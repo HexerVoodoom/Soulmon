@@ -38,7 +38,7 @@ afterEach(() => vi.restoreAllMocks());
 
 describe('H11 — a tabela lote → NPC é única e completa', () => {
   it('as duas tabelas (arte e voz) cobrem EXATAMENTE os lotes que existem — sem lote órfão, sem lote caindo no anfitrião da área', () => {
-    expect(ALL_KEYS.length).toBe(26); // beta-2 (11): + laboratorio:perfil; 14/10/2026: + mercado:restaurante (em obra); D-50: + hall:grove (Biblioteca e Amigos só mudaram de área)
+    expect(ALL_KEYS.length).toBe(27); // beta-2 (11): + laboratorio:perfil; 14/10/2026: + mercado:restaurante (em obra); beta3 M3: + jogos:dungeon (Refúgio só mudou de área); D-50: + hall:grove (Biblioteca e Amigos só mudaram de área)
     expect(Object.keys(LOT_NPC_ART).sort()).toEqual([...ALL_KEYS].sort());
     expect(Object.keys(LOT_NPC_VOICE).sort()).toEqual([...ALL_KEYS].sort());
   });

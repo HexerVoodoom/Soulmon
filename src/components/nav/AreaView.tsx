@@ -6,6 +6,10 @@ import { AreaSheet } from './AreaSheet';
 import { mercadoLots, arenaLots, laboratorioLots, hallLots, type MercadoLotId, type LaboratorioLotId } from '../../utils/areaSheetCopy';
 import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART, HALL_BG, LABORATORIO_BG } from '../../assets/soulmon/areas';
 import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
+import { RogueDungeonPlaceholder } from '../play/RogueDungeonPlaceholder';
+import { RogueDungeon } from '../RogueDungeon';
+import type { RogueRun } from '../../utils/rogueDungeon';
+import type { Combatant } from '../../utils/combate/curve';
 import { buildingGateFor, buildingLockLine, type BuildingId } from '../../utils/gates';
 import type { DailyEvent } from '../../utils/dailyMissions';
 import { isDemoBlockedLot, isDemoHiddenLot, demoRefusalText } from '../../utils/demoMode';
@@ -71,6 +75,7 @@ const CadernoSheet = lazy(() => import('../play/CadernoSheet').then(m => ({ defa
 const Match3Game = lazy(() => loadMatch3Game().then(m => ({ default: m.Match3Game })));
 const DungeonGame = lazy(() => loadDungeonGame().then(m => ({ default: m.DungeonGame })));
 const DinoGame = lazy(() => loadDinoGame().then(m => ({ default: m.DinoGame })));
+const SoulBarrage = lazy(() => import('../SoulBarrage').then(m => ({ default: m.SoulBarrage })));
 const RPSGame = lazy(() => loadRPSGame().then(m => ({ default: m.RPSGame })));
 const EcoGame = lazy(() => loadEcoGame().then(m => ({ default: m.EcoGame })));
 const BolhasGame = lazy(() => loadBolhasGame().then(m => ({ default: m.BolhasGame })));
@@ -114,6 +119,8 @@ export interface PlayHandlers {
   /** Bits de minijogo já creditados HOJE (`minigameBitsToday`) — as folhas
    *  mostram "X de 150" porque o teto é um só para todos os jogos. */
   minigameBitsToday?: number;
+  /** beta3 M7: Calabouço roguelike — incursão no save, gravação e o combatente do pet. Ausente = placeholder. */
+  rogue?: { saved?: RogueRun; onChange: (run: RogueRun) => void; combatant: Combatant };
 }
 
 /** Os lotes que usam o Soulmon DE VERDADE (ficam fechados com ele na masmorra — REGISTRO §36) e o que o aviso diz que o jogador queria fazer. */
@@ -451,6 +458,9 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
+            {open?.id === 'dungeon' && (play.rogue
+              ? <RogueDungeon language={language} todayKey={play.todayKey ?? new Date().toISOString().slice(0, 10)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />
+              : <RogueDungeonPlaceholder language={language} />)}
           </Suspense>
         </AreaSheet>
         {game && (
@@ -473,6 +483,7 @@ export function AreaView(props: AreaViewProps) {
                 onRunEnd={play.onRunEnd}
                 onEnemyDefeated={play.onDungeonEnemyDefeated}
                 onEarnPoints={props.onEarnPoints}
+                rankSaveId={props.guild.saveId}
                 /* WP4.5 — o sumidouro recorrente: comprar profundidade com Bits. */
                 bits={props.points}
                 onSpendBits={play.onSpendBits}
@@ -487,6 +498,19 @@ export function AreaView(props: AreaViewProps) {
                 language={language}
                 onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('dino'); }}
                 onScore={play.onDinoScore}
+                petElement={props.petElement}
+                rankSaveId={props.guild.saveId}
+                onExit={exitGame}
+              />
+            )}
+            {game === 'barrage' && (
+              <SoulBarrage
+                evolutionStage={props.evolutionStage}
+                demoCharacterId={props.demoCharacterId}
+                petElement={props.petElement}
+                playerLevel={props.playerLevel}
+                language={language}
+                onEarnPoints={props.onEarnPoints}
                 rankSaveId={props.guild.saveId}
                 onExit={exitGame}
               />

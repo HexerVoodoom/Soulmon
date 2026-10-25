@@ -106,9 +106,9 @@ describe('Tutorial do mapa (MAP_TOUR_STEPS)', () => {
     }
     expect(MAP_TOUR_STEPS.find(s => s.id === 'map-laboratorio')!.title.pt).toBe(areaLabel('laboratorio', true));
   });
-  it('a Masmorra está listada e dita como aberta desde o primeiro dia', () => {
+  it('a Endless Rift está listada e dita como aberta desde o primeiro dia', () => {
     const exp = MAP_TOUR_STEPS.find(s => s.id === 'map-exploracao')!;
-    expect(exp.areas!.some(r => r.name.en === 'Dungeon')).toBe(true);
+    expect(exp.areas!.some(r => r.name.en === 'Endless Rift')).toBe(true);
     expect(exp.speech.en).toMatch(/day one/);
   });
   it('sanitizeMapTutorialSeen: boolean respeita; save com progresso ou tour visto = true; save vazio = false', () => {

@@ -123,7 +123,8 @@ import type { MealInviteKind } from './utils/mealRhythm';
 import { awardBondXP, awardStepXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
 import { levelUpPending, levelUpBaseline, applyLevelUpCelebrated } from './utils/levelUp';
 import { sanitizeTalentPicks } from './utils/talents';
-import { soulLevel, soulLevelLine } from './utils/soulXP';
+import { soulLevel, soulLevelLine, soulCombatant } from './utils/soulXP';
+import type { RogueRun } from './utils/rogueDungeon';
 import { applyPoopDrain, cleanPoop, pendingPoopEvent, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { pausarTrilha, retomarTrilha } from './utils/trilha';
@@ -7505,6 +7506,7 @@ export default function App() {
                      aqui só se grava o estado que o jogo devolveu. */
                   todayKey: playerDayIso(new Date(), gameState.playerDayTz),
                   focusKeyActive: hasFocusKey(gameState, Date.now()),
+                  rogue: { saved: gameState.rogueDungeon, onChange: (run: RogueRun) => setGameState(prev => ({ ...prev, rogueDungeon: run })), combatant: soulCombatant(gameState) },
                   onFocusPrepared: () => setGameState(prev => grantFocusKey(prev, Date.now())),
                   onFocusStart: (focusEndsAt?: number) => {
                     const now = Date.now();

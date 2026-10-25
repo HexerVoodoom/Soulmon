@@ -29,8 +29,8 @@
  */
 import type { Language } from './i18n';
 
-export type ExploracaoLotId = 'masmorra' | 'passeio' | 'oficina' | 'caderno' | 'preparar';
-export type JogosLotId = 'salao' | 'mente' | 'refugio';
+export type ExploracaoLotId = 'masmorra' | 'passeio' | 'oficina' | 'caderno' | 'preparar' | 'refugio';
+export type JogosLotId = 'salao' | 'mente' | 'dungeon';
 
 interface PlayLotSpec<K extends string> {
   id: K;
@@ -53,7 +53,7 @@ interface PlayLotSpec<K extends string> {
 // soltos sobre o caminho. O fundo tem DOIS tablados de pedra escura (o de cima à
 // esquerda e o do meio à direita) — cada prédio agora assenta no centro do seu.
 const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
-  { id: 'masmorra', labelPt: 'Masmorra', labelEn: 'Dungeon', ariaPt: 'Entrar na Masmorra', ariaEn: 'Enter the Dungeon', left: '22.7%', top: '22.1%', width: '50%' }, // tablado de cima, à esquerda
+  { id: 'masmorra', labelPt: 'Fenda Sem Fim', labelEn: 'Endless Rift', ariaPt: 'Entrar na Fenda Sem Fim', ariaEn: 'Enter the Endless Rift', left: '22.7%', top: '22.1%', width: '50%' }, // tablado de cima, à esquerda
   // 🧭 O Passeio (30/09/2026, decisão do dono — `REGISTRO-DE-DECISOES.md` §5.6):
   // a clareira da DIREITA, do outro lado do caminho. Os lotes têm 38% de largura
   // centrados no `left`, então 27% ocupa 8–46% e 70% ocupa 51–89%: não se tocam.
@@ -68,6 +68,8 @@ const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
   // 🔑 beta3 F1 (25/10/2026): o prédio "Prepare to Focus" — a preparação da sessão saiu da Oficina; concluir dá a CHAVE que a libera.
   // Ocupa o canto de baixo à direita que o Caderno deixou livre. Arte PROVISÓRIA (reusa a da Oficina) e posição a conferir na tela.
   { id: 'preparar', labelPt: 'Preparar o Foco', labelEn: 'Prepare to Focus', ariaPt: 'Entrar em Preparar o Foco', ariaEn: 'Enter Prepare to Focus', left: '78%', top: '84%', width: '52%' },
+  // 🫧 beta3 M3 (25/10/2026): o Refúgio saiu de Jogos para a Exploração (id e comportamento mantidos). Coluna da direita, entre o Passeio (base 34%) e o Preparar (base 84%).
+  { id: 'refugio', labelPt: 'Refúgio', labelEn: 'Refuge', ariaPt: 'Entrar no Refúgio', ariaEn: 'Enter the Refuge', left: '78%', top: '57%', width: '40%' },
 ];
 
 // 🍄 01/10/2026 (H13, navegação do dono): redistribuídos pelas duas clareiras de
@@ -77,7 +79,8 @@ const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
 const JOGOS_LOTS: PlayLotSpec<JogosLotId>[] = [
   { id: 'salao', labelPt: 'Salão de Jogos', labelEn: 'Game Hall', ariaPt: 'Entrar no Salão de Jogos', ariaEn: 'Enter the Game Hall', left: '51.7%', top: '31.2%', width: '58%' }, // W12 (20/10/2026): DESCE 28→31 e centraliza na clareira de cima (centro medido ~52/31), maior 52→58%
   { id: 'mente', labelPt: 'Ateliê da Mente', labelEn: 'Mind Workshop', ariaPt: 'Entrar no Ateliê da Mente', ariaEn: 'Enter the Mind Workshop', left: '53.2%', top: '58.5%', width: '55%' }, // W12: maior 50→55%, centrado no lobo de cima da clareira de baixo (53/59); os três ficam em coluna (H11: o rótulo do Salão não encosta no Ateliê, nem o rótulo deste no Refúgio)
-  { id: 'refugio', labelPt: 'Refúgio', labelEn: 'Refuge', ariaPt: 'Entrar no Refúgio', ariaEn: 'Enter the Refuge', left: '51.2%', top: '87.2%', width: '60%' }, // W12: maior 56→60%; no lobo de baixo da clareira (o pé na borda da terra, 86–87%: acima disso a caixa do Refúgio encostaria no rótulo do Ateliê, H11)
+  // 🗝️ beta3 M3 (25/10/2026): o Calabouço (jogo rogue, lane M7) ocupa o lugar que o Refúgio deixou — lobo de baixo da clareira. Arte PROVISÓRIA (reusa a da Masmorra).
+  { id: 'dungeon', labelPt: 'Calabouço', labelEn: 'Dungeon', ariaPt: 'Entrar no Calabouço', ariaEn: 'Enter the Dungeon', left: '51.2%', top: '90%', width: '46%' },
 ];
 
 function resolveLots<K extends string>(specs: PlayLotSpec<K>[], language: Language) {

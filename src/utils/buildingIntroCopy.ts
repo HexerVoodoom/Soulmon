@@ -54,11 +54,17 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     what: { en: 'Free games, just for the fun of it. Nothing else is asked.', pt: 'Jogos livres, só pela graça de brincar. Nada mais é pedido.' },
     invite: { en: 'Come play a little with your Soulmon.', pt: 'Venha brincar um pouco com o seu Soulmon.' },
   },
-  'jogos.refugio': {
+  'exploracao.refugio': {
     place: { en: 'Refuge', pt: 'Refúgio' },
     hello: { en: "I'm {name}. The tide brought me to this shore.", pt: 'Eu sou {name}. A maré me trouxe a esta praia.' },
     what: { en: 'Slow breathing and quiet bubbles. Nothing here needs delivering.', pt: 'Respiração lenta e bolhas calmas. Aqui nada precisa ser entregue.' },
     invite: { en: 'The door is open, any time.', pt: 'A porta fica aberta, a qualquer hora.' },
+  },
+  'jogos.dungeon': {
+    place: { en: 'Dungeon', pt: 'Calabouço' },
+    hello: { en: "I'm {name}, a guide here. The mist hides paths, and I know a few.", pt: 'Eu sou {name}, guia por aqui. A névoa esconde caminhos, e eu conheço alguns.' },
+    what: { en: 'A small dungeon game is being built here. It is not open yet.', pt: 'Um pequeno jogo de calabouço está sendo preparado aqui. Ainda não abriu.' },
+    invite: { en: 'Come back soon.', pt: 'Volte logo.' },
   },
   'jogos.mente': {
     place: { en: 'Mind Workshop', pt: 'Ateliê da Mente' },
@@ -97,7 +103,7 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     invite: { en: 'Walk as slow as you like.', pt: 'Ande devagar o quanto quiser.' },
   },
   'exploracao.masmorra': {
-    place: { en: 'Dungeon', pt: 'Masmorra' },
+    place: { en: 'Endless Rift', pt: 'Fenda Sem Fim' },
     hello: { en: "I'm {name}, a guide here. The mist hides paths, and I know a few.", pt: 'Eu sou {name}, guia por aqui. A névoa esconde caminhos, e eu conheço alguns.' },
     what: { en: 'The Dungeon goes down in floors, and your Soulmon faces one body at a time.', pt: 'A Masmorra desce em andares, e o seu Soulmon enfrenta um corpo de cada vez.' },
     invite: { en: 'Whenever you want to go down, it is right there.', pt: 'Quando quiser descer, está logo ali.' },

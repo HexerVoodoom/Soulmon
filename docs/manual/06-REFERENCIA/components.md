@@ -1757,3 +1757,24 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 **Props principais:** `DungeonReturnModal` — resumo centralizado de quando o Soulmon volta sozinho da masmorra (beta3 A2), sem cobrança. `PrepararFocoSheet` — folha do prédio Prepare to Focus (beta3 F1): planejar a sessão (`OficinaPlano`) e salvar dá a chave da Oficina do Foco.
 **Chamado por:** `src/App.tsx` e as folhas do Play. **Régua:** nenhuma específica; a regra da chave é de `src/utils/focusKey.ts`.
 
+
+### `src/components/BestiaryCollection.tsx`
+**Dono de:** a coleção do Bestiário (M10): uma célula por criatura × estágio do `enemyRoster`; vista = arte e nome, não vista = silhueta sem nome. O número é de coleção ("N de M"), nunca percentual. Chaves antigas fora do roster não contam. **Exports:** `BestiaryCollection({ seen, language })`.
+
+### `src/components/RankingPanel.tsx`
+**Dono de:** a tela de ranking de um jogo: a FAIXA vem antes da lista; com `score`, envia o resultado uma vez ao montar; falha de rede é silenciosa. **Exports:** `RankingPanel({ game, saveId, language, score?, period? })`. **Usa:** `src/utils/rankings.ts`.
+
+### `src/components/RogueDungeon.tsx`
+**Dono de:** a tela do prédio `jogos.dungeon` (Calabouço, M7): escolher 1 de 3 caminhos, resolver o desafio, escolher 1 de 3 bônus; arte provisória. Regras em `utils/rogueDungeon.ts`. Não é o Endless Rift (`DungeonGame.tsx`). **Exports:** `RogueDungeonProps`, `RogueDungeon`.
+
+### `src/components/SoulBarrage.tsx`
+**Dono de:** a tela do Soul Barrage (4º card do Salão de Jogos, M9): desenha o campo e traduz toque em `targetX`; a regra mora em `utils/soulBarrage.ts`. Usa o `RankingPanel`. **Exports:** `SoulBarrage`.
+
+### `src/components/mente/PatchesGame.tsx`
+**Dono de:** a tela da Colcha (minigame da Oficina da Mente, id `patches`); só aplica a regra de `utils/mente/patches.ts`. **Exports:** `PatchesGame`.
+
+### `src/components/mente/ZipGame.tsx`
+**Dono de:** a tela da Trilha do Pet (minigame da Oficina da Mente, id `zip`); só aplica a regra de `utils/mente/zip.ts`. **Exports:** `ZipGame`.
+
+### `src/components/play/RogueDungeonPlaceholder.tsx`
+**Dono de:** o ponto de encaixe "em breve" do Calabouço (M3), que a lane M7 troca pelo `RogueDungeon` real. **Exports:** `RogueDungeonPlaceholder({ language })`.

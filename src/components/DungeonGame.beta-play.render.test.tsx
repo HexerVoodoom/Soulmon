@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * MASMORRA — o pedido de 11/10/2026 do dono (REGISTRO §36): um indicador só no HUD, avanço rápido 1×/2×/3×, especial automático,
- * modalzinho de drop e a descida que continua sozinha (sair NÃO cancela; ao voltar o avanço aparece; "Retirar da masmorra").
+ * modalzinho de drop e a descida que continua sozinha (sair NÃO cancela; ao voltar o avanço aparece; "Retirar da Fenda").
  * A conta do avanço fora do app é testada pura em `utils/dungeonAway.test.ts`; aqui se trava a TELA.
  */
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
@@ -328,7 +328,7 @@ describe('A descida que continua sozinha', () => {
     expect(aviso !== null || terminou !== null).toBe(true);
   });
 
-  it('"Retirar da masmorra" no cartão: apaga o registro (ele volta para casa) e sai da tela', async () => {
+  it('"Retirar da Fenda" no cartão: apaga o registro (ele volta para casa) e sai da tela', async () => {
     vi.useFakeTimers();
     const onExit = vi.fn();
     await primeiroInimigo({ onExit });

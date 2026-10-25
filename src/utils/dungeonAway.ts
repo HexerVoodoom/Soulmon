@@ -32,6 +32,7 @@ import { buildDungeonWave, clearBonus, dungeonHeartsLeftToday, noteDungeonHeartD
 import { autoDodgeGrade, autoRingGrade, dungeonFight, dungeonFightSeed, type DungeonPlayerCfg } from './dungeonFight';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
 import { mulberry32 } from './combate/rng';
+import { applyRiftLayer, riftTierTotals } from './endlessRift';
 import { SPECIAL_FAMILIES, type SpecialFamily } from './combate/specials';
 import { jeitoDaProfissao, jeitoParaPve } from './profissaoMasmorra';
 import { creditMinigameBits } from './currencies';
@@ -219,6 +220,14 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
     s = { ...s, dungeonDepthRecord: Math.max(clampInt(s.dungeonDepthRecord), layer) };
     const frag = rec.marks.reduce((a, m) => a + m.fragments, 0);
     if (frag > 0) { s = addFragments(s, frag); report.fragments += frag; }
+    // Endless Rift (M6): o score mensal e as faixas do mês (material; Bits pelo funil, com o teto diário).
+    const rift = applyRiftLayer(s, layer, t);
+    if (rift.newTiers.length) {
+      const tot = riftTierTotals(rift.newTiers);
+      s = rift.next;
+      if (tot.fragments > 0) { s = addFragments(s, tot.fragments); report.fragments += tot.fragments; }
+      if (tot.bits > 0) credit(tot.bits);
+    } else s = rift.next;
     if (isMilestoneLayer(layer) && !ms) {
       ms = true;
       report.glitchtama += 1;

@@ -136,7 +136,7 @@ describe('prédios por Vínculo (Tarefa A)', () => {
     for (const l of [NaN, null, undefined, 'x', -3]) expect(buildingGateFor('hall.guilda', l).bondLevel).toBe(1);
   });
   it('sempre livres: mínimo 1 e abertos no Vínculo 1', () => {
-    expect(BUILDINGS_ALWAYS_OPEN).toEqual(['mercado.itens', 'laboratorio.evolucao', 'jogos.refugio', 'exploracao.passeio', 'exploracao.masmorra']);
+    expect(BUILDINGS_ALWAYS_OPEN).toEqual(['mercado.itens', 'laboratorio.evolucao', 'exploracao.refugio', 'exploracao.passeio', 'exploracao.masmorra']);
     for (const id of BUILDINGS_ALWAYS_OPEN) {
       expect(BUILDING_GATES[id].minBond).toBe(1);
       expect(buildingGateFor(id, 1).open).toBe(true);

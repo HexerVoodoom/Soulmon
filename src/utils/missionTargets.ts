@@ -37,5 +37,5 @@ export function achievementTarget(category: MissionCategory): GoTarget {
 
 /** Diárias: o cuidado do Refúgio (banho, carinho, comida, humor, descanso, brincar) se faz na Home; o resto, no prédio da missão. */
 export function dailyTarget(m: Pick<DailyMission, 'building'>): GoTarget {
-  return m.building === 'jogos.refugio' ? 'home' : m.building;
+  return m.building === 'exploracao.refugio' ? 'home' : m.building;
 }

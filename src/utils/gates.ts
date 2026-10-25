@@ -90,9 +90,9 @@ export function gateLine(feature: GateFeature, bondLevel: unknown, language: str
 /** Os prédios (lotes) das seis áreas do Mapa: `<área>.<lote>`. Os ids são estáveis (o save e os testes os citam). */
 export type BuildingId =
   | 'mercado.itens' | 'mercado.conquistas' | 'mercado.decoracao' | 'mercado.background' | 'mercado.ferreiro'
-  | 'jogos.salao' | 'jogos.refugio' | 'jogos.mente'
+  | 'jogos.salao' | 'jogos.dungeon' | 'jogos.mente'
   | 'arena.duelo' | 'arena.torneio' | 'arena.guerra'
-  | 'exploracao.passeio' | 'exploracao.masmorra' | 'exploracao.caderno' | 'exploracao.oficina' | 'exploracao.preparar'
+  | 'exploracao.passeio' | 'exploracao.masmorra' | 'exploracao.caderno' | 'exploracao.oficina' | 'exploracao.preparar' | 'exploracao.refugio'
   | 'laboratorio.evolucao' | 'laboratorio.pet' | 'laboratorio.stats' | 'laboratorio.perfil'
   | 'laboratorio.biblioteca' | 'laboratorio.amigos'
   | 'hall.guilda' | 'hall.feira' | 'hall.grove';
@@ -106,6 +106,7 @@ export const MOVED_BUILDINGS: Readonly<Record<string, BuildingId>> = {
   'arena.feira': 'hall.feira',
   'hall.biblioteca': 'laboratorio.biblioteca',
   'hall.amigos': 'laboratorio.amigos',
+  'jogos.refugio': 'exploracao.refugio', // beta3 M3 (25/10/2026): o Refúgio foi de Jogos para a Exploração
 };
 
 /** O id atual de um prédio (id antigo → novo; qualquer outro valor passa igual). */
@@ -132,7 +133,8 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   // da vitrine abre com o uso (equipamento só se compra com Bits GANHOS, e o teto de 5% é o mesmo para quem entra mais tarde).
   'mercado.ferreiro': { minBond: 2 },
   'jogos.salao': { minBond: 1 },
-  'jogos.refugio': { minBond: 1 },
+  'jogos.dungeon': { minBond: 3 }, // beta3 M3: jogo rogue novo; conservador, mesmo portão do Ateliê da Mente
+  'exploracao.refugio': { minBond: 1 }, // beta3 M3: o Refúgio mudou de Jogos para a Exploração (sempre livre)
   'jogos.mente': { minBond: 3 },
   'exploracao.passeio': { minBond: 1 },
   // A Masmorra abre desde o Vínculo 1 (14/10/2026, pedido do dono: é a atividade mais gacha/idle; o limite diário, a energia e o
@@ -160,7 +162,7 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
 };
 
 /** Prédios de ENTRADA (onboarding/tutorial e o Refúgio): nunca bloqueiam — o teste exige `minBond` 1. */
-export const BUILDINGS_ALWAYS_OPEN: readonly BuildingId[] = ['mercado.itens', 'laboratorio.evolucao', 'jogos.refugio', 'exploracao.passeio', 'exploracao.masmorra'];
+export const BUILDINGS_ALWAYS_OPEN: readonly BuildingId[] = ['mercado.itens', 'laboratorio.evolucao', 'exploracao.refugio', 'exploracao.passeio', 'exploracao.masmorra'];
 
 /** O prédio abre neste Vínculo? `bondLevel` ausente/lixo = Vínculo 1. */
 export function buildingGateFor(id: BuildingId, bondLevel: unknown): GateResult {

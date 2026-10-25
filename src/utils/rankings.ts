@@ -2,7 +2,7 @@
 // Mesmo contrato para todo jogo: `submitScore(game, saveId, score)` e `fetchRanking(game, saveId)`.
 import { authHeaders } from './auth';
 
-export type RankedGame = 'dino' | 'ppt' | 'match3' | 'eco';
+export type RankedGame = 'dino' | 'ppt' | 'match3' | 'eco' | 'endless-rift' | 'rogue-dungeon' | 'soul-barrage';
 export type RankingPeriod = 'weekly' | 'monthly';
 export type RankingTierId = 'madeira' | 'bronze' | 'prata' | 'ouro' | 'platina' | 'diamante';
 
@@ -14,6 +14,8 @@ export interface RankingBoard {
   periodKey: string;
   top: RankingRow[];
   me: RankingMe | null;
+  /** Só `endless-rift`: os Créditos que o SERVIDOR já creditou a este jogador no fechamento do mês anterior (só leitura). */
+  prize?: { month: string; credits: number; place: number } | null;
 }
 export interface SubmitResult extends RankingBoard { improved: boolean; best: number }
 

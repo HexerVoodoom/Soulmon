@@ -134,7 +134,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     const { container } = renderWithCss(<PlayAreaView {...props()} />);
     expect(container.querySelector('[data-area-npc]')).toBeNull();
     expect([...container.querySelectorAll('[data-area-lot]')].map(e => e.getAttribute('data-area-lot')))
-      .toEqual(['masmorra', 'passeio', 'oficina', 'caderno', 'preparar']);
+      .toEqual(['masmorra', 'passeio', 'oficina', 'caderno', 'preparar', 'refugio']);
     expect(container.querySelector('[data-area-lot="masmorra"] [data-area-lot-art]')).toBeTruthy();
     expect(container.querySelector('[data-area-lot="passeio"] [data-area-lot-art]')).toBeTruthy();
     expect(container.querySelector('[data-area-lot="oficina"] [data-area-lot-art]')).toBeTruthy();
@@ -149,7 +149,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     const { container, getByRole } = renderWithCss(<PlayAreaView {...props()} />);
     fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
     await achar(container, '[data-masmorra]');
-    const folha = getByRole('dialog', { name: 'Masmorra' });
+    const folha = getByRole('dialog', { name: 'Fenda Sem Fim' });
     expect(folha.textContent).toContain('321');
     expect(folha.textContent).not.toContain('Camada 0'); // P10 (beta-2): chip zerado não aparece (REGISTRO §31: o recorde de profundidade vem do save; vazio = 0 = sem chip)
     // I13 (02/10/2026): a nota "perder custa só a run" saiu da folha e mora
@@ -225,7 +225,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
 
   it('EN: rótulos e folha em inglês', async () => {
     const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ language: 'en-US' })} />);
-    expect(container.querySelector('[data-area-lot="masmorra"]')!.textContent).toContain('Dungeon');
+    expect(container.querySelector('[data-area-lot="masmorra"]')!.textContent).toContain('Endless Rift');
     fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
     await achar(container, '[data-masmorra]');
     fireEvent.click(getByRole('button', { name: 'How the dungeon works' }));
@@ -260,11 +260,11 @@ describe('Exploração — o Passeio fica com o NPC (07/10/2026: "Stroll fica co
 });
 
 describe('Jogos — os três prédios', () => {
-  it('a cena tem Salão de Jogos, Ateliê da Mente e Refúgio, todos com arte; o Pipo fala no Salão', () => {
+  it('a cena tem Salão de Jogos, Ateliê da Mente e Calabouço (M3: o Refúgio foi para a Exploração), todos com arte; o Pipo fala no Salão', () => {
     const { container } = renderWithCss(<PlayAreaView {...props({ area: 'jogos' })} />);
     expect([...container.querySelectorAll('[data-area-lot]')].map(e => e.getAttribute('data-area-lot')))
-      .toEqual(['salao', 'mente', 'refugio']);
-    for (const id of ['salao', 'mente', 'refugio']) {
+      .toEqual(['salao', 'mente', 'dungeon']);
+    for (const id of ['salao', 'mente', 'dungeon']) {
       expect(container.querySelector(`[data-area-lot="${id}"] [data-area-lot-art]`), id).toBeTruthy();
     }
     fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
@@ -315,8 +315,14 @@ describe('Jogos — os três prédios', () => {
     }
   });
 
-  it('Refúgio: respiração e bolhas calmas NÃO recebem onEarnPoints, e o aviso de ajuda está na folha nos dois idiomas', async () => {
-    const p = props({ area: 'jogos' });
+  it('Calabouço (M3): abre o placeholder "em breve" — ponto de encaixe do RogueDungeon', async () => {
+    const { container } = renderWithCss(<PlayAreaView {...props({ area: 'jogos' })} />);
+    fireEvent.click(container.querySelector('[data-area-lot="dungeon"]')!);
+    expect(await achar(container, '[data-rogue-dungeon-placeholder]')).toBeTruthy();
+  });
+
+  it('Refúgio (agora na Exploração): respiração e bolhas calmas NÃO recebem onEarnPoints, e o aviso de ajuda está na folha nos dois idiomas', async () => {
+    const p = props({ area: 'exploracao' });
     for (const id of ['respiracao', 'bolhas-calmas']) {
       const { container, unmount } = renderWithCss(<PlayAreaView {...p} />);
       fireEvent.click(container.querySelector('[data-area-lot="refugio"]')!);
@@ -327,7 +333,7 @@ describe('Jogos — os três prédios', () => {
       expect(recebidas[nome].onEarnPoints, id).toBeUndefined();
       unmount();
     }
-    const { container } = renderWithCss(<PlayAreaView {...props({ area: 'jogos', language: 'en-US' })} />);
+    const { container } = renderWithCss(<PlayAreaView {...props({ area: 'exploracao', language: 'en-US' })} />);
     fireEvent.click(container.querySelector('[data-area-lot="refugio"]')!);
     expect((await achar(container, '[data-refugio-ajuda]')).textContent).toMatch(/988/);
   });
@@ -377,7 +383,7 @@ describe('Salão de Jogos — ícone de cada jogo (11/10/2026)', () => {
     fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
     await waitFor(() => expect(container.querySelector('[data-salao]')).toBeTruthy());
     const cards = [...container.querySelectorAll('[data-salao] > ul > li')];
-    expect(cards.length).toBe(3); // + Combina 3 (11/10/2026, REGISTRO §36)
+    expect(cards.length).toBe(4); // + Soul Barrage (M9); + Combina 3 (11/10/2026, REGISTRO §36)
     for (const c of cards) {
       const img = c.querySelector('img[data-pixel-icon]') as HTMLImageElement;
       expect(img).toBeTruthy();

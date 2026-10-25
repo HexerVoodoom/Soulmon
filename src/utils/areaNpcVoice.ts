@@ -102,6 +102,7 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   },
   'arena:torneio': AREA_NPC_VOICE.arena,
   'exploracao:masmorra': AREA_NPC_VOICE.exploracao,
+  // 'jogos:dungeon' tem voz própria abaixo (beta3 M3).
   'jogos:salao': AREA_NPC_VOICE.jogos,
   'laboratorio:evolucao': AREA_NPC_VOICE.laboratorio,
   'laboratorio:biblioteca': AREA_NPC_VOICE.hall, // D-50 (19/10/2026): a Biblioteca foi do Hall para o Laboratório — a anfitriã Lumi vai com ela
@@ -167,7 +168,13 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Este quebra-cabeça espera. As peças não vão a lugar nenhum.',
     lineEn: "This puzzle waits. Its pieces aren't going anywhere.",
   },
-  'jogos:refugio': {
+  // 🗝️ beta3 M3: o Calabouço (jogo rogue em breve). Voz e busto PROVISÓRIOS — o busto reusa o da guia da Masmorra.
+  'jogos:dungeon': {
+    namePt: 'Corva, a vigia do calabouço', nameEn: 'Corva, the dungeon watcher',
+    linePt: 'As portas ainda estão sendo aparelhadas. Volte quando o candeeiro estiver aceso.',
+    lineEn: 'The doors are still being hung. Come back when the lantern is lit.',
+  },
+  'exploracao:refugio': {
     namePt: 'Marim, o mensageiro da maré', nameEn: 'Marim, the tide courier', // 07/10/2026: busto trocado a pedido do dono (era Bobbi, o soprador de bolhas)
     linePt: 'Aqui nada precisa ser entregue. Só a maré indo e vindo.',
     lineEn: 'Nothing needs delivering here. Just the tide coming and going.',

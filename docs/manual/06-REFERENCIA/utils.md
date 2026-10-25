@@ -3711,3 +3711,43 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Dono de:** `src/utils/plantioDefesa.ts` — a defesa do jardim (L5-D2): combate fácil contra 3 inimigos pelo motor da Masmorra, sem custo; o servidor decide o dia de proteger. `src/utils/rpsLevel2.ts` — PPT nível 2: 3 pedras, 3 papéis e 3 tesouras por lado, peça usada some; funções puras.
 **Chamado por:** os visores de guilda e o minijogo de PPT.
 
+
+### `src/utils/endlessRift.ts`
+**Dono de:** o placar MENSAL do Endless Rift (a antiga masmorra, nome visível "Endless Rift"/"Fenda Sem Fim"; ids de save e arquivos não mudaram): score = camada mais funda limpa no mês UTC, faixas de recompensa 25/100/250 (uma vez por mês cada) e a entrada no ranking a partir da camada 250.
+**Exports:** `RIFT_GAME_ID = 'endless-rift'`, `RiftTier`/`RIFT_TIERS`, `RIFT_RANKING_FROM = 250`, `RiftMonth`/`RiftMonthState`, `riftMonthKey(nowMs)`, `sanitizeRiftMonth(raw)` (leitura tolerante).
+**Régua:** o prêmio em Créditos do top 3 é pago só pelo servidor (`functions/api/_riftPayout.js`).
+
+### `src/utils/enemyRoster.ts`
+**Dono de:** "quem pode aparecer como inimigo, em que estágio e a partir de que level" (M10): 17 criaturas base × rookie/champion/ultimate/mega + 138 rookies de elemento combinado. Dados puros, sem asset. O level do jogador só decide até que estágio de ARTE o slot mostra; a força continua do slot da escada.
+**Exports:** `EnemyStage`, `ENEMY_STAGES`, `ENEMY_STAGE_UNLOCK_LEVEL`, `RosterEntry`, `chaveBestiario(id, stage)`, `ENEMY_ROSTER`, `ENEMY_ROSTER_KEYS`, `rosterEntryOfKey(key)`, `pickEnemy`.
+
+### `src/utils/enemyRosterArt.ts`
+**Dono de:** a URL da arte dos 138 rookies combinados (`import.meta.glob` eager devolve só a URL; síncrono porque a onda da masmorra é montada sem await). **Exports:** `COMBINADOS_ART` (chave `NNN-slug`).
+
+### `src/utils/enemyRosterData.ts`
+**Dono de:** os 138 rookies de elemento combinado como dados puros (gerado de `assets/soulmon/novos-arquivo/manifest.json`): `[número, slug, nome, elemento 1, elemento 2]`; o elemento de combate é o 1º. **Exports:** `COMBINADOS_DATA`.
+
+### `src/utils/mente/patches.ts`
+**Dono de:** a regra pura da Colcha (id `patches`, EN "Patchwork"): dividir a grade em retângulos, cada um com UMA pista (a área, às vezes a forma). O gerador particiona primeiro e põe as pistas depois, então todo puzzle tem solução; rng por parâmetro.
+**Exports:** `PATCHES_MAX_BITS = 10`, `PATCHES_MIN_SIZE = 4`, `PATCHES_MAX_SIZE = 8`, `PatchShape`, `Rect`, `PatchClue`, `patchesBits`, `patchesForLevel`, `placeRect`, `rectBetween`, `rectHas`, `validatePatches`, `seededRng`.
+**Chamado por:** `src/components/mente/PatchesGame.tsx`
+
+### `src/utils/mente/zip.ts`
+**Dono de:** a regra pura da Trilha do Pet (id `zip`, EN "Pet Trail"): um caminho único que passa pelos números em ordem e preenche todas as casas. O gerador monta o caminho hamiltoniano primeiro; todo puzzle tem solução.
+**Exports:** `ZIP_MAX_BITS = 10`, `ZIP_MIN_SIZE = 4`, `ZIP_MAX_SIZE = 8`, `ZipPuzzle`, `zipSizeForLevel`, `zipBits`, `zipForLevel`, `validateZip`, `canStep`, `areAdjacent`.
+**Chamado por:** `src/components/mente/ZipGame.tsx`
+
+### `src/utils/rankings.ts`
+**Dono de:** o cliente do ranking genérico (M8): `submitScore(game, saveId, score)` e `fetchRanking(game, saveId)`, mesmo contrato para todo jogo; espelho do servidor `functions/api/rankings.js`.
+**Exports:** `RankedGame` (dino, ppt, match3, eco, endless-rift, rogue-dungeon, soul-barrage), `RankingPeriod`, `RankingTierId`, `RankingRow`, `RankingMe`, `RankingBoard`, `SubmitResult`, `RANKING_TIER_NAMES`, `submitScore`, `fetchRanking`.
+**Chamado por:** `src/components/RankingPanel.tsx`
+
+### `src/utils/rogueDungeon.ts`
+**Dono de:** a lógica pura do Calabouço roguelike (M7, prédio `jogos.dungeon`): incursão do dia de 3 andares × 8 desafios; a cada passo 1 de 3 caminhos (combate/puzzle/minigame/exploração, semente = dia + passo), combate obrigatório a cada 3 passos e no fim do andar; bônus só valem na incursão; perder combate encerra o dia. Score = desafios vencidos + 3 por andar (máx. 33, espelho de `_rankings.js`).
+**Exports:** `ROGUE_FLOORS`, `ROGUE_PER_FLOOR`, `ROGUE_MAX_STEPS`, `ROGUE_COMBAT_EVERY`, `ROGUE_FLOOR_BONUS`, `ROGUE_MAX_SCORE`, `PathKind`, `BonusKind`, `pathsFor`, `bonusChoices`, `resolveStep`, `rogueScore`, `rogueBits`, `runForDay`.
+**Chamado por:** `src/components/RogueDungeon.tsx`
+
+### `src/utils/soulBarrage.ts`
+**Dono de:** a lógica pura do Soul Barrage (M9), bullet hell vertical do Salão de Jogos: o Soulmon atira sozinho, inimigos do `enemyRoster` descem e atiram, tiro tira 1 vida, a fase sobe a cada `PHASE_SECONDS`. `dt` e `rng` por parâmetro. Pontos = abates; Bits por `barrageBits(score)` pelo funil de minigames (teto diário aplicado fora).
+**Exports:** `FIELD_W`, `FIELD_H`, `PLAYER_R`, `PLAYER_SIZE`, `PLAYER_Y`, `PLAYER_SPEED`, `START_LIVES`, `INVULN_SECONDS`, `barrageBits` e o estado/passo da simulação.
+**Chamado por:** `src/components/SoulBarrage.tsx`

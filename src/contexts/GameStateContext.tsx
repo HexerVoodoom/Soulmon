@@ -1,4 +1,5 @@
 import { normalizeGuildMission } from '../utils/guildMission';
+import { sanitizeRogueRun, type RogueRun } from '../utils/rogueDungeon';
 import { sanitizeFocusKeyDay } from '../utils/focusKey';
 import { sanitizeClaReceipts } from '../utils/claCredit';
 import { sanitizeBosqueArvores, type BosqueArvores } from '../utils/bosqueArvoresSave';
@@ -442,6 +443,10 @@ export interface GameState {
   /** A camada mais funda já LIMPA na masmorra (0..999; REGISTRO §31). Só sobe; é o ponto de retorno da descida
    *  (`startLayerFor`) e o gatilho dos marcos de profundidade. Dono: `utils/dungeonIdle.ts` (`recordLayerCleared`). */
   dungeonDepthRecord?: number;
+  /** ENDLESS RIFT (M6): score MENSAL da masmorra — `{ m: 'YYYY-MM' UTC, best: camada mais funda do mês, claimed: maior faixa de
+   *  recompensa já paga no mês }`. Ausente/velho = score 0 no mês atual. Dono: `utils/endlessRift.ts`. Só do cliente; os Créditos do
+   *  top 3 são pagos pelo servidor (`functions/api/_riftPayout.js`), nunca lidos daqui. */
+  riftMonth?: { m: string; best: number; claimed: number };
   /** A DESCIDA QUE CONTINUA SOZINHA (11/10/2026, REGISTRO §36): a posição da descida na masmorra (camada, lugar na escada, HP, energia do
    *  especial, semente, instantâneo do jogador). Presente = o Soulmon está NA MASMORRA (ocupado; a Home mostra a plaquinha) e o avanço
    *  fora do app é calculado por `utils/dungeonAway.ts` › `applyDungeonAway` ao voltar. Ausente = em casa. Tipo e higienização: `utils/dungeonIdle.ts`. */
@@ -538,6 +543,8 @@ export interface GameState {
   guildDonatedItem?: string | null;
   /** beta3 F1: dia do jogador (AAAA-MM-DD) em que o "Prepare to Focus" deu a chave que libera a Focus Workshop (`utils/focusKey.ts`). */
   focusKeyDay?: string;
+  /** beta3 M7: incursão do Calabouço roguelike do dia (`utils/rogueDungeon.ts`) (outro dia = incursão nova na leitura, via `runForDay`). */
+  rogueDungeon?: RogueRun;
   /** Recibos de prêmio dos prédios do clã (Praça, Plantio, Mistério) JÁ creditados — os últimos ~50. Credita UMA vez por recibo (`utils/claCredit.ts`). */
   claReceipts?: string[];
   /** As 4 árvores do Bosque: o pico de cada estação e o ano-ciclo em que completou/aperfeiçoou (`utils/bosqueArvores.ts`). */
@@ -1303,6 +1310,14 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // (`utils/dungeonIdle.ts`), inline para não puxar a masmorra para o chunk de entrada.
         dungeonDepthRecord: typeof loadedState.dungeonDepthRecord === 'number' && Number.isFinite(loadedState.dungeonDepthRecord)
           ? Math.min(999, Math.max(0, Math.floor(loadedState.dungeonDepthRecord))) : undefined,
+        // Endless Rift (M6): score mensal. Registro bom ou nada (mesma regra de `sanitizeRiftMonth`, `utils/endlessRift.ts`; inline
+        // para não puxar a masmorra para o chunk de entrada). Save antigo sem o campo = score 0 do mês atual.
+        riftMonth: (() => {
+          const r = obj<unknown>(loadedState.riftMonth) as Record<string, unknown>;
+          if (typeof r.m !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(r.m)) return undefined;
+          const n = (v: unknown, hi: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(0, Math.floor(v))) : 0);
+          return { m: r.m, best: n(r.best, 999), claimed: n(r.claimed, 3) };
+        })(),
         // A descida que continua sozinha: registro inteiro ou nada (campo ruim → `undefined`, o Soulmon volta para casa). Mesma regra de
         // `sanitizeDungeonAway` (`utils/dungeonIdle.ts`).
         dungeonAway: sanitizeDungeonAway(loadedState.dungeonAway),
@@ -1397,6 +1412,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         claReceipts: sanitizeClaReceipts(loadedState.claReceipts),
         bosqueArvores: sanitizeBosqueArvores(loadedState.bosqueArvores),
         focusKeyDay: sanitizeFocusKeyDay(loadedState.focusKeyDay),
+        rogueDungeon: sanitizeRogueRun(loadedState.rogueDungeon),
         guildDonatedItem: (() => { const v = str(loadedState.guildDonatedItem); return v && /^[a-z0-9][a-z0-9_-]{1,39}$/.test(v) ? v : null; })(),
         // Campos novos: saves antigos não os têm, então o fallback é obrigatório.
         // Sem `?? padrão` de valor: aqui o padrão É a ausência. Save antigo
