@@ -314,3 +314,24 @@ describe('RitualPanel — um painel só, com contador e CTA largo', () => {
     expect(screen.getByText('Rituais diários')).toBeTruthy();
   });
 });
+
+describe('halo do check concluído = o do CheckRow do modal', () => {
+  it('a caixa marcada da Home recebe .sm2-check-halo e o CSS usa o mesmo token do .sm2-form-check', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { render } = await import('@testing-library/react');
+    const { RitualCheck } = await import('./RitualPanel');
+    cleanup();
+    const a = render(<RitualCheck checked disabled={false} label="x" onToggle={() => {}} />);
+    expect((a.getByRole('checkbox').querySelector('span') as HTMLElement).className).toContain('sm2-check-halo');
+    a.unmount();
+    const b = render(<RitualCheck checked={false} disabled={false} label="y" onToggle={() => {}} />);
+    expect((b.getByRole('checkbox').querySelector('span') as HTMLElement).className).not.toContain('sm2-check-halo');
+    b.unmount();
+    const css = readFileSync('src/index.css', 'utf8');
+    expect(css).toMatch(/\.sm2-check-halo::after\s*\{[^}]*background: var\(--sm2-check-halo\)/);
+    expect(css.slice(css.indexOf('.sm2-form-check {'))).toMatch(/&::after\s*\{[^}]*background: var\(--sm2-check-halo\)/);
+    expect((css.match(/--sm2-check-halo:\s*radial-gradient/g) ?? []).length).toBe(2); // claro e escuro
+    const i = css.indexOf('.sm2-check-halo::after');
+    expect(css.slice(i, i + 300)).not.toMatch(/animation|transition/); // estático = ok em movimento reduzido
+  });
+});

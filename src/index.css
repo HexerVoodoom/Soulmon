@@ -5116,6 +5116,7 @@ select:focus-visible {
      TURQUESA da paleta (`primary-ink`). O glow é do check, não da caixa: difuso (blur 4), baixo (32%) e estático. Nunca valor próprio. */
   --sm2-check-fill: var(--sm2-gold-fill);
   --sm2-check-glow: drop-shadow(0 0 4px color-mix(in srgb, var(--sm2-primary-ink) 32%, transparent));
+  --sm2-check-halo: radial-gradient(circle, color-mix(in srgb, var(--sm2-primary-ink) 30%, transparent) 0%, transparent 72%);
   /* MADEIRA (beta-2, 6.2): a placa "In Dungeon" da Home. Objeto físico — mesmo valor nos dois temas, sempre por token. */
   --sm2-wood: #7a4c24;
   --sm2-wood-edge: #4a2c12;
@@ -5171,6 +5172,7 @@ select:focus-visible {
   --sm2-on-gold: #04211F;
   --sm2-check-fill: var(--sm2-gold-fill);
   --sm2-check-glow: drop-shadow(0 0 4px color-mix(in srgb, var(--sm2-primary-ink) 32%, transparent));
+  --sm2-check-halo: radial-gradient(circle, color-mix(in srgb, var(--sm2-primary-ink) 30%, transparent) 0%, transparent 72%);
   /* MADEIRA (beta-2, 6.2): a placa "In Dungeon" da Home. Objeto físico — mesmo valor nos dois temas, sempre por token. */
   --sm2-wood: #7a4c24;
   --sm2-wood-edge: #4a2c12;
@@ -6889,6 +6891,18 @@ button[style*="--sm2-btn: ghost"]:active {
   &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
 }
 
+/* Halo do check concluído da lista da Home: o MESMO token (`--sm2-check-halo`) e a mesma escala do `CheckRow` do modal. Estático. */
+.sm2-check-halo { position: relative; }
+.sm2-check-halo::after {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border-radius: 50%;
+  background: var(--sm2-check-halo);
+  transform: scale(1.5);
+  pointer-events: none;
+}
+
 /* ── Checkbox 24, raio 4, num alvo 44 (o rótulo inteiro) ────────────────── */
 .sm2-form-check {
   appearance: none;
@@ -6921,7 +6935,7 @@ button[style*="--sm2-btn: ghost"]:active {
     position: absolute;
     inset: 1px;
     border-radius: 50%;
-    background: radial-gradient(circle, color-mix(in srgb, var(--sm2-primary-ink) 30%, transparent) 0%, transparent 72%);
+    background: var(--sm2-check-halo);
     transform: scale(0);
     pointer-events: none;
   }

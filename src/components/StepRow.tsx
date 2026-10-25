@@ -40,7 +40,7 @@ export function StepRow({ id, label, completed, onToggle, disabled = false, lang
           cursor: inert ? 'default' : 'pointer',
         }}
       >
-        <span aria-hidden="true" style={checkBoxStyle({ checked: completed, dashed: disabled })}>
+        <span aria-hidden="true" className={completed ? 'sm2-check-halo' : undefined} style={checkBoxStyle({ checked: completed, dashed: disabled })}>
           {completed && <CheckMark />}
         </span>
       </button>

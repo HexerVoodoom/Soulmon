@@ -127,7 +127,7 @@ export function RitualCheck({
       onClick={onToggle}
       style={{ ...alvo44, flex: '0 0 44px', border: 'none', cursor: disabled && !onToggle ? 'default' : 'pointer' }}
     >
-      <span aria-hidden="true" style={checkBoxStyle({ checked, mixed, dashed: disabled })}>
+      <span aria-hidden="true" className={checked ? 'sm2-check-halo' : undefined} style={checkBoxStyle({ checked, mixed, dashed: disabled })}>
         {checked && <CheckMark />}
         {!checked && mixed && (
           <span style={{ width: 12, height: 2, borderRadius: 1, backgroundColor: 'var(--sm2-check-fill)' }} />
