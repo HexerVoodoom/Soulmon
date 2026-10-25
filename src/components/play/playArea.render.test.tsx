@@ -383,7 +383,7 @@ describe('Salão de Jogos — ícone de cada jogo (11/10/2026)', () => {
     fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
     await waitFor(() => expect(container.querySelector('[data-salao]')).toBeTruthy());
     const cards = [...container.querySelectorAll('[data-salao] > ul > li')];
-    expect(cards.length).toBe(3); // + Combina 3 (11/10/2026, REGISTRO §36)
+    expect(cards.length).toBe(4); // + Soul Barrage (M9); + Combina 3 (11/10/2026, REGISTRO §36)
     for (const c of cards) {
       const img = c.querySelector('img[data-pixel-icon]') as HTMLImageElement;
       expect(img).toBeTruthy();

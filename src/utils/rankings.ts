@@ -2,7 +2,7 @@
 // Mesmo contrato para todo jogo: `submitScore(game, saveId, score)` e `fetchRanking(game, saveId)`.
 import { authHeaders } from './auth';
 
-export type RankedGame = 'dino' | 'ppt' | 'match3' | 'eco' | 'endless-rift' | 'rogue-dungeon';
+export type RankedGame = 'dino' | 'ppt' | 'match3' | 'eco' | 'endless-rift' | 'rogue-dungeon' | 'soul-barrage';
 export type RankingPeriod = 'weekly' | 'monthly';
 export type RankingTierId = 'madeira' | 'bronze' | 'prata' | 'ouro' | 'platina' | 'diamante';
 

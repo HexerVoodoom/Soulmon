@@ -175,6 +175,7 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
 // ── Corrida com obstáculos ────────────────────────────────────────────────────
 /** Bits que um placar rende na Corrida — a mesma conta da `DinoGame` (1 a cada 100). */
 const DINO_POINTS_PER_BIT = 100;
+import { BARRAGE_POINTS_PER_BIT } from '../../utils/soulBarrage';
 
 export function DinoSheet({ language, onStart }: { language: Language; onStart: () => void }) {
   const isPt = language === 'pt-BR';
@@ -244,7 +245,7 @@ export function PptSheet({ language, onStart }: { language: Language; onStart: (
 // Lumosity). O Refúgio não paga, não pontua e não mede nada, por desenho.
 // ════════════════════════════════════════════════════════════════════════════
 
-export type SalaoGame = 'dino' | 'ppt' | 'match3';
+export type SalaoGame = 'dino' | 'ppt' | 'match3' | 'barrage';
 export type MenteGame = 'eco' | 'zip' | 'patches';
 export type RefugioGame = 'respiracao' | 'bolhas-calmas';
 
@@ -267,6 +268,11 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
             {isPt
               ? `Contra o seu Soulmon — quem vencer ${WINS_NEEDED} rodadas leva a partida`
               : `Against your Soulmon — first to ${WINS_NEEDED} rounds takes the match`}
+          </InfoTipSection>
+          <InfoTipSection title="Soul Barrage">
+            {isPt
+              ? `Arraste para desviar dos tiros: o seu Soulmon atira sozinho · cada ${BARRAGE_POINTS_PER_BIT} pontos vira 1 Bit`
+              : `Drag to dodge the shots: your Soulmon fires on its own · every ${BARRAGE_POINTS_PER_BIT} points becomes 1 Bit`}
           </InfoTipSection>
           <InfoTipSection title={isPt ? 'Combina 3' : 'Match 3'} last>
             {isPt
@@ -296,6 +302,17 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
             <p style={sheetCardTitle}>{isPt ? 'Combina 3' : 'Match 3'}</p>
           </div>
           <Match3Sheet language={language} onStart={() => onStart('match3')} />
+        </li>
+        <li style={sheetCard}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <PixelIcon src={iconCorrida} size={32} style={{ flexShrink: 0 }} />
+            <p style={sheetCardTitle}>Soul Barrage</p>
+          </div>
+          <div data-barrage style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <button type="button" data-barrage-open onClick={() => onStart('barrage')} style={cta}>
+              {isPt ? 'Jogar' : 'Play'}
+            </button>
+          </div>
         </li>
       </ul>
     </div>
