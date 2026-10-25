@@ -84,6 +84,8 @@ export const STORAGE_KEYS = {
   /** Melhor pontuação do Combina 3 (Salão de Jogos), no aparelho como o recorde da Corrida. */
   MATCH3_BEST: 'soulmon-match3-best',
   DINO_BEST: 'soulmon-dino-best',
+  /** Melhor pontuação do Soul Barrage (Salão de Jogos), no aparelho. */
+  BARRAGE_BEST: 'soulmon-barrage-best',
   /** H17 (01/10/2026) — ids de jogador/criatura que a pessoa já abriu na
    *  Biblioteca do Hall (JSON `string[]`). Só decide o que a lista mostra sem
    *  busca; não é progresso, não pontua e não vai para a nuvem. */

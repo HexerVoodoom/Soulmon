@@ -72,6 +72,7 @@ const CadernoSheet = lazy(() => import('../play/CadernoSheet').then(m => ({ defa
 const Match3Game = lazy(() => loadMatch3Game().then(m => ({ default: m.Match3Game })));
 const DungeonGame = lazy(() => loadDungeonGame().then(m => ({ default: m.DungeonGame })));
 const DinoGame = lazy(() => loadDinoGame().then(m => ({ default: m.DinoGame })));
+const SoulBarrage = lazy(() => import('../SoulBarrage').then(m => ({ default: m.SoulBarrage })));
 const RPSGame = lazy(() => loadRPSGame().then(m => ({ default: m.RPSGame })));
 const EcoGame = lazy(() => loadEcoGame().then(m => ({ default: m.EcoGame })));
 const BolhasGame = lazy(() => loadBolhasGame().then(m => ({ default: m.BolhasGame })));
@@ -489,6 +490,19 @@ export function AreaView(props: AreaViewProps) {
                 language={language}
                 onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('dino'); }}
                 onScore={play.onDinoScore}
+                petElement={props.petElement}
+                rankSaveId={props.guild.saveId}
+                onExit={exitGame}
+              />
+            )}
+            {game === 'barrage' && (
+              <SoulBarrage
+                evolutionStage={props.evolutionStage}
+                demoCharacterId={props.demoCharacterId}
+                petElement={props.petElement}
+                playerLevel={props.playerLevel}
+                language={language}
+                onEarnPoints={props.onEarnPoints}
                 rankSaveId={props.guild.saveId}
                 onExit={exitGame}
               />

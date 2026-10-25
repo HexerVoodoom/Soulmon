@@ -36,7 +36,7 @@ import { kvOrThrow } from './_kv.js';
 import { getProfile } from './_profile.js';
 
 /** Allowlist de jogos com ranking. Id estável: vira parte da chave KV. */
-export const RANKED_GAMES = Object.freeze(['dino', 'ppt', 'match3', 'eco']);
+export const RANKED_GAMES = Object.freeze(['dino', 'ppt', 'match3', 'eco', 'soul-barrage']);
 
 export const PERIODS = Object.freeze(['weekly', 'monthly']);
 /** Período padrão — minigames: semanal. (Endless Rift/M6 usará `monthly`.) */
@@ -58,6 +58,7 @@ export const TIER_CUTS = Object.freeze({
   ppt: [0, 10, 20, 30, 40, 50],
   match3: [0, 300, 800, 1500, 2500, 4000],
   eco: [0, 4, 6, 8, 10, 13],
+  'soul-barrage': [0, 150, 400, 800, 1400, 2200],
 });
 
 export function isRankedGame(game) {

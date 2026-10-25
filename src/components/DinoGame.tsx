@@ -12,6 +12,7 @@ import type { Language } from '../utils/i18n';
 import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GAME_VISOR_W, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
+import { fxFrame } from '../utils/combatFx';
 import { DINO_SCENE } from '../utils/dungeonScenes';
 import { idlePose, runPose, type PetPose } from '../utils/petBounce';
 import obstacle1 from '../assets/soulmon/dino/dino-obstacle-1.png';
@@ -161,8 +162,10 @@ function drawPet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: 
   ctx.restore();
 }
 
-export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit, rankSaveId }: {
+export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit, rankSaveId, petElement }: {
   rankSaveId?: string;
+  /** Elemento dominante do Soulmon: o dash mostra o golpe físico `fx-<el>-slash` dele. */
+  petElement?: string;
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos obstáculos). */
   demoCharacterId?: string;
@@ -181,6 +184,12 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   petScaleRef.current = usePetScale(evolutionStage, petUrl);
   const tierImgsRef = useRef<HTMLImageElement[][]>([]);
   const groundImgRef = useRef<HTMLImageElement | null>(null);
+  const slashImgRef = useRef<HTMLImageElement | null>(null);
+  useEffect(() => {
+    const src = fxFrame(petElement, 'slash');
+    if (!src) { slashImgRef.current = null; return; }
+    const i = new Image(); i.src = src; slashImgRef.current = i;
+  }, [petElement]);
   const parallaxImgRef = useRef<HTMLImageElement | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   /** Tamanho do campo em px de CSS (= px do canvas, escala 1× nítida). */
@@ -450,6 +459,15 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         ctx.save();
         if (s.dashT > 0) ctx.translate(DASH_PUSH, 0);
         drawPet(ctx, pet, GROUND, s.h, pose, petMirror, petScaleRef.current);
+        ctx.restore();
+      }
+      const slash = slashImgRef.current;
+      if (s.dashT > 0 && slash?.complete && slash.naturalWidth) {
+        const sz = 72;
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalAlpha = 0.5 + 0.5 * (s.dashT / DASH_TIME);
+        ctx.drawImage(slash, DINO_X + DASH_PUSH + DINO_S - 8, GROUND - s.h - DINO_S / 2 - sz / 2, sz, sz);
         ctx.restore();
       }
       if (chargesElRef.current) chargesElRef.current.textContent = String(s.charges);

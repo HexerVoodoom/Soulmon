@@ -54,7 +54,7 @@ describe('dayWakePending — dormindo para acordar, 1ª abertura de CADA dia, pa
 describe('D-67 — a lista EXATA do que o aviso "acorde o Soulmon" segura', () => {
   it('pet (alimentar, banho, carinho, brincar) + jogos (Masmorra e minijogos do Salão/Ateliê da Mente): nada além disso', () => {
     expect([...WAKE_BLOCKED_PET]).toEqual(['feed', 'shower', 'pet', 'play']);
-    expect([...WAKE_BLOCKED_GAMES]).toEqual(['masmorra', 'dino', 'ppt', 'match3', 'eco', 'bolhas', 'troca', 'picross', 'revisao', 'zip', 'patches']);
+    expect([...WAKE_BLOCKED_GAMES]).toEqual(['masmorra', 'dino', 'ppt', 'match3', 'barrage', 'eco', 'bolhas', 'troca', 'picross', 'revisao', 'zip', 'patches']);
     expect([...WAKE_BLOCKED_ACTIONS]).toEqual([...WAKE_BLOCKED_PET, ...WAKE_BLOCKED_GAMES]);
     expect([...WAKE_ALL_ACTIONS]).toEqual([...WAKE_BLOCKED_ACTIONS]);
   });
