@@ -126,6 +126,8 @@ export interface DailyRitualsProps {
   goal?: number;
   /** Reafirmar o dia (REGISTRO §66): o que a pessoa não marcou para hoje não aparece (o concluído sempre aparece). `onInvite` define o convite discreto. */
   dayPlan?: { view: DayPlanView; invite?: boolean; onInvite?: () => void };
+  /** G2 (beta3): na Home o botão do fim da lista vira atalho para as Configurações (a tela `View all` segue pelo gesto). */
+  onOpenSettings?: () => void;
 }
 
 /** Distância mínima (px) e razão horizontal/vertical do gesto que abre `View all`. */
@@ -136,7 +138,7 @@ export function DailyRituals({
   tasks, activities, completedTasks, habitRhythms, language, now,
   expanded, onExpand, onToggleTask, onToggleTaskStep, onEditTask, onPostponeNudge,
   onEditActivity, onToggleActivity, onUpdateStep, onRestoreTask, onCreate, ctaLabel, emptyMessage,
-  variant = 'panel', dayComplete = false, goal, dayPlan,
+  variant = 'panel', dayComplete = false, goal, dayPlan, onOpenSettings,
 }: DailyRitualsProps) {
   const isPt = language === 'pt-BR';
   /* Beta-2 (2.1/2.3): a Home mostra SÓ o que é de hoje, em `Tasks` e `Habits`.
@@ -245,9 +247,9 @@ export function DailyRituals({
 
   const verTudo = (
     <div className="sm3-ver-tudo">
-      <button type="button" data-view-all onClick={abrirTudo}>
-        {isPt ? 'Ver tudo' : 'View all'}
-        <Icon name="arrow_forward" size={20} />
+      <button type="button" data-view-all={onOpenSettings ? undefined : true} data-settings-shortcut={onOpenSettings ? true : undefined} onClick={onOpenSettings ?? abrirTudo}>
+        {onOpenSettings ? (isPt ? 'Configurações' : 'Settings') : (isPt ? 'Ver tudo' : 'View all')}
+        <Icon name={onOpenSettings ? 'settings' : 'arrow_forward'} size={20} />
       </button>
     </div>
   );

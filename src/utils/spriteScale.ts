@@ -33,7 +33,7 @@ export const SCALE_STAGES: readonly ScaleStage[] = ['rookie', 'champion', 'ultim
  * Home com o zoom 1,5 — legível, nunca minúsculo) até ~96% no ultra.
  */
 export const STAGE_TARGET: Readonly<Record<ScaleStage, number>> = {
-  rookie: 0.54,
+  rookie: 0.27, // G1 (beta3): 50% do tamanho anterior (era 0,54)
   champion: 0.66,
   ultimate: 0.78,
   mega: 0.9,
@@ -43,8 +43,8 @@ export const STAGE_TARGET: Readonly<Record<ScaleStage, number>> = {
 /** Preenchimento assumido enquanto a caixa visível não foi medida (arte de linha típica). */
 export const DEFAULT_FILL = 0.85;
 
-/** Limites do fator: nunca some (< 0,3) nem estoura a caixa (> 1,25). */
-export const SCALE_MIN = 0.3;
+/** Limites do fator: nunca some (< 0,15) nem estoura a caixa (> 1,25). */
+export const SCALE_MIN = 0.15;
 export const SCALE_MAX = 1.25;
 
 /* ── O PORTE DA CRIATURA ──────────────────────────────────────────────────

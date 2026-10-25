@@ -23,7 +23,7 @@ import { visibleBackground } from './utils/backgrounds';
 import { needsWelcomeTour, needsMapTutorial } from './utils/welcomeTourGate';
 import { buildingsUnlockedBetween, isBuildingId, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
-import { bumpDaily, claimDaily, claimFirst, dailyMissionsMark, firstTimesMark, markFirst, markFirstForEvent, type DailyEvent } from './utils/dailyMissions';
+import { bumpDaily, claimDaily, claimFirst, dailyForDay, dailyMissionsMark, firstTimesMark, markFirst, markFirstForEvent, type DailyEvent } from './utils/dailyMissions';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
@@ -5964,6 +5964,7 @@ export default function App() {
   /** Ritmo das refeições: o cartão pede a mochila aberta (bump). */
   const [backpackSignal, setBackpackSignal] = useState(0);
 
+  const rubContadoDiaRef = useRef<string | null>(null);
   const handlePet = useCallback(() => {
     if (guardWake('pet')) return;
     // Regra em utils/careRules.ts, compartilhada com o app de desktop. A
@@ -5984,6 +5985,12 @@ export default function App() {
     // (`already-full`, o caso de TODO pet novo) recusa a cura e antes nunca
     // marcava o gesto.
     marcarGestoDoDia('pet');
+    /* A3 (beta3): a missão "carinho em N dias" conta TODO carinho, curou ou não (vida cheia e teto do dia também contam).
+       Um dia conta uma vez só: trava de sessão + contador do dia que já mora no save (`dailyMissions.counts.carinho`). */
+    if (rubContadoDiaRef.current !== today) {
+      rubContadoDiaRef.current = today;
+      if ((dailyForDay(gameState.dailyMissions, today).counts.carinho ?? 0) === 0) contarMissao('rub-days');
+    }
     const refused = rubDecision(gameState, today);
     if (refused) {
       // "Já está cheio" é silencioso; "acabou o carinho de hoje" o pet comenta.
@@ -5998,7 +6005,6 @@ export default function App() {
     // continua distinguivel pela fala do pet, que e o canal real (R-34).
     // "em 4 DIAS": só a primeira cura do dia conta (o teto diário concede 2–3
     // pedaços de carinho, e cada um somava um "dia").
-    if (rubHealFor(gameState.careCaps, today).healed <= 0) contarMissao('rub-days');
     if (!rubFalouRef.current) {
       rubFalouRef.current = true;
       falar('rub');
@@ -6010,7 +6016,7 @@ export default function App() {
     // desligava o teto DENTRO do updater e deixava a trava inteira dependendo da
     // checagem de fora.
     setGameState(prev => applyRub(prev, today).state);
-  }, [gameState.healthPoints, gameState.maxHealthPoints, gameState.careCaps, gameState.petPassive, gameState.playerDayTz, guardWake]);
+  }, [gameState.healthPoints, gameState.maxHealthPoints, gameState.careCaps, gameState.petPassive, gameState.playerDayTz, gameState.dailyMissions, guardWake]);
 
   // targetStage é sempre um ID da árvore ('rookie' | 'champion-power' | ...),
   // não mais um nome de exibição — a árvore é única por jogador, então não dá
@@ -8092,6 +8098,7 @@ export default function App() {
                        (`completeDayReached`, utils/dailyReset.ts), nunca uma
                        segunda definição (footgun 9). */
                     variant="home"
+                    onOpenSettings={() => goTo('page:settings')}
                     dayComplete={diaCompletoHoje}
                     /* Reafirmar o dia (REGISTRO §66): só o que foi marcado para hoje aparece; o convite abre o modal pela fila. */
                     dayPlan={{
