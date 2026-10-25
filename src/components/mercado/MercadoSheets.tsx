@@ -211,7 +211,8 @@ export function MercadoStallSheet(props: MercadoStallProps) {
       ) : (
         <ShopShelf
           language={language}
-          items={stallItems(stall, cur)}
+          // B1: cenário de conquista só se compra no prédio Conquistas; aqui só aparece se já é seu (para equipar).
+          items={stallItems(stall, cur).filter(i => i.unlock?.kind !== 'mission' || props.ownedBackgrounds.includes(i.id) || (props.ownedFurniture ?? []).includes(i.id))}
           currency={cur}
           balance={balance}
           ownership={props}

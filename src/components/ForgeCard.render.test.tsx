@@ -169,6 +169,7 @@ describe('ForgeCard', () => {
 
   it('refazer a escolha com Bits GANHOS: confirma, troca A↔B, debita e os materiais ficam', () => {
     abrir(nivel1({ gamePoints: 1000, buildingQuests: bq({ ore: 1 }), forge: { v: 2, levels: { 'eq-nucleo-t1': 2 }, picks: { 'eq-nucleo-t1': ['b'] } } }));
+    click(q(`[data-forge-reforge="eq-nucleo-t1"]`));
     click(q(`[data-forge-redo="eq-nucleo-t1:2"]`));
     const dlg = document.querySelector('[data-forge-dialog="redo"]')!;
     expect(dlg.textContent).toMatch(new RegExp(`${REDO_BITS} Bits ganhos`));
@@ -181,6 +182,7 @@ describe('ForgeCard', () => {
 
   it('refazer com Bits que vieram de Crédito: o botão fica desabilitado e o texto explica sem culpa', () => {
     abrir(nivel1({ gamePoints: 1000, bitsOrigin: { day: 'Mon Oct 05 2026', free: 0, fromCredits: 900, paidLeft: 900 }, forge: { v: 2, levels: { 'eq-nucleo-t1': 2 }, picks: { 'eq-nucleo-t1': ['b'] } } }));
+    click(q(`[data-forge-reforge="eq-nucleo-t1"]`));
     click(q(`[data-forge-redo="eq-nucleo-t1:2"]`));
     expect(q('[data-forge-confirm]').disabled).toBe(true);
     expect(document.querySelector('[data-forge-redo-note]')!.textContent).toMatch(/servem para outras coisas/);
