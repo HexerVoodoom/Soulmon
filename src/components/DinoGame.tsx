@@ -102,6 +102,23 @@ const STAGE_MIN_H = 192;
 const GROUND_FROM_BOTTOM = 40;
 const DINO_X = 24, DINO_S = 64;
 
+// Velocidade (E3): antes min(620, 260 + 9·t); agora min(1300, 260 + 24·t) — chega ao dobro do teto antigo e mais rápido.
+export const RUN_SPEED_START = 260;
+export const RUN_SPEED_ACCEL = 24;
+export const RUN_SPEED_CAP = 1300;
+export const runSpeedAt = (t: number) => Math.min(RUN_SPEED_CAP, RUN_SPEED_START + t * RUN_SPEED_ACCEL);
+// Nível 2: dash, cargas, coletável e plataformas suspensas.
+export const DASH_START_CHARGES = 5;
+const DASH_TIME = 0.2, DASH_MULT = 3, DASH_PUSH = 40;
+const PLAT_H = 70, PLAT_W = 260, PLAT_THICK = 8;
+const PICKUP_EVERY = 7;
+type Plat = { x: number };
+type Pickup = { x: number; h: number };
+function newRun(level: 1 | 2) {
+  return { h: 0, vy: 0, obstacles: [] as { x: number; size: number; tier: number; v: number }[], speed: RUN_SPEED_START, t: 0, spawnIn: 1.1, score: 0, gx: 0, px: 0, dust: [] as Dust[], sinceLand: 9, dustIn: 0, wasAir: false,
+    level, charges: DASH_START_CHARGES, dashT: 0, plats: [] as Plat[], pickups: [] as Pickup[], platIn: 3, pickIn: PICKUP_EVERY, floor: 0 };
+}
+
 /** Poeira dos pés: quadradinhos de 2–3 px (grade nítida), poucos, 3 cores do visor. */
 type Dust = { x: number; y: number; vx: number; vy: number; life: number; max: number; size: number; c: number };
 const MAX_DUST = 14;
@@ -197,7 +214,9 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const petMirror = dinoPetMirrored(evolutionStage, demoCharacterId);
 
   // Physics/game state lives in a ref — the loop never re-renders React.
-  const g = useRef({ h: 0, vy: 0, obstacles: [] as { x: number; size: number; tier: number; v: number }[], speed: 0, t: 0, spawnIn: 0, score: 0, gx: 0, px: 0, dust: [] as Dust[], sinceLand: 9, dustIn: 0, wasAir: false });
+  const g = useRef(newRun(1));
+  const [level, setLevel] = useState<1 | 2>(1);
+  const chargesElRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const pet = new Image();
@@ -256,14 +275,24 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const jump = useCallback(() => {
     if (phaseRef.current !== 'playing') return;
     const s = g.current;
-    if (s.h <= 0) {
+    if (s.h <= 0 || s.floor > 0) {
+      s.floor = 0;
       s.vy = 660;
       try { navigator.vibrate?.(8); } catch { /* noop */ }
     }
   }, []);
 
+  const dash = useCallback(() => {
+    if (phaseRef.current !== 'playing') return;
+    const s = g.current;
+    if (s.level !== 2 || s.charges <= 0 || s.dashT > 0) return;
+    s.charges -= 1;
+    s.dashT = DASH_TIME;
+    try { navigator.vibrate?.(8); } catch { /* noop */ }
+  }, []);
+
   const start = () => {
-    g.current = { h: 0, vy: 0, obstacles: [], speed: 260, t: 0, spawnIn: 1.1, score: 0, gx: 0, px: 0, dust: [], sinceLand: 9, dustIn: 0, wasAir: false };
+    g.current = newRun(level);
     setEarned(0);
     setPhase('playing');
   };
@@ -299,20 +328,32 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
       s.t += dt;
-      s.speed = Math.min(620, 260 + s.t * 9);
+      s.speed = runSpeedAt(s.t);
       s.score += dt * 10;
 
       // Jump physics
+      const wasDashing = s.dashT > 0;
+      if (s.dashT > 0) s.dashT = Math.max(0, s.dashT - dt);
+      const dashing = s.dashT > 0 || wasDashing;
+      const mv = s.speed * (s.dashT > 0 ? DASH_MULT : 1);
+      const px0 = DINO_X + 8, px1 = DINO_X + DINO_S - 10;
       if (s.h > 0 || s.vy > 0) {
+        const prevH = s.h;
         s.vy -= 1900 * dt;
         s.h = Math.max(0, s.h + s.vy * dt);
         if (s.h === 0) s.vy = 0;
+        // Plataforma suspensa: pousa por cima (só descendo), caminho alternativo do nível 2.
+        if (s.vy <= 0 && prevH >= PLAT_H - 1 && s.h <= PLAT_H && s.plats.some(p => px1 > p.x && px0 < p.x + PLAT_W)) {
+          s.h = PLAT_H; s.vy = 0; s.floor = PLAT_H;
+        }
       }
+      if (s.floor > 0 && !s.plats.some(p => px1 > p.x && px0 < p.x + PLAT_W)) s.floor = 0; // saiu da borda: cai
 
       // Poeira: uma lufada a cada passada no chão; maior no pouso. Só desenho — não
       // mexe em física, colisão, pontuação nem tempo.
-      const air = s.h > 0 || s.vy > 0;
+      const air = (s.h > 0 || s.vy > 0) && s.floor === 0;
       s.sinceLand += dt;
+      if (s.floor > 0) { s.wasAir = false; }
       if (s.wasAir && !air) {
         s.sinceLand = 0;
         if (!reduced) spawnDust(s.dust, DINO_X + 10, GROUND - 1, s.speed, 4);
@@ -333,20 +374,48 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         s.obstacles.push({ x: canvas.width + 20, size: OBSTACLE_TIERS[tier].size, tier, v });
         s.spawnIn = (0.95 + Math.random() * 0.85) * (340 / s.speed) + 0.34;
       }
-      for (const o of s.obstacles) o.x -= s.speed * dt;
+      if (s.level === 2) {
+        s.platIn -= dt;
+        if (s.platIn <= 0) { s.plats.push({ x: canvas.width + 20 }); s.platIn = 4 + Math.random() * 4; }
+        s.pickIn -= dt;
+        if (s.pickIn <= 0) {
+          // coletável: às vezes sobre uma plataforma (recompensa do caminho de cima), às vezes no ar
+          s.pickups.push({ x: canvas.width + 20 + PLAT_W / 2, h: Math.random() < 0.5 ? PLAT_H + 22 : 30 });
+          s.pickIn = PICKUP_EVERY + Math.random() * 3;
+        }
+        for (const p of s.plats) p.x -= mv * dt;
+        for (const k of s.pickups) k.x -= mv * dt;
+        s.plats = s.plats.filter(p => p.x + PLAT_W > -10);
+        s.pickups = s.pickups.filter(k => k.x > -20);
+        // coleta
+        s.pickups = s.pickups.filter(k => {
+          const hit = k.x + 12 > px0 && k.x - 4 < px1 + (dashing ? DASH_PUSH : 0) && k.h + 12 > s.h && k.h - 12 < s.h + DINO_S;
+          if (hit) s.charges += 1;
+          return !hit;
+        });
+      }
+      for (const o of s.obstacles) o.x -= mv * dt;
       s.obstacles = s.obstacles.filter(o => o.x + o.size > -10);
-      s.gx += s.speed * dt;
-      s.px += s.speed * dt * PARALLAX_SPEED;
+      s.gx += mv * dt;
+      s.px += mv * dt * PARALLAX_SPEED;
 
       // Collision (AABB with generous padding — sprites have transparent margins)
       const dTop = GROUND - DINO_S - s.h + 10;
       const dBot = GROUND - s.h - 2;
-      const dL = DINO_X + 8, dR = DINO_X + DINO_S - 10;
+      const dL = DINO_X + 8, dR = DINO_X + DINO_S - 10 + (s.dashT > 0 ? DASH_PUSH : 0);
       for (const o of s.obstacles) {
         const { hit: [hl, hr], top } = OBSTACLE_TIERS[o.tier].variants[o.v];
         const oL = o.x + o.size * hl + 2, oR = o.x + o.size * hr - 2, oT = GROUND - o.size * (1 - top) + 6;
-        if (dR > oL && dL < oR && dBot > oT && dTop < GROUND) { dead = true; break; }
+        if (dR > oL && dL < oR && dBot > oT && dTop < GROUND) {
+          if (s.dashT > 0) { // o dash destrói o obstáculo atingido
+            o.x = -1000;
+            if (!reduced) spawnDust(s.dust, Math.max(0, oL), GROUND - 4, s.speed, 4);
+            continue;
+          }
+          dead = true; break;
+        }
       }
+      s.obstacles = s.obstacles.filter(o => o.x > -500);
 
       // Draw — fundo distante, obstáculos, chão, pet (ordem de profundidade)
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -357,6 +426,17 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         if (!img?.complete) continue;
         ctx.drawImage(img, o.x, GROUND - o.size, o.size, o.size);
       }
+      if (s.level === 2) {
+        for (const p of s.plats) {
+          const y = GROUND - PLAT_H - PLAT_THICK;
+          ctx.fillStyle = dustColors[2]; ctx.fillRect(Math.round(p.x), y, PLAT_W, PLAT_THICK);
+          ctx.fillStyle = dustColors[1]; ctx.fillRect(Math.round(p.x), y, PLAT_W, 3);
+        }
+        for (const k of s.pickups) {
+          ctx.fillStyle = dustColors[1]; ctx.fillRect(Math.round(k.x - 8), Math.round(GROUND - k.h - 8), 16, 16);
+          ctx.fillStyle = dustColors[0]; ctx.fillRect(Math.round(k.x - 4), Math.round(GROUND - k.h - 4), 8, 8);
+        }
+      }
       const ground = groundImgRef.current;
       if (ground?.complete) drawStrip(ground, s.gx, canvas.height - GROUND_H, GROUND_W, GROUND_H);
       const pet = petImgRef.current;
@@ -365,8 +445,12 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       drawDust(ctx, s.dust, dustColors);
       if (pet?.complete) {
         const pose = runPose({ t: s.t, speed: s.speed, h: s.h, vy: s.vy, sinceLand: s.sinceLand, reduced });
+        ctx.save();
+        if (s.dashT > 0) ctx.translate(DASH_PUSH, 0);
         drawPet(ctx, pet, GROUND, s.h, pose, petMirror, petScaleRef.current);
+        ctx.restore();
       }
+      if (chargesElRef.current) chargesElRef.current.textContent = String(s.charges);
       if (scoreElRef.current) scoreElRef.current.textContent = String(Math.floor(s.score));
 
       if (!dead) { raf = requestAnimationFrame(tick); return; }
@@ -398,10 +482,11 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
 
     const onKey = (e: KeyboardEvent) => {
       if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); jump(); }
+      if (e.code === 'ShiftLeft' || e.code === 'ShiftRight' || e.code === 'KeyX') { e.preventDefault(); dash(); }
     };
     window.addEventListener('keydown', onKey);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('keydown', onKey); };
-  }, [phase, paused, jump, onEarnPoints, onScore, petMirror]);
+  }, [phase, paused, jump, dash, onEarnPoints, onScore, petMirror]);
 
   return (
     <GameRoot style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}>
@@ -411,8 +496,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         language={language}
         infoLabel={isPt ? 'Como se joga' : 'How to play'}
         info={isPt
-          ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit'
-          : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit'}
+          ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit. Nível 2: Dash (Shift/X) destrói obstáculos; pegue o coletável para +1 carga'
+          : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit. Level 2: Dash (Shift/X) smashes obstacles; grab the pickup for +1 charge'}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
         exitConfirm={phase === 'playing' ? gameExitConfirm(isPt, 'da corrida') : undefined}
@@ -455,8 +540,24 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         >
           <span ref={scoreElRef}>0</span>
         </span>
+        {g.current.level === 2 && phase === 'playing' && (
+          <span aria-live="off" className="sm2-num" style={{ position: 'absolute', right: 8, top: 8, padding: '2px 6px', zIndex: 2, fontFamily: 'var(--sm2-font-pixel)', fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-viewport-ink)', backgroundColor: 'color-mix(in srgb, var(--sm2-viewport-bg) 78%, transparent)', borderRadius: 'var(--sm2-radius-sm)' }}>
+            Dash <span ref={chargesElRef}>{DASH_START_CHARGES}</span>
+          </span>
+        )}
       </div>
 
+
+      {phase !== 'playing' && (
+        <div role="group" aria-label={isPt ? 'Nível' : 'Level'} style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+          {([1, 2] as const).map(n => (
+            <button key={n} type="button" onClick={() => setLevel(n)} aria-pressed={level === n}
+              style={{ ...sm2Button(level === n ? 'primary' : 'outline'), minWidth: 110 }}>
+              {isPt ? 'Nível' : 'Level'} {n}
+            </button>
+          ))}
+        </div>
+      )}
       {phase === 'ready' && (
         <>
           <button type="button" onClick={start} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 240, alignSelf: 'center' }}>
@@ -477,15 +578,28 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       {/* O PULAR é aparelho: primário de 64 de altura e largura inteira, sem
           ícone, `onPointerDown` (reflexo — não espera o `click`). Inerte
           antes de começar: `surface-2` + `muted`, nunca opacidade. */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
       <button
         type="button"
         onPointerDown={jump}
         disabled={phase !== 'playing'}
         aria-label={isPt ? 'Pular' : 'Jump'}
-        style={{ ...sm2Button('primary', phase !== 'playing', 'lg'), minHeight: 64, width: '100%', marginTop: 'auto', touchAction: 'manipulation', userSelect: 'none' }}
+        style={{ ...sm2Button('primary', phase !== 'playing', 'lg'), minHeight: 64, flex: 1, touchAction: 'manipulation', userSelect: 'none' }}
       >
         {isPt ? 'Pular' : 'Jump'}
       </button>
+        {level === 2 && (
+          <button
+            type="button"
+            onPointerDown={dash}
+            disabled={phase !== 'playing'}
+            aria-label="Dash"
+            style={{ ...sm2Button('primary', phase !== 'playing', 'lg'), minHeight: 64, flex: 1, touchAction: 'manipulation', userSelect: 'none' }}
+          >
+            Dash
+          </button>
+        )}
+      </div>
     </GameRoot>
   );
 }
