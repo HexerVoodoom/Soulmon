@@ -289,3 +289,20 @@ describe('Bits', () => {
     for (const lixo of [NaN, -5, Infinity * 0]) expect(match3Bits(lixo)).toBe(0);
   });
 });
+
+describe('E2: duas setinhas trocadas entre si disparam juntas (linha E coluna)', () => {
+  it('elementos diferentes: limpa a linha e a coluna das duas', () => {
+    const b = neutro();
+    b[3][3] = { k: 0, sp: 'row' };
+    b[3][4] = { k: 1, sp: 'col' };
+    const res = trySwap(b, { r: 3, c: 3 }, { r: 3, c: 4 }, mulberry32(7));
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.scored).toBe(true);
+    const st = res.steps[0];
+    expect(st.triggered.length).toBeGreaterThanOrEqual(2);
+    const has = (r: number, c: number) => st.cleared.some(p => p.r === r && p.c === c);
+    for (let c = 0; c < M3_COLS; c++) expect(has(3, c)).toBe(true);
+    for (let r = 0; r < M3_ROWS; r++) { expect(has(r, 3)).toBe(true); expect(has(r, 4)).toBe(true); }
+  });
+});

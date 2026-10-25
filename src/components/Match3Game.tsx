@@ -21,7 +21,7 @@ import { mulberry32 } from '../utils/combate/rng';
 import { FX_AURA_MS, FX_BURST_MS, FX_NUM_MS, FX_ORB_PX, FX_ORB_PX_BIG, FX_TRAVEL_MS, planFx, powerShots, type FxSlot, type PowerShot } from '../utils/match3Powers';
 import { fxFrame } from '../utils/combatFx';
 import { fxMirror } from '../utils/fxFacing';
-import { DUNGEON_LINE_NAMES, DUNGEON_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
+import { DUNGEON_LINE_NAMES, OWN_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
 
@@ -70,7 +70,7 @@ const elementName = (el: M3Element, isPt: boolean): string => {
   const n = M3_TILE_NAMES[M3_TILE_ELEMENTS.indexOf(el)];
   return isPt ? n.pt : n.en;
 };
-const LINES = Object.keys(DUNGEON_LINE_SPRITES);
+const LINES = Object.keys(OWN_LINE_SPRITES);
 
 export interface Match3Props extends EarningGameProps {
   /** Semente da rodada (testes). Sem ela, sorteada ao abrir/reabrir. */
@@ -492,8 +492,8 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
       </div>
       <div role="group" aria-label={isPt ? 'Time da fenda' : 'Rift team'} data-m3-enemies data-m3-pos="bottom-right" style={{ display: 'flex', flexDirection: 'row-reverse', gap: 6, minWidth: 0, justifyContent: 'flex-start', alignItems: 'flex-end' }}>
         {combat.enemies.map((e, i) => {
-          const line = e.line && DUNGEON_LINE_SPRITES[e.line] ? e.line : LINES[i];
-          const src = DUNGEON_LINE_SPRITES[line][ENEMY_STAGES[i]];
+          const line = e.line && e.line in OWN_LINE_SPRITES ? e.line : LINES[i];
+          const src = OWN_LINE_SPRITES[line as keyof typeof OWN_LINE_SPRITES][ENEMY_STAGES[i]];
           const isActive = combat.outcome === 'playing' && combat.active === i;
           const down = e.hp <= 0;
           const icon = elementIcon(e.element);

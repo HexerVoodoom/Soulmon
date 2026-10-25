@@ -57,6 +57,14 @@ import bossCorallume from '../assets/soulmon/bosses/boss-corallume.png';
 import bossObsidarch from '../assets/soulmon/bosses/boss-obsidarch.png';
 import bossGlimmerswarm from '../assets/soulmon/bosses/boss-glimmerswarm.png';
 
+/** As linhas PRÓPRIAS do projeto (`assets/soulmon/lines/`, 4 estágios cada) — a arte que o Match 3 usa nos inimigos. Os monstros de `DUNGEON_LINE_SPRITES` (arte de chefes) seguem na masmorra. */
+export const OWN_LINE_SPRITES: Record<'kaelen' | 'thalindra' | 'igni' | 'astrase', Record<'rookie' | 'champion' | 'ultimate' | 'mega', string>> = {
+  kaelen: { rookie: kaelenRookie, champion: kaelenChampion, ultimate: kaelenUltimate, mega: kaelenMega },
+  thalindra: { rookie: thalindraRookie, champion: thalindraChampion, ultimate: thalindraUltimate, mega: thalindraMega },
+  igni: { rookie: igniRookie, champion: igniChampion, ultimate: igniUltimate, mega: igniMega },
+  astrase: { rookie: astraseRookie, champion: astraseChampion, ultimate: astraseUltimate, mega: astraseMega },
+};
+
 export const DUNGEON_LINE_SPRITES: Record<string, Record<'rookie' | 'champion' | 'ultimate' | 'mega', string>> = {
   // 21/10/2026 (dono): os monstros da 1ª geração saíram; as linhas antigas apontam para criaturas novas (arte de chefes), um sprite por linha.
   kaelen: { rookie: bossCinderhorn, champion: bossCinderhorn, ultimate: bossCinderhorn, mega: bossCinderhorn },

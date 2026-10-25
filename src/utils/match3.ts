@@ -173,14 +173,18 @@ export const chainMultiplier = (chain: number): number => 1 + 0.5 * (Math.max(1,
 const MAX_CHAIN = 60;
 
 /** Resolve o tabuleiro até assentar. `anchors` = as casas da troca (a especial nasce onde o jogador mexeu). */
-export function resolveBoard(start: Board, rng: Rng, anchors: readonly Pos[] = []): { steps: Step[]; board: Board; score: number } {
+export function resolveBoard(start: Board, rng: Rng, anchors: readonly Pos[] = [], combo: readonly Pos[] = []): { steps: Step[]; board: Board; score: number } {
   const w = cloneBoard(start);
   const steps: Step[] = [];
   let score = 0;
   for (let chain = 1; chain <= MAX_CHAIN; chain++) {
     const runs = findRuns(w);
-    if (runs.length === 0) break;
+    const comboNow = chain === 1 ? combo : [];
+    if (runs.length === 0 && comboNow.length === 0) break;
     const clearSet = new Map<number, Pos>();
+    // D-E2: duas setinhas trocadas entre si disparam juntas (linha E coluna), com ou sem linha formada
+    const comboKeys = new Set(comboNow.map(key));
+    for (const p of comboNow) clearSet.set(key(p), p);
     const created: Array<{ pos: Pos; tile: Tile }> = [];
     for (const run of runs) {
       for (const p of run.cells) clearSet.set(key(p), p);
@@ -198,9 +202,9 @@ export function resolveBoard(start: Board, rng: Rng, anchors: readonly Pos[] = [
       const t = w[p.r][p.c];
       if (!t?.sp) continue;
       triggered.push(p);
-      const alvo: Pos[] = t.sp === 'row'
-        ? Array.from({ length: M3_COLS }, (_, c) => ({ r: p.r, c }))
-        : Array.from({ length: M3_ROWS }, (_, r) => ({ r, c: p.c }));
+      const linha = Array.from({ length: M3_COLS }, (_, c) => ({ r: p.r, c }));
+      const coluna = Array.from({ length: M3_ROWS }, (_, r) => ({ r, c: p.c }));
+      const alvo: Pos[] = comboKeys.has(key(p)) ? [...linha, ...coluna] : t.sp === 'row' ? linha : coluna;
       for (const q of alvo) {
         if (!w[q.r][q.c] || clearSet.has(key(q))) continue;
         clearSet.set(key(q), q);
@@ -243,7 +247,9 @@ export function trySwap(b: Board, a: Pos, d: Pos, rng: Rng): SwapResult {
   if (!b[a.r][a.c] || !b[d.r][d.c]) return { ok: false, reason: 'empty' };
   const swapped = cloneBoard(b);
   swapCells(swapped, a, d);
-  const res = resolveBoard(swapped, rng, [a, d]);
+  // duas setinhas trocadas entre si (qualquer elemento) disparam juntas: linha E coluna
+  const combo = swapped[a.r][a.c]!.sp && swapped[d.r][d.c]!.sp ? [a, d] : [];
+  const res = resolveBoard(swapped, rng, [a, d], combo);
   let board = res.board;
   let reshuffled: Board | null = null;
   if (!hasMoves(board)) { board = shuffleBoard(board, rng); reshuffled = board; }
