@@ -38,3 +38,34 @@ worktree própria, sem revisão no meio; um QA único no fim (alpha-qa + alpha-f
 
 ## L8 — Pedra, papel, tesoura
 - E4 Área de toque maior. Nível 2: 3 pedras, 3 papéis, 3 tesouras para cada lado; usados ficam escurecidos, os do inimigo também visíveis.
+
+# Rodada 2 (pedido do dono, 25/10/2026)
+
+Decisões do dono (modal): jogo LinkedIn = **Patches** (+ Zip); masmorra NOVA roguelike se chama **Dungeon** e a atual vira **Endless Rift**; Créditos como prêmio só nas 3 faixas do topo do Endless Rift (50/25/10, pago pelo servidor; exceção registrada no REGISTRO-DE-DECISOES); roguelike = MVP jogável agora.
+
+## M1 — Onboarding
+- Sugestões de tarefa/hábito no onboarding vêm da lista de hábitos do(s) foco(s) que o usuário marcou (ex.: sono → hábitos de sono), com os ícones que já existem para eles.
+
+## M2 — Área do Soulmon "digital"
+- A mochila volta a ser uma PASTA (ícone/rótulo). Dormir/acordar vira apagar/acender a luz do display. Banho não muda.
+
+## M3 — Reorganizar prédios
+- Exploração: prédios de se organizar e fazer tarefas + o Refúgio (sai de Games). Games: o jogo "for fun" + o Mind Workshop (jogos com efeito cognitivo).
+
+## M4 — Perfil e Biblioteca
+- Perfil explica o impacto de cada campo (personalidade, main attribute etc.).
+- Card "How they fight": linha 1 = elemento + ataque básico; linha 2 = elemento + nome + efeito do especial. Mostrar sempre, mesmo quando o elemento do especial é igual ao do básico.
+- Biblioteca não tem presente/doação (isso fica só no Friend Circle); só mostra os pets.
+
+## M5 — Mind Workshop
+- Fica o Pet Cycle (repetir a ordem). Os outros jogos saem e entram **Zip** e **Patches** (versões dos jogos do LinkedIn).
+
+## M6 — Endless Rift (a masmorra atual)
+- Renomear a masmorra atual para Endless Rift (EN/PT), mantendo o avanço sem teto.
+- Score mensal que reinicia todo mês. Três faixas de recompensa por profundidade: 1) material; 2) mais Bits; 3) recompensa ligada ao score (competitivo). Ranking mensal; as 3 faixas do topo ganham Créditos (50/25/10) pagos pelo servidor no fechamento do mês.
+
+## M7 — Dungeon (nova, roguelike, MVP)
+- A cada passo, 3 caminhos aleatórios: combate, quebra-cabeça, minigame, ferramenta de Exploração (só recursos de Games e Exploração). De tempo em tempo combate obrigatório, cada vez mais difícil; após cada desafio vencido, escolhe 1 bônus que dura a incursão. 8 desafios por andar, 3 andares por dia. Perdeu o combate = fim da incursão do dia. Reset diário sem os bônus. Ranking.
+
+## M8 — Ranking dos minigames
+- Ranking em todos os minigames (servidor decide, por jogo).
