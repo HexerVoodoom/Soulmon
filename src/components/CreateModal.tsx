@@ -4,7 +4,7 @@ import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { InfoTip } from './ui/InfoTip';
 import {
   CATEGORY_ATTRIBUTES, ATTR_INK, ATTR_LABEL,
-  ActivityCategory, type BranchType,
+  ActivityCategory, type BranchType, type AttributePoints,
 } from '../types/attributes';
 import { CATEGORY_ICONS, CATEGORY_ICON_NAME, categoryLabel } from '../types/category-icons';
 import { canSelectWeekdays } from '../types/progression';
@@ -315,6 +315,11 @@ export function CategoryChips({
 export function StrengthensLine({ category, isPt }: { category: ActivityCategory; isPt: boolean }) {
   const attributes = CATEGORY_ATTRIBUTES[category];
   if (!attributes) return null; // categoria fora do catálogo (save velho): sem a linha, em vez de derrubar a folha
+  return <AttributePointsRow attributes={attributes} isPt={isPt} />;
+}
+
+/** Os 3 valores (Poder/Harmonia/Benevolência) com ícone e cor do caminho. */
+export function AttributePointsRow({ attributes, isPt }: { attributes: AttributePoints; isPt: boolean }) {
   const keys: BranchType[] = ['power', 'harmony', 'benevolence'];
   const Icons = { power: PowerIcon, harmony: HarmonyIcon, benevolence: BenevolenceIcon };
   return (
