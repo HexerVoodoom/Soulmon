@@ -55,7 +55,7 @@ function StoneShape({ stone, size }: { stone: Stone; size: number }) {
   );
 }
 
-export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, rankSaveId }: EarningGameProps) {
+export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, rankSaveId, challenge }: EarningGameProps) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
   const [phase, setPhase] = useState<Phase>('intro');
@@ -105,6 +105,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
   const finish = (best: number) => {
     clearTimers();
     setLit(null);
+    if (challenge) { challenge.onResult(false); return; }
     setPhase('done');
     const bits = ecoBits(best);
     setEarned(bits);
@@ -127,6 +128,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
     if (r === 'continue') { setInput([...input, stone]); return; }
     // Completou: guarda o maior eco e cresce 1.
     const best = Math.max(longest, seq.length);
+    if (challenge && seq.length >= challenge.goal) { clearTimers(); challenge.onResult(true); return; }
     setLongest(best);
     setInput([]);
     setPhase('show');

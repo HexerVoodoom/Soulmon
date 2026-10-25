@@ -3,7 +3,9 @@
  * aqui só a apresentação: escolher 1 de 3 caminhos, resolver o desafio, escolher 1 de 3 bônus. Arte provisória
  * (sem asset novo). A masmorra/Endless Rift (`DungeonGame.tsx`) é outra coisa e não é tocada.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import type { GameChallenge } from '../utils/gameChallenge';
+import { loadDinoGame, loadEcoGame, loadMatch3Game, loadPatchesGame, loadRPSGame, loadZipGame } from './nav/playPrefetch';
 import type { Language } from '../utils/i18n';
 import type { Combatant } from '../utils/combate/curve';
 import { mulberry32 } from '../utils/combate/rng';
@@ -12,14 +14,33 @@ import { RankingPanel } from './RankingPanel';
 import {
   ROGUE_FLOORS, ROGUE_MAX_STEPS, ROGUE_PER_FLOOR, applyBonus, bonusChoices, challengeFor, floorOf, isFinished, markPaid, pathsFor,
   resolveStep, rogueBits, rogueScore, runForDay, simulateRogueCombat, stepInFloor,
-  type BonusKind, type LightKind, type PathKind, type RogueRun,
+  type BonusKind, type ChallengeGame, type LightKind, type PathKind, type RogueRun,
 } from '../utils/rogueDungeon';
+
+// Jogos reais em modo desafio: lazy (mesmos `import()` do `playPrefetch`, o Vite deduplica).
+const Match3Game = lazy(() => loadMatch3Game().then(m => ({ default: m.Match3Game })));
+const DinoGame = lazy(() => loadDinoGame().then(m => ({ default: m.DinoGame })));
+const RPSGame = lazy(() => loadRPSGame().then(m => ({ default: m.RPSGame })));
+const EcoGame = lazy(() => loadEcoGame().then(m => ({ default: m.EcoGame })));
+const ZipGame = lazy(() => loadZipGame().then(m => ({ default: m.ZipGame })));
+const PatchesGame = lazy(() => loadPatchesGame().then(m => ({ default: m.PatchesGame })));
+const SoulBarrage = lazy(() => import('./SoulBarrage').then(m => ({ default: m.SoulBarrage })));
+
+const GAME_GOAL_COPY: Record<ChallengeGame, (goal: number) => { en: string; pt: string }> = {
+  match3: () => ({ en: 'Match 3: defeat the enemy team.', pt: 'Combina 3: vença o time inimigo.' }),
+  dino: g => ({ en: `Obstacle Run: reach ${g} points.`, pt: `Corrida com obstáculos: chegue a ${g} pontos.` }),
+  rps: g => ({ en: `Rock Paper Scissors: win ${g} rounds first.`, pt: `Pedra, Papel, Tesoura: vença ${g} rodadas primeiro.` }),
+  zip: () => ({ en: 'Pet Trail: solve the puzzle.', pt: 'Trilha do Pet: resolva o puzzle.' }),
+  patches: () => ({ en: 'Patches: solve the puzzle.', pt: 'Patches: resolva o puzzle.' }),
+  eco: g => ({ en: `Pet Echo: repeat an echo of ${g} stones.`, pt: `Eco do Pet: repita um eco de ${g} pedras.` }),
+  barrage: g => ({ en: `Soul Barrage: survive ${g} seconds.`, pt: `Soul Barrage: sobreviva ${g} segundos.` }),
+};
 
 const PATH_COPY: Record<PathKind, { en: string; pt: string; icon: string }> = {
   combat: { en: 'Combat', pt: 'Combate', icon: '⚔️' },
   puzzle: { en: 'Puzzle', pt: 'Quebra-cabeça', icon: '🧩' },
   minigame: { en: 'Minigame', pt: 'Minigame', icon: '🎯' },
-  explore: { en: 'Exploration tool', pt: 'Ferramenta de Exploração', icon: '🧭' },
+  explore: { en: 'Mind trial', pt: 'Prova de mente', icon: '🧭' },
 };
 const BONUS_COPY: Record<BonusKind, { en: string; pt: string; icon: string }> = {
   power: { en: '+6% attack', pt: '+6% de ataque', icon: '💪' },
@@ -45,14 +66,19 @@ export interface RogueDungeonProps {
   saveId?: string;
   /** Bits pelo funil/teto diário existente dos minigames. */
   onEarnPoints?: (points: number) => void;
+  /** Dados do Soulmon para os jogos em modo desafio (arte/sprite). */
+  evolutionStage?: string;
+  demoCharacterId?: string;
+  petName?: string;
+  petElement?: string;
+  playerLevel?: number;
 }
 
-export function RogueDungeon({ language, todayKey, saved, onChange, combatant, saveId, onEarnPoints }: RogueDungeonProps) {
+export function RogueDungeon({ language, todayKey, saved, onChange, combatant, saveId, onEarnPoints, evolutionStage = 'rookie', demoCharacterId, petName, petElement, playerLevel }: RogueDungeonProps) {
   const isPt = language === 'pt-BR';
   const t = (c: { en: string; pt: string }) => (isPt ? c.pt : c.en);
   const run = runForDay(saved, todayKey);
   const [challenge, setChallenge] = useState<LightKind | null>(null);
-  const [taps, setTaps] = useState<string[]>([]);
   const [note, setNote] = useState<string | null>(null);
   const finished = isFinished(run);
 
@@ -70,12 +96,11 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
   const finish = (kind: PathKind, victory: boolean, msg: string) => {
     setNote(msg);
     setChallenge(null);
-    setTaps([]);
     onChange(resolveStep(run, kind, victory));
   };
 
   const choose = (kind: PathKind) => {
-    if (kind !== 'combat') { setChallenge(kind); setTaps([]); return; }
+    if (kind !== 'combat') { settled.current = false; setChallenge(kind); return; }
     const foe = pickEnemy(combatant.level, mulberry32(run.step * 7919 + 13), { stage: floorOf(run.step) >= 3 ? 'ultimate' : floorOf(run.step) === 2 ? 'champion' : 'rookie' });
     const res = simulateRogueCombat(run, run.step, combatant);
     finish('combat', res.won, res.won
@@ -83,19 +108,25 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
       : (isPt ? `${foe.name} venceu. O dia na masmorra acabou — volte amanhã.` : `${foe.name} won. The dungeon day is over — come back tomorrow.`));
   };
 
-  const answer = (i: number) => {
-    if (!ch) return;
-    const ok = ch.kind === 'minigame' ? false : i === ch.answer;
-    finish(ch.kind, ok, ok ? (isPt ? 'Acertou!' : 'Correct!') : (isPt ? 'Errou — o passo se foi, mas a incursão segue.' : 'Missed — that step is spent, but the run goes on.'));
+  // Resultado do jogo real em modo desafio (vitória/derrota voltam ao mapa). Ignora chamada repetida.
+  const settled = useRef(false);
+  const gameResult = (won: boolean) => {
+    if (!ch || settled.current) return;
+    settled.current = true;
+    finish(ch.kind, won, won ? (isPt ? 'Desafio vencido!' : 'Challenge won!') : (isPt ? 'Desafio perdido — o passo se foi, mas a incursão segue.' : 'Challenge lost — that step is spent, but the run goes on.'));
   };
-  const tap = (opt: string) => {
-    if (!ch) return;
-    const next = [...taps, opt];
-    setTaps(next);
-    if (next.length < ch.options.length) return;
-    const sorted = [...ch.options].sort((a, b) => Number(a) - Number(b));
-    const ok = next.every((v, i) => v === sorted[i]);
-    finish('minigame', ok, ok ? (isPt ? 'Na ordem certa!' : 'In the right order!') : (isPt ? 'Fora de ordem — o passo se foi.' : 'Out of order — that step is spent.'));
+  const challengeProp: GameChallenge | undefined = ch ? { goal: ch.goal, onResult: gameResult } : undefined;
+  const gameProps = { language, evolutionStage, demoCharacterId, onEarnPoints: () => {}, onExit: () => gameResult(false), challenge: challengeProp } as const;
+  const renderGame = (g: ChallengeGame) => {
+    switch (g) {
+      case 'match3': return <Match3Game {...gameProps} petName={petName} playerLevel={playerLevel} />;
+      case 'dino': return <DinoGame {...gameProps} onScore={() => {}} petElement={petElement} />;
+      case 'rps': return <RPSGame {...gameProps} />;
+      case 'zip': return <ZipGame {...gameProps} />;
+      case 'patches': return <PatchesGame {...gameProps} />;
+      case 'eco': return <EcoGame {...gameProps} />;
+      case 'barrage': return <SoulBarrage {...gameProps} petElement={petElement} playerLevel={playerLevel} />;
+    }
   };
 
   const floor = floorOf(Math.min(run.step, ROGUE_MAX_STEPS - 1));
@@ -151,17 +182,11 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
       )}
 
       {ch && !finished && (
-        <div data-rogue-challenge={ch.kind} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <p style={text}>{PATH_COPY[ch.kind].icon} {t(ch.prompt)}</p>
-          {ch.options.map(o => (
-            <button
-              key={o} type="button" data-rogue-option={o} style={btn}
-              disabled={ch.kind === 'minigame' && taps.includes(o)}
-              onClick={() => (ch.kind === 'minigame' ? tap(o) : answer(ch.options.indexOf(o)))}
-            >
-              {ch.kind === 'minigame' ? `🪨 ${o}` : ch.kind === 'explore' ? `🚪 ${isPt ? 'Porta' : 'Door'} ${o}` : o}
-            </button>
-          ))}
+        <div data-rogue-challenge={ch.kind} data-rogue-game={ch.game} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <p style={text}>{PATH_COPY[ch.kind].icon} {t(GAME_GOAL_COPY[ch.game](ch.goal))}</p>
+          <Suspense fallback={<p style={text}>{isPt ? 'Carregando…' : 'Loading…'}</p>}>
+            {renderGame(ch.game)}
+          </Suspense>
         </div>
       )}
     </div>

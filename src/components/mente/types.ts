@@ -16,6 +16,7 @@
  *  · nenhum número-veredito (idade do cérebro, percentil, ranking).
  */
 import type { Language } from '../../utils/i18n';
+import type { GameChallenge } from '../../utils/gameChallenge';
 
 export interface MiniGameBaseProps {
   language: Language;
@@ -30,4 +31,6 @@ export interface EarningGameProps extends MiniGameBaseProps {
   onEarnPoints: (pts: number) => void;
   /** saveId do jogador: liga o ranking semanal (M8). Sem ele, o jogo não mostra nem envia ranking. */
   rankSaveId?: string;
+  /** Modo desafio (Calabouço): meta curta + resultado; sem Bits nem ranking. Sem a prop, o jogo é o normal. */
+  challenge?: GameChallenge;
 }

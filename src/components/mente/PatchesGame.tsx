@@ -29,7 +29,7 @@ const TINTS = ['var(--sm2-primary-fill)', 'var(--sm2-gold-fill)', 'var(--sm2-cre
 /** Pedra do Eco que lembra a forma: quadrado (2), alto (1, triângulo), largo (3, losango); sem dica = círculo (0). */
 const SHAPE_STONE = { any: 0, tall: 1, square: 2, wide: 3 } as const;
 
-export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit }: EarningGameProps) {
+export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, challenge }: EarningGameProps) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
   const [level, setLevel] = useState(1);
@@ -61,7 +61,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
       setSolved(true);
       const bits = patchesBits(size);
       setEarned(bits);
-      if (!paid.current) { paid.current = true; onEarnPoints(bits); }
+      if (!paid.current) { paid.current = true; if (challenge) challenge.onResult(true); else onEarnPoints(bits); }
     }
   };
 

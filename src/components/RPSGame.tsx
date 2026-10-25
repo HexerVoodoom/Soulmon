@@ -1,4 +1,5 @@
 import { RankingPanel } from './RankingPanel';
+import type { GameChallenge } from '../utils/gameChallenge';
 import { useState, useRef, useEffect } from 'react';
 import { BitsAmount } from './ui/BitsAmount';
 import type { CSSProperties } from 'react';
@@ -43,7 +44,9 @@ const HANDS = [
 export const MATCH_POINTS = 5;
 export const WINS_NEEDED = 3;
 
-export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit, rankSaveId }: {
+export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit, rankSaveId, challenge }: {
+  /** Modo desafio (Calabouço): nível 1 direto, vence com `goal` rodadas ganhas; sem Bits/ranking. */
+  challenge?: GameChallenge;
   rankSaveId?: string;
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts). Sem uso visual desde o canvas Jogos
@@ -64,7 +67,8 @@ export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit, rankSaveId
   const [thinking, setThinking] = useState(false);
   const [roundMsg, setRoundMsg] = useState('');
   const [matchOver, setMatchOver] = useState<'won' | 'lost' | 'draw' | null>(null);
-  const [level, setLevel] = useState<1 | 2 | null>(null);
+  const [level, setLevel] = useState<1 | 2 | null>(challenge ? 1 : null);
+  const need = challenge ? challenge.goal : WINS_NEEDED;
   const [youInv, setYouInv] = useState<RpsInventory>(freshInventory);
   const [petInv, setPetInv] = useState<RpsInventory>(freshInventory);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -103,7 +107,9 @@ export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit, rankSaveId
         }
         try { navigator.vibrate?.(15); } catch { /* noop */ }
       }
-      if (pw >= WINS_NEEDED || (exhausted && pw > ew)) {
+      if (challenge && (pw >= need || ew >= need)) {
+        challenge.onResult(pw >= need);
+      } else if (pw >= WINS_NEEDED || (exhausted && pw > ew)) {
         // C-11 (30/09/2026): vencer a partida não é concluir tarefa (R-CAT) — mudo.
         onEarnPoints(MATCH_POINTS);
         onMatchEnd?.();
@@ -175,7 +181,7 @@ export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit, rankSaveId
         <p className="sm2-num" style={phaseTitle}>
           {isPt ? 'Você' : 'You'} {playerWins} × {petWins} Soulmon
         </p>
-        <p style={sm2Hint}>{isPt ? 'primeiro a 3' : 'first to 3'}</p>
+        <p style={sm2Hint}>{isPt ? `primeiro a ${need}` : `first to ${need}`}</p>
       </div>
 
       {/* O VISOR 348×144 (D-J10): as mãos 128² a 64 frente a frente e "VS" em

@@ -9,6 +9,7 @@ import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
 import { fxFrame } from '../utils/combatFx';
+import type { GameChallenge } from '../utils/gameChallenge';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
 import {
   FIELD_W, FIELD_H, PLAYER_Y, PLAYER_SIZE, ENEMY_SIZE, SHOT_R, BARRAGE_POINTS_PER_BIT,
@@ -21,7 +22,9 @@ import {
  * Superfície NASCE MUDA (R-NOVA): nenhum som. Bits pelo MESMO funil dos minigames
  * (`onEarnPoints`, teto diário aplicado fora). Score semanal: ranking genérico `soul-barrage`.
  */
-export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playerLevel = 1, language, onEarnPoints, rankSaveId, onExit }: {
+export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playerLevel = 1, language, onEarnPoints, rankSaveId, onExit, challenge }: {
+  /** Modo desafio (Calabouço): vence sobrevivendo `goal` segundos; sem Bits/recorde/ranking. */
+  challenge?: GameChallenge;
   evolutionStage: string;
   demoCharacterId?: string;
   /** Elemento dominante do Soulmon: escolhe o sprite `fx-<el>-orb` do tiro. */
@@ -33,6 +36,8 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
+  const challengeRef = useRef(challenge);
+  challengeRef.current = challenge;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [phase, setPhase] = useState<'ready' | 'playing' | 'over'>('ready');
   const [paused, setPaused] = useState(false);
@@ -110,7 +115,10 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       }
       if (hudRef.current) hudRef.current.textContent = `${isPt ? 'Fase' : 'Phase'} ${s.phase} · ${s.score} · ${'♥'.repeat(Math.max(0, s.lives))}`;
 
-      if (!s.over) { raf = requestAnimationFrame(tick); return; }
+      const ch = challengeRef.current;
+      const survived = !!ch && !s.over && s.t >= ch.goal;
+      if (!s.over && !survived) { raf = requestAnimationFrame(tick); return; }
+      if (ch) { ch.onResult(survived); return; }
       const score = s.score;
       const pts = barrageBits(score);
       setFinalScore(score);
