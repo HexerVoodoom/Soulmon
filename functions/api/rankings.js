@@ -15,6 +15,7 @@ import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import {
   DEFAULT_PERIOD, cleanScore, isPeriod, isRankedGame, readBoard, scoreIsPlausible, submitScore, TOP_DEFAULT,
 } from './_rankings.js';
+import { readRiftLayers } from './_dayCounters.js';
 import { closePreviousMonth, readMyPrize, RIFT_GAME } from './_riftPayout.js';
 
 const CORS = {
@@ -68,6 +69,11 @@ export async function onRequest(context) {
   if (request.method === 'POST') {
     const score = cleanScore(q.score, game);
     if (score === null || !scoreIsPlausible(game, score)) return json({ error: 'invalid score' }, 400);
+    // Endless Rift paga Creditos: o score nao pode passar das camadas que o SERVIDOR viu comecadas no mes (`_dayCounters.js`). 409 se passar.
+    if (game === RIFT_GAME) {
+      const lastro = await readRiftLayers(kv(env), id);
+      if (score > lastro) return json({ error: 'score-exceeds-recorded-layers', recorded: lastro }, 409);
+    }
     const g2 = takeToken('rankings-submit', id, LIMIT_SUBMIT);
     if (!g2.ok) return tooManyRequests(g2.retryAfter, CORS);
     const r = await submitScore(env, { game, period, saveId: id, score });

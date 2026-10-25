@@ -25,7 +25,7 @@ import { sanitizeFocusLoot } from './_focusLoot.js';
 import { sanitizeDayPlan } from './_dayPlan.js';
 import { sanitizeNightmares } from './_nightmares.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
-import { enforceDungeonDaily, enforceCheckIns } from './_dayCounters.js';
+import { enforceDungeonDaily, enforceCheckIns, bumpRiftLayers } from './_dayCounters.js';
 import { frameIdOrNull } from './_frames.js';
 import { avatarIdOrNull } from './_avatares.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
@@ -372,12 +372,14 @@ export async function onRequest({ request, env }) {
     // Contadores DIARIOS monotonicos (beta-2 6.1/4.1, `_dayCounters.js`): camadas da masmorra e janelas de check-in do dia do jogador so
     // crescem dentro do dia e o dia so anda para a frente (ate o dia do servidor + 1). Apagar o save local ou voltar o contador nao
     // devolve camada nem janela; omitir o campo mantem o gravado. So parseia o gravado quando algum dos dois campos existe nele.
+    let ddAntes; let ddDepois;
     {
       const temGravado = typeof prev?.value === 'string' && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"'));
       if (temGravado || 'dungeonDaily' in state || 'checkIns' in state) {
         let gravado = {};
         if (temGravado) { try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; } }
         const dd = enforceDungeonDaily(state.dungeonDaily, gravado.dungeonDaily);
+        ddAntes = gravado.dungeonDaily; ddDepois = dd;
         if (dd) state.dungeonDaily = dd; else delete state.dungeonDaily;
         const ci = enforceCheckIns(state.checkIns, gravado.checkIns);
         if (ci) state.checkIns = ci; else delete state.checkIns;
@@ -428,6 +430,8 @@ export async function onRequest({ request, env }) {
       expirationTtl: SAVE_TTL_SECONDS,
       metadata: { t: Date.now(), f, r: cur + 1, h },
     });
+    // Camadas do Endless Rift no MES (so cresce; lastro do score aceito em /api/rankings). Falha aqui nunca derruba o save.
+    await bumpRiftLayers(kvOrThrow(env), saveId, ddAntes, ddDepois).catch(() => {});
     return Response.json({ ok: true, revision: cur + 1 }, { headers: CORS });
   }
 

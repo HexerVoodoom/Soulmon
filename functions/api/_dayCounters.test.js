@@ -101,3 +101,24 @@ describe('save.js — o POST do save aplica a regra (contra o que o servidor JÁ
     expect('checkIns' in s).toBe(false);
   });
 });
+
+describe('lastro mensal do Endless Rift', () => {
+  it('score acima das camadas registradas = 409; plausivel passa e o ranking guarda so o validado', async () => {
+    const { bumpRiftLayers, readRiftLayers } = await import('./_dayCounters.js');
+    const { onRequest: rank } = await import('./rankings.js');
+    const { readBoard } = await import('./_rankings.js');
+    const m = new Map(); const md = new Map();
+    const kvx = { get: async k => m.get(k) ?? null, put: async (k, v, o) => { m.set(k, v); md.set(k, o?.metadata); }, delete: async k => { m.delete(k); },
+      list: async ({ prefix = '' }) => ({ keys: [...m.keys()].filter(k => k.startsWith(prefix)).sort().map(name => ({ name, metadata: md.get(name) })), list_complete: true }) };
+    const E = { DIGIAPP_SAVES: kvx };
+    await bumpRiftLayers(kvx, ID, undefined, { day: hoje, layers: 10 });
+    await bumpRiftLayers(kvx, ID, { day: hoje, layers: 10 }, { day: hoje, layers: 15 });
+    await bumpRiftLayers(kvx, ID, { day: hoje, layers: 15 }, { day: hoje, layers: 3 });
+    expect(await readRiftLayers(kvx, ID)).toBe(15);
+    const sub = score => rank({ request: new Request('https://x/api/rankings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: ID, game: 'endless-rift', score }) }), env: E });
+    expect((await sub(16)).status).toBe(409);
+    expect((await sub(15)).status).toBe(200);
+    const b = await readBoard(E, { game: 'endless-rift', period: 'monthly', saveId: ID });
+    expect(b.top.map(r => r.score)).toEqual([15]);
+  });
+});

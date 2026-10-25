@@ -85,3 +85,35 @@ export function enforceCheckIns(incoming, stored, nowMs = Date.now()) {
     nowMs,
   );
 }
+
+// ---------------------------------------------------------------------------
+// CAMADAS DA FENDA NO MES (lastro do score do Endless Rift). `dungeonDaily` zera a cada dia; o ranking `endless-rift` e MENSAL.
+// O servidor soma, em chave propria (`riftlayers:<AAAA-MM>:<saveId>`, fora do save), o quanto `dungeonDaily.layers` AVANCOU a cada
+// gravacao aceita. So cresce. O score aceito no ranking nao pode passar desse total: descer ate a camada N exige ter COMECADO N camadas.
+// Mes = UTC do servidor (o mesmo do ranking). Limite honesto: o contador nasce com este deploy; camadas descidas antes dele nao contam.
+// ---------------------------------------------------------------------------
+export const riftLayersKey = (month, saveId) => `riftlayers:${month}:${saveId}`;
+const monthOf = (nowMs) => new Date(nowMs).toISOString().slice(0, 7);
+
+/** Quantas camadas novas a gravacao trouxe: mesmo dia = diferenca; dia novo = o contador inteiro. Nunca negativo. */
+export function layersDelta(antes, depois) {
+  const a = sanitizeDungeonDaily(antes);
+  const d = sanitizeDungeonDaily(depois);
+  if (!d) return 0;
+  if (a && a.day === d.day) return Math.max(0, d.layers - a.layers);
+  if (a && d.day < a.day) return 0;
+  return d.layers;
+}
+
+export async function readRiftLayers(store, saveId, nowMs = Date.now()) {
+  const n = Number(await store.get(riftLayersKey(monthOf(nowMs), saveId)));
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+
+export async function bumpRiftLayers(store, saveId, antes, depois, nowMs = Date.now()) {
+  const delta = layersDelta(antes, depois);
+  if (delta <= 0) return 0;
+  const total = (await readRiftLayers(store, saveId, nowMs)) + delta;
+  await store.put(riftLayersKey(monthOf(nowMs), saveId), String(total), { expirationTtl: 86400 * 70 });
+  return total;
+}
