@@ -10,6 +10,8 @@ import { FUNCTION_NPC_ART } from '../assets/soulmon/npcs';
 import { functionNpcVoice } from '../utils/areaNpcVoice';
 import logoUrl from '../assets/brand/final/logo-wordmark.png';
 import { recommendStarterSet } from '../utils/recommend';
+import { PixelIcon } from './ui/PixelIcon';
+import { ACTIVITY_ICON_ART } from '../assets/soulmon/icones-ui/interacao';
 import { suggestFirstTask, firstTaskFrom, type FirstTaskDraft } from '../utils/firstTaskSuggestion';
 import { ACTIVITY_CATALOG } from '../data/activityCatalog';
 import {
@@ -1941,7 +1943,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                     checked={!starterOff.includes(item.id)}
                     onChange={on => setStarterOff(v => (on ? v.filter(x => x !== item.id) : [...v, item.id]))}
                   >
-                    {isPt ? item.name.pt : item.name.en}
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      {ACTIVITY_ICON_ART[item.id] && <PixelIcon src={ACTIVITY_ICON_ART[item.id]} size={32} style={{ flex: 'none' }} />}
+                      <span>{isPt ? item.name.pt : item.name.en}</span>
+                    </span>
                   </CheckRow>
                   <p style={{ ...sm2Hint, margin: '0 0 8px 34px' }}>{isPt ? item.why.pt : item.why.en}</p>
                 </div>

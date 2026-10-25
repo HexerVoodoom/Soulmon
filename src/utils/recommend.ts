@@ -34,9 +34,12 @@ export const STARTER_EFFORT_BUDGET = 4;
 /** No máximo 2 itens por área no starter set — diversidade, não obsessão. */
 export const STARTER_MAX_PER_AREA = 2;
 
+/** O foco marcado manda: item da área escolhida sempre vem antes de item de outra área (M1, beta-3); dificuldades e forças só desempatam. */
+const AREA_WEIGHT = 100;
+
 function scoreItem(item: CatalogItem, profile: RecommendProfile): number {
   let score = 0;
-  if (profile.areas.includes(item.area)) score += 3;
+  if (profile.areas.includes(item.area)) score += AREA_WEIGHT;
   score += item.addresses.filter((s) => profile.struggles.includes(s)).length * 2;
   score += item.leverages.filter((s) => profile.strengths.includes(s)).length * 1;
   if (item.evidence.level === 'A') score += 1;

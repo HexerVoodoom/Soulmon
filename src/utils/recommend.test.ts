@@ -60,3 +60,14 @@ describe('recommendStarterSet', () => {
     expect(set.map((i) => i.id)).not.toContain(optIn.id);
   });
 });
+
+describe('M1 (beta-3): o foco marcado manda no ponto de partida', () => {
+  it('foco sono -> as sugestoes de sono vem primeiro, mesmo com dificuldades de outras areas, e tem icone', async () => {
+    const { ACTIVITY_ICON_ART } = await import('../assets/soulmon/icones-ui/interacao');
+    const set = recommendStarterSet({ areas: ['sono'], struggles: ['distracao', 'tempo', 'perfeccionismo'], strengths: [] }, ACTIVITY_CATALOG);
+    const sono = set.filter(i => i.area === 'sono');
+    expect(sono.length).toBeGreaterThanOrEqual(2);
+    expect(set.slice(0, sono.length).every(i => i.area === 'sono')).toBe(true);
+    for (const i of sono) expect(ACTIVITY_ICON_ART[i.id]).toBeTruthy();
+  });
+});
