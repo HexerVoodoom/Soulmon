@@ -25,9 +25,8 @@ export const loadRPSGame = () => import('../RPSGame');
 export const loadMatch3Game = () => import('../Match3Game');
 export const loadEcoGame = () => import('../mente/EcoGame');
 export const loadBolhasGame = () => import('../mente/BolhasGame');
-export const loadTrocaGame = () => import('../mente/TrocaGame');
-export const loadPicrossGame = () => import('../mente/PicrossGame');
-export const loadRevisaoGame = () => import('../mente/RevisaoGame');
+export const loadZipGame = () => import('../mente/ZipGame');
+export const loadPatchesGame = () => import('../mente/PatchesGame');
 export const loadRespiracaoGame = () => import('../refugio/RespiracaoGame');
 
 type Loader = () => Promise<unknown>;
@@ -35,7 +34,7 @@ type Loader = () => Promise<unknown>;
 /** Ordem: o que o dono mais abre primeiro. */
 const GAME_LOADERS: Loader[] = [
   loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame,
-  loadTrocaGame, loadPicrossGame, loadRevisaoGame, loadRespiracaoGame,
+  loadZipGame, loadPatchesGame, loadRespiracaoGame,
 ];
 
 type IdleWindow = Window & {

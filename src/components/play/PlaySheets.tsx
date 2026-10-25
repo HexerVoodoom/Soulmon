@@ -12,11 +12,9 @@ import { bitsStyle, MINIGAME_BITS_PER_DAY } from '../../utils/currencies';
 import { BitsAmount } from '../ui/BitsAmount';
 import type { Language } from '../../utils/i18n';
 import { ECO_MAX_BITS } from '../../utils/mente/eco';
-import { BOLHAS_MAX_BITS } from '../../utils/mente/bolhas';
-import { TROCA_MAX_BITS } from '../../utils/mente/troca';
-import { PICROSS_MAX_BITS } from '../../utils/mente/picross';
+import { ZIP_MAX_BITS } from '../../utils/mente/zip';
+import { PATCHES_MAX_BITS } from '../../utils/mente/patches';
 import { SupportNote } from '../refugio/SupportNote';
-import { REVIEW_SESSION_BITS } from '../../utils/mente/revisao';
 import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 import { PixelIcon } from '../ui/PixelIcon';
 // Beta-2 (backlog 9.1): o velociraptor e a tesoura SAIRAM do Salão (o dono não gostou). Reuso de arte que já existe,
@@ -247,7 +245,7 @@ export function PptSheet({ language, onStart }: { language: Language; onStart: (
 // ════════════════════════════════════════════════════════════════════════════
 
 export type SalaoGame = 'dino' | 'ppt' | 'match3';
-export type MenteGame = 'eco' | 'bolhas' | 'troca' | 'picross' | 'revisao';
+export type MenteGame = 'eco' | 'zip' | 'patches';
 export type RefugioGame = 'respiracao' | 'bolhas-calmas';
 
 /** Salão de Jogos — jogos livres: a Corrida com obstáculos e o PPT, as mesmas folhas de sempre.
@@ -329,13 +327,11 @@ function GameRow({ id, title, asks, meta, cta, onStart, dataKey }: {
   );
 }
 
-/** Ateliê da Mente — os cinco jogos que exercitam uma função. */
-export function MenteSheet({ language, reviewDue, onStart, bitsToday }: {
+/** Ateliê da Mente — o Eco do Pet e os dois jogos de grade (Trilha e Colcha). */
+export function MenteSheet({ language, onStart, bitsToday }: {
   language: Language;
   /** Bits de minijogo já creditados hoje (o teto é compartilhado). */
   bitsToday?: number;
-  /** Quantos cartões da Revisão estão para hoje (`dueCards`, dono `utils/mente/revisao`). */
-  reviewDue: number;
   onStart: (g: MenteGame) => void;
 }) {
   const isPt = language === 'pt-BR';
@@ -350,37 +346,18 @@ export function MenteSheet({ language, reviewDue, onStart, bitsToday }: {
       meta: <span style={bitsStyle}>{upTo(ECO_MAX_BITS)}</span>,
     },
     {
-      id: 'bolhas',
-      title: isPt ? 'Bolhas do Sonho' : 'Dream Bubbles',
-      asks: isPt ? 'Pede: segurar o impulso' : 'Asks: hold back the impulse',
-      detail: isPt ? 'Estoure os sonhos claros e deixe passar os fiapos escuros.' : 'Pop the bright dreams and let the dark wisps drift by.',
-      meta: <span style={bitsStyle}>{upTo(BOLHAS_MAX_BITS)}</span>,
+      id: 'zip',
+      title: isPt ? 'Trilha do Pet' : 'Pet Trail',
+      asks: isPt ? 'Pede: planejar um caminho' : 'Asks: plan a route',
+      detail: isPt ? 'Trace um caminho só pelos números, em ordem, passando por todas as casas.' : 'Trace one path through the numbers, in order, covering every cell.',
+      meta: <span style={bitsStyle}>{upTo(ZIP_MAX_BITS)}</span>,
     },
     {
-      id: 'troca',
-      title: isPt ? 'Troca de Regra' : 'Rule Switch',
-      asks: isPt ? 'Pede: mudar de ideia' : 'Asks: change your mind',
-      detail: isPt ? 'Separe as criaturas pela regra da vez — e perceba quando ela muda.' : 'Sort the creatures by the current rule — and notice when it changes.',
-      meta: <span style={bitsStyle}>{upTo(TROCA_MAX_BITS)}</span>,
-    },
-    {
-      id: 'picross',
-      title: isPt ? 'Nonograma da Malha' : 'Mesh Nonogram',
-      asks: isPt ? 'Pede: deduzir' : 'Asks: deduce',
-      detail: isPt ? 'Pinte a grade pelas pistas e revele um desenho. Um novo a cada dia.' : 'Fill the grid from the clues and reveal a picture. A new one every day.',
-      meta: <span style={bitsStyle}>{upTo(PICROSS_MAX_BITS)}</span>,
-    },
-    {
-      id: 'revisao',
-      title: isPt ? 'Revisão da Malha' : 'Mesh Review',
-      asks: isPt ? 'Pede: lembrar o que você quer aprender' : 'Asks: recall what you want to learn',
-      detail: isPt
-        ? 'Cartões que VOCÊ escreve, revistos no intervalo certo: o que você lembra volta mais tarde, o que não lembra volta amanhã.'
-        : 'Cards YOU write, reviewed at the right interval: what you remember comes back later, what you don’t comes back tomorrow.',
-      meta: reviewDue > 0
-        ? (isPt ? `${reviewDue} para hoje` : `${reviewDue} for today`)
-        : <BitsAmount value={REVIEW_SESSION_BITS} />,
-      cta: isPt ? 'Abrir' : 'Open',
+      id: 'patches',
+      title: isPt ? 'Colcha' : 'Patchwork',
+      asks: isPt ? 'Pede: dividir pelo espaço' : 'Asks: split the space',
+      detail: isPt ? 'Divida a grade em retângulos: cada um leva um número, que é a área dele.' : 'Split the grid into rectangles: each holds one number, which is its area.',
+      meta: <span style={bitsStyle}>{upTo(PATCHES_MAX_BITS)}</span>,
     },
   ];
   return (
