@@ -72,8 +72,22 @@ describe('apelido unico e sugestoes', () => {
   });
   it('names: prefixo case-insensitive, so nomes, limite 8', async () => {
     const env = mundo();
+    await post(env, 'nickname', BRUNO, { name: 'Bruno' });
     const j = await (await get(env, 'names', { prefix: 'BRU' })).json();
     expect(j).toEqual({ names: ['Bruno'] });
     expect(JSON.stringify(j)).not.toMatch(/@|pid|id/);
+  });
+  it('names: inclui quem tem apelido mesmo sem PvP ligado (indice nick:)', async () => {
+    const env = mundo({ pvpEnabled: false });
+    await post(env, 'nickname', BRUNO, { name: 'Bruna' });
+    const j = await (await get(env, 'names', { prefix: 'bru' })).json();
+    expect(j).toEqual({ names: ['bruna'] });
+  });
+  it('profile: elemento do Oraculo e aditivo, validado e herdado', async () => {
+    const env = mundo();
+    await salvar(env, { element: 'fire' });
+    expect(JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${BRUNO}`)).element).toBe('fire');
+    await salvar(env, { element: '<x>' });
+    expect(JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${BRUNO}`)).element).toBe('fire');
   });
 });

@@ -68,6 +68,8 @@ export interface PublicProfileInput {
   frameId?: string | null;
   /** Linha de arte (D-60, `spriteLineOf`): só um id; o servidor confere contra a lista fechada. */
   artLine?: string | null;
+  /** Elemento do Oráculo da criatura (`soulmonMeta.dominantElement`); o servidor confere o formato. */
+  element?: string | null;
   /** URL do sprite próprio gerado pelo jogador (validada no servidor e no cliente). */
   spriteUrl?: string | null;
   unlockedStages?: string[];
@@ -128,7 +130,7 @@ export const pushProfile = (p: PublicProfileInput) =>
  * tem, há quanto tempo joga.
  */
 export interface DirectoryPlayer {
-  id: string; name: string; petName: string; stage: string;
+  id: string; name: string; petName: string; stage: string; element?: string | null;
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
   unlockedStages: string[]; pvpEnabled: boolean; daysPlaying: number;
 }

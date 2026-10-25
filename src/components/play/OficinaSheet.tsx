@@ -65,7 +65,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
   /** beta3 F1: o planejamento da sessão mora no prédio "Prepare to Focus"; aqui só se executa a sessão pronta. */
   planInPrepare?: boolean;
   /** beta3 F1: o timer de foco começou — abre a descida da masmorra em background e devolve o que aconteceu (para o aviso). */
-  onFocusStart?: () => 'started' | 'busy' | 'no-hp' | 'no-energy';
+  onFocusStart?: (focusEndsAt?: number) => 'started' | 'busy' | 'no-hp' | 'no-energy';
 }) {
   const isPt = language === 'pt-BR';
   const day = todayKey ?? fallbackDay();
@@ -163,8 +163,9 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
     if (!canStartSessionFocus || !session) { startEdit(); return; }
     setMode(session.mode);
     setLootNotice(null);
-    setDescent(onFocusStart ? onFocusStart() : null);
-    apply(startPhase(session.mode, 'focus', Date.now(), false, { expeditionId: session.environment, sessionId: session.id }));
+    const phase = startPhase(session.mode, 'focus', Date.now(), false, { expeditionId: session.environment, sessionId: session.id });
+    setDescent(onFocusStart ? onFocusStart(phase.endAt ?? undefined) : null);
+    apply(phase);
   };
   const isDone = (id: string) => !!session?.doneIds.includes(id) || tasks.some(t => t.id === id && t.completed);
   const todays = doneToday(history, day);

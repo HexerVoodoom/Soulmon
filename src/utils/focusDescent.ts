@@ -27,8 +27,8 @@ export function focusDescentRefusal(state: GameState, nowMs: number): FocusDesce
   return undefined;
 }
 
-/** Abre a descida do foco: paga a 1ª camada (como a tela) e grava `dungeonAway`. Recusa → a mesma referência. */
-export function startFocusDescent(prev: GameState, nowMs: number, seed: number = newDefenseSeed()): GameState {
+/** Abre a descida do foco: paga a 1ª camada (como a tela) e grava `dungeonAway`. `focusEndsAt` = fim do timer de foco: a descida acaba aí (campo `until`), ou antes se a energia/HP acabar. Recusa → a mesma referência. */
+export function startFocusDescent(prev: GameState, nowMs: number, seed: number = newDefenseSeed(), focusEndsAt?: number): GameState {
   if (focusDescentRefusal(prev, nowMs)) return prev;
   const paid = spendLayer(prev, nowMs);
   const c = soulCombatant({
@@ -39,6 +39,7 @@ export function startFocusDescent(prev: GameState, nowMs: number, seed: number =
   const layer = startLayerFor(sanitizeDepthRecord(prev.dungeonDepthRecord), cap);
   const reg: DungeonAway = {
     since: nowMs, seed, layer, slot: 0, hp: hpAgora({ dungeonHp: prev.dungeonHp }, nowMs), en: 0, ms: false,
+    ...(focusEndsAt !== undefined && focusEndsAt > nowMs ? { until: focusEndsAt } : {}),
     player: { level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus, fam: 'direct', sh: 0, hb: 0, rb: 0, stage: prev.evolutionStage },
   };
   return { ...paid, dungeonAway: reg };

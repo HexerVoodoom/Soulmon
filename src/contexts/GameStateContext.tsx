@@ -2082,6 +2082,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         frameId: sanitizeEquippedFrame(gameState.equippedFrame),
         // Linha de arte (D-60): é por ela que o oponente é desenhado com a arte DELE. `null` limpa no servidor.
         artLine: spriteLineOf(gameState) ?? null,
+        element: gameState.soulmonMeta?.dominantElement ?? null,
         // Sprite próprio gerado (quando existe): permite mostrar o Soulmon real do jogador no Torneio, Biblioteca e Bosque.
         spriteUrl: (() => {
           if (isCorvo(gameState)) return null;

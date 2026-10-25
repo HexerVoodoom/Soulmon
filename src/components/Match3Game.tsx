@@ -267,13 +267,13 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
 
   const showTurnBanner = useCallback((name: string, by: 'player' | 'enemy') => {
     if (reducedRef.current) return;
-    setTurnBanner({ text: `${name} turn`, by });
+    setTurnBanner({ text: isPt ? `Vez de ${name}` : `${name} turn`, by });
     const id = setTimeout(() => {
       timers.current.delete(id);
       setTurnBanner(null);
     }, T_TURN_BANNER);
     timers.current.add(id);
-  }, []);
+  }, [isPt]);
 
   const play = useCallback(async (a: Pos, d: Pos) => {
     if (busyRef.current || overRef.current || combatRef.current.outcome !== 'playing') return;

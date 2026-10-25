@@ -28,8 +28,7 @@ import { listPlayers, getPlayer, addFriend, removeFriend, sendGift, suggestNames
 import { LIBRARY_NPCS } from '../utils/libraryNpcs';
 import { PlayerDetailModal } from './PlayerDetailModal';
 import { RitualDialog } from './ritual/RitualKit';
-import { getStageBranch } from '../types/progression';
-import { ATTR_LABEL } from '../types/attributes';
+import { elementLabel } from '../utils/arena';
 import { CoopPanel } from './CoopPanel';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
@@ -478,7 +477,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
               <button
                 key={p.id}
                 type="button"
-                onClick={() => { setSelectedPet(p); markSeen(p.id); onVisitPlayer?.(); }}
+                onClick={() => { setSelectedPet(p); markSeen(p.id); }}
                 aria-label={nomeDe(p)}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: 4, minHeight: 44, background: 'none', border: 0, cursor: 'pointer', minWidth: 0 }}
               >
@@ -493,7 +492,6 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
       )}
 
       {selectedPet && (() => {
-        const branch = getStageBranch(selectedPet.stage);
         const sprite = isSafeSpriteSrc(selectedPet.spriteUrl) ? selectedPet.spriteUrl : opponentSprite(selectedPet);
         return (
           <RitualDialog onClose={() => setSelectedPet(null)} labelledBy="sm2-pet-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320}>
@@ -502,9 +500,11 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
             </h2>
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
               <img src={sprite} alt={selectedPet.petName || selectedPet.name} width={160} height={160} style={{ display: 'block', width: 160, height: 160, objectFit: 'contain', imageRendering: 'pixelated' }} />
-              <p className="sm2-lib-s" style={{ margin: 0 }}>
-                {isPt ? 'Elemento' : 'Element'}: {branch ? (isPt ? ATTR_LABEL[branch].pt : ATTR_LABEL[branch].en) : '—'}
-              </p>
+              {selectedPet.element && (
+                <p className="sm2-lib-s" style={{ margin: 0 }}>
+                  {isPt ? 'Elemento' : 'Element'}: {elementLabel(selectedPet.element, isPt)}
+                </p>
+              )}
               <p className="sm2-lib-s" style={{ margin: 0 }}>
                 {isPt ? 'Dono' : 'Owner'}: {selectedPet.isNpc ? (isPt ? 'demonstração' : 'demo') : selectedPet.name}
               </p>

@@ -153,7 +153,8 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
 
   const elapsedReal = Math.max(0, nowMs - away.since);
   report.capped = elapsedReal > DUNGEON_AWAY_MAX_MS;
-  const limit = away.since + Math.min(elapsedReal, DUNGEON_AWAY_MAX_MS);
+  const focusOver = away.until !== undefined && nowMs >= away.until;
+  const limit = Math.min(away.since + Math.min(elapsedReal, DUNGEON_AWAY_MAX_MS), away.until ?? Infinity);
 
   let s: T = prev;
   let t = away.since;
@@ -228,13 +229,14 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
 
   // beta3 A4: a descida que ACABOU (energia/HP/teto/retirada) com ≥1 camada limpa fora da tela é UMA run da missão semanal.
   if ((opts.retire || ended) && report.layers > 0) s = countWeeklyMission(s, 'dungeon-runs', now);
+  if (focusOver && !ended) ended = 'retired'; // o timer de foco acabou: a descida acaba junto
   if (opts.retire && !ended) ended = 'retired'; // retirar acerta o que rendeu até agora e o Soulmon volta para casa
   report.ended = ended;
   report.toLayer = layer;
   report.recordTo = Math.max(record0, clampInt(s.dungeonDepthRecord));
   report.elapsedMs = Math.max(0, t - away.since);
   report.bits = Math.max(0, (s.gamePoints ?? 0) - bits0);
-  const emHp = ended === 'retired' ? Math.max(nowMs, t) : t;
+  const emHp = ended === 'retired' ? Math.max(focusOver && away.until !== undefined ? away.until : nowMs, t) : t;
   const proximo: DungeonAway | undefined = ended ? undefined : { ...away, since: t, layer, slot, hp, en, ms };
   return { next: { ...s, dungeonAway: proximo, dungeonHp: gravarHp(hp, emHp) }, report };
 }

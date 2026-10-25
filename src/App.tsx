@@ -3441,7 +3441,7 @@ export default function App() {
   const autoVoltaRef = useRef(false);
   const masmorraRetornoAt = masmorraRetorno.returnAt;
   useEffect(() => {
-    if (!naMasmorra || masmorraRetornoAt === null || currentView !== 'home') return;
+    if (!naMasmorra || masmorraRetornoAt === null) return;
     const acertar = async () => {
       if (autoVoltaRef.current || !naMasmorraRef.current) return;
       autoVoltaRef.current = true;
@@ -3458,7 +3458,7 @@ export default function App() {
     if (ms <= 0) { void acertar(); return; }
     const id = setTimeout(() => { void acertar(); }, Math.min(ms, 2_147_000_000));
     return () => clearTimeout(id);
-  }, [naMasmorra, masmorraRetornoAt, currentView, setGameState]);
+  }, [naMasmorra, masmorraRetornoAt, setGameState]);
   const bloqueiaOcupado = useCallback((acao: OcupadoAcao): boolean => {
     if (!naMasmorraRef.current) return false;
     setOcupadoAviso({ acao });
@@ -7494,11 +7494,11 @@ export default function App() {
                   todayKey: playerDayIso(new Date(), gameState.playerDayTz),
                   focusKeyActive: hasFocusKey(gameState, Date.now()),
                   onFocusPrepared: () => setGameState(prev => grantFocusKey(prev, Date.now())),
-                  onFocusStart: () => {
+                  onFocusStart: (focusEndsAt?: number) => {
                     const now = Date.now();
                     const why = focusDescentRefusal(gameStateRef.current, now);
                     if (why) return why;
-                    setGameState(prev => startFocusDescent(prev, now));
+                    setGameState(prev => startFocusDescent(prev, now, undefined, focusEndsAt));
                     return 'started' as const;
                   },
                   focusTasks: gameState.tasks.map(({ id, name, completed, steps }) => ({ id, name, completed, steps })),

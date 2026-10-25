@@ -106,7 +106,7 @@ export interface PlayHandlers {
   focusKeyActive?: boolean;
   onFocusPrepared?: () => void;
   /** beta3 F1: o timer de foco começou — a masmorra desce em background. */
-  onFocusStart?: () => 'started' | 'busy' | 'no-hp' | 'no-energy';
+  onFocusStart?: (focusEndsAt?: number) => 'started' | 'busy' | 'no-hp' | 'no-energy';
   /** Os cartões da Revisão da Malha, que moram no SAVE (`GameState.review`). */
   review?: ReviewState;
   onReviewChange?: (next: ReviewState) => void;

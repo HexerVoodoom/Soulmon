@@ -37,9 +37,10 @@ export function useDungeonReturn(state: GameState, everyMs = 30_000): { returnAt
     void import('../utils/dungeonAway').then(({ applyDungeonAway }) => {
       if (!vivo) return;
       try {
-        const cap = away.since + DUNGEON_AWAY_MAX_MS;
+        const cap = Math.min(away.since + DUNGEON_AWAY_MAX_MS, away.until ?? Infinity);
         const { report } = applyDungeonAway(state, cap);
-        const at = report && report.ended ? away.since + report.elapsedMs : cap;
+        // no fim do foco o `retired` é só o relógio chegando: o retorno é o próprio `cap`; antes disso, o que a conta disser
+        const at = report && report.ended && report.ended !== 'retired' ? away.since + report.elapsedMs : cap;
         setProjected({ key, at });
       } catch {
         setProjected(null); // sem projeção: vale o teto
@@ -50,7 +51,7 @@ export function useDungeonReturn(state: GameState, everyMs = 30_000): { returnAt
 
   return useMemo(() => {
     if (!away) return { returnAt: null, msLeft: null };
-    const returnAt = projected && projected.key === key ? projected.at : away.since + DUNGEON_AWAY_MAX_MS;
+    const returnAt = projected && projected.key === key ? projected.at : Math.min(away.since + DUNGEON_AWAY_MAX_MS, away.until ?? Infinity);
     return { returnAt, msLeft: Math.max(0, returnAt - now) };
   }, [away, projected, key, now]);
 }

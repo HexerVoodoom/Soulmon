@@ -343,6 +343,8 @@ export interface DungeonAway {
   en: number;
   /** O marco do andar 5 desta descida já foi pago. */
   ms: boolean;
+  /** Descida do foco (beta3 F1): epoch ms do FIM da sessão de foco — a descida termina aí (ou antes, por energia/HP). Ausente = só o teto de 8 h. */
+  until?: number;
   player: DungeonAwayPlayer;
 }
 
@@ -365,6 +367,7 @@ export function sanitizeDungeonAway(raw: unknown): DungeonAway | undefined {
     hp: numIn(r.hp, 1, 0, 1),
     en: numIn(r.en, 0, 0, 100),
     ms: r.ms === true,
+    ...(typeof r.until === 'number' && Number.isFinite(r.until) && r.until > 0 ? { until: r.until } : {}),
     player: {
       level: Math.trunc(numIn(p.level, 1, 1, TOP_LEVEL)),
       atk: numIn(p.atk, 1, 0, 1e6), def: numIn(p.def, 1, 0, 1e6), spd: numIn(p.spd, 1, 0, 1e6), hp: numIn(p.hp, 1, 1, 1e7), bonus: numIn(p.bonus, 0, 0, 10),

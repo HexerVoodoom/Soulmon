@@ -181,6 +181,7 @@ async function publicProfile(env, p, extra = {}) {
     id: pid,
     name: p.name, petName: p.petName, stage: p.stage,
     avatarId: avatarIdOrNull(p.avatarId), frameId: frameIdOrNull(p.frameId), artLine: artLineOrNull(p.artLine),
+    ...(/^[a-z][a-z0-9_-]{0,31}$/.test(String(p.element ?? '')) ? { element: p.element } : {}),
     ...(sUrl ? { spriteUrl: sUrl } : {}),
     unlockedStages: p.unlockedStages, pvpEnabled: p.pvpEnabled,
     // ⚰️ `tasksDone` NÃO sai daqui (WP4.11, exposição E3, proibição #21).
@@ -516,6 +517,8 @@ async function handleCommunity({ request, env }) {
       artLine: 'artLine' in body ? artLineOrNull(body.artLine) : artLineOrNull(prev.artLine),
       // URL do sprite gerado pelo jogador (`/api/sprite-image?k=...` ou allowlist CDN): ausência herda o gravado, `null` limpa.
       spriteUrl: 'spriteUrl' in body ? spriteUrlOrNull(body.spriteUrl) : spriteUrlOrNull(prev.spriteUrl),
+      // Elemento do Oráculo da criatura (id fechado por regex; ausência herda o gravado, cliente antigo não apaga).
+      element: typeof body.element === 'string' && /^[a-z][a-z0-9_-]{0,31}$/.test(body.element) ? body.element : (typeof prev.element === 'string' ? prev.element : undefined),
       unlockedStages: Array.isArray(body.unlockedStages)
         ? body.unlockedStages.filter(s => typeof s === 'string' && ID_ESTAGIO.test(s)).slice(0, 16)
         : (prev.unlockedStages || []),
@@ -568,15 +571,19 @@ async function handleCommunity({ request, env }) {
   if (action === 'names' && method === 'GET') {
     const prefixo = (url.searchParams.get('prefix') || '').normalize('NFKC').trim().toLowerCase().slice(0, 40);
     if (!prefixo) return json({ names: [] });
-    const keys = await listPrefix(env, 'profile:', 300);
+    // Índice de apelidos (`nick:<minúsculas>`): TODO jogador com apelido entra, com ou sem PvP. Devolve só o apelido.
+    const page = await kvOrThrow(env).list({ prefix: nickKey(prefixo).replace(/%[0-9A-F]{0,1}$/, ''), limit: 8 });
     const nomes = [];
-    for (const k of keys) {
-      const raw = await kvOrThrow(env).get(k);
-      if (!raw) continue;
-      const p = JSON.parse(raw);
-      if (!p.pvpEnabled || isHidden(p)) continue;
-      const n = String(p.name ?? '');
+    for (const k of page.keys ?? []) {
+      let n;
+      try { n = decodeURIComponent(String(k.name).slice(5)); } catch { continue; }
       if (!n.toLowerCase().startsWith(prefixo)) continue;
+      // O índice guarda minúsculas: a grafia de exibição vem do perfil do dono (se bater); senão vale a minúscula.
+      try {
+        const dono = await kvOrThrow(env).get(k.name);
+        const pr = dono ? await getProfile(env, dono) : null;
+        if (pr && typeof pr.name === 'string' && pr.name.normalize('NFKC').trim().toLowerCase() === n) n = pr.name;
+      } catch { /* fica a minúscula */ }
       if (!nomes.includes(n)) nomes.push(n);
     }
     nomes.sort((a, b) => a.localeCompare(b));
