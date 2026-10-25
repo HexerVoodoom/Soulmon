@@ -546,3 +546,5 @@ P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
 ## Beta3 onda B
 
 - **M3 (prédios):** conservador — o Refúgio mudou de id de prédio `jogos.refugio` → `exploracao.refugio` (migração de leitura em `MOVED_BUILDINGS`, espelho no servidor); o Calabouço (`jogos.dungeon`) abre no Vínculo 3 (mesmo do Ateliê da Mente), é placeholder "em breve" sem material de missão, com arte/NPC provisórios (reusam a Masmorra) e a Masmorra ficou só renomeada (rótulo "Fenda Sem Fim"/"Endless Rift", id `masmorra` mantido).
+
+- **M7 Calabouço roguelike (25/10/2026):** os caminhos não-combate usam desafios leves PRÓPRIOS (série numérica, ordem das pedras, pegadas/porta) em vez de reusar Mind Workshop/Salão/Exploração em modo "desafio" (adaptar cada componente fugia do MVP) — o dono decide se quer os componentes reais. Ranking `rogue-dungeon` semanal (melhor dia da semana; teto 33 = 24 desafios + 3x3 de bônus de andar). Bits = 1 por desafio vencido ao fim da incursão, só pelo funil/teto diário. Bônus: +6% ATK, +10% HP, escudo de 15% (valem só na incursão, por cima do teto de 5% do combate v3, que não se aplica a bônus de run).

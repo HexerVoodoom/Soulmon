@@ -1,4 +1,5 @@
 import { normalizeGuildMission } from '../utils/guildMission';
+import { sanitizeRogueRun, type RogueRun } from '../utils/rogueDungeon';
 import { sanitizeFocusKeyDay } from '../utils/focusKey';
 import { sanitizeClaReceipts } from '../utils/claCredit';
 import { sanitizeBosqueArvores, type BosqueArvores } from '../utils/bosqueArvoresSave';
@@ -538,6 +539,8 @@ export interface GameState {
   guildDonatedItem?: string | null;
   /** beta3 F1: dia do jogador (AAAA-MM-DD) em que o "Prepare to Focus" deu a chave que libera a Focus Workshop (`utils/focusKey.ts`). */
   focusKeyDay?: string;
+  /** beta3 M7: incursão do Calabouço roguelike do dia (`utils/rogueDungeon.ts`) (outro dia = incursão nova na leitura, via `runForDay`). */
+  rogueDungeon?: RogueRun;
   /** Recibos de prêmio dos prédios do clã (Praça, Plantio, Mistério) JÁ creditados — os últimos ~50. Credita UMA vez por recibo (`utils/claCredit.ts`). */
   claReceipts?: string[];
   /** As 4 árvores do Bosque: o pico de cada estação e o ano-ciclo em que completou/aperfeiçoou (`utils/bosqueArvores.ts`). */
@@ -1397,6 +1400,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         claReceipts: sanitizeClaReceipts(loadedState.claReceipts),
         bosqueArvores: sanitizeBosqueArvores(loadedState.bosqueArvores),
         focusKeyDay: sanitizeFocusKeyDay(loadedState.focusKeyDay),
+        rogueDungeon: sanitizeRogueRun(loadedState.rogueDungeon),
         guildDonatedItem: (() => { const v = str(loadedState.guildDonatedItem); return v && /^[a-z0-9][a-z0-9_-]{1,39}$/.test(v) ? v : null; })(),
         // Campos novos: saves antigos não os têm, então o fallback é obrigatório.
         // Sem `?? padrão` de valor: aqui o padrão É a ausência. Save antigo

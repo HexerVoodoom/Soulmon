@@ -36,7 +36,7 @@ import { kvOrThrow } from './_kv.js';
 import { getProfile } from './_profile.js';
 
 /** Allowlist de jogos com ranking. Id estável: vira parte da chave KV. */
-export const RANKED_GAMES = Object.freeze(['dino', 'ppt', 'match3', 'eco']);
+export const RANKED_GAMES = Object.freeze(['dino', 'ppt', 'match3', 'eco', 'rogue-dungeon']);
 
 export const PERIODS = Object.freeze(['weekly', 'monthly']);
 /** Período padrão — minigames: semanal. (Endless Rift/M6 usará `monthly`.) */
@@ -58,7 +58,18 @@ export const TIER_CUTS = Object.freeze({
   ppt: [0, 10, 20, 30, 40, 50],
   match3: [0, 300, 800, 1500, 2500, 4000],
   eco: [0, 4, 6, 8, 10, 13],
+  'rogue-dungeon': [0, 6, 12, 18, 24, 30],
 });
+
+/**
+ * Teto de plausibilidade por jogo (acima = forja). `rogue-dungeon`: 24 desafios/dia + 3 andares × 3 de bônus = 33
+ * (espelho de `ROGUE_MAX_SCORE` em `src/utils/rogueDungeon.ts`; há teste de paridade).
+ */
+export const MAX_SCORE_BY_GAME = Object.freeze({ 'rogue-dungeon': 33 });
+export function scoreIsPlausible(game, score) {
+  const cap = MAX_SCORE_BY_GAME[game];
+  return cap === undefined || score <= cap;
+}
 
 export function isRankedGame(game) {
   return typeof game === 'string' && RANKED_GAMES.includes(game);
