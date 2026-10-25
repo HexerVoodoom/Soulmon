@@ -259,7 +259,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
 
   const enemyNameAt = useCallback((c: M3Combat, idx: number = c.active): string => {
     const e = c.enemies[idx];
-    const line = e?.line && DUNGEON_LINE_SPRITES[e.line] ? e.line : LINES[idx] ?? LINES[0];
+    const line = e?.line && e.line in OWN_LINE_SPRITES ? e.line : LINES[idx] ?? LINES[0];
     return DUNGEON_LINE_NAMES[line] ?? 'Soulmon';
   }, []);
 
