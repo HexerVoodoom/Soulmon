@@ -5,7 +5,7 @@ import { UserAvatar } from '../ui/UserAvatar';
 import { AvatarImg } from '../ui/AvatarImg';
 import { lineIconForStage } from '../../utils/lineIcons';
 import { getSpriteForStage } from '../../utils/sprites';
-import { getRank } from '../../utils/community';
+import { getRank, reserveNickname } from '../../utils/community';
 import { getTierStanding, resolveSeasonPlace } from '../../utils/tournamentTiers';
 import { resolveEquippedFrame, type FrameContext } from '../../utils/frames';
 import { resolveAvatarId } from '../../utils/avatar';
@@ -50,10 +50,27 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
   const [q, setQ] = useState('');
   const [nameDraft, setNameDraft] = useState(userName);
   const [nameSaved, setNameSaved] = useState(false);
-  useEffect(() => { setNameDraft(userName); setNameSaved(false); }, [userName, open]);
+  const [nameError, setNameError] = useState<string | null>(null);
+  useEffect(() => { setNameDraft(userName); setNameSaved(false); setNameError(null); }, [userName, open]);
   const nameTrim = nameDraft.trim();
   const nameOk = nameTrim.length >= 2;
   const nameCanSave = nameOk && nameTrim !== userName;
+  /** Reserva no servidor antes de gravar: nome em uso por OUTRA conta é recusado com aviso; falha de rede não bloqueia (o servidor confere de novo ao publicar). */
+  const commitName = async () => {
+    if (!onChangeName || !nameOk || nameTrim === userName) return;
+    try {
+      await reserveNickname(saveId, nameTrim);
+    } catch (e) {
+      if (e instanceof Error && e.message === 'name taken') {
+        setNameError(isPt ? 'Esse nome já está em uso. Escolha outro.' : 'That name is already taken. Pick another.');
+        setNameSaved(false);
+        return;
+      }
+    }
+    setNameError(null);
+    onChangeName(nameTrim);
+    setNameSaved(true);
+  };
 
   const [petNameDraft, setPetNameDraft] = useState(petName);
   const [petNameSaved, setPetNameSaved] = useState(false);
@@ -83,22 +100,19 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
               <Field id="sm-profile-name" type="text" value={nameDraft} maxLength={24} autoComplete="nickname"
                 style={{ flex: 1 }}
-                onChange={e => { setNameDraft(e.target.value); setNameSaved(false); }}
-                onBlur={() => { if (nameOk && nameTrim !== userName) { onChangeName(nameTrim); setNameSaved(true); } }} />
+                onChange={e => { setNameDraft(e.target.value); setNameSaved(false); setNameError(null); }}
+                onBlur={() => { void commitName(); }} />
               <button
                 type="button"
                 data-save-user-name
                 disabled={!nameCanSave}
                 style={sm2Button('primary', !nameCanSave, 'sm')}
-                onClick={() => {
-                  if (!nameCanSave) return;
-                  onChangeName(nameTrim);
-                  setNameSaved(true);
-                }}
+                onClick={() => { void commitName(); }}
               >
                 {nameSaved && !nameCanSave ? (isPt ? 'Salvo' : 'Saved') : (isPt ? 'Salvar' : 'Save')}
               </button>
             </div>
+            {nameError && <p role="alert" style={sm2Hint}>{nameError}</p>}
             <p style={sm2Hint}>{isPt ? 'É o nome que outros jogadores veem. Mínimo de 2 letras.' : 'The name other players see. At least 2 letters.'}</p>
           </>
         )}

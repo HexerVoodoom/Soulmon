@@ -24,9 +24,12 @@
 import { useEffect, useState } from 'react';
 import { opponentSprite } from '../utils/opponentArt';
 import { isSafeSpriteSrc } from '../utils/spriteLibrary';
-import { listPlayers, getPlayer, addFriend, removeFriend, sendGift, type DirectoryPlayer } from '../utils/community';
+import { listPlayers, getPlayer, addFriend, removeFriend, sendGift, suggestNames, type DirectoryPlayer } from '../utils/community';
 import { LIBRARY_NPCS } from '../utils/libraryNpcs';
 import { PlayerDetailModal } from './PlayerDetailModal';
+import { RitualDialog } from './ritual/RitualKit';
+import { getStageBranch } from '../types/progression';
+import { ATTR_LABEL } from '../types/attributes';
 import { CoopPanel } from './CoopPanel';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
@@ -102,7 +105,7 @@ const amigoNaoResolvido = (id: string, isPt: boolean): LibraryEntry => ({
  * Cor pela natureza da ação (D-S5): `add` ciano, `paid` tinta, remover `muted`.
  */
 function RowAction({
-  icon, label, onClick, disabled, busy, tone = 'ink', fill,
+  icon, label, onClick, disabled, busy, tone = 'ink', fill, onInert,
 }: {
   icon: string;
   label: string;
@@ -111,12 +114,14 @@ function RowAction({
   busy?: boolean;
   tone?: 'ink' | 'primary' | 'muted';
   fill?: number;
+  /** Toque numa ação inerte: o chamador explica o motivo (o ícone sozinho parecia quebrado). */
+  onInert?: () => void;
 }) {
   const inert = disabled || busy;
   return (
     <button
       type="button"
-      onClick={(e) => { e.stopPropagation(); if (!inert) onClick(); }}
+      onClick={(e) => { e.stopPropagation(); if (!inert) onClick(); else if (!busy) onInert?.(); }}
       aria-disabled={inert ? true : undefined}
       aria-busy={busy ? true : undefined}
       tabIndex={inert ? -1 : undefined}
@@ -163,6 +168,10 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
   const [addName, setAddName] = useState('');
   const [addBusy, setAddBusy] = useState(false);
   const [addMsg, setAddMsg] = useState<string | null>(null);
+  /** Sugestões de nomes (do servidor) que começam com o que a pessoa digitou. */
+  const [sugestoes, setSugestoes] = useState<string[]>([]);
+  /** Pet aberto no painel simples da Biblioteca do Hall. */
+  const [selectedPet, setSelectedPet] = useState<LibraryEntry | null>(null);
   const [seen, setSeen] = useState<string[]>(readSeen);
   const markSeen = (id: string) => {
     setSeen(prev => {
@@ -223,6 +232,18 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
     return () => { vivo = false; };
   }, [friendsKey, reloadKey, isPt]);
 
+  useEffect(() => {
+    const q = addName.trim();
+    if (tab !== 'friends' || !q) { setSugestoes([]); return; }
+    let vivo = true;
+    const t = setTimeout(() => {
+      suggestNames(q)
+        .then(r => { if (vivo) setSugestoes((r.names ?? []).filter(n => n.toLowerCase().startsWith(q.toLowerCase()) && n.toLowerCase() !== q.toLowerCase()).slice(0, 8)); })
+        .catch(() => { if (vivo) setSugestoes([]); });
+    }, 250);
+    return () => { vivo = false; clearTimeout(t); };
+  }, [addName, tab]);
+
   const toggleFriend = async (p: DirectoryPlayer) => {
     setBusyId(p.id);
     setActionError(null);
@@ -244,6 +265,7 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
       await sendGift(saveId, friendId);
       setGiftedToday(prev => new Set(prev).add(friendId));
       onGiftSent(friendId);
+      setAddMsg(isPt ? '20 Bits enviados!' : 'Sent 20 Bits!');
     } catch {
       setActionError(isPt ? 'O presente não chegou. Tente de novo daqui a pouco.' : "The gift didn't go through. Try again in a bit.");
     } finally {
@@ -347,6 +369,15 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
           </button>
         </form>
       )}
+      {tab === 'friends' && sugestoes.length > 0 && (
+        <ul data-friend-suggestions aria-label={isPt ? 'Sugestões de nomes' : 'Name suggestions'} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {sugestoes.map(n => (
+            <li key={n}>
+              <button type="button" onClick={() => { setAddName(n); setAddMsg(null); setSugestoes([]); }} style={sm2Button('outline', false, 'sm')}>{n}</button>
+            </li>
+          ))}
+        </ul>
+      )}
       {tab === 'friends' && addMsg && <p role="status" className="sm2-lib-s" data-friend-add-msg style={{ margin: 0 }}>{addMsg}</p>}
 
       {tab === 'directory' && (
@@ -439,8 +470,51 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
         </p>
       )}
 
+      {seenOnly && tab === 'directory' && list && list.length > 0 && (
+        <div className="sm2-lib-grid" data-pet-grid style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 8 }}>
+          {list.map(p => {
+            const sprite = isSafeSpriteSrc(p.spriteUrl) ? p.spriteUrl : opponentSprite(p);
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => { setSelectedPet(p); markSeen(p.id); onVisitPlayer?.(); }}
+                aria-label={nomeDe(p)}
+                style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: 4, minHeight: 44, background: 'none', border: 0, cursor: 'pointer', minWidth: 0 }}
+              >
+                <MiniGlass size={64}>
+                  <img src={sprite} alt="" width={64} height={64} style={{ display: 'block', width: 64, height: 64, objectFit: 'contain', imageRendering: 'pixelated' }} />
+                </MiniGlass>
+                <span className="s" style={{ fontSize: 12, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nomeDe(p)}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {selectedPet && (() => {
+        const branch = getStageBranch(selectedPet.stage);
+        const sprite = isSafeSpriteSrc(selectedPet.spriteUrl) ? selectedPet.spriteUrl : opponentSprite(selectedPet);
+        return (
+          <RitualDialog onClose={() => setSelectedPet(null)} labelledBy="sm2-pet-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320}>
+            <h2 id="sm2-pet-title" className="sm2-lib-h2" style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}>
+              {selectedPet.petName || selectedPet.name}
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+              <img src={sprite} alt={selectedPet.petName || selectedPet.name} width={160} height={160} style={{ display: 'block', width: 160, height: 160, objectFit: 'contain', imageRendering: 'pixelated' }} />
+              <p className="sm2-lib-s" style={{ margin: 0 }}>
+                {isPt ? 'Elemento' : 'Element'}: {branch ? (isPt ? ATTR_LABEL[branch].pt : ATTR_LABEL[branch].en) : '—'}
+              </p>
+              <p className="sm2-lib-s" style={{ margin: 0 }}>
+                {isPt ? 'Dono' : 'Owner'}: {selectedPet.isNpc ? (isPt ? 'demonstração' : 'demo') : selectedPet.name}
+              </p>
+            </div>
+          </RitualDialog>
+        );
+      })()}
+
       <div className="sm2-lib-list">
-        {list?.map(p => {
+        {!(seenOnly && tab === 'directory') && list?.map(p => {
           const isNpc = !!p.isNpc;
           const isFriend = friends.includes(p.id);
           const gifted = giftedToday.has(p.id);
@@ -505,6 +579,9 @@ export function LibraryPage({ saveId, friends, canGiftToday, onFriendsChange, on
                       ? (isPt ? 'Já presenteado hoje' : 'Already gifted today')
                       : (isPt ? `Enviar 20 Bits para ${p.name}` : `Send 20 Bits to ${p.name}`)}
                   onClick={() => gift(p.id)}
+                  onInert={() => setAddMsg(!canGiftToday
+                    ? (isPt ? 'Para presentear, a energia do seu Soulmon precisa estar cheia.' : 'To send a gift, your Soulmon needs full energy.')
+                    : (isPt ? 'Você já presenteou essa pessoa hoje.' : 'You already gifted this person today.'))}
                 />
               )}
               {!isNpc && (

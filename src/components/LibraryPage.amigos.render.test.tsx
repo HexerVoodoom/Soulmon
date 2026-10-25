@@ -61,6 +61,7 @@ const props = (friends: string[]) => ({
 });
 
 /** Uma linha da lista = um botao "Ver o perfil de X". */
+const pets = () => Array.from(document.querySelectorAll('[data-pet-grid] button'));
 const linhas = () => screen.queryAllByRole('button', { name: /Ver o perfil de/ });
 
 const abrirAmigos = () => {
@@ -188,13 +189,16 @@ describe('H17 (01/10/2026) — a Biblioteca do Hall mostra só os Soulmons já v
     r.unmount();
     renderWithCss(<LibraryPage {...props([])} embedded view="directory" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
-    await waitFor(() => expect(linhas()).toHaveLength(2));
-    expect(linhas().map(b => b.getAttribute('aria-label'))).toEqual(['Ver o perfil de Abelhudo', 'Ver o perfil de Zorro']);
+    await waitFor(() => expect(pets()).toHaveLength(2));
+    expect(pets().map(b => b.getAttribute('aria-label'))).toEqual(['Abelhudo', 'Zorro']);
+    fireEvent.click(pets()[1]);
+    expect(await screen.findByRole('dialog')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Fechar/ }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(screen.queryByText('Nunca')).toBeNull();
 
     fireEvent.change(screen.getByRole('textbox', { name: /Buscar Soulmon/ }), { target: { value: 'zor' } });
-    await waitFor(() => expect(linhas()).toHaveLength(1));
-    expect(screen.getByText('Zorro')).toBeTruthy();
+    await waitFor(() => expect(pets()).toHaveLength(1));
   });
 });
 
