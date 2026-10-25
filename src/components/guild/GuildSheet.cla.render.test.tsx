@@ -3,6 +3,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { GuildSheet } from './GuildSheet';
 
+// A vitória da defesa é decisão do cliente: aqui ela é determinística (o combate em si tem teste próprio).
+vi.mock('../../utils/plantioDefesa', async (orig) => ({ ...(await orig<typeof import('../../utils/plantioDefesa')>()), lutarDefesa: () => ({ won: true, fightsWon: 3 }) }));
+
 const EU = 'a'.repeat(16);
 const ELE = 'b'.repeat(16);
 const vista = () => ({
@@ -11,10 +14,6 @@ const vista = () => ({
   presence: [], threadedToday: null, mine: {}, bosque: { stage: 'clareira', stageIndex: 1, perto: false, tide: { key: null, size: 'petala' }, ornaments: [] },
   gestures: [], gestureReceived: null, raid: null,
   casa: { nivel: 'haste', nivelIndex: 1, perto: false, slots: [], mine: { slot: null, capReached: false } },
-});
-const praca = (over: Record<string, unknown> = {}) => ({
-  slots: [0, 1, 2, 3].map(slot => ({ slot, item: null, by: null, mine: false })),
-  gifts: [], mine: { sentToday: [] }, ...over,
 });
 const plantio = (over: Record<string, unknown> = {}) => ({
   season: 'primavera', seasonKey: '2026-primavera', species: 'girassol', planted: false, canPlant: true,
@@ -66,162 +65,140 @@ describe('D-09: Informações do clã', () => {
     await waitFor(() => expect(container.querySelector('[data-cla-info]')).not.toBeNull());
     expect(container.querySelector('[data-cla-info]')!.getAttribute('aria-label')).toBe('Clan info');
   });
-  it.skip('os prédios só falam com o servidor depois de abertos', async () => {
-    mockServer({ claPraca: () => ({ json: { praca: praca() } }) });
-    const { container } = render(<GuildSheet {...base} cla={{ onReward: vi.fn() }} />);
-    await waitFor(() => expect(container.querySelector('[data-predio="praca"]')).not.toBeNull());
-    expect(calls.some(c => c.action === 'claPraca')).toBe(false);
-    fireEvent.click(container.querySelector('[data-predio="praca"]')!);
-    await waitFor(() => expect(calls.some(c => c.action === 'claPraca')).toBe(true));
-  });
 });
 
-describe('Praça (D-11 + D-10)', () => {
-  it.skip('mostra o visor e os 4 lugares; pôr um item livre chama claPracaSlot', async () => {
-    let atual = praca();
-    mockServer({
-      claPraca: () => ({ json: { praca: atual } }),
-      claPracaSlot: (b) => { atual = praca({ slots: [0, 1, 2, 3].map(slot => ({ slot, item: slot === b.slot ? b.item : null, by: null, mine: slot === b.slot })) }); return { json: { praca: atual } }; },
-    });
+describe('Praça e Casa: ocultas no Clan Hall (L5-D1), não apagadas', () => {
+  it('sem porta da Praça, sem "Place an Item" e sem nenhuma chamada à Praça', async () => {
+    mockServer({});
     const { container } = render(<GuildSheet {...base} casa={casa} cla={{ onReward: vi.fn() }} />);
-    await abrir(container, 'praca');
-    await waitFor(() => expect(container.querySelector('[data-praca-visor]')).not.toBeNull());
-    expect(container.querySelectorAll('[data-praca-lugar-item]').length).toBe(4);
-    fireEvent.click(container.querySelector('[data-praca-escolher="1"]')!);
-    expect(container.querySelector('[data-praca-item="furn-rug"]')).toBeNull(); // equipado no cenário pessoal
-    fireEvent.click(container.querySelector('[data-praca-item="furn-lamp"]')!);
-    await waitFor(() => expect(calls.find(c => c.action === 'claPracaSlot')!.body).toMatchObject({ slot: 1, item: 'furn-lamp' }));
-    await waitFor(() => expect(container.querySelector('[data-praca-lugar="1"]')!.getAttribute('data-ocupado')).toBe('true'));
-    await waitFor(() => expect(container.querySelector('[data-praca-tirar="1"]')).not.toBeNull());
-  });
-
-  it.skip('enviar presente: habilitado, chama claPresente com o id do membro e depois fica desabilitado', async () => {
-    let enviados: string[] = [];
-    mockServer({
-      claPraca: () => ({ json: { praca: praca({ mine: { sentToday: enviados } }) } }),
-      claPresente: (b) => { enviados = [b.to]; return { json: { sent: true, praca: praca({ mine: { sentToday: enviados } }) } }; },
-    });
-    const { container } = render(<GuildSheet {...base} cla={{ onReward: vi.fn() }} />);
-    await abrir(container, 'praca');
-    const sel = `[data-praca-presentear="${ELE}"]`;
-    await waitFor(() => expect(container.querySelector(sel)).not.toBeNull());
-    expect(container.querySelector(sel)!.hasAttribute('disabled')).toBe(false);
-    fireEvent.click(container.querySelector(sel)!);
-    await waitFor(() => expect(calls.find(c => c.action === 'claPresente')!.body.to).toBe(ELE));
-    await waitFor(() => expect(container.querySelector(sel)!.hasAttribute('disabled')).toBe(true));
-  });
-
-  it.skip('já enviou hoje: o botão chega desabilitado', async () => {
-    mockServer({ claPraca: () => ({ json: { praca: praca({ mine: { sentToday: [ELE] } }) } }) });
-    const { container } = render(<GuildSheet {...base} cla={{ onReward: vi.fn() }} />);
-    await abrir(container, 'praca');
-    await waitFor(() => expect(container.querySelector(`[data-praca-presentear="${ELE}"]`)).not.toBeNull());
-    expect(container.querySelector(`[data-praca-presentear="${ELE}"]`)!.hasAttribute('disabled')).toBe(true);
-  });
-
-  it.skip('presente recebido: "Abrir" credita pelo onReward com o recibo do servidor', async () => {
-    const onReward = vi.fn();
-    const gift = { from: ELE, day: '2026-10-18', item: { kind: 'chip', id: 'chip-power' }, id: `${ELE}|2026-10-18` };
-    mockServer({
-      claPraca: () => ({ json: { praca: praca({ gifts: [gift] }) } }),
-      claPresenteClaim: () => ({ json: { claimed: { item: gift.item, receipt: 'rec-1' }, praca: praca() } }),
-    });
-    const { container } = render(<GuildSheet {...base} cla={{ onReward }} />);
-    await abrir(container, 'praca');
-    await waitFor(() => expect(container.querySelector('[data-praca-abrir]')).not.toBeNull());
-    fireEvent.click(container.querySelector('[data-praca-abrir]')!);
-    await waitFor(() => expect(onReward).toHaveBeenCalledWith('rec-1', [{ kind: 'chip', id: 'chip-power' }]));
-    expect(calls.find(c => c.action === 'claPresenteClaim')!.body.giftId).toBe(gift.id);
-    await waitFor(() => expect(container.querySelector('[data-praca-presente]')).toBeNull());
-    expect(onReward).toHaveBeenCalledTimes(1);
-  });
-
-  it.skip('falha de rede ao abrir: frase calma e botão de tentar de novo, sem crédito', async () => {
-    globalThis.fetch = vi.fn(async (url: string) => {
-      const action = new URL(url, 'https://x.dev').searchParams.get('action');
-      if (action === 'claPraca') throw new TypeError('offline');
-      if (action === 'guildRewards') return new Response(JSON.stringify({ rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 });
-      return new Response(JSON.stringify({ guild: vista() }), { status: 200 });
-    }) as never;
-    const onReward = vi.fn();
-    const { container } = render(<GuildSheet {...base} cla={{ onReward }} />);
-    await abrir(container, 'praca');
-    await waitFor(() => expect(container.querySelector('[data-praca-erro]')).not.toBeNull());
-    expect(onReward).not.toHaveBeenCalled();
+    await waitFor(() => expect(container.querySelector('[data-cla-info]')).not.toBeNull());
+    await waitFor(() => expect(container.querySelector('[data-guild-card="casa"]')).not.toBeNull());
+    expect(container.querySelector('[data-guild-card="predios"]')).toBeNull();
+    expect(container.querySelector('[data-predio="praca"]')).toBeNull();
+    expect(container.querySelector('[data-casa-escolher]')).toBeNull();
+    expect(container.querySelector('[data-praca-visor]')).toBeNull();
+    expect(calls.some(c => c.action === 'claPraca')).toBe(false);
   });
 });
 
-describe('Plantio (D-14..D-17)', () => {
-  it.skip('terra vazia: espécie da estação e botão Plantar; plantar chama claPlantar', async () => {
-    let atual: any = plantio();
-    mockServer({
-      claPlantio: () => ({ json: { plantio: atual } }),
-      claPlantar: () => { atual = plantio({ planted: true, canPlant: false, stage: 0, progress: 0, level: 1, tier: 1 }); return { json: { plantio: atual } }; },
-    });
+describe('Plantio / Jardim (L5-D2)', () => {
+  const ingles = { language: 'en-US' as const };
+  const crescendo = (over: Record<string, unknown> = {}) => plantio({
+    species: 'cerejeira', planted: true, canPlant: false, stage: 1, progress: 21, progressDays: 3, totalDays: 14, level: 1, tier: 1,
+    underAttack: true, mine: { wateredToday: false, canHarvest: false, task: null, canDraw: true }, ...over,
+  });
+  const comTarefa = (task: 'water' | 'protect' | null, extra: Record<string, unknown> = {}) =>
+    crescendo({ mine: { wateredToday: false, canHarvest: false, task, canDraw: false, ...extra } });
+
+  it('o jardim abre direto: sem porta nem "Fechar", e lê o servidor na hora', async () => {
+    mockServer({ claPlantio: () => ({ json: { plantio: crescendo() } }) });
     const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward: vi.fn() }} />);
-    await abrir(container, 'plantio');
     await waitFor(() => expect(container.querySelector('[data-plantio-especie]')).not.toBeNull());
+    expect(container.querySelector('[data-guild-room="plantio"]')).not.toBeNull();
+    expect(container.querySelector('[data-predio]')).toBeNull();
+    expect(container.querySelector('[data-predio-fechar]')).toBeNull();
+    expect(calls.some(c => c.action === 'claPlantio')).toBe(true);
     expect(container.querySelector('[data-plantio-especie]')!.textContent).toBe('Cerejeira e acácia');
     expect(container.querySelector('[data-plantio-estacao]')!.textContent).toBe('Primavera');
-    fireEvent.click(container.querySelector('[data-plantio-plantar]')!);
+  });
+
+  it('terra vazia: planta sozinha (claPlantar), sem o jogador abrir nada', async () => {
+    let atual: any = plantio({ species: 'cerejeira' });
+    mockServer({
+      claPlantio: () => ({ json: { plantio: atual } }),
+      claPlantar: () => { atual = crescendo({ stage: 0, progress: 0, progressDays: 0 }); return { json: { plantio: atual } }; },
+    });
+    const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward: vi.fn() }} />);
     await waitFor(() => expect(calls.some(c => c.action === 'claPlantar')).toBe(true));
     await waitFor(() => expect(container.querySelector('[data-plantio-estagio]')).not.toBeNull());
+    expect(calls.filter(c => c.action === 'claPlantar')).toHaveLength(1);
     expect(container.querySelector('[data-plantio-arvore]')!.textContent).toMatch(/Nível/);
   });
 
-  it.skip('crescendo e atrasada: avisa com calma, oferece Regar e Proteger; regar fica "você regou hoje"', async () => {
-    let atual: any = plantio({ planted: true, canPlant: false, stage: 2, progress: 50, delayed: true, level: 2, tier: 1 });
-    mockServer({
-      claPlantio: () => ({ json: { plantio: atual } }),
-      claRegar: () => { atual = { ...atual, mine: { wateredToday: true, canHarvest: false } }; return { json: { plantio: atual } }; },
-      claProteger: () => { atual = { ...atual, today: { waterOk: false, protectedToday: true } }; return { json: { plantio: atual } }; },
-    });
-    const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward: vi.fn() }} />);
-    await abrir(container, 'plantio');
-    await waitFor(() => expect(container.querySelector('[data-plantio-atrasada]')).not.toBeNull());
-    expect(container.querySelector('[data-plantio-colher]')).toBeNull();
-    fireEvent.click(container.querySelector('[data-plantio-regar]')!);
-    await waitFor(() => expect(container.querySelector('[data-plantio-regado]')).not.toBeNull());
+  it('a semente mostra "x / y" dias e o botão da ação do dia é "Tend the garden" (nada de Regar/Proteger)', async () => {
+    mockServer({ claPlantio: () => ({ json: { plantio: crescendo() } }) });
+    const { container } = render(<GuildSheet {...base} {...ingles} room="grove" cla={{ onReward: vi.fn() }} />);
+    await waitFor(() => expect(container.querySelector('[data-plantio-dias]')).not.toBeNull());
+    expect(container.querySelector('[data-plantio-dias]')!.textContent).toBe('3 / 14');
+    expect(container.querySelector('[data-plantio-cuidar]')!.textContent).toMatch(/Tend the garden/);
     expect(container.querySelector('[data-plantio-regar]')).toBeNull();
-    fireEvent.click(container.querySelector('[data-plantio-proteger]')!);
-    await waitFor(() => expect(container.querySelector('[data-plantio-protegido]')).not.toBeNull());
+    expect(container.querySelector('[data-plantio-proteger]')).toBeNull();
+    expect(container.querySelector('[data-plantio-colher]')).toBeNull();
   });
 
-  it.skip('madura: colher UMA vez por semana credita o fruto pelo recibo e depois diz que já colheu', async () => {
+  it('"Tend the garden" dispara claSortear; sorteado aguar: regar (claRegar) na hora e vira "regou hoje"', async () => {
+    let atual: any = crescendo();
+    mockServer({
+      claPlantio: () => ({ json: { plantio: atual } }),
+      claSortear: () => { atual = comTarefa('water'); return { json: { plantio: atual, task: 'water' } }; },
+      claRegar: () => { atual = crescendo({ mine: { wateredToday: true, canHarvest: false, task: null, canDraw: false } }); return { json: { plantio: atual } }; },
+    });
+    const { container } = render(<GuildSheet {...base} {...ingles} room="grove" cla={{ onReward: vi.fn() }} />);
+    await waitFor(() => expect(container.querySelector('[data-plantio-cuidar]')).not.toBeNull());
+    fireEvent.click(container.querySelector('[data-plantio-cuidar]')!);
+    await waitFor(() => expect(calls.some(c => c.action === 'claSortear')).toBe(true));
+    await waitFor(() => expect(calls.some(c => c.action === 'claRegar')).toBe(true));
+    await waitFor(() => expect(container.querySelector('[data-plantio-regado]')).not.toBeNull());
+    expect(calls.some(c => c.action === 'claProteger')).toBe(false);
+    expect(container.querySelector('[data-plantio-cuidar]')).toBeNull();
+    expect(container.querySelector('[data-plantio-erro]')).toBeNull();
+  });
+
+  it('sorteado proteger: a defesa mostra 3 inimigos; vencer chama claProteger (a vitória é do cliente)', async () => {
+    let atual: any = crescendo();
+    mockServer({
+      claPlantio: () => ({ json: { plantio: atual } }),
+      claSortear: () => { atual = comTarefa('protect'); return { json: { plantio: atual, task: 'protect' } }; },
+      claProteger: () => { atual = crescendo({ today: { waterOk: false, protectedToday: true }, mine: { wateredToday: false, canHarvest: false, task: null, canDraw: false } }); return { json: { plantio: atual } }; },
+    });
+    const { container } = render(<GuildSheet {...base} {...ingles} room="grove" cla={{ onReward: vi.fn() }} />);
+    await waitFor(() => expect(container.querySelector('[data-plantio-cuidar]')).not.toBeNull());
+    fireEvent.click(container.querySelector('[data-plantio-cuidar]')!);
+    await waitFor(() => expect(container.querySelector('[data-plantio-defesa]')).not.toBeNull());
+    expect(container.querySelectorAll('[data-plantio-defesa] li img')).toHaveLength(3);
+    expect(calls.some(c => c.action === 'claProteger')).toBe(false); // abrir o combate não protege
+    fireEvent.click(container.querySelector('[data-plantio-lutar]')!);
+    await waitFor(() => expect(calls.some(c => c.action === 'claProteger')).toBe(true));
+    await waitFor(() => expect(container.querySelector('[data-plantio-protegido]')).not.toBeNull());
+    expect(container.querySelector('[data-plantio-defesa]')).toBeNull();
+  });
+
+  it('o servidor recusa regar sem sorteio (409 "no draw"): relê em silêncio, sem frase de erro e sem "regou hoje"', async () => {
+    mockServer({
+      claPlantio: () => ({ json: { plantio: comTarefa('water') } }), // vista velha: ainda acha que sorteou
+      claRegar: () => ({ status: 409, json: { error: 'no draw' } }),
+    });
+    const { container } = render(<GuildSheet {...base} {...ingles} room="grove" cla={{ onReward: vi.fn() }} />);
+    await waitFor(() => expect(container.querySelector('[data-plantio-cuidar]')).not.toBeNull());
+    const leituras = () => calls.filter(c => c.action === 'claPlantio').length;
+    const antes = leituras();
+    fireEvent.click(container.querySelector('[data-plantio-cuidar]')!);
+    await waitFor(() => expect(calls.some(c => c.action === 'claRegar')).toBe(true));
+    await waitFor(() => expect(leituras()).toBeGreaterThan(antes));
+    expect(container.querySelector('[data-plantio-regado]')).toBeNull();
+    expect(container.querySelector('[data-plantio-erro]')).toBeNull();
+  });
+
+  it('madura: colher UMA vez por semana credita o fruto pelo recibo e depois diz que já colheu', async () => {
     const onReward = vi.fn();
-    let atual: any = plantio({ planted: true, canPlant: false, stage: 4, mature: true, progress: 100, level: 1, tier: 1, mine: { wateredToday: false, canHarvest: true } });
+    let atual: any = plantio({ species: 'cerejeira', planted: true, canPlant: false, stage: 4, mature: true, progress: 100, level: 1, tier: 1, mine: { wateredToday: false, canHarvest: true } });
     mockServer({
       claPlantio: () => ({ json: { plantio: atual } }),
       claColher: () => {
         atual = { ...atual, mine: { wateredToday: false, canHarvest: false } };
-        return { json: { plantio: atual, fruit: { id: 'fruto-girassol-t1', especie: 'girassol', tier: 1, bits: 5 }, receipt: 'g1|2026-W42|2026-primavera' } };
+        return { json: { plantio: atual, fruit: { id: 'fruto-cerejeira-t1', especie: 'cerejeira', tier: 1, bits: 5 }, receipt: 'g1|2026-W42|2026-primavera' } };
       },
     });
     const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward }} />);
-    await abrir(container, 'plantio');
     await waitFor(() => expect(container.querySelector('[data-plantio-colher]')).not.toBeNull());
+    expect(container.querySelector('[data-plantio-cuidar]')).toBeNull();
     fireEvent.click(container.querySelector('[data-plantio-colher]')!);
     await waitFor(() => expect(onReward).toHaveBeenCalledOnce());
     const [receipt, rewards] = onReward.mock.calls[0];
     expect(receipt).toBe('g1|2026-W42|2026-primavera');
     expect(rewards[0]).toEqual({ kind: 'bits', amount: 5 });
-    expect(rewards[1]).toMatchObject({ kind: 'decor' });
     await waitFor(() => expect(container.querySelector('[data-plantio-colhido]')).not.toBeNull());
     expect(container.querySelector('[data-plantio-colher]')).toBeNull();
-  });
-
-  it.skip('409 (já feito em outro aparelho) é estado: relê em silêncio, sem frase de erro', async () => {
-    let planta: any = plantio({ planted: true, canPlant: false, stage: 1, progress: 10, level: 1, tier: 1 });
-    mockServer({
-      claPlantio: () => ({ json: { plantio: planta } }),
-      claRegar: () => { planta = { ...planta, mine: { wateredToday: true, canHarvest: false } }; return { status: 409, json: { error: 'already watered' } }; },
-    });
-    const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward: vi.fn() }} />);
-    await abrir(container, 'plantio');
-    await waitFor(() => expect(container.querySelector('[data-plantio-regar]')).not.toBeNull());
-    fireEvent.click(container.querySelector('[data-plantio-regar]')!);
-    await waitFor(() => expect(container.querySelector('[data-plantio-regado]')).not.toBeNull());
-    expect(container.querySelector('[data-plantio-erro]')).toBeNull();
   });
 });
 

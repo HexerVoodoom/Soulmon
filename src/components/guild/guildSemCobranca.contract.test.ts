@@ -384,10 +384,9 @@ describe('L4: estados que não podem voltar', () => {
     expect(sheet).toMatch(/<UnlockNudge/);
   });
 
-  it('gesto enviado fica FOCÁVEL: nenhum `disabled` no botão de gesto (só `aria-disabled`) — o teclado não perde o lugar (M6)', () => {
-    const trecho = sheet.slice(sheet.indexOf('data-gesto={k}'), sheet.indexOf('data-gesto={k}') + 700);
-    expect(trecho).toMatch(/aria-disabled/);
-    expect(trecho).not.toMatch(/(?<![-\w])disabled=/);
+  it('L5-D2: os botões de gesto (Aceno/Luz/Descanso) e o componente morto SalaGestos saíram da folha', () => {
+    expect(sheet).not.toMatch(/data-gesto=\{k\}/);
+    expect(sheet).not.toMatch(/SalaGestos/);
   });
 
   it('a saída mora no RODAPÉ da folha (M5) e os gestos recebidos no Bosque, não na lista de nomes (M3/B7)', () => {

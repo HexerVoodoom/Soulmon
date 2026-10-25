@@ -69,16 +69,14 @@ describe('a Casa da guilda no Salão', () => {
     expect(b.container.querySelector('[data-casa-doar]')).toBeNull();
   });
 
-  it.skip('pôr um item: só os livres (não equipados) e o save é reconciliado ao slot do servidor', async () => {
+  it('L5-D1: "Place an Item" está oculto no Clan Hall (nada de escolher item, nem porta da Praça)', async () => {
     mockServer(casaVista());
-    const onSlot = vi.fn();
-    const { container } = render(<GuildSheet {...base} casa={{ bits: 0, ownedFurniture: ['furn-lamp', 'furn-rug'], equippedDecor: { rug: 'furn-rug' }, donatedItem: null, onSpend: vi.fn(), onSlot }} />);
-    await waitFor(() => expect(container.querySelector('[data-casa-escolher]')).not.toBeNull());
-    fireEvent.click(container.querySelector('[data-casa-escolher]')!);
-    expect(container.querySelector('[data-casa-item="furn-rug"]')).toBeNull(); // equipado no cenário pessoal
-    fireEvent.click(container.querySelector('[data-casa-item="furn-lamp"]')!);
-    await waitFor(() => expect(onSlot).toHaveBeenCalledWith('furn-lamp'));
-    expect(calls.find(c => c.action === 'guildSlot')!.body.item).toBe('furn-lamp');
+    const { container } = render(<GuildSheet {...base} casa={{ bits: 0, ownedFurniture: ['furn-lamp', 'furn-rug'], equippedDecor: { rug: 'furn-rug' }, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() }} />);
+    await waitFor(() => expect(container.querySelector('[data-guild-card="casa"]')).not.toBeNull());
+    expect(container.querySelector('[data-casa-escolher]')).toBeNull();
+    expect(container.querySelector('[data-casa-item]')).toBeNull();
+    expect(container.querySelector('[data-predio="praca"]')).toBeNull();
+    expect(calls.some(c => c.action === 'guildSlot')).toBe(false);
   });
 
   it('sem guilda, o item doado volta (onSlot(null))', async () => {
