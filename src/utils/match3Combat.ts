@@ -15,6 +15,7 @@
  */
 import { chainMultiplier, match3Bits, trySwap, validMoves, M3_TILE_ELEMENTS, type Board, type Pos, type Rng, type Step } from './match3';
 import { mulberry32 } from './combate/rng';
+import { pickEnemy } from './enemyRoster';
 
 export type M3Element = (typeof M3_TILE_ELEMENTS)[number];
 
@@ -39,7 +40,13 @@ export const M3C_DEFEAT_BONUS = 100;
 export const M3C_MAX_TURNS = 60;
 
 export interface M3Fighter { hp: number; max: number }
-export interface M3Enemy extends M3Fighter { element: M3Element; /** Linha de arte (`DUNGEON_LINE_SPRITES`). */ line?: string }
+export interface M3Enemy extends M3Fighter {
+  element: M3Element;
+  /** Linha de arte (`DUNGEON_LINE_SPRITES`). */
+  line?: string;
+  /** M10: chave do roster (`enemyRoster.ts`, `<id>-<estágio>`) quando o combate foi montado com o level do jogador; manda na arte/nome. */
+  roster?: string;
+}
 export type M3Target = 'player' | 0 | 1 | 2;
 export interface M3Event {
   by: 'player' | 'enemy';
@@ -70,7 +77,7 @@ export interface M3Combat {
  * Um combate novo. `lines` = linhas de arte candidatas (a tela passa as de `DUNGEON_LINE_SPRITES`); `exclude` = a do jogador (ninguém encara
  * um espelho). Os três elementos são DISTINTOS e as três linhas também — tudo sorteado pelo `rng` por parâmetro.
  */
-export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: string): M3Combat {
+export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: string, level?: number): M3Combat {
   const pool = lines.filter(l => l !== exclude);
   const els: M3Element[] = [...M3_TILE_ELEMENTS];
   const pick = <T,>(arr: T[]): T => arr.splice(Math.min(arr.length - 1, Math.floor(rng() * arr.length)), 1)[0];
@@ -79,6 +86,13 @@ export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: str
     ...(lines.length > 0 ? { line: pick(pool.length > 0 ? pool : [...lines]) } : {}),
   });
   const enemies: [M3Enemy, M3Enemy, M3Enemy] = [mk(0), mk(1), mk(2)];
+  if (level !== undefined) {
+    // M10: as 3 vagas pedem rookie/champion/ultimate, rebaixadas ao teto do level (progressão do roster); sem repetir criatura.
+    // Sorteado DEPOIS do resto, então o rng das jogadas antigas (sem level) não muda.
+    const used = new Set<string>();
+    const pedido = ['rookie', 'champion', 'ultimate'] as const;
+    enemies.forEach((e, i) => { const r = pickEnemy(level, rng, { stage: pedido[i], used }); used.add(r.id); e.roster = r.key; });
+  }
   return { player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP }, enemies, active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing' };
 }
 

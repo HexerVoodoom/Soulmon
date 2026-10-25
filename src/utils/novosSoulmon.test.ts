@@ -72,10 +72,12 @@ describe('os 17 novos Soulmon da masmorra', () => {
     expect(LADDER_TIERS.map(t => novoPreferenceOfTier(t)[0])).toEqual(['rookie', 'rookie', 'rookie', 'champion', 'ultimate', 'mega']);
     expect(Object.keys(FORMAS_ALTAS)).toHaveLength(17);
     for (let seed = 1; seed <= 20; seed++) {
-      const wave = buildDungeonWave(1 + seed % 4, 'rookie', mulberry32(seed));
+      // M10: a forma de ARTE do slot é limitada pelo level (`enemyRoster.ts`); level 30 libera a escada inteira.
+      const wave = buildDungeonWave(1 + seed % 4, 'mega', mulberry32(seed), 30);
       const forma = ['rookie', 'rookie', 'rookie', 'champion', 'ultimate', 'mega'] as const;
       wave.forEach((e, i) => {
-        const n = novoSoulmonOfStage(e.stage)!;
+        const n = novoSoulmonOfStage(e.stage);
+        if (!n) { expect(e.stage, e.stage).toMatch(/^cmb\d{3}-rookie$/); return; } // rookie de elemento combinado (M10)
         expect(n, e.stage).toBeDefined();
         expect(e.element).toBe(n.element);
         expect(e.name).toBe(n.name(forma[i]));
@@ -95,7 +97,7 @@ describe('os 17 novos Soulmon da masmorra', () => {
 
   it('sem repetição: as criaturas novas da onda (6 slots) são todas diferentes', () => {
     for (let seed = 1; seed <= 200; seed++) {
-      const ids = buildDungeonWave(1, 'rookie', mulberry32(seed)).map(e => e.stage.split('-')[0]);
+      const ids = buildDungeonWave(1, 'rookie', mulberry32(seed), 30).map(e => e.stage.split('-')[0]);
       expect(ids).toHaveLength(6);
       expect(new Set(ids).size, ids.join()).toBe(6);
     }
@@ -146,6 +148,7 @@ describe('arquivo de ramos e combinados (sem consumidor)', () => {
       e.isDirectory() ? (e.name === 'assets' ? [] : walk(join(d, e.name))) : /\.(ts|tsx)$/.test(e.name) ? [join(d, e.name)] : []);
     for (const f of walk(join(process.cwd(), 'src'))) {
       if (f.endsWith('novosSoulmon.test.ts')) continue;
+      if (/enemyRoster(Art|Data)?\.ts$/.test(f)) continue; // M10: `enemyRosterArt.ts` é o ÚNICO consumidor (glob só dos 138 combinados); os outros só citam o caminho em comentário
       expect(readFileSync(f, 'utf8'), f).not.toContain('novos-arquivo');
     }
   });
