@@ -47,7 +47,7 @@ describe('3.2 a mochila não aparece junto do sprite', () => {
     const { container } = renderWithCss(<CompanionHUD {...base} />);
     const botao = container.querySelector('[data-cuidado="mochila"]') as HTMLElement;
     expect(botao.getAttribute('data-walking')).toBeNull();
-    expect(botao.getAttribute('aria-label')).toBe('Backpack');
+    expect(botao.getAttribute('aria-label')).toBe('Folder');
   });
 });
 

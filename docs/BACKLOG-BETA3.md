@@ -69,3 +69,6 @@ Decisões do dono (modal): jogo LinkedIn = **Patches** (+ Zip); masmorra NOVA ro
 
 ## M8 — Ranking dos minigames
 - Ranking em todos os minigames (servidor decide, por jogo).
+
+## Assets pendentes
+- M2: glifo `folder` (pasta) e `lightbulb` (lâmpada) não estão no subset de ícones (`styles/tokens.md`). Provisório: pasta = `inventory_2`, luz = `dark_mode` (apagar) / `light_mode` (acender). Trocar quando entrarem no subset.

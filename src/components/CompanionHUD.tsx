@@ -1998,13 +1998,13 @@ export const CompanionHUD = memo(function CompanionHUD({
             aria-haspopup="dialog"
             aria-expanded={mochilaOpen}
             aria-label={(language === 'pt-BR'
-              ? (hasNewItems ? 'Mochila — item novo' : 'Mochila')
-              : (hasNewItems ? 'Backpack — new item' : 'Backpack'))
+              ? (hasNewItems ? 'Pasta — item novo' : 'Pasta')
+              : (hasNewItems ? 'Folder — new item' : 'Folder'))
               + (walkingTo ? (language === 'pt-BR' ? ` — passeando: ${walkingTo}` : ` — out on a stroll to ${walkingTo}`) : '')}
           >
             {hasNewItems && <span className="sm2-deck-dot" aria-hidden="true" />}
             {/* 07/10/2026 (pedido do dono): a MOCHILA é um asset PNG (pixel art `UI_ICON_ART.mochila`, com a aba turquesa recolorida para marrom), não glifo vetorial. A mesma arte aparece no passeio, ao pé do pet. */}
-            <PixelIcon name="mochila" size={24} />
+            <Icon name="inventory_2" size={24} tone="inherit" />
           </button>
           <button
             type="button"
@@ -2014,14 +2014,14 @@ export const CompanionHUD = memo(function CompanionHUD({
             onClick={onSleep}
             aria-pressed={isSleeping}
             aria-label={language === 'pt-BR'
-              ? (isSleeping ? 'Acordar' : 'Dormir')
-              : (isSleeping ? 'Wake' : 'Sleep')}
+              ? (isSleeping ? 'Acender a luz' : 'Apagar a luz')
+              : (isSleeping ? 'Lights on' : 'Lights off')}
           >
             {/* Dormindo, o botão vira "Acordar": o sol da rodada 3 (30/09/2026)
                 substituiu o glifo `wb_sunny` que esperava a arte. */}
             {isSleeping
-              ? <PixelIcon name="acordar" size={24} />
-              : <PixelIcon name="dormir" size={24} />}
+              ? <Icon name="light_mode" size={24} tone="inherit" />
+              : <Icon name="dark_mode" size={24} tone="inherit" />}
           </button>
           <button
             type="button"
