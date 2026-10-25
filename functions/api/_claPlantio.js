@@ -176,12 +176,14 @@ async function estado(env, g, hoje) {
   return { est, planta, membros, membro, cresc: avaliarCrescimento({ plantedDay: planta.plantedDay, today: hoje, membros, membro }) };
 }
 
-/** Rega 1x/dia/membro. `reason`: 'no-plant' | 'grown' | 'already-watered'. */
+/** Rega 1x/dia/membro, só com o sorteio 'water' do dia. `reason`: 'no-plant' | 'grown' | 'no-draw' | 'already-watered'. */
 export async function regar(env, g, save, hoje) {
   const s = await estado(env, g, hoje);
   if (!s.planta) return { ok: false, reason: 'no-plant' };
   if (s.cresc.mature) return { ok: false, reason: 'grown' };
   const m = s.membro[save];
+  // D2: UMA ação por dia por pessoa, sorteada aqui; sem o sorteio de 'water' do dia, não rega.
+  if (m.sorteio?.day !== hoje || m.sorteio.kind !== 'water') return { ok: false, reason: 'no-draw' };
   if (m.water.includes(hoje)) return { ok: false, reason: 'already-watered' };
   m.water = [...m.water, hoje].slice(-PLANTIO_HIST_MAX);
   await gravarMembro(env, g.id, save, m);
@@ -191,7 +193,8 @@ export async function regar(env, g, save, hoje) {
 /**
  * L5-D2: UMA ação por vez por pessoa, SORTEADA AQUI entre aguar e proteger (o cliente não escolhe).
  * Idempotente no dia: repetir devolve o mesmo sorteio. Se a proteção do dia já foi feita por alguém, só sobra aguar.
- * Concluir a ação do sorteio (rega ou proteção) fecha o dia; eason: 'no-plant' | 'grown'.
+ * Concluir a ação do sorteio (rega ou proteção) fecha o dia; 
+eason: 'no-plant' | 'grown'.
  */
 export async function sortear(env, g, save, hoje, moeda = () => crypto.getRandomValues(new Uint8Array(1))[0] & 1) {
   const s = await estado(env, g, hoje);
@@ -210,6 +213,8 @@ export async function proteger(env, g, save, hoje, selo = Math.random().toString
   const s = await estado(env, g, hoje);
   if (!s.planta) return { ok: false, reason: 'no-plant' };
   if (s.cresc.mature) return { ok: false, reason: 'grown' };
+  // D2: só protege quem tirou 'protect' hoje (uma ação por dia por pessoa).
+  if (s.membro[save].sorteio?.day !== hoje || s.membro[save].sorteio.kind !== 'protect') return { ok: false, reason: 'no-draw' };
   if (s.cresc.todayProtected || await kvOrThrow(env).get(protKey(g.id, hoje))) return { ok: false, reason: 'already-protected' };
   await kvOrThrow(env).put(protKey(g.id, hoje), JSON.stringify({ selo }), { expirationTtl: 86400 * 3 });
   const lido = parse(await kvOrThrow(env).get(protKey(g.id, hoje)));

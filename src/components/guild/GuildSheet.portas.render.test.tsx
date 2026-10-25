@@ -93,13 +93,16 @@ describe('as portas dos prédios (D-107)', { timeout: 20000 }, () => {
     expect(document.querySelector('[data-guild-room="roda"]')).toBeTruthy(); // membros seguem
   });
 
-  it.skip('Grove: tem plantio e gestos e NÃO tem o mistério (o mistério é da Feira)', async () => {
+  it('Grove: o jardim abre direto (sem porta), sem Aceno/Luz/Descanso, sem Praça e NÃO tem o mistério (é da Feira)', async () => {
     const r = renderWithCss(area('hall'));
     fireEvent.click(r.container.querySelector('[data-area-lot="grove"]')!);
-    await waitFor(() => expect(document.querySelector('[data-guild-room-open="grove"] [data-predio="plantio"]')).toBeTruthy(), { timeout: 8000 });
-    expect(document.querySelector('[data-guild-room-open="grove"] [data-predio="misterio"]')).toBeNull();
-    expect(document.querySelector('[data-guild-room-open="grove"] [data-guild-gestos]')).toBeTruthy();
-    expect(document.querySelector('[data-guild-room-open="grove"] [data-predio="praca"]')).toBeNull();
+    const grove = () => document.querySelector('[data-guild-room-open="grove"]')!;
+    await waitFor(() => expect(document.querySelector('[data-guild-room-open="grove"] [data-guild-room="plantio"]')).toBeTruthy(), { timeout: 8000 });
+    expect(grove().querySelector('[data-predio]')).toBeNull();
+    expect(grove().querySelector('[data-predio="misterio"]')).toBeNull();
+    expect(grove().querySelector('[data-guild-gestos]')).toBeNull();
+    expect(grove().querySelector('[data-gesto]')).toBeNull();
+    expect(grove().querySelector('[data-predio="praca"]')).toBeNull();
   });
 
   it('Feira: a missão/rodada (nome do fenômeno) existe aqui e o Mistério também (não no Clan Hall nem no Grove)', async () => {

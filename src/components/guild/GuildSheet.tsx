@@ -45,11 +45,11 @@ import {
 } from '../../utils/community';
 import { playerDayKey, type PlayerDayAnchor } from '../../utils/playerDay';
 import {
-  guildText, guildInviteRoom, GUILD_ERROR_KEY, groveStageName, groveStageLine, guildGestureName,
-  guildGestureSent, guildGestureReceived, tideSizeName, type GuildKey,
+  guildText, guildInviteRoom, GUILD_ERROR_KEY, groveStageName, groveStageLine,
+  guildGestureReceived, tideSizeName, type GuildKey,
 } from '../../utils/guildCopy';
 import {
-  GUILD_NAME_MAX, GUILD_CODE_LENGTH, GUILD_PRESENCE_NOMINAL_MAX, GUILD_GESTURES, GROVE_STAGES,
+  GUILD_NAME_MAX, GUILD_CODE_LENGTH, GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES,
   RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, CASA_DOACOES, CASA_BITS_MIN, CASA_STAGES, normalizeGuildCode, type GuildGesture, type CasaStageId,
 } from '../../utils/guildRules';
 import { donatableItems } from '../../utils/guildHouse';
@@ -788,7 +788,11 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
               });
             }}
             className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}
+            // D1: sair é vermelho (cor e borda), com o ícone de saída antes do texto.
+            style={{ color: 'var(--sm2-danger-ink)', borderColor: 'var(--sm2-danger-ink)' }}
+            data-guild-sair
           >
+            <Icon name="logout" size={20} />
             {t('guild.sair.botao')}
           </button>
           <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.sair.nota')}</p>
@@ -1133,41 +1137,6 @@ function SalaRoda({ guild, t, nominal }: {
           </li>
         ))}
       </ul>
-    </section>
-  );
-}
-
-/**
- * GESTOS (W14b: moram só na sala do Grove): três fixos, anônimos, para a RODA INTEIRA (nunca uma pessoa escolhida);
- * um de cada por dia. Roda de uma pessoa só não tem para quem gesticular: a sala não é desenhada.
- */
-function SalaGestos({ guild, t, language, ocupado, onGesto }: {
-  guild: GuildView; t: T; language: Language; ocupado: boolean; onGesto: (k: GuildGesture) => void;
-}) {
-  return (
-    <section className="sm2-guild-sec" aria-label={t('guild.gesto.titulo')} data-guild-room="gestos">
-      <div role="group" aria-label={t('guild.gesto.titulo')} className="sm2-grove-gestures" data-guild-gestos>
-        {GUILD_GESTURES.map(k => {
-          const enviado = guild.mine.gesturesSent.includes(k);
-          const nome = guildGestureName(language, k);
-          return (
-            <button
-              key={k}
-              type="button"
-              className="sm2-grove-gesto"
-              data-gesto={k}
-              // `aria-disabled`, NUNCA `disabled` (QA L3 M6): um botão desabilitado perde o foco e o teclado
-              // cai na raiz da folha. Aqui o botão continua focável, e o toque no que já foi enviado é inerte.
-              aria-disabled={ocupado || enviado ? true : undefined}
-              aria-label={enviado ? t('guild.aria.gesto.enviado', { gesto: nome }) : t('guild.aria.gesto.enviar', { gesto: nome })}
-              onClick={() => { if (!ocupado && !enviado) onGesto(k); }}
-            >
-              <Icon name={GESTO_ICONE[k]} size={24} fill={enviado ? 1 : 0} tone={enviado ? 'primary' : 'ink'} />
-              <span>{enviado ? guildGestureSent(language, k) : nome}</span>
-            </button>
-          );
-        })}
-      </div>
     </section>
   );
 }

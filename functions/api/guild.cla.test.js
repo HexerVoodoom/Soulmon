@@ -75,11 +75,14 @@ describe('rotas do clã: dia do servidor, não do cliente', () => {
     for (const k of chaves) st.push((await post(e, 'claPresente', { id: A, to: idB, dayKey: k })).status);
     expect(st.sort()).toEqual([200, 409, 409]);
     await post(e, 'claPlantar', { id: A, dayKey: d(0) });
+    // D2: regar/proteger exigem o sorteio do dia; a ação sorteada vale 1x só, qualquer dayKey.
+    const sorteio = async (id) => (await post(e, 'claSortear', { id })).json.task;
+    const kA = await sorteio(A), kB = await sorteio(B);
     const reg = [];
-    for (const k of chaves) reg.push((await post(e, 'claRegar', { id: A, dayKey: k })).status);
+    for (const k of chaves) reg.push((await post(e, kA === 'water' ? 'claRegar' : 'claProteger', { id: A, dayKey: k })).status);
     expect(reg.sort()).toEqual([200, 409, 409]);
     const pr = [];
-    for (const k of chaves) pr.push((await post(e, 'claProteger', { id: B, dayKey: k })).status);
+    for (const k of chaves) pr.push((await post(e, kB === 'water' ? 'claRegar' : 'claProteger', { id: B, dayKey: k })).status);
     expect(pr.sort()).toEqual([200, 409, 409]);
     let contou = 0;
     for (let i = 0; i < 15; i++) {
@@ -98,10 +101,16 @@ describe('rotas do clã: plantio', () => {
     expect((await post(e, 'claRegar', { id: A })).status).toBe(404);
     expect((await post(e, 'claPlantar', { id: A })).json.plantio).toMatchObject({ planted: true, canPlant: false });
     expect((await post(e, 'claPlantar', { id: B })).status).toBe(409);
-    expect((await post(e, 'claRegar', { id: A })).json.plantio.mine.wateredToday).toBe(true);
-    expect((await post(e, 'claRegar', { id: A })).status).toBe(409);
-    expect((await post(e, 'claProteger', { id: A })).status).toBe(200);
-    expect((await post(e, 'claProteger', { id: B })).status).toBe(409);
+    // D2: sem sorteio do dia, regar e proteger são recusados com erro claro.
+    const sem = await post(e, 'claRegar', { id: A });
+    expect(sem.status).toBe(409);
+    expect(sem.json.error).toBe('no draw');
+    expect((await post(e, 'claProteger', { id: A })).json.error).toBe('no draw');
+    const kA = (await post(e, 'claSortear', { id: A })).json.task;
+    const certa = kA === 'water' ? 'claRegar' : 'claProteger', errada = kA === 'water' ? 'claProteger' : 'claRegar';
+    expect((await post(e, errada, { id: A })).status).toBe(409);
+    expect((await post(e, certa, { id: A })).status).toBe(200);
+    expect((await post(e, certa, { id: A })).status).toBe(409);
     expect((await post(e, 'claColher', { id: A })).status).toBe(409);
     expect(JSON.stringify((await get(e, 'claPlantio', B)).json)).not.toContain(A);
   });
