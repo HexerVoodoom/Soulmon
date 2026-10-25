@@ -34,7 +34,7 @@ import { generateOracleComplete, type OracleComplete } from './pipeline';
 import { especieDe } from './bestiary/select';
 import { REALM_ORDER, ROLE_ORDER } from '../oracle';
 
-const N = 240;
+const N = 1200; // M14 (25/10/2026): era 240; a régua dos elementos ficou estreita (9,5–15,5%) e precisa de amostra
 const SEED = 19870412; // ≠ 20260928, a seed da calibração
 
 type Pessoa = { input: OracleInput; alt: OracleInput };
@@ -80,11 +80,13 @@ describe('distribuição da criação — pipeline completo, população sintét
   const reinos = conta(rs.map(r => r.result.dominantRealm));
 
   it('os 8 elementos do jogo: todos alcançáveis, nenhum vencedor estrutural', () => {
-    // Medido depois do Loop B: 10,5%–14,5%. Antes: industrial 4,5% · ar 24,5%.
+    // M14 (25/10/2026): cada elemento dominante entre 9,5% e 15,5% (N=1200). Medido N=10.000 nos
+    // 3 cenários (uniforme / opções do meio / 20 itens): 10,0%–14,4%. Antes: industrial 9,1% no
+    // meio, fogo 10,1% no longo. Antes do Loop B: industrial 4,5% · ar 24,5%.
     for (const e of ELEMENT_ORDER) {
-      expect((elementos[e] ?? 0) / N, `${e} — ${fatia(elementos)}`).toBeGreaterThanOrEqual(0.06);
+      expect((elementos[e] ?? 0) / N, `${e} — ${fatia(elementos)}`).toBeGreaterThanOrEqual(0.095);
+      expect((elementos[e] ?? 0) / N, `${e} — ${fatia(elementos)}`).toBeLessThanOrEqual(0.155);
     }
-    expect(Math.max(...Object.values(elementos)) / N, fatia(elementos)).toBeLessThanOrEqual(0.2);
   });
 
   it('os 3 caminhos: nenhum passa de ~2/5 nem cai abaixo de ~1/5', () => {
@@ -184,4 +186,4 @@ describe('distribuição da criação — pipeline completo, população sintét
     }
     expect(mudou / M).toBeGreaterThanOrEqual(0.9);
   });
-}, 120000);
+}, 600000);

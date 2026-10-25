@@ -913,7 +913,9 @@ export const ROLE_DOMINANCE_COMPENSATION: Record<CaminhoRitual, Record<RoleId, n
   longo: { suporte: -0.27, tanque: -0.18, fisico: 1.52, magico: -1.66, alcance: 0.58 },
 };
 export const ELEMENT_PATH_COMPENSATION: Record<CaminhoRitual, Record<ElementId, number>> = {
-  curto: { agua: 0, fogo: 0, terra: 0, ar: 0, sombra: 0, luz: 0, planta: 0, industrial: 0 },
+  // curto (M14, 25/10/2026): o cenário "opções do meio" deixava industrial em 9,1% e planta/terra
+  // em ~15%; ajuste pequeno, calibrado nos 3 cenários (uniforme/meio/longo) com N=10.000.
+  curto: { agua: 0, fogo: 0, terra: -0.1, ar: 0, sombra: 0.15, luz: 0.15, planta: -0.1, industrial: 0.25 },
   longo: { agua: -0.45, fogo: 1.05, terra: 0.65, ar: -0.1, sombra: 0.93, luz: -0.82, planta: -0.73, industrial: -0.53 },
 };
 export const REALM_DOMINANCE_COMPENSATION: Record<CaminhoRitual, Record<RealmId, number>> = {

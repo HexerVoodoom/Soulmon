@@ -249,8 +249,8 @@ describe('generateOracle', () => {
       expect(s.imagePrompt).toContain('isolated subject');
       expect(s.imagePrompt).toContain('no outlines');
       expect(s.imagePrompt).toContain('no anti-aliasing');
-      // v-pet (§47): sem o veto de matiz única (o exemplo do dono não o tem).
-      expect(s.imagePrompt).not.toContain('Do not tint');
+      // M14 (25/10/2026): veto de matiz única LIGADO (monocromático proibido, decisão do dono).
+      expect(s.imagePrompt).toContain('Do not tint the whole creature in a single hue');
       // Bloco conceito no slot do subject: espécie curta + classe (+ adjetivo)
       const conceptMatch = s.imagePrompt.match(/no green fringe: (.+?)\. /);
       expect(conceptMatch).not.toBeNull();
@@ -310,14 +310,14 @@ describe('generateOracle', () => {
 
   it('acento de cor marca o tipo: rookie=dominante, cada linha o seu, ultra=todos', () => {
     const r = generateOracle(INPUT, 42);
-    const accent: Record<string, string> = { poder: 'red', harmonia: 'cyan', benevolencia: 'gold' };
+    const accent: Record<string, string> = { poder: 'red', harmonia: 'cyan', benevolencia: 'soft rose-pink' };
     const rookie = r.creature.stages.find(s => s.stage === 'rookie')!;
-    expect(rookie.imagePrompt).toContain(`with ${accent[r.dominantAlignment]} accents`);
+    expect(rookie.imagePrompt).toContain(`with ${accent[r.dominantAlignment]}`);
     for (const s of r.creature.stages.filter(x => x.branch)) {
-      expect(s.imagePrompt).toContain(`with ${accent[s.branch!]} accents`);
+      expect(s.imagePrompt).toContain(`with ${accent[s.branch!]}`);
     }
     const ultra = r.creature.stages.find(s => s.stage === 'ultra')!;
-    expect(ultra.imagePrompt).toContain('with red, cyan and gold accents');
+    expect(ultra.imagePrompt).toMatch(/with red, cyan and soft rose-pink( with small gold trim)? accents/);
     // Conceito exibe a equivalência (Poder/Harmonia/Benevolência)
     expect(r.creature.concept.pt).toMatch(/atributo (Poder|Harmonia|Benevolência)/);
   });
@@ -366,7 +366,7 @@ describe('generateOracle', () => {
     // A criatura reflete os ajustes (rookie: acento do tipo Poder = red)
     const prompt = r.creature.stages[0].imagePrompt;
     expect(prompt).toContain('with red accents');
-    expect(prompt).toMatch(/steel gray|brass and copper|chrome and hazard/); // paleta industrial (pool)
+    expect(prompt).toMatch(/steel gray|brass and copper|chrome and signal-orange/); // paleta industrial (pool)
     expect(r.creature.concept.pt).toContain('Akasha');
   });
 

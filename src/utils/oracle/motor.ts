@@ -176,7 +176,7 @@ const ELEMENT_FLAVOR_WORDS: Record<ElementId, LText[]> = {
     { pt: 'encoberto', en: 'hidden' }, { pt: 'noturno', en: 'nocturnal' },
   ],
   luz: [
-    { pt: 'radiante', en: 'radiant' }, { pt: 'dourado', en: 'gilded' },
+    { pt: 'radiante', en: 'radiant' }, { pt: 'perolado', en: 'pearl-sheened' },
     { pt: 'cintilante', en: 'shimmering' }, { pt: 'celestial', en: 'celestial' },
     { pt: 'luminoso', en: 'glowing' }, { pt: 'resplandecente', en: 'resplendent' },
     { pt: 'sagrado', en: 'sacred' }, { pt: 'brilhante', en: 'luminous' },
@@ -656,16 +656,16 @@ function pickFamilies(
 }
 
 // POOLS por elemento: paletas e texturas variadas (sorteio semeado)
-const ELEMENT_PALETTES: Record<ElementId, string[]> = {
+export const ELEMENT_PALETTES: Record<ElementId, string[]> = {
   agua: [
     'cool blue and teal color palette',
     'deep navy and seafoam color palette',
     'turquoise and pearl-white color palette',
   ],
   fogo: [
-    'warm red, orange and ember-yellow color palette',
+    'warm red and burnt-orange color palette',
     'crimson and charcoal-smoke color palette',
-    'sunset orange and molten-gold color palette',
+    'sunset orange and plum-purple color palette',
   ],
   terra: [
     'earthy brown and ochre color palette',
@@ -683,19 +683,19 @@ const ELEMENT_PALETTES: Record<ElementId, string[]> = {
     'dark violet and ash-gray color palette',
   ],
   luz: [
-    'golden yellow, white and warm cream color palette',
+    'pearl-white, pale gold and sky-blue color palette',
     'dawn-pink and radiant white color palette',
-    'amber and ivory color palette',
+    'ivory and soft lavender color palette',
   ],
   planta: [
     'leafy green and lime color palette',
     'deep fern and blossom-pink color palette',
-    'sage green and sunflower color palette',
+    'sage green and coral color palette',
   ],
   industrial: [
     'steel gray and gunmetal color palette',
     'brass and copper machinery color palette',
-    'chrome and hazard-yellow color palette',
+    'chrome and signal-orange color palette',
   ],
 };
 
@@ -906,11 +906,38 @@ function countKeywordHits<K extends string>(text: string, dict: Record<K, string
 // bloco inteiro (não soma).
 // ===========================================================================
 
-const ALIGNMENT_ACCENT: Record<AlignmentId, string> = {
+// Benevolência = rosado com dourado só como DETALHE pequeno (decisão do dono,
+// 25/10/2026): o dourado nunca é a cor inteira nem o acento sozinho.
+const BENEVOLENCE_ACCENT = 'soft rose-pink with small gold trim';
+const BENEVOLENCE_ACCENT_NO_GOLD = 'soft rose-pink';
+export const ALIGNMENT_ACCENT: Record<AlignmentId, string> = {
   poder: 'red',
   harmonia: 'cyan',
-  benevolencia: 'gold',
+  benevolencia: BENEVOLENCE_ACCENT,
 };
+
+const YELLOW_FAMILY = /yellow|gold|amber|sunflower|brass|ochre|cream/i;
+
+/** Acento do alinhamento. O detalhe dourado da benevolência é raro (`goldTrim`, 1 em 4
+ *  criaturas, sorteado por criatura) e sai quando a paleta já é amarela ou o elemento é
+ *  Luz (benevolência+luz não pode ficar monocromática). */
+export function accentFor(al: AlignmentId, colorDesc: string, element: ElementId, goldTrim = true): string {
+  if (al !== 'benevolencia') return ALIGNMENT_ACCENT[al];
+  return !goldTrim || element === 'luz' || YELLOW_FAMILY.test(colorDesc) ? BENEVOLENCE_ACCENT_NO_GOLD : BENEVOLENCE_ACCENT;
+}
+
+/** 2ª cor de cada elemento: entra no prompt quando há elemento SECUNDÁRIO. */
+export const ELEMENT_SECONDARY_HUE: Record<ElementId, string> = {
+  agua: 'teal', fogo: 'ember-red', terra: 'clay-brown', ar: 'sky-blue',
+  sombra: 'deep violet', luz: 'pearl-white', planta: 'leaf-green', industrial: 'steel-gray',
+};
+
+const GREEN_WORDS = /green|fern|moss|sage|lime|leaf|emerald|jade|olive|clover|forest|mint|sprout/i;
+
+/** Cor do chroma: magenta quando a criatura tem verde (o recorte verde a comeria). */
+export function chromaFor(colorDesc: string, accent: string, elements: ElementId[]): 'green' | 'magenta' {
+  return elements.includes('planta') || GREEN_WORDS.test(`${colorDesc} ${accent}`) ? 'magenta' : 'green';
+}
 
 // ---------------------------------------------------------------------------
 // Bloco CONCEITO — versão rica: "um(a) <bicho> humanoide <arquétipo>, que
@@ -1379,8 +1406,8 @@ const ELEMENT_LOOK: Record<ElementId, string[]> = {
   luz: [
     'a soft glow', 'a small halo', 'pearl-like skin', 'sunbeam streaks', 'a star mark',
     'radiant edges', 'a shining crest', 'glowing trim', 'prism sparkles', 'a bright aura',
-    'twinkling dots', 'a golden shimmer', 'a lantern glow', 'luminous eyes', 'a dawn tint',
-    'a sunburst crest', 'a ray-of-light tail', 'a glowing chest gem', 'a bright halo ring', 'a warm cream coat',
+    'twinkling dots', 'a pearl sheen', 'a lantern glow', 'luminous eyes', 'a dawn tint',
+    'a sunburst crest', 'a ray-of-light tail', 'a glowing chest gem', 'a bright halo ring', 'a prism-tinted coat',
   ],
   planta: [
     'leaf details', 'a flower bud', 'vine wraps', 'sprout tufts', 'bark patches',
@@ -1492,9 +1519,19 @@ export type SpritePromptArgs = {
   design?: string;
   /** 2 itens de `TYPE_LOOK` do alinhamento, já unidos ("a, b"). */
   looks?: string;
+  /** Cor do fundo chroma (padrão verde). 'magenta' quando a criatura tem verde. */
+  chroma?: 'green' | 'magenta';
   /** true = cita GENRE_REFERENCES (1ª tentativa); false = prompt limpo (2ª). */
   withReferences: boolean;
 };
+
+/** Troca o pedido de fundo verde pelo magenta (criatura com verde). */
+function withChroma(text: string, chroma?: 'green' | 'magenta'): string {
+  if (chroma !== 'magenta') return text;
+  return text
+    .replace('#00FF00 chroma-green', '#FF00FF chroma-magenta')
+    .replace('contains no green and no green fringe', 'contains no magenta, no hot pink and no magenta fringe');
+}
 
 /** `<conceito>. <design>. Distinguishing features: <looks>. <nível>.` — o mesmo miolo nos dois estilos. */
 function conceptAndLevel(args: SpritePromptArgs, concept: string): string {
@@ -1516,7 +1553,7 @@ export function composeSpritePromptLegacy(args: SpritePromptArgs): string {
     // Vale nas DUAS variantes: mesmo citando inspirações, o que sai não pode ser
     // um personagem registrado — o sprite vai pro app de um usuário real.
     `Do not copy any existing franchise character. ` +
-    `Retro virtual-pet sprite, 16x16 pixel art, isolated subject, on a solid flat pure #00FF00 chroma-green background (uniform, no gradient, no shadow), the creature itself contains no green and no green fringe: ` +
+    withChroma(`Retro virtual-pet sprite, 16x16 pixel art, isolated subject, on a solid flat pure #00FF00 chroma-green background (uniform, no gradient, no shadow), the creature itself contains no green and no green fringe: `, args.chroma) +
     `${conceptAndLevel(args, concept)} ` +
     (args.rebirth ? `${args.rebirth} ` : '') +
     // DIREÇÃO (11/10/2026): o app desenha a arte olhando para a DIREITA e espelha ao
@@ -1568,7 +1605,7 @@ export const VPET_TEMPLATE = {
   /** Acabamento plano (fim da frase de cores). */
   finish: 'no shading, no outlines, no anti-aliasing.',
   /** Veto ao tingimento de matiz única; o exemplo do dono não o tem. true = acrescenta. */
-  hueGuard: false,
+  hueGuard: true,
   hueGuardText:
     'Do not tint the whole creature in a single hue — use clearly distinct colors. Grayscale/black-and-white is acceptable.',
 };
@@ -1580,7 +1617,7 @@ export function composeSpritePromptVPet(args: SpritePromptArgs): string {
     args.withReferences ? T.openRefs(GENRE_REFERENCES) : T.openClean,
     args.withReferences && args.inspiracao ? `Draw inspiration from ${args.inspiracao}.` : '',
     T.antiCopy,
-    args.withReferences ? T.styleRefs : T.styleClean,
+    withChroma(args.withReferences ? T.styleRefs : T.styleClean, args.chroma),
     conceptAndLevel(args, concept),
     args.rebirth || '',
     SPRITE_FACING_PROMPT,
@@ -2430,7 +2467,10 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
 
   // ----- BLOCOS DO PROMPT -----
   // Cor base (paleta variada do pool, sem "color palette").
-  const colorDesc = palette.replace(/\s*color palette\s*$/i, '');
+  const baseColor = palette.replace(/\s*color palette\s*$/i, '');
+  // A 2ª cor do elemento SECUNDÁRIO entra na cor (≈90% dos perfis têm secundário):
+  // sem isso a criatura saía de uma paleta só, e a de Luz/amarelo virava monocromática.
+  const colorDesc = secondaryElement ? `${baseColor}, ${ELEMENT_SECONDARY_HUE[secondaryElement]}` : baseColor;
   // Classe DEFINITIVA (função × alinhamento × elemento dominante, ver
   // CLASS_MATRIX) + elemento SECUNDÁRIO como adjetivo solto (nunca muda a
   // classe). Escolhidos UMA vez — constantes nos 11 prompts, é a identidade
@@ -2495,6 +2535,8 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
     ? { pt: petConceptRaw, en: petConceptRaw }
     : { pt: richConceptPt, en: richConceptEn };
 
+  const goldTrim = hashString(`${inputKey}|ouro`) % 4 === 0;
+  const chroma = chromaFor(colorDesc, '', [dominantElement, ...(secondaryElement ? [secondaryElement] : [])]);
   const stages: CreatureStage[] = [];
 
   // COMPORTAMENTO — a metade que faltava na descrição por forma. Reusa sinal
@@ -2519,7 +2561,7 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
       en: `${rookieName} is the base form: a small, simple little monster where ${family.mono ? `the ${fusionA.en} family` : `the ${fusionA.en}-${fusionB.en} blend`} already shows, ${alignTrait.en}. All 3 evolution lines branch from here. ${behaviorSentence.en}`,
     },
     ...composeSpritePrompts({
-      concept: spriteConcept, colorDesc, accent: ALIGNMENT_ACCENT[dominantAlignment],
+      concept: spriteConcept, colorDesc, accent: accentFor(dominantAlignment, colorDesc, dominantElement, goldTrim), chroma,
       ...visualFor(dominantAlignment),
       favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoRookie,
       levelBlock: rookieLevel,
@@ -2536,7 +2578,7 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
     const bTrait = pick(rng, ALIGNMENT_TRAIT_WORDS[branch]);
     const bManifest = pick(rng, ELEMENT_MANIFESTS[secondaryElement ?? dominantElement]);
     const bRegalia = pick(rng, MEGA_REGALIAS[branch]);
-    const bAccent = ALIGNMENT_ACCENT[branch];
+    const bAccent = accentFor(branch, colorDesc, dominantElement, goldTrim);
     const champShape = pickShape(rng, CHAMPION_SHAPES, branch, petElements, usedShapes, speciesKin);
     const champMotif = pickMotif(lookRng, petElements, usedMotifs);
     const perfMotif = pickMotif(lookRng, petElements, usedMotifs);
@@ -2561,7 +2603,7 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
         en: `${champName} — Champion of the ${lineEn}: ${rookieName} evolves into ${champShape.en}, ${bTrait.en}. Bigger and wilder, yet with the same face and crest. ${behaviorSentence.en}`,
       },
       ...composeSpritePrompts({
-        concept: spriteConcept, colorDesc, accent: bAccent, ...visualFor(branch),
+        concept: spriteConcept, colorDesc, accent: bAccent, chroma, ...visualFor(branch),
         favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoChampion,
         levelBlock: `it has evolved into a larger, more defined version of its own species, ${champShape.en}, with ${champMotif.en}. Its body has grown ${roleGrowth}. Habitat trait: ${realmChamp.en}`,
       }),
@@ -2577,7 +2619,7 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
         en: `${perfName} — Perfect of the ${lineEn}: full metamorphosis — it becomes ${perfShape.en}. Its element materializes (${bManifest.en}) and ${emblem.en} of the ${realmInfo.name.en} marks its body. Same face, same crest. ${behaviorSentence.en}`,
       },
       ...composeSpritePrompts({
-        concept: spriteConcept, colorDesc, accent: bAccent, ...visualFor(branch),
+        concept: spriteConcept, colorDesc, accent: bAccent, chroma, ...visualFor(branch),
         favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoPerfeito,
         levelBlock: `it has transformed into ${perfShape.en}, with ${perfMotif.en}. Habitat trait: ${realmPerf.en}`,
       }),
@@ -2593,7 +2635,7 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
         en: `${megaName} — Mega of the ${lineEn}: the apotheosis — it ascends as ${megaShape.en}. ${upperFirstText(bRegalia.en.split(':')[0])}. Its body partially transmutes into living ${elName.en}. ${behaviorSentence.en}`,
       },
       ...composeSpritePrompts({
-        concept: spriteConcept, colorDesc, accent: bAccent, ...visualFor(branch),
+        concept: spriteConcept, colorDesc, accent: bAccent, chroma, ...visualFor(branch),
         favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoMega,
         levelBlock: `in its final form, it is ${megaShape.en}, with ${megaMotif.en}. It carries ${realmMass.en}`,
       }),
@@ -2614,7 +2656,7 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
       en: `${ultraName} is the Ultra: the fusion of the three Megas — ${megaShapeByBranch.poder.en}, ${megaShapeByBranch.harmonia.en} and ${megaShapeByBranch.benevolencia.en} — into a single transcendent being uniting the ferocity of Power, the balance of Harmony and the nobility of Benevolence. The absolute apex of the archetype "${archetype.phrase.en}". ${behaviorSentence.en}`,
     },
     ...composeSpritePrompts({
-      concept: spriteConcept, colorDesc, accent: 'red, cyan and gold', ...visualFor(dominantAlignment),
+      concept: spriteConcept, colorDesc, accent: `red, cyan and ${accentFor('benevolencia', colorDesc, dominantElement, goldTrim)}`, chroma, ...visualFor(dominantAlignment),
       favoriteCreature, rebirth: rebirthClause, inspiracao: inspiracaoUltra,
       levelBlock: `${pick(rng, ULTRA_LOOK)}, the ultra fusion of its three mega forms`,
     }),
