@@ -3,7 +3,7 @@
  * O SOULMON NA MASMORRA FECHA O QUE USA O SOULMON (pedido do dono, 11/10/2026, REGISTRO §36).
  *
  * Os lotes que mandam o Soulmon fazer algo de verdade (duelo, torneio, passeio) não abrem a folha enquanto ele está na masmorra:
- * o toque chama o aviso `onBusy` (o `App` abre o "Ele está na masmorra" com o "Retirar da masmorra"). Mesma regra para o
+ * o toque chama o aviso `onBusy` (o `App` abre o "Ele está na masmorra" com o "Retirar da Fenda"). Mesma regra para o
  * `initialSheet` (a Home manda para o passeio) e, no sentido contrário, descer à masmorra com o Soulmon em missão da guilda.
  * Fora da masmorra o MESMO toque abre a folha (o controle).
  */

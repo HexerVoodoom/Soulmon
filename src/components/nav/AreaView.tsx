@@ -475,6 +475,7 @@ export function AreaView(props: AreaViewProps) {
                 onRunEnd={play.onRunEnd}
                 onEnemyDefeated={play.onDungeonEnemyDefeated}
                 onEarnPoints={props.onEarnPoints}
+                rankSaveId={props.guild.saveId}
                 /* WP4.5 — o sumidouro recorrente: comprar profundidade com Bits. */
                 bits={props.points}
                 onSpendBits={play.onSpendBits}

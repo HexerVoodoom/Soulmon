@@ -101,7 +101,7 @@ describe('Masmorra — a cena em tela cheia', () => {
     expect(nota).toMatch(/solta o especial sozinho/i);
     expect(nota).toMatch(/de um inimigo para o outro/i); // a energia persiste
     expect(nota).toMatch(/1× ou 3×/);
-    expect(nota).toMatch(/Retirar da masmorra/);
+    expect(nota).toMatch(/Retirar da Fenda/);
   });
 
   it('sem barra de esquiva: o golpe sai sozinho e a defesa automática responde sem nenhum toque; o número só chega no IMPACTO', async () => {

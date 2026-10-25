@@ -3325,3 +3325,22 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
   (`spriteFailText('paid-required')`). O texto vive em `AVISO_CONTA_NAO_PAGA`/`SPRITE_COPY.paidFail`/`RevealContaNaoPaga`, sem string solta.
 - **Régua:** `spriteGen.contract.test.ts` (402 `paid-tier-required` ≠ teto), `spriteRunner.test.ts` (não retenta, para o lote), `spriteCopy.paga.test.ts` (aviso uma vez, ação = evento do desbloqueio),
   `RevealContaNaoPaga.render.test.tsx` (aviso + ligação no onboarding).
+
+## 172. Endless Rift (M6): score mensal, três faixas e Crédito como prêmio (dono, 25/10/2026)
+
+- **O que é:** a masmorra (`DungeonGame.tsx`; ids de save e arquivos NÃO mudaram) aparece como **Endless Rift / Fenda Sem Fim**, descida sem teto mantida. Ganhou um **score MENSAL que reinicia**:
+  a **camada mais funda limpa no mês** (UTC, chave `YYYY-MM`). Save: `riftMonth?: { m, best, claimed }`, leitura tolerante (`sanitizeRiftMonth`/`hydrateSave`); save antigo sem o campo = 0 no mês atual;
+  mês velho reinicia sozinho na leitura. Dono: `src/utils/endlessRift.ts`; também alimentado pela descida que continua fora da tela (`dungeonAway.ts`).
+- **Três faixas por profundidade no mês (limiares CONSERVADORES, o dono calibra com dado real; cada faixa paga UMA vez por mês):** faixa 1 = camada 25 → **material** (20 fragmentos do Soulsmith);
+  faixa 2 = camada 100 → **mais Bits (+100)**, creditados pelo funil existente (`creditMinigameBits`/`onEarnPoints`: o teto diário de Bits vale; NENHUMA fonte nova de moeda fora do funil);
+  faixa 3 = camada 250 → **competitiva**: a partir dela o cliente envia o score ao ranking mensal (`endless-rift` na allowlist de `_rankings.js`, período `monthly`, teto de score 999 por jogo).
+- **Exceção "Crédito como prêmio" (dono, 25/10/2026).** A regra de 💎 Créditos ("só dinheiro real; não existe caminho de jogo para Créditos") ganha UMA exceção, estreita: o **top 3 mensal** do Endless Rift
+  recebe **Créditos 50 / 25 / 10**, pagos **SÓ pelo servidor** (`grantRankPrize` em `_entitlements.js`, chamado só por `_riftPayout.js`). O cliente NUNCA credita: só LÊ `prize` na resposta do ranking.
+  `payablePlacements` pula os `simulated` (o prêmio desce ao próximo jogador real). Empate de score: quem chegou àquele score primeiro (`t` no metadata do placar) fica na frente; depois `saveId` (determinístico).
+  Não vira regra geral: nenhuma outra recompensa de jogo paga Créditos; Bits→Créditos continua inexistente. Gatilho de revisão: se o prêmio for farmado (score forjado: o cliente é editável e o score é
+  o do cliente, limitado a 999), tirar os Créditos do prêmio ou validar a descida no servidor.
+- **Fechamento PREGUIÇOSO com trava KV (por quê):** não há cron confiável nas Pages Functions (o worker de push é outro deploy). Em vez disso, no primeiro acesso a `/api/rankings` no mês seguinte o servidor tenta fechar o
+  mês anterior (`closePreviousMonth`, `_riftPayout.js`). **Idempotência:** trava `rift-payout:<YYYY-MM>` gravada ANTES de pagar (com token, relido: só segue quem reconhece o próprio token), por usuário
+  `rift-paid:<YYYY-MM>:<saveId>` gravada ANTES do crédito (prefere-se perder um pagamento a pagar duas vezes), `done` definitivo e `running` velho (>10 min) retomável sem repagar quem já recebeu. Limite honesto:
+  o KV é eventualmente consistente, então a trava é best-effort contra dois primeiros acessos EXATAMENTE simultâneos; a defesa contra repetição é a chave por usuário. Régua: `functions/api/_riftPayout.test.js`
+  (2x paga 1x, simulado pulado, empate, retomada, trava recente) e `src/utils/endlessRift.test.ts`.

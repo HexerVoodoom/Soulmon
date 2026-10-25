@@ -7,7 +7,7 @@ import type { Language } from '../utils/i18n';
  * Enquanto o Soulmon está na masmorra (`soulmonNaMasmorra`, campo `dungeonAway` do save) tudo que usa o Soulmon de verdade fica
  * fechado: mandá-lo em missão, evoluir, renascer, passear, duelar e disputar o torneio. Em vez de um botão morto, quem tentou vê
  * ESTE aviso — usa o modal base (`ModalSheet`), diz o motivo em voz calma (nada de cobrança: o que ele rendeu até aqui fica com o
- * jogador) e oferece o caminho: "Retirar da masmorra" (acerta a conta e ele volta para casa) ou deixá-lo lá.
+ * jogador) e oferece o caminho: "Retirar da Fenda" (acerta a conta e ele volta para casa) ou deixá-lo lá.
  *
  * `acao: null` = o jogador tocou na plaquinha da Home (não tentou nada: só quer saber/trazer de volta).
  */
@@ -71,7 +71,7 @@ export function DungeonBusyModal({ open, acao, language, onRetire, onClose, busy
               {isPt ? 'Deixar lá' : 'Leave him there'}
             </button>
             <button type="button" onClick={onRetire} disabled={busy} style={sm2Button('primary', busy)} data-dungeon-busy-retire>
-              {isPt ? 'Retirar da masmorra' : 'Take him out'}
+              {isPt ? 'Retirar da Fenda' : 'Take him out of the Rift'}
             </button>
           </div>
         )

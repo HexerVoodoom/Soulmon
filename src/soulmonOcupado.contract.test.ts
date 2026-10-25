@@ -48,7 +48,7 @@ describe('pontos de entrada que usam o Soulmon (App.tsx)', () => {
     expect(app).toMatch(/ocupado=\{\{ naMasmorra, missaoFora: isMissionAway\(guildMission, Date\.now\(\)\), onBusy: abrirAvisoMasmorra \}\}/);
   });
 
-  it('"Retirar da masmorra" acerta pela conta pura e é a única saída (retire: true)', () => {
+  it('"Retirar da Fenda" acerta pela conta pura e é a única saída (retire: true)', () => {
     expect(app).toMatch(/settleDungeonAwayNow\(gameStateRef\.current, setGameState, Date\.now\(\), true\)/);
   });
 });

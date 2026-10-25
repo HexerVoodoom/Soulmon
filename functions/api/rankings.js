@@ -15,6 +15,7 @@ import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import {
   DEFAULT_PERIOD, cleanScore, isPeriod, isRankedGame, readBoard, submitScore, TOP_DEFAULT,
 } from './_rankings.js';
+import { closePreviousMonth, readMyPrize, RIFT_GAME } from './_riftPayout.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -50,7 +51,8 @@ export async function onRequest(context) {
 
   const game = q.game;
   if (!isRankedGame(game)) return json({ error: 'unknown game' }, 400);
-  const period = q.period ?? DEFAULT_PERIOD;
+  // Endless Rift (M6): SEMPRE mensal, o cliente não escolhe.
+  const period = game === RIFT_GAME ? 'monthly' : (q.period ?? DEFAULT_PERIOD);
   if (!isPeriod(period)) return json({ error: 'invalid period' }, 400);
 
   const id = q.id;
@@ -60,8 +62,11 @@ export async function onRequest(context) {
     return json(auth.reason === 'account-deleted' ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
   }
 
+  // Fechamento preguiçoso do mês anterior do Endless Rift (`_riftPayout.js`): idempotente, nunca lança.
+  await closePreviousMonth(env);
+
   if (request.method === 'POST') {
-    const score = cleanScore(q.score);
+    const score = cleanScore(q.score, game);
     if (score === null) return json({ error: 'invalid score' }, 400);
     const g2 = takeToken('rankings-submit', id, LIMIT_SUBMIT);
     if (!g2.ok) return tooManyRequests(g2.retryAfter, CORS);
@@ -71,5 +76,8 @@ export async function onRequest(context) {
   }
 
   const top = Number(q.top);
-  return json({ ok: true, ...(await readBoard(env, { game, period, saveId: id, top: Number.isFinite(top) && top > 0 ? top : TOP_DEFAULT })) });
+  const board = await readBoard(env, { game, period, saveId: id, top: Number.isFinite(top) && top > 0 ? top : TOP_DEFAULT });
+  // Só leitura: o prêmio de Créditos do mês fechado (o servidor já creditou; o cliente nunca credita).
+  const prize = game === RIFT_GAME ? await readMyPrize(env, id) : undefined;
+  return json({ ok: true, ...board, ...(prize !== undefined ? { prize } : {}) });
 }

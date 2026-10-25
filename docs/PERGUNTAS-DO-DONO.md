@@ -546,3 +546,4 @@ P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
 ## Beta3 onda B
 
 - **M3 (prédios):** conservador — o Refúgio mudou de id de prédio `jogos.refugio` → `exploracao.refugio` (migração de leitura em `MOVED_BUILDINGS`, espelho no servidor); o Calabouço (`jogos.dungeon`) abre no Vínculo 3 (mesmo do Ateliê da Mente), é placeholder "em breve" sem material de missão, com arte/NPC provisórios (reusam a Masmorra) e a Masmorra ficou só renomeada (rótulo "Fenda Sem Fim"/"Endless Rift", id `masmorra` mantido).
+- **M6 (Endless Rift):** limiares conservadores das faixas (25 / 100 / 250 camadas no mês; faixa 1 = 20 fragmentos, faixa 2 = +100 Bits pelo funil, faixa 3 = ranking) — calibrar com dado real. Score do ranking vem do cliente (teto 999): se o prêmio de Créditos for farmado, validar a descida no servidor.

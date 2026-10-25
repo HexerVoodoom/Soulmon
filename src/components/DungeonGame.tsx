@@ -6,6 +6,9 @@ import { InfoTip } from './ui/InfoTip';
 import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
+import { RankingPanel } from './RankingPanel';
+import { applyRiftLayer, riftTierTotals, riftBestThisMonth, RIFT_RANKING_FROM, RIFT_GAME_ID, type RiftMonthState } from '../utils/endlessRift';
+import { submitScore as submitRankingScore } from '../utils/rankings';
 import { getSpriteForStage } from '../utils/sprites';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
@@ -117,7 +120,7 @@ const PANEL: CSSProperties = {
 };
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skills, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onRunEnd, onEnemyDefeated, onEarnPoints, onExit, onExitToMap, bits = 0, onSpendBits }: {
+export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skills, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onRunEnd, onEnemyDefeated, onEarnPoints, onExit, onExitToMap, bits = 0, onSpendBits, rankSaveId }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos inimigos). */
   demoCharacterId?: string;
@@ -162,6 +165,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   bits?: number;
   /** WP4.5 — cobra os Bits e devolve se deu. Quem decide é quem tem o save. */
   onSpendBits?: (pts: number) => boolean;
+  /** Endless Rift (M6): saveId para enviar o score mensal ao ranking (só a partir da faixa 3) e ler o painel. Ausente = sem ranking. */
+  rankSaveId?: string;
   onExit: () => void;
   /** Sair DIRETO para o mapa (o ícone do mapa no lugar do X, 14/10/2026). Ausente (demo/testes) → `onExit`. */
   onExitToMap?: () => void;
@@ -338,16 +343,32 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     const { marks } = recordLayerCleared({ dungeonDepthRecord: recordeRef.current }, layer);
     recordeRef.current = Math.max(recordeRef.current, layer);
     resumoRef.current.recordTo = Math.max(resumoRef.current.recordTo, layer);
+    // Endless Rift (M6): score mensal e faixas do mês. As recompensas saem da cópia local (`riftRef`); o updater abaixo reaplica sobre o
+    // `prev` (puro e idempotente: a faixa só paga se o `prev` ainda não a tinha). Bits vão pelo funil (`onEarnPoints`, teto diário).
+    const agoraMs = Date.now();
+    const riftBefore = riftBestThisMonth(riftRef.current, agoraMs);
+    const riftAt = applyRiftLayer(riftRef.current, layer, agoraMs);
+    riftRef.current = riftAt.next;
+    const riftTot = riftTierTotals(riftAt.newTiers);
+    if (riftTot.bits > 0) { onEarnPoints(riftTot.bits); resumoRef.current.bits += riftTot.bits; }
+    if (riftTot.fragments > 0) { resumoRef.current.fragments += riftTot.fragments; noteDrop('fragments', riftTot.fragments); }
+    if (rankSaveId && (riftAt.next.riftMonth?.best ?? 0) >= RIFT_RANKING_FROM && (riftAt.next.riftMonth?.best ?? 0) > riftBefore) {
+      // melhor do mês a partir da faixa 3: entra no ranking mensal (o servidor guarda só o melhor; falha de rede é silenciosa)
+      submitRankingScore(RIFT_GAME_ID, rankSaveId, riftAt.next.riftMonth?.best ?? 0, 'monthly').catch(() => { /* sem rede: o ranking nunca atrapalha a descida */ });
+    }
     const frag = marks.reduce((a, m) => a + m.fragments, 0);
     resumoRef.current.fragments += frag;
     if (frag > 0) noteDrop('fragments', frag);
     ctx.setGameState(prev => {
       const r = recordLayerCleared(prev, layer);
-      const ganho = r.marks.reduce((a, m) => a + m.fragments, 0);
-      return ganho > 0 ? addFragments(r.next, ganho) : r.next;
+      const rr = applyRiftLayer(r.next, layer, agoraMs);
+      const ganho = r.marks.reduce((a, m) => a + m.fragments, 0) + riftTierTotals(rr.newTiers).fragments;
+      return ganho > 0 ? addFragments(rr.next, ganho) : rr.next;
     });
   };
   const recordeRef = useRef(recorde);
+  const riftRef = useRef<RiftMonthState>({ riftMonth: gs?.riftMonth });
+  const riftBest = gs ? riftBestThisMonth({ riftMonth: gs.riftMonth }, agora) : 0;
 
   /** Grava o HP da descida no save (fração do máximo + instante). Só o cliente: não compra vantagem. */
   const salvarHp = (frac: number) => {
@@ -752,7 +773,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                   {isPt ? 'Ver a descida' : 'Watch the descent'}
                 </button>
                 <button type="button" onClick={retirar} data-dungeon-retire style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-                  {isPt ? 'Retirar da masmorra' : 'Take him out'}
+                  {isPt ? 'Retirar da Fenda' : 'Take him out of the Rift'}
                 </button>
               </div>
             </div>
@@ -872,7 +893,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     <GameRoot>
       <GameHeader
         run={false}
-        title={isPt ? 'Masmorra' : 'Dungeon'}
+        title={isPt ? 'Fenda Sem Fim' : 'Endless Rift'}
         sub={isPt ? 'Descida automática' : 'Automatic descent'}
         closeLabel={exitLabel}
         onClose={exitRun}
@@ -891,6 +912,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       {/* Lobby */}
       <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
         <StatTag label={isPt ? 'Mais fundo' : 'Deepest'} value={recorde} />
+        <StatTag label={isPt ? 'Neste mês' : 'This month'} value={riftBest} />
         <StatTag label={isPt ? 'Energia' : 'Energy'} value={gs ? `${energia}/${energiaMax}` : '—'} />
         {/* E1 (02/10/2026): o texto longo do lobby mora atrás do "?" — toque lê.
             I13: agora é o `InfoTip` padrão (antes era um "?" próprio). */}
@@ -918,12 +940,14 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                 </span>
                 <span>
                   {isPt
-                    ? 'Pode sair da tela: a descida segue. Para chamá-lo de volta, use "Retirar da masmorra".'
-                    : 'You can leave the screen: the descent goes on. To call him back, use "Take him out".'}
+                    ? 'Pode sair da tela: a descida segue. Para chamá-lo de volta, use "Retirar da Fenda".'
+                    : 'You can leave the screen: the descent goes on. To call him back, use "Take him out of the Rift".'}
                 </span>
           </span>
         </InfoTip>
       </div>
+      {/* Endless Rift (M6): o ranking MENSAL (faixa 3 em diante envia o melhor do mês; os Créditos do top 3 são pagos pelo servidor). */}
+      {rankSaveId && <RankingPanel key={riftBest} game={RIFT_GAME_ID} period="monthly" saveId={rankSaveId} language={language} score={riftBest >= RIFT_RANKING_FROM ? riftBest : null} />}
       {/* Fase 3 do Oráculo: o OFÍCIO da ficha e o jeito dele na fenda —
           uma palavra nomeada e uma frase de mundo sobre a criatura; o
           número fica dentro da run. Sem profissão, nada aqui. */}

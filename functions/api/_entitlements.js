@@ -858,3 +858,17 @@ export async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
   await writeEntitlement(env, saveId, fresh);
   return { ent: fresh, revoked };
 }
+
+/**
+ * Credita Créditos como PRÊMIO de ranking (exceção "Crédito como prêmio", REGISTRO §M6, dono 25/10/2026:
+ * top 3 mensal do Endless Rift). Só o servidor chama isto, e só `_riftPayout.js`, que garante a idempotência
+ * por mês e por usuário ANTES de chegar aqui. Nunca toca `consumedOrders`/`orderDetails` (não é compra; o
+ * reembolso não desfaz prêmio).
+ */
+export async function grantRankPrize(env, saveId, amount) {
+  if (!Number.isInteger(amount) || amount <= 0) return null;
+  const ent = await readEntitlement(env, saveId);
+  ent.credits += amount;
+  await writeEntitlement(env, saveId, ent);
+  return ent;
+}

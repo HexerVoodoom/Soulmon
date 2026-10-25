@@ -35,11 +35,11 @@ export function RankingPanel({ game, saveId, language, score = null, period = 'w
     <div data-ranking-panel={game} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       {board.me && tier && (
         <p data-ranking-tier={board.me.tier} style={{ margin: 0 }}>
-          {isPt ? `Sua faixa na semana: ${tier.pt}` : `Your tier this week: ${tier.en}`}
+          {isPt ? `Sua faixa ${period === 'monthly' ? 'no mês' : 'na semana'}: ${tier.pt}` : `Your tier this ${period === 'monthly' ? 'month' : 'week'}: ${tier.en}`}
         </p>
       )}
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}>
-        {open ? (isPt ? 'Esconder ranking' : 'Hide ranking') : (isPt ? 'Ver ranking da semana' : 'See weekly ranking')}
+        {open ? (isPt ? 'Esconder ranking' : 'Hide ranking') : (isPt ? (period === 'monthly' ? 'Ver ranking do mês' : 'Ver ranking da semana') : (period === 'monthly' ? 'See monthly ranking' : 'See weekly ranking'))}
       </button>
       {open && (
         <ol data-ranking-list style={{ margin: 0, paddingLeft: 20 }}>

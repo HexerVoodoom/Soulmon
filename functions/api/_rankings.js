@@ -36,10 +36,10 @@ import { kvOrThrow } from './_kv.js';
 import { getProfile } from './_profile.js';
 
 /** Allowlist de jogos com ranking. Id estável: vira parte da chave KV. */
-export const RANKED_GAMES = Object.freeze(['dino', 'ppt', 'match3', 'eco']);
+export const RANKED_GAMES = Object.freeze(['dino', 'ppt', 'match3', 'eco', 'endless-rift']);
 
 export const PERIODS = Object.freeze(['weekly', 'monthly']);
-/** Período padrão — minigames: semanal. (Endless Rift/M6 usará `monthly`.) */
+/** Período padrão — minigames: semanal. O Endless Rift (M6) usa `monthly` (score = camada mais funda do mês). */
 export const DEFAULT_PERIOD = 'weekly';
 
 /** Teto de sanidade do score: acima disso é lixo/forja, nunca placar. */
@@ -58,7 +58,13 @@ export const TIER_CUTS = Object.freeze({
   ppt: [0, 10, 20, 30, 40, 50],
   match3: [0, 300, 800, 1500, 2500, 4000],
   eco: [0, 4, 6, 8, 10, 13],
+  // Endless Rift: camada mais funda do mês. Espelha os limiares de recompensa de `utils/endlessRift.ts`
+  // (25 / 100 / 250) mais 500 e 999 (o teto da descida).
+  'endless-rift': [0, 25, 100, 250, 500, 999],
 });
+
+/** Teto de sanidade POR JOGO (abaixo do `MAX_SCORE` global): a Fenda não passa da camada 999. */
+export const MAX_SCORE_BY_GAME = Object.freeze({ 'endless-rift': 999 });
 
 export function isRankedGame(game) {
   return typeof game === 'string' && RANKED_GAMES.includes(game);
@@ -68,11 +74,12 @@ export function isPeriod(p) {
 }
 
 /** Score válido: inteiro finito em [0, MAX_SCORE]; senão `null`. */
-export function cleanScore(raw) {
+export function cleanScore(raw, game) {
+  const max = (game && MAX_SCORE_BY_GAME[game]) || MAX_SCORE;
   const n = typeof raw === 'number' ? raw : Number.NaN;
   if (!Number.isFinite(n)) return null;
   const s = Math.floor(n);
-  return s >= 0 && s <= MAX_SCORE ? s : null;
+  return s >= 0 && s <= max ? s : null;
 }
 
 const pad = (n, w = 2) => String(n).padStart(w, '0');
@@ -132,7 +139,7 @@ export async function submitScore(env, { game, period, saveId, score, now = new 
   const ttl = { expirationTtl: 86400 * 70 }; // cobre o mês inteiro + folga
   await store.put(scoreKey(game, pk, score, saveId), '', {
     ...ttl,
-    metadata: { s: score, n: cleanName(profile?.name), sim: profile?.simulated === true },
+    metadata: { s: score, n: cleanName(profile?.name), sim: profile?.simulated === true, t: now.getTime() },
   });
   if (hasPrev) await store.delete(scoreKey(game, pk, prev, saveId));
   await store.put(mk, String(score), ttl);
