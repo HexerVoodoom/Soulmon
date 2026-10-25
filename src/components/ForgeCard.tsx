@@ -55,7 +55,7 @@ function prefersReducedMotion(): boolean {
 const SPARKS = Array.from({ length: 10 }, (_, i) => ({ dx: `${(i - 4.5) * 14}px`, dy: `${-50 - ((i * 37) % 40)}px`, delay: `${(i % 5) * 60}ms` }));
 
 /** O que a pessoa está decidindo agora: aprimorar a peça (próximo nível) ou refazer a escolha de um nível. */
-type Dialog = { mode: 'upgrade'; id: string } | { mode: 'redo'; id: string; level: number };
+type Dialog = { mode: 'upgrade'; id: string } | { mode: 'reforge'; id: string } | { mode: 'redo'; id: string; level: number };
 
 export default function ForgeCard({ language = 'pt-BR' }: { language?: string }) {
   const ctx = useGameStateOptional();
@@ -97,7 +97,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
     return { ...prev, ...resto } as typeof gameState;
   };
 
-  const abrir = (d: Dialog) => {
+  const abrir = (d: Exclude<Dialog, { mode: 'reforge' }>) => {
     setAviso(null);
     pend.current = null;
     if (d.mode === 'upgrade') setEscolha('a');
@@ -106,7 +106,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
   };
 
   const confirmar = (pay?: 'bits' | 'fragments') => {
-    if (!dialog) return;
+    if (!dialog || dialog.mode === 'reforge') return;
     // DEMO LOCAL (`utils/demoMode.ts`): a forja gasta Bits/fragmentos — a demo não gasta nada.
     if (isDemoMode(gameState)) { setDialog(null); setAviso(demoRefusalText(isPt)); return; }
     const d = dialog;
@@ -188,25 +188,13 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
           <span className="sm2-stats-s" data-forge-why>{forgeRefusalText(recusa, isPt, level)}</span>
         )}
         {possui && level >= 2 && (
-          <details data-forge-choices={piece.id}>
-            <summary className="sm2-stats-s" style={{ cursor: 'pointer' }}>{isPt ? 'Escolhas feitas' : 'Choices made'}</summary>
-            <ul style={{ listStyle: 'none', margin: '4px 0 0', padding: 0, display: 'grid', gap: 6 }}>
-              {escolhas.map((c, i) => {
-                const lv = i + 2;
-                const attr = c === 'b' ? ALT_ATTR[piece.slot] : PRIMARY_ATTR[piece.slot];
-                return (
-                  <li key={lv} style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-                    <span className="sm2-stats-s" style={{ flex: 1 }}>{isPt ? `Nível ${lv}` : `Level ${lv}`}: {attrName(attr)} +{pct(LEVEL_PCT[lv - 1], isPt)}</span>
-                    <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-forge-redo={`${piece.id}:${lv}`}
-                      onClick={() => abrir({ mode: 'redo', id: piece.id, level: lv })}
-                      aria-label={isPt ? `Refazer a escolha do nível ${lv} de ${nome}` : `Redo the level ${lv} choice of ${nome}`}>
-                      {isPt ? 'Refazer escolha' : 'Redo choice'}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </details>
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-forge-reforge={piece.id}
+              onClick={() => { setAviso(null); setDialog({ mode: 'reforge', id: piece.id }); }}
+              aria-label={isPt ? `Reforjar ${nome}` : `Reforge ${nome}`}>
+              {isPt ? 'Reforjar' : 'Reforge'}
+            </button>
+          </div>
         )}
       </li>
     );
@@ -216,6 +204,39 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
     if (!dialog) return null;
     const piece = FORGE_PIECES.find((p) => p.id === dialog.id)!;
     const nome = itemName(piece.slot, piece.tier, isPt);
+    if (dialog.mode === 'reforge') {
+      const lvNow = levelNow(view, piece.id);
+      const esc = pieceChoices(piece.id, lvNow, gameState.forge);
+      return (
+        <div role="dialog" aria-modal="true" aria-labelledby="sm2-forge-dlg" data-forge-dialog="reforge"
+          style={{ position: 'fixed', inset: 0, zIndex: 400, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'rgba(0,0,0,.55)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setDialog(null); }}>
+          <div className="sm2-stats-card" style={{ width: '100%', maxWidth: 420, maxHeight: '88vh', overflowY: 'auto', margin: 0, padding: 16, display: 'grid', gap: 10 }}>
+            <h3 id="sm2-forge-dlg" style={{ margin: 0, fontWeight: 500 }}>{isPt ? `Reforjar ${nome}` : `Reforge ${nome}`}</h3>
+            <p className="sm2-stats-s" style={{ margin: 0 }}>{isPt ? 'Escolha o nível cuja escolha você quer refazer.' : 'Pick the level whose choice you want to redo.'}</p>
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 }}>
+              {esc.map((c, i) => {
+                const lv = i + 2;
+                const attr = c === 'b' ? ALT_ATTR[piece.slot] : PRIMARY_ATTR[piece.slot];
+                return (
+                  <li key={lv} style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <span className="sm2-stats-s" style={{ flex: 1 }}>{isPt ? `Nível ${lv}` : `Level ${lv}`}: {attrName(attr)} +{pct(LEVEL_PCT[lv - 1], isPt)}</span>
+                    <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" data-forge-redo={`${piece.id}:${lv}`}
+                      onClick={() => abrir({ mode: 'redo', id: piece.id, level: lv })}
+                      aria-label={isPt ? `Refazer a escolha do nível ${lv} de ${nome}` : `Redo the level ${lv} choice of ${nome}`}>
+                      {isPt ? 'Refazer' : 'Redo'}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-forge-cancel onClick={() => setDialog(null)}>{isPt ? 'Fechar' : 'Close'}</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
     const alvo = dialog.mode === 'upgrade' ? levelNow(view, piece.id) + 1 : dialog.level;
     const opcoes: { c: ForgeChoice; attr: 'atk' | 'def' | 'spd' }[] = [{ c: 'a', attr: PRIMARY_ATTR[piece.slot] }, { c: 'b', attr: ALT_ATTR[piece.slot] }];
     const atual = dialog.mode === 'redo' ? pieceChoices(piece.id, levelNow(view, piece.id), gameState.forge)[dialog.level - 2] : undefined;

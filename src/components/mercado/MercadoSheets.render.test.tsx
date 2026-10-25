@@ -119,16 +119,10 @@ describe('compra', () => {
     expect(fraca).toEqual([]);
   });
 
-  it('travado = aria-disabled (não disabled nativo), fora do Tab, tracejado, véu no vidro', () => {
+  it('B1: cenário de conquista não é vendido na lojinha de Background (só no prédio Conquistas)', () => {
     const onBuy = vi.fn(() => true);
     abrir({ stall: 'background', onBuy });
-    const card = screen.getByRole('button', { name: new RegExp(`^${lockedBg.nameEn} — locked:`) });
-    expect(card.hasAttribute('disabled')).toBe(false);
-    expect(card.getAttribute('aria-disabled')).toBe('true');
-    expect(card.getAttribute('tabindex')).toBe('-1');
-    expect(card.style.border).toContain('dashed');
-    expect(card.querySelector('.sm2-shop-veil')).not.toBeNull();
-    fireEvent.click(card);
+    expect(screen.queryByRole('button', { name: new RegExp(`^${lockedBg.nameEn}`) })).toBeNull();
     expect(onBuy).not.toHaveBeenCalled();
   });
 
