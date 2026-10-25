@@ -72,3 +72,19 @@ Decisões do dono (modal): jogo LinkedIn = **Patches** (+ Zip); masmorra NOVA ro
 
 ## Assets pendentes
 - M2: glifo `folder` (pasta) e `lightbulb` (lâmpada) não estão no subset de ícones (`styles/tokens.md`). Provisório: pasta = `inventory_2`, luz = `dark_mode` (apagar) / `light_mode` (acender). Trocar quando entrarem no subset.
+
+# Rodada 3 (pedido do dono, 25/10/2026)
+
+Decisões (modal): simulados parecem reais mas NUNCA levam prêmio (flag `simulated`); sprites dos simulados em fila para quando houver crédito; página GM em rota web protegida; bullet hell = **Soul Barrage**.
+
+## M9 — Soul Barrage (bullet hell vertical)
+- Soulmon na base, tela rola para cima, inimigos descendo; desviar ou atacar; ataque ranged CONTÍNUO pelo elemento do Soulmon (`fx-<el>-orb`); move-se para se posicionar; fases com dificuldade crescente; score SEMANAL. Inimigos do roster M10 com progressão rookie→champion→ultimate→mega.
+- Obstacle Run: o dash usa o sprite de ataque FÍSICO do elemento (`fx-<el>-slash`).
+
+## M10 — Roster de todos os elementos (inclusive combinados), progressão por estágio, tudo no bestiário/Biblioteca.
+## M11 — 50 usuários simulados com perfis de comportamento (frequência, jogo preferido, competitividade), ativos em rankings/PvP; flag `simulated`, pulados em prêmio; sprites via API em fila.
+## M12 — Página GM `/gm/soulmons` (sprite, nome, e-mail).
+## M13 — Menu de criar: filtro de categoria/área mostra pontos de Poder/Harmonia/Benevolência.
+## M14 — Balanço dos elementos (Luz frequente demais, sprites monocromáticos amarelos): medir por simulação e corrigir.
+
+Assets: ver `docs/PROMPTS-BETA3.md` (36 reaproveitados, 19 prompts novos).
