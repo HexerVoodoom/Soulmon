@@ -95,6 +95,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   // 04/10/2026: bustos PRÓPRIOS (`entrada-dono/npc-exploracao-*`, 768², alfa binário); até aqui eram
   // os da Kova e da Selene. As versões `-b` ficaram fora do bundle (`E:/Soulmon-assets/instalados/alternativas/`).
   'exploracao:oficina': npcExploracaoOficina, // Lume (vagalume do coro; 07/10/2026 trocou o Tique)
+  'exploracao:preparar': npcExploracaoOficina, // beta3 F1: reusa a NPC da Oficina (provisório)
   'exploracao:caderno': npcExploracaoCaderno, // Opala (geleia-fantasma arquivista; 07/10/2026 trocou a Sépia)
   // Os três prédios de Jogos (30/09/2026): o Pipo segue no Salão (jogos livres).
   'jogos:salao': npcJogos,

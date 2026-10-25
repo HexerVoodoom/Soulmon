@@ -135,7 +135,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     const { container } = renderWithCss(<PlayAreaView {...props()} />);
     expect(container.querySelector('[data-area-npc]')).toBeNull();
     expect([...container.querySelectorAll('[data-area-lot]')].map(e => e.getAttribute('data-area-lot')))
-      .toEqual(['masmorra', 'passeio', 'oficina', 'caderno']);
+      .toEqual(['masmorra', 'passeio', 'oficina', 'caderno', 'preparar']);
     expect(container.querySelector('[data-area-lot="masmorra"] [data-area-lot-art]')).toBeTruthy();
     expect(container.querySelector('[data-area-lot="passeio"] [data-area-lot-art]')).toBeTruthy();
     expect(container.querySelector('[data-area-lot="oficina"] [data-area-lot-art]')).toBeTruthy();

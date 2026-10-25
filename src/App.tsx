@@ -31,6 +31,8 @@ import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, HUNGER_PREMIUM
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
+import { hasFocusKey, grantFocusKey } from './utils/focusKey';
+import { focusDescentRefusal, startFocusDescent } from './utils/focusDescent';
 import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
 import type { BuildingId } from './utils/gates';
 import { Celebration } from './components/ui/Celebration';
@@ -7484,6 +7486,15 @@ export default function App() {
                      Malha, que moram no save. A regra é de `utils/mente/revisao`;
                      aqui só se grava o estado que o jogo devolveu. */
                   todayKey: playerDayIso(new Date(), gameState.playerDayTz),
+                  focusKeyActive: hasFocusKey(gameState, Date.now()),
+                  onFocusPrepared: () => setGameState(prev => grantFocusKey(prev, Date.now())),
+                  onFocusStart: () => {
+                    const now = Date.now();
+                    const why = focusDescentRefusal(gameStateRef.current, now);
+                    if (why) return why;
+                    setGameState(prev => startFocusDescent(prev, now));
+                    return 'started' as const;
+                  },
                   focusTasks: gameState.tasks.map(({ id, name, completed, steps }) => ({ id, name, completed, steps })),
                   onCompleteFocusTask: handleToggleTask,
                   onFocusReward: (request: FocusLootRequest, completedCycles: number) => {

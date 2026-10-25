@@ -186,6 +186,11 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Foco é copiar uma linha de cada vez.',
     lineEn: 'Focus is copying one line at a time.',
   },
+  'exploracao:preparar': {
+    namePt: 'Tela, a organizadora', nameEn: 'Tela, the table-setter', // beta3 F1: reusa a NPC da Oficina (provisório)
+    linePt: 'Primeiro a mesa, depois a linha.',
+    lineEn: 'First the table, then the line.',
+  },
   'exploracao:caderno': {
     namePt: 'Opala, a arquivista das páginas', nameEn: 'Opala, keeper of the pages', // 07/10/2026: busto trocado a pedido do dono (era Sépia, a copista)
     linePt: 'O que se escreve aqui fica guardado. Só você abre.',

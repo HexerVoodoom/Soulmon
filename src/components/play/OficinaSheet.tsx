@@ -55,13 +55,17 @@ function useNow(active: boolean): number {
   return now;
 }
 
-export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = () => {}, onFocusReward, onPlanReward, onFocusCycle }: {
+export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = () => {}, onFocusReward, onPlanReward, onFocusCycle, planInPrepare = false, onFocusStart }: {
   language: Language; todayKey?: string; tasks?: WorkshopTask[]; onCompleteTask?: (taskId: string) => void;
   onFocusReward?: (request: FocusLootRequest, completedCycles: number) => FocusRewardResult;
   /** Recompensa por concluir o processo (1 item, teto diário no ledger). Sem ela, concluir não paga. */
   onPlanReward?: (request: FocusLootRequest) => FocusRewardResult;
   /** Um ciclo de foco (Pomodoro) terminou de verdade — a missão do dia conta o evento (REGISTRO §52). */
   onFocusCycle?: () => void;
+  /** beta3 F1: o planejamento da sessão mora no prédio "Prepare to Focus"; aqui só se executa a sessão pronta. */
+  planInPrepare?: boolean;
+  /** beta3 F1: o timer de foco começou — abre a descida da masmorra em background e devolve o que aconteceu (para o aviso). */
+  onFocusStart?: () => 'started' | 'busy' | 'no-hp' | 'no-energy';
 }) {
   const isPt = language === 'pt-BR';
   const day = todayKey ?? fallbackDay();
@@ -72,7 +76,9 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
   const [tab, setTab] = useState<'session' | 'guides'>('session');
   const [session, setSession] = useState<FocoSession | null>(loadWorkshopSession);
   const [history, setHistory] = useState<DoneSession[]>(() => normalizeHistory(readJson<unknown>(STORAGE_KEYS.FOCO_WORKSHOPS, [])));
-  const [editing, setEditing] = useState(() => !loadWorkshopSession());
+  const [editing, setEditing] = useState(() => !planInPrepare && !loadWorkshopSession());
+  const [prepHint, setPrepHint] = useState(false);
+  const [descent, setDescent] = useState<'started' | 'busy' | 'no-hp' | 'no-energy' | null>(null);
   const [initial, setInitial] = useState<SessionDraft>(emptyDraft);
   const [expanded, setExpanded] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -124,7 +130,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
   };
   const pickMode = (m: FocoModeId) => { setMode(m); if (session?.status === 'ready') writeSession({ ...session, mode: m }); };
   const hoje = sessionsToday(days, day);
-  const startEdit = () => { setInitial(session ? toDraft(session) : emptyDraft()); setEditing(true); setTab('session'); };
+  const startEdit = () => { if (planInPrepare) { setPrepHint(true); return; } setInitial(session ? toDraft(session) : emptyDraft()); setEditing(true); setTab('session'); };
   const saveDraft = (draft: SessionDraft) => {
     const next = buildSession(draft, tasks, { id: `foco-${Date.now()}`, day, prev: session?.status === 'ready' ? session : null });
     if (!next) return;
@@ -148,7 +154,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
     }
   };
   const deleteSession = () => { if (timer?.sessionId === session?.id) apply(null); writeSession(null); setEditing(false); setConfirmDelete(false); setExpanded(false); setLootNotice(null); };
-  const newSession = () => { writeSession(null); setPlanNotice(null); setInitial(emptyDraft()); setEditing(true); setExpanded(false); setTab('session'); };
+  const newSession = () => { if (planInPrepare) { setPrepHint(true); return; } writeSession(null); setPlanNotice(null); setInitial(emptyDraft()); setEditing(true); setExpanded(false); setTab('session'); };
   const left = timer ? remainingMs(timer, now) : FOCO_MODES[mode].focusMin * 60_000;
   const ended = timer?.status === 'ended';
   const timerLabel = timer ? (timer.phase === 'focus' ? (isPt ? 'Foco' : 'Focus') : (isPt ? 'Pausa' : 'Break')) : (isPt ? 'Foco' : 'Focus');
@@ -157,6 +163,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
     if (!canStartSessionFocus || !session) { startEdit(); return; }
     setMode(session.mode);
     setLootNotice(null);
+    setDescent(onFocusStart ? onFocusStart() : null);
     apply(startPhase(session.mode, 'focus', Date.now(), false, { expeditionId: session.environment, sessionId: session.id }));
   };
   const isDone = (id: string) => !!session?.doneIds.includes(id) || tasks.some(t => t.id === id && t.completed);
@@ -197,6 +204,16 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
             ? `${isPt ? 'O Soulmon voltou com' : 'Soulmon returned with'}: ${lootNotice.items.map(item => `${item.icon} ${isPt ? item.namePt : item.nameEn}`).join(' · ')}${lootNotice.items.length > 1 ? ` (${isPt ? 'bônus' : 'bonus'} ${lootNotice.chancePercent}%)` : ''}`
             : (isPt ? `Teto diário de ${FOCUS_LOOT_DAILY_CAP} itens alcançado.` : `Daily cap of ${FOCUS_LOOT_DAILY_CAP} items reached.`)}
         </p>}
+        {descent && timer?.phase === 'focus' && <p role="status" data-oficina-descida={descent} style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
+          {descent === 'started'
+            ? (isPt ? 'Enquanto você foca, o Soulmon desce a masmorra sozinho.' : 'While you focus, your Soulmon goes down the dungeon on its own.')
+            : descent === 'busy'
+              ? (isPt ? 'O Soulmon já está ocupado; a descida dele segue.' : 'Your Soulmon is already busy; his descent goes on.')
+              : descent === 'no-hp'
+                ? (isPt ? 'O Soulmon está sem fôlego para descer agora.' : 'Your Soulmon is too out of breath to go down right now.')
+                : (isPt ? 'Sem energia para a descida agora.' : 'No energy for a descent right now.')}
+        </p>}
+        {prepHint && <p role="status" data-oficina-prepare-hint style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{isPt ? 'Planeje a sessão no prédio "Preparar o Foco".' : 'Plan the session in the "Prepare to Focus" building.'}</p>}
         {hoje > 0 && <p data-oficina-hoje style={{ ...sm2Hint, margin: 0 }}>{isPt ? `Hoje: ${hoje} ${hoje === 1 ? 'foco' : 'focos'}` : `Today: ${hoje} ${hoje === 1 ? 'focus' : 'focuses'}`}</p>}
       </div>
 
