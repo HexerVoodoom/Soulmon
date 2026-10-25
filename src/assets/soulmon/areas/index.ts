@@ -77,7 +77,7 @@ import loteRefugio from './lote-jogos-refugio.png';
 export const PLAY_AREA_BG = { exploracao: bgExploracao, jogos: bgJogos } as const;
 
 // `passeio` (30/09/2026, leva lotes-v2): a ilha flutuante com arco de raízes.
-export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra, passeio: lotePasseio, oficina: loteOficina, caderno: loteCaderno } as const;
+export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra, passeio: lotePasseio, oficina: loteOficina, caderno: loteCaderno, preparar: loteOficina } as const;
 
 // 🏛️ Os três prédios de Jogos (30/09/2026). O Salão herda as duas artes que já
 // eram dele por conteúdo (o PPT; o Dino mudou da Exploração para cá).

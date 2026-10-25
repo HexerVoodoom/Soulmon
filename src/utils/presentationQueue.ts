@@ -60,6 +60,7 @@ export const PRESENTATION_IDLE = 'welcome' as const;
 export const PRESENTATION_ORDER = [
   'welcomeTour',
   'triage',
+  'dungeonReturn',
   'nightmare',
   'dream',
   'dailyReport',

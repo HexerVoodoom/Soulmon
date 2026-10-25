@@ -114,6 +114,12 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     what: { en: 'Focus techniques, laid out as a few steady rhythms. Each light glows in its own time.', pt: 'Técnicas de foco, em alguns ritmos constantes. Cada luz acende no seu tempo.' },
     invite: { en: 'Try one when it suits you.', pt: 'Experimente uma quando combinar com você.' },
   },
+  'exploracao.preparar': {
+    place: { en: 'Prepare to Focus', pt: 'Preparar o Foco' },
+    hello: { en: "I'm {name}. I lay out the table before the work.", pt: 'Eu sou {name}. Eu ponho a mesa antes do trabalho.' },
+    what: { en: 'Plan your session here, step by step. When it is ready you get a key to the Focus Workshop.', pt: 'Planeje a sua sessão aqui, passo a passo. Quando ela estiver pronta, você ganha a chave da Oficina do Foco.' },
+    invite: { en: 'Take it at your own pace.', pt: 'No seu ritmo.' },
+  },
   'laboratorio.evolucao': {
     place: { en: 'Evolution', pt: 'Evolução' },
     hello: { en: "I'm {name}, the alchemist.", pt: 'Eu sou {name}, a alquimista.' },

@@ -10,7 +10,7 @@ import { renderWithCss } from '../test/renderEnv';
 import { DungeonGame } from './DungeonGame';
 import { GameStateProvider } from '../contexts/GameStateContext';
 import { STORAGE_KEYS } from '../utils/storageKeys';
-import { DUNGEON_DAILY_LAYERS, dungeonDayOf } from '../utils/dungeonIdle';
+import { dungeonDayOf } from '../utils/dungeonIdle';
 
 vi.mock('../utils/combate/group', async importOriginal => {
   const real = await importOriginal<typeof import('../utils/combate/group')>();
@@ -85,57 +85,17 @@ describe('Masmorra — energia por camada', () => {
   }, 60_000);
 });
 
-describe('Masmorra — limite diário de camadas (beta-2 6.1, REGISTRO §40)', () => {
+describe('Masmorra — sem limite diário (beta3 F2)', () => {
   const hoje = () => dungeonDayOf({}, Date.now());
 
-  it('no limite do dia o botão NÃO acende (mesmo com energia sobrando) e a frase é calma — PT e EN', () => {
-    montar({ energyPoints: 8, dungeonDaily: { day: hoje(), layers: DUNGEON_DAILY_LAYERS } }, 'pt-BR');
-    expect((screen.getByRole('button', { name: 'Descer' }) as HTMLButtonElement).disabled).toBe(true);
-    const frase = document.querySelector('[data-dungeon-daily-limit]')!.textContent!;
-    expect(frase).toMatch(new RegExp(`até ${DUNGEON_DAILY_LAYERS} camadas por dia`));
-    expect(frase).not.toMatch(/falhou|culpa|precisa|deve/i);
-    expect(document.querySelector('[data-dungeon-no-energy]')).toBeNull(); // não é falta de energia
-    cleanup();
-    montar({ energyPoints: 8, dungeonDaily: { day: hoje(), layers: DUNGEON_DAILY_LAYERS } }, 'en-US');
-    expect((screen.getByRole('button', { name: 'Go down' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(document.querySelector('[data-dungeon-daily-limit]')!.textContent).toMatch(/up to 10 layers a day/);
+  it('com muitas camadas já feitas hoje o botão acende e não há frase de limite', () => {
+    montar({ energyPoints: 8, dungeonDaily: { day: hoje(), layers: 40 } }, 'en-US');
+    expect((screen.getByRole('button', { name: 'Go down' }) as HTMLButtonElement).disabled).toBe(false);
+    expect(document.querySelector('[data-dungeon-daily-limit]')).toBeNull();
   });
 
-  it('o lobby mostra quantas camadas dá para fazer AGORA: o menor entre a energia e o que resta do dia', () => {
-    montar({ energyPoints: 8, dungeonDaily: { day: hoje(), layers: DUNGEON_DAILY_LAYERS - 2 } });
-    expect(document.querySelector('[data-dungeon-plan]')!.textContent).toMatch(/enough for 2 now/);
+  it('o lobby mostra quantas camadas dá para fazer AGORA: só a energia manda', () => {
+    montar({ energyPoints: 8, dungeonDaily: { day: hoje(), layers: 40 } });
+    expect(document.querySelector('[data-dungeon-plan]')!.textContent).toMatch(/enough for 8 now/);
   });
-
-  it('reabrir o app (remontar do localStorage) no limite continua bloqueado: o contador mora no save, não na tela', () => {
-    montar({ energyPoints: 8, dungeonDaily: { day: hoje(), layers: DUNGEON_DAILY_LAYERS } });
-    cleanup();
-    const gravado = JSON.parse(localStorage.getItem(STORAGE_KEYS.GAME_STATE)!);
-    expect(gravado.dungeonDaily.layers).toBe(DUNGEON_DAILY_LAYERS);
-    renderWithCss(
-      <GameStateProvider>
-        <DungeonGame
-          evolutionStage="rookie" language="en-US" petElement="fogo"
-          onEnter={() => ({ ok: true, best: 0 })} onLose={() => {}} onHeartDrop={() => false}
-          onGlitchtama={() => {}} onEnemyDefeated={() => {}} onEarnPoints={() => {}} onExit={() => {}}
-        />
-      </GameStateProvider>,
-    );
-    expect((screen.getByRole('button', { name: 'Go down' }) as HTMLButtonElement).disabled).toBe(true);
-  });
-
-  it('com 1 camada de folga no dia e energia de sobra: desce UMA, termina com "daily", conta a camada no save e NÃO gasta mais energia', async () => {
-    vi.useFakeTimers();
-    montar({ energyPoints: 5, healthPoints: 2, dungeonDaily: { day: hoje(), layers: DUNGEON_DAILY_LAYERS - 1 } });
-    fireEvent.click(screen.getByRole('button', { name: 'Go down' }));
-    for (let t = 0; t < 600_000 && !document.querySelector('[data-dungeon-ended]'); t += 1000) await avancar(1000);
-    const fim = document.querySelector('[data-dungeon-ended]')!;
-    expect(fim.getAttribute('data-dungeon-ended')).toBe('daily');
-    expect(fim.textContent).toMatch(/That is enough down there for today/);
-    expect(fim.textContent).toMatch(/Your hearts are untouched/);
-    expect(screen.queryByRole('button', { name: 'Go down again' })).toBeNull(); // no limite não oferece descer de novo
-    const s = salvo();
-    expect(s.dungeonDaily).toEqual({ day: hoje(), layers: DUNGEON_DAILY_LAYERS });
-    expect(s.energyPoints).toBe(4); // 5 − 1 camada; a energia que sobrou fica
-    expect(s.healthPoints).toBe(2);
-  }, 60_000);
 });

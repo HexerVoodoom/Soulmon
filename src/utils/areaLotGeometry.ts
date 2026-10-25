@@ -39,6 +39,7 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   // 07/10/2026 (escolha do dono): Oficina = santuário Akasha (torre estreita), Caderno = santuário do Pântano, Amigos = abrigo da Terra — bbox do alfa > 20.
   'exploracao:oficina': [0.264, 0.039, 0.734, 0.961],
   // 11/10/2026: chalé `-campina` (alfa > 20), no lugar do santuário do Pântano ([0.13, 0.027, 0.867, 0.983]).
+  'exploracao:preparar': [0.264, 0.039, 0.734, 0.961], // beta3 F1: reusa a arte da Oficina (provisória)
   'exploracao:caderno': [0.23, 0.039, 0.768, 0.961], // 18/10/2026 (§88): prédios Caderno/Oficina repintados (faixa D); caixa remedida pelo alfa
   'jogos:salao': [0.017, 0, 0.98, 1],
   'jogos:mente': [0.227, 0.12, 0.773, 0.973],

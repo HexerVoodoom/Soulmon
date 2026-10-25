@@ -11,7 +11,7 @@ import { installDomGlobals } from '../test/renderEnv';
 import { GameStateProvider, useGameState, type GameState } from './GameStateContext';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { energyStatus, settleEnergy, eat, HUNGER_PER_FOOD, UNIT_POINTS } from '../utils/hunger';
-import { spendLayer, layersToday, DUNGEON_DAILY_LAYERS } from '../utils/dungeonIdle';
+import { spendLayer, layersToday } from '../utils/dungeonIdle';
 import { claimCheckIn, claimedToday } from '../utils/checkIns';
 
 const BASE = { activities: [], tasks: [], lastResetDate: new Date().toDateString() };
@@ -117,6 +117,5 @@ describe('o estado vivo persiste e a UI lê o mesmo dado que a regra (fechar e r
     });
     expect(ctxRef!.gameState.totalXP).toBe(antes.totalXP);
     expect(layersToday(ctxRef!.gameState, T)).toBe(1);
-    expect(DUNGEON_DAILY_LAYERS).toBeGreaterThan(1);
   });
 });

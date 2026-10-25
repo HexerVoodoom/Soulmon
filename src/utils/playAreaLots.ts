@@ -29,7 +29,7 @@
  */
 import type { Language } from './i18n';
 
-export type ExploracaoLotId = 'masmorra' | 'passeio' | 'oficina' | 'caderno';
+export type ExploracaoLotId = 'masmorra' | 'passeio' | 'oficina' | 'caderno' | 'preparar';
 export type JogosLotId = 'salao' | 'mente' | 'refugio';
 
 interface PlayLotSpec<K extends string> {
@@ -65,6 +65,9 @@ const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
   // PT "Caderno" e não "Diário": já existe o Diário de Aventuras (o álbum do pet).
   { id: 'oficina', labelPt: 'Oficina do Foco', labelEn: 'Focus Workshop', ariaPt: 'Entrar na Oficina do Foco', ariaEn: 'Enter the Focus Workshop', left: '28%', top: '86%', width: '62%' },
   { id: 'caderno', labelPt: 'Caderno', labelEn: 'Journal', ariaPt: 'Abrir o Caderno', ariaEn: 'Open the Journal', left: '28%', top: '54%', width: '47%' }, // W5 (19/10/2026): arte nova (caixa opaca 54%) → 44% -> 47% para manter ≥24% da cena; 18/10/2026 (§88): a arte repintada ficou mais estreita na caixa, então 40% -> 44% (centro mantido). 11/10/2026 (dono): o Caderno/Jornal sobe para o espaço ENTRE a Masmorra e a Oficina do Foco (coluna da esquerda: 3 prédios); o canto de baixo à direita, onde ele estava, fica LIVRE (reservado p/ um prédio futuro). Chalé campina (opaco ~89% da caixa).
+  // 🔑 beta3 F1 (25/10/2026): o prédio "Prepare to Focus" — a preparação da sessão saiu da Oficina; concluir dá a CHAVE que a libera.
+  // Ocupa o canto de baixo à direita que o Caderno deixou livre. Arte PROVISÓRIA (reusa a da Oficina) e posição a conferir na tela.
+  { id: 'preparar', labelPt: 'Preparar o Foco', labelEn: 'Prepare to Focus', ariaPt: 'Entrar em Preparar o Foco', ariaEn: 'Enter Prepare to Focus', left: '78%', top: '84%', width: '52%' },
 ];
 
 // 🍄 01/10/2026 (H13, navegação do dono): redistribuídos pelas duas clareiras de

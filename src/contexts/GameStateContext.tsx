@@ -1,4 +1,5 @@
 import { normalizeGuildMission } from '../utils/guildMission';
+import { sanitizeFocusKeyDay } from '../utils/focusKey';
 import { sanitizeClaReceipts } from '../utils/claCredit';
 import { sanitizeBosqueArvores, type BosqueArvores } from '../utils/bosqueArvoresSave';
 import { sanitizeFichaJornada, type FichaJornada } from '../utils/fichaJornada';
@@ -453,7 +454,7 @@ export interface GameState {
   energyClock?: { at: number; carry: number };
   /** 🍽️ Penalidade de fome (REGISTRO §45, `utils/hungerPenalty.ts`): meio coração a cada 12 h CONTÍNUAS de faminto. `since` = a âncora da fome, `paid` = janelas já resolvidas (anti-dupla), `unreported` = o que o resumo do dia ainda vai contar. Ausente = nada cobrado. */
   hungerPenalty?: { since: number; paid: number; unreported: number };
-  /** 🚧 Camadas da masmorra COMEÇADAS no dia do jogador (beta-2 6.1): o limite diário (`DUNGEON_DAILY_LAYERS`, `utils/dungeonIdle.ts`) mora no
+  /** 🚧 Camadas da masmorra COMEÇADAS no dia do jogador (beta-2 6.1): o limite diário (REMOVIDO em beta3 F2; o contador segue) morava no
    *  save — reabrir o app, entrar/sair ou retirar o Soulmon não devolvem camada. O servidor só aceita o contador monotônico no dia. */
   dungeonDaily?: { day: string; layers: number };
   /** ☀️🌤️🌙 Check-ins do dia já resgatados (beta-2 4.1, `utils/checkIns.ts`): UMA recompensa por janela por dia do jogador; sem histórico. */
@@ -535,6 +536,8 @@ export interface GameState {
   /** Item de decoração que a pessoa pôs na CASA DA GUILDA (um por pessoa). Enquanto está lá NÃO está em
    *  `ownedFurniture` nem em `equippedDecor` (`utils/guildHouse.ts`). O servidor é a fonte (`casa.mine.slot`). */
   guildDonatedItem?: string | null;
+  /** beta3 F1: dia do jogador (AAAA-MM-DD) em que o "Prepare to Focus" deu a chave que libera a Focus Workshop (`utils/focusKey.ts`). */
+  focusKeyDay?: string;
   /** Recibos de prêmio dos prédios do clã (Praça, Plantio, Mistério) JÁ creditados — os últimos ~50. Credita UMA vez por recibo (`utils/claCredit.ts`). */
   claReceipts?: string[];
   /** As 4 árvores do Bosque: o pico de cada estação e o ano-ciclo em que completou/aperfeiçoou (`utils/bosqueArvores.ts`). */
@@ -1393,6 +1396,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         guildMission: normalizeGuildMission(loadedState.guildMission),
         claReceipts: sanitizeClaReceipts(loadedState.claReceipts),
         bosqueArvores: sanitizeBosqueArvores(loadedState.bosqueArvores),
+        focusKeyDay: sanitizeFocusKeyDay(loadedState.focusKeyDay),
         guildDonatedItem: (() => { const v = str(loadedState.guildDonatedItem); return v && /^[a-z0-9][a-z0-9_-]{1,39}$/.test(v) ? v : null; })(),
         // Campos novos: saves antigos não os têm, então o fallback é obrigatório.
         // Sem `?? padrão` de valor: aqui o padrão É a ausência. Save antigo

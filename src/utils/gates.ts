@@ -92,7 +92,7 @@ export type BuildingId =
   | 'mercado.itens' | 'mercado.conquistas' | 'mercado.decoracao' | 'mercado.background' | 'mercado.ferreiro'
   | 'jogos.salao' | 'jogos.refugio' | 'jogos.mente'
   | 'arena.duelo' | 'arena.torneio' | 'arena.guerra'
-  | 'exploracao.passeio' | 'exploracao.masmorra' | 'exploracao.caderno' | 'exploracao.oficina'
+  | 'exploracao.passeio' | 'exploracao.masmorra' | 'exploracao.caderno' | 'exploracao.oficina' | 'exploracao.preparar'
   | 'laboratorio.evolucao' | 'laboratorio.pet' | 'laboratorio.stats' | 'laboratorio.perfil'
   | 'laboratorio.biblioteca' | 'laboratorio.amigos'
   | 'hall.guilda' | 'hall.feira' | 'hall.grove';
@@ -140,6 +140,7 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   'exploracao.masmorra': { minBond: 1 },
   'exploracao.caderno': { minBond: 2 },
   'exploracao.oficina': { minBond: 3 },
+  'exploracao.preparar': { minBond: 3 }, // beta3 F1: mesmo portão da Oficina que ele libera
   'arena.duelo': { minBond: GATES.pvp.minBond },
   'arena.torneio': { minBond: GATES.torneio.minBond },
   'arena.guerra': { minBond: 5 }, // dono 18/10/2026: a Arena não destrava antes do que já destravava (Vínculo 5)

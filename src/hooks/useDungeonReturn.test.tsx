@@ -7,7 +7,7 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import type { GameState } from '../contexts/GameStateContext';
 import { useDungeonReturn } from './useDungeonReturn';
-import { DUNGEON_AWAY_MAX_MS, DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_DAILY_LAYERS, dungeonDayOf, type DungeonAway } from '../utils/dungeonIdle';
+import { DUNGEON_AWAY_MAX_MS, DUNGEON_FIGHTS_PER_FLOOR, type DungeonAway } from '../utils/dungeonIdle';
 import { applyDungeonAway } from '../utils/dungeonAway';
 import { soulCombatant } from '../utils/soulXP';
 
@@ -57,13 +57,11 @@ describe('useDungeonReturn', () => {
     expect(b.result.current.msLeft!).toBeLessThanOrEqual(msAntes - 8 * 60_000 + 1);
   });
 
-  it('muda quando o ESTADO muda: mais energia, descida mais longa — e o limite diário a encurta', async () => {
+  it('muda quando o ESTADO muda: mais energia, descida mais longa (sem teto diário)', async () => {
     const pouca = renderHook(() => useDungeonReturn(estado({ energyPoints: 2 })));
     const muita = renderHook(() => useDungeonReturn(estado({ energyPoints: 12 })));
     await waitFor(() => expect(pouca.result.current.returnAt).toBeLessThan(T0 + DUNGEON_AWAY_MAX_MS));
     await waitFor(() => expect(muita.result.current.returnAt!).toBeGreaterThan(pouca.result.current.returnAt!));
-    const noLimite = renderHook(() => useDungeonReturn(estado({ energyPoints: 12, dungeonDaily: { day: dungeonDayOf({}, T0), layers: DUNGEON_DAILY_LAYERS } })));
-    await waitFor(() => expect(noLimite.result.current.returnAt!).toBeLessThan(muita.result.current.returnAt!));
   });
 
   it('o tempo restante nunca é negativo', async () => {

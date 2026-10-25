@@ -64,6 +64,7 @@ const SalaoSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.SalaoShee
 const MenteSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.MenteSheet })));
 const RefugioSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.RefugioSheet })));
 // 🧭 O Passeio (30/09/2026): a folha carrega o catálogo das regiões — por isso lazy.
+const PrepararFocoSheet = lazy(() => import('../play/PrepararFocoSheet').then(m => ({ default: m.PrepararFocoSheet })));
 const OficinaSheet = lazy(() => import('../play/OficinaSheet').then(m => ({ default: m.OficinaSheet })));
 const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ default: m.PasseioSheet })));
 const CadernoSheet = lazy(() => import('../play/CadernoSheet').then(m => ({ default: m.CadernoSheet })));
@@ -88,6 +89,8 @@ export interface PlayHandlers {
   onDungeonHeartDrop: () => boolean;
   onGlitchtama: () => void;
   onFloorCleared?: () => void;
+  /** beta3 A4: a descida terminou com ao menos 1 camada limpa (conta a missão "runs da masmorra"). */
+  onRunEnd?: () => void;
   onDungeonEnemyDefeated: (enemyKey?: string) => void;
   onDinoScore: (score: number) => void;
   onSpendBits?: (pts: number) => boolean;
@@ -99,6 +102,11 @@ export interface PlayHandlers {
   onCompleteFocusTask?: (taskId: string) => void;
   onFocusReward?: (request: FocusLootRequest, completedCycles: number) => FocusRewardResult;
   onPlanReward?: (request: FocusLootRequest) => FocusRewardResult;
+  /** beta3 F1: a chave do dia ("Prepare to Focus" concluído) libera a Focus Workshop. Ausente = sem trava (testes antigos). */
+  focusKeyActive?: boolean;
+  onFocusPrepared?: () => void;
+  /** beta3 F1: o timer de foco começou — a masmorra desce em background. */
+  onFocusStart?: () => 'started' | 'busy' | 'no-hp' | 'no-energy';
   /** Os cartões da Revisão da Malha, que moram no SAVE (`GameState.review`). */
   review?: ReviewState;
   onReviewChange?: (next: ReviewState) => void;
@@ -430,7 +438,13 @@ export function AreaView(props: AreaViewProps) {
                 achado={props.passeio?.achado}
               />
             )}
-            {open?.id === 'oficina' && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} onFocusCycle={() => props.onDailyEvent?.('foco')} />}
+            {open?.id === 'preparar' && <PrepararFocoSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} keyActive={play.focusKeyActive ?? false} onPrepared={play.onFocusPrepared} />}
+            {open?.id === 'oficina' && play.focusKeyActive === false && (
+              <p data-oficina-trancada style={{ margin: 0, color: 'var(--sm2-ink)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm, 14px)' }}>
+                {language === 'pt-BR' ? 'A Oficina do Foco está trancada. Conclua a preparação no prédio "Preparar o Foco" para ganhar a chave de hoje.' : 'The Focus Workshop is locked. Finish the preparation in the "Prepare to Focus" building to get today\'s key.'}
+              </p>
+            )}
+            {open?.id === 'oficina' && play.focusKeyActive !== false && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} onFocusCycle={() => props.onDailyEvent?.('foco')} planInPrepare={play.focusKeyActive !== undefined} onFocusStart={play.onFocusStart} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => (props.ocupado?.missaoFora ? props.ocupado.onBusy('masmorra-em-missao') : start('masmorra'))} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
@@ -455,6 +469,7 @@ export function AreaView(props: AreaViewProps) {
                 onHeartDrop={play.onDungeonHeartDrop}
                 onGlitchtama={play.onGlitchtama}
                 onFloorCleared={play.onFloorCleared}
+                onRunEnd={play.onRunEnd}
                 onEnemyDefeated={play.onDungeonEnemyDefeated}
                 onEarnPoints={props.onEarnPoints}
                 /* WP4.5 — o sumidouro recorrente: comprar profundidade com Bits. */
