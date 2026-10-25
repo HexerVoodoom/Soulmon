@@ -748,6 +748,7 @@ const MorningCheckIn = lazy(() => import('./components/MorningCheckIn').then(m =
 const TriagePile = lazy(() => import('./components/TriagePile').then(m => ({ default: m.TriagePile })));
 const MorningDream = lazy(() => import('./components/MorningDream').then(m => ({ default: m.MorningDream })));
 const RestSetupModal = lazy(() => import('./components/RestSetupModal').then(m => ({ default: m.RestSetupModal })));
+import { demoDaySuggestions } from './utils/demoDaySuggestions';
 const DayGoalsModal = lazy(() => import('./components/DayGoalsModal').then(m => ({ default: m.DayGoalsModal })));
 const CatalogOnboardingFlow = lazy(() => import('./components/catalog/CatalogOnboardingFlow').then(m => ({ default: m.CatalogOnboardingFlow })));
 const CatalogBrowserModal = lazy(() => import('./components/catalog/CatalogBrowserModal').then(m => ({ default: m.CatalogBrowserModal })));
@@ -2108,6 +2109,11 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [gameState.activities, gameState.tasks, gameState.habitRhythms, dayPlanToday],
   );
+  // DEMO: o "Plan my day" abre com sugestões do catálogo (recomendador + foco do jogador); fora da demo, nada muda.
+  const dayGoalsSuggestions = useMemo(
+    () => (demo ? demoDaySuggestions({ soulGoal: gameState.soulGoal, activities: gameState.activities as any }) : []),
+    [demo, gameState.soulGoal, gameState.activities],
+  );
   // Save anterior (sem `dayPlan`): a lista do dia já estava montada → hoje já está reafirmado, nada escondido.
   useEffect(() => {
     if (!dayPlanActive || gameState.dayPlan) return;
@@ -2164,7 +2170,7 @@ export default function App() {
       unlockToast: unlockToastIds.length > 0,
       noticeToast: noticeKey !== null,
       catalogOnboarding: needsCatalogOnboarding(gameState as any),
-      dayGoals: dayGoalsOpen && dayPlanCandidatesNow.length > 0,
+      dayGoals: dayGoalsOpen && (dayPlanCandidatesNow.length > 0 || dayGoalsSuggestions.length > 0),
       checkIn: Boolean(checkInPlanData),
       evolveTask: evolveModalStage !== null && evolutionCeremony === null,
       groveMilestone: Boolean(grovePendente),
@@ -8152,7 +8158,7 @@ export default function App() {
                     /* Reafirmar o dia (REGISTRO §66): só o que foi marcado para hoje aparece; o convite abre o modal pela fila. */
                     dayPlan={{
                       view: dayPlanViewNow,
-                      invite: dayPlanInvite(gameState.dayPlan, dayPlanToday, dayPlanActive) && dayPlanCandidatesNow.length > 0,
+                      invite: dayPlanInvite(gameState.dayPlan, dayPlanToday, dayPlanActive) && (dayPlanCandidatesNow.length > 0 || dayGoalsSuggestions.length > 0),
                       onInvite: () => setDayGoalsOpen(true),
                     }}
                   />
@@ -8944,6 +8950,12 @@ export default function App() {
         <PresentationSlot id="dayGoals" onFail={() => presentation.fail('dayGoals')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <DayGoalsModal
             candidates={dayPlanCandidatesNow}
+            suggestions={dayGoalsSuggestions}
+            onAcceptSuggestions={items => {
+              const novas = activitiesFromCatalogChoice(items, language === 'pt-BR');
+              commitHabitCreate(novas, TELEMETRY_CREATE_PATH.create_modal);
+              return novas.map(a => a.id);
+            }}
             language={language}
             initiallyPicked={gameState.dayPlan?.day === dayPlanToday ? gameState.dayPlan.picked : []}
             /* "HOJE" (REGISTRO §111): metas + compromisso num modal só. Confirmar grava o plano do dia E o foco (as tarefas marcadas, até 3) pelo

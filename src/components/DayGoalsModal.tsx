@@ -3,6 +3,7 @@ import type { Language } from '../utils/i18n';
 import { dayPlanFocusIds, type DayPlanCandidate, type DayPlanFocusSource } from '../utils/dayPlan';
 import { MAX_DAILY_FOCUS } from '../types/taskModel';
 import { tinyOfferIntro } from '../utils/tinyOffer';
+import type { CatalogItem } from '../types/activityCatalog';
 import { Icon } from './ui/Icon';
 import { CheckRow, ModalSheet, sm2Button, sm2Hint } from './form/FormKit';
 
@@ -28,6 +29,9 @@ export interface DayGoalsModalProps {
   /** `focusIds` só vem preenchido com `fuse` (as tarefas marcadas, até 3). */
   onConfirm: (pickedIds: string[], focusIds: string[]) => void;
   onClose: () => void;
+  /** DEMO: atividades do catálogo oferecidas pré-preenchidas (desmarcadas). Nada é criado sem o toque; as marcadas viram atividade via `onAcceptSuggestions`, que devolve os ids criados. */
+  suggestions?: readonly CatalogItem[];
+  onAcceptSuggestions?: (items: CatalogItem[]) => string[];
   /** Modo "Hoje" (metas + compromisso). */
   fuse?: {
     /** O que o motor do check-in sabe: ordem do foco (ontem primeiro) e a oferta reduzida. */
@@ -41,7 +45,7 @@ export interface DayGoalsModalProps {
   };
 }
 
-export function DayGoalsModal({ candidates, language, initiallyPicked = [], onConfirm, onClose, fuse }: DayGoalsModalProps) {
+export function DayGoalsModal({ candidates, language, initiallyPicked = [], onConfirm, onClose, fuse, suggestions = [], onAcceptSuggestions }: DayGoalsModalProps) {
   const isPt = language === 'pt-BR';
   const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set(initiallyPicked));
   const [accepted, setAccepted] = useState<readonly string[]>([]);
@@ -52,9 +56,11 @@ export function DayGoalsModal({ candidates, language, initiallyPicked = [], onCo
   });
   const habits = candidates.filter(c => c.kind === 'habit');
   const tasks = candidates.filter(c => c.kind === 'task');
-  const count = candidates.filter(c => picked.has(c.id)).length;
+  const count = candidates.filter(c => picked.has(c.id)).length + suggestions.filter(i => picked.has(`sug:${i.id}`)).length;
   const confirm = () => {
-    const ids = candidates.filter(c => picked.has(c.id)).map(c => c.id);
+    const chosen = suggestions.filter(i => picked.has(`sug:${i.id}`));
+    const created = chosen.length > 0 && onAcceptSuggestions ? onAcceptSuggestions([...chosen]) : [];
+    const ids = [...candidates.filter(c => picked.has(c.id)).map(c => c.id), ...created];
     onConfirm(ids, fuse ? dayPlanFocusIds(ids, fuse.taskIds, fuse.plan, MAX_DAILY_FOCUS) : []);
   };
   const tiny = fuse ? habits.filter(h => (fuse.plan.tinyOffer ?? []).includes(h.id)) : [];
@@ -106,6 +112,21 @@ export function DayGoalsModal({ candidates, language, initiallyPicked = [], onCo
       </p>
       {group('habits', isPt ? 'Hábitos' : 'Habits', habits)}
       {group('tasks', isPt ? 'Tarefas' : 'Tasks', tasks)}
+      {suggestions.length > 0 && (
+        <section data-day-goals-group="suggestions" aria-label={isPt ? 'Sugestões' : 'Suggestions'} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <h3 style={{ ...sm2Hint, margin: 0, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>{isPt ? 'Sugestões' : 'Suggestions'}</h3>
+          {suggestions.map(i => (
+            <div key={i.id} className="sm2-conta-card" data-day-suggestion={i.id} style={{ padding: '2px 12px' }}>
+              <CheckRow checked={picked.has(`sug:${i.id}`)} onChange={on => toggle(`sug:${i.id}`, on)}>
+                <span style={{ fontWeight: 600 }}>
+                  <span aria-hidden="true" data-day-suggestion-icon style={{ marginRight: 8 }}>{i.emoji}</span>
+                  {isPt ? i.name.pt : i.name.en}
+                </span>
+              </CheckRow>
+            </div>
+          ))}
+        </section>
+      )}
       {/* A oferta reduzida (nunca falte duas vezes): aceitar conta como FEITO; não há botão de recusar — ignorar é a recusa. */}
       {fuse?.onTinyHabit && tiny.length > 0 && (
         <section data-day-goals-tiny style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
