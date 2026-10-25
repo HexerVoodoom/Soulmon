@@ -28,4 +28,6 @@ export interface MiniGameBaseProps {
 /** Jogos que pagam Bits (os de mente). Os do Refúgio NÃO recebem isto. */
 export interface EarningGameProps extends MiniGameBaseProps {
   onEarnPoints: (pts: number) => void;
+  /** saveId do jogador: liga o ranking semanal (M8). Sem ele, o jogo não mostra nem envia ranking. */
+  rankSaveId?: string;
 }

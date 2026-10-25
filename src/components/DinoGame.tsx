@@ -1,3 +1,4 @@
+import { RankingPanel } from './RankingPanel';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSpriteForStage, artFacesLeft } from '../utils/sprites';
 
@@ -160,7 +161,8 @@ function drawPet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: 
   ctx.restore();
 }
 
-export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit }: {
+export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit, rankSaveId }: {
+  rankSaveId?: string;
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos obstáculos). */
   demoCharacterId?: string;
@@ -572,6 +574,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           <button type="button" onClick={start} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 240, alignSelf: 'center' }}>
             {isPt ? 'Jogar de novo' : 'Play again'}
           </button>
+          <RankingPanel key={finalScore} game="dino" saveId={rankSaveId} language={language} score={finalScore} />
         </>
       )}
 
