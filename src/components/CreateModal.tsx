@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Icon } from './ui/Icon';
+import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { InfoTip } from './ui/InfoTip';
 import {
   CATEGORY_ATTRIBUTES, ATTR_INK, ATTR_LABEL,
@@ -315,19 +316,20 @@ export function StrengthensLine({ category, isPt }: { category: ActivityCategory
   const attributes = CATEGORY_ATTRIBUTES[category];
   if (!attributes) return null; // categoria fora do catálogo (save velho): sem a linha, em vez de derrubar a folha
   const keys: BranchType[] = ['power', 'harmony', 'benevolence'];
-  const top = Math.max(...keys.map(k => attributes[k]));
-  const winners = keys.filter(k => attributes[k] === top);
+  const Icons = { power: PowerIcon, harmony: HarmonyIcon, benevolence: BenevolenceIcon };
   return (
-    <p style={sm2Hint}>
-      {isPt ? 'Fortalece ' : 'Strengthens '}
-      {winners.map((a, i) => (
-        <span key={a} style={{ color: ATTR_INK[a], fontWeight: 500 }}>
-          {i > 0 ? ' · ' : ''}{isPt ? ATTR_LABEL[a].pt : ATTR_LABEL[a].en}
-          {' '}<span className="sm2-num">+{attributes[a]}</span>
-        </span>
-      ))}
-      {isPt ? ' — e é o mais alto que decide o galho da evolução.' : ' — and the highest one decides the evolution branch.'}
-    </p>
+    <div data-testid="category-points" style={{ ...sm2Hint, display: 'flex', flexWrap: 'wrap', gap: '4px 14px', alignItems: 'center' }}>
+      {keys.map(a => {
+        const AttrIcon = Icons[a];
+        const label = isPt ? ATTR_LABEL[a].pt : ATTR_LABEL[a].en;
+        return (
+          <span key={a} data-attr={a} style={{ color: ATTR_INK[a], fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <AttrIcon size={18} color={ATTR_INK[a]} />
+            {label}{' '}<span className="sm2-num">+{attributes[a]}</span>
+          </span>
+        );
+      })}
+    </div>
   );
 }
 
