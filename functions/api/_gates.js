@@ -37,12 +37,13 @@ export const BUILDING_GATES = {
   'mercado.background': { minBond: 3 },
   'mercado.ferreiro': { minBond: 2 },
   'jogos.salao': { minBond: 1 },
-  'jogos.refugio': { minBond: 1 },
+  'jogos.dungeon': { minBond: 3 },
   'jogos.mente': { minBond: 3 },
   'exploracao.masmorra': { minBond: 1 },
   'exploracao.caderno': { minBond: 2 },
   'exploracao.oficina': { minBond: 3 },
   'exploracao.preparar': { minBond: 3 },
+  'exploracao.refugio': { minBond: 1 },
   'arena.duelo': { minBond: GATES.pvp.minBond },
   'arena.torneio': { minBond: GATES.torneio.minBond },
   'arena.guerra': { minBond: 5 },
@@ -62,6 +63,7 @@ export const MOVED_BUILDINGS = {
   'arena.feira': 'hall.feira',
   'hall.biblioteca': 'laboratorio.biblioteca',
   'hall.amigos': 'laboratorio.amigos',
+  'jogos.refugio': 'exploracao.refugio',
 };
 
 /** O id atual de um predio (id antigo -> novo; qualquer outro valor passa igual). @param {unknown} x */

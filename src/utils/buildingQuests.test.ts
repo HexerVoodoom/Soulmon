@@ -18,8 +18,9 @@ describe('tabela prédio → material', () => {
     // beta-2 (11): o Perfil do Soulmon é leitura — sem missão, sem material (e sem peça do Soulsmith).
     expect(QUEST_BUILDINGS).not.toContain('laboratorio.perfil');
     expect(QUEST_BUILDINGS).not.toContain('arena.guerra'); // a guerra rende na casa do clã, sem material
-    expect(QUEST_BUILDINGS.length).toBe(Object.keys(BUILDING_GATES).filter(id => !id.startsWith('mercado.') && id !== 'laboratorio.perfil' && id !== 'arena.guerra' && id !== 'hall.grove' && id !== 'exploracao.preparar').length);
+    expect(QUEST_BUILDINGS.length).toBe(Object.keys(BUILDING_GATES).filter(id => !id.startsWith('mercado.') && id !== 'laboratorio.perfil' && id !== 'arena.guerra' && id !== 'hall.grove' && id !== 'exploracao.preparar' && id !== 'jogos.dungeon').length);
     expect(QUEST_BUILDINGS).not.toContain('exploracao.preparar'); // beta3 F1: rende a chave da Oficina, sem material
+    expect(QUEST_BUILDINGS).not.toContain('jogos.dungeon'); // beta3 M3: placeholder do Calabouço, sem material
     expect(QUEST_BUILDINGS).not.toContain('hall.grove'); // D-50: o bosque rende no clã, sem material
     expect(MATERIALS.map(m => m.building).sort()).toEqual([...QUEST_BUILDINGS].sort());
     expect(new Set(MATERIAL_IDS).size).toBe(MATERIAL_IDS.length);

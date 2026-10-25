@@ -100,7 +100,8 @@ export const LOT_NPC_ART: Record<string, string> = {
   // Os três prédios de Jogos (30/09/2026): o Pipo segue no Salão (jogos livres).
   'jogos:salao': npcJogos,
   'jogos:mente': npcJogosMente, // Tessela
-  'jogos:refugio': npcJogosRefugio, // Marim (07/10/2026: trocou o Bobbi)
+  'jogos:dungeon': npcExploracao, // beta3 M3: provisório (reusa a guia da Masmorra)
+  'exploracao:refugio': npcJogosRefugio, // Marim (07/10/2026: trocou o Bobbi)
   'laboratorio:evolucao': npcLaboratorio,
   'laboratorio:pet': npcLaboratorioPet, // Tinta (enguia escriba; 07/10/2026 trocou o Faro)
   'laboratorio:stats': npcLaboratorioStats, // Sumi (koi-dragão sábio; 07/10/2026 trocou a Oriel — `npc-f-sacerdotisa` segue em EXTRA_NPC_ART)

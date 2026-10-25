@@ -57,7 +57,7 @@ export const MATERIAL_PER_QUEST = 1;
 
 /** O prédio dono de cada material: o único que o paga. Nomes e ícones moram em `buildingQuestsCopy.ts` (só a folha lazy os lê). */
 export const MATERIAL_BUILDING: Readonly<Record<MaterialId, BuildingId>> = {
-  spark: 'jogos.salao', moss: 'jogos.refugio', prism: 'jogos.mente',
+  spark: 'jogos.salao', moss: 'exploracao.refugio', prism: 'jogos.mente',
   pebble: 'exploracao.passeio', ore: 'exploracao.masmorra', ink: 'exploracao.caderno', gear: 'exploracao.oficina',
   fang: 'arena.duelo', laurel: 'arena.torneio', ribbon: 'hall.feira',
   essence: 'laboratorio.evolucao', down: 'laboratorio.pet', cipher: 'laboratorio.stats',
@@ -67,7 +67,7 @@ export const MATERIAL_BUILDING: Readonly<Record<MaterialId, BuildingId>> = {
 export const MATERIAL_IDS = Object.keys(MATERIAL_BUILDING) as MaterialId[];
 
 /** Os prédios que dão missão: todos menos `mercado.*` e o Perfil do Soulmon (beta-2: é uma LEITURA da ficha — sem missão, sem material, sem peça do Soulsmith) e a Guerra de Clãs (a guerra rende na casa do clã, não em material) e o Grove (D-50: o bosque rende no clã, não em material). */
-export const QUEST_BUILDINGS: readonly BuildingId[] = (Object.keys(BUILDING_GATES) as BuildingId[]).filter(id => !id.startsWith('mercado.') && id !== 'laboratorio.perfil' && id !== 'arena.guerra' && id !== 'hall.grove' && id !== 'exploracao.preparar');
+export const QUEST_BUILDINGS: readonly BuildingId[] = (Object.keys(BUILDING_GATES) as BuildingId[]).filter(id => !id.startsWith('mercado.') && id !== 'laboratorio.perfil' && id !== 'arena.guerra' && id !== 'hall.grove' && id !== 'exploracao.preparar' && id !== 'jogos.dungeon');
 
 /** Os prédios cuja missão o menu da Home lista (e que acendem a marca do canto). O resto só conta a visita. */
 export const LISTED_QUEST_BUILDINGS: readonly BuildingId[] = ['exploracao.caderno'];

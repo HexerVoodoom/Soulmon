@@ -6,6 +6,7 @@ import { AreaSheet } from './AreaSheet';
 import { mercadoLots, arenaLots, laboratorioLots, hallLots, type MercadoLotId, type LaboratorioLotId } from '../../utils/areaSheetCopy';
 import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART, HALL_BG, LABORATORIO_BG } from '../../assets/soulmon/areas';
 import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
+import { RogueDungeonPlaceholder } from '../play/RogueDungeonPlaceholder';
 import { buildingGateFor, buildingLockLine, type BuildingId } from '../../utils/gates';
 import type { DailyEvent } from '../../utils/dailyMissions';
 import { isDemoBlockedLot, isDemoHiddenLot, demoRefusalText } from '../../utils/demoMode';
@@ -451,6 +452,7 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
+            {open?.id === 'dungeon' && <RogueDungeonPlaceholder language={language} />}
           </Suspense>
         </AreaSheet>
         {game && (

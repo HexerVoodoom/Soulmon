@@ -153,8 +153,8 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
   ]),
   mapStep('jogos', { en: 'Play, and calm.', pt: 'Brincar, e acalmar.' }, [
     bRow('jogos.salao', 'Minigames, for fun and for Bits.', 'Minijogos, pela graça e por Bits.'),
-    bRow('jogos.refugio', 'Slow breathing for hard moments.', 'Respiração lenta para momentos difíceis.'),
     bRow('jogos.mente', 'Memory and logic games.', 'Jogos de memória e lógica.'),
+    bRow('jogos.dungeon', 'A roguelike dungeon, coming soon.', 'Um calabouço roguelike, em breve.'),
   ]),
   mapStep('exploracao', { en: 'Out in the mist. The Dungeon is open from day one.', pt: 'Lá fora, na névoa. A Masmorra está aberta desde o primeiro dia.' }, [
     bRow('exploracao.masmorra', 'Your Soulmon goes down floor by floor and fights on its own, spending energy.', 'O seu Soulmon desce andar por andar e luta sozinho, gastando energia.'),
@@ -162,6 +162,7 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
     bRow('exploracao.preparar', 'Plan a session; it gives you the key to the Workshop.', 'Planeje uma sessão; ela dá a chave da Oficina.'),
     bRow('exploracao.oficina', 'Focus sessions.', 'Sessões de foco.'),
     bRow('exploracao.caderno', 'Your journal.', 'O seu caderno.'),
+    bRow('exploracao.refugio', 'Slow breathing for hard moments.', 'Respiração lenta para momentos difíceis.'),
   ]),
   mapStep('hall', { en: 'Your Clan.', pt: 'O seu Clã.' }, [
     bRow('hall.guilda', 'Your Clan.', 'O seu Clã.'),

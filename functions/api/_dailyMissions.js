@@ -20,7 +20,7 @@ export const DAILY_MISSION_IDS = [
 export const FIRST_TIME_IDS = [
   'first-minigame', 'first-focus', 'first-stroll', 'first-dungeon',
   'visit:mercado.itens', 'visit:mercado.conquistas', 'visit:mercado.decoracao', 'visit:mercado.background', 'visit:mercado.ferreiro',
-  'visit:jogos.salao', 'visit:jogos.refugio', 'visit:jogos.mente',
+  'visit:jogos.salao', 'visit:jogos.dungeon', 'visit:exploracao.refugio', 'visit:jogos.mente',
   'visit:exploracao.passeio', 'visit:exploracao.masmorra', 'visit:exploracao.caderno', 'visit:exploracao.oficina',
   'visit:exploracao.preparar',
   'visit:arena.duelo', 'visit:arena.torneio',

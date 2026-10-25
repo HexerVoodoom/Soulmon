@@ -77,13 +77,14 @@ import loteRefugio from './lote-jogos-refugio.png';
 export const PLAY_AREA_BG = { exploracao: bgExploracao, jogos: bgJogos } as const;
 
 // `passeio` (30/09/2026, leva lotes-v2): a ilha flutuante com arco de raízes.
-export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra, passeio: lotePasseio, oficina: loteOficina, caderno: loteCaderno, preparar: loteOficina } as const;
+export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra, passeio: lotePasseio, oficina: loteOficina, caderno: loteCaderno, preparar: loteOficina, refugio: loteRefugio } as const;
 
 // 🏛️ Os três prédios de Jogos (30/09/2026). O Salão herda as duas artes que já
 // eram dele por conteúdo (o PPT; o Dino mudou da Exploração para cá).
 // `mente` e `refugio`: prédios próprios desde 30/09/2026 (leva lotes-v2). 04/10/2026 (J5): o Refúgio
 // trocou a casinha de cogumelo PROVISÓRIA pela casa-gruta com cachoeira e lago (`entrada-dono/36-*`).
-export const JOGOS_LOT_ART = { salao: lotePpt, mente: loteMente, refugio: loteRefugio } as const;
+// beta3 M3: o Refúgio foi para a Exploração; o Calabouço reusa a arte da Masmorra (provisória).
+export const JOGOS_LOT_ART = { salao: lotePpt, mente: loteMente, dungeon: loteMasmorra } as const;
 
 // ── Guilda, Laboratório e Hall (29/09/2026) ────────────────────────────────
 // 🌙 Fundos 760×1344 do Hall e do Laboratório. 04/10/2026 (H18): REFEITOS na receita dos

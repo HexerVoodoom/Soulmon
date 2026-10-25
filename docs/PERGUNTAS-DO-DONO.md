@@ -541,3 +541,8 @@ P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
 - ✅ **L11-05 (selo DEMO):** sair de cima do conteúdo; feito (some com folha/diálogo aberto).
 - ✅ **L05-09 (estados):** os 3 ajustes pequenos; feito.
 - ⏳ **L06-14 (folha "Nova tarefa" e o teclado):** o dono confirma no aparelho depois do próximo AAB; se persistir, botão fixo acima do teclado.
+
+
+## Beta3 onda B
+
+- **M3 (prédios):** conservador — o Refúgio mudou de id de prédio `jogos.refugio` → `exploracao.refugio` (migração de leitura em `MOVED_BUILDINGS`, espelho no servidor); o Calabouço (`jogos.dungeon`) abre no Vínculo 3 (mesmo do Ateliê da Mente), é placeholder "em breve" sem material de missão, com arte/NPC provisórios (reusam a Masmorra) e a Masmorra ficou só renomeada (rótulo "Fenda Sem Fim"/"Endless Rift", id `masmorra` mantido).
