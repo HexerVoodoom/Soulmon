@@ -165,10 +165,10 @@ export function buildDungeonWave(
   const ptsMult = 1 + 0.12 * (floor - 1);
   const used = new Set<string>(); // sem criatura repetida dentro da onda (REGISTRO §68)
   return LADDER_TIERS.map((tier, slot) => {
-    const picked = getDungeonEncounter(tier, used, rng, getDungeonEnemySprite);
+    const picked = getDungeonEncounter(tier, used, rng, getDungeonEnemySprite, playerLevel);
     return {
       name: picked.name,
-      stage: enemyKey(tier, picked.line),
+      stage: 'key' in picked && picked.key ? picked.key : enemyKey(tier, picked.line),
       sprite: picked.sprite,
       points: Math.max(1, Math.round(TIER_POINTS[tier] * ptsMult * DUNGEON_BITS_FACTOR)),
       slot,

@@ -22,6 +22,8 @@ import { FX_AURA_MS, FX_BURST_MS, FX_NUM_MS, FX_ORB_PX, FX_ORB_PX_BIG, FX_TRAVEL
 import { fxFrame } from '../utils/combatFx';
 import { fxMirror } from '../utils/fxFacing';
 import { DUNGEON_LINE_NAMES, OWN_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
+import { rosterEntryOfKey } from '../utils/enemyRoster';
+import { rosterSpriteOf } from '../utils/novosSoulmon';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
 
@@ -80,16 +82,27 @@ export interface Match3Props extends EarningGameProps {
   onSpendBits?: (n: number) => boolean;
   /** Nome do Soulmon do jogador (para o banner de turno). */
   petName?: string;
+  /** M10: level do jogador. Com ele, os inimigos vêm do roster (`enemyRoster.ts`, estágio limitado pelo level). Sem ele, linhas próprias. */
+  playerLevel?: number;
+  /** M10: inimigo do roster que entrou em cena (bestiário). */
+  onEnemySeen?: (rosterKey: string) => void;
 }
 
 function freshSeed(): number { return Math.floor(Math.random() * 2 ** 31); }
 
 /** O combate de uma rodada a partir da semente (o rng do tabuleiro NÃO é tocado: os dois têm fluxo próprio). */
-function combatFor(sd: number, playerLine: string | undefined): { combat: M3Combat; rng: Rng } {
-  return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine), rng: mulberry32(sd ^ 0x5eed) };
+function combatFor(sd: number, playerLine: string | undefined, level?: number): { combat: M3Combat; rng: Rng } {
+  return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine, level), rng: mulberry32(sd ^ 0x5eed) };
 }
 
-export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName }: Match3Props) {
+/** M10: arte e nome de um inimigo do roster (`enemyRoster.ts`), ou `undefined` (combate sem level: linhas próprias, como antes). */
+function rosterOf(e: { roster?: string } | undefined): { src: string; name: string } | undefined {
+  const entry = rosterEntryOfKey(e?.roster);
+  const src = entry ? rosterSpriteOf(entry) : undefined;
+  return entry && src ? { src, name: entry.name } : undefined;
+}
+
+export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, playerLevel, onEnemySeen }: Match3Props) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
   const reducedRef = useRef(reduced);
@@ -97,13 +110,18 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
 
   const first = useMemo(() => {
     const sd = seed ?? freshSeed();
-    return { round: newRound(sd), battle: combatFor(sd, demoCharacterId) };
-  }, [seed, demoCharacterId]);
+    return { round: newRound(sd), battle: combatFor(sd, demoCharacterId, playerLevel) };
+  }, [seed, demoCharacterId, playerLevel]);
   const [board, setBoard] = useState<Board>(first.round.board);
   const boardRef = useRef(first.round.board);
   const rngRef = useRef<Rng>(first.round.rng);
   const [combat, setCombat] = useState<M3Combat>(first.battle.combat);
   const combatRef = useRef<M3Combat>(first.battle.combat);
+  // M10: os 3 inimigos do roster entram em cena juntos → bestiário (idempotente no App).
+  useEffect(() => {
+    if (!onEnemySeen) return;
+    for (const e of combat.enemies) if (e.roster) onEnemySeen(e.roster);
+  }, [combat.enemies, onEnemySeen]);
   const enemyRngRef = useRef<Rng>(first.battle.rng);
   const [sel, setSelState] = useState<Pos | null>(null);
   const selRef = useRef<Pos | null>(null);
@@ -259,6 +277,8 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
 
   const enemyNameAt = useCallback((c: M3Combat, idx: number = c.active): string => {
     const e = c.enemies[idx];
+    const r = rosterOf(e);
+    if (r) return r.name;
     const line = e?.line && e.line in OWN_LINE_SPRITES ? e.line : LINES[idx] ?? LINES[0];
     return DUNGEON_LINE_NAMES[line] ?? 'Soulmon';
   }, []);
@@ -439,7 +459,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     timers.current.clear();
     const sd = seed === undefined ? freshSeed() : seed + 1;
     const r = newRound(sd);
-    const c = combatFor(sd, demoCharacterId);
+    const c = combatFor(sd, demoCharacterId, playerLevel);
     boardRef.current = r.board;
     rngRef.current = r.rng;
     combatRef.current = c.combat;
@@ -493,11 +513,13 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
       <div role="group" aria-label={isPt ? 'Time da fenda' : 'Rift team'} data-m3-enemies data-m3-pos="bottom-right" style={{ display: 'flex', flexDirection: 'row-reverse', gap: 6, minWidth: 0, justifyContent: 'flex-start', alignItems: 'flex-end' }}>
         {combat.enemies.map((e, i) => {
           const line = e.line && e.line in OWN_LINE_SPRITES ? e.line : LINES[i];
-          const src = OWN_LINE_SPRITES[line as keyof typeof OWN_LINE_SPRITES][ENEMY_STAGES[i]];
+          const ros = rosterOf(e);
+          const src = ros?.src ?? OWN_LINE_SPRITES[line as keyof typeof OWN_LINE_SPRITES][ENEMY_STAGES[i]];
+          const enemyName = ros?.name ?? DUNGEON_LINE_NAMES[line];
           const isActive = combat.outcome === 'playing' && combat.active === i;
           const down = e.hp <= 0;
           const icon = elementIcon(e.element);
-          const nome = `${DUNGEON_LINE_NAMES[line]}, ${elementName(e.element, isPt)}${isActive ? (isPt ? ', ativo' : ', active') : ''}${down ? (isPt ? ', recuou' : ', stepped back') : ''}`;
+          const nome = `${enemyName},${elementName(e.element, isPt)}${isActive ? (isPt ? ', ativo' : ', active') : ''}${down ? (isPt ? ', recuou' : ', stepped back') : ''}`;
           const preAuraSrc = enemyAura && enemyAura.activeIndex === i ? fxFrame(enemyAura.element, 'aura') : undefined;
           const preAuraPx = Math.round(enemyPx * AURA_SCALE);
           return (
@@ -538,7 +560,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
                 )}
                 <img src={src} alt="" aria-hidden="true" draggable={false} width={enemyPx} height={enemyPx} style={{ position: 'relative', zIndex: 1, width: enemyPx, height: enemyPx, maxWidth: '100%', imageRendering: 'pixelated', objectFit: 'contain', opacity: down ? 0.3 : 1, filter: down ? 'grayscale(1)' : undefined }} />
               </div>
-              <HpBars bars={[{ label: DUNGEON_LINE_NAMES[line], cur: e.hp, max: e.max, tone: 'gold' }]} />
+              <HpBars bars={[{ label: enemyName, cur: e.hp, max: e.max, tone: 'gold' }]} />
             </div>
           );
         })}

@@ -10,6 +10,8 @@ import {
   NOVOS_DATA, FORMAS_ALTAS, novoDataOfStage, novoFormName, novoHasForm, pickNovo,
   type NovoData, type NovoStage, type NovoHighStage, type NovoAnyStage, type NovoAttack, type NovoLine,
 } from './novosSoulmonData';
+import { pickEnemy, type EnemyStage, type RosterEntry } from './enemyRoster';
+import { COMBINADOS_ART } from './enemyRosterArt';
 export type { NovoData, NovoStage, NovoHighStage, NovoAnyStage, NovoAttack, NovoLine };
 export { FORMAS_ALTAS, novoDataOfStage, novoHasForm };
 import embritRookie from '../assets/soulmon/novos/fogo-rookie.png';
@@ -157,11 +159,18 @@ const BY_ID: Readonly<Record<string, NovoSoulmon>> = Object.fromEntries(NOVOS_SO
 export const novoSoulmonById = (id: string | undefined | null): NovoSoulmon | undefined => (id ? BY_ID[id] : undefined);
 export const novoSoulmonOfStage = (stage: string | undefined | null): NovoSoulmon | undefined => novoSoulmonById(novoDataOfStage(stage)?.id);
 
+/** Sprite de uma entrada do roster (base ou combinado), ou `undefined` se a arte não existir. */
+export function rosterSpriteOf(e: RosterEntry): string | undefined {
+  return e.kind === 'base' ? BY_ID[e.id]?.sprite(e.stage) : COMBINADOS_ART[e.artFile ?? ''];
+}
+
 export interface DungeonEncounter {
   sprite: string;
   name: string;
   /** Id da linha antiga OU da criatura nova (compõe o `stage`). */
   line: string;
+  /** Chave do bestiário (`<id>-<estágio de ARTE>`, `enemyRoster.ts`); ausente no sorteio antigo (linhas próprias). */
+  key?: string;
   element?: string;
   basico?: NovoAttack;
   especial?: NovoAttack;
@@ -182,10 +191,14 @@ export function novoPreferenceOfTier(tier: string): readonly NovoAnyStage[] {
 export function getDungeonEncounter(
   tier: string, used: Set<string>, rng: () => number,
   legacy: (tier: string, excludeLine: string | undefined, rng: () => number) => { sprite: string; name: string; line: string },
+  /** Level do jogador: o teto de estágio de ARTE do inimigo (`enemyRoster.ts`). Sem ele, tudo liberado (comportamento antigo). */
+  level: number = Number.POSITIVE_INFINITY,
 ): DungeonEncounter {
-  const p = pickNovo(novoPreferenceOfTier(tier), used, rng);
-  if (!p) return legacy(tier, undefined, rng);
-  used.add(p.data.id);
-  const n = BY_ID[p.data.id];
-  return { sprite: n.sprite(p.stage), name: n.name(p.stage), line: n.id, element: n.element, basico: n.basico, especial: n.especial };
+  const pref = novoPreferenceOfTier(tier)[0] as EnemyStage;
+  const e = pickEnemy(level, rng, { stage: pref, used });
+  const n = e.kind === 'base' ? BY_ID[e.id] : undefined;
+  const sprite = n ? n.sprite(e.stage) : COMBINADOS_ART[e.artFile ?? ''];
+  if (!sprite) return legacy(tier, undefined, rng);
+  used.add(e.id);
+  return { sprite, name: n ? n.name(e.stage) : e.name, line: e.id, key: e.key, element: e.element, basico: e.basico, especial: e.especial };
 }

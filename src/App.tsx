@@ -193,7 +193,7 @@ import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMi
 // entrar nele — entradaEnxuta.contract.test.ts).
 import type { ClaReward } from './utils/claApi';
 import { soulmonNaMasmorra } from './utils/dungeonIdle';
-import { applyEnemyDefeated, applyFloorCleared, applyMilestoneItem } from './utils/dungeonRewards';
+import { applyBestiarySeen, applyEnemyDefeated, applyFloorCleared, applyMilestoneItem } from './utils/dungeonRewards';
 import type { BosqueArvores } from './utils/bosqueArvores';
 import type { OcupadoAcao } from './components/DungeonBusyModal';
 import type { DungeonReturnSummary } from './components/DungeonReturnModal';
@@ -4130,6 +4130,11 @@ export default function App() {
     setGameState(prev => applyEnemyDefeated(prev, enemyKey));
   }, []);
 
+  // M10 — inimigo VISTO fora da masmorra (Combina 3): só o bestiário, sem abate (missão "kills" é da masmorra).
+  const handleBestiarySeen = useCallback((enemyKey: string) => {
+    setGameState(prev => applyBestiarySeen(prev, enemyKey));
+  }, []);
+
   /* 🫧 CONVITE AO REFÚGIO — a regra inteira é de `utils/refugio/convite.ts`;
      aqui só se grava o estado e se navega. Nada paga, nada conta. */
   const handleRefugeShown = useCallback(() => {
@@ -6793,6 +6798,7 @@ export default function App() {
               } : null}
               completedTasks={gameState.completedTasks}
               activityStats={gameState.activityStats}
+              bestiary={gameState.bestiary ?? []}
               language={language}
               gamePoints={gameState.gamePoints}
               totalXP={gameState.totalXP}
@@ -7467,6 +7473,7 @@ export default function App() {
                 evolutionStage={gameState.evolutionStage}
                 demoCharacterId={petLine}
                 petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
+                playerLevel={soulLevel(gameState)}
                 skills={gameState.soulmonSkills}
                 profissao={manifestacaoAtual?.profissao}
                 profissaoNome={manifestacaoAtual?.profissaoNome}
@@ -7486,6 +7493,7 @@ export default function App() {
                   onFloorCleared: handleDungeonFloorCleared,
                   onRunEnd: handleDungeonRunEnd,
                   onDungeonEnemyDefeated: handleDungeonEnemyDefeated,
+                  onBestiarySeen: handleBestiarySeen,
                   onDinoScore: handleDinoScore,
                   /* 🏛️ Prédios de Jogos (30/09/2026): o dia do JOGADOR em ISO
                      (Picross do dia, Revisão) e os cartões da Revisão da
