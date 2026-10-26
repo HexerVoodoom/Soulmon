@@ -356,7 +356,10 @@ describe('D-76/D-77: layout da arena e o topo enxuto', () => {
     expect(screen.getByRole('button', { name: 'How to play' })).toBeTruthy();
     const campo = document.querySelector('[data-m3-field]') as HTMLElement;
     const clone = campo.cloneNode(true) as HTMLElement;
-    clone.querySelectorAll('.sm2-sr-only, [data-m3-arena]').forEach(n => n.remove());
+    clone.querySelectorAll('.sm2-sr-only, [data-m3-arena], [data-m3-hint-button]').forEach(n => n.remove());
+    // N5: o botão de dica fica no topo, junto do turno (antes da arena)
+    const dica = campo.querySelector('[data-m3-hint-button]')!;
+    expect(dica.compareDocumentPosition(campo.querySelector('[data-m3-arena]')!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(clone.textContent!.replace(/\s+/g, ' ').trim()).toMatch(/^Turn ?0$/);
     // placar, Bits, aviso e "próximo Bit" existem só para leitor de tela
     for (const sel of ['[data-m3-sr]', '[data-m3-note]', '[data-m3-next]']) expect(document.querySelector(sel)!.classList.contains('sm2-sr-only')).toBe(true);
