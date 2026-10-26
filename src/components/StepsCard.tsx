@@ -77,10 +77,25 @@ export function StepsCard({
   // ── Consentimento: o que é lido, para quê, e o que não guardamos ────────
   if (!hasPermission) {
     const copy = stepsConsentCopy(language);
+    const locale = isPt ? 'pt-BR' : 'en-US';
     return (
       <GroupCard title={copy.title}>
         <p style={{ ...sm2Text, margin: 0 }}>{copy.what}</p>
-        <p style={{ ...sm2Text, margin: 0 }}>{copy.why}</p>
+
+        {/* A meta que a pessoa autoriza, escolhida ANTES do diálogo do sistema (um fluxo só). */}
+        {onChangeGoal && (
+          <div data-step-goal-choice="" role="group" aria-label={copy.goalLabel} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <span style={sm2Hint}>{copy.goalLabel}</span>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {STEP_GOAL_OPTIONS.map(g => (
+                <button key={g} type="button" data-step-goal={g} aria-pressed={g === goal} onClick={() => onChangeGoal(g)} style={sm2Button(g === goal ? 'primary' : 'outline', false, 'sm')}>
+                  {g.toLocaleString(locale)}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <p style={sm2Hint}>{copy.privacy}</p>
 
         {/* Aceitar e recusar têm o MESMO peso: mesma largura, mesma altura,

@@ -1,6 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
   DEFAULT_STEP_GOAL,
+  STEP_GOAL_OPTIONS,
+  applyDayTotal,
+  isHealthConnectAvailable,
   stepsDayKey,
   stepsDeltaFrom,
   updateStepBaseline,
@@ -140,8 +143,10 @@ describe('updateStepBaseline — baseline do dia', () => {
 });
 
 describe('stepsGoalProgress', () => {
-  it('meta padrão são 7000 passos', () => {
-    expect(DEFAULT_STEP_GOAL).toBe(7000);
+  it('meta padrão são 5000 passos e as opções 3k/5k/8k/10k (decisão do dono, 20/10/2026)', () => {
+    expect(DEFAULT_STEP_GOAL).toBe(5000);
+    expect([...STEP_GOAL_OPTIONS]).toEqual([3000, 5000, 8000, 10000]);
+    expect(STEP_GOAL_OPTIONS).toContain(DEFAULT_STEP_GOAL);
   });
 
   it('progresso é a razão simples até a meta', () => {
@@ -181,14 +186,27 @@ describe('consentimento', () => {
     expect(stepsConsentCopy('pt-BR').title).not.toBe(stepsConsentCopy('en-US').title);
   });
 
+  it('a pergunta e a frase da missão bônus são as do dono, curtas e sem emoji', () => {
+    expect(stepsConsentCopy('en-US').title).toBe('Do you want to use step counting?');
+    expect(stepsConsentCopy('en-US').what).toBe('Doing so turns on a bonus mission.');
+    expect(stepsConsentCopy('pt-BR').title).toBe('Você deseja usar a contagem de passos?');
+    expect(stepsConsentCopy('pt-BR').what).toBe('Ao fazer isso você ativa uma missão bônus.');
+    for (const lang of ['en-US', 'pt-BR'] as const) {
+      const all = Object.values(stepsConsentCopy(lang)).join(' ');
+      expect(all).not.toMatch(/\p{Extended_Pictographic}/u);
+      expect(all).not.toContain('!');
+      expect(all.length).toBeLessThan(330); // "tira aquele textão todo"
+    }
+  });
+
   it('deixa claro que passos não pontuam sozinhos (regra de produto)', () => {
-    expect(stepsConsentCopy('pt-BR').why.toLowerCase()).toContain('nunca valem ponto sozinhos');
-    expect(stepsConsentCopy('en-US').why.toLowerCase()).toContain('never score on their own');
+    expect(stepsConsentCopy('pt-BR').privacy.toLowerCase()).toContain('nunca valem ponto sozinhos');
+    expect(stepsConsentCopy('en-US').privacy.toLowerCase()).toContain('never score on their own');
   });
 
   it('declara que só o total do dia é guardado', () => {
-    expect(stepsConsentCopy('pt-BR').privacy.toLowerCase()).toContain('total do dia');
-    expect(stepsConsentCopy('en-US').privacy.toLowerCase()).toContain('daily total');
+    expect(stepsConsentCopy('pt-BR').privacy.toLowerCase()).toContain('total de passos do dia');
+    expect(stepsConsentCopy('en-US').privacy.toLowerCase()).toContain('daily step total');
   });
 });
 
@@ -210,5 +228,30 @@ describe('degradação graciosa na web (sem plugin, sem sensor)', () => {
     await expect(readStepsToday(new Date(2026, 7, 10, 12), anterior)).resolves.toBeNull();
     // o chamador mantém o registro que tinha: nada foi apagado
     expect(anterior.today).toBe(4200);
+  });
+});
+
+describe('applyDayTotal: o total do dia vindo do Health Connect', () => {
+  const DAY = 'Mon Oct 26 2026';
+  it('sem registro: o dia começa JÁ no total (o Health Connect contou com o app fechado)', () => {
+    expect(applyDayTotal(null, 4200, DAY)).toEqual({ date: DAY, baseline: 4200, today: 4200 });
+  });
+  it('dia novo não herda o de ontem', () => {
+    expect(applyDayTotal({ date: 'Sun Oct 25 2026', baseline: 9000, today: 9000 }, 300, DAY).today).toBe(300);
+  });
+  it('mesmo dia: só cresce (leitura menor nunca desfaz passo já visto)', () => {
+    const r = { date: DAY, baseline: 5000, today: 5000 };
+    expect(applyDayTotal(r, 6200, DAY).today).toBe(6200);
+    expect(applyDayTotal(r, 4000, DAY).today).toBe(5000);
+  });
+  it('entrada inválida nunca vira negativo nem NaN', () => {
+    expect(applyDayTotal(null, Number.NaN, DAY).today).toBe(0);
+    expect(applyDayTotal(null, -50, DAY).today).toBe(0);
+  });
+});
+
+describe('Health Connect sem plugin (web, APK antigo)', () => {
+  it('não existe: some em silêncio', async () => {
+    await expect(isHealthConnectAvailable()).resolves.toBe(false);
   });
 });

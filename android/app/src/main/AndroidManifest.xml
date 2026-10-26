@@ -33,6 +33,30 @@
 
         </activity>
 
+        <!-- Health Connect: tela de "por que o app lê passos". O Health Connect EXIGE estes dois pontos de entrada para
+             listar o app e mostrar a permissão. A tela é só uma ponte para a política de privacidade (ver
+             health/HealthRationaleActivity.kt). Android 13 e anterior: ACTION_SHOW_PERMISSIONS_RATIONALE. -->
+        <activity
+            android:name=".health.HealthRationaleActivity"
+            android:exported="true"
+            android:theme="@style/AppTheme.NoActionBarLaunch">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+        </activity>
+
+        <!-- Android 14+: o Health Connect abre a tela de uso da permissão por este alias. -->
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
+            android:targetActivity=".health.HealthRationaleActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -133,6 +157,11 @@
 
     </application>
 
+    <!-- Health Connect: sem isto o app NÃO enxerga o provedor (Android 11+ filtra visibilidade de pacote). -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+    </queries>
+
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
@@ -164,4 +193,8 @@
          a gravação existe só enquanto a tela do chat está aberta e a pessoa
          está com o botão apertado. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- PASSOS pelo Health Connect (Rodada 5 Lane C, REGISTRO §176): SÓ leitura, SÓ passos. É a permissão que o formulário
+         de saúde do Play Console pede para declarar (docs/PASSOS-HEALTH-CONNECT-LANCAMENTO.md). Opcional: sem ela (ou
+         sem o Health Connect) o app roda inteiro e o cartão de passos some. NÃO há READ_HEALTH_DATA_IN_BACKGROUND. -->
+    <uses-permission android:name="android.permission.health.READ_STEPS"/>
 </manifest>

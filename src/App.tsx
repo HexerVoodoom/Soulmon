@@ -1220,6 +1220,8 @@ export default function App() {
   // nada de passos aparece em lugar nenhum (a camada já degrada sozinha).
   const [stepsAvailable, setStepsAvailable] = useState<boolean | null>(null);
   const [stepsPermission, setStepsPermission] = useState<boolean | null>(null);
+  /** Rodada 5 (REGISTRO §176): verdadeiro só na sessão em que o onboarding acabou de terminar → a pergunta curta dos passos vem UMA vez, logo depois da apresentação. Não persiste: quem fecha o app ali ainda tem o cartão em Configurações. */
+  const [stepsAskPending, setStepsAskPending] = useState(false);
   const [aiSettings, setAiSettings] = useState<AISettings>(() => {
     return readJson<AISettings>(STORAGE_KEYS.AI_SETTINGS, {
       tone: 'casual',
@@ -6206,6 +6208,7 @@ export default function App() {
   });
 
   const handleCompleteOnboarding = async (data: OnboardingCompleteData) => {
+    setStepsAskPending(true);
     /* O ponto de partida (B4) é resolvido ANTES de qualquer `await`, e o
        tutorial é dado como feito NO MESMO lote em que o onboarding é dado
        como completo. Até 01/10/2026 a marca do tutorial vinha DEPOIS das
@@ -6753,6 +6756,31 @@ export default function App() {
       <>
         {selo}
         <Suspense fallback={<ScreenSkeleton language={language} />}><SoulmonOnboarding onComplete={handleCompleteOnboarding} onLanguageChange={setLanguage} onStartDemo={handleStartDemo} /></Suspense>
+      </>
+    );
+  }
+
+  // PASSOS, a pergunta curta logo depois da apresentação do Soulmon (Rodada 5, decisão do dono 20/10/2026). Só com Health
+  // Connect/sensor, só uma vez, só em quem acabou de passar pelo onboarding; recusar é de graça e definitivo, e sem sensor
+  // esta tela NÃO existe (nada de aviso sobre o que a pessoa "perde").
+  if (stepsAskPending && stepsAvailable === true && gameState.stepsConsent === undefined) {
+    return (
+      <>
+        {selo}
+        <div data-steps-ask="" style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+          <div style={{ width: '100%', maxWidth: 420 }}>
+            <StepsCard
+              steps={0}
+              available
+              hasPermission={false}
+              language={language}
+              onRequestPermission={handleStepsRequestPermission}
+              onDismiss={handleStepsDecline}
+              goal={sanitizeStepGoal(gameState.stepGoal)}
+              onChangeGoal={handleChangeStepGoal}
+            />
+          </div>
+        </div>
       </>
     );
   }

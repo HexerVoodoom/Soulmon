@@ -8,16 +8,19 @@ import { MissionCard, type MissionEntry } from './MissionCard';
  * MISSÃO ESPECIAL DO DIA (REGISTRO §106) — apresentação pura. Superfície nova nasce MUDA (nenhum som), sem Resgatar (o gauge é
  * creditado sozinho na virada), tom calmo: sem cobrança, sem "!" de pendência, sem contagem regressiva.
  */
-export function specialMissionCopy(kind: SpecialMissionKind, done: boolean, language: Language, goal: number): { title: string; desc: string } {
+export function specialMissionCopy(kind: SpecialMissionKind, done: boolean, language: Language, goal: number, stepsToday?: number): { title: string; desc: string } {
   const pt = language === 'pt-BR';
   const g = goal.toLocaleString(pt ? 'pt-BR' : 'en-US');
   const turn = pt ? 'Conta na virada do dia.' : 'It counts at the turn of the day.';
   if (kind === 'steps') {
+    // Rodada 5: o andamento do dia em tempo real ("N of M steps today"), sem frase de cobrança.
+    const n = Math.max(0, Math.floor(stepsToday ?? 0)).toLocaleString(pt ? 'pt-BR' : 'en-US');
+    const live = stepsToday === undefined ? undefined : pt ? `${n} de ${g} passos hoje.` : `${n} of ${g} steps today.`;
     return done
       ? { title: pt ? `Você caminhou ${g} passos hoje` : `You walked ${g} steps today`, desc: turn }
       : {
           title: pt ? `Caminhe ${g} passos hoje` : `Walk ${g} steps today`,
-          desc: pt ? 'Conta para a barra de evolução na virada do dia. Deixar para lá não custa nada.' : 'Counts toward your evolution bar at the turn of the day. Skipping it costs nothing.',
+          desc: live ?? (pt ? 'Conta para a barra de evolução na virada do dia. Deixar para lá não custa nada.' : 'Counts toward your evolution bar at the turn of the day. Skipping it costs nothing.'),
         };
   }
   return done
@@ -49,7 +52,7 @@ function tomorrowHint(tomorrowKind: SpecialMissionKind, pt: boolean): string {
 export function specialMissionEntries({ language, state, stepsToday, stepGoal, tomorrowKind }: SpecialMissionProps): MissionEntry[] {
   if (!state) return [];
   const pt = language === 'pt-BR';
-  const { title, desc } = specialMissionCopy(state.kind, state.done, language, stepGoal);
+  const { title, desc } = specialMissionCopy(state.kind, state.done, language, stepGoal, stepsToday);
   const reward = pt ? `Vale ${SPECIAL_MISSION_GAUGE_WEIGHT} hábito diário` : `Like ${SPECIAL_MISSION_GAUGE_WEIGHT} daily habit`;
   const status = state.done ? 'claimed' : 'open';
   return [{

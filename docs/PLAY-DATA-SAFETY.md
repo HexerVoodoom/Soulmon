@@ -192,14 +192,16 @@ apelido, o nome da criatura e o **nome da guilda**; denúncia por e-mail de cont
 
 | Tipo do Google | Coletado? | Compartilhado? | Finalidade | Obrigatório? | Onde |
 |---|---|---|---|---|---|
-| **Informações de exercícios físicos** | ✅ **Sim** | ❌ Não | Funcionalidades do app | **Opcional** (o app roda inteiro sem a permissão) | `src/utils/steps.ts`, `GameState.steps` |
+| **Informações de exercícios físicos** (passos) | ✅ **Sim** (Health Connect `READ_STEPS` + contador do aparelho) | ❌ Não | Funcionalidades do app | **Opcional** (opt-in no onboarding; o app roda inteiro sem a permissão) | `src/utils/steps.ts`, `src/plugins/SoulmonHealthPlugin.ts`, `GameState.steps` |
 | **Informações de saúde** | ✅ **Sim** (leitura conservadora — ver abaixo) | ✅ **Sim — Groq** (reserva Google Gemini), só pelo chat: o humor do dia em faixa (`moodToday`) e o humor médio do resumo (`moodAvg`), e o `soulGoal` se a pessoa pedir sugestões no tutorial com o campo pré-preenchido (corrigido em 20/10/2026; antes dizia "Não") | Funcionalidades do app | Opcional | `GameState.moodLog`, `soulGoal`, `soulStruggle`; envio: `functions/api/chat.js` › `CONTEXT_SCHEMA.moodToday`, `BEHAVIOR_SCALARS.moodAvg`; `suggest-tasks.js` |
 
-**Sobre os passos.** É o contador do próprio Android, **não é o Health
-Connect** — logo **não** exige conta de organização verificada nem política dedicada
-de Health Connect (a declaração simples de Apps de saúde do Console, porém, é exigida). O que sobe é só
-`{ dia, âncora, total }`, nunca uma linha do tempo de movimento. Se o revisor
-perguntar, é isso.
+**Sobre os passos (atualizado em 26/10/2026, REGISTRO §176).** A fonte preferida agora é o **Health Connect**
+(`android.permission.health.READ_STEPS`, só leitura, só o total do dia), pedido SÓ depois do cartão curto do fim do
+onboarding (opt-in). O contador do próprio Android (`ACTIVITY_RECOGNITION`) segue como reserva para aparelho sem Health Connect.
+Isso EXIGE a **declaração de permissões do Health Connect no Play Console** (formulário próprio; ver
+`PASSOS-HEALTH-CONNECT-LANCAMENTO.md`) além da declaração de Apps de saúde. O que sobe é só `{ dia, âncora, total }`,
+nunca uma linha do tempo de movimento; não escrevemos no Health Connect; o dado não vai a terceiros nem aos provedores de IA.
+Se o revisor perguntar, é isso.
 
 **Sobre "informações de saúde", e a decisão é sua.** Três campos justificam
 declarar sim:
@@ -372,9 +374,9 @@ suspensão nessa área.
 Gatilhos concretos para revisitar este arquivo:
 
 - entrar qualquer provedor novo de IA, análise ou crash (o crash reporting próprio de 11/10/2026 já está em 2.7; trocá-lo por Crashlytics/Sentry muda "compartilhado" para sim);
-- o contador de passos passar a usar **Health Connect** em vez do sensor do
-  aparelho — aí muda de categoria e passa a exigir conta verificada e política
-  dedicada;
+- ~~o contador de passos passar a usar **Health Connect**~~ — FEITO em 26/10/2026 (REGISTRO §176): a declaração de
+  permissões do Health Connect e a política dedicada entram no AAB 23 (`PASSOS-HEALTH-CONNECT-LANCAMENTO.md`); agora o gatilho é ler
+  QUALQUER outro tipo de dado do Health Connect (sono, frequência cardíaca) ou escrever nele;
 - o modo cooperativo passar a mostrar mais do que "apareceu hoje";
 - `soulStruggle` passar a ir para alguma rota de IA, ou `soulGoal` sair por
   outro caminho além do pré-preenchimento do tutorial já declarado (§2.3,

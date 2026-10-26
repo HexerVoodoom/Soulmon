@@ -54,9 +54,14 @@ describe('SpecialMissionCard', () => {
     const c = renderWithCss(<SpecialMissionCard {...base} language="pt-BR" state={st('rest')} />);
     expect(c.container.querySelector('[data-special-tomorrow="steps"]')!.textContent).toBe('A especial de amanhã é de passos.');
   });
+  it('a missão de passos mostra "N of M steps today" em tempo real', () => {
+    expect(specialMissionCopy('steps', false, 'en-US', 5000, 1234).desc).toBe('1,234 of 5,000 steps today.');
+    expect(specialMissionCopy('steps', false, 'pt-BR', 5000, 1234).desc).toBe('1.234 de 5.000 passos hoje.');
+    expect(specialMissionCopy('steps', false, 'en-US', 5000, 0).desc).toBe('0 of 5,000 steps today.');
+  });
   it('copy sem "!" nem palavras vetadas', () => {
     for (const lang of ['en-US', 'pt-BR'] as const) for (const kind of ['steps', 'rest'] as const) for (const done of [false, true]) {
-      const c = specialMissionCopy(kind, done, lang, 7000);
+      const c = specialMissionCopy(kind, done, lang, 7000, 3500);
       const t = `${c.title} ${c.desc}`;
       expect(t).not.toContain('!');
       expect(t).not.toMatch(/perdeu|falhou|streak|sequência|lost|failed/i);

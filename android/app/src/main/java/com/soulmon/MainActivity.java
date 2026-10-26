@@ -12,6 +12,7 @@ import com.getcapacitor.BridgeActivity;
 import com.soulmon.plugins.SoulmonWidgetPlugin;
 import com.soulmon.plugins.SoulmonAlarmPlugin;
 import com.soulmon.plugins.BillingPlugin;
+import com.soulmon.plugins.SoulmonHealthPlugin;
 
 public class MainActivity extends BridgeActivity {
     @Override
@@ -19,6 +20,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SoulmonWidgetPlugin.class);
         registerPlugin(SoulmonAlarmPlugin.class);
         registerPlugin(BillingPlugin.class);
+        registerPlugin(SoulmonHealthPlugin.class);
         super.onCreate(savedInstanceState);
         createPushNotificationChannel();
         enterImmersiveMode();

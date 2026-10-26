@@ -18,7 +18,7 @@ android {
         // 21/10/2026: 21/1.3.0-beta1 → 22/1.3.0-beta2 (versionName por decisão do dono). Primeiro AAB com o NATIVO novo desde o 21:
         // AndroidManifest com `screenOrientation="portrait"` (QA L06-13) e os 5 drawables do widget regenerados
         // (sprite_starter_*); o resto do beta 2 vai pelo Worker (`server.url`). Cada upload à Play precisa de versionCode maior.
-        versionCode 22
+        versionCode 23
         versionName "1.3.0-beta2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
@@ -81,6 +81,8 @@ dependencies {
     implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
     implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
     implementation "androidx.work:work-runtime-ktx:2.9.0"
+    // Health Connect (passos, Rodada 5 Lane C): só leitura de READ_STEPS, ver plugins/SoulmonHealthPlugin.kt.
+    implementation "androidx.health.connect:connect-client:1.1.0-alpha10"
     // Google Play Billing — compras dentro do app (ver plugins/BillingPlugin.kt).
     // Obrigatório pela Play para conteúdo digital; não dá para usar Stripe/Pix aqui.
     //

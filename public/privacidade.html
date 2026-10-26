@@ -31,7 +31,7 @@
 
 <div id="en-doc" lang="en">
 <h1 id="en">Privacy Policy — Soulmon</h1>
-<p class="sub">Last updated: October 26, 2026</p>
+<p class="sub">Last updated: October 27, 2026</p>
 
 <p class="lang">
   <a href="#pt">Versão em português abaixo ↓</a> ·
@@ -138,14 +138,23 @@
     <td>Part of your save, so you can see your own history. It <strong>never
         counts toward any score, any game rule, or usage stats.</strong></td>
   </tr>
-  <tr>
-    <td>Daily step count — only if you allow the sensor</td>
-    <td>Only <strong>the daily aggregate</strong> travels with the save (the
-        total and the counting anchor), never a timeline of your movement. The
-        app uses the device's own step counter
-        (<code>ACTIVITY_RECOGNITION</code>), <strong>not</strong> Health Connect,
-        and reads no other health or fitness data. Declining the permission
-        blocks nothing: the whole app works without it.</td>
+  <tr id="steps">
+    <td>Daily step count — only if you say yes to step counting</td>
+    <td>Right after your creature introduces itself, the app asks, once, whether
+        you want to use step counting (it turns on a bonus mission). Only if you
+        say yes, the app asks <strong>Health Connect</strong> (Android) for
+        permission to <strong>read steps</strong> (<code>READ_STEPS</code>) and
+        reads <strong>only your total steps for the day</strong>; Health Connect is
+        what keeps counting while the app is closed. Only <strong>the daily
+        aggregate</strong> (the total and the counting anchor) travels with the
+        save, never a timeline of your movement, never a location, and the app
+        <strong>does not write</strong> to Health Connect and reads no other
+        health or fitness data. On devices without Health Connect the app may
+        use the phone's own step counter (<code>ACTIVITY_RECOGNITION</code>)
+        instead. Steps never score on their own, and saying no (or revoking it
+        in Health Connect or in the phone's settings) blocks nothing and costs
+        nothing: the whole app works without it. The data is not sold, not used
+        for advertising, and not shared with the AI providers.</td>
   </tr>
   <tr>
     <td>Co-op group — only if you create or join one</td>
@@ -401,6 +410,9 @@
     <td>Only when you make a purchase there.</td>
   </tr>
 </table>
+<p><strong>Health Connect (Google).</strong> It is part of Android on your phone, not a
+service of ours: the step total is read on your device, and what reaches our
+servers is only what section 2 lists (the daily total inside your save).</p>
 <p>We do not sell your data and do not use it for targeted advertising.</p>
 
 <h2>6b. Subscription (Google Play Billing)</h2>
@@ -530,7 +542,7 @@
 
 <div id="pt" lang="pt-BR">
 <h1>Política de Privacidade — Soulmon</h1>
-<p class="sub">Última atualização: 26 de outubro de 2026</p>
+<p class="sub">Última atualização: 27 de outubro de 2026</p>
 
 <p class="lang">
   <a href="#en">English version ↑</a> ·
@@ -651,15 +663,24 @@
         entra em pontuação, nem no cálculo do jogo, nem nas estatísticas de
         uso.</strong></td>
   </tr>
-  <tr>
-    <td>Contagem de passos do dia — só se você autorizar o sensor</td>
-    <td>Sobe junto do save <strong>apenas o agregado do dia</strong> (o total e
-        a âncora de contagem), nunca uma linha do tempo dos seus movimentos. O
-        app usa o contador de passos do próprio aparelho
-        (<code>ACTIVITY_RECOGNITION</code>), <strong>não</strong> o Health
-        Connect, e <strong>não</strong> lê nenhum outro dado de saúde ou
-        atividade física. Recusar a permissão não trava nada: o app inteiro
-        funciona sem ela.</td>
+  <tr id="passos">
+    <td>Contagem de passos do dia — só se você disser sim à contagem de passos</td>
+    <td>Logo depois que a sua criatura se apresenta, o app pergunta, uma vez,
+        se você quer usar a contagem de passos (ela liga uma missão bônus). Só
+        se você disser sim, o app pede ao <strong>Health Connect</strong>
+        (Android) permissão para <strong>ler passos</strong>
+        (<code>READ_STEPS</code>) e lê <strong>só o seu total de passos do
+        dia</strong>; é o Health Connect que continua contando com o app
+        fechado. Sobe junto do save <strong>apenas o agregado do dia</strong> (o
+        total e a âncora de contagem), nunca uma linha do tempo dos seus
+        movimentos, nunca localização, e o app <strong>não escreve</strong> no
+        Health Connect nem lê nenhum outro dado de saúde ou atividade física.
+        Em aparelhos sem Health Connect o app pode usar o contador de passos do
+        próprio aparelho (<code>ACTIVITY_RECOGNITION</code>). Passos nunca valem
+        ponto sozinhos, e dizer não (ou revogar no Health Connect ou nas
+        configurações do celular) não trava nem custa nada: o app inteiro
+        funciona sem isso. O dado não é vendido, não é usado para publicidade e
+        não é compartilhado com os provedores de IA.</td>
   </tr>
   <tr>
     <td>Grupo cooperativo — só se você criar ou entrar em um</td>
@@ -922,6 +943,9 @@
     <td>Só quando você faz uma compra por lá.</td>
   </tr>
 </table>
+<p><strong>Health Connect (Google).</strong> Faz parte do Android no seu celular, não é
+um serviço nosso: o total de passos é lido no seu aparelho, e o que chega aos
+nossos servidores é só o que a seção 2 lista (o total do dia dentro do seu save).</p>
 <p>
   Não vendemos seus dados e não os usamos para publicidade direcionada.
 </p>

@@ -39,14 +39,18 @@
  *    série bruta, nunca horário de passo, nunca localização. Minimização de
  *    dados; e sem série não há como inferir rotina de ninguém.
  *
- * POR QUE NÃO HEALTH CONNECT E NÃO GOOGLE FIT (decisão fechada)
+ * HEALTH CONNECT (decisão REVISTA pelo dono em 26/10/2026, REGISTRO §176)
  * ------------------------------------------------------------
- * - **Health Connect**: exige conta de organização verificada no Play,
- *   declaração de acesso a dados de saúde e política de privacidade dedicada.
- *   Custo de conformidade desproporcional para um bônus cosmético.
- * - **Google Fit**: está sendo desligado — cadastros novos fechados desde
- *   mai/2024 e as APIs morrem no fim de 2026. Não se escreve linha nova
- *   contra ele.
+ * Até 26/10/2026 esta seção dizia "não Health Connect": o custo de conformidade
+ * (declaração de saúde no Play Console, política dedicada) parecia grande para
+ * um bônus. O dono REVOGOU a linha vermelha em 20/10 (modal) e 26/10 (execução):
+ * Health Connect é permitido, SÓ com opt-in explícito (o cartão curto do fim do
+ * onboarding), SÓ leitura (`READ_STEPS`), SÓ o total do dia. É ele que conta
+ * COM O APP FECHADO (as fontes gravam lá); o app lê ao abrir e em primeiro plano.
+ * Fonte preferida: Health Connect; sem ele, cai no contador do aparelho abaixo
+ * (APK antigo / aparelho sem o app do Health Connect); sem nenhum, a feature some.
+ * - **Google Fit**: continua fora — as APIs morrem no fim de 2026; não se
+ *   escreve linha nova contra ele (o Health Connect é a API que o substitui).
  *
  * O RESET DO CONTADOR — O BUG QUE MORA AQUI
  * -----------------------------------------
@@ -70,11 +74,11 @@ import { Capacitor } from '@capacitor/core';
 import type { Language } from './i18n';
 
 /** Meta diária padrão. Referência de caminhada regular, não meta médica. */
-export const DEFAULT_STEP_GOAL = 7000;
+export const DEFAULT_STEP_GOAL = 5000;
 export const STEP_GOAL_MIN = 1000;
 export const STEP_GOAL_MAX = 30000;
 /** Metas oferecidas ao jogador (qualquer inteiro em [MIN, MAX] é aceito ao carregar). */
-export const STEP_GOAL_OPTIONS = [3000, 5000, 7000, 10000] as const;
+export const STEP_GOAL_OPTIONS = [3000, 5000, 8000, 10000] as const;
 
 /** Meta escolhida → inteiro em [MIN, MAX]; inválida → padrão. */
 export function sanitizeStepGoal(v: unknown): number {
@@ -157,6 +161,22 @@ export function updateStepBaseline(
 }
 
 /**
+ * Aplica o TOTAL do dia lido do Health Connect (que já é "desde a meia-noite local", agregado pela própria fonte).
+ * Diferente de `updateStepBaseline`: não há acumulado-de-boot a diferenciar, então um dia novo NÃO começa em zero (o
+ * Health Connect contou o dia inteiro com o app fechado). Dentro do dia `today` só cresce (uma leitura menor — fonte
+ * ainda sincronizando, relógio atrasado — nunca desfaz passo já visto). Entrada inválida → devolve o registro como está.
+ */
+export function applyDayTotal(
+  record: StepsRecord | null | undefined,
+  total: number,
+  dayKey: string,
+): StepsRecord {
+  const t = sane(total);
+  if (!record || record.date !== dayKey) return { date: dayKey, baseline: t, today: t };
+  return { date: dayKey, baseline: t, today: Math.max(sane(record.today), t) };
+}
+
+/**
  * Progresso da meta, de 0 a 1 (nunca acima de 1, nunca abaixo de 0).
  * Meta inválida (0 ou negativa) devolve 0 — sem meta não há progresso, e
  * dividir por zero não vira 100%.
@@ -172,37 +192,38 @@ export function stepsGoalProgress(steps: number, goal: number = DEFAULT_STEP_GOA
 
 export interface StepsConsentCopy {
   title: string;
-  /** O que é lido. */
+  /** UMA frase: o que acontece ao dizer sim (a missão bônus). */
   what: string;
-  /** Para que serve — e o limite: passo não pontua sozinho. */
-  why: string;
-  /** O que NÃO é guardado. */
+  /** Meta: pergunta curta sobre quantos passos. */
+  goalLabel: string;
+  /** Uma linha de privacidade: o que é lido e o que não sai daqui. */
   privacy: string;
   accept: string;
   decline: string;
 }
 
 /**
- * Texto de consentimento, EN + PT-BR. Precisa dizer o que é lido, para quê e
- * o que não sai do aparelho — exigência da política do Play e da LGPD.
+ * Texto do cartão de passos, EN + PT-BR, CURTO (decisão do dono, 20/10/2026: "tira aquele textão"). Ainda precisa
+ * dizer o que é lido e que não pontua sozinho — o diálogo do sistema só vem depois do "sim", num fluxo só.
+ * O aviso longo vive na política de privacidade (`#steps`).
  */
 export function stepsConsentCopy(language: Language): StepsConsentCopy {
   if (language === 'pt-BR') {
     return {
-      title: 'Contar seus passos?',
-      what: 'O Soulmon leria o contador de passos do próprio aparelho (nenhuma conta de saúde, nenhum app de terceiros).',
-      why: 'Serve só para confirmar um hábito de saúde que você JÁ marcou como feito e para missões extras opcionais. Passos nunca valem ponto sozinhos: quem não ativa isso não perde nada.',
-      privacy: 'Guardamos apenas o total do dia, no seu aparelho. Nada de horários, trajetos ou localização — e nada disso é vendido ou compartilhado.',
-      accept: 'Pode contar',
+      title: 'Você deseja usar a contagem de passos?',
+      what: 'Ao fazer isso você ativa uma missão bônus.',
+      goalLabel: 'Quantos passos por dia?',
+      privacy: 'Lemos só o total de passos do dia, pelo Health Connect, e nada sai do seu aparelho além disso. Passos nunca valem ponto sozinhos.',
+      accept: 'Sim, quero',
       decline: 'Agora não',
     };
   }
   return {
-    title: 'Count your steps?',
-    what: "Soulmon would read your phone's own step counter (no health account, no third-party app).",
-    why: 'It only confirms a health habit you ALREADY marked as done, plus optional side quests. Steps never score on their own: turning this off costs you nothing.',
-    privacy: 'We keep only the daily total, on your device. No timestamps, no routes, no location — and none of it is sold or shared.',
-    accept: 'Count them',
+    title: 'Do you want to use step counting?',
+    what: 'Doing so turns on a bonus mission.',
+    goalLabel: 'How many steps a day?',
+    privacy: 'We read only your daily step total, through Health Connect. Steps never score on their own.',
+    accept: 'Yes, count them',
     decline: 'Not now',
   };
 }
@@ -231,8 +252,53 @@ async function loadPedometer(): Promise<PedometerBox | null> {
   return pedometerPromise;
 }
 
-/** O aparelho tem contador de passos? Web/PWA e aparelho sem sensor → false. */
+// ── Health Connect (fonte preferida; REGISTRO §176) ─────────────────────────
+// FEATURE DETECT: APK antigo não tem o plugin `SoulmonHealth` (`isPluginAvailable` = false) e a web nunca tem;
+// em ambos o Health Connect simplesmente "não existe" e o resto do app segue idêntico. Mesma caixa do pedômetro
+// (nunca devolver o proxy do Capacitor por uma Promise).
+
+type HealthPlugin = typeof import('../plugins/SoulmonHealthPlugin')['SoulmonHealth'];
+interface HealthBox { plugin: HealthPlugin }
+
+let healthPromise: Promise<HealthBox | null> | null = null;
+let healthAvailablePromise: Promise<boolean> | null = null;
+
+async function loadHealth(): Promise<HealthPlugin | null> {
+  if (!Capacitor.isNativePlatform() || !Capacitor.isPluginAvailable('SoulmonHealth')) return null;
+  if (!healthPromise) {
+    healthPromise = import('../plugins/SoulmonHealthPlugin')
+      .then((mod) => (mod.SoulmonHealth ? { plugin: mod.SoulmonHealth } : null))
+      .catch(() => null);
+  }
+  return (await healthPromise)?.plugin ?? null;
+}
+
+/** O Health Connect está instalado e pronto neste aparelho? (cacheado: a resposta não muda com o app aberto) */
+export async function isHealthConnectAvailable(): Promise<boolean> {
+  const health = await loadHealth();
+  if (!health) return false;
+  if (!healthAvailablePromise) {
+    healthAvailablePromise = health.isAvailable().then((r) => r?.available === true).catch(() => false);
+  }
+  return healthAvailablePromise;
+}
+
+async function hasHealthPermission(): Promise<boolean> {
+  if (!(await isHealthConnectAvailable())) return false;
+  try {
+    return (await (await loadHealth())!.hasPermission())?.granted === true;
+  } catch {
+    return false;
+  }
+}
+
+/** O aparelho tem como contar passos (Health Connect OU contador do aparelho)? Web/PWA e aparelho sem nenhum → false. */
 export async function isStepsAvailable(): Promise<boolean> {
+  if (await isHealthConnectAvailable()) return true;
+  return isPedometerAvailable();
+}
+
+async function isPedometerAvailable(): Promise<boolean> {
   const pedometer = (await loadPedometer())?.plugin;
   if (!pedometer) return false;
   try {
@@ -243,8 +309,13 @@ export async function isStepsAvailable(): Promise<boolean> {
   }
 }
 
-/** Já temos permissão? Não abre diálogo nenhum. */
+/** Já temos permissão (em qualquer das fontes)? Não abre diálogo nenhum. */
 export async function hasStepsPermission(): Promise<boolean> {
+  if (await hasHealthPermission()) return true;
+  return hasPedometerPermission();
+}
+
+async function hasPedometerPermission(): Promise<boolean> {
   const pedometer = (await loadPedometer())?.plugin;
   if (!pedometer) return false;
   try {
@@ -260,10 +331,19 @@ export async function hasStepsPermission(): Promise<boolean> {
  * **Só chame depois de mostrar `stepsConsentCopy`** (ver regra 3 no topo).
  */
 export async function requestStepsPermission(): Promise<boolean> {
+  // Um fluxo só: o "sim" do cartão abre direto o diálogo do Health Connect. Negou lá = recusa (sem cair no contador
+  // do aparelho por baixo dos panos: a pessoa disse não à leitura de passos).
+  if (await isHealthConnectAvailable()) {
+    try {
+      return (await (await loadHealth())!.requestPermission())?.granted === true;
+    } catch {
+      return false;
+    }
+  }
   const pedometer = (await loadPedometer())?.plugin;
   if (!pedometer) return false;
   try {
-    if (!(await isStepsAvailable())) return false;
+    if (!(await isPedometerAvailable())) return false;
     const status = await pedometer.requestPermissions();
     return status?.activityRecognition === 'granted';
   } catch {
@@ -280,7 +360,7 @@ async function readRawSteps(now: Date): Promise<number | null> {
   const pedometer = (await loadPedometer())?.plugin;
   if (!pedometer) return null;
   try {
-    if (!(await hasStepsPermission())) return null;
+    if (!(await hasPedometerPermission())) return null;
 
     // No Android o `getMeasurement` só responde algo útil com as atualizações
     // ligadas (o valor é relativo ao início da sessão). Idempotente.
@@ -314,6 +394,13 @@ export async function readStepsToday(
   now: Date,
   previous?: StepsRecord | null,
 ): Promise<StepsRecord | null> {
+  // Health Connect primeiro (é o que conta com o app fechado); `null` NUNCA é 0.
+  if (await hasHealthPermission()) {
+    try {
+      const r = await (await loadHealth())!.readStepsToday();
+      if (typeof r?.steps === 'number' && Number.isFinite(r.steps)) return applyDayTotal(previous, r.steps, stepsDayKey(now));
+    } catch { /* cai no contador do aparelho, se houver */ }
+  }
   const raw = await readRawSteps(now);
   if (raw === null) return null;
   return updateStepBaseline(previous, raw, stepsDayKey(now));
@@ -321,6 +408,8 @@ export async function readStepsToday(
 
 /** Só para os testes: esquece o módulo carregado e o estado da sessão. */
 export function __resetStepsRuntime(): void {
+  healthPromise = null;
+  healthAvailablePromise = null;
   pedometerPromise = null;
   updatesStarted = false;
 }
