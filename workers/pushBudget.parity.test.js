@@ -104,9 +104,9 @@ async function viverUmDia(zone, cenario) {
       mealRhythm: cenario.meals === false ? { push: false, inApp: true, times: { ...DEFAULT_MEAL_TIMES } } : { push: true, inApp: true, times: { ...DEFAULT_MEAL_TIMES } },
       sleepReminderOn: cenario.sleep !== false,
       state: {
-        // dia cheio: a fome cruza 60 às ~12h36 e a energia enche às 08h; dia calmo: fome e energia estáveis
+        // dia cheio: a fome cruza 60 às ~12h36 e a energia (0 pts, 1 a cada 60 min = ENERGY_REGEN_MINUTES) enche às 08h; dia calmo: fome e energia estáveis
         hunger: cenario.calmo ? undefined : { v: 100, at: at(7) },
-        energyPoints: cenario.calmo ? 8 : 4, energyClock: { at: dayStart, carry: 0 }, evolutionStage: 'rookie',
+        energyPoints: cenario.calmo ? 8 : 0, energyClock: { at: dayStart, carry: 0 }, evolutionStage: 'rookie',
         poopEventsScheduled: sched, poopEventsShown: sched.map((s, k) => (s <= t - 60_000 ? k : -1)).filter(k => k >= 0),
         foodCount: 3,
       },
