@@ -14,7 +14,7 @@ import { buildingGateFor, buildingLockLine, type BuildingId } from '../../utils/
 import type { DailyEvent } from '../../utils/dailyMissions';
 import { isDemoBlockedLot, isDemoHiddenLot, demoRefusalText } from '../../utils/demoMode';
 import { useBackLayer } from '../../utils/backStack';
-import type { PlayerDayAnchor } from '../../utils/playerDay';
+import { playerDayIso, type PlayerDayAnchor } from '../../utils/playerDay';
 import type { GuildGoal } from '../../utils/community';
 import type { ShopActions, ShopOwnership } from '../mercado/ShopShelf';
 import type { MercadoStallProps } from '../mercado/MercadoSheets';
@@ -113,6 +113,10 @@ export interface PlayHandlers {
   onFocusPrepared?: () => void;
   /** beta3 F1: o timer de foco começou — a masmorra desce em background. */
   onFocusStart?: (focusEndsAt?: number) => 'started' | 'busy' | 'no-hp' | 'no-energy';
+  /** O timer de foco foi pausado / continuou (novo fim) / cancelado: a descida do foco acompanha. */
+  onFocusPause?: () => void;
+  onFocusResume?: (focusEndsAt?: number) => void;
+  onFocusCancel?: () => void;
   /** Os cartões da Revisão da Malha, que moram no SAVE (`GameState.review`). */
   review?: ReviewState;
   onReviewChange?: (next: ReviewState) => void;
@@ -452,14 +456,14 @@ export function AreaView(props: AreaViewProps) {
                 {language === 'pt-BR' ? 'A Oficina do Foco está trancada. Conclua a preparação no prédio "Preparar o Foco" para ganhar a chave de hoje.' : 'The Focus Workshop is locked. Finish the preparation in the "Prepare to Focus" building to get today\'s key.'}
               </p>
             )}
-            {open?.id === 'oficina' && play.focusKeyActive !== false && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} onFocusCycle={() => props.onDailyEvent?.('foco')} planInPrepare={play.focusKeyActive !== undefined} onFocusStart={play.onFocusStart} />}
+            {open?.id === 'oficina' && play.focusKeyActive !== false && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} onFocusCycle={() => props.onDailyEvent?.('foco')} planInPrepare={play.focusKeyActive !== undefined} onFocusStart={play.onFocusStart} onFocusPause={play.onFocusPause} onFocusResume={play.onFocusResume} onFocusCancel={play.onFocusCancel} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => (props.ocupado?.missaoFora ? props.ocupado.onBusy('masmorra-em-missao') : start('masmorra'))} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
             {open?.id === 'dungeon' && (play.rogue
-              ? <RogueDungeon language={language} todayKey={play.todayKey ?? new Date().toISOString().slice(0, 10)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} />
+              ? <RogueDungeon language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} />
               : <RogueDungeonPlaceholder language={language} />)}
           </Suspense>
         </AreaSheet>

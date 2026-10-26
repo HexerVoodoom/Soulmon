@@ -55,7 +55,7 @@ function useNow(active: boolean): number {
   return now;
 }
 
-export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = () => {}, onFocusReward, onPlanReward, onFocusCycle, planInPrepare = false, onFocusStart }: {
+export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = () => {}, onFocusReward, onPlanReward, onFocusCycle, planInPrepare = false, onFocusStart, onFocusPause, onFocusResume, onFocusCancel }: {
   language: Language; todayKey?: string; tasks?: WorkshopTask[]; onCompleteTask?: (taskId: string) => void;
   onFocusReward?: (request: FocusLootRequest, completedCycles: number) => FocusRewardResult;
   /** Recompensa por concluir o processo (1 item, teto diário no ledger). Sem ela, concluir não paga. */
@@ -66,6 +66,10 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
   planInPrepare?: boolean;
   /** beta3 F1: o timer de foco começou — abre a descida da masmorra em background e devolve o que aconteceu (para o aviso). */
   onFocusStart?: (focusEndsAt?: number) => 'started' | 'busy' | 'no-hp' | 'no-energy';
+  /** A descida do foco acompanha o timer: pausar congela, continuar retoma (com o novo fim), cancelar retira o Soulmon (livre, com o que rendeu). */
+  onFocusPause?: () => void;
+  onFocusResume?: (focusEndsAt?: number) => void;
+  onFocusCancel?: () => void;
 }) {
   const isPt = language === 'pt-BR';
   const day = todayKey ?? fallbackDay();
@@ -124,6 +128,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
     apply(null);
   };
   const cancelarTimer = () => {
+    if (timer?.phase === 'focus') { onFocusCancel?.(); setDescent(null); }
     if (timer?.sessionId && session?.id === timer.sessionId && session.completedCycles !== 0) writeSession({ ...session, completedCycles: 0 });
     setLootNotice(null);
     apply(null);
@@ -153,7 +158,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
       setPlanNotice(onPlanReward({ day, environment: next.environment, sessionId: next.id, eventId: `${FOCUS_PLAN_EVENT_PREFIX}${next.id}` }));
     }
   };
-  const deleteSession = () => { if (timer?.sessionId === session?.id) apply(null); writeSession(null); setEditing(false); setConfirmDelete(false); setExpanded(false); setLootNotice(null); };
+  const deleteSession = () => { if (timer?.sessionId === session?.id) { if (timer?.phase === 'focus') { onFocusCancel?.(); setDescent(null); } apply(null); } writeSession(null); setEditing(false); setConfirmDelete(false); setExpanded(false); setLootNotice(null); };
   const newSession = () => { if (planInPrepare) { setPrepHint(true); return; } writeSession(null); setPlanNotice(null); setInitial(emptyDraft()); setEditing(true); setExpanded(false); setTab('session'); };
   const left = timer ? remainingMs(timer, now) : FOCO_MODES[mode].focusMin * 60_000;
   const ended = timer?.status === 'ended';
@@ -176,7 +181,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
         <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Timer de foco' : 'Focus timer'}</p>
         <ModalInfo language={language} align="right" label={isPt ? 'Como funciona a Oficina' : 'How the Workshop works'}>
           <InfoTipSection title={isPt ? 'Timer de foco' : 'Focus timer'}>
-            {isPt ? 'O relógio segue o horário de verdade. Ao fim, o app avisa na tela e vibra de leve; se você já permitiu notificações, também avisa fora do app. O app não toca um alarme sonoro automático. “Foquei” guarda um registro do dia só neste aparelho: sem placar, sem sequência, sem Bits.' : 'The clock follows real time. At the end the app tells you on screen and buzzes lightly; if you already allowed notifications, it also alerts you outside the app. There is no automatic alarm sound. “I focused” keeps a note of the day on this device only: no scoreboard, streak or Bits.'}
+            {isPt ? 'O relógio segue o horário de verdade. Ao fim, o app avisa na tela e vibra de leve; se você já permitiu notificações, também avisa fora do app. O app não toca um alarme sonoro automático. “Foquei” guarda um registro do dia só neste aparelho: sem placar, sem sequência, sem Bits. Quem rende Bits (dentro do teto diário) é a descida do Soulmon enquanto você foca; pausar o foco a pausa e cancelar recolhe o Soulmon com o que ele já rendeu.' : 'The clock follows real time. At the end the app tells you on screen and buzzes lightly; if you already allowed notifications, it also alerts you outside the app. There is no automatic alarm sound. “I focused” keeps a note of the day on this device only: no scoreboard, no streak, no Bits. Bits (within the daily cap) come from your Soulmon\'s descent while you focus; pausing the focus pauses it, and cancelling brings him home with what he earned.'}
           </InfoTipSection>
           {FOCO_TECNICAS.map((t, i) => <InfoTipSection key={t.id} title={isPt ? t.namePt : t.nameEn} last={i === FOCO_TECNICAS.length - 1}>
             <strong>{isPt ? EVIDENCIA_LABEL[t.evidencia].pt : EVIDENCIA_LABEL[t.evidencia].en}.</strong>{' '}{isPt ? t.howPt : t.howEn}{' '}<em>{isPt ? 'Fonte: ' : 'Source: '}{t.fonte}</em>
@@ -194,8 +199,8 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
         {ended && <p role="status" data-oficina-fim style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{timer?.phase === 'focus' ? (isPt ? 'O tempo acabou.' : 'Time is up.') : (isPt ? 'A pausa acabou.' : 'The break is over.')}</p>}
         <div style={{ display: 'flex', gap: 8, width: '100%', flexWrap: 'wrap' }}>
           {!timer && <button type="button" data-oficina-start onClick={startSessionFocus} style={{ ...sm2Button('primary'), flex: 1 }}>{canStartSessionFocus ? (isPt ? 'Enviar Soulmon e iniciar' : 'Send Soulmon & start') : (isPt ? 'Planejar sessão e escolher cenário' : 'Plan a session & choose a scene')}</button>}
-          {timer?.status === 'running' && <button type="button" data-oficina-pause onClick={() => apply(pause(timer, Date.now()))} style={{ ...sm2Button('primary'), flex: 1 }}><Icon name="pause" size={20} tone="inherit" /> {isPt ? 'Pausar' : 'Pause'}</button>}
-          {timer?.status === 'paused' && <button type="button" data-oficina-resume onClick={() => apply(resume(timer, Date.now()))} style={{ ...sm2Button('primary'), flex: 1 }}><Icon name="play_arrow" size={20} tone="inherit" /> {isPt ? 'Continuar' : 'Resume'}</button>}
+          {timer?.status === 'running' && <button type="button" data-oficina-pause onClick={() => { if (timer.phase === 'focus') onFocusPause?.(); apply(pause(timer, Date.now())); }} style={{ ...sm2Button('primary'), flex: 1 }}><Icon name="pause" size={20} tone="inherit" /> {isPt ? 'Pausar' : 'Pause'}</button>}
+          {timer?.status === 'paused' && <button type="button" data-oficina-resume onClick={() => { const r = resume(timer, Date.now()); if (timer.phase === 'focus') onFocusResume?.(r.endAt ?? undefined); apply(r); }} style={{ ...sm2Button('primary'), flex: 1 }}><Icon name="play_arrow" size={20} tone="inherit" /> {isPt ? 'Continuar' : 'Resume'}</button>}
           {ended && timer?.phase === 'focus' && <button type="button" data-oficina-foquei onClick={feito} style={{ ...sm2Button('primary'), flex: 1 }}>{isPt ? 'Foquei' : 'I focused'}</button>}
           {ended && timer?.phase === 'break' && <button type="button" data-oficina-ok onClick={fimDaPausa} style={{ ...sm2Button('primary'), flex: 1 }}>{isPt ? 'Pronto' : 'Done'}</button>}
           {timer && <button type="button" data-oficina-cancel onClick={cancelarTimer} style={{ ...sm2Button('outline'), flex: ended ? 0 : 1 }}>{ended && timer.phase === 'focus' ? (isPt ? 'Agora não' : 'Not now') : (isPt ? 'Cancelar' : 'Cancel')}</button>}

@@ -32,7 +32,7 @@ import { buildDungeonWave, clearBonus, dungeonHeartsLeftToday, noteDungeonHeartD
 import { autoDodgeGrade, autoRingGrade, dungeonFight, dungeonFightSeed, type DungeonPlayerCfg } from './dungeonFight';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
 import { mulberry32 } from './combate/rng';
-import { applyRiftLayer, riftTierTotals } from './endlessRift';
+import { applyRiftLayer, riftTierTotals, type RiftMonthState } from './endlessRift';
 import { SPECIAL_FAMILIES, type SpecialFamily } from './combate/specials';
 import { jeitoDaProfissao, jeitoParaPve } from './profissaoMasmorra';
 import { creditMinigameBits } from './currencies';
@@ -124,6 +124,23 @@ export function playAutoFight(cfg: DungeonPlayerCfg, enemy: DungeonEnemy, runSee
 /** Duração (ms) que a cena gasta numa luta: núcleo + a pausa de cada especial + o respiro do fim. */
 export const fightWallMs = (res: GroupResult, casts: number): number => Math.round(res.t * 1000) + casts * AWAY_CAST_PAUSE_MS + AWAY_END_BEAT_MS;
 
+/**
+ * Endless Rift: registra a camada limpa E paga as faixas do mês DENTRO do estado (puro, idempotente: a faixa só paga se o `prev` ainda
+ * não a tinha — 1× por mês). É o ÚNICO caminho de pagamento das faixas, usado pela tela (dentro do updater do `setGameState`) e pela
+ * conta de quem ficou fora. Fragmentos entram direto; Bits pelo funil `creditMinigameBits` (teto diário) — sem bônus de talento, igual nos dois.
+ * `bits` devolve o que de fato entrou (depois do teto), para o resumo.
+ */
+export function applyRiftLayerPaid<T extends GameState & RiftMonthState>(prev: T, layer: number, nowMs: number, dayKey: string): { next: T; bits: number; fragments: number } {
+  const rift = applyRiftLayer(prev, layer, nowMs);
+  if (!rift.newTiers.length) return { next: rift.next, bits: 0, fragments: 0 };
+  const tot = riftTierTotals(rift.newTiers);
+  let s: T = rift.next;
+  if (tot.fragments > 0) s = addFragments(s, tot.fragments);
+  const antes = s.gamePoints ?? 0;
+  if (tot.bits > 0) s = creditMinigameBits(s, tot.bits, dayKey);
+  return { next: s, bits: Math.max(0, (s.gamePoints ?? 0) - antes), fragments: tot.fragments };
+}
+
 // ── a conta ──────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 const clampInt = (n: unknown): number => (typeof n === 'number' && Number.isFinite(n) ? Math.max(0, Math.floor(n)) : 0);
@@ -152,9 +169,12 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
   const record0 = clampInt(prev.dungeonDepthRecord);
   const report = emptyAwayReport(away.layer, record0);
 
-  const elapsedReal = Math.max(0, nowMs - away.since);
+  // beta3: descida de foco PAUSADA (`pausedAt`): o relógio da descida congela ali — nada rende depois, e o fim do foco ainda não chegou.
+  const pausado = away.pausedAt !== undefined;
+  const nowEff = pausado ? Math.min(nowMs, away.pausedAt as number) : nowMs;
+  const elapsedReal = Math.max(0, nowEff - away.since);
   report.capped = elapsedReal > DUNGEON_AWAY_MAX_MS;
-  const focusOver = away.until !== undefined && nowMs >= away.until;
+  const focusOver = !pausado && away.until !== undefined && nowMs >= away.until;
   const limit = Math.min(away.since + Math.min(elapsedReal, DUNGEON_AWAY_MAX_MS), away.until ?? Infinity);
 
   let s: T = prev;
@@ -220,14 +240,10 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
     s = { ...s, dungeonDepthRecord: Math.max(clampInt(s.dungeonDepthRecord), layer) };
     const frag = rec.marks.reduce((a, m) => a + m.fragments, 0);
     if (frag > 0) { s = addFragments(s, frag); report.fragments += frag; }
-    // Endless Rift (M6): o score mensal e as faixas do mês (material; Bits pelo funil, com o teto diário).
-    const rift = applyRiftLayer(s, layer, t);
-    if (rift.newTiers.length) {
-      const tot = riftTierTotals(rift.newTiers);
-      s = rift.next;
-      if (tot.fragments > 0) { s = addFragments(s, tot.fragments); report.fragments += tot.fragments; }
-      if (tot.bits > 0) credit(tot.bits);
-    } else s = rift.next;
+    // Endless Rift (M6): o score mensal e as faixas do mês — o MESMO caminho da tela (`applyRiftLayerPaid`).
+    const rift = applyRiftLayerPaid(s, layer, t, dayKey);
+    s = rift.next;
+    report.fragments += rift.fragments;
     if (isMilestoneLayer(layer) && !ms) {
       ms = true;
       report.glitchtama += 1;
@@ -236,10 +252,11 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
     hp = Math.min(1, hp + cura);
   }
 
-  // beta3 A4: a descida que ACABOU (energia/HP/teto/retirada) com ≥1 camada limpa fora da tela é UMA run da missão semanal.
-  if ((opts.retire || ended) && report.layers > 0) s = countWeeklyMission(s, 'dungeon-runs', now);
   if (focusOver && !ended) ended = 'retired'; // o timer de foco acabou: a descida acaba junto
   if (opts.retire && !ended) ended = 'retired'; // retirar acerta o que rendeu até agora e o Soulmon volta para casa
+  // beta3 A4: a descida que ACABOU (energia/HP/teto/retirada/fim do foco) com ≥1 camada limpa fora da tela é UMA run da missão semanal.
+  // 1 camada já vale a run; acertos parciais com 0 camadas não contam (R3). A contagem vem DEPOIS de fechar o `ended` (o fim pelo timer entra).
+  if (ended && report.layers > 0) s = countWeeklyMission(s, 'dungeon-runs', now);
   report.ended = ended;
   report.toLayer = layer;
   report.recordTo = Math.max(record0, clampInt(s.dungeonDepthRecord));

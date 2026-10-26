@@ -25,3 +25,13 @@ export function grantFocusKey<T extends FocusKeyState>(prev: T, nowMs: number): 
   if (hasFocusKey(prev, nowMs)) return prev;
   return { ...prev, focusKeyDay: playerDayIso(new Date(nowMs), prev.playerDayTz) };
 }
+
+/**
+ * COMPAT pré-beta3: quem já tinha uma sessão de foco PRONTA hoje (planejada na Oficina, antes de existir o "Prepare to Focus") não tem
+ * `focusKeyDay` no save e ficaria trancado. Uma sessão `ready` do dia do jogador vale como a chave de hoje.
+ * `session` = a sessão guardada no aparelho (`normalizeSession`); sem ela, só vale a chave do save.
+ */
+export function hasFocusKeyOrLegacy(state: FocusKeyState, nowMs: number, session: { status?: string; day?: string } | null | undefined): boolean {
+  if (hasFocusKey(state, nowMs)) return true;
+  return !!session && session.status === 'ready' && session.day === playerDayIso(new Date(nowMs), state.playerDayTz);
+}

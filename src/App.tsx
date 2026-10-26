@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useRef, useId, lazy, Suspense, Fragment } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, useId, useSyncExternalStore, lazy, Suspense, Fragment } from 'react';
 import type { ReactNode } from 'react';
 import { Icon } from './components/ui/Icon';
 import { ScreenSkeleton } from './components/ui/ScreenSkeleton';
@@ -31,8 +31,10 @@ import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, HUNGER_PREMIUM
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
-import { hasFocusKey, grantFocusKey } from './utils/focusKey';
-import { focusDescentRefusal, startFocusDescent } from './utils/focusDescent';
+import { hasFocusKeyOrLegacy, grantFocusKey } from './utils/focusKey';
+import { normalizeSession } from './utils/focoSessao';
+import { focusDescentRefusal, isFocusDescent, pauseFocusDescent, resumeFocusDescent, startFocusDescent } from './utils/focusDescent';
+import { assinarTelaMasmorra, telaMasmorraAberta } from './utils/dungeonScreenOpen';
 import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
 import type { BuildingId } from './utils/gates';
 import { Celebration } from './components/ui/Celebration';
@@ -197,7 +199,7 @@ import { soulmonNaMasmorra } from './utils/dungeonIdle';
 import { applyBestiarySeen, applyEnemyDefeated, applyFloorCleared, applyMilestoneItem } from './utils/dungeonRewards';
 import type { BosqueArvores } from './utils/bosqueArvores';
 import type { OcupadoAcao } from './components/DungeonBusyModal';
-import type { DungeonReturnSummary } from './components/DungeonReturnModal';
+import type { DungeonReturnSummary } from './utils/dungeonReturnSummary';
 import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
@@ -804,7 +806,11 @@ export default function App() {
   const { gameState, setGameState } = useGameState();
   const [showIntro, setShowIntro] = useState(true);
   const [currentView, setCurrentView] = useState<ViewType>('home');
-  const [dungeonReturnSummary, setDungeonReturnSummary] = useState<DungeonReturnSummary | null>(null);
+  // O resumo da volta sozinha mora no SAVE (`dungeonReturnPending`): fechar o app antes de ver o aviso não o perde.
+  const dungeonReturnSummary: DungeonReturnSummary | null = gameState.dungeonReturnPending ?? null;
+  const setDungeonReturnSummary = useCallback((v: DungeonReturnSummary | null) => {
+    setGameState(prev => (v ? { ...prev, dungeonReturnPending: v } : (prev.dungeonReturnPending ? { ...prev, dungeonReturnPending: undefined } : prev)));
+  }, [setGameState]);
   /** Sub-aba do Laboratório (Evolução / Soulmon / Estatísticas). */
   const [labTab, setLabTab] = useState<LabTab>('evolution');
   const pane = paneFor(currentView, labTab);
@@ -3447,13 +3453,16 @@ export default function App() {
      ou na próxima abertura, e mostra o resumo num modal centralizado (fila: `dungeonReturn`). */
   const autoVoltaRef = useRef(false);
   const masmorraRetornoAt = masmorraRetorno.returnAt;
+  // a tela da masmorra montada é a dona da conta da descida: o retorno automático espera (sem crédito duplicado) e volta quando ela fecha
+  const telaMasmorra = useSyncExternalStore(assinarTelaMasmorra, telaMasmorraAberta, () => false);
   useEffect(() => {
-    if (!naMasmorra || masmorraRetornoAt === null) return;
+    if (!naMasmorra || masmorraRetornoAt === null || telaMasmorra) return;
     const acertar = async () => {
       if (autoVoltaRef.current || !naMasmorraRef.current) return;
       autoVoltaRef.current = true;
       try {
         const { settleDungeonAwayNow } = await import('./utils/dungeonAway');
+        if (telaMasmorraAberta()) return;
         const r = settleDungeonAwayNow(gameStateRef.current, setGameState, Date.now(), false);
         if (r && r.report.ended) {
           const { layers, bits, fragments, hearts, glitchtama, ended } = r.report;
@@ -3465,7 +3474,7 @@ export default function App() {
     if (ms <= 0) { void acertar(); return; }
     const id = setTimeout(() => { void acertar(); }, Math.min(ms, 2_147_000_000));
     return () => clearTimeout(id);
-  }, [naMasmorra, masmorraRetornoAt, setGameState]);
+  }, [naMasmorra, masmorraRetornoAt, telaMasmorra, setGameState, setDungeonReturnSummary]);
   const bloqueiaOcupado = useCallback((acao: OcupadoAcao): boolean => {
     if (!naMasmorraRef.current) return false;
     setOcupadoAviso({ acao });
@@ -4155,7 +4164,8 @@ export default function App() {
   }, [setGameState]);
   const handleRefugeAccept = useCallback(() => {
     setGameState(prev => ({ ...prev, refugeInvite: acceptRefugeInvite(prev.refugeInvite, playerDayIso(new Date(), prev.playerDayTz)) }));
-    setRefugeLaunch(true);
+    // o Refúgio mora na Exploração (`exploracao.refugio`): o convite leva ao prédio dele, com a folha aberta (não à área Jogos)
+    setPendingSheet({ area: 'exploracao', lot: 'refugio' });
   }, [setGameState]);
   const handleRefugeLaunchConsumed = useCallback(() => setRefugeLaunch(false), []);
 
@@ -7505,7 +7515,7 @@ export default function App() {
                      Malha, que moram no save. A regra é de `utils/mente/revisao`;
                      aqui só se grava o estado que o jogo devolveu. */
                   todayKey: playerDayIso(new Date(), gameState.playerDayTz),
-                  focusKeyActive: hasFocusKey(gameState, Date.now()),
+                  focusKeyActive: hasFocusKeyOrLegacy(gameState, Date.now(), normalizeSession(readJson<unknown>(STORAGE_KEYS.FOCO_WORKSHOP_PLAN, null))),
                   rogue: { saved: gameState.rogueDungeon, onChange: (run: RogueRun) => setGameState(prev => ({ ...prev, rogueDungeon: run })), combatant: soulCombatant(gameState) },
                   onFocusPrepared: () => setGameState(prev => grantFocusKey(prev, Date.now())),
                   onFocusStart: (focusEndsAt?: number) => {
@@ -7514,6 +7524,16 @@ export default function App() {
                     if (why) return why;
                     setGameState(prev => startFocusDescent(prev, now, undefined, focusEndsAt));
                     return 'started' as const;
+                  },
+                  // o timer de foco manda na descida: pausar a congela, continuar a retoma, cancelar RETIRA (Soulmon livre, com o que já rendeu)
+                  onFocusPause: () => setGameState(prev => pauseFocusDescent(prev, Date.now())),
+                  onFocusResume: (focusEndsAt?: number) => setGameState(prev => resumeFocusDescent(prev, Date.now(), focusEndsAt)),
+                  onFocusCancel: () => {
+                    if (!isFocusDescent(gameStateRef.current)) return;
+                    void import('./utils/dungeonAway').then(({ settleDungeonAwayNow }) => {
+                      if (!isFocusDescent(gameStateRef.current)) return;
+                      settleDungeonAwayNow(gameStateRef.current, setGameState, Date.now(), true);
+                    });
                   },
                   focusTasks: gameState.tasks.map(({ id, name, completed, steps }) => ({ id, name, completed, steps })),
                   onCompleteFocusTask: handleToggleTask,
@@ -7800,7 +7820,7 @@ export default function App() {
                       language={language}
                       onShown={handleRefugeShown}
                       onDismiss={handleRefugeDismiss}
-                      onAccept={() => { handleRefugeAccept(); goTo(areaView('jogos')); }}
+                      onAccept={() => { handleRefugeAccept(); goTo(areaView('exploracao')); }}
                     />
                   ),
                 });
@@ -8819,7 +8839,7 @@ export default function App() {
       )}
 
       {/* 🏠 A VOLTA SOZINHA DA MASMORRA (beta3 A2): resumo centralizado do que a descida rendeu. */}
-      {interstitial === 'dungeonReturn' && dungeonReturnSummary && (
+      {(interstitial === 'dungeonReturn' || demo) && dungeonReturnSummary && (
         <PresentationSlot id="dungeonReturn" onFail={() => presentation.fail('dungeonReturn')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <DungeonReturnModal summary={dungeonReturnSummary} language={language} onClose={() => setDungeonReturnSummary(null)} />
         </PresentationSlot>

@@ -3357,3 +3357,10 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 - **`names` público:** exige prefixo ≥ 2 caracteres e não devolve apelido de quem está com `publicHidden`.
 - **Grove/clã:** `claRegar`/`claProteger` não exigem mais `claSortear` prévio — sem sorteio HOJE (cliente antigo) o servidor sorteia a ação pedida e segue; sorteio de OUTRA ação no dia continua valendo (1 ação/dia) e segue dando 409 `no draw`.
 - **NO_VISIT:** `visit:jogos.dungeon` e `visit:exploracao.preparar` (prédios placeholder) saíram das primeiras-vezes (cliente e espelho do servidor). `visit:exploracao.refugio` não tem o mesmo problema: `jogos.refugio` já é remapeado para o mesmo id pelo `currentBuildingId`, então não é resgatável duas vezes.
+
+## 174. Calabouço roguelike: bônus com multiplicador PRÓPRIO é exceção do dono; desafio em curso consome o passo (dono, 25/10/2026)
+
+- **Exceção declarada:** os bônus da incursão do Calabouço (`power` +6% ATK, `vigor` +10% HP, `heal` escudo de 15%) têm multiplicador próprio (`POWER_STEP`/`VIGOR_STEP`/`HEAL_SHIELD` em `utils/rogueDungeon.ts`), fora da curva de talentos/equipamento do Combate v3. Valem SÓ na incursão do dia e SÓ são lidos em `simulateRogueCombat` — travado por `src/utils/qa.masmorraFoco.test.ts` (nenhum outro módulo de combate os lê).
+- **Sem re-tentativa grátis:** ao entrar num desafio que não é combate grava-se `RogueRun.pending` (campo opcional; save antigo não tem). Sair/desmontar/fechar o app sem terminar CONSOME o passo (`consumePending`); falha de carga do jogo (offline) não gasta (`cancelChallenge`, botão Voltar do Error Boundary).
+- **Exploração fica para depois:** a ferramenta de Exploração do Calabouço é backlog (`docs/BACKLOG-BETA3.md`); o Eco permanece.
+- **Descida de foco acompanha o timer:** pausar congela (`dungeonAway.pausedAt`), continuar retoma com o novo fim, cancelar retira o Soulmon (acerta o que já rendeu). O texto da Oficina separa "Foquei" (sem Bits) dos Bits da descida (teto diário).

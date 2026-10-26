@@ -88,3 +88,6 @@ Decisões (modal): simulados parecem reais mas NUNCA levam prêmio (flag `simula
 ## M14 — Balanço dos elementos (Luz frequente demais, sprites monocromáticos amarelos): medir por simulação e corrigir.
 
 Assets: ver `docs/PROMPTS-BETA3.md` (36 reaproveitados, 19 prompts novos).
+
+## Calabouço (RogueDungeon)
+- Calabouço: ferramenta de Exploração (backlog, decisão do dono 25/10/2026); manter Eco.
