@@ -20,7 +20,7 @@ export const BETA_CLOSED_COPY = {
     title: 'O Soulmon está em teste fechado',
     as: 'Você entrou como',
     noEmail: 'Não conseguimos ver com qual e-mail você entrou.',
-    body: 'Este e-mail ainda não está na lista de quem testa agora. Se você foi convidado, peça ao Mateus para incluir este e-mail — ou troque para a conta com que recebeu o convite.',
+    body: 'Este e-mail ainda não está na lista de testes. Se foi convidado, peça ao Mateus para incluir este e-mail — ou troque para a conta do convite.',
     soon: 'Quando abrir para todo mundo, seu Soulmon vai estar esperando.',
     switch: 'Trocar de conta',
   },

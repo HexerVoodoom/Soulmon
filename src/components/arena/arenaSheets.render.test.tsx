@@ -43,7 +43,7 @@ describe('Torneio', () => {
   it('explica que o Torneio é ranqueado/social e a Arena é o duelo PvE escalado', () => {
     renderWithCss(<TournamentPage {...base} />);
     fireEvent.click(screen.getByRole('button', { name: 'About the Tournament' }));
-    expect(document.querySelector('[data-torneio-info]')!.textContent).toMatch(/RANKED mode.*server draws opponents.*you don.t choose.*Open Arena/is);
+    expect(document.querySelector('[data-torneio-info]')!.textContent).toMatch(/RANKED.*server draws opponents.*Open Arena/is);
   });
 
   it('a faixa vira indicador do título; tocar abre a folha com as cinco faixas e a atual marcada', async () => {

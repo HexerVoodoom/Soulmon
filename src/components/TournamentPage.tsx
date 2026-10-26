@@ -424,8 +424,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       <span data-torneio-info>
         <InfoTipSection title={isPt ? 'Torneio e Arena' : 'Tournament and Arena'}>
           {isPt
-            ? 'O Torneio é o modo RANQUEADO: o servidor sorteia os oponentes perto da sua faixa — você não escolhe. Para escolher contra quem lutar (criaturas do bestiário, de poder parecido com o seu), entre na Arena livre.'
-            : 'The Tournament is the RANKED mode: the server draws opponents near your tier — you don’t choose. To pick who you fight (bestiary creatures of power similar to yours), enter the Open Arena.'}
+            ? 'O Torneio é RANQUEADO: o servidor sorteia os oponentes perto da sua faixa. Para escolher quem enfrentar, entre na Arena livre.'
+            : 'The Tournament is RANKED: the server draws opponents near your tier. To pick who you fight, enter the Open Arena.'}
         </InfoTipSection>
         <InfoTipSection title={isPt ? 'Faixas' : 'Tiers'}>
           <span style={{ display: 'block' }}>
@@ -444,8 +444,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             ? (
               <span data-torneio-social>
                 {isPt
-                  ? `O Torneio abre no Vínculo ${BOND_PVP_MIN_LEVEL}. Ele é social: seu apelido e seu Soulmon aparecem numa lista pública de jogadores, e esperar dá tempo de conhecer o app antes. Os XP vêm do que você já faz por aqui — sem pressa, seu Soulmon entra sozinho quando chegar lá.`
-                  : `The Tournament opens at Bond ${BOND_PVP_MIN_LEVEL}. It is social: your nickname and your Soulmon show up on a public list of players, and waiting gives you time to get to know the app first. The XP comes from what you already do here — no rush, your Soulmon joins on its own once you get there.`}
+                  ? `O Torneio abre no Vínculo ${BOND_PVP_MIN_LEVEL}. É social: seu apelido e seu Soulmon aparecem numa lista pública. Sem pressa: seu Soulmon entra sozinho quando chegar lá.`
+                  : `The Tournament opens at Bond ${BOND_PVP_MIN_LEVEL}. It is social: your nickname and Soulmon show up on a public list. No rush: your Soulmon joins on its own once you get there.`}
               </span>
             )
             : (
@@ -457,16 +457,16 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                     : 'Your nickname and your Soulmon show up on a public list of Tournament players.')}
                 {' '}
                 {isPt
-                  ? 'Há um número de partidas por dia; perder também rende Honra. Vencer alguém de level bem abaixo do seu, ou o mesmo oponente várias vezes no dia, rende cada vez menos. Sem oponentes, três desafiantes NPC treinam com você — não gastam partida e não rendem nada.'
-                  : 'There is a daily number of matches; losing earns Honor too. Beating someone far below your level, or the same opponent several times a day, earns less each time. With no opponents, three NPC challengers train with you — they use no match and earn nothing.'}
+                  ? 'Há um limite de partidas por dia; perder também rende Honra. Vencer alguém bem abaixo de você, ou o mesmo oponente de novo, rende cada vez menos. Sem oponentes, três NPCs treinam com você, sem gastar partida.'
+                  : 'There is a daily match limit; losing earns Honor too. Beating someone far below you, or the same opponent again, earns less each time. With no opponents, three NPCs train with you, no match used.'}
               </span>
             )}
         </InfoTipSection>
         <span data-torcida-legenda style={{ display: 'block' }}>
           <InfoTipSection title={isPt ? 'Luta e treino' : 'Fighting and training'}>
             {isPt
-              ? 'Os dois Soulmons lutam sozinhos. Você torce tocando na tela (ou no mascote): a barra de cheer enche devagar e despeja energia no seu Soulmon; com a energia cheia, ele solta o golpe especial.'
-              : 'The two Soulmons fight on their own. You cheer by tapping the screen (or the mascot): the cheer bar fills slowly and pours energy into your Soulmon; with full energy, it unleashes its special strike.'}
+              ? 'Os Soulmons lutam sozinhos. Toque na tela (ou no mascote) para torcer: a barra de cheer enche e dá energia ao seu Soulmon, que solta o especial.'
+              : 'The Soulmons fight on their own. Tap the screen (or the mascot) to cheer: the cheer bar fills and feeds your Soulmon energy, then it unleashes its special.'}
           </InfoTipSection>
         </span>
         <InfoTipSection title={isPt ? 'Missões' : 'Missions'}>
