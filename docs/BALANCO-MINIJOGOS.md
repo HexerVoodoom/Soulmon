@@ -30,6 +30,7 @@ produção. Quando houver telemetria, é esta tabela que se confronta.
 | Bolhas: acerto (estourar sonho / deixar fiapo) | 85% | 97% |
 | Troca: segundos por carta · acerto | 1,8 s · 85% | 1,1 s · 97% |
 | Picross: segundos por casa | 2,4 s | 1,2 s |
+| Trilha do Pet / Colcha: segundos por casa (grade lado², 4×4 a 8×8) | 1,5 s | 0,8 s |
 | Dino: duração da corrida | 60 s | 180 s |
 | PPT | sorte (50%), ~2,5 s por rodada | igual |
 
@@ -45,6 +46,7 @@ produção. Quando houver telemetria, é esta tabela que se confronta.
 | Picross 10×10 | 12 · 4,0 · **3,0** | 12 · 2,0 · **6,0** |
 | Corrida do Dino | 6 · 1,05 · **5,7** | 18 · 3,05 · **5,9** |
 | Pedra, papel e tesoura | 2,5 · 0,36 · **6,9** | igual (sorte) |
+| Trilha do Pet / Colcha 4×4 → 8×8 (R3, 25/10/2026) | 2–10 Bits · 0,4–1,6 min · **~5–6,3** (guarda em `balanco.test.ts`) | **~9–12** |
 | Revisão da Malha (1×/dia) | 5 · 1,25 · **4,0** | 5 · 0,75 · **6,7** |
 | **Combina 3** (11/10/2026) | 3 · 1,22 · **3,3** | 6 · 0,82 · **7,3** |
 

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint } from '../form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
@@ -45,7 +45,9 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
   const pet = getSpriteForStage(evolutionStage, demoCharacterId);
   const petScale = usePetScale(evolutionStage, pet);
   const { size } = puzzle;
-  const cell = Math.floor(Math.min(GRID_MAX_W, 52 * size) / size);
+  // Alvo de toque ≥44px também na 8×8 (sem gap; a grade centrada pode vazar pelo padding de 16px, nunca da tela a 360px).
+  const cell = Math.max(44, Math.floor(Math.min(GRID_MAX_W, 52 * size) / size));
+  const gap = size >= 8 ? 0 : 2;
   const numberAt = useMemo(() => {
     const m = new Map<number, number>();
     puzzle.numbers.forEach((c, i) => m.set(c, i + 1));
@@ -100,6 +102,28 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
   };
   const stop = () => { drag.current = false; };
 
+  /** Teclado: setas movem a ponta (a 1ª seta entra no número 1); mover para a casa anterior volta um passo; Backspace desfaz. */
+  const onKey = (e: ReactKeyboardEvent) => {
+    if (solved) return;
+    const d = e.key === 'ArrowUp' ? [-1, 0] : e.key === 'ArrowDown' ? [1, 0] : e.key === 'ArrowLeft' ? [0, -1] : e.key === 'ArrowRight' ? [0, 1] : null;
+    if (e.key === 'Backspace') { e.preventDefault(); setPath(p => p.slice(0, -1)); return; }
+    if (!d) return;
+    e.preventDefault();
+    if (path.length === 0) { enter(puzzle.numbers[0]); return; }
+    const h = path[path.length - 1];
+    const r = Math.floor(h / size) + d[0];
+    const c = (h % size) + d[1];
+    if (r < 0 || c < 0 || r >= size || c >= size) return;
+    enter(r * size + c);
+  };
+  const cellLabel = (c: number): string => {
+    const n = numberAt.get(c);
+    const pos = isPt ? `Linha ${Math.floor(c / size) + 1}, coluna ${(c % size) + 1}` : `Row ${Math.floor(c / size) + 1}, column ${(c % size) + 1}`;
+    const num = n != null ? (isPt ? `, número ${n}` : `, number ${n}`) : '';
+    const st = head === c ? (isPt ? ', ponta do caminho' : ', path end') : order.has(c) ? (isPt ? ', no caminho' : ', on the path') : (isPt ? ', livre' : ', empty');
+    return pos + num + st;
+  };
+
   const next = () => {
     const l = level + 1;
     paid.current = false;
@@ -143,7 +167,7 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
                 : 'Trace ONE path through the numbers in order, from 1 to the last, filling every cell without crossing.'}
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
-              {isPt ? 'Arraste, ou toque numa casa vizinha. Tocar numa casa do caminho volta até ela.' : 'Drag, or tap a neighbouring cell. Tapping a cell on the path steps back to it.'}
+              {isPt ? 'Arraste, toque numa casa vizinha ou use as setas do teclado. Tocar numa casa do caminho volta até ela.' : 'Drag, tap a neighbouring cell or use the arrow keys. Tapping a cell on the path steps back to it.'}
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt ? `Cada trilha resolvida paga Bits pelo tamanho, até ${ZIP_MAX_BITS}.` : `Each solved trail pays Bits by size, up to ${ZIP_MAX_BITS}.`}
@@ -183,13 +207,17 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
         onPointerUp={stop}
         onPointerCancel={stop}
         onPointerLeave={stop}
-        style={{ display: 'grid', gridTemplateColumns: `repeat(${size}, ${cell}px)`, gap: 2, alignSelf: 'center', touchAction: 'none' }}
+        onKeyDown={onKey}
+        tabIndex={0}
+        role="group"
+        aria-label={isPt ? `Grade ${size} por ${size}. Use as setas para traçar o caminho; Backspace volta um passo.` : `${size} by ${size} grid. Use the arrow keys to trace the path; Backspace steps back.`}
+        style={{ display: 'grid', gridTemplateColumns: `repeat(${size}, ${cell}px)`, gap, alignSelf: 'center', touchAction: 'none', flex: 'none' }}
       >
         {Array.from({ length: size * size }, (_, c) => {
           const n = numberAt.get(c);
           const reachable = head != null && areAdjacent(head, c, size) && !order.has(c);
           return (
-            <div key={c} data-zip-cell={c} data-zip-on={order.has(c) ? '' : undefined} data-zip-reach={reachable ? '' : undefined} style={cellStyle(c)}>
+            <div key={c} role="img" aria-label={cellLabel(c)} data-zip-cell={c} data-zip-on={order.has(c) ? '' : undefined} data-zip-reach={reachable ? '' : undefined} style={cellStyle(c)}>
               {n != null && (
                 <span style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', lineHeight: 1 }}>
                   <img src={MINI_FX.pedras[(n - 1) % 4]} alt="" aria-hidden="true" draggable={false} width={cell * 0.55} height={cell * 0.55} style={{ display: 'block', width: cell * 0.55, height: cell * 0.55 }} />

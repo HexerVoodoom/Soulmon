@@ -12,6 +12,8 @@ import { MINIGAME_BITS_PER_DAY } from '../currencies';
 import { M3_MAX_BITS, M3_POINTS_PER_BIT, match3Bits, newRound, trySwap, validMoves } from '../match3';
 import { M3C_DEFEAT_BONUS, M3C_ENEMY_HP, M3C_MAX_TURNS, chooseMove, combatScore, newCombat, playTurn } from '../match3Combat';
 import { mulberry32 } from '../combate/rng';
+import { ZIP_MAX_BITS, zipBits } from './zip';
+import { PATCHES_MAX_BITS, patchesBits } from './patches';
 
 /**
  * O BALANÇO DOS MINIJOGOS LEVES (30/09/2026, `docs/BALANCO-MINIJOGOS.md`).
@@ -139,13 +141,25 @@ function combina3(p: Perfil): Medida {
   return medir('Combina 3', p, match3Bits(r.placar), (r.jogadas * M3_SEG_POR_MOVIMENTO[p.nome] + r.trocasInimigo * M3_SEG_POR_TROCA_INIMIGA + 3) * 1000);
 }
 
+// ── Trilha do Pet (zip) e Colcha (patches): segundos por casa × casas da grade (lado²); sem relógio na jogada ────────
+// R3 BAIXO (25/10/2026): os dois pagavam por tamanho sem régua. A grade 4×4 a 8×8 vem do nível (`zipSizeForLevel`).
+const PUZZLE_SEG_POR_CASA = { típico: 1.5, experiente: 0.8 } as const;
+function puzzleGrade(jogo: string, p: Perfil, lado: 4 | 5 | 6 | 7 | 8, bits: number): Medida {
+  return medir(`${jogo} ${lado}×${lado}`, p, bits, lado * lado * PUZZLE_SEG_POR_CASA[p.nome] * 1000);
+}
+const LADOS = [4, 5, 6, 7, 8] as const;
+const puzzles = (p: Perfil): Medida[] => LADOS.flatMap(l => [
+  puzzleGrade('Trilha do Pet', p, l, zipBits(l)),
+  puzzleGrade('Colcha', p, l, patchesBits(l)),
+]);
+
 // Revisão: 1×/dia; ~15 s por cartão.
 function revisao(p: Perfil): Medida {
   return medir('Revisão da Malha', p, REVIEW_SESSION_BITS, REVIEW_SESSION_SIZE * (p === TIPICO ? 15 : 9) * 1000);
 }
 
 const PERFIS = [TIPICO, EXPERIENTE];
-const LEVES = PERFIS.flatMap(p => [eco(p), bolhas(p), troca(p), picross(p, 5), picross(p, 7), picross(p, 10), dino(p), ppt(p), combina3(p)]);
+const LEVES = PERFIS.flatMap(p => [eco(p), bolhas(p), troca(p), picross(p, 5), picross(p, 7), picross(p, 10), dino(p), ppt(p), combina3(p), ...puzzles(p)]);
 
 /** A faixa de Bits/minuto do jogador TÍPICO nos jogos leves. */
 const FAIXA_TIPICA = { min: 2.5, max: 9 };
@@ -187,6 +201,15 @@ describe('balanço dos minijogos leves (Bits por minuto)', () => {
     expect(match3Bits(perfeita)).toBeLessThanOrEqual(M3_MAX_BITS);
     expect(M3C_MAX_TURNS).toBeGreaterThan(40); // o teto de segurança fica bem acima de uma partida típica
     expect(match3Bits(M3_POINTS_PER_BIT * M3_MAX_BITS)).toBe(M3_MAX_BITS);
+  });
+
+  it('Trilha do Pet e Colcha: o teto anunciado é o da maior grade, e nenhuma grade paga muito mais por minuto que outra', () => {
+    expect(zipBits(8)).toBe(ZIP_MAX_BITS);
+    expect(patchesBits(8)).toBe(PATCHES_MAX_BITS);
+    for (const jogo of ['Trilha do Pet', 'Colcha']) {
+      const t = puzzles(TIPICO).filter(m => m.jogo.startsWith(jogo)).map(m => m.porMinuto);
+      expect(Math.max(...t) / Math.min(...t), jogo).toBeLessThan(1.6);
+    }
   });
 
   it('o típico nas três grades do Picross fica na faixa — grade grande não paga menos por minuto a ponto de ser evitada', () => {
