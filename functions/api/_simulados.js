@@ -12,8 +12,10 @@
 // ATIVAÇÃO — `SIMULADOS_ON=1` (var do Worker, ligada pelo DONO; sem ela o motor é no-op e nenhuma rota muda). Não há
 // cron: a execução é PREGUIÇOSA. As rotas de ranking/diretório/torneio/arena chamam `ensureSimuladosDia(env)`:
 //   1. trava `sim:dia:<YYYY-MM-DD>` (UTC) — `{ state, next }`. Ausente = grava `running/0` e começa;
-//   2. a cada chamada processa UM LOTE de `CHUNK` simulados (teto de subrequests do Worker: ~40 operações de KV por
-//      simulado no pior caso) e avança `next`; no último lote grava `done` (definitivo, e cache em memória);
+//   2. a cada chamada processa UM LOTE pequeno (`CHUNK` simulados E estimativa <`OPS_BUDGET` operações de KV, p/ caber
+//      nos 50 subrequests por request) e avança `next` SÓ pelo que deu certo (falha não marca lote como feito);
+//      trava com token aleatório (grava, relê, só segue se ainda é o dele); último lote grava `done`;
+//      as rotas chamam via `agendarSimuladosDia` = `context.waitUntil`, nunca no caminho síncrono;
 //   3. cada passo é IDEMPOTENTE (perfil só regrava se mudou; ranking só guarda o MELHOR score; reserva de apelido
 //      repete sem efeito) — duas chamadas concorrentes no mesmo lote só duplicam trabalho, nunca dado;
 //   4. NUNCA lança: falha do motor vira `{ status: 'skipped' }` e a rota segue.
@@ -39,8 +41,23 @@ import { RANKED_GAMES, TIER_CUTS, MAX_SCORE_BY_GAME, submitScore } from './_rank
 import { SIMULADOS, SIM_EPOCH } from './_simulados.data.js';
 
 const DAY_MS = 86_400_000;
-/** Simulados processados por chamada (cada um custa ≤ ~40 operações de KV; o Worker aceita 1000 subrequests). */
-export const CHUNK = 8;
+/**
+ * Teto de simulados por invocação E orçamento de operações de KV por invocação. Pages Functions (plano free) aceita
+ * 50 subrequests por request, e o POST de score ainda gasta as dele: o lote para ao estimar passar de `OPS_BUDGET`
+ * (<40, com folga), mas sempre faz ao menos um simulado (senão o dia nunca andaria).
+ */
+export const CHUNK = 3;
+export const OPS_BUDGET = 34;
+/** Estimativa conservadora de operações de KV de um simulado no dia (perfil, nick, rank, + 5 por score gravado). */
+export function custoEstimado(p, day) {
+  let n = 12;
+  for (const { game } of scoresDoDia(p, day)) n += 5 * (game === 'endless-rift' ? 1 : 2);
+  return n;
+}
+/** Quantas vezes um simulado pode falhar antes de ser pulado (não trava o dia inteiro por um perfil ruim). */
+const MAX_FALHAS = 3;
+/** Lease da trava: depois disso outro worker assume (o dono morreu). */
+const LEASE_MS = 30_000;
 const LOCK_TTL = { expirationTtl: 86400 * 3 };
 const PROFILE_REFRESH_MS = 30 * DAY_MS;
 
@@ -244,6 +261,22 @@ async function processarSimulado(env, p, day, now) {
   await escreverScores(env, p, day, now);
 }
 
+const randomToken = () => {
+  const b = new Uint8Array(12);
+  crypto.getRandomValues(b);
+  return [...b].map((x) => x.toString(16).padStart(2, '0')).join('');
+};
+
+/**
+ * Agenda `ensureSimuladosDia` FORA do caminho síncrono da resposta (`context.waitUntil` das Pages Functions).
+ * Sem `waitUntil` (testes, dev) cai no `await` para o comportamento continuar determinístico. Nunca lança.
+ */
+export async function agendarSimuladosDia(context, now) {
+  const p = ensureSimuladosDia(context?.env, now);
+  if (typeof context?.waitUntil === 'function') { context.waitUntil(p); return; }
+  await p;
+}
+
 // ── Orquestração preguiçosa ──────────────────────────────────────────────────
 /** WeakMap por store: o cache em memória não vaza entre ambientes (testes) nem entre namespaces. */
 const concluidos = new WeakMap();
@@ -262,22 +295,45 @@ export async function ensureSimuladosDia(env, now = new Date()) {
     if (!set) { set = new Set(); concluidos.set(store, set); }
     if (set.has(day)) return { status: 'already', day };
 
-    let lock = null;
-    try { lock = JSON.parse((await store.get(lockKeyDia(day))) || 'null'); } catch { lock = null; }
+    const lerLock = async () => { try { return JSON.parse((await store.get(lockKeyDia(day))) || 'null'); } catch { return null; } };
+    const lock = await lerLock();
     if (lock?.state === 'done') { set.add(day); return { status: 'already', day }; }
-    if (!lock) {
-      lock = { state: 'running', next: 0, at: now.getTime() };
-      await store.put(lockKeyDia(day), JSON.stringify(lock), LOCK_TTL); // a trava ANTES do trabalho
+    // Trava com token: grava o MEU token, relê, e só prossegue se ainda é o meu (CAS best-effort — o KV é
+    // eventualmente consistente, então a idempotência dos passos continua sendo a garantia de verdade).
+    if (lock?.owner && Number(lock.leaseUntil) > now.getTime()) return { status: 'progress', day, next: Number(lock.next) || 0 };
+    const tok = randomToken();
+    const base = lock || { state: 'running', next: 0, fails: 0 };
+    await store.put(lockKeyDia(day), JSON.stringify({ ...base, state: 'running', owner: tok, leaseUntil: now.getTime() + LEASE_MS, at: now.getTime() }), LOCK_TTL);
+    const relido = await lerLock();
+    if (relido?.owner !== tok) return { status: 'progress', day, next: Number(relido?.next) || 0 };
+
+    let next = Math.max(0, Math.floor(Number(relido.next) || 0));
+    let fails = Math.max(0, Math.floor(Number(relido.fails) || 0));
+    let ops = 0;
+    let feitos = 0;
+    while (next < SIMULADOS.length && feitos < CHUNK) {
+      const p = SIMULADOS[next];
+      const custo = custoEstimado(p, day);
+      if (feitos > 0 && ops + custo > OPS_BUDGET) break;
+      try {
+        await processarSimulado(env, p, day, now);
+      } catch {
+        // Falha NÃO avança: o lote para aqui e o mesmo simulado é tentado de novo na próxima invocação;
+        // só depois de MAX_FALHAS tentativas ele é pulado (para não travar o dia).
+        fails += 1;
+        if (fails >= MAX_FALHAS) { next += 1; fails = 0; }
+        break;
+      }
+      ops += custo; feitos += 1; next += 1; fails = 0;
     }
-    const ini = Math.max(0, Math.floor(Number(lock.next) || 0));
-    const fim = Math.min(SIMULADOS.length, ini + CHUNK);
-    for (let i = ini; i < fim; i++) {
-      try { await processarSimulado(env, SIMULADOS[i], day, now); } catch { /* um simulado ruim não derruba o lote */ }
+    const acabou = next >= SIMULADOS.length;
+    // Só solta a trava se ainda for minha (outro worker pode ter assumido depois do lease).
+    const atual = await lerLock();
+    if (atual?.owner === tok || !atual) {
+      await store.put(lockKeyDia(day), JSON.stringify({ state: acabou ? 'done' : 'running', next, fails, owner: null, leaseUntil: 0, at: now.getTime() }), LOCK_TTL);
     }
-    const acabou = fim >= SIMULADOS.length;
-    await store.put(lockKeyDia(day), JSON.stringify({ state: acabou ? 'done' : 'running', next: fim, at: now.getTime() }), LOCK_TTL);
-    if (acabou) { set.add(day); return { status: 'done', day, next: fim }; }
-    return { status: 'progress', day, next: fim };
+    if (acabou) { set.add(day); return { status: 'done', day, next }; }
+    return { status: 'progress', day, next };
   } catch {
     return { status: 'skipped' };
   }
