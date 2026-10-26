@@ -265,6 +265,7 @@ function formUsed(ent, formId) {
  * @param {number} units  quantas gerações esta chamada vai custar (a recusa de
  *   conteúdo refaz o pedido com `promptFallback` e por isso custa 2).
  * @param {{ ok: boolean, email?: string } | null} [preAuth]  autorização já feita pela rota (ver abaixo).
+ * @param {{ regenPaid?: boolean } | null} [opts]  `regenPaid`: regeração paga em Créditos (sem vitalício nem teto por forma; ver `_spriteRegen.js`).
  * @param {string|null|undefined} formId  a forma da árvore que está sendo
  *   desenhada. Quando vem, o teto POR FORMA (`perFormLifetime`) vale — e é ele
  *   o disjuntor de loop de retentativa numa forma só. Quando NÃO vem, os outros
@@ -286,7 +287,7 @@ function formUsed(ent, formId) {
  *   estar escrita para valer contra concorrência), e o chamador a DEVOLVE quando
  *   a geração não aconteceu. Ver `makeRelease` — recusa de conteúdo não devolve.
  */
-export async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = null, preAuth = null) {
+export async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = null, preAuth = null, opts = null) {
   if (!kv(env)) return refuse(500, 'storage-not-bound');
 
   const limits = AI_LIMITS[bucket];
@@ -338,7 +339,11 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
   const accountKey = `ai:${bucket}:${saveId}:${today}`;
   // Imagem: além do mensal, um teto DIÁRIO global (`globalDay`).
   const dayKey = usesMonth && typeof limits.globalDay === 'number' ? `ai:${bucket}:@all:${today}` : null;
-  const hasLifetime = typeof limits.perAccountLifetime === 'number';
+  // REGERAÇÃO PAGA (`_spriteRegen.js`, rodada 5): é um sorteio que o jogador PAGA em Créditos, com cota própria (1 por forma por mês).
+  // Por isso NÃO consome o vitalício nem o teto por forma da 1ª geração gratuita (§34) — mas o diário por conta, o global mensal/diário
+  // e o limite por ip-hash seguem valendo inteiros, e é isso que protege a fatura do provedor.
+  const regenPaga = opts?.regenPaid === true && bucket === 'sprite';
+  const hasLifetime = !regenPaga && typeof limits.perAccountLifetime === 'number';
   // Forma só entra na conta se for uma forma que existe. Texto livre recusa —
   // numa rota que queima dinheiro, entrada que não dá para validar não passa.
   if (formId !== null && formId !== undefined) {
@@ -347,7 +352,7 @@ export async function guardAiRequest(request, env, bucket, saveId, units = 1, fo
     }
   }
   const hasFormCap =
-    typeof limits.perFormLifetime === 'number' && typeof formId === 'string' && formId.length > 0;
+    !regenPaga && typeof limits.perFormLifetime === 'number' && typeof formId === 'string' && formId.length > 0;
   const hasTierCap = !!limits.perAccountByTier;
 
   let ent = null;

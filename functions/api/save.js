@@ -26,6 +26,7 @@ import { sanitizeDayPlan } from './_dayPlan.js';
 import { sanitizeNightmares } from './_nightmares.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
 import { enforceDungeonDaily, enforceCheckIns, bumpRiftLayers } from './_dayCounters.js';
+import { sanitizeRegenUsed } from './_spriteRegen.js';
 import { frameIdOrNull } from './_frames.js';
 import { avatarIdOrNull } from './_avatares.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
@@ -354,6 +355,13 @@ export async function onRequest({ request, env }) {
     // Pesadelos (15/10/2026): `fought` so strings, ciclo do sonho bom (`lurkDays` <= 6, `goodDream` booleano, `goodDreams` 0..9999).
     // Espelho de `sanitizeNightmareState` (cliente); nunca recusa o save.
     if ('nightmares' in state) state.nightmares = sanitizeNightmares(state.nightmares);
+    // "Gerar de novo" (rodada 5): `spriteLibrary.regenUsed` e so ESPELHO de tela do mes ja usado por forma (o autoritativo e o `ent.aiRegen`,
+    // `_spriteRegen.js`); aqui so a FORMA: formas validas -> `AAAA-MM`, o resto some. Espelho de `sanitizeRegenUsed` (cliente). Nunca recusa o save.
+    const acervoSprites = state.spriteLibrary;
+    if (acervoSprites && typeof acervoSprites === 'object' && !Array.isArray(acervoSprites)) {
+      const ru = sanitizeRegenUsed(acervoSprites.regenUsed);
+      if (ru) acervoSprites.regenUsed = ru; else delete acervoSprites.regenUsed;
+    }
     // `prev` e lido ANTES de serializar: a imutabilidade da ficha da jornada compara com o que ja esta gravado.
     const prev = await kvOrThrow(env).getWithMetadata(saveId);
     // Ficha da jornada (Combate v3 / PR15c): a FORMA e saneada (estagio valido, galhos finitos e com teto, `at` plausivel,

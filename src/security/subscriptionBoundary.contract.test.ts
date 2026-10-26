@@ -220,7 +220,7 @@ describe('documentação e textos jurídicos', () => {
       expect(html, f).not.toMatch(/\[dono decide/);
     }
     const consent = read('src/utils/consent.ts');
-    expect(consent).toMatch(/TERMS_VERSION = '2026-10-11'/);
+    expect(consent).toMatch(/TERMS_VERSION = '2026-10-26'/);
     expect(consent).toMatch(/PRIVACY_VERSION = '2026-10-26'/);
   });
 });

@@ -19,6 +19,7 @@
  * ⚠️ **Reverter e re-sintonizar NÃO consomem teto** (gate, "Para o
  * `alpha-frontend`"): nenhuma função de adoção aqui toca `attempts`.
  */
+import { sanitizeRegenUsed } from './spriteRegen';
 
 /** Uma forma desenhada. Só metadado — o binário mora no Cache Storage. */
 export interface SpriteEntry {
@@ -91,6 +92,12 @@ export interface SpriteLibrary {
    * Permite que "Voltar ao traço antigo" (`reverted`) devolva o desenho anterior em vez do cristal de reserva.
    */
   previousSprites?: Record<string, SpriteEntry>;
+  /**
+   * "Gerar de novo" a aparência (rodada 5): o mês (`AAAA-MM`, UTC) em que cada forma já usou a regeração PAGA. É só ESPELHO de tela — o
+   * autoritativo é `ent.aiRegen` no servidor (`_spriteRegen.js`), que confere de novo. Campo opcional, leitura tolerante (`sanitizeRegenUsed`,
+   * `utils/spriteRegen.ts`); save sem ele segue válido e reverter este código só deixa o campo órfão (REGISTRO §34b, plano de rollback).
+   */
+  regenUsed?: Record<string, string>;
   failures: Record<string, SpriteFormFailure>;
   /** Forma atual com sprite próprio pronto e ainda não adotado. */
   pendingTune: PendingTune | null;
@@ -349,6 +356,8 @@ export function normalizeSpriteLibrary(raw: unknown): SpriteLibrary {
     }
     if (Object.keys(prevSprites).length > 0) lib.previousSprites = prevSprites;
   }
+  const regenUsed = sanitizeRegenUsed(r.regenUsed);
+  if (regenUsed) lib.regenUsed = regenUsed;
   if (r.failures && typeof r.failures === 'object') {
     for (const [formId, f] of Object.entries(r.failures)) {
       if (!f || typeof f !== 'object') continue;
@@ -532,6 +541,27 @@ export function tuneVisor(
 export function markTuneSeen(lib: SpriteLibrary, formId: string): SpriteLibrary {
   if (!lib.tunedUnseen.includes(formId)) return lib;
   return { ...lib, tunedUnseen: lib.tunedUnseen.filter(id => id !== formId) };
+}
+
+/**
+ * "Manter a atual" depois de "Gerar de novo": descarta a NOVA e fica com a que estava (a que `recordSprite` guardou em `previousSprites`).
+ * Só age enquanto a escolha está aberta (`pendingTune` desta forma + versão anterior guardada); fora disso devolve o mesmo acervo. Guarda
+ * só UMA versão anterior (a que acabou de voltar deixa de ser "anterior"), então não acumula histórico. Não toca em `failures` nem em
+ * `regenUsed`: a regeração foi usada (e paga) — descartar o resultado não devolve a cota do mês.
+ */
+export function discardNewSprite(lib: SpriteLibrary, formId: string): SpriteLibrary {
+  const anterior = lib.previousSprites?.[formId];
+  if (!anterior || lib.pendingTune?.formId !== formId) return lib;
+  const { [formId]: _fora, ...resto } = lib.previousSprites ?? {};
+  const next: SpriteLibrary = {
+    ...lib,
+    sprites: { ...lib.sprites, [formId]: { ...anterior } },
+    pendingTune: null,
+    reverted: lib.reverted.filter(id => id !== formId),
+    tunedUnseen: lib.tunedUnseen.filter(id => id !== formId),
+  };
+  if (Object.keys(resto).length > 0) next.previousSprites = resto; else delete next.previousSprites;
+  return next;
 }
 
 /** "Voltar ao traço antigo" — devolve a reserva sem apagar o sprite pago. */
