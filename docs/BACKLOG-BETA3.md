@@ -91,3 +91,16 @@ Assets: ver `docs/PROMPTS-BETA3.md` (36 reaproveitados, 19 prompts novos).
 
 ## Calabouço (RogueDungeon)
 - Calabouço: ferramenta de Exploração (backlog, decisão do dono 25/10/2026); manter Eco.
+
+# Rodada 4 (pedido do dono, 26/10/2026, após conferência em produção)
+
+## N1 Home: voltar os ícones antigos de dormir/acordar e da mochila até termos os ícones novos (reverte a troca visual do M2; regra de sono não muda).
+## N2 Escala do sprite: o rookie 50% menor vale SÓ na Home e nos combates. Nos minigames o Soulmon volta ao tamanho maior.
+## N3 Obstacle Run: ao entrar, só fechar (topo) + 2 CTAs "Easy" (nível 1) e "Normal" (nível 2); tocar já começa. Dash está para o lado errado. Dash usa o sprite do poder RANGED do elemento como CAMPO DE FORÇA em volta do personagem, acompanhando-o. Os "cubos" do nível 2 (coletáveis) precisam de sprite melhor. Ícone do obstáculo muito pequeno: aumentar/melhorar.
+## N4 Pedra, papel, tesoura: mesmos 2 CTAs Easy (nível 1, sem limite) / Normal (nível 2, 3 de cada). Escolha por ÍCONE (tocar pedra/papel/tesoura), sem texto. Layout: em cima o sprite do Soulmon do jogador (adversário) e, no Normal, as peças disponíveis dele; no meio o campo do duelo; embaixo as peças disponíveis do usuário (só no Normal) e os botões de ícone. Easy = mesmo layout sem as disponíveis.
+## N5 Match 3: banner "<nome> turn" dura mais. Tabuleiro ENTRE o Soulmon do usuário e os adversários (usuário · tabuleiro · adversários). "?" de dica vai para o topo, perto do turno. Mostrar o elemento do usuário. Investigar a numeração (3 foguinhos, 3/2/1 elementos…): se for ordem, tirar. Regra de SUPER (4 iguais viram super): super + normais ativa como hoje; DOIS supers de qualquer elemento juntos se fundem e fazem a CRUZ (linha+coluna).
+## N6 Soul Barrage: sprites maiores (inclusive dos ataques). Inimigos SÓ do elemento espaço (a "toupeirinha" e a outra criatura de espaço que fizer sentido). Dificuldade = quantidade e nível: muito rookie, às vezes champion (mais vida), às vezes ultimate (mais ainda), em levas. Tiro do inimigo usa o FX de espaço. Inimigo que atravessa a tela até a base também tira vida do jogador (tem que impedir a passagem). Girar o sprite do tiro do jogador −90° para sair para cima.
+## N7 Calabouço: trocar a lista por um MAPA desenhado (fundo de mapa, 3 pontos e a trajetória), em tela cheia; combate é uma luta de verdade; refinar bem a interface. Mandar ao dono opções de prédio para o Calabouço (prompts de arte).
+## N8 Exploração: tirar o prédio separado "Prepare to Focus"; o Focus Workshop abre primeiro a etapa Prepare to Focus e, feita, libera a segunda etapa (o workshop/timer). Mesmo NPC/prédio duplicado some.
+## N9 Sem bloqueio: Endless Rift e a atividade do Clan Hall NÃO impedem outras atividades com o Soulmon (tirar a regra de "ocupado").
+## N10 Endless Rift vai para a Arena por enquanto (prédio na área Arena).
