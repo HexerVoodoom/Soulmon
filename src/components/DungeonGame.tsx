@@ -7,7 +7,7 @@ import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
 import { RankingPanel } from './RankingPanel';
-import { applyRiftLayer, riftTierTotals, riftBestThisMonth, RIFT_RANKING_FROM, RIFT_GAME_ID, type RiftMonthState } from '../utils/endlessRift';
+import { applyRiftLayer, riftBestThisMonth, RIFT_RANKING_FROM, RIFT_GAME_ID, type RiftMonthState } from '../utils/endlessRift';
 import { submitScore as submitRankingScore } from '../utils/rankings';
 import { getSpriteForStage } from '../utils/sprites';
 import { usePetScale } from '../hooks/usePetScale';
@@ -21,7 +21,8 @@ import {
   layersAffordable, spendLayer, layerRefusal, recordLayerCleared, sanitizeDepthRecord,
   nextDungeonSpeed, sanitizeDungeonSpeed, DUNGEON_AWAY_MAX_HOURS, type DungeonSpeed, type DungeonAway, type DungeonAwayPlayer,
 } from '../utils/dungeonIdle';
-import { dungeonWaveOf, settleDungeonAwayNow, type AwayReport } from '../utils/dungeonAway';
+import { applyRiftLayerPaid, dungeonWaveOf, settleDungeonAwayNow, type AwayReport } from '../utils/dungeonAway';
+import { marcarTelaMasmorra } from '../utils/dungeonScreenOpen';
 import { autoDodgeGrade, autoRingGrade } from '../utils/dungeonFight';
 import { pushDrop, popDrop, type DropGroup, type DropKind } from '../utils/dungeonDrops';
 import { DropNotice } from './games/DropNotice';
@@ -326,6 +327,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       diário sobre o `prev`). Cada camada paga atualiza o espelho na hora, para dois toques no mesmo lote não passarem os dois. */
   const gsRef = useRef(gs);
   gsRef.current = gs;
+  // a tela é a dona da conta da descida enquanto está montada: o retorno automático da Home espera (sem crédito duplicado)
+  useEffect(() => marcarTelaMasmorra(), []);
   /** Começa UMA camada (energia + limite diário, pela porta única). Devolve se deu (sem provider, sempre). */
   const pagarCamada = (): boolean => {
     if (!ctx) return true;
@@ -343,29 +346,29 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     const { marks } = recordLayerCleared({ dungeonDepthRecord: recordeRef.current }, layer);
     recordeRef.current = Math.max(recordeRef.current, layer);
     resumoRef.current.recordTo = Math.max(resumoRef.current.recordTo, layer);
-    // Endless Rift (M6): score mensal e faixas do mês. As recompensas saem da cópia local (`riftRef`); o updater abaixo reaplica sobre o
-    // `prev` (puro e idempotente: a faixa só paga se o `prev` ainda não a tinha). Bits vão pelo funil (`onEarnPoints`, teto diário).
+    // Endless Rift (M6): score mensal e faixas do mês. As faixas são pagas DENTRO do updater (`applyRiftLayerPaid`, puro e idempotente sobre o
+    // `prev`: a faixa só paga se o `prev` ainda não a tinha) — o MESMO caminho da conta de quem ficou fora. Nada de cópia local congelada.
     const agoraMs = Date.now();
-    const riftBefore = riftBestThisMonth(riftRef.current, agoraMs);
-    const riftAt = applyRiftLayer(riftRef.current, layer, agoraMs);
-    riftRef.current = riftAt.next;
-    const riftTot = riftTierTotals(riftAt.newTiers);
-    if (riftTot.bits > 0) { onEarnPoints(riftTot.bits); resumoRef.current.bits += riftTot.bits; }
-    if (riftTot.fragments > 0) { resumoRef.current.fragments += riftTot.fragments; noteDrop('fragments', riftTot.fragments); }
-    if (rankSaveId && (riftAt.next.riftMonth?.best ?? 0) >= RIFT_RANKING_FROM && (riftAt.next.riftMonth?.best ?? 0) > riftBefore) {
+    const riftBefore = riftBestThisMonth(riftRef.current, agoraMs); // só para decidir o envio ao ranking; não paga nada
+    riftRef.current = applyRiftLayer(riftRef.current, layer, agoraMs).next;
+    if (rankSaveId && (riftRef.current.riftMonth?.best ?? 0) >= RIFT_RANKING_FROM && (riftRef.current.riftMonth?.best ?? 0) > riftBefore) {
       // melhor do mês a partir da faixa 3: entra no ranking mensal (o servidor guarda só o melhor; falha de rede é silenciosa)
-      submitRankingScore(RIFT_GAME_ID, rankSaveId, riftAt.next.riftMonth?.best ?? 0, 'monthly').catch(() => { /* sem rede: o ranking nunca atrapalha a descida */ });
+      submitRankingScore(RIFT_GAME_ID, rankSaveId, riftRef.current.riftMonth?.best ?? 0, 'monthly').catch(() => { /* sem rede: o ranking nunca atrapalha a descida */ });
     }
     const frag = marks.reduce((a, m) => a + m.fragments, 0);
     resumoRef.current.fragments += frag;
     if (frag > 0) noteDrop('fragments', frag);
     ctx.setGameState(prev => {
       const r = recordLayerCleared(prev, layer);
-      const rr = applyRiftLayer(r.next, layer, agoraMs);
-      const ganho = r.marks.reduce((a, m) => a + m.fragments, 0) + riftTierTotals(rr.newTiers).fragments;
+      const rr = applyRiftLayerPaid(r.next, layer, agoraMs, playerDayKey(new Date(agoraMs), prev.playerDayTz));
+      // idempotente por camada (o StrictMode roda o updater 2×): o resumo soma isto no fim da descida
+      riftPagoRef.current.set(layer, { bits: rr.bits, fragments: rr.fragments });
+      const ganho = r.marks.reduce((a, m) => a + m.fragments, 0);
       return ganho > 0 ? addFragments(rr.next, ganho) : rr.next;
     });
   };
+  /** O que as faixas do mês pagaram nesta descida, por camada (preenchido DENTRO do updater; ver acima). */
+  const riftPagoRef = useRef(new Map<number, { bits: number; fragments: number }>());
   const recordeRef = useRef(recorde);
   const riftRef = useRef<RiftMonthState>({ riftMonth: gs?.riftMonth });
   const riftBest = gs ? riftBestThisMonth({ riftMonth: gs.riftMonth }, agora) : 0;
@@ -403,6 +406,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     const now = Date.now();
     if (!podeDescer(hpState, now)) return;
     resumoRef.current = { layers: 0, enemies: 0, bits: 0, hearts: 0, glitchtama: 0, fragments: 0, energy: 0, recordFrom: recorde, recordTo: recorde };
+    riftPagoRef.current.clear();
     recordeRef.current = recorde;
     if (!pagarCamada()) return; // a 1ª camada também custa energia; sem ela o botão nem acende
     const res = onEnter();
@@ -488,6 +492,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const temEnergiaAgora = () => !ctx || !gsRef.current || layerRefusal(gsRef.current, Date.now()) === undefined;
 
   const endDescent = (why: 'hp' | 'sealed' | 'energy' | 'deep' | 'daily') => {
+    // as faixas do mês foram pagas no estado (updater): entram no resumo aqui, uma vez
+    for (const v of riftPagoRef.current.values()) { resumoRef.current.bits += v.bits; resumoRef.current.fragments += v.fragments; }
+    riftPagoRef.current.clear();
     setResumo({ ...resumoRef.current });
     if (resumoRef.current.layers > 0) onRunEnd?.();
     recordDungeonScore(runScoreRef.current);

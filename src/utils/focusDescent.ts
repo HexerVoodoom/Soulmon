@@ -11,7 +11,7 @@ import type { GameState } from '../contexts/GameStateContext';
 import { bondLevelFor } from './bond';
 import { newDefenseSeed } from './autoDefesa';
 import {
-  dungeonLayerCap, hpAgora, podeDescer, sanitizeDepthRecord, soulmonNaMasmorra, spendLayer, startLayerFor, type DungeonAway,
+  dungeonLayerCap, hpAgora, podeDescer, sanitizeDepthRecord, sanitizeDungeonAway, soulmonNaMasmorra, spendLayer, startLayerFor, type DungeonAway,
 } from './dungeonIdle';
 import { soulCombatant } from './soulXP';
 
@@ -43,4 +43,28 @@ export function startFocusDescent(prev: GameState, nowMs: number, seed: number =
     player: { level: c.level, atk: c.atk, def: c.def, spd: c.spd, hp: c.hp, bonus: c.bonus, fam: 'direct', sh: 0, hb: 0, rb: 0, stage: prev.evolutionStage },
   };
   return { ...paid, dungeonAway: reg };
+}
+
+/** A descida em andamento é a do FOCO (tem `until`)? A descida manual da masmorra nunca tem — cancelar/pausar o foco não mexe nela. */
+export function isFocusDescent(state: Pick<GameState, 'dungeonAway'>): boolean {
+  const a = sanitizeDungeonAway(state.dungeonAway);
+  return !!a && a.until !== undefined;
+}
+
+/** O timer de foco foi PAUSADO: a descida congela em `nowMs` (nada rende parado). Sem descida de foco, ou já pausada → a mesma referência. */
+export function pauseFocusDescent(prev: GameState, nowMs: number): GameState {
+  const a = sanitizeDungeonAway(prev.dungeonAway);
+  if (!a || a.until === undefined || a.pausedAt !== undefined) return prev;
+  return { ...prev, dungeonAway: { ...a, pausedAt: nowMs } };
+}
+
+/** O timer de foco CONTINUOU: o tempo parado não conta (`since` anda junto) e o fim passa a ser `focusEndsAt` (o novo `endAt` do timer). */
+export function resumeFocusDescent(prev: GameState, nowMs: number, focusEndsAt?: number): GameState {
+  const a = sanitizeDungeonAway(prev.dungeonAway);
+  if (!a || a.pausedAt === undefined) return prev;
+  const parado = Math.max(0, nowMs - a.pausedAt);
+  const { pausedAt: _p, ...resto } = a;
+  void _p;
+  const until = focusEndsAt !== undefined && focusEndsAt > nowMs ? focusEndsAt : (a.until ?? nowMs) + parado;
+  return { ...prev, dungeonAway: { ...resto, since: a.since + parado, until } };
 }

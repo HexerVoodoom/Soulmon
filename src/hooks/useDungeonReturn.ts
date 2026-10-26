@@ -32,7 +32,7 @@ export function useDungeonReturn(state: GameState, everyMs = 30_000): { returnAt
     : '';
 
   useEffect(() => {
-    if (!away) { setProjected(null); return; }
+    if (!away || away.pausedAt !== undefined) { setProjected(null); return; }
     let vivo = true;
     void import('../utils/dungeonAway').then(({ applyDungeonAway }) => {
       if (!vivo) return;
@@ -51,6 +51,7 @@ export function useDungeonReturn(state: GameState, everyMs = 30_000): { returnAt
 
   return useMemo(() => {
     if (!away) return { returnAt: null, msLeft: null };
+    if (away.pausedAt !== undefined) return { returnAt: null, msLeft: null }; // foco pausado: sem retorno marcado (não há relógio correndo)
     const returnAt = projected && projected.key === key ? projected.at : Math.min(away.since + DUNGEON_AWAY_MAX_MS, away.until ?? Infinity);
     return { returnAt, msLeft: Math.max(0, returnAt - now) };
   }, [away, projected, key, now]);
