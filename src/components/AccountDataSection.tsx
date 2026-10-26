@@ -101,8 +101,8 @@ function inventoryBlocks(isPt: boolean): Array<{ key: keyof DeletePlan; title: s
       key: 'sobrevive',
       title: isPt ? 'Continua existindo' : 'Stays around',
       hint: isPt
-        ? 'O vínculo do seu comprovante de compra. É ele que impede um recibo de virar várias contas pagas — e é ele que deixa você restaurar a compra se voltar com o mesmo e-mail.'
-        : 'The link to your purchase receipt. It is what stops one receipt from becoming several paid accounts — and what lets you restore your purchase if you come back with the same email.',
+        ? 'O vínculo do seu comprovante de compra: impede que um recibo vire várias contas e deixa você restaurar a compra com o mesmo e-mail.'
+        : 'The link to your purchase receipt: it stops one receipt from becoming several accounts and lets you restore the purchase with the same email.',
     },
   ];
 }
@@ -162,8 +162,8 @@ export function AccountDataSection({ language, saveId: saveIdProp, authAvailable
     if (!f) return null;
     if (f.kind === 'unavailable') {
       return pick(f.aviso, isPt) ?? (isPt
-        ? 'Esta função ainda não está disponível — ela liga junto com o login, porque sem login não temos como ter certeza de que é você. Preferimos deixar indisponível a deixar arriscada. Não é nada que você fez.'
-        : 'This feature is not available yet — it turns on together with sign-in, because without sign-in we cannot be sure it is you. We would rather leave it unavailable than leave it risky. Nothing you did caused this.');
+        ? 'Esta função liga junto com o login, porque sem login não temos como saber que é você. Preferimos deixar indisponível a arriscada. Não é nada que você fez.'
+        : 'This feature turns on with sign-in, because without it we cannot be sure it is you. We’d rather leave it unavailable than risky. Nothing you did caused this.');
     }
     if (f.kind === 'expired') {
       return isPt

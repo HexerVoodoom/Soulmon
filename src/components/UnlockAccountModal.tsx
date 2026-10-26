@@ -196,8 +196,8 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
             // monta três galhos com o MESMO nome e a MESMA descrição: a forma
             // existe, a diferença não. Dizer isso é mais honesto que prometer
             // paridade — e não é castigo, é a descrição do que a demonstração é.
-            ? 'Esta é a árvore de um personagem de demonstração: os três caminhos existem, mas terminam na mesma criatura. A do oráculo nasce de você, e cada galho leva a uma forma diferente.'
-            : "This is a demo character's tree: the three paths exist, but they end at the same creature. An oracle creature is born from you, and each branch leads to a different form.")}
+            ? 'Árvore de um personagem de demonstração: os três caminhos terminam na mesma criatura. A do oráculo nasce de você, e cada galho leva a uma forma diferente.'
+            : "A demo character's tree: the three paths end at the same creature. An oracle creature is born from you, and each branch leads to a different form.")}
       </p>
 
       <div className="sm2-conta-perks">

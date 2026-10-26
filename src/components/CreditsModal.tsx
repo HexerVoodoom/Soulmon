@@ -237,8 +237,8 @@ export function CreditsModal({
              é sobre sorteio: é sobre dinheiro nunca comprar poder. Mesmas
              respostas, mesma criatura, e todo pet ajuda igual. */
           hint={isPt
-            ? `${REROLL_COST_CREDITS} créditos — responda de novo as 6 perguntas e a leitura sai delas. Mesmas respostas, mesma criatura. Todo pet é mecanicamente igual: muda quem sua criatura é, nunca o quanto ela te ajuda.`
-            : `${REROLL_COST_CREDITS} credits — answer the 6 questions again and the reading comes from them. Same answers, same creature. Every pet is mechanically equal: it changes who your creature is, never how much it helps you.`}
+            ? `${REROLL_COST_CREDITS} créditos — responda de novo as 6 perguntas. Mesmas respostas, mesma criatura. Todo pet é mecanicamente igual: muda quem ela é, nunca o quanto ajuda.`
+            : `${REROLL_COST_CREDITS} credits — answer the 6 questions again. Same answers, same creature. Every pet is mechanically equal: it changes who it is, never how much it helps.`}
         />
       )}
 

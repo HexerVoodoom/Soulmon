@@ -238,8 +238,8 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
         {/* F5 (beta-2): a regra dos 5% mora atrás do "i" (uma vez só) — antes aparecia em dois parágrafos soltos. */}
         <InfoTip language={isPt ? 'pt-BR' : 'en-US'} label={isPt ? 'Como funcionam os talentos' : 'How talents work'} align="right" style={{ minHeight: 24 }}>
           {isPt
-            ? 'Os pontos nunca dão para tudo: escolha o caminho. Somando talento, equipamento e Comércio, o bônus de combate para em 5%. Já somado ao equipamento. Nada disto se compra com dinheiro.'
-            : 'Points never cover everything, so pick a path. Talent, equipment and Trade together cap combat bonus at 5%. Already added to your equipment. None of it can be bought with real money.'}
+            ? 'Os pontos nunca dão para tudo: escolha o caminho. Talento, equipamento e Comércio juntos param em 5% de bônus de combate. Nada disto se compra com dinheiro.'
+            : 'Points never cover everything, so pick a path. Talent, equipment and Trade together cap at 5% combat bonus. None of it can be bought with real money.'}
         </InfoTip>
       </div>
       {/* O nível do Vínculo já é a leitura do cartão de cima — aqui só o que é DESTA árvore (pontos gastos / livres). */}

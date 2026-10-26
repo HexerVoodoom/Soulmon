@@ -68,39 +68,39 @@ interface Term {
 const TERMS: Term[] = [
   {
     icon: '❤️', en: 'Hearts (HP)', pt: 'Corações (HP)',
-    descEn: 'Its health. Rubbing heals it; a bad day costs at most one, and it never drops to zero out of nowhere. When a day costs nothing, the daily report says which pause held it.',
-    descPt: 'A saúde do seu Soulmon. Carinho cura; um dia ruim custa no máximo um, e nunca zera do nada. Quando um dia não custa nada, o relatório diário conta qual pausa segurou.',
+    descEn: 'Its health. Rubbing heals it; a bad day costs at most one, and it never drops to zero out of nowhere.',
+    descPt: 'A saúde do seu Soulmon. Carinho cura; um dia ruim custa no máximo um, e nunca zera do nada.',
   },
   {
     icon: '⚡', en: 'Energy', pt: 'Energia',
-    descEn: `The side bar. Rises with time (1 every ${ENERGY_REGEN_MINUTES} min when well fed; slower when hungry, stopped when starving — eating fills hunger, not energy), holds twice the daily goal and resets each day. It is the Dungeon's fuel: each layer spends ${DUNGEON_ENERGY_PER_LAYER}, and leveling up refills it.`,
-    descPt: `A barra lateral. Sobe com o tempo (1 a cada ${ENERGY_REGEN_MINUTES} min com o Soulmon bem alimentado; mais devagar com fome, parada se faminto — comer enche a fome, não a energia), guarda o dobro da meta do dia e zera todo dia. É o combustível da Masmorra: cada camada gasta ${DUNGEON_ENERGY_PER_LAYER}, e subir de nível enche de novo.`,
+    descEn: `The side bar: rises with time (1 every ${ENERGY_REGEN_MINUTES} min; slower hungry, stopped starving) and resets daily. The Dungeon's fuel: ${DUNGEON_ENERGY_PER_LAYER} per layer.`,
+    descPt: `A barra lateral: sobe com o tempo (1 a cada ${ENERGY_REGEN_MINUTES} min; mais devagar com fome, parada se faminto) e zera todo dia. Combustível da Masmorra: ${DUNGEON_ENERGY_PER_LAYER} por camada.`,
   },
   {
     // Combate v3: Vínculo N (você) e Lv N (o Soulmon). Números das CONSTANTES; sem prazo, sem cobrança.
     icon: '🔗', en: 'Bond N / Lv N', pt: 'Vínculo N / Lv N',
-    descEn: `Bond N is your level as a carer (up to ${TALENT_POINTS_MAX}); each one gives a talent point. Lv N is your Soulmon's. The Arena opens at Bond ${GATES.pvp.minBond}.`,
-    descPt: `Vínculo N é o seu nível como pessoa que cuida (até ${TALENT_POINTS_MAX}); cada um rende um ponto de talento. Lv N é o do seu Soulmon. A Arena abre no Vínculo ${GATES.pvp.minBond}.`,
+    descEn: `Bond N is your level as a carer (up to ${TALENT_POINTS_MAX}); each gives a talent point. Lv N is your Soulmon's. The Arena opens at Bond ${GATES.pvp.minBond}.`,
+    descPt: `Vínculo N é o seu nível como pessoa que cuida (até ${TALENT_POINTS_MAX}); cada um rende um ponto de talento. Lv N é o do Soulmon. A Arena abre no Vínculo ${GATES.pvp.minBond}.`,
   },
   {
     icon: '❗', en: 'Missions', pt: 'Missões',
-    descEn: 'One icon on Home opens Missions, with three tabs: Dailies, Weekly and Achievements. The dailies invite you to try the other places too (mini-games, focus, care). A mission only points at what to do. When you really do it, the line turns ready (a ?) and you tap Claim to receive the reward. Nothing counts tasks, and nothing is owed.',
-    descPt: 'Um ícone na Home abre as Missões, com três abas: Diárias, Semanal e Conquistas. As diárias convidam a conhecer os outros cantos (minijogos, foco, cuidado). A missão só aponta o que fazer. Quando você faz de verdade, a linha fica pronta (um ?) e você toca em Resgatar para receber. Nada conta tarefas, e nada é cobrado.',
+    descEn: 'One Home icon opens Missions: Dailies, Weekly, Achievements. A mission points at what to do; when it’s done, tap Claim. Nothing counts tasks, nothing is owed.',
+    descPt: 'Um ícone na Home abre as Missões: Diárias, Semanal e Conquistas. A missão só aponta o que fazer; feita, toque em Resgatar. Nada conta tarefas, nada é cobrado.',
   },
   {
     icon: '✨', en: "Today's special", pt: 'Especial do dia',
-    descEn: `One per day. With a step counter it alternates between walking ${DEFAULT_STEP_GOAL.toLocaleString('en-US')} steps (you choose the goal; a change starts the next day) and lying down within your rest window; without one it is always the rest window. It counts like ${SPECIAL_MISSION_GAUGE_WEIGHT} daily habit toward evolution, does not affect the complete-day seal or hearts, and skipping it costs nothing.`,
-    descPt: `Uma por dia. Com contador de passos, alterna entre caminhar ${DEFAULT_STEP_GOAL.toLocaleString('pt-BR')} passos (você escolhe a meta; a troca vale a partir do dia seguinte) e deitar dentro da sua janela de descanso; sem contador, é sempre a janela de descanso. Vale como ${SPECIAL_MISSION_GAUGE_WEIGHT} hábito diário na evolução, não mexe no selo de dia completo nem nos corações, e deixar para lá não custa nada.`,
+    descEn: `One per day: with a step counter, walk ${DEFAULT_STEP_GOAL.toLocaleString('en-US')} steps or lie down in your rest window by turns; without one, always rest. Worth ${SPECIAL_MISSION_GAUGE_WEIGHT} habit; skipping is free.`,
+    descPt: `Uma por dia. Com contador de passos, alterna ${DEFAULT_STEP_GOAL.toLocaleString('pt-BR')} passos e deitar na janela de descanso; sem contador, só descanso. Vale ${SPECIAL_MISSION_GAUGE_WEIGHT} hábito; pular não custa nada.`,
   },
   {
     icon: '🎖️', en: 'Talents & equipment', pt: 'Talentos e equipamento',
-    descEn: `Talents (three paths) live in the Bond Sanctum — open the tree to see what it gives now, already added to your equipment; the three equipment slots are at the Soulsmith in the Market. Pieces come from building missions (level 1) and are parts of your soul, refined there with mission materials, choosing one of two gains per level (up to level ${FORGE_MAX_LEVEL}). Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength; never drawn, never bought with money.`,
-    descPt: `Os talentos (três caminhos) ficam no Santuário do Vínculo — abra a árvore para ver o que ela dá agora, já somado ao equipamento; os três espaços de equipamento, no Soulsmith, no Mercado. As peças vêm das missões dos prédios (nível 1) e são partes da sua alma, aprimoradas lá com os materiais, escolhendo um de dois ganhos por nível (até o nível ${FORGE_MAX_LEVEL}). Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força; nunca sorteado, nunca comprado com dinheiro.`,
+    descEn: `Talents (three paths) live in the Bond Sanctum, equipment at the Soulsmith in the Market. Together they add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength; never drawn, never bought.`,
+    descPt: `Talentos (três caminhos) ficam no Santuário do Vínculo; equipamento, no Soulsmith. Juntos somam no máximo ${Math.round(COMBAT_BONUS_CAP * 100)}% de força; nunca sorteados nem comprados.`,
   },
   {
     icon: '🍽️', en: 'Meal check-ins', pt: 'Convites das refeições',
-    descEn: `After breakfast, lunch and dinner your Soulmon may ask for one small thing — a pat, a rinse, a snack — for ${MEAL_WINDOW_MIN / 60} hours. No points, no count; skipping is free. Reminders are off until you turn them on in Settings (up to ${PUSH_DAILY_CAP} a day, never in your rest window).`,
-    descPt: `Depois do café, do almoço e do jantar, seu Soulmon pode pedir uma coisa pequena — um carinho, um banho, uma comidinha — por ${MEAL_WINDOW_MIN / 60} horas. Sem pontos, sem contagem; pular não custa nada. Os lembretes ficam desligados até você ligar nas Configurações (no máximo ${PUSH_DAILY_CAP} por dia, nunca na sua janela de descanso).`,
+    descEn: `After each meal your Soulmon may ask for one small thing: a pat, a rinse, a snack. No points, skipping is free. Reminders start off; never in your rest window.`,
+    descPt: `Depois de cada refeição, seu Soulmon pode pedir algo pequeno: carinho, banho, comida. Sem pontos; pular não custa nada. Lembretes começam desligados.`,
   },
   {
     icon: '🥚', en: 'Rebirth', pt: 'Renascimento',
@@ -112,8 +112,8 @@ const TERMS: Term[] = [
     // manda atualizar junto com regra de jogo (a outra é o `GuideModal`, que
     // foi atualizado). Esta entrada ficou para trás.
     icon: '🧬', en: 'Soul Fragments', pt: 'Fragmentos de Alma',
-    descEn: 'The evolution currency. Every habit or task you finish earns Soul Fragments (bigger tasks earn more), up to your stage’s daily goal per day. They join at the turn of the day, never shrink, and when you have gathered enough they are used and the next form opens.',
-    descPt: 'A moeda da evolução. Todo hábito ou tarefa concluída rende Fragmentos de Alma (tarefas maiores rendem mais), até a meta diária do estágio por dia. Entram na virada do dia, nunca diminuem, e quando você junta o bastante são usados e a próxima forma abre.',
+    descEn: 'The evolution currency: each habit or task you finish earns Soul Fragments (bigger tasks more), up to the daily goal. They never shrink and open the next form.',
+    descPt: 'A moeda da evolução: cada hábito ou tarefa feita rende Fragmentos de Alma (tarefa maior, mais), até a meta diária. Nunca diminuem e abrem a próxima forma.',
   },
   {
     icon: '📊', en: 'Complete Day', pt: 'Dia Completo',
@@ -140,14 +140,14 @@ const TERMS: Term[] = [
   },
   {
     icon: '🌀', en: 'Glitchtama', pt: 'Glitchtama',
-    descEn: 'Rare item from the first milestone (every 5 layers) of each automatic Endless Rift descent. Using it adds one day’s worth of steps to the evolution path — one a day, so the ladder stays measured in days.',
-    descPt: 'Item raro do primeiro marco (a cada 5 camadas) de cada descida automática da Fenda. Usar soma um dia de passos ao caminho da evolução — um por dia, para a escada continuar sendo medida em dias.',
+    descEn: 'Rare item from the first milestone (every 5 layers) of each automatic Endless Rift descent. Using it adds one day of steps to the evolution path — one a day.',
+    descPt: 'Item raro do primeiro marco (a cada 5 camadas) de cada descida automática da Fenda. Usar soma um dia de passos ao caminho da evolução — um por dia.',
   },
   {
     // 🧭 Passeio e Travessias (30/09/2026). Sem número, sem prazo, sem prêmio.
     icon: '🧭', en: 'Stroll & Crossings', pt: 'Passeio e Travessias',
-    descEn: 'In Exploration: pick where your Soulmon strolls each day. Crossings are optional things you do in your own life that clear the mist over a new region — no deadline, and they never touch your pet or the daily goal.',
-    descPt: 'Na Exploração: escolha para onde seu Soulmon passeia cada dia. Travessias são coisas opcionais que você faz na sua vida e abrem a névoa de uma região nova — sem prazo, e nunca mexem no seu Soulmon nem na meta do dia.',
+    descEn: 'In Exploration: pick where your Soulmon strolls each day. Crossings are optional things you do outside the app that clear a new region’s mist, no deadline.',
+    descPt: 'Na Exploração: escolha para onde seu Soulmon passeia. Travessias são coisas opcionais que você faz fora do app e abrem a névoa de uma região nova, sem prazo.',
   },
   {
     icon: '💗', en: 'Little Heart', pt: 'Coraçãozinho',
@@ -201,8 +201,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '🛏️', en: 'Rest Window', pt: 'Janela de Descanso',
-    descEn: `The sleep window you choose (default ${DEFAULT_REST_WINDOW.start}–${DEFAULT_REST_WINDOW.end}). Read as "how many of the last ${REST_WINDOW_DAYS} nights" — no score, no penalty. A night on time brings ${NIGHT_ENERGY_BONUS} extra energy in the morning, once a day.`,
-    descPt: `A janela de sono que você escolhe (padrão ${DEFAULT_REST_WINDOW.start}–${DEFAULT_REST_WINDOW.end}). Lida como "quantas das últimas ${REST_WINDOW_DAYS} noites" — sem nota, sem castigo. Uma noite no horário traz ${NIGHT_ENERGY_BONUS} de energia a mais de manhã, uma vez por dia.`,
+    descEn: `Your sleep window (default ${DEFAULT_REST_WINDOW.start}–${DEFAULT_REST_WINDOW.end}), read as "how many of the last ${REST_WINDOW_DAYS} nights": no score, no penalty. A night on time brings ${NIGHT_ENERGY_BONUS} extra energy, once a day.`,
+    descPt: `Sua janela de sono (padrão ${DEFAULT_REST_WINDOW.start}–${DEFAULT_REST_WINDOW.end}) conta "quantas das últimas ${REST_WINDOW_DAYS} noites": sem nota, sem castigo. Uma noite no horário traz ${NIGHT_ENERGY_BONUS} de energia extra, uma vez ao dia.`,
   },
   {
     icon: '🌠', en: 'Dream', pt: 'Sonho',

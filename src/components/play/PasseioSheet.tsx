@@ -368,8 +368,8 @@ export function PasseioSheet({ language, crossings, onChange, todayKey, seed = '
           </InfoTipSection>
           <InfoTipSection title={isPt ? 'Marcos de Aventura' : 'Adventure Milestones'} last>
             {isPt
-              ? 'Cada missão feita soma um Marco, no máximo um por dia. Em 5, 10 e 20 Marcos o Soulmon volta com um postal especial. Não muda nada no jogo, nunca diminui e não tem prazo.'
-              : 'Each mission done adds one Milestone, at most one a day. At 5, 10 and 20 Milestones the Soulmon comes back with a special postcard. It changes nothing in the game, never goes down and has no deadline.'}
+              ? 'Cada missão feita soma um Marco, no máximo um por dia. Com 5, 10 e 20 o Soulmon volta com um postal. Não muda o jogo, nunca diminui, sem prazo.'
+              : 'Each mission done adds one Milestone, at most one a day. At 5, 10 and 20 the Soulmon brings back a postcard. It changes nothing, never goes down, no deadline.'}
           </InfoTipSection>
       </ModalInfo>
       {achado && (
