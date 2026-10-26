@@ -542,7 +542,7 @@ export function SettingsPage({
             infoLabel={isPt ? 'Sobre a música' : 'About the music'}
             info={soundMuted
               ? (isPt ? 'Com os sons desligados, a música fica em silêncio.' : 'With sound off, the music stays silent.')
-              : (isPt ? 'Vale para o tema da Home, a música de combate (Fenda, Arena, Duelo, Torneio) e a do Pesadelo. Começa no seu primeiro toque e para sozinha quando o app sai de vista.' : 'Covers the Home theme, the combat music (Dungeon, Arena, Duel, Tournament) and the Nightmare. Starts on your first tap and stops by itself when the app is out of view.')}
+              : (isPt ? 'Vale para o tema da Home, a música de combate (Fenda, Arena, Duelo, Torneio) e a do Pesadelo. Começa no primeiro toque e para quando o app sai de vista.' : 'Covers the Home theme, the combat music (Dungeon, Arena, Duel, Tournament) and the Nightmare. Starts on your first tap and stops when the app is out of view.')}
           />
         </Group>
       )}

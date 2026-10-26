@@ -779,6 +779,8 @@ async function handleDeleteConfirm(env, saveId, body) {
       aiLifetime: { sprite: Number(ent.aiLifetime?.sprite) || 0 },
       aiForms: ent.aiForms && typeof ent.aiForms === 'object' ? ent.aiForms : {},
       ...(ent.rebirthSpriteResetAt ? { rebirthSpriteResetAt: ent.rebirthSpriteResetAt } : {}),
+      // "Gerar de novo" (rodada 5): a cota MENSAL por forma também sobrevive à exclusão (excluir e relogar não devolve a regeração do mês).
+      ...(ent.aiRegen && typeof ent.aiRegen === 'object' && !Array.isArray(ent.aiRegen) && Object.keys(ent.aiRegen).length > 0 ? { aiRegen: ent.aiRegen } : {}),
       adDate: '1970-01-01',
       adCount: 0,
       accountDeletedAt: Date.now(),

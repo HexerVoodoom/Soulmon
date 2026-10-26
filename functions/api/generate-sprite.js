@@ -61,6 +61,7 @@ import { chromaKeyPng, chromaKeyOfPrompt, BadChromaError } from './_chroma.js';
 import { guardAiRequest, VALID_FORM_ID } from './_aiGuard.js';
 import { legacyFormIdOf } from './_branchLegacy.js';
 import { requirePaidTier } from './_entitlements.js';
+import { reserveRegen, completeRegen, refundRegen, REGEN_STALE_MS } from './_spriteRegen.js';
 import { verifiedAdmin } from './_admin.js';
 import { verifiedBetaFull } from './_betaFull.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
@@ -547,8 +548,37 @@ export function referenciasSeguras(request, referenceImageUrls) {
   return ok.length ? ok : undefined;
 }
 
+/**
+ * Resposta para o MESMO `opId` de "Gerar de novo" repetido (retry de rede, aba duplicada): nunca debita nem gera de novo.
+ *  · `done`      → devolve a imagem que aquele gesto já gerou (está no cache da forma);
+ *  · `debited`   → ainda em andamento (202); se passou de `REGEN_STALE_MS` sem terminar, o Worker caiu: devolve o débito;
+ *  · `refunded`  → 409 (o cliente usa um `opId` novo para tentar de novo).
+ */
+async function respostaDeRegenRepetida(env, id, formId, opId, op) {
+  if (op.s === 'done') {
+    let guardada = null;
+    try { guardada = JSON.parse(await kvOrThrow(env).get(cacheKey(id, formId))); } catch { guardada = null; }
+    if (guardada?.image) return Response.json({ image: guardada.image, provider: guardada.provider, cached: true, regen: true }, { headers: CORS });
+    return Response.json({ error: 'regen-duplicate' }, { status: 409, headers: CORS });
+  }
+  if (op.s === 'debited') {
+    if (Date.now() - (Number(op.at) || 0) > REGEN_STALE_MS) {
+      await refundRegen(env, id, opId);
+      return Response.json({ error: 'regen-refunded' }, { status: 502, headers: CORS });
+    }
+    return Response.json({ pending: true, retryAfter: LOCK_RETRY_AFTER }, { status: 202, headers: CORS });
+  }
+  return Response.json({ error: 'regen-duplicate' }, { status: 409, headers: CORS });
+}
+
 export async function onRequestPost({ request, env }) {
   let lock = null;
+  // "Gerar de novo" (rodada 5, `_spriteRegen.js`): o gesto cobrado (`opId`) e se a imagem já chegou ao jogador. No `finally`, gesto
+  // cobrado e NÃO entregue = débito devolvido (idempotente) — cobre recusa de teto, falha do provedor, republicação e exceção.
+  let regenOp = null;
+  let regenId = null;
+  let regenEntregue = false;
+  let regenCredits = null;
   try {
     // Kill-switch `SPRITE_DISABLED`: nada de provedor, nada de cota; o app fica
     // na arte de reserva com a mensagem do ateliê fechado.
@@ -602,6 +632,17 @@ export async function onRequestPost({ request, env }) {
     if (!tierOk) {
       return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS });
     }
+    // "Gerar de novo" é uma COMPRA em Créditos: só conta paga DE VERDADE (`ent.tier === 'paid'`). Admin e beta-full passam no
+    // direito de gerar acima, mas não têm Créditos a gastar por aqui; quem não é paga recebe 402 sem tocar em cota nem em saldo.
+    const regenPago = corpo.regenPaid === true;
+    if (regenPago && !tier.ok) {
+      return Response.json({ error: 'paid-tier-required' }, { status: 402, headers: CORS });
+    }
+    // Kill-switch próprio da regeração paga (`SPRITE_REGEN_DISABLED`, plano de rollback do REGISTRO §34b): desliga SÓ o "Gerar de novo", antes de
+    // qualquer débito, sem derrubar a geração gratuita. Sem deploy: é uma variável do painel.
+    if (regenPago && flagOn(env?.SPRITE_REGEN_DISABLED)) {
+      return Response.json({ error: 'sprite-regen-disabled' }, { status: 503, headers: CORS });
+    }
 
     // O dedupe (§5) roda ENTRE os dois portões, e a ordem não é arbitrária:
     //
@@ -630,7 +671,7 @@ export async function onRequestPost({ request, env }) {
       // "Gerar Soulmon" (teste fechado, 23/10/2026): `regenerate: true` pula o resultado em cache e pede desenho NOVO.
       // Só chega aqui quem já passou pela autorização do save e pelo `tierOk` (conta paga/admin/beta-full);
       // o lock, o teto vitalício por conta e o teto por forma seguem valendo.
-      const regenerar = corpo.regenerate === true;
+      const regenerar = corpo.regenerate === true || regenPago;
       try {
         pronta = regenerar ? null : await kvOrThrow(env).get(cacheKey(id, formId));
         // Cache gravado com o id de forma ANTIGO (antes de 29/09/2026): só leitura.
@@ -686,7 +727,25 @@ export async function onRequestPost({ request, env }) {
     // disjuntor de loop de retentativa numa forma só — sem estrangular quem
     // percorre a árvore inteira até o `ultra`. Opcional: ausente, os outros três
     // tetos seguem inteiros e a conta continua presa ao vitalício de 26.
-    const gate = await guardAiRequest(request, env, 'sprite', id, 1, formId);
+    // COBRA ANTES: o débito dos Créditos (e a cota do mês da forma) sai ANTES de qualquer chamada de IA, numa escrita só, idempotente
+    // por `opId`. O `finally` devolve se a imagem não chegar. A cota de volume (`guardAiRequest`) vem DEPOIS: se ela recusar, devolve.
+    if (regenPago) {
+      let r;
+      try {
+        r = await reserveRegen(env, id, formId, corpo.opId);
+      } catch (err) {
+        console.error('generate-sprite: reserva da regeração ilegível, recusando', err?.message);
+        return Response.json({ error: 'ai-quota-unavailable' }, { status: 503, headers: CORS });
+      }
+      if (!r.ok) {
+        if (r.reason === 'regen-duplicate' && r.op) return await respostaDeRegenRepetida(env, id, formId, corpo.opId, r.op);
+        return Response.json({ error: r.reason }, { status: r.status, headers: CORS });
+      }
+      regenOp = corpo.opId;
+      regenId = id;
+      regenCredits = r.credits;
+    }
+    const gate = await guardAiRequest(request, env, 'sprite', id, 1, formId, null, regenPago ? { regenPaid: true } : null);
     if (!gate.ok) {
       return Response.json(
         { error: gate.reason, ...(gate.message ? { message: gate.message } : {}) },
@@ -732,6 +791,13 @@ export async function onRequestPost({ request, env }) {
           console.error('generate-sprite: falha ao cachear o resultado', err?.message);
         }
       }
+      if (regenOp) {
+        // A imagem está guardada e vai ao jogador: o gesto passa a `done` (repetir o `opId` devolve esta imagem, sem cobrar).
+        // Se o registro falhar, o `finally` NÃO devolve (já entregamos): `regenEntregue` é a trava local.
+        regenEntregue = true;
+        try { await completeRegen(env, id, regenOp); } catch (err) { console.error('generate-sprite: falha ao fechar a regeração', err?.message); }
+        return Response.json({ ...out, image, regen: true, credits: regenCredits }, { headers: CORS });
+      }
       return Response.json({ ...out, image }, { headers: CORS });
     };
 
@@ -765,7 +831,7 @@ export async function onRequestPost({ request, env }) {
       // ANTES de gerar: teto que não conta a refeitura é teto que mente.
       // `formId` null: a refeitura por recusa não saiu imagem nenhuma, então não
       // conta como a "uma geração" da forma — só no vitalício/diário/global.
-      const extra = await guardAiRequest(request, env, 'sprite', id, 1, null);
+      const extra = await guardAiRequest(request, env, 'sprite', id, 1, null, null, regenPago ? { regenPaid: true } : null);
       if (!extra.ok) {
         return Response.json(
           { error: extra.reason, ...(extra.message ? { message: extra.message } : {}) },
@@ -787,6 +853,10 @@ export async function onRequestPost({ request, env }) {
     console.error('generate-sprite error:', err);
     return Response.json({ error: 'internal error' }, { status: 500, headers: CORS });
   } finally {
+    // "Gerar de novo": cobrado e não entregue = o débito volta (idempotente; só desfaz um gesto ainda `debited`).
+    if (regenOp && !regenEntregue) {
+      try { await refundRegen(env, regenId, regenOp); } catch (err) { console.error('generate-sprite: falha ao devolver a regeração', err?.message); }
+    }
     // Sempre, inclusive nos caminhos de recusa de teto e de erro. Lock que
     // sobrevive a uma falha faz o próximo pedido tomar 202 por 120 s — e a
     // retentativa automática do cliente (backoff de 60 s) cairia dentro dele.

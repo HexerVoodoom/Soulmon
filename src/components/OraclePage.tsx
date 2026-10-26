@@ -591,8 +591,8 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
               )}
               <p className="text-[10px] mt-2" style={{ color: 'var(--sm2-muted)' }}>
                 {isPt
-                  ? '* Teste construído segundo princípios psicométricos, mas NÃO validado: os itens nunca passaram por análise fatorial ou normatização. Não serve para uso clínico nem para decisão sobre ninguém.'
-                  : '* Test built according to psychometric principles, but NOT validated: the items never went through factor analysis or norming. Not for clinical use or decisions about anyone.'}
+                  ? '* Teste psicométrico NÃO validado: os itens nunca passaram por análise fatorial nem normatização. Não serve para uso clínico nem para decidir sobre ninguém.'
+                  : '* Psychometric-style test, NOT validated: the items never went through factor analysis or norming. Not for clinical use or decisions about anyone.'}
               </p>
             </div>
           )}
@@ -657,8 +657,8 @@ export function OraclePage({ language = 'en-US', initialDebugMode = false }: Ora
                   ))}
                   <p className={`text-[10px] ${mutedCls}`}>
                     {isPt
-                      ? '* Posições geocêntricas reais (VSOP87/ELP) na eclíptica verdadeira da data. O cálculo é verificável; a interpretação astrológica não tem validade preditiva demonstrada.'
-                      : '* Real geocentric positions (VSOP87/ELP) on the true ecliptic of date. The computation is verifiable; the astrological interpretation has no demonstrated predictive validity.'}
+                      ? '* Posições geocêntricas reais (VSOP87/ELP) na eclíptica da data. O cálculo é verificável; a leitura astrológica não tem validade preditiva demonstrada.'
+                      : '* Real geocentric positions (VSOP87/ELP) on the ecliptic of date. The math is verifiable; the astrological reading has no demonstrated predictive validity.'}
                   </p>
                 </>
               ) : (

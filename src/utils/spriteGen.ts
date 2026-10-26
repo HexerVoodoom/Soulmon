@@ -198,6 +198,12 @@ export interface RequestSpriteOptions {
    * Só o servidor decide: exige autorização do save, conta habilitada (`tierOk`) e respeita os tetos por forma e da conta.
    */
   regenerate?: boolean;
+  /**
+   * "Gerar de novo" a aparência (rodada 5, `functions/api/_spriteRegen.js`): sorteio PAGO em Créditos da forma atual. O servidor debita ANTES
+   * (idempotente por `opId`), devolve se falhar e confere a cota do mês e o tier. `opId` = um id por GESTO (retry com o mesmo id não cobra de novo).
+   * Neste modo os erros NÃO viram avisos globais nem `SpriteGenReason`: o `SpriteGenError` leva o código do servidor em `message`.
+   */
+  regenPaid?: { opId: string };
   signal?: AbortSignal;
 }
 
@@ -205,15 +211,16 @@ export interface RequestSpriteOptions {
 export async function requestSprite(
   prompt: string,
   options: RequestSpriteOptions = {},
-): Promise<{ image: string; provider?: string; cached?: boolean }> {
-  const { referenceImageUrls, promptFallback, formId, regenerate, signal } = options;
+): Promise<{ image: string; provider?: string; cached?: boolean; credits?: number }> {
+  const { referenceImageUrls, promptFallback, formId, regenerate, regenPaid, signal } = options;
   // aiFetch acrescenta o saveId e o token — o servidor recusa sem eles
   // (_aiGuard.js). Esta é a rota que custa dinheiro de verdade.
   let res: Response;
   try {
+    // `undefined` some no JSON: só vai o que foi pedido. Chaves literais (não spread) para a lista de `ia.camposEnviados.contract.test.ts` ser verificável.
     res = await aiFetch(
       '/api/generate-sprite',
-      { prompt, referenceImageUrls, promptFallback, formId, ...(regenerate ? { regenerate: true } : {}) },
+      { prompt, referenceImageUrls, promptFallback, formId, regenerate: regenerate ? true : undefined, regenPaid: regenPaid ? true : undefined, opId: regenPaid?.opId },
       { signal },
     );
   } catch (err) {
@@ -230,6 +237,7 @@ export async function requestSprite(
     retryAfter?: number;
     error?: string;
     message?: { 'pt-BR': string; en: string };
+    credits?: number;
   };
 
   if (res.status === 202 || body.pending) {
@@ -237,6 +245,9 @@ export async function requestSprite(
       retryAfter: body.retryAfter,
       serverMessage: body.message,
     });
+  }
+  if (!res.ok && regenPaid) {
+    throw new SpriteGenError('error', res.status, body.error || `regen failed (${res.status})`);
   }
   if (!res.ok) {
     avisarRecusaDeSprite(body.error, body.message);
@@ -248,7 +259,12 @@ export async function requestSprite(
     );
   }
   if (!body.image) throw new SpriteGenError('error', res.status, 'empty image');
-  return { image: body.image, provider: body.provider, cached: body.cached };
+  return {
+    image: body.image,
+    provider: body.provider,
+    cached: body.cached,
+    ...(typeof body.credits === 'number' && Number.isFinite(body.credits) ? { credits: body.credits } : {}),
+  };
 }
 
 /**

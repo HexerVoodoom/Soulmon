@@ -592,3 +592,17 @@ P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
 - **N7 — Calabouço em tela cheia:** a luta do combate agora é visível (a mesma `BattleStage` da Fenda) e o resultado vem dela, não mais da simulação instantânea (`simulateRogueCombat` continua exportado, só não é mais chamado pela tela). Sair da luta no meio conta como derrota (pede confirmação). Opções de prédio para o Calabouço: `docs/PROMPTS-BETA3.md` §9 (4 conceitos, nenhum gerado).
 - **N8 — Prepare to Focus na Oficina:** sem chave do dia a Oficina abre a etapa 1 (planejar); ao salvar, a etapa 2 (timer) abre sozinha. A NPC/arte do prédio "Preparar o Foco" saiu do mapa; o save antigo que citava `exploracao.preparar` aponta para a Oficina.
 - **Match 3: dois supers trocados fazem a cruz de cada um (linha+coluna dos dois), não uma cruz única fundida.** Conservador: é o comportamento que já existia e que os testes agora travam. Se o dono quiser UMA cruz só (no ponto da troca), é troca pequena em `resolveBoard`. O "elemento do usuário" usa o `petElement` do Oráculo (ícone ao lado do Soulmon); só mostra, não muda dano.
+
+## Beta3 rodada 5 (26/10/2026)
+
+Decisões conservadoras tomadas pela orquestração; revisar:
+
+1. Loja do Clã: preços provisórios (150 a 800 Bits do clã) e estado em chave KV própria `coopLoja:<gid>`; item comprado aparece só no card da Casa, não na cena da árvore (REGISTRO §175). Calibrar preços com dado real?
+2. Loja do Clã: duas compras simultâneas de membros diferentes podem passar juntas (KV eventual). Aceitar até aparecer, ou exigir trava por token já?
+3. Gerar de novo: o botão "Gerar Soulmon" de Configurações (teste fechado) ainda regenera de graça. Remover agora que existe o caminho pago (REGISTRO §34b)?
+4. Gerar de novo: textos de Ajuda/chat ainda dizem "uma geração por forma". Atualizar?
+5. Gerar de novo: kill-switch `SPRITE_REGEN_DISABLED` adicionado (não pedido). Manter?
+6. Passos (branch `rodada5-passos`): sem serviço em segundo plano; lê ao abrir e a cada 5 min. Dia sem abrir o app não fecha a missão depois. Aceitar ou pedir WorkManager?
+7. Passos: total na Home (`StepsTotalChip`) pronto mas não ligado ao CompanionHUD (outra frente mexia nele). Ligar?
+8. Passos: meta padrão 5.000 e a opção 7.000 virou 8.000; `connect-client 1.1.0-alpha10` (trocar por estável se a Play reclamar).
+9. Textos longos: ~44 trechos não encurtados (Match3Game, statTips da Home, aviso de IA com provedores) + textos longos fora da lista d72 em `src/data`/`utils`. Abrir lane própria?

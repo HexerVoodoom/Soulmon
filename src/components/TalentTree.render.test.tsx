@@ -170,7 +170,7 @@ describe('legibilidade (11/10/2026): "o que a sua árvore dá agora" e a linha A
     // F5 (beta-2): a regra dos 5% mora UMA vez, atrás do "i" — não repete na lista nem em parágrafo solto
     expect(ul.textContent).not.toMatch(/5%\./);
     fireEvent.click(screen.getByRole('button', { name: 'Como funcionam os talentos' }));
-    expect(document.body.textContent).toMatch(/o bônus de combate para em 5%\. Já somado ao equipamento/);
+    expect(document.body.textContent).toMatch(/param em 5% de bônus de combate/);
   });
 
   it('EN: o mesmo resumo em inglês, sem "challenge"/PT', () => {
