@@ -119,7 +119,7 @@ function rosterOf(e: { roster?: string } | undefined): { src: string; name: stri
   return entry && src ? { src, name: entry.name } : undefined;
 }
 
-function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, petElement, playerLevel, onEnemySeen, rankSaveId, challenge }: Match3Props & { pvp?: PvpFoe }) {
+function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, petElement, playerLevel, onEnemySeen, rankSaveId, challenge, onNewOpponent }: Match3Props & { pvp?: PvpFoe; onNewOpponent?: () => void }) {
   const isPt = language === 'pt-BR';
   const pvpRef = useRef(pvp);
   pvpRef.current = pvp;
@@ -494,6 +494,8 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   };
 
   const restart = () => {
+    // PVP: 'De novo' sorteia OUTRO oponente (decisão do dono, 26/10/2026) — volta à busca em vez de repetir o adversário.
+    if (pvp && onNewOpponent) { onNewOpponent(); return; }
     timers.current.forEach(clearTimeout);
     timers.current.clear();
     const sd = seed === undefined ? freshSeed() : seed + 1;
@@ -1030,6 +1032,7 @@ function Match3PvpEntry(props: Match3Props & { onBack: () => void }) {
   const { language, rankSaveId, playerLevel, onExit, onBack } = props;
   const isPt = language === 'pt-BR';
   const [foe, setFoe] = useState<PvpFoe | null>(null);
+  const [run, setRun] = useState(0);
   useEffect(() => {
     let dead = false;
     const level = playerLevel ?? 1;
@@ -1046,8 +1049,8 @@ function Match3PvpEntry(props: Match3Props & { onBack: () => void }) {
       })
       .catch(() => done(reserva()));
     return () => { dead = true; clearTimeout(t); };
-  }, [rankSaveId, playerLevel]);
-  if (foe) return <Match3Round {...props} pvp={foe} />;
+  }, [rankSaveId, playerLevel, run]);
+  if (foe) return <Match3Round {...props} pvp={foe} onNewOpponent={() => { setFoe(null); setRun(r => r + 1); }} />;
   return (
     <GameRoot full>
       <GameHeader title="Elemental Fusion" language={language} closeLabel={isPt ? 'Sair' : 'Exit'} onClose={onExit} onBack={onBack} backLabel={isPt ? 'Voltar' : 'Back'} />
