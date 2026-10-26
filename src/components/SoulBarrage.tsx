@@ -12,7 +12,7 @@ import { fxFrame, prefersReducedMotion } from '../utils/combatFx';
 import type { GameChallenge } from '../utils/gameChallenge';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
 import {
-  FIELD_W, FIELD_H, PLAYER_Y, PLAYER_SPEED, PLAYER_SIZE, ENEMY_SIZE, SHOT_R, BARRAGE_POINTS_PER_BIT,
+  FIELD_W, FIELD_H, PLAYER_Y, PLAYER_SPEED, PLAYER_SIZE, SHOT_R, SHOT_DRAW, BARRAGE_ELEMENT, BARRAGE_POINTS_PER_BIT,
   newBarrage, stepBarrage, barrageBits, type BarrageState,
 } from '../utils/soulBarrage';
 
@@ -55,13 +55,15 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   const g = useRef<BarrageState>(newBarrage());
   const targetX = useRef(FIELD_W / 2);
   const hudRef = useRef<HTMLSpanElement>(null);
-  const imgs = useRef<{ pet?: HTMLImageElement; orb?: HTMLImageElement; foes: Map<string, HTMLImageElement>; foeOrbs: Map<string, HTMLImageElement> }>({ foes: new Map(), foeOrbs: new Map() });
+  const imgs = useRef<{ pet?: HTMLImageElement; orb?: HTMLImageElement; foeOrb?: HTMLImageElement; foes: Map<string, HTMLImageElement>; foeOrbs: Map<string, HTMLImageElement> }>({ foes: new Map(), foeOrbs: new Map() });
 
   const loadImg = (src: string | undefined) => { if (!src) return undefined; const i = new Image(); i.src = src; return i; };
 
   useEffect(() => {
     imgs.current.pet = loadImg(lineIconForStage(evolutionStage, 64, demoCharacterId) ?? getSpriteForStage(evolutionStage, demoCharacterId, 256));
     imgs.current.orb = loadImg(fxFrame(petElement, 'orb'));
+    // o tiro dos inimigos é o FX de ESPAÇO (todos os inimigos são do espaço)
+    imgs.current.foeOrb = loadImg(fxFrame(BARRAGE_ELEMENT, 'orb'));
   }, [evolutionStage, demoCharacterId, petElement]);
 
   const syncDir = () => {
@@ -143,17 +145,33 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       // inimigos
       for (const e of s.enemies) {
         const img = foeImg(e);
-        if (ready(img)) ctx.drawImage(img!, e.x - ENEMY_SIZE / 2, e.y - ENEMY_SIZE / 2, ENEMY_SIZE, ENEMY_SIZE);
-        else { ctx.fillStyle = '#B0722F'; ctx.fillRect(e.x - 14, e.y - 14, 28, 28); }
-        if (e.hp < e.maxHp) { ctx.fillStyle = '#5E3612'; ctx.fillRect(e.x - 14, e.y - ENEMY_SIZE / 2 - 4, 28, 3); ctx.fillStyle = '#E9F5F2'; ctx.fillRect(e.x - 14, e.y - ENEMY_SIZE / 2 - 4, 28 * (e.hp / e.maxHp), 3); }
+        if (ready(img)) ctx.drawImage(img!, e.x - e.size / 2, e.y - e.size / 2, e.size, e.size);
+        else { ctx.fillStyle = '#B0722F'; ctx.fillRect(e.x - e.size / 3, e.y - e.size / 3, e.size * 0.66, e.size * 0.66); }
+        if (e.hp < e.maxHp) {
+          const bw = e.size * 0.6;
+          ctx.fillStyle = '#5E3612'; ctx.fillRect(e.x - bw / 2, e.y - e.size / 2 - 4, bw, 4);
+          ctx.fillStyle = '#E9F5F2'; ctx.fillRect(e.x - bw / 2, e.y - e.size / 2 - 4, bw * (e.hp / e.maxHp), 4);
+        }
       }
       // tiros
       const orb = imgs.current.orb;
       for (const b of s.shots) {
-        if (ready(orb)) ctx.drawImage(orb!, b.x - 10, b.y - 10, 20, 20);
-        else { ctx.fillStyle = '#E9F5F2'; ctx.fillRect(b.x - SHOT_R, b.y - SHOT_R, SHOT_R * 2, SHOT_R * 2); }
+        if (ready(orb)) {
+          // a arte do orbe aponta para a DIREITA: gira −90° para sair para CIMA
+          ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(-Math.PI / 2);
+          ctx.drawImage(orb!, -SHOT_DRAW / 2, -SHOT_DRAW / 2, SHOT_DRAW, SHOT_DRAW);
+          ctx.restore();
+        } else { ctx.fillStyle = '#E9F5F2'; ctx.fillRect(b.x - SHOT_R, b.y - SHOT_R, SHOT_R * 2, SHOT_R * 2); }
       }
-      for (const b of s.enemyShots) { ctx.fillStyle = '#ff5a5a'; ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI * 2); ctx.fill(); }
+      const foeOrb = imgs.current.foeOrb;
+      for (const b of s.enemyShots) {
+        if (ready(foeOrb)) {
+          // o FX de espaço, virado para onde o tiro vai
+          ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(Math.atan2(b.vy, b.vx));
+          ctx.drawImage(foeOrb!, -SHOT_DRAW / 2, -SHOT_DRAW / 2, SHOT_DRAW, SHOT_DRAW);
+          ctx.restore();
+        } else { ctx.fillStyle = '#ff5a5a'; ctx.beginPath(); ctx.arc(b.x, b.y, 6, 0, Math.PI * 2); ctx.fill(); }
+      }
       // jogador (pisca na invulnerabilidade)
       const pet = imgs.current.pet;
       if (calm && s.invuln > 0) ctx.globalAlpha = 0.5;
@@ -201,8 +219,8 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
         language={language}
         infoLabel={isPt ? 'Como se joga' : 'How to play'}
         info={isPt
-          ? `Arraste, use as setas (ou A/D) ou os botões para mover: o seu Soulmon atira sozinho. Desvie dos tiros inimigos (3 vidas). As fases ficam mais difíceis. ${BARRAGE_POINTS_PER_BIT} pontos = 1 Bit`
-          : `Drag, use the arrow keys (or A/D) or the buttons to move: your Soulmon fires on its own. Dodge enemy shots (3 lives). Each phase gets harder. ${BARRAGE_POINTS_PER_BIT} points = 1 Bit`}
+          ? `Arraste, use as setas (ou A/D) ou os botões para mover: o seu Soulmon atira sozinho. Desvie dos tiros e impeça os inimigos de chegar à base (3 vidas). As fases ficam mais difíceis. ${BARRAGE_POINTS_PER_BIT} pontos = 1 Bit`
+          : `Drag, use the arrow keys (or A/D) or the buttons to move: your Soulmon fires on its own. Dodge shots and stop enemies from reaching your base (3 lives). Each phase gets harder. ${BARRAGE_POINTS_PER_BIT} points = 1 Bit`}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
         exitConfirm={phase === 'playing' || (phase === 'ready' && challenge) ? gameExitConfirm(isPt, isPt ? 'da partida' : 'this run') : undefined}
