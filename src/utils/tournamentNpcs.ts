@@ -20,15 +20,28 @@ import { getSpriteForStage } from './sprites';
 import portraitEspina from '../assets/soulmon/desafiantes/npc-desafiante-espina.png';
 import portraitQuartzo from '../assets/soulmon/desafiantes/npc-desafiante-quartzo.png';
 import portraitMare from '../assets/soulmon/desafiantes/npc-desafiante-mare.png';
-// 26/10/2026 (URGENTE, dono): SOULMON PRÓPRIO por desafiante, gerado pelo MESMO caminho do app (template do Oráculo → Higgsfield alpha → chroma-key do `_chroma.js`, 256²). Por ora SÓ a forma rookie da Espina existe (créditos do Higgsfield acabaram); as outras formas e os outros dois desafiantes usam o `starter` da demo como reserva até a arte sair.
+// 26/10/2026 (URGENTE, dono): SOULMON PRÓPRIO por desafiante, gerado pelo MESMO caminho do app: template do Oráculo (`generateOracleWithFamilies` → `composeSpritePromptVPet`, + a linha "Important: use the exact same style as the references.") → POST `api.higgsfield.ai/marketing-studio/image` (alpha, low, 1k, 1:1, moderation auto, enhance_prompt false) → chroma-key do `functions/api/_chroma.js` → 256². 4 formas por desafiante (rookie/champion/perfeito=ultimate/mega). Forma sem arte → `starter` da demo (reserva).
 // ORIENTAÇÃO: a arte olha para a DIREITA (igual a `novos/*`); NÃO entra em `LEFT_FACING_LINES`, então `spriteUrlFacesLeft` = false e o
 // `BattleStage` espelha o lado do oponente sozinho — o NPC encara o jogador sem caso especial.
 import espinaRookie from '../assets/soulmon/desafiantes/soulmon-espina-rookie.png';
+import espinaChampion from '../assets/soulmon/desafiantes/soulmon-espina-champion.png';
+import espinaUltimate from '../assets/soulmon/desafiantes/soulmon-espina-ultimate.png';
+import espinaMega from '../assets/soulmon/desafiantes/soulmon-espina-mega.png';
+import quartzoRookie from '../assets/soulmon/desafiantes/soulmon-quartzo-rookie.png';
+import quartzoChampion from '../assets/soulmon/desafiantes/soulmon-quartzo-champion.png';
+import quartzoUltimate from '../assets/soulmon/desafiantes/soulmon-quartzo-ultimate.png';
+import quartzoMega from '../assets/soulmon/desafiantes/soulmon-quartzo-mega.png';
+import mareRookie from '../assets/soulmon/desafiantes/soulmon-mare-rookie.png';
+import mareChampion from '../assets/soulmon/desafiantes/soulmon-mare-champion.png';
+import mareUltimate from '../assets/soulmon/desafiantes/soulmon-mare-ultimate.png';
+import mareMega from '../assets/soulmon/desafiantes/soulmon-mare-mega.png';
 
 export type NpcTier = 'rookie' | 'champion' | 'ultimate' | 'mega';
 /** Arte própria por estágio de cada desafiante. */
 export const TOURNAMENT_NPC_ART: Readonly<Record<string, Partial<Record<NpcTier, string>>>> = {
-  'npc-espina': { rookie: espinaRookie },
+  'npc-espina': { rookie: espinaRookie, champion: espinaChampion, ultimate: espinaUltimate, mega: espinaMega },
+  'npc-quartzo': { rookie: quartzoRookie, champion: quartzoChampion, ultimate: quartzoUltimate, mega: quartzoMega },
+  'npc-mare': { rookie: mareRookie, champion: mareChampion, ultimate: mareUltimate, mega: mareMega },
 };
 
 export interface TournamentNpc {
