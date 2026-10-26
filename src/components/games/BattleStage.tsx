@@ -25,6 +25,8 @@
  * Som (PR18, pedido do dono): o golpe básico, o especial e a vitória têm som próprio (`docs/SOM.md` §3.1) — o golpe e o
  * especial são disparados AQUI (`playAttack`/`playSpecial`); a torcida e o resto seguem mudos (R-NOVA).
  */
+import { elementIcon } from '../../utils/elementIconArt';
+import { tileElementName } from '../../utils/match3Pvp';
 import { BackCircleButton } from '../ui/BackCircleButton';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
@@ -121,6 +123,8 @@ const PLATE_H = 14;
 const BARS_H = 50;
 /** Folga entre o bloco de barras e o topo do sprite (px): as barras ficam ACIMA da cabeça, sem cobri-la (QA L11-10; antes entravam 12 px nela). */
 const BARS_LIFT = 2;
+/** Largura do ícone de elemento ao lado do bloco de barras (a altura é a do bloco). */
+const STAGE_EL_ICON_W = 44;
 /** Quanto do sprite fica acima dos pés (o resto é a base). */
 const SPRITE_TOP = 0.94;
 
@@ -212,22 +216,42 @@ function energyPendingOf(f: StageFighter): number {
  * As barras EM CIMA do lutador, coladas nele (indicando que são DELE): nome (+ HP numérico quando
  * `numeric`), a barra de HP e, logo abaixo, a de ENERGIA — cheia, ela pulsa (o especial é o próximo golpe).
  */
-function FighterBars({ fighter, spot, tone, numeric, barsH }: {
-  fighter: StageFighter; spot: Spot; tone: 'cyan' | 'gold'; numeric: boolean; barsH: number;
+function FighterBars({ fighter, spot, tone, numeric, barsH, fieldW, isPt }: {
+  fighter: StageFighter; spot: Spot; tone: 'cyan' | 'gold'; numeric: boolean; barsH: number; fieldW: number; isPt: boolean;
 }) {
   const pending = energyPendingOf(fighter);
   const width = Math.round(Math.max(124, Math.min(200, spot.size * 0.95)));
   const energy = fighter.energy;
   const full = energy !== undefined && energy >= 0.999;
+  // O ícone do ELEMENTO fica FORA do bloco, encostado na borda externa (o seu: à esquerda; o do oponente: à direita),
+  // pelado (sem caixa) e com a MESMA altura do bloco. Elemento sem arte = nada (o bloco não muda).
+  const iconSrc = elementIcon(fighter.element);
+  const iconOnLeft = tone === 'cyan';
+  const total = width + (iconSrc ? STAGE_EL_ICON_W : 0);
+  const blockLeft = Math.round(spot.x - width / 2);
+  const ownLeft = iconSrc && iconOnLeft ? blockLeft - STAGE_EL_ICON_W : blockLeft;
+  const left = fieldW > 0 ? Math.max(2, Math.min(ownLeft, fieldW - total - 2)) : ownLeft;
   return (
+    <div
+      data-stage-bars-row
+      style={{
+        position: 'absolute', left, top: Math.round(spot.y - spot.size * SPRITE_TOP - barsH - BARS_LIFT), width: total,
+        display: 'flex', flexDirection: iconOnLeft ? 'row' : 'row-reverse', alignItems: 'stretch', zIndex: 3, pointerEvents: 'none',
+      }}
+    >
+      {iconSrc && (
+        <div role="img" aria-label={tileElementName(fighter.element, isPt)} data-stage-element={fighter.element} style={{ position: 'relative', width: STAGE_EL_ICON_W, flex: 'none' }}>
+          <img src={iconSrc} alt="" aria-hidden="true" draggable={false} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' }} />
+        </div>
+      )}
     <div
       data-stage-plate={tone === 'cyan' ? 'me' : 'foe'}
       data-stage-energy-full={energy === undefined ? undefined : full ? '1' : '0'}
       style={{
-        position: 'absolute', left: Math.round(spot.x - width / 2), top: Math.round(spot.y - spot.size * SPRITE_TOP - barsH - BARS_LIFT), width,
+        width, flex: 'none',
         boxSizing: 'border-box', padding: '3px 6px 4px', borderRadius: 8,
         backgroundColor: SCRIM, border: '1px solid var(--sm2-line)',
-        display: 'flex', flexDirection: 'column', gap: 3, zIndex: 3, pointerEvents: 'none',
+        display: 'flex', flexDirection: 'column', gap: 3,
       }}
     >
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 6 }}>
@@ -255,6 +279,7 @@ function FighterBars({ fighter, spot, tone, numeric, barsH }: {
           {pending > 0 && <b aria-hidden="true" data-stage-energy-pending style={{ width: `${Math.round(pending * 100)}%` }} />}
         </div>
       )}
+    </div>
     </div>
   );
 }
@@ -842,9 +867,9 @@ export function BattleStage({
         {foes.map((f, i) => {
           const s = layout.foes[i];
           if (!s || f.down) return null;
-          return <FighterBars key={`p${f.key}`} fighter={f} spot={s} tone="gold" numeric={i === target} barsH={layout.barsH} />;
+          return <FighterBars key={`p${f.key}`} fighter={f} spot={s} tone="gold" numeric={i === target} barsH={layout.barsH} fieldW={w} isPt={isPt} />;
         })}
-        <FighterBars fighter={me} spot={layout.me} tone="cyan" numeric barsH={layout.barsH} />
+        <FighterBars fighter={me} spot={layout.me} tone="cyan" numeric barsH={layout.barsH} fieldW={w} isPt={isPt} />
 
         {/* PR11: os efeitos de status de cada lutador (vazio = nenhuma camada); alvo derrubado não carrega nada. */}
         {foes.map((f, i) => {

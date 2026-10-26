@@ -71,7 +71,7 @@ describe('BattleStage — o que a cena desenha', () => {
     const plate = document.querySelector('[data-stage-plate="me"]') as HTMLElement;
     const spriteBox = (document.querySelector('[data-stage-sprite="me"]') as HTMLElement).closest('div[style*="position: absolute"]') as HTMLElement;
     const barsH = 50; // BARS_H: altura do bloco HP + energia
-    expect(parseFloat(plate.style.top) + barsH).toBeLessThanOrEqual(parseFloat(spriteBox.style.top));
+    expect(parseFloat((plate.closest('[data-stage-bars-row]') as HTMLElement).style.top) + barsH).toBeLessThanOrEqual(parseFloat(spriteBox.style.top));
   });
 
   it('as barras ficam EM CIMA do personagem (coladas nele): HP e, logo abaixo, ENERGIA', () => {
@@ -81,7 +81,7 @@ describe('BattleStage — o que a cena desenha', () => {
     const sprite = document.querySelector('[data-stage-sprite="me"]') as HTMLElement;
     const spriteBox = sprite.closest('div[style*="position: absolute"]') as HTMLElement;
     // a placa fica ACIMA do topo do sprite (top menor)
-    expect(parseFloat(plate.style.top)).toBeLessThan(parseFloat(spriteBox.style.top) + parseFloat(spriteBox.style.height) * 0.3);
+    expect(parseFloat((plate.closest('[data-stage-bars-row]') as HTMLElement).style.top)).toBeLessThan(parseFloat(spriteBox.style.top) + parseFloat(spriteBox.style.height) * 0.3);
     // dentro da placa: o HP vem antes da energia
     const barras = plate.querySelectorAll('[role="progressbar"]');
     expect(barras[0].className).toContain('sm2-kit-meter');
