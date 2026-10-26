@@ -44,7 +44,7 @@ const CAMPOS_DECLARADOS: Record<string, Record<string, string[][]>> = {
     'src/utils/taskSuggestions.ts': [['goalText', 'categories', 'language']],
   },
   '/api/generate-sprite': {
-    'src/utils/spriteGen.ts': [['prompt', 'referenceImageUrls', 'promptFallback', 'formId']],
+    'src/utils/spriteGen.ts': [['prompt', 'referenceImageUrls', 'promptFallback', 'formId', 'regenerate', 'regenPaid', 'opId']],
   },
 };
 

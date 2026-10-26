@@ -59,6 +59,7 @@ import { emptyIncubation, incubationFor, incubationReady, isIncubating } from '.
 import { spriteText } from './utils/spriteCopy';
 import { UNLOCK_NEEDED_EVENT } from './utils/unlockEvent';
 import { MAX_GENERATE_CHARACTER_USES, generateCharacterUsesLeft, spendGenerateCharacterUse } from './utils/generateCharacterUses';
+import { useRegenAparencia } from './hooks/useRegenAparencia';
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, isAccountCapped, isFormCapped, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
 import { PLACEHOLDER_ART } from './utils/placeholderArt';
 import { getSpriteForStage, isStarterId, migrateEggType, setOwnSprites, STARTER_IDS } from './utils/sprites';
@@ -1168,6 +1169,19 @@ export default function App() {
     (formId: string) => updateSpriteLibrary(prev => revertVisor(prev, formId)),
     [updateSpriteLibrary],
   );
+  /* "Gerar de novo" a aparência (Laboratório › Perfil, rodada 5, REGISTRO §34b): sorteio pago em Créditos; quem cobra, devolve e limita é o servidor. */
+  const regenAparencia = useRegenAparencia({
+    library: spriteAcervo,
+    updateLibrary: updateSpriteLibrary,
+    stages: gameState.soulmonStages,
+    formId: gameState.evolutionStage,
+    accountTier: gameState.accountTier,
+    credits: gameState.credits ?? 0,
+    onCredits: credits => setGameState(prev => ({ ...prev, credits })),
+    onNeedCredits: () => setCreditsOpen(true),
+    dayKey: dayKeyOf(new Date()),
+    generatingOther: spriteGen.generating.length > 0,
+  });
 
 
   // ── Os rituais do motor de tarefas (utils/rituals.ts) ─────────────────────
@@ -7088,6 +7102,11 @@ export default function App() {
                   petElement: petElementOf(gameState),
                   equipment: gameState.equipment,
                   forge: gameState.forge,
+                }}
+                regen={{
+                  state: regenAparencia,
+                  currentUrl: spriteAcervo.previousSprites?.[gameState.evolutionStage]?.url,
+                  newUrl: spriteAcervo.sprites[gameState.evolutionStage]?.url,
                 }}
               />
             </Suspense>
