@@ -55,7 +55,7 @@ import { AreaView, type AreaViewProps, type PlayHandlers } from '../nav/AreaView
  *  quatro áreas. As props planas do antigo `PlayAreaView` continuam sendo a
  *  interface do teste; `PlayAreaView` abaixo só as encaixa no `AreaView`. */
 interface PlayProps extends PlayHandlers {
-  area: 'exploracao' | 'jogos';
+  area: 'exploracao' | 'jogos' | 'arena';
   language: 'pt-BR' | 'en-US';
   evolutionStage: string;
   demoCharacterId?: string;
