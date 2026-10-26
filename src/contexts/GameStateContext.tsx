@@ -75,6 +75,7 @@ import { sanitizeBuildingQuests, type BuildingQuestState } from '../utils/buildi
 import { sanitizeMissionsClaimed } from '../utils/missions';
 import { sanitizeDailyMissions, sanitizeFirstTimes, seedFirstTimes, FIRST_TIMES_EMPTY, type DailyMissionsState, type FirstTimesState } from '../utils/dailyMissions';
 import { sanitizeBuildingIntrosSeen, seedBuildingIntrosSeen } from '../utils/buildingIntro';
+import { sanitizeMindGameTutorials, type MindGameTutorials } from '../utils/mente/mindTutorials';
 import { sanitizeMapTutorialSeen } from '../utils/welcomeTourGate';
 import { sanitizeFocusLoot, type FocusLootLedger } from '../utils/focusExpedition';
 import { sanitizeDayPlan, type DayPlan } from '../utils/dayPlan';
@@ -519,6 +520,8 @@ export interface GameState {
    *  e visto OU pulado grava `true`. Campo ausente na carga: `sanitizeMapTutorialSeen` — save com progresso (ou com o tour de
    *  boas-vindas já visto) vira `true` e nunca re-dispara; save vazio (jogador novo) vira `false`. */
   mapTutorialSeen?: boolean;
+  /** Tutorial da 1ª abertura de Eco/Trilha/Colcha (26/10/2026, `utils/mente/mindTutorials.ts`): `{ eco?: true, zip?: true, patches?: true }`, gravado AO MOSTRAR. Ausente/lixo na carga = `{}` (mostra 1× por jogo, pulável). */
+  mindGameTutorials?: MindGameTutorials;
   /** O último nível do Vínculo CELEBRADO (display de level up, 11/10/2026, `utils/levelUp.ts`). O nível em si
    *  nunca vai ao save (`bondLevelFor(totalXP)`); este campo só diz até onde a pessoa JÁ VIU a celebração —
    *  assim o evento sobrevive a fechar o app. Ausente = save anterior: a linha de base é o nível de agora. */
@@ -1385,6 +1388,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           ?? (num(loadedState.totalXP, 0) > 0 ? seedFirstTimes(bondLevelFor(num(loadedState.totalXP, 0))) : FIRST_TIMES_EMPTY),
         buildingIntrosSeen: sanitizeBuildingIntrosSeen(loadedState.buildingIntrosSeen, bondLevelFor(num(loadedState.totalXP, 0))),
         mapTutorialSeen: sanitizeMapTutorialSeen(loadedState.mapTutorialSeen, loadedState as Record<string, any>, readLocal(STORAGE_KEYS.WELCOME_TOUR_SHOWN) === 'true'),
+        mindGameTutorials: sanitizeMindGameTutorials(loadedState.mindGameTutorials),
         lastCelebratedLevel: sanitizeCelebratedLevel(loadedState.lastCelebratedLevel),
         focusLoot: sanitizeFocusLoot(loadedState.focusLoot),
         dayPlan: sanitizeDayPlan(loadedState.dayPlan),
@@ -1664,6 +1668,7 @@ function freshGameState(): GameState {
       maxHealthPoints: getMaxHPForStage('rookie'),
       buildingIntrosSeen: seedBuildingIntrosSeen(1),
       mapTutorialSeen: false,
+      mindGameTutorials: {},
       energyPoints: 0,
       perfectDays: 0,
       evolutionPoints: 0,

@@ -23,6 +23,7 @@ import { visibleBackground } from './utils/backgrounds';
 import { needsWelcomeTour, needsMapTutorial } from './utils/welcomeTourGate';
 import { buildingsUnlockedBetween, isBuildingId, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
+import { markMindGameTutorial } from './utils/mente/mindTutorials';
 import { bumpDaily, claimDaily, claimFirst, dailyForDay, dailyMissionsMark, firstTimesMark, markFirst, markFirstForEvent, type DailyEvent } from './utils/dailyMissions';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
@@ -7537,6 +7538,7 @@ export default function App() {
                   onRunEnd: handleDungeonRunEnd,
                   onDungeonEnemyDefeated: handleDungeonEnemyDefeated,
                   onBestiarySeen: handleBestiarySeen,
+                  mindTutorials: { seen: gameState.mindGameTutorials ?? {}, onShown: id => setGameState(prev => { const m = markMindGameTutorial(prev.mindGameTutorials, id); return m === prev.mindGameTutorials ? prev : { ...prev, mindGameTutorials: m }; }) },
                   onDinoScore: handleDinoScore,
                   /* 🏛️ Prédios de Jogos (30/09/2026): o dia do JOGADOR em ISO
                      (Picross do dia, Revisão) e os cartões da Revisão da

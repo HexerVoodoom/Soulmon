@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
+import { MindTutorialScreen, MindTutorialLink, useMindTutorial } from './MindTutorial';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint } from '../form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
@@ -32,8 +33,9 @@ const TINTS = ['var(--sm2-primary-fill)', 'var(--sm2-gold-fill)', 'var(--sm2-cre
 /** Pedra do Eco que lembra a forma: quadrado (2), alto (1, triângulo), largo (3, losango); sem dica = círculo (0). */
 const SHAPE_STONE = { any: 0, tall: 1, square: 2, wide: 3 } as const;
 
-export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, rankSaveId, challenge }: EarningGameProps) {
+export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, rankSaveId, challenge, tutorial }: EarningGameProps) {
   const isPt = language === 'pt-BR';
+  const tut = useMindTutorial(tutorial);
   const reduced = usePrefersReducedMotion();
   const [level, setLevel] = useState(1);
   const [puzzle, setPuzzle] = useState<PatchesPuzzle>(() => patchesForLevel(1, Math.random));
@@ -185,6 +187,8 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
 
   const shapeWord = (s: 'square' | 'tall' | 'wide') => s === 'square' ? (isPt ? 'quadrado' : 'square') : s === 'tall' ? (isPt ? 'alto' : 'tall') : (isPt ? 'largo' : 'wide');
 
+  if (tut.open) return <MindTutorialScreen game="patches" title={title} language={language} evolutionStage={evolutionStage} demoCharacterId={demoCharacterId} onExit={onExit} onDone={tut.hide} />;
+
   return (
     <GameRoot>
       <GameHeader
@@ -210,6 +214,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt ? `Ranking da semana: seu tempo nas colchas ${TIME_RANK_SIZE}×${TIME_RANK_SIZE} (menor é melhor).` : `Weekly ranking: your time on ${TIME_RANK_SIZE}×${TIME_RANK_SIZE} patchworks (lower is better).`}
             </span>
+            <MindTutorialLink language={language} onClick={tut.show} />
           </>
         )}
         closeLabel={isPt ? 'Sair' : 'Exit'}

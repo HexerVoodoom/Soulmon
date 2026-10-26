@@ -1,6 +1,7 @@
 import { RankingPanel } from '../RankingPanel';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
+import { MindTutorialScreen, MindTutorialLink, useMindTutorial } from './MindTutorial';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
@@ -56,8 +57,9 @@ function StoneShape({ stone, size }: { stone: Stone; size: number }) {
   );
 }
 
-export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, rankSaveId, challenge }: EarningGameProps) {
+export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, rankSaveId, challenge, tutorial }: EarningGameProps) {
   const isPt = language === 'pt-BR';
+  const tut = useMindTutorial(tutorial);
   const reduced = usePrefersReducedMotion();
   const [phase, setPhase] = useState<Phase>('intro');
   const [reverse, setReverse] = useState(false);
@@ -162,6 +164,8 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
     lineHeight: 'var(--sm2-leading-body)', cursor: 'pointer',
   };
 
+  if (tut.open) return <MindTutorialScreen game="eco" title={title} language={language} evolutionStage={evolutionStage} demoCharacterId={demoCharacterId} onExit={onExit} onDone={tut.hide} />;
+
   return (
     <GameRoot>
       <GameHeader
@@ -177,6 +181,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt ? `1 Bit por pedra além de ${ECO_START_LENGTH}, até ${ECO_MAX_BITS}.` : `1 Bit per stone past ${ECO_START_LENGTH}, up to ${ECO_MAX_BITS}.`}
             </span>
+            <MindTutorialLink language={language} onClick={tut.show} />
           </>
         )}
         closeLabel={isPt ? 'Sair' : 'Exit'}

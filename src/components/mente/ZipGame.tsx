@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
+import { MindTutorialScreen, MindTutorialLink, useMindTutorial } from './MindTutorial';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint } from '../form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
@@ -27,8 +28,9 @@ const PET_SCALE_MINIGAME = 1;
 
 const GRID_MAX_W = 348;
 
-export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, rankSaveId, challenge }: EarningGameProps) {
+export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, rankSaveId, challenge, tutorial }: EarningGameProps) {
   const isPt = language === 'pt-BR';
+  const tut = useMindTutorial(tutorial);
   const reduced = usePrefersReducedMotion();
   const [level, setLevel] = useState(1);
   const [puzzle, setPuzzle] = useState<ZipPuzzle>(() => zipForLevel(1, Math.random));
@@ -154,6 +156,8 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
     touchAction: 'none', userSelect: 'none',
   });
 
+  if (tut.open) return <MindTutorialScreen game="zip" title={title} language={language} evolutionStage={evolutionStage} demoCharacterId={demoCharacterId} onExit={onExit} onDone={tut.hide} />;
+
   return (
     <GameRoot>
       <GameHeader
@@ -176,6 +180,7 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt ? `Ranking da semana: seu tempo nas trilhas ${TIME_RANK_SIZE}×${TIME_RANK_SIZE} (menor é melhor).` : `Weekly ranking: your time on ${TIME_RANK_SIZE}×${TIME_RANK_SIZE} trails (lower is better).`}
             </span>
+            <MindTutorialLink language={language} onClick={tut.show} />
           </>
         )}
         closeLabel={isPt ? 'Sair' : 'Exit'}

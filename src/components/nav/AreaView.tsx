@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState, type ComponentProps, type ReactNode } from 'react';
 import type { AreaId } from '../../navigation';
+import type { MindGameId, MindGameTutorials } from '../../utils/mente/mindTutorials';
 import type { Language } from '../../utils/i18n';
 import { AreaScene, type AreaLot } from './AreaScene';
 import { AreaSheet } from './AreaSheet';
@@ -97,6 +98,8 @@ export interface PlayHandlers {
   onDungeonEnemyDefeated: (enemyKey?: string) => void;
   /** M10: inimigo visto fora da masmorra (Combina 3) — só o bestiário. */
   onBestiarySeen?: (enemyKey: string) => void;
+  /** Tutorial da 1ª abertura dos jogos do Ateliê da Mente (26/10/2026): o que já foi visto (save) e como gravar AO MOSTRAR. */
+  mindTutorials?: { seen: MindGameTutorials; onShown: (id: MindGameId) => void };
   onDinoScore: (score: number) => void;
   onSpendBits?: (pts: number) => boolean;
   /** Dia do JOGADOR (`playerDayKey`) — o Picross do dia e a Revisão leem daqui.
@@ -462,6 +465,8 @@ export function AreaView(props: AreaViewProps) {
       language,
       onExit: exitGame,
     };
+    const mt = play.mindTutorials;
+    const mindTut = (id: MindGameId) => (mt ? { seen: mt.seen[id] === true, onShown: () => mt.onShown(id) } : undefined);
     return (
       <AreaScene areaId={area} language={language} background={PLAY_AREA_BG[area]} lots={lots} notice={lockNote}>
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull} onClose={close}>
@@ -537,9 +542,9 @@ export function AreaView(props: AreaViewProps) {
             {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
             {game === 'match3' && <Match3Game {...base} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
-            {game === 'eco' && <EcoGame {...base} rankSaveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />}
-            {game === 'zip' && <ZipGame {...base} rankSaveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />}
-            {game === 'patches' && <PatchesGame {...base} rankSaveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />}
+            {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />}
+            {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />}
+            {game === 'patches' && <PatchesGame {...base} tutorial={mindTut('patches')} rankSaveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />}
             {/* Refúgio — NÃO recebem `onEarnPoints`: não pagam, não pontuam. */}
             {game === 'respiracao' && <RespiracaoGame {...base} />}
             {game === 'bolhas-calmas' && <BolhasGame {...base} mode="calma" />}
