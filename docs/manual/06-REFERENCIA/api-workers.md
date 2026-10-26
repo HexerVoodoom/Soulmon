@@ -257,6 +257,15 @@
 **Chamado por:** ninguém ainda (o clamp S1 do PvP e os gates entram nos PRs seguintes).
 **Régua:** `functions/api/soulXP.parity.test.js` — deriva os tetos de `FORM_REQUIREMENTS` do app e exige o mesmo XP/level em 915 estados (cópia deliberada, footgun 9, travada por paridade).
 
+### `functions/api/_simulados.js`
+**Dono de:** o motor dos 50 usuários simulados (BACKLOG-BETA3 M11; ligado por decisão do dono em 25/10/2026, `SIMULADOS_ON`). A flag `simulated` vive SÓ no servidor (`stripSimulated` a tira de toda resposta); simulado NUNCA leva prêmio. Execução PREGUIÇOSA em lotes pequenos (`CHUNK`, `OPS_BUDGET` p/ caber nos subrequests do plano free), via `agendarSimuladosDia` (`context.waitUntil`, fora do caminho síncrono), com trava `sim:dia:<dia>` por token. **Exports:** `CHUNK`, `OPS_BUDGET`, `custoEstimado`, `isSimuladoId`, `lockKeyDia`, `spriteKeyOf`, `prngOf`, `dayKeyOf`, `dayIndexOf`, `stageForLevel`, `estadoDoDia`, `saveDoSimulado`, `jogaHoje`, `scoresDoDia`, `upsertSimulado`, `agendarSimuladosDia`, `ensureSimuladosDia`, `stripSimulated`. **Régua:** `functions/api/_simulados.test.js`.
+
+### `functions/api/_simulados.data.js`
+**Dono de:** os 50 perfis simulados (dados versionados, sem lógica): `id` estável `sim_NNNN` (vira chave de save/perfil/ranking; nunca mude), apelido único, nome do Soulmon, linha, ritmo. **Exports:** `SIM_EPOCH`, `SIMULADOS`. **Chamado por:** `_simulados.js`.
+
+### `functions/api/gm-rift-payout.js`
+**Rota:** `/api/gm-rift-payout` · **Métodos:** `GET` (lista com a progressão de cada jogador, pendentes primeiro), `POST { month, saveId, action: 'approve' | 'reject' }`. **Dono de:** a REVISÃO do dono sobre os prêmios do Endless Rift (decisão 1 do QA 25/10/2026): o fechamento do mês grava o top 3 como PENDENTE e só a aprovação do GM credita (`approveRiftPrize`, idempotente; `_riftPayout.js`). Exige ID token Firebase de e-mail em `ADMIN_EMAILS`; qualquer outro caso é 403 `forbidden` idêntico.
+
 ### `functions/api/guild.js` (572 linhas — `wc -l`, 29/09/2026; novo em WPG-1/WPG-2, `PLANO-GUILDA.md`)
 **Rota:** `/api/guild?action=…` · **Métodos:** `OPTIONS`, `GET`/`POST` por ação (`GUILD_ACTIONS` dá o método de cada uma).
 **Dono de:** a RESPOSTA da Guilda (coop com teto 12). `vistaDaGuilda` é a ÚNICA montagem do que sai: nunca saveId, `hostSave` (só `isHost` de quem pergunta), estágio/HP de criatura alheia (LV-G10), contagem por pessoa (dias, fios, dano), quem faltou. **Ausência nunca é estado** (M-1): com ≤ `PRESENCA_NOMINAL_MAX` (4) `apareceuHoje`/`cameToday` só existem quando `true`; com 5+ só `threadedToday: true | null`. `progress`/`target` saíram (M-3). Cada membro sai com um id OPACO (`memberId`, 16 hex, `idOpacoDoMembro`), nunca o pid. Estado em `_coop.js` (chaves `coop*`, sem migrar para `guild:*`).

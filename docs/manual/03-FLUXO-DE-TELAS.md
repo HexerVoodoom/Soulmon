@@ -2373,6 +2373,6 @@ Cada prédio do Mapa abre num Vínculo mínimo (`BUILDING_GATES` em `src/utils/g
 
 ## Delta de 14/10/2026: Masmorra no Vínculo 1, tutorial do mapa e ícones de canto sem círculo
 
-- **Masmorra livre desde o Vínculo 1** (`BUILDING_GATES['exploracao.masmorra']`, `gates.ts` + espelho `_gates.js`; REGISTRO §42). Energia, limite diário de camadas, portão dos andares altos (Vínculo 8) e a ocupação do Soulmon não mudaram.
+- **Masmorra livre desde o Vínculo 1** (`BUILDING_GATES['exploracao.masmorra']`, `gates.ts` + espelho `_gates.js`; REGISTRO §42). Energia (único limite: não há mais teto diário de camadas desde 25/10/2026), portão dos andares altos (Vínculo 8) e a ocupação do Soulmon não mudaram.
 - **Tutorial do mapa:** o tour de boas-vindas tem 6 cartões (sem a Parte 2). Na 1ª abertura do Mapa abre o MESMO `WelcomeTour` com `MAP_TOUR_STEPS` (abertura + 1 cartão por área, 1 linha por prédio, EN/PT-BR); visto ou pulado grava `mapTutorialSeen` no save (`sanitizeMapTutorialSeen`: save com progresso ou com o tour já visto = `true`). O replay de Configurações repete só o básico.
 - **Casinha e ícone do Mapa sem círculo:** `CornerLink` perdeu a prop `ring`; ficam o ícone de 32 px, o brilho e o alvo de 56 px.

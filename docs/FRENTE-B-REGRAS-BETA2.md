@@ -1,6 +1,6 @@
-# Frente B (regras) — beta-2: fome, energia por tempo, check-ins, limite diário da masmorra, placa de madeira, Soulsmith e modo imersivo (13/10/2026)
+# Frente B (regras) — beta-2: fome, energia por tempo, check-ins, limite diário da masmorra (REMOVIDO em 25/10/2026: só a energia limita), placa de madeira, Soulsmith e modo imersivo (13/10/2026)
 
-> **Etiqueta:** vivo · **Dono:** `src/utils/hunger.ts` (fome/energia), `src/utils/dungeonIdle.ts` (limite diário), `src/utils/checkIns.ts` · **Régua:** `hunger.test.ts`, `hunger.balanco.test.ts`, `dungeonDaily.test.ts`, `checkIns.test.ts`, `soulsmithAcesso.test.ts`, `hooks/useDungeonReturn.test.tsx`, `functions/api/_dayCounters.test.js` · **Decisão:** `REGISTRO-DE-DECISOES.md` §40
+> **Etiqueta:** vivo · **Dono:** `src/utils/hunger.ts` (fome/energia), `src/utils/dungeonIdle.ts` (energia por camada; o limite diário saiu em 25/10/2026), `src/utils/checkIns.ts` · **Régua:** `hunger.test.ts`, `hunger.balanco.test.ts`, `dungeonDaily.test.ts`, `checkIns.test.ts`, `soulsmithAcesso.test.ts`, `hooks/useDungeonReturn.test.tsx`, `functions/api/_dayCounters.test.js` · **Decisão:** `REGISTRO-DE-DECISOES.md` §40
 >
 > Squad `beta-play-01`, backlog beta-2 (13/10/2026), FRENTE B. Este arquivo descreve o CONTRATO com as outras frentes e o que muda no merge; o código e os testes decidem.
 
@@ -47,7 +47,7 @@ muda de tamanho entre os estados (o `full` do timer some, mas o botão da energi
 * visual de madeira em CSS com variáveis locais de fallback (`--sm2-wood`, `--sm2-wood-edge`, `--sm2-wood-ink`) — se a frente A tiver um token de bronze/madeira, basta defini-los.
 
 O tempo é função do ESTADO PERSISTIDO (nada de contagem de tela): o fim da descida que a MESMA conta determinística de `applyDungeonAway` vai dar (teto de 8 h a partir de `since`,
-antes disso se a energia, o HP, o limite diário ou o portão acabarem). Reabrir o app, navegar ou remontar o componente dá o mesmo instante; ele muda quando a energia/fome/camadas do dia mudam.
+antes disso se a energia, o HP ou o portão acabarem (não há mais limite diário de camadas)). Reabrir o app, navegar ou remontar o componente dá o mesmo instante; ele muda quando a energia/fome/camadas do dia mudam.
 
 ## 3. O que mudou no save (e o contador do fuzz2 para o merge)
 
@@ -74,7 +74,7 @@ dia > dia do servidor + 1: ignora; campo omitido: mantém o gravado. Testes: `_d
 | `src/components/home/DungeonSign.tsx` | placa de madeira (caixa 118 × 46 fixa) | A (slot) |
 | `src/components/MealInviteCard.tsx` | prop opcional `checkIn` e o botão de check-in | A/C (cartão de refeição) |
 | `src/App.tsx` | efeito de acerto da energia (15 s), `useEnergyStatus`, `useDungeonReturn`, `resgatarCheckIn`, `applyBuildingEntry`, texto do toast de comida premium, saída do aviso "falta encher a energia" | todas |
-| `src/components/DungeonGame.tsx` | `pagarCamada` pela porta única `spendLayer`; mensagens de limite diário | — |
+| `src/components/DungeonGame.tsx` | `pagarCamada` pela porta única `spendLayer`; mensagens de energia (o limite diário saiu) | — |
 
 ## 5. Verificação
 

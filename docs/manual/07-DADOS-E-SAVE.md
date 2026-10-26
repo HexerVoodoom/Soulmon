@@ -269,7 +269,7 @@ Quatro campos opcionais, com sanitize no `hydrateSave` (lixo → ausente) e **se
 |---|---|---|---|
 | `hunger?` | `{v: 0..100, at: ms}` | a FOME medida no instante `at`; lida SEMPRE por `hungerAt`/`energyStatus` (desce por timestamp, 14 h do cheio ao vazio). Ausente = cheia | `utils/hunger.ts` |
 | `energyClock?` | `{at: ms, carry}` | o relógio da regeneração da energia: até onde foi contada e o progresso até a próxima unidade (ponto-ms). Moram no save para o timer não reiniciar ao fechar/navegar. Ausente = nasce na próxima leitura | `utils/hunger.ts` |
-| `dungeonDaily?` | `{day: 'AAAA-MM-DD', layers}` | camadas da masmorra COMEÇADAS no dia do jogador (limite `DUNGEON_DAILY_LAYERS` = 10). Servidor: monotônico (`functions/api/_dayCounters.js`) | `utils/dungeonIdle.ts` |
+| `dungeonDaily?` | `{day: 'AAAA-MM-DD', layers}` | camadas da masmorra COMEÇADAS no dia do jogador (só estatística/compatibilidade: o limite diário de 10 camadas SAIU em 25/10/2026 e nada compara o contador a um teto; a energia é o único limite). Servidor: monotônico (`functions/api/_dayCounters.js`) | `utils/dungeonIdle.ts` |
 | `checkIns?` | `{day, claimed: ('morning'\|'afternoon'\|'night')[]}` | janelas de check-in já resgatadas no dia do jogador; sem histórico. Servidor: monotônico | `utils/checkIns.ts` |
 
 #### 2.12-D Campos acrescentados em 19/10/2026 (missão especial diária — REGISTRO §106)

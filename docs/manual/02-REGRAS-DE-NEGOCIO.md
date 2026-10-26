@@ -431,8 +431,8 @@ até a próxima unidade fica no save (`energyClock`): fechar o app não reinicia
 timer. `getMaxEnergyForStage(stage) = FORM_REQUIREMENTS[nível].required ×
 ENERGY_HEADROOM` (`src/types/progression.ts`) — rookie 8, champion 10, ultimate
 10, mega 12, ultra 12. `computeDailyReset` zera a energia em toda virada (o
-relógio e a fome seguem). A energia serve para descer a Masmorra (1 por camada,
-até 10 camadas por dia) e para brincar.
+relógio e a fome seguem). A energia serve para descer a Fenda (1 por camada, sem limite
+diário de camadas — só a energia limita) e para brincar.
 
 **Condição do dia completo**: `energyPoints >= dailyGoalFor`, e **não** o
 requisito cru do estágio. Comida vem de concluir tarefa, então num dia de meta 2

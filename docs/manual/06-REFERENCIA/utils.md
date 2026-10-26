@@ -882,6 +882,22 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 **Acréscimo de 11/10/2026 (REGISTRO §36):** `DUNGEON_SPEEDS` (1/2/3), `sanitizeDungeonSpeed`, `nextDungeonSpeed` · `DUNGEON_AWAY_MAX_HOURS`/`DUNGEON_AWAY_MAX_MS` (8 h) · `DungeonAway`/`DungeonAwayPlayer` (o registro `dungeonAway` do save), `sanitizeDungeonAway` (registro inteiro ou `undefined`), `soulmonNaMasmorra(state)` (o critério único de "ocupado").
 
+### `src/utils/dungeonReturnSummary.ts`
+
+**Dono de:** o resumo da volta SOZINHA do Soulmon da Fenda (descida que acabou fora da tela). **Exports:** `DungeonReturnSummary` (`layers`, `bits`, `fragments`, `hearts`, `glitchtama`, `ended`), `sanitizeDungeonReturnSummary` (leitura tolerante: save antigo não tem o campo, lixo vira `undefined`). Mora no save (`dungeonReturnPending`) até o jogador fechar o aviso; fechar o app não o perde. **Chamado por:** `DungeonReturnModal`, `useDungeonReturn`, `GameStateContext`.
+
+### `src/utils/dungeonScreenOpen.ts`
+
+**Dono de:** "a tela da Fenda (`DungeonGame`) está montada?" — store de módulo lido pelo `App` com `useSyncExternalStore`. **Exports:** `marcarTelaMasmorra()` (devolve o desfazer), `telaMasmorraAberta()`, `assinarTelaMasmorra(f)`. Com a tela montada ELA é a dona da conta da descida; o retorno automático da Home não pode disparar junto (creditaria a mesma descida 2×).
+
+### `src/utils/gameChallenge.ts`
+
+**Dono de:** o contrato do MODO DESAFIO dos jogos (Calabouço, beta3). **Exports:** `GameChallenge { goal, onResult(won) }`. Com a prop o jogo NÃO paga Bits, NÃO grava recorde e NÃO mostra/submete ranking; só devolve vitória/derrota. Sem a prop o jogo é o normal. **Chamado por:** `mente/types.ts` (`EarningGameProps.challenge`) e `RogueDungeon`.
+
+### `src/utils/bestiaryMigrate.ts`
+
+**Dono de:** a ponte do bestiário do save antigo (`<linha>-<tier>`, ex.: `kaelen-champion`) para o novo (`<id>-<estágio>`, `enemyRoster.ts`), para 20/36 não virar 0/155 (QA 25/10/2026). **Exports:** `LEGACY_LINE_TO_NOVO` (9 linhas antigas → 9 criaturas distintas), `migrateBestiaryKey(key)` (`null` se já é nova/desconhecida; `baby-i`/`baby-ii` viram `rookie`), `migrateBestiary(keys)` (antigas mantidas + novas acrescentadas, idempotente). **Chamado por:** `GameStateContext` (carga do save). **Régua:** `bestiaryMigrate.test.ts`.
+
 ### `src/utils/dungeonAway.ts`
 
 **Dono de:** a conta PURA de quem ficou fora da masmorra (REGISTRO §36). **Exports:** `applyDungeonAway(estado, nowMs, { heartsLeft?, retire? })` → `{ next, report }` (rejoga a descida luta a luta pelo motor da tela, com o especial automático, até `DUNGEON_AWAY_MAX_MS`; idempotente; credita pelos funis de sempre), `settleDungeonAwayNow(base, setGameState, now, retire)` (a ponte com o `setGameState`, uma chamada por volta; guarda o teto de corações no aparelho fora do updater), `dungeonWaveOf(seed, camada, nível, estágio)` (a onda da camada, a MESMA da tela), `awayPlayerCfg`, `playAutoFight`, `fightWallMs`, `AWAY_CAST_PAUSE_MS` (2200), `AWAY_END_BEAT_MS` (900), `AwayReport`/`AwayEnd`. **Régua:** `dungeonAway.test.ts`. **Chamado por:** `DungeonGame` (ao entrar) e `App` (`retirarDaMasmorra`, import dinâmico).
