@@ -3785,3 +3785,7 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 - `src/hooks/useRegenAparencia.ts` — gesto de regen: confirmação, `CreditsModal` sem saldo, `opId` por gesto com 1 retry.
 - `src/components/perfil/RegenAparencia.tsx` — Laboratório › Perfil: atual ao lado da nova, "Manter a atual"/"Usar a nova".
 - `functions/api/_spriteRegen.js` — débito antes da IA e devolução idempotente no `finally` de `generate-sprite.js` (`ent.aiRegen`, `ent.regenOps`); kill-switch `SPRITE_REGEN_DISABLED`.
+
+### `src/utils/mente/mindTutorials.ts` (beta3, tutorial dos jogos do Ateliê da Mente)
+**Dono de:** o "visto" do tutorial de primeira vez de cada jogo do Ateliê (Eco do Pet, Trilha do Pet/Zip, Colcha/Patches): `sanitizeMindGameTutorials` (aceita só `true` literal de chave conhecida; lixo vira `{}`) e `markMindGameTutorial` (idempotente). Campo do save: `mindGameTutorials` (`{ eco?, zip?, patches? }`), gravado AO MOSTRAR, com leitura tolerante em `hydrateSave`.
+**Chamado por:** `src/contexts/GameStateContext.tsx`, `src/App.tsx`, `src/components/nav/AreaView.tsx`. **Régua:** `src/components/mente/mindTutorial.render.test.tsx`.

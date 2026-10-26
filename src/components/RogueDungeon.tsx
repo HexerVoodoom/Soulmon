@@ -286,7 +286,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', width: '100%' }}>
                 {bonuses.map(b => (
                   <button key={b} type="button" data-rogue-card data-rogue-bonus={b} style={cardStyle} onClick={() => { setNote(null); onChange(applyBonus(run, b)); }}>
-                    <Icon name={BONUS_COPY[b].icon} size={40} tone="inherit" />
+                    <Icon name={BONUS_COPY[b].icon} size={32} tone="inherit" />
                     <span style={{ fontWeight: 700, fontSize: 'var(--sm2-text-sm, 14px)' }}>{t(BONUS_COPY[b])}</span>
                     <span style={{ fontSize: 'var(--sm2-text-xs, 12px)' }}>{isPt ? BONUS_COPY[b].descPt : BONUS_COPY[b].descEn}</span>
                   </button>
@@ -303,7 +303,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', width: '100%' }}>
                 {paths.map(p => (
                   <button key={p} type="button" data-rogue-card data-rogue-path={p} style={cardStyle} onClick={() => choose(p)}>
-                    <Icon name={PATH_COPY[p].icon} size={40} tone="inherit" />
+                    <Icon name={PATH_COPY[p].icon} size={32} tone="inherit" />
                     <span style={{ fontWeight: 700, fontSize: 'var(--sm2-text-sm, 14px)' }}>{t(PATH_COPY[p])}</span>
                     <span style={{ fontSize: 'var(--sm2-text-xs, 12px)' }}>{isPt ? PATH_COPY[p].descPt : PATH_COPY[p].descEn}</span>
                   </button>

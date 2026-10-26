@@ -496,7 +496,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         opp={training.opp}
         seed={training.seed}
         petSprite={getSpriteForStage(petStage, petLine, 256)}
-        oppSprite={training.npc ? training.npc.art : getSpriteForStage(petStage, petLine, 256)}
+        oppSprite={training.npc ? getSpriteForStage(petStage, training.npc.starter, 256) : getSpriteForStage(petStage, petLine, 256)}
         oppElement={training.npc ? visualElementFor(training.npc.id) : undefined}
         petStage={petStage}
         skills={skills}
@@ -642,7 +642,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           {opponents?.length === 0 && !loadFailed && TOURNAMENT_NPCS.map(n => (
             <div key={n.id} data-torneio-npc={n.id} style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', minHeight: 56 }}>
               <MiniGlass size={64}>
-                <img src={n.portrait} alt="" width={64} height={64} style={{ width: 64, height: 64, objectFit: 'contain', display: 'block' }} />
+                <img src={getSpriteForStage(petStage, n.starter, 256)} alt="" width={64} height={64} style={{ width: 64, height: 64, objectFit: 'contain', display: 'block', imageRendering: 'pixelated' }} />
               </MiniGlass>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ ...sm2Text, margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

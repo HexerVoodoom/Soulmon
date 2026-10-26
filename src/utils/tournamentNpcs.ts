@@ -12,6 +12,7 @@
 // a tela não finge que são — o selo "Treino" fica na linha do cartão.
 // ---------------------------------------------------------------------------
 import { DUELO_OPONENTE_ART } from './dueloArt';
+import type { StarterId } from './sprites';
 // 04/10/2026: retratos PRÓPRIOS dos três desafiantes (`entrada-dono/npc-desafiante-*`, GPT Image 2.5 Flare,
 // alfa real → 192², alfa binário). Entram só no CARTÃO (64 CSS px = 3× de densidade); na luta o oponente
 // continua sendo a CRIATURA do desafiante (`art`, os `duelo-oponente-*`): o retrato é a pessoa, não o bicho.
@@ -27,13 +28,15 @@ export interface TournamentNpc {
   art: string;
   /** O retrato do desafiante no cartão da lista (busto 192², ilustração — sem `pixelated`). */
   portrait: string;
+  /** 26/10/2026 (URGENTE, dono): o desafiante É um Soulmon — o MESMO sprite no cartão e na luta (`getSpriteForStage(estágio, starter)`), do elenco da demo, até a arte própria do ChatGPT. `art`/`portrait` ficam só como reserva (as criaturas `duelo-oponente-*` antigas e o busto não aparecem mais). */
+  starter: StarterId;
 }
 
 /** Três retratos de elementos diferentes: planta espinhosa, cristal e aquática (índices 0, 3 e 4 da folha). */
 export const TOURNAMENT_NPCS: readonly TournamentNpc[] = [
-  { id: 'npc-espina', namePt: 'Espina', nameEn: 'Thorn', art: DUELO_OPONENTE_ART[0], portrait: portraitEspina },
-  { id: 'npc-quartzo', namePt: 'Quartzo', nameEn: 'Quartz', art: DUELO_OPONENTE_ART[3], portrait: portraitQuartzo },
-  { id: 'npc-mare', namePt: 'Maré', nameEn: 'Tide', art: DUELO_OPONENTE_ART[4], portrait: portraitMare },
+  { id: 'npc-espina', namePt: 'Espina', nameEn: 'Thorn', art: DUELO_OPONENTE_ART[0], portrait: portraitEspina, starter: 'vida' },
+  { id: 'npc-quartzo', namePt: 'Quartzo', nameEn: 'Quartz', art: DUELO_OPONENTE_ART[3], portrait: portraitQuartzo, starter: 'industrial' },
+  { id: 'npc-mare', namePt: 'Maré', nameEn: 'Tide', art: DUELO_OPONENTE_ART[4], portrait: portraitMare, starter: 'nascente' },
 ] as const;
 
 /**

@@ -1785,3 +1785,7 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 ### `src/components/NightmareBattleHost.tsx` (beta3, perf do bundle)
 **Dono de:** montar a luta do Pesadelo dentro do chunk lazy, sorteando a onda (`buildNightmareWave`) lá dentro, para o `App` não carregar o roster de inimigos na entrada.
 **Chamado por:** `src/App.tsx`.
+
+### `src/components/mente/MindTutorial.tsx` (beta3)
+**Dono de:** o tutorial de primeira vez dos jogos do Ateliê da Mente: 4 passos curtos por jogo (EN+PT), demonstrações em CSS (quadro fixo com movimento reduzido), "Próximo"/"Pular"/"Entendi, jogar"; reabre sob demanda pelo "Ver o tutorial" do "Como se joga" sem gravar nada. Vive no chunk lazy de cada jogo. O modo desafio do Calabouço não o recebe.
+**Chamado por:** `EcoGame.tsx`, `ZipGame.tsx`, `PatchesGame.tsx`. **Régua:** `mindTutorial.render.test.tsx`.
