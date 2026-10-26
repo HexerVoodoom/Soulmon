@@ -1,15 +1,21 @@
 import { describe, it, expect } from 'vitest';
 import { TOURNAMENT_NPCS, TOURNAMENT_NPC_ART, tournamentNpcSprite } from './tournamentNpcs';
-import { getSpriteForStage, spriteUrlFacesLeft } from './sprites';
+import { spriteUrlFacesLeft } from './sprites';
 
 describe('Soulmon próprio dos desafiantes do Torneio', () => {
-  const espina = TOURNAMENT_NPCS[0];
-  it('a forma com arte própria usa o PNG próprio; as outras formas e os outros NPCs caem no starter da demo', () => {
-    expect(tournamentNpcSprite(espina, 'rookie')).toBe(TOURNAMENT_NPC_ART['npc-espina'].rookie);
-    expect(tournamentNpcSprite(espina, 'champion-power')).toBe(getSpriteForStage('champion-power', espina.starter, 256));
-    for (const n of TOURNAMENT_NPCS.slice(1)) expect(tournamentNpcSprite(n, 'rookie')).toBe(getSpriteForStage('rookie', n.starter, 256));
+  it('cada desafiante tem 4 formas distintas, e estágio desconhecido/ultra cai em mega', () => {
+    for (const n of TOURNAMENT_NPCS) {
+      const art = TOURNAMENT_NPC_ART[n.id];
+      expect(new Set(Object.values(art)).size).toBe(4);
+      expect(tournamentNpcSprite(n, 'rookie')).toBe(art.rookie);
+      expect(tournamentNpcSprite(n, 'champion-power')).toBe(art.champion);
+      expect(tournamentNpcSprite(n, 'ultimate-x')).toBe(art.ultimate);
+      expect(tournamentNpcSprite(n, 'mega-x')).toBe(art.mega);
+      expect(tournamentNpcSprite(n, 'ultra')).toBe(art.mega);
+      expect(tournamentNpcSprite(n, 'qualquer-coisa')).toBe(art.mega);
+    }
   });
   it('a arte olha para a direita (sem caso especial no BattleStage)', () => {
-    expect(spriteUrlFacesLeft(TOURNAMENT_NPC_ART['npc-espina'].rookie!)).toBe(false);
+    for (const n of TOURNAMENT_NPCS) for (const u of Object.values(TOURNAMENT_NPC_ART[n.id])) expect(spriteUrlFacesLeft(u!)).toBe(false);
   });
 });
