@@ -170,9 +170,9 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
       {(run.power > 0 || run.vigor > 0 || run.shield > 0) && (
         <p data-rogue-bonuses style={text}>
           <span style={{ display: 'inline-flex', gap: 12, alignItems: 'center' }}>
-            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="bolt" size={16} tone="inherit" label={isPt ? 'ataque' : 'attack'} />{run.power}</span>
-            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="favorite" size={16} tone="inherit" label={isPt ? 'vida' : 'health'} />{run.vigor}</span>
-            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="auto_awesome" size={16} tone="inherit" label={isPt ? 'escudo' : 'shield'} />{run.shield}</span>
+            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="bolt" size={20} tone="inherit" label={isPt ? 'ataque' : 'attack'} />{run.power}</span>
+            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="favorite" size={20} tone="inherit" label={isPt ? 'vida' : 'health'} />{run.vigor}</span>
+            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="auto_awesome" size={20} tone="inherit" label={isPt ? 'escudo' : 'shield'} />{run.shield}</span>
           </span>
         </p>
       )}

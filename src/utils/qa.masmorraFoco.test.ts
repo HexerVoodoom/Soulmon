@@ -10,6 +10,7 @@ import { sanitizeDungeonReturnSummary } from './dungeonReturnSummary';
 import { dungeonReturnReason } from '../components/DungeonReturnModal';
 import { playerDayKey, playerDayIso } from './playerDay';
 import { isoWeekKey } from './offerMoment';
+import { riftMonthKey } from './endlessRift';
 import {
   consumePending, emptyRun, resolveStep, sanitizeRogueRun, startChallenge, cancelChallenge,
 } from './rogueDungeon';
@@ -89,7 +90,9 @@ describe('missão dungeon-runs: 1 camada vale a run; 0 camadas não', () => {
 describe('faixa 2 da Fenda (+100 Bits): paga 1x só, dentro do estado, respeitando o teto', () => {
   it('a mesma camada duas vezes sobre o estado novo não repaga', () => {
     const dia = playerDayKey(new Date(T0), undefined);
-    const a = applyRiftLayerPaid(estado() as GameState & { riftMonth?: undefined }, 100, T0, dia);
+    // progresso NOVO do mês: descida começou na camada 1 (base 1); sem base, 1 camada no mês zerado não cruza faixa (R3)
+    const novo = estado({ riftMonth: { m: riftMonthKey(T0), best: 1, claimed: 0, base: 1 } }) as GameState & { riftMonth?: undefined };
+    const a = applyRiftLayerPaid(novo, 100, T0, dia);
     expect(a.bits).toBe(100);
     expect(a.fragments).toBe(20); // a faixa 1 cruza junto (camada 100 passa da 25)
     const b = applyRiftLayerPaid(a.next, 100, T0, dia);

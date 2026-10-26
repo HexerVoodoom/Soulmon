@@ -39,7 +39,7 @@ export function DungeonReturnModal({ summary, language, onClose }: { summary: Du
         <p style={{ ...sm2Text, margin: '0 0 8px' }}>{motivo}</p>
         <ul style={{ ...sm2Text, margin: 0, paddingLeft: 18 }}>
           {linhas.map(l => <li key={l}>{l}</li>)}
-          {summary.hearts > 0 && <li data-dungeon-return-hearts><Icon name="favorite" size={16} tone="inherit" label={isPt ? 'corações' : 'hearts'} /> {summary.hearts}</li>}
+          {summary.hearts > 0 && <li data-dungeon-return-hearts><Icon name="favorite" size={20} tone="inherit" label={isPt ? 'corações' : 'hearts'} /> {summary.hearts}</li>}
           {summary.glitchtama > 0 && <li data-dungeon-return-glitchtama>{summary.glitchtama} {isPt ? (summary.glitchtama === 1 ? 'item de marco' : 'itens de marco') : (summary.glitchtama === 1 ? 'milestone item' : 'milestone items')}</li>}
           <li><BitsAmount value={summary.bits} size={14} /></li>
         </ul>
