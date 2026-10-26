@@ -17,6 +17,7 @@
  */
 import type { Language } from '../../utils/i18n';
 import type { GameChallenge } from '../../utils/gameChallenge';
+import type { MindTutorialProp } from './MindTutorial';
 
 export interface MiniGameBaseProps {
   language: Language;
@@ -33,4 +34,6 @@ export interface EarningGameProps extends MiniGameBaseProps {
   rankSaveId?: string;
   /** Modo desafio (Calabouço): meta curta + resultado; sem Bits nem ranking. Sem a prop, o jogo é o normal. */
   challenge?: GameChallenge;
+  /** Tutorial da 1ª abertura (Eco/Trilha/Colcha): `seen` vem do save, `onShown` grava AO MOSTRAR. Sem a prop, sem tutorial automático. */
+  tutorial?: MindTutorialProp;
 }
