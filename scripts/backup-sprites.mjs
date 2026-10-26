@@ -10,7 +10,8 @@ const blobs=new Set(keys.filter(k=>k.startsWith('sprite:blob:')).map(k=>k.slice(
 const refs=new Map();
 for(const k of keys.filter(n=>/^[0-9a-f]{32,64}$/.test(n)||n.startsWith('sprite:img:'))){
   const v=get(k).toString('utf8'); for(const m of v.matchAll(/sprite-image\?k=([0-9a-f]{32})/g)) refs.set(m[1],(refs.get(m[1])||[]).concat(k.slice(0,20)));
-  if(k.startsWith('sprite:img:')) fs.writeFileSync(`${dir}/${k.replace(/:/g,'_')}.json`,v);
+  // O e-mail do titular (campo `email`, só o GM o lê) NUNCA vai para o disco de backup (QA beta3 R8, decisão do dono 4).
+  if(k.startsWith('sprite:img:')){ let o; try{ o=JSON.parse(v); delete o.email; }catch{ o=null; } fs.writeFileSync(`${dir}/${k.replace(/:/g,'_')}.json`, o?JSON.stringify(o):v.replace(/"email"\s*:\s*"[^"]*"\s*,?/g,'')); }
 }
 let faltando=0; for(const [t] of refs) if(!blobs.has(t)){faltando++; console.log('SEM BLOB:',t.slice(0,8));}
 let n=0; for(const t of blobs){ const b=get('sprite:blob:'+t,true); fs.writeFileSync(`${dir}/${t}.png`,b); n++; }
