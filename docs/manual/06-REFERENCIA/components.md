@@ -1396,6 +1396,11 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Régua:** exercitado por `src/components/ui/foundation.render.test.tsx`; a regra "ícone nunca dentro de box" é travada por teste próprio.
 **Avisos do arquivo:** ícone NUNCA dentro de box — nenhuma moldura/fundo/borda/chanfro/padding, em nenhuma prop; se existir glifo próprio com o mesmo nome em `NavGlyphs.tsx`, o `Icon` o desenha, senão cai na ligature Material — a troca é invisível para quem chama.
 
+### `src/components/ui/BackCircleButton.tsx`
+**Dono de:** o VOLTAR padrão de toda tela cheia (rodada 6, L2): seta `arrow_back` pelada num círculo de 44 px (`BACK_CIRCLE`), sempre no canto esquerdo do cabeçalho; título/andar/nome da área vai à direita. Nunca "Fechar"/✕ em tela cheia.
+**Props principais:** `onClick`, `label?` (padrão Voltar/Back por `language`), `language?`, `overScene?` (tinta clara sobre cena escura), `icon?` (`arrow_back` | `map`), `style?`, `data-*`.
+**Exports:** `BACK_CIRCLE` · `BackCircleButton`.
+
 ### `src/components/ui/BitsAmount.tsx`
 **Dono de:** o ÚNICO componente que mostra um valor de Bits (D-62, 19/10/2026, REGISTRO §105): ícone de Bits (`BitsIcon`, 16 px por padrão) + número em `bitsStyle`; a palavra "Bits" só para leitor de tela (`sm2-sr-only`). **Régua:** `ui/BitsAmount.render.test.tsx` (Bits sempre pelo componente; as três moedas nunca com a mesma tinta).
 

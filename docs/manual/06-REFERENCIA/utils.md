@@ -3432,6 +3432,12 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** `src/utils/corvoPet.test.ts`.
 **Regra de negócio (dono, 29/09/2026):** automática na 1ª abertura como administrador (`useAdmin()===true`) e SEM VOLTA. Preserva estágio, HP, energia, atributos, atividades, Bits, Emblemas, `perfectDays`, `unlockedEvolutions`, acervo e `petName`; substitui `soulmonStages`, `baseName`, `creature` e zera `demoCharacterId`.
 
+### `src/utils/feats.ts`
+**Dono de:** os contadores VITALÍCIOS de reconhecimento (rodada 6, L4) em `GameState.feats`: um objeto de chaves fechadas, inteiros 1..`FEAT_CAP`. Não conta tarefa, não é sequência, não cobra.
+**Exports:** `FEAT_CAP` · `FEAT_ADD_KEYS` (soma 1 por evento) · `FEAT_MAX_KEYS` (guarda o maior) · `FEAT_KEYS` · `FeatKey`/`Feats` (types) · `applyFeat` · `sanitizeFeats` · `subscribeFeats`/`emitFeat` (barramento: os componentes emitem, o App aplica).
+**Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`, `src/utils/missions.ts`, `src/utils/gmTools.ts`.
+**Régua:** `src/utils/feats.test.ts`; espelho do servidor `functions/api/_dailyMissions.js` travado por `dailyMissions.parity.test.js`.
+
 ### `src/utils/gmTools.ts`
 **Dono de:** as ações do painel de GM como updaters PUROS sobre o save local.
 **Exports:**

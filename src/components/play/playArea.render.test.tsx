@@ -306,7 +306,9 @@ describe('Jogos — os três prédios', () => {
       fireEvent.click(container.querySelector('[data-area-lot="mente"]')!);
       fireEvent.click(await achar(container, `[data-mente-start="${id}"]`));
       await achar(container, `[data-jogo="${id}"]`);
-      expect(recebidas[id].onEarnPoints, id).toBe(p.onEarnPoints);
+      // Os três embrulham o funil para avisar a missão do dia / os feitos (L4): o Bit continua passando intacto ao onEarnPoints do App.
+      (recebidas[id].onEarnPoints as (pts: number) => void)(3);
+      expect(p.onEarnPoints, id).toHaveBeenLastCalledWith(3);
       unmount();
     }
   });
