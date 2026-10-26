@@ -606,3 +606,13 @@ Decisões conservadoras tomadas pela orquestração; revisar:
 7. Passos: total na Home (`StepsTotalChip`) pronto mas não ligado ao CompanionHUD (outra frente mexia nele). Ligar?
 8. Passos: meta padrão 5.000 e a opção 7.000 virou 8.000; `connect-client 1.1.0-alpha10` (trocar por estável se a Play reclamar).
 9. Textos longos: ~44 trechos não encurtados (Match3Game, statTips da Home, aviso de IA com provedores) + textos longos fora da lista d72 em `src/data`/`utils`. Abrir lane própria?
+
+## Beta3 — respostas do dono 26/10
+
+- r6-l1 e r6-l3: absorvidas pelo orquestrador da rodada 6.
+- Botão "Gerar Soulmon": continua grátis até a produção.
+- QA-4, QA-5 e QA-8: entram em lane agora.
+- Decisões conservadoras da rodada 4: aceitas.
+- Montide: aprovado como a toupeirinha do Soul Barrage.
+- Sprites do Torneio: usar o template real (Oráculo), gerados no ChatGPT.
+- Worktrees já mergeadas na main: removidas.
