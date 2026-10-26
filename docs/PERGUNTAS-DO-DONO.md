@@ -574,3 +574,17 @@ P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
 - ✅ Texto de privacidade do e-mail no sprite APROVADO: publicado em `public/privacidade.html` (§6d, `#image-email`/`#imagem-email`), `PRIVACY_VERSION` → `2026-10-26`, gravação do e-mail religada (`GRAVAR_EMAIL_DO_SPRITE`).
 - ✅ Simulados aprovados; trocados os apelidos `sim_0006` (tiagoVoz → Kael_Rune) e `sim_0043` (Bruna → Mika_Sora).
 - ✅ Ranking de Zip/Patches por tempo só no 6×6. ✅ Tetos de score por jogo aceitos. ✅ Merge na main assim que a régua de bytes passar.
+
+## Beta3 rodada 5 (26/10/2026)
+
+Decisões conservadoras tomadas pela orquestração; revisar:
+
+1. Loja do Clã: preços provisórios (150 a 800 Bits do clã) e estado em chave KV própria `coopLoja:<gid>`; item comprado aparece só no card da Casa, não na cena da árvore (REGISTRO §175). Calibrar preços com dado real?
+2. Loja do Clã: duas compras simultâneas de membros diferentes podem passar juntas (KV eventual). Aceitar até aparecer, ou exigir trava por token já?
+3. Gerar de novo: o botão "Gerar Soulmon" de Configurações (teste fechado) ainda regenera de graça. Remover agora que existe o caminho pago (REGISTRO §34b)?
+4. Gerar de novo: textos de Ajuda/chat ainda dizem "uma geração por forma". Atualizar?
+5. Gerar de novo: kill-switch `SPRITE_REGEN_DISABLED` adicionado (não pedido). Manter?
+6. Passos (branch `rodada5-passos`): sem serviço em segundo plano; lê ao abrir e a cada 5 min. Dia sem abrir o app não fecha a missão depois. Aceitar ou pedir WorkManager?
+7. Passos: total na Home (`StepsTotalChip`) pronto mas não ligado ao CompanionHUD (outra frente mexia nele). Ligar?
+8. Passos: meta padrão 5.000 e a opção 7.000 virou 8.000; `connect-client 1.1.0-alpha10` (trocar por estável se a Play reclamar).
+9. Textos longos: ~44 trechos não encurtados (Match3Game, statTips da Home, aviso de IA com provedores) + textos longos fora da lista d72 em `src/data`/`utils`. Abrir lane própria?
