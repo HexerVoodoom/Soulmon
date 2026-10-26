@@ -50,6 +50,8 @@ const T_SWAP = 170;
 const T_ENEMY_SELECT = 320;
 const T_ENEMY_DELAY = 1000;
 const T_TURN_BANNER = 1500;
+/** Pausa entre o fim da ação (jogador ou inimigo) e o banner "<nome> turn". Com movimento reduzido não há banner (ver showTurnBanner), então o atraso não se aplica. */
+export const TURN_BANNER_DELAY_MS = 900;
 const T_ENEMY_PRE_AURA = 450;
 const T_CLEAR = 280;
 const T_FALL = 240;
@@ -307,6 +309,14 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     timers.current.add(id);
   }, [isPt]);
 
+  /** Espera `TURN_BANNER_DELAY_MS` e só então mostra o banner (movimento reduzido: sem banner, sem espera). */
+  const showTurnBannerLate = useCallback(async (name: string, by: 'player' | 'enemy') => {
+    if (reducedRef.current) return;
+    await wait(TURN_BANNER_DELAY_MS);
+    if (!alive.current) return;
+    showTurnBanner(name, by);
+  }, [wait, showTurnBanner]);
+
   const play = useCallback(async (a: Pos, d: Pos) => {
     if (busyRef.current || overRef.current || combatRef.current.outcome !== 'playing') return;
     const res = trySwap(boardRef.current, a, d, rngRef.current);
@@ -359,7 +369,8 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     // 1 segundo entre o turno do jogador e o turno do inimigo, com o banner "<nome do monstro> turn"
     const activeIdx = preview.active;
     const activeEnemy = preview.enemies[activeIdx];
-    showTurnBanner(enemyNameAt(preview, activeIdx), 'enemy');
+    await showTurnBannerLate(enemyNameAt(preview, activeIdx), 'enemy');
+    if (!alive.current) return;
     await wait(T_ENEMY_DELAY);
     if (!alive.current) return;
     // Efeito de aura de magia no inimigo ativo antes que ele use algum ataque
@@ -396,12 +407,12 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
     setCombat(ex.state);
     if (!res.reshuffled) setNote(turnNote(base.log.length, ex.state));
     if (ex.state.outcome === 'playing') {
-      showTurnBanner(playerLabel, 'player');
+      void showTurnBannerLate(playerLabel, 'player'); // não bloqueia o input
     }
     busyRef.current = false;
     setBusy(false);
     if (ex.state.outcome !== 'playing') finish();
-  }, [clearHint, enemyNameAt, finish, flashExtra, openFxWindow, playerLabel, runSteps, say, setSel, showTurnBanner, turnNote, wait]);
+  }, [clearHint, enemyNameAt, finish, flashExtra, openFxWindow, playerLabel, runSteps, say, setSel, showTurnBannerLate, turnNote, wait]);
 
   const pick = useCallback((p: Pos) => {
     if (busyRef.current || overRef.current) return;
