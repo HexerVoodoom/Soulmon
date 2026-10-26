@@ -118,6 +118,7 @@ import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
 import { applySpecialItem, specialRefusal, chipsUsedThisStage, CHIPS_PER_STAGE } from './utils/specialItemUse';
 import { playerDayKey, playerDayIso, dayKeyToIso } from './utils/playerDay';
+import { REVIEW_EMPTY } from './utils/mente/revisao';
 import { shouldInviteRefuge, markRefugeShown, dismissRefugeInvite, acceptRefugeInvite } from './utils/refugio/convite';
 import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
 import { MEAL_KIND_CODE, MEAL_KEYS, markMealDone, openInvite, pickMicroAction, skipMeal } from './utils/mealRhythm';
@@ -766,6 +767,7 @@ const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ d
 import type { QuickAddResult } from './utils/quickAdd';
 import type { CreateAction } from './utils/chatActions';
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
+const RevisaoGame = lazy(() => import('./components/mente/RevisaoGame').then(m => ({ default: m.RevisaoGame })));
 const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
 // minimal-ui F5 — a `ActivitiesPage` (hub de cartões) saiu: Masmorra e Corrida
 // do Dino são lotes da Exploração, o Pedra, papel e tesoura é lote de Jogos —
@@ -1325,6 +1327,8 @@ export default function App() {
     return false;
   });
   const [showHelpModal, setShowHelpModal] = useState(false);
+  /** Cartões de estudo do jogador (Revisão da Malha), fora do Ateliê: aberto pelos Ajustes. */
+  const [studyCardsOpen, setStudyCardsOpen] = useState(false);
   /* G6 (01/10/2026): o padrão da preferência é LIGADO, condicionado à
      permissão que o sistema já deu (`utils/notificationDefault.ts`). Quem já
      escolheu manda; quem nunca escolheu e ainda não tem permissão continua
@@ -3435,7 +3439,7 @@ export default function App() {
   const { powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, degeneratedByHP } = gameState;
   /* 🏠 O SOULMON ESTÁ NA MASMORRA (pedido do dono, 11/10/2026, REGISTRO §36): enquanto `dungeonAway` existir no save ele está OCUPADO.
      Tudo que usa o Soulmon de verdade passa por `bloqueiaOcupado(acao)` — evoluir, renascer, missão da guilda, passeio, duelo e
-     torneio (os dois últimos e o passeio, pelos lotes do `AreaView`). Ocupado: abre o aviso com o "Retirar da masmorra" e NÃO faz a
+     torneio (os dois últimos e o passeio, pelos lotes do `AreaView`). Ocupado: abre o aviso com o "Retirar da Fenda" e NÃO faz a
      ação. Cuidar (comer, banho, dormir, carinho) segue livre: é o que abastece a energia da própria descida. */
   const naMasmorra = soulmonNaMasmorra(gameState);
   const naMasmorraRef = useRef(naMasmorra);
@@ -3481,7 +3485,7 @@ export default function App() {
     return true;
   }, []);
   const abrirAvisoMasmorra = useCallback((acao: OcupadoAcao | null) => setOcupadoAviso({ acao }), []);
-  /** "Retirar da masmorra": acerta a descida até agora (o que rendeu já entra pelos funis de sempre) e o Soulmon volta para casa. */
+  /** "Retirar da Fenda": acerta a descida até agora (o que rendeu já entra pelos funis de sempre) e o Soulmon volta para casa. */
   const retirarDaMasmorra = useCallback(async () => {
     setRetirando(true);
     try {
@@ -3492,7 +3496,7 @@ export default function App() {
         const { layers, bits } = r.report;
         const temResumo = layers > 0 || bits > 0;
         toast(<>
-          {language === 'pt-BR' ? 'Ele voltou da masmorra' : "He's back from the dungeon"}
+          {language === 'pt-BR' ? 'De volta da Fenda' : "Back from the Rift"}
           {temResumo && <>{`: ${layers} ${language === 'pt-BR' ? (layers === 1 ? 'camada' : 'camadas') : (layers === 1 ? 'layer' : 'layers')}, `}<BitsAmount value={bits} size={14} /></>}.
         </>);
       }
@@ -7096,7 +7100,9 @@ export default function App() {
                 view={view}
                 saveId={saveId}
                 friends={gameState.friends ?? []}
+                canGiftToday={gameState.energyPoints >= getMaxEnergyForStage(gameState.evolutionStage)}
                 onFriendsChange={(friends) => setGameState(prev => ({ ...prev, friends }))}
+                onGiftSent={() => {}}
                 onVisitPlayer={() => contarMissao('friend-visit')}
                 metaDoDiaCumprida={dailyTotal > 0 && dailyDone >= dailyTotal}
                 playerDayTz={gameState.playerDayTz}
@@ -7194,6 +7200,22 @@ export default function App() {
             onDismiss={dismissProtectPrompt}
             onConfirm={handleProtectProgress}
           />
+          </Suspense>
+        )}
+
+        {/* Cartões de estudo do jogador: a Revisão da Malha inteira (lista, editar, revisar), fora do Ateliê. */}
+        {studyCardsOpen && (
+          <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+            <RevisaoGame
+              language={language}
+              evolutionStage={gameState.evolutionStage}
+              demoCharacterId={petLine}
+              onExit={() => setStudyCardsOpen(false)}
+              onEarnPoints={handleEarnGamePoints}
+              todayKey={playerDayIso(new Date(), gameState.playerDayTz)}
+              review={gameState.review ?? REVIEW_EMPTY}
+              onReviewChange={(next) => setGameState(prev => ({ ...prev, review: next }))}
+            />
           </Suspense>
         )}
 
@@ -8235,6 +8257,7 @@ export default function App() {
               onOpenGuide={() => setGuideModalOpen(true)}
               onReplayWelcomeTour={handleReplayWelcomeTour}
               onOpenGlossary={() => setShowHelpModal(true)}
+              onOpenStudyCards={() => setStudyCardsOpen(true)}
               notificationsEnabled={notificationsEnabled}
               onToggleNotifications={handleToggleNotifications}
               mealRhythm={gameState.mealRhythm}

@@ -65,6 +65,8 @@ interface SettingsPageProps {
   onReplayWelcomeTour?: () => void;
   /** Glossário (HelpModal). */
   onOpenGlossary: () => void;
+  /** Cartões de estudo do jogador (Revisão da Malha): ler/editar fora do Ateliê (decisão do dono 25/10). */
+  onOpenStudyCards?: () => void;
   notificationsEnabled: boolean;
   onToggleNotifications: () => void;
   /** "Gerar personagem": só existe para quem está sem a criatura própria; `until` = fim da espera (ms epoch). */
@@ -254,6 +256,7 @@ export function SettingsPage({
   onOpenGuide,
   onReplayWelcomeTour,
   onOpenGlossary,
+  onOpenStudyCards,
   notificationsEnabled,
   onToggleNotifications,
   generateCharacter,
@@ -539,7 +542,7 @@ export function SettingsPage({
             infoLabel={isPt ? 'Sobre a música' : 'About the music'}
             info={soundMuted
               ? (isPt ? 'Com os sons desligados, a música fica em silêncio.' : 'With sound off, the music stays silent.')
-              : (isPt ? 'Vale para o tema da Home, a música de combate (Masmorra, Arena, Duelo, Torneio) e a do Pesadelo. Começa no seu primeiro toque e para sozinha quando o app sai de vista.' : 'Covers the Home theme, the combat music (Dungeon, Arena, Duel, Tournament) and the Nightmare. Starts on your first tap and stops by itself when the app is out of view.')}
+              : (isPt ? 'Vale para o tema da Home, a música de combate (Fenda, Arena, Duelo, Torneio) e a do Pesadelo. Começa no seu primeiro toque e para sozinha quando o app sai de vista.' : 'Covers the Home theme, the combat music (Dungeon, Arena, Duel, Tournament) and the Nightmare. Starts on your first tap and stops by itself when the app is out of view.')}
           />
         </Group>
       )}
@@ -598,6 +601,7 @@ export function SettingsPage({
         <ActionRow label={t.settings.openGuide} onClick={onOpenGuide} />
         {onReplayWelcomeTour && <ActionRow label={isPt ? 'Rever o tutorial' : 'Replay tutorial'} onClick={onReplayWelcomeTour} />}
         <ActionRow label={t.settings.openGlossary} onClick={onOpenGlossary} />
+        {onOpenStudyCards && <ActionRow label={isPt ? 'Meus cartões de estudo' : 'My study cards'} onClick={onOpenStudyCards} />}
         {onOpenCredits && <ActionRow label={isPt ? 'Créditos' : 'Credits'} onClick={onOpenCredits} />}
         {MENU_SHOWS_RITUAL_TOOLS && onOpenOracle && <ActionRow label={isPt ? 'Oráculo' : 'Oracle'} onClick={onOpenOracle} />}
         {MENU_SHOWS_RITUAL_TOOLS && onResetOnboarding && <ActionRow label={isPt ? 'Refazer o ritual' : 'Redo the ritual'} onClick={onResetOnboarding} />}

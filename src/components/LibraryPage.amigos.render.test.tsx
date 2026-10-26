@@ -39,7 +39,7 @@ vi.mock('../utils/community', async (orig) => {
 });
 
 import { LibraryPage } from './LibraryPage';
-import { listPlayers, getPlayer, addFriend } from '../utils/community';
+import { listPlayers, getPlayer, addFriend, sendGift } from '../utils/community';
 
 const perfil = (over: Partial<PlayerDetail> = {}): PlayerDetail => ({
   id: 'pid-x', name: 'Fulano', petName: 'Bichinho', stage: 'rookie',
@@ -236,13 +236,37 @@ describe('C7 — Amigos: adicionar pelo nome', () => {
     expect(addFriend).not.toHaveBeenCalled();
   });
 
-  it('M4: a Biblioteca não oferece presente/doação, nem para amigo (isso é só do Friend Circle)', async () => {
+  it('M4/QA: o presente vive SÓ no Círculo de Amigos (view=friends); a Biblioteca (view=directory) nunca o oferece, nem para amigo', async () => {
     vi.mocked(getPlayer).mockResolvedValue({ found: true, player: perfil({ id: 'pid-lia', name: 'Lia' }) });
     vi.mocked(listPlayers).mockResolvedValue({ players: [] });
-    renderWithCss(<LibraryPage {...props(['pid-lia'])} embedded view="friends" />);
+    const { unmount } = renderWithCss(<LibraryPage {...props(['pid-lia'])} embedded view="directory" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
-    await screen.findByRole('button', { name: /Remover Lia/ });
     const labels = Array.from(document.querySelectorAll('button')).map(b => `${b.getAttribute('aria-label') ?? ''} ${b.textContent}`).join('|');
     expect(labels).not.toMatch(/presente|gift|volunteer_activism|Bits/i);
+    unmount();
+    renderWithCss(<LibraryPage {...props(['pid-lia'])} canGiftToday embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    await screen.findByRole('button', { name: /Remover Lia/ });
+    expect(screen.getByRole('button', { name: 'Enviar 20 Bits para Lia' })).toBeTruthy();
+  });
+
+  it('presente no Círculo: sem energia cheia fica inerte (aria-disabled) com o motivo; com energia cheia chama sendGift e marca como já presenteado', async () => {
+    vi.mocked(getPlayer).mockResolvedValue({ found: true, player: perfil({ id: 'pid-lia', name: 'Lia' }) });
+    vi.mocked(listPlayers).mockResolvedValue({ players: [] });
+    vi.mocked(sendGift).mockResolvedValue({} as never);
+    const onGiftSent = vi.fn();
+    const { unmount } = renderWithCss(<LibraryPage {...props(['pid-lia'])} embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    const inerte = await screen.findByRole('button', { name: 'Precisa de energia cheia para presentear' });
+    expect(inerte.getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(inerte);
+    expect(sendGift).not.toHaveBeenCalled();
+    unmount();
+    renderWithCss(<LibraryPage {...props(['pid-lia'])} canGiftToday onGiftSent={onGiftSent} embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    fireEvent.click(await screen.findByRole('button', { name: 'Enviar 20 Bits para Lia' }));
+    await waitFor(() => expect(sendGift).toHaveBeenCalledWith('save-1', 'pid-lia'));
+    await waitFor(() => expect(onGiftSent).toHaveBeenCalledWith('pid-lia'));
+    expect(await screen.findByRole('button', { name: 'Já presenteado hoje' })).toBeTruthy();
   });
 });

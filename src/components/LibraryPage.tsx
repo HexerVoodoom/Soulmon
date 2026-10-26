@@ -24,7 +24,7 @@
 import { useEffect, useState } from 'react';
 import { opponentSprite } from '../utils/opponentArt';
 import { isSafeSpriteSrc } from '../utils/spriteLibrary';
-import { listPlayers, getPlayer, addFriend, removeFriend, suggestNames, type DirectoryPlayer } from '../utils/community';
+import { listPlayers, getPlayer, addFriend, removeFriend, sendGift, suggestNames, type DirectoryPlayer } from '../utils/community';
 import { LIBRARY_NPCS } from '../utils/libraryNpcs';
 import { PlayerDetailModal } from './PlayerDetailModal';
 import { RitualDialog } from './ritual/RitualKit';
@@ -48,7 +48,10 @@ function readSeen(): string[] {
 interface LibraryPageProps {
   saveId: string;
   friends: string[];
+  /** Energia cheia do Soulmon: condição do presente (só no Círculo de Amigos). */
+  canGiftToday?: boolean;
   onFriendsChange: (friends: string[]) => void;
+  onGiftSent?: (friendId: string) => void;
   /** WP4.7 — abriu a criatura de alguém. A missão é sobre VISITAR, então o
    *  gatilho é a abertura do detalhe, não a amizade nem o presente. */
   onVisitPlayer?: () => void;
@@ -87,7 +90,7 @@ const MAX_FRIENDS = 5;
  */
 const amigoNaoResolvido = (id: string, isPt: boolean): LibraryEntry => ({
   id,
-  name: isPt ? 'Amigo (nao carregou)' : "Friend (didn't load)",
+  name: isPt ? 'Amigo (não carregou)' : "Friend (didn't load)",
   petName: '', stage: 'rookie', unlockedStages: [],
   pvpEnabled: false, daysPlaying: 0,
   unresolved: true,
@@ -137,7 +140,7 @@ function RowAction({
   );
 }
 
-export function LibraryPage({ saveId, friends, onFriendsChange, onVisitPlayer, metaDoDiaCumprida = false, playerDayTz, mySprite, language, embedded = false, view }: LibraryPageProps) {
+export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, playerDayTz, mySprite, language, embedded = false, view }: LibraryPageProps) {
   const isPt = language === 'pt-BR';
   const [search, setSearch] = useState('');
   const [players, setPlayers] = useState<DirectoryPlayer[] | null>(null);
@@ -149,6 +152,7 @@ export function LibraryPage({ saveId, friends, onFriendsChange, onVisitPlayer, m
   const [busyId, setBusyId] = useState<string | null>(null);
   const [tabState, setTab] = useState<'directory' | 'friends' | 'coop'>('directory');
   const tab = view ?? tabState;
+  const [giftedToday, setGiftedToday] = useState<Set<string>>(new Set());
   const [selectedPlayer, setSelectedPlayer] = useState<LibraryEntry | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   /** Amigos resolvidos por pid. `null` = ainda carregando (nao "sem amigos"). */
@@ -156,8 +160,7 @@ export function LibraryPage({ saveId, friends, onFriendsChange, onVisitPlayer, m
   /**
    * H17 (01/10/2026, navegação do dono): a BIBLIOTECA DO HALL mostra só os
    * Soulmons que a pessoa já viu — os que ela já abriu aqui e os amigos. A busca
-   * por nome continua alcançando qualquer um (sem ela, ninguém novo seria
-   * encontrável). Vale só na visão fixa do Hall (`view === 'directory'`).
+   * por nome alcança qualquer um (sem ela, ninguém novo seria encontrável). Vale só na visão fixa do Hall (`view === 'directory'`).
    */
   const seenOnly = view === 'directory';
   /** C7: o campo "adicionar amigo pelo nome" (aba Amigos). */
@@ -254,6 +257,22 @@ export function LibraryPage({ saveId, friends, onFriendsChange, onVisitPlayer, m
     }
   };
 
+  /** Presente (regressão do M4, decisão do dono 25/10): só no Círculo de Amigos (aba Amigos), nunca na Biblioteca. */
+  const gift = async (friendId: string) => {
+    setBusyId(friendId);
+    setActionError(null);
+    try {
+      await sendGift(saveId, friendId);
+      setGiftedToday(prev => new Set(prev).add(friendId));
+      onGiftSent?.(friendId);
+      setAddMsg(isPt ? '20 Bits enviados!' : 'Sent 20 Bits!');
+    } catch {
+      setActionError(isPt ? 'O presente não chegou. Tente de novo daqui a pouco.' : "The gift didn't go through. Try again in a bit.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   /** Nome que a linha mostra: no Hall é o da CRIATURA (C6); fora dele, o do jogador. */
   const nomeDe = (p: LibraryEntry) => (seenOnly ? (p.petName || p.name) : p.name);
   const searchLower = search.trim().toLowerCase();
@@ -263,7 +282,8 @@ export function LibraryPage({ saveId, friends, onFriendsChange, onVisitPlayer, m
   // C6: todo Soulmon já visto (NPC incluso), filtrado pelo nome da criatura e em ordem alfabética.
   const directoryList: LibraryEntry[] | null = directoryAll && onlySeen
     ? directoryAll
-      .filter(p => seen.includes(p.id) || friends.includes(p.id))
+      // Sem busca: só os já vistos e os amigos (H17). COM busca: o diretório inteiro — senão jogador novo nunca aparece (QA R7).
+      .filter(p => searchLower !== '' || seen.includes(p.id) || friends.includes(p.id))
       .filter(p => !searchLower || p.petName.toLowerCase().includes(searchLower) || p.name.toLowerCase().includes(searchLower))
       .sort((a, b) => nomeDe(a).localeCompare(nomeDe(b), language, { sensitivity: 'base' }))
     : directoryAll;
@@ -445,8 +465,8 @@ export function LibraryPage({ saveId, friends, onFriendsChange, onVisitPlayer, m
             ? (isPt ? 'Você ainda não tem amigos. Digite o nome de alguém acima.' : 'You have no friends yet. Type someone’s name above.')
             : onlySeen
               ? (searchLower
-                ? (isPt ? 'Nenhum Soulmon visto com esse nome.' : 'No Soulmon you have seen has that name.')
-                : (isPt ? 'Os Soulmons que você conhecer ficam guardados nesta lista.' : 'The Soulmons you meet stay on this list.'))
+                ? (isPt ? 'Nenhum Soulmon com esse nome.' : 'No Soulmon has that name.')
+                : (isPt ? 'Os Soulmons que você abrir ficam guardados nesta lista. Para achar alguém novo, busque pelo nome.' : 'The Soulmons you open stay on this list. To find someone new, search by name.'))
               : (isPt ? 'Nenhum jogador com esse nome.' : 'No player by that name.')}
         </p>
       )}
@@ -466,7 +486,7 @@ export function LibraryPage({ saveId, friends, onFriendsChange, onVisitPlayer, m
                 <MiniGlass size={64}>
                   <img src={sprite} alt="" width={64} height={64} style={{ display: 'block', width: 64, height: 64, objectFit: 'contain', imageRendering: 'pixelated' }} />
                 </MiniGlass>
-                <span className="s" style={{ fontSize: 12, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nomeDe(p)}</span>
+                <span className="sm2-lib-s" style={{ fontSize: 12, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nomeDe(p)}</span>
               </button>
             );
           })}
@@ -499,6 +519,7 @@ export function LibraryPage({ saveId, friends, onFriendsChange, onVisitPlayer, m
         {!(seenOnly && tab === 'directory') && list?.map(p => {
           const isNpc = !!p.isNpc;
           const isFriend = friends.includes(p.id);
+          const gifted = giftedToday.has(p.id);
           const sprite = isSafeSpriteSrc(p.spriteUrl) ? p.spriteUrl : opponentSprite(p);
           return (
             <div key={p.id} className="sm2-lib-row">
@@ -533,7 +554,7 @@ export function LibraryPage({ saveId, friends, onFriendsChange, onVisitPlayer, m
                   </span>
                   <span className="s sm2-num">
                     {p.unresolved
-                      ? (isPt ? 'Nao deu para carregar o perfil agora.' : "Couldn't load this profile right now.")
+                      ? (isPt ? 'Não deu para carregar o perfil agora.' : "Couldn't load this profile right now.")
                       // WP4.11 / proibição #21: o `rank` saiu. Número que sobe
                       // e desce conforme o outro joga é métrica de desempenho
                       // alheio, e um diretório de amigos é o pior lugar para ela.
@@ -546,6 +567,23 @@ export function LibraryPage({ saveId, friends, onFriendsChange, onVisitPlayer, m
                 </span>
               </button>
 
+              {!isNpc && isFriend && tab === 'friends' && (
+                <RowAction
+                  icon="volunteer_activism"
+                  tone="ink"
+                  busy={busyId === p.id}
+                  disabled={!canGiftToday || gifted}
+                  label={!canGiftToday
+                    ? (isPt ? 'Precisa de energia cheia para presentear' : 'Needs full energy to gift')
+                    : gifted
+                      ? (isPt ? 'Já presenteado hoje' : 'Already gifted today')
+                      : (isPt ? `Enviar 20 Bits para ${p.name}` : `Send 20 Bits to ${p.name}`)}
+                  onClick={() => gift(p.id)}
+                  onInert={() => setAddMsg(!canGiftToday
+                    ? (isPt ? 'Para presentear, a energia do seu Soulmon precisa estar cheia.' : 'To send a gift, your Soulmon needs full energy.')
+                    : (isPt ? 'Você já presenteou essa pessoa hoje.' : 'You already gifted this person today.'))}
+                />
+              )}
               {!isNpc && (
                 <RowAction
                   icon={isFriend ? 'do_not_disturb_on' : 'add'}

@@ -93,6 +93,7 @@ import { sanitizeEquippedFrame, sanitizeOwnedFrames } from '../utils/frames';
 import { spriteLineOf, isCorvo } from '../utils/corvoPet';
 import { newUuid } from '../utils/uuid';
 import { sanitizeAvatarId } from '../utils/avatar';
+import { migrateBestiary } from '../utils/bestiaryMigrate';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
 import type { Answers } from '../utils/soulProfile/personality/types';
 
@@ -1222,7 +1223,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // WP4.10/WP4.6 — coleções novas. `?? {}` / `?? []` porque save antigo
         // não tem: ausência é "ainda não", nunca erro.
         formReachedAt: (loadedState.formReachedAt as Record<string, string>) ?? {},
-        bestiary: strArr(loadedState.bestiary),
+        bestiary: migrateBestiary(strArr(loadedState.bestiary)), // QA: chaves antigas linha-tier ganham as novas id-estágio
         offerShownWeek: typeof loadedState.offerShownWeek === 'string' ? loadedState.offerShownWeek : undefined,
         offerDismissed: loadedState.offerDismissed === true,
         demoTint: num(loadedState.demoTint, 0),
