@@ -54,6 +54,7 @@ const NOVAS_DESDE_20_10_2026: readonly string[] = [
   'soulmon-gifts-credited-v1',
   'soulmon-generate-character-until',
   'soulmon-generate-character-uses',
+  'soulmon-barrage-best',   // nasceu depois de 20/10 (QA beta3 R2): estava na lista congelada por engano
 ];
 
 /** Valores de STORAGE_KEYS em 20/10/2026 — literal, não derivada. */
@@ -97,7 +98,6 @@ const CHAVES_EM_20_10_2026: readonly string[] = [
   'soulmon-ritual-open',
   'soulmon-match3-best',
   'soulmon-dino-best',
-  'soulmon-barrage-best',
   'soulmon-library-seen',
   'soulmon-picross-daily-paid',
   'soulmon-sound-muted',
@@ -267,7 +267,7 @@ describe('CHAVES DE ARMAZENAMENTO NÃO SOMEM', () => {
   });
   it('a lista congelada não tem duplicata nem encolheu', () => {
     expect(new Set(CHAVES_EM_20_10_2026).size).toBe(CHAVES_EM_20_10_2026.length);
-    expect(CHAVES_EM_20_10_2026.length).toBe(78);
+    expect(CHAVES_EM_20_10_2026.length).toBe(77);
   });
   it('toda chave atual de STORAGE_KEYS está congelada (chave nova entra em NOVAS_DESDE_20_10_2026)', () => {
     const soltas = chavesNaoCongeladas(VALORES_KEYS, CHAVES_EM_20_10_2026, NOVAS_DESDE_20_10_2026);
