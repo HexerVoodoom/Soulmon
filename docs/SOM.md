@@ -478,3 +478,27 @@ sono, descanso e mudo; guards de loudness e de manifesto; R-NOVA e D11.
 **13.4 O que só o aparelho do dono confirma.** No PWA instalado, depois de atualizar: entrar na Masmorra toca "Stone Hall Combat"; desligar
 "Música" silencia Home, combate e Pesadelo; "Sons" continua independente. Os testes cobrem o código, não o aparelho.
 
+## 14. Três trilhas do dono: masmorra, evolução e meditação (26/10/2026, S18)
+
+**14.1 O que toca onde** (`musica.ts`; REGISTRO S18):
+| Superfície | Faixa | −3 dB (combate)? |
+|---|---|---|
+| `masmorra-mapa`: lobby, fim e retorno do Endless Rift (`DungeonGame`, fases `intro`/`ended`/`away`) e todo o Calabouço (`RogueDungeon`) | "Dungeon Theme" (`tema-masmorra`) | não |
+| `masmorra`: a descida (`fight`/`enemy-down`/`floor-clear`) | segue "Stone Hall Combat" | sim |
+| `evolucao`: `EvolutionCeremony` montada (cerimônia + cartão final) | "Evolution Theme" (`tema-evolucao`), por cima do estalo `playEvolve` | não |
+| `meditacao`: `RespiracaoGame` e `BolhasGame mode="calma"` | "Meditation Theme" (`tema-meditacao`) | não |
+
+Mesmo interruptor "Música" (§13), mesmo gesto (D11), crossfade de 1,2 s. R-NOVA (superfície nova nasce muda) foi revogada pelo dono SÓ para estas.
+
+**14.2 Medidas** (ffmpeg-static `ebur128`, LUFS-S mediano; régua: tema instalado −28,0 / integrado −28,2):
+| Faixa | Original (LUFS-S / TP) | Ganho | WebM (LUFS-S / integrado / TP) | M4A (LUFS-S / integrado / TP) |
+|---|---|---|---|---|
+| Dungeon Theme (223,61 s) | −15,7 / −5,8 | −12,3 dB + fade-out 3 s | −28,0 / −28,2 / −16,8 | −27,8 / −28,1 / −16,6 |
+| Evolution Theme (29,93 s) | −16,6 / −5,8 | −11,4 dB | −28,0 / −28,5 / −16,7 | −28,1 / −28,5 / −16,7 |
+| Meditation Theme (223,13 s) | −14,7 / −3,5 | −13,3 dB | −28,0 / −28,1 / −15,1 | −28,1 / −28,1 / −15,6 |
+Trim 0 (`TRIM_MUSICAS_DE_COMBATE_DB` em `loudness.ts`, resíduo ≤ 0,2 dB). Encode: `libopus -b:a 64k -vbr on -application audio` e `aac -b:a 64k -movflags +faststart`, `-vn -map_metadata -1` (os MP3 traziam capa h264).
+
+**14.3 Bytes:** MP3 original → WebM / M4A: masmorra 5 268 125 → 1 949 094 / 1 843 435; evolução 706 002 → 246 207 / 246 944; meditação 5 297 929 → 1 995 439 / 1 839 911.
+Fora do S6, fora do pré-cache; o `sw.js` já ignora `Range` em `/sounds/tema-`. Loop: as duas longas já terminam em fade; volta com respiro de 8 s (a de evolução 29 s, que não chega a repetir) e fade-in de 2 / 0,5 / 3 s.
+
+**14.4 Pendência:** nenhuma trilha foi ouvida por agente; a escuta final é do dono (`PERGUNTAS-DO-DONO.md`, "Beta3 som"). Procedência: ver `Attributions.md`.

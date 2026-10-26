@@ -4,6 +4,7 @@
  * (sem asset novo). A masmorra/Endless Rift (`DungeonGame.tsx`) é outra coisa e não é tocada.
  */
 import { Component, lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { entrarNaSuperficie } from '../utils/musica';
 import { Icon } from './ui/Icon';
 import type { GameChallenge } from '../utils/gameChallenge';
 import { loadDinoGame, loadEcoGame, loadMatch3Game, loadPatchesGame, loadRPSGame, loadZipGame } from './nav/playPrefetch';
@@ -93,6 +94,8 @@ export interface RogueDungeonProps {
 }
 
 export function RogueDungeon({ language, todayKey, saved, onChange, combatant, saveId, onEarnPoints, evolutionStage = 'rookie', demoCharacterId, petName, petElement, playerLevel }: RogueDungeonProps) {
+  // S18: o Calabouço (combates simulados, sem cena de luta) toca o "Dungeon Theme" inteiro.
+  useEffect(() => entrarNaSuperficie('masmorra-mapa'), []);
   const isPt = language === 'pt-BR';
   const t = (c: { en: string; pt: string }) => (isPt ? c.pt : c.en);
   const run = runForDay(saved, todayKey);

@@ -150,6 +150,41 @@ Origem: **Fornecida pelo dono, gerada no Suno**. Suno id `e12b0ec8-0451-424a-ae5
 2026-10-19T22:29:09Z, original de 3:37,2 (4 976 023 B). Ganho −12,2 dB + fade-out de 3 s (o último segundo ficava
 sustentado e cortava seco). O título original no Suno continha o nome de uma trilha de terceiro por erro de digitação, segundo declaração do dono em 19/10/2026; o repo não consegue provar por escuta a ausência de material de terceiro.
 
+#### S18 (26/10/2026) — três trilhas novas fornecidas pelo dono
+
+Entregues pelo dono em MP3 (`Dungeon theme (1).mp3` 5 268 125 B, `Evolution Theme.mp3` 706 002 B, `meditation theme.mp3`
+5 297 929 B). Origem: **fornecida pelo dono; gerador/plano NÃO declarados** — o repo não afirma que sejam do Suno nem licença
+alguma; o dono já aprovou o conteúdo, falta ele declarar a procedência/plano (pendência escrita em `PERGUNTAS-DO-DONO.md`, "Beta3 som").
+Reencode: WebM/Opus 64 kbps e M4A/AAC-LC 64 kbps, estéreo, sem metadados nem capa (o MP3 trazia capa h264, descartada).
+Ganho único por faixa para o alvo de `utils/loudness.ts`; medidas e decisão: `SOM.md` §14 e REGISTRO S18.
+
+#### "Dungeon Theme" — exploração da masmorra e Calabouço (`utils/musica.ts`)
+
+| Arquivo · SHA-256 · bytes | Formato |
+|---|---|
+| `public/sounds/tema-masmorra.webm` · `ea353da8e38522988b86e1c9f8d27a555f22640e5141d819df824aa5a72b7d4e` · 1 949 094 B | Opus 64 kbps |
+| `public/sounds/tema-masmorra.m4a` · `e6b953b34855b80beb31b11367e3d03ad7c36894dafc597ab561764d51e8e93f` · 1 843 435 B | AAC-LC 64 kbps, faststart |
+
+Original de 3:43,6 (5 268 125 B). Ganho −12,3 dB + fade-out de 3 s.
+
+#### "Evolution Theme" — cerimônia de evolução (`components/EvolutionCeremony.tsx`)
+
+| Arquivo · SHA-256 · bytes | Formato |
+|---|---|
+| `public/sounds/tema-evolucao.webm` · `10d71c42f45d2151d274146689870fe4444603bf5fca16dcf4aadd8ec694bdd1` · 246 207 B | Opus 64 kbps |
+| `public/sounds/tema-evolucao.m4a` · `ed4c4bba983aebc7eb176105fb76a875fd5d5e65f86cfe57f132fec17283fe95` · 246 944 B | AAC-LC 64 kbps, faststart |
+
+Original de 0:29,95 (706 002 B). Ganho −11,4 dB.
+
+#### "Meditation Theme" — Respiração e Bolhas calmas (`components/refugio/RespiracaoGame.tsx`, `mente/BolhasGame.tsx`)
+
+| Arquivo · SHA-256 · bytes | Formato |
+|---|---|
+| `public/sounds/tema-meditacao.webm` · `adbe6971b8b05a74994e41708bdd73626813b6b9eee7a182e41683c99cd0dff7` · 1 995 439 B | Opus 64 kbps |
+| `public/sounds/tema-meditacao.m4a` · `d286a6798c804d97f27b297f939c6bd2ba0a97276554edc6890a953456b50520` · 1 839 911 B | AAC-LC 64 kbps, faststart |
+
+Original de 3:43,2 (5 297 929 B). Ganho −13,3 dB; a faixa já termina em fade.
+
 #### Licença — o que está declarado e o que falta
 
 ⚠️ **Pendência do dono — nada aqui afirma licença.** O Soulmon NÃO registra termo algum do Suno. Estado em

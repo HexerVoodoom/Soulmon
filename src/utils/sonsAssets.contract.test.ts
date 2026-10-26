@@ -19,7 +19,11 @@ const TODOS = [...Object.values(ASSETS_DE_SOM)];
 /** S17 (07/10/2026): a música-tema — manifesto próprio, fora do S6 de 300 KB, com orçamento por formato. */
 const FORMATOS_DO_TEMA = TEMA_DO_JOGO.formatos;
 /** 19/10/2026: o tema e as músicas de combate (Stone Hall Combat/Nightmare) têm a mesma forma e o mesmo orçamento. */
-const MUSICAS = [TEMA_DO_JOGO, ...Object.values(MUSICAS_DE_COMBATE)];
+const NOVAS_S18 = ['masmorra', 'evolucao', 'meditacao'] as const;
+/** As três do Suno (tema + combate + pesadelo); S18 (26/10/2026) acrescentou três trilhas fornecidas pelo dono. */
+const MUSICAS_SUNO = [TEMA_DO_JOGO, MUSICAS_DE_COMBATE.combate, MUSICAS_DE_COMBATE.pesadelo];
+const MUSICAS_S18 = NOVAS_S18.map(k => MUSICAS_DE_COMBATE[k]);
+const MUSICAS = [...MUSICAS_SUNO, ...MUSICAS_S18];
 const FORMATOS_DAS_MUSICAS = MUSICAS.flatMap(m => [...m.formatos]);
 const TETO_TEMA_POR_FORMATO_BYTES = 2.5 * 1024 * 1024;
 /** O conjunto anterior (tema + dungeon/pvp, 13/10 e 19/10/2026): o novo não pode pesar mais que ele. */
@@ -82,8 +86,18 @@ describe('S17 — as músicas em streaming (tema + Stone Hall Combat/Nightmare):
     }
   });
 
+  it('S18 — as 3 trilhas novas: origem "fornecida pelo dono" (gerador NÃO declarado, nada de licença inventada), hash e pendência escritos', () => {
+    const attr = readFileSync(join(raiz, 'docs', 'Attributions.md'), 'utf8');
+    for (const m of MUSICAS_S18) {
+      expect(m.origem, m.nome).toBe('fornecida-pelo-dono');
+      expect(m.geradoEm, m.nome).toBe('2026-10-26');
+      expect(attr, m.nome).toContain(m.nome);
+    }
+    expect(attr).toMatch(/S18[\s\S]{0,400}gerador\/plano NÃO declarados/);
+  });
+
   it('a procedência é "fornecida pelo dono, gerada no Suno" e a verificação dos termos é pendência ESCRITA (nada de licença inventada)', () => {
-    for (const m of MUSICAS) {
+    for (const m of MUSICAS_SUNO) {
       expect(m.origem, m.nome).toBe('suno/fornecida-pelo-dono');
       expect(m.geradoEm, m.nome).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     }
@@ -100,7 +114,7 @@ describe('S17 — as músicas em streaming (tema + Stone Hall Combat/Nightmare):
     expect(attr).toContain('Falta só conferir o texto do termo');
     expect(attr).not.toContain('musica-masmorra');
     expect(attr).not.toContain('musica-pvp');
-    for (const m of Object.values(MUSICAS_DE_COMBATE)) expect(attr, m.nome).toContain(m.nome);
+    for (const m of MUSICAS) expect(attr, m.nome).toContain(m.nome);
   });
 
   it('o guard de hash vale nas duas direções: nada em public/sounds/ fora do manifesto, e os removidos não existem', () => {
@@ -111,9 +125,12 @@ describe('S17 — as músicas em streaming (tema + Stone Hall Combat/Nightmare):
   });
 
   it('(f) a soma de bytes de tema + músicas de combate não passa a do conjunto anterior (13 589 741)', () => {
-    const total = FORMATOS_DAS_MUSICAS.reduce((s, f) => s + f.bytes, 0);
+    const total = MUSICAS_SUNO.flatMap(m => [...m.formatos]).reduce((s, f) => s + f.bytes, 0);
     expect(total, `${total} bytes`).toBeLessThanOrEqual(TETO_CONJUNTO_ANTERIOR_BYTES);
-    expect(Object.keys(MUSICAS_DE_COMBATE).sort()).toEqual(['combate', 'pesadelo']);
+    // S18: as 3 novas têm orçamento próprio (≤ 2,5 MB por formato, acima) e, juntas, ≤ 12 MB nos dois formatos (medido: ~8,1 MB).
+    const novas = MUSICAS_S18.flatMap(m => [...m.formatos]).reduce((s, f) => s + f.bytes, 0);
+    expect(novas, `${novas} bytes`).toBeLessThanOrEqual(12 * 1024 * 1024);
+    expect(Object.keys(MUSICAS_DE_COMBATE).sort()).toEqual(['combate', 'evolucao', 'masmorra', 'meditacao', 'pesadelo']);
   });
 
   it('cada formato cabe no orçamento próprio (≤ 2,5 MB) e é o ÚNICO motivo de o S6 de 300 KB não valer para ele', () => {
@@ -134,7 +151,7 @@ describe('S17 — as músicas em streaming (tema + Stone Hall Combat/Nightmare):
       expect(m.pausaEntreVoltasS, m.nome).toBeGreaterThan(0);
       expect(m.fadeInS, m.nome).toBeGreaterThan(0);
     }
-    for (const m of Object.values(MUSICAS_DE_COMBATE)) expect(m.pausaEntreVoltasS).toBeLessThan(TEMA_DO_JOGO.pausaEntreVoltasS);
+    for (const m of Object.values(MUSICAS_DE_COMBATE)) expect(m.pausaEntreVoltasS, m.nome).toBeLessThan(TEMA_DO_JOGO.pausaEntreVoltasS);
   });
 });
 

@@ -101,6 +101,46 @@ describe('a tabela (pura): superfície × preferência única → faixa', () => 
   });
 });
 
+describe('S18 — masmorra (mapa), evolução e meditação têm faixa própria', () => {
+  it.each([
+    ['masmorra-mapa', 'masmorra'],
+    ['evolucao', 'evolucao'],
+    ['meditacao', 'meditacao'],
+  ] as const)('ligada: %s → %s; desligada → null; sem o degrau de combate', (s, f) => {
+    expect(escolherFaixa(s, true)).toBe(f);
+    expect(escolherFaixa(s, false)).toBeNull();
+    expect(FAIXA_DE_COMBATE[s]).toBe(f);
+    expect(SUPERFICIE_EM_COMBATE[s]).toBe(false);
+  });
+  it('as LUTAS da masmorra seguem em `combate` (só lobby/fim/retorno e o Calabouço usam o tema da masmorra)', () => {
+    expect(FAIXA_DE_COMBATE.masmorra).toBe('combate');
+  });
+  it('entrar na meditação: tema pausado (`cena`), faixa própria pedida sem o degrau de combate; sair devolve o tema', () => {
+    const sair = entrarNaSuperficie('meditacao');
+    expect(M.chamadas).toEqual(['consentir', 'combate:false', 'faixa:null', 'tema-pausa:cena', 'combate-faixa:meditacao:false']);
+    M.chamadas.length = 0;
+    sair();
+    expect(M.chamadas).toEqual(['combate:false', 'faixa:null', ...SAI_DO_TEMA]);
+  });
+  it('lobby da masmorra → descida → lobby: crossfade entre `masmorra` e `combate`, uma música por vez', () => {
+    const sairMapa = entrarNaSuperficie('masmorra-mapa');
+    expect(M.chamadas).toContain('combate-faixa:masmorra:false');
+    sairMapa();
+    M.chamadas.length = 0;
+    entrarNaSuperficie('masmorra');
+    expect(M.chamadas).toContain('combate-faixa:combate:true');
+    expect(M.chamadas.some(c => c.startsWith('combate-faixa:masmorra'))).toBe(false);
+  });
+  it('as telas ligam cada faixa à superfície certa (a fonte, não a memória)', () => {
+    const lê = (p: string) => readFileSync(new URL(p, import.meta.url), 'utf8');
+    expect(lê('../components/EvolutionCeremony.tsx')).toContain("entrarNaSuperficie('evolucao')");
+    expect(lê('../components/refugio/RespiracaoGame.tsx')).toContain("entrarNaSuperficie('meditacao')");
+    expect(lê('../components/mente/BolhasGame.tsx')).toContain("calma ? entrarNaSuperficie('meditacao')");
+    expect(lê('../components/RogueDungeon.tsx')).toContain("entrarNaSuperficie('masmorra-mapa')");
+    expect(lê('../components/DungeonGame.tsx')).toContain("emDescida ? 'masmorra' : 'masmorra-mapa'");
+  });
+});
+
 describe('o apply: nunca duas músicas ao mesmo tempo', () => {
   it('Home com tema: nada de combate e o tema não tem motivo de pausa', () => {
     reavaliarMusica();

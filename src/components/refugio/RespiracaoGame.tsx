@@ -9,6 +9,7 @@ import { REFUGIO_SCENE_SUAVE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
 import { usePetScale } from '../../hooks/usePetScale';
 import { petScaleStyle } from '../../utils/spriteScale';
+import { entrarNaSuperficie } from '../../utils/musica';
 import {
   BREATH_PATTERNS, BREATH_DURATIONS_MIN, phaseAt, fillLevel, sessionMs, type BreathPhase,
 } from '../../utils/refugio/respiracao';
@@ -20,7 +21,7 @@ import {
  *
  * NÃO mede nada, NÃO pontua, NÃO paga — por isso recebe `MiniGameBaseProps`,
  * sem o callback de Bits. Funciona sem toque nenhum; o botão de segurar é só um
- * apoio para quem quer acompanhar com o dedo. Nasce MUDO (R-NOVA).
+ * apoio para quem quer acompanhar com o dedo. Nasce MUDO (R-NOVA) quanto a SFX; a música "Meditation Theme" é a exceção pedida pelo dono (S18, REGISTRO), sob o interruptor "Música".
  * Movimento reduzido troca a escala por uma barra de preenchimento — reduz o
  * MOVIMENTO, nunca a pausa.
  */
@@ -48,6 +49,7 @@ export function CrisisNote({ isPt }: { isPt: boolean }) {
 export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onExit }: MiniGameBaseProps) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
+  useEffect(() => entrarNaSuperficie('meditacao'), []); // S18: a trilha de meditação acompanha a respiração
   const [screen, setScreen] = useState<Screen>('setup');
   const [patternId, setPatternId] = useState(BREATH_PATTERNS[0].id);
   const [minutes, setMinutes] = useState(BREATH_DURATIONS_MIN[0]);
