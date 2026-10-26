@@ -372,7 +372,7 @@ export async function onRequest({ request, env }) {
     // Contadores DIARIOS monotonicos (beta-2 6.1/4.1, `_dayCounters.js`): camadas da masmorra e janelas de check-in do dia do jogador so
     // crescem dentro do dia e o dia so anda para a frente (ate o dia do servidor + 1). Apagar o save local ou voltar o contador nao
     // devolve camada nem janela; omitir o campo mantem o gravado. So parseia o gravado quando algum dos dois campos existe nele.
-    let ddAntes; let ddDepois;
+    let ddAntes; let ddDepois; let recAntes; let recDepois;
     {
       const temGravado = typeof prev?.value === 'string' && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"'));
       if (temGravado || 'dungeonDaily' in state || 'checkIns' in state) {
@@ -380,6 +380,8 @@ export async function onRequest({ request, env }) {
         if (temGravado) { try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; } }
         const dd = enforceDungeonDaily(state.dungeonDaily, gravado.dungeonDaily);
         ddAntes = gravado.dungeonDaily; ddDepois = dd;
+        // Recorde de profundidade (`dungeonDepthRecord`): só LIDO, para ancorar o lastro do Endless Rift (`_dayCounters.js`); o save segue intacto.
+        recAntes = gravado.dungeonDepthRecord; recDepois = state.dungeonDepthRecord;
         if (dd) state.dungeonDaily = dd; else delete state.dungeonDaily;
         const ci = enforceCheckIns(state.checkIns, gravado.checkIns);
         if (ci) state.checkIns = ci; else delete state.checkIns;
@@ -431,7 +433,7 @@ export async function onRequest({ request, env }) {
       metadata: { t: Date.now(), f, r: cur + 1, h },
     });
     // Camadas do Endless Rift no MES (so cresce; lastro do score aceito em /api/rankings). Falha aqui nunca derruba o save.
-    await bumpRiftLayers(kvOrThrow(env), saveId, ddAntes, ddDepois).catch(() => {});
+    await bumpRiftLayers(kvOrThrow(env), saveId, ddAntes, ddDepois, Date.now(), { recordAntes: recAntes, recordDepois: recDepois }).catch(() => {});
     return Response.json({ ok: true, revision: cur + 1 }, { headers: CORS });
   }
 

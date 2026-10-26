@@ -1,4 +1,5 @@
 import { kv, kvOrThrow } from './_kv.js';
+import { readTombstone } from './_accountTombstone.js';
 // Entitlements — FONTE DA VERDADE de tudo que envolve dinheiro real.
 //
 // Regra de ouro: o cliente NUNCA dita tier nem saldo de créditos. O save do
@@ -859,16 +860,32 @@ export async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
   return { ent: fresh, revoked };
 }
 
+/** Teto de marcas de prêmio guardadas no ent (uma por mês de fechamento; 24 meses bastam para qualquer reprocessamento). */
+const RANK_PRIZES_MAX = 24;
+
 /**
  * Credita Créditos como PRÊMIO de ranking (exceção "Crédito como prêmio", REGISTRO §M6, dono 25/10/2026:
- * top 3 mensal do Endless Rift). Só o servidor chama isto, e só `_riftPayout.js`, que garante a idempotência
- * por mês e por usuário ANTES de chegar aqui. Nunca toca `consumedOrders`/`orderDetails` (não é compra; o
- * reembolso não desfaz prêmio).
+ * top 3 mensal do Endless Rift). Só o servidor chama isto, e só `_riftPayout.js` (aprovação do dono na página GM).
+ * Nunca toca `consumedOrders`/`orderDetails` (não é compra; o reembolso não desfaz prêmio).
+ *
+ * IDEMPOTÊNCIA DENTRO DO PRÓPRIO `ent` (QA beta3 R1): `markKey` (ex.: `rift:2026-10`) entra em `ent.rankPrizes` na MESMA
+ * escrita que soma os Créditos — um único ler-modificar-gravar. Não depende de trava em KV eventual: a segunda chamada
+ * lê a marca e devolve `{ duplicate: true }` sem creditar. Conta APAGADA (`accountDeletedAt` no resíduo minimizado, ou lápide)
+ * não recebe: o prêmio não ressuscita um `ent` excluído.
+ * @param {number} [since] epoch ms de quando o prêmio foi ganho; ver acima.
+ * @returns {Promise<{ ent: any|null, granted: boolean, duplicate?: boolean, refused?: 'deleted'|'invalid' }>}
  */
-export async function grantRankPrize(env, saveId, amount) {
-  if (!Number.isInteger(amount) || amount <= 0) return null;
+export async function grantRankPrize(env, saveId, amount, markKey, since = 0) {
+  if (!Number.isInteger(amount) || amount <= 0 || typeof markKey !== 'string' || !markKey) return { ent: null, granted: false, refused: 'invalid' };
+  // `since` = quando o prêmio foi GANHO (fechamento do mês). Exclusão a partir daí recusa; quem apagou ANTES e voltou depois (conta nova) não é barrado.
+  const tomb = await readTombstone(env, saveId).catch(() => null);
   const ent = await readEntitlement(env, saveId);
+  const delAt = Math.max(tomb ? Number(tomb.at) || 1 : 0, Number(ent.accountDeletedAt) || 0);
+  if (delAt > 0 && delAt >= since) return { ent: null, granted: false, refused: 'deleted' };
+  const marks = Array.isArray(ent.rankPrizes) ? ent.rankPrizes : [];
+  if (marks.includes(markKey)) return { ent, granted: false, duplicate: true };
   ent.credits += amount;
+  ent.rankPrizes = [...marks, markKey].slice(-RANK_PRIZES_MAX);
   await writeEntitlement(env, saveId, ent);
-  return ent;
+  return { ent, granted: true };
 }

@@ -26,8 +26,12 @@ export const RIFT_TIERS: readonly RiftTier[] = [
 export const RIFT_RANKING_FROM = 250;
 const MAX_LAYER = 999;
 
-/** Registro do mês no save. `m` = `YYYY-MM` (UTC); `best` = camada mais funda do mês; `claimed` = maior faixa já paga. */
-export interface RiftMonth { m: string; best: number; claimed: number }
+/**
+ * Registro do mês no save. `m` = `YYYY-MM` (UTC); `best` = camada mais funda do mês; `claimed` = maior faixa já paga;
+ * `base` = a PRIMEIRA camada limpa no mês (a descida retoma perto do recorde: ali o progresso NOVO do mês é 1).
+ * Ausente em registro antigo = 1 (legado: progresso = `best`).
+ */
+export interface RiftMonth { m: string; best: number; claimed: number; base?: number }
 export interface RiftMonthState { riftMonth?: RiftMonth }
 
 /** `YYYY-MM` em UTC (mesma chave do servidor: `monthKey`). */
@@ -44,7 +48,14 @@ export function sanitizeRiftMonth(raw: unknown): RiftMonth | undefined {
   if (!raw || typeof raw !== 'object') return undefined;
   const r = raw as Record<string, unknown>;
   if (typeof r.m !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(r.m)) return undefined;
-  return { m: r.m, best: int(r.best, 0, MAX_LAYER), claimed: int(r.claimed, 0, RIFT_TIERS.length) };
+  const best = int(r.best, 0, MAX_LAYER);
+  const base = typeof r.base === 'number' && Number.isFinite(r.base) ? int(r.base, 1, MAX_LAYER) : undefined;
+  return { m: r.m, best, claimed: int(r.claimed, 0, RIFT_TIERS.length), ...(base !== undefined ? { base } : {}) };
+}
+
+/** Progresso NOVO do mês: camadas além do ponto de retomada (`base`). Mês sem `base` (legado/zerado) = a própria camada. */
+export function riftProgress(m: Pick<RiftMonth, 'best' | 'base'>): number {
+  return m.best <= 0 ? 0 : Math.max(0, m.best - (m.base ?? 1) + 1);
 }
 
 /** O registro do mês de AGORA: mês velho (ou ausente) reinicia em zero. */
@@ -64,11 +75,16 @@ export function riftBestThisMonth(state: RiftMonthState, nowMs: number): number 
  */
 export function applyRiftLayer<T extends RiftMonthState>(prev: T, layer: number, nowMs: number): { next: T; newTiers: RiftTier[] } {
   const cur = currentRiftMonth(prev.riftMonth, nowMs);
-  const best = Math.max(cur.best, int(layer, 0, MAX_LAYER));
-  const crossed = RIFT_TIERS.filter(t => t.tier > cur.claimed && t.layer <= best);
+  const lay = int(layer, 0, MAX_LAYER);
+  const best = Math.max(cur.best, lay);
+  // 1ª camada limpa do mês fixa o ponto de retomada: as FAIXAS pagam por progresso NOVO no mês, não por retomar perto do recorde vitalício
+  // (QA beta3 R3: 1 camada no mês novo cruzava as faixas 25 e 100 de graça). Registro antigo sem `base` segue como era (progresso = best).
+  const base = cur.base ?? (cur.best === 0 && lay > 0 ? lay : undefined);
+  const prog = riftProgress({ best, base });
+  const crossed = RIFT_TIERS.filter(t => t.tier > cur.claimed && t.layer <= prog);
   const claimed = crossed.length ? crossed[crossed.length - 1].tier : cur.claimed;
-  if (best === cur.best && claimed === cur.claimed && prev.riftMonth?.m === cur.m) return { next: prev, newTiers: [] };
-  return { next: { ...prev, riftMonth: { m: cur.m, best, claimed } }, newTiers: crossed };
+  if (best === cur.best && claimed === cur.claimed && base === cur.base && prev.riftMonth?.m === cur.m) return { next: prev, newTiers: [] };
+  return { next: { ...prev, riftMonth: { m: cur.m, best, claimed, ...(base !== undefined ? { base } : {}) } }, newTiers: crossed };
 }
 
 export function riftTierTotals(tiers: readonly RiftTier[]): { fragments: number; bits: number } {

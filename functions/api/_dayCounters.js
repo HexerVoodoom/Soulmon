@@ -87,13 +87,35 @@ export function enforceCheckIns(incoming, stored, nowMs = Date.now()) {
 }
 
 // ---------------------------------------------------------------------------
-// CAMADAS DA FENDA NO MES (lastro do score do Endless Rift). `dungeonDaily` zera a cada dia; o ranking `endless-rift` e MENSAL.
-// O servidor soma, em chave propria (`riftlayers:<AAAA-MM>:<saveId>`, fora do save), o quanto `dungeonDaily.layers` AVANCOU a cada
-// gravacao aceita. So cresce. O score aceito no ranking nao pode passar desse total: descer ate a camada N exige ter COMECADO N camadas.
-// Mes = UTC do servidor (o mesmo do ranking). Limite honesto: o contador nasce com este deploy; camadas descidas antes dele nao contam.
+// LASTRO DO SCORE DO ENDLESS RIFT (QA beta3 R1/R2/R3, decisão do dono 1).
+//
+// O ranking `endless-rift` é MENSAL e o score é a camada ABSOLUTA mais funda do mês. Duas falhas do lastro antigo (soma de
+// `dungeonDaily.layers` do save cru, `riftlayers:<mês>:<saveId>` = número):
+//   · FORJÁVEL: `dungeonDaily.layers = 999` virava lastro 999 num único POST;
+//   · RESTRITIVO: quem retoma perto do recorde (`startLayerFor`) já começa na camada ~R e nunca "começou R camadas" → 409.
+//
+// Agora o servidor ANCORA o mês: `{ n, base, rec, d, dn }`
+//   · `base`  = camada em que a 1ª descida do mês COMEÇA (`startLayerFor(rec)`, sem o teto do Lv, que só deixaria a âncora MAIS
+//     baixa = mais folgada). Progresso do mês = camada atingida − base + 1;
+//   · `n`     = camadas COMEÇADAS no mês, contadas pelo servidor, com TAXA PLAUSÍVEL por dia (`RIFT_MAX_LAYERS_PER_DAY`; o dia é o
+//     do SERVIDOR, não o do aparelho). Só cresce. Score aceito ≤ base + n − 1;
+//   · `rec`   = o recorde que o SERVIDOR acredita: nasce do último mês visto (ou, na 1ª vez, do recorde que o save já trazia) e só
+//     sobe, no máximo o quanto as camadas novas comprovam. Forjar `dungeonDepthRecord` no save não eleva a âncora do mês seguinte.
+//   · `d/dn`  = o dia do servidor e o quanto já entrou nele (teto de taxa).
+// LIMITE HONESTO: a 1ª vez que o servidor vê um recorde (conta que já jogava antes deste deploy) ele é confiado — o save é do
+// cliente. A porta de saída é a REVISÃO DO DONO: o prêmio só é pago após aprovação na página GM, que mostra base/n/recorde.
+// Mês = UTC do servidor (o mesmo do ranking). Valor legado (só um número = camadas somadas) segue lido como `{ n, base: 1 }`.
 // ---------------------------------------------------------------------------
 export const riftLayersKey = (month, saveId) => `riftlayers:${month}:${saveId}`;
 const monthOf = (nowMs) => new Date(nowMs).toISOString().slice(0, 7);
+const prevMonthOf = (nowMs) => { const d = new Date(nowMs); return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1)).toISOString().slice(0, 7); };
+
+/** Camadas COMEÇADAS por dia (do servidor) que o lastro aceita: energia é o limite real (1/camada, estágio máx. ~12/dia) — folga larga, mas finita. */
+export const RIFT_MAX_LAYERS_PER_DAY = 60;
+/** Espelho de `DUNGEON_MILESTONE_FLOOR` (`src/utils/dungeonIdle.ts`). */
+const MILESTONE_FLOOR = 5;
+/** Onde a descida começa para um recorde (espelho de `startLayerFor`, sem o teto do Lv: ver cabeçalho). */
+export const riftStartLayer = (record) => 1 + MILESTONE_FLOOR * Math.floor(Math.max(0, Math.min(DUNGEON_MAX_LAYER - 1, Math.floor(Number(record) || 0))) / MILESTONE_FLOOR);
 
 /** Quantas camadas novas a gravacao trouxe: mesmo dia = diferenca; dia novo = o contador inteiro. Nunca negativo. */
 export function layersDelta(antes, depois) {
@@ -105,15 +127,46 @@ export function layersDelta(antes, depois) {
   return d.layers;
 }
 
-export async function readRiftLayers(store, saveId, nowMs = Date.now()) {
-  const n = Number(await store.get(riftLayersKey(monthOf(nowMs), saveId)));
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+const num = (v, lo, hi) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, Math.floor(v))) : lo);
+
+/** Lê o lastro do mês: JSON novo, número legado ou ausente. @returns {Promise<{n:number,base:number,rec:number,d:string,dn:number}|null>} */
+export async function readRiftLastro(store, saveId, nowMs = Date.now(), month = monthOf(nowMs)) {
+  const raw = await store.get(riftLayersKey(month, saveId));
+  if (raw === null || raw === undefined) return null;
+  let v = null;
+  try { v = JSON.parse(raw); } catch { v = null; }
+  if (typeof v === 'number') return { n: num(v, 0, 1e6), base: 1, rec: 0, d: '', dn: 0 };
+  if (!v || typeof v !== 'object') return null;
+  return { n: num(v.n, 0, 1e6), base: num(v.base, 1, DUNGEON_MAX_LAYER), rec: num(v.rec, 0, DUNGEON_MAX_LAYER), d: typeof v.d === 'string' ? v.d : '', dn: num(v.dn, 0, 1e6) };
 }
 
-export async function bumpRiftLayers(store, saveId, antes, depois, nowMs = Date.now()) {
+/** Maior score aceitável no ranking do mês: `base + n − 1` (0 sem nenhuma camada começada). */
+export async function readRiftLayers(store, saveId, nowMs = Date.now()) {
+  const l = await readRiftLastro(store, saveId, nowMs);
+  return l && l.n > 0 ? Math.min(DUNGEON_MAX_LAYER, l.base + l.n - 1) : 0;
+}
+
+/**
+ * @param {{recordAntes?:unknown, recordDepois?:unknown}} [ctx] o `dungeonDepthRecord` que o save JÁ tinha gravado (antes) e o que chegou (depois).
+ */
+export async function bumpRiftLayers(store, saveId, antes, depois, nowMs = Date.now(), ctx = {}) {
   const delta = layersDelta(antes, depois);
   if (delta <= 0) return 0;
-  const total = (await readRiftLayers(store, saveId, nowMs)) + delta;
-  await store.put(riftLayersKey(monthOf(nowMs), saveId), String(total), { expirationTtl: 86400 * 70 });
-  return total;
+  const month = monthOf(nowMs);
+  const day = isoDayUtc(nowMs);
+  let l = await readRiftLastro(store, saveId, nowMs, month);
+  const recDepois = num(ctx.recordDepois, 0, DUNGEON_MAX_LAYER);
+  if (!l) {
+    // 1º lastro do mês: o recorde do servidor vem do mês anterior; sem ele, é a 1ª vez que o servidor vê esta conta (confiado).
+    const ant = await readRiftLastro(store, saveId, nowMs, prevMonthOf(nowMs)).catch(() => null);
+    const rec0 = ant ? Math.max(ant.rec, ant.base + ant.n - 1) : num(ctx.recordAntes, 0, DUNGEON_MAX_LAYER);
+    l = { n: 0, base: riftStartLayer(rec0), rec: rec0, d: day, dn: 0 };
+  }
+  if (l.d !== day) { l.d = day; l.dn = 0; }
+  const aceito = Math.max(0, Math.min(delta, RIFT_MAX_LAYERS_PER_DAY - l.dn));
+  l.n += aceito; l.dn += aceito;
+  // O recorde do servidor só sobe o quanto as camadas aceitas comprovam (clear ≤ começadas).
+  if (recDepois > l.rec) l.rec = Math.min(recDepois, l.rec + aceito);
+  await store.put(riftLayersKey(month, saveId), JSON.stringify(l), { expirationTtl: 86400 * 70 });
+  return Math.min(DUNGEON_MAX_LAYER, l.base + l.n - 1);
 }

@@ -4,7 +4,7 @@ import {
   CHUNK, ensureSimuladosDia, estadoDoDia, saveDoSimulado, scoresDoDia, stripSimulated, lockKeyDia, isSimuladoId,
 } from './_simulados.js';
 import { submitScore, readBoard, payablePlacements, RANKED_GAMES, isoWeekKey } from './_rankings.js';
-import { closePreviousMonth, paidKey, _resetClosedCache } from './_riftPayout.js';
+import { closePreviousMonth, pendingKey, approveRiftPrize, _resetClosedCache } from './_riftPayout.js';
 import { readEntitlement } from './_entitlements.js';
 import { sanitizarNomeDeGuilda, NOME_MAX } from './_coop.js';
 import { duelSide } from './_duel.js';
@@ -196,12 +196,15 @@ describe('nunca levam prêmio', () => {
     await submitScore(env, { game: 'endless-rift', period: 'monthly', saveId: real('b'), score: 2, now: at });
     const r = await closePreviousMonth(env, new Date('2026-11-02T09:00:00Z'));
     expect(r.status).toBe('closed');
-    expect(r.paid.every(p => !p.saveId.startsWith('sim_'))).toBe(true);
-    expect(r.paid.map(p => p.saveId)).toEqual([real('a'), real('b')]);
+    expect(r.pending.every(p => !p.saveId.startsWith('sim_'))).toBe(true);
+    expect(r.pending.map(p => p.saveId)).toEqual([real('a'), real('b')]);
+    // o fechamento só grava PENDENTE (decisão do dono 1): o Crédito sai na aprovação do GM
+    await approveRiftPrize(env, '2026-10', real('a'));
+    await approveRiftPrize(env, '2026-10', real('b'));
     expect((await readEntitlement(env, real('a'))).credits).toBe(50);
     expect((await readEntitlement(env, real('b'))).credits).toBe(25);
     for (const p of SIMULADOS) {
-      expect(env.SOULMON_SAVES.store.has(paidKey('2026-10', p.id))).toBe(false);
+      expect(env.SOULMON_SAVES.store.has(pendingKey('2026-10', p.id))).toBe(false);
       expect((await readEntitlement(env, p.id)).credits).toBe(0);
     }
   });
@@ -212,7 +215,7 @@ describe('nunca levam prêmio', () => {
     env.SOULMON_SAVES.store.set('rk:endless-rift:2026-10:0999999900:sim_0001', { v: '', m: { s: 100, n: 'Lia_Moon', t: 1 } });
     await submitScore(env, { game: 'endless-rift', period: 'monthly', saveId: real('c'), score: 5, now: new Date('2026-10-20T12:00:00Z') });
     const r = await closePreviousMonth(env, new Date('2026-11-02T09:00:00Z'));
-    expect(r.paid.map(p => p.saveId)).toEqual([real('c')]);
+    expect(r.pending.map(p => p.saveId)).toEqual([real('c')]);
   });
 
   it('closeSeason não dá troféu a simulado (desce para o real)', async () => {

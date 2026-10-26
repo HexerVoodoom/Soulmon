@@ -446,7 +446,7 @@ export interface GameState {
   /** ENDLESS RIFT (M6): score MENSAL da masmorra — `{ m: 'YYYY-MM' UTC, best: camada mais funda do mês, claimed: maior faixa de
    *  recompensa já paga no mês }`. Ausente/velho = score 0 no mês atual. Dono: `utils/endlessRift.ts`. Só do cliente; os Créditos do
    *  top 3 são pagos pelo servidor (`functions/api/_riftPayout.js`), nunca lidos daqui. */
-  riftMonth?: { m: string; best: number; claimed: number };
+  riftMonth?: { m: string; best: number; claimed: number; /** 1ª camada limpa do mês (ponto de retomada): as faixas pagam por progresso além dela. */ base?: number };
   /** A DESCIDA QUE CONTINUA SOZINHA (11/10/2026, REGISTRO §36): a posição da descida na masmorra (camada, lugar na escada, HP, energia do
    *  especial, semente, instantâneo do jogador). Presente = o Soulmon está NA MASMORRA (ocupado; a Home mostra a plaquinha) e o avanço
    *  fora do app é calculado por `utils/dungeonAway.ts` › `applyDungeonAway` ao voltar. Ausente = em casa. Tipo e higienização: `utils/dungeonIdle.ts`. */
@@ -1316,7 +1316,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           const r = obj<unknown>(loadedState.riftMonth) as Record<string, unknown>;
           if (typeof r.m !== 'string' || !/^\d{4}-(0[1-9]|1[0-2])$/.test(r.m)) return undefined;
           const n = (v: unknown, hi: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(0, Math.floor(v))) : 0);
-          return { m: r.m, best: n(r.best, 999), claimed: n(r.claimed, 3) };
+          const base = typeof r.base === 'number' && Number.isFinite(r.base) ? Math.min(999, Math.max(1, Math.floor(r.base))) : undefined;
+          return { m: r.m, best: n(r.best, 999), claimed: n(r.claimed, 3), ...(base !== undefined ? { base } : {}) };
         })(),
         // A descida que continua sozinha: registro inteiro ou nada (campo ruim → `undefined`, o Soulmon volta para casa). Mesma regra de
         // `sanitizeDungeonAway` (`utils/dungeonIdle.ts`).
