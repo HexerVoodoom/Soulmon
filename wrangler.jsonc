@@ -46,6 +46,9 @@
   // servidor passa a exigir token e o cliente nao sabe emitir nenhum.
   "vars": {
     "FIREBASE_PROJECT_ID": "soulmon-app",
+    // Config WEB do Firebase (pública por desenho; igual à de .env.production). Usada só pela página /gm/soulmons para o login do GM.
+    "FIREBASE_API_KEY": "AIzaSyAnDdCxoxdwENfg1tzoXkhRHaqO_NnJ0dU",
+    "FIREBASE_AUTH_DOMAIN": "soulmon-app.firebaseapp.com",
     "SIMULADOS_ON": "1"
   },
   "d1_databases": [
