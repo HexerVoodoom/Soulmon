@@ -6,7 +6,6 @@ import { getSpriteForStage, artFacesLeft } from '../utils/sprites';
 /** A corrida SEMPRE corre para a DIREITA: arte de perfil esquerdo (`artFacesLeft`, mesma regra da Home) é espelhada. */
 export const dinoPetMirrored = (stage: string, demoCharacterId?: string): boolean => artFacesLeft(stage, demoCharacterId);
 import { lineIconForStage } from '../utils/lineIcons';
-import { usePetScale } from '../hooks/usePetScale';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
@@ -30,6 +29,8 @@ import obstacle4b from '../assets/soulmon/dino/dino-obstacle-4b.png';
 import obstacle4c from '../assets/soulmon/dino/dino-obstacle-4c.png';
 import groundStrip from '../assets/soulmon/dino/dino-ground-strip.png';
 import parallaxFar from '../assets/soulmon/dino/dino-parallax-far.png';
+/* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
+const PET_SCALE_MINIGAME = 1;
 
 /**
  * Corrida com obstáculos (EN Obstacle Run; até 30/09/2026 "Corrida do Dino" / "Dino
@@ -193,7 +194,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const petImgRef = useRef<HTMLImageElement | null>(null);
   const petUrl = lineIconForStage(evolutionStage, 64, demoCharacterId) ?? getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const petScaleRef = useRef(1);
-  petScaleRef.current = usePetScale(evolutionStage, petUrl);
+  petScaleRef.current = PET_SCALE_MINIGAME;
   const tierImgsRef = useRef<HTMLImageElement[][]>([]);
   const groundImgRef = useRef<HTMLImageElement | null>(null);
   const slashImgRef = useRef<HTMLImageElement | null>(null);

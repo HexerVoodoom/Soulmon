@@ -7,13 +7,14 @@ import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, ph
 import { BitsAmount } from '../ui/BitsAmount';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { getSpriteForStage } from '../../utils/sprites';
-import { usePetScale } from '../../hooks/usePetScale';
 import { petScaleStyle } from '../../utils/spriteScale';
 import { ATELIE_SCENE_SUAVE, MINI_FX } from '../../utils/visorScenes';
 import {
   checkTap, ecoBits, growSequence, playbackIntervalMs, startSequence,
   ECO_MAX_BITS, ECO_START_LENGTH, type Stone,
 } from '../../utils/mente/eco';
+/* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
+const PET_SCALE_MINIGAME = 1;
 
 /**
  * ECO DO PET (`docs/BENCHMARK-MINIJOGOS.md` §6.2) — o pet acende as pedras
@@ -137,7 +138,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
   };
 
   const pet = getSpriteForStage(evolutionStage, demoCharacterId);
-  const petScale = usePetScale(evolutionStage, pet);
+  const petScale = PET_SCALE_MINIGAME;
   const title = isPt ? 'Eco do Pet' : 'Pet Echo';
   const sub = reverse
     ? (isPt ? 'Repita as pedras de trás para frente.' : 'Repeat the stones backwards.')

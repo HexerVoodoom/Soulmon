@@ -13,9 +13,10 @@ import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { GameVisor, VisorSprite, VisorFx, VisorSparks, DIALOG_VISOR_W, phaseTitle } from './games/GameKit';
 import { NIGHTMARE_SCENE } from '../utils/dungeonScenes';
 import { getSpriteForStage } from '../utils/sprites';
-import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
 import type { Language } from '../utils/i18n';
+/* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
+const PET_SCALE_MINIGAME = 1;
 
 export interface GoodDreamProps {
   open: boolean;
@@ -30,7 +31,7 @@ export interface GoodDreamProps {
 
 export function GoodDream({ open, honor, petStage, demoCharacterId, language, onClaim }: GoodDreamProps) {
   const petSprite = getSpriteForStage(petStage, demoCharacterId, 256);
-  const petScale = usePetScale(petStage, petSprite);
+  const petScale = PET_SCALE_MINIGAME;
   if (!open) return null;
   const isPt = language === 'pt-BR';
   const title = isPt ? 'Um sonho bom' : 'A good dream';

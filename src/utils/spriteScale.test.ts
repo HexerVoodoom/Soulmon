@@ -114,14 +114,24 @@ describe('toda tela que desenha o bicho do jogador usa o dono único', () => {
     'src/components/NightmareBattle.tsx',
     'src/components/DuelScreen.tsx',
     'src/components/TournamentPage.tsx',
+  ];
+  /* Rodada 4 (N2): o porte reduzido vale SÓ na Home e nos combates; nos minigames o bicho tem o tamanho cheio. */
+  const MINIGAMES = [
     'src/components/Match3Game.tsx',
     'src/components/DinoGame.tsx',
     'src/components/GoodDream.tsx',
     'src/components/mente/RevisaoGame.tsx',
     'src/components/mente/EcoGame.tsx',
     'src/components/mente/BolhasGame.tsx',
+    'src/components/mente/PatchesGame.tsx',
+    'src/components/mente/ZipGame.tsx',
     'src/components/refugio/RespiracaoGame.tsx',
   ];
+  it.each(MINIGAMES)('%s NÃO reduz o bicho (tamanho cheio)', (rel) => {
+    const src = ler(rel);
+    expect(src).not.toMatch(/usePetScale/);
+    expect(src).toMatch(/PET_SCALE_MINIGAME = 1/);
+  });
   it.each(TELAS)('%s lê o fator de usePetScale', (rel) => {
     const src = ler(rel);
     expect(src).toMatch(/usePetScale/);
@@ -135,7 +145,7 @@ describe('toda tela que desenha o bicho do jogador usa o dono único', () => {
   });
 
   it('nenhuma tela redeclara a escada de portes (dono único: utils/spriteScale.ts)', () => {
-    for (const rel of TELAS) expect(ler(rel)).not.toMatch(/RARE_BIG_ROOKIE_RATE|sizeProfileFor|targetFor\(/);
+    for (const rel of [...TELAS, ...MINIGAMES]) expect(ler(rel)).not.toMatch(/RARE_BIG_ROOKIE_RATE|sizeProfileFor|targetFor\(/);
   });
 
   it('o App escreve a semente do save em render', () => {

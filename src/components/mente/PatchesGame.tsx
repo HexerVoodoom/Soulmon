@@ -8,13 +8,14 @@ import { RankingPanel } from '../RankingPanel';
 import { TIME_RANK_SIZE } from '../../utils/rankings';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { getSpriteForStage } from '../../utils/sprites';
-import { usePetScale } from '../../hooks/usePetScale';
 import { petScaleStyle } from '../../utils/spriteScale';
 import { ATELIE_SCENE_SUAVE, MINI_FX } from '../../utils/visorScenes';
 import {
   PATCHES_MAX_BITS, patchesBits, patchesForLevel, placeRect, rectBetween, rectHas, validatePatches,
   type PatchesPuzzle, type Rect,
 } from '../../utils/mente/patches';
+/* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
+const PET_SCALE_MINIGAME = 1;
 
 /**
  * COLCHA (id `patches`) — divida a grade em retângulos; cada um leva UMA
@@ -52,7 +53,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
   const [kbAnchor, setKbAnchor] = useState<number | null>(null);
 
   const pet = getSpriteForStage(evolutionStage, demoCharacterId);
-  const petScale = usePetScale(evolutionStage, pet);
+  const petScale = PET_SCALE_MINIGAME;
   const { size } = puzzle;
   // Alvo de toque ≥44px também na 8×8 (sem gap; a grade centrada pode vazar pelo padding de 16px, nunca da tela a 360px).
   const cell = Math.max(44, Math.floor(Math.min(GRID_MAX_W, 52 * size) / size));

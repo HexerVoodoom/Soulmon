@@ -25,8 +25,9 @@ import { fxMirror } from '../utils/fxFacing';
 import { DUNGEON_LINE_NAMES, OWN_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
 import { rosterEntryOfKey } from '../utils/enemyRoster';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
-import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
+/* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
+const PET_SCALE_MINIGAME = 1;
 
 /**
  * COMBINA 3 — o jogo de combinar peças do Salão de Jogos (pedido do dono, 11/10/2026, REGISTRO §36), agora um COMBATE (18/10/2026, D-03…D-07):
@@ -510,7 +511,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
   const enemyPx = compact ? ENEMY_SPRITE_COMPACT : ENEMY_SPRITE;
 
   const playerSprite = getSpriteForStage(evolutionStage, demoCharacterId);
-  const petScale = usePetScale(evolutionStage, playerSprite);
+  const petScale = PET_SCALE_MINIGAME;
 
   // A arena (D-76, 19/10/2026): o SEU Soulmon em CIMA à esquerda; o time inimigo (1→3) EMBAIXO, em fila da DIREITA para a ESQUERDA (o 1º, ativo, na ponta direita). Ativo = borda + ▸ (a cor nunca é a única pista).
   const arena = (

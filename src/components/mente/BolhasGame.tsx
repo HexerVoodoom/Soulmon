@@ -7,13 +7,14 @@ import { BitsAmount } from '../ui/BitsAmount';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { MINI_FX, REFUGIO_SCENE_SUAVE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
-import { usePetScale } from '../../hooks/usePetScale';
 import { petScaleStyle } from '../../utils/spriteScale';
 import {
   bolhasBits, bubbleProgress, hasEscaped, initialStaircase, recordOutcome, spawnBubble, timeLeftMs,
   BOLHAS_CALMA_INTERVAL_MS, BOLHAS_MAX_BITS, BOLHAS_POINTS_PER_BIT,
   type Bubble, type Staircase,
 } from '../../utils/mente/bolhas';
+/* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
+const PET_SCALE_MINIGAME = 1;
 
 /**
  * BOLHAS DO SONHO (`docs/BENCHMARK-MINIJOGOS.md` §6.3). A regra é de
@@ -167,7 +168,7 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
 
   const now = Date.now();
   const pet = getSpriteForStage(evolutionStage, demoCharacterId);
-  const petScale = usePetScale(evolutionStage, pet);
+  const petScale = PET_SCALE_MINIGAME;
   const secondsLeft = phase === 'play' && !calma ? Math.ceil(timeLeftMs(startedAt.current, now) / 1000) : 60;
 
   const title = calma ? (isPt ? 'Bolhas calmas' : 'Calm bubbles') : (isPt ? 'Bolhas do Sonho' : 'Dream Bubbles');
