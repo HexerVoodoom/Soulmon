@@ -38,7 +38,7 @@ export interface RogueFightProps {
   /** Andar atual (1..3): escolhe o cenário. */
   floor: number;
   /** Chamado UMA vez, depois de "Continuar" (ou de sair da luta = derrota). */
-  onResult: (won: boolean, foeName: string) => void;
+  onResult: (won: boolean, foeName: string, hpLeft: number) => void;
 }
 
 export function RogueFight({ language, run, step, combatant, skills, petElement, evolutionStage = 'rookie', demoCharacterId, floor, onResult }: RogueFightProps) {
@@ -66,16 +66,16 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   const reportedRef = useRef(false);
   const reduced = useRef(prefersReducedMotion());
 
-  const report = useCallback((won: boolean) => {
+  const report = useCallback((won: boolean, hpLeft?: number) => {
     if (reportedRef.current) return;
     reportedRef.current = true;
-    onResult(won, enemy.name);
+    onResult(won, enemy.name, hpLeft ?? 0);
   }, [onResult, enemy.name]);
 
   const round = useCallback((): GroupRound => {
     const f = dungeonFight({ combatant: setup.combatant, family, startShield: setup.startShield }, setup.foe, setup.seed, true);
     return {
-      player: f.player, foes: f.foes, seed: f.seed, startHp: 1, startEnergy: 0,
+      player: f.player, foes: f.foes, seed: f.seed, startHp: setup.startHp, startEnergy: 0,
       hitScale: f.hitScale,
       castScale: ({ who, ring, dodge }) => f.castScale({ who, ring, dodge }),
     };
@@ -106,7 +106,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   const won = end?.winner === 'player';
   const pronto = battle.stateKey === 1;
   const foeHp = pronto ? (battle.foesHp[0] ?? 1) : 1;
-  const meHp = pronto ? battle.hp : 1;
+  const meHp = pronto ? battle.hp : setup.startHp;
 
   return (
     <div data-rogue-fight style={BATTLE_LAYER_STYLE}>
@@ -164,7 +164,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
               {won ? (isPt ? `Você venceu ${enemy.name}!` : `You defeated ${enemy.name}!`) : (isPt ? `${enemy.name} venceu.` : `${enemy.name} won.`)}
             </p>
             {!won && <p style={{ margin: 0, fontSize: 'var(--sm2-text-sm, 14px)' }}>{isPt ? 'O dia no Calabouço acaba — volte amanhã.' : 'Your dungeon day ends — come back tomorrow.'}</p>}
-            <button type="button" data-rogue-fight-continue onClick={() => report(won)} style={{ ...sm2Button('primary'), minHeight: 44 }}>
+            <button type="button" data-rogue-fight-continue onClick={() => report(won, end.hpLeft)} style={{ ...sm2Button('primary'), minHeight: 44 }}>
               {isPt ? 'Continuar' : 'Continue'}
             </button>
           </div>

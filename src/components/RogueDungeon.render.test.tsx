@@ -99,4 +99,37 @@ describe('RogueDungeon', () => {
     expect(onEarn).toHaveBeenCalledWith(4);
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ paid: true }));
   });
+  it('cards: uma ação por opção, centralizados sobre o mapa, e tocar chama o mesmo handler', () => {
+    const onChange = vi.fn();
+    const { container } = render(<RogueDungeon language="en-US" todayKey={D} saved={emptyRun(D)} onChange={onChange} combatant={combatant} />);
+    const cards = container.querySelector('[data-rogue-cards]') as HTMLElement;
+    expect(cards).not.toBeNull();
+    expect(container.querySelector('[data-rogue-map]')).not.toBeNull();
+    expect(cards.style.justifyContent).toBe('center');
+    const btns = [...cards.querySelectorAll('button[data-rogue-path]')] as HTMLElement[];
+    expect(btns).toHaveLength(3);
+    for (const b of btns) { expect(b.querySelector('svg, img, [data-icon], span')).not.toBeNull(); expect(b.textContent!.length).toBeGreaterThan(8); }
+    const kind = pathsFor(D, 0).find(k => k !== 'combat' && k !== 'minigame')!;
+    fireEvent.click(cards.querySelector(`[data-rogue-path="${kind}"]`) as HTMLElement);
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ pending: kind }));
+  });
+  it('cards: o bônus também vem em cards e aplica o mesmo handler', () => {
+    const onChange = vi.fn();
+    const saved: RogueRun = { ...emptyRun(D), step: 1, won: 1, bonusPending: true };
+    const { container } = render(<RogueDungeon language="pt-BR" todayKey={D} saved={saved} onChange={onChange} combatant={combatant} />);
+    expect(container.querySelectorAll('[data-rogue-cards] button[data-rogue-bonus]')).toHaveLength(3);
+    fireEvent.click(container.querySelector('[data-rogue-bonus]') as HTMLElement);
+    expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ bonusPending: false }));
+  });
+  it('HUD mostra a vida atual; save sem hp = cheia; ícone por andar no nó', () => {
+    const full = render(<RogueDungeon language="en-US" todayKey={D} saved={emptyRun(D)} onChange={() => {}} combatant={combatant} />);
+    const txt = (full.container.querySelector('[data-rogue-hp] .sm2-num') as HTMLElement).textContent!;
+    const [a, b] = txt.split('/').map(Number);
+    expect(a).toBe(b);
+    expect(full.container.querySelectorAll('[data-rogue-floor-art] img')).toHaveLength(3);
+    cleanup();
+    const hurt = render(<RogueDungeon language="en-US" todayKey={D} saved={{ ...emptyRun(D), hp: 0.5 }} onChange={() => {}} combatant={combatant} />);
+    const [c, d] = (hurt.container.querySelector('[data-rogue-hp] .sm2-num') as HTMLElement).textContent!.split('/').map(Number);
+    expect(c).toBe(Math.round(d / 2));
+  });
 });

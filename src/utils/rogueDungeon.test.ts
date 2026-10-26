@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { combatantAt, REFERENCE_BUILDS } from './combate/level';
 import {
-  ROGUE_FLOORS, ROGUE_MAX_SCORE, ROGUE_MAX_STEPS, applyBonus, bonusChoices, CHALLENGE_POOL, challengeFor, emptyRun, floorsCleared, isFinished,
-  isForcedCombat, pathsFor, resolveStep, rogueScore, runForDay, sanitizeRogueRun, simulateRogueCombat,
+  ROGUE_FLOORS, ROGUE_MAX_SCORE, ROGUE_MAX_STEPS, applyBonus, bonusChoices, CHALLENGE_POOL, challengeFor, emptyRun, floorsCleared, hpOf, isFinished,
+  isForcedCombat, pathsFor, resolveStep, rogueScore, runForDay, rogueFightSetup, sanitizeRogueRun, simulateRogueCombat,
 } from './rogueDungeon';
 
 const D = '2026-10-25';
@@ -98,5 +98,34 @@ describe('rogueFightSetup (N7: a luta visível)', () => {
     expect(a.startShield).toBeGreaterThan(0);
     expect(rogueFightSetup({ ...run, shield: 0 }, 2, c).startShield).toBe(0);
     expect(rogueFightSetup(run, 3, c).seed).not.toBe(a.seed);
+  });
+  it('vida contínua: a vitória guarda o HP restante, entre lutas e andares, sem encher', () => {
+    let r = { ...emptyRun(D), step: 2 };
+    r = resolveStep(r, 'combat', true, 0.4);
+    expect(r.hp).toBe(0.4);
+    r = applyBonus(r, 'heal');
+    r = resolveStep({ ...r, step: 7 }, 'combat', true, 0.25); // cruza para o andar 2
+    expect(r.hp).toBe(0.25);
+    expect(floorsCleared(r)).toBe(1);
+    expect(resolveStep({ ...r, bonusPending: false }, 'puzzle', true).hp).toBe(0.25); // não-combate não mexe
+    expect(hpOf(r)).toBe(0.25);
+  });
+  it('vida: HP inicial entra na luta e a luta seguinte parte dele', () => {
+    const c = combatantAt(20, REFERENCE_BUILDS.balanced);
+    const full = simulateRogueCombat({ ...emptyRun(D) }, 0, c);
+    const hurt = simulateRogueCombat({ ...emptyRun(D), hp: 0.3 }, 0, c);
+    expect(hurt.hpLeft).toBeLessThanOrEqual(0.3 + 1e-9);
+    expect(full.hpLeft).toBeGreaterThanOrEqual(hurt.hpLeft);
+    expect(rogueFightSetup({ ...emptyRun(D), hp: 0.3 }, 0, c).startHp).toBe(0.3);
+    expect(rogueFightSetup(emptyRun(D), 0, c).startHp).toBe(1);
+  });
+  it('vida: save sem hp lê vida cheia; save com hp é tolerante; reset diário enche', () => {
+    expect(hpOf(sanitizeRogueRun({ day: D, step: 3 })!)).toBe(1);
+    expect(sanitizeRogueRun({ day: D, step: 3 })).not.toHaveProperty('hp');
+    expect(sanitizeRogueRun({ day: D, hp: 0.5 })!.hp).toBe(0.5);
+    expect(sanitizeRogueRun({ day: D, hp: 'x' })!.hp).toBeUndefined();
+    expect(sanitizeRogueRun({ day: D, hp: 7 })!.hp).toBeUndefined();
+    expect(sanitizeRogueRun({ day: D, hp: -3 })!.hp).toBe(0.01);
+    expect(hpOf(runForDay({ ...emptyRun('2026-10-24'), hp: 0.2 }, D))).toBe(1);
   });
 });

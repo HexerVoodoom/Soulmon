@@ -62,12 +62,18 @@ export function applyBonus(r: RogueRun, kind: BonusKind): RogueRun {
 }
 
 /** Resolve o passo: vitória abre a escolha de bônus; derrota de combate encerra o dia; erro fora de combate só gasta o passo. */
-export function resolveStep(r0: RogueRun, kind: PathKind, victory: boolean): RogueRun {
+export function resolveStep(r0: RogueRun, kind: PathKind, victory: boolean, hpLeft?: number): RogueRun {
   if (isFinished(r0) || r0.bonusPending) return r0;
   const { pending: _pendente, ...r } = r0; // resolver o passo encerra o desafio em curso
   void _pendente;
   const step = r.step + 1;
-  const base = kind === 'combat' && r.shield > 0 ? { ...r, shield: r.shield - 1 } : r;
+  let base: RogueRun = kind === 'combat' && r.shield > 0 ? { ...r, shield: r.shield - 1 } : r;
+  // Vida contínua: o que sobrou da luta é a vida da próxima (sem encher); sem `hpLeft` (jogos não-combate) a vida não muda.
+  if (kind === 'combat' && victory && typeof hpLeft === 'number' && Number.isFinite(hpLeft)) {
+    const { hp: _h, ...rest } = base; void _h;
+    const hp = Math.max(0.01, Math.min(1, hpLeft));
+    base = hp < 1 ? { ...rest, hp } : rest;
+  }
   if (!victory && kind === 'combat') return { ...base, step, over: true };
   if (!victory) return { ...base, step };
   return { ...base, step, won: r.won + 1, bonusPending: step < ROGUE_MAX_STEPS };
@@ -108,16 +114,17 @@ const pickOdds = (r: () => number, p: readonly number[]): number => { const x = 
 
 /** Combate de UMA luta contra o inimigo do passo. `combatant` = `soulCombatant(estado)`; os bônus da incursão entram por cima. */
 export function simulateRogueCombat(
-  run: Pick<RogueRun, 'day' | 'power' | 'vigor' | 'shield'>, step: number, combatant: Combatant,
+  run: Pick<RogueRun, 'day' | 'power' | 'vigor' | 'shield' | 'hp'>, step: number, combatant: Combatant,
 ): { won: boolean; hpLeft: number } {
   const c: Combatant = { ...combatant, atk: combatant.atk * (1 + POWER_STEP * run.power), hp: combatant.hp * (1 + VIGOR_STEP * run.vigor) };
   const ref = foeRefFor(step);
   const fseed = dungeonFightSeed(seedOf(run.day, step, 'fight'), ref.floor, ref.slot);
   const foe = dungeonFoe(combatant.level, ref.slot, ref.floor);
   const f = dungeonFight({ combatant: c, family: familyOfSkill(undefined), startShield: run.shield > 0 ? HEAL_SHIELD : 0 }, foe, fseed, true);
+  const startHp = hpOf(run);
   const rng = mulberry32((fseed ^ 0x5bd1e995) | 0);
   const odds = ARENA_SKILL_ODDS.media;
-  const g = groupFightSteps(f.player, f.foes, { seed: f.seed, startHp: 1, startEnergy: 0, hitScale: f.hitScale });
+  const g = groupFightSteps(f.player, f.foes, { seed: f.seed, startHp, startEnergy: 0, hitScale: f.hitScale });
   let s = g.next();
   while (!s.done) {
     const e: GroupEvent = s.value;
@@ -167,7 +174,7 @@ export function challengeFor(day: string, step: number, kind: LightKind): RogueC
 }
 
 // No fim de propósito: `qa.masmorraFoco.test.ts` exige que POWER_STEP/VIGOR_STEP/HEAL_SHIELD só apareçam DEPOIS de `simulateRogueCombat`.
-import { POWER_STEP, VIGOR_STEP, HEAL_SHIELD } from './rogueDungeonSave';
+import { POWER_STEP, VIGOR_STEP, HEAL_SHIELD, hpOf } from './rogueDungeonSave';
 
 /**
  * A montagem de UMA luta do Calabouço para a CENA (beta3 N7): o mesmo jogador reforçado, o mesmo inimigo e a mesma semente de
@@ -175,8 +182,8 @@ import { POWER_STEP, VIGOR_STEP, HEAL_SHIELD } from './rogueDungeonSave';
  * reabrir a luta no mesmo passo dá a mesma luta (nada de repetir de graça para tentar outro resultado).
  */
 export function rogueFightSetup(
-  run: Pick<RogueRun, 'day' | 'power' | 'vigor' | 'shield'>, step: number, combatant: Combatant,
-): { combatant: Combatant; ref: RogueFoeRef; seed: number; foe: ReturnType<typeof dungeonFoe>; startShield: number } {
+  run: Pick<RogueRun, 'day' | 'power' | 'vigor' | 'shield' | 'hp'>, step: number, combatant: Combatant,
+): { combatant: Combatant; ref: RogueFoeRef; seed: number; startHp: number; foe: ReturnType<typeof dungeonFoe>; startShield: number } {
   const c: Combatant = { ...combatant, atk: combatant.atk * (1 + POWER_STEP * run.power), hp: combatant.hp * (1 + VIGOR_STEP * run.vigor) };
   const ref = foeRefFor(step);
   return {
@@ -184,5 +191,6 @@ export function rogueFightSetup(
     seed: dungeonFightSeed(seedOf(run.day, step, 'fight'), ref.floor, ref.slot),
     foe: dungeonFoe(combatant.level, ref.slot, ref.floor),
     startShield: run.shield > 0 ? HEAL_SHIELD : 0,
+    startHp: hpOf(run),
   };
 }

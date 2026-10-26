@@ -40,7 +40,15 @@ export interface RogueRun {
    * (`consumePending`): nada de re-tentar o mesmo desafio de graça nem de espiar o jogo de cada caminho. Opcional: save antigo não tem.
    */
   pending?: PathKind;
+  /**
+   * Vida atual da incursão como fração do HP máximo (0..1): CONTINUA de luta em luta e de andar em andar (só o reset diário a enche).
+   * Opcional: save antigo não tem = vida cheia. Campo novo SEM espelho no servidor (como todo o `rogueDungeon`).
+   */
+  hp?: number;
 }
+
+/** Vida atual da incursão (fração 0..1); sem o campo = cheia. */
+export const hpOf = (r: Pick<RogueRun, 'hp'>): number => (typeof r.hp === 'number' && Number.isFinite(r.hp) ? Math.max(0.01, Math.min(1, r.hp)) : 1);
 
 export const emptyRun = (day: string): RogueRun => ({ day, step: 0, won: 0, over: false, power: 0, vigor: 0, shield: 0, bonusPending: false, paid: false });
 
@@ -57,6 +65,7 @@ export function sanitizeRogueRun(raw: unknown): RogueRun | undefined {
     day: r.day, step, won, over: r.over === true,
     power: int(r.power, ROGUE_MAX_STEPS), vigor: int(r.vigor, ROGUE_MAX_STEPS), shield: int(r.shield, ROGUE_MAX_STEPS),
     bonusPending: r.bonusPending === true, paid: r.paid === true,
+    ...(typeof r.hp === 'number' && Number.isFinite(r.hp) && r.hp < 1 ? { hp: Math.max(0.01, Math.max(0, r.hp)) } : {}),
     ...(typeof r.pending === 'string' && (PATH_KINDS as readonly string[]).includes(r.pending) && r.pending !== 'combat' ? { pending: r.pending as PathKind } : {}),
   };
 }

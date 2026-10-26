@@ -17,8 +17,11 @@ import { getSpriteForStage } from '../utils/sprites';
 import { useBackLayer } from '../utils/backStack';
 import type { FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { RankingPanel } from './RankingPanel';
+import floorDoor from '../assets/soulmon/icones-ui/masmorra-porta.png';
+import floorStairs from '../assets/soulmon/icones-ui/masmorra-escada.png';
+import floorChest from '../assets/soulmon/icones-ui/masmorra-bau-fechado.png';
 import {
-  ROGUE_FLOORS, ROGUE_MAX_STEPS, ROGUE_PER_FLOOR, applyBonus, bonusChoices, cancelChallenge, challengeFor, consumePending, floorOf, isFinished, markPaid, pathsFor,
+  ROGUE_FLOORS, ROGUE_MAX_STEPS, ROGUE_PER_FLOOR, VIGOR_STEP, applyBonus, hpOf, bonusChoices, cancelChallenge, challengeFor, consumePending, floorOf, isFinished, markPaid, pathsFor,
   resolveStep, startChallenge, rogueBits, rogueScore, runForDay, stepInFloor,
   type BonusKind, type ChallengeGame, type LightKind, type PathKind, type RogueRun,
 } from '../utils/rogueDungeon';
@@ -43,17 +46,20 @@ const GAME_GOAL_COPY: Record<ChallengeGame, (goal: number) => { en: string; pt: 
   barrage: g => ({ en: `Soul Barrage: survive ${g} seconds.`, pt: `Soul Barrage: sobreviva ${g} segundos.` }),
 };
 
-const PATH_COPY: Record<PathKind, { en: string; pt: string; icon: string }> = {
-  combat: { en: 'Combat', pt: 'Combate', icon: 'swords' },
-  puzzle: { en: 'Puzzle', pt: 'Quebra-cabeça', icon: 'grid_view' },
-  minigame: { en: 'Minigame', pt: 'Minigame', icon: 'casino' },
-  explore: { en: 'Mind trial', pt: 'Prova de mente', icon: 'psychology' },
+/** `descEn`/`descPt` = a linha curta do tipo de desafio mostrada no card. */
+const PATH_COPY: Record<PathKind, { en: string; pt: string; icon: string; descEn: string; descPt: string }> = {
+  combat: { en: 'Combat', pt: 'Combate', icon: 'swords', descEn: 'Fight the floor guardian.', descPt: 'Lute contra o guardião do andar.' },
+  puzzle: { en: 'Puzzle', pt: 'Quebra-cabeça', icon: 'grid_view', descEn: 'Solve a logic puzzle.', descPt: 'Resolva um quebra-cabeça de lógica.' },
+  minigame: { en: 'Minigame', pt: 'Minigame', icon: 'casino', descEn: 'Beat a quick arcade game.', descPt: 'Vença um jogo rápido de arcade.' },
+  explore: { en: 'Mind trial', pt: 'Prova de mente', icon: 'psychology', descEn: 'Test your memory.', descPt: 'Teste sua memória.' },
 };
-const BONUS_COPY: Record<BonusKind, { en: string; pt: string; icon: string }> = {
-  power: { en: '+6% attack', pt: '+6% de ataque', icon: 'bolt' },
-  vigor: { en: '+10% health', pt: '+10% de vida', icon: 'favorite' },
-  heal: { en: 'Healing ward (15% shield next combat)', pt: 'Proteção de cura (escudo de 15% no próximo combate)', icon: 'auto_awesome' },
+const BONUS_COPY: Record<BonusKind, { en: string; pt: string; icon: string; descEn: string; descPt: string }> = {
+  power: { en: '+6% attack', pt: '+6% de ataque', icon: 'bolt', descEn: 'Hit harder this run.', descPt: 'Bata mais forte nesta incursão.' },
+  vigor: { en: '+10% health', pt: '+10% de vida', icon: 'favorite', descEn: 'More max health this run.', descPt: 'Mais vida máxima nesta incursão.' },
+  heal: { en: 'Healing ward', pt: 'Proteção de cura', icon: 'auto_awesome', descEn: '15% shield in the next combat.', descPt: 'Escudo de 15% no próximo combate.' },
 };
+/** A arte provisória de cada andar no nó do mapa. A definitiva entra depois trocando só estes imports (por nome de arquivo). */
+export const FLOOR_ICON_ART: Record<number, string> = { 1: floorDoor, 2: floorStairs, 3: floorChest };
 
 const text = { margin: 0, color: 'var(--sm2-ink)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm, 14px)' } as const;
 const btn = {
@@ -107,6 +113,12 @@ const NODE_POS: ReadonlyArray<{ x: number; y: number }> = [{ x: 24, y: 80 }, { x
 /** A trilha que liga os nós, em coordenadas 0..100 da mesma área. */
 const TRAIL_D = 'M24 80 C 58 86, 88 68, 72 50 S 8 36, 30 20';
 
+/** Um card de escolha (caminho ou bônus): ícone grande SEM caixa, título e uma linha. Alvo de toque bem acima de 44 px; o foco usa o anel padrão do navegador. */
+const cardStyle = {
+  flex: '1 1 96px', minWidth: 96, maxWidth: 150, minHeight: 132, boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', gap: 6,
+  padding: '12px 8px', textAlign: 'center', cursor: 'pointer', borderRadius: 'var(--sm2-radius-md, 8px)', border: '1px solid var(--sm2-line, currentColor)',
+  background: 'var(--sm2-surface)', color: 'var(--sm2-ink)', fontFamily: 'var(--sm2-font-text)',
+} as const;
 const sheetStyle = {
   position: 'absolute', left: 0, right: 0, bottom: 0, maxHeight: '58%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8,
   padding: '14px 16px calc(14px + env(safe-area-inset-bottom, 0px))', borderRadius: 'var(--sm2-radius-lg, 16px) var(--sm2-radius-lg, 16px) 0 0',
@@ -149,11 +161,11 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
   const bonuses = useMemo(() => (run.bonusPending ? bonusChoices(run.day, run.step - 1) : []), [run.bonusPending, run.day, run.step]);
   const ch = useMemo(() => (challenge ? challengeFor(run.day, run.step, challenge) : null), [challenge, run.day, run.step]);
 
-  const finish = (kind: PathKind, victory: boolean, msg: string) => {
+  const finish = (kind: PathKind, victory: boolean, msg: string, hpLeft?: number) => {
     setNote(msg);
     setChallenge(null);
     setFighting(false);
-    onChange(resolveStep(run, kind, victory));
+    onChange(resolveStep(run, kind, victory, hpLeft));
   };
 
   const choose = (kind: PathKind) => {
@@ -161,9 +173,9 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
     setNote(null);
     setFighting(true); // o combate é uma luta visível (`RogueFight`); o passo só resolve quando ela termina
   };
-  const fightResult = (won: boolean, foeName: string) => finish('combat', won, won
+  const fightResult = (won: boolean, foeName: string, hpLeft: number) => finish('combat', won, won
     ? (isPt ? `Você venceu ${foeName}!` : `You defeated ${foeName}!`)
-    : (isPt ? `${foeName} venceu. O dia na masmorra acabou — volte amanhã.` : `${foeName} won. The dungeon day is over — come back tomorrow.`));
+    : (isPt ? `${foeName} venceu. O dia na masmorra acabou — volte amanhã.` : `${foeName} won. The dungeon day is over — come back tomorrow.`), hpLeft);
 
   // Resultado do jogo real em modo desafio (vitória/derrota voltam ao mapa). Ignora chamada repetida.
   const settled = useRef(false);
@@ -190,6 +202,9 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
   const scene = DUNGEON_SCENES[(floor - 1) % DUNGEON_SCENES.length];
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const doneInFloor = (n: number) => Math.max(0, Math.min(ROGUE_PER_FLOOR, run.step - (n - 1) * ROGUE_PER_FLOOR));
+  const hpFrac = hpOf(run);
+  const hpMax = Math.max(1, Math.round(combatant.hp * (1 + VIGOR_STEP * run.vigor)));
+  const hpNow = Math.max(1, Math.round(hpFrac * hpMax));
   /** Fração da trilha já percorrida (passos resolvidos / total). */
   const walked = Math.min(1, run.step / ROGUE_MAX_STEPS);
 
@@ -220,6 +235,13 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
               </span>
             </p>
           )}
+          <div data-rogue-hp role="img" aria-label={isPt ? `Vida ${hpNow} de ${hpMax}` : `Health ${hpNow} of ${hpMax}`} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Icon name="favorite" size={20} tone="inherit" />
+            <span aria-hidden style={{ width: 72, height: 6, borderRadius: 3, background: 'var(--sm2-viewport-ring)', overflow: 'hidden', display: 'block' }}>
+              <span data-rogue-hp-fill style={{ display: 'block', height: '100%', width: `${Math.round(hpFrac * 100)}%`, background: 'var(--sm2-gold-fill)' }} />
+            </span>
+            <span className="sm2-num" style={{ ...hudText, fontSize: 'var(--sm2-text-xs, 12px)' }}>{hpNow}/{hpMax}</span>
+          </div>
         </div>
       </header>
 
@@ -236,14 +258,11 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
           return (
             <div key={n} data-rogue-node={n} data-rogue-node-state={state} style={{ position: 'absolute', left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 120 }}>
               {state === 'current' && <img data-rogue-pet src={petSprite} alt="" draggable={false} style={{ width: 56, height: 56, objectFit: 'contain', imageRendering: 'pixelated', marginBottom: -6, filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.7))' }} />}
-              <span style={{
-                width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                background: state === 'done' ? 'var(--sm2-gold-fill)' : state === 'current' ? 'var(--sm2-primary-fill)' : 'var(--sm2-viewport-bg)',
-                border: `2px solid ${state === 'locked' ? 'var(--sm2-viewport-ring)' : 'var(--sm2-viewport-ink)'}`,
-                boxShadow: state === 'current' ? '0 0 0 6px var(--sm2-primary-soft), 0 0 16px var(--sm2-primary-fill)' : 'none',
-                color: state === 'done' ? 'var(--sm2-on-gold)' : state === 'current' ? 'var(--sm2-on-primary)' : 'var(--sm2-viewport-ink)',
-              }}>
-                <Icon name={state === 'done' ? 'check_circle' : state === 'current' ? 'flag' : 'lock'} size={24} tone="inherit" label={state === 'done' ? (isPt ? 'andar concluído' : 'floor cleared') : state === 'current' ? (isPt ? 'andar atual' : 'current floor') : (isPt ? 'andar trancado' : 'floor locked')} />
+              <span data-rogue-floor-art style={{ position: 'relative', width: 56, height: 56, display: 'block', filter: state === 'current' ? 'drop-shadow(0 0 8px var(--sm2-primary-fill))' : 'drop-shadow(0 2px 3px rgba(0,0,0,.7))' }}>
+                <img src={FLOOR_ICON_ART[n]} alt="" draggable={false} style={{ width: 56, height: 56, objectFit: 'contain', imageRendering: 'pixelated', opacity: state === 'locked' ? 0.45 : 1, filter: state === 'locked' ? 'grayscale(1)' : 'none' }} />
+                {state === 'locked' && <span style={{ position: 'absolute', right: -6, bottom: -4, color: 'var(--sm2-viewport-ink)', display: 'flex' }}><Icon name="lock" size={24} tone="inherit" label={isPt ? 'andar trancado' : 'floor locked'} /></span>}
+                {state === 'done' && <span style={{ position: 'absolute', right: -6, bottom: -4, color: 'var(--sm2-gold-fill)', display: 'flex' }}><Icon name="check_circle" size={24} tone="inherit" label={isPt ? 'andar concluído' : 'floor cleared'} /></span>}
+                {state === 'current' && <span style={{ position: 'absolute', right: -6, bottom: -4, color: 'var(--sm2-primary-fill)', display: 'flex' }}><Icon name="flag" size={24} tone="inherit" label={isPt ? 'andar atual' : 'current floor'} /></span>}
               </span>
               <span style={{ ...hudText, fontWeight: 700, textAlign: 'center' }}>{isPt ? `Andar ${n}` : `Floor ${n}`}</span>
               <span style={{ ...hudText, fontSize: 'var(--sm2-text-xs, 12px)', textAlign: 'center', opacity: state === 'locked' ? 0.75 : 1 }}>{isPt ? sc.namePt : sc.nameEn}</span>
@@ -257,47 +276,56 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
         })}
       </div>
 
-      {/* A folha de baixo: o que fazer neste passo. */}
-      {!ch && !fighting && (
-        <section data-rogue-sheet style={sheetStyle} aria-live="polite">
-          {note && <p data-rogue-note style={{ ...text, fontWeight: 700 }}>{note}</p>}
-
-          {finished && (
-            <div data-rogue-over style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={text}>
-                {run.over
-                  ? (isPt ? 'A incursão de hoje terminou. Ela recomeça amanhã, sem os bônus.' : 'Today\'s run is over. It starts again tomorrow, without the bonuses.')
-                  : (isPt ? 'Você concluiu os 3 andares de hoje! Volte amanhã.' : 'You cleared all 3 floors today! Come back tomorrow.')}
-              </p>
-              <RankingPanel game="rogue-dungeon" saveId={saveId} language={language} score={rogueScore(run)} period="weekly" />
+      {/* Passo: as escolhas viram CARDS no meio da tela, sobre o mapa escurecido. */}
+      {!ch && !fighting && !finished && (run.bonusPending || paths.length > 0) && (
+        <div data-rogue-cards aria-live="polite" style={{ position: 'absolute', inset: 0, zIndex: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '88px 16px 24px', boxSizing: 'border-box', background: 'rgba(6,18,22,.62)' }}>
+          {note && <p data-rogue-note style={{ ...hudText, fontWeight: 700, textAlign: 'center' }}>{note}</p>}
+          {run.bonusPending ? (
+            <div data-rogue-bonus-pick style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: '100%' }}>
+              <p style={{ ...hudText, textAlign: 'center', fontWeight: 700 }}>{isPt ? 'Escolha 1 bônus (vale só nesta incursão):' : 'Pick 1 bonus (this run only):'}</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', width: '100%' }}>
+                {bonuses.map(b => (
+                  <button key={b} type="button" data-rogue-card data-rogue-bonus={b} style={cardStyle} onClick={() => { setNote(null); onChange(applyBonus(run, b)); }}>
+                    <Icon name={BONUS_COPY[b].icon} size={40} tone="inherit" />
+                    <span style={{ fontWeight: 700, fontSize: 'var(--sm2-text-sm, 14px)' }}>{t(BONUS_COPY[b])}</span>
+                    <span style={{ fontSize: 'var(--sm2-text-xs, 12px)' }}>{isPt ? BONUS_COPY[b].descPt : BONUS_COPY[b].descEn}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-          )}
-
-          {run.bonusPending && (
-            <div data-rogue-bonus-pick style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <p style={text}>{isPt ? 'Escolha 1 bônus (vale só nesta incursão):' : 'Pick 1 bonus (this run only):'}</p>
-              {bonuses.map(b => (
-                <button key={b} type="button" data-rogue-bonus={b} style={btn} onClick={() => { setNote(null); onChange(applyBonus(run, b)); }}>
-                  <Icon name={BONUS_COPY[b].icon} size={20} tone="inherit" /> {t(BONUS_COPY[b])}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {!finished && !run.bonusPending && (
-            <div data-rogue-paths style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <p style={text}>
+          ) : (
+            <div data-rogue-paths style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, width: '100%' }}>
+              <p style={{ ...hudText, textAlign: 'center', fontWeight: 700 }}>
                 {paths.length === 1
                   ? (isPt ? 'Um combate bloqueia o caminho.' : 'A combat blocks the way.')
                   : (isPt ? 'Escolha seu caminho:' : 'Choose your path:')}
               </p>
-              {paths.map(p => (
-                <button key={p} type="button" data-rogue-path={p} style={btn} onClick={() => choose(p)}>
-                  <Icon name={PATH_COPY[p].icon} size={20} tone="inherit" /> {t(PATH_COPY[p])}
-                </button>
-              ))}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', width: '100%' }}>
+                {paths.map(p => (
+                  <button key={p} type="button" data-rogue-card data-rogue-path={p} style={cardStyle} onClick={() => choose(p)}>
+                    <Icon name={PATH_COPY[p].icon} size={40} tone="inherit" />
+                    <span style={{ fontWeight: 700, fontSize: 'var(--sm2-text-sm, 14px)' }}>{t(PATH_COPY[p])}</span>
+                    <span style={{ fontSize: 'var(--sm2-text-xs, 12px)' }}>{isPt ? PATH_COPY[p].descPt : PATH_COPY[p].descEn}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* A folha de baixo: só o fim do dia. */}
+      {!ch && !fighting && finished && (
+        <section data-rogue-sheet style={sheetStyle} aria-live="polite">
+          {note && <p data-rogue-note style={{ ...text, fontWeight: 700 }}>{note}</p>}
+          <div data-rogue-over style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <p style={text}>
+              {run.over
+                ? (isPt ? 'A incursão de hoje terminou. Ela recomeça amanhã, sem os bônus.' : "Today's run is over. It starts again tomorrow, without the bonuses.")
+                : (isPt ? 'Você concluiu os 3 andares de hoje! Volte amanhã.' : 'You cleared all 3 floors today! Come back tomorrow.')}
+            </p>
+            <RankingPanel game="rogue-dungeon" saveId={saveId} language={language} score={rogueScore(run)} period="weekly" />
+          </div>
         </section>
       )}
 
