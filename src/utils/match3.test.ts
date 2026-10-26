@@ -21,6 +21,28 @@ function neutro(): Board {
 }
 const set = (b: Board, r: number, c: number, k: number, sp?: 'row' | 'col') => { b[r][c] = sp ? { k, sp } : { k }; };
 
+describe('combo de 2 especiais (validMoves/hasMoves/dica)', () => {
+  it('duas especiais vizinhas sem linha formada são um movimento válido: hasMoves não embaralha e a dica o enxerga', () => {
+    const b = neutro();
+    set(b, 3, 3, 0, 'row'); set(b, 3, 4, 1, 'col');
+    // sem especiais não há linha pronta nem (neste padrão) jogada; com o par, a troca entre elas é válida
+    expect(findRuns(b)).toEqual([]);
+    const m = validMoves(b);
+    expect(m.some(x => x.a.r === 3 && x.a.c === 3 && x.b.r === 3 && x.b.c === 4)).toBe(true);
+    expect(hasMoves(b)).toBe(true);
+    const dica = bestMove(b, mulberry32(1));
+    expect(dica).not.toBeNull();
+    const r = trySwap(b, { r: 3, c: 3 }, { r: 3, c: 4 }, mulberry32(2));
+    expect(r.ok && r.scored).toBe(true);
+  });
+  it('uma especial sozinha (sem par) não cria movimento', () => {
+    const b = neutro();
+    const antes = validMoves(b).length;
+    set(b, 3, 3, b[3][3]!.k, 'row');
+    expect(validMoves(b).length).toBe(antes);
+  });
+});
+
 describe('detecção de linhas', () => {
   it('acha linhas horizontais e verticais de 3+ e ignora pares', () => {
     const b = neutro();

@@ -90,7 +90,7 @@ const swapCells = (b: Board, a: Pos, d: Pos): void => {
   b[d.r][d.c] = t;
 };
 
-/** Os movimentos que formam linha (pares vizinhos, sempre `a` à esquerda/em cima de `b`). */
+/** Os movimentos que formam linha — ou trocam duas especiais entre si (pares vizinhos, sempre `a` à esquerda/em cima de `b`). */
 export function validMoves(b: Board): Array<{ a: Pos; b: Pos }> {
   const out: Array<{ a: Pos; b: Pos }> = [];
   const w = cloneBoard(b);
@@ -101,7 +101,9 @@ export function validMoves(b: Board): Array<{ a: Pos; b: Pos }> {
         const a = { r, c };
         const d = { r: r + dr, c: c + dc };
         swapCells(w, a, d);
-        if (findRuns(w).length > 0) out.push({ a, b: d });
+        // duas setinhas trocadas entre si disparam juntas (combo de 2 especiais), mesmo sem linha formada: é movimento válido
+        // (senão `hasMoves` dizia "sem jogada" e o tabuleiro embaralhava com um combo disponível; a dica e a IA também o ignoravam)
+        if (findRuns(w).length > 0 || (w[a.r][a.c]?.sp && w[d.r][d.c]?.sp)) out.push({ a, b: d });
         swapCells(w, a, d);
       }
     }

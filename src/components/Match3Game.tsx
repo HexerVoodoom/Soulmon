@@ -146,6 +146,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
   const [turnBanner, setTurnBanner] = useState<{ text: string; by: 'player' | 'enemy' } | null>(null);
   const [enemyAura, setEnemyAura] = useState<{ element: M3Element; activeIndex: number } | null>(null);
   const hintTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bannerTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [hintsLeft, setHintsLeft] = useState(M3_HINTS_PER_GAME);
   const [confirmBuy, setConfirmBuy] = useState(false);
   const confirmTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -291,11 +292,15 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
 
   const showTurnBanner = useCallback((name: string, by: 'player' | 'enemy') => {
     if (reducedRef.current) return;
+    // o banner anterior ainda pendente não pode apagar o novo antes da hora
+    if (bannerTimer.current) { clearTimeout(bannerTimer.current); timers.current.delete(bannerTimer.current); }
     setTurnBanner({ text: isPt ? `Vez de ${name}` : `${name} turn`, by });
     const id = setTimeout(() => {
       timers.current.delete(id);
+      if (bannerTimer.current === id) bannerTimer.current = null;
       setTurnBanner(null);
     }, T_TURN_BANNER);
+    bannerTimer.current = id;
     timers.current.add(id);
   }, [isPt]);
 
