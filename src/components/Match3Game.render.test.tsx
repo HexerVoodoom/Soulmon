@@ -8,7 +8,7 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, fireEvent, act, cleanup } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
-import { Match3Game } from './Match3Game';
+import { Match3Game, TURN_BANNER_DELAY_MS } from './Match3Game';
 import { M3_COLS, M3_MAX_BITS, M3_ROWS, match3Bits, newRound, trySwap, validMoves, type Board, type Pos, type Rng } from '../utils/match3';
 import { M3_HINTS_PER_GAME, M3_HINT_PRICE_BITS, M3C_ENEMY_HP, M3C_PLAYER_HP, chooseMove, combatScore, newCombat, playTurn, type M3Combat } from '../utils/match3Combat';
 import { mulberry32 } from '../utils/combate/rng';
@@ -51,7 +51,7 @@ const avancar = async (ms: number) => { await act(async () => { await vi.advance
 const cell = (p: Pos) => document.querySelector(`[data-m3-cell="${p.r},${p.c}"]`) as HTMLButtonElement;
 const num = (attr: string) => Number(document.querySelector(`[${attr}]`)!.getAttribute(attr));
 /** Deixa a cascata inteira correr (cada passo ~0,5 s). */
-const assentar = async () => { await avancar(8000); };
+const assentar = async () => { await avancar(8000 + 2 * TURN_BANNER_DELAY_MS); };
 
 function montar(over: { language?: 'pt-BR' | 'en-US'; onEarn?: (n: number) => void; onExit?: () => void; bits?: number; onSpendBits?: (n: number) => boolean; petName?: string; petElement?: string } = {}) {
   return renderWithCss(<Match3Game language={over.language ?? 'en-US'} evolutionStage="rookie" petName={over.petName} petElement={over.petElement} onEarnPoints={over.onEarn ?? (() => {})} onExit={over.onExit ?? (() => {})} seed={SEED} bits={over.bits} onSpendBits={over.onSpendBits} />);
@@ -630,5 +630,21 @@ describe('D-99/D-100: posição dos Soulmon e o poder do combo', () => {
     expect(document.querySelector('[data-m3-turn-banner]')).toBeNull();
     expect(document.querySelector('[data-m3-enemy-pre-aura]')).toBeNull();
     expect(document.querySelectorAll('[data-m3-enemy-pick="1"]').length).toBe(0);
+  });
+
+  it('o banner de turno só aparece TURN_BANNER_DELAY_MS depois da ação; o ritmo banner→aura do inimigo segue 1 s', async () => {
+    montar({ petName: 'Drako' });
+    const p = previsao(1);
+    fireEvent.click(cell(p.moves[0].a));
+    fireEvent.click(cell(p.moves[0].b));
+    let t = 0; let tBanner = -1; let tAura = -1;
+    while (t < 12000 && tAura < 0) {
+      await avancar(50); t += 50;
+      if (tBanner < 0 && document.querySelector('[data-m3-turn-banner="enemy"]')) tBanner = t;
+      if (document.querySelector('[data-m3-enemy-pre-aura]')) tAura = t;
+    }
+    expect(tBanner).toBeGreaterThanOrEqual(TURN_BANNER_DELAY_MS);
+    expect(tAura - tBanner).toBeGreaterThanOrEqual(1000);
+    expect(tAura - tBanner).toBeLessThanOrEqual(1100);
   });
 });
