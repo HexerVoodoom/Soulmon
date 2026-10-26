@@ -423,7 +423,7 @@ está bem alimentado, parada quando está faminto —, zera todo dia, e o númer
 barras é o dobro do requisito de tarefas do estágio.
 
 **A regra (beta-2, 13/10/2026, REGISTRO §40).** A energia regenera 1 unidade a
-cada `ENERGY_REGEN_MINUTES` (120 min) a 100% de velocidade; a velocidade é
+cada `ENERGY_REGEN_MINUTES` (60 min desde 26/10/2026, era 120) a 100% de velocidade; a velocidade é
 decidida pela FOME (`src/utils/hunger.ts`): bem alimentado (fome ≥ 60) 100%,
 mediano (≥ 20) 50%, faminto 0% (interrompida). A fome cai de 100 a 0 em 14 h e só
 sobe comendo; fome nunca tira coração, Bits nem bloqueia outra coisa. O progresso

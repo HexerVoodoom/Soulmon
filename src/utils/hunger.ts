@@ -49,7 +49,9 @@ export const REGEN_FED_PCT = 100;
 export const REGEN_FAIR_PCT = 50;
 export const REGEN_STARVING_PCT = 0;
 /** Minutos para regenerar UMA unidade de energia a 100%. */
-export const ENERGY_REGEN_MINUTES = 120;
+export const ENERGY_REGEN_MINUTES = 60;
+/** Unidade ANTIGA (120 min, até 26/10/2026): só o teto de sanidade do `carry` gravado — um save velho pode trazer até 2× a unidade nova. */
+const LEGACY_ENERGY_REGEN_MINUTES = 120;
 
 const MIN_MS = 60_000;
 /** Energia cheia: de quanto em quanto tempo o relógio parado é re-ancorado no agora (ver `settleEnergy`). */
@@ -94,7 +96,9 @@ export function sanitizeEnergyClock(raw: unknown): EnergyClock | undefined {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
   const r = raw as { at?: unknown; carry?: unknown };
   if (typeof r.at !== 'number' || !Number.isFinite(r.at)) return undefined;
-  const carry = Math.min(UNIT_POINTS - 1, Math.max(0, Math.floor(fin(r.carry, 0))));
+  // Tolerante: carry da unidade antiga (< 120 min) NÃO é cortado (cortar = perder progresso). `settleEnergy` converte o excedente em
+  // unidades inteiras na 1ª leitura (idempotente: depois o carry fica < UNIT_POINTS). Só o lixo absurdo é limitado.
+  const carry = Math.min(LEGACY_ENERGY_REGEN_MINUTES * MIN_MS * 100 - 1, Math.max(0, Math.floor(fin(r.carry, 0))));
   return { at: Math.max(0, Math.floor(r.at)), carry };
 }
 

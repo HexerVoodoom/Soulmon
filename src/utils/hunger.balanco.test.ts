@@ -60,7 +60,7 @@ describe('a curva fome × energia cabe no orçamento do REGISTRO §30', () => {
     expect(e[2]).toBeGreaterThanOrEqual(1);
     expect(e[2]).toBeLessThanOrEqual(3);
     expect(e[4]).toBeGreaterThanOrEqual(4);
-    expect(e[4]).toBeLessThanOrEqual(8);
+    expect(e[4]).toBeLessThanOrEqual(12); // 26/10/2026: unidade 60 min dobrou a tabela (4 → 11,8; era 6,0 a 120 min) — REGISTRO §40-bis
     expect(e[9]).toBeGreaterThanOrEqual(9);
   });
   it('o teto é o RELÓGIO: nem 12 comidas por dia passam de 24 h ÷ ENERGY_REGEN_MINUTES', () => {

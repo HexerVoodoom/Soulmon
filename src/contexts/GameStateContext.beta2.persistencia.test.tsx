@@ -82,7 +82,7 @@ describe('hydrateSave dos campos novos', () => {
     salvar({ hunger: { v: 1e12, at: -9 }, energyClock: { at: 10, carry: 1e40 }, dungeonDaily: { day: '2026-10-13', layers: 1e9 }, checkIns: { day: '2026-10-13', claimed: ['night', 'x', 'night'] } });
     const t = montar();
     expect(t.hunger).toEqual({ v: 100, at: 0 });
-    expect(t.energyClock!.carry).toBeLessThan(UNIT_POINTS);
+    expect(t.energyClock!.carry).toBeLessThan(UNIT_POINTS * 2); // teto de sanidade = unidade ANTIGA (2x a atual)
     expect(t.dungeonDaily).toEqual({ day: '2026-10-13', layers: 999 });
     expect(t.checkIns).toEqual({ day: '2026-10-13', claimed: ['night'] });
   });
