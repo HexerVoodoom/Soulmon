@@ -78,6 +78,10 @@
 //               "falha ao cachear o resultado") fica ÓRFÃO: a chave é token
 //               aleatório, sem ligação com a conta, e não há como achá-lo.
 //               Declarado em `NOT_INCLUDED`.
+//  APAGA        Ranking (`rkme:<jogo>:<período>:<saveId>` e a linha `rk:*` do jogador), lastro do Endless Rift
+//  (QA beta3)   (`riftlayers:`), prêmios do Rift pendentes/pagos (`rift-pending:`/`rift-paid:`) e o apelido reservado
+//               (`nick:`/`nickof:`). O prêmio não ressuscita a conta: `grantRankPrize` recusa `ent` excluído/lápide.
+//  APAGA        E-mail do titular gravado em `sprite:img:*` (só o GM lê): sai junto com o sprite; o export o mostra.
 //  GRAVA        Lápide `del:done:<saveId>` (30 dias, `_accountTombstone.js`)
 //               ANTES da primeira destruição: `save.js` responde 410 a GET e
 //               POST enquanto ela viver, para outro aparelho logado não
@@ -114,6 +118,7 @@ import { requireVerifiedOwner } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { lerIndice, chaveDoIndice, PUSHIDX_MAX } from './_pushIdentity.js';
 import { writeTombstone, clearTombstone, TOMBSTONE_TTL_SECONDS } from './_accountTombstone.js';
+import { rkKeyFor } from './_rankings.js';
 import { coopLeave, grupoDe, coopOfKey, coopCkKey, coopFioKey, coopMemKey, lerFio, apagarClaims, lerGolpes, semanaDe, semanasDeClaim, coopClaimKey, lerConjunto, coopScenesKey, coopShellKey, coopPartKey, lerDiasCarregados } from './_coop.js';
 
 const CORS = {
@@ -255,7 +260,7 @@ const SPRITE_TOKEN = /\/api\/sprite-image\?k=([0-9a-f]{32})\b/;
  * Lista o que é de sprite desta conta: caches, locks e os blobs que os caches
  * apontam. As duas listagens são por prefixo COM o saveId — não varrem o
  * namespace, e não há `get` por chave alheia.
- * @returns {Promise<{ imgs: string[], locks: string[], blobs: string[] }>}
+ * @returns {Promise<{ imgs: string[], locks: string[], blobs: string[], emails: { key: string, email: string }[] }>}
  */
 async function collectSprites(env, saveId) {
   const store = kvOrThrow(env);
@@ -270,7 +275,52 @@ async function collectSprites(env, saveId) {
     // não tem blob aqui — fica declarado em NOT_INCLUDED.
     if (m) blobs.push(`${SPRITE_BLOB_PREFIX}${m[1]}`);
   }
-  return { imgs, locks, blobs };
+  // E-mail do titular gravado no registro de cache (`generate-sprite.js` > `email`, só o GM lê; decisão do dono 4, QA beta3).
+  const emails = [];
+  for (const k of imgs) {
+    let rec = null;
+    try { rec = JSON.parse((await store.get(k)) || 'null'); } catch { rec = null; }
+    if (typeof rec?.email === 'string' && rec.email) emails.push({ key: k, email: rec.email });
+  }
+  return { imgs, locks, blobs, emails };
+}
+
+/**
+ * Chaves do RANKING (`rkme:<jogo>:<período>:<saveId>` + a linha `rk:...`), do lastro do Endless Rift (`riftlayers:`) e dos
+ * prêmios do Rift (`rift-pending:`/`rift-paid:`), mais o apelido reservado (`nick:`/`nickof:`). QA beta3 R1: a exclusão não
+ * apagava nada disto e o apelido ficava reservado (e o nome, no placar). `rkme` e os prêmios saem por varredura de prefixo
+ * filtrada pelo saveId (mesmo método do `rank:`); `riftlayers` tem TTL de 70 dias, então 3 meses bastam.
+ * @returns {Promise<{ keys: string[], ranking: {game:string,period:string,best:number}[] }>}
+ */
+async function collectRankingKeys(env, saveId) {
+  const store = kvOrThrow(env);
+  const keys = [];
+  const ranking = [];
+  for (const k of (await listPrefix(env, 'rkme:')).filter(x => x.endsWith(`:${saveId}`))) {
+    const [, game, period] = k.split(':');
+    const best = Number(await store.get(k));
+    keys.push(k);
+    if (Number.isFinite(best)) {
+      ranking.push({ game, period, best });
+      keys.push(rkKeyFor(game, period, best, saveId));
+    }
+  }
+  const agora = new Date();
+  for (let i = 0; i < 3; i++) {
+    const m = new Date(Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth() - i, 1)).toISOString().slice(0, 7);
+    const rl = `riftlayers:${m}:${saveId}`;
+    if ((await store.get(rl)) !== null) keys.push(rl);
+  }
+  for (const prefix of ['rift-pending:', 'rift-paid:']) {
+    for (const k of (await listPrefix(env, prefix)).filter(x => x.endsWith(`:${saveId}`))) keys.push(k);
+  }
+  // Apelido: `nickof:<saveId>` aponta a chave `nick:`; ela só é apagada se AINDA for deste titular.
+  const nickKey = await store.get(`nickof:${saveId}`);
+  if (nickKey) {
+    if (typeof nickKey === 'string' && nickKey.startsWith('nick:') && (await store.get(nickKey)) === saveId) keys.push(nickKey);
+    keys.push(`nickof:${saveId}`);
+  }
+  return { keys, ranking };
 }
 
 /**
@@ -416,6 +466,7 @@ async function collect(env, saveId) {
   const pidIndexed = (await store.get(`pid:${pid}`)) === saveId;
 
   const sprites = await collectSprites(env, saveId);
+  const rankingData = await collectRankingKeys(env, saveId);
 
   // Grupo cooperativo (se houver). `grupoDe` já limpa `coopOf:` órfão.
   let coopGroupId = null;
@@ -466,7 +517,7 @@ async function collect(env, saveId) {
   // `steamLicenseKeysOf`. Lista vazia para quem nunca ativou pela Steam.
   const steamLicenseKeys = steamLicenseKeysOf(entitlement);
 
-  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites, coopGroupId, coopExport, steamLicenseKeys };
+  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, rankingData, pidIndexed, sprites, coopGroupId, coopExport, steamLicenseKeys };
 }
 
 /**
@@ -526,6 +577,11 @@ async function handleExport(env, saveId) {
         ? { ...c.entitlement, orderDetails: maskOrderDetails(c.entitlement.orderDetails) }
         : null,
       ranks: c.ranks,
+      // Ranking dos minijogos/Endless Rift (melhor score por jogo e período), lastro e prêmios do Rift, e o apelido reservado.
+      ranking: c.rankingData.ranking,
+      rankingKeys: c.rankingData.keys,
+      // E-mail gravado nos registros de sprite gerado por IA (só o GM o lê; sai da exclusão junto com o sprite).
+      spriteEmails: c.sprites.emails,
       // Só as CHAVES: o binário sai pela própria URL (`/api/sprite-image?k=`),
       // que o save já carrega em `soulmonStages`. Listar aqui é o que deixa a
       // exportação conferível contra o inventário da exclusão.
@@ -546,6 +602,7 @@ function plan(c, saveId) {
       c.pidIndexed ? `pid:${c.pid}` : null,
       c.gifts ? `gifts:${saveId}` : null,
       ...c.rankKeys,
+      ...c.rankingData.keys,
       ...c.sprites.imgs,
       ...c.sprites.locks,
       ...c.sprites.blobs,
@@ -735,6 +792,9 @@ async function handleDeleteConfirm(env, saveId, body) {
 
   // 7) O que é do titular e só dele — chaves já conhecidas, sem varredura.
   for (const k of c.rankKeys) await tentar(k, () => store.delete(k));
+  // 7b) Ranking, lastro/prêmios do Rift e apelido reservado (QA beta3 R1): nada disto sobrevive à conta, e o prêmio
+  //    pendente de uma conta apagada não pode mais ser pago (`grantRankPrize` também recusa por lápide).
+  for (const k of c.rankingData.keys) await tentar(k, () => store.delete(k));
   if (c.gifts) await tentar(`gifts:${saveId}`, () => store.delete(`gifts:${saveId}`));
   if (c.pidIndexed) await tentar(`pid:${c.pid}`, () => store.delete(`pid:${c.pid}`));
   if (c.profile) await tentar(`profile:${saveId}`, () => store.delete(`profile:${saveId}`));
