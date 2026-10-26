@@ -1778,3 +1778,7 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 
 ### `src/components/play/RogueDungeonPlaceholder.tsx`
 **Dono de:** o ponto de encaixe "em breve" do Calabouço (M3), que a lane M7 troca pelo `RogueDungeon` real. **Exports:** `RogueDungeonPlaceholder({ language })`.
+
+### `src/components/NightmareBattleHost.tsx` (beta3, perf do bundle)
+**Dono de:** montar a luta do Pesadelo dentro do chunk lazy, sorteando a onda (`buildNightmareWave`) lá dentro, para o `App` não carregar o roster de inimigos na entrada.
+**Chamado por:** `src/App.tsx`.

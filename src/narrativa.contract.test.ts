@@ -193,7 +193,7 @@ const EXCECOES: Record<string, { arquivos: string[]; proposta: string }> = {
       'src/components/HelpModal.tsx',
       'src/components/NightmareBattle.tsx',
       'src/contexts/GameStateContext.tsx',
-      'src/utils/dungeon.ts',
+      'src/utils/dungeonBase.ts', // movido de dungeon.ts em 26/10/2026 (perf do bundle), mesmo uso — não é espalhamento
       'src/utils/gainArt.ts',
       'src/utils/itemArt.ts',
       'src/utils/shop.ts',
