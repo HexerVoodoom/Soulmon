@@ -139,6 +139,8 @@ export interface AreaViewProps {
   area: AreaId;
   /** Acordar o Soulmon (REGISTRO §112): `true` = a ação de jogo ficou parada (o `App` já mostrou o aviso curto + o atalho "Acordar"). Só os JOGOS passam por aqui (`WAKE_BLOCKED_GAMES`); abrir a área e navegar nunca param. */
   wakeGuard?: (action: string) => boolean;
+  /** O Soulmon JÁ está na descida (`soulmonNaMasmorra`): tocar a Fenda entra direto na tela da descida, sem a folha com o CTA. */
+  naMasmorra?: boolean;
   /** Abre um jogo direto ao montar (o convite ao Refúgio abre a respiração).
    *  One-shot: o `App` limpa pelo `onInitialGameConsumed`. */
   initialGame?: PlayGame;
@@ -403,7 +405,7 @@ export function AreaView(props: AreaViewProps) {
         areaId={area}
         language={language}
         background={AREA_BG.arena}
-        lots={gated(lots.map(l => ({ ...l, art: ARENA_LOT_ART[l.id], onOpen: () => enter(l.id) } satisfies AreaLot)))}
+        lots={gated(lots.map(l => ({ ...l, art: ARENA_LOT_ART[l.id], onOpen: () => { if (l.id === 'fenda' && props.naMasmorra) { onVisitBuilding?.('arena.fenda' as BuildingId); setSheet(null); setGame('masmorra'); } else enter(l.id); } } satisfies AreaLot)))}
         notice={lockNote}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined}>

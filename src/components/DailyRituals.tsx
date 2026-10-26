@@ -248,7 +248,7 @@ export function DailyRituals({
   const verTudo = (
     <div className="sm3-ver-tudo">
       <button type="button" data-view-all={onOpenSettings ? undefined : true} data-settings-shortcut={onOpenSettings ? true : undefined} onClick={onOpenSettings ?? abrirTudo}>
-        {onOpenSettings ? (isPt ? 'Configurações' : 'Settings') : (isPt ? 'Ver tudo' : 'View all')}
+        {onOpenSettings ? (isPt ? 'Configurações' : 'Settings') : (isPt ? 'Editar' : 'Edit')}
         <Icon name={onOpenSettings ? 'settings' : 'arrow_forward'} size={20} />
       </button>
     </div>

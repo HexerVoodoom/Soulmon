@@ -168,7 +168,7 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Este quebra-cabeça espera. As peças não vão a lugar nenhum.',
     lineEn: "This puzzle waits. Its pieces aren't going anywhere.",
   },
-  // 🗝️ beta3 M7: o Calabouço (roguelike, já aberto). Busto PROVISÓRIO — reusa o da guia da Masmorra.
+  // 🗝️ beta3 M7: o Calabouço (roguelike, já aberto). Busto próprio (P1-04, 26/10/2026); nome e voz mantidos.
   'jogos:dungeon': {
     namePt: 'Corva, a vigia do calabouço', nameEn: 'Corva, the dungeon watcher',
     linePt: 'Três caminhos a cada passo. Escolha um e veja até onde vocês chegam hoje.',
