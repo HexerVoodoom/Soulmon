@@ -46,7 +46,7 @@ async function readEntries(store, pk) {
         saveId: k.name.slice(k.name.lastIndexOf(':') + 1),
         score: Number(k.metadata?.s) || 0,
         t: Number.isFinite(t) && k.metadata?.t != null ? t : Number.MAX_SAFE_INTEGER,
-        sim: k.metadata?.sim === true,
+        sim: k.metadata?.sim === true || /^sim_[0-9]{4}$/.test(k.name.slice(k.name.lastIndexOf(':') + 1)), // M11: simulado nunca recebe Crédito
       });
     }
     if (page.list_complete || !page.cursor) break;

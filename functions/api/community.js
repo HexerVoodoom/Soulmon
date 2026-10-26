@@ -44,9 +44,10 @@ import { ehViolacaoDeChave } from './_entitlements.js';
 import { kv, kvOrThrow } from './_kv.js';
 import {
   PID_PREFIX, legacyPidFor, newPid, ensurePid, indexPublicId,
-  getProfile, putProfile, pidSoLeitura,
+  getProfile, putProfile, pidSoLeitura, nickKey, claimNick,
 } from './_profile.js';
 import { secretEquals } from './metrics.js';
+import { ensureSimuladosDia, stripSimulated, isSimuladoId } from './_simulados.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_honra.js';
@@ -72,7 +73,7 @@ const MATCHES_PER_DAY = 5;
 export const GIFT_ACK_LEASE_MS = 10 * 60 * 1000;
 export const CLOSED_SEASON_TTL = 86400 * 400;
 
-const json = (obj, status = 200) => Response.json(obj, { status, headers: CORS });
+const json = (obj, status = 200) => Response.json(stripSimulated(obj), { status, headers: CORS });
 
 /**
  * Serializa `duelStart`/`match` POR CONTA (PR13, ALTO-1). Sem isto, 3 `duelStart` em paralelo liam o MESMO
@@ -228,23 +229,7 @@ async function listPrefix(env, prefix, limit = 100) {
   return out;
 }
 
-// ── Apelido único (case-insensitive) ─────────────────────────────────────────
-// `nick:<minúsculas>` → saveId dono; `nickof:<saveId>` → chave que ele segura (para soltar ao renomear).
-const nickKey = (name) => `nick:${encodeURIComponent(String(name).normalize('NFKC').trim().toLowerCase()).slice(0, 200)}`;
-/** Reivindica o apelido. `true` = é seu agora (ou já era); `false` = outra conta o usa. */
-async function claimNick(env, saveId, name) {
-  if (/^(an[ôo]nimo|anonymous)$/i.test(String(name).trim())) return true; // nomes-padrão não são reservados
-  const kv = kvOrThrow(env);
-  const key = nickKey(name);
-  const dono = await kv.get(key);
-  if (dono && dono !== saveId) return false;
-  const antiga = await kv.get(`nickof:${saveId}`);
-  if (antiga && antiga !== key && (await kv.get(antiga)) === saveId) await kv.delete(antiga);
-  const ttl = { expirationTtl: 86400 * 400 };
-  await kv.put(key, saveId, ttl);
-  await kv.put(`nickof:${saveId}`, key, ttl);
-  return true;
-}
+// (`nickKey` e `claimNick` — apelido único — moram em `_profile.js` desde o M11, para o motor dos simulados reservar nicks pela MESMA régua.)
 
 export async function onRequestOptions() {
   return new Response(null, { headers: CORS });
@@ -343,6 +328,7 @@ export async function onRequest(context) {
 // `_coop.js` e a resposta em `guild.js` › `vistaDaGuilda` (continua havendo UMA
 // só montagem). Aqui só se roteia, com o teto LEVE desta rota já cobrado.
 
+const SIM_ACTIONS = new Set(['players', 'player', 'opponents', 'rank', 'seasonResult', 'duelStart', 'match']);
 async function handleCommunity({ request, env }) {
   if (!kv(env)) return json({ error: 'Storage not bound' }, 500);
   const url = new URL(request.url);
@@ -360,6 +346,9 @@ async function handleCommunity({ request, env }) {
     try { const parsed = JSON.parse(text); body = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {}; } catch { body = {}; }
   }
   const id = body.id || url.searchParams.get('id');
+  // M11: diretório, oponentes, ranking e arena enxergam os simulados do dia (preguiçoso, idempotente, nunca lança;
+  // no-op sem `SIMULADOS_ON`). Os placares por jogo ficam em `rankings.js`.
+  if (SIM_ACTIONS.has(String(action))) await ensureSimuladosDia(env);
 
   /**
    * Autoriza o ATOR da requisição.
@@ -941,9 +930,17 @@ async function handleCommunity({ request, env }) {
       rows.push({ id: k.slice(`rank:${season}:`.length), points: JSON.parse(raw).points });
     }
     rows.sort((a, b) => b.points - a.points);
-    const top3 = rows.slice(0, 3);
+    // M11: simulado nunca leva prêmio — o troféu desce para o próximo jogador REAL (mesma regra de `payablePlacements`).
+    const top3 = [];
+    for (const row of rows) {
+      if (top3.length >= 3) break;
+      if (isSimuladoId(row.id)) continue;
+      const p = await getProfile(env, row.id);
+      if (p?.simulated === true) continue;
+      top3.push({ ...row, p });
+    }
     for (let i = 0; i < top3.length; i++) {
-      const p = await getProfile(env, top3[i].id);
+      const p = top3[i].p;
       if (!p) continue;
       p.pendingTrophies = p.pendingTrophies || [];
       p.pendingTrophies.push({ season, place: i + 1 });
@@ -1017,6 +1014,10 @@ async function handleCommunity({ request, env }) {
     if (me.giftLog[friendSave] === today()) return json({ error: 'already gifted today' }, 429);
     me.giftLog[friendSave] = today();
     await putProfile(env, id, me);
+
+    // M11: presente para um simulado é aceito SEM efeito — nada é gravado e ninguém é debitado ou creditado (a resposta
+    // é a mesma de um presente real; o limite diário acima já valeu).
+    if ((await getProfile(env, friendSave))?.simulated === true) return json({ ok: true });
 
     const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
     const gifts = raw ? JSON.parse(raw) : [];

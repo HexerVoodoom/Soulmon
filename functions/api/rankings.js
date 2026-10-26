@@ -16,6 +16,7 @@ import {
   DEFAULT_PERIOD, cleanScore, isPeriod, isRankedGame, readBoard, scoreIsPlausible, submitScore, TOP_DEFAULT,
 } from './_rankings.js';
 import { readRiftLayers } from './_dayCounters.js';
+import { ensureSimuladosDia, stripSimulated } from './_simulados.js';
 import { closePreviousMonth, readMyPrize, RIFT_GAME } from './_riftPayout.js';
 
 const CORS = {
@@ -23,7 +24,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
-const json = (obj, status = 200) => Response.json(obj, { status, headers: CORS });
+const json = (obj, status = 200) => Response.json(stripSimulated(obj), { status, headers: CORS });
 const VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
 
 /** Limites por janela de 1 min: por IP e, no submit, por conta. */
@@ -65,6 +66,8 @@ export async function onRequest(context) {
 
   // Fechamento preguiçoso do mês anterior do Endless Rift (`_riftPayout.js`): idempotente, nunca lança.
   await closePreviousMonth(env);
+  // M11: os simulados escrevem o dia deles nos placares (preguiçoso, nunca lança; no-op sem `SIMULADOS_ON`).
+  await ensureSimuladosDia(env);
 
   if (request.method === 'POST') {
     const score = cleanScore(q.score, game);
