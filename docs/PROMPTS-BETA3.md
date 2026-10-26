@@ -298,3 +298,24 @@ Seamless VERTICAL SCROLLING game background for a top-down bullet-hell minigame,
 - Nenhuma imagem foi gerada nem instalada; nada foi commitado. Este doc só lista o que existe e o que falta.
 - Música/SFX do Soul Barrage e da Dungeon: squad de som (`soulmon-squad-som`).
 - Arte do quebra-cabeça e dos minigames sorteados dentro da Dungeon: reutilizam os jogos existentes (Match 3, Obstacle Run, PPT, Zip, Patches, Pet Cycle).
+
+
+## 8. Rodada 4 (26/10/2026) — artes provisórias de N3/N6
+
+Provisórias em uso (código já funciona com elas): obstáculo do Obstacle Run = os `dino-obstacle-*` atuais ampliados ~40%; coletável do Normal = cristal `fx-<elemento>-defended`; campo de força do dash = `fx-<elemento>-aura`; inimigos do Soul Barrage = rookie/champion/ultimate do elemento espaço do `enemyRoster` e tiro inimigo `fx-espaco-orb`.
+
+### P3-01 · 1:1 · folha 3:2 (2k); cada obstáculo 256x256 alfa real
+- Destino: `src/assets/soulmon/dino/dino-obstacle-r4-sheet.png`, fatiar (3 variantes por tier; medir a caixa opaca de cada uma para `hit`/`top` em `DinoGame.tsx`)
+- Modelo: gpt_image_2 2k high, --background transparent
+- Referência anexada: src/assets/soulmon/dino/dino-obstacle-3.png (128x128, ampliar com NEAREST)
+```
+Sprite sheet of 6 large side-view pixel-art obstacles for an endless-runner minigame, arranged in a clean 3 columns x 2 rows grid with wide empty gaps, each piece fully isolated on a fully transparent background, no ground, no text, no letters, no frames. Same crisp pixel-art technique, dark moody teal palette and copper/bronze details as the attached reference, faceted glowing turquoise soul crystals as the signature. Bold, big, readable silhouettes that fill most of their square, seen from the side and standing on their base: row 1 low and medium obstacles (a cluster of jagged cold-fire crystals, a toppled mossy stone pillar with a crystal growing from it, a gnarled root arch with a small turquoise flame); row 2 tall obstacles (a tall crystal spire with a floating shard, a ruined stone gate half sunk in moss, a thorny bone-white tree with glowing crystal fruit). Calm and mysterious, no gore, no skulls, no gears, no leather straps.
+```
+
+### P3-02 · 3:2 · folha 3:2 (2k); cada peça 128x128 alfa real
+- Destino: `src/assets/soulmon/dino/dash-gem-sheet.png`, fatiar (coletável de carga do dash, 1 por elemento é opcional; o provisório já usa o `defended` do elemento)
+- Modelo: gpt_image_2 2k high, --background transparent
+- Referência anexada: src/assets/soulmon/fx-ataque/fx-espaco-defended.png (128x128)
+```
+Sprite sheet of 3 small pixel-art collectible gems for an endless-runner minigame, arranged in one row with wide empty gaps, each fully isolated on a fully transparent background, no text, no frames, no ground shadow. Same crisp pixel-art technique and faceted-crystal look as the attached reference, but each gem is a clean CUBE-like faceted crystal (readable at 40 pixels): (1) turquoise soul crystal with a tiny inner flame, (2) the same crystal slightly brighter with a soft sparkle for the moment of pickup, (3) the same crystal dull and dark for an empty charge. Bold outline, 3 tones per color, no gears, no straps.
+```

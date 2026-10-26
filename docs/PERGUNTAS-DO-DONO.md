@@ -574,3 +574,9 @@ P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
 - ✅ Texto de privacidade do e-mail no sprite APROVADO: publicado em `public/privacidade.html` (§6d, `#image-email`/`#imagem-email`), `PRIVACY_VERSION` → `2026-10-26`, gravação do e-mail religada (`GRAVAR_EMAIL_DO_SPRITE`).
 - ✅ Simulados aprovados; trocados os apelidos `sim_0006` (tiagoVoz → Kael_Rune) e `sim_0043` (Bruna → Mika_Sora).
 - ✅ Ranking de Zip/Patches por tempo só no 6×6. ✅ Tetos de score por jogo aceitos. ✅ Merge na main assim que a régua de bytes passar.
+
+## Beta3 rodada 4
+
+- **Soul Barrage: o teto de estágio por level do jogador saiu.** Antes `pickEnemy` rebaixava champion/ultimate ao level do jogador (arte, nunca força). Agora, como o pedido é "às vezes champion, às vezes ultimate" em levas, o jogo sorteia direto do roster do espaço (rookie dominante; champion a partir da fase 2; ultimate a partir da fase 3), sem olhar o level. Conservador: não mostra Mega. Se quiser voltar a travar por level, é uma linha em `utils/soulBarrage.ts` (`spawnWave`). [pendente do dono]
+- **Soul Barrage: inimigo que chega à base custa 1 vida na hora, sem invulnerabilidade** (uma leva inteira vazando pode tirar várias vidas de uma vez). Conservador: manter assim para forçar a defesa; suavizar com invulnerabilidade curta se parecer duro nos testes. [pendente do dono]
+- **Obstacle Run: obstáculos ampliados ~40% (54/62/70/78 px) com a arte atual** e as mesmas caixas de colisão proporcionais; arte nova só quando o P3-01 for gerado (docs/PROMPTS-BETA3.md §8). O Dash passou a ser campo de força (aura do elemento); a distância empurrada (40 px) não mudou. [pendente do dono]
