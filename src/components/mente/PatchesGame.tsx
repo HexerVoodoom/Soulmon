@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
+import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint } from '../form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
@@ -47,11 +47,16 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
   const t0 = useRef<number | null>(null);
   const [solveMs, setSolveMs] = useState(0);
   const moved = useRef(false);
+  /** Cursor do teclado (casa); Espaço/Enter ancora, setas esticam, Espaço/Enter de novo fecha o retângulo, Esc cancela. */
+  const [cursor, setCursor] = useState<number | null>(null);
+  const [kbAnchor, setKbAnchor] = useState<number | null>(null);
 
   const pet = getSpriteForStage(evolutionStage, demoCharacterId);
   const petScale = usePetScale(evolutionStage, pet);
   const { size } = puzzle;
-  const cell = Math.floor(Math.min(GRID_MAX_W, 52 * size) / size);
+  // Alvo de toque ≥44px também na 8×8 (sem gap; a grade centrada pode vazar pelo padding de 16px, nunca da tela a 360px).
+  const cell = Math.max(44, Math.floor(Math.min(GRID_MAX_W, 52 * size) / size));
+  const gap = size >= 8 ? 0 : 2;
   const clueAt = useMemo(() => new Map(puzzle.clues.map(c => [c.cell, c])), [puzzle]);
 
   const cellFromEvent = (e: ReactPointerEvent): number | null => {
@@ -98,7 +103,52 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
   };
   const cancel = () => { setAnchor(null); setHover(null); };
 
-  const preview = anchor != null && hover != null ? rectBetween(anchor, hover, size) : null;
+  const onKey = (e: ReactKeyboardEvent) => {
+    if (solved) return;
+    const d = e.key === 'ArrowUp' ? [-1, 0] : e.key === 'ArrowDown' ? [1, 0] : e.key === 'ArrowLeft' ? [0, -1] : e.key === 'ArrowRight' ? [0, 1] : null;
+    const cur = cursor ?? 0;
+    if (d) {
+      e.preventDefault();
+      const r = Math.min(size - 1, Math.max(0, Math.floor(cur / size) + d[0]));
+      const c = Math.min(size - 1, Math.max(0, (cur % size) + d[1]));
+      setStarted(true);
+      if (t0.current == null) t0.current = Date.now();
+      setCursor(r * size + c);
+    } else if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      setStarted(true);
+      if (t0.current == null) t0.current = Date.now();
+      if (cursor == null) { setCursor(0); return; }
+      if (kbAnchor == null) {
+        const existing = rects.find(rc => rectHas(rc, cur, size));
+        if (existing) { commit(rects.filter(rc => rc !== existing)); return; }
+        setKbAnchor(cur);
+      } else {
+        const from = kbAnchor;
+        setKbAnchor(null);
+        commit(placeRect(rects, rectBetween(from, cur, size)));
+      }
+    } else if (e.key === 'Escape' && kbAnchor != null) {
+      e.preventDefault();
+      e.stopPropagation();
+      setKbAnchor(null);
+    } else if ((e.key === 'Backspace' || e.key === 'Delete') && cursor != null) {
+      e.preventDefault();
+      const existing = rects.find(rc => rectHas(rc, cur, size));
+      if (existing) commit(rects.filter(rc => rc !== existing));
+    }
+  };
+
+  const preview = anchor != null && hover != null
+    ? rectBetween(anchor, hover, size)
+    : kbAnchor != null && cursor != null ? rectBetween(kbAnchor, cursor, size) : null;
+  const cellLabel = (c: number): string => {
+    const cl = clueAt.get(c);
+    const pos = isPt ? `Linha ${Math.floor(c / size) + 1}, coluna ${(c % size) + 1}` : `Row ${Math.floor(c / size) + 1}, column ${(c % size) + 1}`;
+    const clue = cl ? (isPt ? `, pista ${cl.area}` : `, clue ${cl.area}`) + (cl.shape !== 'any' ? `, ${shapeWord(cl.shape)}` : '') : '';
+    const st = rects.some(rc => rectHas(rc, c, size)) ? (isPt ? ', coberta' : ', covered') : (isPt ? ', livre' : ', empty');
+    return pos + clue + st;
+  };
 
   const next = () => {
     const l = level + 1;
@@ -123,6 +173,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
       width: cell, height: cell, boxSizing: 'border-box', position: 'relative',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       border: '1px solid var(--sm2-muted)', borderRadius: 4, touchAction: 'none', userSelect: 'none',
+      outline: cursor === c ? '2px solid var(--sm2-primary-ink)' : 'none', outlineOffset: -2,
       backgroundColor: inPreview
         ? 'color-mix(in srgb, var(--sm2-ink) 18%, transparent)'
         : idx >= 0
@@ -150,7 +201,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
               {isPt ? 'A pedra ao lado do número dá a forma: triângulo = alto, losango = largo, quadrada = quadrado.' : 'The stone beside a number hints the shape: triangle = tall, diamond = wide, square = square.'}
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
-              {isPt ? 'Arraste para desenhar; tocar num retalho o desfaz.' : 'Drag to draw; tapping a patch undoes it.'}
+              {isPt ? 'Arraste para desenhar; tocar num retalho o desfaz. No teclado: setas movem o cursor, Espaço marca o início e o fim do retângulo, Backspace desfaz.' : 'Drag to draw; tapping a patch undoes it. On the keyboard: arrows move the cursor, Space marks a rectangle\'s start and end, Backspace undoes.'}
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt ? `Cada colcha pronta paga Bits pelo tamanho, até ${PATCHES_MAX_BITS}.` : `Each finished patchwork pays Bits by size, up to ${PATCHES_MAX_BITS}.`}
@@ -188,12 +239,16 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
         onPointerMove={onMove}
         onPointerUp={onUp}
         onPointerCancel={cancel}
-        style={{ display: 'grid', gridTemplateColumns: `repeat(${size}, ${cell}px)`, gap: 2, alignSelf: 'center', touchAction: 'none' }}
+        onKeyDown={onKey}
+        tabIndex={0}
+        role="group"
+        aria-label={isPt ? `Grade ${size} por ${size}. Setas movem o cursor; Espaço marca início e fim de um retângulo.` : `${size} by ${size} grid. Arrows move the cursor; Space marks a rectangle's start and end.`}
+        style={{ display: 'grid', gridTemplateColumns: `repeat(${size}, ${cell}px)`, gap, alignSelf: 'center', touchAction: 'none', flex: 'none' }}
       >
         {Array.from({ length: size * size }, (_, c) => {
           const cl = clueAt.get(c);
           return (
-            <div key={c} data-patch-cell={c} style={cellStyle(c)}>
+            <div key={c} role="img" aria-label={cellLabel(c)} data-patch-cell={c} style={cellStyle(c)}>
               {cl && (
                 <span style={{ display: 'flex', alignItems: 'center', gap: 1, lineHeight: 1 }}>
                   <img

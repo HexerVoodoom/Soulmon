@@ -70,7 +70,14 @@ export function serpentinePath(size: number, rng: Rng): number[] {
 /** Caminho hamiltoniano aleatório: DFS com a heurística de Warnsdorff e orçamento de nós; cai na serpente. */
 export function randomHamiltonianPath(size: number, rng: Rng): number[] {
   const total = size * size;
-  const start = Math.floor(rng() * total);
+  // Grade ímpar: um caminho hamiltoniano só existe começando numa casa da cor MAIORITÁRIA ((r+c) par);
+  // sorteando qualquer casa, ~metade das vezes o DFS esgotava o orçamento e caía na serpentina trivial.
+  let start = Math.floor(rng() * total);
+  if (size % 2 === 1) {
+    const evens: number[] = [];
+    for (let i = 0; i < total; i++) if ((Math.floor(i / size) + (i % size)) % 2 === 0) evens.push(i);
+    start = evens[Math.floor(rng() * evens.length)];
+  }
   const visited = new Array<boolean>(total).fill(false);
   const path: number[] = [];
   let budget = 20000;

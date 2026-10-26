@@ -3,6 +3,25 @@ import { generateZip, validateZip, canStep, zipSizeForLevel, zipBits, ZIP_MAX_BI
 import { generatePatches, validatePatches, patchesSizeForLevel, patchesBits, PATCHES_MAX_BITS, placeRect, rectBetween, type Rect } from './patches';
 
 describe('Trilha do Pet (zip)', () => {
+  it('grade ímpar: o caminho começa numa casa da cor maioritária e quase nunca é a serpentina trivial', () => {
+    const triviais = (size: number) => {
+      const set = new Set<string>();
+      for (let s = 1; s <= 30; s++) set.add(serpentinePath(size, seededRng(s)).join(','));
+      return set;
+    };
+    for (const size of [5, 7]) {
+      const trivial = triviais(size);
+      let naSerpentina = 0;
+      const N = 60;
+      for (let seed = 1; seed <= N; seed++) {
+        const p = generateZip(size, seededRng(seed * 104729 + size));
+        const start = p.solution[0];
+        expect((Math.floor(start / size) + (start % size)) % 2, `${size}/${seed}`).toBe(0);
+        if (trivial.has(p.solution.join(','))) naSerpentina++;
+      }
+      expect(naSerpentina, `serpentina em ${size}×${size}`).toBeLessThan(N * 0.25);
+    }
+  });
   it('todo puzzle gerado é solucionável, em todos os tamanhos e muitas sementes', () => {
     for (let size = 4; size <= 8; size++) {
       for (let seed = 1; seed <= 40; seed++) {
