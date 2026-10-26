@@ -33,17 +33,36 @@ describe('soulBarrage', () => {
     for (let i = 0; i < 600; i++) { stepBarrage(s, 0.05, s.px, 30, rng); s.invuln = 99; for (const e of s.enemies) seen.add(e.entry.element); if (s.over) s.over = false; }
     expect([...seen]).toEqual([BARRAGE_ELEMENT]);
   });
-  it('inimigo que chega à base tira 1 vida (sem invulnerabilidade) e some', () => {
-    const s = newBarrage();
-    const rng = seeded(2);
-    s.spawnIn = 99;
+  const leaker = (y: number) => {
     const entry = { key: 'x-rookie', id: 'x', stage: 'rookie' as const, kind: 'base' as const, element: 'espaco', elements: ['espaco'], name: 'x', basico: {} as never, especial: {} as never };
-    s.enemies.push({ x: 10, y: BASE_Y + 1, vx: 0, vy: 0, hp: 2, maxHp: 2, fireIn: 99, entry, stage: 'rookie', points: 10, t: 0, size: 60, r: 22 });
-    s.invuln = 5;
-    const ev = stepBarrage(s, 0.01, s.px, 1, rng);
-    expect(ev.leaked).toBe(1);
+    return { x: 10, y, vx: 0, vy: 0, hp: 2, maxHp: 2, fireIn: 99, entry, stage: 'rookie' as const, points: 10, t: 0, size: 60, r: 22 };
+  };
+  it('vários vazamentos no mesmo passo tiram só 1 vida e dão invulnerabilidade', () => {
+    const s = newBarrage();
+    s.spawnIn = 99;
+    s.enemies.push(leaker(BASE_Y + 1), leaker(BASE_Y + 2), leaker(BASE_Y + 3));
+    const ev = stepBarrage(s, 0.01, s.px, 1, seeded(2));
+    expect(ev.leaked).toBe(3);
     expect(s.lives).toBe(START_LIVES - 1);
     expect(s.enemies.length).toBe(0);
+    expect(s.invuln).toBeGreaterThan(0.9);
+  });
+  it('vazamento durante a invulnerabilidade some sem tirar vida; 1,1 s depois tira outra', () => {
+    const s = newBarrage();
+    s.spawnIn = 99;
+    s.enemies.push(leaker(BASE_Y + 1));
+    stepBarrage(s, 0.01, s.px, 1, seeded(2));
+    expect(s.lives).toBe(START_LIVES - 1);
+    s.enemies.push(leaker(BASE_Y + 1));
+    const ev = stepBarrage(s, 0.01, s.px, 1, seeded(2));
+    expect(ev.leaked).toBe(0);
+    expect(s.enemies.length).toBe(0);
+    expect(s.lives).toBe(START_LIVES - 1);
+    for (let i = 0; i < 22; i++) { s.spawnIn = 99; s.fireIn = 99; stepBarrage(s, 0.05, s.px, 1, seeded(2)); }
+    expect(s.invuln).toBe(0);
+    s.enemies.push(leaker(BASE_Y + 1));
+    stepBarrage(s, 0.01, s.px, 1, seeded(2));
+    expect(s.lives).toBe(START_LIVES - 2);
   });
   it('dificuldade cresce e tem teto', () => {
     expect(difficultyAt(5).bulletSpeed).toBeGreaterThan(difficultyAt(1).bulletSpeed);

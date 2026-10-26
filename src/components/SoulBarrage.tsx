@@ -219,8 +219,8 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
         language={language}
         infoLabel={isPt ? 'Como se joga' : 'How to play'}
         info={isPt
-          ? `Arraste, use as setas (ou A/D) ou os botões para mover: o seu Soulmon atira sozinho. Desvie dos tiros e impeça os inimigos de chegar à base (3 vidas). As fases ficam mais difíceis. ${BARRAGE_POINTS_PER_BIT} pontos = 1 Bit`
-          : `Drag, use the arrow keys (or A/D) or the buttons to move: your Soulmon fires on its own. Dodge shots and stop enemies from reaching your base (3 lives). Each phase gets harder. ${BARRAGE_POINTS_PER_BIT} points = 1 Bit`}
+          ? `Arraste, use as setas (ou A/D) ou os botões para mover: o seu Soulmon atira sozinho. Desvie dos tiros e impeça os inimigos de chegar à base (3 vidas; ao perder uma, você fica 1 s invulnerável). As fases ficam mais difíceis. ${BARRAGE_POINTS_PER_BIT} pontos = 1 Bit`
+          : `Drag, use the arrow keys (or A/D) or the buttons to move: your Soulmon fires on its own. Dodge shots and stop enemies from reaching your base (3 lives; after losing one you are invulnerable for 1 s). Each phase gets harder. ${BARRAGE_POINTS_PER_BIT} points = 1 Bit`}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
         exitConfirm={phase === 'playing' || (phase === 'ready' && challenge) ? gameExitConfirm(isPt, isPt ? 'da partida' : 'this run') : undefined}

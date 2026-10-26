@@ -5,7 +5,7 @@
  *
  * Regras: o Soulmon fica na base e atira sozinho (orbe do elemento dele); inimigos do
  * elemento espaço (`enemyRoster`) descem em levas e atiram; tiro inimigo que encosta tira 1 vida;
- * inimigo que chega à base também tira 1 vida. A cada `PHASE_SECONDS` a fase sobe: estágio do inimigo, cadência,
+ * inimigo que chega à base também tira 1 vida (ambos abrem 1 s de invulnerabilidade; vazamento nela é descartado). A cada `PHASE_SECONDS` a fase sobe: estágio do inimigo, cadência,
  * velocidade e densidade crescem. Pontos = abates; Bits = `barrageBits(score)` pelo funil
  * de minigames (o teto diário é aplicado fora daqui).
  */
@@ -26,7 +26,7 @@ export const PLAYER_SIZE = 64;   // tamanho do desenho
 export const PLAYER_Y = FIELD_H - 70;
 export const PLAYER_SPEED = 520; // px/s ao seguir o dedo
 export const START_LIVES = 3;
-export const INVULN_SECONDS = 1.4;
+export const INVULN_SECONDS = 1.0;
 export const PHASE_SECONDS = 20;
 export const SHOT_EVERY = 0.22;
 export const SHOT_SPEED = 620;
@@ -201,12 +201,15 @@ export function stepBarrage(s: BarrageState, dtRaw: number, targetX: number, _le
     e.fireIn -= dt;
     if (e.fireIn <= 0 && e.y > 0 && e.y < PLAYER_Y - 80) { fire(s, e, rng); e.fireIn = d.fireEvery * (0.85 + rng() * 0.3); }
   }
-  // Quem atravessa até a base TIRA VIDA (sem a invulnerabilidade do tiro: é preciso impedir a passagem).
+  // Quem atravessa até a base some. Fora da invulnerabilidade, a leva inteira tira 1 vida só e abre a janela;
+  // durante a invulnerabilidade, o vazamento é descartado sem tirar vida.
   const through = s.enemies.filter(e => e.y >= BASE_Y).length;
   if (through > 0) {
     s.enemies = s.enemies.filter(e => e.y < BASE_Y);
-    s.lives -= through; ev.leaked = through; ev.hit = true;
-    if (s.lives <= 0) { s.over = true; ev.over = true; }
+    if (s.invuln <= 0) {
+      s.lives -= 1; s.invuln = INVULN_SECONDS; ev.leaked = through; ev.hit = true;
+      if (s.lives <= 0) { s.over = true; ev.over = true; }
+    }
   }
   for (const b of s.shots) { b.x += b.vx * dt; b.y += b.vy * dt; }
   s.shots = s.shots.filter(b => b.y > -20);
