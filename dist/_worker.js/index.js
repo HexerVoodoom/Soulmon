@@ -11855,7 +11855,12 @@ var DAILY_EVENTS = [
   "mercado",
   "amigo",
   "arena",
-  "torneio"
+  "torneio",
+  "barrage",
+  "eco",
+  "zip",
+  "patches",
+  "calabouco"
 ];
 var DAILY_MISSION_IDS = [
   "d-dino",
@@ -11872,7 +11877,12 @@ var DAILY_MISSION_IDS = [
   "d-mercado",
   "d-amigo",
   "d-arena",
-  "d-torneio"
+  "d-torneio",
+  "d-barrage",
+  "d-eco",
+  "d-zip",
+  "d-patches",
+  "d-calabouco"
 ];
 var FIRST_TIME_IDS = [
   "first-minigame",
@@ -11907,7 +11917,35 @@ var MISSION_IDS = [
   "mission-kills-100",
   "mission-runs-3",
   "mission-dino-1000",
-  "mission-perfect-30"
+  "mission-perfect-30",
+  "mission-barrage-1000",
+  "mission-zip-10",
+  "mission-patches-10",
+  "mission-dino-normal-500",
+  "mission-dino-dash-30",
+  "mission-ppt-normal-5",
+  "mission-rogue-floors-3",
+  "mission-rogue-floors-15",
+  "mission-rift-runs-15",
+  "mission-rift-kills-500",
+  "mission-clan-shop-3",
+  "mission-regen-1",
+  "mission-focus-prepared-10",
+  "mission-rank-gold"
+];
+var FEAT_CAP = 999999;
+var FEAT_KEYS = [
+  "zipSolved",
+  "patchesSolved",
+  "rogueFloors",
+  "dinoDashSmashed",
+  "pptNormalWins",
+  "clanShopBuys",
+  "regens",
+  "focusPrepared",
+  "barrageBest",
+  "dinoNormalBest",
+  "rankTier"
 ];
 var has5 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
 function sanitizeDailyMissions(raw) {
@@ -11949,6 +11987,20 @@ function sanitizeMissionsClaimed(raw) {
   return [...new Set(raw.filter((x2) => typeof x2 === "string" && MISSION_IDS.includes(x2)))];
 }
 __name(sanitizeMissionsClaimed, "sanitizeMissionsClaimed");
+function sanitizeFeats(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const r = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  const out = {};
+  for (const k of FEAT_KEYS) {
+    const v = has5(r, k) ? r[k] : void 0;
+    if (typeof v === "number" && Number.isFinite(v) && v > 0) out[k] = Math.min(FEAT_CAP, Math.floor(v));
+  }
+  return out;
+}
+__name(sanitizeFeats, "sanitizeFeats");
 
 // api/_focusLoot.js
 var FOCUS_LOOT_DAILY_CAP = 8;
@@ -12209,6 +12261,11 @@ async function onRequest7({ request, env }) {
       const q = sanitizeMissionsClaimed(state.missionsClaimed);
       if (q) state.missionsClaimed = q;
       else delete state.missionsClaimed;
+    }
+    if ("feats" in state) {
+      const q = sanitizeFeats(state.feats);
+      if (q) state.feats = q;
+      else delete state.feats;
     }
     if ("firstTimes" in state) {
       const q = sanitizeFirstTimes(state.firstTimes);
@@ -12908,7 +12965,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-lGHay8/functionsRoutes-0.1059410315830055.mjs
+// ../.wrangler/tmp/pages-uc0KCt/functionsRoutes-0.3276180216299335.mjs
 var routes = [
   {
     routePath: "/api/account",
