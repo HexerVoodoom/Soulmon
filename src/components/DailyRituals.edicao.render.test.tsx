@@ -57,7 +57,7 @@ function Harness() {
   );
 }
 
-const abrirTudo = () => fireEvent.click(screen.getByRole('button', { name: /View all|Ver tudo/ }));
+const abrirTudo = () => fireEvent.click(screen.getByRole('button', { name: /Edit|Editar/ }));
 const tela = () => document.querySelector('[data-all-activities]') as HTMLElement | null;
 
 describe('View all: edição completa', () => {

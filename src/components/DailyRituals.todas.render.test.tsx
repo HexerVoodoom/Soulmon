@@ -47,7 +47,7 @@ function Harness(over: Partial<Parameters<typeof DailyRituals>[0]> = {}) {
   );
 }
 const mount = (over: Partial<Parameters<typeof DailyRituals>[0]> = {}) => renderWithCss(<Harness {...over} />);
-const abrirTudo = () => fireEvent.click(screen.getByRole('button', { name: /View all|Ver tudo/ }));
+const abrirTudo = () => fireEvent.click(screen.getByRole('button', { name: /Edit|Editar/ }));
 
 describe('2.1 Home: só hoje, em Tasks e Habits', () => {
   it('mostra Tasks e Habits de hoje; não mostra o que não é de hoje nem a tela cheia', () => {

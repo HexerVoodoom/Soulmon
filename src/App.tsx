@@ -8206,7 +8206,6 @@ export default function App() {
                        (`completeDayReached`, utils/dailyReset.ts), nunca uma
                        segunda definição (footgun 9). */
                     variant="home"
-                    onOpenSettings={() => goTo('page:settings')}
                     dayComplete={diaCompletoHoje}
                     /* Reafirmar o dia (REGISTRO §66): só o que foi marcado para hoje aparece; o convite abre o modal pela fila. */
                     dayPlan={{
