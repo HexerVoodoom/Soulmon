@@ -52,7 +52,7 @@ interface PlayLotSpec<K extends string> {
 // 🗺️ 01/10/2026 (H10, navegação do dono): os dois prédios da Exploração estavam
 // soltos sobre o caminho. O fundo tem DOIS tablados de pedra escura (o de cima à
 // esquerda e o do meio à direita) — cada prédio agora assenta no centro do seu.
-// R6-L1 (26/10/2026, dono): Passeio cima-esq, Oficina do Foco cima-dir, Caderno esq-meio (desce), Refugio baixo-dir.
+// R6-L1 (26/10/2026, dono; depois Calabouço 78→70% e Ateliê 55→61%): Passeio cima-esq, Oficina do Foco cima-dir, Caderno esq-meio (desce), Refugio baixo-dir.
 const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
   // 🧭 O Passeio (30/09/2026, decisão do dono — `REGISTRO-DE-DECISOES.md` §5.6):
   // a clareira da DIREITA, do outro lado do caminho. Os lotes têm 38% de largura
@@ -73,12 +73,12 @@ const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
 // terra. Salão e Ateliê dividem a clareira oval de cima, cada um no seu lado e
 // longe da borda; o Refúgio desce para o meio da clareira de baixo, longe da
 // escadinha (antes encostava nela).
-// R6-L1 (26/10/2026, dono): Salao no topo; Atelie da Mente e Calabouco LADO A LADO embaixo; Calabouco ~1,7x mais largo (46% -> 78%).
+// R6-L1 (26/10/2026, dono; depois Calabouço 78→70% e Ateliê 55→61%): Salao no topo; Atelie da Mente e Calabouco LADO A LADO embaixo; Calabouco ~1,7x mais largo (46% -> 78%).
 const JOGOS_LOTS: PlayLotSpec<JogosLotId>[] = [
   { id: 'salao', labelPt: 'Salão de Jogos', labelEn: 'Game Hall', ariaPt: 'Entrar no Salão de Jogos', ariaEn: 'Enter the Game Hall', left: '51.7%', top: '31.2%', width: '58%' }, // W12 (20/10/2026): DESCE 28→31 e centraliza na clareira de cima (centro medido ~52/31), maior 52→58%
-  { id: 'mente', labelPt: 'Ateliê da Mente', labelEn: 'Mind Workshop', ariaPt: 'Entrar no Ateliê da Mente', ariaEn: 'Enter the Mind Workshop', left: '25%', top: '68%', width: '55%' }, // W12: maior 50→55%, centrado no lobo de cima da clareira de baixo (53/59); os três ficam em coluna (H11: o rótulo do Salão não encosta no Ateliê, nem o rótulo deste no Refúgio)
+  { id: 'mente', labelPt: 'Ateliê da Mente', labelEn: 'Mind Workshop', ariaPt: 'Entrar no Ateliê da Mente', ariaEn: 'Enter the Mind Workshop', left: '25%', top: '68%', width: '61%' }, // 26/10/2026 (dono): maior 55→61%. W12: maior 50→55%, centrado no lobo de cima da clareira de baixo (53/59); os três ficam em coluna (H11: o rótulo do Salão não encosta no Ateliê, nem o rótulo deste no Refúgio)
   // 🗝️ beta3 M3 (25/10/2026): o Calabouço (jogo rogue, lane M7) ocupa o lugar que o Refúgio deixou — lobo de baixo da clareira. Arte PROVISÓRIA (reusa a da Masmorra).
-  { id: 'dungeon', labelPt: 'Calabouço', labelEn: 'Dungeon', ariaPt: 'Entrar no Calabouço', ariaEn: 'Enter the Dungeon', left: '68%', top: '82%', width: '78%' },
+  { id: 'dungeon', labelPt: 'Calabouço', labelEn: 'Dungeon', ariaPt: 'Entrar no Calabouço', ariaEn: 'Enter the Dungeon', left: '68%', top: '82%', width: '70%' },
 ];
 
 function resolveLots<K extends string>(specs: PlayLotSpec<K>[], language: Language) {
