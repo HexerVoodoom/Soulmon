@@ -15,7 +15,7 @@ const BASE_EN: Record<string, string> = {
   fogo: 'Fire', agua: 'Water', terra: 'Earth', ar: 'Air', eletricidade: 'Lightning',
   arcano: 'Arcane', sombra: 'Shadow', luz: 'Light', vileza: 'Malice', morte: 'Death',
   vida: 'Life', vigor: 'Vigor', marcial: 'Martial', tempo: 'Time', som: 'Sound',
-  gravidade: 'Gravity', espaco: 'Space',
+  gravidade: 'Gravity', espaco: 'Space', fada: 'Fairy', industrial: 'Industrial', planta: 'Plant',
 };
 
 const DERIVED_EN: Record<string, string> = {
@@ -26,7 +26,7 @@ const DERIVED_EN: Record<string, string> = {
   prisma: 'Prism', acido: 'Acid', veneno: 'Venom', nascente: 'Spring', correnteza: 'Current',
   areia: 'Sand', magnetismo: 'Magnetism', cristal: 'Crystal', obsidiana: 'Obsidian',
   ouro_vivo: 'Living Gold', solo_profano: 'Unhallowed Ground', ossuario: 'Ossuary',
-  flora: 'Flora', tita: 'Titan', tempestade: 'Storm', eter: 'Aether', murmurio: 'Murmur',
+  flora: 'Grove', tita: 'Titan', tempestade: 'Storm', eter: 'Aether', murmurio: 'Murmur',
   aurora: 'Aurora', enxofre: 'Brimstone', miasma: 'Miasma', alento: 'Breath', impeto: 'Impetus',
   fluxo: 'Flux', trovao_negro: 'Black Thunder', fulgor: 'Brilliance', tormento: 'Torment',
   galvanismo: 'Galvanism', sinapse: 'Synapse', reflexo: 'Reflex', ocultismo: 'Occultism',
@@ -55,6 +55,21 @@ const DERIVED_EN: Record<string, string> = {
   devorador: 'Devourer', nebulosa: 'Nebula', semente_estelar: 'Star Seed',
   gigante_estelar: 'Star Giant', lamina_sideral: 'Sidereal Blade', continuum: 'Continuum',
   silencio_cosmico: 'Cosmic Silence', dobra: 'Warp',
+  // 25/10/2026 — os 54 pares de fada, industrial e planta.
+  fogo_fatuo: 'Will-o-Wisp', orvalho: 'Enchanted Dew', circulo_feerico: 'Fairy Ring', brisa_cintilante: 'Glitter Breeze',
+  glitter: 'Glitter', feerie: 'Faerie', sonho_sombrio: 'Dark Dream', arco_iris: 'Rainbow',
+  encanto_traicoeiro: 'Treacherous Charm', banshee: 'Banshee', coracao: 'Heart', graca: 'Grace',
+  lamina_purpurina: 'Glitter Blade', sono_encantado: 'Enchanted Sleep', cancao_feerica: 'Fae Song', leveza: 'Lightness',
+  poeira_estelar: 'Stardust', fornalha: 'Furnace', hidraulica: 'Hydraulics', mineracao: 'Mining',
+  pneumatica: 'Pneumatics', usina: 'Power Plant', artificio: 'Artifice', fuligem: 'Soot',
+  holofote: 'Floodlight', poluicao: 'Pollution', ferro_velho: 'Scrapyard', biomecanica: 'Biomechanics',
+  exoesqueleto: 'Exoskeleton', armaria: 'Armory', relojoaria: 'Clockwork', britadeira: 'Jackhammer',
+  prensa: 'Press', estacao_orbital: 'Orbital Station', brinquedo: 'Wind-up Toy', queimada: 'Wildfire',
+  mangue: 'Mangrove', raiz_profunda: 'Deep Root', polen: 'Pollen', fotossintese: 'Photosynthesis',
+  druidismo: 'Druidism', fungo: 'Fungus', girassol: 'Sunflower', espinheiro: 'Thornbush',
+  murcha: 'Wither', seiva: 'Sap', carvalho: 'Oak', bambu: 'Bamboo',
+  estacoes: 'Seasons', farfalhar: 'Rustle', trepadeira: 'Creeper', arvore_mundo: 'World Tree',
+  jardim_encantado: 'Enchanted Garden', estufa: 'Greenhouse',
 };
 
 /**

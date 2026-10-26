@@ -52,10 +52,12 @@ describe('o pool é o corpus do Besti-rio-', () => {
     expect([...fora]).toEqual([]);
   });
 
-  it('os 17 elementos têm pelo menos 8 criaturas cada, exceto as lacunas CONHECIDAS do corpus', () => {
+  it('os 20 elementos têm pelo menos 8 criaturas cada, exceto as lacunas CONHECIDAS do corpus', () => {
     // A lacuna de `marcial` (nenhuma criatura no corpus bruto) foi fechada pelo
     // enriquecimento de 06/10/2026. Se uma lacuna nova aparecer, declare aqui.
-    const LACUNAS_CONHECIDAS: string[] = [];
+    // fada, industrial e planta viraram base em 25/10/2026; o Besti-rio- ainda não tem criatura deles
+    // (arte/entradas na fila de docs/ASSETS-A-GERAR.md). Fechar a lacuna = tirar daqui.
+    const LACUNAS_CONHECIDAS: string[] = ['fada', 'industrial', 'planta'];
     const cont: Record<string, number> = {};
     // Derivado conta pelos componentes — é assim que `select.ts` pontua.
     const baseDe = (id: string): string[] =>

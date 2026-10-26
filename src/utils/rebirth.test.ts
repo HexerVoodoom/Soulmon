@@ -192,7 +192,7 @@ describe('rebirth — as duas dropdowns saem dos DADOS, nunca de lista à mão',
 
   it('os elementos vão até o SEGUNDO nível e param ali', () => {
     const opts = rebirthElementOptions();
-    expect(opts.filter(o => o.nivel === 1)).toHaveLength(17);
+    expect(opts.filter(o => o.nivel === 1)).toHaveLength(20); // 25/10/2026: +fada, industrial, planta
     expect(opts.filter(o => o.nivel === 2).length).toBeGreaterThan(50);
     // Aridade 3+ existe no class-system e o motor de ficha do Soulmon não
     // aloca: oferecer seria prometer no menu o que a cozinha não faz.

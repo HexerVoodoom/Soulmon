@@ -11,9 +11,9 @@ import type { ElementId } from "../oracle";
 // `ficha/ponte8para17.test.ts` (Fase 1 B6); aqui só se trava a FORMA.
 // ---------------------------------------------------------------------------
 
-/** Os ids que existem nos DOIS sistemas (hoje: agua, fogo, terra, ar, sombra, luz). */
+/** Os ids que existem nos DOIS sistemas (hoje os 8 do oráculo). */
 export type ElementoCompartilhado = Extract<ElementId, ClassElementId>;
-/** Os ids só do Oráculo, sem base no class-system (hoje: planta, industrial). */
+/** Os ids só do Oráculo, sem base no class-system (hoje: nenhum). */
 export type ElementoSoDoOraculo = Exclude<ElementId, ClassElementId>;
 
 /** Um elemento de 8 → pesos nos 17. Compartilhado vai para SI MESMO, peso 1
@@ -25,9 +25,9 @@ export type ElementBridge =
 /**
  * Os 8 elementos do vocabulário do RITUAL → os 17 do class-system.
  *
- * `planta` e `industrial` não existem como base do class-system: viram os
- * vizinhos mais próximos (vida/terra e marcial/terra), o mesmo par que a
- * leitura já usa para eles. Os pesos somam ~1 por elemento de origem, para
+ * Desde 25/10/2026 `planta` e `industrial` são BASE do class-system e vão
+ * para si mesmas, como os outros 6 (antes espalhavam em vida/terra e
+ * marcial/terra). Os pesos somam ~1 por elemento de origem, para
  * uma resposta não valer mais só por cair num elemento que espalha.
  * (Morava em `ritualAnswers.ts` como `RITUAL_TO_CLASS`.)
  */
@@ -38,13 +38,13 @@ export const ELEMENT_BRIDGE: ElementBridge = {
   ar: { ar: 1 },
   sombra: { sombra: 1 },
   luz: { luz: 1 },
-  planta: { vida: 0.6, terra: 0.4 },
-  industrial: { marcial: 0.5, terra: 0.3, eletricidade: 0.2 },
+  planta: { planta: 1 },
+  industrial: { industrial: 1 },
 };
 
 /**
  * Vendorized from `class-system/src/registry/elementos.ts`'s `derivado(...)`
- * entries — the 136 base-pair combos (every 2-of-17 pair, `C(17,2)=136`).
+ * entries — the 190 base-pair combos (every 2-of-20 pair, `C(20,2)=190`).
  * class-system's own rule for a derived element's effective level is "the
  * LOWEST effective level among the recipe's components" (its own comment:
  * "o nível é o MENOR nível efetivo entre os componentes da receita"), which
@@ -55,7 +55,7 @@ export const BASE_ELEMENT_LABELS: Record<ClassElementId, string> = {
   fogo: "Fogo", agua: "Água", terra: "Terra", ar: "Ar", eletricidade: "Eletricidade",
   arcano: "Arcano", sombra: "Sombra", luz: "Luz", vileza: "Vileza", morte: "Morte",
   vida: "Vida", vigor: "Vigor", marcial: "Marcial", tempo: "Tempo", som: "Som",
-  gravidade: "Gravidade", espaco: "Espaço",
+  gravidade: "Gravidade", espaco: "Espaço", fada: "Fada", industrial: "Industrial", planta: "Planta",
 };
 
 export interface DerivedElementDef {
@@ -93,7 +93,7 @@ export const DERIVED_ELEMENT_PAIRS: DerivedElementDef[] = [
   { id: "ouro_vivo", nome: "Ouro Vivo", componentes: ["terra", "luz"] },
   { id: "solo_profano", nome: "Solo Profano", componentes: ["terra", "vileza"] },
   { id: "ossuario", nome: "Ossuário", componentes: ["terra", "morte"] },
-  { id: "flora", nome: "Flora", componentes: ["terra", "vida"] },
+  { id: "flora", nome: "Bosque", componentes: ["terra", "vida"] },
   { id: "tita", nome: "Titã", componentes: ["terra", "vigor"] },
   { id: "tempestade", nome: "Tempestade", componentes: ["ar", "eletricidade"] },
   { id: "eter", nome: "Éter", componentes: ["ar", "arcano"] },
@@ -201,6 +201,61 @@ export const DERIVED_ELEMENT_PAIRS: DerivedElementDef[] = [
   { id: "continuum", nome: "Continuum", componentes: ["espaco", "tempo"] },
   { id: "silencio_cosmico", nome: "Silêncio Cósmico", componentes: ["espaco", "som"] },
   { id: "dobra", nome: "Dobra", componentes: ["espaco", "gravidade"] },
+  // 25/10/2026 — fada, industrial e planta viram base no class-system (+54 pares).
+  { id: "fogo_fatuo", nome: "Fogo-Fátuo", componentes: ["fada", "fogo"] },
+  { id: "orvalho", nome: "Orvalho Encantado", componentes: ["fada", "agua"] },
+  { id: "circulo_feerico", nome: "Círculo de Fadas", componentes: ["fada", "terra"] },
+  { id: "brisa_cintilante", nome: "Brisa Cintilante", componentes: ["fada", "ar"] },
+  { id: "glitter", nome: "Glitter", componentes: ["fada", "eletricidade"] },
+  { id: "feerie", nome: "Feérie", componentes: ["fada", "arcano"] },
+  { id: "sonho_sombrio", nome: "Sonho Sombrio", componentes: ["fada", "sombra"] },
+  { id: "arco_iris", nome: "Arco-Íris", componentes: ["fada", "luz"] },
+  { id: "encanto_traicoeiro", nome: "Encanto Traiçoeiro", componentes: ["fada", "vileza"] },
+  { id: "banshee", nome: "Banshee", componentes: ["fada", "morte"] },
+  { id: "coracao", nome: "Coração", componentes: ["fada", "vida"] },
+  { id: "graca", nome: "Graça", componentes: ["fada", "vigor"] },
+  { id: "lamina_purpurina", nome: "Lâmina de Purpurina", componentes: ["fada", "marcial"] },
+  { id: "sono_encantado", nome: "Sono Encantado", componentes: ["fada", "tempo"] },
+  { id: "cancao_feerica", nome: "Canção Feérica", componentes: ["fada", "som"] },
+  { id: "leveza", nome: "Leveza", componentes: ["fada", "gravidade"] },
+  { id: "poeira_estelar", nome: "Poeira Estelar", componentes: ["fada", "espaco"] },
+  { id: "fornalha", nome: "Fornalha", componentes: ["industrial", "fogo"] },
+  { id: "hidraulica", nome: "Hidráulica", componentes: ["industrial", "agua"] },
+  { id: "mineracao", nome: "Mineração", componentes: ["industrial", "terra"] },
+  { id: "pneumatica", nome: "Pneumática", componentes: ["industrial", "ar"] },
+  { id: "usina", nome: "Usina", componentes: ["industrial", "eletricidade"] },
+  { id: "artificio", nome: "Artifício", componentes: ["industrial", "arcano"] },
+  { id: "fuligem", nome: "Fuligem", componentes: ["industrial", "sombra"] },
+  { id: "holofote", nome: "Holofote", componentes: ["industrial", "luz"] },
+  { id: "poluicao", nome: "Poluição", componentes: ["industrial", "vileza"] },
+  { id: "ferro_velho", nome: "Ferro-Velho", componentes: ["industrial", "morte"] },
+  { id: "biomecanica", nome: "Biomecânica", componentes: ["industrial", "vida"] },
+  { id: "exoesqueleto", nome: "Exoesqueleto", componentes: ["industrial", "vigor"] },
+  { id: "armaria", nome: "Armaria", componentes: ["industrial", "marcial"] },
+  { id: "relojoaria", nome: "Relojoaria", componentes: ["industrial", "tempo"] },
+  { id: "britadeira", nome: "Britadeira", componentes: ["industrial", "som"] },
+  { id: "prensa", nome: "Prensa", componentes: ["industrial", "gravidade"] },
+  { id: "estacao_orbital", nome: "Estação Orbital", componentes: ["industrial", "espaco"] },
+  { id: "brinquedo", nome: "Brinquedo de Corda", componentes: ["industrial", "fada"] },
+  { id: "queimada", nome: "Queimada", componentes: ["planta", "fogo"] },
+  { id: "mangue", nome: "Mangue", componentes: ["planta", "agua"] },
+  { id: "raiz_profunda", nome: "Raiz Profunda", componentes: ["planta", "terra"] },
+  { id: "polen", nome: "Pólen", componentes: ["planta", "ar"] },
+  { id: "fotossintese", nome: "Fotossíntese", componentes: ["planta", "eletricidade"] },
+  { id: "druidismo", nome: "Druidismo", componentes: ["planta", "arcano"] },
+  { id: "fungo", nome: "Fungo", componentes: ["planta", "sombra"] },
+  { id: "girassol", nome: "Girassol", componentes: ["planta", "luz"] },
+  { id: "espinheiro", nome: "Espinheiro", componentes: ["planta", "vileza"] },
+  { id: "murcha", nome: "Murcha", componentes: ["planta", "morte"] },
+  { id: "seiva", nome: "Seiva", componentes: ["planta", "vida"] },
+  { id: "carvalho", nome: "Carvalho", componentes: ["planta", "vigor"] },
+  { id: "bambu", nome: "Bambu", componentes: ["planta", "marcial"] },
+  { id: "estacoes", nome: "Estações", componentes: ["planta", "tempo"] },
+  { id: "farfalhar", nome: "Farfalhar", componentes: ["planta", "som"] },
+  { id: "trepadeira", nome: "Trepadeira", componentes: ["planta", "gravidade"] },
+  { id: "arvore_mundo", nome: "Árvore-Mundo", componentes: ["planta", "espaco"] },
+  { id: "jardim_encantado", nome: "Jardim Encantado", componentes: ["planta", "fada"] },
+  { id: "estufa", nome: "Estufa", componentes: ["planta", "industrial"] },
 ];
 
 /**

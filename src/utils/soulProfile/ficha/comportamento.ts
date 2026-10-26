@@ -32,25 +32,28 @@ export interface JanelaComportamento { power: number; harmony: number; benevolen
 const CHAVE_DO_GALHO: Record<Galho, keyof JanelaComportamento> = { poder: 'power', harmonia: 'harmony', benevolencia: 'benevolence' };
 
 /**
- * Do galho aos elementos BASE: 3 linhas × 17 bases, cada linha soma 1. Semântica do mundo (Ruptura = Poder,
+ * Do galho aos elementos BASE: 3 linhas × 20 bases, cada linha soma 1. Semântica do mundo (Ruptura = Poder,
  * Trama = Harmonia, Guarda = Benevolência — `NARRATIVA-E-UNIVERSO.md` §6.6), CALIBRADA com o
  * `classSystem.data.json`: cada galho herda as famílias de criatura em `FAMILIAS_DO_GALHO` e a linha segue as
  * afinidades delas (fogo domina Poder, arcano/ar a Harmonia, vida/terra a Benevolência); os cinco elementos
- * sem criatura no snapshot (eletricidade, tempo, som, gravidade, espaço) entram por semântica. Os 17
- * aparecem em alguma linha. A régua `comportamento.test.ts` recalcula a afinidade do snapshot e reprova a
+ * sem criatura no snapshot (eletricidade, tempo, som, gravidade, espaço) entram por semântica. Os 20
+ * aparecem em alguma linha (25/10/2026: `industrial` entra em Poder/Harmonia — construto —, `planta` e `fada`
+ * em Benevolência, a casa da família `planta`; sem criatura no snapshot, entram por semântica). A régua
+ * `comportamento.test.ts` recalcula a afinidade do snapshot e reprova a
  * tabela que se afastar dela. Só ids BASE: o par continua exclusivo da cascata (proteção WP4.22).
  */
 export const GALHO_PARA_ELEMENTO: Readonly<Record<Galho, Readonly<Partial<Record<ClassElementId, number>>>>> = {
   poder: {
-    fogo: 0.26, vileza: 0.10, eletricidade: 0.10, marcial: 0.10, morte: 0.08, vigor: 0.08, terra: 0.06,
-    arcano: 0.05, sombra: 0.05, gravidade: 0.04, ar: 0.03, som: 0.03, vida: 0.02,
+    fogo: 0.24, vileza: 0.10, eletricidade: 0.10, marcial: 0.08, morte: 0.08, vigor: 0.08, terra: 0.06,
+    arcano: 0.05, sombra: 0.05, gravidade: 0.04, industrial: 0.04, ar: 0.03, som: 0.03, vida: 0.02,
   },
   harmonia: {
-    arcano: 0.20, ar: 0.15, agua: 0.12, luz: 0.10, tempo: 0.08, som: 0.08, espaco: 0.08, marcial: 0.05,
-    eletricidade: 0.04, sombra: 0.04, vida: 0.02, terra: 0.02, morte: 0.02,
+    arcano: 0.18, ar: 0.14, agua: 0.12, luz: 0.10, tempo: 0.08, som: 0.08, espaco: 0.08, marcial: 0.04,
+    eletricidade: 0.04, sombra: 0.04, vida: 0.02, terra: 0.02, morte: 0.02, industrial: 0.02, fada: 0.02,
   },
   benevolencia: {
-    vida: 0.28, terra: 0.22, vigor: 0.16, agua: 0.10, luz: 0.10, gravidade: 0.06, sombra: 0.03, arcano: 0.03, marcial: 0.02,
+    vida: 0.24, terra: 0.18, vigor: 0.14, agua: 0.10, planta: 0.10, luz: 0.08, fada: 0.06, gravidade: 0.04,
+    sombra: 0.03, arcano: 0.02, marcial: 0.01,
   },
 };
 

@@ -28,6 +28,7 @@ import { type ModificadorId } from '../registry/modificadores';
 import { type Personagem } from '../engine/personagem';
 import { type SkillConfig } from '../engine/skills';
 import { type FusaoConfig } from '../engine/fusao';
+import { type FiltrosGeracao, type FiltrosGrupo, type PapelId } from '../engine/gerador';
 export interface Panorama {
     elementosBase: number;
     pares: number;
@@ -311,3 +312,66 @@ export declare function listarCombinacoes(opcoes?: {
 }>;
 /** Reexporta o util de chave para consumidores externos montarem consultas. */
 export { chaveCombinacao, progressoCombinacao };
+/**
+ * A ficha gerada, no formato que um programa consome: `personagem` é a ficha
+ * exportável (mesmo formato que o simulador salva e que `--ficha` lê de
+ * volta), e o resto é leitura pronta para não obrigar quem consome a
+ * recalcular a progressão.
+ *
+ * `Progressao` NÃO sai daqui de propósito: ela carrega `niveisEfetivos` com
+ * uma entrada por elemento do registro e dois `Set`s, que não sobrevivem a
+ * `JSON.stringify`. A leitura equivalente é `analise`.
+ */
+export interface FichaGerada {
+    personagem: Personagem;
+    papel: PapelId;
+    papelNome: string;
+    nivel: number;
+    semente: number;
+    orcamento: {
+        disponivel: number;
+        gasto: number;
+        sobra: number;
+    };
+    /** As bases que formaram o núcleo, na ordem de investimento. */
+    nucleo: string[];
+    elementoPrincipal: {
+        id: string;
+        nome: string;
+        nivel: number;
+    };
+    analise: AnaliseFicha;
+    skills: {
+        config: SkillConfig;
+        valida: boolean;
+        erros: string[];
+        custoTotal: number;
+        impactoTotal: number;
+        impactoPorAlvo: number;
+        alvosEsperados: number;
+    }[];
+}
+/** Gera uma ficha completa. Único filtro obrigatório: nenhum. */
+export declare function gerarFicha(filtros?: FiltrosGeracao): FichaGerada;
+export interface GrupoGeradoSerializado {
+    nome: string;
+    nivel: number;
+    semente: number;
+    quantidade: number;
+    /** Papéis na ordem dos membros — a composição que de fato saiu. */
+    composicao: PapelId[];
+    membros: FichaGerada[];
+}
+/** Gera um grupo com quantidade e papéis definidos (ou sorteados). */
+export declare function gerarGrupoDeFichas(filtros?: FiltrosGrupo): GrupoGeradoSerializado;
+/** Os papéis que o gerador conhece — alimenta menus e validação de entrada. */
+export declare function listarPapeis(): {
+    id: PapelId;
+    nome: string;
+    descricao: string;
+}[];
+/** A curva de orçamento por nível, para a UI mostrar o que cada tier compra. */
+export declare function listarNiveis(): {
+    nivel: number;
+    orcamento: number;
+}[];

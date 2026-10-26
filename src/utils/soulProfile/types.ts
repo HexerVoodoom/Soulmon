@@ -34,11 +34,13 @@ export type ClassElementId =
   | 'fogo' | 'agua' | 'terra' | 'ar'
   | 'eletricidade' | 'arcano' | 'sombra' | 'luz'
   | 'vileza' | 'morte' | 'vida' | 'vigor'
-  | 'marcial' | 'tempo' | 'som' | 'gravidade' | 'espaco';
+  | 'marcial' | 'tempo' | 'som' | 'gravidade' | 'espaco'
+  | 'fada' | 'industrial' | 'planta';
 
 export const CLASS_ELEMENT_ORDER: ClassElementId[] = [
   'fogo', 'agua', 'terra', 'ar', 'eletricidade', 'arcano', 'sombra', 'luz',
   'vileza', 'morte', 'vida', 'vigor', 'marcial', 'tempo', 'som', 'gravidade', 'espaco',
+  'fada', 'industrial', 'planta',
 ];
 
 /** Os quatro eixos do jogo, já normalizados para somar 100 em cada eixo. */

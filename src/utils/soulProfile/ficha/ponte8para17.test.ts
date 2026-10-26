@@ -66,7 +66,7 @@ describe('ponte 8→17: cada elemento do class-system domina alguma ficha', () =
   const dominou = medir();
 
   for (const s of ESTAGIOS) {
-    it(`${s}: os 17 são alcançáveis como elemento dominante`, () => {
+    it(`${s}: os 20 são alcançáveis como elemento dominante`, () => {
       const nunca = CLASS_ELEMENT_ORDER.filter(e => dominou[s][e] === 0);
       const fatias = CLASS_ELEMENT_ORDER.map(e => `${e}=${dominou[s][e]}`).join(' ');
       expect(nunca, `nunca dominam (${s}): ${nunca.join(', ') || '(nenhum)'} — ${fatias}`).toEqual([]);

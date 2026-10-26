@@ -2,11 +2,11 @@
  "_procedencia": {
   "origem": "vendor/class-system/index.js",
   "repo": "https://github.com/HexerVoodoom/Class-System",
-  "sha": "fb8664553142bf9080782ae553395e57e493757a",
-  "commitSubject": "Sinergia de alvo único alimenta o destrave; lista mostra progresso (#8)",
-  "bundleSha256": "09dbe3ffbf5e8b2bd8276f279f66cbb4b7fe1a624923bfbc12e9e197d776a7a7",
+  "sha": "d658e4a3ed56de38f55eeb4068da3ea1ae025a50",
+  "commitSubject": "fix(elementos): pesadelo_doce vira sonho_sombrio",
+  "bundleSha256": "3bff17aff5e2b7a9c45515af9b6df21112714a3a24498e4e73b062ba28881a1d",
   "geradoPor": "scripts/gen-cascata-fixtures.mjs",
-  "geradoEm": "2026-08-25T17:42:43.082Z",
+  "geradoEm": "2026-10-25T23:54:27.136Z",
   "nota": "Regenere com `npm run gen:cascata-fixtures` SEMPRE que rodar `npm run vendor:class-system`. O SHA daqui TEM que ser o de vendor/class-system/_provenance.json — cascata.parity.test.ts falha se divergir."
  },
  "bases": [
@@ -26,7 +26,10 @@
   "tempo",
   "som",
   "gravidade",
-  "espaco"
+  "espaco",
+  "fada",
+  "industrial",
+  "planta"
  ],
  "sinergiasAlvoUnico": [
   {
@@ -122,6 +125,41 @@
   {
    "de": "eletricidade",
    "para": "ar",
+   "razao": 0.05
+  },
+  {
+   "de": "planta",
+   "para": "vida",
+   "razao": 0.1
+  },
+  {
+   "de": "vida",
+   "para": "planta",
+   "razao": 0.1
+  },
+  {
+   "de": "fada",
+   "para": "luz",
+   "razao": 0.08
+  },
+  {
+   "de": "luz",
+   "para": "fada",
+   "razao": 0.08
+  },
+  {
+   "de": "industrial",
+   "para": "eletricidade",
+   "razao": 0.05
+  },
+  {
+   "de": "industrial",
+   "para": "marcial",
+   "razao": 0.05
+  },
+  {
+   "de": "terra",
+   "para": "planta",
    "razao": 0.05
   }
  ],
@@ -297,6 +335,14 @@
     "santidade": {
      "passivos": 11,
      "destravado": true
+    },
+    "arco_iris": {
+     "passivos": 1,
+     "destravado": false
+    },
+    "coracao": {
+     "passivos": 1,
+     "destravado": false
     }
    }
   },
@@ -525,6 +571,10 @@
      "passivos": 10,
      "destravado": true
     },
+    "queimada": {
+     "passivos": 1,
+     "destravado": false
+    },
     "pantano": {
      "passivos": 4,
      "destravado": false
@@ -585,6 +635,10 @@
      "passivos": 4,
      "destravado": false
     },
+    "mangue": {
+     "passivos": 1,
+     "destravado": false
+    },
     "areia": {
      "passivos": 6,
      "destravado": false
@@ -641,6 +695,10 @@
      "passivos": 9,
      "destravado": false
     },
+    "raiz_profunda": {
+     "passivos": 1,
+     "destravado": false
+    },
     "tempestade": {
      "passivos": 6,
      "destravado": false
@@ -693,6 +751,10 @@
      "passivos": 6,
      "destravado": false
     },
+    "polen": {
+     "passivos": 1,
+     "destravado": false
+    },
     "fluxo": {
      "passivos": 11,
      "destravado": true
@@ -741,6 +803,10 @@
      "passivos": 10,
      "destravado": true
     },
+    "fotossintese": {
+     "passivos": 1,
+     "destravado": false
+    },
     "ocultismo": {
      "passivos": 5,
      "destravado": false
@@ -785,6 +851,10 @@
      "passivos": 10,
      "destravado": true
     },
+    "druidismo": {
+     "passivos": 1,
+     "destravado": false
+    },
     "crepusculo": {
      "passivos": 5,
      "destravado": false
@@ -825,6 +895,10 @@
      "passivos": 5,
      "destravado": false
     },
+    "fungo": {
+     "passivos": 1,
+     "destravado": false
+    },
     "heresia": {
      "passivos": 4,
      "destravado": false
@@ -861,6 +935,10 @@
      "passivos": 10,
      "destravado": true
     },
+    "girassol": {
+     "passivos": 1,
+     "destravado": false
+    },
     "praga": {
      "passivos": 4,
      "destravado": false
@@ -893,6 +971,10 @@
      "passivos": 4,
      "destravado": false
     },
+    "espinheiro": {
+     "passivos": 1,
+     "destravado": false
+    },
     "equilibrio": {
      "passivos": 4,
      "destravado": false
@@ -921,6 +1003,10 @@
      "passivos": 4,
      "destravado": false
     },
+    "murcha": {
+     "passivos": 1,
+     "destravado": false
+    },
     "vitalidade": {
      "passivos": 11,
      "destravado": true
@@ -945,6 +1031,10 @@
      "passivos": 10,
      "destravado": true
     },
+    "seiva": {
+     "passivos": 1,
+     "destravado": false
+    },
     "maestria": {
      "passivos": 7,
      "destravado": false
@@ -965,6 +1055,10 @@
      "passivos": 10,
      "destravado": true
     },
+    "carvalho": {
+     "passivos": 1,
+     "destravado": false
+    },
     "contratempo": {
      "passivos": 7,
      "destravado": false
@@ -981,6 +1075,10 @@
      "passivos": 7,
      "destravado": false
     },
+    "bambu": {
+     "passivos": 1,
+     "destravado": false
+    },
     "eco": {
      "passivos": 2,
      "destravado": false
@@ -993,6 +1091,10 @@
      "passivos": 10,
      "destravado": true
     },
+    "estacoes": {
+     "passivos": 1,
+     "destravado": false
+    },
     "onda_de_choque": {
      "passivos": 2,
      "destravado": false
@@ -1001,8 +1103,20 @@
      "passivos": 2,
      "destravado": false
     },
+    "farfalhar": {
+     "passivos": 1,
+     "destravado": false
+    },
     "dobra": {
      "passivos": 3,
+     "destravado": false
+    },
+    "trepadeira": {
+     "passivos": 1,
+     "destravado": false
+    },
+    "arvore_mundo": {
+     "passivos": 1,
      "destravado": false
     }
    }

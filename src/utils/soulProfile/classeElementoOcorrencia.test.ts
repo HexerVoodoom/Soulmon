@@ -1,4 +1,4 @@
-// OS 17 ELEMENTOS DO CLASS-SYSTEM, EM PÉ DE IGUALDADE — régua de ocorrência.
+// OS 20 ELEMENTOS DO CLASS-SYSTEM (17 até 25/10/2026), EM PÉ DE IGUALDADE — régua de ocorrência.
 //
 // Decisão do dono (22/09/2026): "o class-system deve ser explorado ao máximo,
 // com mesma chance pra todas as combinações e classes".
@@ -30,9 +30,9 @@ import { nomeSintetico, nascimentoSintetico } from './perfisSinteticos';
 const N = 250;
 const SEED = 31337;
 
-/** Os 6 que compartilham nome com os elementos do JOGO — é esse grupo que
- *  entrava numa escala maior que a dos outros 11. */
-const COMPARTILHADOS = ['fogo', 'agua', 'terra', 'ar', 'sombra', 'luz'];
+/** Os 8 que compartilham nome com os elementos do JOGO (6 até 25/10/2026, quando planta e industrial
+ *  viraram base) — é esse grupo que entrava numa escala maior que a dos cósmicos. */
+const COMPARTILHADOS = ['fogo', 'agua', 'terra', 'ar', 'sombra', 'luz', 'planta', 'industrial'];
 
 function medir() {
   const rng = mulberry32(SEED);
@@ -67,7 +67,7 @@ function medir() {
   return { soma, dominou };
 }
 
-describe('ocorrência dos 17 elementos do class-system', () => {
+describe('ocorrência dos 20 elementos do class-system', () => {
   const { soma, dominou } = medir();
   const cosmicos = CLASS_ELEMENT_ORDER.filter(e => !COMPARTILHADOS.includes(e));
 
@@ -81,14 +81,14 @@ describe('ocorrência dos 17 elementos do class-system', () => {
       .toBeLessThanOrEqual(1.45);
   });
 
-  it('TODOS os 17 chegam a dominar alguma ficha', () => {
+  it('TODOS os 20 chegam a dominar alguma ficha', () => {
     const nunca = CLASS_ELEMENT_ORDER.filter(e => dominou[e] === 0);
     // Eram 7 os que nunca dominavam. Depois de `ANCHOR_BASE` 45 sobrou 1
     // (`vileza`); depois de desacoplá-la de Plutão, **nenhum**. Medido:
     // 17/17 em 400 perfis. O piso de 16 dá folga para a amostra menor do CI
-    // sem admitir a volta de elemento inalcançável.
+    // sem admitir a volta de elemento inalcançável. Com 20 bases, a mesma folga de 1: piso 19.
     expect(CLASS_ELEMENT_ORDER.length - nunca.length, `nunca dominam: ${nunca.join(', ') || '(nenhum)'}`)
-      .toBeGreaterThanOrEqual(16);
+      .toBeGreaterThanOrEqual(19);
   });
 
   it('nenhum elemento vira o dominante da maioria', () => {

@@ -27,15 +27,16 @@ const GALHOS = [['poder', 'power'], ['harmonia', 'harmony'], ['benevolencia', 'b
 /** Espelho de `GALHO_PARA_ELEMENTO`: 3 linhas x elementos BASE, cada linha soma 1. */
 export const GALHO_PARA_ELEMENTO = {
   poder: {
-    fogo: 0.26, vileza: 0.10, eletricidade: 0.10, marcial: 0.10, morte: 0.08, vigor: 0.08, terra: 0.06,
-    arcano: 0.05, sombra: 0.05, gravidade: 0.04, ar: 0.03, som: 0.03, vida: 0.02,
+    fogo: 0.24, vileza: 0.10, eletricidade: 0.10, marcial: 0.08, morte: 0.08, vigor: 0.08, terra: 0.06,
+    arcano: 0.05, sombra: 0.05, gravidade: 0.04, industrial: 0.04, ar: 0.03, som: 0.03, vida: 0.02,
   },
   harmonia: {
-    arcano: 0.20, ar: 0.15, agua: 0.12, luz: 0.10, tempo: 0.08, som: 0.08, espaco: 0.08, marcial: 0.05,
-    eletricidade: 0.04, sombra: 0.04, vida: 0.02, terra: 0.02, morte: 0.02,
+    arcano: 0.18, ar: 0.14, agua: 0.12, luz: 0.10, tempo: 0.08, som: 0.08, espaco: 0.08, marcial: 0.04,
+    eletricidade: 0.04, sombra: 0.04, vida: 0.02, terra: 0.02, morte: 0.02, industrial: 0.02, fada: 0.02,
   },
   benevolencia: {
-    vida: 0.28, terra: 0.22, vigor: 0.16, agua: 0.10, luz: 0.10, gravidade: 0.06, sombra: 0.03, arcano: 0.03, marcial: 0.02,
+    vida: 0.24, terra: 0.18, vigor: 0.14, agua: 0.10, planta: 0.10, luz: 0.08, fada: 0.06, gravidade: 0.04,
+    sombra: 0.03, arcano: 0.02, marcial: 0.01,
   },
 };
 

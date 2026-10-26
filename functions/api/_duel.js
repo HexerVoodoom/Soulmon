@@ -136,10 +136,10 @@ export function lexOf(especial, basica, familia) {
 /** Espelho de `escolaSkillSegura` + `fighterIdentity` (src/utils/fighterIdentity.ts): escola de skill válida = ela mesma; texto que não é escola de skill (um `evocacao` antigo, lixo) = `conjuracao`; sem skill/sem texto = `null` (o cliente cai no elemento). */
 const escolaOf = (skill) => (skill && typeof skill.escolaId === 'string' ? (own(ESCOLA_FAMILY, skill.escolaId) ? skill.escolaId : 'conjuracao') : null);
 
-/** A lista FECHADA de elementos do app (17 base + 136 pares: `CLASS_ELEMENT_ORDER` + `DERIVED_ELEMENT_PAIRS`; travada por `fighterIdentity.parity.test.ts`). O elemento publicado em `fx` só sai se estiver aqui. */
+/** A lista FECHADA de elementos do app (20 base + 190 pares: `CLASS_ELEMENT_ORDER` + `DERIVED_ELEMENT_PAIRS`; travada por `fighterIdentity.parity.test.ts`). O elemento publicado em `fx` só sai se estiver aqui. */
 export const ELEMENTOS_FICHA = new Set([
   'fogo', 'agua', 'terra', 'ar', 'eletricidade', 'arcano', 'sombra', 'luz', 'vileza', 'morte', 'vida', 'vigor',
-  'marcial', 'tempo', 'som', 'gravidade', 'espaco', 'vapor', 'lava', 'incendio', 'plasma', 'fogo_feiticeiro',
+  'marcial', 'tempo', 'som', 'gravidade', 'espaco', 'fada', 'industrial', 'planta', 'vapor', 'lava', 'incendio', 'plasma', 'fogo_feiticeiro',
   'fogo_negro', 'chama_solar', 'fogo_infernal', 'chama_azul', 'fenix', 'fervor', 'pantano', 'gelo',
   'agua_viva', 'mare', 'abismo', 'prisma', 'acido', 'veneno', 'nascente', 'correnteza', 'areia', 'magnetismo',
   'cristal', 'obsidiana', 'ouro_vivo', 'solo_profano', 'ossuario', 'flora', 'tita', 'tempestade', 'eter',
@@ -156,6 +156,14 @@ export const ELEMENTOS_FICHA = new Set([
   'dilatacao', 'onda_de_choque', 'meteoro', 'cometa', 'asteroide', 'estratosfera', 'pulsar', 'portal', 'vazio',
   'constelacao', 'devorador', 'nebulosa', 'semente_estelar', 'gigante_estelar', 'lamina_sideral', 'continuum',
   'silencio_cosmico', 'dobra',
+  // 25/10/2026 — fada, industrial e planta viraram base: +3 bases e +54 pares.
+  'fogo_fatuo', 'orvalho', 'circulo_feerico', 'brisa_cintilante', 'glitter', 'feerie', 'sonho_sombrio', 'arco_iris',
+  'encanto_traicoeiro', 'banshee', 'coracao', 'graca', 'lamina_purpurina', 'sono_encantado', 'cancao_feerica', 'leveza',
+  'poeira_estelar', 'fornalha', 'hidraulica', 'mineracao', 'pneumatica', 'usina', 'artificio', 'fuligem',
+  'holofote', 'poluicao', 'ferro_velho', 'biomecanica', 'exoesqueleto', 'armaria', 'relojoaria', 'britadeira',
+  'prensa', 'estacao_orbital', 'brinquedo', 'queimada', 'mangue', 'raiz_profunda', 'polen', 'fotossintese',
+  'druidismo', 'fungo', 'girassol', 'espinheiro', 'murcha', 'seiva', 'carvalho', 'bambu',
+  'estacoes', 'farfalhar', 'trepadeira', 'arvore_mundo', 'jardim_encantado', 'estufa',
 ]);
 
 /** Id de elemento da lista fechada (o cliente valida de novo contra a dele). */
