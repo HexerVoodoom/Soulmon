@@ -3775,3 +3775,13 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 ### `src/utils/dungeonBase.ts` · `src/utils/nightmareWave.ts` · `src/utils/rogueDungeonSave.ts` · `src/utils/soulProfile/ficha/elementoIds.ts` (beta3, perf do bundle)
 **Dono de:** as partes LEVES que saíram de módulos pesados para tirar o roster, o motor de combate e a tabela de elementos do JS de entrada (régua `src/deploy/orcamentoDeBytes.contract.test.ts`). `dungeonBase.ts` — regras e constantes da masmorra sem o roster (`dungeon.ts` ficou só com `buildDungeonWave`). `nightmareWave.ts` — `buildNightmareWave`, sorteada dentro do chunk lazy do pesadelo. `rogueDungeonSave.ts` — `sanitizeRogueRun`, o tipo `RogueRun` e as constantes do Calabouço, lidos pelo `GameStateContext` sem puxar o motor. `elementoIds.ts` — lista leve dos ids de elemento usada por `elementoDoOraculo`; idêntica a `DERIVED_ELEMENT_PAIRS` (régua `elementoIds.test.ts`).
 **Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`, `src/utils/rogueDungeon.ts`, `src/utils/dungeonFight.ts`, `src/utils/nightmares.ts`.
+
+## Rodada 5 da beta3 (26/10/2026) — Loja do Clã e "Gerar de novo"
+
+- `src/utils/guildLoja.ts` — espelho do catálogo da Loja do Clã (ids/preços em paridade com `functions/api/_lojaCla.js`), arte de `DECOR_ART`, copy EN+PT. REGISTRO §175.
+- `src/components/guild/GuildLoja.tsx` — vitrine da Loja dentro do Salão (`GuildSheet`); compra por `buyGuildShopItem` com `opId` por item, nunca manda preço.
+- `functions/api/_lojaCla.js` — catálogo do servidor, `comprarNaLoja` (idempotente por `opId`, saldo = bits da Casa − gasto), `normalizarLoja`; ação `guildShopBuy` em `guild.js`.
+- `src/utils/spriteRegen.ts` — regras de cliente do "Gerar de novo" (50 Créditos, 1 por forma por mês, só `paid`), espelho de `functions/api/_spriteRegen.js`. REGISTRO §34b.
+- `src/hooks/useRegenAparencia.ts` — gesto de regen: confirmação, `CreditsModal` sem saldo, `opId` por gesto com 1 retry.
+- `src/components/perfil/RegenAparencia.tsx` — Laboratório › Perfil: atual ao lado da nova, "Manter a atual"/"Usar a nova".
+- `functions/api/_spriteRegen.js` — débito antes da IA e devolução idempotente no `finally` de `generate-sprite.js` (`ent.aiRegen`, `ent.regenOps`); kill-switch `SPRITE_REGEN_DISABLED`.
