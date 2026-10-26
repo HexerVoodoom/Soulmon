@@ -10,8 +10,8 @@ import npcArenaDuelo from '../../assets/soulmon/npcs/npc-extra-arena-duelo.png';
 import { functionNpcVoice } from '../../utils/areaNpcVoice';
 
 describe('lotes novos (29/09/2026)', () => {
-  it('Arena tem Torneio, Duelo e Guerra; Hall tem Feira, Grove e Salão do Clã; Laboratório tem Biblioteca e Círculo de Amigos (D-50)', () => {
-    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo', 'guerra']);
+  it('Arena tem Torneio, Duelo, Guerra e a Fenda Sem Fim (N10); Hall tem Feira, Grove e Salão do Clã; Laboratório tem Biblioteca e Círculo de Amigos (D-50)', () => {
+    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo', 'guerra', 'fenda']);
     expect(hallLots('pt-BR').map(l => l.id)).toEqual(['feira', 'grove', 'guilda']); // D-50 (19/10/2026): Biblioteca e Amigos saíram do Hall
     expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'pet', 'stats', 'perfil', 'biblioteca', 'amigos']); // beta-2 (11): o Perfil do Soulmon
   });

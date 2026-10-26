@@ -21,7 +21,7 @@ export const FIRST_TIME_IDS = [
   'first-minigame', 'first-focus', 'first-stroll', 'first-dungeon',
   'visit:mercado.itens', 'visit:mercado.conquistas', 'visit:mercado.decoracao', 'visit:mercado.background', 'visit:mercado.ferreiro',
   'visit:jogos.salao', 'visit:exploracao.refugio', 'visit:jogos.mente',
-  'visit:exploracao.passeio', 'visit:exploracao.masmorra', 'visit:exploracao.caderno', 'visit:exploracao.oficina',
+  'visit:exploracao.passeio', 'visit:arena.fenda', 'visit:exploracao.caderno', 'visit:exploracao.oficina',
   'visit:arena.duelo', 'visit:arena.torneio',
   'visit:laboratorio.evolucao', 'visit:laboratorio.pet', 'visit:laboratorio.stats',
   'visit:laboratorio.biblioteca', 'visit:laboratorio.amigos', 'visit:hall.guilda', 'visit:hall.feira',

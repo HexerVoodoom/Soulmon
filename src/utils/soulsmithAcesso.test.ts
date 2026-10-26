@@ -46,33 +46,33 @@ describe('8.3 — causa raiz reproduzida (fluxo ANTIGO: só visita + resgate do 
 describe('8.3 — correção: entrar no prédio paga (uma vez por dia do jogador)', () => {
   const BOND2 = xpForLevel(2);
   it('Masmorra no Vínculo 2: entrar concede a peça de nível 1 e 1 minério; entrar de novo no mesmo dia não paga de novo', () => {
-    const a = applyBuildingEntry(base(BOND2), '2026-11-01', 'exploracao.masmorra');
+    const a = applyBuildingEntry(base(BOND2), '2026-11-01', 'arena.fenda');
     expect(owned(a)).toEqual(['eq-nucleo-t1']);
     expect(stockOf(a.buildingQuests, 'ore')).toBe(1);
-    const b = applyBuildingEntry(a, '2026-11-01', 'exploracao.masmorra');
+    const b = applyBuildingEntry(a, '2026-11-01', 'arena.fenda');
     expect(b).toBe(a); // idempotente: MESMA referência
     let c = a;
-    for (let i = 0; i < 20; i++) c = applyBuildingEntry(c, '2026-11-01', 'exploracao.masmorra'); // entra/sai repetido
+    for (let i = 0; i < 20; i++) c = applyBuildingEntry(c, '2026-11-01', 'arena.fenda'); // entra/sai repetido
     expect(stockOf(c.buildingQuests, 'ore')).toBe(1);
   });
   it('dia seguinte paga mais 1 (o material é o ritmo), a peça não duplica', () => {
-    let s = applyBuildingEntry(base(BOND2), '2026-11-01', 'exploracao.masmorra');
-    s = applyBuildingEntry(s, '2026-11-02', 'exploracao.masmorra');
-    s = applyBuildingEntry(s, '2026-11-03', 'exploracao.masmorra');
+    let s = applyBuildingEntry(base(BOND2), '2026-11-01', 'arena.fenda');
+    s = applyBuildingEntry(s, '2026-11-02', 'arena.fenda');
+    s = applyBuildingEntry(s, '2026-11-03', 'arena.fenda');
     expect(stockOf(s.buildingQuests, 'ore')).toBe(3);
     expect(owned(s)).toEqual(['eq-nucleo-t1']);
   });
   it('reabrir o app (JSON + sanitize) preserva o pago e não repaga no mesmo dia', () => {
-    const a = applyBuildingEntry(base(BOND2), '2026-11-01', 'exploracao.masmorra');
+    const a = applyBuildingEntry(base(BOND2), '2026-11-01', 'arena.fenda');
     const r = roundTrip(a);
     expect(owned(r)).toEqual(['eq-nucleo-t1']);
     expect(stockOf(r.buildingQuests, 'ore')).toBe(1);
-    const again = applyBuildingEntry(r, '2026-11-01', 'exploracao.masmorra');
+    const again = applyBuildingEntry(r, '2026-11-01', 'arena.fenda');
     expect(stockOf(again.buildingQuests, 'ore')).toBe(1);
   });
   it('trocar o relógio para trás (dia já pago) não repaga; o dia é o do JOGADOR, passado por parâmetro', () => {
-    let s = applyBuildingEntry(base(BOND2), '2026-11-05', 'exploracao.masmorra');
-    s = applyBuildingEntry(s, '2026-11-05', 'exploracao.masmorra');
+    let s = applyBuildingEntry(base(BOND2), '2026-11-05', 'arena.fenda');
+    s = applyBuildingEntry(s, '2026-11-05', 'arena.fenda');
     expect(stockOf(s.buildingQuests, 'ore')).toBe(1);
   });
   it('Vínculo insuficiente não paga (nada é liberado de graça): Duelo exige Vínculo 5', () => {
@@ -95,7 +95,7 @@ describe('8.3 — correção: entrar no prédio paga (uma vez por dia do jogador
     expect(upgradeRefusal(s, 'eq-nucleo-t1')).toBe('not-owned');
     for (let d = 1; d <= 6; d++) {
       const day = `2026-11-${String(d).padStart(2, '0')}`;
-      for (const id of ['exploracao.masmorra', 'exploracao.oficina'] as BuildingId[]) s = applyBuildingEntry(s, day, id);
+      for (const id of ['arena.fenda', 'exploracao.oficina'] as BuildingId[]) s = applyBuildingEntry(s, day, id);
     }
     expect(owned(s)).toContain('eq-nucleo-t1');
     expect(upgradeRefusal(s, 'eq-nucleo-t1')).not.toBe('not-owned');

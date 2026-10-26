@@ -73,16 +73,16 @@ describe('AreaView com o Soulmon na masmorra', () => {
 
   it('os lotes que NÃO usam o Soulmon seguem abertos na masmorra (a própria masmorra, o Caderno, os jogos)', async () => {
     const onBusy = vi.fn();
-    const { container } = renderWithCss(<AreaView {...base('exploracao', { ocupado: { naMasmorra: true, missaoFora: false, onBusy } })} />);
-    await toque(lote(container, 'masmorra'));
+    const { container } = renderWithCss(<AreaView {...base('arena', { ocupado: { naMasmorra: true, missaoFora: false, onBusy } })} />);
+    await toque(lote(container, 'fenda'));
     expect(dialogo(container)).not.toBeNull();
     expect(onBusy).not.toHaveBeenCalled();
   });
 
   it('Soulmon em MISSÃO da guilda não desce à masmorra: o "Enter the dungeon" chama o aviso', async () => {
     const onBusy = vi.fn();
-    const { container } = renderWithCss(<AreaView {...base('exploracao', { ocupado: { naMasmorra: false, missaoFora: true, onBusy } })} />);
-    await toque(lote(container, 'masmorra'));
+    const { container } = renderWithCss(<AreaView {...base('arena', { ocupado: { naMasmorra: false, missaoFora: true, onBusy } })} />);
+    await toque(lote(container, 'fenda'));
     await waitFor(() => expect(container.querySelector('[data-masmorra-start]')).not.toBeNull(), { timeout: 20000 });
     await toque(container.querySelector('[data-masmorra-start]') as HTMLElement);
     expect(onBusy).toHaveBeenCalledWith('masmorra-em-missao');

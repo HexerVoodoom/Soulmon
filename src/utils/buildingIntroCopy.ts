@@ -102,7 +102,7 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     what: { en: 'Your Soulmon walks here, and the mist opens a little further each step.', pt: 'O seu Soulmon caminha por aqui, e a névoa abre um pouco mais a cada passo.' },
     invite: { en: 'Walk as slow as you like.', pt: 'Ande devagar o quanto quiser.' },
   },
-  'exploracao.masmorra': {
+  'arena.fenda': {
     place: { en: 'Endless Rift', pt: 'Fenda Sem Fim' },
     hello: { en: "I'm {name}, a guide here. The mist hides paths, and I know a few.", pt: 'Eu sou {name}, guia por aqui. A névoa esconde caminhos, e eu conheço alguns.' },
     what: { en: 'The Rift goes down in floors, and your Soulmon faces one body at a time.', pt: 'A Fenda desce em andares, e o seu Soulmon enfrenta um corpo de cada vez.' },
@@ -119,12 +119,6 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     hello: { en: "I'm {name}. I keep the beat for the lights.", pt: 'Eu sou {name}. Eu marco o ritmo das luzes.' },
     what: { en: 'Focus techniques, laid out as a few steady rhythms. Each light glows in its own time.', pt: 'Técnicas de foco, em alguns ritmos constantes. Cada luz acende no seu tempo.' },
     invite: { en: 'Try one when it suits you.', pt: 'Experimente uma quando combinar com você.' },
-  },
-  'exploracao.preparar': {
-    place: { en: 'Prepare to Focus', pt: 'Preparar o Foco' },
-    hello: { en: "I'm {name}. I lay out the table before the work.", pt: 'Eu sou {name}. Eu ponho a mesa antes do trabalho.' },
-    what: { en: 'Plan your session here, step by step. When it is ready you get a key to the Focus Workshop.', pt: 'Planeje a sua sessão aqui, passo a passo. Quando ela estiver pronta, você ganha a chave da Oficina do Foco.' },
-    invite: { en: 'Take it at your own pace.', pt: 'No seu ritmo.' },
   },
   'laboratorio.evolucao': {
     place: { en: 'Evolution', pt: 'Evolução' },

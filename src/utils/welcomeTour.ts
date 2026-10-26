@@ -146,9 +146,10 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
     // 14/10/2026: o Restaurante ainda está em obra (sem ação, sem BuildingId).
     { name: { en: 'Restaurant', pt: 'Restaurante' }, line: { en: 'Under construction, opening soon!', pt: 'Em obra, em breve!' } },
   ]),
-  mapStep('arena', { en: 'Meeting other Soulmons.', pt: 'Encontros com outros Soulmons.' }, [
+  mapStep('arena', { en: 'Meeting other Soulmons. The Endless Rift is open from day one.', pt: 'Encontros com outros Soulmons. A Fenda Sem Fim está aberta desde o primeiro dia.' }, [
     bRow('arena.duelo', 'One duel at a time, against another Soulmon.', 'Um duelo de cada vez, contra outro Soulmon.'),
     bRow('arena.torneio', 'The ranked Tournament and the Open Arena.', 'O Torneio ranqueado e a Arena livre.'),
+    bRow('arena.fenda', 'Your Soulmon goes down floor by floor and fights on its own, spending energy.', 'O seu Soulmon desce andar por andar e luta sozinho, gastando energia.'),
     bRow('arena.guerra', 'The Clan War, watched over by Mirevesper, fought with your clan.', 'A Guerra de Clãs, vigiada por Mirevesper, junto do seu clã.'),
   ]),
   mapStep('jogos', { en: 'Play, and calm.', pt: 'Brincar, e acalmar.' }, [
@@ -156,11 +157,9 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
     bRow('jogos.mente', 'Memory and logic games.', 'Jogos de memória e lógica.'),
     bRow('jogos.dungeon', 'A small roguelike dungeon game.', 'Um pequeno jogo de calabouço roguelike.'),
   ]),
-  mapStep('exploracao', { en: 'Out in the mist. The Endless Rift is open from day one.', pt: 'Lá fora, na névoa. A Fenda Sem Fim está aberta desde o primeiro dia.' }, [
-    bRow('exploracao.masmorra', 'Your Soulmon goes down floor by floor and fights on its own, spending energy.', 'O seu Soulmon desce andar por andar e luta sozinho, gastando energia.'),
+  mapStep('exploracao', { en: 'Out in the mist.', pt: 'Lá fora, na névoa.' }, [
     bRow('exploracao.passeio', 'A calm walk through the mist.', 'Uma caminhada calma pela névoa.'),
-    bRow('exploracao.preparar', 'Plan a session; it gives you the key to the Workshop.', 'Planeje uma sessão; ela dá a chave da Oficina.'),
-    bRow('exploracao.oficina', 'Focus sessions.', 'Sessões de foco.'),
+    bRow('exploracao.oficina', 'Plan a session first, then focus.', 'Planeje a sessão primeiro, depois foque.'),
     bRow('exploracao.caderno', 'Your journal.', 'O seu caderno.'),
     bRow('exploracao.refugio', 'Slow breathing for hard moments.', 'Respiração lenta para momentos difíceis.'),
   ]),

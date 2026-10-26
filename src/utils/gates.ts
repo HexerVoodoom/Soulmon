@@ -92,7 +92,7 @@ export type BuildingId =
   | 'mercado.itens' | 'mercado.conquistas' | 'mercado.decoracao' | 'mercado.background' | 'mercado.ferreiro'
   | 'jogos.salao' | 'jogos.dungeon' | 'jogos.mente'
   | 'arena.duelo' | 'arena.torneio' | 'arena.guerra'
-  | 'exploracao.passeio' | 'exploracao.masmorra' | 'exploracao.caderno' | 'exploracao.oficina' | 'exploracao.preparar' | 'exploracao.refugio'
+  | 'exploracao.passeio' | 'arena.fenda' | 'exploracao.caderno' | 'exploracao.oficina' | 'exploracao.refugio'
   | 'laboratorio.evolucao' | 'laboratorio.pet' | 'laboratorio.stats' | 'laboratorio.perfil'
   | 'laboratorio.biblioteca' | 'laboratorio.amigos'
   | 'hall.guilda' | 'hall.feira' | 'hall.grove';
@@ -107,6 +107,8 @@ export const MOVED_BUILDINGS: Readonly<Record<string, BuildingId>> = {
   'hall.biblioteca': 'laboratorio.biblioteca',
   'hall.amigos': 'laboratorio.amigos',
   'jogos.refugio': 'exploracao.refugio', // beta3 M3 (25/10/2026): o Refúgio foi de Jogos para a Exploração
+  'exploracao.masmorra': 'arena.fenda', // beta3 N10 (26/10/2026): a Fenda Sem Fim (Masmorra) foi da Exploração para a Arena
+  'exploracao.preparar': 'exploracao.oficina', // beta3 N8 (26/10/2026): o prédio "Prepare to Focus" virou a 1ª etapa da Oficina do Foco
 };
 
 /** O id atual de um prédio (id antigo → novo; qualquer outro valor passa igual). */
@@ -139,10 +141,9 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   'exploracao.passeio': { minBond: 1 },
   // A Masmorra abre desde o Vínculo 1 (14/10/2026, pedido do dono: é a atividade mais gacha/idle; o limite diário, a energia e o
   // portão do andar alto — `masmorraAlto` — seguem valendo). Era 2 até esta data.
-  'exploracao.masmorra': { minBond: 1 },
+  'arena.fenda': { minBond: 1 },
   'exploracao.caderno': { minBond: 2 },
   'exploracao.oficina': { minBond: 3 },
-  'exploracao.preparar': { minBond: 3 }, // beta3 F1: mesmo portão da Oficina que ele libera
   'arena.duelo': { minBond: GATES.pvp.minBond },
   'arena.torneio': { minBond: GATES.torneio.minBond },
   'arena.guerra': { minBond: 5 }, // dono 18/10/2026: a Arena não destrava antes do que já destravava (Vínculo 5)
@@ -162,7 +163,7 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
 };
 
 /** Prédios de ENTRADA (onboarding/tutorial e o Refúgio): nunca bloqueiam — o teste exige `minBond` 1. */
-export const BUILDINGS_ALWAYS_OPEN: readonly BuildingId[] = ['mercado.itens', 'laboratorio.evolucao', 'exploracao.refugio', 'exploracao.passeio', 'exploracao.masmorra'];
+export const BUILDINGS_ALWAYS_OPEN: readonly BuildingId[] = ['mercado.itens', 'laboratorio.evolucao', 'exploracao.refugio', 'exploracao.passeio', 'arena.fenda'];
 
 /** O prédio abre neste Vínculo? `bondLevel` ausente/lixo = Vínculo 1. */
 export function buildingGateFor(id: BuildingId, bondLevel: unknown): GateResult {

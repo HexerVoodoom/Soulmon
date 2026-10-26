@@ -36,7 +36,7 @@ describe('marcadores de missão nos prédios', () => {
     const { container } = renderWithCss(<AreaView {...base({ buildingMarks: { 'exploracao.caderno': 'available' } })} />);
     expect(marca(container, 'caderno')?.getAttribute('data-mission-mark')).toBe('available');
     expect(marca(container, 'passeio')).toBeNull();
-    expect(marca(container, 'masmorra')).toBeNull();
+    expect(marca(container, 'oficina')).toBeNull();
   });
 
   it('"?" no Caderno quando a missão está completa e não recolhida', () => {

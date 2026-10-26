@@ -101,7 +101,7 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: 'This horizon smells like rain. Want a closer look?',
   },
   'arena:torneio': AREA_NPC_VOICE.arena,
-  'exploracao:masmorra': AREA_NPC_VOICE.exploracao,
+  'arena:fenda': AREA_NPC_VOICE.exploracao,
   // 'jogos:dungeon' tem voz própria abaixo (beta3 M3).
   'jogos:salao': AREA_NPC_VOICE.jogos,
   'laboratorio:evolucao': AREA_NPC_VOICE.laboratorio,
@@ -192,11 +192,6 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     namePt: 'Sépia, a copista', nameEn: 'Sépia, the scribe', // 19/10/2026 (D-32): o dono escolheu o busto nº 9 (o escriba-polvo, antes Sépia no Caderno) no lugar da Lume
     linePt: 'Foco é copiar uma linha de cada vez.',
     lineEn: 'Focus is copying one line at a time.',
-  },
-  'exploracao:preparar': {
-    namePt: 'Tela, a organizadora', nameEn: 'Tela, the table-setter', // beta3 F1: reusa a NPC da Oficina (provisório)
-    linePt: 'Primeiro a mesa, depois a linha.',
-    lineEn: 'First the table, then the line.',
   },
   'exploracao:caderno': {
     namePt: 'Opala, a arquivista das páginas', nameEn: 'Opala, keeper of the pages', // 07/10/2026: busto trocado a pedido do dono (era Sépia, a copista)
