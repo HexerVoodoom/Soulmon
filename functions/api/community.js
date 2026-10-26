@@ -414,11 +414,18 @@ async function handleCommunity(context) {
      `DUEL_PENDING_MS` — é fechado como derrota na PRÓXIMA chamada autorizada.
      A cota do dia já foi gasta na abertura, então não há como "sair sem
      custo" de um duelo que se prevê perder. */
+  /* Devolve a partida gasta na abertura de um duelo que não pôde acontecer (só vale no mesmo dia da abertura). */
+  const refundOpenDuel = (myRank, pend) => {
+    const dayOf = d => new Date(d).toISOString().slice(0, 10);
+    if (pend?.at && myRank.day === today() && dayOf(pend.at) === myRank.day) myRank.matchesToday = Math.max(0, (myRank.matchesToday || 0) - 1);
+  };
   const forfeitPending = async ({ id, me, myRank }) => {
     const pend = myRank.pending;
     if (!pend) return false;
     myRank.pending = null;
     const opp = pend.oppSave ? await getProfile(env, pend.oppSave) : null;
+    // QA-5: o oponente sumiu (perfil apagado, PvP desligado ou oculto) = a partida cancela SEM custo e ele NÃO ganha pontos.
+    if (!opp?.pvpEnabled || isHidden(opp)) { refundOpenDuel(myRank, pend); return true; }
     await settleMatch({ id, oppSave: pend.oppSave, me, opp, myRank, outcome: 'loss', sides: pend.sides });
     return true;
   };
@@ -775,8 +782,26 @@ async function handleCommunity(context) {
 
   if (action === 'match' && method === 'POST') return withDuelLock(String(id), async () => {
     const ctx = await matchContext();
-    if (ctx.res) return ctx.res;
+    if (ctx.res) {
+      // QA-5: oponente sumiu no meio do duelo: cancela sem custo (devolve a partida, ninguém pontua). Aditivo: `cancelled`.
+      if (ctx.res.status === 404) {
+        const rec = await getRank(env, currentSeason(), id);
+        if (rec.pending && rec.pending.opp === body.opponentId) {
+          const pend = rec.pending;
+          rec.pending = null;
+          if (rec.day !== today()) { rec.day = today(); rec.matchesToday = 0; rec.pairs = {}; }
+          else refundOpenDuel(rec, pend);
+          await putRank(env, currentSeason(), id, rec);
+          return json({ error: 'opponent unavailable', cancelled: true, matchesLeft: Math.max(0, MATCHES_PER_DAY - (rec.matchesToday || 0)) }, 404);
+        }
+      }
+      return ctx.res;
+    }
     const { opponentId, oppSave, me, opp, myRank } = ctx;
+    // QA-4: reenvio do MESMO `match` (a resposta se perdeu na rede): devolve o resultado já liquidado, sem gastar outra partida.
+    if (!myRank.pending && myRank.last && body.seed !== undefined && myRank.last.opp === opponentId && myRank.last.seed === body.seed) {
+      return json({ ...myRank.last.res, replayed: true });
+    }
     const oppSpriteUrl = spriteUrlOrNull(opp.spriteUrl);
     const opponent = {
       name: opp.name, petName: opp.petName, stage: opp.stage,
@@ -834,7 +859,7 @@ async function handleCommunity(context) {
     const outcome = duel.winner === 'me' ? 'win' : duel.winner === 'opp' ? 'loss' : 'draw';
     const settled = await settleMatch({ id, oppSave, me, opp, myRank, outcome, sides });
 
-    return json({
+    const resposta = {
       won: outcome === 'win',
       draw: outcome === 'draw',
       outcome,
@@ -847,7 +872,14 @@ async function handleCommunity(context) {
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
       opponent,
       duel: { events: duel.events, me: sides.me, opp: sides.opp },
-    });
+    };
+    // Guarda o resultado (sem a repetição da luta) para o reenvio idempotente; só vale com `seed` do duelo aberto.
+    if (open) {
+      const { duel: _d, ...compacto } = resposta;
+      myRank.last = { opp: opponentId, seed, res: compacto };
+      await putRank(env, currentSeason(), id, myRank);
+    }
+    return json(resposta);
   });
 
   if ((action === 'rank' || action === 'seasonResult') && method === 'GET') {

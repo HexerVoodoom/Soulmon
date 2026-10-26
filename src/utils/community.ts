@@ -175,8 +175,32 @@ export interface MatchResult {
 export const startDuel = (id: string, opponentId: string) =>
   call<{ seed: number; me: DuelSide; opp: DuelSide; matchesLeft: number }>('duelStart', { method: 'POST', body: { id, opponentId } });
 /** `taps` = toques dados em cada BALDE de 3 s da luta (o servidor higieniza e põe teto). `forfeit: true` = desistir do duelo aberto (conta como derrota). */
-export const playMatch = (id: string, opponentId: string, taps: number[] = [], forfeit = false) =>
-  call<MatchResult>('match', { method: 'POST', body: { id, opponentId, taps, ...(forfeit ? { forfeit: true } : {}) } });
+/** `seed` (a do `duelStart`) torna o envio IDEMPOTENTE: se a resposta se perder e o app reenviar, o servidor devolve o mesmo resultado
+ *  (`replayed: true`) em vez de gastar outra partida. Campo aditivo: servidor velho o ignora. */
+export const playMatch = (id: string, opponentId: string, taps: number[] = [], forfeit = false, seed?: number) =>
+  call<MatchResult>('match', { method: 'POST', body: { id, opponentId, taps, ...(forfeit ? { forfeit: true } : {}), ...(typeof seed === 'number' ? { seed } : {}) } });
+
+/** Falha de TRANSPORTE (rede caiu, 5xx, corpo ilegível): o servidor pode não ter visto o envio, ou ter visto e a resposta se perdeu. */
+export function isFalhaDeRede(err: unknown): boolean {
+  if (err instanceof TypeError) return true;
+  const m = err instanceof Error ? err.message : '';
+  return /^request failed \(5\d\d\)$/.test(m) || m.startsWith('resposta ilegível');
+}
+export const MATCH_RETRY_DELAYS_MS = [1000, 3000];
+/** `playMatch` com a semente do duelo + novas tentativas com recuo SÓ para falha de rede (erro do servidor é decisão, não se repete). */
+export async function playMatchComRetry(
+  id: string, opponentId: string, taps: number[], seed: number,
+  delays: number[] = MATCH_RETRY_DELAYS_MS,
+): Promise<MatchResult> {
+  for (let i = 0; ; i++) {
+    try {
+      return await playMatch(id, opponentId, taps, false, seed);
+    } catch (err) {
+      if (!isFalhaDeRede(err) || i >= delays.length) throw err;
+      await new Promise(r => setTimeout(r, delays[i]));
+    }
+  }
+}
 
 export interface RankRow {
   id: string; name: string; petName: string; stage: string;
