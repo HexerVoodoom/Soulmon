@@ -58,8 +58,9 @@ describe('Torneio v3 — a fiação do duelo', () => {
     fireEvent.click(screen.getByText('stub-terminar'));
     await waitFor(() => expect(chamadas.some(c => /action=match/.test(c.url))).toBe(true));
     const match = chamadas.find(c => /action=match/.test(c.url))!;
-    expect(match.body).toEqual({ id: saveId, opponentId: OPP.id, taps: [5, 7] });
-    expect(JSON.stringify(match.body)).not.toMatch(/seed|stats|level|combatant|won/i); // nada que decida o resultado sai do cliente
+    // `seed` = a chave de idempotência do reenvio (QA-4): é a semente que o SERVIDOR deu; ele luta com a do duelo aberto, nunca com esta.
+    expect(match.body).toEqual({ id: saveId, opponentId: OPP.id, taps: [5, 7], seed: 4242 });
+    expect(JSON.stringify(match.body)).not.toMatch(/stats|level|combatant|won/i); // nada que decida o resultado sai do cliente
   });
 
   it('VITÓRIA: Honra e Vínculo como sempre', async () => {

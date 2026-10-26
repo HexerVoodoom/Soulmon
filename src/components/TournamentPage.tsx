@@ -75,7 +75,7 @@ import { usePvpTalents } from '../contexts/useTalentBonus';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { stageSkillsFor } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { visualElementFor } from '../utils/combatFx';
-import { getOpponents, playMatch, startDuel, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
+import { getOpponents, playMatchComRetry, playMatch, isFalhaDeRede, startDuel, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
 import { TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
 import { getTournamentWindow, tournamentWindowLabel } from '../utils/tournamentSeason';
@@ -220,6 +220,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   /** Erro de AÇÃO (a partida não foi). Era `alert()` — diálogo do sistema por
    *  cima de um app de bichinho, e sem par PT/EN garantido. */
   const [fightError, setFightError] = useState<string | null>(null);
+  /* QA-4: partida acabada cuja resposta não chegou (rede). Guardada para "tentar de novo"; o servidor segue com o duelo aberto. */
+  const [matchRetry, setMatchRetry] = useState<{ opp: Opponent; taps: number[]; seed: number } | null>(null);
   /* WP4.13 (achado E5) — a FAIXA lê o contador LIFETIME, não os pontos da
      season. Os pontos da season descem por três caminhos (derrota própria,
      ser sorteado como oponente e perder — sem jogar — e a virada de mês), e a
@@ -356,11 +358,14 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
      efeito (o duelo aberto vira derrota na próxima chamada). */
   const leaveDuel = (opp: Opponent) => { void resolveMatch(opp, [], true); };
 
-  const resolveMatch = async (opp: Opponent, taps: number[], forfeit = false) => {
+  const resolveMatch = async (opp: Opponent, taps: number[], forfeit = false, seed?: number) => {
     setFighting(opp.id);
     setFightError(null);
+    setMatchRetry(null);
     try {
-      const r = await playMatch(saveId, opp.id, taps, forfeit);
+      const r = typeof seed === 'number' && !forfeit
+        ? await playMatchComRetry(saveId, opp.id, taps, seed)
+        : await playMatch(saveId, opp.id, taps, forfeit);
       setResult(r);
       // `?? matchesLeft`: resposta sem o campo não pode zerar o contador nem
       // virar `undefined` na tela (ver a nota do estado de carregamento).
@@ -380,7 +385,10 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       onMatchPlayed(r.won);
     } catch (err) {
       setResult(null);
-      setFightError(err instanceof Error && err.message
+      if (typeof seed === 'number' && !forfeit && isFalhaDeRede(err)) setMatchRetry({ opp, taps, seed });
+      setFightError(err instanceof Error && err.message === 'opponent unavailable'
+        ? (isPt ? 'Esse oponente saiu do Torneio. A partida foi cancelada e não gastou a sua cota.' : 'That opponent left the Tournament. The match was cancelled and cost you nothing.')
+        : err instanceof Error && err.message
         ? err.message
         : (isPt ? 'A partida não aconteceu. Tente de novo.' : "The match didn't happen. Try again."));
     } finally {
@@ -528,7 +536,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         petName={isPt ? 'Você' : 'You'}
         oppName={duel.opp.petName || duel.opp.name}
         isPt={isPt}
-        onDone={taps => { void resolveMatch(duel.opp, taps); }}
+        onDone={taps => { void resolveMatch(duel.opp, taps, false, duel.seed); }}
         onClose={() => leaveDuel(duel.opp)}
       />
     );
@@ -624,6 +632,11 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
               nunca vermelho (a partida não aconteceu; ninguém errou). */}
           {fightError && (
             <p role="alert" style={{ ...sm2Text, margin: 0, paddingLeft: 12, borderLeft: '3px solid var(--sm2-gold-ink)' }}>{fightError}</p>
+          )}
+          {matchRetry && (
+            <button type="button" onClick={() => { void resolveMatch(matchRetry.opp, matchRetry.taps, false, matchRetry.seed); }} style={{ ...sm2Button('outline'), width: '100%', maxWidth: 200 }}>
+              {isPt ? 'Tentar de novo' : 'Try again'}
+            </button>
           )}
 
           {/* ── Carregando ── */}
