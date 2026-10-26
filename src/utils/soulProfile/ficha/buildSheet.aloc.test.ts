@@ -114,7 +114,7 @@ describe('WP4.22 — alocação manual de elemento', () => {
 
   describe('a fatia do jogador tem o tamanho declarado', () => {
     // 25/10/2026: com o ultra 500→588 (20 bases), 0,25 daria 220 pontos; a decisão #72 trava o que importa — a
-    // fatia compra UM par completo (187) — e por isso a fração caiu para 0,2125. [pendente do dono: confirmar]
+    // fatia compra UM par completo (187) — e por isso a fração caiu para 0,2125. [decidido pelo dono em 25/10/2026: manter 187]
     it('ALLOC_FRACTION é 0,2125 e supera DERIVED_SPEND_FRACTION (0,2)', () => {
       expect(ALLOC_FRACTION).toBe(0.2125);
       expect(ALLOC_FRACTION).toBeGreaterThan(0.2);

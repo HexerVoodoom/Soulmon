@@ -266,7 +266,7 @@ function apportion<K extends string>(shares: Record<K, number>, order: K[], tota
  *
  * ⚠️ Era 0,25 até 25/10/2026. Com 20 bases o ultra foi a 588 (ver `ELEMENT_ORCAMENTO_BY_STAGE`) e 0,25 daria
  * 220 pontos; o número que a decisão #72 protege é o de baixo (187 = um par completo), então a fração foi a
- * 0,2125 — floor(588 × 1,5 × 0,2125) = 187. [pendente do dono: confirmar] O raciocínio original de 0,25:
+ * 0,2125 — floor(588 × 1,5 × 0,2125) = 187. [decidido pelo dono em 25/10/2026: manter 187] O raciocínio original de 0,25:
  *
  *
  * - precisa superar `DERIVED_SPEND_FRACTION` (0,2), que é o que o sistema já

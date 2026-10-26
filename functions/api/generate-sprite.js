@@ -98,6 +98,9 @@ const GEMINI_MODEL = 'gemini-2.5-flash-image';
 // escrita inofensiva. Fechar isso exigiria Durable Object — a mesma peça, e a
 // mesma recusa, do `adr-conta-e-save.md` §3.
 const CACHE_PREFIX = 'sprite:img:';
+/** E-mail no registro da geração (página GM). DESLIGADO até o dono aprovar o texto da política de privacidade
+ *  (docs/PERGUNTAS-DO-DONO.md) e subir PRIVACY_VERSION — decisão de 26/10/2026. */
+const GRAVAR_EMAIL_DO_SPRITE = false;
 const LOCK_PREFIX = 'sprite:lock:';
 /** Binário republicado do caminho Gemini. Chave por TOKEN aleatório, não por
  *  saveId: o `saveId` é SHA-256 de e-mail (derivável por quem souber o e-mail),
@@ -721,7 +724,7 @@ export async function onRequestPost({ request, env }) {
         try {
           await kvOrThrow(env).put(
             cacheKey(id, formId),
-            JSON.stringify({ image, provider: out.provider, at: Date.now(), ...(typeof auth.email === 'string' && auth.email ? { email: auth.email } : {}) }),
+            JSON.stringify({ image, provider: out.provider, at: Date.now(), ...(GRAVAR_EMAIL_DO_SPRITE && typeof auth.email === 'string' && auth.email ? { email: auth.email } : {}) }),
           );
         } catch (err) {
           // Cache que não gravou custa uma regeração futura, não a resposta de
