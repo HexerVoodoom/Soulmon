@@ -577,3 +577,33 @@ idiomas — termo universal de jogo, mas a regra do idioma pede o par PT; se qui
 
 ## Guerra de Clãs / Praça / Plantio — arte instalada (18/10/2026, SQUAD-ARTE)
 Higgsfield CLI `gpt_image_2_5` flare, `--background transparent`, `@char_sprite-style`/`@char_npcs`, saldo 182,25 → 176,25 cr. Instalados: `npcs/npc-arena-guerra.png` (Mirevesper, 768²), `areas/lote-arena-guerra.png` (300², caixa em `areaLotGeometry.ts`), `items/item-chip-big-{power,harmony,benevolence}.png` + `item-chip-prism.png` (ligados em `itemArt.ts`), `items/item-gift.png` (PracaVisor), `plantio/fruit-{girassol,melancia,abobora,pinheiro}.png` (PlantioVisor, fruto maduro). Sobra: `plantio/fruit-broto.png` (broto, sem slot) e os estágios 0–3 da planta, que seguem SVG procedural; cenário/canteiro das três salas continuam SVG.
+
+## 18. Elementos base novos — Fada, Industrial e Planta (pedido do dono, 25/10/2026)
+
+O class-system passou de 17 para **20 bases** (Class-System `56546d9`, branch
+`feat/elementos-fada-industrial-planta`): +54 pares e 3 triplas curadas novas
+(**Pestilência** = planta+morte+vileza · **Maldição** = fada+sombra+vileza ·
+**Cyber** = industrial+eletricidade+arcano). Nada abaixo foi gerado: **fila para quando
+houver créditos Higgsfield**. Regras de prompt: `PROMPTS-BETA3.md` §1 (receita de 23/09,
+transparência real, nada de steampunk — Industrial é *fábrica arcana*: pedra, cobre e
+cristal turquesa, **sem engrenagem/vapor/couro**).
+
+Vibe de cada base (para o bloco COLORS do prompt):
+- **Fada** — rosa, arco-íris, corações, glitter; asas translúcidas, brilho de purpurina; nada de verde puro.
+- **Industrial** — metal fundido, cobre, chaminé de pedra, faíscas turquesa; corpo blindado e sólido.
+- **Planta** — folha, raiz, espinho, flor e semente; verde de folha (não `#00FF00`).
+
+| ID | Peça | Qtde | Formato / destino | Referência a anexar |
+|---|---|---|---|---|
+| EL1 | Linha de Soulmon `fada` (rookie→ultra) | 5 | 1:1 transparente → `src/assets/soulmon/novos/fada-{rookie,champion,ultimate,mega,ultra}.png` + entrada em `novosSoulmonData.ts` (nome EN + par PT) | `novos/luz-*` e `novos/vida-*` (irmãos aprovados) |
+| EL2 | Linha de Soulmon `industrial` | 5 | idem → `novos/industrial-*.png` | `novos-arquivo/combinados/138-industrial.png` + `novos/terra-*` |
+| EL3 | Linha de Soulmon `planta` | 5 | idem → `novos/planta-*.png` | `novos-arquivo/combinados/137-planta.png` + `novos/vida-*` |
+| EL4 | Inimigos dos 54 pares novos | 54 | 1:1 transparente → `novos-arquivo/combinados/139-…192-<id>.png` (ordem = `elementos.ts` do Class-System: fada+X, industrial+X, planta+X) + linhas em `enemyRosterData.ts` | o combinado de cada componente; gerar em **folha** 3×3 por família |
+| EL5 | Inimigos das triplas Pestilência, Maldição, Cyber | 3 | 1:1 transparente → `combinados/193-pestilencia.png`, `194-maldicao.png`, `195-cyber.png` | os pares-filhos (espinheiro/murcha · pesadelo_doce/encanto_traicoeiro · usina/artificio) |
+| EL6 | Sigilos das 3 bases no simulador do Class-System | 3 | gerado por `npm run sigilos` (procedural) — só conferir; sem crédito | — |
+| EL7 | Pixel-art dos 57 derivados novos no simulador | 57 | folha de ícones 32px → `Class-System/assets/icones-elementos/` + `npm run icones` | folha atual do simulador |
+| EL8 | FX de ataque por elemento (4 famílias) para fada/industrial/planta | 3×4 | mesmo formato das famílias de FX por elemento (`PROMPTS-BETA3.md` §2) | FX de `luz`, `terra`, `vida` |
+| EL9 | Pet-box/cenário temático (opcional) | 3 | 1200×648 opaco, bloco **[PET-BOX]** §1 | pet-box atuais |
+
+**Prédios e NPCs:** esta mudança não cria nenhum. Regra do dono (25/10/2026): todo Soulmon,
+prédio ou NPC novo entra **nesta fila** com prompt e destino antes de ir para o código.
