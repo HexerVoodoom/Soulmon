@@ -4,6 +4,8 @@ import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint } from '../form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { BitsAmount } from '../ui/BitsAmount';
+import { RankingPanel } from '../RankingPanel';
+import { TIME_RANK_SIZE } from '../../utils/rankings';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { getSpriteForStage } from '../../utils/sprites';
 import { usePetScale } from '../../hooks/usePetScale';
@@ -24,7 +26,7 @@ import {
 
 const GRID_MAX_W = 348;
 
-export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, challenge }: EarningGameProps) {
+export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, rankSaveId, challenge }: EarningGameProps) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
   const [level, setLevel] = useState(1);
@@ -36,6 +38,9 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
   const drag = useRef(false);
   const gridRef = useRef<HTMLDivElement>(null);
   const paid = useRef(false);
+  /** Relógio do ranking semanal por TEMPO (decisão do dono 5): da 1ª jogada à trilha completa; reinicia a cada trilha nova. */
+  const t0 = useRef<number | null>(null);
+  const [solveMs, setSolveMs] = useState(0);
 
   const pet = getSpriteForStage(evolutionStage, demoCharacterId);
   const petScale = usePetScale(evolutionStage, pet);
@@ -56,6 +61,7 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
   useEffect(() => {
     if (solved || path.length !== size * size || !validateZip(puzzle, path)) return;
     setSolved(true);
+    setSolveMs(t0.current != null ? Math.max(0, Date.now() - t0.current) : 0);
     const bits = zipBits(size);
     setEarned(bits);
     if (!paid.current) { paid.current = true; if (challenge) challenge.onResult(true); else onEarnPoints(bits); }
@@ -65,6 +71,7 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
   const enter = (c: number) => {
     if (solved) return;
     setStarted(true);
+    if (t0.current == null) t0.current = Date.now();
     setPath(prev => {
       const at = prev.indexOf(c);
       if (at >= 0) return at === prev.length - 1 ? prev : prev.slice(0, at + 1);
@@ -96,6 +103,7 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
   const next = () => {
     const l = level + 1;
     paid.current = false;
+    t0.current = null;
     setLevel(l);
     setPuzzle(zipForLevel(l, Math.random));
     setPath([]);
@@ -139,6 +147,9 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt ? `Cada trilha resolvida paga Bits pelo tamanho, até ${ZIP_MAX_BITS}.` : `Each solved trail pays Bits by size, up to ${ZIP_MAX_BITS}.`}
+            </span>
+            <span style={{ display: 'block', marginTop: 6 }}>
+              {isPt ? `Ranking da semana: seu tempo nas trilhas ${TIME_RANK_SIZE}×${TIME_RANK_SIZE} (menor é melhor).` : `Weekly ranking: your time on ${TIME_RANK_SIZE}×${TIME_RANK_SIZE} trails (lower is better).`}
             </span>
           </>
         )}
@@ -192,6 +203,10 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
           );
         })}
       </div>
+
+      {solved && !challenge && rankSaveId && size === TIME_RANK_SIZE && solveMs > 0 && (
+        <RankingPanel key={`${level}-${solveMs}`} game="zip" saveId={rankSaveId} language={language} score={solveMs} />
+      )}
 
       <div style={{ display: 'flex', gap: 8 }}>
         {solved ? (

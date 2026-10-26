@@ -232,6 +232,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   // Physics/game state lives in a ref — the loop never re-renders React.
   const g = useRef(newRun(1));
   const [level, setLevel] = useState<1 | 2>(1);
+  /** Nível da partida que ACABOU (o ranking é por nível; `level` pode mudar na tela de fim antes de jogar de novo). */
+  const [playedLevel, setPlayedLevel] = useState<1 | 2>(1);
   const chargesElRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
@@ -487,6 +489,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       const score = Math.floor(s.score);
       const pts = Math.floor(score / 100);
       setFinalScore(score);
+      setPlayedLevel(s.level === 2 ? 2 : 1);
       setEarned(pts);
       // C-6 (run `som-01`): `pts === 0` significa score ABAIXO de 100 — ou seja,
       // a primeira partida de quem esta aprendendo o minijogo recebia o som de
@@ -600,7 +603,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           <button type="button" onClick={start} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 240, alignSelf: 'center' }}>
             {isPt ? 'Jogar de novo' : 'Play again'}
           </button>
-          <RankingPanel key={finalScore} game="dino" saveId={rankSaveId} language={language} score={finalScore} />
+          <RankingPanel key={`${playedLevel}-${finalScore}`} game={playedLevel === 2 ? 'dino-2' : 'dino-1'} saveId={rankSaveId} language={language} score={finalScore} />
         </>
       )}
 

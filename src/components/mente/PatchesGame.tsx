@@ -4,6 +4,8 @@ import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint } from '../form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { BitsAmount } from '../ui/BitsAmount';
+import { RankingPanel } from '../RankingPanel';
+import { TIME_RANK_SIZE } from '../../utils/rankings';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { getSpriteForStage } from '../../utils/sprites';
 import { usePetScale } from '../../hooks/usePetScale';
@@ -29,7 +31,7 @@ const TINTS = ['var(--sm2-primary-fill)', 'var(--sm2-gold-fill)', 'var(--sm2-cre
 /** Pedra do Eco que lembra a forma: quadrado (2), alto (1, triângulo), largo (3, losango); sem dica = círculo (0). */
 const SHAPE_STONE = { any: 0, tall: 1, square: 2, wide: 3 } as const;
 
-export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, challenge }: EarningGameProps) {
+export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, rankSaveId, challenge }: EarningGameProps) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
   const [level, setLevel] = useState(1);
@@ -41,6 +43,9 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
   const [earned, setEarned] = useState(0);
   const [started, setStarted] = useState(false);
   const paid = useRef(false);
+  /** Relógio do ranking semanal por TEMPO (decisão do dono 5): da 1ª jogada à colcha pronta; reinicia a cada colcha nova. */
+  const t0 = useRef<number | null>(null);
+  const [solveMs, setSolveMs] = useState(0);
   const moved = useRef(false);
 
   const pet = getSpriteForStage(evolutionStage, demoCharacterId);
@@ -59,6 +64,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
     setRects(next);
     if (validatePatches(puzzle, next)) {
       setSolved(true);
+      setSolveMs(t0.current != null ? Math.max(0, Date.now() - t0.current) : 0);
       const bits = patchesBits(size);
       setEarned(bits);
       if (!paid.current) { paid.current = true; if (challenge) challenge.onResult(true); else onEarnPoints(bits); }
@@ -70,6 +76,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
     const c = cellFromEvent(e);
     if (c == null) return;
     setStarted(true);
+    if (t0.current == null) t0.current = Date.now();
     moved.current = false;
     setAnchor(c);
     setHover(c);
@@ -96,6 +103,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
   const next = () => {
     const l = level + 1;
     paid.current = false;
+    t0.current = null;
     setLevel(l);
     setPuzzle(patchesForLevel(l, Math.random));
     setRects([]);
@@ -146,6 +154,9 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt ? `Cada colcha pronta paga Bits pelo tamanho, até ${PATCHES_MAX_BITS}.` : `Each finished patchwork pays Bits by size, up to ${PATCHES_MAX_BITS}.`}
+            </span>
+            <span style={{ display: 'block', marginTop: 6 }}>
+              {isPt ? `Ranking da semana: seu tempo nas colchas ${TIME_RANK_SIZE}×${TIME_RANK_SIZE} (menor é melhor).` : `Weekly ranking: your time on ${TIME_RANK_SIZE}×${TIME_RANK_SIZE} patchworks (lower is better).`}
             </span>
           </>
         )}
@@ -203,6 +214,10 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
           );
         })}
       </div>
+
+      {solved && !challenge && rankSaveId && size === TIME_RANK_SIZE && solveMs > 0 && (
+        <RankingPanel key={`${level}-${solveMs}`} game="patches" saveId={rankSaveId} language={language} score={solveMs} />
+      )}
 
       <div style={{ display: 'flex', gap: 8 }}>
         {solved ? (

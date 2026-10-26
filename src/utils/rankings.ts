@@ -2,12 +2,29 @@
 // Mesmo contrato para todo jogo: `submitScore(game, saveId, score)` e `fetchRanking(game, saveId)`.
 import { authHeaders } from './auth';
 
-export type RankedGame = 'dino' | 'ppt' | 'match3' | 'eco' | 'endless-rift' | 'rogue-dungeon' | 'soul-barrage';
+// `dino` (sem nível) só existe para cliente antigo; o novo envia `dino-1`/`dino-2`. `zip`/`patches`: TEMPO em ms (menor vence).
+export type RankedGame = 'dino' | 'dino-1' | 'dino-2' | 'ppt' | 'match3' | 'eco' | 'endless-rift' | 'rogue-dungeon' | 'soul-barrage' | 'zip' | 'patches';
+
+/** Jogos de tempo (menor é melhor): o score é o tempo de resolução em ms. */
+export const TIME_RANKED_GAMES: readonly RankedGame[] = ['zip', 'patches'];
+export const isTimeRanked = (game: RankedGame): boolean => TIME_RANKED_GAMES.includes(game);
+
+/** Tamanho de grade em que o tempo vale para o ranking (todos comparam a mesma grade; Zip e Patches sobem de 4 a 8 por nível). */
+export const TIME_RANK_SIZE = 6;
+
+/** `m:ss.d` de um tempo em ms. */
+export function formatRankTime(ms: number): string {
+  const t = Math.max(0, Math.round(ms / 100));
+  const m = Math.floor(t / 600);
+  const s = Math.floor((t % 600) / 10);
+  return `${m}:${String(s).padStart(2, '0')}.${t % 10}`;
+}
 export type RankingPeriod = 'weekly' | 'monthly';
 export type RankingTierId = 'madeira' | 'bronze' | 'prata' | 'ouro' | 'platina' | 'diamante';
 
-export interface RankingRow { rank: number; name: string; score: number; me: boolean }
-export interface RankingMe { score: number; tier: RankingTierId; rank: number | null }
+export interface RankingRow { rank: number; name: string; score: number; me: boolean; /** Só `endless-rift`: 1..3 = esta linha recebe prêmio (simulados não contam; o rótulo "#4" pode levar o 1º prêmio). */ prizePlace?: number }
+/** `tier` é `null` nos jogos de tempo (sem faixa: o tempo se compara só dentro da mesma grade). */
+export interface RankingMe { score: number; tier: RankingTierId | null; rank: number | null }
 export interface RankingBoard {
   game: RankedGame;
   period: RankingPeriod;

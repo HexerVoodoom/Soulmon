@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 
 vi.mock('./auth', () => ({ authHeaders: async () => ({ Authorization: 'Bearer t' }) }));
-import { submitScore, fetchRanking } from './rankings';
+import { submitScore, fetchRanking, formatRankTime, isTimeRanked, TIME_RANK_SIZE } from './rankings';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -36,5 +36,19 @@ describe('cliente de ranking', () => {
   it('corpo ilegível é falha', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => new Response('<html>', { status: 200 })));
     await expect(fetchRanking('dino', 'player-aaaaaaaa')).rejects.toThrow();
+  });
+});
+
+describe('ranking de tempo (Zip e Patches, QA beta3 decisão 5)', () => {
+  it('formata ms como m:ss.d', () => {
+    expect(formatRankTime(0)).toBe('0:00.0');
+    expect(formatRankTime(65_400)).toBe('1:05.4');
+    expect(formatRankTime(599_999)).toBe('10:00.0');
+  });
+  it('só zip e patches são jogos de tempo; a grade do ranking é 6', () => {
+    expect(isTimeRanked('zip')).toBe(true);
+    expect(isTimeRanked('patches')).toBe(true);
+    expect(isTimeRanked('dino-1')).toBe(false);
+    expect(TIME_RANK_SIZE).toBe(6);
   });
 });

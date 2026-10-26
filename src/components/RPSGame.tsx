@@ -239,7 +239,7 @@ export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit, rankSaveId
         </div>
       ) : matchOver ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <RankingPanel game="ppt" saveId={rankSaveId} language={language} score={playerWins * 10 + (matchOver === 'won' ? 10 : 0)} />
+        <RankingPanel game="ppt" saveId={rankSaveId} language={language} score={matchOver === 'lost' ? null : playerWins * 10 + (matchOver === 'won' ? 10 : 0)} /> {/* derrota não pontua (QA beta3 R4): só mostra o ranking */}
         <div style={{ display: 'flex', gap: 8 }}>
           <button type="button" onClick={restart} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
             {isPt ? 'Revanche' : 'Rematch'}

@@ -530,8 +530,8 @@ export function AreaView(props: AreaViewProps) {
             {game === 'match3' && <Match3Game {...base} rankSaveId={props.guild.saveId} petName={props.petName} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
             {game === 'eco' && <EcoGame {...base} rankSaveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />}
-            {game === 'zip' && <ZipGame {...base} onEarnPoints={props.onEarnPoints} />}
-            {game === 'patches' && <PatchesGame {...base} onEarnPoints={props.onEarnPoints} />}
+            {game === 'zip' && <ZipGame {...base} rankSaveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />}
+            {game === 'patches' && <PatchesGame {...base} rankSaveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />}
             {/* Refúgio — NÃO recebem `onEarnPoints`: não pagam, não pontuam. */}
             {game === 'respiracao' && <RespiracaoGame {...base} />}
             {game === 'bolhas-calmas' && <BolhasGame {...base} mode="calma" />}

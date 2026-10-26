@@ -571,6 +571,8 @@ async function handleCommunity({ request, env }) {
       try {
         const dono = await kvOrThrow(env).get(k.name);
         const pr = dono ? await getProfile(env, dono) : null;
+        // Quem se escondeu da lista pública (`publicHidden`) não aparece nas sugestões: o índice `nick:` não pode virar enumeração (QA beta3 R1).
+        if (pr && isHidden(pr)) continue;
         if (pr && typeof pr.name === 'string' && pr.name.normalize('NFKC').trim().toLowerCase() === n) n = pr.name;
       } catch { /* fica a minúscula */ }
       if (!nomes.includes(n)) nomes.push(n);

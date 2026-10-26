@@ -36,7 +36,13 @@ import { kvOrThrow } from './_kv.js';
 import { getProfile } from './_profile.js';
 
 /** Allowlist de jogos com ranking. Id estável: vira parte da chave KV. */
-export const RANKED_GAMES = Object.freeze(['dino', 'ppt', 'match3', 'eco', 'endless-rift', 'rogue-dungeon', 'soul-barrage']);
+// `dino` (sem nível) fica só para LER/aceitar recorde antigo e cliente antigo; o cliente novo envia `dino-1`/`dino-2` (QA beta3 R4, decisão 6).
+// `zip`/`patches`: ranking SEMANAL por TEMPO de resolução (decisão 5; MENOR é melhor — ver `LOWER_IS_BETTER`).
+export const RANKED_GAMES = Object.freeze(['dino', 'dino-1', 'dino-2', 'ppt', 'match3', 'eco', 'endless-rift', 'rogue-dungeon', 'soul-barrage', 'zip', 'patches']);
+
+/** Jogos em que o MENOR score vence (tempo em ms). A chave KV usa o score direto (ordem crescente) em vez do invertido. */
+export const LOWER_IS_BETTER = Object.freeze(['zip', 'patches']);
+export const isLowerBetter = (game) => LOWER_IS_BETTER.includes(game);
 
 export const PERIODS = Object.freeze(['weekly', 'monthly']);
 /** Período padrão — minigames: semanal. O Endless Rift (M6) usa `monthly` (score = camada mais funda do mês). */
@@ -55,6 +61,8 @@ const RANK_SCAN_PAGES = 5;
 export const TIER_IDS = Object.freeze(['madeira', 'bronze', 'prata', 'ouro', 'platina', 'diamante']);
 export const TIER_CUTS = Object.freeze({
   dino: [0, 300, 800, 1500, 2500, 4000],
+  'dino-1': [0, 300, 800, 1500, 2500, 4000],
+  'dino-2': [0, 300, 800, 1500, 2500, 4000],
   ppt: [0, 10, 20, 30, 40, 50],
   match3: [0, 300, 800, 1500, 2500, 4000],
   eco: [0, 4, 6, 8, 10, 13],
@@ -66,11 +74,21 @@ export const TIER_CUTS = Object.freeze({
 });
 
 /**
- * Teto de sanidade POR JOGO (abaixo do `MAX_SCORE` global). Fenda: camada 999. `rogue-dungeon`: 24 desafios/dia
- * + 3 andares x 3 de bônus = 33 (espelho de `ROGUE_MAX_SCORE` em `src/utils/rogueDungeon.ts`; há teste de paridade).
+ * Teto de sanidade POR JOGO (abaixo do `MAX_SCORE` global; QA beta3 R1: 1e9 genérico deixava qualquer um forjar o topo).
+ * Fenda: camada 999. `rogue-dungeon`: 24 desafios/dia + 3 andares x 3 de bônus = 33 (espelho de `ROGUE_MAX_SCORE` em
+ * `src/utils/rogueDungeon.ts`; há teste de paridade). Os demais são folgados (dezenas de vezes o topo da faixa mais alta
+ * de `TIER_CUTS`), só para barrar lixo/forja grosseira — o dono calibra quando houver dado real.
  */
-export const MAX_SCORE_BY_GAME = Object.freeze({ 'endless-rift': 999, 'rogue-dungeon': 33 });
+export const MAX_SCORE_BY_GAME = Object.freeze({
+  'endless-rift': 999, 'rogue-dungeon': 33,
+  dino: 100_000, 'dino-1': 100_000, 'dino-2': 100_000,
+  ppt: 200, match3: 100_000, eco: 100, 'soul-barrage': 50_000,
+});
+/** Jogos de TEMPO (ms): faixa plausível [min, max]. Resolver em < 2 s é impossível; > 30 min não é recorde de ninguém. */
+export const TIME_BOUNDS_MS = Object.freeze({ zip: [2000, 1_800_000], patches: [2000, 1_800_000] });
 export function scoreIsPlausible(game, score) {
+  const tb = TIME_BOUNDS_MS[game];
+  if (tb) return score >= tb[0] && score <= tb[1];
   const cap = MAX_SCORE_BY_GAME[game];
   return cap === undefined || score <= cap;
 }
@@ -84,7 +102,7 @@ export function isPeriod(p) {
 
 /** Score válido: inteiro finito em [0, MAX_SCORE]; senão `null`. */
 export function cleanScore(raw, game) {
-  const max = (game && MAX_SCORE_BY_GAME[game]) || MAX_SCORE;
+  const max = (game && (TIME_BOUNDS_MS[game]?.[1] ?? MAX_SCORE_BY_GAME[game])) || MAX_SCORE;
   const n = typeof raw === 'number' ? raw : Number.NaN;
   if (!Number.isFinite(n)) return null;
   const s = Math.floor(n);
@@ -122,9 +140,14 @@ export function tierFor(game, score) {
 }
 
 const scoreKey = (game, pk, score, saveId) =>
-  `rk:${game}:${pk}:${String(MAX_SCORE - score).padStart(INV_WIDTH, '0')}:${saveId}`;
+  `rk:${game}:${pk}:${String(isLowerBetter(game) ? score : MAX_SCORE - score).padStart(INV_WIDTH, '0')}:${saveId}`;
+/** Chave do placar de um score (para a exclusão de conta apagar a linha do jogador sem varrer o ranking). */
+export const rkKeyFor = (game, pk, score, saveId) => scoreKey(game, pk, score, saveId);
 const meKey = (game, pk, saveId) => `rkme:${game}:${pk}:${saveId}`;
 const boardPrefix = (game, pk) => `rk:${game}:${pk}:`;
+
+/** Quantas colocações pagam prêmio neste jogo (hoje só o Endless Rift: top 3). 0 = nenhuma. */
+const pagoPor = (game) => (game === 'endless-rift' ? 3 : 0);
 
 function cleanName(name) {
   const s = String(name ?? '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 40);
@@ -142,13 +165,15 @@ export async function submitScore(env, { game, period, saveId, score, now = new 
   const prevRaw = await store.get(mk);
   const prev = prevRaw === null || prevRaw === undefined ? null : Number(prevRaw);
   const hasPrev = prev !== null && Number.isFinite(prev);
-  if (hasPrev && score <= prev) return { improved: false, best: prev };
+  if (hasPrev && (isLowerBetter(game) ? score >= prev : score <= prev)) return { improved: false, best: prev };
 
   const profile = await getProfile(env, saveId).catch(() => null);
+  // Quem se escondeu da lista pública (`publicHidden`) nunca tem o NOME gravado no placar (QA beta3 R1): `h` marca, e a leitura mascara.
+  const hidden = profile?.publicHidden === true;
   const ttl = { expirationTtl: 86400 * 70 }; // cobre o mês inteiro + folga
   await store.put(scoreKey(game, pk, score, saveId), '', {
     ...ttl,
-    metadata: { s: score, n: cleanName(profile?.name), sim: profile?.simulated === true, t: now.getTime() },
+    metadata: { s: score, n: hidden ? 'Anônimo' : cleanName(profile?.name), ...(hidden ? { h: true } : {}), sim: profile?.simulated === true, t: now.getTime() },
   });
   if (hasPrev) await store.delete(scoreKey(game, pk, prev, saveId));
   await store.put(mk, String(score), ttl);
@@ -158,8 +183,8 @@ export async function submitScore(env, { game, period, saveId, score, now = new 
 /**
  * Top N + situação do jogador. `rank` do jogador pode ser `null` (fora da janela varrida).
  * @returns {Promise<{ game: string, period: string, periodKey: string,
- *   top: { rank: number, name: string, score: number, me: boolean }[],
- *   me: null | { score: number, tier: string, rank: number | null } }>}
+ *   top: { rank: number, name: string, score: number, me: boolean, prizePlace?: number }[],
+ *   me: null | { score: number, tier: string | null, rank: number | null } }>}
  */
 export async function readBoard(env, { game, period, saveId, top = TOP_DEFAULT, now = new Date() }) {
   const pk = periodKey(period, now);
@@ -168,19 +193,26 @@ export async function readBoard(env, { game, period, saveId, top = TOP_DEFAULT, 
   const prefix = boardPrefix(game, pk);
 
   const page = await store.list({ prefix, limit: n });
+  const simRow = (k) => k.metadata?.sim === true || /^sim_[0-9]{4}$/.test(k.name.slice(k.name.lastIndexOf(':') + 1));
+  /** @type {{ rank: number, name: string, score: number, me: boolean, prizePlace?: number }[]} */
   const rows = page.keys.map((k, i) => ({
     rank: i + 1,
-    name: cleanName(k.metadata?.n),
+    name: k.metadata?.h === true ? 'Anônimo' : cleanName(k.metadata?.n),
     score: Number(k.metadata?.s) || 0,
     me: !!saveId && k.name.endsWith(`:${saveId}`),
   }));
+  // Quem recebe prêmio de verdade (1..N entre os NÃO simulados): o rótulo "#4" com o 1º pago deixa de existir (QA beta3 R10).
+  if (pagoPor(game)) {
+    let p = 0;
+    page.keys.forEach((k, i) => { if (!simRow(k) && p < pagoPor(game)) rows[i].prizePlace = ++p; });
+  }
 
   let me = null;
   if (saveId) {
     const raw = await store.get(meKey(game, pk, saveId));
     const best = raw === null || raw === undefined ? null : Number(raw);
     if (best !== null && Number.isFinite(best)) {
-      me = { score: best, tier: tierFor(game, best), rank: await rankOf(store, prefix, scoreKey(game, pk, best, saveId)) };
+      me = { score: best, tier: isLowerBetter(game) ? null : tierFor(game, best), rank: await rankOf(store, prefix, scoreKey(game, pk, best, saveId)) };
     }
   }
   return { game, period, periodKey: pk, top: rows, me };
