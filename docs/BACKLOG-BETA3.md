@@ -104,3 +104,8 @@ Assets: ver `docs/PROMPTS-BETA3.md` (36 reaproveitados, 19 prompts novos).
 ## N8 Exploração: tirar o prédio separado "Prepare to Focus"; o Focus Workshop abre primeiro a etapa Prepare to Focus e, feita, libera a segunda etapa (o workshop/timer). Mesmo NPC/prédio duplicado some.
 ## N9 Sem bloqueio: Endless Rift e a atividade do Clan Hall NÃO impedem outras atividades com o Soulmon (tirar a regra de "ocupado").
 ## N10 Endless Rift vai para a Arena por enquanto (prédio na área Arena).
+
+## Decisões do dono (26/10/2026, modal) — arte provisória
+- Prédio do Calabouço: **opção d, Cripta de cristal** (`E:\Soulmon-assets\beta3-geradas\chatgpt\r4-02d-calabouco-cripta-cristal.png`). As outras opções (a gruta com runas, b torre/poço, c árvore-portal) ficam arquivadas.
+- Os 68 PNGs transparentes do ChatGPT (`E:\Soulmon-assets\beta3-geradas\chatgpt\`) entram como PROVISÓRIOS na próxima rodada, depois que a rodada 4 integrar: conferente (squad-arte) + instalador, o dono aprova a folha antes. Fundos do Gemini (`...\gemini\`): P1-05 tem emenda (usar com espelhamento); faltam P2-05, P2-06, P2-10 e R4-01 (mapa do Calabouço).
+- Sprite do dash (campo de força) e tiro inimigo do Barrage reaproveitam `fx-<el>-aura`/`fx-espaco-orb`; "toupeirinha" do Soul Barrage: candidato Montide (123-asteroide, espaço+terra), AGUARDA o dono confirmar olhando o PNG.
