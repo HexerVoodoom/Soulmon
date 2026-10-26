@@ -29,7 +29,7 @@ describe('Combina 3 — tela baixa (QA L11-15, 320×568)', () => {
     montar();
     const arena = document.querySelector('[data-m3-arena]') as HTMLElement;
     expect(arena.hasAttribute('data-m3-compact')).toBe(true);
-    expect(arena.style.flexDirection).toBe('row');
+    expect(arena.style.flexDirection).toBe('column');
     const player = document.querySelector('[data-m3-player] img') as HTMLImageElement;
     expect(player.width).toBeLessThan(88);
   });
@@ -53,8 +53,8 @@ const num = (attr: string) => Number(document.querySelector(`[${attr}]`)!.getAtt
 /** Deixa a cascata inteira correr (cada passo ~0,5 s). */
 const assentar = async () => { await avancar(8000); };
 
-function montar(over: { language?: 'pt-BR' | 'en-US'; onEarn?: (n: number) => void; onExit?: () => void; bits?: number; onSpendBits?: (n: number) => boolean; petName?: string } = {}) {
-  return renderWithCss(<Match3Game language={over.language ?? 'en-US'} evolutionStage="rookie" petName={over.petName} onEarnPoints={over.onEarn ?? (() => {})} onExit={over.onExit ?? (() => {})} seed={SEED} bits={over.bits} onSpendBits={over.onSpendBits} />);
+function montar(over: { language?: 'pt-BR' | 'en-US'; onEarn?: (n: number) => void; onExit?: () => void; bits?: number; onSpendBits?: (n: number) => boolean; petName?: string; petElement?: string } = {}) {
+  return renderWithCss(<Match3Game language={over.language ?? 'en-US'} evolutionStage="rookie" petName={over.petName} petElement={over.petElement} onEarnPoints={over.onEarn ?? (() => {})} onExit={over.onExit ?? (() => {})} seed={SEED} bits={over.bits} onSpendBits={over.onSpendBits} />);
 }
 /** A mesma rodada, jogada pela conta pura (tabuleiro + combate com os MESMOS rngs da tela), para prever o que a tela deve mostrar. */
 function previsao(n: number): { moves: Array<{ a: Pos; b: Pos }>; total: number; boards: Board[]; combates: M3Combat[] } {
@@ -341,7 +341,9 @@ describe('D-76/D-77: layout da arena e o topo enxuto', () => {
     const filhos = [...arena.children] as HTMLElement[];
     expect(filhos[0].hasAttribute('data-m3-player')).toBe(true);
     expect(filhos[0].style.alignSelf).toBe('flex-start'); // à esquerda
-    const time = filhos[1];
+    // N5: usuário · tabuleiro · adversários (o tabuleiro ENTRE eles)
+    expect(filhos[1].hasAttribute('data-m3-board')).toBe(true);
+    const time = filhos[2];
     expect(time.hasAttribute('data-m3-enemies')).toBe(true);
     expect(time.style.flexDirection).toBe('row-reverse'); // o 1º inimigo na ponta DIREITA
     expect(time.style.justifyContent).toBe('flex-start');
@@ -358,6 +360,17 @@ describe('D-76/D-77: layout da arena e o topo enxuto', () => {
     expect(clone.textContent!.replace(/\s+/g, ' ').trim()).toMatch(/^Turn ?0$/);
     // placar, Bits, aviso e "próximo Bit" existem só para leitor de tela
     for (const sel of ['[data-m3-sr]', '[data-m3-note]', '[data-m3-next]']) expect(document.querySelector(sel)!.classList.contains('sm2-sr-only')).toBe(true);
+  });
+});
+
+describe('N5: elemento do usuário, sem numeração e banner mais longo', () => {
+  it('mostra o ícone do elemento do Soulmon do usuário quando conhecido', () => {
+    montar({ petElement: 'fogo' });
+    expect(document.querySelector('[data-m3-player] [data-m3-player-element="fogo"]')).not.toBeNull();
+  });
+  it('os inimigos não levam mais o numeral de ordem (só o ▸ do ativo e o elemento)', () => {
+    montar();
+    for (const e of document.querySelectorAll('[data-m3-enemy]')) expect(e.querySelector('p')!.textContent).toMatch(/^▸?$/);
   });
 });
 

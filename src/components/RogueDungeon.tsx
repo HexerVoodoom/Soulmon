@@ -149,7 +149,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
   const gameProps = { language, evolutionStage, demoCharacterId, onEarnPoints: () => {}, onExit: () => gameResult(false), challenge: challengeProp } as const;
   const renderGame = (g: ChallengeGame) => {
     switch (g) {
-      case 'match3': return <Match3Game {...gameProps} petName={petName} playerLevel={playerLevel} />;
+      case 'match3': return <Match3Game {...gameProps} petName={petName} petElement={petElement} playerLevel={playerLevel} />;
       case 'dino': return <DinoGame {...gameProps} onScore={() => {}} petElement={petElement} />;
       case 'rps': return <RPSGame {...gameProps} />;
       case 'zip': return <ZipGame {...gameProps} />;
