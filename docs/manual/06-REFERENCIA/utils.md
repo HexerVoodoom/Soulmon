@@ -3432,6 +3432,12 @@ dominância populacional — por isso ±15%. Régua nova:
 **Régua:** `src/utils/corvoPet.test.ts`.
 **Regra de negócio (dono, 29/09/2026):** automática na 1ª abertura como administrador (`useAdmin()===true`) e SEM VOLTA. Preserva estágio, HP, energia, atributos, atividades, Bits, Emblemas, `perfectDays`, `unlockedEvolutions`, acervo e `petName`; substitui `soulmonStages`, `baseName`, `creature` e zera `demoCharacterId`.
 
+### `src/utils/feats.ts`
+**Dono de:** os contadores VITALÍCIOS de reconhecimento (rodada 6, L4) em `GameState.feats`: um objeto de chaves fechadas, inteiros 1..`FEAT_CAP`. Não conta tarefa, não é sequência, não cobra.
+**Exports:** `FEAT_CAP` · `FEAT_ADD_KEYS` (soma 1 por evento) · `FEAT_MAX_KEYS` (guarda o maior) · `FEAT_KEYS` · `FeatKey`/`Feats` (types) · `applyFeat` · `sanitizeFeats` · `subscribeFeats`/`emitFeat` (barramento: os componentes emitem, o App aplica).
+**Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`, `src/utils/missions.ts`, `src/utils/gmTools.ts`.
+**Régua:** `src/utils/feats.test.ts`; espelho do servidor `functions/api/_dailyMissions.js` travado por `dailyMissions.parity.test.js`.
+
 ### `src/utils/gmTools.ts`
 **Dono de:** as ações do painel de GM como updaters PUROS sobre o save local.
 **Exports:**
@@ -3501,6 +3507,10 @@ dominância populacional — por isso ±15%. Régua nova:
 ### `src/utils/levelUpArt.ts`
 **Dono de:** a fronteira de troca da arte OPCIONAL do level up (`src/assets/soulmon/levelup/levelup-{banner,burst,frame}.png`, via `import.meta.glob` eager); sem o PNG devolve `undefined` e o overlay desenha tudo de forma procedural. Pacote de geração: `docs/ASSETS-A-GERAR.md` §16 e `src/assets/soulmon/levelup/INSTALAR.md`.
 **Exports:** `levelUpArt`, `LevelUpSlot`.
+
+### `src/utils/lazyOverlay.tsx`
+**Dono de:** a casca `lazyOverlay(load)` das sobreposições condicionais do `App` (banner, toast, folha, cartão): `React.lazy` + `Suspense` sem fallback visível, mesma API do componente. Existe para tirar essas peças do JS de entrada (orçamento de bytes).
+**Exports:** `lazyOverlay`.
 
 ### `src/utils/talentLayout.ts`
 **Dono de:** o DESENHO da árvore de talentos (Tarefa B, §2.37): posição de cada nó (hub, 3 braços a −90/30/150°, raios 120/230/340/450) e as ligações, lidas do grafo `requires`/`requiresAny` de `talents.ts`; vizinho por seta. Não decide regra. Fora do chunk de entrada (só o `TalentTree` lazy o importa).

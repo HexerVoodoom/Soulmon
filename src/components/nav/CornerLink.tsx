@@ -1,5 +1,5 @@
 import { PixelIcon } from '../ui/PixelIcon';
-import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE, CORNER_GLOW } from './cornerAnchor';
+import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE } from './cornerAnchor';
 
 /**
  * O LINK DE CANTO — a única navegação entre as duas telas de topo.
@@ -9,7 +9,7 @@ import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE, CORNER_GLOW } from './cornerAn
  * canto, abaixo da área segura do aparelho (o anel de 44 cai em y=12, a linha do header da Home).
  *
  * ⚠️ **Sem anel (14/10/2026, pedido do dono):** o círculo em volta da casinha e do ícone do Mapa (C14/H2) saiu — o ícone
- * lê sobre a cena só pelo brilho (`glow`) e o alvo de toque (56px, ≥ 44) é o mesmo. O anel segue no voltar das áreas e nos avisos.
+ * lê sobre a cena sem brilho externo (removido na rodada 6, L2) e o alvo de toque (56px, ≥ 44) é o mesmo. O anel segue no voltar das áreas e nos avisos.
  *
  * **Ícone pelado, 32px (papel `nav` da escala, tokens.md §6.1)** — a regra
  * "ícone nunca dentro de box" vale aqui sem exceção (a exceção D1 é só do
@@ -19,16 +19,11 @@ import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE, CORNER_GLOW } from './cornerAn
  * `home.png`, `assets/soulmon/icones-ui`) — até a correção pós-F3 era um glifo
  * vetorial de linha fina no lugar dela, por engano.
  */
-export function CornerLink({ icon, label, side, onClick, glow = true }: {
+export function CornerLink({ icon, label, side, onClick }: {
   icon: 'mapa' | 'home';
   label: string;
   side: 'left' | 'right';
   onClick: () => void;
-  /** Brilho claro (F3, mock do Mapa), `true` por padrão desde H9 (02/10/2026):
-   *  a casinha PERDEU o brilho quando o anel entrou — agora a casinha e o ícone
-   *  do Mapa o têm sempre, para ler sobre qualquer fundo. A âncora (posição e
-   *  tamanho) mora em `cornerAnchor.ts`, compartilhada com o voltar das áreas. */
-  glow?: boolean;
 }) {
   return (
     <button
@@ -37,7 +32,6 @@ export function CornerLink({ icon, label, side, onClick, glow = true }: {
       aria-label={label}
       title={label}
       data-corner-link={side}
-      data-corner-glow={glow || undefined}
       className="sm2-corner-link"
       style={{
         position: 'fixed',
@@ -48,7 +42,6 @@ export function CornerLink({ icon, label, side, onClick, glow = true }: {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
         color: 'var(--sm2-primary-ink)',
-        filter: glow ? CORNER_GLOW : undefined,
       }}
     >
       <PixelIcon name={icon} size={32} />

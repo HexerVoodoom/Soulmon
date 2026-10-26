@@ -1,3 +1,4 @@
+import { BackCircleButton } from '../ui/BackCircleButton';
 import { useEffect, useLayoutEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Icon } from '../ui/Icon';
@@ -104,19 +105,7 @@ export function BackgroundLightbox({ open, bgId, name, language, onClose }: {
       }}
     >
       {/* ✕ no topo ESQUERDO (padrão do app: fechar fica à esquerda, acima do conteúdo). Ícone pelado. */}
-      <button
-        type="button"
-        data-lightbox-close
-        onClick={e => { e.stopPropagation(); onClose(); }}
-        aria-label={isPt ? 'Fechar' : 'Close'}
-        style={{
-          position: 'absolute', top: 'calc(env(safe-area-inset-top, 0px) + 8px)', left: 8,
-          width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'none', border: 'none', cursor: 'pointer', color: '#E9F5F2',
-        }}
-      >
-        <Icon name="close" size={24} tone="inherit" />
-      </button>
+      <BackCircleButton data-lightbox-close="" onClick={onClose} language={isPt ? 'pt-BR' : 'en-US'} overScene style={{ position: 'absolute', top: 'calc(env(safe-area-inset-top, 0px) + 8px)', left: 8 }} />
       {src
         ? <img data-lightbox-image src={src} alt={name} onClick={e => e.stopPropagation()} style={{ maxWidth: '100%', maxHeight: '82vh', objectFit: 'contain', borderRadius: 12, boxShadow: '0 12px 32px rgba(0,0,0,.6)' }} />
         : <div data-lightbox-image role="img" aria-label={name} onClick={e => e.stopPropagation()} style={{ width: 'min(92vw, 420px)', aspectRatio: '9 / 16', maxHeight: '82vh', background: css, backgroundSize: 'cover', backgroundPosition: 'center bottom', borderRadius: 12, boxShadow: '0 12px 32px rgba(0,0,0,.6)' }} />}
@@ -146,19 +135,7 @@ export function ItemLightbox({ open, item, name, language, onClose }: {
         display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, boxSizing: 'border-box',
       }}
     >
-      <button
-        type="button"
-        data-lightbox-close
-        onClick={e => { e.stopPropagation(); onClose(); }}
-        aria-label={isPt ? 'Fechar' : 'Close'}
-        style={{
-          position: 'absolute', top: 'calc(env(safe-area-inset-top, 0px) + 8px)', left: 8,
-          width: 44, height: 44, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'none', border: 'none', cursor: 'pointer', color: '#E9F5F2',
-        }}
-      >
-        <Icon name="close" size={24} tone="inherit" />
-      </button>
+      <BackCircleButton data-lightbox-close="" onClick={onClose} language={isPt ? 'pt-BR' : 'en-US'} overScene style={{ position: 'absolute', top: 'calc(env(safe-area-inset-top, 0px) + 8px)', left: 8 }} />
       {png
         ? <img data-lightbox-image src={png} alt={name} onClick={e => e.stopPropagation()} style={{ maxWidth: '86vw', maxHeight: '62vh', width: 'auto', height: 'min(62vh, 320px)', objectFit: 'contain', imageRendering: 'pixelated' }} />
         : <span data-lightbox-image role="img" aria-label={name} onClick={e => e.stopPropagation()} style={{ fontSize: 160, lineHeight: 1 }}>{item.icon}</span>}

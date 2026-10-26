@@ -4,6 +4,7 @@ import {
   DAILY_COUNT_CAP, DAILY_EVENTS, DAILY_MISSION_IDS, FIRST_TIME_IDS, sanitizeDailyMissions, sanitizeFirstTimes,
 } from '../../src/utils/dailyMissions';
 import { MISSIONS, sanitizeMissionsClaimed } from '../../src/utils/missions';
+import { FEAT_CAP, FEAT_KEYS, sanitizeFeats } from '../../src/utils/feats';
 
 describe('missoes diarias e primeiras vezes: servidor e app concordam', () => {
   it('mesmas listas fechadas e mesmo teto', () => {
@@ -32,5 +33,11 @@ describe('missoes diarias e primeiras vezes: servidor e app concordam', () => {
       { done: [...FIRST_TIME_IDS], claimed: [...FIRST_TIME_IDS] },
     ];
     for (const c of casos) expect(srv.sanitizeFirstTimes(c), JSON.stringify(c)).toEqual(sanitizeFirstTimes(c));
+  });
+  it('feitos vitalicios: mesmas chaves, mesmo teto e mesma saneacao', () => {
+    expect(srv.FEAT_KEYS).toEqual([...FEAT_KEYS]);
+    expect(srv.FEAT_CAP).toBe(FEAT_CAP);
+    const casos = [null, 3, 'x', [], {}, { zipSolved: 3.9, hack: 5, regens: -1, barrageBest: 1e12 }, { rankTier: '4', focusPrepared: 2 }];
+    for (const c of casos) expect(srv.sanitizeFeats(c), JSON.stringify(c)).toEqual(sanitizeFeats(c));
   });
 });

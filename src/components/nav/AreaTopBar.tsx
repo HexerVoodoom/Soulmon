@@ -1,6 +1,6 @@
 import { NavGlyph } from '../ui/NavGlyphs';
 import { PixelIcon } from '../ui/PixelIcon';
-import { CORNER_RING, CORNER_RING_TOP, CORNER_RING_SIDE, CORNER_GLOW, CORNER_RING_STYLE } from './cornerAnchor';
+import { CORNER_RING, CORNER_RING_TOP, CORNER_RING_SIDE, CORNER_RING_STYLE } from './cornerAnchor';
 
 /** Tinta clara para o que fica sobre a arte escura da área (igual aos rótulos dos lotes). */
 const SCENE_INK = '#E9F5F2';
@@ -13,8 +13,7 @@ const SCENE_INK = '#E9F5F2';
  *   é permitido aqui e nos três cuidados da Home, em nenhum outro lugar. O anel
  *   é só TRAÇO (`--sm2-line`), sem preenchimento — o ícone continua pelado
  *   dentro dele.
- * - **Título centralizado.** Uma coluna vazia do tamanho do voltar à direita
- *   mantém o centro óptico no centro da tela, e não no centro do que sobra.
+ * - **Título à DIREITA** (L2, rodada 6): voltar sempre à esquerda, nome da área à direita.
  *
  * **Um `<h1>` por tela**: se a página de baixo já é dona do próprio `<h1>`
  * (Jogos, Arena, Hall), o título aqui é texto comum (`ownsHeading={false}`) e
@@ -45,7 +44,7 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
     margin: 0,
     flex: 1,
     minWidth: 0,
-    textAlign: 'center',
+    textAlign: 'right',
     fontFamily: 'var(--sm2-font-display)',
     fontSize: 'var(--sm2-text-xl)',
     fontWeight: 600,
@@ -107,7 +106,6 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
           top: CORNER_RING_TOP, left: CORNER_RING_SIDE,
           padding: 0, cursor: 'pointer',
           color: overScene ? SCENE_INK : 'var(--sm2-ink)',
-          filter: overScene ? CORNER_GLOW : undefined,
         }}
       >
         {icon === 'map'
@@ -120,7 +118,6 @@ export function AreaTopBar({ title, backLabel, onBack, ownsHeading = true, icon 
       {ownsHeading
         ? <h1 style={titleStyle}>{title}</h1>
         : <p aria-hidden="true" style={titleStyle}>{title}</p>}
-      <span aria-hidden="true" style={{ width: CORNER_RING, flex: `0 0 ${CORNER_RING}px` }} />
     </div>
   );
 }

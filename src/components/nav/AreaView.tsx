@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type ComponentProps, type ReactNode } from 'react';
+import { emitFeat } from '../../utils/feats';
 import type { AreaId } from '../../navigation';
 import type { MindGameId, MindGameTutorials } from '../../utils/mente/mindTutorials';
 import type { Language } from '../../utils/i18n';
@@ -291,7 +292,7 @@ export function AreaView(props: AreaViewProps) {
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
   useEffect(() => { if (props.initialSheet) { if (!initialLock && !initialDemoBlocked) onVisitBuilding?.(`${area}.${props.initialSheet}` as BuildingId); onInitialSheetConsumed?.(); } }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const closeLabel = language === 'pt-BR' ? 'Fechar' : 'Close';
+  const closeLabel = language === 'pt-BR' ? 'Voltar' : 'Back'; // L2: tela cheia nunca diz "Fechar"
   /* D-16: capturado na montagem (o `App` limpa o pedido logo depois e a folha do Mercado é `lazy` — ela monta DEPOIS disso).
      Vale só para a primeira abertura: fechar a folha apaga. */
   const [stallKind, setStallKind] = useState(props.initialStallKind);
@@ -525,7 +526,7 @@ export function AreaView(props: AreaViewProps) {
                 petElement={props.petElement}
                 playerLevel={props.playerLevel}
                 language={language}
-                onEarnPoints={props.onEarnPoints}
+                onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('barrage'); }}
                 rankSaveId={props.guild.saveId}
                 onExit={exitGame}
               />
@@ -544,9 +545,9 @@ export function AreaView(props: AreaViewProps) {
             {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
             {game === 'match3' && <Match3Game {...base} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
-            {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />}
-            {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />}
-            {game === 'patches' && <PatchesGame {...base} tutorial={mindTut('patches')} rankSaveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} />}
+            {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('eco'); }} />}
+            {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('zip'); emitFeat('zipSolved'); }} />}
+            {game === 'patches' && <PatchesGame {...base} tutorial={mindTut('patches')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('patches'); emitFeat('patchesSolved'); }} />}
             {/* Refúgio — NÃO recebem `onEarnPoints`: não pagam, não pontuam. */}
             {game === 'respiracao' && <RespiracaoGame {...base} />}
             {game === 'bolhas-calmas' && <BolhasGame {...base} mode="calma" />}

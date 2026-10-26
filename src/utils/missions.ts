@@ -4,6 +4,7 @@
 // from GameState counters.
 import { getStageLevel, type EvolutionStage } from '../types/progression';
 import type { ShopItem } from './shop';
+import type { Feats } from './feats';
 // Missão é INTERFACE (aparece na aba da loja), não conteúdo do visor: o ícone
 // deixou de ser PNG emoldurado e virou o nome de uma ligature da Material
 // Symbols Rounded, desenhada pelo `<Icon>`. Este módulo é de DADOS e não
@@ -38,6 +39,8 @@ export interface MissionState {
    * nunca anda para trás.
    */
   missionPerfectDays: number;
+  /** Feitos vitalícios dos recursos sem contador próprio (`utils/feats.ts`). Ausente = save antigo = tudo zero. */
+  feats?: Feats;
 }
 
 /**
@@ -62,8 +65,9 @@ export interface Mission {
   descPt: string;
   descEn: string;
   target: number;
-  /** Shop item whose PURCHASE this mission unlocks (id into SHOP_ITEMS). */
-  bgReward: string;
+  /** Shop item whose PURCHASE this mission unlocks (id into SHOP_ITEMS). Ausente = conquista de RECONHECIMENTO (rodada 6): sem cenário,
+   *  sem resgate — fica marcada como feita e pronto (nada a cobrar, nada a "esquecer de pegar"). */
+  bgReward?: string;
   progress: (s: MissionState) => number;
 }
 
@@ -117,7 +121,56 @@ export const MISSIONS: Mission[] = [
     // deixou de contá-lo é `utils/achievements.ts`, que lê `totalPerfectDays`.
     progress: s => s.missionPerfectDays,
   },
+  // ── Rodada 6 (L4): conquistas de RECONHECIMENTO dos recursos (sem cenário, sem resgate). Poucas, metas razoáveis, nenhuma premia contagem
+  // de tarefas nem cobra: só registram que o recurso foi usado. ─────────────────────────────────────────────────────────────────────
+  { id: 'mission-barrage-1000', category: 'games', icon: '🌧️', iconName: 'water_drop', target: 1000,
+    namePt: 'Chuva sob controle', nameEn: 'Barrage Master', descPt: 'Faça 1000 de score na Chuva de Almas', descEn: 'Score 1000 in the Soul Barrage',
+    progress: s => s.feats?.barrageBest ?? 0 },
+  { id: 'mission-zip-10', category: 'games', icon: '🧵', iconName: 'trending_up', target: 10,
+    namePt: 'Fio da meada', nameEn: 'Thread Finder', descPt: 'Resolva 10 Trilhas do Pet', descEn: 'Solve 10 Pet Trails',
+    progress: s => s.feats?.zipSolved ?? 0 },
+  { id: 'mission-patches-10', category: 'games', icon: '🧶', iconName: 'grid_view', target: 10,
+    namePt: 'Colcha de retalhos', nameEn: 'Patchwork Maker', descPt: 'Monte 10 Colchas', descEn: 'Piece together 10 Patchworks',
+    progress: s => s.feats?.patchesSolved ?? 0 },
+  { id: 'mission-dino-normal-500', category: 'games', icon: '⚡', iconName: 'timer', target: 500,
+    namePt: 'Corrida no Normal', nameEn: 'Normal Runner', descPt: 'Faça 500 de score na Corrida com obstáculos no Normal', descEn: 'Score 500 in the Obstacle Run on Normal',
+    progress: s => s.feats?.dinoNormalBest ?? 0 },
+  { id: 'mission-dino-dash-30', category: 'games', icon: '💨', iconName: 'bolt', target: 30,
+    namePt: 'Campo de força', nameEn: 'Force Field', descPt: 'Destrua 30 obstáculos com o dash (Normal)', descEn: 'Smash 30 obstacles with the dash (Normal)',
+    progress: s => s.feats?.dinoDashSmashed ?? 0 },
+  { id: 'mission-ppt-normal-5', category: 'games', icon: '✂️', iconName: 'pan_tool', target: 5,
+    namePt: 'Mão de mestre', nameEn: 'Steady Hand', descPt: 'Vença 5 partidas de Pedra, papel e tesoura no Normal', descEn: 'Win 5 Rock, paper, scissors matches on Normal',
+    progress: s => s.feats?.pptNormalWins ?? 0 },
+  { id: 'mission-rogue-floors-3', category: 'dungeon', icon: '🕯️', iconName: 'flag', target: 3,
+    namePt: 'Primeiros andares', nameEn: 'First Floors', descPt: 'Conclua 3 andares do Calabouço', descEn: 'Finish 3 Dungeon floors',
+    progress: s => s.feats?.rogueFloors ?? 0 },
+  { id: 'mission-rogue-floors-15', category: 'dungeon', icon: '🗝️', iconName: 'lock_open', target: 15,
+    namePt: 'Fundo do Calabouço', nameEn: 'Deep Dungeon', descPt: 'Conclua 15 andares do Calabouço', descEn: 'Finish 15 Dungeon floors',
+    progress: s => s.feats?.rogueFloors ?? 0 },
+  { id: 'mission-rift-runs-15', category: 'dungeon', icon: '🌀', iconName: 'sync', target: 15,
+    namePt: 'Habitante da Fenda', nameEn: 'Rift Dweller', descPt: 'Conclua 15 descidas completas da Fenda', descEn: 'Complete 15 full Endless Rift runs',
+    progress: s => s.dungeonRunsCompleted },
+  { id: 'mission-rift-kills-500', category: 'dungeon', icon: '🛡️', iconName: 'military_tech', target: 500,
+    namePt: 'Guardião da Fenda', nameEn: 'Rift Warden', descPt: 'Derrote 500 inimigos na Fenda', descEn: 'Defeat 500 Endless Rift enemies',
+    progress: s => s.dungeonKills },
+  { id: 'mission-clan-shop-3', category: 'constancy', icon: '🏪', iconName: 'storefront', target: 3,
+    namePt: 'Cliente do clã', nameEn: 'Clan Regular', descPt: 'Compre 3 itens na Loja do Clã', descEn: 'Buy 3 items from the Clan Shop',
+    progress: s => s.feats?.clanShopBuys ?? 0 },
+  { id: 'mission-regen-1', category: 'constancy', icon: '🎨', iconName: 'palette', target: 1,
+    namePt: 'Outro traço', nameEn: 'Another Stroke', descPt: 'Use "Gerar de novo" na aparência do seu Soulmon', descEn: 'Use "Generate again" on your Soulmon’s look',
+    progress: s => s.feats?.regens ?? 0 },
+  { id: 'mission-focus-prepared-10', category: 'constancy', icon: '🧭', iconName: 'spa', target: 10,
+    namePt: 'Espaço preparado', nameEn: 'Space Ready', descPt: 'Prepare o foco 10 vezes (não precisam ser seguidas)', descEn: 'Prepare to focus 10 times (they need not be consecutive)',
+    progress: s => s.feats?.focusPrepared ?? 0 },
+  { id: 'mission-rank-gold', category: 'constancy', icon: '🏅', iconName: 'leaderboard', target: 4,
+    namePt: 'Faixa de ouro', nameEn: 'Gold Band', descPt: 'Alcance a faixa de ouro em qualquer ranking', descEn: 'Reach the gold band in any ranking',
+    // `rankTier` guarda índice+1 (madeira 1 … ouro 4 … diamante 6).
+    progress: s => s.feats?.rankTier ?? 0 },
 ];
+
+/** Só as conquistas COM cenário pedem Resgatar; as de reconhecimento já nascem resolvidas. */
+export const needsClaim = (m: Mission): boolean => !!m.bgReward;
+
 
 /** Progress per mission id, clamped to the target. */
 export function getMissionProgress(s: MissionState): Record<string, number> {
@@ -163,10 +216,10 @@ export function sanitizeMissionsClaimed(raw: unknown): string[] | undefined {
 
 /** Os ids que já estão cumpridos agora — a MIGRAÇÃO: save antigo vira "já resgatado" e ninguém perde um item que já estava liberado. */
 export function completedMissionIds(missionProgress: Record<string, number>): string[] {
-  return MISSIONS.filter(m => isMissionComplete(m.id, missionProgress)).map(m => m.id);
+  return MISSIONS.filter(m => needsClaim(m) && isMissionComplete(m.id, missionProgress)).map(m => m.id);
 }
 
 /** Há conquista cumprida e ainda não resgatada? (a marca "?" do ícone) */
 export function hasUnclaimedMission(missionProgress: Record<string, number>, claimed: readonly string[] | undefined): boolean {
-  return claimed !== undefined && MISSIONS.some(m => isMissionComplete(m.id, missionProgress) && !claimed.includes(m.id));
+  return claimed !== undefined && MISSIONS.some(m => needsClaim(m) && isMissionComplete(m.id, missionProgress) && !claimed.includes(m.id));
 }

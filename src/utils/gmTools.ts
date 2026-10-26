@@ -26,6 +26,7 @@ import { dailyGaugeCap } from './evolutionGauge';
 import { PET_BACKGROUNDS } from './backgrounds';
 import { ALL_SHOP_ITEMS } from './shop';
 import { MISSIONS } from './missions';
+import { FEAT_KEYS, type Feats } from './feats';
 import { CORVO_FORM_IDS } from './corvoPet';
 import { cleanPoop } from './poopDrain';
 
@@ -39,6 +40,17 @@ export const GM_FORMS = CORVO_FORM_IDS;
 export const GM_PERFECT_DAY_STEPS = [1, 7, 30] as const;
 
 const missionTarget = (id: string): number => MISSIONS.find(m => m.id === id)?.target ?? 0;
+
+/** Maior meta entre as missões que leem este campo do save (sonda: só ele preenchido, alto). Cobre as conquistas novas sem lista à mão. */
+const maxTargetReading = (patch: Record<string, unknown>): number => {
+  let max = 0;
+  for (const m of MISSIONS) {
+    try { if (m.progress(patch as never) >= m.target) max = Math.max(max, m.target); } catch { /* missão que lê outro campo */ }
+  }
+  return max;
+};
+const PROBE = 1e9;
+const featTargets = (): Feats => Object.fromEntries(FEAT_KEYS.map(k => [k, maxTargetReading({ feats: { [k]: PROBE } })]).filter(([, v]) => (v as number) > 0));
 
 // ── (a) Saldo ───────────────────────────────────────────────────────────────
 
@@ -59,6 +71,7 @@ export interface GmUnlockState {
   dungeonRunsCompleted?: number;
   dinoBest?: number;
   missionPerfectDays?: number;
+  feats?: Feats;
 }
 
 /** Todos os cenários do catálogo (inclui `bg-mission-*` e `bg-guild-*`). */
@@ -78,16 +91,28 @@ const union = (a: readonly string[] | undefined, b: readonly string[]): string[]
   return faltam.length ? [...base, ...faltam] : (base as string[]);
 };
 
+/** Sobe cada contador de `feats` até a meta mais alta que o lê (nunca reduz). Sem mudança devolve o MESMO objeto. */
+function mergeFeats(prev: Feats | undefined): Feats {
+  const alvo = featTargets();
+  const out: Feats = { ...(prev ?? {}) };
+  let mudou = !prev;
+  for (const k of Object.keys(alvo) as (keyof Feats)[]) {
+    if ((out[k] ?? 0) < (alvo[k] ?? 0)) { out[k] = alvo[k]; mudou = true; }
+  }
+  return mudou ? out : (prev as Feats);
+}
+
 export function gmUnlockAll<T extends GmUnlockState>(prev: T): T {
   const next = {
     ...prev,
     ownedBackgrounds: union(prev.ownedBackgrounds, allBackgroundIds()),
     ownedFurniture: union(prev.ownedFurniture, allFurnitureIds()),
     unlockedEvolutions: union(prev.unlockedEvolutions, GM_FORMS),
-    dungeonKills: Math.max(prev.dungeonKills ?? 0, missionTarget('mission-kills-100')),
-    dungeonRunsCompleted: Math.max(prev.dungeonRunsCompleted ?? 0, missionTarget('mission-runs-3')),
+    dungeonKills: Math.max(prev.dungeonKills ?? 0, maxTargetReading({ dungeonKills: PROBE })),
+    dungeonRunsCompleted: Math.max(prev.dungeonRunsCompleted ?? 0, maxTargetReading({ dungeonRunsCompleted: PROBE })),
     dinoBest: Math.max(prev.dinoBest ?? 0, missionTarget('mission-dino-1000')),
-    missionPerfectDays: Math.max(prev.missionPerfectDays ?? 0, ...MISSIONS.filter(m => m.category === 'constancy').map(m => m.target)),
+    missionPerfectDays: Math.max(prev.missionPerfectDays ?? 0, maxTargetReading({ missionPerfectDays: PROBE })),
+    feats: mergeFeats(prev.feats),
   };
   const same = next.ownedBackgrounds === prev.ownedBackgrounds
     && next.ownedFurniture === prev.ownedFurniture
@@ -95,7 +120,8 @@ export function gmUnlockAll<T extends GmUnlockState>(prev: T): T {
     && next.dungeonKills === prev.dungeonKills
     && next.dungeonRunsCompleted === prev.dungeonRunsCompleted
     && next.dinoBest === prev.dinoBest
-    && next.missionPerfectDays === prev.missionPerfectDays;
+    && next.missionPerfectDays === prev.missionPerfectDays
+    && next.feats === prev.feats;
   return same ? prev : next;
 }
 

@@ -5,6 +5,7 @@
  * VISÍVEL (`RogueFight`, a `BattleStage` da Masmorra); os desafios que não são combate seguem sendo os jogos reais em modo desafio.
  * A masmorra/Endless Rift (`DungeonGame.tsx`) é outra coisa e não é tocada. A superfície NASCE MUDA (nenhum som novo).
  */
+import { BackCircleButton } from './ui/BackCircleButton';
 import { Component, lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { entrarNaSuperficie } from '../utils/musica';
 import { Icon } from './ui/Icon';
@@ -215,11 +216,9 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
 
       <header style={{ position: 'absolute', top: 0, left: 0, width: '100%', zIndex: 4, display: 'flex', alignItems: 'flex-start', gap: 8, padding: 'calc(10px + env(safe-area-inset-top, 0px)) 8px 0 8px' }}>
         {onClose && (
-          <button type="button" data-rogue-close onClick={onClose} aria-label={isPt ? 'Fechar o Calabouço' : 'Close the Dungeon'} style={{ background: 'none', border: 'none', boxShadow: 'none', padding: 0, minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--sm2-viewport-ink)' }}>
-            <Icon name="close" size={24} tone="inherit" />
-          </button>
+          <BackCircleButton data-rogue-close="" onClick={onClose} language={isPt ? 'pt-BR' : 'en-US'} overScene />
         )}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, paddingTop: 4 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, paddingTop: 4, flex: 1, alignItems: 'flex-end', textAlign: 'right' }}>
           <h2 style={{ ...hudText, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg, 20px)', fontWeight: 700 }}>{isPt ? 'Calabouço' : 'Dungeon'}</h2>
           <p data-rogue-progress style={hudText}>
             {isPt

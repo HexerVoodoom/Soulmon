@@ -66,13 +66,14 @@ describe('ritual — o passo como aparelho (D-Q1…D-Q3)', () => {
     expect(document.body.textContent).not.toMatch(/Question \d+ of/);
   });
 
-  it('D-Q2: o voltar é `arrow_back` 24 pelado num alvo 44 com o rótulo só no nome acessível; "Continue" sem seta e inerte por SUPERFÍCIE', () => {
+  it('D-Q2: o voltar é `arrow_back` 24 no círculo padrão de 44 (L2) com o rótulo só no nome acessível; "Continue" sem seta e inerte por SUPERFÍCIE', () => {
     writeOracleDraft(rascunho(1, { fullName: '' }));
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     const back = btn('Back');
-    expect(back.className).toContain('sm2-ora-back');
-    expect(back.textContent?.trim()).toBe('arrow_back'); // só a ligature, escondida
-    expect(back.querySelector('.sm2-icon')?.getAttribute('aria-hidden')).toBe('true');
+    expect(back.className).toContain('sm2-area-back');
+    expect(back.hasAttribute('data-back-circle')).toBe(true);
+    expect(back.textContent?.trim()).toBe(''); // glifo SVG, sem texto visível
+    expect(back.querySelector('svg')).not.toBeNull();
     const cont = btn('Continue');
     expect(cont.textContent?.trim()).toBe('Continue');
     expect(cont.getAttribute('aria-disabled')).toBe('true');
@@ -149,7 +150,7 @@ describe('as 6 perguntas, a bifurcação e os 20 itens (D-Q4, D-Q5, D-Q12)', () 
     writeOracleDraft(rascunho(QUIZ_START));
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     const back = btn('Back');
-    expect(back.className).toContain('sm2-ora-back');
+    expect(back.className).toContain('sm2-area-back');
     fireEvent.click(back);
     expect(screen.queryByText("What's your favorite creature?")).toBeNull();
     expect(screen.getByText('Where were you born?')).toBeTruthy();
@@ -171,7 +172,7 @@ describe('as 6 perguntas, a bifurcação e os 20 itens (D-Q4, D-Q5, D-Q12)', () 
     const opts = [...document.querySelectorAll('button[aria-pressed]')] as HTMLButtonElement[];
     expect(opts.length).toBeGreaterThanOrEqual(2);
     for (const o of opts) expect(o.style.border).toBe('1px solid var(--sm2-muted)');
-    expect(btn('Back').className).toContain('sm2-ora-back');
+    expect(btn('Back').className).toContain('sm2-area-back');
     fireEvent.click(btn('Back'));
     expect(document.body.textContent).not.toMatch(/Question \d+ of/);
   });
@@ -296,7 +297,7 @@ describe('Upgrade — o mesmo ritual sem intro e sem cadastro', () => {
     expect(screen.queryByRole('progressbar')).toBeNull();
     expect(screen.queryByText('Before we start')).toBeNull();
     const back = btn('Back');
-    expect(back.className).toContain('sm2-ora-back');
+    expect(back.className).toContain('sm2-area-back');
     fireEvent.click(back);
     expect(cancel).toHaveBeenCalledTimes(1);
   });

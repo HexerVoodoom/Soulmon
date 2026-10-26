@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { Icon } from './Icon';
+import { BackCircleButton } from './BackCircleButton';
 
 /**
  * `BackArrow` — o "voltar" PADRÃO do app (checklist do dono 01/10/2026, B6/I3):
@@ -34,13 +35,23 @@ export function BackArrow({
   style?: CSSProperties;
 }) {
   const isPt = language === 'pt-BR';
+  /* L2 (rodada 6): o voltar de tela cheia é SEMPRE o círculo padrão
+     (`BackCircleButton`). O `icon="close"` sobrou só para diálogos pequenos
+     (RitualKit/ferramenta de dev) e segue pelado. */
+  if (icon !== 'close') {
+    return (
+      <div data-back-arrow style={{ display: 'flex', justifyContent: 'flex-start', margin: '0 0 4px 0', ...style, marginLeft: 0 }}>
+        <BackCircleButton onClick={onClick} label={label} language={language} />
+      </div>
+    );
+  }
   return (
     <div data-back-arrow style={{ display: 'flex', justifyContent: 'flex-start', margin: '0 0 4px -10px', ...style }}>
       <button
         type="button"
         className="sm2-ora-back"
         onClick={onClick}
-        aria-label={label ?? (icon === 'close' ? (isPt ? 'Fechar' : 'Close') : (isPt ? 'Voltar' : 'Back'))}
+        aria-label={label ?? (isPt ? 'Fechar' : 'Close')}
       >
         <Icon name={icon} size={24} tone="inherit" />
       </button>

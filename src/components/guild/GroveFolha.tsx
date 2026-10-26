@@ -6,6 +6,7 @@
  * (`getPlantio`, só a estação de hoje). Se a rede falha, o panorama abre mesmo assim, com o que o save sabe.
  * Carregada sob demanda (`lazy` no `GuildSheet`): panorama e árvores não entram no chunk de entrada.
  */
+import { BackCircleButton } from '../ui/BackCircleButton';
 import { useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useBackLayer } from '../../utils/backStack';
@@ -51,9 +52,7 @@ export function GroveFolha({ saveId, language, guild, mySprite, tz, reducedMotio
   return createPortal(
     <div ref={dialogRef} className="sm2-grove-folha" role="dialog" aria-modal="true" aria-label={titulo} data-grove-folha>
       <div className="sm2-grove-folha-topo">
-        <button type="button" className="sm2-grove-folha-fechar" onClick={onClose} aria-label={guildText(language, 'guild.bosque.panorama.fechar')} data-grove-fechar>
-          <Icon name="close" size={32} />
-        </button>
+        <BackCircleButton overScene data-grove-fechar="" onClick={onClose} language={language === 'pt-BR' ? 'pt-BR' : 'en-US'} />
         <h2 className="sm2-grove-folha-titulo">{titulo}</h2>
       </div>
       <GroveVisor language={language} guild={guild} mySprite={mySprite} niveis={niveis} reducedMotion={reducedMotion} label={guildText(language, 'guild.bosque.panorama.aria')} />

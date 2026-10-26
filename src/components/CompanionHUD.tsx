@@ -542,8 +542,22 @@ export const CompanionHUD = memo(function CompanionHUD({
     return t && Math.random() < t.taxa ? t.fala : undefined;
   };
 
+  /* Ausente (mesmo predicado da plaquinha/lupa: masmorra ou missão): o Soulmon não
+     está na Home, então NÃO fala — nenhuma fala (idle, toque, carinho, comida, sinal)
+     chega à bolha. Ponto único: `speak`/`speakRaw` consultam este ref. */
+  const ausente = naMasmorra || missionAway;
+  const ausenteRef = useRef(ausente);
+  ausenteRef.current = ausente;
+  useEffect(() => {
+    if (!ausente) return;
+    if (bubbleTimeoutRef.current) { clearTimeout(bubbleTimeoutRef.current); bubbleTimeoutRef.current = null; }
+    setShowBubble(false);
+    setBubbleText('');
+  }, [ausente]);
+
   // speak: strips all emojis, shows bubble, auto-hides after durationMs
   const speak = useCallback((text: string, durationMs = 4000) => {
+    if (ausenteRef.current) return;
     const clean = (text || '').replace(/\p{Emoji_Presentation}|\p{Emoji}️/gu, '').replace(/\s{2,}/g, ' ').trim();
     if (!clean) return;
     if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
@@ -558,7 +572,7 @@ export const CompanionHUD = memo(function CompanionHUD({
 
   // speakRaw: no emoji stripping — only for the ❤️ feeding response
   const speakRaw = useCallback((text: string, durationMs = 3000) => {
-    if (!text) return;
+    if (!text || ausenteRef.current) return;
     if (bubbleTimeoutRef.current) clearTimeout(bubbleTimeoutRef.current);
     setBubbleText(text);
     setShowBubble(true);

@@ -12,10 +12,12 @@ export const DAILY_COUNT_CAP = 99;
 export const DAILY_EVENTS = [
   'dino', 'ppt', 'match3', 'foco', 'masmorra', 'banho', 'carinho', 'brincar',
   'comida', 'humor', 'sono', 'mercado', 'amigo', 'arena', 'torneio',
+  'barrage', 'eco', 'zip', 'patches', 'calabouco',
 ];
 export const DAILY_MISSION_IDS = [
   'd-dino', 'd-ppt', 'd-match3', 'd-foco', 'd-masmorra', 'd-banho', 'd-carinho', 'd-brincar',
   'd-comida', 'd-humor', 'd-sono', 'd-mercado', 'd-amigo', 'd-arena', 'd-torneio',
+  'd-barrage', 'd-eco', 'd-zip', 'd-patches', 'd-calabouco',
 ];
 export const FIRST_TIME_IDS = [
   'first-minigame', 'first-focus', 'first-stroll', 'first-dungeon',
@@ -29,6 +31,14 @@ export const FIRST_TIME_IDS = [
 /** Ids das conquistas (`MISSIONS`) — espelho de `src/utils/missions.ts`, travado pela paridade. */
 export const MISSION_IDS = [
   'mission-champion', 'mission-mega', 'mission-kills-100', 'mission-runs-3', 'mission-dino-1000', 'mission-perfect-30',
+  'mission-barrage-1000', 'mission-zip-10', 'mission-patches-10', 'mission-dino-normal-500', 'mission-dino-dash-30', 'mission-ppt-normal-5',
+  'mission-rogue-floors-3', 'mission-rogue-floors-15', 'mission-rift-runs-15', 'mission-rift-kills-500',
+  'mission-clan-shop-3', 'mission-regen-1', 'mission-focus-prepared-10', 'mission-rank-gold',
+];
+export const FEAT_CAP = 999999;
+export const FEAT_KEYS = [
+  'zipSolved', 'patchesSolved', 'rogueFloors', 'dinoDashSmashed', 'pptNormalWins', 'clanShopBuys', 'regens', 'focusPrepared',
+  'barrageBest', 'dinoNormalBest', 'rankTier',
 ];
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
@@ -67,4 +77,17 @@ export function sanitizeFirstTimes(raw) {
 export function sanitizeMissionsClaimed(raw) {
   if (!Array.isArray(raw)) return undefined;
   return [...new Set(raw.filter((x) => typeof x === 'string' && MISSION_IDS.includes(x)))];
+}
+
+/** Feitos vitalicios (espelho de `src/utils/feats.ts`): chaves fechadas, inteiros 1..FEAT_CAP. Lixo = undefined. @param {unknown} raw */
+export function sanitizeFeats(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const r = /** @type {Record<string, unknown>} */ (raw);
+  /** @type {Record<string, number>} */
+  const out = {};
+  for (const k of FEAT_KEYS) {
+    const v = has(r, k) ? r[k] : undefined;
+    if (typeof v === 'number' && Number.isFinite(v) && v > 0) out[k] = Math.min(FEAT_CAP, Math.floor(v));
+  }
+  return out;
 }

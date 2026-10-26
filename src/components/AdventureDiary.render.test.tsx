@@ -114,7 +114,7 @@ describe('tela cheia (rodada 7, I7)', () => {
     expect(tela.querySelector('[data-adventure-pet]')).toBeTruthy();
     expect(screen.getByText(A.textEn)).toBeTruthy();
     expect(tela.querySelectorAll('[data-info-tip]')).toHaveLength(1);
-    fireEvent.click(screen.getByLabelText('Close'));
+    fireEvent.click(screen.getByLabelText('Back'));
     expect(document.querySelector('[data-adventure-screen]')).toBeNull();
   });
 });

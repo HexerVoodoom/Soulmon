@@ -1,6 +1,6 @@
 import { QuestGlyph } from '../play/MissionMark';
 import type { QuestMark, QuestTone } from '../../utils/questMarks';
-import { CORNER_BOX, CORNER_BOX_TOP, CORNER_GLOW, CORNER_SIDE } from './cornerAnchor';
+import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE } from './cornerAnchor';
 
 /**
  * O ÍCONE DE MISSÕES na Home (rodada 7, M8, 04/10/2026): logo abaixo do link do
@@ -11,7 +11,7 @@ import { CORNER_BOX, CORNER_BOX_TOP, CORNER_GLOW, CORNER_SIDE } from './cornerAn
  * número e sem som: nada que cobre.
  *
  * Ícone PELADO (14/10/2026, pedido do dono: sem círculo nem fundo em volta do
- * "!"/"?"); a legibilidade sobre o cenário vem do brilho do canto (`CORNER_GLOW`),
+ * "!"/"?"); SEM brilho externo (removido na rodada 6, L2),
  * o alvo de toque é o botão de 56 e o rótulo mora no `aria-label` (sem `title`).
  */
 export function MissionsLink({ mark, tone = 'gold', label, markLabel, onClick, row = 1 }: {
@@ -44,7 +44,6 @@ export function MissionsLink({ mark, tone = 'gold', label, markLabel, onClick, r
         width: CORNER_BOX, height: CORNER_BOX,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
-        filter: CORNER_GLOW,
         opacity: mark === null ? 0.6 : 1,
       }}
     >

@@ -616,3 +616,9 @@ Decisões conservadoras tomadas pela orquestração; revisar:
 - Montide: aprovado como a toupeirinha do Soul Barrage.
 - Sprites do Torneio: usar o template real (Oráculo), gerados no ChatGPT.
 - Worktrees já mergeadas na main: removidas.
+## Beta3 rodada 6 (26/10/2026)
+
+- Conquistas novas (14) entram só como reconhecimento, sem cenário/Resgatar (não há arte de fundo). Quer cenários para elas? (conservador: sem prêmio até haver arte)
+- Diária do Calabouço paga 1 `ore` (o prédio não tem material próprio). Outro material?
+- Casinha "Início" da Home e minimapa/exclamação seguem sem círculo (só perderam o glow); diálogos pequenos (RitualDialog, ModalSheet, cards dispensáveis) mantêm o ✕ fechar. Quer círculo também neles?
+- Diárias de Eco/Chuva só contam quando a partida rende pontos (Eco com 0 Bits ou Chuva < 100 não conta).

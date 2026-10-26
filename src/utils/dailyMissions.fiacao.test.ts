@@ -8,11 +8,16 @@ const app = readFileSync('src/App.tsx', 'utf8');
 const area = readFileSync('src/components/nav/AreaView.tsx', 'utf8');
 
 describe('todo evento do catálogo diário tem emissor', () => {
-  const porAreaView = ['dino', 'ppt', 'match3', 'foco', 'arena'];
+  const porAreaView = ['dino', 'ppt', 'match3', 'foco', 'arena', 'barrage', 'eco', 'zip', 'patches'];
   const porContarDiaria = ['masmorra', 'comida', 'sono', 'mercado'];
   const porContarMissao: Record<string, string> = { banho: 'banho', brincar: 'brincar', humor: 'humor', carinho: 'carinho', amigo: 'amigo', torneio: 'torneio' };
 
-  for (const m of dailyMissionPool()) {
+  it('calabouco: o App bumpa o evento ao concluir um andar (e sobe o feito vitalício)', () => {
+    expect(app).toContain("'calabouco')");
+    expect(app).toContain("applyFeat(prev.feats, 'rogueFloors', ganhos)");
+  });
+
+  for (const m of dailyMissionPool().filter(x => x.event !== 'calabouco')) {
     it(`${m.event}`, () => {
       if (porAreaView.includes(m.event)) expect(area).toContain(`onDailyEvent?.('${m.event}')`);
       else if (porContarDiaria.includes(m.event)) expect(app).toContain(`contarDiaria('${m.event}')`);

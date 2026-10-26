@@ -30,7 +30,8 @@ import type { QuestMark } from './questMarks';
 
 export type DailyEvent =
   | 'dino' | 'ppt' | 'match3' | 'foco' | 'masmorra' | 'banho' | 'carinho' | 'brincar'
-  | 'comida' | 'humor' | 'sono' | 'arena' | 'torneio' | 'mercado' | 'amigo';
+  | 'comida' | 'humor' | 'sono' | 'arena' | 'torneio' | 'mercado' | 'amigo'
+  | 'barrage' | 'eco' | 'zip' | 'patches' | 'calabouco';
 
 export interface DailyMission {
   /** Estável (o save e os testes o citam). */
@@ -66,7 +67,27 @@ const POOL: readonly DailyMission[] = [
   { id: 'd-amigo', event: 'amigo', target: 1, building: 'laboratorio.amigos', material: 'keepsake', descPt: 'Visite a criatura de um amigo', descEn: 'Visit a friend’s creature' },
   { id: 'd-arena', event: 'arena', target: 1, building: 'arena.duelo', material: 'fang', descPt: 'Faça um Duelo na Arena', descEn: 'Have a Duel in the Arena' },
   { id: 'd-torneio', event: 'torneio', target: 1, building: 'arena.torneio', material: 'laurel', descPt: 'Dispute uma partida do Torneio', descEn: 'Play a Tournament match' },
+  // Rodada 6 (L4): Chuva de Almas no rodízio do Salão; Eco/Trilha/Colcha no rodízio do Ateliê; Calabouço sempre. O Calabouço não tem material
+  // próprio (prédio sem lote de missão): paga o minério, o mesmo do ambiente de masmorra (a Fenda).
+  { id: 'd-barrage', event: 'barrage', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Encare uma Chuva de Almas', descEn: 'Face a Soul Barrage' },
+  { id: 'd-eco', event: 'eco', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Jogue uma rodada do Eco do Pet', descEn: 'Play a round of Pet Echo' },
+  { id: 'd-zip', event: 'zip', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Resolva uma Trilha do Pet', descEn: 'Solve a Pet Trail' },
+  { id: 'd-patches', event: 'patches', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Monte uma Colcha', descEn: 'Piece together a Patchwork' },
+  { id: 'd-calabouco', event: 'calabouco', target: 1, building: 'jogos.dungeon', material: 'ore', descPt: 'Conclua um andar do Calabouço', descEn: 'Finish a Dungeon floor' },
 ];
+
+/** Rodízios (rodada 6): UMA do Salão e UMA do Ateliê por dia, em ordem fixa; o Calabouço entra todo dia. */
+const ROTA_SALAO: readonly string[] = ['d-dino', 'd-ppt', 'd-match3', 'd-barrage'];
+const ROTA_MENTE: readonly string[] = ['d-eco', 'd-zip', 'd-patches'];
+const FIXA_CALABOUCO = 'd-calabouco';
+const NA_ROTA: readonly string[] = [...ROTA_SALAO, ...ROTA_MENTE, FIXA_CALABOUCO];
+
+/** Número do dia (dias desde 1970) a partir da chave `YYYY-MM-DD` do jogador; chave fora do formato cai num hash estável. */
+function numeroDoDia(day: string): number {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(day);
+  if (m) return Math.floor(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) / 86400000);
+  return (hashString(`daily-rota:${day}`) >>> 0) % 100000;
+}
 
 /** Até 6 por dia (dono, 14/10/2026, REGISTRO §54): quem tem menos recursos abertos recebe menos (o filtro de portão vem antes do corte). */
 export const DAILY_MISSION_COUNT = 6;
@@ -87,12 +108,17 @@ export const DAILY_EVENTS: readonly DailyEvent[] = POOL.map(m => m.event);
  */
 export function dailyMissionsFor(day: string, bondLevel: unknown): DailyMission[] {
   const rng = mulberry32(hashString(`daily-missions:${day}`));
-  const ordem = [...POOL];
-  for (let i = ordem.length - 1; i > 0; i -= 1) {
+  const resto = POOL.filter(m => !NA_ROTA.includes(m.id));
+  for (let i = resto.length - 1; i > 0; i -= 1) {
     const j = Math.floor(rng() * (i + 1));
-    [ordem[i], ordem[j]] = [ordem[j], ordem[i]];
+    [resto[i], resto[j]] = [resto[j], resto[i]];
   }
-  return ordem.filter(m => buildingGateFor(m.building, bondLevel).open).slice(0, DAILY_MISSION_COUNT);
+  // Rodízio DETERMINÍSTICO pelo dia do jogador: salão e Ateliê andam juntos (12 dias fecham todos os pares). O que a pessoa ainda não abriu
+  // sai pelo portão; o rodízio não "pula" para outra do mesmo prédio (a de hoje é a de hoje).
+  const n = numeroDoDia(day);
+  const byId = (id: string) => POOL.find(m => m.id === id)!;
+  const fixas = [byId(ROTA_SALAO[n % ROTA_SALAO.length]), byId(ROTA_MENTE[n % ROTA_MENTE.length]), byId(FIXA_CALABOUCO)];
+  return [...fixas, ...resto].filter(m => buildingGateFor(m.building, bondLevel).open).slice(0, DAILY_MISSION_COUNT);
 }
 
 export interface DailyMissionsState {
@@ -202,7 +228,7 @@ const VISITS: readonly FirstTime[] = (Object.keys(BUILDING_GATES) as BuildingId[
   .map(b => ({ id: `visit:${b}`, building: b, material: materialOf(b) ?? 'moss' }));
 
 const FIRST_EVENTS: readonly (FirstTime & { from: readonly DailyEvent[] })[] = [
-  { id: 'first-minigame', building: 'jogos.salao', material: 'spark', from: ['dino', 'ppt', 'match3'], descPt: 'Estreie o seu primeiro minijogo', descEn: 'Try your first mini-game' },
+  { id: 'first-minigame', building: 'jogos.salao', material: 'spark', from: ['dino', 'ppt', 'match3', 'barrage'], descPt: 'Estreie o seu primeiro minijogo', descEn: 'Try your first mini-game' },
   { id: 'first-focus', building: 'exploracao.oficina', material: 'gear', from: ['foco'], descPt: 'Faça o seu primeiro ciclo de foco (Pomodoro)', descEn: 'Do your first focus cycle (Pomodoro)' },
   { id: 'first-stroll', building: 'exploracao.passeio', material: 'pebble', from: [], descPt: 'Conclua o seu primeiro passeio', descEn: 'Finish your first stroll' },
   { id: 'first-dungeon', building: 'arena.fenda', material: 'ore', from: ['masmorra'], descPt: 'Limpe a sua primeira camada da Fenda', descEn: 'Clear your first Endless Rift layer' },

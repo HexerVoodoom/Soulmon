@@ -83,6 +83,7 @@ import { SalaPlantio } from './PlantioVisor';
 import { SalaMisterio } from './MisterioVisor';
 import type { ClaOnReward } from './claUi';
 import type { Language } from '../../utils/i18n';
+import { emitFeat } from '../../utils/feats';
 
 interface GuildSheetProps {
   saveId: string;
@@ -771,6 +772,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
                 try {
                   const v = await buyGuildShopItem(saveId, itemId, opId, tz.current);
                   lojaOps.current.delete(itemId);
+                  emitFeat('clanShopBuys');
                   return v;
                 } catch (e) {
                   // 409 (saldo mudou / já é do clã): não é frase de tela; relê e o estado verdadeiro aparece.

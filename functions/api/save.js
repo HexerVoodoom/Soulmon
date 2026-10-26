@@ -20,7 +20,7 @@ import { sanitizeTalentPicks } from './_talents.js';
 import { sanitizeEquipment, sanitizeBitsOrigin } from './_equipment.js';
 import { sanitizeForge } from './_forge.js';
 import { sanitizeBuildingQuests } from './_buildingQuests.js';
-import { sanitizeDailyMissions, sanitizeFirstTimes, sanitizeMissionsClaimed } from './_dailyMissions.js';
+import { sanitizeDailyMissions, sanitizeFeats, sanitizeFirstTimes, sanitizeMissionsClaimed } from './_dailyMissions.js';
 import { sanitizeFocusLoot } from './_focusLoot.js';
 import { sanitizeDayPlan } from './_dayPlan.js';
 import { sanitizeNightmares } from './_nightmares.js';
@@ -338,6 +338,10 @@ export async function onRequest({ request, env }) {
     if ('missionsClaimed' in state) {
       const q = sanitizeMissionsClaimed(state.missionsClaimed);
       if (q) state.missionsClaimed = q; else delete state.missionsClaimed;
+    }
+    if ('feats' in state) {
+      const q = sanitizeFeats(state.feats);
+      if (q) state.feats = q; else delete state.feats;
     }
     if ('firstTimes' in state) {
       const q = sanitizeFirstTimes(state.firstTimes);

@@ -1,5 +1,5 @@
 import { Icon } from '../ui/Icon';
-import { CORNER_BOX, CORNER_BOX_TOP, CORNER_GLOW, CORNER_SIDE } from './cornerAnchor';
+import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE } from './cornerAnchor';
 
 /**
  * O BOTÃO DE AVISOS na Home (beta-2, F3 do crítico, 13/10/2026): na pilha do canto direito, logo abaixo das missões. O glifo é `info` (14/10/2026): o `event_note` antigo (calendário com nota) lia como o ícone do login diário/check-ins, ocultado pelo dono. Os avisos do dia
@@ -38,7 +38,6 @@ export function AvisosLink({ count, label, countLabel, onClick, row }: {
         width: CORNER_BOX, height: CORNER_BOX,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
-        filter: CORNER_GLOW,
       }}
     >
       <span aria-hidden="true" style={{ display: 'flex', position: 'relative' }}>

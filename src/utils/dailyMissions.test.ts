@@ -209,3 +209,43 @@ describe('primeiras vezes (missões únicas)', () => {
     expect(sanitizeFirstTimes({ done: ['x', 'first-focus', 'first-focus'], claimed: ['first-stroll'] })).toEqual({ done: ['first-focus', 'first-stroll'], claimed: ['first-stroll'] });
   });
 });
+
+describe('rodízio da rodada 6: Salão, Ateliê e Calabouço', () => {
+  const dia = (n: number) => new Date(Date.UTC(2026, 9, 1 + n)).toISOString().slice(0, 10);
+  it('com tudo aberto: 1 do Salão (dino/ppt/match3/barrage), 1 do Ateliê (eco/zip/patches) e o Calabouço, TODO dia; os 4 e os 3 giram', () => {
+    const salao = new Set<string>(); const mente = new Set<string>();
+    for (let n = 0; n < 24; n += 1) {
+      const ev = dailyMissionsFor(dia(n), 99).map(m => m.event);
+      const s = ev.filter(e => ['dino', 'ppt', 'match3', 'barrage'].includes(e));
+      const m = ev.filter(e => ['eco', 'zip', 'patches'].includes(e));
+      expect(s.length).toBe(1); expect(m.length).toBe(1); expect(ev).toContain('calabouco');
+      expect(ev.length).toBe(DAILY_MISSION_COUNT);
+      salao.add(s[0]); mente.add(m[0]);
+    }
+    expect(salao.size).toBe(4); expect(mente.size).toBe(3);
+  });
+  it('é determinístico e consecutivo: dia seguinte avança a roda do Salão', () => {
+    const a = dailyMissionsFor(dia(0), 99).map(m => m.id);
+    expect(dailyMissionsFor(dia(0), 99).map(m => m.id)).toEqual(a);
+    const salaoDe = (d: string) => dailyMissionsFor(d, 99).find(m => ['d-dino', 'd-ppt', 'd-match3', 'd-barrage'].includes(m.id))!.id;
+    expect(new Set([0, 1, 2, 3].map(n => salaoDe(dia(n)))).size).toBe(4);
+    expect(salaoDe(dia(0))).toBe(salaoDe(dia(4)));
+  });
+  it('respeita portões: Vínculo 1 não vê Ateliê nem Calabouço (Vínculo 3), mas sempre tem 1 do Salão', () => {
+    for (let n = 0; n < 12; n += 1) {
+      const ev = dailyMissionsFor(dia(n), 1).map(m => m.event);
+      expect(ev).not.toContain('calabouco'); expect(ev).not.toContain('zip');
+      expect(ev.filter(e => ['dino', 'ppt', 'match3', 'barrage'].includes(e)).length).toBe(1);
+      expect(ev.length).toBe(DAILY_MISSION_COUNT);
+    }
+    expect(dailyMissionsFor(dia(0), 3).map(m => m.event)).toContain('calabouco');
+  });
+  it('conta, resgata (1 material) e saves antigos higienizam', () => {
+    let s = bumpDaily(undefined, dia(0), 'calabouco');
+    const r = claimDaily({ dailyMissions: s } as never, dia(0), 99, 'd-calabouco');
+    expect(r.paid).toBe('ore');
+    expect(sanitizeDailyMissions({ day: 'x', counts: { zip: 2, barrage: 1 }, claimed: ['d-zip', 'd-calabouco'] })).toEqual({ day: 'x', counts: { zip: 2, barrage: 1 }, claimed: ['d-zip', 'd-calabouco'] });
+    expect(sanitizeDailyMissions({ day: 'x', counts: { dino: 1 }, claimed: ['d-dino'] })!.claimed).toEqual(['d-dino']);
+    s = bumpDaily(s, dia(0), 'zip'); expect(s.counts.zip).toBe(1);
+  });
+});
