@@ -33,7 +33,7 @@ Reaproveitados sem trabalho: HUD `icones-ui/hp.png`, `icones-ui/energia.png`; re
 | id | Nome | Serve para | Estado | Transp. | Tamanho alvo | Prio |
 |---|---|---|---|---|---|---|
 | P1-03 | Guia do Prepare to Focus | NPC do prédio Prepare to Focus | **CANCELADO (N8)**. Usa `npcs/npc-exploracao-oficina.png` | — | — | — |
-| P1-04 | Guia do Dungeon (híbrido besouro-rinoceronte/morcego/carneiro, sombra+terra) | NPC do prédio do Calabouço/Dungeon | FALTA. Provisório: `dungeon-spirit.png` (existe, 128²) | T | 1:1, 768x768 | P1 |
+| P1-04 | Guia do Dungeon (híbrido besouro-rinoceronte/morcego/carneiro, sombra+terra) | NPC do prédio do Calabouço/Dungeon | **INSTALADO (26/10/2026)**: `npcs/npc-jogos-dungeon.png` (768², alfa real), ligado em `jogos:dungeon` | T | 1:1, 768x768 | P1 |
 | P2-08 | Arauto do ranking (tentilhão-sino-cervo) | NPC do ranking | FALTA. Provisório `npcs/npc-jogos-mente.png` ou nenhum | T | 1:1, 768x768 | P2 |
 
 ## 3. SPRITES

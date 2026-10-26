@@ -45,6 +45,7 @@ export const STALL_NPC_ART = {
 import npcArenaDuelo from './npc-extra-arena-duelo.png';
 import npcArenaFeira from './npc-arena-feira.png';
 import npcArenaGuerra from './npc-arena-guerra.png';
+import npcJogosDungeon from './npc-jogos-dungeon.png';
 import npcJogosMente from './npc-jogos-mente.png';
 import npcJogosRefugio from './npc-oceano-jogos-refugio.png';
 import npcMercadoConquistas from './npc-mercado-conquistas.png';
@@ -99,7 +100,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   // Os três prédios de Jogos (30/09/2026): o Pipo segue no Salão (jogos livres).
   'jogos:salao': npcJogos,
   'jogos:mente': npcJogosMente, // Tessela
-  'jogos:dungeon': npcExploracao, // beta3 M3: provisório (reusa a guia da Masmorra)
+  'jogos:dungeon': npcJogosDungeon, // Corva (26/10/2026: busto próprio, P1-04)
   'exploracao:refugio': npcJogosRefugio, // Marim (07/10/2026: trocou o Bobbi)
   'laboratorio:evolucao': npcLaboratorio,
   'laboratorio:pet': npcLaboratorioPet, // Tinta (enguia escriba; 07/10/2026 trocou o Faro)

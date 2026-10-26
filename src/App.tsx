@@ -7459,6 +7459,7 @@ export default function App() {
                 key={currentView}
                 area={area}
                 wakeGuard={guardWake}
+                naMasmorra={naMasmorra}
                 initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
                 onInitialGameConsumed={handleRefugeLaunchConsumed}
                 initialSheet={pendingSheet && pendingSheet.area === area ? pendingSheet.lot : undefined}
