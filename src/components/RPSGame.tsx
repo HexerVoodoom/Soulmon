@@ -9,8 +9,15 @@ import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { freshInventory, spendPiece, petPick, totalPieces } from '../utils/rpsLevel2';
 import type { RpsInventory } from '../utils/rpsLevel2';
 import { GameRoot, GameHeader, GameVisor, phaseTitle, gameExitConfirm } from './games/GameKit';
+import { getSpriteForStage } from '../utils/sprites';
 
 /**
+ * Rodada 4 (26/10/2026, N4): ao entrar só há o fechar e dois CTAs, "Easy" (nível 1, sem limite de
+ * peças) e "Normal" (nível 2, 3 de cada); a jogada é por ÍCONE (pedra/papel/tesoura), sem texto.
+ * Layout em três faixas: em cima o Soulmon do jogador (que é o adversário) e, no Normal, as peças
+ * que lhe restam; no meio o campo do duelo; embaixo as peças que restam ao usuário (só no Normal)
+ * e os botões de ícone.
+ *
  * Rock-Paper-Scissors vs the pet. First to 3 round-wins takes the match.
  * Scoring: 🪙 +5 Bits on a match victory (luck-based game → flat, modest reward).
  *
@@ -44,7 +51,7 @@ const HANDS = [
 export const MATCH_POINTS = 5;
 export const WINS_NEEDED = 3;
 
-export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit, rankSaveId, challenge }: {
+export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onMatchEnd, onExit, rankSaveId, challenge }: {
   /** Modo desafio (Calabouço): nível 1 direto, vence com `goal` rodadas ganhas; sem Bits/ranking. */
   challenge?: GameChallenge;
   rankSaveId?: string;
@@ -157,14 +164,13 @@ export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit, rankSaveId
     imageRendering: 'pixelated', display: 'block',
     ...(side === 'left' ? { left: 56 } : { right: 56, transform: 'scaleX(-1)' }),
   });
-  const chip: CSSProperties = {
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-    minHeight: 64, minWidth: 96, padding: '0 20px', borderRadius: 999, boxSizing: 'border-box',
-    border: '1px solid var(--sm2-muted)', backgroundColor: 'var(--sm2-surface-2)', color: 'var(--sm2-ink)',
-    fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm)', fontWeight: 500, lineHeight: 'var(--sm2-leading-body)',
-    cursor: 'pointer',
+  const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
+  /** Botão de jogada: só o ícone (sem caixa); inerte = cinza, nunca opacidade. */
+  const handBtn: CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    width: 80, height: 80, padding: 0, background: 'none', border: 'none', cursor: 'pointer',
+    touchAction: 'manipulation',
   };
-  const chipOff: CSSProperties = { ...chip, border: '1px solid var(--sm2-line)', color: 'var(--sm2-muted)', cursor: 'default' };
 
   return (
     <GameRoot>
@@ -172,94 +178,96 @@ export function RPSGame({ language, onEarnPoints, onMatchEnd, onExit, rankSaveId
         title={isPt ? 'Pedra · Papel · Tesoura' : 'Rock · Paper · Scissors'}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
-        activity={!matchOver}
+        activity={!!level && !matchOver}
         exitConfirm={!matchOver && playerWins + petWins > 0 ? gameExitConfirm(isPt, 'da partida') : undefined}
       />
 
-      {/* Placar em Rubik `tabular-nums` (era Silkscreen — V3). */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center' }}>
-        <p className="sm2-num" style={phaseTitle}>
-          {isPt ? 'Você' : 'You'} {playerWins} × {petWins} Soulmon
-        </p>
-        <p style={sm2Hint}>{isPt ? `primeiro a ${need}` : `first to ${need}`}</p>
-      </div>
-
-      {/* O VISOR 348×144 (D-J10): as mãos 128² a 64 frente a frente e "VS" em
-          Silkscreen 14 sobre placa — a única palavra pixel do canvas, DENTRO
-          do vidro. As mãos em PNG só aparecem aqui; as jogadas são chips de
-          texto embaixo. */}
-      <GameVisor height={72} scene={`url(${rpsScene}) center/cover`}>
-        {playerHand !== null && (
-          <img src={HANDS[playerHand].art} alt={isPt ? HANDS[playerHand].pt : HANDS[playerHand].en} width={64} height={64} style={handStyle('left')} data-hand-you />
-        )}
-        <span
-          aria-hidden="true"
-          style={{
-            position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', padding: '4px 8px',
-            fontFamily: 'var(--sm2-font-pixel)', fontSize: 'var(--sm2-text-sm)', lineHeight: 1.2, letterSpacing: 0,
-            textTransform: 'uppercase', WebkitFontSmoothing: 'none', color: 'var(--sm2-viewport-ink)',
-            backgroundColor: 'color-mix(in srgb, var(--sm2-viewport-bg) 78%, transparent)',
-            borderRadius: 'var(--sm2-radius-sm)',
-          }}
-        >
-          {thinking ? '. . .' : 'VS'}
-        </span>
-        {petHand !== null && !thinking && (
-          <img src={HANDS[petHand].art} alt={isPt ? HANDS[petHand].pt : HANDS[petHand].en} width={64} height={64} style={handStyle('right')} data-hand-pet />
-        )}
-      </GameVisor>
-
-      {/* O resultado da rodada / da partida — `role=status`, mesma tinta nos
-          dois desfechos (perder uma rodada não é erro). */}
-      <p role="status" style={{ ...sm2Text, margin: 0, textAlign: 'center', minHeight: 20 }}>
-        {matchOver === 'won'
-          ? <>{isPt ? 'Você venceu!' : 'You won!'} <BitsAmount value={MATCH_POINTS} sign="+" /></>
-          : matchOver === 'lost'
-            ? (isPt ? 'Seu Soulmon venceu a partida!' : 'Your Soulmon won the match!')
-            : matchOver === 'draw'
-              ? (isPt ? 'Partida empatada!' : 'Match drawn!')
-              : roundMsg}
-      </p>
-
-      {level === 2 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {inventoryRow(petInv, isPt ? 'Soulmon' : 'Soulmon')}
-          {inventoryRow(youInv, isPt ? 'Você' : 'You')}
-        </div>
-      )}
-
       {!level ? (
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="button" onClick={() => setLevel(1)} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, minHeight: 64, padding: '0 8px' }}>
-            {isPt ? 'Nível 1' : 'Level 1'}
+        <div role="group" aria-label={isPt ? 'Dificuldade' : 'Difficulty'} style={{ display: 'flex', gap: 8, marginTop: 'auto', marginBottom: 'auto' }}>
+          <button type="button" data-rps-start={1} onClick={() => setLevel(1)} style={{ ...sm2Button('outline', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64, padding: '0 8px' }}>
+            Easy
           </button>
-          <button type="button" onClick={() => setLevel(2)} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, minHeight: 64, padding: '0 8px' }}>
-            {isPt ? 'Nível 2 · 3 de cada' : 'Level 2 · 3 of each'}
+          <button type="button" data-rps-start={2} onClick={() => setLevel(2)} style={{ ...sm2Button('primary', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64, padding: '0 8px' }}>
+            Normal
           </button>
-        </div>
-      ) : matchOver ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <RankingPanel game="ppt" saveId={rankSaveId} language={language} score={matchOver === 'lost' ? null : playerWins * 10 + (matchOver === 'won' ? 10 : 0)} /> {/* derrota não pontua (QA beta3 R4): só mostra o ranking */}
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="button" onClick={restart} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-            {isPt ? 'Revanche' : 'Rematch'}
-          </button>
-          <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-            {isPt ? 'Sair' : 'Exit'}
-          </button>
-        </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-          {HANDS.map((h, i) => {
-            const off = thinking || (level === 2 && youInv[i] <= 0);
-            return (
-            <button key={h.en} type="button" onClick={() => play(i as Hand)} disabled={off} style={off ? chipOff : chip}>
-              {isPt ? h.pt : h.en}
-            </button>
-            );
-          })}
-        </div>
+        <>
+          {/* TOPO: o Soulmon do jogador (o adversário) + as peças que lhe restam (Normal). */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }} data-rps-top>
+            {petSprite && <img src={petSprite} alt="" width={96} height={96} style={{ display: 'block', objectFit: 'contain' }} data-rps-pet />}
+            {level === 2 && inventoryRow(petInv, 'Soulmon')}
+            <p className="sm2-num" style={phaseTitle}>
+              {isPt ? 'Você' : 'You'} {playerWins} × {petWins} Soulmon
+            </p>
+          </div>
+
+          {/* MEIO: o campo do duelo (as mãos frente a frente). */}
+          <GameVisor height={72} scene={`url(${rpsScene}) center/cover`}>
+            {playerHand !== null && (
+              <img src={HANDS[playerHand].art} alt={isPt ? HANDS[playerHand].pt : HANDS[playerHand].en} width={64} height={64} style={handStyle('left')} data-hand-you />
+            )}
+            <span
+              aria-hidden="true"
+              style={{
+                position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', padding: '4px 8px',
+                fontFamily: 'var(--sm2-font-pixel)', fontSize: 'var(--sm2-text-sm)', lineHeight: 1.2, letterSpacing: 0,
+                textTransform: 'uppercase', WebkitFontSmoothing: 'none', color: 'var(--sm2-viewport-ink)',
+                backgroundColor: 'color-mix(in srgb, var(--sm2-viewport-bg) 78%, transparent)',
+                borderRadius: 'var(--sm2-radius-sm)',
+              }}
+            >
+              {thinking ? '. . .' : 'VS'}
+            </span>
+            {petHand !== null && !thinking && (
+              <img src={HANDS[petHand].art} alt={isPt ? HANDS[petHand].pt : HANDS[petHand].en} width={64} height={64} style={handStyle('right')} data-hand-pet />
+            )}
+          </GameVisor>
+
+          {/* O resultado da rodada / da partida — `role=status`. */}
+          <p role="status" style={{ ...sm2Text, margin: 0, textAlign: 'center', minHeight: 20 }}>
+            {matchOver === 'won'
+              ? <>{isPt ? 'Você venceu!' : 'You won!'} <BitsAmount value={MATCH_POINTS} sign="+" /></>
+              : matchOver === 'lost'
+                ? (isPt ? 'Seu Soulmon venceu a partida!' : 'Your Soulmon won the match!')
+                : matchOver === 'draw'
+                  ? (isPt ? 'Partida empatada!' : 'Match drawn!')
+                  : roundMsg}
+          </p>
+
+          {/* BASE: as peças que restam ao usuário (Normal) e os botões de ícone. */}
+          <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {matchOver ? (
+              <>
+                <RankingPanel game="ppt" saveId={rankSaveId} language={language} score={matchOver === 'lost' ? null : playerWins * 10 + (matchOver === 'won' ? 10 : 0)} /> {/* derrota não pontua (QA beta3 R4): só mostra o ranking */}
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button type="button" onClick={restart} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
+                    {isPt ? 'Revanche' : 'Rematch'}
+                  </button>
+                  <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
+                    {isPt ? 'Sair' : 'Exit'}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                {level === 2 && inventoryRow(youInv, isPt ? 'Você' : 'You')}
+                <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
+                  {HANDS.map((h, i) => {
+                    const off = thinking || (level === 2 && youInv[i] <= 0);
+                    return (
+                      <button key={h.en} type="button" onClick={() => play(i as Hand)} disabled={off}
+                        aria-label={isPt ? h.pt : h.en} data-rps-hand={i} style={{ ...handBtn, cursor: off ? 'default' : 'pointer' }}>
+                        <img src={h.art} alt="" width={64} height={64}
+                          style={{ imageRendering: 'pixelated', filter: off ? 'grayscale(1) brightness(0.5)' : undefined }} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </>
       )}
     </GameRoot>
   );
