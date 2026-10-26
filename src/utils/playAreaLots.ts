@@ -52,31 +52,33 @@ interface PlayLotSpec<K extends string> {
 // 🗺️ 01/10/2026 (H10, navegação do dono): os dois prédios da Exploração estavam
 // soltos sobre o caminho. O fundo tem DOIS tablados de pedra escura (o de cima à
 // esquerda e o do meio à direita) — cada prédio agora assenta no centro do seu.
+// R6-L1 (26/10/2026, dono): Passeio cima-esq, Oficina do Foco cima-dir, Caderno esq-meio (desce), Refugio baixo-dir.
 const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
   // 🧭 O Passeio (30/09/2026, decisão do dono — `REGISTRO-DE-DECISOES.md` §5.6):
   // a clareira da DIREITA, do outro lado do caminho. Os lotes têm 38% de largura
   // centrados no `left`, então 27% ocupa 8–46% e 70% ocupa 51–89%: não se tocam.
   // EN "Stroll" e não "Trail": trilha é justamente o lugar que o parecer de
   // menores veta para as Travessias (04 R-3).
-  { id: 'passeio', labelPt: 'Passeio', labelEn: 'Stroll', ariaPt: 'Abrir o Passeio', ariaEn: 'Open the Stroll', left: '79.9%', top: '34.1%', width: '56%' }, // tablado do meio, à direita
+  { id: 'passeio', labelPt: 'Passeio', labelEn: 'Stroll', ariaPt: 'Abrir o Passeio', ariaEn: 'Open the Stroll', left: '30%', top: '34%', width: '56%' }, // tablado do meio, à direita
   // 🛠️ 04/10/2026 (pedido do dono, `docs/PLANO-OFICINA-FOCO.md`): a GRANDE clareira de baixo, que estava
   // vazia, ganha dois prédios lado a lado — técnicas de foco/produtividade e o Caderno (journaling).
   // PT "Caderno" e não "Diário": já existe o Diário de Aventuras (o álbum do pet).
-  { id: 'oficina', labelPt: 'Oficina do Foco', labelEn: 'Focus Workshop', ariaPt: 'Entrar na Oficina do Foco', ariaEn: 'Enter the Focus Workshop', left: '28%', top: '86%', width: '62%' },
-  { id: 'caderno', labelPt: 'Caderno', labelEn: 'Journal', ariaPt: 'Abrir o Caderno', ariaEn: 'Open the Journal', left: '28%', top: '54%', width: '47%' }, // W5 (19/10/2026): arte nova (caixa opaca 54%) → 44% -> 47% para manter ≥24% da cena; 18/10/2026 (§88): a arte repintada ficou mais estreita na caixa, então 40% -> 44% (centro mantido). 11/10/2026 (dono): o Caderno/Jornal sobe para o espaço ENTRE a Masmorra e a Oficina do Foco (coluna da esquerda: 3 prédios); o canto de baixo à direita, onde ele estava, fica LIVRE (reservado p/ um prédio futuro). Chalé campina (opaco ~89% da caixa).
+  { id: 'oficina', labelPt: 'Oficina do Foco', labelEn: 'Focus Workshop', ariaPt: 'Entrar na Oficina do Foco', ariaEn: 'Enter the Focus Workshop', left: '74%', top: '34%', width: '62%' },
+  { id: 'caderno', labelPt: 'Caderno', labelEn: 'Journal', ariaPt: 'Abrir o Caderno', ariaEn: 'Open the Journal', left: '28%', top: '64%', width: '47%' }, // W5 (19/10/2026): arte nova (caixa opaca 54%) → 44% -> 47% para manter ≥24% da cena; 18/10/2026 (§88): a arte repintada ficou mais estreita na caixa, então 40% -> 44% (centro mantido). 11/10/2026 (dono): o Caderno/Jornal sobe para o espaço ENTRE a Masmorra e a Oficina do Foco (coluna da esquerda: 3 prédios); o canto de baixo à direita, onde ele estava, fica LIVRE (reservado p/ um prédio futuro). Chalé campina (opaco ~89% da caixa).
   // 🫧 beta3 M3 (25/10/2026): o Refúgio saiu de Jogos para a Exploração (id e comportamento mantidos). Coluna da direita, entre o Passeio (base 34%) e o Preparar (base 84%).
-  { id: 'refugio', labelPt: 'Refúgio', labelEn: 'Refuge', ariaPt: 'Entrar no Refúgio', ariaEn: 'Enter the Refuge', left: '78%', top: '57%', width: '40%' },
+  { id: 'refugio', labelPt: 'Refúgio', labelEn: 'Refuge', ariaPt: 'Entrar no Refúgio', ariaEn: 'Enter the Refuge', left: '72%', top: '86%', width: '40%' },
 ];
 
 // 🍄 01/10/2026 (H13, navegação do dono): redistribuídos pelas duas clareiras de
 // terra. Salão e Ateliê dividem a clareira oval de cima, cada um no seu lado e
 // longe da borda; o Refúgio desce para o meio da clareira de baixo, longe da
 // escadinha (antes encostava nela).
+// R6-L1 (26/10/2026, dono): Salao no topo; Atelie da Mente e Calabouco LADO A LADO embaixo; Calabouco ~1,7x mais largo (46% -> 78%).
 const JOGOS_LOTS: PlayLotSpec<JogosLotId>[] = [
   { id: 'salao', labelPt: 'Salão de Jogos', labelEn: 'Game Hall', ariaPt: 'Entrar no Salão de Jogos', ariaEn: 'Enter the Game Hall', left: '51.7%', top: '31.2%', width: '58%' }, // W12 (20/10/2026): DESCE 28→31 e centraliza na clareira de cima (centro medido ~52/31), maior 52→58%
-  { id: 'mente', labelPt: 'Ateliê da Mente', labelEn: 'Mind Workshop', ariaPt: 'Entrar no Ateliê da Mente', ariaEn: 'Enter the Mind Workshop', left: '53.2%', top: '58.5%', width: '55%' }, // W12: maior 50→55%, centrado no lobo de cima da clareira de baixo (53/59); os três ficam em coluna (H11: o rótulo do Salão não encosta no Ateliê, nem o rótulo deste no Refúgio)
+  { id: 'mente', labelPt: 'Ateliê da Mente', labelEn: 'Mind Workshop', ariaPt: 'Entrar no Ateliê da Mente', ariaEn: 'Enter the Mind Workshop', left: '25%', top: '68%', width: '55%' }, // W12: maior 50→55%, centrado no lobo de cima da clareira de baixo (53/59); os três ficam em coluna (H11: o rótulo do Salão não encosta no Ateliê, nem o rótulo deste no Refúgio)
   // 🗝️ beta3 M3 (25/10/2026): o Calabouço (jogo rogue, lane M7) ocupa o lugar que o Refúgio deixou — lobo de baixo da clareira. Arte PROVISÓRIA (reusa a da Masmorra).
-  { id: 'dungeon', labelPt: 'Calabouço', labelEn: 'Dungeon', ariaPt: 'Entrar no Calabouço', ariaEn: 'Enter the Dungeon', left: '51.2%', top: '90%', width: '46%' },
+  { id: 'dungeon', labelPt: 'Calabouço', labelEn: 'Dungeon', ariaPt: 'Entrar no Calabouço', ariaEn: 'Enter the Dungeon', left: '68%', top: '82%', width: '78%' },
 ];
 
 function resolveLots<K extends string>(specs: PlayLotSpec<K>[], language: Language) {
