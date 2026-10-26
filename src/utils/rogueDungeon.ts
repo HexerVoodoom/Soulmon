@@ -168,3 +168,21 @@ export function challengeFor(day: string, step: number, kind: LightKind): RogueC
 
 // No fim de propósito: `qa.masmorraFoco.test.ts` exige que POWER_STEP/VIGOR_STEP/HEAL_SHIELD só apareçam DEPOIS de `simulateRogueCombat`.
 import { POWER_STEP, VIGOR_STEP, HEAL_SHIELD } from './rogueDungeonSave';
+
+/**
+ * A montagem de UMA luta do Calabouço para a CENA (beta3 N7): o mesmo jogador reforçado, o mesmo inimigo e a mesma semente de
+ * `simulateRogueCombat`, mas entregues a `RogueFight` (que mostra a luta de verdade, no relógio do núcleo). Pura e determinística:
+ * reabrir a luta no mesmo passo dá a mesma luta (nada de repetir de graça para tentar outro resultado).
+ */
+export function rogueFightSetup(
+  run: Pick<RogueRun, 'day' | 'power' | 'vigor' | 'shield'>, step: number, combatant: Combatant,
+): { combatant: Combatant; ref: RogueFoeRef; seed: number; foe: ReturnType<typeof dungeonFoe>; startShield: number } {
+  const c: Combatant = { ...combatant, atk: combatant.atk * (1 + POWER_STEP * run.power), hp: combatant.hp * (1 + VIGOR_STEP * run.vigor) };
+  const ref = foeRefFor(step);
+  return {
+    combatant: c, ref,
+    seed: dungeonFightSeed(seedOf(run.day, step, 'fight'), ref.floor, ref.slot),
+    foe: dungeonFoe(combatant.level, ref.slot, ref.floor),
+    startShield: run.shield > 0 ? HEAL_SHIELD : 0,
+  };
+}

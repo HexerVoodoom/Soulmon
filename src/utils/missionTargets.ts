@@ -14,7 +14,7 @@ export type GoTarget = BuildingId | 'home' | null;
 
 export function weeklyTarget(id: WeeklyMissionId): GoTarget {
   switch (id) {
-    case 'dungeon-runs': return 'exploracao.masmorra';
+    case 'dungeon-runs': return 'arena.fenda';
     case 'evolve-view': return 'laboratorio.evolucao';
     case 'tournament-match': return 'arena.torneio';
     case 'friend-visit': return 'laboratorio.amigos';
@@ -29,7 +29,7 @@ export function weeklyTarget(id: WeeklyMissionId): GoTarget {
 export function achievementTarget(category: MissionCategory): GoTarget {
   switch (category) {
     case 'evolution': return 'laboratorio.evolucao';
-    case 'dungeon': return 'exploracao.masmorra';
+    case 'dungeon': return 'arena.fenda';
     case 'games': return 'jogos.salao';
     default: return null;
   }

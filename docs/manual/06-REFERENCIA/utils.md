@@ -3720,7 +3720,7 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Chamado por:** `src/components/guild/GroveFolha.tsx`, `src/components/guild/PlantioVisor.tsx`, `src/utils/claApi.ts`, `src/utils/claCredit.ts`, `src/contexts/GameStateContext.tsx`, `src/App.tsx`. **Régua:** `src/utils/bosqueArvores.test.ts`, `src/utils/claCredit.test.ts`.
 
 ### `src/utils/focusKey.ts` · `src/utils/focusDescent.ts` (beta3 F1)
-**Dono de:** a chave do foco e a descida em background. `src/utils/focusKey.ts` — `hasFocusKey`/`grantFocusKey` sobre `focusKeyDay` do save (dia do jogador, leitura tolerante); concluir o "Prepare to Focus" (`exploracao.preparar`) dá a chave que libera a Oficina. `src/utils/focusDescent.ts` — `startFocusDescent`/`focusDescentRefusal`: com o timer de foco rodando, só ABRE o `dungeonAway`; a conta e o retorno são os de sempre.
+**Dono de:** a chave do foco e a descida em background. `src/utils/focusKey.ts` — `hasFocusKey`/`grantFocusKey` sobre `focusKeyDay` do save (dia do jogador, leitura tolerante); concluir o "Prepare to Focus" (etapa 1 da Oficina do Foco; o antigo prédio `exploracao.preparar` migra para `exploracao.oficina`, N8) dá a chave que libera a etapa 2. `src/utils/focusDescent.ts` — `startFocusDescent`/`focusDescentRefusal`: com o timer de foco rodando, só ABRE o `dungeonAway`; a conta e o retorno são os de sempre.
 **Chamado por:** `src/App.tsx`, `src/components/play/PrepararFocoSheet.tsx`. **Régua:** `src/utils/focusKey.test.ts`, `src/utils/focusDescent.test.ts`.
 
 ### `src/utils/plantioDefesa.ts` · `src/utils/rpsLevel2.ts`

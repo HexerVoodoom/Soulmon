@@ -39,7 +39,8 @@ export const MERCADO_LOT_ART = {
 } as const;
 
 // W5 (19/10/2026): a Guerra foi repintada (coliseu em pedra petróleo com bandeiras vermelhas, sem ossos/grifo; escolha padrão `arena-guerra-a`, 512², alfa real). A versão de 18/10 (grifo e serpente de ossos) saiu do bundle.
-export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, guerra: loteGuerra } as const;
+// beta3 N10: a Fenda Sem Fim (Masmorra) mora na Arena; reusa a arte do prédio da Masmorra.
+export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, guerra: loteGuerra, fenda: loteMasmorra } as const;
 
 // ── Exploração e Jogos (F5, PR #118) ───────────────────────────────────────
 // Fundos reduzidos para 760×1344 (a mesma medida do Mercado/Arena) para caber
@@ -77,7 +78,7 @@ import loteRefugio from './lote-jogos-refugio.png';
 export const PLAY_AREA_BG = { exploracao: bgExploracao, jogos: bgJogos } as const;
 
 // `passeio` (30/09/2026, leva lotes-v2): a ilha flutuante com arco de raízes.
-export const EXPLORACAO_LOT_ART = { masmorra: loteMasmorra, passeio: lotePasseio, oficina: loteOficina, caderno: loteCaderno, preparar: loteOficina, refugio: loteRefugio } as const;
+export const EXPLORACAO_LOT_ART = { passeio: lotePasseio, oficina: loteOficina, caderno: loteCaderno, refugio: loteRefugio } as const;
 
 // 🏛️ Os três prédios de Jogos (30/09/2026). O Salão herda as duas artes que já
 // eram dele por conteúdo (o PPT; o Dino mudou da Exploração para cá).

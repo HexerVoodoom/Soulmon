@@ -106,7 +106,7 @@ describe('toda missão com lugar leva até ele', () => {
     render(mk({ initialTab: 'weekly', onGoBuilding: onGo, weekly: [{ mission: semanal('dungeon-runs'), count: 0, done: false, claimed: false }] }));
     await waitFor(() => expect(document.querySelector('[data-weekly-mission="dungeon-runs"] [data-mission-go]')).not.toBeNull(), T);
     fireEvent.click(document.querySelector('[data-weekly-mission="dungeon-runs"] [data-mission-go]')!);
-    expect(onGo).toHaveBeenCalledWith('exploracao.masmorra');
+    expect(onGo).toHaveBeenCalledWith('arena.fenda');
   });
 
   it('PRÉDIO FECHADO não navega: sem "Ir", mostra o requisito de Vínculo', async () => {
@@ -126,14 +126,14 @@ describe('toda missão com lugar leva até ele', () => {
     fireEvent.click(document.querySelector('[data-conquistas] [role="tab"][data-tab-key="dungeon"]')!);
     await waitFor(() => expect(document.querySelector('[data-conquistas] [data-mission-go]')).not.toBeNull());
     fireEvent.click(document.querySelector('[data-conquistas] [data-mission-go]')!);
-    expect(onGo).toHaveBeenCalledWith('exploracao.masmorra');
+    expect(onGo).toHaveBeenCalledWith('arena.fenda');
   });
 });
 
 describe('tabela de destinos', () => {
   it('toda semanal e toda categoria de conquista têm destino resolvido (prédio, Home ou nenhum)', () => {
     for (const m of weeklyMissionPool()) expect(weeklyTarget(m.id) === null || typeof weeklyTarget(m.id) === 'string').toBe(true);
-    expect(weeklyTarget('dungeon-runs')).toBe('exploracao.masmorra');
+    expect(weeklyTarget('dungeon-runs')).toBe('arena.fenda');
     expect(weeklyTarget('tournament-match')).toBe('arena.torneio');
     expect(weeklyTarget('shower')).toBe('home');
     expect(achievementTarget('constancy')).toBeNull();

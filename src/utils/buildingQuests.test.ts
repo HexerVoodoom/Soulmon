@@ -36,7 +36,7 @@ describe('tabela prédio → material', () => {
 describe('missão do dia', () => {
   it('trancada pelo Vínculo; aberta vira disponível → pronta → resgatada', () => {
     // A Masmorra abre no Vínculo 1 desde 14/10/2026 (pedido do dono); a Oficina do Foco segue no 3.
-    expect(questStatus(undefined, D1, 'exploracao.masmorra', 1)).toBe('available');
+    expect(questStatus(undefined, D1, 'arena.fenda', 1)).toBe('available');
     expect(questStatus(undefined, D1, 'exploracao.oficina', 2)).toBe('locked');
     expect(questStatus(undefined, D1, 'exploracao.oficina', 3)).toBe('available');
     const v = visitBuilding(undefined, D1, 'exploracao.oficina', 3);

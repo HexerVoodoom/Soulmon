@@ -83,3 +83,20 @@ describe('rogueDungeon', () => {
     expect(simulateRogueCombat(run, 23, weak).won).toBe(false);
   });
 });
+
+describe('rogueFightSetup (N7: a luta visível)', () => {
+  it('é determinística e soma os bônus da incursão ao jogador', async () => {
+    const { rogueFightSetup, emptyRun } = await import('./rogueDungeon');
+    const { combatantAt, REFERENCE_BUILDS } = await import('./combate/level');
+    const c = combatantAt(20, REFERENCE_BUILDS.balanced);
+    const run = { ...emptyRun('2026-10-26'), power: 2, vigor: 1, shield: 1 };
+    const a = rogueFightSetup(run, 2, c);
+    const b = rogueFightSetup(run, 2, c);
+    expect(a).toEqual(b);
+    expect(a.combatant.atk).toBeCloseTo(c.atk * 1.12);
+    expect(a.combatant.hp).toBeCloseTo(c.hp * 1.1);
+    expect(a.startShield).toBeGreaterThan(0);
+    expect(rogueFightSetup({ ...run, shield: 0 }, 2, c).startShield).toBe(0);
+    expect(rogueFightSetup(run, 3, c).seed).not.toBe(a.seed);
+  });
+});

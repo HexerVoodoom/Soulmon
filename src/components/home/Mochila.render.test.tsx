@@ -156,7 +156,7 @@ describe('Mochila — a alternativa acessível', () => {
 
   it('as abas são tabs de verdade (role/aria-selected) e trocam o conteúdo', () => {
     montar();
-    const dialog = screen.getByRole('dialog', { name: 'Pasta' });
+    const dialog = screen.getByRole('dialog', { name: 'Mochila' });
     const comida = within(dialog).getByRole('tab', { name: 'Comida e chips' });
     const esp = within(dialog).getByRole('tab', { name: 'Especiais' });
     expect(comida.getAttribute('aria-selected')).toBe('true');
@@ -257,7 +257,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
     fireEvent.click(within(sec).getByLabelText('Ore × 0'));
     fireEvent.click(document.querySelector('[data-material-go]')!);
     expect(onGo).toHaveBeenCalledTimes(1);
-    expect(onGo).toHaveBeenCalledWith('exploracao.masmorra');
+    expect(onGo).toHaveBeenCalledWith('arena.fenda');
     expect(onClose).toHaveBeenCalled();
   });
 

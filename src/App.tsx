@@ -3444,9 +3444,8 @@ export default function App() {
    */
   const { powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, degeneratedByHP } = gameState;
   /* 🏠 O SOULMON ESTÁ NA MASMORRA (pedido do dono, 11/10/2026, REGISTRO §36): enquanto `dungeonAway` existir no save ele está OCUPADO.
-     Tudo que usa o Soulmon de verdade passa por `bloqueiaOcupado(acao)` — evoluir, renascer, missão da guilda, passeio, duelo e
-     torneio (os dois últimos e o passeio, pelos lotes do `AreaView`). Ocupado: abre o aviso com o "Retirar da Fenda" e NÃO faz a
-     ação. Cuidar (comer, banho, dormir, carinho) segue livre: é o que abastece a energia da própria descida. */
+     RODADA 4 (N9): ele NÃO bloqueia mais nenhuma atividade (evoluir, renascer, missão, passeio, duelo, torneio, pesadelo); a plaquinha
+     da Home segue só como atalho para "Retirar da Fenda". Cuidar (comer, banho, dormir, carinho) segue livre: é o que abastece a energia da própria descida. */
   const naMasmorra = soulmonNaMasmorra(gameState);
   const naMasmorraRef = useRef(naMasmorra);
   naMasmorraRef.current = naMasmorra;
@@ -3485,11 +3484,6 @@ export default function App() {
     const id = setTimeout(() => { void acertar(); }, Math.min(ms, 2_147_000_000));
     return () => clearTimeout(id);
   }, [naMasmorra, masmorraRetornoAt, telaMasmorra, setGameState, setDungeonReturnSummary]);
-  const bloqueiaOcupado = useCallback((acao: OcupadoAcao): boolean => {
-    if (!naMasmorraRef.current) return false;
-    setOcupadoAviso({ acao });
-    return true;
-  }, []);
   const abrirAvisoMasmorra = useCallback((acao: OcupadoAcao | null) => setOcupadoAviso({ acao }), []);
   /** "Retirar da Fenda": acerta a descida até agora (o que rendeu já entra pelos funis de sempre) e o Soulmon volta para casa. */
   const retirarDaMasmorra = useCallback(async () => {
@@ -3510,7 +3504,6 @@ export default function App() {
   }, [setGameState, language]);
 
   const handleEvolveRequest = useCallback(() => {
-    if (bloqueiaOcupado('evolucao')) return;
     if (isStarterId(gameState.demoCharacterId)) return; // os iniciais não evoluem
     const { stage: next } = evolutionTarget({
       points: { power: powerPoints, harmony: harmonyPoints, benevolence: benevolencePoints },
@@ -3525,10 +3518,9 @@ export default function App() {
     // qualquer jeito, deixando o jogador diante de um ritual que não commita.
     if (degeneratedByHP) return;
     if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next, spent: gaugeGoalFor(evolutionStage, unlockedEvolutions) });
-  }, [bloqueiaOcupado, powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP, gameState.demoCharacterId]);
+  }, [powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP, gameState.demoCharacterId]);
 
   const handleEvolve = useCallback(() => {
-    if (bloqueiaOcupado('evolucao')) return;
     setGameState(prev => {
       // Evolution padlock (Evolution page): while locked, never evolve.
       if (prev.evolutionLocked) return prev;
@@ -4456,12 +4448,11 @@ export default function App() {
 
   /** MISSÃO da guilda: manda o Solmon investigar (some da Home até `returnAt`). Uma por dia do jogador — o servidor também recusa a 2ª volta. */
   const handleGuildMissionSend = useCallback(() => {
-    if (bloqueiaOcupado('missao')) return;
     setGameState(prev => {
       if (prev.guildMission) return prev;
       return { ...prev, guildMission: startGuildMission(playerDayKey(new Date(), prev.playerDayTz), Date.now()) };
     });
-  }, [setGameState, bloqueiaOcupado]);
+  }, [setGameState]);
 
   // MISSÃO da guilda: na hora da volta, registra a rodada no servidor (`guildRaidHit`) e o Solmon aparece de novo.
   // Sem rede, o registro espera (nova tentativa a cada minuto e ao voltar ao app) — mas o pet já está em casa.
@@ -4693,7 +4684,6 @@ export default function App() {
    */
   const handleRebirth = useCallback(async (choices: RebirthChoices): Promise<boolean> => {
     if (!canRebirth(gameState)) return false;
-    if (bloqueiaOcupado('renascer')) return false;
     // Opções de escola/elemento, `applyRebirth` e a herança vivem em `rebirth.ts`
     // (puxa o class-system) — só carregam aqui, no momento de renascer.
     const { applyRebirth, rebirthEscolaOptions, rebirthElementOptions, herancaDoCiclo } = await import('./utils/rebirth');
@@ -5676,7 +5666,7 @@ export default function App() {
       nowMs: now.getTime(),
       sleeping: isSleeping,
       wakePending: dayWakePending,
-      busy: naMasmorra || isMissionAway(guildMission, now.getTime()),
+      busy: false, // rodada 4 (N9): Fenda/missão do clã não ocupam mais o Soulmon
       onHome: currentView === 'home',
       completionWokeAt,
     };
@@ -6111,7 +6101,6 @@ export default function App() {
   }, []);
 
   const handleEvolveToUnlocked = useCallback((targetStage: string) => {
-    if (bloqueiaOcupado('evolucao')) return;
     setGameState(prev => {
       if (!prev.unlockedEvolutions.includes(targetStage)) return prev;
 
@@ -7463,7 +7452,6 @@ export default function App() {
                 buildingMarks={buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0))}
                 onLayerChange={setAreaLayerOpen}
                 onGoToMap={() => goTo('map')}
-                ocupado={{ naMasmorra, missaoFora: isMissionAway(guildMission, Date.now()), onBusy: abrirAvisoMasmorra }}
                 language={language}
                 ownership={{
                   ownedBackgrounds: gameState.ownedBackgrounds ?? [],

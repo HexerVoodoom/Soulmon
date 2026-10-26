@@ -6,7 +6,6 @@ import { getSpriteForStage, artFacesLeft } from '../utils/sprites';
 /** A corrida SEMPRE corre para a DIREITA: arte de perfil esquerdo (`artFacesLeft`, mesma regra da Home) é espelhada. */
 export const dinoPetMirrored = (stage: string, demoCharacterId?: string): boolean => artFacesLeft(stage, demoCharacterId);
 import { lineIconForStage } from '../utils/lineIcons';
-import { usePetScale } from '../hooks/usePetScale';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
@@ -30,8 +29,15 @@ import obstacle4b from '../assets/soulmon/dino/dino-obstacle-4b.png';
 import obstacle4c from '../assets/soulmon/dino/dino-obstacle-4c.png';
 import groundStrip from '../assets/soulmon/dino/dino-ground-strip.png';
 import parallaxFar from '../assets/soulmon/dino/dino-parallax-far.png';
+/* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
+const PET_SCALE_MINIGAME = 1;
 
 /**
+ * Rodada 4 (26/10/2026, N3): ao entrar só há o fechar e dois CTAs, "Easy" (nível 1) e "Normal"
+ * (nível 2); tocar já começa (sem seletor de nível nem "Start"). O dash é um CAMPO DE FORÇA: a
+ * `aura` do poder à distância do elemento (`fx-<el>-aura`) em volta do personagem, acompanhando-o.
+ * O coletável do nível 2 é o cristal `defended` do elemento. Os obstáculos cresceram ~40%.
+ *
  * Corrida com obstáculos (EN Obstacle Run; até 30/09/2026 "Corrida do Dino" / "Dino
  * Runner" — o id `dino`, a pasta `dino/` e as chaves de save NÃO mudaram) — endless
  * runner starring the pet. Obstacles are bones and cold-fire crystals (tema da rodada 3,
@@ -66,22 +72,22 @@ import parallaxFar from '../assets/soulmon/dino/dino-parallax-far.png';
 // colisão na caixa inteira mataria o jogador "no ar". `size` é balanceamento e não mudou.
 type ObstacleArt = { src: string; hit: readonly [number, number]; top: number };
 const OBSTACLE_TIERS: { from: number; size: number; variants: ObstacleArt[] }[] = [
-  { from: 0, size: 38, variants: [
+  { from: 0, size: 54, variants: [
     { src: obstacle1, hit: [4 / 128, 124 / 128], top: 1 / 128 },
     { src: obstacle1b, hit: [1 / 128, 127 / 128], top: 65 / 128 },
     { src: obstacle1c, hit: [6 / 128, 122 / 128], top: 1 / 128 },
   ] },
-  { from: 20, size: 44, variants: [
+  { from: 20, size: 62, variants: [
     { src: obstacle2, hit: [6 / 128, 121 / 128], top: 1 / 128 },
     { src: obstacle2b, hit: [1 / 128, 127 / 128], top: 15 / 128 },
     { src: obstacle2c, hit: [1 / 128, 127 / 128], top: 4 / 128 },
   ] },
-  { from: 45, size: 50, variants: [
+  { from: 45, size: 70, variants: [
     { src: obstacle3, hit: [40 / 128, 88 / 128], top: 1 / 128 },
     { src: obstacle3b, hit: [38 / 128, 89 / 128], top: 1 / 128 },
     { src: obstacle3c, hit: [41 / 128, 86 / 128], top: 1 / 128 },
   ] },
-  { from: 75, size: 56, variants: [
+  { from: 75, size: 78, variants: [
     { src: obstacle4, hit: [1 / 128, 127 / 128], top: 38 / 128 },
     { src: obstacle4b, hit: [1 / 128, 127 / 128], top: 66 / 128 },
     { src: obstacle4c, hit: [1 / 128, 127 / 128], top: 45 / 128 },
@@ -193,14 +199,17 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const petImgRef = useRef<HTMLImageElement | null>(null);
   const petUrl = lineIconForStage(evolutionStage, 64, demoCharacterId) ?? getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const petScaleRef = useRef(1);
-  petScaleRef.current = usePetScale(evolutionStage, petUrl);
+  petScaleRef.current = PET_SCALE_MINIGAME;
   const tierImgsRef = useRef<HTMLImageElement[][]>([]);
   const groundImgRef = useRef<HTMLImageElement | null>(null);
-  const slashImgRef = useRef<HTMLImageElement | null>(null);
+  /** Campo de força do dash: a aura do poder à distância do elemento. */
+  const fieldImgRef = useRef<HTMLImageElement | null>(null);
+  /** Coletável do nível 2: o cristal `defended` do elemento. */
+  const gemImgRef = useRef<HTMLImageElement | null>(null);
   useEffect(() => {
-    const src = fxFrame(petElement, 'slash');
-    if (!src) { slashImgRef.current = null; return; }
-    const i = new Image(); i.src = src; slashImgRef.current = i;
+    const load = (src: string | undefined) => { if (!src) return null; const i = new Image(); i.src = src; return i; };
+    fieldImgRef.current = load(fxFrame(petElement, 'aura'));
+    gemImgRef.current = load(fxFrame(petElement, 'defended'));
   }, [petElement]);
   const parallaxImgRef = useRef<HTMLImageElement | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -245,8 +254,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
 
   // Physics/game state lives in a ref — the loop never re-renders React.
   const g = useRef(newRun(1));
-  const [level, setLevel] = useState<1 | 2>(1);
-  /** Nível da partida que ACABOU (o ranking é por nível; `level` pode mudar na tela de fim antes de jogar de novo). */
+  /** Nível da partida que ACABOU (o ranking é por nível; a tela de fim só oferece Easy/Normal). */
   const [playedLevel, setPlayedLevel] = useState<1 | 2>(1);
   const chargesElRef = useRef<HTMLSpanElement>(null);
 
@@ -323,8 +331,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     try { navigator.vibrate?.(8); } catch { /* noop */ }
   }, []);
 
-  const start = () => {
-    g.current = newRun(level);
+  const start = (lv: 1 | 2) => {
+    g.current = newRun(lv);
     setEarned(0);
     setPhase('playing');
   };
@@ -468,8 +476,15 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           ctx.fillStyle = dustColors[1]; ctx.fillRect(Math.round(p.x), y, PLAT_W, 3);
         }
         for (const k of s.pickups) {
-          ctx.fillStyle = dustColors[1]; ctx.fillRect(Math.round(k.x - 8), Math.round(GROUND - k.h - 8), 16, 16);
-          ctx.fillStyle = dustColors[0]; ctx.fillRect(Math.round(k.x - 4), Math.round(GROUND - k.h - 4), 8, 8);
+          const gem = gemImgRef.current;
+          if (gem?.complete && gem.naturalWidth) {
+            // cristal do elemento (128² com margem): 44 px com o centro no ponto do coletável
+            const bob = reduced ? 0 : Math.sin(s.t * 5 + k.x * 0.05) * 2;
+            ctx.drawImage(gem, Math.round(k.x - 22), Math.round(GROUND - k.h - 22 + bob), 44, 44);
+          } else {
+            ctx.fillStyle = dustColors[1]; ctx.fillRect(Math.round(k.x - 8), Math.round(GROUND - k.h - 8), 16, 16);
+            ctx.fillStyle = dustColors[0]; ctx.fillRect(Math.round(k.x - 4), Math.round(GROUND - k.h - 4), 8, 8);
+          }
         }
       }
       const ground = groundImgRef.current;
@@ -485,13 +500,15 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         drawPet(ctx, pet, GROUND, s.h, pose, petMirror, petScaleRef.current);
         ctx.restore();
       }
-      const slash = slashImgRef.current;
-      if (s.dashT > 0 && slash?.complete && slash.naturalWidth) {
-        const sz = 72;
+      const field = fieldImgRef.current;
+      if (s.dashT > 0 && field?.complete && field.naturalWidth) {
+        // campo de força: a aura do elemento centrada no personagem, acompanhando-o (mesmo deslocamento do dash)
+        const sz = 140;
+        const body = DINO_S * petScaleRef.current;
         ctx.save();
         ctx.imageSmoothingEnabled = false;
-        ctx.globalAlpha = 0.5 + 0.5 * (s.dashT / DASH_TIME);
-        ctx.drawImage(slash, DINO_X + DASH_PUSH + DINO_S - 8, GROUND - s.h - DINO_S / 2 - sz / 2, sz, sz);
+        ctx.globalAlpha = 0.65 + 0.35 * (s.dashT / DASH_TIME);
+        ctx.drawImage(field, DINO_X + DASH_PUSH + DINO_S / 2 - sz / 2, GROUND - s.h - body / 2 - sz / 2, sz, sz);
         ctx.restore();
       }
       if (chargesElRef.current) chargesElRef.current.textContent = String(s.charges);
@@ -544,8 +561,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         language={language}
         infoLabel={isPt ? 'Como se joga' : 'How to play'}
         info={isPt
-          ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit. Nível 2: Dash (Shift/X) destrói obstáculos; pegue o coletável para +1 carga'
-          : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit. Level 2: Dash (Shift/X) smashes obstacles; grab the pickup for +1 charge'}
+          ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit. Normal: Dash (Shift/X) cria um campo de força que destrói obstáculos; pegue o cristal para +1 carga'
+          : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit. Normal: Dash (Shift/X) raises a force field that smashes obstacles; grab the crystal for +1 charge'}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
         exitConfirm={phase === 'playing' ? gameExitConfirm(isPt, 'da corrida') : undefined}
@@ -597,29 +614,19 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
 
 
       {phase !== 'playing' && (
-        <div role="group" aria-label={isPt ? 'Nível' : 'Level'} style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+        <div role="group" aria-label={isPt ? 'Dificuldade' : 'Difficulty'} style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
           {([1, 2] as const).map(n => (
-            <button key={n} type="button" onClick={() => setLevel(n)} aria-pressed={level === n}
-              style={{ ...sm2Button(level === n ? 'primary' : 'outline'), minWidth: 110 }}>
-              {isPt ? 'Nível' : 'Level'} {n}
+            <button key={n} type="button" data-dino-start={n} onClick={() => start(n)}
+              style={{ ...sm2Button(n === 2 ? 'primary' : 'outline', false, 'lg'), flex: 1, maxWidth: 160, minHeight: 64 }}>
+              {n === 1 ? 'Easy' : 'Normal'}
             </button>
           ))}
         </div>
-      )}
-      {phase === 'ready' && (
-        <>
-          <button type="button" onClick={start} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 240, alignSelf: 'center' }}>
-            {isPt ? 'Começar' : 'Start'}
-          </button>
-        </>
       )}
       {phase === 'over' && (
         <>
           <p style={phaseTitle}>{isPt ? 'Fim de jogo!' : 'Game over!'}</p>
           <p className="sm2-num" style={phaseLine}>Score: {finalScore} · <BitsAmount value={earned} sign="+" /></p>
-          <button type="button" onClick={start} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 240, alignSelf: 'center' }}>
-            {isPt ? 'Jogar de novo' : 'Play again'}
-          </button>
           <RankingPanel key={`${playedLevel}-${finalScore}`} game={playedLevel === 2 ? 'dino-2' : 'dino-1'} saveId={rankSaveId} language={language} score={finalScore} />
         </>
       )}
@@ -627,6 +634,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       {/* O PULAR é aparelho: primário de 64 de altura e largura inteira, sem
           ícone, `onPointerDown` (reflexo — não espera o `click`). Inerte
           antes de começar: `surface-2` + `muted`, nunca opacidade. */}
+      {phase === 'playing' && (
       <div style={{ display: 'flex', gap: 8, marginTop: 'auto' }}>
       <button
         type="button"
@@ -637,7 +645,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       >
         {isPt ? 'Pular' : 'Jump'}
       </button>
-        {level === 2 && (
+        {g.current.level === 2 && (
           <button
             type="button"
             onPointerDown={dash}
@@ -649,6 +657,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           </button>
         )}
       </div>
+      )}
     </GameRoot>
   );
 }

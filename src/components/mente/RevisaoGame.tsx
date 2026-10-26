@@ -6,12 +6,13 @@ import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, ph
 import { BitsAmount } from '../ui/BitsAmount';
 import { ATELIE_SCENE_SUAVE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
-import { usePetScale } from '../../hooks/usePetScale';
 import { petScaleStyle } from '../../utils/spriteScale';
 import {
   REVIEW_MAX_CARDS, REVIEW_TEXT_MAX, addCard, editCard, removeCard, dueCards, answerCard,
   completeSession, type ReviewCard, type ReviewState,
 } from '../../utils/mente/revisao';
+/* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
+const PET_SCALE_MINIGAME = 1;
 
 /**
  * REVISÃO DA MALHA (`docs/BENCHMARK-MINIJOGOS.md` §6.1) — o pet pergunta os
@@ -69,7 +70,7 @@ export function RevisaoGame({
 
   const due = dueCards(review, todayKey);
   const sprite = getSpriteForStage(evolutionStage, demoCharacterId);
-  const petScale = usePetScale(evolutionStage, sprite);
+  const petScale = PET_SCALE_MINIGAME;
   const explain = isPt
     ? 'Revisar no intervalo certo ajuda a lembrar: o que você lembra volta mais tarde, o que não lembra volta amanhã.'
     : 'Reviewing at the right interval helps you remember: what you remember comes back later, what you don’t comes back tomorrow.';

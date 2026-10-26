@@ -1,7 +1,9 @@
 /**
- * CALABOUÇO ROGUELIKE (beta3 M7) — a tela do prédio `jogos.dungeon`. Regras e sorteios em `utils/rogueDungeon.ts`;
- * aqui só a apresentação: escolher 1 de 3 caminhos, resolver o desafio, escolher 1 de 3 bônus. Arte provisória
- * (sem asset novo). A masmorra/Endless Rift (`DungeonGame.tsx`) é outra coisa e não é tocada.
+ * CALABOUÇO ROGUELIKE (beta3 M7 + N7) — a tela do prédio `jogos.dungeon`. Regras e sorteios em `utils/rogueDungeon.ts`.
+ * N7 (26/10/2026): a LISTA virou um MAPA em TELA CHEIA — um cenário existente (`DUNGEON_SCENES`) como fundo, 3 nós (os 3 andares) numa
+ * trilha em SVG, o Soulmon parado no nó atual; as escolhas do passo (caminhos, bônus) sobem numa folha de baixo. O combate é uma LUTA
+ * VISÍVEL (`RogueFight`, a `BattleStage` da Masmorra); os desafios que não são combate seguem sendo os jogos reais em modo desafio.
+ * A masmorra/Endless Rift (`DungeonGame.tsx`) é outra coisa e não é tocada. A superfície NASCE MUDA (nenhum som novo).
  */
 import { Component, lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { entrarNaSuperficie } from '../utils/musica';
@@ -10,12 +12,14 @@ import type { GameChallenge } from '../utils/gameChallenge';
 import { loadDinoGame, loadEcoGame, loadMatch3Game, loadPatchesGame, loadRPSGame, loadZipGame } from './nav/playPrefetch';
 import type { Language } from '../utils/i18n';
 import type { Combatant } from '../utils/combate/curve';
-import { mulberry32 } from '../utils/combate/rng';
-import { pickEnemy } from '../utils/enemyRoster';
+import { DUNGEON_SCENES } from '../utils/dungeonScenes';
+import { getSpriteForStage } from '../utils/sprites';
+import { useBackLayer } from '../utils/backStack';
+import type { FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { RankingPanel } from './RankingPanel';
 import {
   ROGUE_FLOORS, ROGUE_MAX_STEPS, ROGUE_PER_FLOOR, applyBonus, bonusChoices, cancelChallenge, challengeFor, consumePending, floorOf, isFinished, markPaid, pathsFor,
-  resolveStep, startChallenge, rogueBits, rogueScore, runForDay, simulateRogueCombat, stepInFloor,
+  resolveStep, startChallenge, rogueBits, rogueScore, runForDay, stepInFloor,
   type BonusKind, type ChallengeGame, type LightKind, type PathKind, type RogueRun,
 } from '../utils/rogueDungeon';
 
@@ -26,6 +30,7 @@ const RPSGame = lazy(() => loadRPSGame().then(m => ({ default: m.RPSGame })));
 const EcoGame = lazy(() => loadEcoGame().then(m => ({ default: m.EcoGame })));
 const ZipGame = lazy(() => loadZipGame().then(m => ({ default: m.ZipGame })));
 const PatchesGame = lazy(() => loadPatchesGame().then(m => ({ default: m.PatchesGame })));
+const RogueFight = lazy(() => import('./RogueFight').then(m => ({ default: m.RogueFight })));
 const SoulBarrage = lazy(() => import('./SoulBarrage').then(m => ({ default: m.SoulBarrage })));
 
 const GAME_GOAL_COPY: Record<ChallengeGame, (goal: number) => { en: string; pt: string }> = {
@@ -85,23 +90,41 @@ export interface RogueDungeonProps {
   saveId?: string;
   /** Bits pelo funil/teto diário existente dos minigames. */
   onEarnPoints?: (points: number) => void;
-  /** Dados do Soulmon para os jogos em modo desafio (arte/sprite). */
+  /** Dados do Soulmon para os jogos em modo desafio e para a luta (arte/sprite/golpes). */
   evolutionStage?: string;
   demoCharacterId?: string;
   petName?: string;
   petElement?: string;
   playerLevel?: number;
+  /** As skills da ficha (a identidade de golpe da luta). */
+  skills?: FichaSkills;
+  /** Fecha a tela cheia (volta à área). Ausente (testes) = sem botão de fechar. */
+  onClose?: () => void;
 }
 
-export function RogueDungeon({ language, todayKey, saved, onChange, combatant, saveId, onEarnPoints, evolutionStage = 'rookie', demoCharacterId, petName, petElement, playerLevel }: RogueDungeonProps) {
-  // S18: o Calabouço (combates simulados, sem cena de luta) toca o "Dungeon Theme" inteiro.
+/** Onde os 3 nós (os andares) ficam no mapa, em % da área do mapa (esquerda/topo), de baixo para cima. */
+const NODE_POS: ReadonlyArray<{ x: number; y: number }> = [{ x: 24, y: 80 }, { x: 72, y: 50 }, { x: 30, y: 20 }];
+/** A trilha que liga os nós, em coordenadas 0..100 da mesma área. */
+const TRAIL_D = 'M24 80 C 58 86, 88 68, 72 50 S 8 36, 30 20';
+
+const sheetStyle = {
+  position: 'absolute', left: 0, right: 0, bottom: 0, maxHeight: '58%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8,
+  padding: '14px 16px calc(14px + env(safe-area-inset-bottom, 0px))', borderRadius: 'var(--sm2-radius-lg, 16px) var(--sm2-radius-lg, 16px) 0 0',
+  background: 'var(--sm2-surface)', color: 'var(--sm2-ink)', borderTop: '1px solid var(--sm2-line, currentColor)', zIndex: 3,
+} as const;
+const hudText = { margin: 0, color: 'var(--sm2-viewport-ink)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm, 14px)', textShadow: '0 1px 2px rgba(0,0,0,.9)' } as const;
+
+export function RogueDungeon({ language, todayKey, saved, onChange, combatant, saveId, onEarnPoints, evolutionStage = 'rookie', demoCharacterId, petName, petElement, playerLevel, skills, onClose }: RogueDungeonProps) {
+  // S18: o Calabouço toca o "Dungeon Theme" inteiro (mapa e escolhas; a luta troca para a música de combate).
   useEffect(() => entrarNaSuperficie('masmorra-mapa'), []);
   const isPt = language === 'pt-BR';
   const t = (c: { en: string; pt: string }) => (isPt ? c.pt : c.en);
   const run = runForDay(saved, todayKey);
   const [challenge, setChallenge] = useState<LightKind | null>(null);
+  const [fighting, setFighting] = useState(false);
   const [note, setNote] = useState<string | null>(null);
   const finished = isFinished(run);
+  useBackLayer(!!onClose && !challenge && !fighting, () => onClose?.());
 
   // Fim da incursão: paga os Bits UMA vez (o teto diário do app limita). `paidRef` trava remontagem/re-render antes de o save voltar com
   // `paid`; `onEarnPoints` (instável, vem inline do pai) fica fora das deps, lido pelo ref.
@@ -129,17 +152,18 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
   const finish = (kind: PathKind, victory: boolean, msg: string) => {
     setNote(msg);
     setChallenge(null);
+    setFighting(false);
     onChange(resolveStep(run, kind, victory));
   };
 
   const choose = (kind: PathKind) => {
     if (kind !== 'combat') { settled.current = false; setChallenge(kind); onChange(startChallenge(run, kind)); return; }
-    const foe = pickEnemy(combatant.level, mulberry32(run.step * 7919 + 13), { stage: floorOf(run.step) >= 3 ? 'ultimate' : floorOf(run.step) === 2 ? 'champion' : 'rookie' });
-    const res = simulateRogueCombat(run, run.step, combatant);
-    finish('combat', res.won, res.won
-      ? (isPt ? `Você venceu ${foe.name}!` : `You defeated ${foe.name}!`)
-      : (isPt ? `${foe.name} venceu. O dia na masmorra acabou — volte amanhã.` : `${foe.name} won. The dungeon day is over — come back tomorrow.`));
+    setNote(null);
+    setFighting(true); // o combate é uma luta visível (`RogueFight`); o passo só resolve quando ela termina
   };
+  const fightResult = (won: boolean, foeName: string) => finish('combat', won, won
+    ? (isPt ? `Você venceu ${foeName}!` : `You defeated ${foeName}!`)
+    : (isPt ? `${foeName} venceu. O dia na masmorra acabou — volte amanhã.` : `${foeName} won. The dungeon day is over — come back tomorrow.`));
 
   // Resultado do jogo real em modo desafio (vitória/derrota voltam ao mapa). Ignora chamada repetida.
   const settled = useRef(false);
@@ -152,7 +176,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
   const gameProps = { language, evolutionStage, demoCharacterId, onEarnPoints: () => {}, onExit: () => gameResult(false), challenge: challengeProp } as const;
   const renderGame = (g: ChallengeGame) => {
     switch (g) {
-      case 'match3': return <Match3Game {...gameProps} petName={petName} playerLevel={playerLevel} />;
+      case 'match3': return <Match3Game {...gameProps} petName={petName} petElement={petElement} playerLevel={playerLevel} />;
       case 'dino': return <DinoGame {...gameProps} onScore={() => {}} petElement={petElement} />;
       case 'rps': return <RPSGame {...gameProps} />;
       case 'zip': return <ZipGame {...gameProps} />;
@@ -163,69 +187,138 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
   };
 
   const floor = floorOf(Math.min(run.step, ROGUE_MAX_STEPS - 1));
+  const scene = DUNGEON_SCENES[(floor - 1) % DUNGEON_SCENES.length];
+  const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
+  const doneInFloor = (n: number) => Math.max(0, Math.min(ROGUE_PER_FLOOR, run.step - (n - 1) * ROGUE_PER_FLOOR));
+  /** Fração da trilha já percorrida (passos resolvidos / total). */
+  const walked = Math.min(1, run.step / ROGUE_MAX_STEPS);
+
   return (
-    <div data-rogue-dungeon style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <p data-rogue-progress style={text}>
-        {isPt
-          ? `Andar ${floor}/${ROGUE_FLOORS} · desafio ${Math.min(stepInFloor(run.step) + 1, ROGUE_PER_FLOOR)}/${ROGUE_PER_FLOOR} · vencidos ${run.won} · pontos ${rogueScore(run)}`
-          : `Floor ${floor}/${ROGUE_FLOORS} · challenge ${Math.min(stepInFloor(run.step) + 1, ROGUE_PER_FLOOR)}/${ROGUE_PER_FLOOR} · won ${run.won} · score ${rogueScore(run)}`}
-      </p>
-      {(run.power > 0 || run.vigor > 0 || run.shield > 0) && (
-        <p data-rogue-bonuses style={text}>
-          <span style={{ display: 'inline-flex', gap: 12, alignItems: 'center' }}>
-            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="bolt" size={20} tone="inherit" label={isPt ? 'ataque' : 'attack'} />{run.power}</span>
-            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="favorite" size={20} tone="inherit" label={isPt ? 'vida' : 'health'} />{run.vigor}</span>
-            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="auto_awesome" size={20} tone="inherit" label={isPt ? 'escudo' : 'shield'} />{run.shield}</span>
-          </span>
-        </p>
-      )}
-      {note && <p data-rogue-note style={text}>{note}</p>}
+    <div data-rogue-dungeon style={{ position: 'absolute', inset: 0, overflow: 'hidden', background: scene.bg, color: 'var(--sm2-viewport-ink)' }}>
+      {/* véu para o texto e a trilha lerem sobre qualquer cenário */}
+      <div aria-hidden style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(6,18,22,.62), rgba(6,18,22,.38) 40%, rgba(6,18,22,.72))' }} />
 
-      {finished && (
-        <div data-rogue-over style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <p style={text}>
-            {run.over
-              ? (isPt ? 'A incursão de hoje terminou. Ela recomeça amanhã, sem os bônus.' : 'Today\'s run is over. It starts again tomorrow, without the bonuses.')
-              : (isPt ? 'Você concluiu os 3 andares de hoje! Volte amanhã.' : 'You cleared all 3 floors today! Come back tomorrow.')}
+      <header style={{ position: 'absolute', top: 0, left: 0, width: '100%', zIndex: 4, display: 'flex', alignItems: 'flex-start', gap: 8, padding: 'calc(10px + env(safe-area-inset-top, 0px)) 8px 0 8px' }}>
+        {onClose && (
+          <button type="button" data-rogue-close onClick={onClose} aria-label={isPt ? 'Fechar o Calabouço' : 'Close the Dungeon'} style={{ background: 'none', border: 'none', boxShadow: 'none', padding: 0, minWidth: 44, minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'var(--sm2-viewport-ink)' }}>
+            <Icon name="close" size={24} tone="inherit" />
+          </button>
+        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0, paddingTop: 4 }}>
+          <h2 style={{ ...hudText, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg, 20px)', fontWeight: 700 }}>{isPt ? 'Calabouço' : 'Dungeon'}</h2>
+          <p data-rogue-progress style={hudText}>
+            {isPt
+              ? `Andar ${floor}/${ROGUE_FLOORS} · desafio ${Math.min(stepInFloor(run.step) + 1, ROGUE_PER_FLOOR)}/${ROGUE_PER_FLOOR} · vencidos ${run.won} · pontos ${rogueScore(run)}`
+              : `Floor ${floor}/${ROGUE_FLOORS} · challenge ${Math.min(stepInFloor(run.step) + 1, ROGUE_PER_FLOOR)}/${ROGUE_PER_FLOOR} · won ${run.won} · score ${rogueScore(run)}`}
           </p>
-          <RankingPanel game="rogue-dungeon" saveId={saveId} language={language} score={rogueScore(run)} period="weekly" />
+          {(run.power > 0 || run.vigor > 0 || run.shield > 0) && (
+            <p data-rogue-bonuses style={hudText}>
+              <span style={{ display: 'inline-flex', gap: 12, alignItems: 'center' }}>
+                <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="bolt" size={20} tone="inherit" label={isPt ? 'ataque' : 'attack'} />{run.power}</span>
+                <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="favorite" size={20} tone="inherit" label={isPt ? 'vida' : 'health'} />{run.vigor}</span>
+                <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="auto_awesome" size={20} tone="inherit" label={isPt ? 'escudo' : 'shield'} />{run.shield}</span>
+              </span>
+            </p>
+          )}
         </div>
+      </header>
+
+      {/* O MAPA: a trilha em SVG (0..100 esticado à área) e os 3 nós posicionados em % por cima. */}
+      <div data-rogue-map style={{ position: 'absolute', left: 0, right: 0, top: 'calc(88px + env(safe-area-inset-top, 0px))', bottom: '40%', zIndex: 2 }}>
+        <svg aria-hidden viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }}>
+          <path d={TRAIL_D} fill="none" stroke="var(--sm2-viewport-ring)" strokeOpacity={0.45} strokeWidth={3} strokeDasharray="1 2.4" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+          <path data-rogue-trail-walked d={TRAIL_D} pathLength={1} fill="none" stroke="var(--sm2-gold-fill)" strokeWidth={4} strokeLinecap="round" strokeDasharray={`${walked} 1`} vectorEffect="non-scaling-stroke" style={{ filter: 'drop-shadow(0 0 4px var(--sm2-gold-fill))' }} />
+        </svg>
+        {NODE_POS.map((p, i) => {
+          const n = i + 1;
+          const state: 'done' | 'current' | 'locked' = run.step >= n * ROGUE_PER_FLOOR ? 'done' : n === floor && !finished ? 'current' : n < floor ? 'done' : 'locked';
+          const sc = DUNGEON_SCENES[i % DUNGEON_SCENES.length];
+          return (
+            <div key={n} data-rogue-node={n} data-rogue-node-state={state} style={{ position: 'absolute', left: `${p.x}%`, top: `${p.y}%`, transform: 'translate(-50%, -50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 120 }}>
+              {state === 'current' && <img data-rogue-pet src={petSprite} alt="" draggable={false} style={{ width: 56, height: 56, objectFit: 'contain', imageRendering: 'pixelated', marginBottom: -6, filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.7))' }} />}
+              <span style={{
+                width: 48, height: 48, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: state === 'done' ? 'var(--sm2-gold-fill)' : state === 'current' ? 'var(--sm2-primary-fill)' : 'var(--sm2-viewport-bg)',
+                border: `2px solid ${state === 'locked' ? 'var(--sm2-viewport-ring)' : 'var(--sm2-viewport-ink)'}`,
+                boxShadow: state === 'current' ? '0 0 0 6px var(--sm2-primary-soft), 0 0 16px var(--sm2-primary-fill)' : 'none',
+                color: state === 'done' ? 'var(--sm2-on-gold)' : state === 'current' ? 'var(--sm2-on-primary)' : 'var(--sm2-viewport-ink)',
+              }}>
+                <Icon name={state === 'done' ? 'check_circle' : state === 'current' ? 'flag' : 'lock'} size={24} tone="inherit" label={state === 'done' ? (isPt ? 'andar concluído' : 'floor cleared') : state === 'current' ? (isPt ? 'andar atual' : 'current floor') : (isPt ? 'andar trancado' : 'floor locked')} />
+              </span>
+              <span style={{ ...hudText, fontWeight: 700, textAlign: 'center' }}>{isPt ? `Andar ${n}` : `Floor ${n}`}</span>
+              <span style={{ ...hudText, fontSize: 'var(--sm2-text-xs, 12px)', textAlign: 'center', opacity: state === 'locked' ? 0.75 : 1 }}>{isPt ? sc.namePt : sc.nameEn}</span>
+              <span aria-hidden style={{ display: 'flex', gap: 3 }}>
+                {Array.from({ length: ROGUE_PER_FLOOR }, (_, k) => (
+                  <span key={k} style={{ width: 6, height: 6, borderRadius: '50%', background: k < doneInFloor(n) ? 'var(--sm2-gold-fill)' : 'var(--sm2-viewport-ring)', opacity: k < doneInFloor(n) ? 1 : 0.5 }} />
+                ))}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* A folha de baixo: o que fazer neste passo. */}
+      {!ch && !fighting && (
+        <section data-rogue-sheet style={sheetStyle} aria-live="polite">
+          {note && <p data-rogue-note style={{ ...text, fontWeight: 700 }}>{note}</p>}
+
+          {finished && (
+            <div data-rogue-over style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <p style={text}>
+                {run.over
+                  ? (isPt ? 'A incursão de hoje terminou. Ela recomeça amanhã, sem os bônus.' : 'Today\'s run is over. It starts again tomorrow, without the bonuses.')
+                  : (isPt ? 'Você concluiu os 3 andares de hoje! Volte amanhã.' : 'You cleared all 3 floors today! Come back tomorrow.')}
+              </p>
+              <RankingPanel game="rogue-dungeon" saveId={saveId} language={language} score={rogueScore(run)} period="weekly" />
+            </div>
+          )}
+
+          {run.bonusPending && (
+            <div data-rogue-bonus-pick style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <p style={text}>{isPt ? 'Escolha 1 bônus (vale só nesta incursão):' : 'Pick 1 bonus (this run only):'}</p>
+              {bonuses.map(b => (
+                <button key={b} type="button" data-rogue-bonus={b} style={btn} onClick={() => { setNote(null); onChange(applyBonus(run, b)); }}>
+                  <Icon name={BONUS_COPY[b].icon} size={20} tone="inherit" /> {t(BONUS_COPY[b])}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {!finished && !run.bonusPending && (
+            <div data-rogue-paths style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <p style={text}>
+                {paths.length === 1
+                  ? (isPt ? 'Um combate bloqueia o caminho.' : 'A combat blocks the way.')
+                  : (isPt ? 'Escolha seu caminho:' : 'Choose your path:')}
+              </p>
+              {paths.map(p => (
+                <button key={p} type="button" data-rogue-path={p} style={btn} onClick={() => choose(p)}>
+                  <Icon name={PATH_COPY[p].icon} size={20} tone="inherit" /> {t(PATH_COPY[p])}
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
       )}
 
-      {run.bonusPending && (
-        <div data-rogue-bonus-pick style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <p style={text}>{isPt ? 'Escolha 1 bônus (vale só nesta incursão):' : 'Pick 1 bonus (this run only):'}</p>
-          {bonuses.map(b => (
-            <button key={b} type="button" data-rogue-bonus={b} style={btn} onClick={() => { setNote(null); onChange(applyBonus(run, b)); }}>
-              <Icon name={BONUS_COPY[b].icon} size={20} tone="inherit" /> {t(BONUS_COPY[b])}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {!finished && !run.bonusPending && !ch && (
-        <div data-rogue-paths style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <p style={text}>
-            {paths.length === 1
-              ? (isPt ? 'Um combate bloqueia o caminho.' : 'A combat blocks the way.')
-              : (isPt ? 'Escolha seu caminho:' : 'Choose your path:')}
-          </p>
-          {paths.map(p => (
-            <button key={p} type="button" data-rogue-path={p} style={btn} onClick={() => choose(p)}>
-              <Icon name={PATH_COPY[p].icon} size={20} tone="inherit" /> {t(PATH_COPY[p])}
-            </button>
-          ))}
-        </div>
+      {fighting && !finished && (
+        <Suspense fallback={<p style={{ ...hudText, position: 'absolute', left: 0, right: 0, bottom: 24, textAlign: 'center', zIndex: 4 }}>{isPt ? 'Carregando a luta…' : 'Loading the fight…'}</p>}>
+          <ChallengeBoundary isPt={isPt} onBack={() => setFighting(false)}>
+            <RogueFight language={language} run={run} step={run.step} combatant={combatant} skills={skills} petElement={petElement} evolutionStage={evolutionStage} demoCharacterId={demoCharacterId} floor={floor} onResult={fightResult} />
+          </ChallengeBoundary>
+        </Suspense>
       )}
 
       {ch && !finished && (
-        <div data-rogue-challenge={ch.kind} data-rogue-game={ch.game} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <p style={{ ...text, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name={PATH_COPY[ch.kind].icon} size={20} tone="inherit" /> {t(GAME_GOAL_COPY[ch.game](ch.goal))}</p>
-          <ChallengeBoundary isPt={isPt} onBack={() => { setChallenge(null); onChange(cancelChallenge(run)); }}>
-            <Suspense fallback={<p style={text}>{isPt ? 'Carregando…' : 'Loading…'}</p>}>
-              {renderGame(ch.game)}
-            </Suspense>
-          </ChallengeBoundary>
+        <div data-rogue-challenge={ch.kind} data-rogue-game={ch.game} style={{ position: 'absolute', inset: 0, zIndex: 5, display: 'flex', flexDirection: 'column', background: 'var(--sm2-bg)' }}>
+          <p style={{ ...text, display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px' }}><Icon name={PATH_COPY[ch.kind].icon} size={20} tone="inherit" /> {t(GAME_GOAL_COPY[ch.game](ch.goal))}</p>
+          <div style={{ position: 'relative', flex: 1, minHeight: 0 }}>
+            <ChallengeBoundary isPt={isPt} onBack={() => { setChallenge(null); onChange(cancelChallenge(run)); }}>
+              <Suspense fallback={<p style={text}>{isPt ? 'Carregando…' : 'Loading…'}</p>}>
+                {renderGame(ch.game)}
+              </Suspense>
+            </ChallengeBoundary>
+          </div>
         </div>
       )}
     </div>

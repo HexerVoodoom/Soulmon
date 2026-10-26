@@ -7,12 +7,13 @@ import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, ph
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { REFUGIO_SCENE_SUAVE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
-import { usePetScale } from '../../hooks/usePetScale';
 import { petScaleStyle } from '../../utils/spriteScale';
 import { entrarNaSuperficie } from '../../utils/musica';
 import {
   BREATH_PATTERNS, BREATH_DURATIONS_MIN, phaseAt, fillLevel, sessionMs, type BreathPhase,
 } from '../../utils/refugio/respiracao';
+/* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
+const PET_SCALE_MINIGAME = 1;
 
 /**
  * RESPIRAÇÃO COM O PET (Refúgio, `docs/BENCHMARK-MINIJOGOS.md` §6.8) — para os
@@ -90,7 +91,7 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
   const { phase, progress } = phaseAt(pattern, elapsed);
   const level = fillLevel(phase, progress);
   const sprite = getSpriteForStage(evolutionStage, demoCharacterId);
-  const petBodyScale = usePetScale(evolutionStage, sprite);
+  const petBodyScale = PET_SCALE_MINIGAME;
   const title = isPt ? 'Respirar com o pet' : 'Breathe with your pet';
   const closeLabel = isPt ? 'Sair' : 'Exit';
 

@@ -41,7 +41,7 @@ export function PrepararFocoSheet({ language, todayKey, tasks = [], keyActive = 
     <div data-preparar-foco style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       {editing
         ? <>
-          <p data-preparar-hint style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Planeje a sessão, passo a passo. Ao salvar, você ganha a chave da Oficina do Foco.' : 'Plan the session, step by step. When you save it, you get the key to the Focus Workshop.'}</p>
+          <p data-preparar-hint style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Planeje a sessão, passo a passo. Ao salvar, a segunda etapa (a Oficina do Foco) se abre.' : 'Plan the session, step by step. When you save it, the second step (the Focus Workshop) opens.'}</p>
           {saveError && <p role="alert" data-preparar-erro style={{ ...sm2Text, margin: 0, color: 'var(--sm2-gold-ink, var(--sm2-ink))' }}>{saveError}</p>}
           <OficinaPlano key={formKey} language={language} tasks={tasks} initial={emptyDraft()} onSave={saveDraft} onCancel={cancel} />
         </>

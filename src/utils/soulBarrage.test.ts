@@ -1,16 +1,49 @@
 import { describe, it, expect } from 'vitest';
 import {
-  newBarrage, stepBarrage, phaseAt, enemyStageForPhase, difficultyAt, barrageBits, FIELD_W, PLAYER_Y, START_LIVES,
+  newBarrage, stepBarrage, phaseAt, stageOdds, pickWaveStage, STAGE_HP, BASE_Y, BARRAGE_ELEMENT, difficultyAt, barrageBits, FIELD_W, PLAYER_Y, START_LIVES,
   PHASE_SECONDS, INVULN_SECONDS,
 } from './soulBarrage';
 
 const seeded = (seed = 7) => () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 2 ** 32; };
 
 describe('soulBarrage', () => {
-  it('fase sobe a cada PHASE_SECONDS e o estágio do inimigo acompanha', () => {
+  it('fase sobe a cada PHASE_SECONDS; champion/ultimate entram "às vezes", com teto, e têm mais vida', () => {
     expect(phaseAt(0)).toBe(1);
     expect(phaseAt(PHASE_SECONDS)).toBe(2);
-    expect([1, 3, 5, 7, 12].map(enemyStageForPhase)).toEqual(['rookie', 'champion', 'ultimate', 'mega', 'mega']);
+    expect(stageOdds(1)).toEqual({ champion: 0, ultimate: 0 });
+    expect(stageOdds(2).ultimate).toBe(0);
+    expect(stageOdds(3).ultimate).toBeGreaterThan(0);
+    expect(stageOdds(99).champion).toBeLessThanOrEqual(0.3);
+    expect(stageOdds(99).ultimate).toBeLessThanOrEqual(0.14);
+    expect(STAGE_HP.champion).toBeGreaterThan(STAGE_HP.rookie);
+    expect(STAGE_HP.ultimate).toBeGreaterThan(STAGE_HP.champion);
+    // na fase 1 só rookie; na 8 a maioria ainda é rookie
+    const rng = seeded(5);
+    expect(Array.from({ length: 50 }, () => pickWaveStage(1, rng)).every(x => x === 'rookie')).toBe(true);
+    const mix = Array.from({ length: 400 }, () => pickWaveStage(8, rng));
+    expect(mix.filter(x => x === 'rookie').length).toBeGreaterThan(200);
+    expect(mix).toContain('champion');
+    expect(mix).toContain('ultimate');
+  });
+  it('só nascem inimigos do elemento espaço, em levas', () => {
+    const s = newBarrage();
+    const rng = seeded(21);
+    s.t = 100; s.phase = 6;
+    const seen = new Set<string>();
+    for (let i = 0; i < 600; i++) { stepBarrage(s, 0.05, s.px, 30, rng); s.invuln = 99; for (const e of s.enemies) seen.add(e.entry.element); if (s.over) s.over = false; }
+    expect([...seen]).toEqual([BARRAGE_ELEMENT]);
+  });
+  it('inimigo que chega à base tira 1 vida (sem invulnerabilidade) e some', () => {
+    const s = newBarrage();
+    const rng = seeded(2);
+    s.spawnIn = 99;
+    const entry = { key: 'x-rookie', id: 'x', stage: 'rookie' as const, kind: 'base' as const, element: 'espaco', elements: ['espaco'], name: 'x', basico: {} as never, especial: {} as never };
+    s.enemies.push({ x: 10, y: BASE_Y + 1, vx: 0, vy: 0, hp: 2, maxHp: 2, fireIn: 99, entry, stage: 'rookie', points: 10, t: 0, size: 60, r: 22 });
+    s.invuln = 5;
+    const ev = stepBarrage(s, 0.01, s.px, 1, rng);
+    expect(ev.leaked).toBe(1);
+    expect(s.lives).toBe(START_LIVES - 1);
+    expect(s.enemies.length).toBe(0);
   });
   it('dificuldade cresce e tem teto', () => {
     expect(difficultyAt(5).bulletSpeed).toBeGreaterThan(difficultyAt(1).bulletSpeed);
@@ -37,6 +70,7 @@ describe('soulBarrage', () => {
     for (let i = 0; i < 400 && s.enemyShots.length === 0; i++) stepBarrage(s, 0.05, s.px, 1, rng);
     expect(s.enemies.length + s.kills).toBeGreaterThan(0);
     expect(s.enemies[0]?.entry.stage ?? 'rookie').toBe('rookie');
+    expect(s.enemies.every(e => e.entry.element === 'espaco')).toBe(true);
     expect(s.enemyShots.length).toBeGreaterThan(0);
   });
   it('tiro inimigo tira vida, dá invulnerabilidade e acaba em 0 vidas', () => {
@@ -59,7 +93,7 @@ describe('soulBarrage', () => {
     const s = newBarrage();
     const rng = seeded(11);
     s.spawnIn = 99;
-    s.enemies.push({ x: s.px, y: 200, vx: 0, vy: 0, hp: 1, maxHp: 1, fireIn: 99, entry: { key: 'x-rookie', id: 'x', stage: 'rookie', kind: 'base', element: 'fogo', elements: ['fogo'], name: 'x', basico: {} as never, especial: {} as never }, stage: 'rookie', points: 10, t: 0 });
+    s.enemies.push({ x: s.px, y: 200, vx: 0, vy: 0, hp: 1, maxHp: 1, fireIn: 99, entry: { key: 'x-rookie', id: 'x', stage: 'rookie', kind: 'base', element: 'fogo', elements: ['fogo'], name: 'x', basico: {} as never, especial: {} as never }, stage: 'rookie', points: 10, t: 0, size: 60, r: 22 });
     s.shots.push({ x: s.px, y: 200, vx: 0, vy: 0 });
     const ev = stepBarrage(s, 0.01, s.px, 1, rng);
     expect(ev.kills).toBe(1);

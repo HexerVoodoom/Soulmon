@@ -55,7 +55,7 @@ import { AreaView, type AreaViewProps, type PlayHandlers } from '../nav/AreaView
  *  quatro áreas. As props planas do antigo `PlayAreaView` continuam sendo a
  *  interface do teste; `PlayAreaView` abaixo só as encaixa no `AreaView`. */
 interface PlayProps extends PlayHandlers {
-  area: 'exploracao' | 'jogos';
+  area: 'exploracao' | 'jogos' | 'arena';
   language: 'pt-BR' | 'en-US';
   evolutionStage: string;
   demoCharacterId?: string;
@@ -130,24 +130,41 @@ async function achar(container: HTMLElement, sel: string): Promise<HTMLElement> 
 }
 
 describe('Exploração — Zeph e a Masmorra', () => {
-  it('a cena tem a Masmorra, o Passeio, a Oficina e o Caderno (30/09 e 04/10/2026; a Corrida mudou para o Salão de Jogos); Zeph fala dentro da folha', () => {
+  it('a cena tem o Passeio, a Oficina e o Caderno (30/09 e 04/10/2026; N8/N10 de 26/10/2026: a Fenda foi para a Arena e o Prepare to Focus virou a 1ª etapa da Oficina); Zeph fala dentro da folha da Fenda', () => {
     const { container } = renderWithCss(<PlayAreaView {...props()} />);
     expect(container.querySelector('[data-area-npc]')).toBeNull();
     expect([...container.querySelectorAll('[data-area-lot]')].map(e => e.getAttribute('data-area-lot')))
-      .toEqual(['masmorra', 'passeio', 'oficina', 'caderno', 'preparar', 'refugio']);
-    expect(container.querySelector('[data-area-lot="masmorra"] [data-area-lot-art]')).toBeTruthy();
+      .toEqual(['passeio', 'oficina', 'caderno', 'refugio']);
+    expect(container.querySelector('[data-area-lot="masmorra"]')).toBeNull();
+    expect(container.querySelector('[data-area-lot="preparar"]')).toBeNull();
     expect(container.querySelector('[data-area-lot="passeio"] [data-area-lot-art]')).toBeTruthy();
     expect(container.querySelector('[data-area-lot="oficina"] [data-area-lot-art]')).toBeTruthy();
     expect(container.querySelector('[data-area-lot="caderno"] [data-area-lot-art]')).toBeTruthy();
     expect(container.querySelector('[data-area-lot="dino"]')).toBeNull();
-    fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
+  });
+
+  it('Arena: a Fenda Sem Fim é um prédio da Arena, com arte; Zeph fala dentro da folha (N10)', () => {
+    const { container } = renderWithCss(<PlayAreaView {...props({ area: 'arena' })} />);
+    expect(container.querySelector('[data-area-lot="fenda"] [data-area-lot-art]')).toBeTruthy();
+    fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Zeph');
+  });
+
+  it('Oficina do Foco: sem a chave abre a etapa 1 (Prepare to Focus); com a chave, a etapa 2 (N8)', async () => {
+    const sem = renderWithCss(<PlayAreaView {...props({ focusKeyActive: false } as Partial<PlayProps>)} />);
+    fireEvent.click(sem.container.querySelector('[data-area-lot="oficina"]')!);
+    await achar(sem.container, '[data-oficina-etapa="1"] [data-preparar-foco]');
+    sem.unmount();
+    const com = renderWithCss(<PlayAreaView {...props({ focusKeyActive: true } as Partial<PlayProps>)} />);
+    fireEvent.click(com.container.querySelector('[data-area-lot="oficina"]')!);
+    await achar(com.container, '[data-oficina]');
+    expect(com.container.querySelector('[data-oficina-etapa="1"]')).toBeNull();
   });
 
   it('Masmorra: folha mostra dificuldade e placar lidos das chaves do jogo, e diz que perder não custa coração', async () => {
     localStorage.setItem(STORAGE_KEYS.DUNGEON_BEST, '321');
-    const { container, getByRole } = renderWithCss(<PlayAreaView {...props()} />);
-    fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
+    const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ area: 'arena' })} />);
+    fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     await achar(container, '[data-masmorra]');
     const folha = getByRole('dialog', { name: 'Fenda Sem Fim' });
     expect(folha.textContent).toContain('321');
@@ -169,17 +186,17 @@ describe('Exploração — Zeph e a Masmorra', () => {
   });
 
   it('Masmorra: SEM gate de entrada — o CTA nunca fica desabilitado, nem com 0 Bits', async () => {
-    const { container } = renderWithCss(<PlayAreaView {...props({ totalPoints: 0 })} />);
-    fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
+    const { container } = renderWithCss(<PlayAreaView {...props({ area: 'arena', totalPoints: 0 })} />);
+    fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     const cta = await achar(container, '[data-masmorra-start]') as HTMLButtonElement;
     expect(cta.disabled).toBe(false);
     expect(cta.getAttribute('aria-disabled')).toBeNull();
   });
 
   it('Masmorra: o CTA fecha a folha e abre a DungeonGame com os handlers do App INTACTOS', async () => {
-    const p = props({ totalPoints: 77 });
+    const p = props({ area: 'arena', totalPoints: 77 });
     const { container } = renderWithCss(<PlayAreaView {...p} />);
-    fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
+    fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     fireEvent.click(await achar(container, '[data-masmorra-start]'));
     await achar(container, '[data-jogo="dungeon"]');
     expect(container.querySelector('[data-area-sheet]')).toBeNull();
@@ -196,14 +213,14 @@ describe('Exploração — Zeph e a Masmorra', () => {
   });
 
   it('sair do jogo volta à cena da área', async () => {
-    const { container } = renderWithCss(<PlayAreaView {...props()} />);
-    fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
+    const { container } = renderWithCss(<PlayAreaView {...props({ area: 'arena' })} />);
+    fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     fireEvent.click(await achar(container, '[data-masmorra-start]'));
     await achar(container, '[data-jogo="dungeon"]');
     // O dublê não tem botão: chama-se o `onExit` que o jogo chamaria.
     act(() => { (recebidas.dungeon.onExit as () => void)(); });
     expect(container.querySelector('[data-jogo="dungeon"]')).toBeNull();
-    expect(container.querySelector('[data-area-scene="exploracao"]')).toBeTruthy();
+    expect(container.querySelector('[data-area-scene="arena"]')).toBeTruthy();
   });
 
   it('Salão de Jogos → Corrida com obstáculos: recorde da chave DINO_BEST, 1 Bit a cada 100, e o CTA abre a DinoGame', async () => {
@@ -224,9 +241,9 @@ describe('Exploração — Zeph e a Masmorra', () => {
   });
 
   it('EN: rótulos e folha em inglês', async () => {
-    const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ language: 'en-US' })} />);
-    expect(container.querySelector('[data-area-lot="masmorra"]')!.textContent).toContain('Endless Rift');
-    fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
+    const { container, getByRole } = renderWithCss(<PlayAreaView {...props({ area: 'arena', language: 'en-US' })} />);
+    expect(container.querySelector('[data-area-lot="fenda"]')!.textContent).toContain('Endless Rift');
+    fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     await achar(container, '[data-masmorra]');
     fireEvent.click(getByRole('button', { name: 'How the Rift works' }));
     expect(document.querySelector('[data-info-tip-panel]')!.textContent).toMatch(/never your hearts/);
