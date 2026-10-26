@@ -49,7 +49,7 @@ const SWIPE_PX = 22;
 const T_SWAP = 170;
 const T_ENEMY_SELECT = 320;
 const T_ENEMY_DELAY = 1000;
-const T_TURN_BANNER = 700;
+const T_TURN_BANNER = 1500;
 const T_ENEMY_PRE_AURA = 450;
 const T_CLEAR = 280;
 const T_FALL = 240;
@@ -84,6 +84,8 @@ export interface Match3Props extends EarningGameProps {
   onSpendBits?: (n: number) => boolean;
   /** Nome do Soulmon do jogador (para o banner de turno). */
   petName?: string;
+  /** Elemento do Soulmon do jogador (id do Oráculo); só é mostrado, não muda a regra. */
+  petElement?: string;
   /** M10: level do jogador. Com ele, os inimigos vêm do roster (`enemyRoster.ts`, estágio limitado pelo level). Sem ele, linhas próprias. */
   playerLevel?: number;
   /** M10: inimigo do roster que entrou em cena (bestiário). */
@@ -104,7 +106,7 @@ function rosterOf(e: { roster?: string } | undefined): { src: string; name: stri
   return entry && src ? { src, name: entry.name } : undefined;
 }
 
-export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, playerLevel, onEnemySeen, rankSaveId, challenge }: Match3Props) {
+export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, petElement, playerLevel, onEnemySeen, rankSaveId, challenge }: Match3Props) {
   const isPt = language === 'pt-BR';
   const challengeRef = useRef(challenge);
   challengeRef.current = challenge;
@@ -513,14 +515,82 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
   const playerSprite = getSpriteForStage(evolutionStage, demoCharacterId);
   const petScale = PET_SCALE_MINIGAME;
 
+  const playerElIcon = petElement ? elementIcon(petElement) : undefined;
+  const boardNode = over ? null : (
+  <div
+    role="grid"
+    aria-label={isPt ? 'Tabuleiro do Combina 3' : 'Match 3 board'}
+    aria-rowcount={M3_ROWS}
+    aria-colcount={M3_COLS}
+    aria-busy={busy}
+    data-m3-board
+    onKeyDown={onKey}
+    style={boardStyle}
+  >
+    {board.map((row, r) => row.map((t, c) => {
+      const p = { r, c };
+      const k = key(p);
+      const isSel = same(sel, p);
+      const isHint = !!hint && (same(hint.a, p) || same(hint.b, p));
+      const isEnemyPick = !!enemyPick && (same(enemyPick.a, p) || same(enemyPick.b, p));
+      return (
+        <div key={k} role="gridcell" aria-colindex={c + 1} aria-rowindex={r + 1} aria-selected={isSel} style={{ display: 'contents' }}>
+          <TileButton
+            ref={el => { btnRefs.current[k] = el; }}
+            tile={t}
+            label={t ? cellLabel(t, r, c) : ''}
+            pos={p}
+            focusable={same(cursor, p)}
+            selected={isSel}
+            hint={isHint}
+            enemyPick={isEnemyPick}
+            clearing={clearing.has(k)}
+            fresh={fresh.cells.has(k) ? fresh.id : 0}
+            shake={shake.cells.has(k) ? shake.id : 0}
+            reduced={reduced}
+            disabled={busy}
+            onPick={() => { if (swiped.current) { swiped.current = false; return; } pick(p); }}
+            onPointerDown={e => onPointerDown(e, p)}
+            onPointerUp={onPointerUp}
+          />
+        </div>
+      );
+    }))}
+  </div>
+  );
+  const hintNode = over ? null : (
+    (() => {
+      const act = hintAction(hintsLeft, bits);
+      const falta = act === 'buy' && !onSpendBits;
+      const bloqueado = busy || act === 'blocked' || falta;
+      const nome = act === 'use'
+        ? (isPt ? `Dica, ${hintsLeft} restantes` : `Hint, ${hintsLeft} left`)
+        : confirmBuy
+          ? (isPt ? `Confirmar: comprar uma dica por ${M3_HINT_PRICE_BITS} Bits` : `Confirm: buy a hint for ${M3_HINT_PRICE_BITS} Bits`)
+          : (isPt ? `Comprar uma dica por ${M3_HINT_PRICE_BITS} Bits` : `Buy a hint for ${M3_HINT_PRICE_BITS} Bits`);
+      return (
+        <button type="button" onClick={onHint} disabled={bloqueado} aria-label={nome} data-m3-hint-button data-m3-hint-mode={confirmBuy ? 'confirm' : act} style={{ ...sm2Button('outline', bloqueado), minHeight: 44, minWidth: 72, padding: '0 14px', gap: 6 }}>
+          <Icon name={confirmBuy ? 'check' : 'help'} size={24} tone={confirmBuy ? 'primary' : 'ink'} />
+          {act === 'use'
+            ? <span className="sm2-num" data-m3-hints-left={hintsLeft}>{hintsLeft}</span>
+            : <span data-m3-hint-price={M3_HINT_PRICE_BITS}><BitsAmount value={M3_HINT_PRICE_BITS} /></span>}
+        </button>
+      );
+    })()
+  );
+
   // A arena (D-76, 19/10/2026): o SEU Soulmon em CIMA à esquerda; o time inimigo (1→3) EMBAIXO, em fila da DIREITA para a ESQUERDA (o 1º, ativo, na ponta direita). Ativo = borda + ▸ (a cor nunca é a única pista).
   const arena = (
-    <div data-m3-arena data-m3-compact={compact ? '' : undefined} style={{ display: 'flex', flexDirection: compact ? 'row' : 'column', justifyContent: 'space-between', alignItems: compact ? 'flex-end' : undefined, gap: 8, flex: '1 0 auto', minHeight: compact ? 0 : 130 }}>
-      <div data-m3-player data-m3-pos="top-left" data-m3-hp={combat.player.hp} style={{ width: playerPx + 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 'none', alignSelf: compact ? 'flex-end' : 'flex-start' }}>
+    <div data-m3-arena data-m3-compact={compact ? '' : undefined} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'stretch', gap: 8, flex: '1 0 auto', minHeight: 0 }}>
+      <div data-m3-player data-m3-pos="top-left" data-m3-hp={combat.player.hp} style={{ width: playerPx + 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 'none', alignSelf: 'flex-start' }}>
         <img src={playerSprite} alt="" aria-hidden="true" draggable={false} width={playerPx} height={playerPx} style={{ width: playerPx, height: playerPx, imageRendering: 'pixelated', objectFit: 'contain', ...petScaleStyle(petScale) }} />
+        {playerElIcon && (
+          <img src={playerElIcon} alt="" draggable={false} width={18} height={18} data-m3-player-element={petElement} style={{ imageRendering: 'pixelated' }} />
+        )}
         <HpBars bars={[{ label: isPt ? 'Seu Soulmon' : 'Your Soulmon', cur: combat.player.hp, max: combat.player.max, tone: 'cyan' }]} />
       </div>
-      <div role="group" aria-label={isPt ? 'Time da fenda' : 'Rift team'} data-m3-enemies data-m3-pos="bottom-right" style={{ display: 'flex', flexDirection: 'row-reverse', gap: 6, minWidth: 0, justifyContent: 'flex-start', alignItems: 'flex-end' }}>
+      {boardNode}
+      <div role="group" aria-label={isPt ? 'Time da fenda' : 'Rift team'} data-m3-enemies data-m3-pos="bottom-right" style={{ display: 'flex', flexDirection: 'row-reverse', gap: 6, minWidth: 0, justifyContent: 'flex-start', alignItems: 'flex-end', alignSelf: 'flex-end' }}>
         {combat.enemies.map((e, i) => {
           const line = e.line && e.line in OWN_LINE_SPRITES ? e.line : LINES[i];
           const ros = rosterOf(e);
@@ -548,7 +618,7 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
               }}
             >
               <p aria-hidden="true" style={{ ...sm2Hint, whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 2 }}>
-                <span>{isActive ? '▸' : ''}{i + 1}</span>
+                <span>{isActive ? '▸' : ''}</span>
                 {icon && <img src={icon} alt="" draggable={false} width={14} height={14} style={{ imageRendering: 'pixelated' }} />}
               </p>
               <div style={{ position: 'relative', width: enemyPx, height: enemyPx, maxWidth: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -600,7 +670,8 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
 
       {/* a arena cresce até o tabuleiro: história, placar, o campo e o aviso vivo moram nela (D-02) */}
       <div ref={fieldRef} data-m3-field style={{ position: 'relative', display: 'flex', flexDirection: 'column', gap: 8, flex: '1 0 auto', minHeight: 0 }}>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12 }}>
+          {hintNode}
           <StatTag label={isPt ? 'Turno' : 'Turn'} value={<span data-m3-turn={combat.turns}>{combat.turns}</span>} />
           {extraFlash > 0 && (
             <span key={extraFlash} data-m3-extra={extraFlash} role="img" aria-label={isPt ? 'Rodada extra' : 'Extra turn'} style={{ display: 'inline-flex', marginLeft: 8, animation: reduced ? undefined : 'sm-m3-extra 900ms ease-out both' }}>
@@ -671,66 +742,6 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
         </div>
       ) : (
         <>
-          <div
-            role="grid"
-            aria-label={isPt ? 'Tabuleiro do Combina 3' : 'Match 3 board'}
-            aria-rowcount={M3_ROWS}
-            aria-colcount={M3_COLS}
-            aria-busy={busy}
-            data-m3-board
-            onKeyDown={onKey}
-            style={boardStyle}
-          >
-            {board.map((row, r) => row.map((t, c) => {
-              const p = { r, c };
-              const k = key(p);
-              const isSel = same(sel, p);
-              const isHint = !!hint && (same(hint.a, p) || same(hint.b, p));
-              const isEnemyPick = !!enemyPick && (same(enemyPick.a, p) || same(enemyPick.b, p));
-              return (
-                <div key={k} role="gridcell" aria-colindex={c + 1} aria-rowindex={r + 1} aria-selected={isSel} style={{ display: 'contents' }}>
-                  <TileButton
-                    ref={el => { btnRefs.current[k] = el; }}
-                    tile={t}
-                    label={t ? cellLabel(t, r, c) : ''}
-                    pos={p}
-                    focusable={same(cursor, p)}
-                    selected={isSel}
-                    hint={isHint}
-                    enemyPick={isEnemyPick}
-                    clearing={clearing.has(k)}
-                    fresh={fresh.cells.has(k) ? fresh.id : 0}
-                    shake={shake.cells.has(k) ? shake.id : 0}
-                    reduced={reduced}
-                    disabled={busy}
-                    onPick={() => { if (swiped.current) { swiped.current = false; return; } pick(p); }}
-                    onPointerDown={e => onPointerDown(e, p)}
-                    onPointerUp={onPointerUp}
-                  />
-                </div>
-              );
-            }))}
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'center', flex: 'none' }}>
-            {(() => {
-              const act = hintAction(hintsLeft, bits);
-              const falta = act === 'buy' && !onSpendBits;
-              const bloqueado = busy || act === 'blocked' || falta;
-              const nome = act === 'use'
-                ? (isPt ? `Dica, ${hintsLeft} restantes` : `Hint, ${hintsLeft} left`)
-                : confirmBuy
-                  ? (isPt ? `Confirmar: comprar uma dica por ${M3_HINT_PRICE_BITS} Bits` : `Confirm: buy a hint for ${M3_HINT_PRICE_BITS} Bits`)
-                  : (isPt ? `Comprar uma dica por ${M3_HINT_PRICE_BITS} Bits` : `Buy a hint for ${M3_HINT_PRICE_BITS} Bits`);
-              return (
-                <button type="button" onClick={onHint} disabled={bloqueado} aria-label={nome} data-m3-hint-button data-m3-hint-mode={confirmBuy ? 'confirm' : act} style={{ ...sm2Button('outline', bloqueado), minHeight: 44, minWidth: 72, padding: '0 14px', gap: 6 }}>
-                  <Icon name={confirmBuy ? 'check' : 'help'} size={24} tone={confirmBuy ? 'primary' : 'ink'} />
-                  {act === 'use'
-                    ? <span className="sm2-num" data-m3-hints-left={hintsLeft}>{hintsLeft}</span>
-                    : <span data-m3-hint-price={M3_HINT_PRICE_BITS}><BitsAmount value={M3_HINT_PRICE_BITS} /></span>}
-                </button>
-              );
-            })()}
-          </div>
           <p className="sm2-sr-only" data-m3-next>
             {bitsNow >= M3_MAX_BITS
               ? (isPt ? 'Você chegou ao máximo de Bits desta rodada.' : 'You reached the Bits maximum for this round.')

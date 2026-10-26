@@ -328,3 +328,43 @@ describe('E2: duas setinhas trocadas entre si disparam juntas (linha E coluna)',
     for (let r = 0; r < M3_ROWS; r++) { expect(has(r, 3)).toBe(true); expect(has(r, 4)).toBe(true); }
   });
 });
+
+describe('N5: dois SUPERS trocados entre si se fundem e fazem a CRUZ (qualquer elemento)', () => {
+  const limpas = (b: Board, a: { r: number; c: number }, d: { r: number; c: number }) => {
+    const res = trySwap(b, a, d, mulberry32(11));
+    expect(res.ok).toBe(true);
+    if (!res.ok) return new Set<string>();
+    return new Set(res.steps[0].cleared.map(p => `${p.r},${p.c}`));
+  };
+  it('mesmo elemento e mesma seta (linha+linha): ainda é cruz inteira, não só a linha', () => {
+    const b = neutro();
+    b[2][2] = { k: 3, sp: 'row' }; b[3][2] = { k: 3, sp: 'row' };
+    const s = limpas(b, { r: 2, c: 2 }, { r: 3, c: 2 });
+    for (let c = 0; c < M3_COLS; c++) { expect(s.has(`2,${c}`)).toBe(true); expect(s.has(`3,${c}`)).toBe(true); }
+    for (let r = 0; r < M3_ROWS; r++) expect(s.has(`${r},2`)).toBe(true);
+  });
+  it('coluna+coluna, elementos diferentes, na quina do tabuleiro: linha e coluna inteiras', () => {
+    const b = neutro();
+    b[0][0] = { k: 1, sp: 'col' }; b[0][1] = { k: 4, sp: 'col' };
+    const s = limpas(b, { r: 0, c: 0 }, { r: 0, c: 1 });
+    for (let c = 0; c < M3_COLS; c++) expect(s.has(`0,${c}`)).toBe(true);
+    for (let r = 0; r < M3_ROWS; r++) { expect(s.has(`${r},0`)).toBe(true); expect(s.has(`${r},1`)).toBe(true); }
+  });
+  it('super + peça normal NÃO vira cruz: dispara só a sua linha (ou coluna) quando entra numa combinação', () => {
+    const b = neutro();
+    // linha de 3 que inclui o super 'col' na coluna 5: limpa a coluna 5, mas não a linha dele
+    b[3][3] = { k: 2 }; b[3][4] = { k: 2 }; b[3][5] = { k: 2, sp: 'col' };
+    const r = findRuns(b);
+    expect(r.length).toBe(1);
+    const res = resolveBoard(b, mulberry32(5));
+    const s = new Set(res.steps[0].cleared.map(p => `${p.r},${p.c}`));
+    for (let rr = 0; rr < M3_ROWS; rr++) expect(s.has(`${rr},5`)).toBe(true);
+    expect(s.has('3,0')).toBe(false);
+  });
+  it('um super só (sem par) trocado com peça normal sem formar linha não faz nada', () => {
+    const b = neutro();
+    b[3][3] = { k: 0, sp: 'row' };
+    const res = trySwap(b, { r: 3, c: 3 }, { r: 3, c: 4 }, mulberry32(3));
+    expect(res.ok && res.scored === false).toBe(true);
+  });
+});
