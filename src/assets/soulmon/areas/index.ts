@@ -48,6 +48,7 @@ export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, guerra: l
 import bgExploracao from './bg-exploracao.png';
 import bgJogos from './bg-jogos.png';
 import loteMasmorra from './lote-exploracao-masmorra.png';
+import loteJogosDungeon from './lote-jogos-dungeon.png';
 import lotePpt from './lote-jogos-ppt.png';
 // ⚠️ SEM CONSUMIDOR desde 30/09/2026: `lote-exploracao-dino.png` só emprestava a
 // arte ao Ateliê da Mente, que ganhou prédio próprio. O arquivo fica em disco
@@ -85,7 +86,7 @@ export const EXPLORACAO_LOT_ART = { passeio: lotePasseio, oficina: loteOficina, 
 // `mente` e `refugio`: prédios próprios desde 30/09/2026 (leva lotes-v2). 04/10/2026 (J5): o Refúgio
 // trocou a casinha de cogumelo PROVISÓRIA pela casa-gruta com cachoeira e lago (`entrada-dono/36-*`).
 // beta3 M3: o Refúgio foi para a Exploração; o Calabouço reusa a arte da Masmorra (provisória).
-export const JOGOS_LOT_ART = { salao: lotePpt, mente: loteMente, dungeon: loteMasmorra } as const;
+export const JOGOS_LOT_ART = { salao: lotePpt, mente: loteMente, dungeon: loteJogosDungeon } as const;
 
 // ── Guilda, Laboratório e Hall (29/09/2026) ────────────────────────────────
 // 🌙 Fundos 760×1344 do Hall e do Laboratório. 04/10/2026 (H18): REFEITOS na receita dos
