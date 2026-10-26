@@ -8444,11 +8444,19 @@ async function handleCommunity(context) {
     }
     return mine;
   }, "settleMatch");
+  const refundOpenDuel = /* @__PURE__ */ __name((myRank, pend) => {
+    const dayOf = /* @__PURE__ */ __name((d) => new Date(d).toISOString().slice(0, 10), "dayOf");
+    if (pend?.at && myRank.day === today2() && dayOf(pend.at) === myRank.day) myRank.matchesToday = Math.max(0, (myRank.matchesToday || 0) - 1);
+  }, "refundOpenDuel");
   const forfeitPending = /* @__PURE__ */ __name(async ({ id: id2, me, myRank }) => {
     const pend = myRank.pending;
     if (!pend) return false;
     myRank.pending = null;
     const opp = pend.oppSave ? await getProfile(env, pend.oppSave) : null;
+    if (!opp?.pvpEnabled || isHidden(opp)) {
+      refundOpenDuel(myRank, pend);
+      return true;
+    }
     await settleMatch({ id: id2, oppSave: pend.oppSave, me, opp, myRank, outcome: "loss", sides: pend.sides });
     return true;
   }, "forfeitPending");
@@ -8701,8 +8709,27 @@ async function handleCommunity(context) {
   });
   if (action === "match" && method === "POST") return withDuelLock(String(id), async () => {
     const ctx = await matchContext();
-    if (ctx.res) return ctx.res;
+    if (ctx.res) {
+      if (ctx.res.status === 404) {
+        const rec = await getRank(env, currentSeason(), id);
+        if (rec.pending && rec.pending.opp === body.opponentId) {
+          const pend2 = rec.pending;
+          rec.pending = null;
+          if (rec.day !== today2()) {
+            rec.day = today2();
+            rec.matchesToday = 0;
+            rec.pairs = {};
+          } else refundOpenDuel(rec, pend2);
+          await putRank(env, currentSeason(), id, rec);
+          return json3({ error: "opponent unavailable", cancelled: true, matchesLeft: Math.max(0, MATCHES_PER_DAY - (rec.matchesToday || 0)) }, 404);
+        }
+      }
+      return ctx.res;
+    }
     const { opponentId, oppSave, me, opp, myRank } = ctx;
+    if (!myRank.pending && myRank.last && body.seed !== void 0 && myRank.last.opp === opponentId && myRank.last.seed === body.seed) {
+      return json3({ ...myRank.last.res, replayed: true });
+    }
     const oppSpriteUrl = spriteUrlOrNull(opp.spriteUrl);
     const opponent = {
       name: opp.name,
@@ -8756,7 +8783,7 @@ async function handleCommunity(context) {
     const duel = simulateDuel({ me: sides.me, opp: sides.opp, seed, taps: body.taps ?? body.cheers });
     const outcome = duel.winner === "me" ? "win" : duel.winner === "opp" ? "loss" : "draw";
     const settled = await settleMatch({ id, oppSave, me, opp, myRank, outcome, sides });
-    return json3({
+    const resposta = {
       won: outcome === "win",
       draw: outcome === "draw",
       outcome,
@@ -8769,7 +8796,13 @@ async function handleCommunity(context) {
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
       opponent,
       duel: { events: duel.events, me: sides.me, opp: sides.opp }
-    });
+    };
+    if (open) {
+      const { duel: _d, ...compacto } = resposta;
+      myRank.last = { opp: opponentId, seed, res: compacto };
+      await putRank(env, currentSeason(), id, myRank);
+    }
+    return json3(resposta);
   });
   if ((action === "rank" || action === "seasonResult") && method === "GET") {
     const season = url.searchParams.get("season") || currentSeason();
@@ -12875,7 +12908,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-dnmGY3/functionsRoutes-0.7504960407300713.mjs
+// ../.wrangler/tmp/pages-lGHay8/functionsRoutes-0.1059410315830055.mjs
 var routes = [
   {
     routePath: "/api/account",
