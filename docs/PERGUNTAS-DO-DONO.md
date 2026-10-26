@@ -606,3 +606,10 @@ Decisões conservadoras tomadas pela orquestração; revisar:
 7. Passos: total na Home (`StepsTotalChip`) pronto mas não ligado ao CompanionHUD (outra frente mexia nele). Ligar?
 8. Passos: meta padrão 5.000 e a opção 7.000 virou 8.000; `connect-client 1.1.0-alpha10` (trocar por estável se a Play reclamar).
 9. Textos longos: ~44 trechos não encurtados (Match3Game, statTips da Home, aviso de IA com provedores) + textos longos fora da lista d72 em `src/data`/`utils`. Abrir lane própria?
+
+## Beta3 rodada 6 (26/10/2026)
+
+- Conquistas novas (14) entram só como reconhecimento, sem cenário/Resgatar (não há arte de fundo). Quer cenários para elas? (conservador: sem prêmio até haver arte)
+- Diária do Calabouço paga 1 `ore` (o prédio não tem material próprio). Outro material?
+- Casinha "Início" da Home e minimapa/exclamação seguem sem círculo (só perderam o glow); diálogos pequenos (RitualDialog, ModalSheet, cards dispensáveis) mantêm o ✕ fechar. Quer círculo também neles?
+- Diárias de Eco/Chuva só contam quando a partida rende pontos (Eco com 0 Bits ou Chuva < 100 não conta).
