@@ -47,7 +47,7 @@ import {
   getProfile, putProfile, pidSoLeitura, nickKey, claimNick,
 } from './_profile.js';
 import { secretEquals } from './metrics.js';
-import { ensureSimuladosDia, stripSimulated, isSimuladoId } from './_simulados.js';
+import { agendarSimuladosDia, stripSimulated, isSimuladoId } from './_simulados.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_honra.js';
@@ -329,7 +329,8 @@ export async function onRequest(context) {
 // só montagem). Aqui só se roteia, com o teto LEVE desta rota já cobrado.
 
 const SIM_ACTIONS = new Set(['players', 'player', 'opponents', 'rank', 'seasonResult', 'duelStart', 'match']);
-async function handleCommunity({ request, env }) {
+async function handleCommunity(context) {
+  const { request, env } = context;
   if (!kv(env)) return json({ error: 'Storage not bound' }, 500);
   const url = new URL(request.url);
   const action = url.searchParams.get('action');
@@ -348,7 +349,7 @@ async function handleCommunity({ request, env }) {
   const id = body.id || url.searchParams.get('id');
   // M11: diretório, oponentes, ranking e arena enxergam os simulados do dia (preguiçoso, idempotente, nunca lança;
   // no-op sem `SIMULADOS_ON`). Os placares por jogo ficam em `rankings.js`.
-  if (SIM_ACTIONS.has(String(action))) await ensureSimuladosDia(env);
+  if (SIM_ACTIONS.has(String(action))) await agendarSimuladosDia(context);
 
   /**
    * Autoriza o ATOR da requisição.
@@ -559,10 +560,12 @@ async function handleCommunity({ request, env }) {
   // ── Sugestões de nome por prefixo (só nomes do diretório público; nunca e-mail/id) ──
   if (action === 'names' && method === 'GET') {
     const prefixo = (url.searchParams.get('prefix') || '').normalize('NFKC').trim().toLowerCase().slice(0, 40);
-    if (!prefixo) return json({ names: [] });
+    // Enumeração: prefixo curto (1 letra) varreria o índice inteiro de apelidos — mínimo 2 caracteres.
+    if (prefixo.length < 2) return json({ names: [] });
     // Índice de apelidos (`nick:<minúsculas>`): TODO jogador com apelido entra, com ou sem PvP. Devolve só o apelido.
     const page = await kvOrThrow(env).list({ prefix: nickKey(prefixo).replace(/%[0-9A-F]{0,1}$/, ''), limit: 8 });
     const nomes = [];
+    // Teto de chaves lidas por chamada (cada uma custa 2 KV gets): o `limit: 8` acima já é o teto.
     for (const k of page.keys ?? []) {
       let n;
       try { n = decodeURIComponent(String(k.name).slice(5)); } catch { continue; }

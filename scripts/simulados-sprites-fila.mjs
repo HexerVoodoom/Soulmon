@@ -22,6 +22,22 @@ import { fileURLToPath } from 'node:url';
 import { SIMULADOS } from '../functions/api/_simulados.data.js';
 
 export const APP_URL_PADRAO = 'https://soulmon.mateus-sprnd.workers.dev';
+/** Hosts que podem receber o token admin (o do projeto, em wrangler.jsonc/docs). Qualquer outro é recusado. */
+export const HOSTS_PERMITIDOS = Object.freeze(['soulmon.mateus-sprnd.workers.dev']);
+
+/** `--url`: só https, sem credencial embutida, e só host da allowlist. Devolve a origem normalizada ou lança. */
+export function validarUrlBase(raw) {
+  let u;
+  try { u = new URL(String(raw)); } catch { throw new Error('--url inválida'); }
+  if (u.protocol !== 'https:') throw new Error('--url precisa ser https');
+  if (u.username || u.password) throw new Error('--url não pode ter credenciais');
+  if (!HOSTS_PERMITIDOS.includes(u.hostname)) throw new Error(`--url: host fora da allowlist (${HOSTS_PERMITIDOS.join(', ')})`);
+  return u.origin;
+}
+
+const WRANGLER_BIN = fileURLToPath(new URL('../node_modules/wrangler/bin/wrangler.js', import.meta.url));
+/** O id de sprite devolvido pelo servidor: `/api/sprite-image?k=<32 hex>` e nada mais (vai para o argv do wrangler). */
+export const SPRITE_URL_RE = /^\/api\/sprite-image\?k=[0-9a-f]{32}$/;
 const ELEMENTO_EN = {
   fogo: 'fire', vileza: 'venom and thorns', morte: 'bone and grave mist', sombra: 'shadow', vigor: 'raw vigor',
   marcial: 'martial arts', arcano: 'arcane runes', tempo: 'time and clockwork', espaco: 'warped space', gravidade: 'gravity',
@@ -39,10 +55,13 @@ export function promptDe(p) {
     + 'on a flat solid #00FF00 green background; the creature must contain no green and have no green fringe.';
 }
 
+/** Id de simulado (`sim_NNNN`) — vai para chave de KV e argv. */
+export const assertSimId = (id) => { if (!/^sim_\d{4}$/.test(id)) throw new Error(`id de simulado inválido: ${id}`); return id; };
+
 /** O plano da fila (puro, testável). `only` = lista de ids para restringir. */
 export function planejar(only = null) {
   return SIMULADOS.filter(p => !only || only.includes(p.id)).map(p => ({
-    id: p.id, formId: FORM_ID, prompt: promptDe(p), kvKey: `sim:sprite:${p.id}`,
+    id: assertSimId(p.id), formId: FORM_ID, prompt: promptDe(p), kvKey: `sim:sprite:${p.id}`,
   }));
 }
 
@@ -65,13 +84,14 @@ async function gerar(o, item, env) {
   if (r.status === 202) throw new Error('202 pending (tente de novo daqui a pouco)');
   if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
   const j = await r.json();
-  if (typeof j.image !== 'string' || !j.image.startsWith('/api/sprite-image?k=')) throw new Error('resposta sem URL de sprite');
+  if (typeof j.image !== 'string' || !SPRITE_URL_RE.test(j.image)) throw new Error('resposta sem URL de sprite válida (esperado /api/sprite-image?k=<32 hex>)');
   return j.image;
 }
 
 async function main() {
   const o = parseArgs(process.argv.slice(2));
   const fila = planejar(o.only);
+  if (o.run) o.url = validarUrlBase(o.url); // ANTES de qualquer fetch: o token admin só vai para host conhecido
   if (!o.run) {
     console.log(`DRY-RUN: ${fila.length} sprites seriam gerados (forma ${FORM_ID}) via ${o.url}/api/generate-sprite. Use --run para executar.`);
     for (const it of fila) console.log(`${it.id}  ->  ${it.kvKey}\n    ${it.prompt}`);
@@ -79,11 +99,14 @@ async function main() {
   }
   const falta = ['SIMULADOS_ID_TOKEN', 'SIMULADOS_ADMIN_SAVE_ID', 'SIMULADOS_KV_NAMESPACE_ID'].filter(k => !process.env[k]);
   if (falta.length) { console.error(`Defina: ${falta.join(', ')}`); process.exit(2); }
+  const ns = process.env.SIMULADOS_KV_NAMESPACE_ID;
+  if (!/^[0-9a-f]{32}$/.test(ns)) { console.error('SIMULADOS_KV_NAMESPACE_ID inválido (esperado 32 hex)'); process.exit(2); }
   let ok = 0;
   for (const it of fila) {
     try {
       const url = await gerar(o, it, process.env);
-      const put = spawnSync('npx', ['wrangler', 'kv', 'key', 'put', it.kvKey, url, '--namespace-id', process.env.SIMULADOS_KV_NAMESPACE_ID, '--remote'], { stdio: 'inherit', shell: true });
+      // sem shell, argv em array; wrangler via `node <bin>` (npx.cmd exigiria shell no Windows)
+      const put = spawnSync(process.execPath, [WRANGLER_BIN, 'kv', 'key', 'put', it.kvKey, url, '--namespace-id', ns, '--remote'], { stdio: 'inherit', shell: false });
       if (put.status !== 0) throw new Error('wrangler kv put falhou');
       ok++;
       console.log(`${it.id}: ok (${url})`);

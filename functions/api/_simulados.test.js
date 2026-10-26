@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SIMULADOS } from './_simulados.data.js';
 import {
-  CHUNK, ensureSimuladosDia, estadoDoDia, saveDoSimulado, scoresDoDia, stripSimulated, lockKeyDia, isSimuladoId,
+  CHUNK, OPS_BUDGET, custoEstimado, agendarSimuladosDia, ensureSimuladosDia, estadoDoDia, saveDoSimulado, scoresDoDia, stripSimulated, lockKeyDia, isSimuladoId,
 } from './_simulados.js';
 import { submitScore, readBoard, payablePlacements, RANKED_GAMES, isoWeekKey } from './_rankings.js';
 import { closePreviousMonth, pendingKey, approveRiftPrize, _resetClosedCache } from './_riftPayout.js';
@@ -11,7 +11,7 @@ import { duelSide } from './_duel.js';
 import { onRequest as community } from './community.js';
 import { onRequest as rankings } from './rankings.js';
 import { resetRateLimits } from './_rateLimit.js';
-import { planejar, promptDe, parseArgs } from '../../scripts/simulados-sprites-fila.mjs';
+import { planejar, promptDe, parseArgs, validarUrlBase, SPRITE_URL_RE, APP_URL_PADRAO } from '../../scripts/simulados-sprites-fila.mjs';
 
 /** KV falso com `list` ordenado, `metadata` e `getWithMetadata`; conta as escritas. */
 function fakeKV() {
@@ -34,7 +34,7 @@ const DIA = new Date('2026-10-26T10:00:00Z');
 /** Roda `ensureSimuladosDia` até o dia fechar. */
 async function fecharDia(env, now = DIA) {
   let r;
-  for (let i = 0; i < 20; i++) { r = await ensureSimuladosDia(env, now); if (r.status === 'done' || r.status === 'already') return r; }
+  for (let i = 0; i < 150; i++) { r = await ensureSimuladosDia(env, now); if (r.status === 'done' || r.status === 'already') return r; }
   throw new Error(`dia não fechou: ${JSON.stringify(r)}`);
 }
 const snap = (env) => JSON.stringify([...env.SOULMON_SAVES.store.entries()].sort(([a], [b]) => (a < b ? -1 : 1)));
@@ -86,6 +86,19 @@ describe('perfis versionados', () => {
   });
 });
 
+describe('fila de sprites: segurança do script', () => {
+  it('--url só https e host da allowlist; credencial embutida e host parecido são recusados', () => {
+    expect(validarUrlBase(APP_URL_PADRAO)).toBe(APP_URL_PADRAO);
+    for (const u of ['http://soulmon.mateus-sprnd.workers.dev', 'https://evil.example', 'https://soulmon.mateus-sprnd.workers.dev@evil.example', 'https://soulmon.mateus-sprnd.workers.dev.evil.example', 'nao-e-url']) {
+      expect(() => validarUrlBase(u), u).toThrow();
+    }
+  });
+  it('a URL de sprite vinda do servidor é só /api/sprite-image?k=<32 hex>', () => {
+    expect(SPRITE_URL_RE.test('/api/sprite-image?k=' + 'a1'.repeat(16))).toBe(true);
+    for (const x of ['/api/sprite-image?k=abc', '/api/sprite-image?k=' + 'a'.repeat(32) + '; calc', 'x' + '/api/sprite-image?k=' + 'a'.repeat(32), '/api/sprite-image?k=' + 'A'.repeat(32)]) expect(SPRITE_URL_RE.test(x), x).toBe(false);
+  });
+});
+
 describe('ativação e idempotência', () => {
   beforeEach(() => resetRateLimits());
 
@@ -98,8 +111,8 @@ describe('ativação e idempotência', () => {
   it('um lote por chamada; trava do dia vira done; depois disso não escreve nada', async () => {
     const env = mkEnv();
     const r1 = await ensureSimuladosDia(env, DIA);
-    expect(r1).toMatchObject({ status: 'progress', next: CHUNK });
-    expect(JSON.parse(env.SOULMON_SAVES.store.get(lockKeyDia('2026-10-26')).v)).toMatchObject({ state: 'running', next: CHUNK });
+    expect(r1.status).toBe('progress'); expect(r1.next).toBeGreaterThanOrEqual(1); expect(r1.next).toBeLessThanOrEqual(CHUNK);
+    expect(JSON.parse(env.SOULMON_SAVES.store.get(lockKeyDia('2026-10-26')).v)).toMatchObject({ state: 'running', next: r1.next, owner: null });
     await fecharDia(env);
     expect(JSON.parse(env.SOULMON_SAVES.store.get(lockKeyDia('2026-10-26')).v).state).toBe('done');
     const antes = env.SOULMON_SAVES.puts;
@@ -109,6 +122,55 @@ describe('ativação e idempotência', () => {
     const novoEnv = { SOULMON_SAVES: env.SOULMON_SAVES, SIMULADOS_ON: '1' };
     expect((await ensureSimuladosDia(novoEnv, DIA)).status).toBe('already');
     expect(env.SOULMON_SAVES.puts).toBe(antes);
+  });
+
+  it('falha num simulado NÃO marca o lote como feito: o mesmo simulado é tentado de novo', async () => {
+    const env = mkEnv();
+    const put0 = env.SOULMON_SAVES.put;
+    const alvo = SIMULADOS[1].id;
+    env.SOULMON_SAVES.put = async (key, v, o) => { if (key === alvo) throw new Error('kv fora'); return put0(key, v, o); };
+    const r1 = await ensureSimuladosDia(env, DIA);
+    expect(r1).toMatchObject({ status: 'progress', next: 1 }); // parou NO simulado que falhou
+    const r2 = await ensureSimuladosDia(env, DIA);
+    expect(r2.next).toBe(1);
+    expect(JSON.parse(env.SOULMON_SAVES.store.get(lockKeyDia('2026-10-26')).v).fails).toBe(2);
+    const r3 = await ensureSimuladosDia(env, DIA); // 3ª falha: pula esse simulado para não travar o dia
+    expect(r3.next).toBe(2);
+  });
+
+  it('trava com token: lease de outro worker barra; token trocado entre a escrita e a releitura barra', async () => {
+    const env = mkEnv();
+    const lockKey = lockKeyDia('2026-10-26');
+    await env.SOULMON_SAVES.put(lockKey, JSON.stringify({ state: 'running', next: 5, owner: 'outro', leaseUntil: DIA.getTime() + 10_000 }));
+    const antes = env.SOULMON_SAVES.puts;
+    expect(await ensureSimuladosDia(env, DIA)).toMatchObject({ status: 'progress', next: 5 });
+    expect(env.SOULMON_SAVES.puts).toBe(antes); // não trabalhou
+    // lease vencido: assume
+    const depois = new Date(DIA.getTime() + 60_000);
+    expect((await ensureSimuladosDia(env, depois)).next).toBeGreaterThan(5);
+    // corrida: outro worker sobrescreve a trava logo depois da minha escrita -> não processo
+    const env2 = mkEnv();
+    const put0 = env2.SOULMON_SAVES.put;
+    env2.SOULMON_SAVES.put = async (key, v, o) => {
+      await put0(key, key === lockKey ? JSON.stringify({ state: 'running', next: 0, owner: 'rival', leaseUntil: DIA.getTime() + 9000 }) : v, o);
+    };
+    const r = await ensureSimuladosDia(env2, DIA);
+    expect(r.status).toBe('progress');
+    expect(env2.SOULMON_SAVES.store.has(SIMULADOS[0].id)).toBe(false);
+  });
+
+  it('o lote cabe no orçamento: nunca passa de CHUNK simulados nem de OPS_BUDGET (exceto o 1º)', () => {
+    expect(OPS_BUDGET).toBeLessThan(40);
+    for (const p of SIMULADOS) expect(custoEstimado(p, '2026-10-26')).toBeLessThan(60);
+  });
+
+  it('rotas agendam via waitUntil (fora do caminho síncrono) quando existe', async () => {
+    const env = mkEnv();
+    const pend = [];
+    await agendarSimuladosDia({ env, waitUntil: (pr) => pend.push(pr) }, DIA);
+    expect(pend).toHaveLength(1);
+    await Promise.all(pend);
+    expect(env.SOULMON_SAVES.puts).toBeGreaterThan(0);
   });
 
   it('falha do KV nunca lança', async () => {

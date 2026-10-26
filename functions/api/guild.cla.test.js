@@ -101,11 +101,10 @@ describe('rotas do clã: plantio', () => {
     expect((await post(e, 'claRegar', { id: A })).status).toBe(404);
     expect((await post(e, 'claPlantar', { id: A })).json.plantio).toMatchObject({ planted: true, canPlant: false });
     expect((await post(e, 'claPlantar', { id: B })).status).toBe(409);
-    // D2: sem sorteio do dia, regar e proteger são recusados com erro claro.
-    const sem = await post(e, 'claRegar', { id: A });
-    expect(sem.status).toBe(409);
-    expect(sem.json.error).toBe('no draw');
-    expect((await post(e, 'claProteger', { id: A })).json.error).toBe('no draw');
+    // Cliente antigo (sem claSortear): regar sorteia internamente e segue (nada de 409 'no draw'); depois vale 1 ação/dia.
+    const sem = await post(e, 'claRegar', { id: B });
+    expect(sem.status).toBe(200);
+    expect((await post(e, 'claProteger', { id: B })).json.error).toBe('no draw');
     const kA = (await post(e, 'claSortear', { id: A })).json.task;
     const certa = kA === 'water' ? 'claRegar' : 'claProteger', errada = kA === 'water' ? 'claProteger' : 'claRegar';
     expect((await post(e, errada, { id: A })).status).toBe(409);
