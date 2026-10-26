@@ -1765,7 +1765,10 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 **Dono de:** a tela de ranking de um jogo: a FAIXA vem antes da lista; com `score`, envia o resultado uma vez ao montar; falha de rede é silenciosa. **Exports:** `RankingPanel({ game, saveId, language, score?, period? })`. **Usa:** `src/utils/rankings.ts`.
 
 ### `src/components/RogueDungeon.tsx`
-**Dono de:** a tela do prédio `jogos.dungeon` (Calabouço, M7): escolher 1 de 3 caminhos, resolver o desafio, escolher 1 de 3 bônus; arte provisória. Regras em `utils/rogueDungeon.ts`. Não é o Endless Rift (`DungeonGame.tsx`). **Exports:** `RogueDungeonProps`, `RogueDungeon`.
+**Dono de:** a tela do prédio `jogos.dungeon` (Calabouço, M7 + N7): um MAPA em tela cheia (cenário de `DUNGEON_SCENES`, 3 nós = os 3 andares numa trilha SVG, o Soulmon no nó atual) com a folha de baixo para escolher 1 de 3 caminhos e 1 de 3 bônus; o combate é uma luta visível (`RogueFight`) e os demais desafios são os jogos reais em modo desafio. Regras em `utils/rogueDungeon.ts`. Não é o Endless Rift (`DungeonGame.tsx`). **Exports:** `RogueDungeonProps`, `RogueDungeon`. **Usa:** `RogueFight`.
+
+### `src/components/RogueFight.tsx`
+**Dono de:** a luta do Calabouço em cena (N7): a `BattleStage` com o núcleo v3 decidindo pela semente de `rogueFightSetup`, relógio de `useGroupBattle` com especial automático, avanço rápido 1×/3× e o cartão de fim ("Continuar"). Sair no meio conta como derrota. Superfície muda (nenhum som novo). **Exports:** `RogueFightProps`, `RogueFight`. **Chamado por:** `RogueDungeon`.
 
 ### `src/components/SoulBarrage.tsx`
 **Dono de:** a tela do Soul Barrage (4º card do Salão de Jogos, M9): desenha o campo e traduz toque em `targetX`; a regra mora em `utils/soulBarrage.ts`. Usa o `RankingPanel`. **Exports:** `SoulBarrage`.

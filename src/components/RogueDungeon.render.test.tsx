@@ -62,6 +62,26 @@ describe('RogueDungeon', () => {
     expect(paths[0].getAttribute('data-rogue-path')).toBe('combat');
     expect(container.textContent).toContain('Combate');
   });
+  it('N7: o Calabouço é um MAPA com os 3 andares como nós e a trilha em SVG; o nó atual leva o Soulmon', () => {
+    const saved: RogueRun = { ...emptyRun(D), step: 9 };
+    const { container } = render(<RogueDungeon language="en-US" todayKey={D} saved={saved} onChange={() => {}} combatant={combatant} onClose={() => {}} />);
+    expect(container.querySelector('[data-rogue-map] svg path[data-rogue-trail-walked]')).not.toBeNull();
+    const nodes = [...container.querySelectorAll('[data-rogue-node]')].map(n => n.getAttribute('data-rogue-node-state'));
+    expect(nodes).toEqual(['done', 'current', 'locked']);
+    expect(container.querySelectorAll('[data-rogue-pet]')).toHaveLength(1);
+    expect(container.querySelector('[data-rogue-node="2"] [data-rogue-pet]')).not.toBeNull();
+    expect(container.querySelector('[data-rogue-close]')).not.toBeNull();
+    expect(container.querySelector('[data-rogue-list]')).toBeNull();
+  });
+  it('N7: escolher o combate abre a LUTA VISÍVEL (BattleStage) e não resolve o passo na hora', async () => {
+    const onChange = vi.fn();
+    const saved: RogueRun = { ...emptyRun(D), step: 2 };
+    const { container } = render(<RogueDungeon language="en-US" todayKey={D} saved={saved} onChange={onChange} combatant={combatant} />);
+    fireEvent.click(container.querySelector('[data-rogue-path="combat"]') as HTMLElement);
+    await waitFor(() => expect(container.querySelector('[data-rogue-fight]')).not.toBeNull(), { timeout: 40000 });
+    expect(onChange).not.toHaveBeenCalled();
+    expect(container.querySelector('[data-rogue-sheet]')).toBeNull();
+  }, 60000);
   it('bônus pendente mostra 3 escolhas; outro dia ignora a incursão antiga', () => {
     const saved: RogueRun = { ...emptyRun(D), step: 1, won: 1, bonusPending: true };
     const a = render(<RogueDungeon language="en-US" todayKey={D} saved={saved} onChange={() => {}} combatant={combatant} />);

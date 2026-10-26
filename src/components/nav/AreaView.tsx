@@ -374,6 +374,7 @@ export function AreaView(props: AreaViewProps) {
     );
   }
 
+  const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setGame(g); };
   /** A Fenda Sem Fim (a antiga Masmorra): mora na Arena desde beta3 N10; o jogo abre em tela cheia sobre a cena da área. */
   const renderMasmorra = () => {
     const { play } = props;
@@ -406,7 +407,6 @@ export function AreaView(props: AreaViewProps) {
   };
 
   if (area === 'arena') {
-    const startFenda = () => { if (props.wakeGuard?.('masmorra')) return; setSheet(null); setGame('masmorra'); };
     const lots = arenaLots(language);
     const open = lots.find(l => l.id === sheet) ?? null;
     return (
@@ -432,7 +432,7 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'guerra' && (
               <GuildSheet room="guerra" language={language} {...props.guild} />
             )}
-            {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={props.play.minigameBitsToday} onStart={() => (props.ocupado?.missaoFora ? props.ocupado.onBusy('masmorra-em-missao') : startFenda())} />}
+            {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={props.play.minigameBitsToday} onStart={() => (props.ocupado?.missaoFora ? props.ocupado.onBusy('masmorra-em-missao') : start('masmorra'))} />}
           </Suspense>
         </AreaSheet>
         {game === 'masmorra' && (
@@ -461,7 +461,6 @@ export function AreaView(props: AreaViewProps) {
   }
 
   if (area === 'exploracao' || area === 'jogos') {
-    const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setGame(g); };
     const exitGame = () => setGame(null);
     const lots: AreaLot[] = gated(area === 'exploracao'
       ? exploracaoLots(language).map(l => ({
@@ -470,6 +469,8 @@ export function AreaView(props: AreaViewProps) {
       : jogosLots(language).map(l => ({ ...l, art: JOGOS_LOT_ART[l.id], onOpen: () => enter(l.id) })));
     const open = lots.find(l => l.id === sheet) ?? null;
     const { play } = props;
+    /** O Calabouço (jogos.dungeon) com a incursão no save abre em TELA CHEIA, sem a folha (N7). */
+    const rogueFull = area === 'jogos' && open?.id === 'dungeon' && !!play.rogue;
     const base = {
       evolutionStage: props.evolutionStage,
       demoCharacterId: props.demoCharacterId,
@@ -478,7 +479,7 @@ export function AreaView(props: AreaViewProps) {
     };
     return (
       <AreaScene areaId={area} language={language} background={PLAY_AREA_BG[area]} lots={lots} notice={lockNote}>
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull} onClose={close}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'passeio' && (
               <PasseioSheet
@@ -498,11 +499,17 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
-            {open?.id === 'dungeon' && (play.rogue
-              ? <RogueDungeon language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} />
-              : <RogueDungeonPlaceholder language={language} />)}
+            {open?.id === 'dungeon' && !play.rogue && <RogueDungeonPlaceholder language={language} />}
           </Suspense>
         </AreaSheet>
+        {/* beta3 N7: o Calabouço é um MAPA em tela cheia (não uma folha); fecha de volta à área. */}
+        {rogueFull && play.rogue && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
+            <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
+              <RogueDungeon language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} skills={props.skills} onClose={close} />
+            </Suspense>
+          </div>
+        )}
         {game && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
           <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
