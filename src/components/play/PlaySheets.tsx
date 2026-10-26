@@ -269,10 +269,10 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
               ? `Contra o seu Soulmon — quem vencer ${WINS_NEEDED} rodadas leva a partida`
               : `Against your Soulmon — first to ${WINS_NEEDED} rounds takes the match`}
           </InfoTipSection>
-          <InfoTipSection title="Soul Barrage">
+          <InfoTipSection title={isPt ? 'Chuva de Almas' : 'Soul Barrage'}>
             {isPt
-              ? `Arraste para desviar dos tiros: o seu Soulmon atira sozinho · cada ${BARRAGE_POINTS_PER_BIT} pontos vira 1 Bit`
-              : `Drag to dodge the shots: your Soulmon fires on its own · every ${BARRAGE_POINTS_PER_BIT} points becomes 1 Bit`}
+              ? `Arraste (ou use as setas) para desviar dos tiros: o seu Soulmon atira sozinho · cada ${BARRAGE_POINTS_PER_BIT} pontos vira 1 Bit`
+              : `Drag (or use the arrow keys) to dodge the shots: your Soulmon fires on its own · every ${BARRAGE_POINTS_PER_BIT} points becomes 1 Bit`}
           </InfoTipSection>
           <InfoTipSection title={isPt ? 'Combina 3' : 'Match 3'} last>
             {isPt
@@ -306,7 +306,7 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
         <li style={sheetCard}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <PixelIcon src={iconCorrida} size={32} style={{ flexShrink: 0 }} />
-            <p style={sheetCardTitle}>Soul Barrage</p>
+            <p style={sheetCardTitle}>{isPt ? 'Chuva de Almas' : 'Soul Barrage'}</p>
           </div>
           <div data-barrage style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <button type="button" data-barrage-open onClick={() => onStart('barrage')} style={cta}>
