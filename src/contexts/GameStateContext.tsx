@@ -73,6 +73,7 @@ import type { CrossingsState } from '../types/travessias';
 import type { WeeklyMissionProgress } from '../utils/weeklyMissions';
 import { sanitizeBuildingQuests, type BuildingQuestState } from '../utils/buildingQuests';
 import { sanitizeMissionsClaimed } from '../utils/missions';
+import { sanitizeFeats, type Feats } from '../utils/feats';
 import { sanitizeDailyMissions, sanitizeFirstTimes, seedFirstTimes, FIRST_TIMES_EMPTY, type DailyMissionsState, type FirstTimesState } from '../utils/dailyMissions';
 import { sanitizeBuildingIntrosSeen, seedBuildingIntrosSeen } from '../utils/buildingIntro';
 import { sanitizeMindGameTutorials, type MindGameTutorials } from '../utils/mente/mindTutorials';
@@ -512,6 +513,8 @@ export interface GameState {
   firstTimes?: FirstTimesState;
   /** Conquistas (`MISSIONS`) já RESGATADAS (14/10/2026, REGISTRO §56): resgatar libera a COMPRA do item no Mercado, nunca o concede. Ausente = save anterior; o `App` migra marcando as já cumpridas (ninguém perde acesso). */
   missionsClaimed?: string[];
+  /** Feitos vitalícios dos recursos (rodada 6, `utils/feats.ts`): alimentam as conquistas de reconhecimento. Ausente = zero. */
+  feats?: Feats;
   /** Apresentações de prédio já vistas (08/10/2026, `utils/buildingIntro.ts`): ids `<área>.<lote>`. O NPC se apresenta UMA vez por
    *  prédio, quando o Vínculo o abre. Ausente/lixo na carga = semeado com tudo que já está aberto no Vínculo daquela carga —
    *  save existente nunca re-dispara apresentação do que o jogador já usa. */
@@ -1384,6 +1387,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         buildingQuests: sanitizeBuildingQuests(loadedState.buildingQuests),
         dailyMissions: sanitizeDailyMissions(loadedState.dailyMissions),
         missionsClaimed: sanitizeMissionsClaimed(loadedState.missionsClaimed),
+        feats: sanitizeFeats(loadedState.feats),
         firstTimes: sanitizeFirstTimes(loadedState.firstTimes)
           ?? (num(loadedState.totalXP, 0) > 0 ? seedFirstTimes(bondLevelFor(num(loadedState.totalXP, 0))) : FIRST_TIMES_EMPTY),
         buildingIntrosSeen: sanitizeBuildingIntrosSeen(loadedState.buildingIntrosSeen, bondLevelFor(num(loadedState.totalXP, 0))),

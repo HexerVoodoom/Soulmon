@@ -44,9 +44,25 @@ describe('missions — progress', () => {
   });
 });
 
+describe('missions — conquistas de reconhecimento (rodada 6)', () => {
+  it('sem cenário não pede resgate, não acende o "?" e usa só contadores do save', () => {
+    const novas = MISSIONS.filter(m => !m.bgReward);
+    expect(novas.length).toBeGreaterThanOrEqual(10);
+    const cheio = getMissionProgress({ ...base, dungeonKills: 9999, dungeonRunsCompleted: 99, feats: { barrageBest: 5000, zipSolved: 99, patchesSolved: 99, rogueFloors: 99, dinoNormalBest: 9999, dinoDashSmashed: 99, pptNormalWins: 99, clanShopBuys: 9, regens: 2, focusPrepared: 99, rankTier: 4 } });
+    for (const m of novas) expect(cheio[m.id], m.id).toBe(m.target);
+    expect(hasUnclaimedMission(cheio, [...MISSIONS.filter(m => m.bgReward).map(m => m.id)])).toBe(false);
+    expect(completedMissionIds(cheio).every(id => !!MISSIONS.find(m => m.id === id)!.bgReward)).toBe(true);
+  });
+  it('save antigo (sem feats) = tudo zero nas novas; voz sem cobrança nem contagem de tarefas', () => {
+    const p = getMissionProgress(base);
+    for (const m of MISSIONS.filter(x => !x.bgReward && !/rift/.test(x.id))) expect(p[m.id], m.id).toBe(0);
+    for (const m of MISSIONS) expect(`${m.namePt} ${m.descPt} ${m.nameEn} ${m.descEn}`).not.toMatch(/tarefa|task|streak|sequência|perder|lose|não esqueça/i);
+  });
+});
+
 describe('missions — shop unlock gating', () => {
   it('every mission unlocks a distinct shop item, with CSS defined for bg rewards', () => {
-    const rewards = MISSIONS.map(m => m.bgReward);
+    const rewards = MISSIONS.map(m => m.bgReward).filter((x): x is string => !!x);
     expect(new Set(rewards).size).toBe(rewards.length);
     for (const id of rewards) {
       const item = SHOP_ITEMS.find(i => i.id === id);

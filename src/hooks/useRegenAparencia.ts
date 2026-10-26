@@ -19,6 +19,7 @@ import {
   type RegenAvailability, type RegenOutcome,
 } from '../utils/spriteRegen';
 import { fetchEntitlement } from '../utils/entitlements';
+import { emitFeat } from '../utils/feats';
 
 export type RegenWhy = Extract<RegenOutcome, { kind: 'not-charged' }>['why'];
 
@@ -113,6 +114,7 @@ export function useRegenAparencia(args: UseRegenAparenciaArgs): RegenAparencia {
           a.formId,
           mes,
         ));
+        emitFeat('regens');
         if (typeof res.credits === 'number') argsRef.current.onCredits(res.credits);
         else void fetchEntitlement().then(e => { if (e) argsRef.current.onCredits(e.credits); });
       } catch (err) {

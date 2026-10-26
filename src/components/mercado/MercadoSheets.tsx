@@ -285,7 +285,7 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
       <ul style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-3, 12px)', listStyle: 'none', margin: 0, padding: 0 }}>
         {list.map(m => {
           const done = isMissionComplete(m.id, missionProgress);
-          const resgatada = done && (claimed === undefined || claimed.includes(m.id));
+          const resgatada = done && (!m.bgReward || claimed === undefined || claimed.includes(m.id));
           const go = resolveGo(nav, achievementTarget(m.category), language);
           const cur = Math.min(missionProgress[m.id] ?? 0, m.target);
           const reward = SHOP_ITEMS.find(i => i.id === m.bgReward);

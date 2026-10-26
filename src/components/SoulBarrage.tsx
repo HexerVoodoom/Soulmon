@@ -15,6 +15,7 @@ import {
   FIELD_W, FIELD_H, PLAYER_Y, PLAYER_SPEED, PLAYER_SIZE, SHOT_R, SHOT_DRAW, BARRAGE_ELEMENT, BARRAGE_POINTS_PER_BIT,
   newBarrage, stepBarrage, barrageBits, type BarrageState,
 } from '../utils/soulBarrage';
+import { emitFeat } from '../utils/feats';
 
 /**
  * Soul Barrage (EN) / Chuva de Almas (PT) — bullet hell vertical do Salão de Jogos (BETA3 M9).
@@ -197,6 +198,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       setFinalScore(score);
       setEarned(pts);
       if (pts > 0) onEarnRef.current(pts);
+      emitFeat('barrageBest', Math.floor(score));
       const nb = Math.max(bestRef.current, score);
       writeLocal(STORAGE_KEYS.BARRAGE_BEST, String(nb));
       setBest(nb);
