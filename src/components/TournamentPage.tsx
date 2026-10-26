@@ -58,7 +58,7 @@ import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
 import { TOURNAMENT_LADDER, getTierStanding, resolveSeasonPlace } from '../utils/tournamentTiers';
 import { availableFrames, resolveEquippedFrame, type FrameContext } from '../utils/frames';
-import { TOURNAMENT_NPCS, npcSide, type TournamentNpc } from '../utils/tournamentNpcs';
+import { TOURNAMENT_NPCS, npcSide, tournamentNpcSprite, type TournamentNpc } from '../utils/tournamentNpcs';
 import { getSpriteForStage } from '../utils/sprites';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
@@ -504,7 +504,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         opp={training.opp}
         seed={training.seed}
         petSprite={getSpriteForStage(petStage, petLine, 256)}
-        oppSprite={training.npc ? getSpriteForStage(petStage, training.npc.starter, 256) : getSpriteForStage(petStage, petLine, 256)}
+        oppSprite={training.npc ? tournamentNpcSprite(training.npc, petStage) : getSpriteForStage(petStage, petLine, 256)}
         oppElement={training.npc ? visualElementFor(training.npc.id) : undefined}
         petStage={petStage}
         skills={skills}
@@ -655,7 +655,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           {opponents?.length === 0 && !loadFailed && TOURNAMENT_NPCS.map(n => (
             <div key={n.id} data-torneio-npc={n.id} style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', minHeight: 56 }}>
               <MiniGlass size={64}>
-                <img src={getSpriteForStage(petStage, n.starter, 256)} alt="" width={64} height={64} style={{ width: 64, height: 64, objectFit: 'contain', display: 'block', imageRendering: 'pixelated' }} />
+                <img src={tournamentNpcSprite(n, petStage)} alt="" width={64} height={64} style={{ width: 64, height: 64, objectFit: 'contain', display: 'block', imageRendering: 'pixelated' }} />
               </MiniGlass>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ ...sm2Text, margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>

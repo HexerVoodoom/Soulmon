@@ -408,3 +408,8 @@ Fonte: `D:/Soulmon/_gemini_out/w5-arte-20261019/<lote>/{raw,final}` (Higgsfield 
 - **W13 (20/10/2026) — REGISTRO §142:** `icons/mood/mood-{1-rough..5-great}.png` (`src/assets/icons/mood/`, 128², alfa real) RECOLORIDOS por `tools/mood-tint.py` (fonte: originais em `_gemini_out/w5-arte-20261019/L6/final/`; só matiz/saturação/brilho do preenchimento; contorno e alfa intactos); prévias `previas/w13-humor.png` e `w13-laboratorio*.png`.
 
 - 20/10/2026 (humor): os 5 icones de humor (`src/assets/icons/mood/mood-N-*.png`, 128 px, alfa real) sao a ARTE ENVIADA PELO DONO (gotas em pixel art), fatiada por `tools/mood-dono.py` (idempotente; original em D:/Soulmon/_gemini_out/w13-humor-dono/emotions-original.png). Substitui o tingimento da W13 (`tools/mood-tint.py`, desativado) e a arte L6 de humor.
+
+
+## Soulmons PRÓPRIOS dos desafiantes NPC do Torneio (26/10/2026) — PARCIAL
+
+Gerados pelo caminho real do app (prompt do `composeSpritePromptVPet` via `generateOracleWithFamilies` + linha final "Important: use the exact same style as the references." → Higgsfield `gpt_image_2` (alpha), chroma do prompt, recorte pelo `functions/api/_chroma.js`, 256²). **Só 1 de 3 saiu:** `src/assets/soulmon/desafiantes/soulmon-espina-rookie.png` (forma rookie da Espina). Os créditos do Higgsfield acabaram (saldo 0,40 cr, cada imagem custa 0,5): Quartzo e Maré, e as demais formas, ficam no `starter` da demo (`tournamentNpcSprite`) e voltam para `docs/ASSETS-A-GERAR.md`. A arte olha para a DIREITA (fora de `LEFT_FACING_LINES`); o `BattleStage` espelha o oponente sozinho. Prompts usados: `E:/Soulmon-assets/beta3-geradas/torneio-npcs/out/prompts.txt`.

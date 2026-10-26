@@ -217,3 +217,6 @@ Custo: usar a tabela de `PROMPTS-BETA3.md` §0 (4 cr por imagem 1k high medido; 
 - `npcs-pagina-1.png` (3.428.484), `npcs-pagina-2.png` (3.362.478), `npcs-pagina-3.png` (2.117.003)
 
 Referências de estilo para os prompts R4: `E:/Soulmon-assets/higgsfield-banco/_meta/ref-2026-09-23/referencias/` (52 arquivos; `ref_1c3efe44.png` confirmado) e `E:/Soulmon-assets/higgsfield-banco/_meta/ref-2026-09-23/folha-referencias.png`. Atenção: `PROMPTS-BETA3.md` P1-08 e P2-02 citam o caminho sem `referencias/` (errado).
+
+
+- **Soulmons dos desafiantes do Torneio**: só a Espina rookie existe (26/10/2026); faltam Quartzo e Maré e as demais formas (créditos do Higgsfield esgotados). Reserva = starter da demo.

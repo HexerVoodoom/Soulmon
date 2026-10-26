@@ -7,7 +7,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import { TournamentPage } from './TournamentPage';
 import { xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
-import { TOURNAMENT_NPCS } from '../utils/tournamentNpcs';
+import { TOURNAMENT_NPCS, TOURNAMENT_NPC_ART, tournamentNpcSprite } from '../utils/tournamentNpcs';
 
 const saveId = 'a'.repeat(32);
 const base = {
@@ -37,6 +37,10 @@ describe('R8 — desafiantes NPC quando não há oponentes', () => {
     render(<TournamentPage {...base} onEarnEmblems={onEarn} onMatchPlayed={onPlayed} />);
     await waitFor(() => expect(document.querySelectorAll('[data-torneio-npc]').length).toBe(TOURNAMENT_NPCS.length));
     expect(screen.queryByText(/Come back later/)).toBeNull();
+    // cartão = luta: o cartão mostra o Soulmon PRÓPRIO do desafiante (mesma função da luta, `tournamentNpcSprite`)
+    const srcCard = document.querySelector(`[data-torneio-npc="${TOURNAMENT_NPCS[0].id}"] img`)!.getAttribute('src');
+    expect(srcCard).toBe(tournamentNpcSprite(TOURNAMENT_NPCS[0], 'rookie'));
+    expect(srcCard).toBe(TOURNAMENT_NPC_ART[TOURNAMENT_NPCS[0].id].rookie);
     const antes = calls.length;
     fireEvent.click(screen.getByRole('button', { name: new RegExp(`challenge ${TOURNAMENT_NPCS[0].nameEn} \\(training`) }));
     // a luta abre (DuelScreen) sem nenhuma chamada nova — nada de `duelStart`/`match`
