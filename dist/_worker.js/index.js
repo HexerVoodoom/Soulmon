@@ -5553,7 +5553,7 @@ var KNOWLEDGE = [
   { "id": "termo-plaquinha-da-masmorra", "t": "Plaquinha da masmorra", "x": 'O aviso "Estou na masmorra, volto logo" que fica no lugar do Soulmon na Home enquanto ele est\xE1 descendo sozinho. Tocar nela abre a op\xE7\xE3o de retir\xE1-lo da masmorra. Nunca cobra nada de voc\xEA.' },
   { "id": "termo-avanco-rapido", "t": "Avan\xE7o r\xE1pido", "x": "O bot\xE3o 1\xD7, 2\xD7 ou 3\xD7 no canto de baixo da luta da masmorra. S\xF3 deixa a cena mais r\xE1pida; o resultado da luta \xE9 o mesmo em qualquer velocidade." },
   { "id": "termo-perfil", "t": "Perfil", "x": "O pr\xE9dio do Laborat\xF3rio (V\xEDnculo 2) que mostra, em duas cartas curtas e sem pontua\xE7\xE3o, quem o Soulmon \xE9 (personalidade, atributo principal, equipamento do Soulsmith) e como luta (elemento, ataque, especial). L\xEA o que o app j\xE1 sabe; nunca inventa. N\xE3o confundir com o perfil da PESSOA (ProfileEditor)." },
-  { "id": "termo-combina-3", "t": "Combina 3", "x": "O jogo de combinar pe\xE7as do Sal\xE3o de Jogos: troque duas pe\xE7as vizinhas (a troca vale pontue ou n\xE3o, e gasta 1 movimento) para formar linhas de 3 ou mais elementos iguais. Desde 18/10/2026 \xE9 um COMBATE: cada linha \xE9 um golpe daquele elemento no inimigo ativo de um time de 3 Soulmon da fenda, e depois de cada troca o inimigo ativo responde;" },
+  { "id": "termo-elemental-fusion", "t": "Elemental Fusion", "x": "O jogo de combinar pe\xE7as do Sal\xE3o de Jogos: troque duas pe\xE7as vizinhas (a troca vale pontue ou n\xE3o, e gasta 1 movimento) para formar linhas de 3 ou mais elementos iguais. Desde 18/10/2026 \xE9 um COMBATE: cada linha \xE9 um golpe daquele elemento no inimigo ativo de um time de 3 Soulmon da fenda, e depois de cada troca o inimigo ativo responde;" },
   { "id": "termo-memoria", "t": "Mem\xF3ria", "x": "O marco de conviv\xEAncia que o app devolve ao jogador em datas de rela\xE7\xE3o (n\xE3o de desempenho). Mostrado uma vez, de forma idempotente." },
   { "id": "termo-meta-de-coracao-meta-do-dia", "t": "Meta de cora\xE7\xE3o \xD7 meta do dia", "x": "\u26A0\uFE0F S\xE3o DUAS r\xE9guas desde 07/09/2026 (decis\xE3o P1). A que PROTEGE o cora\xE7\xE3o \xE9 menor; a do dia completo \xE9 a meta inteira. A excel\xEAncia n\xE3o foi afrouxada: quem quer evoluir continua tendo que fazer tudo." },
   { "id": "termo-missoes", "t": "Miss\xF5es", "x": "Seis objetivos permanentes que liberam a compra de cen\xE1rios exclusivos. Contadores lifetime no save." },
@@ -12965,7 +12965,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-4kGNxA/functionsRoutes-0.7632454961120346.mjs
+// ../.wrangler/tmp/pages-JpevQi/functionsRoutes-0.6310569350976795.mjs
 var routes = [
   {
     routePath: "/api/account",
