@@ -6,6 +6,7 @@ import type { Language } from '../../utils/i18n';
 import { emptyDraft, normalizeSession, saveSession as buildSession, type SessionDraft } from '../../utils/focoSessao';
 import { readJson, writeJson } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
+import { playerDayIso } from '../../utils/playerDay';
 import { OficinaPlano } from './OficinaPlano';
 
 type PrepTask = { id: string; name: string; completed: boolean; steps?: Array<{ id: string; label: string; completed: boolean }> };
@@ -19,7 +20,7 @@ export function PrepararFocoSheet({ language, todayKey, tasks = [], keyActive = 
   language: Language; todayKey?: string; tasks?: PrepTask[]; keyActive?: boolean; onPrepared?: () => void;
 }) {
   const isPt = language === 'pt-BR';
-  const day = todayKey ?? new Date().toISOString().slice(0, 10);
+  const day = todayKey ?? playerDayIso(new Date(), undefined);
   const [editing, setEditing] = useState(!keyActive);
   const saveDraft = (draft: SessionDraft) => {
     const prev = normalizeSession(readJson<unknown>(STORAGE_KEYS.FOCO_WORKSHOP_PLAN, null));

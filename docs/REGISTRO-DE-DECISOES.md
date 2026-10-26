@@ -3208,7 +3208,8 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
 
 ## 160. O som do golpe à distância (D-88) do Freesound (CC BY 4.0) foi retirado; volta o "push" CC0 do §152 até o dono escolher outro CC0 (dono, 21/10/2026; revoga a troca feita no mesmo dia)
 - **O que aconteceu:** em 21/10/2026 o dono escolheu o "Slow Spell (Less Powerful)" (Freesound 732245, SilverIllusionist, **CC BY 4.0**, crédito obrigatório) para o golpe à distância; o arquivo (0,474 s, −24,89 LUFS-M, 4 184 B, commit `605dbdfa6`) chegou à `main`. Depois o dono decidiu **não ter tela de licenças/créditos**, e CC BY sem crédito visível não pode ficar no app.
-- **Decisão:** o arquivo sai; `sfx-combate-attack-ranged.webm` volta ao "push" CC0 (Kenney `thrusterFire_001`, §152). A régua `sfxCombateLivres.contract.test.ts` volta a aceitar só **CC0 1.0** (nenhuma atribuição obrigatória). O dono vai escolher um novo som entre candidatos **CC0** (`E:\dowloadanged-cc0-*.wav`); nada é instalado antes da escolha.
+- **Decisão:** o arquivo sai; `sfx-combate-attack-ranged.webm` volta ao "push" CC0 (Kenney `thrusterFire_001`, §152). A régua `sfxCombateLivres.contract.test.ts` volta a aceitar só **CC0 1.0** (nenhuma atribuição obrigatória). O dono vai escolher um novo som entre candidatos **CC0** (`E:\dowload
+anged-cc0-*.wav`); nada é instalado antes da escolha.
 - **Alternativa que perdeu:** manter o CC BY e publicar o crédito numa tela "Sobre / Licenças" (o dono não quer a tela).
 - **O que falsificaria:** o dono voltar a querer um som CC BY (aí exige tela de créditos e a régua precisa aceitar CC BY de novo).
 
@@ -3344,3 +3345,10 @@ O lote do Santuário do Vínculo passa a se chamar **Vínculo/Bond** no mapa (a 
   `rift-paid:<YYYY-MM>:<saveId>` gravada ANTES do crédito (prefere-se perder um pagamento a pagar duas vezes), `done` definitivo e `running` velho (>10 min) retomável sem repagar quem já recebeu. Limite honesto:
   o KV é eventualmente consistente, então a trava é best-effort contra dois primeiros acessos EXATAMENTE simultâneos; a defesa contra repetição é a chave por usuário. Régua: `functions/api/_riftPayout.test.js`
   (2x paga 1x, simulado pulado, empate, retomada, trava recente) e `src/utils/endlessRift.test.ts`.
+
+## 173. Calabouço roguelike: bônus com multiplicador PRÓPRIO é exceção do dono; desafio em curso consome o passo (dono, 25/10/2026)
+
+- **Exceção declarada:** os bônus da incursão do Calabouço (`power` +6% ATK, `vigor` +10% HP, `heal` escudo de 15%) têm multiplicador próprio (`POWER_STEP`/`VIGOR_STEP`/`HEAL_SHIELD` em `utils/rogueDungeon.ts`), fora da curva de talentos/equipamento do Combate v3. Valem SÓ na incursão do dia e SÓ são lidos em `simulateRogueCombat` — travado por `src/utils/qa.masmorraFoco.test.ts` (nenhum outro módulo de combate os lê).
+- **Sem re-tentativa grátis:** ao entrar num desafio que não é combate grava-se `RogueRun.pending` (campo opcional; save antigo não tem). Sair/desmontar/fechar o app sem terminar CONSOME o passo (`consumePending`); falha de carga do jogo (offline) não gasta (`cancelChallenge`, botão Voltar do Error Boundary).
+- **Exploração fica para depois:** a ferramenta de Exploração do Calabouço é backlog (`docs/BACKLOG-BETA3.md`); o Eco permanece.
+- **Descida de foco acompanha o timer:** pausar congela (`dungeonAway.pausedAt`), continuar retoma com o novo fim, cancelar retira o Soulmon (acerta o que já rendeu). O texto da Oficina separa "Foquei" (sem Bits) dos Bits da descida (teto diário).

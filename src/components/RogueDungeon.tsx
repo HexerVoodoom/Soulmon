@@ -3,7 +3,8 @@
  * aqui só a apresentação: escolher 1 de 3 caminhos, resolver o desafio, escolher 1 de 3 bônus. Arte provisória
  * (sem asset novo). A masmorra/Endless Rift (`DungeonGame.tsx`) é outra coisa e não é tocada.
  */
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Component, lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Icon } from './ui/Icon';
 import type { GameChallenge } from '../utils/gameChallenge';
 import { loadDinoGame, loadEcoGame, loadMatch3Game, loadPatchesGame, loadRPSGame, loadZipGame } from './nav/playPrefetch';
 import type { Language } from '../utils/i18n';
@@ -12,8 +13,8 @@ import { mulberry32 } from '../utils/combate/rng';
 import { pickEnemy } from '../utils/enemyRoster';
 import { RankingPanel } from './RankingPanel';
 import {
-  ROGUE_FLOORS, ROGUE_MAX_STEPS, ROGUE_PER_FLOOR, applyBonus, bonusChoices, challengeFor, floorOf, isFinished, markPaid, pathsFor,
-  resolveStep, rogueBits, rogueScore, runForDay, simulateRogueCombat, stepInFloor,
+  ROGUE_FLOORS, ROGUE_MAX_STEPS, ROGUE_PER_FLOOR, applyBonus, bonusChoices, cancelChallenge, challengeFor, consumePending, floorOf, isFinished, markPaid, pathsFor,
+  resolveStep, startChallenge, rogueBits, rogueScore, runForDay, simulateRogueCombat, stepInFloor,
   type BonusKind, type ChallengeGame, type LightKind, type PathKind, type RogueRun,
 } from '../utils/rogueDungeon';
 
@@ -31,28 +32,45 @@ const GAME_GOAL_COPY: Record<ChallengeGame, (goal: number) => { en: string; pt: 
   dino: g => ({ en: `Obstacle Run: reach ${g} points.`, pt: `Corrida com obstáculos: chegue a ${g} pontos.` }),
   rps: g => ({ en: `Rock Paper Scissors: win ${g} rounds first.`, pt: `Pedra, Papel, Tesoura: vença ${g} rodadas primeiro.` }),
   zip: () => ({ en: 'Pet Trail: solve the puzzle.', pt: 'Trilha do Pet: resolva o puzzle.' }),
-  patches: () => ({ en: 'Patches: solve the puzzle.', pt: 'Patches: resolva o puzzle.' }),
+  patches: () => ({ en: 'Patchwork: solve the puzzle.', pt: 'Colcha: resolva o puzzle.' }),
   eco: g => ({ en: `Pet Echo: repeat an echo of ${g} stones.`, pt: `Eco do Pet: repita um eco de ${g} pedras.` }),
   barrage: g => ({ en: `Soul Barrage: survive ${g} seconds.`, pt: `Soul Barrage: sobreviva ${g} segundos.` }),
 };
 
 const PATH_COPY: Record<PathKind, { en: string; pt: string; icon: string }> = {
-  combat: { en: 'Combat', pt: 'Combate', icon: '⚔️' },
-  puzzle: { en: 'Puzzle', pt: 'Quebra-cabeça', icon: '🧩' },
-  minigame: { en: 'Minigame', pt: 'Minigame', icon: '🎯' },
-  explore: { en: 'Mind trial', pt: 'Prova de mente', icon: '🧭' },
+  combat: { en: 'Combat', pt: 'Combate', icon: 'swords' },
+  puzzle: { en: 'Puzzle', pt: 'Quebra-cabeça', icon: 'grid_view' },
+  minigame: { en: 'Minigame', pt: 'Minigame', icon: 'casino' },
+  explore: { en: 'Mind trial', pt: 'Prova de mente', icon: 'psychology' },
 };
 const BONUS_COPY: Record<BonusKind, { en: string; pt: string; icon: string }> = {
-  power: { en: '+6% attack', pt: '+6% de ataque', icon: '💪' },
-  vigor: { en: '+10% health', pt: '+10% de vida', icon: '❤️' },
-  heal: { en: 'Healing ward (15% shield next combat)', pt: 'Proteção de cura (escudo de 15% no próximo combate)', icon: '✨' },
+  power: { en: '+6% attack', pt: '+6% de ataque', icon: 'bolt' },
+  vigor: { en: '+10% health', pt: '+10% de vida', icon: 'favorite' },
+  heal: { en: 'Healing ward (15% shield next combat)', pt: 'Proteção de cura (escudo de 15% no próximo combate)', icon: 'auto_awesome' },
 };
 
 const text = { margin: 0, color: 'var(--sm2-ink)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm, 14px)' } as const;
 const btn = {
-  display: 'block', width: '100%', textAlign: 'left', padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
+  display: 'flex', alignItems: 'center', gap: 8, width: '100%', minHeight: 44, textAlign: 'left', padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
   border: '1px solid var(--sm2-line, currentColor)', background: 'transparent', color: 'var(--sm2-ink)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm, 14px)',
 } as const;
+
+/** Erro ao carregar/renderizar o jogo do desafio (chunk offline, falha de render): mostra o erro e um botão para voltar — nunca derruba a tela. */
+class ChallengeBoundary extends Component<{ isPt: boolean; onBack: () => void; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  componentDidCatch() { /* o erro já aparece para o jogador; nada a reportar daqui */ }
+  render() {
+    if (!this.state.failed) return this.props.children;
+    const { isPt, onBack } = this.props;
+    return (
+      <div data-rogue-challenge-error role="alert" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <p style={text}>{isPt ? 'Não deu para abrir este desafio (talvez sem conexão). O passo não foi gasto.' : "This challenge couldn't open (maybe you're offline). The step wasn't spent."}</p>
+        <button type="button" data-rogue-challenge-back onClick={onBack} style={btn}>{isPt ? 'Voltar' : 'Back'}</button>
+      </div>
+    );
+  }
+}
 
 export interface RogueDungeonProps {
   language: Language;
@@ -82,12 +100,24 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
   const [note, setNote] = useState<string | null>(null);
   const finished = isFinished(run);
 
-  // Fim da incursão: paga os Bits UMA vez (o teto diário do app limita).
+  // Fim da incursão: paga os Bits UMA vez (o teto diário do app limita). `paidRef` trava remontagem/re-render antes de o save voltar com
+  // `paid`; `onEarnPoints` (instável, vem inline do pai) fica fora das deps, lido pelo ref.
+  const paidRef = useRef(false);
+  const earnRef = useRef(onEarnPoints);
+  earnRef.current = onEarnPoints;
   useEffect(() => {
-    if (!finished || run.paid) return;
-    if (run.won > 0) onEarnPoints?.(rogueBits(run));
+    if (!finished || run.paid || paidRef.current) return;
+    paidRef.current = true;
+    if (run.won > 0) earnRef.current?.(rogueBits(run));
     onChange(markPaid(run));
-  }, [finished, run, onChange, onEarnPoints]);
+  }, [finished, run, onChange]);
+
+  // Voltou com um desafio em curso (saiu/desmontou/fechou o app sem terminar): o passo é CONSUMIDO — sem re-tentar de graça nem espiar.
+  useEffect(() => {
+    if (!run.pending) return;
+    setNote(isPt ? 'Você saiu do desafio — o passo se foi, mas a incursão segue.' : 'You left the challenge — that step is spent, but the run goes on.');
+    onChange(consumePending(run));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const paths = useMemo(() => (finished || run.bonusPending ? [] : pathsFor(run.day, run.step)), [finished, run.bonusPending, run.day, run.step]);
   const bonuses = useMemo(() => (run.bonusPending ? bonusChoices(run.day, run.step - 1) : []), [run.bonusPending, run.day, run.step]);
@@ -100,7 +130,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
   };
 
   const choose = (kind: PathKind) => {
-    if (kind !== 'combat') { settled.current = false; setChallenge(kind); return; }
+    if (kind !== 'combat') { settled.current = false; setChallenge(kind); onChange(startChallenge(run, kind)); return; }
     const foe = pickEnemy(combatant.level, mulberry32(run.step * 7919 + 13), { stage: floorOf(run.step) >= 3 ? 'ultimate' : floorOf(run.step) === 2 ? 'champion' : 'rookie' });
     const res = simulateRogueCombat(run, run.step, combatant);
     finish('combat', res.won, res.won
@@ -139,7 +169,11 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
       </p>
       {(run.power > 0 || run.vigor > 0 || run.shield > 0) && (
         <p data-rogue-bonuses style={text}>
-          {`💪 ${run.power}  ❤️ ${run.vigor}  ✨ ${run.shield}`}
+          <span style={{ display: 'inline-flex', gap: 12, alignItems: 'center' }}>
+            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="bolt" size={16} tone="inherit" label={isPt ? 'ataque' : 'attack'} />{run.power}</span>
+            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="favorite" size={16} tone="inherit" label={isPt ? 'vida' : 'health'} />{run.vigor}</span>
+            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="auto_awesome" size={16} tone="inherit" label={isPt ? 'escudo' : 'shield'} />{run.shield}</span>
+          </span>
         </p>
       )}
       {note && <p data-rogue-note style={text}>{note}</p>}
@@ -160,7 +194,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
           <p style={text}>{isPt ? 'Escolha 1 bônus (vale só nesta incursão):' : 'Pick 1 bonus (this run only):'}</p>
           {bonuses.map(b => (
             <button key={b} type="button" data-rogue-bonus={b} style={btn} onClick={() => { setNote(null); onChange(applyBonus(run, b)); }}>
-              {BONUS_COPY[b].icon} {t(BONUS_COPY[b])}
+              <Icon name={BONUS_COPY[b].icon} size={20} tone="inherit" /> {t(BONUS_COPY[b])}
             </button>
           ))}
         </div>
@@ -175,7 +209,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
           </p>
           {paths.map(p => (
             <button key={p} type="button" data-rogue-path={p} style={btn} onClick={() => choose(p)}>
-              {PATH_COPY[p].icon} {t(PATH_COPY[p])}
+              <Icon name={PATH_COPY[p].icon} size={20} tone="inherit" /> {t(PATH_COPY[p])}
             </button>
           ))}
         </div>
@@ -183,10 +217,12 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
 
       {ch && !finished && (
         <div data-rogue-challenge={ch.kind} data-rogue-game={ch.game} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          <p style={text}>{PATH_COPY[ch.kind].icon} {t(GAME_GOAL_COPY[ch.game](ch.goal))}</p>
-          <Suspense fallback={<p style={text}>{isPt ? 'Carregando…' : 'Loading…'}</p>}>
-            {renderGame(ch.game)}
-          </Suspense>
+          <p style={{ ...text, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name={PATH_COPY[ch.kind].icon} size={20} tone="inherit" /> {t(GAME_GOAL_COPY[ch.game](ch.goal))}</p>
+          <ChallengeBoundary isPt={isPt} onBack={() => { setChallenge(null); onChange(cancelChallenge(run)); }}>
+            <Suspense fallback={<p style={text}>{isPt ? 'Carregando…' : 'Loading…'}</p>}>
+              {renderGame(ch.game)}
+            </Suspense>
+          </ChallengeBoundary>
         </div>
       )}
     </div>

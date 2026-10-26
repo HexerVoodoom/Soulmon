@@ -50,6 +50,11 @@ export interface RogueRun {
   bonusPending: boolean;
   /** Bits do fim da incursão já pagos (uma vez). */
   paid: boolean;
+  /**
+   * Desafio EM CURSO (gravado ao entrar nele, antes de jogar). Sair/desmontar/fechar o app sem terminar CONSOME o passo
+   * (`consumePending`): nada de re-tentar o mesmo desafio de graça nem de espiar o jogo de cada caminho. Opcional: save antigo não tem.
+   */
+  pending?: PathKind;
 }
 
 export const emptyRun = (day: string): RogueRun => ({ day, step: 0, won: 0, over: false, power: 0, vigor: 0, shield: 0, bonusPending: false, paid: false });
@@ -67,6 +72,7 @@ export function sanitizeRogueRun(raw: unknown): RogueRun | undefined {
     day: r.day, step, won, over: r.over === true,
     power: int(r.power, ROGUE_MAX_STEPS), vigor: int(r.vigor, ROGUE_MAX_STEPS), shield: int(r.shield, ROGUE_MAX_STEPS),
     bonusPending: r.bonusPending === true, paid: r.paid === true,
+    ...(typeof r.pending === 'string' && (PATH_KINDS as readonly string[]).includes(r.pending) && r.pending !== 'combat' ? { pending: r.pending as PathKind } : {}),
   };
 }
 
@@ -113,13 +119,32 @@ export function applyBonus(r: RogueRun, kind: BonusKind): RogueRun {
 }
 
 /** Resolve o passo: vitória abre a escolha de bônus; derrota de combate encerra o dia; erro fora de combate só gasta o passo. */
-export function resolveStep(r: RogueRun, kind: PathKind, victory: boolean): RogueRun {
-  if (isFinished(r) || r.bonusPending) return r;
+export function resolveStep(r0: RogueRun, kind: PathKind, victory: boolean): RogueRun {
+  if (isFinished(r0) || r0.bonusPending) return r0;
+  const { pending: _pendente, ...r } = r0; // resolver o passo encerra o desafio em curso
+  void _pendente;
   const step = r.step + 1;
   const base = kind === 'combat' && r.shield > 0 ? { ...r, shield: r.shield - 1 } : r;
   if (!victory && kind === 'combat') return { ...base, step, over: true };
   if (!victory) return { ...base, step };
   return { ...base, step, won: r.won + 1, bonusPending: step < ROGUE_MAX_STEPS };
+}
+
+/** Entrar num desafio que não é combate: grava o `pending` (o passo já está em jogo). Combate resolve na hora, sem pending. */
+export const startChallenge = (r: RogueRun, kind: PathKind): RogueRun => (isFinished(r) || r.bonusPending || kind === 'combat' ? r : { ...r, pending: kind });
+
+/** Voltou a uma incursão com desafio em curso (saiu/fechou sem terminar): o passo é CONSUMIDO como derrota do desafio. Sem pending → a mesma referência. */
+export function consumePending(r: RogueRun): RogueRun {
+  if (!r.pending) return r;
+  if (isFinished(r) || r.bonusPending) { const { pending: _p, ...rest } = r; void _p; return rest; }
+  return resolveStep(r, r.pending, false);
+}
+
+/** Saiu por falha de carga do jogo (rede/chunk): desfaz o `pending` SEM gastar o passo — a falha não foi do jogador. */
+export function cancelChallenge(r: RogueRun): RogueRun {
+  if (!r.pending) return r;
+  const { pending: _p, ...rest } = r; void _p;
+  return rest;
 }
 
 export const markPaid = (r: RogueRun): RogueRun => (r.paid ? r : { ...r, paid: true });
