@@ -153,6 +153,9 @@ describe('primeiras vezes (missões únicas)', () => {
     expect(FIRST_TIME_IDS).toContain('visit:mercado.itens');
     expect(FIRST_TIME_IDS).toContain('visit:hall.feira');
     expect(FIRST_TIME_IDS).not.toContain('visit:laboratorio.perfil');
+    // prédios placeholder não pagam material (QA 25/10)
+    expect(FIRST_TIME_IDS).not.toContain('visit:jogos.dungeon');
+    expect(FIRST_TIME_IDS).not.toContain('visit:exploracao.preparar');
     expect(FIRST_TIME_IDS.filter(i => i.startsWith('first-')).length).toBe(4);
   });
   it('só lista o que o Vínculo abriu', () => {
