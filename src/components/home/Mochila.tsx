@@ -248,7 +248,7 @@ export function Mochila({
         <div className="sm3-mochila-alca" aria-hidden="true" />
         {/* I3: o fechar é a seta do app (`BackArrow` com `close`), no canto superior
             ESQUERDO, ACIMA do título — o mesmo lugar do voltar. */}
-        <BackArrow icon="close" onClick={onClose} language={isPt ? 'pt-BR' : 'en-US'} style={{ margin: '-6px 0 0 -10px' }} />
+        <BackArrow onClick={onClose} language={isPt ? 'pt-BR' : 'en-US'} style={{ margin: '-6px 0 0 -10px' }} />
         <div className="sm3-mochila-head">
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2 className="sm3-mochila-titulo">{isPt ? 'Mochila' : 'Backpack'}</h2>

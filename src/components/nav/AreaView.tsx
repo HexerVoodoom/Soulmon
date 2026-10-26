@@ -289,7 +289,7 @@ export function AreaView(props: AreaViewProps) {
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
   useEffect(() => { if (props.initialSheet) { if (!initialLock && !initialDemoBlocked) onVisitBuilding?.(`${area}.${props.initialSheet}` as BuildingId); onInitialSheetConsumed?.(); } }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  const closeLabel = language === 'pt-BR' ? 'Fechar' : 'Close';
+  const closeLabel = language === 'pt-BR' ? 'Voltar' : 'Back'; // L2: tela cheia nunca diz "Fechar"
   /* D-16: capturado na montagem (o `App` limpa o pedido logo depois e a folha do Mercado é `lazy` — ela monta DEPOIS disso).
      Vale só para a primeira abertura: fechar a folha apaga. */
   const [stallKind, setStallKind] = useState(props.initialStallKind);

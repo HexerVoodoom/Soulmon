@@ -65,7 +65,7 @@ describe('8.2 — a miniatura abre a pré-visualização', () => {
     expect(lb).not.toBeNull();
     expect(lb.getAttribute('role')).toBe('dialog');
     expect(lb.querySelector('[data-lightbox-image]')).not.toBeNull();
-    fireEvent.click(within(lb).getByRole('button', { name: 'Close' }));
+    fireEvent.click(within(lb).getByRole('button', { name: 'Back' }));
     expect(document.querySelector('[data-item-lightbox]')).toBeNull();
     expect(document.querySelector('[data-item-sheet="chip-power"]')).not.toBeNull();
     expect(onBuy).not.toHaveBeenCalled();
@@ -89,7 +89,7 @@ describe('8.2 — a miniatura abre a pré-visualização', () => {
     fireEvent.click(thumb);
     expect(onEquipFurniture).not.toHaveBeenCalled();
     expect(document.querySelector('[data-item-lightbox]')).not.toBeNull();
-    fireEvent.click(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Back' }).at(-1)!);
     expect(document.querySelector('[data-item-lightbox]')).toBeNull();
     fireEvent.click(document.querySelector(`[data-guild-owned-item="${RAID_TROPHY_ID}"]`)!);
     expect(onEquipFurniture).toHaveBeenCalledWith(RAID_TROPHY_ID, 'trophy');

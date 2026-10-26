@@ -136,7 +136,7 @@ function DiaryScreen({ entries, language, spriteUrl, sceneId, onClose }: Adventu
     >
       {/* Cabeçalho: fechar à esquerda, o "i" ÚNICO à direita (I2). */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px 0 12px', flexShrink: 0 }}>
-        <BackArrow icon="close" onClick={onClose} language={language} style={{ margin: 0 }} />
+        <BackArrow onClick={onClose} language={language} style={{ margin: 0 }} />
         <span style={{ flex: 1 }} />
         <InfoTip language={language} label={isPt ? 'Sobre o diário de aventuras' : 'About the adventure diary'} align="right">
           <InfoTipSection title={isPt ? 'O diário' : 'The diary'} last>

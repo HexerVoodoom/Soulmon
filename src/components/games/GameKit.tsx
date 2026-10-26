@@ -23,8 +23,7 @@
  *  · **ícone nunca em box**; **texto nunca abaixo de 12**; **alvo ≥ 44**.
  */
 import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
-import { Icon } from '../ui/Icon';
-import { NavGlyph } from '../ui/NavGlyphs';
+import { BackCircleButton } from '../ui/BackCircleButton';
 import { Viewport } from '../ui/Viewport';
 import { MiniGlass } from '../ui/MiniGlass';
 import { PixelMeter } from '../pixel/PixelKit';
@@ -127,49 +126,29 @@ export function GameHeader({ title, sub, closeLabel, onClose, run = false, onBac
     if (exitConfirm) { setConfirming(true); onPauseChange?.(true); } else onClose();
   };
   const stay = () => { setConfirming(false); onPauseChange?.(false); };
-  const ring: CSSProperties = {
-    width: 44, height: 44, flex: 'none', marginBottom: 6, boxSizing: 'border-box',
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    padding: 0, cursor: 'pointer', background: 'transparent',
-    border: '2px solid var(--sm2-line)', borderRadius: '50%',
-    color: 'var(--sm2-ink)',
-  };
+  /* L2 (rodada 6): o cabeçalho é SEMPRE [voltar em círculo à esquerda] … [título à direita].
+     O círculo faz `onBack` (tela de dentro do jogo) ou sai (`tryClose`: com
+     confirmação quando sair perde progresso). Nunca ✕/"Fechar". */
+  const genericClose = /^(fechar|close)$/i.test(closeLabel.trim());
+  const backName = onBack ? backLabel : (genericClose ? undefined : closeLabel);
   return (
     <div
       style={{
-        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8,
+        display: 'flex', alignItems: 'flex-start', gap: 8,
         minHeight: 44, flex: 'none',
         borderBottom: run ? '1px solid var(--sm2-line)' : undefined,
         paddingBottom: run ? 4 : 0,
       }}
     >
-      <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {onBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            aria-label={backLabel}
-            title={backLabel}
-            data-game-back
-            className="sm2-area-back"
-            style={ring}
-          >
-            <NavGlyph name="arrow_back" size={24} tone="ink" />
-          </button>
-        )}
-        {!onBack && !onRight && (
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={closeLabel}
-            title={closeLabel}
-            data-game-close-start
-            className="sm2-area-back"
-            style={ring}
-          >
-            <Icon name="close" size={24} tone="inherit" />
-          </button>
-        )}
+      <BackCircleButton
+        onClick={onBack ?? tryClose}
+        label={backName}
+        language={language ?? (/[ãçõé]|sair|fechar|voltar|ir ao/i.test(closeLabel) ? 'pt-BR' : 'en-US')}
+        data-game-back={onBack ? '' : undefined}
+        data-game-close-start={!onBack ? '' : undefined}
+        style={{ marginBottom: 6 }}
+      />
+      <div style={{ minWidth: 0, flex: 1, display: 'flex', flexDirection: 'column', gap: 2, textAlign: 'right', alignItems: 'flex-end' }}>
         {run ? (
           <p style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>{title}</p>
         ) : (
@@ -188,24 +167,6 @@ export function GameHeader({ title, sub, closeLabel, onClose, run = false, onBac
       </div>
       {info !== undefined && infoLabel && language && (
         <InfoTip language={language} label={infoLabel} align="right" style={{ marginRight: -8 }}>{info}</InfoTip>
-      )}
-      {/* O × da ATIVIDADE em andamento (I3): à direita e, quando sair perde
-          progresso, pede confirmação. */}
-      {onRight && (
-        <button
-          type="button"
-          onClick={tryClose}
-          aria-label={closeLabel}
-          data-game-close-end
-          style={{
-            width: 44, height: 44, flex: 'none', margin: '-2px -8px 0 0',
-            display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-            background: 'none', border: 'none', cursor: 'pointer',
-            borderRadius: 'var(--sm2-radius-md)', color: 'var(--sm2-ink)',
-          }}
-        >
-          <Icon name="close" size={24} tone="inherit" />
-        </button>
       )}
       {confirming && exitConfirm && (
         <ExitConfirm {...exitConfirm} onStay={stay} onLeave={onClose} />

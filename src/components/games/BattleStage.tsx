@@ -25,6 +25,7 @@
  * Som (PR18, pedido do dono): o golpe básico, o especial e a vitória têm som próprio (`docs/SOM.md` §3.1) — o golpe e o
  * especial são disparados AQUI (`playAttack`/`playSpecial`); a torcida e o resto seguem mudos (R-NOVA).
  */
+import { BackCircleButton } from '../ui/BackCircleButton';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
@@ -787,7 +788,7 @@ export function BattleStage({
       {/* O véu: escurece o topo e o pé para o HUD e as barras lerem sobre a arte. */}
       <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to bottom, rgba(0,0,0,.5), rgba(0,0,0,0) 20%, rgba(0,0,0,0) 76%, rgba(0,0,0,.45))' }} />
 
-      {/* O HUD do topo: título à esquerda, X à direita (canto superior DIREITO). */}
+      {/* O HUD do topo: voltar em círculo à ESQUERDA, título à DIREITA (L2, rodada 6). */}
       <div
         data-stage-hud
         style={{
@@ -796,24 +797,17 @@ export function BattleStage({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 44 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+          <BackCircleButton
+            onClick={tryClose}
+            label={closeLabel}
+            icon={closeIcon === 'map' ? 'map' : 'arrow_back'}
+            overScene
+            data-stage-close=""
+          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, justifyContent: 'flex-end', textAlign: 'right' }}>
             <p style={{ ...sm2Text, margin: 0, fontWeight: 500, color: 'var(--sm2-viewport-ink)', textShadow: '0 1px 2px rgba(0,0,0,.8)' }}>{title}</p>
             {badge}
           </div>
-          <button
-            type="button"
-            onClick={tryClose}
-            aria-label={closeLabel}
-            data-stage-close
-            style={{
-              width: 44, height: 44, flex: 'none', margin: '0 -8px 0 0',
-              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-              background: 'none', border: 'none', cursor: 'pointer', color: 'var(--sm2-viewport-ink)',
-              filter: 'drop-shadow(0 1px 2px rgba(0,0,0,.85))',
-            }}
-          >
-            {closeIcon === 'map' ? <PixelIcon name="mapa" size={32} /> : <Icon name="close" size={24} tone="inherit" />}
-          </button>
         </div>
       </div>
 

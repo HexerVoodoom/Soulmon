@@ -8335,7 +8335,7 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm2-grove-folha { position: fixed; inset: 0; z-index: 250; background: #0b1a17; display: flex; flex-direction: column; }
 .sm2-grove-folha-topo { position: absolute; top: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: center; gap: var(--sm2-space-2); padding: calc(env(safe-area-inset-top, 0px) + var(--sm2-space-2)) var(--sm2-space-3) var(--sm2-space-2); background: linear-gradient(to bottom, rgba(5,14,12,.72), transparent); pointer-events: none; }
 .sm2-grove-folha-topo > * { pointer-events: auto; }
-.sm2-grove-folha-titulo { margin: 0; flex: 1; min-width: 0; font-family: var(--sm2-font-display); font-size: var(--sm2-text-lg); font-weight: 600; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.7); }
+.sm2-grove-folha-titulo { margin: 0; flex: 1; min-width: 0; font-family: var(--sm2-font-display); font-size: var(--sm2-text-lg); font-weight: 600; text-align: right; color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.7); }
 .sm2-grove-folha-fechar { min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; color: #fff; cursor: pointer; filter: drop-shadow(0 1px 4px rgba(0,0,0,.8)); }
 .sm2-grove-folha-busy { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #fff; }
 .sm2-grove-pan-wrap { position: relative; flex: 1; min-height: 0; width: 100%; }

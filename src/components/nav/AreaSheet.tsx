@@ -7,7 +7,7 @@ import { NpcSpeech } from './NpcSpeech';
 import { useBackLayer } from '../../utils/backStack';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
 import { NPC_MAX_WIDTH_PCT, NPC_BASE_UNDER_SHEET, NPC_TOP_PAD_PX } from './npcScale';
-import { Icon } from '../ui/Icon';
+import { BackCircleButton } from '../ui/BackCircleButton';
 import { ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
 
@@ -90,29 +90,13 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
         }}
       >
         {!closeInSheet && (
-          <button
-            type="button"
-            data-area-sheet-close
-            onClick={e => { e.stopPropagation(); onClose(); }}
-            aria-label={closeLabel}
-            title={closeLabel}
-            className="sm2-area-back"
-            style={{
-              position: 'absolute', zIndex: 3,
-              top: CORNER_RING_TOP, left: CORNER_RING_SIDE,
-              width: 44, height: 44, boxSizing: 'border-box',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: 0, cursor: 'pointer', pointerEvents: 'auto',
-              // O MESMO anel do voltar das áreas (`AreaTopBar` overScene), com
-              // miolo escuro translúcido: o ✕ fica sobre a arte do NPC/cena.
-              background: 'rgba(8,25,26,.72)',
-              border: '2px solid rgba(233,245,242,.6)',
-              borderRadius: '50%',
-              color: '#E9F5F2',
-            }}
-          >
-            <Icon name="close" size={24} tone="inherit" />
-          </button>
+          <BackCircleButton
+            data-area-sheet-close=""
+            onClick={() => onClose()}
+            label={closeLabel}
+            overScene
+            style={{ position: 'absolute', zIndex: 3, top: CORNER_RING_TOP, left: CORNER_RING_SIDE, pointerEvents: 'auto' }}
+          />
         )}
 
         {/* O 1/3 de cima da TELA, FORA do card e transparente: o NPC da
@@ -180,21 +164,11 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
         >
           {closeInSheet && (
             <div style={{ padding: '8px 16px 0', flexShrink: 0 }}>
-              <button
-                type="button"
-                data-area-sheet-close
-                className="sm2-ora-back"
-                onClick={e => { e.stopPropagation(); onClose(); }}
-                aria-label={closeLabel}
-                title={closeLabel}
-                style={{ margin: '0 0 0 -10px' }}
-              >
-                <Icon name="close" size={24} tone="inherit" />
-              </button>
+              <BackCircleButton data-area-sheet-close="" onClick={() => onClose()} label={closeLabel} />
             </div>
           )}
           <div data-area-sheet-head style={{ display: 'flex', alignItems: 'center', minHeight: 52, padding: '8px 16px 0', boxSizing: 'border-box', backgroundColor: 'var(--sm2-surface)' }}>
-            <h2 style={{ flex: 1, margin: 0, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>
+            <h2 style={{ flex: 1, margin: 0, textAlign: 'right', paddingRight: 8, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg)', fontWeight: 700, color: 'var(--sm2-ink)' }}>
               {title}
             </h2>
             {headSlotRef && <span ref={headSlotRef} data-area-sheet-head-slot style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }} />}

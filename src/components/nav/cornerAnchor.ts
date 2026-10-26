@@ -28,10 +28,6 @@ export const CORNER_RING_SIDE = `calc(var(--sm2-space-3) + ${CORNER_RING_INSET}p
 /** Tinta clara fixa: o canto fica sobre arte/cena escura nos dois temas. */
 export const CORNER_INK = '#E9F5F2';
 
-/** O brilho claro que a casinha tinha antes do anel (F3): halo ciano + um fio
- *  branco, para o ícone ler sobre QUALQUER fundo. */
-export const CORNER_GLOW = 'drop-shadow(0 0 6px rgba(95, 243, 224, 0.55)) drop-shadow(0 0 1px rgba(233, 245, 242, 0.7)) drop-shadow(0 1px 2px rgba(4, 20, 19, 0.6))';
-
 /** O anel: traço claro + miolo escuro translúcido (legível sobre fundo claro ou escuro). */
 export const CORNER_RING_STYLE: CSSProperties = {
   width: CORNER_RING, height: CORNER_RING, boxSizing: 'border-box',

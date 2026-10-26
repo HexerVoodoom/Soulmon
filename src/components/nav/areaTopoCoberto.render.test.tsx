@@ -45,7 +45,7 @@ describe('AreaView avisa a camada aberta', () => {
     expect(onLayerChange).toHaveBeenLastCalledWith(false);
     await act(async () => { fireEvent.click(container.querySelector('[data-area-lot]')!); });
     expect(onLayerChange).toHaveBeenLastCalledWith(true);
-    await act(async () => { fireEvent.click(screen.getByLabelText('Fechar')); });
+    await act(async () => { fireEvent.click(screen.getByLabelText('Voltar')); });
     expect(onLayerChange).toHaveBeenLastCalledWith(false);
     await act(async () => { fireEvent.click(container.querySelector('[data-area-lot]')!); });
     unmount();

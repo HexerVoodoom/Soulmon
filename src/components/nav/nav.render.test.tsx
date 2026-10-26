@@ -117,16 +117,11 @@ describe('CornerLink', () => {
     expect(btn.querySelector('svg')).toBeNull();
   });
 
-  it('brilho claro por PADRÃO (H9: a casinha perdeu o brilho), desligável, sem virar caixa', () => {
-    const padrao = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} />);
-    expect(padrao.container.querySelector('button')!.style.filter).toContain('drop-shadow');
-    padrao.unmount();
-    const semGlow = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} glow={false} />);
-    expect(semGlow.container.querySelector('button')!.style.filter).toBeFalsy();
-    semGlow.unmount();
-    const comGlow = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} glow />);
-    const btn = comGlow.container.querySelector('button')!;
-    expect(btn.style.filter).toContain('drop-shadow');
+  it('L2: sem brilho externo (nenhum filter/drop-shadow/box-shadow), sem virar caixa', () => {
+    const r = renderWithCss(<CornerLink icon="home" side="left" label="Home" onClick={() => {}} />);
+    const btn = r.container.querySelector('button')!;
+    expect(btn.style.filter).toBeFalsy();
+    expect(btn.style.boxShadow).toBeFalsy();
     expect(btn.style.background).toBe('transparent');
     expect(btn.style.border === 'none' || btn.style.border === '' || btn.style.borderStyle === 'none').toBe(true);
   });
@@ -163,7 +158,7 @@ describe('AreaTopBar', () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
-  it('14/10/2026: casinha e ícone do Mapa SEM círculo — ícone pelado, alvo de toque ≥ 44, brilho para ler sobre a cena', () => {
+  it('14/10/2026: casinha e ícone do Mapa SEM círculo — ícone pelado, alvo de toque ≥ 44, SEM brilho externo (L2)', () => {
     for (const [icon, side] of [['home', 'left'], ['mapa', 'right']] as const) {
       const r = renderWithCss(<CornerLink icon={icon} side={side} label="X" onClick={() => {}} />);
       const btn = r.container.querySelector('button') as HTMLButtonElement;
@@ -172,7 +167,8 @@ describe('AreaTopBar', () => {
       expect(btn.style.border === '' || btn.style.border === 'none' || btn.style.border.startsWith('medium')).toBe(true);
       expect(parseInt(btn.style.width, 10)).toBeGreaterThanOrEqual(44);
       expect(parseInt(btn.style.height, 10)).toBeGreaterThanOrEqual(44);
-      expect(btn.style.filter).toContain('drop-shadow');
+      expect(btn.style.filter).toBeFalsy();
+      expect(btn.style.boxShadow).toBeFalsy();
       r.unmount();
     }
   });

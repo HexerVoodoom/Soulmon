@@ -8446,7 +8446,6 @@ export default function App() {
           side="left"
           label={language === 'pt-BR' ? 'Início' : 'Home'}
           onClick={goBack}
-          glow
         />
       )}
 

@@ -94,9 +94,21 @@ describe('voltar/fechar — contrato (I3)', () => {
     }
   });
 
-  it('o `GameHeader` tem as duas posições (ocioso à esquerda, atividade à direita)', () => {
+  it('L2: telas cheias usam o círculo padrão `BackCircleButton` à esquerda e não desenham ✕', () => {
+    const cheias = [
+      'components/games/GameKit.tsx', 'components/games/BattleStage.tsx', 'components/RogueDungeon.tsx',
+      'components/nav/AreaSheet.tsx', 'components/guild/GroveFolha.tsx', 'components/mercado/ShopItemSheet.tsx',
+      'components/ui/BackArrow.tsx',
+    ];
+    for (const path of cheias) {
+      const f = FILES.find(x => x.path === path)!;
+      expect(f.src, path).toContain('BackCircleButton');
+    }
+    for (const path of cheias.filter(p => p !== 'components/ui/BackArrow.tsx')) {
+      const f = FILES.find(x => x.path === path)!;
+      expect(f.src, `${path}: ✕ em tela cheia`).not.toMatch(FECHA);
+    }
     const kit = FILES.find(f => f.path === 'components/games/GameKit.tsx')!.src;
-    expect(kit).toContain('data-game-close-start');
-    expect(kit).toContain('data-game-close-end');
+    expect(kit).not.toContain('data-game-close-end');
   });
 });
