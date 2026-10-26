@@ -47,7 +47,7 @@ const soma = (o: Record<string, number | undefined>) => Object.values(o).reduce<
 const totalFicha = (f: { totals: Record<string, number> }) => soma(f.totals);
 
 describe('GALHO_PARA_ELEMENTO: a tabela calibrada com o snapshot', () => {
-  it('cada linha soma 1, só tem ids BASE e os 17 elementos aparecem em alguma linha', () => {
+  it('cada linha soma 1, só tem ids BASE e os 20 elementos aparecem em alguma linha', () => {
     const base = new Set<string>(CLASS_ELEMENT_ORDER);
     const vistos = new Set<string>();
     for (const g of GALHOS) {

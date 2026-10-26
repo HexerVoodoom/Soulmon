@@ -29,12 +29,9 @@ describe('elementoDoOraculo', () => {
     expect(elementoDoOraculo(undefined)).toBeUndefined();
     expect(elementoDoOraculo(null)).toBeUndefined();
   });
-  it('consistência com ELEMENT_BRIDGE: a base dominante do mapa é o componente de maior peso da ponte', () => {
-    for (const k of Object.keys(ORACULO_PARA_CLASSE) as Array<keyof typeof ORACULO_PARA_CLASSE>) {
-      const pesos = ELEMENT_BRIDGE[k] as Record<string, number>;
-      const maior = Object.entries(pesos).sort((a, b) => b[1] - a[1])[0][0];
-      expect(baseDominanteDoElemento(ORACULO_PARA_CLASSE[k])).toBe(maior);
-    }
+  it('ELEMENT_BRIDGE: desde 25/10/2026 planta e industrial são base e vão para si mesmas; o mapa acima é só de arte', () => {
+    expect(ELEMENT_BRIDGE.planta).toEqual({ planta: 1 });
+    expect(ELEMENT_BRIDGE.industrial).toEqual({ industrial: 1 });
     expect(baseDominanteDoElemento(ORACULO_PARA_CLASSE.planta)).toBe('vida');
     expect(baseDominanteDoElemento(ORACULO_PARA_CLASSE.industrial)).toBe('marcial');
   });

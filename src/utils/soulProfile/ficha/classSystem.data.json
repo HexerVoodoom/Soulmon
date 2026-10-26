@@ -1,9 +1,9 @@
 {
  "_provenance": {
   "repo": "https://github.com/HexerVoodoom/Class-System.git",
-  "ref": "main",
-  "sha": "98bb4267c7f13de4dce5b514a6b41082ded411cc",
-  "syncedAt": "2026-08-27T21:57:45.779Z",
+  "ref": "HEAD",
+  "sha": "d658e4a3ed56de38f55eeb4068da3ea1ae025a50",
+  "syncedAt": "2026-10-25T23:54:25.506Z",
   "script": "scripts/sync-oracle-data.mjs"
  },
  "escolas": {

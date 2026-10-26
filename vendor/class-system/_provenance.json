@@ -1,12 +1,12 @@
 {
   "repo": "https://github.com/HexerVoodoom/Class-System",
-  "ref": "main",
-  "sha": "fb8664553142bf9080782ae553395e57e493757a",
-  "commitDate": "2026-08-17T11:53:37-03:00",
-  "commitSubject": "Sinergia de alvo único alimenta o destrave; lista mostra progresso (#8)",
-  "generatedAt": "2026-08-25T17:03:25.944Z",
+  "ref": "HEAD",
+  "sha": "d658e4a3ed56de38f55eeb4068da3ea1ae025a50",
+  "commitDate": "2026-10-25T20:53:54-03:00",
+  "commitSubject": "fix(elementos): pesadelo_doce vira sonho_sombrio",
+  "generatedAt": "2026-10-25T23:54:19.112Z",
   "generatedBy": "scripts/vendor-class-system.mjs",
-  "bundleSha256": "09dbe3ffbf5e8b2bd8276f279f66cbb4b7fe1a624923bfbc12e9e197d776a7a7",
-  "bundleBytes": 226978,
-  "note": "Artefato COMPILADO, commitado (ADR-002 §1). O build do Soulmon não busca este repositório. Para atualizar: rode `npm run vendor:class-system` com o clone irmão atualizado e `npm run sync:oracle-data` (os fixtures de paridade de `cascata.parity.test.ts` têm que vir do MESMO SHA)."
+  "bundleSha256": "3bff17aff5e2b7a9c45515af9b6df21112714a3a24498e4e73b062ba28881a1d",
+  "bundleBytes": 255349,
+  "note": "Artefato COMPILADO, commitado (ADR-002 §1). O build do Soulmon não busca este repositório. Para atualizar: rode `npm run vendor:class-system` com o clone irmão atualizado e, LOGO EM SEGUIDA, `npm run gen:cascata-fixtures` (regenera `ficha/cascata.fixtures.json` a partir DESTE bundle — o teste de paridade falha se os dois SHAs divergirem). `npm run sync:oracle-data` é independente: traz vocabulário e diais, não fixtures de cascata."
 }

@@ -32,7 +32,11 @@ export type StageActionKind = 'melee' | 'ranged' | 'special';
 /** Elemento sem arte própria cai neste (neutro tem os 6 estados). */
 export const FX_FALLBACK_ELEMENT = 'neutro';
 
-/** Os 17 elementos base (a mesma lista do anel de `arena.ts`), para dar um elemento visual ao oponente. */
+/**
+ * Os elementos base que TÊM ARTE (cenário, escudo, ícone, Soulmon da masmorra), para dar um elemento visual ao
+ * oponente. São 17 dos 20 do anel de `arena.ts`: fada, industrial e planta viraram base em 25/10/2026 e ainda
+ * não têm arte (fila em docs/ASSETS-A-GERAR.md) — entram aqui junto com ela.
+ */
 export const VISUAL_ELEMENTS = [
   'fogo', 'vida', 'terra', 'gravidade', 'ar', 'som', 'eletricidade', 'agua',
   'marcial', 'arcano', 'tempo', 'espaco', 'luz', 'sombra', 'morte', 'vileza', 'vigor',
@@ -112,6 +116,9 @@ export const ELEMENT_STRIKE_FORM: Record<string, Record<SkillRole, StrikeForm>> 
   som: { basica: 'ranged', especial: 'ranged' },
   gravidade: { basica: 'melee', especial: 'ranged' },
   espaco: { basica: 'ranged', especial: 'ranged' },
+  fada: { basica: 'ranged', especial: 'ranged' },
+  industrial: { basica: 'melee', especial: 'ranged' },
+  planta: { basica: 'melee', especial: 'ranged' },
   aco: { basica: 'melee', especial: 'melee' },
   // Derivados que o corpus do bestiário traz como elemento de inimigo (06/10/2026).
   lava: { basica: 'melee', especial: 'ranged' },

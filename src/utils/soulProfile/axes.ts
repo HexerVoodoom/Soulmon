@@ -438,12 +438,18 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
   const P = (body: string) => inputs.planetProminence?.[body] ?? 10;
   const dev = (body: string) => P(body) - 10;
   const ANCHOR_BASE = 45;
+  // ⚠️ 25/10/2026: com `planta` e `industrial` virando base do class-system, as respostas do ritual que antes
+  // espalhavam em vida/terra/marcial/eletricidade (`ELEMENT_BRIDGE`) passaram a ir para elas mesmas, e quem mais
+  // ganhou com o vácuo foi `sombra`, que é cópia crua do oráculo: dominância no class-system 15,7% → 20,8%
+  // (600 perfis, mesma sonda de `ponte8para17`). O amortecedor vale SÓ do lado do class-system — o eixo do jogo
+  // (`elements.sombra`) não muda, então `elementoOcorrencia.test.ts` fica onde estava. 0,88 devolve 15,0%.
+  const SOMBRA_CLASSE = 0.88;
   const ANCHOR_GAIN = 4.2;
   const anchored = (d: number, extra: number) => Math.max(0, ANCHOR_BASE + d * ANCHOR_GAIN + extra);
   const assertividade = facet(inputs, 'extraversion', 'assertividade', traits.extraversion);
   const classElements: Record<ClassElementId, number> = {
     fogo: elements.fogo, agua: elements.agua, terra: elements.terra, ar: elements.ar,
-    sombra: elements.sombra, luz: elements.luz,
+    sombra: elements.sombra * SOMBRA_CLASSE, luz: elements.luz,
     eletricidade: anchored(dev('Urano'), traits.extraversion * 0.06),
     arcano: anchored(dev('Netuno'), traits.openness * 0.1 + soft(100 - jung.SN) * 0.06),
     // ⚠️ **`vileza` DEIXOU de ser só Plutão em 22/09/2026** (decisão do dono:
@@ -468,6 +474,16 @@ export function generateOracleAxes(inputs: OracleAxesInput): OracleAxes {
     som: anchored(dev('Mercúrio'), traits.extraversion * 0.06),
     gravidade: anchored(dev('Lua') * 0.65 + dev('Saturno') * 0.65, 0),
     espaco: anchored(dev('Júpiter') * 0.85 + dev('Urano') * 0.4, 0),
+    // 25/10/2026 — três bases novas no class-system. `planta` e `industrial`
+    // já existiam no oráculo com o MESMO nome, então entram como os outros 6
+    // compartilhados: cópia direta. `fada` não tem par no oráculo e entra pela
+    // constelação, como os 11 cósmicos: Vênus (encanto, amor) + Netuno
+    // (ilusão, sonho), com amabilidade e abertura como empurrão de traço.
+    // Ganho 0,8 (e não 0,6): com 0,6 `fada` dominava 0,7% das fichas ultra e 0% das rookie em 600 perfis;
+    // com 0,8, 3,3% / 1,2% — dentro da faixa dos cósmicos (vileza 0,2 · espaço 0,8 · morte 3,5).
+    planta: elements.planta,
+    industrial: elements.industrial,
+    fada: anchored(dev('Vênus') * 0.8 + dev('Netuno') * 0.8, traits.agreeableness * 0.06 + traits.openness * 0.05),
   };
 
   const sharedClassElements = toShare(classElements, CLASS_ELEMENT_ORDER);

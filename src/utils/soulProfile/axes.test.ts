@@ -97,13 +97,15 @@ test("facet overrides are used when present, and fall back to the trait score ot
   assert.ok(withFacet.elements.industrial > withoutFacet.elements.industrial);
 });
 
-test("class-system bridge copies the six shared elements verbatim", () => {
+test("class-system bridge copies the shared elements verbatim (sombra damped on the class side only)", () => {
   const axes = generateOracleAxes(withTrait({ extraversion: 80 }));
   // Compare pre-normalization ratios: both records were normalized
-  // independently, but the six shared elements must keep the same *rank*
+  // independently, but the shared elements must keep the same *rank*
   // relative to each other in both spaces since they come from the same
-  // underlying numbers.
-  const soulmonOrder = [...ELEMENT_ORDER.filter((e) => e !== "planta" && e !== "industrial")].sort(
+  // underlying numbers. Since 25/10/2026 planta and industrial are shared too
+  // (they became class-system bases), and sombra is the one exception: it is
+  // multiplied by SOMBRA_CLASSE (0.88) on the class side only — see axes.ts.
+  const soulmonOrder = [...ELEMENT_ORDER.filter((e) => e !== "sombra")].sort(
     (a, b) => axes.elements[b] - axes.elements[a]
   );
   const classOrder = [...soulmonOrder].sort(

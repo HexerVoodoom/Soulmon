@@ -9,11 +9,13 @@
  * ⚠️ `derivedElements.ts` NÃO importa este arquivo (ciclo): ele importa o tipo de lá, e `ELEMENT_BRIDGE` (pesos) é
  * conferido por teste de consistência.
  */
-import type { ElementoSoDoOraculo } from './soulProfile/derivedElements';
 import { elementoConhecido } from './soulProfile/ficha/elementoNome';
 
 /** Um elemento só-do-oráculo novo obriga uma entrada aqui (erro de compilação). */
-export const ORACULO_PARA_CLASSE: Readonly<Record<ElementoSoDoOraculo, string>> = { planta: 'vida', industrial: 'aco' };
+// ⚠️ 25/10/2026: planta e industrial viraram BASE do class-system (a ficha agora as pontua como elas mesmas — ver
+// ELEMENT_BRIDGE). Este mapa SOBREVIVE só para exibição/arte: não há ícone, FX nem sprite de planta/industrial no app
+// ainda (fila em docs/ASSETS-A-GERAR.md). Quando a arte chegar, apagar as duas entradas faz o id passar direto.
+export const ORACULO_PARA_CLASSE: Readonly<Record<'planta' | 'industrial', string>> = { planta: 'vida', industrial: 'aco' };
 
 const MAPA: Readonly<Record<string, string | undefined>> = ORACULO_PARA_CLASSE;
 

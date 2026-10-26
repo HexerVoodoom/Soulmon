@@ -63,9 +63,18 @@ export const STAGE_MULTIPLIER: Record<FichaStage, number> = {
  * orçamento do class-system), e só perfis concentrados de mega/ultra chegam
  * lá — "só as criaturas de estágio avançado alcançam os elementos avançados".
  * Base custa 1; ponto direto em par destravado custa `CUSTO_PONTO_PAR` (2).
+ *
+ * ⚠️ rookie 30→35 em 25/10/2026 (fada, industrial e planta viraram base): o orçamento é rateado sobre TODAS
+ * as bases, e com 20 em vez de 17 o rookie ficava raso demais. O sintoma medido: 30 pontos em 20 bases
+ * empatam quase tudo em 1–2 e o desempate por ordem dava
+ * `fogo` (1º da lista) como dominante em 31,7% das fichas (era 20,0% com 17). 30·20/17 ≈ 35 devolve a mesma
+ * profundidade por base de antes. mega/ultra também sobem 20/17 (300→353, 500→588): é ali que a CASCATA acontece
+ * (~50 pontos por componente para destravar par), e com 20 bases rasas o T-PISO caía de 49,7%/82% para
+ * 38,9%/63,4% (`buildSheet.piso.test.ts`, mesmos 120 perfis). champion/ultimate ficam: só bases, sem empate.
+ * `ALLOC_FRACTION` foi ajustada junto para manter os 187 pontos da decisão #72.
  */
 export const ELEMENT_ORCAMENTO_BY_STAGE: Record<FichaStage, number> = {
-  rookie: 30, champion: 60, ultimate: 120, mega: 300, ultra: 500,
+  rookie: 35, champion: 60, ultimate: 120, mega: 353, ultra: 588,
 };
 
 /** Fração do orçamento de elementos desviada para pontos DIRETOS no melhor
@@ -255,7 +264,10 @@ function apportion<K extends string>(shares: Record<K, number>, order: K[], tota
  * Fatia do orçamento de elementos que o JOGADOR redistribui, quando ele tem
  * um plano de alocação (WP4.22 — decisão #72 do dono, 22/09/2026).
  *
- * 0,25 e não outro número, e o motivo são as constantes vizinhas:
+ * ⚠️ Era 0,25 até 25/10/2026. Com 20 bases o ultra foi a 588 (ver `ELEMENT_ORCAMENTO_BY_STAGE`) e 0,25 daria
+ * 220 pontos; o número que a decisão #72 protege é o de baixo (187 = um par completo), então a fração foi a
+ * 0,2125 — floor(588 × 1,5 × 0,2125) = 187. [pendente do dono: confirmar] O raciocínio original de 0,25:
+ *
  *
  * - precisa superar `DERIVED_SPEND_FRACTION` (0,2), que é o que o sistema já
  *   gasta sozinho em pares. Abaixo disso a escolha do jogador pesaria menos
@@ -269,7 +281,7 @@ function apportion<K extends string>(shares: Record<K, number>, order: K[], tota
  * ⚠️ Mexer neste número sem refazer a 5ª simulação do `pipeline.test.ts`
  * (WP4.23, planos adversariais) reabre o buraco que ela fecha.
  */
-export const ALLOC_FRACTION = 0.25;
+export const ALLOC_FRACTION = 0.2125;
 
 /**
  * O plano do jogador: peso relativo por elemento BASE. Só pesos — nunca

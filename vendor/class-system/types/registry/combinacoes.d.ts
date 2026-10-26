@@ -1,11 +1,11 @@
 /**
  * Motor de COMBINAÇÕES N-ÁRIAS — o espaço completo de triplas e quádruplas.
  *
- * Os 136 pares dos 17 elementos base são todos curados à mão em
+ * Os 190 pares dos 20 elementos base são todos curados à mão em
  * `elementos.ts`. A partir de 3 componentes o espaço explode:
  *
- *   C(17,3) =   680 triplas
- *   C(17,4) = 2.380 quádruplas
+ *   C(20,3) = 1.140 triplas
+ *   C(20,4) = 4.845 quádruplas
  *
  * Curar 3.060 entradas à mão é inviável e desnecessário. A estratégia é
  * HÍBRIDA:
@@ -103,7 +103,7 @@ export interface CombinacaoCurada {
  * gerado sob demanda.
  */
 export declare const CURADAS: CombinacaoCurada[];
-/** Todas as 680 triplas. */
+/** Todas as 1.140 triplas. */
 export declare const TRIPLAS: CombinacaoInfo[];
 /** Todas as 2.380 quádruplas. */
 export declare const QUADRUPLAS: CombinacaoInfo[];

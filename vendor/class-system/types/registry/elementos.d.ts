@@ -2,19 +2,19 @@
  * Registro de elementos.
  *
  * Categorias:
- *  - "base": recebem pontos diretamente do jogador (17 elementos).
+ *  - "base": recebem pontos diretamente do jogador (20 elementos).
  *  - "derivado": não recebem pontos diretos; o nível é o MENOR nível efetivo
  *    entre os componentes da receita (evolução conjunta), desde que todos
- *    atinjam o mínimo. TODOS os 136 pares existem aqui, nomeados à mão.
+ *    atinjam o mínimo. TODOS os 190 pares existem aqui, nomeados à mão.
  *    Triplas e quádruplas moram em `combinacoes.ts`: as de identidade forte
- *    são curadas, as outras 3.000 são geradas sob demanda.
+ *    são curadas, as outras ~5.900 são geradas sob demanda.
  *  - "especial": derivados com receita ampla (primordial, ciclo, nulo).
  *
  * Cada elemento tem um PERFIL (pesos de dano/controle/cura/defesa/suporte)
  * que molda o resultado das skills. Derivados herdam a média dos perfis dos
  * componentes — a identidade mecânica da combinação emerge sozinha.
  */
-export type ElementoBaseId = 'fogo' | 'agua' | 'terra' | 'ar' | 'eletricidade' | 'arcano' | 'sombra' | 'luz' | 'vileza' | 'morte' | 'vida' | 'vigor' | 'marcial' | 'tempo' | 'som' | 'gravidade' | 'espaco';
+export type ElementoBaseId = 'fogo' | 'agua' | 'terra' | 'ar' | 'eletricidade' | 'arcano' | 'sombra' | 'luz' | 'vileza' | 'morte' | 'vida' | 'vigor' | 'marcial' | 'tempo' | 'som' | 'gravidade' | 'espaco' | 'fada' | 'industrial' | 'planta';
 export interface PerfilPesos {
     dano: number;
     controle: number;

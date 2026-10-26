@@ -162,6 +162,30 @@ var ELEMENTOS_BASE = {
     fatorPotencia: 1,
     pesos: pesos(0.3, 0.4, 0, 0, 0.3),
     descricao: "A dist\xE2ncia entre os pontos: portais, teleporte e o cosmos."
+  },
+  fada: {
+    id: "fada",
+    nome: "Fada",
+    tipo: "base",
+    fatorPotencia: 1,
+    pesos: pesos(0.2, 0.3, 0.2, 0, 0.3),
+    descricao: "Encanto fe\xE9rico: arco-\xEDris, cora\xE7\xF5es e glitter \u2014 encanta, ilude e aben\xE7oa."
+  },
+  industrial: {
+    id: "industrial",
+    nome: "Industrial",
+    tipo: "base",
+    fatorPotencia: 1,
+    pesos: pesos(0.4, 0.1, 0, 0.4, 0.1),
+    descricao: "F\xE1brica e m\xE1quina: constructos, ferramentas e blindagem fabricada."
+  },
+  planta: {
+    id: "planta",
+    nome: "Planta",
+    tipo: "base",
+    fatorPotencia: 1,
+    pesos: pesos(0.2, 0.3, 0.3, 0.2, 0),
+    descricao: "Raiz, espinho e semente: enreda, envenena e regenera."
   }
 };
 function derivado(id, nome, componentes, descricao, opts = {}) {
@@ -220,7 +244,7 @@ var DERIVADOS_LISTA = [
   derivado("ouro_vivo", "Ouro Vivo", ["terra", "luz"], "Metal sagrado: armaduras e armas conjuradas brilhantes."),
   derivado("solo_profano", "Solo Profano", ["terra", "vileza"], "Ch\xE3o corrompido: territ\xF3rio que enfraquece quem pisa."),
   derivado("ossuario", "Ossu\xE1rio", ["terra", "morte"], "Os ossos da terra: muralhas e lan\xE7as de osso."),
-  derivado("flora", "Flora", ["terra", "vida"], "Natureza desperta: vinhas, ra\xEDzes e crescimento selvagem."),
+  derivado("flora", "Bosque", ["terra", "vida"], "Natureza desperta: vinhas, ra\xEDzes e crescimento selvagem."),
   derivado("tita", "Tit\xE3", ["terra", "vigor"], "Corpo de pedra: for\xE7a colossal e pele impenetr\xE1vel."),
   // ---- ar + X ----
   derivado("tempestade", "Tempestade", ["ar", "eletricidade"], "C\xE9u em f\xFAria: \xE1rea enorme e rel\xE2mpagos encadeados."),
@@ -341,6 +365,63 @@ var DERIVADOS_LISTA = [
   derivado("continuum", "Continuum", ["espaco", "tempo"], "Espa\xE7o-tempo dominado: mover-se por onde e quando quiser.", { fator: 1.3, minimo: 12 }),
   derivado("silencio_cosmico", "Sil\xEAncio C\xF3smico", ["espaco", "som"], "O v\xE1cuo n\xE3o propaga som: sufoca can\xE7\xF5es e magias."),
   derivado("dobra", "Dobra", ["espaco", "gravidade"], "O espa\xE7o curvado sobre si: encurta dist\xE2ncias e esmaga.", { fator: 1.25, minimo: 12 }),
+  // ---- fada + X (base nova, 25/10/2026) ----
+  derivado("fogo_fatuo", "Fogo-F\xE1tuo", ["fada", "fogo"], "Luzinhas que dan\xE7am: chamas rosadas que atraem e confundem."),
+  derivado("orvalho", "Orvalho Encantado", ["fada", "agua"], "Gotas de arco-\xEDris: cura leve que reflete feiti\xE7os."),
+  derivado("circulo_feerico", "C\xEDrculo de Fadas", ["fada", "terra"], "Anel de cogumelos: quem entra fica preso no encanto."),
+  derivado("brisa_cintilante", "Brisa Cintilante", ["fada", "ar"], "Vento de glitter: cega de leve e acelera aliados."),
+  derivado("glitter", "Glitter", ["fada", "eletricidade"], "Fa\xEDscas de purpurina: choques que deslumbram em \xE1rea."),
+  derivado("feerie", "Fe\xE9rie", ["fada", "arcano"], "Magia das fadas: ilus\xF5es t\xE3o reais que ferem.", { fator: 1.2 }),
+  derivado("sonho_sombrio", "Sonho Sombrio", ["fada", "sombra"], "O sonho que vira armadilha: sono, medo e do\xE7ura."),
+  derivado("arco_iris", "Arco-\xCDris", ["fada", "luz"], "Ponte de sete cores: escudo e b\xEAn\xE7\xE3o que se espalham."),
+  derivado("encanto_traicoeiro", "Encanto Trai\xE7oeiro", ["fada", "vileza"], "O sorriso da fada m\xE1: charme que se volta contra o alvo."),
+  derivado("banshee", "Banshee", ["fada", "morte"], "O lamento fe\xE9rico: o grito que anuncia o fim."),
+  derivado("coracao", "Cora\xE7\xE3o", ["fada", "vida"], "Amor encantado: cora\xE7\xF5es que curam e unem aliados."),
+  derivado("graca", "Gra\xE7a", ["fada", "vigor"], "Leveza de dan\xE7a: esquiva e golpes delicados e certeiros."),
+  derivado("lamina_purpurina", "L\xE2mina de Purpurina", ["fada", "marcial"], "A espada rosa: cada corte deixa um rastro cintilante."),
+  derivado("sono_encantado", "Sono Encantado", ["fada", "tempo"], "Cem anos num piscar: adormece e congela o instante."),
+  derivado("cancao_feerica", "Can\xE7\xE3o Fe\xE9rica", ["fada", "som"], "Melodia que enfeiti\xE7a: aliados inspirados, inimigos distra\xEDdos."),
+  derivado("leveza", "Leveza", ["fada", "gravidade"], "Asas de fada: anula o peso, levita e flutua."),
+  derivado("poeira_estelar", "Poeira Estelar", ["fada", "espaco"], "P\xF3 de estrela: teleporte curto num estouro de brilho."),
+  // ---- industrial + X (base nova, 25/10/2026) ----
+  derivado("fornalha", "Fornalha", ["industrial", "fogo"], "A caldeira acesa: calor constante que funde metal."),
+  derivado("hidraulica", "Hidr\xE1ulica", ["industrial", "agua"], "Press\xE3o de pist\xE3o: empurr\xF5es e jatos esmagadores."),
+  derivado("mineracao", "Minera\xE7\xE3o", ["industrial", "terra"], "Broca e picareta: perfura defesas e escava abrigos."),
+  derivado("pneumatica", "Pneum\xE1tica", ["industrial", "ar"], "Ar comprimido: disparos e saltos propulsionados."),
+  derivado("usina", "Usina", ["industrial", "eletricidade"], "Gerador em carga m\xE1xima: energia para aliados e torres."),
+  derivado("artificio", "Artif\xEDcio", ["industrial", "arcano"], "M\xE1quina com runa: dispositivos m\xE1gicos program\xE1veis.", { fator: 1.2 }),
+  derivado("fuligem", "Fuligem", ["industrial", "sombra"], "Fuma\xE7a de chamin\xE9: nuvem negra que cega e sufoca."),
+  derivado("holofote", "Holofote", ["industrial", "luz"], "Luz fabricada: revela, ofusca e marca alvos."),
+  derivado("poluicao", "Polui\xE7\xE3o", ["industrial", "vileza"], "Res\xEDduo t\xF3xico: corr\xF3i o terreno e quem nele vive."),
+  derivado("ferro_velho", "Ferro-Velho", ["industrial", "morte"], "Sucata reanimada: constructos feitos do que morreu."),
+  derivado("biomecanica", "Biomec\xE2nica", ["industrial", "vida"], "Carne e pr\xF3tese: reparo de corpo e m\xE1quina."),
+  derivado("exoesqueleto", "Exoesqueleto", ["industrial", "vigor"], "Armadura motorizada: for\xE7a e resist\xEAncia fabricadas."),
+  derivado("armaria", "Armaria", ["industrial", "marcial"], "Linha de montagem de armas: muni\xE7\xE3o sem fim."),
+  derivado("relojoaria", "Relojoaria", ["industrial", "tempo"], "Mecanismo preciso: atrasa e adianta turnos."),
+  derivado("britadeira", "Britadeira", ["industrial", "som"], "Vibra\xE7\xE3o mec\xE2nica: atordoa e racha estruturas."),
+  derivado("prensa", "Prensa", ["industrial", "gravidade"], "Toneladas de a\xE7o descendo: esmaga e imobiliza."),
+  derivado("estacao_orbital", "Esta\xE7\xE3o Orbital", ["industrial", "espaco"], "F\xE1brica no c\xE9u: bombardeio e suporte de longe."),
+  derivado("brinquedo", "Brinquedo de Corda", ["industrial", "fada"], "Corda e encanto: bonecos que dan\xE7am, distraem e protegem."),
+  // ---- planta + X (base nova, 25/10/2026) ----
+  derivado("queimada", "Queimada", ["planta", "fogo"], "Mato seco em chamas: inc\xEAndio que se alastra pelo ch\xE3o."),
+  derivado("mangue", "Mangue", ["planta", "agua"], "Ra\xEDzes na \xE1gua: terreno que prende e alimenta."),
+  derivado("raiz_profunda", "Raiz Profunda", ["planta", "terra"], "Ra\xEDzes que racham pedra: prende e ancora."),
+  derivado("polen", "P\xF3len", ["planta", "ar"], "Nuvem dourada: espirros, sono e cura leve no vento."),
+  derivado("fotossintese", "Fotoss\xEDntese", ["planta", "eletricidade"], "Energia da folha: recarga cont\xEDnua de recurso."),
+  derivado("druidismo", "Druidismo", ["planta", "arcano"], "A magia verde: forma de fera e o chamado da mata.", { fator: 1.2 }),
+  derivado("fungo", "Fungo", ["planta", "sombra"], "Mic\xE9lio no escuro: esporos que drenam e se espalham."),
+  derivado("girassol", "Girassol", ["planta", "luz"], "A flor do sol: cura e prote\xE7\xE3o voltadas aos aliados."),
+  derivado("espinheiro", "Espinheiro", ["planta", "vileza"], "Espinhos venenosos: quem toca sangra e adoece."),
+  derivado("murcha", "Murcha", ["planta", "morte"], "A folha que cai: drena vigor e apodrece o terreno."),
+  derivado("seiva", "Seiva", ["planta", "vida"], "Sangue verde: regenera\xE7\xE3o profunda e lenta."),
+  derivado("carvalho", "Carvalho", ["planta", "vigor"], "Tronco de mil anos: pele de casca e for\xE7a de raiz."),
+  derivado("bambu", "Bambu", ["planta", "marcial"], "Haste flex\xEDvel: bast\xF5es e lan\xE7as que nunca quebram."),
+  derivado("estacoes", "Esta\xE7\xF5es", ["planta", "tempo"], "Primavera ao inverno: o terreno muda a cada turno."),
+  derivado("farfalhar", "Farfalhar", ["planta", "som"], "A floresta sussurra: alerta, confunde e esconde."),
+  derivado("trepadeira", "Trepadeira", ["planta", "gravidade"], "Vinhas que puxam: arrasta e prende ao ch\xE3o."),
+  derivado("arvore_mundo", "\xC1rvore-Mundo", ["planta", "espaco"], "Galhos que tocam outros mundos: portais vivos.", { fator: 1.25, minimo: 12 }),
+  derivado("jardim_encantado", "Jardim Encantado", ["planta", "fada"], "Flores que cantam e brilham: cura e encanto em \xE1rea."),
+  derivado("estufa", "Estufa", ["planta", "industrial"], "Cultivo acelerado: plantas crescem armadas e r\xE1pidas."),
   // ---- triplas ----
   derivado("chama_demoniaca", "Chama Demon\xEDaca", ["fogo", "vileza", "morte"], "Fogo alimentado por pacto e morte: queima corpo, alma e contrato."),
   derivado("paradoxo", "Paradoxo", ["tempo", "arcano", "morte"], "Vida e morte fora de ordem: desfaz causas e efeitos."),
@@ -354,6 +435,9 @@ var DERIVADOS_LISTA = [
   derivado("sobrecarga", "Sobrecarga", ["eletricidade", "arcano", "vigor"], "Corpo-condutor: velocidade e poder al\xE9m do limite seguro."),
   derivado("ascensao", "Ascens\xE3o", ["luz", "vida", "vigor"], "Forma exaltada: transcende brevemente a condi\xE7\xE3o mortal."),
   derivado("nucleo", "N\xFAcleo", ["fogo", "terra", "eletricidade"], "O cora\xE7\xE3o do mundo: erup\xE7\xF5es magn\xE9ticas e magma pressurizado."),
+  derivado("pestilencia", "Pestil\xEAncia", ["planta", "morte", "vileza"], "A praga verde: esporos e espinhos que apodrecem tudo em volta."),
+  derivado("maldicao", "Maldi\xE7\xE3o", ["fada", "sombra", "vileza"], "O encanto que virou praga: a fada corrompida amaldi\xE7oa quem ama."),
+  derivado("cyber", "Cyber", ["industrial", "eletricidade", "arcano"], "Mana digital: c\xF3digo, rede e m\xE1quina pensante."),
   derivado("avatar_de_guerra", "Avatar de Guerra", ["marcial", "vigor", "arcano"], "A guerra encarnada: cem armas orbitando um corpo perfeito."),
   // ---- amplas e especiais ----
   derivado(
@@ -373,7 +457,7 @@ var DERIVADOS_LISTA = [
   derivado(
     "nulo",
     "Nulo",
-    ["fogo", "agua", "terra", "ar", "eletricidade", "arcano", "sombra", "luz", "vileza", "morte", "vida", "vigor", "marcial", "tempo", "som", "gravidade", "espaco"],
+    ["fogo", "agua", "terra", "ar", "eletricidade", "arcano", "sombra", "luz", "vileza", "morte", "vida", "vigor", "marcial", "tempo", "som", "gravidade", "espaco", "fada", "industrial", "planta"],
     "O elemento de quem dominou todos: nega, absorve e devolve qualquer coisa.",
     { fator: 1.4, minimo: 8, tipo: "especial" }
   )
@@ -412,10 +496,17 @@ var SINERGIAS = [
   { de: "ar", para: ["som"], razao: 0.05 },
   { de: "terra", para: ["vigor"], razao: 0.05 },
   { de: "eletricidade", para: ["ar"], razao: 0.05 },
+  { de: "planta", para: ["vida"], razao: 0.1 },
+  { de: "vida", para: ["planta"], razao: 0.1 },
+  { de: "fada", para: ["luz"], razao: 0.08 },
+  { de: "luz", para: ["fada"], razao: 0.08 },
+  { de: "industrial", para: ["eletricidade"], razao: 0.05 },
+  { de: "industrial", para: ["marcial"], razao: 0.05 },
+  { de: "terra", para: ["planta"], razao: 0.05 },
   // Arcano é magia pura: alimenta de leve tudo que não é físico.
   {
     de: "arcano",
-    para: ["fogo", "agua", "terra", "ar", "eletricidade", "sombra", "luz"],
+    para: ["fogo", "agua", "terra", "ar", "eletricidade", "sombra", "luz", "fada"],
     razao: 0.05
   }
 ];
@@ -425,16 +516,16 @@ var MULT_FORTE = 1.5;
 var MULT_FRACO = 0.5;
 var MULT_NEUTRO = 1;
 var AFINIDADES = {
-  fogo: { forteContra: ["vida", "terra"], fracoContra: ["agua"] },
-  agua: { forteContra: ["fogo"], fracoContra: ["eletricidade", "vida"] },
+  fogo: { forteContra: ["vida", "terra", "planta"], fracoContra: ["agua"] },
+  agua: { forteContra: ["fogo", "industrial"], fracoContra: ["eletricidade", "vida"] },
   terra: { forteContra: ["eletricidade", "som"], fracoContra: ["ar", "fogo"] },
   ar: { forteContra: ["terra"], fracoContra: ["eletricidade"] },
-  eletricidade: { forteContra: ["agua", "ar"], fracoContra: ["terra"] },
+  eletricidade: { forteContra: ["agua", "ar", "industrial"], fracoContra: ["terra"] },
   arcano: { forteContra: ["vigor", "marcial", "tempo", "espaco"], fracoContra: ["sombra"] },
   sombra: { forteContra: ["luz", "arcano"], fracoContra: ["luz"] },
   luz: { forteContra: ["sombra", "morte", "vileza"], fracoContra: [] },
-  vileza: { forteContra: ["vida"], fracoContra: ["luz"] },
-  morte: { forteContra: ["vida"], fracoContra: ["luz"] },
+  vileza: { forteContra: ["vida", "planta"], fracoContra: ["luz"] },
+  morte: { forteContra: ["vida", "fada"], fracoContra: ["luz"] },
   vida: { forteContra: ["morte", "vileza"], fracoContra: ["fogo", "morte"] },
   vigor: { forteContra: [], fracoContra: ["arcano", "tempo"] },
   marcial: { forteContra: [], fracoContra: ["arcano", "tempo"] },
@@ -445,7 +536,13 @@ var AFINIDADES = {
   // Gravidade esmaga o físico e o voo; o espaço a curva.
   gravidade: { forteContra: ["ar", "vigor", "marcial"], fracoContra: ["espaco"] },
   // Espaço supera gravidade e tempo; o arcano o mapeia.
-  espaco: { forteContra: ["gravidade", "tempo"], fracoContra: ["arcano"] }
+  espaco: { forteContra: ["gravidade", "tempo"], fracoContra: ["arcano"] },
+  // Fada encanta o profano e flutua acima do peso; o ferro e a morte a quebram.
+  fada: { forteContra: ["sombra", "vileza", "gravidade"], fracoContra: ["industrial", "morte"] },
+  // A máquina derruba a mata e o encanto; a água enferruja, o raio dá curto.
+  industrial: { forteContra: ["fada", "planta", "terra"], fracoContra: ["agua", "eletricidade"] },
+  // A planta bebe a água, racha a pedra e aterra o raio; o fogo a queima.
+  planta: { forteContra: ["agua", "terra", "eletricidade"], fracoContra: ["fogo"] }
 };
 function baseDominanteDoDef(def) {
   if (!def) return "arcano";
@@ -497,7 +594,10 @@ var LEXICO = {
   tempo: { adjetivo: { m: "Eterno", f: "Eterna" }, dominio: "Era", genero: "m" },
   som: { adjetivo: { m: "Sonoro", f: "Sonora" }, dominio: "Eco", genero: "m" },
   gravidade: { adjetivo: { m: "Denso", f: "Densa" }, dominio: "Peso", genero: "f" },
-  espaco: { adjetivo: { m: "Sideral", f: "Sideral" }, dominio: "Vazio", genero: "m" }
+  espaco: { adjetivo: { m: "Sideral", f: "Sideral" }, dominio: "Vazio", genero: "m" },
+  fada: { adjetivo: { m: "Fe\xE9rico", f: "Fe\xE9rica" }, dominio: "Encanto", genero: "m" },
+  industrial: { adjetivo: { m: "Fabril", f: "Fabril" }, dominio: "F\xE1brica", genero: "f" },
+  planta: { adjetivo: { m: "Silvestre", f: "Silvestre" }, dominio: "Raiz", genero: "f" }
 };
 var GENERO_EXCECOES = {
   // gregos em -ma são masculinos apesar da terminação
@@ -639,8 +739,8 @@ var FRASE_PERFIL = {
   suporte: "amplifica\xE7\xE3o"
 };
 function descricaoProcedural(comps, coesao = coesaoDe(comps)) {
-  const perfil = perfilDeCombinacao(comps);
-  const eixos = Object.keys(perfil).filter((k) => perfil[k] > 0).sort((x, y) => perfil[y] - perfil[x]);
+  const perfil2 = perfilDeCombinacao(comps);
+  const eixos = Object.keys(perfil2).filter((k) => perfil2[k] > 0).sort((x, y) => perfil2[y] - perfil2[x]);
   const nomes = ordenarComponentes(comps).map((c3) => ELEMENTOS[c3].nome);
   const lista = `${nomes.slice(0, -1).join(", ")} e ${nomes[nomes.length - 1]}`;
   const foco = eixos.length >= 2 ? `${FRASE_PERFIL[eixos[0]]} com ${FRASE_PERFIL[eixos[1]]}` : eixos.length === 1 ? FRASE_PERFIL[eixos[0]] : "equil\xEDbrio sem foco";
@@ -2482,7 +2582,10 @@ var ESTADOS_POR_ELEMENTO = {
   tempo: ["lentidao", "pressa"],
   som: ["silencio", "atordoamento"],
   gravidade: ["derrubada", "lentidao", "atordoamento"],
-  espaco: ["derrubada", "lentidao"]
+  espaco: ["derrubada", "lentidao"],
+  fada: ["encantado", "escudo"],
+  industrial: ["atordoamento", "escudo"],
+  planta: ["veneno", "regeneracao"]
 };
 var ESTADOS_POR_ESCOLA = {
   combate_fisico: ["sangramento", "atordoamento"],
@@ -4215,9 +4318,9 @@ function calcularSkill(p, prog, cfg) {
     suporte: 0
   };
   const pesosEscola = ESCOLAS[cfg.escola].pesos;
-  const perfil = {};
+  const perfil2 = {};
   for (const k of ["dano", "controle", "cura", "defesa", "suporte"]) {
-    perfil[k] = (pesosElemento[k] + pesosEscola[k]) / 2 * impactoTotal;
+    perfil2[k] = (pesosElemento[k] + pesosEscola[k]) / 2 * impactoTotal;
   }
   const propriedades2 = [];
   for (const [id, ranks] of Object.entries(p.talentos)) {
@@ -4314,7 +4417,7 @@ function calcularSkill(p, prog, cfg) {
     montaria,
     estados,
     efetividade: efet,
-    perfil,
+    perfil: perfil2,
     propriedades: propriedades2,
     eficiencia: impactoTotal / cfg.energia,
     tags,
@@ -4720,8 +4823,8 @@ function calcularFusao(p, prog, cfg) {
     }
   }
   const escala = resultadoCru.impactoTotal > 0 ? impactoTotal / resultadoCru.impactoTotal : 1;
-  const perfil = { ...resultadoCru.perfil };
-  for (const k of Object.keys(perfil)) perfil[k] *= escala;
+  const perfil2 = { ...resultadoCru.perfil };
+  for (const k of Object.keys(perfil2)) perfil2[k] *= escala;
   const resultado = {
     ...resultadoCru,
     valida: erros.length === 0,
@@ -4739,7 +4842,7 @@ function calcularFusao(p, prog, cfg) {
       poderPorCriatura: resultadoCru.invocacoes.poderPorCriatura * escala,
       poderTotal: resultadoCru.invocacoes.poderTotal * escala
     } : void 0,
-    perfil,
+    perfil: perfil2,
     eficiencia: impactoTotal / energiaTotal
   };
   const propriedadesEmergentes = [
@@ -4817,6 +4920,451 @@ function previewFusao(prog, componentes) {
 }
 function nomeEscola(escola) {
   return ESCOLAS[escola].nome;
+}
+
+// src/engine/gerador.ts
+function criarPrng(semente) {
+  let a2 = semente >>> 0;
+  return () => {
+    a2 = a2 + 1831565813 >>> 0;
+    let t = Math.imul(a2 ^ a2 >>> 15, 1 | a2);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+function sementeDeTexto(texto) {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < texto.length; i++) {
+    h ^= texto.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+var inteiro = (rnd, min, max) => min + Math.floor(rnd() * (max - min + 1));
+var umDe = (rnd, itens) => itens[Math.floor(rnd() * itens.length)];
+function sortearPonderado(rnd, itens, peso, quantidade) {
+  const restantes = [...itens];
+  const escolhidos = [];
+  while (escolhidos.length < quantidade && restantes.length) {
+    const pesos2 = restantes.map((x) => Math.max(0.02, peso(x)));
+    const total = pesos2.reduce((a2, b) => a2 + b, 0);
+    let alvo = rnd() * total;
+    let idx = restantes.length - 1;
+    for (let i = 0; i < restantes.length; i++) {
+      alvo -= pesos2[i];
+      if (alvo <= 0) {
+        idx = i;
+        break;
+      }
+    }
+    escolhidos.push(restantes[idx]);
+    restantes.splice(idx, 1);
+  }
+  return escolhidos;
+}
+var perfil = (dano, controle, cura, defesa, suporte) => ({ dano, controle, cura, defesa, suporte });
+var PAPEIS = {
+  dps: {
+    id: "dps",
+    nome: "DPS",
+    descricao: "Concentra o or\xE7amento em dano bruto e alcance efetivo.",
+    alvo: perfil(0.8, 0.1, 0, 0.05, 0.05),
+    escolasPreferidas: ["conjuracao", "longo_alcance", "combate_fisico"],
+    recursosPreferidos: ["mana", "furia", "ressonancia"],
+    forma: { area: "circulo", entrega: "instantaneo", fracaoAlcance: 0.6 },
+    talentosPreferidos: ["canalizacao_profunda", "impacto_imediato", "perfuracao", "estilhaco"]
+  },
+  tank: {
+    id: "tank",
+    nome: "Tank",
+    descricao: "Segura a linha de frente: defesa, presen\xE7a e amea\xE7a de perto.",
+    alvo: perfil(0.25, 0.15, 0, 0.5, 0.1),
+    escolasPreferidas: ["combate_fisico", "benca"],
+    recursosPreferidos: ["furia", "mana"],
+    forma: { area: "unico", entrega: "instantaneo", fracaoAlcance: 0.05 },
+    talentosPreferidos: ["postura_inabalavel", "golpe_devastador", "egide", "sequencia_marcial"]
+  },
+  suporte: {
+    id: "suporte",
+    nome: "Suporte",
+    descricao: "Amplifica o grupo com auras, escudos e b\xEAn\xE7\xE3os sustentadas.",
+    alvo: perfil(0.05, 0.15, 0.2, 0.2, 0.4),
+    escolasPreferidas: ["benca", "conjuracao"],
+    recursosPreferidos: ["fe", "mana"],
+    forma: { area: "circulo", entrega: "continuo", fracaoAlcance: 0.35 },
+    talentosPreferidos: ["exaltacao", "vinculo_de_grupo", "persistencia", "area_ampliada"]
+  },
+  curandeiro: {
+    id: "curandeiro",
+    nome: "Curandeiro",
+    descricao: "Sustenta a vida do grupo; cura reativa e regenera\xE7\xE3o.",
+    alvo: perfil(0.05, 0.05, 0.6, 0.2, 0.1),
+    escolasPreferidas: ["benca"],
+    recursosPreferidos: ["fe", "mana"],
+    forma: { area: "circulo", entrega: "continuo", fracaoAlcance: 0.3 },
+    talentosPreferidos: ["exaltacao", "persistencia", "economia_de_recurso", "egide"]
+  },
+  controle: {
+    id: "controle",
+    nome: "Controle",
+    descricao: "Nega espa\xE7o e a\xE7\xE3o: lentid\xE3o, pris\xE3o, maldi\xE7\xE3o e \xE1rea negada.",
+    alvo: perfil(0.2, 0.65, 0, 0.05, 0.1),
+    escolasPreferidas: ["maldicao", "conjuracao"],
+    recursosPreferidos: ["mana", "ressonancia", "soullink"],
+    forma: { area: "circulo", entrega: "continuo", fracaoAlcance: 0.5 },
+    talentosPreferidos: ["contagio", "aflicao_profunda", "area_ampliada", "dano_ao_longo_do_tempo"]
+  },
+  invocador: {
+    id: "invocador",
+    nome: "Invocador",
+    descricao: "Luta por procura\xE7\xE3o: evoca\xE7\xF5es que agem sozinhas.",
+    alvo: perfil(0.45, 0.1, 0.05, 0.2, 0.2),
+    escolasPreferidas: ["evocacao"],
+    recursosPreferidos: ["mana", "soullink", "fe"],
+    forma: { area: "unico", entrega: "instantaneo", fracaoAlcance: 0.25 },
+    talentosPreferidos: ["enxame", "autonomia", "comando", "colosso"]
+  }
+};
+var PAPEIS_VALIDOS = Object.keys(PAPEIS);
+var COMPOSICAO_PADRAO = [
+  "dps",
+  "tank",
+  "curandeiro",
+  "controle",
+  "suporte",
+  "invocador"
+];
+function composicaoPadrao(quantidade) {
+  const papeis = [];
+  for (let i = 0; i < quantidade; i++) papeis.push(COMPOSICAO_PADRAO[i % COMPOSICAO_PADRAO.length]);
+  return papeis;
+}
+function afinidadeComPapel(pesos2, alvo) {
+  return pesos2.dano * alvo.dano + pesos2.controle * alvo.controle + pesos2.cura * alvo.cura + pesos2.defesa * alvo.defesa + pesos2.suporte * alvo.suporte;
+}
+var PRENOMES = [
+  "Ashen",
+  "Bruma",
+  "Corvo",
+  "D\xE1lmine",
+  "Ember",
+  "F\xFAlvio",
+  "Gar\xE7a",
+  "H\xFAmus",
+  "\xCDdris",
+  "J\xF4nia",
+  "Kaleb",
+  "L\xE1rix",
+  "M\xFArmur",
+  "Nyx",
+  "\xD3rion",
+  "Pr\xE1xis",
+  "Qu\xE9ren",
+  "R\xFAbrica",
+  "S\xEDlex",
+  "T\xEDbio",
+  "Ulmo",
+  "V\xF3rtice",
+  "Xisto",
+  "Z\xE9firo"
+];
+var EPITETOS_POR_PAPEL = {
+  dps: ["o Estilha\xE7o", "a L\xE2mina Curta", "o Rombo", "a Pontaria Seca"],
+  tank: ["o Batente", "a Muralha Baixa", "o Que N\xE3o Cede", "a \xC2ncora"],
+  suporte: ["o F\xF4lego", "a Corrente Boa", "o Segundo Vento", "a M\xE3o Aberta"],
+  curandeiro: ["a Costura", "o Que Remenda", "a Vig\xEDlia", "o Fio Quente"],
+  controle: ["o N\xF3", "a Coleira", "o Que Atrasa", "a N\xE9voa Cheia"],
+  invocador: ["o Coro", "a Matilha", "o Que Chama", "a Boca do Bando"]
+};
+function nomearPersonagem(rnd, papel, elementoPrincipal) {
+  const prenome = umDe(rnd, PRENOMES);
+  const elemento = elementoDef(elementoPrincipal)?.nome ?? elementoPrincipal;
+  const epiteto = rnd() < 0.5 ? `de ${elemento}` : umDe(rnd, EPITETOS_POR_PAPEL[papel]);
+  return `${prenome} ${epiteto}`;
+}
+var FORMAS_NOME_SKILL = ["Rito de", "Sopro de", "Selo de", "Colapso de", "V\xE9u de", "Marca de", "Coroa de", "Mar\xE9 de"];
+function nomearSkill(rnd, elemento) {
+  return `${umDe(rnd, FORMAS_NOME_SKILL)} ${elementoDef(elemento)?.nome ?? elemento}`;
+}
+var NIVEL_MINIMO = 1;
+var NIVEL_MAXIMO = 7;
+function orcamentoDoNivel(nivel) {
+  const n = Math.min(NIVEL_MAXIMO, Math.max(NIVEL_MINIMO, Math.round(nivel)));
+  return ORCAMENTO_POR_TIER[n];
+}
+function normalizarNivel(nivel) {
+  if (nivel === void 0) return 3;
+  if (!Number.isFinite(nivel)) throw new Error("N\xEDvel precisa ser um n\xFAmero entre 1 e 7.");
+  const n = Math.round(nivel);
+  if (n < NIVEL_MINIMO || n > NIVEL_MAXIMO) {
+    throw new Error(
+      `N\xEDvel ${nivel} fora da faixa: use ${NIVEL_MINIMO}..${NIVEL_MAXIMO} (or\xE7amentos ${ORCAMENTO_POR_TIER[NIVEL_MINIMO]}..${ORCAMENTO_POR_TIER[NIVEL_MAXIMO]}), ou informe \`orcamento\` direto.`
+    );
+  }
+  return n;
+}
+var FATIAS = { elementos: 0.58, escolas: 0.18, recursos: 0.14, talentos: 0.05, profissoes: 0.05 };
+function tamanhoDoNucleo(orcamento, rnd) {
+  if (orcamento < 100) return 2;
+  if (orcamento < 220) return inteiro(rnd, 2, 3);
+  if (orcamento < 520) return 3;
+  return inteiro(rnd, 3, 4);
+}
+function gerarPersonagem(filtros = {}) {
+  const nivel = normalizarNivel(filtros.nivel);
+  const disponivel = filtros.orcamento ?? orcamentoDoNivel(nivel);
+  if (disponivel <= 0) throw new Error("Or\xE7amento precisa ser positivo.");
+  const semente = filtros.semente ?? sementeDeTexto(`${nivel}|${disponivel}|${filtros.papel ?? "?"}|${filtros.nome ?? ""}`);
+  const rnd = criarPrng(semente);
+  const papel = filtros.papel ?? umDe(rnd, PAPEIS_VALIDOS);
+  const def = PAPEIS[papel];
+  const evitar = new Set(filtros.evitarElementos ?? []);
+  const bases = elementosBase().map((e) => e.id);
+  const quantidadeNucleo = Math.min(bases.length, tamanhoDoNucleo(disponivel, rnd));
+  const nucleo = sortearPonderado(
+    rnd,
+    bases,
+    (id) => {
+      const afinidade = afinidadeComPapel(ELEMENTOS[id].pesos, def.alvo);
+      return (0.15 + afinidade) * (evitar.has(id) ? 0.12 : 1);
+    },
+    quantidadeNucleo
+  );
+  const p = criarPersonagem(filtros.nome ?? "sem nome");
+  const orcamentoElementos = Math.floor(disponivel * FATIAS.elementos);
+  const pesosNucleo = nucleo.map((_, i) => i === 0 ? 1.35 : 1);
+  const somaPesos = pesosNucleo.reduce((a2, b) => a2 + b, 0);
+  nucleo.forEach((id, i) => {
+    const pontos = Math.floor(orcamentoElementos * pesosNucleo[i] / somaPesos);
+    if (pontos > 0) investirElemento(p, id, pontos);
+  });
+  const orcamentoEscolas = Math.floor(disponivel * FATIAS.escolas);
+  const escolaPrincipal = sortearPonderado(
+    rnd,
+    def.escolasPreferidas,
+    (id) => 1 + afinidadeComPapel(ESCOLAS[id].pesos, def.alvo),
+    1
+  )[0];
+  const escolas = [escolaPrincipal];
+  if (orcamentoEscolas >= 40) {
+    escolas.push(
+      sortearPonderado(
+        rnd,
+        Object.keys(ESCOLAS).filter((id) => id !== escolaPrincipal),
+        (id) => (def.escolasPreferidas.includes(id) ? 1.2 : 0.25) + afinidadeComPapel(ESCOLAS[id].pesos, def.alvo),
+        1
+      )[0]
+    );
+  }
+  escolas.forEach((id, i) => {
+    const pontos = Math.floor(orcamentoEscolas * (escolas.length === 1 ? 1 : i === 0 ? 0.7 : 0.3));
+    if (pontos > 0) investirEscola(p, id, pontos);
+  });
+  const orcamentoRecursos = Math.floor(disponivel * FATIAS.recursos);
+  const recursoPrincipal = umDe(rnd, def.recursosPreferidos);
+  const recursos = [recursoPrincipal];
+  if (orcamentoRecursos >= 30) {
+    recursos.push(
+      sortearPonderado(
+        rnd,
+        Object.keys(RECURSOS).filter((id) => id !== recursoPrincipal),
+        (id) => def.recursosPreferidos.includes(id) ? 1 : 0.3,
+        1
+      )[0]
+    );
+  }
+  recursos.forEach((id, i) => {
+    const pontos = Math.floor(orcamentoRecursos * (recursos.length === 1 ? 1 : i === 0 ? 0.75 : 0.25));
+    if (pontos > 0) investirRecurso(p, id, pontos);
+  });
+  let orcamentoTalentos = Math.floor(disponivel * FATIAS.talentos);
+  const candidatosTalento = [
+    ...def.talentosPreferidos,
+    ...sortearPonderado(rnd, Object.keys(TALENTOS), () => 1, 6)
+  ];
+  for (const id of candidatosTalento) {
+    if (orcamentoTalentos <= 0) break;
+    const talento3 = TALENTOS[id];
+    if (!talento3) continue;
+    const ranks = Math.min(talento3.ranksMaximos, orcamentoTalentos, inteiro(rnd, 1, 2));
+    if (ranks <= 0) continue;
+    try {
+      investirTalento(p, id, ranks);
+      orcamentoTalentos -= ranks;
+    } catch {
+    }
+  }
+  const orcamentoProfissoes = Math.floor(disponivel * FATIAS.profissoes);
+  if (orcamentoProfissoes > 0) {
+    const profissao = sortearPonderado(
+      rnd,
+      Object.keys(PROFISSOES),
+      (id) => {
+        const fatores = PROFISSOES[id].fatoresElementos;
+        return 0.2 + nucleo.reduce((soma, base) => soma + (fatores[base] ?? 0), 0);
+      },
+      1
+    )[0];
+    investirProfissao(p, profissao, orcamentoProfissoes);
+  }
+  let prog = calcularProgressao(p);
+  let sobra = disponivel - custoDeAlocacao(p.elementos).total - somaValores(p.escolas) - somaValores(p.recursos) - somaValores(p.talentos) - somaValores(p.profissoes);
+  const destravados = [...prog.cascata.destravados].filter((id) => ELEMENTOS[id]?.tipo !== "base").filter((id) => podeInvestir(p, id, prog).ok).sort((a2, b) => (prog.niveisEfetivos[b] ?? 0) - (prog.niveisEfetivos[a2] ?? 0) || a2.localeCompare(b));
+  if (destravados.length && sobra > 0) {
+    const alvo = destravados[0];
+    const aridade = Math.min(4, Math.max(1, elementoDef(alvo)?.receita?.length ?? 2));
+    const pontos = Math.floor(sobra / CUSTO_PONTO_ALOCACAO[aridade]);
+    if (pontos > 0) {
+      investirElemento(p, alvo, pontos, prog);
+      sobra -= pontos * CUSTO_PONTO_ALOCACAO[aridade];
+      prog = calcularProgressao(p);
+    }
+  }
+  const elementoPrincipal = escolherElementoPrincipal(prog, nucleo);
+  if (!filtros.nome) p.nome = nomearPersonagem(rnd, papel, elementoPrincipal);
+  const skills = [];
+  const quantasSkills = Math.max(0, filtros.skills ?? 2);
+  const paletaElementos = paletaDeElementos(prog, elementoPrincipal);
+  for (let i = 0; i < quantasSkills; i++) {
+    const elemento = paletaElementos[i % paletaElementos.length];
+    const skill = desenharSkill(rnd, p, prog, def, elemento);
+    if (skill) skills.push(skill);
+  }
+  const gasto = {
+    elementos: custoDeAlocacao(p.elementos).total,
+    escolas: somaValores(p.escolas),
+    recursos: somaValores(p.recursos),
+    talentos: somaValores(p.talentos),
+    profissoes: somaValores(p.profissoes),
+    total: 0
+  };
+  gasto.total = gasto.elementos + gasto.escolas + gasto.recursos + gasto.talentos + gasto.profissoes;
+  return {
+    personagem: p,
+    papel,
+    nivel,
+    semente,
+    orcamento: { disponivel, gasto, sobra: disponivel - gasto.total },
+    progressao: prog,
+    skills,
+    nucleo,
+    elementoPrincipal
+  };
+}
+function somaValores(m2) {
+  return Object.values(m2).reduce((a2, b) => a2 + (b ?? 0), 0);
+}
+function escolherElementoPrincipal(prog, nucleo) {
+  let melhor = nucleo[0];
+  let melhorNota = -1;
+  for (const id of prog.elementosDisponiveis) {
+    const nivel = prog.niveisEfetivos[id] ?? 0;
+    if (nivel <= 0) continue;
+    const nota = nivel * (elementoDef(id)?.fatorPotencia ?? 1);
+    if (nota > melhorNota || nota === melhorNota && id.localeCompare(melhor) < 0) {
+      melhorNota = nota;
+      melhor = id;
+    }
+  }
+  return melhor;
+}
+function paletaDeElementos(prog, principal) {
+  const ordenados = prog.elementosDisponiveis.filter((id) => (prog.niveisEfetivos[id] ?? 0) > 0).sort(
+    (a2, b) => (prog.niveisEfetivos[b] ?? 0) * (elementoDef(b)?.fatorPotencia ?? 1) - (prog.niveisEfetivos[a2] ?? 0) * (elementoDef(a2)?.fatorPotencia ?? 1) || a2.localeCompare(b)
+  );
+  const paleta = [principal, ...ordenados.filter((id) => id !== principal)];
+  return paleta.length ? paleta : [principal];
+}
+function desenharSkill(rnd, p, prog, papel, elemento) {
+  const escolasComPontos = Object.keys(p.escolas).filter(
+    (id) => (p.escolas[id] ?? 0) > 0
+  );
+  const recursosComProficiencia = Object.keys(p.recursos).filter(
+    (id) => (p.recursos[id] ?? 0) > 0
+  );
+  if (!escolasComPontos.length || !recursosComProficiencia.length) return void 0;
+  const escola = escolasComPontos.find((id) => papel.escolasPreferidas.includes(id)) ?? escolasComPontos[0];
+  const limites = calcularLimites(p, escola, []);
+  const fontes = recursosComProficiencia.length > 1 && rnd() < 0.35 ? [
+    { recurso: recursosComProficiencia[0], proporcao: 70 },
+    { recurso: recursosComProficiencia[1], proporcao: 30 }
+  ] : [{ recurso: recursosComProficiencia[0], proporcao: 100 }];
+  const energia = Math.max(1, Math.floor(limites.energiaMaxima * (0.55 + rnd() * 0.35)));
+  const alcance = Math.round(limites.alcanceMaximo * papel.forma.fracaoAlcance);
+  const cfg = {
+    nome: nomearSkill(rnd, elemento),
+    elemento,
+    escola,
+    fontes,
+    energia,
+    tempoConjuracaoSegundos: Number(
+      (limites.tempoConjuracaoMinimo + rnd() * 2).toFixed(2)
+    ),
+    alcanceMetros: alcance,
+    area: papel.forma.area === "circulo" ? { tipo: "circulo", raioMetros: Math.max(1, Math.round(limites.raioMaximo * (0.4 + rnd() * 0.4))) } : { tipo: "unico" },
+    entrega: papel.forma.entrega === "continuo" ? { tipo: "continuo", duracaoSegundos: inteiro(rnd, 3, 8) } : { tipo: "instantaneo" }
+  };
+  const slots = slotsModificador(p);
+  if (slots > 0) {
+    const tags = tagsDaSkill(cfg);
+    const compativeis = Object.keys(MODIFICADORES).filter((id) => avaliarModificador(p, cfg, id, tags).compativel).sort();
+    const escolhidos = sortearPonderado(rnd, compativeis, () => 1, Math.min(slots, compativeis.length > 1 ? inteiro(rnd, 1, 2) : compativeis.length));
+    if (escolhidos.length) cfg.modificadores = escolhidos.sort();
+  }
+  const { erros } = validarSkill(p, prog, cfg);
+  if (erros.length) {
+    const recuo = { ...cfg, energia: Math.max(1, Math.floor(limites.energiaMaxima * 0.4)) };
+    delete recuo.modificadores;
+    if (validarSkill(p, prog, recuo).erros.length) return void 0;
+    return { config: recuo, resultado: calcularSkill(p, prog, recuo) };
+  }
+  return { config: cfg, resultado: calcularSkill(p, prog, cfg) };
+}
+function gerarGrupo(filtros = {}) {
+  const nivel = normalizarNivel(filtros.nivel);
+  const papeisPedidos = filtros.papeis ?? [];
+  for (const papel of papeisPedidos) {
+    if (!PAPEIS[papel]) {
+      throw new Error(`Papel desconhecido: "${papel}". Use: ${PAPEIS_VALIDOS.join(", ")}.`);
+    }
+  }
+  const quantidade = Math.max(
+    1,
+    Math.round(filtros.quantidade ?? Math.max(papeisPedidos.length, 4))
+  );
+  if (quantidade > 24) {
+    throw new Error("Grupo de no m\xE1ximo 24 membros \u2014 acima disso gere em lotes.");
+  }
+  const papeis = [...papeisPedidos];
+  const preenchimento = composicaoPadrao(quantidade);
+  for (let i = papeis.length; i < quantidade; i++) {
+    const jaUsados = new Set(papeis);
+    const proximo = preenchimento.find((x) => !jaUsados.has(x)) ?? preenchimento[i % preenchimento.length];
+    papeis.push(proximo);
+  }
+  papeis.length = quantidade;
+  const semente = filtros.semente ?? sementeDeTexto(`grupo|${nivel}|${quantidade}|${papeis.join(",")}`);
+  const membros = [];
+  const usados = [];
+  for (let i = 0; i < quantidade; i++) {
+    const membro = gerarPersonagem({
+      nivel,
+      orcamento: filtros.orcamento,
+      papel: papeis[i],
+      // semente derivada: o grupo inteiro é reprodutível a partir de uma só
+      semente: semente + i * 2654435761 >>> 0,
+      skills: filtros.skills,
+      evitarElementos: usados
+    });
+    usados.push(...membro.nucleo);
+    membros.push(membro);
+  }
+  return {
+    nome: filtros.nome ?? `Companhia ${membros[0]?.personagem.nome.split(" ")[0] ?? "sem nome"}`,
+    nivel,
+    semente,
+    membros
+  };
 }
 
 // src/api/consultas.ts
@@ -5404,6 +5952,64 @@ function listarCombinacoes(opcoes = {}) {
   });
   return paginar(todos, limite, offset);
 }
+function serializarGerado(g) {
+  return {
+    personagem: g.personagem,
+    papel: g.papel,
+    papelNome: PAPEIS[g.papel].nome,
+    nivel: g.nivel,
+    semente: g.semente,
+    orcamento: {
+      disponivel: g.orcamento.disponivel,
+      gasto: g.orcamento.gasto.total,
+      sobra: g.orcamento.sobra
+    },
+    nucleo: g.nucleo,
+    elementoPrincipal: {
+      id: g.elementoPrincipal,
+      nome: elementoDef(g.elementoPrincipal)?.nome ?? g.elementoPrincipal,
+      nivel: g.progressao.niveisEfetivos[g.elementoPrincipal] ?? 0
+    },
+    analise: analisarFicha(g.personagem),
+    skills: g.skills.map((s) => ({
+      config: s.config,
+      valida: s.resultado.valida,
+      erros: s.resultado.erros,
+      custoTotal: s.resultado.custoTotal,
+      impactoTotal: s.resultado.impactoTotal,
+      impactoPorAlvo: s.resultado.impactoPorAlvo,
+      alvosEsperados: s.resultado.alvosEsperados
+    }))
+  };
+}
+function gerarFicha(filtros = {}) {
+  return serializarGerado(gerarPersonagem(filtros));
+}
+function gerarGrupoDeFichas(filtros = {}) {
+  const grupo = gerarGrupo(filtros);
+  return {
+    nome: grupo.nome,
+    nivel: grupo.nivel,
+    semente: grupo.semente,
+    quantidade: grupo.membros.length,
+    composicao: grupo.membros.map((m2) => m2.papel),
+    membros: grupo.membros.map(serializarGerado)
+  };
+}
+function listarPapeis() {
+  return PAPEIS_VALIDOS.map((id) => ({
+    id,
+    nome: PAPEIS[id].nome,
+    descricao: PAPEIS[id].descricao
+  }));
+}
+function listarNiveis() {
+  const niveis = [];
+  for (let n = NIVEL_MINIMO; n <= NIVEL_MAXIMO; n++) {
+    niveis.push({ nivel: n, orcamento: orcamentoDoNivel(n) });
+  }
+  return niveis;
+}
 export {
   AFINIDADES,
   ARIDADE_MAXIMA,
@@ -5511,6 +6117,8 @@ export {
   familiasCapturaveis,
   fatorDeCombinacao,
   generoDoNome,
+  gerarFicha,
+  gerarGrupoDeFichas,
   investirElemento,
   investirEscola,
   investirProfissao,
@@ -5520,6 +6128,8 @@ export {
   listarArquetipos,
   listarCombinacoes,
   listarModificadores,
+  listarNiveis,
+  listarPapeis,
   listarTalentos,
   minimoDeCombinacao,
   modificadores,

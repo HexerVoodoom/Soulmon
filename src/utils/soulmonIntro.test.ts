@@ -17,11 +17,12 @@ const TODOS = [PODER, HARMONIA, BENEVOLENCIA];
 const emoji = /\p{Extended_Pictographic}/u;
 const TRAVESSAO = String.fromCharCode(0x2014);
 
+// 25/10/2026: o anel de counters ganhou fada/industrial/planta — Água agora apanha de Fada e Vida de Planta.
 describe('soulmonIntroLines: os três caminhos, texto exato', () => {
   it('poder EN', () => {
     expect(soulmonIntroLines(PODER, 'en')).toEqual([
       "Hi, I'm Lumi.\nI'm a digital counterpart of your soul, and we grow together.",
-      "My main element is Water.\nI'm not a fan of Lightning, though. It gets the better of me.",
+      "My main element is Water.\nI'm not a fan of Fairy, though. It gets the better of me.",
       "I really like protein.\nAnd I'm a foodie: I enjoy every single meal.",
       'I lean toward Power: when something matters, I like to face it head on.',
     ]);
@@ -29,7 +30,7 @@ describe('soulmonIntroLines: os três caminhos, texto exato', () => {
   it('poder PT', () => {
     expect(soulmonIntroLines(PODER, 'pt')).toEqual([
       'Oi, eu sou Lumi.\nSou uma contraparte digital da sua alma, e juntos vamos crescer.',
-      'Meu elemento principal é Água.\nJá de Eletricidade eu não gosto: leva vantagem sobre mim.',
+      'Meu elemento principal é Água.\nJá de Fada eu não gosto: leva vantagem sobre mim.',
       'Gosto muito de proteína.\nE sou guloso: aproveito cada refeição.',
       'Puxo para o Poder: quando algo importa, gosto de ir de frente.',
     ]);
@@ -37,7 +38,7 @@ describe('soulmonIntroLines: os três caminhos, texto exato', () => {
   it('harmonia EN (planta vira Life)', () => {
     expect(soulmonIntroLines(HARMONIA, 'en')).toEqual([
       "Hi, I'm Lumi.\nI'm a digital counterpart of your soul, and we grow together.",
-      "My main element is Life.\nI'm not a fan of Fire, though. It gets the better of me.",
+      "My main element is Life.\nI'm not a fan of Plant, though. It gets the better of me.",
       "I really like salad.\nI'm cuddly, too. A little affection goes a long way.",
       'I lean toward Harmony: I like things in balance, one step at a time.',
     ]);
@@ -45,7 +46,7 @@ describe('soulmonIntroLines: os três caminhos, texto exato', () => {
   it('harmonia PT (planta vira Vida)', () => {
     expect(soulmonIntroLines(HARMONIA, 'pt')).toEqual([
       'Oi, eu sou Lumi.\nSou uma contraparte digital da sua alma, e juntos vamos crescer.',
-      'Meu elemento principal é Vida.\nJá de Fogo eu não gosto: leva vantagem sobre mim.',
+      'Meu elemento principal é Vida.\nJá de Planta eu não gosto: leva vantagem sobre mim.',
       'Gosto muito de salada.\nTambém sou carinhoso: um pouco de colo faz diferença.',
       'Puxo para a Harmonia: gosto das coisas em equilíbrio, um passo de cada vez.',
     ]);
@@ -79,7 +80,8 @@ describe('soulmonIntroLines: regras de forma', () => {
       expect(b).not.toContain(TRAVESSAO);
       expect(emoji.test(b)).toBe(false);
       for (const c of INTRO_CLICHES_PROIBIDOS) expect(b.toLowerCase()).not.toContain(c.toLowerCase());
-      expect(b).not.toMatch(/\b(planta|industrial)\b/i);
+      // id CRU (minúsculo) proibido; o RÓTULO "Planta"/"Industrial" é legítimo desde 25/10/2026 (viraram base).
+      expect(b).not.toMatch(/\b(planta|industrial)\b/);
       expect(b).not.toMatch(/Ruptura|Trama|Guarda|Rupture|Weave|Guard/);
     }
   });
