@@ -13,6 +13,7 @@
  */
 import { mulberry32 } from './combate/rng';
 import { elementIconIds } from './elementIconArt';
+import { ELEMENT_VISUAL } from './elementVisual.data';
 import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { essenceEn } from './soulProfile/essenceLabels';
 import { M3_KINDS, type Rng } from './match3';
@@ -39,8 +40,41 @@ export function pickPvpElements(rng: Rng, pool: readonly string[] = pvpElementPo
   return out;
 }
 
-/** Os 6 elementos de uma partida a partir da SEMENTE dela (fluxo próprio: não toca o rng do tabuleiro nem o do combate). */
-export const pvpElementsForSeed = (seed: number): string[] => pickPvpElements(mulberry32((seed ^ 0x3e1e) | 0));
+/**
+ * ΔE mínimo entre QUAISQUER dois ícones do tabuleiro. Métrica: CIE76 (distância euclidiana em CIELAB da cor
+ * dominante, `elementVisual.data.ts`; gerada por `scripts/element-visual.py`). Calibrado no pool de 153 ícones:
+ * 643 de 11628 pares (5,5%) ficam abaixo de 15 ("gêmeos"); com 15 o guloso fecha 6 na grande maioria das sementes.
+ */
+export const M3_PVP_MIN_DELTA_E = 15;
+/** Quanto o limiar cai a cada rodada sem fechar `n` ícones (nunca trava: no fim chega a 0 = aceita tudo). */
+export const M3_PVP_DELTA_E_STEP = 2;
+
+/** ΔE CIE76 entre dois ícones; id sem assinatura conta como distante (Infinity) para não travar o sorteio. */
+export function iconDeltaE(a: string, b: string): number {
+  const x = ELEMENT_VISUAL[a], y = ELEMENT_VISUAL[b];
+  if (!x || !y) return Infinity;
+  return Math.hypot(x[0] - y[0], x[1] - y[1], x[2] - y[2]);
+}
+
+/**
+ * Sorteio guloso com semente: embaralha o pool com o `rng` e aceita um ícone só se o ΔE até TODOS os já aceitos for
+ * ≥ limiar. Se não fechar `n`, baixa o limiar em passos de `M3_PVP_DELTA_E_STEP` e refaz sobre a MESMA ordem
+ * embaralhada. Determinístico pelo `rng`.
+ */
+export function pickDistinctPvpElements(rng: Rng, pool: readonly string[] = pvpElementPool(), n: number = PVP_ELEMENT_COUNT, minDeltaE: number = M3_PVP_MIN_DELTA_E): string[] {
+  const order = pickPvpElements(rng, pool, pool.length);
+  for (let lim = minDeltaE; ; lim = Math.max(0, lim - M3_PVP_DELTA_E_STEP)) {
+    const out: string[] = [];
+    for (const id of order) {
+      if (out.every(o => iconDeltaE(o, id) >= lim)) out.push(id);
+      if (out.length >= n) return out;
+    }
+    if (lim <= 0) return out;
+  }
+}
+
+/** Os 6 elementos de uma partida a partir da SEMENTE dela (fluxo próprio: não toca o rng do tabuleiro nem o do combate). Ícones bem distintos entre si. */
+export const pvpElementsForSeed = (seed: number): string[] => pickDistinctPvpElements(mulberry32((seed ^ 0x3e1e) | 0));
 
 /** Nome do elemento de uma peça, PT/EN (leitor de tela): base do Oráculo/class-system ou misto; id desconhecido devolve o próprio id. */
 export function tileElementName(id: string, isPt: boolean): string {
