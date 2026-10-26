@@ -1843,10 +1843,9 @@ var BUILDING_GATES = {
   "jogos.salao": { minBond: 1 },
   "jogos.dungeon": { minBond: 3 },
   "jogos.mente": { minBond: 3 },
-  "exploracao.masmorra": { minBond: 1 },
+  "arena.fenda": { minBond: 1 },
   "exploracao.caderno": { minBond: 2 },
   "exploracao.oficina": { minBond: 3 },
-  "exploracao.preparar": { minBond: 3 },
   "exploracao.refugio": { minBond: 1 },
   "arena.duelo": { minBond: GATES.pvp.minBond },
   "arena.torneio": { minBond: GATES.torneio.minBond },
@@ -1865,7 +1864,9 @@ var MOVED_BUILDINGS = {
   "arena.feira": "hall.feira",
   "hall.biblioteca": "laboratorio.biblioteca",
   "hall.amigos": "laboratorio.amigos",
-  "jogos.refugio": "exploracao.refugio"
+  "jogos.refugio": "exploracao.refugio",
+  "exploracao.masmorra": "arena.fenda",
+  "exploracao.preparar": "exploracao.oficina"
 };
 function currentBuildingId(x2) {
   return typeof x2 === "string" && Object.prototype.hasOwnProperty.call(MOVED_BUILDINGS, x2) ? (
@@ -3838,6 +3839,8 @@ async function handleDeleteConfirm(env, saveId, body) {
       aiLifetime: { sprite: Number(ent.aiLifetime?.sprite) || 0 },
       aiForms: ent.aiForms && typeof ent.aiForms === "object" ? ent.aiForms : {},
       ...ent.rebirthSpriteResetAt ? { rebirthSpriteResetAt: ent.rebirthSpriteResetAt } : {},
+      // "Gerar de novo" (rodada 5): a cota MENSAL por forma também sobrevive à exclusão (excluir e relogar não devolve a regeração do mês).
+      ...ent.aiRegen && typeof ent.aiRegen === "object" && !Array.isArray(ent.aiRegen) && Object.keys(ent.aiRegen).length > 0 ? { aiRegen: ent.aiRegen } : {},
       adDate: "1970-01-01",
       adCount: 0,
       accountDeletedAt: Date.now(),
@@ -4847,7 +4850,7 @@ function formUsed(ent, formId) {
   return n + m;
 }
 __name(formUsed, "formUsed");
-async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = null, preAuth = null) {
+async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = null, preAuth = null, opts = null) {
   if (!kv(env)) return refuse(500, "storage-not-bound");
   const limits = AI_LIMITS[bucket];
   if (!limits) return refuse(500, "unknown-bucket");
@@ -4878,13 +4881,14 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = 
   const globalTtl = usesMonth ? MONTH_TTL_SECONDS : TTL_SECONDS;
   const accountKey = `ai:${bucket}:${saveId}:${today3}`;
   const dayKey = usesMonth && typeof limits.globalDay === "number" ? `ai:${bucket}:@all:${today3}` : null;
-  const hasLifetime = typeof limits.perAccountLifetime === "number";
+  const regenPaga = opts?.regenPaid === true && bucket === "sprite";
+  const hasLifetime = !regenPaga && typeof limits.perAccountLifetime === "number";
   if (formId !== null && formId !== void 0) {
     if (typeof formId !== "string" || !VALID_FORM_ID.test(formId)) {
       return refuse(400, "invalid-form-id");
     }
   }
-  const hasFormCap = typeof limits.perFormLifetime === "number" && typeof formId === "string" && formId.length > 0;
+  const hasFormCap = !regenPaga && typeof limits.perFormLifetime === "number" && typeof formId === "string" && formId.length > 0;
   const hasTierCap = !!limits.perAccountByTier;
   let ent = null;
   let perAccount = limits.perAccount * adminMul;
@@ -7557,6 +7561,65 @@ async function vistaDoMisterio(env, g, eu, hoje) {
 }
 __name(vistaDoMisterio, "vistaDoMisterio");
 
+// api/_lojaCla.js
+var LOJA_CATALOGO = Object.freeze([
+  Object.freeze({ id: "loja-fogueira-roda", preco: 250 }),
+  Object.freeze({ id: "loja-lanterna-latao", preco: 150 }),
+  Object.freeze({ id: "loja-cogumelos-brilho", preco: 200 }),
+  Object.freeze({ id: "loja-tapete-circuito", preco: 500 }),
+  Object.freeze({ id: "loja-cristal-menor", preco: 400 }),
+  Object.freeze({ id: "loja-poco-desejos", preco: 600 }),
+  Object.freeze({ id: "loja-ampulheta", preco: 800 }),
+  Object.freeze({ id: "loja-deck-clareira", preco: 300 })
+]);
+var LOJA_OP_RE = /^[A-Za-z0-9_-]{8,64}$/;
+var LOJA_OPS_MAX = 40;
+var lojaKey = /* @__PURE__ */ __name((gid) => `coopLoja:${gid}`, "lojaKey");
+var itemDaLoja = /* @__PURE__ */ __name((id) => LOJA_CATALOGO.find((i2) => i2.id === id) ?? null, "itemDaLoja");
+var int03 = /* @__PURE__ */ __name((n) => Number.isFinite(n) && n > 0 ? Math.floor(n) : 0, "int0");
+function normalizarLoja(r) {
+  const ids2 = new Set(LOJA_CATALOGO.map((i2) => i2.id));
+  const itens = [...new Set((Array.isArray(r?.itens) ? r.itens : []).filter((x2) => typeof x2 === "string" && ids2.has(x2)))];
+  const ops = {};
+  if (r?.ops && typeof r.ops === "object" && !Array.isArray(r.ops)) {
+    for (const [k, v] of Object.entries(r.ops)) if (LOJA_OP_RE.test(k) && typeof v === "string" && ids2.has(v)) ops[k] = v;
+  }
+  return { v: 1, gasto: int03(r?.gasto), itens, ops };
+}
+__name(normalizarLoja, "normalizarLoja");
+async function lerLoja(env, gid) {
+  const raw = await kvOrThrow(env).get(lojaKey(gid));
+  try {
+    return normalizarLoja(raw ? JSON.parse(raw) : null);
+  } catch {
+    return normalizarLoja(null);
+  }
+}
+__name(lerLoja, "lerLoja");
+function vistaDaLoja(loja, g, cartoes) {
+  return { itens: loja.itens.slice(), saldo: Math.max(0, bitsDaCasa(g, cartoes) - loja.gasto) };
+}
+__name(vistaDaLoja, "vistaDaLoja");
+async function comprarNaLoja(env, g, cartoes, itemId, opId) {
+  const item = typeof itemId === "string" ? itemDaLoja(itemId) : null;
+  if (!item) return { ok: false, reason: "invalid-item" };
+  if (typeof opId !== "string" || !LOJA_OP_RE.test(opId)) return { ok: false, reason: "invalid-op" };
+  const loja = await lerLoja(env, g.id);
+  if (loja.ops[opId] !== void 0) {
+    return loja.ops[opId] === item.id ? { ok: true, repeated: true } : { ok: false, reason: "op-reuse" };
+  }
+  if (loja.itens.includes(item.id)) return { ok: false, reason: "already-owned" };
+  if (bitsDaCasa(g, cartoes) - loja.gasto < item.preco) return { ok: false, reason: "insufficient" };
+  loja.gasto += item.preco;
+  loja.itens.push(item.id);
+  loja.ops[opId] = item.id;
+  const chaves = Object.keys(loja.ops);
+  for (const k of chaves.slice(0, Math.max(0, chaves.length - LOJA_OPS_MAX))) delete loja.ops[k];
+  await kvOrThrow(env).put(lojaKey(g.id), JSON.stringify(loja), { expirationTtl: CASA_TTL });
+  return { ok: true, repeated: false };
+}
+__name(comprarNaLoja, "comprarNaLoja");
+
 // api/guild.js
 var CORS5 = {
   "Access-Control-Allow-Origin": "*",
@@ -7586,6 +7649,7 @@ var GUILD_ACTIONS = Object.freeze({
   guildWarSeek: "POST",
   guildDonate: "POST",
   guildSlot: "POST",
+  guildShopBuy: "POST",
   claPraca: "GET",
   claPracaSlot: "POST",
   claPresente: "POST",
@@ -7636,6 +7700,7 @@ async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date())
   const nominal = size <= PRESENCA_NOMINAL_MAX;
   const cartoes = await lerCartoes(env, g, /* @__PURE__ */ new Date(), cartoesProntos ?? {});
   const cart = g.members.map((m) => cartoes[m]);
+  const loja = await lerLoja(env, g.id);
   const dias = cart.map((c, i2) => {
     const proprios = checkinsDoCartao(c, semana);
     return proprios.length > 0 ? proprios : g.checkins?.[g.members[i2]] || [];
@@ -7708,6 +7773,8 @@ async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date())
         const c = cart[i2]?.casa ? normalizarCasa(cart[i2].casa) : null;
         return c?.slot ? [{ memberId: membros[i2].memberId, item: c.slot, euMesmo: m === euSave }] : [];
       }),
+      // R5/A: a Loja do clã (campo ADITIVO; cliente antigo ignora). Itens do clã + saldo de Bits do clã.
+      loja: vistaDaLoja(loja, g, cartoes),
       mine: (() => {
         const c = eu >= 0 && cart[eu]?.casa ? normalizarCasa(cart[eu].casa) : null;
         return { slot: c?.slot ?? null, capReached: !!c && c.day === hoje && c.bitsToday >= CASA_BITS_POR_DIA };
@@ -7886,6 +7953,18 @@ async function handleGuild({ request, env }) {
     if (r.accepted === 0) return erro("daily limit", 429);
     await cartao(g);
     return json12({ accepted: r.accepted, guild: await montar(g, id, hoje) });
+  }
+  if (action === "guildShopBuy") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    const cartoes = await lerCartoes(env, g);
+    const r = await comprarNaLoja(env, g, cartoes, body.itemId, body.opId);
+    if (!r.ok) {
+      if (r.reason === "invalid-item") return erro("invalid item", 400);
+      if (r.reason === "invalid-op") return erro("invalid op", 400);
+      return erro(r.reason === "insufficient" ? "not enough bits" : r.reason === "already-owned" ? "already owned" : "op reuse", 409);
+    }
+    return json12({ repeated: r.repeated, guild: await montar(g, id, hoje) });
   }
   if (action === "guildSlot") {
     const g = await grupoDe(env, id, semana);
@@ -10349,6 +10428,86 @@ function chromaKeyPng(pngBytes, key = "green") {
 }
 __name(chromaKeyPng, "chromaKeyPng");
 
+// api/_spriteRegen.js
+var SPRITE_REGEN = Object.freeze({
+  /** Créditos cobrados por regeração. Espelho de `SPRITE_REGEN_COST_CREDITS` (`src/utils/spriteRegen.ts`), travado por `spriteRegen.parity.test.js`. */
+  costCredits: 50,
+  /** Regerações pagas por forma por mês (UTC). */
+  perFormPerMonth: 1
+});
+var REGEN_OP_RE = /^[A-Za-z0-9_-]{8,64}$/;
+var MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
+var REGEN_OPS_KEEP = 16;
+var REGEN_STALE_MS = 5 * 6e4;
+var regenMonthOf = /* @__PURE__ */ __name((now = Date.now()) => new Date(now).toISOString().slice(0, 7), "regenMonthOf");
+function sanitizeRegenUsed(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const out = {};
+  for (const [formId, month2] of Object.entries(raw)) {
+    if (VALID_FORM_ID.test(formId) && typeof month2 === "string" && MONTH_RE.test(month2)) out[formId] = month2;
+  }
+  return Object.keys(out).length > 0 ? out : void 0;
+}
+__name(sanitizeRegenUsed, "sanitizeRegenUsed");
+function opsOf(ent) {
+  return ent.regenOps && typeof ent.regenOps === "object" && !Array.isArray(ent.regenOps) ? { ...ent.regenOps } : {};
+}
+__name(opsOf, "opsOf");
+function podarOps(ops) {
+  const ids2 = Object.keys(ops);
+  if (ids2.length <= REGEN_OPS_KEEP) return ops;
+  ids2.sort((a, b) => (Number(ops[b]?.at) || 0) - (Number(ops[a]?.at) || 0));
+  return Object.fromEntries(ids2.slice(0, REGEN_OPS_KEEP).map((k) => [k, ops[k]]));
+}
+__name(podarOps, "podarOps");
+function temPrimeiraGeracao(ent, formId) {
+  const antigo = legacyFormIdOf(formId);
+  return Number(ent.aiForms?.[formId] ?? 0) >= 1 || (antigo ? Number(ent.aiForms?.[antigo] ?? 0) >= 1 : false);
+}
+__name(temPrimeiraGeracao, "temPrimeiraGeracao");
+async function reserveRegen(env, saveId, formId, opId, now = Date.now()) {
+  if (typeof opId !== "string" || !REGEN_OP_RE.test(opId)) return { ok: false, status: 400, reason: "regen-op-id-required" };
+  const ent = await readEntitlement(env, saveId);
+  const ops = opsOf(ent);
+  if (ops[opId]) return { ok: false, status: 409, reason: "regen-duplicate", op: ops[opId] };
+  if (ent.tier !== "paid") return { ok: false, status: 402, reason: "paid-tier-required" };
+  if (!temPrimeiraGeracao(ent, formId)) return { ok: false, status: 409, reason: "regen-needs-first-generation" };
+  const month2 = regenMonthOf(now);
+  const usados = sanitizeRegenUsed(ent.aiRegen) ?? {};
+  if (usados[formId] === month2) return { ok: false, status: 429, reason: "regen-monthly-limit" };
+  if (!(ent.credits >= SPRITE_REGEN.costCredits)) return { ok: false, status: 402, reason: "insufficient-credits" };
+  ent.credits -= SPRITE_REGEN.costCredits;
+  ent.aiRegen = { ...usados, [formId]: month2 };
+  ent.regenOps = podarOps({ ...ops, [opId]: { s: "debited", f: formId, m: month2, at: now } });
+  await writeEntitlement(env, saveId, ent);
+  return { ok: true, credits: ent.credits, month: month2 };
+}
+__name(reserveRegen, "reserveRegen");
+async function completeRegen(env, saveId, opId) {
+  const ent = await readEntitlement(env, saveId);
+  const ops = opsOf(ent);
+  if (!ops[opId] || ops[opId].s !== "debited") return;
+  ops[opId] = { ...ops[opId], s: "done" };
+  ent.regenOps = ops;
+  await writeEntitlement(env, saveId, ent);
+}
+__name(completeRegen, "completeRegen");
+async function refundRegen(env, saveId, opId) {
+  const ent = await readEntitlement(env, saveId);
+  const ops = opsOf(ent);
+  const op = ops[opId];
+  if (!op || op.s !== "debited") return { refunded: false };
+  ent.credits += SPRITE_REGEN.costCredits;
+  const usados = sanitizeRegenUsed(ent.aiRegen) ?? {};
+  if (usados[op.f] === op.m) delete usados[op.f];
+  ent.aiRegen = usados;
+  ops[opId] = { ...op, s: "refunded" };
+  ent.regenOps = ops;
+  await writeEntitlement(env, saveId, ent);
+  return { refunded: true, credits: ent.credits };
+}
+__name(refundRegen, "refundRegen");
+
 // api/_ipHash.js
 var IP_HASH_TTL_SECONDS = 30 * 24 * 60 * 60;
 var IP_LIMITS = { newAccount: 3, sprite: 4 };
@@ -10735,8 +10894,33 @@ function referenciasSeguras(request, referenceImageUrls) {
   return ok.length ? ok : void 0;
 }
 __name(referenciasSeguras, "referenciasSeguras");
+async function respostaDeRegenRepetida(env, id, formId, opId, op) {
+  if (op.s === "done") {
+    let guardada = null;
+    try {
+      guardada = JSON.parse(await kvOrThrow(env).get(cacheKey(id, formId)));
+    } catch {
+      guardada = null;
+    }
+    if (guardada?.image) return Response.json({ image: guardada.image, provider: guardada.provider, cached: true, regen: true }, { headers: CORS10 });
+    return Response.json({ error: "regen-duplicate" }, { status: 409, headers: CORS10 });
+  }
+  if (op.s === "debited") {
+    if (Date.now() - (Number(op.at) || 0) > REGEN_STALE_MS) {
+      await refundRegen(env, id, opId);
+      return Response.json({ error: "regen-refunded" }, { status: 502, headers: CORS10 });
+    }
+    return Response.json({ pending: true, retryAfter: LOCK_RETRY_AFTER }, { status: 202, headers: CORS10 });
+  }
+  return Response.json({ error: "regen-duplicate" }, { status: 409, headers: CORS10 });
+}
+__name(respostaDeRegenRepetida, "respostaDeRegenRepetida");
 async function onRequestPost5({ request, env }) {
   let lock = null;
+  let regenOp = null;
+  let regenId = null;
+  let regenEntregue = false;
+  let regenCredits = null;
   try {
     if (flagOn(env?.SPRITE_DISABLED)) {
       return Response.json({ error: "sprite-disabled", message: AI_REFUSAL_MESSAGES["sprite-disabled"] }, { status: 503, headers: CORS10 });
@@ -10768,6 +10952,13 @@ async function onRequestPost5({ request, env }) {
     if (!tierOk) {
       return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS10 });
     }
+    const regenPago = corpo.regenPaid === true;
+    if (regenPago && !tier.ok) {
+      return Response.json({ error: "paid-tier-required" }, { status: 402, headers: CORS10 });
+    }
+    if (regenPago && flagOn(env?.SPRITE_REGEN_DISABLED)) {
+      return Response.json({ error: "sprite-regen-disabled" }, { status: 503, headers: CORS10 });
+    }
     if (formId !== null && formId !== void 0) {
       if (typeof formId !== "string" || !VALID_FORM_ID.test(formId)) {
         return Response.json({ error: "invalid-form-id" }, { status: 400, headers: CORS10 });
@@ -10776,7 +10967,7 @@ async function onRequestPost5({ request, env }) {
     if (typeof formId === "string" && formId.length > 0) {
       let pronta = null;
       let ocupada = null;
-      const regenerar = corpo.regenerate === true;
+      const regenerar = corpo.regenerate === true || regenPago;
       try {
         pronta = regenerar ? null : await kvOrThrow(env).get(cacheKey(id, formId));
         const antigo = legacyFormIdOf(formId);
@@ -10815,7 +11006,23 @@ async function onRequestPost5({ request, env }) {
         return Response.json({ error: "ai-quota-unavailable" }, { status: 503, headers: CORS10 });
       }
     }
-    const gate2 = await guardAiRequest(request, env, "sprite", id, 1, formId);
+    if (regenPago) {
+      let r;
+      try {
+        r = await reserveRegen(env, id, formId, corpo.opId);
+      } catch (err2) {
+        console.error("generate-sprite: reserva da regera\xE7\xE3o ileg\xEDvel, recusando", err2?.message);
+        return Response.json({ error: "ai-quota-unavailable" }, { status: 503, headers: CORS10 });
+      }
+      if (!r.ok) {
+        if (r.reason === "regen-duplicate" && r.op) return await respostaDeRegenRepetida(env, id, formId, corpo.opId, r.op);
+        return Response.json({ error: r.reason }, { status: r.status, headers: CORS10 });
+      }
+      regenOp = corpo.opId;
+      regenId = id;
+      regenCredits = r.credits;
+    }
+    const gate2 = await guardAiRequest(request, env, "sprite", id, 1, formId, null, regenPago ? { regenPaid: true } : null);
     if (!gate2.ok) {
       return Response.json(
         { error: gate2.reason, ...gate2.message ? { message: gate2.message } : {} },
@@ -10846,6 +11053,15 @@ async function onRequestPost5({ request, env }) {
           console.error("generate-sprite: falha ao cachear o resultado", err2?.message);
         }
       }
+      if (regenOp) {
+        regenEntregue = true;
+        try {
+          await completeRegen(env, id, regenOp);
+        } catch (err2) {
+          console.error("generate-sprite: falha ao fechar a regera\xE7\xE3o", err2?.message);
+        }
+        return Response.json({ ...out, image, regen: true, credits: regenCredits }, { headers: CORS10 });
+      }
       return Response.json({ ...out, image }, { headers: CORS10 });
     }, "responder");
     try {
@@ -10861,7 +11077,7 @@ async function onRequestPost5({ request, env }) {
         }
         throw err2;
       }
-      const extra = await guardAiRequest(request, env, "sprite", id, 1, null);
+      const extra = await guardAiRequest(request, env, "sprite", id, 1, null, null, regenPago ? { regenPaid: true } : null);
       if (!extra.ok) {
         return Response.json(
           { error: extra.reason, ...extra.message ? { message: extra.message } : {} },
@@ -10881,6 +11097,13 @@ async function onRequestPost5({ request, env }) {
     console.error("generate-sprite error:", err2);
     return Response.json({ error: "internal error" }, { status: 500, headers: CORS10 });
   } finally {
+    if (regenOp && !regenEntregue) {
+      try {
+        await refundRegen(env, regenId, regenOp);
+      } catch (err2) {
+        console.error("generate-sprite: falha ao devolver a regera\xE7\xE3o", err2?.message);
+      }
+    }
     await destravar(env, lock);
   }
 }
@@ -11632,7 +11855,7 @@ var FIRST_TIME_IDS = [
   "visit:exploracao.refugio",
   "visit:jogos.mente",
   "visit:exploracao.passeio",
-  "visit:exploracao.masmorra",
+  "visit:arena.fenda",
   "visit:exploracao.caderno",
   "visit:exploracao.oficina",
   "visit:arena.duelo",
@@ -11970,6 +12193,12 @@ async function onRequest7({ request, env }) {
       else delete state.dayPlan;
     }
     if ("nightmares" in state) state.nightmares = sanitizeNightmares(state.nightmares);
+    const acervoSprites = state.spriteLibrary;
+    if (acervoSprites && typeof acervoSprites === "object" && !Array.isArray(acervoSprites)) {
+      const ru = sanitizeRegenUsed(acervoSprites.regenUsed);
+      if (ru) acervoSprites.regenUsed = ru;
+      else delete acervoSprites.regenUsed;
+    }
     const prev = await kvOrThrow(env).getWithMetadata(saveId);
     if ("fichaJornada" in state) {
       let guardado;
@@ -12646,7 +12875,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-5Ifb8z/functionsRoutes-0.7223308125714911.mjs
+// ../.wrangler/tmp/pages-sEyp8i/functionsRoutes-0.0659462444339517.mjs
 var routes = [
   {
     routePath: "/api/account",
