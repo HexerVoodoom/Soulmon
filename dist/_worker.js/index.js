@@ -6546,7 +6546,7 @@ var SIMULADOS = Object.freeze([
   { id: "sim_0003", nick: "PedroH", petName: "Piu", line: "benevolencia", element: "luz", artLine: "thalindra", lv0: 7, rate: 0.12, bond0: 9, skill: 0.39, frequency: "casual", prefs: { "endless-rift": 0.46, eco: 0.52, "rogue-dungeon": 0.36 }, daysPlaying: 204 },
   { id: "sim_0004", nick: "Nebulosa", petName: "Nuvem", line: "harmonia", element: "arcano", artLine: "industrial", lv0: 3, rate: 0.1, bond0: 5, skill: 0.15, frequency: "casual", prefs: { dino: 0.55, eco: 0.29, "rogue-dungeon": 0.17 }, daysPlaying: 147 },
   { id: "sim_0005", nick: "mari.silva", petName: "Piu", line: "benevolencia", element: "vida", artLine: "nascente", lv0: 2, rate: 0.09, bond0: 5, skill: 0.2, frequency: "regular", prefs: { dino: 0.38, "soul-barrage": 0.29, ppt: 0.2 }, daysPlaying: 244 },
-  { id: "sim_0006", nick: "tiagoVoz", petName: "Raio", line: "harmonia", element: "espaco", artLine: "industrial", lv0: 28, rate: 0.19, bond0: 25, skill: 0.9, frequency: "assiduo", prefs: { "rogue-dungeon": 0.74, "soul-barrage": 0.65 }, daysPlaying: 111 },
+  { id: "sim_0006", nick: "Kael_Rune", petName: "Raio", line: "harmonia", element: "espaco", artLine: "industrial", lv0: 28, rate: 0.19, bond0: 25, skill: 0.9, frequency: "assiduo", prefs: { "rogue-dungeon": 0.74, "soul-barrage": 0.65 }, daysPlaying: 111 },
   { id: "sim_0007", nick: "Zeca", petName: "Bruma", line: "benevolencia", element: "vida", artLine: "vida", lv0: 13, rate: 0.16, bond0: 14, skill: 0.6, frequency: "assiduo", prefs: { eco: 0.65, dino: 0.38, "soul-barrage": 0.43 }, daysPlaying: 46 },
   { id: "sim_0008", nick: "luna_k", petName: "Dango", line: "poder", element: "marcial", artLine: "meteoro", lv0: 13, rate: 0.16, bond0: 13, skill: 0.62, frequency: "regular", prefs: { "soul-barrage": 0.68, ppt: 0.67, dino: 0.56 }, daysPlaying: 190 },
   { id: "sim_0009", nick: "RafaGamer", petName: "Rastro", line: "benevolencia", element: "terra", artLine: "nascente", lv0: 8, rate: 0.14, bond0: 9, skill: 0.44, frequency: "casual", prefs: { dino: 0.58, eco: 0.37, "endless-rift": 0.5 }, daysPlaying: 89 },
@@ -6583,7 +6583,7 @@ var SIMULADOS = Object.freeze([
   { id: "sim_0040", nick: "ZePedro", petName: "Breu", line: "poder", element: "morte", artLine: "meteoro", lv0: 9, rate: 0.15, bond0: 13, skill: 0.5, frequency: "casual", prefs: { eco: 0.75, ppt: 0.62, "rogue-dungeon": 0.36 }, daysPlaying: 188 },
   { id: "sim_0041", nick: "Carol", petName: "P\xE9rola", line: "harmonia", element: "arcano", artLine: "alento", lv0: 1, rate: 0.1, bond0: 6, skill: 0.1, frequency: "regular", prefs: { dino: 0.24, "match3": 0.1 }, daysPlaying: 87 },
   { id: "sim_0042", nick: "matheus_r", petName: "Breu", line: "poder", element: "sombra", artLine: "igni", lv0: 5, rate: 0.13, bond0: 10, skill: 0.33, frequency: "casual", prefs: { "rogue-dungeon": 0.68 }, daysPlaying: 262 },
-  { id: "sim_0043", nick: "Bruna", petName: "Rastro", line: "poder", element: "morte", artLine: "industrial", lv0: 9, rate: 0.14, bond0: 13, skill: 0.47, frequency: "casual", prefs: { "endless-rift": 0.73, "soul-barrage": 0.37 }, daysPlaying: 233 },
+  { id: "sim_0043", nick: "Mika_Sora", petName: "Rastro", line: "poder", element: "morte", artLine: "industrial", lv0: 9, rate: 0.14, bond0: 13, skill: 0.47, frequency: "casual", prefs: { "endless-rift": 0.73, "soul-barrage": 0.37 }, daysPlaying: 233 },
   { id: "sim_0044", nick: "leo_tc", petName: "Sopro", line: "poder", element: "marcial", artLine: "industrial", lv0: 2, rate: 0.1, bond0: 8, skill: 0.23, frequency: "casual", prefs: { "match3": 0.43 }, daysPlaying: 261 },
   { id: "sim_0045", nick: "Helo", petName: "Jade", line: "harmonia", element: "gravidade", artLine: "industrial", lv0: 17, rate: 0.16, bond0: 20, skill: 0.7, frequency: "assiduo", prefs: { "endless-rift": 0.94, dino: 0.75, eco: 0.48 }, daysPlaying: 233 },
   { id: "sim_0046", nick: "Samuel", petName: "Cacto", line: "poder", element: "vigor", artLine: "kaelen", lv0: 1, rate: 0.09, bond0: 5, skill: 0.08, frequency: "casual", prefs: { ppt: 0.36 }, daysPlaying: 261 },
@@ -10388,7 +10388,7 @@ var CORS10 = {
 var HF_BASE = "https://platform.higgsfield.ai";
 var GEMINI_MODEL2 = "gemini-2.5-flash-image";
 var CACHE_PREFIX = "sprite:img:";
-var GRAVAR_EMAIL_DO_SPRITE = false;
+var GRAVAR_EMAIL_DO_SPRITE = true;
 var LOCK_PREFIX = "sprite:lock:";
 var BLOB_PREFIX = "sprite:blob:";
 var LOCK_TTL_SECONDS = 120;
@@ -12646,7 +12646,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-8Ux7zI/functionsRoutes-0.8556028186383864.mjs
+// ../.wrangler/tmp/pages-eHJByZ/functionsRoutes-0.2484276192717756.mjs
 var routes = [
   {
     routePath: "/api/account",
