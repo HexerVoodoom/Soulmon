@@ -176,14 +176,16 @@ async function estado(env, g, hoje) {
   return { est, planta, membros, membro, cresc: avaliarCrescimento({ plantedDay: planta.plantedDay, today: hoje, membros, membro }) };
 }
 
-/** Rega 1x/dia/membro, só com o sorteio 'water' do dia. `reason`: 'no-plant' | 'grown' | 'no-draw' | 'already-watered'. */
+/** Rega 1x/dia/membro, só com o sorteio 'water' do dia (sem sorteio prévio — cliente antigo — sorteia 'water' internamente). `reason`: 'no-plant' | 'grown' | 'no-draw' | 'already-watered'. */
 export async function regar(env, g, save, hoje) {
   const s = await estado(env, g, hoje);
   if (!s.planta) return { ok: false, reason: 'no-plant' };
   if (s.cresc.mature) return { ok: false, reason: 'grown' };
   const m = s.membro[save];
-  // D2: UMA ação por dia por pessoa, sorteada aqui; sem o sorteio de 'water' do dia, não rega.
-  if (m.sorteio?.day !== hoje || m.sorteio.kind !== 'water') return { ok: false, reason: 'no-draw' };
+  // D2: UMA ação por dia por pessoa. Cliente antigo regava sem `claSortear`: sem sorteio HOJE o servidor sorteia aqui
+  // (a ação pedida vira a do dia). Com sorteio de OUTRA ação hoje, vale a regra de uma ação por dia.
+  if (m.sorteio?.day !== hoje) m.sorteio = { day: hoje, kind: 'water' };
+  else if (m.sorteio.kind !== 'water') return { ok: false, reason: 'no-draw' };
   if (m.water.includes(hoje)) return { ok: false, reason: 'already-watered' };
   m.water = [...m.water, hoje].slice(-PLANTIO_HIST_MAX);
   await gravarMembro(env, g.id, save, m);
@@ -213,9 +215,12 @@ export async function proteger(env, g, save, hoje, selo = Math.random().toString
   const s = await estado(env, g, hoje);
   if (!s.planta) return { ok: false, reason: 'no-plant' };
   if (s.cresc.mature) return { ok: false, reason: 'grown' };
-  // D2: só protege quem tirou 'protect' hoje (uma ação por dia por pessoa).
-  if (s.membro[save].sorteio?.day !== hoje || s.membro[save].sorteio.kind !== 'protect') return { ok: false, reason: 'no-draw' };
+  // D2: uma ação por dia por pessoa. Sem sorteio HOJE (cliente antigo) o servidor sorteia 'protect' aqui; com sorteio de
+  // OUTRA ação hoje, vale a regra de uma ação por dia.
+  const sorteadoHoje = s.membro[save].sorteio?.day === hoje;
+  if (sorteadoHoje && s.membro[save].sorteio.kind !== 'protect') return { ok: false, reason: 'no-draw' };
   if (s.cresc.todayProtected || await kvOrThrow(env).get(protKey(g.id, hoje))) return { ok: false, reason: 'already-protected' };
+  if (!sorteadoHoje) s.membro[save].sorteio = { day: hoje, kind: 'protect' };
   await kvOrThrow(env).put(protKey(g.id, hoje), JSON.stringify({ selo }), { expirationTtl: 86400 * 3 });
   const lido = parse(await kvOrThrow(env).get(protKey(g.id, hoje)));
   if (lido?.selo !== selo) return { ok: false, reason: 'already-protected' };

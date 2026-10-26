@@ -38,8 +38,7 @@ describe('plantio: uma por estação', () => {
     const e = env(); const g = grupo();
     expect((await regar(e, g, A, '2026-04-02')).reason).toBe('no-plant');
     await plantar(e, g.id, A, '2026-04-02');
-    expect((await regar(e, g, A, '2026-04-02')).reason).toBe('no-draw'); // D2: sem sorteio não rega
-    await tirar(e, g, A, '2026-04-02', 'water');
+    // Cliente antigo (sem claSortear): o servidor sorteia 'water' internamente e rega.
     expect((await regar(e, g, A, '2026-04-02')).ok).toBe(true);
     expect((await regar(e, g, A, '2026-04-02')).reason).toBe('already-watered');
     await tirar(e, g, B, '2026-04-02', 'water');
@@ -50,9 +49,8 @@ describe('plantio: uma por estação', () => {
   it('proteção: só 1 membro por dia', async () => {
     const e = env(); const g = grupo();
     await plantar(e, g.id, A, '2026-04-02');
-    expect((await proteger(e, g, A, '2026-04-02')).reason).toBe('no-draw'); // D2: sem sorteio não protege
-    await tirar(e, g, A, '2026-04-02', 'protect');
-    await tirar(e, g, B, '2026-04-02', 'protect');
+    // Cliente antigo (sem claSortear): proteger sorteia 'protect' internamente.
+    await tirar(e, g, B, '2026-04-02', 'protect'); // B sorteia 'protect' ANTES de A proteger (depois o sorteio vira 'water')
     expect((await proteger(e, g, A, '2026-04-02')).ok).toBe(true);
     expect((await proteger(e, g, B, '2026-04-02')).reason).toBe('already-protected');
     await tirar(e, g, B, '2026-04-03', 'protect');
