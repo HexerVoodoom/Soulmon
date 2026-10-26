@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, useId, useSyncExternalStore, lazy, Suspense, Fragment } from 'react';
 import type { ReactNode } from 'react';
 import { Icon } from './components/ui/Icon';
+import { lazyOverlay } from './utils/lazyOverlay';
 import { ScreenSkeleton } from './components/ui/ScreenSkeleton';
 import { OfflineSeal } from './components/ui/OfflineSeal';
 import { toast } from 'sonner';
@@ -18,7 +19,6 @@ import {
 import { CornerLink } from './components/nav/CornerLink';
 import { MissionsLink } from './components/nav/MissionsLink';
 import { AvisosLink } from './components/nav/AvisosLink';
-import { AvisosSheet } from './components/nav/AvisosSheet';
 import { visibleBackground } from './utils/backgrounds';
 import { needsWelcomeTour, needsMapTutorial } from './utils/welcomeTourGate';
 import { buildingsUnlockedBetween, isBuildingId, markBuildingIntroSeen } from './utils/buildingIntro';
@@ -38,10 +38,8 @@ import { focusDescentRefusal, isFocusDescent, pauseFocusDescent, resumeFocusDesc
 import { assinarTelaMasmorra, telaMasmorraAberta } from './utils/dungeonScreenOpen';
 import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
 import type { BuildingId } from './utils/gates';
-import { Celebration } from './components/ui/Celebration';
 import { AreaTopBar } from './components/nav/AreaTopBar';
 import { ProfileAvatarButton } from './components/perfil/ProfileAvatarButton';
-import { DemoSoundButton } from './components/perfil/DemoSoundButton';
 import { readyFor } from './utils/presentationQueue';
 import {
   type ViewType, type AreaId, buildingDestination, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
@@ -87,7 +85,6 @@ import { parseRitualOpen, serializeRitualOpen } from './utils/atividadesLista';
 import { isDemoMode, demoRefusalText, isDemoBlockedView, setDemoNetworkOff } from './utils/demoMode';
 import { isEmbedMode } from './utils/embedMode';
 import { buildDemoPatch, leaveDemo, keepDemoVitalsFull, localizeDemoActivities } from './utils/demoStart';
-import { DemoExitButton } from './components/home/DemoExitButton';
 import { newUuid } from './utils/uuid';
 import type { StarterId } from './utils/sprites';
 import { petElementOf } from './utils/starterElements';
@@ -122,7 +119,6 @@ import { applySpecialItem, specialRefusal, chipsUsedThisStage, CHIPS_PER_STAGE }
 import { playerDayKey, playerDayIso, dayKeyToIso } from './utils/playerDay';
 import { REVIEW_EMPTY } from './utils/mente/revisao';
 import { shouldInviteRefuge, markRefugeShown, dismissRefugeInvite, acceptRefugeInvite } from './utils/refugio/convite';
-import { RefugeInviteCard } from './components/refugio/RefugeInviteCard';
 import { MEAL_KIND_CODE, MEAL_KEYS, markMealDone, openInvite, pickMicroAction, skipMeal } from './utils/mealRhythm';
 import type { MealInviteKind } from './utils/mealRhythm';
 import { awardBondXP, awardStepXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
@@ -164,7 +160,6 @@ import { rolledRareCheer, type PetVoiceKind } from './utils/petVoice';
 import {
   emptyFirstDay, markGesture, shouldShowFirstDay, type FirstDayGesture,
 } from './utils/firstDay';
-import { TermsUpdateBanner } from './components/TermsUpdateBanner';
 import { marcaAvisoTermos, precisaAvisarTermos, qualDocMudou } from './utils/termsNotice';
 import { PRIVACY_VERSION, TERMS_VERSION } from './utils/consent';
 import { useGroveWatch } from './hooks/useGroveWatch';
@@ -206,7 +201,6 @@ import type { DungeonReturnSummary } from './utils/dungeonReturnSummary';
 import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
-import { UndoToast } from './components/UndoToast';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
 import { isCorvo, spriteLineOf } from './utils/corvoPet';
 // G1: `corvoAdocao` (nomes, CORVO_STAGES, adoptCorvo) e `gmTools` só são lidos por admin, no clique —
@@ -244,7 +238,6 @@ const XP_BY_LEVEL: Record<string, number> = {
 import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/labels';
 import type { AISettings } from './components/AISettingsModal';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
-import { UnlockNudge } from './components/UnlockNudge';
 import type { UnlockReason } from './components/unlockReason';
 
 // ── O MOTOR DE TAREFAS (docs/PLANO-TAREFAS.md) ──────────────────────────────
@@ -269,7 +262,6 @@ import {
 } from './utils/taskTriage';
 import { isPremiumKey } from './utils/premiumFood';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './components/form/FormKit';
-import { SpritePoseRows } from './components/SpritePoseRows';
 import { suggestTasks, type SuggestedTask } from './utils/taskSuggestions';
 import {
   completeHabit, emptyRhythm, dayKeyOf, attributeMultiplier, milestoneReached, habitTier,
@@ -293,7 +285,6 @@ import type { Dream, RestWindow } from './utils/restWindow';
 // ── SONO JOGÁVEL, BRINCAR E PASSOS ──────────────────────────────────────────
 // Mesma disciplina do bloco acima: as regras moram nos módulos puros
 // (`nightmares`, `petNeeds`, `steps`) e aqui só existe fiação.
-import { StepsCard } from './components/StepsCard';
 import { loadAreaView, useAreaViewPrefetch } from './components/nav/playPrefetch';
 import {
   hasPendingNightmare, markFought, nightmareDayKey, nightmaresFor,
@@ -605,6 +596,16 @@ const MapPage = lazy(() => import('./components/nav/MapPage').then(m => ({ defau
 const WeeklyReportCard = lazy(() => import('./components/WeeklyReportCard').then(m => ({ default: m.WeeklyReportCard })));
 const UnlockAccountModal = lazy(() => import('./components/UnlockAccountModal').then(m => ({ default: m.UnlockAccountModal })));
 const CheckInSheet = lazy(() => import('./components/CheckInSheet').then(m => ({ default: m.CheckInSheet })));
+const TermsUpdateBanner = lazyOverlay(() => import('./components/TermsUpdateBanner').then(m => ({ default: m.TermsUpdateBanner })));
+const RefugeInviteCard = lazyOverlay(() => import('./components/refugio/RefugeInviteCard').then(m => ({ default: m.RefugeInviteCard })));
+const DemoExitButton = lazyOverlay(() => import('./components/home/DemoExitButton').then(m => ({ default: m.DemoExitButton })));
+const UnlockNudge = lazyOverlay(() => import('./components/UnlockNudge').then(m => ({ default: m.UnlockNudge })));
+const Celebration = lazyOverlay(() => import('./components/ui/Celebration').then(m => ({ default: m.Celebration })));
+const AvisosSheet = lazyOverlay(() => import('./components/nav/AvisosSheet').then(m => ({ default: m.AvisosSheet })));
+const UndoToast = lazyOverlay(() => import('./components/UndoToast').then(m => ({ default: m.UndoToast })));
+const DemoSoundButton = lazyOverlay(() => import('./components/perfil/DemoSoundButton').then(m => ({ default: m.DemoSoundButton })));
+const SpritePoseRows = lazyOverlay(() => import('./components/SpritePoseRows').then(m => ({ default: m.SpritePoseRows })));
+const StepsCard = lazyOverlay(() => import('./components/StepsCard').then(m => ({ default: m.StepsCard })));
 const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m => ({ default: m.MissionsSheet })));
 const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));

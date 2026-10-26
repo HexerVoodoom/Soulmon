@@ -3508,6 +3508,10 @@ dominância populacional — por isso ±15%. Régua nova:
 **Dono de:** a fronteira de troca da arte OPCIONAL do level up (`src/assets/soulmon/levelup/levelup-{banner,burst,frame}.png`, via `import.meta.glob` eager); sem o PNG devolve `undefined` e o overlay desenha tudo de forma procedural. Pacote de geração: `docs/ASSETS-A-GERAR.md` §16 e `src/assets/soulmon/levelup/INSTALAR.md`.
 **Exports:** `levelUpArt`, `LevelUpSlot`.
 
+### `src/utils/lazyOverlay.tsx`
+**Dono de:** a casca `lazyOverlay(load)` das sobreposições condicionais do `App` (banner, toast, folha, cartão): `React.lazy` + `Suspense` sem fallback visível, mesma API do componente. Existe para tirar essas peças do JS de entrada (orçamento de bytes).
+**Exports:** `lazyOverlay`.
+
 ### `src/utils/talentLayout.ts`
 **Dono de:** o DESENHO da árvore de talentos (Tarefa B, §2.37): posição de cada nó (hub, 3 braços a −90/30/150°, raios 120/230/340/450) e as ligações, lidas do grafo `requires`/`requiresAny` de `talents.ts`; vizinho por seta. Não decide regra. Fora do chunk de entrada (só o `TalentTree` lazy o importa).
 **Exports:** `LAYOUT_NODES`, `LAYOUT_EDGES`, `LAYOUT_BY_ID`, `BOARD`, `RINGS`, `NODE_SIZE`, `HUB`, `HUB_POINT`, `ARM_ANGLE`, `pointOf`, `neighborIn`.
