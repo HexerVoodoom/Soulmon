@@ -239,17 +239,18 @@ describe('B5 — gesto numa roda de 2 não diz o tipo', () => {
  */
 export const ORCAMENTO = {
   // +1 leitura (11/10, casa da guilda): o cartão do membro resume também `coopCasa:<gid>:<save>`.
-  criar: { get: 16, put: 5 },
-  entrar: { get: 28, put: 3 },
+  // +1 leitura (R5/A, 26/10, Loja do clã): a vista lê `coopLoja:<gid>` (uma por vista, não por membro).
+  criar: { get: 17, put: 5 },
+  entrar: { get: 29, put: 3 },
   // +1 leitura (29/09, M-2): o PRIMEIRO fio numa guilda lê `coopDias` para
   // herdar os dias distintos; os fios seguintes não leem.
-  fio: { get: 26, put: 2 },
-  checkin: { get: 26, put: 2 },
+  fio: { get: 27, put: 2 },
+  checkin: { get: 27, put: 2 },
   // +1 escrita (29/09, A-1): `coopPart:<save>:<week>`, o direito ao resgate
   // guardado com a PESSOA para sobreviver à saída.
-  golpe: { get: 40, put: 4 },
-  gesto: { get: 25, put: 2 },
-  vista12: { get: 17, put: 0 },
+  golpe: { get: 41, put: 4 },
+  gesto: { get: 26, put: 2 },
+  vista12: { get: 18, put: 0 },
 };
 
 describe('A3 — orçamento de leituras/escritas por ação (guilda de 12)', () => {

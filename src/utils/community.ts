@@ -336,6 +336,8 @@ export interface GuildCasa {
   /** O TOTAL de Bits que o clã já recebeu em doação (W14b): um número do CLÃ, nunca por pessoa. `null` = servidor antigo. */
   bitsTotal: number | null;
   slots: Array<{ memberId: string; item: string; euMesmo: boolean }>;
+  /** A Loja do clã (R5/A): itens JÁ do clã (ids do catálogo) e o saldo de Bits do clã. Campo aditivo: ausente = vazio. */
+  loja: { itens: string[]; saldo: number | null };
   mine: {
     /** O item que EU pus na casa, ou `null`. */
     slot: string | null;
@@ -362,6 +364,11 @@ function sanitizeCasa(raw: unknown): GuildCasa | null {
     perto: x.perto === true && idx < CASA_STAGES.length - 1,
     bitsTotal: typeof x.bitsTotal === 'number' && Number.isFinite(x.bitsTotal) && x.bitsTotal >= 0 ? Math.floor(x.bitsTotal) : null,
     slots,
+    loja: (() => {
+      const l = (x.loja && typeof x.loja === 'object' ? x.loja : {}) as Record<string, unknown>;
+      const itens = [...new Set((Array.isArray(l.itens) ? l.itens : []).filter((v): v is string => typeof v === 'string' && /^loja-[a-z0-9-]{2,40}$/.test(v)))].slice(0, 20);
+      return { itens, saldo: typeof l.saldo === 'number' && Number.isFinite(l.saldo) && l.saldo >= 0 ? Math.floor(l.saldo) : null };
+    })(),
     mine: { slot: itemOk(mine.slot) ? mine.slot : null, capReached: mine.capReached === true },
   };
 }
@@ -626,6 +633,13 @@ export const hitGuildRaid = (id: string, tz?: PlayerDayAnchor) =>
 export const donateToGuild = (id: string, bits: number, tz?: PlayerDayAnchor) =>
   guildCall<{ accepted?: number; guild: unknown }>('guildDonate', { method: 'POST', body: { id, dayKey: dia(tz), bits } })
     .then(r => ({ accepted: typeof r.accepted === 'number' && r.accepted > 0 ? Math.floor(r.accepted) : 0, guild: viewOf(r) }));
+
+/**
+ * Compra na LOJA do clã. Manda SÓ `itemId` + `opId` (nunca preço): o servidor decide preço e saldo, e repetir o
+ * MESMO `opId` (reenvio após queda de rede) não cobra de novo. 409 = saldo curto / já é do clã (o chamador relê).
+ */
+export const buyGuildShopItem = (id: string, itemId: string, opId: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ repeated?: boolean; guild: unknown }>('guildShopBuy', { method: 'POST', body: { id, dayKey: dia(tz), itemId, opId } }).then(viewOf);
 
 /** Põe (ou tira, com `null`) o item do SEU slot na casa. Um item por pessoa. */
 export const setGuildSlot = (id: string, item: string | null, tz?: PlayerDayAnchor) =>

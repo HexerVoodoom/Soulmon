@@ -23,6 +23,7 @@
 //   O direito NÃO exige estar na guilda: quem golpeou e saiu ainda colhe (A-1).
 //   POST guildDonate  {id, dayKey, bits}   → { guild, accepted }   404 no guild · 400 invalid bits (múltiplo de 10, ≥10) · 429 daily limit
 //   POST guildSlot    {id, dayKey, item|null} → { guild }   404 no guild · 400 invalid item   (a CASA: `_casa.js`)
+//   POST guildShopBuy {id, dayKey, itemId, opId} → { guild, repeated }  404 no guild · 400 invalid item/op · 409 not enough bits / already owned / op reuse   (a LOJA: `_lojaCla.js`; cliente nunca manda preço)
 //   POST claPracaSlot {id, dayKey, slot:0..3, item|null} → { praca }   404 no guild · 400 invalid slot/item   (a PRAÇA: `_claPraca.js`)
 //   GET  claPraca     ?id=&dayKey=         → { praca: { slots[4], gifts[], mine:{sentToday[]} } }   404 no guild
 //   POST claPresente  {id, dayKey, to}     → { sent: true, praca }   404 no guild · 400 invalid target · 409 already sent today
@@ -66,6 +67,7 @@ import { buscarGuerra, estadoDaGuerra } from './_guerra.js';
 import { vistaDaPraca, definirSlotPraca, enviarPresente, resgatarPresente } from './_claPraca.js';
 import { vistaDoPlantio, plantar, regar, proteger, colher, sortear } from './_claPlantio.js';
 import { vistaDoMisterio, enviarMisterio, somarTarefa, resgatarMisterio } from './_claMisterio.js';
+import { comprarNaLoja, lerLoja, vistaDaLoja } from './_lojaCla.js';
 import { CASA_BITS_POR_DIA, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa, bitsDaCasa, somarPontos, pontosDeMissao } from './_casa.js';
 
 const CORS = {
@@ -103,6 +105,7 @@ export const GUILD_ACTIONS = Object.freeze({
   guildWarSeek: 'POST',
   guildDonate: 'POST',
   guildSlot: 'POST',
+  guildShopBuy: 'POST',
   claPraca: 'GET',
   claPracaSlot: 'POST',
   claPresente: 'POST',
@@ -180,6 +183,7 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
   // A3: UMA leitura por membro (o cartão), em vez de ~9. Ver `_coop.js` › cartão.
   const cartoes = await lerCartoes(env, g, new Date(), cartoesProntos ?? {});
   const cart = g.members.map(m => cartoes[m]);
+  const loja = await lerLoja(env, g.id);
   const dias = cart.map((c, i) => {
     const proprios = checkinsDoCartao(c, semana);
     return proprios.length > 0 ? proprios : (g.checkins?.[g.members[i]] || []);
@@ -261,6 +265,8 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
         const c = cart[i]?.casa ? normalizarCasa(cart[i].casa) : null;
         return c?.slot ? [{ memberId: membros[i].memberId, item: c.slot, euMesmo: m === euSave }] : [];
       }),
+      // R5/A: a Loja do clã (campo ADITIVO; cliente antigo ignora). Itens do clã + saldo de Bits do clã.
+      loja: vistaDaLoja(loja, g, cartoes),
       mine: (() => {
         const c = eu >= 0 && cart[eu]?.casa ? normalizarCasa(cart[eu].casa) : null;
         return { slot: c?.slot ?? null, capReached: !!c && c.day === hoje && c.bitsToday >= CASA_BITS_POR_DIA };
@@ -481,6 +487,20 @@ export async function handleGuild({ request, env }) {
     if (r.accepted === 0) return erro('daily limit', 429);
     await cartao(g);
     return json({ accepted: r.accepted, guild: await montar(g, id, hoje) });
+  }
+
+  if (action === 'guildShopBuy') {
+    // Compra na Loja do clã: o cliente manda SÓ `itemId` + `opId`; preço e saldo são do servidor.
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    const cartoes = await lerCartoes(env, g);
+    const r = await comprarNaLoja(env, g, cartoes, body.itemId, body.opId);
+    if (!r.ok) {
+      if (r.reason === 'invalid-item') return erro('invalid item', 400);
+      if (r.reason === 'invalid-op') return erro('invalid op', 400);
+      return erro(r.reason === 'insufficient' ? 'not enough bits' : r.reason === 'already-owned' ? 'already owned' : 'op reuse', 409);
+    }
+    return json({ repeated: r.repeated, guild: await montar(g, id, hoje) });
   }
 
   if (action === 'guildSlot') {

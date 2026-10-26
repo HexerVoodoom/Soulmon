@@ -39,7 +39,7 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   getGuild, createGuild, joinGuild, guildThread, guildGesture, leaveGuild, renameGuild, newGuildCode,
-  hitGuildRaid, getGuildRewards, claimGuildReward, donateToGuild, setGuildSlot, getGuildWar, seekGuildWar,
+  hitGuildRaid, getGuildRewards, claimGuildReward, donateToGuild, setGuildSlot, buyGuildShopItem, getGuildWar, seekGuildWar,
   type GuildWar,
   GuildError, type GuildErrorKind, type GuildView, type GuildGoal, type GuildRaid, type GuildRewards, type GuildClaim,
 } from '../../utils/community';
@@ -52,6 +52,7 @@ import {
   GUILD_NAME_MAX, GUILD_CODE_LENGTH, GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES,
   RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, CASA_DOACOES, CASA_BITS_MIN, CASA_STAGES, normalizeGuildCode, type GuildGesture, type CasaStageId,
 } from '../../utils/guildRules';
+import { GuildLoja } from './GuildLoja';
 import { donatableItems } from '../../utils/guildHouse';
 import { isMissionAway, type GuildMissionState } from '../../utils/guildMission';
 import { ALL_SHOP_ITEMS } from '../../utils/shop';
@@ -167,6 +168,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
 
   const rootRef = useRef<HTMLDivElement>(null);
   const vivo = useRef(false);
+  const lojaOps = useRef(new Map<string, string>()); // itemId → opId da compra em andamento (idempotência no reenvio)
   const busy = useRef(false);            // trava SÍNCRONA: `disabled` só vale depois do re-render
   const seq = useRef(0);                 // resposta velha nunca sobrescreve a nova
   const tz = useRef(playerDayTz);
@@ -757,6 +759,25 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
                 casaRef.current?.onSlot(v?.casa ? v.casa.mine.slot : item);
                 return v;
               }, { anunciar: item ? 'guild.casa.slot.ok' : 'guild.casa.slot.volta' })}
+            />
+            <GuildLoja
+              casa={g.casa}
+              language={language}
+              ocupado={ocupado}
+              onComprar={(itemId) => void agir(async () => {
+                // O `opId` vale por tentativa: se a rede cair e a pessoa tocar de novo, vai o MESMO (o servidor não cobra duas vezes).
+                const opId = lojaOps.current.get(itemId) ?? `op-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`}`;
+                lojaOps.current.set(itemId, opId);
+                try {
+                  const v = await buyGuildShopItem(saveId, itemId, opId, tz.current);
+                  lojaOps.current.delete(itemId);
+                  return v;
+                } catch (e) {
+                  // 409 (saldo mudou / já é do clã): não é frase de tela; relê e o estado verdadeiro aparece.
+                  if (e instanceof GuildError && e.status === 409) { lojaOps.current.delete(itemId); return await getGuild(saveId, tz.current); }
+                  throw e;
+                }
+              })}
             />
         </div>
         )}

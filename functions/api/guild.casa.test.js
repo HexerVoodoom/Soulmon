@@ -55,7 +55,7 @@ describe('a casa da guilda', () => {
     const txt = JSON.stringify(await vista(e, B));
     for (const proibido of ['pts', 'bitsToday', 'doacao', 'legado', 'total']) expect(txt).not.toContain(proibido);
     const casa = (await vista(e, B)).casa;
-    expect(Object.keys(casa).sort()).toEqual(['bitsTotal', 'mine', 'nivel', 'nivelIndex', 'perto', 'slots']);
+    expect(Object.keys(casa).sort()).toEqual(['bitsTotal', 'loja', 'mine', 'nivel', 'nivelIndex', 'perto', 'slots']);
     expect(casa.slots).toHaveLength(1);
     expect(casa.slots[0]).toMatchObject({ item: 'furn-lamp', euMesmo: false });
     expect(casa.mine.slot).toBeNull(); // o slot do outro não é "meu"
