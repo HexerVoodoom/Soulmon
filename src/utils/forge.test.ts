@@ -138,11 +138,11 @@ describe('migração sem confisco (peça comprada antes do Soulsmith)', () => {
 
 describe('concessão por missão', () => {
   it('o resgate do prédio concede a peça de nível 1 (equipa se o slot está vazio) e é idempotente', () => {
-    const a = applyForgeGrant<ForgeGameState>({}, 'exploracao.masmorra');
+    const a = applyForgeGrant<ForgeGameState>({}, 'arena.fenda');
     expect(a.equipment!.owned).toEqual(['eq-nucleo-t1']);
     expect(a.equipment!.equipped.nucleo).toBe('eq-nucleo-t1');
     expect(a.forge!.levels['eq-nucleo-t1']).toBe(1);
-    expect(applyForgeGrant(a, 'exploracao.masmorra')).toBe(a);
+    expect(applyForgeGrant(a, 'arena.fenda')).toBe(a);
     const b = applyForgeGrant(a, 'arena.duelo'); // 2ª peça do mesmo slot: SUBSTITUI a primeira (uma peça por tipo)
     expect(b.equipment!.owned).toEqual(['eq-nucleo-t2']);
     expect(b.equipment!.equipped.nucleo).toBe('eq-nucleo-t2');
@@ -159,7 +159,7 @@ describe('concessão por missão', () => {
     expect(r.forge!.picks).toEqual({ 'eq-nucleo-t2': ['b', 'a'] });
     expect(r.forge!.v).toBe(FORGE_SCHEMA);
     expect(sum(ownedPieceBonus('eq-nucleo-t2', r.forge))).toBeCloseTo(LEVEL_PCT[0] + LEVEL_PCT[1] + LEVEL_PCT[2], 12);
-    expect(applyForgeGrant(r, 'exploracao.masmorra')).toBe(r); // o t1 não volta por cima do t2
+    expect(applyForgeGrant(r, 'arena.fenda')).toBe(r); // o t1 não volta por cima do t2
     expect(applyForgeGrant(r, 'arena.duelo')).toBe(r); // idempotente
   });
   it('prédio sem peça (Salão de outro, Mercado) não concede nada; quem já tinha a peça comprada não ganha de novo', () => {
@@ -167,7 +167,7 @@ describe('concessão por missão', () => {
     expect(applyForgeGrant(s, 'mercado.ferreiro' as never)).toBe(s);
     expect(applyForgeGrant(s, 'jogos.mente')).toBe(s);
     const antigo: ForgeGameState = { equipment: eqOwn('eq-nucleo-t1') };
-    expect(applyForgeGrant(antigo, 'exploracao.masmorra')).toBe(antigo);
+    expect(applyForgeGrant(antigo, 'arena.fenda')).toBe(antigo);
   });
   it('o prêmio da missão sempre chega: peça de outro tipo entra, e a de um slot cheio com tier maior substitui', () => {
     const s: ForgeGameState = { equipment: { owned: ['eq-nucleo-t2', 'eq-carapaca-t2', 'eq-rastro-t2'], equipped: { nucleo: 'eq-nucleo-t2', carapaca: 'eq-carapaca-t2', rastro: 'eq-rastro-t2' }, fragments: 0 } };
@@ -176,7 +176,7 @@ describe('concessão por missão', () => {
 });
 
 describe('aprimorar', () => {
-  const base = (): ForgeGameState => applyForgeGrant({ totalXP: xpForLevel(6), buildingQuests: mats({ ore: 5, gear: 5 }) }, 'exploracao.masmorra');
+  const base = (): ForgeGameState => applyForgeGrant({ totalXP: xpForLevel(6), buildingQuests: mats({ ore: 5, gear: 5 }) }, 'arena.fenda');
   it('debita os materiais, sobe o nível e guarda a escolha; o material nunca fica negativo', () => {
     const r = applyUpgrade(base(), 'eq-nucleo-t1', 'b');
     expect(r.ok).toBe(true);

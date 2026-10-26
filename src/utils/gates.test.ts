@@ -136,14 +136,14 @@ describe('prédios por Vínculo (Tarefa A)', () => {
     for (const l of [NaN, null, undefined, 'x', -3]) expect(buildingGateFor('hall.guilda', l).bondLevel).toBe(1);
   });
   it('sempre livres: mínimo 1 e abertos no Vínculo 1', () => {
-    expect(BUILDINGS_ALWAYS_OPEN).toEqual(['mercado.itens', 'laboratorio.evolucao', 'exploracao.refugio', 'exploracao.passeio', 'exploracao.masmorra']);
+    expect(BUILDINGS_ALWAYS_OPEN).toEqual(['mercado.itens', 'laboratorio.evolucao', 'exploracao.refugio', 'exploracao.passeio', 'arena.fenda']);
     for (const id of BUILDINGS_ALWAYS_OPEN) {
       expect(BUILDING_GATES[id].minBond).toBe(1);
       expect(buildingGateFor(id, 1).open).toBe(true);
     }
   });
   it('Masmorra livre desde o Vínculo 1 (14/10/2026); só os andares ALTOS seguem no portão', () => {
-    expect(buildingGateFor('exploracao.masmorra', 1)).toMatchObject({ open: true, minBond: 1 });
+    expect(buildingGateFor('arena.fenda', 1)).toMatchObject({ open: true, minBond: 1 });
     expect(masmorraFloorOpen(1, 1)).toBe(true);
     expect(masmorraFloorOpen(MASMORRA_ALTO_A_PARTIR_DO_ANDAR, 1)).toBe(false);
     expect(areaMinBond('exploracao')).toBe(1);
@@ -154,7 +154,7 @@ describe('prédios por Vínculo (Tarefa A)', () => {
     expect(BUILDING_GATES['arena.torneio'].minBond).toBe(GATES.torneio.minBond);
   });
   it('a área no Mapa = menor Vínculo dos seus prédios; o aviso é neutro e bilíngue', () => {
-    expect(areaMinBond('arena')).toBe(5); // 'arena.guerra' fica no Vínculo 5: a Arena não abre antes do que já abria
+    expect(areaMinBond('arena')).toBe(1); // beta3 N10 (26/10/2026): a Fenda Sem Fim (Vínculo 1) veio para a Arena, então a ÁREA abre no 1; Guerra segue no 5, Duelo/Torneio nos deles (o gate vale por prédio)
     expect(areaMinBond('hall')).toBe(4); // D-50 (19/10/2026): sem a Biblioteca (Vínculo 2), o prédio mais cedo do Hall é o Clan Hall/Grove (4)
     expect(areaMinBond('laboratorio')).toBe(1);
     expect(areaMinBond('mercado')).toBe(1);

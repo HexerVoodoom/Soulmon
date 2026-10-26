@@ -56,7 +56,7 @@ describe('BuildingIntro', () => {
   it('nada fecha sozinho: o tempo passa e nenhuma saída é chamada', () => {
     vi.useFakeTimers();
     const onFinish = vi.fn();
-    render(<BuildingIntro ids={['exploracao.masmorra']} language="en-US" onFinish={onFinish} />);
+    render(<BuildingIntro ids={['arena.fenda']} language="en-US" onFinish={onFinish} />);
     vi.advanceTimersByTime(10 * 60 * 1000);
     expect(onFinish).not.toHaveBeenCalled();
     expect(document.querySelector('[role="dialog"]')).not.toBeNull();

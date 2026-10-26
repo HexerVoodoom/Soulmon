@@ -87,7 +87,7 @@ export interface ForgePiece {
 
 /** Item → prédio de origem → materiais. Os ids são os do catálogo antigo (saves antigos continuam válidos). */
 export const FORGE_PIECES: readonly ForgePiece[] = [
-  { id: 'eq-nucleo-t1', slot: 'nucleo', tier: 1, building: 'exploracao.masmorra', mats: ['ore', 'gear'] },
+  { id: 'eq-nucleo-t1', slot: 'nucleo', tier: 1, building: 'arena.fenda', mats: ['ore', 'gear'] },
   { id: 'eq-nucleo-t2', slot: 'nucleo', tier: 2, building: 'arena.duelo', mats: ['fang', 'ore'] },
   { id: 'eq-nucleo-t3', slot: 'nucleo', tier: 3, building: 'arena.torneio', mats: ['laurel', 'fang'] },
   { id: 'eq-carapaca-t1', slot: 'carapaca', tier: 1, building: 'exploracao.passeio', mats: ['pebble', 'moss'] },

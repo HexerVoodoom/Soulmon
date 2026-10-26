@@ -29,7 +29,7 @@
  */
 import type { Language } from './i18n';
 
-export type ExploracaoLotId = 'masmorra' | 'passeio' | 'oficina' | 'caderno' | 'preparar' | 'refugio';
+export type ExploracaoLotId = 'passeio' | 'oficina' | 'caderno' | 'refugio';
 export type JogosLotId = 'salao' | 'mente' | 'dungeon';
 
 interface PlayLotSpec<K extends string> {
@@ -53,7 +53,6 @@ interface PlayLotSpec<K extends string> {
 // soltos sobre o caminho. O fundo tem DOIS tablados de pedra escura (o de cima à
 // esquerda e o do meio à direita) — cada prédio agora assenta no centro do seu.
 const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
-  { id: 'masmorra', labelPt: 'Fenda Sem Fim', labelEn: 'Endless Rift', ariaPt: 'Entrar na Fenda Sem Fim', ariaEn: 'Enter the Endless Rift', left: '22.7%', top: '22.1%', width: '50%' }, // tablado de cima, à esquerda
   // 🧭 O Passeio (30/09/2026, decisão do dono — `REGISTRO-DE-DECISOES.md` §5.6):
   // a clareira da DIREITA, do outro lado do caminho. Os lotes têm 38% de largura
   // centrados no `left`, então 27% ocupa 8–46% e 70% ocupa 51–89%: não se tocam.
@@ -65,9 +64,6 @@ const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
   // PT "Caderno" e não "Diário": já existe o Diário de Aventuras (o álbum do pet).
   { id: 'oficina', labelPt: 'Oficina do Foco', labelEn: 'Focus Workshop', ariaPt: 'Entrar na Oficina do Foco', ariaEn: 'Enter the Focus Workshop', left: '28%', top: '86%', width: '62%' },
   { id: 'caderno', labelPt: 'Caderno', labelEn: 'Journal', ariaPt: 'Abrir o Caderno', ariaEn: 'Open the Journal', left: '28%', top: '54%', width: '47%' }, // W5 (19/10/2026): arte nova (caixa opaca 54%) → 44% -> 47% para manter ≥24% da cena; 18/10/2026 (§88): a arte repintada ficou mais estreita na caixa, então 40% -> 44% (centro mantido). 11/10/2026 (dono): o Caderno/Jornal sobe para o espaço ENTRE a Masmorra e a Oficina do Foco (coluna da esquerda: 3 prédios); o canto de baixo à direita, onde ele estava, fica LIVRE (reservado p/ um prédio futuro). Chalé campina (opaco ~89% da caixa).
-  // 🔑 beta3 F1 (25/10/2026): o prédio "Prepare to Focus" — a preparação da sessão saiu da Oficina; concluir dá a CHAVE que a libera.
-  // Ocupa o canto de baixo à direita que o Caderno deixou livre. Arte PROVISÓRIA (reusa a da Oficina) e posição a conferir na tela.
-  { id: 'preparar', labelPt: 'Preparar o Foco', labelEn: 'Prepare to Focus', ariaPt: 'Entrar em Preparar o Foco', ariaEn: 'Enter Prepare to Focus', left: '78%', top: '84%', width: '52%' },
   // 🫧 beta3 M3 (25/10/2026): o Refúgio saiu de Jogos para a Exploração (id e comportamento mantidos). Coluna da direita, entre o Passeio (base 34%) e o Preparar (base 84%).
   { id: 'refugio', labelPt: 'Refúgio', labelEn: 'Refuge', ariaPt: 'Entrar no Refúgio', ariaEn: 'Enter the Refuge', left: '78%', top: '57%', width: '40%' },
 ];

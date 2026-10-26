@@ -75,6 +75,17 @@ describe('D-50: migração do save (idempotente, sem chave nova)', () => {
     expect(currentBuildingId('laboratorio.biblioteca')).toBe('laboratorio.biblioteca');
     expect(currentBuildingId(42)).toBe(42);
   });
+  it('beta3 N8/N10: ids antigos migram na leitura (Fenda → arena.fenda, Prepare to Focus → oficina), idempotente; save velho segue válido', () => {
+    expect(currentBuildingId('exploracao.masmorra')).toBe('arena.fenda');
+    expect(currentBuildingId('exploracao.preparar')).toBe('exploracao.oficina');
+    expect(currentBuildingId(currentBuildingId('exploracao.masmorra'))).toBe('arena.fenda');
+    expect(BUILDING_GATES).not.toHaveProperty('exploracao.masmorra');
+    expect(BUILDING_GATES).not.toHaveProperty('exploracao.preparar');
+    const velho = sanitizeFirstTimes({ done: ['visit:exploracao.masmorra', 'first-dungeon'], claimed: ['visit:exploracao.masmorra'] })!;
+    expect(velho.done).toContain('visit:arena.fenda');
+    expect(velho.claimed).toEqual(['visit:arena.fenda']);
+    expect(sanitizeFirstTimes(JSON.parse(JSON.stringify(velho)))).toEqual(velho);
+  });
 });
 
 describe('D-50: atalhos e deep links', () => {

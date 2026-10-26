@@ -359,6 +359,38 @@ export function AreaView(props: AreaViewProps) {
     );
   }
 
+  const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setGame(g); };
+  /** A Fenda Sem Fim (a antiga Masmorra): mora na Arena desde beta3 N10; o jogo abre em tela cheia sobre a cena da área. */
+  const renderMasmorra = () => {
+    const { play } = props;
+    const exitGame = () => setGame(null);
+    return (
+            <DungeonGame
+              evolutionStage={props.evolutionStage}
+              demoCharacterId={props.demoCharacterId}
+              profissao={props.profissao}
+              profissaoNome={props.profissaoNome}
+              petElement={props.petElement}
+              skills={props.skills}
+              language={language}
+              onEnter={play.onDungeonEnter}
+              onLose={play.onDungeonLose}
+              onHeartDrop={play.onDungeonHeartDrop}
+              onGlitchtama={play.onGlitchtama}
+              onFloorCleared={play.onFloorCleared}
+              onRunEnd={play.onRunEnd}
+              onEnemyDefeated={play.onDungeonEnemyDefeated}
+              onEarnPoints={props.onEarnPoints}
+              rankSaveId={props.guild.saveId}
+              /* WP4.5 — o sumidouro recorrente: comprar profundidade com Bits. */
+              bits={props.points}
+              onSpendBits={play.onSpendBits}
+              onExit={exitGame}
+              onExitToMap={() => { setGame(null); props.onGoToMap?.(); }}
+            />
+    );
+  };
+
   if (area === 'arena') {
     const lots = arenaLots(language);
     const open = lots.find(l => l.id === sheet) ?? null;
@@ -385,8 +417,16 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'guerra' && (
               <GuildSheet room="guerra" language={language} {...props.guild} />
             )}
+            {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={props.play.minigameBitsToday} onStart={() => (props.ocupado?.missaoFora ? props.ocupado.onBusy('masmorra-em-missao') : start('masmorra'))} />}
           </Suspense>
         </AreaSheet>
+        {game === 'masmorra' && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
+            <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
+              {renderMasmorra()}
+            </Suspense>
+          </div>
+        )}
         {duelOpen && (
           <Suspense fallback={<SheetLoading language={language} />}>
             <ArenaGame
@@ -406,7 +446,6 @@ export function AreaView(props: AreaViewProps) {
   }
 
   if (area === 'exploracao' || area === 'jogos') {
-    const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setGame(g); };
     const exitGame = () => setGame(null);
     const lots: AreaLot[] = gated(area === 'exploracao'
       ? exploracaoLots(language).map(l => ({
@@ -415,6 +454,8 @@ export function AreaView(props: AreaViewProps) {
       : jogosLots(language).map(l => ({ ...l, art: JOGOS_LOT_ART[l.id], onOpen: () => enter(l.id) })));
     const open = lots.find(l => l.id === sheet) ?? null;
     const { play } = props;
+    /** O Calabouço (jogos.dungeon) com a incursão no save abre em TELA CHEIA, sem a folha (N7). */
+    const rogueFull = area === 'jogos' && open?.id === 'dungeon' && !!play.rogue;
     const base = {
       evolutionStage: props.evolutionStage,
       demoCharacterId: props.demoCharacterId,
@@ -423,7 +464,7 @@ export function AreaView(props: AreaViewProps) {
     };
     return (
       <AreaScene areaId={area} language={language} background={PLAY_AREA_BG[area]} lots={lots} notice={lockNote}>
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull} onClose={close}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'passeio' && (
               <PasseioSheet
@@ -435,51 +476,29 @@ export function AreaView(props: AreaViewProps) {
                 achado={props.passeio?.achado}
               />
             )}
-            {open?.id === 'preparar' && <PrepararFocoSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} keyActive={play.focusKeyActive ?? false} onPrepared={play.onFocusPrepared} />}
-            {open?.id === 'oficina' && play.focusKeyActive === false && (
-              <p data-oficina-trancada style={{ margin: 0, color: 'var(--sm2-ink)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm, 14px)' }}>
-                {language === 'pt-BR' ? 'A Oficina do Foco está trancada. Conclua a preparação no prédio "Preparar o Foco" para ganhar a chave de hoje.' : 'The Focus Workshop is locked. Finish the preparation in the "Prepare to Focus" building to get today\'s key.'}
-              </p>
-            )}
+            {/* beta3 N8 (26/10/2026): a Oficina abre primeiro a etapa 1 (Prepare to Focus); concluída, libera a etapa 2 (workshop/timer). */}
+            {open?.id === 'oficina' && play.focusKeyActive === false && <div data-oficina-etapa="1"><PrepararFocoSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} keyActive={false} onPrepared={play.onFocusPrepared} /></div>}
             {open?.id === 'oficina' && play.focusKeyActive !== false && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} onFocusCycle={() => props.onDailyEvent?.('foco')} planInPrepare={play.focusKeyActive !== undefined} onFocusStart={play.onFocusStart} onFocusPause={play.onFocusPause} onFocusResume={play.onFocusResume} onFocusCancel={play.onFocusCancel} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
-            {open?.id === 'dungeon' && (play.rogue
-              ? <RogueDungeon language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} />
-              : <RogueDungeonPlaceholder language={language} />)}
+            {open?.id === 'dungeon' && !play.rogue && <RogueDungeonPlaceholder language={language} />}
           </Suspense>
         </AreaSheet>
+        {/* beta3 N7: o Calabouço é um MAPA em tela cheia (não uma folha); fecha de volta à área. */}
+        {rogueFull && play.rogue && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
+            <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
+              <RogueDungeon language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} skills={props.skills} onClose={close} />
+            </Suspense>
+          </div>
+        )}
         {game && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
           <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
-            {game === 'masmorra' && (
-              <DungeonGame
-                evolutionStage={props.evolutionStage}
-                demoCharacterId={props.demoCharacterId}
-                profissao={props.profissao}
-                profissaoNome={props.profissaoNome}
-                petElement={props.petElement}
-                skills={props.skills}
-                language={language}
-                onEnter={play.onDungeonEnter}
-                onLose={play.onDungeonLose}
-                onHeartDrop={play.onDungeonHeartDrop}
-                onGlitchtama={play.onGlitchtama}
-                onFloorCleared={play.onFloorCleared}
-                onRunEnd={play.onRunEnd}
-                onEnemyDefeated={play.onDungeonEnemyDefeated}
-                onEarnPoints={props.onEarnPoints}
-                rankSaveId={props.guild.saveId}
-                /* WP4.5 — o sumidouro recorrente: comprar profundidade com Bits. */
-                bits={props.points}
-                onSpendBits={play.onSpendBits}
-                onExit={exitGame}
-                onExitToMap={() => { setGame(null); props.onGoToMap?.(); }}
-              />
-            )}
+            {game === 'masmorra' && renderMasmorra()}
             {game === 'dino' && (
               <DinoGame
                 evolutionStage={props.evolutionStage}

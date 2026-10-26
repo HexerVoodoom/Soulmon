@@ -40,6 +40,7 @@ const TABELA: Record<string, Classe> = {
   'components/SoulmonOnboarding.tsx': 'dispensar-inline', // card da oferta 13.1 + ferramenta de dev (BackArrow close)
   'components/games/GameKit.tsx': 'atividade-direita', // `GameHeader`: esquerda quando ocioso, direita em `activity`
   'components/games/BattleStage.tsx': 'atividade-direita',
+  'components/RogueDungeon.tsx': 'base-esquerda', // o mapa do Calabouço (N7): tela cheia de área, ✕ no topo ESQUERDO; a luta dentro dele é a BattleStage
   'App.tsx': 'dispensar-inline', // banners `sm2-notice-dismiss`
   'components/DailyReportModal.tsx': 'dispensar-inline', // × do convite dentro do relatório
   'components/CreateModal.tsx': 'dispensar-inline', // remover passo da lista

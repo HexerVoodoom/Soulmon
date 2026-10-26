@@ -37,8 +37,8 @@ describe('Emblemas: o Torneio e a Feira passam pelo MESMO caminho', () => {
 });
 
 describe('o lote e o NPC da Feira', () => {
-  it('11/10/2026: a Arena tem só Torneio e Arena livre; a FEIRA mora no Hall ao lado do Salão (`guilda`) — dois lotes, duas salas', () => {
-    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo', 'guerra']);
+  it('11/10/2026: a Arena tem Torneio, Arena livre, Guerra e (N10) a Fenda; a FEIRA mora no Hall ao lado do Salão (`guilda`) — dois lotes, duas salas', () => {
+    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo', 'guerra', 'fenda']);
     expect(hallLots('pt-BR').map(l => l.id)).toEqual(['feira', 'grove', 'guilda']); // D-50 (19/10/2026): o Hall tem 3 prédios — Biblioteca e Amigos foram para o Laboratório
     expect(hallLots('pt-BR').find(l => l.id === 'feira')!.label).toBe('Feira');
     expect(hallLots('en-US').find(l => l.id === 'feira')!.label).toBe('Fair');
