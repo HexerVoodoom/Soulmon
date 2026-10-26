@@ -168,11 +168,11 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Este quebra-cabeça espera. As peças não vão a lugar nenhum.',
     lineEn: "This puzzle waits. Its pieces aren't going anywhere.",
   },
-  // 🗝️ beta3 M3: o Calabouço (jogo rogue em breve). Voz e busto PROVISÓRIOS — o busto reusa o da guia da Masmorra.
+  // 🗝️ beta3 M7: o Calabouço (roguelike, já aberto). Busto PROVISÓRIO — reusa o da guia da Masmorra.
   'jogos:dungeon': {
     namePt: 'Corva, a vigia do calabouço', nameEn: 'Corva, the dungeon watcher',
-    linePt: 'As portas ainda estão sendo aparelhadas. Volte quando o candeeiro estiver aceso.',
-    lineEn: 'The doors are still being hung. Come back when the lantern is lit.',
+    linePt: 'Três caminhos a cada passo. Escolha um e veja até onde vocês chegam hoje.',
+    lineEn: 'Three paths at every step. Pick one and see how far you two get today.',
   },
   'exploracao:refugio': {
     namePt: 'Marim, o mensageiro da maré', nameEn: 'Marim, the tide courier', // 07/10/2026: busto trocado a pedido do dono (era Bobbi, o soprador de bolhas)

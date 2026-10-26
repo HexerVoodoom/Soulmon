@@ -9066,7 +9066,8 @@ export default function App() {
         </PresentationSlot>
       )}
       <Suspense fallback={null}><XpGainDisplay totalXP={gameState.totalXP} language={language} demo={isDemoMode(gameState)} /></Suspense>
-      {demo && hasCompletedOnboarding && <DemoExitButton language={language} onLeave={handleLeaveDemo} />}
+      {/* Só na Home: flutuando sobre mapa/jogos ele cobria títulos e botões (QA em produção, 26/10/2026). Fora da Home, a saída fica em Configurações. */}
+      {demo && hasCompletedOnboarding && currentView === 'home' && <DemoExitButton language={language} onLeave={handleLeaveDemo} />}
       <Toaster richColors position="top-right" />
     </div>
   );
