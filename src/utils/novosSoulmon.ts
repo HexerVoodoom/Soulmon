@@ -3,7 +3,7 @@
  *
  * Rookie e Champion: encontros COMUNS da masmorra (`buildDungeonWave`) e inimigos da Arena (`buildArenaRound`).
  * Ultimate/Mega: slots 4/5 da escada; Ultra: só o chefe da Arena (`FORMAS_ALTAS_ART`). NÃO substituem `DUNGEON_LINE_SPRITES`
- * (personagens prontos, sombras do Pesadelo, NPCs da Biblioteca, Combina 3, bosque seguem nas 9 linhas antigas).
+ * (personagens prontos, sombras do Pesadelo, NPCs da Biblioteca, Elemental Fusion, bosque seguem nas 9 linhas antigas).
  * Arte: 256² RGBA (Rookie/Champion: Lanczos a partir de 1024², alfa >=250 vira 255; formas altas pixelizadas: vizinho mais próximo 1024²->256², alfa binário), orientada à direita/de frente.
  */
 import {

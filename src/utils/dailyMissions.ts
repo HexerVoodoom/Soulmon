@@ -54,7 +54,7 @@ export interface DailyMission {
 const POOL: readonly DailyMission[] = [
   { id: 'd-dino', event: 'dino', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Dê uma corrida na Corrida com obstáculos', descEn: 'Take a run in the obstacle course' },
   { id: 'd-ppt', event: 'ppt', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Jogue uma partida de Pedra, papel e tesoura', descEn: 'Play a match of Rock, paper, scissors' },
-  { id: 'd-match3', event: 'match3', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Jogue uma rodada de Combina 3', descEn: 'Play a round of Match 3' },
+  { id: 'd-match3', event: 'match3', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Jogue uma rodada de Elemental Fusion', descEn: 'Play a round of Elemental Fusion' },
   { id: 'd-foco', event: 'foco', target: 1, building: 'exploracao.oficina', material: 'gear', descPt: 'Faça um ciclo de foco (Pomodoro) na Oficina', descEn: 'Do one focus cycle (Pomodoro) in the Workshop' },
   { id: 'd-masmorra', event: 'masmorra', target: 1, building: 'arena.fenda', material: 'ore', descPt: 'Limpe uma camada da Fenda', descEn: 'Clear an Endless Rift layer' },
   { id: 'd-banho', event: 'banho', target: 1, building: 'exploracao.refugio', material: 'moss', descPt: 'Dê um banho no seu Soulmon', descEn: 'Give your Soulmon a bath' },

@@ -105,7 +105,7 @@ function ppt(p: Perfil): Medida {
   return medir('Pedra, papel e tesoura', p, MATCH_POINTS * 0.5, rodadas * 2500 + 3000);
 }
 
-// ── Combina 3 (Salão, 11/10/2026; virou COMBATE em 18/10/2026): a partida é jogada com as funções REAIS ────────────
+// ── Elemental Fusion (Salão, 11/10/2026; virou COMBATE em 18/10/2026): a partida é jogada com as funções REAIS ────────────
 // Típico = um jogador que acha um movimento válido qualquer; experiente = quem sempre vê a melhor troca. A MEDIANA de 41 sementes.
 // Tempo por jogada (olhar + trocar + a cascata correr): 3,5 s típico, 2,3 s experiente; +3 s de abertura e fim. A partida acaba
 // quando um lado cai (não há mais "20 movimentos"): o tempo é o das jogadas que ela de fato levou.
@@ -138,7 +138,7 @@ function partidaCombina3(p: Perfil, seed: number): { placar: number; jogadas: nu
 const medianaPor = <T,>(xs: T[], k: (x: T) => number): T => [...xs].sort((a, b) => k(a) - k(b))[Math.floor(xs.length / 2)];
 function combina3(p: Perfil): Medida {
   const r = medianaPor(Array.from({ length: 41 }, (_, i) => partidaCombina3(p, i + 1)), x => x.placar);
-  return medir('Combina 3', p, match3Bits(r.placar), (r.jogadas * M3_SEG_POR_MOVIMENTO[p.nome] + r.trocasInimigo * M3_SEG_POR_TROCA_INIMIGA + 3) * 1000);
+  return medir('Elemental Fusion', p, match3Bits(r.placar), (r.jogadas * M3_SEG_POR_MOVIMENTO[p.nome] + r.trocasInimigo * M3_SEG_POR_TROCA_INIMIGA + 3) * 1000);
 }
 
 // ── Trilha do Pet (zip) e Colcha (patches): segundos por casa × casas da grade (lado²); sem relógio na jogada ────────
@@ -194,7 +194,7 @@ describe('balanço dos minijogos leves (Bits por minuto)', () => {
     expect(bolhas(EXPERIENTE).bits).toBe(BOLHAS_MAX_BITS);
     expect(trocaBits(TROCA_DECK_SIZE)).toBe(TROCA_MAX_BITS);
     expect(picrossBits(10, true)).toBe(PICROSS_MAX_BITS);
-    // Combina 3 (combate): o placar de uma partida PERFEITA (todo o HP do time + o bônus dos três) paga o que a conta diz e NUNCA passa do
+    // Elemental Fusion (combate): o placar de uma partida PERFEITA (todo o HP do time + o bônus dos três) paga o que a conta diz e NUNCA passa do
     // teto — e o combate paga ≤ à regra antiga dos pontos (a mediana do típico/experiente fica em 3–4 Bits, como ficava com 20 movimentos).
     const perfeita = M3C_ENEMY_HP.reduce((a, b) => a + b, 0) + 3 * M3C_DEFEAT_BONUS;
     expect(match3Bits(perfeita)).toBeGreaterThanOrEqual(4);

@@ -26,7 +26,7 @@ export function applyEnemyDefeated<T extends Pick<GameState, 'dungeonKills' | 'b
   };
 }
 
-/** Um inimigo VISTO sem abate (Combina 3, M10): entra no bestiário (chave do roster `<id>-<estágio>`), IDEMPOTENTE, sem tocar `dungeonKills`. */
+/** Um inimigo VISTO sem abate (Elemental Fusion, M10): entra no bestiário (chave do roster `<id>-<estágio>`), IDEMPOTENTE, sem tocar `dungeonKills`. */
 export function applyBestiarySeen<T extends Pick<GameState, 'bestiary'>>(prev: T, enemyKey?: string): T {
   if (!enemyKey || (prev.bestiary ?? []).includes(enemyKey)) return prev;
   return { ...prev, bestiary: [...(prev.bestiary ?? []), enemyKey] };

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * COMBINA 3 — a TELA (pedido do dono, 11/10/2026, REGISTRO §36; combate em 18/10/2026, D-02/D-04/D-07). A regra é testada pura em
+ * ELEMENTAL FUSION — a TELA (pedido do dono, 11/10/2026, REGISTRO §36; combate em 18/10/2026, D-02/D-04/D-07). A regra é testada pura em
  * `utils/match3.test.ts` e `utils/match3Combat.test.ts`; aqui: o tabuleiro monta (49 peças, nome acessível, formas), a arena (você à
  * esquerda, 3 inimigos em ordem 1→3, o ativo marcado), tela quase cheia, a jogada válida gasta 1 turno e a cascata anima passo a
  * passo, a rodada fecha quando um lado cai e paga UMA vez o que o placar do combate diz (PT/EN), teclado, dica, recorde, de novo.
@@ -20,7 +20,7 @@ const SEED = 31337;
 /** Altura da janela (jsdom não tem layout): o hook lê `window.innerHeight`. */
 const comAltura = (h: number) => { Object.defineProperty(window, 'innerHeight', { configurable: true, writable: true, value: h }); };
 
-describe('Combina 3 — tela baixa (QA L11-15, 320×568)', () => {
+describe('Elemental Fusion — tela baixa (QA L11-15, 320×568)', () => {
   const hOriginal = window.innerHeight;
   afterEach(() => comAltura(hOriginal));
 

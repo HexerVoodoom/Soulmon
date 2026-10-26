@@ -155,6 +155,7 @@ describe('2. ponto novo sem o predicado reprova', () => {
       'utils/claApi.ts': 'cliente dos prédios do clã (Praça/Plantio/Mistério) sobre o `guildCall`; só chega pelo GuildSheet, e o Mistério por tarefa só dispara com memória de clã no aparelho (a demo não tem)',
       'components/perfil/ProfileEditor.tsx': 'só abre em Configurações > Perfil; o perfil público só sobe com PvP ligado (nunca na demo)',
       'utils/giftsCredited.ts': 'confirma presentes (giftsAck) só depois de um save confirmado na nuvem — na demo não há POST de save, então nunca dispara',
+      'components/Match3Game.tsx': 'PVP do Elemental Fusion: só é oferecido com `rankSaveId` (saveId de CONTA; a demo não tem) e a rota `opponents` exige token — sem conta o jogo abre o Normal direto',
       'hooks/useGroveWatch.ts': 'só consulta quem já tem memória de roda no aparelho — a demo não tem (Guilda bloqueada)',
     };
     // Só import de VALOR conta: `import type` não executa nada (fairArt, groveLocal, groveStage, guildCopy e

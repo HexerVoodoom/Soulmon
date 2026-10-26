@@ -22,7 +22,7 @@ import { PixelIcon } from '../ui/PixelIcon';
 // o mesmo do jogo) para o Pedra-papel-tesoura. Nenhum asset novo.
 import { ACTIVITY_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { iconePpt as iconPpt } from '../../assets/soulmon/icones-ui';
-// Combina 3 (11/10/2026): o ícone é a gema que já estava no repo (`icons/icon-gem.png`) — nenhuma arte nova.
+// Elemental Fusion (11/10/2026): o ícone é a gema que já estava no repo (`icons/icon-gem.png`) — nenhuma arte nova.
 import iconCombina from '../../assets/soulmon/icons/icon-gem.png';
 import { M3_POINTS_PER_BIT } from '../../utils/match3';
 import { M3C_MAX_BITS } from '../../utils/match3Combat';
@@ -202,7 +202,7 @@ export function DinoSheet({ language, onStart }: { language: Language; onStart: 
   );
 }
 
-// ── Combina 3 ───────────────────────────────────────────────────────────────
+// ── Elemental Fusion ───────────────────────────────────────────────────────────────
 export function Match3Sheet({ language, onStart }: { language: Language; onStart: () => void }) {
   const isPt = language === 'pt-BR';
   const [best] = useState(() => readNumber(STORAGE_KEYS.MATCH3_BEST, 0));
@@ -274,7 +274,7 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
               ? `Arraste (ou use as setas) para desviar dos tiros: o seu Soulmon atira sozinho · cada ${BARRAGE_POINTS_PER_BIT} pontos vira 1 Bit`
               : `Drag (or use the arrow keys) to dodge the shots: your Soulmon fires on its own · every ${BARRAGE_POINTS_PER_BIT} points becomes 1 Bit`}
           </InfoTipSection>
-          <InfoTipSection title={isPt ? 'Combina 3' : 'Match 3'} last>
+          <InfoTipSection title={isPt ? 'Elemental Fusion' : 'Elemental Fusion'} last>
             {isPt
               ? `Troque peças vizinhas e alinhe 3 ou mais: cada linha golpeia o time da fenda · a rodada acaba quando um lado recua · cada ${M3_POINTS_PER_BIT} pontos viram 1 Bit, até ${M3C_MAX_BITS}`
               : `Swap neighbouring tiles to line up 3+: each line strikes the rift team · the round ends when one side steps back · every ${M3_POINTS_PER_BIT} points become 1 Bit, up to ${M3C_MAX_BITS}`}
@@ -299,7 +299,7 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
         <li style={sheetCard}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <PixelIcon src={iconCombina} size={32} style={{ flexShrink: 0 }} />
-            <p style={sheetCardTitle}>{isPt ? 'Combina 3' : 'Match 3'}</p>
+            <p style={sheetCardTitle}>{isPt ? 'Elemental Fusion' : 'Elemental Fusion'}</p>
           </div>
           <Match3Sheet language={language} onStart={() => onStart('match3')} />
         </li>

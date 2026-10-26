@@ -397,12 +397,12 @@ describe('fiação no App (guard de fonte)', () => {
 });
 
 describe('Salão de Jogos — ícone de cada jogo (11/10/2026)', () => {
-  it('Corrida com obstáculos, Pedra-papel-tesoura e Combina 3 têm ícone próprio, pelado (sem moldura)', async () => {
+  it('Corrida com obstáculos, Pedra-papel-tesoura e Elemental Fusion têm ícone próprio, pelado (sem moldura)', async () => {
     const { container } = renderWithCss(<PlayAreaView {...props({ area: 'jogos' })} />);
     fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
     await waitFor(() => expect(container.querySelector('[data-salao]')).toBeTruthy());
     const cards = [...container.querySelectorAll('[data-salao] > ul > li')];
-    expect(cards.length).toBe(4); // + Soul Barrage (M9); + Combina 3 (11/10/2026, REGISTRO §36)
+    expect(cards.length).toBe(4); // + Soul Barrage (M9); + Elemental Fusion (11/10/2026, REGISTRO §36)
     for (const c of cards) {
       const img = c.querySelector('img[data-pixel-icon]') as HTMLImageElement;
       expect(img).toBeTruthy();
@@ -424,7 +424,7 @@ describe('P10 (beta-2) — chips zerados do Salão não aparecem', () => {
     expect(r.container.textContent).toContain('2 Bits');
     localStorage.removeItem(STORAGE_KEYS.DINO_BEST);
   });
-  it('Combina 3 sem recorde: só o "até N Bits"; PPT mantém seus dois chips (não são zerados)', () => {
+  it('Elemental Fusion sem recorde: só o "até N Bits"; PPT mantém seus dois chips (não são zerados)', () => {
     const { container } = renderWithCss(<Match3Sheet language="pt-BR" onStart={() => {}} />);
     expect(container.textContent).not.toContain('seu recorde');
     expect(container.textContent).toMatch(/até \d+ Bits/);
