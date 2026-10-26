@@ -243,7 +243,7 @@ export function Mochila({
         className="sm3-mochila sm2-sheet-rise"
         role="dialog"
         aria-modal="true"
-        aria-label={isPt ? 'Pasta' : 'Folder'}
+        aria-label={isPt ? 'Mochila' : 'Backpack'}
       >
         <div className="sm3-mochila-alca" aria-hidden="true" />
         {/* I3: o fechar é a seta do app (`BackArrow` com `close`), no canto superior
@@ -251,7 +251,7 @@ export function Mochila({
         <BackArrow icon="close" onClick={onClose} language={isPt ? 'pt-BR' : 'en-US'} style={{ margin: '-6px 0 0 -10px' }} />
         <div className="sm3-mochila-head">
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h2 className="sm3-mochila-titulo">{isPt ? 'Pasta' : 'Folder'}</h2>
+            <h2 className="sm3-mochila-titulo">{isPt ? 'Mochila' : 'Backpack'}</h2>
           </div>
           {/* I13 (02/10/2026): a dica de arrastar mora atrás do "?". */}
           <InfoTip language={language} label={isPt ? 'Como usar um item' : 'How to use an item'} align="right">
