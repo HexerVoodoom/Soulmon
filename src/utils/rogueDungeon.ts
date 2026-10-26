@@ -146,7 +146,7 @@ export function simulateRogueCombat(
 
 export type ChallengeGame = 'match3' | 'dino' | 'rps' | 'zip' | 'patches' | 'eco' | 'barrage';
 export type LightKind = Exclude<PathKind, 'combat'>;
-/** Pool por caminho: puzzle = Zip/Patches; minigame = Match 3/Obstacle Run/PPT/Soul Barrage; explore = prova de mente (Eco). */
+/** Pool por caminho: puzzle = Zip/Patches; minigame = Elemental Fusion/Obstacle Run/PPT/Soul Barrage; explore = prova de mente (Eco). */
 export const CHALLENGE_POOL: Record<LightKind, readonly ChallengeGame[]> = {
   puzzle: ['zip', 'patches'],
   minigame: ['match3', 'dino', 'rps', 'barrage'],

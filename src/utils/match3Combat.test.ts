@@ -1,5 +1,5 @@
 /**
- * COMBINA 3 COMO COMBATE — a regra pura (D-03…D-07, 18/10/2026): dano por elemento, só no inimigo ativo, turnos alternados, placar que vira
+ * ELEMENTAL FUSION COMO COMBATE — a regra pura (D-03…D-07, 18/10/2026): dano por elemento, só no inimigo ativo, turnos alternados, placar que vira
  * Bits e o balanço (uma partida típica de ~15–25 jogadas, por simulação com as funções REAIS).
  */
 import { describe, it, expect } from 'vitest';

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * Beta-2, FRENTE D (13/10/2026) — critérios de aceite de tela que não cabem em outro arquivo:
- *  · 9.1  Salão de Jogos: o velociraptor e a tesoura saíram; ícones de arte existente; espaço maior entre os cards; Combina 3 mantém a gema;
+ *  · 9.1  Salão de Jogos: o velociraptor e a tesoura saíram; ícones de arte existente; espaço maior entre os cards; Elemental Fusion mantém a gema;
  *  · 10.1 Santuário do Vínculo: a categoria da atividade vira ícone próprio (imagem), não emoji;
  *  · 10.3 Centro de Evolução: abas compactas (tablist), nome inteiro dos três caminhos, toque e deslize trocam de aba;
  *  · 12   Humor: ícones de 40 px em alvos >= 44, e o nome do humor escolhido aparece.
@@ -31,7 +31,7 @@ describe('9.1 — Salão de Jogos', () => {
     expect(lista.style.gap).toContain('--sm2-space-4');
     for (const li of cards) expect(li.querySelector('img[data-pixel-icon]')).not.toBeNull();
   });
-  it('o fonte não importa mais icon-game-dino nem icon-game-rps (e o Combina 3 mantém a gema)', () => {
+  it('o fonte não importa mais icon-game-dino nem icon-game-rps (e o Elemental Fusion mantém a gema)', () => {
     const src = readFileSync(join(__dirname, 'play/PlaySheets.tsx'), 'utf-8');
     expect(src).not.toMatch(/^import .*icon-game-(dino|rps)\.png/m);
     expect(src).toMatch(/^import iconCombina from .*icon-gem\.png/m);

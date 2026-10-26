@@ -38,7 +38,7 @@ const RogueFight = lazy(() => import('./RogueFight').then(m => ({ default: m.Rog
 const SoulBarrage = lazy(() => import('./SoulBarrage').then(m => ({ default: m.SoulBarrage })));
 
 const GAME_GOAL_COPY: Record<ChallengeGame, (goal: number) => { en: string; pt: string }> = {
-  match3: () => ({ en: 'Match 3: defeat the enemy team.', pt: 'Combina 3: vença o time inimigo.' }),
+  match3: () => ({ en: 'Elemental Fusion: defeat the enemy team.', pt: 'Elemental Fusion: vença o time inimigo.' }),
   dino: g => ({ en: `Obstacle Run: reach ${g} points.`, pt: `Corrida com obstáculos: chegue a ${g} pontos.` }),
   rps: g => ({ en: `Rock Paper Scissors: win ${g} rounds first.`, pt: `Pedra, Papel, Tesoura: vença ${g} rodadas primeiro.` }),
   zip: () => ({ en: 'Pet Trail: solve the puzzle.', pt: 'Trilha do Pet: resolva o puzzle.' }),

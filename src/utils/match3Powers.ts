@@ -1,5 +1,5 @@
 /**
- * COMBINA 3 — os PODERES por elemento (D-100, 19/10/2026): quando um combo fecha, do PONTO onde ele fechou sai um "poderzinho" do elemento
+ * ELEMENTAL FUSION — os PODERES por elemento (D-100, 19/10/2026): quando um combo fecha, do PONTO onde ele fechou sai um "poderzinho" do elemento
  * que viaja até o alvo e mostra o dano. Aqui só a conta PURA de "de onde sai, qual elemento, quanto": o dano NÃO é recalculado — vem dos
  * eventos que `match3Combat` já gravou (`M3Event.dmg`), então o número mostrado é exatamente o aplicado. Sem sorte, sem arte, sem tela.
  */
@@ -35,12 +35,12 @@ export function comboOrigin(step: Step, kind: number, closers: readonly Pos[] = 
 }
 
 /** Um poder por EVENTO de dano do passo (`events` = as entradas novas do log, na ordem), cada um com a origem do seu elemento. */
-export function powerShots(step: Step, events: readonly M3Event[], closers: readonly Pos[] = []): PowerShot[] {
+export function powerShots(step: Step, events: readonly M3Event[], closers: readonly Pos[] = [], elements: readonly string[] = M3_TILE_ELEMENTS): PowerShot[] {
   const out: PowerShot[] = [];
   for (const e of events) {
-    const from = comboOrigin(step, M3_TILE_ELEMENTS.indexOf(e.element), closers);
+    const from = comboOrigin(step, elements.indexOf(e.element), closers);
     if (from) {
-      const kind = M3_TILE_ELEMENTS.indexOf(e.element);
+      const kind = elements.indexOf(e.element);
       out.push({ by: e.by, element: e.element, dmg: e.dmg, target: e.target, from, big: step.created.some(c => c.tile.k === kind) });
     }
   }

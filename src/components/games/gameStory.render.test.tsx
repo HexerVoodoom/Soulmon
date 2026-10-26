@@ -38,7 +38,7 @@ describe('D-01: cada um dos 7 jogos mostra o seu contexto narrativo', () => {
     for (const lang of ['pt-BR', 'en-US'] as const) {
       it(`${id} (${lang}) renderiza o texto de gameStories`, () => {
         const { container } = renderWithCss(JOGOS[id](lang));
-        if (id === 'match3') { // D-77 (19/10/2026): a tela de jogo do Combina 3 não tem nenhum texto de história
+        if (id === 'match3') { // D-77 (19/10/2026): a tela de jogo do Elemental Fusion não tem nenhum texto de história
           expect(container.querySelector('[data-game-story]')).toBeNull();
           return;
         }
@@ -71,7 +71,7 @@ describe('D-01: o conteúdo respeita a bíblia', () => {
       expect(t, id).not.toMatch(/errou|erro|falh|wrong|mistake|fail|vermelh|red\b|game over|você é|you are/i);
     }
   });
-  it('só o Combina 3 tem combate; o Refúgio é calmo (sem inimigo, golpe, placar nem tempo)', () => {
+  it('só o Elemental Fusion tem combate; o Refúgio é calmo (sem inimigo, golpe, placar nem tempo)', () => {
     for (const id of GAME_STORY_IDS.filter(i => i !== 'match3')) {
       for (const t of [GAME_STORIES[id].pt, GAME_STORIES[id].en]) expect(t, id).not.toMatch(/inimig|enem|golpe|strike|combat|batalh|battle/i);
     }

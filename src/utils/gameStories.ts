@@ -3,7 +3,7 @@
  *
  * Voz da bíblia (`docs/NARRATIVA-E-UNIVERSO.md` §13): o mundo constata, em 2ª pessoa, curto e concreto — não elogia, não julga, não
  * promete. Regras que todo texto daqui cumpre (e `gameStories.test.ts` trava): nenhuma promessa de efeito cognitivo ("treina a
- * memória"), nenhum veredito, nada de vermelho nem "errou"; o Refúgio é CALMO e sem combate; o Combina 3 é o único com combate.
+ * memória"), nenhum veredito, nada de vermelho nem "errou"; o Refúgio é CALMO e sem combate; o Elemental Fusion é o único com combate.
  * Quem escreve a frase é este arquivo — a tela só a mostra (`GameStory` do `GameKit`).
  */
 import type { Language } from './i18n';

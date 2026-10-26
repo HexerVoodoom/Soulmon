@@ -57,7 +57,7 @@ import bossCorallume from '../assets/soulmon/bosses/boss-corallume.png';
 import bossObsidarch from '../assets/soulmon/bosses/boss-obsidarch.png';
 import bossGlimmerswarm from '../assets/soulmon/bosses/boss-glimmerswarm.png';
 
-/** As linhas PRÓPRIAS do projeto (`assets/soulmon/lines/`, 4 estágios cada) — a arte que o Match 3 usa nos inimigos. Os monstros de `DUNGEON_LINE_SPRITES` (arte de chefes) seguem na masmorra. */
+/** As linhas PRÓPRIAS do projeto (`assets/soulmon/lines/`, 4 estágios cada) — a arte que o Elemental Fusion usa nos inimigos. Os monstros de `DUNGEON_LINE_SPRITES` (arte de chefes) seguem na masmorra. */
 export const OWN_LINE_SPRITES: Record<'kaelen' | 'thalindra' | 'igni' | 'astrase', Record<'rookie' | 'champion' | 'ultimate' | 'mega', string>> = {
   kaelen: { rookie: kaelenRookie, champion: kaelenChampion, ultimate: kaelenUltimate, mega: kaelenMega },
   thalindra: { rookie: thalindraRookie, champion: thalindraChampion, ultimate: thalindraUltimate, mega: thalindraMega },
@@ -101,7 +101,7 @@ export const DUNGEON_LINE_NAMES: Record<string, string> = {
  * AS LINHAS APOSENTADAS (D-78, 19/10/2026; Ignar e Lumel somados em 20/10/2026) — dono único.
  *
  * Akashai (`orrin`), Serah (`serah`), Nautil (`nautilu`), Ignar (`ignar`) e Lumel (`lumel`) são linhas DEFASADAS: o dono
- * mandou tirar o SPRITE delas de todo lugar visível (Match 3, masmorra, bestiário, sombras
+ * mandou tirar o SPRITE delas de todo lugar visível (Elemental Fusion, masmorra, bestiário, sombras
  * do Pesadelo, NPC da Biblioteca, fallback por hash). Elas saíram de `DUNGEON_LINE_SPRITES`
  * e de `DUNGEON_LINE_NAMES` (roster hoje = 6 linhas × 4 tiers); os PNGs foram removidos.
  * O NOME Serah segue no lore/copy (REGISTRO §14) — aposentar o sprite não é aposentar o nome.

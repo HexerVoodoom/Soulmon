@@ -70,7 +70,7 @@ describe('roster de inimigos (M10): progressão', () => {
   it('masmorra: toda `stage` da onda é chave válida do roster (entra no bestiário)', () => {
     for (let seed = 1; seed <= 50; seed++) for (const e of buildDungeonWave(2, 'mega', mulberry32(seed), 30)) expect(ENEMY_ROSTER_KEYS.has(e.stage), e.stage).toBe(true);
   });
-  it('Combina 3: com level, os 3 inimigos vêm do roster respeitando o teto; sem level, nada muda', () => {
+  it('Elemental Fusion: com level, os 3 inimigos vêm do roster respeitando o teto; sem level, nada muda', () => {
     for (let seed = 1; seed <= 50; seed++) {
       const c = newCombat(mulberry32(seed), ['a', 'b', 'c'], undefined, 1);
       for (const e of c.enemies) expect(rosterEntryOfKey(e.roster)?.stage).toBe('rookie');

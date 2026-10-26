@@ -1,5 +1,5 @@
 /**
- * COMBINA 3 — a lógica PURA do jogo de combinar peças do Salão de Jogos (pedido do dono, 11/10/2026, REGISTRO §36).
+ * ELEMENTAL FUSION — a lógica PURA do jogo de combinar peças do Salão de Jogos (pedido do dono, 11/10/2026, REGISTRO §36).
  *
  * Tabuleiro `M3_ROWS × M3_COLS` de peças de `M3_KINDS` tipos (os ícones de ELEMENTO que já existem no repo — ver `M3_TILE_ELEMENTS`).
  * O jogador troca duas peças vizinhas, LIVREMENTE (beta-2, backlog 9.2: a exigência de "a troca tem que pontuar" saiu — toda troca entre vizinhas

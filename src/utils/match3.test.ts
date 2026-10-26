@@ -1,5 +1,5 @@
 /**
- * COMBINA 3 — a lógica pura (pedido do dono, 11/10/2026, REGISTRO §36): detecção de linhas, gravidade, cascata, troca inválida,
+ * ELEMENTAL FUSION — a lógica pura (pedido do dono, 11/10/2026, REGISTRO §36): detecção de linhas, gravidade, cascata, troca inválida,
  * peças especiais (linha de 4), embaralhar sem jogadas e DETERMINISMO por semente. Mais a conta de Bits e o grep de `Math.random`.
  */
 import { describe, it, expect } from 'vitest';

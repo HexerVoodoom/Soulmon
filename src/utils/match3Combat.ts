@@ -1,5 +1,5 @@
 /**
- * COMBINA 3 COMO COMBATE — a regra PURA (pedido do dono, 18/10/2026, stories D-03…D-07).
+ * ELEMENTAL FUSION COMO COMBATE — a regra PURA (pedido do dono, 18/10/2026, stories D-03…D-07).
  *
  * Combinar peças de um elemento causa dano DAQUELE elemento ao inimigo ATIVO. São três Soulmon inimigos, em fila (1→3), que contam como
  * UM time: o dano só atinge o ativo; a sobra de um golpe que o derruba é descartada; zerou o HP, o próximo assume; os três derrotados = vitória.
@@ -17,7 +17,8 @@ import { chainMultiplier, match3Bits, trySwap, validMoves, M3_TILE_ELEMENTS, typ
 import { mulberry32 } from './combate/rng';
 import { pickEnemy } from './enemyRoster';
 
-export type M3Element = (typeof M3_TILE_ELEMENTS)[number];
+/** Id de elemento (ícone). No Normal são os 6 de `M3_TILE_ELEMENTS`; no PVP, 6 sorteados do pool inteiro (`match3Pvp.ts`). */
+export type M3Element = string;
 
 /** HP do Soulmon do jogador. */
 export const M3C_PLAYER_HP = 520;
@@ -59,7 +60,10 @@ export interface M3Event {
 export type M3Outcome = 'playing' | 'win' | 'loss';
 export interface M3Combat {
   player: M3Fighter;
-  enemies: [M3Enemy, M3Enemy, M3Enemy];
+  /** 3 no Normal; 1 no PVP (1 contra 1). */
+  enemies: M3Enemy[];
+  /** PVP: o elemento de cada TIPO de peça (índice = `Tile.k`). Ausente = os 6 fixos `M3_TILE_ELEMENTS` (save/estado antigo e Normal). */
+  elements?: readonly string[];
   /** Índice (0..2) do inimigo ativo. */
   active: number;
   log: M3Event[];
@@ -85,7 +89,7 @@ export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: str
     hp: M3C_ENEMY_HP[i], max: M3C_ENEMY_HP[i], element: pick(els),
     ...(lines.length > 0 ? { line: pick(pool.length > 0 ? pool : [...lines]) } : {}),
   });
-  const enemies: [M3Enemy, M3Enemy, M3Enemy] = [mk(0), mk(1), mk(2)];
+  const enemies: M3Enemy[] = [mk(0), mk(1), mk(2)];
   if (level !== undefined) {
     // M10: as 3 vagas pedem rookie/champion/ultimate, rebaixadas ao teto do level (progressão do roster); sem repetir criatura.
     // Sorteado DEPOIS do resto, então o rng das jogadas antigas (sem level) não muda.
@@ -96,8 +100,24 @@ export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: str
   return { player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP }, enemies, active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing' };
 }
 
+/** PVP: HP do único inimigo = a SOMA do time do Normal (o placar, e portanto os Bits, ficam na mesma escala; SUPOSIÇÃO a confirmar pelo dono). */
+export const M3C_PVP_ENEMY_HP: number = M3C_ENEMY_HP.reduce((a, b) => a + b, 0);
+
+/**
+ * Um combate de PVP (1 contra 1): UM inimigo, com os 6 `elements` da partida (o do inimigo sai deles, sorteado pelo `rng`).
+ * `roster` = chave do roster quando o adversário é um NPC (bestiário); jogador real não leva nada (arte e level vêm da tela).
+ */
+export function newPvpCombat(rng: Rng, elements: readonly string[], roster?: string): M3Combat {
+  const el = elements[Math.min(elements.length - 1, Math.floor(rng() * elements.length))];
+  return {
+    player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP },
+    enemies: [{ hp: M3C_PVP_ENEMY_HP, max: M3C_PVP_ENEMY_HP, element: el, ...(roster ? { roster } : {}) }],
+    elements: [...elements], active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing',
+  };
+}
+
 const cloneCombat = (s: M3Combat): M3Combat => ({
-  ...s, player: { ...s.player }, enemies: s.enemies.map(e => ({ ...e })) as M3Combat['enemies'], log: [...s.log],
+  ...s, player: { ...s.player }, enemies: s.enemies.map(e => ({ ...e })), log: [...s.log],
 });
 
 /**
@@ -117,10 +137,10 @@ export function applyPlayerSteps(state: M3Combat, steps: readonly Step[]): M3Com
       const dmg = Math.min(alvo.hp, bruto); // a sobra se perde
       alvo.hp -= dmg;
       s.dealt += dmg;
-      s.log.push({ by: 'player', element: M3_TILE_ELEMENTS[k], dmg, target: s.active as 0 | 1 | 2 });
+      s.log.push({ by: 'player', element: (s.elements ?? M3_TILE_ELEMENTS)[k], dmg, target: s.active as 0 | 1 | 2 });
       if (alvo.hp <= 0) {
         s.defeated += 1;
-        if (s.active >= 2) s.outcome = 'win';
+        if (s.active >= s.enemies.length - 1) s.outcome = 'win';
         else s.active += 1;
       }
     }
@@ -159,7 +179,7 @@ export function applyEnemySteps(state: M3Combat, steps: readonly Step[]): M3Comb
       const dmg = Math.min(s.player.hp, bruto);
       s.player.hp -= dmg;
       s.taken += dmg;
-      s.log.push({ by: 'enemy', element: M3_TILE_ELEMENTS[k], dmg, target: 'player' });
+      s.log.push({ by: 'enemy', element: (s.elements ?? M3_TILE_ELEMENTS)[k], dmg, target: 'player' });
       if (s.player.hp <= 0) s.outcome = 'loss';
     }
   }

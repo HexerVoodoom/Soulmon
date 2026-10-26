@@ -40,7 +40,7 @@ describe('powerShots: dano mostrado = dano aplicado', () => {
         expect(s.dmg).toBe(novos[i].dmg);
         expect(s.by).toBe('player');
         expect(s.target).toBe(novos[i].target);
-        const k = M3_TILE_ELEMENTS.indexOf(s.element);
+        const k = M3_TILE_ELEMENTS.indexOf(s.element as (typeof M3_TILE_ELEMENTS)[number]);
         const idx = st.cleared.findIndex((p, j) => p.r === s.from.r && p.c === s.from.c && st.kinds[j] === k);
         expect(idx).toBeGreaterThanOrEqual(0); // a origem É uma célula limpa daquele elemento
       });

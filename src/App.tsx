@@ -4170,7 +4170,7 @@ export default function App() {
     setGameState(prev => applyEnemyDefeated(prev, enemyKey));
   }, []);
 
-  // M10 — inimigo VISTO fora da masmorra (Combina 3): só o bestiário, sem abate (missão "kills" é da masmorra).
+  // M10 — inimigo VISTO fora da masmorra (Elemental Fusion): só o bestiário, sem abate (missão "kills" é da masmorra).
   const handleBestiarySeen = useCallback((enemyKey: string) => {
     setGameState(prev => applyBestiarySeen(prev, enemyKey));
   }, []);

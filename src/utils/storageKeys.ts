@@ -81,7 +81,7 @@ export const STORAGE_KEYS = {
   DUNGEON_SPEED: 'soulmon-dungeon-speed',
   /** Beta-2 (2.2): o que a pessoa abriu/recolheu na lista do dia (JSON `Record<string, boolean>`, chave `id|d`/`id|p`). Preferência de tela do aparelho — não é progresso e não vai para a nuvem. */
   RITUAL_OPEN: 'soulmon-ritual-open',
-  /** Melhor pontuação do Combina 3 (Salão de Jogos), no aparelho como o recorde da Corrida. */
+  /** Melhor pontuação do Elemental Fusion (Salão de Jogos), no aparelho como o recorde da Corrida. */
   MATCH3_BEST: 'soulmon-match3-best',
   DINO_BEST: 'soulmon-dino-best',
   /** Melhor pontuação do Soul Barrage (Salão de Jogos), no aparelho. */
