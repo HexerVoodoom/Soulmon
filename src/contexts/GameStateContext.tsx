@@ -1,5 +1,5 @@
 import { normalizeGuildMission } from '../utils/guildMission';
-import { sanitizeRogueRun, type RogueRun } from '../utils/rogueDungeon';
+import { sanitizeRogueRun, type RogueRun } from '../utils/rogueDungeonSave';
 import { sanitizeDungeonReturnSummary, type DungeonReturnSummary } from '../utils/dungeonReturnSummary';
 import { sanitizeFocusKeyDay } from '../utils/focusKey';
 import { sanitizeClaReceipts } from '../utils/claCredit';

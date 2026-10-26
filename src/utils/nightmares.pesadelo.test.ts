@@ -7,9 +7,10 @@ import { describe, expect, it } from 'vitest';
 import { LADDER_TIERS, dungeonFoe } from './dungeon';
 import {
   GOOD_DREAM_HONOR, NIGHTMARE_CYCLE_DAYS, NIGHTMARE_END_TEXT, NIGHTMARE_HINT, NIGHTMARE_MEGA_EASE, NIGHTMARE_POWER, NIGHTMARE_WAVE_SIZE,
-  buildNightmareWave, claimGoodDream, countNightmareDay, createNightmareState, hasPendingGoodDream, markFought, nightmareEndText,
+  claimGoodDream, countNightmareDay, createNightmareState, hasPendingGoodDream, markFought, nightmareEndText,
   nightmareFoe, sanitizeNightmareState, specialLanded, type NightmareState,
 } from './nightmares';
+import { buildNightmareWave } from './nightmareWave';
 import { nightmareRefs, playSequence, simulateNightmareScenario, SCENARIO_FULL, SCENARIO_NONE, type NightmareScenario } from './dungeonFight';
 import { createRestState, recordNight, type RestState } from './restWindow';
 import { REFERENCE_BUILDS } from './combate/level';

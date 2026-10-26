@@ -16,7 +16,7 @@
 // Pure and deterministic given a seed: the draws come from `defenseRoll` and `mulberry32`, never `Math.random`.
 import { autoDefense, defenseRoll } from './autoDefesa';
 import { ARENA_SKILL_ODDS, autoDefenseHitScale, familyOfSkill, type ArenaSkill } from './arena';
-import { dungeonFoe, type DungeonFoeKnobs } from './dungeon';
+import { dungeonFoe, type DungeonFoeKnobs } from './dungeonBase';
 import { DODGE_REDUCE, RING_MULT, type DodgeGrade, type RingGrade } from './energia';
 import { nightmareFoe, nightmareSlots } from './nightmares';
 import { jeitoParaPve, JEITO_PADRAO, type JeitoNaMasmorra, type JeitoPve } from './profissaoMasmorra';

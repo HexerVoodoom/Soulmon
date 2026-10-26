@@ -35,3 +35,16 @@ export function hasFocusKeyOrLegacy(state: FocusKeyState, nowMs: number, session
   if (hasFocusKey(state, nowMs)) return true;
   return !!session && session.status === 'ready' && session.day === playerDayIso(new Date(nowMs), state.playerDayTz);
 }
+
+/**
+ * O que `hasFocusKeyOrLegacy` lê da sessão guardada (`status` + `day`), com o MESMO portão de validade de `normalizeSession`
+ * (`focoSessao.ts`: id/name/day string, status ready|completed, modo p25|p50) — sem importar a Oficina (~7 KB) para o chunk de entrada.
+ * `focusKey.legacyStamp.test.ts` prova a equivalência com `normalizeSession`.
+ */
+export function focusSessionStamp(raw: unknown): { status: 'ready' | 'completed'; day: string } | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.id !== 'string' || typeof r.name !== 'string' || typeof r.day !== 'string' || (r.status !== 'ready' && r.status !== 'completed')) return null;
+  if (r.mode !== 'p25' && r.mode !== 'p50') return null;
+  return { status: r.status, day: r.day.slice(0, 10) };
+}

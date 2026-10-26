@@ -206,13 +206,14 @@ describe('AC7. no Math.random in the fight or in the wave; the same seed gives t
   const ler = (f: string) => readFileSync(resolve(__dirname, '..', f), 'utf8').replace(/\r\n/g, '\n');
 
   it('dungeon.ts (but the heart drop), nightmares.ts, dungeonFight.ts, DungeonGame.tsx and NightmareBattle.tsx', () => {
-    expect(semComentarios(semSorteioDeCoracao(ler('utils/dungeon.ts')))).not.toMatch(SORTEIO);
-    for (const f of ['utils/nightmares.ts', 'utils/dungeonFight.ts', 'components/DungeonGame.tsx', 'components/NightmareBattle.tsx']) {
+    expect(semComentarios(ler('utils/dungeon.ts'))).not.toMatch(SORTEIO);
+    expect(semComentarios(semSorteioDeCoracao(ler('utils/dungeonBase.ts')))).not.toMatch(SORTEIO);
+    for (const f of ['utils/nightmares.ts', 'utils/nightmareWave.ts', 'utils/dungeonFight.ts', 'components/DungeonGame.tsx', 'components/NightmareBattle.tsx']) {
       expect(semComentarios(ler(f)), f).not.toMatch(SORTEIO);
     }
   });
   it('the heart drop is the one place that stays on Math.random (the declared exception)', () => {
-    expect(ler('utils/dungeon.ts')).toMatch(/export function rollDungeonHeartDrop[\s\S]*Math\.random\(\)/);
+    expect(ler('utils/dungeonBase.ts')).toMatch(/export function rollDungeonHeartDrop[\s\S]*Math\.random\(\)/);
   });
   it('RED: the detector catches a real Math.random (and ignores the name in a comment)', () => {
     expect(semComentarios('const x = Math.random();')).toMatch(SORTEIO);

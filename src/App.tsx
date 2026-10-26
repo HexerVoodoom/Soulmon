@@ -31,8 +31,7 @@ import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, HUNGER_PREMIUM
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
-import { hasFocusKeyOrLegacy, grantFocusKey } from './utils/focusKey';
-import { normalizeSession } from './utils/focoSessao';
+import { hasFocusKeyOrLegacy, grantFocusKey, focusSessionStamp } from './utils/focusKey';
 import { focusDescentRefusal, isFocusDescent, pauseFocusDescent, resumeFocusDescent, startFocusDescent } from './utils/focusDescent';
 import { assinarTelaMasmorra, telaMasmorraAberta } from './utils/dungeonScreenOpen';
 import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
@@ -127,7 +126,7 @@ import { awardBondXP, awardStepXP, bondLevelFor, unclaimedBondRewards, applyBond
 import { levelUpPending, levelUpBaseline, applyLevelUpCelebrated } from './utils/levelUp';
 import { sanitizeTalentPicks } from './utils/talents';
 import { soulLevel, soulLevelLine, soulCombatant } from './utils/soulXP';
-import type { RogueRun } from './utils/rogueDungeon';
+import type { RogueRun } from './utils/rogueDungeonSave';
 import { applyPoopDrain, cleanPoop, pendingPoopEvent, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { pausarTrilha, retomarTrilha } from './utils/trilha';
@@ -139,7 +138,7 @@ import {
 // `CHIP_BOOST`/`HEART_HEAL` saíram daqui de propósito: os números do uso de item
 // especial agora são lidos uma vez só, dentro de `utils/specialItemUse.ts`.
 import { ALL_SHOP_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
-import { getDungeonBest, rollDungeonHeartDrop } from './utils/dungeon';
+import { getDungeonBest, rollDungeonHeartDrop } from './utils/dungeonBase';
 import { heartDropBonus, rollPetPassive, getPassive } from './utils/passives';
 import { recordMood, moodFor, moodSummary, type MoodValue } from './utils/mood';
 import { computeCarePattern, resolveBranch, careHistory } from './utils/carePattern';
@@ -294,7 +293,7 @@ import type { Dream, RestWindow } from './utils/restWindow';
 import { StepsCard } from './components/StepsCard';
 import { loadAreaView, useAreaViewPrefetch } from './components/nav/playPrefetch';
 import {
-  buildNightmareWave, hasPendingNightmare, markFought, nightmareDayKey, nightmaresFor,
+  hasPendingNightmare, markFought, nightmareDayKey, nightmaresFor,
   createNightmareState, hasPendingGoodDream, claimGoodDream, GOOD_DREAM_HONOR, type NightmareRewards,
 } from './utils/nightmares';
 import {
@@ -735,7 +734,7 @@ const MILESTONE_TEXT: Record<string, { pt: string; en: string }> = {
 const UnlockToast = lazy(() => import('./components/UnlockToast').then(m => ({ default: m.UnlockToast })));
 const RebirthModal = lazy(() => import('./components/RebirthModal').then(m => ({ default: m.RebirthModal })));
 // Pesadelo da manhã: leva junto BattleStage/PveMechanics/useGroupBattle/combatFx/attackFxArt (~100 KB) — só na luta.
-const NightmareBattle = lazy(() => import('./components/NightmareBattle').then(m => ({ default: m.NightmareBattle })));
+const NightmareBattleHost = lazy(() => import('./components/NightmareBattleHost').then(m => ({ default: m.NightmareBattleHost })));
 const GoodDream = lazy(() => import('./components/GoodDream').then(m => ({ default: m.GoodDream })));
 // Modais/interstícios que só montam sob condição (rodada 6, perf): saem do chunk de entrada.
 const EvolveTaskModal = lazy(() => import('./components/EvolveTaskModal').then(m => ({ default: m.EvolveTaskModal })));
@@ -752,7 +751,6 @@ const MorningCheckIn = lazy(() => import('./components/MorningCheckIn').then(m =
 const TriagePile = lazy(() => import('./components/TriagePile').then(m => ({ default: m.TriagePile })));
 const MorningDream = lazy(() => import('./components/MorningDream').then(m => ({ default: m.MorningDream })));
 const RestSetupModal = lazy(() => import('./components/RestSetupModal').then(m => ({ default: m.RestSetupModal })));
-import { demoDaySuggestions } from './utils/demoDaySuggestions';
 const DayGoalsModal = lazy(() => import('./components/DayGoalsModal').then(m => ({ default: m.DayGoalsModal })));
 const CatalogOnboardingFlow = lazy(() => import('./components/catalog/CatalogOnboardingFlow').then(m => ({ default: m.CatalogOnboardingFlow })));
 const CatalogBrowserModal = lazy(() => import('./components/catalog/CatalogBrowserModal').then(m => ({ default: m.CatalogBrowserModal })));
@@ -2121,9 +2119,17 @@ export default function App() {
     [gameState.activities, gameState.tasks, gameState.habitRhythms, dayPlanToday],
   );
   // DEMO: o "Plan my day" abre com sugestões do catálogo (recomendador + foco do jogador); fora da demo, nada muda.
+  // O módulo puxa o catálogo inteiro (~31 KB): fora do chunk de entrada, só a demo carrega (`import()`).
+  const [demoSuggestFn, setDemoSuggestFn] = useState<typeof import('./utils/demoDaySuggestions').demoDaySuggestions | null>(null);
+  useEffect(() => {
+    if (!demo || demoSuggestFn) return;
+    let vivo = true;
+    import('./utils/demoDaySuggestions').then(m => { if (vivo) setDemoSuggestFn(() => m.demoDaySuggestions); }).catch(() => {});
+    return () => { vivo = false; };
+  }, [demo, demoSuggestFn]);
   const dayGoalsSuggestions = useMemo(
-    () => (demo ? demoDaySuggestions({ soulGoal: gameState.soulGoal, activities: gameState.activities as any }) : []),
-    [demo, gameState.soulGoal, gameState.activities],
+    () => (demo && demoSuggestFn ? demoSuggestFn({ soulGoal: gameState.soulGoal, activities: gameState.activities as any }) : []),
+    [demo, demoSuggestFn, gameState.soulGoal, gameState.activities],
   );
   // Save anterior (sem `dayPlan`): a lista do dia já estava montada → hoje já está reafirmado, nada escondido.
   useEffect(() => {
@@ -5704,13 +5710,6 @@ export default function App() {
    * re-sorteada a cada render e o inimigo trocaria no meio da luta.
    */
   const nightmareKey = nightmareDayKey(new Date(), gameState.rest?.playerDayTz);
-  const nightmareWave = useMemo(
-    () => (nightmareOpen
-      ? buildNightmareWave(gameState.rest ?? createRestState(), gameState.evolutionStage, new Date(), soulLevel(gameState))
-      : []),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [nightmareOpen, nightmareKey, gameState.evolutionStage],
-  );
   const nightmareRarity = useMemo(
     () => nightmaresFor(gameState.rest ?? createRestState(), new Date(), gameState.evolutionStage).rarity,
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -7537,7 +7536,7 @@ export default function App() {
                      Malha, que moram no save. A regra é de `utils/mente/revisao`;
                      aqui só se grava o estado que o jogo devolveu. */
                   todayKey: playerDayIso(new Date(), gameState.playerDayTz),
-                  focusKeyActive: hasFocusKeyOrLegacy(gameState, Date.now(), normalizeSession(readJson<unknown>(STORAGE_KEYS.FOCO_WORKSHOP_PLAN, null))),
+                  focusKeyActive: hasFocusKeyOrLegacy(gameState, Date.now(), focusSessionStamp(readJson<unknown>(STORAGE_KEYS.FOCO_WORKSHOP_PLAN, null))),
                   rogue: { saved: gameState.rogueDungeon, onChange: (run: RogueRun) => setGameState(prev => ({ ...prev, rogueDungeon: run })), combatant: soulCombatant(gameState) },
                   onFocusPrepared: () => setGameState(prev => grantFocusKey(prev, Date.now())),
                   onFocusStart: (focusEndsAt?: number) => {
@@ -8937,9 +8936,10 @@ export default function App() {
             onClaim={claimGoodDreamNow}
           />
         ) : (
-        <NightmareBattle
+        <NightmareBattleHost
           open
-          wave={nightmareWave}
+          rest={gameState.rest}
+          nightKey={nightmareKey}
           rarity={nightmareRarity}
           petStage={gameState.evolutionStage}
           demoCharacterId={petLine}

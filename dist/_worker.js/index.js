@@ -13,6 +13,65 @@ function kvOrThrow(env) {
 }
 __name(kvOrThrow, "kvOrThrow");
 
+// api/_accountTombstone.js
+var TOMBSTONE_PREFIX = "del:done:";
+var TOMBSTONE_TTL_SECONDS = 30 * 24 * 60 * 60;
+function tombstoneKey(saveId) {
+  return `${TOMBSTONE_PREFIX}${saveId}`;
+}
+__name(tombstoneKey, "tombstoneKey");
+async function writeTombstone(env, saveId, now = Date.now()) {
+  await kvOrThrow(env).put(
+    tombstoneKey(saveId),
+    JSON.stringify({ at: now }),
+    { expirationTtl: TOMBSTONE_TTL_SECONDS }
+  );
+}
+__name(writeTombstone, "writeTombstone");
+async function clearTombstone(env, saveId) {
+  await kvOrThrow(env).delete(tombstoneKey(saveId));
+}
+__name(clearTombstone, "clearTombstone");
+async function readTombstone(env, saveId) {
+  const raw = await kvOrThrow(env).get(tombstoneKey(saveId));
+  if (raw === null) return null;
+  try {
+    const t = JSON.parse(raw);
+    return { at: Number.isFinite(t?.at) ? t.at : 0 };
+  } catch {
+    return { at: 0 };
+  }
+}
+__name(readTombstone, "readTombstone");
+async function gateTombstone(env, saveId, authTime) {
+  let t = null;
+  try {
+    t = await readTombstone(env, saveId);
+  } catch {
+    return { deleted: false, reopened: false };
+  }
+  if (!t) return { deleted: false, reopened: false };
+  const loginMs = typeof authTime === "number" && authTime > 0 ? authTime * 1e3 : 0;
+  if (loginMs > t.at) {
+    try {
+      await clearTombstone(env, saveId);
+    } catch (err2) {
+      console.warn("tombstone: reabertura n\xE3o conseguiu apagar a l\xE1pide, chamada segue", {
+        saveIdPrefix: String(saveId).slice(0, 8),
+        err: String(err2)
+      });
+    }
+    console.info("tombstone: conta reaberta por login posterior \xE0 exclus\xE3o", {
+      saveIdPrefix: String(saveId).slice(0, 8),
+      deletedAt: t.at,
+      loginAt: loginMs
+    });
+    return { deleted: false, reopened: true };
+  }
+  return { deleted: true, reopened: false, at: t.at };
+}
+__name(gateTombstone, "gateTombstone");
+
 // api/_entitlements.js
 var ENT_PREFIX = "ent:";
 var ORDER_PREFIX = "ord:";
@@ -410,6 +469,21 @@ async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
   return { ent: fresh, revoked };
 }
 __name(auditRefunds, "auditRefunds");
+var RANK_PRIZES_MAX = 24;
+async function grantRankPrize(env, saveId, amount, markKey, since = 0) {
+  if (!Number.isInteger(amount) || amount <= 0 || typeof markKey !== "string" || !markKey) return { ent: null, granted: false, refused: "invalid" };
+  const tomb = await readTombstone(env, saveId).catch(() => null);
+  const ent = await readEntitlement(env, saveId);
+  const delAt = Math.max(tomb ? Number(tomb.at) || 1 : 0, Number(ent.accountDeletedAt) || 0);
+  if (delAt > 0 && delAt >= since) return { ent: null, granted: false, refused: "deleted" };
+  const marks = Array.isArray(ent.rankPrizes) ? ent.rankPrizes : [];
+  if (marks.includes(markKey)) return { ent, granted: false, duplicate: true };
+  ent.credits += amount;
+  ent.rankPrizes = [...marks, markKey].slice(-RANK_PRIZES_MAX);
+  await writeEntitlement(env, saveId, ent);
+  return { ent, granted: true };
+}
+__name(grantRankPrize, "grantRankPrize");
 
 // api/_killSwitch.js
 var LIGADO = /^(1|true|yes|on|sim)$/i;
@@ -469,65 +543,6 @@ var BETA_CLOSED_MESSAGE = {
   pt: "O Soulmon est\xE1 em teste fechado e esta conta ainda n\xE3o est\xE1 na lista. Se voc\xEA recebeu um convite, entre com o mesmo e-mail do convite.",
   en: "Soulmon is in a closed test and this account is not on the list yet. If you got an invite, sign in with the same e-mail it was sent to."
 };
-
-// api/_accountTombstone.js
-var TOMBSTONE_PREFIX = "del:done:";
-var TOMBSTONE_TTL_SECONDS = 30 * 24 * 60 * 60;
-function tombstoneKey(saveId) {
-  return `${TOMBSTONE_PREFIX}${saveId}`;
-}
-__name(tombstoneKey, "tombstoneKey");
-async function writeTombstone(env, saveId, now = Date.now()) {
-  await kvOrThrow(env).put(
-    tombstoneKey(saveId),
-    JSON.stringify({ at: now }),
-    { expirationTtl: TOMBSTONE_TTL_SECONDS }
-  );
-}
-__name(writeTombstone, "writeTombstone");
-async function clearTombstone(env, saveId) {
-  await kvOrThrow(env).delete(tombstoneKey(saveId));
-}
-__name(clearTombstone, "clearTombstone");
-async function readTombstone(env, saveId) {
-  const raw = await kvOrThrow(env).get(tombstoneKey(saveId));
-  if (raw === null) return null;
-  try {
-    const t = JSON.parse(raw);
-    return { at: Number.isFinite(t?.at) ? t.at : 0 };
-  } catch {
-    return { at: 0 };
-  }
-}
-__name(readTombstone, "readTombstone");
-async function gateTombstone(env, saveId, authTime) {
-  let t = null;
-  try {
-    t = await readTombstone(env, saveId);
-  } catch {
-    return { deleted: false, reopened: false };
-  }
-  if (!t) return { deleted: false, reopened: false };
-  const loginMs = typeof authTime === "number" && authTime > 0 ? authTime * 1e3 : 0;
-  if (loginMs > t.at) {
-    try {
-      await clearTombstone(env, saveId);
-    } catch (err2) {
-      console.warn("tombstone: reabertura n\xE3o conseguiu apagar a l\xE1pide, chamada segue", {
-        saveIdPrefix: String(saveId).slice(0, 8),
-        err: String(err2)
-      });
-    }
-    console.info("tombstone: conta reaberta por login posterior \xE0 exclus\xE3o", {
-      saveIdPrefix: String(saveId).slice(0, 8),
-      deletedAt: t.at,
-      loginAt: loginMs
-    });
-    return { deleted: false, reopened: true };
-  }
-  return { deleted: true, reopened: false, at: t.at };
-}
-__name(gateTombstone, "gateTombstone");
 
 // api/_auth.js
 var JWK_URL = "https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com";
@@ -901,6 +916,240 @@ async function desindexarInscricao(kv2, chave) {
   }
 }
 __name(desindexarInscricao, "desindexarInscricao");
+
+// api/_profile.js
+function stagePower(stage) {
+  if (!stage) return 1;
+  const p = String(stage).split("-")[0];
+  return { rookie: 1, champion: 2, ultimate: 3, mega: 4, ultra: 5 }[p] ?? 1;
+}
+__name(stagePower, "stagePower");
+var PID_PREFIX = "pid:";
+async function legacyPidFor(saveId) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`soulmon-pub:${saveId}`));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 24);
+}
+__name(legacyPidFor, "legacyPidFor");
+function newPid() {
+  const b = crypto.getRandomValues(new Uint8Array(12));
+  return Array.from(b).map((x2) => x2.toString(16).padStart(2, "0")).join("");
+}
+__name(newPid, "newPid");
+async function ensurePid(env, p) {
+  if (p.pid && p.pid !== await legacyPidFor(p.id)) return p.pid;
+  const antigo = p.pid;
+  p.pid = newPid();
+  await putProfile(env, p.id, p);
+  await indexPublicId(env, p.id, p.pid);
+  if (antigo) await kvOrThrow(env).delete(`${PID_PREFIX}${antigo}`);
+  return p.pid;
+}
+__name(ensurePid, "ensurePid");
+async function pidSoLeitura(p) {
+  if (!p?.pid || p.pid === await legacyPidFor(p.id)) return null;
+  return p.pid;
+}
+__name(pidSoLeitura, "pidSoLeitura");
+async function indexPublicId(env, saveId, pid) {
+  await kvOrThrow(env).put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
+}
+__name(indexPublicId, "indexPublicId");
+async function getProfile(env, id) {
+  const raw = await kvOrThrow(env).get(`profile:${id}`);
+  return raw ? JSON.parse(raw) : null;
+}
+__name(getProfile, "getProfile");
+async function putProfile(env, id, profile) {
+  await kvOrThrow(env).put(`profile:${id}`, JSON.stringify(profile), { expirationTtl: 86400 * 365 });
+}
+__name(putProfile, "putProfile");
+var nickKey = /* @__PURE__ */ __name((name) => `nick:${encodeURIComponent(String(name).normalize("NFKC").trim().toLowerCase()).slice(0, 200)}`, "nickKey");
+async function claimNick(env, saveId, name) {
+  if (/^(an[ôo]nimo|anonymous)$/i.test(String(name).trim())) return true;
+  const kv2 = kvOrThrow(env);
+  const key = nickKey(name);
+  const dono = await kv2.get(key);
+  if (dono && dono !== saveId) return false;
+  const antiga = await kv2.get(`nickof:${saveId}`);
+  if (antiga && antiga !== key && await kv2.get(antiga) === saveId) await kv2.delete(antiga);
+  const ttl = { expirationTtl: 86400 * 400 };
+  await kv2.put(key, saveId, ttl);
+  await kv2.put(`nickof:${saveId}`, key, ttl);
+  return true;
+}
+__name(claimNick, "claimNick");
+
+// api/_rankings.js
+var RANKED_GAMES = Object.freeze(["dino", "dino-1", "dino-2", "ppt", "match3", "eco", "endless-rift", "rogue-dungeon", "soul-barrage", "zip", "patches"]);
+var LOWER_IS_BETTER = Object.freeze(["zip", "patches"]);
+var isLowerBetter = /* @__PURE__ */ __name((game) => LOWER_IS_BETTER.includes(game), "isLowerBetter");
+var PERIODS = Object.freeze(["weekly", "monthly"]);
+var DEFAULT_PERIOD = "weekly";
+var MAX_SCORE = 1e9;
+var INV_WIDTH = 10;
+var TOP_DEFAULT = 10;
+var TOP_MAX = 50;
+var RANK_SCAN_PAGES = 5;
+var TIER_IDS = Object.freeze(["madeira", "bronze", "prata", "ouro", "platina", "diamante"]);
+var TIER_CUTS = Object.freeze({
+  dino: [0, 300, 800, 1500, 2500, 4e3],
+  "dino-1": [0, 300, 800, 1500, 2500, 4e3],
+  "dino-2": [0, 300, 800, 1500, 2500, 4e3],
+  ppt: [0, 10, 20, 30, 40, 50],
+  match3: [0, 300, 800, 1500, 2500, 4e3],
+  eco: [0, 4, 6, 8, 10, 13],
+  // Endless Rift: camada mais funda do mês. Espelha os limiares de recompensa de `utils/endlessRift.ts`
+  // (25 / 100 / 250) mais 500 e 999 (o teto da descida).
+  "endless-rift": [0, 25, 100, 250, 500, 999],
+  "rogue-dungeon": [0, 6, 12, 18, 24, 30],
+  "soul-barrage": [0, 150, 400, 800, 1400, 2200]
+});
+var MAX_SCORE_BY_GAME = Object.freeze({
+  "endless-rift": 999,
+  "rogue-dungeon": 33,
+  dino: 1e5,
+  "dino-1": 1e5,
+  "dino-2": 1e5,
+  ppt: 200,
+  match3: 1e5,
+  eco: 100,
+  "soul-barrage": 5e4
+});
+var TIME_BOUNDS_MS = Object.freeze({ zip: [2e3, 18e5], patches: [2e3, 18e5] });
+function scoreIsPlausible(game, score) {
+  const tb = TIME_BOUNDS_MS[game];
+  if (tb) return score >= tb[0] && score <= tb[1];
+  const cap = MAX_SCORE_BY_GAME[game];
+  return cap === void 0 || score <= cap;
+}
+__name(scoreIsPlausible, "scoreIsPlausible");
+function isRankedGame(game) {
+  return typeof game === "string" && RANKED_GAMES.includes(game);
+}
+__name(isRankedGame, "isRankedGame");
+function isPeriod(p) {
+  return typeof p === "string" && PERIODS.includes(p);
+}
+__name(isPeriod, "isPeriod");
+function cleanScore(raw, game) {
+  const max2 = game && (TIME_BOUNDS_MS[game]?.[1] ?? MAX_SCORE_BY_GAME[game]) || MAX_SCORE;
+  const n = typeof raw === "number" ? raw : Number.NaN;
+  if (!Number.isFinite(n)) return null;
+  const s = Math.floor(n);
+  return s >= 0 && s <= max2 ? s : null;
+}
+__name(cleanScore, "cleanScore");
+var pad = /* @__PURE__ */ __name((n, w = 2) => String(n).padStart(w, "0"), "pad");
+function isoWeekKey(now = /* @__PURE__ */ new Date()) {
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const dow = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dow);
+  const yearStart = Date.UTC(d.getUTCFullYear(), 0, 1);
+  const week = Math.ceil(((d.getTime() - yearStart) / 864e5 + 1) / 7);
+  return `${d.getUTCFullYear()}-W${pad(week)}`;
+}
+__name(isoWeekKey, "isoWeekKey");
+function monthKey(now = /* @__PURE__ */ new Date()) {
+  return `${now.getUTCFullYear()}-${pad(now.getUTCMonth() + 1)}`;
+}
+__name(monthKey, "monthKey");
+function periodKey(period, now = /* @__PURE__ */ new Date()) {
+  return period === "monthly" ? monthKey(now) : isoWeekKey(now);
+}
+__name(periodKey, "periodKey");
+function tierFor(game, score) {
+  const cuts = TIER_CUTS[game];
+  if (!cuts) return TIER_IDS[0];
+  let idx = 0;
+  for (let i2 = 0; i2 < cuts.length; i2++) if (score >= cuts[i2]) idx = i2;
+  return TIER_IDS[idx];
+}
+__name(tierFor, "tierFor");
+var scoreKey = /* @__PURE__ */ __name((game, pk, score, saveId) => `rk:${game}:${pk}:${String(isLowerBetter(game) ? score : MAX_SCORE - score).padStart(INV_WIDTH, "0")}:${saveId}`, "scoreKey");
+var rkKeyFor = /* @__PURE__ */ __name((game, pk, score, saveId) => scoreKey(game, pk, score, saveId), "rkKeyFor");
+var meKey = /* @__PURE__ */ __name((game, pk, saveId) => `rkme:${game}:${pk}:${saveId}`, "meKey");
+var boardPrefix = /* @__PURE__ */ __name((game, pk) => `rk:${game}:${pk}:`, "boardPrefix");
+var pagoPor = /* @__PURE__ */ __name((game) => game === "endless-rift" ? 3 : 0, "pagoPor");
+function cleanName(name) {
+  const s = String(name ?? "").replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 40);
+  return s || "An\xF4nimo";
+}
+__name(cleanName, "cleanName");
+async function submitScore(env, { game, period, saveId, score, now = /* @__PURE__ */ new Date() }) {
+  const pk = periodKey(period, now);
+  const store = kvOrThrow(env);
+  const mk = meKey(game, pk, saveId);
+  const prevRaw = await store.get(mk);
+  const prev = prevRaw === null || prevRaw === void 0 ? null : Number(prevRaw);
+  const hasPrev = prev !== null && Number.isFinite(prev);
+  if (hasPrev && (isLowerBetter(game) ? score >= prev : score <= prev)) return { improved: false, best: prev };
+  const profile = await getProfile(env, saveId).catch(() => null);
+  const hidden = profile?.publicHidden === true;
+  const ttl = { expirationTtl: 86400 * 70 };
+  await store.put(scoreKey(game, pk, score, saveId), "", {
+    ...ttl,
+    metadata: { s: score, n: hidden ? "An\xF4nimo" : cleanName(profile?.name), ...hidden ? { h: true } : {}, sim: profile?.simulated === true, t: now.getTime() }
+  });
+  if (hasPrev) await store.delete(scoreKey(game, pk, prev, saveId));
+  await store.put(mk, String(score), ttl);
+  return { improved: true, best: score };
+}
+__name(submitScore, "submitScore");
+async function readBoard(env, { game, period, saveId, top = TOP_DEFAULT, now = /* @__PURE__ */ new Date() }) {
+  const pk = periodKey(period, now);
+  const store = kvOrThrow(env);
+  const n = Math.max(1, Math.min(TOP_MAX, Math.floor(top) || TOP_DEFAULT));
+  const prefix = boardPrefix(game, pk);
+  const page = await store.list({ prefix, limit: n });
+  const simRow = /* @__PURE__ */ __name((k) => k.metadata?.sim === true || /^sim_[0-9]{4}$/.test(k.name.slice(k.name.lastIndexOf(":") + 1)), "simRow");
+  const rows = page.keys.map((k, i2) => ({
+    rank: i2 + 1,
+    name: k.metadata?.h === true ? "An\xF4nimo" : cleanName(k.metadata?.n),
+    score: Number(k.metadata?.s) || 0,
+    me: !!saveId && k.name.endsWith(`:${saveId}`)
+  }));
+  if (pagoPor(game)) {
+    let p = 0;
+    page.keys.forEach((k, i2) => {
+      if (!simRow(k) && p < pagoPor(game)) rows[i2].prizePlace = ++p;
+    });
+  }
+  let me = null;
+  if (saveId) {
+    const raw = await store.get(meKey(game, pk, saveId));
+    const best = raw === null || raw === void 0 ? null : Number(raw);
+    if (best !== null && Number.isFinite(best)) {
+      me = { score: best, tier: isLowerBetter(game) ? null : tierFor(game, best), rank: await rankOf(store, prefix, scoreKey(game, pk, best, saveId)) };
+    }
+  }
+  return { game, period, periodKey: pk, top: rows, me };
+}
+__name(readBoard, "readBoard");
+async function rankOf(store, prefix, key) {
+  let seen = 0;
+  let cursor;
+  for (let p = 0; p < RANK_SCAN_PAGES; p++) {
+    const page = await store.list({ prefix, limit: 1e3, ...cursor ? { cursor } : {} });
+    const idx = page.keys.findIndex((k) => k.name === key);
+    if (idx >= 0) return seen + idx + 1;
+    seen += page.keys.length;
+    if (page.list_complete || !page.cursor) return null;
+    cursor = page.cursor;
+  }
+  return null;
+}
+__name(rankOf, "rankOf");
+function payablePlacements(entries, n) {
+  const out = [];
+  for (const e of entries ?? []) {
+    if (out.length >= n) break;
+    if (e?.simulated === true || e?.sim === true) continue;
+    if (typeof e?.saveId === "string" && /^sim_[0-9]{4}$/.test(e.saveId)) continue;
+    out.push(e);
+  }
+  return out;
+}
+__name(payablePlacements, "payablePlacements");
 
 // api/_redact.js
 var DATE_RECENT_YEARS = 5;
@@ -1592,11 +1841,13 @@ var BUILDING_GATES = {
   "mercado.background": { minBond: 3 },
   "mercado.ferreiro": { minBond: 2 },
   "jogos.salao": { minBond: 1 },
-  "jogos.refugio": { minBond: 1 },
+  "jogos.dungeon": { minBond: 3 },
   "jogos.mente": { minBond: 3 },
   "exploracao.masmorra": { minBond: 1 },
   "exploracao.caderno": { minBond: 2 },
   "exploracao.oficina": { minBond: 3 },
+  "exploracao.preparar": { minBond: 3 },
+  "exploracao.refugio": { minBond: 1 },
   "arena.duelo": { minBond: GATES.pvp.minBond },
   "arena.torneio": { minBond: GATES.torneio.minBond },
   "arena.guerra": { minBond: 5 },
@@ -1613,7 +1864,8 @@ var BUILDING_GATES = {
 var MOVED_BUILDINGS = {
   "arena.feira": "hall.feira",
   "hall.biblioteca": "laboratorio.biblioteca",
-  "hall.amigos": "laboratorio.amigos"
+  "hall.amigos": "laboratorio.amigos",
+  "jogos.refugio": "exploracao.refugio"
 };
 function currentBuildingId(x2) {
   return typeof x2 === "string" && Object.prototype.hasOwnProperty.call(MOVED_BUILDINGS, x2) ? (
@@ -1635,6 +1887,13 @@ function stepFor(level) {
 }
 __name(stepFor, "stepFor");
 var BOND_MAX_LEVEL = 1e3;
+function xpForLevel(n) {
+  const level = Math.min(BOND_MAX_LEVEL, Math.max(1, Math.floor(Number.isFinite(n) ? n : 1)));
+  let total = 0;
+  for (let k = 1; k < level; k++) total += stepFor(k);
+  return total;
+}
+__name(xpForLevel, "xpForLevel");
 function bondLevelFor(totalXP) {
   const xp = typeof totalXP === "number" && Number.isFinite(totalXP) ? Math.max(0, totalXP) : 0;
   let level = 1;
@@ -1929,45 +2188,50 @@ var FAMILIAS_VALIDAS = ["direct", "dot", "heal", "shield", "atkBuff", "defDebuff
 var GALHOS = [["poder", "power"], ["harmonia", "harmony"], ["benevolencia", "benevolence"]];
 var GALHO_PARA_ELEMENTO = {
   poder: {
-    fogo: 0.26,
+    fogo: 0.24,
     vileza: 0.1,
     eletricidade: 0.1,
-    marcial: 0.1,
+    marcial: 0.08,
     morte: 0.08,
     vigor: 0.08,
     terra: 0.06,
     arcano: 0.05,
     sombra: 0.05,
     gravidade: 0.04,
+    industrial: 0.04,
     ar: 0.03,
     som: 0.03,
     vida: 0.02
   },
   harmonia: {
-    arcano: 0.2,
-    ar: 0.15,
+    arcano: 0.18,
+    ar: 0.14,
     agua: 0.12,
     luz: 0.1,
     tempo: 0.08,
     som: 0.08,
     espaco: 0.08,
-    marcial: 0.05,
+    marcial: 0.04,
     eletricidade: 0.04,
     sombra: 0.04,
     vida: 0.02,
     terra: 0.02,
-    morte: 0.02
+    morte: 0.02,
+    industrial: 0.02,
+    fada: 0.02
   },
   benevolencia: {
-    vida: 0.28,
-    terra: 0.22,
-    vigor: 0.16,
+    vida: 0.24,
+    terra: 0.18,
+    vigor: 0.14,
     agua: 0.1,
-    luz: 0.1,
-    gravidade: 0.06,
+    planta: 0.1,
+    luz: 0.08,
+    fada: 0.06,
+    gravidade: 0.04,
     sombra: 0.03,
-    arcano: 0.03,
-    marcial: 0.02
+    arcano: 0.02,
+    marcial: 0.01
   }
 };
 var MESES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -2149,6 +2413,9 @@ var ELEMENTOS_FICHA = /* @__PURE__ */ new Set([
   "som",
   "gravidade",
   "espaco",
+  "fada",
+  "industrial",
+  "planta",
   "vapor",
   "lava",
   "incendio",
@@ -2284,7 +2551,62 @@ var ELEMENTOS_FICHA = /* @__PURE__ */ new Set([
   "lamina_sideral",
   "continuum",
   "silencio_cosmico",
-  "dobra"
+  "dobra",
+  // 25/10/2026 — fada, industrial e planta viraram base: +3 bases e +54 pares.
+  "fogo_fatuo",
+  "orvalho",
+  "circulo_feerico",
+  "brisa_cintilante",
+  "glitter",
+  "feerie",
+  "sonho_sombrio",
+  "arco_iris",
+  "encanto_traicoeiro",
+  "banshee",
+  "coracao",
+  "graca",
+  "lamina_purpurina",
+  "sono_encantado",
+  "cancao_feerica",
+  "leveza",
+  "poeira_estelar",
+  "fornalha",
+  "hidraulica",
+  "mineracao",
+  "pneumatica",
+  "usina",
+  "artificio",
+  "fuligem",
+  "holofote",
+  "poluicao",
+  "ferro_velho",
+  "biomecanica",
+  "exoesqueleto",
+  "armaria",
+  "relojoaria",
+  "britadeira",
+  "prensa",
+  "estacao_orbital",
+  "brinquedo",
+  "queimada",
+  "mangue",
+  "raiz_profunda",
+  "polen",
+  "fotossintese",
+  "druidismo",
+  "fungo",
+  "girassol",
+  "espinheiro",
+  "murcha",
+  "seiva",
+  "carvalho",
+  "bambu",
+  "estacoes",
+  "farfalhar",
+  "trepadeira",
+  "arvore_mundo",
+  "jardim_encantado",
+  "estufa"
 ]);
 var idElemento = /* @__PURE__ */ __name((id) => typeof id === "string" && ELEMENTOS_FICHA.has(id) ? id : null, "idElemento");
 function elementoDoBasico(skills) {
@@ -3110,9 +3432,49 @@ async function collectSprites(env, saveId) {
     const m = typeof rec?.image === "string" ? SPRITE_TOKEN.exec(rec.image) : null;
     if (m) blobs.push(`${SPRITE_BLOB_PREFIX}${m[1]}`);
   }
-  return { imgs, locks, blobs };
+  const emails = [];
+  for (const k of imgs) {
+    let rec = null;
+    try {
+      rec = JSON.parse(await store.get(k) || "null");
+    } catch {
+      rec = null;
+    }
+    if (typeof rec?.email === "string" && rec.email) emails.push({ key: k, email: rec.email });
+  }
+  return { imgs, locks, blobs, emails };
 }
 __name(collectSprites, "collectSprites");
+async function collectRankingKeys(env, saveId) {
+  const store = kvOrThrow(env);
+  const keys = [];
+  const ranking2 = [];
+  for (const k of (await listPrefix(env, "rkme:")).filter((x2) => x2.endsWith(`:${saveId}`))) {
+    const [, game, period] = k.split(":");
+    const best = Number(await store.get(k));
+    keys.push(k);
+    if (Number.isFinite(best)) {
+      ranking2.push({ game, period, best });
+      keys.push(rkKeyFor(game, period, best, saveId));
+    }
+  }
+  const agora = /* @__PURE__ */ new Date();
+  for (let i2 = 0; i2 < 3; i2++) {
+    const m = new Date(Date.UTC(agora.getUTCFullYear(), agora.getUTCMonth() - i2, 1)).toISOString().slice(0, 7);
+    const rl = `riftlayers:${m}:${saveId}`;
+    if (await store.get(rl) !== null) keys.push(rl);
+  }
+  for (const prefix of ["rift-pending:", "rift-paid:"]) {
+    for (const k of (await listPrefix(env, prefix)).filter((x2) => x2.endsWith(`:${saveId}`))) keys.push(k);
+  }
+  const nickKey2 = await store.get(`nickof:${saveId}`);
+  if (nickKey2) {
+    if (typeof nickKey2 === "string" && nickKey2.startsWith("nick:") && await store.get(nickKey2) === saveId) keys.push(nickKey2);
+    keys.push(`nickof:${saveId}`);
+  }
+  return { keys, ranking: ranking2 };
+}
+__name(collectRankingKeys, "collectRankingKeys");
 function maskOrderDetails(details) {
   if (!Array.isArray(details)) return [];
   return details.map((d) => ({
@@ -3225,6 +3587,7 @@ async function collect(env, saveId) {
   }
   const pidIndexed = await store.get(`pid:${pid}`) === saveId;
   const sprites = await collectSprites(env, saveId);
+  const rankingData = await collectRankingKeys(env, saveId);
   let coopGroupId = null;
   let coopExport = null;
   try {
@@ -3274,7 +3637,7 @@ async function collect(env, saveId) {
   } catch {
   }
   const steamLicenseKeys = steamLicenseKeysOf(entitlement);
-  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, pidIndexed, sprites, coopGroupId, coopExport, steamLicenseKeys };
+  return { pid, state, profile, gifts, entitlement, ranks, rankKeys, rankingData, pidIndexed, sprites, coopGroupId, coopExport, steamLicenseKeys };
 }
 __name(collect, "collect");
 async function pidDeAmigo(env, friendSaveId) {
@@ -3320,6 +3683,11 @@ async function handleExport(env, saveId) {
       [`gifts:${saveId}`]: c.gifts,
       [`${ENT_PREFIX}${saveId}`]: c.entitlement ? { ...c.entitlement, orderDetails: maskOrderDetails(c.entitlement.orderDetails) } : null,
       ranks: c.ranks,
+      // Ranking dos minijogos/Endless Rift (melhor score por jogo e período), lastro e prêmios do Rift, e o apelido reservado.
+      ranking: c.rankingData.ranking,
+      rankingKeys: c.rankingData.keys,
+      // E-mail gravado nos registros de sprite gerado por IA (só o GM o lê; sai da exclusão junto com o sprite).
+      spriteEmails: c.sprites.emails,
       // Só as CHAVES: o binário sai pela própria URL (`/api/sprite-image?k=`),
       // que o save já carrega em `soulmonStages`. Listar aqui é o que deixa a
       // exportação conferível contra o inventário da exclusão.
@@ -3339,6 +3707,7 @@ function plan(c, saveId) {
       c.pidIndexed ? `pid:${c.pid}` : null,
       c.gifts ? `gifts:${saveId}` : null,
       ...c.rankKeys,
+      ...c.rankingData.keys,
       ...c.sprites.imgs,
       ...c.sprites.locks,
       ...c.sprites.blobs,
@@ -3476,6 +3845,7 @@ async function handleDeleteConfirm(env, saveId, body) {
     }), { expirationTtl: RETENTION_TTL_SECONDS }));
   }
   for (const k of c.rankKeys) await tentar(k, () => store.delete(k));
+  for (const k of c.rankingData.keys) await tentar(k, () => store.delete(k));
   if (c.gifts) await tentar(`gifts:${saveId}`, () => store.delete(`gifts:${saveId}`));
   if (c.pidIndexed) await tentar(`pid:${c.pid}`, () => store.delete(`pid:${c.pid}`));
   if (c.profile) await tentar(`profile:${saveId}`, () => store.delete(`profile:${saveId}`));
@@ -4912,13 +5282,13 @@ var TOOLS = [
     }
   }
 ];
-function cleanName(input) {
+function cleanName2(input) {
   let t = (input ?? "").toString();
   t = t.replace(new RegExp("[\\u0000-\\u001F\\u007F\\u2028\\u2029]+", "g"), " ").replace(new RegExp("[\\u200B\\u200E\\u200F\\u202A-\\u202E\\u2060-\\u206F\\uFEFF]", "g"), "").replace(/[<>{}|\\]/g, " ").replace(/\x60/g, " ").replace(/[\[\]]/g, " ").replace(/\s+/g, " ").trim();
   if (!t) return "";
   return minimizeForAi(t, MAX_NAME).text.trim();
 }
-__name(cleanName, "cleanName");
+__name(cleanName2, "cleanName");
 function int(v) {
   if (typeof v === "string" && /^-?\d+$/.test(v.trim())) return Number(v);
   return typeof v === "number" && Number.isFinite(v) && Number.isInteger(v) ? v : null;
@@ -4955,7 +5325,7 @@ function validateToolCall(name, rawArgs) {
     }
   }
   if (!args || typeof args !== "object" || Array.isArray(args)) return { ok: false, reason: "bad-args" };
-  const title = cleanName(args.name);
+  const title = cleanName2(args.name);
   if (!title) return { ok: false, reason: "empty-name" };
   const category = cleanCategory(args.category) ?? "Discipline";
   if (name === "create_task") {
@@ -5679,8 +6049,8 @@ async function onRequestPost2({ request, env }) {
     }
     const rajada = perMinuteGate("chat", body.id);
     if (rajada) return Response.json({ error: rajada.reason, response: ispt ? AI_BUSY_MESSAGE.pt : AI_BUSY_MESSAGE.en }, { status: 429, headers: CORS3 });
-    const gate = await guardAiRequest(request, env, "chat", body.id, 1, null, preAuth);
-    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS3 });
+    const gate2 = await guardAiRequest(request, env, "chat", body.id, 1, null, preAuth);
+    if (!gate2.ok) return Response.json({ error: gate2.reason }, { status: gate2.status, headers: CORS3 });
     const min = minimizeForAi(message, 500);
     const safeMessage = min.text;
     const removed = redactionCount(min.redactions);
@@ -5725,11 +6095,11 @@ async function onRequestPost2({ request, env }) {
         temperature: clampTemperature(aiSettings?.temperature)
       });
     } catch (err2) {
-      await gate.release(`erro no provedor de IA: ${err2?.message}`);
+      await gate2.release(`erro no provedor de IA: ${err2?.message}`);
       throw err2;
     }
     if (!result.ok) {
-      await gate.release(`provedor de IA respondeu ${result.status}`);
+      await gate2.release(`provedor de IA respondeu ${result.status}`);
       if (result.status === 429) {
         return Response.json({ error: "ai-busy", response: ispt ? AI_BUSY_MESSAGE.pt : AI_BUSY_MESSAGE.en }, { status: 429, headers: CORS3 });
       }
@@ -5756,53 +6126,6 @@ async function onRequestPost2({ request, env }) {
   }
 }
 __name(onRequestPost2, "onRequestPost");
-
-// api/_profile.js
-function stagePower(stage) {
-  if (!stage) return 1;
-  const p = String(stage).split("-")[0];
-  return { rookie: 1, champion: 2, ultimate: 3, mega: 4, ultra: 5 }[p] ?? 1;
-}
-__name(stagePower, "stagePower");
-var PID_PREFIX = "pid:";
-async function legacyPidFor(saveId) {
-  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`soulmon-pub:${saveId}`));
-  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 24);
-}
-__name(legacyPidFor, "legacyPidFor");
-function newPid() {
-  const b = crypto.getRandomValues(new Uint8Array(12));
-  return Array.from(b).map((x2) => x2.toString(16).padStart(2, "0")).join("");
-}
-__name(newPid, "newPid");
-async function ensurePid(env, p) {
-  if (p.pid && p.pid !== await legacyPidFor(p.id)) return p.pid;
-  const antigo = p.pid;
-  p.pid = newPid();
-  await putProfile(env, p.id, p);
-  await indexPublicId(env, p.id, p.pid);
-  if (antigo) await kvOrThrow(env).delete(`${PID_PREFIX}${antigo}`);
-  return p.pid;
-}
-__name(ensurePid, "ensurePid");
-async function pidSoLeitura(p) {
-  if (!p?.pid || p.pid === await legacyPidFor(p.id)) return null;
-  return p.pid;
-}
-__name(pidSoLeitura, "pidSoLeitura");
-async function indexPublicId(env, saveId, pid) {
-  await kvOrThrow(env).put(`${PID_PREFIX}${pid}`, saveId, { expirationTtl: 86400 * 400 });
-}
-__name(indexPublicId, "indexPublicId");
-async function getProfile(env, id) {
-  const raw = await kvOrThrow(env).get(`profile:${id}`);
-  return raw ? JSON.parse(raw) : null;
-}
-__name(getProfile, "getProfile");
-async function putProfile(env, id, profile) {
-  await kvOrThrow(env).put(`profile:${id}`, JSON.stringify(profile), { expirationTtl: 86400 * 365 });
-}
-__name(putProfile, "putProfile");
 
 // api/metrics.js
 var CORS4 = {
@@ -6059,11 +6382,11 @@ function applyAggregate(agg, events) {
 __name(applyAggregate, "applyAggregate");
 function summarizeNorthStar(totals) {
   const t = totals && typeof totals === "object" ? totals : {};
-  const num = /* @__PURE__ */ __name((k) => typeof t[k] === "number" && Number.isFinite(t[k]) ? t[k] : 0, "num");
+  const num2 = /* @__PURE__ */ __name((k) => typeof t[k] === "number" && Number.isFinite(t[k]) ? t[k] : 0, "num");
   const read = /* @__PURE__ */ __name((prefix) => {
-    const active = num(prefix);
+    const active = num2(prefix);
     let onTarget = 0;
-    for (let n = NORTH_STAR_GOAL_DAYS; n <= 7; n++) onTarget += num(`${prefix}.goal_days.${n}`);
+    for (let n = NORTH_STAR_GOAL_DAYS; n <= 7; n++) onTarget += num2(`${prefix}.goal_days.${n}`);
     return { weekly_active: active, on_target: onTarget, rate: active > 0 ? onTarget / active : null };
   }, "read");
   const by_tier = {};
@@ -6121,8 +6444,8 @@ async function onRequestGet({ request, env }) {
   if (!env?.METRICS_ADMIN_KEY) {
     return Response.json({ error: "Not found" }, { status: 404, headers: CORS4 });
   }
-  const gate = takeToken("metrics-read", clientKey(request), RATE);
-  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS4);
+  const gate2 = takeToken("metrics-read", clientKey(request), RATE);
+  if (!gate2.ok) return tooManyRequests(gate2.retryAfter, CORS4);
   const given = request.headers.get(METRICS_KEY_HEADER);
   if (!secretEquals(given ?? "", env.METRICS_ADMIN_KEY)) {
     return Response.json({ error: "Unauthorized" }, { status: 401, headers: CORS4 });
@@ -6176,8 +6499,8 @@ async function onRequest2({ request, env }) {
   if (request.method !== "POST") {
     return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS4 });
   }
-  const gate = takeToken("metrics", clientKey(request), RATE);
-  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS4);
+  const gate2 = takeToken("metrics", clientKey(request), RATE);
+  if (!gate2.ok) return tooManyRequests(gate2.retryAfter, CORS4);
   const raw = await request.text().catch(() => null);
   if (raw === null || raw.length > MAX_BODY_BYTES) {
     return Response.json({ error: "Invalid body" }, { status: 400, headers: CORS4 });
@@ -6214,6 +6537,364 @@ async function onRequest2({ request, env }) {
   return Response.json({ ok: true, accepted }, { headers: CORS4 });
 }
 __name(onRequest2, "onRequest");
+
+// api/_simulados.data.js
+var SIM_EPOCH = "2026-10-25";
+var SIMULADOS = Object.freeze([
+  { id: "sim_0001", nick: "Lia_Moon", petName: "Bolinha", line: "poder", element: "vigor", artLine: "igni", lv0: 5, rate: 0.12, bond0: 8, skill: 0.34, frequency: "casual", prefs: { eco: 0.35, dino: 0.26, "match3": 0.5 }, daysPlaying: 170 },
+  { id: "sim_0002", nick: "kaito88", petName: "\xD4nix", line: "harmonia", element: "tempo", artLine: "industrial", lv0: 1, rate: 0.09, bond0: 7, skill: 0.11, frequency: "regular", prefs: { "soul-barrage": 0.3, ppt: 0.27, eco: 0.34 }, daysPlaying: 144 },
+  { id: "sim_0003", nick: "PedroH", petName: "Piu", line: "benevolencia", element: "luz", artLine: "thalindra", lv0: 7, rate: 0.12, bond0: 9, skill: 0.39, frequency: "casual", prefs: { "endless-rift": 0.46, eco: 0.52, "rogue-dungeon": 0.36 }, daysPlaying: 204 },
+  { id: "sim_0004", nick: "Nebulosa", petName: "Nuvem", line: "harmonia", element: "arcano", artLine: "industrial", lv0: 3, rate: 0.1, bond0: 5, skill: 0.15, frequency: "casual", prefs: { dino: 0.55, eco: 0.29, "rogue-dungeon": 0.17 }, daysPlaying: 147 },
+  { id: "sim_0005", nick: "mari.silva", petName: "Piu", line: "benevolencia", element: "vida", artLine: "nascente", lv0: 2, rate: 0.09, bond0: 5, skill: 0.2, frequency: "regular", prefs: { dino: 0.38, "soul-barrage": 0.29, ppt: 0.2 }, daysPlaying: 244 },
+  { id: "sim_0006", nick: "tiagoVoz", petName: "Raio", line: "harmonia", element: "espaco", artLine: "industrial", lv0: 28, rate: 0.19, bond0: 25, skill: 0.9, frequency: "assiduo", prefs: { "rogue-dungeon": 0.74, "soul-barrage": 0.65 }, daysPlaying: 111 },
+  { id: "sim_0007", nick: "Zeca", petName: "Bruma", line: "benevolencia", element: "vida", artLine: "vida", lv0: 13, rate: 0.16, bond0: 14, skill: 0.6, frequency: "assiduo", prefs: { eco: 0.65, dino: 0.38, "soul-barrage": 0.43 }, daysPlaying: 46 },
+  { id: "sim_0008", nick: "luna_k", petName: "Dango", line: "poder", element: "marcial", artLine: "meteoro", lv0: 13, rate: 0.16, bond0: 13, skill: 0.62, frequency: "regular", prefs: { "soul-barrage": 0.68, ppt: 0.67, dino: 0.56 }, daysPlaying: 190 },
+  { id: "sim_0009", nick: "RafaGamer", petName: "Rastro", line: "benevolencia", element: "terra", artLine: "nascente", lv0: 8, rate: 0.14, bond0: 9, skill: 0.44, frequency: "casual", prefs: { dino: 0.58, eco: 0.37, "endless-rift": 0.5 }, daysPlaying: 89 },
+  { id: "sim_0010", nick: "Bia", petName: "Kiko", line: "harmonia", element: "som", artLine: "alento", lv0: 3, rate: 0.09, bond0: 5, skill: 0.28, frequency: "regular", prefs: { ppt: 0.59, dino: 0.22 }, daysPlaying: 93 },
+  { id: "sim_0011", nick: "aurora7", petName: "L\xF3tus", line: "harmonia", element: "espaco", artLine: "alento", lv0: 26, rate: 0.21, bond0: 25, skill: 0.84, frequency: "assiduo", prefs: { dino: 0.8, "soul-barrage": 0.72 }, daysPlaying: 129 },
+  { id: "sim_0012", nick: "DuduX", petName: "Brasa", line: "poder", element: "marcial", artLine: "igni", lv0: 3, rate: 0.09, bond0: 6, skill: 0.29, frequency: "casual", prefs: { "soul-barrage": 0.59, "match3": 0.2 }, daysPlaying: 75 },
+  { id: "sim_0013", nick: "ClaraV", petName: "Rastro", line: "poder", element: "sombra", artLine: "meteoro", lv0: 2, rate: 0.06, bond0: 7, skill: 0.05, frequency: "casual", prefs: { "rogue-dungeon": 0.42, dino: 0.22 }, daysPlaying: 140 },
+  { id: "sim_0014", nick: "joaoDev", petName: "Kiko", line: "poder", element: "morte", artLine: "industrial", lv0: 8, rate: 0.13, bond0: 10, skill: 0.42, frequency: "casual", prefs: { "match3": 0.67 }, daysPlaying: 211 },
+  { id: "sim_0015", nick: "feliperibas", petName: "Tufo", line: "benevolencia", element: "ar", artLine: "nascente", lv0: 2, rate: 0.07, bond0: 6, skill: 0.16, frequency: "casual", prefs: { dino: 0.32 }, daysPlaying: 299 },
+  { id: "sim_0016", nick: "Yuki", petName: "Neon", line: "harmonia", element: "eletricidade", artLine: "astrase", lv0: 5, rate: 0.13, bond0: 10, skill: 0.38, frequency: "regular", prefs: { eco: 0.51, ppt: 0.53 }, daysPlaying: 150 },
+  { id: "sim_0017", nick: "Gabi_R", petName: "Bruma", line: "poder", element: "fogo", artLine: "kaelen", lv0: 16, rate: 0.18, bond0: 16, skill: 0.68, frequency: "regular", prefs: { ppt: 0.66, "match3": 0.52, "rogue-dungeon": 0.66 }, daysPlaying: 48 },
+  { id: "sim_0018", nick: "nando", petName: "Gotinha", line: "benevolencia", element: "ar", artLine: "thalindra", lv0: 8, rate: 0.12, bond0: 12, skill: 0.46, frequency: "regular", prefs: { eco: 0.73, "soul-barrage": 0.44 }, daysPlaying: 297 },
+  { id: "sim_0019", nick: "sol_e_mar", petName: "Dango", line: "benevolencia", element: "terra", artLine: "nascente", lv0: 28, rate: 0.22, bond0: 27, skill: 0.87, frequency: "assiduo", prefs: { "endless-rift": 0.98, "soul-barrage": 0.72, eco: 0.76 }, daysPlaying: 128 },
+  { id: "sim_0020", nick: "Hugo", petName: "Chispa", line: "poder", element: "marcial", artLine: "igni", lv0: 2, rate: 0.08, bond0: 5, skill: 0.21, frequency: "regular", prefs: { dino: 0.58, eco: 0.34 }, daysPlaying: 104 },
+  { id: "sim_0021", nick: "tamires", petName: "Brasa", line: "poder", element: "vigor", artLine: "industrial", lv0: 2, rate: 0.05, bond0: 5, skill: 0.06, frequency: "regular", prefs: { dino: 0.36, eco: 0.2, "endless-rift": 0.29 }, daysPlaying: 275 },
+  { id: "sim_0022", nick: "Otavio_M", petName: "Musgo", line: "harmonia", element: "espaco", artLine: "astrase", lv0: 4, rate: 0.11, bond0: 6, skill: 0.22, frequency: "casual", prefs: { "soul-barrage": 0.47, "match3": 0.4 }, daysPlaying: 138 },
+  { id: "sim_0023", nick: "lucasbm", petName: "Fagulha", line: "benevolencia", element: "ar", artLine: "thalindra", lv0: 2, rate: 0.1, bond0: 5, skill: 0.18, frequency: "casual", prefs: { eco: 0.49, "rogue-dungeon": 0.38 }, daysPlaying: 122 },
+  { id: "sim_0024", nick: "Cacau", petName: "Rastro", line: "poder", element: "vileza", artLine: "igni", lv0: 2, rate: 0.11, bond0: 7, skill: 0.24, frequency: "casual", prefs: { "match3": 0.56, ppt: 0.34, "endless-rift": 0.14 }, daysPlaying: 142 },
+  { id: "sim_0025", nick: "vini.alves", petName: "L\xF3tus", line: "poder", element: "fogo", artLine: "meteoro", lv0: 5, rate: 0.11, bond0: 9, skill: 0.36, frequency: "regular", prefs: { eco: 0.68, dino: 0.3 }, daysPlaying: 296 },
+  { id: "sim_0026", nick: "Nina", petName: "Pipoca", line: "benevolencia", element: "ar", artLine: "thalindra", lv0: 5, rate: 0.12, bond0: 8, skill: 0.3, frequency: "casual", prefs: { "soul-barrage": 0.32, "rogue-dungeon": 0.25, ppt: 0.18 }, daysPlaying: 188 },
+  { id: "sim_0027", nick: "Dani_Z", petName: "Jade", line: "benevolencia", element: "vida", artLine: "thalindra", lv0: 2, rate: 0.12, bond0: 5, skill: 0.27, frequency: "casual", prefs: { ppt: 0.41, "soul-barrage": 0.27, "match3": 0.33 }, daysPlaying: 73 },
+  { id: "sim_0028", nick: "Beto", petName: "Chispa", line: "benevolencia", element: "agua", artLine: "vida", lv0: 3, rate: 0.1, bond0: 7, skill: 0.32, frequency: "casual", prefs: { dino: 0.47, "endless-rift": 0.5 }, daysPlaying: 48 },
+  { id: "sim_0029", nick: "Isa", petName: "Fagulha", line: "benevolencia", element: "luz", artLine: "thalindra", lv0: 11, rate: 0.14, bond0: 12, skill: 0.51, frequency: "casual", prefs: { "match3": 0.69, "soul-barrage": 0.48, dino: 0.34 }, daysPlaying: 237 },
+  { id: "sim_0030", nick: "thales", petName: "Vulto", line: "poder", element: "marcial", artLine: "industrial", lv0: 15, rate: 0.17, bond0: 17, skill: 0.66, frequency: "regular", prefs: { eco: 0.78, "soul-barrage": 0.59, ppt: 0.67 }, daysPlaying: 229 },
+  { id: "sim_0031", nick: "Mel", petName: "Neon", line: "poder", element: "sombra", artLine: "industrial", lv0: 4, rate: 0.11, bond0: 7, skill: 0.35, frequency: "casual", prefs: { eco: 0.68 }, daysPlaying: 227 },
+  { id: "sim_0032", nick: "Caio_P", petName: "Quark", line: "poder", element: "sombra", artLine: "igni", lv0: 2, rate: 0.09, bond0: 8, skill: 0.17, frequency: "casual", prefs: { dino: 0.28 }, daysPlaying: 230 },
+  { id: "sim_0033", nick: "Pri", petName: "Jade", line: "poder", element: "vigor", artLine: "meteoro", lv0: 5, rate: 0.1, bond0: 9, skill: 0.4, frequency: "regular", prefs: { ppt: 0.49 }, daysPlaying: 202 },
+  { id: "sim_0034", nick: "Rodrigo_S", petName: "Tico", line: "poder", element: "vileza", artLine: "industrial", lv0: 1, rate: 0.07, bond0: 5, skill: 0.12, frequency: "regular", prefs: { "match3": 0.47, eco: 0.38, "soul-barrage": 0.1 }, daysPlaying: 221 },
+  { id: "sim_0035", nick: "Lara", petName: "Tico", line: "harmonia", element: "som", artLine: "astrase", lv0: 8, rate: 0.14, bond0: 10, skill: 0.48, frequency: "regular", prefs: { "match3": 0.46 }, daysPlaying: 184 },
+  { id: "sim_0036", nick: "Gui", petName: "Chispa", line: "poder", element: "vileza", artLine: "industrial", lv0: 10, rate: 0.13, bond0: 14, skill: 0.52, frequency: "regular", prefs: { dino: 0.47, ppt: 0.56, eco: 0.55 }, daysPlaying: 64 },
+  { id: "sim_0037", nick: "Manu", petName: "Sopro", line: "poder", element: "sombra", artLine: "kaelen", lv0: 2, rate: 0.07, bond0: 7, skill: 0.14, frequency: "regular", prefs: { "soul-barrage": 0.35 }, daysPlaying: 75 },
+  { id: "sim_0038", nick: "Davi_L", petName: "Cuco", line: "poder", element: "marcial", artLine: "meteoro", lv0: 19, rate: 0.19, bond0: 18, skill: 0.72, frequency: "assiduo", prefs: { "endless-rift": 0.78 }, daysPlaying: 41 },
+  { id: "sim_0039", nick: "Alice_N", petName: "Zumbi", line: "harmonia", element: "espaco", artLine: "astrase", lv0: 6, rate: 0.13, bond0: 9, skill: 0.41, frequency: "casual", prefs: { ppt: 0.7 }, daysPlaying: 279 },
+  { id: "sim_0040", nick: "ZePedro", petName: "Breu", line: "poder", element: "morte", artLine: "meteoro", lv0: 9, rate: 0.15, bond0: 13, skill: 0.5, frequency: "casual", prefs: { eco: 0.75, ppt: 0.62, "rogue-dungeon": 0.36 }, daysPlaying: 188 },
+  { id: "sim_0041", nick: "Carol", petName: "P\xE9rola", line: "harmonia", element: "arcano", artLine: "alento", lv0: 1, rate: 0.1, bond0: 6, skill: 0.1, frequency: "regular", prefs: { dino: 0.24, "match3": 0.1 }, daysPlaying: 87 },
+  { id: "sim_0042", nick: "matheus_r", petName: "Breu", line: "poder", element: "sombra", artLine: "igni", lv0: 5, rate: 0.13, bond0: 10, skill: 0.33, frequency: "casual", prefs: { "rogue-dungeon": 0.68 }, daysPlaying: 262 },
+  { id: "sim_0043", nick: "Bruna", petName: "Rastro", line: "poder", element: "morte", artLine: "industrial", lv0: 9, rate: 0.14, bond0: 13, skill: 0.47, frequency: "casual", prefs: { "endless-rift": 0.73, "soul-barrage": 0.37 }, daysPlaying: 233 },
+  { id: "sim_0044", nick: "leo_tc", petName: "Sopro", line: "poder", element: "marcial", artLine: "industrial", lv0: 2, rate: 0.1, bond0: 8, skill: 0.23, frequency: "casual", prefs: { "match3": 0.43 }, daysPlaying: 261 },
+  { id: "sim_0045", nick: "Helo", petName: "Jade", line: "harmonia", element: "gravidade", artLine: "industrial", lv0: 17, rate: 0.16, bond0: 20, skill: 0.7, frequency: "assiduo", prefs: { "endless-rift": 0.94, dino: 0.75, eco: 0.48 }, daysPlaying: 233 },
+  { id: "sim_0046", nick: "Samuel", petName: "Cacto", line: "poder", element: "vigor", artLine: "kaelen", lv0: 1, rate: 0.09, bond0: 5, skill: 0.08, frequency: "casual", prefs: { ppt: 0.36 }, daysPlaying: 261 },
+  { id: "sim_0047", nick: "Jujuba", petName: "P\xE9rola", line: "poder", element: "sombra", artLine: "kaelen", lv0: 1, rate: 0.08, bond0: 7, skill: 0.09, frequency: "casual", prefs: { eco: 0.25 }, daysPlaying: 109 },
+  { id: "sim_0048", nick: "andre.f", petName: "Tico", line: "harmonia", element: "gravidade", artLine: "astrase", lv0: 3, rate: 0.11, bond0: 5, skill: 0.26, frequency: "regular", prefs: { "match3": 0.35 }, daysPlaying: 159 },
+  { id: "sim_0049", nick: "Sofia_M", petName: "Brasa", line: "harmonia", element: "som", artLine: "industrial", lv0: 8, rate: 0.14, bond0: 12, skill: 0.45, frequency: "casual", prefs: { ppt: 0.53, eco: 0.51, dino: 0.4 }, daysPlaying: 111 },
+  { id: "sim_0050", nick: "Kenzo", petName: "Chispa", line: "harmonia", element: "tempo", artLine: "industrial", lv0: 16, rate: 0.18, bond0: 17, skill: 0.64, frequency: "regular", prefs: { dino: 0.59, "soul-barrage": 0.67, "match3": 0.55 }, daysPlaying: 86 }
+]);
+
+// api/_simulados.js
+var DAY_MS = 864e5;
+var CHUNK = 3;
+var OPS_BUDGET = 34;
+function custoEstimado(p, day2) {
+  let n = 12;
+  for (const { game } of scoresDoDia(p, day2)) n += 5 * (game === "endless-rift" ? 1 : 2);
+  return n;
+}
+__name(custoEstimado, "custoEstimado");
+var MAX_FALHAS = 3;
+var LEASE_MS = 3e4;
+var LOCK_TTL = { expirationTtl: 86400 * 3 };
+var PROFILE_REFRESH_MS = 30 * DAY_MS;
+var SIM_ID_RE = /^sim_\d{4}$/;
+var isSimuladoId = /* @__PURE__ */ __name((id) => typeof id === "string" && SIM_ID_RE.test(id), "isSimuladoId");
+var lockKeyDia = /* @__PURE__ */ __name((day2) => `sim:dia:${day2}`, "lockKeyDia");
+var spriteKeyOf = /* @__PURE__ */ __name((id) => `sim:sprite:${id}`, "spriteKeyOf");
+function hash32(str) {
+  let h = 1779033703 ^ str.length;
+  for (let i2 = 0; i2 < str.length; i2++) {
+    h = Math.imul(h ^ str.charCodeAt(i2), 3432918353);
+    h = h << 13 | h >>> 19;
+  }
+  h = Math.imul(h ^ h >>> 16, 2246822507);
+  h = Math.imul(h ^ h >>> 13, 3266489909);
+  return (h ^ h >>> 16) >>> 0;
+}
+__name(hash32, "hash32");
+function prngOf(key) {
+  let a = hash32(key);
+  return () => {
+    a = a + 1831565813 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+__name(prngOf, "prngOf");
+var dayKeyOf = /* @__PURE__ */ __name((now = /* @__PURE__ */ new Date()) => new Date(now).toISOString().slice(0, 10), "dayKeyOf");
+var dayStart = /* @__PURE__ */ __name((day2) => Date.parse(`${day2}T00:00:00Z`), "dayStart");
+var dayIndexOf = /* @__PURE__ */ __name((day2) => Math.max(0, Math.floor((dayStart(day2) - dayStart(SIM_EPOCH)) / DAY_MS)), "dayIndexOf");
+var STAGE_FIRST_LEVEL = { rookie: 1, champion: 7, ultimate: 14, mega: 22, ultra: 31 };
+var PATH_SUFFIX = { poder: "power", harmonia: "harmony", benevolencia: "benevolence" };
+var MAX_LEVEL2 = 40;
+var FREQ_P = { casual: 0.3, regular: 0.6, assiduo: 0.9 };
+function stageForLevel(level) {
+  if (level <= 6) return "rookie";
+  if (level <= 13) return "champion";
+  if (level <= 21) return "ultimate";
+  if (level <= 30) return "mega";
+  return "ultra";
+}
+__name(stageForLevel, "stageForLevel");
+function estadoDoDia(p, day2) {
+  const d = dayIndexOf(day2);
+  const level = Math.min(MAX_LEVEL2, p.lv0 + Math.floor(p.rate * d));
+  const stage = stageForLevel(level);
+  const bond = Math.max(5, p.bond0 + Math.floor(p.rate * d * 0.8));
+  const evolutionStage = stage === "rookie" || stage === "ultra" ? stage : `${stage}-${PATH_SUFFIX[p.line]}`;
+  return { level, stage, bond, evolutionStage };
+}
+__name(estadoDoDia, "estadoDoDia");
+function saveDoSimulado(p, day2) {
+  const e = estadoDoDia(p, day2);
+  const perfectDays = Math.max(0, e.level - STAGE_FIRST_LEVEL[e.stage]);
+  const peso = /* @__PURE__ */ __name((alvo) => p.line === alvo ? 40 + e.level * 6 : 10 + e.level * 2, "peso");
+  return {
+    evolutionStage: e.evolutionStage,
+    perfectDays,
+    totalXP: xpForLevel(e.bond),
+    powerPoints: peso("poder"),
+    harmonyPoints: peso("harmonia"),
+    benevolencePoints: peso("benevolencia"),
+    demoCharacterId: artLineOrNull(p.artLine) ?? void 0
+  };
+}
+__name(saveDoSimulado, "saveDoSimulado");
+function jogaHoje(p, day2) {
+  return prngOf(`${p.id}|${day2}|joga`)() < FREQ_P[p.frequency];
+}
+__name(jogaHoje, "jogaHoje");
+function scoresDoDia(p, day2) {
+  if (!jogaHoje(p, day2)) return [];
+  const out = [];
+  for (const [game, compRaw] of Object.entries(p.prefs)) {
+    const comp = compRaw ?? 0;
+    if (!RANKED_GAMES.includes(game)) continue;
+    const rng = prngOf(`${p.id}|${day2}|${game}`);
+    if (rng() > 0.35 + comp * 0.6) continue;
+    const cuts = TIER_CUTS[game];
+    const topo = cuts[cuts.length - 1] * (game === "endless-rift" ? 0.45 : 1);
+    const forca = Math.min(1, p.skill * 0.6 + comp * 0.4);
+    let score = Math.round(topo * (0.04 + 0.96 * Math.pow(forca, 1.3) * (0.75 + 0.35 * rng())));
+    const teto = MAX_SCORE_BY_GAME[game];
+    if (teto !== void 0) score = Math.min(score, teto);
+    if (score >= 1) out.push({ game, score });
+  }
+  return out;
+}
+__name(scoresDoDia, "scoresDoDia");
+var pidDeterministico = /* @__PURE__ */ __name((id) => {
+  const h = /* @__PURE__ */ __name((s) => hash32(s).toString(16).padStart(8, "0"), "h");
+  return `${h(`sim-pid-a|${id}`)}${h(`sim-pid-b|${id}`)}${h(`sim-pid-c|${id}`)}`;
+}, "pidDeterministico");
+async function reservarApelido(env, p) {
+  const candidatos = [p.nick, ...[2, 3, 4, 5, 6, 7, 8, 9].map((n) => `${p.nick}${n}`), `${p.nick}_${p.id.slice(-4)}`];
+  for (const nome of candidatos) {
+    if (await claimNick(env, p.id, nome)) return nome;
+  }
+  return null;
+}
+__name(reservarApelido, "reservarApelido");
+async function upsertSimulado(env, p, day2, now = /* @__PURE__ */ new Date()) {
+  const store = kvOrThrow(env);
+  const prev = await getProfile(env, p.id).catch(() => null);
+  const spriteRaw = await store.get(spriteKeyOf(p.id)).catch(() => null);
+  const spriteUrl = spriteUrlOrNull(spriteRaw);
+  const e = estadoDoDia(p, day2);
+  const sig = `${e.level}|${e.bond}|${spriteUrl ?? ""}`;
+  if (prev?.simulated === true && prev.simSig === sig && now.getTime() - Number(prev.simAt || 0) < PROFILE_REFRESH_MS) {
+    return { wrote: false, name: prev.name };
+  }
+  const name = prev?.simulated === true && prev.name ? prev.name : await reservarApelido(env, p) ?? p.nick;
+  const pid = prev?.pid || pidDeterministico(p.id);
+  const criadoEm = dayStart(SIM_EPOCH) - p.daysPlaying * DAY_MS;
+  const lifetimeBase = Math.round(p.skill * p.skill * 1300 + e.level * 6);
+  const peso = /* @__PURE__ */ __name((alvo) => p.line === alvo ? 40 + e.level * 6 : 10 + e.level * 2, "peso");
+  const unlocked = ["rookie", "champion", "ultimate", "mega", "ultra"].filter((s) => STAGE_FIRST_LEVEL[s] <= e.level);
+  const perfil = {
+    ...prev || {},
+    id: p.id,
+    pid,
+    name,
+    petName: p.petName,
+    stage: e.evolutionStage,
+    avatarId: null,
+    frameId: null,
+    artLine: artLineOrNull(p.artLine),
+    element: p.element,
+    ...spriteUrl ? { spriteUrl } : {},
+    unlockedStages: unlocked,
+    pvpEnabled: true,
+    publicHidden: false,
+    attrs: { power: peso("poder"), harmony: peso("harmonia"), benevolence: peso("benevolencia") },
+    tasksDone: Math.round(e.level * 9 + p.daysPlaying * 0.4),
+    friends: prev?.friends || [],
+    createdAt: prev?.createdAt || criadoEm,
+    updatedAt: now.getTime(),
+    // O duelo só soma (`settleMatch`): nunca recuar o que o Torneio já creditou.
+    lifetimePoints: Math.max(Number(prev?.lifetimePoints) || 0, lifetimeBase),
+    simulated: true,
+    // SÓ servidor — `stripSimulated` garante que nunca sai
+    simSig: sig,
+    simAt: now.getTime()
+  };
+  await store.put(p.id, JSON.stringify(saveDoSimulado(p, day2)), { expirationTtl: 86400 * 400, metadata: { f: criadoEm } });
+  await putProfile(env, p.id, perfil);
+  await indexPublicId(env, p.id, pid);
+  return { wrote: true, name };
+}
+__name(upsertSimulado, "upsertSimulado");
+async function garantirRankDaSeason(env, p, now) {
+  const store = kvOrThrow(env);
+  const season = new Date(now).toISOString().slice(0, 7);
+  const key = `rank:${season}:${p.id}`;
+  if (await store.get(key)) return;
+  const rng = prngOf(`${p.id}|${season}|rank`);
+  const points = Math.round(p.skill * 380 + rng() * 60);
+  const jogos = 3 + Math.floor(p.skill * 14 + rng() * 6);
+  const wins = Math.round(jogos * (0.3 + p.skill * 0.5));
+  await store.put(key, JSON.stringify({ points, wins, losses: Math.max(0, jogos - wins), day: SIM_EPOCH, matchesToday: 0 }), { expirationTtl: 86400 * 120 });
+}
+__name(garantirRankDaSeason, "garantirRankDaSeason");
+async function escreverScores(env, p, day2, now) {
+  const quando = new Date(dayStart(day2) + 12 * 36e5);
+  void now;
+  let n = 0;
+  for (const { game, score } of scoresDoDia(p, day2)) {
+    const periodos = game === "endless-rift" ? ["monthly"] : ["weekly", "monthly"];
+    for (const period of periodos) {
+      await submitScore(env, { game, period, saveId: p.id, score, now: quando });
+      n++;
+    }
+  }
+  return n;
+}
+__name(escreverScores, "escreverScores");
+async function processarSimulado(env, p, day2, now) {
+  await upsertSimulado(env, p, day2, now);
+  await garantirRankDaSeason(env, p, now);
+  await escreverScores(env, p, day2, now);
+}
+__name(processarSimulado, "processarSimulado");
+var randomToken = /* @__PURE__ */ __name(() => {
+  const b = new Uint8Array(12);
+  crypto.getRandomValues(b);
+  return [...b].map((x2) => x2.toString(16).padStart(2, "0")).join("");
+}, "randomToken");
+async function agendarSimuladosDia(context, now) {
+  const p = ensureSimuladosDia(context?.env, now);
+  if (typeof context?.waitUntil === "function") {
+    context.waitUntil(p);
+    return;
+  }
+  await p;
+}
+__name(agendarSimuladosDia, "agendarSimuladosDia");
+var concluidos = /* @__PURE__ */ new WeakMap();
+async function ensureSimuladosDia(env, now = /* @__PURE__ */ new Date()) {
+  try {
+    if (!flagOn(env?.SIMULADOS_ON) || !kv(env)) return { status: "off" };
+    const store = kvOrThrow(env);
+    const day2 = dayKeyOf(now);
+    let set = concluidos.get(store);
+    if (!set) {
+      set = /* @__PURE__ */ new Set();
+      concluidos.set(store, set);
+    }
+    if (set.has(day2)) return { status: "already", day: day2 };
+    const lerLock = /* @__PURE__ */ __name(async () => {
+      try {
+        return JSON.parse(await store.get(lockKeyDia(day2)) || "null");
+      } catch {
+        return null;
+      }
+    }, "lerLock");
+    const lock = await lerLock();
+    if (lock?.state === "done") {
+      set.add(day2);
+      return { status: "already", day: day2 };
+    }
+    if (lock?.owner && Number(lock.leaseUntil) > now.getTime()) return { status: "progress", day: day2, next: Number(lock.next) || 0 };
+    const tok = randomToken();
+    const base = lock || { state: "running", next: 0, fails: 0 };
+    await store.put(lockKeyDia(day2), JSON.stringify({ ...base, state: "running", owner: tok, leaseUntil: now.getTime() + LEASE_MS, at: now.getTime() }), LOCK_TTL);
+    const relido = await lerLock();
+    if (relido?.owner !== tok) return { status: "progress", day: day2, next: Number(relido?.next) || 0 };
+    let next = Math.max(0, Math.floor(Number(relido.next) || 0));
+    let fails = Math.max(0, Math.floor(Number(relido.fails) || 0));
+    let ops = 0;
+    let feitos = 0;
+    while (next < SIMULADOS.length && feitos < CHUNK) {
+      const p = SIMULADOS[next];
+      const custo = custoEstimado(p, day2);
+      if (feitos > 0 && ops + custo > OPS_BUDGET) break;
+      try {
+        await processarSimulado(env, p, day2, now);
+      } catch {
+        fails += 1;
+        if (fails >= MAX_FALHAS) {
+          next += 1;
+          fails = 0;
+        }
+        break;
+      }
+      ops += custo;
+      feitos += 1;
+      next += 1;
+      fails = 0;
+    }
+    const acabou = next >= SIMULADOS.length;
+    const atual = await lerLock();
+    if (atual?.owner === tok || !atual) {
+      await store.put(lockKeyDia(day2), JSON.stringify({ state: acabou ? "done" : "running", next, fails, owner: null, leaseUntil: 0, at: now.getTime() }), LOCK_TTL);
+    }
+    if (acabou) {
+      set.add(day2);
+      return { status: "done", day: day2, next };
+    }
+    return { status: "progress", day: day2, next };
+  } catch {
+    return { status: "skipped" };
+  }
+}
+__name(ensureSimuladosDia, "ensureSimuladosDia");
+var CAMPOS_INTERNOS = /* @__PURE__ */ new Set(["simulated", "sim", "simSig", "simAt"]);
+function stripSimulated(value, depth = 0) {
+  if (depth > 8 || value === null || typeof value !== "object") return value;
+  if (Array.isArray(value)) {
+    let mudou2 = false;
+    const out2 = value.map((v) => {
+      const n = stripSimulated(v, depth + 1);
+      if (n !== v) mudou2 = true;
+      return n;
+    });
+    return mudou2 ? out2 : value;
+  }
+  let mudou = false;
+  const out = {};
+  for (const [k, v] of Object.entries(value)) {
+    if (CAMPOS_INTERNOS.has(k)) {
+      mudou = true;
+      continue;
+    }
+    const n = stripSimulated(v, depth + 1);
+    if (n !== v) mudou = true;
+    out[k] = n;
+  }
+  return mudou ? out : value;
+}
+__name(stripSimulated, "stripSimulated");
 
 // api/_duelLoad.js
 var VALID_ID2 = /^[a-zA-Z0-9_-]{8,64}$/;
@@ -6606,6 +7287,7 @@ function normalizarMembro(r) {
     v: 1,
     water: diasLista(r?.water),
     prot: diasLista(r?.prot),
+    sorteio: r?.sorteio && DIA_RE2.test(r.sorteio.day) && (r.sorteio.kind === "water" || r.sorteio.kind === "protect") ? { day: r.sorteio.day, kind: r.sorteio.kind } : null,
     last: r?.last && typeof r.last.week === "string" && r.last.fruit && typeof r.last.receipt === "string" ? { week: r.last.week, fruit: migrarFruto(r.last.fruit), receipt: r.last.receipt } : null,
     harvest: (Array.isArray(r?.harvest) ? r.harvest.filter((w) => typeof w === "string") : []).slice(-12)
   };
@@ -6664,17 +7346,34 @@ async function regar(env, g, save, hoje) {
   if (!s.planta) return { ok: false, reason: "no-plant" };
   if (s.cresc.mature) return { ok: false, reason: "grown" };
   const m = s.membro[save];
+  if (m.sorteio?.day !== hoje) m.sorteio = { day: hoje, kind: "water" };
+  else if (m.sorteio.kind !== "water") return { ok: false, reason: "no-draw" };
   if (m.water.includes(hoje)) return { ok: false, reason: "already-watered" };
   m.water = [...m.water, hoje].slice(-PLANTIO_HIST_MAX);
   await gravarMembro(env, g.id, save, m);
   return { ok: true };
 }
 __name(regar, "regar");
+async function sortear(env, g, save, hoje, moeda = () => crypto.getRandomValues(new Uint8Array(1))[0] & 1) {
+  const s = await estado(env, g, hoje);
+  if (!s.planta) return { ok: false, reason: "no-plant" };
+  if (s.cresc.mature) return { ok: false, reason: "grown" };
+  const m = s.membro[save];
+  if (m.sorteio?.day === hoje) return { ok: true, kind: m.sorteio.kind };
+  const kind = s.cresc.todayProtected || moeda() === 0 ? "water" : "protect";
+  m.sorteio = { day: hoje, kind };
+  await gravarMembro(env, g.id, save, m);
+  return { ok: true, kind };
+}
+__name(sortear, "sortear");
 async function proteger(env, g, save, hoje, selo = Math.random().toString(36).slice(2)) {
   const s = await estado(env, g, hoje);
   if (!s.planta) return { ok: false, reason: "no-plant" };
   if (s.cresc.mature) return { ok: false, reason: "grown" };
+  const sorteadoHoje = s.membro[save].sorteio?.day === hoje;
+  if (sorteadoHoje && s.membro[save].sorteio.kind !== "protect") return { ok: false, reason: "no-draw" };
   if (s.cresc.todayProtected || await kvOrThrow(env).get(protKey(g.id, hoje))) return { ok: false, reason: "already-protected" };
+  if (!sorteadoHoje) s.membro[save].sorteio = { day: hoje, kind: "protect" };
   await kvOrThrow(env).put(protKey(g.id, hoje), JSON.stringify({ selo }), { expirationTtl: 86400 * 3 });
   const lido = parse4(await kvOrThrow(env).get(protKey(g.id, hoje)));
   if (lido?.selo !== selo) return { ok: false, reason: "already-protected" };
@@ -6702,6 +7401,12 @@ async function colher(env, g, save, hoje) {
   return { ok: true, fruit, week: semana, receipt };
 }
 __name(colher, "colher");
+function tarefaDe(m, hoje, c) {
+  if (c.mature || m.sorteio?.day !== hoje) return null;
+  if (m.sorteio.kind === "water") return m.water.includes(hoje) ? null : "water";
+  return m.prot.includes(hoje) || c.todayProtected ? null : "protect";
+}
+__name(tarefaDe, "tarefaDe");
 async function vistaDoPlantio(env, g, eu, hoje) {
   const s = await estado(env, g, hoje);
   const base = { season: s.est.estacao, seasonKey: s.est.key, species: s.est.especie, planted: !!s.planta };
@@ -6718,7 +7423,10 @@ async function vistaDoPlantio(env, g, eu, hoje) {
     level: s.planta.nivel,
     tier: s.planta.tier,
     today: { waterOk: c.todayWatered, protectedToday: c.todayProtected },
-    mine: { wateredToday: mine.water.includes(hoje), canHarvest: c.mature && !mine.harvest.includes(semanaDoDia(hoje)) }
+    progressDays: c.cared,
+    totalDays: PLANTIO_DIAS,
+    underAttack: !c.mature && !c.todayProtected,
+    mine: { wateredToday: mine.water.includes(hoje), canHarvest: c.mature && !mine.harvest.includes(semanaDoDia(hoje)), task: tarefaDe(mine, hoje, c), canDraw: !c.mature && mine.sorteio?.day !== hoje }
   };
 }
 __name(vistaDoPlantio, "vistaDoPlantio");
@@ -6886,6 +7594,7 @@ var GUILD_ACTIONS = Object.freeze({
   claPlantar: "POST",
   claRegar: "POST",
   claProteger: "POST",
+  claSortear: "POST",
   claColher: "POST",
   claMisterio: "GET",
   claMisterioEnviar: "POST",
@@ -6901,8 +7610,8 @@ async function onRequestOptions5() {
 }
 __name(onRequestOptions5, "onRequestOptions");
 async function onRequest3(context) {
-  const gate = takeToken("guild", clientKey(context.request), limiteDaGuilda());
-  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS5);
+  const gate2 = takeToken("guild", clientKey(context.request), limiteDaGuilda());
+  if (!gate2.ok) return tooManyRequests(gate2.retryAfter, CORS5);
   return handleGuild(context);
 }
 __name(onRequest3, "onRequest");
@@ -7021,30 +7730,30 @@ async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date())
 }
 __name(vistaDaGuilda, "vistaDaGuilda");
 async function handleGuild({ request, env }) {
-  const json11 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS5 }), "json");
-  if (!kv(env)) return json11({ error: "Storage not bound" }, 500);
+  const json12 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS5 }), "json");
+  if (!kv(env)) return json12({ error: "Storage not bound" }, 500);
   const url = new URL(request.url);
   const pedida = url.searchParams.get("action") ?? "";
   const alias = Object.prototype.hasOwnProperty.call(COOP_ALIASES, pedida);
   const action = alias ? COOP_ALIASES[pedida] : pedida;
   const method = request.method;
-  if (!(action in GUILD_ACTIONS) || GUILD_ACTIONS[action] !== method) return json11({ error: "unknown action" }, 400);
+  if (!(action in GUILD_ACTIONS) || GUILD_ACTIONS[action] !== method) return json12({ error: "unknown action" }, 400);
   const parsed = method === "POST" ? await request.json().catch(() => null) : null;
   const body = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
   const id = body.id || url.searchParams.get("id");
   const chave = alias ? "group" : "guild";
-  const erro = /* @__PURE__ */ __name((texto, status, extra = {}) => json11({ error: texto.replace("{g}", chave), ...extra }, status), "erro");
-  const vista = /* @__PURE__ */ __name((v) => json11({ [chave]: v }), "vista");
+  const erro = /* @__PURE__ */ __name((texto, status, extra = {}) => json12({ error: texto.replace("{g}", chave), ...extra }, status), "erro");
+  const vista = /* @__PURE__ */ __name((v) => json12({ [chave]: v }), "vista");
   const montar = /* @__PURE__ */ __name(async (g, eu, dia2) => {
     const cartoes = await lerCartoes(env, g);
     const fechado = await atualizarBosque(env, g, dia2, /* @__PURE__ */ new Date(), fiosDosCartoes(g, cartoes));
     return vistaDaGuilda(env, fechado, eu, dia2, cartoes);
   }, "montar");
   const cartao = /* @__PURE__ */ __name((g) => renovarCartao(env, g.id, id), "cartao");
-  if (!VALID_ID3.test(id || "")) return json11({ error: "invalid id" }, 400);
+  if (!VALID_ID3.test(id || "")) return json12({ error: "invalid id" }, 400);
   const auth = await authorizeSaveAccess(request, env, id);
   if (!auth.ok) {
-    return json11(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
+    return json12(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
   }
   const dia = diaDoJogador(method === "GET" ? url.searchParams.get("dayKey") : body.dayKey);
   if (!dia.ok) return erro("invalid day", 400);
@@ -7161,13 +7870,13 @@ async function handleGuild({ request, env }) {
   if (action === "guildWar") {
     const g = await grupoDe(env, id, semana);
     if (!g) return erro("no {g}", 404);
-    return json11({ war: await estadoDaGuerra(env, g.id) });
+    return json12({ war: await estadoDaGuerra(env, g.id) });
   }
   if (action === "guildWarSeek") {
     const g = await grupoDe(env, id, semana);
     if (!g) return erro("no {g}", 404);
     const r = await buscarGuerra(env, g, id, hoje, (gid) => lerGrupo(env, gid));
-    return json11({ state: r.state, war: { waiting: r.waiting, last: r.last } });
+    return json12({ state: r.state, war: { waiting: r.waiting, last: r.last } });
   }
   if (action === "guildDonate") {
     const g = await grupoDe(env, id, semana);
@@ -7176,7 +7885,7 @@ async function handleGuild({ request, env }) {
     if (r.invalid) return erro("invalid bits", 400);
     if (r.accepted === 0) return erro("daily limit", 429);
     await cartao(g);
-    return json11({ accepted: r.accepted, guild: await montar(g, id, hoje) });
+    return json12({ accepted: r.accepted, guild: await montar(g, id, hoje) });
   }
   if (action === "guildSlot") {
     const g = await grupoDe(env, id, semana);
@@ -7198,19 +7907,19 @@ async function handleGuild({ request, env }) {
     const plantio = /* @__PURE__ */ __name(async () => vistaDoPlantio(env, g, id, hoje2), "plantio");
     const misterio = /* @__PURE__ */ __name(async () => vistaDoMisterio(env, g, id, hoje2), "misterio");
     const conflito = /* @__PURE__ */ __name((r) => erro(r.reason.replace(/-/g, " "), r.reason === "no-plant" ? 404 : 409), "conflito");
-    if (action === "claPraca") return json11({ praca: await praca() });
+    if (action === "claPraca") return json12({ praca: await praca() });
     if (action === "claPracaSlot") {
       if (body.item !== null && typeof body.item !== "string") return erro("invalid item", 400);
       const r = await definirSlotPraca(env, g.id, id, hoje2, body.slot, body.item);
       if (r === void 0) return erro(Number.isInteger(body.slot) && body.slot >= 0 && body.slot < 4 ? "invalid item" : "invalid slot", 400);
-      return json11({ praca: await praca() });
+      return json12({ praca: await praca() });
     }
     if (action === "claPresente") {
       const alvo = typeof body.to === "string" ? salvoDe(body.to) : void 0;
       if (!alvo || alvo === id) return erro("invalid target", 400);
       const r = await enviarPresente(env, g.id, id, alvo, hoje2, void 0, g.members);
       if (!r.ok) return erro("already sent today", 409);
-      return json11({ sent: true, praca: await praca() });
+      return json12({ sent: true, praca: await praca() });
     }
     if (action === "claPresenteClaim") {
       const [de, dia2] = String(body.giftId ?? "").split("|");
@@ -7218,34 +7927,39 @@ async function handleGuild({ request, env }) {
       if (!origem || !dia2) return erro("nothing to claim", 404);
       const r = await resgatarPresente(env, g.id, id, g.members, origem, dia2, hoje2, ids2);
       if (!r.ok) return erro("nothing to claim", 404);
-      return json11({ claimed: { item: r.item, receipt: r.receipt }, praca: await praca() });
+      return json12({ claimed: { item: r.item, receipt: r.receipt }, praca: await praca() });
     }
-    if (action === "claPlantio") return json11({ plantio: await plantio() });
+    if (action === "claPlantio") return json12({ plantio: await plantio() });
     if (action === "claPlantar") {
       const r = await plantar(env, g.id, id, hoje2);
       if (!r.ok) return erro("already planted", 409);
-      return json11({ plantio: await plantio() });
+      return json12({ plantio: await plantio() });
+    }
+    if (action === "claSortear") {
+      const r = await sortear(env, g, id, hoje2);
+      if (!r.ok) return conflito(r);
+      return json12({ plantio: await plantio(), task: r.kind });
     }
     if (action === "claRegar" || action === "claProteger" || action === "claColher") {
       const r = await (action === "claRegar" ? regar : action === "claProteger" ? proteger : colher)(env, g, id, hoje2);
       if (!r.ok) return conflito(r);
-      return json11({ plantio: await plantio(), ...r.fruit ? { fruit: r.fruit, receipt: r.receipt } : {} });
+      return json12({ plantio: await plantio(), ...r.fruit ? { fruit: r.fruit, receipt: r.receipt } : {} });
     }
-    if (action === "claMisterio") return json11({ misterio: await misterio() });
+    if (action === "claMisterio") return json12({ misterio: await misterio() });
     if (action === "claMisterioEnviar") {
       const r = await enviarMisterio(env, g, id);
       if (!r.ok) return conflito(r);
-      return json11({ misterio: await misterio() });
+      return json12({ misterio: await misterio() });
     }
     if (action === "claMisterioTarefa") {
       const r = await somarTarefa(env, g, id, hoje2, body.taskId);
       if (!r.ok) return erro("invalid task", 400);
-      return json11({ counted: r.counted, ...r.reason ? { reason: r.reason } : {}, misterio: await misterio() });
+      return json12({ counted: r.counted, ...r.reason ? { reason: r.reason } : {}, misterio: await misterio() });
     }
     if (action === "claMisterioClaim") {
       const r = await resgatarMisterio(env, g, id);
       if (!r.ok) return erro("nothing to claim", 404);
-      return json11({ claimed: { reward: r.reward, receipt: r.receipt }, misterio: await misterio() });
+      return json12({ claimed: { reward: r.reward, receipt: r.receipt }, misterio: await misterio() });
     }
   }
   if (action === "guildRaidHit") {
@@ -7267,7 +7981,7 @@ async function handleGuild({ request, env }) {
     await marcarParticipacao(env, g.id, id, semana, hoje);
     await somarPontos(env, g.id, id, "missao", pontosDeMissao(stagePower(perfil?.stage), membrosAtivos(g, fiosDosCartoes(g, cartoesDaRoda), hoje).length));
     await cartao(g);
-    return json11({ landed: true, [chave]: await montar(g, id, hoje) });
+    return json12({ landed: true, [chave]: await montar(g, id, hoje) });
   }
   if (action === "guildRewards" || action === "guildClaim") {
     const g = await grupoDe(env, id, semana);
@@ -7304,7 +8018,7 @@ async function handleGuild({ request, env }) {
           if (liberados.some((s) => !scenes.includes(s))) scenes = await unirConjunto(env, coopScenesKey(id), liberados);
         }
       }
-      return json11({ rewards: { pending, scenes, trophyOwned: await conchas() >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID } });
+      return json12({ rewards: { pending, scenes, trophyOwned: await conchas() >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID } });
     }
     const w = String(body.week ?? "");
     if (!candidatas.includes(w)) return erro("invalid week", 400);
@@ -7332,11 +8046,11 @@ async function handleGuild({ request, env }) {
       trophy = depois > antes && depois % RAID_TROPHY_EVERY === 0;
     }
     if (trophy) await kvOrThrow(env).put(coopClaimKey(id, w), JSON.stringify({ ...gravado, trophy }), { expirationTtl: COOP_CLAIM_TTL });
-    return json11({ claimed: { week: w, outcome: d.outcome, emblems: d.emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null, receipt: recibo } });
+    return json12({ claimed: { week: w, outcome: d.outcome, emblems: d.emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null, receipt: recibo } });
   }
   if (action === "guildLeave") {
     await coopLeave(env, id);
-    return json11({ ok: true });
+    return json12({ ok: true });
   }
   if (action === "guildRename" || action === "guildNewCode") {
     const g = await grupoDe(env, id, semana);
@@ -7359,7 +8073,7 @@ async function handleGuild({ request, env }) {
     }
     return vista(await montar(rolarSemana(fresco, semana), id, hoje));
   }
-  return json11({ error: "unknown action" }, 400);
+  return json12({ error: "unknown action" }, 400);
 }
 __name(handleGuild, "handleGuild");
 
@@ -7452,16 +8166,16 @@ var attrFinito = /* @__PURE__ */ __name((v) => {
 var MATCHES_PER_DAY = 5;
 var GIFT_ACK_LEASE_MS = 10 * 60 * 1e3;
 var CLOSED_SEASON_TTL = 86400 * 400;
-var json3 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS6 }), "json");
+var json3 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(stripSimulated(obj), { status, headers: CORS6 }), "json");
 var duelLocks = /* @__PURE__ */ new Map();
 async function withDuelLock(key, fn) {
   const prev = duelLocks.get(key) || Promise.resolve();
   let release = /* @__PURE__ */ __name(() => {
   }, "release");
-  const gate = new Promise((r) => {
+  const gate2 = new Promise((r) => {
     release = /* @__PURE__ */ __name(() => r(void 0), "release");
   });
-  const tail = prev.then(() => gate);
+  const tail = prev.then(() => gate2);
   duelLocks.set(key, tail);
   await prev;
   try {
@@ -7472,7 +8186,7 @@ async function withDuelLock(key, fn) {
   }
 }
 __name(withDuelLock, "withDuelLock");
-var HEAVY_ACTIONS = /* @__PURE__ */ new Set(["players", "opponents", "rank", "seasonResult"]);
+var HEAVY_ACTIONS = /* @__PURE__ */ new Set(["players", "opponents", "rank", "seasonResult", "names"]);
 var HEAVY_LIMIT = { limit: 20, windowMs: 6e4 };
 var LIGHT_LIMIT = { limit: 120, windowMs: 6e4 };
 var CACHEABLE_ACTIONS = /* @__PURE__ */ new Set(["players", "rank", "seasonResult"]);
@@ -7505,6 +8219,7 @@ async function publicProfile(env, p, extra = {}) {
     avatarId: avatarIdOrNull(p.avatarId),
     frameId: frameIdOrNull(p.frameId),
     artLine: artLineOrNull(p.artLine),
+    .../^[a-z][a-z0-9_-]{0,31}$/.test(String(p.element ?? "")) ? { element: p.element } : {},
     ...sUrl ? { spriteUrl: sUrl } : {},
     unlockedStages: p.unlockedStages,
     pvpEnabled: p.pvpEnabled,
@@ -7558,14 +8273,14 @@ async function onRequest4(context) {
   !(action === "rank" && url.searchParams.has("id")) && typeof caches !== "undefined" && caches.default;
   let hit = null;
   if (cacheable) hit = await caches.default.match(request).catch(() => null);
-  const gate = takeToken(
+  const gate2 = takeToken(
     "community",
     ip,
     hit ? LIGHT_LIMIT : HEAVY_ACTIONS.has(action) ? HEAVY_LIMIT : LIGHT_LIMIT
   );
-  if (!gate.ok) {
-    console.warn("[community] rate limited", { action, cached: !!hit, retryAfter: gate.retryAfter });
-    return tooManyRequests(gate.retryAfter, CORS6);
+  if (!gate2.ok) {
+    console.warn("[community] rate limited", { action, cached: !!hit, retryAfter: gate2.retryAfter });
+    return tooManyRequests(gate2.retryAfter, CORS6);
   }
   if (hit) return hit;
   const res = await handleCommunity(context);
@@ -7581,7 +8296,9 @@ async function onRequest4(context) {
   return res;
 }
 __name(onRequest4, "onRequest");
-async function handleCommunity({ request, env }) {
+var SIM_ACTIONS = /* @__PURE__ */ new Set(["players", "player", "opponents", "rank", "seasonResult", "duelStart", "match"]);
+async function handleCommunity(context) {
+  const { request, env } = context;
   if (!kv(env)) return json3({ error: "Storage not bound" }, 500);
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
@@ -7601,6 +8318,7 @@ async function handleCommunity({ request, env }) {
     }
   }
   const id = body.id || url.searchParams.get("id");
+  if (SIM_ACTIONS.has(String(action))) await agendarSimuladosDia(context);
   const denyUnlessOwner = /* @__PURE__ */ __name(async (actorId) => {
     if (!VALID_ID4.test(actorId || "")) return json3({ error: "invalid id" }, 400);
     const auth = await authorizeSaveAccess(request, env, actorId);
@@ -7681,14 +8399,20 @@ async function handleCommunity({ request, env }) {
       }
     }
     const apelidoPedido = body.name ? sanitizarNomeDeGuilda(body.name) : null;
-    const nameRejected = !!body.name && !apelidoPedido;
+    let nameRejected = !!body.name && !apelidoPedido;
+    let nameTaken = false;
+    let apelidoFinal = apelidoPedido;
+    if (apelidoPedido && !await claimNick(env, id, apelidoPedido)) {
+      nameTaken = true;
+      apelidoFinal = null;
+    }
     const ID_ESTAGIO = /^[A-Za-z0-9_.-]{1,40}$/;
     const petNameOk = /* @__PURE__ */ __name((v) => typeof v === "string" && v.length > 0 && sanitizarNomeDeGuilda(v) !== null, "petNameOk");
     const prevPet = petNameOk(prev.petName) ? String(prev.petName).slice(0, 32) : "";
     const publicHidden = typeof body.publicHidden === "boolean" ? body.publicHidden : prev.publicHidden === true;
     const profile = {
       id,
-      name: apelidoPedido || sanitizarNomeDeGuilda(prev.name) || "An\xF4nimo",
+      name: apelidoFinal || sanitizarNomeDeGuilda(prev.name) || "An\xF4nimo",
       stage: typeof body.stage === "string" && ID_ESTAGIO.test(body.stage) ? body.stage : ID_ESTAGIO.test(String(prev.stage ?? "")) ? prev.stage : "rookie",
       petName: petNameOk(body.petName) ? body.petName.slice(0, 32) : prevPet,
       // Foto e moldura (Tarefa C): so IDs das listas fechadas. Ausencia herda o gravado (cliente antigo nao apaga);
@@ -7699,6 +8423,8 @@ async function handleCommunity({ request, env }) {
       artLine: "artLine" in body ? artLineOrNull(body.artLine) : artLineOrNull(prev.artLine),
       // URL do sprite gerado pelo jogador (`/api/sprite-image?k=...` ou allowlist CDN): ausência herda o gravado, `null` limpa.
       spriteUrl: "spriteUrl" in body ? spriteUrlOrNull(body.spriteUrl) : spriteUrlOrNull(prev.spriteUrl),
+      // Elemento do Oráculo da criatura (id fechado por regex; ausência herda o gravado, cliente antigo não apaga).
+      element: typeof body.element === "string" && /^[a-z][a-z0-9_-]{0,31}$/.test(body.element) ? body.element : typeof prev.element === "string" ? prev.element : void 0,
       unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.filter((s) => typeof s === "string" && ID_ESTAGIO.test(s)).slice(0, 16) : prev.unlockedStages || [],
       pvpEnabled,
       publicHidden,
@@ -7731,8 +8457,42 @@ async function handleCommunity({ request, env }) {
       pvpEnabled: profile.pvpEnabled,
       publicHidden,
       ...nameRejected ? { nameRejected: true } : {},
+      ...nameTaken ? { nameTaken: true } : {},
       ...pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: gateFor("pvp", bondLevel).minBond } : {}
     });
+  }
+  if (action === "nickname" && method === "POST") {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const nome = sanitizarNomeDeGuilda(body.name);
+    if (!nome) return json3({ error: "invalid name", nameRejected: true }, 400);
+    if (!await claimNick(env, id, nome)) return json3({ error: "name taken", nameTaken: true }, 409);
+    return json3({ ok: true, name: nome });
+  }
+  if (action === "names" && method === "GET") {
+    const prefixo = (url.searchParams.get("prefix") || "").normalize("NFKC").trim().toLowerCase().slice(0, 40);
+    if (prefixo.length < 2) return json3({ names: [] });
+    const page = await kvOrThrow(env).list({ prefix: nickKey(prefixo).replace(/%[0-9A-F]{0,1}$/, ""), limit: 8 });
+    const nomes = [];
+    for (const k of page.keys ?? []) {
+      let n;
+      try {
+        n = decodeURIComponent(String(k.name).slice(5));
+      } catch {
+        continue;
+      }
+      if (!n.toLowerCase().startsWith(prefixo)) continue;
+      try {
+        const dono = await kvOrThrow(env).get(k.name);
+        const pr = dono ? await getProfile(env, dono) : null;
+        if (pr && isHidden(pr)) continue;
+        if (pr && typeof pr.name === "string" && pr.name.normalize("NFKC").trim().toLowerCase() === n) n = pr.name;
+      } catch {
+      }
+      if (!nomes.includes(n)) nomes.push(n);
+    }
+    nomes.sort((a, b) => a.localeCompare(b));
+    return json3({ names: nomes.slice(0, 8) });
   }
   if (action === "players" && method === "GET") {
     const search = (url.searchParams.get("search") || "").toLowerCase();
@@ -8004,9 +8764,16 @@ async function handleCommunity({ request, env }) {
       rows.push({ id: k.slice(`rank:${season}:`.length), points: JSON.parse(raw).points });
     }
     rows.sort((a, b) => b.points - a.points);
-    const top3 = rows.slice(0, 3);
+    const top3 = [];
+    for (const row of rows) {
+      if (top3.length >= 3) break;
+      if (isSimuladoId(row.id)) continue;
+      const p = await getProfile(env, row.id);
+      if (p?.simulated === true) continue;
+      top3.push({ ...row, p });
+    }
     for (let i2 = 0; i2 < top3.length; i2++) {
-      const p = await getProfile(env, top3[i2].id);
+      const p = top3[i2].p;
       if (!p) continue;
       p.pendingTrophies = p.pendingTrophies || [];
       p.pendingTrophies.push({ season, place: i2 + 1 });
@@ -8061,6 +8828,7 @@ async function handleCommunity({ request, env }) {
     if (me.giftLog[friendSave] === today2()) return json3({ error: "already gifted today" }, 429);
     me.giftLog[friendSave] = today2();
     await putProfile(env, id, me);
+    if ((await getProfile(env, friendSave))?.simulated === true) return json3({ ok: true });
     const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
     const gifts = raw ? JSON.parse(raw) : [];
     gifts.push({ from: isHidden(me) ? "" : me.name, bits: 20, at: Date.now(), gid: crypto.randomUUID() });
@@ -8247,8 +9015,8 @@ var json4 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { s
 var hourNow = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 13), "hourNow");
 async function receive({ request, env }) {
   if (flagOn(env?.CRASH_DISABLED)) return json4({ ok: true, disabled: true }, 202);
-  const gate = takeToken("crash", clientKey(request), RATE2);
-  if (!gate.ok) return tooManyRequests(gate.retryAfter);
+  const gate2 = takeToken("crash", clientKey(request), RATE2);
+  if (!gate2.ok) return tooManyRequests(gate2.retryAfter);
   const raw = await request.text().catch(() => null);
   if (raw === null || raw.length > MAX_BODY_BYTES2) return json4({ error: "Invalid body" }, 400);
   let body = null;
@@ -8308,8 +9076,8 @@ async function receive({ request, env }) {
 __name(receive, "receive");
 async function onRequestGet3({ request, env }) {
   if (!env?.METRICS_ADMIN_KEY) return json4({ error: "Not found" }, 404);
-  const gate = takeToken("crash-read", clientKey(request), READ_RATE);
-  if (!gate.ok) return tooManyRequests(gate.retryAfter);
+  const gate2 = takeToken("crash-read", clientKey(request), READ_RATE);
+  if (!gate2.ok) return tooManyRequests(gate2.retryAfter);
   const given = request.headers.get(METRICS_KEY_HEADER);
   if (!secretEquals(given ?? "", env.METRICS_ADMIN_KEY)) return json4({ error: "Unauthorized" }, 401);
   const url = new URL(request.url);
@@ -8356,8 +9124,8 @@ function log2(event, saveId, extra = {}) {
 __name(log2, "log");
 async function handleGrant(request, env) {
   if (!env?.ENTITLEMENTS_ADMIN_KEY) return json5({ error: "Not found" }, 404);
-  const gate = takeToken("entitlements-grant", clientKey(request), GRANT_RATE);
-  if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS8);
+  const gate2 = takeToken("entitlements-grant", clientKey(request), GRANT_RATE);
+  if (!gate2.ok) return tooManyRequests(gate2.retryAfter, CORS8);
   const header = request.headers.get("Authorization") ?? "";
   const given = header.startsWith("Bearer ") ? header.slice("Bearer ".length).trim() : "";
   if (!secretEquals2(given, env.ENTITLEMENTS_ADMIN_KEY)) return json5({ error: "Unauthorized" }, 401);
@@ -8477,10 +9245,10 @@ var json6 = /* @__PURE__ */ __name((corpo, status) => new Response(JSON.stringif
   headers: { "Content-Type": "application/json", ...CORS9 }
 }), "json");
 function costGate(request) {
-  const gate = takeToken("fcm-subscribe", clientKey(request), LIMITE_INSCRICAO);
-  if (gate.ok) return null;
-  console.warn("[fcm-subscribe] rate limited", { retryAfter: gate.retryAfter });
-  return tooManyRequests(gate.retryAfter, CORS9);
+  const gate2 = takeToken("fcm-subscribe", clientKey(request), LIMITE_INSCRICAO);
+  if (gate2.ok) return null;
+  console.warn("[fcm-subscribe] rate limited", { retryAfter: gate2.retryAfter });
+  return tooManyRequests(gate2.retryAfter, CORS9);
 }
 __name(costGate, "costGate");
 async function onRequestOptions9() {
@@ -9456,7 +10224,12 @@ var BadChromaError = class extends Error {
     this.code = "bad-chroma";
   }
 };
-function keyRgba(width, height, rgba) {
+function chromaKeyOfPrompt(prompt) {
+  return /#FF00FF/i.test(String(prompt ?? "")) ? "magenta" : "green";
+}
+__name(chromaKeyOfPrompt, "chromaKeyOfPrompt");
+function keyRgba(width, height, rgba, key = "green") {
+  const magenta = key === "magenta";
   const n = width * height;
   const alpha = new Uint8Array(n);
   const isBg = new Uint8Array(n);
@@ -9464,15 +10237,21 @@ function keyRgba(width, height, rgba) {
   for (let i2 = 0; i2 < n; i2++) {
     const p = i2 * 4;
     const r = rgba[p], g = rgba[p + 1], b = rgba[p + 2];
-    const m = r > b ? r : b;
-    const d = g - m;
-    const bg = g > BG_G_MIN && d > BG_D_MIN;
+    const v = magenta ? r < b ? r : b : g;
+    const other = magenta ? g : r > b ? r : b;
+    const d = v - other;
+    const bg = v > BG_G_MIN && d > BG_D_MIN;
     const al = bg ? 0 : d > EDGE_D_MIN ? 255 * (1 - (d - EDGE_D_MIN) / EDGE_SPAN) : 255;
     if (bg) {
       isBg[i2] = 1;
       bgCount++;
     }
-    if (d > 0) rgba[p + 1] = m;
+    if (d > 0) {
+      if (magenta) {
+        rgba[p] = r - d;
+        rgba[p + 2] = b - d;
+      } else rgba[p + 1] = other;
+    }
     alpha[i2] = al > 128 ? 255 : 0;
   }
   const stack = new Int32Array(n);
@@ -9540,10 +10319,10 @@ function keyRgba(width, height, rgba) {
   return { bgFraction: bgCount / n, opaque, holeFraction: holes + opaque ? holes / (holes + opaque) : 0 };
 }
 __name(keyRgba, "keyRgba");
-function chromaKeyPng(pngBytes) {
+function chromaKeyPng(pngBytes, key = "green") {
   const { width, height, data } = decodePng(pngBytes);
-  const m = keyRgba(width, height, data);
-  if (m.bgFraction < MIN_BG_FRACTION) throw new BadChromaError(`sem fundo verde (${(m.bgFraction * 100).toFixed(1)}% removido)`);
+  const m = keyRgba(width, height, data, key);
+  if (m.bgFraction < MIN_BG_FRACTION) throw new BadChromaError(`sem fundo ${key === "magenta" ? "magenta" : "verde"} (${(m.bgFraction * 100).toFixed(1)}% removido)`);
   if (m.holeFraction > MAX_HOLE_FRACTION) throw new BadChromaError(`verde demais na criatura (${(m.holeFraction * 100).toFixed(1)}%)`);
   let x0 = width, y0 = height, x1 = -1, y1 = -1;
   for (let y = 0; y < height; y++) {
@@ -9559,10 +10338,10 @@ function chromaKeyPng(pngBytes) {
   if (x1 < 0) throw new BadChromaError("nada sobrou depois do recorte");
   const w = x1 - x0 + 1, h = y1 - y0 + 1;
   const side = Math.max(w, h);
-  const pad = Math.max(2, Math.floor(side * 0.04));
-  const S = side + 2 * pad;
+  const pad2 = Math.max(2, Math.floor(side * 0.04));
+  const S = side + 2 * pad2;
   const out = new Uint8Array(S * S * 4);
-  const ox = pad + (side - w >> 1), oy = pad + (side - h >> 1);
+  const ox = pad2 + (side - w >> 1), oy = pad2 + (side - h >> 1);
   for (let y = 0; y < h; y++) {
     out.set(data.subarray(((y0 + y) * width + x0) * 4, ((y0 + y) * width + x0 + w) * 4), ((oy + y) * S + ox) * 4);
   }
@@ -9609,6 +10388,7 @@ var CORS10 = {
 var HF_BASE = "https://platform.higgsfield.ai";
 var GEMINI_MODEL2 = "gemini-2.5-flash-image";
 var CACHE_PREFIX = "sprite:img:";
+var GRAVAR_EMAIL_DO_SPRITE = false;
 var LOCK_PREFIX = "sprite:lock:";
 var BLOB_PREFIX = "sprite:blob:";
 var LOCK_TTL_SECONDS = 120;
@@ -9739,13 +10519,13 @@ function bytesToDataUrl(bytes, mime) {
   return `data:${mime};base64,${btoa(bin)}`;
 }
 __name(bytesToDataUrl, "bytesToDataUrl");
-async function baixarEChavear(url) {
+async function baixarEChavear(url, key = "green") {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`higgsfield: download ${res.status}`);
   const buf = new Uint8Array(await res.arrayBuffer());
   if (buf.length > MAX_IMAGE_BYTES) throw new Error("higgsfield: imagem grande demais");
   try {
-    return bytesToDataUrl(chromaKeyPng(buf), "image/png");
+    return bytesToDataUrl(chromaKeyPng(buf, key), "image/png");
   } catch (err2) {
     if (err2 instanceof BadChromaError) {
       console.error("generate-sprite:", err2.message);
@@ -9787,7 +10567,7 @@ async function generateHf(env, model, prompt, referenceImageUrls) {
     if (data.status === "failed" || data.status === "canceled") throw new Error(`higgsfield ${model}: generation failed`);
     if (data.status === "completed") {
       const url = data.images?.[0]?.url;
-      if (typeof url === "string" && /^https:\/\//i.test(url)) return baixarEChavear(url);
+      if (typeof url === "string" && /^https:\/\//i.test(url)) return baixarEChavear(url, chromaKeyOfPrompt(prompt));
       throw new Error(`higgsfield ${model}: completed without url`);
     }
   }
@@ -9884,15 +10664,15 @@ async function generateGemini(env, prompt) {
   return `data:${mime};base64,${inline.data}`;
 }
 __name(generateGemini, "generateGemini");
-async function chaveioOpcional(image) {
+async function chaveioOpcional(image, key = "green") {
   try {
     if (image.startsWith("data:image/png;base64,")) {
       const bin = atob(image.slice(22));
       const bytes = new Uint8Array(bin.length);
       for (let i2 = 0; i2 < bin.length; i2++) bytes[i2] = bin.charCodeAt(i2);
-      return bytesToDataUrl(chromaKeyPng(bytes), "image/png");
+      return bytesToDataUrl(chromaKeyPng(bytes, key), "image/png");
     }
-    if (/^https:\/\//i.test(image)) return await baixarEChavear(image);
+    if (/^https:\/\//i.test(image)) return await baixarEChavear(image, key);
   } catch (err2) {
     console.error("generate-sprite: chroma opcional falhou, imagem mantida:", err2?.message);
   }
@@ -9905,7 +10685,7 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
   if (env.HF_API_KEY && env.HF_SECRET || hfCredentials(env)) {
     try {
       const hf = await generateHiggsfield(env, prompt, referenceImageUrls);
-      const image = hf.keyed ? hf.image : await chaveioOpcional(hf.image);
+      const image = hf.keyed ? hf.image : await chaveioOpcional(hf.image, chromaKeyOfPrompt(prompt));
       return { image, provider: "higgsfield", hfError: null };
     } catch (err3) {
       hfError = err3.message;
@@ -9915,7 +10695,7 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
   }
   if (env.GEMINI_API_KEY && flagOn(env.SPRITE_GEMINI_IMAGE)) {
     try {
-      const image = await chaveioOpcional(await generateGemini(env, prompt));
+      const image = await chaveioOpcional(await generateGemini(env, prompt), chromaKeyOfPrompt(prompt));
       return { image, provider: "gemini", hfError };
     } catch (err3) {
       if (isRefusal(err3) || hfRefusal) throw refusalError(err3.message);
@@ -10035,16 +10815,16 @@ async function onRequestPost5({ request, env }) {
         return Response.json({ error: "ai-quota-unavailable" }, { status: 503, headers: CORS10 });
       }
     }
-    const gate = await guardAiRequest(request, env, "sprite", id, 1, formId);
-    if (!gate.ok) {
+    const gate2 = await guardAiRequest(request, env, "sprite", id, 1, formId);
+    if (!gate2.ok) {
       return Response.json(
-        { error: gate.reason, ...gate.message ? { message: gate.message } : {} },
-        { status: gate.status, headers: CORS10 }
+        { error: gate2.reason, ...gate2.message ? { message: gate2.message } : {} },
+        { status: gate2.status, headers: CORS10 }
       );
     }
     const porIp = await takeIpQuota(env, request, "sprite");
     if (!porIp.ok) {
-      await gate.release("limite por ip-hash");
+      await gate2.release("limite por ip-hash");
       return Response.json({ error: porIp.reason, message: AI_REFUSAL_MESSAGES[porIp.reason] }, { status: porIp.status, headers: CORS10 });
     }
     const responder = /* @__PURE__ */ __name(async (out) => {
@@ -10060,7 +10840,7 @@ async function onRequestPost5({ request, env }) {
         try {
           await kvOrThrow(env).put(
             cacheKey(id, formId),
-            JSON.stringify({ image, provider: out.provider, at: Date.now() })
+            JSON.stringify({ image, provider: out.provider, at: Date.now(), ...GRAVAR_EMAIL_DO_SPRITE && typeof auth.email === "string" && auth.email ? { email: auth.email } : {} })
           );
         } catch (err2) {
           console.error("generate-sprite: falha ao cachear o resultado", err2?.message);
@@ -10074,7 +10854,7 @@ async function onRequestPost5({ request, env }) {
     } catch (err2) {
       const canRetry = typeof promptFallback === "string" && promptFallback.length > 0 && promptFallback !== prompt;
       if (!canRetry || !isRefusal(err2)) {
-        if (!isRefusal(err2)) await gate.release(err2.notConfigured ? "provedor n\xE3o configurado" : `falha do provedor: ${err2.message}`);
+        if (!isRefusal(err2)) await gate2.release(err2.notConfigured ? "provedor n\xE3o configurado" : `falha do provedor: ${err2.message}`);
         if (err2.notConfigured) {
           console.warn("sprite: provedor n\xE3o configurado:", err2.message);
           return Response.json({ error: "sprite-provider-not-configured" }, { status: 503, headers: CORS10 });
@@ -10105,6 +10885,459 @@ async function onRequestPost5({ request, env }) {
   }
 }
 __name(onRequestPost5, "onRequestPost");
+
+// api/_dayCounters.js
+var ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+var DAY_MS2 = 864e5;
+var DUNGEON_MAX_LAYER = 999;
+var CHECKIN_SLOTS = ["morning", "afternoon", "night"];
+function isoDayUtc(ms) {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+__name(isoDayUtc, "isoDayUtc");
+function maxAcceptableDay(nowMs = Date.now()) {
+  return isoDayUtc(nowMs + DAY_MS2);
+}
+__name(maxAcceptableDay, "maxAcceptableDay");
+function sanitizeDungeonDaily(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const r = (
+    /** @type {{day?:unknown,layers?:unknown}} */
+    raw
+  );
+  if (typeof r.day !== "string" || !ISO_DAY.test(r.day) || typeof r.layers !== "number" || !Number.isFinite(r.layers)) return void 0;
+  return { day: r.day, layers: Math.min(DUNGEON_MAX_LAYER, Math.max(0, Math.floor(r.layers))) };
+}
+__name(sanitizeDungeonDaily, "sanitizeDungeonDaily");
+function sanitizeCheckIns(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const r = (
+    /** @type {{day?:unknown,claimed?:unknown}} */
+    raw
+  );
+  if (typeof r.day !== "string" || !ISO_DAY.test(r.day)) return void 0;
+  const claimed = Array.isArray(r.claimed) ? CHECKIN_SLOTS.filter((s) => (
+    /** @type {unknown[]} */
+    r.claimed.includes(s)
+  )) : [];
+  return { day: r.day, claimed };
+}
+__name(sanitizeCheckIns, "sanitizeCheckIns");
+function monotonic(inc, sto, merge, nowMs) {
+  if (!inc) return sto;
+  if (inc.day > maxAcceptableDay(nowMs)) return sto;
+  if (!sto) return inc;
+  if (inc.day < sto.day) return sto;
+  if (inc.day === sto.day) return merge(inc, sto);
+  return inc;
+}
+__name(monotonic, "monotonic");
+function enforceDungeonDaily(incoming, stored, nowMs = Date.now()) {
+  return monotonic(sanitizeDungeonDaily(incoming), sanitizeDungeonDaily(stored), (a, b) => ({ day: a.day, layers: Math.max(a.layers, b.layers) }), nowMs);
+}
+__name(enforceDungeonDaily, "enforceDungeonDaily");
+function enforceCheckIns(incoming, stored, nowMs = Date.now()) {
+  return monotonic(
+    sanitizeCheckIns(incoming),
+    sanitizeCheckIns(stored),
+    (a, b) => ({ day: a.day, claimed: CHECKIN_SLOTS.filter((s) => a.claimed.includes(s) || b.claimed.includes(s)) }),
+    nowMs
+  );
+}
+__name(enforceCheckIns, "enforceCheckIns");
+var riftLayersKey = /* @__PURE__ */ __name((month2, saveId) => `riftlayers:${month2}:${saveId}`, "riftLayersKey");
+var monthOf = /* @__PURE__ */ __name((nowMs) => new Date(nowMs).toISOString().slice(0, 7), "monthOf");
+var prevMonthOf = /* @__PURE__ */ __name((nowMs) => {
+  const d = new Date(nowMs);
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
+}, "prevMonthOf");
+var RIFT_MAX_LAYERS_PER_DAY = 60;
+var MILESTONE_FLOOR = 5;
+var riftStartLayer = /* @__PURE__ */ __name((record) => 1 + MILESTONE_FLOOR * Math.floor(Math.max(0, Math.min(DUNGEON_MAX_LAYER - 1, Math.floor(Number(record) || 0))) / MILESTONE_FLOOR), "riftStartLayer");
+function layersDelta(antes, depois) {
+  const a = sanitizeDungeonDaily(antes);
+  const d = sanitizeDungeonDaily(depois);
+  if (!d) return 0;
+  if (a && a.day === d.day) return Math.max(0, d.layers - a.layers);
+  if (a && d.day < a.day) return 0;
+  return d.layers;
+}
+__name(layersDelta, "layersDelta");
+var num = /* @__PURE__ */ __name((v, lo, hi) => typeof v === "number" && Number.isFinite(v) ? Math.min(hi, Math.max(lo, Math.floor(v))) : lo, "num");
+async function readRiftLastro(store, saveId, nowMs = Date.now(), month2 = monthOf(nowMs)) {
+  const raw = await store.get(riftLayersKey(month2, saveId));
+  if (raw === null || raw === void 0) return null;
+  let v = null;
+  try {
+    v = JSON.parse(raw);
+  } catch {
+    v = null;
+  }
+  if (typeof v === "number") return { n: num(v, 0, 1e6), base: 1, rec: 0, d: "", dn: 0 };
+  if (!v || typeof v !== "object") return null;
+  return { n: num(v.n, 0, 1e6), base: num(v.base, 1, DUNGEON_MAX_LAYER), rec: num(v.rec, 0, DUNGEON_MAX_LAYER), d: typeof v.d === "string" ? v.d : "", dn: num(v.dn, 0, 1e6) };
+}
+__name(readRiftLastro, "readRiftLastro");
+async function readRiftLayers(store, saveId, nowMs = Date.now()) {
+  const l = await readRiftLastro(store, saveId, nowMs);
+  return l && l.n > 0 ? Math.min(DUNGEON_MAX_LAYER, l.base + l.n - 1) : 0;
+}
+__name(readRiftLayers, "readRiftLayers");
+async function bumpRiftLayers(store, saveId, antes, depois, nowMs = Date.now(), ctx = {}) {
+  const delta = layersDelta(antes, depois);
+  if (delta <= 0) return 0;
+  const month2 = monthOf(nowMs);
+  const day2 = isoDayUtc(nowMs);
+  let l = await readRiftLastro(store, saveId, nowMs, month2);
+  const recDepois = num(ctx.recordDepois, 0, DUNGEON_MAX_LAYER);
+  if (!l) {
+    const ant = await readRiftLastro(store, saveId, nowMs, prevMonthOf(nowMs)).catch(() => null);
+    const rec0 = ant ? Math.max(ant.rec, ant.base + ant.n - 1) : num(ctx.recordAntes, 0, DUNGEON_MAX_LAYER);
+    l = { n: 0, base: riftStartLayer(rec0), rec: rec0, d: day2, dn: 0 };
+  }
+  if (l.d !== day2) {
+    l.d = day2;
+    l.dn = 0;
+  }
+  const aceito = Math.max(0, Math.min(delta, RIFT_MAX_LAYERS_PER_DAY - l.dn));
+  l.n += aceito;
+  l.dn += aceito;
+  if (recDepois > l.rec) l.rec = Math.min(recDepois, l.rec + aceito);
+  await store.put(riftLayersKey(month2, saveId), JSON.stringify(l), { expirationTtl: 86400 * 70 });
+  return Math.min(DUNGEON_MAX_LAYER, l.base + l.n - 1);
+}
+__name(bumpRiftLayers, "bumpRiftLayers");
+
+// api/_riftPayout.js
+var RIFT_GAME = "endless-rift";
+var RIFT_PAYOUT = Object.freeze([50, 25, 10]);
+var RUNNING_STALE_MS = 10 * 60 * 1e3;
+var LOCK_TTL2 = { expirationTtl: 86400 * 400 };
+var lockKey2 = /* @__PURE__ */ __name((pk) => `rift-payout:${pk}`, "lockKey");
+var pendingKey = /* @__PURE__ */ __name((pk, saveId) => `rift-pending:${pk}:${saveId}`, "pendingKey");
+var PENDING_PREFIX = "rift-pending:";
+var prizeMark = /* @__PURE__ */ __name((pk) => `rift:${pk}`, "prizeMark");
+function prevMonthKey(now = /* @__PURE__ */ new Date()) {
+  return monthKey(new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)));
+}
+__name(prevMonthKey, "prevMonthKey");
+async function readEntries(store, pk) {
+  const prefix = `rk:${RIFT_GAME}:${pk}:`;
+  const out = [];
+  let cursor;
+  for (let p = 0; p < 5; p++) {
+    const page = await store.list({ prefix, limit: 1e3, ...cursor ? { cursor } : {} });
+    for (const k of page.keys) {
+      const t = Number(k.metadata?.t);
+      out.push({
+        saveId: k.name.slice(k.name.lastIndexOf(":") + 1),
+        score: Number(k.metadata?.s) || 0,
+        t: Number.isFinite(t) && k.metadata?.t != null ? t : Number.MAX_SAFE_INTEGER,
+        sim: k.metadata?.sim === true || /^sim_[0-9]{4}$/.test(k.name.slice(k.name.lastIndexOf(":") + 1))
+        // M11: simulado nunca recebe Crédito
+      });
+    }
+    if (page.list_complete || !page.cursor) break;
+    cursor = page.cursor;
+  }
+  return out.sort((a, b) => b.score - a.score || a.t - b.t || (a.saveId < b.saveId ? -1 : 1));
+}
+__name(readEntries, "readEntries");
+var closedInMemory = /* @__PURE__ */ new Set();
+async function closePreviousMonth(env, now = /* @__PURE__ */ new Date()) {
+  const pk = prevMonthKey(now);
+  try {
+    if (closedInMemory.has(pk)) return { status: "already", month: pk };
+    const store = kvOrThrow(env);
+    const raw = await store.get(lockKey2(pk));
+    if (raw) {
+      let lock = null;
+      try {
+        lock = JSON.parse(raw);
+      } catch {
+      }
+      if (lock?.state === "done") {
+        closedInMemory.add(pk);
+        return { status: "already", month: pk };
+      }
+      if (lock && Number(lock.at) > now.getTime() - RUNNING_STALE_MS) return { status: "busy", month: pk };
+    }
+    const token = `${now.getTime()}-${Math.random().toString(36).slice(2)}`;
+    await store.put(lockKey2(pk), JSON.stringify({ state: "running", at: now.getTime(), token }), LOCK_TTL2);
+    const back = JSON.parse(await store.get(lockKey2(pk)) || "null");
+    if (back?.token !== token) return { status: "busy", month: pk };
+    const entries = await readEntries(store, pk);
+    const winners = payablePlacements(entries, RIFT_PAYOUT.length);
+    const pending = [];
+    for (let i2 = 0; i2 < winners.length; i2++) {
+      const w = winners[i2];
+      const credits = RIFT_PAYOUT[i2];
+      const key = pendingKey(pk, w.saveId);
+      if (await store.get(key)) continue;
+      await store.put(key, JSON.stringify({ status: "pending", month: pk, credits, place: i2 + 1, score: w.score, at: now.getTime() }), LOCK_TTL2);
+      pending.push({ saveId: w.saveId, credits, place: i2 + 1 });
+    }
+    await store.put(lockKey2(pk), JSON.stringify({ state: "done", at: now.getTime(), token }), LOCK_TTL2);
+    closedInMemory.add(pk);
+    return { status: "closed", month: pk, pending };
+  } catch {
+    return { status: "skipped", month: pk };
+  }
+}
+__name(closePreviousMonth, "closePreviousMonth");
+var VALID_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
+var VALID_SAVE = /^[a-zA-Z0-9_-]{8,64}$/;
+async function readPending(store, pk, saveId) {
+  const raw = await store.get(pendingKey(pk, saveId));
+  if (!raw) return null;
+  try {
+    const v = JSON.parse(raw);
+    return v && typeof v === "object" ? v : null;
+  } catch {
+    return null;
+  }
+}
+__name(readPending, "readPending");
+async function approveRiftPrize(env, pk, saveId, now = Date.now()) {
+  if (!VALID_MONTH.test(String(pk)) || !VALID_SAVE.test(String(saveId))) return { status: "invalid" };
+  const store = kvOrThrow(env);
+  const p = await readPending(store, pk, saveId);
+  if (!p) return { status: "not-found" };
+  if (p.status === "paid") return { status: "already", credits: p.credits };
+  if (p.status === "rejected") return { status: "rejected" };
+  const credits = Number(p.credits);
+  const r = await grantRankPrize(env, saveId, credits, prizeMark(pk), Number(p.at) || 0);
+  if (r.refused) {
+    await store.put(pendingKey(pk, saveId), JSON.stringify({ ...p, refused: r.refused, refusedAt: now }), LOCK_TTL2).catch(() => {
+    });
+    return { status: "refused", credits };
+  }
+  let recorded = true;
+  try {
+    const { refused: _r, refusedAt: _ra, ...limpo } = p;
+    await store.put(pendingKey(pk, saveId), JSON.stringify({ ...limpo, status: "paid", paidAt: now }), LOCK_TTL2);
+  } catch {
+    recorded = false;
+  }
+  return { status: r.duplicate ? "already" : "paid", credits, recorded };
+}
+__name(approveRiftPrize, "approveRiftPrize");
+async function rejectRiftPrize(env, pk, saveId, now = Date.now()) {
+  if (!VALID_MONTH.test(String(pk)) || !VALID_SAVE.test(String(saveId))) return { status: "invalid" };
+  const store = kvOrThrow(env);
+  const p = await readPending(store, pk, saveId);
+  if (!p) return { status: "not-found" };
+  if (p.status === "paid") return { status: "already" };
+  await store.put(pendingKey(pk, saveId), JSON.stringify({ ...p, status: "rejected", rejectedAt: now }), LOCK_TTL2);
+  return { status: "rejected" };
+}
+__name(rejectRiftPrize, "rejectRiftPrize");
+async function listRiftPrizes(env) {
+  const store = kvOrThrow(env);
+  const page = await store.list({ prefix: PENDING_PREFIX, limit: 100 });
+  const items = [];
+  for (const k of page.keys ?? []) {
+    const m = /^rift-pending:(\d{4}-\d{2}):(.+)$/.exec(k.name);
+    if (!m) continue;
+    const [, month2, saveId] = m;
+    const p = await readPending(store, month2, saveId);
+    if (!p) continue;
+    let nome = null;
+    try {
+      const raw = await store.get(`profile:${saveId}`);
+      nome = raw ? JSON.parse(raw)?.name ?? null : null;
+    } catch {
+      nome = null;
+    }
+    const [y, mo] = month2.split("-").map(Number);
+    const lastro = await readRiftLastro(store, saveId, Date.UTC(y, mo - 1, 15), month2).catch(() => null);
+    const historico = [];
+    for (let i2 = 1; i2 <= 3; i2++) {
+      const pm = monthKey(new Date(Date.UTC(y, mo - 1 - i2, 1)));
+      const v = Number(await store.get(`rkme:${RIFT_GAME}:${pm}:${saveId}`));
+      if (Number.isFinite(v) && v > 0) historico.push({ month: pm, best: v });
+    }
+    items.push({
+      month: month2,
+      saveId,
+      name: typeof nome === "string" ? nome.slice(0, 80) : null,
+      place: p.place,
+      credits: p.credits,
+      score: p.score,
+      status: p.status,
+      refused: p.refused ?? null,
+      progresso: lastro ? { base: lastro.base, camadasComecadas: lastro.n, recordeDoServidor: lastro.rec } : null,
+      historico
+    });
+  }
+  items.sort((a, b) => (a.status === "pending" ? 0 : 1) - (b.status === "pending" ? 0 : 1) || (a.month < b.month ? 1 : a.month > b.month ? -1 : a.place - b.place));
+  return items;
+}
+__name(listRiftPrizes, "listRiftPrizes");
+async function readMyPrize(env, saveId, now = /* @__PURE__ */ new Date()) {
+  try {
+    const pk = prevMonthKey(now);
+    const v = await readPending(kvOrThrow(env), pk, saveId);
+    if (!v || v.status !== "paid") return null;
+    return { month: pk, credits: Number(v.credits) || 0, place: Number(v.place) || 0 };
+  } catch {
+    return null;
+  }
+}
+__name(readMyPrize, "readMyPrize");
+
+// api/gm-rift-payout.js
+var headers = { "Cache-Control": "no-store", "X-Robots-Tag": "noindex" };
+var forbidden = /* @__PURE__ */ __name(() => Response.json({ error: "forbidden" }, { status: 403, headers }), "forbidden");
+async function gate(request, env) {
+  const g = takeToken("gm-rift-payout", clientKey(request), { limit: 30, windowMs: 6e4 });
+  if (!g.ok) return tooManyRequests(g.retryAfter);
+  if (!(await verifiedAdmin(env, request)).admin) return forbidden();
+  if (!kv(env)) return Response.json({ error: "Unavailable" }, { status: 503, headers });
+  return null;
+}
+__name(gate, "gate");
+async function onRequestGet5({ request, env }) {
+  const bloqueio = await gate(request, env);
+  if (bloqueio) return bloqueio;
+  const items = await listRiftPrizes(env);
+  console.log(JSON.stringify({ event: "gm_rift_payout_list", n: items.length }));
+  return Response.json({ items }, { headers });
+}
+__name(onRequestGet5, "onRequestGet");
+async function onRequestPost6({ request, env }) {
+  const bloqueio = await gate(request, env);
+  if (bloqueio) return bloqueio;
+  let body = null;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "invalid json" }, { status: 400, headers });
+  }
+  const { month: month2, saveId, action } = body ?? {};
+  if (action !== "approve" && action !== "reject") return Response.json({ error: "invalid action" }, { status: 400, headers });
+  const r = action === "approve" ? await approveRiftPrize(env, month2, saveId) : await rejectRiftPrize(env, month2, saveId);
+  console.log(JSON.stringify({ event: "gm_rift_payout", action, status: r.status, saveIdPrefix: String(saveId).slice(0, 8) }));
+  if (r.status === "invalid") return Response.json({ error: "invalid" }, { status: 400, headers });
+  if (r.status === "not-found") return Response.json({ error: "not-found" }, { status: 404, headers });
+  return Response.json({ ok: true, ...r }, { headers });
+}
+__name(onRequestPost6, "onRequestPost");
+
+// api/gm-soulmons.js
+var PAGE = 24;
+var CURSOR_OK = /^[A-Za-z0-9_=-]{1,2048}$/;
+var KEY = /^sprite:img:([^:]+):(.+)$/;
+var headers2 = { "Cache-Control": "no-store", "X-Robots-Tag": "noindex" };
+var forbidden2 = /* @__PURE__ */ __name(() => Response.json({ error: "forbidden" }, { status: 403, headers: headers2 }), "forbidden");
+async function onRequestGet6({ request, env }) {
+  const gate2 = takeToken("gm-soulmons", clientKey(request), { limit: 30, windowMs: 6e4 });
+  if (!gate2.ok) return tooManyRequests(gate2.retryAfter);
+  if (!(await verifiedAdmin(env, request)).admin) return forbidden2();
+  if (!kv(env)) return Response.json({ error: "Unavailable" }, { status: 503, headers: headers2 });
+  const cursor = new URL(request.url).searchParams.get("cursor");
+  if (cursor && !CURSOR_OK.test(cursor)) return Response.json({ error: "invalid-cursor" }, { status: 400, headers: headers2 });
+  const store = kvOrThrow(env);
+  const page = await store.list({ prefix: "sprite:img:", limit: PAGE, ...cursor ? { cursor } : {} });
+  const nomes = /* @__PURE__ */ new Map();
+  const items = [];
+  for (const k of page.keys) {
+    const m = KEY.exec(k.name);
+    if (!m) continue;
+    let rec = null;
+    try {
+      rec = JSON.parse(await store.get(k.name) || "null");
+    } catch {
+      rec = null;
+    }
+    if (!rec || typeof rec.image !== "string") continue;
+    const [, saveId, formId] = m;
+    if (!nomes.has(saveId)) {
+      let nome = null;
+      try {
+        const raw = await store.get(`profile:${saveId}`);
+        nome = raw ? JSON.parse(raw)?.name ?? null : null;
+      } catch {
+        nome = null;
+      }
+      nomes.set(saveId, typeof nome === "string" ? nome.slice(0, 80) : null);
+    }
+    items.push({
+      image: rec.image,
+      name: nomes.get(saveId),
+      email: typeof rec.email === "string" ? rec.email : null,
+      at: typeof rec.at === "number" ? rec.at : null,
+      formId,
+      provider: typeof rec.provider === "string" ? rec.provider : null
+    });
+  }
+  console.log(JSON.stringify({ event: "gm_soulmons_list", n: items.length }));
+  return Response.json({ items, cursor: page.list_complete ? null : page.cursor }, { headers: headers2 });
+}
+__name(onRequestGet6, "onRequestGet");
+
+// api/rankings.js
+var CORS11 = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization"
+};
+var json7 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(stripSimulated(obj), { status, headers: CORS11 }), "json");
+var VALID_ID5 = /^[a-zA-Z0-9_-]{8,64}$/;
+var LIMIT_IP = { limit: 60, windowMs: 6e4 };
+var LIMIT_SUBMIT = { limit: 20, windowMs: 6e4 };
+async function onRequestOptions11() {
+  return new Response(null, { headers: CORS11 });
+}
+__name(onRequestOptions11, "onRequestOptions");
+async function onRequest6(context) {
+  const { request, env } = context;
+  if (request.method === "OPTIONS") return onRequestOptions11();
+  if (request.method !== "GET" && request.method !== "POST") return json7({ error: "method not allowed" }, 405);
+  if (!kv(env)) return json7({ error: "storage-not-bound" }, 503);
+  const gate2 = takeToken("rankings", clientKey(request), LIMIT_IP);
+  if (!gate2.ok) return tooManyRequests(gate2.retryAfter, CORS11);
+  const url = new URL(request.url);
+  let body = {};
+  if (request.method === "POST") {
+    try {
+      body = await request.json();
+    } catch {
+      return json7({ error: "invalid json" }, 400);
+    }
+  }
+  const q = request.method === "POST" ? body : Object.fromEntries(url.searchParams);
+  const game = q.game;
+  if (!isRankedGame(game)) return json7({ error: "unknown game" }, 400);
+  const period = game === RIFT_GAME ? "monthly" : q.period ?? DEFAULT_PERIOD;
+  if (!isPeriod(period)) return json7({ error: "invalid period" }, 400);
+  const id = q.id;
+  if (!VALID_ID5.test(id || "")) return json7({ error: "invalid id" }, 400);
+  const auth = await authorizeSaveAccess(request, env, id);
+  if (!auth.ok) {
+    return json7(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
+  }
+  await closePreviousMonth(env);
+  await agendarSimuladosDia(context);
+  if (request.method === "POST") {
+    const score = cleanScore(q.score, game);
+    if (score === null || !scoreIsPlausible(game, score)) return json7({ error: "invalid score" }, 400);
+    if (game === RIFT_GAME) {
+      const lastro = await readRiftLayers(kv(env), id);
+      if (score > lastro) return json7({ error: "score-exceeds-recorded-layers", recorded: lastro }, 409);
+    }
+    const g2 = takeToken("rankings-submit", id, LIMIT_SUBMIT);
+    if (!g2.ok) return tooManyRequests(g2.retryAfter, CORS11);
+    const r = await submitScore(env, { game, period, saveId: id, score });
+    const board2 = await readBoard(env, { game, period, saveId: id, top: TOP_DEFAULT });
+    return json7({ ok: true, improved: r.improved, best: r.best, ...board2 });
+  }
+  const top = Number(q.top);
+  const board = await readBoard(env, { game, period, saveId: id, top: Number.isFinite(top) && top > 0 ? top : TOP_DEFAULT });
+  const prize = game === RIFT_GAME ? await readMyPrize(env, id) : void 0;
+  return json7({ ok: true, ...board, ...prize !== void 0 ? { prize } : {} });
+}
+__name(onRequest6, "onRequest");
 
 // api/_pubsubAuth.js
 var JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs";
@@ -10189,7 +11422,7 @@ async function verifyPubsubPush(request, env, now = Math.floor(Date.now() / 1e3)
 __name(verifyPubsubPush, "verifyPubsubPush");
 
 // api/rtdn.js
-var json7 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status }), "json");
+var json8 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status }), "json");
 var log3 = /* @__PURE__ */ __name((event, extra = {}) => console.log(JSON.stringify({ event, ...extra })), "log");
 function decodeData(data) {
   try {
@@ -10237,18 +11470,18 @@ async function reconcileToken(env, purchaseToken, kind) {
   return { status: 200, outcome: read.entitled ? "active" : "closed" };
 }
 __name(reconcileToken, "reconcileToken");
-async function onRequestPost6({ request, env }) {
-  if (!pubsubAuthConfigured(env) || !env.ANDROID_PACKAGE_NAME) return json7({ error: "rtdn-not-configured" }, 503);
-  if (!await verifyPubsubPush(request, env)) return json7({ error: "Unauthorized" }, 401);
-  if (!kv(env)) return json7({ error: "Storage not bound" }, 500);
+async function onRequestPost7({ request, env }) {
+  if (!pubsubAuthConfigured(env) || !env.ANDROID_PACKAGE_NAME) return json8({ error: "rtdn-not-configured" }, 503);
+  if (!await verifyPubsubPush(request, env)) return json8({ error: "Unauthorized" }, 401);
+  if (!kv(env)) return json8({ error: "Storage not bound" }, 500);
   const envelope = await request.json().catch(() => null);
   const messageId = typeof envelope?.message?.messageId === "string" ? envelope.message.messageId : "";
   if (!/^[0-9A-Za-z_-]{1,64}$/.test(messageId)) {
     log3("rtdn.malformed", { why: "messageId" });
-    return json7({ ok: true, ignored: "malformed" });
+    return json8({ ok: true, ignored: "malformed" });
   }
   try {
-    if (await rtdnSeen(env, messageId)) return json7({ ok: true, duplicate: true });
+    if (await rtdnSeen(env, messageId)) return json8({ ok: true, duplicate: true });
   } catch (err2) {
     log3("rtdn.dedupe.unavailable", { err: String(err2?.message ?? err2).slice(0, 80) });
   }
@@ -10261,11 +11494,11 @@ async function onRequestPost6({ request, env }) {
   }
   if (!note || typeof note !== "object") {
     log3("rtdn.malformed", { why: "data", messageId });
-    return json7({ ok: true, ignored: "malformed" });
+    return json8({ ok: true, ignored: "malformed" });
   }
   if (note.packageName !== env.ANDROID_PACKAGE_NAME) {
     log3("rtdn.wrong-package", { messageId });
-    return json7({ ok: true, ignored: "package" });
+    return json8({ ok: true, ignored: "package" });
   }
   let result = { status: 200, outcome: "ignored" };
   try {
@@ -10279,17 +11512,17 @@ async function onRequestPost6({ request, env }) {
     }
   } catch (err2) {
     log3("rtdn.error", { messageId, err: String(err2?.message ?? err2).slice(0, 80) });
-    return json7({ ok: false, error: "retry" }, 500);
+    return json8({ ok: false, error: "retry" }, 500);
   }
-  if (result.status >= 500) return json7({ ok: false, reason: result.outcome }, result.status);
+  if (result.status >= 500) return json8({ ok: false, reason: result.outcome }, result.status);
   try {
     await rtdnMarkSeen(env, messageId);
   } catch (err2) {
     log3("rtdn.dedupe.unavailable", { err: String(err2?.message ?? err2).slice(0, 80) });
   }
-  return json7({ ok: true, outcome: result.outcome });
+  return json8({ ok: true, outcome: result.outcome });
 }
-__name(onRequestPost6, "onRequestPost");
+__name(onRequestPost7, "onRequestPost");
 
 // api/_buildingQuests.js
 var MATERIAL_CAP = 99;
@@ -10396,7 +11629,7 @@ var FIRST_TIME_IDS = [
   "visit:mercado.background",
   "visit:mercado.ferreiro",
   "visit:jogos.salao",
-  "visit:jogos.refugio",
+  "visit:exploracao.refugio",
   "visit:jogos.mente",
   "visit:exploracao.passeio",
   "visit:exploracao.masmorra",
@@ -10520,68 +11753,8 @@ function sanitizeNightmares(raw) {
 }
 __name(sanitizeNightmares, "sanitizeNightmares");
 
-// api/_dayCounters.js
-var ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
-var DAY_MS = 864e5;
-var DUNGEON_MAX_LAYER = 999;
-var CHECKIN_SLOTS = ["morning", "afternoon", "night"];
-function isoDayUtc(ms) {
-  return new Date(ms).toISOString().slice(0, 10);
-}
-__name(isoDayUtc, "isoDayUtc");
-function maxAcceptableDay(nowMs = Date.now()) {
-  return isoDayUtc(nowMs + DAY_MS);
-}
-__name(maxAcceptableDay, "maxAcceptableDay");
-function sanitizeDungeonDaily(raw) {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
-  const r = (
-    /** @type {{day?:unknown,layers?:unknown}} */
-    raw
-  );
-  if (typeof r.day !== "string" || !ISO_DAY.test(r.day) || typeof r.layers !== "number" || !Number.isFinite(r.layers)) return void 0;
-  return { day: r.day, layers: Math.min(DUNGEON_MAX_LAYER, Math.max(0, Math.floor(r.layers))) };
-}
-__name(sanitizeDungeonDaily, "sanitizeDungeonDaily");
-function sanitizeCheckIns(raw) {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
-  const r = (
-    /** @type {{day?:unknown,claimed?:unknown}} */
-    raw
-  );
-  if (typeof r.day !== "string" || !ISO_DAY.test(r.day)) return void 0;
-  const claimed = Array.isArray(r.claimed) ? CHECKIN_SLOTS.filter((s) => (
-    /** @type {unknown[]} */
-    r.claimed.includes(s)
-  )) : [];
-  return { day: r.day, claimed };
-}
-__name(sanitizeCheckIns, "sanitizeCheckIns");
-function monotonic(inc, sto, merge, nowMs) {
-  if (!inc) return sto;
-  if (inc.day > maxAcceptableDay(nowMs)) return sto;
-  if (!sto) return inc;
-  if (inc.day < sto.day) return sto;
-  if (inc.day === sto.day) return merge(inc, sto);
-  return inc;
-}
-__name(monotonic, "monotonic");
-function enforceDungeonDaily(incoming, stored, nowMs = Date.now()) {
-  return monotonic(sanitizeDungeonDaily(incoming), sanitizeDungeonDaily(stored), (a, b) => ({ day: a.day, layers: Math.max(a.layers, b.layers) }), nowMs);
-}
-__name(enforceDungeonDaily, "enforceDungeonDaily");
-function enforceCheckIns(incoming, stored, nowMs = Date.now()) {
-  return monotonic(
-    sanitizeCheckIns(incoming),
-    sanitizeCheckIns(stored),
-    (a, b) => ({ day: a.day, claimed: CHECKIN_SLOTS.filter((s) => a.claimed.includes(s) || b.claimed.includes(s)) }),
-    nowMs
-  );
-}
-__name(enforceCheckIns, "enforceCheckIns");
-
 // api/save.js
-var CORS11 = {
+var CORS12 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   // `Authorization` PRECISA estar aqui: o cliente manda `Bearer <idToken>` e o
@@ -10662,25 +11835,25 @@ async function sha256Hex2(text) {
   return Array.from(new Uint8Array(buf), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 __name(sha256Hex2, "sha256Hex");
-async function onRequestOptions11() {
-  return new Response(null, { headers: CORS11 });
+async function onRequestOptions12() {
+  return new Response(null, { headers: CORS12 });
 }
-__name(onRequestOptions11, "onRequestOptions");
-async function onRequest6({ request, env }) {
+__name(onRequestOptions12, "onRequestOptions");
+async function onRequest7({ request, env }) {
   const url = new URL(request.url);
   let body = null;
   if (request.method === "POST") {
     const ipGate = takeToken("save-write-ip", clientKey(request), SAVE_WRITE_RATE_IP);
-    if (!ipGate.ok) return tooManyRequests(ipGate.retryAfter, CORS11);
+    if (!ipGate.ok) return tooManyRequests(ipGate.retryAfter, CORS12);
     const declared = Number(request.headers.get("content-length"));
     if (Number.isFinite(declared) && declared > MAX_BODY_BYTES3) {
       console.warn("save: POST recusado antes de ler, corpo acima do teto", { bytes: declared });
-      return Response.json({ error: "State too large" }, { status: 413, headers: CORS11 });
+      return Response.json({ error: "State too large" }, { status: 413, headers: CORS12 });
     }
     const text = await request.text().catch(() => "");
     if (text.length > MAX_BODY_BYTES3) {
       console.warn("save: POST recusado antes do parse, corpo acima do teto", { chars: text.length });
-      return Response.json({ error: "State too large" }, { status: 413, headers: CORS11 });
+      return Response.json({ error: "State too large" }, { status: 413, headers: CORS12 });
     }
     try {
       body = JSON.parse(text);
@@ -10691,14 +11864,14 @@ async function onRequest6({ request, env }) {
   const queryId = url.searchParams.get("id");
   const bodyId = typeof body?.id === "string" ? body.id : null;
   if (queryId && bodyId && queryId !== bodyId) {
-    return Response.json({ error: "Conflicting save ID" }, { status: 400, headers: CORS11 });
+    return Response.json({ error: "Conflicting save ID" }, { status: 400, headers: CORS12 });
   }
   const saveId = queryId || bodyId;
   if (!saveId || !VALID_ID.test(saveId)) {
-    return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS11 });
+    return Response.json({ error: "Invalid save ID" }, { status: 400, headers: CORS12 });
   }
   if (!kv(env)) {
-    return Response.json({ error: "Storage not bound \u2014 add a KV binding named SOULMON_SAVES (or DIGIAPP_SAVES) in the Cloudflare dashboard" }, { status: 500, headers: CORS11 });
+    return Response.json({ error: "Storage not bound \u2014 add a KV binding named SOULMON_SAVES (or DIGIAPP_SAVES) in the Cloudflare dashboard" }, { status: 500, headers: CORS12 });
   }
   const auth = await authorizeSaveAccess(request, env, saveId);
   if (!auth.ok) {
@@ -10706,19 +11879,19 @@ async function onRequest6({ request, env }) {
       console.warn("save: recusado, conta apagada (l\xE1pide)", { saveIdPrefix: saveId.slice(0, 8), method: request.method });
     }
     const corpo = auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : auth.reason === "beta-closed" ? { error: auth.reason, message: BETA_CLOSED_MESSAGE } : { error: auth.reason };
-    return Response.json(corpo, { status: authStatus(auth), headers: CORS11 });
+    return Response.json(corpo, { status: authStatus(auth), headers: CORS12 });
   }
   const tombstone = auth.tombstone ?? await gateTombstone(env, saveId, auth.authTime);
   if (tombstone.deleted) {
     console.warn("save: recusado, conta apagada (l\xE1pide)", { saveIdPrefix: saveId.slice(0, 8), method: request.method });
-    return Response.json({ error: "account-deleted", deletedAt: tombstone.at }, { status: 410, headers: CORS11 });
+    return Response.json({ error: "account-deleted", deletedAt: tombstone.at }, { status: 410, headers: CORS12 });
   }
   if (betaGate(env, auth, "core")) {
-    return Response.json({ error: "beta-closed", message: BETA_CLOSED_MESSAGE }, { status: 403, headers: CORS11 });
+    return Response.json({ error: "beta-closed", message: BETA_CLOSED_MESSAGE }, { status: 403, headers: CORS12 });
   }
   if (request.method === "GET") {
     const { value: raw, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
-    if (!raw) return Response.json({ found: false }, { headers: CORS11 });
+    if (!raw) return Response.json({ found: false }, { headers: CORS12 });
     const gravadoEm = Number(metadata?.t) || 0;
     if ((Date.now() - gravadoEm) / 1e3 > RENEW_AFTER_SECONDS) {
       try {
@@ -10742,15 +11915,15 @@ async function onRequest6({ request, env }) {
     const betaFull = admin ? false : (await verifiedBetaFull(env, request, saveId)).betaFull;
     state.accountTier = admin || betaFull ? "paid" : ent.tier;
     state.credits = admin ? ADMIN_CREDITS_DISPLAY : ent.credits;
-    return Response.json({ found: true, state, revision: revisionOf(metadata) }, { headers: CORS11 });
+    return Response.json({ found: true, state, revision: revisionOf(metadata) }, { headers: CORS12 });
   }
   if (request.method === "POST") {
     const acctGate = takeToken("save-write", saveId, SAVE_WRITE_RATE_ACCOUNT);
-    if (!acctGate.ok) return tooManyRequests(acctGate.retryAfter, CORS11);
+    if (!acctGate.ok) return tooManyRequests(acctGate.retryAfter, CORS12);
     const incoming = body?.state;
     if (typeof incoming !== "object" || incoming === null || Array.isArray(incoming)) {
       console.warn("save: POST recusado, state n\xE3o \xE9 objeto", { saveIdPrefix: saveId.slice(0, 8), tipo: Array.isArray(incoming) ? "array" : typeof incoming });
-      return Response.json({ error: "Missing or invalid state" }, { status: 400, headers: CORS11 });
+      return Response.json({ error: "Missing or invalid state" }, { status: 400, headers: CORS12 });
     }
     const state = { ...incoming };
     for (const field of SERVER_OWNED_FIELDS) delete state[field];
@@ -10812,6 +11985,10 @@ async function onRequest6({ request, env }) {
       if (ficha) state.fichaJornada = ficha;
       else delete state.fichaJornada;
     }
+    let ddAntes;
+    let ddDepois;
+    let recAntes;
+    let recDepois;
     {
       const temGravado = typeof prev?.value === "string" && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"'));
       if (temGravado || "dungeonDaily" in state || "checkIns" in state) {
@@ -10824,6 +12001,10 @@ async function onRequest6({ request, env }) {
           }
         }
         const dd = enforceDungeonDaily(state.dungeonDaily, gravado.dungeonDaily);
+        ddAntes = gravado.dungeonDaily;
+        ddDepois = dd;
+        recAntes = gravado.dungeonDepthRecord;
+        recDepois = state.dungeonDepthRecord;
         if (dd) state.dungeonDaily = dd;
         else delete state.dungeonDaily;
         const ci = enforceCheckIns(state.checkIns, gravado.checkIns);
@@ -10836,18 +12017,18 @@ async function onRequest6({ request, env }) {
       serialized = JSON.stringify(state);
     } catch {
       console.warn("save: POST recusado, state n\xE3o serializa (aninhamento profundo demais)", { saveIdPrefix: saveId.slice(0, 8) });
-      return Response.json({ error: "Missing or invalid state" }, { status: 400, headers: CORS11 });
+      return Response.json({ error: "Missing or invalid state" }, { status: 400, headers: CORS12 });
     }
     const bytes = serialized.length * 3 > MAX_STATE_BYTES ? new TextEncoder().encode(serialized).length : serialized.length;
     if (bytes > MAX_STATE_BYTES) {
       console.warn("save: POST recusado, state acima do teto", { saveIdPrefix: saveId.slice(0, 8), bytes });
-      return Response.json({ error: "State too large" }, { status: 413, headers: CORS11 });
+      return Response.json({ error: "State too large" }, { status: 413, headers: CORS12 });
     }
     if (prev?.value == null) {
       const porIp = await takeIpQuota(env, request, "newAccount");
       if (!porIp.ok) {
         console.warn("save: conta nova recusada pelo limite por ip-hash");
-        return Response.json({ error: porIp.reason }, { status: 429, headers: CORS11 });
+        return Response.json({ error: porIp.reason }, { status: 429, headers: CORS12 });
       }
     }
     const cur = revisionOf(prev?.metadata);
@@ -10858,36 +12039,38 @@ async function onRequest6({ request, env }) {
       console.info("save: escrita sem baseRevision", { saveIdPrefix: saveId.slice(0, 8) });
     } else if (base !== cur) {
       if (typeof prev?.metadata?.h === "string" && prev.metadata.h === h) {
-        return Response.json({ ok: true, revision: cur, duplicate: true }, { headers: CORS11 });
+        return Response.json({ ok: true, revision: cur, duplicate: true }, { headers: CORS12 });
       }
       console.warn("save: 409 conflito de revis\xE3o", { saveIdPrefix: saveId.slice(0, 8), base, cur });
-      return Response.json({ error: "conflict", revision: cur }, { status: 409, headers: CORS11 });
+      return Response.json({ error: "conflict", revision: cur }, { status: 409, headers: CORS12 });
     }
     const f = firstSeenMeta(prev?.metadata).f ?? Date.now();
     await kvOrThrow(env).put(saveId, serialized, {
       expirationTtl: SAVE_TTL_SECONDS,
       metadata: { t: Date.now(), f, r: cur + 1, h }
     });
-    return Response.json({ ok: true, revision: cur + 1 }, { headers: CORS11 });
+    await bumpRiftLayers(kvOrThrow(env), saveId, ddAntes, ddDepois, Date.now(), { recordAntes: recAntes, recordDepois: recDepois }).catch(() => {
+    });
+    return Response.json({ ok: true, revision: cur + 1 }, { headers: CORS12 });
   }
-  return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS11 });
+  return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS12 });
 }
-__name(onRequest6, "onRequest");
+__name(onRequest7, "onRequest");
 
 // api/sprite-admin.js
-var json8 = /* @__PURE__ */ __name((o, status = 200) => Response.json(o, { status, headers: { "Cache-Control": "no-store" } }), "json");
-async function onRequestPost7({ request, env }) {
-  if (!env?.METRICS_ADMIN_KEY) return json8({ error: "Not found" }, 404);
-  const gate = takeToken("sprite-admin", clientKey(request), { limit: 20, windowMs: 6e4 });
-  if (!gate.ok) return tooManyRequests(gate.retryAfter);
-  if (!secretEquals(request.headers.get(METRICS_KEY_HEADER) ?? "", env.METRICS_ADMIN_KEY)) return json8({ error: "Unauthorized" }, 401);
-  if (new URL(request.url).searchParams.get("action") !== "release-form") return json8({ error: "Unknown action" }, 400);
+var json9 = /* @__PURE__ */ __name((o, status = 200) => Response.json(o, { status, headers: { "Cache-Control": "no-store" } }), "json");
+async function onRequestPost8({ request, env }) {
+  if (!env?.METRICS_ADMIN_KEY) return json9({ error: "Not found" }, 404);
+  const gate2 = takeToken("sprite-admin", clientKey(request), { limit: 20, windowMs: 6e4 });
+  if (!gate2.ok) return tooManyRequests(gate2.retryAfter);
+  if (!secretEquals(request.headers.get(METRICS_KEY_HEADER) ?? "", env.METRICS_ADMIN_KEY)) return json9({ error: "Unauthorized" }, 401);
+  if (new URL(request.url).searchParams.get("action") !== "release-form") return json9({ error: "Unknown action" }, 400);
   const body = await request.json().catch(() => null);
   const id = body?.id;
   const formId = body?.formId;
-  if (typeof id !== "string" || !VALID_ID.test(id)) return json8({ error: "invalid-save-id" }, 400);
-  if (typeof formId !== "string" || !VALID_FORM_ID.test(formId)) return json8({ error: "invalid-form-id" }, 400);
-  if (!kv(env)) return json8({ error: "Unavailable" }, 503);
+  if (typeof id !== "string" || !VALID_ID.test(id)) return json9({ error: "invalid-save-id" }, 400);
+  if (typeof formId !== "string" || !VALID_FORM_ID.test(formId)) return json9({ error: "invalid-form-id" }, 400);
+  if (!kv(env)) return json9({ error: "Unavailable" }, 503);
   const store = kvOrThrow(env);
   const antigo = legacyFormIdOf(formId);
   await store.delete(`sprite:img:${id}:${formId}`);
@@ -10900,14 +12083,14 @@ async function onRequestPost7({ request, env }) {
   ent.aiForms = forms;
   await writeEntitlement(env, id, ent);
   console.log(JSON.stringify({ event: "sprite.admin.release-form", saveIdPrefix: id.slice(0, 8), formId, antes, depois: forms[formId] }));
-  return json8({ ok: true, formId, antes, depois: forms[formId] });
+  return json9({ ok: true, formId, antes, depois: forms[formId] });
 }
-__name(onRequestPost7, "onRequestPost");
+__name(onRequestPost8, "onRequestPost");
 
 // api/sprite-image.js
 var IMMUTABLE = "public, max-age=31536000, immutable";
 var TOKEN = /^[0-9a-f]{32}$/;
-async function onRequestGet5({ request, env }) {
+async function onRequestGet7({ request, env }) {
   const token = new URL(request.url).searchParams.get("k") || "";
   if (!TOKEN.test(token)) {
     return Response.json({ error: "invalid token" }, { status: 400 });
@@ -10938,7 +12121,7 @@ async function onRequestGet5({ request, env }) {
     }
   });
 }
-__name(onRequestGet5, "onRequestGet");
+__name(onRequestGet7, "onRequestGet");
 
 // api/_pushTargets.js
 var PUSH_HOST_SUFFIXES = [
@@ -10974,24 +12157,24 @@ __name(isAllowedPushEndpoint, "isAllowedPushEndpoint");
 // api/subscribe.js
 var SUB_LIMIT = LIMITE_INSCRICAO;
 function costGate2(request) {
-  const gate = takeToken("subscribe", clientKey(request), SUB_LIMIT);
-  if (gate.ok) return null;
-  console.warn("[subscribe] rate limited", { retryAfter: gate.retryAfter });
-  return tooManyRequests(gate.retryAfter, CORS12);
+  const gate2 = takeToken("subscribe", clientKey(request), SUB_LIMIT);
+  if (gate2.ok) return null;
+  console.warn("[subscribe] rate limited", { retryAfter: gate2.retryAfter });
+  return tooManyRequests(gate2.retryAfter, CORS13);
 }
 __name(costGate2, "costGate");
-var CORS12 = {
+var CORS13 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, DELETE, OPTIONS",
   // `Authorization` anunciado: o cliente manda `Bearer <idToken>` junto do
   // `saveId` para a inscrição ser ligada à conta (ver `saveIdAutorizado`).
   "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
-async function onRequestOptions12() {
-  return new Response(null, { status: 204, headers: CORS12 });
+async function onRequestOptions13() {
+  return new Response(null, { status: 204, headers: CORS13 });
 }
-__name(onRequestOptions12, "onRequestOptions");
-async function onRequestPost8({ request, env }) {
+__name(onRequestOptions13, "onRequestOptions");
+async function onRequestPost9({ request, env }) {
   const limited = costGate2(request);
   if (limited) return limited;
   let body;
@@ -11001,33 +12184,33 @@ async function onRequestPost8({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS12 }
+      headers: { "Content-Type": "application/json", ...CORS13 }
     });
   }
   const { endpoint, keys, petName, language, bornAt, saveId, meals, sleep, skip, poop } = body;
   if (!endpoint || !keys?.p256dh || !keys?.auth) {
     return new Response(JSON.stringify({ error: "Missing required fields" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS12 }
+      headers: { "Content-Type": "application/json", ...CORS13 }
     });
   }
   if (!isAllowedPushEndpoint(endpoint)) {
     return new Response(JSON.stringify({ error: "Unsupported push endpoint" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS12 }
+      headers: { "Content-Type": "application/json", ...CORS13 }
     });
   }
   if (!ehChaveWebPush(keys.p256dh) || !ehChaveWebPush(keys.auth)) {
     return new Response(JSON.stringify({ error: "Malformed keys" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS12 }
+      headers: { "Content-Type": "application/json", ...CORS13 }
     });
   }
   const dono = await saveIdAutorizado2(request, env, saveId);
   if (dono.status) {
     return new Response(JSON.stringify({ error: dono.reason }), {
       status: dono.status,
-      headers: { "Content-Type": "application/json", ...CORS12 }
+      headers: { "Content-Type": "application/json", ...CORS13 }
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
@@ -11079,10 +12262,10 @@ async function onRequestPost8({ request, env }) {
   await gravarSeMudou(env.PUSH_SUBSCRIPTIONS, kvKey, record);
   return new Response(JSON.stringify({ ok: true }), {
     status: 201,
-    headers: { "Content-Type": "application/json", ...CORS12 }
+    headers: { "Content-Type": "application/json", ...CORS13 }
   });
 }
-__name(onRequestPost8, "onRequestPost");
+__name(onRequestPost9, "onRequestPost");
 async function onRequestDelete2({ request, env }) {
   const limited = costGate2(request);
   if (limited) return limited;
@@ -11093,14 +12276,14 @@ async function onRequestDelete2({ request, env }) {
   } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS12 }
+      headers: { "Content-Type": "application/json", ...CORS13 }
     });
   }
   const { endpoint } = body;
   if (!endpoint) {
     return new Response(JSON.stringify({ error: "Missing endpoint" }), {
       status: 400,
-      headers: { "Content-Type": "application/json", ...CORS12 }
+      headers: { "Content-Type": "application/json", ...CORS13 }
     });
   }
   const kvKey = `push:${await hashEndpoint(endpoint)}`;
@@ -11108,7 +12291,7 @@ async function onRequestDelete2({ request, env }) {
   await env.PUSH_SUBSCRIPTIONS.delete(kvKey);
   return new Response(JSON.stringify({ ok: true }), {
     status: 200,
-    headers: { "Content-Type": "application/json", ...CORS12 }
+    headers: { "Content-Type": "application/json", ...CORS13 }
   });
 }
 __name(onRequestDelete2, "onRequestDelete");
@@ -11136,17 +12319,17 @@ async function hashEndpoint(endpoint) {
 __name(hashEndpoint, "hashEndpoint");
 
 // api/suggest-tasks.js
-var CORS13 = {
+var CORS14 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type"
 };
 var VALID_CATEGORIES = ["Health", "Creativity", "Discipline", "Study", "Work", "Social", "Wellness", "Fitness"];
-async function onRequestOptions13() {
-  return new Response(null, { headers: CORS13 });
+async function onRequestOptions14() {
+  return new Response(null, { headers: CORS14 });
 }
-__name(onRequestOptions13, "onRequestOptions");
-async function onRequestPost9({ request, env }) {
+__name(onRequestOptions14, "onRequestOptions");
+async function onRequestPost10({ request, env }) {
   try {
     const body = await request.json().catch(() => null) ?? {};
     const goalMin = minimizeForAi(String(body.goalText || "").slice(0, 2e3).trim(), 300);
@@ -11160,12 +12343,12 @@ async function onRequestPost9({ request, env }) {
     const categories = Array.isArray(body.categories) ? body.categories.filter((c) => VALID_CATEGORIES.includes(c)) : [];
     const isPt = body.language === "pt-BR";
     if (!goalText && categories.length === 0) {
-      return Response.json({ error: "goalText or categories required" }, { status: 400, headers: CORS13 });
+      return Response.json({ error: "goalText or categories required" }, { status: 400, headers: CORS14 });
     }
     const groqKey = cleanKey(env.GROQ_API_KEY);
-    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS13 });
-    const gate = await guardAiRequest(request, env, "suggest", body.id);
-    if (!gate.ok) return Response.json({ error: gate.reason }, { status: gate.status, headers: CORS13 });
+    if (!groqKey) return Response.json({ error: "AI not configured" }, { status: 500, headers: CORS14 });
+    const gate2 = await guardAiRequest(request, env, "suggest", body.id);
+    if (!gate2.ok) return Response.json({ error: gate2.reason }, { status: gate2.status, headers: CORS14 });
     const systemPrompt = `You are a productivity coach inside a gamified habit-tracking app (Soulmon).
 Given a user's goal and optional life-area tags, suggest 5 concrete, actionable RECURRING tasks/habits
 that would help achieve that goal. Each task name must be short (max 40 chars), action-oriented, and
@@ -11192,13 +12375,13 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
         })
       });
     } catch (err2) {
-      await gate.release(`rede/timeout no Groq: ${err2?.message}`);
+      await gate2.release(`rede/timeout no Groq: ${err2?.message}`);
       throw err2;
     }
     if (!groqRes.ok) {
       console.error("Groq error:", await groqRes.text());
-      await gate.release(`Groq respondeu ${groqRes.status}`);
-      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS13 });
+      await gate2.release(`Groq respondeu ${groqRes.status}`);
+      return Response.json({ error: "AI service error" }, { status: 500, headers: CORS14 });
     }
     const data = await groqRes.json();
     const raw = data.choices?.[0]?.message?.content ?? "[]";
@@ -11207,38 +12390,38 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
       const match2 = raw.match(/\[[\s\S]*\]/);
       parsed = JSON.parse(match2 ? match2[0] : raw);
     } catch {
-      return Response.json({ error: "Could not parse suggestions" }, { status: 502, headers: CORS13 });
+      return Response.json({ error: "Could not parse suggestions" }, { status: 502, headers: CORS14 });
     }
     const suggestions = (Array.isArray(parsed) ? parsed : []).map((item) => ({
       name: (item?.name || "").toString().trim().slice(0, 60),
       category: VALID_CATEGORIES.includes(item?.category) ? item.category : "Wellness"
     })).filter((item) => item.name.length > 0).slice(0, 6);
-    return Response.json({ suggestions }, { headers: CORS13 });
+    return Response.json({ suggestions }, { headers: CORS14 });
   } catch (err2) {
     console.error("suggest-tasks error:", err2);
-    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS13 });
+    return Response.json({ error: "Internal error" }, { status: 500, headers: CORS14 });
   }
 }
-__name(onRequestPost9, "onRequestPost");
+__name(onRequestPost10, "onRequestPost");
 
 // api/top-ai.js
 var BUCKETS = ["chat", "sprite", "transcribe", "suggest"];
 var TOP_N = 20;
 var DAY_RE3 = /^\d{4}-\d{2}-\d{2}$/;
-var json9 = /* @__PURE__ */ __name((o, status = 200) => Response.json(o, { status, headers: { "Cache-Control": "no-store" } }), "json");
+var json10 = /* @__PURE__ */ __name((o, status = 200) => Response.json(o, { status, headers: { "Cache-Control": "no-store" } }), "json");
 function ranking(bucket, entradas, limites = AI_LIMITS) {
   const teto = limites[bucket]?.perAccountByTier?.paid ?? limites[bucket]?.perAccount ?? 0;
   return entradas.filter((e) => e.saveId && !e.saveId.startsWith("@")).map((e) => ({ bucket, saveIdPrefix: e.saveId.slice(0, 8), n: e.n, acima80: teto > 0 && e.n >= teto * 0.8 })).sort((a, b) => b.n - a.n).slice(0, TOP_N);
 }
 __name(ranking, "ranking");
-async function onRequestGet6({ request, env }) {
-  if (!env?.METRICS_ADMIN_KEY) return json9({ error: "Not found" }, 404);
-  const gate = takeToken("top-ai", clientKey(request), { limit: 30, windowMs: 6e4 });
-  if (!gate.ok) return tooManyRequests(gate.retryAfter);
-  if (!secretEquals(request.headers.get(METRICS_KEY_HEADER) ?? "", env.METRICS_ADMIN_KEY)) return json9({ error: "Unauthorized" }, 401);
+async function onRequestGet8({ request, env }) {
+  if (!env?.METRICS_ADMIN_KEY) return json10({ error: "Not found" }, 404);
+  const gate2 = takeToken("top-ai", clientKey(request), { limit: 30, windowMs: 6e4 });
+  if (!gate2.ok) return tooManyRequests(gate2.retryAfter);
+  if (!secretEquals(request.headers.get(METRICS_KEY_HEADER) ?? "", env.METRICS_ADMIN_KEY)) return json10({ error: "Unauthorized" }, 401);
   const day2 = new URL(request.url).searchParams.get("day") ?? serverDay();
-  if (!DAY_RE3.test(day2)) return json9({ error: "Invalid day" }, 400);
-  if (!kv(env)) return json9({ error: "Unavailable" }, 503);
+  if (!DAY_RE3.test(day2)) return json10({ error: "Invalid day" }, 400);
+  if (!kv(env)) return json10({ error: "Unavailable" }, 503);
   const store = kvOrThrow(env);
   const out = {};
   for (const bucket of BUCKETS) {
@@ -11251,17 +12434,17 @@ async function onRequestGet6({ request, env }) {
     }
     out[bucket] = ranking(bucket, entradas);
   }
-  return json9({ ok: true, day: day2, top: out });
+  return json10({ ok: true, day: day2, top: out });
 }
-__name(onRequestGet6, "onRequestGet");
+__name(onRequestGet8, "onRequestGet");
 
 // api/transcribe.js
-var CORS14 = {
+var CORS15 = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization"
 };
-var json10 = /* @__PURE__ */ __name((corpo, status = 200) => Response.json(corpo, { status, headers: CORS14 }), "json");
+var json11 = /* @__PURE__ */ __name((corpo, status = 200) => Response.json(corpo, { status, headers: CORS15 }), "json");
 var LIMITE = { limit: 6, windowMs: 6e4 };
 var MAX_BYTES = 2 * 1024 * 1024;
 var MAX_DURACAO_S = 65;
@@ -11271,51 +12454,51 @@ var EXTENSAO = { webm: "webm", ogg: "ogg", mp4: "mp4", "x-m4a": "m4a", mpeg: "mp
 var extensaoDe = /* @__PURE__ */ __name((tipo) => EXTENSAO[String(tipo).split(";")[0].split("/")[1]?.trim().toLowerCase()] ?? "webm", "extensaoDe");
 var TIPOS = /^audio\/(webm|ogg|mp4|mpeg|wav|x-m4a)(;.*)?$/i;
 var IDIOMAS = /* @__PURE__ */ new Set(["pt", "en"]);
-async function onRequestOptions14() {
-  return new Response(null, { headers: CORS14 });
+async function onRequestOptions15() {
+  return new Response(null, { headers: CORS15 });
 }
-__name(onRequestOptions14, "onRequestOptions");
-async function onRequestPost10({ request, env }) {
-  const gate = takeToken("transcribe", clientKey(request), LIMITE);
-  if (!gate.ok) {
-    console.warn("[transcribe] rate limited", { retryAfter: gate.retryAfter });
-    return tooManyRequests(gate.retryAfter, CORS14);
+__name(onRequestOptions15, "onRequestOptions");
+async function onRequestPost11({ request, env }) {
+  const gate2 = takeToken("transcribe", clientKey(request), LIMITE);
+  if (!gate2.ok) {
+    console.warn("[transcribe] rate limited", { retryAfter: gate2.retryAfter });
+    return tooManyRequests(gate2.retryAfter, CORS15);
   }
   if (!env.GROQ_API_KEY) {
-    return json10({ error: "transcribe-not-configured" }, 503);
+    return json11({ error: "transcribe-not-configured" }, 503);
   }
-  if (!env.FIREBASE_PROJECT_ID) return json10({ error: "auth-unavailable" }, 503);
+  if (!env.FIREBASE_PROJECT_ID) return json11({ error: "auth-unavailable" }, 503);
   let claims = null;
   try {
     claims = await verifyIdToken(bearerToken(request), env.FIREBASE_PROJECT_ID);
   } catch {
-    return json10({ error: "auth-unavailable" }, 503);
+    return json11({ error: "auth-unavailable" }, 503);
   }
-  if (!claims) return json10({ error: "unauthenticated" }, 401);
+  if (!claims) return json11({ error: "unauthenticated" }, 401);
   const declarado = request.headers.get("content-length");
   if (declarado !== null && Number(declarado) > MAX_BYTES + 64 * 1024) {
-    return json10({ error: "audio-too-large" }, 413);
+    return json11({ error: "audio-too-large" }, 413);
   }
   let form;
   try {
     form = await request.formData();
   } catch {
-    return json10({ error: "invalid-form" }, 400);
+    return json11({ error: "invalid-form" }, 400);
   }
   const audio = form.get("audio");
   if (!audio || typeof audio === "string") {
-    return json10({ error: "missing-audio" }, 400);
+    return json11({ error: "missing-audio" }, 400);
   }
-  if (audio.size === 0) return json10({ error: "empty-audio" }, 400);
-  if (audio.size > MAX_BYTES) return json10({ error: "audio-too-large" }, 413);
-  if (!TIPOS.test(audio.type || "")) return json10({ error: "unsupported-audio-type" }, 415);
+  if (audio.size === 0) return json11({ error: "empty-audio" }, 400);
+  if (audio.size > MAX_BYTES) return json11({ error: "audio-too-large" }, 413);
+  if (!TIPOS.test(audio.type || "")) return json11({ error: "unsupported-audio-type" }, 415);
   const bruto = String(form.get("language") ?? "").slice(0, 5).split("-")[0].toLowerCase();
   const language = IDIOMAS.has(bruto) ? bruto : "en";
   const saveId = await emailToSaveId(claims.email);
   const rajada = perMinuteGate("transcribe", saveId);
-  if (rajada) return json10({ error: rajada.reason, message: rajada.message }, 429);
+  if (rajada) return json11({ error: rajada.reason, message: rajada.message }, 429);
   const cota = await guardAiRequest(request, env, "transcribe", saveId, 1, null, { ok: true, email: claims.email });
-  if (!cota.ok) return json10({ error: cota.reason, ...cota.message ? { message: cota.message } : {} }, cota.status);
+  if (!cota.ok) return json11({ error: cota.reason, ...cota.message ? { message: cota.message } : {} }, cota.status);
   const repasse = new FormData();
   repasse.append("file", audio, `audio.${extensaoDe(audio.type)}`);
   repasse.append("model", "whisper-large-v3");
@@ -11335,30 +12518,115 @@ async function onRequestPost10({ request, env }) {
   } catch (err2) {
     console.error("[transcribe] falha ao falar com o provedor:", err2?.name);
     await cota.release("provedor de transcri\xE7\xE3o indispon\xEDvel");
-    return json10({ error: "transcribe-unavailable" }, 502);
+    return json11({ error: "transcribe-unavailable" }, 502);
   }
   if (!upstream.ok) {
     console.error("[transcribe] provedor respondeu", upstream.status);
     await cota.release(`provedor respondeu ${upstream.status}`);
-    return json10({ error: "transcribe-failed" }, 502);
+    return json11({ error: "transcribe-failed" }, 502);
   }
   let dados;
   try {
     dados = await upstream.json();
   } catch {
-    return json10({ error: "transcribe-failed" }, 502);
+    return json11({ error: "transcribe-failed" }, 502);
   }
   const d = Number(dados?.duration);
   if (!Number.isFinite(d) || d > MAX_DURACAO_S) {
-    return json10({ error: "audio-too-long" }, 413);
+    return json11({ error: "audio-too-long" }, 413);
   }
-  return json10({ text: String(dados?.text ?? "").slice(0, 2e3) });
+  return json11({ text: String(dados?.text ?? "").slice(0, 2e3) });
 }
-__name(onRequestPost10, "onRequestPost");
+__name(onRequestPost11, "onRequestPost");
+
+// gm/_gmPage.js
+var FIREBASE_VERSION = "10.12.2";
+var FIREBASE_SRI = Object.freeze({
+  app: "sha384-AQ3POAMqIhwS81FrUH95ekxqBZHeP5tG2JfEL3+7GuTtfRLWnrRh32UxwzM+//A9",
+  auth: "sha384-TnlRYaR4JYz/lpaGuaiU61PjNberSA4vjLjtF+oRC/IkohkJqnWxw5EmDSOt1vA1"
+});
+function firebaseScripts(nonce) {
+  const base = `https://www.gstatic.com/firebasejs/${FIREBASE_VERSION}`;
+  return `<script nonce="${nonce}" src="${base}/firebase-app-compat.js" integrity="${FIREBASE_SRI.app}" crossorigin="anonymous"><\/script>
+<script nonce="${nonce}" src="${base}/firebase-auth-compat.js" integrity="${FIREBASE_SRI.auth}" crossorigin="anonymous"><\/script>`;
+}
+__name(firebaseScripts, "firebaseScripts");
+function gmNonce() {
+  return btoa(String.fromCharCode(...crypto.getRandomValues(new Uint8Array(16))));
+}
+__name(gmNonce, "gmNonce");
+function gmHeaders(nonce) {
+  return {
+    "Content-Type": "text/html; charset=utf-8",
+    "Cache-Control": "no-store",
+    "X-Robots-Tag": "noindex",
+    "X-Frame-Options": "DENY",
+    "X-Content-Type-Options": "nosniff",
+    "Content-Security-Policy": `default-src 'none'; script-src 'nonce-${nonce}' https://www.gstatic.com https://apis.google.com; style-src 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https://*.googleapis.com https://*.firebaseapp.com; frame-src https://*.firebaseapp.com https://accounts.google.com; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`
+  };
+}
+__name(gmHeaders, "gmHeaders");
+
+// gm/rift.js
+async function onRequestGet9({ env }) {
+  const nonce = gmNonce();
+  const cfg = { apiKey: env?.FIREBASE_API_KEY || "", authDomain: env?.FIREBASE_AUTH_DOMAIN || "", projectId: env?.FIREBASE_PROJECT_ID || "" };
+  const cfgJson = JSON.stringify(cfg).replace(/</g, "\\u003c");
+  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>GM \xB7 Pr\xEAmios da Fenda</title>
+<style>body{font:14px system-ui;margin:16px;background:#14121c;color:#eee}button{padding:8px 14px;margin-right:8px}#l{display:grid;gap:12px;margin-top:14px}
+.c{background:#201c2e;border-radius:8px;padding:12px}.m{opacity:.75;font-size:12px;margin-top:4px}.ok{color:#8f8}.no{color:#f98}</style></head><body>
+<h1>Pr\xEAmios do Endless Rift</h1><p class="m">O fechamento do m\xEAs s\xF3 grava o top 3. Os Cr\xE9ditos saem quando voc\xEA aprova aqui.</p><div id="s">Carregando\u2026</div><div id="l"></div>
+${firebaseScripts(nonce)}
+<script nonce="${nonce}">
+const $=id=>document.getElementById(id);
+function line(d,t,c){const p=document.createElement('div');p.className='m'+(c?' '+c:'');p.textContent=t;d.appendChild(p);}
+async function act(user,it,action){const t=await user.getIdToken();const r=await fetch('/api/gm-rift-payout',{method:'POST',headers:{Authorization:'Bearer '+t,'Content-Type':'application/json'},body:JSON.stringify({month:it.month,saveId:it.saveId,action:action})});const j=await r.json().catch(()=>({}));$('s').textContent=r.ok?('Resultado: '+j.status):('Erro '+r.status);load(user);}
+function card(user,it){const d=document.createElement('div');d.className='c';const h=document.createElement('strong');h.textContent=it.month+' \xB7 #'+it.place+' \xB7 '+(it.name||'(sem nome)')+' \xB7 score '+it.score+' \xB7 '+it.credits+' Cr\xE9ditos';d.appendChild(h);
+const p=it.progresso;line(d,p?('Lastro do m\xEAs: come\xE7ou na camada '+p.base+', '+p.camadasComecadas+' camadas come\xE7adas, recorde do servidor '+p.recordeDoServidor):'Sem lastro registrado (o servidor n\xE3o viu esta conta descer neste m\xEAs)');
+line(d,'Hist\xF3rico: '+(it.historico.length?it.historico.map(h=>h.month+' \u2192 '+h.best).join(' \xB7 '):'sem meses anteriores no ranking'));
+line(d,'Situa\xE7\xE3o: '+it.status+(it.refused?(' (recusado: '+it.refused+')'):''),it.status==='paid'?'ok':(it.status==='rejected'?'no':''));
+if(it.status==='pending'){const a=document.createElement('button');a.textContent='Aprovar e creditar';a.onclick=()=>act(user,it,'approve');const r=document.createElement('button');r.textContent='Rejeitar';r.onclick=()=>act(user,it,'reject');d.appendChild(a);d.appendChild(r);}return d;}
+async function load(user){const t=await user.getIdToken();const r=await fetch('/api/gm-rift-payout',{headers:{Authorization:'Bearer '+t}});
+if(r.status===403){$('s').textContent='Acesso negado.';return;}if(!r.ok){$('s').textContent='Erro '+r.status;return;}
+const j=await r.json();if(!$('s').textContent.startsWith('Resultado'))$('s').textContent=j.items.length?'':'Nada a revisar.';$('l').textContent='';j.items.forEach(i=>$('l').appendChild(card(user,i)));}
+const cfg=${cfgJson};
+if(!cfg.apiKey){$('s').textContent='Firebase n\xE3o configurado (FIREBASE_API_KEY / FIREBASE_AUTH_DOMAIN).';}else{
+firebase.initializeApp(cfg);firebase.auth().onAuthStateChanged(u=>{if(u){load(u);}else{$('s').innerHTML='';const b=document.createElement('button');b.textContent='Entrar com Google';b.onclick=()=>firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider());$('s').appendChild(b);}});}
+<\/script></body></html>`;
+  return new Response(html, { headers: gmHeaders(nonce) });
+}
+__name(onRequestGet9, "onRequestGet");
+
+// gm/soulmons.js
+async function onRequestGet10({ env }) {
+  const nonce = gmNonce();
+  const cfg = { apiKey: env?.FIREBASE_API_KEY || "", authDomain: env?.FIREBASE_AUTH_DOMAIN || "", projectId: env?.FIREBASE_PROJECT_ID || "" };
+  const cfgJson = JSON.stringify(cfg).replace(/</g, "\\u003c");
+  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>GM \xB7 Soulmons gerados</title>
+<style>body{font:14px system-ui;margin:16px;background:#14121c;color:#eee}button{padding:8px 14px}#g{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-top:14px}
+.c{background:#201c2e;border-radius:8px;padding:8px;word-break:break-all}.c img{width:100%;aspect-ratio:1;object-fit:contain;background:#0006;border-radius:6px}.m{opacity:.7;font-size:12px}</style></head><body>
+<h1>Soulmons gerados</h1><div id="s">Carregando\u2026</div><div id="g"></div><button id="more" hidden>Carregar mais</button>
+${firebaseScripts(nonce)}
+<script nonce="${nonce}">
+const $=id=>document.getElementById(id);let cursor=null;
+function card(i){const d=document.createElement('div');d.className='c';const im=document.createElement('img');im.src=i.image;im.loading='lazy';im.alt='';d.appendChild(im);
+for(const t of [i.name||'(sem nome)',i.email||'(sem e-mail: gera\xE7\xE3o antiga)',i.formId+(i.provider?' \xB7 '+i.provider:''),i.at?new Date(i.at).toLocaleString('pt-BR'):'']){const p=document.createElement('div');p.className='m';p.textContent=t;d.appendChild(p);}return d;}
+async function load(user){const t=await user.getIdToken();const r=await fetch('/api/gm-soulmons'+(cursor?'?cursor='+encodeURIComponent(cursor):''),{headers:{Authorization:'Bearer '+t}});
+if(r.status===403){$('s').textContent='Acesso negado.';return;}if(!r.ok){$('s').textContent='Erro '+r.status;return;}
+const j=await r.json();$('s').textContent='';j.items.forEach(i=>$('g').appendChild(card(i)));cursor=j.cursor;$('more').hidden=!cursor;}
+const cfg=${cfgJson};
+if(!cfg.apiKey){$('s').textContent='Firebase n\xE3o configurado (FIREBASE_API_KEY / FIREBASE_AUTH_DOMAIN).';}else{
+firebase.initializeApp(cfg);firebase.auth().onAuthStateChanged(u=>{if(u){load(u);$('more').onclick=()=>load(firebase.auth().currentUser);}else{$('s').innerHTML='';const b=document.createElement('button');b.textContent='Entrar com Google';b.onclick=()=>firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider());$('s').appendChild(b);}});}
+<\/script></body></html>`;
+  return new Response(html, { headers: gmHeaders(nonce) });
+}
+__name(onRequestGet10, "onRequestGet");
 
 // .well-known/assetlinks.json.js
 var DEFAULT_PACKAGE = "com.soulmon";
-async function onRequest7({ env }) {
+async function onRequest8({ env }) {
   const packageName = env?.ASSETLINKS_PACKAGE_NAME || DEFAULT_PACKAGE;
   const fingerprint = env?.ASSETLINKS_SHA256;
   const alvos = fingerprint ? [{
@@ -11376,9 +12644,9 @@ async function onRequest7({ env }) {
     }
   });
 }
-__name(onRequest7, "onRequest");
+__name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-acaG5C/functionsRoutes-0.16933600723650222.mjs
+// ../.wrangler/tmp/pages-8Ux7zI/functionsRoutes-0.8556028186383864.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -11500,6 +12768,27 @@ var routes = [
     modules: [onRequestPost5]
   },
   {
+    routePath: "/api/gm-rift-payout",
+    mountPath: "/api",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet5]
+  },
+  {
+    routePath: "/api/gm-rift-payout",
+    mountPath: "/api",
+    method: "POST",
+    middlewares: [],
+    modules: [onRequestPost6]
+  },
+  {
+    routePath: "/api/gm-soulmons",
+    mountPath: "/api",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet6]
+  },
+  {
     routePath: "/api/guild",
     mountPath: "/api",
     method: "OPTIONS",
@@ -11521,32 +12810,39 @@ var routes = [
     modules: [onRequestOptions4]
   },
   {
-    routePath: "/api/rtdn",
-    mountPath: "/api",
-    method: "POST",
-    middlewares: [],
-    modules: [onRequestPost6]
-  },
-  {
-    routePath: "/api/save",
+    routePath: "/api/rankings",
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
     modules: [onRequestOptions11]
   },
   {
-    routePath: "/api/sprite-admin",
+    routePath: "/api/rtdn",
     mountPath: "/api",
     method: "POST",
     middlewares: [],
     modules: [onRequestPost7]
   },
   {
+    routePath: "/api/save",
+    mountPath: "/api",
+    method: "OPTIONS",
+    middlewares: [],
+    modules: [onRequestOptions12]
+  },
+  {
+    routePath: "/api/sprite-admin",
+    mountPath: "/api",
+    method: "POST",
+    middlewares: [],
+    modules: [onRequestPost8]
+  },
+  {
     routePath: "/api/sprite-image",
     mountPath: "/api",
     method: "GET",
     middlewares: [],
-    modules: [onRequestGet5]
+    modules: [onRequestGet7]
   },
   {
     routePath: "/api/subscribe",
@@ -11560,56 +12856,70 @@ var routes = [
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
-    modules: [onRequestOptions12]
+    modules: [onRequestOptions13]
   },
   {
     routePath: "/api/subscribe",
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost8]
-  },
-  {
-    routePath: "/api/suggest-tasks",
-    mountPath: "/api",
-    method: "OPTIONS",
-    middlewares: [],
-    modules: [onRequestOptions13]
-  },
-  {
-    routePath: "/api/suggest-tasks",
-    mountPath: "/api",
-    method: "POST",
-    middlewares: [],
     modules: [onRequestPost9]
   },
   {
-    routePath: "/api/top-ai",
-    mountPath: "/api",
-    method: "GET",
-    middlewares: [],
-    modules: [onRequestGet6]
-  },
-  {
-    routePath: "/api/transcribe",
+    routePath: "/api/suggest-tasks",
     mountPath: "/api",
     method: "OPTIONS",
     middlewares: [],
     modules: [onRequestOptions14]
   },
   {
-    routePath: "/api/transcribe",
+    routePath: "/api/suggest-tasks",
     mountPath: "/api",
     method: "POST",
     middlewares: [],
     modules: [onRequestPost10]
   },
   {
+    routePath: "/api/top-ai",
+    mountPath: "/api",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet8]
+  },
+  {
+    routePath: "/api/transcribe",
+    mountPath: "/api",
+    method: "OPTIONS",
+    middlewares: [],
+    modules: [onRequestOptions15]
+  },
+  {
+    routePath: "/api/transcribe",
+    mountPath: "/api",
+    method: "POST",
+    middlewares: [],
+    modules: [onRequestPost11]
+  },
+  {
+    routePath: "/gm/rift",
+    mountPath: "/gm",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet9]
+  },
+  {
+    routePath: "/gm/soulmons",
+    mountPath: "/gm",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet10]
+  },
+  {
     routePath: "/.well-known/assetlinks.json",
     mountPath: "/.well-known",
     method: "",
     middlewares: [],
-    modules: [onRequest7]
+    modules: [onRequest8]
   },
   {
     routePath: "/api/account",
@@ -11647,11 +12957,18 @@ var routes = [
     modules: [onRequest2]
   },
   {
-    routePath: "/api/save",
+    routePath: "/api/rankings",
     mountPath: "/api",
     method: "",
     middlewares: [],
     modules: [onRequest6]
+  },
+  {
+    routePath: "/api/save",
+    mountPath: "/api",
+    method: "",
+    middlewares: [],
+    modules: [onRequest7]
   }
 ];
 

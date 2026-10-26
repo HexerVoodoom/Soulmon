@@ -9,72 +9,15 @@
  * Score do ranking = desafios vencidos + `ROGUE_FLOOR_BONUS` por andar concluído (máx. `ROGUE_MAX_SCORE`).
  */
 import { dungeonFight, dungeonFightSeed } from './dungeonFight';
-import { dungeonFoe } from './dungeon';
+import { dungeonFoe } from './dungeonBase';
 import { ARENA_SKILL_ODDS, familyOfSkill } from './arena';
 import type { DodgeGrade, RingGrade } from './energia';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
 import { mulberry32 } from './combate/rng';
 import type { Combatant } from './combate/curve';
 
-export const ROGUE_FLOORS = 3;
-export const ROGUE_PER_FLOOR = 8;
-export const ROGUE_MAX_STEPS = ROGUE_FLOORS * ROGUE_PER_FLOOR; // 24
-export const ROGUE_COMBAT_EVERY = 3;
-export const ROGUE_FLOOR_BONUS = 3;
-export const ROGUE_MAX_SCORE = ROGUE_MAX_STEPS + ROGUE_FLOORS * ROGUE_FLOOR_BONUS; // 33 (espelho: functions/api/_rankings.js)
-
-export type PathKind = 'combat' | 'puzzle' | 'minigame' | 'explore';
-export type BonusKind = 'power' | 'vigor' | 'heal';
-export const PATH_KINDS: readonly PathKind[] = ['combat', 'puzzle', 'minigame', 'explore'];
-export const BONUS_KINDS: readonly BonusKind[] = ['power', 'vigor', 'heal'];
-
-/** Cada `power` = +6% ATK, cada `vigor` = +10% HP, cada `heal` = escudo de 15% do HP no próximo combate. */
-export const POWER_STEP = 0.06;
-export const VIGOR_STEP = 0.1;
-export const HEAL_SHIELD = 0.15;
-
-export interface RogueRun {
-  /** Dia do jogador (ISO) a que a incursão pertence. */
-  day: string;
-  /** Passos já resolvidos (vencidos ou errados), 0..24. */
-  step: number;
-  /** Desafios vencidos. */
-  won: number;
-  /** Combate perdido = dia encerrado. */
-  over: boolean;
-  power: number;
-  vigor: number;
-  /** Escudos de cura guardados (1 consumido por combate). */
-  shield: number;
-  /** Há um bônus a escolher antes do próximo passo. */
-  bonusPending: boolean;
-  /** Bits do fim da incursão já pagos (uma vez). */
-  paid: boolean;
-  /**
-   * Desafio EM CURSO (gravado ao entrar nele, antes de jogar). Sair/desmontar/fechar o app sem terminar CONSOME o passo
-   * (`consumePending`): nada de re-tentar o mesmo desafio de graça nem de espiar o jogo de cada caminho. Opcional: save antigo não tem.
-   */
-  pending?: PathKind;
-}
-
-export const emptyRun = (day: string): RogueRun => ({ day, step: 0, won: 0, over: false, power: 0, vigor: 0, shield: 0, bonusPending: false, paid: false });
-
-const int = (v: unknown, max: number): number => (typeof v === 'number' && Number.isFinite(v) ? Math.max(0, Math.min(max, Math.floor(v))) : 0);
-
-/** Leitura tolerante do save: lixo vira `undefined`; números ficam dentro dos tetos. */
-export function sanitizeRogueRun(raw: unknown): RogueRun | undefined {
-  if (!raw || typeof raw !== 'object') return undefined;
-  const r = raw as Record<string, unknown>;
-  if (typeof r.day !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(r.day)) return undefined;
-  const step = int(r.step, ROGUE_MAX_STEPS);
-  const won = Math.min(int(r.won, ROGUE_MAX_STEPS), step);
-  return {
-    day: r.day, step, won, over: r.over === true,
-    power: int(r.power, ROGUE_MAX_STEPS), vigor: int(r.vigor, ROGUE_MAX_STEPS), shield: int(r.shield, ROGUE_MAX_STEPS),
-    bonusPending: r.bonusPending === true, paid: r.paid === true,
-    ...(typeof r.pending === 'string' && (PATH_KINDS as readonly string[]).includes(r.pending) && r.pending !== 'combat' ? { pending: r.pending as PathKind } : {}),
-  };
-}
+export * from './rogueDungeonSave';
+import { ROGUE_FLOORS, ROGUE_PER_FLOOR, ROGUE_MAX_STEPS, ROGUE_COMBAT_EVERY, ROGUE_FLOOR_BONUS, ROGUE_MAX_SCORE, PATH_KINDS, BONUS_KINDS, emptyRun, type PathKind, type BonusKind, type RogueRun } from './rogueDungeonSave';
 
 /** A incursão de HOJE: a guardada se for do mesmo dia, senão uma nova (sem bônus). */
 export const runForDay = (saved: RogueRun | undefined, day: string): RogueRun => (saved && saved.day === day ? saved : emptyRun(day));
@@ -222,3 +165,6 @@ export function challengeFor(day: string, step: number, kind: LightKind): RogueC
   const game = pool[Math.floor(rng() * pool.length)];
   return { kind, game, goal: goalFor(game, floorOf(step)) };
 }
+
+// No fim de propósito: `qa.masmorraFoco.test.ts` exige que POWER_STEP/VIGOR_STEP/HEAL_SHIELD só apareçam DEPOIS de `simulateRogueCombat`.
+import { POWER_STEP, VIGOR_STEP, HEAL_SHIELD } from './rogueDungeonSave';

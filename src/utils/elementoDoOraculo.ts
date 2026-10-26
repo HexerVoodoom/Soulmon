@@ -9,7 +9,7 @@
  * ⚠️ `derivedElements.ts` NÃO importa este arquivo (ciclo): ele importa o tipo de lá, e `ELEMENT_BRIDGE` (pesos) é
  * conferido por teste de consistência.
  */
-import { elementoConhecido } from './soulProfile/ficha/elementoNome';
+import { elementoConhecidoLeve as elementoConhecido } from './soulProfile/ficha/elementoIds';
 
 /** Um elemento só-do-oráculo novo obriga uma entrada aqui (erro de compilação). */
 // ⚠️ 25/10/2026: planta e industrial viraram BASE do class-system (a ficha agora as pontua como elas mesmas — ver

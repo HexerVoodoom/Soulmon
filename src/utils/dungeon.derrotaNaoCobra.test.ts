@@ -32,14 +32,14 @@ describe('masmorra — perder não cobra coração (WP4.20)', () => {
     // O arquivo INTEIRO, e não só o cabeçalho: é o comando de aceite do WP4.20.
     // Nem a nota histórica pode repetir as frases — foi por isso que o WP4.9
     // teve de reescrever o próprio aceite (a agulha dentro do comando).
-    const fonte = ler('src/utils/dungeon.ts');
+    const fonte = ler('src/utils/dungeonBase.ts');
     for (const mentira of ['resets monthly', 'daily play limit', 'costs a real heart']) {
       expect(fonte, `\`dungeon.ts\` voltou a dizer "${mentira}"`).not.toContain(mentira);
     }
   });
 
   it('o cabeçalho diz o que o arquivo faz: sem limite, sem gate além da energia por camada (REGISTRO §31)', () => {
-    const fonte = ler('src/utils/dungeon.ts');
+    const fonte = ler('src/utils/dungeonBase.ts');
     expect(fonte).toMatch(/no per-day cap.*no entry gate besides the\s*\/\/\s*energy each layer spends — never a heart, never Bits/s);
     // A base semanal saiu (11/10/2026): nada de reset mensal voltando no lugar dela.
     expect(fonte).not.toMatch(/function monthKey/);

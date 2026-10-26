@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import { buildNightmareWave } from './nightmareWave';
 import {
   NIGHTMARES_PER_NIGHT,
   NIGHTMARE_MAX_HEART_CURE,
-  buildNightmareWave,
   createNightmareState,
   hasPendingNightmare,
   markFought,
