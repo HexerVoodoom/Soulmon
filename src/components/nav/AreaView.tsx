@@ -417,7 +417,7 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'guerra' && (
               <GuildSheet room="guerra" language={language} {...props.guild} />
             )}
-            {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={props.play.minigameBitsToday} onStart={() => (props.ocupado?.missaoFora ? props.ocupado.onBusy('masmorra-em-missao') : start('masmorra'))} />}
+            {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={props.play.minigameBitsToday} onStart={() => start('masmorra')} />}
           </Suspense>
         </AreaSheet>
         {game === 'masmorra' && (
