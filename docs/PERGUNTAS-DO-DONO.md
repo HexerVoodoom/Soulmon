@@ -569,3 +569,8 @@ P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
 - ⏳ **Prêmio da Fenda — revisão na página GM:** o fechamento mensal agora só grava o top 3 como pendente; você aprova em `/gm/rift` (login Google, mesmo `ADMIN_EMAILS`). A página mostra a progressão do lastro; "o servidor não viu esta conta descer neste mês" é sinal para desconfiar. O limite honesto está no REGISTRO §172.
 - ⏳ **Teto de score por jogo (R1):** valores propostos em `MAX_SCORE_BY_GAME` (`_rankings.js`): Obstacle Run 100 000 por nível, PPT 200, Combina 3 100 000, Eco 100, Chuva de Almas 50 000. Folgados de propósito; calibre com dado real.
 - ⏳ **Ranking de Zip e Patches (decisão 5):** semanal, **tempo em ms de resolução** (menor vence), só em grade **6×6** (todos comparam a mesma grade; os níveis 4×4 a 8×8 existem). Aceito entre 2 s e 30 min. Sem faixas (madeira…diamante), porque tempo não tem escada. Mude `TIME_RANK_SIZE` (`src/utils/rankings.ts`) se preferir outra grade.
+
+## QA beta3 — respondidas (26/10/2026, modal)
+- ✅ Texto de privacidade do e-mail no sprite APROVADO: publicado em `public/privacidade.html` (§6d, `#image-email`/`#imagem-email`), `PRIVACY_VERSION` → `2026-10-26`, gravação do e-mail religada (`GRAVAR_EMAIL_DO_SPRITE`).
+- ✅ Simulados aprovados; trocados os apelidos `sim_0006` (tiagoVoz → Kael_Rune) e `sim_0043` (Bruna → Mika_Sora).
+- ✅ Ranking de Zip/Patches por tempo só no 6×6. ✅ Tetos de score por jogo aceitos. ✅ Merge na main assim que a régua de bytes passar.

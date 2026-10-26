@@ -98,9 +98,9 @@ const GEMINI_MODEL = 'gemini-2.5-flash-image';
 // escrita inofensiva. Fechar isso exigiria Durable Object — a mesma peça, e a
 // mesma recusa, do `adr-conta-e-save.md` §3.
 const CACHE_PREFIX = 'sprite:img:';
-/** E-mail no registro da geração (página GM). DESLIGADO até o dono aprovar o texto da política de privacidade
- *  (docs/PERGUNTAS-DO-DONO.md) e subir PRIVACY_VERSION — decisão de 26/10/2026. */
-const GRAVAR_EMAIL_DO_SPRITE = false;
+/** E-mail no registro da geração (página GM). Ligado em 26/10/2026: o dono aprovou o texto
+ *  da política (privacidade.html §6d, #image-email) e PRIVACY_VERSION subiu para 2026-10-26. */
+const GRAVAR_EMAIL_DO_SPRITE = true;
 const LOCK_PREFIX = 'sprite:lock:';
 /** Binário republicado do caminho Gemini. Chave por TOKEN aleatório, não por
  *  saveId: o `saveId` é SHA-256 de e-mail (derivável por quem souber o e-mail),
