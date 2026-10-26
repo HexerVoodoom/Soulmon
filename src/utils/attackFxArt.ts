@@ -74,7 +74,7 @@ export const attackFx = (
 /** @deprecated nome anterior; hoje cobre base e derivados. */
 export const derivedAttackFx = attackFx;
 
-/** Quantas peças o glob encontrou — guard de instalação (18 base incl. neutro + 136 derivados) × 6 = 924. */
+/** Quantas peças o glob encontrou — guard de instalação (18 base incl. neutro + 136 derivados + 76 novos de 26/10/2026 = 230) × 6 = 1380. */
 export const ATTACK_FX_COUNT = Object.keys(ATTACK_FX).length;
 /** Quantas auras 96² o glob encontrou (R2-3: uma por elemento com `-aura.png`). */
 export const AURA_96_COUNT = Object.keys(AURA_96).length;

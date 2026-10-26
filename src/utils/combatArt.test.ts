@@ -27,8 +27,8 @@ describe('combatArt — cenário, escudo e plataforma por elemento (rodada 2, 04
     expect(combatShadow('fogo')).toMatch(/sombra-clara\.png$/);
     expect(combatShadow(null)).toMatch(/sombra-clara\.png$/);
   });
-  it('ícones de elemento: os 17 base passaram a existir (154 = 17 + 136 + neutro)', () => {
-    expect(elementIconIds().length).toBe(154);
+  it('ícones de elemento: os 17 base passaram a existir (230 = 17 + 136 + neutro)', () => {
+    expect(elementIconIds().length).toBe(230);
     for (const el of VISUAL_ELEMENTS) expect(elementIcon(el), el).toBeDefined();
   });
 });

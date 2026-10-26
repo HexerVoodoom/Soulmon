@@ -123,3 +123,6 @@ orb; GPT Image 2.5 Flare, alfa REAL). `fx-espectro`: canônica é a sem `-v`
   magenta (r>g+40 e b>g+40) caiu de 75% (antigo) para < 5%. `fogo_feiticeiro`
   é o único acima de 5% (15%).
 - Pranchas: `E:\Soulmon-assets\out\instalacao-20261004\combate\prancha-fx-*.png`.
+
+## Beta3 — 76 novos (ChatGPT), instalado 26/10/2026
+76 elementos x (6 estados 128² + aura-96) copiados; `fxFacingTable.ts` regerada por `scripts/fx-facing.mjs`.

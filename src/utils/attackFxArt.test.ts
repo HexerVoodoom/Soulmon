@@ -11,7 +11,7 @@ import { attackFx, auraForElement, ATTACK_FX_COUNT, AURA_96_COUNT, ATTACK_FX_STA
 
 describe('attackFxArt', () => {
   it('as 924 peças estão no mapa (17 base + neutro + 136 derivados, × 6 estados)', () => {
-    expect(ATTACK_FX_COUNT).toBe(924);
+    expect(ATTACK_FX_COUNT).toBe(1380);
   });
 
   it('todo elemento BASE tem os 6 estados encontráveis pela chave `<id>:<estado>`', () => {
@@ -35,9 +35,9 @@ describe('attackFxArt', () => {
     expect(auraForElement('elemento-que-nao-existe')).toBeUndefined();
   });
 
-  it('R2-3: uma aura 96² por elemento com `-aura.png` (154), separada do mapa 128² e servida por `size: 96`', () => {
-    expect(AURA_96_COUNT).toBe(154);
-    expect(ATTACK_FX_COUNT).toBe(924); // a -aura-96 NÃO entra como 7º estado
+  it('R2-3: uma aura 96² por elemento com `-aura.png` (230), separada do mapa 128² e servida por `size: 96`', () => {
+    expect(AURA_96_COUNT).toBe(230);
+    expect(ATTACK_FX_COUNT).toBe(1380); // a -aura-96 NÃO entra como 7º estado
     expect(auraForElement('fogo', 96)).toMatch(/fx-fogo-aura-96\.png$/);
     expect(auraForElement('planta', 96)).toMatch(/fx-vida-aura-96\.png$/);
     expect(auraForElement('fogo', 128)).toMatch(/fx-fogo-aura\.png$/);

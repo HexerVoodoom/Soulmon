@@ -607,3 +607,5 @@ Vibe de cada base (para o bloco COLORS do prompt):
 
 **Prédios e NPCs:** esta mudança não cria nenhum. Regra do dono (25/10/2026): todo Soulmon,
 prédio ou NPC novo entra **nesta fila** com prompt e destino antes de ir para o código.
+
+> Atualização 26/10/2026: os 76 elementos novos (ícone + FX) dos ELEMENTOS compostos/especiais foram INSTALADOS (arte em `elementos/` e `fx-ataque/`); fada/industrial/planta continuam fora de `VISUAL_ELEMENTS` (faltam escudo e cenário).

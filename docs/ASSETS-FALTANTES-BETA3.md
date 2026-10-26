@@ -63,11 +63,11 @@ Reaproveitados (já existem): tiro do jogador `fx-ataque/fx-<el>-orb.png`, impac
 
 | id | Nome | Serve para | Estado | Transp. | Tamanho alvo | Prio |
 |---|---|---|---|---|---|---|
-| R4-01 | Mapa do Calabouço (fundo desenhado, 3 pontos e trilha) | Tela cheia do Calabouço | FALTA. Prompt §8. Provisório `bg/dungeon-interior-templo.png` + `mapa/bg-mapa.png` (existem) | N | 9:16, 1080x1920 | P1 |
-| P1-05 | Fundo rolável do Soul Barrage (tile vertical sem emenda) | Soul Barrage | FALTA. Provisório `bg/minigame-dino.png` (existe) | N | 9:16, 1080x1920 | P1 |
-| P2-03 | Bifurcação com 3 túneis | Dungeon (escolha de caminho) | FALTA. Provisório `bg/dungeon-interior-templo.png` | N | 9:16, 1080x1920 | P2 |
-| P2-04 / P2-05 / P2-06 | Andares 1, 2 e 3 do Dungeon | Dungeon (combate) | FALTA. Provisório `bg/dungeon-interior-forja.png`, `dungeon-interior-biblioteca.png`, `dungeon-6.png` (existem) | N | 9:16, 1080x1920 cada | P2 |
-| P2-10 | Fundo rolável 2 do Soul Barrage (tempestade) | Barrage, ondas finais | FALTA. Gerar só depois de aprovado P1-05 | N | 9:16, 1080x1920 | P2 |
+| R4-01 | Mapa do Calabouço (fundo desenhado, 3 pontos e trilha) | Tela cheia do Calabouço | INSTALADO (26/10/2026) em `bg/calabouco-mapa.png`. Provisório `bg/dungeon-interior-templo.png` + `mapa/bg-mapa.png` (existem) | N | 9:16, 1080x1920 | P1 |
+| P1-05 | Fundo rolável do Soul Barrage (tile vertical sem emenda) | Soul Barrage | INSTALADO (26/10/2026; destinos em PROMPTS-BETA3). Provisório `bg/minigame-dino.png` (existe) | N | 9:16, 1080x1920 | P1 |
+| P2-03 | Bifurcação com 3 túneis | Dungeon (escolha de caminho) | INSTALADO (26/10/2026; destinos em PROMPTS-BETA3). Provisório `bg/dungeon-interior-templo.png` | N | 9:16, 1080x1920 | P2 |
+| P2-04 / P2-05 / P2-06 | Andares 1, 2 e 3 do Dungeon | Dungeon (combate) | INSTALADO (26/10/2026; destinos em PROMPTS-BETA3). Provisório `bg/dungeon-interior-forja.png`, `dungeon-interior-biblioteca.png`, `dungeon-6.png` (existem) | N | 9:16, 1080x1920 cada | P2 |
+| P2-10 | Fundo rolável 2 do Soul Barrage (tempestade) | Barrage, ondas finais | INSTALADO (26/10/2026; destinos em PROMPTS-BETA3). Gerar só depois de aprovado P1-05 | N | 9:16, 1080x1920 | P2 |
 | R4-07 | Fundo do novo PPT | PPT | **JÁ EXISTE e serve**: `bg/minigame-rps.png`. A tela nova põe o campo do duelo no meio, e um fundo de cenário sem personagens cabe. Gerar o fundo condicional (§8) só se o dono reprovar o atual olhando a tela montada | N | 9:16 | só se reprovar |
 | R4-07b | Fundo do Soul Barrage | Barrage | Coberto por P1-05 (acima) | N | — | — |
 

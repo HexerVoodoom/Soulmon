@@ -103,3 +103,6 @@ Fonte: `E:\Soulmon-assets\entrada-dono\elementos-el\` (17 folhas 4×2, ordem em
   em violeta (cronomancia, fogo_feiticeiro, singularidade, pacto, portal…), como
   já saíam na leva antiga; os de Tempo trazem ampulheta (não é relógio).
 - Prancha: `E:\Soulmon-assets\out\instalacao-20261004\combate\prancha-elementos*.png`.
+
+## Beta3 — 76 novos (ChatGPT), instalado 26/10/2026
+76 ícones `el-*.png` (96²) copiados. Total de elementos: 230.
