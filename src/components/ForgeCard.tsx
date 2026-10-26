@@ -7,7 +7,8 @@
  *
  * O bônus mostrado é HONESTO: o que as peças dão por atributo e o que vale em luta depois do teto único de 5% somado ao talento.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { isDemoMode, demoRefusalText } from '../utils/demoMode';
 import { bondLevelFor } from '../utils/bond';
@@ -56,6 +57,18 @@ const SPARKS = Array.from({ length: 10 }, (_, i) => ({ dx: `${(i - 4.5) * 14}px`
 
 /** O que a pessoa está decidindo agora: aprimorar a peça (próximo nível) ou refazer a escolha de um nível. */
 type Dialog = { mode: 'upgrade'; id: string } | { mode: 'reforge'; id: string } | { mode: 'redo'; id: string; level: number };
+
+/** O casco dos modais do Soulsmith: `role=dialog` com Esc, foco de entrada/retorno e fundo inerte (`useDialogA11y`); clicar no véu fecha. */
+function ForgeDialogShell({ mode, onClose, children }: { mode: string; onClose: () => void; children: ReactNode }) {
+  const ref = useDialogA11y<HTMLDivElement>(true, onClose);
+  return (
+    <div ref={ref} role="dialog" aria-modal="true" aria-labelledby="sm2-forge-dlg" data-forge-dialog={mode}
+      style={{ position: 'fixed', inset: 0, zIndex: 400, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'rgba(0,0,0,.55)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      {children}
+    </div>
+  );
+}
 
 export default function ForgeCard({ language = 'pt-BR' }: { language?: string }) {
   const ctx = useGameStateOptional();
@@ -208,9 +221,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
       const lvNow = levelNow(view, piece.id);
       const esc = pieceChoices(piece.id, lvNow, gameState.forge);
       return (
-        <div role="dialog" aria-modal="true" aria-labelledby="sm2-forge-dlg" data-forge-dialog="reforge"
-          style={{ position: 'fixed', inset: 0, zIndex: 400, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'rgba(0,0,0,.55)' }}
-          onClick={(e) => { if (e.target === e.currentTarget) setDialog(null); }}>
+        <ForgeDialogShell mode="reforge" onClose={() => setDialog(null)}>
           <div className="sm2-stats-card" style={{ width: '100%', maxWidth: 420, maxHeight: '88vh', overflowY: 'auto', margin: 0, padding: 16, display: 'grid', gap: 10 }}>
             <h3 id="sm2-forge-dlg" style={{ margin: 0, fontWeight: 500 }}>{isPt ? `Reforjar ${nome}` : `Reforge ${nome}`}</h3>
             <p className="sm2-stats-s" style={{ margin: 0 }}>{isPt ? 'Escolha o nível cuja escolha você quer refazer.' : 'Pick the level whose choice you want to redo.'}</p>
@@ -234,7 +245,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
               <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-forge-cancel onClick={() => setDialog(null)}>{isPt ? 'Fechar' : 'Close'}</button>
             </div>
           </div>
-        </div>
+        </ForgeDialogShell>
       );
     }
     const alvo = dialog.mode === 'upgrade' ? levelNow(view, piece.id) + 1 : dialog.level;
@@ -245,9 +256,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
     const refFrag = dialog.mode === 'redo' ? redoRefusal(view, piece.id, dialog.level, escolha, 'fragments') : undefined;
     const precoBits = redoBitsPrice(piece.id, picks);
     return (
-      <div role="dialog" aria-modal="true" aria-labelledby="sm2-forge-dlg" data-forge-dialog={dialog.mode}
-        style={{ position: 'fixed', inset: 0, zIndex: 400, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'rgba(0,0,0,.55)' }}
-        onClick={(e) => { if (e.target === e.currentTarget) setDialog(null); }}>
+      <ForgeDialogShell mode={dialog.mode} onClose={() => setDialog(null)}>
         <div className="sm2-stats-card" style={{ width: '100%', maxWidth: 420, maxHeight: '88vh', overflowY: 'auto', margin: 0, padding: 16, display: 'grid', gap: 10 }}>
           <h3 id="sm2-forge-dlg" style={{ margin: 0, fontWeight: 500 }}>
             {dialog.mode === 'upgrade'
@@ -310,7 +319,7 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
             )}
           </div>
         </div>
-      </div>
+      </ForgeDialogShell>
     );
   };
 

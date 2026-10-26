@@ -258,9 +258,9 @@ describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
     expect(onSleep).toHaveBeenCalledTimes(1);
     fireEvent.click(within(grupo).getByRole('button', { name: 'Banho' }));
     expect(onShower).toHaveBeenCalledTimes(1);
-    // lua → sol: dormindo, o mesmo botão acorda e diz que está ligado
+    // dormindo: o rótulo NÃO troca (QA R7: aria-pressed + rótulo trocado anunciava duas vezes); quem diz o estado é o aria-pressed
     rerender(<CompanionHUD {...base} isSleeping onSleep={onSleep} onShower={onShower} />);
-    const acordar = screen.getByRole('button', { name: 'Acender a luz' });
+    const acordar = screen.getByRole('button', { name: 'Apagar a luz' });
     expect(acordar.getAttribute('aria-pressed')).toBe('true');
   });
 

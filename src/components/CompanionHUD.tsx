@@ -1924,7 +1924,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                 className="sm3-stat"
                 data-stat="energy"
                 data-low={enBaixo || undefined}
-                aria-expanded={statAberto === 'hunger'}
+                aria-expanded={statAberto === 'energy'}
                 aria-controls="sm3-stat-tip"
                 onClick={() => setStatAberto(v => (v === 'energy' ? null : 'energy'))}
                 aria-label={isPt
@@ -2013,9 +2013,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             data-on={isSleeping || undefined}
             onClick={onSleep}
             aria-pressed={isSleeping}
-            aria-label={language === 'pt-BR'
-              ? (isSleeping ? 'Acender a luz' : 'Apagar a luz')
-              : (isSleeping ? 'Lights on' : 'Lights off')}
+            aria-label={language === 'pt-BR' ? 'Apagar a luz' : 'Lights off'}
           >
             {/* Dormindo, o botão vira "Acordar": o sol da rodada 3 (30/09/2026)
                 substituiu o glifo `wb_sunny` que esperava a arte. */}

@@ -172,9 +172,8 @@ export function CatalogBrowserModal({ isOpen, onClose, language = 'en-US', onAdd
                       {isPt ? item.name.pt : item.name.en}
                     </span>
                   </span>
-                  {/* D6: "Adicionar" mais baixo (32) — o cartão inteiro não
-                      precisa de um botão de 44 de altura para uma ação curta. */}
-                  <button type="button" disabled={jaTem.has(item.id)} onClick={() => requestAdd(item)} style={{ ...sm2Button('primary', jaTem.has(item.id), 'sm'), minHeight: 32, height: 32, padding: '0 12px' }}>
+                  {/* Alvo de toque ≥ 44 (QA R7): o `sm` do kit já dá 44 de altura. */}
+                  <button type="button" disabled={jaTem.has(item.id)} onClick={() => requestAdd(item)} style={{ ...sm2Button('primary', jaTem.has(item.id), 'sm'), padding: '0 12px' }}>
                     {jaTem.has(item.id) ? (isPt ? 'Adicionado' : 'Added') : (isPt ? 'Adicionar' : 'Add')}
                   </button>
                 </div>

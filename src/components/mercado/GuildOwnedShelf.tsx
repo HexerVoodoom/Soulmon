@@ -94,7 +94,7 @@ export function GuildOwnedShelf({ language, kind, ownership, actions }: {
               type="button"
               data-guild-owned-item={it.id}
               aria-pressed={equipped}
-              aria-label={`${it.name} — ${equipped ? (isPt ? 'Equipado' : 'Equipped') : (isPt ? 'Equipar' : 'Equip')}`}
+              aria-label={it.name}
               onClick={toggle}
               style={mainBtn}
             >

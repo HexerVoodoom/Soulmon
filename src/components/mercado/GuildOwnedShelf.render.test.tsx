@@ -43,7 +43,7 @@ describe('cenários da roda voltam ao jogo com a arte nova (D-27/W5-L7; antes D-
   it('equipar: tocar no cenário do Bosque chama onEquip com o id (o campo do save é do App)', () => {
     const onEquip = vi.fn();
     abrir({ stall: 'background', ownedBackgrounds: ['bg-room', 'bg-guild-mata'], equippedBackground: 'bg-room', onEquip });
-    fireEvent.click(within(secao('bg')!).getByRole('button', { name: /Mata — Equipar/ }));
+    fireEvent.click(within(secao('bg')!).getByRole('button', { name: 'Mata' }));
     expect(onEquip).toHaveBeenLastCalledWith('bg-guild-mata');
   });
 
@@ -74,12 +74,12 @@ describe('Concha da Maré: conquista, nunca compra', () => {
   it('possuída, aparece na Decoração, equipa no espaço `trophy` e desequipa', () => {
     const onEquipFurniture = vi.fn();
     const r = abrir({ stall: 'decoracao', ownedFurniture: [RAID_TROPHY_ID], onEquipFurniture });
-    fireEvent.click(within(secao('furniture')!).getByRole('button', { name: /Concha da Maré — Equipar/ }));
+    fireEvent.click(within(secao('furniture')!).getByRole('button', { name: 'Concha da Maré' }));
     expect(onEquipFurniture).toHaveBeenLastCalledWith(RAID_TROPHY_ID, 'trophy');
     r.unmount();
     const off = vi.fn();
     abrir({ stall: 'decoracao', ownedFurniture: [RAID_TROPHY_ID], equippedDecor: { trophy: RAID_TROPHY_ID }, onEquipFurniture: off });
-    fireEvent.click(within(secao('furniture')!).getByRole('button', { name: /Concha da Maré — Equipado/ }));
+    fireEvent.click(within(secao('furniture')!).getByRole('button', { name: 'Concha da Maré' }));
     expect(off).toHaveBeenLastCalledWith(null, 'trophy');
   });
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ModalSheet, Field, Segment, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { FrameSelector } from '../ui/AvatarFrame';
 import { UserAvatar } from '../ui/UserAvatar';
@@ -56,8 +56,18 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
   const nameOk = nameTrim.length >= 2;
   const nameCanSave = nameOk && nameTrim !== userName;
   /** Reserva no servidor antes de gravar: nome em uso por OUTRA conta é recusado com aviso; falha de rede não bloqueia (o servidor confere de novo ao publicar). */
+  /** Guarda de reentrada: blur + clique no Salvar disparavam `commitName` 2× (e 2 reservas) antes de o `userName` mudar. */
+  const savingName = useRef<string | null>(null);
   const commitName = async () => {
-    if (!onChangeName || !nameOk || nameTrim === userName) return;
+    if (!onChangeName || !nameOk || nameTrim === userName || savingName.current === nameTrim) return;
+    savingName.current = nameTrim;
+    try {
+      await commitNameInner();
+    } finally {
+      savingName.current = null;
+    }
+  };
+  const commitNameInner = async () => {
     try {
       await reserveNickname(saveId, nameTrim);
     } catch (e) {
@@ -68,7 +78,7 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
       }
     }
     setNameError(null);
-    onChangeName(nameTrim);
+    onChangeName?.(nameTrim);
     setNameSaved(true);
   };
 
@@ -100,6 +110,7 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
             <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
               <Field id="sm-profile-name" type="text" value={nameDraft} maxLength={24} autoComplete="nickname"
                 style={{ flex: 1 }}
+                warn={!!nameError} aria-invalid={nameError ? true : undefined} aria-describedby={nameError ? 'sm-profile-name-err' : undefined}
                 onChange={e => { setNameDraft(e.target.value); setNameSaved(false); setNameError(null); }}
                 onBlur={() => { void commitName(); }} />
               <button
@@ -112,7 +123,7 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
                 {nameSaved && !nameCanSave ? (isPt ? 'Salvo' : 'Saved') : (isPt ? 'Salvar' : 'Save')}
               </button>
             </div>
-            {nameError && <p role="alert" style={sm2Hint}>{nameError}</p>}
+            {nameError && <p id="sm-profile-name-err" role="alert" style={sm2Hint}>{nameError}</p>}
             <p style={sm2Hint}>{isPt ? 'É o nome que outros jogadores veem. Mínimo de 2 letras.' : 'The name other players see. At least 2 letters.'}</p>
           </>
         )}

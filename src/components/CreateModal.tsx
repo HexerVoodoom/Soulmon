@@ -363,6 +363,7 @@ export function StepsFields({
             <div key={step.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span className="sm2-num" style={{ ...sm2Hint, margin: 0, flexShrink: 0 }}>{index + 1}.</span>
               <Field type="text" value={step.label} onChange={(e) => onLabel(step.id, e.target.value)}
+                aria-label={`${isPt ? 'Passo' : 'Step'} ${index + 1}`}
                 placeholder={`${isPt ? 'Passo' : 'Step'} ${index + 1}`} />
               {/* "Remove step N": alvo 44 (achado 7), `close` 24 `muted` pelado. */}
               <button type="button" onClick={() => onDelete(step.id)}

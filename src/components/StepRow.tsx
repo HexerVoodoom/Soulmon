@@ -32,7 +32,7 @@ export function StepRow({ id, label, completed, onToggle, disabled = false, lang
         aria-checked={completed}
         aria-disabled={inert || undefined}
         aria-label={`${isPt ? (completed ? 'Etapa concluída' : 'Marcar etapa como concluída') : (completed ? 'Step completed' : 'Mark step as completed')}: ${label}`}
-        disabled={inert}
+        tabIndex={inert ? -1 : undefined}
         onClick={inert ? undefined : () => onToggle(id)}
         style={{
           width: 44, height: 44, padding: 0, flexShrink: 0, background: 'none', border: 'none',

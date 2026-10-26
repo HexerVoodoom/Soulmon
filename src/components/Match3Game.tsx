@@ -607,6 +607,8 @@ export function Match3Game({ language, evolutionStage, demoCharacterId, onEarnPo
           {isPt ? 'Placar' : 'Score'} <span data-m3-score={score}>{score}</span> · Bits <span data-m3-bits={bitsNow}>{bitsNow}</span>
         </span>
         {arena}
+        {/* A vez anunciada ao leitor de tela (QA R6): a região viva fica sempre montada; o banner visual segue aria-hidden. */}
+        <span role="status" className="sm2-sr-only" data-m3-turn-sr>{turnBanner?.text ?? ''}</span>
         {turnBanner && (
           <div
             aria-hidden="true"
