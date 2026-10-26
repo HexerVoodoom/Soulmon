@@ -199,7 +199,14 @@ describe('a escada: teto S3, ordem e degrau derivado', () => {
     // músicas de combate (19/10/2026): medidas já no alvo de masterização (pior formato: combate −28,0; pesadelo −28,1), trim 0
     expect(-28.0 + TRIM_MUSICAS_DE_COMBATE_DB.combate).toBeCloseTo(ALVO_MASTERIZACAO_MUSICA_LUFS_S, 0);
     expect(-28.1 + TRIM_MUSICAS_DE_COMBATE_DB.pesadelo).toBeCloseTo(ALVO_MASTERIZACAO_MUSICA_LUFS_S, 0);
-    expect(Object.keys(TRIM_MUSICAS_DE_COMBATE_DB).sort()).toEqual(['combate', 'pesadelo']);
+    // S18 (26/10/2026): masmorra/evolucao/meditacao, pior formato medido: −27,8 / −28,1 / −28,1; pior true peak −16,6 / −16,7 / −15,1
+    expect(-27.8 + TRIM_MUSICAS_DE_COMBATE_DB.masmorra).toBeCloseTo(ALVO_MASTERIZACAO_MUSICA_LUFS_S, 0);
+    expect(-28.1 + TRIM_MUSICAS_DE_COMBATE_DB.evolucao).toBeCloseTo(ALVO_MASTERIZACAO_MUSICA_LUFS_S, 0);
+    expect(-28.1 + TRIM_MUSICAS_DE_COMBATE_DB.meditacao).toBeCloseTo(ALVO_MASTERIZACAO_MUSICA_LUFS_S, 0);
+    expect(-16.6 + TRIM_MUSICAS_DE_COMBATE_DB.masmorra + GANHO_MUSICA_DB).toBeLessThanOrEqual(TETO_DBTP);
+    expect(-16.7 + TRIM_MUSICAS_DE_COMBATE_DB.evolucao + GANHO_MUSICA_DB).toBeLessThanOrEqual(TETO_DBTP);
+    expect(-15.1 + TRIM_MUSICAS_DE_COMBATE_DB.meditacao + GANHO_MUSICA_DB).toBeLessThanOrEqual(TETO_DBTP);
+    expect(Object.keys(TRIM_MUSICAS_DE_COMBATE_DB).sort()).toEqual(['combate', 'evolucao', 'masmorra', 'meditacao', 'pesadelo']);
   });
 
   it('o teto de true peak é o do S3, e a tolerância é a do §3.4', () => {

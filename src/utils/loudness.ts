@@ -102,7 +102,12 @@ export const OFFSET_MUSICA_EM_COMBATE_DB = -3.0;
  * dBTP; m4a com fade-out de 3 s no fim); pesadelo webm −28,1 / m4a −28,0 (integrado −28,4/−28,3; true peak −17,4/−17,2
  * dBTP; fade-out de 3 s). Resíduo ≤ 0,1 dB → 0. Com o ganho de reprodução: integrado pior −22,2, true peak pior −9,8 dBTP
  * (tema). Remasterizar = medir de novo. */
-export const TRIM_MUSICAS_DE_COMBATE_DB: Record<'combate' | 'pesadelo', number> = { combate: 0, pesadelo: 0 };
+export const TRIM_MUSICAS_DE_COMBATE_DB: Record<'combate' | 'pesadelo' | 'masmorra' | 'evolucao' | 'meditacao', number> = {
+  combate: 0, pesadelo: 0, masmorra: 0, evolucao: 0, meditacao: 0,
+};
+/* S18 (26/10/2026): masmorra/evolucao/meditacao masterizadas com ganho ÚNICO por faixa para ALVO_MASTERIZACAO_MUSICA_LUFS_S e
+ * medidas depois do encode (ffmpeg ebur128, LUFS-S mediano; webm / m4a): masmorra −28,0 / −27,8 (true peak −16,8 / −16,6),
+ * evolucao −28,0 / −28,1 (−16,7 / −16,7), meditacao −28,0 / −28,1 (−15,1 / −15,6). Resíduo ≤ 0,2 dB → trim 0. */
 
 /**
  * A ordem da escada, do mais alto ao mais baixo. Existe como declaração

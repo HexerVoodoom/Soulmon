@@ -9,6 +9,7 @@ import { MINI_FX, REFUGIO_SCENE_SUAVE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
 import { usePetScale } from '../../hooks/usePetScale';
 import { petScaleStyle } from '../../utils/spriteScale';
+import { entrarNaSuperficie } from '../../utils/musica';
 import {
   bolhasBits, bubbleProgress, hasEscaped, initialStaircase, recordOutcome, spawnBubble, timeLeftMs,
   BOLHAS_CALMA_INTERVAL_MS, BOLHAS_MAX_BITS, BOLHAS_POINTS_PER_BIT,
@@ -52,6 +53,7 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
   const isPt = language === 'pt-BR';
   const calma = mode === 'calma';
   const reduced = usePrefersReducedMotion();
+  useEffect(() => (calma ? entrarNaSuperficie('meditacao') : undefined), [calma]); // S18: só a variante calma (Refúgio) tem a trilha de meditação
   // Calma começa direto (não há o que explicar antes; as refs já nascem zeradas).
   const [phase, setPhase] = useState<Phase>(calma ? 'play' : 'intro');
   const [, setFrame] = useState(0);

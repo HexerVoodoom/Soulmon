@@ -574,3 +574,9 @@ P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
 - ✅ Texto de privacidade do e-mail no sprite APROVADO: publicado em `public/privacidade.html` (§6d, `#image-email`/`#imagem-email`), `PRIVACY_VERSION` → `2026-10-26`, gravação do e-mail religada (`GRAVAR_EMAIL_DO_SPRITE`).
 - ✅ Simulados aprovados; trocados os apelidos `sim_0006` (tiagoVoz → Kael_Rune) e `sim_0043` (Bruna → Mika_Sora).
 - ✅ Ranking de Zip/Patches por tempo só no 6×6. ✅ Tetos de score por jogo aceitos. ✅ Merge na main assim que a régua de bytes passar.
+
+## Beta3 som
+
+- **Escuta final das 3 trilhas novas (S18, 26/10/2026) — sua, nenhum agente ouviu:** "Dungeon Theme" (lobby/fim/retorno do Endless Rift e todo o Calabouço), "Evolution Theme" (acompanha a cerimônia, junto do estalo antigo) e "Meditation Theme" (Respiração e Bolhas calmas). Conferir em fone e no alto-falante do celular: volume relativo ao tema/combate, loop sem estalo, e se a Evolution Theme (30 s) casa com a cerimônia (3 s + cartão). Conservador: as lutas da descida continuam no "Stone Hall Combat"; o estalo `playEvolve` continua.
+- **Procedência das 3 trilhas:** de qual gerador/plano vieram? `Attributions.md` registra só "fornecida pelo dono" e hash; nada de licença afirmada.
+

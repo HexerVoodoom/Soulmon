@@ -173,7 +173,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   onExitToMap?: () => void;
 }) {
   // Música (11/10/2026): na masmorra toca o "Stone Hall Combat" (se o interruptor "Música" está ligado; 19/10/2026). Abrir o jogo é o gesto do jogador.
-  useEffect(() => entrarNaSuperficie('masmorra'), []);
 
   const isPt = language === 'pt-BR';
   const lang = isPt ? 'pt' : 'en';
@@ -673,6 +672,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     const t = setInterval(() => setAgora(Date.now()), 30_000);
     return () => clearInterval(t);
   }, [phase]);
+
+  // S18: lobby, fim da descida e retorno (intro/ended/away) tocam o "Dungeon Theme"; a descida (luta, entre lutas, entre andares: o
+  // intervalo é de 4 s) segue no "Stone Hall Combat" — trocar de faixa a cada andar seria barulho, não música.
+  const emDescida = phase === 'fight' || phase === 'enemy-down' || phase === 'floor-clear';
+  useEffect(() => entrarNaSuperficie(emDescida ? 'masmorra' : 'masmorra-mapa'), [emDescida]);
 
   const inStage = enemies.length > 0 && phase !== 'intro';
   const capBits = !!gs && minigameBitsToday(gs, playerDayKey(new Date(), gs.playerDayTz)) >= MINIGAME_BITS_PER_DAY;

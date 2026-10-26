@@ -5,6 +5,11 @@
  *     Masmorra, Arena,
  *     Torneio, Duelo ........ "combate" ("Stone Hall Combat", streaming, `musicaDeCombate.ts`)
  *     Pesadelo .............. "pesadelo" ("Stone Hall Nightmare", streaming, `musicaDeCombate.ts`)
+ *     Masmorra (lobby, fim, retorno)
+ *       e Calabouço ......... "masmorra" ("Dungeon Theme", S18; as LUTAS da descida seguem em `combate`)
+ *     Cerimônia de evolução . "evolucao" ("Evolution Theme", S18)
+ *     Meditação (Respiração,
+ *       Bolhas calmas) ...... "meditacao" ("Meditation Theme", S18)
  *
  * Este módulo é só a TABELA e o apply: não toca nada, não tem constante de loudness, não lê relógio. Quem toca é o
  * `tema.ts` (streaming, `busTema`) e o `musicaDeCombate.ts` (streaming, `busTrilha`); o loop de camadas de `trilha.ts`
@@ -27,7 +32,7 @@ import { pedirMusicaDeCombate } from './musicaDeCombate';
 import type { MusicaDeCombate } from './sonsAssets';
 
 /** `pesadelo` (15/10/2026): o convite e a luta do Pesadelo. `torneio`/`duelo` (19/10/2026): o lobby e a luta do PvP. */
-export type Superficie = 'casa' | 'masmorra' | 'arena' | 'pesadelo' | 'torneio' | 'duelo';
+export type Superficie = 'casa' | 'masmorra' | 'arena' | 'pesadelo' | 'torneio' | 'duelo' | 'masmorra-mapa' | 'evolucao' | 'meditacao';
 export type FaixaDeMusica = 'tema' | MusicaDeCombate;
 
 /** A tabela superfície → faixa de COMBATE (a que o interruptor de música liga). A Home não tem: é o tema. */
@@ -37,11 +42,16 @@ export const FAIXA_DE_COMBATE: Record<Exclude<Superficie, 'casa'>, MusicaDeComba
   torneio: 'combate',
   duelo: 'combate',
   pesadelo: 'pesadelo',
+  // S18 (26/10/2026, trilhas do dono): exploração da masmorra, cerimônia de evolução e meditação têm faixa própria.
+  'masmorra-mapa': 'masmorra',
+  evolucao: 'evolucao',
+  meditacao: 'meditacao',
 };
 
 /** Em combate a música desce o offset da política. O lobby do Torneio NÃO é luta. */
 export const SUPERFICIE_EM_COMBATE: Record<Superficie, boolean> = {
   casa: false, torneio: false, masmorra: true, arena: true, duelo: true, pesadelo: true,
+  'masmorra-mapa': false, evolucao: false, meditacao: false, // exploração/cerimônia/calma: sem o degrau de combate
 };
 
 /** Pura: a faixa que deve soar dada a superfície e a preferência única. `null` = silêncio. */

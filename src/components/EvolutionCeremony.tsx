@@ -8,6 +8,7 @@ import { Icon } from './ui/Icon';
 import { ritualLabel } from './ritual/RitualKit';
 import { sm2Button, sm2Hint } from './form/FormKit';
 import { fragmentsGatherLine, fragmentsSpentLine } from '../utils/soulFragment';
+import { entrarNaSuperficie } from '../utils/musica';
 import { SoulFragmentIcon } from './ui/SoulFragmentIcon';
 import evolutionBgVideo from '../assets/video/evolution-bg.mp4';
 import evolutionBgThumb from '../assets/video/evolution-bg-thumb.webp';
@@ -97,6 +98,8 @@ export function EvolutionCeremony({
   const [showNext, setShowNext] = useState(false);
   const [done, setDone] = useState(false);
   const evolvedRef = useRef(false);
+  // S18: o tema da cerimônia acompanha a cerimônia e o cartão final; fechar devolve a música anterior (crossfade).
+  useEffect(() => entrarNaSuperficie('evolucao'), []);
 
   const fromSprite = fromSpriteUrl ?? getSpriteForStage(fromStage, demoCharacterId);
   const toSprite = toSpriteUrl ?? getSpriteForStage(toStage, demoCharacterId);

@@ -413,6 +413,74 @@ export const MUSICAS_DE_COMBATE = {
       },
     ],
   },
-} as const satisfies Record<'combate' | 'pesadelo', ManifestoDeMusica>;
+  masmorra: {
+    nome: 'Dungeon Theme',
+    duracaoS: 223.61,
+    /** Exploração: respiro maior que o do combate, menor que o do tema da Home. */
+    pausaEntreVoltasS: 8,
+    fadeInS: 2,
+    origem: 'fornecida-pelo-dono',
+    geradoEm: '2026-10-26',
+    formatos: [
+      {
+        url: '/sounds/tema-masmorra.webm',
+        mime: 'audio/webm; codecs="opus"',
+        sha256: 'ea353da8e38522988b86e1c9f8d27a555f22640e5141d819df824aa5a72b7d4e',
+        bytes: 1949094,
+      },
+      {
+        url: '/sounds/tema-masmorra.m4a',
+        mime: 'audio/mp4; codecs="mp4a.40.2"',
+        sha256: 'e6b953b34855b80beb31b11367e3d03ad7c36894dafc597ab561764d51e8e93f',
+        bytes: 1843435,
+      },
+    ],
+  },
+  evolucao: {
+    nome: 'Evolution Theme',
+    duracaoS: 29.93,
+    /** Cerimônia: toca uma vez; o silêncio é quase o do tema; a cerimônia fecha antes da volta. */
+    pausaEntreVoltasS: 29,
+    fadeInS: 0.5,
+    origem: 'fornecida-pelo-dono',
+    geradoEm: '2026-10-26',
+    formatos: [
+      {
+        url: '/sounds/tema-evolucao.webm',
+        mime: 'audio/webm; codecs="opus"',
+        sha256: '10d71c42f45d2151d274146689870fe4444603bf5fca16dcf4aadd8ec694bdd1',
+        bytes: 246207,
+      },
+      {
+        url: '/sounds/tema-evolucao.m4a',
+        mime: 'audio/mp4; codecs="mp4a.40.2"',
+        sha256: 'ed4c4bba983aebc7eb176105fb76a875fd5d5e65f86cfe57f132fec17283fe95',
+        bytes: 246944,
+      },
+    ],
+  },
+  meditacao: {
+    nome: 'Meditation Theme',
+    duracaoS: 223.13,
+    pausaEntreVoltasS: 8,
+    fadeInS: 3,
+    origem: 'fornecida-pelo-dono',
+    geradoEm: '2026-10-26',
+    formatos: [
+      {
+        url: '/sounds/tema-meditacao.webm',
+        mime: 'audio/webm; codecs="opus"',
+        sha256: 'adbe6971b8b05a74994e41708bdd73626813b6b9eee7a182e41683c99cd0dff7',
+        bytes: 1995439,
+      },
+      {
+        url: '/sounds/tema-meditacao.m4a',
+        mime: 'audio/mp4; codecs="mp4a.40.2"',
+        sha256: 'd286a6798c804d97f27b297f939c6bd2ba0a97276554edc6890a953456b50520',
+        bytes: 1839911,
+      },
+    ],
+  },
+} as const satisfies Record<'combate' | 'pesadelo' | 'masmorra' | 'evolucao' | 'meditacao', ManifestoDeMusica>;
 
 export type MusicaDeCombate = keyof typeof MUSICAS_DE_COMBATE;
