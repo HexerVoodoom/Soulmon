@@ -214,10 +214,16 @@ export function GameHeader({ title, sub, closeLabel, onClose, run = false, onBac
   );
 }
 
-/** Texto padrão da confirmação de sair de uma partida em andamento (`GameHeader exitConfirm`). */
+/** O complemento da pergunta de sair ("Sair da rodada?"): os jogos passam o trecho em PT; o EN vem desta tabela (QA 25/10: "Leave do jogo?"). */
+const EXIT_WHAT_EN: Record<string, string> = {
+  'do jogo': 'the game', 'da rodada': 'this round', 'da corrida': 'this run', 'da partida': 'this match', 'do desenho': 'this puzzle', 'desta partida': 'this match',
+};
+
+/** Texto padrão da confirmação de sair de uma partida em andamento (`GameHeader exitConfirm`). `what` em PT ("da rodada"); em EN é traduzido (ou usado como veio se já estiver em inglês). */
 export function gameExitConfirm(isPt: boolean, what?: string): { title: string; stay: string; leave: string } {
+  const en = what ? (EXIT_WHAT_EN[what] ?? what) : '';
   return {
-    title: isPt ? `Sair${what ? ` ${what}` : ''}? O progresso desta partida se perde.` : `Leave${what ? ` ${what}` : ''}? This game's progress will be lost.`,
+    title: isPt ? `Sair${what ? ` ${what}` : ''}? O progresso desta partida se perde.` : `Leave${en ? ` ${en}` : ''}? This game's progress will be lost.`,
     stay: isPt ? 'Continuar' : 'Keep going',
     leave: isPt ? 'Sair' : 'Leave',
   };
