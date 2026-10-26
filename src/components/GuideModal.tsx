@@ -83,8 +83,14 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
             {L(
               // 🧬 11/10/2026 (decisão do dono): o critério de evolução é o
               // GAUGE (`utils/evolutionGauge.ts`), não mais o dia completo.
-              'Cada forma tem uma barra de Fragmentos de Alma. Todo hábito ou tarefa concluída rende fragmentos — tarefas maiores rendem mais (1 a 3) — e o dia soma no máximo a meta diária do estágio. Eles entram na virada do dia e nunca diminuem; quando você junta o bastante, são usados para abrir a próxima forma.',
-              'Each form has a Soul Fragment bar. Every habit or task you finish earns fragments — bigger tasks earn more (1 to 3) — and a day adds at most your stage’s daily goal. They join at the turn of the day and never shrink; when you have gathered enough, they are used to open the next form.',
+              'Cada forma tem uma barra de Fragmentos de Alma. Todo hábito ou tarefa concluída rende fragmentos (tarefas maiores, 1 a 3), até a meta diária do estágio.',
+              'Each form has a Soul Fragment bar. Every habit or task you finish earns fragments (bigger tasks, 1 to 3), up to your stage’s daily goal.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              'Eles entram na virada do dia e nunca diminuem; quando juntam o bastante, abrem a próxima forma.',
+              'They join at the turn of the day and never shrink; once you have enough, they open the next form.',
             )}
           </p>
           <p style={para}>
@@ -121,14 +127,26 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
                  exclusivo de quem comprou, e a página de Evolução não mostrava
                  nada para quem não podia — o guia criava a expectativa e a tela
                  entregava silêncio. */
-              'Depois do Ultra existe o Renascimento, para quem tem a conta completa: sua criatura vira ovo, volta a Rookie e os atributos zeram — em troca ela nasce mais funda e você escolhe a criatura, a escola e o elemento dela. Bits, cenários, sonhos, hábitos e o caminho andado continuam intactos. Acontece uma vez só.',
-              'After the Ultra comes Rebirth, for full accounts: your creature becomes an egg, returns to Rookie and attributes reset — in exchange they are born deeper and you choose their creature, school and element. Bits, scenes, dreams, habits and the path walked stay intact. It happens only once.',
+              'Depois do Ultra existe o Renascimento, para quem tem a conta completa: sua criatura vira ovo, volta a Rookie e os atributos zeram.',
+              'After the Ultra comes Rebirth, for full accounts: your creature becomes an egg, returns to Rookie and attributes reset.',
             )}
           </p>
           <p style={para}>
             {L(
-              'O caminho só acumula — um dia fraco soma pouco, nunca tira. Dia completo (a meta do dia inteira) é um selo do dia: rende Bits, mas não é mais o que faz evoluir. A evolução é sua: toque no Soulmon na página de Evolução para travar ou destravar o cadeado.',
-              'The path only accumulates — a light day adds a little, never takes away. A complete day (the whole daily goal) is a seal for the day: it pays Bits, but it is no longer what makes it evolve. Evolution is yours to trigger: tap your Soulmon on the Evolution page to lock or unlock the padlock.',
+              'Em troca ela nasce mais funda e você escolhe criatura, escola e elemento. Bits, cenários, sonhos, hábitos e o caminho andado ficam. Só acontece uma vez.',
+              'In exchange it is born deeper and you choose its creature, school and element. Bits, scenes, dreams, habits and the path walked stay. It happens only once.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              'O caminho só acumula — um dia fraco soma pouco, nunca tira. Dia completo (a meta inteira) é um selo do dia: rende Bits, mas não faz evoluir.',
+              'The path only accumulates — a light day adds a little, never takes away. A complete day is a seal for the day: it pays Bits, but does not drive evolution.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              'A evolução é sua: toque no Soulmon na página de Evolução para travar ou destravar o cadeado.',
+              'Evolution is yours: tap your Soulmon on the Evolution page to lock or unlock the padlock.',
             )}
           </p>
           <p style={para}>
@@ -137,8 +155,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
                 R-N do parecer: quem não sabe que nada expira se comporta como
                 se expirasse. Sem número e sem unidade de tempo (R-I). */}
             {L(
-              'Quando a barra enche, a próxima forma começa a tomar corpo: leva um tempo até ficar pronta. Volte quando quiser — ela espera por você, e nada se perde no caminho.',
-              'When the bar fills, the next form starts taking shape: it takes a while to be ready. Come back whenever you like — it waits for you, and nothing is lost along the way.',
+              'Quando a barra enche, a próxima forma começa a tomar corpo e leva um tempo para ficar pronta. Volte quando quiser — ela espera, e nada se perde.',
+              'When the bar fills, the next form starts taking shape and takes a while to be ready. Come back whenever you like — it waits, and nothing is lost.',
             )}
           </p>
         </>
@@ -157,13 +175,13 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Sumiu por ${ABSENCE_FORGIVENESS_DAYS} dias ou mais? Voltar não custa nada. Toda segunda seu Soulmon recupera ${WEEKLY_RELIEF_HEARTS} coração. Quando um dia não custa nada, o relatório diário conta qual pausa segurou.`,
-              `Away for ${ABSENCE_FORGIVENESS_DAYS} days or more? Coming back costs nothing. Every Monday it recovers ${WEEKLY_RELIEF_HEARTS} of a heart. When a day costs nothing, the daily report says which pause held it.`,
+              `Sumiu por ${ABSENCE_FORGIVENESS_DAYS} dias ou mais? Voltar não custa nada. Toda segunda seu Soulmon recupera ${WEEKLY_RELIEF_HEARTS} coração. O relatório diário diz qual pausa segurou o dia.`,
+              `Away for ${ABSENCE_FORGIVENESS_DAYS} days or more? Coming back costs nothing. Every Monday it recovers ${WEEKLY_RELIEF_HEARTS} of a heart. The daily report says which pause held the day.`,
             )}
           </p>
           <p style={para}>
             {L(
-              'Cocô não limpo drena 1 coração a cada 6 horas — dê banho. Esfregar o pet é o principal jeito de curar (até 1 coração por dia). Se zerar, seu Soulmon regride uma forma.',
+              'Cocô não limpo drena 1 coração a cada 6 horas — dê banho. Esfregar o pet cura (até 1 coração por dia). Se zerar, seu Soulmon regride uma forma.',
               'Uncleaned poop drains 1 heart every 6 hours — give it a bath. Rubbing your pet is the main way to heal (up to 1 heart a day). At zero it degenerates one form.',
             )}
           </p>
@@ -177,20 +195,44 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
         <>
           <p style={para}>
             {L(
-              `As barras de energia são o dobro da meta diária do estágio (Rookie: ${getMaxEnergyForStage('rookie')}). Ela sobe com o tempo (1 a cada ${ENERGY_REGEN_MINUTES} min com o Soulmon bem alimentado, a metade da velocidade com um pouco de fome, parada se ele estiver faminto) e zera todo dia — e não decide o dia completo. Ela serve para descer a Masmorra: cada camada gasta ${DUNGEON_ENERGY_PER_LAYER}, e subir de nível enche de novo.`,
-              `Energy bars are twice your stage’s daily goal (Rookie: ${getMaxEnergyForStage('rookie')}). It rises with time (1 every ${ENERGY_REGEN_MINUTES} min when your Soulmon is well fed, half speed when a little hungry, stopped when starving) and resets daily — and does not decide the complete day. It is what the Dungeon runs on: each layer spends ${DUNGEON_ENERGY_PER_LAYER}, and leveling up refills it.`,
+              `As barras de energia são o dobro da meta diária do estágio (Rookie: ${getMaxEnergyForStage('rookie')}). Ela zera todo dia e não decide o dia completo.`,
+              `Energy bars are twice your stage’s daily goal (Rookie: ${getMaxEnergyForStage('rookie')}). It resets daily and does not decide the complete day.`,
             )}
           </p>
           <p style={para}>
             {L(
-              `Cada tarefa concluída rende uma comida. Alimentar enche a fome (que cai em ${HUNGER_FULL_TO_EMPTY_HOURS} h do cheio ao vazio) e dá pontos de atributo — que definem o galho da evolução —, mas NÃO dá energia direto e NÃO cura coração. Fome não custa nada além da energia parada. Até ${FOOD_LIMIT_PER_HOUR} vezes por hora.`,
-              `Each completed task yields one food. Feeding fills hunger (which drops from full to empty in ${HUNGER_FULL_TO_EMPTY_HOURS} h) and grants attribute points — which steer your evolution branch — but does NOT give energy directly and does NOT heal hearts. Hunger costs nothing beyond paused energy. Up to ${FOOD_LIMIT_PER_HOUR} times an hour.`,
+              `Sobe com o tempo: 1 a cada ${ENERGY_REGEN_MINUTES} min com o Soulmon bem alimentado, metade da velocidade com um pouco de fome, parada se ele estiver faminto.`,
+              `It rises with time: 1 every ${ENERGY_REGEN_MINUTES} min when your Soulmon is well fed, half speed when a little hungry, stopped when starving.`,
             )}
           </p>
           <p style={para}>
             {L(
-              `Depois do café, do almoço e do jantar (${DEFAULT_MEAL_TIMES.breakfast}, ${DEFAULT_MEAL_TIMES.lunch} e ${DEFAULT_MEAL_TIMES.dinner}, nas Configurações você muda), seu Soulmon pode pedir UMA coisa pequena por ${MEAL_WINDOW_MIN / 60} horas: um carinho, um banho, uma comidinha. Não vale pontos, não conta e pular não custa nada. Os lembretes começam desligados.`,
-              `After breakfast, lunch and dinner (${DEFAULT_MEAL_TIMES.breakfast}, ${DEFAULT_MEAL_TIMES.lunch} and ${DEFAULT_MEAL_TIMES.dinner} — change them in Settings), your Soulmon may ask for ONE small thing for ${MEAL_WINDOW_MIN / 60} hours: a pat, a rinse, a snack. It earns no points, nothing is counted, and skipping costs nothing. The reminders start off.`,
+              `Serve para descer a Masmorra: cada camada gasta ${DUNGEON_ENERGY_PER_LAYER}, e subir de nível enche de novo.`,
+              `It is what the Dungeon runs on: each layer spends ${DUNGEON_ENERGY_PER_LAYER}, and leveling up refills it.`,
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `Cada tarefa concluída rende uma comida. Alimentar enche a fome (cai do cheio ao vazio em ${HUNGER_FULL_TO_EMPTY_HOURS} h) e dá pontos de atributo, que definem o galho da evolução.`,
+              `Each completed task yields one food. Feeding fills hunger (full to empty in ${HUNGER_FULL_TO_EMPTY_HOURS} h) and grants attribute points, which steer your evolution branch.`,
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `NÃO dá energia direto e NÃO cura coração. Fome não custa nada além da energia parada. Até ${FOOD_LIMIT_PER_HOUR} vezes por hora.`,
+              `It does NOT give energy directly or heal hearts. Hunger costs nothing beyond paused energy. Up to ${FOOD_LIMIT_PER_HOUR} times an hour.`,
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `Depois do café, do almoço e do jantar (${DEFAULT_MEAL_TIMES.breakfast}, ${DEFAULT_MEAL_TIMES.lunch} e ${DEFAULT_MEAL_TIMES.dinner}; muda nas Configurações), seu Soulmon pode pedir UMA coisa pequena por ${MEAL_WINDOW_MIN / 60} horas: carinho, banho, comidinha.`,
+              `After breakfast, lunch and dinner (${DEFAULT_MEAL_TIMES.breakfast}, ${DEFAULT_MEAL_TIMES.lunch} and ${DEFAULT_MEAL_TIMES.dinner} — change them in Settings), your Soulmon may ask for ONE small thing for ${MEAL_WINDOW_MIN / 60} hours: a pat, a rinse, a snack.`,
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `Não vale pontos, não conta e pular não custa nada. Os lembretes começam desligados.`,
+              `It earns no points, nothing is counted, and skipping costs nothing. The reminders start off.`,
             )}
           </p>
         </>
@@ -215,8 +257,14 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Uma falta não gera nada. Em ${MISS_INTERVENTION_AT} seguidas, o pet oferece uma versão bem menor do hábito — aceitar já conta como feito. E o ícone amadurece até virar árvore em ${M3} dias feitos, rendendo mais atributo.`,
-              `One miss does nothing. At ${MISS_INTERVENTION_AT} in a row, your pet offers a much smaller version of the habit — accepting counts as done. And the icon matures into a tree at ${M3} days done, yielding more attribute.`,
+              `Uma falta não gera nada. Em ${MISS_INTERVENTION_AT} seguidas, o pet oferece uma versão bem menor do hábito — aceitar já conta como feito.`,
+              `One miss does nothing. At ${MISS_INTERVENTION_AT} in a row, your pet offers a much smaller version of the habit — accepting counts as done.`,
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `E o ícone amadurece até virar árvore em ${M3} dias feitos, rendendo mais atributo.`,
+              `And the icon matures into a tree at ${M3} days done, yielding more attribute.`,
             )}
           </p>
         </>
@@ -229,14 +277,44 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
         <>
           <p style={para}>
             {L(
-              'Hábito é o que acontece TODO DIA e aparece sempre no Hoje; tarefa é pontual ou em dias específicos, configurada por você (só aparece nos dias dela; a lista completa fica em "Ver tudo"). Tarefa com subitens pesa pelo esforço que você escolheu, nunca pelo número de subitens: cada subitem feito avança a barra e rende um pouquinho de XP (até 5 subitens por tarefa, no máximo +50% do XP dela), e o peso nunca passa do que as mesmas tarefas soltas pesariam (máximo 3). Fechar TODOS os subitens de uma tarefa com 3 ou mais rende uma comida premium (★): 5 de energia em vez de 1, no máximo uma por dia e três por semana, sem passar do máximo do dia. O check de um hábito vale só para o dia de hoje; o "N de M" ao lado é só o resumo da semana.',
-              'A habit happens EVERY DAY and always shows in Today; a task is one-off or on specific days, set up by you (it only shows on its days; the full list lives in "View all"). A task with steps weighs by the effort you picked, never by how many steps it has: each finished step advances the bar and earns a little XP (up to 5 steps per task, at most +50% of its XP), and the weight never exceeds what the same loose tasks would (max 3). Finishing ALL steps of a task with 3 or more earns a premium food (★): 5 energy instead of 1, at most one a day and three a week, never above the day\'s max. A habit\'s check counts for for that day; the "N of M" beside it is just the week\'s summary.',
+              'Hábito acontece TODO DIA e aparece sempre no Hoje; tarefa é pontual ou em dias específicos e só aparece nos dias dela (a lista completa fica em "Ver tudo").',
+              'A habit happens EVERY DAY and always shows in Today; a task is one-off or on specific days and only shows on its days (the full list lives in "View all").',
             )}
           </p>
           <p style={para}>
             {L(
-              `Toda tarefa tem um esforço: Rápida (1), Média (2) ou Projeto (3). A meta soma esforço, não itens — um Projeto vale três Rápidas. Passando de ${OVERCOMMIT_EFFORT} pontos no dia, o pet avisa. É aviso, nunca bloqueio.`,
-              `Every task has an effort: Quick (1), Medium (2) or Project (3). The goal adds up effort, not items — one Project is worth three Quick ones. Past ${OVERCOMMIT_EFFORT} points in a day your pet says so. A heads-up, never a block.`,
+              'Tarefa com subitens pesa pelo esforço escolhido, não pelo número deles. Cada subitem feito avança a barra e rende um pouco de XP (até 5, no máximo +50%).',
+              'A task with steps weighs by the effort you picked, not by its step count. Each finished step advances the bar and earns a little XP (up to 5, at most +50%).',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              'O peso nunca passa do que as mesmas tarefas soltas pesariam (máximo 3).',
+              'The weight never exceeds what the same loose tasks would (max 3).',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              'Fechar TODOS os subitens de tarefa com 3+ rende comida premium (★): 5 de energia em vez de 1, no máximo uma por dia e três por semana, dentro do teto do dia.',
+              'Finishing ALL steps of a task with 3 or more earns a premium food (★): 5 energy instead of 1, at most one a day and three a week, never above the day\'s max.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              'O check de um hábito vale só para hoje; o "N de M" ao lado é só o resumo da semana.',
+              'A habit\'s check counts only for that day; the "N of M" beside it is just the week\'s summary.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `Toda tarefa tem um esforço: Rápida (1), Média (2) ou Projeto (3). A meta soma esforço, não itens — um Projeto vale três Rápidas.`,
+              `Every task has an effort: Quick (1), Medium (2) or Project (3). The goal adds up effort, not items — one Project is worth three Quick ones.`,
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `Passando de ${OVERCOMMIT_EFFORT} pontos no dia, o pet avisa. É aviso, nunca bloqueio.`,
+              `Past ${OVERCOMMIT_EFFORT} points in a day your pet says so. A heads-up, never a block.`,
             )}
           </p>
           <p style={para}>
@@ -248,7 +326,7 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           <p style={para}>
             {L(
               `Parada há ${HAUNTED_AFTER_DAYS} dias ela fica assombrada — e concluir uma assombrada dá bônus de alívio. Adiada ${POSTPONE_NUDGE_AT} vezes, o pet oferece dividir, encolher ou deixar pra lá.`,
-              `Untouched for ${HAUNTED_AFTER_DAYS} days it becomes haunted — and clearing a haunted task grants a relief bonus. Postponed ${POSTPONE_NUDGE_AT} times, your pet offers to split it, shrink it or let it go.`,
+              `Untouched for ${HAUNTED_AFTER_DAYS} days it becomes haunted — clearing a haunted task grants a relief bonus. Postponed ${POSTPONE_NUDGE_AT} times, your pet offers to split, shrink or drop it.`,
             )}
           </p>
           <p style={para}>
@@ -279,8 +357,14 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Cada noite na janela seu Soulmon SONHA, e o sonho é uma cena colecionável do próprio Soulmon — ${DREAM_COUNT} para descobrir. A raridade vem da regularidade, nunca de dormir mais. Uma noite no horário também traz ${NIGHT_ENERGY_BONUS} de energia a mais de manhã, uma vez por dia; sem noite, nada se perde.`,
-              `Every night inside the window it DREAMS, and the dream is a collectible scene of itself — ${DREAM_COUNT} to discover. Rarity comes from regularity, never from sleeping longer. A night on time also brings ${NIGHT_ENERGY_BONUS} extra energy in the morning, once a day; no night, nothing is lost.`,
+              `Cada noite na janela seu Soulmon SONHA: uma cena colecionável dele — ${DREAM_COUNT} para descobrir. A raridade vem da regularidade, nunca de dormir mais.`,
+              `Every night inside the window it DREAMS: a collectible scene of itself — ${DREAM_COUNT} to discover. Rarity comes from regularity, never from sleeping longer.`,
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `Uma noite no horário também traz ${NIGHT_ENERGY_BONUS} de energia a mais de manhã, uma vez por dia; sem noite, nada se perde.`,
+              `A night on time also brings ${NIGHT_ENERGY_BONUS} extra energy in the morning, once a day; no night, nothing is lost.`,
             )}
           </p>
         </>
@@ -296,13 +380,31 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           <p style={para}>
             {L(
               'Na Exploração fica o Passeio: seu Soulmon sai todo dia e conta o que viu no relatório do fim do dia. Você escolhe para onde — casa ou uma região já aberta.',
-              'The Stroll lives in Exploration: your Soulmon heads out every day and tells you what it saw in the end-of-day report. You pick where — home, or a region that is already open.',
+              'The Stroll lives in Exploration: your Soulmon heads out daily and tells you what it saw in the end-of-day report. You pick where: home, or an open region.',
             )}
           </p>
           <p style={para}>
             {L(
-              'Travessias são opcionais: algo que você faz na sua vida, fora do app, sempre com uma versão pequena para fazer em casa. O passeio fica com o NPC da Exploração: é lá que você escolhe e conclui. Ficam esperando o tempo que for, e deixar pra lá não custa nada. Um passeio leva um tempo: depois de pegar a missão, o Concluir abre em ' + STROLL_MIN_MINUTES + ' minutos. No menu de Missões da Home fica só a linha "Faça um passeio". As missões só apontam o que fazer; quando a ação acontece (um registro no journaling, o passeio concluído no NPC), a linha fica pronta e você toca em Resgatar. Há dois acessos na Home: missões diárias e missões semanais. Quando você resgata, a névoa de uma região se abre no passeio da noite seguinte.',
-              'Crossings are optional: something you do in your own life, outside the app, always with a small version you can do at home. The stroll stays with the NPC in Exploration: that is where you pick and finish it. It waits as long as you like, and letting one go costs nothing. A stroll takes a little while: once you pick a mission, Done opens after ' + STROLL_MIN_MINUTES + ' minutes. The Missions menu on Home only keeps a "Take a stroll" line. Missions only point at what to do; once the action happens (an entry in your journal, the stroll finished at the NPC), the line turns ready and you tap Claim. Home has two doors: daily missions and weekly missions. Once you claim, the mist over a region clears on the next night\'s stroll.',
+              'Travessias são opcionais: algo que você faz fora do app, com uma versão pequena para fazer em casa. Esperam o tempo que for; deixar pra lá não custa nada.',
+              'Crossings are optional: something you do outside the app, with a small version you can do at home. They wait as long as you like; letting one go costs nothing.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              'O passeio fica com o NPC da Exploração: é lá que você escolhe e conclui. Depois de pegar a missão, o Concluir abre em ' + STROLL_MIN_MINUTES + ' minutos.',
+              'The stroll stays with the NPC in Exploration: that is where you pick and finish it. Once you pick a mission, Done opens after ' + STROLL_MIN_MINUTES + ' minutes.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              'No menu de Missões fica só a linha "Faça um passeio". Missões só apontam o que fazer: feita a ação, a linha fica pronta e você toca em Resgatar.',
+              'The Missions menu only keeps a "Take a stroll" line. Missions only point at what to do: once done, the line turns ready and you tap Claim.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              'Há dois acessos na Home: missões diárias e semanais. Quando você resgata, a névoa de uma região se abre no passeio da noite seguinte.',
+              'Home has two doors: daily and weekly missions. Once you claim, the mist over a region clears on the next night\'s stroll.',
             )}
           </p>
           <p style={para}>
@@ -325,12 +427,20 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
       id: 'demo',
       title: L('A demo', 'The demo'),
       body: (
+        <>
         <p style={para}>
           {L(
-            `O botão DEMO abre o jogo sem conta, com um dos cinco Soulmon iniciais no Vínculo nível ${DEMO_BOND_LEVEL}. A demo salva só neste aparelho; não ganha XP (o Vínculo fica fixo), não faz compras e não entra no PvP (Torneio, Duelo, Biblioteca e Clã ficam fechados). Para ter uma conta, saia da demo em Configurações.`,
-            `The DEMO button opens the game without an account, with one of the five starter Soulmon at Bond level ${DEMO_BOND_LEVEL}. The demo saves on this device only; it earns no XP (Bond stays fixed), makes no purchases and does not enter PvP (Tournament, Duel, Library and Clan stay closed). To get an account, leave the demo in Settings.`,
-          )}
-        </p>
+            `O botão DEMO abre o jogo sem conta, com um dos cinco Soulmon iniciais no Vínculo nível ${DEMO_BOND_LEVEL}. A demo salva só neste aparelho e não faz compras.`,
+              `The DEMO button opens the game without an account, with one of the five starter Soulmon at Bond level ${DEMO_BOND_LEVEL}. The demo saves on this device only; no purchases.`,
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `Não ganha XP (o Vínculo fica fixo) e não entra no PvP (Torneio, Duelo, Biblioteca e Clã ficam fechados). Para ter uma conta, saia da demo em Configurações.`,
+              `It earns no XP (Bond stays fixed) and does not enter PvP (Tournament, Duel, Library and Clan stay closed). To get an account, leave the demo in Settings.`,
+            )}
+          </p>
+        </>
       ),
     },
     {
@@ -358,32 +468,74 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `A Masmorra é uma descida automática: as lutas vêm sozinhas e a cada ${DUNGEON_FIGHTS_PER_FLOOR} você desce uma camada, até a ${DUNGEON_MAX_LAYER}. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia (a da Home); a descida para quando a energia ou o HP acabam. O HP não enche entre descidas — volta com o tempo (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h do zero ao cheio, até com o app fechado) e precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer de novo. A cada ${DUNGEON_MILESTONE_FLOOR} camadas há um marco: a próxima descida começa dali, e o primeiro marco de cada descida rende o item 🌀 (veja Itens). Quanto mais Lv o Soulmon tem — dias completos e evolução —, mais fundo ele chega; bater uma profundidade nova (5, 10, 25, 50…) rende fragmentos do Soulsmith. Subir de nível enche a energia e o HP.`,
-              `The Dungeon is an automatic descent: fights come on their own and every ${DUNGEON_FIGHTS_PER_FLOOR} you go down a layer, all the way to ${DUNGEON_MAX_LAYER}. Each layer spends ${DUNGEON_ENERGY_PER_LAYER} energy (Home energy); the descent stops when energy or HP runs out. HP does not refill between descents — it comes back over time (about ${DUNGEON_HP_REGEN_FULL_HOURS} h from empty to full, even with the app closed) and you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to go down again. Every ${DUNGEON_MILESTONE_FLOOR} layers is a milestone: the next descent starts there, and the first milestone of each descent earns the 🌀 item (see Items). The higher your Soulmon's Lv — complete days and evolution — the deeper it reaches; a new depth (5, 10, 25, 50…) earns Soulsmith fragments. Leveling up refills energy and HP.`,
+              `A Masmorra é uma descida automática: as lutas vêm sozinhas e a cada ${DUNGEON_FIGHTS_PER_FLOOR} você desce uma camada, até a ${DUNGEON_MAX_LAYER}. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia (a da Home).`,
+              `The Dungeon is an automatic descent: fights come on their own and every ${DUNGEON_FIGHTS_PER_FLOOR} you go down a layer, all the way to ${DUNGEON_MAX_LAYER}. Each layer spends ${DUNGEON_ENERGY_PER_LAYER} energy (Home energy).`,
             )}
           </p>
           <p style={para}>
             {L(
-              'Torneio e Arena são diferentes: o Torneio é RANQUEADO — o servidor sorteia seus oponentes perto da sua faixa, você não escolhe. Na Arena livre VOCÊ escolhe contra quem lutar, sempre de poder parecido com o seu.',
-              'Tournament and Arena are different: the Tournament is RANKED — the server draws your opponents near your tier and you don’t choose. In the Open Arena YOU choose who to fight, always of power similar to yours.',
+              `A descida para quando a energia ou o HP acabam. O HP volta com o tempo (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h do zero ao cheio, até com o app fechado) e precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer de novo.`,
+              `The descent stops when energy or HP runs out. HP returns over time (about ${DUNGEON_HP_REGEN_FULL_HOURS} h from empty to full, even app closed); you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to descend again.`,
             )}
           </p>
           <p style={para}>
             {L(
-              'Nos duelos (Torneio e Arena) os pets lutam sozinhos. Você torce tocando em qualquer lugar da tela: o gauge cheio vira um golpe especial. Torcer só ajuda; não torcer não atrapalha.',
-              'In duels (Tournament and Arena) the pets fight on their own. You cheer by tapping anywhere on the screen: a full gauge becomes a special strike. Cheering only helps; skipping never hurts.',
+              `A cada ${DUNGEON_MILESTONE_FLOOR} camadas há um marco: a próxima descida começa dali, e o primeiro marco de cada descida rende o item 🌀 (veja Itens).`,
+              `Every ${DUNGEON_MILESTONE_FLOOR} layers is a milestone: the next descent starts there, and the first milestone of each descent earns the 🌀 item (see Items).`,
             )}
           </p>
           <p style={para}>
             {L(
-              `Vínculo N é o seu nível como pessoa que cuida: cada Vínculo (até ${TALENT_POINTS_MAX}) rende um ponto de talento, e nenhum dinheiro compra Vínculo. A Arena e o Torneio abrem no Vínculo ${GATES.pvp.minBond}. Lv N é o do seu Soulmon.`,
-              `Bond N is your own level as a carer: each Bond (up to ${TALENT_POINTS_MAX}) gives one talent point, and no money buys Bond. The Arena and the Tournament open at Bond ${GATES.pvp.minBond}. Lv N is your Soulmon's.`,
+              `Quanto mais Lv, mais fundo ele chega; uma profundidade nova (5, 10, 25, 50…) rende fragmentos do Soulsmith. Subir de nível enche energia e HP.`,
+              `The higher your Soulmon's Lv, the deeper it reaches; a new depth (5, 10, 25, 50…) earns Soulsmith fragments. Leveling up refills energy and HP.`,
             )}
           </p>
           <p style={para}>
             {L(
-              `Talentos e equipamento somam, no máximo, ${Math.round(COMBAT_BONUS_CAP * 100)}% de força em qualquer luta. Cada peça de equipamento chega no nível 1 pela missão de um prédio e se aprimora no Soulsmith até o nível ${FORGE_MAX_LEVEL}, com os materiais das missões; a cada nível você escolhe entre dois ganhos (refazer a escolha custa ${REDO_BITS} Bits ganhos jogando). Uma peça no máximo vale ${(PIECE_MAX_PCT * 100).toFixed(1).replace('.', ',')}%. As peças são partes da sua alma, aprimoradas: quem a tem a traz sempre consigo, não há como tirar. Sem sorteio. Créditos aceleram só o que não é combate, em até +${Math.round(CREDIT_BITS_CAP_RATIO * 100)}% sobre o ritmo grátis.`,
-              `Talents and equipment add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength in any fight. Each equipment piece arrives at level 1 through a building mission and is upgraded at the Soulsmith up to level ${FORGE_MAX_LEVEL}, with the materials missions give; at each level you choose between two gains (redoing a choice costs ${REDO_BITS} Bits earned by playing). One piece at the top is worth ${(PIECE_MAX_PCT * 100).toFixed(1)}%. The pieces are parts of your soul, refined: once you have one it is always with you, nothing to take off. No draws. Credits speed up only what is not combat, by up to +${Math.round(CREDIT_BITS_CAP_RATIO * 100)}% over the free pace.`,
+              'Torneio e Arena são diferentes: o Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar, de poder parecido.',
+              'Tournament and Arena differ: the Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight, of similar power.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              'Nos duelos os pets lutam sozinhos. Toque em qualquer lugar para torcer: o gauge cheio vira um golpe especial. Torcer só ajuda; não torcer não atrapalha.',
+              'In duels the pets fight on their own. Tap anywhere to cheer: a full gauge becomes a special strike. Cheering only helps; skipping never hurts.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `Vínculo N é o seu nível como pessoa que cuida: cada Vínculo (até ${TALENT_POINTS_MAX}) rende um ponto de talento, e nenhum dinheiro compra Vínculo.`,
+              `Bond N is your own level as a carer: each Bond (up to ${TALENT_POINTS_MAX}) gives one talent point, and no money buys Bond.`,
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `A Arena e o Torneio abrem no Vínculo ${GATES.pvp.minBond}. Lv N é o do seu Soulmon.`,
+              `The Arena and the Tournament open at Bond ${GATES.pvp.minBond}. Lv N is your Soulmon's.`,
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `Talentos e equipamento somam, no máximo, ${Math.round(COMBAT_BONUS_CAP * 100)}% de força em qualquer luta.`,
+              `Talents and equipment add at most ${Math.round(COMBAT_BONUS_CAP * 100)}% strength in any fight.`,
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `Cada peça chega no nível 1 pela missão de um prédio e se aprimora no Soulsmith até o nível ${FORGE_MAX_LEVEL}, com os materiais das missões.`,
+              `Each piece arrives at level 1 through a building mission and is upgraded at the Soulsmith up to level ${FORGE_MAX_LEVEL}, with the materials missions give.`,
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `A cada nível você escolhe entre dois ganhos (refazer custa ${REDO_BITS} Bits ganhos jogando). Uma peça no máximo vale ${(PIECE_MAX_PCT * 100).toFixed(1).replace('.', ',')}%.`,
+              `At each level you choose between two gains (redoing a choice costs ${REDO_BITS} Bits earned by playing). One piece at the top is worth ${(PIECE_MAX_PCT * 100).toFixed(1)}%.`,
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              `As peças são partes da sua alma, aprimoradas: não há como tirar. Sem sorteio. Créditos aceleram só o que não é combate, em até +${Math.round(CREDIT_BITS_CAP_RATIO * 100)}% sobre o ritmo grátis.`,
+              `The pieces are parts of your soul, refined: nothing to take off. No draws. Credits speed up only what is not combat, by up to +${Math.round(CREDIT_BITS_CAP_RATIO * 100)}% over the free pace.`,
             )}
           </p>
           <p style={para}>

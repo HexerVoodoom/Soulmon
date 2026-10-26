@@ -51,7 +51,7 @@ export function MealRhythmRows({ language, settings, notificationsEnabled, onCha
         infoLabel={isPt ? 'Sobre os check-ins das refeições' : 'About meal check-ins'}
         info={isPt
           ? 'Depois do café, do almoço e do jantar, o Soulmon pede algo pequeno: carinho, banho ou comida. Até 3 por dia, fora da janela de descanso. Pular não custa nada. ' + 'Com a notificação ligada, fuso e horários vão ao servidor só para isso; ao desligar, deixam de ir.'
-          : 'After breakfast, lunch and dinner, Soulmon asks for one small thing: a pat, a rinse or a snack. Up to 3 a day, outside your rest window. Skipping costs nothing. ' + 'With notifications on, your time zone and times go to the server for this only; turn it off and they stop.'}
+          : 'After each meal, Soulmon asks for one small thing: a pat, a rinse or a snack. Up to 3 a day, outside your rest window. Skipping costs nothing. ' + 'With notifications on, your time zone and times go to the server for this only; turn it off and they stop.'}
       />
       {on && (
         <div role="group" aria-label={isPt ? 'Horários das refeições' : 'Meal times'} style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 0' }}>
