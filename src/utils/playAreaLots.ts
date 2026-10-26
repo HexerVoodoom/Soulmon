@@ -59,11 +59,11 @@ const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
   // centrados no `left`, então 27% ocupa 8–46% e 70% ocupa 51–89%: não se tocam.
   // EN "Stroll" e não "Trail": trilha é justamente o lugar que o parecer de
   // menores veta para as Travessias (04 R-3).
-  { id: 'passeio', labelPt: 'Passeio', labelEn: 'Stroll', ariaPt: 'Abrir o Passeio', ariaEn: 'Open the Stroll', left: '30%', top: '34%', width: '56%' }, // tablado do meio, à direita
+  { id: 'passeio', labelPt: 'Passeio', labelEn: 'Stroll', ariaPt: 'Abrir o Passeio', ariaEn: 'Open the Stroll', left: '22.6%', top: '21%', width: '48%' }, // 26/10/2026 (dono, mapa de Exploração): ENCAIXE no tablado de CIMA À ESQUERDA (piso medido no bg: centro 210/252 de 760×1344, ~250 px de largura; tela 390×844 = centro 88/158, `cover` corta ~11% de cada lado). Pegada no meio da frente do piso (88/175), opaco ~97 px de largura (62% do piso) — o arco é alto e mais que isso passaria da barra do topo
   // 🛠️ 04/10/2026 (pedido do dono, `docs/PLANO-OFICINA-FOCO.md`): a GRANDE clareira de baixo, que estava
   // vazia, ganha dois prédios lado a lado — técnicas de foco/produtividade e o Caderno (journaling).
   // PT "Caderno" e não "Diário": já existe o Diário de Aventuras (o álbum do pet).
-  { id: 'oficina', labelPt: 'Oficina do Foco', labelEn: 'Focus Workshop', ariaPt: 'Entrar na Oficina do Foco', ariaEn: 'Enter the Focus Workshop', left: '74%', top: '34%', width: '62%' },
+  { id: 'oficina', labelPt: 'Oficina do Foco', labelEn: 'Focus Workshop', ariaPt: 'Entrar na Oficina do Foco', ariaEn: 'Enter the Focus Workshop', left: '80.1%', top: '34.4%', width: '66%' }, // 26/10/2026 (dono): ENCAIXE no tablado do MEIO À DIREITA (piso medido: centro 566/458 → tela 312/288, ~270 px de largura); opaco ~121 px (72% do piso), pegada em 312/292; topo da torre ≥ y 77 (abaixo do título)
   { id: 'caderno', labelPt: 'Caderno', labelEn: 'Journal', ariaPt: 'Abrir o Caderno', ariaEn: 'Open the Journal', left: '28%', top: '64%', width: '47%' }, // W5 (19/10/2026): arte nova (caixa opaca 54%) → 44% -> 47% para manter ≥24% da cena; 18/10/2026 (§88): a arte repintada ficou mais estreita na caixa, então 40% -> 44% (centro mantido). 11/10/2026 (dono): o Caderno/Jornal sobe para o espaço ENTRE a Masmorra e a Oficina do Foco (coluna da esquerda: 3 prédios); o canto de baixo à direita, onde ele estava, fica LIVRE (reservado p/ um prédio futuro). Chalé campina (opaco ~89% da caixa).
   // 🫧 beta3 M3 (25/10/2026): o Refúgio saiu de Jogos para a Exploração (id e comportamento mantidos). Coluna da direita, entre o Passeio (base 34%) e o Preparar (base 84%).
   { id: 'refugio', labelPt: 'Refúgio', labelEn: 'Refuge', ariaPt: 'Entrar no Refúgio', ariaEn: 'Enter the Refuge', left: '72%', top: '86%', width: '40%' },
