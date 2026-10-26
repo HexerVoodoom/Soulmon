@@ -83,6 +83,12 @@ describe('apelido unico e sugestoes', () => {
     const j = await (await get(env, 'names', { prefix: 'bru' })).json();
     expect(j).toEqual({ names: ['bruna'] });
   });
+  it('names: quem esta com publicHidden nao aparece; prefixo de 1 letra nao enumera', async () => {
+    const env = mundo({ publicHidden: true });
+    await post(env, 'nickname', BRUNO, { name: 'Bruna' });
+    expect(await (await get(env, 'names', { prefix: 'bru' })).json()).toEqual({ names: [] });
+    expect(await (await get(env, 'names', { prefix: 'b' })).json()).toEqual({ names: [] });
+  });
   it('profile: elemento do Oraculo e aditivo, validado e herdado', async () => {
     const env = mundo();
     await salvar(env, { element: 'fire' });
