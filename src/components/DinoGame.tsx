@@ -117,6 +117,13 @@ const PLAT_H = 70, PLAT_W = 260, PLAT_THICK = 8;
 const PICKUP_EVERY = 7;
 type Plat = { x: number };
 type Pickup = { x: number; h: number };
+/** Mantém só os itens que passam em `keep`, SEM criar array novo (o loop de 60 fps não gera lixo para o GC). */
+function keepIf<T>(list: T[], keep: (x: T) => boolean): void {
+  let w = 0;
+  for (let i = 0; i < list.length; i++) { const x = list[i]; if (keep(x)) list[w++] = x; }
+  list.length = w;
+}
+
 function newRun(level: 1 | 2) {
   return { h: 0, vy: 0, obstacles: [] as { x: number; size: number; tier: number; v: number }[], speed: RUN_SPEED_START, t: 0, spawnIn: 1.1, score: 0, gx: 0, px: 0, dust: [] as Dust[], sinceLand: 9, dustIn: 0, wasAir: false,
     level, charges: DASH_START_CHARGES, dashT: 0, plats: [] as Plat[], pickups: [] as Pickup[], platIn: 3, pickIn: PICKUP_EVERY, floor: 0 };
@@ -204,6 +211,13 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const [phase, setPhase] = useState<'ready' | 'playing' | 'over'>('ready');
   /** I3: a confirmação de sair pausa a corrida (o laço é por `dt`, retoma sem salto). */
   const [paused, setPaused] = useState(false);
+  // Aba oculta pausa a corrida (o rAF para sozinho, mas o relógio do desafio e o dt não podem "pular").
+  const [hidden, setHidden] = useState(() => typeof document !== 'undefined' && document.visibilityState === 'hidden');
+  useEffect(() => {
+    const onVis = () => setHidden(document.visibilityState === 'hidden');
+    document.addEventListener('visibilitychange', onVis);
+    return () => document.removeEventListener('visibilitychange', onVis);
+  }, []);
   const phaseRef = useRef(phase);
   phaseRef.current = phase;
   const [finalScore, setFinalScore] = useState(0);
@@ -316,7 +330,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   };
 
   useEffect(() => {
-    if (phase !== 'playing' || paused) return;
+    if (phase !== 'playing' || paused || hidden) return;
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext('2d')!;
     ctx.imageSmoothingEnabled = false;
@@ -398,22 +412,25 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         s.pickIn -= dt;
         if (s.pickIn <= 0) {
           // coletável: às vezes sobre uma plataforma (recompensa do caminho de cima), às vezes no ar
-          s.pickups.push({ x: canvas.width + 20 + PLAT_W / 2, h: Math.random() < 0.5 ? PLAT_H + 22 : 30 });
+          const onTop = Math.random() < 0.5;
+          // o coletável de cima nasce SEMPRE sobre uma plataforma (não flutua sozinho): nasce uma, se não há uma ali
+          if (onTop && !s.plats.some(p => Math.abs(p.x - (canvas.width + 20)) < PLAT_W)) s.plats.push({ x: canvas.width + 20 });
+          s.pickups.push({ x: canvas.width + 20 + PLAT_W / 2, h: onTop ? PLAT_H + 22 : 30 });
           s.pickIn = PICKUP_EVERY + Math.random() * 3;
         }
         for (const p of s.plats) p.x -= mv * dt;
         for (const k of s.pickups) k.x -= mv * dt;
-        s.plats = s.plats.filter(p => p.x + PLAT_W > -10);
-        s.pickups = s.pickups.filter(k => k.x > -20);
-        // coleta
-        s.pickups = s.pickups.filter(k => {
+        keepIf(s.plats, p => p.x + PLAT_W > -10);
+        // coleta (mutação in-place: sem array novo por frame)
+        keepIf(s.pickups, k => {
+          if (k.x <= -20) return false;
           const hit = k.x + 12 > px0 && k.x - 4 < px1 + (dashing ? DASH_PUSH : 0) && k.h + 12 > s.h && k.h - 12 < s.h + DINO_S;
           if (hit) s.charges += 1;
           return !hit;
         });
       }
       for (const o of s.obstacles) o.x -= mv * dt;
-      s.obstacles = s.obstacles.filter(o => o.x + o.size > -10);
+      keepIf(s.obstacles, o => o.x + o.size > -10);
       s.gx += mv * dt;
       s.px += mv * dt * PARALLAX_SPEED;
 
@@ -433,7 +450,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           dead = true; break;
         }
       }
-      s.obstacles = s.obstacles.filter(o => o.x > -500);
+      keepIf(s.obstacles, o => o.x > -500);
 
       // Draw — fundo distante, obstáculos, chão, pet (ordem de profundidade)
       ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -481,7 +498,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       if (scoreElRef.current) scoreElRef.current.textContent = String(Math.floor(s.score));
 
       const ch = challengeRef.current;
-      const reached = !!ch && s.score >= ch.goal;
+      const reached = !dead && !!ch && s.score >= ch.goal; // morrer no mesmo frame da meta NÃO é vitória
       if (!dead && !reached) { raf = requestAnimationFrame(tick); return; }
       if (ch) { ch.onResult(reached); return; }
 
@@ -517,7 +534,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     };
     window.addEventListener('keydown', onKey);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('keydown', onKey); };
-  }, [phase, paused, jump, dash, onEarnPoints, onScore, petMirror]);
+  }, [phase, paused, hidden, jump, dash, onEarnPoints, onScore, petMirror]);
 
   return (
     <GameRoot style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}>
