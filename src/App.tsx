@@ -24,6 +24,7 @@ import { needsWelcomeTour, needsMapTutorial } from './utils/welcomeTourGate';
 import { buildingsUnlockedBetween, isBuildingId, markBuildingIntroSeen } from './utils/buildingIntro';
 import { questMarks, questMarkLabel } from './utils/questMarks';
 import { markMindGameTutorial } from './utils/mente/mindTutorials';
+import { applyFeat, emitFeat, subscribeFeats } from './utils/feats';
 import { bumpDaily, claimDaily, claimFirst, dailyForDay, dailyMissionsMark, firstTimesMark, markFirst, markFirstForEvent, type DailyEvent } from './utils/dailyMissions';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
@@ -128,7 +129,7 @@ import { awardBondXP, awardStepXP, bondLevelFor, unclaimedBondRewards, applyBond
 import { levelUpPending, levelUpBaseline, applyLevelUpCelebrated } from './utils/levelUp';
 import { sanitizeTalentPicks } from './utils/talents';
 import { soulLevel, soulLevelLine, soulCombatant } from './utils/soulXP';
-import type { RogueRun } from './utils/rogueDungeonSave';
+import { ROGUE_PER_FLOOR, type RogueRun } from './utils/rogueDungeonSave';
 import { applyPoopDrain, cleanPoop, pendingPoopEvent, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { pausarTrilha, retomarTrilha } from './utils/trilha';
@@ -4012,6 +4013,11 @@ export default function App() {
       return { ...prev, dailyMissions: bumpDaily(prev.dailyMissions, playerDayKey(new Date(), prev.playerDayTz), evento), ...(firstTimes === prev.firstTimes ? {} : { firstTimes }) };
     });
   }, []);
+  /* FEITOS (rodada 6, `utils/feats.ts`): os recursos emitem (`emitFeat`) e o App grava no save, num assinante só. */
+  useEffect(() => subscribeFeats((key, value) => setGameState(prev => {
+    const feats = applyFeat(prev.feats, key, value);
+    return feats === (prev.feats ?? {}) ? prev : { ...prev, feats };
+  })), [setGameState]);
   const contarMissao = useCallback((id: WeeklyMissionId) => {
     const doDia: Partial<Record<WeeklyMissionId, DailyEvent>> = {
       shower: 'banho', 'play-days': 'brincar', 'mood-checkins': 'humor', 'rub-days': 'carinho', 'friend-visit': 'amigo', 'tournament-match': 'torneio',
@@ -4202,6 +4208,7 @@ export default function App() {
     // #41/#60 (22/09/2026): a MISSÃO segue contando o 🌀; a CONQUISTA não.
     // `?? totalPerfectDays` para save anterior à decisão não andar para trás.
     missionPerfectDays: gameState.missionPerfectDays ?? gameState.totalPerfectDays ?? 0,
+    feats: gameState.feats,
   };
   const missionProgress = getMissionProgress(missionState);
 
@@ -7546,8 +7553,15 @@ export default function App() {
                      aqui só se grava o estado que o jogo devolveu. */
                   todayKey: playerDayIso(new Date(), gameState.playerDayTz),
                   focusKeyActive: hasFocusKeyOrLegacy(gameState, Date.now(), focusSessionStamp(readJson<unknown>(STORAGE_KEYS.FOCO_WORKSHOP_PLAN, null))),
-                  rogue: { saved: gameState.rogueDungeon, onChange: (run: RogueRun) => setGameState(prev => ({ ...prev, rogueDungeon: run })), combatant: soulCombatant(gameState) },
-                  onFocusPrepared: () => setGameState(prev => grantFocusKey(prev, Date.now())),
+                  rogue: { saved: gameState.rogueDungeon, onChange: (run: RogueRun) => setGameState(prev => {
+                    // Andar concluído (rodada 6): sobe `floorsCleared` dentro do MESMO dia → feito vitalício + missão do dia do Calabouço.
+                    const antes = prev.rogueDungeon && prev.rogueDungeon.day === run.day ? Math.floor(prev.rogueDungeon.step / ROGUE_PER_FLOOR) : 0;
+                    const ganhos = Math.max(0, Math.floor(run.step / ROGUE_PER_FLOOR) - antes);
+                    if (ganhos === 0) return { ...prev, rogueDungeon: run };
+                    const dia = playerDayKey(new Date(), prev.playerDayTz);
+                    return { ...prev, rogueDungeon: run, feats: applyFeat(prev.feats, 'rogueFloors', ganhos), dailyMissions: bumpDaily(prev.dailyMissions, dia, 'calabouco') };
+                  }), combatant: soulCombatant(gameState) },
+                  onFocusPrepared: () => { emitFeat('focusPrepared'); setGameState(prev => grantFocusKey(prev, Date.now())); },
                   onFocusStart: (focusEndsAt?: number) => {
                     const now = Date.now();
                     const why = focusDescentRefusal(gameStateRef.current, now);

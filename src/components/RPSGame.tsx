@@ -32,6 +32,7 @@ type Hand = 0 | 1 | 2; // rock, paper, scissors
 import handRock from '../assets/soulmon/icons/games/hand-rock.png';
 import handPaper from '../assets/soulmon/icons/games/hand-paper.png';
 import handScissors from '../assets/soulmon/icons/games/hand-scissors.png';
+import { emitFeat } from '../utils/feats';
 
 /* As tres PECAS do jogo. Eram emoji do SISTEMA (✊ ✋ ✌️) — os controles
    primarios do minijogo desenhados por outra pessoa, com outra grade e outra
@@ -119,6 +120,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
       } else if (pw >= WINS_NEEDED || (exhausted && pw > ew)) {
         // C-11 (30/09/2026): vencer a partida não é concluir tarefa (R-CAT) — mudo.
         onEarnPoints(MATCH_POINTS);
+        if (level === 2) emitFeat('pptNormalWins');
         onMatchEnd?.();
         setMatchOver('won');
       } else if (ew >= WINS_NEEDED || (exhausted && ew > pw)) {

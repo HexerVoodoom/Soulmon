@@ -29,6 +29,7 @@ import obstacle4b from '../assets/soulmon/dino/dino-obstacle-4b.png';
 import obstacle4c from '../assets/soulmon/dino/dino-obstacle-4c.png';
 import groundStrip from '../assets/soulmon/dino/dino-ground-strip.png';
 import parallaxFar from '../assets/soulmon/dino/dino-parallax-far.png';
+import { emitFeat } from '../utils/feats';
 /* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
 const PET_SCALE_MINIGAME = 1;
 
@@ -452,6 +453,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         if (dR > oL && dL < oR && dBot > oT && dTop < GROUND) {
           if (s.dashT > 0) { // o dash destrói o obstáculo atingido
             o.x = -1000;
+            emitFeat('dinoDashSmashed');
             if (!reduced) spawnDust(s.dust, Math.max(0, oL), GROUND - 4, s.speed, 4);
             continue;
           }
@@ -533,6 +535,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       // uma tarefa — pela R-CAT a categoria vem do EVENTO, e `playTaskComplete`
       // é a categoria de conclusão. Fica mudo até existir a categoria arcade.
       if (pts > 0) onEarnPoints(pts);
+      if (s.level === 2) emitFeat('dinoNormalBest', score);
       onScore(score);
       setBest(prev => {
         const nb = Math.max(prev, score);

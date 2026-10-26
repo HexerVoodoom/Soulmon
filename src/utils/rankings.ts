@@ -1,6 +1,7 @@
 // Cliente do ranking genérico (`functions/api/_rankings.js` / `rankings.js`, BACKLOG-BETA3 M8).
 // Mesmo contrato para todo jogo: `submitScore(game, saveId, score)` e `fetchRanking(game, saveId)`.
 import { authHeaders } from './auth';
+import { emitFeat, RANK_TIER_ORDER } from './feats';
 
 // `dino` (sem nível) só existe para cliente antigo; o novo envia `dino-1`/`dino-2`. `zip`/`patches`: TEMPO em ms (menor vence).
 export type RankedGame = 'dino' | 'dino-1' | 'dino-2' | 'ppt' | 'match3' | 'eco' | 'endless-rift' | 'rogue-dungeon' | 'soul-barrage' | 'zip' | 'patches';
@@ -62,7 +63,11 @@ export async function submitScore(game: RankedGame, saveId: string, score: numbe
     headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
     body: JSON.stringify({ id: saveId, game, period, score: Math.max(0, Math.floor(score)) }),
   });
-  return parse<SubmitResult>(res);
+  const out = await parse<SubmitResult>(res);
+  // Conquista "faixa de ouro" (rodada 6): guarda a MAIOR faixa já vista (índice+1: madeira 1 … diamante 6). Só o que o servidor devolveu.
+  const faixa = out?.me?.tier ? RANK_TIER_ORDER.indexOf(out.me.tier) + 1 : 0;
+  if (faixa > 0) emitFeat('rankTier', faixa);
+  return out;
 }
 
 export async function fetchRanking(game: RankedGame, saveId: string, period: RankingPeriod = 'weekly', top = 10): Promise<RankingBoard> {

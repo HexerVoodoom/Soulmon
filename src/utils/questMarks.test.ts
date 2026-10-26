@@ -4,7 +4,7 @@ import { MISSIONS } from './missions';
 
 const zero = Object.fromEntries(MISSIONS.map(m => [m.id, 0]));
 const cheio = Object.fromEntries(MISSIONS.map(m => [m.id, m.target]));
-const base = { passeio: null, weekly: [], missionProgress: cheio, ownedBackgrounds: MISSIONS.map(m => m.bgReward) } as const;
+const base = { passeio: null, weekly: [], missionProgress: cheio, ownedBackgrounds: MISSIONS.flatMap(m => (m.bgReward ? [m.bgReward] : [])) } as const;
 
 describe('questMarks', () => {
   it('sem nada pendente, nenhuma marca', () => {
