@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import type { AreaId } from '../../navigation';
-import { lotArtBounds } from '../../utils/areaLotGeometry';
+import { lotArtBounds, lotHitBounds, lotLabelOffset } from '../../utils/areaLotGeometry';
 import { lotArtFilter } from './lotHalo';
 import { MissionMark } from '../play/MissionMark';
 import type { QuestMark as MissionMarkKind } from '../../utils/questMarks';
@@ -47,6 +47,9 @@ export interface AreaLot {
 
 /** Largura padrão de um lote, em % da cena (o molde F4). */
 export const LOT_WIDTH_DEFAULT = '38%';
+
+/** Prédios que o desenho do dono põe NA FRENTE dos vizinhos mais altos (Arena livre cobre parte do Torneio e da Guerra). */
+const LOT_Z_OVERRIDE: Record<string, number> = { 'arena:duelo': 90 };
 
 /**
  * Ordem de empilhamento dos lotes (QA L06-12, decisão do dono 21/10/2026): quanto mais ALTO o lote na cena (`top` menor), mais
@@ -127,7 +130,7 @@ export function AreaScene({ areaId, language, lots, background, notice, children
             // prédio grande roubava o toque do vizinho (Santuário do Vínculo × Centro de Evolução).
             pointerEvents: 'none',
             // O lote mais ALTO da cena fica por cima: o rótulo dele (na base) nunca é tapado pela arte do vizinho de baixo (QA L06-12).
-            zIndex: lotZIndex(lot.top),
+            zIndex: LOT_Z_OVERRIDE[`${areaId}:${lot.id}`] ?? lotZIndex(lot.top),
           }}
         >
           {lot.art ? (
@@ -159,7 +162,7 @@ export function AreaScene({ areaId, language, lots, background, notice, children
                 style={{ width: '100%', display: 'block', filter: lotArtFilter({ locked: !!lot.locked, accent: LOT_HALO.has(`${areaId}:${lot.id}`) }) }}
               />
               {(() => {
-                const b = lotArtBounds(areaId, lot.id) ?? [0, 0, 1, 1];
+                const b = lotHitBounds(areaId, lot.id);
                 return (
                   <span
                     aria-hidden="true"
@@ -198,6 +201,7 @@ export function AreaScene({ areaId, language, lots, background, notice, children
             data-area-lot-label
             style={{
               marginTop: -4, pointerEvents: 'auto',
+              position: 'relative', left: lotLabelOffset(areaId, lot.id)[0], top: lotLabelOffset(areaId, lot.id)[1],
               padding: '2px 9px',
               borderRadius: 999,
               background: 'rgba(8,25,26,.85)',

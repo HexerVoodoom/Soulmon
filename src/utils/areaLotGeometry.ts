@@ -55,6 +55,37 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'hall:guilda': [0.137, 0.039, 0.863, 0.961],
 };
 
+/**
+ * MIOLO DE TOQUE (26/10/2026, dono: ARENA com os prédios sobrepostos no desenho). Fração da caixa OPACA (`LOT_ART_BOUNDS`) que
+ * NÃO recebe toque, por lado (esquerda, topo, direita, base). A arte continua inteira; só o alvo encolhe — usado por `lotHitRects`
+ * E pelo botão real do `AreaScene` (`data-area-lot-hit`), então o que o contrato mede é o que o jogador toca.
+ */
+export const LOT_HIT_INSET: Record<string, LotBounds> = {
+  'arena:torneio': [0, 0, 0.22, 0],
+  'arena:duelo': [0.2, 0, 0, 0],
+  'arena:guerra': [0.2, 0, 0, 0],
+  'arena:fenda': [0, 0, 0.04, 0],
+};
+
+/** Deslocamento do RÓTULO (px, x e y) por lote — tira o nome de trás do prédio vizinho que o cobre. */
+export const LOT_LABEL_OFFSET: Record<string, readonly [number, number]> = {
+  'arena:torneio': [-38, 0],
+  'arena:fenda': [0, -62],
+};
+
+/** Caixa de TOQUE do sprite: a opaca menos o miolo (`LOT_HIT_INSET`). */
+export function lotHitBounds(areaId: AreaId, lotId: string): LotBounds {
+  const b = lotArtBounds(areaId, lotId) ?? [0, 0, 1, 1];
+  const i = LOT_HIT_INSET[`${areaId}:${lotId}`];
+  if (!i) return b;
+  const w = b[2] - b[0], h = b[3] - b[1];
+  return [b[0] + i[0] * w, b[1] + i[1] * h, b[2] - i[2] * w, b[3] - i[3] * h];
+}
+
+export function lotLabelOffset(areaId: AreaId, lotId: string): readonly [number, number] {
+  return LOT_LABEL_OFFSET[`${areaId}:${lotId}`] ?? [0, 0];
+}
+
 export function lotArtBounds(areaId: AreaId, lotId: string): LotBounds | undefined {
   return LOT_ART_BOUNDS[`${areaId}:${lotId}`];
 }
@@ -83,9 +114,10 @@ export function lotHitRects(
   const total = bw + LOT_LABEL_H;
   const x0 = pct(lot.left) * viewW - bw / 2;
   const y0 = pct(lot.top) * viewH - 0.8 * total;
-  const b = lotArtBounds(areaId, lot.id) ?? [0, 0, 1, 1];
+  const b = lotHitBounds(areaId, lot.id);
+  const [ox, oy] = lotLabelOffset(areaId, lot.id);
   const art: Rect = { x0: x0 + b[0] * bw, y0: y0 + b[1] * bw, x1: x0 + b[2] * bw, y1: y0 + b[3] * bw };
   const labelW = Math.min(bw, lot.label.length * 7.5 + 20);
-  const label: Rect = { x0: x0 + (bw - labelW) / 2, y0: y0 + bw, x1: x0 + (bw + labelW) / 2, y1: y0 + total };
+  const label: Rect = { x0: x0 + (bw - labelW) / 2 + ox, y0: y0 + bw + oy, x1: x0 + (bw + labelW) / 2 + ox, y1: y0 + total + oy };
   return [art, label];
 }

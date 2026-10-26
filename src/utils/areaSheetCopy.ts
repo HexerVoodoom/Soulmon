@@ -73,10 +73,10 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
 // na diagonal do losango de baixo, e a de cima-esquerda (P1) fica vazia. W19 (§147): a base do Torneio desceu 38 px / foi 25 px à direita (área marcada pelo dono); a Arena livre desceu o mínimo p/ o H11. `left`/`top` = centro da BASE da caixa do botão; o centro visual cai na marca.
 const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
   { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '25.5%', top: '47.3%', width: '30.8%' },
-  { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '46.5%', top: '69%', width: '39%' }, // beta-2 (9.3): a Arena livre sai do meio do caminho e assenta no OUTRO tablado (o da direita, livre desde que a Feira foi para o Hall) — um bloco para cada modo
+  { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '41.5%', top: '57.5%', width: '39%' }, // beta-2 (9.3): a Arena livre sai do meio do caminho e assenta no OUTRO tablado (o da direita, livre desde que a Feira foi para o Hall) — um bloco para cada modo
   { id: 'guerra', labelPt: 'Guerra de Clãs', labelEn: 'Clan War', ariaPt: 'Entrar na Guerra de Clãs', ariaEn: 'Enter the Clan War', left: '77.4%', top: '46.7%', width: '38%' },
   // 🌀 beta3 N10 (26/10/2026): a Fenda Sem Fim (a antiga Masmorra) veio da Exploração para a Arena — ocupa a vaga de cima-esquerda (P1) do losango de cima. Arte provisória (a da Masmorra); posição a conferir na tela.
-  { id: 'fenda', labelPt: 'Fenda Sem Fim', labelEn: 'Endless Rift', ariaPt: 'Entrar na Fenda Sem Fim', ariaEn: 'Enter the Endless Rift', left: '56%', top: '25%', width: '46%' },
+  { id: 'fenda', labelPt: 'Fenda Sem Fim', labelEn: 'Endless Rift', ariaPt: 'Entrar na Fenda Sem Fim', ariaEn: 'Enter the Endless Rift', left: '54.5%', top: '33.5%', width: '50%' },
   // 🔎 11/10/2026 (guilda-lancamento): a FEIRA saiu da Arena e foi para o HALL, ao lado do Salão da Guilda — é a Missão da
   // guilda (`GuildSheet` room `feira`). O tablado da direita da Arena fica livre.
 ];

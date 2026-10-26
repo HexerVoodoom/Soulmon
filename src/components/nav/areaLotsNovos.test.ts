@@ -32,11 +32,11 @@ describe('lotes novos (29/09/2026)', () => {
     expect([arena.guerra.left, arena.guerra.top, (arena.guerra as { width?: string }).width]).toEqual(['77.4%', '46.7%', '38%']); // a Guerra não mudou (§146)
     const rects = (id: string, w: number, h: number) => lotHitRects('arena', arenaLots('pt-BR').find(l => l.id === id) as never, w, h)[0];
     const centro = (id: string) => { const art = rects(id, 390, 844); return [((art.x0 + art.x1) / 2 / 390) * 100, ((art.y0 + art.y1) / 2 / 844) * 100]; };
-    // §147 (W19): o dono marcou na captura 390×844 onde a BASE do Torneio deve ficar: o ponto (70,328) do sprite (a escadaria vermelha, dentro do círculo
-    // branco dele) tem de cair no centro do círculo vermelho (95,366): Δ = (+25, +38) px. A Arena livre desceu o MÍNIMO que o H11 deixa (Torneio e Guerra
-    // fecham o vão em x): centro visual do Arena livre − o do Torneio ≈ 21,0 / 20,6 pontos (era 27,4 / 10,1 no §146: a diagonal ficou mais vertical).
-    expect(centro('duelo')[0] - centro('torneio')[0]).toBeCloseTo(21.0, 0);
-    expect(Math.abs(centro('duelo')[1] - centro('torneio')[1] - 20.6)).toBeLessThanOrEqual(0.6);
+    // §147 (W19): o dono marcou na captura 390×844 onde a BASE do Torneio deve ficar: o ponto (70,328) do sprite tem de cair em (95,366).
+    // 26/10/2026 (dono, desenho novo): a Arena livre SOBE e vai à esquerda, na frente, cobrindo parte do Torneio e da Guerra; a Fenda Sem Fim cresce no topo-centro. O H11 segue valendo pelo miolo de toque (`LOT_HIT_INSET`) e pelo deslocamento de rótulo.
+    expect([arena.duelo.left, arena.duelo.top, (arena.duelo as { width?: string }).width]).toEqual(['41.5%', '57.5%', '39%']);
+    const fenda = arenaLots('pt-BR').find(l => l.id === 'fenda') as { left: string; top: string; width?: string };
+    expect([fenda.left, fenda.top, fenda.width]).toEqual(['54.5%', '33.5%', '50%']);
     const tArt = rects('torneio', 390, 844);
     const ancora = [tArt.x0 + 46.8, tArt.y0 + 80.46]; // ponto da escadaria no sprite, medido na captura do dono (antes em (70,328))
     expect(Math.abs(ancora[0] - 95), 'base do Torneio × alvo do dono, x').toBeLessThanOrEqual(3);
