@@ -140,8 +140,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '🌀', en: 'Glitchtama', pt: 'Glitchtama',
-    descEn: 'Rare item from the first milestone (every 5 layers) of each automatic dungeon descent. Using it adds one day’s worth of steps to the evolution path — one a day, so the ladder stays measured in days.',
-    descPt: 'Item raro do primeiro marco (a cada 5 camadas) de cada descida automática da masmorra. Usar soma um dia de passos ao caminho da evolução — um por dia, para a escada continuar sendo medida em dias.',
+    descEn: 'Rare item from the first milestone (every 5 layers) of each automatic Endless Rift descent. Using it adds one day’s worth of steps to the evolution path — one a day, so the ladder stays measured in days.',
+    descPt: 'Item raro do primeiro marco (a cada 5 camadas) de cada descida automática da Fenda. Usar soma um dia de passos ao caminho da evolução — um por dia, para a escada continuar sendo medida em dias.',
   },
   {
     // 🧭 Passeio e Travessias (30/09/2026). Sem número, sem prazo, sem prêmio.
@@ -151,8 +151,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '💗', en: 'Little Heart', pt: 'Coraçãozinho',
-    descEn: 'Shop item and rare dungeon drop. Using it from the Backpack heals 1 HP.',
-    descPt: 'Item da loja e drop raro da masmorra. Usar pela mochila cura 1 HP.',
+    descEn: 'Shop item and rare Endless Rift drop. Using it from the Backpack heals 1 HP.',
+    descPt: 'Item da loja e drop raro da Fenda. Usar pela mochila cura 1 HP.',
   },
   {
     icon: '📈', en: 'Consistency', pt: 'Constância',

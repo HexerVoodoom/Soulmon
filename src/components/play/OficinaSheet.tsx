@@ -212,7 +212,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
         </p>}
         {descent && timer?.phase === 'focus' && <p role="status" data-oficina-descida={descent} style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
           {descent === 'started'
-            ? (isPt ? 'Enquanto você foca, o Soulmon desce a masmorra sozinho.' : 'While you focus, your Soulmon goes down the dungeon on its own.')
+            ? (isPt ? 'Enquanto você foca, o Soulmon desce a Fenda sozinho.' : 'While you focus, your Soulmon goes down the Endless Rift on its own.')
             : descent === 'busy'
               ? (isPt ? 'O Soulmon já está ocupado; a descida dele segue.' : 'Your Soulmon is already busy; his descent goes on.')
               : descent === 'no-hp'

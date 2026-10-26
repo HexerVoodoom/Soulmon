@@ -326,7 +326,7 @@ export function Mochila({
 
           {aba === 'especiais' && lista.length === 0 && (
             <p className="sm3-mochila-vazia" data-mochila-vazia>
-              {isPt ? 'Nenhum item especial ainda. Os especiais vêm da masmorra.' : 'No special items yet. Specials come from the dungeon.'}
+              {isPt ? 'Nenhum item especial ainda. Os especiais vêm da Fenda.' : 'No special items yet. Specials come from the Rift.'}
             </p>
           )}
 

@@ -239,7 +239,7 @@ export function StatsPage({
   const feitos: string[] = [];
   if ((journey?.dungeonRunsCompleted ?? 0) > 0) {
     const n = journey!.dungeonRunsCompleted!;
-    feitos.push(isPt ? `limparam ${n} run(s) da masmorra` : `cleared ${n} dungeon run(s)`);
+    feitos.push(isPt ? `limparam ${n} run(s) da Fenda` : `cleared ${n} Endless Rift run(s)`);
   }
   if ((journey?.dungeonKills ?? 0) > 0) {
     const n = journey!.dungeonKills!;

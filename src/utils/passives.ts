@@ -55,8 +55,8 @@ export const PET_PASSIVES: readonly PetPassive[] = [
     emoji: '🍀',
     namePt: 'Sortudo',
     nameEn: 'Lucky',
-    descPt: 'Tropeça em coisa boa: acha coraçãozinho na masmorra com mais frequência.',
-    descEn: 'Stumbles into good things: finds Little Hearts in the dungeon more often.',
+    descPt: 'Tropeça em coisa boa: acha coraçãozinho na Fenda com mais frequência.',
+    descEn: 'Stumbles into good things: finds Little Hearts in the Rift more often.',
   },
   {
     id: 'madrugador',

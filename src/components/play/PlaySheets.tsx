@@ -126,7 +126,7 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <p style={sectionHead}>{isPt ? 'Descida automática, sem fim' : 'Automatic descent, no end'}</p>
         {/* I13: a nota de "perder" saiu da folha e mora atrás do "?". */}
-        <ModalInfo language={language} label={isPt ? 'Como funciona a masmorra' : 'How the dungeon works'} align="right">
+        <ModalInfo language={language} label={isPt ? 'Como funciona a Fenda' : 'How the Rift works'} align="right">
           <InfoTipSection title={isPt ? 'Como funciona' : 'How it works'}>
           {isPt
             ? `As lutas vêm sozinhas e o HP volta com o tempo. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia (a da Home, que volta com o tempo) e até a camada ${DUNGEON_MAX_LAYER}. Perder custa só a descida — nunca os seus corações.`
@@ -165,7 +165,7 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
       )}
       {/* H11: o botão vem ANTES das duas notas — a ação primeiro, o miúdo depois. */}
       <button type="button" data-masmorra-start onClick={onStart} style={cta}>
-        {isPt ? 'Entrar na masmorra' : 'Enter the dungeon'}
+        {isPt ? 'Descer à Fenda' : 'Go down the Rift'}
       </button>
       <BitsHoje language={language} earned={bitsToday} />
     </div>

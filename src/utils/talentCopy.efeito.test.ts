@@ -36,10 +36,10 @@ describe('a descrição diz o efeito ANTES do número e não promete o que o có
     expect(TALENT_COPY['tal-pvp-03'].descEn).toMatch(/^Blows come quicker/);
     expect(TALENT_COPY['tal-pve-01'].descPt).toMatch(/^O seu Soulmon bate mais forte/);
   });
-  it('Muro da fenda e Arco de luz dizem a verdade sobre onde são defesa/ritmo de verdade (Masmorra) e onde entram no bônus único', () => {
+  it('Muro da fenda e Arco de luz dizem a verdade sobre onde são defesa/ritmo de verdade (Fenda) e onde entram no bônus único', () => {
     for (const id of ['tal-pve-02', 'tal-pve-06']) {
-      expect(TALENT_COPY[id].descPt, id).toMatch(/Masmorra/); expect(TALENT_COPY[id].descPt, id).toMatch(/bônus único da fenda/);
-      expect(TALENT_COPY[id].descEn, id).toMatch(/Dungeon/); expect(TALENT_COPY[id].descEn, id).toMatch(/single rift bonus/);
+      expect(TALENT_COPY[id].descPt, id).toMatch(/Na Fenda/); expect(TALENT_COPY[id].descPt, id).toMatch(/bônus único da fenda/);
+      expect(TALENT_COPY[id].descEn, id).toMatch(/Endless Rift/); expect(TALENT_COPY[id].descEn, id).toMatch(/single rift bonus/);
     }
   });
   it('três nós de combate da fenda NÃO são mais o mesmo efeito: os canais são ATK, DEF e SPD', () => {

@@ -89,7 +89,7 @@ export function areaHint(id: AreaId, isPt: boolean): string {
     case 'mercado': return isPt ? 'Itens, decoração e fundos' : 'Items, decor and backgrounds';
     case 'jogos': return isPt ? 'Jogos livres, mente e refúgio' : 'Free play, mind and refuge';
     case 'arena': return isPt ? 'Torneio ranqueado e Arena livre' : 'Ranked Tournament and Open Arena';
-    case 'exploracao': return isPt ? 'Masmorra, Passeio, Oficina e Caderno' : 'Dungeon, Stroll, Workshop and Journal';
+    case 'exploracao': return isPt ? 'Fenda, Passeio, Oficina e Caderno' : 'Endless Rift, Stroll, Workshop and Journal';
     case 'laboratorio': return isPt ? 'Evolução, Biblioteca e amigos' : 'Evolution, Library and friends';
     case 'hall': return isPt ? 'Feira, Clan Hall e Grove' : 'Fair, Clan Hall and Grove';
   }

@@ -43,8 +43,8 @@ export function DungeonSign({ language, onTap, returnInMs }: { language: Languag
   const hasTime = typeof returnInMs === 'number' && Number.isFinite(returnInMs);
   const back = hasTime && (returnInMs as number) <= 0;
   // Já voltou: o TÍTULO muda (F2 do crítico: "In Dungeon" + "Back" se contradizia); a segunda linha completa a frase.
-  const label = back ? (isPt ? 'Voltou' : 'Back') : (isPt ? 'Na masmorra' : 'In Dungeon');
-  const time = hasTime ? (back ? (isPt ? 'da masmorra' : 'from the Dungeon') : formatEnergyEta(returnInMs as number, isPt)) : null;
+  const label = back ? (isPt ? 'Voltou' : 'Back') : (isPt ? 'Na Fenda' : 'In the Rift');
+  const time = hasTime ? (back ? (isPt ? 'da Fenda' : 'from the Rift') : formatEnergyEta(returnInMs as number, isPt)) : null;
   const aria = back
     ? `${label} ${time}. ${isPt ? 'Toque para receber' : 'Tap to welcome him'}`
     : `${label}${time ? `, ${isPt ? `volta em ${time}` : `back in ${time}`}` : ''}. ${isPt ? 'Toque para ver' : 'Tap for details'}`;

@@ -42,7 +42,7 @@ const POOL: readonly WeeklyMission[] = [
   { id: 'rest-nights', target: 3, emblems: 3, descPt: 'Deite no seu horário em 3 noites', descEn: 'Lie down in your window on 3 nights' },
   { id: 'checkins', target: 4, emblems: 3, descPt: 'Faça o ritual do dia 4 vezes', descEn: 'Do the daily ritual 4 times' },
   { id: 'haunted-done', target: 1, emblems: 4, descPt: 'Termine uma tarefa que estava te olhando', descEn: 'Finish a task that was watching you' },
-  { id: 'dungeon-runs', target: 2, emblems: 3, descPt: 'Complete 2 runs da masmorra', descEn: 'Complete 2 dungeon runs' },
+  { id: 'dungeon-runs', target: 2, emblems: 3, descPt: 'Conclua 2 descidas da Fenda', descEn: 'Complete 2 Endless Rift runs' },
   { id: 'rub-days', target: 4, emblems: 2, descPt: 'Faça carinho no seu Soulmon em 4 dias', descEn: 'Rub your Soulmon on 4 days' },
   { id: 'shower', target: 3, emblems: 2, descPt: 'Dê 3 banhos', descEn: 'Give 3 baths' },
   { id: 'play-days', target: 3, emblems: 2, descPt: 'Brinque com ele em 3 dias', descEn: 'Play with them on 3 days' },

@@ -42,7 +42,7 @@ export const ACHIEVEMENT_LABELS: Record<AchievementId, { pt: string; en: string 
   'habit-66': { pt: 'Árvore — 66 dias', en: 'Tree — 66 days' },
   'first-evolution': { pt: 'Primeira evolução', en: 'First evolution' },
   'mega-form': { pt: 'Forma mega', en: 'Mega form' },
-  'dungeon-10': { pt: 'Dez masmorras', en: 'Ten dungeon runs' },
+  'dungeon-10': { pt: 'Dez descidas da Fenda', en: 'Ten Endless Rift runs' },
   'tournament-champion': { pt: 'Campeão do torneio', en: 'Tournament champion' },
   'dias-completos-30': { pt: 'Trinta dias completos', en: 'Thirty complete days' },
 };
@@ -59,7 +59,7 @@ export const ACHIEVEMENT_HOW: Record<AchievementId, { pt: string; en: string }> 
   'habit-66': { pt: 'Cumpra um hábito 66 vezes no total — não precisa ser em sequência.', en: 'Do a habit 66 times in total — no streak needed.' },
   'first-evolution': { pt: 'Evolua o seu Soulmon pela primeira vez.', en: 'Evolve your Soulmon for the first time.' },
   'mega-form': { pt: 'Chegue à forma mega.', en: 'Reach the mega form.' },
-  'dungeon-10': { pt: 'Complete 10 masmorras.', en: 'Complete 10 dungeon runs.' },
+  'dungeon-10': { pt: 'Complete 10 descidas da Fenda.', en: 'Complete 10 Endless Rift runs.' },
   'tournament-champion': { pt: 'Fique em 1º lugar num torneio.', en: 'Place first in a tournament.' },
   'dias-completos-30': { pt: 'Feche 30 dias completos — não precisam ser seguidos.', en: 'Finish 30 complete days — they need not be consecutive.' },
 };

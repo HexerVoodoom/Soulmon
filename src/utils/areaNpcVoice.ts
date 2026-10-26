@@ -45,8 +45,8 @@ const AREA_NPC_VOICE: Record<AreaId, AreaNpcVoice> = {
     namePt: 'Zeph, a guia',
     nameEn: 'Zeph, the guide',
     // A Corrida mudou para o Salão de Jogos (30/09/2026); aqui ficou a Masmorra.
-    linePt: 'A névoa esconde caminhos. A Masmorra está logo ali, quando quiser descer.',
-    lineEn: 'The mist hides paths. The Dungeon is right there, whenever you want to go down.',
+    linePt: 'A névoa esconde caminhos. A Fenda está logo ali, quando quiser descer.',
+    lineEn: 'The mist hides paths. The Endless Rift is right there, whenever you want to go down.',
   },
   jogos: {
     namePt: 'Pipo, o anfitrião',

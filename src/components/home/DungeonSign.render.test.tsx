@@ -32,17 +32,17 @@ describe('DungeonSign', () => {
     const onTap = vi.fn();
     render(<DungeonSign language="en-US" returnInMs={95 * 60_000} onTap={onTap} />);
     const b = screen.getByRole('button');
-    expect(b.getAttribute('aria-label')).toBe('In Dungeon, back in 1h35. Tap for details');
-    expect(b.querySelector('[data-dungeon-sign-label]')!.textContent).toBe('In Dungeon');
+    expect(b.getAttribute('aria-label')).toBe('In the Rift, back in 1h35. Tap for details');
+    expect(b.querySelector('[data-dungeon-sign-label]')!.textContent).toBe('In the Rift');
     expect(SIGN_W).toBeGreaterThanOrEqual(44);
     expect(SIGN_H).toBeGreaterThanOrEqual(44);
     fireEvent.click(b);
     expect(onTap).toHaveBeenCalledOnce();
   });
-  it('já voltou: título "Voltou" + "da masmorra"', () => {
+  it('já voltou: título "Voltou" + "da Fenda"', () => {
     render(<DungeonSign language="pt-BR" returnInMs={0} />);
     expect(screen.getByRole('button').textContent).toContain('Voltou');
-    expect(screen.getByRole('button').textContent).toContain('da masmorra');
+    expect(screen.getByRole('button').textContent).toContain("da Fenda");
   });
 });
 

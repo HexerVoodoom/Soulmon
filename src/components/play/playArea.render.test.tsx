@@ -155,7 +155,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     // I13 (02/10/2026): a nota "perder custa só a run" saiu da folha e mora
     // atrás do "?" — fica fora da tela até o jogador tocar.
     expect(folha.textContent).not.toMatch(/nunca os seus corações/);
-    fireEvent.click(getByRole('button', { name: 'Como funciona a masmorra' }));
+    fireEvent.click(getByRole('button', { name: 'Como funciona a Fenda' }));
     // Pedido do dono (11/10/2026): "Pode cair" saiu do corpo da folha e vive no "i", como lista.
     expect(folha.textContent).not.toContain('Pode cair');
     expect(folha.textContent).not.toContain('4→12');
@@ -228,7 +228,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(container.querySelector('[data-area-lot="masmorra"]')!.textContent).toContain('Endless Rift');
     fireEvent.click(container.querySelector('[data-area-lot="masmorra"]')!);
     await achar(container, '[data-masmorra]');
-    fireEvent.click(getByRole('button', { name: 'How the dungeon works' }));
+    fireEvent.click(getByRole('button', { name: 'How the Rift works' }));
     expect(document.querySelector('[data-info-tip-panel]')!.textContent).toMatch(/never your hearts/);
   });
 });

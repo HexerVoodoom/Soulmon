@@ -352,8 +352,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              'Masmorra e Torneio nunca cobram corações. Perder custa só a run.',
-              'Dungeon and Tournament never cost hearts. Losing only costs the run.',
+              'A Fenda e o Torneio nunca cobram corações. Perder custa só a descida.',
+              'The Endless Rift and the Tournament never cost hearts. Losing only costs the descent.',
             )}
           </p>
           <p style={para}>

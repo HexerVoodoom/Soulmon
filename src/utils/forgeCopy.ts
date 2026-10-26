@@ -15,7 +15,7 @@ export function forgeRefusalText(r: ForgeRefusal, isPt: boolean, level = 0): str
     case 'not-owned': return isPt ? 'Esta peça vem da missão do prédio dela.' : 'This piece comes from its building’s mission.';
     case 'no-funds': return isPt ? 'Ainda faltam Bits. Eles chegam jogando, sem pressa.' : 'Not enough Bits yet. They come from playing, no rush.';
     case 'not-earned': return isPt ? 'Refazer só aceita Bits que você ganhou jogando. Os Bits vindos de Créditos servem para outras coisas.' : 'Redoing only takes Bits you earned by playing. Bits that came from Credits are for other things.';
-    case 'no-fragments': return isPt ? 'Ainda faltam fragmentos. Eles vêm das runs completas da Masmorra.' : 'Not enough fragments yet. They come from completed Dungeon runs.';
+    case 'no-fragments': return isPt ? 'Ainda faltam fragmentos. Eles vêm das descidas completas da Fenda.' : 'Not enough fragments yet. They come from completed Endless Rift runs.';
     case 'same': return isPt ? 'Esta já é a escolha atual.' : 'That is already the current choice.';
     default: return isPt ? 'Isto não está disponível agora.' : 'That is not available right now.';
   }

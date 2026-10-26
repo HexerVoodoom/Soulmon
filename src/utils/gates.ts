@@ -65,7 +65,7 @@ export function gatesOpenedBetween(from: unknown, to: unknown): GateFeature[] {
 const NOME: Record<GateFeature, { pt: string; en: string }> = {
   pvp: { pt: 'O Duelo', en: 'The Duel' },
   torneio: { pt: 'O Torneio', en: 'The Tournament' },
-  masmorraAlto: { pt: 'Os andares mais fundos da Masmorra', en: 'The deepest Dungeon floors' },
+  masmorraAlto: { pt: 'As camadas mais fundas da Fenda', en: 'The deepest Endless Rift layers' },
   renascimento: { pt: 'O Renascimento', en: 'Rebirth' },
 };
 

@@ -177,7 +177,7 @@ describe('Mochila — dados e estados', () => {
     const pt = montar({ foodInventory: {} });
     expect(screen.getByText('Nada por aqui. Complete tarefas pra ganhar comida.')).toBeTruthy();
     fireEvent.click(screen.getByRole('tab', { name: 'Especiais' }));
-    expect(screen.getByText(/Os especiais vêm da masmorra/)).toBeTruthy();
+    expect(screen.getByText(/Os especiais vêm da Fenda/)).toBeTruthy();
     pt.unmount();
     montar({ foodInventory: {}, language: 'en-US' });
     expect(screen.getByText('Nothing here yet. Complete tasks to earn food.')).toBeTruthy();

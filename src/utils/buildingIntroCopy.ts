@@ -63,8 +63,8 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
   'jogos.dungeon': {
     place: { en: 'Dungeon', pt: 'Calabouço' },
     hello: { en: "I'm {name}, a guide here. The mist hides paths, and I know a few.", pt: 'Eu sou {name}, guia por aqui. A névoa esconde caminhos, e eu conheço alguns.' },
-    what: { en: 'A small dungeon game is being built here. It is not open yet.', pt: 'Um pequeno jogo de calabouço está sendo preparado aqui. Ainda não abriu.' },
-    invite: { en: 'Come back soon.', pt: 'Volte logo.' },
+    what: { en: 'A small roguelike dungeon game. Step in and try your luck.', pt: 'Um pequeno jogo de calabouço roguelike. Entre e tente a sorte.' },
+    invite: { en: 'The door is open.', pt: 'A porta está aberta.' },
   },
   'jogos.mente': {
     place: { en: 'Mind Workshop', pt: 'Ateliê da Mente' },
@@ -105,7 +105,7 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
   'exploracao.masmorra': {
     place: { en: 'Endless Rift', pt: 'Fenda Sem Fim' },
     hello: { en: "I'm {name}, a guide here. The mist hides paths, and I know a few.", pt: 'Eu sou {name}, guia por aqui. A névoa esconde caminhos, e eu conheço alguns.' },
-    what: { en: 'The Dungeon goes down in floors, and your Soulmon faces one body at a time.', pt: 'A Masmorra desce em andares, e o seu Soulmon enfrenta um corpo de cada vez.' },
+    what: { en: 'The Rift goes down in floors, and your Soulmon faces one body at a time.', pt: 'A Fenda desce em andares, e o seu Soulmon enfrenta um corpo de cada vez.' },
     invite: { en: 'Whenever you want to go down, it is right there.', pt: 'Quando quiser descer, está logo ali.' },
   },
   'exploracao.caderno': {

@@ -165,7 +165,7 @@ describe('legibilidade (11/10/2026): "o que a sua árvore dá agora" e a linha A
     const fenda = ul.querySelector('[data-talent-now-path="pve"]')!.textContent!;
     expect(duelo).toMatch(/Duelo e Torneio/);
     expect(duelo).toMatch(/dano \+0,8% · defesa \+0% · ritmo \+0%/);
-    expect(fenda).toMatch(/Masmorra: dano \+1,2% · defesa \+1,2% · ritmo \+0%/); // 02 é DEFESA de verdade na Masmorra
+    expect(fenda).toMatch(/Fenda: dano \+1,2% · defesa \+1,2% · ritmo \+0%/); // 02 é DEFESA de verdade na Fenda
     expect(fenda).toMatch(/Arena \+2,4% · Pesadelo \+2,4% \(um bônus só\)/);
     // F5 (beta-2): a regra dos 5% mora UMA vez, atrás do "i" — não repete na lista nem em parágrafo solto
     expect(ul.textContent).not.toMatch(/5%\./);
@@ -176,7 +176,7 @@ describe('legibilidade (11/10/2026): "o que a sua árvore dá agora" e a linha A
   it('EN: o mesmo resumo em inglês, sem "challenge"/PT', () => {
     abrir({ totalXP: xpForLevel(20), talentPicks: ['tal-pvp-01'] }, 'en-US');
     const t = document.querySelector('[data-talent-now]')!.textContent!;
-    expect(t).toMatch(/Duel & Tournament/); expect(t).toMatch(/damage \+0\.4%/); expect(t).toMatch(/Dungeon:/);
+    expect(t).toMatch(/Duel & Tournament/); expect(t).toMatch(/damage \+0\.4%/); expect(t).toMatch(/Endless Rift:/);
     expect(t).not.toMatch(/Duelo|Fenda|Masmorra/);
   });
 

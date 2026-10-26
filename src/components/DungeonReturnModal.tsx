@@ -31,7 +31,7 @@ export function DungeonReturnModal({ summary, language, onClose }: { summary: Du
       placement="center"
       onClose={onClose}
       language={language}
-      title={isPt ? 'Ele voltou da masmorra' : "He's back from the dungeon"}
+      title={isPt ? 'De volta da Fenda' : 'Back from the Rift'}
       maxWidth={380}
       footer={<button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }} data-dungeon-return-ok>{isPt ? 'Ótimo' : 'Great'}</button>}
     >

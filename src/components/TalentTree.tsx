@@ -28,7 +28,7 @@ import { TALENT_COPY, talentEffectLine } from '../utils/talentCopy';
 
 const PATHS: readonly { id: TalentPath; art: string; root: string; pt: string; en: string; hintPt: string; hintEn: string }[] = [
   { id: 'pvp', art: 'talent-path-pvp', root: 'talent-root-pvp', pt: 'Duelo', en: 'Duel', hintPt: 'Vale só nos Duelos e no Torneio.', hintEn: 'Counts only in Duels and the Tournament.' },
-  { id: 'pve', art: 'talent-path-pve', root: 'talent-root-pve', pt: 'Fenda', en: 'Rift', hintPt: 'Vale na Arena, na Masmorra e no Pesadelo.', hintEn: 'Counts in the Arena, Dungeon and Nightmare.' },
+  { id: 'pve', art: 'talent-path-pve', root: 'talent-root-pve', pt: 'Fenda', en: 'Rift', hintPt: 'Vale na Arena, na Fenda e no Pesadelo.', hintEn: 'Counts in the Arena, Endless Rift and Nightmare.' },
   { id: 'comercio', art: 'talent-path-comercio', root: 'talent-root-com', pt: 'Comércio', en: 'Trade', hintPt: 'Mexe em preço e em ganho de moeda, nunca em combate.', hintEn: 'Touches prices and coin gains, never combat.' },
 ];
 
@@ -148,7 +148,7 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
       ]),
     ] },
     { id: 'pve', label: isPt ? 'Fenda' : 'Rift', linhas: [
-      (isPt ? 'Masmorra: ' : 'Dungeon: ') + canais(masmorra),
+      (isPt ? 'Fenda: ' : 'Endless Rift: ') + canais(masmorra),
       (isPt ? `Arena +${pctTxt(arena)} · Pesadelo +${pctTxt(pesadelo)} (um bônus só)` : `Arena +${pctTxt(arena)} · Nightmare +${pctTxt(pesadelo)} (one bonus)`),
       extras([
         cura > 0 ? (isPt ? `cura +${pctTxt(cura)} do HP` : `heal +${pctTxt(cura)} of HP`) : null,

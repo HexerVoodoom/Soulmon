@@ -154,7 +154,7 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
   mapStep('jogos', { en: 'Play, and calm.', pt: 'Brincar, e acalmar.' }, [
     bRow('jogos.salao', 'Minigames, for fun and for Bits.', 'Minijogos, pela graça e por Bits.'),
     bRow('jogos.mente', 'Memory and logic games.', 'Jogos de memória e lógica.'),
-    bRow('jogos.dungeon', 'A roguelike dungeon, coming soon.', 'Um calabouço roguelike, em breve.'),
+    bRow('jogos.dungeon', 'A small roguelike dungeon game.', 'Um pequeno jogo de calabouço roguelike.'),
   ]),
   mapStep('exploracao', { en: 'Out in the mist. The Endless Rift is open from day one.', pt: 'Lá fora, na névoa. A Fenda Sem Fim está aberta desde o primeiro dia.' }, [
     bRow('exploracao.masmorra', 'Your Soulmon goes down floor by floor and fights on its own, spending energy.', 'O seu Soulmon desce andar por andar e luta sozinho, gastando energia.'),

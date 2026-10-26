@@ -584,8 +584,8 @@ export function HowToEarnSheet({ item, currency, language, onClose }: {
         {
           key: 'jogos', icon: 'casino',
           text: isPt
-            ? `Nos minijogos: a Masmorra (Exploração), o Salão de Jogos e o Ateliê da Mente (Jogos) pagam Bits — até ${MINIGAME_BITS_PER_DAY} por dia, somando todos.`
-            : `In the minigames: the Dungeon (Exploration), the Game Hall and the Mind Workshop (Games) pay Bits — up to ${MINIGAME_BITS_PER_DAY} a day, all together.`,
+            ? `Nos minijogos: a Fenda (Exploração), o Salão de Jogos e o Ateliê da Mente (Jogos) pagam Bits — até ${MINIGAME_BITS_PER_DAY} por dia, somando todos.`
+            : `In the minigames: the Endless Rift (Exploration), the Game Hall and the Mind Workshop (Games) pay Bits — up to ${MINIGAME_BITS_PER_DAY} a day, all together.`,
         },
         {
           key: 'creditos', icon: 'diamond',

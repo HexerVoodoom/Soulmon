@@ -336,8 +336,8 @@ export const SEASON_PATHS: readonly SeasonPath[] = [
   {
     id: 'dungeon-runs',
     target: 5,
-    labelPt: '5 runs completas da masmorra na estação',
-    labelEn: '5 full dungeon runs during the season',
+    labelPt: '5 descidas completas da Fenda na estação',
+    labelEn: '5 full Endless Rift runs during the season',
   },
   {
     id: 'rest-nights',

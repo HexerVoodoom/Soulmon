@@ -22,25 +22,25 @@ export function ocupadoVerbo(acao: OcupadoAcao, isPt: boolean): string {
     case 'passeio': return isPt ? 'levá-lo para passear' : 'take him for a stroll';
     case 'duelo': return isPt ? 'duelar' : 'duel';
     case 'torneio': return isPt ? 'disputar o torneio' : 'enter the tournament';
-    case 'masmorra-em-missao': return isPt ? 'descer à masmorra' : 'go down the dungeon';
+    case 'masmorra-em-missao': return isPt ? 'descer à Fenda' : 'go down the Rift';
   }
 }
 
 export function ocupadoMensagem(acao: OcupadoAcao | null, isPt: boolean): string {
   if (acao === 'masmorra-em-missao') {
     return isPt
-      ? 'Ele está numa missão do clã. Quando voltar, ele pode descer à masmorra.'
-      : 'He is out on a clan mission. When he is back, he can go down the dungeon.';
+      ? 'Ele está numa missão do clã. Quando voltar, ele pode descer à Fenda.'
+      : 'He is out on a clan mission. When he is back, he can go down the Rift.';
   }
   if (!acao) {
     return isPt
-      ? 'Ele está na masmorra, descendo sozinho. O que ele render fica esperando você. Quer trazê-lo de volta?'
-      : 'He is in the dungeon, going down on his own. Whatever he earns waits for you. Want to bring him back?';
+      ? 'Ele está na Fenda, descendo sozinho. O que ele render fica esperando você. Quer trazê-lo de volta?'
+      : 'He is in the Rift, going down on his own. Whatever he earns waits for you. Want to bring him back?';
   }
   const verbo = ocupadoVerbo(acao, isPt);
   return isPt
-    ? `Ele está na masmorra, descendo sozinho. Para ${verbo}, é só retirá-lo de lá primeiro — o que ele já rendeu fica com você.`
-    : `He is in the dungeon, going down on his own. To ${verbo}, take him out first — what he already earned is yours.`;
+    ? `Ele está na Fenda, descendo sozinho. Para ${verbo}, é só retirá-lo de lá primeiro — o que ele já rendeu fica com você.`
+    : `He is in the Rift, going down on his own. To ${verbo}, take him out first — what he already earned is yours.`;
 }
 
 export function DungeonBusyModal({ open, acao, language, onRetire, onClose, busy = false }: {
@@ -60,7 +60,7 @@ export function DungeonBusyModal({ open, acao, language, onRetire, onClose, busy
       open={open}
       onClose={onClose}
       language={language}
-      title={emMissao ? (isPt ? 'Ele está em missão' : 'He is on a mission') : (isPt ? 'Ele está na masmorra' : 'He is in the dungeon')}
+      title={emMissao ? (isPt ? 'Ele está em missão' : 'He is on a mission') : (isPt ? 'Ele está na Fenda' : 'He is in the Rift')}
       maxWidth={420}
       footer={
         emMissao ? (

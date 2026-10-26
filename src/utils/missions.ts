@@ -94,13 +94,13 @@ export const MISSIONS: Mission[] = [
   {
     id: 'mission-kills-100', category: 'dungeon', icon: '⚔️', iconName: 'swords', target: 100, bgReward: 'bg-mission-coliseum',
     namePt: 'Gladiador', nameEn: 'Gladiator',
-    descPt: 'Derrote 100 inimigos na masmorra', descEn: 'Defeat 100 dungeon enemies',
+    descPt: 'Derrote 100 inimigos na Fenda', descEn: 'Defeat 100 Endless Rift enemies',
     progress: s => s.dungeonKills,
   },
   {
     id: 'mission-runs-3', category: 'dungeon', icon: '🏰', iconName: 'flag', target: 3, bgReward: 'bg-mission-abyss',
     namePt: 'Conquistador do Abismo', nameEn: 'Abyss Conqueror',
-    descPt: 'Conclua 3 runs completas da masmorra', descEn: 'Complete 3 full dungeon runs',
+    descPt: 'Conclua 3 descidas completas da Fenda', descEn: 'Complete 3 full Endless Rift runs',
     progress: s => s.dungeonRunsCompleted,
   },
   {
