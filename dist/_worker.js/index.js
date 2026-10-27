@@ -6710,6 +6710,15 @@ async function reservarApelido(env, p) {
   return null;
 }
 __name(reservarApelido, "reservarApelido");
+async function spriteVivoDoSimulado(env, saveId) {
+  if (typeof saveId !== "string" || !/^sim_\d{4}$/.test(saveId)) return null;
+  try {
+    return spriteUrlOrNull(await kvOrThrow(env).get(spriteKeyOf(saveId)));
+  } catch {
+    return null;
+  }
+}
+__name(spriteVivoDoSimulado, "spriteVivoDoSimulado");
 async function upsertSimulado(env, p, day2, now = /* @__PURE__ */ new Date()) {
   const store = kvOrThrow(env);
   const prev = await getProfile(env, p.id).catch(() => null);
@@ -8323,6 +8332,8 @@ async function putRank(env, season, id, rec) {
   await kvOrThrow(env).put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120 });
 }
 __name(putRank, "putRank");
+var rerollKey = /* @__PURE__ */ __name((id) => `reroll:${id}`, "rerollKey");
+var rerollUsado = /* @__PURE__ */ __name(async (env, id) => !!await kvOrThrow(env).get(rerollKey(id)).catch(() => null), "rerollUsado");
 async function listPrefix2(env, prefix, limit = 100) {
   const out = [];
   let cursor;
@@ -8406,6 +8417,8 @@ async function handleCommunity(context) {
   }, "denyUnlessOwner");
   const settleMatch = /* @__PURE__ */ __name(async ({ id: id2, oppSave, me, opp, myRank, outcome, sides }) => {
     const season = currentSeason();
+    await kvOrThrow(env).delete(rerollKey(id2)).catch(() => {
+    });
     const nada = { gain: 0, factor: 1 };
     if (outcome === "draw") {
       await putRank(env, season, id2, myRank);
@@ -8619,6 +8632,11 @@ async function handleCommunity(context) {
       const denied = await denyUnlessOwner(id);
       if (denied) return denied;
     }
+    const quer = url.searchParams.get("reroll") === "1";
+    if (quer && id) {
+      if (await rerollUsado(env, id)) return json3({ error: "reroll used", rerolled: true }, 429);
+      await kvOrThrow(env).put(rerollKey(id), "1", { expirationTtl: 86400 });
+    }
     const keys = await listPrefix2(env, "profile:", 300);
     const me = id;
     const pool = [];
@@ -8649,7 +8667,7 @@ async function handleCommunity(context) {
     const meSide = id ? await loadDuelSide2(id) : null;
     const opponents = await Promise.all(pool.slice(0, 3).map(async ({ pub, saveId }) => {
       const { side, spriteUrl, artLine } = await loadDuelSideWithSprite(env, saveId);
-      const effectiveSprite = pub.spriteUrl ?? spriteUrl;
+      const effectiveSprite = await spriteVivoDoSimulado(env, saveId) ?? pub.spriteUrl ?? spriteUrl;
       return {
         ...pub,
         artLine: pub.artLine ?? artLine,
@@ -8657,7 +8675,7 @@ async function handleCommunity(context) {
         duel: publicDuel(side)
       };
     }));
-    return json3({ opponents, me: { duel: publicDuel(meSide) }, matchesLeft: Math.max(0, matchesLeft) });
+    return json3({ opponents, me: { duel: publicDuel(meSide) }, matchesLeft: Math.max(0, matchesLeft), ...id ? { rerolled: quer || await rerollUsado(env, id) } : {} });
   }
   const matchContext = /* @__PURE__ */ __name(async () => {
     const { opponentId } = body;
@@ -8730,7 +8748,7 @@ async function handleCommunity(context) {
     if (!myRank.pending && myRank.last && body.seed !== void 0 && myRank.last.opp === opponentId && myRank.last.seed === body.seed) {
       return json3({ ...myRank.last.res, replayed: true });
     }
-    const oppSpriteUrl = spriteUrlOrNull(opp.spriteUrl);
+    const oppSpriteUrl = await spriteVivoDoSimulado(env, oppSave) ?? spriteUrlOrNull(opp.spriteUrl);
     const opponent = {
       name: opp.name,
       petName: opp.petName,
@@ -12965,7 +12983,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-SIJgpf/functionsRoutes-0.9874080445833736.mjs
+// ../.wrangler/tmp/pages-lDIaVj/functionsRoutes-0.38316707684491635.mjs
 var routes = [
   {
     routePath: "/api/account",
