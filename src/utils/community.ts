@@ -717,6 +717,8 @@ export interface GuildRewards {
   scenes: string[];
   trophyOwned: boolean;
   trophyId: string | null;
+  /** O MISTÉRIO foi encerrado: a recompensa pendente virou Bits ou Honra (recibo determinístico; o cliente credita UMA vez por recibo). */
+  misterio: { kind: 'bits' | 'honra'; amount: number; receipt: string } | null;
 }
 
 export interface GuildClaim {
@@ -731,6 +733,13 @@ export interface GuildClaim {
 
 const intIn = (v: unknown, min: number, max: number) => (typeof v === 'number' && Number.isInteger(v) ? Math.min(max, Math.max(min, v)) : min);
 
+function sanitizeMisterioFim(raw: unknown): GuildRewards['misterio'] {
+  const m = (raw && typeof raw === 'object' ? raw : null) as Record<string, unknown> | null;
+  if (!m || (m.kind !== 'bits' && m.kind !== 'honra') || typeof m.receipt !== 'string' || !m.receipt) return null;
+  const amount = intIn(m.amount, 0, 1000);
+  return amount > 0 ? { kind: m.kind, amount, receipt: m.receipt.slice(0, 80) } : null;
+}
+
 export function sanitizeRewards(raw: unknown): GuildRewards {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const pending = (Array.isArray(r.pending) ? r.pending : []).flatMap(p => {
@@ -739,7 +748,7 @@ export function sanitizeRewards(raw: unknown): GuildRewards {
     return [{ week: x.week.slice(0, 20), outcome: x.outcome as 'dissipada' | 'recuou', emblems: intIn(x.emblems, 0, 20) }];
   }).slice(0, 4);
   const scenes = (Array.isArray(r.scenes) ? r.scenes : []).filter((s): s is string => typeof s === 'string' && /^bg-guild-[a-z-]{1,20}$/.test(s)).slice(0, 8);
-  return { pending, scenes, trophyOwned: r.trophyOwned === true, trophyId: typeof r.trophyId === 'string' ? r.trophyId.slice(0, 40) : null };
+  return { pending, scenes, trophyOwned: r.trophyOwned === true, trophyId: typeof r.trophyId === 'string' ? r.trophyId.slice(0, 40) : null, misterio: sanitizeMisterioFim(r.misterio) };
 }
 
 /** Resgates pendentes. Sem guilda, ainda devolve os cenários já liberados (ficam com quem sai). */

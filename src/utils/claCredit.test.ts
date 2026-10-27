@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { applyClaRewards, fruitRewards, sanitizeClaReceipts, CLA_RECEIPTS_MAX, FRUTO_DECOR, type ClaSaveSlice } from './claCredit';
 import { CHIP_EMOJI } from './shop';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
-import { sanitizeReward, sanitizePraca, sanitizePlantio, sanitizeMisterio, migrarEspecie } from './claApi';
+import { sanitizeReward, sanitizePraca, sanitizePlantio, migrarEspecie } from './claApi';
 
 const base = (): ClaSaveSlice => ({ gamePoints: 100, foodInventory: {}, ownedFurniture: ['furn-rug'], guildDonatedItem: null, claReceipts: [] });
 const DAY = '2026-10-18';
@@ -101,7 +101,5 @@ describe('o cliente trata a resposta do servidor como dado não confiável', () 
   it('plantio e mistério: espécie/estação desconhecida e barra fora do intervalo', () => {
     expect(sanitizePlantio({ species: 'banana', season: 'verao' })).toBeNull();
     expect(sanitizePlantio({ species: 'melancia', season: 'verao', planted: true, stage: 9, progress: 250, today: {}, mine: {} })).toMatchObject({ stage: 4, progress: 100 });
-    expect(sanitizeMisterio({ bar: 400, mine: { sent: true } })).toMatchObject({ bar: 99, sent: true });
-    expect(sanitizeMisterio({})).toBeNull();
   });
 });

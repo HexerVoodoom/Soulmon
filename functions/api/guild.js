@@ -66,7 +66,7 @@ import {
 import { buscarGuerra, estadoDaGuerra } from './_guerra.js';
 import { vistaDaPraca, definirSlotPraca, enviarPresente, resgatarPresente } from './_claPraca.js';
 import { vistaDoPlantio, plantar, regar, proteger, colher, sortear } from './_claPlantio.js';
-import { vistaDoMisterio, enviarMisterio, somarTarefa, resgatarMisterio } from './_claMisterio.js';
+import { vistaDoMisterio, enviarMisterio, somarTarefa, resgatarMisterio, converterMisterio } from './_claMisterio.js';
 import { comprarNaLoja, lerLoja, vistaDaLoja } from './_lojaCla.js';
 import { CASA_BITS_POR_DIA, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa, bitsDaCasa, somarPontos, pontosDeMissao } from './_casa.js';
 
@@ -678,7 +678,10 @@ export async function handleGuild({ request, env }) {
           if (liberados.some(s => !scenes.includes(s))) scenes = await unirConjunto(env, coopScenesKey(id), liberados);
         }
       }
-      return json({ rewards: { pending, scenes, trophyOwned: (await conchas()) >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID } });
+      // O MISTÉRIO foi encerrado (27/10/2026): recompensa pendente vira Bits/Honra, uma vez, aqui (por demanda). Falha é silêncio.
+      let misterio;
+      if (g) { try { misterio = (await converterMisterio(env, g, id)) ?? undefined; } catch { misterio = undefined; } }
+      return json({ rewards: { pending, scenes, trophyOwned: (await conchas()) >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID, ...(misterio ? { misterio } : {}) } });
     }
 
     // guildClaim

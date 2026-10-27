@@ -107,7 +107,63 @@ describe('a Missão na Feira (prédio da Feira do Hall)', () => {
     const { container } = render(<GuildSheet {...base} room="feira" missao={subir({ day: '2026-10-11', returnAt: Date.now() + 20 * 60_000 })} />);
     await waitFor(() => expect(container.querySelector('[data-missao-fora]')).not.toBeNull());
     expect(container.querySelector('[data-missao-mandar]')).toBeNull();
-    expect(container.querySelector('[data-missao-fora]')!.textContent).toMatch(/Volta às \d{1,2}[:h]\d{2}/);
+    expect(container.querySelector('[data-missao-fora]')!.textContent).toMatch(/Volta às \d{1,2}[:h]\d{2}, em \d+ min/);
+  });
+
+  it('UM card, UMA ação: a história aparece, o Mistério não, e há um só botão de investigar', async () => {
+    globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ guild: comRaid(casaVista()), rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 })) as never;
+    const { container } = render(<GuildSheet {...base} room="feira" missao={subir(null)} />);
+    await waitFor(() => expect(container.querySelector('[data-missao-historia]')).not.toBeNull());
+    expect(container.querySelector('[data-guild-card="misterio"]')).toBeNull();
+    expect(container.querySelectorAll('button[data-missao-mandar], button[data-misterio-mandar]').length).toBe(1);
+  });
+
+  it('na volta (rodada de hoje feita): diz a contribuição ao clã e ao jogador, sem número nem botão', async () => {
+    globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ guild: { ...vista(casaVista()), raid: { ...raid, mine: { hitToday: true } } }, rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 })) as never;
+    const { container } = render(<GuildSheet {...base} room="feira" missao={subir(null)} />);
+    await waitFor(() => expect(container.querySelector('[data-missao-feita]')).not.toBeNull());
+    expect(container.querySelector('[data-missao-volta-cla]')).not.toBeNull();
+    expect(container.querySelector('[data-missao-volta-eu]')).not.toBeNull();
+    expect(container.querySelector('[data-missao-mandar]')).toBeNull();
+    expect(container.querySelector('[data-missao-feita]')!.textContent).not.toMatch(/\d/);
+  });
+});
+
+describe('o Mistério encerrado (conversão da recompensa pendente)', () => {
+  const raid = { weekKey: '2026-W41', phenomenon: 'mare', state: 'aberta', ferido: false, lastWeek: null, mine: {} };
+  const servir = (misterio: unknown) => {
+    globalThis.fetch = vi.fn(async (url: string) => {
+      const action = new URL(url, 'https://x.dev').searchParams.get('action');
+      if (action === 'guildRewards') return new Response(JSON.stringify({ rewards: { pending: [], scenes: [], trophyOwned: false, misterio } }), { status: 200 });
+      return new Response(JSON.stringify({ guild: { ...vista(casaVista()), raid } }), { status: 200 });
+    }) as never;
+  };
+
+  it('Honra: credita UMA vez por recibo e diz a linha na Feira (sem culpa, sem botão)', async () => {
+    try { localStorage.clear(); } catch { /* */ }
+    servir({ kind: 'honra', amount: 2, receipt: 'g1|misc|0|saveA' });
+    const onClaimed = vi.fn();
+    const a = render(<GuildSheet {...base} room="feira" onClaimed={onClaimed} cla={{ onReward: vi.fn() }} missao={{ state: null, onSend: vi.fn() }} />);
+    await waitFor(() => expect(a.container.querySelector('[data-misterio-fim]')).not.toBeNull());
+    expect(a.container.querySelector('[data-misterio-fim]')!.textContent).toBe('O Mistério da feira foi encerrado; sua recompensa virou 2 Honra.');
+    expect(onClaimed).toHaveBeenCalledWith({ emblems: 2, trophyId: null });
+    a.unmount();
+    // 2ª abertura com o MESMO recibo: nada de novo
+    const b = render(<GuildSheet {...base} room="feira" onClaimed={onClaimed} cla={{ onReward: vi.fn() }} missao={{ state: null, onSend: vi.fn() }} />);
+    await waitFor(() => expect(b.container.querySelector('[data-missao-historia]')).not.toBeNull());
+    await new Promise(r => setTimeout(r, 50));
+    expect(b.container.querySelector('[data-misterio-fim]')).toBeNull();
+    expect(onClaimed).toHaveBeenCalledTimes(1);
+  });
+
+  it('Bits: credita pelo recibo (onReward) na mesma moeda', async () => {
+    try { localStorage.clear(); } catch { /* */ }
+    servir({ kind: 'bits', amount: 30, receipt: 'g1|misc|1|saveA' });
+    const onReward = vi.fn();
+    const { container } = render(<GuildSheet {...base} room="feira" cla={{ onReward }} missao={{ state: null, onSend: vi.fn() }} />);
+    await waitFor(() => expect(container.querySelector('[data-misterio-fim]')).not.toBeNull());
+    expect(onReward).toHaveBeenCalledWith('g1|misc|1|saveA', [{ kind: 'bits', amount: 30 }]);
+    expect(container.querySelector('[data-misterio-fim]')!.textContent).toMatch(/virou 30 Bits/);
   });
 });
 

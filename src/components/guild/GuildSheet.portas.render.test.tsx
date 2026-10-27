@@ -107,11 +107,12 @@ describe('as portas dos prédios (D-107)', { timeout: 20000 }, () => {
     expect(grove().querySelector('[data-predio="praca"]')).toBeNull();
   });
 
-  it('Feira: a missão/rodada (nome do fenômeno) existe aqui e o Mistério também (não no Clan Hall nem no Grove)', async () => {
+  it('Feira: a missão/rodada (nome do fenômeno) existe aqui, num card só (o Mistério saiu da Feira; nem no Clan Hall nem no Grove)', async () => {
     const r = renderWithCss(area('hall'));
     fireEvent.click(r.container.querySelector('[data-area-lot="feira"]')!);
     await waitFor(() => expect(document.querySelector('[data-guild-room-open="feira"] [data-feira-fenomeno]')).toBeTruthy(), { timeout: 8000 });
-    expect(document.querySelector('[data-guild-room-open="feira"] [data-predio="misterio"]')).toBeTruthy();
+    expect(document.querySelector('[data-guild-room-open="feira"] [data-predio="misterio"]')).toBeNull();
+    expect(document.querySelector('[data-guild-room-open="feira"] [data-guild-card="misterio"]')).toBeNull();
     expect(document.querySelector('[data-guild-room-open="feira"] [data-predio="plantio"]')).toBeNull();
     expect(document.querySelector('[data-guild-room-open="feira"] [data-predio="praca"]')).toBeNull();
   });

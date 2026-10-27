@@ -73,10 +73,10 @@ describe('copy da Guilda — vocabulário vetado', () => {
 
   it('{n} só existe onde é contagem de VAGAS ou de membros, nunca de quem veio', () => {
     const comN = entradas.filter(([, [pt]]) => pt.includes('{n}')).map(([k]) => k).sort();
-    // B2: `{n}` também é a QUANTIA de Emblemas colhidos e o intervalo da Concha — nunca de quem veio.
+    // B2: `{n}` também é a QUANTIA de Emblemas colhidos e o intervalo da Concha — nunca de quem veio. O Mistério encerrado: {n} é a QUANTIA da própria recompensa convertida.
     // L4: `guild.entrar.codigo.dica` leva o TAMANHO do código (`GUILD_CODE_LENGTH`), que é regra e não pessoa.
     // W14b: `guild.casa.bits.total` é o TOTAL de Bits do CLÃ (um número só, nunca por pessoa).
-    expect(comN).toEqual(['guild.casa.bits.total', 'guild.criar.codigo.corpo', 'guild.entrar.codigo.dica', 'guild.feira.colhido', 'guild.help.concha.def', 'guild.roda.contagem']);
+    expect(comN).toEqual(['guild.casa.bits.total', 'guild.criar.codigo.corpo', 'guild.entrar.codigo.dica', 'guild.feira.colhido', 'guild.help.concha.def', 'guild.misterio.fim.bits', 'guild.misterio.fim.honra', 'guild.roda.contagem']);
   });
 
   it('a linha de presença é a marca positiva — não existe chave de "ausente"', () => {
@@ -148,7 +148,7 @@ describe('copy do Bosque, dos gestos, do marco e do Mural', () => {
   it('os placeholders permitidos são só {n} (vagas/membros), {estagio}, {data} e {gesto} — nunca de pessoa ou de quantidade de quem veio', () => {
     for (const [k, [pt, en]] of entradas) {
       for (const txt of [pt, en]) {
-        for (const m of txt.matchAll(/\{(\w+)\}/g)) expect(['n', 'estagio', 'data', 'gesto', 'nome', 'max', 'cheio', 'piso', 'semanas', 'bits', 'hora'], `${k}: {${m[1]}}`).toContain(m[1]);
+        for (const m of txt.matchAll(/\{(\w+)\}/g)) expect(['n', 'estagio', 'data', 'gesto', 'nome', 'max', 'cheio', 'piso', 'semanas', 'bits', 'hora', 'min'], `${k}: {${m[1]}}`).toContain(m[1]);
       }
     }
     // {estagio} é NOME de estágio; nenhuma chave de estágio/gesto/marco/mural leva {n}

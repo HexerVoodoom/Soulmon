@@ -295,7 +295,7 @@ describe('a rodada, o direito e o resgate (chamadas)', () => {
       scenes: ['bg-guild-clareira', 'bg-mission-abyss', 42], trophyOwned: true, trophyId: 'trophy-concha-mare',
     } }));
     const r = await getGuildRewards('save-12345');
-    expect(r).toEqual({ pending: [{ week: '2026-W39', outcome: 'dissipada', emblems: 4 }], scenes: ['bg-guild-clareira'], trophyOwned: true, trophyId: 'trophy-concha-mare' });
+    expect(r).toEqual({ pending: [{ week: '2026-W39', outcome: 'dissipada', emblems: 4 }], scenes: ['bg-guild-clareira'], trophyOwned: true, trophyId: 'trophy-concha-mare', misterio: null });
     expect(fetchMock.mock.calls[0][0]).toContain('action=guildRewards');
     expect(fetchMock.mock.calls[0][0]).toContain('id=save-12345');
   });

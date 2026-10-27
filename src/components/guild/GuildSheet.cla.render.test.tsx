@@ -19,7 +19,6 @@ const plantio = (over: Record<string, unknown> = {}) => ({
   season: 'primavera', seasonKey: '2026-primavera', species: 'girassol', planted: false, canPlant: true,
   stage: 0, mature: false, level: null, tier: null, today: { waterOk: false, protectedToday: false }, mine: { wateredToday: false, canHarvest: false }, ...over,
 });
-const misterio = (over: Record<string, unknown> = {}) => ({ bar: 30, round: 0, investigating: 0, mine: { sent: false, rewardPending: false, capReached: false }, ...over });
 
 let calls: Array<{ action: string; body?: any }>;
 let respostas: Record<string, (body: any) => { status?: number; json: unknown }>;
@@ -199,50 +198,6 @@ describe('Plantio / Jardim (L5-D2)', () => {
     expect(rewards[0]).toEqual({ kind: 'bits', amount: 5 });
     await waitFor(() => expect(container.querySelector('[data-plantio-colhido]')).not.toBeNull());
     expect(container.querySelector('[data-plantio-colher]')).toBeNull();
-  });
-});
-
-describe('Mistério (D-18)', () => {
-  it('mandar investigar chama claMisterioEnviar e passa a dizer que está investigando', async () => {
-    let atual: any = misterio();
-    mockServer({
-      claMisterio: () => ({ json: { misterio: atual } }),
-      claMisterioEnviar: () => { atual = misterio({ investigating: 1, mine: { sent: true, rewardPending: false, capReached: false } }); return { json: { misterio: atual } }; },
-    });
-    const { container } = render(<GuildSheet {...base} room="feira" cla={{ onReward: vi.fn() }} />);
-    await abrir(container, 'misterio');
-    await waitFor(() => expect(container.querySelector('[data-misterio-mandar]')).not.toBeNull());
-    expect(container.querySelector('[data-misterio-barra]')).not.toBeNull();
-    expect(container.querySelector('[data-misterio-criatura]')).not.toBeNull();
-    fireEvent.click(container.querySelector('[data-misterio-mandar]')!);
-    await waitFor(() => expect(container.querySelector('[data-misterio-enviado]')).not.toBeNull());
-    expect(container.querySelector('[data-misterio-mandar]')).toBeNull();
-    expect(container.querySelector('[data-misterio-criatura]')).toBeNull();
-  });
-
-  it('barra cheia: resgatar a recompensa credita pelo recibo e o botão some', async () => {
-    const onReward = vi.fn();
-    let atual: any = misterio({ mine: { sent: false, rewardPending: true, capReached: false } });
-    mockServer({
-      claMisterio: () => ({ json: { misterio: atual } }),
-      claMisterioClaim: () => { atual = misterio({ bar: 0, round: 1 }); return { json: { claimed: { reward: { kind: 'bits', amount: 30 }, receipt: 'g1|mis|0|aaaaaaaa' }, misterio: atual } }; },
-    });
-    const { container } = render(<GuildSheet {...base} room="feira" cla={{ onReward }} />);
-    await abrir(container, 'misterio');
-    await waitFor(() => expect(container.querySelector('[data-misterio-resgatar]')).not.toBeNull());
-    fireEvent.click(container.querySelector('[data-misterio-resgatar]')!);
-    await waitFor(() => expect(onReward).toHaveBeenCalledWith('g1|mis|0|aaaaaaaa', [{ kind: 'bits', amount: 30 }]));
-    await waitFor(() => expect(container.querySelector('[data-misterio-resgatar]')).toBeNull());
-    expect(onReward).toHaveBeenCalledTimes(1);
-  });
-
-  it('a barra não escreve número: só luz', async () => {
-    mockServer({ claMisterio: () => ({ json: { misterio: misterio({ bar: 47 }) } }) });
-    const { container } = render(<GuildSheet {...base} room="feira" cla={{ onReward: vi.fn() }} />);
-    await abrir(container, 'misterio');
-    await waitFor(() => expect(container.querySelector('[data-misterio-barra]')).not.toBeNull());
-    expect(container.querySelector('[data-misterio-barra]')!.textContent).toBe('');
-    expect(container.querySelector('[data-guild-room="misterio"]')!.textContent).not.toMatch(/47/);
   });
 });
 
