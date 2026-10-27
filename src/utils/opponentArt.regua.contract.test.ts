@@ -42,7 +42,7 @@ function chamadas(src: string, nome: string): string[][] {
 
 // Quem pode chamar sem linha (jogador PRÓPRIO, rookie de reserva): arquivo → quantas chamadas.
 const SEM_LINHA_PERMITIDO: Record<string, number> = {
-  'components/guild/GuildSheet.tsx': 3, // `mySprite || getSpriteForStage('rookie')` — o próprio jogador (4→3: o Bosque saiu do Clan Hall, §132)
+  'components/guild/GuildSheet.tsx': 1, // `mySprite || getSpriteForStage('rookie')` — o próprio jogador, calculado UMA vez e reusado (card único do Bosque)
   'components/TournamentPage.tsx': 1, // previewSrc da moldura — o próprio jogador
   'components/perfil/ProfileEditor.tsx': 1, // previewSrc da moldura do perfil — o próprio jogador
 };
