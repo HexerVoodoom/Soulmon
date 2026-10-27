@@ -54,7 +54,7 @@ import {
 } from '../../utils/guildRules';
 import { GuildLoja } from './GuildLoja';
 import { donatableItems } from '../../utils/guildHouse';
-import { isMissionAway, type GuildMissionState } from '../../utils/guildMission';
+import { isMissionAway, msUntilReturn, type GuildMissionState } from '../../utils/guildMission';
 import { ALL_SHOP_ITEMS } from '../../utils/shop';
 import { DECOR_ART } from '../../utils/decorArt';
 import { hasClaimedReceipt, rememberClaimedReceipt, markClaimAttempt, hadClaimAttempt } from '../../utils/guildClaimLocal';
@@ -638,12 +638,6 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
             depois: () => track('guild_raid', { outcome: 0 }),
           })}
         />
-        {/* O MISTÉRIO mora aqui, junto da missão e da rodada (dono, 20/10/2026); sai do Grove. */}
-        {cla && (
-          <div className="sm2-stats-card" data-guild-card="misterio">
-            <SalaPredios t={t} ids={['misterio']} titulo="guild.feira.predios.titulo" aberto={predio} onAbrir={setPredio} render={renderPredio} />
-          </div>
-        )}
       </>
     ) : (
       <>
@@ -1221,6 +1215,15 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
   missao?: GuildSheetProps['missao'];
 }) {
   const raid = guild.raid;
+  // Relógio da volta ("volta em X min"): só roda enquanto o Solmon está fora.
+  const [agora, setAgora] = useState(() => Date.now());
+  const returnAt = missao?.state?.returnAt ?? 0;
+  useEffect(() => {
+    setAgora(Date.now());
+    if (!returnAt) return;
+    const id = setInterval(() => setAgora(Date.now()), 20_000);
+    return () => clearInterval(id);
+  }, [returnAt]);
   // Telemetria de leitura (1 = viu dissipada, 2 = viu recuou): uma vez por semana e estado.
   const semana = raid?.weekKey ?? '';
   const estado = raid?.state;
@@ -1243,7 +1246,7 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
   const nome = t(`guild.feira.fenomeno.${raid.phenomenon}.nome`);
   const dissipada = raid.state === 'dissipada';
   return (
-    <section className="sm2-guild-sec" aria-label={t('guild.feira.titulo')} data-guild-room="feira">
+    <section className="sm2-guild-sec sm2-stats-card" aria-label={t('guild.feira.titulo')} data-guild-room="feira">
       {resgate}
       {/* O cartão do resgate já diz "se desfez diante da roda": dizer de novo, uma linha acima, é eco (QA L3 B2). */}
       {!(dissipada && resgateAberto) && (
@@ -1285,23 +1288,37 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
           {raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.feira.rodada.botao')}
         </button>
       )}
+      {/* UM card, UMA ação (dono, 27/10/2026): a história do que rola na feira, o gesto de mandar, o "fora" e a volta. */}
       {!dissipada && missao && (() => {
-        const fora = isMissionAway(missao.state, Date.now());
+        const fora = isMissionAway(missao.state, agora);
         const hora = missao.state ? new Date(missao.state.returnAt).toLocaleTimeString(language === 'pt-BR' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' }) : '';
-        if (fora) return <p className="sm2-stats-t" style={{ margin: 0 }} data-missao-fora>{t('guild.missao.fora', { hora })}</p>;
-        if (raid.hitToday) return <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-feita>{t('guild.missao.feita')}</p>;
+        if (fora) {
+          const min = Math.max(1, Math.ceil(msUntilReturn(missao.state, agora) / 60_000));
+          return <p className="sm2-stats-t" style={{ margin: 0 }} data-missao-fora>{t('guild.missao.fora', { hora, min })}</p>;
+        }
+        // Voltou hoje: SÓ o que a vista já pode mostrar (sem número por pessoa). O ganho é o direito ao resgate da semana.
+        if (raid.hitToday) return (
+          <div data-missao-feita style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.missao.volta.titulo')}</p>
+            <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-cla>{t('guild.missao.volta.cla')}</p>
+            <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-eu>{t('guild.missao.volta.eu', { nome })}</p>
+          </div>
+        );
         return (
-          <button
-            type="button"
-            data-missao-mandar
-            disabled={ocupado || !!missao.state}
-            aria-disabled={ocupado || missao.state ? true : undefined}
-            onClick={missao.onSend}
-            className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
-          >
-            <Icon name="search" size={20} />
-            {t('guild.missao.mandar')}
-          </button>
+          <>
+            <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-historia>{t('guild.missao.historia')}</p>
+            <button
+              type="button"
+              data-missao-mandar
+              disabled={ocupado || !!missao.state}
+              aria-disabled={ocupado || missao.state ? true : undefined}
+              onClick={missao.onSend}
+              className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
+            >
+              <Icon name="search" size={20} />
+              {t('guild.missao.mandar')}
+            </button>
+          </>
         );
       })()}
     </section>

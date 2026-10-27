@@ -55,7 +55,6 @@ export const GUILD_COPY = {
   'guild.casa.doar.titulo': ['Trazer Bits', 'Bring Bits'],
   // W14b: o total de Bits do clã (um número do clã; nunca por pessoa).
   'guild.casa.bits.total': ['Bits do clã: {n}', 'Clan Bits: {n}'],
-  'guild.feira.predios.titulo': ['Mistério da feira', 'Fair mystery'],
   'guild.bosque.predios.titulo': ['Cuidar do bosque', 'Tend the grove'],
   'guild.casa.doar.botao': ['Trazer {bits} Bits', 'Bring {bits} Bits'],
   'guild.casa.doar.ok': ['A casa recebeu o que você trouxe.', 'The house received what you brought.'],
@@ -72,8 +71,11 @@ export const GUILD_COPY = {
   // ── A MISSÃO (guilda-lancamento PR3): o antigo circo/Feira vira investigação do Solmon ──
   'guild.missao.titulo': ['Missão', 'Mission'],
   'guild.missao.mandar': ['Mandar investigar', 'Send to investigate'],
-  'guild.missao.fora': ['Seu Soulmon foi investigar. Volta às {hora}.', 'Your Soulmon went to investigate. Back at {hora}.'],
-  'guild.missao.feita': ['Hoje a roda já ouviu a sua parte.', 'The circle has already heard your part today.'],
+  'guild.missao.historia': ['A feira abriu e algo chegou da névoa. Seu Soulmon vai ver de perto o que é e volta com o que achar. O que ele achar, a roda leva para a casa.', 'The fair opened and something came in from the mist. Your Soulmon goes to take a close look and comes back with what it finds. What it finds, the circle carries to the house.'],
+  'guild.missao.fora': ['Seu Soulmon foi investigar. Volta às {hora}, em {min} min.', 'Your Soulmon went to investigate. Back at {hora}, in {min} min.'],
+  'guild.missao.volta.titulo': ['Seu Soulmon voltou da investigação.', 'Your Soulmon is back from investigating.'],
+  'guild.missao.volta.cla': ['Para o clã: o que ele achou foi para a roda e regou a casa.', 'For the clan: what it found went into the circle and watered the house.'],
+  'guild.missao.volta.eu': ['Para você: um lugar no resgate da semana. Se a roda desfizer {nome}, você colhe Honra e, às vezes, a Concha da Maré. Se não, nada se perde.', 'For you: a place in this week’s rescue. If the circle undoes {nome}, you gather Honor and, now and then, the Tide Shell. If not, nothing is lost.'],
   'guild.missao.regra': ['Algo misterioso chegou. Mande seu Soulmon investigar: ele some da Home por um tempo e volta. Cada volta ajuda a roda e a casa; quanto mais gente na roda e mais forte o Soulmon, mais ajuda. Uma por dia.', 'Something mysterious has arrived. Send your Soulmon to investigate: it leaves the Home for a while and comes back. Each return helps the circle and the house; the more people in the circle and the stronger the Soulmon, the more it helps. One a day.'],
   // ── A GUERRA DE GUILDA (guilda-lancamento PR4): 4×4, pareada por tamanho, resolvida no servidor ──
   'guild.guerra.titulo': ['Guerra de clã', 'Clan war'],

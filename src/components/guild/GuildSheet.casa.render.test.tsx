@@ -107,7 +107,25 @@ describe('a Missão na Feira (prédio da Feira do Hall)', () => {
     const { container } = render(<GuildSheet {...base} room="feira" missao={subir({ day: '2026-10-11', returnAt: Date.now() + 20 * 60_000 })} />);
     await waitFor(() => expect(container.querySelector('[data-missao-fora]')).not.toBeNull());
     expect(container.querySelector('[data-missao-mandar]')).toBeNull();
-    expect(container.querySelector('[data-missao-fora]')!.textContent).toMatch(/Volta às \d{1,2}[:h]\d{2}/);
+    expect(container.querySelector('[data-missao-fora]')!.textContent).toMatch(/Volta às \d{1,2}[:h]\d{2}, em \d+ min/);
+  });
+
+  it('UM card, UMA ação: a história aparece, o Mistério não, e há um só botão de investigar', async () => {
+    globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ guild: comRaid(casaVista()), rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 })) as never;
+    const { container } = render(<GuildSheet {...base} room="feira" missao={subir(null)} />);
+    await waitFor(() => expect(container.querySelector('[data-missao-historia]')).not.toBeNull());
+    expect(container.querySelector('[data-guild-card="misterio"]')).toBeNull();
+    expect(container.querySelectorAll('button[data-missao-mandar], button[data-misterio-mandar]').length).toBe(1);
+  });
+
+  it('na volta (rodada de hoje feita): diz a contribuição ao clã e ao jogador, sem número nem botão', async () => {
+    globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ guild: { ...vista(casaVista()), raid: { ...raid, mine: { hitToday: true } } }, rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 })) as never;
+    const { container } = render(<GuildSheet {...base} room="feira" missao={subir(null)} />);
+    await waitFor(() => expect(container.querySelector('[data-missao-feita]')).not.toBeNull());
+    expect(container.querySelector('[data-missao-volta-cla]')).not.toBeNull();
+    expect(container.querySelector('[data-missao-volta-eu]')).not.toBeNull();
+    expect(container.querySelector('[data-missao-mandar]')).toBeNull();
+    expect(container.querySelector('[data-missao-feita]')!.textContent).not.toMatch(/\d/);
   });
 });
 
