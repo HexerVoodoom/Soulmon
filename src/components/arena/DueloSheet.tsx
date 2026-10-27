@@ -7,6 +7,11 @@ import { elementIcon } from '../../utils/elementIconArt';
 import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
 import type { Language } from '../../utils/i18n';
+import { arenaTemaElementos } from '../../utils/arenaTema';
+import { fighterIdentity } from '../../utils/fighterIdentity';
+import { fichaStageOf } from '../../utils/soulProfile/ficha/stageSkillsFor';
+import type { FichaStage } from '../../utils/soulProfile/ficha/types';
+import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 
 /**
  * DUELO (minimal-ui F5, Arena) — a porta de entrada da `ArenaGame`, a luta de
@@ -37,8 +42,8 @@ const box: CSSProperties = {
 };
 
 const SEED_MIX = 0x9e3779b1;
-const roundFoes = (seed: number, n: number, pool: Parameters<typeof buildArenaRound>[3]): ArenaEnemy[] =>
-  buildArenaRound(n, 1, mulberry32((seed ^ Math.imul(n, SEED_MIX)) | 0), pool);
+const roundFoes = (seed: number, n: number, pool: Parameters<typeof buildArenaRound>[3], tema?: readonly string[]): ArenaEnemy[] =>
+  buildArenaRound(n, 1, mulberry32((seed ^ Math.imul(n, SEED_MIX)) | 0), pool, tema);
 
 /**
  * ARENA = VOCÊ ESCOLHE (guilda-lancamento PR1, 11/10/2026). Três desafios de poder PARECIDO com o seu
@@ -46,7 +51,7 @@ const roundFoes = (seed: number, n: number, pool: Parameters<typeof buildArenaRo
  * vai lutar. A semente do card é a da run: a `ArenaGame` luta exatamente o que o card mostrou. O Torneio é
  * o oposto, de propósito: lá o servidor sorteia pela faixa (`functions/api/_rankedPick.js`).
  */
-function EscolhaDeAdversarios({ isPt, onPick }: { isPt: boolean; onPick: (seed: number) => void }) {
+function EscolhaDeAdversarios({ isPt, onPick, tema }: { isPt: boolean; onPick: (seed: number) => void; tema?: readonly string[] }) {
   const seeds = useMemo(() => [newDefenseSeed(), newDefenseSeed(), newDefenseSeed()], []);
   const [pool, setPool] = useState<Awaited<ReturnType<typeof loadBestiaryPool>> | null>(null);
   const [chosen, setChosen] = useState(0);
@@ -63,9 +68,9 @@ function EscolhaDeAdversarios({ isPt, onPick }: { isPt: boolean; onPick: (seed: 
         {isPt ? 'Você escolhe contra quem lutar — todos de poder parecido com o seu.' : 'You choose who to fight — all of power similar to yours.'}
       </p>
       {seeds.map((seed, i) => {
-        const first = roundFoes(seed, 1, pool);
+        const first = roundFoes(seed, 1, pool, tema);
         const bossIdx = ARENA_ROUND_COMP[ARENA_ROUNDS - 1].indexOf('boss');
-        const boss = roundFoes(seed, ARENA_ROUNDS, pool)[Math.max(0, bossIdx)];
+        const boss = roundFoes(seed, ARENA_ROUNDS, pool, tema)[Math.max(0, bossIdx)];
         const els = [...new Set(first.map(f => f.elements[0]))];
         const on = chosen === i;
         return (
@@ -96,8 +101,11 @@ function EscolhaDeAdversarios({ isPt, onPick }: { isPt: boolean; onPick: (seed: 
   );
 }
 
-export function DueloSheet({ language, onStart }: {
+export function DueloSheet({ language, onStart, skills, petElement, evolutionStage }: {
   language: Language;
+  /** Ficha e elemento do oráculo: o TEMA do jogador (`arenaTemaElementos`) — os cards mostram os MESMOS inimigos que a `ArenaGame` vai sortear. */
+  skills?: Partial<Record<FichaStage, StageSkills>>;
+  petElement?: string;
   /** Mantido por compat com o chamador; o número de Poder saiu da folha (D-59). */
   evolutionStage?: string;
   /** Chamado com a semente do desafio ESCOLHIDO (sem ela, a Arena sorteia). */
@@ -105,6 +113,10 @@ export function DueloSheet({ language, onStart }: {
 }) {
   const isPt = language === 'pt-BR';
   const [pickedSeed, setPickedSeed] = useState<number | undefined>(undefined);
+  const tema = useMemo(
+    () => arenaTemaElementos(fighterIdentity(skills?.[fichaStageOf(evolutionStage ?? 'rookie')], petElement).basico.elemento),
+    [skills, petElement, evolutionStage],
+  );
 
   return (
     <div data-duelo style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -143,7 +155,7 @@ export function DueloSheet({ language, onStart }: {
           </span>
         </ModalInfo>
       </div>
-      <EscolhaDeAdversarios isPt={isPt} onPick={setPickedSeed} />
+      <EscolhaDeAdversarios isPt={isPt} onPick={setPickedSeed} tema={tema} />
       <button type="button" data-duelo-start onClick={() => onStart(pickedSeed)} style={{ ...sm2Button('primary'), width: '100%' }}>
         {isPt ? 'Lutar' : 'Fight'}
       </button>

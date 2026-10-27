@@ -60,6 +60,23 @@ export function combatSceneBg(id: string | null | undefined): string | undefined
   return base ? `url(${BG[base]}) center/cover ${BG_MEAN[base] ?? ''}`.trim() : undefined;
 }
 
+// ── Cenários por DOMÍNIO (Arena por tema, 27/10/2026) ──────────────────────
+// `combate/dominio/<dominio>-<1..3>.png`: o `masmorra-1..3` de cada um dos 17 domínios (`assets/dominios/`), reduzido para 360×640 e
+// paleta de 64 cores (≈ 70 KB cada, como os `bg-*` base). Quem escolhe o domínio é `utils/arenaTema.ts`.
+const dominioBgs = import.meta.glob('../assets/soulmon/combate/dominio/*.png', { eager: true, import: 'default' }) as Record<string, string>;
+const DOMINIO_BG: Record<string, string> = {};
+for (const [p, url] of Object.entries(dominioBgs)) {
+  const m = /\/([a-z_]+-[0-9])\.png$/.exec(p);
+  if (m) DOMINIO_BG[m[1]] = url;
+}
+
+/** `background` shorthand do cenário `variante` (0..2) de um domínio, ou `undefined` se o domínio não tem arte instalada. */
+export function combatDomainSceneBg(dominio: string | null | undefined, variante = 0): string | undefined {
+  if (!dominio) return undefined;
+  const url = DOMINIO_BG[`${dominio}-${(Math.abs(variante) % 3) + 1}`];
+  return url ? `url(${url}) center/cover #1c3a40` : undefined;
+}
+
 /** O escudo levantado do elemento do DEFENSOR, ou `undefined` (cai no `defended` do FX). */
 export function combatShield(id: string | null | undefined): string | undefined {
   const base = combatBaseElement(id);

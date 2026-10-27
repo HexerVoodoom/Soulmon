@@ -609,3 +609,36 @@ Vibe de cada base (para o bloco COLORS do prompt):
 prédio ou NPC novo entra **nesta fila** com prompt e destino antes de ir para o código.
 
 > Atualização 26/10/2026: os 76 elementos novos (ícone + FX) dos ELEMENTOS compostos/especiais foram INSTALADOS (arte em `elementos/` e `fx-ataque/`); fada/industrial/planta continuam fora de `VISUAL_ELEMENTS` (faltam escudo e cenário).
+
+## 19. Arena: cenários por elemento (pedido do dono, 27/10/2026)
+
+A Arena agora pinta o cenário do **domínio do elemento do jogador** (`utils/arenaTema.ts`; arte reduzida em
+`src/assets/soulmon/combate/dominio/<dominio>-<1..3>.png`, 360×640, a partir de `dominios/<dominio>/masmorra/`).
+Os 17 domínios = 8 elementos do Oráculo + 9 reinos. **Os 8 do Oráculo têm domínio próprio** (agua, fogo, terra, ar,
+sombra, luz, planta, industrial). Os outros **12 elementos-base NÃO têm cenário próprio** e usam o domínio mais
+próximo (nada foi inventado). Fila para quando houver créditos: 1 cenário 9:16 opaco por elemento, no padrão dos
+`dominios/*/masmorra` (pintura 608×1080, terço inferior livre para os lutadores, paleta petróleo/turquesa/cobre da
+casa, sem personagem, sem texto, sem steampunk). Destino: `src/assets/dominios/<id>/masmorra/bg-<id>-masmorra-{1,2,3}.png`
++ trocar a linha em `DOMINIO_DO_ELEMENTO_BASE` (`proprio: true`) e rodar o redutor (360×640, paleta 64).
+
+| ID | Elemento | Domínio usado hoje (mais próximo) | Prompt sugerido (bloco CENA) |
+|---|---|---|---|
+| AC1 | eletricidade | picos | storm-struck mountain ridge at dusk, forked lightning arcing between crystal pylons, turquoise sparks, wet dark rock; open lower third |
+| AC2 | arcano | akasha | floating library-observatory of runes, drifting glyph rings, violet-and-gold twilight, starlit stone floor; open lower third |
+| AC3 | tempo | akasha | ruined clockwork-free sundial plaza, hourglass sand rivers frozen mid-air, amber dusk haze; open lower third |
+| AC4 | espaco | akasha | stone platform at the edge of a nebula rift, floating islets, soft starfield, deep indigo and turquoise; open lower third |
+| AC5 | gravidade | cavernas | cavern where boulders hover in a slow orbit around a dark core, pale dust trails, heavy cold light; open lower third |
+| AC6 | som | cavernas | resonant crystal amphitheatre cave, visible concentric sound ripples on a still pool, warm copper and turquoise glow; open lower third |
+| AC7 | vileza | pantano | sour green-brown bog at night, twisted dead roots, pale toxic mist, leering lantern glow far away; open lower third |
+| AC8 | morte | pantano | misty bone-and-lantern marsh graveyard, pale grey-blue light, still black water, wilted reeds; calm, not gory; open lower third |
+| AC9 | vida | floresta | sunlit ancient grove, huge living trunks, glowing seedlings and moss, warm green-gold light; open lower third |
+| AC10 | fada | campina | pink-lilac twilight meadow, glitter motes, tiny floating lanterns, rainbow haze at the horizon; open lower third |
+| AC11 | vigor | campina | open training meadow with worn stone circle, banners in wind, bright morning, strong warm light; open lower third |
+| AC12 | marcial | deserto | sandstone dojo courtyard in the desert, rope-and-wood posts, long shadows, copper dusk; open lower third |
+
+Pares derivados: usam o domínio do 1º componente, exceto `gelo`→gelo, `areia`→deserto, `pantano`→pantano,
+`mare`/`abismo`/`correnteza`→oceano. Se quiser cenário exato para mais pares, é uma linha em `DOMINIO_DO_PAR`.
+
+**Limite de pool, para decidir depois:** há exatamente **1 criatura por elemento-base** (`NOVOS_DATA`), então
+no tema a Arena mostra a MESMA espécie em Rookie/Champion/Ultra (e repete na rodada 4). Mais variedade pede mais
+linhas de Soulmon por elemento (nova fila, não incluída aqui).

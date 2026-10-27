@@ -7,7 +7,7 @@ import type { RegenAparencia as RegenState, RegenNotice } from '../../hooks/useR
 import type { Language } from '../../utils/i18n';
 
 /**
- * "GERAR DE NOVO" A APARÊNCIA (Laboratório › Perfil; rodada 5, Lane B; REGISTRO §34b).
+ * "GERAR DE NOVO" A APARÊNCIA (Laboratório › Centro de Evolução; nasceu no Perfil na rodada 5, Lane B, e mudou para cá em 27/10/2026, pedido do dono; REGISTRO §34b).
  *
  * Um sorteio PAGO da imagem da forma atual, com o mesmo prompt: 50 Créditos, 1 por forma por mês, só conta paga. A cópia diz a verdade antes do
  * toque (é um novo sorteio, sem garantia de resultado; cobra antes; devolve se não sair) e depois dele (a nova aparece ao lado da atual e a

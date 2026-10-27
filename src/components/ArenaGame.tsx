@@ -46,6 +46,7 @@ import { InfoTip } from './ui/InfoTip';
 import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, VisorSparks, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
+import { arenaTemaElementos, dominioDoElemento, arenaVarianteDaRodada } from '../utils/arenaTema';
 import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
@@ -65,7 +66,6 @@ import {
   arenaSpecialElementScale,
   autoDefenseHitScale,
   buildArenaRound,
-  elementLabel,
   familyOfSkill,
   loadBestiaryPool,
   type ArenaEnemy,
@@ -144,6 +144,11 @@ export function ArenaGame({
   // A identidade de combate (dono único): o MESMO golpe básico/especial da Masmorra, do Pesadelo, do Torneio e do PvP.
   const ident = useMemo(() => fighterIdentity(par, petElement), [par, petElement]);
   const atributos = attrs ?? DEFAULT_ARENA_ATTRIBUTES;
+  // TEMA (27/10/2026): o elemento que o jogador VÊ no próprio ícone (a identidade, com o fallback do oráculo) escolhe os inimigos e o cenário.
+  const temaElementos = useMemo(() => arenaTemaElementos(ident.basico.elemento), [ident.basico.elemento]);
+  const temaRef = useRef(temaElementos);
+  temaRef.current = temaElementos;
+  const dominio = useMemo(() => dominioDoElemento(ident.basico.elemento), [ident.basico.elemento]);
 
   // O level e o ramo vêm do estado do save (`soulCombatant`); sem provider (demo, testes) cai no estágio.
   const ctx = useGameStateOptional();
@@ -188,7 +193,7 @@ export function ArenaGame({
   const montarRodada = useCallback((n: number, poolAtual: BestiaryCreature[]) => {
     // O sabor da rodada vem da semente da run (determinístico: a mesma run, os mesmos bichos).
     const rng = mulberry32((runSeedRef.current ^ Math.imul(n, 0x9e3779b1)) | 0);
-    const novos = buildArenaRound(n, 1, rng, poolAtual);
+    const novos = buildArenaRound(n, 1, rng, poolAtual, temaRef.current);
     inimigosRef.current = novos;
     rodadaRef.current = n;
     setInimigos(novos);
@@ -313,13 +318,17 @@ export function ArenaGame({
       >
         <BattleStage
           scene={ARENA_SCENE.bg}
+          sceneDomain={dominio}
+          sceneVariant={arenaVarianteDaRodada(seedLuta, rodada)}
           sceneElement={inimigos[0] ? fxElementId(inimigos[0].elements[0]) : null}
           specialLabel={specialLabel(isPt, especial)}
           foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
           isPt={isPt}
           me={{
             key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, hpFrac) * hpMax), maxHp: hpMax,
-            element: fxElementId(basica ? ident.basico.elemento : atributos.principal), // o que se VÊ = a identidade (par incluso); a vantagem segue em `elements` (base)
+            // o que se VÊ = a identidade (par incluso), SEMPRE — com ou sem ficha (o fallback é o elemento do oráculo, `petElement`). Antes, sem ficha
+            // no estágio, caía em `atributos.principal` (o `vigor` padrão: o "marronzinho"). A vantagem segue em `elements` (base).
+            element: fxElementId(ident.basico.elemento),
             energy: (pronto ? batalha.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
             status: pronto ? batalha.status.me : undefined,
             // PR18: o trecho da barra de especial que a torcida em andamento já encheu (só UI; o motor soma na descarga).
@@ -420,7 +429,7 @@ export function ArenaGame({
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
             <StatTag label={isPt ? 'Vida' : 'HP'} value={hpMax} />
             <StatTag label={isPt ? 'Poder' : 'Power'} value={jogador.combatant.atk} />
-            <StatTag label={isPt ? 'Essência' : 'Essence'} value={basica ? (isPt ? elementoNomeDe(ident.basico.elemento).pt : elementoNomeDe(ident.basico.elemento).en) : elementLabel(atributos.principal, isPt)} />
+            <StatTag label={isPt ? 'Essência' : 'Essence'} value={isPt ? elementoNomeDe(ident.basico.elemento).pt : elementoNomeDe(ident.basico.elemento).en} />
           </div>
 
           {/* A ficha do jogador é o que torna a Arena DELE. Sem ela, o texto

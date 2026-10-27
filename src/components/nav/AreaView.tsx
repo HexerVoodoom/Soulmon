@@ -419,6 +419,8 @@ export function AreaView(props: AreaViewProps) {
               <DueloSheet
                 language={language}
                 evolutionStage={props.evolutionStage}
+                skills={props.skills}
+                petElement={props.petElement}
                 onStart={(seed) => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }}
               />
             )}

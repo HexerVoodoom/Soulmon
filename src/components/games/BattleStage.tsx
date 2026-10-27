@@ -44,7 +44,7 @@ import {
 import { useCombatV3Art } from './useCombatV3Art';
 import { type RingGrade, type RingSpec } from '../../utils/energia';
 import { SpecialRing, DodgeButtons } from './PveMechanics';
-import { combatSceneBg, combatShield, combatShadow } from '../../utils/combatArt';
+import { combatSceneBg, combatDomainSceneBg, combatShield, combatShadow } from '../../utils/combatArt';
 import { playAttack, playAttackRanged, playCharge, playDefend, playSpecial } from '../../utils/sounds';
 import { prepararSfxCombate } from '../../utils/sfxCombateCarga';
 
@@ -649,6 +649,12 @@ export interface BattleStageProps {
    * Masmorra não passam (cena fixa / cenário por andar).
    */
   sceneElement?: string | null;
+  /**
+   * Arena por tema (27/10/2026): o DOMÍNIO do elemento do jogador (`utils/arenaTema.ts`) e qual dos 3 cenários dele. Quando tem arte,
+   * vence `sceneElement` (a Arena deixou de pintar o terreno do inimigo: inimigo e cenário são do tema do jogador).
+   */
+  sceneDomain?: string | null;
+  sceneVariant?: number;
   me: StageFighter;
   foes: StageFighter[];
   /** Índice do inimigo mirado (mostra o HP numérico dele). */
@@ -710,7 +716,7 @@ function bannerLabel(
 
 /** A cena inteira. Envolva-a numa `TorcidaLayer style={BATTLE_LAYER_STYLE} mascot`. */
 export function BattleStage({
-  scene, sceneElement, me, foes, target = 0, action, hit, badge, title, closeLabel, closeIcon = 'close', onClose, exitConfirm, onPauseChange, hud, status,
+  scene, sceneElement, sceneDomain, sceneVariant = 0, me, foes, target = 0, action, hit, badge, title, closeLabel, closeIcon = 'close', onClose, exitConfirm, onPauseChange, hud, status,
   charging = false, fast = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, foeSpecialLabel, isPt = false, children,
 }: BattleStageProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -794,8 +800,9 @@ export function BattleStage({
   }, [actionId, reduced]);
   const cutActor = action?.kind === 'special' ? action.actor : null;
   const meBody = bodyCenter(layout.me);
-  const elementScene = combatSceneBg(sceneElement);
-  const platformArt = combatShadow(elementScene ? sceneElement : null);
+  const domainScene = combatDomainSceneBg(sceneDomain, sceneVariant);
+  const elementScene = domainScene ?? combatSceneBg(sceneElement);
+  const platformArt = combatShadow(domainScene ? (sceneDomain === 'luz' ? 'luz' : null) : elementScene ? sceneElement : null);
 
   return (
     <div
@@ -808,7 +815,7 @@ export function BattleStage({
     >
       {/* O cenário do elemento: arte PINTADA 360×640, ampliada COM suavização (dono, 18/10/2026); só os sprites seguem pixelados. */}
       {elementScene && (
-        <div aria-hidden="true" data-stage-scene={sceneElement ?? ''} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: elementScene, imageRendering: 'auto' }} />
+        <div aria-hidden="true" data-stage-scene={domainScene ? `dominio:${sceneDomain}` : sceneElement ?? ''} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: elementScene, imageRendering: 'auto' }} />
       )}
       {/* O véu: escurece o topo e o pé para o HUD e as barras lerem sobre a arte. */}
       <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'linear-gradient(to bottom, rgba(0,0,0,.5), rgba(0,0,0,0) 20%, rgba(0,0,0,0) 76%, rgba(0,0,0,.45))' }} />

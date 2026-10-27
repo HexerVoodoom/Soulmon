@@ -787,6 +787,7 @@ const LibraryPage = lazy(() => import('./components/LibraryPage').then(m => ({ d
 // orçamento de bytes (decisão #31).
 const AreaView = lazy(() => loadAreaView().then(m => ({ default: m.AreaView })));
 const PetPage = lazy(() => import('./components/PetPage').then(m => ({ default: m.PetPage })));
+const RegenAparencia = lazy(() => import('./components/perfil/RegenAparencia').then(m => ({ default: m.RegenAparencia })));
 const SoulmonPerfil = lazy(() => import('./components/perfil/SoulmonPerfil').then(m => ({ default: m.SoulmonPerfil })));
 
 /** O que o `<main>` desenha fora das áreas, DERIVADO da navegação
@@ -6939,6 +6940,21 @@ export default function App() {
             /></Suspense>
           )}
 
+          {/* "GERAR A APARÊNCIA DE NOVO" mora no CENTRO DE EVOLUÇÃO (27/10/2026, pedido do dono; antes era do Perfil): é sobre o desenho da
+              forma, e o desenho da forma é o que esta página mostra. O MESMO componente e o mesmo gancho (`useRegenAparencia`) — só mudou o lugar. */}
+          {labTab === 'evolution' && (
+            <div style={{ marginTop: 16 }} data-testid="evolucao-regen-aparencia">
+              <Suspense fallback={<ScreenSkeleton language={language} variant="inline" />}>
+                <RegenAparencia
+                  language={language}
+                  state={regenAparencia}
+                  currentUrl={spriteAcervo.previousSprites?.[gameState.evolutionStage]?.url}
+                  newUrl={spriteAcervo.sprites[gameState.evolutionStage]?.url}
+                />
+              </Suspense>
+            </div>
+          )}
+
           {/* RENASCIMENTO — mora na página de Evolução porque é o último
               degrau da escada que essa página conta, e só aparece para quem
               PODE (ultra + comprou + nunca usou). Nunca abre sozinho: o
@@ -7107,11 +7123,6 @@ export default function App() {
                   petElement: petElementOf(gameState),
                   equipment: gameState.equipment,
                   forge: gameState.forge,
-                }}
-                regen={{
-                  state: regenAparencia,
-                  currentUrl: spriteAcervo.previousSprites?.[gameState.evolutionStage]?.url,
-                  newUrl: spriteAcervo.sprites[gameState.evolutionStage]?.url,
                 }}
               />
             </Suspense>

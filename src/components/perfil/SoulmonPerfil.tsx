@@ -10,7 +10,6 @@ import {
   buildPerfil, PERFIL_ATRIBUTO, PERFIL_EFEITO, PERFIL_FORMA, PERFIL_IMPACTO, type MainAttr, type PerfilInput,
 } from '../../utils/soulmonPerfil';
 import type { Language } from '../../utils/i18n';
-import { RegenAparencia, type RegenAparenciaProps } from './RegenAparencia';
 // Arte que já está no repo (beta-2, 11: "ícones próprios, sem arte nova"): escudo, engrenagem, livro, chama, poção, estrela, aperto de mãos (atributo e ataque ganharam arte própria, P2).
 import iconGear from '../../assets/soulmon/icons/icon-gear.png';
 import iconSpellbook from '../../assets/soulmon/icons/icon-spellbook.png';
@@ -47,7 +46,7 @@ function Row({ id, icon, label, hint, children }: { id: string; icon: ReactNode;
   );
 }
 
-export function SoulmonPerfil({ language, input, regen }: { language: Language; input: PerfilInput; /** "Gerar de novo" a aparência (rodada 5): ausente = a seção não existe (ex.: testes e telas sem o gancho). */ regen?: Omit<RegenAparenciaProps, 'language'> }) {
+export function SoulmonPerfil({ language, input }: { language: Language; input: PerfilInput }) {
   const isPt = language === 'pt-BR';
   const L = (x: { pt: string; en: string }) => (isPt ? x.pt : x.en);
   const p = buildPerfil(input);
@@ -88,7 +87,6 @@ export function SoulmonPerfil({ language, input, regen }: { language: Language; 
           )}
         </li>
       </ul>
-      {regen && <RegenAparencia language={language} {...regen} />}
     </div>
   );
 }
