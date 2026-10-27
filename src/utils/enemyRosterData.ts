@@ -145,31 +145,18 @@ export const COMBINADOS_DATA: ReadonlyArray<readonly [string, string, string, st
 ];
 
 /**
- * OS 20 INIMIGOS DA API (27/10/2026, decisão do dono) — sprites aprovados (nº do banco Higgsfield 722–823) que entram como
- * inimigos NOVOS da masmorra/Fenda. Famílias de estágio: o mesmo `id` aparece em mais de um estágio (a chave do bestiário é
- * `${id}-${estágio}`). [id, estágio, nome, elemento, nº do banco]. A arte é `assets/soulmon/inimigos-api/<id>-<estágio>.png`
- * (256², alfa binário, bbox normalizada a 204 px; todas olham para a DIREITA, como as demais artes de roster — fora de
- * `LEFT_FACING_*`). Golpes = os da criatura base do elemento (como nos combinados).
+ * OS 5 INIMIGOS DA API "À PARTE" (27/10/2026, decisão do dono: poda de 20 para 7 códigos do banco — R10, R14, R12, R19, R42, R35, R26;
+ * R35/#752 e R26/#734 nunca estiveram no roster nem têm arte aprovada, então ficaram de fora). Sprites aprovados (nº do banco
+ * Higgsfield) que entram como inimigos EXTRAS da masmorra/Fenda. Eles NÃO representam elemento: o prompt original do banco não
+ * escreve elemento nenhum, então o `element` abaixo é só o que o combate usa para os golpes e PODE repetir o de outra
+ * criatura — nunca entram em contagem "um por elemento" (a distribuição é dos 17 base). [id, estágio, nome, elemento, nº do banco].
+ * A arte é `assets/soulmon/inimigos-api/<id>-<estágio>.png` (256², alfa binário, olham para a DIREITA). Golpes = os da criatura
+ * base do elemento (como nos combinados).
  */
 export const INIMIGOS_API_DATA: ReadonlyArray<readonly [string, 'rookie' | 'champion' | 'ultimate', string, string, number]> = [
-  ['cinderkit', 'rookie', 'Cinderkit', 'fogo', 724],
-  ['cinderkit', 'champion', 'Forgefox', 'fogo', 739],
-  ['ashimp', 'rookie', 'Ashimp', 'fogo', 736],
-  ['magmahorn', 'champion', 'Magmahorn', 'fogo', 800],
-  ['zephkit', 'rookie', 'Zephkit', 'ar', 735],
-  ['gildkit', 'rookie', 'Gildkit', 'luz', 737],
-  ['lopkin', 'rookie', 'Lopkin', 'terra', 744],
-  ['lopkin', 'champion', 'Shellop', 'terra', 740],
-  ['sparkshell', 'champion', 'Sparkshell', 'eletricidade', 743],
-  ['rivetkin', 'rookie', 'Rivetkin', 'vigor', 722],
-  ['rivetkin', 'ultimate', 'Forgeguard', 'vigor', 748],
-  ['woolhorn', 'rookie', 'Woolhorn', 'arcano', 727],
-  ['woolhorn', 'champion', 'Runeram', 'arcano', 732],
-  ['tailhorn', 'rookie', 'Tailhorn', 'terra', 749],
-  ['tidewark', 'ultimate', 'Tidewark', 'agua', 746],
-  ['gogglet', 'rookie', 'Gogglet', 'vida', 733],
-  ['glyphlith', 'ultimate', 'Glyphlith', 'terra', 790],
-  ['tidoise', 'champion', 'Tidoise', 'agua', 793],
-  ['gloomhorn', 'champion', 'Gloomhorn', 'sombra', 823],
-  ['bulwarax', 'ultimate', 'Bulwarax', 'vigor', 747],
+  ['cinderkit', 'champion', 'Forgefox', 'fogo', 739], // R12
+  ['ashimp', 'rookie', 'Ashimp', 'fogo', 736], // R19
+  ['tailhorn', 'rookie', 'Tailhorn', 'terra', 749], // R10
+  ['tidewark', 'ultimate', 'Tidewark', 'agua', 746], // R14
+  ['gloomhorn', 'champion', 'Gloomhorn', 'sombra', 823], // R42
 ];
