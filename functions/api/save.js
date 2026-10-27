@@ -22,6 +22,7 @@ import { sanitizeForge } from './_forge.js';
 import { sanitizeBuildingQuests } from './_buildingQuests.js';
 import { sanitizeDailyMissions, sanitizeFeats, sanitizeFirstTimes, sanitizeMissionsClaimed } from './_dailyMissions.js';
 import { sanitizeFocusLoot } from './_focusLoot.js';
+import { sanitizeDefeatedElements } from './_elementDex.js';
 import { sanitizeDayPlan } from './_dayPlan.js';
 import { sanitizeNightmares } from './_nightmares.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
@@ -350,6 +351,11 @@ export async function onRequest({ request, env }) {
     if ('focusLoot' in state) {
       const q = sanitizeFocusLoot(state.focusLoot);
       if (q) state.focusLoot = q; else delete state.focusLoot;
+    }
+    // Dex de elementos (27/10/2026): lista de ids saneada (forma, sem repetir, teto 210). Espelho de `sanitizeDefeatedElements` (cliente).
+    if ('defeatedElements' in state) {
+      const q = sanitizeDefeatedElements(state.defeatedElements);
+      if (q) state.defeatedElements = q; else delete state.defeatedElements;
     }
     // Plano do dia (15/10/2026, REGISTRO §66): dia ISO + listas de ids saneadas (teto 200). Sem forma = ausente.
     if ('dayPlan' in state) {

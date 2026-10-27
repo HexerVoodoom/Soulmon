@@ -96,6 +96,7 @@ import { spriteLineOf, isCorvo } from '../utils/corvoPet';
 import { newUuid } from '../utils/uuid';
 import { sanitizeAvatarId } from '../utils/avatar';
 import { migrateBestiary } from '../utils/bestiaryMigrate';
+import { sanitizeDefeatedElements } from '../utils/elementDex';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
 import type { Answers } from '../utils/soulProfile/personality/types';
 
@@ -313,6 +314,8 @@ export interface GameState {
   formReachedAt?: Record<string, string>;
   /** WP4.6 — inimigos da masmorra já enfrentados. Só cresce. */
   bestiary?: string[];
+  /** Dex de elementos (27/10/2026): ids (20 base + 190 derivados) de elementos de inimigos identificados já VENCIDOS. Começa vazio para todos (sem retroativo), só cresce. Dono: `utils/elementDex.ts`. */
+  defeatedElements?: string[];
   /**
    * WP4.29 — A INCUBAÇÃO (D-G8b/D-G8c, 22/09/2026). `formId` → instante em que
    * aquela forma começou a incubar. Ficar apto abre a espera de
@@ -1230,6 +1233,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // não tem: ausência é "ainda não", nunca erro.
         formReachedAt: (loadedState.formReachedAt as Record<string, string>) ?? {},
         bestiary: migrateBestiary(strArr(loadedState.bestiary)), // QA: chaves antigas linha-tier ganham as novas id-estágio
+        defeatedElements: sanitizeDefeatedElements(loadedState.defeatedElements), // dex de elementos: ausente/lixo = lista vazia
         offerShownWeek: typeof loadedState.offerShownWeek === 'string' ? loadedState.offerShownWeek : undefined,
         offerDismissed: loadedState.offerDismissed === true,
         demoTint: num(loadedState.demoTint, 0),
