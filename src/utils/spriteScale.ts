@@ -19,7 +19,7 @@
  * `Math.random` por render: o mesmo bicho tem sempre o mesmo porte.
  *
  * Funções puras, sem React. Só `measureVisibleFill` toca canvas (e cai no
- * padrão se o canvas não existir ou a imagem for de outra origem).
+ * conservador `FAILED_FILL` se o canvas não existir ou a imagem for de outra origem).
  */
 
 export type ScaleStage = 'rookie' | 'champion' | 'ultimate' | 'mega' | 'ultra';
@@ -42,6 +42,14 @@ export const STAGE_TARGET: Readonly<Record<ScaleStage, number>> = {
 
 /** Preenchimento assumido enquanto a caixa visível não foi medida (arte de linha típica). */
 export const DEFAULT_FILL = 0.85;
+
+/**
+ * Preenchimento assumido quando a medição FALHOU (canvas tainted, CORS, erro de
+ * carga, sem canvas). Conservador: 1 = "o bicho enche o canvas", então o fator
+ * vira o próprio `STAGE_TARGET` (sem dividir) — pode sair um pouco pequeno,
+ * nunca enorme. (Bug 27/10: sprite gerado/externo aparecia gigante.)
+ */
+export const FAILED_FILL = 1;
 
 /** Limites do fator: nunca some (< 0,15) nem estoura a caixa (> 1,25). */
 export const SCALE_MIN = 0.15;
@@ -185,8 +193,10 @@ export function measureVisibleFill(url: string): Promise<number> {
   if (pending) return pending;
   const p = new Promise<number>((resolve) => {
     try {
-      if (typeof Image === 'undefined' || typeof document === 'undefined') return resolve(DEFAULT_FILL);
+      if (typeof Image === 'undefined' || typeof document === 'undefined') return resolve(FAILED_FILL);
       const img = new Image();
+      // Sem isto, imagem de outra origem deixa o canvas tainted. A rota /api/sprite-image já manda ACAO: *.
+      img.crossOrigin = 'anonymous';
       img.onload = () => {
         try {
           const side = 128;
@@ -194,21 +204,21 @@ export function measureVisibleFill(url: string): Promise<number> {
           c.width = side;
           c.height = side;
           const ctx = c.getContext('2d', { willReadFrequently: true });
-          if (!ctx) return resolve(DEFAULT_FILL);
+          if (!ctx) return resolve(FAILED_FILL);
           ctx.drawImage(img, 0, 0, side, side);
           resolve(fillFromRGBA(ctx.getImageData(0, 0, side, side).data, side, side));
         } catch {
-          resolve(DEFAULT_FILL); // canvas tainted
+          resolve(FAILED_FILL); // canvas tainted
         }
       };
-      img.onerror = () => resolve(DEFAULT_FILL);
+      img.onerror = () => resolve(FAILED_FILL);
       img.src = url;
     } catch {
-      resolve(DEFAULT_FILL);
+      resolve(FAILED_FILL);
     }
   }).then((v) => {
     inflight.delete(url);
-    // Só cacheia medição real; "padrão" por falha não trava a URL em valor falso.
+    // Falha cacheia FAILED_FILL (conservador): não re-tenta a cada render.
     fillCache.set(url, v);
     listeners.forEach((l) => l());
     return v;
