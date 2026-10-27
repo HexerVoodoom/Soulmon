@@ -153,16 +153,16 @@ describe('arenaElementsFor — o oráculo sem ficha entra na vantagem pela base 
   const foe = arenaFoe(21, 'medium', 0);
   const ident = (dom: string) => fighterIdentity(null, petElementOf({ soulmonMeta: { dominantElement: dom } }));
 
-  it('planta → vida: vantagem +1 contra terra', () => {
+  it('planta fica planta (sem alias, 27/10/2026): vantagem +1 contra terra', () => {
     const els = arenaElementsFor({}, ident('planta'), attrs);
-    expect(els.basica).toBe('vida');
+    expect(els.basica).toBe('planta');
     expect(arenaFoeWithElement(foe, cfg(els), ['terra']).combatant.hp).toBeCloseTo(foe.combatant.hp * elementHits(1), 6);
   });
-  it('industrial → aco → marcial: vantagem +1 contra arcano e tempo', () => {
+  it('industrial fica industrial (sem alias, 27/10/2026): vantagem +1 contra fada e agua', () => {
     const els = arenaElementsFor({}, ident('industrial'), attrs);
-    expect(els.basica).toBe('marcial');
-    expect(els.especial).toBe('marcial');
-    for (const d of ['arcano', 'tempo']) {
+    expect(els.basica).toBe('industrial');
+    expect(els.especial).toBe('industrial');
+    for (const d of ['fada', 'agua']) {
       expect(arenaFoeWithElement(foe, cfg(els), [d]).combatant.hp).toBeCloseTo(foe.combatant.hp * elementHits(1), 6);
     }
   });

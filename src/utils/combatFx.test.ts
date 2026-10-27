@@ -26,12 +26,12 @@ describe('inventário da arte de skill por elemento (a base da cena de combate)'
     expect(ATTACK_FX_COUNT).toBe(230 * 6);
   });
 
-  it('id sem arte cai no neutro; ids do oráculo sem arte caem no mais próximo', () => {
+  it('id sem arte cai no neutro; planta/industrial têm arte própria (sem alias)', () => {
     expect(fxElementId(undefined)).toBe('neutro');
     expect(fxElementId('')).toBe('neutro');
     expect(fxElementId('elemento-que-nao-existe')).toBe('neutro');
-    expect(fxElementId('planta')).toBe('vida');
-    expect(fxElementId('industrial')).toBe('aco');
+    expect(fxElementId('planta')).toBe('planta');
+    expect(fxElementId('industrial')).toBe('industrial');
     expect(fxElementId('fogo')).toBe('fogo');
     expect(fxFrame('elemento-que-nao-existe', 'orb')).toBe(fxFrame('neutro', 'orb'));
     // Derivado também tem arte própria (não cai no neutro).
@@ -94,7 +94,7 @@ describe('o elemento visual do oponente e a ação de cada escola', () => {
     expect(new Set(seq).size).toBe(1);
     expect(elementStrikeForm('fogo', 'basica')).toBe('ranged');
     expect(elementStrikeForm('fogo', 'especial')).toBe('melee');
-    expect(elementStrikeForm('planta', 'basica')).toBe(elementStrikeForm('vida', 'basica')); // alias do oráculo
+    expect(elementStrikeForm('planta', 'basica')).toBe('melee'); // tabela própria, sem alias
     expect(elementStrikeForm('elemento-que-nao-existe', 'especial')).toBe('ranged');
   });
 

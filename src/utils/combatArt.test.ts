@@ -7,14 +7,17 @@ describe('combatArt — cenário, escudo e plataforma por elemento (rodada 2, 04
   it('18 cenários e 18 escudos: um por elemento BASE + o neutro', () => {
     expect(COMBAT_BG_COUNT).toBe(18);
     expect(COMBAT_SHIELD_COUNT).toBe(18);
-    for (const el of [...VISUAL_ELEMENTS, 'neutro']) {
+    for (const el of [...VISUAL_ELEMENTS.filter(e => e !== 'planta' && e !== 'industrial'), 'neutro']) {
       expect(combatSceneBg(el), el).toMatch(new RegExp(String.raw`bg-${el}\.png\) center/cover #[0-9a-f]{6}$`));
       expect(combatShield(el), el).toMatch(new RegExp(String.raw`escudo-${el}\.png$`));
     }
   });
-  it('derivado usa o 1º componente; planta → vida; neutro tem arte própria; desconhecido → undefined', () => {
+  it('derivado usa o 1º componente; planta/industrial nunca viram vida/marcial; neutro tem arte própria; desconhecido → undefined', () => {
     expect(combatBaseElement('vapor')).toBe('fogo');
-    expect(combatBaseElement('planta')).toBe('vida');
+    expect(combatBaseElement('planta')).toBeUndefined(); // sem bg-/escudo- base; nunca 'vida'
+    expect(combatSceneBg('planta')).toMatch(/dominio\/planta-1|planta-1/);
+    expect(combatSceneBg('industrial')).toMatch(/industrial-1/);
+    expect(combatShield('planta')).toBeUndefined(); // cai no `defended` próprio do FX
     expect(combatBaseElement('flora')).toBeDefined();
     expect(combatSceneBg('neutro')).toMatch(/bg-neutro\.png\) center\/cover #285558$/);
     expect(combatShield('neutro')).toMatch(/escudo-neutro\.png$/);

@@ -35,34 +35,34 @@ describe('soulmonIntroLines: os três caminhos, texto exato', () => {
       'Puxo para o Poder: quando algo importa, gosto de ir de frente.',
     ]);
   });
-  it('harmonia EN (planta vira Life)', () => {
+  it('harmonia EN (planta segue Planta)', () => {
     expect(soulmonIntroLines(HARMONIA, 'en')).toEqual([
       "Hi, I'm Lumi.\nI'm a digital counterpart of your soul, and we grow together.",
-      "My main element is Life.\nI'm not a fan of Plant, though. It gets the better of me.",
+      "My main element is Plant.\nI'm not a fan of Fire, though. It gets the better of me.",
       "I really like salad.\nI'm cuddly, too. A little affection goes a long way.",
       'I lean toward Harmony: I like things in balance, one step at a time.',
     ]);
   });
-  it('harmonia PT (planta vira Vida)', () => {
+  it('harmonia PT (planta segue Planta)', () => {
     expect(soulmonIntroLines(HARMONIA, 'pt')).toEqual([
       'Oi, eu sou Lumi.\nSou uma contraparte digital da sua alma, e juntos vamos crescer.',
-      'Meu elemento principal é Vida.\nJá de Planta eu não gosto: leva vantagem sobre mim.',
+      'Meu elemento principal é Planta.\nJá de Fogo eu não gosto: leva vantagem sobre mim.',
       'Gosto muito de salada.\nTambém sou carinhoso: um pouco de colo faz diferença.',
       'Puxo para a Harmonia: gosto das coisas em equilíbrio, um passo de cada vez.',
     ]);
   });
-  it('benevolencia EN (industrial vira Steel)', () => {
+  it('benevolencia EN (industrial segue Industrial)', () => {
     expect(soulmonIntroLines(BENEVOLENCIA, 'en')).toEqual([
       "Hi, I'm Lumi.\nI'm a digital counterpart of your soul, and we grow together.",
-      "My main element is Steel.\nI'm not a fan of Water, though. It gets the better of me.",
+      "My main element is Industrial.\nI'm not a fan of Lightning, though. It gets the better of me.",
       "I really like pizza.\nI'm lucky, too. I tend to stumble into good things.",
       "I lean toward Benevolence: I feel best when I'm looking after someone.",
     ]);
   });
-  it('benevolencia PT (industrial vira Aço)', () => {
+  it('benevolencia PT (industrial segue Industrial)', () => {
     expect(soulmonIntroLines(BENEVOLENCIA, 'pt')).toEqual([
       'Oi, eu sou Lumi.\nSou uma contraparte digital da sua alma, e juntos vamos crescer.',
-      'Meu elemento principal é Aço.\nJá de Água eu não gosto: leva vantagem sobre mim.',
+      'Meu elemento principal é Industrial.\nJá de Eletricidade eu não gosto: leva vantagem sobre mim.',
       'Gosto muito de pizza.\nTambém sou sortudo: costumo tropeçar em coisa boa.',
       'Puxo para a Benevolência: fico melhor quando estou cuidando de alguém.',
     ]);

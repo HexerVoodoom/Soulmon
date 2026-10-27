@@ -19,7 +19,6 @@
  * Nenhuma regra de jogo mora aqui (dano, gauge, golpe: `arena.ts`/`_duel.js`).
  */
 import { attackFx, type AttackFxState } from './attackFxArt';
-import { aliasDoOraculo } from './elementoDoOraculo';
 import { NIGHTMARE_ELEMENT, hasNightmareFx, nightmareFx } from './nightmareElement';
 import { escolaSkillSegura } from './soulProfile/ficha/types';
 import { nomeEspecialInimigo, nomeDeLexico } from './soulProfile/ficha/nomeEspecial';
@@ -34,19 +33,18 @@ export const FX_FALLBACK_ELEMENT = 'neutro';
 
 /**
  * Os elementos base que TÊM ARTE (cenário, escudo, ícone, Soulmon da masmorra), para dar um elemento visual ao
- * oponente. São 17 dos 20 do anel de `arena.ts`: fada, industrial e planta viraram base em 25/10/2026 e ainda
- * não têm arte (fila em docs/ASSETS-A-GERAR.md) — entram aqui junto com ela.
+ * oponente. São 19 dos 20 do anel de `arena.ts`: industrial e planta têm arte própria (27/10/2026, alias apagado); fada entra junto com a dela.
  */
 export const VISUAL_ELEMENTS = [
   'fogo', 'vida', 'terra', 'gravidade', 'ar', 'som', 'eletricidade', 'agua',
-  'marcial', 'arcano', 'tempo', 'espaco', 'luz', 'sombra', 'morte', 'vileza', 'vigor',
+  'marcial', 'arcano', 'tempo', 'espaco', 'luz', 'sombra', 'morte', 'vileza', 'vigor', 'planta', 'industrial',
 ] as const;
 
 /** Id de elemento (do oráculo, da ficha ou do bestiário) → id que tem arte; sem arte, `neutro`. */
 export function fxElementId(id: string | undefined | null): string {
   if (!id) return FX_FALLBACK_ELEMENT;
   if (id === NIGHTMARE_ELEMENT) return hasNightmareFx() ? id : FX_FALLBACK_ELEMENT; // exclusivo do Pesadelo; sem arte, o procedural
-  const mapped = aliasDoOraculo(id);
+  const mapped = id;
   return attackFx(mapped, 'orb') ? mapped : FX_FALLBACK_ELEMENT;
 }
 
@@ -130,7 +128,7 @@ export const ELEMENT_STRIKE_FALLBACK: Record<SkillRole, StrikeForm> = { basica: 
 
 /** Elemento (inimigo, fantasma, pet sem ficha) → forma do golpe da skill básica/especial dele. */
 export function elementStrikeForm(element: string | undefined | null, role: SkillRole): StrikeForm {
-  const id = element ? aliasDoOraculo(element) : undefined;
+  const id = element ?? undefined;
   return (id ? ELEMENT_STRIKE_FORM[id] : undefined)?.[role] ?? ELEMENT_STRIKE_FALLBACK[role];
 }
 

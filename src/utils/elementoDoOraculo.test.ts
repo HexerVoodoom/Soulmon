@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve, join, relative } from 'node:path';
-import { ORACULO_PARA_CLASSE, elementoDoOraculo, aliasDoOraculo } from './elementoDoOraculo';
+import { elementoDoOraculo } from './elementoDoOraculo';
 import { ELEMENT_BRIDGE } from './soulProfile/derivedElements';
 import { baseDominanteDoElemento, elementoConhecido } from './soulProfile/ficha/elementoNome';
 import { petElementOf } from './starterElements';
@@ -10,17 +10,16 @@ import { petElementOf } from './starterElements';
 const OITO = ['agua', 'fogo', 'terra', 'ar', 'sombra', 'luz', 'planta', 'industrial'];
 
 describe('elementoDoOraculo', () => {
-  it('planta → vida, industrial → aco', () => {
-    expect(elementoDoOraculo('planta')).toBe('vida');
-    expect(elementoDoOraculo('industrial')).toBe('aco');
-    expect(aliasDoOraculo('planta')).toBe('vida');
-    expect(aliasDoOraculo('fogo')).toBe('fogo');
+  it('planta e industrial têm arte própria e NUNCA viram vida/aco (REGISTRO §150 revisto, 27/10/2026)', () => {
+    expect(elementoDoOraculo('planta')).toBe('planta');
+    expect(elementoDoOraculo('industrial')).toBe('industrial');
+    expect(elementoDoOraculo('fogo')).toBe('fogo');
   });
-  it('os 8 ids do oráculo viram elemento conhecido, nenhum devolve id cru só-do-oráculo', () => {
+  it('os 8 ids do oráculo viram elemento conhecido, cada um passa como é', () => {
     for (const id of OITO) {
       const r = elementoDoOraculo(id);
       expect(elementoConhecido(r)).toBe(true);
-      expect(Object.keys(ORACULO_PARA_CLASSE)).not.toContain(r);
+      expect(r).toBe(id);
     }
   });
   it('lixo → undefined', () => {
@@ -29,22 +28,22 @@ describe('elementoDoOraculo', () => {
     expect(elementoDoOraculo(undefined)).toBeUndefined();
     expect(elementoDoOraculo(null)).toBeUndefined();
   });
-  it('ELEMENT_BRIDGE: desde 25/10/2026 planta e industrial são base e vão para si mesmas; o mapa acima é só de arte', () => {
+  it('ELEMENT_BRIDGE: desde 25/10/2026 planta e industrial são base e vão para si mesmas', () => {
     expect(ELEMENT_BRIDGE.planta).toEqual({ planta: 1 });
     expect(ELEMENT_BRIDGE.industrial).toEqual({ industrial: 1 });
-    expect(baseDominanteDoElemento(ORACULO_PARA_CLASSE.planta)).toBe('vida');
-    expect(baseDominanteDoElemento(ORACULO_PARA_CLASSE.industrial)).toBe('marcial');
+    expect(baseDominanteDoElemento('planta')).toBe('planta');
+    expect(baseDominanteDoElemento('industrial')).toBe('industrial');
   });
-  it('petElementOf normaliza o oráculo; inicial e corvo seguem', () => {
-    expect(petElementOf({ soulmonMeta: { dominantElement: 'planta' } })).toBe('vida');
-    expect(petElementOf({ soulmonMeta: { dominantElement: 'industrial' } })).toBe('aco');
+  it('petElementOf devolve planta/industrial como são; inicial e corvo seguem', () => {
+    expect(petElementOf({ soulmonMeta: { dominantElement: 'planta' } })).toBe('planta');
+    expect(petElementOf({ soulmonMeta: { dominantElement: 'industrial' } })).toBe('industrial');
     expect(petElementOf({ soulmonMeta: { dominantElement: 'fogo' } })).toBe('fogo');
     expect(petElementOf({ demoCharacterId: 'industrial', soulmonMeta: { dominantElement: 'planta' } })).toBe('terra');
     expect(petElementOf({ soulmonMeta: { dominantElement: 'planta', creature: 'corvo' } })).toBe('neutro');
   });
 });
 
-describe('guard: o mapa oráculo→classe tem UM dono', () => {
+describe('guard: o alias oráculo→classe não volta', () => {
   const RAIZ = resolve(__dirname, '..');
   const EXCLUI = ['utils/elementoDoOraculo.ts', 'utils/oracle.ts', 'utils/soulProfile/derivedElements.ts'];
   const varre = (dir: string, acc: string[] = []): string[] => {
@@ -55,7 +54,7 @@ describe('guard: o mapa oráculo→classe tem UM dono', () => {
     }
     return acc;
   };
-  it('nenhum literal duplicado do mapa', () => {
+  it('nenhum literal do alias', () => {
     const achados: string[] = [];
     for (const f of varre(RAIZ)) {
       const rel = relative(RAIZ, f).replace(/\\/g, '/');

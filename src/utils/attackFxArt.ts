@@ -13,7 +13,6 @@
 //
 // Era `derivedAttackFxArt.ts` (só derivados) até os base entrarem; o nome
 // antigo da função fica exportado como alias.
-import { aliasDoOraculo } from './elementoDoOraculo';
 
 export type AttackFxState =
   | 'cast'
@@ -81,7 +80,7 @@ export const AURA_96_COUNT = Object.keys(AURA_96).length;
 
 export { ATTACK_FX_STATES };
 
-// O dominante do oráculo (`planta`/`industrial`) vira o da classe em `elementoDoOraculo.ts` (dono único do mapa).
+// `planta`/`industrial` têm aura própria (sem alias para vida/aço desde 27/10/2026).
 
 /**
  * Aura (D9: a única chamada por agora) para o elemento dominante do bicho.
@@ -90,6 +89,6 @@ export { ATTACK_FX_STATES };
  */
 export const auraForElement = (elementoOraculo: string | undefined, size: 96 | 128 = 128): string | undefined => {
   if (!elementoOraculo) return undefined;
-  const id = aliasDoOraculo(elementoOraculo);
+  const id = elementoOraculo;
   return (size === 96 ? AURA_96[id] : undefined) ?? attackFx(id, 'aura');
 };

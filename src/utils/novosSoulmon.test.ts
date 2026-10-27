@@ -14,7 +14,7 @@ const DIR = join(process.cwd(), 'src/assets/soulmon/novos');
 describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => {
   it('um por elemento base, divisão 7/7/6, ids únicos', () => {
     expect(NOVOS_SOULMON).toHaveLength(20);
-    expect([...NOVOS_SOULMON.map(n => n.element)].sort()).toEqual([...VISUAL_ELEMENTS, 'fada', 'industrial', 'planta'].sort());
+    expect([...NOVOS_SOULMON.map(n => n.element)].sort()).toEqual([...VISUAL_ELEMENTS, 'fada'].sort());
     const por = (l: string) => NOVOS_SOULMON.filter(n => n.line === l).length;
     expect([por('poder'), por('harmonia'), por('benevolencia')]).toEqual([7, 7, 6]);
     expect(new Set(NOVOS_SOULMON.map(n => n.id)).size).toBe(20);
@@ -45,8 +45,7 @@ describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => 
 
   it('todo elemento tem FX próprio (sem cair no neutro) e forma de golpe própria', () => {
     for (const n of NOVOS_SOULMON) {
-      // fada tem FX próprio; planta/industrial ainda usam o da classe (`ORACULO_PARA_CLASSE`: vida/aco) até o alias ser apagado.
-      if (!['planta', 'industrial'].includes(n.element)) expect(fxElementId(n.element)).toBe(n.element);
+      expect(fxElementId(n.element)).toBe(n.element); // inclusive planta/industrial (alias apagado em 27/10/2026)
       expect(elementStrikeForm(n.element, 'basica')).toBeTruthy();
     }
   });

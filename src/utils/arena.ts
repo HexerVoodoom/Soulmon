@@ -330,7 +330,7 @@ export function arenaFoe(L: number, cls: ArenaEnemyClass, r: number): FightSide 
 
 /**
  * Os elementos da MECÂNICA da vantagem (tabela só das 17 bases): a base da ficha (`elementoId`); sem ficha, a BASE DOMINANTE
- * da identidade (par → componente de maior peso; `industrial`→`aco`→`marcial`, `planta`→`vida`). Puro: testável sem a tela.
+ * da identidade (par → componente de maior peso; `planta` e `industrial` são base e passam como são). Puro: testável sem a tela.
  */
 export function arenaElementsFor(
   ficha: { basica?: string; especial?: string },

@@ -101,17 +101,17 @@ describe('SoulmonPerfil: elemento do oráculo normalizado (dono, 20/10/2026, REG
     return { txt: row.textContent!, src: row.querySelector('img')?.getAttribute('src') };
   };
   const dom = (id: string) => petElementOf({ soulmonMeta: { dominantElement: id } });
-  const CASOS: Array<[string, string, string, string]> = [['planta', 'vida', 'Vida', 'Life'], ['industrial', 'aco', 'Aço', 'Steel']];
+  const CASOS: Array<[string, string, string, string]> = [['planta', 'planta', 'Planta', 'Plant'], ['industrial', 'industrial', 'Industrial', 'Industrial']];
   for (const [cru, classe, pt, en] of CASOS) {
-    it(`${cru} → ${classe}: nome nas duas línguas, ícone certo, sem id cru`, () => {
+    it(`${cru} segue ${classe} (alias apagado em 27/10/2026): nome nas duas línguas, ícone certo, sem id cru`, () => {
       const a = linha('pt-BR', dom(cru));
       expect(a.txt).toContain(pt);
-      expect(a.txt).not.toContain(cru);
+      expect(a.txt).not.toMatch(/Vida|Aço|Life|Steel/);
       expect(a.src).toBe(elementIcon(classe));
       cleanup();
       const b = linha('en-US', dom(cru));
       expect(b.txt).toContain(en);
-      expect(b.txt).not.toContain(cru);
+      expect(b.txt).not.toMatch(/Vida|Aço|Life|Steel/);
       expect(b.src).toBe(elementIcon(classe));
     });
   }

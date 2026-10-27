@@ -10,15 +10,14 @@
  *  · `sombra-clara.png` / `sombra-escura.png` — a plataforma sob os pés (256×96).
  *
  * Só os 17 elementos BASE têm arte; um derivado usa o seu 1º componente
- * (`DERIVED_ELEMENT_PAIRS`), `planta` (do Oráculo) usa `vida`, `industrial` usa
- * `marcial`; `neutro` tem arte própria (05/10/2026: `bg-neutro` + `escudo-neutro`); o resto
+ * (`DERIVED_ELEMENT_PAIRS`), `planta`/`industrial` NÃO têm
+ * `bg-`/`escudo-` base: `combatSceneBg` devolve o cenário do domínio deles e o escudo cai no `defended` do FX (ambos próprios); `neutro` tem arte própria (05/10/2026: `bg-neutro` + `escudo-neutro`); o resto
  * (desconhecido) devolve `undefined` e o chamador mantém o que tinha.
  *
  * ⚠️ Importado SÓ pela `BattleStage` (chunk preguiçoso da luta) — não importe
  * isto de nada que esteja no chunk de entrada (`entradaEnxuta.contract.test.ts`).
  */
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
-import { aliasDoOraculo } from './elementoDoOraculo';
 import sombraClara from '../assets/soulmon/combate/sombra-clara.png';
 import sombraEscura from '../assets/soulmon/combate/sombra-escura.png';
 
@@ -49,7 +48,7 @@ const DERIVED_TO_BASE: Record<string, string> = Object.fromEntries(DERIVED_ELEME
 /** Qualquer id de elemento → o elemento BASE que tem arte de cena, ou `undefined`. */
 export function combatBaseElement(id: string | null | undefined): string | undefined {
   if (!id) return undefined;
-  const mapped = aliasDoOraculo(id);
+  const mapped = id;
   const base = DERIVED_TO_BASE[mapped] ?? mapped;
   return BG[base] ? base : undefined;
 }
@@ -57,7 +56,9 @@ export function combatBaseElement(id: string | null | undefined): string | undef
 /** `background` shorthand do cenário do elemento (`url(…) center/cover <cor média>`), ou `undefined`. */
 export function combatSceneBg(id: string | null | undefined): string | undefined {
   const base = combatBaseElement(id);
-  return base ? `url(${BG[base]}) center/cover ${BG_MEAN[base] ?? ''}`.trim() : undefined;
+  if (base) return `url(${BG[base]}) center/cover ${BG_MEAN[base] ?? ''}`.trim();
+  // planta/industrial: sem `bg-` base, o cenário próprio é o do domínio (variante 1) — nunca o de vida/marcial.
+  return id === 'planta' || id === 'industrial' ? combatDomainSceneBg(id, 0) : undefined;
 }
 
 // ── Cenários por DOMÍNIO (Arena por tema, 27/10/2026) ──────────────────────

@@ -86,13 +86,11 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Regra de negócio:** Aniversário de mês/ano da relação, contado a partir de `bornAt`. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
 ### `src/utils/elementoDoOraculo.ts`
-**Dono de:** o mapa oráculo → classe (dono, 20/10/2026, REGISTRO §150): `planta` → `vida`, `industrial` → `aco` (Arena: base dominante `marcial`). Normalização NA LEITURA, nada no save.
+**Dono de:** validar o id do oráculo (27/10/2026, REGISTRO §150 revisto): o alias `planta`→`vida` / `industrial`→`aco` foi APAGADO; planta e industrial passam como são (ícone, FX, cenário e criatura próprios).
 **Exports:**
-- `ORACULO_PARA_CLASSE` — o mapa (tipado por `ElementoSoDoOraculo`: elemento novo só-do-oráculo obriga entrada).
-- `elementoDoOraculo(id)` — id do oráculo ou da classe → elemento conhecido (17 base + pares) ou `undefined`.
-- `aliasDoOraculo(id)` — só traduz, sem validar (mapas de arte).
+- `elementoDoOraculo(id)` — id do oráculo ou da classe → elemento conhecido (base + pares) ou `undefined`.
 **Chamado por:** `starterElements.ts` (`petElementOf`), `combatFx.ts`, `attackFxArt.ts`, `combatArt.ts`, `soulmonPerfil.ts`. A Arena usa `arenaElementsFor` (`arena.ts`): sem ficha, a vantagem vem da base dominante da identidade.
-**Régua:** `src/utils/elementoDoOraculo.test.ts` (mapa, consistência com `ELEMENT_BRIDGE`, guard de grep contra literal duplicado).
+**Régua:** `src/utils/elementoDoOraculo.test.ts` (contrato novo, consistência com `ELEMENT_BRIDGE`, guard de grep contra o alias voltar).
 
 ### `src/utils/arena.ts`
 **Dono de:** o motor da Arena no **núcleo do Combate v3, em GRUPO (N × 1)** (PR3b, 06/10/2026, `docs/squad-alpha-runs/combate-v3-01`, contexto §2.15–§2.17): o jogador é `soulCombatant(estado)` (level e ramo), o especial é `specialOf(família)` com a área da skill (`StageSkill.area`), os inimigos são RELATIVOS ao level dele (`arenaFoe`) e lutam ao mesmo tempo (`groupFightSteps`, `combate/group.ts`). O bestiário só dá o SABOR (nome gerado, elemento, sprite — nunca o `nome` do pool). Tudo puro e determinístico pela semente (um teste de fonte proíbe `Math.random` — `arena.semRandom.contract.test.ts`).

@@ -53,7 +53,7 @@ const PAR_POR_ID = new Map(DERIVED_ELEMENT_PAIRS.map(d => [d.id, d.componentes a
 /** Os elementos BASE do tema de um elemento do jogador: `[X]` (base), `[A, B]` (par derivado) ou `[]` (sem tema). */
 export function arenaTemaElementos(id: string | null | undefined): string[] {
   if (!id) return [];
-  // SEM `aliasDoOraculo`: planta e industrial são BASE desde 25/10/2026 (o alias é só de arte) e têm domínio PRÓPRIO.
+  // planta e industrial são BASE e têm domínio PRÓPRIO (o alias para vida/aço foi apagado em 27/10/2026).
   const mapped = id;
   if ((CLASS_ELEMENT_ORDER as readonly string[]).includes(mapped)) return [mapped];
   return [...(PAR_POR_ID.get(mapped) ?? [])];

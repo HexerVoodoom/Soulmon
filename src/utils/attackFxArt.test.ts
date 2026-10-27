@@ -27,10 +27,10 @@ describe('attackFxArt', () => {
     expect(attackFx('aco_voltaico', 'aura')).toBeTruthy();
   });
 
-  it('auraForElement: elemento do oráculo → aura; planta/industrial mapeiam para vida/aco', () => {
+  it('auraForElement: elemento do oráculo → aura; planta/industrial têm aura própria', () => {
     expect(auraForElement('fogo')).toMatch(/fx-fogo-aura/);
-    expect(auraForElement('planta')).toMatch(/fx-vida-aura/);
-    expect(auraForElement('industrial')).toMatch(/fx-aco-aura/);
+    expect(auraForElement('planta')).toMatch(/fx-planta-aura/);
+    expect(auraForElement('industrial')).toMatch(/fx-industrial-aura/);
     expect(auraForElement(undefined)).toBeUndefined();
     expect(auraForElement('elemento-que-nao-existe')).toBeUndefined();
   });
@@ -39,7 +39,7 @@ describe('attackFxArt', () => {
     expect(AURA_96_COUNT).toBe(230);
     expect(ATTACK_FX_COUNT).toBe(1380); // a -aura-96 NÃO entra como 7º estado
     expect(auraForElement('fogo', 96)).toMatch(/fx-fogo-aura-96\.png$/);
-    expect(auraForElement('planta', 96)).toMatch(/fx-vida-aura-96\.png$/);
+    expect(auraForElement('planta', 96)).toMatch(/fx-planta-aura-96\.png$/);
     expect(auraForElement('fogo', 128)).toMatch(/fx-fogo-aura\.png$/);
     expect(auraForElement('fogo')).toMatch(/fx-fogo-aura\.png$/);
   });
