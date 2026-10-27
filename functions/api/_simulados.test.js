@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SIMULADOS } from './_simulados.data.js';
 import {
-  CHUNK, OPS_BUDGET, custoEstimado, agendarSimuladosDia, ensureSimuladosDia, estadoDoDia, saveDoSimulado, scoresDoDia, stripSimulated, lockKeyDia, isSimuladoId,
+  CHUNK, OPS_BUDGET, custoEstimado, petNameDoSimulado, agendarSimuladosDia, ensureSimuladosDia, estadoDoDia, saveDoSimulado, scoresDoDia, stripSimulated, lockKeyDia, isSimuladoId,
 } from './_simulados.js';
 import { submitScore, readBoard, payablePlacements, RANKED_GAMES, isoWeekKey } from './_rankings.js';
 import { closePreviousMonth, pendingKey, approveRiftPrize, _resetClosedCache } from './_riftPayout.js';
@@ -58,6 +58,37 @@ describe('perfis versionados', () => {
       expect(p.nick.length).toBeLessThanOrEqual(NOME_MAX);
       expect(sanitizarNomeDeGuilda(p.petName)).toBe(p.petName);
     }
+  });
+
+  it('nomes de Soulmon únicos, sem sufixo -mon e sem nome de franquia (aprovados pelo dono, 27/10)', () => {
+    const nomes = SIMULADOS.map(p => p.petName.normalize('NFKC').trim().toLowerCase());
+    expect(new Set(nomes).size).toBe(50);
+    for (const p of SIMULADOS) {
+      expect(p.petName.length).toBeGreaterThanOrEqual(3);
+      expect(p.petName.length).toBeLessThanOrEqual(NOME_MAX);
+      expect(p.petName).toMatch(/^[A-Za-z]+$/);
+      expect(p.petName.toLowerCase()).not.toMatch(/mon$/);
+      expect(p.petName.toLowerCase()).not.toMatch(/pok[eé]|digi|yokai|tamagotchi|pikachu/);
+    }
+  });
+
+  it('petName do perfil em KV é sobreposto pelo dado estático (sem migração) e entra na simSig', async () => {
+    const p0 = SIMULADOS[0];
+    expect(petNameDoSimulado({ id: p0.id, simulated: true, petName: 'Antigo' })).toBe(p0.petName);
+    expect(petNameDoSimulado({ id: p0.id, petName: 'Antigo' })).toBe('Antigo'); // sem a flag: intocado
+    expect(petNameDoSimulado({ id: 'x'.repeat(64), simulated: true, petName: 'Real' })).toBe('Real');
+    expect(petNameDoSimulado(null)).toBeUndefined();
+    const env = mkEnv();
+    await fecharDia(env);
+    const k = `profile:${p0.id}`;
+    const perfil = JSON.parse(env.SOULMON_SAVES.store.get(k).v);
+    expect(perfil.simSig.endsWith(`|${p0.petName}`)).toBe(true);
+    // perfil antigo (nome velho + simSig velha) vira o nome novo na leitura pública, antes de qualquer reescrita
+    env.SOULMON_SAVES.store.set(k, { v: JSON.stringify({ ...perfil, petName: 'Bolinha', simSig: 'velha' }) });
+    const r = await community({ request: new Request(`https://x/api/community?action=opponents`), env });
+    const j = await r.json();
+    expect(j.opponents.length).toBeGreaterThan(0);
+    for (const o of j.opponents) expect(o.petName).not.toBe('Bolinha');
   });
 
   it('distribuição realista: poucos no topo, maioria no meio/baixo; jogos e frequências válidos', () => {

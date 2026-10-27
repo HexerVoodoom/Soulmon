@@ -194,6 +194,17 @@ export async function spriteVivoDoSimulado(env, saveId) {
   }
 }
 
+/**
+ * O nome do Soulmon de um simulado vem do dado ESTÁTICO (`SIMULADOS`), não do perfil em KV: renomear no
+ * `_simulados.data.js` vale na hora para quem já tem perfil em produção, sem migração em lote (mesmo espírito de
+ * `spriteVivoDoSimulado`). Só atua em perfil `simulated === true` de id conhecido; qualquer outro devolve `p.petName`.
+ */
+const PET_POR_ID = new Map(SIMULADOS.map((s) => [s.id, s.petName]));
+export function petNameDoSimulado(p) {
+  if (p && p.simulated === true && typeof p.id === 'string' && PET_POR_ID.has(p.id)) return PET_POR_ID.get(p.id);
+  return p?.petName;
+}
+
 /** Cria/atualiza save + perfil + índices do simulado. Só grava o que mudou (poupa subrequests). */
 export async function upsertSimulado(env, p, day, now = new Date()) {
   const store = kvOrThrow(env);
@@ -201,7 +212,7 @@ export async function upsertSimulado(env, p, day, now = new Date()) {
   const spriteRaw = await store.get(spriteKeyOf(p.id)).catch(() => null);
   const spriteUrl = spriteUrlOrNull(spriteRaw);
   const e = estadoDoDia(p, day);
-  const sig = `${e.level}|${e.bond}|${spriteUrl ?? ''}`;
+  const sig = `${e.level}|${e.bond}|${spriteUrl ?? ''}|${p.petName}`;
   if (prev?.simulated === true && prev.simSig === sig && now.getTime() - Number(prev.simAt || 0) < PROFILE_REFRESH_MS) {
     return { wrote: false, name: prev.name };
   }

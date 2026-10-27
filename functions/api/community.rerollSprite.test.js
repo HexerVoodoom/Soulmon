@@ -81,7 +81,8 @@ describe('sprite do simulado: preview == duelo', () => {
   it('a lista usa sim:sprite mesmo com o perfil sem spriteUrl', async () => {
     const env = mkEnv();
     const { json } = await opponents(env);
-    const sim = json.opponents.find(o => o.petName === 'Bicho' && o.spriteUrl);
+    // o perfil em KV ainda diz 'Bicho': o servidor sobrepoe pelo dado estatico (petNameDoSimulado)
+    const sim = json.opponents.find(o => o.petName === 'HolySylvasi' && o.spriteUrl);
     expect(sim?.spriteUrl).toBe(SPRITE);
     expect(JSON.stringify(json)).not.toMatch(/sim_0007/);
   });

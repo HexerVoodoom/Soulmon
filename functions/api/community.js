@@ -47,7 +47,7 @@ import {
   getProfile, putProfile, pidSoLeitura, nickKey, claimNick,
 } from './_profile.js';
 import { secretEquals } from './metrics.js';
-import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado } from './_simulados.js';
+import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado, petNameDoSimulado } from './_simulados.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_honra.js';
@@ -180,7 +180,7 @@ async function publicProfile(env, p, extra = {}) {
   const sUrl = spriteUrlOrNull(p.spriteUrl);
   return {
     id: pid,
-    name: p.name, petName: p.petName, stage: p.stage,
+    name: p.name, petName: petNameDoSimulado(p), stage: p.stage,
     avatarId: avatarIdOrNull(p.avatarId), frameId: frameIdOrNull(p.frameId), artLine: artLineOrNull(p.artLine),
     ...(/^[a-z][a-z0-9_-]{0,31}$/.test(String(p.element ?? '')) ? { element: p.element } : {}),
     ...(sUrl ? { spriteUrl: sUrl } : {}),
@@ -817,7 +817,7 @@ async function handleCommunity(context) {
     }
     const oppSpriteUrl = (await spriteVivoDoSimulado(env, oppSave)) ?? spriteUrlOrNull(opp.spriteUrl);
     const opponent = {
-      name: opp.name, petName: opp.petName, stage: opp.stage,
+      name: opp.name, petName: petNameDoSimulado(opp), stage: opp.stage,
       avatarId: avatarIdOrNull(opp.avatarId), frameId: frameIdOrNull(opp.frameId), artLine: artLineOrNull(opp.artLine),
       ...(oppSpriteUrl ? { spriteUrl: oppSpriteUrl } : {}),
     };
@@ -937,7 +937,7 @@ async function handleCommunity(context) {
         // L07-04: leitura de terceiro NÃO escreve. Só a linha do próprio dono
         // autenticado (meId passou por denyUnlessOwner) migra o pid legado.
         id: p ? (meId && ownerSave === meId ? await ensurePid(env, p) : await pidSoLeitura(p)) : null,
-        name: p?.name || 'Anônimo', petName: p?.petName || '', stage: p?.stage || 'rookie',
+        name: p?.name || 'Anônimo', petName: petNameDoSimulado(p) || '', stage: p?.stage || 'rookie',
         avatarId: avatarIdOrNull(p?.avatarId), frameId: frameIdOrNull(p?.frameId), artLine: artLineOrNull(p?.artLine),
         ...(rowSpriteUrl ? { spriteUrl: rowSpriteUrl } : {}),
         points: rec.points, wins: rec.wins, losses: rec.losses,
