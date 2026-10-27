@@ -178,6 +178,22 @@ async function reservarApelido(env, p) {
   return null;
 }
 
+/**
+ * O sprite VIVO de um simulado: lê `sim:sprite:<id>` direto do KV, sem esperar o motor reescrever o perfil.
+ * Por quê (27/10/2026): o perfil só ganha `spriteUrl` quando `upsertSimulado` roda (trava diária `sim:dia:*`), então
+ * sprite publicado no meio do dia ficava invisível até o dia seguinte e o Torneio mostrava `artLine`/roster. As rotas
+ * de oponente/partida usam isto para que preview e duelo leiam a MESMA fonte. Só vale para `sim_NNNN`; devolve `null`
+ * (nunca lança) para qualquer outro id ou chave ausente/inválida — aí vale o `spriteUrl` do perfil, como antes.
+ */
+export async function spriteVivoDoSimulado(env, saveId) {
+  if (typeof saveId !== 'string' || !/^sim_\d{4}$/.test(saveId)) return null;
+  try {
+    return spriteUrlOrNull(await kvOrThrow(env).get(spriteKeyOf(saveId)));
+  } catch {
+    return null;
+  }
+}
+
 /** Cria/atualiza save + perfil + índices do simulado. Só grava o que mudou (poupa subrequests). */
 export async function upsertSimulado(env, p, day, now = new Date()) {
   const store = kvOrThrow(env);

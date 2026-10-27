@@ -25,7 +25,7 @@ import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
  * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
  * abrir/fechar, o NPC certo, a fala e a proporção.
  */
-export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, headSlotRef, closeInSheet = false, children }: {
+export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, headSlotRef, closeInSheet = false, hideClose = false, children }: {
   areaId: AreaId;
   /** Id do lote aberto (ex.: `'itens'`, `'torneio'`) — resolve o NPC certo
    *  via `lotNpcArt`. Áreas com folha única (Laboratório/Hall) passam o
@@ -47,6 +47,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   /** P2 (beta-2): o ✕ mora DENTRO da folha, no canto superior esquerdo acima do título (o mesmo lugar do `ModalSheet`), e não no anel sobre a
    *  cena. Para a folha que faz parte de uma SEQUÊNCIA de `ModalSheet` (a aventura do resumo), onde o fechar não pode mudar de lugar. */
   closeInSheet?: boolean;
+  /** Esconde o voltar da folha: o conteúdo (o duelo do Torneio, com o `BattleStage`) traz o PRÓPRIO voltar padrão — duas setas era o bug de 27/10/2026. O voltar do sistema e o Escape seguem fechando. */
+  hideClose?: boolean;
   children?: ReactNode;
 }) {
   // O voltar do sistema (botão do Android/navegador) fecha a folha antes de mudar de tela.
@@ -89,7 +91,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           pointerEvents: 'none',
         }}
       >
-        {!closeInSheet && (
+        {!closeInSheet && !hideClose && (
           <BackCircleButton
             data-area-sheet-close=""
             onClick={() => onClose()}
@@ -162,7 +164,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             overflow: 'hidden',
           }}
         >
-          {closeInSheet && (
+          {closeInSheet && !hideClose && (
             <div style={{ padding: '8px 16px 0', flexShrink: 0 }}>
               <BackCircleButton data-area-sheet-close="" onClick={() => onClose()} label={closeLabel} />
             </div>

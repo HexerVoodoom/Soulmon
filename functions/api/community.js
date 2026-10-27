@@ -47,7 +47,7 @@ import {
   getProfile, putProfile, pidSoLeitura, nickKey, claimNick,
 } from './_profile.js';
 import { secretEquals } from './metrics.js';
-import { agendarSimuladosDia, stripSimulated, isSimuladoId } from './_simulados.js';
+import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado } from './_simulados.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_honra.js';
@@ -215,6 +215,10 @@ async function getRank(env, season, id) {
 async function putRank(env, season, id, rec) {
   await kvOrThrow(env).put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120 });
 }
+/** Reroll dos 3 oponentes (27/10/2026): UM por intervalo entre combates. Chave própria (não toca o `rank:`: não cria linha
+ *  no ranking nem corre contra o `putRank` de uma partida). Nasce no reroll, morre em `settleMatch`; TTL de 1 dia por segurança. */
+const rerollKey = (id) => `reroll:${id}`;
+const rerollUsado = async (env, id) => !!(await kvOrThrow(env).get(rerollKey(id)).catch(() => null));
 async function listPrefix(env, prefix, limit = 100) {
   const out = [];
   let cursor;
@@ -381,6 +385,8 @@ async function handleCommunity(context) {
      desistência viraria um caminho barato que não paga o mesmo que perder. */
   const settleMatch = async ({ id, oppSave, me, opp, myRank, outcome, sides }) => {
     const season = currentSeason();
+    // Um combate terminou (vitória, derrota, empate ou desistência): o reroll dos oponentes volta.
+    await kvOrThrow(env).delete(rerollKey(id)).catch(() => {});
     // Resultado sem ganho: o que o cliente usa para NAO pagar Honra de vitoria (`honorFactor`).
     const nada = { gain: 0, factor: 1 };
     // EMPATE (combate v3, §2.4/§2.19): resultado válido, a partida conta como jogada (a cota já foi gasta) e
@@ -671,6 +677,12 @@ async function handleCommunity(context) {
   if (action === 'opponents' && method === 'GET') {
     // Com `id` a resposta traz a ficha e a cota DESSA conta: so o dono le (senao e oraculo e-mail->conta, como o `player` era).
     if (id) { const denied = await denyUnlessOwner(id); if (denied) return denied; }
+    // Reroll (`reroll=1`, aditivo): sorteia de novo, mas só UMA vez entre combates — a trava vale AQUI, não no cliente.
+    const quer = url.searchParams.get('reroll') === '1';
+    if (quer && id) {
+      if (await rerollUsado(env, id)) return json({ error: 'reroll used', rerolled: true }, 429);
+      await kvOrThrow(env).put(rerollKey(id), '1', { expirationTtl: 86400 });
+    }
     const keys = await listPrefix(env, 'profile:', 300);
     const me = id;
     const pool = [];
@@ -705,7 +717,8 @@ async function handleCommunity(context) {
     const meSide = id ? await loadDuelSide(id) : null;
     const opponents = await Promise.all(pool.slice(0, 3).map(async ({ pub, saveId }) => {
       const { side, spriteUrl, artLine } = await loadDuelSideWithSprite(env, saveId);
-      const effectiveSprite = pub.spriteUrl ?? spriteUrl;
+      // Simulado: o sprite publicado em `sim:sprite:<id>` vence (o perfil pode estar defasado até o motor rodar).
+      const effectiveSprite = (await spriteVivoDoSimulado(env, saveId)) ?? pub.spriteUrl ?? spriteUrl;
       return {
         ...pub,
         artLine: pub.artLine ?? artLine,
@@ -713,7 +726,7 @@ async function handleCommunity(context) {
         duel: publicDuel(side),
       };
     }));
-    return json({ opponents, me: { duel: publicDuel(meSide) }, matchesLeft: Math.max(0, matchesLeft) });
+    return json({ opponents, me: { duel: publicDuel(meSide) }, matchesLeft: Math.max(0, matchesLeft), ...(id ? { rerolled: quer || await rerollUsado(env, id) } : {}) });
   }
 
   /* Valida ator e oponente e devolve o contexto da partida. Compartilhado por
@@ -802,7 +815,7 @@ async function handleCommunity(context) {
     if (!myRank.pending && myRank.last && body.seed !== undefined && myRank.last.opp === opponentId && myRank.last.seed === body.seed) {
       return json({ ...myRank.last.res, replayed: true });
     }
-    const oppSpriteUrl = spriteUrlOrNull(opp.spriteUrl);
+    const oppSpriteUrl = (await spriteVivoDoSimulado(env, oppSave)) ?? spriteUrlOrNull(opp.spriteUrl);
     const opponent = {
       name: opp.name, petName: opp.petName, stage: opp.stage,
       avatarId: avatarIdOrNull(opp.avatarId), frameId: frameIdOrNull(opp.frameId), artLine: artLineOrNull(opp.artLine),

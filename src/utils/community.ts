@@ -149,8 +149,9 @@ export interface Opponent {
   /** Duelo fantasma v3 (PR5): só o level com que cada um luta (já com o teto S1) — a ficha inteira vem em `duelStart`. */
   duel?: { level: number } | null;
 }
-export const getOpponents = (id: string) =>
-  call<{ opponents: Opponent[]; me?: { duel: { level: number } | null }; matchesLeft: number }>('opponents', { params: { id } });
+/** `reroll` sorteia os 3 de novo; o servidor só aceita UM entre combates (429 `reroll used`). `rerolled` = já usado. */
+export const getOpponents = (id: string, reroll = false) =>
+  call<{ opponents: Opponent[]; me?: { duel: { level: number } | null }; matchesLeft: number; rerolled?: boolean }>('opponents', { params: reroll ? { id, reroll: '1' } : { id } });
 
 export interface MatchResult {
   won: boolean;

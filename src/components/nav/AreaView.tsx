@@ -287,6 +287,8 @@ export function AreaView(props: AreaViewProps) {
   const [duelSeed, setDuelSeed] = useState<number | undefined>(undefined);
   /** O encaixe do canto do título da folha do Torneio (o indicador da faixa entra por portal). */
   const [tournamentHead, setTournamentHead] = useState<HTMLElement | null>(null);
+  /** O duelo do Torneio está na tela: o `BattleStage` traz o voltar dele, a folha esconde o seu (uma seta só). */
+  const [tournamentDuelOpen, setTournamentDuelOpen] = useState(false);
   const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? null);
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -408,10 +410,10 @@ export function AreaView(props: AreaViewProps) {
         lots={gated(lots.map(l => ({ ...l, art: ARENA_LOT_ART[l.id], onOpen: () => { if (l.id === 'fenda' && props.naMasmorra) { onVisitBuilding?.('arena.fenda' as BuildingId); setSheet(null); setGame('masmorra'); } else enter(l.id); } } satisfies AreaLot)))}
         notice={lockNote}
       >
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined} hideClose={open?.id === 'torneio' && tournamentDuelOpen}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'torneio' && (
-              <TournamentPage {...props.tournament} skills={props.skills} headSlot={tournamentHead} />
+              <TournamentPage {...props.tournament} skills={props.skills} headSlot={tournamentHead} onCoverChange={setTournamentDuelOpen} />
             )}
             {open?.id === 'duelo' && (
               <DueloSheet

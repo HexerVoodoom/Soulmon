@@ -85,6 +85,8 @@ import { AvatarFrame, FrameSelector } from './ui/AvatarFrame';
 import { MiniGlass } from './ui/MiniGlass';
 import { PixelMeter } from './pixel/PixelKit';
 import { RitualDialog } from './ritual/RitualKit';
+import { BackCircleButton } from './ui/BackCircleButton';
+import { useDialogA11y } from '../hooks/useDialogA11y';
 import { GameVisor, VisorSprite, DIALOG_VISOR_W } from './games/GameKit';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { sm2Tag } from './TaskMeta';
@@ -130,6 +132,8 @@ interface TournamentPageProps {
    *  da folha, `AreaSheet`). `undefined` = sem folha em volta, o indicador vai
    *  inline no topo; `null` = a folha ainda não entregou o encaixe (espera). */
   headSlot?: HTMLElement | null;
+  /** Avisa a folha quando o duelo abre/fecha (ela esconde o voltar dela: o `BattleStage` já traz o padrão). */
+  onCoverChange?: (open: boolean) => void;
 }
 
 /** Emblemas: serifa de medalha (regra das três moedas) em ouro-TINTA. */
@@ -157,6 +161,36 @@ const TIER_ICON: Record<string, string> = {
   mestre: 'swords',
   'grao-mestre': 'bolt',
 };
+
+/**
+ * Tela cheia do Torneio (faixas + ranking, moldura): ocupa a folha inteira, com o voltar PADRÃO (`BackCircleButton`, esquerda)
+ * e o título à direita. Antes era um cartão centrado com uma seta própria, e o voltar da folha ficava por baixo: dois voltar.
+ * Quem a abre avisa a folha (`onCoverChange`) para ela esconder o dela.
+ */
+function TorneioPanel({ label, title, backLabel, onClose, children }: { label: string; title: string; backLabel: string; onClose: () => void; children: React.ReactNode }) {
+  const ref = useDialogA11y<HTMLDivElement>(true, onClose);
+  return (
+    <div
+      ref={ref}
+      role="dialog"
+      aria-modal="true"
+      aria-label={label}
+      tabIndex={-1}
+      data-torneio-panel
+      style={{
+        position: 'fixed', inset: 0, zIndex: 400, outline: 'none', boxSizing: 'border-box', overflowY: 'auto',
+        backgroundColor: 'var(--sm2-surface)', display: 'flex', flexDirection: 'column', gap: 12,
+        padding: 'calc(env(safe-area-inset-top, 0px) + 8px) 16px calc(16px + env(safe-area-inset-bottom, 0px))',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 44 }}>
+        <BackCircleButton onClick={onClose} label={backLabel} data-tiers-back="" />
+        <h2 style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)', textAlign: 'right' }}>{title}</h2>
+      </div>
+      {children}
+    </div>
+  );
+}
 
 /**
  * A marca da faixa: a INSÍGNIA em pixel da rodada 3 (30/09/2026, `TIER_INSIGNIA_ART`),
@@ -196,7 +230,7 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
   );
 }
 
-export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, headSlot }: TournamentPageProps) {
+export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, headSlot, onCoverChange }: TournamentPageProps) {
   // Música (19/10/2026): o Torneio toca o "Stone Hall Combat" (se o interruptor "Música" está ligado). Antes de qualquer return (hooks).
   useEffect(() => entrarNaSuperficie('torneio'), []);
   const isPt = language === 'pt-BR';
@@ -205,6 +239,9 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   /** `null` = o servidor não disse quantas sobraram (offline ou resposta velha). */
   const [matchesLeft, setMatchesLeft] = useState<number | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
+  /** O sorteio dos 3 já foi refeito neste intervalo entre combates (a verdade é do servidor; volta a `false` depois de um combate). */
+  const [rerolled, setRerolled] = useState(false);
+  const [rerolling, setRerolling] = useState(false);
   const [rank, setRank] = useState<RankRow[] | null>(null);
   /** Só vem quando a pessoa está fora da lista pública: o próprio lugar dela. */
   const [meRank, setMeRank] = useState<{ lifetime?: number } | null>(null);
@@ -298,14 +335,23 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
      nasce no PvP. O que sobra é o requisito de Vínculo (`BOND_PVP_MIN_LEVEL`,
      REGISTRO: o único destrave não-cosmético e social), e a tela o EXPLICA em
      vez de parecer quebrada. A trava inforjável continua sendo a do servidor. */
+  /* Duelo, faixas/ranking e moldura cobrem a folha com o voltar PADRÃO próprio: a folha esconde o dela (uma seta só). */
+  const coverOpen = duel !== null || tiersOpen || framesOpen;
+  useEffect(() => {
+    onCoverChange?.(coverOpen);
+    return () => { if (coverOpen) onCoverChange?.(false); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [coverOpen]);
+
   const pvpAberto = meetsPvpBond(totalXP);
 
-  const loadOpponents = () => {
+  const loadOpponents = (reroll = false) => {
     if (!pvpAberto) return;
     setLoadFailed(false);
-    getOpponents(saveId)
+    getOpponents(saveId, reroll)
       .then(r => {
         setOpponents(r.opponents ?? []);
+        setRerolled(r.rerolled === true);
         setMyDuel(r.me?.duel ?? null);
         // A API já devolveu resposta SEM `matchesLeft`, e a tela imprimia
         // "undefined partida(s) restante(s) hoje" — literalmente a palavra
@@ -317,6 +363,21 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   };
 
   useEffect(() => { loadOpponents(); }, [pvpAberto, saveId]);
+
+  /** Sorteia os 3 de novo. O servidor recusa o segundo pedido sem combate no meio (429): aí só some o botão. */
+  const rerollOpponents = () => {
+    if (rerolling || rerolled || fighting !== null) return;
+    setRerolling(true);
+    getOpponents(saveId, true)
+      .then(r => {
+        setOpponents(r.opponents ?? []);
+        setMyDuel(r.me?.duel ?? null);
+        setMatchesLeft(typeof r.matchesLeft === 'number' ? r.matchesLeft : null);
+        setRerolled(true);
+      })
+      .catch(() => { setRerolled(true); })
+      .finally(() => setRerolling(false));
+  };
   useEffect(() => {
     if (!rank) {
       /* `?? []` é DEFESA, não redundância: se a resposta vier sem `rank`,
@@ -686,7 +747,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
               <p style={sm2Hint}>
                 {isPt ? 'Pode ser a sua conexão.' : 'It may be your connection.'}
               </p>
-              <button type="button" onClick={loadOpponents} style={{ ...sm2Button('outline'), width: '100%', maxWidth: 200 }}>
+              <button type="button" onClick={() => loadOpponents()} style={{ ...sm2Button('outline'), width: '100%', maxWidth: 200 }}>
                 {isPt ? 'Tentar de novo' : 'Try again'}
               </button>
             </div>
@@ -733,6 +794,20 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
               </div>
             );
           })}
+
+          {/* Refresh dos 3: UMA vez entre combates. Usou, some; depois de um combate o servidor libera e ele volta. */}
+          {opponents && opponents.length > 0 && !rerolled && !loadFailed && (
+            <button
+              type="button"
+              data-torneio-reroll
+              disabled={rerolling || fighting !== null}
+              onClick={rerollOpponents}
+              style={{ ...sm2Button('outline', rerolling || fighting !== null), width: '100%' }}
+            >
+              <Icon name="sync" size={20} className={rerolling ? 'animate-spin' : undefined} />
+              {isPt ? 'Sortear outros 3 oponentes' : 'Draw 3 new opponents'}
+            </button>
+          )}
         </div>
       )}
 
@@ -741,24 +816,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           progresso de antes (a faixa vem ANTES do ranking, só sobe); só mudou
           de lugar. Voltar = seta no topo ESQUERDO (padrão B6/I3). */}
       {tiersOpen && (
-        <RitualDialog label={isPt ? 'Faixas do Torneio' : 'Tournament tiers'} onClose={() => setTiersOpen(false)} zIndex={400} maxWidth={380} style={{ gap: 8 }}>
-          <button
-            type="button"
-            onClick={() => setTiersOpen(false)}
-            aria-label={isPt ? 'Voltar' : 'Back'}
-            title={isPt ? 'Voltar' : 'Back'}
-            data-tiers-back
-            style={{
-              alignSelf: 'flex-start', width: 44, height: 44, margin: '-8px 0 -8px -10px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--sm2-ink)',
-            }}
-          >
-            <Icon name="arrow_back" size={24} />
-          </button>
-          <h2 style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>
-            {isPt ? 'Faixas' : 'Tiers'}
-          </h2>
+        <TorneioPanel label={isPt ? 'Faixas do Torneio' : 'Tournament tiers'} title={isPt ? 'Faixas' : 'Tiers'} backLabel={isPt ? 'Voltar' : 'Back'} onClose={() => setTiersOpen(false)}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {rank === null && (
             <p role="status" style={{ ...sm2Hint, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '24px 0' }}>
@@ -911,23 +969,11 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             </button>
           )}
         </div>
-        </RitualDialog>
+        </TorneioPanel>
       )}
 
       {framesOpen && onEquipFrame && (
-        <RitualDialog label={isPt ? 'Moldura do avatar' : 'Avatar frame'} onClose={() => setFramesOpen(false)} zIndex={410} maxWidth={380} style={{ gap: 8 }}>
-          <button
-            type="button"
-            onClick={() => setFramesOpen(false)}
-            aria-label={isPt ? 'Voltar' : 'Back'}
-            title={isPt ? 'Voltar' : 'Back'}
-            style={{ alignSelf: 'flex-start', width: 44, height: 44, margin: '-8px 0 -8px -10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--sm2-ink)' }}
-          >
-            <Icon name="arrow_back" size={24} />
-          </button>
-          <h2 style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>
-            {isPt ? 'Moldura' : 'Frame'}
-          </h2>
+        <TorneioPanel label={isPt ? 'Moldura do avatar' : 'Avatar frame'} title={isPt ? 'Moldura' : 'Frame'} backLabel={isPt ? 'Voltar' : 'Back'} onClose={() => setFramesOpen(false)}>
           <FrameSelector
             ctx={frameCtx}
             equipped={myFrame?.id ?? null}
@@ -937,7 +983,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             previewSrc={lineIconForStage(petStage, 32) ?? getSpriteForStage(petStage)}
             isPt={isPt}
           />
-        </RitualDialog>
+        </TorneioPanel>
       )}
 
       {trainingOutcome !== null && (
