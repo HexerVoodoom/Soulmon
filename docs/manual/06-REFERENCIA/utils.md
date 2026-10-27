@@ -110,6 +110,9 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:** `ARENA_DOMINIOS` (os 17 domínios), `DOMINIO_DO_ELEMENTO_BASE` (os 20 elementos-base → domínio + `proprio`; os 8 do Oráculo têm domínio próprio, os outros 12 usam o mais próximo), `arenaTemaElementos`, `dominioDoElemento`, `ARENA_CENARIOS_POR_DOMINIO` (3), `arenaVarianteDaRodada(seed, rodada)`.
 **Chamado por:** `ArenaGame.tsx`, `arena/DueloSheet.tsx`; `buildArenaRound(…, theme)` (`arena.ts`) e `pickNovo(…, themeElements)` (`novosSoulmonData.ts`) recebem o tema; a arte vem de `combatDomainSceneBg` (`combatArt.ts`).
 **Régua:** `arenaTema.test.ts`, `ArenaGame.tema.render.test.tsx`.
+### `src/utils/arenaTemaDoJogador.ts`
+**Dono de:** `arenaTemaDoJogador(skills, evolutionStage, petElement)`: o tema da Arena lido pela fonte única (`fighterIdentity`, §11.3), para o `AreaView` entregar à `DueloSheet` por prop (a folha não lê elemento).
+**Chamado por:** `nav/AreaView.tsx`. **Régua:** `soulmonPerfil.test.ts` (11.3).
 ### `src/utils/atividadesLista.ts`
 **Dono de:** quem aparece onde na lista de atividades (beta-2, itens 2.1 a 2.3): `Habit` (todo dia) × `Scheduled` (recorrência em dias específicos) para a tela `View all`, "tarefa de hoje" (sem `startDate` no futuro) para a Home, e o estado aberto/recolhido das linhas com filhos (aberta enquanto há pendente, recolhida quando todos concluem; a escolha manual vale só para o mesmo estado de conclusão) com seu parse/serialização no aparelho (`STORAGE_KEYS.RITUAL_OPEN`). Puro; a recorrência continua lida por `normalizeSchedule`/`habitCountsOn`.
 **Exports:**

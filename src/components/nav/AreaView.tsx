@@ -28,6 +28,7 @@ import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
 import type { ReviewState } from '../../utils/mente/revisao';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import type { CadernoEntry } from '../../utils/cadernoSave';
+import { arenaTemaDoJogador } from '../../utils/arenaTemaDoJogador';
 import type { QuestMark } from '../../utils/questMarks';
 import type { FocusLootRequest } from '../../utils/focusExpedition';
 import type { FocusRewardResult } from '../play/OficinaSheet';
@@ -419,8 +420,7 @@ export function AreaView(props: AreaViewProps) {
               <DueloSheet
                 language={language}
                 evolutionStage={props.evolutionStage}
-                skills={props.skills}
-                petElement={props.petElement}
+                tema={arenaTemaDoJogador(props.skills, props.evolutionStage, props.petElement)}
                 onStart={(seed) => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }}
               />
             )}

@@ -7,11 +7,6 @@ import { elementIcon } from '../../utils/elementIconArt';
 import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
 import type { Language } from '../../utils/i18n';
-import { arenaTemaElementos } from '../../utils/arenaTema';
-import { fighterIdentity } from '../../utils/fighterIdentity';
-import { fichaStageOf } from '../../utils/soulProfile/ficha/stageSkillsFor';
-import type { FichaStage } from '../../utils/soulProfile/ficha/types';
-import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 
 /**
  * DUELO (minimal-ui F5, Arena) — a porta de entrada da `ArenaGame`, a luta de
@@ -101,11 +96,10 @@ function EscolhaDeAdversarios({ isPt, onPick, tema }: { isPt: boolean; onPick: (
   );
 }
 
-export function DueloSheet({ language, onStart, skills, petElement, evolutionStage }: {
+export function DueloSheet({ language, onStart, tema }: {
   language: Language;
-  /** Ficha e elemento do oráculo: o TEMA do jogador (`arenaTemaElementos`) — os cards mostram os MESMOS inimigos que a `ArenaGame` vai sortear. */
-  skills?: Partial<Record<FichaStage, StageSkills>>;
-  petElement?: string;
+  /** Os elementos BASE do tema do jogador (`arenaTemaDoJogador`, lido pela fonte única no App): os cards mostram os MESMOS inimigos que a `ArenaGame` vai sortear. */
+  tema?: readonly string[];
   /** Mantido por compat com o chamador; o número de Poder saiu da folha (D-59). */
   evolutionStage?: string;
   /** Chamado com a semente do desafio ESCOLHIDO (sem ela, a Arena sorteia). */
@@ -113,10 +107,6 @@ export function DueloSheet({ language, onStart, skills, petElement, evolutionSta
 }) {
   const isPt = language === 'pt-BR';
   const [pickedSeed, setPickedSeed] = useState<number | undefined>(undefined);
-  const tema = useMemo(
-    () => arenaTemaElementos(fighterIdentity(skills?.[fichaStageOf(evolutionStage ?? 'rookie')], petElement).basico.elemento),
-    [skills, petElement, evolutionStage],
-  );
 
   return (
     <div data-duelo style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
