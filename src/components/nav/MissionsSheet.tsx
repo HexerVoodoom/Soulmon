@@ -91,7 +91,7 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
     <div data-missions-frame style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
     <AreaSheet
       open={open} title={isPt ? 'Missões' : 'Missions'} onClose={onClose} language={language}
-      closeLabel={isPt ? 'Fechar' : 'Close'} closeInSheet
+      closeLabel={isPt ? 'Fechar' : 'Close'}
       npcArt={FUNCTION_NPC_ART.onboarding} npcVoice={functionNpcVoice('onboarding', language)}
     >
       <div data-missions-sheet={tab}>
