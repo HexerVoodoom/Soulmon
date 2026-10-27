@@ -12,18 +12,21 @@
  * nenhum número por pessoa existe na vista. A barra é o crescimento COLETIVO da planta, sem texto de razão.
  * Os botões mostram só o que a pessoa pode fazer agora: o que já foi feito hoje vira o fato, sem botão.
  */
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import type { SoulXPState } from '../../utils/soulXP';
 import { DEFESA_INIMIGOS, inimigosDaDefesa, lutarDefesa } from '../../utils/plantioDefesa';
 import { getPlantio, actPlantio, type PlantioAction, type PlantioView, type PlantSpecies } from '../../utils/claApi';
 import { fruitRewards } from '../../utils/claCredit';
 import { ARVORE_SRC, PANORAMA_SRC } from '../../assets/bosque';
+import { LOT_NPC_ART } from '../../assets/soulmon/npcs';
+import { NpcSpeech } from '../nav/NpcSpeech';
+import { tendGate, tendLinhaAntes, tendFalaLilia } from '../../utils/groveTend';
 import { ESTACAO_DA_ESPECIE, nivelDoPlantio, type EstacaoBosque } from '../../utils/bosqueArvores';
 import { SPRITES } from './GroveVisor';
 import type { GuildKey } from '../../utils/guildCopy';
 import { Icon } from '../ui/Icon';
-import { InfoTip } from '../ui/InfoTip';
+import { InfoTip, ModalInfo } from '../ui/InfoTip';
 import { useClaBuilding, type ClaSalaProps, type ClaT } from './claUi';
 
 export const PLANTIO_VISOR_HEIGHT = 220;
@@ -83,7 +86,26 @@ const ACOES_OK: Record<PlantioAction, GuildKey> = {
 };
 
 /** O painel do Plantio: espécie da estação, estágio, "atrasada", Plantar/Regar/Proteger/Colher e a árvore do clã. */
-export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, onAnnounce }: ClaSalaProps) {
+/** Card UNICO do Bosque: a cena (membros do cla + arvorezinha da estacao) no lugar do visor, o icone de entrar e so o CTA do dia. */
+export interface PlantioUnico {
+  /** Recebe a arvore da estacao (ou null) para desenhar sobre o panorama. */
+  cena: (arvore: ReactNode) => ReactNode;
+  onEntrar: () => void;
+  /** A regra do dia (meta cumprida) e as tarefas que ainda restam: bloqueia o CTA e Lilia explica. */
+  metaCumprida: boolean;
+  goal?: { done: number; heart: number };
+  pendentes?: string[];
+}
+
+/** A arvorezinha plantada da estacao, sobre o panorama da cena (nivel 0 = nada). */
+function ArvoreNaCena({ stage, species, planted, mature }: { stage: number; species: PlantSpecies; planted: boolean; mature: boolean }) {
+  const nivel = nivelDoPlantio({ planted, mature, stage });
+  if (nivel <= 0) return null;
+  const e = ESTACAO_DA_ESPECIE[species];
+  return <img src={ARVORE_SRC[e][nivel]} alt="" draggable={false} data-plantio-planta data-nivel={nivel} className="sm2-grove-cena-arvore" />;
+}
+
+export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, onAnnounce, unico }: Omit<ClaSalaProps, 'guild' | 'mySprite'> & { unico?: PlantioUnico }) {
   const { view, setView, status, ocupado, erro, agir, recarregar } = useClaBuilding(() => getPlantio(saveId, tz));
 
   const fazer = async (acao: PlantioAction) => {
@@ -106,7 +128,10 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
   }, [view?.planted, view?.canPlant]);
 
   /** O servidor sorteia a acao (aguar ou defender); aguar acontece na hora, defender abre o combate. */
+  const [lilia, setLilia] = useState(false);
+  const gate = unico ? tendGate({ metaCumprida: unico.metaCumprida, goal: unico.goal, pendentes: unico.pendentes }) : null;
   const cuidar = async () => {
+    if (gate && !gate.liberado) { setLilia(true); return; }
     let tarefa = view?.task ?? null;
     if (!tarefa) {
       const r = await agir(() => actPlantio('claSortear', saveId, tz));
@@ -132,12 +157,27 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
       )}
       {v && (
         <>
-          <PlantioVisor stage={v.stage} species={v.species} planted={v.planted} mature={v.mature} reducedMotion={reducedMotion} label={t('guild.plantio.aria', { nome: especie })} />
+          {unico ? (
+            <div style={{ position: 'relative' }}>
+              {unico.cena(<ArvoreNaCena stage={v.stage} species={v.species} planted={v.planted} mature={v.mature} />)}
+              {/* Entrar: so o icone, sem caixa em volta (regra do app). */}
+              <button type="button" data-guild-bosque-entrar onClick={unico.onEntrar} aria-label={t('guild.bosque.entrar')} className="sm2-grove-cena-entrar">
+                <Icon name="arrow_forward" size={28} />
+              </button>
+            </div>
+          ) : (
+            <PlantioVisor stage={v.stage} species={v.species} planted={v.planted} mature={v.mature} reducedMotion={reducedMotion} label={t('guild.plantio.aria', { nome: especie })} />
+          )}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
             <h3 className="sm2-grove-stage" style={{ margin: 0 }} data-plantio-especie>{especie}</h3>
-            <InfoTip language={language} label={language === 'pt-BR' ? 'Como funciona o plantio' : 'How the garden works'} align="right" style={{ marginRight: -8 }}>{t('guild.plantio.regra')}</InfoTip>
+            {unico ? (
+              // D-106: o "i" mora na linha do título do modal (canto direito), não no corpo.
+              <ModalInfo language={language} label={language === 'pt-BR' ? 'Como o bosque cresce' : 'How the grove grows'}>{t('guild.plantio.regra')}</ModalInfo>
+            ) : (
+              <InfoTip language={language} label={language === 'pt-BR' ? 'Como funciona o plantio' : 'How the garden works'} align="right" style={{ marginRight: -8 }}>{t('guild.plantio.regra')}</InfoTip>
+            )}
           </div>
-          <p className="sm2-grove-line" style={{ margin: 0 }} data-plantio-estacao>{t(`guild.plantio.estacao.${v.season}` as GuildKey)}</p>
+          {!unico && <p className="sm2-grove-line" style={{ margin: 0 }} data-plantio-estacao>{t(`guild.plantio.estacao.${v.season}` as GuildKey)}</p>}
           {erro && <p role="alert" className="sm2-lib-alert" data-plantio-erro>{t('guild.cla.erro')}</p>}
 
           {!v.planted ? (
@@ -151,6 +191,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
             </>
           ) : (
             <>
+              {!unico && <>
               <p className="sm2-stats-t" style={{ margin: 0 }} data-plantio-estagio>{t(`guild.plantio.estagio.${Math.min(4, v.stage)}` as GuildKey)}</p>
               {/* o crescimento COLETIVO da planta: uma barra, sem razão nem texto de progresso */}
               <div aria-hidden="true" data-plantio-barra style={{ height: 6, borderRadius: 3, background: 'var(--sm2-line, rgba(255,255,255,0.15))', overflow: 'hidden' }}>
@@ -158,6 +199,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
               </div>
               {!v.mature && <p className="sm2-lib-s sm2-num" style={{ margin: 0 }} data-plantio-dias>{v.progressDays} / {v.totalDays}</p>}
               {v.delayed && !v.mature && <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-atrasada>{t('guild.plantio.atrasada')}</p>}
+              </>}
 
               {!v.mature && (
                 <>
@@ -167,9 +209,18 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
                   {defendendo && v.task === 'protect' ? (
                     <Defesa t={t} estado={estado} linha={linha} ocupado={ocupado} onVenceu={() => { setDefendendo(false); void fazer('claProteger'); }} />
                   ) : (v.canDraw || v.task) && (
+                    <>
+                    {gate && !gate.liberado && <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-tend-antes>{tendLinhaAntes(language, gate.restam)}</p>}
+                    {lilia && gate && !gate.liberado && (
+                      <div data-plantio-lilia style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+                        <img src={LOT_NPC_ART['hall:grove']} alt="" width={64} height={64} draggable={false} style={{ width: 64, height: 64, objectFit: 'contain' }} />
+                        <NpcSpeech name={language === 'pt-BR' ? 'Lilia' : 'Lilia'} line={tendFalaLilia(language, gate)} speakerKey="hall:grove:tend" />
+                      </div>
+                    )}
                     <button type="button" data-plantio-cuidar disabled={ocupado} aria-disabled={ocupado ? true : undefined} aria-busy={ocupado ? true : undefined} onClick={() => void cuidar()} className={btn}>
-                      <Icon name="eco" size={20} />{t('guild.plantio.cuidar')}
+                      <Icon name="eco" size={20} />{t(v.task === 'water' ? 'guild.plantio.regar' : v.task === 'protect' ? 'guild.plantio.proteger' : 'guild.plantio.cuidar')}
                     </button>
+                    </>
                   )}
                 </>
               )}
@@ -181,7 +232,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
                 <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-colhido>{t('guild.plantio.colhido')}</p>
               ))}
 
-              {v.level !== null && v.tier !== null && (
+              {!unico && v.level !== null && v.tier !== null && (
                 <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-arvore>
                   {t('guild.plantio.arvore')}{' · '}{t('guild.plantio.nivel')} <span className="sm2-num">{v.level}</span>{' · '}{t('guild.plantio.fruto')} <span className="sm2-num">{v.tier}</span>
                 </p>

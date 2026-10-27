@@ -393,7 +393,7 @@ describe('L4: estados que não podem voltar', () => {
     expect(sheet).toMatch(/className="sm2-guild-foot"/);
     const roda = sheet.slice(sheet.indexOf('function SalaRoda'), sheet.indexOf('function SalaMural') > 0 ? sheet.indexOf('/**\n * MURAL') : undefined);
     expect(roda).not.toMatch(/data-guild-recebidos/);
-    const bosque = sheet.slice(sheet.indexOf('function SalaBosque'), sheet.indexOf('function SalaRoda'));
+    const bosque = sheet.slice(sheet.indexOf('function GestosRecebidos'), sheet.indexOf('function SalaRoda'));
     expect(bosque).toMatch(/data-guild-recebidos/);
   });
 

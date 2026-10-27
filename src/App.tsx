@@ -108,7 +108,7 @@ const ACTIVITY_LOG_CAP = 90;
 const EMPTY_ARVORES: BosqueArvores = {};
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
-import { getNextEvolution, dailyGoalFor, heartGoalFor, degeneratedPerfectDays, degeneratedEvolutionPoints, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached, deveCelebrarDiaCompleto, settlePendingRollover } from './utils/dailyReset';
+import { getNextEvolution, activitiesForWeekDay, dailyGoalFor, heartGoalFor, degeneratedPerfectDays, degeneratedEvolutionPoints, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached, deveCelebrarDiaCompleto, settlePendingRollover } from './utils/dailyReset';
 import {
   feedFood, rubHeal, rubRefusal, completeTask,
   FOOD_LIMIT_PER_HOUR,
@@ -2306,6 +2306,13 @@ export default function App() {
      servidor confere `done ≥ heart`. Nunca `dailyTotal` cru (que é a meta inteira). */
   const heartGoalHoje = heartGoalFor(gameState, new Date().getDay(), new Date().toDateString());
   const fioGoal = { done: dailyDone, heart: heartGoalHoje, full: dailyTotal };
+  const pendentesDoDia = (() => {
+    const hoje = new Date();
+    const dk = hoje.toDateString();
+    const acts = activitiesForWeekDay(gameState as any, hoje.getDay(), dk).filter((a: any) => !a.completedToday).map((a: any) => String(a.name));
+    const tarefas = (gameState.tasks ?? []).filter((x: any) => (x?.status ?? 'open') === 'open' && !x.completed).map((x: any) => String(x.name));
+    return [...acts, ...tarefas];
+  })();
   const fioMetaCumprida = dailyTotal > 0 && dailyDone >= heartGoalHoje;
   const minhaCriaturaUrl = (!petIsCorvo
     ? (displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? Object.values(spriteAcervo.sprites)[0]?.url)
@@ -7625,7 +7632,7 @@ export default function App() {
                 onLabTab={setLabTab}
                 labContent={labContent}
                 hallContent={hallContent}
-                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
+                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, pendentesDoDia, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
               />
             </Suspense>
           )}

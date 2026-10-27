@@ -8330,6 +8330,8 @@ button.sm3-hunger[data-hunger-tier="starving"], span[data-hunger-tier="starving"
 .sm2-grove-cena-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 62% 88%; user-select: none; -webkit-user-drag: none; }
 .sm2-grove-cena-slots { position: absolute; left: 8px; bottom: 6px; display: flex; gap: 4px; margin: 0; padding: 0; list-style: none; z-index: 4; }
 .sm2-grove-cena-slots img { display: block; image-rendering: pixelated; }
+.sm2-grove-cena-arvore { position: absolute; left: 50%; bottom: 22%; height: 62%; width: auto; transform: translateX(-50%); z-index: 2; pointer-events: none; user-select: none; -webkit-user-drag: none; }
+.sm2-grove-cena-entrar { position: absolute; right: 4px; bottom: 4px; z-index: 5; min-width: 44px; min-height: 44px; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: 0; background: none; color: #fff; cursor: pointer; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.8)); }
 /* O PANORAMA DO BOSQUE (18/10/2026): tela cheia, ~3 telas de largura, rola para os lados. A arte nova é pixel art HD: quando a
    imagem é reduzida, `pixelated` mantém a quina nítida (só nestes assets; o teste confere que a resolução é >= a exibida). */
 .sm2-grove-folha { position: fixed; inset: 0; z-index: 250; background: #0b1a17; display: flex; flex-direction: column; }

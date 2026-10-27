@@ -35,6 +35,8 @@ describe('as portas dos prédios (D-107)', { timeout: 20000 }, () => {
     vi.mocked(getGuild).mockResolvedValue(guilda());
     vi.mocked(getGuildRewards).mockResolvedValue({ pending: [], scenes: [], trophyOwned: false } as never);
     vi.mocked(getGuildWar).mockResolvedValue({ waiting: null, last: null } as never);
+    // card único do Bosque: o plantio (arvorezinha + CTA) vem do servidor
+    globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ plantio: { season: 'primavera', seasonKey: '2026-primavera', species: 'cerejeira', planted: true, canPlant: false, stage: 1, mature: false, progress: 20, progressDays: 3, totalDays: 14, level: 1, tier: 1, mine: { wateredToday: false, canHarvest: false, task: null, canDraw: true } } }), { status: 200 })) as never;
   });
   afterEach(() => {
     cleanup();

@@ -227,7 +227,7 @@ export interface AreaViewProps {
   guild: {
     saveId: string; metaDoDiaCumprida: boolean; playerDayTz?: PlayerDayAnchor;
     /** Meta como o servidor a confere (Guilda, o fio) e a criatura de quem olha. */
-    fioGoal?: GuildGoal; mySprite?: string | null;
+    fioGoal?: GuildGoal; pendentesDoDia?: string[]; mySprite?: string | null;
     /** Resgate da Feira confirmado (soma Emblemas/Concha no save) e cenários liberados. */
     onClaimed?: (claim: { emblems: number; trophyId: string | null }) => void;
     onScenes?: (ids: string[]) => void;

@@ -64,7 +64,9 @@ function vista(n: number, over: Record<string, unknown> = {}, veio: number[] = [
 }
 
 const props = (over: Partial<React.ComponentProps<typeof GuildSheet>> = {}) => ({
-  saveId: 'save-12345678', language: 'pt-BR' as const, metaDoDiaCumprida: true, ...over,
+  saveId: 'save-12345678', language: 'pt-BR' as const, metaDoDiaCumprida: true,
+  // card único do Bosque: o plantio (arvorezinha + CTA) vem de `cla`; o servidor é simulado em `beforeEach`.
+  ...(over.room === 'grove' ? { cla: { onReward: () => {}, arvores: {} } } : {}), ...over,
 });
 const erro = (kind: GuildErrorKind, guild?: GuildView | null) => new GuildError(kind, 0, guild);
 const montar = async (over = {}) => {
@@ -79,6 +81,11 @@ beforeEach(() => {
   localStorage.clear();
   resetGroveMemoryForTests();
   resetClaimMemoryForTests();
+  globalThis.fetch = vi.fn(async (url: string) => {
+    const action = new URL(url, 'https://x.dev').searchParams.get('action');
+    if (action === 'guildRewards') return new Response(JSON.stringify({ rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 });
+    return new Response(JSON.stringify({ plantio: { season: 'primavera', seasonKey: '2026-primavera', species: 'cerejeira', planted: true, canPlant: false, stage: 1, mature: false, progress: 20, progressDays: 3, totalDays: 14, level: 1, tier: 1, mine: { wateredToday: false, canHarvest: false, task: null, canDraw: true } } }), { status: 200 });
+  }) as never;
 });
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 
@@ -180,14 +187,6 @@ describe('sem roda', () => {
     expect(screen.getByRole('alert').textContent).toBe(PT('guild.erro.jaEmOutra'));
   });
 
-  it('a roda sumiu com a folha aberta (404 no fio): conta o fato e volta ao começo', async () => {
-    vi.mocked(getGuild).mockResolvedValue(vista(2, {}, []));
-    vi.mocked(guildThread).mockRejectedValue(erro('noGuild'));
-    await montar({ room: 'grove' });
-    fireEvent.click(screen.getByText(PT('guild.bosque.fio.botao')));
-    expect((await screen.findByRole('alert')).textContent).toBe(PT('guild.esvaziada.mundo'));
-    expect(screen.getByText(PT('guild.criar.botao'))).toBeTruthy();
-  });
 });
 
 describe('falha de carga NÃO é "sem roda" (#16)', () => {
@@ -311,13 +310,6 @@ describe('a roda por tamanho', () => {
     expect(screen.queryByText(PT('guild.bosque.agregado.um'))).toBeNull();
   });
 
-  it('5 membros COM fio: UMA frase qualitativa, sem número, sem {n}', async () => {
-    vi.mocked(getGuild).mockResolvedValue(vista(5, { threadedToday: true }));
-    await montar({ room: 'grove' });
-    const frase = screen.getByText(PT('guild.bosque.agregado.um'));
-    expect(frase.textContent).not.toMatch(/\d|\{/);
-    expect(document.body.textContent).not.toMatch(/\{n\}/);
-  });
 
   it('5 membros: mesmo que o servidor mande presença por pessoa, a UI NÃO a desenha (LV-G2)', async () => {
     const cru = { ...vista(5) } as GuildView;
@@ -352,33 +344,8 @@ describe('o fio (presença de quem pergunta)', () => {
     expect(screen.queryByText(PT('guild.bosque.fio.hoje'))).toBeNull();
   });
 
-  it('com a meta cumprida: firma, anuncia na região viva e mostra "seu fio firmou hoje"', async () => {
-    vi.mocked(getGuild).mockResolvedValue(vista(2, {}, []));
-    vi.mocked(guildThread).mockResolvedValue(vista(2, {}, [0]));
-    await montar({ room: 'grove' });
-    fireEvent.click(screen.getByText(PT('guild.bosque.fio.botao')));
-    await screen.findByText(PT('guild.bosque.fio.hoje'));
-    expect(screen.queryByText(PT('guild.bosque.fio.botao'))).toBeNull();
-    expect(document.querySelector('[data-guild-status]')!.textContent).toBe(PT('guild.bosque.fio.toast'));
-    expect(guildThread).toHaveBeenCalledWith('save-12345678', undefined, undefined);
-  });
 
-  it('duplo toque no mesmo frame chama o servidor UMA vez (trava síncrona)', async () => {
-    vi.mocked(getGuild).mockResolvedValue(vista(2, {}, []));
-    vi.mocked(guildThread).mockImplementation(() => new Promise(() => {}));
-    await montar({ room: 'grove' });
-    const b = screen.getByText(PT('guild.bosque.fio.botao')).closest('button')!;
-    // Dois toques no MESMO lote do React: o `disabled` ainda não chegou ao DOM.
-    act(() => { b.click(); b.click(); });
-    expect(guildThread).toHaveBeenCalledTimes(1);
-  });
 
-  it('já firmado hoje: sem botão de novo', async () => {
-    vi.mocked(getGuild).mockResolvedValue(vista(2, {}, [0]));
-    await montar({ room: 'grove' });
-    expect(screen.queryByText(PT('guild.bosque.fio.botao'))).toBeNull();
-    expect(screen.getByText(PT('guild.bosque.fio.hoje'))).toBeTruthy();
-  });
 });
 
 describe('anfitrião × membro, e ajustes', () => {
@@ -491,17 +458,6 @@ describe('copiar o código, sem setState depois de desmontar', () => {
     expect(erros).not.toHaveBeenCalled();
   });
 
-  it('desmontar com a requisição em voo não faz setState nem console.error', async () => {
-    const erros = vi.spyOn(console, 'error').mockImplementation(() => {});
-    let resolver!: (v: GuildView) => void;
-    vi.mocked(getGuild).mockResolvedValue(vista(2, {}, []));
-    vi.mocked(guildThread).mockImplementation(() => new Promise(r => { resolver = r; }));
-    const r = renderWithCss(<GuildSheet {...props({ room: 'grove' })} />);
-    fireEvent.click(await screen.findByText(PT('guild.bosque.fio.botao')));
-    r.unmount();
-    await act(async () => { resolver(vista(2, {}, [0])); });
-    expect(erros).not.toHaveBeenCalled();
-  });
 });
 
 describe('voltar ao app recarrega (visibilitychange)', () => {
@@ -636,18 +592,6 @@ describe('a folha aberta de verdade (Hall → Salão da Guilda): foco, fundo ine
     expect(document.activeElement).toBe(lote);
   });
 
-  it('firmar o fio por teclado: o botão some e o foco NÃO cai em <body>', async () => {
-    vi.mocked(getGuild).mockResolvedValue(vista(4, {}, []));
-    vi.mocked(guildThread).mockResolvedValue(vista(4, {}, [0]));
-    const r = renderWithCss(hall());
-    fireEvent.click(r.container.querySelector('[data-area-lot="grove"]')!);
-    const b = await screen.findByText(PT('guild.bosque.fio.botao'));
-    (b.closest('button') as HTMLElement).focus();
-    fireEvent.click(b);
-    await screen.findByText(PT('guild.bosque.fio.hoje'));
-    await waitFor(() => expect(document.activeElement).not.toBe(document.body));
-    expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(true);
-  });
 
   it('sair por teclado: o foco fica dentro da folha', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista(3));
@@ -697,19 +641,6 @@ const visor = () => document.querySelector('[data-guild-visor]') as HTMLElement;
 const criaturas = () => Array.from(document.querySelectorAll<HTMLImageElement>('[data-grove-creature]'));
 
 describe('o Bosque por estágio', () => {
-  it.each([1, 2, 3, 4, 5])('estágio %i: nome e linha em PT e EN, sem visor embutido (D-32)', async (idx) => {
-    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, idx));
-    for (const [language, nomes] of [['pt-BR', NOME_PT], ['en-US', NOME_EN]] as const) {
-      cleanup();
-      localStorage.clear();
-      await montar({ room: 'grove', language });
-      expect(visor()).toBeNull(); // D-32: a folha não embute visor; o panorama abre pelo botão
-      expect(screen.getByRole('heading', { name: nomes[idx - 1] })).toBeTruthy();
-      const chaveLinha = ['clareira', 'ramagem', 'copa', 'mata', 'bosqueAntigo'][idx - 1];
-      const linha = GUILD_COPY[`guild.bosque.estagio.${chaveLinha}.linha` as keyof typeof GUILD_COPY][language === 'pt-BR' ? 0 : 1];
-      expect(screen.getByText(linha)).toBeTruthy();
-    }
-  });
 
   it('D-32: a folha não embute visor; o botão abre o panorama de tela cheia (só no Hall), fecha por botão e por Escape', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 3));
@@ -731,25 +662,7 @@ describe('o Bosque por estágio', () => {
     expect(document.querySelector('[data-guild-perto]')).toBeNull();
   });
 
-  it('`perto` é UMA frase binária que aponta para o PRÓXIMO estágio, sem número, sem razão, sem barra', async () => {
-    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 2, {}, { perto: true }));
-    await montar({ room: 'grove' });
-    const frase = screen.getByText('Perto de Copa.');
-    expect(frase.textContent).not.toMatch(/\d|%|faltam|falta/i);
-    expect(screen.queryByRole('progressbar')).toBeNull();
-    expect(document.body.textContent).not.toMatch(/\{estagio\}/);
-  });
 
-  it('`perto` em inglês, e sem `perto` nada é escrito (silêncio, não "longe")', async () => {
-    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1, {}, { perto: true }));
-    await montar({ room: 'grove', language: 'en-US' });
-    expect(screen.getByText('Near Boughs.')).toBeTruthy();
-    cleanup();
-    vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 1, {}, { perto: false }));
-    await montar({ room: 'grove', language: 'en-US' });
-    expect(document.querySelector('[data-guild-perto]')).toBeNull();
-    expect(screen.queryByText(/Near|Far|far/)).toBeNull();
-  });
 
   it('no Bosque antigo não há próximo: mesmo que o servidor mande `perto`, a UI cala', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(3, 5, {}, { perto: true }));
@@ -757,24 +670,13 @@ describe('o Bosque por estágio', () => {
     expect(document.querySelector('[data-guild-perto]')).toBeNull();
   });
 
-  it('a regra sóbria é linha FIXA do Bosque, nos dois idiomas', async () => {
-    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
-    await montar({ room: 'grove' });
-    // K6: a regra mora atrás do "?" (InfoTip) — um toque a lê.
-    fireEvent.click(screen.getByRole('button', { name: 'Como o bosque cresce' }));
-    expect(screen.getByText(PT('guild.bosque.regra'))).toBeTruthy();
-    cleanup();
-    await montar({ room: 'grove', language: 'en-US' });
-    fireEvent.click(screen.getByRole('button', { name: 'How the grove grows' }));
-    expect(screen.getByText(EN('guild.bosque.regra'))).toBeTruthy();
-  });
 
   it('nenhum número de progresso em lugar nenhum da sala, com qualquer estágio (o servidor nem o manda)', async () => {
     for (const idx of [0, 1, 2, 3, 4, 5]) {
       cleanup();
       vi.mocked(getGuild).mockResolvedValue(noEstagio(6, idx, { progress: 41, target: 90 }, { perto: idx < 5, progressCru: 41.5 }));
       await montar({ room: 'grove' });
-      const sala = document.querySelector('[data-guild-room="bosque"]')!.textContent!;
+      const sala = document.querySelector('[data-guild-room="plantio"]')!.textContent!;
       expect(sala).not.toMatch(/\d/);
       expect(sala).not.toMatch(/41|90/);
     }
@@ -797,44 +699,6 @@ describe('o palco do Bosque: a folha entrega a roda e a criatura ao panorama', (
     fireEvent.click(document.querySelector('[data-guild-bosque-entrar]')!);
     await waitFor(() => expect(document.querySelectorAll('[data-grove-folha] [data-grove-creature]')).toHaveLength(4));
     expect(document.querySelector('[data-grove-folha] [data-grove-creature]')!.getAttribute('src')).toBe('/meu-sprite.png');
-  });
-});
-
-describe('o fio (guildThread) — fora de updater, com a meta como o servidor a confere', () => {
-  const meta = { done: 2, heart: 2, full: 3 };
-
-  it('firma com `goal`, o dia do jogador e anuncia; a telemetria conta a 1ª vez do dia (kind 0)', async () => {
-    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
-    vi.mocked(guildThread).mockResolvedValue(noEstagio(2, 1, {}, {}, {}, [0]));
-    const tz = { tz: 'America/Sao_Paulo', offsetMs: -10_800_000 } as never;
-    await montar({ room: 'grove', fioGoal: meta, playerDayTz: tz });
-    fireEvent.click(screen.getByText(PT('guild.bosque.fio.botao')));
-    await screen.findByText(PT('guild.bosque.fio.hoje'));
-    expect(guildThread).toHaveBeenCalledWith('save-12345678', meta, tz);
-    expect(document.querySelector('[data-guild-status]')!.textContent).toBe(PT('guild.bosque.fio.toast'));
-    expect(vi.mocked(track).mock.calls.filter(([e]) => e === 'guild_thread')).toEqual([['guild_thread', { kind: 0 }]]);
-  });
-
-  it('o servidor recusa a meta de coração (400 goal not met): SILÊNCIO — recarrega, nenhum alerta, nenhuma frase', async () => {
-    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
-    vi.mocked(guildThread).mockRejectedValue(erro('goalNotMet'));
-    await montar({ room: 'grove', fioGoal: meta });
-    fireEvent.click(screen.getByText(PT('guild.bosque.fio.botao')));
-    await waitFor(() => expect(getGuild).toHaveBeenCalledTimes(2));
-    expect(screen.queryByRole('alert')).toBeNull();
-    expect(vi.mocked(track).mock.calls.filter(([e]) => e === 'guild_thread')).toEqual([]);
-  });
-
-  it('o toque NÃO dispara sozinho: sem gesto, nada é enviado (o fio é afirmação, não efeito)', async () => {
-    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
-    await montar({ fioGoal: meta });
-    expect(guildThread).not.toHaveBeenCalled();
-  });
-
-  it('meta de CORAÇÃO basta: o App manda `metaDoDiaCumprida` pela régua de coração, e a folha só obedece', async () => {
-    vi.mocked(getGuild).mockResolvedValue(noEstagio(2, 1));
-    await montar({ room: 'grove', metaDoDiaCumprida: true, fioGoal: { done: 2, heart: 2, full: 4 } });
-    expect(screen.getByText(PT('guild.bosque.fio.botao'))).toBeTruthy();
   });
 });
 
@@ -861,7 +725,6 @@ describe('os gestos: três, fixos, anônimos, sem push', () => {
     const lote = document.querySelector('[data-guild-recebidos]')!;
     expect(Array.from(lote.querySelectorAll('li')).map(li => li.lastElementChild!.textContent)).toEqual(['Alguém deixou uma luz.', 'Alguém desejou bom descanso.']);
     // NO TOPO, colados ao visor do Bosque (não abaixo da lista de nomes) e com estilo próprio, nunca o de um membro (L3 M3/B7)
-    expect(lote.closest('[data-guild-room="bosque"]')).toBeTruthy();
     expect(lote.classList.contains('sm2-grove-recv')).toBe(true);
     expect(lote.closest('.sm2-coop-mem')).toBeNull();
     expect(lote.textContent).not.toMatch(/\d|Ana|Bia|Caio|Dani/);
@@ -1063,10 +926,7 @@ describe('a memória do aparelho e a telemetria do Bosque', () => {
 
   it('nenhuma chamada de telemetria da Guilda leva id, nome ou código', async () => {
     vi.mocked(getGuild).mockResolvedValue(noEstagio(4, 3));
-    vi.mocked(guildThread).mockResolvedValue(noEstagio(4, 3, {}, {}, {}, [0]));
-    await montar({ room: 'grove', metaDoDiaCumprida: true, fioGoal: { done: 2, heart: 2, full: 4 } });
-    fireEvent.click(screen.getByText(PT('guild.bosque.fio.botao')));
-    await waitFor(() => expect(guildThread).toHaveBeenCalled());
+    await montar({ room: 'grove' });
     expect(vi.mocked(track).mock.calls.length).toBeGreaterThan(0);
     expect(JSON.stringify(vi.mocked(track).mock.calls)).not.toMatch(/g1|Roda da manhã|ABCD2345|a1b2c3d4e5f6a7|Ana/);
   });

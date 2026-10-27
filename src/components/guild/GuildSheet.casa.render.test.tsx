@@ -155,10 +155,21 @@ describe('a Guerra no lote da Arena', () => {
   });
 });
 
+/** Card único do Bosque: o plantio vem do servidor (`claPlantio`); o resto segue o mock da vista. */
+const PLANTIO_SIM = { season: 'primavera', seasonKey: '2026-primavera', species: 'cerejeira', planted: true, canPlant: false, stage: 1, mature: false, progress: 20, progressDays: 3, totalDays: 14, level: 1, tier: 1, mine: { wateredToday: false, canHarvest: false, task: null, canDraw: true } };
+function comPlantio() {
+  const antes = globalThis.fetch;
+  globalThis.fetch = vi.fn(async (url: string, init?: any) => {
+    if (new URL(url, 'https://x.dev').searchParams.get('action') === 'claPlantio') return new Response(JSON.stringify({ plantio: PLANTIO_SIM }), { status: 200 });
+    return (antes as typeof fetch)(url, init);
+  }) as never;
+}
+
 describe('D-55/D-56/D-57: sem visor vetorial; um card por assunto; o Clan Hall é o administrativo', () => {
   it('o desenho vetorial (retângulos de cobre/turquesa e o cristal em losango) sumiu da tela da Guilda', async () => {
     mockServer(casaVista());
-    const { container } = render(<GuildSheet {...base} room="grove" />);
+    comPlantio();
+    const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward: vi.fn() }} />);
     await waitFor(() => expect(container.querySelector('[data-grove-cena]')).not.toBeNull());
     expect(container.querySelector('[data-casa-visor], [data-casa-arvore], [data-casa-tronco], [data-casa-nucleo], [data-casa-cristal], [data-casa-folha], [data-casa-ramo]')).toBeNull();
     expect(container.querySelector('[data-grove-cena] svg')).toBeNull();
@@ -166,7 +177,8 @@ describe('D-55/D-56/D-57: sem visor vetorial; um card por assunto; o Clan Hall �
 
   it('o Bosque (prédio Grove) tem os membros andando devagar (os dois da roda), sem nome na tela até tocar', async () => {
     mockServer(casaVista());
-    const { container } = render(<GuildSheet {...base} room="grove" />);
+    comPlantio();
+    const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward: vi.fn() }} />);
     await waitFor(() => expect(container.querySelectorAll('[data-grove-cena] [data-grove-creature]')).toHaveLength(2));
     expect(container.querySelector('[data-grove-nome]')).toBeNull();
   });

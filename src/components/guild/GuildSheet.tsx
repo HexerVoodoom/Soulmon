@@ -38,14 +38,14 @@
  */
 import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
-  getGuild, createGuild, joinGuild, guildThread, guildGesture, leaveGuild, renameGuild, newGuildCode,
+  getGuild, createGuild, joinGuild, guildGesture, leaveGuild, renameGuild, newGuildCode,
   hitGuildRaid, getGuildRewards, claimGuildReward, donateToGuild, setGuildSlot, buyGuildShopItem, getGuildWar, seekGuildWar,
   type GuildWar,
   GuildError, type GuildErrorKind, type GuildView, type GuildGoal, type GuildRaid, type GuildRewards, type GuildClaim,
 } from '../../utils/community';
 import { playerDayKey, type PlayerDayAnchor } from '../../utils/playerDay';
 import {
-  guildText, guildInviteRoom, GUILD_ERROR_KEY, groveStageName, groveStageLine,
+  guildText, guildInviteRoom, GUILD_ERROR_KEY, groveStageName,
   guildGestureReceived, tideSizeName, type GuildKey,
 } from '../../utils/guildCopy';
 import {
@@ -68,7 +68,7 @@ import { getSpriteForStage } from '../../utils/sprites';
 // `src/styles/tokens.md`: a fonte é SUBSETADA, e um nome fora dele renderiza um
 // <span> VAZIO — sem erro e sem aparecer em teste nenhum.
 import { Icon } from '../ui/Icon';
-import { InfoTip, ModalInfo } from '../ui/InfoTip';
+import { InfoTip } from '../ui/InfoTip';
 import { Field } from '../form/FormKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 /** O panorama (D-32): só nasce aqui, pela porta do Hall, e sob demanda — panorama e árvores fora do chunk de entrada. */
@@ -94,6 +94,8 @@ interface GuildSheetProps {
   metaDoDiaCumprida: boolean;
   /** A meta como o servidor a confere (`done` × `heart`, em PESO de esforço). Sem ela, o servidor não confere. */
   fioGoal?: GuildGoal;
+  /** Nomes das tarefas de hoje ainda abertas (Lilia os cita ao bloquear aguar/defender). */
+  pendentesDoDia?: string[];
   /** A criatura de quem olha, no estágio dela (o App sabe; a folha não deriva estágio nenhum). */
   mySprite?: string | null;
   /** Âncora do DIA DO JOGADOR (`gameState.playerDayTz`); sem ela vale o do aparelho. */
@@ -143,7 +145,7 @@ type PredioId = 'praca' | 'plantio' | 'misterio';
 
 const kindOf = (e: unknown): GuildErrorKind => (e instanceof GuildError ? e.kind : 'server');
 
-export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin, casa, missao, cla }: GuildSheetProps) {
+export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pendentesDoDia, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin, casa, missao, cla }: GuildSheetProps) {
   const t = useCallback((k: GuildKey, vars?: Record<string, string | number>) => guildText(language, k, vars), [language]);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [aviso, setAviso] = useState<GuildKey | null>(null);
@@ -166,6 +168,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
   const [war, setWar] = useState<GuildWar | null>(null);
   /** O prédio do clã aberto (Praça, Plantio, Mistério): um por vez, e só o aberto fala com o servidor. */
   const [predio, setPredio] = useState<PredioId | null>(null);
+  const [panorama, setPanorama] = useState(false);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const vivo = useRef(false);
@@ -574,26 +577,6 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
         onBuscar={buscarGuerra}
       />
     );
-    // D-50: o bosque é a mesma sala no Salão do Clã (junto do resto) e no prédio Grove (sozinha).
-    const salaBosque = (
-        <SalaBosque
-          guild={g}
-          t={t}
-          language={language}
-          metaDoDiaCumprida={metaDoDiaCumprida}
-          ocupado={ocupado}
-          mySprite={mySprite || getSpriteForStage('rookie')}
-          reducedMotion={reducedMotion}
-          saveId={saveId}
-          tz={tz.current}
-          arvores={cla?.arvores ?? {}}
-          onPlantio={cla?.onPlantio}
-          onFio={() => void agir(() => guildThread(saveId, fioGoal, tz.current), {
-            anunciar: 'guild.bosque.fio.toast',
-            depois: () => track('guild_thread', { kind: 0 }),
-          })}
-        />
-    );
     const renderPredio = (id: PredioId) => {
       const comum = {
         saveId, language, t, guild: g, tz: tz.current, reducedMotion, mySprite: mySprite || getSpriteForStage('rookie'),
@@ -612,12 +595,24 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
       <>
         {alerta}
         {resgate}
-        <div className="sm2-stats-card">{salaBosque}</div>
+        <GestosRecebidos guild={g} t={t} language={language} />
         {/* W14b: o gesto (fio/gestos) e o PLANTIO do Bosque moram só aqui; o Clan Hall é informativo. O MISTÉRIO é da Feira (dono, 20/10: "o mistério é da feira"). */}
         {/* L5-D2: sem Aceno/Luz/Descanso e sem 'Entrar'/'Fechar' do predio: o jardim abre direto. */}
         {cla && (
           <div className="sm2-stats-card" data-guild-card="plantio">
-            {renderPredio('plantio')}
+            <SalaPlantio
+              saveId={saveId} language={language} t={t} tz={tz.current} reducedMotion={reducedMotion}
+              onReward={cla.onReward} onAnnounce={setAnuncio}
+              unico={{
+                onEntrar: () => setPanorama(true), metaCumprida: metaDoDiaCumprida, goal: fioGoal, pendentes: pendentesDoDia,
+                cena: arvore => <GroveCena language={language} guild={g} mySprite={mySprite || getSpriteForStage('rookie')} reducedMotion={reducedMotion}>{arvore}</GroveCena>,
+              }}
+            />
+            {panorama && (
+              <Suspense fallback={null}>
+                <GroveFolha saveId={saveId} language={language} guild={g} mySprite={mySprite || getSpriteForStage('rookie')} tz={tz.current} reducedMotion={reducedMotion} arvores={cla.arvores ?? {}} onPlantio={cla.onPlantio} onClose={() => setPanorama(false)} />
+              </Suspense>
+            )}
           </div>
         )}
       </>
@@ -841,49 +836,10 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
 
 type T = (k: GuildKey, vars?: Record<string, string | number>) => string;
 
-/**
- * BOSQUE (topo): o visor (cenário do estágio + criaturas na linha do chão), o
- * nome do estágio e a linha dele, a faixa `perto` — UMA frase BINÁRIA, nunca
- * razão, contagem nem tempo estimado —, a regra sóbria e o fio.
- *
- * O fio ainda não firmado é SILÊNCIO (`guild.bosque.fio.ainda`): sem a meta
- * própria cumprida nem botão nem frase de explicação. O agregado (5+) só existe
- * com fio hoje e nunca leva número.
- */
-function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, reducedMotion, onFio, saveId, tz, arvores, onPlantio }: {
-  guild: GuildView; t: T; language: Language; metaDoDiaCumprida: boolean; ocupado: boolean;
-  mySprite: string; reducedMotion: boolean; onFio: () => void;
-  saveId: string; tz: PlayerDayAnchor | undefined; arvores: BosqueArvores; onPlantio?: OnPlantio;
-}) {
-  const [panorama, setPanorama] = useState(false);
-  const { stage, stageIndex, perto } = guild.bosque;
-  const fioHoje = guild.mine.threadToday;
-  const podeFirmar = !fioHoje && metaDoDiaCumprida;
-  // 5+: UMA frase qualitativa, só com fio; nunca número, nunca `{n}`.
-  const agregado = guild.threadedToday === true;
-  const nomeDoEstagio = stage ? groveStageName(language, stage) : null;
-  // "Perto de …" aponta para o PRÓXIMO estágio (o índice é a ordem; sem próximo, sem faixa).
-  const proximo = perto && stageIndex < GROVE_STAGES.length ? groveStageName(language, GROVE_STAGES[stageIndex]) : null;
+/** O que CHEGOU (gestos), em lote, sem quem e sem quantos; nada quando nao veio nenhum. */
+function GestosRecebidos({ guild, t, language }: { guild: GuildView; t: T; language: Language }) {
   return (
-    <section className="sm2-guild-sec" aria-label={t('guild.bosque.titulo')} data-guild-room="bosque">
-      {/* D-49/D-55/D-56: o Bosque é UM cenário; aqui a janela dele (membros andando), no lugar do antigo visor vetorial da Casa. */}
-      <div style={{ position: 'relative' }}>
-        <GroveCena language={language} guild={guild} mySprite={mySprite} reducedMotion={reducedMotion} />
-        {/* L5-D2: entrar e secundario e discreto, DENTRO do box do preview. */}
-        <button type="button" data-guild-bosque-entrar onClick={() => setPanorama(true)} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" style={{ position: 'absolute', right: 8, bottom: 8, opacity: 0.85 }}>
-          <Icon name="eco" size={20} />
-          {t('guild.bosque.entrar')}
-        </button>
-      </div>
-      {/* D-32: o panorama do Bosque abre AQUI (Hall > Guilda), em tela cheia; não há visor embutido na folha. */}
-      {panorama && (
-        <Suspense fallback={null}>
-          <GroveFolha saveId={saveId} language={language} guild={guild} mySprite={mySprite} tz={tz} reducedMotion={reducedMotion} arvores={arvores} onPlantio={onPlantio} onClose={() => setPanorama(false)} />
-        </Suspense>
-      )}
-      {/* O que CHEGOU vem colado ao visor, no topo da folha (QA L3 M3/B7): antes ficava a 550 px, abaixo
-          da dobra, e com o mesmo estilo de uma linha de membro — lia-se como gente. Só o tipo, em lote,
-          sem quem e sem quantos; sem nada quando não veio nenhum. */}
+    <>
       {guild.gestures.length > 0 ? (
         <ul className="sm2-grove-recv" data-guild-recebidos>
           {guild.gestures.map(k => (
@@ -897,33 +853,7 @@ function SalaBosque({ guild, t, language, metaDoDiaCumprida, ocupado, mySprite, 
         // Roda de 2: o servidor não manda o TIPO (B5) — só o fato de que chegou algo.
         <p className="sm2-grove-recv" data-guild-recebidos>{t('guild.gesto.recebido.agregado')}</p>
       )}
-      {stage && (
-        <>
-          <h3 className="sm2-grove-stage" data-guild-stage>{nomeDoEstagio}</h3>
-          <p className="sm2-grove-line">{groveStageLine(language, stage)}</p>
-        </>
-      )}
-      {proximo && <p className="sm2-grove-line" data-guild-perto>{t('guild.bosque.perto', { estagio: proximo })}</p>}
-      {/* K6 (04/10/2026): a regra do bosque mora atrás do "?". */}
-      {/* D-106: o "i" do Grove mora na linha do título do modal (canto direito), não no corpo. */}
-      <ModalInfo language={language} label={language === 'pt-BR' ? 'Como o bosque cresce' : 'How the grove grows'}>{t('guild.bosque.regra')}</ModalInfo>
-      {fioHoje && <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.bosque.fio.hoje')}</p>}
-      {podeFirmar && (
-        <button
-          type="button"
-          disabled={ocupado}
-          aria-disabled={ocupado ? true : undefined}
-          aria-busy={ocupado ? true : undefined}
-          aria-label={t('guild.aria.fio')}
-          onClick={onFio}
-          className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn"
-        >
-          <Icon name={ocupado ? 'sync' : 'check_circle'} size={20} className={ocupado ? 'animate-spin' : undefined} />
-          {t('guild.bosque.fio.botao')}
-        </button>
-      )}
-      {agregado && <p className="sm2-lib-s" style={{ margin: 0 }} data-guild-agregado>{t('guild.bosque.agregado.um')}</p>}
-    </section>
+    </>
   );
 }
 

@@ -39,7 +39,7 @@ function mockServer(r: typeof respostas) {
 beforeEach(() => { try { localStorage.clear(); } catch { /* */ } });
 afterEach(cleanup);
 
-const base = { saveId: 'x'.repeat(32), language: 'pt-BR' as const, metaDoDiaCumprida: false };
+const base = { saveId: 'x'.repeat(32), language: 'pt-BR' as const, metaDoDiaCumprida: true };
 const casa = { bits: 0, ownedFurniture: ['furn-lamp', 'furn-rug'], equippedDecor: { rug: 'furn-rug' }, donatedItem: null, onSpend: vi.fn(), onSlot: vi.fn() };
 
 async function abrir(container: HTMLElement, predio: string) {
@@ -99,7 +99,8 @@ describe('Plantio / Jardim (L5-D2)', () => {
     expect(container.querySelector('[data-predio-fechar]')).toBeNull();
     expect(calls.some(c => c.action === 'claPlantio')).toBe(true);
     expect(container.querySelector('[data-plantio-especie]')!.textContent).toBe('Cerejeira e acácia');
-    expect(container.querySelector('[data-plantio-estacao]')!.textContent).toBe('Primavera');
+    expect(container.querySelector('[data-plantio-estacao]')).toBeNull(); // card único: sem texto da estação/semente
+    expect(container.querySelector('[data-guild-bosque-entrar]')!.getAttribute('aria-label')).toBe('Entrar no bosque');
   });
 
   it('terra vazia: planta sozinha (claPlantar), sem o jogador abrir nada', async () => {
@@ -110,16 +111,15 @@ describe('Plantio / Jardim (L5-D2)', () => {
     });
     const { container } = render(<GuildSheet {...base} room="grove" cla={{ onReward: vi.fn() }} />);
     await waitFor(() => expect(calls.some(c => c.action === 'claPlantar')).toBe(true));
-    await waitFor(() => expect(container.querySelector('[data-plantio-estagio]')).not.toBeNull());
+    await waitFor(() => expect(container.querySelector('[data-plantio-planta]')).not.toBeNull());
     expect(calls.filter(c => c.action === 'claPlantar')).toHaveLength(1);
-    expect(container.querySelector('[data-plantio-arvore]')!.textContent).toMatch(/Nível/);
   });
 
   it('a semente mostra "x / y" dias e o botão da ação do dia é "Tend the garden" (nada de Regar/Proteger)', async () => {
     mockServer({ claPlantio: () => ({ json: { plantio: crescendo() } }) });
     const { container } = render(<GuildSheet {...base} {...ingles} room="grove" cla={{ onReward: vi.fn() }} />);
-    await waitFor(() => expect(container.querySelector('[data-plantio-dias]')).not.toBeNull());
-    expect(container.querySelector('[data-plantio-dias]')!.textContent).toBe('3 / 14');
+    await waitFor(() => expect(container.querySelector('[data-plantio-cuidar]')).not.toBeNull());
+    expect(container.querySelector('[data-plantio-dias]')).toBeNull(); // card único: sem texto de semente/dias
     expect(container.querySelector('[data-plantio-cuidar]')!.textContent).toMatch(/Tend the garden/);
     expect(container.querySelector('[data-plantio-regar]')).toBeNull();
     expect(container.querySelector('[data-plantio-proteger]')).toBeNull();
@@ -252,5 +252,51 @@ describe('o Salão sem a ponte `cla` segue como antes', () => {
     const { container } = render(<GuildSheet {...base} />);
     await waitFor(() => expect(container.querySelector('[data-cla-info]')).not.toBeNull());
     expect(container.querySelector('[data-predio]')).toBeNull();
+  });
+});
+
+describe('Cuidar do Bosque: a meta do dia libera aguar/defender (Lilia explica)', () => {
+  const cresc = () => plantio({ species: 'cerejeira', planted: true, canPlant: false, stage: 1, progress: 21, progressDays: 3, totalDays: 14, level: 1, tier: 1, mine: { wateredToday: false, canHarvest: false, task: null, canDraw: true } });
+  async function abrirBloqueado(extra: Record<string, unknown>, language: 'en-US' | 'pt-BR' = 'en-US') {
+    mockServer({ claPlantio: () => ({ json: { plantio: cresc() } }) });
+    const r = render(<GuildSheet {...base} language={language} metaDoDiaCumprida={false} room="grove" cla={{ onReward: vi.fn() }} {...extra} />);
+    await waitFor(() => expect(r.container.querySelector('[data-plantio-cuidar]')).not.toBeNull());
+    return r;
+  }
+  it('1 faltando: a linha antes do toque e Lilia cita a tarefa; nada vai ao servidor', async () => {
+    const { container } = await abrirBloqueado({ fioGoal: { done: 2, heart: 3, full: 5 }, pendentesDoDia: ['Read'] });
+    expect(container.querySelector('[data-plantio-tend-antes]')!.textContent).toBe("Finish today's tasks to tend the Grove (1 left)");
+    fireEvent.click(container.querySelector('[data-plantio-cuidar]')!);
+    await waitFor(() => expect(container.querySelector('[data-plantio-lilia]')).not.toBeNull());
+    await waitFor(() => expect(container.querySelector('[data-plantio-lilia]')!.textContent).toMatch(/You still need to finish Read to tend the Grove/));
+    expect(calls.some(c => c.action === 'claSortear')).toBe(false);
+  });
+  it('2 faltando: cita as duas tarefas (EN e PT)', async () => {
+    const { container } = await abrirBloqueado({ fioGoal: { done: 1, heart: 3, full: 5 }, pendentesDoDia: ['Read', 'Run', 'Nap'] });
+    fireEvent.click(container.querySelector('[data-plantio-cuidar]')!);
+    await waitFor(() => expect(container.querySelector('[data-plantio-lilia]')!.textContent).toMatch(/You still need to finish Read and Run to tend the Grove/), { timeout: 4000 });
+    cleanup();
+    const pt = await abrirBloqueado({ fioGoal: { done: 1, heart: 3, full: 5 }, pendentesDoDia: ['Ler', 'Correr'] }, 'pt-BR');
+    expect(pt.container.querySelector('[data-plantio-tend-antes]')!.textContent).toBe('Termine as tarefas de hoje para cuidar do Bosque (faltam 2)');
+    fireEvent.click(pt.container.querySelector('[data-plantio-cuidar]')!);
+    await waitFor(() => expect(pt.container.querySelector('[data-plantio-lilia]')!.textContent).toMatch(/Você ainda precisa terminar Ler e Correr para cuidar do Bosque/), { timeout: 4000 });
+  });
+  it('5 faltando: só a contagem, EN e PT', async () => {
+    const { container } = await abrirBloqueado({ fioGoal: { done: 0, heart: 5, full: 8 }, pendentesDoDia: ['a', 'b', 'c', 'd', 'e'] });
+    fireEvent.click(container.querySelector('[data-plantio-cuidar]')!);
+    await waitFor(() => expect(container.querySelector('[data-plantio-lilia]')!.textContent).toMatch(/You still need to finish 5 tasks to tend the Grove/), { timeout: 4000 });
+    cleanup();
+    const pt = await abrirBloqueado({ fioGoal: { done: 0, heart: 5, full: 8 }, pendentesDoDia: ['a', 'b', 'c', 'd', 'e'] }, 'pt-BR');
+    fireEvent.click(pt.container.querySelector('[data-plantio-cuidar]')!);
+    await waitFor(() => expect(pt.container.querySelector('[data-plantio-lilia]')!.textContent).toMatch(/Faltam 5 tarefas para você poder cuidar do Bosque/), { timeout: 4000 });
+  });
+  it('0 faltando (meta cumprida): sem linha, sem Lilia, o CTA sorteia (claSortear)', async () => {
+    mockServer({ claPlantio: () => ({ json: { plantio: cresc() } }), claSortear: () => ({ json: { plantio: cresc(), task: null } }) });
+    const { container } = render(<GuildSheet {...base} language="en-US" room="grove" cla={{ onReward: vi.fn() }} />);
+    await waitFor(() => expect(container.querySelector('[data-plantio-cuidar]')).not.toBeNull());
+    expect(container.querySelector('[data-plantio-tend-antes]')).toBeNull();
+    fireEvent.click(container.querySelector('[data-plantio-cuidar]')!);
+    await waitFor(() => expect(calls.some(c => c.action === 'claSortear')).toBe(true));
+    expect(container.querySelector('[data-plantio-lilia]')).toBeNull();
   });
 });
