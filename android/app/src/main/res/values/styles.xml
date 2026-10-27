@@ -13,6 +13,11 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+        <!-- Barra de status = continuação do app (tema escuro --sm-bg #0e2323), sem a faixa branca do tema Light.
+             O tema claro troca só o estilo dos ícones em runtime (SystemBars, src/utils/statusBar.ts). -->
+        <item name="android:statusBarColor">#0E2323</item>
+        <item name="android:navigationBarColor">#0E2323</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 
 

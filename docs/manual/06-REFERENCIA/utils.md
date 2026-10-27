@@ -1268,6 +1268,13 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/utils/androidBack.test.ts`.
 
+### `src/utils/statusBar.ts`
+**Dono de:** a faixa do sistema (barra de status / chrome do PWA) acompanhar o tema do app (27/10/2026): `meta theme-color` ÚNICA sem `media` com o `--sm-bg` do tema e, no APK, `SystemBars.setStyle` (core do Capacitor 8) com ícones claros no escuro e escuros no claro, com feature detect (`isPluginAvailable`). Falha é silenciosa (cosmético).
+**Exports:** `STATUS_BAR_BG` (`light` `#f3f9f8`, `dark` `#0e2323`), `applyStatusBarTheme(theme)`.
+**Chamado por:** `src/contexts/ThemeContext.tsx` (efeito de `resolvedTheme`).
+**Régua:** `src/utils/statusBar.test.ts` (cores = `--sm-bg` do `index.css`).
+
+
 ### `src/utils/backStack.ts`
 **Dono de:** a pilha de "voltar" das CAMADAS abertas por cima de uma tela (folha de lote `AreaSheet`, minijogo em tela cheia, duelo) — nasceu em 29/09/2026. O grafo de `viewBack` (`src/navigation.ts`) só conhece views; antes, o voltar do Android pulava a folha e ia direto ao Mapa. Cada camada se registra; o voltar (botão físico e `popstate`) fecha primeiro a MAIS RECENTE, e só sem camada aberta o grafo de telas decide. Estado em módulo (array interno), sem save.
 **Exports:** `pushBackLayer(close)` — registra e devolve a função que tira da pilha; `closeTopBackLayer()` — fecha a do topo, `true` se havia uma; `hasBackLayer()`; `useBackLayer(active, close)` — hook: enquanto `active`, o voltar chama `close`.

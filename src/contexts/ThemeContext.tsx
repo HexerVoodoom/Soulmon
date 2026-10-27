@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readLocal, writeLocal } from '../utils/safeStorage';
+import { applyStatusBarTheme } from '../utils/statusBar';
 
 export type ThemeMode = 'light' | 'dark' | 'system';
 type ResolvedTheme = 'light' | 'dark';
@@ -44,6 +45,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.dataset.theme = resolvedTheme;
+    applyStatusBarTheme(resolvedTheme);
   }, [resolvedTheme]);
 
   useEffect(() => {
