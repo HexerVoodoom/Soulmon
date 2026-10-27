@@ -80,7 +80,6 @@ import { GuerraVisor } from './GuerraVisor';
 import { FeiraVisor } from './FeiraVisor';
 import { SalaPraca } from './PracaVisor';
 import { SalaPlantio } from './PlantioVisor';
-import { SalaMisterio } from './MisterioVisor';
 import type { ClaOnReward } from './claUi';
 import type { Language } from '../../utils/i18n';
 import { emitFeat } from '../../utils/feats';
@@ -139,7 +138,7 @@ type Load =
   | { status: 'error'; kind: GuildErrorKind }
   | { status: 'ready'; guild: GuildView | null; day: string };
 
-type PredioId = 'praca' | 'plantio' | 'misterio';
+type PredioId = 'praca' | 'plantio';
 
 const kindOf = (e: unknown): GuildErrorKind => (e instanceof GuildError ? e.kind : 'server');
 
@@ -176,6 +175,9 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
   tz.current = playerDayTz;
   const copiadoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rewardsKey = useRef('');
+  const [misterioFim, setMisterioFim] = useState<{ kind: 'bits' | 'honra'; n: number } | null>(null);
+  const claRef = useRef(cla);
+  claRef.current = cla;
   const onClaimedRef = useRef(onClaimed);
   onClaimedRef.current = onClaimed;
   const onScenesRef = useRef(onScenes);
@@ -265,6 +267,15 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
       if (!vivo.current) return;
       setRewards(r);
       if (r.scenes.length > 0) onScenesRef.current?.(r.scenes);
+      // O MISTÉRIO foi encerrado: a recompensa pendente chega convertida (Bits ou Honra). Credita UMA vez por recibo e avisa na Feira.
+      const fim = r.misterio;
+      if (fim && room === 'feira' && !hasClaimedReceipt(fim.receipt)) {
+        if (fim.kind === 'honra') onClaimedRef.current?.({ emblems: fim.amount, trophyId: null });
+        else if (claRef.current) claRef.current.onReward(fim.receipt, [{ kind: 'bits', amount: fim.amount }]);
+        else return;
+        rememberClaimedReceipt(fim.receipt);
+        setMisterioFim({ kind: fim.kind, n: fim.amount });
+      }
     }).catch(() => { if (rewardsKey.current === chaveDaFeira) rewardsKey.current = ''; });
   }, [chaveDaFeira, saveId]);
 
@@ -600,8 +611,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
         onReward: cla!.onReward, onAnnounce: setAnuncio,
       };
       if (id === 'praca') return <SalaPraca {...comum} itens={casa ? { ownedFurniture: casa.ownedFurniture, equippedDecor: casa.equippedDecor } : undefined} />;
-      if (id === 'plantio') return <SalaPlantio {...comum} />;
-      return <SalaMisterio {...comum} />;
+      return <SalaPlantio {...comum} />;
     };
     corpo = room === 'guerra' ? (
       <>
@@ -633,6 +643,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, mySpr
           resgate={resgate}
           resgateAberto={!!(rewards?.pending[0] || colhido)}
           missao={missao}
+          misterioFim={misterioFim}
           onRodada={() => void agir(() => hitGuildRaid(saveId, tz.current), {
             anunciar: 'guild.feira.rodada.feita',
             depois: () => track('guild_raid', { outcome: 0 }),
@@ -975,7 +986,6 @@ const casaStageName = (t: T, nivel: CasaStageId): string => t(`guild.casa.nivel.
 const PREDIOS: ReadonlyArray<{ id: PredioId; titulo: GuildKey; icone: string }> = [
   { id: 'praca', titulo: 'guild.praca.titulo', icone: 'storefront' },
   { id: 'plantio', titulo: 'guild.plantio.titulo', icone: 'eco' },
-  { id: 'misterio', titulo: 'guild.misterio.titulo', icone: 'search' },
 ];
 
 /**
@@ -1208,11 +1218,13 @@ function SalaMural({ guild, t, language, marcos }: {
  * (`guild.feira.rodada.feita`). Semana dissipada não tem botão. O resultado da semana que fechou
  * (`lastWeek`) é um fato, nunca um veredito: `recuou` não culpa ninguém.
  */
-function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgateAberto, onRodada, missao }: {
+function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgateAberto, onRodada, missao, misterioFim }: {
   guild: GuildView; t: T; language: Language; ocupado: boolean; reducedMotion: boolean;
   resgate: React.ReactNode; resgateAberto: boolean; onRodada: () => void;
   /** No Salão (PR3) a rodada é a MISSÃO: mandar o Solmon, esperar a volta. Sem isto, a Feira antiga (rodada de um toque). */
   missao?: GuildSheetProps['missao'];
+  /** O Mistério foi encerrado e a recompensa pendente virou Bits/Honra (dito uma vez, na abertura da Feira). */
+  misterioFim?: { kind: 'bits' | 'honra'; n: number } | null;
 }) {
   const raid = guild.raid;
   // Relógio da volta ("volta em X min"): só roda enquanto o Solmon está fora.
@@ -1248,6 +1260,7 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
   return (
     <section className="sm2-guild-sec sm2-stats-card" aria-label={t('guild.feira.titulo')} data-guild-room="feira">
       {resgate}
+      {misterioFim && <p className="sm2-lib-s" style={{ margin: 0 }} role="status" data-misterio-fim>{t(misterioFim.kind === 'honra' ? 'guild.misterio.fim.honra' : 'guild.misterio.fim.bits', { n: misterioFim.n })}</p>}
       {/* O cartão do resgate já diz "se desfez diante da roda": dizer de novo, uma linha acima, é eco (QA L3 B2). */}
       {!(dissipada && resgateAberto) && (
         <p className="sm2-stats-t" style={{ margin: 0 }} data-feira-cabecalho>

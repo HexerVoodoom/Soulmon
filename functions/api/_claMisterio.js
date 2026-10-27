@@ -52,6 +52,8 @@ export function normalizarMis(r) {
     lastClaim: r?.lastClaim && typeof r.lastClaim.receipt === 'string' && r.lastClaim.reward && typeof r.lastClaim.reward === 'object' ? { reward: r.lastClaim.reward, receipt: r.lastClaim.receipt } : null,
     ids: (Array.isArray(r?.ids) ? r.ids : []).filter(x => x && typeof x.id === 'string' && DIA_RE.test(x.day)).slice(-MISTERIO_IDS_MAX),
     sentRound: Number.isInteger(r?.sentRound) && r.sentRound >= 0 ? r.sentRound : null,
+    converted: r?.converted && typeof r.converted.receipt === 'string' && (r.converted.kind === 'bits' || r.converted.kind === 'honra') && Number.isInteger(r.converted.amount) && r.converted.amount > 0
+      ? { kind: r.converted.kind, amount: r.converted.amount, receipt: r.converted.receipt, selo: typeof r.converted.selo === 'string' ? r.converted.selo : '' } : null,
   };
 }
 
@@ -134,6 +136,37 @@ export async function resgatarMisterio(env, g, save, rng = rngSeguro) {
   m.lastClaim = { reward, receipt };
   await gravarMis(env, g.id, save, m);
   return { ok: true, reward, receipt };
+}
+
+/** Honra paga quando a recompensa pendente NÃO era Bits (decoração/chip): o piso da Feira (`RAID_EMBLEMS_FLOOR`). */
+export const MISTERIO_HONRA_CONVERSAO = 2;
+
+/**
+ * ENCERRAMENTO DO MISTÉRIO (dono, 27/10/2026): a recompensa PENDENTE vira, UMA vez, Bits (se o sorteio era Bits,
+ * mesma moeda) ou Honra. Por demanda — no primeiro `guildRewards` da pessoa depois do deploy; nenhuma migração em lote.
+ * Idempotente e à prova de duas chamadas paralelas (o KV não tem CAS): cada chamada grava com um selo aleatório e relê;
+ * só quem encontra o PRÓPRIO selo converte, as outras devolvem o registro gravado. O recibo é determinístico por
+ * (guilda, rodada, conta) — o cliente credita uma vez por recibo, mesmo que a resposta se repita.
+ * Devolve `null` (nada a converter / nunca houve) ou `{ kind:'bits'|'honra', amount, receipt }`.
+ */
+export async function converterMisterio(env, g, save, rng = rngSeguro) {
+  const c = await coletivo(env, g);
+  const m = c.membros[save];
+  if (!m) return null;
+  const pendente = m.sentRound !== null && m.sentRound < c.rodada;
+  if (!pendente) return m.converted ? { kind: m.converted.kind, amount: m.converted.amount, receipt: m.converted.receipt } : null;
+  const premio = sortearRecompensaMisterio(rng);
+  const rodada = m.sentRound;
+  const receipt = `${g.id}|misc|${rodada}|${save.slice(0, 8)}`;
+  const selo = `${Math.floor(rng() * 1e9)}-${Math.floor(rng() * 1e9)}`;
+  const novo = premio.kind === 'bits' ? { kind: 'bits', amount: premio.amount } : { kind: 'honra', amount: MISTERIO_HONRA_CONVERSAO };
+  m.sentRound = null;
+  m.converted = { ...novo, receipt, selo };
+  await gravarMis(env, g.id, save, m);
+  const gravado = await lerMis(env, g.id, save);
+  const f = gravado.converted;
+  if (!f) return null;
+  return { kind: f.kind, amount: f.amount, receipt: f.receipt };
 }
 
 /** A VISTA: barra coletiva 0..99, rodada, quantos investigam; nada por pessoa. */

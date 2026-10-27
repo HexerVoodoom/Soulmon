@@ -73,10 +73,10 @@ describe('copy da Guilda — vocabulário vetado', () => {
 
   it('{n} só existe onde é contagem de VAGAS ou de membros, nunca de quem veio', () => {
     const comN = entradas.filter(([, [pt]]) => pt.includes('{n}')).map(([k]) => k).sort();
-    // B2: `{n}` também é a QUANTIA de Emblemas colhidos e o intervalo da Concha — nunca de quem veio.
+    // B2: `{n}` também é a QUANTIA de Emblemas colhidos e o intervalo da Concha — nunca de quem veio. O Mistério encerrado: {n} é a QUANTIA da própria recompensa convertida.
     // L4: `guild.entrar.codigo.dica` leva o TAMANHO do código (`GUILD_CODE_LENGTH`), que é regra e não pessoa.
     // W14b: `guild.casa.bits.total` é o TOTAL de Bits do CLÃ (um número só, nunca por pessoa).
-    expect(comN).toEqual(['guild.casa.bits.total', 'guild.criar.codigo.corpo', 'guild.entrar.codigo.dica', 'guild.feira.colhido', 'guild.help.concha.def', 'guild.roda.contagem']);
+    expect(comN).toEqual(['guild.casa.bits.total', 'guild.criar.codigo.corpo', 'guild.entrar.codigo.dica', 'guild.feira.colhido', 'guild.help.concha.def', 'guild.misterio.fim.bits', 'guild.misterio.fim.honra', 'guild.roda.contagem']);
   });
 
   it('a linha de presença é a marca positiva — não existe chave de "ausente"', () => {

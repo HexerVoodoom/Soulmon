@@ -2596,7 +2596,6 @@ export default function App() {
     const justFinishedActivity =
       activity && activity.steps.every(s => s.completed || s.id === stepId) ? activity : null;
 
-    if (justFinishedActivity) contarMisterio(`a:${activityId}`, true);
 
     // Allow checking without confirmation
     setGameState(prev => {
@@ -2723,7 +2722,6 @@ export default function App() {
     const activity = gameState.activities.find(a => a.id === activityId);
     // Completed activities cannot be unchecked — only daily reset restores them
     if (activity?.completedToday && activity?.lastCompletedDate === today) return;
-    if (activity) contarMisterio(`a:${activityId}`, true);
 
     setGameState(prevRaw => {
       // Virada pendente (até 30 s depois da meia-noite): fecha ontem ANTES de escrever hoje (QA L02-02).
@@ -3045,7 +3043,6 @@ export default function App() {
       // FORA do updater (footgun 6), e sem nada da tarefa — só o fato.
       if (relief) track('haunted_done');
       if (relief) contarMissao('haunted-done');
-      contarMisterio(`t:${taskId}`);
 
       // Mark task as completed first
       setGameState(prev => ({
@@ -4458,16 +4455,6 @@ export default function App() {
       });
     });
   }, [setGameState]);
-
-  /** MISTÉRIO do clã: UMA tarefa/hábito concluído soma na barra coletiva. Fire-and-forget; só com clã (a memória do
-   *  Bosque neste aparelho diz), nunca bloqueia nem falha a conclusão. Chamado FORA de updater (footgun 6). */
-  const contarMisterio = useCallback((origem: string, porDia = false) => {
-    if (!saveId || !readGroveLocal()) return;
-    // Hábito repete o id todo dia, e o servidor é idempotente por id (hoje e ontem): o dia entra no id.
-    const id = porDia ? `${origem}:${playerDayKey(new Date(), gameState.playerDayTz)}` : origem;
-    const tz = gameState.playerDayTz;
-    void import('./utils/claApi').then(({ countMisterioTask }) => countMisterioTask(saveId, id, tz)).catch(() => {});
-  }, [saveId, gameState.playerDayTz]);
 
   /** MISSÃO da guilda: manda o Solmon investigar (some da Home até `returnAt`). Uma por dia do jogador — o servidor também recusa a 2ª volta. */
   const handleGuildMissionSend = useCallback(() => {

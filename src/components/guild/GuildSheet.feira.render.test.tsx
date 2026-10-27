@@ -59,7 +59,7 @@ function vista(raid: RaidOver = {}, n = 3): GuildView {
   })!;
 }
 
-const semPendencia: GuildRewards = { pending: [], scenes: [], trophyOwned: false, trophyId: null };
+const semPendencia: GuildRewards = { pending: [], scenes: [], trophyOwned: false, trophyId: null, misterio: null };
 const recibo = (over: Partial<GuildClaim> = {}): GuildClaim => ({ week: '2026-W39', outcome: 'dissipada', emblems: RAID_EMBLEMS, trophy: false, trophyId: null, receipt: 'rc-1', ...over });
 const pendente = (outcome: 'dissipada' | 'recuou' = 'dissipada', week = '2026-W39'): GuildRewards => ({
   ...semPendencia, pending: [{ week, outcome, emblems: outcome === 'dissipada' ? RAID_EMBLEMS : RAID_EMBLEMS_FLOOR }],
