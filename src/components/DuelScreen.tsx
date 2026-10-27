@@ -37,6 +37,9 @@ import { playDefeat, playVictory } from '../utils/sounds';
 import { entrarNaSuperficie } from '../utils/musica';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
+import { elementAdvantage } from '../utils/arena';
+import { baseDominanteDoElemento } from '../utils/soulProfile/ficha/elementoNome';
+import { ElementAdvantageBadge } from './games/ElementAdvantageBadge';
 import {
   fxElementId, impactMs, introMs, prefersReducedMotion, visualElementFor, specialLabel, foeSpecialLabel, duelStatusBoard, stageStatusOf,
   specialLeadMs, specialTailMs, type StageActionKind, type StageStatus,
@@ -321,6 +324,8 @@ export function DuelScreen({
         action={acao}
         hit={golpes}
         title={isPt ? 'Duelo' : 'Duel'}
+        // Selo de vantagem elemental (27/10/2026): o golpe básico de cada lado pela base dominante (o anel só conhece as 20 bases).
+        badge={<ElementAdvantageBadge advantage={elementAdvantage(baseDominanteDoElemento(meId.basico.elemento), [baseDominanteDoElemento(oppId.basico.elemento)])} isPt={isPt} />}
         closeLabel={isPt ? 'Sair do duelo' : 'Leave the duel'}
         onClose={() => { if (phase !== 'done') onClose(); }}
         exitConfirm={fimDaLuta ? undefined : {

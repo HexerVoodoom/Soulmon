@@ -3,6 +3,7 @@ import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ARENA_ROUNDS, ARENA_ROUND_COMP, buildArenaRound, elementLabel, loadBestiaryPool, type ArenaEnemy } from '../../utils/arena';
 import { mulberry32 } from '../../utils/combate/rng';
 import { newDefenseSeed } from '../../utils/autoDefesa';
+import { arenaCardSeeds, isStraySeed } from '../../utils/strayFoes';
 import { elementIcon } from '../../utils/elementIconArt';
 import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
@@ -38,7 +39,7 @@ const box: CSSProperties = {
 
 const SEED_MIX = 0x9e3779b1;
 const roundFoes = (seed: number, n: number, pool: Parameters<typeof buildArenaRound>[3], tema?: readonly string[]): ArenaEnemy[] =>
-  buildArenaRound(n, 1, mulberry32((seed ^ Math.imul(n, SEED_MIX)) | 0), pool, tema);
+  buildArenaRound(n, 1, mulberry32((seed ^ Math.imul(n, SEED_MIX)) | 0), pool, tema, isStraySeed(seed));
 
 /**
  * ARENA = VOCÊ ESCOLHE (guilda-lancamento PR1, 11/10/2026). Três desafios de poder PARECIDO com o seu
@@ -47,7 +48,7 @@ const roundFoes = (seed: number, n: number, pool: Parameters<typeof buildArenaRo
  * o oposto, de propósito: lá o servidor sorteia pela faixa (`functions/api/_rankedPick.js`).
  */
 function EscolhaDeAdversarios({ isPt, onPick, tema }: { isPt: boolean; onPick: (seed: number) => void; tema?: readonly string[] }) {
-  const seeds = useMemo(() => [newDefenseSeed(), newDefenseSeed(), newDefenseSeed()], []);
+  const seeds = useMemo(() => arenaCardSeeds(newDefenseSeed), []); // 3 desafios, no máximo 1 Desgarrado (às vezes)
   const [pool, setPool] = useState<Awaited<ReturnType<typeof loadBestiaryPool>> | null>(null);
   const [chosen, setChosen] = useState(0);
   useEffect(() => {
@@ -85,6 +86,7 @@ function EscolhaDeAdversarios({ isPt, onPick, tema }: { isPt: boolean; onPick: (
                 {els.map(e => elementLabel(e, isPt)).join(' · ')}
               </span>
               <span style={{ ...sm2Hint, display: 'block' }}>
+                {isStraySeed(seed) && <span data-arena-stray>{isPt ? 'Desgarrado · ' : 'Stray · '}</span>}
                 {isPt ? 'Chefe: ' : 'Boss: '}{boss ? (isPt ? boss.namePt : boss.nameEn) : '—'}
               </span>
             </span>

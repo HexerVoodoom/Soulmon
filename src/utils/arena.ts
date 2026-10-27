@@ -241,6 +241,8 @@ export interface ArenaEnemy {
   /** A criatura NOVA do inimigo (`novosSoulmonData.ts`, REGISTRO §68) e a forma dela: o componente resolve o sprite. */
   creature?: string;
   form?: NovoAnyStage;
+  /** Desgarrado (27/10/2026): a run inteira usa as formas fortes (`isStrayFoe`). Só arte/nome; a força segue sendo do slot (`arenaFoe`). */
+  stray?: true;
 }
 
 export const ARENA_ROUNDS = 5;
@@ -271,6 +273,8 @@ export function buildArenaRound(
   _pool?: BestiaryCreature[], // sem uso desde o §68 (o inimigo vem das 17 criaturas novas); mantido para não quebrar chamadores
   /** Os elementos BASE do tema do jogador (`arenaTemaElementos`): todo inimigo é de um deles. `[]`/ausente = sem tema (sorteio geral). */
   theme?: readonly string[],
+  /** Run de DESGARRADO (`isStraySeed`, `utils/strayFoes.ts`): as formas vêm do topo (ultimate/mega/ultra). Sem isto, nada muda (mesmas chamadas de `rng`). */
+  stray = false,
 ): ArenaEnemy[] {
   const comp = ARENA_ROUND_COMP[Math.min(Math.max(roundIdx, 1), ARENA_ROUNDS) - 1];
   const used = new Set<string>(); // sem criatura repetida dentro da rodada
@@ -279,7 +283,7 @@ export function buildArenaRound(
     // REGISTRO §68: o inimigo é UMA das 17 criaturas novas, sorteada por elemento com chance igual (o anel é simétrico, então a
     // Arena segue justa para qualquer elemento do jogador) e o ELEMENTO é o da criatura — o mesmo do ataque e do FX.
     // fraco = Rookie · médio = Champion · chefe = a maior forma com arte (ultra > mega > ultimate), senão o Champion.
-    const prefer: NovoAnyStage[] = cls === 'weak' ? ['rookie'] : cls === 'medium' ? ['champion'] : ['ultra', 'mega', 'ultimate', 'champion'];
+    const prefer: NovoAnyStage[] = stray ? (cls === 'boss' ? ['ultra', 'mega', 'ultimate'] : cls === 'medium' ? ['mega', 'ultimate'] : ['ultimate', 'mega']) : cls === 'weak' ? ['rookie'] : cls === 'medium' ? ['champion'] : ['ultra', 'mega', 'ultimate', 'champion'];
     // TEMA (27/10/2026): com tema, o pool é SÓ dele — pequeno (1 criatura por elemento-base, 2 num par) e por isso a mesma espécie
     // pode repetir na rodada (`pickNovo` solta o `used` quando acaba). O fallback explícito é o pool vazio (tema sem criatura): sorteio geral.
     const picked = (theme?.length ? pickNovo(prefer, used, rng, theme) : null) ?? pickNovo(prefer, used, rng)!;
@@ -294,6 +298,7 @@ export function buildArenaRound(
       tier: shape.tier,
       creature: picked.data.id,
       form: picked.stage,
+      ...(stray ? { stray: true as const } : {}),
     };
   });
 }

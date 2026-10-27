@@ -27,6 +27,10 @@ import { fxFrame } from '../utils/combatFx';
 import { fxMirror } from '../utils/fxFacing';
 import { OWN_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
 import { rosterEntryOfKey } from '../utils/enemyRoster';
+import { elementIdOfFoe } from '../utils/elementDex';
+import { elementAdvantage } from '../utils/arena';
+import { baseDominanteDoElemento } from '../utils/soulProfile/ficha/elementoNome';
+import { ElementAdvantageBadge } from './games/ElementAdvantageBadge';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
 import { petScaleStyle } from '../utils/spriteScale';
@@ -99,6 +103,8 @@ export interface Match3Props extends EarningGameProps {
   playerLevel?: number;
   /** M10: inimigo do roster que entrou em cena (bestiário). */
   onEnemySeen?: (rosterKey: string) => void;
+  /** Dex de elementos (27/10/2026): ao VENCER, os elementos dos inimigos identificados (roster) do time. Derrota não libera nada. */
+  onElementsDefeated?: (ids: readonly string[]) => void;
 }
 
 function freshSeed(): number { return Math.floor(Math.random() * 2 ** 31); }
@@ -120,12 +126,14 @@ function rosterOf(e: { roster?: string } | undefined): { src: string; name: stri
   return entry && src ? { src, name: entry.name } : undefined;
 }
 
-function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, petElement, playerLevel, onEnemySeen, rankSaveId, challenge, onNewOpponent }: Match3Props & { pvp?: PvpFoe; onNewOpponent?: () => void }) {
+function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, petElement, playerLevel, onEnemySeen, onElementsDefeated, rankSaveId, challenge, onNewOpponent }: Match3Props & { pvp?: PvpFoe; onNewOpponent?: () => void }) {
   const isPt = language === 'pt-BR';
   const pvpRef = useRef(pvp);
   pvpRef.current = pvp;
   const challengeRef = useRef(challenge);
   challengeRef.current = challenge;
+  const elementsDefeatedRef = useRef(onElementsDefeated);
+  elementsDefeatedRef.current = onElementsDefeated;
   const reduced = usePrefersReducedMotion();
   const reducedRef = useRef(reduced);
   reducedRef.current = reduced;
@@ -202,6 +210,10 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   const finish = useCallback(() => {
     if (overRef.current) return;
     overRef.current = true;
+    if (combatRef.current.outcome === 'win' && elementsDefeatedRef.current) {
+      const ids = combatRef.current.enemies.map(e => elementIdOfFoe(rosterEntryOfKey(e.roster)?.elements)).filter((x): x is string => !!x);
+      if (ids.length > 0) elementsDefeatedRef.current(ids);
+    }
     if (challengeRef.current) { challengeRef.current.onResult(combatRef.current.outcome === 'win'); return; }
     const final = combatScore(combatRef.current);
     const bits = match3Bits(final);
@@ -546,6 +558,9 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   const petScale = PET_SCALE_MINIGAME;
 
   const playerElIcon = petElement ? elementIcon(petElement) : undefined;
+  // Selo de vantagem elemental (27/10/2026): o elemento do Soulmon contra o do inimigo ATIVO (neutro = sem selo).
+  const alvoAtivo = combat.outcome === 'playing' ? combat.enemies[combat.active] : undefined;
+  const vantagemElemental = petElement && alvoAtivo ? elementAdvantage(baseDominanteDoElemento(petElement), [alvoAtivo.element]) : 0;
   const boardNode = over ? null : (
   <div
     role="grid"
@@ -619,6 +634,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
         {playerElIcon && (
           <img src={playerElIcon} alt="" draggable={false} width={EL_ICON_PLAYER} height={EL_ICON_PLAYER} data-m3-player-element={petElement} style={{ imageRendering: 'pixelated' }} />
         )}
+        <ElementAdvantageBadge advantage={vantagemElemental} isPt={isPt} onScene={false} />
         <HpBars bars={[{ label: isPt ? 'Seu Soulmon' : 'Your Soulmon', cur: combat.player.hp, max: combat.player.max, tone: 'cyan' }]} />
       </div>
       {boardNode}

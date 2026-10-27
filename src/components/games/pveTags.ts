@@ -18,3 +18,9 @@ export const PERSONAL_TAG: Record<'pt' | 'en', Partial<Record<string, string>>> 
   pt: { heal: 'Cura!', shield: 'Escudo!', atkBuff: 'Poder!', spdBuff: 'Ligeiro!' },
   en: { heal: 'Heal!', shield: 'Shield!', atkBuff: 'Power!', spdBuff: 'Swift!' },
 };
+
+/** Selo da VANTAGEM ELEMENTAL (27/10/2026): só em ±1 (`elementAdvantage`); neutro não tem selo. Independe das notas do anel acima. */
+export const ELEMENT_ADVANTAGE_TAG: Record<'pt' | 'en', { up: string; down: string }> = {
+  pt: { up: 'Super eficiente!', down: 'Pouco eficiente' },
+  en: { up: 'Super effective!', down: 'Not very effective' },
+};

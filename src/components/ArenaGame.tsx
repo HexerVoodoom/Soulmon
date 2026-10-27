@@ -33,6 +33,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer } from './games/TorcidaKit';
 import { playDefeat, playVictory } from '../utils/sounds';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
+import { elementIdOfFoe } from '../utils/elementDex';
+import { isStraySeed } from '../utils/strayFoes';
+import { ElementAdvantageBadge } from './games/ElementAdvantageBadge';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { CHEER_TAPS_FULL } from '../utils/energia';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
@@ -66,6 +69,7 @@ import {
   arenaSpecialElementScale,
   autoDefenseHitScale,
   buildArenaRound,
+  elementAdvantage,
   familyOfSkill,
   loadBestiaryPool,
   type ArenaEnemy,
@@ -104,12 +108,16 @@ export interface ArenaGameProps {
    *  (Arena) — o Torneio é o que sorteia. Sem ela (ou na revanche) a semente é nova. */
   seed?: number;
   onEarnPoints?: (points: number) => void;
+  /** Dex de elementos (27/10/2026): ao vencer uma RODADA, os elementos dos inimigos dela. */
+  onElementsDefeated?: (ids: readonly string[]) => void;
   onExit: () => void;
 }
 
 export function ArenaGame({
-  evolutionStage, demoCharacterId, language, skills, petElement, attrs, seed: chosenSeed, onEarnPoints, onExit,
+  evolutionStage, demoCharacterId, language, skills, petElement, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onExit,
 }: ArenaGameProps) {
+  const elementsDefeatedRef = useRef(onElementsDefeated);
+  elementsDefeatedRef.current = onElementsDefeated;
   // Música (11/10/2026): na Arena toca o "Stone Hall Combat" (se o interruptor "Música" está ligado).
   useEffect(() => entrarNaSuperficie('arena'), []);
   const isPt = language === 'pt-BR';
@@ -193,7 +201,7 @@ export function ArenaGame({
   const montarRodada = useCallback((n: number, poolAtual: BestiaryCreature[]) => {
     // O sabor da rodada vem da semente da run (determinístico: a mesma run, os mesmos bichos).
     const rng = mulberry32((runSeedRef.current ^ Math.imul(n, 0x9e3779b1)) | 0);
-    const novos = buildArenaRound(n, 1, rng, poolAtual, temaRef.current);
+    const novos = buildArenaRound(n, 1, rng, poolAtual, temaRef.current, isStraySeed(runSeedRef.current));
     inimigosRef.current = novos;
     rodadaRef.current = n;
     setInimigos(novos);
@@ -261,6 +269,8 @@ export function ArenaGame({
       // C-1 (run `som-01`): a rodada limpa NÃO toca `playTaskComplete`. PR18 (pedido do dono, 06/10/2026): ganhou o som
       // PRÓPRIO de vitória de combate (`playVictory`, categoria `arcade`) — o corte C-1 continua valendo para o resto.
       playVictory();
+      const ids = inimigosRef.current.map(e => elementIdOfFoe(e.elements)).filter((x): x is string => !!x);
+      if (ids.length > 0) elementsDefeatedRef.current?.(ids);
       setPontos(p => p + inimigosRef.current.reduce((s, e) => s + e.points, 0));
       setFase('rodada-limpa');
     } else {
@@ -359,6 +369,8 @@ export function ArenaGame({
             dodgeRight: isPt ? 'Esquivar para a direita' : 'Dodge right',
           }}
           title={`${isPt ? 'Arena' : 'Arena'} · ${rodada}/${ARENA_ROUNDS}`}
+          // Selo de vantagem elemental (27/10/2026): o golpe básico do jogador contra o alvo atual (a mesma conta do combate, `elementAdvantage`).
+          badge={inimigos[alvoIdx] ? <ElementAdvantageBadge advantage={elementAdvantage(jogador.elements?.basica ?? '', inimigos[alvoIdx].elements)} isPt={isPt} /> : undefined}
           closeLabel={sair}
           onClose={onExit}
           exitConfirm={{

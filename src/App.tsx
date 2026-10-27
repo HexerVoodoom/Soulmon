@@ -194,6 +194,7 @@ import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMi
 // entrar nele — entradaEnxuta.contract.test.ts).
 import type { ClaReward } from './utils/claApi';
 import { soulmonNaMasmorra } from './utils/dungeonIdle';
+import { applyElementsDefeated } from './utils/elementDex';
 import { applyBestiarySeen, applyEnemyDefeated, applyFloorCleared, applyMilestoneItem } from './utils/dungeonRewards';
 import type { BosqueArvores } from './utils/bosqueArvores';
 import type { OcupadoAcao } from './components/DungeonBusyModal';
@@ -4175,6 +4176,11 @@ export default function App() {
     setGameState(prev => applyEnemyDefeated(prev, enemyKey));
   }, []);
 
+  // Dex de elementos (27/10/2026): vitória sobre inimigo identificado (Combina 3, Arena, Torneio). Idempotente; fora do updater não há efeito colateral.
+  const handleElementsDefeated = useCallback((ids: readonly string[]) => {
+    setGameState(prev => applyElementsDefeated(prev, ids));
+  }, []);
+
   // M10 — inimigo VISTO fora da masmorra (Elemental Fusion): só o bestiário, sem abate (missão "kills" é da masmorra).
   const handleBestiarySeen = useCallback((enemyKey: string) => {
     setGameState(prev => applyBestiarySeen(prev, enemyKey));
@@ -7525,6 +7531,7 @@ export default function App() {
                     contarMissao('tournament-match');
                   },
                   totalXP: gameState.totalXP,
+                  onElementsDefeated: handleElementsDefeated,
                   onMatchPlayed: won => setGameState(prev => awardBondXP(
                     prev, { kind: 'tournamentMatch', won }, playerDayKey(new Date(), prev.playerDayTz),
                   )),
@@ -7553,6 +7560,7 @@ export default function App() {
                   onRunEnd: handleDungeonRunEnd,
                   onDungeonEnemyDefeated: handleDungeonEnemyDefeated,
                   onBestiarySeen: handleBestiarySeen,
+                  onElementsDefeated: handleElementsDefeated,
                   mindTutorials: { seen: gameState.mindGameTutorials ?? {}, onShown: id => setGameState(prev => { const m = markMindGameTutorial(prev.mindGameTutorials, id); return m === prev.mindGameTutorials ? prev : { ...prev, mindGameTutorials: m }; }) },
                   onDinoScore: handleDinoScore,
                   /* 🏛️ Prédios de Jogos (30/09/2026): o dia do JOGADOR em ISO
