@@ -188,7 +188,7 @@ describe('ELEMENTO PESADELO — exclusivo da mecânica', () => {
   });
   it('os outros elementos continuam resolvendo como antes', () => {
     expect(fxElementId('fogo')).toBe('fogo');
-    expect(fxElementId('planta')).toBe('vida');
+    expect(fxElementId('planta')).toBe('planta'); // alias planta→vida apagado (27/10/2026): planta tem FX próprio
   });
 });
 
