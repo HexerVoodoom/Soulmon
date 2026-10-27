@@ -11,7 +11,7 @@ export const COMBINADOS_ART: Readonly<Record<string, string>> = Object.fromEntri
 
 const API_FILES = import.meta.glob('../assets/soulmon/inimigos-api/*.png', { eager: true, import: 'default' }) as Record<string, string>;
 
-/** ARTE dos 20 inimigos da API (27/10/2026). Chave = `<id>-<estágio>` (`RosterEntry.artFile`). */
+/** ARTE dos 5 inimigos da API "à parte" (27/10/2026). Chave = `<id>-<estágio>` (`RosterEntry.artFile`). */
 export const INIMIGOS_API_ART: Readonly<Record<string, string>> = Object.fromEntries(
   Object.entries(API_FILES).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1).replace(/\.png$/, ''), url]),
 );

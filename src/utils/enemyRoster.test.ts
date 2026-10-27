@@ -16,10 +16,17 @@ import { mulberry32 } from './combate/rng';
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
 
 describe('roster de inimigos (M10): cobertura', () => {
-  it('17 base × 4 estágios + 138 combinados rookie + 20 da API = 226 entradas, chaves únicas', () => {
-    expect(ENEMY_ROSTER).toHaveLength(17 * 4 + 138 + 20);
+  it('17 base × 4 estágios + 138 combinados rookie + 5 da API (à parte) = 211 entradas, chaves únicas', () => {
+    expect(ENEMY_ROSTER).toHaveLength(17 * 4 + 138 + 5);
     expect(ENEMY_ROSTER_KEYS.size).toBe(ENEMY_ROSTER.length);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'combinado').every(e => e.stage === 'rookie' && e.elements.length === 2)).toBe(true);
+  });
+  it('distribuição: cada elemento base tem 1 representante (17 distintos); os da API ficam à parte e não entram na conta', () => {
+    const base = ENEMY_ROSTER.filter(e => e.kind === 'base' && e.stage === 'rookie');
+    expect(base).toHaveLength(17);
+    expect(new Set(base.map(e => e.element)).size).toBe(17);
+    expect(new Set(base.map(e => e.id)).size).toBe(17);
+    expect(ENEMY_ROSTER.filter(e => e.kind === 'api').every(e => e.kind === 'api')).toBe(true);
   });
   it('todo elemento base aparece em todos os estágios; toda entrada tem arte e nome', () => {
     for (const n of NOVOS_DATA) for (const s of ORDEM) expect(rosterEntryOfKey(`${n.id}-${s}`), `${n.id}-${s}`).toBeDefined();
@@ -29,9 +36,9 @@ describe('roster de inimigos (M10): cobertura', () => {
       expect(e.name.length, e.key).toBeGreaterThan(0);
     }
   });
-  it('20 inimigos da API: arte 256² alfa binário, elemento existente, sem nome de franquia, nada de sufixo -mon', () => {
+  it('5 inimigos da API (à parte; R10/R14/R12/R19/R42): arte 256² alfa binário, elemento existente, sem nome de franquia, nada de sufixo -mon', () => {
     const api = ENEMY_ROSTER.filter(e => e.kind === 'api');
-    expect(api).toHaveLength(20);
+    expect(api).toHaveLength(5);
     expect(Object.keys(INIMIGOS_API_ART).sort()).toEqual(INIMIGOS_API_DATA.map(([id, st]) => `${id}-${st}`).sort());
     const els = new Set(NOVOS_DATA.map(n => n.element));
     for (const e of api) {
@@ -39,9 +46,10 @@ describe('roster de inimigos (M10): cobertura', () => {
       expect(e.name, e.key).not.toMatch(/mon$/i);
       expect(rosterSpriteOf(e), e.key).toBe(INIMIGOS_API_ART[e.artFile!]);
     }
-    // famílias de estágio: mesmo id em mais de um estágio, sem repetir o estágio
-    expect(new Set(api.map(e => e.key)).size).toBe(20);
-    expect(api.filter(e => e.id === 'cinderkit').map(e => e.stage).sort()).toEqual(['champion', 'rookie']);
+    expect(new Set(api.map(e => e.key)).size).toBe(5);
+    // poda de 27/10: só os 7 códigos escolhidos pelo dono (5 no roster); nada podado volta
+    expect(api.map(e => e.key).sort()).toEqual(['ashimp-rookie', 'cinderkit-champion', 'gloomhorn-champion', 'tailhorn-rookie', 'tidewark-ultimate']);
+    expect(api.map(e => e.bancoN).sort()).toEqual([736, 739, 746, 749, 823]);
     for (const [id, st] of INIMIGOS_API_DATA) {
       const b = readFileSync(join(process.cwd(), 'src/assets/soulmon/inimigos-api', `${id}-${st}.png`));
       expect([b.readUInt32BE(16), b.readUInt32BE(20), b[25]], `${id}-${st}`).toEqual([256, 256, 6]);
