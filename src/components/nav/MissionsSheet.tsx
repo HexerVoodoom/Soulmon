@@ -12,6 +12,7 @@ import { FirstTimesList, allFirstTimesClaimed, type FirstTimesProps } from './Fi
 import type { GoTarget } from '../../utils/missionTargets';
 import type { MissionNav } from './MissionCard';
 import type { SpecialMissionProps } from './SpecialMissionCard';
+import { FunctionNpcNote } from '../ui/FunctionNpcNote';
 import { FirstDayCard } from '../FirstDayCard';
 import type { FirstDayProgress } from '../../utils/firstDay';
 
@@ -120,6 +121,7 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
           <Suspense fallback={null}>
             {seen.has('daily') && (
               <div role="tabpanel" hidden={tab !== 'daily'} data-missions-panel="daily">
+                <FunctionNpcNote id="onboarding" language={language} size={48} />
                 {firstDay && (
                   <Section title={isPt ? 'Primeiro dia' : 'First day'} mark={marks.firstDay ?? null} isPt={isPt} id="first-day">
                     <FirstDayCard progress={firstDay} language={language} />

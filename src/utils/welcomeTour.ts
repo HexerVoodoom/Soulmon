@@ -55,8 +55,8 @@ export const TOUR_STEPS: readonly TourStep[] = [
     id: 'hello', part: 1,
     title: { en: 'Welcome', pt: 'Boas-vindas' },
     speech: {
-      en: `Hi, I'm ${TOUR_GUIDE_NAME}. I'll show you around — about a minute. Your Soulmon grows with you, and I'm here to help, not to keep score. You can skip whenever you like.`,
-      pt: `Oi, eu sou o ${TOUR_GUIDE_NAME_PT}. Vou te mostrar o caminho — leva cerca de um minuto. O seu Soulmon cresce junto com você, e eu estou aqui para ajudar, não para dar nota. Você pode pular quando quiser.`,
+      en: `Hi! I'll show you around — about a minute. Your Soulmon grows with you, and I'm here to help, not to keep score. You can skip whenever you like.`,
+      pt: `Oi! Vou te mostrar o caminho — leva cerca de um minuto. O seu Soulmon cresce junto com você, e eu estou aqui para ajudar, não para dar nota. Você pode pular quando quiser.`,
     },
   },
   {
