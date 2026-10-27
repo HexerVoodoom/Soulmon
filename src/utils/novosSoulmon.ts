@@ -1,5 +1,5 @@
 /**
- * OS 17 NOVOS SOULMON — dados + ARTE (15/10/2026; contrato e formas futuras em `novosSoulmonData.ts`).
+ * OS 20 NOVOS SOULMON — dados + ARTE (15/10/2026; contrato e formas futuras em `novosSoulmonData.ts`).
  *
  * Rookie e Champion: encontros COMUNS da masmorra (`buildDungeonWave`) e inimigos da Arena (`buildArenaRound`).
  * Ultimate/Mega: slots 4/5 da escada; Ultra: só o chefe da Arena (`FORMAS_ALTAS_ART`). NÃO substituem `DUNGEON_LINE_SPRITES`
@@ -100,6 +100,21 @@ import pebbloUltra from '../assets/soulmon/novos/terra-ultra.png';
 import zephirUltimate from '../assets/soulmon/novos/ar-ultimate.png';
 import zephirMega from '../assets/soulmon/novos/ar-mega.png';
 import zephirUltra from '../assets/soulmon/novos/ar-ultra.png';
+import glimmiRookie from '../assets/soulmon/novos/fada-rookie.png';
+import glimmiChampion from '../assets/soulmon/novos/fada-champion.png';
+import glimmiUltimate from '../assets/soulmon/novos/fada-ultimate.png';
+import glimmiMega from '../assets/soulmon/novos/fada-mega.png';
+import glimmiUltra from '../assets/soulmon/novos/fada-ultra.png';
+import smeltuRookie from '../assets/soulmon/novos/industrial-rookie.png';
+import smeltuChampion from '../assets/soulmon/novos/industrial-champion.png';
+import smeltuUltimate from '../assets/soulmon/novos/industrial-ultimate.png';
+import smeltuMega from '../assets/soulmon/novos/industrial-mega.png';
+import smeltuUltra from '../assets/soulmon/novos/industrial-ultra.png';
+import brottoRookie from '../assets/soulmon/novos/planta-rookie.png';
+import brottoChampion from '../assets/soulmon/novos/planta-champion.png';
+import brottoUltimate from '../assets/soulmon/novos/planta-ultimate.png';
+import brottoMega from '../assets/soulmon/novos/planta-mega.png';
+import brottoUltra from '../assets/soulmon/novos/planta-ultra.png';
 
 const ART: Record<string, { rookie: string; champion: string }> = {
   embrit: { rookie: embritRookie, champion: embritChampion },
@@ -119,6 +134,9 @@ const ART: Record<string, { rookie: string; champion: string }> = {
   bubbo: { rookie: bubboRookie, champion: bubboChampion },
   pebblo: { rookie: pebbloRookie, champion: pebbloChampion },
   zephir: { rookie: zephirRookie, champion: zephirChampion },
+  glimmi: { rookie: glimmiRookie, champion: glimmiChampion },
+  smeltu: { rookie: smeltuRookie, champion: smeltuChampion },
+  brotto: { rookie: brottoRookie, champion: brottoChampion },
 };
 
 /** Sprites das formas altas, por criatura (mesmas chaves de `FORMAS_ALTAS`). 256² RGBA, pixelizadas (§78). */
@@ -140,6 +158,9 @@ export const FORMAS_ALTAS_ART: Readonly<Record<string, Partial<Record<NovoHighSt
   bubbo: { ultimate: bubboUltimate, mega: bubboMega, ultra: bubboUltra },
   pebblo: { ultimate: pebbloUltimate, mega: pebbloMega, ultra: pebbloUltra },
   zephir: { ultimate: zephirUltimate, mega: zephirMega, ultra: zephirUltra },
+  glimmi: { ultimate: glimmiUltimate, mega: glimmiMega, ultra: glimmiUltra },
+  smeltu: { ultimate: smeltuUltimate, mega: smeltuMega, ultra: smeltuUltra },
+  brotto: { ultimate: brottoUltimate, mega: brottoMega, ultra: brottoUltra },
 };
 
 export interface NovoSoulmon extends NovoData {

@@ -16,14 +16,14 @@ import { mulberry32 } from './combate/rng';
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
 
 describe('roster de inimigos (M10): cobertura', () => {
-  it('17 base × 4 estágios + 138 combinados rookie + 20 da API = 226 entradas, chaves únicas', () => {
-    expect(ENEMY_ROSTER).toHaveLength(17 * 4 + 138 + 20);
+  it('20 base × 4 estágios + 211 combinados rookie + 20 da API = 311 entradas, chaves únicas', () => {
+    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 20);
     expect(ENEMY_ROSTER_KEYS.size).toBe(ENEMY_ROSTER.length);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'combinado').every(e => e.stage === 'rookie' && e.elements.length === 2)).toBe(true);
   });
   it('todo elemento base aparece em todos os estágios; toda entrada tem arte e nome', () => {
     for (const n of NOVOS_DATA) for (const s of ORDEM) expect(rosterEntryOfKey(`${n.id}-${s}`), `${n.id}-${s}`).toBeDefined();
-    expect(Object.keys(COMBINADOS_ART)).toHaveLength(138);
+    expect(Object.keys(COMBINADOS_ART)).toHaveLength(211);
     for (const e of ENEMY_ROSTER) {
       expect(rosterSpriteOf(e), e.key).toBeTruthy();
       expect(e.name.length, e.key).toBeGreaterThan(0);

@@ -817,6 +817,150 @@
    "stage": "mega",
    "seed": "23000",
    "engineName": "ZenithGlacunis"
+  },
+  {
+   "file": "ramos/fada/poder-champion.png",
+   "element": "fada",
+   "branch": "poder",
+   "stage": "champion",
+   "seed": "9000",
+   "engineName": "Glimmi"
+  },
+  {
+   "file": "ramos/fada/poder-ultimate.png",
+   "element": "fada",
+   "branch": "poder",
+   "stage": "ultimate",
+   "seed": "9000",
+   "engineName": "Glimmi"
+  },
+  {
+   "file": "ramos/fada/poder-mega.png",
+   "element": "fada",
+   "branch": "poder",
+   "stage": "mega",
+   "seed": "9000",
+   "engineName": "Glimmi"
+  },
+  {
+   "file": "ramos/fada/harmonia-champion.png",
+   "element": "fada",
+   "branch": "harmonia",
+   "stage": "champion",
+   "seed": "9000",
+   "engineName": "Glimmi"
+  },
+  {
+   "file": "ramos/fada/harmonia-ultimate.png",
+   "element": "fada",
+   "branch": "harmonia",
+   "stage": "ultimate",
+   "seed": "9000",
+   "engineName": "Glimmi"
+  },
+  {
+   "file": "ramos/fada/harmonia-mega.png",
+   "element": "fada",
+   "branch": "harmonia",
+   "stage": "mega",
+   "seed": "9000",
+   "engineName": "Glimmi"
+  },
+  {
+   "file": "ramos/industrial/harmonia-champion.png",
+   "element": "industrial",
+   "branch": "harmonia",
+   "stage": "champion",
+   "seed": "10000",
+   "engineName": "Smeltu"
+  },
+  {
+   "file": "ramos/industrial/harmonia-ultimate.png",
+   "element": "industrial",
+   "branch": "harmonia",
+   "stage": "ultimate",
+   "seed": "10000",
+   "engineName": "Smeltu"
+  },
+  {
+   "file": "ramos/industrial/harmonia-mega.png",
+   "element": "industrial",
+   "branch": "harmonia",
+   "stage": "mega",
+   "seed": "10000",
+   "engineName": "Smeltu"
+  },
+  {
+   "file": "ramos/industrial/benevolencia-champion.png",
+   "element": "industrial",
+   "branch": "benevolencia",
+   "stage": "champion",
+   "seed": "10000",
+   "engineName": "Smeltu"
+  },
+  {
+   "file": "ramos/industrial/benevolencia-ultimate.png",
+   "element": "industrial",
+   "branch": "benevolencia",
+   "stage": "ultimate",
+   "seed": "10000",
+   "engineName": "Smeltu"
+  },
+  {
+   "file": "ramos/industrial/benevolencia-mega.png",
+   "element": "industrial",
+   "branch": "benevolencia",
+   "stage": "mega",
+   "seed": "10000",
+   "engineName": "Smeltu"
+  },
+  {
+   "file": "ramos/planta/poder-champion.png",
+   "element": "planta",
+   "branch": "poder",
+   "stage": "champion",
+   "seed": "11000",
+   "engineName": "Brotto"
+  },
+  {
+   "file": "ramos/planta/poder-ultimate.png",
+   "element": "planta",
+   "branch": "poder",
+   "stage": "ultimate",
+   "seed": "11000",
+   "engineName": "Brotto"
+  },
+  {
+   "file": "ramos/planta/poder-mega.png",
+   "element": "planta",
+   "branch": "poder",
+   "stage": "mega",
+   "seed": "11000",
+   "engineName": "Brotto"
+  },
+  {
+   "file": "ramos/planta/benevolencia-champion.png",
+   "element": "planta",
+   "branch": "benevolencia",
+   "stage": "champion",
+   "seed": "11000",
+   "engineName": "Brotto"
+  },
+  {
+   "file": "ramos/planta/benevolencia-ultimate.png",
+   "element": "planta",
+   "branch": "benevolencia",
+   "stage": "ultimate",
+   "seed": "11000",
+   "engineName": "Brotto"
+  },
+  {
+   "file": "ramos/planta/benevolencia-mega.png",
+   "element": "planta",
+   "branch": "benevolencia",
+   "stage": "mega",
+   "seed": "11000",
+   "engineName": "Brotto"
   }
  ],
  "combined": [
@@ -2889,6 +3033,1140 @@
    "role": "alcance",
    "realm": "gelo",
    "seed": "237000"
+  },
+  {
+   "n": 139,
+   "file": "combinados/139-fogo_fatuo.png",
+   "combination": "Fogo-Fatuo",
+   "components": [
+    "fada",
+    "fogo"
+   ],
+   "name": "Fatuxa",
+   "alignment": "benevolencia",
+   "species": "wisp fox cub",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "239000"
+  },
+  {
+   "n": 140,
+   "file": "combinados/140-orvalho.png",
+   "combination": "Orvalho Encantado",
+   "components": [
+    "fada",
+    "agua"
+   ],
+   "name": "Dewilu",
+   "alignment": "benevolencia",
+   "species": "dew-drop frog",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "240000"
+  },
+  {
+   "n": 141,
+   "file": "combinados/141-circulo_feerico.png",
+   "combination": "Circulo de Fadas",
+   "components": [
+    "fada",
+    "terra"
+   ],
+   "name": "Ringofae",
+   "alignment": "benevolencia",
+   "species": "mushroom-capped hare",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "241000"
+  },
+  {
+   "n": 142,
+   "file": "combinados/142-brisa_cintilante.png",
+   "combination": "Brisa Cintilante",
+   "components": [
+    "fada",
+    "ar"
+   ],
+   "name": "Brisilu",
+   "alignment": "benevolencia",
+   "species": "glitter hummingbird",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "242000"
+  },
+  {
+   "n": 143,
+   "file": "combinados/143-glitter.png",
+   "combination": "Glitter",
+   "components": [
+    "fada",
+    "eletricidade"
+   ],
+   "name": "Glimmix",
+   "alignment": "benevolencia",
+   "species": "spark ferret",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "243000"
+  },
+  {
+   "n": 144,
+   "file": "combinados/144-feerie.png",
+   "combination": "Feerie",
+   "components": [
+    "fada",
+    "arcano"
+   ],
+   "name": "Feeloka",
+   "alignment": "benevolencia",
+   "species": "butterfly-winged owlet",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "244000"
+  },
+  {
+   "n": 145,
+   "file": "combinados/145-sonho_sombrio.png",
+   "combination": "Sonho Sombrio",
+   "components": [
+    "fada",
+    "sombra"
+   ],
+   "name": "Lunambra",
+   "alignment": "benevolencia",
+   "species": "moon moth",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "245000"
+  },
+  {
+   "n": 146,
+   "file": "combinados/146-arco_iris.png",
+   "combination": "Arco-Iris",
+   "components": [
+    "fada",
+    "luz"
+   ],
+   "name": "Iriska",
+   "alignment": "benevolencia",
+   "species": "cloud lamb",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "246000"
+  },
+  {
+   "n": 147,
+   "file": "combinados/147-encanto_traicoeiro.png",
+   "combination": "Encanto Traicoeiro",
+   "components": [
+    "fada",
+    "vileza"
+   ],
+   "name": "Thornelle",
+   "alignment": "benevolencia",
+   "species": "thorned rose cat",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "247000"
+  },
+  {
+   "n": 148,
+   "file": "combinados/148-banshee.png",
+   "combination": "Banshee",
+   "components": [
+    "fada",
+    "morte"
+   ],
+   "name": "Wailfae",
+   "alignment": "benevolencia",
+   "species": "pale wailing spirit bird",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "248000"
+  },
+  {
+   "n": 149,
+   "file": "combinados/149-coracao.png",
+   "combination": "Coracao",
+   "components": [
+    "fada",
+    "vida"
+   ],
+   "name": "Corazu",
+   "alignment": "benevolencia",
+   "species": "winged heart dove",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "249000"
+  },
+  {
+   "n": 150,
+   "file": "combinados/150-graca.png",
+   "combination": "Graca",
+   "components": [
+    "fada",
+    "vigor"
+   ],
+   "name": "Gracivel",
+   "alignment": "benevolencia",
+   "species": "ballerina swan chick",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "250000"
+  },
+  {
+   "n": 151,
+   "file": "combinados/151-lamina_purpurina.png",
+   "combination": "Lamina de Purpurina",
+   "components": [
+    "fada",
+    "marcial"
+   ],
+   "name": "Purpuri",
+   "alignment": "benevolencia",
+   "species": "sword-tailed pixie fox",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "251000"
+  },
+  {
+   "n": 152,
+   "file": "combinados/152-sono_encantado.png",
+   "combination": "Sono Encantado",
+   "components": [
+    "fada",
+    "tempo"
+   ],
+   "name": "Slumbrel",
+   "alignment": "benevolencia",
+   "species": "sleepy dormouse",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "252000"
+  },
+  {
+   "n": 153,
+   "file": "combinados/153-cancao_feerica.png",
+   "combination": "Cancao Feerica",
+   "components": [
+    "fada",
+    "som"
+   ],
+   "name": "Harpelu",
+   "alignment": "benevolencia",
+   "species": "harp-winged songbird",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "253000"
+  },
+  {
+   "n": 154,
+   "file": "combinados/154-leveza.png",
+   "combination": "Leveza",
+   "components": [
+    "fada",
+    "gravidade"
+   ],
+   "name": "Plumeli",
+   "alignment": "benevolencia",
+   "species": "feather-winged bunny",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "254000"
+  },
+  {
+   "n": 155,
+   "file": "combinados/155-poeira_estelar.png",
+   "combination": "Poeira Estelar",
+   "components": [
+    "fada",
+    "espaco"
+   ],
+   "name": "Stardusa",
+   "alignment": "benevolencia",
+   "species": "comet-tailed kitten",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "255000"
+  },
+  {
+   "n": 156,
+   "file": "combinados/156-fornalha.png",
+   "combination": "Fornalha",
+   "components": [
+    "industrial",
+    "fogo"
+   ],
+   "name": "Furnavo",
+   "alignment": "poder",
+   "species": "furnace-mouthed bulldog pup",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "256000"
+  },
+  {
+   "n": 157,
+   "file": "combinados/157-hidraulica.png",
+   "combination": "Hidraulica",
+   "components": [
+    "industrial",
+    "agua"
+   ],
+   "name": "Pistrel",
+   "alignment": "poder",
+   "species": "copper piston otter",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "257000"
+  },
+  {
+   "n": 158,
+   "file": "combinados/158-mineracao.png",
+   "combination": "Mineracao",
+   "components": [
+    "industrial",
+    "terra"
+   ],
+   "name": "Pickoro",
+   "alignment": "poder",
+   "species": "pickaxe mole",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "258000"
+  },
+  {
+   "n": 159,
+   "file": "combinados/159-pneumatica.png",
+   "combination": "Pneumatica",
+   "components": [
+    "industrial",
+    "ar"
+   ],
+   "name": "Puffero",
+   "alignment": "poder",
+   "species": "bellows-nosed piglet",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "259000"
+  },
+  {
+   "n": 160,
+   "file": "combinados/160-usina.png",
+   "combination": "Usina",
+   "components": [
+    "industrial",
+    "eletricidade"
+   ],
+   "name": "Dynamoru",
+   "alignment": "poder",
+   "species": "coil-tower lizard",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "260000"
+  },
+  {
+   "n": 161,
+   "file": "combinados/161-artificio.png",
+   "combination": "Artificio",
+   "components": [
+    "industrial",
+    "arcano"
+   ],
+   "name": "Cuprune",
+   "alignment": "poder",
+   "species": "copper music-box cat",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "261000"
+  },
+  {
+   "n": 162,
+   "file": "combinados/162-fuligem.png",
+   "combination": "Fuligem",
+   "components": [
+    "industrial",
+    "sombra"
+   ],
+   "name": "Sootel",
+   "alignment": "poder",
+   "species": "soot-cloud raccoon",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "262000"
+  },
+  {
+   "n": 163,
+   "file": "combinados/163-holofote.png",
+   "combination": "Holofote",
+   "components": [
+    "industrial",
+    "luz"
+   ],
+   "name": "Spotlux",
+   "alignment": "poder",
+   "species": "spotlight owl",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "263000"
+  },
+  {
+   "n": 164,
+   "file": "combinados/164-poluicao.png",
+   "combination": "Poluicao",
+   "components": [
+    "industrial",
+    "vileza"
+   ],
+   "name": "Smogula",
+   "alignment": "poder",
+   "species": "sludge toad",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "264000"
+  },
+  {
+   "n": 165,
+   "file": "combinados/165-ferro_velho.png",
+   "combination": "Ferro-Velho",
+   "components": [
+    "industrial",
+    "morte"
+   ],
+   "name": "Scrapaw",
+   "alignment": "poder",
+   "species": "scrap-metal skull hound",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "265000"
+  },
+  {
+   "n": 166,
+   "file": "combinados/166-biomecanica.png",
+   "combination": "Biomecanica",
+   "components": [
+    "industrial",
+    "vida"
+   ],
+   "name": "Cyberhart",
+   "alignment": "poder",
+   "species": "prosthetic-hearted fawn",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "266000"
+  },
+  {
+   "n": 167,
+   "file": "combinados/167-exoesqueleto.png",
+   "combination": "Exoesqueleto",
+   "components": [
+    "industrial",
+    "vigor"
+   ],
+   "name": "Exovigo",
+   "alignment": "poder",
+   "species": "armored-fist ape cub",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "267000"
+  },
+  {
+   "n": 168,
+   "file": "combinados/168-armaria.png",
+   "combination": "Armaria",
+   "components": [
+    "industrial",
+    "marcial"
+   ],
+   "name": "Anvilar",
+   "alignment": "poder",
+   "species": "anvil-backed boar",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "268000"
+  },
+  {
+   "n": 169,
+   "file": "combinados/169-relojoaria.png",
+   "combination": "Relojoaria",
+   "components": [
+    "industrial",
+    "tempo"
+   ],
+   "name": "Tickory",
+   "alignment": "poder",
+   "species": "clock-faced tortoise",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "269000"
+  },
+  {
+   "n": 170,
+   "file": "combinados/170-britadeira.png",
+   "combination": "Britadeira",
+   "components": [
+    "industrial",
+    "som"
+   ],
+   "name": "Jackhamu",
+   "alignment": "poder",
+   "species": "jackhammer woodpecker",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "270000"
+  },
+  {
+   "n": 171,
+   "file": "combinados/171-prensa.png",
+   "combination": "Prensa",
+   "components": [
+    "industrial",
+    "gravidade"
+   ],
+   "name": "Pressavo",
+   "alignment": "poder",
+   "species": "steel-block rhino calf",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "271000"
+  },
+  {
+   "n": 172,
+   "file": "combinados/172-estacao_orbital.png",
+   "combination": "Estacao Orbital",
+   "components": [
+    "industrial",
+    "espaco"
+   ],
+   "name": "Orbitexa",
+   "alignment": "poder",
+   "species": "ring-orbit space hamster",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "272000"
+  },
+  {
+   "n": 173,
+   "file": "combinados/173-brinquedo.png",
+   "combination": "Brinquedo de Corda",
+   "components": [
+    "industrial",
+    "fada"
+   ],
+   "name": "Windolly",
+   "alignment": "poder",
+   "species": "wind-up ballerina doll cat",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "273000"
+  },
+  {
+   "n": 174,
+   "file": "combinados/174-queimada.png",
+   "combination": "Queimada",
+   "components": [
+    "planta",
+    "fogo"
+   ],
+   "name": "Cinderaf",
+   "alignment": "harmonia",
+   "species": "charred-grass fox",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "274000"
+  },
+  {
+   "n": 175,
+   "file": "combinados/175-mangue.png",
+   "combination": "Mangue",
+   "components": [
+    "planta",
+    "agua"
+   ],
+   "name": "Mangrovi",
+   "alignment": "harmonia",
+   "species": "mangrove crab",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "275000"
+  },
+  {
+   "n": 176,
+   "file": "combinados/176-raiz_profunda.png",
+   "combination": "Raiz Profunda",
+   "components": [
+    "planta",
+    "terra"
+   ],
+   "name": "Rootoro",
+   "alignment": "harmonia",
+   "species": "stone-cracking root mole",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "276000"
+  },
+  {
+   "n": 177,
+   "file": "combinados/177-polen.png",
+   "combination": "Polen",
+   "components": [
+    "planta",
+    "ar"
+   ],
+   "name": "Pollenyx",
+   "alignment": "harmonia",
+   "species": "pollen-puff bee bear",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "277000"
+  },
+  {
+   "n": 178,
+   "file": "combinados/178-fotossintese.png",
+   "combination": "Fotossintese",
+   "components": [
+    "planta",
+    "eletricidade"
+   ],
+   "name": "Photola",
+   "alignment": "harmonia",
+   "species": "electric-veined leaf gecko",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "278000"
+  },
+  {
+   "n": 179,
+   "file": "combinados/179-druidismo.png",
+   "combination": "Druidismo",
+   "components": [
+    "planta",
+    "arcano"
+   ],
+   "name": "Druidow",
+   "alignment": "harmonia",
+   "species": "branch-staff stag fawn",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "279000"
+  },
+  {
+   "n": 180,
+   "file": "combinados/180-fungo.png",
+   "combination": "Fungo",
+   "components": [
+    "planta",
+    "sombra"
+   ],
+   "name": "Sporeko",
+   "alignment": "harmonia",
+   "species": "glowing mushroom snail",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "280000"
+  },
+  {
+   "n": 181,
+   "file": "combinados/181-girassol.png",
+   "combination": "Girassol",
+   "components": [
+    "planta",
+    "luz"
+   ],
+   "name": "Sunflor",
+   "alignment": "harmonia",
+   "species": "sunflower-maned lion cub",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "281000"
+  },
+  {
+   "n": 182,
+   "file": "combinados/182-espinheiro.png",
+   "combination": "Espinheiro",
+   "components": [
+    "planta",
+    "vileza"
+   ],
+   "name": "Thornivo",
+   "alignment": "harmonia",
+   "species": "dripping-thorn porcupine",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "282000"
+  },
+  {
+   "n": 183,
+   "file": "combinados/183-murcha.png",
+   "combination": "Murcha",
+   "components": [
+    "planta",
+    "morte"
+   ],
+   "name": "Witheru",
+   "alignment": "harmonia",
+   "species": "dry-leaf curled caterpillar",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "283000"
+  },
+  {
+   "n": 184,
+   "file": "combinados/184-seiva.png",
+   "combination": "Seiva",
+   "components": [
+    "planta",
+    "vida"
+   ],
+   "name": "Sapiro",
+   "alignment": "harmonia",
+   "species": "amber sap-dripping beetle",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "284000"
+  },
+  {
+   "n": 185,
+   "file": "combinados/185-carvalho.png",
+   "combination": "Carvalho",
+   "components": [
+    "planta",
+    "vigor"
+   ],
+   "name": "Oakrum",
+   "alignment": "harmonia",
+   "species": "acorn-capped bear cub",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "285000"
+  },
+  {
+   "n": 186,
+   "file": "combinados/186-bambu.png",
+   "combination": "Bambu",
+   "components": [
+    "planta",
+    "marcial"
+   ],
+   "name": "Bambuko",
+   "alignment": "harmonia",
+   "species": "bamboo-staff panda cub",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "286000"
+  },
+  {
+   "n": 187,
+   "file": "combinados/187-estacoes.png",
+   "combination": "Estacoes",
+   "components": [
+    "planta",
+    "tempo"
+   ],
+   "name": "Seasona",
+   "alignment": "harmonia",
+   "species": "four-season leaf deer",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "287000"
+  },
+  {
+   "n": 188,
+   "file": "combinados/188-farfalhar.png",
+   "combination": "Farfalhar",
+   "components": [
+    "planta",
+    "som"
+   ],
+   "name": "Rustlea",
+   "alignment": "harmonia",
+   "species": "rustling leaf-fan peacock chick",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "288000"
+  },
+  {
+   "n": 189,
+   "file": "combinados/189-trepadeira.png",
+   "combination": "Trepadeira",
+   "components": [
+    "planta",
+    "gravidade"
+   ],
+   "name": "Creepvi",
+   "alignment": "harmonia",
+   "species": "vine-wrapped sloth",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "289000"
+  },
+  {
+   "n": 190,
+   "file": "combinados/190-arvore_mundo.png",
+   "combination": "Arvore-Mundo",
+   "components": [
+    "planta",
+    "espaco"
+   ],
+   "name": "Worldrae",
+   "alignment": "harmonia",
+   "species": "starry-portal tree sprite",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "290000"
+  },
+  {
+   "n": 191,
+   "file": "combinados/191-jardim_encantado.png",
+   "combination": "Jardim Encantado",
+   "components": [
+    "planta",
+    "fada"
+   ],
+   "name": "Bloomfae",
+   "alignment": "harmonia",
+   "species": "winged-flower butterfly pup",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "291000"
+  },
+  {
+   "n": 192,
+   "file": "combinados/192-estufa.png",
+   "combination": "Estufa",
+   "components": [
+    "planta",
+    "industrial"
+   ],
+   "name": "Greenhu",
+   "alignment": "harmonia",
+   "species": "glass-dome copper turtle",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "292000"
+  },
+  {
+   "n": 193,
+   "file": "combinados/193-chama_demoniaca.png",
+   "combination": "Chama Demoniaca",
+   "components": [
+    "fogo",
+    "vileza",
+    "morte"
+   ],
+   "name": "Hellicorn",
+   "alignment": "poder",
+   "species": "horned skull flame imp",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "293000"
+  },
+  {
+   "n": 194,
+   "file": "combinados/194-paradoxo.png",
+   "combination": "Paradoxo",
+   "components": [
+    "tempo",
+    "arcano",
+    "morte"
+   ],
+   "name": "Paradux",
+   "alignment": "harmonia",
+   "species": "broken hourglass cat",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "294000"
+  },
+  {
+   "n": 195,
+   "file": "combinados/195-big_bang.png",
+   "combination": "Big Bang",
+   "components": [
+    "espaco",
+    "gravidade",
+    "tempo"
+   ],
+   "name": "Bangula",
+   "alignment": "harmonia",
+   "species": "exploding star seed",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "295000"
+  },
+  {
+   "n": 196,
+   "file": "combinados/196-sinfonia.png",
+   "combination": "Sinfonia",
+   "components": [
+    "som",
+    "luz",
+    "vida"
+   ],
+   "name": "Symphonu",
+   "alignment": "harmonia",
+   "species": "treble-clef crowned songbird",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "296000"
+  },
+  {
+   "n": 197,
+   "file": "combinados/197-furacao.png",
+   "combination": "Furacao",
+   "components": [
+    "agua",
+    "ar",
+    "eletricidade"
+   ],
+   "name": "Hurrica",
+   "alignment": "benevolencia",
+   "species": "storm-eye eagle",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "297000"
+  },
+  {
+   "n": 198,
+   "file": "combinados/198-selva.png",
+   "combination": "Selva",
+   "components": [
+    "agua",
+    "terra",
+    "vida"
+   ],
+   "name": "Junglex",
+   "alignment": "benevolencia",
+   "species": "waterfall jungle frog",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "298000"
+  },
+  {
+   "n": 199,
+   "file": "combinados/199-abominacao.png",
+   "combination": "Abominacao",
+   "components": [
+    "sombra",
+    "morte",
+    "vileza"
+   ],
+   "name": "Abomino",
+   "alignment": "poder",
+   "species": "many-eyed shadow blob",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "299000"
+  },
+  {
+   "n": 200,
+   "file": "combinados/200-eclipse.png",
+   "combination": "Eclipse",
+   "components": [
+    "luz",
+    "sombra",
+    "arcano"
+   ],
+   "name": "Eclipsu",
+   "alignment": "benevolencia",
+   "species": "moon-covered sun owl",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "300000"
+  },
+  {
+   "n": 201,
+   "file": "combinados/201-reencarnacao.png",
+   "combination": "Reencarnacao",
+   "components": [
+    "vida",
+    "morte",
+    "arcano"
+   ],
+   "name": "Reborna",
+   "alignment": "benevolencia",
+   "species": "phoenix-butterfly",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "301000"
+  },
+  {
+   "n": 202,
+   "file": "combinados/202-sobrecarga.png",
+   "combination": "Sobrecarga",
+   "components": [
+    "eletricidade",
+    "arcano",
+    "vigor"
+   ],
+   "name": "Overvolt",
+   "alignment": "harmonia",
+   "species": "battery-hearted hamster",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "302000"
+  },
+  {
+   "n": 203,
+   "file": "combinados/203-ascensao.png",
+   "combination": "Ascensao",
+   "components": [
+    "luz",
+    "vida",
+    "vigor"
+   ],
+   "name": "Ascendri",
+   "alignment": "benevolencia",
+   "species": "winged rising spirit",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "303000"
+  },
+  {
+   "n": 204,
+   "file": "combinados/204-nucleo.png",
+   "combination": "Nucleo",
+   "components": [
+    "fogo",
+    "terra",
+    "eletricidade"
+   ],
+   "name": "Coreon",
+   "alignment": "poder",
+   "species": "magma-core armadillo",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "304000"
+  },
+  {
+   "n": 205,
+   "file": "combinados/205-pestilencia.png",
+   "combination": "Pestilencia",
+   "components": [
+    "planta",
+    "morte",
+    "vileza"
+   ],
+   "name": "Pestilo",
+   "alignment": "harmonia",
+   "species": "rotten-flower spore rat",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "305000"
+  },
+  {
+   "n": 206,
+   "file": "combinados/206-maldicao.png",
+   "combination": "Maldicao",
+   "components": [
+    "fada",
+    "sombra",
+    "vileza"
+   ],
+   "name": "Hexelle",
+   "alignment": "benevolencia",
+   "species": "torn-wing hexed fairy bat",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "306000"
+  },
+  {
+   "n": 207,
+   "file": "combinados/207-cyber.png",
+   "combination": "Cyber",
+   "components": [
+    "industrial",
+    "eletricidade",
+    "arcano"
+   ],
+   "name": "Cyberia",
+   "alignment": "poder",
+   "species": "circuit-eyed lynx",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "307000"
+  },
+  {
+   "n": 208,
+   "file": "combinados/208-avatar_de_guerra.png",
+   "combination": "Avatar de Guerra",
+   "components": [
+    "marcial",
+    "vigor",
+    "arcano"
+   ],
+   "name": "Warvatar",
+   "alignment": "poder",
+   "species": "shield knight beast",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "308000"
+  },
+  {
+   "n": 209,
+   "file": "combinados/209-primordial.png",
+   "combination": "Primordial",
+   "components": [
+    "fogo",
+    "agua",
+    "terra",
+    "ar",
+    "eletricidade"
+   ],
+   "name": "Primora",
+   "alignment": "poder",
+   "species": "five-gem pentagon golem pup",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "309000"
+  },
+  {
+   "n": 210,
+   "file": "combinados/210-ciclo.png",
+   "combination": "Ciclo",
+   "components": [
+    "vida",
+    "morte",
+    "luz",
+    "sombra"
+   ],
+   "name": "Cyclos",
+   "alignment": "benevolencia",
+   "species": "leaf-and-skull yin-yang fox",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "310000"
+  },
+  {
+   "n": 211,
+   "file": "combinados/211-nulo.png",
+   "combination": "Nulo",
+   "components": [
+    "fogo",
+    "agua",
+    "terra",
+    "ar",
+    "eletricidade",
+    "arcano",
+    "sombra",
+    "luz",
+    "vileza",
+    "morte",
+    "vida",
+    "vigor",
+    "marcial",
+    "tempo",
+    "som",
+    "gravidade",
+    "espaco",
+    "fada",
+    "industrial",
+    "planta"
+   ],
+   "name": "Nullum",
+   "alignment": "poder",
+   "species": "broken hollow ring wisp",
+   "role": "misto",
+   "realm": "novo",
+   "seed": "311000"
   }
  ]
 }
