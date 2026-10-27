@@ -25,8 +25,9 @@ import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
  * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
  * abrir/fechar, o NPC certo, a fala e a proporção.
  */
-export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, headSlotRef, closeInSheet = false, children }: {
-  areaId: AreaId;
+export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcVoice, headSlotRef, closeInSheet = false, children }: {
+  /** Ausente só quando `npcArt` + `npcVoice` vêm de fora (NPC de FUNÇÃO, ex.: Ambra nas Missões). */
+  areaId?: AreaId;
   /** Id do lote aberto (ex.: `'itens'`, `'torneio'`) — resolve o NPC certo
    *  via `lotNpcArt`. Áreas com folha única (Laboratório/Hall) passam o
    *  próprio id do lote de exemplo. */
@@ -36,6 +37,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   /** Override explícito do NPC (raro — testes/casos sem lote). Sem ele, usa
    *  `lotNpcArt(areaId, lotId)`. */
   npcArt?: string;
+  /** Nome + fala do NPC quando ele NÃO é de lote (NPC de função, `functionNpcVoice`). Sem ele, `lotNpcVoice`. */
+  npcVoice?: { name: string; line: string };
   title: string;
   /** Rótulo acessível do fechar — PT/EN, decidido por quem chama (a `AreaScene` sabe o idioma). */
   closeLabel: string;
@@ -59,8 +62,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   const npcKey = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
   if (!open) return null;
 
-  const npcSrc = npcArt ?? lotNpcArt(areaId, lotId);
-  const npc = lotNpcVoice(areaId, lotId, language);
+  const npcSrc = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
+  const npc = npcVoice ?? (areaId ? lotNpcVoice(areaId, lotId, language) : { name: '', line: '' });
 
   return (
     <div
@@ -137,7 +140,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
           />
           {/* Balão de fala — a fala surge letra a letra (I1, `NpcSpeech`); a altura final
               já fica reservada, então o balão não cresce enquanto ela é dita. */}
-          <NpcSpeech name={npc.name} line={npc.line} speakerKey={lotId ? `${areaId}:${lotId}` : undefined} />
+          <NpcSpeech name={npc.name} line={npc.line} speakerKey={npcVoice ? `fn:${npcVoice.name}` : lotId ? `${areaId}:${lotId}` : undefined} />
         </div>
 
         <div

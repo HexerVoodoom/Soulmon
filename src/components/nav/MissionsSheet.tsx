@@ -1,7 +1,9 @@
 import { Suspense, lazy, useRef, useState } from 'react';
 import type { Language } from '../../utils/i18n';
 import type { CrossingsState } from '../../types/travessias';
-import { ModalSheet } from '../form/FormKit';
+import { AreaSheet } from './AreaSheet';
+import { FUNCTION_NPC_ART } from '../../assets/soulmon/npcs';
+import { functionNpcVoice } from '../../utils/areaNpcVoice';
 import type { WeeklyMission, WeeklyMissionId } from '../../utils/weeklyMissions';
 import type { BuildingQuestsProps } from './BuildingQuestList';
 import { questMarkLabel, strongestMark, type QuestMark } from '../../utils/questMarks';
@@ -12,7 +14,6 @@ import { FirstTimesList, allFirstTimesClaimed, type FirstTimesProps } from './Fi
 import type { GoTarget } from '../../utils/missionTargets';
 import type { MissionNav } from './MissionCard';
 import type { SpecialMissionProps } from './SpecialMissionCard';
-import { FunctionNpcNote } from '../ui/FunctionNpcNote';
 import { FirstDayCard } from '../FirstDayCard';
 import type { FirstDayProgress } from '../../utils/firstDay';
 
@@ -84,8 +85,15 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
     weekly: isPt ? 'Semanal' : 'Weekly',
     achievements: isPt ? 'Conquistas' : 'Achievements',
   };
+  if (!open) return null;
+  /* O MESMO molde dos prédios (`AreaSheet`): NPC grande por cima da folha, por fora, com a fala (pedido do dono, 27/10/2026). O wrapper `fixed` é o de `DailyReportModal`, já que aqui não há a cena. */
   return (
-    <ModalSheet open={open} title={isPt ? 'Missões' : 'Missions'} onClose={onClose} language={language}>
+    <div data-missions-frame style={{ position: 'fixed', inset: 0, zIndex: 200 }}>
+    <AreaSheet
+      open={open} title={isPt ? 'Missões' : 'Missions'} onClose={onClose} language={language}
+      closeLabel={isPt ? 'Fechar' : 'Close'} closeInSheet
+      npcArt={FUNCTION_NPC_ART.onboarding} npcVoice={functionNpcVoice('onboarding', language)}
+    >
       <div data-missions-sheet={tab}>
         <PixelTabs
           variant="compact"
@@ -121,7 +129,6 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
           <Suspense fallback={null}>
             {seen.has('daily') && (
               <div role="tabpanel" hidden={tab !== 'daily'} data-missions-panel="daily">
-                <FunctionNpcNote id="onboarding" language={language} size={48} />
                 {firstDay && (
                   <Section title={isPt ? 'Primeiro dia' : 'First day'} mark={marks.firstDay ?? null} isPt={isPt} id="first-day">
                     <FirstDayCard progress={firstDay} language={language} />
@@ -160,7 +167,8 @@ export function MissionsSheet({ initialTab = 'daily', open, onClose, language, c
           </Suspense>
         </div>
       </div>
-    </ModalSheet>
+    </AreaSheet>
+    </div>
   );
 }
 
