@@ -7479,7 +7479,8 @@ function normalizarMis(r) {
     dayPts: Math.min(MISTERIO_TETO_DIA, int02(r?.dayPts)),
     lastClaim: r?.lastClaim && typeof r.lastClaim.receipt === "string" && r.lastClaim.reward && typeof r.lastClaim.reward === "object" ? { reward: r.lastClaim.reward, receipt: r.lastClaim.receipt } : null,
     ids: (Array.isArray(r?.ids) ? r.ids : []).filter((x2) => x2 && typeof x2.id === "string" && DIA_RE3.test(x2.day)).slice(-MISTERIO_IDS_MAX),
-    sentRound: Number.isInteger(r?.sentRound) && r.sentRound >= 0 ? r.sentRound : null
+    sentRound: Number.isInteger(r?.sentRound) && r.sentRound >= 0 ? r.sentRound : null,
+    converted: r?.converted && typeof r.converted.receipt === "string" && (r.converted.kind === "bits" || r.converted.kind === "honra") && Number.isInteger(r.converted.amount) && r.converted.amount > 0 ? { kind: r.converted.kind, amount: r.converted.amount, receipt: r.converted.receipt, selo: typeof r.converted.selo === "string" ? r.converted.selo : "" } : null
   };
 }
 __name(normalizarMis, "normalizarMis");
@@ -7559,6 +7560,27 @@ async function resgatarMisterio(env, g, save, rng = rngSeguro) {
   return { ok: true, reward, receipt };
 }
 __name(resgatarMisterio, "resgatarMisterio");
+var MISTERIO_HONRA_CONVERSAO = 2;
+async function converterMisterio(env, g, save, rng = rngSeguro) {
+  const c = await coletivo(env, g);
+  const m = c.membros[save];
+  if (!m) return null;
+  const pendente = m.sentRound !== null && m.sentRound < c.rodada;
+  if (!pendente) return m.converted ? { kind: m.converted.kind, amount: m.converted.amount, receipt: m.converted.receipt } : null;
+  const premio = sortearRecompensaMisterio(rng);
+  const rodada = m.sentRound;
+  const receipt = `${g.id}|misc|${rodada}|${save.slice(0, 8)}`;
+  const selo = `${Math.floor(rng() * 1e9)}-${Math.floor(rng() * 1e9)}`;
+  const novo = premio.kind === "bits" ? { kind: "bits", amount: premio.amount } : { kind: "honra", amount: MISTERIO_HONRA_CONVERSAO };
+  m.sentRound = null;
+  m.converted = { ...novo, receipt, selo };
+  await gravarMis(env, g.id, save, m);
+  const gravado = await lerMis(env, g.id, save);
+  const f = gravado.converted;
+  if (!f) return null;
+  return { kind: f.kind, amount: f.amount, receipt: f.receipt };
+}
+__name(converterMisterio, "converterMisterio");
 async function vistaDoMisterio(env, g, eu, hoje) {
   const c = await coletivo(env, g);
   const m = c.membros[eu] ?? normalizarMis(null);
@@ -8112,7 +8134,15 @@ async function handleGuild({ request, env }) {
           if (liberados.some((s) => !scenes.includes(s))) scenes = await unirConjunto(env, coopScenesKey(id), liberados);
         }
       }
-      return json12({ rewards: { pending, scenes, trophyOwned: await conchas() >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID } });
+      let misterio;
+      if (g) {
+        try {
+          misterio = await converterMisterio(env, g, id) ?? void 0;
+        } catch {
+          misterio = void 0;
+        }
+      }
+      return json12({ rewards: { pending, scenes, trophyOwned: await conchas() >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID, ...misterio ? { misterio } : {} } });
     }
     const w = String(body.week ?? "");
     if (!candidatas.includes(w)) return erro("invalid week", 400);
@@ -12989,7 +13019,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-FtPl6M/functionsRoutes-0.07593788032052395.mjs
+// ../.wrangler/tmp/pages-ffGXXq/functionsRoutes-0.8702335802258004.mjs
 var routes = [
   {
     routePath: "/api/account",
