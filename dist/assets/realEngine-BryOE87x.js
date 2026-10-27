@@ -1,1 +1,0 @@
-import{a9 as t}from"./index-ciNQB3dI.js";async function a(e){const o=await t(()=>import("./index-Cxx-WTzk.js"),[]),s={nome:e.nome,elementos:e.elementos,escolas:e.escolas,recursos:e.recursos,talentos:e.talentos,profissoes:e.profissoes,bestiario:[]},r=o.calcularProgressao(s);return{engine:o,personagem:s,prog:r}}export{a as b};
