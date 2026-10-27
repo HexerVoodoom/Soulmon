@@ -564,6 +564,8 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
       .catch(e => { if (vivo.current) setAviso(GUILD_ERROR_KEY[kindOf(e)]); })
       .finally(() => { busy.current = false; if (vivo.current) setOcupado(false); });
   };
+    // O PRÓPRIO jogador (nunca outro membro: os do clã vêm da arte própria deles, `GroveWalkers`); piso = inicial atual.
+    const meuSprite = mySprite || getSpriteForStage('rookie');
     const salaGuerra = war && (
       <SalaGuerra
         guild={g}
@@ -572,14 +574,14 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
         war={war}
         hoje={load.day}
         ocupado={ocupado}
-        mySprite={mySprite || getSpriteForStage('rookie')}
+        mySprite={meuSprite}
         reducedMotion={reducedMotion}
         onBuscar={buscarGuerra}
       />
     );
     const renderPredio = (id: PredioId) => {
       const comum = {
-        saveId, language, t, guild: g, tz: tz.current, reducedMotion, mySprite: mySprite || getSpriteForStage('rookie'),
+        saveId, language, t, guild: g, tz: tz.current, reducedMotion, mySprite: meuSprite,
         onReward: cla!.onReward, onAnnounce: setAnuncio,
       };
       if (id === 'praca') return <SalaPraca {...comum} itens={casa ? { ownedFurniture: casa.ownedFurniture, equippedDecor: casa.equippedDecor } : undefined} />;
@@ -605,12 +607,12 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
               onReward={cla.onReward} onAnnounce={setAnuncio}
               unico={{
                 onEntrar: () => setPanorama(true), metaCumprida: metaDoDiaCumprida, goal: fioGoal, pendentes: pendentesDoDia,
-                cena: arvore => <GroveCena language={language} guild={g} mySprite={mySprite || getSpriteForStage('rookie')} reducedMotion={reducedMotion}>{arvore}</GroveCena>,
+                cena: arvore => <GroveCena language={language} guild={g} mySprite={meuSprite} reducedMotion={reducedMotion}>{arvore}</GroveCena>,
               }}
             />
             {panorama && (
               <Suspense fallback={null}>
-                <GroveFolha saveId={saveId} language={language} guild={g} mySprite={mySprite || getSpriteForStage('rookie')} tz={tz.current} reducedMotion={reducedMotion} arvores={cla.arvores ?? {}} onPlantio={cla.onPlantio} onClose={() => setPanorama(false)} />
+                <GroveFolha saveId={saveId} language={language} guild={g} mySprite={meuSprite} tz={tz.current} reducedMotion={reducedMotion} arvores={cla.arvores ?? {}} onPlantio={cla.onPlantio} onClose={() => setPanorama(false)} />
               </Suspense>
             )}
           </div>
