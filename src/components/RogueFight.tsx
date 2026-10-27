@@ -23,6 +23,7 @@ import { ENERGY_TRIGGER } from '../utils/combate/specials';
 import type { Combatant } from '../utils/combate/curve';
 import type { GroupResult } from '../utils/combate/group';
 import type { Language } from '../utils/i18n';
+import { wildFoeLabel } from '../utils/wildFoeLabel';
 import { rogueFightSetup, type RogueRun } from '../utils/rogueDungeon';
 
 export interface RogueFightProps {
@@ -69,8 +70,8 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   const report = useCallback((won: boolean, hpLeft?: number) => {
     if (reportedRef.current) return;
     reportedRef.current = true;
-    onResult(won, enemy.name, hpLeft ?? 0);
-  }, [onResult, enemy.name]);
+    onResult(won, wildFoeLabel(enemy.stage, isPt), hpLeft ?? 0);
+  }, [onResult, enemy.stage, isPt]);
 
   const round = useCallback((): GroupRound => {
     const f = dungeonFight({ combatant: setup.combatant, family, startShield: setup.startShield }, setup.foe, setup.seed, true);
@@ -120,7 +121,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
           element: petEl, energy: (pronto ? battle.petEnergy : 0) / ENERGY_TRIGGER, status: pronto ? battle.status.me : undefined,
         }}
         foes={[{
-          key: `rogue-${step}`, sprite: enemy.sprite, name: enemy.name, hp: Math.round(Math.max(0, foeHp) * foeMax), maxHp: foeMax,
+          key: `rogue-${step}`, sprite: enemy.sprite, name: wildFoeLabel(enemy.stage, isPt), hp: Math.round(Math.max(0, foeHp) * foeMax), maxHp: foeMax,
           element: foeEl, down: foeHp <= 1e-9,
           energy: setup.foe.special && pronto ? (battle.foeEnergy[0] ?? 0) / ENERGY_TRIGGER : undefined,
           status: pronto ? battle.status.foes[0] : undefined,
@@ -161,7 +162,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
             style={{ position: 'absolute', left: 16, right: 16, bottom: 24, zIndex: 6, pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 'var(--sm2-radius-md, 8px)', background: 'var(--sm2-viewport-bg)', border: '1px solid var(--sm2-viewport-ring)', color: 'var(--sm2-viewport-ink)', fontFamily: 'var(--sm2-font-text)', textAlign: 'center' }}
           >
             <p style={{ margin: 0, fontSize: 'var(--sm2-text-md, 16px)', fontWeight: 700 }}>
-              {won ? (isPt ? `Você venceu ${enemy.name}!` : `You defeated ${enemy.name}!`) : (isPt ? `${enemy.name} venceu.` : `${enemy.name} won.`)}
+              {won ? (isPt ? `Você venceu ${wildFoeLabel(enemy.stage, true)}!` : `You defeated ${wildFoeLabel(enemy.stage, false)}!`) : (isPt ? `${wildFoeLabel(enemy.stage, true)} venceu.` : `${wildFoeLabel(enemy.stage, false)} won.`)}
             </p>
             {!won && <p style={{ margin: 0, fontSize: 'var(--sm2-text-sm, 14px)' }}>{isPt ? 'O dia no Calabouço acaba — volte amanhã.' : 'Your dungeon day ends — come back tomorrow.'}</p>}
             <button type="button" data-rogue-fight-continue onClick={() => report(won, end.hpLeft)} style={{ ...sm2Button('primary'), minHeight: 44 }}>

@@ -59,6 +59,7 @@ import { gateLine, masmorraFloorOpen } from '../utils/gates';
 import { bondLevelFor } from '../utils/bond';
 import type { LText } from '../utils/oracle';
 import type { Language } from '../utils/i18n';
+import { wildFoeLabel } from '../utils/wildFoeLabel';
 
 /**
  * Dungeon minigame — an AUTOMATIC, endless descent, in the full-screen `BattleStage`.
@@ -731,7 +732,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
             cheerPending: pronto ? (battle.meter / CHEER_TAPS_FULL) * (CHEER.energyPerDischarge / ENERGY_TRIGGER) : 0,
           }}
           foes={[{
-            key: `${floor}-${enemyIdx}`, sprite: enemy.sprite, name: enemy.name, hp: Math.round(Math.max(0, foeHpFrac) * foeMax), maxHp: foeMax,
+            key: `${floor}-${enemyIdx}`, sprite: enemy.sprite, name: wildFoeLabel(enemy.stage, isPt), hp: Math.round(Math.max(0, foeHpFrac) * foeMax), maxHp: foeMax,
             element: enemyEl, down: foeHpFrac <= 1e-9,
             // só quem tem especial (o mega) mostra a barra de energia
             energy: enemy.foe.special && pronto ? (battle.foeEnergy[0] ?? 0) / ENERGY_TRIGGER : undefined,
@@ -796,8 +797,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                   eufemismo de velório. O verbo canônico é "parar de insistir". */}
               <p style={phaseTitle}>
                 {isPt
-                  ? `${enemy.name} parou de insistir aqui. O padrão dele reassenta noutro lugar.`
-                  : `${enemy.name} stopped holding here. The pattern settles somewhere else.`}
+                  ? `${wildFoeLabel(enemy.stage, true)} parou de insistir aqui. O padrão dele reassenta noutro lugar.`
+                  : `${wildFoeLabel(enemy.stage, false)} stopped holding here. The pattern settles somewhere else.`}
               </p>
               {/* "+N Bits" e, raramente, o coraçãozinho — o emoji da string virou
                   glifo `favorite` 20 FILL `primary-ink` + "+1 heart" (D-J9). */}

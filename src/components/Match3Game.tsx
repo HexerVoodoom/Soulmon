@@ -25,9 +25,10 @@ import { mulberry32 } from '../utils/combate/rng';
 import { FX_AURA_MS, FX_BURST_MS, FX_NUM_MS, FX_ORB_PX, FX_ORB_PX_BIG, FX_TRAVEL_MS, planFx, powerShots, type FxSlot, type PowerShot } from '../utils/match3Powers';
 import { fxFrame } from '../utils/combatFx';
 import { fxMirror } from '../utils/fxFacing';
-import { DUNGEON_LINE_NAMES, OWN_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
+import { OWN_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
 import { rosterEntryOfKey } from '../utils/enemyRoster';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
+import { wildFoeLabel } from '../utils/wildFoeLabel';
 import { petScaleStyle } from '../utils/spriteScale';
 /* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
 const PET_SCALE_MINIGAME = 1;
@@ -304,9 +305,8 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
     if (pvpRef.current) return isPt ? 'Oponente' : 'Opponent'; // nome de pessoa real nunca aparece
     const e = c.enemies[idx];
     const r = rosterOf(e);
-    if (r) return r.name;
-    const line = e?.line && e.line in OWN_LINE_SPRITES ? e.line : LINES[idx] ?? LINES[0];
-    return DUNGEON_LINE_NAMES[line] ?? 'Soulmon';
+    if (r) return wildFoeLabel(e?.roster, isPt);
+    return wildFoeLabel(ENEMY_STAGES[idx], isPt); // sem roster (linhas próprias): o slot dá a força
   }, [isPt]);
 
   const playerLabel = petName?.trim() || (isPt ? 'Seu Soulmon' : 'Your Soulmon');
@@ -628,7 +628,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
           const ros = rosterOf(e);
           // PVP: arte do adversário (jogador real ou NPC) e o rótulo genérico — o nome do roster/da pessoa nunca aparece
           const src = pvp ? (pvp.sprite ?? ros?.src ?? '') : (ros?.src ?? OWN_LINE_SPRITES[line as keyof typeof OWN_LINE_SPRITES][ENEMY_STAGES[i]]);
-          const enemyName = pvp ? `${isPt ? 'Oponente' : 'Opponent'} ${isPt ? 'nv' : 'Lv'} ${pvp.level}` : (ros?.name ?? DUNGEON_LINE_NAMES[line]);
+          const enemyName = pvp ? `${isPt ? 'Oponente' : 'Opponent'} ${isPt ? 'nv' : 'Lv'} ${pvp.level}` : wildFoeLabel(ros ? e.roster : ENEMY_STAGES[i], isPt);
           const isActive = combat.outcome === 'playing' && combat.active === i;
           const down = e.hp <= 0;
           const icon = elementIcon(e.element);

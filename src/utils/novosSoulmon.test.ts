@@ -77,7 +77,7 @@ describe('os 17 novos Soulmon da masmorra', () => {
       const forma = ['rookie', 'rookie', 'rookie', 'champion', 'ultimate', 'mega'] as const;
       wave.forEach((e, i) => {
         const n = novoSoulmonOfStage(e.stage);
-        if (!n) { expect(e.stage, e.stage).toMatch(/^cmb\d{3}-rookie$/); return; } // rookie de elemento combinado (M10)
+        if (!n) { expect(e.stage, e.stage).toMatch(/^(cmb\d{3}-rookie|[a-z]+-(rookie|champion|ultimate))$/); return; } // rookie de elemento combinado (M10)
         expect(n, e.stage).toBeDefined();
         expect(e.element).toBe(n.element);
         expect(e.name).toBe(n.name(forma[i]));

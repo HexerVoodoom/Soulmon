@@ -3761,6 +3761,12 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 ### `src/utils/enemyRosterData.ts`
 **Dono de:** os 138 rookies de elemento combinado como dados puros (gerado de `assets/soulmon/novos-arquivo/manifest.json`): `[número, slug, nome, elemento 1, elemento 2]`; o elemento de combate é o 1º. **Exports:** `COMBINADOS_DATA`.
 
+### `src/utils/wildFoeLabel.ts`
+**Dono de:** o rótulo exibido de todo Soulmon sem dono (inimigo de masmorra/Fenda/Calabouço; NPC, Torneio, Arena e PVP ficam de fora): estágios menores = "Soulmon selvagem"/"Wild Soulmon"; ultimate/mega/ultra (e o chefe de andar) = "Soulmon desgarrado"/"Stray Soulmon". Decisão do dono, 27/10/2026: nenhum nome próprio na tela; id/arte/chave do bestiário não mudam. **Exports:** `WILD_FOE_STRONG_STAGES`, `wildFoeLabel(tier, isPt)` (aceita estágio puro ou chave `<id>-<estágio>`). No bestiário a célula vista mostra `#<nº da coleção>`.
+
+### `src/utils/enemyRosterData.ts` (INIMIGOS_API_DATA)
+**Dono de (acréscimo 27/10/2026):** os 20 inimigos da API em famílias de estágio (`[id, estágio, nome interno, elemento, nº do banco]`; arte em `assets/soulmon/inimigos-api/<id>-<estágio>.png`, carregada por `INIMIGOS_API_ART` em `enemyRosterArt.ts`; `RosterEntry.kind === 'api'`). Roster total: 17×4 + 138 + 20 = 226.
+
 ### `src/utils/mente/patches.ts`
 **Dono de:** a regra pura da Colcha (id `patches`, EN "Patchwork"): dividir a grade em retângulos, cada um com UMA pista (a área, às vezes a forma). O gerador particiona primeiro e põe as pistas depois, então todo puzzle tem solução; rng por parâmetro.
 **Exports:** `PATCHES_MAX_BITS = 10`, `PATCHES_MIN_SIZE = 4`, `PATCHES_MAX_SIZE = 8`, `PatchShape`, `Rect`, `PatchClue`, `patchesBits`, `patchesForLevel`, `placeRect`, `rectBetween`, `rectHas`, `validatePatches`, `seededRng`.

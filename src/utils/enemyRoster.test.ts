@@ -1,9 +1,12 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   ENEMY_ROSTER, ENEMY_ROSTER_KEYS, ENEMY_STAGE_UNLOCK_LEVEL, maxEnemyStageForLevel, pickEnemy, rosterEntryOfKey, type EnemyStage,
 } from './enemyRoster';
 import { NOVOS_DATA } from './novosSoulmonData';
-import { COMBINADOS_ART } from './enemyRosterArt';
+import { COMBINADOS_ART, INIMIGOS_API_ART } from './enemyRosterArt';
+import { INIMIGOS_API_DATA } from './enemyRosterData';
 import { rosterSpriteOf } from './novosSoulmon';
 import { buildDungeonWave } from './dungeon';
 import { newCombat } from './match3Combat';
@@ -13,8 +16,8 @@ import { mulberry32 } from './combate/rng';
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
 
 describe('roster de inimigos (M10): cobertura', () => {
-  it('17 base × 4 estágios + 138 combinados rookie = 206 entradas, chaves únicas', () => {
-    expect(ENEMY_ROSTER).toHaveLength(17 * 4 + 138);
+  it('17 base × 4 estágios + 138 combinados rookie + 20 da API = 226 entradas, chaves únicas', () => {
+    expect(ENEMY_ROSTER).toHaveLength(17 * 4 + 138 + 20);
     expect(ENEMY_ROSTER_KEYS.size).toBe(ENEMY_ROSTER.length);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'combinado').every(e => e.stage === 'rookie' && e.elements.length === 2)).toBe(true);
   });
@@ -24,6 +27,24 @@ describe('roster de inimigos (M10): cobertura', () => {
     for (const e of ENEMY_ROSTER) {
       expect(rosterSpriteOf(e), e.key).toBeTruthy();
       expect(e.name.length, e.key).toBeGreaterThan(0);
+    }
+  });
+  it('20 inimigos da API: arte 256² alfa binário, elemento existente, sem nome de franquia, nada de sufixo -mon', () => {
+    const api = ENEMY_ROSTER.filter(e => e.kind === 'api');
+    expect(api).toHaveLength(20);
+    expect(Object.keys(INIMIGOS_API_ART).sort()).toEqual(INIMIGOS_API_DATA.map(([id, st]) => `${id}-${st}`).sort());
+    const els = new Set(NOVOS_DATA.map(n => n.element));
+    for (const e of api) {
+      expect(els.has(e.element), e.key).toBe(true);
+      expect(e.name, e.key).not.toMatch(/mon$/i);
+      expect(rosterSpriteOf(e), e.key).toBe(INIMIGOS_API_ART[e.artFile!]);
+    }
+    // famílias de estágio: mesmo id em mais de um estágio, sem repetir o estágio
+    expect(new Set(api.map(e => e.key)).size).toBe(20);
+    expect(api.filter(e => e.id === 'cinderkit').map(e => e.stage).sort()).toEqual(['champion', 'rookie']);
+    for (const [id, st] of INIMIGOS_API_DATA) {
+      const b = readFileSync(join(process.cwd(), 'src/assets/soulmon/inimigos-api', `${id}-${st}.png`));
+      expect([b.readUInt32BE(16), b.readUInt32BE(20), b[25]], `${id}-${st}`).toEqual([256, 256, 6]);
     }
   });
   it('a chave do bestiário não tem hífen no id e cobre elemento+estágio', () => {
@@ -56,7 +77,7 @@ describe('roster de inimigos (M10): progressão', () => {
   it('rookie sorteia também os combinados; `used` evita repetir', () => {
     const ids = new Set<string>();
     for (let i = 1; i <= 400; i++) ids.add(pickEnemy(1, mulberry32(i)).kind);
-    expect([...ids].sort()).toEqual(['base', 'combinado']);
+    expect([...ids].sort()).toEqual(['api', 'base', 'combinado']);
     const used = new Set(ENEMY_ROSTER.filter(e => e.stage === 'rookie').slice(1).map(e => e.id));
     expect(pickEnemy(1, () => 0, { used }).id).toBe(ENEMY_ROSTER.filter(e => e.stage === 'rookie')[0].id);
   });

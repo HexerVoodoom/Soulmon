@@ -2,7 +2,7 @@
  * ROSTER DE INIMIGOS — dono único de "quem pode aparecer, em que estágio e a partir de que level" (M10, 25/10/2026).
  *
  * Existe: 17 criaturas base (1 por elemento) × rookie/champion/ultimate/mega (Ultra é só o chefe da Arena, não sorteia aqui)
- * + 138 rookies de elemento COMBINADO (arte em `assets/soulmon/novos-arquivo/combinados`, só a forma rookie). DADOS PUROS, sem
+ * + 20 inimigos da API (famílias de estágio, 27/10/2026, `INIMIGOS_API_DATA`) + 138 rookies de elemento COMBINADO (arte em `assets/soulmon/novos-arquivo/combinados`, só a forma rookie). DADOS PUROS, sem
  * asset: a arte entra por `enemyRosterArt.ts`/`novosSoulmon.ts`, e a Arena/testes importam este módulo sem puxar PNG.
  *
  * PROGRESSÃO (arte, nunca força): a força do inimigo continua sendo do SLOT da escada (`dungeonFoe`); o level do jogador só
@@ -14,7 +14,7 @@
  * `dungeon.ts`; o id não tem hífen (`novoDataOfStage` corta no 1º).
  */
 import { NOVOS_DATA, novoHasForm, novoFormName, type NovoAttack } from './novosSoulmonData';
-import { COMBINADOS_DATA } from './enemyRosterData';
+import { COMBINADOS_DATA, INIMIGOS_API_DATA } from './enemyRosterData';
 
 export type EnemyStage = 'rookie' | 'champion' | 'ultimate' | 'mega';
 export const ENEMY_STAGES: readonly EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
@@ -32,7 +32,7 @@ export interface RosterEntry {
   key: string;
   id: string;
   stage: EnemyStage;
-  kind: 'base' | 'combinado';
+  kind: 'base' | 'combinado' | 'api';
   /** Elemento de combate (nos combinados, o 1º componente). */
   element: string;
   /** Nos combinados, os dois elementos; nos base, só o próprio. */
@@ -40,8 +40,10 @@ export interface RosterEntry {
   name: string;
   basico: NovoAttack;
   especial: NovoAttack;
-  /** Nos combinados: o `NNN-slug` do arquivo de arte. */
+  /** Nos combinados: o `NNN-slug` do arquivo de arte; nos `api`: `<id>-<estágio>`. */
   artFile?: string;
+  /** Nos `api`: o nº do sprite no banco Higgsfield (rastreio). */
+  bancoN?: number;
 }
 
 const BASE_BY_ELEMENT = Object.fromEntries(NOVOS_DATA.map(n => [n.element, n]));
@@ -64,6 +66,13 @@ function build(): RosterEntry[] {
     out.push({
       key: chaveBestiario(id, 'rookie'), id, stage: 'rookie', kind: 'combinado', element: e1, elements: [e1, e2],
       name, basico: base.basico, especial: base.especial, artFile: `${num}-${slug}`,
+    });
+  }
+  for (const [id, stage, name, el, num] of INIMIGOS_API_DATA) {
+    const base = BASE_BY_ELEMENT[el];
+    out.push({
+      key: chaveBestiario(id, stage), id, stage, kind: 'api', element: el, elements: [el],
+      name, basico: base.basico, especial: base.especial, artFile: `${id}-${stage}`, bancoN: num,
     });
   }
   return out;

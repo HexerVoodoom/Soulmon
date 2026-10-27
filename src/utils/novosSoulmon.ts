@@ -11,7 +11,7 @@ import {
   type NovoData, type NovoStage, type NovoHighStage, type NovoAnyStage, type NovoAttack, type NovoLine,
 } from './novosSoulmonData';
 import { pickEnemy, type EnemyStage, type RosterEntry } from './enemyRoster';
-import { COMBINADOS_ART } from './enemyRosterArt';
+import { COMBINADOS_ART, INIMIGOS_API_ART } from './enemyRosterArt';
 export type { NovoData, NovoStage, NovoHighStage, NovoAnyStage, NovoAttack, NovoLine };
 export { FORMAS_ALTAS, novoDataOfStage, novoHasForm };
 import embritRookie from '../assets/soulmon/novos/fogo-rookie.png';
@@ -161,7 +161,7 @@ export const novoSoulmonOfStage = (stage: string | undefined | null): NovoSoulmo
 
 /** Sprite de uma entrada do roster (base ou combinado), ou `undefined` se a arte não existir. */
 export function rosterSpriteOf(e: RosterEntry): string | undefined {
-  return e.kind === 'base' ? BY_ID[e.id]?.sprite(e.stage) : COMBINADOS_ART[e.artFile ?? ''];
+  return e.kind === 'base' ? BY_ID[e.id]?.sprite(e.stage) : e.kind === 'api' ? INIMIGOS_API_ART[e.artFile ?? ''] : COMBINADOS_ART[e.artFile ?? ''];
 }
 
 export interface DungeonEncounter {
@@ -197,7 +197,7 @@ export function getDungeonEncounter(
   const pref = novoPreferenceOfTier(tier)[0] as EnemyStage;
   const e = pickEnemy(level, rng, { stage: pref, used });
   const n = e.kind === 'base' ? BY_ID[e.id] : undefined;
-  const sprite = n ? n.sprite(e.stage) : COMBINADOS_ART[e.artFile ?? ''];
+  const sprite = n ? n.sprite(e.stage) : rosterSpriteOf(e);
   if (!sprite) return legacy(tier, undefined, rng);
   used.add(e.id);
   return { sprite, name: n ? n.name(e.stage) : e.name, line: e.id, key: e.key, element: e.element, basico: e.basico, especial: e.especial };
