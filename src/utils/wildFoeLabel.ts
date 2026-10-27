@@ -7,8 +7,13 @@
  */
 export const WILD_FOE_STRONG_STAGES: ReadonlySet<string> = new Set(['ultimate', 'mega', 'ultra']);
 
+/** O inimigo é DESGARRADO (estágio forte)? Mesma regra do rótulo; `tier` como em `wildFoeLabel`. */
+export function isStrayFoe(tier: string | undefined | null): boolean {
+  const stage = (tier ?? '').slice((tier ?? '').lastIndexOf('-') + 1);
+  return WILD_FOE_STRONG_STAGES.has(stage);
+}
+
 /** `tier` = estágio/tier puro (`champion`) OU chave `<id>-<estágio>` / `<linha>-<tier>` (pega o último trecho). */
 export function wildFoeLabel(tier: string | undefined | null, isPt: boolean): string {
-  const stage = (tier ?? '').slice((tier ?? '').lastIndexOf('-') + 1);
-  return WILD_FOE_STRONG_STAGES.has(stage) ? (isPt ? 'Soulmon desgarrado' : 'Stray Soulmon') : (isPt ? 'Soulmon selvagem' : 'Wild Soulmon');
+  return isStrayFoe(tier) ? (isPt ? 'Soulmon desgarrado' : 'Stray Soulmon') : (isPt ? 'Soulmon selvagem' : 'Wild Soulmon');
 }

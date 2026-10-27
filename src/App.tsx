@@ -6825,7 +6825,6 @@ export default function App() {
               } : null}
               completedTasks={gameState.completedTasks}
               activityStats={gameState.activityStats}
-              bestiary={gameState.bestiary ?? []}
               language={language}
               gamePoints={gameState.gamePoints}
               totalXP={gameState.totalXP}
@@ -7128,6 +7127,8 @@ export default function App() {
                 metaDoDiaCumprida={dailyTotal > 0 && dailyDone >= dailyTotal}
                 playerDayTz={gameState.playerDayTz}
                 mySprite={minhaCriaturaUrl}
+                bestiary={gameState.bestiary}
+                defeatedElements={gameState.defeatedElements}
                 language={language}
                 embedded
               />

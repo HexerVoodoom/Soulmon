@@ -30,6 +30,8 @@ import { PlayerDetailModal } from './PlayerDetailModal';
 import { RitualDialog } from './ritual/RitualKit';
 import { elementLabel } from '../utils/arena';
 import { CoopPanel } from './CoopPanel';
+import { BestiaryCollection } from './BestiaryCollection';
+import { ElementDex } from './ElementDex';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import { MiniGlass } from './ui/MiniGlass';
@@ -71,6 +73,10 @@ interface LibraryPageProps {
   /** Fixa UMA visão (o Hall tem uma construção por visão): esconde as abas e a
    *  visão `coop` (que agora é a Guilda, outra construção). Sem ela, tudo como antes. */
   view?: 'directory' | 'friends';
+  /** `GameState.bestiary`: chaves `<id>-<estágio>` dos inimigos já vistos — abas Selvagem/Desgarrado (só na visão `directory`). */
+  bestiary?: string[];
+  /** `GameState.defeatedElements`: o dex da aba Elemento (só na visão `directory`). */
+  defeatedElements?: string[];
 }
 
 // Entrada unificada da lista — jogador real ou NPC de teste (ver
@@ -140,7 +146,7 @@ function RowAction({
   );
 }
 
-export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, playerDayTz, mySprite, language, embedded = false, view }: LibraryPageProps) {
+export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, playerDayTz, mySprite, language, embedded = false, view, bestiary, defeatedElements }: LibraryPageProps) {
   const isPt = language === 'pt-BR';
   const [search, setSearch] = useState('');
   const [players, setPlayers] = useState<DirectoryPlayer[] | null>(null);
@@ -152,6 +158,11 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   const [busyId, setBusyId] = useState<string | null>(null);
   const [tabState, setTab] = useState<'directory' | 'friends' | 'coop'>('directory');
   const tab = view ?? tabState;
+  /** 27/10/2026 (dono): a Biblioteca do Hall tem 4 abas — Encontrados (a lista de sempre), Selvagem, Desgarrado e Elemento. */
+  const hallTabs = view === 'directory';
+  const [libTab, setLibTab] = useState<'found' | 'wild' | 'stray' | 'element'>('found');
+  /** Aba que NÃO é a lista de jogadores: some busca, carregamento, vazio e a grade de encontrados. */
+  const outroPainel = hallTabs && libTab !== 'found';
   const [giftedToday, setGiftedToday] = useState<Set<string>>(new Set());
   const [selectedPlayer, setSelectedPlayer] = useState<LibraryEntry | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -322,6 +333,13 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   /** Carregando e por ABA: cada uma tem a sua fonte e o seu `null`. */
   const carregando = list === null;
 
+  const LIB_TABS = [
+    { key: 'found' as const, label: isPt ? 'Encontrados' : 'Encountered' },
+    { key: 'wild' as const, label: isPt ? 'Selvagem' : 'Wild' },
+    { key: 'stray' as const, label: isPt ? 'Desgarrado' : 'Stray' },
+    { key: 'element' as const, label: isPt ? 'Elemento' : 'Element' },
+  ];
+
   const TABS = [
     { key: 'directory' as const, icon: 'person', label: isPt ? 'Todos' : 'All' },
     { key: 'friends' as const, icon: 'volunteer_activism', label: isPt ? `Amigos ${friends.length}/${MAX_FRIENDS}` : `Friends ${friends.length}/${MAX_FRIENDS}` },
@@ -381,7 +399,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       )}
       {tab === 'friends' && addMsg && <p role="status" className="sm2-lib-s" data-friend-add-msg style={{ margin: 0 }}>{addMsg}</p>}
 
-      {tab === 'directory' && (
+      {tab === 'directory' && !outroPainel && (
       <div style={{ position: 'relative' }}>
         <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', display: 'flex', pointerEvents: 'none' }}>
           <Icon name="search" size={24} tone="muted" />
@@ -398,6 +416,38 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
 
       {/* Abas SIS-04 (D-S3): a ativa em `primary-ink` + sublinhado 3px + glifo
           FILL 1; "onde estou" nunca é placa cheia. */}
+      {hallTabs && (
+      <div role="tablist" aria-label={isPt ? 'Seções da Biblioteca' : 'Library sections'} className="sm2-kit-tabs" data-library-tabs>
+        {LIB_TABS.map(item => {
+          const active = libTab === item.key;
+          return (
+            <button
+              key={item.key}
+              type="button"
+              role="tab"
+              id={'sm2-libtab-' + item.key}
+              aria-selected={active}
+              aria-controls="sm2-libpanel"
+              tabIndex={active ? 0 : -1}
+              onClick={() => setLibTab(item.key)}
+              onKeyDown={(e) => {
+                const i = LIB_TABS.findIndex(t => t.key === item.key);
+                const next = e.key === 'ArrowRight' ? LIB_TABS[(i + 1) % LIB_TABS.length] : e.key === 'ArrowLeft' ? LIB_TABS[(i + LIB_TABS.length - 1) % LIB_TABS.length] : null;
+                if (!next) return;
+                e.preventDefault();
+                setLibTab(next.key);
+                document.getElementById('sm2-libtab-' + next.key)?.focus();
+              }}
+              className={active ? 'sm2-kit-tab sm2-kit-tab-on' : 'sm2-kit-tab'}
+              style={{ flex: 1, padding: '0 4px', minWidth: 0, whiteSpace: 'nowrap' }}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+      )}
+
       {!view && (
       <div role="tablist" aria-label={isPt ? 'Filtro de jogadores' : 'Player filter'} className="sm2-kit-tabs">
         {TABS.map(item => {
@@ -420,6 +470,14 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       </div>
       )}
 
+      {/* ── Selvagem / Desgarrado / Elemento (27/10/2026) ── */}
+      {outroPainel && (
+        <div role="tabpanel" id="sm2-libpanel" aria-labelledby={'sm2-libtab-' + libTab} data-library-panel={libTab}>
+          {(libTab === 'wild' || libTab === 'stray') && <BestiaryCollection seen={bestiary} mode={libTab} language={language} />}
+          {libTab === 'element' && <ElementDex defeated={defeatedElements} language={language} />}
+        </div>
+      )}
+
       {/* ── Grupo (Fase 4.3) ── */}
       {tab === 'coop' && (
         <CoopPanel saveId={saveId} language={language} metaDoDiaCumprida={metaDoDiaCumprida} playerDayTz={playerDayTz} mySprite={mySprite} />
@@ -427,12 +485,12 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
 
       {/* O alerta é ÂMBAR (D-S6): filete + tinta `gold-ink` — "tente de novo" é
           convite, não culpa. Nunca `danger`. */}
-      {actionError && tab !== 'coop' && (
+      {actionError && tab !== 'coop' && !outroPainel && (
         <p role="alert" className="sm2-lib-alert">{actionError}</p>
       )}
 
       {/* ── Carregando ── */}
-      {carregando && tab !== 'coop' && (
+      {carregando && tab !== 'coop' && !outroPainel && (
         <p className="sm2-lib-busy">
           <Icon name="sync" size={24} tone="muted" className="animate-spin" />
           {isPt ? 'Procurando jogadores…' : 'Looking for players…'}
@@ -441,7 +499,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
 
       {/* ── Erro / sem rede: nunca confundido com "não há ninguém" ── */}
       {/* O erro de carga e do DIRETORIO; na aba Amigos a falha e por linha. */}
-      {loadError && tab === 'directory' && (
+      {loadError && tab === 'directory' && !outroPainel && (
         <div className="sm2-lib-cstate">
           <Icon name="cloud_off" size={48} tone="muted" />
           <p className="sm2-stats-t">
@@ -459,7 +517,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       )}
 
       {/* ── Vazio: UMA frase, sem ilustração, sem "0 friends" ── */}
-      {list && list.length === 0 && tab !== 'coop' && !(loadError && tab === 'directory') && (
+      {list && list.length === 0 && tab !== 'coop' && !outroPainel && !(loadError && tab === 'directory') && (
         <p className="sm2-lib-s" style={{ textAlign: 'center', padding: '24px 0', margin: 0 }}>
           {tab === 'friends'
             ? (isPt ? 'Você ainda não tem amigos. Digite o nome de alguém acima.' : 'You have no friends yet. Type someone’s name above.')
@@ -471,7 +529,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
         </p>
       )}
 
-      {seenOnly && tab === 'directory' && list && list.length > 0 && (
+      {seenOnly && tab === 'directory' && !outroPainel && list && list.length > 0 && (
         <div className="sm2-lib-grid" data-pet-grid style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 8 }}>
           {list.map(p => {
             const sprite = isSafeSpriteSrc(p.spriteUrl) ? p.spriteUrl : opponentSprite(p);

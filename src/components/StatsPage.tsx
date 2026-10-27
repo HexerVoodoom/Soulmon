@@ -53,7 +53,6 @@ import { PixelIcon } from './ui/PixelIcon';
 import { categoryIconArt } from '../assets/soulmon/icons/categories';
 import { PASSIVE_ICON_ART } from '../assets/soulmon/icones-ui/interacao';
 import { BirthCard } from './BirthCard';
-import { BestiaryCollection } from './BestiaryCollection';
 import type { CarePattern } from '../utils/carePattern';
 import {
   seasonProgress, seasonLabel, seasonMedalStatus,
@@ -133,8 +132,6 @@ export interface StatsPageProps {
   };
   /** Janela de Descanso (`rest.hideMetrics`): esconde números, preserva recompensas. */
   hideMetrics?: boolean;
-  /** `GameState.bestiary`: chaves `<id>-<estágio>` dos inimigos já vistos (M10). */
-  bestiary?: string[];
 }
 
 /**
@@ -190,7 +187,6 @@ export function StatsPage({
   birth,
   season,
   hideMetrics = false,
-  bestiary,
 }: StatsPageProps) {
   const passive = getPassive(petPassive);
   const t = useTranslation(language);
@@ -388,9 +384,7 @@ export function StatsPage({
         )}
 
         {/* ⚰️ 07/10/2026 (dono): "Encounters" (bestiário) e "Forms lived" (álbum) saíram do
-            Santuário do Vínculo. M10 (25/10/2026, pedido do dono): o bestiário VOLTA, agora como `BestiaryCollection`
-            (coleção do roster `enemyRoster.ts`, silhueta para o não visto); o álbum de formas segue fora. */}
-        {bestiary && <BestiaryCollection seen={bestiary} language={language} />}
+            Santuário do Vínculo. 27/10/2026 (dono): o bestiário (`BestiaryCollection`) mora nas abas Selvagem/Desgarrado da Biblioteca; o álbum de formas segue fora. */}
 
 
         {!hideMetrics && feitos.length > 0 && (

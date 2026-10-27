@@ -63,7 +63,7 @@ describe('vitória na masmorra libera o elemento (applyEnemyDefeated)', () => {
     expect(applyEnemyDefeated(a, base.key).defeatedElements).toEqual([base.element]);
   });
   it('sem chave de roster não libera nada', () => {
-    expect(applyEnemyDefeated({ dungeonKills: 0, bestiary: [] }, undefined).defeatedElements).toBeUndefined();
+    expect(applyEnemyDefeated<{ dungeonKills: number; bestiary: string[]; defeatedElements?: string[] }>({ dungeonKills: 0, bestiary: [] }, undefined).defeatedElements).toBeUndefined();
   });
 });
 
