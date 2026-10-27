@@ -69,7 +69,7 @@ describe('o espelho: sempre (para onde a arte olha) × (para onde o golpe vai)',
 
   it('os casos do dono: espaço (inimigo), luz (jogador) e sombra física (inimigo)', () => {
     // projétil que olha à ESQUERDA: o jogador (vai à direita) espelha, o inimigo não
-    for (const el of ['espaco', 'luz']) {
+    for (const el of ['espaco', 'alma']) {
       expect(fxFacing(el, 'orb')).toBe('L');
       expect(fxMirror(el, 'orb', 'right')).toBe(true);
       expect(fxMirror(el, 'orb', 'left')).toBe(false);

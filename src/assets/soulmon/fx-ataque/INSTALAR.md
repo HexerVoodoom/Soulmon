@@ -126,3 +126,7 @@ orb; GPT Image 2.5 Flare, alfa REAL). `fx-espectro`: canônica é a sem `-v`
 
 ## Beta3 — 76 novos (ChatGPT), instalado 26/10/2026
 76 elementos x (6 estados 128² + aura-96) copiados; `fxFacingTable.ts` regerada por `scripts/fx-facing.mjs`.
+
+## Fase 2 — 48 folhas substituídas (ChatGPT), instalado 27/10/2026
+48 elementos (agua_viva … vigor, de `beta3-geradas/fase2-ataques/out`) trocaram os 6 estados 128² + `-aura-96` (aura 128 reduzida a 96 por lanczos), mesmos nomes. Folhas novas vinham em bbox não quadrado: aparadas por alfa, ajustadas a 118 px e centradas em 128² (margem ≥5). `fxFacingTable.ts` regerada (`node scripts/fx-facing.mjs`, 231 elementos; 30 linhas mudaram). Os outros 106 seguem na fila.
+Auras de alento, frenesi, luz, ocaso, solo_profano e vigor ganharam espelho a 30–40% (dest-over) para caber no limite de simetria do `fxFacing.contract.test.ts` (≤12 px); teste de espelho trocou o exemplo `luz` (agora olha à direita) por `alma`.
