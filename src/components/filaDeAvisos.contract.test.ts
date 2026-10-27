@@ -150,7 +150,7 @@ describe('o MARCO DO BOSQUE entra nas duas filas, com posição declarada (Guild
     // ...e a definição dela é `done ≥ heart`, nunca a meta inteira (`dailyTotal`)
     expect(app).toContain('const fioMetaCumprida = dailyTotal > 0 && dailyDone >= heartGoalHoje;');
     expect(app).toContain('const fioGoal = { done: dailyDone, heart: heartGoalHoje, full: dailyTotal };');
-    expect(app).toMatch(/guild=\{\{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, mySprite: minhaCriaturaUrl/);
+    expect(app).toMatch(/guild=\{\{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, pendentesDoDia, mySprite: minhaCriaturaUrl/);
     const sheet = readFileSync('src/components/guild/GuildSheet.tsx', 'utf8');
     expect(sheet).not.toMatch(/heartGoalFor|dailyGoalFor/);
   });

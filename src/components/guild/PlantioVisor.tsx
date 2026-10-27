@@ -162,7 +162,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
               {unico.cena(<ArvoreNaCena stage={v.stage} species={v.species} planted={v.planted} mature={v.mature} />)}
               {/* Entrar: so o icone, sem caixa em volta (regra do app). */}
               <button type="button" data-guild-bosque-entrar onClick={unico.onEntrar} aria-label={t('guild.bosque.entrar')} className="sm2-grove-cena-entrar">
-                <Icon name="arrow_forward" size={28} />
+                <Icon name="arrow_forward" size={32} />
               </button>
             </div>
           ) : (
