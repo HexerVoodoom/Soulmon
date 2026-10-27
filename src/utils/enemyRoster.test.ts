@@ -16,21 +16,21 @@ import { mulberry32 } from './combate/rng';
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
 
 describe('roster de inimigos (M10): cobertura', () => {
-  it('17 base × 4 estágios + 138 combinados rookie + 5 da API (à parte) = 211 entradas, chaves únicas', () => {
-    expect(ENEMY_ROSTER).toHaveLength(17 * 4 + 138 + 5);
+  it('20 base × 4 estágios + 211 combinados rookie + 5 da API (à parte) = 296 entradas, chaves únicas', () => {
+    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 5);
     expect(ENEMY_ROSTER_KEYS.size).toBe(ENEMY_ROSTER.length);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'combinado').every(e => e.stage === 'rookie' && e.elements.length === 2)).toBe(true);
   });
-  it('distribuição: cada elemento base tem 1 representante (17 distintos); os da API ficam à parte e não entram na conta', () => {
+  it('distribuição: cada elemento base tem 1 representante (20 distintos); os da API ficam à parte e não entram na conta', () => {
     const base = ENEMY_ROSTER.filter(e => e.kind === 'base' && e.stage === 'rookie');
-    expect(base).toHaveLength(17);
-    expect(new Set(base.map(e => e.element)).size).toBe(17);
-    expect(new Set(base.map(e => e.id)).size).toBe(17);
+    expect(base).toHaveLength(20);
+    expect(new Set(base.map(e => e.element)).size).toBe(20);
+    expect(new Set(base.map(e => e.id)).size).toBe(20);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'api').every(e => e.kind === 'api')).toBe(true);
   });
   it('todo elemento base aparece em todos os estágios; toda entrada tem arte e nome', () => {
     for (const n of NOVOS_DATA) for (const s of ORDEM) expect(rosterEntryOfKey(`${n.id}-${s}`), `${n.id}-${s}`).toBeDefined();
-    expect(Object.keys(COMBINADOS_ART)).toHaveLength(138);
+    expect(Object.keys(COMBINADOS_ART)).toHaveLength(211);
     for (const e of ENEMY_ROSTER) {
       expect(rosterSpriteOf(e), e.key).toBeTruthy();
       expect(e.name.length, e.key).toBeGreaterThan(0);

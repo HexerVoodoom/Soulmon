@@ -1,5 +1,5 @@
 /**
- * OS 17 NOVOS SOULMON — DADOS PUROS (sem arte; 15/10/2026, REGISTRO §67/§68). Dono único de id, linha, elemento, nomes e
+ * OS 20 NOVOS SOULMON (17 + fada/industrial/planta de 27/10/2026) — DADOS PUROS (sem arte; 15/10/2026, REGISTRO §67/§68). Dono único de id, linha, elemento, nomes e
  * nomes dos golpes. A arte (PNG) é anexada por `novosSoulmon.ts`; este módulo existe para a Arena (`arena.ts`, sem imports
  * de asset) escolher e nomear a criatura.
  *
@@ -57,6 +57,13 @@ export const NOVOS_DATA: readonly NovoData[] = [
     basico: { pt: "Pedrada", en: "Rock Toss" }, especial: { pt: "Tremor", en: "Quake Stomp" } },
   { id: 'zephir', line: 'benevolencia', element: 'ar', rookie: 'Zephir', champion: 'Cirruwing',
     basico: { pt: "Bicada de Vento", en: "Gust Peck" }, especial: { pt: "Ciclone", en: "Cyclone Dive" } },
+  // 27/10/2026: os 3 elementos novos (fada, industrial, planta) viram criatura base, com as 5 formas.
+  { id: 'glimmi', line: 'benevolencia', element: 'fada', rookie: 'Glimmi', champion: 'Fayloom',
+    basico: { pt: "Pó de Fada", en: "Fairy Dust" }, especial: { pt: "Chuva de Brilho", en: "Glitter Storm" } },
+  { id: 'smeltu', line: 'poder', element: 'industrial', rookie: 'Smeltu', champion: 'Cruciblor',
+    basico: { pt: "Jato Fundido", en: "Molten Splash" }, especial: { pt: "Fundição Pesada", en: "Heavy Pour" } },
+  { id: 'brotto', line: 'harmonia', element: 'planta', rookie: 'Brotto', champion: 'Thornhog',
+    basico: { pt: "Espinho de Folha", en: "Leaf Quill" }, especial: { pt: "Brotar", en: "Overgrowth" } },
 ];
 
 /** Nome das formas altas que JÁ têm arte instalada, por criatura. Leva de 15/10/2026 aprovada pelo dono (REGISTRO §78); nomes curtos propostos no tom do jogo (PT = EN, como os das criaturas). */
@@ -78,6 +85,9 @@ export const FORMAS_ALTAS: Readonly<Record<string, Partial<Record<NovoHighStage,
   bubbo: { ultimate: 'Tidalord', mega: 'Oceanor', ultra: 'Abyssarch' },
   pebblo: { ultimate: 'Terraclast', mega: 'Geodon', ultra: 'Tectonarch' },
   zephir: { ultimate: 'Cirrostrix', mega: 'Zenithawk', ultra: 'Aeriarch' },
+  glimmi: { ultimate: 'Sylphine', mega: 'Faeregent', ultra: 'Feyarch' },
+  smeltu: { ultimate: 'Foundrax', mega: 'Smelterion', ultra: 'Forgearch' },
+  brotto: { ultimate: 'Briarmor', mega: 'Thornlord', ultra: 'Florarch' },
 };
 
 export const NOVO_IDS: readonly string[] = NOVOS_DATA.map(n => n.id);

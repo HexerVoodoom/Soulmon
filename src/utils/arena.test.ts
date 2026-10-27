@@ -136,14 +136,12 @@ describe('sorteio estratificado por elemento (06/10/2026)', () => {
     for (let i = 0; i < 6000; i++) {
       for (const e of buildArenaRound(1, 1, rng, POOL)) { cont[e.elements[0]] = (cont[e.elements[0]] ?? 0) + 1; total++; }
     }
-    // fada, industrial e planta (bases desde 25/10/2026) ainda não têm criatura no corpus do bestiário —
-    // lacuna conhecida (curadoria.contract.test.ts); o sorteio estratifica só sobre os elementos presentes,
-    // que seguem sendo 17, então a faixa 1/17 ± não muda.
-    const presentes = CLASS_ELEMENT_ORDER.filter(el => !['fada', 'industrial', 'planta'].includes(el));
-    expect(presentes).toHaveLength(17);
+    // 27/10/2026: fada, industrial e planta ganharam Soulmon base (`novosSoulmonData.ts`): o sorteio estratifica sobre os 20 elementos.
+    const presentes = [...CLASS_ELEMENT_ORDER];
+    expect(presentes).toHaveLength(20);
     const fatias = presentes.map(el => (cont[el] ?? 0) / total);
-    expect(Math.min(...fatias), JSON.stringify(cont)).toBeGreaterThanOrEqual(0.045);
-    expect(Math.max(...fatias), JSON.stringify(cont)).toBeLessThanOrEqual(0.075);
+    expect(Math.min(...fatias), JSON.stringify(cont)).toBeGreaterThanOrEqual(0.035);
+    expect(Math.max(...fatias), JSON.stringify(cont)).toBeLessThanOrEqual(0.065);
   });
 });
 

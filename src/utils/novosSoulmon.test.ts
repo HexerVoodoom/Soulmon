@@ -11,13 +11,13 @@ import { mulberry32 } from './combate/rng';
 
 const DIR = join(process.cwd(), 'src/assets/soulmon/novos');
 
-describe('os 17 novos Soulmon da masmorra', () => {
-  it('um por elemento base, divisão 6/6/5, ids únicos', () => {
-    expect(NOVOS_SOULMON).toHaveLength(17);
-    expect([...NOVOS_SOULMON.map(n => n.element)].sort()).toEqual([...VISUAL_ELEMENTS].sort());
+describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => {
+  it('um por elemento base, divisão 7/7/6, ids únicos', () => {
+    expect(NOVOS_SOULMON).toHaveLength(20);
+    expect([...NOVOS_SOULMON.map(n => n.element)].sort()).toEqual([...VISUAL_ELEMENTS, 'fada', 'industrial', 'planta'].sort());
     const por = (l: string) => NOVOS_SOULMON.filter(n => n.line === l).length;
-    expect([por('poder'), por('harmonia'), por('benevolencia')]).toEqual([6, 6, 5]);
-    expect(new Set(NOVOS_SOULMON.map(n => n.id)).size).toBe(17);
+    expect([por('poder'), por('harmonia'), por('benevolencia')]).toEqual([7, 7, 6]);
+    expect(new Set(NOVOS_SOULMON.map(n => n.id)).size).toBe(20);
   });
 
   it('nomes finais (renomeados), sem -mon, e ataques PT/EN preenchidos', () => {
@@ -30,9 +30,9 @@ describe('os 17 novos Soulmon da masmorra', () => {
     }
   });
 
-  it('arte 256² RGBA, 85 arquivos (17×5 formas) sem órfão, peso < 150 KB', () => {
+  it('arte 256² RGBA, 100 arquivos (20×5 formas) sem órfão, peso < 150 KB', () => {
     const files = readdirSync(DIR).filter(f => f.endsWith('.png'));
-    expect(files).toHaveLength(85);
+    expect(files).toHaveLength(100);
     for (const n of NOVOS_SOULMON) for (const st of ['rookie', 'champion', 'ultimate', 'mega', 'ultra']) expect(files).toContain(`${n.element}-${st}.png`);
     for (const f of files) {
       const b = readFileSync(join(DIR, f));
@@ -45,12 +45,13 @@ describe('os 17 novos Soulmon da masmorra', () => {
 
   it('todo elemento tem FX próprio (sem cair no neutro) e forma de golpe própria', () => {
     for (const n of NOVOS_SOULMON) {
-      expect(fxElementId(n.element)).toBe(n.element);
+      // fada tem FX próprio; planta/industrial ainda usam o da classe (`ORACULO_PARA_CLASSE`: vida/aco) até o alias ser apagado.
+      if (!['planta', 'industrial'].includes(n.element)) expect(fxElementId(n.element)).toBe(n.element);
       expect(elementStrikeForm(n.element, 'basica')).toBeTruthy();
     }
   });
 
-  it('formas altas: as 17 têm ultimate/mega/ultra, com nome PT/EN (iguais), arte própria e sem colisão', () => {
+  it('formas altas: as 20 têm ultimate/mega/ultra, com nome PT/EN (iguais), arte própria e sem colisão', () => {
     const todos = new Set<string>();
     for (const n of NOVOS_SOULMON) {
       expect(NOVOS_DATA.find(d => d.id === n.id)).toBeDefined();
@@ -64,13 +65,13 @@ describe('os 17 novos Soulmon da masmorra', () => {
       }
       for (const nm of [n.rookie, n.champion]) todos.add(nm);
     }
-    expect(todos.size).toBe(17 * 5);
-    expect(new Set(Object.values(FORMAS_ALTAS_ART).flatMap(o => Object.values(o))).size).toBe(51);
+    expect(todos.size).toBe(20 * 5);
+    expect(new Set(Object.values(FORMAS_ALTAS_ART).flatMap(o => Object.values(o))).size).toBe(60);
   });
 
   it('a escada: slots rookie/champion/ultimate/mega = criaturas novas com elemento', () => {
     expect(LADDER_TIERS.map(t => novoPreferenceOfTier(t)[0])).toEqual(['rookie', 'rookie', 'rookie', 'champion', 'ultimate', 'mega']);
-    expect(Object.keys(FORMAS_ALTAS)).toHaveLength(17);
+    expect(Object.keys(FORMAS_ALTAS)).toHaveLength(20);
     for (let seed = 1; seed <= 20; seed++) {
       // M10: a forma de ARTE do slot é limitada pelo level (`enemyRoster.ts`); level 30 libera a escada inteira.
       const wave = buildDungeonWave(1 + seed % 4, 'mega', mulberry32(seed), 30);
@@ -130,10 +131,10 @@ describe('os 17 novos Soulmon da masmorra', () => {
 
 describe('arquivo de ramos e combinados (sem consumidor)', () => {
   const ARQ = join(process.cwd(), 'src/assets/soulmon/novos-arquivo');
-  it('manifest bate com os PNGs (102 ramos + 138 combinados), 256² RGBA, sem órfão', () => {
+  it('manifest bate com os PNGs (120 ramos + 211 combinados), 256² RGBA, sem órfão', () => {
     const m = JSON.parse(readFileSync(join(ARQ, 'manifest.json'), 'utf8'));
-    expect(m.branches).toHaveLength(102);
-    expect(m.combined).toHaveLength(138);
+    expect(m.branches).toHaveLength(120);
+    expect(m.combined).toHaveLength(211);
     const listados = new Set<string>([...m.branches, ...m.combined].map((x: { file: string }) => x.file));
     const reais = [...readdirSync(join(ARQ, 'combinados')).map(f => `combinados/${f}`),
       ...readdirSync(join(ARQ, 'ramos')).flatMap(d => readdirSync(join(ARQ, 'ramos', d)).map(f => `ramos/${d}/${f}`))];
