@@ -42,7 +42,7 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'exploracao:caderno': [0.23, 0.039, 0.768, 0.961], // 18/10/2026 (§88): prédios Caderno/Oficina repintados (faixa D); caixa remedida pelo alfa
   'jogos:salao': [0.017, 0, 0.98, 1],
   'jogos:mente': [0.227, 0.12, 0.773, 0.973],
-  'jogos:dungeon': [0.31, 0, 0.767, 1], // beta3 M3: arte PROVISÓRIA = a da Masmorra; 26/10/2026: cópia sem o pedaço do prédio vizinho à esquerda (`lote-jogos-dungeon`)
+  'jogos:dungeon': [0.087, 0.007, 0.91, 0.993], // 28/10/2026 (dono, 26/10): opção d, Cripta de cristal (`lote-jogos-dungeon-cripta`, alfa > 20)
   'exploracao:refugio': [0.147, 0.12, 0.857, 0.973],
   'laboratorio:evolucao': [0.088, 0.039, 0.91, 0.961],
   'laboratorio:pet': [0.186, 0.039, 0.814, 0.961],

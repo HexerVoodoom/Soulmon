@@ -49,7 +49,7 @@ import bgExploracao from './bg-exploracao.png';
 import bgJogos from './bg-jogos.png';
 // 28/10/2026 (beta3, aprovado pelo dono): prédio PRÓPRIO do Endless Rift (`p2-01-endless-rift`, 512²→300², alfa binário); `lote-exploracao-masmorra.png` fica em disco, sem import.
 import loteEndlessRift from './lote-exploracao-endless-rift.png';
-import loteJogosDungeon from './lote-jogos-dungeon.png';
+import loteJogosDungeon from './lote-jogos-dungeon-cripta.png';
 import lotePpt from './lote-jogos-ppt.png';
 // ⚠️ SEM CONSUMIDOR desde 30/09/2026: `lote-exploracao-dino.png` só emprestava a
 // arte ao Ateliê da Mente, que ganhou prédio próprio. O arquivo fica em disco
