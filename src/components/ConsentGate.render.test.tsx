@@ -6,7 +6,7 @@ import { buildConsentRecord, isConsentCurrent, PRIVACY_VERSION, TERMS_VERSION } 
 
 afterEach(cleanup);
 
-describe('ConsentGate (reaceite, REGISTRO §184)', () => {
+describe('ConsentGate (reaceite, REGISTRO §185)', () => {
   it('só libera "Aceitar" com a caixa marcada e mostra os dois links', () => {
     const onAccept = vi.fn();
     render(<ConsentGate language="pt-BR" onAccept={onAccept} />);

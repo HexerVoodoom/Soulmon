@@ -3,7 +3,7 @@ import { sm2Button } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 
 /**
- * REACEITE DOS TERMOS (QA-13, decisão do dono de 28/10/2026 — REGISTRO §184).
+ * REACEITE DOS TERMOS (QA-13, decisão do dono de 28/10/2026 — REGISTRO §185).
  *
  * Tela BLOQUEANTE para quem já passou do onboarding mas não tem o consentimento da versão ATUAL dos
  * documentos (`isConsentCurrent`): save antigo sem registro, ou aceite de uma versão anterior. Substitui o

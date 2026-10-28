@@ -6822,7 +6822,7 @@ export default function App() {
     );
   }
 
-  /* REACEITE (QA-13, REGISTRO §184): quem já passou do onboarding mas não consentiu à versão ATUAL dos
+  /* REACEITE (QA-13, REGISTRO §185): quem já passou do onboarding mas não consentiu à versão ATUAL dos
      documentos (save antigo sem registro, ou aceite de versão anterior) fica nesta tela até aceitar. Grava o
      registro da versão atual; o banner informativo (#24) deixa de aparecer porque o consentimento passa a ser vigente. */
   if (!isConsentCurrent(gameState.consent)) {

@@ -3521,7 +3521,7 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 **O que falsificaria:** pessoas abrindo o app só para "bater" as 3 janelas, ou o convite virando o motivo de abrir; ver a taxa de atendimento por janela. **Rollback:** remover o `awardBondXP` de `atenderRefeicao` (o evento fica inerte).
 
 
-## 184. Reaceite obrigatório dos Termos/Privacidade + `PRIVACY_VERSION` 2026-10-28 (dono, 28/10/2026; REVOGA a #24 de 21/09/2026)
+## 185. Reaceite obrigatório dos Termos/Privacidade + `PRIVACY_VERSION` 2026-10-28 (dono, 28/10/2026; REVOGA a #24 de 21/09/2026)
 
 **Decisão do dono:** a revisão D2b da política (voz direto no Groq, Gemini de reserva no chat) já está publicada; `PRIVACY_VERSION` sobe para 2026-10-28 e quem já jogava passa a ser obrigado a reaceitar (QA-13).
 
