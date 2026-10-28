@@ -36,6 +36,7 @@ import { kv, kvOrThrow } from './_kv.js';
 import { flagOn } from './_killSwitch.js';
 import { getProfile, putProfile, indexPublicId, claimNick } from './_profile.js';
 import { xpForLevel } from './_bond.js';
+import { fichaStageOf } from './_duel.js';
 import { artLineOrNull, spriteUrlOrNull } from './_artLine.js';
 import { RANKED_GAMES, TIER_CUTS, MAX_SCORE_BY_GAME, submitScore } from './_rankings.js';
 import { SIMULADOS, SIM_EPOCH } from './_simulados.data.js';
@@ -132,6 +133,8 @@ export function saveDoSimulado(p, day) {
     harmonyPoints: peso('harmonia'),
     benevolencePoints: peso('benevolencia'),
     demoCharacterId: artLineOrNull(p.artLine) ?? undefined,
+    // REGISTRO 182: o golpe BÁSICO do duelo usa o elemento do simulado (`elementoDoBasico` lê `elementoDominante.id` da ficha do estágio). Só isso: sem escola/especial, a luta não muda.
+    soulmonSkills: { [fichaStageOf(e.evolutionStage)]: { elementoDominante: { id: p.element } } },
   };
 }
 

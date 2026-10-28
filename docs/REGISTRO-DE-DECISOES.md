@@ -3488,3 +3488,13 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 **Alternativa que perdeu:** reduzir o rookie na geração/prompt (obrigaria regerar ou reprocessar as artes reais e duplicaria a redução); corrigir a flutuação com dado de baseline por sprite em JSON (mais um arquivo para manter, e não cobre arte gerada depois).
 
 **O que falsificaria:** bicho com sombra/cauda/aura opaca embaixo cuja base medida não é o pé (aparece afundado ou alto demais); rookie pequeno demais para tocar. **Rollback:** reverter os commits; `ROOKIE_RENDER_RATIO = 1` desfaz só a redução; sem migração nem campo novo no save.
+
+## 182. O simulado luta com o golpe básico do PRÓPRIO elemento (dono, 28/10/2026)
+
+**Decisão do dono:** simulados são jogadores reais para o jogo; o elemento deles (coerente com a criatura base) vale também no duelo. O `petName` dos simulados NÃO é renomeado.
+
+**O que mudou:** `saveDoSimulado` (`functions/api/_simulados.js`) grava `soulmonSkills[estágio].elementoDominante.id = element`; `duelSide` (`_duel.js`) então publica `fx.elBasica` com esse elemento (`elementoDoBasico`, já espelhada no cliente). Determinístico (função pura de perfil+dia); stats, escola e especial intactos (teste compara o combatente com e sem a ficha). Sem mudança em `_duel.js` nem em `duel.ts`: a paridade cliente/servidor não é tocada.
+
+**Alternativa que perdeu:** deixar `elBasica` nulo e o cliente inventar o elemento por hash do id. **Por que perdeu:** o oponente aparecia com elemento diferente do da Biblioteca.
+
+**O que falsificaria:** simulado com golpe básico visualmente errado ou duelo com resultado diferente do de antes. **Rollback:** remover a linha `soulmonSkills` de `saveDoSimulado` (o motor regrava o save no dia seguinte).

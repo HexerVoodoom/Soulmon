@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { SIMULADOS, ART_LINE_BY_ELEMENT } from './_simulados.data.js';
 import { ART_LINE_IDS } from './_artLine.js';
 import { duelSide } from './_duel.js';
+import { saveDoSimulado } from './_simulados.js';
 import { NOVOS_DATA } from '../../src/utils/novosSoulmonData';
 import { CLASS_ELEMENT_ORDER } from '../../src/utils/soulProfile/types';
 import { STARTER_ELEMENT } from '../../src/utils/starterElements';
@@ -30,5 +31,15 @@ describe('simulados: elemento coerente com a criatura (determinístico, nunca so
   it('ids únicos e estáveis (sim_0001..sim_0050)', () => {
     expect(SIMULADOS.map(s => s.id)).toEqual(Array.from({ length: 50 }, (_, i) => `sim_${String(i + 1).padStart(4, '0')}`));
     expect(duelSide).toBeTypeOf('function');
+  });
+  it('duelo: fx.elBasica do simulado é o elemento dele, em todo dia, sem mexer nos stats', () => {
+    for (const s of SIMULADOS) for (const dia of ['2026-10-25', '2026-12-01']) {
+      const save = saveDoSimulado(s, dia);
+      const a = duelSide(save), b = duelSide(save);
+      expect(a.fx.elBasica, s.id).toBe(s.element);
+      expect(a).toEqual(b);
+      const { soulmonSkills, ...semSkills } = save;
+      expect(duelSide(semSkills).combatant).toEqual(a.combatant);
+    }
   });
 });
