@@ -504,8 +504,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              'Elementos importam na Arena, nos Duelos e no Combina 3: um golpe cujo elemento contra-ataca o do outro lado vale um golpe a menos ("Super eficiente!"), e o inverso leva um golpe a mais ("Pouco eficiente"). Sem elemento em um dos lados, nada muda.',
-              'Elements matter in the Arena, Duels and Combine 3: a strike whose element counters the opposing element lands one hit sooner ("Super effective!"), and the reverse takes one hit longer ("Not very effective"). No element on either side means no change.',
+              'Elementos importam na Arena e no Combina 3 (não nos Duelos nem na Guerra): um golpe cujo elemento contra-ataca o do outro lado vale um golpe a menos ("Super eficiente!"), e o inverso leva um golpe a mais ("Pouco eficiente"). Sem elemento em um dos lados, nada muda.',
+              'Elements matter in the Arena and Combine 3 (not in Duels or the War): a strike whose element counters the opposing element lands one hit sooner ("Super effective!"), and the reverse takes one hit longer ("Not very effective"). No element on either side means no change.',
             )}
           </p>
           <p style={para}>

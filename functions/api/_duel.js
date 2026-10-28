@@ -41,7 +41,6 @@ import { bondLevelFor } from './_bond.js';
 import { talentAttrBonus, talentCheerScale, talentStartEnergy, talentDotResist } from './_talents.js';
 import { equipAttrBonus } from './_equipment.js';
 import { fichaJornadaFamilia } from './_fichaJornada.js';
-import { aplicarElementosDuelo } from './_elementoBase.js';
 
 export { PVP_HP_SCALE };
 
@@ -240,11 +239,9 @@ export function duelSeed(...parts) {
  * @returns {{ events: any[], winner: 'me' | 'opp' | 'draw', hpMe: number, hpOpp: number, timeMe: number, timeOpp: number }}
  */
 export function simulateDuel({ me, opp, seed, taps }) {
-  // Vantagem elemental (dono, 27/10/2026): o golpe basico de cada lado contra o elemento do outro move +-1 golpe exibido. Vale tambem para a Guerra de Guildas (usa esta funcao).
-  const { meCombatant, oppCombatant } = aplicarElementosDuelo(me, opp);
   const g = fightSteps(
-    { combatant: meCombatant, special: me.special, dotResist: me.dotResist },
-    { combatant: oppCombatant, special: opp.special, dotResist: opp.dotResist },
+    { combatant: me.combatant, special: me.special, dotResist: me.dotResist },
+    { combatant: opp.combatant, special: opp.special, dotResist: opp.dotResist },
     { seed: seed >>> 0, hpScale: PVP_HP_SCALE, startEnergy: [cleanStartEnergy(me.startEnergy), cleanStartEnergy(opp.startEnergy)], cheer: duelCheerEvents(taps, 0, me.cheerScale) },
   );
   const events = [];

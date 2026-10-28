@@ -37,7 +37,6 @@ import { playDefeat, playVictory } from '../utils/sounds';
 import { entrarNaSuperficie } from '../utils/musica';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
-import { ElementAdvantageBadge } from './games/ElementAdvantageBadge';
 import {
   fxElementId, impactMs, introMs, prefersReducedMotion, visualElementFor, specialLabel, foeSpecialLabel, duelStatusBoard, stageStatusOf,
   specialLeadMs, specialTailMs, type StageActionKind, type StageStatus,
@@ -45,7 +44,7 @@ import {
 import { avancar as avancarPortao, bloqueiaAplicar, bloqueiaComecar, fechar as fecharPortao, serializarEspeciais, type ConfigDoPortao, type Portao } from '../utils/specialGate';
 import { PVP_HP_SCALE, type FightEvent } from '../utils/combate/fight';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
-import { DUEL_CHEER_BUCKETS, duelElementAdvantage, simulatePvp, type DuelResult, type DuelSide } from '../utils/combate/duel';
+import { DUEL_CHEER_BUCKETS, simulatePvp, type DuelResult, type DuelSide } from '../utils/combate/duel';
 
 // ── Torcida por TIMING (DESATIVADA, guardada para reaproveitar) ───────────────
 /** Duração do anel da torcida; o encontro com o alvo é em `CHEER_TARGET`. */
@@ -322,8 +321,6 @@ export function DuelScreen({
         action={acao}
         hit={golpes}
         title={isPt ? 'Duelo' : 'Duel'}
-        // Selo de vantagem elemental (27/10/2026): o golpe básico de cada lado pela base dominante (o anel só conhece as 20 bases).
-        badge={<ElementAdvantageBadge advantage={duelElementAdvantage(me.fx?.elBasica, opp.fx?.elBasica)} isPt={isPt} />}
         closeLabel={isPt ? 'Sair do duelo' : 'Leave the duel'}
         onClose={() => { if (phase !== 'done') onClose(); }}
         exitConfirm={fimDaLuta ? undefined : {
