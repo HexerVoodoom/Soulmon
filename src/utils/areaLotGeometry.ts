@@ -26,7 +26,7 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'mercado:background': [0.023, 0, 0.973, 1],
   'mercado:conquistas': [0.253, 0.027, 0.75, 0.973],
   // O Soulsmith (07/10/2026): a oficina de lava do domínio Fogo.
-  'forja:ferreiro': [0.04, 0.08, 0.963, 0.94],
+  'forja:ferreiro': [0.131, 0, 0.871, 0.742],
   // O Restaurante em obra (14/10/2026): andaimes e tijolos, alfa > 20.
   'mercado:restaurante': [0.027, 0.277, 0.97, 0.97],
   'arena:torneio': [0.073, 0, 0.927, 1],
@@ -37,18 +37,18 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'exploracao:passeio': [0.243, 0.12, 0.76, 0.973],
   // Prédios próprios desde 04/10/2026 (antes reusavam o Observatório e a Biblioteca).
   // 07/10/2026 (escolha do dono): Oficina = santuário Akasha (torre estreita), Caderno = santuário do Pântano, Amigos = abrigo da Terra — bbox do alfa > 20.
-  'forja:oficina': [0.264, 0.039, 0.734, 0.961],
+  'forja:oficina': [0.207, 0.102, 0.793, 0.742],
   // 11/10/2026: chalé `-campina` (alfa > 20), no lugar do santuário do Pântano ([0.13, 0.027, 0.867, 0.983]).
-  'forja:caderno': [0.23, 0.039, 0.768, 0.961], // 18/10/2026 (§88): prédios Caderno/Oficina repintados (faixa D); caixa remedida pelo alfa
+  'forja:caderno': [0.209, 0, 0.793, 0.742], // 18/10/2026 (§88): prédios Caderno/Oficina repintados (faixa D); caixa remedida pelo alfa
   'jogos:salao': [0.017, 0, 0.98, 1],
   'jogos:mente': [0.227, 0.12, 0.773, 0.973],
   'exploracao:dungeon': [0.087, 0.007, 0.91, 0.993], // 28/10/2026 (dono, 26/10): opção d, Cripta de cristal (`lote-jogos-dungeon-cripta`, alfa > 20)
-  'forja:refugio': [0.147, 0.12, 0.857, 0.973],
-  'laboratorio:evolucao': [0.088, 0.039, 0.91, 0.961],
-  'laboratorio:stats': [0.238, 0.039, 0.762, 0.955],
+  'forja:refugio': [0.109, 0, 0.893, 0.742],
+  'laboratorio:evolucao': [0.174, 0, 0.826, 0.742],
+  'laboratorio:stats': [0.184, 0, 0.818, 0.742],
   'laboratorio:perfil': [0.02, 0.487, 0.98, 0.97], // P2b (14/10/2026): `lote-laboratorio-perfil` (espelho-d'água da alma, alfa > 20)
   // D-50 (19/10/2026): Biblioteca e Círculo de Amigos mudaram do Hall para o Laboratório. W5 (19/10/2026): arte nova do Clã/Feira/Grove/Evolução/Arquivo/Vínculo/Amigos/Guerra/Caderno/Oficina — 512², recorte da bbox + ~4% de margem, caixa medida com alfa > 20.
-  'laboratorio:biblioteca': [0.027, 0.03, 0.973, 0.973],
+  'laboratorio:biblioteca': [0.117, 0, 0.883, 0.742],
   'hall:grove': [0.127, 0.039, 0.871, 0.961],
   'hall:guilda': [0.137, 0.039, 0.863, 0.961],
 };
