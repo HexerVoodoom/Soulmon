@@ -292,7 +292,7 @@ export function functionNpcVoice(id: FunctionNpcId, language: Language): { name:
 export type ExtraNpcId =
   | 'forja' | 'treino' | 'cacadora' | 'guarda' | 'feras' | 'cura'
   | 'mercenaria' | 'navegadora' | 'barda' | 'venenos' | 'arqueira' | 'sacerdotisa'
-  | 'lua' | 'ferreiro' | 'ferreira';
+  | 'lua' | 'ferreiro' | 'ferreira' | 'arauto';
 
 export interface ExtraNpcVoice extends AreaNpcVoice {
   officePt: string;
@@ -376,6 +376,12 @@ export const EXTRA_NPC_VOICE: Record<ExtraNpcId, ExtraNpcVoice> = {
     namePt: 'Kova', nameEn: 'Kova', officePt: 'Ferreira', officeEn: 'Blacksmith',
     linePt: 'Cada peça tem o seu tempo. Eu espero junto com você.',
     lineEn: "Every piece takes its own time. I'll wait it out with you.",
+  },
+  // 28/10/2026 (beta3, `p2-08`): o arauto do ranking — coruja-cervo com sinos e o pergaminho da lista. Sem chamada hoje (não há tela de ranking).
+  arauto: {
+    namePt: 'Tilin', nameEn: 'Tilin', officePt: 'Arauto do ranking', officeEn: 'Herald of the ranking',
+    lineEn: 'The bells ring for everyone who climbed this month. Come and read the scroll whenever you like.',
+    linePt: 'Os sinos tocam para quem subiu neste mês. Venha ler o pergaminho quando quiser.',
   },
 };
 

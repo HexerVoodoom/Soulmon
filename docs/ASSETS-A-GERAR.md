@@ -1,4 +1,4 @@
-# Assets a gerar — lista completa, por família, com uso, formato e prompt
+﻿# Assets a gerar — lista completa, por família, com uso, formato e prompt
 
 > **Data:** 15/09/2026 · **Base:** `INVENTARIO-ASSETS.md` (o que existe, medido) + as decisões do
 > dono D1–D9 (15/09). Este documento é a **fila de trabalho**: cada linha "falta" tem uso,
@@ -659,3 +659,5 @@ Conferência: Pillow (`python -I`), prévia em #08191A (nunca magenta/verde). En
 
 - ✅ 28/10 — 3 mãos do PPT (`r4-05-ppt-{pedra,papel,tesoura}`) → `soulmon/icons/games/hand-{rock,paper,scissors}.png` (troca no lugar; `RPSGame.tsx` já usava).
 - ✅ 28/10 — 4 glifos `p1-09-glifo-*` → `soulmon/icones-ui/{pasta,pasta-aberta,display-luz-acesa,display-luz-apagada}.png`, exportados em `icones-ui/index.ts`; sem consumidor.
+
+**Beta3 (28/10/2026) — INSTALADOS**: `p2-01-endless-rift` (prédio do Endless Rift), `r4-02d` (prédio do Dungeon, opção d do dono), `p2-07` (pódio, sem chamada) e `p2-08` (NPC Arauto/Tilin, sem chamada). Detalhe em `INVENTARIO-ASSETS.md` (seção "Beta3 — prédios e pódio"). Não instalados: `r4-02a/b/c`, `p1-02-dungeon-pedregulho`.

@@ -77,14 +77,14 @@ describe('roster dos chefes (leva poderosos, 01/10/2026)', () => {
   });
 });
 
-describe('15 NPCs extras (12 da leva npcs-femininas + 3 do banco, 01/10/2026)', () => {
+describe('16 NPCs extras (12 da leva npcs-femininas + 3 do banco, 01/10/2026 + o arauto do ranking, 28/10/2026)', () => {
   const ids = Object.keys(EXTRA_NPC_VOICE) as ExtraNpcId[];
 
   it('15 bustos com arte própria (sem colidir com nenhum outro) e voz nos dois idiomas', () => {
-    expect(ids).toHaveLength(15);
-    expect(new Set(Object.values(EXTRA_NPC_ART)).size).toBe(15);
+    expect(ids).toHaveLength(16);
+    expect(new Set(Object.values(EXTRA_NPC_ART)).size).toBe(16);
     for (const id of ids) {
-      expect(EXTRA_NPC_ART[id], id).toMatch(new RegExp(`npc-f-${id}`));
+      expect(EXTRA_NPC_ART[id], id).toMatch(id === 'arauto' ? /npc-ranking-arauto/ : new RegExp(`npc-f-${id}`));
       for (const lang of ['pt-BR', 'en-US'] as const) {
         const v = extraNpcVoice(id, lang);
         expect(v.name).not.toMatch(/mon$/i);

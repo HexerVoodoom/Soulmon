@@ -49,6 +49,8 @@ import bgExploracao from './bg-exploracao.png';
 import bgJogos from './bg-jogos.png';
 // 28/10/2026 (beta3, aprovado pelo dono): prédio PRÓPRIO do Endless Rift (`p2-01-endless-rift`, 512²→300², alfa binário); `lote-exploracao-masmorra.png` fica em disco, sem import.
 import loteEndlessRift from './lote-exploracao-endless-rift.png';
+// 28/10/2026: pódio do ranking (`p2-07`), 512×405. SEM CHAMADA HOJE — nenhum lote/tela de ranking existe em `areaLotGeometry`/`AreaView`.
+export { default as RANKING_PODIUM_ART } from './ranking-podium.png';
 import loteJogosDungeon from './lote-jogos-dungeon-cripta.png';
 import lotePpt from './lote-jogos-ppt.png';
 // ⚠️ SEM CONSUMIDOR desde 30/09/2026: `lote-exploracao-dino.png` só emprestava a

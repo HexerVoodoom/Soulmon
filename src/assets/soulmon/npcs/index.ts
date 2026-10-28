@@ -144,6 +144,7 @@ import npcFSacerdotisa from './npc-f-sacerdotisa.png';
 import npcFLua from './npc-f-lua.png';
 import npcFFerreiro from './npc-f-ferreiro.png';
 import npcFFerreira from './npc-f-ferreira.png';
+import npcRankingArauto from './npc-ranking-arauto.png';
 
 /**
  * NPCs EXTRAS (01/10/2026, leva `npcs-femininas` aprovada pelo dono —
@@ -174,6 +175,7 @@ export const EXTRA_NPC_ART: Record<ExtraNpcId, string> = {
   lua: npcFLua, // Selene
   ferreiro: npcFFerreiro, // Mallo
   ferreira: npcFFerreira, // Kova
+  arauto: npcRankingArauto, // Tilin, arauto do ranking (28/10/2026, beta3 `p2-08`, 768², alfa binário; arquivo `npc-ranking-arauto`)
 };
 
 
