@@ -31,7 +31,7 @@ const CELL = 44;
 const gridStyle = (cols: number): CSSProperties => ({ display: 'grid', gridTemplateColumns: `repeat(${cols}, ${CELL}px)`, gap: 3, justifyContent: 'center', touchAction: 'manipulation' });
 const cellStyle = (on: boolean): CSSProperties => ({
   width: CELL, height: CELL, borderRadius: 8, border: '1px solid var(--sm2-line)', cursor: 'pointer', padding: 0,
-  background: on ? 'var(--sm2-primary-fill)' : 'var(--sm2-surface)', color: on ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)', fontFamily: 'var(--sm2-font-text)', fontWeight: 600,
+  background: on ? 'var(--sm2-primary-fill)' : 'var(--sm2-surface)', color: on ? 'var(--sm2-on-primary)' : 'var(--sm2-ink)', fontFamily: 'var(--sm2-font-text)', fontWeight: 600,
 });
 
 export function FeiraTrailPlay({ language, trail, onSubmit, busy }: FeiraTrailPlayProps) {

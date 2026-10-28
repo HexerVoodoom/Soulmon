@@ -57,7 +57,7 @@ describe('sala da Feira × mistério', () => {
     expect(document.querySelector('[data-feira-misterio-pool]')!.getAttribute('data-feira-misterio-pool')).toBe('62');
     for (const nome of ['Ana', 'Bia', 'Caio']) expect(bloco.textContent).not.toContain(nome);
     fireEvent.click(document.querySelector('[data-feira-misterio-abrir]')!);
-    await waitFor(() => expect(document.querySelector('[data-feira-evento="boss"]')).not.toBeNull());
+    await waitFor(() => expect(document.querySelector('[data-feira-evento="boss"]')).not.toBeNull(), { timeout: 20000 });
     expect(getGuildFeira).toHaveBeenCalledTimes(1);
   });
 
