@@ -33,7 +33,7 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { spriteUrlFacesLeft } from '../../utils/sprites';
 import { fxMirror, orbPose, travelOf } from '../../utils/fxFacing';
-import { petScaleStyle } from '../../utils/spriteScale';
+import { petScaleFor, petScaleStyle, scaleStageOf, visibleFillOf } from '../../utils/spriteScale';
 import { useFeetShift } from '../../hooks/usePetScale';
 import { PixelIcon } from '../ui/PixelIcon';
 import { PixelMeter } from '../pixel/PixelKit';
@@ -59,6 +59,8 @@ export interface StageFighter {
   sprite: string;
   /** Porte do bicho do jogador (`utils/spriteScale.ts`); ausente = 1 (inimigos). Escala com origem nos pés. */
   scale?: number;
+  /** Estágio do INIMIGO (rookie/champion-…): sem `scale`, o palco aplica a regra de render do rookie a 50% (REGISTRO §181). Ausente = 100%. */
+  stage?: string;
   name: string;
   hp: number;
   maxHp: number;
@@ -333,7 +335,10 @@ function Fighter({ f, spot, flip, zIndex, lunge, hitKey, hitDelay, charged }: {
   // (`spriteUrlFacesLeft`) inverte o espelho — senão o bicho luta de costas. Os efeitos (`--flip`, idle) seguem o mesmo valor.
   const espelha = flip !== spriteUrlFacesLeft(f.sprite);
   // Ancora pelo PÉ: o PNG pode ter padding transparente embaixo (o bicho "flutua"); mede a base visível e desce o canvas.
-  const feetDy = useFeetShift(f.sprite, f.scale, spot.size);
+  // Inimigo de estágio rookie: 50% pela regra de render (só rookie; os demais ficam a 100%, como sempre foram).
+  const foeRookie = f.scale === undefined && f.stage !== undefined && scaleStageOf(f.stage) === 'rookie';
+  const scale = foeRookie ? petScaleFor('rookie', String(f.key), visibleFillOf(f.sprite)) : f.scale;
+  const feetDy = useFeetShift(f.sprite, scale, spot.size);
   return (
     <div
       style={{ position: 'absolute', left: spot.x - spot.size / 2, top: spot.y - spot.size * SPRITE_TOP + feetDy, width: spot.size, height: spot.size, zIndex, pointerEvents: 'none', opacity: f.down ? 0.28 : 1, filter: f.down ? 'grayscale(1)' : undefined, transition: 'opacity 300ms' }}
@@ -364,7 +369,7 @@ function Fighter({ f, spot, flip, zIndex, lunge, hitKey, hitDelay, charged }: {
               ['--sm-idle-dur' as string]: flip ? '1.25s' : '1.05s',
               // O palco fixa os lados; a arte de perfil ESQUERDO inverte o espelho (`spriteUrlFacesLeft`), senão luta de costas.
               ...(espelha ? { transform: 'scaleX(-1)' } : null),
-              ...(f.scale !== undefined ? petScaleStyle(f.scale) : null),
+              ...(scale !== undefined ? petScaleStyle(scale) : null),
             } as CSSProperties}
           />
         </div>

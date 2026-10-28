@@ -340,7 +340,7 @@ export function ArenaGame({
           foes={inimigos.map((e, i) => {
             const max = Math.max(1, Math.round(foesLado[i].combatant.hp));
             return {
-              key: i, sprite: sprites[i], name: nomeDe(e), hp: Math.round(Math.max(0, foesHp(i)) * max), maxHp: max,
+              key: i, sprite: sprites[i], stage: e.tier, name: nomeDe(e), hp: Math.round(Math.max(0, foesHp(i)) * max), maxHp: max,
               element: fxElementId(e.elements[0]), down: foesHp(i) <= 1e-9,
               // só quem tem especial (o chefe) mostra a barra de energia
               energy: foesLado[i].special && pronto ? (batalha.foeEnergy[i] ?? 0) / ENERGY_TRIGGER : undefined,

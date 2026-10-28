@@ -76,6 +76,8 @@ export interface DuelScreenProps {
   seed: number;
   petSprite: string;
   oppSprite: string;
+  /** Estágio do oponente (rookie a 50% no render, REGISTRO §181); ausente = 100%. */
+  oppStage?: string;
   petName: string;
   oppName: string;
   isPt: boolean;
@@ -102,7 +104,7 @@ const maxHpOf = (s: DuelSide) => Math.max(1, Math.round(s.combatant.hp * PVP_HP_
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
 export function DuelScreen({
-  me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, petStage = 'rookie', skills, oppElement, onDone, onClose,
+  me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, petStage = 'rookie', oppStage, skills, oppElement, onDone, onClose,
 }: DuelScreenProps) {
   // Música (19/10/2026): a luta (ranqueada ou treino) toca o "Stone Hall Combat" em combate; empilha sobre o torneio e, ao sair, volta a ele.
   useEffect(() => entrarNaSuperficie('duelo'), []);
@@ -317,7 +319,7 @@ export function DuelScreen({
         foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia, opp.fx?.lex)}
         isPt={isPt}
         me={{ key: 'me', sprite: petSprite, scale: petScale, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER, status: status.me, cheerPending: (barra / CHEER.tapsFull) * (CHEER.pvpEnergyPerDischarge / ENERGY_TRIGGER) }}
-        foes={[{ key: 'opp', sprite: oppSprite, name: oppName, hp: Math.round(hpFrac.opp * maxOpp), maxHp: maxOpp, element: oppEl, down: fimDaLuta && hpFrac.opp <= 0, energy: energia.opp / ENERGY_TRIGGER, status: status.opp }]}
+        foes={[{ key: 'opp', sprite: oppSprite, stage: oppStage, name: oppName, hp: Math.round(hpFrac.opp * maxOpp), maxHp: maxOpp, element: oppEl, down: fimDaLuta && hpFrac.opp <= 0, energy: energia.opp / ENERGY_TRIGGER, status: status.opp }]}
         action={acao}
         hit={golpes}
         title={isPt ? 'Duelo' : 'Duel'}

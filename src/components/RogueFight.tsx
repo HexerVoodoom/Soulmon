@@ -121,7 +121,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
           element: petEl, energy: (pronto ? battle.petEnergy : 0) / ENERGY_TRIGGER, status: pronto ? battle.status.me : undefined,
         }}
         foes={[{
-          key: `rogue-${step}`, sprite: enemy.sprite, name: wildFoeLabel(enemy.stage, isPt), hp: Math.round(Math.max(0, foeHp) * foeMax), maxHp: foeMax,
+          key: `rogue-${step}`, sprite: enemy.sprite, stage: enemy.stage, name: wildFoeLabel(enemy.stage, isPt), hp: Math.round(Math.max(0, foeHp) * foeMax), maxHp: foeMax,
           element: foeEl, down: foeHp <= 1e-9,
           energy: setup.foe.special && pronto ? (battle.foeEnergy[0] ?? 0) / ENERGY_TRIGGER : undefined,
           status: pronto ? battle.status.foes[0] : undefined,

@@ -734,7 +734,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
             cheerPending: pronto ? (battle.meter / CHEER_TAPS_FULL) * (CHEER.energyPerDischarge / ENERGY_TRIGGER) : 0,
           }}
           foes={[{
-            key: `${floor}-${enemyIdx}`, sprite: enemy.sprite, name: wildFoeLabel(enemy.stage, isPt), hp: Math.round(Math.max(0, foeHpFrac) * foeMax), maxHp: foeMax,
+            key: `${floor}-${enemyIdx}`, sprite: enemy.sprite, stage: enemy.stage, name: wildFoeLabel(enemy.stage, isPt), hp: Math.round(Math.max(0, foeHpFrac) * foeMax), maxHp: foeMax,
             element: enemyEl, down: foeHpFrac <= 1e-9,
             // só quem tem especial (o mega) mostra a barra de energia
             energy: enemy.foe.special && pronto ? (battle.foeEnergy[0] ?? 0) / ENERGY_TRIGGER : undefined,

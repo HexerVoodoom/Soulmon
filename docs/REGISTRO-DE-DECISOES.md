@@ -3483,6 +3483,8 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 
 **O que mudou:** a regra ganhou nome e dono: `ROOKIE_RENDER_RATIO = 0,5` × `ROOKIE_BASE_TARGET = 0,54` (valor final idêntico, 0,27), com teste de contrato (rookie 50%, demais estágios 100%). Combate: o `Fighter` do `BattleStage` mede a base da caixa visível do PNG (cache por URL, canvas) e desce/sobe o canvas (`feetShiftPx`) para o PÉ tocar a plataforma, em vez de supor que o pé está a 94% do canvas; vale para jogador, simulados, selvagens e desgarrados. Sem medida (jsdom, imagem de outra origem) o deslocamento é 0, o layout histórico. `stageLayout` e o modo `boss` não mudam.
 
+**Decisão do dono (28/10, depois):** a regra vale também nos INIMIGOS de estágio rookie no `BattleStage` (selvagens, simulados, desgarrados): `StageFighter.stage` (Masmorra, Calabouço, Pesadelo, Arena via `tier`, Duelo via `oppStage` opcional); inimigo não-rookie ou sem estágio fica a 100%. NÃO se aplica a Bestiário, avatares e listas (só combate e Home). O Duelo/Torneio ainda não passa `oppStage` (fica a 100% até alguém ligar).
+
 **Alternativa que perdeu:** reduzir o rookie na geração/prompt (obrigaria regerar ou reprocessar as artes reais e duplicaria a redução); corrigir a flutuação com dado de baseline por sprite em JSON (mais um arquivo para manter, e não cobre arte gerada depois).
 
 **O que falsificaria:** bicho com sombra/cauda/aura opaca embaixo cuja base medida não é o pé (aparece afundado ou alto demais); rookie pequeno demais para tocar. **Rollback:** reverter os commits; `ROOKIE_RENDER_RATIO = 1` desfaz só a redução; sem migração nem campo novo no save.
