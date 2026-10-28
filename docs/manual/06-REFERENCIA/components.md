@@ -1843,5 +1843,8 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 ### `src/components/ElementDex.tsx`
 **Dono de:** a aba "Elemento" da Biblioteca (27/10/2026): grade dos 20 base + 190 derivados; trancado = "?" sem nome, ícone nem id no DOM; destrancado abre uma `RitualDialog` com ícone grande, nome, composição (derivado) e forte/fraco contra (o que ainda está trancado ali aparece "?"). **Exports:** `ElementDex({ defeated, language })`, `dexElementName`. **Chamado por:** `LibraryPage.tsx`. **Régua:** `LibraryPage.abas.render.test.tsx`.
 
+### `src/components/EssencesSection.tsx`
+**Dono de:** a seção Essências do Laboratório (aba do pet, logo abaixo dos Sonhos; 28/10/2026): só as com quantidade > 0, cada uma = ícone do próprio elemento (`elementIcon`; `nightmareIcon` no Pesadelo) + quantidade, sem caixa; tocar mostra o nome EN/PT. Sem nenhuma, não renderiza. **Exports:** `EssencesSection({ essences, language })`.
+
 ### `src/components/games/ElementAdvantageBadge.tsx`
 **Dono de:** o selo "Super eficiente!/Pouco eficiente" (EN "Super effective!/Not very effective") a partir de `elementAdvantage` (+1/-1; neutro não renderiza). Vai no slot `badge` do `BattleStage` (Arena, Duelo) e sob o ícone do jogador no Combina 3; textos em `pveTags.ts` (`ELEMENT_ADVANTAGE_TAG`). **Chamado por:** `ArenaGame.tsx`, `DuelScreen.tsx`, `Match3Game.tsx`. **Régua:** `ElementAdvantageBadge.test.tsx`.

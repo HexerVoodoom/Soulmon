@@ -3867,6 +3867,9 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 ### `src/utils/elementDex.ts`
 **Dono de:** o dex de elementos (27/10/2026): o catálogo (20 base + 190 derivados), o id de elemento de um inimigo (`elementIdOfFoe`: composto libera só o composto, nunca as bases), `applyElementsDefeated` (idempotente) e `sanitizeDefeatedElements` (forma segura do campo `defeatedElements`, espelhada no servidor). Começa vazio para todos, sem retroativo. **Chamado por:** `dungeonRewards.ts`, `GameStateContext.tsx`, `Match3Game.tsx`, `ArenaGame.tsx`, `TournamentPage.tsx`, `ElementDex.tsx`. **Régua:** `elementDex.test.ts`, `functions/api/elementDex.parity.test.js`.
 
+### `src/utils/essences.ts`
+**Dono de:** as essências dos elementos (28/10/2026, REGISTRO §183): `GameState.essences` (`{elementId: qtd}`, só cresce, só coleta) e `essenceAway` (contador do dia da descida AUTOMÁTICA, teto `ESSENCE_AWAY_DAILY_CAP` = 30/dia; a luta ativa não tem teto). **Exports:** `essenceQtyOfStage` (rookie 1, champion 2, ultimate/mega 3), `essenceQtyOfBoss` (5..9), `essenceDropOfFoe`, `applyEssences`, `applyEssencesAway`, `sanitizeEssences`, `sanitizeEssenceAway`, `essenceName` (EN/PT). Espelhado em `functions/api/_essences.js` e `_dayCounters.js`.
+
 ### `src/utils/elementDexMatchups.ts`
 **Dono de:** forte contra / fraco contra de um elemento do dex (`elementMatchups`), pelo anel de `arena.ts` e, para derivado, pela base dominante. Separado do `elementDex.ts` para o dex leve não puxar o `arena.ts` para o `App`. **Chamado por:** `ElementDex.tsx`. **Régua:** `elementDex.test.ts`.
 

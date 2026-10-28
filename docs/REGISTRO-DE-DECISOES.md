@@ -3498,3 +3498,13 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 **Alternativa que perdeu:** deixar `elBasica` nulo e o cliente inventar o elemento por hash do id. **Por que perdeu:** o oponente aparecia com elemento diferente do da Biblioteca.
 
 **O que falsificaria:** simulado com golpe básico visualmente errado ou duelo com resultado diferente do de antes. **Rollback:** remover a linha `soulmonSkills` de `saveDoSimulado` (o motor regrava o save no dia seguinte).
+
+## 183. Essências dos elementos: drop do PRÓPRIO elemento, só coleta, teto diário só na descida automática (dono, 28/10/2026)
+
+**Decisão do dono:** todo inimigo derrotado dropa a essência do elemento dele (composto = o composto; Pesadelo = essência de pesadelo). Quantidade: 1 base; estágio forte mais; chefe da Feira mais. Sem teto na luta ativa; a descida AUTOMÁTICA da Fenda tem teto diário. Só coleta (sem uso por ora). Aparece em Laboratório > Arquivo, abaixo dos Sonhos, só as com quantidade > 0, com o ícone do próprio elemento e tooltip com o nome EN/PT.
+
+**O que mudou:** `src/utils/essences.ts` é o dono único: rookie 1, champion 2, ultimate/mega 3 (`ESSENCE_BY_STAGE`); Pesadelo 1/2/3 por raridade (`nightmareRewards.essence`); chefe da Feira `5 + floor(nível/5)` (5..9, `reward.essences` agora é `[{id: elemento do chefe, n}]`, antes gancho vazio); descida automática 30/dia (`ESSENCE_AWAY_DAILY_CAP`, contador `essenceAway {day,count}`). Ligado em: Fenda/Masmorra ativa e idle (`applyEnemyDefeated`), Arena, Combina 3, Desgarrado do Torneio, Pesadelo e Feira. PvP contra jogador (Duelo/Guerra) NÃO dropa. Save: `essences` + `essenceAway` (hidrata tolerante; servidor sanea e torna monotônico: `_essences.js`, `_dayCounters.js`; paridade em `essences.parity.test.js`). O elemento do chefe da Feira é próprio (fora dos 210 do dex): a essência vale pela FORMA do id; sem ícone próprio, a seção mostra o nome. Não mexe nas outras recompensas nem no dex.
+
+**Alternativa que perdeu:** teto diário também na luta ativa (anti-farm geral), e ícone novo "gota/cristal" por essência. **Por que perdeu:** o dono quer a luta ativa livre (o farm é a graça) e sem arte nova; o único ponto sem o jogador olhando é a descida automática.
+
+**O que falsificaria:** jogador que só deixa a Fenda no automático e ainda assim acumula essência sem limite (o teto diário falhou), ou save com `essences` regredindo após sincronizar. **Rollback:** campos aditivos e opcionais: remover as chamadas de `applyEssences`/`applyEssencesAway` e a seção do Laboratório; os campos `essences`/`essenceAway` ficam no save inertes (cliente velho os ignora; servidor continua saneando).
