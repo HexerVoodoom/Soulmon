@@ -153,8 +153,8 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
     setBusy(true); setNote(null);
     try {
       // O servidor recusa resposta mais rápida que o piso do jogo: o cliente ESPERA o que falta antes de enviar.
-      const falta = FEIRA_TRAIL_MIN_MS[trail.game] - (Date.now() - startedAt.current) + SAFETY_MS;
-      if (falta > 0) await api.sleep(falta);
+      const restante = FEIRA_TRAIL_MIN_MS[trail.game] - (Date.now() - startedAt.current) + SAFETY_MS;
+      if (restante > 0) await api.sleep(restante);
       if (!alive.current) return;
       const r = await api.done(saveId, solution, tz);
       if (!alive.current) return;

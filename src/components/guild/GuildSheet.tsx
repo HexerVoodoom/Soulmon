@@ -80,8 +80,7 @@ import { GroveCena } from './GroveCena';
 import { GuerraVisor } from './GuerraVisor';
 import { FeiraVisor } from './FeiraVisor';
 import type { BossFightMe } from './BossFightScreen';
-import { BOSS_ROSTER, bossText } from '../../data/bossRoster';
-import { feiraText } from '../../utils/feiraCopy';
+import { FeiraMisterio } from './FeiraMisterio';
 import type { FeiraCredit } from '../../utils/feiraCredit';
 import { SalaPraca } from './PracaVisor';
 import { SalaPlantio } from './PlantioVisor';
@@ -1261,27 +1260,7 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
           {raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.feira.rodada.botao')}
         </button>
       )}
-      {feira && (() => {
-        const r = feira.resumo;
-        const bossEntry = r.state === 'boss' ? BOSS_ROSTER.find(b => b.id === r.bossId) : undefined;
-        const nomeChefe = bossEntry ? bossText(bossEntry, language === 'pt-BR').name : r.state === 'boss' ? r.bossId : '';
-        return (
-          <div data-feira-misterio data-feira-estado={r.state} style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
-            <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-misterio-linha>
-              {r.state === 'boss' ? feiraText(language, 'room.boss', { name: nomeChefe, level: r.level }) : r.state === 'trail' ? feiraText(language, 'room.trail') : feiraText(language, 'room.rest')}
-            </p>
-            {r.state === 'boss' && (
-              <div role="meter" aria-label={feiraText(language, 'boss.pool')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(r.bossHpPct)} data-feira-misterio-pool={Math.round(r.bossHpPct)}
-                style={{ height: 8, width: 200, borderRadius: 6, background: 'var(--sm2-surface-2)', overflow: 'hidden' }}>
-                <div style={{ width: `${Math.round(r.bossHpPct)}%`, height: '100%', background: 'var(--sm2-primary-fill)' }} />
-              </div>
-            )}
-            <button type="button" data-feira-misterio-abrir disabled={feira.ocupado} aria-disabled={feira.ocupado ? true : undefined} onClick={feira.onAbrir} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline">
-              {feiraText(language, 'room.open')}
-            </button>
-          </div>
-        );
-      })()}
+      {feira && <FeiraMisterio language={language} resumo={feira.resumo} ocupado={feira.ocupado} onAbrir={feira.onAbrir} />}
       {/* UM card, UMA ação (dono, 27/10/2026): a história do que rola na feira, o gesto de mandar, o "fora" e a volta. */}
       {!dissipada && missao && (() => {
         const fora = isMissionAway(missao.state, agora);

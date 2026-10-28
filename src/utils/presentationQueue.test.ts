@@ -204,3 +204,22 @@ describe('D-64 — o INÍCIO DE DIA (REGISTRO §111): ordem e TETO de 3 modais',
     expect(presentationBacklog(ready)).toEqual(['dailyReport', 'levelUp', 'evolveTask', 'groveMilestone']);
   });
 });
+
+describe('feiraEvento (a volta da Missão encontra o Chefe/Desafio)', () => {
+  it('entra na ordem logo depois do retorno da masmorra e antes do início de dia; aviso de gesto, fora do teto', () => {
+    expect(presentationRank('feiraEvento')).toBe(presentationRank('dungeonReturn') + 1);
+    expect(presentationRank('feiraEvento')).toBeLessThan(presentationRank('nightmare'));
+    expect(DAY_START_IDS).not.toContain('feiraEvento');
+    expect(CELEBRATION_IDS).not.toContain('feiraEvento');
+    expect(INVITE_IDS).not.toContain('feiraEvento');
+  });
+  it('UM por vez: quem está na tela não é expulso; o resto espera a vez', () => {
+    expect(pickPresentation(all(['feiraEvento', 'levelUp']))).toBe('feiraEvento');
+    expect(pickPresentation(all(['feiraEvento', 'dungeonReturn']), 'feiraEvento')).toBe('feiraEvento');
+    expect(sessao(all(['levelUp', 'feiraEvento', 'dungeonReturn']))).toEqual(['dungeonReturn', 'feiraEvento', 'levelUp']);
+  });
+  it('INERTE: sem `ready.feiraEvento` (Feira desligada) a fila é a de sempre', () => {
+    expect(sessao(all(['dungeonReturn', 'levelUp']))).toEqual(['dungeonReturn', 'levelUp']);
+    expect(pickPresentation({})).toBe(PRESENTATION_IDLE);
+  });
+});

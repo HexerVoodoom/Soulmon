@@ -4476,11 +4476,10 @@ export default function App() {
 
   /** FEIRA DO CHEFE: credita o que o servidor deu (Emblemas, Bits, troféu) pelos caminhos de sempre. Chamado UMA vez por recibo (`creditFeiraOnce`), fora de updater. */
   const handleFeiraCredit = useCallback((c: FeiraCredit) => {
-    if (c.emblems > 0) earnEmblems(c.emblems);
+    // Emblemas + troféu pelo MESMO caminho do resgate semanal (`handleGuildClaimed`); `grantGuildTrophy` ignora ids que o catálogo do cliente não conhece (ex.: `trophy-boss-*`)
+    if (c.emblems > 0 || c.trophyId) handleGuildClaimed({ emblems: c.emblems, trophyId: c.trophyId });
     if (c.bits > 0) handleClaReward(`${c.receipt}:bits`, [{ kind: 'bits', amount: c.bits }]);
-    // troféu `trophy-boss-<id>` pode não existir no catálogo do cliente: `grantGuildTrophy` só aceita ids conhecidos (o resto é ignorado em silêncio)
-    if (c.trophyId) { const id = c.trophyId; setGameState(prev => grantGuildTrophy(prev, id)); }
-  }, [earnEmblems, handleClaReward, setGameState]);
+  }, [handleGuildClaimed, handleClaReward]);
 
   /** BOSQUE: guarda o pico da árvore da estação (e o ano-ciclo de conclusão). Idempotente: vista igual devolve o MESMO estado. */
   const handleBosquePlantio = useCallback((v: { planted: boolean; mature: boolean; stage: number; season: 'primavera' | 'verao' | 'outono' | 'inverno' }) => {
