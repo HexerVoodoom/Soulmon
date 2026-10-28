@@ -1794,3 +1794,9 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 ### `src/components/mente/MindTutorial.tsx` (beta3)
 **Dono de:** o tutorial de primeira vez dos jogos do Ateliê da Mente: 4 passos curtos por jogo (EN+PT), demonstrações em CSS (quadro fixo com movimento reduzido), "Próximo"/"Pular"/"Entendi, jogar"; reabre sob demanda pelo "Ver o tutorial" do "Como se joga" sem gravar nada. Vive no chunk lazy de cada jogo. O modo desafio do Calabouço não o recebe.
 **Chamado por:** `EcoGame.tsx`, `ZipGame.tsx`, `PatchesGame.tsx`. **Régua:** `mindTutorial.render.test.tsx`.
+
+### `src/components/ElementDex.tsx`
+**Dono de:** a aba "Elemento" da Biblioteca (27/10/2026): grade dos 20 base + 190 derivados; trancado = "?" sem nome, ícone nem id no DOM; destrancado abre uma `RitualDialog` com ícone grande, nome, composição (derivado) e forte/fraco contra (o que ainda está trancado ali aparece "?"). **Exports:** `ElementDex({ defeated, language })`, `dexElementName`. **Chamado por:** `LibraryPage.tsx`. **Régua:** `LibraryPage.abas.render.test.tsx`.
+
+### `src/components/games/ElementAdvantageBadge.tsx`
+**Dono de:** o selo "Super eficiente!/Pouco eficiente" (EN "Super effective!/Not very effective") a partir de `elementAdvantage` (+1/-1; neutro não renderiza). Vai no slot `badge` do `BattleStage` (Arena, Duelo) e sob o ícone do jogador no Combina 3; textos em `pveTags.ts` (`ELEMENT_ADVANTAGE_TAG`). **Chamado por:** `ArenaGame.tsx`, `DuelScreen.tsx`, `Match3Game.tsx`. **Régua:** `ElementAdvantageBadge.test.tsx`.

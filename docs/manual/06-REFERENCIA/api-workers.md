@@ -596,3 +596,6 @@ Fechamento mensal do Endless Rift (M6): Créditos 50/25/10 para o top 3, pagos S
 
 ### `functions/api/rankings.js`
 `/api/rankings` (M8): `POST { id, game, score, period? }` submete (melhor score do período) e `GET ?game=&period=&id=&top=` devolve o top N e a posição/faixa de `id`. As duas exigem ID token que derive o saveId (`authorizeSaveAccess`); rate limit por IP (`LIMIT_IP` 60/min) e por submissão (`LIMIT_SUBMIT` 20/min). Regras em `_rankings.js`.
+
+### `functions/api/_elementDex.js`
+Espelho de `sanitizeDefeatedElements` (`src/utils/elementDex.ts`) para o campo `defeatedElements` do save (dex de elementos, 27/10/2026): só a forma — strings `[a-z_]{2,24}`, sem repetir, teto 210; sem forma de lista o campo é descartado. `save.js` o aplica; nunca recusa o save. Régua: `elementDex.parity.test.js`, `save.elementDex.test.js`.

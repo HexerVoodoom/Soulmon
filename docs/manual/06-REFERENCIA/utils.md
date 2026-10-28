@@ -3832,3 +3832,12 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 ### `src/utils/mente/mindTutorials.ts` (beta3, tutorial dos jogos do Ateliê da Mente)
 **Dono de:** o "visto" do tutorial de primeira vez de cada jogo do Ateliê (Eco do Pet, Trilha do Pet/Zip, Colcha/Patches): `sanitizeMindGameTutorials` (aceita só `true` literal de chave conhecida; lixo vira `{}`) e `markMindGameTutorial` (idempotente). Campo do save: `mindGameTutorials` (`{ eco?, zip?, patches? }`), gravado AO MOSTRAR, com leitura tolerante em `hydrateSave`.
 **Chamado por:** `src/contexts/GameStateContext.tsx`, `src/App.tsx`, `src/components/nav/AreaView.tsx`. **Régua:** `src/components/mente/mindTutorial.render.test.tsx`.
+
+### `src/utils/elementDex.ts`
+**Dono de:** o dex de elementos (27/10/2026): o catálogo (20 base + 190 derivados), o id de elemento de um inimigo (`elementIdOfFoe`: composto libera só o composto, nunca as bases), `applyElementsDefeated` (idempotente) e `sanitizeDefeatedElements` (forma segura do campo `defeatedElements`, espelhada no servidor). Começa vazio para todos, sem retroativo. **Chamado por:** `dungeonRewards.ts`, `GameStateContext.tsx`, `Match3Game.tsx`, `ArenaGame.tsx`, `TournamentPage.tsx`, `ElementDex.tsx`. **Régua:** `elementDex.test.ts`, `functions/api/elementDex.parity.test.js`.
+
+### `src/utils/elementDexMatchups.ts`
+**Dono de:** forte contra / fraco contra de um elemento do dex (`elementMatchups`), pelo anel de `arena.ts` e, para derivado, pela base dominante. Separado do `elementDex.ts` para o dex leve não puxar o `arena.ts` para o `App`. **Chamado por:** `ElementDex.tsx`. **Régua:** `elementDex.test.ts`.
+
+### `src/utils/strayFoes.ts`
+**Dono de:** onde o Soulmon desgarrado aparece como OPONENTE (27/10/2026): a semente de run da Arena que vira Desgarrado (`isStraySeed`, 12%), os 3 cards com no máximo um (`arenaCardSeeds`) e o Desgarrado do dia que preenche o Torneio sem par (`strayForTournament`, estável por conta+dia). Determinístico, nunca `Math.random`. **Chamado por:** `DueloSheet.tsx`, `ArenaGame.tsx`, `TournamentPage.tsx`. **Régua:** `strayFoes.test.ts`.
