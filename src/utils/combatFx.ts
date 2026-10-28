@@ -71,6 +71,11 @@ export function visualElementFor(seedText: string): string {
   return VISUAL_ELEMENTS[h % VISUAL_ELEMENTS.length];
 }
 
+/** O elemento do OPONENTE de um duelo: o que o perfil público dele publica (jogador real ou simulado, mesmo caminho); sem ele, o determinístico pelo id. */
+export function opponentElementFor(opp: { id: string; element?: string | null }): string {
+  return typeof opp.element === "string" && /^[a-z][a-z0-9_-]{0,31}$/.test(opp.element) ? opp.element : visualElementFor(opp.id);
+}
+
 /**
  * O elemento de um inimigo da masmorra/pesadelo: o da criatura nova (`novosSoulmon.ts`) quando ela tem; as linhas antigas
  * (ultimate/mega) seguem com o elemento sorteado pelo `stage`.

@@ -38,14 +38,10 @@ import { MiniGlass } from './ui/MiniGlass';
 import { Field, sm2Button } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 import type { PlayerDayAnchor } from '../utils/playerDay';
-import { readJson, writeJson } from '../utils/safeStorage';
+import { readSeenIds, addSeenId } from '../utils/librarySeen';
+import { writeJson } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 
-/** H17 — os ids já abertos na Biblioteca, lidos com defesa (lixo vira lista vazia). */
-function readSeen(): string[] {
-  const v = readJson<unknown>(STORAGE_KEYS.LIBRARY_SEEN, []);
-  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : [];
-}
 
 interface LibraryPageProps {
   saveId: string;
@@ -182,11 +178,11 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   const [sugestoes, setSugestoes] = useState<string[]>([]);
   /** Pet aberto no painel simples da Biblioteca do Hall. */
   const [selectedPet, setSelectedPet] = useState<LibraryEntry | null>(null);
-  const [seen, setSeen] = useState<string[]>(readSeen);
+  const [seen, setSeen] = useState<string[]>(readSeenIds);
   const markSeen = (id: string) => {
     setSeen(prev => {
       if (prev.includes(id)) return prev;
-      const next = [...prev, id];
+      const next = [...addSeenId(prev, id)];
       writeJson(STORAGE_KEYS.LIBRARY_SEEN, next);
       return next;
     });

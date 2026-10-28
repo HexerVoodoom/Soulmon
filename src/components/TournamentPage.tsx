@@ -52,6 +52,7 @@
  * visor 288×112 da arena e as duas criaturas a 64 na vitória.
  */
 import type { FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
+import { markSeenId } from '../utils/librarySeen';
 import { useEffect, useMemo, useState } from 'react';
 import { entrarNaSuperficie } from '../utils/musica';
 import { createPortal } from 'react-dom';
@@ -79,7 +80,7 @@ import { familyOfSkill } from '../utils/arena';
 import { usePvpTalents } from '../contexts/useTalentBonus';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { stageSkillsFor } from '../utils/soulProfile/ficha/stageSkillsFor';
-import { visualElementFor } from '../utils/combatFx';
+import { visualElementFor, opponentElementFor } from '../utils/combatFx';
 import { getOpponents, playMatchComRetry, playMatch, isFalhaDeRede, startDuel, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
 import { TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
@@ -405,6 +406,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
      sozinhos e o dono torce. Sair antes do fim é DERROTA (`leaveDuel`).
      Sem a ficha (servidor antigo), a partida segue direto como antes. */
   const fight = async (opp: Opponent) => {
+    markSeenId(opp.id); // enfrentou = viu o Soulmon (mesma lista da Biblioteca; simulado entra igual a jogador real)
     if (!(opp.duel && myDuel)) { void resolveMatch(opp, []); return; }
     setFighting(opp.id);
     setFightError(null);
@@ -606,7 +608,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         petElement={petElement}
         petStage={petStage}
         skills={skills}
-        oppElement={visualElementFor(duel.opp.id)}
+        oppElement={opponentElementFor(duel.opp)}
         petName={isPt ? 'Você' : 'You'}
         oppName={duel.opp.petName || duel.opp.name}
         isPt={isPt}

@@ -149,7 +149,7 @@ export const getPlayer = (id: string) =>
   call<{ found: boolean; player?: PlayerDetail }>('player', { params: { id } });
 
 export interface Opponent {
-  id: string; name: string; petName: string; stage: string;
+  id: string; name: string; petName: string; stage: string; element?: string | null;
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
   /** Duelo fantasma v3 (PR5): só o level com que cada um luta (já com o teto S1) — a ficha inteira vem em `duelStart`. */
   duel?: { level: number } | null;
