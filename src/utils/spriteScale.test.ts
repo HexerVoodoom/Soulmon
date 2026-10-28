@@ -139,9 +139,10 @@ describe('toda tela que desenha o bicho do jogador usa o dono único', () => {
     expect(src).not.toMatch(/STAGE_TARGET|SCALE_MIN|BIG_ROOKIE_TARGET/);
   });
 
-  it('o palco de batalha escala só o lutador que traz `scale` (inimigos ficam como estão)', () => {
+  it('o palco de batalha escala o lutador que traz `scale` e o inimigo rookie (`stage`); o resto fica a 100%', () => {
     const src = ler('src/components/games/BattleStage.tsx');
-    expect(src).toMatch(/f\.scale !== undefined \? petScaleStyle\(f\.scale\)/);
+    expect(src).toMatch(/scale !== undefined \? petScaleStyle\(scale\)/);
+    expect(src).toMatch(/scaleStageOf\(f\.stage\) === 'rookie'/);
   });
 
   it('nenhuma tela redeclara a escada de portes (dono único: utils/spriteScale.ts)', () => {
