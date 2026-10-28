@@ -14,7 +14,7 @@ import { lotHitRects } from './areaLotGeometry';
 import { buildingDestination } from '../navigation';
 
 describe('D-50: as listas de lotes', () => {
-  it('o Hall tem EXATAMENTE três prédios (Feira, Grove, Clan Hall) e o Laboratório quatro (#186: sem o Arquivo e o Círculo de Amigos, que viraram seções)', () => {
+  it('o Hall tem EXATAMENTE três prédios (Feira, Grove, Clan Hall) e o Laboratório quatro (#187: sem o Arquivo e o Círculo de Amigos, que viraram seções)', () => {
     expect(hallLots('pt-BR').map(l => l.id).sort()).toEqual(['feira', 'grove', 'guilda']);
     expect(laboratorioLots('pt-BR').map(l => l.id).sort()).toEqual(['biblioteca', 'evolucao', 'perfil', 'stats']);
     expect(Object.keys(BUILDING_GATES).filter(id => id.startsWith('hall.')).sort()).toEqual(['hall.feira', 'hall.grove', 'hall.guilda']);
@@ -89,7 +89,7 @@ describe('D-50: migração do save (idempotente, sem chave nova)', () => {
 });
 
 describe('D-50: atalhos e deep links', () => {
-  it('missão/atalho para a Biblioteca leva ao Laboratório e para os Amigos ao Salão do Clã (id novo ou antigo; #186)', () => {
+  it('missão/atalho para a Biblioteca leva ao Laboratório e para os Amigos ao Salão do Clã (id novo ou antigo; #187)', () => {
     for (const id of ['laboratorio.biblioteca', 'hall.biblioteca']) expect(buildingDestination(id)).toEqual({ kind: 'lot', area: 'laboratorio', lot: 'biblioteca' });
     for (const id of ['laboratorio.amigos', 'hall.amigos']) expect(buildingDestination(id)).toEqual({ kind: 'lot', area: 'hall', lot: 'guilda', section: 'amigos' });
     expect(buildingDestination('hall.grove')).toEqual({ kind: 'lot', area: 'hall', lot: 'grove' });

@@ -16,7 +16,7 @@
  * seriam três regras que divergem em silêncio (footgun 9).
  */
 
-/** As sete áreas do Mapa, na ordem de leitura do Mapa (a Forja, #186 de 28/10/2026, fica embaixo da Exploração, ao lado do Laboratório). */
+/** As sete áreas do Mapa, na ordem de leitura do Mapa (a Forja, #187 de 28/10/2026, fica embaixo da Exploração, ao lado do Laboratório). */
 import { LISTED_QUEST_BUILDINGS } from './utils/buildingQuests';
 import { currentBuildingId } from './utils/gates';
 
@@ -37,7 +37,7 @@ export type ViewType = 'home' | 'map' | `area:${AreaId}` | `page:${MenuPageId}`;
 export type BuildingDestination = { kind: 'missions' } | { kind: 'lot'; area: AreaId; lot: string; section?: string };
 
 /**
- * Prédios que NÃO têm lote próprio no Mapa (#186, 28/10/2026): o id é estável (missão, material, peça do Soulsmith, save), mas a função
+ * Prédios que NÃO têm lote próprio no Mapa (#187, 28/10/2026): o id é estável (missão, material, peça do Soulsmith, save), mas a função
  * mora DENTRO de outro lote. `laboratorio.pet` (o Arquivo) é a seção "Arquivo" do Perfil; `laboratorio.amigos` (o Círculo de Amigos) é a
  * seção "Amigos" do Salão do Clã. Um atalho a esses ids abre o lote-casa já na seção.
  */

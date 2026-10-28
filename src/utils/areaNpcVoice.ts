@@ -48,7 +48,7 @@ const AREA_NPC_VOICE: Record<AreaId, AreaNpcVoice> = {
     linePt: 'A névoa esconde caminhos. A Fenda está logo ali, quando quiser descer.',
     lineEn: 'The mist hides paths. The Endless Rift is right there, whenever you want to go down.',
   },
-  // #186 (28/10/2026): a Forja (produtividade e disciplina). Voz provisória = a da Vitra, a Soulsmith do lote; sem cobrança, sem pressa.
+  // #187 (28/10/2026): a Forja (produtividade e disciplina). Voz provisória = a da Vitra, a Soulsmith do lote; sem cobrança, sem pressa.
   forja: {
     namePt: 'Vitra, a Soulsmith',
     nameEn: 'Vitra, the Soulsmith',

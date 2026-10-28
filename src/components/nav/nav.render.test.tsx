@@ -30,7 +30,7 @@ import { resolve } from 'node:path';
 const mapProps = { bits: 260, emblems: 12, credits: 3 };
 
 describe('MapPage', () => {
-  it('teto: exatamente as 7 áreas, na ordem do dono (a Forja, #186, é a 7ª)', () => {
+  it('teto: exatamente as 7 áreas, na ordem do dono (a Forja, #187, é a 7ª)', () => {
     const { container } = renderWithCss(<MapPage language="en-US" onOpenArea={() => {}} {...mapProps} />);
     const ids = Array.from(container.querySelectorAll('[data-map-area]')).map(b => b.getAttribute('data-map-area'));
     expect(ids).toEqual(['mercado', 'jogos', 'arena', 'exploracao', 'forja', 'laboratorio', 'hall']);

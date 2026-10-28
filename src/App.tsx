@@ -4119,7 +4119,7 @@ export default function App() {
 
   /* A linha de missão de prédio (Caderno) leva ao lote com a folha aberta, como o Passeio (dono, 11/10/2026). */
   const irAoPredioDaMissao = useCallback((id: BuildingId) => {
-    // #186: `buildingLot` é o único que sabe onde cada prédio mora hoje (Arquivo → Perfil, Amigos → Salão do Clã).
+    // #187: `buildingLot` é o único que sabe onde cada prédio mora hoje (Arquivo → Perfil, Amigos → Salão do Clã).
     const dest = buildingLot(id);
     if (!dest) return;
     setMissionsOpen(null);
@@ -4228,7 +4228,7 @@ export default function App() {
   }, [setGameState]);
   const handleRefugeAccept = useCallback(() => {
     setGameState(prev => ({ ...prev, refugeInvite: acceptRefugeInvite(prev.refugeInvite, playerDayIso(new Date(), prev.playerDayTz)) }));
-    // o Refúgio mora na Forja (`forja.refugio`; #186): o convite leva ao prédio dele, com a folha aberta (não à área Jogos)
+    // o Refúgio mora na Forja (`forja.refugio`; #187): o convite leva ao prédio dele, com a folha aberta (não à área Jogos)
     setPendingSheet({ area: 'forja', lot: 'refugio' });
   }, [setGameState]);
   const handleRefugeLaunchConsumed = useCallback(() => setRefugeLaunch(false), []);

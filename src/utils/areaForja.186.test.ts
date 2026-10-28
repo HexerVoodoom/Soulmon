@@ -1,5 +1,5 @@
 /**
- * #186 (28/10/2026, dono) — A FORJA e a nova divisão das áreas: a Forja (7ª área) recebe Oficina, Caderno, Refúgio e Soulsmith; a Exploração recebe
+ * #187 (28/10/2026, dono) — A FORJA e a nova divisão das áreas: a Forja (7ª área) recebe Oficina, Caderno, Refúgio e Soulsmith; a Exploração recebe
  * as masmorras e mantém o Passeio; o Arquivo vira seção do Perfil e o Círculo de Amigos seção do Salão do Clã. Trava: as listas de lotes, os ids que
  * acompanham o lote (migração idempotente, sem chave de storage nova), os atalhos antigos, os portões (o Vínculo de cada prédio é o de antes) e o
  * resolvedor de arte (o arquivo-alvo assume sozinho; sem ele vale o provisório).
@@ -18,7 +18,7 @@ import { resolveMapaZona } from '../assets/soulmon/mapa/zonas';
 
 const ids = (l: { id: string }[]) => l.map(x => x.id).sort();
 
-describe('#186: as áreas e os lotes', () => {
+describe('#187: as áreas e os lotes', () => {
   it('a Forja é a 7ª área, entre a Exploração e o Laboratório, com nome EN/PT', () => {
     expect(AREAS).toHaveLength(7);
     expect(AREAS.indexOf('forja')).toBe(AREAS.indexOf('exploracao') + 1);
@@ -47,7 +47,7 @@ describe('#186: as áreas e os lotes', () => {
   });
 });
 
-describe('#186: os ids de prédio acompanham o lote, e o save antigo migra sozinho', () => {
+describe('#187: os ids de prédio acompanham o lote, e o save antigo migra sozinho', () => {
   const NOVOS: Record<string, string> = {
     'exploracao.oficina': 'forja.oficina', 'exploracao.caderno': 'forja.caderno', 'exploracao.refugio': 'forja.refugio',
     'mercado.ferreiro': 'forja.ferreiro', 'arena.fenda': 'exploracao.fenda', 'jogos.dungeon': 'exploracao.dungeon',
@@ -95,7 +95,7 @@ describe('#186: os ids de prédio acompanham o lote, e o save antigo migra sozin
   });
 });
 
-describe('#186: atalhos', () => {
+describe('#187: atalhos', () => {
   it('prédio movido → lote novo (id antigo ou novo)', () => {
     for (const [velho, area, lot] of [['exploracao.oficina', 'forja', 'oficina'], ['mercado.ferreiro', 'forja', 'ferreiro'], ['arena.fenda', 'exploracao', 'fenda'], ['jogos.dungeon', 'exploracao', 'dungeon'], ['forja.refugio', 'forja', 'refugio']] as const) {
       expect(buildingDestination(velho), velho).toEqual({ kind: 'lot', area, lot });
@@ -117,7 +117,7 @@ describe('#186: atalhos', () => {
   });
 });
 
-describe('#186: demo e arte', () => {
+describe('#187: demo e arte', () => {
   it('na demo, a Forja segue como as outras (sem bloqueio) e os Amigos seguem fora (Salão do Clã bloqueado)', () => {
     expect(DEMO_BLOCKED_LOTS).not.toHaveProperty('forja');
     expect(isDemoBlockedLot('hall', 'guilda')).toBe(true);

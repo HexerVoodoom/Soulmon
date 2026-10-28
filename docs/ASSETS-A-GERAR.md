@@ -673,7 +673,7 @@ Conferência: Pillow (`python -I`), prévia em #08191A (nunca magenta/verde). En
 |---|---|---|---|
 | NPC-N sereia-pintora (corpo inteiro, 768×1296) | `E:/novos npcs/hf_20261014_162920_19e8f11a-4fe0-40c3-b9af-89b15cff7639.png` (cópia em `E:/Soulmon-assets/higgsfield-banco/novos-npcs/`) | Fundo é degradê colorido com vinheta e brilho, sem alfa. Flood-fill (tol. 6 e 14) tira só o fundo externo; sobram bolsões marrom/oliva entre cabelo, asas e cauda, e o azul-escuro do vestido e o marrom da bolsa têm o tom do fundo (remoção global comeria a personagem). Não instalada, para não entrar recorte sujo. | Regerar sereia-pintora com fundo transparente real (`gpt_image_2_5` flare, `--background transparent`; molde NPC-BUSTO/corpo inteiro). Precisa do PC livre / ChatGPT. Depois: `npc-n-sereiaPintora.png` + entrada em `NOVO_NPC_VOICE`/`NOVO_NPC_ART`. |
 
-## 21. A Forja e a nova divisão das áreas (pedido do dono, 28/10/2026, REGISTRO #186)
+## 21. A Forja e a nova divisão das áreas (pedido do dono, 28/10/2026, REGISTRO #187)
 
 **Como funciona:** a arte final tem **nome-alvo fixo** na pasta de cada família. Enquanto o arquivo NÃO existe, vale a arte provisória (reaproveitada); no dia em que ele cair na pasta com o nome certo, assume SOZINHO (resolvedores `resolveArt` em `src/assets/soulmon/areas/index.ts` e `resolveMapaZona` em `src/assets/soulmon/mapa/zonas.ts`; sem editar código). Todos com **alfa real** (regra `assets-transparencia-real`), pelo ChatGPT desktop, receita `GUIA-CONSISTENCIA-2026-09-23.md` (`[PRÉDIO]`/`[MAPA-ISO]`/`[NPC-BUSTO]`). Depois de instalar um prédio novo, **remedir** `LOT_ART_BOUNDS` (`utils/areaLotGeometry.ts`; o contrato `areaLotGeometry.contract.test.ts` diz os números) e conferir `left/top/width` em 5 viewports.
 

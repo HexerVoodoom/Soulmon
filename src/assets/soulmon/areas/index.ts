@@ -38,7 +38,7 @@ export const MERCADO_LOT_ART = {
 } as const;
 
 // W5 (19/10/2026): a Guerra foi repintada (coliseu em pedra petróleo com bandeiras vermelhas, sem ossos/grifo; escolha padrão `arena-guerra-a`, 512², alfa real). A versão de 18/10 (grifo e serpente de ossos) saiu do bundle.
-// #186 (28/10/2026): a Fenda Sem Fim voltou para a Exploração (`EXPLORACAO_LOT_ART.fenda`).
+// #187 (28/10/2026): a Fenda Sem Fim voltou para a Exploração (`EXPLORACAO_LOT_ART.fenda`).
 export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, guerra: loteGuerra } as const;
 
 // ── Exploração e Jogos (F5, PR #118) ───────────────────────────────────────
@@ -83,7 +83,7 @@ export const PLAY_AREA_BG = { exploracao: bgExploracao, jogos: bgJogos } as cons
 // `passeio` (30/09/2026, leva lotes-v2): a ilha flutuante com arco de raízes.
 export const EXPLORACAO_LOT_ART = { passeio: lotePasseio, fenda: loteEndlessRift, dungeon: loteJogosDungeon } as const;
 
-// ── Arte que o dono vai gerar (#186, 28/10/2026) — RESOLVEDOR ─────────────────────────────────────────────
+// ── Arte que o dono vai gerar (#187, 28/10/2026) — RESOLVEDOR ─────────────────────────────────────────────
 // Cada arte nova tem um NOME-ALVO fixo nesta pasta. Enquanto o arquivo NÃO existe, vale a arte provisória (reaproveitada); no dia em que o
 // arquivo cair aqui com o nome certo, ele assume SOZINHO — sem editar código. O glob é ESTREITO de propósito (só os nomes-alvo): um glob
 // largo empacotaria os PNG que ficam em disco fora do bundle (orçamento de bytes). Lista exata de tamanhos/posições: docs/ASSETS-A-GERAR.md §15.
@@ -93,7 +93,7 @@ export function resolveArt(nome: string, provisoria: string): string {
   return ARTE_NOVA[`./${nome}.png`] ?? provisoria;
 }
 
-// ⚒️ A FORJA (#186, 28/10/2026): fundo e prédios provisórios reaproveitados da Exploração/Mercado; nomes-alvo da arte final: `bg-forja.png` e `lote-forja-<atividade>.png`.
+// ⚒️ A FORJA (#187, 28/10/2026): fundo e prédios provisórios reaproveitados da Exploração/Mercado; nomes-alvo da arte final: `bg-forja.png` e `lote-forja-<atividade>.png`.
 export const FORJA_BG = resolveArt('bg-forja', bgExploracao);
 export const FORJA_LOT_ART = {
   oficina: resolveArt('lote-forja-oficina', loteOficina),
@@ -133,7 +133,7 @@ import loteBiblioteca from './lote-hall-biblioteca.png';
 import loteGuilda from './lote-hall-guilda-luz.png';
 
 // D-50 (19/10/2026): a Biblioteca e o Círculo de Amigos mudaram do Hall para o Laboratório — a arte é a mesma de antes.
-// #186 (28/10/2026): sem o Arquivo (`pet`) e o Círculo de Amigos (viraram seções do Perfil e do Salão do Clã). Biblioteca, Vínculo e Centro de Evolução ganham prédios novos: nomes-alvo
+// #187 (28/10/2026): sem o Arquivo (`pet`) e o Círculo de Amigos (viraram seções do Perfil e do Salão do Clã). Biblioteca, Vínculo e Centro de Evolução ganham prédios novos: nomes-alvo
 // `lote-lab-biblioteca-v2.png`, `lote-lab-vinculo-v2.png`, `lote-lab-evolucao-v2.png` (resolvedor acima).
 export const LABORATORIO_LOT_ART = {
   evolucao: resolveArt('lote-lab-evolucao-v2', loteEvolucao),

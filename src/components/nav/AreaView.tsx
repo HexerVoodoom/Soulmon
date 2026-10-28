@@ -153,7 +153,7 @@ export interface AreaViewProps {
   /** Abre a folha de um lote ao montar (missão da Home → o lugar dela, ex.:
    *  `'passeio'`, `'torneio'`). One-shot: o `App` limpa pelo `onInitialSheetConsumed`. */
   initialSheet?: string;
-  /** A SEÇÃO dentro do lote aberto por `initialSheet` (#186): `'arquivo'` no Perfil, `'amigos'` no Salão do Clã (atalhos de `BUILDING_HOME`). */
+  /** A SEÇÃO dentro do lote aberto por `initialSheet` (#187): `'arquivo'` no Perfil, `'amigos'` no Salão do Clã (atalhos de `BUILDING_HOME`). */
   initialSection?: string;
   onInitialSheetConsumed?: () => void;
   language: Language;
@@ -252,7 +252,7 @@ export interface AreaViewProps {
   };
 }
 
-/** Abas de SEÇÃO dentro de um lote que absorveu a função de outro prédio (#186): Perfil | Arquivo e Clã | Amigos. Mesmo visual das abas da Biblioteca (`sm2-kit-tab`). */
+/** Abas de SEÇÃO dentro de um lote que absorveu a função de outro prédio (#187): Perfil | Arquivo e Clã | Amigos. Mesmo visual das abas da Biblioteca (`sm2-kit-tab`). */
 function SectionTabs<K extends string>({ label, items, active, onPick }: { label: string; items: { key: K; label: string }[]; active: K; onPick: (k: K) => void }) {
   return (
     <div role="tablist" aria-label={label} className="sm2-kit-tabs" data-section-tabs style={{ marginBottom: 12 }}>
@@ -328,7 +328,7 @@ export function AreaView(props: AreaViewProps) {
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
   useEffect(() => { if (props.initialSheet) { if (!initialLock && !initialDemoBlocked) onVisitBuilding?.(`${area}.${props.initialSheet}` as BuildingId); onInitialSheetConsumed?.(); } }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  // #186: um atalho a `laboratorio.pet` (Arquivo) abre o Perfil JÁ na seção Arquivo — a visita do prédio do Arquivo conta como antes.
+  // #187: um atalho a `laboratorio.pet` (Arquivo) abre o Perfil JÁ na seção Arquivo — a visita do prédio do Arquivo conta como antes.
   const [guildaSection, setGuildaSection] = useState<'cla' | 'amigos'>(props.initialSection === 'amigos' && !initialDemoBlocked ? 'amigos' : 'cla');
   useEffect(() => {
     if (area === 'laboratorio' && props.initialSheet && !initialLock) {
@@ -411,7 +411,7 @@ export function AreaView(props: AreaViewProps) {
   }
 
   const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setGame(g); };
-  /** A Fenda Sem Fim (a antiga Masmorra): mora na Exploração (#186, 28/10/2026; esteve na Arena de beta3 N10 até então); o jogo abre em tela cheia sobre a cena da área. */
+  /** A Fenda Sem Fim (a antiga Masmorra): mora na Exploração (#187, 28/10/2026; esteve na Arena de beta3 N10 até então); o jogo abre em tela cheia sobre a cena da área. */
   const renderMasmorra = () => {
     const { play } = props;
     const exitGame = () => setGame(null);
@@ -606,7 +606,7 @@ export function AreaView(props: AreaViewProps) {
   // Laboratório; Biblioteca / Círculo de Amigos / Salão da Guilda no Hall. As
   // abas e filtros de dentro das folhas saíram; a construção é quem escolhe.
   if (area === 'laboratorio') {
-    // D-50 (19/10/2026): a Biblioteca mora no Laboratório — a folha dela é a `LibraryPage` (`hallContent`), não a do `labContent`. #186: o Arquivo é seção do Perfil e o Círculo de Amigos, do Salão do Clã.
+    // D-50 (19/10/2026): a Biblioteca mora no Laboratório — a folha dela é a `LibraryPage` (`hallContent`), não a do `labContent`. #187: o Arquivo é seção do Perfil e o Círculo de Amigos, do Salão do Clã.
     const tabOf = LAB_TAB_OF;
     const lots = laboratorioLots(language).filter(l => !(props.demo && isDemoHiddenLot('laboratorio', l.id)));
     const open = lots.find(l => l.id === sheet) ?? null;
@@ -625,7 +625,7 @@ export function AreaView(props: AreaViewProps) {
             </Suspense>
           ) : (
             <>
-              {/* #186: o Arquivo (a ficha do Soulmon) é uma SEÇÃO do Perfil — o prédio `laboratorio.pet` segue existindo (missão, material), só sem lote no mapa. */}
+              {/* #187: o Arquivo (a ficha do Soulmon) é uma SEÇÃO do Perfil — o prédio `laboratorio.pet` segue existindo (missão, material), só sem lote no mapa. */}
               {open?.id === 'perfil' && (
                 <SectionTabs
                   label={language === 'pt-BR' ? 'Seções do Perfil' : 'Profile sections'}
@@ -656,7 +656,7 @@ export function AreaView(props: AreaViewProps) {
         <Suspense fallback={<SheetLoading language={language} />}>
           {open?.id === 'guilda' && (
             <>
-              {/* #186: o Círculo de Amigos é uma SEÇÃO do Salão do Clã — o prédio `laboratorio.amigos` segue existindo (missão, material), só sem lote no mapa. */}
+              {/* #187: o Círculo de Amigos é uma SEÇÃO do Salão do Clã — o prédio `laboratorio.amigos` segue existindo (missão, material), só sem lote no mapa. */}
               <SectionTabs
                 label={language === 'pt-BR' ? 'Seções do Salão do Clã' : 'Clan Hall sections'}
                 items={[{ key: 'cla', label: language === 'pt-BR' ? 'Clã' : 'Clan' }, { key: 'amigos', label: language === 'pt-BR' ? 'Amigos' : 'Friends' }]}

@@ -62,10 +62,10 @@ export const MOVED_BUILDINGS = {
   'arena.feira': 'hall.feira',
   'hall.biblioteca': 'laboratorio.biblioteca',
   'hall.amigos': 'laboratorio.amigos',
-  'jogos.refugio': 'forja.refugio', // beta3 M3 (25/10/2026): o Refúgio foi de Jogos para a Exploração; 28/10/2026 (#186): daí para a Forja
-  'exploracao.masmorra': 'exploracao.fenda', // beta3 N10 (26/10/2026): a Fenda Sem Fim foi para a Arena; 28/10/2026 (#186): voltou à Exploração
+  'jogos.refugio': 'forja.refugio', // beta3 M3 (25/10/2026): o Refúgio foi de Jogos para a Exploração; 28/10/2026 (#187): daí para a Forja
+  'exploracao.masmorra': 'exploracao.fenda', // beta3 N10 (26/10/2026): a Fenda Sem Fim foi para a Arena; 28/10/2026 (#187): voltou à Exploração
   'exploracao.preparar': 'forja.oficina', // beta3 N8 (26/10/2026): o prédio "Prepare to Focus" virou a 1ª etapa da Oficina do Foco (hoje na Forja)
-  // 28/10/2026 (#186, a Forja e as masmorras na Exploração): o id acompanha o lote — a leitura do save, do servidor e dos atalhos antigos redireciona.
+  // 28/10/2026 (#187, a Forja e as masmorras na Exploração): o id acompanha o lote — a leitura do save, do servidor e dos atalhos antigos redireciona.
   'exploracao.oficina': 'forja.oficina',
   'exploracao.caderno': 'forja.caderno',
   'exploracao.refugio': 'forja.refugio',

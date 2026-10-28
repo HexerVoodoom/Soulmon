@@ -35,7 +35,7 @@ export function areaDemoLot(id: AreaId, language: Language): { label: string } {
  */
 export type MercadoLotId = 'itens' | 'decoracao' | 'background' | 'conquistas' | 'restaurante';
 export type ArenaLotId = 'torneio' | 'duelo' | 'guerra';
-// #186 (28/10/2026): o Arquivo (`pet`) virou seção do Perfil e o Círculo de Amigos (`amigos`) seção do Salão do Clã — saíram do mapa do Laboratório.
+// #187 (28/10/2026): o Arquivo (`pet`) virou seção do Perfil e o Círculo de Amigos (`amigos`) seção do Salão do Clã — saíram do mapa do Laboratório.
 export type LaboratorioLotId = 'evolucao' | 'stats' | 'perfil' | 'biblioteca';
 export type HallLotId = 'guilda' | 'feira' | 'grove';
 
@@ -58,7 +58,7 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
   { id: 'conquistas', labelPt: 'Conquistas', labelEn: 'Achievements', ariaPt: 'Entrar em Conquistas', ariaEn: 'Enter Achievements', left: '70%', top: '28%', width: '64%' },
   { id: 'background', labelPt: 'Background', labelEn: 'Background', ariaPt: 'Entrar na lojinha de Background', ariaEn: 'Enter the Background stall', left: '24.3%', top: '51%' },
   { id: 'decoracao', labelPt: 'Decoração', labelEn: 'Decor', ariaPt: 'Entrar na lojinha de Decoração', ariaEn: 'Enter the Decor stall', left: '70%', top: '53.5%', width: '42%' },
-  // ⚒️ #186 (28/10/2026): o Soulsmith (equipamentos) saiu do Mercado e foi para a Forja; o chão livre de baixo à ESQUERDA (26/81) fica vago.
+  // ⚒️ #187 (28/10/2026): o Soulsmith (equipamentos) saiu do Mercado e foi para a Forja; o chão livre de baixo à ESQUERDA (26/81) fica vago.
   // 🏗️ 14/10/2026 (dono): o Restaurante em obra ocupa a direita de baixo que ficava livre. Só vitrine: NPC e fala, sem ação, sem Vínculo mínimo.
   { id: 'restaurante', labelPt: 'Restaurante', labelEn: 'Restaurant', ariaPt: 'Falar com o pedreiro do Restaurante em obra', ariaEn: 'Talk to the builder of the Restaurant under construction', left: '73%', top: '81%', width: '40%' },
 ];
@@ -75,7 +75,7 @@ const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
   { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '25.5%', top: '47.3%', width: '30.8%' },
   { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '41.5%', top: '57.5%', width: '39%' }, // beta-2 (9.3): a Arena livre sai do meio do caminho e assenta no OUTRO tablado (o da direita, livre desde que a Feira foi para o Hall) — um bloco para cada modo
   { id: 'guerra', labelPt: 'Guerra de Clãs', labelEn: 'Clan War', ariaPt: 'Entrar na Guerra de Clãs', ariaEn: 'Enter the Clan War', left: '77.4%', top: '46.7%', width: '38%' },
-  // 🌀 #186 (28/10/2026): a Fenda Sem Fim voltou para a Exploração; a vaga de cima-esquerda (P1) do losango de cima fica livre de novo.
+  // 🌀 #187 (28/10/2026): a Fenda Sem Fim voltou para a Exploração; a vaga de cima-esquerda (P1) do losango de cima fica livre de novo.
   // 🔎 11/10/2026 (guilda-lancamento): a FEIRA saiu da Arena e foi para o HALL, ao lado do Salão da Guilda — é a Missão da
   // guilda (`GuildSheet` room `feira`). O tablado da direita da Arena fica livre.
 ];
@@ -130,7 +130,7 @@ const HALL_LOTS: AreaLotSpec<HallLotId>[] = [
   { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50.8%', top: '75.2%', width: '64%' },
 ];
 
-/** Rótulo dos prédios que NÃO têm lote no mapa (#186): moram dentro de outro lote. Dono único (a lista de Primeiras Vezes e a de missões leem daqui). */
+/** Rótulo dos prédios que NÃO têm lote no mapa (#187): moram dentro de outro lote. Dono único (a lista de Primeiras Vezes e a de missões leem daqui). */
 export function sectionBuildingLabel(id: string, language: Language): string | undefined {
   const isPt = language === 'pt-BR';
   if (id === 'laboratorio.pet') return isPt ? 'Arquivo (no Perfil)' : 'Archive (in Profile)';

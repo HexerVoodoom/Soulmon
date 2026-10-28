@@ -88,7 +88,7 @@ export function gateLine(feature: GateFeature, bondLevel: unknown, language: str
 // PRÉDIOS POR VÍNCULO (Tarefa A, 07/10/2026) — qual prédio do Mapa abre em qual Vínculo.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Os prédios (lotes) das sete áreas do Mapa: `<área>.<lote>`. Os ids são estáveis (o save e os testes os citam); `laboratorio.pet` e `laboratorio.amigos` são prédios SEM lote próprio desde #186 (moram dentro do Perfil e do Salão do Clã). */
+/** Os prédios (lotes) das sete áreas do Mapa: `<área>.<lote>`. Os ids são estáveis (o save e os testes os citam); `laboratorio.pet` e `laboratorio.amigos` são prédios SEM lote próprio desde #187 (moram dentro do Perfil e do Salão do Clã). */
 export type BuildingId =
   | 'mercado.itens' | 'mercado.conquistas' | 'mercado.decoracao' | 'mercado.background' | 'forja.ferreiro'
   | 'jogos.salao' | 'exploracao.dungeon' | 'jogos.mente'
@@ -107,10 +107,10 @@ export const MOVED_BUILDINGS: Readonly<Record<string, BuildingId>> = {
   'arena.feira': 'hall.feira',
   'hall.biblioteca': 'laboratorio.biblioteca',
   'hall.amigos': 'laboratorio.amigos',
-  'jogos.refugio': 'forja.refugio', // beta3 M3 (25/10/2026): o Refúgio foi de Jogos para a Exploração; 28/10/2026 (#186): daí para a Forja
-  'exploracao.masmorra': 'exploracao.fenda', // beta3 N10 (26/10/2026): a Fenda Sem Fim foi para a Arena; 28/10/2026 (#186): voltou à Exploração
+  'jogos.refugio': 'forja.refugio', // beta3 M3 (25/10/2026): o Refúgio foi de Jogos para a Exploração; 28/10/2026 (#187): daí para a Forja
+  'exploracao.masmorra': 'exploracao.fenda', // beta3 N10 (26/10/2026): a Fenda Sem Fim foi para a Arena; 28/10/2026 (#187): voltou à Exploração
   'exploracao.preparar': 'forja.oficina', // beta3 N8 (26/10/2026): o prédio "Prepare to Focus" virou a 1ª etapa da Oficina do Foco (hoje na Forja)
-  // 28/10/2026 (#186, a Forja e as masmorras na Exploração): o id acompanha o lote — a leitura do save, do servidor e dos atalhos antigos redireciona.
+  // 28/10/2026 (#187, a Forja e as masmorras na Exploração): o id acompanha o lote — a leitura do save, do servidor e dos atalhos antigos redireciona.
   'exploracao.oficina': 'forja.oficina',
   'exploracao.caderno': 'forja.caderno',
   'exploracao.refugio': 'forja.refugio',

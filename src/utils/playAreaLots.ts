@@ -30,7 +30,7 @@
 import type { Language } from './i18n';
 
 export type ExploracaoLotId = 'passeio' | 'fenda' | 'dungeon';
-/** A Forja (#186, 28/10/2026): tudo que era da Exploração menos o Passeio (Oficina do Foco, Caderno, Refúgio) + o Soulsmith (ex-Mercado). */
+/** A Forja (#187, 28/10/2026): tudo que era da Exploração menos o Passeio (Oficina do Foco, Caderno, Refúgio) + o Soulsmith (ex-Mercado). */
 export type ForjaLotId = 'oficina' | 'caderno' | 'refugio' | 'ferreiro';
 export type JogosLotId = 'salao' | 'mente';
 
@@ -57,14 +57,14 @@ interface PlayLotSpec<K extends string> {
 // R6-L1 (26/10/2026, dono; depois Calabouço 78→70% e Ateliê 55→61%): Passeio cima-esq, Oficina do Foco cima-dir, Caderno esq-meio (desce), Refugio baixo-dir.
 const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
   { id: 'passeio', labelPt: 'Passeio', labelEn: 'Stroll', ariaPt: 'Abrir o Passeio', ariaEn: 'Open the Stroll', left: '22.6%', top: '21%', width: '48%' }, // 26/10/2026 (dono, mapa de Exploração): ENCAIXE no tablado de CIMA À ESQUERDA (piso medido no bg: centro 210/252 de 760×1344, ~250 px de largura; tela 390×844 = centro 88/158, `cover` corta ~11% de cada lado). Pegada no meio da frente do piso (88/175), opaco ~97 px de largura (62% do piso) — o arco é alto e mais que isso passaria da barra do topo
-  // 🌀 #186 (28/10/2026): a Exploração passa a receber as MASMORRAS — a Fenda Sem Fim (veio da Arena) no tablado do MEIO À DIREITA e o Calabouço roguelike (veio de Jogos) na
+  // 🌀 #187 (28/10/2026): a Exploração passa a receber as MASMORRAS — a Fenda Sem Fim (veio da Arena) no tablado do MEIO À DIREITA e o Calabouço roguelike (veio de Jogos) na
   // coluna da esquerda. Posições PROVISÓRIAS (as das antigas Oficina e Caderno, sobre o mesmo fundo): a arte final de Exploração remede (ver docs/ASSETS-A-GERAR.md). O canto de baixo
-  // à direita (onde estava o Refúgio) fica LIVRE — reservado à terceira masmorra, se o dono confirmar qual é (ver o REGISTRO #186).
+  // à direita (onde estava o Refúgio) fica LIVRE — reservado à terceira masmorra, se o dono confirmar qual é (ver o REGISTRO #187).
   { id: 'fenda', labelPt: 'Fenda Sem Fim', labelEn: 'Endless Rift', ariaPt: 'Entrar na Fenda Sem Fim', ariaEn: 'Enter the Endless Rift', left: '80.1%', top: '34.4%', width: '60%' },
   { id: 'dungeon', labelPt: 'Calabouço', labelEn: 'Dungeon', ariaPt: 'Entrar no Calabouço', ariaEn: 'Enter the Dungeon', left: '28%', top: '64%', width: '47%' },
 ];
 
-// ⚒️ A FORJA (#186, 28/10/2026, dono): produtividade e disciplina. Mesmo fundo PROVISÓRIO da Exploração (`bg-forja.png` assume sozinho quando existir) e as posições que os três
+// ⚒️ A FORJA (#187, 28/10/2026, dono): produtividade e disciplina. Mesmo fundo PROVISÓRIO da Exploração (`bg-forja.png` assume sozinho quando existir) e as posições que os três
 // lotes já tinham; o Soulsmith (ex-Mercado) assenta no tablado de CIMA À ESQUERDA, onde morava o Passeio.
 const FORJA_LOTS: PlayLotSpec<ForjaLotId>[] = [
   { id: 'ferreiro', labelPt: 'Soulsmith', labelEn: 'Soulsmith', ariaPt: 'Entrar no Soulsmith', ariaEn: 'Enter the Soulsmith', left: '22.6%', top: '21%', width: '44%' },
@@ -85,7 +85,7 @@ const FORJA_LOTS: PlayLotSpec<ForjaLotId>[] = [
 const JOGOS_LOTS: PlayLotSpec<JogosLotId>[] = [
   { id: 'salao', labelPt: 'Salão de Jogos', labelEn: 'Game Hall', ariaPt: 'Entrar no Salão de Jogos', ariaEn: 'Enter the Game Hall', left: '51.7%', top: '31.2%', width: '58%' }, // W12 (20/10/2026): DESCE 28→31 e centraliza na clareira de cima (centro medido ~52/31), maior 52→58%
   { id: 'mente', labelPt: 'Ateliê da Mente', labelEn: 'Mind Workshop', ariaPt: 'Entrar no Ateliê da Mente', ariaEn: 'Enter the Mind Workshop', left: '25%', top: '68%', width: '61%' }, // 26/10/2026 (dono): maior 55→61%. W12: maior 50→55%, centrado no lobo de cima da clareira de baixo (53/59); os três ficam em coluna (H11: o rótulo do Salão não encosta no Ateliê, nem o rótulo deste no Refúgio)
-  // 🗝️ #186 (28/10/2026): o Calabouço roguelike saiu de Jogos para a Exploração (id `exploracao.dungeon`); o lobo de baixo da clareira fica livre.
+  // 🗝️ #187 (28/10/2026): o Calabouço roguelike saiu de Jogos para a Exploração (id `exploracao.dungeon`); o lobo de baixo da clareira fica livre.
 ];
 
 function resolveLots<K extends string>(specs: PlayLotSpec<K>[], language: Language) {

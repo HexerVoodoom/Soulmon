@@ -15,13 +15,13 @@ describe('buildingDestination', () => {
       expect(d?.kind, mat).toBe('lot');
       if (d?.kind === 'lot') {
         expect(AREAS).toContain(d.area);
-        // #186: `laboratorio.pet` e `laboratorio.amigos` não têm lote próprio — moram dentro do Perfil e do Salão do Clã (`BUILDING_HOME`).
+        // #187: `laboratorio.pet` e `laboratorio.amigos` não têm lote próprio — moram dentro do Perfil e do Salão do Clã (`BUILDING_HOME`).
         if (b in BUILDING_HOME) expect({ area: d.area, lot: d.lot, section: d.section }).toEqual(BUILDING_HOME[b]);
         else expect(`${d.area}.${d.lot}`).toBe(b);
       }
     }
   });
-  it('#186: atalhos antigos levam ao lote onde a função mora hoje (id antigo ou novo)', () => {
+  it('#187: atalhos antigos levam ao lote onde a função mora hoje (id antigo ou novo)', () => {
     expect(buildingDestination('laboratorio.pet')).toEqual({ kind: 'lot', area: 'laboratorio', lot: 'perfil', section: 'arquivo' });
     expect(buildingDestination('laboratorio.amigos')).toEqual({ kind: 'lot', area: 'hall', lot: 'guilda', section: 'amigos' });
     expect(buildingDestination('hall.amigos')).toEqual({ kind: 'lot', area: 'hall', lot: 'guilda', section: 'amigos' });

@@ -55,7 +55,7 @@ const AREA_ART: Record<AreaId, string> = {
   jogos: zonaJogos,
   arena: zonaArena,
   exploracao: zonaExploracao,
-  // #186 (28/10/2026): a Forja ainda não tem a construção própria no Mapa — vale a da Exploração (PROVISÓRIA). Nome-alvo da arte final: `zona-forja.png` (assume sozinho).
+  // #187 (28/10/2026): a Forja ainda não tem a construção própria no Mapa — vale a da Exploração (PROVISÓRIA). Nome-alvo da arte final: `zona-forja.png` (assume sozinho).
   forja: resolveMapaZona('zona-forja', zonaExploracao),
   laboratorio: zonaLaboratorio,
   hall: zonaHall,
@@ -68,7 +68,7 @@ const AREA_POS: Record<AreaId, { left: string; top: string }> = {
   mercado: { left: '30%', top: '17%' },
   jogos: { left: '74%', top: '19.8%' },
   exploracao: { left: '23%', top: '47%' },
-  // #186 (28/10/2026): ABAIXO da Exploração, simétrica ao Hall — a plataforma do portal de baixo à esquerda do `bg-mapa` (centro ~19/73 do fundo) está livre.
+  // #187 (28/10/2026): ABAIXO da Exploração, simétrica ao Hall — a plataforma do portal de baixo à esquerda do `bg-mapa` (centro ~19/73 do fundo) está livre.
   forja: { left: '19%', top: '74.5%' },
   arena: { left: '82%', top: '41.5%' },
   laboratorio: { left: '49%', top: '77.9%' },

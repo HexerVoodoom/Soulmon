@@ -133,7 +133,7 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
     bRow('laboratorio.evolucao', 'Its attributes and the Soul Fragments for the next form.', 'Os atributos e os Fragmentos de Alma para a próxima forma.'),
     bRow('laboratorio.stats', 'Your stats and your Bond.', 'Suas estatísticas e o seu Vínculo.'),
     bRow('laboratorio.perfil', 'Your profile card.', 'O seu cartão de perfil.'),
-    // #186: o Arquivo não tem lote — é a aba "Arquivo" do Perfil (o prédio segue na lista, 1 linha por prédio).
+    // #187: o Arquivo não tem lote — é a aba "Arquivo" do Perfil (o prédio segue na lista, 1 linha por prédio).
     bRow('laboratorio.pet', 'Inside the Profile: its sheet, moves and creatures met.', 'Dentro do Perfil: a ficha, os golpes e as criaturas que você já encontrou.'),
     bRow('laboratorio.biblioteca', 'Stories, and the people who tell them.', 'Histórias, e quem as conta.'),
   ]),
@@ -159,7 +159,7 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
     bRow('exploracao.fenda', 'Your Soulmon goes down floor by floor and fights on its own, spending energy.', 'O seu Soulmon desce andar por andar e luta sozinho, gastando energia.'),
     bRow('exploracao.dungeon', 'A small roguelike dungeon game.', 'Um pequeno jogo de calabouço roguelike.'),
   ]),
-  // #186 (28/10/2026): a Forja — produtividade e disciplina. Recebeu a Oficina, o Caderno e o Refúgio (que eram da Exploração) e o Soulsmith (que era do Mercado).
+  // #187 (28/10/2026): a Forja — produtividade e disciplina. Recebeu a Oficina, o Caderno e o Refúgio (que eram da Exploração) e o Soulsmith (que era do Mercado).
   mapStep('forja', { en: 'Where steady habits are made.', pt: 'Onde se forjam os hábitos constantes.' }, [
     bRow('forja.oficina', 'Plan a session first, then focus.', 'Planeje a sessão primeiro, depois foque.'),
     bRow('forja.caderno', 'Your journal.', 'O seu caderno.'),
@@ -168,7 +168,7 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
   ]),
   mapStep('hall', { en: 'Your Clan.', pt: 'O seu Clã.' }, [
     bRow('hall.guilda', 'Your Clan.', 'O seu Clã.'),
-    // #186: o Círculo de Amigos não tem lote — é a aba "Amigos" do Salão do Clã.
+    // #187: o Círculo de Amigos não tem lote — é a aba "Amigos" do Salão do Clã.
     bRow('laboratorio.amigos', 'Inside the Clan Hall: your friends.', 'Dentro do Salão do Clã: os seus amigos.'),
     bRow('hall.feira', 'The Fair: send your Soulmon on a mission for the Clan.', 'A Feira: mande o seu Soulmon em missão pelo Clã.'),
     bRow('hall.grove', 'The grove your Clan grows.', 'O bosque que o seu Clã cultiva.'),

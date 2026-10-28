@@ -23,7 +23,7 @@ export const AREA_NPC_ART: Record<AreaId, string> = {
   laboratorio: npcLaboratorio,
   jogos: npcJogos,
   exploracao: npcExploracao,
-  // #186 (28/10/2026): a Forja ainda não tem anfitriã própria — vale a Vitra (Soulsmith), o busto mais industrial do banco. Arte final: ver docs/ASSETS-A-GERAR.md §15.
+  // #187 (28/10/2026): a Forja ainda não tem anfitriã própria — vale a Vitra (Soulsmith), o busto mais industrial do banco. Arte final: ver docs/ASSETS-A-GERAR.md §15.
   forja: npcFForjaFerreiro,
   hall: npcHall,
 };
@@ -105,7 +105,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   'exploracao:dungeon': npcJogosDungeon, // Corva (26/10/2026: busto próprio, P1-04)
   'forja:refugio': npcJogosRefugio, // Marim (07/10/2026: trocou o Bobbi)
   'laboratorio:evolucao': npcLaboratorio,
-  // #186 (28/10/2026): `laboratorio:pet` e `laboratorio:amigos` NÃO têm mais lote no mapa (viraram seções do Perfil e do Salão do Clã), mas os prédios seguem (missão, material, apresentação
+  // #187 (28/10/2026): `laboratorio:pet` e `laboratorio:amigos` NÃO têm mais lote no mapa (viraram seções do Perfil e do Salão do Clã), mas os prédios seguem (missão, material, apresentação
   // ao abrir) e a Tinta e a Zumi continuam sendo quem os apresenta — por isso o busto e a voz ficam, fora da conta dos lotes (`SECTION_NPC_KEYS` no teste de contrato).
   'laboratorio:pet': npcLaboratorioPet, // Tinta (enguia escriba; 07/10/2026 trocou o Faro)
   'laboratorio:stats': npcLaboratorioStats, // Sumi (koi-dragão sábio; 07/10/2026 trocou a Oriel — `npc-f-sacerdotisa` segue em EXTRA_NPC_ART)

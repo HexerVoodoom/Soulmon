@@ -13,7 +13,7 @@ import { AreaView } from './AreaView';
 vi.mock('../play/PasseioSheet', () => ({ PasseioSheet: () => <p data-stub="passeio">passeio</p> }));
 
 const base = (over: Record<string, unknown> = {}): ComponentProps<typeof AreaView> => ({
-  area: 'forja', // #186: o Caderno mora na Forja
+  area: 'forja', // #187: o Caderno mora na Forja
   language: 'en-US',
   ownership: { ownedBackgrounds: [], equippedBackground: null, ownedFurniture: [], equippedDecor: {}, missionProgress: {} },
   actions: { onBuy: () => false, onEquip: () => {}, onEquipFurniture: () => {} },

@@ -11,12 +11,12 @@ import npcArenaDuelo from '../../assets/soulmon/npcs/npc-extra-arena-duelo.png';
 import { functionNpcVoice } from '../../utils/areaNpcVoice';
 
 describe('lotes novos (29/09/2026)', () => {
-  it('Arena tem Torneio, Duelo e Guerra (a Fenda voltou à Exploração, #186); Hall tem Feira, Grove e Salão do Clã; Laboratório tem Evolução, Vínculo, Perfil e Biblioteca (sem Arquivo e Amigos, #186)', () => {
+  it('Arena tem Torneio, Duelo e Guerra (a Fenda voltou à Exploração, #187); Hall tem Feira, Grove e Salão do Clã; Laboratório tem Evolução, Vínculo, Perfil e Biblioteca (sem Arquivo e Amigos, #187)', () => {
     expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo', 'guerra']);
     expect(hallLots('pt-BR').map(l => l.id)).toEqual(['feira', 'grove', 'guilda']); // D-50 (19/10/2026): Biblioteca e Amigos saíram do Hall
-    expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'stats', 'perfil', 'biblioteca']); // beta-2 (11): o Perfil do Soulmon; #186: o Arquivo e o Círculo de Amigos viraram seções
-    expect(exploracaoLots('pt-BR').map(l => l.id)).toEqual(['passeio', 'fenda', 'dungeon']); // #186: a Exploração recebe as masmorras e mantém o Passeio
-    expect(forjaLots('pt-BR').map(l => l.id).sort()).toEqual(['caderno', 'ferreiro', 'oficina', 'refugio']); // #186: a Forja
+    expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'stats', 'perfil', 'biblioteca']); // beta-2 (11): o Perfil do Soulmon; #187: o Arquivo e o Círculo de Amigos viraram seções
+    expect(exploracaoLots('pt-BR').map(l => l.id)).toEqual(['passeio', 'fenda', 'dungeon']); // #187: a Exploração recebe as masmorras e mantém o Passeio
+    expect(forjaLots('pt-BR').map(l => l.id).sort()).toEqual(['caderno', 'ferreiro', 'oficina', 'refugio']); // #187: a Forja
     expect(jogosLots('pt-BR').map(l => l.id)).toEqual(['salao', 'mente']); // o Calabouço saiu de Jogos
   });
 
@@ -124,7 +124,7 @@ describe('as bancas do Mercado têm nome próprio (01/10/2026)', () => {
   });
 });
 
-describe('o Ferreiro (07/10/2026; #186: agora lote da Forja) para os equipamentos', () => {
+describe('o Ferreiro (07/10/2026; #187: agora lote da Forja) para os equipamentos', () => {
   it('existe, com rótulo EN/PT, Vínculo 2 e o NPC Vitra', () => {
     expect(forjaLots('en-US').find(l => l.id === 'ferreiro')?.label).toBe('Soulsmith');
     expect(forjaLots('pt-BR').find(l => l.id === 'ferreiro')?.label).toBe('Soulsmith');
