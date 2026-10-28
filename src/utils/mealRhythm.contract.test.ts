@@ -81,12 +81,13 @@ describe('COCÔ: dreno e teto não mudaram; a AGENDA agora garante 2 acordado (R
   });
 });
 
-describe('RECOMPENSA: nada de moeda, energia, HP ou XP pelo convite', () => {
-  it('os atendedores de gesto só escrevem `mealRitual` (a regra de cada gesto continua no dono dele)', () => {
+describe('RECOMPENSA: nada de moeda, energia ou HP pelo convite; só 5 XP de Vínculo na transição (REGISTRO §183)', () => {
+  it('os atendedores de gesto só escrevem `mealRitual` e o XP de Vínculo, e só quando a janela mudou de estado', () => {
     const i = app.indexOf('const atenderRefeicao = useCallback');
-    const trecho = app.slice(i, i + 400);
-    expect(trecho).toContain('markMealDone(prev, new Date(), kind, isSleepingRefeicao.current)');
-    expect(trecho).not.toMatch(/gamePoints|emblems|totalXP|healthPoints|energyPoints/);
+    const trecho = app.slice(i, i + 900);
+    expect(trecho).toContain('markMealDone(prev, agora, kind, isSleepingRefeicao.current)');
+    expect(trecho).toContain("next === prev ? prev : awardBondXP(next, { kind: 'mealInvite' }");
+    expect(trecho).not.toMatch(/gamePoints|emblems|healthPoints|energyPoints/);
   });
 
 });
