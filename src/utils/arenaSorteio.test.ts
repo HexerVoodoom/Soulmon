@@ -7,7 +7,7 @@ import {
   sanitizeArenaReroll, arenaCards, arenaFoesOfSeed, arenaCardElements, arenaSceneOfSeed, applyArenaReroll,
 } from './arenaSorteio';
 import { ARENA_BG_SCENES } from './dungeonScenes';
-import { isStraySeed } from './strayFoes';
+import { isComboSeed, isStraySeed } from './strayFoes';
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 
 describe('sorteio geral (sem tema)', () => {
@@ -104,5 +104,33 @@ describe('cenário da Arena', () => {
       vistos.add(c.nameEn);
     }
     expect(vistos.size).toBe(2);
+  });
+});
+
+describe('pool combinado (REGISTRO §180, emenda 28/10)', () => {
+  it('metade das runs comuns usa rookies de elemento combinado (2 elementos, arte NNN-slug); a outra metade o pool base', () => {
+    let combo = 0, base = 0;
+    for (let s = 1; s <= 2000; s++) {
+      if (isStraySeed(s)) { expect(isComboSeed(s)).toBe(false); continue; }
+      const f = arenaFoesOfSeed(s, 2);
+      if (isComboSeed(s)) {
+        combo++;
+        for (const e of f) { expect(e.artFile).toBeTruthy(); expect(e.elements).toHaveLength(2); expect(e.tier).toBe('rookie'); expect(e.creature).toBeUndefined(); }
+        expect(new Set(f.map(e => e.artFile)).size).toBe(f.length); // sem repetir na rodada
+      } else { base++; for (const e of f) expect(e.artFile).toBeUndefined(); }
+    }
+    expect(combo / (combo + base)).toBeGreaterThan(0.45);
+    expect(combo / (combo + base)).toBeLessThan(0.55);
+  });
+
+  it('cards: mistura os dois pools, determinístico, distintos, no máximo 1 Desgarrado, elemento do card é base', () => {
+    let comCombo = 0, comBase = 0;
+    for (let i = 0; i < 200; i++) {
+      const seeds = arenaCards('2026-10-28', `k${i}`, 0);
+      expect(arenaCards('2026-10-28', `k${i}`, 0)).toEqual(seeds);
+      expect(seeds.filter(isStraySeed).length).toBeLessThanOrEqual(1);
+      for (const s of seeds) { if (isComboSeed(s)) comCombo++; else comBase++; expect(CLASS_ELEMENT_ORDER as readonly string[]).toContain(arenaCardElements(s)[0]); }
+    }
+    expect(comCombo).toBeGreaterThan(200); expect(comBase).toBeGreaterThan(200);
   });
 });

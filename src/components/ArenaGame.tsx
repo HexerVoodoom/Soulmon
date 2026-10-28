@@ -55,6 +55,7 @@ import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
 import { novoSoulmonById } from '../utils/novosSoulmon';
+import { COMBINADOS_ART } from '../utils/enemyRosterArt';
 import {
   ARENA_ROUNDS,
   DEFAULT_ARENA_ATTRIBUTES,
@@ -202,7 +203,7 @@ export function ArenaGame({
     inimigosRef.current = novos;
     rodadaRef.current = n;
     setInimigos(novos);
-    setSprites(novos.map(e => novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
+    setSprites(novos.map(e => (e.artFile ? COMBINADOS_ART[e.artFile] : undefined) ?? novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
     setFightKey(k => k + 1);
     setFase('luta');
   }, []);

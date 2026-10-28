@@ -11,6 +11,12 @@ import { mulberry32 } from './combate/rng';
 export const STRAY_SEED_CHANCE = 0.12;
 const STRAY_MIX = 0x57a7c0de;
 
+/** Chance de uma run COMUM (não Desgarrada) da Arena sortear o pool de elementos COMBINADOS (metade base, metade combinado). */
+export const COMBO_SEED_CHANCE = 0.5;
+const COMBO_MIX = 0x0c0b1ed5;
+/** A run da Arena com esta semente usa rookies de elemento combinado? (puro; Desgarrado nunca é combinado). */
+export const isComboSeed = (seed: number): boolean => !isStraySeed(seed) && mulberry32((seed ^ COMBO_MIX) | 0)() < COMBO_SEED_CHANCE;
+
 /** A run da Arena com esta semente enfrenta Desgarrados? (puro; a semente é a da run, a mesma do card). */
 export const isStraySeed = (seed: number): boolean => mulberry32((seed ^ STRAY_MIX) | 0)() < STRAY_SEED_CHANCE;
 

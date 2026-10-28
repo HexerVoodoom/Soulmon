@@ -3508,7 +3508,6 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 **Alternativa que perdeu:** teto diário também na luta ativa (anti-farm geral), e ícone novo "gota/cristal" por essência. **Por que perdeu:** o dono quer a luta ativa livre (o farm é a graça) e sem arte nova; o único ponto sem o jogador olhando é a descida automática.
 
 **O que falsificaria:** jogador que só deixa a Fenda no automático e ainda assim acumula essência sem limite (o teto diário falhou), ou save com `essences` regredindo após sincronizar. **Rollback:** campos aditivos e opcionais: remover as chamadas de `applyEssences`/`applyEssencesAway` e a seção do Laboratório; os campos `essences`/`essenceAway` ficam no save inertes (cliente velho os ignora; servidor continua saneando).
-=======
 
 ## 184. Atender o convite de refeição rende 5 XP de Vínculo, 1x por refeição (dono, 28/10/2026)
 
@@ -3530,3 +3529,6 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 **Alternativa que perdeu:** manter só o banner informativo, sem re-aceite (#24). **Por que perdeu:** a política mudou o destinatário dos dados da voz; informar sem consentir não cobre o aceite específico que a LGPD pede.
 
 **O que falsificaria:** queda de retenção no dia da subida do gate (quem fecha o app na tela); ver sessões D1 após o deploy. **Rollback:** remover o `if (!isConsentCurrent…)` do `App`.
+### §180 emenda (dono, 28/10/2026): a Arena livre sorteia também os elementos COMBINADOS
+
+**Decisão do dono:** a Arena livre cobre TODOS os elementos: metade das runs vem do pool base (20 elementos), metade do pool combinado (os 138 rookies de elemento combinado do `enemyRoster`, só existem na forma rookie). **Como:** `isComboSeed(seed)` (`strayFoes.ts`, 50% das sementes que não são Desgarradas; Desgarrado nunca é combinado) passa `combo` a `buildArenaRound`: numa run combinada TODOS os slots (fraco, médio, chefe) mostram rookies combinados (nome, 2 elementos, arte `COMBINADOS_ART`); a FORÇA segue sendo do slot (`arenaFoe`), então o chefe de uma run combinada é tão forte quanto o de uma base, só com arte rookie (a 50% pelo §181). O card mostra o 1º elemento (base) do combinado; determinismo, distinção entre cards, no máximo 1 Desgarrado e "card = luta" intactos (mesma `arenaFoesOfSeed`). **Alternativa que perdeu:** só os slots fracos virarem combinados (a rodada 1 é um médio, o card não mostraria o pool novo). **Falsificaria:** chefe rookie combinado parecer "fraco demais" para o jogador (reclamação de arte, não de força). **Rollback:** `COMBO_SEED_CHANCE = 0`.

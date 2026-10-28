@@ -3,8 +3,8 @@
 //
 // Dono único de:
 //   1. `arenaFoesOfSeed(seed, rodada)` — a ÚNICA função pura que diz quem é o inimigo de uma rodada da run `seed`. O card da `DueloSheet`
-//      e a `ArenaGame.montarRodada` chamam esta mesma, então o card mostra EXATAMENTE o que será lutado. Sem tema: sorteio geral entre
-//      os 20 elementos base (1 criatura por elemento, chance igual).
+//      e a `ArenaGame.montarRodada` chamam esta mesma, então o card mostra EXATAMENTE o que será lutado. Sem tema: sorteio geral: metade das runs usa o pool BASE
+//      (20 elementos, 1 criatura por elemento) e metade o pool COMBINADO (rookies de 2 elementos; `isComboSeed`).
 //   2. `arenaCards(...)` — os 3 cards do dia, determinísticos por (dia do jogador, conta, nº de rerolls): fechar e reabrir mostra os
 //      mesmos; cada reroll mistura o contador na semente. Elementos DISTINTOS entre os cards quando der (re-sorteio vizinho), no máximo
 //      1 Desgarrado (`arenaCardSeeds`).
@@ -13,7 +13,7 @@
 // ---------------------------------------------------------------------------
 import { buildArenaRound, type ArenaEnemy } from './arena';
 import { mulberry32 } from './combate/rng';
-import { arenaCardSeeds, isStraySeed } from './strayFoes';
+import { arenaCardSeeds, isComboSeed, isStraySeed } from './strayFoes';
 import { spendBitsPaidFirst, type BitsOriginState } from './bitsOrigin';
 import { ARENA_BG_SCENES, type DungeonScene } from './dungeonScenes';
 
@@ -62,7 +62,7 @@ function hash(s: string): number {
 
 /** Os inimigos da rodada `rodada` (1-based) da run `seed`. Pura: card e luta chamam ESTA. */
 export function arenaFoesOfSeed(seed: number, rodada: number): ArenaEnemy[] {
-  return buildArenaRound(rodada, 1, mulberry32((seed ^ Math.imul(rodada, 0x9e3779b1)) | 0), undefined, isStraySeed(seed));
+  return buildArenaRound(rodada, 1, mulberry32((seed ^ Math.imul(rodada, 0x9e3779b1)) | 0), undefined, isStraySeed(seed), isComboSeed(seed));
 }
 
 /** O conjunto de elementos que o card MOSTRA (os da 1ª rodada). */

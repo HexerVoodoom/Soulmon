@@ -13,6 +13,7 @@
 // (`builder/balanco-motores.md` §6) — recalibrate with that script, never by hand.
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { novoFormName, pickNovo, type NovoAnyStage } from './novosSoulmonData';
+import { ENEMY_ROSTER } from './enemyRoster';
 import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { CUSTO_PONTO_PAR } from './soulProfile/ficha/cascata';
 import { baseDominanteDoElemento } from './soulProfile/ficha/elementoNome';
@@ -243,7 +244,12 @@ export interface ArenaEnemy {
   form?: NovoAnyStage;
   /** Desgarrado (27/10/2026): a run inteira usa as formas fortes (`isStrayFoe`). Só arte/nome; a força segue sendo do slot (`arenaFoe`). */
   stray?: true;
+  /** Run COMBINADA (28/10/2026, REGISTRO §180 emenda): o inimigo é um rookie de elemento combinado (2 elementos). `artFile` = `NNN-slug` da arte (`COMBINADOS_ART`). Só arte/nome/elementos; a força segue sendo do slot. */
+  artFile?: string;
 }
+
+/** Os rookies de elemento combinado (o pool "combinado" da Arena; só existem na forma rookie). */
+const COMBO_ROOKIES = ENEMY_ROSTER.filter(e => e.kind === 'combinado' && e.stage === 'rookie');
 
 export const ARENA_ROUNDS = 5;
 
@@ -273,11 +279,23 @@ export function buildArenaRound(
   _pool?: BestiaryCreature[], // sem uso desde o §68 (o inimigo vem das 17 criaturas novas); mantido para não quebrar chamadores
   /** Run de DESGARRADO (`isStraySeed`, `utils/strayFoes.ts`): as formas vêm do topo (ultimate/mega/ultra). Sem isto, nada muda (mesmas chamadas de `rng`). */
   stray = false,
+  /** Run COMBINADA (`isComboSeed`, `strayFoes.ts`): todos os slots mostram rookies de elemento combinado. Sem isto, nada muda. */
+  combo = false,
 ): ArenaEnemy[] {
   const comp = ARENA_ROUND_COMP[Math.min(Math.max(roundIdx, 1), ARENA_ROUNDS) - 1];
   const used = new Set<string>(); // sem criatura repetida dentro da rodada
   return comp.map(cls => {
     const shape = CLASS_FLAVOR[cls];
+    if (combo && !stray && COMBO_ROOKIES.length > 0) {
+      const fresh = COMBO_ROOKIES.filter(e => !used.has(e.id));
+      const pool = fresh.length > 0 ? fresh : COMBO_ROOKIES;
+      const c = pool[Math.floor(rng() * pool.length)];
+      used.add(c.id);
+      return {
+        namePt: c.name, nameEn: c.name, elements: [...c.elements], points: shape.points + Math.max(0, difficulty - 1),
+        cls, tier: 'rookie' as const, artFile: c.artFile, form: 'rookie' as const,
+      };
+    }
     // REGISTRO §68: o inimigo é UMA das 17 criaturas novas, sorteada por elemento com chance igual (o anel é simétrico, então a
     // Arena segue justa para qualquer elemento do jogador) e o ELEMENTO é o da criatura — o mesmo do ataque e do FX.
     // fraco = Rookie · médio = Champion · chefe = a maior forma com arte (ultra > mega > ultimate), senão o Champion.
