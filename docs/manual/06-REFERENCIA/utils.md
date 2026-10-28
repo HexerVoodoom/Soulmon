@@ -1319,9 +1319,17 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** nenhuma direta (`ls src/utils/backStack*.test.ts` vazio) — indireta via `src/utils/androidBack.test.ts`.
 
 ### `src/utils/playAreaLots.ts`
+
+> **#186 (28/10/2026):** `playAreaLots.ts` exporta `forjaLots` (Soulsmith, Oficina do Foco, Caderno, Refúgio) e `exploracaoLots` passa a ser Passeio + Fenda Sem Fim + Calabouço; `jogosLots` perde o Calabouço. `navigation.ts` ganha `BUILDING_HOME`/`buildingLot`; `gates.ts` › `MOVED_BUILDINGS` ganha os ids antigos; `areaSheetCopy.ts` ganha `sectionBuildingLabel`.
 **Dono de:** a copy e a posição dos lotes das áreas de jogar (minimal-ui F5) — Exploração (`masmorra` 27%/36% e, desde `3532ccf5`, `passeio` "Passeio"/"Stroll" 70%/58% — ⚰️ a Masmorra foi o único prédio entre os dois merges de 30/09/2026) e Jogos (`salao` "Salão de Jogos", `mente` "Ateliê da Mente", `refugio` "Refúgio", posições 27%/42%, 72%/42%, 50%/72%): rótulo PT/EN, rótulo acessível e o centro da base em % da cena, tirados dos mocks aprovados. ⚰️ O lote único "Pedra, papel e tesoura" (`ppt`) e o lote `dino` da Exploração não existem mais: PPT e a Corrida com obstáculos (pasta/ids `dino` mantidos) moraram no Salão. Os três prédios repetem o arranjo de três construções do Laboratório e do Hall (`docs/BENCHMARK-MINIJOGOS.md` §6).
 **Exports:** `ExploracaoLotId`, `JogosLotId` (types), `exploracaoLots(language)`, `jogosLots(language)`. Desde `3532ccf5` `ExploracaoLotId` = `'masmorra' | 'passeio'` (⚰️ só `masmorra` entre os dois merges de 30/09/2026) e Jogos tem os três prédios `salao` / `mente` / `refugio` (a Corrida mudou para o Salão).
 **Chamado por:** `src/components/nav/AreaView.tsx`.
+
+### `src/assets/soulmon/mapa/zonas.ts`
+
+**Dono de:** o resolvedor da arte das ZONAS do Mapa que o dono ainda vai gerar (28/10/2026, #186): `resolveMapaZona(nome, provisoria)` devolve `./<nome>.png` se o arquivo existe na pasta (glob estreito: só `zona-forja.png`), senão a arte provisória. É o mesmo mecanismo de `resolveArt` em `src/assets/soulmon/areas/index.ts` (fundo e prédios da Forja e prédios novos do Laboratório).
+**Exports:** `resolveMapaZona`.
+**Chamado por:** `src/components/nav/MapPage.tsx`.
 **Régua:** `src/components/play/playArea.render.test.tsx` (indireta).
 
 ### `src/utils/lineIcons.ts`
@@ -3788,7 +3796,7 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Chamado por:** `src/components/guild/GroveFolha.tsx`, `src/components/guild/PlantioVisor.tsx`, `src/utils/claApi.ts`, `src/utils/claCredit.ts`, `src/contexts/GameStateContext.tsx`, `src/App.tsx`. **Régua:** `src/utils/bosqueArvores.test.ts`, `src/utils/claCredit.test.ts`.
 
 ### `src/utils/focusKey.ts` · `src/utils/focusDescent.ts` (beta3 F1)
-**Dono de:** a chave do foco e a descida em background. `src/utils/focusKey.ts` — `hasFocusKey`/`grantFocusKey` sobre `focusKeyDay` do save (dia do jogador, leitura tolerante); concluir o "Prepare to Focus" (etapa 1 da Oficina do Foco; o antigo prédio `exploracao.preparar` migra para `exploracao.oficina`, N8) dá a chave que libera a etapa 2. `src/utils/focusDescent.ts` — `startFocusDescent`/`focusDescentRefusal`: com o timer de foco rodando, só ABRE o `dungeonAway`; a conta e o retorno são os de sempre.
+**Dono de:** a chave do foco e a descida em background. `src/utils/focusKey.ts` — `hasFocusKey`/`grantFocusKey` sobre `focusKeyDay` do save (dia do jogador, leitura tolerante); concluir o "Prepare to Focus" (etapa 1 da Oficina do Foco; o antigo prédio `exploracao.preparar` migra para `forja.oficina` (ex-`exploracao.oficina`, #186), N8) dá a chave que libera a etapa 2. `src/utils/focusDescent.ts` — `startFocusDescent`/`focusDescentRefusal`: com o timer de foco rodando, só ABRE o `dungeonAway`; a conta e o retorno são os de sempre.
 **Chamado por:** `src/App.tsx`, `src/components/play/PrepararFocoSheet.tsx`. **Régua:** `src/utils/focusKey.test.ts`, `src/utils/focusDescent.test.ts`.
 
 ### `src/utils/plantioDefesa.ts` · `src/utils/rpsLevel2.ts`
@@ -3833,7 +3841,7 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Chamado por:** `src/components/RankingPanel.tsx`
 
 ### `src/utils/rogueDungeon.ts`
-**Dono de:** a lógica pura do Calabouço roguelike (M7, prédio `jogos.dungeon`): incursão do dia de 3 andares × 8 desafios; a cada passo 1 de 3 caminhos (combate/puzzle/minigame/exploração, semente = dia + passo), combate obrigatório a cada 3 passos e no fim do andar; bônus só valem na incursão; perder combate encerra o dia. Score = desafios vencidos + 3 por andar (máx. 33, espelho de `_rankings.js`).
+**Dono de:** a lógica pura do Calabouço roguelike (M7, prédio `exploracao.dungeon` (ex-`jogos.dungeon`, #186)): incursão do dia de 3 andares × 8 desafios; a cada passo 1 de 3 caminhos (combate/puzzle/minigame/exploração, semente = dia + passo), combate obrigatório a cada 3 passos e no fim do andar; bônus só valem na incursão; perder combate encerra o dia. Score = desafios vencidos + 3 por andar (máx. 33, espelho de `_rankings.js`).
 **Exports:** `ROGUE_FLOORS`, `ROGUE_PER_FLOOR`, `ROGUE_MAX_STEPS`, `ROGUE_COMBAT_EVERY`, `ROGUE_FLOOR_BONUS`, `ROGUE_MAX_SCORE`, `PathKind`, `BonusKind`, `pathsFor`, `bonusChoices`, `resolveStep`, `rogueScore`, `rogueBits`, `runForDay`.
 **Chamado por:** `src/components/RogueDungeon.tsx`
 
