@@ -291,7 +291,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
             : (isPt ? 'Ele está pronto quando você estiver.' : 'He is ready when you are.')}
           hero={{ label: isPt ? 'Pontos' : 'Score', value: finalScore }}
           recordNote={isPt ? `Novo recorde, antes ${prevBest}` : `New best, was ${prevBest}`}
-          strip={[{ key: 'best', label: isPt ? 'Recorde' : 'Best', value: best, hideOnRecord: true }]}
+          strip={prevBest > 0 ? [{ key: 'best', label: isPt ? 'Recorde' : 'Best', value: best, hideOnRecord: true }] : undefined}
           ledger={[{ key: 'bits', kind: 'bits', value: earned }]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           petSrc={getSpriteForStage(evolutionStage, demoCharacterId, 256)}

@@ -78,9 +78,10 @@ export function gateName(feature: GateFeature, language: string): string {
 export function gateLine(feature: GateFeature, bondLevel: unknown, language: string): string {
   const g = gateFor(feature, bondLevel);
   if (g.open) return '';
+  const plural = feature === 'masmorraAlto'; // "As camadas ... abrem" / "layers ... open"
   return language === 'pt-BR'
-    ? `${NOME[feature].pt} abre no Vínculo ${g.minBond}. Você está no Vínculo ${g.bondLevel}, e ele cresce com o que você já faz por aqui.`
-    : `${NOME[feature].en} opens at Bond ${g.minBond}. You are at Bond ${g.bondLevel}, and it grows with what you already do here.`;
+    ? `${NOME[feature].pt} ${plural ? 'abrem' : 'abre'} no Vínculo ${g.minBond}. Você está no Vínculo ${g.bondLevel}, e ele cresce com o que você já faz por aqui.`
+    : `${NOME[feature].en} ${plural ? 'open' : 'opens'} at Bond ${g.minBond}. You are at Bond ${g.bondLevel}, and it grows with what you already do here.`;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

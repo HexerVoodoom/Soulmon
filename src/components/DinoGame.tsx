@@ -643,7 +643,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           recordNote={isPt ? `Novo recorde, antes ${prevBest}` : `New best, was ${prevBest}`}
           strip={[
             { key: 'level', label: isPt ? 'Dificuldade' : 'Difficulty', value: playedLevel === 2 ? 'Normal' : 'Easy' },
-            { key: 'best', label: isPt ? 'Recorde' : 'Best', value: best, hideOnRecord: true },
+            // Primeira partida (sem recorde anterior): a célula repetiria o próprio placar.
+            ...(prevBest > 0 ? [{ key: 'best', label: isPt ? 'Recorde' : 'Best', value: best, hideOnRecord: true }] : []),
           ]}
           ledger={[{ key: 'bits', kind: 'bits', value: earned }]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}

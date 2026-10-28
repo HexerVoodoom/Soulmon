@@ -858,7 +858,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               recordNote={isPt ? `Mais fundo até hoje: camada ${resumo.recordTo}` : `Deepest so far: layer ${resumo.recordTo}`}
               strip={[
                 { key: 'score', label: isPt ? 'Placar' : 'Score', value: runScore },
-                { key: 'best', label: isPt ? 'Recorde' : 'Best', value: best, hideOnRecord: true },
+                // Primeira descida (sem recorde anterior): a célula repetiria o próprio placar.
+                ...(resumo.recordFrom > 0 ? [{ key: 'best', label: isPt ? 'Recorde' : 'Best', value: best, hideOnRecord: true }] : []),
               ]}
               ledger={[
                 { key: 'bits', kind: 'bits', value: resumo.bits },

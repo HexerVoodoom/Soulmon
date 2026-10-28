@@ -439,7 +439,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
                 document.getElementById('sm2-libtab-' + next.key)?.focus();
               }}
               className={active ? 'sm2-kit-tab sm2-kit-tab-on' : 'sm2-kit-tab'}
-              style={{ flex: 1, padding: '0 4px', minWidth: 0, whiteSpace: 'nowrap' }}
+              style={{ flex: '1 0 auto', padding: '0 12px', whiteSpace: 'nowrap' }}
             >
               {item.label}
             </button>
@@ -460,7 +460,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
               aria-selected={active}
               onClick={() => setTab(item.key)}
               className={active ? 'sm2-kit-tab sm2-kit-tab-on' : 'sm2-kit-tab'}
-              style={{ flex: 1, padding: '0 4px', minWidth: 0, whiteSpace: 'nowrap' }}
+              style={{ flex: '1 0 auto', padding: '0 12px', whiteSpace: 'nowrap' }}
             >
               <Icon name={item.icon} size={20} fill={active ? 1 : 0} tone="inherit" />
               {item.label}

@@ -8889,7 +8889,10 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 .sm-result-in { opacity: 0; transform: translateY(10px); }
 .sm-result-in--on { opacity: 1; transform: none; transition: opacity 240ms ease-out, transform 240ms ease-out; }
 .sm-result-banner { animation: sm-result-banner 260ms ease-out 1; }
-.sm-result-visor { display: flex; justify-content: center; }
+/* O visor CRESCE no espaço livre entre a barra e o conteúdo (mín. 180, máx. 46vh); em tela baixa fica no mínimo e a coluna rola. */
+.sm-result-visor { display: flex; justify-content: center; flex: 1 1 180px; min-height: 180px; max-height: 46vh; width: 100%; max-width: 348px; }
+.sm-result-visor > .sm2-viewport { width: 100% !important; height: 100% !important; box-sizing: border-box; display: flex !important; }
+.sm-result-visor .sm2-viewport-screen { width: 100% !important; height: 100% !important; flex: 1 1 auto; min-height: 0; }
 .sm-result-visor--happy, .sm-result-visor--calm, .sm-result-visor--tired, .sm-result-visor--live { --sm-result-mood: 1; }
 .sm-result-pet { transform-origin: 50% 100%; }
 .sm-result-visor--happy.sm-result-visor--live .sm-result-pet { animation: sm-result-hop 520ms ease-out 2; }
@@ -8901,3 +8904,8 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 @keyframes sm-result-banner { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
 @keyframes sm-result-hop { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-14px); } }
 @keyframes sm-result-spark { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }
+
+/* Dex de elementos (28/10/2026): a célula trancada leva um círculo escuro atrás do "?" (não é caixa em volta de ícone; o ícone aberto segue pelado). Mesmo tamanho do ícone aberto (32; 24 nas listas) para a grade não deslocar. */
+.sm-dex-lock { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: rgba(0, 0, 0, 0.35); color: var(--sm2-ink); line-height: 1; }
+.sm-dex-lock--sm { width: 24px; height: 24px; }
+[data-theme="light"] .sm-dex-lock { background: rgba(0, 0, 0, 0.18); }

@@ -168,6 +168,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   const [earned, setEarned] = useState(0);
   const [best, setBest] = useState(() => readNumber(STORAGE_KEYS.MATCH3_BEST, 0));
   const [newBest, setNewBest] = useState(false);
+  const [hadBest, setHadBest] = useState(false);
   const [hint, setHint] = useState<{ a: Pos; b: Pos } | null>(null);
   const [enemyPick, setEnemyPick] = useState<{ a: Pos; b: Pos } | null>(null);
   const [turnBanner, setTurnBanner] = useState<{ text: string; by: 'player' | 'enemy' } | null>(null);
@@ -218,6 +219,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
     const bits = match3Bits(final);
     setEarned(bits);
     const prevBest = readNumber(STORAGE_KEYS.MATCH3_BEST, 0);
+    setHadBest(prevBest > 0);
     // PVP: sem recorde nem ranking (decisão do dono, 26/10/2026) — só os Bits, pelo mesmo funil do Normal
     if (!pvpRef.current && final > prevBest) { writeLocal(STORAGE_KEYS.MATCH3_BEST, String(final)); setBest(final); setNewBest(prevBest > 0); }
     setOver(true);
@@ -520,7 +522,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
     overRef.current = false;
     busyRef.current = false;
     setBoard(r.board); setCombat(c.combat); setSel(null); setCursor({ r: 0, c: 0 });
-    setBusy(false); setFx([]); fxLanes.current = [0, 0]; setClearing(new Set()); setChain(0); setNote(''); setOver(false); setHint(null); setEnemyPick(null); setTurnBanner(null); setEnemyAura(null); setHintsLeft(M3_HINTS_PER_GAME); setConfirmBuy(false); streakRef.current = 1; setEarned(0); setNewBest(false);
+    setBusy(false); setFx([]); fxLanes.current = [0, 0]; setClearing(new Set()); setChain(0); setNote(''); setOver(false); setHint(null); setEnemyPick(null); setTurnBanner(null); setEnemyAura(null); setHintsLeft(M3_HINTS_PER_GAME); setConfirmBuy(false); streakRef.current = 1; setEarned(0); setNewBest(false); setHadBest(false);
   };
 
   const score = combatScore(combat);
@@ -781,7 +783,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
           againAttrs={{ 'data-m3-again': true }}
           hero={{ label: isPt ? 'Pontos' : 'Score', value: score }}
           recordNote={isPt ? 'Novo recorde' : 'New best'}
-          strip={pvp ? undefined : [{ key: 'best', label: isPt ? 'Seu recorde' : 'Your best', value: best, hideOnRecord: true }]}
+          strip={pvp || !hadBest ? undefined : [{ key: 'best', label: isPt ? 'Seu recorde' : 'Your best', value: best, hideOnRecord: true }]}
           ledger={[{ key: 'bits', kind: 'bits', value: earned }]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           petSrc={playerSprite}

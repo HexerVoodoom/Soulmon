@@ -26,7 +26,7 @@ function ElementRef({ id, open, isPt }: { id: string; open: boolean; isPt: boole
           <span className="sm2-lib-s" style={{ color: 'var(--sm2-ink)' }}>{dexElementName(id, isPt)}</span>
         </>
       ) : (
-        <span className="sm2-lib-s" aria-label={isPt ? 'Elemento ainda trancado' : 'Element still locked'}>?</span>
+        <span className="sm2-lib-s sm-dex-lock sm-dex-lock--sm" aria-label={isPt ? 'Elemento ainda trancado' : 'Element still locked'}>?</span>
       )}
     </li>
   );
@@ -62,7 +62,7 @@ export function ElementDex({ defeated, language = 'en-US' }: { defeated: readonl
             return (
               <li key={i} data-element-cell="locked" aria-label={isPt ? 'Elemento ainda trancado' : 'Element still locked'}
                 style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, minHeight: 64 }}>
-                <span aria-hidden="true" className="sm2-lib-h2" style={{ color: 'var(--sm2-muted)' }}>?</span>
+                <span aria-hidden="true" className="sm2-lib-h2 sm-dex-lock">?</span>
               </li>
             );
           }
