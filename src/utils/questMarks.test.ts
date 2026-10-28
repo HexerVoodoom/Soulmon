@@ -23,7 +23,7 @@ describe('questMarks', () => {
     expect(questMarks({ ...base, weekly: [{ done: true, claimed: true }] }).corner).toBeNull();
     expect(questMarks({ ...base, passeioReady: true }).corner).toBe('ready');
     expect(questMarks({ ...base, passeioReady: false }).corner).toBeNull();
-    expect(questMarks({ ...base, buildings: { 'exploracao.caderno': 'ready' } }).corner).toBe('ready');
+    expect(questMarks({ ...base, buildings: { 'forja.caderno': 'ready' } }).corner).toBe('ready');
     expect(questMarks({ ...base, buildings: {} }).corner).toBeNull();
   });
   it('semanal: andando "!", cumprida e não paga "?", paga some', () => {

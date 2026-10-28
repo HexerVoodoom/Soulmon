@@ -14,9 +14,9 @@ import { lotHitRects } from './areaLotGeometry';
 import { buildingDestination } from '../navigation';
 
 describe('D-50: as listas de lotes', () => {
-  it('o Hall tem EXATAMENTE três prédios (Feira, Grove, Clan Hall) e o Laboratório seis', () => {
+  it('o Hall tem EXATAMENTE três prédios (Feira, Grove, Clan Hall) e o Laboratório quatro (#186: sem o Arquivo e o Círculo de Amigos, que viraram seções)', () => {
     expect(hallLots('pt-BR').map(l => l.id).sort()).toEqual(['feira', 'grove', 'guilda']);
-    expect(laboratorioLots('pt-BR').map(l => l.id).sort()).toEqual(['amigos', 'biblioteca', 'evolucao', 'perfil', 'pet', 'stats']);
+    expect(laboratorioLots('pt-BR').map(l => l.id).sort()).toEqual(['biblioteca', 'evolucao', 'perfil', 'stats']);
     expect(Object.keys(BUILDING_GATES).filter(id => id.startsWith('hall.')).sort()).toEqual(['hall.feira', 'hall.grove', 'hall.guilda']);
     expect(Object.keys(BUILDING_GATES)).not.toContain('hall.biblioteca');
     expect(Object.keys(BUILDING_GATES)).not.toContain('hall.amigos');
@@ -75,23 +75,23 @@ describe('D-50: migração do save (idempotente, sem chave nova)', () => {
     expect(currentBuildingId('laboratorio.biblioteca')).toBe('laboratorio.biblioteca');
     expect(currentBuildingId(42)).toBe(42);
   });
-  it('beta3 N8/N10: ids antigos migram na leitura (Fenda → arena.fenda, Prepare to Focus → oficina), idempotente; save velho segue válido', () => {
-    expect(currentBuildingId('exploracao.masmorra')).toBe('arena.fenda');
-    expect(currentBuildingId('exploracao.preparar')).toBe('exploracao.oficina');
-    expect(currentBuildingId(currentBuildingId('exploracao.masmorra'))).toBe('arena.fenda');
+  it('beta3 N8/N10: ids antigos migram na leitura (Fenda → exploracao.fenda, Prepare to Focus → oficina), idempotente; save velho segue válido', () => {
+    expect(currentBuildingId('exploracao.masmorra')).toBe('exploracao.fenda');
+    expect(currentBuildingId('exploracao.preparar')).toBe('forja.oficina');
+    expect(currentBuildingId(currentBuildingId('exploracao.masmorra'))).toBe('exploracao.fenda');
     expect(BUILDING_GATES).not.toHaveProperty('exploracao.masmorra');
     expect(BUILDING_GATES).not.toHaveProperty('exploracao.preparar');
     const velho = sanitizeFirstTimes({ done: ['visit:exploracao.masmorra', 'first-dungeon'], claimed: ['visit:exploracao.masmorra'] })!;
-    expect(velho.done).toContain('visit:arena.fenda');
-    expect(velho.claimed).toEqual(['visit:arena.fenda']);
+    expect(velho.done).toContain('visit:exploracao.fenda');
+    expect(velho.claimed).toEqual(['visit:exploracao.fenda']);
     expect(sanitizeFirstTimes(JSON.parse(JSON.stringify(velho)))).toEqual(velho);
   });
 });
 
 describe('D-50: atalhos e deep links', () => {
-  it('missão/atalho para Biblioteca e Amigos leva ao Laboratório (id novo ou antigo)', () => {
+  it('missão/atalho para a Biblioteca leva ao Laboratório e para os Amigos ao Salão do Clã (id novo ou antigo; #186)', () => {
     for (const id of ['laboratorio.biblioteca', 'hall.biblioteca']) expect(buildingDestination(id)).toEqual({ kind: 'lot', area: 'laboratorio', lot: 'biblioteca' });
-    for (const id of ['laboratorio.amigos', 'hall.amigos']) expect(buildingDestination(id)).toEqual({ kind: 'lot', area: 'laboratorio', lot: 'amigos' });
+    for (const id of ['laboratorio.amigos', 'hall.amigos']) expect(buildingDestination(id)).toEqual({ kind: 'lot', area: 'hall', lot: 'guilda', section: 'amigos' });
     expect(buildingDestination('hall.grove')).toEqual({ kind: 'lot', area: 'hall', lot: 'grove' });
   });
 });

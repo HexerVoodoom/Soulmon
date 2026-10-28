@@ -13,7 +13,7 @@ export const MATERIAL_IDS = [
   'spark', 'moss', 'prism', 'pebble', 'ore', 'ink', 'gear', 'fang',
   'laurel', 'ribbon', 'essence', 'down', 'cipher', 'page', 'keepsake', 'crest',
 ];
-const BUILDING_RE = /^(jogos|exploracao|arena|laboratorio|hall)\.[a-z]{1,24}$/;
+const BUILDING_RE = /^(jogos|exploracao|forja|arena|laboratorio|hall)\.[a-z]{1,24}$/;
 const MAX_LIST = 20;
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 

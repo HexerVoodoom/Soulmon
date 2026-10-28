@@ -16,11 +16,12 @@ describe('tabela prédio → material', () => {
   it('todo prédio fora do Mercado tem 1 material, e o Mercado nenhum', () => {
     expect(QUEST_BUILDINGS.some(id => id.startsWith('mercado.'))).toBe(false);
     // beta-2 (11): o Perfil do Soulmon é leitura — sem missão, sem material (e sem peça do Soulsmith).
+    expect(QUEST_BUILDINGS).not.toContain('forja.ferreiro'); // #186: o Soulsmith saiu do Mercado para a Forja, e segue sem missão/material
     expect(QUEST_BUILDINGS).not.toContain('laboratorio.perfil');
     expect(QUEST_BUILDINGS).not.toContain('arena.guerra'); // a guerra rende na casa do clã, sem material
-    expect(QUEST_BUILDINGS.length).toBe(Object.keys(BUILDING_GATES).filter(id => !id.startsWith('mercado.') && id !== 'laboratorio.perfil' && id !== 'arena.guerra' && id !== 'hall.grove' && id !== 'exploracao.preparar' && id !== 'jogos.dungeon').length);
+    expect(QUEST_BUILDINGS.length).toBe(Object.keys(BUILDING_GATES).filter(id => !id.startsWith('mercado.') && id !== 'forja.ferreiro' && id !== 'laboratorio.perfil' && id !== 'arena.guerra' && id !== 'hall.grove' && id !== 'exploracao.preparar' && id !== 'exploracao.dungeon').length);
     expect(QUEST_BUILDINGS).not.toContain('exploracao.preparar'); // beta3 F1: rende a chave da Oficina, sem material
-    expect(QUEST_BUILDINGS).not.toContain('jogos.dungeon'); // beta3 M3: placeholder do Calabouço, sem material
+    expect(QUEST_BUILDINGS).not.toContain('exploracao.dungeon'); // beta3 M3: placeholder do Calabouço, sem material
     expect(QUEST_BUILDINGS).not.toContain('hall.grove'); // D-50: o bosque rende no clã, sem material
     expect(MATERIALS.map(m => m.building).sort()).toEqual([...QUEST_BUILDINGS].sort());
     expect(new Set(MATERIAL_IDS).size).toBe(MATERIAL_IDS.length);
@@ -36,15 +37,15 @@ describe('tabela prédio → material', () => {
 describe('missão do dia', () => {
   it('trancada pelo Vínculo; aberta vira disponível → pronta → resgatada', () => {
     // A Masmorra abre no Vínculo 1 desde 14/10/2026 (pedido do dono); a Oficina do Foco segue no 3.
-    expect(questStatus(undefined, D1, 'arena.fenda', 1)).toBe('available');
-    expect(questStatus(undefined, D1, 'exploracao.oficina', 2)).toBe('locked');
-    expect(questStatus(undefined, D1, 'exploracao.oficina', 3)).toBe('available');
-    const v = visitBuilding(undefined, D1, 'exploracao.oficina', 3);
-    expect(questStatus(v, D1, 'exploracao.oficina', 3)).toBe('ready');
-    const c = claimBuildingQuest(v, D1, 'exploracao.oficina', 3);
+    expect(questStatus(undefined, D1, 'exploracao.fenda', 1)).toBe('available');
+    expect(questStatus(undefined, D1, 'forja.oficina', 2)).toBe('locked');
+    expect(questStatus(undefined, D1, 'forja.oficina', 3)).toBe('available');
+    const v = visitBuilding(undefined, D1, 'forja.oficina', 3);
+    expect(questStatus(v, D1, 'forja.oficina', 3)).toBe('ready');
+    const c = claimBuildingQuest(v, D1, 'forja.oficina', 3);
     expect(c.paid).toBe('gear');
     expect(stockOf(c.state, 'gear')).toBe(1);
-    expect(questStatus(c.state, D1, 'exploracao.oficina', 3)).toBe('claimed');
+    expect(questStatus(c.state, D1, 'forja.oficina', 3)).toBe('claimed');
   });
   it('resgate duplo não paga 2× e devolve a mesma referência', () => {
     const v = visitBuilding(undefined, D1, 'hall.guilda', MAXB);
@@ -87,30 +88,30 @@ describe('missão do dia', () => {
 
 describe('a missão só APONTA: a ação real conclui, entrar não (07/10/2026)', () => {
   it('entrar no Caderno NÃO conclui; guardar um registro (completeBuildingQuest) deixa pronta; resgatar paga 1×', () => {
-    expect(visitBuilding(undefined, D1, 'exploracao.caderno', MAXB)).toBeUndefined();
-    const v = completeBuildingQuest(undefined, D1, 'exploracao.caderno', MAXB);
-    expect(questStatus(v, D1, 'exploracao.caderno', MAXB)).toBe('ready');
-    expect(completeBuildingQuest(v, D1, 'exploracao.caderno', MAXB)).toBe(v); // idempotente no dia
-    const c = claimBuildingQuest(v, D1, 'exploracao.caderno', MAXB);
+    expect(visitBuilding(undefined, D1, 'forja.caderno', MAXB)).toBeUndefined();
+    const v = completeBuildingQuest(undefined, D1, 'forja.caderno', MAXB);
+    expect(questStatus(v, D1, 'forja.caderno', MAXB)).toBe('ready');
+    expect(completeBuildingQuest(v, D1, 'forja.caderno', MAXB)).toBe(v); // idempotente no dia
+    const c = claimBuildingQuest(v, D1, 'forja.caderno', MAXB);
     expect(c.paid).toBe('ink');
-    expect(claimBuildingQuest(c.state, D1, 'exploracao.caderno', MAXB).paid).toBeNull();
-    expect(completeBuildingQuest(c.state, D1, 'exploracao.caderno', MAXB)).toBe(c.state); // pago não reabre no dia
-    expect(questStatus(c.state, D2, 'exploracao.caderno', MAXB)).toBe('available'); // dia novo
+    expect(claimBuildingQuest(c.state, D1, 'forja.caderno', MAXB).paid).toBeNull();
+    expect(completeBuildingQuest(c.state, D1, 'forja.caderno', MAXB)).toBe(c.state); // pago não reabre no dia
+    expect(questStatus(c.state, D2, 'forja.caderno', MAXB)).toBe('available'); // dia novo
   });
   it('o texto aponta, curto e imperativo, EN e PT', () => {
-    expect(questText(D1, 'exploracao.caderno', false)).toBe('Write an entry in your journal');
-    expect(questText(D1, 'exploracao.caderno', true)).toBe('Faça um registro no journaling');
+    expect(questText(D1, 'forja.caderno', false)).toBe('Write an entry in your journal');
+    expect(questText(D1, 'forja.caderno', true)).toBe('Faça um registro no journaling');
   });
 });
 
 describe('marcas', () => {
   it('só a missão LISTADA no menu (Caderno) tem marca: ! disponível, ? pronta, nada depois de paga; Mercado nunca', () => {
-    expect(buildingMarks(undefined, D1, MAXB)['exploracao.caderno']).toBe('available');
-    const v = completeBuildingQuest(undefined, D1, 'exploracao.caderno', MAXB);
-    expect(buildingMarks(v, D1, MAXB)['exploracao.caderno']).toBe('ready');
-    const c = claimBuildingQuest(v, D1, 'exploracao.caderno', MAXB).state;
-    expect(buildingMarks(c, D1, MAXB)['exploracao.caderno']).toBeUndefined();
-    expect(Object.keys(buildingMarks(undefined, D1, MAXB))).toEqual(['exploracao.caderno']);
+    expect(buildingMarks(undefined, D1, MAXB)['forja.caderno']).toBe('available');
+    const v = completeBuildingQuest(undefined, D1, 'forja.caderno', MAXB);
+    expect(buildingMarks(v, D1, MAXB)['forja.caderno']).toBe('ready');
+    const c = claimBuildingQuest(v, D1, 'forja.caderno', MAXB).state;
+    expect(buildingMarks(c, D1, MAXB)['forja.caderno']).toBeUndefined();
+    expect(Object.keys(buildingMarks(undefined, D1, MAXB))).toEqual(['forja.caderno']);
   });
   it('visitar prédio não listado continua contando, mas não acende nada', () => {
     const v = visitBuilding(undefined, D1, 'arena.duelo', MAXB);
@@ -119,8 +120,8 @@ describe('marcas', () => {
   });
   it('canto: a missão listada acende em dourado; sem nada a fazer nem a entregar, some', () => {
     const base = { passeio: null, weekly: [], missionProgress: {}, ownedBackgrounds: [] };
-    const v = completeBuildingQuest(undefined, D1, 'exploracao.caderno', MAXB);
-    const c = claimBuildingQuest(v, D1, 'exploracao.caderno', MAXB).state;
+    const v = completeBuildingQuest(undefined, D1, 'forja.caderno', MAXB);
+    const c = claimBuildingQuest(v, D1, 'forja.caderno', MAXB).state;
     expect(questMarks({ ...base, buildings: buildingMarks(c, D1, MAXB) }).corner).toBeNull();
     expect(questMarks({ ...base, buildings: buildingMarks(undefined, D1, MAXB) }).corner).toBe('available');
     const m = questMarks({ ...base, buildings: buildingMarks(v, D1, MAXB) });

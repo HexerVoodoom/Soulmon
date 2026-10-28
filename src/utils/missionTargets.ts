@@ -14,7 +14,7 @@ export type GoTarget = BuildingId | 'home' | null;
 
 export function weeklyTarget(id: WeeklyMissionId): GoTarget {
   switch (id) {
-    case 'dungeon-runs': return 'arena.fenda';
+    case 'dungeon-runs': return 'exploracao.fenda';
     case 'evolve-view': return 'laboratorio.evolucao';
     case 'tournament-match': return 'arena.torneio';
     case 'friend-visit': return 'laboratorio.amigos';
@@ -29,7 +29,7 @@ export function weeklyTarget(id: WeeklyMissionId): GoTarget {
 export function achievementTarget(category: MissionCategory): GoTarget {
   switch (category) {
     case 'evolution': return 'laboratorio.evolucao';
-    case 'dungeon': return 'arena.fenda';
+    case 'dungeon': return 'exploracao.fenda';
     case 'games': return 'jogos.salao';
     default: return null;
   }
@@ -37,5 +37,5 @@ export function achievementTarget(category: MissionCategory): GoTarget {
 
 /** Diárias: o cuidado do Refúgio (banho, carinho, comida, humor, descanso, brincar) se faz na Home; o resto, no prédio da missão. */
 export function dailyTarget(m: Pick<DailyMission, 'building'>): GoTarget {
-  return m.building === 'exploracao.refugio' ? 'home' : m.building;
+  return m.building === 'forja.refugio' ? 'home' : m.building;
 }

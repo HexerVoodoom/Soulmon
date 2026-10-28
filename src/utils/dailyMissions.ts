@@ -55,14 +55,14 @@ const POOL: readonly DailyMission[] = [
   { id: 'd-dino', event: 'dino', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Dê uma corrida na Corrida com obstáculos', descEn: 'Take a run in the obstacle course' },
   { id: 'd-ppt', event: 'ppt', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Jogue uma partida de Pedra, papel e tesoura', descEn: 'Play a match of Rock, paper, scissors' },
   { id: 'd-match3', event: 'match3', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Jogue uma rodada de Elemental Fusion', descEn: 'Play a round of Elemental Fusion' },
-  { id: 'd-foco', event: 'foco', target: 1, building: 'exploracao.oficina', material: 'gear', descPt: 'Faça um ciclo de foco (Pomodoro) na Oficina', descEn: 'Do one focus cycle (Pomodoro) in the Workshop' },
-  { id: 'd-masmorra', event: 'masmorra', target: 1, building: 'arena.fenda', material: 'ore', descPt: 'Limpe uma camada da Fenda', descEn: 'Clear an Endless Rift layer' },
-  { id: 'd-banho', event: 'banho', target: 1, building: 'exploracao.refugio', material: 'moss', descPt: 'Dê um banho no seu Soulmon', descEn: 'Give your Soulmon a bath' },
-  { id: 'd-carinho', event: 'carinho', target: 1, building: 'exploracao.refugio', material: 'moss', descPt: 'Faça um carinho no seu Soulmon', descEn: 'Pet your Soulmon' },
-  { id: 'd-brincar', event: 'brincar', target: 1, building: 'exploracao.refugio', material: 'moss', descPt: 'Brinque um pouco com o seu Soulmon', descEn: 'Play a little with your Soulmon' },
-  { id: 'd-comida', event: 'comida', target: 1, building: 'exploracao.refugio', material: 'moss', descPt: 'Dê uma comidinha ao seu Soulmon', descEn: 'Give your Soulmon a snack' },
-  { id: 'd-humor', event: 'humor', target: 1, building: 'exploracao.refugio', material: 'moss', descPt: 'Conte como você está se sentindo hoje', descEn: 'Tell how you are feeling today' },
-  { id: 'd-sono', event: 'sono', target: 1, building: 'exploracao.refugio', material: 'moss', descPt: 'Deixe o seu Soulmon descansar', descEn: 'Let your Soulmon get some rest' },
+  { id: 'd-foco', event: 'foco', target: 1, building: 'forja.oficina', material: 'gear', descPt: 'Faça um ciclo de foco (Pomodoro) na Oficina', descEn: 'Do one focus cycle (Pomodoro) in the Workshop' },
+  { id: 'd-masmorra', event: 'masmorra', target: 1, building: 'exploracao.fenda', material: 'ore', descPt: 'Limpe uma camada da Fenda', descEn: 'Clear an Endless Rift layer' },
+  { id: 'd-banho', event: 'banho', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Dê um banho no seu Soulmon', descEn: 'Give your Soulmon a bath' },
+  { id: 'd-carinho', event: 'carinho', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Faça um carinho no seu Soulmon', descEn: 'Pet your Soulmon' },
+  { id: 'd-brincar', event: 'brincar', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Brinque um pouco com o seu Soulmon', descEn: 'Play a little with your Soulmon' },
+  { id: 'd-comida', event: 'comida', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Dê uma comidinha ao seu Soulmon', descEn: 'Give your Soulmon a snack' },
+  { id: 'd-humor', event: 'humor', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Conte como você está se sentindo hoje', descEn: 'Tell how you are feeling today' },
+  { id: 'd-sono', event: 'sono', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Deixe o seu Soulmon descansar', descEn: 'Let your Soulmon get some rest' },
   { id: 'd-mercado', event: 'mercado', target: 1, building: 'mercado.itens', material: 'ribbon', descPt: 'Dê uma passadinha no Mercado', descEn: 'Stop by the Market' },
   { id: 'd-amigo', event: 'amigo', target: 1, building: 'laboratorio.amigos', material: 'keepsake', descPt: 'Visite a criatura de um amigo', descEn: 'Visit a friend’s creature' },
   { id: 'd-arena', event: 'arena', target: 1, building: 'arena.duelo', material: 'fang', descPt: 'Faça um Duelo na Arena', descEn: 'Have a Duel in the Arena' },
@@ -73,7 +73,7 @@ const POOL: readonly DailyMission[] = [
   { id: 'd-eco', event: 'eco', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Jogue uma rodada do Eco do Pet', descEn: 'Play a round of Pet Echo' },
   { id: 'd-zip', event: 'zip', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Resolva uma Trilha do Pet', descEn: 'Solve a Pet Trail' },
   { id: 'd-patches', event: 'patches', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Monte uma Colcha', descEn: 'Piece together a Patchwork' },
-  { id: 'd-calabouco', event: 'calabouco', target: 1, building: 'jogos.dungeon', material: 'ore', descPt: 'Conclua um andar do Calabouço', descEn: 'Finish a Dungeon floor' },
+  { id: 'd-calabouco', event: 'calabouco', target: 1, building: 'exploracao.dungeon', material: 'ore', descPt: 'Conclua um andar do Calabouço', descEn: 'Finish a Dungeon floor' },
 ];
 
 /** Rodízios (rodada 6): UMA do Salão e UMA do Ateliê por dia, em ordem fixa; o Calabouço entra todo dia. */
@@ -220,8 +220,8 @@ export interface FirstTime {
   descEn?: string;
 }
 
-// Prédios placeholder (jogos.dungeon) não pagam material: sem tela própria para "visitar" (QA 25/10/2026).
-const NO_VISIT: readonly BuildingId[] = ['laboratorio.perfil', 'arena.guerra', 'hall.grove', 'jogos.dungeon'];
+// Prédios placeholder (exploracao.dungeon) não pagam material: sem tela própria para "visitar" (QA 25/10/2026).
+const NO_VISIT: readonly BuildingId[] = ['laboratorio.perfil', 'arena.guerra', 'hall.grove', 'exploracao.dungeon'];
 
 const VISITS: readonly FirstTime[] = (Object.keys(BUILDING_GATES) as BuildingId[])
   .filter(b => !NO_VISIT.includes(b))
@@ -229,9 +229,9 @@ const VISITS: readonly FirstTime[] = (Object.keys(BUILDING_GATES) as BuildingId[
 
 const FIRST_EVENTS: readonly (FirstTime & { from: readonly DailyEvent[] })[] = [
   { id: 'first-minigame', building: 'jogos.salao', material: 'spark', from: ['dino', 'ppt', 'match3', 'barrage'], descPt: 'Estreie o seu primeiro minijogo', descEn: 'Try your first mini-game' },
-  { id: 'first-focus', building: 'exploracao.oficina', material: 'gear', from: ['foco'], descPt: 'Faça o seu primeiro ciclo de foco (Pomodoro)', descEn: 'Do your first focus cycle (Pomodoro)' },
+  { id: 'first-focus', building: 'forja.oficina', material: 'gear', from: ['foco'], descPt: 'Faça o seu primeiro ciclo de foco (Pomodoro)', descEn: 'Do your first focus cycle (Pomodoro)' },
   { id: 'first-stroll', building: 'exploracao.passeio', material: 'pebble', from: [], descPt: 'Conclua o seu primeiro passeio', descEn: 'Finish your first stroll' },
-  { id: 'first-dungeon', building: 'arena.fenda', material: 'ore', from: ['masmorra'], descPt: 'Limpe a sua primeira camada da Fenda', descEn: 'Clear your first Endless Rift layer' },
+  { id: 'first-dungeon', building: 'exploracao.fenda', material: 'ore', from: ['masmorra'], descPt: 'Limpe a sua primeira camada da Fenda', descEn: 'Clear your first Endless Rift layer' },
 ];
 
 const FIRST_POOL: readonly FirstTime[] = [...FIRST_EVENTS.map(({ from: _f, ...r }) => r), ...VISITS];

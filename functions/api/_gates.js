@@ -35,14 +35,14 @@ export const BUILDING_GATES = {
   'mercado.conquistas': { minBond: 1 },
   'mercado.decoracao': { minBond: 2 },
   'mercado.background': { minBond: 3 },
-  'mercado.ferreiro': { minBond: 2 },
+  'forja.ferreiro': { minBond: 2 },
   'jogos.salao': { minBond: 1 },
-  'jogos.dungeon': { minBond: 3 },
+  'exploracao.dungeon': { minBond: 3 },
   'jogos.mente': { minBond: 3 },
-  'arena.fenda': { minBond: 1 },
-  'exploracao.caderno': { minBond: 2 },
-  'exploracao.oficina': { minBond: 3 },
-  'exploracao.refugio': { minBond: 1 },
+  'exploracao.fenda': { minBond: 1 },
+  'forja.caderno': { minBond: 2 },
+  'forja.oficina': { minBond: 3 },
+  'forja.refugio': { minBond: 1 },
   'arena.duelo': { minBond: GATES.pvp.minBond },
   'arena.torneio': { minBond: GATES.torneio.minBond },
   'arena.guerra': { minBond: 5 },
@@ -62,9 +62,16 @@ export const MOVED_BUILDINGS = {
   'arena.feira': 'hall.feira',
   'hall.biblioteca': 'laboratorio.biblioteca',
   'hall.amigos': 'laboratorio.amigos',
-  'jogos.refugio': 'exploracao.refugio',
-  'exploracao.masmorra': 'arena.fenda',
-  'exploracao.preparar': 'exploracao.oficina',
+  'jogos.refugio': 'forja.refugio', // beta3 M3 (25/10/2026): o Refúgio foi de Jogos para a Exploração; 28/10/2026 (#186): daí para a Forja
+  'exploracao.masmorra': 'exploracao.fenda', // beta3 N10 (26/10/2026): a Fenda Sem Fim foi para a Arena; 28/10/2026 (#186): voltou à Exploração
+  'exploracao.preparar': 'forja.oficina', // beta3 N8 (26/10/2026): o prédio "Prepare to Focus" virou a 1ª etapa da Oficina do Foco (hoje na Forja)
+  // 28/10/2026 (#186, a Forja e as masmorras na Exploração): o id acompanha o lote — a leitura do save, do servidor e dos atalhos antigos redireciona.
+  'exploracao.oficina': 'forja.oficina',
+  'exploracao.caderno': 'forja.caderno',
+  'exploracao.refugio': 'forja.refugio',
+  'mercado.ferreiro': 'forja.ferreiro',
+  'arena.fenda': 'exploracao.fenda',
+  'jogos.dungeon': 'exploracao.dungeon',
 };
 
 /** O id atual de um predio (id antigo -> novo; qualquer outro valor passa igual). @param {unknown} x */

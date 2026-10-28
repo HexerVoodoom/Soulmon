@@ -87,14 +87,14 @@ export interface ForgePiece {
 
 /** Item → prédio de origem → materiais. Os ids são os do catálogo antigo (saves antigos continuam válidos). */
 export const FORGE_PIECES: readonly ForgePiece[] = [
-  { id: 'eq-nucleo-t1', slot: 'nucleo', tier: 1, building: 'arena.fenda', mats: ['ore', 'gear'] },
+  { id: 'eq-nucleo-t1', slot: 'nucleo', tier: 1, building: 'exploracao.fenda', mats: ['ore', 'gear'] },
   { id: 'eq-nucleo-t2', slot: 'nucleo', tier: 2, building: 'arena.duelo', mats: ['fang', 'ore'] },
   { id: 'eq-nucleo-t3', slot: 'nucleo', tier: 3, building: 'arena.torneio', mats: ['laurel', 'fang'] },
   { id: 'eq-carapaca-t1', slot: 'carapaca', tier: 1, building: 'exploracao.passeio', mats: ['pebble', 'moss'] },
   { id: 'eq-carapaca-t2', slot: 'carapaca', tier: 2, building: 'laboratorio.pet', mats: ['down', 'pebble'] },
   { id: 'eq-carapaca-t3', slot: 'carapaca', tier: 3, building: 'hall.guilda', mats: ['crest', 'down'] },
   { id: 'eq-rastro-t1', slot: 'rastro', tier: 1, building: 'jogos.salao', mats: ['spark', 'moss'] },
-  { id: 'eq-rastro-t2', slot: 'rastro', tier: 2, building: 'exploracao.oficina', mats: ['gear', 'spark'] },
+  { id: 'eq-rastro-t2', slot: 'rastro', tier: 2, building: 'forja.oficina', mats: ['gear', 'spark'] },
   { id: 'eq-rastro-t3', slot: 'rastro', tier: 3, building: 'hall.feira', mats: ['ribbon', 'gear'] },
 ];
 

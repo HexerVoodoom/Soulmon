@@ -88,12 +88,12 @@ export function gateLine(feature: GateFeature, bondLevel: unknown, language: str
 // PRÉDIOS POR VÍNCULO (Tarefa A, 07/10/2026) — qual prédio do Mapa abre em qual Vínculo.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Os prédios (lotes) das seis áreas do Mapa: `<área>.<lote>`. Os ids são estáveis (o save e os testes os citam). */
+/** Os prédios (lotes) das sete áreas do Mapa: `<área>.<lote>`. Os ids são estáveis (o save e os testes os citam); `laboratorio.pet` e `laboratorio.amigos` são prédios SEM lote próprio desde #186 (moram dentro do Perfil e do Salão do Clã). */
 export type BuildingId =
-  | 'mercado.itens' | 'mercado.conquistas' | 'mercado.decoracao' | 'mercado.background' | 'mercado.ferreiro'
-  | 'jogos.salao' | 'jogos.dungeon' | 'jogos.mente'
+  | 'mercado.itens' | 'mercado.conquistas' | 'mercado.decoracao' | 'mercado.background' | 'forja.ferreiro'
+  | 'jogos.salao' | 'exploracao.dungeon' | 'jogos.mente'
   | 'arena.duelo' | 'arena.torneio' | 'arena.guerra'
-  | 'exploracao.passeio' | 'arena.fenda' | 'exploracao.caderno' | 'exploracao.oficina' | 'exploracao.refugio'
+  | 'exploracao.passeio' | 'exploracao.fenda' | 'forja.caderno' | 'forja.oficina' | 'forja.refugio'
   | 'laboratorio.evolucao' | 'laboratorio.pet' | 'laboratorio.stats' | 'laboratorio.perfil'
   | 'laboratorio.biblioteca' | 'laboratorio.amigos'
   | 'hall.guilda' | 'hall.feira' | 'hall.grove';
@@ -107,9 +107,16 @@ export const MOVED_BUILDINGS: Readonly<Record<string, BuildingId>> = {
   'arena.feira': 'hall.feira',
   'hall.biblioteca': 'laboratorio.biblioteca',
   'hall.amigos': 'laboratorio.amigos',
-  'jogos.refugio': 'exploracao.refugio', // beta3 M3 (25/10/2026): o Refúgio foi de Jogos para a Exploração
-  'exploracao.masmorra': 'arena.fenda', // beta3 N10 (26/10/2026): a Fenda Sem Fim (Masmorra) foi da Exploração para a Arena
-  'exploracao.preparar': 'exploracao.oficina', // beta3 N8 (26/10/2026): o prédio "Prepare to Focus" virou a 1ª etapa da Oficina do Foco
+  'jogos.refugio': 'forja.refugio', // beta3 M3 (25/10/2026): o Refúgio foi de Jogos para a Exploração; 28/10/2026 (#186): daí para a Forja
+  'exploracao.masmorra': 'exploracao.fenda', // beta3 N10 (26/10/2026): a Fenda Sem Fim foi para a Arena; 28/10/2026 (#186): voltou à Exploração
+  'exploracao.preparar': 'forja.oficina', // beta3 N8 (26/10/2026): o prédio "Prepare to Focus" virou a 1ª etapa da Oficina do Foco (hoje na Forja)
+  // 28/10/2026 (#186, a Forja e as masmorras na Exploração): o id acompanha o lote — a leitura do save, do servidor e dos atalhos antigos redireciona.
+  'exploracao.oficina': 'forja.oficina',
+  'exploracao.caderno': 'forja.caderno',
+  'exploracao.refugio': 'forja.refugio',
+  'mercado.ferreiro': 'forja.ferreiro',
+  'arena.fenda': 'exploracao.fenda',
+  'jogos.dungeon': 'exploracao.dungeon',
 };
 
 /** O id atual de um prédio (id antigo → novo; qualquer outro valor passa igual). */
@@ -134,17 +141,17 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   'mercado.background': { minBond: 3 },
   // O Soulsmith (07/10/2026): equipamentos. Vínculo 2 — o mesmo da Decoração: o primeiro Vínculo é a Loja de Itens e o resto
   // da vitrine abre com o uso (equipamento só se compra com Bits GANHOS, e o teto de 5% é o mesmo para quem entra mais tarde).
-  'mercado.ferreiro': { minBond: 2 },
+  'forja.ferreiro': { minBond: 2 },
   'jogos.salao': { minBond: 1 },
-  'jogos.dungeon': { minBond: 3 }, // beta3 M3: jogo rogue novo; conservador, mesmo portão do Ateliê da Mente
-  'exploracao.refugio': { minBond: 1 }, // beta3 M3: o Refúgio mudou de Jogos para a Exploração (sempre livre)
+  'exploracao.dungeon': { minBond: 3 }, // beta3 M3: jogo rogue novo; conservador, mesmo portão do Ateliê da Mente
+  'forja.refugio': { minBond: 1 }, // beta3 M3: o Refúgio mudou de Jogos para a Exploração (sempre livre)
   'jogos.mente': { minBond: 3 },
   'exploracao.passeio': { minBond: 1 },
   // A Masmorra abre desde o Vínculo 1 (14/10/2026, pedido do dono: é a atividade mais gacha/idle; o limite diário, a energia e o
   // portão do andar alto — `masmorraAlto` — seguem valendo). Era 2 até esta data.
-  'arena.fenda': { minBond: 1 },
-  'exploracao.caderno': { minBond: 2 },
-  'exploracao.oficina': { minBond: 3 },
+  'exploracao.fenda': { minBond: 1 },
+  'forja.caderno': { minBond: 2 },
+  'forja.oficina': { minBond: 3 },
   'arena.duelo': { minBond: GATES.pvp.minBond },
   'arena.torneio': { minBond: GATES.torneio.minBond },
   'arena.guerra': { minBond: 5 }, // dono 18/10/2026: a Arena não destrava antes do que já destravava (Vínculo 5)
@@ -164,7 +171,7 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
 };
 
 /** Prédios de ENTRADA (onboarding/tutorial e o Refúgio): nunca bloqueiam — o teste exige `minBond` 1. */
-export const BUILDINGS_ALWAYS_OPEN: readonly BuildingId[] = ['mercado.itens', 'laboratorio.evolucao', 'exploracao.refugio', 'exploracao.passeio', 'arena.fenda'];
+export const BUILDINGS_ALWAYS_OPEN: readonly BuildingId[] = ['mercado.itens', 'laboratorio.evolucao', 'forja.refugio', 'exploracao.passeio', 'exploracao.fenda'];
 
 /** O prédio abre neste Vínculo? `bondLevel` ausente/lixo = Vínculo 1. */
 export function buildingGateFor(id: BuildingId, bondLevel: unknown): GateResult {
