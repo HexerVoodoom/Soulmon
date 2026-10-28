@@ -5,7 +5,7 @@ import { useHabitSchedule } from '../hooks/useItemForm';
 import { CategoryChips, HabitAnchorFields, HabitScheduleFields, StepsFields } from './CreateModal';
 import { Field, ModalSheet, SM2_SHADOW_CARD, sm2Button, sm2Label } from './form/FormKit';
 import { HabitConstancy } from './HabitConstancy';
-import { normalizeSchedule, type HabitAnchor, type Schedule } from '../types/taskModel';
+import { normalizeSchedule, weekDaysForSchedule, type HabitAnchor, type Schedule } from '../types/taskModel';
 import type { HabitRhythm } from '../utils/habitRhythm';
 import type { Language } from '../utils/i18n';
 
@@ -81,11 +81,13 @@ export function EditModal({
 
   const handleSave = () => {
     if (!name.trim() || (canEditWeekdays && !sched.isValid)) return;
+    // Sem edição de dias, preserva a agenda original (renomear não pode zerá-la).
+    const keptSchedule = normalizeSchedule(initialData ?? {});
     onSave({
       name, category, emoji: CATEGORY_ICONS[category], steps,
-      weekDays: canEditWeekdays ? sched.buildWeekDays() : [0, 1, 2, 3, 4, 5, 6],
+      weekDays: canEditWeekdays ? sched.buildWeekDays() : weekDaysForSchedule(keptSchedule),
       alarm: alarmTime ? { time: alarmTime } : undefined,
-      schedule: canEditWeekdays ? sched.buildSchedule() : { kind: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] },
+      schedule: canEditWeekdays ? sched.buildSchedule() : keptSchedule,
       anchor: sched.buildAnchor(),
     });
     onClose();
