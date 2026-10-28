@@ -374,6 +374,9 @@ export async function coopLeave(env, saveId, { exclusao = false, now = new Date(
   await kvOrThrow(env).delete(coopMemKey(lido.id, saveId));
   // A CASA nunca encolhe: os pontos de quem sai viram `casaLegado` (aplicado abaixo, na releitura).
   const { pts: casaDeQuemSai, bits: bitsDeQuemSai } = await recolherCasaDetalhe(env, lido.id, saveId);
+  // O CHEFE da Feira nunca regride (plano da Feira, F-02): o dano de quem sai neste chefe vira `feiraLegado`
+  // do grupo (aplicado na releitura, abaixo) e a chave pessoal fica zerada, com os DIAS (sair e voltar não reabre o ataque do dia).
+  const feiraDeQuemSai = await recolherFeiraDeQuemSai(env, lido.id, saveId, { exclusao });
   // Os golpes (`coopHit`, com o saveId NA CHAVE) saem com a pessoa em TODA
   // saída, não só na exclusão (M5, L2-backend): o dano de quem saiu já não
   // conta para a Feira (a soma é dos membros atuais). O DIREITO ao resgate não
@@ -391,6 +394,7 @@ export async function coopLeave(env, saveId, { exclusao = false, now = new Date(
   g.members = (g.members || []).filter(m => m !== saveId);
   if (casaDeQuemSai > 0) g.casaLegado = Math.floor(Number(g.casaLegado) || 0) + casaDeQuemSai;
   if (bitsDeQuemSai > 0) g.bitsLegado = Math.floor(Number(g.bitsLegado) || 0) + bitsDeQuemSai;
+  if (feiraDeQuemSai) g.feiraLegado = somarFeiraLegado(g.feiraLegado, feiraDeQuemSai);
   if (g.checkins) delete g.checkins[saveId];
   if (g.desde) delete g.desde[saveId];
   if (fio) {
@@ -419,7 +423,7 @@ export async function coopLeave(env, saveId, { exclusao = false, now = new Date(
     const ultima = await lerGrupo(env, g.id);
     const outros = (ultima?.members || []).filter(m => m !== saveId);
     if (outros.length > 0) {
-      const vivo = { ...ultima, casaLegado: g.casaLegado ?? ultima.casaLegado, bitsLegado: g.bitsLegado ?? ultima.bitsLegado, fiosAvulsos: g.fiosAvulsos ?? ultima.fiosAvulsos, members: outros, hostSave: ultima.hostSave && outros.includes(ultima.hostSave) ? ultima.hostSave : outros[0] };
+      const vivo = { ...ultima, casaLegado: g.casaLegado ?? ultima.casaLegado, bitsLegado: g.bitsLegado ?? ultima.bitsLegado, feiraLegado: g.feiraLegado ?? ultima.feiraLegado, fiosAvulsos: g.fiosAvulsos ?? ultima.fiosAvulsos, members: outros, hostSave: ultima.hostSave && outros.includes(ultima.hostSave) ? ultima.hostSave : outros[0] };
       await gravarGrupo(env, vivo);
       return { left: true, groupId: g.id, remaining: outros.length };
     }
@@ -700,6 +704,8 @@ export async function apagarClaims(env, saveId, now = new Date()) {
   // WPG-5: o contador das Conchas e os cenários liberados também são do titular.
   await kvOrThrow(env).delete(`coopShell:${saveId}`);
   await kvOrThrow(env).delete(`coopScenes:${saveId}`);
+  // A Feira do Chefe: a porta e o ponteiro do resgate são da pessoa (o resto, por clã, sai em `coopLeave` com `exclusao`).
+  await apagarFeiraDaPessoa(env, saveId);
 }
 
 // ===========================================================================
@@ -1040,4 +1046,82 @@ export async function guardarDiasDistintos(env, save, fio) {
   const n = Math.max(c.n, total);
   const days = [...new Set([...c.days, ...f.days])].sort().slice(-FIO_DIAS_GUARDADOS);
   await kvOrThrow(env).put(coopDiasKey(save), JSON.stringify({ n, days }));
+}
+
+
+// ===========================================================================
+// A FEIRA: O CHEFE E O DESAFIO (plano `docs/PLANO-FEIRA-CHEFE.md`, 28/10/2026)
+//
+// Só as CHAVES e o que a saída/exclusão da pessoa precisam; a regra mora em
+// `_feira.js` (que importa daqui — nunca o contrário, para não haver ciclo).
+// Cada membro escreve só a SUA chave (KV sem transação): totais são derivados
+// na leitura. Nada disto toca o blob do grupo, exceto `feiraLegado` (o dano de
+// quem saiu no chefe vivo), que `coopLeave` grava junto com `casaLegado`.
+// ===========================================================================
+
+/** A janela de mistérios (k) que as chaves pessoais ainda podem ter (TTL de 60 d cobre o resto). */
+export const FEIRA_JANELA_K = 4;
+export const FEIRA_TTL = 86400 * 120;
+export const FEIRA_PESSOAL_TTL = 86400 * 60;
+export const FEIRA_TRILHA_TTL = 86400 * 30;
+
+export const feiraEvtKey = gid => `feiraEvt:${gid}`;
+export const feiraDoneKey = gid => `feiraDone:${gid}`;
+export const feiraDeadKey = (gid, k) => `feiraDead:${gid}:${k}`;
+export const feiraHitKey = (gid, k, save) => `feiraHit:${gid}:${k}:${save}`;
+export const feiraTrailKey = (gid, k, save) => `feiraTrail:${gid}:${k}:${save}`;
+export const feiraClaimKey = (gid, k, save) => `feiraClaim:${gid}:${k}:${save}`;
+export const feiraPartKey = (gid, k, save) => `feiraPart:${gid}:${k}:${save}`;
+/** A porta da próxima incursão da PESSOA (trilha cumprida). */
+export const feiraGateKey = save => `feiraGate:${save}`;
+/** Ponteiro do último chefe em que a pessoa bateu (`{ gid, k }`): o direito ao resgate não some com a saída (A-1). */
+export const feiraRightKey = save => `feiraRight:${save}`;
+/** Chefes já abatidos pela PESSOA (conjunto de ids): o troféu do chefe sai no 1º abate de cada um. Sem TTL: é conquista. */
+export const feiraTrofeusKey = save => `feiraTrophy:${save}`;
+
+/** Registro de golpes da pessoa neste chefe: `{ k, days[], dmg }`. Dado não confiável (vem do KV). */
+export function normalizarFeiraHit(r, k) {
+  if (!r || typeof r !== 'object' || (r.k !== undefined && r.k !== k)) return { k, days: [], dmg: 0 };
+  const days = Array.isArray(r.days) ? r.days.filter(d => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d)).slice(-4) : [];
+  const dmg = Number.isFinite(r.dmg) && r.dmg > 0 ? Math.floor(r.dmg) : 0;
+  return { k, days, dmg };
+}
+
+export async function lerFeiraHit(env, gid, k, save) {
+  const raw = await kvOrThrow(env).get(feiraHitKey(gid, k, save));
+  try { return normalizarFeiraHit(raw ? JSON.parse(raw) : null, k); } catch { return normalizarFeiraHit(null, k); }
+}
+
+/** O legado do chefe vivo: só vale para o MESMO k (outro k = chefe antigo, ignorado). */
+export function somarFeiraLegado(atual, novo) {
+  const base = atual && typeof atual === 'object' && atual.k === novo.k && Number.isFinite(atual.dmg) ? Math.floor(atual.dmg) : 0;
+  return { k: novo.k, dmg: base + Math.floor(novo.dmg) };
+}
+
+/**
+ * Saída/exclusão: na SAÍDA, o dano da pessoa no chefe vivo vira legado do grupo (devolvido aqui) e a chave dela
+ * fica com `dmg: 0` e os dias (o ataque do dia continua gasto se ela voltar). Na EXCLUSÃO, tudo o que é dela
+ * nos últimos `FEIRA_JANELA_K` mistérios é apagado. Sem `feiraEvt`, não há chave nenhuma: 1 leitura e nada mais.
+ * @returns {Promise<{ k: number, dmg: number } | null>}
+ */
+export async function recolherFeiraDeQuemSai(env, gid, save, { exclusao = false } = {}) {
+  const kvs = kvOrThrow(env);
+  const evt = parse(await kvs.get(feiraEvtKey(gid)));
+  const kAtual = Number.isInteger(evt?.k) ? evt.k : null;
+  if (kAtual === null) return null;
+  const ks = Array.from({ length: FEIRA_JANELA_K }, (_, i) => kAtual - i).filter(k => k >= 0);
+  if (exclusao) {
+    await Promise.all(ks.flatMap(k => [feiraHitKey, feiraTrailKey, feiraClaimKey, feiraPartKey].map(f => kvs.delete(f(gid, k, save)))));
+    await Promise.all([kvs.delete(feiraGateKey(save)), kvs.delete(feiraRightKey(save)), kvs.delete(feiraTrofeusKey(save))]);
+    return null;
+  }
+  const meu = await lerFeiraHit(env, gid, kAtual, save);
+  if (meu.dmg <= 0) return null;
+  await kvs.put(feiraHitKey(gid, kAtual, save), JSON.stringify({ k: kAtual, days: meu.days, dmg: 0, moved: true }), { expirationTtl: FEIRA_PESSOAL_TTL });
+  return { k: kAtual, dmg: meu.dmg };
+}
+
+/** Apaga o que é da pessoa fora de qualquer grupo (conta excluída depois de ter saído): a porta e o ponteiro. */
+export async function apagarFeiraDaPessoa(env, saveId) {
+  await Promise.all([kvOrThrow(env).delete(feiraGateKey(saveId)), kvOrThrow(env).delete(feiraRightKey(saveId)), kvOrThrow(env).delete(feiraTrofeusKey(saveId))]);
 }
