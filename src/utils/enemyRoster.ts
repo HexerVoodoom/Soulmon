@@ -1,7 +1,7 @@
 /**
  * ROSTER DE INIMIGOS — dono único de "quem pode aparecer, em que estágio e a partir de que level" (M10, 25/10/2026).
  *
- * Existe: 17 criaturas base (1 por elemento) × rookie/champion/ultimate/mega (Ultra é só o chefe da Arena, não sorteia aqui)
+ * Existe: 20 criaturas base (1 por elemento; contrato em enemyRoster.test.ts) × rookie/champion/ultimate/mega (Ultra é só o chefe da Arena, não sorteia aqui)
  * + 5 inimigos da API "à parte" (27/10/2026, `INIMIGOS_API_DATA`: não contam na distribuição por elemento, podem repetir elemento) + 138 rookies de elemento COMBINADO (arte em `assets/soulmon/novos-arquivo/combinados`, só a forma rookie). DADOS PUROS, sem
  * asset: a arte entra por `enemyRosterArt.ts`/`novosSoulmon.ts`, e a Arena/testes importam este módulo sem puxar PNG.
  *

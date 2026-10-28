@@ -12,6 +12,9 @@ import { buildDungeonWave } from './dungeon';
 import { newCombat } from './match3Combat';
 import { applyBestiarySeen, applyEnemyDefeated } from './dungeonRewards';
 import { mulberry32 } from './combate/rng';
+import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
+import { STRAY_ROSTER } from './strayFoes';
+import { isStrayFoe } from './wildFoeLabel';
 
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
 
@@ -120,5 +123,28 @@ describe('bestiário (M10)', () => {
     expect(b.bestiary).toEqual(['embrit-champion', 'cmb003-rookie']);
     expect(applyBestiarySeen(b, 'cmb003-rookie')).toBe(b);
     expect(applyBestiarySeen(b, undefined)).toBe(b);
+  });
+});
+
+describe('contrato: elemento x criatura base (selvagem/desgarrado)', () => {
+  const base = ENEMY_ROSTER.filter(e => e.kind === 'base');
+  it('cada um dos 20 elementos base tem EXATAMENTE 1 criatura base, sem repetição', () => {
+    expect(CLASS_ELEMENT_ORDER).toHaveLength(20);
+    expect(NOVOS_DATA).toHaveLength(20);
+    for (const el of CLASS_ELEMENT_ORDER) expect(NOVOS_DATA.filter(n => n.element === el), el).toHaveLength(1);
+    expect(new Set(NOVOS_DATA.map(n => n.element))).toEqual(new Set(CLASS_ELEMENT_ORDER));
+  });
+  it('cada elemento tem a criatura em todos os estágios selvagens (rookie/champion) e desgarrados (ultimate/mega)', () => {
+    for (const el of CLASS_ELEMENT_ORDER) {
+      const doEl = base.filter(e => e.element === el);
+      expect(new Set(doEl.map(e => e.id)).size, el).toBe(1);
+      expect(doEl.filter(e => !isStrayFoe(e.stage)).length, el).toBeGreaterThanOrEqual(2);
+      expect(doEl.filter(e => isStrayFoe(e.stage)).length, el).toBeGreaterThanOrEqual(2);
+      expect(STRAY_ROSTER.some(e => e.element === el), el).toBe(true);
+    }
+  });
+  it('os 211 combinados e os 5 da API só usam elementos base válidos', () => {
+    const ok = new Set<string>(CLASS_ELEMENT_ORDER);
+    for (const e of ENEMY_ROSTER.filter(x => x.kind !== 'base')) for (const el of e.elements) expect(ok.has(el), `${e.key} ${el}`).toBe(true);
   });
 });
