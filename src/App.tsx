@@ -189,6 +189,7 @@ import {
   type WeeklyMissionId,
 } from './utils/weeklyMissions';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/currencies';
+import { arenaRerollCost, arenaRerollsToday, applyArenaReroll } from './utils/arenaSorteio';
 import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst } from './utils/bitsOrigin';
 import { applyGuildSlot } from './utils/guildHouse';
 import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMission';
@@ -7645,6 +7646,18 @@ export default function App() {
                   /* WP4.5 — o sumidouro. A cobrança é conferida sobre o `prev`
                      (dois toques no mesmo lote do React leriam o mesmo saldo e
                      comprariam duas vezes com o dinheiro de uma). */
+                  arena: {
+                    dayIso: playerDayIso(new Date(), gameState.playerDayTz),
+                    reroll: gameState.arenaReroll,
+                    onReroll: () => {
+                      const dia = playerDayIso(new Date(), gameState.playerDayTz);
+                      const custo = arenaRerollCost(arenaRerollsToday(gameState.arenaReroll, dia));
+                      if (custo > 0 && demo) { refuseDemo(); return false; }
+                      if ((gameState.gamePoints ?? 0) < custo) return false;
+                      setGameState(prev => applyArenaReroll(prev, dia)); // o preço é reconferido sobre o `prev`
+                      return true;
+                    },
+                  },
                   onSpendBits: (pts) => {
                     if (demo) { refuseDemo(); return false; }
                     if ((gameState.gamePoints ?? 0) < pts) return false;

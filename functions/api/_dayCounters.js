@@ -50,6 +50,15 @@ export function sanitizeCheckIns(raw) {
   return { day: r.day, claimed };
 }
 
+/** Espelho de `sanitizeArenaReroll` (`src/utils/arenaSorteio.ts`, 28/10/2026): rerolls da Arena livre no dia. @param {unknown} raw @returns {{day:string,count:number}|undefined} */
+export const ARENA_REROLL_MAX_COUNT = 999;
+export function sanitizeArenaReroll(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const r = /** @type {{day?:unknown,count?:unknown}} */ (raw);
+  if (typeof r.day !== 'string' || !ISO_DAY.test(r.day) || typeof r.count !== 'number' || !Number.isFinite(r.count)) return undefined;
+  return { day: r.day, count: Math.min(ARENA_REROLL_MAX_COUNT, Math.max(0, Math.floor(r.count))) };
+}
+
 /**
  * Regra comum: devolve o registro que o servidor deve gravar. `merge(a, b)` junta dois registros do MESMO dia.
  * @template {{day:string}} T
@@ -84,6 +93,15 @@ export function enforceCheckIns(incoming, stored, nowMs = Date.now()) {
     (a, b) => ({ day: a.day, claimed: CHECKIN_SLOTS.filter(s => a.claimed.includes(s) || b.claimed.includes(s)) }),
     nowMs,
   );
+}
+
+/**
+ * Rerolls da Arena livre: mesmo dia = o MAIOR contador (apagar o save local não devolve rerolls grátis nem baixa o preço).
+ * @param {unknown} incoming @param {unknown} stored @param {number} [nowMs]
+ * @returns {{day:string,count:number}|undefined}
+ */
+export function enforceArenaReroll(incoming, stored, nowMs = Date.now()) {
+  return monotonic(sanitizeArenaReroll(incoming), sanitizeArenaReroll(stored), (a, b) => ({ day: a.day, count: Math.max(a.count, b.count) }), nowMs);
 }
 
 // ---------------------------------------------------------------------------

@@ -2,16 +2,12 @@
  * ARENA POR TEMA (27/10/2026): inimigos e cenário do tema do elemento do jogador.
  */
 import { describe, it, expect } from 'vitest';
-import { ARENA_ROUNDS, buildArenaRound } from './arena';
+import { ARENA_ROUNDS } from './arena';
 import { arenaTemaElementos, dominioDoElemento, DOMINIO_DO_ELEMENTO_BASE, ARENA_DOMINIOS, arenaVarianteDaRodada, ARENA_CENARIOS_POR_DOMINIO } from './arenaTema';
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { NOVOS_DATA } from './novosSoulmonData';
-import { mulberry32 } from './combate/rng';
 import { combatDomainSceneBg } from './combatArt';
-
-const todasAsRodadas = (seed: number, tema?: readonly string[]) =>
-  Array.from({ length: ARENA_ROUNDS }, (_, i) => buildArenaRound(i + 1, 1, mulberry32(seed + i), [], tema)).flat();
 
 describe('arenaTemaElementos', () => {
   it('base = ela mesma; par derivado = os dois componentes; neutro/lixo = sem tema', () => {
@@ -23,38 +19,8 @@ describe('arenaTemaElementos', () => {
   });
 });
 
-describe('inimigos do tema', () => {
-  it.each(['industrial', 'sombra', 'fogo', 'planta', 'fada'])('jogador %s: TODO inimigo de TODA rodada e do tema', el => {
-    for (const seed of [1, 7, 99, 12345]) {
-      const foes = todasAsRodadas(seed, arenaTemaElementos(el));
-      expect(foes.length).toBe(8);
-      for (const f of foes) expect(f.elements).toEqual([el]);
-    }
-  });
-
-  it('par derivado: so criaturas que contem um dos componentes', () => {
-    const tema = arenaTemaElementos('lava');
-    for (const seed of [1, 2, 3, 4]) for (const f of todasAsRodadas(seed, tema)) expect(tema).toContain(f.elements[0]);
-  });
-
-  it('a composicao da rodada e o contrato v3 nao mudam (a forca vem de `arenaFoe`, relativa ao level)', () => {
-    const f = buildArenaRound(4, 1, mulberry32(5), [], ['sombra']);
-    expect(f.map(x => x.cls)).toEqual(['weak', 'weak', 'weak']);
-  });
-
-  it('deterministico por semente', () => {
-    expect(todasAsRodadas(42, ['sombra'])).toEqual(todasAsRodadas(42, ['sombra']));
-  });
-
-  it('FALLBACK explicito: tema vazio (neutro/desconhecido) = sorteio geral dos 20, sem travar', () => {
-    const vistos = new Set<string>();
-    for (let seed = 1; seed <= 60; seed++) for (const f of todasAsRodadas(seed, [])) vistos.add(f.elements[0]);
-    expect(vistos.size).toBeGreaterThan(8);
-    // tema sem criatura no pool (id fora dos 20): tambem cai no geral
-    expect(todasAsRodadas(3, ['inexistente']).length).toBe(8);
-  });
-
-  it('todo elemento-base tem criatura (o pool do tema nunca e vazio)', () => {
+describe('pool', () => {
+  it('todo elemento-base tem criatura', () => {
     for (const el of CLASS_ELEMENT_ORDER) expect(NOVOS_DATA.some(n => n.element === el)).toBe(true);
   });
 });

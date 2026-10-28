@@ -14,6 +14,7 @@ import { sanitizeDungeonAway, sanitizeDungeonDaily, type DungeonAway } from '../
 import { sanitizeHunger, sanitizeEnergyClock } from '../utils/hunger';
 import { sanitizeHungerPenalty } from '../utils/hungerPenalty';
 import { sanitizeCheckIns } from '../utils/checkIns';
+import { sanitizeArenaReroll, type ArenaReroll } from '../utils/arenaSorteio';
 import { hydrateEvolutionPoints } from '../utils/evolutionGauge';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import type { SeasonProgressState } from '../utils/seasons';
@@ -471,6 +472,8 @@ export interface GameState {
   dungeonDaily?: { day: string; layers: number };
   /** ☀️🌤️🌙 Check-ins do dia já resgatados (beta-2 4.1, `utils/checkIns.ts`): UMA recompensa por janela por dia do jogador; sem histórico. */
   checkIns?: { day: string; claimed: Array<'morning' | 'afternoon' | 'night'> };
+  /** 🎲 Rerolls dos 3 cards da Arena livre feitos no dia do jogador (28/10/2026, `utils/arenaSorteio.ts`): 3 grátis, depois Bits. O contador (dia ISO + n) também é a semente dos cards, então reabrir mostra os mesmos. Servidor: monotônico no dia (`_dayCounters.js`). */
+  arenaReroll?: ArenaReroll;
   /**
    * P2 — a folga da semana (`REST_DAYS_PER_WEEK`, `utils/dailyReset.ts`).
    *
@@ -1343,6 +1346,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         hungerPenalty: sanitizeHungerPenalty(loadedState.hungerPenalty),
         dungeonDaily: sanitizeDungeonDaily(loadedState.dungeonDaily),
         checkIns: sanitizeCheckIns(loadedState.checkIns),
+        arenaReroll: sanitizeArenaReroll(loadedState.arenaReroll),
         // Folga da semana (P2). `undefined` é o certo para save antigo: a
         // virada lê isso como "a folga daquela semana estava inteira".
         restDaysLeft: typeof loadedState.restDaysLeft === 'number'

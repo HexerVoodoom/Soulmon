@@ -492,8 +492,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              'Torneio e Arena são diferentes: o Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar, de poder parecido.',
-              'Tournament and Arena differ: the Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight, of similar power.',
+              'Torneio e Arena são diferentes: o Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar, de poder parecido, e pode sortear três novos adversários (3 grátis por dia, depois com Bits).',
+              'Tournament and Arena differ: the Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight, of similar power, and can draw three new opponents (3 free a day, then with Bits).',
             )}
           </p>
           <p style={para}>

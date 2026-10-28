@@ -100,25 +100,27 @@ describe('Torneio — faixa e luta', () => {
   });
 });
 
+const ARENA_PROPS = { dayIso: '2026-10-28', accountKey: 'conta-teste', bits: 100, onReroll: () => true };
+
 describe('Duelo', () => {
   it('11.3: a Arena livre NÃO mostra mais elemento nem golpes do Soulmon (moram no Perfil)', () => {
-    const { container } = renderWithCss(<DueloSheet language="pt-BR" evolutionStage="rookie" onStart={() => {}} />);
+    const { container } = renderWithCss(<DueloSheet arena={ARENA_PROPS} language="pt-BR" evolutionStage="rookie" onStart={() => {}} />);
     expect(container.querySelector('[data-duelo-elemento]')).toBeNull();
     expect(container.querySelector('[data-duelo-golpes]')).toBeNull();
     expect(container.querySelector('[data-duelo-poder]')).toBeNull();
   });
 
   it('D-59: sem número de Poder na folha (a regra de poder parecido não muda, só a exibição)', () => {
-    const { container } = renderWithCss(<DueloSheet language="pt-BR" evolutionStage="rookie" onStart={() => {}} />);
+    const { container } = renderWithCss(<DueloSheet arena={ARENA_PROPS} language="pt-BR" evolutionStage="rookie" onStart={() => {}} />);
     expect(container.querySelector('[data-duelo-poder]')).toBeNull();
     expect(container.textContent).not.toMatch(/Poder \d|Power \d/);
-    const en = renderWithCss(<DueloSheet language="en-US" evolutionStage="rookie" onStart={() => {}} />);
+    const en = renderWithCss(<DueloSheet arena={ARENA_PROPS} language="en-US" evolutionStage="rookie" onStart={() => {}} />);
     expect(en.container.querySelector('[data-duelo-poder]')).toBeNull();
   });
 
   it('mostra a ficha padrão sem skills e o botão abre a luta', () => {
     const onStart = vi.fn();
-    const { container } = renderWithCss(<DueloSheet language="pt-BR" evolutionStage="rookie" onStart={onStart} />);
+    const { container } = renderWithCss(<DueloSheet arena={ARENA_PROPS} language="pt-BR" evolutionStage="rookie" onStart={onStart} />);
     // I9: só o essencial na folha; a explicação mora atrás do "?".
     expect(container.textContent).not.toContain('Sua ficha');
     expect(container.textContent).not.toContain('perder não custa nada');
@@ -137,7 +139,7 @@ describe('Duelo', () => {
 
   it('ARENA = você escolhe: três desafios de poder parecido, e a semente do escolhido vai para a luta', async () => {
     const onStart = vi.fn();
-    const { container } = renderWithCss(<DueloSheet language="pt-BR" evolutionStage="rookie" onStart={onStart} />);
+    const { container } = renderWithCss(<DueloSheet arena={ARENA_PROPS} language="pt-BR" evolutionStage="rookie" onStart={onStart} />);
     await waitFor(() => expect(container.querySelectorAll('[data-arena-card]').length).toBe(3));
     expect(container.querySelector('[data-arena-escolha]')!.textContent).toMatch(/Você escolhe contra quem lutar/);
     fireEvent.click(container.querySelector('[data-arena-card="2"]')!);
@@ -147,7 +149,7 @@ describe('Duelo', () => {
   });
 
   it('em inglês, também', () => {
-    renderWithCss(<DueloSheet language="en-US" evolutionStage="rookie" onStart={() => {}} />);
+    renderWithCss(<DueloSheet arena={ARENA_PROPS} language="en-US" evolutionStage="rookie" onStart={() => {}} />);
     expect(screen.getByRole('button', { name: 'Fight' })).toBeTruthy();
   });
 });

@@ -116,14 +116,12 @@ export function novoFormName(n: NovoData, stage: NovoAnyStage): string {
  * Sorteio de UMA criatura nova para um slot. `prefer` = formas desejadas em ordem de preferência (ex. `['ultra','mega']`);
  * só entram criaturas que TÊM a forma (a 1ª preferência que alguém tem vence); sem nenhuma, `null` (o chamador cai no
  * fallback). `used` = criaturas já na onda: saem do sorteio enquanto sobrar alguma. Exatamente 1 chamada de `rng`.
- * `themeElements` (opcional, Arena por tema): só entram criaturas desse(s) elemento(s) — sem a forma pedida no tema, vale a próxima
- * preferência DO TEMA, nunca uma criatura de fora.
  */
 export function pickNovo(
-  prefer: readonly NovoAnyStage[], used: ReadonlySet<string>, rng: () => number, themeElements?: readonly string[],
+  prefer: readonly NovoAnyStage[], used: ReadonlySet<string>, rng: () => number,
 ): { data: NovoData; stage: NovoAnyStage } | null {
   for (const stage of prefer) {
-    const have = NOVOS_DATA.filter(n => novoHasForm(n.id, stage) && (!themeElements?.length || themeElements.includes(n.element)));
+    const have = NOVOS_DATA.filter(n => novoHasForm(n.id, stage));
     if (have.length === 0) continue;
     const fresh = have.filter(n => !used.has(n.id));
     const pool = fresh.length > 0 ? fresh : have;

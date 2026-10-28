@@ -25,22 +25,24 @@ async function lutar(petElement: string) {
   return [...document.querySelectorAll('[data-stage-element]')].map(n => n.getAttribute('data-stage-element'));
 }
 
-describe('Arena: icone do jogador e tema', () => {
-  it('jogador sombra sem ficha: o icone do jogador e a SOMBRA (nao o vigor padrao); inimigos e cenario da sombra', async () => {
-    const els = await lutar('sombra');
-    expect(els.length).toBeGreaterThanOrEqual(2);
-    expect(els.every(e => e === 'sombra')).toBe(true);
-    expect(document.querySelector('[data-stage-scene]')?.getAttribute('data-stage-scene')).toBe('dominio:sombra');
+describe('Arena: icone do jogador, inimigos gerais e cenario de arena', () => {
+  it('jogador sombra sem ficha: o icone do jogador e a SOMBRA (nao o vigor padrao)', async () => {
+    await lutar('sombra');
     const me = document.querySelector('[data-stage-plate="me"]')?.parentElement?.querySelector('[data-stage-element]');
     expect(me?.getAttribute('data-stage-element')).toBe('sombra');
     expect(me?.querySelector('img')?.getAttribute('src')).toBe(elementIcon('sombra'));
   });
 
-  it('jogador fada: inimigos de fada; jogador industrial: cenario do dominio industrial', async () => {
-    const fada = await lutar('fada');
-    expect(fada.every(e => e === 'fada')).toBe(true);
-    cleanup();
-    await lutar('industrial');
-    expect(document.querySelector('[data-stage-scene]')?.getAttribute('data-stage-scene')).toBe('dominio:industrial');
+  it('28/10: SEM tema (inimigos nao ficam presos ao elemento do jogador) e o cenario NUNCA e de dominio de elemento', async () => {
+    const vistos = new Set<string>();
+    for (const seed of [7, 8, 9, 10, 11]) {
+      renderWithCss(<ArenaGame evolutionStage="rookie" language="pt-BR" petElement="sombra" seed={seed} onExit={() => {}} />);
+      fireEvent.click(await screen.findByRole('button', { name: /Entrar na Arena/i }));
+      await waitFor(() => expect(document.querySelector('[data-battle-stage]')).toBeTruthy());
+      [...document.querySelectorAll('[data-stage-element]')].forEach(n => vistos.add(n.getAttribute('data-stage-element')!));
+      expect(document.querySelector('[data-stage-scene]')?.getAttribute('data-stage-scene') ?? '').not.toMatch(/^dominio:/);
+      cleanup();
+    }
+    expect(vistos.size).toBeGreaterThan(2);
   });
 });

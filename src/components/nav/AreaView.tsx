@@ -28,7 +28,7 @@ import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
 import type { ReviewState } from '../../utils/mente/revisao';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import type { CadernoEntry } from '../../utils/cadernoSave';
-import { arenaTemaDoJogador } from '../../utils/arenaTemaDoJogador';
+import type { ArenaReroll } from '../../utils/arenaSorteio';
 import type { QuestMark } from '../../utils/questMarks';
 import type { FocusLootRequest } from '../../utils/focusExpedition';
 import type { FocusRewardResult } from '../play/OficinaSheet';
@@ -106,6 +106,8 @@ export interface PlayHandlers {
   mindTutorials?: { seen: MindGameTutorials; onShown: (id: MindGameId) => void };
   onDinoScore: (score: number) => void;
   onSpendBits?: (pts: number) => boolean;
+  /** Arena livre (28/10/2026): contador de rerolls do save, dia do jogador e o pedido de reroll (o App desconta Bits e grava). */
+  arena?: { dayIso: string; reroll?: ArenaReroll; onReroll: () => boolean };
   /** Dia do JOGADOR (`playerDayKey`) — o Picross do dia e a Revisão leem daqui.
    *  Sem ele (testes antigos), cai no dia UTC do aparelho. */
   todayKey?: string;
@@ -424,7 +426,7 @@ export function AreaView(props: AreaViewProps) {
               <DueloSheet
                 language={language}
                 evolutionStage={props.evolutionStage}
-                tema={arenaTemaDoJogador(props.skills, props.evolutionStage, props.petElement)}
+                arena={{ dayIso: props.play.arena?.dayIso ?? playerDayIso(new Date(), undefined), accountKey: props.guild.saveId ?? 'local', reroll: props.play.arena?.reroll, bits: props.points, onReroll: props.play.arena?.onReroll ?? (() => false) }}
                 onStart={(seed) => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }}
               />
             )}

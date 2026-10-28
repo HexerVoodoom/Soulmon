@@ -612,7 +612,9 @@ prédio ou NPC novo entra **nesta fila** com prompt e destino antes de ir para o
 
 > Atualização 26/10/2026: os 76 elementos novos (ícone + FX) dos ELEMENTOS compostos/especiais foram INSTALADOS (arte em `elementos/` e `fx-ataque/`); fada/industrial/planta continuam fora de `VISUAL_ELEMENTS` (faltam escudo e cenário).
 
-## 19. Arena: cenários por elemento (pedido do dono, 27/10/2026)
+## 19. Arena: cenários por elemento (pedido do dono, 27/10/2026) — RETIRADA em 28/10/2026
+
+> **RETIRADA (dono, 28/10/2026, REGISTRO §180):** a Arena livre deixou de usar cenário por elemento; usa as duas arenas do Torneio. NENHUM dos itens AC1–AC12 deve ser gerado. Texto abaixo mantido só como histórico.
 
 A Arena agora pinta o cenário do **domínio do elemento do jogador** (`utils/arenaTema.ts`; arte reduzida em
 `src/assets/soulmon/combate/dominio/<dominio>-<1..3>.png`, 360×640, a partir de `dominios/<dominio>/masmorra/`).

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// ARENA POR TEMA (pedido do dono, 27/10/2026): se o jogador é do elemento X, os INIMIGOS e o CENÁRIO da luta são do tema X.
+// ARENA POR TEMA (27/10/2026) — REVOGADA em 28/10/2026 (REGISTRO-DE-DECISOES): a Arena sorteia entre TODOS os elementos (`arenaSorteio.ts`) e usa as arenas do Torneio. Este arquivo ficou SEM USO na Arena (tabela elemento→domínio de cenário, arte instalada).
 //
 // Dono único de duas regras PURAS (sem import de arte — a arte mora em `combatArt.ts`):
 //   1. `arenaTemaElementos(id)`   — o elemento do jogador → os elementos BASE que valem como "do tema": o próprio (base) ou os

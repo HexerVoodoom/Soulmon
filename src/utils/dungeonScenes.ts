@@ -155,6 +155,8 @@ export function nightmareScene(dayKey: string = localDayKey(new Date())): Dungeo
 
 /** A cena da ARENA (`ArenaGame`) — o Abismo Violeta (`dungeon-4`, canvas `Arena`). */
 export const ARENA_SCENE: DungeonScene = SPIRIT_BG_SCENES[3];
+/** As duas arenas do Torneio (Arena Noturna, Coliseu Ancião): o cenário da Arena livre (28/10/2026), escolhido por run em `arenaSorteio.ts`. */
+export const ARENA_BG_SCENES: readonly DungeonScene[] = SPIRIT_BG_SCENES.filter(s => s.nameEn === 'Night Arena' || s.nameEn === 'Elder Colosseum');
 /** A cena do DINO — o corredor em ruínas (`minigame-dino`), atrás do parallax. */
 export const DINO_SCENE: DungeonScene = SPIRIT_BG_SCENES[10];
 

@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { ARENA_ROUNDS, ARENA_ROUND_COMP, buildArenaRound, elementLabel, loadBestiaryPool, type ArenaEnemy } from '../../utils/arena';
-import { mulberry32 } from '../../utils/combate/rng';
-import { newDefenseSeed } from '../../utils/autoDefesa';
-import { arenaCardSeeds, isStraySeed } from '../../utils/strayFoes';
+import { ARENA_ROUNDS, ARENA_ROUND_COMP, elementLabel, loadBestiaryPool } from '../../utils/arena';
+import { isStraySeed } from '../../utils/strayFoes';
+import { arenaCards, arenaFoesOfSeed, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
 import { elementIcon } from '../../utils/elementIconArt';
 import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
@@ -37,18 +36,32 @@ const box: CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 8,
 };
 
-const SEED_MIX = 0x9e3779b1;
-const roundFoes = (seed: number, n: number, pool: Parameters<typeof buildArenaRound>[3], tema?: readonly string[]): ArenaEnemy[] =>
-  buildArenaRound(n, 1, mulberry32((seed ^ Math.imul(n, SEED_MIX)) | 0), pool, tema, isStraySeed(seed));
-
 /**
  * ARENA = VOCÊ ESCOLHE (guilda-lancamento PR1, 11/10/2026). Três desafios de poder PARECIDO com o seu
  * (os adversários da Arena são sempre relativos ao level — `arenaFoe`), e o jogador seleciona contra quais
  * vai lutar. A semente do card é a da run: a `ArenaGame` luta exatamente o que o card mostrou. O Torneio é
  * o oposto, de propósito: lá o servidor sorteia pela faixa (`functions/api/_rankedPick.js`).
  */
-function EscolhaDeAdversarios({ isPt, onPick, tema }: { isPt: boolean; onPick: (seed: number) => void; tema?: readonly string[] }) {
-  const seeds = useMemo(() => arenaCardSeeds(newDefenseSeed), []); // 3 desafios, no máximo 1 Desgarrado (às vezes)
+export interface ArenaRerollProps {
+  /** Dia do jogador (ISO, `playerDayIso` com o fuso do save): a semente dos cards e a virada dos 3 grátis. */
+  dayIso: string;
+  /** Id estável da conta (`saveId`): parte da semente dos cards. */
+  accountKey: string;
+  /** O contador do save (`arenaReroll`). */
+  reroll?: ArenaReroll;
+  /** Saldo de Bits. */
+  bits: number;
+  /** Pede o reroll (o chamador desconta e grava); `false` = recusado. */
+  onReroll: () => boolean;
+}
+
+function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: (seed: number) => void; arena: ArenaRerollProps }) {
+  const done = arenaRerollsToday(arena.reroll, arena.dayIso);
+  // 3 desafios do DIA, determinísticos (mesmos ao reabrir), elementos distintos, no máximo 1 Desgarrado.
+  const seeds = useMemo(() => arenaCards(arena.dayIso, arena.accountKey, done), [arena.dayIso, arena.accountKey, done]);
+  const cost = arenaRerollCost(done);
+  const free = arenaRerollsFreeLeft(done);
+  const canReroll = arena.bits >= cost;
   const [pool, setPool] = useState<Awaited<ReturnType<typeof loadBestiaryPool>> | null>(null);
   const [chosen, setChosen] = useState(0);
   useEffect(() => {
@@ -56,18 +69,18 @@ function EscolhaDeAdversarios({ isPt, onPick, tema }: { isPt: boolean; onPick: (
     loadBestiaryPool().then(p => { if (alive) setPool(p); }).catch(() => { /* sem pool: o botão ainda abre uma luta sorteada */ });
     return () => { alive = false; };
   }, []);
-  useEffect(() => { onPick(seeds[chosen]); }, [chosen, seeds, onPick]);
+  useEffect(() => { setChosen(0); }, [seeds]); // novo sorteio: volta ao 1º card
+  useEffect(() => { onPick(seeds[Math.min(chosen, seeds.length - 1)]); }, [chosen, seeds, onPick]);
   if (!pool) return null;
   return (
     <div data-arena-escolha role="radiogroup" aria-label={isPt ? 'Escolha seus adversários' : 'Choose your opponents'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <p style={{ ...sm2Hint, margin: 0 }}>
-        {isPt ? 'Você escolhe contra quem lutar — todos de poder parecido com o seu.' : 'You choose who to fight — all of power similar to yours.'}
+        {isPt ? 'Você escolhe contra quem lutar — elementos variados, todos de poder parecido com o seu.' : 'You choose who to fight — mixed elements, all of power similar to yours.'}
       </p>
       {seeds.map((seed, i) => {
-        const first = roundFoes(seed, 1, pool, tema);
         const bossIdx = ARENA_ROUND_COMP[ARENA_ROUNDS - 1].indexOf('boss');
-        const boss = roundFoes(seed, ARENA_ROUNDS, pool, tema)[Math.max(0, bossIdx)];
-        const els = [...new Set(first.map(f => f.elements[0]))];
+        const boss = arenaFoesOfSeed(seed, ARENA_ROUNDS)[Math.max(0, bossIdx)];
+        const els = [...new Set(arenaFoesOfSeed(seed, 1).map(f => f.elements[0]))];
         const on = chosen === i;
         return (
           <button
@@ -94,14 +107,31 @@ function EscolhaDeAdversarios({ isPt, onPick, tema }: { isPt: boolean; onPick: (
           </button>
         );
       })}
+      <button
+        type="button" data-arena-reroll disabled={!canReroll} onClick={() => { if (canReroll) arena.onReroll(); }}
+        aria-label={free > 0 ? (isPt ? `Sortear outros três adversários, ${free} grátis` : `Draw three other opponents, ${free} free`) : (isPt ? `Sortear outros três adversários por ${cost} Bits` : `Draw three other opponents for ${cost} Bits`)}
+        style={{ ...sm2Button('outline'), width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: canReroll ? 1 : 0.55 }}
+      >
+        <Icon name="refresh" size={24} tone="inherit" />
+        <span data-arena-reroll-label>
+          {free > 0
+            ? (isPt ? `Sortear de novo · ${free} grátis` : `Draw again · ${free} free left`)
+            : (isPt ? `Sortear de novo · ${cost} Bits` : `Draw again · ${cost} Bits`)}
+        </span>
+      </button>
+      {!canReroll && (
+        <p data-arena-reroll-faltam style={{ ...sm2Hint, margin: 0 }}>
+          {isPt ? `Faltam ${cost - arena.bits} Bits para sortear de novo hoje.` : `${cost - arena.bits} more Bits needed to draw again today.`}
+        </p>
+      )}
     </div>
   );
 }
 
-export function DueloSheet({ language, onStart, tema }: {
+export function DueloSheet({ language, onStart, arena }: {
   language: Language;
-  /** Os elementos BASE do tema do jogador (`arenaTemaDoJogador`, lido pela fonte única no App): os cards mostram os MESMOS inimigos que a `ArenaGame` vai sortear. */
-  tema?: readonly string[];
+  /** Sorteio dos cards e reroll (`utils/arenaSorteio.ts`): os cards mostram os MESMOS inimigos que a `ArenaGame` luta (`arenaFoesOfSeed`). */
+  arena: ArenaRerollProps;
   /** Mantido por compat com o chamador; o número de Poder saiu da folha (D-59). */
   evolutionStage?: string;
   /** Chamado com a semente do desafio ESCOLHIDO (sem ela, a Arena sorteia). */
@@ -136,8 +166,8 @@ export function DueloSheet({ language, onStart, tema }: {
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
-                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários, de poder parecido com o seu. Vencer rende Bits; perder não custa nada.`
-                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE your opponents, of power similar to yours. Wins earn Bits; losses cost nothing.`}
+                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários, de poder parecido com o seu. Vencer rende Bits; perder não custa nada. Sortear de novo: 3 grátis por dia, depois Bits.`
+                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE your opponents, of power similar to yours. Wins earn Bits; losses cost nothing. Draw again: 3 free a day, then Bits.`}
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
@@ -147,7 +177,7 @@ export function DueloSheet({ language, onStart, tema }: {
           </span>
         </ModalInfo>
       </div>
-      <EscolhaDeAdversarios isPt={isPt} onPick={setPickedSeed} tema={tema} />
+      <EscolhaDeAdversarios isPt={isPt} onPick={setPickedSeed} arena={arena} />
       <button type="button" data-duelo-start onClick={() => onStart(pickedSeed)} style={{ ...sm2Button('primary'), width: '100%' }}>
         {isPt ? 'Lutar' : 'Fight'}
       </button>

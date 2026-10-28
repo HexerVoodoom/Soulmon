@@ -49,8 +49,7 @@ import { InfoTip } from './ui/InfoTip';
 import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { ResultScreen } from './games/ResultScreen';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, VisorSparks, StatTag, phaseTitle, phaseLine } from './games/GameKit';
-import { ARENA_SCENE } from '../utils/dungeonScenes';
-import { arenaTemaElementos, dominioDoElemento, arenaVarianteDaRodada } from '../utils/arenaTema';
+import { arenaFoesOfSeed, arenaSceneOfSeed } from '../utils/arenaSorteio';
 import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
@@ -153,11 +152,8 @@ export function ArenaGame({
   // A identidade de combate (dono único): o MESMO golpe básico/especial da Masmorra, do Pesadelo, do Torneio e do PvP.
   const ident = useMemo(() => fighterIdentity(par, petElement), [par, petElement]);
   const atributos = attrs ?? DEFAULT_ARENA_ATTRIBUTES;
-  // TEMA (27/10/2026): o elemento que o jogador VÊ no próprio ícone (a identidade, com o fallback do oráculo) escolhe os inimigos e o cenário.
-  const temaElementos = useMemo(() => arenaTemaElementos(ident.basico.elemento), [ident.basico.elemento]);
-  const temaRef = useRef(temaElementos);
-  temaRef.current = temaElementos;
-  const dominio = useMemo(() => dominioDoElemento(ident.basico.elemento), [ident.basico.elemento]);
+  // CENÁRIO (28/10/2026): sempre uma das duas arenas do Torneio, fixa durante a run (escolhida pela semente).
+  const cenaDaRun = useMemo(() => arenaSceneOfSeed(seedLuta), [seedLuta]);
 
   // O level e o ramo vêm do estado do save (`soulCombatant`); sem provider (demo, testes) cai no estágio.
   const ctx = useGameStateOptional();
@@ -201,8 +197,7 @@ export function ArenaGame({
 
   const montarRodada = useCallback((n: number, poolAtual: BestiaryCreature[]) => {
     // O sabor da rodada vem da semente da run (determinístico: a mesma run, os mesmos bichos).
-    const rng = mulberry32((runSeedRef.current ^ Math.imul(n, 0x9e3779b1)) | 0);
-    const novos = buildArenaRound(n, 1, rng, poolAtual, temaRef.current, isStraySeed(runSeedRef.current));
+    const novos = arenaFoesOfSeed(runSeedRef.current, n); // a MESMA função do card da DueloSheet
     inimigosRef.current = novos;
     rodadaRef.current = n;
     setInimigos(novos);
@@ -328,10 +323,7 @@ export function ArenaGame({
         onSwipe={batalha.swipe}
       >
         <BattleStage
-          scene={ARENA_SCENE.bg}
-          sceneDomain={dominio}
-          sceneVariant={arenaVarianteDaRodada(seedLuta, rodada)}
-          sceneElement={inimigos[0] ? fxElementId(inimigos[0].elements[0]) : null}
+          scene={cenaDaRun.bg}
           specialLabel={specialLabel(isPt, especial)}
           foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
           isPt={isPt}
@@ -401,7 +393,7 @@ export function ArenaGame({
 
       {fase === 'carregando' && (
         <>
-          <GameVisor height={80} scene={ARENA_SCENE.bg}>
+          <GameVisor height={80} scene={cenaDaRun.bg}>
             <VisorSprite src={petSprite} alt="" style={{ left: '50%', marginLeft: -64, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
           </GameVisor>
           <p style={{ ...phaseLine, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px 0' }}>
@@ -435,7 +427,7 @@ export function ArenaGame({
 
       {fase === 'intro' && (
         <>
-          <GameVisor height={80} scene={ARENA_SCENE.bg}>
+          <GameVisor height={80} scene={cenaDaRun.bg}>
             <VisorSprite src={petSprite} alt="" style={{ left: '50%', marginLeft: -64, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
           </GameVisor>
           {/* A ficha em `.chip.tag` (D-J11): HP/Power/Essence, valor em `ink`. */}
@@ -494,7 +486,7 @@ export function ArenaGame({
 
       {fase === 'rodada-limpa' && (
         <>
-          <GameVisor height={80} scene={ARENA_SCENE.bg}>
+          <GameVisor height={80} scene={cenaDaRun.bg}>
             <VisorSprite src={petSprite} alt="" style={{ left: 16, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
             <VisorFx icon="🏳️" style={{ right: 16, top: 8 }} data-visor-fx="defeat" />
           </GameVisor>
@@ -532,7 +524,7 @@ export function ArenaGame({
           ledger={[{ key: 'bits', kind: 'bits', value: fase === 'venceu' ? riftBitsWith(pontos, rift.riftBits) : 0 }]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           petSrc={petSprite}
-          scene={ARENA_SCENE.bg}
+          scene={cenaDaRun.bg}
           playAgainLabel={isPt ? 'Tentar de novo' : 'Try again'}
           onPlayAgain={comecar}
           homeLabel={sair}

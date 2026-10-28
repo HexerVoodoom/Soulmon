@@ -271,8 +271,6 @@ export function buildArenaRound(
   difficulty: number,
   rng: () => number,
   _pool?: BestiaryCreature[], // sem uso desde o §68 (o inimigo vem das 17 criaturas novas); mantido para não quebrar chamadores
-  /** Os elementos BASE do tema do jogador (`arenaTemaElementos`): todo inimigo é de um deles. `[]`/ausente = sem tema (sorteio geral). */
-  theme?: readonly string[],
   /** Run de DESGARRADO (`isStraySeed`, `utils/strayFoes.ts`): as formas vêm do topo (ultimate/mega/ultra). Sem isto, nada muda (mesmas chamadas de `rng`). */
   stray = false,
 ): ArenaEnemy[] {
@@ -284,9 +282,7 @@ export function buildArenaRound(
     // Arena segue justa para qualquer elemento do jogador) e o ELEMENTO é o da criatura — o mesmo do ataque e do FX.
     // fraco = Rookie · médio = Champion · chefe = a maior forma com arte (ultra > mega > ultimate), senão o Champion.
     const prefer: NovoAnyStage[] = stray ? (cls === 'boss' ? ['ultra', 'mega', 'ultimate'] : cls === 'medium' ? ['mega', 'ultimate'] : ['ultimate', 'mega']) : cls === 'weak' ? ['rookie'] : cls === 'medium' ? ['champion'] : ['ultra', 'mega', 'ultimate', 'champion'];
-    // TEMA (27/10/2026): com tema, o pool é SÓ dele — pequeno (1 criatura por elemento-base, 2 num par) e por isso a mesma espécie
-    // pode repetir na rodada (`pickNovo` solta o `used` quando acaba). O fallback explícito é o pool vazio (tema sem criatura): sorteio geral.
-    const picked = (theme?.length ? pickNovo(prefer, used, rng, theme) : null) ?? pickNovo(prefer, used, rng)!;
+    const picked = pickNovo(prefer, used, rng)!;
     used.add(picked.data.id);
     const nome = novoFormName(picked.data, picked.stage);
     return {
