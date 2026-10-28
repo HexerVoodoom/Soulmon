@@ -69,3 +69,39 @@ describe('o lote e o NPC da Feira', () => {
     expect(fairStateOf({ state: 'dissipada', ferido: false })).toBe('dissipado');
   });
 });
+
+describe('o Chefe e o Desafio da Feira (servidor): aditivos e DESLIGADOS', () => {
+  const raiz = path.resolve(__dirname, '../../..');
+  const guild = semComentarios(fs.readFileSync(path.resolve(raiz, 'functions/api/guild.js'), 'utf8'));
+  const feira = semComentarios(fs.readFileSync(path.resolve(raiz, 'functions/api/_feira.js'), 'utf8'));
+  const ramoRaio = guild.slice(guild.indexOf("if (action === 'guildRaidHit')"), guild.indexOf("if (action === 'guildRewards' || action === 'guildClaim')"));
+
+  it('o golpe da Missão segue respondendo `landed` e a vista; `evento` é aditivo, calculado DEPOIS da lógica de sempre e em try/catch', () => {
+    expect(ramoRaio).toContain('landed: true');
+    expect(ramoRaio).toMatch(/\.\.\.\(evento \? \{ evento \} : \{\}\)/);
+    const i = ramoRaio.indexOf('await cartao(g);');
+    expect(i).toBeGreaterThan(0);
+    // tudo o que já existia (golpe, participação, seiva, cartão) vem antes de qualquer menção à Feira do Chefe
+    expect(ramoRaio.slice(0, i)).not.toMatch(/feiraLigada|eventoDaFeira|lerEstadoFeira|beventob/);
+    expect(ramoRaio).toMatch(/if \(feiraLigada\(env\)\) \{\s*try \{ evento = await eventoDaFeira/);
+    expect(ramoRaio).toMatch(/catch \(err\) \{[^}]*evento = undefined/);
+  });
+
+  it('nasce DESLIGADA: a data de liga está no futuro e toda rota da Feira recusa antes de ler ou gravar', () => {
+    const m = /export const FEIRA_CHEFE_DESDE = '(\d{4}-\d{2}-\d{2})'/.exec(feira);
+    expect(m).toBeTruthy();
+    expect(m![1] > new Date().toISOString().slice(0, 10)).toBe(true);
+    const ramo = guild.slice(guild.indexOf("if (action.startsWith('guildFeira'))"));
+    expect(ramo.indexOf('if (!feiraLigada(env))')).toBeGreaterThan(0);
+    expect(ramo.indexOf('if (!feiraLigada(env))')).toBeLessThan(ramo.indexOf('grupoDe('));
+  });
+
+  it('a vista só lê (nunca grava) e só tem o agregado do clã', () => {
+    expect(guild).toMatch(/resumoDaFeira\(await lerEstadoFeira\(env, g, hoje, \{ cartoes, escrever: false \}\)\)/);
+  });
+
+  it('a Feira do Chefe não importa nada de dinheiro/conta e não escreve no blob do clã', () => {
+    for (const i of feira.match(/^import .*$/gm) ?? []) expect(i).not.toMatch(/_entitlements|_billing|billing|monetization|gravarGrupo/);
+    expect(feira).not.toMatch(/gravarGrupo|bosqueProgress/);
+  });
+});
