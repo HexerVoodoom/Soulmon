@@ -39,6 +39,10 @@ import bgMissionColiseumImg from '../assets/backgrounds/bg-mission-coliseum.png'
 import bgMissionAbyssImg from '../assets/backgrounds/bg-mission-abyss.png';
 import bgMissionDinolandImg from '../assets/backgrounds/bg-mission-dinoland.png';
 import bgMissionAuroraImg from '../assets/backgrounds/bg-mission-aurora.png';
+import bgMissionChuvaImg from '../assets/backgrounds/bg-mission-chuva.png';
+import bgMissionMeadaImg from '../assets/backgrounds/bg-mission-meada.png';
+import bgMissionColchaImg from '../assets/backgrounds/bg-mission-colcha.png';
+import bgMissionCorridaImg from '../assets/backgrounds/bg-mission-corrida.png';
 // 30/09/2026 — fundos-v2 (rodada 3, aprovados pelo dono): os 5 estágios do Bosque
 // deixam de ser gradiente e ganham arte pintada noturna; campina e cavernas são os
 // postais do Passeio que faltavam (as duas regiões tinham `bgId: null`).
@@ -315,6 +319,30 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
     nameEn: 'Digital Aurora',
     css: `url(${bgMissionAuroraImg})`, baseColor: '#041a18',
     setting: 'outdoor', slots: GROUND_SLOTS, horizonY: 74,   // céu aberto: nada onde pendurar
+  },
+  'bg-mission-chuva': {
+    namePt: 'Chuva das Almas',
+    nameEn: 'Soul Rain',
+    css: `url(${bgMissionChuvaImg})`, baseColor: '#0b393a',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-mission-meada': {
+    namePt: 'Fio da Meada',
+    nameEn: 'Thread Trail',
+    css: `url(${bgMissionMeadaImg})`, baseColor: '#0e433d',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-mission-colcha': {
+    namePt: 'Colcha de Retalhos',
+    nameEn: 'Patchwork Quilt',
+    css: `url(${bgMissionColchaImg})`, baseColor: '#144b45',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-mission-corrida': {
+    namePt: 'Pista da Corrida',
+    nameEn: 'Obstacle Track',
+    css: `url(${bgMissionCorridaImg})`, baseColor: '#074344',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
   // ── Cenários do BOSQUE da Guilda (`docs/PLANO-GUILDA.md` §7 e §9) ──────────
   // Ganhos por CONQUISTA (7 dias distintos de fio — `mine.groveScenes`, G12: ficam

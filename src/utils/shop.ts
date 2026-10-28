@@ -428,6 +428,22 @@ export const SHOP_ITEMS: ShopItem[] = [
     namePt: 'Aurora Digital', nameEn: 'Digital Aurora',
     descPt: 'Luzes dançando no céu polar', descEn: 'Lights dancing in the polar sky', price: 300,
     unlock: { kind: 'mission', missionId: 'mission-perfect-30' } },
+  { id: 'bg-mission-chuva', kind: 'bg', icon: '🌧️',
+    namePt: 'Chuva das Almas', nameEn: 'Soul Rain',
+    descPt: 'Chuva de luz sob as pedras antigas', descEn: 'Soft light rain over the ancient stones', price: 300,
+    unlock: { kind: 'mission', missionId: 'mission-barrage-1000' } },
+  { id: 'bg-mission-meada', kind: 'bg', icon: '🧵',
+    namePt: 'Fio da Meada', nameEn: 'Thread Trail',
+    descPt: 'Trilhas de fios dourados entre as raízes', descEn: 'Golden threads winding through the roots', price: 300,
+    unlock: { kind: 'mission', missionId: 'mission-zip-10' } },
+  { id: 'bg-mission-colcha', kind: 'bg', icon: '🧶',
+    namePt: 'Colcha de Retalhos', nameEn: 'Patchwork Quilt',
+    descPt: 'Retalhos de luz costurados no chão', descEn: 'Patches of light stitched into the ground', price: 300,
+    unlock: { kind: 'mission', missionId: 'mission-patches-10' } },
+  { id: 'bg-mission-corrida', kind: 'bg', icon: '⚡',
+    namePt: 'Pista da Corrida', nameEn: 'Obstacle Track',
+    descPt: 'Trilha veloz sob um céu de tempestade', descEn: 'A fast track under a stormy sky', price: 300,
+    unlock: { kind: 'mission', missionId: 'mission-dino-normal-500' } },
 
 ];
 
