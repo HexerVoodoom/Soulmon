@@ -295,7 +295,7 @@ describe('F-04 o resgate do abate', () => {
     expect(Object.keys(c).sort()).toEqual(['bossId', 'k', 'level', 'receipt', 'reward']);
     expect(c.k).toBe(0);
     expect(c.level).toBe(1);
-    expect(c.reward).toMatchObject({ emblems: 2, bits: 40, sap: 10, essences: [], trophyId: `trophy-boss-${c.bossId}` });
+    expect(c.reward).toMatchObject({ emblems: 2, bits: 40, sap: 10, essences: [{ n: 5 }], trophyId: `trophy-boss-${c.bossId}` });
     expect(typeof c.reward.element).toBe('string');
     expect(Object.keys(c.reward).sort()).toEqual(['bits', 'element', 'emblems', 'essences', 'sap', 'trophyId']);
     expect(kv.store.get(feiraClaimKey(gid, 0, M[0]))).toBeTruthy();

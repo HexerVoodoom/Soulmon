@@ -379,7 +379,10 @@ export async function reciboDaFeira(tipo, save, gid, k) {
   return Array.from(h.slice(0, 8), b => b.toString(16).padStart(2, '0')).join('');
 }
 
-/** A recompensa do abate (plano §5): cosmético, Emblemas, Bits e seiva; nada pago, nenhuma odd. `essences` é SÓ o gancho (sempre vazio). */
+/** Essências do chefe (28/10/2026, REGISTRO §183): 5 + 1 a cada 5 níveis (5..9). Espelho de `essenceQtyOfBoss` (src/utils/essences.ts). */
+export const essenceDoChefe = (L) => 5 + Math.floor(L / 5);
+
+/** A recompensa do abate (plano §5): cosmético, Emblemas, Bits e seiva; nada pago, nenhuma odd. `essences` = [{id: elemento do chefe, n}] (vazio sem elemento). */
 export function recompensaDoChefe(level, bossId, element, trofeuNovo) {
   const L = Math.min(NIVEL_MAX, Math.max(1, Math.floor(level)));
   return {
@@ -387,7 +390,7 @@ export function recompensaDoChefe(level, bossId, element, trofeuNovo) {
     bits: Math.min(CHEFE_BITS_TETO, 30 + 10 * L),
     sap: 10 * L,
     trophyId: trofeuNovo ? `trophy-boss-${bossId}` : null,
-    essences: [],
+    essences: element ? [{ id: element, n: essenceDoChefe(L) }] : [],
     element: element ?? null,
   };
 }

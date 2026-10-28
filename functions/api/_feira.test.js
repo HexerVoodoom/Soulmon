@@ -164,9 +164,9 @@ describe('o ataque (re-simulação com semente do servidor)', () => {
 describe('recompensa do abate (plano §5): cosmético, Emblemas, Bits, seiva; essências só o gancho', () => {
   it('escala com o nível, tem teto e o campo de essências é SEMPRE vazio', () => {
     const r1 = recompensaDoChefe(1, 'cinderhorn', 'fervor', true);
-    expect(r1).toEqual({ emblems: 2, bits: 40, sap: 10, trophyId: 'trophy-boss-cinderhorn', essences: [], element: 'fervor' });
+    expect(r1).toEqual({ emblems: 2, bits: 40, sap: 10, trophyId: 'trophy-boss-cinderhorn', essences: [{ id: 'fervor', n: 5 }], element: 'fervor' });
     const r20 = recompensaDoChefe(20, 'arauto-do-fim', 'juizo_final', false);
-    expect(r20).toEqual({ emblems: 10, bits: 150, sap: 200, trophyId: null, essences: [], element: 'juizo_final' });
+    expect(r20).toEqual({ emblems: 10, bits: 150, sap: 200, trophyId: null, essences: [{ id: 'juizo_final', n: 9 }], element: 'juizo_final' });
     expect(recompensaDoChefe(999, 'x', null, false).emblems).toBe(10);
     expect(Object.keys(r1).sort()).toEqual(['bits', 'element', 'emblems', 'essences', 'sap', 'trophyId']);
   });

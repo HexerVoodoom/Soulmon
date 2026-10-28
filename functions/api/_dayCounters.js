@@ -188,3 +188,12 @@ export async function bumpRiftLayers(store, saveId, antes, depois, nowMs = Date.
   await store.put(riftLayersKey(month, saveId), JSON.stringify(l), { expirationTtl: 86400 * 70 });
   return Math.min(DUNGEON_MAX_LAYER, l.base + l.n - 1);
 }
+
+/**
+ * Essências da descida AUTOMÁTICA no dia (28/10/2026, REGISTRO §183): `essenceAway {day,count}`, a mesma regra do `arenaReroll`
+ * (mesmo dia = o MAIOR contador; apagar o save local não reabre o teto diário). Espelho de `sanitizeEssenceAway` (`src/utils/essences.ts`).
+ * @param {unknown} raw @returns {{day:string,count:number}|undefined}
+ */
+export const sanitizeEssenceAway = sanitizeArenaReroll;
+/** @param {unknown} incoming @param {unknown} stored @param {number} [nowMs] @returns {{day:string,count:number}|undefined} */
+export const enforceEssenceAway = enforceArenaReroll;
