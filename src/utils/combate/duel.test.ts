@@ -8,7 +8,7 @@ import { REFERENCE_BUILD_NAMES, REFERENCE_BUILDS, STAGE_LEVEL_CAPS, combatantAt,
 import { CHEER, SPECIAL_FAMILIES, specialOf } from './specials';
 import { fight, PVP_HP_SCALE } from './fight';
 import {
-  DUEL_CHEER_BUCKETS, NPC_ATK_HANDICAP, NPC_LEVEL_GAP, bucketTapTimes, duelCheerEvents, npcCombatant, npcSide, sanitizeTaps, simulatePvp,
+  DUEL_CHEER_BUCKETS, NPC_ATK_HANDICAP, duelElementAdvantage, NPC_LEVEL_GAP, bucketTapTimes, duelCheerEvents, npcCombatant, npcSide, sanitizeTaps, simulatePvp,
 } from './duel';
 
 const N = 1200;
@@ -98,5 +98,48 @@ describe('a torcida por balde (a conta do cliente é a do servidor)', () => {
       if (sem !== 'me' && com === 'me') ganhou++;
     }
     expect(ganhou).toBeGreaterThan(perdeu); // a torcida desequilibra a favor de quem torce
+  });
+});
+
+describe('Vantagem elemental no Duelo (dono, 27/10/2026): ±1 golpe exibido pelo golpe básico, como na Arena', () => {
+  const mk = (L: number, el?: string) => ({ combatant: combatantAt(L, REFERENCE_BUILDS.balanced), special: specialOf('direct'), ...(el ? { fx: { basica: null, especial: null, elBasica: el } } : {}) });
+  const vitorias = (elMe?: string, elOpp?: string) => {
+    let w = 0;
+    const n = 300;
+    for (let s = 0; s < n; s++) {
+      const L = 5 + (s % 40);
+      const r = simulatePvp({ me: mk(L, elMe), opp: mk(L, elOpp), seed: s * 13 + 1 });
+      w += r.winner === 'me' ? 1 : r.winner === 'draw' ? 0.5 : 0;
+    }
+    return w / n;
+  };
+  it('duelElementAdvantage: pelo anel, na base dominante; ausente = neutro', () => {
+    expect(duelElementAdvantage('fogo', 'planta')).toBe(1);
+    expect(duelElementAdvantage('planta', 'fogo')).toBe(-1);
+    expect(duelElementAdvantage('vapor', 'planta')).toBe(1); // vapor -> fogo
+    expect(duelElementAdvantage('fogo', 'fogo')).toBe(0);
+    expect(duelElementAdvantage(undefined, 'fogo')).toBe(0);
+    expect(duelElementAdvantage('fogo', null)).toBe(0);
+  });
+  it('sem elemento nos dois lados a luta é a de antes (espelho ~50%); com vantagem o dono do selo vence mais, com desvantagem menos', () => {
+    const neutro = vitorias();
+    const favor = vitorias('fogo', 'planta');
+    const contra = vitorias('planta', 'fogo');
+    const iguais = vitorias('fogo', 'fogo');
+    // Medido em 27/10/2026 (300 lutas, mesmo level 5..44, build balanced): neutro 53,0% · vantagem 98,3% · desvantagem 2,2% — no ESPELHO o selo decide a luta (ver REGISTRO §177).
+    expect(pct(neutro)).toBeTruthy();
+    expect(iguais).toBe(neutro);
+    expect(favor).toBeGreaterThan(neutro + 0.1);
+    expect(contra).toBeLessThan(neutro - 0.1);
+    expect(favor + contra).toBeCloseTo(2 * neutro, 0);
+  });
+  it('só um lado com elemento = neutro (elemento ausente não é desvantagem)', () => {
+    expect(vitorias('fogo', undefined)).toBe(vitorias());
+  });
+  it('não toca no HP nem nos atributos do combatente e o teto de bônus segue o de antes', () => {
+    const a = mk(20, 'fogo'), b = mk(20, 'planta');
+    const antes = JSON.stringify([a.combatant, b.combatant]);
+    simulatePvp({ me: a, opp: b, seed: 5 });
+    expect(JSON.stringify([a.combatant, b.combatant])).toBe(antes);
   });
 });

@@ -16,6 +16,9 @@
 import { chainMultiplier, match3Bits, trySwap, validMoves, M3_TILE_ELEMENTS, type Board, type Pos, type Rng, type Step } from './match3';
 import { mulberry32 } from './combate/rng';
 import { pickEnemy } from './enemyRoster';
+import { elementAdvantage } from './arena';
+import { elementHits } from './combate/curve';
+import { baseDominanteDoElemento } from './soulProfile/ficha/elementoNome';
 
 /** Id de elemento (ícone). No Normal são os 6 de `M3_TILE_ELEMENTS`; no PVP, 6 sorteados do pool inteiro (`match3Pvp.ts`). */
 export type M3Element = string;
@@ -39,6 +42,30 @@ export const M3C_ENEMY_DMG_FACTOR = 0.2;
 export const M3C_DEFEAT_BONUS = 100;
 /** Teto de segurança: a rodada que chega a este turno acaba como derrota SEM custo. */
 export const M3C_MAX_TURNS = 60;
+
+/**
+ * VANTAGEM ELEMENTAL (decisão do dono, 27/10/2026): a mesma do Arena/Duelo — `elementAdvantage` (+1/-1/0, pela base dominante) vira ±1 golpe EXIBIDO
+ * (`elementHits`, h0 = 10): o dano multiplica por `1 / elementHits(adv)` (+1 → ×1,111; -1 → ×0,909), arredondado só no fim. Sem elemento = neutro.
+ */
+export function m3ElementMult(atacante: string | undefined, defensor: string | undefined): number {
+  if (!atacante || !defensor) return 1;
+  return 1 / elementHits(elementAdvantage(baseDominanteDoElemento(atacante), [baseDominanteDoElemento(defensor)]));
+}
+
+/**
+ * O selo da tela: a vantagem líquida das PEÇAS do jogador contra o inimigo ativo (soma do sinal de cada elemento do tabuleiro; >0 = +1, <0 = -1, 0 = neutro).
+ * É o MESMO cálculo que o dano usa (`m3ElementMult`), então o selo nunca discorda da luta.
+ */
+export function m3BoardAdvantage(s: M3Combat): -1 | 0 | 1 {
+  const alvo = s.enemies[s.active];
+  if (!alvo || s.outcome !== 'playing') return 0;
+  let net = 0;
+  for (const el of s.elements ?? M3_TILE_ELEMENTS) {
+    const m = m3ElementMult(el, alvo.element);
+    net += m > 1 ? 1 : m < 1 ? -1 : 0;
+  }
+  return net > 0 ? 1 : net < 0 ? -1 : 0;
+}
 
 export interface M3Fighter { hp: number; max: number }
 export interface M3Enemy extends M3Fighter {
@@ -64,6 +91,8 @@ export interface M3Combat {
   enemies: M3Enemy[];
   /** PVP: o elemento de cada TIPO de peça (índice = `Tile.k`). Ausente = os 6 fixos `M3_TILE_ELEMENTS` (save/estado antigo e Normal). */
   elements?: readonly string[];
+  /** Elemento do Soulmon do jogador (base ou par): o defensor da conta de vantagem dos golpes do INIMIGO. Ausente = neutro. */
+  playerElement?: string;
   /** Índice (0..2) do inimigo ativo. */
   active: number;
   log: M3Event[];
@@ -81,7 +110,7 @@ export interface M3Combat {
  * Um combate novo. `lines` = linhas de arte candidatas (a tela passa as de `DUNGEON_LINE_SPRITES`); `exclude` = a do jogador (ninguém encara
  * um espelho). Os três elementos são DISTINTOS e as três linhas também — tudo sorteado pelo `rng` por parâmetro.
  */
-export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: string, level?: number): M3Combat {
+export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: string, level?: number, playerElement?: string): M3Combat {
   const pool = lines.filter(l => l !== exclude);
   const els: M3Element[] = [...M3_TILE_ELEMENTS];
   const pick = <T,>(arr: T[]): T => arr.splice(Math.min(arr.length - 1, Math.floor(rng() * arr.length)), 1)[0];
@@ -97,7 +126,7 @@ export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: str
     const pedido = ['rookie', 'champion', 'ultimate'] as const;
     enemies.forEach((e, i) => { const r = pickEnemy(level, rng, { stage: pedido[i], used }); used.add(r.id); e.roster = r.key; });
   }
-  return { player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP }, enemies, active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing' };
+  return { player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP }, enemies, ...(playerElement ? { playerElement } : {}), active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing' };
 }
 
 /** PVP: HP do único inimigo = a SOMA do time do Normal (o placar, e portanto os Bits, ficam na mesma escala; SUPOSIÇÃO a confirmar pelo dono). */
@@ -107,12 +136,12 @@ export const M3C_PVP_ENEMY_HP: number = M3C_ENEMY_HP.reduce((a, b) => a + b, 0);
  * Um combate de PVP (1 contra 1): UM inimigo, com os 6 `elements` da partida (o do inimigo sai deles, sorteado pelo `rng`).
  * `roster` = chave do roster quando o adversário é um NPC (bestiário); jogador real não leva nada (arte e level vêm da tela).
  */
-export function newPvpCombat(rng: Rng, elements: readonly string[], roster?: string): M3Combat {
+export function newPvpCombat(rng: Rng, elements: readonly string[], roster?: string, playerElement?: string): M3Combat {
   const el = elements[Math.min(elements.length - 1, Math.floor(rng() * elements.length))];
   return {
     player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP },
     enemies: [{ hp: M3C_PVP_ENEMY_HP, max: M3C_PVP_ENEMY_HP, element: el, ...(roster ? { roster } : {}) }],
-    elements: [...elements], active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing',
+    elements: [...elements], ...(playerElement ? { playerElement } : {}), active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing',
   };
 }
 
@@ -133,7 +162,8 @@ export function applyPlayerSteps(state: M3Combat, steps: readonly Step[]): M3Com
     for (const k of [...porElemento.keys()].sort((a, b) => a - b)) {
       if (s.outcome !== 'playing') return s;
       const alvo = s.enemies[s.active];
-      const bruto = Math.round(porElemento.get(k)! * M3C_DMG_PER_TILE * chainMultiplier(st.chain));
+      const elTile = (s.elements ?? M3_TILE_ELEMENTS)[k];
+      const bruto = Math.round(porElemento.get(k)! * M3C_DMG_PER_TILE * chainMultiplier(st.chain) * m3ElementMult(elTile, alvo.element));
       const dmg = Math.min(alvo.hp, bruto); // a sobra se perde
       alvo.hp -= dmg;
       s.dealt += dmg;
@@ -175,7 +205,7 @@ export function applyEnemySteps(state: M3Combat, steps: readonly Step[]): M3Comb
     for (const k of st.kinds) porElemento.set(k, (porElemento.get(k) ?? 0) + 1);
     for (const k of [...porElemento.keys()].sort((a, b) => a - b)) {
       if (s.outcome !== 'playing') return s;
-      const bruto = Math.max(1, Math.round(porElemento.get(k)! * M3C_DMG_PER_TILE * chainMultiplier(st.chain) * M3C_ENEMY_DMG_FACTOR));
+      const bruto = Math.max(1, Math.round(porElemento.get(k)! * M3C_DMG_PER_TILE * chainMultiplier(st.chain) * M3C_ENEMY_DMG_FACTOR * m3ElementMult(s.enemies[s.active]?.element, s.playerElement)));
       const dmg = Math.min(s.player.hp, bruto);
       s.player.hp -= dmg;
       s.taken += dmg;

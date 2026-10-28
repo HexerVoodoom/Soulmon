@@ -11,9 +11,10 @@ import {
 } from './match3';
 import {
   M3C_DEFEAT_BONUS, M3C_DMG_PER_TILE, M3C_ENEMY_HP, M3C_MAX_TURNS, M3C_PLAYER_HP,
-  M3_HINTS_PER_GAME, M3_HINT_PRICE_BITS, hintAction, M3C_ENEMY_DMG_FACTOR, M3C_MAX_STREAK, applyEnemySteps, applyPlayerSteps, chooseMove, combatScore, enemyPhase, grantsExtraTurn, newCombat, playTurn, type M3Combat,
+  M3_HINTS_PER_GAME, M3_HINT_PRICE_BITS, hintAction, M3C_ENEMY_DMG_FACTOR, M3C_MAX_STREAK, m3BoardAdvantage, m3ElementMult, applyEnemySteps, applyPlayerSteps, chooseMove, combatScore, enemyPhase, grantsExtraTurn, newCombat, playTurn, type M3Combat,
 } from './match3Combat';
 import { mulberry32 } from './combate/rng';
+import { elementAdvantage } from './arena';
 
 /** Tabuleiro sem nenhuma linha pronta, com 3 de FOGO (tipo 0) alinhadas na linha 3, colunas 1..3. */
 function tabuleiroComTresDeFogo(): Board {
@@ -24,7 +25,9 @@ function tabuleiroComTresDeFogo(): Board {
 /** Um passo sintético: `n` peças do tipo `k` limpas (só o que o combate lê). */
 const passo = (kinds: number[], chain = 1, quatro = false): Step => ({ cleared: [], kinds, triggered: [], created: quatro ? [{ pos: { r: 0, c: 0 }, tile: { k: kinds[0], sp: 'row' as const } }] : [], chain, gained: 0, after: [] });
 const tab = (seed = 1): Board => newRound(seed).board;
-const novo = (seed = 1) => newCombat(mulberry32(seed), ['a', 'b', 'c', 'd', 'e', 'f'], 'a');
+const novoReal = (seed = 1) => newCombat(mulberry32(seed), ['a', 'b', 'c', 'd', 'e', 'f'], 'a');
+/** Combate com os 3 inimigos de elemento NEUTRO (sem relação no anel): os números dos testes antigos não dependem do sorteio de elemento. */
+const novo = (seed = 1): M3Combat => { const c = novoReal(seed); return { ...c, enemies: c.enemies.map(e => ({ ...e, element: 'neutro' })) }; };
 
 describe('D-03: combinar peças causa dano do ELEMENTO ao inimigo ativo', () => {
   it('3 de fogo alinhadas: ao combinar o inimigo ativo perde HP e o evento registra elemento=fogo', () => {
@@ -134,7 +137,7 @@ describe('D-06/D-83: turnos alternados — o inimigo da frente MEXE as peças de
   });
   it('três inimigos com elementos e linhas distintas, nenhuma a do jogador', () => {
     for (let s = 1; s <= 30; s++) {
-      const c = novo(s);
+      const c = novoReal(s);
       expect(new Set(c.enemies.map(e => e.element)).size).toBe(3);
       expect(new Set(c.enemies.map(e => e.line)).size).toBe(3);
       expect(c.enemies.some(e => e.line === 'a')).toBe(false);
@@ -293,5 +296,51 @@ describe('D-85: dica — 3 usos, compra com Bits, saldo insuficiente', () => {
   });
   it('a dica é a jogada que a IA inimiga escolheria (mesma função, determinística)', () => {
     for (let s = 1; s <= 5; s++) expect(chooseMove(tab(s))).toEqual(chooseMove(tab(s)));
+  });
+});
+
+describe('Vantagem elemental (dono, 27/10/2026): o dano do Match3 segue o mesmo ±1 golpe exibido da Arena e do Duelo', () => {
+  const com = (el: string, playerElement?: string): M3Combat => ({ ...novo(), ...(playerElement ? { playerElement } : {}), enemies: novo().enemies.map(e => ({ ...e, element: el })) });
+  it('m3ElementMult: +1 = ×(1/0,9), -1 = ×(1/1,1), neutro/ausente = ×1 (a mesma tabela do anel)', () => {
+    expect(elementAdvantage('fogo', ['planta'])).toBe(1);
+    expect(m3ElementMult('fogo', 'planta')).toBeCloseTo(1 / 0.9, 10);
+    expect(m3ElementMult('planta', 'fogo')).toBeCloseTo(1 / 1.1, 10);
+    expect(m3ElementMult('fogo', 'neutro')).toBe(1);
+    expect(m3ElementMult(undefined, 'fogo')).toBe(1);
+    expect(m3ElementMult('fogo', undefined)).toBe(1);
+    expect(m3ElementMult('fogo', 'vapor')).toBe(1); // par: vale a base dominante (vapor -> fogo; fogo vs fogo = neutro)
+  });
+  it('dano do jogador: peça de fogo contra planta bate +1 golpe a mais; contra vigor (que contra-ataca o fogo) bate menos; neutro igual a antes', () => {
+    const passoFogo = [passo([0, 0, 0])];
+    const neutro = applyPlayerSteps(novo(), passoFogo).log[0].dmg;
+    const vant = applyPlayerSteps(com('planta'), passoFogo).log[0].dmg;
+    const desv = applyPlayerSteps(com('vigor'), passoFogo).log[0].dmg;
+    expect(neutro).toBe(30);
+    expect(vant).toBe(Math.round(30 / 0.9));
+    expect(desv).toBe(Math.round(30 / 1.1));
+    expect(vant).toBeGreaterThan(neutro);
+    expect(desv).toBeLessThan(neutro);
+  });
+  it('dano do inimigo: o elemento do inimigo contra o do Soulmon; sem elemento do Soulmon = neutro', () => {
+    const st = [passo([0, 0, 0, 0, 0])];
+    const base = applyEnemySteps(com('fogo'), st).log[0].dmg;
+    const vant = applyEnemySteps(com('fogo', 'planta'), st).log[0].dmg; // fogo bate planta
+    const desv = applyEnemySteps(com('planta', 'fogo'), st).log[0].dmg; // fogo do inimigo contra planta do Soulmon: a favor do inimigo
+    expect(applyEnemySteps(com('fogo', 'fogo'), st).log[0].dmg).toBe(base);
+    expect(vant).toBeGreaterThan(base);
+    expect(desv).toBeLessThan(base);
+  });
+  it('o selo (m3BoardAdvantage) vem do MESMO cálculo: peças a favor = +1, contra = -1, equilíbrio/neutro = 0', () => {
+    const so = (els: string[], foe: string): M3Combat => ({ ...com(foe), elements: els });
+    expect(m3BoardAdvantage(so(['fogo', 'fogo'], 'planta'))).toBe(1);
+    expect(m3BoardAdvantage(so(['planta', 'planta'], 'fogo'))).toBe(-1);
+    expect(m3BoardAdvantage(so(['fogo', 'planta'], 'fogo'))).toBe(-1); // fogo x fogo neutro, planta x fogo desvantagem
+    expect(m3BoardAdvantage(so(['fogo'], 'neutro'))).toBe(0);
+    expect(m3BoardAdvantage({ ...com('planta'), outcome: 'win' })).toBe(0);
+  });
+  it('determinístico: mesma entrada, mesmo dano (e nenhum Math.random na regra)', () => {
+    const a = applyPlayerSteps(com('planta'), [passo([0, 0, 0, 1, 1, 1], 2)]);
+    const b = applyPlayerSteps(com('planta'), [passo([0, 0, 0, 1, 1, 1], 2)]);
+    expect(a).toEqual(b);
   });
 });

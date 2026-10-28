@@ -10,7 +10,9 @@
  *
  * The client NEVER derives the opponent: `me` and `opp` come from `duelStart`.
  */
-import type { Combatant } from './curve';
+import { elementHits, type Combatant } from './curve';
+import { elementAdvantage } from '../arena';
+import { baseDominanteDoElemento } from '../soulProfile/ficha/elementoNome';
 import { fightSteps, PVP_HP_SCALE, type FightEvent, type FightFxPair, type FightSide } from './fight';
 import { REFERENCE_BUILDS, combatantAt, firstLevelOfStage, stageOfLevel } from './level';
 import { CHEER, cheerEvents, cleanStartEnergy, specialOf, type Special } from './specials';
@@ -67,10 +69,25 @@ export interface DuelResult {
   readonly timeOpp: number;
 }
 
+/**
+ * Element matchup of the DUEL (owner decision 27/10/2026): the BASIC strike's element of `atk` against the one of `def`, by dominant base
+ * (the counter ring only knows the 20 bases). +1 / -1 / 0; a missing element on either side is neutral. Mirrored by `vantagemElemental`
+ * in `functions/api/_elementoBase.js` (locked by `elementoBase.parity.test.js`). The badge reads THIS, so it never disagrees with the fight.
+ */
+export function duelElementAdvantage(atk: string | null | undefined, def: string | null | undefined): -1 | 0 | 1 {
+  if (!atk || !def) return 0;
+  return elementAdvantage(baseDominanteDoElemento(atk), [baseDominanteDoElemento(def)]);
+}
+
+/** Fold the element matchup into the attacker's damage bonus: ±1 displayed hit (`elementHits`), HP/ATK/DEF/SPD and the 5% cap untouched. */
+const withElement = (c: Combatant, adv: number): Combatant => (adv === 0 ? c : { ...c, bonus: (1 + c.bonus) / elementHits(adv) - 1 });
+
 /** The whole fight, pure and deterministic; the same function the server runs (`simulateDuel` of `_duel.js`). */
-export function simulatePvp(args: { me: Pick<DuelSide, 'combatant' | 'special' | 'cheerScale' | 'startEnergy' | 'dotResist'>; opp: Pick<DuelSide, 'combatant' | 'special' | 'startEnergy' | 'dotResist'>; seed: number; taps?: unknown }): DuelResult {
-  const a: FightSide = { combatant: args.me.combatant, special: args.me.special, dotResist: args.me.dotResist };
-  const b: FightSide = { combatant: args.opp.combatant, special: args.opp.special, dotResist: args.opp.dotResist };
+export function simulatePvp(args: { me: Pick<DuelSide, 'combatant' | 'special' | 'cheerScale' | 'startEnergy' | 'dotResist' | 'fx'>; opp: Pick<DuelSide, 'combatant' | 'special' | 'startEnergy' | 'dotResist' | 'fx'>; seed: number; taps?: unknown }): DuelResult {
+  const advMe = duelElementAdvantage(args.me.fx?.elBasica, args.opp.fx?.elBasica);
+  const advOpp = duelElementAdvantage(args.opp.fx?.elBasica, args.me.fx?.elBasica);
+  const a: FightSide = { combatant: withElement(args.me.combatant, advMe), special: args.me.special, dotResist: args.me.dotResist };
+  const b: FightSide = { combatant: withElement(args.opp.combatant, advOpp), special: args.opp.special, dotResist: args.opp.dotResist };
   const fx: FightFxPair[] = [];
   const g = fightSteps(a, b, { seed: args.seed >>> 0, hpScale: PVP_HP_SCALE, startEnergy: [cleanStartEnergy(args.me.startEnergy), cleanStartEnergy(args.opp.startEnergy)], cheer: duelCheerEvents(args.taps, 0, args.me.cheerScale), fxTrace: fx });
   const events: FightEvent[] = [];

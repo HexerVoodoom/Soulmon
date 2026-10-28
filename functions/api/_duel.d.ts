@@ -36,5 +36,5 @@ export declare function fichaStageOf(evolutionStage: unknown): string;
 export declare function duelSide(save: unknown, opts?: { maxLevel?: number }): DuelSide;
 export declare function duelCombatant(save: unknown, opts?: { maxLevel?: number }): Combatant;
 export declare function duelSeed(...parts: Array<string | number>): number;
-export declare function simulateDuel(args: { me: Pick<DuelSide, 'combatant' | 'special'>; opp: Pick<DuelSide, 'combatant' | 'special'>; seed: number; taps?: unknown }): DuelResult;
+export declare function simulateDuel(args: { me: Pick<DuelSide, 'combatant' | 'special'> & Partial<Pick<DuelSide, 'fx'>>; opp: Pick<DuelSide, 'combatant' | 'special'> & Partial<Pick<DuelSide, 'fx'>>; seed: number; taps?: unknown }): DuelResult;
 export declare const ELEMENTOS_FICHA: ReadonlySet<string>;

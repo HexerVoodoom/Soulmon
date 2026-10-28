@@ -19,7 +19,7 @@ import {
   match3Bits, newRound, trySwap, type Board, type Pos, type Rng, type Step, type Tile,
 } from '../utils/match3';
 import {
-  M3C_DEFEAT_BONUS, M3C_MAX_STREAK, M3_HINTS_PER_GAME, M3_HINT_PRICE_BITS, applyEnemySteps, applyPlayerSteps, chooseMove, combatScore, hintAction, newCombat, newPvpCombat, playTurn, type M3Combat, type M3Element,
+  M3C_DEFEAT_BONUS, M3C_MAX_STREAK, M3_HINTS_PER_GAME, M3_HINT_PRICE_BITS, applyEnemySteps, applyPlayerSteps, m3BoardAdvantage, chooseMove, combatScore, hintAction, newCombat, newPvpCombat, playTurn, type M3Combat, type M3Element,
 } from '../utils/match3Combat';
 import { mulberry32 } from '../utils/combate/rng';
 import { FX_AURA_MS, FX_BURST_MS, FX_NUM_MS, FX_ORB_PX, FX_ORB_PX_BIG, FX_TRAVEL_MS, planFx, powerShots, type FxSlot, type PowerShot } from '../utils/match3Powers';
@@ -28,8 +28,6 @@ import { fxMirror } from '../utils/fxFacing';
 import { OWN_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
 import { rosterEntryOfKey } from '../utils/enemyRoster';
 import { elementIdOfFoe } from '../utils/elementDex';
-import { elementAdvantage } from '../utils/arena';
-import { baseDominanteDoElemento } from '../utils/soulProfile/ficha/elementoNome';
 import { ElementAdvantageBadge } from './games/ElementAdvantageBadge';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
@@ -110,13 +108,13 @@ export interface Match3Props extends EarningGameProps {
 function freshSeed(): number { return Math.floor(Math.random() * 2 ** 31); }
 
 /** O combate de uma rodada a partir da semente (o rng do tabuleiro NÃO é tocado: os dois têm fluxo próprio). */
-function combatFor(sd: number, playerLine: string | undefined, level?: number, pvp?: PvpFoe): { combat: M3Combat; rng: Rng; elements: readonly string[] } {
+function combatFor(sd: number, playerLine: string | undefined, level?: number, pvp?: PvpFoe, petElement?: string): { combat: M3Combat; rng: Rng; elements: readonly string[] } {
   // PVP: 6 elementos sorteados do pool inteiro (semente por partida) e UM inimigo; Normal: os 6 fixos e o time de 3, como sempre.
   if (pvp) {
     const elements = pvpElementsForSeed(sd);
-    return { combat: newPvpCombat(mulberry32(sd + 99), elements, pvp.roster), rng: mulberry32(sd ^ 0x5eed), elements };
+    return { combat: newPvpCombat(mulberry32(sd + 99), elements, pvp.roster, petElement), rng: mulberry32(sd ^ 0x5eed), elements };
   }
-  return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine, level), rng: mulberry32(sd ^ 0x5eed), elements: M3_TILE_ELEMENTS };
+  return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine, level, petElement), rng: mulberry32(sd ^ 0x5eed), elements: M3_TILE_ELEMENTS };
 }
 
 /** M10: arte e nome de um inimigo do roster (`enemyRoster.ts`), ou `undefined` (combate sem level: linhas próprias, como antes). */
@@ -140,7 +138,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
 
   const first = useMemo(() => {
     const sd = seed ?? freshSeed();
-    return { round: newRound(sd), battle: combatFor(sd, demoCharacterId, playerLevel, pvp) };
+    return { round: newRound(sd), battle: combatFor(sd, demoCharacterId, playerLevel, pvp, petElement) };
   }, [seed, demoCharacterId, playerLevel, pvp]);
   const [elements, setElements] = useState<readonly string[]>(first.battle.elements);
   const [board, setBoard] = useState<Board>(first.round.board);
@@ -512,7 +510,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
     timers.current.clear();
     const sd = seed === undefined ? freshSeed() : seed + 1;
     const r = newRound(sd);
-    const c = combatFor(sd, demoCharacterId, playerLevel, pvp);
+    const c = combatFor(sd, demoCharacterId, playerLevel, pvp, petElement);
     setElements(c.elements);
     boardRef.current = r.board;
     rngRef.current = r.rng;
@@ -558,9 +556,8 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   const petScale = PET_SCALE_MINIGAME;
 
   const playerElIcon = petElement ? elementIcon(petElement) : undefined;
-  // Selo de vantagem elemental (27/10/2026): o elemento do Soulmon contra o do inimigo ATIVO (neutro = sem selo).
-  const alvoAtivo = combat.outcome === 'playing' ? combat.enemies[combat.active] : undefined;
-  const vantagemElemental = petElement && alvoAtivo ? elementAdvantage(baseDominanteDoElemento(petElement), [alvoAtivo.element]) : 0;
+  // Selo de vantagem elemental (27/10/2026): o MESMO cálculo do dano (`m3BoardAdvantage`: as peças do tabuleiro contra o inimigo ATIVO; neutro = sem selo).
+  const vantagemElemental = m3BoardAdvantage(combat);
   const boardNode = over ? null : (
   <div
     role="grid"
