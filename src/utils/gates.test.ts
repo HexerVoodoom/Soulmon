@@ -26,11 +26,11 @@ describe('gateFor', () => {
     for (const f of FEATURES) for (const lixo of [NaN, null, undefined, -4, 'x', {}]) expect(gateFor(f, lixo).open, `${f} ${String(lixo)}`).toBe(false);
   });
 
-  it('o PvP continua no 5 que já valia, e meetsPvpBond é a MESMA entrada', () => {
-    expect(GATES.pvp.minBond).toBe(5);
+  it('o PvP abre no 3 (emenda 28/10/2026; era 5), e meetsPvpBond é a MESMA entrada', () => {
+    expect(GATES.pvp.minBond).toBe(3);
     expect(BOND_PVP_MIN_LEVEL).toBe(GATES.pvp.minBond);
-    expect(meetsPvpBond(xpForLevel(4))).toBe(false);
-    expect(meetsPvpBond(xpForLevel(5))).toBe(true);
+    expect(meetsPvpBond(xpForLevel(2))).toBe(false);
+    expect(meetsPvpBond(xpForLevel(3))).toBe(true);
   });
 
   it('as portas pedidas pelo dono existem: Arena/PvP, Torneio, andares altos, Renascimento', () => {
@@ -150,11 +150,11 @@ describe('prédios por Vínculo (Tarefa A)', () => {
   });
   it('Arena/Feira/Torneio leem a tabela de portões (um número só)', () => {
     expect(BUILDING_GATES['arena.duelo'].minBond).toBe(GATES.pvp.minBond);
-    expect(BUILDING_GATES['hall.feira'].minBond).toBe(GATES.pvp.minBond);
+    expect(BUILDING_GATES['hall.feira'].minBond).toBe(5);
     expect(BUILDING_GATES['arena.torneio'].minBond).toBe(GATES.torneio.minBond);
   });
   it('a área no Mapa = menor Vínculo dos seus prédios; o aviso é neutro e bilíngue', () => {
-    expect(areaMinBond('arena')).toBe(5); // #187 (28/10/2026): a Fenda Sem Fim voltou para a Exploração, então a ÁREA da Arena só abre no Vínculo 5 (Duelo/Torneio/Guerra), como antes de beta3 N10
+    expect(areaMinBond('arena')).toBe(3); // emenda 28/10/2026: Arena inteira no Vínculo 3. Antes: // #187 (28/10/2026): a Fenda Sem Fim voltou para a Exploração, então a ÁREA da Arena só abre no Vínculo 5 (Duelo/Torneio/Guerra), como antes de beta3 N10
     expect(areaMinBond('forja')).toBe(1); // o Refúgio (Vínculo 1, sempre livre) mora na Forja
     expect(areaMinBond('exploracao')).toBe(1);
     expect(areaMinBond('hall')).toBe(2); // emenda 28/10/2026: o Salão do Clã (e o Grove) abre no Vínculo 2

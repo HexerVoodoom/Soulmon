@@ -107,18 +107,18 @@ describe('invariantes anti-pressão — se caírem, o desenho foi desfeito', () 
 });
 
 describe('gate de PvP — um limiar, cruzado uma vez, para sempre', () => {
-  it('o nível mínimo é 5 (derivação em level-de-conta.md §6)', () => {
-    expect(BOND_PVP_MIN_LEVEL).toBe(5);
+  it('o nível mínimo é 3 (emenda 28/10/2026; era 5, derivação em level-de-conta.md §6)', () => {
+    expect(BOND_PVP_MIN_LEVEL).toBe(3);
   });
 
-  it('abaixo de 700 XP não libera; a partir dele libera', () => {
-    expect(xpForLevel(BOND_PVP_MIN_LEVEL)).toBe(700);
-    expect(meetsPvpBond(699)).toBe(false);
-    expect(meetsPvpBond(700)).toBe(true);
+  it('abaixo de 200 XP não libera; a partir dele libera', () => {
+    expect(xpForLevel(BOND_PVP_MIN_LEVEL)).toBe(200);
+    expect(meetsPvpBond(199)).toBe(false);
+    expect(meetsPvpBond(200)).toBe(true);
   });
 
   it('uma vez cruzado, NUNCA volta a fechar (não há manutenção)', () => {
-    for (let xp = 700; xp < 30000; xp += 211) expect(meetsPvpBond(xp)).toBe(true);
+    for (let xp = 200; xp < 30000; xp += 211) expect(meetsPvpBond(xp)).toBe(true);
   });
 
   it('save corrompido/NaN não libera por acidente', () => {

@@ -5001,7 +5001,7 @@ de vermelho (tinta neutra; só a vitória ganha cor). Não deixa perder sem ganh
 nada — e não deixa desistir sem perder. A Arena **não cobra coração nem tem porta de entrada paga**.
 
 **Onde a UI mostra.** `src/components/TournamentPage.tsx` (faixa → ranking →
-oponentes → troféus; sem toggle de PvP desde 02/10/2026 — abaixo do Vínculo 5 a aba explica o requisito), `src/components/DuelScreen.tsx` (o duelo fantasma), `src/components/ArenaGame.tsx` (aberta
+oponentes → troféus; sem toggle de PvP desde 02/10/2026 — abaixo do Vínculo 3 a aba explica (era 5 até 28/10/2026) o requisito), `src/components/DuelScreen.tsx` (o duelo fantasma), `src/components/ArenaGame.tsx` (aberta
 pelo lote Duelo da área Arena — `DueloSheet`; ⚰️ antes, da `ActivitiesPage`).
 
 ---
@@ -5260,7 +5260,7 @@ vindo do servidor).
 - **Golpe normalizado.** Cada ataque vale ~1/10 do espelho em qualquer level (`HIT_UNIT_H0` = 10), com sorte AR(1) de ρ = 0,9 e σ = 8% (`VARIANCE`). A luta, o Soulmon e o adversário usam o mesmo motor na Arena, na Masmorra, no Pesadelo e no Duelo.
 - **Level do Soulmon.** HP sobe sozinho com o level; os pontos de distribuição vão só para ATK/DEF/SPD, conduzidos pelo galho dominante. Na degeneração o level desce, com texto neutro (`copy.semFomo`). Os chips dão só pontos de tipo (Poder/Harmonia/Benevolência) e afetam apenas a evolução (§47).
 - **Vínculo = level do usuário.** Fonte única: `bondLevelFor(totalXP)` (nunca persistido). Pontos de talento = Vínculo, até `TALENT_POINTS_MAX` (20). Persiste só `talentPicks: string[]` (um id por grau; vetor inválido é descartado inteiro no `save.js`). Respec sempre pago em Bits ganhos (`RESPEC_COST_PER_POINT`).
-- **Portões** (`GATES`, `src/utils/gates.ts`): Arena/PvP e Torneio no Vínculo 5, andares altos da Masmorra (a partir do andar 4) no 8, Renascimento no 12 (somado à conta paga). O dinheiro nunca compra Vínculo. Valores são defaults da squad, o dono os confirma.
+- **Portões** (`GATES`, `src/utils/gates.ts`): Arena/PvP, Torneio e Guerra de Clãs no Vínculo 3 (emenda 28/10/2026; era 5), andares altos da Masmorra (a partir do andar 4) no 8, Renascimento no 12 (somado à conta paga). O dinheiro nunca compra Vínculo. Valores são defaults da squad, o dono os confirma.
 - **Teto único de 5%** (`COMBAT_BONUS_CAP`): talento e equipamento entram como bônus em ATK/DEF/SPD pelo `combinedAttrBonus`; a SOMA dos canais nunca passa de 5% (acima disso os três escalam juntos). Vale também no PvP (decisão consciente do dono, REGISTRO §24 item 3); o servidor recalcula tudo do save.
 - **Equipamento** (`src/utils/equipment.ts`): 3 slots (Núcleo=ATK, Carapaça=DEF, Rastro=SPD) × 3 tiers (`TIER_PCT` 0,5/1/1,5%), por loja direta em Bits GANHOS (`TIER_BITS`) ou fragmentos (`TIER_FRAGMENTS`; `FRAGMENTS_PER_RUN` = 5 pela run completa da Masmorra). Sem sorteio, sem caixa. Percentual, nunca ponto plano.
 - **Equipamento na Masmorra (PR12a, §2.28 B).** A Masmorra usa o canal por atributo (`dungeonAttrBonus` em `equipment.ts`, hook `useDungeonBonus`): Núcleo = dano dado, Carapaça = o inimigo precisa de mais golpes (dano recebido menor), Rastro = o golpe sai mais cedo; o talento de PvE soma no ATK. É o MESMO teto único de 5% na soma dos três canais. Arena e Pesadelo seguem no canal escalar. Medido (`dungeon.equipamento.test.ts`): razão das médias 4,0% (cheio) e 4,9% (cheio + talento); só DEF 1,4%, só SPD 1,5%. A parede do andar 5 sobe com equipamento (37% sem, 71% cheio com talento; o escalar antigo já dava ~68%) e a habilidade ao concluir vai de 30,2pp para 32,4pp: reportado ao dono, não recalibrado.
@@ -5326,7 +5326,7 @@ criatura tem, há quanto tempo joga.
 
 **Entrar na lista pública é automático e sair é um interruptor** (⚰️ até
 02/10/2026 era o toggle de PvP, um ato explícito — H13 o tirou, TORC-5 trouxe a
-saída de volta): ao cruzar o Vínculo 5 o apelido e o pet aparecem na lista
+saída de volta): ao cruzar o Vínculo 3 o apelido e o pet aparecem na lista
 pública do Torneio, e Configurações → Seus dados tem "Aparecer na lista pública
 do Torneio", ligado por padrão (`hideFromPublicList`). O consentimento de Termos/Privacidade é outro assunto e mora
 em `src/utils/consent.ts` (`MIN_AGE_YEARS` = 18; `TERMS_VERSION` = **`'2026-09-30'`**

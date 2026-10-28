@@ -24,8 +24,8 @@ export interface GateRule {
  * mantêm o 5 que já valia (funil D1–D7 termina no 4); Masmorra alta e Renascimento são propostas.
  */
 export const GATES: Readonly<Record<GateFeature, GateRule>> = {
-  pvp: { minBond: 5 },
-  torneio: { minBond: 5 },
+  pvp: { minBond: 3 },
+  torneio: { minBond: 3 },
   masmorraAlto: { minBond: 8 },
   renascimento: { minBond: 12 },
 };
@@ -154,7 +154,7 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   'forja.oficina': { minBond: 3 },
   'arena.duelo': { minBond: GATES.pvp.minBond },
   'arena.torneio': { minBond: GATES.torneio.minBond },
-  'arena.guerra': { minBond: 5 }, // dono 18/10/2026: a Arena não destrava antes do que já destravava (Vínculo 5)
+  'arena.guerra': { minBond: 3 }, // dono 28/10/2026: a Arena inteira abre no Vínculo 3 (era 5)
   'laboratorio.evolucao': { minBond: 1 },
   'laboratorio.pet': { minBond: 2 },
   'laboratorio.stats': { minBond: 3 },

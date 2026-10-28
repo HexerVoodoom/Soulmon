@@ -223,8 +223,8 @@ describe('invariante 3 (reescrito): o catálogo de recompensas segue cosmético;
     const { talentPointsFor } = await import('./talents');
     const { gateFor } = await import('./gates');
     expect(talentPointsFor(bondLevelFor(xpForLevel(6)))).toBe(6);
-    expect(gateFor('pvp', bondLevelFor(xpForLevel(5))).open).toBe(true);
-    expect(gateFor('pvp', bondLevelFor(xpForLevel(4))).open).toBe(false);
+    expect(gateFor('pvp', bondLevelFor(xpForLevel(3))).open).toBe(true);
+    expect(gateFor('pvp', bondLevelFor(xpForLevel(2))).open).toBe(false);
   });
 
   it('o ÚNICO efeito de combate do Vínculo é o talento, e ele nunca passa do teto único de 5%', async () => {

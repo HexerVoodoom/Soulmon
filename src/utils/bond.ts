@@ -558,7 +558,7 @@ export function awardBondXP<T extends BondState>(state: T, event: BondEvent, day
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Nível mínimo para LIGAR o PvP: **5**.
+ * Nível mínimo para LIGAR o PvP: **3** (dono 28/10/2026; a derivação abaixo é a do 5 original).
  *
  * Não é número escolhido: os níveis 1–4 são o funil de retenção D1–D7 declarado
  * na própria curva (seção 3), e o 5 é o primeiro degrau FORA dele — 700 XP,

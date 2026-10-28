@@ -6,8 +6,8 @@
 
 /** @type {Readonly<Record<'pvp' | 'torneio' | 'masmorraAlto' | 'renascimento', { minBond: number }>>} */
 export const GATES = {
-  pvp: { minBond: 5 },
-  torneio: { minBond: 5 },
+  pvp: { minBond: 3 },
+  torneio: { minBond: 3 },
   masmorraAlto: { minBond: 8 },
   renascimento: { minBond: 12 },
 };
@@ -45,7 +45,7 @@ export const BUILDING_GATES = {
   'forja.refugio': { minBond: 1 },
   'arena.duelo': { minBond: GATES.pvp.minBond },
   'arena.torneio': { minBond: GATES.torneio.minBond },
-  'arena.guerra': { minBond: 5 },
+  'arena.guerra': { minBond: 3 }, // dono 28/10/2026: a Arena inteira abre no Vínculo 3 (era 5)
   'laboratorio.evolucao': { minBond: 1 },
   'laboratorio.pet': { minBond: 2 },
   'laboratorio.stats': { minBond: 3 },

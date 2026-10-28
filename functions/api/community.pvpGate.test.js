@@ -9,7 +9,7 @@
  *
  * O servidor tem o save (`totalXP` sincroniza por `/api/save`, chave = saveId),
  * então ele deriva o Vínculo e decide. Duas regras do dono, travadas aqui:
- *  1. o PvP nasce DESLIGADO e só liga a partir do nível 5;
+ *  1. o PvP nasce DESLIGADO e só liga a partir do nível 3;
  *  2. quem JÁ ligou continua ligado — o gate vale para LIGAR, nunca para tirar
  *     de quem já consentiu.
  */
@@ -18,7 +18,7 @@ import { onRequest } from './community.js';
 import { xpForLevel } from '../../src/utils/bond';
 
 const ALICE = 'a'.repeat(32);
-const XP_NIVEL_5 = xpForLevel(5);
+const XP_NIVEL_5 = xpForLevel(3);
 
 function fakeKV(seed = {}) {
   const store = new Map(Object.entries(seed));
@@ -45,7 +45,7 @@ const postProfile = (env, id, body) => onRequest({
 
 const perfilGravado = (env, id) => JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${id}`));
 
-describe('gate de PvP no servidor — nível mínimo 5', () => {
+describe('gate de PvP no servidor — nível mínimo 3', () => {
   it('cliente pedindo pvpEnabled:true SEM Vínculo suficiente não entra', async () => {
     const env = { DIGIAPP_SAVES: fakeKV({ [ALICE]: JSON.stringify({ totalXP: XP_NIVEL_5 - 1 }) }) };
     const res = await postProfile(env, ALICE, { name: 'Alice', pvpEnabled: true });
@@ -54,7 +54,7 @@ describe('gate de PvP no servidor — nível mínimo 5', () => {
     expect((await res.json()).pvpBlocked).toBe(true);
   });
 
-  it('com o Vínculo no nível 5, liga', async () => {
+  it('com o Vínculo no nível 3, liga', async () => {
     const env = { DIGIAPP_SAVES: fakeKV({ [ALICE]: JSON.stringify({ totalXP: XP_NIVEL_5 }) }) };
     await postProfile(env, ALICE, { name: 'Alice', pvpEnabled: true });
     expect(perfilGravado(env, ALICE).pvpEnabled).toBe(true);
