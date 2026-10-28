@@ -19,7 +19,7 @@ import { fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
 import { MapPage } from './MapPage';
 import { CornerLink } from './CornerLink';
-import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
+import { CORNER_RING_TOP, CORNER_RING_SIDE, CORNER_BOX_TOP } from './cornerAnchor';
 import { AreaTopBar } from './AreaTopBar';
 import { ProfileAvatarButton } from '../perfil/ProfileAvatarButton';
 import { MENU_SHOWS_RITUAL_TOOLS } from '../SettingsPage';
@@ -263,5 +263,15 @@ describe('Botão de avatar da Home (Tarefa C, substitui o sanduíche)', () => {
 
   it('Oráculo e "Refazer o ritual" seguem ocultos (G1) — a flag mora nas Configurações', () => {
     expect(MENU_SHOWS_RITUAL_TOOLS).toBe(false);
+  });
+});
+
+describe('Home: header e canto do Mapa somam o MESMO inset de topo', () => {
+  it('o .sm2-hud soma env(safe-area-inset-top), como o CORNER_BOX_TOP (viewport-fit=cover, a3807ecf7)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const css = readFileSync('src/index.css', 'utf8');
+    const hud = css.split('\n').find(l => l.startsWith('.sm2-hud {')) ?? '';
+    expect(hud).toContain('padding-top: env(safe-area-inset-top, 0px)');
+    expect(CORNER_BOX_TOP).toContain('env(safe-area-inset-top');
   });
 });

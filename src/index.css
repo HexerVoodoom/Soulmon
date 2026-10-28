@@ -5994,7 +5994,8 @@ select:focus-visible {
 }
 
 /* ── HUD: medidores segmentados ─────────────────────────────────────────── */
-.sm2-hud { display: flex; flex-direction: column; gap: 8px; }
+/* `viewport-fit=cover` (a3807ecf7, 27/10/2026) faz o `env(safe-area-inset-top)` valer no Android; o `CornerLink` (fixed) já soma o inset, então o header da Home (em fluxo) soma o MESMO inset — senao o Mapa fica abaixo da linha do nome. */
+.sm2-hud { display: flex; flex-direction: column; gap: 8px; padding-top: env(safe-area-inset-top, 0px); }
 .sm2-hud-brand { display: flex; align-items: center; gap: 8px; min-width: 0; }
 /* Cinzel, não Silkscreen: a marca vivia em 11px bitmap, abaixo do piso de
    14px da voz do aparelho (e do piso de 12px do app). */

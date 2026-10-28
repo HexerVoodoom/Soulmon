@@ -217,3 +217,29 @@ describe('Gerar Soulmon — 3 usos, cooldown e dica do Centro de Evolução', ()
     rPtDemo.unmount();
   });
 });
+
+describe('Ajuda — reportar bug', () => {
+  it('EN: linha logo abaixo do feedback, mailto com [Soulmon bug] e diagnóstico sem dado pessoal', () => {
+    renderSettings('en-US');
+    const fb = screen.getByRole('link', { name: /Talk to the people who make Soulmon/ });
+    const bug = screen.getByRole('link', { name: /Report a bug/ }) as HTMLAnchorElement;
+    expect(fb.nextElementSibling).toBe(bug);
+    const href = bug.getAttribute('href') ?? '';
+    expect(href.startsWith(`mailto:${FEEDBACK_EMAIL}?`)).toBe(true);
+    const params = new URLSearchParams(href.slice(href.indexOf('?') + 1));
+    expect(params.get('subject')).toBe('[Soulmon bug]');
+    const body = params.get('body') ?? '';
+    for (const k of [`Version: ${APP_VERSION}`, 'Build:', 'Platform:', 'Language: en-US', 'View: settings', 'User agent:', 'Time:']) expect(body).toContain(k);
+    expect(body).not.toContain('abcdef01');
+    expect(body).not.toMatch(/@/);
+  });
+
+  it('PT: rótulo e corpo em português', () => {
+    renderSettings('pt-BR');
+    const bug = screen.getByRole('link', { name: /Reportar bug/ }) as HTMLAnchorElement;
+    const params = new URLSearchParams((bug.getAttribute('href') ?? '').split('?')[1]);
+    expect(params.get('subject')).toBe('[Soulmon bug]');
+    expect(params.get('body')).toContain('Plataforma:');
+    expect(params.get('body')).toContain('Tela: settings');
+  });
+});

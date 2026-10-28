@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { ActionRow } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 
@@ -71,6 +72,58 @@ function originLabel(origin: 'settings' | 'error', isPt: boolean): string {
 
 export function feedbackLabel(language: Language): string {
   return language === 'pt-BR' ? 'Falar com quem faz o Soulmon' : 'Talk to the people who make Soulmon';
+}
+
+/**
+ * REPORTAR BUG (28/10/2026): o MESMO mecanismo do feedback (`mailto:` para o
+ * dono, sem backend, sem tabela nova), com assunto próprio "[Soulmon bug]" para
+ * triar à parte. O corpo traz um espaço para a pessoa descrever e, abaixo da
+ * linha, diagnóstico NÃO pessoal: versão, build, plataforma, idioma, user agent,
+ * tela atual e horário. Nunca vai conteúdo do save, e-mail ou id — nem o trecho
+ * do `saveId` que o feedback leva.
+ */
+export function bugMailto(opts: {
+  language: Language;
+  /** Tela de onde a pessoa reportou. */
+  view?: string;
+  now?: Date;
+  platform?: string;
+  userAgent?: string;
+}): string {
+  const isPt = opts.language === 'pt-BR';
+  const platform = opts.platform ?? Capacitor.getPlatform();
+  const ua = opts.userAgent ?? (typeof navigator !== 'undefined' ? navigator.userAgent : '');
+  const plat = platform === 'android' ? 'Android' : platform === 'ios' ? 'iOS' : 'web';
+  const linhas = [
+    isPt ? 'O que aconteceu? (o que você fez, o que esperava, o que viu)' : 'What happened? (what you did, what you expected, what you saw)',
+    '',
+    '',
+    `--- ${isPt ? 'diagnóstico automático (sem dados pessoais)' : 'automatic diagnostics (no personal data)'} ---`,
+    `${isPt ? 'Versão' : 'Version'}: ${APP_VERSION}`,
+    `Build: ${BUILD_ID}`,
+    `${isPt ? 'Plataforma' : 'Platform'}: ${plat}`,
+    `${isPt ? 'Idioma' : 'Language'}: ${opts.language}`,
+    `${isPt ? 'Tela' : 'View'}: ${opts.view ?? 'settings'}`,
+    `User agent: ${ua}`,
+    `${isPt ? 'Horário' : 'Time'}: ${(opts.now ?? new Date()).toISOString()}`,
+  ];
+  return `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('[Soulmon bug]')}&body=${encodeURIComponent(linhas.join('\n'))}`;
+}
+
+export function bugLabel(language: Language): string {
+  return language === 'pt-BR' ? 'Reportar bug' : 'Report a bug';
+}
+
+/** A linha logo ABAIXO do feedback — mesmo `ActionRow`, mesma largura e espaçamento. */
+export function BugReportRow({ language, view }: { language: Language; view?: string }) {
+  const isPt = language === 'pt-BR';
+  return (
+    <ActionRow
+      label={bugLabel(language)}
+      hint={isPt ? 'Abre seu e-mail com um diagnóstico sem dados pessoais (versão, aparelho, tela).' : 'Opens your email app with diagnostics that contain no personal data (version, device, screen).'}
+      href={bugMailto({ language, view })}
+    />
+  );
 }
 
 /** A linha de Configurações — o mesmo `ActionRow` das outras linhas do grupo. */

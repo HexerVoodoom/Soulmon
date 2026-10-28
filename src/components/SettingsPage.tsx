@@ -16,7 +16,7 @@ import { SLEEP_REMINDER_EVENT } from '../utils/restWindow';
 import { isTelemetryEnabled, setTelemetryEnabled, telemetryConsentCopy } from '../utils/telemetry';
 import { useTheme } from '../contexts/ThemeContext';
 import { desligarMusica, ligarMusica, musicaPreferida } from '../utils/musica';
-import { APP_VERSION, FeedbackRow } from './FeedbackLink';
+import { APP_VERSION, FeedbackRow, BugReportRow } from './FeedbackLink';
 import { ProfileEditor } from './perfil/ProfileEditor';
 import { UserAvatar } from './ui/UserAvatar';
 import { BondXpBar } from './perfil/BondXpBar';
@@ -622,6 +622,7 @@ export function SettingsPage({
             e-mail: é onde a pessoa procura quando algo não funciona
             (design-critic B3, 21/09/2026; `FeedbackLink.tsx`). */}
         <FeedbackRow language={language} saveId={saveId} />
+        <BugReportRow language={language} view="settings" />
         <p className="sm2-num" style={{ ...sm2Hint, minHeight: 24, display: 'flex', alignItems: 'center' }}>Soulmon {APP_VERSION}</p>
       </Group>
 
