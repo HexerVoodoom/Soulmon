@@ -502,3 +502,15 @@ Trim 0 (`TRIM_MUSICAS_DE_COMBATE_DB` em `loudness.ts`, resíduo ≤ 0,2 dB). Enc
 Fora do S6, fora do pré-cache; o `sw.js` já ignora `Range` em `/sounds/tema-`. Loop: as duas longas já terminam em fade; volta com respiro de 8 s (a de evolução 29 s, que não chega a repetir) e fade-in de 2 / 0,5 / 3 s.
 
 **14.4 Pendência:** nenhuma trilha foi ouvida por agente; a escuta final é do dono (`PERGUNTAS-DO-DONO.md`, "Beta3 som"). Procedência: ver `Attributions.md`.
+
+## 15. A revelação de recompensa tem som (28/10/2026, pedido do dono, S19)
+
+**15.1 O que soa.** Na tela de resultado (`ResultScreen`, `DungeonReturnModal`, `BitsReveal`): `playRewardPop(pitch)` quando um ícone estoura (um semitom acima do anterior, teto de 8), `playCoinRoll()` em rajadas de tique (a cada 140 ms) enquanto o odômetro de Bits rola, `playCoinLand()` quando ele pousa. Os três são procedurais (parciais em `src/utils/sonsRecompensa.ts`), categoria **`arcade`** (R-CAT: o EVENTO é fim de partida e o tique repete).
+
+**15.2 R-NOVA.** O dono revogou o "nasce muda" SÓ para esta superfície (§6.1 S19; `REGISTRO-DE-DECISOES.md` §178). Qualquer outra tela nova segue muda.
+
+**15.3 Regras que continuam valendo.** O mudo global e o mudo/volume por categoria (`play()` de `sounds.ts`). **D11 no chamador:** `useRewardReveal` só toca com a aba visível e o áudio já liberado por um gesto (a tela de resultado vem depois de gestos do jogo; aberta fria, nasce muda); movimento reduzido, `instant` e toque-para-pular = final e mudo. **R-EX:** o cronograma (`rewardTimeline`) mantém todo par de eventos sonoros a mais de 120 ms um do outro (tique a 140 ms, folga de 160 ms antes do "ding"); o teste `rewardReveal.test.ts` prova isso. Por isso o tique é uma rajada por chamada, não uma chamada por tique.
+
+**15.4 Loudness.** Offsets em `loudness.ts` medidos em Node no sinal nominal (a 48 kHz, medidor K-weighting de `src/test/lufsM.ts`): pop −39,1 → **+14,1 dB**, roll → **+10,91 dB**, land → **+6,49 dB**, alvo `arcade` (−25 LUFS-M); `sonsRecompensa.loudness.test.ts` re-mede e reprova se sair da tolerância ou passar do teto de true peak. **Guardas atualizados:** `sounds.contract.test.ts` (19 símbolos), `cortes.contract.test.ts` A-3 (único chamador: `hooks/useRewardReveal.ts`), `loudness.contract.test.ts` (categoria e offset).
+
+**15.5 Pendência.** NENHUM dos três sons foi ouvido por agente (gate humano S8): é medição de sinal, não escuta.

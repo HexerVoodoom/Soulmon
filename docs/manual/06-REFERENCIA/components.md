@@ -1419,6 +1419,12 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 ### `src/components/ui/BitsAmount.tsx`
 **Dono de:** o ÚNICO componente que mostra um valor de Bits (D-62, 19/10/2026, REGISTRO §105): ícone de Bits (`BitsIcon`, 16 px por padrão) + número em `bitsStyle`; a palavra "Bits" só para leitor de tela (`sm2-sr-only`). **Régua:** `ui/BitsAmount.render.test.tsx` (Bits sempre pelo componente; as três moedas nunca com a mesma tinta).
 
+### `src/components/ui/RewardPop.tsx`
+**Dono de:** as peças de desenho da REVELAÇÃO DE RECOMPENSA (dono, 28/10/2026): `RewardPop` (o que nasce minúsculo, passa um pouco do tamanho e assenta — keyframes `sm-pop-in` no fim do `index.css`; invisível mas ocupando o lugar antes de nascer), `RewardIcon` (ícone pelado em pixel-art dentro de `RewardPop`) e `RollingCount` (odômetro de caça-níquel: colunas de dígitos que rolam de 0 ao valor; o valor final fica sempre no DOM em `sm2-sr-only`, os dígitos são desenhados por CSS `::before` para o `textContent` não poluir). Quem sequencia é `hooks/useRewardReveal.ts`; o cronograma é `utils/rewardReveal.ts`. **Usado em:** `games/ResultScreen.tsx`, `DungeonReturnModal.tsx`, `ui/BitsAmount.tsx` (prop `roll`), `ui/BitsReveal.tsx`. **Régua:** `games/ResultScreen.reveal.render.test.tsx`.
+
+### `src/components/ui/BitsReveal.tsx`
+**Dono de:** a linha ÚNICA de Bits de um fim de partida com a revelação padrão (a moeda estoura, o número rola e pousa com o "ding"; toque pula). **Usado em:** `mente/TrocaGame.tsx`, `mente/PicrossGame.tsx`, `mente/RevisaoGame.tsx`. Telas com mais de uma linha de recompensa usam `ResultScreen`. **Régua:** `mente/revisaoRespiracao.render.test.tsx`.
+
 ### `src/components/ui/RewardLine.tsx`
 **Dono de:** a linha de recompensa com ícones (D-71, 19/10/2026): Bits, energia (`bolt`) e coração (`favorite`), nome só para leitor de tela. **Usado em:** vitória do `NightmareBattle`.
 

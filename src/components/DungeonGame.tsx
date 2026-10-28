@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
 import { useBackLayer } from '../utils/backStack';
 import { RewardLine } from './ui/RewardLine';
+import { STAIRS_ICON, ENERGY_ICON, rewardItemLabel } from '../utils/rewardIcons';
 import { InfoTip } from './ui/InfoTip';
 import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
@@ -846,16 +847,16 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               outcome={resumo.recordTo > resumo.recordFrom ? 'record' : endReason === 'hp' ? 'tired' : 'calm'}
               gameName={isPt ? 'Fenda Sem Fim' : 'Endless Rift'}
               title={isPt ? 'Descida encerrada' : 'Descent over'}
-              line={endReason === 'sealed'
-                ? (isPt ? 'O caminho para baixo está lacrado por ora.' : 'The way further down is sealed for now.')
-                : endReason === 'energy'
-                  ? (isPt ? 'A energia desta descida acabou. Ele volta à superfície.' : 'The energy for this descent ran out. He heads back up.')
-                  : endReason === 'deep'
-                    ? (isPt ? 'Mais fundo que isso, ele ainda não alcança.' : 'Deeper than this is still out of his reach.')
-                    : (isPt ? 'Seu Soulmon ficou sem fôlego. A descida para aqui.' : 'Your Soulmon is out of breath. The descent stops here.')}
               rootAttrs={{ 'data-dungeon-ended': endReason }}
-              hero={{ label: isPt ? 'Camada' : 'Layer', value: floor }}
-              recordNote={isPt ? `Mais fundo até hoje: camada ${resumo.recordTo}` : `Deepest so far: layer ${resumo.recordTo}`}
+              // Herói = camadas limpas NESTA descida, com UMA escada por camada estourando (até 10; acima disso 10 + "×N").
+              hero={{ label: isPt ? 'Camadas limpas' : 'Layers cleared', value: resumo.layers, big: true, unit: { icon: STAIRS_ICON, count: resumo.layers } }}
+              // "Mais fundo até hoje" aparece UMA vez, em destaque, logo abaixo do herói (saiu da lista de estatísticas).
+              deepest={{ label: isPt ? 'Mais fundo até hoje' : 'Deepest so far', value: isPt ? `camada ${resumo.recordTo}` : `layer ${resumo.recordTo}` }}
+              recordNote={isPt ? 'Novo recorde!' : 'New record!'}
+              stats={[
+                { key: 'enemies', label: isPt ? 'Criaturas que pararam de insistir' : 'Creatures that stopped holding', value: resumo.enemies },
+                ...(resumo.energy > 0 ? [{ key: 'energy', label: isPt ? 'Energia usada' : 'Energy used', value: resumo.energy, icon: ENERGY_ICON }] : []),
+              ]}
               strip={[
                 { key: 'score', label: isPt ? 'Placar' : 'Score', value: runScore },
                 // Primeira descida (sem recorde anterior): a célula repetiria o próprio placar.
@@ -863,9 +864,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               ]}
               ledger={[
                 { key: 'bits', kind: 'bits', value: resumo.bits },
-                ...(resumo.hearts > 0 ? [{ key: 'hearts', kind: 'node' as const, label: isPt ? 'Corações (mochila)' : 'Hearts (Backpack)', node: <RewardLine hearts={resumo.hearts} language={isPt ? 'pt-BR' : 'en-US'} size={16} /> }] : []),
-                ...(resumo.glitchtama > 0 ? [{ key: 'glitchtama', kind: 'item' as const, label: isPt ? 'Glitchtama (mochila)' : 'Glitchtama (Backpack)', amount: resumo.glitchtama }] : []),
-                ...(resumo.fragments > 0 ? [{ key: 'fragments', kind: 'item' as const, label: isPt ? 'Fragmentos do Soulsmith' : 'Soulsmith fragments', amount: resumo.fragments }] : []),
+                // O "coração da mochila" é o ITEM de recuperar vida (a poção em forma de coração), com a arte do item.
+                ...(resumo.hearts > 0 ? [{ key: 'hearts', kind: 'item' as const, itemKind: 'heart' as const, label: rewardItemLabel('heart', isPt), amount: resumo.hearts }] : []),
+                ...(resumo.glitchtama > 0 ? [{ key: 'glitchtama', kind: 'item' as const, itemKind: 'glitchtama' as const, label: isPt ? 'Glitchtama (mochila)' : 'Glitchtama (Backpack)', amount: resumo.glitchtama }] : []),
+                ...(resumo.fragments > 0 ? [{ key: 'fragments', kind: 'item' as const, itemKind: 'fragments' as const, label: rewardItemLabel('fragments', isPt), amount: resumo.fragments }] : []),
               ]}
               emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
               petSrc={petSprite}
@@ -894,9 +896,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                       {isPt ? 'Isto aconteceu enquanto você esteve fora; ele já voltou para casa.' : 'This happened while you were away; he is back home now.'}
                     </p>
                   )}
-                  <DungeonSummary isPt={isPt} resumo={resumo} capBits={capBits} statsOnly />
                   {capBits && <p style={phaseLine} data-dungeon-bits-cap>{isPt ? 'Teto diário de Bits atingido — a descida segue, só sem Bits.' : 'Daily Bits cap reached — the descent goes on, just without Bits.'}</p>}
-                  <p style={phaseLine}>{isPt ? 'Seus corações continuam intactos.' : 'Your hearts are untouched.'}</p>
                   {espera > 0 && (
                     <p style={phaseLine} data-dungeon-recovering>
                       {isPt ? `Recuperando… pode descer de novo em ${formatarEspera(espera, true)}.` : `Recovering… ready to go down again in ${formatarEspera(espera, false)}.`}

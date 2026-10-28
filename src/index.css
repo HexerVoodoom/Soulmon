@@ -8909,3 +8909,20 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 .sm-dex-lock { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; background: rgba(0, 0, 0, 0.35); color: var(--sm2-ink); line-height: 1; }
 .sm-dex-lock--sm { width: 24px; height: 24px; }
 [data-theme="light"] .sm-dex-lock { background: rgba(0, 0, 0, 0.18); }
+
+/* Revelação de recompensa (28/10/2026, pedido do dono): o ícone NASCE minúsculo, passa um pouco do tamanho e assenta; o contador de Bits rola como odômetro.
+   `RewardPop`/`RollingCount` (components/ui/RewardPop.tsx). Antes de nascer o ícone fica invisível mas OCUPA o lugar (o layout não pula). */
+.sm-pop { display: inline-flex; opacity: 0; transform: scale(.15); transform-origin: 50% 60%; }
+.sm-pop--on { animation: sm-pop-in 420ms cubic-bezier(.2, .9, .3, 1) both; }
+.sm-pop--still { animation: none; opacity: 1; transform: none; }
+@keyframes sm-pop-in { 0% { opacity: 0; transform: scale(.15); } 55% { opacity: 1; transform: scale(1.22); } 80% { transform: scale(.94); } 100% { opacity: 1; transform: scale(1); } }
+.sm-reel { display: inline-flex; align-items: center; line-height: 1; }
+.sm-reel-col { display: inline-block; height: 1em; overflow: hidden; line-height: 1em; }
+.sm-reel-strip { display: flex; flex-direction: column; will-change: transform; }
+.sm-reel-cell { display: block; height: 1em; line-height: 1em; text-align: center; }
+@media (prefers-reduced-motion: reduce) {
+  .sm-pop, .sm-pop--on { animation: none; opacity: 1; transform: none; }
+  .sm-reel-strip { transition: none !important; }
+}
+.sm-reel-cell::before { content: attr(data-d); }
+.sm-reel-sign { height: 1em; }

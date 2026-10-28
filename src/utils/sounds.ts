@@ -10,6 +10,7 @@ import { assetPronto, prepararAssets, prepararSfxLivres, sfxLivrePronto, tocarBu
 import { aoGestoSonoro } from './trilha';
 import type { NomeSfxCombate } from './sfxCombate';
 import { prepararSfxCombate, sfxCombatePronto } from './sfxCombateCarga';
+import { ATAQUE_S, PISO, duracaoDe, parciaisDing, parciaisPop, parciaisTique, type Parcial } from './sonsRecompensa';
 
 const MUTED_KEY = STORAGE_KEYS.SOUND_MUTED;
 
@@ -374,3 +375,46 @@ export function playVisorTune(): void {
     return DUR;
   });
 }
+
+/* ── A REVELAÇÃO DE RECOMPENSA (pedido do dono, 28/10/2026) ──────────────────────────────────────────────────────────
+   Três sons para a tela de resultado: `playRewardPop` (bolha; cada ícone sucessivo sobe um semitom), `playCoinRoll` (rajada de
+   tiques do odômetro, chamada pelo cronograma a cada ~140 ms) e `playCoinLand` (o "ding" de pouso). Categoria `arcade` (R-CAT: o
+   EVENTO é o fim de partida e o tique repete), loudness pelo offset MEDIDO em `loudness.ts` (nunca um alvo escrito aqui).
+   **Decisão do dono que revoga a R-NOVA SÓ para esta superfície** (a tela de resultado nasce com som); o resto segue mudo.
+   **D11 mora no CHAMADOR** (`useRewardReveal`): aba visível + áudio já liberado por um gesto da sessão. Os parciais vêm de
+   `sonsRecompensa.ts` — a mesma lista que o teste de loudness renderiza e mede. NÃO OUVIDOS (sem escuta humana ainda — S8). */
+function tocarParciais(
+  nomeDoSom: 'playRewardPop' | 'playCoinRoll' | 'playCoinLand',
+  parciais: readonly Parcial[],
+): void {
+  play(nomeDoSom, (ctx, destino) => {
+    const k = db2lin(OFFSET_POR_SOM_DB[nomeDoSom]);
+    for (const p of parciais) {
+      const osc = ctx.createOscillator();
+      const vol = ctx.createGain();
+      osc.connect(vol);
+      vol.connect(destino);
+      osc.type = p.type;
+      const t = ctx.currentTime + p.t;
+      const g = p.gain * k;
+      if (p.f0 === p.f1) osc.frequency.value = p.f0;
+      else {
+        osc.frequency.setValueAtTime(p.f0, t);
+        osc.frequency.exponentialRampToValueAtTime(p.f1, t + p.dur);
+      }
+      vol.gain.setValueAtTime(0, t);
+      vol.gain.linearRampToValueAtTime(g, t + ATAQUE_S);
+      vol.gain.exponentialRampToValueAtTime(g * PISO, t + p.dur);
+      osc.start(t);
+      osc.stop(t + p.dur);
+    }
+    return duracaoDe(parciais);
+  });
+}
+
+/** Bolha que estoura: `pitch` = semitons acima da nota-base (o cronograma sobe um por ícone, com teto). */
+export function playRewardPop(pitch = 0): void { tocarParciais('playRewardPop', parciaisPop(pitch)); }
+/** Uma rajada de tiques do odômetro (~120 ms). Quem repete é o cronograma, num passo MAIOR que a janela da R-EX. */
+export function playCoinRoll(): void { tocarParciais('playCoinRoll', parciaisTique()); }
+/** O "ding" de quando o contador pousa no valor. */
+export function playCoinLand(): void { tocarParciais('playCoinLand', parciaisDing()); }

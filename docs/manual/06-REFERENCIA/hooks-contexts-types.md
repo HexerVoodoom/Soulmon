@@ -266,3 +266,8 @@ Os dois são **acréscimo**, nunca renomeação (linha vermelha #20 — save só
 
 ### `src/hooks/useDungeonReturn.ts` (beta-2 6.2)
 **Dono de:** o instante de retorno do Soulmon na masmorra para a placa da Home — o fim que a MESMA conta determinística de `applyDungeonAway` vai dar, a partir do estado PERSISTIDO (teto de 8 h; antes se a energia, o HP, o limite diário ou o portão acabarem). Carrega o motor por `import()` dinâmico; até lá vale o teto. **Exports:** `useDungeonReturn(state, everyMs?)` → `{ returnAt, msLeft }`. **Chamado por:** `App.tsx` (→ `CompanionHUD.masmorraRetornoMs`). **Régua:** `hooks/useDungeonReturn.test.tsx` (não reinicia ao reabrir; muda com o estado).
+
+### `src/hooks/useRewardReveal.ts`
+**Dono de:** a EXECUÇÃO do cronograma da revelação de recompensa (dono, 28/10/2026): quem já estourou (`isShown`), quem está rolando/pousou (`isRolling`/`isLanded`), `skip` (toque pula, sem som) e o som. É o ÚNICO chamador de `playRewardPop`/`playCoinRoll`/`playCoinLand` e guarda a D11 (`sonoLiberado`: aba visível + áudio já liberado por um gesto da sessão). Movimento reduzido / `instant` = tudo no estado final e mudo.
+**Exports:** `useRewardReveal(steps, { active, instant?, sound? })` · `sonoLiberado()` · `prefersReducedMotion()`.
+**Chamado por:** `src/components/games/ResultScreen.tsx`, `DungeonReturnModal.tsx`, `ui/BitsReveal.tsx`. **Régua:** `games/ResultScreen.reveal.render.test.tsx`, `utils/cortes.contract.test.ts` (A-3).

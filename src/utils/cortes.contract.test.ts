@@ -257,6 +257,11 @@ describe('a régua dos cortes — nenhum `play*` cortado volta ao contexto corta
       playVictory: ['components/ArenaGame.tsx', 'components/DuelScreen.tsx', 'components/DungeonGame.tsx', 'components/NightmareBattle.tsx'],
       // 11/10/2026 (pedido do dono): level up do Vínculo — `marco`, só no overlay (D11 no chamador).
       playLevelUp: ['components/LevelUpOverlay.tsx'],
+      // 28/10/2026 (pedido do dono, REGISTRO-DE-DECISOES: revelação de recompensa tem som; REVOGA a R-NOVA só para a tela de resultado):
+      // os três moram no hook de revelação, que é o único chamador e guarda a D11 (aba visível + áudio já liberado por um gesto).
+      playRewardPop: ['hooks/useRewardReveal.ts'],
+      playCoinRoll: ['hooks/useRewardReveal.ts'],
+      playCoinLand: ['hooks/useRewardReveal.ts'],
       playShower: ['components/CompanionHUD.tsx'],
       playSleep: ['App.tsx'],
       playEvolve: ['App.tsx'],

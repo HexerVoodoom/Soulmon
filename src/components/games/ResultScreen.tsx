@@ -4,7 +4,11 @@
  * UMA tela de fim de partida para todo minijogo: visor com o Soulmon reagindo ao desfecho (alegre / calmo / cansado),
  * título Cinzel + frase calorosa, UMA métrica-herói (32 px), faixa opcional (placar / melhor / faixa), livro "Ganhou"
  * com uma moeda por linha, e um dock fixo (jogar de novo + sair). Revelação em degraus (~2,6 s) com toque para pular;
- * `prefers-reduced-motion` = estado final no primeiro quadro. Mudo: nenhum som novo (R-NOVA); nenhuma regra de jogo.
+ * `prefers-reduced-motion` = estado final no primeiro quadro. Nenhuma regra de jogo.
+ *
+ * REVELAÇÃO DE RECOMPENSA (dono, 28/10/2026): cada ícone do livro (e as escadas/o selo do herói) ESTOURA em sequência
+ * (`RewardPop`, ~250 ms entre si), os Bits rolam como odômetro (`RollingCount`) e há SOM (`useRewardReveal`; decisão do dono que
+ * revoga a R-NOVA só aqui). Toque em qualquer lugar pula; o número final está sempre no DOM e o `role=status` anuncia o resumo UMA vez.
  *
  * Quem chama passa os DADOS já calculados; este arquivo não sabe regra de recompensa nem de recorde.
  * Texto vem pronto (EN/PT-BR escolhido pelo chamador via `language === 'pt-BR'`).
@@ -13,6 +17,11 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Mous
 import { GameVisor, VisorSprite, VisorSparks } from './GameKit';
 import { PixelMeter } from '../pixel/PixelKit';
 import { BitsAmount } from '../ui/BitsAmount';
+import { RewardIcon, RewardPop } from '../ui/RewardPop';
+import { useRewardReveal } from '../../hooks/useRewardReveal';
+import type { RevealStep } from '../../utils/rewardReveal';
+import { POP_STAGGER_MS, STAIRS_STAGGER_MS } from '../../utils/rewardReveal';
+import { ENERGY_ICON, RECORD_SEAL_ICON, useRewardItemIcon, type RewardItemKind } from '../../utils/rewardIcons';
 import { sm2Button, sm2Hint } from '../form/FormKit';
 import { CURRENCIES, emblemStyle } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
@@ -25,7 +34,17 @@ export interface ResultHero {
   label: string;
   /** Número (conta de 0 ao valor) ou texto pronto (tempo "0:42.1"). */
   value: number | string;
+  /** Um ícone POR unidade do herói (ex.: uma escada por camada), estourando um a um. Passa de `max` (10) = `max` ícones + "×N". */
+  unit?: { icon: string; count?: number; max?: number };
+  /** Herói maior (a Fenda: "Camadas limpas" é a maior coisa da tela). */
+  big?: boolean;
 }
+
+/** "Mais fundo até hoje": destaque único logo abaixo do herói (maior, cor de acento). */
+export interface ResultDeepest { label: string; value: string }
+
+/** Estatística em destaque (acima do livro): rótulo + número grande, com ícone opcional que também estoura. */
+export interface ResultStat { key: string; label: string; value: ReactNode; icon?: string }
 
 export interface ResultStripCell {
   key: string;
@@ -38,7 +57,8 @@ export interface ResultStripCell {
 export type ResultLedgerRow =
   | { key: string; kind: 'bits'; value: number }
   | { key: string; kind: 'honor'; value: number }
-  | { key: string; kind: 'item'; label: string; amount?: number; icon?: string }
+  /** `itemKind` resolve o ícone pelo resolvedor único (`utils/rewardIcons`); `icon` é o escape para uma arte avulsa. */
+  | { key: string; kind: 'item'; label: string; amount?: number; icon?: string; itemKind?: RewardItemKind }
   | { key: string; kind: 'node'; label: string; node: ReactNode }
   | { key: string; kind: 'text'; label: string };
 
@@ -62,8 +82,12 @@ export interface ResultScreenProps {
   title: string;
   line?: string;
   hero?: ResultHero;
-  /** Texto do selo dourado (só `record`). */
+  /** Texto do selo de recorde (só `record`): vem depois do ícone do selo (`RECORD_SEAL_ICON`, que estoura). */
   recordNote?: string;
+  /** "Mais fundo até hoje", em destaque logo abaixo do herói. */
+  deepest?: ResultDeepest;
+  /** Estatísticas em destaque, entre o herói e o livro. */
+  stats?: ResultStat[];
   strip?: ResultStripCell[];
   /** Livro "Ganhou". Linhas `bits`/`honor` com valor 0 são ignoradas. */
   ledger?: ResultLedgerRow[];
@@ -107,6 +131,14 @@ type DataAttrs = Record<string, string | number | boolean | undefined>;
 const prefersReducedMotion = (): boolean =>
   typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+const UNIT_MAX = 10;
+
+/** Ícone de uma linha de item: resolve pelo `itemKind` (fragmento carrega sob demanda) e estoura quando a linha nasce. */
+function ItemRowIcon({ r, on, still }: { r: Extract<ResultLedgerRow, { kind: 'item' }>; on: boolean; still: boolean }) {
+  const resolved = useRewardItemIcon(r.itemKind);
+  const src = r.icon ?? resolved;
+  return <RewardIcon src={src} size={24} on={on} still={still} data-result-item-icon={r.itemKind ?? 'custom'} />;
+}
 /** Tempo de solução como m:ss.d (0:42.1) para o herói dos jogos por tempo (menor é melhor). */
 export const formatResultTime = (ms: number): string => {
   const t = Math.floor(ms / 100) / 10;
@@ -165,7 +197,8 @@ function HeroNumber({ value, active }: { value: number; active: boolean }) {
 }
 
 /** 7+ dígitos cai para 24 px (nunca abaixo, nunca abreviar). */
-const heroSize = (v: number | string): string => (String(v).replace(/\D/g, '').length >= 7 ? 'var(--sm2-text-xl)' : 'var(--sm2-text-2xl)');
+const heroSize = (v: number | string, big?: boolean): string =>
+  String(v).replace(/\D/g, '').length >= 7 ? 'var(--sm2-text-xl)' : big ? 'calc(var(--sm2-text-2xl) * 1.5)' : 'var(--sm2-text-2xl)';
 
 /** O herói da variante `boss`: a barra do pool desce de `before` a `after` (a transição CSS some em movimento reduzido). */
 function PoolHero({ pool, on }: { pool: ResultPool; on: boolean }) {
@@ -195,13 +228,30 @@ export function ResultScreen(p: ResultScreenProps) {
 
   const ledger = (p.ledger ?? []).filter(r => !((r.kind === 'bits' || r.kind === 'honor') && r.value <= 0));
   const strip = (p.strip ?? []).filter(c => !(record && c.hideOnRecord));
+  const stats = p.stats ?? [];
   const honorName = CURRENCIES.emblems.name[isPt ? 'pt' : 'en'];
+  const recordText = record ? (p.recordNote ?? (isPt ? 'Novo recorde!' : 'New record!')) : '';
+
+  // Escadas (um ícone por unidade do herói), em quantidade limitada; o resto vira "×N".
+  const unitTotal = p.hero?.unit ? Math.max(0, Math.floor(p.hero.unit.count ?? (typeof p.hero.value === 'number' ? p.hero.value : 0))) : 0;
+  const unitShown = Math.min(unitTotal, p.hero?.unit?.max ?? UNIT_MAX);
+
+  // O cronograma da revelação, na ORDEM visual: escadas → selo de recorde → ícones das estatísticas → livro.
+  const steps: RevealStep[] = [
+    ...Array.from({ length: unitShown }, (_, i): RevealStep => ({ key: `unit-${i}`, after: i === unitShown - 1 ? POP_STAGGER_MS : STAIRS_STAGGER_MS })),
+    ...(record ? [{ key: 'seal' } as RevealStep] : []),
+    ...stats.filter(c => c.icon).map((c): RevealStep => ({ key: `stat-${c.key}`, silent: true, after: 120 })),
+    ...ledger.map((r): RevealStep => ({ key: `row-${r.key}`, roll: r.kind === 'bits' })),
+  ];
+  const reveal = useRewardReveal(steps, { active: step >= 1, instant: p.instant });
 
   const summaryText = [
     p.title, p.line,
     p.hero ? `${p.hero.label}: ${p.hero.value}` : '',
     p.kind === 'boss' && p.pool ? `${p.pool.label}: ${Math.round(p.pool.after)}%` : '',
-    record ? p.recordNote : '',
+    p.deepest ? `${p.deepest.label}: ${p.deepest.value}` : '',
+    recordText,
+    ...stats.map(c => `${c.label}: ${typeof c.value === 'number' || typeof c.value === 'string' ? c.value : ''}`),
     ...ledger.map(r => r.kind === 'bits' ? `${r.value} Bits` : r.kind === 'honor' ? `+${r.value} ${honorName}` : r.kind === 'item' ? `${r.label}${r.amount ? ` ×${r.amount}` : ''}` : r.label),
     ledger.length === 0 ? p.emptyLedgerLine : '',
   ].filter(Boolean).join('. ');
@@ -222,15 +272,19 @@ export function ResultScreen(p: ResultScreenProps) {
   }, [mode]);
 
   const stageCls = (n: number) => `sm-result-in${step >= n ? ' sm-result-in--on' : ''}`;
+  const rowCls = (key: string) => `sm-result-in${reveal.isShown(key) ? ' sm-result-in--on' : ''}`;
+  const still = !reveal.animated;
 
   const onSkipTap = (e: MouseEvent) => {
     if ((e.target as HTMLElement).closest('button, a, input, [data-result-noskip]')) return;
     if (step < RESULT_FINAL_STEP) skip();
+    if (reveal.animated) reveal.skip();
   };
 
   const rootProps = mode === 'dialog' ? { role: 'dialog' as const, 'aria-modal': true as const, 'aria-label': p.title } : {};
   const mood = MOOD[p.outcome];
-  const rowStep = (i: number) => 4 + Math.min(i, 2);
+  const ledgerShown = ledger.length === 0 || reveal.isShown(`row-${ledger[0].key}`);
+  const notesOn = step >= RESULT_FINAL_STEP && !reveal.animated;
 
   return (
     <div
@@ -282,19 +336,51 @@ export function ResultScreen(p: ResultScreenProps) {
           {p.hero && (
             <div aria-hidden="true" className={stageCls(1)} style={{ textAlign: 'center' }} data-result-hero>
               <div style={{ ...sm2Hint, fontWeight: 500 }}>{p.hero.label}</div>
-              <div className="sm2-num" data-result-hero-value style={{ fontSize: heroSize(p.hero.value), fontWeight: 700, lineHeight: 1.15, fontVariantNumeric: 'tabular-nums', color: 'var(--sm2-ink)' }}>
+              <div className="sm2-num" data-result-hero-value style={{ fontSize: heroSize(p.hero.value, p.hero.big), fontWeight: 700, lineHeight: 1.15, fontVariantNumeric: 'tabular-nums', color: 'var(--sm2-ink)' }}>
                 {typeof p.hero.value === 'number' ? <HeroNumber value={p.hero.value} active={animated && step >= 1} /> : p.hero.value}
                 {/* O valor final sempre no DOM: a contagem é enfeite, nunca o único lugar do número. */}
                 <span className="sm2-sr-only" data-result-final>{p.hero.value}</span>
               </div>
+              {p.hero.unit && unitShown > 0 && (
+                <div data-result-units={unitShown} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+                  {Array.from({ length: unitShown }, (_, i) => (
+                    <RewardIcon key={i} src={p.hero!.unit!.icon} size={28} on={reveal.isShown(`unit-${i}`)} still={still} data-result-unit={i} />
+                  ))}
+                  {unitTotal > unitShown && (
+                    <span className="sm2-num" data-result-units-more style={{ fontSize: 'var(--sm2-text-lg)', fontWeight: 700, marginLeft: 4 }}>×{unitTotal}</span>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
           {p.kind === 'boss' && p.pool && <PoolHero pool={p.pool} on={step >= 1} />}
 
-          {record && p.recordNote && (
-            <div aria-hidden="true" className={stageCls(2)} data-result-record style={{ fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-sm)', fontWeight: 600, color: 'var(--sm2-gold-ink)', textAlign: 'center' }}>
-              {p.recordNote}
+          {p.deepest && (
+            <div aria-hidden="true" className={stageCls(2)} data-result-deepest style={{ textAlign: 'center' }}>
+              <div style={{ ...sm2Hint, fontWeight: 500 }}>{p.deepest.label}</div>
+              <div className="sm2-num" style={{ fontSize: 'var(--sm2-text-xl)', fontWeight: 700, lineHeight: 1.15, color: 'var(--sm2-primary-ink)' }}>{p.deepest.value}</div>
+            </div>
+          )}
+
+          {record && (
+            <div aria-hidden="true" className={stageCls(2)} data-result-record style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-md)', fontWeight: 600, color: 'var(--sm2-gold-ink)', textAlign: 'center' }}>
+              <RewardIcon src={RECORD_SEAL_ICON} size={32} on={reveal.isShown('seal')} still={still} data-result-seal />
+              <span>{recordText}</span>
+            </div>
+          )}
+
+          {stats.length > 0 && (
+            <div aria-hidden="true" className={stageCls(2)} data-result-stats style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {stats.map(c => (
+                <div key={c.key} data-result-stat={c.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--sm2-text-md)', color: 'var(--sm2-ink)' }}>
+                    {c.icon && <RewardIcon src={c.icon} size={24} on={reveal.isShown(`stat-${c.key}`)} still={still} />}
+                    {c.label}
+                  </span>
+                  <span className="sm2-num" style={{ fontSize: 'var(--sm2-text-lg)', fontWeight: 700 }}>{c.value}</span>
+                </div>
+              ))}
             </div>
           )}
 
@@ -313,23 +399,27 @@ export function ResultScreen(p: ResultScreenProps) {
             <div aria-hidden="true" style={{ width: '100%' }} data-result-ledger>
               {ledger.length > 0 ? (
                 <>
-                  <div style={{ ...sm2Hint, fontWeight: 500, marginBottom: 4 }}>{p.ledgerLabel ?? (isPt ? 'Ganhou' : 'Earned')}</div>
-                  {ledger.map((r, i) => (
-                    <div key={r.key} className={stageCls(rowStep(i))} data-result-row={r.kind} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 36, borderBottom: '1px solid var(--sm2-line)' }}>
-                      <span style={{ fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-ink)', textAlign: 'left' }}>
-                        {r.kind === 'bits' ? 'Bits' : r.kind === 'honor' ? honorName : r.label}
-                      </span>
-                      {r.kind === 'bits' && <BitsAmount value={r.value} sign="+" size={18} />}
-                      {r.kind === 'honor' && <span className="sm2-num" data-result-honor style={{ ...emblemStyle, fontSize: 20 }}>+{r.value}</span>}
-                      {r.kind === 'node' && <span style={{ display: 'inline-flex', alignItems: 'center' }}>{r.node}</span>}
-                      {r.kind === 'item' && (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                          {r.icon && <img src={r.icon} alt="" width={24} height={24} style={{ imageRendering: 'pixelated' }} />}
-                          {r.amount ? <span className="sm2-num" style={{ fontWeight: 600 }}>×{r.amount}</span> : null}
+                  <div className={`sm-result-in${ledgerShown ? ' sm-result-in--on' : ''}`} style={{ ...sm2Hint, fontWeight: 500, marginBottom: 4 }}>{p.ledgerLabel ?? (isPt ? 'Ganhou' : 'Earned')}</div>
+                  {ledger.map(r => {
+                    const key = `row-${r.key}`;
+                    const shown = reveal.isShown(key);
+                    return (
+                      <div key={r.key} className={rowCls(key)} data-result-row={r.kind} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 36, borderBottom: '1px solid var(--sm2-line)' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-ink)', textAlign: 'left' }}>
+                          {r.kind === 'item' && <ItemRowIcon r={r} on={shown} still={still} />}
+                          {r.kind === 'bits' ? 'Bits' : r.kind === 'honor' ? honorName : r.label}
                         </span>
-                      )}
-                    </div>
-                  ))}
+                        {r.kind === 'bits' && (
+                          <RewardPop on={shown} still={still} data-result-bits-pop>
+                            <BitsAmount value={r.value} sign="+" size={18} roll={{ run: reveal.isRolling(key), still: still || reveal.isLanded(key) }} />
+                          </RewardPop>
+                        )}
+                        {r.kind === 'honor' && <RewardPop on={shown} still={still}><span className="sm2-num" data-result-honor style={{ ...emblemStyle, fontSize: 20 }}>+{r.value}</span></RewardPop>}
+                        {r.kind === 'node' && <span style={{ display: 'inline-flex', alignItems: 'center' }}>{r.node}</span>}
+                        {r.kind === 'item' && r.amount ? <span className="sm2-num" style={{ fontWeight: 600 }}>×{r.amount}</span> : null}
+                      </div>
+                    );
+                  })}
                 </>
               ) : (
                 <p className={stageCls(4)} style={{ ...sm2Hint, textAlign: 'center' }} data-result-empty>{p.emptyLedgerLine}</p>
@@ -337,7 +427,7 @@ export function ResultScreen(p: ResultScreenProps) {
             </div>
           )}
 
-          {p.notes && <div aria-hidden="true" className={stageCls(RESULT_FINAL_STEP)} data-result-notes style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 4, textAlign: 'center' }}>{p.notes}</div>}
+          {p.notes && <div aria-hidden="true" className={`sm-result-in${notesOn ? ' sm-result-in--on' : ''}`} data-result-notes style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 4, textAlign: 'center' }}>{p.notes}</div>}
         </div>
 
         {p.below && <div data-result-noskip style={{ width: '100%', maxWidth: 348 }}>{p.below}</div>}

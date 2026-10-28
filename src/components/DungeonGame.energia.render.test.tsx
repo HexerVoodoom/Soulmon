@@ -71,12 +71,14 @@ describe('Masmorra — energia por camada', () => {
     for (let t = 0; t < 600_000 && !document.querySelector('[data-dungeon-ended]'); t += 1000) await avancar(1000);
     const fim = document.querySelector('[data-dungeon-ended]')!;
     expect(fim.getAttribute('data-dungeon-ended')).toBe('energy');
-    const resumo = fim.querySelector('[data-dungeon-summary]')!.textContent!;
-    expect(resumo).toMatch(/Layers cleared: 1/);
-    expect(resumo).toMatch(/Creatures that stopped holding: 6/);
-    expect(resumo).toMatch(/Deepest so far: layer 1/);
-    expect(resumo).toMatch(/Energy used: 1/);
-    expect(fim.textContent).toMatch(/Your hearts are untouched/);
+    // Camadas limpas é o HERÓI (com uma escada por camada); "Mais fundo" aparece UMA vez, em destaque; as estatísticas sobem para o corpo da tela.
+    expect(fim.querySelector('[data-result-hero]')!.textContent).toMatch(/Layers cleared1/);
+    expect(fim.querySelectorAll('[data-result-unit]').length).toBe(1);
+    expect(fim.querySelector('[data-result-deepest]')!.textContent).toMatch(/Deepest so farlayer 1/);
+    expect((fim.textContent!.match(/Deepest so far/g) ?? []).length).toBe(1);
+    expect(fim.querySelector('[data-result-stat="enemies"]')!.textContent).toMatch(/Creatures that stopped holding6/);
+    expect(fim.querySelector('[data-result-stat="energy"]')!.textContent).toMatch(/Energy used1/);
+    expect(fim.textContent).not.toMatch(/hearts are untouched|sealed for now/); // as duas frases saíram da tela (dono, 28/10/2026)
     expect(screen.queryByRole('button', { name: 'Go down again' })).toBeNull(); // sem energia, não oferece descer de novo
     const s = salvo();
     expect(s.energyPoints).toBe(0);

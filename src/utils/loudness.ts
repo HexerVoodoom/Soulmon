@@ -148,6 +148,11 @@ export const CATEGORIA_DO_SOM: Record<string, CategoriaSom> = {
   // 11/10/2026 (pedido do dono, LEVEL UP): subir de Vínculo é MARCO — raro, voluntário (vem de um gesto) e sem
   // vizinho de repetição (R-CAT: o EVENTO decide, não o arquivo). Mesma categoria de `playEvolve`.
   playLevelUp: 'marco',
+  // 28/10/2026 (pedido do dono, revelação de recompensa): o EVENTO é o fim de uma partida/minijogo (a tela de resultado) e o
+  // tique do odômetro repete bastante → `arcade`, o degrau de baixo (R-CAT). Decisão do dono que vale SÓ para esta superfície: R-NOVA.
+  playRewardPop: 'arcade',
+  playCoinRoll: 'arcade',
+  playCoinLand: 'arcade',
 };
 
 /**
@@ -197,6 +202,11 @@ export const OFFSET_POR_SOM_DB: Record<string, number> = {
   // (OfflineAudioContext + K-weighting BS.1770, o MESMO arnês que reproduz playTaskComplete -22,00). Pico -11,5 dBFS.
   // Falta o gate humano de escuta (S8).
   playLevelUp: 1.893,
+  // 28/10/2026: medidos em Node, a 48 kHz, no sinal NOMINAL de `sonsRecompensa.ts` (medidor K-weighting de `src/test/lufsM.ts`, o mesmo
+  // do combate): alvo `arcade` (−25) − LUFS-M nominal. Pop: ≈ −39,1 nos pitches 0/4/8 (spread ≤ 0,4 dB). Falta o gate humano (S8).
+  playRewardPop: 14.1,
+  playCoinRoll: 10.91,
+  playCoinLand: 6.49,
 };
 
 /** dB → linear. A conversão mora aqui porque o alvo mora aqui. */

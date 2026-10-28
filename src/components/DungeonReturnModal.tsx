@@ -1,6 +1,8 @@
 import { ModalSheet, sm2Button, sm2Text } from './form/FormKit';
 import { BitsAmount } from './ui/BitsAmount';
-import { Icon } from './ui/Icon';
+import { RewardIcon, RewardPop } from './ui/RewardPop';
+import { useRewardReveal } from '../hooks/useRewardReveal';
+import { rewardItemLabel, useRewardItemIcon } from '../utils/rewardIcons';
 import type { Language } from '../utils/i18n';
 import type { DungeonReturnSummary } from '../utils/dungeonReturnSummary';
 
@@ -18,12 +20,29 @@ export function dungeonReturnReason(ended: string | null, isPt: boolean): string
 
 export type { DungeonReturnSummary };
 
+/** Uma linha de item da volta: ícone (arte do item) que estoura + quantidade. O texto continua no DOM desde o primeiro quadro. */
+function ReturnItem({ kind, qty, label, on, still, attr }: { kind: 'heart' | 'glitchtama' | 'fragments'; qty: number; label: string; on: boolean; still: boolean; attr: string }) {
+  const src = useRewardItemIcon(kind);
+  return (
+    <li {...{ [attr]: '' }} style={{ listStyle: 'none', marginLeft: -18, display: 'flex', alignItems: 'center', gap: 8 }}>
+      <RewardIcon src={src} size={24} on={on} still={still} />
+      <span>{qty} {label}</span>
+    </li>
+  );
+}
+
 export function DungeonReturnModal({ summary, language, onClose }: { summary: DungeonReturnSummary; language: Language; onClose: () => void }) {
   const isPt = language === 'pt-BR';
   const n = summary.layers;
-  const linhas: string[] = [];
-  linhas.push(`${n} ${isPt ? (n === 1 ? 'camada limpa' : 'camadas limpas') : (n === 1 ? 'layer cleared' : 'layers cleared')}`);
-  if (summary.fragments > 0) linhas.push(`${summary.fragments} ${isPt ? 'fragmentos' : 'fragments'}`);
+  const camadas = `${n} ${isPt ? (n === 1 ? 'camada limpa' : 'camadas limpas') : (n === 1 ? 'layer cleared' : 'layers cleared')}`;
+  // O "o que rendeu" usa a revelação padrão: os ícones estouram um a um e os Bits rolam (toque no modal pula).
+  const reveal = useRewardReveal([
+    ...(summary.hearts > 0 ? [{ key: 'hearts' }] : []),
+    ...(summary.glitchtama > 0 ? [{ key: 'glitchtama' }] : []),
+    ...(summary.fragments > 0 ? [{ key: 'fragments' }] : []),
+    { key: 'bits', roll: true },
+  ], { active: true });
+  const still = !reveal.animated;
   const motivo = dungeonReturnReason(summary.ended, isPt);
   return (
     <ModalSheet
@@ -35,13 +54,18 @@ export function DungeonReturnModal({ summary, language, onClose }: { summary: Du
       maxWidth={380}
       footer={<button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }} data-dungeon-return-ok>{isPt ? 'Ótimo' : 'Great'}</button>}
     >
-      <div data-dungeon-return-modal>
+      <div data-dungeon-return-modal onClick={reveal.skip}>
         <p style={{ ...sm2Text, margin: '0 0 8px' }}>{motivo}</p>
         <ul style={{ ...sm2Text, margin: 0, paddingLeft: 18 }}>
-          {linhas.map(l => <li key={l}>{l}</li>)}
-          {summary.hearts > 0 && <li data-dungeon-return-hearts><Icon name="favorite" size={20} tone="inherit" label={isPt ? 'corações' : 'hearts'} /> {summary.hearts}</li>}
-          {summary.glitchtama > 0 && <li data-dungeon-return-glitchtama>{summary.glitchtama} {isPt ? (summary.glitchtama === 1 ? 'item de marco' : 'itens de marco') : (summary.glitchtama === 1 ? 'milestone item' : 'milestone items')}</li>}
-          <li><BitsAmount value={summary.bits} size={14} /></li>
+          <li>{camadas}</li>
+          {summary.hearts > 0 && <ReturnItem kind="heart" qty={summary.hearts} label={rewardItemLabel('heart', isPt)} on={reveal.isShown('hearts')} still={still} attr="data-dungeon-return-hearts" />}
+          {summary.glitchtama > 0 && <ReturnItem kind="glitchtama" qty={summary.glitchtama} label={isPt ? (summary.glitchtama === 1 ? 'item de marco' : 'itens de marco') : (summary.glitchtama === 1 ? 'milestone item' : 'milestone items')} on={reveal.isShown('glitchtama')} still={still} attr="data-dungeon-return-glitchtama" />}
+          {summary.fragments > 0 && <ReturnItem kind="fragments" qty={summary.fragments} label={isPt ? 'fragmentos' : 'fragments'} on={reveal.isShown('fragments')} still={still} attr="data-dungeon-return-fragments" />}
+          <li style={{ listStyle: 'none', marginLeft: -18 }}>
+            <RewardPop on={reveal.isShown('bits')} still={still}>
+              <BitsAmount value={summary.bits} size={14} roll={{ run: reveal.isRolling('bits'), still: still || reveal.isLanded('bits') }} />
+            </RewardPop>
+          </li>
         </ul>
       </div>
     </ModalSheet>

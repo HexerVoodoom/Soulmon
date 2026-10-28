@@ -3841,3 +3841,12 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 
 ### `src/utils/strayFoes.ts`
 **Dono de:** onde o Soulmon desgarrado aparece como OPONENTE (27/10/2026): a semente de run da Arena que vira Desgarrado (`isStraySeed`, 12%), os 3 cards com no máximo um (`arenaCardSeeds`) e o Desgarrado do dia que preenche o Torneio sem par (`strayForTournament`, estável por conta+dia). Determinístico, nunca `Math.random`. **Chamado por:** `DueloSheet.tsx`, `ArenaGame.tsx`, `TournamentPage.tsx`. **Régua:** `strayFoes.test.ts`.
+
+### `src/utils/rewardReveal.ts`
+**Dono de:** o cronograma PURO da revelação de recompensa (sem relógio, sem som, sem DOM): `rewardTimeline(steps)` devolve os eventos `pop`/`roll`/`tick`/`land` com o instante de cada um (ícones a cada ~250 ms, escadas a 200 ms, odômetro de 900 ms), `pitchStep` (o "pop" sobe um semitom por ícone, com teto), `odometerDigits` e `reelLoops`. Todo par de eventos sonoros fica FORA da janela de coincidência da R-EX (120 ms). **Chamado por:** `hooks/useRewardReveal.ts`, `components/ui/RewardPop.tsx`. **Régua:** `rewardReveal.test.ts`.
+
+### `src/utils/rewardIcons.ts`
+**Dono de:** o resolvedor ÚNICO de ícone e nome das recompensas nas telas de resultado: `rewardItemLabel` (o coração da mochila é o "Item de recuperar vida" / "Healing item"), `rewardItemIconSync`/`useRewardItemIcon` (coração e Glitchtama por `ITEM_ART`; fragmento do Soulsmith sob demanda por `equipArt`), `STAIRS_ICON`, `ENERGY_ICON` e `RECORD_SEAL_ICON` (PROVISÓRIO: o troféu dourado; a arte final `icon-record-seal.png` entra trocando UMA linha de import). **Chamado por:** `games/ResultScreen.tsx`, `DungeonGame.tsx`, `DungeonReturnModal.tsx`. **Régua:** `components/games/ResultScreen.reveal.render.test.tsx`.
+
+### `src/utils/sonsRecompensa.ts`
+**Dono de:** a ESPECIFICAÇÃO em dados (lista de parciais `sine`/`triangle`) dos três sons da revelação de recompensa — `playRewardPop`, `playCoinRoll`, `playCoinLand`, categoria `arcade`. `sounds.ts` toca a lista no `AudioContext`; o teste de loudness a renderiza em Node e mede o LUFS-M para calibrar o offset de `loudness.ts`. NÃO OUVIDO (sem escuta humana). **Chamado por:** `utils/sounds.ts`. **Régua:** `sonsRecompensa.loudness.test.ts`.

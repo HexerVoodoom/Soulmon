@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { bitsStyle } from '../../utils/currencies';
 import { BitsIcon } from './BitsIcon';
+import { RollingCount } from './RewardPop';
 
 /**
  * `BitsAmount` — o ÚNICO jeito de mostrar um valor em Bits (D-62, 19/10/2026; revoga a D-L11
@@ -10,7 +11,7 @@ import { BitsIcon } from './BitsIcon';
  * A regra "as três moedas nunca se misturam visualmente" continua: Bits = moeda `BitsIcon` + mono
  * `primary-ink`; Honra = medalha dourada em serifa; Créditos = diamante roxo.
  */
-export function BitsAmount({ value, sign = '', size = 16, dim = false, style, unit }: {
+export function BitsAmount({ value, sign = '', size = 16, dim = false, style, unit, roll }: {
   value: number | string;
   /** Prefixo do número ("+", "−"). */
   sign?: string;
@@ -21,6 +22,8 @@ export function BitsAmount({ value, sign = '', size = 16, dim = false, style, un
   style?: CSSProperties;
   /** Texto de leitor de tela no lugar de "Bits" (ex.: "Bits por rodada"). */
   unit?: string;
+  /** Revelação de recompensa: o número ROLA de 0 ao valor (odômetro). Só funciona com `value` numérico; o valor final fica no DOM. */
+  roll?: { run: boolean; still: boolean };
 }) {
   return (
     <span
@@ -32,7 +35,7 @@ export function BitsAmount({ value, sign = '', size = 16, dim = false, style, un
       }}
     >
       <BitsIcon size={size} />
-      <span>{sign}{value}</span>
+      <span>{roll && typeof value === 'number' ? <RollingCount value={value} sign={sign} run={roll.run} still={roll.still} /> : <>{sign}{value}</>}</span>
       <span className="sm2-sr-only">{' '}{unit ?? 'Bits'}</span>
     </span>
   );

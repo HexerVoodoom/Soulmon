@@ -141,8 +141,9 @@ describe('Masmorra idle — HP persistente e recuperação', () => {
       fim = !!document.querySelector('[data-dungeon-ended]');
     }
     expect(fim).toBe(true);
-    expect(document.body.textContent).toMatch(/out of breath/);
-    expect(document.body.textContent).toMatch(/Your hearts are untouched/);
+    // 28/10/2026 (dono): a frase de fim ("sem fôlego") e "corações intactos" saíram da tela; o que fica é o herói e o "Recuperando…".
+    expect(document.body.textContent).not.toMatch(/Your hearts are untouched/);
+    expect(document.querySelector('[data-result-hero]')).not.toBeNull();
     expect(screen.queryByRole('button', { name: 'Go down again' })).toBeNull(); // HP zero: recuperar antes
     const salvo = JSON.parse(localStorage.getItem(STORAGE_KEYS.GAME_STATE)!) as { dungeonHp?: { frac: number; at: number } };
     expect(salvo.dungeonHp?.frac).toBe(0);

@@ -3,7 +3,7 @@ import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Text } from '../form/FormKit';
 import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
-import { BitsAmount } from '../ui/BitsAmount';
+import { BitsReveal } from '../ui/BitsReveal';
 import { Icon } from '../ui/Icon';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { DUNGEON_LINE_SPRITES } from '../../utils/sprites';
@@ -234,7 +234,7 @@ export function TrocaGame({ language, onEarnPoints, onExit }: EarningGameProps) 
             {isPt ? `Você separou ${game.correct}` : `You sorted ${game.correct}`}
           </p>
           <p style={phaseLine}>
-            {earned > 0 ? <BitsAmount value={earned} sign="+" /> : (isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.')}
+            {earned > 0 ? <BitsReveal value={earned} /> : (isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.')}
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
             <button type="button" onClick={restart} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
