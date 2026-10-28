@@ -43,6 +43,16 @@ import bgMissionChuvaImg from '../assets/backgrounds/bg-mission-chuva.png';
 import bgMissionMeadaImg from '../assets/backgrounds/bg-mission-meada.png';
 import bgMissionColchaImg from '../assets/backgrounds/bg-mission-colcha.png';
 import bgMissionCorridaImg from '../assets/backgrounds/bg-mission-corrida.png';
+import bgMissionCampoImg from '../assets/backgrounds/bg-mission-campo.png';
+import bgMissionMaoImg from '../assets/backgrounds/bg-mission-mao.png';
+import bgMissionAndaresImg from '../assets/backgrounds/bg-mission-andares.png';
+import bgMissionFundoImg from '../assets/backgrounds/bg-mission-fundo.png';
+import bgMissionHabitanteImg from '../assets/backgrounds/bg-mission-habitante.png';
+import bgMissionGuardiaoImg from '../assets/backgrounds/bg-mission-guardiao.png';
+import bgMissionClienteImg from '../assets/backgrounds/bg-mission-cliente.png';
+import bgMissionTracoImg from '../assets/backgrounds/bg-mission-traco.png';
+import bgMissionEspacoImg from '../assets/backgrounds/bg-mission-espaco.png';
+import bgMissionOuroImg from '../assets/backgrounds/bg-mission-ouro.png';
 // 30/09/2026 — fundos-v2 (rodada 3, aprovados pelo dono): os 5 estágios do Bosque
 // deixam de ser gradiente e ganham arte pintada noturna; campina e cavernas são os
 // postais do Passeio que faltavam (as duas regiões tinham `bgId: null`).
@@ -342,6 +352,66 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
     namePt: 'Pista da Corrida',
     nameEn: 'Obstacle Track',
     css: `url(${bgMissionCorridaImg})`, baseColor: '#074344',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-mission-campo': {
+    namePt: 'Campo de Força',
+    nameEn: 'Force Field',
+    css: `url(${bgMissionCampoImg})`, baseColor: '#0c4544',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-mission-mao': {
+    namePt: 'Mão de Mestre',
+    nameEn: 'Steady Hand',
+    css: `url(${bgMissionMaoImg})`, baseColor: '#0e4442',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-mission-andares': {
+    namePt: 'Primeiros Andares',
+    nameEn: 'First Floors',
+    css: `url(${bgMissionAndaresImg})`, baseColor: '#0a3f3d',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-mission-fundo': {
+    namePt: 'Fundo do Calabouço',
+    nameEn: 'Deep Dungeon',
+    css: `url(${bgMissionFundoImg})`, baseColor: '#0c4743',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-mission-habitante': {
+    namePt: 'Habitante da Fenda',
+    nameEn: 'Rift Dweller',
+    css: `url(${bgMissionHabitanteImg})`, baseColor: '#15504d',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-mission-guardiao': {
+    namePt: 'Guardião da Fenda',
+    nameEn: 'Rift Warden',
+    css: `url(${bgMissionGuardiaoImg})`, baseColor: '#10524f',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-mission-cliente': {
+    namePt: 'Cliente do Clã',
+    nameEn: 'Clan Regular',
+    css: `url(${bgMissionClienteImg})`, baseColor: '#184540',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-mission-traco': {
+    namePt: 'Outro Traço',
+    nameEn: 'Another Stroke',
+    css: `url(${bgMissionTracoImg})`, baseColor: '#155552',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-mission-espaco': {
+    namePt: 'Espaço Preparado',
+    nameEn: 'Space Ready',
+    css: `url(${bgMissionEspacoImg})`, baseColor: '#1a342c',
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  },
+  'bg-mission-ouro': {
+    namePt: 'Faixa de Ouro',
+    nameEn: 'Gold Band',
+    css: `url(${bgMissionOuroImg})`, baseColor: '#234333',
     setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
   // ── Cenários do BOSQUE da Guilda (`docs/PLANO-GUILDA.md` §7 e §9) ──────────

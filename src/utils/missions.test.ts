@@ -45,9 +45,9 @@ describe('missions — progress', () => {
 });
 
 describe('missions — conquistas de reconhecimento (rodada 6)', () => {
-  it('sem cenário não pede resgate, não acende o "?" e usa só contadores do save', () => {
+  it('toda conquista de reconhecimento libera um cenário, e usa só contadores do save', () => {
     const novas = MISSIONS.filter(m => !m.bgReward);
-    expect(novas.length).toBeGreaterThanOrEqual(10);
+    expect(novas.length).toBe(0);
     const cheio = getMissionProgress({ ...base, dungeonKills: 9999, dungeonRunsCompleted: 99, feats: { barrageBest: 5000, zipSolved: 99, patchesSolved: 99, rogueFloors: 99, dinoNormalBest: 9999, dinoDashSmashed: 99, pptNormalWins: 99, clanShopBuys: 9, regens: 2, focusPrepared: 99, rankTier: 4 } });
     for (const m of novas) expect(cheio[m.id], m.id).toBe(m.target);
     expect(hasUnclaimedMission(cheio, [...MISSIONS.filter(m => m.bgReward).map(m => m.id)])).toBe(false);
