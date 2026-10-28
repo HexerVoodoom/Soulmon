@@ -1269,6 +1269,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Avisos do arquivo:**
 - ⚠️ A CHAVE É O EMOJI, deliberado: `foodInventory` indexa por emoji (save antigo, widget Android e desktop leem assim) — trocar a chave quebraria save.
 
+### `src/utils/librarySeen.ts`
+**Dono de:** a lista local de ids de jogadores já vistos na Biblioteca (`STORAGE_KEYS.LIBRARY_SEEN`), 28/10/2026. A Biblioteca (ao abrir a ficha) e o Torneio (ao enfrentar) marcam pelo MESMO caminho; o simulado é tratado como jogador real (o cliente nunca recebe a flag `simulated`).
+**Exports:** `readSeenIds`, `addSeenId` (pura, idempotente), `markSeenId` (grava; tolera lixo e storage indisponível).
+
 ### `src/utils/libraryNpcs.ts`
 **Dono de:** Catálogo dos NPCs da tela Biblioteca.
 **Exports:**

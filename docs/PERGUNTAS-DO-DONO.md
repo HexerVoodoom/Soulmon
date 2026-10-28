@@ -622,3 +622,12 @@ Decisões conservadoras tomadas pela orquestração; revisar:
 - Diária do Calabouço paga 1 `ore` (o prédio não tem material próprio). Outro material?
 - Casinha "Início" da Home e minimapa/exclamação seguem sem círculo (só perderam o glow); diálogos pequenos (RitualDialog, ModalSheet, cards dispensáveis) mantêm o ✕ fechar. Quer círculo também neles?
 - Diárias de Eco/Chuva só contam quando a partida rende pontos (Eco com 0 Bits ou Chuva < 100 não conta).
+
+## 28/10/2026 (noite) — sprite e simulados
+1. **Rookie a 50% nos INIMIGOS?** Hoje só o bicho do jogador usa a escala por estágio; selvagens/simulados/desgarrados entram no combate a 100%. Aplicar a regra do rookie neles também (recomendado: sim, pelo estágio do roster)?
+2. **Rookie a 50% no Bestiário, avatares e listas?** Hoje aparecem em tamanho cheio por desenho de cada tela.
+3. **Tabela de arte dos simulados (`ART_LINE_BY_ELEMENT`)** é provisória (linhas existentes por elemento) até os sprites gerados da fila M11; quer outra?
+4. **`petName` dos simulados** não segue o elemento (ex.: Florasi com elemento vigor). Harmonizar os nomes?
+5. **Golpe básico do simulado no duelo** ainda não usa o elemento dele (`fx.elBasica` nulo); mudar muda a luta do servidor.
+6. **Fada** não está em `VISUAL_ELEMENTS` (arte do duelo cai em neutro); incluir muda o hash visual.
+7. Conferir no app, com sprites reais, a âncora pelo pé (modo Chefe da Feira pode descer alguns px).
