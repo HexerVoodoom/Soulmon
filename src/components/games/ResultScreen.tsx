@@ -342,9 +342,9 @@ export function ResultScreen(p: ResultScreenProps) {
                 <span className="sm2-sr-only" data-result-final>{p.hero.value}</span>
               </div>
               {p.hero.unit && unitShown > 0 && (
-                <div data-result-units={unitShown} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+                <div data-result-units={unitShown} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 2, marginTop: 6 }}>
                   {Array.from({ length: unitShown }, (_, i) => (
-                    <RewardIcon key={i} src={p.hero!.unit!.icon} size={28} on={reveal.isShown(`unit-${i}`)} still={still} data-result-unit={i} />
+                    <RewardIcon key={i} src={p.hero!.unit!.icon} size={24} on={reveal.isShown(`unit-${i}`)} still={still} data-result-unit={i} />
                   ))}
                   {unitTotal > unitShown && (
                     <span className="sm2-num" data-result-units-more style={{ fontSize: 'var(--sm2-text-lg)', fontWeight: 700, marginLeft: 4 }}>×{unitTotal}</span>
