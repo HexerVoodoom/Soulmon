@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // A FEIRA: O CHEFE E O DESAFIO (plano `docs/PLANO-FEIRA-CHEFE.md`, 28/10/2026; decisões do dono no §11).
 //
-// A Missão (30 min fora, `guildRaidHit`) NÃO muda. Quando o Solmon VOLTA, o clã encontra um mistério:
+// A Missão (30 min fora, `guildRaidHit`) NÃO muda. Quando o Soulmon VOLTA, o clã encontra um mistério:
 //   · um CHEFE de HP compartilhado (1 ataque/dia/pessoa, nunca regenera, nunca morre sozinho); ou
 //   · uma TRILHA de desafios pessoais (cada um cumpre o seu para liberar a PRÓPRIA próxima incursão).
 // O servidor decide TUDO: o dano nasce de uma re-simulação com semente do servidor (mesmo padrão de
@@ -310,7 +310,7 @@ export function simularAtaque(side, power, seed) {
   return { dmg, desempenho, log: eu.log, seed: seed >>> 0 };
 }
 
-/** A ficha de luta de quem ataca: a do SAVE; sem save utilizável, um Solmon de level 1 (todo mundo pode bater). */
+/** A ficha de luta de quem ataca: a do SAVE; sem save utilizável, um Soulmon de level 1 (todo mundo pode bater). */
 export async function fichaDoAtacante(env, save) {
   return (await loadDuelSide(env, save)) ?? duelSide({}, { maxLevel: 1 });
 }

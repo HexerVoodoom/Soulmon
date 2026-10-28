@@ -27,7 +27,7 @@ export const CASA_BITS_POR_DIA = 200;
 /** Menor doação aceita (múltiplo de `CASA_BITS_POR_PONTO`). */
 export const CASA_BITS_MIN = 10;
 /**
- * Seiva de UMA missão: cresce com o LEVEL do Solmon (`stagePower` 1..5) e com o tamanho da roda ativa
+ * Seiva de UMA missão: cresce com o LEVEL do Soulmon (`stagePower` 1..5) e com o tamanho da roda ativa
  * (pedido do dono: "mais membros e mais level = mais pontos"). 4 → 17; sempre inteiro, ≥ 1.
  * @param {number} power `stagePower` do estágio (1..5)
  * @param {number} ativos membros ativos da roda (1..12)

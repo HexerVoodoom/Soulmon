@@ -68,7 +68,7 @@ export const GUILD_COPY = {
   'guild.casa.slot.nenhum': ['Você não tem itens livres para pôr.', 'You have no free items to place.'],
   'guild.casa.slot.ok': ['Seu item está na casa.', 'Your item is in the house.'],
   'guild.casa.slot.volta': ['Seu item voltou para você.', 'Your item came back to you.'],
-  // ── A MISSÃO (guilda-lancamento PR3): o antigo circo/Feira vira investigação do Solmon ──
+  // ── A MISSÃO (guilda-lancamento PR3): o antigo circo/Feira vira investigação do Soulmon ──
   'guild.missao.titulo': ['Missão', 'Mission'],
   'guild.missao.mandar': ['Mandar investigar', 'Send to investigate'],
   'guild.missao.historia': ['A feira abriu e algo chegou da névoa. Seu Soulmon vai ver de perto o que é e volta com o que achar. O que ele achar, a roda leva para a casa.', 'The fair opened and something came in from the mist. Your Soulmon goes to take a close look and comes back with what it finds. What it finds, the circle carries to the house.'],
@@ -351,7 +351,7 @@ export const GUILD_COPY = {
   'guild.help.casa.termo': ['Casa', 'House'],
   'guild.help.casa.def': ['A casa é o cenário da roda: uma árvore mecânica com um cristal no centro. Bits trazidos, missões e guerras a fazem crescer. Cada pessoa pode pôr um item seu nela; enquanto estiver lá, ele não aparece no seu cenário.', 'The house is the circle’s scene: a mechanical tree with a crystal at its center. Bits brought, missions and wars make it grow. Each person can place one of their items in it; while it’s there, it doesn’t show in their own scene.'],
   'guild.help.missao.termo': ['Missão', 'Mission'],
-  'guild.help.missao.def': ['Todo dia a roda pode mandar o Solmon investigar o que chegou da névoa. Ele some da Home por um tempo e volta; cada volta ajuda a roda e a casa.', 'Every day the circle can send its Soulmon to investigate what came in from the mist. It leaves the Home for a while and comes back; each return helps the circle and the house.'],
+  'guild.help.missao.def': ['Todo dia a roda pode mandar o Soulmon investigar o que chegou da névoa. Ele some da Home por um tempo e volta; cada volta ajuda a roda e a casa.', 'Every day the circle can send its Soulmon to investigate what came in from the mist. It leaves the Home for a while and comes back; each return helps the circle and the house.'],
   'guild.help.guerra.termo': ['Guerra de clã', 'Clan war'],
   'guild.help.guerra.def': ['Uma vez por dia o esquadrão da roda, até quatro pessoas, enfrenta o de outro clã do mesmo tamanho. O servidor resolve, e a casa recebe seiva vença ou não.', 'Once a day the circle’s squad, up to four people, faces another clan’s squad of the same size. The server settles it, and the house gets sap win or not.'],
   'guild.help.mare.termo': ['Maré', 'Tide'],

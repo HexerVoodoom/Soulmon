@@ -1,6 +1,6 @@
 /**
  * A MISSÃO DA GUILDA (guilda-lancamento PR3) — o antigo "circo" (a Feira) virou uma investigação:
- * acontece algo misterioso, o jogador MANDA o Solmon, ele some da Home enquanto "investiga" (tempo,
+ * acontece algo misterioso, o jogador MANDA o Soulmon, ele some da Home enquanto "investiga" (tempo,
  * como o Passeio) e volta. Ao voltar, o servidor soma a rodada ao fenômeno da roda e rega a casa
  * (`guildRaidHit`: o servidor sorteia o valor — o cliente nunca manda pontos).
  *
@@ -10,7 +10,7 @@
  * CASA na Home do mesmo jeito — o registro é que espera.
  */
 
-/** Quanto o Solmon passa fora, em minutos (a mesma ordem do Passeio). */
+/** Quanto o Soulmon passa fora, em minutos (a mesma ordem do Passeio). */
 export const GUILD_MISSION_MINUTES = 30;
 
 export interface GuildMissionState {
@@ -33,7 +33,7 @@ export function normalizeGuildMission(raw: unknown): GuildMissionState | null {
   return day && returnAt ? { day, returnAt } : null;
 }
 
-/** O Solmon está FORA da Home agora? (só entre a ida e o horário de volta). */
+/** O Soulmon está FORA da Home agora? (só entre a ida e o horário de volta). */
 export const isMissionAway = (m: GuildMissionState | null | undefined, now: number): boolean => !!m && now < m.returnAt;
 
 /** Já deu a hora de voltar (e a volta ainda não foi registrada)? */

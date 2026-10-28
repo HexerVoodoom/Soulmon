@@ -1,5 +1,5 @@
 /**
- * A FOLHA DO EVENTO DA FEIRA (F-09/F-10, `docs/PLANO-FEIRA-CHEFE.md`): o que o clã encontra quando o Solmon VOLTA da Missão.
+ * A FOLHA DO EVENTO DA FEIRA (F-09/F-10, `docs/PLANO-FEIRA-CHEFE.md`): o que o clã encontra quando o Soulmon VOLTA da Missão.
  *
  *  · Chefe (`boss`)   — "Atacar" (1×/dia): o servidor re-simula e devolve o registro; a `BossFightScreen` o toca.
  *  · Desafio (`trail`) — o servidor entrega a instância, o cliente a desenha (`FeiraTrailPlay`), espera o piso de tempo e

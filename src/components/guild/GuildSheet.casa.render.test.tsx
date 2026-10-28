@@ -102,7 +102,7 @@ describe('a Missão na Feira (prédio da Feira do Hall)', () => {
     expect(onSend).toHaveBeenCalledOnce();
   });
 
-  it('com o Solmon fora: diz a HORA da volta (nunca contagem) e não oferece mandar de novo', async () => {
+  it('com o Soulmon fora: diz a HORA da volta (nunca contagem) e não oferece mandar de novo', async () => {
     globalThis.fetch = vi.fn(async () => new Response(JSON.stringify({ guild: comRaid(casaVista()), rewards: { pending: [], scenes: [], trophyOwned: false } }), { status: 200 })) as never;
     const { container } = render(<GuildSheet {...base} room="feira" missao={subir({ day: '2026-10-11', returnAt: Date.now() + 20 * 60_000 })} />);
     await waitFor(() => expect(container.querySelector('[data-missao-fora]')).not.toBeNull());

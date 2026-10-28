@@ -570,7 +570,7 @@ export interface GameState {
   claReceipts?: string[];
   /** As 4 árvores do Bosque: o pico de cada estação e o ano-ciclo em que completou/aperfeiçoou (`utils/bosqueArvores.ts`). */
   bosqueArvores?: BosqueArvores;
-  /** MISSÃO da guilda (PR3): o Solmon foi investigar e some da Home até `returnAt` (`utils/guildMission.ts`). */
+  /** MISSÃO da guilda (PR3): o Soulmon foi investigar e some da Home até `returnAt` (`utils/guildMission.ts`). */
   guildMission?: { day: string; returnAt: number } | null;
   /** @deprecated Só sobrevive para migrar saves antigos. Use `equippedDecor`. */
   equippedFurniture?: string | null;

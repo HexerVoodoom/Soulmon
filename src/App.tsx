@@ -4506,7 +4506,7 @@ export default function App() {
     });
   }, [setGameState]);
 
-  /** MISSÃO da guilda: manda o Solmon investigar (some da Home até `returnAt`). Uma por dia do jogador — o servidor também recusa a 2ª volta. */
+  /** MISSÃO da guilda: manda o Soulmon investigar (some da Home até `returnAt`). Uma por dia do jogador — o servidor também recusa a 2ª volta. */
   const handleGuildMissionSend = useCallback(() => {
     setGameState(prev => {
       if (prev.guildMission) return prev;
@@ -4514,7 +4514,7 @@ export default function App() {
     });
   }, [setGameState]);
 
-  // MISSÃO da guilda: na hora da volta, registra a rodada no servidor (`guildRaidHit`) e o Solmon aparece de novo.
+  // MISSÃO da guilda: na hora da volta, registra a rodada no servidor (`guildRaidHit`) e o Soulmon aparece de novo.
   // Sem rede, o registro espera (nova tentativa a cada minuto e ao voltar ao app) — mas o pet já está em casa.
   // Qualquer outra resposta (limite do dia, fenômeno dissipado, sem guilda, sem login) encerra a missão em silêncio.
   const guildMission = gameState.guildMission ?? null;
@@ -8975,7 +8975,7 @@ export default function App() {
         </PresentationSlot>
       )}
 
-      {/* 🎪 FEIRA DO CHEFE: o que o clã encontra quando o Solmon VOLTA da Missão (chefe, desafio ou dia calmo). Desligada = nunca monta. */}
+      {/* 🎪 FEIRA DO CHEFE: o que o clã encontra quando o Soulmon VOLTA da Missão (chefe, desafio ou dia calmo). Desligada = nunca monta. */}
       {interstitial === 'feiraEvento' && feiraEvento && saveId && (
         <PresentationSlot id="feiraEvento" onFail={() => presentation.fail('feiraEvento')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <FeiraEventoSheet

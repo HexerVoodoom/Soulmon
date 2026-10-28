@@ -243,7 +243,7 @@ interface CompanionHUDProps {
    * dos dois lê estado do HUD — quem passa calcula sobre o estado real.
    */
   statsSlots?: { hunger?: ReactNode; energyTimer?: ReactNode };
-  /** 🔎 MISSÃO da guilda (PR3): o Solmon foi investigar e SOME do palco até voltar. Sem texto de cobrança — só a ausência e uma lupa. */
+  /** 🔎 MISSÃO da guilda (PR3): o Soulmon foi investigar e SOME do palco até voltar. Sem texto de cobrança — só a ausência e uma lupa. */
   missionAway?: boolean;
   /** 🏠 O Soulmon está NA MASMORRA (descida idle, REGISTRO §36): o pet some do palco e no lugar dele fica a plaquinha "Estou na masmorra, volto logo". */
   naMasmorra?: boolean;

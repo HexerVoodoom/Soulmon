@@ -242,7 +242,7 @@ export interface AreaViewProps {
     onLogin?: () => void;
     /** A Casa da guilda (PR2): carteira, inventário e o que mudou. Ver `GuildSheet` › `casa`. */
     casa?: ComponentProps<typeof GuildSheetT>['casa'];
-    /** A Missão (PR3): estado da ida do Solmon e o gesto de mandá-lo. */
+    /** A Missão (PR3): estado da ida do Soulmon e o gesto de mandá-lo. */
     missao?: ComponentProps<typeof GuildSheetT>['missao'];
     /** Feira do Chefe: reabrir o evento pela sala (só com `guild.feira` na vista). */
     feira?: ComponentProps<typeof GuildSheetT>['feira'];

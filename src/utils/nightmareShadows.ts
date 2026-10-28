@@ -28,7 +28,7 @@ export interface ShadowSlot { id: string; line: string; stage: ShadowStage }
 /**
  * Doze sombras (4 degraus × 3 variantes, mesma ordem de `OBSTACLE_TIERS`), uma criatura por slot.
  * Degrau 1/2 = chão baixo e médio (formas pequenas), 3 = coluna alta e estreita (formas esguias),
- * 4 = voadores. As linhas são os 6 Solmons próprios ATIVOS (`DUNGEON_LINE_NAMES`) — nenhuma de terceiros.
+ * 4 = voadores. As linhas são os 6 Soulmons próprios ATIVOS (`DUNGEON_LINE_NAMES`) — nenhuma de terceiros.
  */
 export const SHADOW_SLOTS: ReadonlyArray<ReadonlyArray<ShadowSlot>> = [
   [{ id: '1', line: 'kaelen', stage: 'rookie' }, { id: '1b', line: 'thalindra', stage: 'rookie' }, { id: '1c', line: 'igni', stage: 'rookie' }],

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { GUILD_MISSION_MINUTES, startGuildMission, normalizeGuildMission, isMissionAway, isMissionDue, msUntilReturn } from './guildMission';
 
-describe('guildMission — a ida do Solmon', () => {
+describe('guildMission — a ida do Soulmon', () => {
   const t0 = Date.parse('2026-10-11T12:00:00Z');
   it('parte agora e volta em GUILD_MISSION_MINUTES', () => {
     const m = startGuildMission('2026-10-11', t0);

@@ -128,7 +128,7 @@ interface GuildSheetProps {
     onSpend: (bits: number) => void;
     onSlot: (item: string | null) => void;
   };
-  /** A MISSÃO (PR3, ex-Feira): o estado da ida do Solmon (no save) e o gesto de mandá-lo. */
+  /** A MISSÃO (PR3, ex-Feira): o estado da ida do Soulmon (no save) e o gesto de mandá-lo. */
   missao?: { state: GuildMissionState | null; onSend: () => void };
   /** Os PRÉDIOS DO CLÃ (Praça, Plantio, Mistério): a ponte do prêmio com o save. O App credita UMA vez por recibo (`utils/claCredit.ts`). */
   /** FEIRA DO CHEFE: reabrir o evento pela sala (a folha de volta é uma só vez). Só aparece quando o servidor manda `guild.feira`. */
@@ -1178,7 +1178,7 @@ function SalaMural({ guild, t, language, marcos }: {
 function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgateAberto, onRodada, missao, misterioFim, feira }: {
   guild: GuildView; t: T; language: Language; ocupado: boolean; reducedMotion: boolean;
   resgate: React.ReactNode; resgateAberto: boolean; onRodada: () => void;
-  /** No Salão (PR3) a rodada é a MISSÃO: mandar o Solmon, esperar a volta. Sem isto, a Feira antiga (rodada de um toque). */
+  /** No Salão (PR3) a rodada é a MISSÃO: mandar o Soulmon, esperar a volta. Sem isto, a Feira antiga (rodada de um toque). */
   missao?: GuildSheetProps['missao'];
   /** O Mistério foi encerrado e a recompensa pendente virou Bits/Honra (dito uma vez, na abertura da Feira). */
   misterioFim?: { kind: 'bits' | 'honra'; n: number } | null;
@@ -1186,7 +1186,7 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
   feira?: { resumo: NonNullable<GuildView['feira']>; ocupado: boolean; onAbrir: () => void };
 }) {
   const raid = guild.raid;
-  // Relógio da volta ("volta em X min"): só roda enquanto o Solmon está fora.
+  // Relógio da volta ("volta em X min"): só roda enquanto o Soulmon está fora.
   const [agora, setAgora] = useState(() => Date.now());
   const returnAt = missao?.state?.returnAt ?? 0;
   useEffect(() => {

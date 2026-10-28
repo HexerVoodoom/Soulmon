@@ -702,7 +702,7 @@ export async function handleGuild({ request, env }) {
     );
     // A-1: o direito ao resgate mora com a PESSOA, não com a guilda.
     await marcarParticipacao(env, g.id, id, semana, hoje);
-    // A MISSÃO também rega a CASA (PR3): seiva que cresce com o level do Solmon e com o tamanho da roda ativa.
+    // A MISSÃO também rega a CASA (PR3): seiva que cresce com o level do Soulmon e com o tamanho da roda ativa.
     // Escreve só a chave pessoal da casa; o servidor decide o valor (o cliente nunca manda pontos).
     await somarPontos(env, g.id, id, 'missao', pontosDeMissao(stagePower(perfil?.stage), membrosAtivos(g, fiosDosCartoes(g, cartoesDaRoda), hoje).length));
     await cartao(g);
