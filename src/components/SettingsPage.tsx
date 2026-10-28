@@ -618,6 +618,11 @@ export function SettingsPage({
           href={isPt ? '/privacidade.html#pt' : '/privacidade.html'}
           language={language}
         />
+        <ActionRow
+          label={isPt ? 'Sobre e licenças' : 'About and licenses'}
+          href={isPt ? '/licencas.html#pt' : '/licencas.html'}
+          language={language}
+        />
         {/* O canal de feedback fica em Ajuda, logo acima da versão que vai no
             e-mail: é onde a pessoa procura quando algo não funciona
             (design-critic B3, 21/09/2026; `FeedbackLink.tsx`). */}
