@@ -62,6 +62,8 @@ export interface ResultScreenProps {
   notes?: ReactNode;
   /** Sprite do pet no visor (omitido = visor só com a cena). */
   petSrc?: string;
+  /** Segundo combatente (Torneio): outro `VisorSprite` dentro do vidro; com ele o pet vai para a esquerda. */
+  visorOpponent?: ReactNode;
   /** `background` da cena do visor. */
   scene?: string;
   /** Ações. `onPlayAgain` ausente = só o botão de sair. */
@@ -224,10 +226,11 @@ export function ResultScreen(p: ResultScreenProps) {
         <div className={`sm-result-visor ${MOOD_CLASS[mood]}${record ? ' sm-result-visor--record' : ''}${animated ? ' sm-result-visor--live' : ''}`} aria-hidden="true">
           <GameVisor height={84} scene={p.scene}>
             {p.petSrc && (
-              <div className="sm-result-pet" data-result-pet={mood} style={{ position: 'absolute', left: '50%', marginLeft: -64, bottom: 6, width: 128, height: 128 }}>
+              <div className="sm-result-pet" data-result-pet={mood} style={{ position: 'absolute', left: p.visorOpponent ? 8 : '50%', marginLeft: p.visorOpponent ? 0 : -64, bottom: 6, width: 128, height: 128 }}>
                 <VisorSprite src={p.petSrc} style={{ left: 0, bottom: 0 }} data-visor-pet />
               </div>
             )}
+            {p.visorOpponent}
             {(record || p.outcome === 'win') && step >= 1 && <div className="sm-result-sparks"><VisorSparks /></div>}
           </GameVisor>
         </div>

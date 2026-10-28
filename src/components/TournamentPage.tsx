@@ -1076,6 +1076,7 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
       ledger={draw ? [] : [{ key: 'honor', kind: 'honor', value: result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS }]}
       petSrc={petSpriteSrc}
       scene={`url(${tournamentFinal}) center/cover`}
+      visorOpponent={result.won ? <VisorSprite src={opponentSprite({ ...result.opponent, id: result.opponent.name })} alt="" idle={false} flip style={{ right: 8, bottom: 6 }} data-visor-enemy /> : undefined}
       playAgainLabel={isPt ? 'Continuar' : 'Continue'}
       onPlayAgain={onClose}
       onDismiss={onClose}
