@@ -34,6 +34,7 @@ import { Icon } from '../ui/Icon';
 import { spriteUrlFacesLeft } from '../../utils/sprites';
 import { fxMirror, orbPose, travelOf } from '../../utils/fxFacing';
 import { petScaleStyle } from '../../utils/spriteScale';
+import { useFeetShift } from '../../hooks/usePetScale';
 import { PixelIcon } from '../ui/PixelIcon';
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Text } from '../form/FormKit';
@@ -331,9 +332,11 @@ function Fighter({ f, spot, flip, zIndex, lunge, hitKey, hitDelay, charged }: {
   // O palco fixa os lados (eu à esquerda olhando à direita; inimigo à direita olhando à esquerda). Arte de perfil ESQUERDO
   // (`spriteUrlFacesLeft`) inverte o espelho — senão o bicho luta de costas. Os efeitos (`--flip`, idle) seguem o mesmo valor.
   const espelha = flip !== spriteUrlFacesLeft(f.sprite);
+  // Ancora pelo PÉ: o PNG pode ter padding transparente embaixo (o bicho "flutua"); mede a base visível e desce o canvas.
+  const feetDy = useFeetShift(f.sprite, f.scale, spot.size);
   return (
     <div
-      style={{ position: 'absolute', left: spot.x - spot.size / 2, top: spot.y - spot.size * SPRITE_TOP, width: spot.size, height: spot.size, zIndex, pointerEvents: 'none', opacity: f.down ? 0.28 : 1, filter: f.down ? 'grayscale(1)' : undefined, transition: 'opacity 300ms' }}
+      style={{ position: 'absolute', left: spot.x - spot.size / 2, top: spot.y - spot.size * SPRITE_TOP + feetDy, width: spot.size, height: spot.size, zIndex, pointerEvents: 'none', opacity: f.down ? 0.28 : 1, filter: f.down ? 'grayscale(1)' : undefined, transition: 'opacity 300ms' }}
     >
       <div
         key={lunge ? `l${lunge.key}` : 'l-'}

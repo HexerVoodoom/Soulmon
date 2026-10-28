@@ -152,3 +152,39 @@ describe('toda tela que desenha o bicho do jogador usa o dono único', () => {
     expect(ler('src/App.tsx')).toMatch(/setPetSizeSeed\(sizeSeedOf\(gameState\)\)/);
   });
 });
+
+describe('contrato do rookie a 50% NO RENDER (REGISTRO §181)', () => {
+  it('rookie = 50% do alvo que teria sem a regra; os outros estágios = 100% (inalterados)', async () => {
+    const m = await import('./spriteScale');
+    expect(m.ROOKIE_RENDER_RATIO).toBe(0.5);
+    expect(m.STAGE_TARGET.rookie).toBeCloseTo(m.ROOKIE_BASE_TARGET * 0.5, 10);
+    expect(m.STAGE_TARGET).toMatchObject({ champion: 0.66, ultimate: 0.78, mega: 0.9, ultra: 0.96 });
+  });
+  it('o fator vem do estágio e da caixa visível, não do tamanho do canvas: mesmo bicho, canvas folgado ou justo → mesma altura na tela', async () => {
+    const m = await import('./spriteScale');
+    // canvas justo (enche 100%) e canvas folgado (enche 80%): lado visível final = fator × preenchimento = alvo
+    for (const fill of [1, 0.8]) {
+      expect(m.petScaleFor('rookie', '', fill) * fill).toBeCloseTo(m.STAGE_TARGET.rookie, 6);
+      expect(m.petScaleFor('champion', '', fill) * fill).toBeCloseTo(m.STAGE_TARGET.champion, 6);
+    }
+  });
+});
+
+describe('ancoragem pelo pé', () => {
+  it('bottomFromRGBA acha a última linha opaca; vazio = padrão', async () => {
+    const m = await import('./spriteScale');
+    const w = 4, h = 10, d = new Uint8Array(w * h * 4);
+    d[(6 * w + 1) * 4 + 3] = 255; // última linha opaca = y 6
+    expect(m.bottomFromRGBA(d, w, h)).toBeCloseTo(0.7, 6);
+    expect(m.bottomFromRGBA(new Uint8Array(w * h * 4), w, h)).toBe(m.DEFAULT_BOTTOM);
+  });
+  it('feetShiftPx: pé já no padrão = 0; padding embaixo desce; escala reduz o vão; preso a ±45%', async () => {
+    const m = await import('./spriteScale');
+    expect(m.feetShiftPx(m.DEFAULT_BOTTOM, 1, 200)).toBe(0);
+    expect(m.feetShiftPx(0.7, 1, 200)).toBe(48); // (0,3 − 0,06) × 200
+    expect(m.feetShiftPx(0.7, 0.5, 200)).toBe(18); // (0,15 − 0,06) × 200
+    expect(m.feetShiftPx(0.2, 1, 200)).toBe(90);
+    expect(m.feetShiftPx(NaN, 1, 200)).toBe(0);
+    expect(m.feetShiftPx(0.7, 1, 0)).toBe(0);
+  });
+});

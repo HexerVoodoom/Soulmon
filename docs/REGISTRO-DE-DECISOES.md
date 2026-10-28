@@ -3474,3 +3474,15 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 
 **O que falsificaria:** jogadores gastando Bits em sequência de rerolls para caçar o elemento fraco do chefe (ver a taxa de rerolls pagos/dia); ou o reroll grátis virar o motivo de abrir a Arena (sinal de cobrança). **Gatilho de revisão:** mediana de rerolls pagos por jogador-dia > 1. **Rollback:** reverter o commit; o campo `arenaReroll` é aditivo e inofensivo se ficar no save.
 
+
+## 181. Rookie a 50% é regra de RENDER (dona única `spriteScale.ts`) e o sprite pousa pelo PÉ na plataforma (dono, 28/10/2026)
+
+**Decisão do dono:** "a regra de reduzir 50% o Soulmon ROOKIE deve ser sobre o SPRITE e não na GERAÇÃO; pode aplicar nos Soulmon que já existem de usuários reais". E: simulados e selvagens/desgarrados flutuavam muito sobre a plataforma no combate.
+
+**Fatos achados:** a redução já vivia no render (commit `15501033d`, `STAGE_TARGET.rookie` 0,54 → 0,27); nenhum script, prompt ou canvas de geração reduz o rookie (acervo/KV `sprite:blob` guardam a arte em tamanho cheio). Logo não há redução dupla e os Soulmon existentes já obedecem sem tocar nos PNGs. O fator é `alvo ÷ preenchimento medido da caixa visível`, então não depende do tamanho do canvas (canvas folgado ou justo dão a mesma altura na tela).
+
+**O que mudou:** a regra ganhou nome e dono: `ROOKIE_RENDER_RATIO = 0,5` × `ROOKIE_BASE_TARGET = 0,54` (valor final idêntico, 0,27), com teste de contrato (rookie 50%, demais estágios 100%). Combate: o `Fighter` do `BattleStage` mede a base da caixa visível do PNG (cache por URL, canvas) e desce/sobe o canvas (`feetShiftPx`) para o PÉ tocar a plataforma, em vez de supor que o pé está a 94% do canvas; vale para jogador, simulados, selvagens e desgarrados. Sem medida (jsdom, imagem de outra origem) o deslocamento é 0, o layout histórico. `stageLayout` e o modo `boss` não mudam.
+
+**Alternativa que perdeu:** reduzir o rookie na geração/prompt (obrigaria regerar ou reprocessar as artes reais e duplicaria a redução); corrigir a flutuação com dado de baseline por sprite em JSON (mais um arquivo para manter, e não cobre arte gerada depois).
+
+**O que falsificaria:** bicho com sombra/cauda/aura opaca embaixo cuja base medida não é o pé (aparece afundado ou alto demais); rookie pequeno demais para tocar. **Rollback:** reverter os commits; `ROOKIE_RENDER_RATIO = 1` desfaz só a redução; sem migração nem campo novo no save.
