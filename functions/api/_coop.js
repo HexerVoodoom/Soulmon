@@ -1125,3 +1125,25 @@ export async function recolherFeiraDeQuemSai(env, gid, save, { exclusao = false 
 export async function apagarFeiraDaPessoa(env, saveId) {
   await Promise.all([kvOrThrow(env).delete(feiraGateKey(saveId)), kvOrThrow(env).delete(feiraRightKey(saveId)), kvOrThrow(env).delete(feiraTrofeusKey(saveId))]);
 }
+
+/**
+ * O que a EXPORTAÇÃO mostra da Feira do Chefe: só o que é DA PESSOA — os próprios dias de golpe e de desafio, os mistérios que ela
+ * resgatou e os chefes que já abateu. Nunca o dano (número que nem ela vê) nem nada de outro membro.
+ */
+export async function exportarFeiraDaPessoa(env, gid, save) {
+  const kvs = kvOrThrow(env);
+  const evt = parse(await kvs.get(feiraEvtKey(gid)));
+  const kAtual = Number.isInteger(evt?.k) ? evt.k : null;
+  /** @type {{ hitDays: Record<number, string[]>, trailClearedDays: Record<number, string>, claimedK: number[], defeatedBosses: string[], gateOpen: boolean }} */
+  const out = { hitDays: {}, trailClearedDays: {}, claimedK: [], defeatedBosses: await lerConjunto(env, feiraTrofeusKey(save)), gateOpen: false };
+  const gate = parse(await kvs.get(feiraGateKey(save)));
+  out.gateOpen = gate?.open === true;
+  if (kAtual === null) return out;
+  for (let k = kAtual; k >= Math.max(0, kAtual - FEIRA_JANELA_K + 1); k--) {
+    const [hit, trilha, claim] = await Promise.all([lerFeiraHit(env, gid, k, save), kvs.get(feiraTrailKey(gid, k, save)).then(parse), kvs.get(feiraClaimKey(gid, k, save))]);
+    if (hit.days.length) out.hitDays[k] = hit.days;
+    if (typeof trilha?.clearedDay === 'string') out.trailClearedDays[k] = trilha.clearedDay;
+    if (claim) out.claimedK.push(k);
+  }
+  return out;
+}

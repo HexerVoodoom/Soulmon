@@ -38,6 +38,16 @@
 //   POST claMisterioClaim  {id, dayKey}    → { claimed:{reward,receipt}, misterio }   404 nothing to claim
 //   GET  guildWar     ?id=&dayKey=         → { war: { waiting: {size}|null, last: {day,outcome,duels[],size,enemy}|null } }   404 no guild
 //   POST guildWarSeek {id, dayKey}         → { state: 'small'|'already'|'waiting'|'done', war }   404 no guild   (a GUERRA: `_guerra.js`)
+//   (A FEIRA: O CHEFE E O DESAFIO — `_feira.js`; DESLIGADA até `FEIRA_CHEFE_DESDE`: antes disso respondem 404 `not available`)
+//   GET  guildFeira          ?id=&dayKey=  → { evento }   404 no guild
+//   POST guildFeiraAttack    {id, dayKey}  → { landed, attack:{dmg,seed,seconds,log[]}, boss:{bossId,level,bossHpPct,max,dead}, evento }
+//                                            404 no guild · 409 no boss|boss dead · 429 daily limit
+//   POST guildFeiraClaim     {id, dayKey, k?} → { claimed:{k,level,bossId,receipt,reward:{emblems,bits,sap,trophyId,essences:[],element}} }
+//                                            404 nothing to claim · 409 already claimed + { receipt, claimed }   (o direito NÃO exige estar na guilda)
+//   POST guildFeiraTrailStart {id, dayKey} → { trail:{k,game,seed,puzzle}, evento }   404 no guild · 409 no trail|already cleared
+//   POST guildFeiraTrailDone  {id, dayKey, path|rects|cells|sides|score} → { cleared:true, reward:{emblems,sap}, receipt, evento }
+//                                            400 wrong solution|too fast · 409 no trail|not started|already cleared · 429 daily limit
+//   `guildRaidHit` ganha `evento?` (ADITIVO: ausente com a Feira desligada, e um erro ao calculá-lo nunca derruba o golpe).
 //   POST guildLeave   {id}                 → { ok: true } (sempre; idempotente)
 //   POST guildRename  {id, name}           → { guild }   403 not host · 400 invalid name · 404 no guild
 //   POST guildNewCode {id}                 → { guild }   403 not host · 503 try again · 404 no guild
@@ -68,6 +78,11 @@ import { vistaDaPraca, definirSlotPraca, enviarPresente, resgatarPresente } from
 import { vistaDoPlantio, plantar, regar, proteger, colher, sortear } from './_claPlantio.js';
 import { vistaDoMisterio, enviarMisterio, somarTarefa, resgatarMisterio, converterMisterio } from './_claMisterio.js';
 import { comprarNaLoja, lerLoja, vistaDaLoja } from './_lojaCla.js';
+import {
+  feiraLigada, lerEstadoFeira, eventoDaFeira, resumoDaFeira, simularAtaque, fichaDoAtacante, sementeDoServidor,
+  gravarGolpe, marcarFeira, resgatarChefe, iniciarTrilha, entregarTrilha, FIGHT_SECONDS,
+} from './_feira.js';
+import { lerFeiraHit } from './_coop.js';
 import { CASA_BITS_POR_DIA, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa, bitsDaCasa, somarPontos, pontosDeMissao } from './_casa.js';
 
 const CORS = {
@@ -120,6 +135,11 @@ export const GUILD_ACTIONS = Object.freeze({
   claMisterioEnviar: 'POST',
   claMisterioTarefa: 'POST',
   claMisterioClaim: 'POST',
+  guildFeira: 'GET',
+  guildFeiraAttack: 'POST',
+  guildFeiraClaim: 'POST',
+  guildFeiraTrailStart: 'POST',
+  guildFeiraTrailDone: 'POST',
   guildLeave: 'POST',
   guildRename: 'POST',
   guildNewCode: 'POST',
@@ -220,6 +240,11 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
   const feira = await resolverFeira(env, g, semana, hoje, cartoes);
   const anterior = semanaAnterior(hoje);
   const passada = await resolverFeira(env, g, anterior, ultimoDiaDaSemana(diaDeNum(numDia(hoje) - 7)), cartoes);
+  // A FEIRA DO CHEFE (só com a liga ligada; SÓ LEITURA: quem abre o mistério é a volta, o ataque ou `guildFeira`): estado e agregados do CLÃ — nunca dano, golpes nem marcas por pessoa (LV-G1/LV-G10).
+  let feiraVista;
+  if (feiraLigada(env)) {
+    try { feiraVista = resumoDaFeira(await lerEstadoFeira(env, g, hoje, { cartoes, escrever: false })); } catch (err) { console.warn('feira: resumo indisponível', String(err)); feiraVista = undefined; }
+  }
   const meusGolpes = eu >= 0 ? (golpesDoCartao(cart[eu], semana) ?? await lerGolpes(env, g.id, semana, euSave)) : { days: [] };
   return {
     id: g.id,
@@ -282,6 +307,7 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
       lastWeek: passada.cleared ? 'dissipada' : (passada.hitters.length > 0 ? 'recuou' : null),
       mine: meusGolpes.days.includes(hoje) ? { hitToday: true } : {},
     },
+    ...(feiraVista ? { feira: feiraVista } : {}),
     // M-3 (L3-conformidade): `progress`/`target` NÃO trafegam mais, em nenhum
     // tamanho nem pelos aliases `coop*` — o cliente já os descartava
     // (`sanitizeGuildView`) e era um número semanal que zera na virada.
@@ -585,6 +611,60 @@ export async function handleGuild({ request, env }) {
     }
   }
 
+  if (action.startsWith('guildFeira')) {
+    // A FEIRA: O CHEFE E O DESAFIO (`_feira.js`). Desligada = a rota não existe (nada é gravado). O servidor decide
+    // o dano (re-simulação com semente DELE), o limite diário e o abate; a resposta traz só o agregado do clã (LV-G1).
+    if (!feiraLigada(env)) return erro('not available', 404);
+    const g = await grupoDe(env, id, semana);
+    if (action === 'guildFeiraClaim') {
+      // O direito ao resgate mora com a PESSOA (A-1): quem bateu e saiu ainda colhe.
+      const pedido = Number.isInteger(body.k) && body.k >= 0 ? body.k : undefined;
+      const r = await resgatarChefe(env, g, id, pedido);
+      if (r.ok) return json({ claimed: r.claimed });
+      if (r.reason === 'claimed') return erro('already claimed', 409, { receipt: r.claimed.receipt, claimed: r.claimed });
+      return erro('nothing to claim', 404);
+    }
+    if (!g) return erro('no {g}', 404);
+    const cartoes = await lerCartoes(env, g);
+    const estado = await lerEstadoFeira(env, g, hoje, { cartoes });
+    if (action === 'guildFeira') return json({ evento: await eventoDaFeira(env, g, id, hoje, estado) });
+    if (action === 'guildFeiraAttack') {
+      if (estado.phase !== 'boss') return erro(estado.phase === 'rest' && estado.done.lastKind === 'boss' ? 'boss dead' : 'no boss', 409);
+      const antes = await lerFeiraHit(env, g.id, estado.k, id);
+      if (antes.days.includes(hoje)) return erro('daily limit', 429);
+      const perfil = await getProfile(env, id);
+      const r = simularAtaque(await fichaDoAtacante(env, id), stagePower(perfil?.stage), sementeDoServidor());
+      await gravarGolpe(env, g.id, estado.k, id, antes, hoje, r.dmg);
+      await marcarFeira(env, g.id, estado.k, id, hoje);
+      await cartao(g);
+      const depois = await lerEstadoFeira(env, g, hoje, { cartoes });
+      const morreu = depois.phase !== 'boss';
+      return json({
+        landed: true,
+        attack: { dmg: r.dmg, seed: r.seed, seconds: FIGHT_SECONDS, log: r.log },
+        boss: { bossId: estado.bossId, level: estado.level, bossHpPct: morreu ? 0 : depois.hpPct, max: estado.hp0, dead: morreu },
+        evento: await eventoDaFeira(env, g, id, hoje, depois),
+      });
+    }
+    if (action === 'guildFeiraTrailStart') {
+      const r = await iniciarTrilha(env, g, id, hoje, estado);
+      if (!r.ok) return erro(r.reason === 'already-cleared' ? 'already cleared' : 'no trail', 409);
+      return json({ trail: r.trail, evento: await eventoDaFeira(env, g, id, hoje, estado) });
+    }
+    if (action === 'guildFeiraTrailDone') {
+      const r = await entregarTrilha(env, g, id, hoje, estado, body);
+      if (!r.ok) {
+        if (r.reason === 'limit') return erro('daily limit', 429);
+        if (r.reason === 'wrong') return erro('wrong solution', 400);
+        if (r.reason === 'too-fast') return erro('too fast', 400);
+        if (r.reason === 'already-cleared') return erro('already cleared', 409, { receipt: r.receipt });
+        return erro(r.reason === 'no-start' ? 'not started' : 'no trail', 409);
+      }
+      await cartao(g);
+      return json({ cleared: true, reward: r.reward, receipt: r.receipt, evento: await eventoDaFeira(env, g, id, hoje, await lerEstadoFeira(env, g, hoje, { cartoes })) });
+    }
+  }
+
   if (action === 'guildRaidHit') {
     // A FEIRA (WPG-4). Um golpe por pessoa por dia do jogador, a qualquer hora
     // da semana ISO inteira (G11). NÃO exige fio nem meta (a rodada é gesto),
@@ -626,7 +706,13 @@ export async function handleGuild({ request, env }) {
     // Escreve só a chave pessoal da casa; o servidor decide o valor (o cliente nunca manda pontos).
     await somarPontos(env, g.id, id, 'missao', pontosDeMissao(stagePower(perfil?.stage), membrosAtivos(g, fiosDosCartoes(g, cartoesDaRoda), hoje).length));
     await cartao(g);
-    return json({ landed: true, [chave]: await montar(g, id, hoje) });
+    // O EVENTO DA VOLTA (Feira: Chefe ou Desafio): calculado DEPOIS de tudo acima, para que a Missão, o fenômeno e a seiva
+    // fiquem idênticos; campo ADITIVO (cliente antigo ignora), ausente com a Feira desligada, e falha aqui nunca derruba o golpe.
+    let evento;
+    if (feiraLigada(env)) {
+      try { evento = await eventoDaFeira(env, g, id, hoje, await lerEstadoFeira(env, g, hoje, { cartoes: cartoesDaRoda })); } catch (err) { console.warn('feira: evento indisponível', String(err)); evento = undefined; }
+    }
+    return json({ landed: true, [chave]: await montar(g, id, hoje), ...(evento ? { evento } : {}) });
   }
 
   if (action === 'guildRewards' || action === 'guildClaim') {

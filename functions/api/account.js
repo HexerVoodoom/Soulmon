@@ -119,7 +119,7 @@ import { kv, kvOrThrow } from './_kv.js';
 import { lerIndice, chaveDoIndice, PUSHIDX_MAX } from './_pushIdentity.js';
 import { writeTombstone, clearTombstone, TOMBSTONE_TTL_SECONDS } from './_accountTombstone.js';
 import { rkKeyFor } from './_rankings.js';
-import { coopLeave, grupoDe, coopOfKey, coopCkKey, coopFioKey, coopMemKey, lerFio, apagarClaims, lerGolpes, semanaDe, semanasDeClaim, coopClaimKey, lerConjunto, coopScenesKey, coopShellKey, coopPartKey, lerDiasCarregados } from './_coop.js';
+import { coopLeave, grupoDe, coopOfKey, coopCkKey, coopFioKey, coopMemKey, lerFio, apagarClaims, lerGolpes, semanaDe, semanasDeClaim, coopClaimKey, lerConjunto, coopScenesKey, coopShellKey, coopPartKey, lerDiasCarregados, exportarFeiraDaPessoa } from './_coop.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -494,6 +494,8 @@ async function collect(env, saveId) {
           // o dano (número que nem o titular vê no app) nem o de outro membro.
           myHitsThisWeek: (await lerGolpes(env, g.id, semanaDe(), saveId)).days,
         },
+        // A Feira do Chefe e o Desafio (`_feira.js`): só os dias e os resgates DA PESSOA — nunca o dano nem outro membro.
+        ...(await (async () => { const f = await exportarFeiraDaPessoa(env, g.id, saveId); return Object.keys(f.hitDays).length || Object.keys(f.trailClearedDays).length || f.claimedK.length || f.defeatedBosses.length || f.gateOpen ? { feira: f } : {}; })()),
       };
     }
   } catch { coopGroupId = null; coopExport = null; }
@@ -609,6 +611,7 @@ function plan(c, saveId) {
       'mentions of you in other players\' friend lists',
       'notification subscriptions (push:*/fcm:*) linked to your account',
       ...(c.coopGroupId ? [`coop:${c.coopGroupId} (your spot in the group)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId), coopFioKey(c.coopGroupId, saveId), coopMemKey(c.coopGroupId, saveId)] : []),
+      'Fair Boss and Trail records of your current clan (feiraHit:*, feiraTrail:*, feiraClaim:*, feiraPart:*), your Trail door (feiraGate:*), your Boss pointer (feiraRight:*) and your defeated-boss trophies (feiraTrophy:*)',
       'Guild claims (coopClaim:*) and Fair rounds (coopHit:*) of your current clan — those from clans you already left were erased when you left; any leftover without a link expires on its own within 21 days. Threads you already tied stay in the Grove, anonymous',
       // #54: o vínculo SteamID ↔ conta. ⚰️ Até 22/09/2026 estas chaves apareciam
       // em `sobrevive` (5 anos, justificativa fiscal que não se aplica a licença).
