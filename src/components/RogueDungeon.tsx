@@ -9,6 +9,7 @@ import { BackCircleButton } from './ui/BackCircleButton';
 import { Component, lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { entrarNaSuperficie } from '../utils/musica';
 import { Icon } from './ui/Icon';
+import { rogueBonusIcon } from '../utils/rogueBonusArt';
 import type { GameChallenge } from '../utils/gameChallenge';
 import { loadDinoGame, loadEcoGame, loadMatch3Game, loadPatchesGame, loadRPSGame, loadZipGame } from './nav/playPrefetch';
 import type { Language } from '../utils/i18n';
@@ -60,6 +61,12 @@ const BONUS_COPY: Record<BonusKind, { en: string; pt: string; icon: string; desc
   vigor: { en: '+10% health', pt: '+10% de vida', icon: 'favorite', descEn: 'More max health this run.', descPt: 'Mais vida máxima nesta incursão.' },
   heal: { en: 'Healing ward', pt: 'Proteção de cura', icon: 'auto_awesome', descEn: '15% shield in the next combat.', descPt: 'Escudo de 15% no próximo combate.' },
 };
+/** O ícone do bônus: a arte P2-02 (96²) quando existe, senão o glifo Material de `BONUS_COPY`. */
+function BonusIcon({ kind, size, label }: { kind: BonusKind; size: number; label?: string }) {
+  const src = rogueBonusIcon(kind);
+  if (!src) return <Icon name={BONUS_COPY[kind].icon} size={size} tone="inherit" label={label} />;
+  return <img src={src} alt={label ?? ''} aria-hidden={label ? undefined : true} width={size} height={size} style={{ imageRendering: 'pixelated', flexShrink: 0 }} />;
+}
 /** A arte provisória de cada andar no nó do mapa. A definitiva entra depois trocando só estes imports (por nome de arquivo). */
 export const FLOOR_ICON_ART: Record<number, string> = { 1: floorDoor, 2: floorStairs, 3: floorChest };
 
@@ -229,9 +236,9 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
           {(run.power > 0 || run.vigor > 0 || run.shield > 0) && (
             <p data-rogue-bonuses style={hudText}>
               <span style={{ display: 'inline-flex', gap: 12, alignItems: 'center' }}>
-                <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="bolt" size={20} tone="inherit" label={isPt ? 'ataque' : 'attack'} />{run.power}</span>
-                <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="favorite" size={20} tone="inherit" label={isPt ? 'vida' : 'health'} />{run.vigor}</span>
-                <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Icon name="auto_awesome" size={20} tone="inherit" label={isPt ? 'escudo' : 'shield'} />{run.shield}</span>
+                <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><BonusIcon kind="power" size={20} label={isPt ? 'ataque' : 'attack'} />{run.power}</span>
+                <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><BonusIcon kind="vigor" size={20} label={isPt ? 'vida' : 'health'} />{run.vigor}</span>
+                <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><BonusIcon kind="heal" size={20} label={isPt ? 'escudo' : 'shield'} />{run.shield}</span>
               </span>
             </p>
           )}
@@ -286,7 +293,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', width: '100%' }}>
                 {bonuses.map(b => (
                   <button key={b} type="button" data-rogue-card data-rogue-bonus={b} style={cardStyle} onClick={() => { setNote(null); onChange(applyBonus(run, b)); }}>
-                    <Icon name={BONUS_COPY[b].icon} size={32} tone="inherit" />
+                    <BonusIcon kind={b} size={32} />
                     <span style={{ fontWeight: 700, fontSize: 'var(--sm2-text-sm, 14px)' }}>{t(BONUS_COPY[b])}</span>
                     <span style={{ fontSize: 'var(--sm2-text-xs, 12px)' }}>{isPt ? BONUS_COPY[b].descPt : BONUS_COPY[b].descEn}</span>
                   </button>

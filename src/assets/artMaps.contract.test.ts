@@ -39,6 +39,8 @@ import { ADVENTURE_ART } from '../utils/adventureArt';
 import { REGIONS } from '../data/travessiasCatalog';
 import { DECOR_ART } from '../utils/decorArt';
 import { elementIcon } from '../utils/elementIconArt';
+import { rogueBonusIcon, rogueBonusArtKeys, ROGUE_BONUS_ICON_KEY } from '../utils/rogueBonusArt';
+import { BONUS_KINDS } from '../utils/rogueDungeonSave';
 
 const SRC = path.resolve(process.cwd(), 'src');
 const ASSETS = path.join(SRC, 'assets');
@@ -201,11 +203,27 @@ describe('(c) todo import estático de asset nos mapas `*Art.ts` resolve em disc
   });
 });
 
+describe('bônus da incursão roguelike — BONUS_KINDS ↔ assets/soulmon/dungeon-rogue', () => {
+  it('(a) todo bônus do jogo tem ícone e o ícone existe na pasta', () => {
+    const sem = BONUS_KINDS.filter(k => !rogueBonusIcon(k));
+    expect(sem, `bônus sem ícone: ${sem.join(', ')}`).toEqual([]);
+    const chaves = new Set(ls('soulmon/dungeon-rogue').map(f => f.replace(/^bonus-/, '')));
+    for (const k of BONUS_KINDS) expect(chaves.has(ROGUE_BONUS_ICON_KEY[k]), `${k}: arquivo bonus-${ROGUE_BONUS_ICON_KEY[k]}.png`).toBe(true);
+  });
+  it('(b) o glob enxerga a pasta inteira (12 ícones, estoque incluído) e nada fora do padrão', () => {
+    const arquivos = ls('soulmon/dungeon-rogue');
+    expect(arquivos.every(f => f.startsWith('bonus-')), 'arquivo que o regex do glob não lê').toBe(true);
+    expect(rogueBonusArtKeys().sort()).toEqual(arquivos.map(f => f.replace(/^bonus-/, '')).sort());
+    expect(arquivos.length).toBe(12);
+  });
+});
+
 describe('autoverificação — id inventado não ganha arte', () => {
   it('os mapas por glob devolvem undefined para chave desconhecida', () => {
     expect(emblemArt('nao-existe' as never)).toBeUndefined();
     expect(lineIcon('zzz', 'rookie', 64)).toBeUndefined();
     expect(elementIcon('nao-existe')).toBeUndefined();
     expect(DREAM_ART['dream-nao-existe']).toBeUndefined();
+    expect(rogueBonusIcon('nao-existe')).toBeUndefined();
   });
 });

@@ -956,6 +956,15 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** nenhuma (`ls src/utils/dungeonScenes*.test.ts` vazio).
 **Regra de negócio:** Cada andar da Masmorra sorteia um cenário pintado diferente por run. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/rogueBonusArt.ts`
+**Dono de:** o ícone de cada bônus da incursão roguelike (Calabouço diário), arte P2-02 96² em `assets/soulmon/dungeon-rogue/`.
+**Exports:**
+- `ROGUE_BONUS_ICON_KEY` — bônus do jogo → chave do arquivo (`power`→`ataque`, `vigor`→`vida`, `heal`→`aura-escudo`).
+- `rogueBonusIcon` — URL do ícone de um bônus, ou `undefined` (o consumidor mantém o glifo Material).
+- `rogueBonusArtKeys` — todas as chaves da pasta (os 9 ícones sem bônus correspondente ficam em estoque, sem chamada).
+**Chamado por:** `components/RogueDungeon.tsx` (`BonusIcon`: cartas de escolha e placar de bônus).
+**Régua:** `src/assets/artMaps.contract.test.ts` (bloco "bônus da incursão roguelike").
+
 ### `src/utils/elementIconArt.ts`
 **Dono de:** URL do ícone de um elemento (base, derivado ou neutro).
 **Exports:**
