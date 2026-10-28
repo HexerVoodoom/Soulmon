@@ -63,10 +63,10 @@ describe('LevelUpOverlay — abre e escurece', () => {
     expect(container.querySelector('[data-lvup-pet]')?.getAttribute('src')).toBe('/pet.png');
   });
 
-  it('sem arte instalada: o banner é procedural (texto), funciona hoje', () => {
+  it('com a arte do banner instalada (28/10/2026): a imagem substitui o texto procedural', () => {
     const { container } = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
-    expect(container.querySelector('[data-lvup-banner-text]')?.textContent).toBe('LEVEL UP');
-    expect(container.querySelector('[data-lvup-banner]')).toBeNull();
+    expect(container.querySelector('[data-lvup-banner]')?.getAttribute('src')).toBeTruthy();
+    expect(container.querySelector('[data-lvup-banner-text]')).toBeNull();
   });
 });
 
