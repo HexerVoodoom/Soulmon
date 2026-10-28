@@ -642,3 +642,15 @@ Pares derivados: usam o domínio do 1º componente, exceto `gelo`→gelo, `areia
 **Limite de pool, para decidir depois:** há exatamente **1 criatura por elemento-base** (`NOVOS_DATA`), então
 no tema a Arena mostra a MESMA espécie em Rookie/Champion/Ultra (e repete na rodada 4). Mais variedade pede mais
 linhas de Soulmon por elemento (nova fila, não incluída aqui).
+
+## 20. Selo "novo recorde" do ResultScreen (pedido do dono, 28/10/2026)
+
+**Status:** PAUSADO a pedido do dono (ele está usando o PC; avisa quando liberar). Gerar pelo app ChatGPT desktop (ver `docs/` e a memória `chatgpt-preferido-sobre-gemini`), com alfa real.
+
+| Peça | Qtd | Destino | Formato | Referência a anexar |
+|---|---|---|---|---|
+| Selo/medalha "novo recorde" | 1 | `src/assets/soulmon/icons/icon-record-seal.png` | PNG RGBA 1024x1024 (reduzir com *nearest* se preciso), fundo transparente | `items/item-heart.png`, `icons/icon-trophy-gold.png` (estilo) |
+
+Prompt (EN): "Create a single pixel-art game icon: a round 'NEW RECORD' medal seal. Gold-and-copper circular medal with a small teal crystal gem in the center, two tiny leaf laurels hugging the lower half, a short ribbon with two tails below, a couple of small cyan sparkle stars around it. 16-bit pixel art, crisp hard pixel edges, flat shading with 3 tones per material, dark navy 1px outline, magical-nature mood (arcane, calm, NOT steampunk, no gears), handheld creature-collector UI icon look. Centered, ~80% of the square canvas. TRANSPARENT background with real alpha (no drawn checkerboard, no shadow, no glow halo). No text, letters or numbers."
+
+Conferência: Pillow (`python -I`), prévia em #08191A (nunca magenta/verde). Enquanto não existe, o ResultScreen usa o troféu dourado (`icons/icon-trophy-gold.png`) como selo provisório.
