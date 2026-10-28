@@ -4,7 +4,7 @@
 
 | Feito | Pendente (só você) |
 |---|---|
-| AAB 21 publicado no **teste interno**; login com Google confirmado no Moto G34. **Faixa atual (dono, 20/10/2026): teste fechado, já no ar**; o dono vai divulgar para recrutar testadores. Próximo = **produção** [estado exato da faixa a conferir pelo dono no Play Console] | **Verificar o depósito** da conta bancária nova (Perfil para pagamentos) |
+| AAB 21 publicado no **teste interno**; login com Google confirmado no Moto G34. **Faixa atual (dono, 20/10/2026): teste fechado, já no ar**; o dono vai divulgar para recrutar testadores. Próximo = **produção** [estado exato da faixa a conferir pelo dono no Play Console; no repo, `android/app/build.gradle` está em versionCode 22 / 1.3.0-beta2, então o AAB 21 citado aqui é anterior — não verificável fora do Play Console] | **Verificar o depósito** da conta bancária nova (Perfil para pagamentos) |
 | Ficha da loja EN, ícone, gráfico de destaque, 3 prints, Segurança dos dados, categoria, contato | **E-mails dos 12+ testadores** → Google Group + faixa de teste fechado + `BETA_EMAILS` + `BETA_CLOSED=true` |
 | Chat de IA funcionando (Groq + reserva Gemini) | **Trocar a `GROQ_API_KEY`** (colar sem Ctrl+V cru) |
 | `ASSETLINKS` (arquivo estático), SHAs no Firebase, migrações D1 | **Pub/Sub + RTDN** e `FIREBASE_SERVICE_ACCOUNT` (renovação de assinatura) |

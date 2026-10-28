@@ -1,6 +1,6 @@
 # Backlog de produto (ditado do dono)
 
-> Itens decididos como "depois". Nada aqui está em andamento. Cada item diz de onde veio e o que ele desbloqueia.
+> Itens decididos como "depois". O que está em andamento (28/10/2026) fica em `docs/PEDIDOS-DO-DONO-2026-10-28.md`; aqui só o que foi adiado. Cada item diz de onde veio e o que ele desbloqueia.
 > Regra: o REGISTRO-DE-DECISOES guarda o que foi DECIDIDO; este arquivo guarda o que foi ADIADO.
 
 ## Guilda

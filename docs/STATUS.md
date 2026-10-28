@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 26–28/10/2026 — Beta3 na `versao/1.3.0-beta3` + pedidos do dono de 27–28/10
+>
+> - Beta3 em `main` no commit `d00a760f6` (26/10); a branch `versao/1.3.0-beta3` seguiu com: Biblioteca em 4 abas (Encontrados/Selvagem/Desgarrado/Elemento) e `defeatedElements` no save; vantagem elemental (Combina 3 e Guerra de Guildas a meio efeito, Duelo/Torneio neutros, REGISTRO §177); tela de resultado padrão (Proposta D) nos minijogos; Arena por elemento e Centro de Evolução; 48 folhas de ataque da fase 2; header da Home com inset de topo e botão "Reportar bug"; Soul Barrage com 1 s de invulnerabilidade (`7bdf6d4cc`).
+> - Em andamento e estados item a item: `docs/PEDIDOS-DO-DONO-2026-10-28.md` (Fenda/recompensas, Arena livre, Feira: chefe do clã e desafio, desligados na entrada). Selo de recorde parado (ChatGPT, aguardando o dono liberar o PC).
+> - **Não conferido no aparelho:** inset de topo da Home, sons novos (o Claude não escuta). Base de testes vermelhos herdados do beta3 ainda existe.
+> - Ajustes pequenos (branch `ajustes-pequenos`): `fix(EditModal)` renomear hábito sem edição de dias preserva a agenda (QA-12); comentário do "?" das Conquistas corrigido (§56).
+
 > ## 23/10/2026 — Botão "Gerar Soulmon" com 3 usos para todo testador
 >
 > - Nas Configurações ("Sua conta" e modo Demo), o botão **"Gerar Soulmon" / "Generate Soulmon"** agora aparece para todo usuário do teste fechado com **3 usos** (`MAX_GENERATE_CHARACTER_USES = 3`, chave local `soulmon-generate-character-uses`), independentemente de já ter arte no acervo (`spriteLibrary`), estar com inicial da demo ou em demo local.
