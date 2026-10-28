@@ -3533,7 +3533,7 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 
 **Decisão do dono:** a Arena livre cobre TODOS os elementos: metade das runs vem do pool base (20 elementos), metade do pool combinado (os 138 rookies de elemento combinado do `enemyRoster`, só existem na forma rookie). **Como:** `isComboSeed(seed)` (`strayFoes.ts`, 50% das sementes que não são Desgarradas; Desgarrado nunca é combinado) passa `combo` a `buildArenaRound`: numa run combinada TODOS os slots (fraco, médio, chefe) mostram rookies combinados (nome, 2 elementos, arte `COMBINADOS_ART`); a FORÇA segue sendo do slot (`arenaFoe`), então o chefe de uma run combinada é tão forte quanto o de uma base, só com arte rookie (a 50% pelo §181). O card mostra o 1º elemento (base) do combinado; determinismo, distinção entre cards, no máximo 1 Desgarrado e "card = luta" intactos (mesma `arenaFoesOfSeed`). **Alternativa que perdeu:** só os slots fracos virarem combinados (a rodada 1 é um médio, o card não mostraria o pool novo). **Falsificaria:** chefe rookie combinado parecer "fraco demais" para o jogador (reclamação de arte, não de força). **Rollback:** `COMBO_SEED_CHANCE = 0`.
 
-## 183. Dificuldade das lutas seguidas: Masmorra/Fenda e Calabouço (dono, 28/10/2026)
+## 186. Dificuldade das lutas seguidas: Masmorra/Fenda e Calabouço (dono, 28/10/2026)
 
 **Decisão do dono:** as batalhas estavam fáceis, principalmente as SEGUIDAS (Masmorra, Fenda, Calabouço). Escolha: (a) o inimigo escala por andar/rodada nas lutas seguidas e (b) menos cura entre lutas seguidas. Meta: ~60-70% de vitória nas sequências típicas, sem tornar o início impossível.
 

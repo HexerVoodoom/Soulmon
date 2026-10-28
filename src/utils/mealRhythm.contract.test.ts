@@ -81,7 +81,7 @@ describe('COCÔ: dreno e teto não mudaram; a AGENDA agora garante 2 acordado (R
   });
 });
 
-describe('RECOMPENSA: nada de moeda, energia ou HP pelo convite; só 5 XP de Vínculo na transição (REGISTRO §183)', () => {
+describe('RECOMPENSA: nada de moeda, energia ou HP pelo convite; só 5 XP de Vínculo na transição (REGISTRO §184)', () => {
   it('os atendedores de gesto só escrevem `mealRitual` e o XP de Vínculo, e só quando a janela mudou de estado', () => {
     const i = app.indexOf('const atenderRefeicao = useCallback');
     const trecho = app.slice(i, i + 900);
