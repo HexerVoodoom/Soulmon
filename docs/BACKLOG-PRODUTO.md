@@ -66,3 +66,10 @@
   jogos, arena, masmorra e combate (hoje cada tela dimensiona o sprite por conta própria — medir antes: Home/`CompanionHUD`, `BattleStage`,
   `DungeonGame`, `ArenaGame`). Cuidado: o sprite gerado do Oráculo (acervo) vem em 512² com bbox variável; normalizar pela caixa visível, não
   pelo canvas, senão o "enorme" volta em outra tela.
+
+## Essências dos elementos (ditado do dono, 28/10/2026)
+- **O que é:** todo inimigo derrotado dropa uma **essência do elemento dele**, em qualquer modo: minigames, PvP, PvE (Fenda/Masmorra, Combina 3, Arena, Duelo, Torneio, Guerra). Elemento composto dropa a essência do composto (ex.: pântano dá essência de pântano). O **Pesadelo** dropa essência de **pesadelo** (elemento próprio). Os **chefes da Feira** têm elemento e dropam **mais** essências; quanto mais forte o chefe, mais essência.
+- **Não mexe nas outras recompensas** (Bits, itens, fragmentos, Honra, seiva): a essência é drop ADICIONAL.
+- **Uso:** nenhum por enquanto. Só coletar. O uso vem depois (decisão futura do dono).
+- **Onde aparece:** Laboratório > Arquivo, em uma seção **Essências** logo abaixo da coleção de Sonhos. Lista só as essências com quantidade > 0 (zero não aparece). Cada uma é um ícone + quantidade; ao tocar, mostra só um tooltip com o **nome** da essência (e o ícone e a quantidade).
+- **Pontos em aberto (perguntar ao dono antes de construir):** quantidade base por derrota e a escala por força do inimigo; se há teto diário (anti-farm na Masmorra idle); se a descida automática (`dungeonAway`) também coleta; ícones (a proposta é derivar do ícone do elemento, `elementIcon`, com uma gota/cristal por cima, em vez de gerar 211 peças + Pesadelo); campo novo no save (`essences: Record<elementId, number>`, leitura tolerante, espelho no servidor com teto de ganho por dia/ação, regras de Compatibilidade do CLAUDE.md); relação com a `defeatedElements` do Dex (a essência não desbloqueia nada; o Dex continua por vitória).
