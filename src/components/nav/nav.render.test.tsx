@@ -158,11 +158,11 @@ describe('AreaTopBar', () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
-  it('14/10/2026: casinha e ícone do Mapa SEM círculo — ícone pelado, alvo de toque ≥ 44, SEM brilho externo (L2)', () => {
+  it('14/10/2026: ícone do Mapa SEM círculo (pelado); a casinha VOLTOU a ter o anel (28/10/2026) — ícone pelado, alvo de toque ≥ 44, SEM brilho externo (L2)', () => {
     for (const [icon, side] of [['home', 'left'], ['mapa', 'right']] as const) {
       const r = renderWithCss(<CornerLink icon={icon} side={side} label="X" onClick={() => {}} />);
       const btn = r.container.querySelector('button') as HTMLButtonElement;
-      expect(r.container.querySelector('[data-corner-ring]')).toBeNull();
+      expect(!!r.container.querySelector('[data-corner-ring]')).toBe(icon === 'home');
       expect(btn.style.background).toBe('transparent');
       expect(btn.style.border === '' || btn.style.border === 'none' || btn.style.border.startsWith('medium')).toBe(true);
       expect(parseInt(btn.style.width, 10)).toBeGreaterThanOrEqual(44);
@@ -179,7 +179,7 @@ describe('AreaTopBar', () => {
     expect(caixa.style.top).toContain('safe-area-inset-top');
     // o jsdom normaliza `calc()`: compara pelo MESMO caminho de normalização
     const norm = (prop: 'top' | 'left', v: string) => { const el = document.createElement('div'); el.style[prop] = v; return el.style[prop]; };
-    expect(casinha.container.querySelector('[data-corner-ring]')).toBeNull(); // sem círculo (14/10/2026)
+    expect(casinha.container.querySelector('[data-corner-ring]')).not.toBeNull(); // anel de volta na casinha (28/10/2026)
     expect(caixa.style.width).toBe('56px');
     for (const overScene of [true, false]) {
       const r = renderWithCss(<AreaTopBar title="T" backLabel="Voltar" onBack={() => {}} icon={overScene ? 'map' : 'arrow_back'} overScene={overScene} />);

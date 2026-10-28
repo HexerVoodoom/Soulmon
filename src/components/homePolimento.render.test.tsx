@@ -23,13 +23,14 @@ describe('círculos: só o ícone', () => {
       <MissionsLink mark="available" label="Daily" markLabel="Quest" onClick={() => {}} />
       <AvisosLink count={2} row={2} label="Notices" countLabel="2" onClick={() => {}} />
     </>);
-    expect(container.querySelector('[data-corner-ring]')).toBeNull();
+    // 28/10/2026: só a casinha do Mapa tem anel; o Mapa, as missões e os Avisos seguem pelados.
+    expect(container.querySelectorAll('[data-corner-ring]').length).toBe(1);
     for (const b of Array.from(container.querySelectorAll('button'))) {
       expect(b.style.background).toBe('transparent');
       expect(parseInt(b.style.width, 10)).toBeGreaterThanOrEqual(44);
       expect(parseInt(b.style.height, 10)).toBeGreaterThanOrEqual(44);
       for (const el of Array.from(b.querySelectorAll<HTMLElement>('span'))) {
-        if (el.hasAttribute('data-avisos-seal')) continue; // o ponto do selo não é círculo de fundo
+        if (el.hasAttribute('data-avisos-seal') || el.hasAttribute('data-corner-ring')) continue; // o ponto do selo não é círculo de fundo
         expect(el.style.border).toBe('');
         expect(el.style.backgroundColor).toBe('');
       }

@@ -158,9 +158,9 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   const [busyId, setBusyId] = useState<string | null>(null);
   const [tabState, setTab] = useState<'directory' | 'friends' | 'coop'>('directory');
   const tab = view ?? tabState;
-  /** 27/10/2026 (dono): a Biblioteca do Hall tem 4 abas — Encontrados (a lista de sempre), Selvagem, Desgarrado e Elemento. */
+  /** 27/10/2026 (dono): a Biblioteca do Hall tem 3 abas — Encontrados (a lista de sempre), Selvagens (Selvagem + Desgarrado na mesma aba) e Elemento. */
   const hallTabs = view === 'directory';
-  const [libTab, setLibTab] = useState<'found' | 'wild' | 'stray' | 'element'>('found');
+  const [libTab, setLibTab] = useState<'found' | 'wild' | 'element'>('found');
   /** Aba que NÃO é a lista de jogadores: some busca, carregamento, vazio e a grade de encontrados. */
   const outroPainel = hallTabs && libTab !== 'found';
   const [giftedToday, setGiftedToday] = useState<Set<string>>(new Set());
@@ -335,8 +335,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
 
   const LIB_TABS = [
     { key: 'found' as const, label: isPt ? 'Encontrados' : 'Encountered' },
-    { key: 'wild' as const, label: isPt ? 'Selvagem' : 'Wild' },
-    { key: 'stray' as const, label: isPt ? 'Desgarrado' : 'Stray' },
+    { key: 'wild' as const, label: isPt ? 'Selvagens' : 'Wild' },
     { key: 'element' as const, label: isPt ? 'Elemento' : 'Element' },
   ];
 
@@ -473,7 +472,15 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       {/* ── Selvagem / Desgarrado / Elemento (27/10/2026) ── */}
       {outroPainel && (
         <div role="tabpanel" id="sm2-libpanel" aria-labelledby={'sm2-libtab-' + libTab} data-library-panel={libTab}>
-          {(libTab === 'wild' || libTab === 'stray') && <BestiaryCollection seen={bestiary} mode={libTab} language={language} />}
+          {libTab === 'wild' && (
+            <>
+              {/* 28/10/2026 (dono): Selvagem e Desgarrado moram na MESMA aba, em duas seções. */}
+              <h3 className="sm2-lib-s" style={{ margin: '0 0 6px', fontWeight: 600 }}>{isPt ? 'Selvagem' : 'Wild'}</h3>
+              <BestiaryCollection seen={bestiary} mode="wild" language={language} />
+              <h3 className="sm2-lib-s" style={{ margin: '16px 0 6px', fontWeight: 600 }}>{isPt ? 'Desgarrado' : 'Stray'}</h3>
+              <BestiaryCollection seen={bestiary} mode="stray" language={language} />
+            </>
+          )}
           {libTab === 'element' && <ElementDex defeated={defeatedElements} language={language} />}
         </div>
       )}

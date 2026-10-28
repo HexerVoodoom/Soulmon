@@ -24,18 +24,18 @@ const render = (over: Partial<Parameters<typeof LibraryPage>[0]> = {}, language:
 describe('LibraryPage — abas do Hall', () => {
   beforeEach(() => { vi.useFakeTimers({ shouldAdvanceTime: true }); });
 
-  it('mostra as 4 abas (EN e PT), a primeira ativa, e Encontrados segue com a busca', async () => {
+  it('mostra as 3 abas (EN e PT), a primeira ativa, e Encontrados segue com a busca', async () => {
     render();
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
     const tabs = screen.getAllByRole('tab');
-    expect(tabs.map(t => t.textContent)).toEqual(['Encountered', 'Wild', 'Stray', 'Element']);
+    expect(tabs.map(t => t.textContent)).toEqual(['Encountered', 'Wild', 'Element']);
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
     expect(screen.getByRole('textbox')).toBeTruthy();
   });
 
-  it('PT: Encontrados · Selvagem · Desgarrado · Elemento', () => {
+  it('PT: Encontrados · Selvagens · Elemento', () => {
     render({}, 'pt-BR');
-    expect(screen.getAllByRole('tab').map(t => t.textContent)).toEqual(['Encontrados', 'Selvagem', 'Desgarrado', 'Elemento']);
+    expect(screen.getAllByRole('tab').map(t => t.textContent)).toEqual(['Encontrados', 'Selvagens', 'Elemento']);
   });
 
   it('teclado: seta para a direita troca de aba', () => {
@@ -49,14 +49,14 @@ describe('LibraryPage — abas do Hall', () => {
     render({ bestiary: [vistoSelvagem.key] });
     fireEvent.click(screen.getByRole('tab', { name: 'Wild' }));
     const totalSelvagem = ENEMY_ROSTER.filter(e => !isStrayFoe(e.stage)).length;
-    expect(document.querySelector('[data-bestiary-count]')!.textContent).toBe(`1 / ${totalSelvagem}`);
-    expect(document.querySelectorAll('[data-bestiary-cell]').length).toBe(totalSelvagem);
+    const totalDesgarrado = ENEMY_ROSTER.filter(e => isStrayFoe(e.stage)).length;
+    // Selvagem e Desgarrado moram na MESMA aba (28/10/2026): duas seções, cada uma com a sua contagem.
+    expect(document.querySelector('[data-bestiary="wild"] [data-bestiary-count]')!.textContent).toBe(`1 / ${totalSelvagem}`);
+    expect(document.querySelectorAll('[data-bestiary="wild"] [data-bestiary-cell]').length).toBe(totalSelvagem);
     expect(document.querySelector(`[data-bestiary-cell="${vistoSelvagem.key}"]`)!.getAttribute('data-seen')).toBe('1');
     expect(document.body.textContent).toContain('???');
-    fireEvent.click(screen.getByRole('tab', { name: 'Stray' }));
-    const totalDesgarrado = ENEMY_ROSTER.filter(e => isStrayFoe(e.stage)).length;
-    expect(document.querySelector('[data-bestiary-count]')!.textContent).toBe(`0 / ${totalDesgarrado}`);
-    expect(document.querySelector(`[data-bestiary-cell="${vistoSelvagem.key}"]`)).toBeNull();
+    expect(document.querySelector('[data-bestiary="stray"] [data-bestiary-count]')!.textContent).toBe(`0 / ${totalDesgarrado}`);
+    expect(document.querySelector(`[data-bestiary="stray"] [data-bestiary-cell="${vistoSelvagem.key}"]`)).toBeNull();
     expect(document.body.textContent).not.toMatch(/%|faltam|left to find/i);
   });
 

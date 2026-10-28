@@ -1,5 +1,5 @@
 import { PixelIcon } from '../ui/PixelIcon';
-import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE } from './cornerAnchor';
+import { CORNER_BOX, CORNER_BOX_TOP, CORNER_RING_STYLE, CORNER_SIDE } from './cornerAnchor';
 
 /**
  * O LINK DE CANTO — a única navegação entre as duas telas de topo.
@@ -8,7 +8,8 @@ import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE } from './cornerAnchor';
  * esquerdo (B2, 02/10/2026: antes ficavam embaixo). Não é barra: é um botão só, fixo no
  * canto, abaixo da área segura do aparelho (o anel de 44 cai em y=12, a linha do header da Home).
  *
- * ⚠️ **Sem anel (14/10/2026, pedido do dono):** o círculo em volta da casinha e do ícone do Mapa (C14/H2) saiu — o ícone
+ * ⚠️ **Anel só na casinha do Mapa (28/10/2026, pedido do dono):** voltou o círculo (`CORNER_RING_STYLE`) em volta da casinha; o ícone do Mapa na Home segue pelado.
+ * (Histórico) **Sem anel (14/10/2026, pedido do dono):** o círculo em volta da casinha e do ícone do Mapa (C14/H2) saiu — o ícone
  * lê sobre a cena sem brilho externo (removido na rodada 6, L2) e o alvo de toque (56px, ≥ 44) é o mesmo. O anel segue no voltar das áreas e nos avisos.
  *
  * **Ícone pelado, 32px (papel `nav` da escala, tokens.md §6.1)** — a regra
@@ -44,7 +45,11 @@ export function CornerLink({ icon, label, side, onClick }: {
         color: 'var(--sm2-primary-ink)',
       }}
     >
-      <PixelIcon name={icon} size={32} />
+      {icon === 'home' ? (
+        <span data-corner-ring style={CORNER_RING_STYLE}><PixelIcon name={icon} size={32} /></span>
+      ) : (
+        <PixelIcon name={icon} size={32} />
+      )}
     </button>
   );
 }
