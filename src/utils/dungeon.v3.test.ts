@@ -28,7 +28,7 @@ vi.setConfig({ testTimeout: 180_000 });
 const DECLARED = {
   hp: [0.945, 0.95, 0.955, 0.955, 0.96, 0.965],
   power: [0.026, 0.038, 0.04, 0.06, 0.089, 0.096],
-  growth: { hp: 0.14, power: 0.11 },
+  growth: { hp: 0.14, power: 0.16 }, // 28/10/2026 (dono: "batalhas fáceis"): power 0.11 → 0.16, medido em winrateModos.sim.test.ts
   /** Floor of the median time per enemy (the story's 20 s). */
   durationFloor: 20,
 };
@@ -119,12 +119,12 @@ describe('AC5 + AC6. the run: duration per enemy and the ladder of floors (same 
       expect(m, `floor ${i + 1}`).toBeLessThanOrEqual(29);
     }
   });
-  it('AC6: floors 1-4 ~98-100%, floor 5 ~30-40%, floor 6 ~0% (the wall is the same for every level)', () => {
+  it('AC6: floors 1-3 ~98-100%, floor 4 ~60-72%, floor 5 ~0% (the wall is the same for every level; moved one floor up on 28/10/2026)', () => {
     console.log(`[AC6] reach: ${[1, 2, 3, 4, 5, 6].map((n) => `${n}:${pct(reached(n))}`).join(' ')}`);
-    for (const n of [1, 2, 3, 4]) expect(reached(n), `floor ${n}`).toBeGreaterThanOrEqual(0.97);
-    expect(reached(5)).toBeGreaterThanOrEqual(0.28);
-    expect(reached(5)).toBeLessThanOrEqual(0.42);
-    expect(reached(6)).toBeLessThanOrEqual(0.03);
+    for (const n of [1, 2, 3]) expect(reached(n), `floor ${n}`).toBeGreaterThanOrEqual(0.97);
+    expect(reached(4)).toBeGreaterThanOrEqual(0.6);
+    expect(reached(4)).toBeLessThanOrEqual(0.72);
+    expect(reached(5)).toBeLessThanOrEqual(0.03);
   });
   it('RED: a floor growth in power of 3 knocks floor 2 down (the gate can fail)', () => {
     const wall = Array.from({ length: 400 }, (_, s) => simulateDungeonRunV3({ ...cell(s), knobs: { foe: { growth: { hp: DUNGEON_FLOOR_GROWTH.hp, power: 3 } } } }, s, 'media', 3));
@@ -144,10 +144,10 @@ describe('AC10. skill (P4): "does not act" × "plays well" ≤ 25pp, measured in
     for (let s = 0; s < N; s++) w += simulateDungeonRunV3({ ...cell(s), ...patch }, s, skill, floors).floorsCleared / floors;
     return w / N;
   };
-  /** Share of the runs that FINISH the 5 floors (the analogue of "run won" of the Arena). */
+  /** Share of the runs that FINISH the 4 floors (the wall since 28/10/2026; the analogue of "run won" of the Arena). */
   const finishes = (skill: DungeonSkill, patch: Record<string, unknown> = {}) => {
     let w = 0;
-    for (let s = 0; s < N; s++) w += +(simulateDungeonRunV3({ ...cell(s), ...patch }, s, skill, 5).floorsCleared >= 5);
+    for (let s = 0; s < N; s++) w += +(simulateDungeonRunV3({ ...cell(s), ...patch }, s, skill, 4).floorsCleared >= 4);
     return w / N;
   };
   it('the story metric (ladder of 3 floors) and the mean share of the 5 floors: the gap is ≤ 25pp and more skill never loses', () => {

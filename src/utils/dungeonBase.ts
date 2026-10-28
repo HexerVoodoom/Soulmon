@@ -86,7 +86,7 @@ export const DUNGEON_SLOTS: readonly { readonly hp: number; readonly power: numb
 ];
 
 /** Per-floor growth of the enemy: HP × (1 + hp·(f−1)), strength × (1 + power·(f−1)). The ladder climbs in HITS, not in %. */
-export const DUNGEON_FLOOR_GROWTH = { hp: 0.14, power: 0.11 } as const;
+export const DUNGEON_FLOOR_GROWTH = { hp: 0.14, power: 0.16 } as const;
 
 /** The F2 floor (§2.3): the weakest enemy takes at least 3 displayed hits from the strongest attacker. */
 export const DUNGEON_MIN_HITS = 3;

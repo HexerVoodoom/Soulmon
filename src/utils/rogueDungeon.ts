@@ -17,7 +17,7 @@ import { mulberry32 } from './combate/rng';
 import type { Combatant } from './combate/curve';
 
 export * from './rogueDungeonSave';
-import { ROGUE_FLOORS, ROGUE_PER_FLOOR, ROGUE_MAX_STEPS, ROGUE_COMBAT_EVERY, ROGUE_FLOOR_BONUS, ROGUE_MAX_SCORE, PATH_KINDS, BONUS_KINDS, emptyRun, type PathKind, type BonusKind, type RogueRun } from './rogueDungeonSave';
+import { ROGUE_FOE_RAMP, ROGUE_FLOORS, ROGUE_PER_FLOOR, ROGUE_MAX_STEPS, ROGUE_COMBAT_EVERY, ROGUE_FLOOR_BONUS, ROGUE_MAX_SCORE, PATH_KINDS, BONUS_KINDS, emptyRun, type PathKind, type BonusKind, type RogueRun } from './rogueDungeonSave';
 
 /** A incursão de HOJE: a guardada se for do mesmo dia, senão uma nova (sem bônus). */
 export const runForDay = (saved: RogueRun | undefined, day: string): RogueRun => (saved && saved.day === day ? saved : emptyRun(day));
@@ -105,7 +105,8 @@ export interface RogueFoeRef { floor: number; slot: number }
 export function foeRefFor(step: number): RogueFoeRef {
   const f = floorOf(step);
   const k = stepInFloor(step);
-  return { floor: f + Math.floor(k / 4), slot: Math.min(5, f - 1 + (k === ROGUE_PER_FLOOR - 1 ? 2 : k >= 4 ? 1 : 0)) };
+  const rampa = ROGUE_FOE_RAMP.flat + (ROGUE_FOE_RAMP.stepsPerFloor > 0 ? Math.floor(step / ROGUE_FOE_RAMP.stepsPerFloor) : 0);
+  return { floor: f + Math.floor(k / 4) + rampa, slot: Math.min(5, f - 1 + (k === ROGUE_PER_FLOOR - 1 ? 2 : k >= 4 ? 1 : 0)) };
 }
 
 const RING_GRADES: readonly RingGrade[] = ['ruim', 'bom', 'otimo'];

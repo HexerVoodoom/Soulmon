@@ -14,6 +14,13 @@ export const PATH_KINDS: readonly PathKind[] = ['combat', 'puzzle', 'minigame', 
 export const BONUS_KINDS: readonly BonusKind[] = ['power', 'vigor', 'heal'];
 
 /** Cada `power` = +6% ATK, cada `vigor` = +10% HP, cada `heal` = escudo de 15% do HP no próximo combate. */
+/**
+ * ESCALA DO INIMIGO nas lutas SEGUIDAS do Calabouço (dono, 28/10/2026: "batalhas fáceis, principalmente as seguidas"): além do andar,
+ * o inimigo ganha +1 "andar de golpes" (`dungeonFoe`) a cada `stepsPerFloor` passos da incursão (0 = sem escala, o desenho anterior) e
+ * `flat` andares fixos. Dono único; medido por `winrateModos.sim.test.ts` (meta: ~60-70% de incursões completas).
+ */
+export const ROGUE_FOE_RAMP = { stepsPerFloor: 3.1, flat: 0 } as const;
+
 export const POWER_STEP = 0.06;
 export const VIGOR_STEP = 0.1;
 export const HEAL_SHIELD = 0.15;

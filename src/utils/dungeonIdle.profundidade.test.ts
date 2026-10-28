@@ -27,7 +27,7 @@ describe('constantes', () => {
   it('1 de energia por camada, 999 camadas, margem de 6, marco a cada 5', () => {
     expect(DUNGEON_ENERGY_PER_LAYER).toBe(1);
     expect(DUNGEON_MAX_LAYER).toBe(999);
-    expect(DUNGEON_CAP_MARGIN).toBe(6);
+    expect(DUNGEON_CAP_MARGIN).toBe(5);
     expect(DUNGEON_MILESTONE_FLOOR).toBe(5);
   });
   it('orçamento (REGISTRO §30): o leve (~2 de energia/dia) faz 2 camadas; o máximo do estágio paga 8–12, sem comer além do que as tarefas dão', () => {

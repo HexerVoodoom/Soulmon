@@ -117,8 +117,8 @@ export const DUNGEON_ENERGY_PER_LAYER = 1;
 /** A camada mais funda que existe. */
 export const DUNGEON_MAX_LAYER = 999;
 
-/** Camadas além da zona de conforto que o teto do Lv deixa tentar: a parede medida cai entre +4 e +6 (média 5,35). */
-export const DUNGEON_CAP_MARGIN = 6;
+/** Camadas além da zona de conforto que o teto do Lv deixa tentar: a parede medida cai em +3 a +4 (média 3,8, desde 28/10/2026; era +4 a +6); sobra 1 camada de folga. */
+export const DUNGEON_CAP_MARGIN = 5;
 
 /** O Lv mais alto do combate (ultra no topo): é nele que a zona de conforto chega à camada 999. */
 const TOP_LEVEL = STAGE_LEVEL_CAPS[STAGE_LEVEL_CAPS.length - 1];

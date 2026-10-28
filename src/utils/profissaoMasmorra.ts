@@ -43,7 +43,7 @@ export interface JeitoNaMasmorra {
 
 export const JEITO_PADRAO: JeitoNaMasmorra = {
   hp: 1, dmg: 1, perfeito: 0.92, tempoDefesaExtra: 0, velocidadeAtaque: 1, velocidadeDefesa: 1,
-  curaAndar: 0.25, reducaoDano: 0, contraAtaque: 1, atravessaGuarda: 0,
+  curaAndar: 0.185, reducaoDano: 0, contraAtaque: 1, atravessaGuarda: 0,
 };
 
 export interface ProfissaoNaMasmorra {
@@ -61,7 +61,7 @@ export const PROFISSAO_MASMORRA: Record<string, ProfissaoNaMasmorra> = {
   curtidor: { jeito: { reducaoDano: 1 }, frase: { pt: 'Couro grosso: cada golpe dói um pouco menos.', en: 'Thick hide: every hit stings a little less.' } },
   encantador: { jeito: { atravessaGuarda: 0.5 }, frase: { pt: 'Atravessa metade da guarda do outro.', en: 'Cuts through half of the other’s guard.' } },
   escriba: { jeito: { velocidadeAtaque: 0.9 }, frase: { pt: 'Lê o próprio ritmo: a barra de ataque anda mais devagar.', en: 'Reads its own rhythm: the attack bar moves slower.' } },
-  cozinheiro: { jeito: { curaAndar: 0.35 }, frase: { pt: 'Recupera mais ao limpar uma camada.', en: 'Recovers more when a layer is cleared.' } },
+  cozinheiro: { jeito: { curaAndar: 0.3 }, frase: { pt: 'Recupera mais ao limpar uma camada.', en: 'Recovers more when a layer is cleared.' } },
   luthier: { jeito: { velocidadeDefesa: 0.9 }, frase: { pt: 'Ouve o golpe vindo: defende com mais firmeza.', en: 'Hears the blow coming: defends more firmly.' } },
   cartografo: { jeito: { velocidadeAtaque: 0.95, velocidadeDefesa: 0.95 }, frase: { pt: 'Conhece as camadas: defende com um pouco mais de firmeza.', en: 'Knows the layers: defends a little more firmly.' } },
 };

@@ -25,7 +25,7 @@ const cell = (s: number) => ({
 describe('jeitoParaPve: the mapping (one owner)', () => {
   it('the default craft is neutral', () => {
     expect(jeitoParaPve(JEITO_PADRAO)).toEqual({
-      hp: 1, basico: 1, cast: 1, perfeito: 0.92, defesaBonus: 0, recebido: 1, contra: 0.5, cura: 0.25,
+      hp: 1, basico: 1, cast: 1, perfeito: 0.92, defesaBonus: 0, recebido: 1, contra: 0.5, cura: 0.185,
     });
   });
   it('each field lands on its hook', () => {

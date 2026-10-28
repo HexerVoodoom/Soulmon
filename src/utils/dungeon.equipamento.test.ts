@@ -83,7 +83,7 @@ describe('2. o teto de 5% pela razão das médias (HP×3, núcleo real)', () => 
   });
 });
 
-describe('3. a Masmorra com equipamento (andares 1-4, andar 5, andar 6, duração, habilidade)', () => {
+describe('3. a Masmorra com equipamento (andares 1-3, andar 4 = a parede desde 28/10/2026, andar 5, duração, habilidade)', () => {
   const N = 800;
   const reach = (bonus: AttrBonus) => {
     const runs = Array.from({ length: N }, (_, s) => simulateDungeonRunV3({ ...cell(s), bonus }, s, 'media', 6));
@@ -94,24 +94,24 @@ describe('3. a Masmorra com equipamento (andares 1-4, andar 5, andar 6, duraçã
   const rSpd = reach(SO_SPD);
   const rCheio = reach(CHEIO_TALENTO);
 
-  it('DEF e SPD mexem na Masmorra (RED: sem o canal o andar 5 ficaria igual ao sem equipamento)', () => {
-    console.log(`[PR12a andar 5] nada ${pct(rNada(5))} · só DEF ${pct(rDef(5))} · só SPD ${pct(rSpd(5))} · cheio+talento ${pct(rCheio(5))}`);
-    expect(rDef(5)).toBeGreaterThan(rNada(5) + 0.03);
-    expect(rSpd(5)).toBeGreaterThan(rNada(5) + 0.03);
+  it('DEF e SPD mexem na Masmorra (RED: sem o canal o andar 4 ficaria igual ao sem equipamento)', () => {
+    console.log(`[PR12a andar 4] nada ${pct(rNada(4))} · só DEF ${pct(rDef(4))} · só SPD ${pct(rSpd(4))} · cheio+talento ${pct(rCheio(4))}`);
+    expect(rDef(4)).toBeGreaterThan(rNada(4) + 0.03);
+    expect(rSpd(4)).toBeGreaterThan(rNada(4) + 0.03);
   });
-  it('com equipamento cheio: andares 1-4 seguem ~100% e o andar 6 segue ~0% (a parede do andar 5 sobe: reportado)', () => {
-    for (const n of [1, 2, 3, 4]) expect(rCheio(n), `andar ${n}`).toBeGreaterThanOrEqual(0.97);
-    expect(rCheio(6)).toBeLessThanOrEqual(0.03);
-    expect(rCheio(5)).toBeGreaterThan(rNada(5));
+  it('com equipamento cheio: andares 1-3 seguem ~100% e o andar 5 segue ~0% (a parede do andar 4 sobe: reportado)', () => {
+    for (const n of [1, 2, 3]) expect(rCheio(n), `andar ${n}`).toBeGreaterThanOrEqual(0.97);
+    expect(rCheio(5)).toBeLessThanOrEqual(0.03);
+    expect(rCheio(4)).toBeGreaterThan(rNada(4));
   });
-  it('o jogador SEM equipamento segue nas faixas do dono (andar 5: 30-40%)', () => {
-    expect(rNada(5)).toBeGreaterThanOrEqual(0.28);
-    expect(rNada(5)).toBeLessThanOrEqual(0.42);
+  it('o jogador SEM equipamento segue nas faixas do dono (andar 4: 60-72%, meta de 28/10/2026)', () => {
+    expect(rNada(4)).toBeGreaterThanOrEqual(0.6);
+    expect(rNada(4)).toBeLessThanOrEqual(0.72);
   });
   it('FINDING (reportado ao dono, não recalibrado): habilidade ao concluir — sem equipamento, escalar antigo e canal novo', () => {
     const concluiu = (skill: DungeonSkill, bonus: number | AttrBonus) => {
       let w = 0;
-      for (let s = 0; s < 1200; s++) w += +(simulateDungeonRunV3({ ...cell(s), bonus }, s, skill, 5).floorsCleared >= 5);
+      for (let s = 0; s < 1200; s++) w += +(simulateDungeonRunV3({ ...cell(s), bonus }, s, skill, 4).floorsCleared >= 4);
       return w / 1200;
     };
     const gap = (bonus: number | AttrBonus) => concluiu('boa', bonus) - concluiu('nenhuma', bonus);
