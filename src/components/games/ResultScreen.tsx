@@ -11,6 +11,7 @@
  */
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from 'react';
 import { GameVisor, VisorSprite, VisorSparks } from './GameKit';
+import { PixelMeter } from '../pixel/PixelKit';
 import { BitsAmount } from '../ui/BitsAmount';
 import { sm2Button, sm2Hint } from '../form/FormKit';
 import { CURRENCIES, emblemStyle } from '../../utils/currencies';
@@ -41,8 +42,20 @@ export type ResultLedgerRow =
   | { key: string; kind: 'node'; label: string; node: ReactNode }
   | { key: string; kind: 'text'; label: string };
 
+/** Variante `boss` (Feira do Chefe): o herói é a barra do POOL do clã descendo (só agregado, nunca por membro). */
+export interface ResultPool {
+  /** Rótulo de 12 px acima da barra ("Clan pool"). */
+  label: string;
+  /** Porcentagem 0..100 antes e depois do golpe. */
+  before: number;
+  after: number;
+}
+
 export interface ResultScreenProps {
   language: Language;
+  /** `boss` = a variante da Feira do Chefe: `pool` ocupa o lugar do herói. Ausente = a tela padrão. */
+  kind?: 'boss';
+  pool?: ResultPool;
   outcome: ResultOutcome;
   /** Nome do jogo, na barra (sem seta de voltar). */
   gameName: string;
@@ -154,6 +167,21 @@ function HeroNumber({ value, active }: { value: number; active: boolean }) {
 /** 7+ dígitos cai para 24 px (nunca abaixo, nunca abreviar). */
 const heroSize = (v: number | string): string => (String(v).replace(/\D/g, '').length >= 7 ? 'var(--sm2-text-xl)' : 'var(--sm2-text-2xl)');
 
+/** O herói da variante `boss`: a barra do pool desce de `before` a `after` (a transição CSS some em movimento reduzido). */
+function PoolHero({ pool, on }: { pool: ResultPool; on: boolean }) {
+  const clamp = (n: number) => Math.round(Math.min(100, Math.max(0, n)));
+  const shown = on ? clamp(pool.after) : clamp(pool.before);
+  return (
+    <div aria-hidden="true" data-result-hero data-result-pool style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+        <span style={{ ...sm2Hint, fontWeight: 500 }}>{pool.label}</span>
+        <span className="sm2-num" data-result-pool-pct style={{ fontSize: 'var(--sm2-text-md)', fontWeight: 600 }}>{shown}%</span>
+      </div>
+      <PixelMeter ratio={shown / 100} tone="gold" height={16} label={pool.label} />
+    </div>
+  );
+}
+
 const MOOD: Record<ResultOutcome, string> = { record: 'happy', win: 'happy', calm: 'calm', tired: 'tired' };
 const MOOD_CLASS: Record<string, string> = { happy: 'sm-result-visor--happy', calm: 'sm-result-visor--calm', tired: 'sm-result-visor--tired' };
 
@@ -172,6 +200,7 @@ export function ResultScreen(p: ResultScreenProps) {
   const summaryText = [
     p.title, p.line,
     p.hero ? `${p.hero.label}: ${p.hero.value}` : '',
+    p.kind === 'boss' && p.pool ? `${p.pool.label}: ${Math.round(p.pool.after)}%` : '',
     record ? p.recordNote : '',
     ...ledger.map(r => r.kind === 'bits' ? `${r.value} Bits` : r.kind === 'honor' ? `+${r.value} ${honorName}` : r.kind === 'item' ? `${r.label}${r.amount ? ` ×${r.amount}` : ''}` : r.label),
     ledger.length === 0 ? p.emptyLedgerLine : '',
@@ -207,6 +236,7 @@ export function ResultScreen(p: ResultScreenProps) {
     <div
       data-result-screen
       data-result-outcome={p.outcome}
+      data-result-kind={p.kind}
       data-result-step={step}
       data-testid={p.testId}
       onClick={onSkipTap}
@@ -259,6 +289,8 @@ export function ResultScreen(p: ResultScreenProps) {
               </div>
             </div>
           )}
+
+          {p.kind === 'boss' && p.pool && <PoolHero pool={p.pool} on={step >= 1} />}
 
           {record && p.recordNote && (
             <div aria-hidden="true" className={stageCls(2)} data-result-record style={{ fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-sm)', fontWeight: 600, color: 'var(--sm2-gold-ink)', textAlign: 'center' }}>

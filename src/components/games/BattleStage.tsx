@@ -117,6 +117,8 @@ export interface StageLayout {
   me: Spot; foes: Spot[]; plateH: number; platHalf: (s: Spot) => number;
   /** Altura do bloco de barras (HP + energia) que fica EM CIMA de cada lutador. */
   barsH: number;
+  /** Só no modo `boss`: onde mora a barra grande do pool do clã (topo do campo). Ausente nos outros modos. */
+  boss?: { barTop: number; barH: number; barW: number };
 }
 
 const PLATE_H = 14;
@@ -127,6 +129,13 @@ const BARS_LIFT = 2;
 const STAGE_EL_ICON_W = 44;
 /** Quanto do sprite fica acima dos pés (o resto é a base). */
 const SPRITE_TOP = 0.94;
+/** Modo `boss` (Feira do Chefe): a barra do pool mora no topo do campo e o chefe começa logo abaixo. */
+const BOSS_BAR_TOP = 4;
+const BOSS_BAR_H = 54;
+/** Tamanhos de caixa do chefe (arte 512×512): 1×, 1/2× e 1/4× — escala INTEIRA, o `pixelated` fica nítido. */
+const BOSS_SIZES = [128, 256, 512] as const;
+/** Alvo da largura do chefe (fração da largura do campo). */
+const BOSS_W_TARGET = 0.68;
 
 /**
  * Onde cada um fica, em px, dentro da CAIXA DO CAMPO de `w × h`. `x,y` é o centro
@@ -135,7 +144,7 @@ const SPRITE_TOP = 0.94;
  * menores (0,6× com um, 0,5× com vários), escalonados no "fundo" da cena. As barras de HP e energia
  * ficam EM CIMA de cada um (`barsH`).
  */
-export function stageLayout(w: number, h: number, nFoes: number): StageLayout {
+export function stageLayout(w: number, h: number, nFoes: number, boss = false): StageLayout {
   const meSize = Math.round(Math.max(110, Math.min(300, w * 0.64, h * 0.38)));
   const foeSize = Math.round(meSize * (nFoes <= 1 ? 0.66 : 0.5));
   const platHalf = (s: Spot) => Math.round(s.size * 0.1);
@@ -144,6 +153,17 @@ export function stageLayout(w: number, h: number, nFoes: number): StageLayout {
     y: Math.round(h - meSize * 0.1 - 8),
     size: meSize,
   };
+  if (boss) {
+    // Um só inimigo, enorme (~65-72% da largura, escala inteira da arte 512), centrado e na METADE DE CIMA, abaixo da barra do pool.
+    const want = w * BOSS_W_TARGET;
+    const bossSize = BOSS_SIZES.reduce((best, c) => (Math.abs(c - want) < Math.abs(best - want) ? c : best), BOSS_SIZES[0]);
+    const top = BOSS_BAR_TOP + BOSS_BAR_H + BARS_LIFT;
+    const foe: Spot = { x: Math.round(w / 2), y: Math.round(top + bossSize * SPRITE_TOP), size: bossSize };
+    // O seu Soulmon fica PEQUENO diante dele (no máx. 62% do chefe), mantendo o canto de baixo à esquerda.
+    const meSmall = Math.min(meSize, Math.round(bossSize * 0.62));
+    const meBoss: Spot = { x: Math.round(Math.max(w * 0.32, meSmall / 2 + 4)), y: Math.round(h - meSmall * 0.1 - 8), size: meSmall };
+    return { me: meBoss, foes: [foe], plateH: PLATE_H, platHalf, barsH: BARS_H, boss: { barTop: BOSS_BAR_TOP, barH: BOSS_BAR_H, barW: Math.round(Math.min(w - 16, 320)) } };
+  }
   const fr: Array<[number, number]> = nFoes <= 1
     ? [[0.7, 0.42]]
     : nFoes === 2
@@ -699,7 +719,38 @@ export interface BattleStageProps {
   foeSpecialLabel?: (foe: { name: string; element?: string }) => string;
   /** Língua dos selos de status (aria-label e legenda): `true` = PT-BR, padrão EN. */
   isPt?: boolean;
+  /**
+   * Feira do Chefe: liga o modo `boss` do layout (um chefe enorme no alto, centrado). Só o AGREGADO do clã
+   * (`poolPct` 0..100); nenhuma contribuição individual passa por aqui.
+   */
+  boss?: { poolPct: number; name: string; levelLabel: string };
   children?: ReactNode;
+}
+
+/** A barra grande do pool do clã (modo `boss`): nome + nível e a barra; sem ícone, sem dado por membro. */
+function BossPoolBar({ boss, layout }: { boss: NonNullable<BattleStageProps['boss']>; layout: StageLayout }) {
+  const b = layout.boss;
+  if (!b) return null;
+  const pct = Math.round(Math.min(100, Math.max(0, boss.poolPct)));
+  return (
+    <div
+      data-stage-boss-bar
+      data-stage-boss-pct={pct}
+      style={{
+        position: 'absolute', left: '50%', top: b.barTop, width: b.barW, height: b.barH, transform: 'translateX(-50%)', boxSizing: 'border-box',
+        padding: '5px 10px 7px', borderRadius: 'var(--sm2-radius-md)', backgroundColor: SCRIM, border: '1px solid var(--sm2-line)',
+        display: 'flex', flexDirection: 'column', gap: 4, zIndex: 3, pointerEvents: 'none',
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+        <span style={{ fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-sm)', fontWeight: 600, color: 'var(--sm2-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
+          {boss.name}
+        </span>
+        <span style={{ fontSize: 'var(--sm2-text-xs)', color: 'var(--sm2-muted)', flex: 'none' }}>{boss.levelLabel}</span>
+      </div>
+      <PixelMeter ratio={pct / 100} tone="gold" height={14} label={boss.name} style={{ transition: 'width 300ms' }} />
+    </div>
+  );
 }
 
 /** O texto do selo: o nome do pet quando ele conjura; o do inimigo (por regra do elemento) quando é ele. */
@@ -717,11 +768,11 @@ function bannerLabel(
 /** A cena inteira. Envolva-a numa `TorcidaLayer style={BATTLE_LAYER_STYLE} mascot`. */
 export function BattleStage({
   scene, sceneElement, sceneDomain, sceneVariant = 0, me, foes, target = 0, action, hit, badge, title, closeLabel, closeIcon = 'close', onClose, exitConfirm, onPauseChange, hud, status,
-  charging = false, fast = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, foeSpecialLabel, isPt = false, children,
+  charging = false, fast = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, foeSpecialLabel, isPt = false, boss, children,
 }: BattleStageProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
   const { w, h } = useBox(fieldRef);
-  const layout = stageLayout(w, h, foes.length);
+  const layout = stageLayout(w, h, foes.length, !!boss);
   const reducedRef = useRef(prefersReducedMotion());
   const reduced = reducedRef.current || fast;
   const [confirmingRaw, setConfirming] = useState(false);
@@ -873,10 +924,11 @@ export function BattleStage({
         {/* As barras EM CIMA de cada lutador: HP e, logo abaixo, energia. */}
         {foes.map((f, i) => {
           const s = layout.foes[i];
-          if (!s || f.down) return null;
+          if (!s || f.down || boss) return null;
           return <FighterBars key={`p${f.key}`} fighter={f} spot={s} tone="gold" numeric={i === target} barsH={layout.barsH} fieldW={w} isPt={isPt} />;
         })}
         <FighterBars fighter={me} spot={layout.me} tone="cyan" numeric barsH={layout.barsH} fieldW={w} isPt={isPt} />
+        {boss && <BossPoolBar boss={boss} layout={layout} />}
 
         {/* PR11: os efeitos de status de cada lutador (vazio = nenhuma camada); alvo derrubado não carrega nada. */}
         {foes.map((f, i) => {
