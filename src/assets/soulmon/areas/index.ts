@@ -40,14 +40,15 @@ export const MERCADO_LOT_ART = {
 
 // W5 (19/10/2026): a Guerra foi repintada (coliseu em pedra petróleo com bandeiras vermelhas, sem ossos/grifo; escolha padrão `arena-guerra-a`, 512², alfa real). A versão de 18/10 (grifo e serpente de ossos) saiu do bundle.
 // beta3 N10: a Fenda Sem Fim (Masmorra) mora na Arena; reusa a arte do prédio da Masmorra.
-export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, guerra: loteGuerra, fenda: loteMasmorra } as const;
+export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, guerra: loteGuerra, fenda: loteEndlessRift } as const;
 
 // ── Exploração e Jogos (F5, PR #118) ───────────────────────────────────────
 // Fundos reduzidos para 760×1344 (a mesma medida do Mercado/Arena) para caber
 // no teto de 400 KB por imagem de `orcamentoDeBytes.contract.test.ts`.
 import bgExploracao from './bg-exploracao.png';
 import bgJogos from './bg-jogos.png';
-import loteMasmorra from './lote-exploracao-masmorra.png';
+// 28/10/2026 (beta3, aprovado pelo dono): prédio PRÓPRIO do Endless Rift (`p2-01-endless-rift`, 512²→300², alfa binário); `lote-exploracao-masmorra.png` fica em disco, sem import.
+import loteEndlessRift from './lote-exploracao-endless-rift.png';
 import loteJogosDungeon from './lote-jogos-dungeon.png';
 import lotePpt from './lote-jogos-ppt.png';
 // ⚠️ SEM CONSUMIDOR desde 30/09/2026: `lote-exploracao-dino.png` só emprestava a

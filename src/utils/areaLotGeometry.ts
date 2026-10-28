@@ -33,7 +33,7 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'arena:duelo': [0.167, 0, 0.833, 1],
   'arena:guerra': [0.039, 0.059, 0.959, 0.939], // W12 (20/10/2026): prédio do banco isométrico de 23/09 (`hf_20260923_193918_c287e46f…`, coliseu em cabeça de pedra com cristais), alfa > 20
   'hall:feira': [0.188, 0.039, 0.811, 0.961],
-  'arena:fenda': [0.23, 0, 0.767, 1],
+  'arena:fenda': [0.23, 0.01, 0.767, 0.987], // 28/10/2026: prédio próprio do Endless Rift (`lote-exploracao-endless-rift`, alfa > 20)
   'exploracao:passeio': [0.243, 0.12, 0.76, 0.973],
   // Prédios próprios desde 04/10/2026 (antes reusavam o Observatório e a Biblioteca).
   // 07/10/2026 (escolha do dono): Oficina = santuário Akasha (torre estreita), Caderno = santuário do Pântano, Amigos = abrigo da Terra — bbox do alfa > 20.
