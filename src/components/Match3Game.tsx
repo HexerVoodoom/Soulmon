@@ -29,6 +29,7 @@ import { fxMirror } from '../utils/fxFacing';
 import { OWN_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
 import { rosterEntryOfKey } from '../utils/enemyRoster';
 import { elementIdOfFoe } from '../utils/elementDex';
+import { essenceDropOfFoe, type EssenceDrop } from '../utils/essences';
 import { ElementAdvantageBadge } from './games/ElementAdvantageBadge';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
@@ -103,7 +104,7 @@ export interface Match3Props extends EarningGameProps {
   /** M10: inimigo do roster que entrou em cena (bestiário). */
   onEnemySeen?: (rosterKey: string) => void;
   /** Dex de elementos (27/10/2026): ao VENCER, os elementos dos inimigos identificados (roster) do time. Derrota não libera nada. */
-  onElementsDefeated?: (ids: readonly string[]) => void;
+  onElementsDefeated?: (ids: readonly string[], drops?: readonly EssenceDrop[]) => void;
 }
 
 function freshSeed(): number { return Math.floor(Math.random() * 2 ** 31); }
@@ -212,7 +213,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
     overRef.current = true;
     if (combatRef.current.outcome === 'win' && elementsDefeatedRef.current) {
       const ids = combatRef.current.enemies.map(e => elementIdOfFoe(rosterEntryOfKey(e.roster)?.elements)).filter((x): x is string => !!x);
-      if (ids.length > 0) elementsDefeatedRef.current(ids);
+      if (ids.length > 0) elementsDefeatedRef.current(ids, combatRef.current.enemies.map(e => { const r = rosterEntryOfKey(e.roster); return r ? essenceDropOfFoe(r.elements, r.stage) : undefined; }).filter((d): d is EssenceDrop => !!d));
     }
     if (challengeRef.current) { challengeRef.current.onResult(combatRef.current.outcome === 'win'); return; }
     const final = combatScore(combatRef.current);

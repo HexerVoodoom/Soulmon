@@ -34,6 +34,7 @@ import { TorcidaLayer } from './games/TorcidaKit';
 import { playDefeat, playVictory } from '../utils/sounds';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
 import { elementIdOfFoe } from '../utils/elementDex';
+import { essenceDropOfFoe, type EssenceDrop } from '../utils/essences';
 import { isStraySeed } from '../utils/strayFoes';
 import { ElementAdvantageBadge } from './games/ElementAdvantageBadge';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
@@ -109,7 +110,7 @@ export interface ArenaGameProps {
   seed?: number;
   onEarnPoints?: (points: number) => void;
   /** Dex de elementos (27/10/2026): ao vencer uma RODADA, os elementos dos inimigos dela. */
-  onElementsDefeated?: (ids: readonly string[]) => void;
+  onElementsDefeated?: (ids: readonly string[], drops?: readonly EssenceDrop[]) => void;
   onExit: () => void;
 }
 
@@ -266,7 +267,7 @@ export function ArenaGame({
       // PRÓPRIO de vitória de combate (`playVictory`, categoria `arcade`) — o corte C-1 continua valendo para o resto.
       playVictory();
       const ids = inimigosRef.current.map(e => elementIdOfFoe(e.elements)).filter((x): x is string => !!x);
-      if (ids.length > 0) elementsDefeatedRef.current?.(ids);
+      if (ids.length > 0) elementsDefeatedRef.current?.(ids, inimigosRef.current.map(e => essenceDropOfFoe(e.elements, e.tier)).filter((d): d is EssenceDrop => !!d));
       setPontos(p => p + inimigosRef.current.reduce((s, e) => s + e.points, 0));
       setFase('rodada-limpa');
     } else {

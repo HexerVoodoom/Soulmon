@@ -11,6 +11,7 @@ import { bumpWeekly, forWeek, type WeeklyMissionId } from './weeklyMissions';
 import { GLITCHTAMA_EMOJI } from './shop';
 import { rosterEntryOfKey } from './enemyRoster';
 import { applyElementsDefeated, elementIdOfFoe } from './elementDex';
+import { applyEssences, applyEssencesAway, essenceDropOfFoe } from './essences';
 
 /** Conta uma missão semanal (a mesma conta de `contarMissao` do App, sem o setState). */
 export function countWeeklyMission<T extends Pick<GameState, 'weeklyMissions' | 'playerDayTz'>>(prev: T, id: WeeklyMissionId, now: Date): T {
@@ -20,14 +21,18 @@ export function countWeeklyMission<T extends Pick<GameState, 'weeklyMissions' | 
 }
 
 /** Um inimigo vencido: abate, bestiário e elemento do dex (a mesma conta de `handleDungeonEnemyDefeated`). */
-export function applyEnemyDefeated<T extends Pick<GameState, 'dungeonKills' | 'bestiary' | 'defeatedElements'>>(prev: T, enemyKey?: string): T {
+export function applyEnemyDefeated<T extends Pick<GameState, 'dungeonKills' | 'bestiary' | 'defeatedElements' | 'essences' | 'essenceAway'>>(prev: T, enemyKey?: string, away?: { dayKey: string }): T {
   const abatido: T = {
     ...prev,
     dungeonKills: (prev.dungeonKills ?? 0) + 1,
     bestiary: enemyKey && !(prev.bestiary ?? []).includes(enemyKey) ? [...(prev.bestiary ?? []), enemyKey] : prev.bestiary,
   };
   // Dex de elementos (27/10/2026): vencer um inimigo IDENTIFICADO libera o elemento dele (composto = só o composto).
-  return applyElementsDefeated(abatido, [elementIdOfFoe(rosterEntryOfKey(enemyKey)?.elements)]);
+  const comDex = applyElementsDefeated(abatido, [elementIdOfFoe(rosterEntryOfKey(enemyKey)?.elements)]);
+  // Essências (28/10/2026, REGISTRO §183): a do PRÓPRIO elemento, pelo estágio. Luta ativa = sem teto; descida automática (`away`) = teto diário.
+  const e = rosterEntryOfKey(enemyKey);
+  const drop = e ? essenceDropOfFoe(e.elements, e.stage) : undefined;
+  return away ? applyEssencesAway(comDex, drop, away.dayKey) : applyEssences(comDex, [drop]);
 }
 
 /** Um inimigo VISTO sem abate (Elemental Fusion, M10): entra no bestiário (chave do roster `<id>-<estágio>`), IDEMPOTENTE, sem tocar `dungeonKills`. */

@@ -63,6 +63,7 @@ import { type RosterEntry } from '../utils/enemyRoster';
 import { strayForTournament } from '../utils/strayFoes';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
 import { elementIdOfFoe } from '../utils/elementDex';
+import { essenceQtyOfStage, type EssenceDrop } from '../utils/essences';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
 import { TOURNAMENT_NPCS, npcSide, tournamentNpcSprite, type TournamentNpc } from '../utils/tournamentNpcs';
 import { getSpriteForStage } from '../utils/sprites';
@@ -134,7 +135,7 @@ interface TournamentPageProps {
    *  resultado a partir do número de Emblemas seria regra copiada. */
   onMatchPlayed: (won: boolean) => void;
   /** Dex de elementos (27/10/2026): ao VENCER um oponente de elemento conhecido (a ficha publicada dele, ou o Desgarrado do treino). */
-  onElementsDefeated?: (ids: readonly string[]) => void;
+  onElementsDefeated?: (ids: readonly string[], drops?: readonly EssenceDrop[]) => void;
   /* D-58 (19/10/2026): o Torneio é SÓ de lutas. A loja de Emblemas e o botão "Train" saíram; a Honra se gasta no Mercado (aba Honra,
      com as missões da semana no topo). */
   /** Onde pôr o indicador da faixa: o canto direito da linha do título (que é
@@ -589,7 +590,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         onDone={taps => {
           const w = simulatePvp({ me: training.me, opp: training.opp, seed: training.seed, taps }).winner;
           // Dex de elementos: vencer o Desgarrado do Torneio sem par libera o elemento dele (o treino de NPC não libera: o elemento é só visual).
-          if (w === 'me' && training.stray) { const id = elementIdOfFoe(training.stray.elements); if (id) onElementsDefeated?.([id]); }
+          if (w === 'me' && training.stray) { const id = elementIdOfFoe(training.stray.elements); if (id) onElementsDefeated?.([id], [{ id, qty: essenceQtyOfStage(training.stray.stage) }]); }
           setTrainingOutcome(w === 'me' ? 'win' : w === 'opp' ? 'loss' : 'draw');
           setTraining(null);
         }}

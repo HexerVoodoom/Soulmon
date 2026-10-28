@@ -101,7 +101,7 @@ export interface PlayHandlers {
   /** M10: inimigo visto fora da masmorra (Combina 3) — só o bestiário. */
   onBestiarySeen?: (enemyKey: string) => void;
   /** Dex de elementos (27/10/2026): ids de elemento de inimigos identificados VENCIDOS (Combina 3 e Arena). */
-  onElementsDefeated?: (ids: readonly string[]) => void;
+  onElementsDefeated?: (ids: readonly string[], drops?: readonly import('../../utils/essences').EssenceDrop[]) => void;
   /** Tutorial da 1ª abertura dos jogos do Ateliê da Mente (26/10/2026): o que já foi visto (save) e como gravar AO MOSTRAR. */
   mindTutorials?: { seen: MindGameTutorials; onShown: (id: MindGameId) => void };
   onDinoScore: (score: number) => void;

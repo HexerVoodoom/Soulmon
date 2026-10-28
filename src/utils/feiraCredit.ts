@@ -8,7 +8,7 @@
  */
 import { hasClaimedReceipt, rememberClaimedReceipt } from './guildClaimLocal';
 
-export interface FeiraCredit { receipt: string; emblems: number; bits: number; trophyId: string | null }
+export interface FeiraCredit { receipt: string; emblems: number; bits: number; trophyId: string | null; essences?: Array<{ id: string; n: number }> }
 
 /** `true` = creditou agora; `false` = recibo repetido (ou vazio), nada a fazer. */
 export function creditFeiraOnce(credit: FeiraCredit, apply: (c: FeiraCredit) => void): boolean {

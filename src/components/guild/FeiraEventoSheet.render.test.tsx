@@ -24,7 +24,7 @@ const attackRes: FeiraAttack = {
   boss: { bossId: 'arauto-do-fim', level: 1, bossHpPct: 70, dead: false }, evento: { ...boss, bossHpPct: 70, canAttack: false },
 };
 const rest = (claimable: boolean): FeiraEvento => ({ k: 1, kind: 'rest', level: 2, claimable, claimK: claimable ? 0 : null });
-const claimRes: FeiraClaim = { k: 0, level: 1, bossId: 'arauto-do-fim', receipt: 'rec-1', reward: { emblems: 3, bits: 40, sap: 10, trophyId: null, element: 'fogo' } };
+const claimRes: FeiraClaim = { k: 0, level: 1, bossId: 'arauto-do-fim', receipt: 'rec-1', reward: { emblems: 3, bits: 40, sap: 10, trophyId: null, element: 'fogo', essences: [] } };
 const trailEv: FeiraEvento = { k: 2, kind: 'trail', level: 3, trail: { pending: true, cleared: false, marks: 2 }, gate: 'locked' };
 
 const mk = (over: Partial<FeiraApi> = {}): FeiraApi => ({
@@ -90,7 +90,7 @@ describe('Resgate (descanso com recompensa)', () => {
     fireEvent.click(q('[data-feira-colher]')!);
     await waitFor(() => expect(q('[data-feira-colhido]')).not.toBeNull());
     expect(a.onCredit).toHaveBeenCalledTimes(1);
-    expect(a.onCredit).toHaveBeenCalledWith({ receipt: 'rec-1', emblems: 3, bits: 40, trophyId: null });
+    expect(a.onCredit).toHaveBeenCalledWith({ receipt: 'rec-1', emblems: 3, bits: 40, trophyId: null, essences: [] });
     a.unmount();
     const b = open(rest(true), api); // reabriu (o servidor devolveu o mesmo recibo)
     fireEvent.click(q('[data-feira-colher]')!);

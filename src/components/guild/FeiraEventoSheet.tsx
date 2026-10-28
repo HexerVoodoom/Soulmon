@@ -122,7 +122,7 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
       const c = await api.claim(saveId, evento.claimK ?? undefined, tz);
       if (!alive.current) return;
       if (!c) { setNote('rest.nothing'); setEvento({ ...evento, claimable: false, claimK: null }); return; }
-      credit({ receipt: c.receipt, emblems: c.reward.emblems, bits: c.reward.bits, trophyId: c.reward.trophyId });
+      credit({ receipt: c.receipt, emblems: c.reward.emblems, bits: c.reward.bits, trophyId: c.reward.trophyId, essences: c.reward.essences });
       setCollected(c.reward);
       setEvento({ ...evento, claimable: false, claimK: null });
     } catch (e) {

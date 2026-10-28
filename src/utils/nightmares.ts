@@ -209,6 +209,8 @@ export interface NightmareRewards {
   hearts: number;
   energy: number;
   bits: number;
+  /** Essências de pesadelo (28/10/2026, REGISTRO §183): comum 1, raro 2, lendário 3. */
+  essence?: number;
   /** Reservado. Hoje NUNCA é preenchido — ver `nightmareRewards`. */
   item?: string;
 }
@@ -472,6 +474,7 @@ export function nightmareRewards(rarity: DreamRarity, won: boolean): NightmareRe
     hearts: Math.min(NIGHTMARE_MAX_HEART_CURE, base.hearts),
     energy: base.energy,
     bits: base.bits,
+    essence: rarity === 'legendary' ? 3 : rarity === 'rare' ? 2 : 1,
   };
 }
 

@@ -222,7 +222,7 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
     if (res.winner !== 'player') { hp = 0; en = 0; ended = 'hp'; break; }
     hp = res.hpLeft; en = res.energyLeft;
     // o inimigo parou de insistir: abate, bestiário, Bits e (raro, com teto) o coraçãozinho
-    s = applyEnemyDefeated(s, enemy.stage);
+    s = applyEnemyDefeated(s, enemy.stage, { dayKey });
     credit(enemy.points);
     report.enemies += 1;
     if (heartsLeft > 0 && mulberry32((away.seed * 31 + layer * 7 + slot * 3 + 1) | 0)() <= HEART_DROP_CHANCE + heartBonus) {

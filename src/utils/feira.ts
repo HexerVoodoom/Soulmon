@@ -133,7 +133,10 @@ export function mapFeiraLog(log: readonly FeiraLogEntry[]): FightEvent[] {
   return out;
 }
 
-export interface FeiraReward { emblems: number; bits: number; sap: number; trophyId: string | null; element: string | null }
+const sanitizeFeiraEssences = (v: unknown): Array<{ id: string; n: number }> =>
+  Array.isArray(v) ? v.slice(0, 4).flatMap(e => { const o = obj(e); const id = o ? slug(o.id) : null; return o && id ? [{ id, n: int(o.n, 1, 100) }] : []; }) : [];
+
+export interface FeiraReward { emblems: number; bits: number; sap: number; trophyId: string | null; element: string | null; essences: Array<{ id: string; n: number }> }
 export interface FeiraClaim { k: number; level: number; bossId: string; receipt: string; reward: FeiraReward }
 
 export function sanitizeFeiraClaim(raw: unknown): FeiraClaim | null {
@@ -153,6 +156,7 @@ export function sanitizeFeiraClaim(raw: unknown): FeiraClaim | null {
       sap: int(w.sap, 0, 1000),
       trophyId: typeof w.trophyId === 'string' && w.trophyId ? w.trophyId.slice(0, 40) : null,
       element: slug(w.element),
+      essences: sanitizeFeiraEssences(w.essences),
     },
   };
 }

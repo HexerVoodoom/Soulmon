@@ -198,6 +198,8 @@ import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMi
 import type { ClaReward } from './utils/claApi';
 import { soulmonNaMasmorra } from './utils/dungeonIdle';
 import { applyElementsDefeated } from './utils/elementDex';
+import { applyEssences, type EssenceDrop } from './utils/essences';
+import { NIGHTMARE_ELEMENT } from './utils/nightmareElement';
 import { applyBestiarySeen, applyEnemyDefeated, applyFloorCleared, applyMilestoneItem } from './utils/dungeonRewards';
 import type { BosqueArvores } from './utils/bosqueArvores';
 import type { OcupadoAcao } from './components/DungeonBusyModal';
@@ -614,6 +616,7 @@ const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m
 const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
+import { EssencesSection } from './components/EssencesSection';
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
 const AdventureDiary = lazy(() => import('./components/AdventureDiary').then(m => ({ default: m.AdventureDiary })));
 
@@ -4192,8 +4195,9 @@ export default function App() {
   }, []);
 
   // Dex de elementos (27/10/2026): vitória sobre inimigo identificado (Combina 3, Arena, Torneio). Idempotente; fora do updater não há efeito colateral.
-  const handleElementsDefeated = useCallback((ids: readonly string[]) => {
-    setGameState(prev => applyElementsDefeated(prev, ids));
+  const handleElementsDefeated = useCallback((ids: readonly string[], drops?: readonly EssenceDrop[]) => {
+    // + Essências (28/10/2026, REGISTRO §183): o drop do PRÓPRIO elemento, pelo estágio; sem teto na luta ativa.
+    setGameState(prev => applyEssences(applyElementsDefeated(prev, ids), drops ?? []));
   }, []);
 
   // M10 — inimigo VISTO fora da masmorra (Elemental Fusion): só o bestiário, sem abate (missão "kills" é da masmorra).
@@ -4480,7 +4484,9 @@ export default function App() {
     // Emblemas + troféu pelo MESMO caminho do resgate semanal (`handleGuildClaimed`); `grantGuildTrophy` ignora ids que o catálogo do cliente não conhece (ex.: `trophy-boss-*`)
     if (c.emblems > 0 || c.trophyId) handleGuildClaimed({ emblems: c.emblems, trophyId: c.trophyId });
     if (c.bits > 0) handleClaReward(`${c.receipt}:bits`, [{ kind: 'bits', amount: c.bits }]);
-  }, [handleGuildClaimed, handleClaReward]);
+    // Essências do chefe (28/10/2026, REGISTRO §183): o elemento do chefe, mais quanto mais forte. Recibo único já garante 1×.
+    if (c.essences?.length) setGameState(prev => applyEssences(prev, c.essences!.map(e => ({ id: e.id, qty: e.n }))));
+  }, [handleGuildClaimed, handleClaReward, setGameState]);
 
   /** BOSQUE: guarda o pico da árvore da estação (e o ano-ciclo de conclusão). Idempotente: vista igual devolve o MESMO estado. */
   const handleBosquePlantio = useCallback((v: { planted: boolean; mature: boolean; stage: number; season: 'primavera' | 'verao' | 'outono' | 'inverno' }) => {
@@ -5814,6 +5820,8 @@ export default function App() {
       ...(() => { const e = setEnergy(prev, Date.now(), (cur) => cur + (rewards.energy ?? 0)); return { energyPoints: e.energyPoints, energyClock: e.energyClock }; })(),
       gamePoints: (prev.gamePoints ?? 0) + (rewards.bits ?? 0),
       bitsOrigin: noteFreeBits(prev, rewards.bits ?? 0, playerDayKey(new Date(), prev.playerDayTz)).bitsOrigin,
+      // Essência de pesadelo (28/10/2026, REGISTRO §183): o Pesadelo tem elemento próprio.
+      essences: applyEssences(prev, [{ id: NIGHTMARE_ELEMENT, qty: rewards.essence ?? 1 }]).essences,
       nightmares: markFought(
         prev.nightmares ?? EMPTY_NIGHTMARES,
         nightmareDayKey(new Date(), prev.rest?.playerDayTz),
@@ -7108,6 +7116,13 @@ export default function App() {
               <Suspense fallback={<ScreenSkeleton language={language} />}>
                 <DreamDex rest={gameState.rest ?? createRestState()} language={language} />
               </Suspense>
+            </div>
+          )}
+
+          {/* ESSÊNCIAS dos elementos (28/10/2026, REGISTRO §183): logo abaixo dos Sonhos; só as com quantidade > 0; só coleta. */}
+          {labTab === 'pet' && Object.keys(gameState.essences ?? {}).length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <EssencesSection essences={gameState.essences} language={language} />
             </div>
           )}
 
