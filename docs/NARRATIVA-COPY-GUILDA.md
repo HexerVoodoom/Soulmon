@@ -274,13 +274,13 @@
 | chave | PT-BR | EN | onde usa | lei |
 |---|---|---|---|---|
 | `guild.missao.titulo` | Missão | Mission | GuildSheet, título da seção (a antiga Feira) | L12 |
-| `guild.missao.mandar` | Mandar investigar | Send to investigate | botão que manda o Solmon | L12 |
+| `guild.missao.mandar` | Mandar investigar | Send to investigate | botão que manda o Soulmon | L12 |
 | `guild.missao.fora` | Seu Soulmon foi investigar. Volta às {hora}. | Your Soulmon went to investigate. Back at {hora}. | estado "fora" (horário, nunca contagem regressiva) | L12 |
 | `guild.missao.feita` | Hoje a roda já ouviu a sua parte. | The circle has already heard your part today. | missão de hoje já voltou (sem cobrança) | L12 |
 | `guild.missao.regra` | Algo misterioso chegou. Mande seu Soulmon investigar: ele some da Home por um tempo e volta. Cada volta ajuda a roda e a casa; quanto mais gente na roda e mais forte o Soulmon, mais ajuda. Uma por dia. | Something mysterious has arrived. Send your Soulmon to investigate: it leaves the Home for a while and comes back. Each return helps the circle and the house; the more people in the circle and the stronger the Soulmon, the more it helps. One a day. | atrás do "?" da seção | L10, L12 |
 
 | `guild.help.missao.termo` | Missão | Mission | HelpModal, glossário | L12 |
-| `guild.help.missao.def` | Todo dia a roda pode mandar o Solmon investigar o que chegou da névoa. Ele some da Home por um tempo e volta; cada volta ajuda a roda e a casa. | Every day the circle can send its Soulmon to investigate what came in from the mist. It leaves the Home for a while and comes back; each return helps the circle and the house. | HelpModal, glossário | L12 |
+| `guild.help.missao.def` | Todo dia a roda pode mandar o Soulmon investigar o que chegou da névoa. Ele some da Home por um tempo e volta; cada volta ajuda a roda e a casa. | Every day the circle can send its Soulmon to investigate what came in from the mist. It leaves the Home for a while and comes back; each return helps the circle and the house. | HelpModal, glossário | L12 |
 
 ## 14. A Guerra (guilda-lancamento PR4, 11/10/2026)
 
