@@ -204,7 +204,7 @@ describe('a rodada', () => {
     expect(final.outcome).not.toBe('playing');
     expect(p.moves.length).toBeGreaterThan(5);
     await jogarTudo(p);
-    expect(document.querySelector('[data-m3-end]')!.textContent).toBe(`You scored ${p.total} points`);
+    expect(document.querySelector('[data-m3-end] [data-result-final]')!.textContent).toBe(String(p.total));
     expect(document.querySelector('[data-m3-end]')!.getAttribute('data-m3-outcome')).toBe(final.outcome);
     const bits = match3Bits(p.total);
     expect(bits).toBeLessThanOrEqual(M3_MAX_BITS);
@@ -237,7 +237,7 @@ describe('a rodada', () => {
     montar({ language: 'pt-BR' });
     const p = previsao(60);
     await jogarTudo(p);
-    expect(document.querySelector('[data-m3-end]')!.textContent).toBe(`Você fez ${p.total} pontos`);
+    expect(document.querySelector('[data-m3-end] [data-result-final]')!.textContent).toBe(String(p.total));
     expect(screen.getByRole('button', { name: 'De novo' })).toBeTruthy();
     expect(document.querySelector('[data-m3-outcome-line]')!.textContent).toMatch(/time da fenda/);
     expect(document.body.textContent).not.toMatch(/errou|perdeu|derrota/i);

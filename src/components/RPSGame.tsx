@@ -8,6 +8,7 @@ import type { Language } from '../utils/i18n';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { freshInventory, spendPiece, petPick, totalPieces } from '../utils/rpsLevel2';
 import type { RpsInventory } from '../utils/rpsLevel2';
+import { ResultScreen } from './games/ResultScreen';
 import { GameRoot, GameHeader, GameVisor, phaseTitle, gameExitConfirm } from './games/GameKit';
 import { getSpriteForStage } from '../utils/sprites';
 
@@ -239,19 +240,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
 
           {/* BASE: as peças que restam ao usuário (Normal) e os botões de ícone. */}
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {matchOver ? (
-              <>
-                <RankingPanel game="ppt" saveId={rankSaveId} language={language} score={matchOver === 'lost' ? null : playerWins * 10 + (matchOver === 'won' ? 10 : 0)} /> {/* derrota não pontua (QA beta3 R4): só mostra o ranking */}
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <button type="button" onClick={restart} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-                    {isPt ? 'Revanche' : 'Rematch'}
-                  </button>
-                  <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-                    {isPt ? 'Sair' : 'Exit'}
-                  </button>
-                </div>
-              </>
-            ) : (
+            {matchOver ? null : (
               <>
                 {level === 2 && inventoryRow(youInv, isPt ? 'Você' : 'You')}
                 <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
@@ -270,6 +259,29 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
             )}
           </div>
         </>
+      )}
+      {matchOver && (
+        <ResultScreen
+          language={language}
+          outcome={matchOver === 'won' ? 'win' : matchOver === 'draw' ? 'calm' : 'tired'}
+          gameName={isPt ? 'Pedra, Papel, Tesoura' : 'Rock Paper Scissors'}
+          title={matchOver === 'won' ? (isPt ? 'Você venceu' : 'You won') : matchOver === 'draw' ? (isPt ? 'Empate' : 'Draw') : (isPt ? 'Partida encerrada' : 'Match over')}
+          line={matchOver === 'won'
+            ? (isPt ? 'Uma boa partida contra o seu Soulmon.' : 'A good match against your Soulmon.')
+            : matchOver === 'draw'
+              ? (isPt ? 'Ninguém cedeu. Vocês estão no mesmo passo.' : 'Neither gave way. You are in step.')
+              : (isPt ? 'Seu Soulmon levou esta. Nada foi cobrado.' : 'Your Soulmon took this one. Nothing was charged.')}
+          hero={{ label: isPt ? 'Você × Soulmon' : 'You × Soulmon', value: `${playerWins} × ${petWins}` }}
+          ledger={[{ key: 'bits', kind: 'bits', value: matchOver === 'won' ? MATCH_POINTS : 0 }]}
+          emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
+          petSrc={petSprite}
+          scene={`url(${rpsScene}) center/cover`}
+          playAgainLabel={isPt ? 'Revanche' : 'Rematch'}
+          onPlayAgain={restart}
+          homeLabel={isPt ? 'Sair' : 'Exit'}
+          onHome={onExit}
+          below={<RankingPanel game="ppt" saveId={rankSaveId} language={language} score={matchOver === 'lost' ? null : playerWins * 10 + (matchOver === 'won' ? 10 : 0)} /> /* derrota não pontua (QA beta3 R4): só mostra o ranking */}
+        />
       )}
     </GameRoot>
   );

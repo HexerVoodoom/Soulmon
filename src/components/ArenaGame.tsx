@@ -47,6 +47,7 @@ import { autoDefense, defenseRoll, newDefenseSeed } from '../utils/autoDefesa';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
+import { ResultScreen } from './games/ResultScreen';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, VisorSparks, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
 import { arenaTemaElementos, dominioDoElemento, arenaVarianteDaRodada } from '../utils/arenaTema';
@@ -511,41 +512,32 @@ export function ArenaGame({
         </>
       )}
 
+      {/* Fim da run: tela padrão (Proposta D). A "rodada limpa" acima é intermediária (a run segue) e fica COMPACTA, inline: não é resultado. */}
       {(fase === 'venceu' || fase === 'perdeu' || fase === 'empatou') && (
-        <>
-          {/* Vitória: a faísca no lugar do último inimigo; derrota e empate: o pet
-              inteiro — na MESMA tinta (D-J8). */}
-          <GameVisor height={80} scene={ARENA_SCENE.bg}>
-            <VisorSprite src={petSprite} alt="" style={{ left: 16, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
-            {fase === 'venceu' && <><VisorFx icon="✨" style={{ right: 16, top: 8 }} data-visor-fx="sparkle" /><VisorSparks style={{ marginRight: 8 }} /></>}
-          </GameVisor>
-          <p style={phaseTitle}>
-            {fase === 'venceu'
-              ? (isPt ? 'Arena vencida!' : 'Arena cleared!')
-              : fase === 'empatou'
-                ? (isPt ? 'Empate' : 'A draw')
-                : (isPt ? 'Você caiu' : 'You went down')}
-          </p>
-          <p className="sm2-num" style={phaseLine}>
-            {fase === 'venceu'
-              ? (isPt ? `As ${ARENA_ROUNDS} rodadas, na sequência. ${pontos} Bits.` : `All ${ARENA_ROUNDS} rounds, back to back. ${pontos} Bits.`)
-              : fase === 'empatou'
-                ? (isPt
-                  ? `Vocês caíram juntos na rodada ${rodada}. Não custou nenhum coração — só a run.`
-                  : `You went down together in round ${rodada}. It cost no hearts — only the run.`)
-                : (isPt
-                  ? `Chegou até a rodada ${rodada}. Não custou nenhum coração — só a run.`
-                  : `You got to round ${rodada}. It cost no hearts — only the run.`)}
-          </p>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" onClick={comecar} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-              {isPt ? 'Tentar de novo' : 'Try again'}
-            </button>
-            <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-              {sair}
-            </button>
-          </div>
-        </>
+        <ResultScreen
+          language={language}
+          outcome={fase === 'venceu' ? 'win' : fase === 'empatou' ? 'calm' : 'tired'}
+          gameName="Arena"
+          title={fase === 'venceu'
+            ? (isPt ? 'Arena vencida' : 'Arena cleared')
+            : fase === 'empatou'
+              ? (isPt ? 'Empate' : 'Draw')
+              : (isPt ? 'Arena encerrada' : 'Arena over')}
+          line={fase === 'venceu'
+            ? (isPt ? `As ${ARENA_ROUNDS} rodadas, na sequência.` : `All ${ARENA_ROUNDS} rounds, back to back.`)
+            : fase === 'empatou'
+              ? (isPt ? 'Vocês caíram juntos. Não custou nenhum coração, só a run.' : 'You both held your ground. It cost no hearts, only the run.')
+              : (isPt ? 'Não custou nenhum coração, só a run. Ele está recuperando o fôlego.' : 'It cost no hearts, only the run. He is catching his breath.')}
+          hero={{ label: isPt ? 'Rodadas vencidas' : 'Rounds cleared', value: fase === 'venceu' ? ARENA_ROUNDS : Math.max(0, rodada - 1) }}
+          ledger={[{ key: 'bits', kind: 'bits', value: fase === 'venceu' ? riftBitsWith(pontos, rift.riftBits) : 0 }]}
+          emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
+          petSrc={petSprite}
+          scene={ARENA_SCENE.bg}
+          playAgainLabel={isPt ? 'Tentar de novo' : 'Try again'}
+          onPlayAgain={comecar}
+          homeLabel={sair}
+          onHome={onExit}
+        />
       )}
       </TorcidaLayer>
     </GameRoot>

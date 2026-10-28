@@ -1,4 +1,5 @@
 import { RankingPanel } from './RankingPanel';
+import { ResultScreen } from './games/ResultScreen';
 import { getOpponents } from '../utils/community';
 import { opponentSprite } from '../utils/opponentArt';
 import { npcFoe, pickPvpOpponent, pvpElementsForSeed, tileElementName, type PvpFoe } from '../utils/match3Pvp';
@@ -763,37 +764,33 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
       </div>
 
       {over ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 'none' }}>
-          <p role="status" style={phaseTitle} data-m3-end data-m3-outcome={combat.outcome}>
-            {isPt ? `Você fez ${score} pontos` : `You scored ${score} points`}
-          </p>
-          <p style={phaseLine} data-m3-outcome-line>
-            {pvp
-              ? (win
-                ? (isPt ? 'Seu oponente recuou. Boa luta.' : 'Your opponent stepped back. Good fight.')
-                : (isPt ? 'Seu oponente segurou esta luta. Nada foi cobrado.' : 'Your opponent held this fight. Nothing was charged.'))
-              : win
-                ? (isPt ? 'O time da fenda recuou. A passagem está livre.' : 'The rift team stepped back. The way is clear.')
-                : (isPt ? 'O time da fenda segurou a passagem desta vez. Nada foi cobrado.' : 'The rift team held the way this time. Nothing was charged.')}
-          </p>
-          <p style={phaseLine}>
-            {earned > 0 ? <BitsAmount value={earned} sign="+" /> : (isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.')}
-          </p>
-          {!pvp && (
-            <p className="sm2-num" style={phaseLine}>
-              {isPt ? `Seu recorde: ${best}` : `Your best: ${best}`}{newBest ? (isPt ? ' · novo recorde' : ' · new best') : ''}
-            </p>
-          )}
-          {!pvp && <RankingPanel game="match3" saveId={rankSaveId} language={language} score={score} />}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" onClick={restart} data-m3-again style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-              {isPt ? 'De novo' : 'Again'}
-            </button>
-            <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-              {isPt ? 'Sair' : 'Exit'}
-            </button>
-          </div>
-        </div>
+        <ResultScreen
+          language={language}
+          outcome={newBest && !pvp ? 'record' : win ? 'win' : 'tired'}
+          gameName={isPt ? 'Combina 3' : 'Match 3'}
+          title={win ? (isPt ? 'Rodada vencida' : 'Round cleared') : (isPt ? 'Fim da rodada' : 'Round over')}
+          line={pvp
+            ? (win
+              ? (isPt ? 'Seu oponente recuou. Boa luta.' : 'Your opponent stepped back. Good fight.')
+              : (isPt ? 'Seu oponente segurou esta luta. Nada foi cobrado.' : 'Your opponent held this fight. Nothing was charged.'))
+            : win
+              ? (isPt ? 'O time da fenda recuou. A passagem está livre.' : 'The rift team stepped back. The way is clear.')
+              : (isPt ? 'O time da fenda segurou a passagem desta vez. Nada foi cobrado.' : 'The rift team held the way this time. Nothing was charged.')}
+          lineAttrs={{ 'data-m3-outcome-line': true }}
+          rootAttrs={{ 'data-m3-end': true, 'data-m3-outcome': combat.outcome }}
+          againAttrs={{ 'data-m3-again': true }}
+          hero={{ label: isPt ? 'Pontos' : 'Score', value: score }}
+          recordNote={isPt ? 'Novo recorde' : 'New best'}
+          strip={pvp ? undefined : [{ key: 'best', label: isPt ? 'Seu recorde' : 'Your best', value: best, hideOnRecord: true }]}
+          ledger={[{ key: 'bits', kind: 'bits', value: earned }]}
+          emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
+          petSrc={playerSprite}
+          playAgainLabel={isPt ? 'De novo' : 'Again'}
+          onPlayAgain={restart}
+          homeLabel={isPt ? 'Sair' : 'Exit'}
+          onHome={onExit}
+          below={!pvp ? <RankingPanel game="match3" saveId={rankSaveId} language={language} score={score} /> : undefined}
+        />
       ) : (
         <>
           <p className="sm2-sr-only" data-m3-next>

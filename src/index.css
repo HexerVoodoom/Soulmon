@@ -5902,6 +5902,10 @@ select:focus-visible {
   .sm-forge-sweep, .sm-forge-spark { display: none; }
   /* Level up (11/10/2026): o número, o banner, o pet, o burst e a dica ficam PARADOS — o display continua esperando o toque. */
   .sm-lvup-num, .sm-lvup-banner, .sm-lvup-pet, .sm-lvup-burst, .sm-lvup-glow, .sm-lvup-hint { animation: none !important; }
+  /* Resultado padrão (Proposta D): o estado final desde o 1º quadro; o pet cansado FICA na postura baixa (a informação é a mesma). */
+  .sm-result-in, .sm-result-in--on { opacity: 1; transform: none; transition: none; }
+  .sm-result-banner, .sm-result-sparks img { animation: none !important; }
+  .sm-result-pet { animation: none !important; }
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -8879,3 +8883,20 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 
 /* Combina 3: o aviso breve de rodada extra (ícone, sem texto). */
 @keyframes sm-m3-extra { 0% { opacity: 0; transform: scale(0.6); } 25% { opacity: 1; transform: scale(1.15); } 100% { opacity: 0.85; transform: scale(1); } }
+
+/* Resultado padrão (Proposta D, 27/10/2026): revelação em degraus + reação do pet. Mudo. Movimento reduzido = estado final. */
+.sm-result-in { opacity: 0; transform: translateY(10px); }
+.sm-result-in--on { opacity: 1; transform: none; transition: opacity 240ms ease-out, transform 240ms ease-out; }
+.sm-result-banner { animation: sm-result-banner 260ms ease-out 1; }
+.sm-result-visor { display: flex; justify-content: center; }
+.sm-result-visor--happy, .sm-result-visor--calm, .sm-result-visor--tired, .sm-result-visor--live { --sm-result-mood: 1; }
+.sm-result-pet { transform-origin: 50% 100%; }
+.sm-result-visor--happy.sm-result-visor--live .sm-result-pet { animation: sm-result-hop 520ms ease-out 2; }
+.sm-result-visor--record.sm-result-visor--live .sm-result-pet { animation-delay: 1150ms; animation-fill-mode: backwards; }
+.sm-result-visor--tired .sm-result-pet { transform: translateY(7px) rotate(-3deg); filter: saturate(.8); }
+.sm-result-visor--tired .sm-battle-idle { animation-duration: 4.2s; }
+.sm-result-visor--record { filter: drop-shadow(0 0 12px color-mix(in srgb, var(--sm2-gold-ink) 55%, transparent)); }
+.sm-result-sparks img { animation: sm-result-spark 420ms ease-out 1 backwards; }
+@keyframes sm-result-banner { from { opacity: 0; transform: scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes sm-result-hop { 0%, 100% { transform: translateY(0); } 45% { transform: translateY(-14px); } }
+@keyframes sm-result-spark { from { opacity: 0; transform: scale(.4); } to { opacity: 1; transform: none; } }

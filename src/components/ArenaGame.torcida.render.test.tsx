@@ -306,8 +306,8 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
     H.playerHp = 0.0001;
     const onEarn = vi.fn();
     await entrar({ onEarnPoints: onEarn });
-    expect(await ate(() => screen.queryByText('Você caiu') !== null, 30_000)).toBe(true);
-    expect(screen.getByText(/Não custou nenhum coração — só a run/)).toBeTruthy();
+    expect(await ate(() => document.querySelector('[data-result-title]')?.textContent === 'Arena encerrada', 30_000)).toBe(true);
+    expect(document.querySelector('[data-result-line]')!.textContent).toMatch(/Não custou nenhum coração, só a run/);
     expect(document.querySelector('[data-battle-stage]')).toBeNull();
     expect(onEarn).not.toHaveBeenCalled();
     H.playerHp = 1;
@@ -319,13 +319,13 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
   it('empate: encerra a run, sem custo, em PT e em EN (texto neutro, sem "perdeu")', async () => {
     H.forceDraw = true;
     await entrar();
-    expect(await ate(() => screen.queryByText('Empate') !== null, 5000)).toBe(true);
-    expect(screen.getByText(/Vocês caíram juntos na rodada 1\. Não custou nenhum coração — só a run\./)).toBeTruthy();
+    expect(await ate(() => document.querySelector('[data-result-title]')?.textContent === 'Empate', 5000)).toBe(true);
+    expect(document.querySelector('[data-result-line]')!.textContent).toMatch(/Vocês caíram juntos\. Não custou nenhum coração, só a run\./);
     cleanup();
     H.calls = 0;
     await entrar({ language: 'en-US' });
-    expect(await ate(() => screen.queryByText('A draw') !== null, 5000)).toBe(true);
-    expect(screen.getByText(/You went down together in round 1\. It cost no hearts — only the run\./)).toBeTruthy();
+    expect(await ate(() => document.querySelector('[data-result-title]')?.textContent === 'Draw', 5000)).toBe(true);
+    expect(document.querySelector('[data-result-line]')!.textContent).toMatch(/You both held your ground\. It cost no hearts, only the run\./);
     expect(screen.queryByText(/lost|derrota|perdeu/i)).toBeNull();
   });
 
@@ -350,7 +350,7 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
     expect(document.querySelector('[data-stage-plate="foe"] [data-stage-energy]')).not.toBeNull(); // o chefe
     expect(await ate(() => temBotao('Terminar'))).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Terminar' }));
-    expect(screen.getByText('Arena vencida!')).toBeTruthy();
+    expect(document.querySelector('[data-result-title]')!.textContent).toBe('Arena vencida');
     expect(onEarn).toHaveBeenCalledWith(50);
   });
 });

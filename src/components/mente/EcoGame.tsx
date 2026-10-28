@@ -6,6 +6,7 @@ import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { BitsAmount } from '../ui/BitsAmount';
+import { ResultScreen } from '../games/ResultScreen';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { getSpriteForStage } from '../../utils/sprites';
 import { petScaleStyle } from '../../utils/spriteScale';
@@ -277,16 +278,24 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
         </>
       )}
 
-      {phase === 'done' && <RankingPanel key={longest} game="eco" saveId={rankSaveId} language={language} score={longest} />}
       {phase === 'done' && (
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button type="button" onClick={start} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }} data-eco-again>
-            {isPt ? 'Jogar de novo' : 'Play again'}
-          </button>
-          <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-            {isPt ? 'Sair' : 'Exit'}
-          </button>
-        </div>
+        <ResultScreen
+          language={language}
+          outcome="win"
+          gameName={title}
+          title={isPt ? 'Eco concluído' : 'Echo complete'}
+          line={isPt ? 'Seu pet comemora o eco.' : 'Your pet celebrates the echo.'}
+          hero={{ label: isPt ? 'Sequência mais longa' : 'Longest sequence', value: longest }}
+          ledger={[{ key: 'bits', kind: 'bits', value: earned }]}
+          emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
+          petSrc={getSpriteForStage(evolutionStage, demoCharacterId)}
+          playAgainLabel={isPt ? 'Jogar de novo' : 'Play again'}
+          againAttrs={{ 'data-eco-again': true }}
+          onPlayAgain={start}
+          homeLabel={isPt ? 'Sair' : 'Exit'}
+          onHome={onExit}
+          below={<RankingPanel key={longest} game="eco" saveId={rankSaveId} language={language} score={longest} />}
+        />
       )}
 
       {phase === 'input' && reverse && (

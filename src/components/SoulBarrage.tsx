@@ -6,6 +6,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
 import { sm2Button } from './form/FormKit';
+import { ResultScreen } from './games/ResultScreen';
 import { GameRoot, GameHeader, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
 import { fxFrame, prefersReducedMotion } from '../utils/combatFx';
@@ -45,6 +46,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   const [hidden, setHidden] = useState(() => typeof document !== 'undefined' && document.visibilityState === 'hidden');
   const [finalScore, setFinalScore] = useState(0);
   const [earned, setEarned] = useState(0);
+  const [prevBest, setPrevBest] = useState(0);
   const [best, setBest] = useState(() => readNumber(STORAGE_KEYS.BARRAGE_BEST, 0));
   const onEarnRef = useRef(onEarnPoints);
   onEarnRef.current = onEarnPoints;
@@ -196,6 +198,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       const score = s.score;
       const pts = barrageBits(score);
       setFinalScore(score);
+      setPrevBest(bestRef.current);
       setEarned(pts);
       if (pts > 0) onEarnRef.current(pts);
       emitFeat('barrageBest', Math.floor(score));
@@ -278,14 +281,26 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
         </button>
       )}
       {phase === 'over' && (
-        <>
-          <p style={phaseTitle}>{isPt ? 'Fim de jogo!' : 'Game over!'}</p>
-          <p className="sm2-num" style={phaseLine}>{isPt ? 'Pontos' : 'Score'}: {finalScore} · <BitsAmount value={earned} sign="+" /></p>
-          <button type="button" onClick={start} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 240, alignSelf: 'center' }}>
-            {isPt ? 'Jogar de novo' : 'Play again'}
-          </button>
-          <RankingPanel key={finalScore} game="soul-barrage" saveId={rankSaveId} language={language} score={finalScore} />
-        </>
+        <ResultScreen
+          language={language}
+          outcome={prevBest > 0 && finalScore > prevBest ? 'record' : 'calm'}
+          gameName={isPt ? 'Chuva de Almas' : 'Soul Barrage'}
+          title={isPt ? 'Chuva encerrada' : 'Barrage over'}
+          line={prevBest > 0 && finalScore > prevBest
+            ? (isPt ? 'Nunca passou tanta chuva por ele. Ele está orgulhoso.' : 'Never has this much rain passed him by. He is proud.')
+            : (isPt ? 'Ele está pronto quando você estiver.' : 'He is ready when you are.')}
+          hero={{ label: isPt ? 'Pontos' : 'Score', value: finalScore }}
+          recordNote={isPt ? `Novo recorde, antes ${prevBest}` : `New best, was ${prevBest}`}
+          strip={[{ key: 'best', label: isPt ? 'Recorde' : 'Best', value: best, hideOnRecord: true }]}
+          ledger={[{ key: 'bits', kind: 'bits', value: earned }]}
+          emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
+          petSrc={getSpriteForStage(evolutionStage, demoCharacterId, 256)}
+          playAgainLabel={isPt ? 'Jogar de novo' : 'Play again'}
+          onPlayAgain={start}
+          homeLabel={isPt ? 'Sair' : 'Exit'}
+          onHome={onExit}
+          below={<RankingPanel key={finalScore} game="soul-barrage" saveId={rankSaveId} language={language} score={finalScore} />}
+        />
       )}
     </GameRoot>
   );

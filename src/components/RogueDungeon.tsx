@@ -17,6 +17,7 @@ import { DUNGEON_SCENES } from '../utils/dungeonScenes';
 import { getSpriteForStage } from '../utils/sprites';
 import { useBackLayer } from '../utils/backStack';
 import type { FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
+import { ResultScreen } from './games/ResultScreen';
 import { RankingPanel } from './RankingPanel';
 import floorDoor from '../assets/soulmon/icones-ui/masmorra-porta.png';
 import floorStairs from '../assets/soulmon/icones-ui/masmorra-escada.png';
@@ -313,19 +314,27 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
         </div>
       )}
 
-      {/* A folha de baixo: só o fim do dia. */}
+      {/* O fim do dia: tela padrão (Proposta D). Concluir os 3 andares = vitória; a incursão que acabou antes = calma, sem luto. */}
       {!ch && !fighting && finished && (
-        <section data-rogue-sheet style={sheetStyle} aria-live="polite">
-          {note && <p data-rogue-note style={{ ...text, fontWeight: 700 }}>{note}</p>}
-          <div data-rogue-over style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <p style={text}>
-              {run.over
-                ? (isPt ? 'A incursão de hoje terminou. Ela recomeça amanhã, sem os bônus.' : "Today's run is over. It starts again tomorrow, without the bonuses.")
-                : (isPt ? 'Você concluiu os 3 andares de hoje! Volte amanhã.' : 'You cleared all 3 floors today! Come back tomorrow.')}
-            </p>
-            <RankingPanel game="rogue-dungeon" saveId={saveId} language={language} score={rogueScore(run)} period="weekly" />
-          </div>
-        </section>
+        <ResultScreen
+          language={language}
+          outcome={run.over ? 'tired' : 'win'}
+          gameName={isPt ? 'Incursão do dia' : "Today's run"}
+          title={run.over ? (isPt ? 'Incursão encerrada' : 'Run over') : (isPt ? 'Incursão concluída' : 'Run cleared')}
+          line={run.over
+            ? (isPt ? 'A incursão de hoje terminou. Ela recomeça amanhã, sem os bônus.' : "Today's run is over. It starts again tomorrow, without the bonuses.")
+            : (isPt ? 'Você concluiu os 3 andares de hoje! Volte amanhã.' : 'You cleared all 3 floors today! Come back tomorrow.')}
+          rootAttrs={{ 'data-rogue-over': true }}
+          hero={{ label: isPt ? 'Pontos' : 'Score', value: rogueScore(run) }}
+          strip={[{ key: 'won', label: isPt ? 'Desafios vencidos' : 'Challenges won', value: run.won }]}
+          ledger={[{ key: 'bits', kind: 'bits', value: run.won > 0 ? rogueBits(run) : 0 }]}
+          emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
+          notes={note ? <p data-rogue-note style={text}>{note}</p> : undefined}
+          petSrc={petSprite}
+          homeLabel={isPt ? 'Fechar' : 'Close'}
+          onHome={onClose}
+          below={<RankingPanel game="rogue-dungeon" saveId={saveId} language={language} score={rogueScore(run)} period="weekly" />}
+        />
       )}
 
       {fighting && !finished && (

@@ -10,6 +10,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
 import { sm2Button } from './form/FormKit';
+import { ResultScreen } from './games/ResultScreen';
 import { GameRoot, GameHeader, GAME_VISOR_W, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
 import { fxFrame } from '../utils/combatFx';
@@ -232,6 +233,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   phaseRef.current = phase;
   const [finalScore, setFinalScore] = useState(0);
   const [earned, setEarned] = useState(0);
+  /** Recorde anterior desta corrida (0 = primeira partida: sem festa de recorde). */
+  const [prevBest, setPrevBest] = useState(0);
   const [best, setBest] = useState(() => readNumber(STORAGE_KEYS.DINO_BEST, 0));
 
   // O campo acompanha a tela (rotação, barra do sistema); piso = o vidro de antes.
@@ -525,6 +528,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       const score = Math.floor(s.score);
       const pts = Math.floor(score / 100);
       setFinalScore(score);
+      setPrevBest(readNumber(STORAGE_KEYS.DINO_BEST, 0));
       setPlayedLevel(s.level === 2 ? 2 : 1);
       setEarned(pts);
       // C-6 (run `som-01`): `pts === 0` significa score ABAIXO de 100 — ou seja,
@@ -616,7 +620,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       </div>
 
 
-      {phase !== 'playing' && (
+      {phase === 'ready' && (
         <div role="group" aria-label={isPt ? 'Dificuldade' : 'Difficulty'} style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
           {([1, 2] as const).map(n => (
             <button key={n} type="button" data-dino-start={n} onClick={() => start(n)}
@@ -627,11 +631,30 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         </div>
       )}
       {phase === 'over' && (
-        <>
-          <p style={phaseTitle}>{isPt ? 'Fim de jogo!' : 'Game over!'}</p>
-          <p className="sm2-num" style={phaseLine}>Score: {finalScore} · <BitsAmount value={earned} sign="+" /></p>
-          <RankingPanel key={`${playedLevel}-${finalScore}`} game={playedLevel === 2 ? 'dino-2' : 'dino-1'} saveId={rankSaveId} language={language} score={finalScore} />
-        </>
+        <ResultScreen
+          language={language}
+          outcome={prevBest > 0 && finalScore > prevBest ? 'record' : 'calm'}
+          gameName={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}
+          title={isPt ? 'Corrida encerrada' : 'Run over'}
+          line={prevBest > 0 && finalScore > prevBest
+            ? (isPt ? 'Um novo ponto mais longe. Ele está orgulhoso.' : 'A new farthest point. He is proud.')
+            : (isPt ? 'Ele está pronto quando você estiver.' : 'He is ready when you are.')}
+          hero={{ label: isPt ? 'Pontos' : 'Score', value: finalScore }}
+          recordNote={isPt ? `Novo recorde, antes ${prevBest}` : `New best, was ${prevBest}`}
+          strip={[
+            { key: 'level', label: isPt ? 'Dificuldade' : 'Difficulty', value: playedLevel === 2 ? 'Normal' : 'Easy' },
+            { key: 'best', label: isPt ? 'Recorde' : 'Best', value: best, hideOnRecord: true },
+          ]}
+          ledger={[{ key: 'bits', kind: 'bits', value: earned }]}
+          emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
+          petSrc={getSpriteForStage(evolutionStage, demoCharacterId, 256)}
+          scene={DINO_SCENE.bg}
+          playAgainLabel={isPt ? 'Correr de novo' : 'Run again'}
+          onPlayAgain={() => start(playedLevel)}
+          homeLabel={isPt ? 'Sair' : 'Exit'}
+          onHome={onExit}
+          below={<RankingPanel key={`${playedLevel}-${finalScore}`} game={playedLevel === 2 ? 'dino-2' : 'dino-1'} saveId={rankSaveId} language={language} score={finalScore} />}
+        />
       )}
 
       {/* O PULAR é aparelho: primário de 64 de altura e largura inteira, sem

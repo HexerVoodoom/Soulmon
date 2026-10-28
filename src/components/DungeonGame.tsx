@@ -6,6 +6,7 @@ import { InfoTip } from './ui/InfoTip';
 import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
+import { ResultScreen } from './games/ResultScreen';
 import { RankingPanel } from './RankingPanel';
 import { applyRiftLayer, riftBestThisMonth, RIFT_RANKING_FROM, RIFT_GAME_ID, type RiftMonthState } from '../utils/endlessRift';
 import { submitScore as submitRankingScore } from '../utils/rankings';
@@ -837,62 +838,76 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
             </div>
           )}
           {phase === 'ended' && (
-            <div role="status" style={PANEL} data-dungeon-ended={endReason}>
-              {/* Fim de descida SEM vereditos: não é derrota nem cobrança, é o HP que acabou — e ele volta com o tempo.
-                  Copy §4 (L5, §7): perda só sobre o que foi apostado de propósito (a descida). Sem "descansar" (§5.12:
-                  vocabulário da criatura que acaba) — o verbo é RECUPERAR. */}
-              <p style={phaseTitle}>
-                {endReason === 'sealed'
-                  ? (isPt ? 'O caminho para baixo está lacrado por ora.' : 'The way further down is sealed for now.')
-                  : endReason === 'energy'
-                    ? (isPt ? 'A energia desta descida acabou. Ele volta à superfície.' : 'The energy for this descent ran out. He heads back up.')
-                    : endReason === 'deep'
-                      ? (isPt ? 'Mais fundo que isso, ele ainda não alcança.' : 'Deeper than this is still out of his reach.')
-                      : (isPt ? 'Seu Soulmon ficou sem fôlego. A descida para aqui.' : 'Your Soulmon is out of breath. The descent stops here.')}
-              </p>
-              {endReason === 'sealed' && gs && (
-                <p style={phaseLine} data-gate-masmorra>{gateLine('masmorraAlto', bondLevelFor(gs.totalXP ?? 0), language)}</p>
+            /* Fim de descida SEM vereditos: não é derrota nem cobrança, é o HP que acabou — e ele volta com o tempo.
+               Copy §4 (L5, §7): perda só sobre o que foi apostado de propósito (a descida). Sem "descansar" (§5.12:
+               vocabulário da criatura que acaba) — o verbo é RECUPERAR. Tela padrão: `ResultScreen` (Proposta D). */
+            <ResultScreen
+              language={language}
+              outcome={resumo.recordTo > resumo.recordFrom ? 'record' : endReason === 'hp' ? 'tired' : 'calm'}
+              gameName={isPt ? 'Fenda Sem Fim' : 'Endless Rift'}
+              title={isPt ? 'Descida encerrada' : 'Descent over'}
+              line={endReason === 'sealed'
+                ? (isPt ? 'O caminho para baixo está lacrado por ora.' : 'The way further down is sealed for now.')
+                : endReason === 'energy'
+                  ? (isPt ? 'A energia desta descida acabou. Ele volta à superfície.' : 'The energy for this descent ran out. He heads back up.')
+                  : endReason === 'deep'
+                    ? (isPt ? 'Mais fundo que isso, ele ainda não alcança.' : 'Deeper than this is still out of his reach.')
+                    : (isPt ? 'Seu Soulmon ficou sem fôlego. A descida para aqui.' : 'Your Soulmon is out of breath. The descent stops here.')}
+              rootAttrs={{ 'data-dungeon-ended': endReason }}
+              hero={{ label: isPt ? 'Camada' : 'Layer', value: floor }}
+              recordNote={isPt ? `Mais fundo até hoje: camada ${resumo.recordTo}` : `Deepest so far: layer ${resumo.recordTo}`}
+              strip={[
+                { key: 'score', label: isPt ? 'Placar' : 'Score', value: runScore },
+                { key: 'best', label: isPt ? 'Recorde' : 'Best', value: best, hideOnRecord: true },
+              ]}
+              ledger={[
+                { key: 'bits', kind: 'bits', value: resumo.bits },
+                ...(resumo.hearts > 0 ? [{ key: 'hearts', kind: 'node' as const, label: isPt ? 'Corações (mochila)' : 'Hearts (Backpack)', node: <RewardLine hearts={resumo.hearts} language={isPt ? 'pt-BR' : 'en-US'} size={16} /> }] : []),
+                ...(resumo.glitchtama > 0 ? [{ key: 'glitchtama', kind: 'item' as const, label: isPt ? 'Glitchtama (mochila)' : 'Glitchtama (Backpack)', amount: resumo.glitchtama }] : []),
+                ...(resumo.fragments > 0 ? [{ key: 'fragments', kind: 'item' as const, label: isPt ? 'Fragmentos do Soulsmith' : 'Soulsmith fragments', amount: resumo.fragments }] : []),
+              ]}
+              emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
+              petSrc={petSprite}
+              scene={scene.bg}
+              notes={(
+                <>
+                  {endReason === 'sealed' && gs && (
+                    <p style={phaseLine} data-gate-masmorra>{gateLine('masmorraAlto', bondLevelFor(gs.totalXP ?? 0), language)}</p>
+                  )}
+                  {endReason === 'energy' && (
+                    <p style={phaseLine} data-dungeon-no-energy>
+                      {isPt
+                        ? 'Volte mais tarde: a energia volta com o tempo, e mais depressa quando ele está bem alimentado.'
+                        : 'Come back later: energy returns with time, and faster when he is well fed.'}
+                    </p>
+                  )}
+                  {endReason === 'deep' && (
+                    <p style={phaseLine} data-dungeon-deep>
+                      {isPt
+                        ? `O Lv dele chega até a camada ${capCamadas}. O Lv cresce com os seus dias completos e a evolução.`
+                        : `His Lv reaches down to layer ${capCamadas}. Lv grows with your complete days and evolution.`}
+                    </p>
+                  )}
+                  {awayReport && (
+                    <p style={phaseLine} data-dungeon-away-note>
+                      {isPt ? 'Isto aconteceu enquanto você esteve fora; ele já voltou para casa.' : 'This happened while you were away; he is back home now.'}
+                    </p>
+                  )}
+                  <DungeonSummary isPt={isPt} resumo={resumo} capBits={capBits} statsOnly />
+                  {capBits && <p style={phaseLine} data-dungeon-bits-cap>{isPt ? 'Teto diário de Bits atingido — a descida segue, só sem Bits.' : 'Daily Bits cap reached — the descent goes on, just without Bits.'}</p>}
+                  <p style={phaseLine}>{isPt ? 'Seus corações continuam intactos.' : 'Your hearts are untouched.'}</p>
+                  {espera > 0 && (
+                    <p style={phaseLine} data-dungeon-recovering>
+                      {isPt ? `Recuperando… pode descer de novo em ${formatarEspera(espera, true)}.` : `Recovering… ready to go down again in ${formatarEspera(espera, false)}.`}
+                    </p>
+                  )}
+                </>
               )}
-              {endReason === 'energy' && (
-                <p style={phaseLine} data-dungeon-no-energy>
-                  {isPt
-                    ? 'Volte mais tarde: a energia volta com o tempo, e mais depressa quando ele está bem alimentado.'
-                    : 'Come back later: energy returns with time, and faster when he is well fed.'}
-                </p>
-              )}
-              {endReason === 'deep' && (
-                <p style={phaseLine} data-dungeon-deep>
-                  {isPt
-                    ? `O Lv dele chega até a camada ${capCamadas}. O Lv cresce com os seus dias completos e a evolução.`
-                    : `His Lv reaches down to layer ${capCamadas}. Lv grows with your complete days and evolution.`}
-                </p>
-              )}
-              {awayReport && (
-                <p style={phaseLine} data-dungeon-away-note>
-                  {isPt ? 'Isto aconteceu enquanto você esteve fora; ele já voltou para casa.' : 'This happened while you were away; he is back home now.'}
-                </p>
-              )}
-              <DungeonSummary isPt={isPt} resumo={resumo} capBits={capBits} />
-              <p className="sm2-num" style={phaseLine}>
-                {isPt ? `Camada ${floor} · ${scoreLine}` : `Layer ${floor} · ${scoreLine}`}
-              </p>
-              <p style={phaseLine}>{isPt ? 'Seus corações continuam intactos.' : 'Your hearts are untouched.'}</p>
-              {espera > 0 && (
-                <p style={phaseLine} data-dungeon-recovering>
-                  {isPt ? `Recuperando… pode descer de novo em ${formatarEspera(espera, true)}.` : `Recovering… ready to go down again in ${formatarEspera(espera, false)}.`}
-                </p>
-              )}
-              <div style={{ display: 'flex', gap: 8 }}>
-                {espera === 0 && temEnergia && (
-                  <button type="button" onClick={startRun} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-                    {isPt ? 'Descer de novo' : 'Go down again'}
-                  </button>
-                )}
-                <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-                  {exitLabel}
-                </button>
-              </div>
-            </div>
+              playAgainLabel={isPt ? 'Descer de novo' : 'Go down again'}
+              onPlayAgain={espera === 0 && temEnergia ? startRun : undefined}
+              homeLabel={exitLabel}
+              onHome={onExit}
+            />
           )}
         </BattleStage>
         {/* O modalzinho de drop: a luta continua por trás (nada pausa), toque no véu/cartão fecha, a fila é de `dungeonDrops.ts`. */}
@@ -1001,8 +1016,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
 }
 
 /** O RESUMO da descida (REGISTRO §31): o que ela rendeu, em linhas de fato — sem placar de cobrança. */
-function DungeonSummary({ isPt, resumo, capBits }: {
+function DungeonSummary({ isPt, resumo, capBits, statsOnly = false }: {
   isPt: boolean; capBits: boolean;
+  /** Só as linhas de estatística (camadas, criaturas, recorde, energia): Bits e itens vão para o livro da `ResultScreen`. */
+  statsOnly?: boolean;
   resumo: { layers: number; enemies: number; bits: number; hearts: number; glitchtama: number; fragments: number; energy: number; recordFrom: number; recordTo: number };
 }) {
   const linhas: Array<{ k: string; n: ReactNode }> = [
@@ -1010,11 +1027,11 @@ function DungeonSummary({ isPt, resumo, capBits }: {
     { k: 'enemies', n: isPt ? `Criaturas que pararam de insistir: ${resumo.enemies}` : `Creatures that stopped holding: ${resumo.enemies}` },
     // D-62/D-80: o valor em Bits é o `BitsAmount` (moeda + número); o rótulo "Bits" fica só para leitor de tela.
     { k: 'bits', n: <><BitsAmount value={resumo.bits} />{capBits ? (isPt ? ' (o teto diário de Bits já foi atingido)' : ' (the daily Bits cap was already reached)') : ''}</> },
-  ];
+  ].filter(l => !statsOnly || l.k !== 'bits');
   const add = (k: string, n: string) => linhas.push({ k, n });
-  if (resumo.hearts > 0) linhas.push({ k: 'hearts', n: <><RewardLine hearts={resumo.hearts} language={isPt ? 'pt-BR' : 'en-US'} size={16} />{isPt ? ' (mochila)' : ' (Backpack)'}</> });
-  if (resumo.glitchtama > 0) add('glitchtama', isPt ? `Glitchtama: +${resumo.glitchtama} (mochila)` : `Glitchtama: +${resumo.glitchtama} (Backpack)`);
-  if (resumo.fragments > 0) add('fragments', isPt ? `Fragmentos do Soulsmith: +${resumo.fragments}` : `Soulsmith fragments: +${resumo.fragments}`);
+  if (!statsOnly && resumo.hearts > 0) linhas.push({ k: 'hearts', n: <><RewardLine hearts={resumo.hearts} language={isPt ? 'pt-BR' : 'en-US'} size={16} />{isPt ? ' (mochila)' : ' (Backpack)'}</> });
+  if (!statsOnly && resumo.glitchtama > 0) add('glitchtama', isPt ? `Glitchtama: +${resumo.glitchtama} (mochila)` : `Glitchtama: +${resumo.glitchtama} (Backpack)`);
+  if (!statsOnly && resumo.fragments > 0) add('fragments', isPt ? `Fragmentos do Soulsmith: +${resumo.fragments}` : `Soulsmith fragments: +${resumo.fragments}`);
   if (resumo.recordTo > resumo.recordFrom) add('record', isPt ? `Mais fundo até hoje: camada ${resumo.recordTo}` : `Deepest so far: layer ${resumo.recordTo}`);
   if (resumo.energy > 0) add('energy', isPt ? `Energia usada: ${resumo.energy}` : `Energy used: ${resumo.energy}`);
   return (

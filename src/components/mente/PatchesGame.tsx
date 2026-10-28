@@ -6,6 +6,7 @@ import { sm2Button, sm2Hint } from '../form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { BitsAmount } from '../ui/BitsAmount';
 import { RankingPanel } from '../RankingPanel';
+import { ResultScreen, formatResultTime } from '../games/ResultScreen';
 import { TIME_RANK_SIZE } from '../../utils/rankings';
 import { usePrefersReducedMotion } from '../ui/Viewport';
 import { getSpriteForStage } from '../../utils/sprites';
@@ -276,11 +277,31 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
         })}
       </div>
 
-      {solved && !challenge && rankSaveId && size === TIME_RANK_SIZE && solveMs > 0 && (
-        <RankingPanel key={`${level}-${solveMs}`} game="patches" saveId={rankSaveId} language={language} score={solveMs} />
+      {solved && !challenge && (
+        <ResultScreen
+          language={language}
+          outcome="win"
+          gameName={title}
+          title={isPt ? 'Colcha pronta' : 'Patchwork done'}
+          line={isPt ? 'Seu pet admira a colcha.' : 'Your pet admires the patchwork.'}
+          hero={solveMs > 0
+            ? { label: isPt ? 'Tempo' : 'Time', value: formatResultTime(solveMs) }
+            : { label: isPt ? 'Nível' : 'Level', value: level }}
+          strip={[{ key: 'level', label: isPt ? 'Nível' : 'Level', value: level }, { key: 'size', label: isPt ? 'Grade' : 'Grid', value: `${size}×${size}` }]}
+          ledger={[{ key: 'bits', kind: 'bits', value: earned }]}
+          petSrc={pet}
+          playAgainLabel={isPt ? 'Próxima colcha' : 'Next patchwork'}
+          againAttrs={{ 'data-patches-next': true }}
+          onPlayAgain={next}
+          homeLabel={isPt ? 'Sair' : 'Exit'}
+          onHome={onExit}
+          below={rankSaveId && size === TIME_RANK_SIZE && solveMs > 0
+            ? <RankingPanel key={`${level}-${solveMs}`} game="patches" saveId={rankSaveId} language={language} score={solveMs} />
+            : undefined}
+        />
       )}
 
-      <div style={{ display: 'flex', gap: 8 }}>
+      {!(solved && !challenge) && <div style={{ display: 'flex', gap: 8 }}>
         {solved ? (
           <>
             <button type="button" onClick={next} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }} data-patches-next>
@@ -295,7 +316,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
             {isPt ? 'Limpar tudo' : 'Clear all'}
           </button>
         )}
-      </div>
+      </div>}
     </GameRoot>
   );
 }

@@ -89,6 +89,7 @@ import { InfoTip, InfoTipSection } from './ui/InfoTip';
 import { AvatarFrame, FrameSelector } from './ui/AvatarFrame';
 import { MiniGlass } from './ui/MiniGlass';
 import { PixelMeter } from './pixel/PixelKit';
+import { ResultScreen } from './games/ResultScreen';
 import { RitualDialog } from './ritual/RitualKit';
 import { BackCircleButton } from './ui/BackCircleButton';
 import { useDialogA11y } from '../hooks/useDialogA11y';
@@ -1060,34 +1061,24 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
   const petScale = usePetScale(petStage, petSpriteSrc);
   const title = draw ? (isPt ? 'Empate' : 'Draw') : result.won ? (isPt ? 'Vitória' : 'Victory') : (isPt ? 'Derrota' : 'Defeat');
   return (
-    <RitualDialog label={title} onClose={onClose} zIndex={400} maxWidth={340} style={{ alignItems: 'center', textAlign: 'center', gap: 10 }}>
-      <h2 style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>
-        {title}
-      </h2>
-      {result.won && (
-        <GameVisor width={DIALOG_VISOR_W} height={56} scene={`url(${tournamentFinal}) center/cover`}>
-          <VisorSprite src={petSpriteSrc} alt="" size={64} idle={false} style={{ left: 56, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
-          <VisorSprite src={opponentSprite({ ...result.opponent, id: result.opponent.name })} alt="" size={64} idle={false} flip style={{ right: 56, bottom: 8 }} data-visor-enemy />
-        </GameVisor>
-      )}
-      <p className="sm2-num" style={sm2Hint}>
-        {isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`} · {result.points} pts
-        {draw ? null : <>{' · '}{result.myScore} × {result.oppScore}</>}
-      </p>
-      {/* Perder também rende Emblemas, e a tela diz. O EMPATE não rende nada (nem pontos) e não tem perdedor: texto neutro. */}
-      {draw ? (
-        <p data-empate style={sm2Hint}>{isPt ? 'Os dois caíram juntos. A partida conta, sem pontos para ninguém.' : 'You both went down together. The match counts, with no points for anyone.'}</p>
-      ) : (
-        <p style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8, margin: 0 }}>
-          <span style={sm2Hint}>{isPt ? 'Honra' : 'Honor'}</span>
-          <span className="sm2-num" style={{ ...emblemNum, fontSize: 'var(--sm2-text-lg)' }}>
-            +{result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS}
-          </span>
-        </p>
-      )}
-      <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 260 }}>
-        {isPt ? 'Continuar' : 'Continue'}
-      </button>
-    </RitualDialog>
+    <ResultScreen
+      language={isPt ? 'pt-BR' : 'en-US'}
+      mode="dialog"
+      outcome={draw ? 'calm' : result.won ? 'win' : 'tired'}
+      gameName={isPt ? 'Torneio' : 'Tournament'}
+      title={title}
+      line={draw
+        ? (isPt ? 'Os dois caíram juntos. A partida conta, sem pontos para ninguém.' : 'You both went down together. The match counts, with no points for anyone.')
+        : (isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`)}
+      lineAttrs={draw ? { 'data-empate': true } : undefined}
+      hero={draw ? undefined : { label: isPt ? 'Placar da partida' : 'Match score', value: `${result.myScore} × ${result.oppScore}` }}
+      strip={draw ? undefined : [{ key: 'pts', label: isPt ? 'Poder da partida' : 'Match power', value: `${result.points} pts` }]}
+      ledger={draw ? [] : [{ key: 'honor', kind: 'honor', value: result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS }]}
+      petSrc={petSpriteSrc}
+      scene={`url(${tournamentFinal}) center/cover`}
+      playAgainLabel={isPt ? 'Continuar' : 'Continue'}
+      onPlayAgain={onClose}
+      onDismiss={onClose}
+    />
   );
 }
