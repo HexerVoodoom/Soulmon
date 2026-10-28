@@ -65,7 +65,7 @@ export function resolverGuerra(A, B, sementeBase) {
   const duels = [];
   let aWins = 0, bWins = 0;
   for (let i = 0; i < n; i++) {
-    const r = simulateDuel({ me: a[i].side, opp: b[i].side, seed: duelSeed(sementeBase, i), taps: [] });
+    const r = simulateDuel({ me: a[i].side, opp: b[i].side, seed: duelSeed(sementeBase, i), taps: [], elementScale: 0.5 });
     if (r.winner === 'me') { aWins++; duels.push('a'); } else if (r.winner === 'opp') { bWins++; duels.push('b'); } else duels.push('draw');
   }
   return { aWins, bWins, duels };

@@ -83,10 +83,10 @@ const TERMS: Term[] = [
     descPt: `Vínculo N é o seu nível como pessoa que cuida (até ${TALENT_POINTS_MAX}); cada um rende um ponto de talento. Lv N é o do Soulmon. A Arena abre no Vínculo ${GATES.pvp.minBond}.`,
   },
   {
-    // Vantagem elemental (dono, 27/10/2026): Arena e Combina 3 usam o mesmo ±1 golpe exibido; selo "Super eficiente!" / "Pouco eficiente".
+    // Vantagem elemental (dono, 27/10/2026): Arena, Combina 3 e Guerra usam o mesmo ±1 golpe exibido; selo "Super eficiente!" / "Pouco eficiente".
     icon: '⚔️', en: 'Element advantage', pt: 'Vantagem elemental',
-    descEn: `In the Arena and Combine 3 (not Duels or the War) a strike whose element counters the other side's lands one hit sooner ("Super effective!"); the reverse takes one hit longer. No element, no change.`,
-    descPt: `Na Arena e no Combina 3 (não nos Duelos nem na Guerra), um golpe cujo elemento contra-ataca o do outro lado vale um golpe a menos ("Super eficiente!"); o inverso leva um golpe a mais. Sem elemento, nada muda.`,
+    descEn: `In the Arena, Combine 3 and the Guild War (half effect there; not Tournament Duels) a strike whose element counters the other side's lands one hit sooner ("Super effective!"); the reverse takes one hit longer. No element, no change.`,
+    descPt: `Na Arena, no Combina 3 e na Guerra de Guildas (metade do efeito; não nos Duelos do Torneio), um golpe cujo elemento contra-ataca o do outro lado vale um golpe a menos ("Super eficiente!"); o inverso leva um golpe a mais. Sem elemento, nada muda.`,
   },
   {
     icon: '❗', en: 'Missions', pt: 'Missões',

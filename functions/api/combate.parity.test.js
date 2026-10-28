@@ -19,6 +19,7 @@ import * as bonusApp from '../../src/utils/combate/bonus';
 import * as duelApp from '../../src/utils/combate/duel';
 import { soulCombatant as soulCombatantApp } from '../../src/utils/soulXP';
 import { ESCOLA_FAMILY_PADRAO } from '../../src/utils/arena';
+import * as elSrv from './_elementoBase.js';
 
 const BUILDS = Object.keys(levelApp.REFERENCE_BUILDS);
 const FAMILIES = specialsApp.SPECIAL_FAMILIES;
@@ -155,6 +156,46 @@ describe('o duelo (`_duel.js`) é o do cliente (`combate/duel.ts`)', () => {
       const { fx: _fx, ...aSemFx } = a;
       expect(b).toEqual(aSemFx);
     }
+  });
+
+  it('vantagem elemental (dono, 27/10/2026): a tabela do servidor dá o MESMO +1/-1/0 do app em todos os pares de ids da ficha', () => {
+    const ids = [...duelSrv.ELEMENTOS_FICHA];
+    expect(ids.length).toBeGreaterThanOrEqual(200);
+    let pares = 0, vant = 0;
+    for (const a of ids) for (const d of ids) {
+      const app = duelApp.duelElementAdvantage(a, d);
+      expect(elSrv.vantagemElemental(a, d), `${a} x ${d}`).toBe(app);
+      pares++; if (app === 1) vant++;
+    }
+    expect(vant).toBeGreaterThan(0);
+    expect(pares).toBe(ids.length * ids.length);
+    // ausente / lixo = neutro nos dois lados
+    for (const lixo of [undefined, null, '', 7, {}]) {
+      expect(elSrv.vantagemElemental(lixo, 'fogo')).toBe(0);
+      expect(duelApp.duelElementAdvantage(lixo, 'fogo')).toBe(0);
+    }
+  });
+
+  it('simulateDuel com elementos (`fx.elBasica`): eventos, vencedor e placar iguais ao cliente, e só a Guerra (escala 0,5) muda a luta', () => {
+    const els = ['fogo', 'planta', 'vigor', 'agua', 'vapor', 'lava', 'luz', 'tempo', undefined];
+    let mudou = 0;
+    for (let s = 0; s < 90; s++) {
+      const L = levelApp.RULER_LEVELS[s % 15];
+      const base = { me: sideSrv(L, BUILDS[s % 4], FAMILIES[s % 7]), opp: sideSrv(L, BUILDS[(s >> 2) % 4], FAMILIES[(s >> 3) % 7]) };
+      const me = { ...base.me, fx: { elBasica: els[s % els.length] } };
+      const opp = { ...base.opp, fx: { elBasica: els[(s * 5 + 3) % els.length] } };
+      const a = duelApp.simulatePvp({ me, opp, seed: s * 31 + 7, elementScale: 0.5 });
+      const b = duelSrv.simulateDuel({ me, opp, seed: s * 31 + 7, elementScale: 0.5 });
+      const { fx: _fx, ...aSemFx } = a;
+      expect(b).toEqual(aSemFx);
+      const neutro = duelSrv.simulateDuel({ ...base, seed: s * 31 + 7 });
+      // Torneio/Duelo (escala 0, o padrão): elemento NÃO muda a luta, nos dois lados.
+      expect(duelSrv.simulateDuel({ me, opp, seed: s * 31 + 7 })).toEqual(neutro);
+      expect(duelSrv.simulateDuel({ me, opp, seed: s * 31 + 7, elementScale: 0 })).toEqual(neutro);
+      expect(duelApp.simulatePvp({ me, opp, seed: s * 31 + 7 }).winner).toBe(neutro.winner);
+      if (duelApp.duelElementAdvantage(me.fx.elBasica, opp.fx.elBasica) !== 0 && JSON.stringify(neutro) !== JSON.stringify(b)) mudou++;
+    }
+    expect(mudou).toBeGreaterThan(0);
   });
 
   it('a higienização dos toques e a conta por balde são as mesmas', () => {

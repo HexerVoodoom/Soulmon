@@ -41,6 +41,7 @@ import { bondLevelFor } from './_bond.js';
 import { talentAttrBonus, talentCheerScale, talentStartEnergy, talentDotResist } from './_talents.js';
 import { equipAttrBonus } from './_equipment.js';
 import { fichaJornadaFamilia } from './_fichaJornada.js';
+import { aplicarElementosDuelo } from './_elementoBase.js';
 
 export { PVP_HP_SCALE };
 
@@ -238,10 +239,12 @@ export function duelSeed(...parts) {
  * (`'me' | 'opp' | 'draw'`) e a fração de vida de cada lado no PRIMEIRO nocaute (o placar).
  * @returns {{ events: any[], winner: 'me' | 'opp' | 'draw', hpMe: number, hpOpp: number, timeMe: number, timeOpp: number }}
  */
-export function simulateDuel({ me, opp, seed, taps }) {
+export function simulateDuel({ me, opp, seed, taps, elementScale = 0 }) {
+  // Vantagem elemental (dono, 27/10/2026): o golpe basico de cada lado contra o elemento do outro move +-1 golpe exibido. So a Guerra de Guildas passa `elementScale` 0,5; Torneio/Duelo ranqueado passa 0 (padrao) e luta sem elemento (REGISTRO 177).
+  const { meCombatant, oppCombatant } = elementScale > 0 ? aplicarElementosDuelo(me, opp, elementScale) : { meCombatant: me.combatant, oppCombatant: opp.combatant };
   const g = fightSteps(
-    { combatant: me.combatant, special: me.special, dotResist: me.dotResist },
-    { combatant: opp.combatant, special: opp.special, dotResist: opp.dotResist },
+    { combatant: meCombatant, special: me.special, dotResist: me.dotResist },
+    { combatant: oppCombatant, special: opp.special, dotResist: opp.dotResist },
     { seed: seed >>> 0, hpScale: PVP_HP_SCALE, startEnergy: [cleanStartEnergy(me.startEnergy), cleanStartEnergy(opp.startEnergy)], cheer: duelCheerEvents(taps, 0, me.cheerScale) },
   );
   const events = [];
