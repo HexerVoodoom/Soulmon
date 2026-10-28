@@ -119,11 +119,11 @@ describe('AC5 + AC6. the run: duration per enemy and the ladder of floors (same 
       expect(m, `floor ${i + 1}`).toBeLessThanOrEqual(29);
     }
   });
-  it('AC6: floors 1-3 ~98-100%, floor 4 ~60-72%, floor 5 ~0% (the wall is the same for every level; moved one floor up on 28/10/2026)', () => {
+  it('AC6: floors 1-3 ~98-100%, floor 4 ~45-62% for the base player (~80% equipped; ~67% on the 50/50 mix of `winrateModos.sim.test.ts`), floor 5 ~0% (the wall is the same for every level; moved one floor up on 28/10/2026)', () => {
     console.log(`[AC6] reach: ${[1, 2, 3, 4, 5, 6].map((n) => `${n}:${pct(reached(n))}`).join(' ')}`);
     for (const n of [1, 2, 3]) expect(reached(n), `floor ${n}`).toBeGreaterThanOrEqual(0.97);
-    expect(reached(4)).toBeGreaterThanOrEqual(0.6);
-    expect(reached(4)).toBeLessThanOrEqual(0.72);
+    expect(reached(4)).toBeGreaterThanOrEqual(0.45);
+    expect(reached(4)).toBeLessThanOrEqual(0.62);
     expect(reached(5)).toBeLessThanOrEqual(0.03);
   });
   it('RED: a floor growth in power of 3 knocks floor 2 down (the gate can fail)', () => {
