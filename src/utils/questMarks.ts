@@ -91,10 +91,10 @@ export function questMarks(input: QuestMarkInput): QuestMarks {
   const torneio = strongestMark(
     input.weekly.filter(w => !w.claimed).map((w): QuestMark => (w.done ? 'ready' : 'available')),
   );
-  // Permanente (11/10/2026, pedido do dono): "a interrogação só aparece quando há missão
-  // para ENTREGAR". Conquista cumprida não tem "Resgatar" na folha (só libera a COMPRA do
-  // cenário na loja), então o "?" levava a uma lista sem nada a entregar. Fica sempre nula;
-  // `missionProgress`/`ownedBackgrounds` seguem na entrada por compatibilidade.
+  // Conquistas: o "?" acende quando há missão cumprida e ainda não resgatada
+  // (`hasUnclaimedMission`; REGISTRO §56, 14/10/2026 — a folha ganhou "Resgatar"
+  // explícito). Sem missão para ENTREGAR, fica nulo. `ownedBackgrounds` segue na
+  // entrada por compatibilidade.
   const conquistas: QuestMark = hasUnclaimedMission(input.missionProgress, input.missionsClaimed) ? 'ready' : null;
   const buildings = input.buildings ?? {};
   const predios = strongestMark(Object.values(buildings).map(m => m ?? null));
