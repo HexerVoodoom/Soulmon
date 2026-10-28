@@ -33,11 +33,11 @@ export const FX_FALLBACK_ELEMENT = 'neutro';
 
 /**
  * Os elementos base que TÊM ARTE (cenário, escudo, ícone, Soulmon da masmorra), para dar um elemento visual ao
- * oponente. São 19 dos 20 do anel de `arena.ts`: industrial e planta têm arte própria (27/10/2026, alias apagado); fada entra junto com a dela.
+ * oponente. São os 20 do anel de `arena.ts`: industrial e planta têm arte própria (27/10/2026, alias apagado); fada entrou em 28/10/2026.
  */
 export const VISUAL_ELEMENTS = [
   'fogo', 'vida', 'terra', 'gravidade', 'ar', 'som', 'eletricidade', 'agua',
-  'marcial', 'arcano', 'tempo', 'espaco', 'luz', 'sombra', 'morte', 'vileza', 'vigor', 'planta', 'industrial',
+  'marcial', 'arcano', 'tempo', 'espaco', 'luz', 'sombra', 'morte', 'vileza', 'vigor', 'planta', 'industrial', 'fada',
 ] as const;
 
 /** Id de elemento (do oráculo, da ficha ou do bestiário) → id que tem arte; sem arte, `neutro`. */

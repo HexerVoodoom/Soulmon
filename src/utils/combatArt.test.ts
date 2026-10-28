@@ -7,7 +7,7 @@ describe('combatArt — cenário, escudo e plataforma por elemento (rodada 2, 04
   it('18 cenários e 18 escudos: um por elemento BASE + o neutro', () => {
     expect(COMBAT_BG_COUNT).toBe(18);
     expect(COMBAT_SHIELD_COUNT).toBe(18);
-    for (const el of [...VISUAL_ELEMENTS.filter(e => e !== 'planta' && e !== 'industrial'), 'neutro']) {
+    for (const el of [...VISUAL_ELEMENTS.filter(e => e !== 'planta' && e !== 'industrial' && e !== 'fada'), 'neutro']) {
       expect(combatSceneBg(el), el).toMatch(new RegExp(String.raw`bg-${el}\.png\) center/cover #[0-9a-f]{6}$`));
       expect(combatShield(el), el).toMatch(new RegExp(String.raw`escudo-${el}\.png$`));
     }
