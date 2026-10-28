@@ -40,6 +40,7 @@ export const PRESENTATION_IDLE = 'welcome' as const;
  * A ORDEM. Do mais urgente ao mais leve (a posição é a prioridade):
  *  1. `welcomeTour` — a boas-vindas do primeiro uso (nada mais faz sentido antes dela);
  *  2. `triage` — a única aberta por TOQUE do usuário: ele acabou de pedir;
+ *  2b. `feiraEvento` — o chefe/desafio/dia calmo da Feira que a VOLTA da Missão encontra (aviso de gesto, fora do teto; 28/10/2026, `docs/PLANO-FEIRA-CHEFE.md`);
  *  ── INÍCIO DE DIA (D-64, REGISTRO §111), depois de acordar o Soulmon ──
  *  3. `nightmare` — o pesadelo da manhã (jogável) logo depois do despertar; NUNCA junto do sonho;
  *  4. `dream` — o sonho da manhã, no lugar do pesadelo quando não há luta;
@@ -61,6 +62,7 @@ export const PRESENTATION_ORDER = [
   'welcomeTour',
   'triage',
   'dungeonReturn',
+  'feiraEvento',
   'nightmare',
   'dream',
   'dailyReport',

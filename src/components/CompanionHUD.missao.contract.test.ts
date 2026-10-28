@@ -13,6 +13,6 @@ describe('o Solmon em missão some da Home', () => {
   });
   it('o App liga `missionAway` pelo relógio da ida e registra a volta no servidor', () => {
     expect(app).toMatch(/missionAway=\{isMissionAway\(guildMission, Date\.now\(\)\)\}/);
-    expect(app).toMatch(/hitGuildRaid\(saveId, gameState\.playerDayTz\)/);
+    expect(app).toMatch(/hitGuildRaid(Evento)?\(saveId, gameState\.playerDayTz\)/);
   });
 });

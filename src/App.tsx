@@ -173,6 +173,8 @@ import {
   CEREMONY_MIN_INDEX, readGroveLocal,
 } from './utils/groveLocal';
 import { grantGuildTrophy } from './utils/guildClaimLocal';
+import { feiraEventoAbre, feiraShownKey, type FeiraEvento } from './utils/feira';
+import type { FeiraCredit } from './utils/feiraCredit';
 import { guildCoreText, groveStageName, type GroveMarcoStage } from './utils/guildCopyCore';
 import { canRebirth, rebirthRefusal } from './utils/rebirthGate';
 import { gateLine } from './utils/gates';
@@ -752,6 +754,7 @@ const WelcomePromptModal = lazy(() => import('./components/WelcomePromptModal').
 const ProtectProgressModal = lazy(() => import('./components/ProtectProgressModal').then(m => ({ default: m.ProtectProgressModal })));
 const MilestoneCeremony = lazy(() => import('./components/MilestoneCeremony').then(m => ({ default: m.MilestoneCeremony })));
 const GroveMilestoneCeremony = lazy(() => import('./components/guild/GroveMilestoneCeremony').then(m => ({ default: m.GroveMilestoneCeremony })));
+const FeiraEventoSheet = lazy(() => import('./components/guild/FeiraEventoSheet').then(m => ({ default: m.FeiraEventoSheet })));
 const MorningCheckIn = lazy(() => import('./components/MorningCheckIn').then(m => ({ default: m.MorningCheckIn })));
 const TriagePile = lazy(() => import('./components/TriagePile').then(m => ({ default: m.TriagePile })));
 const MorningDream = lazy(() => import('./components/MorningDream').then(m => ({ default: m.MorningDream })));
@@ -812,6 +815,10 @@ export default function App() {
   const { gameState, setGameState } = useGameState();
   const [showIntro, setShowIntro] = useState(true);
   const [currentView, setCurrentView] = useState<ViewType>('home');
+  // FEIRA DO CHEFE (docs/PLANO-FEIRA-CHEFE.md): o evento que a VOLTA da Missão encontrou. Em memória (a sala da Feira reabre a folha);
+  // `null` com a Feira desligada/servidor antigo — e então nada disto acontece.
+  const [feiraEvento, setFeiraEvento] = useState<FeiraEvento | null>(null);
+
   // O resumo da volta sozinha mora no SAVE (`dungeonReturnPending`): fechar o app antes de ver o aviso não o perde.
   const dungeonReturnSummary: DungeonReturnSummary | null = gameState.dungeonReturnPending ?? null;
   const setDungeonReturnSummary = useCallback((v: DungeonReturnSummary | null) => {
@@ -2199,6 +2206,7 @@ export default function App() {
       welcomeTour: welcomeTourOpen,
       triage: Boolean(triageTasks),
       dungeonReturn: dungeonReturnSummary !== null,
+      feiraEvento: feiraEvento !== null,
       levelUp: levelUpOpen,
       dailyReport: showDailyReport && Boolean(gameState.lastDayReport),
       buildingIntro: introShown.length > 0,
@@ -2222,6 +2230,9 @@ export default function App() {
         handleLevelUpDone(levelUpEvent.to);
         const abertos = buildingsUnlockedBetween(levelUpEvent.from, levelUpEvent.to);
         if (abertos.length > 0) setUnlockToastIds(abertos);
+      } else if (id === 'feiraEvento' && feiraEvento) {
+        // "visto" ao MOSTRAR: o mesmo mistério no mesmo dia não reabre sozinho (a sala da Feira reabre à mão)
+        writeLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO, feiraShownKey(feiraEvento, playerDayKey(new Date(), gameState.playerDayTz)), { silent: true });
       } else if (id === 'noticeToast' && noticeKey) {
         // "visto" ao MOSTRAR: `<dia>|<chave>,<chave>` — reabrir o app no mesmo dia não repete o balão
         const dia = playerDayKey(new Date(), gameState.playerDayTz);
@@ -2256,6 +2267,7 @@ export default function App() {
         case 'welcomeTour': handleWelcomeTourDone(); break;
         case 'triage': setTriageTasks(null); break;
         case 'dungeonReturn': setDungeonReturnSummary(null); break;
+        case 'feiraEvento': setFeiraEvento(null); break;
         case 'levelUp': setLevelUpShown(null); break;
         case 'dailyReport': closeDailyReport(); break;
         case 'buildingIntro': setIntroShown([]); break;
@@ -2320,6 +2332,8 @@ export default function App() {
     ? (displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? Object.values(spriteAcervo.sprites)[0]?.url)
     : undefined)
     ?? getSpriteForStage(gameState.evolutionStage, petLine);
+  /** FEIRA DO CHEFE: o SEU bicho na luta (o replay só traz a fração de HP; elemento neutro até a ficha elemental ser lida aqui). */
+  const feiraMe = { sprite: minhaCriaturaUrl, name: soulmonDisplayName(gameState.soulmonMeta) || 'Soulmon', element: 'neutro' };
   /* O selo "Dia completo" da lista (minimal-ui F2). A condição é a da VIRADA —
      `completeDayReached`, a mesma função que `computeDailyReset` usa para
      contar o dia — aplicada ao dia de hoje: meta inteira feita, ≥1 cadastrada
@@ -4460,6 +4474,14 @@ export default function App() {
     });
   }, [setGameState]);
 
+  /** FEIRA DO CHEFE: credita o que o servidor deu (Emblemas, Bits, troféu) pelos caminhos de sempre. Chamado UMA vez por recibo (`creditFeiraOnce`), fora de updater. */
+  const handleFeiraCredit = useCallback((c: FeiraCredit) => {
+    if (c.emblems > 0) earnEmblems(c.emblems);
+    if (c.bits > 0) handleClaReward(`${c.receipt}:bits`, [{ kind: 'bits', amount: c.bits }]);
+    // troféu `trophy-boss-<id>` pode não existir no catálogo do cliente: `grantGuildTrophy` só aceita ids conhecidos (o resto é ignorado em silêncio)
+    if (c.trophyId) { const id = c.trophyId; setGameState(prev => grantGuildTrophy(prev, id)); }
+  }, [earnEmblems, handleClaReward, setGameState]);
+
   /** BOSQUE: guarda o pico da árvore da estação (e o ano-ciclo de conclusão). Idempotente: vista igual devolve o MESMO estado. */
   const handleBosquePlantio = useCallback((v: { planted: boolean; mature: boolean; stage: number; season: 'primavera' | 'verao' | 'outono' | 'inverno' }) => {
     void import('./utils/bosqueArvores').then(({ registrarPlantio }) => {
@@ -4494,8 +4516,10 @@ export default function App() {
       voltouDaMissao(n => n + 1);
       busy = true;
       try {
-        const { hitGuildRaid } = await import('./utils/community');
-        await hitGuildRaid(saveId, gameState.playerDayTz);
+        const { hitGuildRaidEvento } = await import('./utils/community');
+        const volta = await hitGuildRaidEvento(saveId, gameState.playerDayTz);
+        // FEIRA DO CHEFE: o evento da volta entra na fila (um por vez). Ausente (Feira desligada / servidor antigo) = nada muda.
+        if (volta.evento && feiraEventoAbre(volta.evento) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraShownKey(volta.evento, playerDayKey(new Date(), gameState.playerDayTz))) setFeiraEvento(volta.evento);
         if (alive) encerrar();
       } catch (e) {
         const kind = (e as { kind?: string } | null)?.kind;
@@ -7639,7 +7663,7 @@ export default function App() {
                 onLabTab={setLabTab}
                 labContent={labContent}
                 hallContent={hallContent}
-                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, pendentesDoDia, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
+                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, pendentesDoDia, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend }, feira: { me: feiraMe, onCredit: handleFeiraCredit }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
               />
             </Suspense>
           )}
@@ -8901,6 +8925,21 @@ export default function App() {
       {(interstitial === 'dungeonReturn' || demo) && dungeonReturnSummary && (
         <PresentationSlot id="dungeonReturn" onFail={() => presentation.fail('dungeonReturn')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <DungeonReturnModal summary={dungeonReturnSummary} language={language} onClose={() => setDungeonReturnSummary(null)} />
+        </PresentationSlot>
+      )}
+
+      {/* 🎪 FEIRA DO CHEFE: o que o clã encontra quando o Solmon VOLTA da Missão (chefe, desafio ou dia calmo). Desligada = nunca monta. */}
+      {interstitial === 'feiraEvento' && feiraEvento && saveId && (
+        <PresentationSlot id="feiraEvento" onFail={() => presentation.fail('feiraEvento')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <FeiraEventoSheet
+            language={language}
+            saveId={saveId}
+            tz={gameState.playerDayTz}
+            evento={feiraEvento}
+            me={feiraMe}
+            onClose={() => setFeiraEvento(null)}
+            onCredit={handleFeiraCredit}
+          />
         </PresentationSlot>
       )}
 

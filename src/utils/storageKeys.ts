@@ -203,6 +203,8 @@ export const STORAGE_KEYS = {
    *  respostas 200 são possíveis, e é esta lista que impede o segundo crédito de Emblemas.
    *  Só recibos (nada de nome, guilda ou quantia). Dono: `utils/guildClaimLocal.ts`. */
   GUILD_CLAIMED: 'soulmon-guild-claimed',
+  /** Feira do Chefe: o último evento da volta que a fila JÁ mostrou (`<k>:<kind>:<dia>`), gravado ao MOSTRAR. */
+  FEIRA_EVENTO_VISTO: 'soulmon-feira-evento-visto',
   /** OFICINA DO FOCO (04/10/2026) — o timer em curso (modo, fase, `endAt` em timestamp). Só do
    *  aparelho, nunca no save. Dono: `utils/focoTimer.ts`. */
   FOCO_TIMER: 'soulmon-foco-timer',

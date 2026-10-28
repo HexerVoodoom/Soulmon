@@ -242,6 +242,8 @@ export interface AreaViewProps {
     casa?: ComponentProps<typeof GuildSheetT>['casa'];
     /** A Missão (PR3): estado da ida do Solmon e o gesto de mandá-lo. */
     missao?: ComponentProps<typeof GuildSheetT>['missao'];
+    /** Feira do Chefe: reabrir o evento pela sala (só com `guild.feira` na vista). */
+    feira?: ComponentProps<typeof GuildSheetT>['feira'];
     cla?: ComponentProps<typeof GuildSheetT>['cla'];
   };
 }

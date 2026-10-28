@@ -6,6 +6,11 @@ import { authHeaders } from './auth';
 import { reagirContaExcluida } from './cloudSave';
 import { playerDayKey, type PlayerDayAnchor } from './playerDay';
 import {
+  sanitizeFeiraEvento, sanitizeFeiraResumo, sanitizeFeiraAttack, sanitizeFeiraClaim, sanitizeFeiraTrail, sanitizeFeiraTrailDone,
+  type FeiraEvento, type FeiraResumo, type FeiraAttack, type FeiraClaim, type FeiraTrail, type FeiraTrailDone, type FeiraSolution,
+} from './feira';
+export type { FeiraEvento, FeiraResumo, FeiraAttack, FeiraClaim, FeiraTrail, FeiraTrailDone, FeiraSolution };
+import {
   GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES, GUILD_GESTURES, TIDE_SIZES, RAID_PHENOMENA, CASA_STAGES,
   type CasaStageId, type GroveStageId, type GuildGesture, type TideSize, type RaidPhenomenon,
 } from './guildRules';
@@ -344,6 +349,8 @@ export interface GuildView {
   gestureReceived: boolean;
   /** A Feira desta semana. `null` = o servidor não a mandou (não se desenha nada). */
   raid: GuildRaid | null;
+  /** A Feira do Chefe (só agregado do clã). Ausente com a Feira desligada ou em servidor antigo. */
+  feira?: FeiraResumo;
   /** A CASA da guilda (PR2). `null` = o servidor não a mandou (versão antiga): a sala não se desenha. */
   casa: GuildCasa | null;
 }
@@ -443,6 +450,8 @@ export class GuildError extends Error {
     public readonly status: number,
     public readonly guild?: GuildView | null,
     public readonly claim?: GuildClaim | null,
+    /** Corpo cru do erro (só para a Feira do Chefe: o 409 `already claimed` traz o recibo no formato dela). Nunca renderize isto. */
+    public readonly raw?: unknown,
   ) {
     super(`guild:${kind}:${status}`);
     this.name = 'GuildError';
@@ -463,6 +472,7 @@ export function sanitizeGuildView(raw: unknown): GuildView | null {
   const declared = typeof r.size === 'number' && Number.isFinite(r.size) ? Math.floor(r.size) : 0;
   const size = Math.max(list.length, declared);
   const nominal = size <= GUILD_PRESENCE_NOMINAL_MAX && r.presence !== null;
+  const feiraResumo = sanitizeFeiraResumo(r.feira);
   const members: GuildMember[] = list.map((m): GuildMember => {
     const o = (m && typeof m === 'object' ? m : {}) as Record<string, unknown>;
     const rawSprite = typeof o.sprite === 'string' && o.sprite.trim() ? o.sprite.trim().slice(0, 500) : null;
@@ -513,6 +523,7 @@ export function sanitizeGuildView(raw: unknown): GuildView | null {
     gestures: gestos(r.gestures),
     gestureReceived: r.gestureReceived === true,
     raid: sanitizeRaid(r.raid),
+    ...(feiraResumo ? { feira: feiraResumo } : {}),
     casa: sanitizeCasa(r.casa),
   };
 }
@@ -593,6 +604,7 @@ export async function guildCall<T>(action: string, opts: { method?: 'GET' | 'POS
       kind === 'alreadyIn' ? sanitizeGuildView(obj.guild) : undefined,
       // 409 `already claimed`: o servidor manda `claimed` (a MESMA forma do 200, lida do registro gravado).
       kind === 'alreadyClaimed' ? sanitizeClaim(obj.claimed) : undefined,
+      obj,
     );
   }
   return data as T;
@@ -650,6 +662,65 @@ export const newGuildCode = (id: string, tz?: PlayerDayAnchor) =>
  */
 export const hitGuildRaid = (id: string, tz?: PlayerDayAnchor) =>
   guildCall<{ landed?: boolean; guild: unknown }>('guildRaidHit', { method: 'POST', body: { id, dayKey: dia(tz) } }).then(viewOf);
+
+/**
+ * A MESMA rodada, mas devolvendo também o `evento` da Feira do Chefe (`docs/PLANO-FEIRA-CHEFE.md`): é o que a VOLTA da
+ * Missão mostra. `evento` é `null` com a Feira desligada ou em servidor antigo (campo ausente) — e aí tudo se comporta
+ * exatamente como antes.
+ */
+export const hitGuildRaidEvento = (id: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ landed?: boolean; guild: unknown; evento?: unknown }>('guildRaidHit', { method: 'POST', body: { id, dayKey: dia(tz) } })
+    .then(r => ({ guild: viewOf(r), evento: sanitizeFeiraEvento(r.evento) }));
+
+// ── A FEIRA: O CHEFE E O DESAFIO (client; servidor em `functions/api/_feira.js`) ─────────────────────────────────────
+// Desligada no servidor = 404 `not available` em toda rota: aqui isso é "a Feira não existe" (`null`), nunca um erro.
+// Só agregado do clã e o que é DA PRÓPRIA pessoa (LV-G1): os sanitizadores não têm onde carregar dado por membro.
+
+const feiraAusente = (e: unknown): boolean => e instanceof GuildError && e.status === 404 && e.kind === 'server';
+
+/** O evento de hoje (bastidor: reabrir a folha). `null` = Feira desligada/servidor antigo/sem roda. */
+export const getGuildFeira = (id: string, tz?: PlayerDayAnchor): Promise<FeiraEvento | null> =>
+  guildCall<{ evento?: unknown }>('guildFeira', { params: { id, dayKey: dia(tz) } })
+    .then(r => sanitizeFeiraEvento(r.evento))
+    .catch(e => { if (feiraAusente(e) || (e instanceof GuildError && e.kind === 'noGuild')) return null; throw e; });
+
+/**
+ * O ataque do dia. 404 `not available` → `null`. 429 `dailyLimit` (já bateu hoje) e 409 `raidClosed`/`server` (chefe já caiu / sem chefe)
+ * sobem como `GuildError` para a folha dizer com calma.
+ */
+export const attackGuildFeira = (id: string, tz?: PlayerDayAnchor): Promise<FeiraAttack | null> =>
+  guildCall<unknown>('guildFeiraAttack', { method: 'POST', body: { id, dayKey: dia(tz) } })
+    .then(r => sanitizeFeiraAttack(r))
+    .catch(e => { if (feiraAusente(e)) return null; throw e; });
+
+/**
+ * O resgate do abate (idempotente no servidor). O 409 `already claimed` traz o MESMO recibo: devolvemos o resgate dele
+ * (a resposta do 200 pode ter se perdido) — quem credita decide pelo recibo, UMA vez.
+ */
+export const claimGuildFeira = (id: string, k?: number, tz?: PlayerDayAnchor): Promise<FeiraClaim | null> =>
+  guildCall<{ claimed?: unknown }>('guildFeiraClaim', { method: 'POST', body: { id, dayKey: dia(tz), ...(k !== undefined ? { k } : {}) } })
+    .then(r => { const c = sanitizeFeiraClaim(r.claimed); if (!c) throw new GuildError('server', 200); return c; })
+    .catch(e => {
+      if (e instanceof GuildError && e.kind === 'alreadyClaimed') {
+        const c = sanitizeFeiraClaim((e.raw as { claimed?: unknown } | undefined)?.claimed);
+        if (c) return c;
+        return null;
+      }
+      if (feiraAusente(e) || (e instanceof GuildError && e.kind === 'nothingToClaim')) return null;
+      throw e;
+    });
+
+/** Começa o Desafio de hoje: o servidor gera a instância e o relógio do piso de tempo. */
+export const startGuildFeiraTrail = (id: string, tz?: PlayerDayAnchor): Promise<FeiraTrail | null> =>
+  guildCall<{ trail?: unknown }>('guildFeiraTrailStart', { method: 'POST', body: { id, dayKey: dia(tz) } })
+    .then(r => sanitizeFeiraTrail(r.trail))
+    .catch(e => { if (feiraAusente(e)) return null; throw e; });
+
+/** Entrega a solução. 400 (errada / rápida demais), 409 (já cumprido / não começou), 429 (limite do dia): `GuildError`. */
+export const doneGuildFeiraTrail = (id: string, solution: FeiraSolution, tz?: PlayerDayAnchor): Promise<FeiraTrailDone | null> =>
+  guildCall<unknown>('guildFeiraTrailDone', { method: 'POST', body: { id, dayKey: dia(tz), ...solution } })
+    .then(r => sanitizeFeiraTrailDone(r))
+    .catch(e => { if (feiraAusente(e)) return null; throw e; });
 
 /**
  * Doar Bits à CASA. O servidor decide quanto cabe no teto do dia e devolve `accepted`: o chamador

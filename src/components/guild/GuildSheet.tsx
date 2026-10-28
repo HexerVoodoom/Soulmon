@@ -39,9 +39,9 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   getGuild, createGuild, joinGuild, guildGesture, leaveGuild, renameGuild, newGuildCode,
-  hitGuildRaid, getGuildRewards, claimGuildReward, donateToGuild, setGuildSlot, buyGuildShopItem, getGuildWar, seekGuildWar,
+  hitGuildRaid, getGuildFeira, getGuildRewards, claimGuildReward, donateToGuild, setGuildSlot, buyGuildShopItem, getGuildWar, seekGuildWar,
   type GuildWar,
-  GuildError, type GuildErrorKind, type GuildView, type GuildGoal, type GuildRaid, type GuildRewards, type GuildClaim,
+  GuildError, type GuildErrorKind, type GuildView, type FeiraEvento, type GuildGoal, type GuildRaid, type GuildRewards, type GuildClaim,
 } from '../../utils/community';
 import { playerDayKey, type PlayerDayAnchor } from '../../utils/playerDay';
 import {
@@ -75,9 +75,14 @@ import { usePrefersReducedMotion } from '../ui/Viewport';
 import type { OnPlantio } from './GroveFolha';
 import type { BosqueArvores } from '../../utils/bosqueArvores';
 const GroveFolha = lazy(() => import('./GroveFolha'));
+const FeiraEventoSheet = lazy(() => import('./FeiraEventoSheet'));
 import { GroveCena } from './GroveCena';
 import { GuerraVisor } from './GuerraVisor';
 import { FeiraVisor } from './FeiraVisor';
+import type { BossFightMe } from './BossFightScreen';
+import { BOSS_ROSTER, bossText } from '../../data/bossRoster';
+import { feiraText } from '../../utils/feiraCopy';
+import type { FeiraCredit } from '../../utils/feiraCredit';
 import { SalaPraca } from './PracaVisor';
 import { SalaPlantio } from './PlantioVisor';
 import type { ClaOnReward } from './claUi';
@@ -127,6 +132,8 @@ interface GuildSheetProps {
   /** A MISSÃO (PR3, ex-Feira): o estado da ida do Solmon (no save) e o gesto de mandá-lo. */
   missao?: { state: GuildMissionState | null; onSend: () => void };
   /** Os PRÉDIOS DO CLÃ (Praça, Plantio, Mistério): a ponte do prêmio com o save. O App credita UMA vez por recibo (`utils/claCredit.ts`). */
+  /** FEIRA DO CHEFE: reabrir o evento pela sala (a folha de volta é uma só vez). Só aparece quando o servidor manda `guild.feira`. */
+  feira?: { me: BossFightMe; onCredit: (c: FeiraCredit) => void };
   cla?: { onReward: ClaOnReward; /** As 4 árvores do Bosque no save (`bosqueArvores`). */ arvores?: BosqueArvores; /** Guarda o que o plantio mostrou (pico da árvore da estação). */ onPlantio?: OnPlantio };
 }
 
@@ -144,7 +151,7 @@ type PredioId = 'praca' | 'plantio';
 
 const kindOf = (e: unknown): GuildErrorKind => (e instanceof GuildError ? e.kind : 'server');
 
-export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pendentesDoDia, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin, casa, missao, cla }: GuildSheetProps) {
+export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pendentesDoDia, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin, casa, missao, cla, feira }: GuildSheetProps) {
   const t = useCallback((k: GuildKey, vars?: Record<string, string | number>) => guildText(language, k, vars), [language]);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [aviso, setAviso] = useState<GuildKey | null>(null);
@@ -179,6 +186,9 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
   const copiadoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rewardsKey = useRef('');
   const [misterioFim, setMisterioFim] = useState<{ kind: 'bits' | 'honra'; n: number } | null>(null);
+  // FEIRA DO CHEFE: o evento reaberto pela sala (lido na hora; falha = silêncio, a sala segue com o resumo agregado).
+  const [feiraAberto, setFeiraAberto] = useState<FeiraEvento | null>(null);
+  const [feiraLendo, setFeiraLendo] = useState(false);
   const claRef = useRef(cla);
   claRef.current = cla;
   const onClaimedRef = useRef(onClaimed);
@@ -641,11 +651,27 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
           resgateAberto={!!(rewards?.pending[0] || colhido)}
           missao={missao}
           misterioFim={misterioFim}
+          feira={feira && g.feira ? {
+            resumo: g.feira, ocupado: feiraLendo,
+            onAbrir: () => {
+              if (feiraLendo) return;
+              setFeiraLendo(true);
+              getGuildFeira(saveId, tz.current).then(e => { if (vivo.current && e) setFeiraAberto(e); }).catch(() => { /* silêncio */ }).finally(() => { if (vivo.current) setFeiraLendo(false); });
+            },
+          } : undefined}
           onRodada={() => void agir(() => hitGuildRaid(saveId, tz.current), {
             anunciar: 'guild.feira.rodada.feita',
             depois: () => track('guild_raid', { outcome: 0 }),
           })}
         />
+        {feira && feiraAberto && (
+          <Suspense fallback={null}>
+            <FeiraEventoSheet
+              language={language} saveId={saveId} tz={tz.current} evento={feiraAberto} me={feira.me}
+              onClose={() => setFeiraAberto(null)} onCredit={feira.onCredit} onEvento={e => setFeiraAberto(e)}
+            />
+          </Suspense>
+        )}
       </>
     ) : (
       <>
@@ -1150,13 +1176,15 @@ function SalaMural({ guild, t, language, marcos }: {
  * (`guild.feira.rodada.feita`). Semana dissipada não tem botão. O resultado da semana que fechou
  * (`lastWeek`) é um fato, nunca um veredito: `recuou` não culpa ninguém.
  */
-function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgateAberto, onRodada, missao, misterioFim }: {
+function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgateAberto, onRodada, missao, misterioFim, feira }: {
   guild: GuildView; t: T; language: Language; ocupado: boolean; reducedMotion: boolean;
   resgate: React.ReactNode; resgateAberto: boolean; onRodada: () => void;
   /** No Salão (PR3) a rodada é a MISSÃO: mandar o Solmon, esperar a volta. Sem isto, a Feira antiga (rodada de um toque). */
   missao?: GuildSheetProps['missao'];
   /** O Mistério foi encerrado e a recompensa pendente virou Bits/Honra (dito uma vez, na abertura da Feira). */
   misterioFim?: { kind: 'bits' | 'honra'; n: number } | null;
+  /** O mistério da Feira do Chefe (SÓ agregado do clã): resumo da vista + gesto de reabrir a folha. Ausente = Feira desligada. */
+  feira?: { resumo: NonNullable<GuildView['feira']>; ocupado: boolean; onAbrir: () => void };
 }) {
   const raid = guild.raid;
   // Relógio da volta ("volta em X min"): só roda enquanto o Solmon está fora.
@@ -1233,6 +1261,27 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
           {raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.feira.rodada.botao')}
         </button>
       )}
+      {feira && (() => {
+        const r = feira.resumo;
+        const bossEntry = r.state === 'boss' ? BOSS_ROSTER.find(b => b.id === r.bossId) : undefined;
+        const nomeChefe = bossEntry ? bossText(bossEntry, language === 'pt-BR').name : r.state === 'boss' ? r.bossId : '';
+        return (
+          <div data-feira-misterio data-feira-estado={r.state} style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
+            <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-misterio-linha>
+              {r.state === 'boss' ? feiraText(language, 'room.boss', { name: nomeChefe, level: r.level }) : r.state === 'trail' ? feiraText(language, 'room.trail') : feiraText(language, 'room.rest')}
+            </p>
+            {r.state === 'boss' && (
+              <div role="meter" aria-label={feiraText(language, 'boss.pool')} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(r.bossHpPct)} data-feira-misterio-pool={Math.round(r.bossHpPct)}
+                style={{ height: 8, width: 200, borderRadius: 6, background: 'var(--sm2-surface-2)', overflow: 'hidden' }}>
+                <div style={{ width: `${Math.round(r.bossHpPct)}%`, height: '100%', background: 'var(--sm2-primary-fill)' }} />
+              </div>
+            )}
+            <button type="button" data-feira-misterio-abrir disabled={feira.ocupado} aria-disabled={feira.ocupado ? true : undefined} onClick={feira.onAbrir} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline">
+              {feiraText(language, 'room.open')}
+            </button>
+          </div>
+        );
+      })()}
       {/* UM card, UMA ação (dono, 27/10/2026): a história do que rola na feira, o gesto de mandar, o "fora" e a volta. */}
       {!dissipada && missao && (() => {
         const fora = isMissionAway(missao.state, agora);
