@@ -52,9 +52,9 @@ export const BUILDING_GATES = {
   'laboratorio.perfil': { minBond: 2 },
   'laboratorio.biblioteca': { minBond: 2 },
   'laboratorio.amigos': { minBond: 2 },
-  'hall.guilda': { minBond: 4 },
-  'hall.grove': { minBond: 4 },
-  'hall.feira': { minBond: GATES.pvp.minBond },
+  'hall.guilda': { minBond: 2 },
+  'hall.grove': { minBond: 2 },
+  'hall.feira': { minBond: 5 },
 };
 
 /** Predios que mudaram de id (espelho de `MOVED_BUILDINGS` em `src/utils/gates.ts`; D-50). */

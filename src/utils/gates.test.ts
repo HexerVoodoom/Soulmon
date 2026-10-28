@@ -157,7 +157,7 @@ describe('prédios por Vínculo (Tarefa A)', () => {
     expect(areaMinBond('arena')).toBe(5); // #187 (28/10/2026): a Fenda Sem Fim voltou para a Exploração, então a ÁREA da Arena só abre no Vínculo 5 (Duelo/Torneio/Guerra), como antes de beta3 N10
     expect(areaMinBond('forja')).toBe(1); // o Refúgio (Vínculo 1, sempre livre) mora na Forja
     expect(areaMinBond('exploracao')).toBe(1);
-    expect(areaMinBond('hall')).toBe(4); // D-50 (19/10/2026): sem a Biblioteca (Vínculo 2), o prédio mais cedo do Hall é o Clan Hall/Grove (4)
+    expect(areaMinBond('hall')).toBe(2); // emenda 28/10/2026: o Salão do Clã (e o Grove) abre no Vínculo 2
     expect(areaMinBond('laboratorio')).toBe(1);
     expect(areaMinBond('mercado')).toBe(1);
     expect(buildingLockLine(4, 'en-US')).toBe('Opens at Bond 4. It grows with what you already do here.');

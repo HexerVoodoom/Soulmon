@@ -163,11 +163,11 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   // D-50 (19/10/2026): a Biblioteca e o Círculo de Amigos saíram do Hall e foram para o Laboratório — o Vínculo é o de antes.
   'laboratorio.biblioteca': { minBond: 2 },
   'laboratorio.amigos': { minBond: 2 },
-  'hall.guilda': { minBond: 4 },
-  // O Grove (D-50): o bosque do clã vira prédio do Hall; abre no mesmo Vínculo do Salão do Clã.
-  'hall.grove': { minBond: 4 },
-  // A Feira (a Missão da guilda) mudou da Arena para o Hall em 11/10/2026 — o id e o Vínculo são os de antes.
-  'hall.feira': { minBond: GATES.pvp.minBond },
+  'hall.guilda': { minBond: 2 },
+  // O Grove (D-50): o bosque do clã vira prédio do Hall; abre no mesmo Vínculo do Salão do Clã (2, REGISTRO #187 emenda 28/10).
+  'hall.grove': { minBond: 2 },
+  // A Feira (a Missão da guilda) mudou da Arena para o Hall em 11/10/2026 — o id e o Vínculo (5) são os de antes; fixo em 5 (não segue mais o gate de PvP).
+  'hall.feira': { minBond: 5 },
 };
 
 /** Prédios de ENTRADA (onboarding/tutorial e o Refúgio): nunca bloqueiam — o teste exige `minBond` 1. */
