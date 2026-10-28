@@ -801,6 +801,24 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **FX de status (PR11, `combate-v3-01`):** `STATUS_FX` (efeito → glifo/loop/peça estática/forma em texto/nome EN+PT, 7 kinds: `buff`, `debuff`, `maldicao`, `dot`, `cura`, `hot`, `escudo`) · `FAMILY_STATUS` (`SpecialFamily` do núcleo → efeito e alvo; `direct` = nenhum; tipada em `Record<SpecialFamily, …>`, família nova sem linha não compila) · `UNREACHABLE_STATUS_FX` (`maldicao` e `hot`: prontos, inalcançáveis, Q-FX1/§2.13) · o quadro puro `emptyStatusBoard`/`castStatus`/`tickStatus`/`clearHolders`/`stageStatusOf`, e `duelStatusBoard(events, upTo, specials)` (a dobra pura dos eventos do duelo: replay e ressimulação dão o mesmo selo) (aplicar, gastar turnos, expirar) · `statusAriaLabel`/`statusLabel`/`statusShort`/`statusGlyphId`, `MAX_STATUS_CHIPS`. Só arte que já estava na `main`; sem arte, a forma e o texto do selo seguem.
 **Régua:** `src/utils/combatFx.test.ts` — inventário (17 base × 6 estados, 154 × 6 no glob), fallback no neutro, e o RITMO/calibração do duelo (modelo de tempo, 04/10/2026: ~35–45 s, o especial com 3 toques/s sai antes do que sairia sozinho, 50% → 72% → teto 82%).
 
+### `src/utils/feira.ts`
+**Dono de:** o lado CLIENTE da Feira do Chefe (`PLANO-FEIRA-CHEFE.md`; servidor em `functions/api/_feira.js`), puro: tipos e sanitizadores do `evento` (boss/trail/rest), do resumo da vista (`guild.feira`), do ataque, do resgate e da instância/solução da trilha (dado do servidor nunca é confiável; nada por membro tem onde caber); `mapFeiraLog` (log do servidor `a/c/t` → `FightEvent` da `BossFightScreen`, determinístico); `FEIRA_TRAIL_MIN_MS` (espelho do piso de tempo do servidor); `feiraShownKey`/`feiraEventoAbre` (a fila só abre o que tem o que fazer). INERTE: sem `evento` os sanitizadores devolvem `null`.
+**Exports:** `sanitizeFeiraEvento`, `sanitizeFeiraResumo`, `sanitizeFeiraAttack`, `sanitizeFeiraClaim`, `sanitizeFeiraTrail`, `sanitizeFeiraTrailDone`, `mapFeiraLog`, `feiraEventoAbre`, `feiraShownKey`, `FEIRA_TRAIL_MIN_MS`, `FEIRA_TRAIL_GAMES` e os tipos `Feira*`.
+**Chamado por:** `utils/community.ts`, `App.tsx`, `components/guild/Feira*`.
+**Régua:** `src/utils/feira.test.ts`.
+
+### `src/utils/feiraCopy.ts`
+**Dono de:** a copy da Feira do Chefe, `[en, pt]` (EN primeiro) no padrão de `guildCopy.ts`, mas FORA da tabela `GUILD_COPY` de propósito (essa veta "boss"/"chefe"/dígitos). Tom caloroso, sem cobrança; a régua própria está em `FeiraEventoSheet.render.test.tsx`.
+**Exports:** `feiraText(language, key, vars?)`, `FeiraKey`, `FEIRA_COPY`.
+**Chamado por:** `FeiraEventoSheet.tsx`, `FeiraTrailPlay.tsx`, `FeiraMisterio.tsx`.
+**Régua:** `FeiraEventoSheet.render.test.tsx` (bloco `copy`).
+
+### `src/utils/feiraCredit.ts`
+**Dono de:** o crédito da Feira no aparelho UMA vez por recibo (`creditFeiraOnce`): usa a memória de recibos de `guildClaimLocal` (a mesma do resgate semanal); `apply` roda fora de updater e o recibo só é gravado depois dele (se `apply` lançar, tenta de novo). Reabrir a folha ou receber o 409 `already claimed` (mesmo recibo) não credita de novo.
+**Exports:** `creditFeiraOnce(credit, apply)`, `FeiraCredit`.
+**Chamado por:** `FeiraEventoSheet.tsx` (que repassa a `App.handleFeiraCredit`).
+**Régua:** `src/utils/feira.test.ts`, `FeiraEventoSheet.render.test.tsx`.
+
 ### `src/utils/fighterIdentity.ts`
 **Dono de:** a IDENTIDADE DE COMBATE do lutador (fix/identidade-lutador, contexto §2.30): UM golpe básico (elemento PRINCIPAL = `elementoDominante`, base ou par, + forma da escola da skill básica) e UM especial (elemento, escola, forma e família próprios), idênticos em Arena, Masmorra, Pesadelo, Duelo e Torneio e iguais ao que o oponente vê no PvP. Nenhuma tela deriva isso sozinha (guarda de grep: `fighterIdentity.owner.test.ts`).
 **Exports:** `fighterIdentity(par, fallbackElement)` (o SEU lado, da ficha do estágio; sem ficha, o fallback é o dominante do oráculo e a forma sai do elemento) · `fighterIdentityFromFx(fx, fallback)` (o `fx` que o servidor publica do save; elemento só vale se está na lista fechada de 153) · `fxDoLutador(par)` (o mesmo `fx` para o treino local) · `elementoDoBasico(par)` · tipos `FighterIdentity`, `FighterStrike`, `FighterFx`.

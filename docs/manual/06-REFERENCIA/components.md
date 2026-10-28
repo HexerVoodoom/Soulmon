@@ -301,6 +301,30 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Depende de:** `games/BattleStage` (prop `boss`, `stageLayout(w, h, n, boss)`), `games/ResultScreen` (`kind`, `pool`), `data/bossRoster` (`BOSS_ROSTER`, `bossArt`, `bossText`), `utils/combate/fight` (`FightEvent`).
 **Régua:** `src/components/guild/BossFightScreen.render.test.tsx`, `src/components/games/BattleStage.layout.test.ts`.
 
+### `src/components/guild/FeiraEventoSheet.tsx`
+**Dono de:** a folha do evento da Feira do Chefe (`PLANO-FEIRA-CHEFE.md` §3–§5, F-09/F-10): o que o clã encontra quando o Solmon VOLTA da Missão. Chefe (`boss`): "Atacar" 1×/dia → `attackGuildFeira` → `BossFightScreen` com o registro do servidor mapeado por `mapFeiraLog`; já bateu hoje / chefe caído / sem rede viram frases calmas. Desafio (`trail`): `startGuildFeiraTrail` → `FeiraTrailPlay` com a instância do servidor → ESPERA o piso de tempo do jogo (`FEIRA_TRAIL_MIN_MS`) → `doneGuildFeiraTrail` → `ResultScreen` com +1 Emblema e +3 seiva; 400/409/429/offline calmos; a porta (`gate`) só informa. Descanso (`rest`): com `claimable`, "Colher" via `claimGuildFeira`, creditando UMA vez por recibo (`creditFeiraOnce`). Chamada e crédito injetáveis (`api`, `onCredit`). Mudo; só agregado do clã.
+**Exports:** `FeiraEventoSheet(props)` (e default), `FeiraEventoSheetProps`, `FeiraApi`.
+**Props principais:** `{ language, saveId, tz?, evento, me, onClose, onCredit, onEvento?, api?, skipReplay? }`.
+**Depende de:** `BossFightScreen`, `FeiraTrailPlay`, `games/ResultScreen`, `form/FormKit` (`ModalSheet`), `utils/community` (wrappers `*GuildFeira*`), `utils/feira`, `utils/feiraCopy`, `utils/feiraCredit`, `data/bossRoster`.
+**Chamado por:** `src/App.tsx` (item `feiraEvento` da fila central, lazy) e `src/components/guild/GuildSheet.tsx` (reabrir pela sala da Feira, lazy).
+**Régua:** `src/components/guild/FeiraEventoSheet.render.test.tsx`, `GuildSheet.feira.chefe.render.test.tsx`.
+
+### `src/components/guild/FeiraTrailPlay.tsx`
+**Dono de:** o desenho do Desafio da Feira (F-10): recebe a INSTÂNCIA do servidor (zip, colcha, picross, troca ou eco) e devolve a solução no formato de `guildFeiraTrailDone`. ⚠️ Renderizadores MÍNIMOS, não os minijogos de `components/mente/` (que misturam tela com ciclo de jogo, Bits, ranking e tutorial): a REGRA de cada um é reaproveitada de `utils/mente/*` (`canStep`/`validateZip`, `placeRect`/`rectBetween`/`validatePatches`, `matchesClues`, `sideFor`, `checkTap`/`seededRng` do Eco); só a casca de tela é nova (toque simples, sem arrastar, sem som).
+**Exports:** `FeiraTrailPlay(props)`, `FeiraTrailPlayProps`, `trocaGabarito`.
+**Props principais:** `{ language, trail, onSubmit, busy? }`.
+**Depende de:** `utils/mente/{zip,patches,picross,troca,eco}`, `utils/feira`, `utils/feiraCopy`, `form/FormKit`.
+**Chamado por:** `FeiraEventoSheet.tsx`.
+**Régua:** `FeiraEventoSheet.render.test.tsx` (um caso por jogo).
+
+### `src/components/guild/FeiraMisterio.tsx`
+**Dono de:** o bloco do mistério na sala da Feira: nome e nível do chefe, a barra agregada do que resta dele (`role="meter"`), as marcas da trilha / o dia calmo, e o botão que reabre a folha do evento. Só AGREGADO do clã (LV-G1/G10). Mora em arquivo próprio porque a régua da sala proíbe barra de HP no fenômeno semanal dentro do `GuildSheet.tsx`.
+**Exports:** `FeiraMisterio(props)`.
+**Props principais:** `{ language, resumo: FeiraResumo, ocupado, onAbrir }`.
+**Depende de:** `data/bossRoster`, `utils/feiraCopy`, `utils/feira` (tipo).
+**Chamado por:** `GuildSheet.tsx` (sala `feira`, só quando a vista traz `feira` e o App passa a ponte).
+**Régua:** `GuildSheet.feira.chefe.render.test.tsx`.
+
 ### `src/components/guild/FeiraVisor.tsx`
 **Dono de:** o visor da Feira (`PLANO-GUILDA.md` §9, WPG-10) — o fenômeno da semana em três estados (aberto, ferido, dissipado) e quatro tipos. ⚰️ **Era PLACEHOLDER** até a rodada 3 (30/09/2026): agora a arte real de `utils/fairArt.ts` é lida por TIPO × ESTADO — `FAIR_ART[fairFenomenoId(raid.phenomenon, state)]` (12 ids `fair-fenomeno-<tipo>-<estado>`, `<img data-fair-fenomeno>`) — e o FX do tipo (`fairFxId`) é um motivo 128² desenhado a 64 px nos dois cantos de cima (o da direita espelhado, `data-fair-fx`), nunca um véu sobre o fenômeno; o fundo é `VISOR_ART.visorFeira` (leva `visores`, 01/10/2026, 696×352 a 0,5×) sobre o degradê antigo. O SVG na paleta do Visor (petróleo, turquesa, cobre, osso: lajes + `Fx`) ficou só como FALLBACK para id sem arte. Sem rosto, olho, boca, barra de HP, número ou letra: o fenômeno é tempo da Malha, nunca inimigo; nenhum estado se lê como "quanto EU bati" (o servidor só entrega `ferido: boolean`). Movimento reduzido deixa o FX parado.
 **Props principais:** `{ raid: GuildRaid, label, reducedMotion }`.

@@ -358,6 +358,8 @@ Vê o Bosque inteiro no estágio atual (é dele também) e, desde o 1º dia, o p
 | `coopHit:<gid>:<week>:<save>` (novo) | `{days[], dmg}` | só o próprio membro | 21 d |
 | `coopRaidOk:<gid>:<week>` (novo) | `{at, hp, members}` | servidor, 1ª leitura com `dano ≥ hp` (valor constante, idempotente) | 60 d |
 | `coopClaim:<save>:<week>` (novo) | `{at, kind}` | servidor, no resgate | 60 d |
+| `feiraEvt:<gid>` · `feiraHit:<gid>:<k>:<save>` · `feiraDead:<gid>:<k>` · `feiraDone:<gid>` (Feira do Chefe, **desligada**, §179 do REGISTRO) | foto do mistério · `{days[], dmg}` do próprio membro · constante idempotente do abate · mistérios concluídos | membro (só a própria) / quem lê e vê o abate | 30–120 d |
+| `feiraTrail:<gid>:<k>:<save>` · `feiraGate:<save>` · `feiraPart` · `feiraClaim` · `feiraRight` (idem) | desafio pessoal · porta individual (informativa) · direito de participação · recibo do resgate · ponteiro do direito | só o próprio membro | 30–60 d |
 
 **Migração 4 → 12**: nenhuma. O blob de hoje já é um blob de guilda válido.
 
@@ -547,7 +549,7 @@ Total de código ≈ 22 dias; caminho crítico WPG-1 → 3a → 4 → 5 → 8.
 | G8 | Escola no perfil para dar sabor ao golpe (v2) | Não na v1 | Um campo novo no perfil e na exportação |
 | G9 | Emblemas: 4 dissipada / **piso 2** recuou, só a quem deu ≥1 rodada | Sim | Sem piso: o recuo passa a ler como perda; a todos os membros: premia quem não abriu a Feira (sem dano, mas sem sentido de gesto) |
 | G10 | **[divergência 1]** Dano `10 + 2×stagePower` ±20% com HP `max(ativos,3)×45` | Confirmar | `6 + 2×sp + rnd(0..4)` exige recalibrar K (≈37) e refazer a sim |
-| G11 | **[divergência 3]** Feira aberta a **semana ISO inteira** | Confirmar | Sex–dom: vira ritual colado ao Torneio, e quem não pode no fim de semana fica fora (LV-G9) |
+| G11 | **[divergência 3]** Feira aberta a **semana ISO inteira** | Confirmar | Sex–dom: vira ritual colado ao Torneio, e quem não pode no fim de semana fica fora (LV-G9) | **Nota 28/10/2026 (§179):** a janela ISO vale só para o FENÔMENO semanal; o Chefe da Feira não tem janela (dura até morrer, LV-G9) e o 1 ataque/dia dele é independente do golpe do fenômeno.
 | G12 | `bg-guild-*` fica com quem sai | Sim | Não: sair passa a custar algo (LV-G5) |
 | G13 | Até 4 criaturas no palco do Bosque, só em guilda ≤4 | Sim | Até 20 rotacionados (`04` §3): fileira com lacunas em guilda grande |
 | G14 | A Feira é da **roda contra um fenômeno**; reescrever as falas 6/6b/7 da lore que falam de "outros bosques" | Sim | Manter "outros bosques" contradiz D-G4 |
