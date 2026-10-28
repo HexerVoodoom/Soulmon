@@ -2344,8 +2344,8 @@ export default function App() {
     ? (displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? Object.values(spriteAcervo.sprites)[0]?.url)
     : undefined)
     ?? getSpriteForStage(gameState.evolutionStage, petLine);
-  /** FEIRA DO CHEFE: o SEU bicho na luta (o replay só traz a fração de HP; elemento neutro até a ficha elemental ser lida aqui). */
-  const feiraMe = { sprite: minhaCriaturaUrl, name: soulmonDisplayName(gameState.soulmonMeta) || 'Soulmon', element: 'neutro' };
+  /** FEIRA DO CHEFE: o SEU bicho na luta (elemento = o do Soulmon (`petElementOf`, a mesma fonte do resto do combate)). */
+  const feiraMe = { sprite: minhaCriaturaUrl, name: soulmonDisplayName(gameState.soulmonMeta) || 'Soulmon', element: petElementOf(gameState) ?? 'neutro' };
   /* O selo "Dia completo" da lista (minimal-ui F2). A condição é a da VIRADA —
      `completeDayReached`, a mesma função que `computeDailyReset` usa para
      contar o dia — aplicada ao dia de hoje: meta inteira feita, ≥1 cadastrada
