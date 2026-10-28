@@ -7,13 +7,14 @@
 > (`PERGUNTAS-DO-DONO.md`, NPC-1). Régua: `src/data/bossRoster.test.ts`
 > (15 artes próprias, sem colidir com os extras, categoria válida, falas sem cobrança).
 
-17 PNG do Higgsfield chegaram em `E:/novos npcs`; **15 instalados, 2 pendentes**.
+17 PNG do Higgsfield chegaram em `E:/novos npcs`; **16 instalados (28/10: + Lodi de costas), 1 pendente**.
 
-## Instalados (15)
+## Instalados (16)
 
 | id | Nome (PT / EN) | Ofício | Categoria | Arquivo | Nota |
 |---|---|---|---|---|---|
 | `alquimistaLimo` | Lodi | Alquimista de limo | oficio | `npc-n-alquimistaLimo.png` | corpo inteiro, 617×1100; fundo preto recortado (sobra um halo verde-escuro) |
+| `alquimistaLimoCostas` | Lodi | Alquimista de limo (de costas) | oficio | `npc-n-alquimistaLimoCostas.png` | variante da Lodi vista de costas, corpo inteiro 602×1100; fundo preto recortado por flood-fill + descasque de 3 px do brilho verde; sem uso em tela |
 | `enfermeira` | Rubra | Enfermeira da Sombra | sombrio | `npc-n-enfermeira.png` | busto; xadrez de transparência "assado" recortado por flood-fill |
 | `colheita` | Espiga / Tassel | Guardiã da colheita | natureza | `npc-n-colheita.png` | fada de milho e couve-flor |
 | `tempo` | Clepsi / Clepsy | Guardião das horas | mistico | `npc-n-tempo.png` | peixe-dourado de penas com relógios |
@@ -41,12 +42,11 @@ Recorte do bounding box, 768² centrado para os bustos (corpo inteiro: altura 11
 PNG otimizado. O build converte para WebP como o resto. Matiz 270–340° **não** foi
 medido nesta leva (as artes são verdes/vermelhas/azuis; nenhum roxo-magenta de fundo).
 
-## Pendentes (2) — ainda em `E:/novos npcs`
+## Pendentes (1) — ainda em `E:/novos npcs`
 
 | Arquivo de origem | O que é | Por que não entrou |
 |---|---|---|
-| `hf_20261014_162920_19e8f11a-…png` | sereia-pintora (corpo inteiro) | fundo escuro em degradê com vinheta, sem alfa; não dá para recortar limpo. **Regerar** com fundo `#00FF00` chapado (regra do `CLAUDE.md` global) |
-| `hf_20261014_163057_e93a4201-…png` | Lodi de costas (mesma alquimista de limo) | pose só de costas, sem uso como busto de NPC; sobra como variante se o dono quiser |
+| `hf_20261014_162920_19e8f11a-…png` | sereia-pintora (corpo inteiro) | fundo escuro em degradê com vinheta, sem alfa; não dá para recortar limpo (28/10: flood-fill tolerâncias 6 e 14 tirou o fundo externo, mas sobram bolsões de fundo marrom/oliva entre cabelo, asas e cauda, e o azul-escuro do vestido e o marrom da bolsa têm o mesmo tom do fundo, então uma remoção global comeria a personagem). **Regerar** com fundo `#00FF00` chapado (regra do `CLAUDE.md` global) |
 
 ## Para o dono
 

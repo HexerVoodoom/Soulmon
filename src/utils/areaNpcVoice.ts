@@ -405,7 +405,7 @@ export function extraNpcVoice(id: ExtraNpcId, language: Language): { name: strin
 export type NovoNpcCategory = 'oficio' | 'mistico' | 'natureza' | 'sombrio' | 'criatura';
 
 export type NovoNpcId =
-  | 'alquimistaLimo' | 'enfermeira' | 'colheita' | 'tempo' | 'musa'
+  | 'alquimistaLimo' | 'alquimistaLimoCostas' | 'enfermeira' | 'colheita' | 'tempo' | 'musa'
   | 'ossarioFera' | 'ossarioForma' | 'serpentePlumadaFera' | 'serpentePlumadaForma'
   | 'broto' | 'corvo' | 'cozinheiro' | 'besouro'
   | 'luaTronoSentada' | 'luaTronoDePe';
@@ -417,6 +417,11 @@ export interface NovoNpcVoice extends ExtraNpcVoice {
 export const NOVO_NPC_VOICE: Record<NovoNpcId, NovoNpcVoice> = {
   alquimistaLimo: {
     category: 'oficio', namePt: 'Lodi', nameEn: 'Lodi', officePt: 'Alquimista de limo', officeEn: 'Slime alchemist',
+    linePt: 'Tudo que escorre guarda uma receita. Chegue mais perto.',
+    lineEn: 'Everything that drips holds a recipe. Come a little closer.',
+  },
+  alquimistaLimoCostas: {
+    category: 'oficio', namePt: 'Lodi', nameEn: 'Lodi', officePt: 'Alquimista de limo (de costas)', officeEn: 'Slime alchemist (from behind)',
     linePt: 'Tudo que escorre guarda uma receita. Chegue mais perto.',
     lineEn: 'Everything that drips holds a recipe. Come a little closer.',
   },

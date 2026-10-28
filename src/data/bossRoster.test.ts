@@ -104,8 +104,8 @@ describe('15 NPCs novos (leva `E:/novos npcs`, 15/10/2026)', () => {
   const ids = Object.keys(NOVO_NPC_VOICE) as NovoNpcId[];
   const CATEGORIAS = ['oficio', 'mistico', 'natureza', 'sombrio', 'criatura'];
 
-  it('15 artes próprias, sem colidir com os extras, com categoria e voz nos dois idiomas', () => {
-    expect(ids).toHaveLength(15);
+  it('16 artes próprias, sem colidir com os extras, com categoria e voz nos dois idiomas', () => {
+    expect(ids).toHaveLength(16);
     expect(Object.keys(NOVO_NPC_ART).sort()).toEqual([...ids].sort());
     const todas = [...Object.values(EXTRA_NPC_ART), ...Object.values(NOVO_NPC_ART)];
     expect(new Set(todas).size).toBe(todas.length);

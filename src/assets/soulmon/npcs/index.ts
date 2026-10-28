@@ -181,6 +181,7 @@ export const EXTRA_NPC_ART: Record<ExtraNpcId, string> = {
 
 import type { NovoNpcId } from '../../../utils/areaNpcVoice';
 import npcNAlquimistaLimo from './npc-n-alquimistaLimo.png';
+import npcNAlquimistaLimoCostas from './npc-n-alquimistaLimoCostas.png';
 import npcNEnfermeira from './npc-n-enfermeira.png';
 import npcNColheita from './npc-n-colheita.png';
 import npcNTempo from './npc-n-tempo.png';
@@ -210,6 +211,7 @@ import npcNLuaTronoDePe from './npc-n-luaTronoDePe.png';
  */
 export const NOVO_NPC_ART: Record<NovoNpcId, string> = {
   alquimistaLimo: npcNAlquimistaLimo,
+  alquimistaLimoCostas: npcNAlquimistaLimoCostas,
   enfermeira: npcNEnfermeira,
   colheita: npcNColheita,
   tempo: npcNTempo,
