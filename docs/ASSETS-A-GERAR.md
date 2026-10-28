@@ -654,3 +654,8 @@ linhas de Soulmon por elemento (nova fila, não incluída aqui).
 Prompt (EN): "Create a single pixel-art game icon: a round 'NEW RECORD' medal seal. Gold-and-copper circular medal with a small teal crystal gem in the center, two tiny leaf laurels hugging the lower half, a short ribbon with two tails below, a couple of small cyan sparkle stars around it. 16-bit pixel art, crisp hard pixel edges, flat shading with 3 tones per material, dark navy 1px outline, magical-nature mood (arcane, calm, NOT steampunk, no gears), handheld creature-collector UI icon look. Centered, ~80% of the square canvas. TRANSPARENT background with real alpha (no drawn checkerboard, no shadow, no glow halo). No text, letters or numbers."
 
 Conferência: Pillow (`python -I`), prévia em #08191A (nunca magenta/verde). Enquanto não existe, o ResultScreen usa o troféu dourado (`icons/icon-trophy-gold.png`) como selo provisório.
+
+## Instalados do lote beta3 (28/10/2026)
+
+- ✅ 28/10 — 3 mãos do PPT (`r4-05-ppt-{pedra,papel,tesoura}`) → `soulmon/icons/games/hand-{rock,paper,scissors}.png` (troca no lugar; `RPSGame.tsx` já usava).
+- ✅ 28/10 — 4 glifos `p1-09-glifo-*` → `soulmon/icones-ui/{pasta,pasta-aberta,display-luz-acesa,display-luz-apagada}.png`, exportados em `icones-ui/index.ts`; sem consumidor.

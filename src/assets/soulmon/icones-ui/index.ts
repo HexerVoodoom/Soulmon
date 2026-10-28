@@ -144,3 +144,9 @@ export { default as perfilResistencia } from './perfil-resistencia.png';
 export { default as perfilAgilidade } from './perfil-agilidade.png';
 export { default as perfilAtaqueCorpo } from './perfil-ataque-corpo.png';
 export { default as perfilAtaqueDistancia } from './perfil-ataque-distancia.png';
+
+// P1-09 (28/10/2026, aprovado pelo dono; ChatGPT, alfa binário em 128, 128²): glifos da pasta e da luz do display. SEM CHAMADA — só instalado e registrado.
+export { default as pastaGlifo } from './pasta.png';
+export { default as pastaAbertaGlifo } from './pasta-aberta.png';
+export { default as displayLuzAcesa } from './display-luz-acesa.png';
+export { default as displayLuzApagada } from './display-luz-apagada.png';
