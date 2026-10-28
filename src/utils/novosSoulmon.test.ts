@@ -14,7 +14,7 @@ const DIR = join(process.cwd(), 'src/assets/soulmon/novos');
 describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => {
   it('um por elemento base, divisão 7/7/6, ids únicos', () => {
     expect(NOVOS_SOULMON).toHaveLength(20);
-    expect([...NOVOS_SOULMON.map(n => n.element)].sort()).toEqual([...VISUAL_ELEMENTS, 'fada'].sort());
+    expect([...NOVOS_SOULMON.map(n => n.element)].sort()).toEqual([...VISUAL_ELEMENTS].sort());
     const por = (l: string) => NOVOS_SOULMON.filter(n => n.line === l).length;
     expect([por('poder'), por('harmonia'), por('benevolencia')]).toEqual([7, 7, 6]);
     expect(new Set(NOVOS_SOULMON.map(n => n.id)).size).toBe(20);
