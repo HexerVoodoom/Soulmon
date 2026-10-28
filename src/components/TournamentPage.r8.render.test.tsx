@@ -108,9 +108,12 @@ describe('R8 — molduras (cosmético)', () => {
       { id: 'b'.repeat(32), name: 'Ana', stage: 'rookie', points: 30, lifetime: 100, frameId: 'rank-ouro' },
     ] });
     render(<TournamentPage {...base} ownedFrames={[]} equippedFrame={null} />);
-    await waitFor(() => {
-      expect(document.querySelector('[data-rank-row="me"]')).not.toBeNull();
-      expect(document.querySelector('[data-avatar-frame="rank-ouro"]')).not.toBeNull();
+    const ind = await waitFor(() => {
+      const el = document.querySelector('[data-tier-indicator]');
+      expect(el).not.toBeNull();
+      return el as HTMLElement;
     });
+    fireEvent.click(ind);
+    expect(document.querySelector('[data-avatar-frame="rank-ouro"]')).not.toBeNull();
   });
 });
