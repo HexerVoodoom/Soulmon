@@ -64,7 +64,7 @@ describe('tabela de XP — só relê eventos que já existem', () => {
       { kind: 'nightmareCleared' }, { kind: 'dungeonFloor' }, { kind: 'dungeonRun' },
       { kind: 'tournamentMatch', won: true }, { kind: 'tournamentMatch', won: false },
       { kind: 'habitMilestone', days: 7 }, { kind: 'habitMilestone', days: NaN },
-      { kind: 'triageCleared' }, { kind: 'checkIn' },
+      { kind: 'triageCleared' }, { kind: 'checkIn' }, { kind: 'mealInvite' },
     ];
     for (const ev of events) {
       const xp = bondXP(ev);
@@ -83,6 +83,8 @@ describe('teto diário SUAVE — para de somar, nunca subtrai', () => {
     expect(bondCapSource({ kind: 'completion', weight: 1 })).toBeNull();
     expect(bondCapSource({ kind: 'perfectDay' })).toBeNull();
     expect(bondCapSource({ kind: 'checkIn' })).toBeNull();
+    expect(bondCapSource({ kind: 'mealInvite' })).toBeNull();
+    expect(bondXP({ kind: 'mealInvite' })).toBe(5);
   });
 
   it('ao bater o teto o ganho vira 0 e o total NUNCA diminui', () => {

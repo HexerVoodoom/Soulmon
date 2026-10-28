@@ -19,8 +19,8 @@
  *     e pelo seu teto (`careRules`/`careUpdaters`/`poopDrain`). O que este
  *     módulo registra é só "a janela de hoje foi atendida" — não concede
  *     energia, HP, Bits, Emblemas nem XP. A recompensa é a reação do bicho ao
- *     gesto que a pessoa acabou de fazer (L11). Se o dono quiser XP de vínculo,
- *     a conta e a pergunta estão em `docs/PERGUNTAS-DO-DONO.md`.
+ *     gesto que a pessoa acabou de fazer (L11). O dono aprovou o XP de Vínculo
+ *     pequeno em 28/10/2026.
  *  3. **Opt-in no que interrompe.** O cartão dentro do app vem ligado (não
  *     interrompe nada: só aparece com o app já aberto); o PUSH começa
  *     DESLIGADO e só existe com a permissão de notificação concedida.

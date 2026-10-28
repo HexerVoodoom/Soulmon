@@ -1028,11 +1028,18 @@ export default function App() {
      concluir algo, "dizer oi") atende a janela de refeição aberta, se houver.
      `markMealDone` é PURA e idempotente (devolve a mesma referência sem janela
      aberta), então entra direto no updater (footgun 6). NÃO concede nada: o
-     que cada gesto rende continua sendo dele, sob o teto dele. */
+     que cada gesto rende continua sendo dele, sob o teto dele. A ÚNICA coisa concedida pela janela em si é
+     `XP_MEAL_INVITE` de Vínculo (REGISTRO §184). */
   const isSleepingRefeicao = useRef(isSleeping);
   isSleepingRefeicao.current = isSleeping;
   const atenderRefeicao = useCallback((kind: MealInviteKind) => {
-    setGameState(prev => markMealDone(prev, new Date(), kind, isSleepingRefeicao.current));
+    setGameState(prev => {
+      const agora = new Date();
+      const next = markMealDone(prev, agora, kind, isSleepingRefeicao.current);
+      /* Só na TRANSIÇÃO (janela passou a atendida): `markMealDone` devolve a mesma referência sem janela aberta e
+         `done` só cresce, então 1 refeição = 1 XP de Vínculo, no máximo 3 por dia. Sem contador, sem sequência. */
+      return next === prev ? prev : awardBondXP(next, { kind: 'mealInvite' }, playerDayKey(agora, prev.playerDayTz));
+    });
   }, []);
 
 

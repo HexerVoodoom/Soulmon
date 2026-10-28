@@ -87,6 +87,8 @@ export const XP_HABIT_MILESTONE: Record<number, number> = { 7: 100, 21: 200, 66:
 export const XP_TRIAGE_CLEARED = 30;
 /** ☀️ Check-in do dia. */
 export const XP_CHECK_IN = 10;
+/** 🍽️ Atender o convite do ritmo das refeições (1x por refeição, no máximo 3 por dia — o trinco é o `mealRitual.done`, que só cresce). */
+export const XP_MEAL_INVITE = 5;
 
 export type BondEvent =
   /** Conclusão de hábito/tarefa. `weight` = PESO DE ESFORÇO (nunca contagem de itens). */
@@ -102,7 +104,8 @@ export type BondEvent =
   | { kind: 'tournamentMatch'; won: boolean }
   | { kind: 'habitMilestone'; days: number }
   | { kind: 'triageCleared' }
-  | { kind: 'checkIn' };
+  | { kind: 'checkIn' }
+  | { kind: 'mealInvite' };
 
 /** Clamp defensivo: save corrompido/NaN nunca vira XP negativo nem NaN. */
 function safe(n: unknown, fallback = 0): number {
@@ -141,6 +144,7 @@ export function bondXP(event: BondEvent): number {
     case 'habitMilestone': return XP_HABIT_MILESTONE[safe(event.days, -1)] ?? 0;
     case 'triageCleared': return XP_TRIAGE_CLEARED;
     case 'checkIn': return XP_CHECK_IN;
+    case 'mealInvite': return XP_MEAL_INVITE;
     default: return 0;
   }
 }

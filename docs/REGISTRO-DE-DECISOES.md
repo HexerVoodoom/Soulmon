@@ -3508,3 +3508,14 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 **Alternativa que perdeu:** teto diário também na luta ativa (anti-farm geral), e ícone novo "gota/cristal" por essência. **Por que perdeu:** o dono quer a luta ativa livre (o farm é a graça) e sem arte nova; o único ponto sem o jogador olhando é a descida automática.
 
 **O que falsificaria:** jogador que só deixa a Fenda no automático e ainda assim acumula essência sem limite (o teto diário falhou), ou save com `essences` regredindo após sincronizar. **Rollback:** campos aditivos e opcionais: remover as chamadas de `applyEssences`/`applyEssencesAway` e a seção do Laboratório; os campos `essences`/`essenceAway` ficam no save inertes (cliente velho os ignora; servidor continua saneando).
+=======
+
+## 184. Atender o convite de refeição rende 5 XP de Vínculo, 1x por refeição (dono, 28/10/2026)
+
+**Decisão do dono:** o convite do ritmo das refeições passa a dar XP de Vínculo, pequeno e sem virar farm.
+
+**O que mudou:** `BondEvent` ganhou `mealInvite` (`XP_MEAL_INVITE = 5`, `utils/bond.ts`). `atenderRefeicao` (App) concede só na TRANSIÇÃO da janela para "atendida" (`markMealDone` devolve a mesma referência sem janela aberta e `mealRitual.done` só cresce): 1 refeição = 5 XP, no máximo 15 XP/dia, sem contador, sequência nem tom que cobre. Energia, HP, Bits e Emblemas continuam sem concessão da janela.
+
+**Alternativa que perdeu:** manter "sem XP" (a recompensa seria só a reação do bicho). **Por que perdeu:** o dono quer o gesto de presença reconhecido no Vínculo; 15 XP/dia é ruído frente aos ~100+ de um dia normal.
+
+**O que falsificaria:** pessoas abrindo o app só para "bater" as 3 janelas, ou o convite virando o motivo de abrir; ver a taxa de atendimento por janela. **Rollback:** remover o `awardBondXP` de `atenderRefeicao` (o evento fica inerte).
