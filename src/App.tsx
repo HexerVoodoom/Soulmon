@@ -161,7 +161,7 @@ import {
   emptyFirstDay, markGesture, shouldShowFirstDay, type FirstDayGesture,
 } from './utils/firstDay';
 import { marcaAvisoTermos, precisaAvisarTermos, qualDocMudou } from './utils/termsNotice';
-import { PRIVACY_VERSION, TERMS_VERSION } from './utils/consent';
+import { PRIVACY_VERSION, TERMS_VERSION, buildConsentRecord, isConsentCurrent } from './utils/consent';
 import { useGroveWatch } from './hooks/useGroveWatch';
 import { usePresentationQueue } from './hooks/usePresentationQueue';
 import { nightmareGateOpen, nightmareRetryInMs, dreamMode } from './utils/nightmareWake';
@@ -602,6 +602,7 @@ const MapPage = lazy(() => import('./components/nav/MapPage').then(m => ({ defau
 const WeeklyReportCard = lazy(() => import('./components/WeeklyReportCard').then(m => ({ default: m.WeeklyReportCard })));
 const UnlockAccountModal = lazy(() => import('./components/UnlockAccountModal').then(m => ({ default: m.UnlockAccountModal })));
 const CheckInSheet = lazy(() => import('./components/CheckInSheet').then(m => ({ default: m.CheckInSheet })));
+const ConsentGate = lazyOverlay(() => import('./components/ConsentGate').then(m => ({ default: m.ConsentGate })));
 const TermsUpdateBanner = lazyOverlay(() => import('./components/TermsUpdateBanner').then(m => ({ default: m.TermsUpdateBanner })));
 const RefugeInviteCard = lazyOverlay(() => import('./components/refugio/RefugeInviteCard').then(m => ({ default: m.RefugeInviteCard })));
 const DemoExitButton = lazyOverlay(() => import('./components/home/DemoExitButton').then(m => ({ default: m.DemoExitButton })));
@@ -6817,6 +6818,18 @@ export default function App() {
           demoTint={gameState.demoCharacterId ? gameState.demoTint : undefined}
           onComplete={handleCompleteTutorial}
         />
+      </Suspense>
+    );
+  }
+
+  /* REACEITE (QA-13, REGISTRO §184): quem já passou do onboarding mas não consentiu à versão ATUAL dos
+     documentos (save antigo sem registro, ou aceite de versão anterior) fica nesta tela até aceitar. Grava o
+     registro da versão atual; o banner informativo (#24) deixa de aparecer porque o consentimento passa a ser vigente. */
+  if (!isConsentCurrent(gameState.consent)) {
+    return (
+      <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        {selo}
+        <ConsentGate language={language} onAccept={() => setGameState(prev => ({ ...prev, consent: buildConsentRecord(new Date()) }))} />
       </Suspense>
     );
   }

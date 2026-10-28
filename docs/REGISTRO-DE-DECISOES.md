@@ -3519,3 +3519,14 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 **Alternativa que perdeu:** manter "sem XP" (a recompensa seria só a reação do bicho). **Por que perdeu:** o dono quer o gesto de presença reconhecido no Vínculo; 15 XP/dia é ruído frente aos ~100+ de um dia normal.
 
 **O que falsificaria:** pessoas abrindo o app só para "bater" as 3 janelas, ou o convite virando o motivo de abrir; ver a taxa de atendimento por janela. **Rollback:** remover o `awardBondXP` de `atenderRefeicao` (o evento fica inerte).
+
+
+## 184. Reaceite obrigatório dos Termos/Privacidade + `PRIVACY_VERSION` 2026-10-28 (dono, 28/10/2026; REVOGA a #24 de 21/09/2026)
+
+**Decisão do dono:** a revisão D2b da política (voz direto no Groq, Gemini de reserva no chat) já está publicada; `PRIVACY_VERSION` sobe para 2026-10-28 e quem já jogava passa a ser obrigado a reaceitar (QA-13).
+
+**O que mudou:** `ConsentGate` (tela bloqueante, Termos + Política em aba nova, caixa + "Aceitar e continuar") entra no `App` quando `!isConsentCurrent(gameState.consent)` depois do onboarding/tutorial; grava `buildConsentRecord()`. Vale também para save antigo SEM registro. `public/privacidade.html` (PT+EN) com carimbo 28/10/2026, igual à constante (régua `consent.versoes.contract`). O servidor não espelha a constante (só comentário em `generate-sprite.js`; nenhuma validação por versão). O banner informativo (#24) fica no código mas nunca aparece, pois o consentimento passa a ser vigente.
+
+**Alternativa que perdeu:** manter só o banner informativo, sem re-aceite (#24). **Por que perdeu:** a política mudou o destinatário dos dados da voz; informar sem consentir não cobre o aceite específico que a LGPD pede.
+
+**O que falsificaria:** queda de retenção no dia da subida do gate (quem fecha o app na tela); ver sessões D1 após o deploy. **Rollback:** remover o `if (!isConsentCurrent…)` do `App`.
