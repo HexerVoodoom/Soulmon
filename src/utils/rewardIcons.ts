@@ -11,12 +11,13 @@ import { dropName, type DropKind } from './dungeonDrops';
 import stairsIcon from '../assets/soulmon/icones-ui/masmorra-escada.png';
 import energyIcon from '../assets/soulmon/icones-ui/energia.png';
 import trophyGold from '../assets/icons/icon-trophy-gold.png';
+import recordSeal from '../assets/soulmon/icons/icon-record-seal.png';
 
 /**
  * O SELO DE RECORDE. PROVISÓRIO: hoje é o troféu dourado. A arte final (`icon-record-seal.png`) será gerada depois;
  * para trocar, é UMA linha: `import recordSeal from '../assets/soulmon/icons/icon-record-seal.png'` e `RECORD_SEAL_ICON = recordSeal`.
  */
-export const RECORD_SEAL_ICON: string = trophyGold;
+export const RECORD_SEAL_ICON: string = recordSeal;
 export const STAIRS_ICON: string = stairsIcon;
 export const ENERGY_ICON: string = energyIcon;
 
