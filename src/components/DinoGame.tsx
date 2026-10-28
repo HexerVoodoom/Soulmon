@@ -28,6 +28,20 @@ import obstacle3b from '../assets/soulmon/dino/dino-obstacle-3b.png';
 import obstacle3c from '../assets/soulmon/dino/dino-obstacle-3c.png';
 import obstacle4b from '../assets/soulmon/dino/dino-obstacle-4b.png';
 import obstacle4c from '../assets/soulmon/dino/dino-obstacle-4c.png';
+import obstacleR1 from '../assets/soulmon/dino/dino-obstacle-r4-1.png';
+import obstacleR2 from '../assets/soulmon/dino/dino-obstacle-r4-2.png';
+import obstacleR3 from '../assets/soulmon/dino/dino-obstacle-r4-3.png';
+import obstacleR4 from '../assets/soulmon/dino/dino-obstacle-r4-4.png';
+import obstacleR5 from '../assets/soulmon/dino/dino-obstacle-r4-5.png';
+import obstacleR6 from '../assets/soulmon/dino/dino-obstacle-r4-6.png';
+import dashGem1 from '../assets/soulmon/dino/dash-gem-1.png';
+import dashGem2 from '../assets/soulmon/dino/dash-gem-2.png';
+import dashGem3 from '../assets/soulmon/dino/dash-gem-3.png';
+import dashGem4 from '../assets/soulmon/dino/dash-gem-4.png';
+import dashPickup from '../assets/soulmon/dino/dash-pickup.png';
+import dashPickupSpent from '../assets/soulmon/dino/dash-pickup-spent.png';
+import dashSpark from '../assets/soulmon/dino/dash-spark.png';
+import dashPlatMedia from '../assets/soulmon/dino/dash-plat-media.png';
 import groundStrip from '../assets/soulmon/dino/dino-ground-strip.png';
 import parallaxFar from '../assets/soulmon/dino/dino-parallax-far.png';
 import { emitFeat } from '../utils/feats';
@@ -78,16 +92,23 @@ const OBSTACLE_TIERS: { from: number; size: number; variants: ObstacleArt[] }[] 
     { src: obstacle1, hit: [4 / 128, 124 / 128], top: 1 / 128 },
     { src: obstacle1b, hit: [1 / 128, 127 / 128], top: 65 / 128 },
     { src: obstacle1c, hit: [6 / 128, 122 / 128], top: 1 / 128 },
+    // R4-04 (28/10/2026), 256², pés encostados na base (sem folga embaixo); caixa = bbox do alfa binário medida.
+    { src: obstacleR4, hit: [0 / 256, 256 / 256], top: 80 / 256 }, // sebe de espinhos (baixa e larga)
+    { src: obstacleR2, hit: [0 / 256, 255 / 256], top: 107 / 256 }, // arco de espinhos (só a metade de baixo)
   ] },
   { from: 20, size: 62, variants: [
     { src: obstacle2, hit: [6 / 128, 121 / 128], top: 1 / 128 },
     { src: obstacle2b, hit: [1 / 128, 127 / 128], top: 15 / 128 },
     { src: obstacle2c, hit: [1 / 128, 127 / 128], top: 4 / 128 },
+    { src: obstacleR1, hit: [11 / 256, 244 / 256], top: 5 / 256 }, // aglomerado de cristais
+    { src: obstacleR6, hit: [9 / 256, 247 / 256], top: 2 / 256 }, // arco em ruínas com tocha
   ] },
   { from: 45, size: 70, variants: [
     { src: obstacle3, hit: [40 / 128, 88 / 128], top: 1 / 128 },
     { src: obstacle3b, hit: [38 / 128, 89 / 128], top: 1 / 128 },
     { src: obstacle3c, hit: [41 / 128, 86 / 128], top: 1 / 128 },
+    { src: obstacleR3, hit: [39 / 256, 217 / 256], top: 0 / 256 }, // coluna rúnica
+    { src: obstacleR5, hit: [1 / 256, 256 / 256], top: 42 / 256 }, // três obeliscos roxos
   ] },
   { from: 75, size: 78, variants: [
     { src: obstacle4, hit: [1 / 128, 127 / 128], top: 38 / 128 },
@@ -124,7 +145,14 @@ const DASH_TIME = 0.2, DASH_MULT = 3, DASH_PUSH = 40;
 const PLAT_H = 70, PLAT_W = 260, PLAT_THICK = 8;
 const PICKUP_EVERY = 7;
 type Plat = { x: number };
-type Pickup = { x: number; h: number };
+type Pickup = { x: number; h: number; v: number };
+/** Coletado há pouco: o cristal "gasto" sobe e some, com a fagulha por cima (só visual; ~0,35 s). */
+type Spent = { x: number; h: number; t: number };
+const GEM_SRCS = [dashGem1, dashGem2, dashGem3, dashGem4];
+const SPENT_TIME = 0.35;
+// Plataforma R4: a arte 192² mede 1..192 × 42..149 (alfa binário); desenhada a PLAT_W de largura (escala
+// PLAT_W/192), só a laje (linhas 42..86) — os pendentes passariam do chão. A face de cima fica em `PLAT_H`.
+const PLAT_SRC_Y = 42, PLAT_SRC_H = 44, PLAT_TUFT = 8;
 /** Mantém só os itens que passam em `keep`, SEM criar array novo (o loop de 60 fps não gera lixo para o GC). */
 function keepIf<T>(list: T[], keep: (x: T) => boolean): void {
   let w = 0;
@@ -134,7 +162,7 @@ function keepIf<T>(list: T[], keep: (x: T) => boolean): void {
 
 function newRun(level: 1 | 2) {
   return { h: 0, vy: 0, obstacles: [] as { x: number; size: number; tier: number; v: number }[], speed: RUN_SPEED_START, t: 0, spawnIn: 1.1, score: 0, gx: 0, px: 0, dust: [] as Dust[], sinceLand: 9, dustIn: 0, wasAir: false,
-    level, charges: DASH_START_CHARGES, dashT: 0, plats: [] as Plat[], pickups: [] as Pickup[], platIn: 3, pickIn: PICKUP_EVERY, floor: 0 };
+    level, charges: DASH_START_CHARGES, dashT: 0, plats: [] as Plat[], pickups: [] as Pickup[], spent: [] as Spent[], platIn: 3, pickIn: PICKUP_EVERY, floor: 0 };
 }
 
 /** Poeira dos pés: quadradinhos de 2–3 px (grade nítida), poucos, 3 cores do visor. */
@@ -206,13 +234,16 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   const groundImgRef = useRef<HTMLImageElement | null>(null);
   /** Campo de força do dash: a aura do poder à distância do elemento. */
   const fieldImgRef = useRef<HTMLImageElement | null>(null);
-  /** Coletável do nível 2: o cristal `defended` do elemento. */
-  const gemImgRef = useRef<HTMLImageElement | null>(null);
+  /** Arte do nível 2 (R4-03 / P2-09, 28/10/2026): 4 cargas de dash, o cristal gasto, a fagulha e a laje da plataforma. */
+  const dashArtRef = useRef<{ gems: HTMLImageElement[]; spent: HTMLImageElement; spark: HTMLImageElement; plat: HTMLImageElement } | null>(null);
   useEffect(() => {
     const load = (src: string | undefined) => { if (!src) return null; const i = new Image(); i.src = src; return i; };
     fieldImgRef.current = load(fxFrame(petElement, 'aura'));
-    gemImgRef.current = load(fxFrame(petElement, 'defended'));
   }, [petElement]);
+  useEffect(() => {
+    const mk = (src: string) => { const i = new Image(); i.src = src; return i; };
+    dashArtRef.current = { gems: GEM_SRCS.map(mk), spent: mk(dashPickupSpent), spark: mk(dashSpark), plat: mk(dashPlatMedia) };
+  }, []);
   const parallaxImgRef = useRef<HTMLImageElement | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   /** Tamanho do campo em px de CSS (= px do canvas, escala 1× nítida). */
@@ -427,17 +458,19 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           const onTop = Math.random() < 0.5;
           // o coletável de cima nasce SEMPRE sobre uma plataforma (não flutua sozinho): nasce uma, se não há uma ali
           if (onTop && !s.plats.some(p => Math.abs(p.x - (canvas.width + 20)) < PLAT_W)) s.plats.push({ x: canvas.width + 20 });
-          s.pickups.push({ x: canvas.width + 20 + PLAT_W / 2, h: onTop ? PLAT_H + 22 : 30 });
+          s.pickups.push({ x: canvas.width + 20 + PLAT_W / 2, h: onTop ? PLAT_H + 22 : 30, v: Math.floor(Math.random() * GEM_SRCS.length) });
           s.pickIn = PICKUP_EVERY + Math.random() * 3;
         }
         for (const p of s.plats) p.x -= mv * dt;
         for (const k of s.pickups) k.x -= mv * dt;
         keepIf(s.plats, p => p.x + PLAT_W > -10);
+        for (const f of s.spent) { f.t += dt; f.x -= mv * dt; }
+        keepIf(s.spent, f => f.t < SPENT_TIME);
         // coleta (mutação in-place: sem array novo por frame)
         keepIf(s.pickups, k => {
           if (k.x <= -20) return false;
           const hit = k.x + 12 > px0 && k.x - 4 < px1 + (dashing ? DASH_PUSH : 0) && k.h + 12 > s.h && k.h - 12 < s.h + DINO_S;
-          if (hit) s.charges += 1;
+          if (hit) { s.charges += 1; s.spent.push({ x: k.x, h: k.h, t: 0 }); }
           return !hit;
         });
       }
@@ -475,15 +508,35 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         ctx.drawImage(img, o.x, GROUND - o.size, o.size, o.size);
       }
       if (s.level === 2) {
+        const art = dashArtRef.current;
         for (const p of s.plats) {
           const y = GROUND - PLAT_H - PLAT_THICK;
-          ctx.fillStyle = dustColors[2]; ctx.fillRect(Math.round(p.x), y, PLAT_W, PLAT_THICK);
-          ctx.fillStyle = dustColors[1]; ctx.fillRect(Math.round(p.x), y, PLAT_W, 3);
+          if (art?.plat.complete && art.plat.naturalWidth) {
+            // laje R4 (linhas PLAT_SRC_Y..+PLAT_SRC_H da arte 192²) esticada à largura de colisão; os tufos de musgo
+            // sobem PLAT_TUFT acima da face onde o pet pisa
+            const k = PLAT_W / 192;
+            ctx.drawImage(art.plat, 0, PLAT_SRC_Y, 192, PLAT_SRC_H, Math.round(p.x), GROUND - PLAT_H - PLAT_TUFT, PLAT_W, Math.round(PLAT_SRC_H * k));
+          } else {
+            ctx.fillStyle = dustColors[2]; ctx.fillRect(Math.round(p.x), y, PLAT_W, PLAT_THICK);
+            ctx.fillStyle = dustColors[1]; ctx.fillRect(Math.round(p.x), y, PLAT_W, 3);
+          }
+        }
+        for (const f of s.spent) {
+          if (!art?.spent.complete || !art.spent.naturalWidth) continue;
+          const u = f.t / SPENT_TIME;
+          ctx.save();
+          ctx.globalAlpha = 1 - u;
+          ctx.drawImage(art.spent, Math.round(f.x - 22), Math.round(GROUND - f.h - 22 - (reduced ? 0 : u * 14)), 44, 44);
+          if (art.spark.complete && art.spark.naturalWidth) {
+            const sz = Math.round(30 + u * 34);
+            ctx.drawImage(art.spark, Math.round(f.x - sz / 2), Math.round(GROUND - f.h - sz / 2), sz, sz);
+          }
+          ctx.restore();
         }
         for (const k of s.pickups) {
-          const gem = gemImgRef.current;
+          const gem = art?.gems[k.v];
           if (gem?.complete && gem.naturalWidth) {
-            // cristal do elemento (128² com margem): 44 px com o centro no ponto do coletável
+            // carga de dash (128² quase sem margem): 44 px com o centro no ponto do coletável
             const bob = reduced ? 0 : Math.sin(s.t * 5 + k.x * 0.05) * 2;
             ctx.drawImage(gem, Math.round(k.x - 22), Math.round(GROUND - k.h - 22 + bob), 44, 44);
           } else {
@@ -614,7 +667,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         </span>
         {g.current.level === 2 && phase === 'playing' && (
           <span aria-live="off" className="sm2-num" style={{ position: 'absolute', right: 8, top: 8, padding: '2px 6px', zIndex: 2, fontFamily: 'var(--sm2-font-pixel)', fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-viewport-ink)', backgroundColor: 'color-mix(in srgb, var(--sm2-viewport-bg) 78%, transparent)', borderRadius: 'var(--sm2-radius-sm)' }}>
-            Dash <span ref={chargesElRef}>{DASH_START_CHARGES}</span>
+            <img src={dashPickup} alt="" width={16} height={16} style={{ imageRendering: 'pixelated', verticalAlign: '-3px', marginRight: 4 }} />Dash <span ref={chargesElRef}>{DASH_START_CHARGES}</span>
           </span>
         )}
       </div>
