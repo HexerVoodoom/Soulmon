@@ -6996,7 +6996,9 @@ function saveDoSimulado(p, day2) {
     powerPoints: peso("poder"),
     harmonyPoints: peso("harmonia"),
     benevolencePoints: peso("benevolencia"),
-    demoCharacterId: artLineOrNull(p.artLine) ?? void 0
+    demoCharacterId: artLineOrNull(p.artLine) ?? void 0,
+    // REGISTRO 182: o golpe BÁSICO do duelo usa o elemento do simulado (`elementoDoBasico` lê `elementoDominante.id` da ficha do estágio). Só isso: sem escola/especial, a luta não muda.
+    soulmonSkills: { [fichaStageOf(e.evolutionStage)]: { elementoDominante: { id: p.element } } }
   };
 }
 __name(saveDoSimulado, "saveDoSimulado");
@@ -14094,7 +14096,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-SJuVpD/functionsRoutes-0.33793363024596423.mjs
+// ../.wrangler/tmp/pages-lpLCHP/functionsRoutes-0.8859709896724102.mjs
 var routes = [
   {
     routePath: "/api/account",
