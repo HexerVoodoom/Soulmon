@@ -58,7 +58,7 @@ import { entrarNaSuperficie } from '../utils/musica';
 import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
 import { TOURNAMENT_LADDER, getTierStanding, resolveSeasonPlace } from '../utils/tournamentTiers';
-import { availableFrames, resolveEquippedFrame, type FrameContext } from '../utils/frames';
+import { availableFrames, frameById, resolveEquippedFrame, type FrameContext } from '../utils/frames';
 import { type RosterEntry } from '../utils/enemyRoster';
 import { strayForTournament } from '../utils/strayFoes';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
@@ -976,7 +976,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                     <span className="sm2-num" style={{ ...sm2Hint, width: 28, flexShrink: 0, color: isMe ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)' }}>
                       {place}
                     </span>
-                    <AvatarFrame frame={isMe ? myFrame : null} plaque={isMe ? standing?.place : null}>
+                    <AvatarFrame frame={isMe ? myFrame : frameById(r.frameId)} plaque={isMe ? standing?.place : null}>
                       <MiniGlass size={32}>
                         {(() => {
                           const icon = opponentIcon(r, 32);
