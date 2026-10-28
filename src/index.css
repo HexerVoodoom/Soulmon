@@ -5824,6 +5824,9 @@ select:focus-visible {
   .sm-corvo-bob { animation: none !important; }
   /* Apresentação do prédio novo: o busto do NPC aparece parado; os balões esperam o toque do mesmo jeito. */
   .sm-npc-intro { animation: none !important; }
+  /* Revelação de recompensa (S19): ícones e odômetro mostram o final já. */
+  .sm-pop, .sm-pop--on { animation: none; opacity: 1; transform: none; }
+  .sm-reel-strip { transition: none !important; }
   /* Bosque da Guilda: as criaturas ficam paradas. */
   .sm2-grove-bob { animation: none !important; }
   .sm2-grove-walker, .sm2-grove-walker-flip { animation: none !important; }
@@ -8920,9 +8923,5 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 .sm-reel-col { display: inline-block; height: 1em; overflow: hidden; line-height: 1em; }
 .sm-reel-strip { display: flex; flex-direction: column; will-change: transform; }
 .sm-reel-cell { display: block; height: 1em; line-height: 1em; text-align: center; }
-@media (prefers-reduced-motion: reduce) {
-  .sm-pop, .sm-pop--on { animation: none; opacity: 1; transform: none; }
-  .sm-reel-strip { transition: none !important; }
-}
 .sm-reel-cell::before { content: attr(data-d); }
 .sm-reel-sign { height: 1em; }

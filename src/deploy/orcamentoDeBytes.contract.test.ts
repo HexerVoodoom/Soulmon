@@ -186,7 +186,9 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // esta PR soma +2,2 KB no chunk de entrada (revisão no `cloudSave`, fila de POSTs, casca da reconciliação no provider) DEPOIS de pagar
   // o corpo da reconciliação e a saída da carga degradada para `saveReconcileRun.ts` (`import()`). 675_858 -> 684_919. Proteção de save
   // de jogador real; corte real segue = partir o `App.tsx`.
-  'index.js': 684_919,
+  // 28/10/2026 (lote Biblioteca/elementos + tela de resultado padrão + Arena livre + Feira, REGISTRO §178–§180): 684_919 -> 742_662 (+57,7 KB),
+  // medido no build limpo. Crescimento JUSTIFICADO pelo pedido do dono; corte real segue = partir o `App.tsx` e mandar Feira/Biblioteca para chunks.
+  'index.js': 742_662,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.

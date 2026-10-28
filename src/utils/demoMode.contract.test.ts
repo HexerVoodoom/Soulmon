@@ -152,6 +152,8 @@ describe('2. ponto novo sem o predicado reprova', () => {
       'components/guild/GuildSheet.tsx': 'prédios `hall.feira`/`hall.guilda` — bloqueados na demo',
       'components/guild/GroveFolha.tsx': 'o panorama do Bosque: só abre pelo botão do Salão (`hall.guilda`, bloqueado na demo) e lê só o plantio do clã',
       'components/guild/claUi.tsx': 'só tipo de erro (`GuildError`) da Praça/Plantio/Mistério, montados dentro do GuildSheet (`hall.guilda`, bloqueado na demo)',
+      'components/guild/FeiraEventoSheet.tsx': 'sala da Feira (mistério/chefe): só abre pelo prédio `hall.feira`, bloqueado na demo',
+      'components/guild/FeiraTrailPlay.tsx': 'trilha da Feira, montada dentro do FeiraEventoSheet (bloqueado na demo)',
       'utils/claApi.ts': 'cliente dos prédios do clã (Praça/Plantio/Mistério) sobre o `guildCall`; só chega pelo GuildSheet, e o Mistério por tarefa só dispara com memória de clã no aparelho (a demo não tem)',
       'components/perfil/ProfileEditor.tsx': 'só abre em Configurações > Perfil; o perfil público só sobe com PvP ligado (nunca na demo)',
       'utils/giftsCredited.ts': 'confirma presentes (giftsAck) só depois de um save confirmado na nuvem — na demo não há POST de save, então nunca dispara',

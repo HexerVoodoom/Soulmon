@@ -312,7 +312,7 @@ describe('A descida que continua sozinha', () => {
     expect(painel).not.toBeNull();
     expect(estadoAtual!.dungeonKills ?? 0).toBeGreaterThan(killsAntes);
     expect(document.body.textContent).toMatch(/While you were away|happened while you were away/);
-    expect(document.querySelector('[data-dungeon-summary]')).not.toBeNull();
+    expect(document.body.textContent).toMatch(/Layers cleared|Camadas limpas/); // o resumo agora é a tela de resultado padrão (Proposta D)
   });
 
   it('o tempo fora tem TETO: o cartão avisa quando passou das horas contadas', async () => {

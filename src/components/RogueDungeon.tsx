@@ -64,7 +64,7 @@ const BONUS_COPY: Record<BonusKind, { en: string; pt: string; icon: string; desc
 /** O ícone do bônus: a arte P2-02 (96²) quando existe, senão o glifo Material de `BONUS_COPY`. */
 function BonusIcon({ kind, size, label }: { kind: BonusKind; size: number; label?: string }) {
   const src = rogueBonusIcon(kind);
-  if (!src) return <Icon name={BONUS_COPY[kind].icon} size={size} tone="inherit" label={label} />;
+  if (!src) return <Icon name={BONUS_COPY[kind].icon} size={20} tone="inherit" label={label} />;
   return <img src={src} alt={label ?? ''} aria-hidden={label ? undefined : true} width={size} height={size} style={{ imageRendering: 'pixelated', flexShrink: 0 }} />;
 }
 /** A arte provisória de cada andar no nó do mapa. A definitiva entra depois trocando só estes imports (por nome de arquivo). */

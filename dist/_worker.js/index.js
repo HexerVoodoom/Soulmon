@@ -2245,8 +2245,8 @@ function cleanGalhos(g) {
   return { power: pts(o.power), harmony: pts(o.harmony), benevolence: pts(o.benevolence) };
 }
 __name(cleanGalhos, "cleanGalhos");
-function planoDoComportamento(janela) {
-  const b = GALHOS.map(([, k]) => janela && typeof janela === "object" ? typeof janela[k] === "number" && Number.isFinite(janela[k]) && janela[k] > 0 ? janela[k] : 0 : 0);
+function planoDoComportamento(janela2) {
+  const b = GALHOS.map(([, k]) => janela2 && typeof janela2 === "object" ? typeof janela2[k] === "number" && Number.isFinite(janela2[k]) && janela2[k] > 0 ? janela2[k] : 0 : 0);
   const total = b.reduce((a, x2) => a + x2, 0);
   if (total < MIN_AMOSTRA) return null;
   const fatias = b.map((x2) => x2 / total);
@@ -2334,6 +2334,247 @@ function fichaJornadaFamilia(ficha, stage) {
   return typeof f === "string" && FAMILIAS_VALIDAS.includes(f) ? f : null;
 }
 __name(fichaJornadaFamilia, "fichaJornadaFamilia");
+
+// api/_elementoBase.js
+var COUNTER_RING = [
+  "fogo",
+  "planta",
+  "vida",
+  "terra",
+  "gravidade",
+  "ar",
+  "som",
+  "eletricidade",
+  "industrial",
+  "fada",
+  "agua",
+  "marcial",
+  "arcano",
+  "tempo",
+  "espaco",
+  "luz",
+  "sombra",
+  "morte",
+  "vileza",
+  "vigor"
+];
+var BASE_DO_PAR = {
+  vapor: "fogo",
+  lava: "fogo",
+  incendio: "fogo",
+  plasma: "fogo",
+  fogo_feiticeiro: "fogo",
+  fogo_negro: "fogo",
+  chama_solar: "fogo",
+  fogo_infernal: "fogo",
+  chama_azul: "fogo",
+  fenix: "fogo",
+  fervor: "fogo",
+  pantano: "agua",
+  gelo: "agua",
+  agua_viva: "agua",
+  mare: "agua",
+  abismo: "agua",
+  prisma: "agua",
+  acido: "agua",
+  veneno: "agua",
+  nascente: "agua",
+  correnteza: "agua",
+  areia: "terra",
+  magnetismo: "terra",
+  cristal: "terra",
+  obsidiana: "terra",
+  ouro_vivo: "terra",
+  solo_profano: "terra",
+  ossuario: "terra",
+  flora: "terra",
+  tita: "terra",
+  tempestade: "ar",
+  eter: "ar",
+  murmurio: "ar",
+  aurora: "ar",
+  enxofre: "ar",
+  miasma: "ar",
+  alento: "ar",
+  impeto: "ar",
+  fluxo: "eletricidade",
+  trovao_negro: "eletricidade",
+  fulgor: "eletricidade",
+  tormento: "eletricidade",
+  galvanismo: "eletricidade",
+  sinapse: "eletricidade",
+  reflexo: "eletricidade",
+  ocultismo: "arcano",
+  runa: "arcano",
+  pacto: "arcano",
+  alma: "arcano",
+  essencia: "arcano",
+  encantamento: "arcano",
+  crepusculo: "sombra",
+  terror: "sombra",
+  espectro: "sombra",
+  parasita: "sombra",
+  assassinio: "sombra",
+  heresia: "luz",
+  julgamento: "luz",
+  santidade: "luz",
+  bravura: "luz",
+  praga: "vileza",
+  mutacao: "vileza",
+  carnificina: "vileza",
+  equilibrio: "morte",
+  ceifa: "morte",
+  vitalidade: "vida",
+  forja: "marcial",
+  tempera: "marcial",
+  aco: "marcial",
+  esgrima: "marcial",
+  aco_voltaico: "marcial",
+  arsenal: "marcial",
+  lamina_oculta: "marcial",
+  lamina_radiante: "marcial",
+  serrilha: "marcial",
+  fio_funebre: "marcial",
+  lamina_viva: "marcial",
+  maestria: "marcial",
+  pira_eterna: "tempo",
+  erosao: "tempo",
+  fossil: "tempo",
+  aceleracao: "tempo",
+  instante: "tempo",
+  cronomancia: "tempo",
+  entropia: "tempo",
+  eon: "tempo",
+  ruina: "tempo",
+  ocaso: "tempo",
+  florescer: "tempo",
+  frenesi: "tempo",
+  contratempo: "tempo",
+  estrondo: "som",
+  sonar: "som",
+  terremoto: "som",
+  estampido: "som",
+  trovao: "som",
+  cantico: "som",
+  sussurro: "som",
+  harmonia: "som",
+  dissonancia: "som",
+  requiem: "som",
+  melodia: "som",
+  brado: "som",
+  cadencia: "som",
+  eco: "som",
+  fornalha_estelar: "gravidade",
+  voragem: "gravidade",
+  colapso: "gravidade",
+  vacuo: "gravidade",
+  magnetar: "gravidade",
+  singularidade: "gravidade",
+  buraco_negro: "gravidade",
+  halo_gravitacional: "gravidade",
+  jugo: "gravidade",
+  implosao: "gravidade",
+  ancora_vital: "gravidade",
+  peso_descomunal: "gravidade",
+  ariete: "gravidade",
+  dilatacao: "gravidade",
+  onda_de_choque: "gravidade",
+  meteoro: "espaco",
+  cometa: "espaco",
+  asteroide: "espaco",
+  estratosfera: "espaco",
+  pulsar: "espaco",
+  portal: "espaco",
+  vazio: "espaco",
+  constelacao: "espaco",
+  devorador: "espaco",
+  nebulosa: "espaco",
+  semente_estelar: "espaco",
+  gigante_estelar: "espaco",
+  lamina_sideral: "espaco",
+  continuum: "espaco",
+  silencio_cosmico: "espaco",
+  dobra: "espaco",
+  fogo_fatuo: "fada",
+  orvalho: "fada",
+  circulo_feerico: "fada",
+  brisa_cintilante: "fada",
+  glitter: "fada",
+  feerie: "fada",
+  sonho_sombrio: "fada",
+  arco_iris: "fada",
+  encanto_traicoeiro: "fada",
+  banshee: "fada",
+  coracao: "fada",
+  graca: "fada",
+  lamina_purpurina: "fada",
+  sono_encantado: "fada",
+  cancao_feerica: "fada",
+  leveza: "fada",
+  poeira_estelar: "fada",
+  fornalha: "industrial",
+  hidraulica: "industrial",
+  mineracao: "industrial",
+  pneumatica: "industrial",
+  usina: "industrial",
+  artificio: "industrial",
+  fuligem: "industrial",
+  holofote: "industrial",
+  poluicao: "industrial",
+  ferro_velho: "industrial",
+  biomecanica: "industrial",
+  exoesqueleto: "industrial",
+  armaria: "industrial",
+  relojoaria: "industrial",
+  britadeira: "industrial",
+  prensa: "industrial",
+  estacao_orbital: "industrial",
+  brinquedo: "industrial",
+  queimada: "planta",
+  mangue: "planta",
+  raiz_profunda: "planta",
+  polen: "planta",
+  fotossintese: "planta",
+  druidismo: "planta",
+  fungo: "planta",
+  girassol: "planta",
+  espinheiro: "planta",
+  murcha: "planta",
+  seiva: "planta",
+  carvalho: "planta",
+  bambu: "planta",
+  estacoes: "planta",
+  farfalhar: "planta",
+  trepadeira: "planta",
+  arvore_mundo: "planta",
+  jardim_encantado: "planta",
+  estufa: "planta"
+};
+function baseDominante(id) {
+  return Object.prototype.hasOwnProperty.call(BASE_DO_PAR, id) ? BASE_DO_PAR[id] : id;
+}
+__name(baseDominante, "baseDominante");
+function counters(attacker, defender) {
+  const i2 = COUNTER_RING.indexOf(attacker);
+  if (i2 < 0) return false;
+  return COUNTER_RING[(i2 + 1) % COUNTER_RING.length] === defender || COUNTER_RING[(i2 + 2) % COUNTER_RING.length] === defender;
+}
+__name(counters, "counters");
+function vantagemElemental(atacante, defensor) {
+  if (typeof atacante !== "string" || typeof defensor !== "string") return 0;
+  const a = baseDominante(atacante), d = baseDominante(defensor);
+  if (counters(a, d)) return 1;
+  if (counters(d, a)) return -1;
+  return 0;
+}
+__name(vantagemElemental, "vantagemElemental");
+function aplicarElementosDuelo(me, opp, escala = 1) {
+  const advMe = vantagemElemental(me.fx?.elBasica, opp.fx?.elBasica);
+  const advOpp = vantagemElemental(opp.fx?.elBasica, me.fx?.elBasica);
+  const com = /* @__PURE__ */ __name((c, adv) => adv === 0 ? c : { ...c, bonus: (1 + c.bonus) / (1 - escala * adv / 10) - 1 }, "com");
+  return { meCombatant: com(me.combatant, advMe), oppCombatant: com(opp.combatant, advOpp) };
+}
+__name(aplicarElementosDuelo, "aplicarElementosDuelo");
 
 // api/_duel.js
 var DUEL_PENDING_MS = 5 * 60 * 1e3;
@@ -2644,10 +2885,11 @@ function duelSeed(...parts) {
   return h >>> 0;
 }
 __name(duelSeed, "duelSeed");
-function simulateDuel({ me, opp, seed, taps }) {
+function simulateDuel({ me, opp, seed, taps, elementScale = 0 }) {
+  const { meCombatant, oppCombatant } = elementScale > 0 ? aplicarElementosDuelo(me, opp, elementScale) : { meCombatant: me.combatant, oppCombatant: opp.combatant };
   const g = fightSteps(
-    { combatant: me.combatant, special: me.special, dotResist: me.dotResist },
-    { combatant: opp.combatant, special: opp.special, dotResist: opp.dotResist },
+    { combatant: meCombatant, special: me.special, dotResist: me.dotResist },
+    { combatant: oppCombatant, special: opp.special, dotResist: opp.dotResist },
     { seed: seed >>> 0, hpScale: PVP_HP_SCALE, startEnergy: [cleanStartEnergy(me.startEnergy), cleanStartEnergy(opp.startEnergy)], cheer: duelCheerEvents(taps, 0, me.cheerScale) }
   );
   const events = [];
@@ -2856,12 +3098,14 @@ async function coopLeave(env, saveId, { exclusao = false, now = /* @__PURE__ */ 
   await kvOrThrow(env).delete(coopGestKey(lido.id, saveId));
   await kvOrThrow(env).delete(coopMemKey(lido.id, saveId));
   const { pts: casaDeQuemSai, bits: bitsDeQuemSai } = await recolherCasaDetalhe(env, lido.id, saveId);
+  const feiraDeQuemSai = await recolherFeiraDeQuemSai(env, lido.id, saveId, { exclusao });
   const semanas = [0, 1, 2, 3].map((k) => semanaDe(new Date(now.getTime() - k * 7 * 864e5)));
   await Promise.all(semanas.map((w) => kvOrThrow(env).delete(coopHitKey(lido.id, w, saveId))));
   const g = await lerGrupo(env, lido.id) ?? lido;
   g.members = (g.members || []).filter((m) => m !== saveId);
   if (casaDeQuemSai > 0) g.casaLegado = Math.floor(Number(g.casaLegado) || 0) + casaDeQuemSai;
   if (bitsDeQuemSai > 0) g.bitsLegado = Math.floor(Number(g.bitsLegado) || 0) + bitsDeQuemSai;
+  if (feiraDeQuemSai) g.feiraLegado = somarFeiraLegado(g.feiraLegado, feiraDeQuemSai);
   if (g.checkins) delete g.checkins[saveId];
   if (g.desde) delete g.desde[saveId];
   if (fio) {
@@ -2883,7 +3127,7 @@ async function coopLeave(env, saveId, { exclusao = false, now = /* @__PURE__ */ 
     const ultima = await lerGrupo(env, g.id);
     const outros = (ultima?.members || []).filter((m) => m !== saveId);
     if (outros.length > 0) {
-      const vivo = { ...ultima, casaLegado: g.casaLegado ?? ultima.casaLegado, bitsLegado: g.bitsLegado ?? ultima.bitsLegado, fiosAvulsos: g.fiosAvulsos ?? ultima.fiosAvulsos, members: outros, hostSave: ultima.hostSave && outros.includes(ultima.hostSave) ? ultima.hostSave : outros[0] };
+      const vivo = { ...ultima, casaLegado: g.casaLegado ?? ultima.casaLegado, bitsLegado: g.bitsLegado ?? ultima.bitsLegado, feiraLegado: g.feiraLegado ?? ultima.feiraLegado, fiosAvulsos: g.fiosAvulsos ?? ultima.fiosAvulsos, members: outros, hostSave: ultima.hostSave && outros.includes(ultima.hostSave) ? ultima.hostSave : outros[0] };
       await gravarGrupo(env, vivo);
       return { left: true, groupId: g.id, remaining: outros.length };
     }
@@ -3094,6 +3338,7 @@ async function apagarClaims(env, saveId, now = /* @__PURE__ */ new Date()) {
   await kvOrThrow(env).delete(coopDiasKey(saveId));
   await kvOrThrow(env).delete(`coopShell:${saveId}`);
   await kvOrThrow(env).delete(`coopScenes:${saveId}`);
+  await apagarFeiraDaPessoa(env, saveId);
 }
 __name(apagarClaims, "apagarClaims");
 var GUILD_MIN_RAID_MEMBERS = 3;
@@ -3325,6 +3570,79 @@ async function guardarDiasDistintos(env, save, fio) {
   await kvOrThrow(env).put(coopDiasKey(save), JSON.stringify({ n, days }));
 }
 __name(guardarDiasDistintos, "guardarDiasDistintos");
+var FEIRA_JANELA_K = 4;
+var FEIRA_TTL = 86400 * 120;
+var FEIRA_PESSOAL_TTL = 86400 * 60;
+var FEIRA_TRILHA_TTL = 86400 * 30;
+var feiraEvtKey = /* @__PURE__ */ __name((gid) => `feiraEvt:${gid}`, "feiraEvtKey");
+var feiraDoneKey = /* @__PURE__ */ __name((gid) => `feiraDone:${gid}`, "feiraDoneKey");
+var feiraDeadKey = /* @__PURE__ */ __name((gid, k) => `feiraDead:${gid}:${k}`, "feiraDeadKey");
+var feiraHitKey = /* @__PURE__ */ __name((gid, k, save) => `feiraHit:${gid}:${k}:${save}`, "feiraHitKey");
+var feiraTrailKey = /* @__PURE__ */ __name((gid, k, save) => `feiraTrail:${gid}:${k}:${save}`, "feiraTrailKey");
+var feiraClaimKey = /* @__PURE__ */ __name((gid, k, save) => `feiraClaim:${gid}:${k}:${save}`, "feiraClaimKey");
+var feiraPartKey = /* @__PURE__ */ __name((gid, k, save) => `feiraPart:${gid}:${k}:${save}`, "feiraPartKey");
+var feiraGateKey = /* @__PURE__ */ __name((save) => `feiraGate:${save}`, "feiraGateKey");
+var feiraRightKey = /* @__PURE__ */ __name((save) => `feiraRight:${save}`, "feiraRightKey");
+var feiraTrofeusKey = /* @__PURE__ */ __name((save) => `feiraTrophy:${save}`, "feiraTrofeusKey");
+function normalizarFeiraHit(r, k) {
+  if (!r || typeof r !== "object" || r.k !== void 0 && r.k !== k) return { k, days: [], dmg: 0 };
+  const days = Array.isArray(r.days) ? r.days.filter((d) => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)).slice(-4) : [];
+  const dmg = Number.isFinite(r.dmg) && r.dmg > 0 ? Math.floor(r.dmg) : 0;
+  return { k, days, dmg };
+}
+__name(normalizarFeiraHit, "normalizarFeiraHit");
+async function lerFeiraHit(env, gid, k, save) {
+  const raw = await kvOrThrow(env).get(feiraHitKey(gid, k, save));
+  try {
+    return normalizarFeiraHit(raw ? JSON.parse(raw) : null, k);
+  } catch {
+    return normalizarFeiraHit(null, k);
+  }
+}
+__name(lerFeiraHit, "lerFeiraHit");
+function somarFeiraLegado(atual, novo) {
+  const base = atual && typeof atual === "object" && atual.k === novo.k && Number.isFinite(atual.dmg) ? Math.floor(atual.dmg) : 0;
+  return { k: novo.k, dmg: base + Math.floor(novo.dmg) };
+}
+__name(somarFeiraLegado, "somarFeiraLegado");
+async function recolherFeiraDeQuemSai(env, gid, save, { exclusao = false } = {}) {
+  const kvs = kvOrThrow(env);
+  const evt = parse(await kvs.get(feiraEvtKey(gid)));
+  const kAtual = Number.isInteger(evt?.k) ? evt.k : null;
+  if (kAtual === null) return null;
+  const ks = Array.from({ length: FEIRA_JANELA_K }, (_, i2) => kAtual - i2).filter((k) => k >= 0);
+  if (exclusao) {
+    await Promise.all(ks.flatMap((k) => [feiraHitKey, feiraTrailKey, feiraClaimKey, feiraPartKey].map((f) => kvs.delete(f(gid, k, save)))));
+    await Promise.all([kvs.delete(feiraGateKey(save)), kvs.delete(feiraRightKey(save)), kvs.delete(feiraTrofeusKey(save))]);
+    return null;
+  }
+  const meu = await lerFeiraHit(env, gid, kAtual, save);
+  if (meu.dmg <= 0) return null;
+  await kvs.put(feiraHitKey(gid, kAtual, save), JSON.stringify({ k: kAtual, days: meu.days, dmg: 0, moved: true }), { expirationTtl: FEIRA_PESSOAL_TTL });
+  return { k: kAtual, dmg: meu.dmg };
+}
+__name(recolherFeiraDeQuemSai, "recolherFeiraDeQuemSai");
+async function apagarFeiraDaPessoa(env, saveId) {
+  await Promise.all([kvOrThrow(env).delete(feiraGateKey(saveId)), kvOrThrow(env).delete(feiraRightKey(saveId)), kvOrThrow(env).delete(feiraTrofeusKey(saveId))]);
+}
+__name(apagarFeiraDaPessoa, "apagarFeiraDaPessoa");
+async function exportarFeiraDaPessoa(env, gid, save) {
+  const kvs = kvOrThrow(env);
+  const evt = parse(await kvs.get(feiraEvtKey(gid)));
+  const kAtual = Number.isInteger(evt?.k) ? evt.k : null;
+  const out = { hitDays: {}, trailClearedDays: {}, claimedK: [], defeatedBosses: await lerConjunto(env, feiraTrofeusKey(save)), gateOpen: false };
+  const gate2 = parse(await kvs.get(feiraGateKey(save)));
+  out.gateOpen = gate2?.open === true;
+  if (kAtual === null) return out;
+  for (let k = kAtual; k >= Math.max(0, kAtual - FEIRA_JANELA_K + 1); k--) {
+    const [hit, trilha, claim] = await Promise.all([lerFeiraHit(env, gid, k, save), kvs.get(feiraTrailKey(gid, k, save)).then(parse), kvs.get(feiraClaimKey(gid, k, save))]);
+    if (hit.days.length) out.hitDays[k] = hit.days;
+    if (typeof trilha?.clearedDay === "string") out.trailClearedDays[k] = trilha.clearedDay;
+    if (claim) out.claimedK.push(k);
+  }
+  return out;
+}
+__name(exportarFeiraDaPessoa, "exportarFeiraDaPessoa");
 
 // api/account.js
 var CORS = {
@@ -3617,7 +3935,12 @@ async function collect(env, saveId) {
           // A Feira (WPG-4): só os PRÓPRIOS dias de golpe desta semana — nunca
           // o dano (número que nem o titular vê no app) nem o de outro membro.
           myHitsThisWeek: (await lerGolpes(env, g.id, semanaDe(), saveId)).days
-        }
+        },
+        // A Feira do Chefe e o Desafio (`_feira.js`): só os dias e os resgates DA PESSOA — nunca o dano nem outro membro.
+        ...await (async () => {
+          const f = await exportarFeiraDaPessoa(env, g.id, saveId);
+          return Object.keys(f.hitDays).length || Object.keys(f.trailClearedDays).length || f.claimedK.length || f.defeatedBosses.length || f.gateOpen ? { feira: f } : {};
+        })()
       };
     }
   } catch {
@@ -3715,6 +4038,7 @@ function plan(c, saveId) {
       "mentions of you in other players' friend lists",
       "notification subscriptions (push:*/fcm:*) linked to your account",
       ...c.coopGroupId ? [`coop:${c.coopGroupId} (your spot in the group)`, coopOfKey(saveId), coopCkKey(c.coopGroupId, saveId), coopFioKey(c.coopGroupId, saveId), coopMemKey(c.coopGroupId, saveId)] : [],
+      "Fair Boss and Trail records of your current clan (feiraHit:*, feiraTrail:*, feiraClaim:*, feiraPart:*), your Trail door (feiraGate:*), your Boss pointer (feiraRight:*) and your defeated-boss trophies (feiraTrophy:*)",
       "Guild claims (coopClaim:*) and Fair rounds (coopHit:*) of your current clan \u2014 those from clans you already left were erased when you left; any leftover without a link expires on its own within 21 days. Threads you already tied stay in the Grove, anonymous",
       // #54: o vínculo SteamID ↔ conta. ⚰️ Até 22/09/2026 estas chaves apareciam
       // em `sobrevive` (5 anos, justificativa fiscal que não se aplica a licença).
@@ -6971,7 +7295,7 @@ function resolverGuerra(A, B2, sementeBase) {
   const duels = [];
   let aWins = 0, bWins = 0;
   for (let i2 = 0; i2 < n; i2++) {
-    const r = simulateDuel({ me: a[i2].side, opp: b[i2].side, seed: duelSeed(sementeBase, i2), taps: [] });
+    const r = simulateDuel({ me: a[i2].side, opp: b[i2].side, seed: duelSeed(sementeBase, i2), taps: [], elementScale: 0.5 });
     if (r.winner === "me") {
       aWins++;
       duels.push("a");
@@ -7657,6 +7981,646 @@ async function comprarNaLoja(env, g, cartoes, itemId, opId) {
 }
 __name(comprarNaLoja, "comprarNaLoja");
 
+// api/_feira.js
+var FEIRA_CHEFE_DESDE = "2099-12-31";
+var ISO_DIA = /^\d{4}-\d{2}-\d{2}$/;
+function feiraLigada(env, agora = /* @__PURE__ */ new Date()) {
+  const e = env && typeof env.FEIRA_CHEFE_DESDE === "string" && ISO_DIA.test(env.FEIRA_CHEFE_DESDE) ? env.FEIRA_CHEFE_DESDE : null;
+  return agora.toISOString().slice(0, 10) >= (e ?? FEIRA_CHEFE_DESDE);
+}
+__name(feiraLigada, "feiraLigada");
+var DANO_MEDIO = 100;
+var COMPARECIMENTO = 0.9;
+var ATAQUE_TETO = 150;
+var DESEMPENHO_MIN = 0.7;
+var DESEMPENHO_MAX = 1.5;
+var FEIRA_MIN_MEMBROS = 3;
+var NIVEL_MAX = 20;
+var TRAIL_PCT = 30;
+var TRAIL_MAX_DAYS = 3;
+var SPAWN_GAP_DIAS = 2;
+var ARAUTO_NIVEL_MIN = 15;
+var FIGHT_SECONDS = 30;
+var CHEFE_FORCA_NA_SIM = 0.25;
+var HP_ENORME = 1e9;
+var LOG_MAX = 160;
+var CHEFE_BITS_TETO = 150;
+var CHEFE_EMBLEMAS_TETO = 10;
+var TRILHA_SEIVA = 3;
+var TRILHA_EMBLEMAS = 1;
+var TRILHA_TENTATIVAS_DIA = 12;
+function hash322(texto) {
+  let h = 2166136261;
+  const s = String(texto);
+  for (let i2 = 0; i2 < s.length; i2++) {
+    h ^= s.charCodeAt(i2);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+__name(hash322, "hash32");
+function nivelDoMisterio(k) {
+  const n = Math.max(0, Math.floor(Number(k) || 0));
+  return Math.min(NIVEL_MAX, 1 + n);
+}
+__name(nivelDoMisterio, "nivelDoMisterio");
+var DIAS_BASE = 1.5;
+function diasAlvo(level) {
+  const L = Math.min(NIVEL_MAX, Math.max(1, Math.floor(Number(level) || 1)));
+  return Math.min(7, DIAS_BASE + 0.25 * (L - 1));
+}
+__name(diasAlvo, "diasAlvo");
+function bossHpFor(level, ativos) {
+  const N = Math.max(FEIRA_MIN_MEMBROS, Math.floor(Number(ativos) || 0));
+  return Math.max(3 * ATAQUE_TETO, Math.round(N * DANO_MEDIO * COMPARECIMENTO * diasAlvo(level) / 10) * 10);
+}
+__name(bossHpFor, "bossHpFor");
+function danoBaseFor(power) {
+  const p = Math.min(5, Math.max(1, Math.floor(Number(power) || 1)));
+  return 70 + 10 * p;
+}
+__name(danoBaseFor, "danoBaseFor");
+function kindDoMisterio(gid, k) {
+  const n = Math.max(0, Math.floor(Number(k) || 0));
+  if (n === 0) return "boss";
+  return hash322(`${gid}:${n}`) % 100 < TRAIL_PCT ? "trail" : "boss";
+}
+__name(kindDoMisterio, "kindDoMisterio");
+var BOSS_ROSTER = Object.freeze([
+  ["cinderhorn", "fervor"],
+  ["thrummer", "tempestade"],
+  ["squallstride", "trovao"],
+  ["orbitant", "peso_descomunal"],
+  ["mycelar", "miasma"],
+  ["obsidarch", "obsidiana"],
+  ["bladeveil", "lamina_viva"],
+  ["sabrefin", "lamina_oculta"],
+  ["glimmerswarm", "alento"],
+  ["corallume", "mare"],
+  ["halorune", "runa"],
+  ["chorale", "cristal"],
+  ["drifela", "nascente"],
+  ["hollowmere", "florescer"],
+  ["astrawing", "estratosfera"],
+  ["nebulara", "nebulosa"],
+  ["voltbloom", "sinapse"],
+  ["graftfang", "mutacao"],
+  ["duskveil", "crepusculo"],
+  ["dawnloom", "aurora"],
+  ["aeonyx", "eon"],
+  ["tallyjack", "ouro_vivo"],
+  ["cuprex", "aco"]
+].map(([id, element]) => Object.freeze({ id, element })));
+var ARAUTO = Object.freeze({ id: "arauto-do-fim", element: "juizo_final" });
+function bossDoMisterio(gid, k) {
+  const level = nivelDoMisterio(k);
+  if (level >= ARAUTO_NIVEL_MIN && (level === NIVEL_MAX || hash322(`${gid}:${k}:arauto`) % 4 === 0)) return ARAUTO;
+  return BOSS_ROSTER[hash322(`${gid}:${k}:boss`) % BOSS_ROSTER.length];
+}
+__name(bossDoMisterio, "bossDoMisterio");
+var maisDias = /* @__PURE__ */ __name((dia, n) => diaDeNum(numDia(dia) + n), "maisDias");
+var lerJson = /* @__PURE__ */ __name(async (env, chave) => {
+  const raw = await kvOrThrow(env).get(chave);
+  try {
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}, "lerJson");
+var diaValido = /* @__PURE__ */ __name((d) => typeof d === "string" && ISO_DIA.test(d), "diaValido");
+function normalizarDone(r) {
+  const n = Number.isInteger(r?.n) && r.n > 0 ? r.n : 0;
+  return {
+    n,
+    bosses: Number.isInteger(r?.bosses) && r.bosses > 0 ? r.bosses : 0,
+    trails: Number.isInteger(r?.trails) && r.trails > 0 ? r.trails : 0,
+    lastDay: diaValido(r?.lastDay) ? r.lastDay : null,
+    lastKind: r?.lastKind === "boss" || r?.lastKind === "trail" ? r.lastKind : null
+  };
+}
+__name(normalizarDone, "normalizarDone");
+function normalizarEvt(r) {
+  if (!r || typeof r !== "object" || !Number.isInteger(r.k) || r.k < 0 || !diaValido(r.spawnDay)) return null;
+  const boss = r.kind !== "trail";
+  const nome = boss ? [ARAUTO, ...BOSS_ROSTER].find((b) => b.id === r.bossId) : null;
+  if (boss && !nome) return null;
+  return {
+    k: r.k,
+    kind: boss ? "boss" : "trail",
+    level: nivelDoMisterio(r.k),
+    bossId: nome?.id ?? null,
+    element: nome?.element ?? null,
+    hp0: boss && Number.isFinite(r.hp0) && r.hp0 > 0 ? Math.floor(r.hp0) : 0,
+    spawnDay: r.spawnDay
+  };
+}
+__name(normalizarEvt, "normalizarEvt");
+async function lerEstadoFeira(env, g, hoje, opts = {}) {
+  const { cartoes = null, escrever = true } = opts;
+  const kvs = kvOrThrow(env);
+  const cart = cartoes ?? await lerCartoes(env, g);
+  let done = normalizarDone(await lerJson(env, feiraDoneKey(g.id)));
+  for (let volta = 0; volta < 3; volta++) {
+    let evt = normalizarEvt(await lerJson(env, feiraEvtKey(g.id)));
+    if (evt && evt.k < done.n) evt = null;
+    if (!evt) {
+      const spawnDay = done.n === 0 || !done.lastDay ? hoje : maisDias(done.lastDay, SPAWN_GAP_DIAS);
+      if (hoje < spawnDay) return { phase: "rest", k: done.n, level: nivelDoMisterio(done.n), spawnDay, done, lastDay: done.lastDay };
+      const kind = kindDoMisterio(g.id, done.n);
+      const chefe = kind === "boss" ? bossDoMisterio(g.id, done.n) : null;
+      const ativos = membrosAtivos(g, fiosDosCartoes(g, cart), spawnDay).length;
+      const level = nivelDoMisterio(done.n);
+      evt = { k: done.n, kind, level, bossId: chefe?.id ?? null, element: chefe?.element ?? null, hp0: kind === "boss" ? bossHpFor(level, ativos) : 0, spawnDay };
+      if (escrever) {
+        await kvs.put(feiraEvtKey(g.id), JSON.stringify({ k: evt.k, kind: evt.kind, level, bossId: evt.bossId, hp0: evt.hp0, spawnDay }), { expirationTtl: FEIRA_TTL });
+      }
+    }
+    let fim = await lerJson(env, feiraDeadKey(g.id, evt.k));
+    let dmg = 0;
+    let marks = 0;
+    if (evt.kind === "boss") {
+      dmg = await danoDoChefe(env, g, evt.k);
+      if (!fim && dmg >= evt.hp0) {
+        fim = { day: hoje, level: evt.level, hp0: evt.hp0, kind: "boss" };
+        if (escrever) await kvs.put(feiraDeadKey(g.id, evt.k), JSON.stringify(fim), { expirationTtl: FEIRA_TTL });
+      }
+    } else {
+      const trilhas = await Promise.all(g.members.map((m) => lerJson(env, feiraTrailKey(g.id, evt.k, m))));
+      const limpos = trilhas.map((t) => diaValido(t?.clearedDay) ? t.clearedDay : null).filter(Boolean).sort();
+      const teto = maisDias(evt.spawnDay, TRAIL_MAX_DAYS - 1);
+      const fimDia = limpos.length ? limpos[0] < teto ? limpos[0] : teto : teto;
+      marks = limpos.filter((d) => d <= fimDia).length;
+      if (!fim && hoje > fimDia) {
+        fim = { day: fimDia, level: evt.level, hp0: 0, kind: "trail", marks };
+        if (escrever) await kvs.put(feiraDeadKey(g.id, evt.k), JSON.stringify(fim), { expirationTtl: FEIRA_TTL });
+      }
+      if (fim && Number.isInteger(fim.marks)) marks = fim.marks;
+    }
+    if (fim && diaValido(fim.day)) {
+      if (done.n <= evt.k) {
+        done = { n: evt.k + 1, bosses: done.bosses + (evt.kind === "boss" ? 1 : 0), trails: done.trails + (evt.kind === "trail" ? 1 : 0), lastDay: fim.day, lastKind: evt.kind };
+        if (escrever) await kvs.put(feiraDoneKey(g.id), JSON.stringify(done), { expirationTtl: FEIRA_TTL });
+      }
+      continue;
+    }
+    const hpPct = evt.kind === "boss" ? pctDoChefe(evt.hp0, dmg) : null;
+    return {
+      phase: evt.kind,
+      k: evt.k,
+      kind: evt.kind,
+      level: evt.level,
+      bossId: evt.bossId,
+      element: evt.element,
+      hp0: evt.hp0,
+      dmg,
+      hpPct,
+      spawnDay: evt.spawnDay,
+      marks,
+      done
+    };
+  }
+  return { phase: "rest", k: done.n, level: nivelDoMisterio(done.n), spawnDay: null, done, lastDay: done.lastDay };
+}
+__name(lerEstadoFeira, "lerEstadoFeira");
+function pctDoChefe(hp0, dmg) {
+  if (!(hp0 > 0)) return 100;
+  const resta = Math.max(0, hp0 - Math.max(0, dmg));
+  return resta <= 0 ? 0 : Math.min(100, Math.max(1, Math.ceil(100 * resta / hp0)));
+}
+__name(pctDoChefe, "pctDoChefe");
+async function danoDoChefe(env, g, k) {
+  const hits = await Promise.all(g.members.map((m) => lerFeiraHit(env, g.id, k, m)));
+  const legado = g.feiraLegado && g.feiraLegado.k === k && Number.isFinite(g.feiraLegado.dmg) ? Math.max(0, Math.floor(g.feiraLegado.dmg)) : 0;
+  return hits.reduce((s, h) => s + h.dmg, legado);
+}
+__name(danoDoChefe, "danoDoChefe");
+function sementeDoServidor() {
+  return crypto.getRandomValues(new Uint32Array(1))[0];
+}
+__name(sementeDoServidor, "sementeDoServidor");
+function janela(side, nivel, seed) {
+  const chefe = combatantAt(nivel, REFERENCE_BUILDS.balanced);
+  const g = fightSteps(
+    { combatant: side.combatant, special: side.special, dotResist: side.dotResist },
+    { combatant: chefe, special: null, dotResist: 0 },
+    {
+      seed,
+      hpScale: PVP_HP_SCALE,
+      startHp: [1, HP_ENORME],
+      startEnergy: [cleanStartEnergy(side.startEnergy), 0],
+      hitScale: /* @__PURE__ */ __name((who) => who === 1 ? CHEFE_FORCA_NA_SIM : 1, "hitScale")
+    }
+  );
+  let total = 0;
+  const log4 = [];
+  for (let r = g.next(); !r.done; r = g.next(1)) {
+    const e = r.value;
+    if (e.t > FIGHT_SECONDS) break;
+    if (e.kind === "ko") continue;
+    if (e.side === 0 && (e.kind === "attack" || e.kind === "tick")) total += e.frac;
+    if (log4.length < LOG_MAX) log4.push({ k: e.kind === "attack" ? "a" : e.kind === "cast" ? "c" : "t", t: Math.round(e.t * 100) / 100, s: e.side, f: Math.round(e.frac * 1e4) / 1e4 });
+  }
+  return { total, log: log4 };
+}
+__name(janela, "janela");
+function simularAtaque(side, power, seed) {
+  const nivel = side.combatant.level;
+  const eu = janela(side, nivel, seed);
+  const ref = janela({ combatant: combatantAt(nivel, REFERENCE_BUILDS.balanced), special: specialOf("direct"), dotResist: 0, startEnergy: 0 }, nivel, seed);
+  const razao = ref.total > 0 ? eu.total / ref.total : 1;
+  const desempenho = Math.min(DESEMPENHO_MAX, Math.max(DESEMPENHO_MIN, razao));
+  const dmg = Math.min(ATAQUE_TETO, Math.max(1, Math.round(danoBaseFor(power) * desempenho)));
+  return { dmg, desempenho, log: eu.log, seed: seed >>> 0 };
+}
+__name(simularAtaque, "simularAtaque");
+async function fichaDoAtacante(env, save) {
+  return await loadDuelSide(env, save) ?? duelSide({}, { maxLevel: 1 });
+}
+__name(fichaDoAtacante, "fichaDoAtacante");
+async function eventoDaFeira(env, g, save, hoje, estado2) {
+  if (estado2.phase === "rest") {
+    const k = estado2.done.n - 1;
+    const claimable = k >= 0 ? await resgatavel(env, g.id, k, save) : false;
+    return { k: estado2.k, kind: "rest", level: estado2.level, rest: true, ...claimable ? { claimable: true, claimK: k } : {} };
+  }
+  if (estado2.phase === "boss") {
+    const meu = await lerFeiraHit(env, g.id, estado2.k, save);
+    return {
+      k: estado2.k,
+      kind: "boss",
+      level: estado2.level,
+      bossId: estado2.bossId,
+      element: estado2.element,
+      bossHpPct: estado2.hpPct,
+      canAttack: !meu.days.includes(hoje)
+    };
+  }
+  const t = await lerJson(env, feiraTrailKey(g.id, estado2.k, save));
+  const cleared = diaValido(t?.clearedDay);
+  return {
+    k: estado2.k,
+    kind: "trail",
+    level: estado2.level,
+    trail: { pending: !cleared, cleared, marks: estado2.marks },
+    ...cleared ? {} : { gate: "locked" }
+  };
+}
+__name(eventoDaFeira, "eventoDaFeira");
+function resumoDaFeira(estado2) {
+  if (estado2.phase === "rest") return { state: "rest", level: estado2.level };
+  if (estado2.phase === "boss") return { state: "boss", level: estado2.level, bossId: estado2.bossId, bossHpPct: estado2.hpPct };
+  return { state: "trail", level: estado2.level, marks: estado2.marks };
+}
+__name(resumoDaFeira, "resumoDaFeira");
+async function resgatavel(env, gid, k, save) {
+  const [fim, parte, recibo] = await Promise.all([lerJson(env, feiraDeadKey(gid, k)), lerJson(env, feiraPartKey(gid, k, save)), lerJson(env, feiraClaimKey(gid, k, save))]);
+  return !!fim && fim.kind === "boss" && !!parte && !recibo;
+}
+__name(resgatavel, "resgatavel");
+async function marcarFeira(env, gid, k, save, hoje) {
+  const kvs = kvOrThrow(env);
+  await Promise.all([
+    kvs.put(feiraPartKey(gid, k, save), JSON.stringify({ day: hoje }), { expirationTtl: FEIRA_PESSOAL_TTL }),
+    kvs.put(feiraRightKey(save), JSON.stringify({ gid, k }), { expirationTtl: FEIRA_PESSOAL_TTL })
+  ]);
+}
+__name(marcarFeira, "marcarFeira");
+async function gravarGolpe(env, gid, k, save, antes, hoje, dmg) {
+  await kvOrThrow(env).put(
+    feiraHitKey(gid, k, save),
+    JSON.stringify({ k, days: [...antes.days, hoje].slice(-4), dmg: antes.dmg + dmg }),
+    { expirationTtl: FEIRA_PESSOAL_TTL }
+  );
+}
+__name(gravarGolpe, "gravarGolpe");
+async function reciboDaFeira(tipo, save, gid, k) {
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`soulmon-feira-${tipo}|${save}|${gid}|${k}`)));
+  return Array.from(h.slice(0, 8), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+__name(reciboDaFeira, "reciboDaFeira");
+function recompensaDoChefe(level, bossId, element, trofeuNovo) {
+  const L = Math.min(NIVEL_MAX, Math.max(1, Math.floor(level)));
+  return {
+    emblems: Math.min(CHEFE_EMBLEMAS_TETO, 2 + Math.floor(L / 2)),
+    bits: Math.min(CHEFE_BITS_TETO, 30 + 10 * L),
+    sap: 10 * L,
+    trophyId: trofeuNovo ? `trophy-boss-${bossId}` : null,
+    essences: [],
+    element: element ?? null
+  };
+}
+__name(recompensaDoChefe, "recompensaDoChefe");
+var guardaSeiva = /* @__PURE__ */ __name(async (env, gid, save, n) => {
+  let total = 0;
+  for (let resto = n; resto > 0; resto -= CASA_PTS_FONTE_DIA_MAX) total += await somarPontos(env, gid, save, "missao", Math.min(resto, CASA_PTS_FONTE_DIA_MAX));
+  return total;
+}, "guardaSeiva");
+async function resgatarChefe(env, g, save, pedidoK) {
+  const kvs = kvOrThrow(env);
+  const done = normalizarDone(g ? await lerJson(env, feiraDoneKey(g.id)) : null);
+  const direito = await lerJson(env, feiraRightKey(save));
+  const candidatos = [];
+  if (g) for (let k = done.n - 1; k >= Math.max(0, done.n - 3); k--) candidatos.push({ gid: g.id, k });
+  if (direito && typeof direito.gid === "string" && Number.isInteger(direito.k) && !candidatos.some((c) => c.gid === direito.gid && c.k === direito.k)) candidatos.push({ gid: direito.gid, k: direito.k });
+  let jaResgatado = null;
+  for (const c of candidatos) {
+    if (pedidoK !== void 0 && c.k !== pedidoK) continue;
+    const [fim, parte, recibo] = await Promise.all([lerJson(env, feiraDeadKey(c.gid, c.k)), lerJson(env, feiraPartKey(c.gid, c.k, save)), lerJson(env, feiraClaimKey(c.gid, c.k, save))]);
+    if (!fim || fim.kind !== "boss" || !parte) continue;
+    const evt = normalizarEvt(await lerJson(env, feiraEvtKey(c.gid)));
+    const chefe = evt && evt.k === c.k ? { id: evt.bossId, element: evt.element } : bossDoMisterio(c.gid, c.k);
+    const level = Number.isInteger(fim.level) ? fim.level : nivelDoMisterio(c.k);
+    const recibo2 = await reciboDaFeira("chefe", save, c.gid, c.k);
+    if (recibo) {
+      jaResgatado ??= { k: c.k, level, bossId: chefe.id, receipt: recibo2, reward: recibo.reward ?? recompensaDoChefe(level, chefe.id, chefe.element, false) };
+      continue;
+    }
+    const selo = crypto.randomUUID();
+    const trofeus = await lerConjunto(env, feiraTrofeusKey(save));
+    const reward = recompensaDoChefe(level, chefe.id, chefe.element, !trofeus.includes(chefe.id));
+    await kvs.put(feiraClaimKey(c.gid, c.k, save), JSON.stringify({ at: Date.now(), selo, reward }), { expirationTtl: FEIRA_PESSOAL_TTL });
+    const gravado = await lerJson(env, feiraClaimKey(c.gid, c.k, save));
+    if (gravado?.selo !== selo) return { ok: false, reason: "claimed", claimed: { k: c.k, level, bossId: chefe.id, receipt: recibo2, reward: gravado?.reward ?? reward } };
+    if (reward.trophyId) await unirConjunto(env, feiraTrofeusKey(save), [chefe.id]);
+    if (g && g.id === c.gid) await guardaSeiva(env, g.id, save, reward.sap);
+    return { ok: true, claimed: { k: c.k, level, bossId: chefe.id, receipt: recibo2, reward } };
+  }
+  return jaResgatado ? { ok: false, reason: "claimed", claimed: jaResgatado } : { ok: false, reason: "nothing" };
+}
+__name(resgatarChefe, "resgatarChefe");
+var TRAIL_GAMES = Object.freeze(["picross", "zip", "patches", "troca", "eco"]);
+var TRAIL_MIN_MS = Object.freeze({ picross: 8e3, zip: 4e3, patches: 4e3, troca: 1e4, eco: 6e3 });
+var TRAIL_PUZZLE_SIZE = 5;
+var TROCA_CARTAS = 30;
+var TROCA_PAR = 24;
+var REFLEXO_PAR = Object.freeze({ eco: 5 });
+function seededRng(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = a + 1831565813 >>> 0;
+    let t = a;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+__name(seededRng, "seededRng");
+var jogoDaTrilha = /* @__PURE__ */ __name((save, dia, k) => TRAIL_GAMES[hash322(`${save}:${dia}:${k}`) % TRAIL_GAMES.length], "jogoDaTrilha");
+function vizinhos(cell, size) {
+  const r = Math.floor(cell / size), c = cell % size, out = [];
+  if (r > 0) out.push(cell - size);
+  if (r < size - 1) out.push(cell + size);
+  if (c > 0) out.push(cell - 1);
+  if (c < size - 1) out.push(cell + 1);
+  return out;
+}
+__name(vizinhos, "vizinhos");
+function serpentina(size, rng) {
+  const flip = rng() < 0.5, transpose = rng() < 0.5, path = [];
+  for (let r = 0; r < size; r++) {
+    for (let k = 0; k < size; k++) {
+      const c = r % 2 === 0 ? k : size - 1 - k;
+      const rr = flip ? size - 1 - r : r;
+      path.push(transpose ? c * size + rr : rr * size + c);
+    }
+  }
+  return path;
+}
+__name(serpentina, "serpentina");
+function caminhoAleatorio(size, rng) {
+  const total = size * size;
+  let start = Math.floor(rng() * total);
+  if (size % 2 === 1) {
+    const evens = [];
+    for (let i2 = 0; i2 < total; i2++) if ((Math.floor(i2 / size) + i2 % size) % 2 === 0) evens.push(i2);
+    start = evens[Math.floor(rng() * evens.length)];
+  }
+  const visited = new Array(total).fill(false), path = [];
+  let budget = 2e4;
+  const free = /* @__PURE__ */ __name((c) => vizinhos(c, size).filter((n) => !visited[n]).length, "free");
+  const dfs = /* @__PURE__ */ __name((cell) => {
+    if (budget-- <= 0) return false;
+    visited[cell] = true;
+    path.push(cell);
+    if (path.length === total) return true;
+    const next = vizinhos(cell, size).filter((n) => !visited[n]).map((n) => ({ n, f: free(n), j: rng() })).sort((a, b) => a.f - b.f || a.j - b.j);
+    for (const { n } of next) if (dfs(n)) return true;
+    visited[cell] = false;
+    path.pop();
+    return false;
+  }, "dfs");
+  return dfs(start) ? path : serpentina(size, rng);
+}
+__name(caminhoAleatorio, "caminhoAleatorio");
+function gerarZip(size, rng) {
+  const n = Math.min(8, Math.max(4, Math.floor(size)));
+  const path = caminhoAleatorio(n, rng), total = path.length;
+  const k = Math.min(n + 2, Math.max(3, Math.floor(n * 1.2)));
+  const positions = /* @__PURE__ */ new Set([0, total - 1]);
+  for (let i2 = 1; i2 < k - 1; i2++) {
+    const center = i2 * (total - 1) / (k - 1);
+    const jitter = Math.round((rng() - 0.5) * (total / (k - 1)) * 0.5);
+    positions.add(Math.min(total - 2, Math.max(1, Math.round(center) + jitter)));
+  }
+  return { size: n, numbers: [...positions].sort((a, b) => a - b).map((p) => path[p]), solution: path };
+}
+__name(gerarZip, "gerarZip");
+function validarZip(p, path) {
+  const total = p.size * p.size;
+  if (!Array.isArray(path) || path.length !== total) return false;
+  const seen = /* @__PURE__ */ new Set();
+  for (let i2 = 0; i2 < path.length; i2++) {
+    const c = path[i2];
+    if (!Number.isInteger(c) || c < 0 || c >= total || seen.has(c)) return false;
+    seen.add(c);
+    if (i2 > 0 && !vizinhos(path[i2 - 1], p.size).includes(c)) return false;
+  }
+  let last = -1;
+  for (const cell of p.numbers) {
+    const idx = path.indexOf(cell);
+    if (idx <= last) return false;
+    last = idx;
+  }
+  return path[0] === p.numbers[0] && path[total - 1] === p.numbers[p.numbers.length - 1];
+}
+__name(validarZip, "validarZip");
+var formaDe = /* @__PURE__ */ __name((rc) => rc.h === rc.w ? "square" : rc.h > rc.w ? "tall" : "wide", "formaDe");
+function particionar(size, rng) {
+  const target = Math.max(4, Math.round(size * size / (3 + rng() * 1.5)));
+  const rects = [{ r: 0, c: 0, h: size, w: size }];
+  let guard = 400;
+  while (rects.length < target && guard-- > 0) {
+    const cuttable = rects.map((x3, i3) => ({ x: x3, i: i3 })).filter(({ x: x3 }) => x3.h > 1 || x3.w > 1);
+    if (cuttable.length === 0) break;
+    const total = cuttable.reduce((s, { x: x3 }) => s + x3.h * x3.w, 0);
+    let pick = rng() * total;
+    let chosen = cuttable[0];
+    for (const cand of cuttable) {
+      pick -= cand.x.h * cand.x.w;
+      if (pick <= 0) {
+        chosen = cand;
+        break;
+      }
+    }
+    const { x: x2, i: i2 } = chosen;
+    const vertical = x2.w > 1 && (x2.h === 1 || rng() < (x2.w >= x2.h ? 0.65 : 0.35));
+    if (vertical) {
+      const at = 1 + Math.floor(rng() * (x2.w - 1));
+      rects.splice(i2, 1, { ...x2, w: at }, { ...x2, c: x2.c + at, w: x2.w - at });
+    } else {
+      const at = 1 + Math.floor(rng() * (x2.h - 1));
+      rects.splice(i2, 1, { ...x2, h: at }, { ...x2, r: x2.r + at, h: x2.h - at });
+    }
+  }
+  return rects;
+}
+__name(particionar, "particionar");
+function gerarColcha(size, rng) {
+  const n = Math.min(8, Math.max(4, Math.floor(size)));
+  const solution = particionar(n, rng);
+  const clues = solution.map((rc) => {
+    const cell = (rc.r + Math.floor(rng() * rc.h)) * n + rc.c + Math.floor(rng() * rc.w);
+    const showShape = rc.h * rc.w > 1 && rng() < 0.45;
+    return { cell, area: rc.h * rc.w, shape: showShape ? formaDe(rc) : "any" };
+  });
+  clues.sort((a, b) => a.cell - b.cell);
+  return { size: n, clues, solution };
+}
+__name(gerarColcha, "gerarColcha");
+function validarColcha(p, rects) {
+  const { size, clues } = p;
+  if (!Array.isArray(rects) || rects.length > size * size) return false;
+  const owner = new Array(size * size).fill(-1);
+  for (let i2 = 0; i2 < rects.length; i2++) {
+    const rc = rects[i2];
+    if (!rc || ![rc.r, rc.c, rc.h, rc.w].every(Number.isInteger)) return false;
+    if (rc.h < 1 || rc.w < 1 || rc.r < 0 || rc.c < 0 || rc.r + rc.h > size || rc.c + rc.w > size) return false;
+    for (let r = rc.r; r < rc.r + rc.h; r++) for (let c = rc.c; c < rc.c + rc.w; c++) {
+      if (owner[r * size + c] !== -1) return false;
+      owner[r * size + c] = i2;
+    }
+  }
+  if (owner.some((o) => o === -1)) return false;
+  const porRect = new Array(rects.length).fill(0);
+  for (const cl of clues) {
+    const i2 = owner[cl.cell];
+    if (i2 < 0) return false;
+    porRect[i2]++;
+    const rc = rects[i2];
+    if (rc.h * rc.w !== cl.area) return false;
+    if (cl.shape !== "any" && formaDe(rc) !== cl.shape) return false;
+  }
+  return porRect.every((n) => n === 1);
+}
+__name(validarColcha, "validarColcha");
+var pistaDaLinha = /* @__PURE__ */ __name((linha) => {
+  const out = [];
+  let run = 0;
+  for (const v of linha) {
+    if (v) run++;
+    else if (run > 0) {
+      out.push(run);
+      run = 0;
+    }
+  }
+  if (run > 0) out.push(run);
+  return out;
+}, "pistaDaLinha");
+var pistasDe = /* @__PURE__ */ __name((grade) => ({
+  rows: grade.map(pistaDaLinha),
+  cols: grade[0].map((_, c) => pistaDaLinha(grade.map((r) => r[c])))
+}), "pistasDe");
+function gerarPicross(size, rng) {
+  const grade = Array.from({ length: size }, () => Array.from({ length: size }, () => rng() < 0.55));
+  for (let r = 0; r < size; r++) if (!grade[r].some(Boolean)) grade[r][Math.floor(rng() * size)] = true;
+  for (let c = 0; c < size; c++) if (!grade.some((r) => r[c])) grade[Math.floor(rng() * size)][c] = true;
+  return { size, ...pistasDe(grade), solution: grade };
+}
+__name(gerarPicross, "gerarPicross");
+function validarPicross(p, celulas) {
+  if (!Array.isArray(celulas) || celulas.length !== p.size || celulas.some((r) => !Array.isArray(r) || r.length !== p.size)) return false;
+  const mine = pistasDe(celulas.map((r) => r.map((v) => v === 1 || v === true)));
+  const igual = /* @__PURE__ */ __name((a, b) => a.length === b.length && a.every((v, i2) => v === b[i2]), "igual");
+  return mine.rows.every((r, i2) => igual(r, p.rows[i2])) && mine.cols.every((c, i2) => igual(c, p.cols[i2]));
+}
+__name(validarPicross, "validarPicross");
+function gerarTroca(rng) {
+  const deck = [];
+  let regra = "forma", ate = 5 + Math.floor(rng() * 4);
+  for (let i2 = 0; i2 < TROCA_CARTAS; i2++) {
+    if (i2 === ate) {
+      regra = regra === "forma" ? "lugar" : "forma";
+      ate = i2 + 5 + Math.floor(rng() * 4);
+    }
+    deck.push({ forma: rng() < 0.5 ? "young" : "grown", lugar: rng() < 0.5 ? "sky" : "cave", rule: regra, art: Math.floor(rng() * 256) });
+  }
+  return { deck };
+}
+__name(gerarTroca, "gerarTroca");
+var ladoCerto = /* @__PURE__ */ __name((c) => (c.rule === "forma" ? c.forma === "young" : c.lugar === "sky") ? "left" : "right", "ladoCerto");
+function validarTroca(p, respostas) {
+  if (!Array.isArray(respostas) || respostas.length !== p.deck.length) return false;
+  return respostas.filter((s, i2) => s === ladoCerto(p.deck[i2])).length >= TROCA_PAR;
+}
+__name(validarTroca, "validarTroca");
+function gerarInstancia(game, seed) {
+  const rng = seededRng(seed);
+  if (game === "zip") return gerarZip(TRAIL_PUZZLE_SIZE, rng);
+  if (game === "patches") return gerarColcha(TRAIL_PUZZLE_SIZE, rng);
+  if (game === "picross") return gerarPicross(TRAIL_PUZZLE_SIZE, rng);
+  if (game === "troca") return gerarTroca(rng);
+  return { par: REFLEXO_PAR.eco };
+}
+__name(gerarInstancia, "gerarInstancia");
+function instanciaDaTrilha(game, seed) {
+  const { solution: _solucao, ...publica } = gerarInstancia(game, seed);
+  return publica;
+}
+__name(instanciaDaTrilha, "instanciaDaTrilha");
+function conferirTrilha(game, seed, corpo) {
+  const p = instanciaDaTrilha(game, seed);
+  if (game === "zip") return validarZip(p, corpo?.path);
+  if (game === "patches") return validarColcha(p, corpo?.rects);
+  if (game === "picross") return validarPicross(p, corpo?.cells);
+  if (game === "troca") return validarTroca(p, corpo?.sides);
+  const score = typeof corpo?.score === "number" && Number.isFinite(corpo.score) ? Math.floor(corpo.score) : null;
+  return score !== null && scoreIsPlausible(game, score) && score >= REFLEXO_PAR[game];
+}
+__name(conferirTrilha, "conferirTrilha");
+async function iniciarTrilha(env, g, save, hoje, estado2) {
+  if (estado2.phase !== "trail") return { ok: false, reason: "no-trail" };
+  const atual = await lerJson(env, feiraTrailKey(g.id, estado2.k, save));
+  if (diaValido(atual?.clearedDay)) return { ok: false, reason: "already-cleared" };
+  const mesmoDia = atual && atual.day === hoje && TRAIL_GAMES.includes(atual.game) && Number.isInteger(atual.seed);
+  const reg = mesmoDia ? atual : { k: estado2.k, day: hoje, game: jogoDaTrilha(save, hoje, estado2.k), seed: sementeDoServidor(), startedAt: Date.now(), attempts: 0, clearedDay: null };
+  if (!mesmoDia) await kvOrThrow(env).put(feiraTrailKey(g.id, estado2.k, save), JSON.stringify(reg), { expirationTtl: FEIRA_TRILHA_TTL });
+  return { ok: true, trail: { k: estado2.k, game: reg.game, seed: reg.seed >>> 0, puzzle: instanciaDaTrilha(reg.game, reg.seed) } };
+}
+__name(iniciarTrilha, "iniciarTrilha");
+async function entregarTrilha(env, g, save, hoje, estado2, corpo) {
+  if (estado2.phase !== "trail") return { ok: false, reason: "no-trail" };
+  const kvs = kvOrThrow(env);
+  const reg = await lerJson(env, feiraTrailKey(g.id, estado2.k, save));
+  const receipt = await reciboDaFeira("trilha", save, g.id, estado2.k);
+  if (diaValido(reg?.clearedDay)) return { ok: false, reason: "already-cleared", receipt };
+  if (!reg || reg.day !== hoje || !TRAIL_GAMES.includes(reg.game) || !Number.isInteger(reg.seed)) return { ok: false, reason: "no-start" };
+  if ((reg.attempts ?? 0) >= TRILHA_TENTATIVAS_DIA) return { ok: false, reason: "limit" };
+  const tentativas = (Number.isInteger(reg.attempts) ? reg.attempts : 0) + 1;
+  if (Date.now() - (Number(reg.startedAt) || 0) < TRAIL_MIN_MS[reg.game]) {
+    await kvs.put(feiraTrailKey(g.id, estado2.k, save), JSON.stringify({ ...reg, attempts: tentativas }), { expirationTtl: FEIRA_TRILHA_TTL });
+    return { ok: false, reason: "too-fast" };
+  }
+  if (!conferirTrilha(reg.game, reg.seed, corpo)) {
+    await kvs.put(feiraTrailKey(g.id, estado2.k, save), JSON.stringify({ ...reg, attempts: tentativas }), { expirationTtl: FEIRA_TRILHA_TTL });
+    return { ok: false, reason: "wrong" };
+  }
+  await kvs.put(feiraTrailKey(g.id, estado2.k, save), JSON.stringify({ ...reg, attempts: tentativas, clearedDay: hoje }), { expirationTtl: FEIRA_TRILHA_TTL });
+  await kvs.put(feiraGateKey(save), JSON.stringify({ k: estado2.k, day: hoje, open: true }), { expirationTtl: FEIRA_TRILHA_TTL });
+  await somarPontos(env, g.id, save, "missao", TRILHA_SEIVA);
+  return { ok: true, receipt, reward: { emblems: TRILHA_EMBLEMAS, sap: TRILHA_SEIVA } };
+}
+__name(entregarTrilha, "entregarTrilha");
+
 // api/guild.js
 var CORS5 = {
   "Access-Control-Allow-Origin": "*",
@@ -7701,6 +8665,11 @@ var GUILD_ACTIONS = Object.freeze({
   claMisterioEnviar: "POST",
   claMisterioTarefa: "POST",
   claMisterioClaim: "POST",
+  guildFeira: "GET",
+  guildFeiraAttack: "POST",
+  guildFeiraClaim: "POST",
+  guildFeiraTrailStart: "POST",
+  guildFeiraTrailDone: "POST",
   guildLeave: "POST",
   guildRename: "POST",
   guildNewCode: "POST"
@@ -7765,6 +8734,15 @@ async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date())
   const feira = await resolverFeira(env, g, semana, hoje, cartoes);
   const anterior = semanaAnterior(hoje);
   const passada = await resolverFeira(env, g, anterior, ultimoDiaDaSemana(diaDeNum(numDia(hoje) - 7)), cartoes);
+  let feiraVista;
+  if (feiraLigada(env)) {
+    try {
+      feiraVista = resumoDaFeira(await lerEstadoFeira(env, g, hoje, { cartoes, escrever: false }));
+    } catch (err2) {
+      console.warn("feira: resumo indispon\xEDvel", String(err2));
+      feiraVista = void 0;
+    }
+  }
   const meusGolpes = eu >= 0 ? golpesDoCartao(cart[eu], semana) ?? await lerGolpes(env, g.id, semana, euSave) : { days: [] };
   return {
     id: g.id,
@@ -7826,7 +8804,8 @@ async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date())
       ferido: !feira.cleared && feira.dmg * 2 >= feira.hp,
       lastWeek: passada.cleared ? "dissipada" : passada.hitters.length > 0 ? "recuou" : null,
       mine: meusGolpes.days.includes(hoje) ? { hitToday: true } : {}
-    }
+    },
+    ...feiraVista ? { feira: feiraVista } : {}
     // M-3 (L3-conformidade): `progress`/`target` NÃO trafegam mais, em nenhum
     // tamanho nem pelos aliases `coop*` — o cliente já os descartava
     // (`sanitizeGuildView`) e era um número semanal que zera na virada.
@@ -8078,6 +9057,56 @@ async function handleGuild({ request, env }) {
       return json12({ claimed: { reward: r.reward, receipt: r.receipt }, misterio: await misterio() });
     }
   }
+  if (action.startsWith("guildFeira")) {
+    if (!feiraLigada(env)) return erro("not available", 404);
+    const g = await grupoDe(env, id, semana);
+    if (action === "guildFeiraClaim") {
+      const pedido = Number.isInteger(body.k) && body.k >= 0 ? body.k : void 0;
+      const r = await resgatarChefe(env, g, id, pedido);
+      if (r.ok) return json12({ claimed: r.claimed });
+      if (r.reason === "claimed") return erro("already claimed", 409, { receipt: r.claimed.receipt, claimed: r.claimed });
+      return erro("nothing to claim", 404);
+    }
+    if (!g) return erro("no {g}", 404);
+    const cartoes = await lerCartoes(env, g);
+    const estado2 = await lerEstadoFeira(env, g, hoje, { cartoes });
+    if (action === "guildFeira") return json12({ evento: await eventoDaFeira(env, g, id, hoje, estado2) });
+    if (action === "guildFeiraAttack") {
+      if (estado2.phase !== "boss") return erro(estado2.phase === "rest" && estado2.done.lastKind === "boss" ? "boss dead" : "no boss", 409);
+      const antes = await lerFeiraHit(env, g.id, estado2.k, id);
+      if (antes.days.includes(hoje)) return erro("daily limit", 429);
+      const perfil = await getProfile(env, id);
+      const r = simularAtaque(await fichaDoAtacante(env, id), stagePower(perfil?.stage), sementeDoServidor());
+      await gravarGolpe(env, g.id, estado2.k, id, antes, hoje, r.dmg);
+      await marcarFeira(env, g.id, estado2.k, id, hoje);
+      await cartao(g);
+      const depois = await lerEstadoFeira(env, g, hoje, { cartoes });
+      const morreu = depois.phase !== "boss";
+      return json12({
+        landed: true,
+        attack: { dmg: r.dmg, seed: r.seed, seconds: FIGHT_SECONDS, log: r.log },
+        boss: { bossId: estado2.bossId, level: estado2.level, bossHpPct: morreu ? 0 : depois.hpPct, max: estado2.hp0, dead: morreu },
+        evento: await eventoDaFeira(env, g, id, hoje, depois)
+      });
+    }
+    if (action === "guildFeiraTrailStart") {
+      const r = await iniciarTrilha(env, g, id, hoje, estado2);
+      if (!r.ok) return erro(r.reason === "already-cleared" ? "already cleared" : "no trail", 409);
+      return json12({ trail: r.trail, evento: await eventoDaFeira(env, g, id, hoje, estado2) });
+    }
+    if (action === "guildFeiraTrailDone") {
+      const r = await entregarTrilha(env, g, id, hoje, estado2, body);
+      if (!r.ok) {
+        if (r.reason === "limit") return erro("daily limit", 429);
+        if (r.reason === "wrong") return erro("wrong solution", 400);
+        if (r.reason === "too-fast") return erro("too fast", 400);
+        if (r.reason === "already-cleared") return erro("already cleared", 409, { receipt: r.receipt });
+        return erro(r.reason === "no-start" ? "not started" : "no trail", 409);
+      }
+      await cartao(g);
+      return json12({ cleared: true, reward: r.reward, receipt: r.receipt, evento: await eventoDaFeira(env, g, id, hoje, await lerEstadoFeira(env, g, hoje, { cartoes })) });
+    }
+  }
   if (action === "guildRaidHit") {
     const g = await grupoDe(env, id, semana);
     if (!g) return erro("no {g}", 404);
@@ -8097,7 +9126,16 @@ async function handleGuild({ request, env }) {
     await marcarParticipacao(env, g.id, id, semana, hoje);
     await somarPontos(env, g.id, id, "missao", pontosDeMissao(stagePower(perfil?.stage), membrosAtivos(g, fiosDosCartoes(g, cartoesDaRoda), hoje).length));
     await cartao(g);
-    return json12({ landed: true, [chave]: await montar(g, id, hoje) });
+    let evento;
+    if (feiraLigada(env)) {
+      try {
+        evento = await eventoDaFeira(env, g, id, hoje, await lerEstadoFeira(env, g, hoje, { cartoes: cartoesDaRoda }));
+      } catch (err2) {
+        console.warn("feira: evento indispon\xEDvel", String(err2));
+        evento = void 0;
+      }
+    }
+    return json12({ landed: true, [chave]: await montar(g, id, hoje), ...evento ? { evento } : {} });
   }
   if (action === "guildRewards" || action === "guildClaim") {
     const g = await grupoDe(env, id, semana);
@@ -11233,6 +12271,17 @@ function sanitizeCheckIns(raw) {
   return { day: r.day, claimed };
 }
 __name(sanitizeCheckIns, "sanitizeCheckIns");
+var ARENA_REROLL_MAX_COUNT = 999;
+function sanitizeArenaReroll(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const r = (
+    /** @type {{day?:unknown,count?:unknown}} */
+    raw
+  );
+  if (typeof r.day !== "string" || !ISO_DAY.test(r.day) || typeof r.count !== "number" || !Number.isFinite(r.count)) return void 0;
+  return { day: r.day, count: Math.min(ARENA_REROLL_MAX_COUNT, Math.max(0, Math.floor(r.count))) };
+}
+__name(sanitizeArenaReroll, "sanitizeArenaReroll");
 function monotonic(inc, sto, merge, nowMs) {
   if (!inc) return sto;
   if (inc.day > maxAcceptableDay(nowMs)) return sto;
@@ -11255,6 +12304,10 @@ function enforceCheckIns(incoming, stored, nowMs = Date.now()) {
   );
 }
 __name(enforceCheckIns, "enforceCheckIns");
+function enforceArenaReroll(incoming, stored, nowMs = Date.now()) {
+  return monotonic(sanitizeArenaReroll(incoming), sanitizeArenaReroll(stored), (a, b) => ({ day: a.day, count: Math.max(a.count, b.count) }), nowMs);
+}
+__name(enforceArenaReroll, "enforceArenaReroll");
 var riftLayersKey = /* @__PURE__ */ __name((month2, saveId) => `riftlayers:${month2}:${saveId}`, "riftLayersKey");
 var monthOf = /* @__PURE__ */ __name((nowMs) => new Date(nowMs).toISOString().slice(0, 7), "monthOf");
 var prevMonthOf = /* @__PURE__ */ __name((nowMs) => {
@@ -12072,6 +13125,19 @@ function sanitizeFocusLoot(raw) {
 }
 __name(sanitizeFocusLoot, "sanitizeFocusLoot");
 
+// api/_elementDex.js
+var ELEMENT_DEX_MAX = 210;
+function sanitizeDefeatedElements(raw) {
+  if (!Array.isArray(raw)) return void 0;
+  const out = [];
+  for (const v of raw) {
+    if (typeof v === "string" && /^[a-z_]{2,24}$/.test(v) && !out.includes(v)) out.push(v);
+    if (out.length >= ELEMENT_DEX_MAX) break;
+  }
+  return out;
+}
+__name(sanitizeDefeatedElements, "sanitizeDefeatedElements");
+
 // api/_dayPlan.js
 var DAY_PLAN_MAX_IDS = 200;
 var ID_RE2 = /^[\w:.-]{1,120}$/;
@@ -12331,6 +13397,11 @@ async function onRequest7({ request, env }) {
       if (q) state.focusLoot = q;
       else delete state.focusLoot;
     }
+    if ("defeatedElements" in state) {
+      const q = sanitizeDefeatedElements(state.defeatedElements);
+      if (q) state.defeatedElements = q;
+      else delete state.defeatedElements;
+    }
     if ("dayPlan" in state) {
       const q = sanitizeDayPlan(state.dayPlan);
       if (q) state.dayPlan = q;
@@ -12363,8 +13434,8 @@ async function onRequest7({ request, env }) {
     let recAntes;
     let recDepois;
     {
-      const temGravado = typeof prev?.value === "string" && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"'));
-      if (temGravado || "dungeonDaily" in state || "checkIns" in state) {
+      const temGravado = typeof prev?.value === "string" && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"') || prev.value.includes('"arenaReroll"'));
+      if (temGravado || "dungeonDaily" in state || "checkIns" in state || "arenaReroll" in state) {
         let gravado = {};
         if (temGravado) {
           try {
@@ -12383,6 +13454,9 @@ async function onRequest7({ request, env }) {
         const ci = enforceCheckIns(state.checkIns, gravado.checkIns);
         if (ci) state.checkIns = ci;
         else delete state.checkIns;
+        const ar = enforceArenaReroll(state.arenaReroll, gravado.arenaReroll);
+        if (ar) state.arenaReroll = ar;
+        else delete state.arenaReroll;
       }
     }
     let serialized;
@@ -13019,7 +14093,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-ffGXXq/functionsRoutes-0.8702335802258004.mjs
+// ../.wrangler/tmp/pages-OvZJ6U/functionsRoutes-0.8854855801858351.mjs
 var routes = [
   {
     routePath: "/api/account",

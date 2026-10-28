@@ -52,6 +52,7 @@ const NOVAS_DESDE_20_10_2026: readonly string[] = [
   'soulmon-save-revision-v1',
   'soulmon-picross-base-paid',
   'soulmon-gifts-credited-v1',
+  'soulmon-feira-evento-visto',
   'soulmon-generate-character-until',
   'soulmon-generate-character-uses',
   'soulmon-barrage-best',   // nasceu depois de 20/10 (QA beta3 R2): estava na lista congelada por engano
