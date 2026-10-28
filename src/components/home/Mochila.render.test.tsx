@@ -257,7 +257,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
     fireEvent.click(within(sec).getByLabelText('Ore × 0'));
     fireEvent.click(document.querySelector('[data-material-go]')!);
     expect(onGo).toHaveBeenCalledTimes(1);
-    expect(onGo).toHaveBeenCalledWith('arena.fenda');
+    expect(onGo).toHaveBeenCalledWith('exploracao.fenda');
     expect(onClose).toHaveBeenCalled();
   });
 

@@ -37,14 +37,14 @@ export function isDemoMode(state: DemoCarrier | null | undefined): boolean {
 /**
  * Os prédios do mapa que são SOCIAIS (PvP, ranking, comunidade) e por isso
  * ficam inertes na demo: Arena — Torneio, Duelo e Guerra; Hall — Feira, Salão
- * do Clã e Grove; Laboratório — Biblioteca e Círculo de Amigos. O toque mostra `demoRefusalText` na
+ * do Clã e Grove; Laboratório — Biblioteca (o Círculo de Amigos é seção do Salão do Clã, que a demo já bloqueia inteiro, #186). O toque mostra `demoRefusalText` na
  * faixa de aviso do mapa (o mesmo canal do cadeado do Vínculo). Dono único da
  * lista: `AreaView` a lê daqui, e a régua de fiação confere os dois lados.
  */
 export const DEMO_BLOCKED_LOTS: Readonly<Record<string, readonly string[]>> = {
   arena: ['torneio', 'duelo', 'guerra'],
-  // D-50 (19/10/2026): Biblioteca e Círculo de Amigos moraram no Hall; agora são do Laboratório (a demo segue sem os dois).
-  laboratorio: ['biblioteca', 'amigos'],
+  // D-50 (19/10/2026): Biblioteca e Círculo de Amigos moraram no Hall; agora a Biblioteca é do Laboratório. #186 (28/10/2026): o Círculo de Amigos é seção do Salão do Clã (`hall: guilda`, bloqueado abaixo).
+  laboratorio: ['biblioteca'],
   hall: ['guilda', 'feira', 'grove'],
 };
 

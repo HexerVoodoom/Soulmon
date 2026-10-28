@@ -37,20 +37,20 @@ describe('AreaView sem trava de Soulmon ocupado', () => {
   }
 });
 
-describe('Fenda: entrada direta com descida em curso', () => {
+describe('Fenda (na Exploração desde #186): entrada direta com descida em curso', () => {
   it('com descida: abre a DungeonGame direto, sem a folha "Descer à Fenda"', async () => {
-    const { container } = renderWithCss(<AreaView {...{ ...base('arena'), naMasmorra: true }} />);
+    const { container } = renderWithCss(<AreaView {...{ ...base('exploracao'), naMasmorra: true }} />);
     await act(async () => { fireEvent.click(container.querySelector('[data-area-lot="fenda"]') as HTMLElement); });
     expect(container.textContent).not.toMatch(/Descend|Descer/);
     expect(container.querySelector('[role="dialog"]')).toBeNull();
   });
   it('sem descida: abre a folha da Fenda', async () => {
-    const { container } = renderWithCss(<AreaView {...base('arena')} />);
+    const { container } = renderWithCss(<AreaView {...base('exploracao')} />);
     await act(async () => { fireEvent.click(container.querySelector('[data-area-lot="fenda"]') as HTMLElement); });
     expect(container.querySelector('[role="dialog"]')).not.toBeNull();
   });
   it('o Calabouço mostra o NPC próprio na folha', async () => {
-    const { container } = renderWithCss(<AreaView {...base('arena')} area={'jogos' as never} />);
+    const { container } = renderWithCss(<AreaView {...base('exploracao')} />);
     await act(async () => { fireEvent.click(container.querySelector('[data-area-lot="dungeon"]') as HTMLElement); });
     expect(container.querySelector('img[src*="npc-jogos-dungeon"]')).not.toBeNull();
   });

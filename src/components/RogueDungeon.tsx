@@ -1,5 +1,5 @@
 /**
- * CALABOUÇO ROGUELIKE (beta3 M7 + N7) — a tela do prédio `jogos.dungeon`. Regras e sorteios em `utils/rogueDungeon.ts`.
+ * CALABOUÇO ROGUELIKE (beta3 M7 + N7) — a tela do prédio `exploracao.dungeon`. Regras e sorteios em `utils/rogueDungeon.ts`.
  * N7 (26/10/2026): a LISTA virou um MAPA em TELA CHEIA — um cenário existente (`DUNGEON_SCENES`) como fundo, 3 nós (os 3 andares) numa
  * trilha em SVG, o Soulmon parado no nó atual; as escolhas do passo (caminhos, bônus) sobem numa folha de baixo. O combate é uma LUTA
  * VISÍVEL (`RogueFight`, a `BattleStage` da Masmorra); os desafios que não são combate seguem sendo os jogos reais em modo desafio.

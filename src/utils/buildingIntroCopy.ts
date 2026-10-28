@@ -42,7 +42,7 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     what: { en: 'Each canvas here is a place your Soulmon can stand in front of.', pt: 'Cada tela aqui é um lugar diante do qual o seu Soulmon pode ficar.' },
     invite: { en: 'Take a closer look.', pt: 'Chegue mais perto e veja.' },
   },
-  'mercado.ferreiro': {
+  'forja.ferreiro': {
     place: { en: 'Soulsmith', pt: 'Soulsmith' },
     hello: { en: "I'm {name}. The furnace is lit.", pt: 'Eu sou {name}. O forno está aceso.' },
     what: { en: 'Pieces arrive rough here and take shape with the materials you bring.', pt: 'As peças chegam cruas e ganham forma com os materiais que você traz.' },
@@ -54,13 +54,13 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     what: { en: 'Free games, just for the fun of it. Nothing else is asked.', pt: 'Jogos livres, só pela graça de brincar. Nada mais é pedido.' },
     invite: { en: 'Come play a little with your Soulmon.', pt: 'Venha brincar um pouco com o seu Soulmon.' },
   },
-  'exploracao.refugio': {
+  'forja.refugio': {
     place: { en: 'Refuge', pt: 'Refúgio' },
     hello: { en: "I'm {name}. The tide brought me to this shore.", pt: 'Eu sou {name}. A maré me trouxe a esta praia.' },
     what: { en: 'Slow breathing and quiet bubbles. Nothing here needs delivering.', pt: 'Respiração lenta e bolhas calmas. Aqui nada precisa ser entregue.' },
     invite: { en: 'The door is open, any time.', pt: 'A porta fica aberta, a qualquer hora.' },
   },
-  'jogos.dungeon': {
+  'exploracao.dungeon': {
     place: { en: 'Dungeon', pt: 'Calabouço' },
     hello: { en: "I'm {name}, a guide here. The mist hides paths, and I know a few.", pt: 'Eu sou {name}, guia por aqui. A névoa esconde caminhos, e eu conheço alguns.' },
     what: { en: 'A small roguelike dungeon game. Step in and try your luck.', pt: 'Um pequeno jogo de calabouço roguelike. Entre e tente a sorte.' },
@@ -102,19 +102,19 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     what: { en: 'Your Soulmon walks here, and the mist opens a little further each step.', pt: 'O seu Soulmon caminha por aqui, e a névoa abre um pouco mais a cada passo.' },
     invite: { en: 'Walk as slow as you like.', pt: 'Ande devagar o quanto quiser.' },
   },
-  'arena.fenda': {
+  'exploracao.fenda': {
     place: { en: 'Endless Rift', pt: 'Fenda Sem Fim' },
     hello: { en: "I'm {name}, a guide here. The mist hides paths, and I know a few.", pt: 'Eu sou {name}, guia por aqui. A névoa esconde caminhos, e eu conheço alguns.' },
     what: { en: 'The Rift goes down in floors, and your Soulmon faces one body at a time.', pt: 'A Fenda desce em andares, e o seu Soulmon enfrenta um corpo de cada vez.' },
     invite: { en: 'Whenever you want to go down, it is right there.', pt: 'Quando quiser descer, está logo ali.' },
   },
-  'exploracao.caderno': {
+  'forja.caderno': {
     place: { en: 'Journal', pt: 'Caderno' },
     hello: { en: "I'm {name}. I keep the pages.", pt: 'Eu sou {name}. Eu guardo as páginas.' },
     what: { en: 'What is written here stays kept, and only you can open it.', pt: 'O que se escreve aqui fica guardado, e só você abre.' },
     invite: { en: 'A blank page is fine too.', pt: 'Uma página em branco também serve.' },
   },
-  'exploracao.oficina': {
+  'forja.oficina': {
     place: { en: 'Focus Workshop', pt: 'Oficina do Foco' },
     hello: { en: "I'm {name}. I keep the beat for the lights.", pt: 'Eu sou {name}. Eu marco o ritmo das luzes.' },
     what: { en: 'Focus techniques, laid out as a few steady rhythms. Each light glows in its own time.', pt: 'Técnicas de foco, em alguns ritmos constantes. Cada luz acende no seu tempo.' },
@@ -130,7 +130,7 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     place: { en: 'Archive', pt: 'Arquivo' },
     hello: { en: "I'm {name}. I write the Archive.", pt: 'Eu sou {name}. Eu escrevo o Arquivo.' },
     what: { en: 'Your Soulmon’s forms, its bestiary and its keepsakes, all kept in order.', pt: 'As formas do seu Soulmon, o bestiário e as lembranças, tudo em ordem.' },
-    invite: { en: 'Look at your own pace.', pt: 'Olhe no seu ritmo.' },
+    invite: { en: 'Find me inside the Profile, under Archive. Look at your own pace.', pt: 'Me encontre dentro do Perfil, na aba Arquivo. Olhe no seu ritmo.' },
   },
   'laboratorio.stats': {
     place: { en: 'Bond Sanctum', pt: 'Santuário do Vínculo' },
@@ -154,7 +154,7 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     place: { en: 'Friends Circle', pt: 'Círculo de Amigos' },
     hello: { en: "I'm {name}. I sit in the Circle.", pt: 'Eu sou {name}. Eu fico no Círculo.' },
     what: { en: 'This is where your friends live. Everyone brings a little sweetness.', pt: 'Aqui moram os seus amigos. Cada um traz um pouco de doçura.' },
-    invite: { en: 'There is a seat free, whenever.', pt: 'Sempre tem um lugar livre.' },
+    invite: { en: 'Find me inside the Clan Hall, under Friends. There is a seat free, whenever.', pt: 'Me encontre dentro do Salão do Clã, na aba Amigos. Sempre tem um lugar livre.' },
   },
   'hall.grove': {
     place: { en: 'Grove', pt: 'Grove' },

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { arenaLots, hallLots, laboratorioLots, mercadoLots } from '../../utils/areaSheetCopy';
+import { exploracaoLots, forjaLots, jogosLots } from '../../utils/playAreaLots';
 import { BUILDING_GATES } from '../../utils/gates';
 import { lotNpcVoice, areaNpcVoice } from '../../utils/areaNpcVoice';
 import fs from 'node:fs';
@@ -10,10 +11,13 @@ import npcArenaDuelo from '../../assets/soulmon/npcs/npc-extra-arena-duelo.png';
 import { functionNpcVoice } from '../../utils/areaNpcVoice';
 
 describe('lotes novos (29/09/2026)', () => {
-  it('Arena tem Torneio, Duelo, Guerra e a Fenda Sem Fim (N10); Hall tem Feira, Grove e Salão do Clã; Laboratório tem Biblioteca e Círculo de Amigos (D-50)', () => {
-    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo', 'guerra', 'fenda']);
+  it('Arena tem Torneio, Duelo e Guerra (a Fenda voltou à Exploração, #186); Hall tem Feira, Grove e Salão do Clã; Laboratório tem Evolução, Vínculo, Perfil e Biblioteca (sem Arquivo e Amigos, #186)', () => {
+    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo', 'guerra']);
     expect(hallLots('pt-BR').map(l => l.id)).toEqual(['feira', 'grove', 'guilda']); // D-50 (19/10/2026): Biblioteca e Amigos saíram do Hall
-    expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'pet', 'stats', 'perfil', 'biblioteca', 'amigos']); // beta-2 (11): o Perfil do Soulmon
+    expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'stats', 'perfil', 'biblioteca']); // beta-2 (11): o Perfil do Soulmon; #186: o Arquivo e o Círculo de Amigos viraram seções
+    expect(exploracaoLots('pt-BR').map(l => l.id)).toEqual(['passeio', 'fenda', 'dungeon']); // #186: a Exploração recebe as masmorras e mantém o Passeio
+    expect(forjaLots('pt-BR').map(l => l.id).sort()).toEqual(['caderno', 'ferreiro', 'oficina', 'refugio']); // #186: a Forja
+    expect(jogosLots('pt-BR').map(l => l.id)).toEqual(['salao', 'mente']); // o Calabouço saiu de Jogos
   });
 
   it('H15/H16/H17 + W12 (20/10/2026): Torneio e Arena livre dividem UM retângulo do fundo e a Guerra fica no OUTRO; Santuário do Vínculo bem maior; Hall maior', () => {
@@ -35,8 +39,6 @@ describe('lotes novos (29/09/2026)', () => {
     // §147 (W19): o dono marcou na captura 390×844 onde a BASE do Torneio deve ficar: o ponto (70,328) do sprite tem de cair em (95,366).
     // 26/10/2026 (dono, desenho novo): a Arena livre SOBE e vai à esquerda, na frente, cobrindo parte do Torneio e da Guerra; a Fenda Sem Fim cresce no topo-centro. O H11 segue valendo pelo miolo de toque (`LOT_HIT_INSET`) e pelo deslocamento de rótulo.
     expect([arena.duelo.left, arena.duelo.top, (arena.duelo as { width?: string }).width]).toEqual(['41.5%', '57.5%', '39%']);
-    const fenda = arenaLots('pt-BR').find(l => l.id === 'fenda') as { left: string; top: string; width?: string };
-    expect([fenda.left, fenda.top, fenda.width]).toEqual(['54.5%', '33.5%', '50%']);
     const tArt = rects('torneio', 390, 844);
     const ancora = [tArt.x0 + 46.8, tArt.y0 + 80.46]; // ponto da escadaria no sprite, medido na captura do dono (antes em (70,328))
     expect(Math.abs(ancora[0] - 95), 'base do Torneio × alvo do dono, x').toBeLessThanOrEqual(3);
@@ -45,7 +47,7 @@ describe('lotes novos (29/09/2026)', () => {
     for (const id of ['torneio', 'duelo', 'guerra']) expect(Math.hypot(centro(id)[0] - 50.8, (centro(id)[1] - 35.1) * 2)).toBeGreaterThan(15);
     const lab = Object.fromEntries(laboratorioLots('pt-BR').map(l => [l.id, l as { width?: string; top: string }]));
     expect(pct(lab.stats.width)).toBeGreaterThanOrEqual(pct(lab.evolucao.width) * 1.4);
-    for (const id of ['evolucao', 'pet']) {
+    for (const id of ['evolucao']) {
       expect(pct(lab[id].width)).toBeGreaterThan(38);
       expect(pct(lab[id].top)).toBeGreaterThan(54);
     }
@@ -67,7 +69,7 @@ describe('lotes novos (29/09/2026)', () => {
   it('os 10 bustos de lote da leva npcs-flare (30/09/2026) são arte PRÓPRIA — nenhum placeholder no bundle', () => {
     const lotes: Array<[Parameters<typeof lotNpcArt>[0], string, string]> = [
       ['arena', 'duelo', 'Naia'], ['hall', 'feira', 'Fanfare'], ['jogos', 'mente', 'Tessela'],
-      ['exploracao', 'refugio', 'Marim'], ['mercado', 'conquistas', 'Medra'], ['laboratorio', 'amigos', 'Zumi'],
+      ['forja', 'refugio', 'Marim'], ['mercado', 'conquistas', 'Medra'], ['laboratorio', 'amigos', 'Zumi'],
       ['hall', 'guilda', 'Aurea'], ['laboratorio', 'pet', 'Tinta'], ['laboratorio', 'stats', 'Sumi'],
       ['exploracao', 'passeio', 'Lisel'],
     ];
@@ -76,7 +78,7 @@ describe('lotes novos (29/09/2026)', () => {
     for (const [a, l, nome] of lotes) {
       // G3 (02/10/2026): o Salão da Guilda usa o busto da Bastia (`npc-f-guarda`), já aprovado.
       // 07/10/2026: Amigos (Trill), Arquivo (Faro) e Santuário (Oriel) trocaram de busto a pedido do dono.
-      const TROCADOS: Record<string, string> = { 'arena:duelo': 'npc-extra-arena-duelo', 'exploracao:refugio': 'npc-oceano-jogos-refugio', 'hall:guilda': 'npc-luz-hall-guilda', 'hall:feira': 'npc-arena-feira', // a Feira mudou da Arena para o Hall (11/10/2026); o arquivo mantém o nome da leva
+      const TROCADOS: Record<string, string> = { 'arena:duelo': 'npc-extra-arena-duelo', 'forja:refugio': 'npc-oceano-jogos-refugio', 'hall:guilda': 'npc-luz-hall-guilda', 'hall:feira': 'npc-arena-feira', // a Feira mudou da Arena para o Hall (11/10/2026); o arquivo mantém o nome da leva
         'laboratorio:amigos': 'npc-extra-filhote-de-mel', 'laboratorio:pet': 'npc-agua-laboratorio-pet', 'laboratorio:stats': 'npc-agua-laboratorio-stats' };
       const arquivo = TROCADOS[`${a}:${l}`] ?? `npc-${a}-${l}`;
       expect(lotNpcArt(a, l)).toMatch(new RegExp(arquivo));
@@ -122,13 +124,14 @@ describe('as bancas do Mercado têm nome próprio (01/10/2026)', () => {
   });
 });
 
-describe('o Ferreiro (07/10/2026): lote do Mercado para os equipamentos', () => {
+describe('o Ferreiro (07/10/2026; #186: agora lote da Forja) para os equipamentos', () => {
   it('existe, com rótulo EN/PT, Vínculo 2 e o NPC Vitra', () => {
-    expect(mercadoLots('en-US').find(l => l.id === 'ferreiro')?.label).toBe('Soulsmith');
-    expect(mercadoLots('pt-BR').find(l => l.id === 'ferreiro')?.label).toBe('Soulsmith');
-    expect(BUILDING_GATES['mercado.ferreiro'].minBond).toBe(2);
-    expect(lotNpcVoice('mercado', 'ferreiro', 'en-US').name).toContain('Vitra');
-    expect(lotNpcVoice('mercado', 'ferreiro', 'pt-BR').name).toContain('Vitra');
+    expect(forjaLots('en-US').find(l => l.id === 'ferreiro')?.label).toBe('Soulsmith');
+    expect((mercadoLots('en-US') as { id: string }[]).some(l => l.id === 'ferreiro')).toBe(false);
+    expect(mercadoLots('en-US').some(l => l.id === 'ferreiro')).toBe(false);
+    expect(BUILDING_GATES['forja.ferreiro'].minBond).toBe(2);
+    expect(lotNpcVoice('forja', 'ferreiro', 'en-US').name).toContain('Vitra');
+    expect(lotNpcVoice('forja', 'ferreiro', 'pt-BR').name).toContain('Vitra');
   });
   it('a folha do lote abre a ForgeCard, e as Estatísticas não a montam mais', () => {
     const lerSrc = (f: string) => fs.readFileSync(path.resolve(__dirname, f), 'utf8');

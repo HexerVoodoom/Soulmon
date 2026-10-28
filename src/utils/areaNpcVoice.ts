@@ -48,6 +48,13 @@ const AREA_NPC_VOICE: Record<AreaId, AreaNpcVoice> = {
     linePt: 'A névoa esconde caminhos. A Fenda está logo ali, quando quiser descer.',
     lineEn: 'The mist hides paths. The Endless Rift is right there, whenever you want to go down.',
   },
+  // #186 (28/10/2026): a Forja (produtividade e disciplina). Voz provisória = a da Vitra, a Soulsmith do lote; sem cobrança, sem pressa.
+  forja: {
+    namePt: 'Vitra, a Soulsmith',
+    nameEn: 'Vitra, the Soulsmith',
+    linePt: 'O forno está aceso. O que se faz com calma pega a forma certa.',
+    lineEn: 'The furnace is lit. What is made patiently takes the right shape.',
+  },
   jogos: {
     namePt: 'Pipo, o anfitrião',
     nameEn: 'Pipo, the host',
@@ -101,8 +108,8 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: 'This horizon smells like rain. Want a closer look?',
   },
   'arena:torneio': AREA_NPC_VOICE.arena,
-  'arena:fenda': AREA_NPC_VOICE.exploracao,
-  // 'jogos:dungeon' tem voz própria abaixo (beta3 M3).
+  'exploracao:fenda': AREA_NPC_VOICE.exploracao,
+  // 'exploracao:dungeon' tem voz própria abaixo (beta3 M3).
   'jogos:salao': AREA_NPC_VOICE.jogos,
   'laboratorio:evolucao': AREA_NPC_VOICE.laboratorio,
   'laboratorio:biblioteca': AREA_NPC_VOICE.hall, // D-50 (19/10/2026): a Biblioteca foi do Hall para o Laboratório — a anfitriã Lumi vai com ela
@@ -128,7 +135,7 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   },
   // ⚒️ 07/10/2026: o Soulsmith do Mercado — Vitra, o espírito-do-forno vidraceiro (o Mallo do banco `EXTRA_NPC_VOICE.ferreiro` segue como NPC extra). Fala descreve o ofício, sem
   // preço, sem pressa e sem prometer efeito (L1..L12 da bíblia): o equipamento é do companheiro, a forja só dá forma.
-  'mercado:ferreiro': {
+  'forja:ferreiro': {
     namePt: 'Vitra, a Soulsmith', nameEn: 'Vitra, the Soulsmith',
     linePt: 'A peça chega crua e melhora com o material que você traz. Escolha o lado que quiser reforçar, sem pressa.',
     lineEn: 'A piece arrives rough and gets better with the materials you bring. Choose the side to strengthen, no rush.',
@@ -169,12 +176,12 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: "This puzzle waits. Its pieces aren't going anywhere.",
   },
   // 🗝️ beta3 M7: o Calabouço (roguelike, já aberto). Busto próprio (P1-04, 26/10/2026); nome e voz mantidos.
-  'jogos:dungeon': {
+  'exploracao:dungeon': {
     namePt: 'Corva, a vigia do calabouço', nameEn: 'Corva, the dungeon watcher',
     linePt: 'Três caminhos a cada passo. Escolha um e veja até onde vocês chegam hoje.',
     lineEn: 'Three paths at every step. Pick one and see how far you two get today.',
   },
-  'exploracao:refugio': {
+  'forja:refugio': {
     namePt: 'Marim, o mensageiro da maré', nameEn: 'Marim, the tide courier', // 07/10/2026: busto trocado a pedido do dono (era Bobbi, o soprador de bolhas)
     linePt: 'Aqui nada precisa ser entregue. Só a maré indo e vindo.',
     lineEn: 'Nothing needs delivering here. Just the tide coming and going.',
@@ -188,12 +195,12 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   },
   // 🛠️ 04/10/2026 (pedido do dono): os dois prédios da clareira de baixo. Falas sem cobrança, sem
   // número e sem prometer efeito (a Oficina descreve; o Caderno guarda e cala).
-  'exploracao:oficina': {
+  'forja:oficina': {
     namePt: 'Sépia, a copista', nameEn: 'Sépia, the scribe', // 19/10/2026 (D-32): o dono escolheu o busto nº 9 (o escriba-polvo, antes Sépia no Caderno) no lugar da Lume
     linePt: 'Foco é copiar uma linha de cada vez.',
     lineEn: 'Focus is copying one line at a time.',
   },
-  'exploracao:caderno': {
+  'forja:caderno': {
     namePt: 'Opala, a arquivista das páginas', nameEn: 'Opala, keeper of the pages', // 07/10/2026: busto trocado a pedido do dono (era Sépia, a copista)
     linePt: 'O que se escreve aqui fica guardado. Só você abre.',
     lineEn: 'What is written here stays kept. Only you open it.',

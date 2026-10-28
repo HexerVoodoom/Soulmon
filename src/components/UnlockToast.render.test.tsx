@@ -8,18 +8,18 @@ afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 describe('balão "prédio desbloqueado"', () => {
   it('um prédio: "<Prédio> desbloqueado em <local>" (PT) / "unlocked in" (EN)', () => {
-    expect(unlockToastText(['mercado.ferreiro'], 'pt-BR')).toBe('Soulsmith desbloqueado em Mercado');
-    expect(unlockToastText(['mercado.ferreiro'], 'en-US')).toBe('Soulsmith unlocked in Market');
+    expect(unlockToastText(['forja.ferreiro'], 'pt-BR')).toBe('Soulsmith desbloqueado em A Forja');
+    expect(unlockToastText(['forja.ferreiro'], 'en-US')).toBe('Soulsmith unlocked in The Forge');
   });
   it('vários do mesmo level-up viram UM balão', () => {
-    const t = unlockToastText(['mercado.decoracao', 'mercado.ferreiro'], 'en-US');
+    const t = unlockToastText(['mercado.decoracao', 'forja.ferreiro'], 'en-US');
     expect(t).toMatch(/^2 new places on the Map: /);
     expect(unlockToastText([], 'en-US')).toBe('');
   });
   it('não é modal (sem dialog), some sozinho e ao toque', () => {
     vi.useFakeTimers();
     const onDone = vi.fn();
-    const { container } = render(<UnlockToast ids={['mercado.ferreiro']} language="en-US" onDone={onDone} />);
+    const { container } = render(<UnlockToast ids={['forja.ferreiro']} language="en-US" onDone={onDone} />);
     expect(container.querySelector('[role="dialog"]')).toBeNull();
     expect(container.querySelector('[role="status"]')).not.toBeNull();
     act(() => { vi.advanceTimersByTime(UNLOCK_TOAST_MS + 10); });

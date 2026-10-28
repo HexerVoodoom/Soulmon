@@ -2,8 +2,8 @@ import { missionsInQueueOrder } from '../../utils/missionOrder';
 import type { Language } from '../../utils/i18n';
 import type { BuildingId } from '../../utils/gates';
 import { firstStatus, firstTimesFor, type FirstTime, type FirstTimesState } from '../../utils/dailyMissions';
-import { mercadoLots, arenaLots, laboratorioLots, hallLots } from '../../utils/areaSheetCopy';
-import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
+import { mercadoLots, arenaLots, laboratorioLots, hallLots, sectionBuildingLabel } from '../../utils/areaSheetCopy';
+import { exploracaoLots, forjaLots, jogosLots } from '../../utils/playAreaLots';
 import { sm2Hint } from '../form/FormKit';
 import { ClaimButton, MissionCard, MissionCardList, resolveGo, type MissionNav } from './MissionCard';
 
@@ -18,7 +18,9 @@ export interface FirstTimesProps {
 /** O nome do prédio, do mesmo lugar que o Mapa lê (um dono por rótulo). */
 function buildingName(id: BuildingId, language: Language): string {
   const [area, lot] = id.split('.');
-  const lots = area === 'mercado' ? mercadoLots(language) : area === 'jogos' ? jogosLots(language) : area === 'exploracao' ? exploracaoLots(language)
+  const section = sectionBuildingLabel(id, language);
+  if (section) return section;
+  const lots = area === 'mercado' ? mercadoLots(language) : area === 'jogos' ? jogosLots(language) : area === 'exploracao' ? exploracaoLots(language) : area === 'forja' ? forjaLots(language)
     : area === 'arena' ? arenaLots(language) : area === 'laboratorio' ? laboratorioLots(language) : hallLots(language);
   return (lots as { id: string; label: string }[]).find(l => l.id === lot)?.label ?? id;
 }

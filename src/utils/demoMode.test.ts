@@ -49,7 +49,7 @@ describe('o predicado — dono único', () => {
   it('os prédios sociais da demo: Arena (Torneio, Duelo, Guerra de Clãs) e Hall (Guilda, Feira, Grove) e Laboratório (Biblioteca, Amigos)', () => {
     expect(DEMO_BLOCKED_LOTS.arena).toEqual(['torneio', 'duelo', 'guerra']);
     expect(DEMO_BLOCKED_LOTS.hall).toEqual(['guilda', 'feira', 'grove']);
-    expect(DEMO_BLOCKED_LOTS.laboratorio).toEqual(['biblioteca', 'amigos']);
+    expect(DEMO_BLOCKED_LOTS.laboratorio).toEqual(['biblioteca']) // #186: o Círculo de Amigos é seção do Salão do Clã (hall › guilda, bloqueado);
     expect(isDemoBlockedLot('arena', 'torneio')).toBe(true);
     expect(isDemoBlockedLot('mercado', 'itens')).toBe(false);
     expect(isDemoBlockedLot('exploracao', 'masmorra')).toBe(false);

@@ -47,8 +47,9 @@ describe('Laboratório — a árvore de Evolução dentro da folha', () => {
     expect(APP).toContain('labContent={labContent}');
     expect(APP).toContain('hallContent={hallContent}');
     expect(AREA_VIEW).toContain('props.labContent');
-    // D-50: Biblioteca e Amigos moram no Laboratório e abrem o `hallContent` (a `LibraryPage`).
-    expect(AREA_VIEW).toContain("props.hallContent(open.id === 'biblioteca' ? 'directory' : 'friends')");
+    // D-50: a Biblioteca mora no Laboratório e abre o `hallContent` (a `LibraryPage`). #186: os Amigos são seção do Salão do Clã e abrem o mesmo `hallContent` na visão `friends`.
+    expect(AREA_VIEW).toContain("props.hallContent('directory')");
+    expect(AREA_VIEW).toContain("props.hallContent('friends')");
   });
 
   it('labContent monta a EvolutionPath com a cerimônia manual de sempre (sem regra nova)', () => {
@@ -70,7 +71,9 @@ describe('Laboratório — a árvore de Evolução dentro da folha', () => {
     expect(lab).toContain("labTab === 'evolution'");
     expect(lab).toContain("labTab === 'pet' && (");
     expect(lab).toContain("labTab === 'stats' && statsPage");
-    expect(AREA_VIEW).toContain("{ evolucao: 'evolution', pet: 'pet', stats: 'stats', perfil: 'perfil' }");
+    // #186: o Arquivo (`labTab` 'pet') é seção do Perfil — o lote `perfil` tem as abas Perfil | Arquivo.
+    expect(AREA_VIEW).toContain("{ evolucao: 'evolution', stats: 'stats', perfil: 'perfil' }");
+    expect(AREA_VIEW).toContain("props.onLabTab(k)");
     expect(AREA_VIEW).toContain('props.onLabTab(tab)');
     // Dentro da folha o `<h1>` é o do AreaTopBar: a ficha desce para h2.
     expect(lab).toMatch(/<PetPage\s+headingLevel=\{2\}/);

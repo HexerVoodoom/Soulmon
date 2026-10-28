@@ -18,7 +18,7 @@ import iconBond from '../../assets/soulmon/icons/icon-heart-handshake.png';
 /**
  * O PERFIL DO SOULMON (beta-2, 11) — a folha do prédio `laboratorio.perfil`. Duas cartas curtas, só valores qualitativos (sem
  * pontuação) e só o que o app TEM: a linha some quando o dado não existe (`utils/soulmonPerfil.ts`). Sem melhoria do Soulsmith aqui
- * (o aprimoramento mora no Soulsmith, no Mercado) e sem repetir o que a Arena mostrava: o elemento e o ataque moram SÓ aqui.
+ * (o aprimoramento mora no Soulsmith, na Forja) e sem repetir o que a Arena mostrava: o elemento e o ataque moram SÓ aqui.
  */
 
 const ATTR_ART: Record<MainAttr, string | undefined> = {

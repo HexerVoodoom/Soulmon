@@ -19,18 +19,21 @@ import { AreaSheet } from './AreaSheet';
 import { LOT_NPC_ART, lotNpcArt } from '../../assets/soulmon/npcs';
 import { LOT_NPC_VOICE, lotNpcVoice } from '../../utils/areaNpcVoice';
 import { mercadoLots, arenaLots, laboratorioLots, hallLots } from '../../utils/areaSheetCopy';
-import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
+import { exploracaoLots, forjaLots, jogosLots } from '../../utils/playAreaLots';
 import type { AreaId } from '../../navigation';
 
 const LOTS: Array<[AreaId, string[]]> = [
   ['mercado', mercadoLots('pt-BR').map(l => l.id)],
   ['arena', arenaLots('pt-BR').map(l => l.id)],
   ['exploracao', exploracaoLots('pt-BR').map(l => l.id)],
+  ['forja', forjaLots('pt-BR').map(l => l.id)],
   ['jogos', jogosLots('pt-BR').map(l => l.id)],
   ['laboratorio', laboratorioLots('pt-BR').map(l => l.id)],
   ['hall', hallLots('pt-BR').map(l => l.id)],
 ];
 const ALL_KEYS = LOTS.flatMap(([a, ids]) => ids.map(id => `${a}:${id}`));
+/** #186 (28/10/2026): prédios SEM lote no mapa (Arquivo é seção do Perfil; Círculo de Amigos é seção do Salão do Clã). Seguem com NPC (quem os apresenta ao abrir), fora da conta dos lotes. */
+const SECTION_NPC_KEYS = ['laboratorio:pet', 'laboratorio:amigos'];
 
 const src = (rel: string) => readFileSync(resolve(__dirname, rel), 'utf8');
 
@@ -38,9 +41,10 @@ afterEach(() => vi.restoreAllMocks());
 
 describe('H11 — a tabela lote → NPC é única e completa', () => {
   it('as duas tabelas (arte e voz) cobrem EXATAMENTE os lotes que existem — sem lote órfão, sem lote caindo no anfitrião da área', () => {
-    expect(ALL_KEYS.length).toBe(26); // beta3 N8/N10 (26/10/2026): − exploracao:preparar (virou etapa da Oficina); a Masmorra só mudou de área (exploracao:masmorra → arena:fenda). Antes 27: beta-2 (11): + laboratorio:perfil; 14/10/2026: + mercado:restaurante (em obra); beta3 M3: + jogos:dungeon (Refúgio só mudou de área); D-50: + hall:grove (Biblioteca e Amigos só mudaram de área)
-    expect(Object.keys(LOT_NPC_ART).sort()).toEqual([...ALL_KEYS].sort());
-    expect(Object.keys(LOT_NPC_VOICE).sort()).toEqual([...ALL_KEYS].sort());
+    expect(ALL_KEYS.length).toBe(24); // #186 (28/10/2026): − mercado:ferreiro (foi para a Forja: só mudança de área), − laboratorio:pet e − laboratorio:amigos (viraram seções, ver SECTION_NPC_KEYS). Antes 26
+    const esperado = [...ALL_KEYS, ...SECTION_NPC_KEYS].sort();
+    expect(Object.keys(LOT_NPC_ART).sort()).toEqual(esperado);
+    expect(Object.keys(LOT_NPC_VOICE).sort()).toEqual(esperado);
   });
 
   it('cada lote tem um NPC com nome próprio, distinto dos demais lotes, nos dois idiomas', () => {

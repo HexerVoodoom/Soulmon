@@ -29,8 +29,10 @@
  */
 import type { Language } from './i18n';
 
-export type ExploracaoLotId = 'passeio' | 'oficina' | 'caderno' | 'refugio';
-export type JogosLotId = 'salao' | 'mente' | 'dungeon';
+export type ExploracaoLotId = 'passeio' | 'fenda' | 'dungeon';
+/** A Forja (#186, 28/10/2026): tudo que era da Exploração menos o Passeio (Oficina do Foco, Caderno, Refúgio) + o Soulsmith (ex-Mercado). */
+export type ForjaLotId = 'oficina' | 'caderno' | 'refugio' | 'ferreiro';
+export type JogosLotId = 'salao' | 'mente';
 
 interface PlayLotSpec<K extends string> {
   id: K;
@@ -54,12 +56,18 @@ interface PlayLotSpec<K extends string> {
 // esquerda e o do meio à direita) — cada prédio agora assenta no centro do seu.
 // R6-L1 (26/10/2026, dono; depois Calabouço 78→70% e Ateliê 55→61%): Passeio cima-esq, Oficina do Foco cima-dir, Caderno esq-meio (desce), Refugio baixo-dir.
 const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
-  // 🧭 O Passeio (30/09/2026, decisão do dono — `REGISTRO-DE-DECISOES.md` §5.6):
-  // a clareira da DIREITA, do outro lado do caminho. Os lotes têm 38% de largura
-  // centrados no `left`, então 27% ocupa 8–46% e 70% ocupa 51–89%: não se tocam.
-  // EN "Stroll" e não "Trail": trilha é justamente o lugar que o parecer de
-  // menores veta para as Travessias (04 R-3).
   { id: 'passeio', labelPt: 'Passeio', labelEn: 'Stroll', ariaPt: 'Abrir o Passeio', ariaEn: 'Open the Stroll', left: '22.6%', top: '21%', width: '48%' }, // 26/10/2026 (dono, mapa de Exploração): ENCAIXE no tablado de CIMA À ESQUERDA (piso medido no bg: centro 210/252 de 760×1344, ~250 px de largura; tela 390×844 = centro 88/158, `cover` corta ~11% de cada lado). Pegada no meio da frente do piso (88/175), opaco ~97 px de largura (62% do piso) — o arco é alto e mais que isso passaria da barra do topo
+  // 🌀 #186 (28/10/2026): a Exploração passa a receber as MASMORRAS — a Fenda Sem Fim (veio da Arena) no tablado do MEIO À DIREITA e o Calabouço roguelike (veio de Jogos) na
+  // coluna da esquerda. Posições PROVISÓRIAS (as das antigas Oficina e Caderno, sobre o mesmo fundo): a arte final de Exploração remede (ver docs/ASSETS-A-GERAR.md). O canto de baixo
+  // à direita (onde estava o Refúgio) fica LIVRE — reservado à terceira masmorra, se o dono confirmar qual é (ver o REGISTRO #186).
+  { id: 'fenda', labelPt: 'Fenda Sem Fim', labelEn: 'Endless Rift', ariaPt: 'Entrar na Fenda Sem Fim', ariaEn: 'Enter the Endless Rift', left: '80.1%', top: '34.4%', width: '60%' },
+  { id: 'dungeon', labelPt: 'Calabouço', labelEn: 'Dungeon', ariaPt: 'Entrar no Calabouço', ariaEn: 'Enter the Dungeon', left: '28%', top: '64%', width: '47%' },
+];
+
+// ⚒️ A FORJA (#186, 28/10/2026, dono): produtividade e disciplina. Mesmo fundo PROVISÓRIO da Exploração (`bg-forja.png` assume sozinho quando existir) e as posições que os três
+// lotes já tinham; o Soulsmith (ex-Mercado) assenta no tablado de CIMA À ESQUERDA, onde morava o Passeio.
+const FORJA_LOTS: PlayLotSpec<ForjaLotId>[] = [
+  { id: 'ferreiro', labelPt: 'Soulsmith', labelEn: 'Soulsmith', ariaPt: 'Entrar no Soulsmith', ariaEn: 'Enter the Soulsmith', left: '22.6%', top: '21%', width: '44%' },
   // 🛠️ 04/10/2026 (pedido do dono, `docs/PLANO-OFICINA-FOCO.md`): a GRANDE clareira de baixo, que estava
   // vazia, ganha dois prédios lado a lado — técnicas de foco/produtividade e o Caderno (journaling).
   // PT "Caderno" e não "Diário": já existe o Diário de Aventuras (o álbum do pet).
@@ -77,8 +85,7 @@ const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
 const JOGOS_LOTS: PlayLotSpec<JogosLotId>[] = [
   { id: 'salao', labelPt: 'Salão de Jogos', labelEn: 'Game Hall', ariaPt: 'Entrar no Salão de Jogos', ariaEn: 'Enter the Game Hall', left: '51.7%', top: '31.2%', width: '58%' }, // W12 (20/10/2026): DESCE 28→31 e centraliza na clareira de cima (centro medido ~52/31), maior 52→58%
   { id: 'mente', labelPt: 'Ateliê da Mente', labelEn: 'Mind Workshop', ariaPt: 'Entrar no Ateliê da Mente', ariaEn: 'Enter the Mind Workshop', left: '25%', top: '68%', width: '61%' }, // 26/10/2026 (dono): maior 55→61%. W12: maior 50→55%, centrado no lobo de cima da clareira de baixo (53/59); os três ficam em coluna (H11: o rótulo do Salão não encosta no Ateliê, nem o rótulo deste no Refúgio)
-  // 🗝️ beta3 M3 (25/10/2026): o Calabouço (jogo rogue, lane M7) ocupa o lugar que o Refúgio deixou — lobo de baixo da clareira. Arte: Cripta de cristal (28/10/2026, opção d do dono); largura 70→48% porque o prédio novo é largo (caixa 82% da imagem), mantendo o centro.
-  { id: 'dungeon', labelPt: 'Calabouço', labelEn: 'Dungeon', ariaPt: 'Entrar no Calabouço', ariaEn: 'Enter the Dungeon', left: '70.5%', top: '82%', width: '48%' },
+  // 🗝️ #186 (28/10/2026): o Calabouço roguelike saiu de Jogos para a Exploração (id `exploracao.dungeon`); o lobo de baixo da clareira fica livre.
 ];
 
 function resolveLots<K extends string>(specs: PlayLotSpec<K>[], language: Language) {
@@ -93,4 +100,5 @@ function resolveLots<K extends string>(specs: PlayLotSpec<K>[], language: Langua
 }
 
 export function exploracaoLots(language: Language) { return resolveLots(EXPLORACAO_LOTS, language); }
+export function forjaLots(language: Language) { return resolveLots(FORJA_LOTS, language); }
 export function jogosLots(language: Language) { return resolveLots(JOGOS_LOTS, language); }

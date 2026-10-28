@@ -15,6 +15,7 @@ import zonaExploracao from '../../assets/soulmon/mapa/zona-exploracao.png';
 import zonaLaboratorio from '../../assets/soulmon/mapa/zona-laboratorio.png';
 import zonaHall from '../../assets/soulmon/mapa/zona-hall.png';
 import { CHIP_MOEDA_ART, CHIP_MOEDA_SLICE } from '../../assets/soulmon/icones-ui';
+import { resolveMapaZona } from '../../assets/soulmon/mapa/zonas';
 
 /** A pílula de moeda: moldura `chip-moeda` em 9-slice. A arte tem 256×92 e é
  *  desenhada a 1/3 (tampas de 16px, bordas de 6px) — a altura final fica
@@ -54,6 +55,8 @@ const AREA_ART: Record<AreaId, string> = {
   jogos: zonaJogos,
   arena: zonaArena,
   exploracao: zonaExploracao,
+  // #186 (28/10/2026): a Forja ainda não tem a construção própria no Mapa — vale a da Exploração (PROVISÓRIA). Nome-alvo da arte final: `zona-forja.png` (assume sozinho).
+  forja: resolveMapaZona('zona-forja', zonaExploracao),
   laboratorio: zonaLaboratorio,
   hall: zonaHall,
 };
@@ -65,6 +68,8 @@ const AREA_POS: Record<AreaId, { left: string; top: string }> = {
   mercado: { left: '30%', top: '17%' },
   jogos: { left: '74%', top: '19.8%' },
   exploracao: { left: '23%', top: '47%' },
+  // #186 (28/10/2026): ABAIXO da Exploração, simétrica ao Hall — a plataforma do portal de baixo à esquerda do `bg-mapa` (centro ~19/73 do fundo) está livre.
+  forja: { left: '19%', top: '74.5%' },
   arena: { left: '82%', top: '41.5%' },
   laboratorio: { left: '49%', top: '77.9%' },
   hall: { left: '81.5%', top: '69%' },

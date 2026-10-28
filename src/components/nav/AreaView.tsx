@@ -6,8 +6,8 @@ import type { Language } from '../../utils/i18n';
 import { AreaScene, type AreaLot } from './AreaScene';
 import { AreaSheet } from './AreaSheet';
 import { mercadoLots, arenaLots, laboratorioLots, hallLots, type MercadoLotId, type LaboratorioLotId } from '../../utils/areaSheetCopy';
-import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART, HALL_BG, LABORATORIO_BG } from '../../assets/soulmon/areas';
-import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
+import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, FORJA_LOT_ART, FORJA_BG, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART, HALL_BG, LABORATORIO_BG } from '../../assets/soulmon/areas';
+import { exploracaoLots, forjaLots, jogosLots } from '../../utils/playAreaLots';
 import { RogueDungeonPlaceholder } from '../play/RogueDungeonPlaceholder';
 import { RogueDungeon } from '../RogueDungeon';
 import type { RogueRun } from '../../utils/rogueDungeon';
@@ -153,6 +153,8 @@ export interface AreaViewProps {
   /** Abre a folha de um lote ao montar (missão da Home → o lugar dela, ex.:
    *  `'passeio'`, `'torneio'`). One-shot: o `App` limpa pelo `onInitialSheetConsumed`. */
   initialSheet?: string;
+  /** A SEÇÃO dentro do lote aberto por `initialSheet` (#186): `'arquivo'` no Perfil, `'amigos'` no Salão do Clã (atalhos de `BUILDING_HOME`). */
+  initialSection?: string;
   onInitialSheetConsumed?: () => void;
   language: Language;
   /** DEMO LOCAL (`utils/demoMode.ts`): os prédios sociais (PvP, ranking, comunidade) ficam inertes. Derivado no `App` por `isDemoMode(gameState)`. */
@@ -250,6 +252,31 @@ export interface AreaViewProps {
   };
 }
 
+/** Abas de SEÇÃO dentro de um lote que absorveu a função de outro prédio (#186): Perfil | Arquivo e Clã | Amigos. Mesmo visual das abas da Biblioteca (`sm2-kit-tab`). */
+function SectionTabs<K extends string>({ label, items, active, onPick }: { label: string; items: { key: K; label: string }[]; active: K; onPick: (k: K) => void }) {
+  return (
+    <div role="tablist" aria-label={label} className="sm2-kit-tabs" data-section-tabs style={{ marginBottom: 12 }}>
+      {items.map(it => (
+        <button
+          key={it.key}
+          type="button"
+          role="tab"
+          aria-selected={it.key === active}
+          data-section-tab={it.key}
+          onClick={() => onPick(it.key)}
+          className={it.key === active ? 'sm2-kit-tab sm2-kit-tab-on' : 'sm2-kit-tab'}
+          style={{ flex: '1 0 auto', padding: '0 12px', whiteSpace: 'nowrap' }}
+        >
+          {it.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** A sub-aba do `App` que cada lote do Laboratório mostra (`'pet'` = a seção Arquivo, dentro do lote Perfil). */
+const LAB_TAB_OF: Partial<Record<LaboratorioLotId, LabTab>> = { evolucao: 'evolution', stats: 'stats', perfil: 'perfil' };
+
 /** Espera curta dentro da folha — o conteúdo é `lazy`, e a folha já está
  *  aberta: nunca um branco sem explicação. */
 function SheetLoading({ language }: { language: Language }) {
@@ -301,6 +328,16 @@ export function AreaView(props: AreaViewProps) {
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
   useEffect(() => { if (props.initialSheet) { if (!initialLock && !initialDemoBlocked) onVisitBuilding?.(`${area}.${props.initialSheet}` as BuildingId); onInitialSheetConsumed?.(); } }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // #186: um atalho a `laboratorio.pet` (Arquivo) abre o Perfil JÁ na seção Arquivo — a visita do prédio do Arquivo conta como antes.
+  const [guildaSection, setGuildaSection] = useState<'cla' | 'amigos'>(props.initialSection === 'amigos' && !initialDemoBlocked ? 'amigos' : 'cla');
+  useEffect(() => {
+    if (area === 'laboratorio' && props.initialSheet && !initialLock) {
+      const tab = props.initialSection === 'arquivo' ? 'pet' : LAB_TAB_OF[props.initialSheet as LaboratorioLotId];
+      if (tab) props.onLabTab(tab);
+      if (props.initialSection === 'arquivo') onVisitBuilding?.('laboratorio.pet');
+    }
+    if (area === 'hall' && props.initialSheet === 'guilda' && props.initialSection === 'amigos' && !initialLock && !initialDemoBlocked) onVisitBuilding?.('laboratorio.amigos');
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const closeLabel = language === 'pt-BR' ? 'Voltar' : 'Back'; // L2: tela cheia nunca diz "Fechar"
   /* D-16: capturado na montagem (o `App` limpa o pedido logo depois e a folha do Mercado é `lazy` — ela monta DEPOIS disso).
      Vale só para a primeira abertura: fechar a folha apaga. */
@@ -310,7 +347,7 @@ export function AreaView(props: AreaViewProps) {
   // esconde o topo sobre a cena — ele não pode competir com o ✕/voltar da camada.
   const layerOpen = sheet !== null || duelOpen || game !== null;
   // J1 (rodada 7): baixa os chunks de jogar ANTES do toque (ver `playPrefetch.ts`).
-  usePlayPrefetch(area === 'exploracao' || area === 'jogos', sheet !== null);
+  usePlayPrefetch(area === 'exploracao' || area === 'jogos' || area === 'forja', sheet !== null);
   const { onLayerChange } = props;
   useEffect(() => {
     onLayerChange?.(layerOpen);
@@ -324,7 +361,7 @@ export function AreaView(props: AreaViewProps) {
   if (area === 'mercado') {
     const lots = mercadoLots(language);
     const open = lots.find(l => l.id === sheet) ?? null;
-    const stall = open && open.id !== 'conquistas' && open.id !== 'ferreiro' && open.id !== 'restaurante' ? open.id as Exclude<MercadoLotId, 'conquistas' | 'ferreiro' | 'restaurante'> : null;
+    const stall = open && open.id !== 'conquistas' && open.id !== 'restaurante' ? open.id as Exclude<MercadoLotId, 'conquistas' | 'restaurante'> : null;
     return (
       <AreaScene
         areaId={area}
@@ -367,7 +404,6 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'conquistas' && (
               <ConquistasSheet language={language} missionProgress={ownership.missionProgress} claimed={ownership.missionClaimed} shop={{ ownedBackgrounds: ownership.ownedBackgrounds, balance: props.points, onBuy: actions.onBuy }} />
             )}
-            {open?.id === 'ferreiro' && <ForgeCard language={language} />}
           </Suspense>
         </AreaSheet>
       </AreaScene>
@@ -375,7 +411,7 @@ export function AreaView(props: AreaViewProps) {
   }
 
   const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setGame(g); };
-  /** A Fenda Sem Fim (a antiga Masmorra): mora na Arena desde beta3 N10; o jogo abre em tela cheia sobre a cena da área. */
+  /** A Fenda Sem Fim (a antiga Masmorra): mora na Exploração (#186, 28/10/2026; esteve na Arena de beta3 N10 até então); o jogo abre em tela cheia sobre a cena da área. */
   const renderMasmorra = () => {
     const { play } = props;
     const exitGame = () => setGame(null);
@@ -414,7 +450,7 @@ export function AreaView(props: AreaViewProps) {
         areaId={area}
         language={language}
         background={AREA_BG.arena}
-        lots={gated(lots.map(l => ({ ...l, art: ARENA_LOT_ART[l.id], onOpen: () => { if (l.id === 'fenda' && props.naMasmorra) { onVisitBuilding?.('arena.fenda' as BuildingId); setSheet(null); setGame('masmorra'); } else enter(l.id); } } satisfies AreaLot)))}
+        lots={gated(lots.map(l => ({ ...l, art: ARENA_LOT_ART[l.id], onOpen: () => enter(l.id) } satisfies AreaLot)))}
         notice={lockNote}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined} hideClose={open?.id === 'torneio' && tournamentDuelOpen}>
@@ -433,16 +469,8 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'guerra' && (
               <GuildSheet room="guerra" language={language} {...props.guild} />
             )}
-            {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={props.play.minigameBitsToday} onStart={() => start('masmorra')} />}
           </Suspense>
         </AreaSheet>
-        {game === 'masmorra' && (
-          <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
-            <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
-              {renderMasmorra()}
-            </Suspense>
-          </div>
-        )}
         {duelOpen && (
           <Suspense fallback={<SheetLoading language={language} />}>
             <ArenaGame
@@ -462,17 +490,20 @@ export function AreaView(props: AreaViewProps) {
     );
   }
 
-  if (area === 'exploracao' || area === 'jogos') {
+  if (area === 'exploracao' || area === 'jogos' || area === 'forja') {
     const exitGame = () => setGame(null);
     const lots: AreaLot[] = gated(area === 'exploracao'
       ? exploracaoLots(language).map(l => ({
-        ...l, art: EXPLORACAO_LOT_ART[l.id], onOpen: () => enter(l.id),
+        // A Fenda Sem Fim com o Soulmon JÁ na descida entra direto na tela da descida, sem a folha com o CTA (`naMasmorra`).
+        ...l, art: EXPLORACAO_LOT_ART[l.id], onOpen: () => { if (l.id === 'fenda' && props.naMasmorra) { onVisitBuilding?.('exploracao.fenda' as BuildingId); setSheet(null); setGame('masmorra'); } else enter(l.id); },
       }))
-      : jogosLots(language).map(l => ({ ...l, art: JOGOS_LOT_ART[l.id], onOpen: () => enter(l.id) })));
+      : area === 'forja'
+        ? forjaLots(language).map(l => ({ ...l, art: FORJA_LOT_ART[l.id], onOpen: () => enter(l.id) }))
+        : jogosLots(language).map(l => ({ ...l, art: JOGOS_LOT_ART[l.id], onOpen: () => enter(l.id) })));
     const open = lots.find(l => l.id === sheet) ?? null;
     const { play } = props;
-    /** O Calabouço (jogos.dungeon) com a incursão no save abre em TELA CHEIA, sem a folha (N7). */
-    const rogueFull = area === 'jogos' && open?.id === 'dungeon' && !!play.rogue;
+    /** O Calabouço (exploracao.dungeon) com a incursão no save abre em TELA CHEIA, sem a folha (N7). */
+    const rogueFull = area === 'exploracao' && open?.id === 'dungeon' && !!play.rogue;
     const base = {
       evolutionStage: props.evolutionStage,
       demoCharacterId: props.demoCharacterId,
@@ -482,7 +513,7 @@ export function AreaView(props: AreaViewProps) {
     const mt = play.mindTutorials;
     const mindTut = (id: MindGameId) => (mt ? { seen: mt.seen[id] === true, onShown: () => mt.onShown(id) } : undefined);
     return (
-      <AreaScene areaId={area} language={language} background={PLAY_AREA_BG[area]} lots={lots} notice={lockNote}>
+      <AreaScene areaId={area} language={language} background={area === 'forja' ? FORJA_BG : PLAY_AREA_BG[area]} lots={lots} notice={lockNote}>
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull} onClose={close}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'passeio' && (
@@ -499,7 +530,8 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'oficina' && play.focusKeyActive === false && <div data-oficina-etapa="1"><PrepararFocoSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} keyActive={false} onPrepared={play.onFocusPrepared} /></div>}
             {open?.id === 'oficina' && play.focusKeyActive !== false && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} onFocusCycle={() => props.onDailyEvent?.('foco')} planInPrepare={play.focusKeyActive !== undefined} onFocusStart={play.onFocusStart} onFocusPause={play.onFocusPause} onFocusResume={play.onFocusResume} onFocusCancel={play.onFocusCancel} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
-            {open?.id === 'masmorra' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
+            {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
+            {open?.id === 'ferreiro' && <ForgeCard language={language} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
@@ -574,8 +606,8 @@ export function AreaView(props: AreaViewProps) {
   // Laboratório; Biblioteca / Círculo de Amigos / Salão da Guilda no Hall. As
   // abas e filtros de dentro das folhas saíram; a construção é quem escolhe.
   if (area === 'laboratorio') {
-    // D-50 (19/10/2026): a Biblioteca e o Círculo de Amigos moram no Laboratório — a folha deles é a `LibraryPage` (`hallContent`), não a do `labContent`.
-    const tabOf: Partial<Record<LaboratorioLotId, LabTab>> = { evolucao: 'evolution', pet: 'pet', stats: 'stats', perfil: 'perfil' };
+    // D-50 (19/10/2026): a Biblioteca mora no Laboratório — a folha dela é a `LibraryPage` (`hallContent`), não a do `labContent`. #186: o Arquivo é seção do Perfil e o Círculo de Amigos, do Salão do Clã.
+    const tabOf = LAB_TAB_OF;
     const lots = laboratorioLots(language).filter(l => !(props.demo && isDemoHiddenLot('laboratorio', l.id)));
     const open = lots.find(l => l.id === sheet) ?? null;
     return (
@@ -587,11 +619,24 @@ export function AreaView(props: AreaViewProps) {
         notice={lockNote}
       >
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
-          {open?.id === 'biblioteca' || open?.id === 'amigos' ? (
+          {open?.id === 'biblioteca' ? (
             <Suspense fallback={<SheetLoading language={language} />}>
-              {props.hallContent(open.id === 'biblioteca' ? 'directory' : 'friends')}
+              {props.hallContent('directory')}
             </Suspense>
-          ) : props.labContent}
+          ) : (
+            <>
+              {/* #186: o Arquivo (a ficha do Soulmon) é uma SEÇÃO do Perfil — o prédio `laboratorio.pet` segue existindo (missão, material), só sem lote no mapa. */}
+              {open?.id === 'perfil' && (
+                <SectionTabs
+                  label={language === 'pt-BR' ? 'Seções do Perfil' : 'Profile sections'}
+                  items={[{ key: 'perfil', label: language === 'pt-BR' ? 'Perfil' : 'Profile' }, { key: 'pet', label: language === 'pt-BR' ? 'Arquivo' : 'Archive' }]}
+                  active={props.labTab === 'pet' ? 'pet' : 'perfil'}
+                  onPick={(k) => { props.onLabTab(k); if (k === 'pet') onVisitBuilding?.('laboratorio.pet'); }}
+                />
+              )}
+              {props.labContent}
+            </>
+          )}
         </AreaSheet>
       </AreaScene>
     );
@@ -610,7 +655,18 @@ export function AreaView(props: AreaViewProps) {
       <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close}>
         <Suspense fallback={<SheetLoading language={language} />}>
           {open?.id === 'guilda' && (
-            <GuildSheet room="salao" language={language} {...props.guild} />
+            <>
+              {/* #186: o Círculo de Amigos é uma SEÇÃO do Salão do Clã — o prédio `laboratorio.amigos` segue existindo (missão, material), só sem lote no mapa. */}
+              <SectionTabs
+                label={language === 'pt-BR' ? 'Seções do Salão do Clã' : 'Clan Hall sections'}
+                items={[{ key: 'cla', label: language === 'pt-BR' ? 'Clã' : 'Clan' }, { key: 'amigos', label: language === 'pt-BR' ? 'Amigos' : 'Friends' }]}
+                active={guildaSection}
+                onPick={(k) => { setGuildaSection(k); if (k === 'amigos') onVisitBuilding?.('laboratorio.amigos'); }}
+              />
+              {guildaSection === 'amigos'
+                ? props.hallContent('friends')
+                : <GuildSheet room="salao" language={language} {...props.guild} />}
+            </>
           )}
           {open?.id === 'feira' && (
             <GuildSheet room="feira" language={language} {...props.guild} />

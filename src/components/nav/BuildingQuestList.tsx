@@ -1,7 +1,7 @@
 import type { Language } from '../../utils/i18n';
 import type { BuildingId } from '../../utils/gates';
-import { exploracaoLots, jogosLots } from '../../utils/playAreaLots';
-import { arenaLots, laboratorioLots, hallLots } from '../../utils/areaSheetCopy';
+import { exploracaoLots, forjaLots, jogosLots } from '../../utils/playAreaLots';
+import { arenaLots, laboratorioLots, hallLots, sectionBuildingLabel } from '../../utils/areaSheetCopy';
 import { LISTED_QUEST_BUILDINGS, questStatus, type BuildingQuestState } from '../../utils/buildingQuests';
 import { questText } from '../../utils/buildingQuestsCopy';
 import { ClaimButton, MissionCard, type MissionEntry } from './MissionCard';
@@ -19,7 +19,10 @@ export interface BuildingQuestsProps {
 /** O nome do prédio, do mesmo lugar que o Mapa lê (um dono por rótulo). */
 export function nameOf(id: BuildingId, language: Language): string {
   const [area, lot] = id.split('.');
+  const section = sectionBuildingLabel(id, language);
+  if (section) return section;
   const lots = area === 'exploracao' ? exploracaoLots(language)
+    : area === 'forja' ? forjaLots(language)
     : area === 'jogos' ? jogosLots(language)
     : area === 'arena' ? arenaLots(language)
     : area === 'laboratorio' ? laboratorioLots(language)

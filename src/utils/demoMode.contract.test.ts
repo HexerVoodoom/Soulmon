@@ -88,7 +88,7 @@ describe('1. cada ponto de fiação continua lendo o predicado', () => {
     const area = ler('components/nav/AreaView.tsx');
     // Os seis lotes existem de verdade no mapa — a lista da demo não pode apontar para um id que sumiu.
     const copy = ler('utils/areaSheetCopy.ts');
-    for (const [, ids] of Object.entries({ arena: ['torneio', 'duelo'], hall: ['guilda', 'feira', 'grove'], laboratorio: ['biblioteca', 'amigos'] })) {
+    for (const [, ids] of Object.entries({ arena: ['torneio', 'duelo'], hall: ['guilda', 'feira', 'grove'], laboratorio: ['biblioteca'] })) {
       for (const id of ids) expect(copy, `lote ${id}`).toContain(`id: '${id}'`);
     }
     expect(area).toContain('demoBlocks(l.id)');

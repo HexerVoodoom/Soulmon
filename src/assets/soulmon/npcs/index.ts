@@ -23,6 +23,8 @@ export const AREA_NPC_ART: Record<AreaId, string> = {
   laboratorio: npcLaboratorio,
   jogos: npcJogos,
   exploracao: npcExploracao,
+  // #186 (28/10/2026): a Forja ainda não tem anfitriã própria — vale a Vitra (Soulsmith), o busto mais industrial do banco. Arte final: ver docs/ASSETS-A-GERAR.md §15.
+  forja: npcFForjaFerreiro,
   hall: npcHall,
 };
 
@@ -85,24 +87,26 @@ export const LOT_NPC_ART: Record<string, string> = {
   'mercado:decoracao': npcLojaDecoracao,
   'mercado:background': npcLojaBackground,
   'mercado:conquistas': npcMercadoConquistas, // Medra
-  'mercado:ferreiro': FERREIRO_NPC_ART,
+  'forja:ferreiro': FERREIRO_NPC_ART,
   'mercado:restaurante': npcMercadoRestaurante, // Brickle, o caranguejo pedreiro (14/10/2026; restaurante em obra)
   'arena:torneio': npcArena,
   'arena:duelo': npcArenaDuelo, // Naia (07/10/2026: trocou o Tuska)
   'arena:guerra': npcArenaGuerra, // Mirevesper: arte escolhida pelo dono em 18/10/2026 — ver docs/ARTE-MELHORIAS-FUTURAS.md
   'hall:feira': npcArenaFeira, // Fanfare (`utils/fairArt.ts` › FAIR_ART_IDS.npc)
-  'arena:fenda': npcExploracao,
+  'exploracao:fenda': npcExploracao,
   'exploracao:passeio': npcExploracaoPasseio, // Lisel (mariposa arquivista; 22/10/2026 trocou o Mirk)
   // 04/10/2026: bustos PRÓPRIOS (`entrada-dono/npc-exploracao-*`, 768², alfa binário); até aqui eram
   // os da Kova e da Selene. As versões `-b` ficaram fora do bundle (`E:/Soulmon-assets/instalados/alternativas/`).
-  'exploracao:oficina': npcExploracaoOficina, // Lume (vagalume do coro; 07/10/2026 trocou o Tique)
-  'exploracao:caderno': npcExploracaoCaderno, // Opala (geleia-fantasma arquivista; 07/10/2026 trocou a Sépia)
+  'forja:oficina': npcExploracaoOficina, // Lume (vagalume do coro; 07/10/2026 trocou o Tique)
+  'forja:caderno': npcExploracaoCaderno, // Opala (geleia-fantasma arquivista; 07/10/2026 trocou a Sépia)
   // Os três prédios de Jogos (30/09/2026): o Pipo segue no Salão (jogos livres).
   'jogos:salao': npcJogos,
   'jogos:mente': npcJogosMente, // Tessela
-  'jogos:dungeon': npcJogosDungeon, // Corva (26/10/2026: busto próprio, P1-04)
-  'exploracao:refugio': npcJogosRefugio, // Marim (07/10/2026: trocou o Bobbi)
+  'exploracao:dungeon': npcJogosDungeon, // Corva (26/10/2026: busto próprio, P1-04)
+  'forja:refugio': npcJogosRefugio, // Marim (07/10/2026: trocou o Bobbi)
   'laboratorio:evolucao': npcLaboratorio,
+  // #186 (28/10/2026): `laboratorio:pet` e `laboratorio:amigos` NÃO têm mais lote no mapa (viraram seções do Perfil e do Salão do Clã), mas os prédios seguem (missão, material, apresentação
+  // ao abrir) e a Tinta e a Zumi continuam sendo quem os apresenta — por isso o busto e a voz ficam, fora da conta dos lotes (`SECTION_NPC_KEYS` no teste de contrato).
   'laboratorio:pet': npcLaboratorioPet, // Tinta (enguia escriba; 07/10/2026 trocou o Faro)
   'laboratorio:stats': npcLaboratorioStats, // Sumi (koi-dragão sábio; 07/10/2026 trocou a Oriel — `npc-f-sacerdotisa` segue em EXTRA_NPC_ART)
   'laboratorio:perfil': npcPerfilCorvo, // o Corvo em alta qualidade, 768² (15/10/2026, variação 1 do dono); antes o mascote 384² (14/10/2026, decisão do dono: o Perfil não usa o busto da Iris/Oráculo nem o da Oriel; `npc-f-sacerdotisa` segue em EXTRA_NPC_ART)

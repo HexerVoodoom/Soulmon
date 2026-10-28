@@ -33,10 +33,10 @@ const panel = (key: string) => document.querySelector<HTMLElement>(`[data-missio
 describe('MissionsSheet: uma folha, três abas', () => {
   it('Daily abre primeiro: Hoje (passeio + journaling); semana e conquistas ainda não montadas', async () => {
     sheet('en-US');
-    await waitFor(() => expect(document.querySelector('[data-building-quest="exploracao.caderno"]')).not.toBeNull(), { timeout: 20000 });
+    await waitFor(() => expect(document.querySelector('[data-building-quest="forja.caderno"]')).not.toBeNull(), { timeout: 20000 });
     const daily = document.querySelector('[data-missions-section="daily"]')!;
     expect(daily.getAttribute('aria-label')).toBe('Today');
-    expect(daily.querySelector('[data-building-quest="exploracao.caderno"]')!.textContent).toContain('Write an entry in your journal');
+    expect(daily.querySelector('[data-building-quest="forja.caderno"]')!.textContent).toContain('Write an entry in your journal');
     expect(daily.querySelector('[data-stroll-line]')!.textContent).toContain('Take a stroll');
     expect(daily.querySelector('[data-travessias]')).toBeNull();
     expect(panel('weekly')).toBeNull();
@@ -129,7 +129,7 @@ describe('journaling: aponta, pronta, Resgatar, resgatada', () => {
     expect(li.querySelector('button')).toBeNull();
   });
   it('pronta: "Claim" é a única ação; resgatada: discreta, sem botão', async () => {
-    const pronta = completeBuildingQuest(undefined, D, 'exploracao.caderno', 99);
+    const pronta = completeBuildingQuest(undefined, D, 'forja.caderno', 99);
     const onClaim = vi.fn();
     const mk = (state: BuildingQuestState | undefined) => (
       <MissionsSheet open onClose={() => {}} language="en-US" crossings={CROSSINGS_EMPTY} onClaimStroll={vi.fn()}
@@ -144,8 +144,8 @@ describe('journaling: aponta, pronta, Resgatar, resgatada', () => {
     expect(btns.length).toBe(1);
     expect(btns[0].textContent).toBe('Claim');
     fireEvent.click(btns[0]);
-    expect(onClaim).toHaveBeenCalledWith('exploracao.caderno');
-    rerender(mk(claimBuildingQuest(pronta, D, 'exploracao.caderno', 99).state));
+    expect(onClaim).toHaveBeenCalledWith('forja.caderno');
+    rerender(mk(claimBuildingQuest(pronta, D, 'forja.caderno', 99).state));
     const li2 = document.querySelector('[data-building-quest]')!;
     expect(li2.getAttribute('data-status')).toBe('claimed');
     expect(li2.querySelector('button')).toBeNull();
@@ -265,17 +265,17 @@ describe('Hoje sem "!" no título e "Take a stroll" leva ao prédio (11/10/2026)
 
 // Dono, 11/10/2026: toda missão diária com lugar próprio NAVEGA até ele (como o Passeio).
 describe('missão do Caderno leva ao prédio', () => {
-  it('o texto da linha é um botão que chama onGo("exploracao.caderno"); resgatada, vira texto', async () => {
+  it('o texto da linha é um botão que chama onGo("forja.caderno"); resgatada, vira texto', async () => {
     const onGo = vi.fn();
     const base = { open: true, onClose: () => {}, language: 'pt-BR' as const, crossings: CROSSINGS_EMPTY, onClaimStroll: vi.fn(), todayKey: '2026-10-07',
       weekly: [], onClaimWeekly: vi.fn(), missionProgress: {}, marks: { daily: 'available' as const, torneio: null, conquistas: null } };
     render(<MissionsSheet {...base} buildings={{ state: undefined, day: '2026-10-07', bondLevel: 99, onClaim: vi.fn(), onGo }} />);
-    const go = await waitFor(() => { const b = document.querySelector('[data-building-go="exploracao.caderno"]'); expect(b).not.toBeNull(); return b as HTMLButtonElement; }, { timeout: 20000 });
+    const go = await waitFor(() => { const b = document.querySelector('[data-building-go="forja.caderno"]'); expect(b).not.toBeNull(); return b as HTMLButtonElement; }, { timeout: 20000 });
     fireEvent.click(go);
-    expect(onGo).toHaveBeenCalledWith('exploracao.caderno');
+    expect(onGo).toHaveBeenCalledWith('forja.caderno');
     cleanup();
-    let st: BuildingQuestState | undefined = completeBuildingQuest(undefined, '2026-10-07', 'exploracao.caderno', 99);
-    st = claimBuildingQuest(st, '2026-10-07', 'exploracao.caderno', 99).state ?? st;
+    let st: BuildingQuestState | undefined = completeBuildingQuest(undefined, '2026-10-07', 'forja.caderno', 99);
+    st = claimBuildingQuest(st, '2026-10-07', 'forja.caderno', 99).state ?? st;
     render(<MissionsSheet {...base} buildings={{ state: st, day: '2026-10-07', bondLevel: 99, onClaim: vi.fn(), onGo }} />);
     await waitFor(() => expect(document.querySelector('[data-building-quest]')).not.toBeNull(), { timeout: 20000 });
     expect(document.querySelector('[data-building-go]')).toBeNull();

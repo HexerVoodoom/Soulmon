@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { areaLabel, type AreaId } from '../navigation';
+import { areaLabel, buildingLot, type AreaId } from '../navigation';
 import { buildingIntroView } from '../utils/buildingIntroCopy';
 import type { BuildingId } from '../utils/gates';
 import type { Language } from '../utils/i18n';
@@ -16,7 +16,8 @@ export function unlockToastText(ids: readonly BuildingId[], language: Language):
   if (ids.length === 0) return '';
   const nome = (id: BuildingId) => buildingIntroView(id, language).place;
   if (ids.length === 1) {
-    const area = ids[0].split('.')[0] as AreaId;
+    // #186: o Arquivo e o Círculo de Amigos moram dentro do Perfil e do Salão do Clã — o balão cita a área onde eles ESTÃO.
+    const area = (buildingLot(ids[0])?.area ?? ids[0].split('.')[0]) as AreaId;
     const local = areaLabel(area, isPt);
     return isPt ? `${nome(ids[0])} desbloqueado em ${local}` : `${nome(ids[0])} unlocked in ${local}`;
   }

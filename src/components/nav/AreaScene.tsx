@@ -64,7 +64,7 @@ export function lotZIndex(top: string | number | undefined): number {
 
 /** Lotes cuja arte é teal sobre o fundo teal e some no cenário: ganham um HALO claro (pedido do dono, 11/10/2026, "o prédio do jornal
  *  não tá legal" / "muito misturado com o background"). É filtro — nenhuma arte nova. Chave `área:lote`. */
-const LOT_HALO: ReadonlySet<string> = new Set(['exploracao:caderno']);
+const LOT_HALO: ReadonlySet<string> = new Set(['forja:caderno']);
 
 export function AreaScene({ areaId, language, lots, background, notice, children }: {
   areaId: AreaId;

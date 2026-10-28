@@ -14,8 +14,8 @@ import { resolve, basename } from 'node:path';
 import sharp from 'sharp';
 import { LOT_ART_BOUNDS, lotHitRects, type Rect } from './areaLotGeometry';
 import { mercadoLots, arenaLots, laboratorioLots, hallLots } from './areaSheetCopy';
-import { exploracaoLots, jogosLots } from './playAreaLots';
-import { MERCADO_LOT_ART, ARENA_LOT_ART, EXPLORACAO_LOT_ART, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART } from '../assets/soulmon/areas';
+import { exploracaoLots, forjaLots, jogosLots } from './playAreaLots';
+import { MERCADO_LOT_ART, ARENA_LOT_ART, EXPLORACAO_LOT_ART, FORJA_LOT_ART, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART } from '../assets/soulmon/areas';
 import type { AreaId } from '../navigation';
 
 type Lot = { id: string; left: string; top: string; width?: string; label: string };
@@ -23,6 +23,7 @@ const AREAS: Array<[AreaId, Lot[], Record<string, string>]> = [
   ['mercado', mercadoLots('pt-BR'), MERCADO_LOT_ART],
   ['arena', arenaLots('pt-BR'), ARENA_LOT_ART],
   ['exploracao', exploracaoLots('pt-BR'), EXPLORACAO_LOT_ART],
+  ['forja', forjaLots('pt-BR'), FORJA_LOT_ART],
   ['jogos', jogosLots('pt-BR'), JOGOS_LOT_ART],
   ['laboratorio', laboratorioLots('pt-BR'), LABORATORIO_LOT_ART],
   ['hall', hallLots('pt-BR'), HALL_LOT_ART],

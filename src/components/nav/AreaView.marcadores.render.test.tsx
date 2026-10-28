@@ -13,7 +13,7 @@ import { AreaView } from './AreaView';
 vi.mock('../play/PasseioSheet', () => ({ PasseioSheet: () => <p data-stub="passeio">passeio</p> }));
 
 const base = (over: Record<string, unknown> = {}): ComponentProps<typeof AreaView> => ({
-  area: 'exploracao',
+  area: 'forja', // #186: o Caderno mora na Forja
   language: 'en-US',
   ownership: { ownedBackgrounds: [], equippedBackground: null, ownedFurniture: [], equippedDecor: {}, missionProgress: {} },
   actions: { onBuy: () => false, onEquip: () => {}, onEquipFurniture: () => {} },
@@ -33,14 +33,14 @@ const marca = (c: HTMLElement, id: string) => lote(c, id).querySelector('[data-m
 
 describe('marcadores de missão nos prédios', () => {
   it('"!" no Caderno quando a missão está disponível; nos outros prédios, nada', () => {
-    const { container } = renderWithCss(<AreaView {...base({ buildingMarks: { 'exploracao.caderno': 'available' } })} />);
+    const { container } = renderWithCss(<AreaView {...base({ buildingMarks: { 'forja.caderno': 'available' } })} />);
     expect(marca(container, 'caderno')?.getAttribute('data-mission-mark')).toBe('available');
-    expect(marca(container, 'passeio')).toBeNull();
+    expect(marca(container, 'refugio')).toBeNull();
     expect(marca(container, 'oficina')).toBeNull();
   });
 
   it('"?" no Caderno quando a missão está completa e não recolhida', () => {
-    const { container } = renderWithCss(<AreaView {...base({ buildingMarks: { 'exploracao.caderno': 'ready' } })} />);
+    const { container } = renderWithCss(<AreaView {...base({ buildingMarks: { 'forja.caderno': 'ready' } })} />);
     expect(marca(container, 'caderno')?.getAttribute('data-mission-mark')).toBe('ready');
   });
 
@@ -53,22 +53,22 @@ describe('marcadores de missão nos prédios', () => {
 
   it('o marcador não intercepta o toque (H11) e tocar no prédio só abre a folha: nunca recolhe recompensa ali', async () => {
     const onVisitBuilding = vi.fn();
-    const { container } = renderWithCss(<AreaView {...base({ onVisitBuilding, buildingMarks: { 'exploracao.caderno': 'ready' } })} />);
+    const { container } = renderWithCss(<AreaView {...base({ onVisitBuilding, buildingMarks: { 'forja.caderno': 'ready' } })} />);
     const m = marca(container, 'caderno')!;
     expect((m.parentElement as HTMLElement).style.pointerEvents).toBe('none');
     expect(container.querySelector('[data-claim], [data-resgatar]')).toBeNull();
     await act(async () => { fireEvent.click(lote(container, 'caderno')); });
-    expect(onVisitBuilding).toHaveBeenCalledWith('exploracao.caderno');
+    expect(onVisitBuilding).toHaveBeenCalledWith('forja.caderno');
     expect(container.querySelector('[role="dialog"]')).not.toBeNull();
   });
 
   it('prédio trancado pelo Vínculo não mostra marcador', () => {
-    const { container } = renderWithCss(<AreaView {...base({ bondLevel: 0, buildingMarks: { 'exploracao.caderno': 'available' } })} />);
+    const { container } = renderWithCss(<AreaView {...base({ bondLevel: 0, buildingMarks: { 'forja.caderno': 'available' } })} />);
     expect(marca(container, 'caderno')).toBeNull();
   });
 
   it('sem pulso: o marcador não tem animação (vale com prefers-reduced-motion)', () => {
-    const { container } = renderWithCss(<AreaView {...base({ buildingMarks: { 'exploracao.caderno': 'available' } })} />);
+    const { container } = renderWithCss(<AreaView {...base({ buildingMarks: { 'forja.caderno': 'available' } })} />);
     const m = marca(container, 'caderno')!;
     expect(m.style.animation ?? '').toBe('');
     expect((m.parentElement as HTMLElement).style.animation ?? '').toBe('');

@@ -42,7 +42,7 @@ import { AreaTopBar } from './components/nav/AreaTopBar';
 import { ProfileAvatarButton } from './components/perfil/ProfileAvatarButton';
 import { readyFor } from './utils/presentationQueue';
 import {
-  type ViewType, type AreaId, buildingDestination, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
+  type ViewType, type AreaId, buildingDestination, buildingLot, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
 } from './navigation';
 import { registerAndroidBack } from './utils/androidBack';
 import { closeTopBackLayer } from './utils/backStack';
@@ -840,7 +840,7 @@ export default function App() {
   const [missionsOpen, setMissionsOpen] = useState<null | 'daily'>(null);
   const abrirMissoes = useCallback(() => setMissionsOpen('daily'), []);
   const fecharMissoes = useCallback(() => setMissionsOpen(null), []);
-  const [pendingSheet, setPendingSheet] = useState<{ area: AreaId; lot: string; stallKind?: 'frames' } | null>(null);
+  const [pendingSheet, setPendingSheet] = useState<{ area: AreaId; lot: string; stallKind?: 'frames'; section?: string } | null>(null);
   /* Rodada 7 (M5): a celebração da meta do dia — liga na virada de "não" para "sim". */
   const [celebrarMeta, setCelebrarMeta] = useState(false);
   const currentViewRef = useRef(currentView);
@@ -4094,7 +4094,7 @@ export default function App() {
     const dest = buildingDestination(building);
     if (!dest) return;
     if (dest.kind === 'missions') { setMissionsOpen('daily'); return; }
-    setPendingSheet({ area: dest.area, lot: dest.lot });
+    setPendingSheet({ area: dest.area, lot: dest.lot, section: dest.section });
     goTo(areaView(dest.area));
   }, [goTo]);
 
@@ -4119,10 +4119,12 @@ export default function App() {
 
   /* A linha de missão de prédio (Caderno) leva ao lote com a folha aberta, como o Passeio (dono, 11/10/2026). */
   const irAoPredioDaMissao = useCallback((id: BuildingId) => {
-    const [area, lot] = id.split('.');
+    // #186: `buildingLot` é o único que sabe onde cada prédio mora hoje (Arquivo → Perfil, Amigos → Salão do Clã).
+    const dest = buildingLot(id);
+    if (!dest) return;
     setMissionsOpen(null);
-    setPendingSheet({ area: area as AreaId, lot });
-    goTo(areaView(area as AreaId));
+    setPendingSheet({ area: dest.area, lot: dest.lot, section: dest.section });
+    goTo(areaView(dest.area));
   }, [goTo]);
 
   /* TODA missão com lugar LEVA até ele (dono, 14/10/2026, REGISTRO §62): fecha a folha e abre o prédio no Mapa (ou volta à Home,
@@ -4226,8 +4228,8 @@ export default function App() {
   }, [setGameState]);
   const handleRefugeAccept = useCallback(() => {
     setGameState(prev => ({ ...prev, refugeInvite: acceptRefugeInvite(prev.refugeInvite, playerDayIso(new Date(), prev.playerDayTz)) }));
-    // o Refúgio mora na Exploração (`exploracao.refugio`): o convite leva ao prédio dele, com a folha aberta (não à área Jogos)
-    setPendingSheet({ area: 'exploracao', lot: 'refugio' });
+    // o Refúgio mora na Forja (`forja.refugio`; #186): o convite leva ao prédio dele, com a folha aberta (não à área Jogos)
+    setPendingSheet({ area: 'forja', lot: 'refugio' });
   }, [setGameState]);
   const handleRefugeLaunchConsumed = useCallback(() => setRefugeLaunch(false), []);
 
@@ -5367,7 +5369,7 @@ export default function App() {
       // idempotente por dia do jogador (`completeBuildingQuest` só age em `available`).
       const novo = c1.some(e => !c0.some(o => o.id === e.id));
       const bq = novo
-        ? completeBuildingQuest(prev.buildingQuests, playerDayKey(new Date(), prev.playerDayTz), 'exploracao.caderno', bondLevelFor(prev.totalXP ?? 0))
+        ? completeBuildingQuest(prev.buildingQuests, playerDayKey(new Date(), prev.playerDayTz), 'forja.caderno', bondLevelFor(prev.totalXP ?? 0))
         : prev.buildingQuests;
       return bq === prev.buildingQuests ? { ...prev, caderno: c1 } : { ...prev, caderno: c1, buildingQuests: bq };
     });
@@ -7542,6 +7544,7 @@ export default function App() {
                 initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
                 onInitialGameConsumed={handleRefugeLaunchConsumed}
                 initialSheet={pendingSheet && pendingSheet.area === area ? pendingSheet.lot : undefined}
+                initialSection={pendingSheet && pendingSheet.area === area ? pendingSheet.section : undefined}
                 onInitialSheetConsumed={() => setPendingSheet(null)}
                 initialStallKind={pendingSheet && pendingSheet.area === area ? pendingSheet.stallKind : undefined}
                 weekly={missoesDaSemana}
@@ -7951,7 +7954,7 @@ export default function App() {
                       language={language}
                       onShown={handleRefugeShown}
                       onDismiss={handleRefugeDismiss}
-                      onAccept={() => { handleRefugeAccept(); goTo(areaView('exploracao')); }}
+                      onAccept={() => { handleRefugeAccept(); goTo(areaView('forja')); }}
                     />
                   ),
                 });

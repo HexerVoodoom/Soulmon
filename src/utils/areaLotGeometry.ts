@@ -26,31 +26,29 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'mercado:background': [0.023, 0, 0.973, 1],
   'mercado:conquistas': [0.253, 0.027, 0.75, 0.973],
   // O Soulsmith (07/10/2026): a oficina de lava do domínio Fogo.
-  'mercado:ferreiro': [0.04, 0.08, 0.963, 0.94],
+  'forja:ferreiro': [0.04, 0.08, 0.963, 0.94],
   // O Restaurante em obra (14/10/2026): andaimes e tijolos, alfa > 20.
   'mercado:restaurante': [0.027, 0.277, 0.97, 0.97],
   'arena:torneio': [0.073, 0, 0.927, 1],
   'arena:duelo': [0.167, 0, 0.833, 1],
   'arena:guerra': [0.039, 0.059, 0.959, 0.939], // W12 (20/10/2026): prédio do banco isométrico de 23/09 (`hf_20260923_193918_c287e46f…`, coliseu em cabeça de pedra com cristais), alfa > 20
   'hall:feira': [0.188, 0.039, 0.811, 0.961],
-  'arena:fenda': [0.23, 0.01, 0.767, 0.987], // 28/10/2026: prédio próprio do Endless Rift (`lote-exploracao-endless-rift`, alfa > 20)
+  'exploracao:fenda': [0.23, 0.01, 0.767, 0.987], // 28/10/2026: prédio próprio do Endless Rift (`lote-exploracao-endless-rift`, alfa > 20)
   'exploracao:passeio': [0.243, 0.12, 0.76, 0.973],
   // Prédios próprios desde 04/10/2026 (antes reusavam o Observatório e a Biblioteca).
   // 07/10/2026 (escolha do dono): Oficina = santuário Akasha (torre estreita), Caderno = santuário do Pântano, Amigos = abrigo da Terra — bbox do alfa > 20.
-  'exploracao:oficina': [0.264, 0.039, 0.734, 0.961],
+  'forja:oficina': [0.264, 0.039, 0.734, 0.961],
   // 11/10/2026: chalé `-campina` (alfa > 20), no lugar do santuário do Pântano ([0.13, 0.027, 0.867, 0.983]).
-  'exploracao:caderno': [0.23, 0.039, 0.768, 0.961], // 18/10/2026 (§88): prédios Caderno/Oficina repintados (faixa D); caixa remedida pelo alfa
+  'forja:caderno': [0.23, 0.039, 0.768, 0.961], // 18/10/2026 (§88): prédios Caderno/Oficina repintados (faixa D); caixa remedida pelo alfa
   'jogos:salao': [0.017, 0, 0.98, 1],
   'jogos:mente': [0.227, 0.12, 0.773, 0.973],
-  'jogos:dungeon': [0.087, 0.007, 0.91, 0.993], // 28/10/2026 (dono, 26/10): opção d, Cripta de cristal (`lote-jogos-dungeon-cripta`, alfa > 20)
-  'exploracao:refugio': [0.147, 0.12, 0.857, 0.973],
+  'exploracao:dungeon': [0.087, 0.007, 0.91, 0.993], // 28/10/2026 (dono, 26/10): opção d, Cripta de cristal (`lote-jogos-dungeon-cripta`, alfa > 20)
+  'forja:refugio': [0.147, 0.12, 0.857, 0.973],
   'laboratorio:evolucao': [0.088, 0.039, 0.91, 0.961],
-  'laboratorio:pet': [0.186, 0.039, 0.814, 0.961],
   'laboratorio:stats': [0.238, 0.039, 0.762, 0.955],
   'laboratorio:perfil': [0.02, 0.487, 0.98, 0.97], // P2b (14/10/2026): `lote-laboratorio-perfil` (espelho-d'água da alma, alfa > 20)
   // D-50 (19/10/2026): Biblioteca e Círculo de Amigos mudaram do Hall para o Laboratório. W5 (19/10/2026): arte nova do Clã/Feira/Grove/Evolução/Arquivo/Vínculo/Amigos/Guerra/Caderno/Oficina — 512², recorte da bbox + ~4% de margem, caixa medida com alfa > 20.
   'laboratorio:biblioteca': [0.027, 0.03, 0.973, 0.973],
-  'laboratorio:amigos': [0.102, 0.039, 0.898, 0.961],
   'hall:grove': [0.127, 0.039, 0.871, 0.961],
   'hall:guilda': [0.137, 0.039, 0.863, 0.961],
 };
@@ -64,13 +62,11 @@ export const LOT_HIT_INSET: Record<string, LotBounds> = {
   'arena:torneio': [0, 0, 0.22, 0],
   'arena:duelo': [0.2, 0, 0, 0],
   'arena:guerra': [0.2, 0, 0, 0],
-  'arena:fenda': [0, 0, 0.04, 0],
 };
 
 /** Deslocamento do RÓTULO (px, x e y) por lote — tira o nome de trás do prédio vizinho que o cobre. */
 export const LOT_LABEL_OFFSET: Record<string, readonly [number, number]> = {
   'arena:torneio': [-38, 0],
-  'arena:fenda': [0, -62],
 };
 
 /** Caixa de TOQUE do sprite: a opaca menos o miolo (`LOT_HIT_INSET`). */

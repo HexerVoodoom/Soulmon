@@ -34,13 +34,12 @@ export const MERCADO_LOT_ART = {
   background: loteBackground,
   // 30/09/2026 (leva lotes-v2, aprovada pelo dono): a torre-treliça própria.
   conquistas: loteMercadoConquistas,
-  ferreiro: loteFerreiro,
   restaurante: loteRestaurante,
 } as const;
 
 // W5 (19/10/2026): a Guerra foi repintada (coliseu em pedra petróleo com bandeiras vermelhas, sem ossos/grifo; escolha padrão `arena-guerra-a`, 512², alfa real). A versão de 18/10 (grifo e serpente de ossos) saiu do bundle.
-// beta3 N10: a Fenda Sem Fim (Masmorra) mora na Arena; reusa a arte do prédio da Masmorra.
-export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, guerra: loteGuerra, fenda: loteEndlessRift } as const;
+// #186 (28/10/2026): a Fenda Sem Fim voltou para a Exploração (`EXPLORACAO_LOT_ART.fenda`).
+export const ARENA_LOT_ART = { torneio: loteTorneio, duelo: loteDuelo, guerra: loteGuerra } as const;
 
 // ── Exploração e Jogos (F5, PR #118) ───────────────────────────────────────
 // Fundos reduzidos para 760×1344 (a mesma medida do Mercado/Arena) para caber
@@ -82,14 +81,33 @@ import loteRefugio from './lote-jogos-refugio.png';
 export const PLAY_AREA_BG = { exploracao: bgExploracao, jogos: bgJogos } as const;
 
 // `passeio` (30/09/2026, leva lotes-v2): a ilha flutuante com arco de raízes.
-export const EXPLORACAO_LOT_ART = { passeio: lotePasseio, oficina: loteOficina, caderno: loteCaderno, refugio: loteRefugio } as const;
+export const EXPLORACAO_LOT_ART = { passeio: lotePasseio, fenda: loteEndlessRift, dungeon: loteJogosDungeon } as const;
+
+// ── Arte que o dono vai gerar (#186, 28/10/2026) — RESOLVEDOR ─────────────────────────────────────────────
+// Cada arte nova tem um NOME-ALVO fixo nesta pasta. Enquanto o arquivo NÃO existe, vale a arte provisória (reaproveitada); no dia em que o
+// arquivo cair aqui com o nome certo, ele assume SOZINHO — sem editar código. O glob é ESTREITO de propósito (só os nomes-alvo): um glob
+// largo empacotaria os PNG que ficam em disco fora do bundle (orçamento de bytes). Lista exata de tamanhos/posições: docs/ASSETS-A-GERAR.md §15.
+const ARTE_NOVA = import.meta.glob('./{bg-forja,lote-forja-*,lote-lab-*-v2}.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+/** A arte-alvo `./<nome>.png` se já existe na pasta; senão a provisória. */
+export function resolveArt(nome: string, provisoria: string): string {
+  return ARTE_NOVA[`./${nome}.png`] ?? provisoria;
+}
+
+// ⚒️ A FORJA (#186, 28/10/2026): fundo e prédios provisórios reaproveitados da Exploração/Mercado; nomes-alvo da arte final: `bg-forja.png` e `lote-forja-<atividade>.png`.
+export const FORJA_BG = resolveArt('bg-forja', bgExploracao);
+export const FORJA_LOT_ART = {
+  oficina: resolveArt('lote-forja-oficina', loteOficina),
+  caderno: resolveArt('lote-forja-caderno', loteCaderno),
+  refugio: resolveArt('lote-forja-refugio', loteRefugio),
+  ferreiro: resolveArt('lote-forja-ferreiro', loteFerreiro),
+} as const;
 
 // 🏛️ Os três prédios de Jogos (30/09/2026). O Salão herda as duas artes que já
 // eram dele por conteúdo (o PPT; o Dino mudou da Exploração para cá).
 // `mente` e `refugio`: prédios próprios desde 30/09/2026 (leva lotes-v2). 04/10/2026 (J5): o Refúgio
 // trocou a casinha de cogumelo PROVISÓRIA pela casa-gruta com cachoeira e lago (`entrada-dono/36-*`).
 // beta3 M3: o Refúgio foi para a Exploração; o Calabouço reusa a arte da Masmorra (provisória).
-export const JOGOS_LOT_ART = { salao: lotePpt, mente: loteMente, dungeon: loteJogosDungeon } as const;
+export const JOGOS_LOT_ART = { salao: lotePpt, mente: loteMente } as const;
 
 // ── Guilda, Laboratório e Hall (29/09/2026) ────────────────────────────────
 // 🌙 Fundos 760×1344 do Hall e do Laboratório. 04/10/2026 (H18): REFEITOS na receita dos
@@ -108,23 +126,20 @@ export const LABORATORIO_BG = bgLaboratorio;
 // versão limpa `final/`, 300² alfa binário). Até aqui eram empréstimos das
 // isométricas do Mercado e de Jogos.
 import loteEvolucao from './lote-laboratorio-evolucao.png';
-import lotePet from './lote-laboratorio-pet.png';
 import loteStats from './lote-laboratorio-stats.png';
 // 14/10/2026 (lote P2b): prédio próprio do Perfil, o espelho que lê a alma (Higgsfield gpt_image_2_5 flare, 300², alfa real).
 import lotePerfil from './lote-laboratorio-perfil.png';
 import loteBiblioteca from './lote-hall-biblioteca.png';
-// 07/10/2026 (escolha do dono): o Círculo de Amigos usa o abrigo do domínio Terra.
-import loteAmigos from './lote-hall-amigos-terra.png';
 import loteGuilda from './lote-hall-guilda-luz.png';
 
 // D-50 (19/10/2026): a Biblioteca e o Círculo de Amigos mudaram do Hall para o Laboratório — a arte é a mesma de antes.
+// #186 (28/10/2026): sem o Arquivo (`pet`) e o Círculo de Amigos (viraram seções do Perfil e do Salão do Clã). Biblioteca, Vínculo e Centro de Evolução ganham prédios novos: nomes-alvo
+// `lote-lab-biblioteca-v2.png`, `lote-lab-vinculo-v2.png`, `lote-lab-evolucao-v2.png` (resolvedor acima).
 export const LABORATORIO_LOT_ART = {
-  evolucao: loteEvolucao,
-  pet: lotePet,
-  stats: loteStats,
+  evolucao: resolveArt('lote-lab-evolucao-v2', loteEvolucao),
+  stats: resolveArt('lote-lab-vinculo-v2', loteStats),
   perfil: lotePerfil,
-  biblioteca: loteBiblioteca,
-  amigos: loteAmigos,
+  biblioteca: resolveArt('lote-lab-biblioteca-v2', loteBiblioteca),
 } as const;
 
 // W5 (19/10/2026, escolha do dono): o Grove ganhou prédio PRÓPRIO — pavilhão de cristal em volta de uma árvore jovem luminosa (Higgsfield gpt_image_2_5 flare, 512², alfa real).

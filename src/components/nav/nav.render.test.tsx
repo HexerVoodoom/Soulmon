@@ -30,10 +30,10 @@ import { resolve } from 'node:path';
 const mapProps = { bits: 260, emblems: 12, credits: 3 };
 
 describe('MapPage', () => {
-  it('teto: exatamente as 6 áreas, na ordem do dono', () => {
+  it('teto: exatamente as 7 áreas, na ordem do dono (a Forja, #186, é a 7ª)', () => {
     const { container } = renderWithCss(<MapPage language="en-US" onOpenArea={() => {}} {...mapProps} />);
     const ids = Array.from(container.querySelectorAll('[data-map-area]')).map(b => b.getAttribute('data-map-area'));
-    expect(ids).toEqual(['mercado', 'jogos', 'arena', 'exploracao', 'laboratorio', 'hall']);
+    expect(ids).toEqual(['mercado', 'jogos', 'arena', 'exploracao', 'forja', 'laboratorio', 'hall']);
   });
 
   it('par PT/EN: o rótulo visível É o nome acessível, e os idiomas diferem', () => {
@@ -51,8 +51,8 @@ describe('MapPage', () => {
     const pt = nomes('pt-BR');
     expect(en.h1).toBe('Map');
     expect(pt.h1).toBe('Mapa');
-    expect(en.out).toEqual(['Market', 'Games', 'Arena', 'Exploration', 'Laboratory', 'Hall']);
-    expect(pt.out).toEqual(['Mercado', 'Jogos', 'Arena', 'Exploração', 'Laboratório', 'Hall']);
+    expect(en.out).toEqual(['Market', 'Games', 'Arena', 'Exploration', 'The Forge', 'Laboratory', 'Hall']);
+    expect(pt.out).toEqual(['Mercado', 'Jogos', 'Arena', 'Exploração', 'A Forja', 'Laboratório', 'Hall']);
     // rótulo visível == nome acessível (aria-label do botão)
     expect(en.ariaOut).toEqual(en.out);
     expect(pt.ariaOut).toEqual(pt.out);
@@ -65,7 +65,7 @@ describe('MapPage', () => {
     expect(onOpen).toHaveBeenCalledWith('arena');
   });
 
-  it('as 6 áreas navegam para a rota certa (reusa AREAS de navigation.ts)', () => {
+  it('as 7 áreas navegam para a rota certa (reusa AREAS de navigation.ts)', () => {
     const onOpen = vi.fn();
     const { container } = renderWithCss(<MapPage language="pt-BR" onOpenArea={onOpen} {...mapProps} />);
     for (const id of AREAS) {
@@ -91,7 +91,7 @@ describe('MapPage', () => {
     expect(bg.getAttribute('aria-hidden')).toBe('true');
     // cada área carrega arte própria (não é mais só um glifo do Material)
     const arts = Array.from(container.querySelectorAll('[data-map-area] img'));
-    expect(arts.length).toBe(6);
+    expect(arts.length).toBe(7);
   });
 });
 

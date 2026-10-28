@@ -1,5 +1,5 @@
 /**
- * Ponto de ENCAIXE do Calabouço (beta3 M3, 25/10/2026): o prédio `jogos.dungeon` abre este placeholder (fallback sem save de run; o Calabouço real já existe).
+ * Ponto de ENCAIXE do Calabouço (beta3 M3, 25/10/2026): o prédio `exploracao.dungeon` abre este placeholder (fallback sem save de run; o Calabouço real já existe).
  * A lane M7 troca o uso em `AreaView` (`open?.id === 'dungeon'`) pelo componente real `RogueDungeon.tsx`.
  */
 import type { Language } from '../../utils/i18n';

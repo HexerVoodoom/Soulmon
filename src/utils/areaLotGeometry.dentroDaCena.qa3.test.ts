@@ -2,12 +2,12 @@
 import { describe, it, expect } from 'vitest';
 import { lotHitRects } from './areaLotGeometry';
 import { mercadoLots, arenaLots, laboratorioLots, hallLots } from './areaSheetCopy';
-import { exploracaoLots, jogosLots } from './playAreaLots';
+import { exploracaoLots, forjaLots, jogosLots } from './playAreaLots';
 import type { AreaId } from '../navigation';
 
 type Lot = { id: string; left: string; top: string; width?: string; label: string };
 const AREAS: Array<[AreaId, (l: 'pt-BR' | 'en-US') => Lot[]]> = [
-  ['mercado', mercadoLots as never], ['arena', arenaLots as never], ['exploracao', exploracaoLots as never],
+  ['mercado', mercadoLots as never], ['arena', arenaLots as never], ['exploracao', exploracaoLots as never], ['forja', forjaLots as never],
   ['jogos', jogosLots as never], ['laboratorio', laboratorioLots as never], ['hall', hallLots as never],
 ];
 describe('QA3 geometria dos lotes: dentro da cena e >= 44px', () => {

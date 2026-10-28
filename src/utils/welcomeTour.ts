@@ -107,7 +107,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** A ordem dos cartões de área é a do Mapa tal como o tour antigo a lia (travada em teste). */
-export const MAP_TOUR_AREA_ORDER: readonly AreaId[] = ['laboratorio', 'mercado', 'arena', 'jogos', 'exploracao', 'hall'];
+export const MAP_TOUR_AREA_ORDER: readonly AreaId[] = ['laboratorio', 'mercado', 'arena', 'jogos', 'exploracao', 'forja', 'hall'];
 
 const bRow = (id: BuildingId, en: string, pt: string): TourAreaRow =>
   ({ name: { en: BUILDING_INTRO_COPY[id].place.en, pt: BUILDING_INTRO_COPY[id].place.pt }, line: { en, pt } });
@@ -131,40 +131,45 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
   },
   mapStep('laboratorio', { en: 'Where your Soulmon is looked at up close.', pt: 'Onde o seu Soulmon é visto de perto.' }, [
     bRow('laboratorio.evolucao', 'Its attributes and the Soul Fragments for the next form.', 'Os atributos e os Fragmentos de Alma para a próxima forma.'),
-    bRow('laboratorio.pet', 'Its sheet: element, moves and the creatures you have met.', 'A ficha: elemento, golpes e as criaturas que você já encontrou.'),
     bRow('laboratorio.stats', 'Your stats and your Bond.', 'Suas estatísticas e o seu Vínculo.'),
     bRow('laboratorio.perfil', 'Your profile card.', 'O seu cartão de perfil.'),
+    // #186: o Arquivo não tem lote — é a aba "Arquivo" do Perfil (o prédio segue na lista, 1 linha por prédio).
+    bRow('laboratorio.pet', 'Inside the Profile: its sheet, moves and creatures met.', 'Dentro do Perfil: a ficha, os golpes e as criaturas que você já encontrou.'),
     bRow('laboratorio.biblioteca', 'Stories, and the people who tell them.', 'Histórias, e quem as conta.'),
-    bRow('laboratorio.amigos', 'Your friends.', 'Os seus amigos.'),
   ]),
-  mapStep('mercado', { en: 'Shops, and the forge.', pt: 'Lojas, e a forja.' }, [
+  mapStep('mercado', { en: 'Shops.', pt: 'Lojas.' }, [
     bRow('mercado.itens', 'Food, chips and small things for your Soulmon.', 'Comida, chips e coisinhas para o seu Soulmon.'),
     bRow('mercado.conquistas', 'The milestones you have reached.', 'Os marcos que você já atravessou.'),
     bRow('mercado.decoracao', 'Furniture for its den.', 'Móveis para o abrigo dele.'),
     bRow('mercado.background', 'Backdrops for its stage.', 'Cenários para o palco dele.'),
-    bRow('mercado.ferreiro', 'Upgrades for its gear.', 'Aprimora os equipamentos dele.'),
     // 14/10/2026: o Restaurante ainda está em obra (sem ação, sem BuildingId).
     { name: { en: 'Restaurant', pt: 'Restaurante' }, line: { en: 'Under construction, opening soon!', pt: 'Em obra, em breve!' } },
   ]),
-  mapStep('arena', { en: 'Meeting other Soulmons. The Endless Rift is open from day one.', pt: 'Encontros com outros Soulmons. A Fenda Sem Fim está aberta desde o primeiro dia.' }, [
+  mapStep('arena', { en: 'Meeting other Soulmons.', pt: 'Encontros com outros Soulmons.' }, [
     bRow('arena.duelo', 'One duel at a time, against another Soulmon.', 'Um duelo de cada vez, contra outro Soulmon.'),
     bRow('arena.torneio', 'The ranked Tournament and the Open Arena.', 'O Torneio ranqueado e a Arena livre.'),
-    bRow('arena.fenda', 'Your Soulmon goes down floor by floor and fights on its own, spending energy.', 'O seu Soulmon desce andar por andar e luta sozinho, gastando energia.'),
     bRow('arena.guerra', 'The Clan War, watched over by Mirevesper, fought with your clan.', 'A Guerra de Clãs, vigiada por Mirevesper, junto do seu clã.'),
   ]),
   mapStep('jogos', { en: 'Play, and calm.', pt: 'Brincar, e acalmar.' }, [
     bRow('jogos.salao', 'Minigames, for fun and for Bits.', 'Minijogos, pela graça e por Bits.'),
     bRow('jogos.mente', 'Memory and logic games.', 'Jogos de memória e lógica.'),
-    bRow('jogos.dungeon', 'A small roguelike dungeon game.', 'Um pequeno jogo de calabouço roguelike.'),
   ]),
-  mapStep('exploracao', { en: 'Out in the mist.', pt: 'Lá fora, na névoa.' }, [
+  mapStep('exploracao', { en: 'Out in the mist. The Endless Rift is open from day one.', pt: 'Lá fora, na névoa. A Fenda Sem Fim está aberta desde o primeiro dia.' }, [
     bRow('exploracao.passeio', 'A calm walk through the mist.', 'Uma caminhada calma pela névoa.'),
-    bRow('exploracao.oficina', 'Plan a session first, then focus.', 'Planeje a sessão primeiro, depois foque.'),
-    bRow('exploracao.caderno', 'Your journal.', 'O seu caderno.'),
-    bRow('exploracao.refugio', 'Slow breathing for hard moments.', 'Respiração lenta para momentos difíceis.'),
+    bRow('exploracao.fenda', 'Your Soulmon goes down floor by floor and fights on its own, spending energy.', 'O seu Soulmon desce andar por andar e luta sozinho, gastando energia.'),
+    bRow('exploracao.dungeon', 'A small roguelike dungeon game.', 'Um pequeno jogo de calabouço roguelike.'),
+  ]),
+  // #186 (28/10/2026): a Forja — produtividade e disciplina. Recebeu a Oficina, o Caderno e o Refúgio (que eram da Exploração) e o Soulsmith (que era do Mercado).
+  mapStep('forja', { en: 'Where steady habits are made.', pt: 'Onde se forjam os hábitos constantes.' }, [
+    bRow('forja.oficina', 'Plan a session first, then focus.', 'Planeje a sessão primeiro, depois foque.'),
+    bRow('forja.caderno', 'Your journal.', 'O seu caderno.'),
+    bRow('forja.refugio', 'Slow breathing for hard moments.', 'Respiração lenta para momentos difíceis.'),
+    bRow('forja.ferreiro', 'Upgrades for its gear.', 'Aprimora os equipamentos dele.'),
   ]),
   mapStep('hall', { en: 'Your Clan.', pt: 'O seu Clã.' }, [
     bRow('hall.guilda', 'Your Clan.', 'O seu Clã.'),
+    // #186: o Círculo de Amigos não tem lote — é a aba "Amigos" do Salão do Clã.
+    bRow('laboratorio.amigos', 'Inside the Clan Hall: your friends.', 'Dentro do Salão do Clã: os seus amigos.'),
     bRow('hall.feira', 'The Fair: send your Soulmon on a mission for the Clan.', 'A Feira: mande o seu Soulmon em missão pelo Clã.'),
     bRow('hall.grove', 'The grove your Clan grows.', 'O bosque que o seu Clã cultiva.'),
   ]),

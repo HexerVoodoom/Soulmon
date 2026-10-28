@@ -320,7 +320,7 @@ export function StatsPage({
         </Suspense>
       )}
 
-      {/* Equipamento (PR8b): mudou para o Soulsmith, no Mercado (07/10/2026) — `AreaView`, lote `ferreiro`. */}
+      {/* Equipamento (PR8b): mudou para o Soulsmith (07/10/2026; da Forja desde #186) — `AreaView`, lote `ferreiro`. */}
 
       {/* ─────────────── Quem ele é ─────────────── */}
       {(passive || carePattern) && (

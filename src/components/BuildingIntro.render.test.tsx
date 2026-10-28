@@ -56,7 +56,7 @@ describe('BuildingIntro', () => {
   it('nada fecha sozinho: o tempo passa e nenhuma saída é chamada', () => {
     vi.useFakeTimers();
     const onFinish = vi.fn();
-    render(<BuildingIntro ids={['arena.fenda']} language="en-US" onFinish={onFinish} />);
+    render(<BuildingIntro ids={['exploracao.fenda']} language="en-US" onFinish={onFinish} />);
     vi.advanceTimersByTime(10 * 60 * 1000);
     expect(onFinish).not.toHaveBeenCalled();
     expect(document.querySelector('[role="dialog"]')).not.toBeNull();
@@ -70,12 +70,12 @@ describe('BuildingIntro', () => {
   });
 
   it('cada idioma lê o seu texto (EN base, PT-BR par)', () => {
-    const en = render(<BuildingIntro ids={['mercado.ferreiro']} language="en-US" onFinish={() => {}} />);
-    expect(en.container.textContent).toContain(buildingIntroView('mercado.ferreiro', 'en-US').lines[0]);
+    const en = render(<BuildingIntro ids={['forja.ferreiro']} language="en-US" onFinish={() => {}} />);
+    expect(en.container.textContent).toContain(buildingIntroView('forja.ferreiro', 'en-US').lines[0]);
     expect(q(en.container, '[data-npc-skip]')!.textContent).toBe('Skip');
     en.unmount();
-    const pt = render(<BuildingIntro ids={['mercado.ferreiro']} language="pt-BR" onFinish={() => {}} />);
-    expect(pt.container.textContent).toContain(buildingIntroView('mercado.ferreiro', 'pt-BR').lines[0]);
+    const pt = render(<BuildingIntro ids={['forja.ferreiro']} language="pt-BR" onFinish={() => {}} />);
+    expect(pt.container.textContent).toContain(buildingIntroView('forja.ferreiro', 'pt-BR').lines[0]);
     expect(q(pt.container, '[data-npc-skip]')!.textContent).toBe('Pular');
   });
 });

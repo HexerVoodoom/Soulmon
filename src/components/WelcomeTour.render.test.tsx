@@ -91,7 +91,7 @@ describe('WelcomeTour — fluxo', () => {
 });
 
 describe('Tutorial do mapa (MAP_TOUR_STEPS)', () => {
-  it('um cartão por ÁREA, na ordem do mapa, e um prédio por linha: os 22 prédios, cada um UMA vez', () => {
+  it('um cartão por ÁREA, na ordem do mapa, e um prédio por linha: os prédios de `BUILDING_GATES`, cada um UMA vez', () => {
     const areas = MAP_TOUR_STEPS.filter(s => s.areas).map(s => s.id);
     expect(areas).toEqual(MAP_TOUR_AREA_ORDER.map(a => `map-${a}`));
     expect(new Set(MAP_TOUR_AREA_ORDER).size).toBe(AREAS.length);
@@ -107,7 +107,7 @@ describe('Tutorial do mapa (MAP_TOUR_STEPS)', () => {
     expect(MAP_TOUR_STEPS.find(s => s.id === 'map-laboratorio')!.title.pt).toBe(areaLabel('laboratorio', true));
   });
   it('a Endless Rift está listada e dita como aberta desde o primeiro dia', () => {
-    const exp = MAP_TOUR_STEPS.find(s => s.id === 'map-arena')!; // beta3 N10: a Fenda mora na Arena
+    const exp = MAP_TOUR_STEPS.find(s => s.id === 'map-exploracao')!; // #186: a Fenda voltou para a Exploração
     expect(exp.areas!.some(r => r.name.en === 'Endless Rift')).toBe(true);
     expect(exp.speech.en).toMatch(/day one/);
   });
