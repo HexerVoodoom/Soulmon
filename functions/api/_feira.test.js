@@ -10,15 +10,18 @@ import { duelSide } from './_duel.js';
  * A Feira do Chefe: as funções PURAS (plano `PLANO-FEIRA-CHEFE.md` §2, com a correção de calibração documentada em `diasAlvo`).
  */
 describe('liga e desliga', () => {
-  it('a constante está no futuro: nasce DESLIGADA', () => {
-    expect(FEIRA_CHEFE_DESDE > new Date().toISOString().slice(0, 10)).toBe(true);
-    expect(feiraLigada({})).toBe(false);
-    expect(feiraLigada(undefined)).toBe(false);
+  it('a constante liga em 2026-10-29: antes disso desligada, a partir daí ligada (dono ligou em produção)', () => {
+    expect(FEIRA_CHEFE_DESDE).toBe('2026-10-29');
+    expect(feiraLigada({}, new Date('2026-10-28T23:00:00Z'))).toBe(false);
+    expect(feiraLigada({}, new Date('2026-10-29T00:00:00Z'))).toBe(true);
+    expect(feiraLigada(undefined, new Date('2026-10-28T12:00:00Z'))).toBe(false);
   });
-  it('a variável de ambiente (data válida) liga; lixo é ignorado', () => {
-    expect(feiraLigada({ FEIRA_CHEFE_DESDE: '2000-01-01' })).toBe(true);
-    expect(feiraLigada({ FEIRA_CHEFE_DESDE: '2099-01-01' })).toBe(false);
-    expect(feiraLigada({ FEIRA_CHEFE_DESDE: 'ontem' })).toBe(false);
+  it('a variável de ambiente (data válida) manda sobre a constante; lixo é ignorado (cai na constante)', () => {
+    const antes = new Date('2026-10-28T12:00:00Z');
+    expect(feiraLigada({ FEIRA_CHEFE_DESDE: '2000-01-01' }, antes)).toBe(true);
+    expect(feiraLigada({ FEIRA_CHEFE_DESDE: '2099-01-01' }, new Date('2026-11-01T12:00:00Z'))).toBe(false);
+    expect(feiraLigada({ FEIRA_CHEFE_DESDE: 'ontem' }, antes)).toBe(false);
+    expect(feiraLigada({ FEIRA_CHEFE_DESDE: 'ontem' }, new Date('2026-10-30T12:00:00Z'))).toBe(true);
     expect(feiraLigada({ FEIRA_CHEFE_DESDE: '2026-11-10' }, new Date('2026-11-09T23:00:00Z'))).toBe(false);
     expect(feiraLigada({ FEIRA_CHEFE_DESDE: '2026-11-10' }, new Date('2026-11-10T00:00:00Z'))).toBe(true);
   });

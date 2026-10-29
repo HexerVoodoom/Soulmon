@@ -56,7 +56,9 @@ async function ateAIris() {
   }, { timeout: 60_000, interval: 50 });
 }
 
-describe('D-150: a Iris diz o elemento antes do desenho', () => {
+// 21/10/2026 (dono): a tela da Iris está OCULTA (`TELA_GOSTEI_OCULTA` em SoulmonOnboarding.tsx; o fluxo segue direto como "Gostei").
+// Reativar estes testes junto com a flag.
+describe.skip('D-150: a Iris diz o elemento antes do desenho', () => {
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'setInterval', 'clearInterval', 'Date'] });
     installFakeStorage();
