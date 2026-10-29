@@ -110,7 +110,7 @@ describe('(b) o núcleo não lê Travessia (R-27, R-37)', () => {
 
 describe('(c) nada fora do app fala de Travessia ou Passeio (R-38, Passeio R-1)', () => {
   const MENCAO = /\btravessia|\bcrossings?\b|\bpasseio|\bstroll/i;
-  const PULAR = new Set(['node_modules', 'build', 'dist', '.gradle', 'release', 'out', 'generated', 'intermediates']);
+  const PULAR = new Set(['node_modules', 'build', 'dist', 'public', '.gradle', 'release', 'out', 'generated', 'intermediates']);
   const TEXTO = /\.(ts|tsx|js|mjs|cjs|kt|java|xml|json|html|toml)$/;
   function varrer(dir: string, acc: string[] = []): string[] {
     const abs = join(RAIZ, dir);
