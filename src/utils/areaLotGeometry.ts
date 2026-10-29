@@ -29,10 +29,10 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'forja:ferreiro': [0.131, 0, 0.871, 0.742],
   // O Restaurante em obra (14/10/2026): andaimes e tijolos, alfa > 20.
   'mercado:restaurante': [0.027, 0.277, 0.97, 0.97],
-  'arena:torneio': [0.073, 0, 0.927, 1],
-  'arena:duelo': [0.167, 0, 0.833, 1],
+  'arena:torneio': [0.073, 0.107, 0.927, 1.0],
+  'arena:duelo': [0.167, 0.347, 0.833, 1.0],
   'arena:guerra': [0.039, 0.059, 0.959, 0.939], // W12 (20/10/2026): prédio do banco isométrico de 23/09 (`hf_20260923_193918_c287e46f…`, coliseu em cabeça de pedra com cristais), alfa > 20
-  'hall:feira': [0.188, 0.039, 0.811, 0.961],
+  'hall:feira': [0.158, 0.0, 0.84, 0.742],
   'exploracao:fenda': [0.23, 0.01, 0.767, 0.987], // 28/10/2026: prédio próprio do Endless Rift (`lote-exploracao-endless-rift`, alfa > 20)
   'exploracao:passeio': [0.243, 0.12, 0.76, 0.973],
   // Prédios próprios desde 04/10/2026 (antes reusavam o Observatório e a Biblioteca).
@@ -49,8 +49,8 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'laboratorio:perfil': [0.02, 0.487, 0.98, 0.97], // P2b (14/10/2026): `lote-laboratorio-perfil` (espelho-d'água da alma, alfa > 20)
   // D-50 (19/10/2026): Biblioteca e Círculo de Amigos mudaram do Hall para o Laboratório. W5 (19/10/2026): arte nova do Clã/Feira/Grove/Evolução/Arquivo/Vínculo/Amigos/Guerra/Caderno/Oficina — 512², recorte da bbox + ~4% de margem, caixa medida com alfa > 20.
   'laboratorio:biblioteca': [0.117, 0, 0.883, 0.742],
-  'hall:grove': [0.127, 0.039, 0.871, 0.961],
-  'hall:guilda': [0.137, 0.039, 0.863, 0.961],
+  'hall:grove': [0.18, 0.0, 0.82, 0.742],
+  'hall:guilda': [0.184, 0.0, 0.816, 0.742],
 };
 
 /**
