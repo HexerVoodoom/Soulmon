@@ -28,7 +28,7 @@ function MaterialIcon({ item }: { item: RewardItemKind }) {
   return <RewardIcon src={src} size={18} on still />;
 }
 
-export function RewardPreview({ items, mode, language, size = 16 }: {
+export function RewardPreview({ items, mode, language, size = 20 }: {
   items: readonly PreviewItem[]; mode: 'before' | 'after'; language: Language; size?: number;
 }) {
   const isPt = language === 'pt-BR';

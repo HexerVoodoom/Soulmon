@@ -427,6 +427,7 @@ describe('P10 (beta-2) — chips zerados do Salão não aparecem', () => {
   it('Elemental Fusion sem recorde: só o "até N Bits"; PPT mantém seus dois chips (não são zerados)', () => {
     const { container } = renderWithCss(<Match3Sheet language="pt-BR" onStart={() => {}} />);
     expect(container.textContent).not.toContain('seu recorde');
-    expect(container.textContent).toMatch(/até \d+ Bits/);
+    // 29/10/2026: a prévia de recompensa (RewardPreview) escreve "até" + valor com o glifo de Bits (sem a palavra "Bits").
+    expect(container.textContent).toMatch(/até\s*\d+/);
   });
 });
