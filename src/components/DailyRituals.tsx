@@ -25,9 +25,7 @@
  *    junta as pontuais e as agendadas que caem hoje; `Habits` são as diárias.
  *  · A linha de HOJE mostra o nome e o checkbox (+ os filhos, se houver) e, só se
  *    houver, UMA linha secundária pequena com o PRAZO e o convite da assombrada
- *    (`TaskMeta lean`, decisão §46). Sem subtítulo, selo, barra, adiamentos nem categoria.
- *    EMENDA 29/10/2026 (dono, §188): a linha mostra a recompensa ANTES de concluir, um chip pequeno no fim
- *    (`RewardPreview before`): tarefa = `+N XP` exato; hábito = `até N XP` (teto do degrau `tree`).
+ *    (`TaskMeta lean`, decisão §46). Sem subtítulo, selo, barra, XP, adiamentos nem categoria.
  *  · `View all` (gatilho discreto + swipe) lista TODAS as tarefas e hábitos, com busca,
  *    filtro e ordem (revisão 2, A3/A4): NÃO marca nada, é o ÚNICO lugar que edita.
  *    Na Home, tocar em qualquer lugar da linha marca como feita (A1).
@@ -45,9 +43,6 @@ import { BackArrow } from './ui/BackArrow';
 import { useBackLayer } from '../utils/backStack';
 import { activityBucket, taskIsForToday, isRitualOpen, ritualOpenKey } from '../utils/atividadesLista';
 import { sm2Button } from './form/FormKit';
-import { RewardPreview } from './ui/RewardPreview';
-import { bondXP } from '../utils/bond';
-import { effortOf, HABIT_WEIGHT } from '../utils/taskTriage';
 import { RitualPanel, RitualRow } from './pixel/RitualPanel';
 import { StepRow } from './StepRow';
 import { TaskMeta } from './TaskMeta';
@@ -285,7 +280,6 @@ export function DailyRituals({
           ? `${task.completed ? 'Tarefa concluída' : 'Conclua as etapas'}: ${task.name}`
           : `${task.completed ? 'Tarefa concluída' : 'Marcar tarefa como concluída'}: ${task.name}`}
         below={<TaskMeta task={task} now={now} language={language} lean />}
-        reward={<RewardPreview mode="before" language={language} size={14} items={[{ kind: 'xp', amount: bondXP({ kind: 'completion', weight: effortOf(task) }) }]} />}
         toggleLabelEn={comFilhos
           ? `${task.completed ? 'Task completed' : 'Complete the steps'}: ${task.name}`
           : `${task.completed ? 'Task completed' : 'Mark task as completed'}: ${task.name}`}
@@ -488,7 +482,6 @@ export function DailyRituals({
         max={etapas.length > 0 ? etapas.length : 1}
         done={activity.isComplete}
         dimmed={!activity.disponivelHoje}
-        reward={<RewardPreview mode="before" language={language} size={14} items={[{ kind: 'xp', max: bondXP({ kind: 'completion', weight: HABIT_WEIGHT, habitTier: 'tree' }) }]} />}
         expandable={etapas.length > 0}
         expanded={aberta}
         onExpand={() => onExpand(ritualOpenKey(activity.id, activity.isComplete), !aberta)}

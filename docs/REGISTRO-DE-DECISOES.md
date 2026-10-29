@@ -3567,7 +3567,8 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 
 **Alternativa que perdeu:** manter a noite neutra (quem esquece o app aberto nunca vê pesadelo). **Falsificaria:** jogadores abrindo o app só de manhã para forjar pesadelo (a trava de atividade o impede; medir pesadelos/jogador). **Rollback:** remover a chamada no `App.tsx`; registros gravados são noites normais.
 
-## 188. Recompensa visível na linha do Hoje: tarefa `+N XP`, hábito `até N XP` (dono, 29/10/2026; EMENDA a regra de 14/10/2026 "a linha do Hoje mostra só o nome")
+## 188. REVERTIDO no mesmo dia: a linha do Hoje NÃO mostra recompensa (dono, 29/10/2026: "das tarefas da home não põe o que elas dão, é exceção"). Vale a regra de 14/10. Texto abaixo é histórico.
+### (histórico) Recompensa visível na linha do Hoje: tarefa `+N XP`, hábito `até N XP`
 
 **Decisão do dono:** tarefas e hábitos da lista do Hoje (`DailyRituals.tsx`) mostram a recompensa ANTES de concluir, num chip pequeno no fim da linha (`RewardPreview mode="before"`). Tarefa = XP exato (`bondXP({kind:'completion', weight: effortOf(task)})`); hábito = `até N XP`, o teto do degrau `tree` (`bondXP` com `HABIT_WEIGHT` e `habitTier:'tree'`). Os números vêm da função que concede, sem tabela nova. Isto emenda a regra de 14/10 (§45/§46: nome + checkbox + prazo/assombrada); o resto dela (sem subtítulo, selo, barra, adiamentos, categoria) segue valendo.
 

@@ -30,21 +30,17 @@ describe('Lista única (sem abas)', () => {
     expect(container.textContent).not.toContain('This check is for today');
     expect(container.textContent).not.toContain('per week');
   });
-  it('tudo na mesma lista; a linha mostra nome + chip de recompensa (sem "0 of 3 this week", sem frequência)', () => {
+  it('tudo na mesma lista; a linha mostra SÓ o nome (sem "0 of 3 this week", sem XP, sem frequência)', () => {
     const { container } = mount();
     expect(container.textContent).toContain('Beber água');
     expect(container.textContent).toContain('Pagar conta');
     expect(container.textContent).toContain('Correr');
-    expect(container.textContent).not.toMatch(/this week|3×|Every day/);
+    expect(container.textContent).not.toMatch(/this week|XP|3×|Every day/);
     expect(container.querySelector('.sm2-ritual-sub')).toBeNull();
   });
-  it('29/10/2026 (dono, §188, emenda da regra de 14/10): tarefa mostra `+N XP` exato, hábito `até N XP`; sem etiqueta de esforço', () => {
+  it('a linha não mostra XP nem a etiqueta de esforço ("medium"/"média") — 14/10/2026 supera a prévia de 11/10', () => {
     const { container } = mount();
-    const t = container.querySelector('li[data-kind="task"] [data-reward-preview="xp"]');
-    const h = container.querySelector('li[data-kind="habit"] [data-reward-preview="xp"]');
-    expect(t?.textContent).toMatch(/\+\d+ XP/);
-    expect(h?.textContent).toMatch(/up to \d+ XP/);
-    expect(container.textContent).not.toMatch(/medium|média/);
+    expect(container.textContent).not.toMatch(/XP|medium|média/);
   });
   it('linha com etapas (pai): sem barra nem contagem "1/2 steps"; o checkbox `mixed` e os filhos dizem tudo', () => {
     const pai = { id: 'p', name: 'Mudar', completed: false, effort: 2, steps: [{ id: 'a', label: 'a', completed: true }, { id: 'b', label: 'b', completed: false }] } as unknown as Task;
