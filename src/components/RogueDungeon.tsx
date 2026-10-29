@@ -10,6 +10,7 @@ import { Component, lazy, Suspense, useEffect, useMemo, useRef, useState, type R
 import { entrarNaSuperficie } from '../utils/musica';
 import { Icon } from './ui/Icon';
 import { rogueBonusIcon } from '../utils/rogueBonusArt';
+import { rogueCardArt } from '../utils/rogueCardArt';
 import type { GameChallenge } from '../utils/gameChallenge';
 import { loadDinoGame, loadEcoGame, loadMatch3Game, loadPatchesGame, loadRPSGame, loadZipGame } from './nav/playPrefetch';
 import type { Language } from '../utils/i18n';
@@ -66,6 +67,12 @@ function BonusIcon({ kind, size, label }: { kind: BonusKind; size: number; label
   const src = rogueBonusIcon(kind);
   if (!src) return <Icon name={BONUS_COPY[kind].icon} size={20} tone="inherit" label={label} />;
   return <img src={src} alt={label ?? ''} aria-hidden={label ? undefined : true} width={size} height={size} style={{ imageRendering: 'pixelated', flexShrink: 0 }} />;
+}
+/** A ilustração do card (2:3) quando o arquivo existe; `null` mantém o ícone atual. Decorativa: o rótulo é o texto do botão. */
+function CardArt({ kind }: { kind: string }) {
+  const src = rogueCardArt(kind);
+  if (!src) return null;
+  return <img src={src} alt="" aria-hidden draggable={false} data-rogue-card-art style={{ width: 96, aspectRatio: '2 / 3', objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />;
 }
 /** A arte provisória de cada andar no nó do mapa. A definitiva entra depois trocando só estes imports (por nome de arquivo). */
 export const FLOOR_ICON_ART: Record<number, string> = { 1: floorDoor, 2: floorStairs, 3: floorChest };
@@ -293,7 +300,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', width: '100%' }}>
                 {bonuses.map(b => (
                   <button key={b} type="button" data-rogue-card data-rogue-bonus={b} style={cardStyle} onClick={() => { setNote(null); onChange(applyBonus(run, b)); }}>
-                    <BonusIcon kind={b} size={32} />
+                    {rogueCardArt(b) ? <CardArt kind={b} /> : <BonusIcon kind={b} size={32} />}
                     <span style={{ fontWeight: 700, fontSize: 'var(--sm2-text-sm, 14px)' }}>{t(BONUS_COPY[b])}</span>
                     <span style={{ fontSize: 'var(--sm2-text-xs, 12px)' }}>{isPt ? BONUS_COPY[b].descPt : BONUS_COPY[b].descEn}</span>
                   </button>
@@ -310,7 +317,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', width: '100%' }}>
                 {paths.map(p => (
                   <button key={p} type="button" data-rogue-card data-rogue-path={p} style={cardStyle} onClick={() => choose(p)}>
-                    <Icon name={PATH_COPY[p].icon} size={32} tone="inherit" />
+                    {rogueCardArt(p) ? <CardArt kind={p} /> : <Icon name={PATH_COPY[p].icon} size={32} tone="inherit" />}
                     <span style={{ fontWeight: 700, fontSize: 'var(--sm2-text-sm, 14px)' }}>{t(PATH_COPY[p])}</span>
                     <span style={{ fontSize: 'var(--sm2-text-xs, 12px)' }}>{isPt ? PATH_COPY[p].descPt : PATH_COPY[p].descEn}</span>
                   </button>
