@@ -183,3 +183,47 @@ desligado em produção. O beta segue igual. No lançamento oficial: liga + rese
   distribuição, que é o gargalo do projeto.
 - **Telemetria do funil**: medir onde a pessoa para no onboarding (cena a cena) para
   decidir o que encurtar.
+
+## 11. Prédio novo: Guilda dos Mercenários (29/10/2026)
+
+Um prédio novo da CORE com **um Velado de cada clã principal** (Filtradores =
+Benevolência, Tecelões = Harmonia, Rompentes = Poder). Por dia o jogador escolhe **um**
+dos três e recebe dele **uma missão**: uma atividade benéfica, com evidência, do tipo
+daquele clã.
+
+| # | Decisão do dono |
+|---|---|
+| M1 | **1 missão por dia do jogador**, de um clã só (`playerDayKey`). Escolheu, os outros dois esperam o dia seguinte. |
+| M2 | A atividade é **sorteada dentro do tipo**, só entre itens do `activityCatalog.ts` com evidência **A ou B** (`catalogo-evidencia`). |
+| M3 | Confirmação pela **pergunta de honestidade** (a mesma do onboarding, D11): "ainda não" deixa a missão aberta até o fim do dia, sem castigo. |
+| M4 | Recompensa: **só pontos do tipo do clã**: **3** (atividade rápida, `effort` 1) ou **5** (média/projeto, `effort` 2–3). Não entra na meta diária, não dá XP nem Bits. |
+| M5 | Só a partir do **rookie** (o BB fica de fora). |
+
+**Que categoria é de que tipo** (dono: `CATEGORY_ATTRIBUTES`, `src/types/attributes.ts`;
+vale a categoria cujo maior valor é o do tipo):
+
+| Clã | Tipo | Categorias |
+|---|---|---|
+| Rompentes | Poder | Creativity (3), Fitness (2) |
+| Tecelões | Harmonia | Study (3), Work (2), Wellness (2) |
+| Filtradores | Benevolência | Discipline (3), Health (2), Social (2) |
+
+**Regras para a sessão de execução:**
+- Estado novo no save, por exemplo `mercMission {day, clan, activityId, done}`, com
+  leitura tolerante, migração idempotente e espelho no servidor com paridade (regra 1
+  de Compatibilidade). Os pontos passam pelo mesmo caminho dos atributos
+  (`powerPoints`/`attributesSinceLastEvolution`), nunca por um somador próprio.
+- O sorteio é **determinístico por dia** (semente = dia do jogador + clã): reabrir o app
+  não troca a missão. Mesma lição das missões semanais.
+- Linhas vermelhas: a missão é **convite**, não cobrança. Não fazer não custa nada,
+  sem contador de missões perdidas e sem streak. A copy não pode prometer saúde (L8):
+  o Velado diz o que a atividade é, nunca o que ela cura.
+- Os pontos de tipo **inclinam a evolução**. 5 pontos por dia num tipo pesa no galho.
+  Antes de executar, o `catalogo-balanceador` simula se isso não domina a categoria
+  das tarefas normais (comida dá 1–3 por refeição).
+- Arte: três NPCs reaproveitando as folhas de conceito dos clãs; o prédio entra no
+  lote do mapa pela `/squad-arte`.
+
+**Ainda depende do dono:** nome do prédio em inglês (proposta: *Mercenary Guild*), nome
+de cada um dos três Velados e se a missão vira uma tarefa na lista de atividades ou
+fica só no prédio.
