@@ -71,6 +71,7 @@ export const LOT_HIT_INSET: Record<string, LotBounds> = {
 /** Deslocamento do RÓTULO (px, x e y) por lote — tira o nome de trás do prédio vizinho que o cobre. */
 export const LOT_LABEL_OFFSET: Record<string, readonly [number, number]> = {
 
+  'laboratorio:evolucao': [-30, 0], // 29/10/2026: Centro na borda direita; o rótulo não sai da tela
   'arena:duelo': [-28, 0], // 29/10/2026: Arena livre na borda direita; o rótulo não sai da tela
 };
 

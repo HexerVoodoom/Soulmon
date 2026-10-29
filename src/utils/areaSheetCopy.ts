@@ -109,16 +109,17 @@ const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
 // baixo ficam ≥ 22 pontos separadas por causa do guard H11 — as plataformas distam só 18).
 // W13 (20/10/2026, dono): o rótulo do lote encurtou para "Vínculo"/"Bond" e a Biblioteca e o Círculo de Amigos DESCERAM ao centro das plataformas deles (~43–44%; o Amigos 1 ponto acima do centro
 // para o rótulo não tocar o Arquivo). Prévias: `w13-laboratorio*.png`.
+// 29/10/2026 (dono): fundo novo do Laboratório com 4 plataformas — Vínculo em cima, Biblioteca no meio à esquerda, Centro de Evolução no meio à direita, Perfil embaixo.
 const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
-  { id: 'evolucao', labelPt: 'Centro de Evolução', labelEn: 'Evolution Center', ariaPt: 'Entrar no Centro de Evolução', ariaEn: 'Enter the Evolution Center', left: '27%', top: '72%', width: '40%' },
-  { id: 'stats', labelPt: 'Vínculo', labelEn: 'Bond', ariaPt: 'Entrar no Santuário do Vínculo (estatísticas)', ariaEn: 'Enter the Bond Sanctum (stats)', left: '49.6%', top: '45%', width: '64.1%' },
+  { id: 'evolucao', labelPt: 'Centro de Evolução', labelEn: 'Evolution Center', ariaPt: 'Entrar no Centro de Evolução', ariaEn: 'Enter the Evolution Center', left: '79.5%', top: '61.6%', width: '48%' },
+  { id: 'stats', labelPt: 'Vínculo', labelEn: 'Bond', ariaPt: 'Entrar no Santuário do Vínculo (estatísticas)', ariaEn: 'Enter the Bond Sanctum (stats)', left: '50.7%', top: '43%', width: '80.1%' },
   // beta-2 (11, 13/10/2026): o PERFIL do Soulmon — embaixo, no meio do piso hexagonal livre entre o Centro de Evolução e o Arquivo (o Santuário segue grande e no alto).
   // D-44 (19/10/2026, dono): "só pode ser um pouco maior" — 36% → 41% (~+15%); o guard H11 (geometria dos lotes) segue verde nos 5 viewports.
-  { id: 'perfil', labelPt: 'Perfil', labelEn: 'Profile', ariaPt: 'Entrar no Perfil do Soulmon', ariaEn: 'Enter the Soulmon Profile', left: '50.5%', top: '85.8%', width: '41%' },
+  { id: 'perfil', labelPt: 'Perfil', labelEn: 'Profile', ariaPt: 'Entrar no Perfil do Soulmon', ariaEn: 'Enter the Soulmon Profile', left: '50.8%', top: '83.4%', width: '47.6%' },
   // D-50 (19/10/2026, dono): a Biblioteca e o Círculo de Amigos SAEM do Hall e vêm para o Laboratório. Ficam nos dois flancos do Santuário (que é estreito:
   // só ~32% da cena é opaca), à esquerda e à direita, num só andar. D-47: a Biblioteca aparece INTEIRA já na primeira tela, sem rolagem (a cena É a viewport) —
   // `areaLotGeometry.contract.test.ts` mede a caixa dela em 360×640. Larguras 32% (W5; antes 34%): com 36% a caixa encosta no Santuário (guard H11). Arte: a que já existe nos lotes.
-  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '18.8%', top: '51.8%', width: '42%' },
+  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '20.5%', top: '61.6%', width: '48%' },
 ];
 
 // D-50 (19/10/2026, dono): o Hall fica com EXATAMENTE três prédios — Feira, Clan Hall (o administrativo do clã) e Grove — um por plataforma do fundo

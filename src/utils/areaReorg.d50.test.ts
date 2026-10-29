@@ -107,9 +107,10 @@ describe('D-47 / D-44: geometria no Laboratório', () => {
     expect(label.x0).toBeGreaterThanOrEqual(0);
     expect(label.x1).toBeLessThanOrEqual(360);
   });
-  it('D-44: o Perfil ficou ~15% maior (36% → 41%)', () => {
+  // 29/10/2026 (dono): regra nova — o prédio ocupa quase toda a plataforma; o Perfil passou de 41% para ~48% no fundo novo do Laboratório.
+  it('D-44 + 29/10: o Perfil é maior que o de 36% e ocupa a plataforma de baixo', () => {
     const w = parseFloat(laboratorioLots('pt-BR').find(l => l.id === 'perfil')!.width!);
     expect(w / 36).toBeGreaterThanOrEqual(1.13);
-    expect(w / 36).toBeLessThanOrEqual(1.17);
+    expect(w / 36).toBeLessThanOrEqual(1.4);
   });
 });
