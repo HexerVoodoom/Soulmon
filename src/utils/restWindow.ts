@@ -791,6 +791,21 @@ export function shouldWakeOnOpen(
   return !insideNow && isWithinWindow(window, started);
 }
 
+/**
+ * O INÍCIO NOMINAL do sono automático: o sono automático é a AGENDA (a janela), não um gesto — quando o app só
+ * abre/percebe a virada no meio da janela, o pet já "dormia" desde o início dela. Usar a hora de abrir encolhia a
+ * noite (abrir às 03:00 = 4 h < NIGHTMARE_MIN_SLEEP_HOURS) e o sono automático nunca rendia pesadelo; o manual,
+ * deitado no horário, sim. Fora da janela devolve `at`.
+ */
+export function autoSleepStart(window: RestWindow, at: Date): Date {
+  const st = parseTime(window.start);
+  if (Number.isNaN(st) || Number.isNaN(parseTime(window.end))) return at;
+  const since = ((minutesOfDay(at) - st) % MINUTES_PER_DAY + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  if (since >= windowSpanMin(window)) return at;
+  const minute = Math.floor(at.getTime() / MS_MIN) * MS_MIN;
+  return new Date(minute - since * MS_MIN);
+}
+
 /** Quando o pet acordou numa noite em que o app estava fechado: o que vier primeiro, agora ou o fim da janela. */
 export function nightWakeAt(window: RestWindow, sleptAt: Date, now: Date): Date {
   const end = new Date(sleptAt.getTime() + windowSpanMin(window) * MS_MIN);

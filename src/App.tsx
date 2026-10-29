@@ -283,7 +283,7 @@ import { pickCatalogLevelInviteCandidate, applyLevelChange } from './utils/catal
 
 import type { Schedule, HabitAnchor, Effort } from './types/taskModel';
 import {
-  createRestState, recordNight, nightAlreadyRecorded, dreamRarity, rollDream, collectDream, DREAM_CATALOG, isWithinWindow,
+  createRestState, recordNight, nightAlreadyRecorded, autoSleepStart, dreamRarity, rollDream, collectDream, DREAM_CATALOG, isWithinWindow,
   decideArmedNight, isInArmPeriod, shouldWakeOnOpen, nightWakeAt, nightEnergyGain, stampNightBonus, armMark, reconcileSleepHours,
 } from './utils/restWindow';
 import type { Dream, RestWindow } from './utils/restWindow';
@@ -5577,14 +5577,19 @@ export default function App() {
    * registro é NEUTRA, nunca uma falha).
    */
   const sleepStateRef = useRef<boolean | null>(null);
+  /** O próximo `isSleeping=true` veio do sono AUTOMÁTICO: a noite começa no início da janela, não ao abrir o app. */
+  const autoSleepFlagRef = useRef(false);
   useEffect(() => {
     if (sleepStateRef.current === null) { sleepStateRef.current = isSleeping; return; }
     if (sleepStateRef.current === isSleeping) return;
     sleepStateRef.current = isSleeping;
     const now = new Date();
     if (isSleeping) {
+      const veioDoAuto = autoSleepFlagRef.current;
+      autoSleepFlagRef.current = false;
+      const inicioNoite = veioDoAuto ? autoSleepStart((gameStateRef.current.rest ?? createRestState()).window, now) : now;
       // Perder isto só custa a hora de deitar da noite em curso. Silencioso.
-      writeLocal(STORAGE_KEYS.SLEEP_STARTED_AT, now.toISOString(), { silent: true });
+      writeLocal(STORAGE_KEYS.SLEEP_STARTED_AT, inicioNoite.toISOString(), { silent: true });
       contarDiaria('sono');
       /* 🔗 #59b — 🛏️ NOITE DE DESCANSO. Só a noite DENTRO da janela rende XP:
          é a MESMA régua da missão `rest-nights` logo abaixo, e premiar toda
@@ -5601,7 +5606,7 @@ export default function App() {
         // hoje) travar o XP de toda noite depois da primeira.
         const chaveDoDia = playerDayKey(now, prev.playerDayTz);
         const jaRegistrada = nightAlreadyRecorded(rest, now);
-        const comNoite = { ...prev, rest: recordNight(rest, now) };
+        const comNoite = { ...prev, rest: recordNight(rest, inicioNoite) };
         return !jaRegistrada && isWithinWindow(rest.window, now)
           ? awardBondXP(comNoite, { kind: 'restNight' }, chaveDoDia)
           : comNoite;
@@ -6059,6 +6064,7 @@ export default function App() {
       if (!shouldAct) return;
       setIsSleeping(sleeping => {
         if (inWindow === sleeping) return sleeping;
+        if (inWindow) autoSleepFlagRef.current = true;
         writeFlag(STORAGE_KEYS.IS_SLEEPING, inWindow, { silent: true });
         return inWindow;
       });
