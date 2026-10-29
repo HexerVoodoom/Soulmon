@@ -712,8 +712,8 @@ export function ChatSupportNote({ isPt }: { isPt: boolean }) {
           registrada para o dono (PERGUNTAS-DO-DONO). */}
       <p className="sm2-chat-support">
         {isPt
-          ? 'Se estiver num momento difícil, procure ajuda de verdade: um serviço de saúde, uma linha de apoio ou alguém de confiança. O Soulmon é um app de hábitos, não substitui isso.'
-          : "If you're going through a hard time, reach out for real help: a health service, a support line or someone you trust. Soulmon is a habit app, not a substitute."}
+          ? 'Num momento difícil, procure ajuda de verdade: serviço de saúde, linha de apoio ou alguém de confiança. O Soulmon não substitui isso.'
+          : "In a hard moment, reach out for real help: a health service, a support line or someone you trust. Soulmon is no substitute."}
         {' '}
         {/* O CAMINHO — decisão do dono, 21/09/2026.
             Sem ele, a cláusula SAFETY de `functions/api/chat.js` manda procurar

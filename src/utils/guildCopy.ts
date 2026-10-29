@@ -76,12 +76,12 @@ export const GUILD_COPY = {
   'guild.missao.volta.titulo': ['Seu Soulmon voltou da investigação.', 'Your Soulmon is back from investigating.'],
   'guild.missao.volta.cla': ['Para o clã: o que ele achou foi para a roda e regou a casa.', 'For the clan: what it found went into the circle and watered the house.'],
   'guild.missao.volta.eu': ['Para você: um lugar no resgate da semana. Se a roda desfizer {nome}, você colhe Honra e, às vezes, a Concha da Maré. Se não, nada se perde.', 'For you: a place in this week’s rescue. If the circle undoes {nome}, you gather Honor and, now and then, the Tide Shell. If not, nothing is lost.'],
-  'guild.missao.regra': ['Algo misterioso chegou. Mande seu Soulmon investigar: ele some da Home por um tempo e volta. Cada volta ajuda a roda e a casa; quanto mais gente na roda e mais forte o Soulmon, mais ajuda. Uma por dia.', 'Something mysterious has arrived. Send your Soulmon to investigate: it leaves the Home for a while and comes back. Each return helps the circle and the house; the more people in the circle and the stronger the Soulmon, the more it helps. One a day.'],
+  'guild.missao.regra': ['Algo misterioso chegou. Mande seu Soulmon investigar: ele some da Home por um tempo e volta. Cada volta ajuda a roda e a casa. Uma por dia.', 'Something mysterious has arrived. Send your Soulmon to investigate: it leaves the Home for a while and comes back. Each return helps the circle and the house. One a day.'],
   'guild.misterio.fim.honra': ['O Mistério da feira foi encerrado; sua recompensa virou {n} Honra.', 'The fair’s Mystery has ended; your reward became {n} Honor.'],
   'guild.misterio.fim.bits': ['O Mistério da feira foi encerrado; sua recompensa virou {n} Bits.', 'The fair’s Mystery has ended; your reward became {n} Bits.'],
   // ── A GUERRA DE GUILDA (guilda-lancamento PR4): 4×4, pareada por tamanho, resolvida no servidor ──
   'guild.guerra.titulo': ['Guerra de clã', 'Clan war'],
-  'guild.guerra.regra': ['Seu esquadrão — você e até três aliados — enfrenta o de outro clã do mesmo tamanho: duas pessoas com duas, três com três, até quatro com quatro. O servidor resolve cada confronto, e o resultado rega a casa, vença ou não. Uma guerra por dia.', 'Your squad — you and up to three allies — faces another clan’s squad of the same size: two people against two, three against three, up to four against four. The server settles each bout, and the result waters the house, win or not. One war a day.'],
+  'guild.guerra.regra': ['Seu esquadrão (você e até três aliados) enfrenta o de outro clã do mesmo tamanho. O servidor resolve cada confronto, e o resultado rega a casa, vença ou não. Uma guerra por dia.', 'Your squad (you and up to three allies) faces another clan’s squad of the same size. The server settles each bout, and the result waters the house, win or not. One war a day.'],
   'guild.guerra.buscar': ['Procurar um clã rival', 'Look for a rival clan'],
   'guild.guerra.esperando': ['Seu esquadrão espera um clã do mesmo tamanho. O resultado chega sozinho.', 'Your squad is waiting for a clan of the same size. The result arrives on its own.'],
   'guild.guerra.pequena': ['Para a guerra são precisas ao menos duas pessoas com ficha de luta.', 'A war needs at least two people with a fighter sheet.'],
@@ -111,7 +111,7 @@ export const GUILD_COPY = {
   // Praça
   'guild.praca.titulo': ['Praça', 'Square'],
   'guild.praca.aria': ['A praça do clã: quatro lugares para decorar juntos', 'The clan’s square: four places to decorate together'],
-  'guild.praca.regra': ['Qualquer pessoa do clã pode pôr, trocar ou tirar um item nos quatro lugares da praça. Também dá para mandar um presente por dia a cada pessoa; ele chega surpresa e só abre quando a pessoa quiser.', 'Anyone in the clan can place, swap or remove an item in the square’s four spots. You can also send each person one gift a day; it arrives as a surprise and opens whenever they like.'],
+  'guild.praca.regra': ['Qualquer pessoa do clã pode pôr, trocar ou tirar um item nos quatro lugares da praça. Dá para mandar um presente por dia a cada pessoa; ele abre quando ela quiser.', 'Anyone in the clan can place, swap or remove an item in the square’s four spots. You can send each person one gift a day; it opens whenever they like.'],
   'guild.praca.lugar': ['Lugar {nome}', 'Spot {nome}'],
   'guild.praca.lugar.vazio': ['Livre', 'Free'],
   'guild.praca.lugar.pos': ['Pôr um item', 'Place an item'],
@@ -132,7 +132,7 @@ export const GUILD_COPY = {
   // Plantio
   'guild.plantio.titulo': ['Plantio', 'Garden'],
   'guild.plantio.aria': ['O plantio do clã: {nome}', 'The clan’s garden: {nome}'],
-  'guild.plantio.regra': ['O clã cuida de uma planta por estação. Ela cresce nos dias em que boa parte do clã rega e alguém a defende de quem a ataca. Dia sem cuidado só atrasa; a planta nunca morre. Quando amadurece, cada pessoa colhe um fruto por semana.', 'The clan tends one plant a season. It grows on days when a good part of the clan waters it and someone defends it from whatever attacks it. A day without care only delays it; the plant never dies. Once ripe, each person harvests one fruit a week.'],
+  'guild.plantio.regra': ['O clã cuida de uma planta por estação. Ela cresce nos dias em que boa parte do clã rega e alguém a defende. Dia sem cuidado só atrasa; a planta nunca morre. Madura, rende um fruto por pessoa por semana.', 'The clan tends one plant a season. It grows on days when a good part of the clan waters it and someone defends it. A day without care only delays it; the plant never dies. Once ripe, it gives one fruit per person a week.'],
   'guild.plantio.estacao.primavera': ['Primavera', 'Spring'],
   'guild.plantio.estacao.verao': ['Verão', 'Summer'],
   'guild.plantio.estacao.outono': ['Outono', 'Autumn'],
@@ -286,8 +286,8 @@ export const GUILD_COPY = {
   // A8 (rodada 7, 04/10/2026): o dono seguia sem entender a Feira. Três frases curtas para um leigo, dentro do
   // InfoTip ÚNICO da sala: o que é, o que o jogador faz, o que ganha. Mesma régua: sem número, "golpe", "vida", "quem".
   'guild.feira.legenda': ['A Feira é uma tarefa da semana feita em roda. Toda semana chega da névoa um fenômeno, e a sua roda (o grupo do app) precisa desfazê-lo junta.', 'The Fair is a weekly task done as a circle. Every week a phenomenon comes in from the mist, and your circle (your group in the app) has to undo it together.'],
-  'guild.feira.como': ['Uma vez por dia, cada pessoa faz a própria rodada no botão abaixo. Cada rodada enfraquece um pouco o fenômeno; quando as rodadas da roda se somam o bastante, ele se desfaz.', "Once a day, each person takes their own round with the button below. Each round weakens the phenomenon a little; when the circle's rounds add up enough, it comes apart."],
-  'guild.feira.ganho': ['O que se ganha: Honra (a moeda dos enfeites) e, de vez em quando, a Concha da Maré, uma decoração do bosque. Se o fenômeno voltar à névoa, nada se perde.', 'What you get: Honor (the currency for decor) and, now and then, the Tide Shell, a decoration for the grove. If the phenomenon goes back into the mist, nothing is lost.'],
+  'guild.feira.como': ['Uma vez por dia, cada pessoa faz a própria rodada no botão abaixo. Cada rodada enfraquece o fenômeno; somadas, ele se desfaz.', "Once a day, each person takes their own round with the button below. Each round weakens the phenomenon; added up, it comes apart."],
+  'guild.feira.ganho': ['Ganha-se Honra (a moeda dos enfeites) e, às vezes, a Concha da Maré, decoração do bosque. Se o fenômeno voltar à névoa, nada se perde.', 'You get Honor (the currency for decor) and, now and then, the Tide Shell, a grove decoration. If the phenomenon goes back into the mist, nothing is lost.'],
   'guild.feira.aberta.mundo': ['A maré abriu a Feira. Algo chegou da névoa.', 'The tide opened the Fair. Something came in from the mist.'],
   'guild.feira.fenomeno.nevoa.nome': ['Névoa', 'Mist'],
   'guild.feira.fenomeno.nevoa.linha': ['Uma camada que não assentou.', "A layer that hasn't settled."],
@@ -349,7 +349,7 @@ export const GUILD_COPY = {
   'guild.help.feira.termo': ['Feira', 'Fair'],
   'guild.help.feira.def': ['Toda semana chega um fenômeno da névoa. Cada pessoa faz uma rodada por dia. Semana dissipada rende {cheio} de Honra; se ele voltar à névoa, {piso}. A Feira não mexe no bosque.', 'Every week a phenomenon comes in from the mist. Each person takes one round a day. A cleared week pays {cheio} Honor; if it goes back to the mist, {piso}. The Fair never touches the grove.'],
   'guild.help.casa.termo': ['Casa', 'House'],
-  'guild.help.casa.def': ['A casa é o cenário da roda: uma árvore mecânica com um cristal no centro. Bits trazidos, missões e guerras a fazem crescer. Cada pessoa pode pôr um item seu nela; enquanto estiver lá, ele não aparece no seu cenário.', 'The house is the circle’s scene: a mechanical tree with a crystal at its center. Bits brought, missions and wars make it grow. Each person can place one of their items in it; while it’s there, it doesn’t show in their own scene.'],
+  'guild.help.casa.def': ['A casa é o cenário da roda: uma árvore mecânica com um cristal no centro. Bits, missões e guerras a fazem crescer. Cada pessoa pode pôr um item seu nela; lá, ele não aparece no seu cenário.', 'The house is the circle’s scene: a mechanical tree with a crystal at its center. Bits, missions and wars make it grow. Each person can place one of their items in it; there, it doesn’t show in their own scene.'],
   'guild.help.missao.termo': ['Missão', 'Mission'],
   'guild.help.missao.def': ['Todo dia a roda pode mandar o Soulmon investigar o que chegou da névoa. Ele some da Home por um tempo e volta; cada volta ajuda a roda e a casa.', 'Every day the circle can send its Soulmon to investigate what came in from the mist. It leaves the Home for a while and comes back; each return helps the circle and the house.'],
   'guild.help.guerra.termo': ['Guerra de clã', 'Clan war'],

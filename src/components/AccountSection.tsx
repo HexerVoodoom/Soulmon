@@ -212,8 +212,8 @@ export function AccountSection({ language, onEntitlementChange, onSignedIn }: Ac
         <div data-signout-sync-failed style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <AlertLine>
             {isPt
-              ? `${saidaOffline ? 'Parece que a internet não está ajudando agora. ' : ''}Seu progresso mais recente ainda não chegou à nuvem. Se você sair, o que está só neste aparelho será apagado daqui.`
-              : `${saidaOffline ? "Looks like the connection isn't cooperating right now. " : ''}Your latest progress hasn't reached the cloud yet. If you sign out, what's only on this device will be erased from it.`}
+              ? `${saidaOffline ? 'Parece que a internet não está ajudando agora. ' : ''}Seu progresso mais recente ainda não chegou à nuvem. Se sair, o que só está neste aparelho será apagado.`
+              : `${saidaOffline ? "Looks like the connection isn't cooperating right now. " : ''}Your latest progress hasn't reached the cloud yet. If you sign out, what's only on this device will be erased.`}
           </AlertLine>
           <button type="button" onClick={handleExportBackup} data-signout-export style={{ ...sm2Button('primary'), width: '100%' }}>
             {isPt ? 'Exportar backup' : 'Export backup'}

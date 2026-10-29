@@ -71,16 +71,16 @@ export const TOUR_STEPS: readonly TourStep[] = [
     id: 'why', part: 1,
     title: { en: 'Why they matter', pt: 'Por que importam' },
     speech: {
-      en: `Each thing you finish feeds your Soulmon: food for energy, and a nudge toward the path it will grow along. A day is complete when you reach today's goal — at first about ${TOUR_STARTING_GOAL} tasks' worth, and bigger tasks count for more.`,
-      pt: `Cada coisa que você termina alimenta o seu Soulmon: comida para a energia e um empurrãozinho para o caminho em que ele vai crescer. O dia fica completo quando você alcança a meta de hoje — no começo, o equivalente a umas ${TOUR_STARTING_GOAL} tarefas, e as tarefas maiores valem mais.`,
+      en: `Each thing you finish feeds your Soulmon and nudges the path it grows along. A day is complete when you reach today's goal — at first about ${TOUR_STARTING_GOAL} tasks' worth; bigger tasks count more.`,
+      pt: `Cada coisa que você termina alimenta o seu Soulmon e empurra o caminho em que ele cresce. O dia fica completo na meta de hoje — no começo, umas ${TOUR_STARTING_GOAL} tarefas; as maiores valem mais.`,
     },
   },
   {
     id: 'evolution', part: 1,
     title: { en: 'Evolution', pt: 'Evolução' },
     speech: {
-      en: 'Every habit or task you finish earns Soul Fragments toward the next form, and they only ever add up. When you have gathered enough, you pick the moment: open Evolution and tap your Soulmon. A slow day just goes slowly.',
-      pt: 'Cada hábito ou tarefa que você termina rende Fragmentos de Alma para a próxima forma, e eles só somam. Quando juntar o bastante, o momento é seu: abra a Evolução e toque no seu Soulmon. Um dia devagar só anda devagar.',
+      en: 'Every habit or task you finish earns Soul Fragments toward the next form, and they only add up. When you have enough, you pick the moment: open Evolution and tap your Soulmon.',
+      pt: 'Cada hábito ou tarefa que você termina rende Fragmentos de Alma para a próxima forma, e eles só somam. Quando juntar o bastante, o momento é seu: abra a Evolução e toque no seu Soulmon.',
     },
   },
   {
@@ -95,8 +95,8 @@ export const TOUR_STEPS: readonly TourStep[] = [
     id: 'corners', part: 1,
     title: { en: 'Missions and the Bag', pt: 'Missões e a Mochila' },
     speech: {
-      en: "Missions live in the icon at the corner of Home. The Bag sits with your care buttons under your Soulmon — your items wait there. The first time you open the map, I'll show you around it. You can replay this tour from Settings any time.",
-      pt: 'As missões ficam no ícone do canto da Home. A Mochila fica junto dos botões de cuidado, embaixo do seu Soulmon — seus itens esperam lá. Na primeira vez que abrir o mapa, eu mostro o caminho. Você pode rever este tour nas Configurações quando quiser.',
+      en: "Missions live in the icon at the corner of Home. The Bag sits with your care buttons under your Soulmon. The first time you open the map, I'll show you around. You can replay this tour from Settings.",
+      pt: 'As missões ficam no ícone do canto da Home. A Mochila fica junto dos botões de cuidado, embaixo do seu Soulmon. Mostro o mapa na primeira vez que abrir. Dá para rever este tour nas Configurações.',
     },
   },
 ];

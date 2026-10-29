@@ -14,8 +14,8 @@ export const GAME_STORY_IDS: readonly GameStoryId[] = ['match3', 'eco', 'bolhas'
 
 export const GAME_STORIES: Record<GameStoryId, { pt: string; en: string }> = {
   match3: {
-    pt: 'Três Soulmon da fenda formam um time e barram a passagem. Combine peças de um elemento: cada linha vira um golpe daquele elemento no primeiro da fila, e o seu Soulmon enfrenta um de cada vez.',
-    en: 'Three Soulmon from the rift form a team and block the way. Line up tiles of one element: each line becomes a strike of that element on the first in line, and your Soulmon faces them one at a time.',
+    pt: 'Três Soulmon da fenda formam um time e barram a passagem. Combine peças de um elemento: cada linha vira um golpe daquele elemento no primeiro da fila.',
+    en: 'Three Soulmon from the rift form a team and block the way. Line up tiles of one element: each line becomes a strike of that element on the first in line.',
   },
   eco: {
     pt: 'Pedras antigas respondem ao canto do seu Soulmon. Ele canta uma ordem; você a repete, pedra por pedra, para o eco chegar inteiro.',

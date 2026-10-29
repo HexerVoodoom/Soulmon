@@ -527,8 +527,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             ? (
               <span data-torneio-social>
                 {isPt
-                  ? `O Torneio abre no Vínculo ${BOND_PVP_MIN_LEVEL}. É social: seu apelido e seu Soulmon aparecem numa lista pública. Sem pressa: seu Soulmon entra sozinho quando chegar lá.`
-                  : `The Tournament opens at Bond ${BOND_PVP_MIN_LEVEL}. It is social: your nickname and Soulmon show up on a public list. No rush: your Soulmon joins on its own once you get there.`}
+                  ? `O Torneio abre no Vínculo ${BOND_PVP_MIN_LEVEL}. É social: seu apelido e seu Soulmon aparecem numa lista pública. Sem pressa, ele entra sozinho.`
+                  : `The Tournament opens at Bond ${BOND_PVP_MIN_LEVEL}. It is social: your nickname and Soulmon show up on a public list. No rush, it joins on its own.`}
               </span>
             )
             : (

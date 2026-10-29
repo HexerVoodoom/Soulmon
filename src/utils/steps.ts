@@ -191,7 +191,7 @@ export function stepsConsentCopy(language: Language): StepsConsentCopy {
     return {
       title: 'Contar seus passos?',
       what: 'O Soulmon leria o contador de passos do próprio aparelho (nenhuma conta de saúde, nenhum app de terceiros).',
-      why: 'Serve só para confirmar um hábito de saúde que você JÁ marcou como feito e para missões extras opcionais. Passos nunca valem ponto sozinhos: quem não ativa isso não perde nada.',
+      why: 'Serve só para confirmar um hábito de saúde que você JÁ marcou e para missões extras opcionais. Passos nunca valem ponto sozinhos; quem não ativa não perde nada.',
       privacy: 'Guardamos apenas o total do dia, no seu aparelho. Nada de horários, trajetos ou localização — e nada disso é vendido ou compartilhado.',
       accept: 'Pode contar',
       decline: 'Agora não',

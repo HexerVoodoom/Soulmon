@@ -73,8 +73,8 @@ export function statTip(kind: StatTipKind, isPt: boolean): StatTip {
     upLabel,
     downLabel,
     up: isPt
-      ? `com o tempo: +1 a cada ${ENERGY_REGEN_MINUTES} min com ele bem alimentado, a metade da velocidade com um pouco de fome, parada se faminto. Comer enche a fome, não a energia.`
-      : `with time: +1 every ${ENERGY_REGEN_MINUTES} min when well fed, half speed when a little hungry, stopped when starving. Eating fills hunger, not energy.`,
+      ? `com o tempo: +1 a cada ${ENERGY_REGEN_MINUTES} min bem alimentado, metade da velocidade com fome, parada se faminto. Comer não enche a energia.`
+      : `with time: +1 every ${ENERGY_REGEN_MINUTES} min when well fed, half speed when hungry, stopped when starving. Eating doesn't fill energy.`,
     down: isPt
       ? `recomeça do zero a cada dia, e cada camada da Masmorra gasta ${DUNGEON_ENERGY_PER_LAYER}.`
       : `starts again from zero each day, and each Dungeon layer spends ${DUNGEON_ENERGY_PER_LAYER}.`,

@@ -2059,8 +2059,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
              é coleta silenciosa. */
           <StepShell title={isPt ? 'Quando você nasceu?' : 'When were you born?'}
             hint={isPt
-              ? `Sua data de nascimento faz duas coisas aqui: define os elementos do seu mapa astral e confirma que você tem ${MIN_AGE_YEARS} anos ou mais, a idade mínima do Soulmon.`
-              : `Your birth date does two things here: it sets your astral chart's elements and confirms you're ${MIN_AGE_YEARS} or older, Soulmon's minimum age.`}>
+              ? `Sua data de nascimento define os elementos do seu mapa astral e confirma que você tem ${MIN_AGE_YEARS} anos ou mais, a idade mínima.`
+              : `Your birth date sets your astral chart's elements and confirms you're ${MIN_AGE_YEARS} or older, the minimum age.`}>
             {/* QA L05-06/L05-07: data completa que não existe (31/02, ano fora de 1900..hoje) antes só "não avançava", sem dizer
                 por quê. O aviso é âmbar, em texto, e liga ao campo por aria-describedby. */}
             <Field type="text" inputMode="numeric" autoComplete="off"

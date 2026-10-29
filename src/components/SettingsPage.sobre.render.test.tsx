@@ -63,9 +63,9 @@ describe('Sobre — IA declarada (#22)', () => {
     expect(p.textContent).toMatch(/Gemini/);
     expect(p.textContent).toMatch(/Groq/);
     // Compliance #6 (21/09/2026): sons, sem revisão humana, não é emergência.
-    expect(p.textContent).toMatch(/alguns sons \(evolução, regressão e conclusão de tarefa\)/);
+    expect(p.textContent).toMatch(/alguns sons/);
     expect(p.textContent).toMatch(/sem revisão humana/);
-    expect(p.textContent).toMatch(/não é um serviço de emergência/);
+    expect(p.textContent).toMatch(/não é serviço de emergência/);
     // Tom de fato, não de alerta (L11): nada de "atenção"/"cuidado".
     expect(p.textContent).not.toMatch(/atenção|cuidado|aviso/i);
     const link = screen.getByRole('link', { name: /O que o chat recebe/ }) as HTMLAnchorElement;
@@ -76,7 +76,7 @@ describe('Sobre — IA declarada (#22)', () => {
     renderSettings('en-US');
     const p = screen.getByText(/AI-generated/);
     expect(p.textContent).toMatch(/Groq/);
-    expect(p.textContent).toMatch(/some sounds \(evolution, regression and task completion\)/);
+    expect(p.textContent).toMatch(/some sounds/);
     expect(p.textContent).toMatch(/no human review/);
     expect(p.textContent).toMatch(/not an emergency service/);
     // A5: EN aponta para a âncora inglesa da política.

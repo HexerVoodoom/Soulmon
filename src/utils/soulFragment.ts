@@ -54,8 +54,8 @@ export function fragmentTodayHint(today: number, language: Language | string): s
 /** Como se ganha (texto de ajuda da página de Evolução). */
 export function fragmentHowText(language: Language | string): string {
   return isPt(language)
-    ? 'Cada hábito ou tarefa concluída rende Fragmentos de Alma (tarefas maiores rendem mais, até a meta do dia). Quando juntar o bastante, eles são usados e a próxima forma abre — e nada aqui volta para trás.'
-    : 'Every habit or task you finish earns Soul Fragments (bigger tasks earn more, up to the day’s goal). When you have gathered enough, they are used and the next form opens — and nothing here ever goes back.';
+    ? 'Cada hábito ou tarefa concluída rende Fragmentos de Alma (as maiores rendem mais, até a meta do dia). Ao juntar o bastante, a próxima forma abre — e nada aqui volta atrás.'
+    : 'Every habit or task you finish earns Soul Fragments (bigger ones earn more, up to the day’s goal). With enough, the next form opens — and nothing here goes back.';
 }
 
 /** Linha da cerimônia: o que a evolução consumiu (dita uma vez, no ato). */

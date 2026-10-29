@@ -667,8 +667,8 @@ export function SettingsPage({
             e a política já os dizem — divergir seria pior que repetir. */}
         <p style={sm2Text}>
           {isPt
-            ? 'A imagem da sua criatura, as falas do chat e alguns sons (evolução, regressão e conclusão de tarefa) são gerados por IA (Higgsfield e Gemini para a imagem, Groq para a conversa), sem revisão humana. O chat não é um serviço de emergência.'
-            : 'Your creature’s image, the chat lines and some sounds (evolution, regression and task completion) are AI-generated (Higgsfield and Gemini for the image, Groq for the conversation), with no human review. The chat is not an emergency service.'}
+            ? 'A imagem da criatura, as falas do chat e alguns sons são gerados por IA (Higgsfield e Gemini na imagem, Groq no chat), sem revisão humana. O chat não é serviço de emergência.'
+            : 'The creature’s image, the chat lines and some sounds are AI-generated (Higgsfield and Gemini for the image, Groq for the chat), with no human review. The chat is not an emergency service.'}
         </p>
         <ActionRow
           label={isPt ? 'O que o chat recebe' : 'What the chat receives'}

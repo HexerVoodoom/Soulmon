@@ -166,8 +166,8 @@ export function DueloSheet({ language, onStart, arena }: {
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt
-                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários, de poder parecido com o seu. Vencer rende Bits; perder não custa nada. Sortear de novo: 3 grátis por dia, depois Bits.`
-                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE your opponents, of power similar to yours. Wins earn Bits; losses cost nothing. Draw again: 3 free a day, then Bits.`}
+                ? `Arena: ${ARENA_ROUNDS} rodadas PvE; você ESCOLHE os adversários, de poder parecido. Vencer rende Bits; perder não custa nada. Sortear de novo: 3 grátis por dia, depois Bits.`
+                : `Arena: ${ARENA_ROUNDS} PvE rounds; you CHOOSE opponents of similar power. Wins earn Bits; losses cost nothing. Draw again: 3 free a day, then Bits.`}
             </span>
             <span style={{ display: 'block', marginTop: 6 }}>
               {isPt

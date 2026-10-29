@@ -283,8 +283,8 @@ function TriageDone({ isPt, decided, petSprite }: { isPt: boolean; decided: numb
             ? 'Nada parado por aqui hoje. Seu Soulmon aproveitou pra cochilar.'
             : 'Nothing stuck here today. Your Soulmon took a nap instead.'
           : isPt
-            ? `Você decidiu ${decided} ${decided === 1 ? 'coisa' : 'coisas'}. Decidir o que NÃO fazer é planejamento de verdade — e é isso que tira o peso da cabeça, não a lista vazia.`
-            : `You decided on ${decided} ${decided === 1 ? 'item' : 'items'}. Deciding what NOT to do is real planning — and that's what lifts the weight, not an empty list.`}
+            ? `Você decidiu ${decided} ${decided === 1 ? 'coisa' : 'coisas'}. Decidir o que NÃO fazer também é planejar — e é isso que alivia a cabeça.`
+            : `You decided on ${decided} ${decided === 1 ? 'item' : 'items'}. Deciding what NOT to do is planning too — and that's what lightens the load.`}
       </p>
       {/* I3: sem botão "Voltar" no pé — o ✕ do topo da folha (`ModalSheet`) fecha. */}
     </div>

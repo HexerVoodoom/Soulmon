@@ -129,8 +129,8 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
         <ModalInfo language={language} label={isPt ? 'Como funciona a Fenda' : 'How the Rift works'} align="right">
           <InfoTipSection title={isPt ? 'Como funciona' : 'How it works'}>
           {isPt
-            ? `As lutas vêm sozinhas e o HP volta com o tempo. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia (a da Home) até a camada ${DUNGEON_MAX_LAYER}. Perder custa só a descida, nunca os seus corações.`
-            : `Fights run on their own and HP returns over time. Each layer costs ${DUNGEON_ENERGY_PER_LAYER} energy (Home energy), down to layer ${DUNGEON_MAX_LAYER}. Losing only costs the descent, never your hearts.`}
+            ? `As lutas vêm sozinhas e o HP volta com o tempo. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia da Home, até a camada ${DUNGEON_MAX_LAYER}. Perder nunca custa corações.`
+            : `Fights run on their own and HP returns over time. Each layer costs ${DUNGEON_ENERGY_PER_LAYER} Home energy, down to layer ${DUNGEON_MAX_LAYER}. Losing never costs hearts.`}
           </InfoTipSection>
           {/* Pedido do dono (11/10/2026): "Pode cair" saiu do corpo da folha e
               vive aqui, atrás do "i", como lista. Mesmas constantes de antes. */}
@@ -276,8 +276,8 @@ export function SalaoSheet({ language, onStart, bitsToday }: { language: Languag
           </InfoTipSection>
           <InfoTipSection title={isPt ? 'Elemental Fusion' : 'Elemental Fusion'} last>
             {isPt
-              ? `Troque peças vizinhas e alinhe 3 ou mais: cada linha golpeia o time da fenda · a rodada acaba quando um lado recua · cada ${M3_POINTS_PER_BIT} pontos viram 1 Bit, até ${M3C_MAX_BITS}`
-              : `Swap neighbouring tiles to line up 3+: each line strikes the rift team · the round ends when one side steps back · every ${M3_POINTS_PER_BIT} points become 1 Bit, up to ${M3C_MAX_BITS}`}
+              ? `Alinhe 3 ou mais peças: cada linha golpeia o time da fenda · a rodada acaba quando um lado recua · ${M3_POINTS_PER_BIT} pontos = 1 Bit, até ${M3C_MAX_BITS}`
+              : `Line up 3+ tiles: each line strikes the rift team · the round ends when one side steps back · ${M3_POINTS_PER_BIT} points = 1 Bit, up to ${M3C_MAX_BITS}`}
           </InfoTipSection>
         </ModalInfo>
       </div>

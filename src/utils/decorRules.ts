@@ -74,10 +74,10 @@ export function decorRuleText(isPt: boolean): { limit: string; scenes: string } 
   return isPt
     ? {
         limit: `Cabe 1 peça por espaço — até ${DECOR_MAX_TOTAL} ao mesmo tempo (${names}). Equipar troca a que já estava lá.`,
-        scenes: 'Qualquer peça pode ser equipada em qualquer cenário, mas só aparece onde serve: peças de interior em cenários de interior, peças ao ar livre em cenários abertos, e a parede só em cenários que têm onde pendurar.',
+        scenes: 'Qualquer peça pode ser equipada em qualquer cenário, mas só aparece onde serve: interior em cenário de interior, ao ar livre em cenário aberto, parede só onde dá para pendurar.',
       }
     : {
         limit: `1 piece per spot — up to ${DECOR_MAX_TOTAL} at once (${names}). Equipping replaces what was there.`,
-        scenes: 'Any piece can be equipped in any scene, but it only shows where it fits: indoor pieces in indoor scenes, outdoor pieces in open scenes, and the wall only in scenes with somewhere to hang it.',
+        scenes: 'Any piece can be equipped in any scene, but it only shows where it fits: indoor in indoor scenes, outdoor in open scenes, wall only where it can hang.',
       };
 }
