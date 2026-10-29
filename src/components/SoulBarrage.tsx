@@ -9,6 +9,7 @@ import { sm2Button } from './form/FormKit';
 import { ResultScreen } from './games/ResultScreen';
 import { GameRoot, GameHeader, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
+import { RewardPreview } from './ui/RewardPreview';
 import { fxFrame, prefersReducedMotion } from '../utils/combatFx';
 import type { GameChallenge } from '../utils/gameChallenge';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
@@ -275,11 +276,12 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
           })}
         </div>
       )}
-      {phase === 'ready' && (
+      {phase === 'ready' && (<>
+        <div style={{ display: 'flex', justifyContent: 'center' }}><RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} items={[{ kind: 'bits' }]} /></div>
         <button type="button" data-barrage-start onClick={start} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 240, alignSelf: 'center' }}>
           {isPt ? 'Começar' : 'Start'}
         </button>
-      )}
+      </>)}
       {phase === 'over' && (
         <ResultScreen
           language={language}

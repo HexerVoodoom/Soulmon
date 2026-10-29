@@ -211,7 +211,7 @@ export function Match3Sheet({ language, onStart }: { language: Language; onStart
     <div data-match3 style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ display: 'flex', gap: 8 }}>
         {best > 0 && <StatBox value={best} label={isPt ? 'seu recorde' : 'your best'} />}
-        <StatBox value={<>{isPt ? 'até' : 'up to'} <BitsAmount value={M3C_MAX_BITS} /></>} label={isPt ? 'por rodada' : 'per round'} valueStyle={bitsStyle} />
+        <StatBox value={<RewardPreview mode="before" language={language} items={[{ kind: 'bits', max: M3C_MAX_BITS }]} />} label={isPt ? 'por rodada' : 'per round'} valueStyle={bitsStyle} />
       </div>
       <button type="button" data-match3-start onClick={onStart} style={cta}>
         {isPt ? 'Jogar' : 'Play'}

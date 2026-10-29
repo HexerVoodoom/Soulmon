@@ -10,6 +10,7 @@
  * Chamada e crédito são injetáveis (`api`, `onCredit`) para teste; o crédito passa por `creditFeiraOnce` (idempotente por recibo).
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { RewardPreview } from '../ui/RewardPreview';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { BossFightScreen, type BossFightMe } from './BossFightScreen';
 import { FeiraTrailPlay } from './FeiraTrailPlay';
@@ -225,7 +226,7 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
     if (evento.kind === 'boss' && evento.canAttack) {
       footer = <button type="button" disabled={busy} aria-disabled={busy ? true : undefined} aria-busy={busy ? true : undefined} onClick={() => void doAttack()} style={{ ...sm2Button('primary', busy), width: '100%' }} data-feira-atacar>{busy ? t('boss.busy') : t('boss.attack')}</button>;
     } else if (evento.kind === 'trail' && evento.trail.pending && !evento.trail.cleared) {
-      footer = <button type="button" disabled={busy} aria-disabled={busy ? true : undefined} onClick={() => void doStart()} style={{ ...sm2Button('primary', busy), width: '100%' }} data-feira-comecar>{t('trail.start')}</button>;
+      footer = <><div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><RewardPreview mode="before" language={language} items={[{ kind: 'honor' }, { kind: 'xp' }]} /></div><button type="button" disabled={busy} aria-disabled={busy ? true : undefined} onClick={() => void doStart()} style={{ ...sm2Button('primary', busy), width: '100%' }} data-feira-comecar>{t('trail.start')}</button></>;
     } else if (evento.kind === 'rest' && evento.claimable) {
       footer = <button type="button" disabled={busy} aria-disabled={busy ? true : undefined} onClick={() => void doClaim()} style={{ ...sm2Button('primary', busy), width: '100%' }} data-feira-colher>{t('rest.claim')}</button>;
     } else {

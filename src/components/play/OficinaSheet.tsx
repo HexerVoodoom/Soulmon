@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState, type CSSProperties } from 'react';
+import { RewardPreview } from '../ui/RewardPreview';
 import { Segment, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { Icon } from '../ui/Icon';
@@ -198,6 +199,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
         <p role="timer" data-oficina-clock className="sm2-num" style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 700, fontSize: 48, lineHeight: 1, color: 'var(--sm2-ink)' }}>{formatClock(left)}</p>
         {ended && <p role="status" data-oficina-fim style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{timer?.phase === 'focus' ? (isPt ? 'O tempo acabou.' : 'Time is up.') : (isPt ? 'A pausa acabou.' : 'The break is over.')}</p>}
         <div style={{ display: 'flex', gap: 8, width: '100%', flexWrap: 'wrap' }}>
+          {!timer && <RewardPreview mode="before" language={language} size={14} items={[{ kind: 'custom', emoji: '🎁', label: isPt ? 'material de foco' : 'focus material' }]} />}
           {!timer && <button type="button" data-oficina-start onClick={startSessionFocus} style={{ ...sm2Button('primary'), flex: 1 }}>{canStartSessionFocus ? (isPt ? 'Enviar Soulmon e iniciar' : 'Send Soulmon & start') : (isPt ? 'Planejar sessão e escolher cenário' : 'Plan a session & choose a scene')}</button>}
           {timer?.status === 'running' && <button type="button" data-oficina-pause onClick={() => { if (timer.phase === 'focus') onFocusPause?.(); apply(pause(timer, Date.now())); }} style={{ ...sm2Button('primary'), flex: 1 }}><Icon name="pause" size={20} tone="inherit" /> {isPt ? 'Pausar' : 'Pause'}</button>}
           {timer?.status === 'paused' && <button type="button" data-oficina-resume onClick={() => { const r = resume(timer, Date.now()); if (timer.phase === 'focus') onFocusResume?.(r.endAt ?? undefined); apply(r); }} style={{ ...sm2Button('primary'), flex: 1 }}><Icon name="play_arrow" size={20} tone="inherit" /> {isPt ? 'Continuar' : 'Resume'}</button>}
