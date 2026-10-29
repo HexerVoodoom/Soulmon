@@ -1018,6 +1018,13 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/utils/evoRecap.test.ts`.
 
+### `src/utils/rogueCardArt.ts`
+**Dono de:** a ilustração dos cards do Calabouço diário (29/10/2026) — caminhos (`combat`, `puzzle`, `minigame`, `explore`) e bônus (`power`, `vigor`, `heal`). Glob estreito em `dungeon-rogue/cards/card-*.png`: o card mostra a arte quando o arquivo existe; senão segue o ícone atual.
+**Exports:** `ROGUE_CARD_FILE` · `indexCardArt` · `resolveCardArt` · `rogueCardArt`.
+**Depende de:** nada (glob do Vite).
+**Chamado por:** `src/components/RogueDungeon.tsx`.
+**Régua:** `src/utils/rogueCardArt.test.ts`.
+
 ### `src/utils/soulFragment.ts`
 **Dono de:** o VOCABULÁRIO do Fragmento de Alma (20/10/2026, REGISTRO §153) — o nome visível do gauge de evolução. Singular/plural PT+EN, frases da barra, da prévia de hoje ("entram amanhã"), da ajuda, do que JÁ se juntou (nunca o que falta) e do consumo na cerimônia. NÃO decide regra: o fragmento é o `evolutionPoints` do `evolutionGauge.ts` (por esforço, teto diário, crédito na virada, zera ao evoluir), com o mesmo significado no save.
 **Exports:** `SOUL_FRAGMENT_SAVE_FIELD`, `soulFragmentName`, `soulFragmentWord`, `soulFragmentCount`, `fragmentBarLabel`, `fragmentTodayHint`, `fragmentHowText`, `fragmentsSpentLine`, `fragmentsGatherLine`, `fragmentsGatheredLine`.

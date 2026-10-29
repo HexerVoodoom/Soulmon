@@ -1,7 +1,7 @@
 # Identidade visual e sonora do Soulmon
 
 > **Dono:** doc-redator-identidade · **Data:** 07/10/2026 (sincronização `e3d55bb8..e71061b8`, Combate v3 PR1–PR18, prédios, missões, avatar: §9.1 os três sons do combate (`arcade`)); anterior: 01/10/2026 (delta `bcfe7ca6..e3d55bb8`, PRs #189–#197, arte rodada 3: §5.6 recontado, §5.6-A NOVO, §7.2/§7.3/§7.5 atualizados); anterior: 30/09/2026 (sincronização `8e6d0d9a..ae366480`: §8.2-A NOVO corvinho e as 11 formas; tokens `--sm-attr-*` renomeados); anterior: 29/09/2026 (sincronização da Guilda, delta `38c3ccb5..b657a340`: §7.5 NOVO — placeholders do Bosque e da Feira, ids de arte pendentes, dois keyframes novos); anterior: 27/09/2026 (sincronização do delta `c510c7e4..2336e4e7`: §8.3 o corte do bestiário e o dono do critério; §8.4 o nome da inspiração no `imagePrompt`); anterior: 27/09/2026 (sincronização do delta `78ef5367..c510c7e4`, correções pós-F3 da minimal-ui: §5.1 ganha o TERCEIRO caminho de ícone — `PixelIcon` + o pacote `assets/soulmon/icones-ui/` (nove nomes, sem `fill`/`weight`/`tone`), a escala compartilhada e a moldura de texto `chip-moeda`; anterior: 22/09/2026 (3ª sincronização do dia, delta `cd66940f..cf6315e1`: §10.0 a tagline ÚNICA travada por contrato (#70) e §10.1 a `description` do manifesto; §3 (réguas) ganhou a nota do `UndoToast` sem `className` — desenho inline por token, decisão e não descuido; anterior: 2ª sincronização do dia, delta `a6c1cd8a..592e2c14`, QA Rodada 2: §10.2 o ramo Android do gate exige `; wv)` e a CSP por igualdade; o flash de evolução do `CompanionHUD` passou a usar `--sm2-viewport-bg`/`--sm2-viewport-ink` — ⚰️ `#2dd4bf` sobre branco/70, ~1,6:1 — sem seção própria aqui, registrado no `06-REFERENCIA/components.md`)) · **Estado:** verificado em 27/09/2026 por doc-verificador (delta `78ef5367..c510c7e4` — §5.1 conferida contra `src/components/ui/PixelIcon.tsx`, `src/assets/soulmon/icones-ui/index.ts` (`UI_ICON_ART` com 9 chaves, `CHIP_MOEDA_SLICE` 18/48/18/48), `iconScale.contract.test.ts` (tag `PixelIcon` no regex) e `iconInventory.contract.test.ts` (`mapa` no `NAO_SAO_ICONES`)); anterior: verificado em 24/09/2026 por doc-verificador (HEAD `78ef5367` — §1 `.sm-bottom-nav-label` ⚰️ e `navRotulo.contract.test.ts` medindo `areaLabel`; §2 `--sm-corner-h: 68px` (`CornerLink` 56px a `--sm2-space-3` = 12px), `.sm-nav-btn` com `--sm-muted`, `--sm-px-cyan` em `.sm-px-chat-btn`/`-send`, `--sm-px-copper` em `.sm-px-field`; §5.4 `.sm3-cuidado` (55%/22%/`--sm2-radius-md`, `.sm3-cuidado-inerte` tracejado) e o CSS de `.sm2-corner-link`/`.sm2-area-back`/`[data-map-area]`; §6 `@keyframes sm3-blink`/`sm3-sobe` e o movimento reduzido de `.sm3-term-cur`/`.sm3-mais`/`.sm3-mochila` — tudo em `src/index.css`, sem correção); anterior: verificado em 22/09/2026 por doc-verificador (delta `cd66940f..cf6315e1` — `index.html`, `public/manifest.json`, os dois casos `#70` de `src/deploy/manifest.contract.test.ts` e `src/components/UndoToast.tsx` conferidos); anterior: verificado em 22/09/2026 por doc-verificador (delta `a6c1cd8a..592e2c14` — `index.html`, `public/_headers` e `CompanionHUD.tsx` conferidos; anterior no mesmo dia: delta `f4086ce0..a6c1cd8a`, QA Rodada 1 — §10.1 `name`/`description` do `manifest.json` e §10.2 gate por plataforma conferidos contra `public/manifest.json`, `index.html`, `src/deploy/manifest.contract.test.ts`; anterior: delta `f02a3166..4a8b8049`, execução das respostas #11–#39 — §9 linha da trilha (⚰️ `SettingsModal`) e §10.2 gate de WebView conferidos por grep; `.sm2-notice` do banner de termos não é classe nova (`grep -n "^.sm2-notice" src/index.css`); anterior: delta `9f4e5a7a..f9faf7a7`, QA geral — só as passagens que o diff tocou, conferidas por grep; anterior: delta `dc72579e..9875477b`, conferido em `5ac3d351`: rodada 2 da SQUAD-ARTE, SQUAD-SOM retomada, superfície de suporte do chat) · §9 verificado em 21/09/2026 por doc-verificador (delta `5ac3d351..8d318529`: S16, trilha em duas camadas, escolha do dono nos 3 eventos longos, chaves na `SettingsPage`)
-> **Estado:** verificado em 01/10/2026 por doc-redator-identidade (delta `bcfe7ca6..e3d55bb8`; sem verificador independente — contagens por `find`/`ls`/`grep -c`, símbolos por `grep` contra o fonte); anterior: verificado em 30/09/2026 por doc-verificador (delta `ae366480..5edfcfba` — conferido: nomes de `DUNGEON_SCENES` em `dungeonScenes.ts`, `og:locale`/`alternate` e `description` do `index.html`, `description`/`lang` de `public/manifest.json`, `TAGLINE_PT` de `manifest.contract.test.ts`, `grep -c '@keyframes' src/index.css` = 40, `sm-duel-dmg` 850ms `ease-out` + reduced-motion; nomes de fauna/linhas de `DUNGEON_LINE_NAMES` sem divergência); anterior: verificado em 30/09/2026 por doc-mantenedor (sem verificador independente nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — `_admin.js`, `gmTools.ts`, `corvoAdocao.ts`, `AreaTopBar.tsx`, `npcScale.ts`, `attributes.ts`; só as seções tocadas; delta `8e6d0d9a..ae366480`); anterior: verificado em 29/09/2026 por doc-mantenedor (sem a ferramenta Agent nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — exports de `_coop.js`/`guild.js`/`_profile.js`, módulos novos de `src/`, constantes e chaves de KV; delta `38c3ccb5..b657a340`, só as seções tocadas; `docsManual`/`docsSemMentira` verdes)
+> **Estado:** verificado em 29/10/2026 por doc-verificador (delta `f3acead1..HEAD`, só as passagens tocadas — o parágrafo do `CompletionTag` (ex-`UndoToast`) em §2, §5.6 (linhas `areas/` e `mapa/`), §7 (contagem de cenários), §10.2 (splash) e o Delta de 29/10/2026 no fim; conferidas por `grep`/`ls`/`find` contra `index.html`, `src/index.css`, `components/CompletionTag.tsx`, `components/ui/RewardPreview.tsx`, `components/ui/BitsAmount.tsx`, `utils/backgrounds.ts`, `utils/areaLotGeometry.ts`, `assets/soulmon/{areas,mapa}/` e `public/sounds/`; as demais contagens do doc NÃO foram refeitas); anterior: verificado em 01/10/2026 por doc-redator-identidade (delta `bcfe7ca6..e3d55bb8`; sem verificador independente — contagens por `find`/`ls`/`grep -c`, símbolos por `grep` contra o fonte); anterior: verificado em 30/09/2026 por doc-verificador (delta `ae366480..5edfcfba` — conferido: nomes de `DUNGEON_SCENES` em `dungeonScenes.ts`, `og:locale`/`alternate` e `description` do `index.html`, `description`/`lang` de `public/manifest.json`, `TAGLINE_PT` de `manifest.contract.test.ts`, `grep -c '@keyframes' src/index.css` = 40, `sm-duel-dmg` 850ms `ease-out` + reduced-motion; nomes de fauna/linhas de `DUNGEON_LINE_NAMES` sem divergência); anterior: verificado em 30/09/2026 por doc-mantenedor (sem verificador independente nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — `_admin.js`, `gmTools.ts`, `corvoAdocao.ts`, `AreaTopBar.tsx`, `npcScale.ts`, `attributes.ts`; só as seções tocadas; delta `8e6d0d9a..ae366480`); anterior: verificado em 29/09/2026 por doc-mantenedor (sem a ferramenta Agent nesta sessão: verificação própria, símbolo a símbolo por `grep` contra o fonte — exports de `_coop.js`/`guild.js`/`_profile.js`, módulos novos de `src/`, constantes e chaves de KV; delta `38c3ccb5..b657a340`, só as seções tocadas; `docsManual`/`docsSemMentira` verdes)
 > **Verificação:** `npx vitest run src/styles/ src/index.css.contract.test.ts src/utils/sprites.dungeonRoster.test.ts src/utils/loudness.contract.test.ts src/utils/cortes.contract.test.ts src/utils/sonsAssets.contract.test.ts src/components/ui/Viewport.contract.test.tsx src/components/ui/foundation.render.test.tsx src/brand/brandFlame.parity.test.ts src/assets/assets.contract.test.ts` — os 11 arquivos de 09/09/2026 (216 testes, verde) mais os dois que nasceram com a marca vetorizada e a leva de arte de 15/09/2026, mais `sonsAssets.contract.test.ts` (21/09/2026, S16).
 > **Não cobre:** o fluxo entre telas e o que cada superfície mostra (doc `03-FLUXO-DE-TELAS.md`); as regras de jogo por trás dos números que a UI pinta (doc `02-REGRAS-DE-NEGOCIO.md`); a assinatura de cada componente (`06-REFERENCIA/components.md`); o pipeline de build/deploy dos assets (doc `08-INTEGRACOES-E-DEPLOY.md`). Este doc descreve o som — **não** decide nada sobre ele: quem decide é o `REGISTRO-DE-DECISOES.md` (§6.1, S1..S16 — não existe S14).
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -425,19 +425,20 @@ em `src/components/ui/`. **Não reintroduza `var(--foreground)` /
 | Visor escuro nos dois temas | idem | `--sm2-viewport-bg` claro no tema claro |
 | Classe fantasma | `src/index.css.contract.test.ts` | classe utilitária usada no JSX que não existe no CSS pré-compilado (footgun 1) |
 
-**O `UndoToast` não tem `className` nenhuma — por decisão, não por descuido**
-(22/09/2026, decisão do dono **#57**). Todo o desenho dele é **inline** com os
-tokens `--sm2-*` (`--sm2-surface`, `--sm2-ink`, `--sm2-line`, `--sm2-radius-md`,
-`--sm2-radius-sm`, `--sm2-primary-ink`, `--sm2-text-sm`), e o comentário no
-arquivo diz por quê: **classe que não existe em `index.css` não aplica nada** —
-é o footgun 1, e é exatamente o que a régua "Classe fantasma"
-(`src/index.css.contract.test.ts`) reprova. Como o componente nasceu fora do CSS
-pré-compilado, escrever estilo por token inline é o caminho que o guard aprova
-sem precisar de classe nova. Os dois números que ele fixa à mão são de
-acessibilidade, não de estética: **`role="status"`** (o `sonner` 2.0.3 não põe
-`role` nenhum no `<li>` do toast) e **alvo de 44×44** no botão (o `action` do
-`sonner` herda a altura do texto, ~24px, contra os 44 que o sistema exige em
-`src/styles/tokens.md`) — ver [03 §4.25](03-FLUXO-DE-TELAS.md).
+**A `CompletionTag` não tem `className` nenhuma — por decisão, não por descuido**
+(a regra nasceu com o `UndoToast`, 22/09/2026, decisão do dono **#57**; o `UndoToast`
+foi apagado em `744c06633b`, 29/10/2026, e a `CompletionTag` herdou o desenho e a
+regra). Todo o desenho dela é **inline** com os tokens `--sm2-*` (`--sm2-surface`,
+`--sm2-ink`, `--sm2-line`, `--sm2-radius-md`, `--sm2-radius-sm`, `--sm2-primary-ink`,
+`--sm2-text-sm`), e o comentário no arquivo diz por quê: **classe que não existe em
+`index.css` não aplica nada** — é o footgun 1, e é exatamente o que a régua "Classe
+fantasma" (`src/index.css.contract.test.ts`) reprova. Os números que ela fixa à mão são
+de acessibilidade, não de estética: **`role="status"`** (anuncia sem roubar o foco) e
+**alvo de 44×44** no botão Desfazer (contra os ~24px do `action` do `sonner`, que o
+`UndoToast` usava) — ver [03 §4.25](03-FLUXO-DE-TELAS.md). O que mudou do toast para a
+tag: vai no RODAPÉ (`position: fixed`, `zIndex: 60`, `maxWidth: 420`, acima do canto e do
+chat), usa o glifo autoral `check_circle` (nada de emoji) e carrega a linha de ganho do
+`RewardPreview` (abaixo, no Delta de 29/10/2026).
 
 O contraste é medido **numericamente**, não visualmente, e o motivo está escrito
 no cabeçalho do teste: na faixa de 3:1 a 5:1 o olho mente e o pixel não. O CSS é
@@ -738,8 +739,8 @@ então a D5 de §8.2 continua valendo; o que mudou depois de 21/09 é a **rodada
 | `src/assets/soulmon/windows/` | **1** | 1 |
 | `src/assets/soulmon/icones-ui/` (`UI_ICON_ART`, §5.1) | **34** | — (não medida aqui em 21/09) |
 | `src/assets/soulmon/corvo/` (as 11 formas do corvinho × 512 e 256, §8.2-A) | **22** | — |
-| `src/assets/soulmon/areas/` (6 fundos `bg-*` e 20 lotes `lote-*`, + `index.ts`) | **26** | — |
-| `src/assets/soulmon/mapa/` (`bg-mapa` + 6 `zona-*`) | **7** | — |
+| `src/assets/soulmon/areas/` (7 fundos `bg-*` — a Forja ganhou o dela — e 47 lotes `lote-*`, + `index.ts`; `ls areas/*.png \| wc -l` → 54 e `ls areas \| wc -l` → 55, 29/10/2026) | **55** (era 26 em 21/09/2026) | — |
+| `src/assets/soulmon/mapa/` (`bg-mapa` + 7 `zona-*` — `zona-forja.png`, v3 de 29/10/2026, é a sétima — + `zonas.ts`; `ls mapa/*.png \| wc -l` → 8, `ls mapa \| wc -l` → 9) | **9** (era 7) | — |
 | `src/assets/soulmon/npcs/` (bustos 768²; + `index.ts`) | **40** | — |
 | `src/assets/soulmon/arena/` (12 sprites de fenômeno da Feira, tipo × estado) | **12** | — |
 | `src/assets/soulmon/bosses/` (24 chefes 512² + `boss-arauto-do-fim-full`) | **25** | — |
@@ -1009,7 +1010,7 @@ Cada cenário (`PET_BACKGROUNDS`, `src/utils/backgrounds.ts`) declara:
   propósito: o CSS de um cenário é uma pilha de gradientes onde "74%" tanto pode
   ser a linha do piso quanto a coordenada horizontal de uma estrela — foi
   exatamente assim que a primeira versão do teste passou sem verificar nada.
-  Presente em **35** dos 35 cenários em 01/10/2026 (`grep -c "horizonY:"
+  Presente em **35** dos 35 cenários em 01/10/2026 — e em **55** dos 55 em 29/10/2026 (`grep -c "horizonY:"
   src/utils/backgrounds.ts`; eram 28 em 20/09/2026 e 25 antes — os 3 ausentes eram os `void`);
 - `baseColor` — cor de base atrás da arte, para cenário PINTADO. O visor
   desenha a arte com `auto 100%` para não deformar o pixel nem perder a linha
@@ -1024,7 +1025,7 @@ Cada cenário (`PET_BACKGROUNDS`, `src/utils/backgrounds.ts`) declara:
   escuro, `ANIM_ART.sleepZ` (teal) sobre claro. **Régua: nenhuma** além do
   guard geral de assets (§5.6).
 
-`PET_BACKGROUNDS` tem **35** entradas em 01/10/2026 (`grep -c "^  '[a-z-]*': {" src/utils/backgrounds.ts`): 22 comuns/comprados + os 6 `bg-mission-*`
+`PET_BACKGROUNDS` tem **55** entradas em 29/10/2026 (`grep -c "^  '[a-z-]*': {" src/utils/backgrounds.ts`; eram 35 em 01/10/2026 e 41 em `f3acead1`) e **55** `horizonY:` (todas): destas, **20** são `bg-mission-*` (`grep -c "^  'bg-mission-" src/utils/backgrounds.ts`; eram 6 — os 14 novos, de `bg-mission-chuva` a `bg-mission-ouro`, entraram depois de `f3acead1`, todos `outdoor`, `horizonY` 74), os 5 `bg-guild-*` e os 2 postais do Passeio; a lista de 22 comuns + 6 missões abaixo é a de 01/10/2026: 22 comuns/comprados + os 6 `bg-mission-*`
 liberados por missão + os 5 `bg-guild-*` do Bosque (29/09/2026) + os postais `bg-campina` e `bg-cavernas` (30/09/2026, só do Passeio: fora de `shop.ts`/`SHOP_BG_ACCENTS`). ⚰️ **Nenhum é mais gradiente CSS**: em 15/09/2026
 (`559222ed`, leva `cenarios-20260915` da SQUAD-ARTE — C3 em
 `docs/ASSETS-A-GERAR.md` §11) os **19** cenários que eram pilhas de
@@ -1628,11 +1629,10 @@ derivados de `flame.ts`, referenciados em `public/sw.js` (`PUSH_ICON`,
 ### 10.2 O splash — o aparelho ligando
 
 O `#splash` vive **inline no `index.html`** como MARKUP (nada de bundle no
-caminho crítico) e é uma peça de identidade completa: **é o VISOR do aparelho
-ligando, em tela cheia** (canvas Onboarding-funil ONB-01,
-`docs/design/DECISOES-WIREFRAME.md` §23; `fd9ec04d`, 20/09/2026). O `<div
-id="splash">` leva as classes **`.sm2-visor .sm2-splash`** e termina com um
-`.sm2-viewport-glass` (o reflexo, sem raio porque é a tela inteira).
+caminho crítico) e é o fundo do VISOR do aparelho, em tela cheia (canvas
+Onboarding-funil ONB-01, `docs/design/DECISOES-WIREFRAME.md` §23; `fd9ec04d`,
+20/09/2026 — ⚠️ a peça "completa" daquela data virou uma barra só em 14/10/2026,
+ver abaixo). O `<div id="splash">` leva as classes **`.sm2-visor .sm2-splash`**.
 
 ⚰️ **O `<style>` inline com ~60 linhas de tokens do tema escuro copiados à mão
 saiu em 20/09/2026.** Até então o `#splash` redeclarava `--sm2-viewport-bg:
@@ -1645,21 +1645,7 @@ splash lê os tokens de `src/index.css`: a paleta do vidro vem do escopo
 (ONB-03/04) é a continuação do boot no MESMO `.sm2-splash` (D-O3/X4), com o
 vídeo em `cover` dentro.
 
-Composição, de cima para baixo: a **chama do kit a 4× inteiro** (`svg.sp-flame
-.sm2-splash-flame`, `viewBox 0 0 19 30`, `width 76 × height 120`, **343**
-`<rect>` — `grep -o '<rect' index.html | wc -l`, 20/09/2026; eram 109 numa chama
-de 12×16 ⚰️ — a arte é a de `src/brand/flame.ts`, §10.1, e
-`brandFlame.parity.test.ts` confere grupo por grupo), **sem `drop-shadow` e sem
-`transform` fracionário** (o pulso é COR, não escala — D-O2, keyframe
-`sm2-splash-flick`); o wordmark `Soulmon` em `h1.sm2-splash-title` (Silkscreen
-`--sm2-text-2xl`, caixa alta por CSS, `--sm2-primary-ink`); a linha `LOADING
-DATA...` (`.sm2-splash-pix`, `--sm2-text-sm` = 14px — o PISO da Silkscreen);
-a **barra de 8 segmentos** (`.sm2-splash-bar`, 220×16, `surface-2` + `line`,
-`radius-sm`) cujo segmento apagado é **TINTA** (`primary-ink` a 15% sobre
-`surface-2`), nunca `opacity`, e a onda anima a COR (`sm2-splash-seg`); o selo
-`SOUL_LINK ESTABLISHED` (`.sm2-splash-link`); e os **três cristais**
-(`.sm2-splash-crystals`), a mesma cena da Home que o placeholder reproduz
-(§8.6).
+Composição desde 14/10/2026 (REGISTRO §50, pedido do dono por voz): **só o fundo do visor e UMA barra fina turquesa que enche** — `.sm2-loadbar.sm2-loadbar-boot#sp-bar` (`role="progressbar"`, `aria-busy="true"`, `aria-label` "Loading"/"Carregando"), a MESMA visual do componente `LoadingBar` (`src/components/ui/LoadingBar.tsx`, que o `ScreenSkeleton` também desenha); na splash a cor é `--sm2-primary-ink` do visor (`.sm2-visor .sm2-loadbar`) e, com movimento reduzido, a barra anda em 5 passos sem brilho (`sm2-loadbar-boot-steps`). **Sem chama, sem wordmark, sem texto, sem cristais, sem `.sm2-viewport-glass`.** ⚰️ A composição anterior (20/09/2026, canvas ONB-01) — a chama do kit a 4× (`svg.sp-flame`, 343 `<rect>`, `sm2-splash-flick`), o `h1.sm2-splash-title`, `LOADING DATA...`, a barra de 8 segmentos (`.sm2-splash-bar`/`sm2-splash-seg`), o selo `SOUL_LINK ESTABLISHED` e os três cristais — saiu do `index.html` (`grep -c '<rect' index.html` → 0, 29/10/2026); as classes `.sm2-splash-*` que sobraram no `index.css` são a continuação da intro (ONB-03/04), não da splash. A chama de marca continua em `src/brand/flame.ts` (§10.1).
 
 Três decisões medidas que sobreviveram à reescrita:
 
@@ -1672,9 +1658,10 @@ Três decisões medidas que sobreviveram à reescrita:
   proíbe por ser indistinguível da Rubik em tamanho pequeno), porque a Silkscreen
   chega com o bundle e **não é preloadada**: baixar fonte nova no caminho crítico
   atrasaria o LCP desta própria tela.
-- O selo `SOUL_LINK` **era um selo dentro de uma caixa com borda de cobre de
-  2px** ⚰️. A caixa saiu: o que informa é a palavra, não a moldura — a mesma
-  regra do dono que tirou a placa do ícone.
+- ⚰️ O selo `SOUL_LINK` (que **era um selo dentro de uma caixa com borda de cobre de
+  2px**, e depois só a palavra) deixou de existir junto com o resto do texto da splash
+  (14/10/2026); a regra "o que informa é a palavra, não a moldura" segue valendo para
+  os outros selos.
 - O gate de WebView antigo (o `<script>` inline que troca a tela branca pelo
   aviso "Precisamos de uma atualização") testa, desde `42b07bec` (decisão #19),
   **`CSS.supports('selector(&)')`** além de `oklch`/`color-mix`: o kit inteiro
@@ -1700,15 +1687,17 @@ Três decisões medidas que sobreviveram à reescrita:
 
 O que morreu com o `<style>`: os `fill` do sprite antigo entravam por token
 (`#5df0e0` → `--sm2-primary-ink`) "sem tocar nos 109 `rect`" ⚰️ — a chama nova
-tem as cores da MARCA como atributo, de propósito, e elas NÃO seguem tema.
+tinha as cores da MARCA como atributo, de propósito (e em 29/10/2026 nem está no `index.html`).
 
-Um script inline localiza o splash sem esperar o bundle (`CARREGANDO DADOS...` /
-`SOUL_LINK ESTABELECIDO` quando `navigator.language` começa com `pt`).
+Um script inline localiza a splash sem esperar o bundle: quando `navigator.language`
+começa com `pt`, troca só o `aria-label` da barra (`Carregando`) — ⚰️ não há mais
+`CARREGANDO DADOS...`/`SOUL_LINK ESTABELECIDO`.
 
 ⚠️ `docs/INVENTARIO-TELAS.md` §0 registra um resíduo do splash no DOM em TODAS as
-telas (o `innerText` termina com `SOULMON / LOADING DATA... / SOUL_LINK
-ESTABLISHED`), medido com `height: 0` depois do resize — pendência de
-verificação visual desde 19/08/2026, não confirmada nem refutada aqui.
+telas (o `innerText` terminava com `SOULMON / LOADING DATA... / SOUL_LINK
+ESTABLISHED`), medido com `height: 0` depois do resize em 19/08/2026. O texto citado
+não existe mais no `index.html` (29/10/2026); a verificação visual do resíduo da barra
+continua sem medição.
 
 ---
 
@@ -1808,3 +1797,12 @@ Lista fechada, para o `STATUS.md`. Medidas em 09/09/2026, revistas em
 | 13 | `src/styles/tokens.md` × `src/index.css` | o `grep` de tokens `--sm2-*` devolve 59 e são 58: `--sm2-btn` é seletor de variante do kit vetor, não token declarado (§2.8) |
 | 14 | `CLAUDE.md`, `docs/SOM.md` e este doc (§9) × `docs/REGISTRO-DE-DECISOES.md` §6.1 | os três diziam "**S1..S13**", mas o registro tem **S15** desde 09/09/2026 (`6bbdd9f8`, termos do gerador) e **S16** desde 21/09/2026 (`ee79fd44`); **não existe S14**. Achado em 21/09/2026 ao sincronizar §9.5; ⚰️ este doc passou a dizer S1..S16 em 21/09/2026 (sincronização sobre `73be1a2f`); ⚰️ `CLAUDE.md` › Áudio corrigido em `15164e4c` (21/09/2026, autorizado pelo dono): S1..S16, cinco arquivos, `sonsAssets.ts`/`trilha.ts` — **régua: nenhuma** |
 | 15 | ⚰️ `docs/SOM.md` §5 e `REGISTRO-DE-DECISOES.md` §6.1 (linha da S16) × `public/sounds/` | diziam "188 KB" / "188 031 bytes" e "camada-base" (estado de `ee79fd44`: uma camada); em `73be1a2f` são **5** arquivos, duas camadas de trilha, **258 248 bytes** (`ls -l public/sounds/`, 21/09/2026). **Fechada em `8d318529`** (mesmo dia): a S16 foi emendada ("emenda no mesmo dia … 258 248 bytes em 5 arquivos") e `docs/SOM.md` não cita mais 188 (`grep -n 188 docs/SOM.md` → vazio). O total é conferido contra o teto S6 por `sonsAssets.contract.test.ts` |
+
+## Delta de 29/10/2026 (`f3acead1..HEAD`): recompensa, Bits, mapas e som
+
+- **`RewardPreview`** (`components/ui/RewardPreview.tsx`; pedido do dono, 29/10/2026): a linha de recompensa é UM componente, em dois modos — `before` (valor fixo `+N`, faixa `até N`/`up to N`, ou só o ícone) e `after` (o concedido, só o que for > 0). Identidade: Bits pelo `BitsAmount`, XP pelo glifo autoral `star` dourado (`fill={1}`, `tone="gold"`), Honra pelo medalhão, energia pelo `ENERGY_ICON`, material pelo resolvedor `rewardIcons` (ícones `RewardIcon` de 18 px, parados). Tamanho padrão do ícone 20 (degrau 20 da escala, `aed8893f7d`); a `CompletionTag` usa 14. Nunca emoji, nunca texto "Bits" na tela. Fluxo e onde aparece: [03 Delta de 29/10/2026](03-FLUXO-DE-TELAS.md).
+- **Bits têm ícone** (D-62, 19/10/2026, REGISTRO §105; revoga a D-L11 "Bits sem ícone"): o valor sai SEMPRE do `BitsAmount` (`BitsIcon` + número em `bitsStyle`; a palavra "Bits" só em `sm2-sr-only`). As três moedas seguem sem se misturar: Bits = moeda própria + mono `primary-ink`; Honra = `military_tech` dourado + serifa; Créditos = `diamond` + `credit-ink` (`src/styles/tokens.md`, bloco "Bits têm ícone"). Desde 28/10/2026 o `BitsAmount` aceita `roll` (odômetro; `RollingCount` de `RewardPop`).
+- **Mapas e lotes** (`areas/`, `mapa/`): a Forja tem fundo (`bg-forja.png`) e quatro prédios próprios (28/10/2026), e a zona dela no Mapa (`mapa/zona-forja.png`, v3 de 29/10/2026, fundição de pedra no estilo do mapa interno); os fundos do Hall e da Arena foram refeitos (Hall: base de pedra turquesa, pedras de luz e fluxos de alma, com o sol do Clan Hall no lote grande e a feira em cima; Arena: fundo novo a 760 px de largura, `d89263c5ee`). A caixa opaca de cada prédio é medida pelo alfa (`LOT_ART_BOUNDS`, `utils/areaLotGeometry.ts`) e o rótulo cola na base DESENHADA (`lotLabelLift`) — a regra de composição é: o rótulo mora na borda da arte, não na da caixa transparente. Posições e larguras: [03 §1.3](03-FLUXO-DE-TELAS.md).
+- **Cenários**: 14 `bg-mission-*` novos (total 20) e os 5 `bg-guild-*` agora são `.webp` (com variante `-portrait`) — §7; 3 cenários de PESADELO (`NIGHTMARE_SCENES` em `utils/dungeonScenes.ts`: Abismo Glitch, Corredor Impossível, Quarto sem Fim; pixel art 608×1080 gerada por `scripts/gerar-pesadelo-arte.py`, UM por dia pela chave do dia local, `nightmareSceneIndex`; fora do sorteio da Masmorra).
+- **Splash**: só a barra fina turquesa (14/10/2026) — §10.2. **`UndoToast` → `CompletionTag`** — §2 (regra do estilo inline). `viewport-fit=cover` e `interactive-widget=resizes-content` entraram no `<meta viewport>` do `index.html` (a splash e o app cobrem a área segura; o teclado redimensiona o conteúdo).
+- **Som** (resumo; dono do detalhe: `docs/SOM.md`, e o §9 acima NÃO foi reescrito nesta rodada): em `public/sounds/` há agora `tema-masmorra`, `tema-evolucao`, `tema-meditacao` (S18, 26/10/2026; diretor com as superfícies `masmorra-mapa`, `evolucao` e `meditacao` em `utils/musica.ts`), `tema-stone-hall-decay`, `musica-combate`/`musica-pesadelo` e 7 `sfx-combate-*` (`ls public/sounds | wc -l` → 22 arquivos, todos `.webm`/`.m4a`; samples CC0 no lugar da síntese procedural, que virou fallback — `31096581ec`); um interruptor só de música para tema, combate e Pesadelo (REGISTRO §129, `audioBus.musicaLigada()`); e a revelação de recompensa (S19, 28/10/2026, REGISTRO §178) com `playRewardPop`, `playCoinRoll` e `playCoinLand` (arcade, offsets medidos). A tabela de 8 sons (+3) do §9.1 não inclui esses.
