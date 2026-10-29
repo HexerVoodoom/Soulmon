@@ -147,15 +147,16 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: "We're under construction! Soon the restaurant will open its doors and I'll be able to cook special meals here. Come back soon!",
   },
   'arena:duelo': {
-    namePt: 'Naia, a pescadora', nameEn: 'Naia, the net-fisher', // 07/10/2026: busto trocado a pedido do dono (era Tuska, o rinoceronte)
+    namePt: 'Naia, a gladiadora', nameEn: 'Naia, the gladiator', // 07/10/2026: busto trocado a pedido do dono (era Tuska, o rinoceronte). 29/10/2026 (dono): gladiadora de tridente e rede, nada de pescaria
     linePt: 'Um duelo, uma rodada de cada vez. Pode vir.',
     lineEn: 'One duel, one round at a time. Come on.',
   },
   'arena:guerra': {
-    // 18/10/2026 (dono): o NPC é a própria criatura, quimera de duas cabeças do brejo (Pântano + Sombra), autoral; nome em inglês.
+    // 18/10/2026 (dono): o NPC é a própria criatura, quimera do brejo (Pântano + Sombra), autoral; nome em inglês.
+    // 29/10/2026 (dono): entidade única; a fala nunca menciona as cabeças, escreve como criatura comum.
     namePt: 'Mirevesper, a quimera do brejo', nameEn: 'Mirevesper, the mire chimera',
-    linePt: 'Duas cabeças, uma só vigília. A roda dos clãs se abre quando o seu esquadrão chega junto.',
-    lineEn: "Two heads, one watch. The clans' round opens when your squad arrives together.",
+    linePt: 'Eu vigio a roda dos clãs. Ela se abre quando o seu esquadrão chega junto.',
+    lineEn: "I keep watch over the clans' round. It opens when your squad arrives together.",
   },
   // Fala da Feira (`guild.npc.feira`) — a copy mora em `guildCopy.ts`; "grupo
   // pequeno" ficou falso com a roda de até 12. NPC da Feira: Fanfare (criatura-sanfona,
