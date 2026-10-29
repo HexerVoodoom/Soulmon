@@ -223,3 +223,14 @@ describe('feiraEvento (a volta da Missão encontra o Chefe/Desafio)', () => {
     expect(pickPresentation({})).toBe(PRESENTATION_IDLE);
   });
 });
+
+describe('evoRecap (REGISTRO §190)', () => {
+  it('vem logo depois do resumo e não gasta vaga no teto', async () => {
+    const q = await import('./presentationQueue');
+    expect(q.presentationRank('evoRecap')).toBe(q.presentationRank('dailyReport') + 1);
+    expect(q.presentationSlotOf('evoRecap')).toBe('dailyReport');
+    expect(q.countedModals(new Set(['dailyReport', 'evoRecap'] as const))).toBe(1);
+    expect(q.pickPresentation({ dailyReport: true, evoRecap: true } as any)).toBe('dailyReport');
+    expect(q.pickPresentation({ evoRecap: true } as any)).toBe('evoRecap');
+  });
+});

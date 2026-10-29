@@ -45,6 +45,7 @@ export const PRESENTATION_IDLE = 'welcome' as const;
  *  3. `nightmare` — o pesadelo da manhã (jogável) logo depois do despertar; NUNCA junto do sonho;
  *  4. `dream` — o sonho da manhã, no lugar do pesadelo quando não há luta;
  *  5. `dailyReport` — o resumo de ontem COM o humor (tarefas + corações + humor numa tela; depois a aventura, quando houver);
+ *  5b. `evoRecap` — a barra da evolução enchendo (REGISTRO §190): 2ª página do resumo, MESMA vaga do teto; só com progresso;
  *  6. `buildingIntro` — o NPC do prédio, SÓ na primeira entrada nele (tela cheia, sequência de falas);
  *  6b. `mapTutorial` — o tutorial do mapa (corvo e NPCs de área em `NpcSequence`), UMA vez, na 1ª abertura do Mapa;
  *  7. `catalogOnboarding` — escolher as primeiras metas (depende de já ter visto o resumo);
@@ -66,6 +67,7 @@ export const PRESENTATION_ORDER = [
   'nightmare',
   'dream',
   'dailyReport',
+  'evoRecap',
   'buildingIntro',
   'mapTutorial',
   'catalogOnboarding',
@@ -95,7 +97,7 @@ const NO_FAILED: ReadonlySet<PresentationId> = new Set();
 export const START_OF_DAY_MODAL_CAP = 3;
 
 /** O início de dia propriamente dito: entram depois de acordar, antes de qualquer celebração, e NUNCA são adiados pelo teto. */
-export const DAY_START_IDS: readonly PresentationId[] = ['nightmare', 'dream', 'dailyReport', 'dayGoals', 'checkIn'];
+export const DAY_START_IDS: readonly PresentationId[] = ['nightmare', 'dream', 'dailyReport', 'evoRecap', 'dayGoals', 'checkIn'];
 
 /** Celebrações: vêm DEPOIS do início de dia, e só se sobrar vaga no teto; senão, próxima abertura. */
 export const CELEBRATION_IDS: readonly PresentationId[] = ['levelUp', 'evolveTask', 'groveMilestone'];
@@ -128,6 +130,7 @@ export function presentationRank(id: PresentationId): number {
 /** A TELA que o id ocupa na contagem do teto: sonho e pesadelo são UMA tela; "Hoje" (`dayGoals`/`checkIn`) é UMA tela. */
 export function presentationSlotOf(id: PresentationId): string {
   if (id === 'nightmare' || id === 'dream') return 'sono';
+  if (id === 'evoRecap') return 'dailyReport'; // a barra da evolução é a 2ª página do resumo: não gasta vaga no teto
   if (id === 'dayGoals' || id === 'checkIn') return 'hoje';
   return id;
 }

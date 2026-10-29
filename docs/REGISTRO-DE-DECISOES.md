@@ -3575,3 +3575,13 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 **Alternativa que perdeu:** manter a linha só com o nome (regra de 14/10) e mostrar o XP só depois (`XpGainDisplay`).
 
 **O que falsificaria:** a lista ficar visualmente carregada (cliques por linha, ou queixa de ruído) ou o jogador tratar o chip como meta e escolher só tarefas de maior XP.
+
+## 190. Recap da evolução: a barra enche na manhã, depois do resumo (dono, 29/10/2026)
+
+**Decisão do dono:** no começo do dia, logo depois do resumo de ontem (corações etc.), entra uma 2ª página `evoRecap` (`EvoRecapModal`): a barra do gauge de evolução sai do que estava ontem e enche com brilho até o de hoje; mostra "Ontem X%", "Agora Y%", "+N% desde ontem" e "Faltam K para evoluir" (ou "Barra cheia!"). Minimalista, uma linha de copy, PT/EN, sem culpa.
+
+**Como funciona:** o "ontem" sai do próprio relatório da virada (`lastDayReport`: `evolutionPoints − gaugeGain`), sem snapshot em tempo de virada (a virada já aplicou antes da UI abrir; o relatório é o registro fiel). O snapshot persistido `soulmon-evo-recap-v1` (`{date,before,after}`, congelada em `saveCompat`) é o "visto" gravado ao MOSTRAR. Fila: logo após `dailyReport`, MESMA vaga do teto de 3 (`presentationSlotOf`), classe de início de dia. Regra pura em `utils/evoRecap.ts`. Movimento: transição CSS de largura + brilho 1×; `prefers-reduced-motion` zera as durações pela regra global.
+
+**Sem progresso (`gaugeGain = 0`), estágio final ou barra reiniciada pela evolução: o modal NÃO abre** (uma página só para dizer "nada mudou" seria cobrança disfarçada; o gauge nunca desce).
+
+**Alternativa que perdeu:** versão "gentil" para dia sem progresso ("sua barra segue em X%"). **Falsificaria:** o jogador achar a página repetitiva (fechar sem olhar nas primeiras semanas) ou querer ver a barra mesmo sem ganho. **Rollback:** remover `evoRecap` da fila/App; a chave gravada fica órfã e inofensiva.

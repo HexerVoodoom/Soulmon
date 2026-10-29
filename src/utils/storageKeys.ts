@@ -65,6 +65,8 @@ export const STORAGE_KEYS = {
   FOOD_FEED_TIMES: 'soulmon-food-feed-times',
   RUB_HEAL_DAY: 'soulmon-rub-heal-day',
   DAILY_REPORT_SHOWN: 'soulmon-daily-report-shown',
+  /** Recap da evolução (REGISTRO §190): snapshot JSON `{date,before,after}` do dia em que o modal da barra foi mostrado; é também o "visto". */
+  EVO_RECAP_SNAPSHOT: 'soulmon-evo-recap-v1',
   /** Balão de aviso acionável já mostrado hoje: `<dia>|<chave>,<chave>` (REGISTRO §56). */
   NOTICE_TOAST_SEEN: 'soulmon-notice-toast-seen',
   /** Balões de UMA vez na vida já mostrados (`termos`), `<chave>,<chave>` (REGISTRO §56). */

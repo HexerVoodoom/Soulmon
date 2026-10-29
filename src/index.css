@@ -8925,3 +8925,12 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 .sm-reel-cell { display: block; height: 1em; line-height: 1em; text-align: center; }
 .sm-reel-cell::before { content: attr(data-d); }
 .sm-reel-sign { height: 1em; }
+
+/* Recap da evolucao (REGISTRO 190): a barra enche e brilha uma vez. prefers-reduced-motion zera as duracoes pela regra global. */
+.sm2-evo-recap-fill { transition: width 1.4s cubic-bezier(.22, 1, .36, 1); }
+@keyframes sm2-evo-recap-glow {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--sm2-primary-ink) 0%, transparent); }
+  45%  { box-shadow: 0 0 14px 3px color-mix(in srgb, var(--sm2-primary-ink) 55%, transparent); }
+  100% { box-shadow: 0 0 6px 1px color-mix(in srgb, var(--sm2-primary-ink) 30%, transparent); }
+}
+.sm2-evo-recap-glow { animation: sm2-evo-recap-glow 1.6s ease-out 1 forwards; }
