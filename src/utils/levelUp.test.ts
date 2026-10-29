@@ -45,8 +45,8 @@ describe('levelUpGains — vem dos donos, não de número escrito aqui', () => {
     expect(g.rewards.map(r => r.level)).toEqual([...g.rewards.map(r => r.level)].sort((a, b) => b - a));
   });
   it('portões que abriram nesta subida (e só nela)', () => {
-    expect(levelUpGains(4, 5).gates.sort()).toEqual(['pvp', 'torneio']);
-    expect(levelUpGains(5, 6).gates).toEqual([]);
+    expect(levelUpGains(2, 3).gates.sort()).toEqual(['pvp', 'torneio']);
+    expect(levelUpGains(3, 4).gates).toEqual([]);
     expect(levelUpGains(7, 12)).toMatchObject({ gates: expect.arrayContaining(['masmorraAlto', 'renascimento']) });
   });
 });
