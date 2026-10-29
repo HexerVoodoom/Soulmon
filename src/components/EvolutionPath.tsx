@@ -821,7 +821,7 @@ export function EvolutionPath({
             <InfoTip language={language} label={isPt ? 'Como chegar à forma Ultra' : 'How to reach the Ultra form'} align="left" style={{ minHeight: 24, justifyContent: 'flex-start' }}>
               {isPt
                 ? `Dois caminhos chegam aqui: ${ULTRA_PATIENCE_POINTS} passos como mega, ou conhecer os três galhos. Nenhum é melhor — e nenhum pede que você desça.`
-                : `Two paths reach this form: ${ULTRA_PATIENCE_POINTS} steps as a mega, or knowing all three branches. Neither is better — and neither asks you to go back down.`}
+                : `Two paths reach this form: ${ULTRA_PATIENCE_POINTS} steps as a mega, or knowing all three branches. Neither is better, and neither asks you to go back down.`}
             </InfoTip>
           )}
 
@@ -892,8 +892,8 @@ export function EvolutionPath({
           <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{isPt ? 'Revelar essa evolução?' : 'Reveal this evolution?'}</p>
           <p style={{ ...sm2Text, margin: 0 }}>
             {isPt
-              ? 'Essa é uma evolução futura que você ainda não desbloqueou — espiar é spoiler. Ela aparece só nesta sessão e esconde de novo quando você sair dessa tela.'
-              : "This is a future evolution you haven't unlocked yet — peeking is a spoiler. It shows up this session only, and hides again once you leave this screen."}
+              ? 'Evolução futura ainda não desbloqueada — espiar é spoiler. Ela aparece só nesta sessão e se esconde ao sair da tela.'
+              : "A future evolution you haven't unlocked yet — peeking is a spoiler. It shows this session only and hides again when you leave the screen."}
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
             <button type="button" onClick={() => setConfirmReveal(null)} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 12px' }}>

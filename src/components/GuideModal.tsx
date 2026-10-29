@@ -101,8 +101,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
               // regra consulta — e prometia uma escada 2,5× mais longa que a
               // real. Quem lia o guia achava que estava a 6 dias de evoluir
               // quando o botão já estava aceso.
-              `Rookie→Champion pede ${R.rookie.gauge} passos (até ${R.rookie.required} por dia); Champion→Ultimate ${R.champion.gauge} (até ${R.champion.required}/dia); Ultimate→Mega ${R.ultimate.gauge} (até ${R.ultimate.required}/dia).`,
-              `Rookie→Champion takes ${R.rookie.gauge} steps (up to ${R.rookie.required} a day); Champion→Ultimate ${R.champion.gauge} (up to ${R.champion.required}/day); Ultimate→Mega ${R.ultimate.gauge} (up to ${R.ultimate.required}/day).`,
+              `Rookie→Champion pede ${R.rookie.gauge} passos (até ${R.rookie.required}/dia); Champion→Ultimate ${R.champion.gauge} (até ${R.champion.required}/dia); Ultimate→Mega ${R.ultimate.gauge} (até ${R.ultimate.required}/dia).`,
+              `Rookie→Champion takes ${R.rookie.gauge} steps (up to ${R.rookie.required}/day); Champion→Ultimate ${R.champion.gauge} (up to ${R.champion.required}/day); Ultimate→Mega ${R.ultimate.gauge} (up to ${R.ultimate.required}/day).`,
             )}
           </p>
           {/* WP4.2 — o requisito do Ultra nunca esteve no guia, e ele é o único
@@ -225,8 +225,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Depois do café, do almoço e do jantar (${DEFAULT_MEAL_TIMES.breakfast}, ${DEFAULT_MEAL_TIMES.lunch} e ${DEFAULT_MEAL_TIMES.dinner}; muda nas Configurações), seu Soulmon pode pedir UMA coisa pequena por ${MEAL_WINDOW_MIN / 60} horas: carinho, banho, comidinha.`,
-              `After breakfast, lunch and dinner (${DEFAULT_MEAL_TIMES.breakfast}, ${DEFAULT_MEAL_TIMES.lunch} and ${DEFAULT_MEAL_TIMES.dinner} — change them in Settings), your Soulmon may ask for ONE small thing for ${MEAL_WINDOW_MIN / 60} hours: a pat, a rinse, a snack.`,
+              `Depois do café, do almoço e do jantar (${DEFAULT_MEAL_TIMES.breakfast}, ${DEFAULT_MEAL_TIMES.lunch} e ${DEFAULT_MEAL_TIMES.dinner}; muda nas Configurações), seu Soulmon pode pedir UMA coisa pequena por ${MEAL_WINDOW_MIN / 60} h: carinho, banho, comidinha.`,
+              `After breakfast, lunch and dinner (${DEFAULT_MEAL_TIMES.breakfast}, ${DEFAULT_MEAL_TIMES.lunch} and ${DEFAULT_MEAL_TIMES.dinner} — change them in Settings), your Soulmon may ask for ONE small thing for ${MEAL_WINDOW_MIN / 60} h: a pat, a rinse, a snack.`,
             )}
           </p>
           <p style={para}>
@@ -468,14 +468,14 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `A Masmorra é uma descida automática: as lutas vêm sozinhas e a cada ${DUNGEON_FIGHTS_PER_FLOOR} você desce uma camada, até a ${DUNGEON_MAX_LAYER}. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia (a da Home).`,
-              `The Dungeon is an automatic descent: fights come on their own and every ${DUNGEON_FIGHTS_PER_FLOOR} you go down a layer, all the way to ${DUNGEON_MAX_LAYER}. Each layer spends ${DUNGEON_ENERGY_PER_LAYER} energy (Home energy).`,
+              `A Masmorra é uma descida automática: a cada ${DUNGEON_FIGHTS_PER_FLOOR} lutas você desce uma camada, até a ${DUNGEON_MAX_LAYER}. Cada camada gasta ${DUNGEON_ENERGY_PER_LAYER} de energia.`,
+              `The Dungeon is an automatic descent: every ${DUNGEON_FIGHTS_PER_FLOOR} fights you go down a layer, up to ${DUNGEON_MAX_LAYER}. Each layer spends ${DUNGEON_ENERGY_PER_LAYER} energy.`,
             )}
           </p>
           <p style={para}>
             {L(
-              `A descida para quando a energia ou o HP acabam. O HP volta com o tempo (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h do zero ao cheio, até com o app fechado) e precisa de ${DUNGEON_MIN_HP_TO_ENTER_PCT}% para descer de novo.`,
-              `The descent stops when energy or HP runs out. HP returns over time (about ${DUNGEON_HP_REGEN_FULL_HOURS} h from empty to full, even app closed); you need ${DUNGEON_MIN_HP_TO_ENTER_PCT}% to descend again.`,
+              `A descida para quando a energia ou o HP acabam. O HP volta com o tempo (uns ${DUNGEON_HP_REGEN_FULL_HOURS} h, até com o app fechado); descer de novo pede ${DUNGEON_MIN_HP_TO_ENTER_PCT}%.`,
+              `The descent stops when energy or HP runs out. HP returns over time (about ${DUNGEON_HP_REGEN_FULL_HOURS} h, even app closed); descending again needs ${DUNGEON_MIN_HP_TO_ENTER_PCT}%.`,
             )}
           </p>
           <p style={para}>
@@ -492,8 +492,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              'Torneio e Arena são diferentes: o Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar, de poder parecido, e pode sortear três novos adversários (3 grátis por dia, depois com Bits).',
-              'Tournament and Arena differ: the Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight, of similar power, and can draw three new opponents (3 free a day, then with Bits).',
+              'O Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar; sortear três novos custa Bits depois de 3 grátis por dia.',
+              'The Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight; drawing three new ones costs Bits after 3 free a day.',
             )}
           </p>
           <p style={para}>
@@ -504,8 +504,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              'Elementos importam na Arena, no Combina 3 e na Guerra de Guildas (esta com metade do efeito; não nos Duelos do Torneio): um golpe cujo elemento contra-ataca o do outro lado vale um golpe a menos ("Super eficiente!"), e o inverso leva um golpe a mais ("Pouco eficiente"). Sem elemento em um dos lados, nada muda.',
-              'Elements matter in the Arena, Combine 3 and the Guild War (half the effect there; not in Tournament Duels): a strike whose element counters the opposing element lands one hit sooner ("Super effective!"), and the reverse takes one hit longer ("Not very effective"). No element on either side means no change.',
+              'Elementos contam na Arena, no Combina 3 e na Guerra de Guildas (metade do efeito; não nos Duelos do Torneio). Elemento que contra-ataca: um golpe a menos ("Super eficiente!"); o inverso, um a mais. Sem elemento, nada muda.',
+              'Elements count in the Arena, Combine 3 and the Guild War (half effect there; not Tournament Duels). A countering element lands one hit sooner ("Super effective!"); the reverse takes one more. No element, no change.',
             )}
           </p>
           <p style={para}>

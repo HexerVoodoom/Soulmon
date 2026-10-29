@@ -73,8 +73,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '⚡', en: 'Energy', pt: 'Energia',
-    descEn: `The side bar: rises with time (1 every ${ENERGY_REGEN_MINUTES} min; slower hungry, stopped starving) and resets daily. The Dungeon's fuel: ${DUNGEON_ENERGY_PER_LAYER} per layer.`,
-    descPt: `A barra lateral: sobe com o tempo (1 a cada ${ENERGY_REGEN_MINUTES} min; mais devagar com fome, parada se faminto) e zera todo dia. Combustível da Masmorra: ${DUNGEON_ENERGY_PER_LAYER} por camada.`,
+    descEn: `The side bar: rises with time (1 every ${ENERGY_REGEN_MINUTES} min; slower hungry, stopped starving), resets daily. Dungeon fuel: ${DUNGEON_ENERGY_PER_LAYER} per layer.`,
+    descPt: `A barra lateral: sobe com o tempo (1 a cada ${ENERGY_REGEN_MINUTES} min; mais devagar com fome, parada se faminto), zera todo dia. Masmorra: ${DUNGEON_ENERGY_PER_LAYER} por camada.`,
   },
   {
     // Combate v3: Vínculo N (você) e Lv N (o Soulmon). Números das CONSTANTES; sem prazo, sem cobrança.
@@ -85,8 +85,8 @@ const TERMS: Term[] = [
   {
     // Vantagem elemental (dono, 27/10/2026): Arena, Combina 3 e Guerra usam o mesmo ±1 golpe exibido; selo "Super eficiente!" / "Pouco eficiente".
     icon: '⚔️', en: 'Element advantage', pt: 'Vantagem elemental',
-    descEn: `In the Arena, Combine 3 and the Guild War (half effect there; not Tournament Duels) a strike whose element counters the other side's lands one hit sooner ("Super effective!"); the reverse takes one hit longer. No element, no change.`,
-    descPt: `Na Arena, no Combina 3 e na Guerra de Guildas (metade do efeito; não nos Duelos do Torneio), um golpe cujo elemento contra-ataca o do outro lado vale um golpe a menos ("Super eficiente!"); o inverso leva um golpe a mais. Sem elemento, nada muda.`,
+    descEn: `Arena, Combine 3 and Guild War (half effect there; not Tournament Duels): a countering element lands one hit sooner ("Super effective!"); the reverse, one later. No element, no change.`,
+    descPt: `Arena, Combina 3 e Guerra de Guildas (metade do efeito; não nos Duelos do Torneio): elemento que contra-ataca vale um golpe a menos ("Super eficiente!"); o inverso, um a mais. Sem elemento, nada muda.`,
   },
   {
     icon: '❗', en: 'Missions', pt: 'Missões',
@@ -95,8 +95,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '✨', en: "Today's special", pt: 'Especial do dia',
-    descEn: `One per day: with a step counter, walk ${DEFAULT_STEP_GOAL.toLocaleString('en-US')} steps or lie down in your rest window by turns; without one, always rest. Worth ${SPECIAL_MISSION_GAUGE_WEIGHT} habit; skipping is free.`,
-    descPt: `Uma por dia. Com contador de passos, alterna ${DEFAULT_STEP_GOAL.toLocaleString('pt-BR')} passos e deitar na janela de descanso; sem contador, só descanso. Vale ${SPECIAL_MISSION_GAUGE_WEIGHT} hábito; pular não custa nada.`,
+    descEn: `One a day: with a step counter, it alternates ${DEFAULT_STEP_GOAL.toLocaleString('en-US')} steps and lying down in your rest window; without one, rest only. Worth ${SPECIAL_MISSION_GAUGE_WEIGHT} habit; skipping is free.`,
+    descPt: `Uma por dia. Com contador, alterna ${DEFAULT_STEP_GOAL.toLocaleString('pt-BR')} passos e deitar na janela de descanso; sem contador, só descanso. Vale ${SPECIAL_MISSION_GAUGE_WEIGHT} hábito; pular é livre.`,
   },
   {
     icon: '🎖️', en: 'Talents & equipment', pt: 'Talentos e equipamento',
@@ -207,8 +207,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '🛏️', en: 'Rest Window', pt: 'Janela de Descanso',
-    descEn: `Your sleep window (default ${DEFAULT_REST_WINDOW.start}–${DEFAULT_REST_WINDOW.end}), read as "how many of the last ${REST_WINDOW_DAYS} nights": no score, no penalty. A night on time brings ${NIGHT_ENERGY_BONUS} extra energy, once a day.`,
-    descPt: `Sua janela de sono (padrão ${DEFAULT_REST_WINDOW.start}–${DEFAULT_REST_WINDOW.end}) conta "quantas das últimas ${REST_WINDOW_DAYS} noites": sem nota, sem castigo. Uma noite no horário traz ${NIGHT_ENERGY_BONUS} de energia extra, uma vez ao dia.`,
+    descEn: `Your sleep window (default ${DEFAULT_REST_WINDOW.start}–${DEFAULT_REST_WINDOW.end}), read as "how many of the last ${REST_WINDOW_DAYS} nights": no score. A night on time brings ${NIGHT_ENERGY_BONUS} extra energy, once a day.`,
+    descPt: `Sua janela de sono (padrão ${DEFAULT_REST_WINDOW.start}–${DEFAULT_REST_WINDOW.end}) conta "quantas das últimas ${REST_WINDOW_DAYS} noites": sem nota. Uma noite no horário traz ${NIGHT_ENERGY_BONUS} de energia extra, uma vez ao dia.`,
   },
   {
     icon: '🌠', en: 'Dream', pt: 'Sonho',

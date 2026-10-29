@@ -150,7 +150,7 @@ export function StepsCard({
       <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
         <InfoTip language={language} label={isPt ? 'Como os passos contam' : 'How steps count'} align="right" style={{ minHeight: 24 }}>
           {isPt
-            ? 'Passos não valem ponto sozinhos: confirmam um hábito de saúde que você já marcou e movem uma missão especial opcional que vale como um hábito na evolução.'
+            ? 'Passos não valem ponto sozinhos: confirmam um hábito de saúde que você já marcou e movem uma missão opcional que vale como um hábito.'
             : 'Steps never score on their own: they confirm a health habit you marked and power an optional daily special that counts as one habit toward evolution.'}
         </InfoTip>
       </div>

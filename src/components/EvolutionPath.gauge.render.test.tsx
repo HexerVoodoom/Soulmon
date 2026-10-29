@@ -33,13 +33,13 @@ describe('EvolutionPath — gauge', () => {
     expect(document.querySelector('[data-evo-gauge-count]')?.textContent).toBe('12 / 30 · +3 from today join tomorrow');
     expect(document.querySelector('[data-evo-meter-today]')).toBeTruthy();
     expect(screen.getByText('You have gathered 12 soul fragments on the way to the next form.')).toBeTruthy();
-    expect(document.querySelector('[data-evo-gauge-unlock]')?.textContent).toMatch(/Soul Fragments.*ever goes back/);
+    expect(document.querySelector('[data-evo-gauge-unlock]')?.textContent).toMatch(/Soul Fragments.*nothing here goes back/);
   });
 
   it('PT: descreve o que já se juntou (sem "faltam") e o que desbloqueia', () => {
     renderWithCss(<EvolutionPath {...base} language="pt-BR" />);
     expect(screen.getByText('Você já juntou 12 fragmentos de alma a caminho da próxima forma.')).toBeTruthy();
-    expect(document.querySelector('[data-evo-gauge-unlock]')?.textContent).toMatch(/nada aqui volta para trás/);
+    expect(document.querySelector('[data-evo-gauge-unlock]')?.textContent).toMatch(/nada aqui volta atrás/);
   });
 
   it('cheio: não mostra "faltam", mostra o gesto', () => {
