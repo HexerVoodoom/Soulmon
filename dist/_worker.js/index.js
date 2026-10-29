@@ -7998,7 +7998,7 @@ async function comprarNaLoja(env, g, cartoes, itemId, opId) {
 __name(comprarNaLoja, "comprarNaLoja");
 
 // api/_feira.js
-var FEIRA_CHEFE_DESDE = "2099-12-31";
+var FEIRA_CHEFE_DESDE = "2026-10-29";
 var ISO_DIA = /^\d{4}-\d{2}-\d{2}$/;
 function feiraLigada(env, agora = /* @__PURE__ */ new Date()) {
   const e = env && typeof env.FEIRA_CHEFE_DESDE === "string" && ISO_DIA.test(env.FEIRA_CHEFE_DESDE) ? env.FEIRA_CHEFE_DESDE : null;
@@ -14148,7 +14148,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-ntWtdb/functionsRoutes-0.41472599068383464.mjs
+// ../.wrangler/tmp/pages-8ZOEyz/functionsRoutes-0.47741117195971916.mjs
 var routes = [
   {
     routePath: "/api/account",
