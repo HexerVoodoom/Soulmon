@@ -229,11 +229,12 @@ export function* fightSteps(
   const gain = (f: Fighter, x: number, per: number) => {
     if (f.sp && f.dead === Infinity) f.en += per * x;
   };
-  const hit = (src: Fighter, v: Fighter, frac: number, kind: 'attack' | 'tick') => {
+  const hit = (src: Fighter, v: Fighter, frac: number, kind: 'attack' | 'tick', shieldCap = Infinity) => {
     if (v.dead < Infinity) return; // leftover damage expires
     let amt = frac;
+    // DoT lançado ANTES de um escudo adversário não é absorvido por ele: `shieldCap` = escudo do alvo NO CAST
     if (v.shield > EPS) {
-      const ab = Math.min(v.shield, amt);
+      const ab = Math.min(v.shield, amt, shieldCap);
       v.shield -= ab;
       amt -= ab;
     }
@@ -250,11 +251,13 @@ export function* fightSteps(
       case 'direct':
         hit(me, foe, (E * me.mult()) / hitsOn(me, foe), 'attack');
         break;
-      case 'dot':
+      case 'dot': {
+        const cap = foe.shield; // escudo do alvo no instante do cast
         for (let k = 1; k <= 3; k++) {
-          timed.push({ t: t0 + 0.25 * iv * k, dotOn: foe, fn: () => hit(me, foe, (E / 3) * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), 'tick') });
+          timed.push({ t: t0 + 0.25 * iv * k, dotOn: foe, fn: () => hit(me, foe, (E / 3) * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), 'tick', cap) });
         }
         break;
+      }
       case 'heal':
         me.hp += Math.min(1 - me.hp, E / hitsOn(foe, me));
         break;

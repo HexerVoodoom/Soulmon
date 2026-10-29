@@ -174,11 +174,12 @@ export function* groupFightSteps(
   const gain = (f: G, x: number, per: number) => {
     if (f.sp && f.dead === Infinity) f.en += per * x;
   };
-  const hit = (src: G, v: G, frac: number, kind: 'attack' | 'tick') => {
+  const hit = (src: G, v: G, frac: number, kind: 'attack' | 'tick', shieldCap = Infinity) => {
     if (v.dead < Infinity) return;
     let amt = frac;
+    // DoT lançado ANTES de um escudo adversário não é absorvido por ele: `shieldCap` = escudo do alvo NO CAST
     if (v.shield > EPS) {
-      const ab = Math.min(v.shield, amt);
+      const ab = Math.min(v.shield, amt, shieldCap);
       v.shield -= ab;
       amt -= ab;
     }
@@ -206,6 +207,7 @@ export function* groupFightSteps(
         for (let k = 1; k <= 3; k++) {
           const vs = [...spread];
           const single = spread.length === 1 && me === pl;
+          const caps = new Map(vs.map((x) => [x, x.shield] as const)); // escudo de cada alvo NO CAST
           const rec = { owner: me, vs, single };
           dots.push(rec);
           timed.push({
@@ -215,7 +217,7 @@ export function* groupFightSteps(
             fn: () => {
               dots.splice(dots.indexOf(rec), 1);
               const ts = single ? [target() ?? vs[0]] : vs;
-              for (const v of ts) hit(me, v, (share / 3) * me.mult() / hitsOn(me, v), 'tick');
+              for (const v of ts) hit(me, v, (share / 3) * me.mult() / hitsOn(me, v), 'tick', caps.get(v) ?? Infinity);
             },
           });
         }
