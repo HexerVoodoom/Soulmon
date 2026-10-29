@@ -1666,11 +1666,11 @@ function* fightSteps(a, b, opts) {
   const gain = /* @__PURE__ */ __name((f, x2, per) => {
     if (f.sp && f.dead === Infinity) f.en += per * x2;
   }, "gain");
-  const hit = /* @__PURE__ */ __name((src, v, frac, kind) => {
+  const hit = /* @__PURE__ */ __name((src, v, frac, kind, shieldCap = Infinity) => {
     if (v.dead < Infinity) return;
     let amt = frac;
     if (v.shield > EPS) {
-      const ab = Math.min(v.shield, amt);
+      const ab = Math.min(v.shield, amt, shieldCap);
       v.shield -= ab;
       amt -= ab;
     }
@@ -1687,11 +1687,13 @@ function* fightSteps(a, b, opts) {
       case "direct":
         hit(me, foe, E * me.mult() / hitsOn(me, foe), "attack");
         break;
-      case "dot":
+      case "dot": {
+        const cap = foe.shield;
         for (let k = 1; k <= 3; k++) {
-          timed.push({ t: t0 + 0.25 * iv * k, fn: /* @__PURE__ */ __name(() => hit(me, foe, E / 3 * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), "tick"), "fn") });
+          timed.push({ t: t0 + 0.25 * iv * k, fn: /* @__PURE__ */ __name(() => hit(me, foe, E / 3 * me.mult() / hitsOn(me, foe) * (1 - foe.dotResist), "tick", cap), "fn") });
         }
         break;
+      }
       case "heal":
         me.hp += Math.min(1 - me.hp, E / hitsOn(foe, me));
         break;
@@ -1823,8 +1825,8 @@ __name(soulCombatant, "soulCombatant");
 
 // api/_gates.js
 var GATES = {
-  pvp: { minBond: 5 },
-  torneio: { minBond: 5 },
+  pvp: { minBond: 3 },
+  torneio: { minBond: 3 },
   masmorraAlto: { minBond: 8 },
   renascimento: { minBond: 12 }
 };
@@ -1839,34 +1841,45 @@ var BUILDING_GATES = {
   "mercado.conquistas": { minBond: 1 },
   "mercado.decoracao": { minBond: 2 },
   "mercado.background": { minBond: 3 },
-  "mercado.ferreiro": { minBond: 2 },
+  "forja.ferreiro": { minBond: 2 },
   "jogos.salao": { minBond: 1 },
-  "jogos.dungeon": { minBond: 3 },
+  "exploracao.dungeon": { minBond: 3 },
   "jogos.mente": { minBond: 3 },
-  "arena.fenda": { minBond: 1 },
-  "exploracao.caderno": { minBond: 2 },
-  "exploracao.oficina": { minBond: 3 },
-  "exploracao.refugio": { minBond: 1 },
+  "exploracao.fenda": { minBond: 1 },
+  "forja.caderno": { minBond: 2 },
+  "forja.oficina": { minBond: 3 },
+  "forja.refugio": { minBond: 1 },
   "arena.duelo": { minBond: GATES.pvp.minBond },
   "arena.torneio": { minBond: GATES.torneio.minBond },
-  "arena.guerra": { minBond: 5 },
+  "arena.guerra": { minBond: 3 },
+  // dono 28/10/2026: a Arena inteira abre no Vínculo 3 (era 5)
   "laboratorio.evolucao": { minBond: 1 },
   "laboratorio.pet": { minBond: 2 },
   "laboratorio.stats": { minBond: 3 },
   "laboratorio.perfil": { minBond: 2 },
   "laboratorio.biblioteca": { minBond: 2 },
   "laboratorio.amigos": { minBond: 2 },
-  "hall.guilda": { minBond: 4 },
-  "hall.grove": { minBond: 4 },
-  "hall.feira": { minBond: GATES.pvp.minBond }
+  "hall.guilda": { minBond: 2 },
+  "hall.grove": { minBond: 2 },
+  "hall.feira": { minBond: 5 }
 };
 var MOVED_BUILDINGS = {
   "arena.feira": "hall.feira",
   "hall.biblioteca": "laboratorio.biblioteca",
   "hall.amigos": "laboratorio.amigos",
-  "jogos.refugio": "exploracao.refugio",
-  "exploracao.masmorra": "arena.fenda",
-  "exploracao.preparar": "exploracao.oficina"
+  "jogos.refugio": "forja.refugio",
+  // beta3 M3 (25/10/2026): o Refúgio foi de Jogos para a Exploração; 28/10/2026 (#187): daí para a Forja
+  "exploracao.masmorra": "exploracao.fenda",
+  // beta3 N10 (26/10/2026): a Fenda Sem Fim foi para a Arena; 28/10/2026 (#187): voltou à Exploração
+  "exploracao.preparar": "forja.oficina",
+  // beta3 N8 (26/10/2026): o prédio "Prepare to Focus" virou a 1ª etapa da Oficina do Foco (hoje na Forja)
+  // 28/10/2026 (#187, a Forja e as masmorras na Exploração): o id acompanha o lote — a leitura do save, do servidor e dos atalhos antigos redireciona.
+  "exploracao.oficina": "forja.oficina",
+  "exploracao.caderno": "forja.caderno",
+  "exploracao.refugio": "forja.refugio",
+  "mercado.ferreiro": "forja.ferreiro",
+  "arena.fenda": "exploracao.fenda",
+  "jogos.dungeon": "exploracao.dungeon"
 };
 function currentBuildingId(x2) {
   return typeof x2 === "string" && Object.prototype.hasOwnProperty.call(MOVED_BUILDINGS, x2) ? (
@@ -8301,6 +8314,7 @@ async function reciboDaFeira(tipo, save, gid, k) {
   return Array.from(h.slice(0, 8), (b) => b.toString(16).padStart(2, "0")).join("");
 }
 __name(reciboDaFeira, "reciboDaFeira");
+var essenceDoChefe = /* @__PURE__ */ __name((L) => 5 + Math.floor(L / 5), "essenceDoChefe");
 function recompensaDoChefe(level, bossId, element, trofeuNovo) {
   const L = Math.min(NIVEL_MAX, Math.max(1, Math.floor(level)));
   return {
@@ -8308,7 +8322,7 @@ function recompensaDoChefe(level, bossId, element, trofeuNovo) {
     bits: Math.min(CHEFE_BITS_TETO, 30 + 10 * L),
     sap: 10 * L,
     trophyId: trofeuNovo ? `trophy-boss-${bossId}` : null,
-    essences: [],
+    essences: element ? [{ id: element, n: essenceDoChefe(L) }] : [],
     element: element ?? null
   };
 }
@@ -12373,6 +12387,7 @@ async function bumpRiftLayers(store, saveId, antes, depois, nowMs = Date.now(), 
   return Math.min(DUNGEON_MAX_LAYER, l.base + l.n - 1);
 }
 __name(bumpRiftLayers, "bumpRiftLayers");
+var enforceEssenceAway = enforceArenaReroll;
 
 // api/_riftPayout.js
 var RIFT_GAME = "endless-rift";
@@ -12910,7 +12925,7 @@ var MATERIAL_IDS = [
   "keepsake",
   "crest"
 ];
-var BUILDING_RE = /^(jogos|exploracao|arena|laboratorio|hall)\.[a-z]{1,24}$/;
+var BUILDING_RE = /^(jogos|exploracao|forja|arena|laboratorio|hall)\.[a-z]{1,24}$/;
 var MAX_LIST = 20;
 var has4 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
 function ids(v) {
@@ -13003,14 +13018,14 @@ var FIRST_TIME_IDS = [
   "visit:mercado.conquistas",
   "visit:mercado.decoracao",
   "visit:mercado.background",
-  "visit:mercado.ferreiro",
+  "visit:forja.ferreiro",
   "visit:jogos.salao",
-  "visit:exploracao.refugio",
+  "visit:forja.refugio",
   "visit:jogos.mente",
   "visit:exploracao.passeio",
-  "visit:arena.fenda",
-  "visit:exploracao.caderno",
-  "visit:exploracao.oficina",
+  "visit:exploracao.fenda",
+  "visit:forja.caderno",
+  "visit:forja.oficina",
   "visit:arena.duelo",
   "visit:arena.torneio",
   "visit:laboratorio.evolucao",
@@ -13183,6 +13198,37 @@ function sanitizeNightmares(raw) {
   return out;
 }
 __name(sanitizeNightmares, "sanitizeNightmares");
+
+// api/_essences.js
+var ESSENCE_MAX_PER_ELEMENT = 1e6;
+var ESSENCE_MAX_KEYS = 211;
+function sanitizeEssences(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const out = {};
+  let n = 0;
+  for (const [k, v] of Object.entries(raw)) {
+    if (!/^[a-z_]{2,24}$/.test(k) || typeof v !== "number" || !Number.isFinite(v)) continue;
+    const q = Math.min(ESSENCE_MAX_PER_ELEMENT, Math.floor(v));
+    if (q < 1) continue;
+    out[k] = q;
+    if (++n >= ESSENCE_MAX_KEYS) break;
+  }
+  return out;
+}
+__name(sanitizeEssences, "sanitizeEssences");
+function enforceEssences(incoming, stored) {
+  const inc = sanitizeEssences(incoming);
+  const sto = sanitizeEssences(stored);
+  if (!inc) return sto;
+  if (!sto) return inc;
+  const out = { ...inc };
+  for (const [k, v] of Object.entries(sto)) {
+    if (!(k in out) && Object.keys(out).length >= ESSENCE_MAX_KEYS) continue;
+    out[k] = Math.max(out[k] ?? 0, v);
+  }
+  return out;
+}
+__name(enforceEssences, "enforceEssences");
 
 // api/save.js
 var CORS12 = {
@@ -13437,8 +13483,8 @@ async function onRequest7({ request, env }) {
     let recAntes;
     let recDepois;
     {
-      const temGravado = typeof prev?.value === "string" && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"') || prev.value.includes('"arenaReroll"'));
-      if (temGravado || "dungeonDaily" in state || "checkIns" in state || "arenaReroll" in state) {
+      const temGravado = typeof prev?.value === "string" && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"') || prev.value.includes('"arenaReroll"') || prev.value.includes('"essences"') || prev.value.includes('"essenceAway"'));
+      if (temGravado || "dungeonDaily" in state || "checkIns" in state || "arenaReroll" in state || "essences" in state || "essenceAway" in state) {
         let gravado = {};
         if (temGravado) {
           try {
@@ -13460,6 +13506,12 @@ async function onRequest7({ request, env }) {
         const ar = enforceArenaReroll(state.arenaReroll, gravado.arenaReroll);
         if (ar) state.arenaReroll = ar;
         else delete state.arenaReroll;
+        const es = enforceEssences(state.essences, gravado.essences);
+        if (es && Object.keys(es).length) state.essences = es;
+        else delete state.essences;
+        const ea = enforceEssenceAway(state.essenceAway, gravado.essenceAway);
+        if (ea) state.essenceAway = ea;
+        else delete state.essenceAway;
       }
     }
     let serialized;
@@ -14096,7 +14148,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-lpLCHP/functionsRoutes-0.8859709896724102.mjs
+// ../.wrangler/tmp/pages-ntWtdb/functionsRoutes-0.41472599068383464.mjs
 var routes = [
   {
     routePath: "/api/account",

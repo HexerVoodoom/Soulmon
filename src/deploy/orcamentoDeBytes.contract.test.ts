@@ -188,7 +188,9 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // de jogador real; corte real segue = partir o `App.tsx`.
   // 28/10/2026 (lote Biblioteca/elementos + tela de resultado padrão + Arena livre + Feira, REGISTRO §178–§180): 684_919 -> 742_662 (+57,7 KB),
   // medido no build limpo. Crescimento JUSTIFICADO pelo pedido do dono; corte real segue = partir o `App.tsx` e mandar Feira/Biblioteca para chunks.
-  'index.js': 742_662,
+  // 29/10/2026 (prévia de recompensa, tag de feito no rodapé, recap da evolução, pesadelo do sono automático e com app fechado, REGISTRO §188–§190):
+  // 742_662 -> 779_790 (+37 KB), build limpo. Crescimento JUSTIFICADO pelo pedido do dono; corte real segue = partir o `App.tsx`.
+  'index.js': 779_790,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
@@ -197,6 +199,7 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // 21/10/2026 (splash sem texto assado, REGISTRO §168, L11-08): 180_815 -> 190_071 em build limpo sobre a main (a main já media 188_832; esta
   // PR soma +1,2 KB: o texto/barra de carregamento da intro em DOM). O vídeo da intro caiu de 2,5 MB para 0,7 MB.
   'index.css': 190_071,
+  'bg-forja.webp': 424_334, // 29/10/2026: fundo da Forja (pixel art denso) 14 KB acima do teto; borrar para caber estragaria o pixel
   'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
 };
 
