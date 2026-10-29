@@ -75,18 +75,18 @@ describe('🔴 o nome da área cabe no cartão do Mapa', () => {
     expect(src).not.toMatch(/textTransform:\s*'uppercase'/);
   });
 
-  it('AUTOVERIFICAÇÃO: seis áreas, os seis nomeados, par de idioma real', () => {
+  it('AUTOVERIFICAÇÃO: sete áreas (a Forja é a 7ª, #186), as sete nomeadas, par de idioma real', () => {
     // Guard que não acha nada passa sempre. Leitura frouxa ("achou mais que
     // zero") foi o que fez a primeira versão deste arquivo medir o vácuo.
     const pares = rotulos();
     expect(pares.map(p => p.pt)).toEqual(
-      ['Mercado', 'Jogos', 'Arena', 'Exploração', 'Laboratório', 'Hall'],
+      ['Mercado', 'Jogos', 'Arena', 'Exploração', 'A Forja', 'Laboratório', 'Hall'],
     );
     expect(pares.map(p => p.en)).toEqual(
-      ['Market', 'Games', 'Arena', 'Exploration', 'Laboratory', 'Hall'],
+      ['Market', 'Games', 'Arena', 'Exploration', 'The Forge', 'Laboratory', 'Hall'],
     );
-    // Arena e Hall são iguais nos dois idiomas de propósito; os outros quatro
+    // Arena e Hall são iguais nos dois idiomas de propósito; os outros cinco
     // diferem — senão o teto do inglês nunca seria medido.
-    expect(pares.filter(p => p.pt !== p.en).length).toBe(4);
+    expect(pares.filter(p => p.pt !== p.en).length).toBe(5);
   });
 });

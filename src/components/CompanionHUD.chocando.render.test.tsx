@@ -52,9 +52,13 @@ describe('registro dos sprites próprios (todas as outras telas)', () => {
     setOwnSprites({}, PLACEHOLDER_ART.forming);
     expect(getSpriteForStage('rookie')).toBe(PLACEHOLDER_ART.forming);
   });
-  it('quem usa uma linha pronta (demo) não é afetado', () => {
+  it('quem usa uma linha pronta de masmorra (demo) não é afetado', () => {
     setOwnSprites({ rookie: '/assets/meu-peixe.png' }, PLACEHOLDER_ART.forming);
-    expect(getSpriteForStage('rookie', 'meteoro')).not.toBe('/assets/meu-peixe.png');
-    expect(getSpriteForStage('rookie', 'meteoro')).not.toBe(PLACEHOLDER_ART.forming);
+    expect(getSpriteForStage('rookie', 'kaelen')).not.toBe('/assets/meu-peixe.png');
+    expect(getSpriteForStage('rookie', 'kaelen')).not.toBe(PLACEHOLDER_ART.forming);
+  });
+  it('inicial de reserva: o sprite gerado do jogador vence (dono, 21/10/2026)', () => {
+    setOwnSprites({ rookie: '/assets/meu-peixe.png' }, PLACEHOLDER_ART.forming);
+    expect(getSpriteForStage('rookie', 'meteoro')).toBe('/assets/meu-peixe.png');
   });
 });
