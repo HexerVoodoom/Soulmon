@@ -18,7 +18,9 @@ export type PreviewItem =
   | { kind: 'xp'; amount?: number; max?: number }
   | { kind: 'honor'; amount?: number; max?: number }
   | { kind: 'energy'; amount?: number; max?: number }
-  | { kind: 'item'; item: RewardItemKind; amount?: number; max?: number };
+  | { kind: 'item'; item: RewardItemKind; amount?: number; max?: number }
+  /** Material avulso já existente no jogo (emoji da própria tabela de origem). */
+  | { kind: 'custom'; emoji: string; label: string; amount?: number; max?: number };
 
 
 function MaterialIcon({ item }: { item: RewardItemKind }) {
@@ -49,6 +51,7 @@ export function RewardPreview({ items, mode, language, size = 16 }: {
       case 'honor': return isPt ? 'Honra' : 'Honor';
       case 'energy': return isPt ? 'energia' : 'energy';
       case 'item': return rewardItemLabel(it.item, isPt);
+      case 'custom': return it.label;
     }
   };
   const nodes = items.map((it, i) => {
@@ -66,6 +69,7 @@ export function RewardPreview({ items, mode, language, size = 16 }: {
     const icon = it.kind === 'xp' ? <Icon name="star" size={size} fill={1} tone="gold" />
       : it.kind === 'energy' ? <img src={ENERGY_ICON} alt="" width={size} height={size} />
       : it.kind === 'honor' ? <Icon name="military_tech" size={size} fill={1} />
+      : it.kind === 'custom' ? <span aria-hidden="true" style={{ fontSize: size }}>{it.emoji}</span>
       : <MaterialIcon item={it.item} />;
     return (
       <span key={key} data-reward-preview={it.kind} style={{ ...part, ...(it.kind === 'honor' ? emblemStyle : null) }}>

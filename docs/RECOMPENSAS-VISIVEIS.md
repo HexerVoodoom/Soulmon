@@ -14,10 +14,14 @@ Componente único: `src/components/ui/RewardPreview.tsx` (`mode="before"` = `+N`
 | Arena | sim (Bits, ícone: valor depende da run) | ResultScreen Bits | ArenaGame.tsx |
 | Pedra-papel-tesoura | sim (+5 Bits) | ResultScreen Bits | RPSGame.tsx |
 | Pesadelo | não | Bits/energia/coração + XP exato | NightmareBattle.tsx |
-| Feira (Desafio) | não | ResultScreen Honra + seiva | guild/FeiraEventoSheet.tsx |
-| Match3 | texto "até N" existente | ResultScreen Bits | Match3Game.tsx |
+| Match3 | sim (Bits até N via RewardPreview) | ResultScreen Bits | play/PlaySheets.tsx, Match3Game.tsx |
+| SoulBarrage | sim (Bits, ícone: sem teto) | ResultScreen Bits | SoulBarrage.tsx |
+| Feira (Desafio) | sim (Honra e XP, ícone) | ResultScreen Honra + seiva | guild/FeiraEventoSheet.tsx |
+| Foco (Oficina) | sim (material, ícone) | popup de loot existente | play/OficinaSheet.tsx |
 
 ## Lacunas
-- Prévia (before): Match3, Dino, Barrage, Feira, Oficina/Forja, Grove, missões, foco, Pesadelo.
-- Toasts de Bits seguem só com Bits (XP sai pelo `XpGainDisplay`, separado).
-- XP "depois" na Fenda/Torneio usa a tabela (`bondXP`); o teto diário do Vínculo pode reduzir o valor real.
+- Pesadelo (entrada): NÃO — o convite enxuto (D-69) proíbe recompensa; ela aparece depois, no fim.
+- Dino (sem tela de início), Arena (Bits: sem teto derivável; só ícone), Feira Chefe, Grove (marco: XP por dias não chega à cerimônia), Forja (gasta, não paga), Missões (já têm "+1 material" em texto).
+- Tarefas/hábitos: decisão do dono pendente (linha do Hoje só nome).
+- Toasts de Bits (App.tsx): as fontes só pagam Bits; sem material/XP para somar.
+- XP "depois" na Fenda/Torneio vem da tabela; o teto diário do Vínculo pode reduzir o valor real.

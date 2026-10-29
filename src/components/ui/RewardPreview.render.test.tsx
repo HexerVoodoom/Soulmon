@@ -74,3 +74,19 @@ describe('ResultScreen — linha de XP', () => {
     void MorningCheckIn;
   });
 });
+
+describe('RewardPreview — material avulso e telas da rodada 3', () => {
+  it('custom mostra o emoji e o nome só para leitor de tela', () => {
+    const { container } = render(<RewardPreview mode="before" language="en-US" items={[{ kind: 'custom', emoji: '🎁', label: 'focus material' }]} />);
+    expect(container.querySelector('[data-reward-preview="custom"]')!.textContent).toContain('🎁');
+    expect(container.querySelector('.sm2-sr-only')!.textContent).toContain('focus material');
+  });
+  it('Match3 usa a constante que paga (M3C_MAX_BITS)', async () => {
+    const { Match3Sheet } = await import('../play/PlaySheets');
+    const { M3C_MAX_BITS } = await import('../../utils/match3Combat');
+    const { container } = render(<Match3Sheet language="en-US" onStart={() => {}} />);
+    const el = container.querySelector('[data-reward-preview="bits"]')!;
+    expect(el.textContent).toContain(String(M3C_MAX_BITS));
+    expect(el.textContent).toContain('up to');
+  });
+});
