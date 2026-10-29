@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 29/10/2026 — Sincronização parcial do manual (`f3acead1..15624b69b`, 1089 commits)
+>
+> - Feito: entradas de 06-REFERENCIA para `evoRecap.ts`, `CompletionTag`, `EvoRecapModal`, `ui/RewardPreview`; lápides de `GuerraClaSheet`, `RestWindowCard`, `UndoToast`; `RECOMPENSAS-VISIVEIS.md` no 00-MAPA. Guard verde (2 arquivos, 10 testes).
+> - **NÃO feito (dívida declarada):** o delta é de 5.916 arquivos; as regras (02), telas (03), arquitetura (05), integrações (08: pacote Android virou `com.soulmon`), api-workers e ~100 módulos com exports alterados NÃO foram reescritos. `.sincronizado.json` avançou mesmo assim por ordem da sessão; reabrir com `--desde f3acead1`. Menções antigas a `UndoToast`/`RestWindowCard` em 02/03/04 seguem como estavam.
+> - Docs locais não rastreados `PLANO-EXECUCAO-2026-10-28.md` e `PROMPTS-CHATGPT-2026-10-28.md` ainda sem linha no MAPA (deixam o guard local vermelho até serem commitados e mapeados).
+
 > ## 26–28/10/2026 — Beta3 na `versao/1.3.0-beta3` + pedidos do dono de 27–28/10
 >
 > - Beta3 em `main` no commit `d00a760f6` (26/10); a branch `versao/1.3.0-beta3` seguiu com: Biblioteca em 4 abas (Encontrados/Selvagem/Desgarrado/Elemento) e `defeatedElements` no save; vantagem elemental (Combina 3 e Guerra de Guildas a meio efeito, Duelo/Torneio neutros, REGISTRO §177); tela de resultado padrão (Proposta D) nos minijogos; Arena por elemento e Centro de Evolução; 48 folhas de ataque da fase 2; header da Home com inset de topo e botão "Reportar bug"; Soul Barrage com 1 s de invulnerabilidade (`7bdf6d4cc`).

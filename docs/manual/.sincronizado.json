@@ -1,6 +1,6 @@
 {
-  "sha": "f3acead1c58297f2dac5ba8c8477da89066fc9b7",
-  "data": "11/10/2026",
-  "por": "doc-mantenedor (/manter-docs, rodada final de lançamento: delta e71061b8..f3acead1 — gauge, energia x2, comida premium, masmorra idle, refeições, Level Up, guilda, Soulsmith, onboarding)",
+  "sha": "15624b69b9bf9def6a832a177e2c0b14878be987",
+  "data": "29/10/2026",
+  "por": "doc-mantenedor (sessão)",
   "nota": "Escrito pelo doc-mantenedor ao fechar cada sincronização. Lido por scripts/docs-delta.mjs e pelo hook de sessão. Nunca edite à mão."
 }
