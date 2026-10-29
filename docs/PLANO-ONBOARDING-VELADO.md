@@ -21,7 +21,7 @@ abrir o jogo com uma sequência narrativa curta que ensina o laço central:
 | D4 | Evolução do BB | Evolui ao atingir **Vínculo nível 2** (`bondLevelFor`, XP de tarefa). |
 | D5 | BB trancado em | **Torneio, Duelo PvP e Guilda (missão/guerra)**. Masmorra, Arena e Pesadelo ficam abertos. |
 | D6 | Geração grátis | **1 por e-mail**, para sempre (apagar a conta e refazer não devolve). O sprite fica **associado ao e-mail**: quem recria a conta recebe o MESMO. |
-| D7 | O que se gera | **BB na criação; rookie sob demanda**, só quando o BB está prestes a evoluir (paga a 2ª imagem só de quem voltou). |
+| D7 | O que se gera ⚰️ (substituído por D18) | **BB na criação; rookie sob demanda**, só quando o BB está prestes a evoluir (paga a 2ª imagem só de quem voltou). |
 | D8 | Free depois do BB | **Evolui até rookie e trava**; dali a evolução pede a compra. |
 | D9 | Preço | Desbloqueio completo **US$ 3,99 / R$ 19,90** (hoje R$ 29,90 / US$ 6,99). ⚰️ Era US$ 1,99; revisto no mesmo dia pela conta do §6.1. |
 | D17 | Custo do pagante | **Formas sob demanda**: só o galho que o jogador alcança é gerado (pior caso cai de 15 para ~8 imagens). |
@@ -227,3 +227,38 @@ vale a categoria cujo maior valor é o do tipo):
 **Ainda depende do dono:** nome do prédio em inglês (proposta: *Mercenary Guild*), nome
 de cada um dos três Velados e se a missão vira uma tarefa na lista de atividades ou
 fica só no prédio.
+
+## 12. Pool de BBs prontos (29/10/2026) — muda D6/D7
+
+| # | Decisão do dono |
+|---|---|
+| D18 | O BB **não é gerado por usuário**. Existe um **pool de ~200 BBs** prontos, e cada jogador recebe um por sorteio. A forma única começa no **rookie**. |
+| D19 | O sorteio é **filtrado pelo oráculo**: cada BB do pool é marcado por elemento/reino, e o sorteio fica dentro do que combina com a leitura. Determinístico pelo saveId, para o mesmo e-mail cair no mesmo BB. |
+| D20 | O sprite do BB **não é referência** para gerar o rookie. O BB é berço; o rookie nasce só da leitura do oráculo. |
+| D21 | O pool é **gerado uma vez pela `/squad-arte`** (~200 × US$ 0,024 ≈ US$ 5), conferido e instalado como arte nossa (`src/assets/soulmon/`, régua de franquia valendo). |
+
+**O que muda no resto do plano:**
+- D6 continua (1 geração grátis por e-mail), mas agora a geração grátis é **o rookie**,
+  feita quando o BB atinge o Vínculo 2. Quem nunca chega lá custa **zero** de API.
+- Cena 1 do roteiro (§3): o "nascimento" passa a revelar o BB sorteado, sem esperar a API.
+  O onboarding fica mais rápido e não depende do provedor estar no ar.
+- O prompt do rookie não recebe imagem do BB (D20); a cerimônia BB → rookie é a
+  revelação da forma única. A copy pode tratar isso como "o berço ficou pequeno".
+
+**Conta de custo refeita (substitui as linhas de custo do §6.1):**
+
+| Perfil | Imagens | Custo (×1,3) |
+|---|---|---|
+| Grátis que para no BB | 0 | US$ 0 |
+| Grátis que chega ao rookie | 1 | US$ 0,031 |
+| **Grátis médio** (50% chegam ao rookie) | 0,5 | **US$ 0,016** |
+| **Pagante** — rookie + 3 rerolls + formas sob demanda (~4) | ~8 | US$ 0,25 + chat 0,10 = **US$ 0,35** |
+
+| Conversão | Custo por pagante (com subsídio) | Margem a US$ 3,99 (líquido US$ 3,05) |
+|---|---|---|
+| 2% | US$ 1,13 | +63% |
+| 3% | US$ 0,85 | +72% |
+| 5% | US$ 0,65 | +79% |
+
+Com o pool, até **US$ 2,99** (líquido US$ 2,29) fica com ~63% de margem a 3% de conversão.
+O preço decidido (D9, US$ 3,99) segue; se quiser baixar, a conta agora permite.
