@@ -11,7 +11,7 @@ import type { Language } from '../../utils/i18n';
  * `mode="before"` (CTA/entrada): valor fixo = `+20`; faixa = `até N` / `up to N` (o máximo); sem número = só o ícone.
  * `mode="after"` (resultado/toast): sempre o valor realmente concedido (`amount`), só o que for > 0.
  * Quem chama deriva os números das MESMAS funções que concedem (`bondXP`, `*Bits`, `nightmareRewards`…); aqui não
- * mora nenhuma regra. Bits vêm do `BitsAmount`; XP usa o glifo `star`; materiais usam o resolvedor `rewardIcons`.
+ * mora nenhuma regra. Bits vêm do `BitsAmount`; XP é o texto "EXP" depois do número (dono, 29/10/2026); materiais usam o resolvedor `rewardIcons`.
  */
 export type PreviewItem =
   | { kind: 'bits'; amount?: number; max?: number }
@@ -66,7 +66,8 @@ export function RewardPreview({ items, mode, language, size = 20 }: {
       if (n === undefined) return <span key={key} data-reward-preview="bits" style={part}><BitsAmount value="" size={size} /></span>;
       return <span key={key} data-reward-preview="bits" style={part}><BitsAmount value={n} sign="+" size={size} /></span>;
     }
-    const icon = it.kind === 'xp' ? <Icon name="star" size={size} fill={1} tone="gold" />
+    // 29/10/2026 (dono): XP é escrito "EXP" depois do número, sem estrelinha.
+    const icon = it.kind === 'xp' ? null
       : it.kind === 'energy' ? <img src={ENERGY_ICON} alt="" width={size} height={size} />
       : it.kind === 'honor' ? <Icon name="military_tech" size={size} fill={1} />
       : it.kind === 'custom' ? <span aria-hidden="true" style={{ fontSize: size }}>{it.emoji}</span>
@@ -75,6 +76,7 @@ export function RewardPreview({ items, mode, language, size = 20 }: {
       <span key={key} data-reward-preview={it.kind} style={{ ...part, ...(it.kind === 'honor' ? emblemStyle : null) }}>
         {icon}
         {l.text && <span className="sm2-num">{l.text}</span>}
+        {it.kind === 'xp' && <span aria-hidden="true" className="sm2-num" style={{ fontWeight: 800 }}>EXP</span>}
         <span className="sm2-sr-only">{' '}{name(it)} {l.text || l.sr}</span>
       </span>
     );
