@@ -64,3 +64,17 @@ Plano: `docs/PLANO-FEIRA-CHEFE.md` (decisões do dono no §11). Entra na `main` 
 - Fazer em paralelo o que não colide; o que estiver pronto, commit + merge na `main`.
 - A `main` é produção com testadores reais: tudo novo de regra vai desligado/testado; portões antes de mergear.
 - Sons desta sessão não foram ouvidos (o Claude não escuta): o dono precisa testar.
+
+## 29/10/2026
+
+Legenda igual à da sessão anterior.
+
+| # | Pedido | Estado | Onde |
+|---|---|---|---|
+| H1 | Zona da Forja no Mapa: gerada no ChatGPT e instalada | ✅ | commit `4eb0131d5` |
+| H2 | D-03 textos longos: encurtar textos que estouravam a tela | 🔧 | commit `9b35501c7`: 61 textos encurtados em 21 arquivos. Faltam: Guia/Ajuda, focoTecnicas, i18n, BetaClosedScreen, StepsCard, EvolutionPath, TalentTree |
+| H3 | Fundo do Hall refeito com temas trocados: sol/Clan Hall no lote grande de baixo, feira no lote de cima à esquerda | ✅ | commit `5fb7ab409` |
+| H4 | Pesadelo no sono automático: sono auto passa a contar desde o início da janela | ✅ | commit `723b2fd9c`. Pendente decisão do dono: noite com app fechado a noite toda não registra (sem pesadelo) |
+| H5 | Especial: DoT não é mais bloqueado por escudo levantado depois do cast | ✅ | commit `063a69237` |
+| H6 | Recompensas visíveis antes/depois de toda ação (RewardPreview). Regra: valor fixo = "+N", faixa = "até N" | 🔧 | commits `a50ccd02a`, `a6ff9e601`, `087dc2def` |
+| H7 | APK alfa conflita com a versão da Play instalada | ⏸ | dono aprova por prints |
