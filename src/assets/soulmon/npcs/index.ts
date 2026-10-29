@@ -49,12 +49,12 @@ import npcArenaFeira from './npc-arena-feira.png';
 import npcArenaGuerra from './npc-arena-guerra.png';
 import npcJogosDungeon from './npc-jogos-dungeon.png';
 import npcJogosMente from './npc-jogos-mente.png';
-import npcJogosRefugio from './npc-oceano-jogos-refugio.png';
+import npcForjaRefugio from './npc-forja-refugio.png'; // 29/10/2026: Yuzu, a guardiã da fonte (trocou a Marim)
 import npcMercadoConquistas from './npc-mercado-conquistas.png';
 import npcFGuarda from './npc-f-guarda.png';
 import npcExploracaoPasseio from './npc-exploracao-passeio.png';
 import npcExploracaoOficina from './npc-exploracao-caderno.png'; // D-32 (19/10/2026): o NPC da Focus Workshop = a escolha 9 do dono (o escriba-polvo-coruja), no lugar da Lume
-import npcExploracaoCaderno from './npc-akasha-exploracao-caderno.png';
+import npcForjaCaderno from './npc-forja-caderno.png'; // 29/10/2026: Trilho, o maquinista dos croquis (trocou a Opala)
 import npcLaboratorioPet from './npc-agua-laboratorio-pet.png';
 import npcLaboratorioStats from './npc-agua-laboratorio-stats.png';
 import npcHallGuildaLuz from './npc-luz-hall-guilda.png';
@@ -98,12 +98,12 @@ export const LOT_NPC_ART: Record<string, string> = {
   // 04/10/2026: bustos PRÓPRIOS (`entrada-dono/npc-exploracao-*`, 768², alfa binário); até aqui eram
   // os da Kova e da Selene. As versões `-b` ficaram fora do bundle (`E:/Soulmon-assets/instalados/alternativas/`).
   'forja:oficina': npcExploracaoOficina, // Lume (vagalume do coro; 07/10/2026 trocou o Tique)
-  'forja:caderno': npcExploracaoCaderno, // Opala (geleia-fantasma arquivista; 07/10/2026 trocou a Sépia)
+  'forja:caderno': npcForjaCaderno, // Trilho (maquinista-fantasma que desenha paisagens; 29/10/2026 trocou a Opala)
   // Os três prédios de Jogos (30/09/2026): o Pipo segue no Salão (jogos livres).
   'jogos:salao': npcJogos,
   'jogos:mente': npcJogosMente, // Tessela
   'exploracao:dungeon': npcJogosDungeon, // Corva (26/10/2026: busto próprio, P1-04)
-  'forja:refugio': npcJogosRefugio, // Marim (07/10/2026: trocou o Bobbi)
+  'forja:refugio': npcForjaRefugio, // Yuzu (guardiã da fonte quente; 29/10/2026 trocou a Marim)
   'laboratorio:evolucao': npcLaboratorio,
   // #187 (28/10/2026): `laboratorio:pet` e `laboratorio:amigos` NÃO têm mais lote no mapa (viraram seções do Perfil e do Salão do Clã), mas os prédios seguem (missão, material, apresentação
   // ao abrir) e a Tinta e a Zumi continuam sendo quem os apresenta — por isso o busto e a voz ficam, fora da conta dos lotes (`SECTION_NPC_KEYS` no teste de contrato).

@@ -183,9 +183,9 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: 'Three paths at every step. Pick one and see how far you two get today.',
   },
   'forja:refugio': {
-    namePt: 'Marim, o mensageiro da maré', nameEn: 'Marim, the tide courier', // 07/10/2026: busto trocado a pedido do dono (era Bobbi, o soprador de bolhas)
-    linePt: 'Aqui nada precisa ser entregue. Só a maré indo e vindo.',
-    lineEn: 'Nothing needs delivering here. Just the tide coming and going.',
+    namePt: 'Yuzu, a guardiã da fonte', nameEn: 'Yuzu, the spring warden', // 29/10/2026: novo NPC (guardiã de fonte quente; era Marim, o mensageiro da maré)
+    linePt: 'A água está morna. Entre quando quiser, sem pressa.',
+    lineEn: "The water's warm. Step in whenever you like, no rush.",
   },
   // 🧭 O Passeio: Lisel, a mariposa arquivista (22/10/2026; antes Mirk, o espírito do charco, antes Brume). Convite, nunca cobrança — e nenhuma palavra sobre o que as
   // Travessias "rendem".
@@ -202,9 +202,9 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: 'Focus is copying one line at a time.',
   },
   'forja:caderno': {
-    namePt: 'Opala, a arquivista das páginas', nameEn: 'Opala, keeper of the pages', // 07/10/2026: busto trocado a pedido do dono (era Sépia, a copista)
-    linePt: 'O que se escreve aqui fica guardado. Só você abre.',
-    lineEn: 'What is written here stays kept. Only you open it.',
+    namePt: 'Trilho, o maquinista dos croquis', nameEn: 'Trilho, the sketching engineer', // 29/10/2026: novo NPC (maquinista-fantasma; era Opala, a arquivista)
+    linePt: 'Desenhei a paisagem que passou pela janela do trem. O caderno da Forja guarda.',
+    lineEn: 'I sketched the view that rolled past the train window. The Forge journal keeps it.',
   },
   'laboratorio:amigos': {
     namePt: 'Zumi, o filhote de mel', nameEn: 'Zumi, the honey cub', // 07/10/2026: busto trocado a pedido do dono (era Ramo, o carvalho; antes Trill, a barda)

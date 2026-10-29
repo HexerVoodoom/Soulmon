@@ -3585,3 +3585,12 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 **Sem progresso (`gaugeGain = 0`), estágio final ou barra reiniciada pela evolução: o modal NÃO abre** (uma página só para dizer "nada mudou" seria cobrança disfarçada; o gauge nunca desce).
 
 **Alternativa que perdeu:** versão "gentil" para dia sem progresso ("sua barra segue em X%"). **Falsificaria:** o jogador achar a página repetitiva (fechar sem olhar nas primeiras semanas) ou querer ver a barra mesmo sem ganho. **Rollback:** remover `evoRecap` da fila/App; a chave gravada fica órfã e inofensiva.
+
+
+### §181 (dono, 29/10/2026): dois NPCs novos na Forja, Trilho (Caderno) e Yuzu (Refúgio)
+
+**Decisão:** o dono aprovou dois NPCs novos. `forja:caderno` passa a ser **Trilho, o maquinista dos croquis** (fantasma maquinista de rosto em sombra, olhos âmbar, boné com lanterna, caderno de desenho; ama rabiscar as paisagens que vê dos trens da forja de almas), no lugar da Opala. `forja:refugio` passa a ser **Yuzu, a guardiã da fonte** (espírito de fonte quente inspirado nos macacos de onsen, mas não é macaco: focinho de raposa, chifres de carneiro em pedra clara, pelagem de geada, rosto coral, toalha na cabeça, concha de madeira, banhando-se em piscina turquesa fumegante), no lugar da Marim. Falas curtas, sem cobrança: Trilho fala de desenhar a paisagem do trem e do caderno da Forja; Yuzu, de descansar na água morna.
+
+**Como ficou:** bustos novos `npc-forja-caderno.png` e `npc-forja-refugio.png` (512², alfa binário ≥128, recorte pela caixa do alfa e encaixe centrado em 500 px, mesmo padrão dos irmãos), originais em `E:/Soulmon-assets/gerados-2026-10-29/`. Arquivos antigos (`npc-akasha-exploracao-caderno.png`, `npc-oceano-jogos-refugio.png`) ficam no disco, sem uso. Voz em `LOT_NPC_VOICE` (`areaNpcVoice.ts`).
+
+**Alternativa que perdeu:** manter Opala/Marim. **Falsificaria:** o dono achar a Yuzu parecida demais com um macaco, ou o Trilho escuro demais no fundo da cena. **Rollback:** reverter os dois imports em `npcs/index.ts` e as duas entradas de voz.
