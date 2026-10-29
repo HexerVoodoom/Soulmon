@@ -17,6 +17,7 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Mous
 import { GameVisor, VisorSprite, VisorSparks } from './GameKit';
 import { PixelMeter } from '../pixel/PixelKit';
 import { BitsAmount } from '../ui/BitsAmount';
+import { Icon } from '../ui/Icon';
 import { RewardIcon, RewardPop } from '../ui/RewardPop';
 import { useRewardReveal } from '../../hooks/useRewardReveal';
 import type { RevealStep } from '../../utils/rewardReveal';
@@ -57,6 +58,8 @@ export interface ResultStripCell {
 export type ResultLedgerRow =
   | { key: string; kind: 'bits'; value: number }
   | { key: string; kind: 'honor'; value: number }
+  /** XP do Vínculo realmente concedido (valor exato; 0 some). */
+  | { key: string; kind: 'xp'; value: number }
   /** `itemKind` resolve o ícone pelo resolvedor único (`utils/rewardIcons`); `icon` é o escape para uma arte avulsa. */
   | { key: string; kind: 'item'; label: string; amount?: number; icon?: string; itemKind?: RewardItemKind }
   | { key: string; kind: 'node'; label: string; node: ReactNode }
@@ -226,7 +229,7 @@ export function ResultScreen(p: ResultScreenProps) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [summary, setSummary] = useState('');
 
-  const ledger = (p.ledger ?? []).filter(r => !((r.kind === 'bits' || r.kind === 'honor') && r.value <= 0));
+  const ledger = (p.ledger ?? []).filter(r => !((r.kind === 'bits' || r.kind === 'honor' || r.kind === 'xp') && r.value <= 0));
   const strip = (p.strip ?? []).filter(c => !(record && c.hideOnRecord));
   const stats = p.stats ?? [];
   const honorName = CURRENCIES.emblems.name[isPt ? 'pt' : 'en'];
@@ -252,7 +255,7 @@ export function ResultScreen(p: ResultScreenProps) {
     p.deepest ? `${p.deepest.label}: ${p.deepest.value}` : '',
     recordText,
     ...stats.map(c => `${c.label}: ${typeof c.value === 'number' || typeof c.value === 'string' ? c.value : ''}`),
-    ...ledger.map(r => r.kind === 'bits' ? `${r.value} Bits` : r.kind === 'honor' ? `+${r.value} ${honorName}` : r.kind === 'item' ? `${r.label}${r.amount ? ` ×${r.amount}` : ''}` : r.label),
+    ...ledger.map(r => r.kind === 'bits' ? `${r.value} Bits` : r.kind === 'honor' ? `+${r.value} ${honorName}` : r.kind === 'xp' ? `+${r.value} XP` : r.kind === 'item' ? `${r.label}${r.amount ? ` ×${r.amount}` : ''}` : r.label),
     ledger.length === 0 ? p.emptyLedgerLine : '',
   ].filter(Boolean).join('. ');
 
@@ -407,7 +410,8 @@ export function ResultScreen(p: ResultScreenProps) {
                       <div key={r.key} className={rowCls(key)} data-result-row={r.kind} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 36, borderBottom: '1px solid var(--sm2-line)' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-ink)', textAlign: 'left' }}>
                           {r.kind === 'item' && <ItemRowIcon r={r} on={shown} still={still} />}
-                          {r.kind === 'bits' ? 'Bits' : r.kind === 'honor' ? honorName : r.label}
+                          {r.kind === 'xp' && <Icon name="star" size={20} fill={1} tone="gold" />}
+                          {r.kind === 'bits' ? 'Bits' : r.kind === 'honor' ? honorName : r.kind === 'xp' ? 'XP' : r.label}
                         </span>
                         {r.kind === 'bits' && (
                           <RewardPop on={shown} still={still} data-result-bits-pop>
@@ -415,6 +419,7 @@ export function ResultScreen(p: ResultScreenProps) {
                           </RewardPop>
                         )}
                         {r.kind === 'honor' && <RewardPop on={shown} still={still}><span className="sm2-num" data-result-honor style={{ ...emblemStyle, fontSize: 20 }}>+{r.value}</span></RewardPop>}
+                        {r.kind === 'xp' && <RewardPop on={shown} still={still}><span className="sm2-num" data-result-xp style={{ fontSize: 20 }}>+{r.value}</span></RewardPop>}
                         {r.kind === 'node' && <span style={{ display: 'inline-flex', alignItems: 'center' }}>{r.node}</span>}
                         {r.kind === 'item' && r.amount ? <span className="sm2-num" style={{ fontWeight: 600 }}>×{r.amount}</span> : null}
                       </div>

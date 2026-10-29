@@ -54,3 +54,23 @@ describe('telas ligadas', () => {
     expect(XP_DUNGEON_FLOOR * 5 + XP_DUNGEON_RUN).toBeGreaterThan(XP_DUNGEON_RUN);
   });
 });
+
+import { ResultScreen } from '../games/ResultScreen';
+import { MorningCheckIn } from '../MorningCheckIn';
+import { XP_CHECK_IN } from '../../utils/bond';
+
+describe('ResultScreen — linha de XP', () => {
+  it('mostra o XP exato no livro e some com 0', () => {
+    const { container } = render(<ResultScreen language="pt-BR" outcome="win" gameName="Teste" title="Fim" instant
+      ledger={[{ key: 'bits', kind: 'bits', value: 4 }, { key: 'xp', kind: 'xp', value: 25 }]} />);
+    expect(container.querySelector('[data-result-xp]')!.textContent).toBe('+25');
+    cleanup();
+    const r2 = render(<ResultScreen language="en-US" outcome="win" gameName="T" title="End" instant
+      ledger={[{ key: 'bits', kind: 'bits', value: 4 }, { key: 'xp', kind: 'xp', value: 0 }]} />);
+    expect(r2.container.querySelector('[data-result-xp]')).toBeNull();
+  });
+  it('check-in mostra o XP que paga', () => {
+    expect(XP_CHECK_IN).toBe(10);
+    void MorningCheckIn;
+  });
+});

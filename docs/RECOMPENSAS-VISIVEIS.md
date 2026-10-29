@@ -1,18 +1,23 @@
 # Recompensas visíveis (29/10/2026)
 
 Pedido do dono: antes de cada ação, ícones do que se pode ganhar; depois, o valor exato por moeda/material/XP.
-Componente único: `src/components/ui/RewardPreview.tsx` (`mode="before"` = `+N` fixo, `até N`/`up to N` em faixa, só ícone se variável; `mode="after"` = valor realmente concedido). Os números vêm das funções que concedem (`bondXP`, `*_MAX_BITS`, `remainingMinigameBits`, `EMBLEMS_PER_WIN`).
+Componente único: `src/components/ui/RewardPreview.tsx` (`mode="before"` = `+N` fixo, `até N`/`up to N` em faixa, só ícone se variável; `mode="after"` = valor concedido). Os números vêm das funções que concedem (`bondXP`, `*_MAX_BITS`, `remainingMinigameBits`, `EMBLEMS_PER_WIN`, `MATCH_POINTS`). O livro "Ganhou" do `ResultScreen` ganhou a linha `xp`.
 
 | Ação | Antes | Depois | Arquivo |
 |---|---|---|---|
-| Minijogos da Mente (Eco, Trilha, Colcha) | sim (Bits, até N) | sim (ResultScreen: Bits exatos) | play/PlaySheets.tsx, mente/*Game.tsx |
-| Salão (Match3, RPS, Dino, Barrage, Arena) | Bits "até N" já existia no texto (Match3) | sim (ResultScreen) | PlaySheets.tsx, *Game.tsx |
-| Fenda (Masmorra) | sim (Bits restantes, XP até, coração) | sim (RewardLine + ResultScreen) | DungeonGame.tsx |
-| Torneio | sim (XP até, Honra até) | Honra exata (ledger); XP pelo XpGainDisplay | TournamentPage.tsx |
-| Pesadelo | não | sim (RewardLine bits/energia/coração) | NightmareBattle.tsx (fora do escopo: outro agente) |
-| XP do Vínculo (qualquer ação) | — | sim, `+N EXP` exato após o ganho | XpGainDisplay.tsx |
-| Tarefa/hábito, check-in, Feira, Oficina/Forja, Grove, missões, foco | NÃO | parcial (toasts de Bits; XP global) | lacuna |
+| Tarefa | NÃO (conflito: decisão 14/10 do dono "linha do Hoje só nome", travada por DailyRituals.lista e homePolimento) | XP exato (XpGainDisplay) | DailyRituals.tsx |
+| Hábito | NÃO (mesmo conflito) | XP exato (XpGainDisplay) | DailyRituals.tsx |
+| Check-in da manhã | sim (+10 XP) | XP (XpGainDisplay) | MorningCheckIn.tsx |
+| Ateliê da Mente | sim (Bits até N) | ResultScreen Bits | play/PlaySheets.tsx |
+| Fenda | sim (Bits, XP até, coração) | ResultScreen Bits + XP + itens | DungeonGame.tsx |
+| Torneio | sim (XP até, Honra até) | ResultScreen Honra + XP | TournamentPage.tsx |
+| Arena | sim (Bits, ícone: valor depende da run) | ResultScreen Bits | ArenaGame.tsx |
+| Pedra-papel-tesoura | sim (+5 Bits) | ResultScreen Bits | RPSGame.tsx |
+| Pesadelo | não | Bits/energia/coração + XP exato | NightmareBattle.tsx |
+| Feira (Desafio) | não | ResultScreen Honra + seiva | guild/FeiraEventoSheet.tsx |
+| Match3 | texto "até N" existente | ResultScreen Bits | Match3Game.tsx |
 
 ## Lacunas
-- Prévia nas tarefas/hábitos (XP = `bondXP({kind:'completion'})`), Feira, Oficina/Forja, Grove, missões, foco, Arena.
-- Linha `xp` no livro "Ganhou" do ResultScreen (hoje o XP exato aparece pelo `XpGainDisplay`, após o ganho).
+- Prévia (before): Match3, Dino, Barrage, Feira, Oficina/Forja, Grove, missões, foco, Pesadelo.
+- Toasts de Bits seguem só com Bits (XP sai pelo `XpGainDisplay`, separado).
+- XP "depois" na Fenda/Torneio usa a tabela (`bondXP`); o teto diário do Vínculo pode reduzir o valor real.
