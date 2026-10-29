@@ -23,7 +23,8 @@ abrir o jogo com uma sequência narrativa curta que ensina o laço central:
 | D6 | Geração grátis | **1 por e-mail**, para sempre (apagar a conta e refazer não devolve). O sprite fica **associado ao e-mail**: quem recria a conta recebe o MESMO. |
 | D7 | O que se gera | **BB na criação; rookie sob demanda**, só quando o BB está prestes a evoluir (paga a 2ª imagem só de quem voltou). |
 | D8 | Free depois do BB | **Evolui até rookie e trava**; dali a evolução pede a compra. |
-| D9 | Preço | Desbloqueio completo **US$ 1,99 / R$ 9,90** (hoje R$ 29,90 / US$ 6,99). |
+| D9 | Preço | Desbloqueio completo **US$ 3,99 / R$ 19,90** (hoje R$ 29,90 / US$ 6,99). ⚰️ Era US$ 1,99; revisto no mesmo dia pela conta do §6.1. |
+| D17 | Custo do pagante | **Formas sob demanda**: só o galho que o jogador alcança é gerado (pior caso cai de 15 para ~8 imagens). |
 | D10 | Iniciais prontos | **Continuam no modo DEMO** (e como reserva quando a geração falhar). |
 | D11 | "Você fez de verdade?" | Pergunta **sem castigo**: "ainda não" → o ancião espera ("vamos juntos, faço companhia"); "sim" → avança. |
 | D12 | Pular | **Pula a fala, não as etapas**. Puzzle, tarefa e duelo são obrigatórios; "Rever a história" nas Configurações. |
@@ -83,6 +84,67 @@ pequena).
   e a cerimônia mostra o `UnlockNudge` (motivo novo `evolve-free`).
 - Preço: trocar `FULL_UNLOCK_PRICE_LABEL(_USD)` + Play Console + `publishedPrice.test.ts`.
 - Linha vermelha que continua: dinheiro nunca compra cuidado nem HP.
+
+### 6.1 Reanálise do preço (29/10/2026)
+
+O dono pediu para refazer a conta: custo de TODOS os sprites (com 3 rerolls do rookie),
+margem e o subsídio de quem gera até o rookie e para.
+
+**Premissas** (trocar quando houver dado real):
+
+| Item | Valor | Fonte |
+|---|---|---|
+| Custo por imagem | **US$ 0,024** (Higgsfield 2.0 Alpha, low, 1k) | medido, `INVENTARIO-ASSETS.md` (NPCs do Torneio) |
+| Margem de segurança (falha, refação por recusa, fallback) | ×1,3 | estimativa |
+| Taxa da Play | 15% (programa para pequenos devs) | Play Console |
+| Impostos/IOF no BR (sobre o líquido) | ~10% | estimativa — confirmar com contador |
+| Chat de IA por pagante, vida útil | ~US$ 0,10 | review de monetização 03/08/2026 (Groq barato) |
+
+**Custo por perfil:**
+
+| Perfil | Imagens | Custo (×1,3) |
+|---|---|---|
+| Grátis que para no BB | 1 | US$ 0,031 |
+| Grátis que chega ao rookie | 2 | US$ 0,062 |
+| **Grátis médio** (50% chegam ao rookie) | 1,5 | **US$ 0,047** |
+| **Pagante** — BB + rookie + 3 rerolls + 10 formas restantes (pior caso: árvore inteira) | 15 | US$ 0,47 + chat 0,10 = **US$ 0,57** |
+
+**Custo total por pagante** = custo dele + subsídio dos grátis (grátis por pagante =
+(1 − conversão) / conversão):
+
+| Conversão grátis→pago | Grátis por pagante | Subsídio | **Custo por pagante** |
+|---|---|---|---|
+| 2% | 49 | US$ 2,30 | **US$ 2,87** |
+| 3% | 32 | US$ 1,52 | **US$ 2,09** |
+| 5% | 19 | US$ 0,89 | **US$ 1,46** |
+| 8% | 11,5 | US$ 0,54 | **US$ 1,11** |
+
+**Receita líquida por preço** (após 15% da Play e ~10% de imposto ≈ 76,5% do bruto):
+
+| Preço | Líquido | Margem a 3% de conversão | Margem a 5% |
+|---|---|---|---|
+| US$ 1,99 / R$ 9,90 | US$ 1,52 | **−37%** (prejuízo) | **+4%** |
+| US$ 2,99 / R$ 14,90 | US$ 2,29 | +9% | +36% |
+| US$ 3,99 / R$ 19,90 | US$ 3,05 | +31% | +52% |
+| US$ 4,99 / R$ 24,90 | US$ 3,82 | +45% | +62% |
+| US$ 6,99 / R$ 29,90 (hoje) | US$ 5,35 | +61% | +73% |
+
+**Leitura:**
+- A US$ 1,99 o produto **só fecha a conta se ≥ 5% dos grátis comprarem**, e com margem
+  quase zero. A 3% (comum em app freemium), cada venda dá prejuízo.
+- O subsídio do grátis é o que mais pesa (mais que os 15 sprites do pagante). As
+  alavancas que mais mexem: **conversão** e **custo do grátis**.
+- Alavancas para baixar o custo do grátis: gerar o BB num modelo mais barato; só gerar
+  o rookie de quem voltou no dia 2 (já é D7); limitar a geração grátis por aparelho além
+  do e-mail (contas descartáveis).
+- Alavanca para o pagante: gerar as formas **sob demanda** (só o galho que ele de fato
+  alcança), o que corta o pior caso de 15 para ~8 imagens.
+- Os Créditos (reroll extra, troca por Bits) são receita **adicional** e não entram
+  nesta conta.
+
+**Faixa recomendada para decisão:** US$ 3,99 / R$ 19,90 (margem saudável já a 3%),
+ou US$ 2,99 / R$ 14,90 com geração sob demanda + meta de conversão ≥ 5% medida na 1ª
+semana. **Decidido (29/10/2026): US$ 3,99 / R$ 19,90 + formas sob demanda (D9, D17).**
 
 ## 7. Como testar em paralelo
 
