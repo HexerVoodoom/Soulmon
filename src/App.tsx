@@ -3089,6 +3089,7 @@ export default function App() {
        * Calculado FORA do updater: efeito colateral dentro de setGameState roda
        * 2× no StrictMode (footgun 6) e daria comida em dobro.
        */
+      const antesDaTarefa = gameState;
       const relief = isHaunted(task, new Date());
       // WP0.13: o numerador de "a pilha de culpa virou loop de jogo?". Aqui,
       // FORA do updater (footgun 6), e sem nada da tarefa — só o fato.
@@ -3173,6 +3174,8 @@ export default function App() {
         queueMicrotask(() => {
           if (!concluiu) return;
           queueTaskGains(task.category);
+          // Tag de rodapé (ganho + Desfazer) quando a conclusão é PAGA — foto tirada no clique.
+          ofereceDesfazer(antesDaTarefa, task.name, true);
           if (ganhouPremium) {
             toast(language === 'pt-BR'
               ? '⭐ Todas as etapas feitas! Você ganhou uma comida premium.'
@@ -3284,9 +3287,11 @@ export default function App() {
    * `duration` = `UNDO_WINDOW_MS` porque a janela do toast **é** a janela da
    * reversão: o botão nunca some antes de expirar nem fica morto na tela.
    */
-  const [doneTag, setDoneTag] = useState<{ id: number; name: string; snapshot: ReturnType<typeof snapshotCompletion>; xp0: number; bits0: number; gain: PreviewItem[] | null } | null>(null);
-  const ofereceDesfazer = useCallback((antes: GameState, nomeDoHabito: string) => {
-    setDoneTag({ id: Date.now(), name: nomeDoHabito, snapshot: snapshotCompletion(antes), xp0: antes.totalXP ?? 0, bits0: antes.gamePoints ?? 0, gain: null });
+  const [doneTag, setDoneTag] = useState<{ id: number; name: string; snapshot: ReturnType<typeof snapshotCompletion> & { tasks?: unknown; completedTasks?: unknown }; xp0: number; bits0: number; gain: PreviewItem[] | null } | null>(null);
+  const ofereceDesfazer = useCallback((antes: GameState, nomeDoHabito: string, comTarefas = false) => {
+    // Tarefa avulsa: a conclusão também mexe em `tasks`/`completedTasks` (e na próxima ocorrência), então o snapshot os leva.
+    const snapshot = comTarefas ? { ...snapshotCompletion(antes), tasks: antes.tasks, completedTasks: antes.completedTasks } : snapshotCompletion(antes);
+    setDoneTag({ id: Date.now(), name: nomeDoHabito, snapshot, xp0: antes.totalXP ?? 0, bits0: antes.gamePoints ?? 0, gain: null });
   }, []);
   // Ganho exato = diferença entre o estado de antes e o primeiro estado depois da conclusão.
   useEffect(() => {
@@ -9239,7 +9244,10 @@ export default function App() {
             items={doneTag.gain ?? []}
             onUndo={() => {
               const snap = doneTag.snapshot;
-              setGameState(prev => undoCompletion(prev, snap));
+              setGameState(prev => {
+                const volta = undoCompletion(prev, snap);
+                return 'tasks' in snap ? { ...volta, tasks: snap.tasks as GameState['tasks'], completedTasks: snap.completedTasks as GameState['completedTasks'] } : volta;
+              });
               setDoneTag(null);
             }}
           />
