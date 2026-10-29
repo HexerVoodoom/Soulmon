@@ -283,7 +283,7 @@ import { pickCatalogLevelInviteCandidate, applyLevelChange } from './utils/catal
 
 import type { Schedule, HabitAnchor, Effort } from './types/taskModel';
 import {
-  createRestState, recordNight, nightAlreadyRecorded, autoSleepStart, dreamRarity, rollDream, collectDream, DREAM_CATALOG, isWithinWindow,
+  createRestState, recordNight, nightAlreadyRecorded, autoSleepStart, decideMissedWindowNight, dreamRarity, rollDream, collectDream, DREAM_CATALOG, isWithinWindow,
   decideArmedNight, isInArmPeriod, shouldWakeOnOpen, nightWakeAt, nightEnergyGain, stampNightBonus, armMark, reconcileSleepHours,
 } from './utils/restWindow';
 import type { Dream, RestWindow } from './utils/restWindow';
@@ -6038,6 +6038,15 @@ export default function App() {
         }
         if (dec.kind !== 'none') { removeLocal(STORAGE_KEYS.NIGHT_ARMED_AT, { silent: true }); armada = null; }
       }
+      /* §188 — a janela passou com o app fechado: conta a noite pela janela (sem XP de descanso). Antes de carimbar a atividade. */
+      const perdida = decideMissedWindowNight(gameStateRef.current.rest ?? createRestState(horario), readLocal(STORAGE_KEYS.LAST_ACTIVE_AT), nowD);
+      if (perdida) {
+        setGameState(prev => {
+          const r = prev.rest ?? createRestState(horario);
+          return nightAlreadyRecorded(r, perdida.sleptAt) ? prev : { ...prev, rest: { ...recordNight({ ...r, window: horario }, perdida.sleptAt, perdida.wokeAt), window: r.window } };
+        });
+      }
+      writeLocal(STORAGE_KEYS.LAST_ACTIVE_AT, nowD.toISOString(), { silent: true });
       if (!armada && isInArmPeriod(horario, nowD)) writeLocal(STORAGE_KEYS.NIGHT_ARMED_AT, armMark(nowD, horario), { silent: true });
       /* Hipótese 2 do D-23: o app abre FORA da janela com o pet ainda dormindo (a janela acabou com o app fechado).
          `prev === null` não acordava ninguém. Acorda se o sono começou dentro da janela (sesta manual não é desfeita)

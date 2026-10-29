@@ -806,6 +806,33 @@ export function autoSleepStart(window: RestWindow, at: Date): Date {
   return new Date(minute - since * MS_MIN);
 }
 
+/**
+ * REGISTRO §188 — "Sim, conta a janela" (dono, 29/10/2026). App aberto de manhã depois de uma janela configurada
+ * que passou INTEIRA com ele fechado (nem armou, nem dormiu): conta a noite pela janela, para poder haver pesadelo.
+ * Trava anti-forja: só a janela concluída MAIS RECENTE (≤ 24 h), só se a última atividade do app (`lastActiveIso`)
+ * é ANTERIOR ao início dela (aberto/acordado durante a janela = não conta), nunca sobre noite já registrada.
+ * Quem chama só usa `recordNight` — nunca premia o XP de descanso.
+ */
+export function decideMissedWindowNight(
+  state: RestState,
+  lastActiveIso: string | null | undefined,
+  now: Date,
+): { sleptAt: Date; wokeAt: Date } | null {
+  if (!lastActiveIso) return null;
+  const last = new Date(lastActiveIso);
+  if (Number.isNaN(last.getTime())) return null;
+  const e = parseTime(state.window.end);
+  if (Number.isNaN(e) || Number.isNaN(parseTime(state.window.start))) return null;
+  const sinceEnd = ((minutesOfDay(now) - e) % MINUTES_PER_DAY + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  const endAt = new Date(Math.floor(now.getTime() / MS_MIN) * MS_MIN - sinceEnd * MS_MIN);
+  const sleptAt = new Date(endAt.getTime() - windowSpanMin(state.window) * MS_MIN);
+  if (now.getTime() < endAt.getTime()) return null;
+  if (now.getTime() - endAt.getTime() > ARMED_NIGHT_MAX_AGE_MS) return null;
+  if (last.getTime() >= sleptAt.getTime()) return null; // app ativo na janela (ou depois)
+  if (nightAlreadyRecorded(state, sleptAt)) return null;
+  return { sleptAt, wokeAt: endAt };
+}
+
 /** Quando o pet acordou numa noite em que o app estava fechado: o que vier primeiro, agora ou o fim da janela. */
 export function nightWakeAt(window: RestWindow, sleptAt: Date, now: Date): Date {
   const end = new Date(sleptAt.getTime() + windowSpanMin(window) * MS_MIN);
