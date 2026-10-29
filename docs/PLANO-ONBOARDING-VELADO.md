@@ -257,8 +257,8 @@ fica só no prédio.
 | Conversão | Custo por pagante (com subsídio) | Margem a US$ 3,99 (líquido US$ 3,05) |
 |---|---|---|
 | 2% | US$ 1,13 | +63% |
-| 3% | US$ 0,87 | +71% |
+| 3% | US$ 0,85 | +72% |
 | 5% | US$ 0,65 | +79% |
 
-Com o pool, até **US$ 2,99** (líquido US$ 2,29) fica com ~62% de margem a 3% de conversão.
+Com o pool, até **US$ 2,99** (líquido US$ 2,29) fica com ~63% de margem a 3% de conversão.
 O preço decidido (D9, US$ 3,99) segue; se quiser baixar, a conta agora permite.
