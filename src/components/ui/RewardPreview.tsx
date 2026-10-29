@@ -71,7 +71,7 @@ export function RewardPreview({ items, mode, language, size = 16 }: {
       <span key={key} data-reward-preview={it.kind} style={{ ...part, ...(it.kind === 'honor' ? emblemStyle : null) }}>
         {icon}
         {l.text && <span className="sm2-num">{l.text}</span>}
-        <span className="sm2-sr-only">{' '}{name(it)}{l.text ? '' : ` ${l.sr}`}</span>
+        <span className="sm2-sr-only">{' '}{name(it)} {l.text || l.sr}</span>
       </span>
     );
   }).filter(Boolean);
