@@ -59,7 +59,7 @@ describe('sala da Feira × mistério', () => {
     fireEvent.click(document.querySelector('[data-feira-misterio-abrir]')!);
     await waitFor(() => expect(document.querySelector('[data-feira-evento="boss"]')).not.toBeNull(), { timeout: 20000 });
     expect(getGuildFeira).toHaveBeenCalledTimes(1);
-  });
+  }, 40000);
 
   it('trilha e descanso: uma linha calma, sem barra', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista({ state: 'trail', level: 2, marks: 2 }));

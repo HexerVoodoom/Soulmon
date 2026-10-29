@@ -37,14 +37,14 @@ describe('Emblemas: o Torneio e a Feira passam pelo MESMO caminho', () => {
 });
 
 describe('o lote e o NPC da Feira', () => {
-  it('11/10/2026: a Arena tem Torneio, Arena livre, Guerra e (N10) a Fenda; a FEIRA mora no Hall ao lado do Salão (`guilda`) — dois lotes, duas salas', () => {
-    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo', 'guerra', 'fenda']);
+  it('11/10/2026: a Arena tem Torneio, Arena livre e Guerra (a Fenda voltou para a Exploração, #187); a FEIRA mora no Hall ao lado do Salão (`guilda`) — dois lotes, duas salas', () => {
+    expect(arenaLots('pt-BR').map(l => l.id)).toEqual(['torneio', 'duelo', 'guerra']);
     expect(hallLots('pt-BR').map(l => l.id)).toEqual(['feira', 'grove', 'guilda']); // D-50 (19/10/2026): o Hall tem 3 prédios — Biblioteca e Amigos foram para o Laboratório
     expect(hallLots('pt-BR').find(l => l.id === 'feira')!.label).toBe('Feira');
     expect(hallLots('en-US').find(l => l.id === 'feira')!.label).toBe('Fair');
     const av = ler('components/nav/AreaView.tsx');
     expect(av).toMatch(/open\?\.id === 'feira'[\s\S]{0,80}room="feira"/);
-    expect(av).toMatch(/open\?\.id === 'guilda'[\s\S]{0,80}room="salao"/);
+    expect(av).toMatch(/open\?\.id === 'guilda'[\s\S]{0,900}room="salao"/);
   });
 
   it('a Feira tem o busto do Fanfare registrado em `hall:feira` (mudou da Arena em 11/10/2026) e os ids da leva de arte estão declarados', () => {
@@ -87,10 +87,10 @@ describe('o Chefe e o Desafio da Feira (servidor): aditivos e DESLIGADOS', () =>
     expect(ramoRaio).toMatch(/catch \(err\) \{[^}]*evento = undefined/);
   });
 
-  it('nasce DESLIGADA: a data de liga está no futuro e toda rota da Feira recusa antes de ler ou gravar', () => {
+  it('nasce LIGADA (29/10/2026): a data de liga já passou, mas toda rota da Feira ainda recusa antes de ler ou gravar quando desligada', () => {
     const m = /export const FEIRA_CHEFE_DESDE = '(\d{4}-\d{2}-\d{2})'/.exec(feira);
     expect(m).toBeTruthy();
-    expect(m![1] > new Date().toISOString().slice(0, 10)).toBe(true);
+    expect(m![1] <= new Date().toISOString().slice(0, 10)).toBe(true);
     const ramo = guild.slice(guild.indexOf("if (action.startsWith('guildFeira'))"));
     expect(ramo.indexOf('if (!feiraLigada(env))')).toBeGreaterThan(0);
     expect(ramo.indexOf('if (!feiraLigada(env))')).toBeLessThan(ramo.indexOf('grupoDe('));

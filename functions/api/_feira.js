@@ -36,8 +36,8 @@ import {
 } from './_combate.js';
 
 // ── liga / desliga ──────────────────────────────────────────────────────────
-/** Dia (UTC) a partir do qual o Chefe e o Desafio existem. NO FUTURO = desligado (decisão do dono, 28/10/2026). */
-export const FEIRA_CHEFE_DESDE = '2099-12-31';
+/** Dia (UTC) a partir do qual o Chefe e o Desafio existem. LIGADA desde 29/10/2026 (dono aprovou em modal; antes '2099-12-31' = desligada). */
+export const FEIRA_CHEFE_DESDE = '2026-10-29';
 const ISO_DIA = /^\d{4}-\d{2}-\d{2}$/;
 
 /** Está ligada? A variável de ambiente `FEIRA_CHEFE_DESDE` (se for uma data válida) manda sobre a constante. */

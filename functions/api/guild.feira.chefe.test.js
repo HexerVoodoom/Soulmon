@@ -47,7 +47,7 @@ async function roda(n, { ligada = true, inicio = '2026-11-10' } = {}) {
   dia(inicio);
   vi.spyOn(console, 'warn').mockImplementation(() => {});
   vi.spyOn(console, 'log').mockImplementation(() => {});
-  const e = { DIGIAPP_SAVES: fakeKV(), ...(ligada ? { FEIRA_CHEFE_DESDE: LIGADA } : {}) };
+  const e = { DIGIAPP_SAVES: fakeKV(), ...(ligada ? { FEIRA_CHEFE_DESDE: LIGADA } : { FEIRA_CHEFE_DESDE: '2099-12-31' }) };
   for (const m of M) e.DIGIAPP_SAVES.store.set(`profile:${m}`, JSON.stringify({ name: `N${m[0]}`, pid: `P${m[0]}${'q'.repeat(22)}`, stage: 'champion' }));
   const g = (await J(await chamar(e, 'guildCreate', { id: M[0], name: 'Roda' }))).guild;
   for (const m of M.slice(1, n)) await chamar(e, 'guildJoin', { id: m, code: g.code });
@@ -59,7 +59,7 @@ const atacar = (e, id, extra = {}) => chamar(e, 'guildFeiraAttack', { id, ...ext
 const semeia = (kv, gid, k, membro, dmg, days = ['2026-11-10']) => kv.store.set(feiraHitKey(gid, k, membro), JSON.stringify({ k, days, dmg }));
 const evt = (kv, gid) => JSON.parse(kv.store.get(feiraEvtKey(gid)));
 
-describe('DESLIGADA por padrão', () => {
+describe('DESLIGADA (env FEIRA_CHEFE_DESDE no futuro); a constante já vem LIGADA', () => {
   it('toda ação da Feira responde 404 e NADA é gravado; guildRaidHit sem `evento`; a vista sem `feira`', async () => {
     const { e, kv } = await roda(4, { ligada: false });
     kv.puts.length = 0;
@@ -74,6 +74,10 @@ describe('DESLIGADA por padrão', () => {
     expect('evento' in hit).toBe(false);
     expect('feira' in hit.guild).toBe(false);
     expect([...kv.store.keys()].filter(k => k.startsWith('feira'))).toEqual([]);
+  });
+  it('o padrão (sem env) é LIGADO: a constante é de hoje ou do passado', async () => {
+    const { FEIRA_CHEFE_DESDE } = await import('./_feira.js');
+    expect(FEIRA_CHEFE_DESDE <= new Date().toISOString().slice(0, 10)).toBe(true);
   });
   it('a data de liga no futuro também desliga; no passado liga', async () => {
     const { e } = await roda(3, { ligada: false });
