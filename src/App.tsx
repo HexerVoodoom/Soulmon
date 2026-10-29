@@ -81,6 +81,7 @@ import { SoulmonWidget, widgetPetName, widgetPetLine, widgetGroveStage } from '.
 import { unlockedAchievements } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
+import { buildEvoRecap, parseEvoRecapSnapshot, serializeEvoRecapSnapshot, type EvoRecap } from './utils/evoRecap';
 import { parseRitualOpen, serializeRitualOpen } from './utils/atividadesLista';
 import { isDemoMode, demoRefusalText, isDemoBlockedView, setDemoNetworkOff } from './utils/demoMode';
 import { isEmbedMode } from './utils/embedMode';
@@ -205,6 +206,7 @@ import type { BosqueArvores } from './utils/bosqueArvores';
 import type { OcupadoAcao } from './components/DungeonBusyModal';
 import type { DungeonReturnSummary } from './utils/dungeonReturnSummary';
 import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
+import type { PreviewItem } from './components/ui/RewardPreview';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
@@ -609,7 +611,7 @@ const DemoExitButton = lazyOverlay(() => import('./components/home/DemoExitButto
 const UnlockNudge = lazyOverlay(() => import('./components/UnlockNudge').then(m => ({ default: m.UnlockNudge })));
 const Celebration = lazyOverlay(() => import('./components/ui/Celebration').then(m => ({ default: m.Celebration })));
 const AvisosSheet = lazyOverlay(() => import('./components/nav/AvisosSheet').then(m => ({ default: m.AvisosSheet })));
-const UndoToast = lazyOverlay(() => import('./components/UndoToast').then(m => ({ default: m.UndoToast })));
+const CompletionTag = lazyOverlay(() => import('./components/CompletionTag').then(m => ({ default: m.CompletionTag })));
 const DemoSoundButton = lazyOverlay(() => import('./components/perfil/DemoSoundButton').then(m => ({ default: m.DemoSoundButton })));
 const SpritePoseRows = lazyOverlay(() => import('./components/SpritePoseRows').then(m => ({ default: m.SpritePoseRows })));
 const StepsCard = lazyOverlay(() => import('./components/StepsCard').then(m => ({ default: m.StepsCard })));
@@ -751,6 +753,7 @@ const GoodDream = lazy(() => import('./components/GoodDream').then(m => ({ defau
 // Modais/interstícios que só montam sob condição (rodada 6, perf): saem do chunk de entrada.
 const EvolveTaskModal = lazy(() => import('./components/EvolveTaskModal').then(m => ({ default: m.EvolveTaskModal })));
 const EvolutionCeremony = lazy(() => import('./components/EvolutionCeremony').then(m => ({ default: m.EvolutionCeremony })));
+const EvoRecapModal = lazy(() => import('./components/EvoRecapModal').then(m => ({ default: m.EvoRecapModal })));
 const DailyReportModal = lazy(() => import('./components/DailyReportModal').then(m => ({ default: m.DailyReportModal })));
 const WelcomeTour = lazy(() => import('./components/WelcomeTour').then(m => ({ default: m.WelcomeTour })));
 const MapTutorial = lazy(() => import('./components/MapTutorial').then(m => ({ default: m.MapTutorial })));
@@ -1085,6 +1088,8 @@ export default function App() {
   const rubFalouRef = useRef(false);
   // Daily report: shown once per day, on the first open after the reset ran.
   const [showDailyReport, setShowDailyReport] = useState(false);
+  /** Recap da evolução (REGISTRO §190): nasce quando o resumo do dia é MOSTRADO e há progresso; a fila o põe logo depois dele. */
+  const [evoRecap, setEvoRecap] = useState<EvoRecap | null>(null);
   // A virada do dia. Subiu para ANTES da geração incremental porque o
   // `rolloverPending` que ela devolve entra no `busy` do lote (X-7) -- ordem de
   // hook, não de lógica: continua incondicional e única.
@@ -2221,6 +2226,7 @@ export default function App() {
       feiraEvento: feiraEvento !== null,
       levelUp: levelUpOpen,
       dailyReport: showDailyReport && Boolean(gameState.lastDayReport),
+      evoRecap: evoRecap !== null,
       buildingIntro: introShown.length > 0,
       mapTutorial: mapTutorialOpen,
       unlockToast: unlockToastIds.length > 0,
@@ -2256,6 +2262,15 @@ export default function App() {
         setGameState(prev => (prev.mapTutorialSeen === true ? prev : { ...prev, mapTutorialSeen: true }));
       } else if (id === 'dailyReport' && gameState.lastDayReport) {
         writeLocal(STORAGE_KEYS.DAILY_REPORT_SHOWN, gameState.lastDayReport.date, { silent: true });
+        // a barra da evolução vem logo depois, só com progresso e UMA vez por virada (o snapshot gravado é o "visto")
+        setEvoRecap(buildEvoRecap({
+          report: gameState.lastDayReport,
+          evolutionStage: gameState.evolutionStage,
+          unlockedEvolutions: gameState.unlockedEvolutions,
+          seen: parseEvoRecapSnapshot(readLocal(STORAGE_KEYS.EVO_RECAP_SNAPSHOT)),
+        }));
+      } else if (id === 'evoRecap' && evoRecap) {
+        writeLocal(STORAGE_KEYS.EVO_RECAP_SNAPSHOT, serializeEvoRecapSnapshot(evoRecap), { silent: true });
       } else if (id === 'dayGoals') {
         // reafirmar o dia: "visto" ao MOSTRAR — fechar sem confirmar deixa a lista vazia com o convite e NÃO reabre no mesmo dia
         const hoje = playerDayIso(new Date(), gameState.playerDayTz);
@@ -2282,6 +2297,7 @@ export default function App() {
         case 'feiraEvento': setFeiraEvento(null); break;
         case 'levelUp': setLevelUpShown(null); break;
         case 'dailyReport': closeDailyReport(); break;
+        case 'evoRecap': setEvoRecap(null); break;
         case 'buildingIntro': setIntroShown([]); break;
         case 'mapTutorial': setMapTutorialShown(false); break;
         case 'unlockToast': setUnlockToastIds([]); break;
@@ -3241,7 +3257,7 @@ export default function App() {
     const isPt = language === 'pt-BR';
     // Revisão 2 (A2): UM aviso só — o progresso do dia. A parte "+1 comida" saiu (a comida já aparece no inventário/animação).
     if (dailyTotal <= 0) return;
-    toast(isPt ? `📋 ${dailyDone}/${dailyTotal} do dia` : `📋 ${dailyDone}/${dailyTotal} today`);
+    // Progresso do dia saiu do topo (29/10/2026): a tag de rodapé é a única confirmação da conclusão.
   }, [language, dailyDone, dailyTotal]);
 
   /**
@@ -3268,25 +3284,26 @@ export default function App() {
    * `duration` = `UNDO_WINDOW_MS` porque a janela do toast **é** a janela da
    * reversão: o botão nunca some antes de expirar nem fica morto na tela.
    */
+  const [doneTag, setDoneTag] = useState<{ id: number; name: string; snapshot: ReturnType<typeof snapshotCompletion>; xp0: number; bits0: number; gain: PreviewItem[] | null } | null>(null);
   const ofereceDesfazer = useCallback((antes: GameState, nomeDoHabito: string) => {
-    const snapshot = snapshotCompletion(antes);
-    const mensagem = language === 'pt-BR'
-      ? `${nomeDoHabito} — marcado como feito`
-      : `${nomeDoHabito} — marked as done`;
-    toast.custom(
-      (t) => (
-        <UndoToast
-          language={language}
-          mensagem={mensagem}
-          onUndo={() => {
-            setGameState(prev => undoCompletion(prev, snapshot));
-            toast.dismiss(t);
-          }}
-        />
-      ),
-      { duration: UNDO_WINDOW_MS },
-    );
-  }, [language, setGameState]);
+    setDoneTag({ id: Date.now(), name: nomeDoHabito, snapshot: snapshotCompletion(antes), xp0: antes.totalXP ?? 0, bits0: antes.gamePoints ?? 0, gain: null });
+  }, []);
+  // Ganho exato = diferença entre o estado de antes e o primeiro estado depois da conclusão.
+  useEffect(() => {
+    if (!doneTag || doneTag.gain) return;
+    const xp = (gameState.totalXP ?? 0) - doneTag.xp0;
+    const bits = (gameState.gamePoints ?? 0) - doneTag.bits0;
+    const gain: PreviewItem[] = [];
+    if (xp > 0) gain.push({ kind: 'xp', amount: xp });
+    if (bits > 0) gain.push({ kind: 'bits', amount: bits });
+    setDoneTag(t => (t && t.id === doneTag.id && !t.gain ? { ...t, gain } : t));
+  }, [doneTag, gameState.totalXP, gameState.gamePoints]);
+  useEffect(() => {
+    if (!doneTag) return;
+    const id = doneTag.id;
+    const h = window.setTimeout(() => setDoneTag(t => (t && t.id === id ? null : t)), UNDO_WINDOW_MS);
+    return () => window.clearTimeout(h);
+  }, [doneTag?.id]);
 
   const queueTaskGains = useCallback((category: ActivityCategory) => {
     setGainSignal(prev => ({ category, n: (prev?.n ?? 0) + 1 }));
@@ -8941,6 +8958,11 @@ export default function App() {
         />
         </PresentationSlot>
       )}
+      {interstitial === 'evoRecap' && evoRecap && (
+        <PresentationSlot id="evoRecap" onFail={() => presentation.fail('evoRecap')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <EvoRecapModal recap={evoRecap} language={language} onClose={() => setEvoRecap(null)} />
+        </PresentationSlot>
+      )}
       {/* CHECK-IN MATINAL — o ritual de ≤20s. Só um por dia e pulável sem
           culpa. Posição na fila: depois do relatório diário. */}
       {interstitial === 'checkIn' && checkInPlanData && (
@@ -9209,6 +9231,20 @@ export default function App() {
       <Suspense fallback={null}><XpGainDisplay totalXP={gameState.totalXP} language={language} demo={isDemoMode(gameState)} /></Suspense>
       {/* Só na Home: flutuando sobre mapa/jogos ele cobria títulos e botões (QA em produção, 26/10/2026). Fora da Home, a saída fica em Configurações. */}
       {demo && hasCompletedOnboarding && currentView === 'home' && <DemoExitButton language={language} onLeave={handleLeaveDemo} />}
+      {doneTag && (
+        <Suspense fallback={null}>
+          <CompletionTag
+            language={language}
+            name={doneTag.name}
+            items={doneTag.gain ?? []}
+            onUndo={() => {
+              const snap = doneTag.snapshot;
+              setGameState(prev => undoCompletion(prev, snap));
+              setDoneTag(null);
+            }}
+          />
+        </Suspense>
+      )}
       <Toaster richColors position="top-right" />
     </div>
   );
