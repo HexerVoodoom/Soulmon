@@ -3558,3 +3558,19 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 **Alternativa que perdeu:** renomear os ids de prédio SÓ na tela e manter `exploracao.oficina` etc. no save/servidor (zero risco de migração). **Por que perdeu:** deixaria o id mentindo sobre o lugar (a leitura de `BUILDING_GATES`, `areaMinBond` e o Mapa dependem do prefixo da área) e criaria uma tabela paralela de "onde mora"; o padrão `MOVED_BUILDINGS` já foi usado 5 vezes sem perda de save.
 
 **O que falsificaria:** retenção/uso dos Amigos cair por causa do gate 4 do Salão do Clã; jogador procurando o Arquivo (ver cliques na aba Arquivo vs. suporte); a Arena trancada até o Vínculo 5 gerar queixa de "área bloqueada". **Rollback:** reverter o commit do #186 — os ids antigos continuam válidos nos saves que não passaram pela migração; saves que já gravaram ids novos (`forja.*`) precisam do mapa inverso (`MOVED_BUILDINGS` ao contrário) ou ficam sem o "visto" daqueles prédios (nunca perdem material nem progresso de missão: o estoque é por material, não por id).
+
+## 188. Janela sem app conta a noite (dono, 29/10/2026; EMENDA a "noite sem registro é neutra")
+
+**Decisão do dono ("Sim, conta a janela"):** ao abrir o app depois de uma janela de descanso configurada que passou com ele fechado, a noite conta pela janela (dormiu = início da janela, acordou = fim), para que o pesadelo possa acontecer com as mesmas regras e chance de uma noite normal (máx. 1 por noite). Antes, sem abrir entre o período do lembrete e o fim da janela, não havia registro e a noite era neutra.
+
+**Como:** `decideMissedWindowNight` (`restWindow.ts`, pura) + efeito de sono automático do `App.tsx`. Anti-forja: só a janela concluída mais recente (≤ 24 h); só se a última atividade (`LAST_ACTIVE_AT`, carimbada a cada minuto de app aberto) é anterior ao início da janela (aberto/acordado na janela = não conta); sem carimbo = não conta; nunca sobre noite já registrada (`nightAlreadyRecorded`, idempotente por manhã). Só `recordNight`: o XP de descanso (`restNight`) e a missão `rest-nights` NÃO são pagos, então o prêmio do sono não dobra.
+
+**Alternativa que perdeu:** manter a noite neutra (quem esquece o app aberto nunca vê pesadelo). **Falsificaria:** jogadores abrindo o app só de manhã para forjar pesadelo (a trava de atividade o impede; medir pesadelos/jogador). **Rollback:** remover a chamada no `App.tsx`; registros gravados são noites normais.
+
+## 188. Recompensa visível na linha do Hoje: tarefa `+N XP`, hábito `até N XP` (dono, 29/10/2026; EMENDA a regra de 14/10/2026 "a linha do Hoje mostra só o nome")
+
+**Decisão do dono:** tarefas e hábitos da lista do Hoje (`DailyRituals.tsx`) mostram a recompensa ANTES de concluir, num chip pequeno no fim da linha (`RewardPreview mode="before"`). Tarefa = XP exato (`bondXP({kind:'completion', weight: effortOf(task)})`); hábito = `até N XP`, o teto do degrau `tree` (`bondXP` com `HABIT_WEIGHT` e `habitTier:'tree'`). Os números vêm da função que concede, sem tabela nova. Isto emenda a regra de 14/10 (§45/§46: nome + checkbox + prazo/assombrada); o resto dela (sem subtítulo, selo, barra, adiamentos, categoria) segue valendo.
+
+**Alternativa que perdeu:** manter a linha só com o nome (regra de 14/10) e mostrar o XP só depois (`XpGainDisplay`).
+
+**O que falsificaria:** a lista ficar visualmente carregada (cliques por linha, ou queixa de ruído) ou o jogador tratar o chip como meta e escolher só tarefas de maior XP.

@@ -70,7 +70,8 @@ describe('linha mínima no Today', () => {
     // §45 (PR #334): prazo e convite da assombrada VOLTARAM à linha do Hoje (TaskMeta lean).
     expect(txt).toMatch(/Thu, Jan 1/);
     expect(txt).toContain('haunted');
-    expect(txt).not.toMatch(/XP|postponed|steps|Every day|Due/);
+    expect(txt).not.toMatch(/postponed|steps|Every day|Due/);
+    expect(txt).toMatch(/\+\d+ XP/); // §188 (29/10): chip de recompensa antes de concluir
     expect(txt).toContain('Caixas'); // filhos continuam
     expect(txt).toContain('Frete');
   });

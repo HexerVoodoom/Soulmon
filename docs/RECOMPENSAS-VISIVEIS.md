@@ -5,8 +5,8 @@ Componente único: `src/components/ui/RewardPreview.tsx` (`mode="before"` = `+N`
 
 | Ação | Antes | Depois | Arquivo |
 |---|---|---|---|
-| Tarefa | NÃO (conflito: decisão 14/10 do dono "linha do Hoje só nome", travada por DailyRituals.lista e homePolimento) | XP exato (XpGainDisplay) | DailyRituals.tsx |
-| Hábito | NÃO (mesmo conflito) | XP exato (XpGainDisplay) | DailyRituals.tsx |
+| Tarefa | sim: `+N XP` exato (REGISTRO §188, dono 29/10, emenda a regra de 14/10) | XP exato (XpGainDisplay) | DailyRituals.tsx |
+| Hábito | sim: `até N XP` (teto do degrau tree, §188) | XP exato (XpGainDisplay) | DailyRituals.tsx |
 | Check-in da manhã | sim (+10 XP) | XP (XpGainDisplay) | MorningCheckIn.tsx |
 | Ateliê da Mente | sim (Bits até N) | ResultScreen Bits | play/PlaySheets.tsx |
 | Fenda | sim (Bits, XP até, coração) | ResultScreen Bits + XP + itens | DungeonGame.tsx |
@@ -22,6 +22,5 @@ Componente único: `src/components/ui/RewardPreview.tsx` (`mode="before"` = `+N`
 ## Lacunas
 - Pesadelo (entrada): NÃO — o convite enxuto (D-69) proíbe recompensa; ela aparece depois, no fim.
 - Dino (sem tela de início), Arena (Bits: sem teto derivável; só ícone), Feira Chefe, Grove (marco: XP por dias não chega à cerimônia), Forja (gasta, não paga), Missões (já têm "+1 material" em texto).
-- Tarefas/hábitos: decisão do dono pendente (linha do Hoje só nome).
 - Toasts de Bits (App.tsx): as fontes só pagam Bits; sem material/XP para somar.
 - XP "depois" na Fenda/Torneio vem da tabela; o teto diário do Vínculo pode reduzir o valor real.
