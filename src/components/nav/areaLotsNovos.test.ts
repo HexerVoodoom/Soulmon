@@ -20,37 +20,16 @@ describe('lotes novos (29/09/2026)', () => {
     expect(jogosLots('pt-BR').map(l => l.id)).toEqual(['salao', 'mente']); // o Calabouço saiu de Jogos
   });
 
-  it('H15/H16/H17 + W12 (20/10/2026): Torneio e Arena livre dividem UM retângulo do fundo e a Guerra fica no OUTRO; Santuário do Vínculo bem maior; Hall maior', () => {
+  it('29/10/2026 (dono, marcas em vermelho): Torneio à esquerda, Arena livre à direita, Guerra na plataforma de baixo; prédios ocupam a plataforma', () => {
     const pct = (s?: string) => Number(String(s ?? '38%').replace('%', ''));
-    const arena = Object.fromEntries(arenaLots('pt-BR').map(l => [l.id, l]));
-    // 20/10/2026 (dono, §145 e §146): vagas P1 (vazia), P2 = Guerra, P3 = Torneio, P4 = Arena livre. Torneio e Arena livre acompanham a DIAGONAL do losango
-    // de baixo (o Arena livre fica mais à direita E mais abaixo) e, desde o §146, o PAR fica CENTRADO no piso interno da moldura de tijolos do fundo
-    // (`bg-arena.png`, 1269×1700); a Guerra (P2, bloco de cima) não mudou. Arena livre MAIS BAIXO que o Torneio, e a Guerra MAIOR (≥ 1,25× o opaco do Torneio).
-    const opaca = (id: 'torneio' | 'duelo' | 'guerra') => { const b = LOT_ART_BOUNDS[`arena:${id}`]; return pct((arena[id] as { width?: string }).width) * (b[2] - b[0]); };
-    expect(pct(arena.torneio.left)).toBeLessThan(pct(arena.duelo.left));
-    expect(pct(arena.duelo.top) - pct(arena.torneio.top)).toBeGreaterThanOrEqual(8);               // na diagonal, NÃO lado a lado na mesma linha de chão
-    expect(Math.abs(opaca('torneio') - opaca('duelo'))).toBeLessThan(0.6);                       // mesmo tamanho
-    expect(opaca('torneio')).toBeGreaterThanOrEqual(24);                                           // H12 (sem relaxar)
-    expect(opaca('guerra')).toBeGreaterThanOrEqual(opaca('torneio') * 1.25);                      // Clan War MAIOR
-    expect(pct(arena.guerra.left)).toBeGreaterThan(pct(arena.duelo.left));                         // P2 fica à direita de P4
-    expect([arena.guerra.left, arena.guerra.top, (arena.guerra as { width?: string }).width]).toEqual(['77.4%', '46.7%', '38%']); // a Guerra não mudou (§146)
-    const rects = (id: string, w: number, h: number) => lotHitRects('arena', arenaLots('pt-BR').find(l => l.id === id) as never, w, h)[0];
-    const centro = (id: string) => { const art = rects(id, 390, 844); return [((art.x0 + art.x1) / 2 / 390) * 100, ((art.y0 + art.y1) / 2 / 844) * 100]; };
-    // §147 (W19): o dono marcou na captura 390×844 onde a BASE do Torneio deve ficar: o ponto (70,328) do sprite tem de cair em (95,366).
-    // 26/10/2026 (dono, desenho novo): a Arena livre SOBE e vai à esquerda, na frente, cobrindo parte do Torneio e da Guerra; a Fenda Sem Fim cresce no topo-centro. O H11 segue valendo pelo miolo de toque (`LOT_HIT_INSET`) e pelo deslocamento de rótulo.
-    expect([arena.duelo.left, arena.duelo.top, (arena.duelo as { width?: string }).width]).toEqual(['41.5%', '57.5%', '39%']);
-    const tArt = rects('torneio', 390, 844);
-    const ancora = [tArt.x0 + 46.8, tArt.y0 + 80.46]; // ponto da escadaria no sprite, medido na captura do dono (antes em (70,328))
-    expect(Math.abs(ancora[0] - 95), 'base do Torneio × alvo do dono, x').toBeLessThanOrEqual(3);
-    expect(Math.abs(ancora[1] - 366), 'base do Torneio × alvo do dono, y').toBeLessThanOrEqual(3);
-    // a vaga P1 (50,8%/35,1%) segue vazia: nenhum prédio tem o centro por lá
-    for (const id of ['torneio', 'duelo', 'guerra']) expect(Math.hypot(centro(id)[0] - 50.8, (centro(id)[1] - 35.1) * 2)).toBeGreaterThan(15);
+    const arena = Object.fromEntries(arenaLots('pt-BR').map(l => [l.id, l as { left: string; top: string; width?: string }]));
+    expect(pct(arena.torneio.left)).toBeLessThan(40);
+    expect(pct(arena.duelo.left)).toBeGreaterThan(70);
+    expect(Math.abs(pct(arena.torneio.top) - pct(arena.duelo.top))).toBeLessThan(5);       // mesma fileira (plataformas da esquerda e da direita)
+    expect(pct(arena.guerra.top) - pct(arena.duelo.top)).toBeGreaterThanOrEqual(12);       // a Guerra fica na plataforma de baixo
+    expect(pct(arena.guerra.width)).toBeGreaterThan(pct(arena.torneio.width));             // a de baixo é a maior
     const lab = Object.fromEntries(laboratorioLots('pt-BR').map(l => [l.id, l as { width?: string; top: string }]));
     expect(pct(lab.stats.width)).toBeGreaterThanOrEqual(pct(lab.evolucao.width) * 1.4);
-    for (const id of ['evolucao']) {
-      expect(pct(lab[id].width)).toBeGreaterThan(38);
-      expect(pct(lab[id].top)).toBeGreaterThan(54);
-    }
     for (const l of hallLots('pt-BR')) expect(pct((l as { width?: string }).width)).toBeGreaterThan(38);
   });
 

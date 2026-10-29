@@ -64,15 +64,16 @@ const AREA_ART: Record<AreaId, string> = {
 /** Posição do CENTRO da base de cada construção, em % do fundo (do mock aprovado).
  *  01/10/2026 (H1, navegação do dono): ajuste fino — Exploração, Hall, Jogos e
  *  Laboratório descem ~3%, a Arena vai ~3% para a direita; o Mercado fica. */
-const AREA_POS: Record<AreaId, { left: string; top: string }> = {
+// 29/10/2026 (dono): cada construção ocupa a ilha dela no fundo — largura própria por zona (padrão 34%).
+const AREA_POS: Record<AreaId, { left: string; top: string; width?: string }> = {
   mercado: { left: '30%', top: '17%' },
   jogos: { left: '74%', top: '19.8%' },
-  exploracao: { left: '23%', top: '47%' },
+  exploracao: { left: '16.8%', top: '47.1%', width: '30.3%' },
   // #187 (28/10/2026): ABAIXO da Exploração, simétrica ao Hall — a plataforma do portal de baixo à esquerda do `bg-mapa` (centro ~19/73 do fundo) está livre.
-  forja: { left: '19%', top: '74.5%' },
-  arena: { left: '82%', top: '41.5%' },
+  forja: { left: '15.1%', top: '78.7%', width: '30.7%' },
+  arena: { left: '84.1%', top: '47.3%', width: '29.4%' },
   laboratorio: { left: '49%', top: '77.9%' },
-  hall: { left: '81.5%', top: '69%' },
+  hall: { left: '84.7%', top: '71.5%', width: '30.8%' },
 };
 
 export function MapPage({ language, onOpenArea, bits, emblems, credits, bondLevel }: {
@@ -181,7 +182,7 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits, bondLeve
               position: 'absolute',
               left: pos.left, top: pos.top,
               transform: 'translate(-50%, -78%)',
-              width: '34%',
+              width: pos.width ?? '34%',
               display: 'flex', flexDirection: 'column', alignItems: 'center',
               background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
             }}

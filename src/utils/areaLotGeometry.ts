@@ -60,13 +60,16 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
  */
 export const LOT_HIT_INSET: Record<string, LotBounds> = {
   'arena:torneio': [0, 0, 0.22, 0],
-  'arena:duelo': [0.2, 0, 0, 0],
-  'arena:guerra': [0.2, 0, 0, 0],
+  'arena:duelo': [0.2, 0, 0, 0.2],
+  'arena:guerra': [0.2, 0.4, 0, 0],
   'hall:guilda': [0, 0.25, 0, 0], // 29/10/2026: Salão ocupa a plataforma grande; a torre não rouba o toque do Grove
+  'laboratorio:evolucao': [0, 0.15, 0, 0], // 29/10/2026: Biblioteca maior logo acima; o topo do Centro não rouba o toque dela
 };
 
 /** Deslocamento do RÓTULO (px, x e y) por lote — tira o nome de trás do prédio vizinho que o cobre. */
 export const LOT_LABEL_OFFSET: Record<string, readonly [number, number]> = {
+  'hall:guilda': [0, -70], // 29/10/2026: Salão ocupa a plataforma grande; o rótulo sobe e não sai da tela curta
+  'arena:duelo': [-28, 0], // 29/10/2026: Arena livre na borda direita; o rótulo não sai da tela
 };
 
 /** Caixa de TOQUE do sprite: a opaca menos o miolo (`LOT_HIT_INSET`). */
