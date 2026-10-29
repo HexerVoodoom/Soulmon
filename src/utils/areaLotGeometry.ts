@@ -60,7 +60,7 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
  */
 export const LOT_HIT_INSET: Record<string, LotBounds> = {
   'arena:torneio': [0, 0, 0.22, 0],
-  'arena:duelo': [0.2, 0, 0, 0.2],
+  'arena:duelo': [0.2, 0, 0.25, 0.2],
   'arena:guerra': [0.2, 0.4, 0, 0],
   'hall:guilda': [0, 0.25, 0, 0], // 29/10/2026: Salão ocupa a plataforma grande; a torre não rouba o toque do Grove
   'laboratorio:biblioteca': [0, 0.1, 0.18, 0.15], // 29/10/2026: Biblioteca ocupa a plataforma; as bordas não roubam o toque do Vínculo nem do Centro
