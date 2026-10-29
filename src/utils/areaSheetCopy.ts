@@ -72,9 +72,9 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
 // 🔎 20/10/2026 (§145): o dono marcou 4 VAGAS na captura do app (2 losangos, 2 vagas em cada): Guerra na de cima-direita (P2), Torneio (P3) e Arena livre (P4)
 // na diagonal do losango de baixo, e a de cima-esquerda (P1) fica vazia. W19 (§147): a base do Torneio desceu 38 px / foi 25 px à direita (área marcada pelo dono); a Arena livre desceu o mínimo p/ o H11. `left`/`top` = centro da BASE da caixa do botão; o centro visual cai na marca.
 const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
-  { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '22%', top: '52.5%', width: '30.8%' },
-  { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '50.7%', top: '69.5%', width: '39%' }, // beta-2 (9.3): a Arena livre sai do meio do caminho e assenta no OUTRO tablado (o da direita, livre desde que a Feira foi para o Hall) — um bloco para cada modo
-  { id: 'guerra', labelPt: 'Guerra de Clãs', labelEn: 'Clan War', ariaPt: 'Entrar na Guerra de Clãs', ariaEn: 'Enter the Clan War', left: '82%', top: '52.5%', width: '38%' },
+  { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '23%', top: '52.5%', width: '35%' },
+  { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '83%', top: '52%', width: '40%' }, // beta-2 (9.3): a Arena livre sai do meio do caminho e assenta no OUTRO tablado (o da direita, livre desde que a Feira foi para o Hall) — um bloco para cada modo
+  { id: 'guerra', labelPt: 'Guerra de Clãs', labelEn: 'Clan War', ariaPt: 'Entrar na Guerra de Clãs', ariaEn: 'Enter the Clan War', left: '49%', top: '78.5%', width: '52%' },
   // 🌀 #187 (28/10/2026): a Fenda Sem Fim voltou para a Exploração; a vaga de cima-esquerda (P1) do losango de cima fica livre de novo.
   // 🔎 11/10/2026 (guilda-lancamento): a FEIRA saiu da Arena e foi para o HALL, ao lado do Salão da Guilda — é a Missão da
   // guilda (`GuildSheet` room `feira`). O tablado da direita da Arena fica livre.
@@ -125,9 +125,9 @@ const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
 // (dois losangos em cima, o grande embaixo). A Biblioteca e o Círculo de Amigos foram para o Laboratório (`LABORATORIO_LOTS`). A ordem do array é a ordem de pintura.
 // O Grove tem arte própria desde W5 (19/10/2026): pavilhão de cristal em volta de uma árvore jovem.
 const HALL_LOTS: AreaLotSpec<HallLotId>[] = [
-  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '31%', top: '38.5%', width: '58%' },
-  { id: 'grove', labelPt: 'Grove', labelEn: 'Grove', ariaPt: 'Entrar no Grove', ariaEn: 'Enter the Grove', left: '77%', top: '38.5%', width: '50%' },
-  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '50.8%', top: '80%', width: '64%' },
+  { id: 'feira', labelPt: GUILD_COPY['guild.lote.feira.label'][0], labelEn: GUILD_COPY['guild.lote.feira.label'][1], ariaPt: GUILD_COPY['guild.lote.feira.aria'][0], ariaEn: GUILD_COPY['guild.lote.feira.aria'][1], left: '22.5%', top: '39.5%', width: '56%' },
+  { id: 'grove', labelPt: 'Grove', labelEn: 'Grove', ariaPt: 'Entrar no Grove', ariaEn: 'Enter the Grove', left: '80.5%', top: '41.5%', width: '52%' },
+  { id: 'guilda', labelPt: GUILD_COPY['guild.lote.hall.label'][0], labelEn: GUILD_COPY['guild.lote.hall.label'][1], ariaPt: GUILD_COPY['guild.lote.hall.aria'][0], ariaEn: GUILD_COPY['guild.lote.hall.aria'][1], left: '54%', top: '86.5%', width: '98%' },
 ];
 
 /** Rótulo dos prédios que NÃO têm lote no mapa (#187): moram dentro de outro lote. Dono único (a lista de Primeiras Vezes e a de missões leem daqui). */
