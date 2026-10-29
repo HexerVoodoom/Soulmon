@@ -33,7 +33,7 @@ import { STORAGE_KEYS } from '../utils/storageKeys';
 import { getMaxEnergyForStage } from '../types/progression';
 import { settleEnergy } from '../utils/hunger';
 import { addFragments } from '../utils/equipment';
-import { MINIGAME_BITS_PER_DAY, minigameBitsToday } from '../utils/currencies';
+import { MINIGAME_BITS_PER_DAY, minigameBitsToday, remainingMinigameBits } from '../utils/currencies';
 import { playerDayKey } from '../utils/playerDay';
 import { newDefenseSeed } from '../utils/autoDefesa';
 import {
@@ -58,7 +58,8 @@ import { useGameStateOptional } from '../contexts/GameStateContext';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { useDungeonBonus, useRiftTalents, riftBitsWith } from '../contexts/useTalentBonus';
 import { gateLine, masmorraFloorOpen } from '../utils/gates';
-import { bondLevelFor } from '../utils/bond';
+import { bondLevelFor, XP_DUNGEON_FLOOR, XP_DUNGEON_RUN } from '../utils/bond';
+import { RewardPreview } from './ui/RewardPreview';
 import type { LText } from '../utils/oracle';
 import type { Language } from '../utils/i18n';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
@@ -992,6 +993,13 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               ? `Começa na camada ${inicio} · dá para ${layersAffordable(energia)} agora`
               : `Starts at layer ${inicio} · enough for ${layersAffordable(energia)} now`}
           </p>
+        )}
+        {gs && (
+          <RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} items={[
+            { kind: 'bits', max: remainingMinigameBits(gs, playerDayKey(new Date(), gs.playerDayTz)) },
+            { kind: 'xp', max: XP_DUNGEON_FLOOR * 5 + XP_DUNGEON_RUN },
+            { kind: 'item', item: 'heart' },
+          ]} />
         )}
         <button type="button" onClick={startRun} disabled={espera > 0 || !temEnergia} style={{ ...sm2Button('primary', espera > 0 || !temEnergia), width: '100%', maxWidth: 320 }}>
           {/* Copy §4: fenda se DESCE; não se "entra" nem se "inicia run". */}

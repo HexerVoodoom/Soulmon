@@ -11,6 +11,7 @@ import { readNumber } from '../../utils/safeStorage';
 import { bitsStyle, MINIGAME_BITS_PER_DAY } from '../../utils/currencies';
 import { BitsAmount } from '../ui/BitsAmount';
 import type { Language } from '../../utils/i18n';
+import { RewardPreview } from '../ui/RewardPreview';
 import { ECO_MAX_BITS } from '../../utils/mente/eco';
 import { ZIP_MAX_BITS } from '../../utils/mente/zip';
 import { PATCHES_MAX_BITS } from '../../utils/mente/patches';
@@ -352,7 +353,7 @@ export function MenteSheet({ language, onStart, bitsToday }: {
   onStart: (g: MenteGame) => void;
 }) {
   const isPt = language === 'pt-BR';
-  const upTo = (n: number) => <>{isPt ? 'até' : 'up to'} <BitsAmount value={n} /></>;
+  const upTo = (n: number) => <RewardPreview mode="before" language={language} items={[{ kind: 'bits', max: n }]} />;
   const cta = isPt ? 'Jogar' : 'Play';
   const rows: { id: MenteGame; title: string; asks: string; detail: string; meta: ReactNode; cta?: string }[] = [
     {

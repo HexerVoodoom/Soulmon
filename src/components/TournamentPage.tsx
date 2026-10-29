@@ -84,6 +84,7 @@ import { stageSkillsFor } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { visualElementFor, opponentElementFor } from '../utils/combatFx';
 import { getOpponents, playMatchComRetry, playMatch, isFalhaDeRede, startDuel, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
+import { RewardPreview } from './ui/RewardPreview';
 import { TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
 import { getTournamentWindow, tournamentWindowLabel } from '../utils/tournamentSeason';
 import { Icon } from './ui/Icon';
@@ -98,7 +99,7 @@ import { useDialogA11y } from '../hooks/useDialogA11y';
 import { GameVisor, VisorSprite, DIALOG_VISOR_W } from './games/GameKit';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { sm2Tag } from './TaskMeta';
-import { bondLevelFor, meetsPvpBond, xpToPvpBond, xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
+import { bondXP, bondLevelFor, meetsPvpBond, xpToPvpBond, xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
 import tournamentFinal from '../assets/soulmon/bg/tournament-final.png';
 
 interface TournamentPageProps {
@@ -810,6 +811,10 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                     {o.petName || o.stage} · {getStageLevel(o.stage)}
                   </p>
                 </div>
+                <RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} size={14} items={[
+                  { kind: 'xp', max: bondXP({ kind: 'tournamentMatch', won: true }) },
+                  { kind: 'honor', max: EMBLEMS_PER_WIN },
+                ]} />
                 {/* WCAG 2.5.3 (Label in Name): o texto visível "Fight" está
                     CONTIDO no nome acessível, que ainda nomeia o oponente
                     ("Fight — challenge Lu"); quem usa comando de voz diz
