@@ -83,6 +83,7 @@ import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
 import type { GroupResult } from '../utils/combate/group';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
+import { RewardPreview } from './ui/RewardPreview';
 import { useTalentBonus, useRiftTalents, riftBitsWith } from '../contexts/useTalentBonus';
 import type { StageSkills } from '../utils/soulProfile/ficha/skills';
 import { fichaStageOf } from '../utils/soulProfile/ficha/stageSkillsFor';
@@ -480,6 +481,7 @@ export function ArenaGame({
               ? `${ARENA_ROUNDS} rodadas seguidas, cada uma mais dura. O elemento pesa no dano; perder custa a run, nunca os seus corações.`
               : `${ARENA_ROUNDS} rounds back to back, each harder. Element weighs on damage; losing costs the run, never your hearts.`}
           </p>
+          <div style={{ display: 'flex', justifyContent: 'center' }}><RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} items={[{ kind: 'bits' }]} /></div>
           <button type="button" onClick={comecar} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320, alignSelf: 'center' }}>
             {isPt ? 'Entrar na Arena' : 'Enter the Arena'}
           </button>

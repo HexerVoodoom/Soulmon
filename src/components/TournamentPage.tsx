@@ -1083,7 +1083,10 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
       lineAttrs={draw ? { 'data-empate': true } : undefined}
       hero={draw ? undefined : { label: isPt ? 'Placar da partida' : 'Match score', value: `${result.myScore} × ${result.oppScore}` }}
       strip={draw ? undefined : [{ key: 'pts', label: isPt ? 'Poder da partida' : 'Match power', value: `${result.points} pts` }]}
-      ledger={draw ? [] : [{ key: 'honor', kind: 'honor', value: result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS }]}
+      ledger={draw ? [] : [
+        { key: 'honor', kind: 'honor', value: result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS },
+        { key: 'xp', kind: 'xp', value: bondXP({ kind: 'tournamentMatch', won: result.won }) },
+      ]}
       petSrc={petSpriteSrc}
       scene={`url(${tournamentFinal}) center/cover`}
       visorOpponent={result.won ? <VisorSprite src={opponentSprite({ ...result.opponent, id: result.opponent.name })} alt="" idle={false} flip style={{ right: 8, bottom: 6 }} data-visor-enemy /> : undefined}

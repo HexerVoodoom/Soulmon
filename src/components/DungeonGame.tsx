@@ -865,6 +865,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               ]}
               ledger={[
                 { key: 'bits', kind: 'bits', value: resumo.bits },
+                { key: 'xp', kind: 'xp' as const, value: resumo.layers * XP_DUNGEON_FLOOR },
                 // O "coração da mochila" é o ITEM de recuperar vida (a poção em forma de coração), com a arte do item.
                 ...(resumo.hearts > 0 ? [{ key: 'hearts', kind: 'item' as const, itemKind: 'heart' as const, label: rewardItemLabel('heart', isPt), amount: resumo.hearts }] : []),
                 ...(resumo.glitchtama > 0 ? [{ key: 'glitchtama', kind: 'item' as const, itemKind: 'glitchtama' as const, label: isPt ? 'Glitchtama (mochila)' : 'Glitchtama (Backpack)', amount: resumo.glitchtama }] : []),

@@ -1,6 +1,7 @@
 import { RankingPanel } from './RankingPanel';
 import type { GameChallenge } from '../utils/gameChallenge';
 import { useState, useRef, useEffect } from 'react';
+import { RewardPreview } from './ui/RewardPreview';
 import { BitsAmount } from './ui/BitsAmount';
 import type { CSSProperties } from 'react';
 import rpsScene from '../assets/soulmon/bg/minigame-rps.png';
@@ -186,6 +187,8 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
       />
 
       {!level ? (
+        <>
+        <div style={{ display: 'flex', justifyContent: 'center' }}><RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} items={[{ kind: 'bits', amount: MATCH_POINTS }]} /></div>
         <div role="group" aria-label={isPt ? 'Dificuldade' : 'Difficulty'} style={{ display: 'flex', gap: 8, marginTop: 'auto', marginBottom: 'auto' }}>
           <button type="button" data-rps-start={1} onClick={() => setLevel(1)} style={{ ...sm2Button('outline', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64, padding: '0 8px' }}>
             Easy
@@ -194,6 +197,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
             Normal
           </button>
         </div>
+        </>
       ) : (
         <>
           {/* TOPO: o Soulmon do jogador (o adversário) + as peças que lhe restam (Normal). */}

@@ -82,6 +82,8 @@ import type { DungeonEnemy } from '../utils/dungeon';
 import type { DreamRarity } from '../utils/restWindow';
 import type { Language } from '../utils/i18n';
 import { RewardLine } from './ui/RewardLine';
+import { RewardPreview } from './ui/RewardPreview';
+import { bondXP } from '../utils/bond';
 
 export interface NightmareBattleProps {
   open: boolean;
@@ -443,6 +445,7 @@ export function NightmareBattle({
           <p style={sm2Hint} data-nightmare-end="extinct">{nightmareEndText('extinct', language)}</p>
           <p style={{ ...sm2Text, margin: 0 }}>
             <RewardLine bits={rewards.bits} energy={rewards.energy} hearts={rewards.hearts} language={language} />
+            {' '}<RewardPreview mode="after" language={language} items={[{ kind: 'xp', amount: bondXP({ kind: 'nightmareCleared' }) }]} />
           </p>
           <button type="button" onClick={onClose} style={btn('primary')}>{goodMorning}</button>
         </div>

@@ -4,6 +4,8 @@ import { MAX_DAILY_FOCUS, taskEffort, normalizeEffort, type HabitTier } from '..
 import { tinyOfferIntro } from '../utils/tinyOffer';
 import { isOvercommitted } from '../utils/taskTriage';
 import { Icon } from './ui/Icon';
+import { RewardPreview } from './ui/RewardPreview';
+import { bondXP } from '../utils/bond';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { TIER_FILL } from './HabitConstancy';
 import { RitualDialog, ritualLabel, ritualTitle } from './ritual/RitualKit';
@@ -448,6 +450,9 @@ export function MorningCheckIn({ open, plan, language, onConfirm, onSkip, onTiny
             troca desse texto que rendeu ao Duolingo dezenas de milhares de
             DAU (transcrição A2). Sem meta cadastrada não há o que assumir,
             então o texto volta a ser neutro. */}
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <RewardPreview mode="before" language={language} items={[{ kind: 'xp', amount: bondXP({ kind: 'checkIn' }) }]} />
+        </div>
         <button type="button" onClick={() => onConfirm(selected)} style={{ ...sm2Button('primary'), width: '100%' }}>
           {plan.plannedEffort > 0
             /* C9 (01/10/2026): "Commit" → "Definir"/"Set", a palavra do dono. */
