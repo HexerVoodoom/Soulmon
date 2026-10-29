@@ -7,7 +7,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { AreaScene } from './AreaScene';
 import { arenaLots } from '../../utils/areaSheetCopy';
-import { lotHitBounds, lotLabelOffset } from '../../utils/areaLotGeometry';
+import { lotHitBounds, lotLabelLift, lotLabelOffset } from '../../utils/areaLotGeometry';
 
 describe('AreaScene — Arena', () => {
   it('tocar no miolo de cada prédio abre o lote certo; o miolo e o rótulo seguem a geometria do contrato', () => {
@@ -23,7 +23,7 @@ describe('AreaScene — Arena', () => {
       expect(parseFloat(hit.style.width)).toBeCloseTo((b[2] - b[0]) * 100, 3);
       const lab = btn.querySelector('[data-area-lot-label]') as HTMLElement;
       expect(parseFloat(lab.style.left)).toBe(lotLabelOffset('arena', l.id)[0]);
-      expect(parseFloat(lab.style.top)).toBe(lotLabelOffset('arena', l.id)[1]);
+      expect(lab.getAttribute('style')).toContain(`${lotLabelOffset('arena', l.id)[1]}px - ${lotLabelLift('arena', l.id)}cqw`);
       fireEvent.click(hit);
     }
     expect(opened).toEqual(lots.map(l => l.id));

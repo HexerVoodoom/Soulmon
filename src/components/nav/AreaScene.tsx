@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import type { AreaId } from '../../navigation';
-import { lotArtBounds, lotHitBounds, lotLabelOffset } from '../../utils/areaLotGeometry';
+import { lotArtBounds, lotHitBounds, lotLabelLift, lotLabelOffset } from '../../utils/areaLotGeometry';
 import { lotArtFilter } from './lotHalo';
 import { MissionMark } from '../play/MissionMark';
 import type { QuestMark as MissionMarkKind } from '../../utils/questMarks';
@@ -123,6 +123,8 @@ export function AreaScene({ areaId, language, lots, background, notice, children
             transform: 'translate(-50%, -80%)',
             width: lot.width ?? LOT_WIDTH_DEFAULT,
             minWidth: 120,
+            // 29/10/2026 (dono): o rótulo cola na BASE DESENHADA do prédio (cqw = 1% da largura do lote), não no fim da caixa transparente.
+            containerType: 'inline-size',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
             background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
             // H11 (02/10/2026): a caixa do botão (quadrado inteiro, com alfa) NÃO recebe toque —
@@ -201,7 +203,7 @@ export function AreaScene({ areaId, language, lots, background, notice, children
             data-area-lot-label
             style={{
               marginTop: -4, pointerEvents: 'auto',
-              position: 'relative', left: lotLabelOffset(areaId, lot.id)[0], top: lotLabelOffset(areaId, lot.id)[1],
+              position: 'relative', left: lotLabelOffset(areaId, lot.id)[0], top: `calc(${lotLabelOffset(areaId, lot.id)[1]}px - ${lotLabelLift(areaId, lot.id)}cqw)`,
               padding: '2px 9px',
               borderRadius: 999,
               background: 'rgba(8,25,26,.85)',

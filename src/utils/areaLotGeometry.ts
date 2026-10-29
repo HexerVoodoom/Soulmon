@@ -69,7 +69,7 @@ export const LOT_HIT_INSET: Record<string, LotBounds> = {
 
 /** Deslocamento do RÓTULO (px, x e y) por lote — tira o nome de trás do prédio vizinho que o cobre. */
 export const LOT_LABEL_OFFSET: Record<string, readonly [number, number]> = {
-  'hall:guilda': [0, -70], // 29/10/2026: Salão ocupa a plataforma grande; o rótulo sobe e não sai da tela curta
+
   'arena:duelo': [-28, 0], // 29/10/2026: Arena livre na borda direita; o rótulo não sai da tela
 };
 
@@ -84,6 +84,12 @@ export function lotHitBounds(areaId: AreaId, lotId: string): LotBounds {
 
 export function lotLabelOffset(areaId: AreaId, lotId: string): readonly [number, number] {
   return LOT_LABEL_OFFSET[`${areaId}:${lotId}`] ?? [0, 0];
+}
+
+/** Quanto o RÓTULO sobe (em % da largura do lote) para colar na base desenhada: a faixa transparente abaixo da arte opaca, menos uma folga. */
+export function lotLabelLift(areaId: AreaId, lotId: string): number {
+  const b = lotArtBounds(areaId, lotId);
+  return b ? Math.max(0, (1 - b[3]) * 100 - 2) : 0;
 }
 
 export function lotArtBounds(areaId: AreaId, lotId: string): LotBounds | undefined {
@@ -118,6 +124,7 @@ export function lotHitRects(
   const [ox, oy] = lotLabelOffset(areaId, lot.id);
   const art: Rect = { x0: x0 + b[0] * bw, y0: y0 + b[1] * bw, x1: x0 + b[2] * bw, y1: y0 + b[3] * bw };
   const labelW = Math.min(bw, lot.label.length * 7.5 + 20);
-  const label: Rect = { x0: x0 + (bw - labelW) / 2 + ox, y0: y0 + bw + oy, x1: x0 + (bw + labelW) / 2 + ox, y1: y0 + total + oy };
+  const lift = (lotLabelLift(areaId, lot.id) / 100) * bw;
+  const label: Rect = { x0: x0 + (bw - labelW) / 2 + ox, y0: y0 + bw + oy - lift, x1: x0 + (bw + labelW) / 2 + ox, y1: y0 + total + oy - lift };
   return [art, label];
 }
