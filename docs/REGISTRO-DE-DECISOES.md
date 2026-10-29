@@ -3559,7 +3559,7 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 
 **O que falsificaria:** retenção/uso dos Amigos cair por causa do gate 4 do Salão do Clã; jogador procurando o Arquivo (ver cliques na aba Arquivo vs. suporte); a Arena trancada até o Vínculo 5 gerar queixa de "área bloqueada". **Rollback:** reverter o commit do #186 — os ids antigos continuam válidos nos saves que não passaram pela migração; saves que já gravaram ids novos (`forja.*`) precisam do mapa inverso (`MOVED_BUILDINGS` ao contrário) ou ficam sem o "visto" daqueles prédios (nunca perdem material nem progresso de missão: o estoque é por material, não por id).
 
-## 188. Janela sem app conta a noite (dono, 29/10/2026; EMENDA a "noite sem registro é neutra")
+## 189. Janela sem app conta a noite (dono, 29/10/2026; EMENDA a "noite sem registro é neutra")
 
 **Decisão do dono ("Sim, conta a janela"):** ao abrir o app depois de uma janela de descanso configurada que passou com ele fechado, a noite conta pela janela (dormiu = início da janela, acordou = fim), para que o pesadelo possa acontecer com as mesmas regras e chance de uma noite normal (máx. 1 por noite). Antes, sem abrir entre o período do lembrete e o fim da janela, não havia registro e a noite era neutra.
 

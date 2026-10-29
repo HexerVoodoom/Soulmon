@@ -5,7 +5,7 @@ import { nightmaresFor } from './nightmares';
 const W: RestWindow = { start: '23:00', end: '07:00' };
 const at = (d: number, h: number, m = 0) => new Date(2026, 9, d, h, m, 20);
 
-describe('§188 — janela sem app conta a noite', () => {
+describe('§189 — janela sem app conta a noite', () => {
   const rest = createRestState(W);
   it('app fechado a janela inteira: conta 23:00→07:00', () => {
     const d = decideMissedWindowNight(rest, at(10, 20, 0).toISOString(), at(11, 8, 30));

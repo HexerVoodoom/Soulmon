@@ -6038,7 +6038,7 @@ export default function App() {
         }
         if (dec.kind !== 'none') { removeLocal(STORAGE_KEYS.NIGHT_ARMED_AT, { silent: true }); armada = null; }
       }
-      /* §188 — a janela passou com o app fechado: conta a noite pela janela (sem XP de descanso). Antes de carimbar a atividade. */
+      /* §189 — a janela passou com o app fechado: conta a noite pela janela (sem XP de descanso). Antes de carimbar a atividade. */
       const perdida = decideMissedWindowNight(gameStateRef.current.rest ?? createRestState(horario), readLocal(STORAGE_KEYS.LAST_ACTIVE_AT), nowD);
       if (perdida) {
         setGameState(prev => {

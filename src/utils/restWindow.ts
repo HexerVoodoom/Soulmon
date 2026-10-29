@@ -807,7 +807,7 @@ export function autoSleepStart(window: RestWindow, at: Date): Date {
 }
 
 /**
- * REGISTRO §188 — "Sim, conta a janela" (dono, 29/10/2026). App aberto de manhã depois de uma janela configurada
+ * REGISTRO §189 — "Sim, conta a janela" (dono, 29/10/2026). App aberto de manhã depois de uma janela configurada
  * que passou INTEIRA com ele fechado (nem armou, nem dormiu): conta a noite pela janela, para poder haver pesadelo.
  * Trava anti-forja: só a janela concluída MAIS RECENTE (≤ 24 h), só se a última atividade do app (`lastActiveIso`)
  * é ANTERIOR ao início dela (aberto/acordado durante a janela = não conta), nunca sobre noite já registrada.

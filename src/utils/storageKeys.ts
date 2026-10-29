@@ -167,7 +167,7 @@ export const STORAGE_KEYS = {
   /** D-23: ISO de quando o app foi aberto no período do lembrete de deitar (a noite "armada").
    *  De manhã, `decideArmedNight` (utils/restWindow.ts) grava a noite e a limpa. */
   NIGHT_ARMED_AT: 'soulmon-night-armed-at',
-  /** §188: ISO da última vez que o app esteve ativo (carimbado a cada minuto); `decideMissedWindowNight` o lê. */
+  /** §189: ISO da última vez que o app esteve ativo (carimbado a cada minuto); `decideMissedWindowNight` o lê. */
   LAST_ACTIVE_AT: 'soulmon-last-active-at',
   /** Ledger dos pushes de EVENTO do dia (fome, energia cheia, cocô, progresso): o que já saiu hoje,
    *  para nunca repetir no mesmo dia e para o teto de 4 contar o que já foi (utils/petPushEvents.ts). */
