@@ -20,13 +20,13 @@ describe('lotes novos (29/09/2026)', () => {
     expect(jogosLots('pt-BR').map(l => l.id)).toEqual(['salao', 'mente']); // o Calabouço saiu de Jogos
   });
 
-  it('29/10/2026 (dono, marcas em vermelho): Torneio à esquerda, Arena livre à direita, Guerra na plataforma de baixo; prédios ocupam a plataforma', () => {
+  it('29/10/2026 (dono, marcas em vermelho): Torneio à esquerda, Arena livre à direita, Guerra na plataforma de cima; prédios ocupam a plataforma', () => {
     const pct = (s?: string) => Number(String(s ?? '38%').replace('%', ''));
     const arena = Object.fromEntries(arenaLots('pt-BR').map(l => [l.id, l as { left: string; top: string; width?: string }]));
     expect(pct(arena.torneio.left)).toBeLessThan(40);
     expect(pct(arena.duelo.left)).toBeGreaterThan(70);
     expect(Math.abs(pct(arena.torneio.top) - pct(arena.duelo.top))).toBeLessThan(5);       // mesma fileira (plataformas da esquerda e da direita)
-    expect(pct(arena.guerra.top) - pct(arena.duelo.top)).toBeGreaterThanOrEqual(12);       // a Guerra fica na plataforma de baixo
+    expect(pct(arena.duelo.top) - pct(arena.guerra.top)).toBeGreaterThanOrEqual(12);       // a Guerra fica na plataforma de cima
     expect(pct(arena.guerra.width)).toBeGreaterThan(pct(arena.torneio.width));             // a de baixo é a maior
     const lab = Object.fromEntries(laboratorioLots('pt-BR').map(l => [l.id, l as { width?: string; top: string }]));
     expect(pct(lab.stats.width)).toBeGreaterThanOrEqual(pct(lab.evolucao.width) * 1.4);
