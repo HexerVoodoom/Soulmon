@@ -72,9 +72,9 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
 // 🔎 20/10/2026 (§145): o dono marcou 4 VAGAS na captura do app (2 losangos, 2 vagas em cada): Guerra na de cima-direita (P2), Torneio (P3) e Arena livre (P4)
 // na diagonal do losango de baixo, e a de cima-esquerda (P1) fica vazia. W19 (§147): a base do Torneio desceu 38 px / foi 25 px à direita (área marcada pelo dono); a Arena livre desceu o mínimo p/ o H11. `left`/`top` = centro da BASE da caixa do botão; o centro visual cai na marca.
 const ARENA_LOTS: AreaLotSpec<ArenaLotId>[] = [
-  { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '18.1%', top: '56.4%', width: '39.4%' },
-  { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '87%', top: '58.6%', width: '36.5%' }, // beta-2 (9.3): a Arena livre sai do meio do caminho e assenta no OUTRO tablado (o da direita, livre desde que a Feira foi para o Hall) — um bloco para cada modo
-  { id: 'guerra', labelPt: 'Guerra de Clãs', labelEn: 'Clan War', ariaPt: 'Entrar na Guerra de Clãs', ariaEn: 'Enter the Clan War', left: '53.4%', top: '76.9%', width: '51.1%' },
+  { id: 'torneio', labelPt: 'Torneio', labelEn: 'Tournament', ariaPt: 'Entrar no Torneio', ariaEn: 'Enter the Tournament', left: '15.8%', top: '51.8%', width: '32.1%' },
+  { id: 'duelo', labelPt: 'Arena livre', labelEn: 'Open Arena', ariaPt: 'Entrar na Arena livre: você escolhe os adversários', ariaEn: 'Enter the Open Arena: you choose your opponents', left: '87%', top: '52.5%', width: '36.5%' }, // beta-2 (9.3): a Arena livre sai do meio do caminho e assenta no OUTRO tablado (o da direita, livre desde que a Feira foi para o Hall) — um bloco para cada modo
+  { id: 'guerra', labelPt: 'Guerra de Clãs', labelEn: 'Clan War', ariaPt: 'Entrar na Guerra de Clãs', ariaEn: 'Enter the Clan War', left: '53.4%', top: '75.5%', width: '43.6%' },
   // 🌀 #187 (28/10/2026): a Fenda Sem Fim voltou para a Exploração; a vaga de cima-esquerda (P1) do losango de cima fica livre de novo.
   // 🔎 11/10/2026 (guilda-lancamento): a FEIRA saiu da Arena e foi para o HALL, ao lado do Salão da Guilda — é a Missão da
   // guilda (`GuildSheet` room `feira`). O tablado da direita da Arena fica livre.
@@ -118,7 +118,7 @@ const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
   // D-50 (19/10/2026, dono): a Biblioteca e o Círculo de Amigos SAEM do Hall e vêm para o Laboratório. Ficam nos dois flancos do Santuário (que é estreito:
   // só ~32% da cena é opaca), à esquerda e à direita, num só andar. D-47: a Biblioteca aparece INTEIRA já na primeira tela, sem rolagem (a cena É a viewport) —
   // `areaLotGeometry.contract.test.ts` mede a caixa dela em 360×640. Larguras 32% (W5; antes 34%): com 36% a caixa encosta no Santuário (guard H11). Arte: a que já existe nos lotes.
-  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '19.7%', top: '50.7%', width: '36.1%' },
+  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '19%', top: '52.3%', width: '48.3%' },
 ];
 
 // D-50 (19/10/2026, dono): o Hall fica com EXATAMENTE três prédios — Feira, Clan Hall (o administrativo do clã) e Grove — um por plataforma do fundo

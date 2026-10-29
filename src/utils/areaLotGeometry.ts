@@ -63,7 +63,8 @@ export const LOT_HIT_INSET: Record<string, LotBounds> = {
   'arena:duelo': [0.2, 0, 0, 0.2],
   'arena:guerra': [0.2, 0.4, 0, 0],
   'hall:guilda': [0, 0.25, 0, 0], // 29/10/2026: Salão ocupa a plataforma grande; a torre não rouba o toque do Grove
-  'laboratorio:evolucao': [0, 0.15, 0, 0], // 29/10/2026: Biblioteca maior logo acima; o topo do Centro não rouba o toque dela
+  'laboratorio:biblioteca': [0, 0.1, 0.18, 0.15], // 29/10/2026: Biblioteca ocupa a plataforma; as bordas não roubam o toque do Vínculo nem do Centro
+  'laboratorio:evolucao': [0, 0.25, 0, 0], // 29/10/2026: Biblioteca maior logo acima; o topo do Centro não rouba o toque dela
 };
 
 /** Deslocamento do RÓTULO (px, x e y) por lote — tira o nome de trás do prédio vizinho que o cobre. */
