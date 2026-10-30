@@ -941,7 +941,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/dungeonRevive.ts`
 
-**Dono de:** o 2º uso do Coraçãozinho (revive na queda, 50% do HP, REGISTRO §191) e a Faísca de Alma (`✨`). **Exports:** `canOfferRevive`, `consumeOne`/`addOne` (inventário imutável), `reviveSeed`, `reviveStart`, `heartsOwned`/`sparksOwned`, `rollSparkDrop`, `REVIVE_HP_FRAC`, `SPARK_ENERGY`. **Chamado por:** `DungeonGame`. **Régua:** `dungeonRevive.test.ts`, `DungeonGame.revive.render.test.tsx`.
+**Dono de:** o 2º uso do Coraçãozinho (revive na queda, 50% do HP, REGISTRO §191) e a Faísca de Alma (`✨`, que NÃO é de luta: usada nos Arquivos restaura a energia da Home — `SPARK_HOME_ENERGY` em `shop.ts`, aplicada por `specialItemUse.ts`). **Exports:** `canOfferRevive`, `consumeOne`/`addOne` (inventário imutável), `reviveSeed`, `reviveStart`, `heartsOwned`/`sparksOwned`, `rollSparkDrop`, `REVIVE_HP_FRAC`. **Chamado por:** `DungeonGame`. **Régua:** `dungeonRevive.test.ts`, `DungeonGame.revive.render.test.tsx`.
 
 ### `src/utils/dungeonDrops.ts`
 

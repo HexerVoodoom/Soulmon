@@ -4,20 +4,17 @@
 //    abre-se a oferta "Usar Coraçãozinho" ANTES do resultado de derrota. Aceitar gasta 1 do inventário e o Soulmon volta com 50% do
 //    HP MÁXIMO; a luta CONTINUA de onde parou (o inimigo mantém o HP que tinha). Recusar = a derrota de sempre.
 //    Limite: nenhum além do estoque (cada queda reoferece enquanto houver Coraçãozinho). Perder continua não custando coração.
-//  · Faísca de Alma: item NOVO (não é o coração). Cai da Masmorra como o coraçãozinho; na luta, um botão enche a barra do especial.
+//  · Faísca de Alma: item NOVO (não é o coração). Cai da Masmorra como o coraçãozinho; usada nos Arquivos, restaura a ENERGIA DA HOME (REGISTRO §191, corrigido).
 //
 // Determinismo: a continuação é uma luta NOVA do núcleo (`groupFightSteps`) com semente derivada (`reviveSeed`), HP inicial 50%,
 // energia 0 e o HP do inimigo no ponto da queda (`startFoesHp`) — mesmas entradas, mesma luta. Funções PURAS.
 
-import { ENERGY_TRIGGER } from './combate/specials';
 import { HEART_ITEM_EMOJI, SPARK_ITEM_EMOJI } from './shop';
 
 export const REVIVE_HP_FRAC = 0.5;
 export { SPARK_ITEM_EMOJI };
-/** Chance de a Faísca cair por inimigo derrotado (sem teto diário: o item só tem valor dentro da luta). */
+/** Chance de a Faísca cair por inimigo derrotado (sem teto diário). */
 export const SPARK_DROP_CHANCE = 0.04;
-/** A Faísca enche a barra do especial por inteiro. */
-export const SPARK_ENERGY = ENERGY_TRIGGER;
 
 type Inv = Readonly<Record<string, number>>;
 

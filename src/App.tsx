@@ -137,7 +137,7 @@ import {
 } from './utils/notificationPermission';
 // `CHIP_BOOST`/`HEART_HEAL` saíram daqui de propósito: os números do uso de item
 // especial agora são lidos uma vez só, dentro de `utils/specialItemUse.ts`.
-import { ALL_SHOP_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
+import { ALL_SHOP_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, SPARK_HOME_ENERGY } from './utils/shop';
 import { getDungeonBest, rollDungeonHeartDrop } from './utils/dungeonBase';
 import { heartDropBonus, rollPetPassive, getPassive } from './utils/passives';
 import { recordMood, moodFor, moodSummary, type MoodValue } from './utils/mood';
@@ -3747,17 +3747,15 @@ export default function App() {
           : "🌀 One Glitchtama a day. It'll wait for you tomorrow.");
         return;
       }
-      if (refused === 'battle-only') {
-        toast(language === 'pt-BR'
-          ? '✨ A Faísca de Alma se usa dentro de uma luta da Masmorra.'
-          : '✨ The Soul Spark is used inside a Dungeon fight.');
-        return;
-      }
       if (refused === 'stage-cap') {
         // D-97: 3 chips por estágio. O chip volta intacto e vale no próximo estágio — sem culpa.
         toast(language === 'pt-BR'
           ? `Este Soulmon já recebeu ${CHIPS_PER_STAGE} chips neste estágio. O chip te espera no próximo.`
           : `This Soulmon already got ${CHIPS_PER_STAGE} chips this stage. The chip will wait for the next one.`);
+        return;
+      }
+      if (refused === 'already-full' && special.kind === 'spark') {
+        toast(language === 'pt-BR' ? '✨ A energia já está cheia. A Faísca te espera.' : '✨ Energy is already full. The Spark will wait.');
         return;
       }
       if (refused === 'already-full') {
@@ -3786,6 +3784,9 @@ export default function App() {
       }
       if (special.kind === 'glitchtama') {
         toast(language === 'pt-BR' ? '🌀 Glitchtama! +1 dia completo' : '🌀 Glitchtama! +1 complete day');
+      }
+      if (special.kind === 'spark') {
+        toast(language === 'pt-BR' ? `✨ Faísca de Alma! +${SPARK_HOME_ENERGY} de energia` : `✨ Soul Spark! +${SPARK_HOME_ENERGY} energy`);
       }
       if (special.kind === 'premium') {
         toast(language === 'pt-BR' ? '⭐ Comida premium! Fome bem cheia' : '⭐ Premium food! Hunger well filled');

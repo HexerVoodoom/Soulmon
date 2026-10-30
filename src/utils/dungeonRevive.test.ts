@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  REVIVE_HP_FRAC, SPARK_ENERGY, addOne, canOfferRevive, consumeOne, heartsOwned, reviveSeed, reviveStart, rollSparkDrop, sparksOwned,
+  REVIVE_HP_FRAC, addOne, canOfferRevive, consumeOne, heartsOwned, reviveSeed, reviveStart, rollSparkDrop, sparksOwned,
   SPARK_ITEM_EMOJI,
 } from './dungeonRevive';
-import { HEART_ITEM_EMOJI, SPECIAL_ITEMS } from './shop';
+import { HEART_ITEM_EMOJI, SPARK_HOME_ENERGY, SPECIAL_ITEMS } from './shop';
 import { specialRefusal, applySpecialItem } from './specialItemUse';
 import { dungeonFoe } from './dungeonBase';
 import { dungeonFight, dungeonFightSeed } from './dungeonFight';
@@ -76,10 +76,9 @@ describe('Faísca de Alma', () => {
     expect(dropName('spark', true)).toBe('Faísca de Alma');
     expect(dropName('spark', false)).toBe('Soul Spark');
   });
-  it('enche a barra do especial (energyDrain) e não passa do gatilho', () => {
+  it('opção energyDrain do núcleo segue funcionando (API sem uso pela Faísca desde a correção)', () => {
     let usado = false;
-    const { evs } = run({ startEnergy: 0, energyDrain: () => { if (usado) return 0; usado = true; return SPARK_ENERGY; } });
-    expect(SPARK_ENERGY).toBe(ENERGY_TRIGGER);
+    const { evs } = run({ startEnergy: 0, energyDrain: () => { if (usado) return 0; usado = true; return ENERGY_TRIGGER; } });
     expect(evs.some(e => e.kind === 'cast' && e.who === 0)).toBe(true);
     // sem a Faísca o especial vem depois (a barra encheu antes: o cast acontece mais cedo)
     const sem = run({ startEnergy: 0 });
@@ -92,11 +91,21 @@ describe('Faísca de Alma', () => {
     const inv = addOne({}, SPARK_ITEM_EMOJI);
     expect(sparksOwned(inv)).toBe(1);
   });
-  it('na pastinha ela é recusada e volta intacta (só se usa na luta)', () => {
-    const prev = { foodInventory: { [SPARK_ITEM_EMOJI]: 1 } } as never;
-    expect(specialRefusal(prev, SPARK_ITEM_EMOJI, new Date())).toBe('battle-only');
-    const r = applySpecialItem(prev, SPARK_ITEM_EMOJI, new Date());
-    expect(r.state).toBe(prev);
+  it('nos Arquivos restaura a energia da Home e gasta 1; cheia, recusa e volta intacta', () => {
+    const base = { foodInventory: { [SPARK_ITEM_EMOJI]: 2 }, energyPoints: 1, evolutionStage: 'rookie', energyClock: { at: 1000, carry: 0 } } as never;
+    const now = new Date(1000);
+    expect(specialRefusal(base, SPARK_ITEM_EMOJI, now)).toBeUndefined();
+    const r = applySpecialItem(base, SPARK_ITEM_EMOJI, now);
+    expect(r.refused).toBeUndefined();
+    expect((r.state as { energyPoints: number }).energyPoints).toBe(1 + SPARK_HOME_ENERGY);
+    expect((r.state as { foodInventory: Record<string, number> }).foodInventory[SPARK_ITEM_EMOJI]).toBe(1);
+    const cheia = { ...(base as object), energyPoints: 8 } as never;
+    expect(specialRefusal(cheia, SPARK_ITEM_EMOJI, now)).toBe('already-full');
+    expect(applySpecialItem(cheia, SPARK_ITEM_EMOJI, now).state).toBe(cheia);
+  });
+  it('a energia não passa do máximo do estágio', () => {
+    const base = { foodInventory: { [SPARK_ITEM_EMOJI]: 1 }, energyPoints: 6, evolutionStage: 'rookie', energyClock: { at: 1000, carry: 0 } } as never;
+    expect((applySpecialItem(base, SPARK_ITEM_EMOJI, new Date(1000)).state as { energyPoints: number }).energyPoints).toBe(8);
   });
 });
 void dungeonFightSeed;

@@ -70,8 +70,10 @@ export const HEART_HEAL = 1;   // hearts restored when a heart item is USED
 // Inventory emojis for the consumable items that live in the Items folder.
 export const CHIP_EMOJI: Record<Attr, string> = { power: '👊', harmony: '🎶', benevolence: '🤲' };
 export const HEART_ITEM_EMOJI = '💗';
-/** ✨ Faísca de Alma (30/10/2026): item de LUTA (Masmorra/Fenda) que enche a barra do especial. Não se usa na pastinha. */
+/** ✨ Faísca de Alma (30/10/2026, corrigida pelo dono no mesmo dia): usada nos Arquivos, restaura a ENERGIA DA HOME (a que a comida regenera e a Masmorra gasta). */
 export const SPARK_ITEM_EMOJI = '✨';
+/** Energia da Home restaurada por 1 Faísca (como a comida premium antiga, +5; teto = máximo do estágio). */
+export const SPARK_HOME_ENERGY = 5;
 
 // Consumables that live in the Items folder alongside food, but behave
 // differently when USED: chips only add attribute points (no energy), the
@@ -152,7 +154,7 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
   [SPARK_ITEM_EMOJI]: {
     emoji: SPARK_ITEM_EMOJI, kind: 'spark',
     namePt: 'Faísca de Alma', nameEn: 'Soul Spark',
-    descPt: 'Na luta da Masmorra ou da Fenda, enche a barra do especial', descEn: 'In a Dungeon or Rift fight, fills the special bar',
+    descPt: `Restaura ${SPARK_HOME_ENERGY} de energia`, descEn: `Restores ${SPARK_HOME_ENERGY} energy`,
   },
   // Comida premium (uma por comida de categoria) — dono: `utils/premiumFood.ts`.
   ...PREMIUM_SPECIAL_ITEMS,
