@@ -242,7 +242,9 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(folha.textContent).toContain('1240');
     expect(folha.textContent).toContain('12 Bits');
     fireEvent.click(start);
+    fireEvent.click(await achar(container, '[data-gate-pick="2"]'));
     await achar(container, '[data-jogo="dino"]');
+    expect(recebidas.dino.initialLevel).toBe(2);
     expect(recebidas.dino.onScore).toBe(p.onDinoScore);
     // 14/10/2026: o Dino embrulha o funil para também avisar a missão do dia (REGISTRO §52) — o Bit continua passando intacto.
     (recebidas.dino.onEarnPoints as (pts: number) => void)(7);
@@ -304,6 +306,8 @@ describe('Jogos — os três prédios', () => {
     const start = await achar(container, '[data-ppt-start]');
     expect(getByRole('dialog', { name: 'Salão de Jogos' }).textContent).toContain('5 Bits');
     fireEvent.click(start);
+    // O Pipo pergunta o modo antes do jogo (30/10/2026): Comum começa a partida.
+    fireEvent.click(await achar(container, '[data-gate-pick="1"]'));
     await achar(container, '[data-jogo="rps"]');
     expect(recebidas.rps.onEarnPoints).toBe(p.onEarnPoints);
   });
@@ -314,6 +318,7 @@ describe('Jogos — os três prédios', () => {
       const { container, unmount } = renderWithCss(<PlayAreaView {...p} />);
       fireEvent.click(container.querySelector('[data-area-lot="mente"]')!);
       fireEvent.click(await achar(container, `[data-mente-start="${id}"]`));
+      fireEvent.click(await achar(container, '[data-gate-play]'));
       await achar(container, `[data-jogo="${id}"]`);
       // Os três embrulham o funil para avisar a missão do dia / os feitos (L4): o Bit continua passando intacto ao onEarnPoints do App.
       (recebidas[id].onEarnPoints as (pts: number) => void)(3);

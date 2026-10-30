@@ -45,6 +45,7 @@ import dashPlatMedia from '../assets/soulmon/dino/dash-plat-media.png';
 import groundStrip from '../assets/soulmon/dino/dino-ground-strip.png';
 import parallaxFar from '../assets/soulmon/dino/dino-parallax-far.png';
 import { emitFeat } from '../utils/feats';
+import { difficultyLabel } from '../utils/minigameDifficulty';
 /* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
 const PET_SCALE_MINIGAME = 1;
 
@@ -206,7 +207,9 @@ function drawPet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: 
   ctx.restore();
 }
 
-export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit, rankSaveId, petElement, challenge }: {
+export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit, rankSaveId, petElement, challenge, initialLevel }: {
+  /** Dificuldade já escolhida na pergunta do NPC (`MinigameModeGate`): começa direto, sem os CTAs de dentro. */
+  initialLevel?: 1 | 2;
   /** Modo desafio (Calabouço): vence ao atingir `goal` de score; sem Bits/recorde/ranking. */
   challenge?: GameChallenge;
   rankSaveId?: string;
@@ -371,6 +374,12 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
     setEarned(0);
     setPhase('playing');
   };
+  const autoStarted = useRef(false);
+  useEffect(() => {
+    if (!initialLevel || autoStarted.current) return;
+    autoStarted.current = true;
+    start(initialLevel);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (phase !== 'playing' || paused || hidden) return;
@@ -621,8 +630,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         language={language}
         infoLabel={isPt ? 'Como se joga' : 'How to play'}
         info={isPt
-          ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit. Normal: Dash (Shift/X) cria um campo de força que destrói obstáculos; pegue o cristal para +1 carga'
-          : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit. Normal: Dash (Shift/X) raises a force field that smashes obstacles; grab the crystal for +1 charge'}
+          ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit. Avançado: Dash (Shift/X) cria um campo de força que destrói obstáculos; pegue o cristal para +1 carga'
+          : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit. Advanced: Dash (Shift/X) raises a force field that smashes obstacles; grab the crystal for +1 charge'}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
         exitConfirm={phase === 'playing' ? gameExitConfirm(isPt, 'da corrida') : undefined}
@@ -678,7 +687,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           {([1, 2] as const).map(n => (
             <button key={n} type="button" data-dino-start={n} onClick={() => start(n)}
               style={{ ...sm2Button(n === 2 ? 'primary' : 'outline', false, 'lg'), flex: 1, maxWidth: 160, minHeight: 64 }}>
-              {n === 1 ? 'Easy' : 'Normal'}
+              {difficultyLabel(n, isPt)}
             </button>
           ))}
         </div>
@@ -695,7 +704,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           hero={{ label: isPt ? 'Pontos' : 'Score', value: finalScore }}
           recordNote={isPt ? `Novo recorde, antes ${prevBest}` : `New best, was ${prevBest}`}
           strip={[
-            { key: 'level', label: isPt ? 'Dificuldade' : 'Difficulty', value: playedLevel === 2 ? 'Normal' : 'Easy' },
+            { key: 'level', label: isPt ? 'Dificuldade' : 'Difficulty', value: difficultyLabel(playedLevel, isPt) },
             // Primeira partida (sem recorde anterior): a célula repetiria o próprio placar.
             ...(prevBest > 0 ? [{ key: 'best', label: isPt ? 'Recorde' : 'Best', value: best, hideOnRecord: true }] : []),
           ]}

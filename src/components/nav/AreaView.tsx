@@ -25,6 +25,7 @@ import type { GuildSheet as GuildSheetT } from '../guild/GuildSheet';
 import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 import type { SalaoGame, MenteGame, RefugioGame } from '../play/PlaySheets';
+import { MinigameModeGate, type GateRanking } from '../play/MinigameModeGate';
 import type { ReviewState } from '../../utils/mente/revisao';
 import { CROSSINGS_EMPTY, type CrossingsState } from '../../types/travessias';
 import type { CadernoEntry } from '../../utils/cadernoSave';
@@ -134,6 +135,20 @@ export interface PlayHandlers {
   /** beta3 M7: Calabouço roguelike — incursão no save, gravação e o combatente do pet. Ausente = placeholder. */
   rogue?: { saved?: RogueRun; onChange: (run: RogueRun) => void; combatant: Combatant };
 }
+
+/**
+ * Os minijogos com a pergunta do Pipo antes de abrir (30/10/2026): ranking no topo + escolha. `difficulty` = Comum | Avançado
+ * (só a Corrida com obstáculos e o Pedra·Papel·Tesoura têm); os demais mostram um único "Jogar". Sem ranking/Refúgio/Fenda: sem a pergunta.
+ */
+const MINIGAME_GATE: Partial<Record<PlayGame, { name: { pt: string; en: string }; rankings: GateRanking[]; difficulty?: boolean }>> = {
+  dino: { name: { pt: 'Corrida com obstáculos', en: 'Obstacle Run' }, difficulty: true, rankings: [{ game: 'dino-1', label: 'Comum' }, { game: 'dino-2', label: 'Avançado' }] },
+  ppt: { name: { pt: 'Pedra · Papel · Tesoura', en: 'Rock · Paper · Scissors' }, difficulty: true, rankings: [{ game: 'ppt' }] },
+  barrage: { name: { pt: 'Chuva de Almas', en: 'Soul Barrage' }, rankings: [{ game: 'soul-barrage' }] },
+  match3: { name: { pt: 'Fusão Elemental', en: 'Elemental Fusion' }, rankings: [{ game: 'match3' }] },
+  eco: { name: { pt: 'Eco do Pet', en: "Pet's Echo" }, rankings: [{ game: 'eco' }] },
+  zip: { name: { pt: 'Trilha do Pet', en: 'Pet Trail' }, rankings: [{ game: 'zip' }] },
+  patches: { name: { pt: 'Colcha', en: 'Patchwork' }, rankings: [{ game: 'patches' }] },
+};
 
 export type PlayGame = 'masmorra' | SalaoGame | MenteGame | RefugioGame;
 export type LabTab = 'evolution' | 'pet' | 'stats' | 'perfil';
@@ -324,6 +339,8 @@ export function AreaView(props: AreaViewProps) {
   /** O duelo do Torneio está na tela: o `BattleStage` traz o voltar dele, a folha esconde o seu (uma seta só). */
   const [tournamentDuelOpen, setTournamentDuelOpen] = useState(false);
   const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? null);
+  /** O Pipo perguntou o modo (30/10/2026, `MinigameModeGate`): o jogo só monta depois da resposta; `level` só nos jogos com dificuldade. */
+  const [modeChosen, setModeChosen] = useState<{ game: PlayGame; level?: 1 | 2 } | null>(null);
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
@@ -410,7 +427,7 @@ export function AreaView(props: AreaViewProps) {
     );
   }
 
-  const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setGame(g); };
+  const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setModeChosen(null); setGame(g); };
   /** A Fenda Sem Fim (a antiga Masmorra): mora na Exploração (#187, 28/10/2026; esteve na Arena de beta3 N10 até então); o jogo abre em tela cheia sobre a cena da área. */
   const renderMasmorra = () => {
     const { play } = props;
@@ -491,7 +508,7 @@ export function AreaView(props: AreaViewProps) {
   }
 
   if (area === 'exploracao' || area === 'jogos' || area === 'forja') {
-    const exitGame = () => setGame(null);
+    const exitGame = () => { setModeChosen(null); setGame(null); };
     const lots: AreaLot[] = gated(area === 'exploracao'
       ? exploracaoLots(language).map(l => ({
         // A Fenda Sem Fim com o Soulmon JÁ na descida entra direto na tela da descida, sem a folha com o CTA (`naMasmorra`).
@@ -546,7 +563,20 @@ export function AreaView(props: AreaViewProps) {
             </Suspense>
           </div>
         )}
-        {game && (
+        {game && MINIGAME_GATE[game] && modeChosen?.game !== game && (
+          <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
+            <MinigameModeGate
+              language={language}
+              gameName={MINIGAME_GATE[game]!.name[language === 'pt-BR' ? 'pt' : 'en']}
+              rankings={MINIGAME_GATE[game]!.rankings}
+              saveId={props.guild.saveId}
+              withDifficulty={!!MINIGAME_GATE[game]!.difficulty}
+              onPick={level => setModeChosen({ game, level })}
+              onBack={exitGame}
+            />
+          </div>
+        )}
+        {game && (!MINIGAME_GATE[game] || modeChosen?.game === game) && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
           <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
             {game === 'masmorra' && renderMasmorra()}
@@ -555,6 +585,7 @@ export function AreaView(props: AreaViewProps) {
                 evolutionStage={props.evolutionStage}
                 demoCharacterId={props.demoCharacterId}
                 language={language}
+                initialLevel={modeChosen?.level}
                 onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('dino'); }}
                 onScore={play.onDinoScore}
                 petElement={props.petElement}
@@ -579,6 +610,7 @@ export function AreaView(props: AreaViewProps) {
                 evolutionStage={props.evolutionStage}
                 demoCharacterId={props.demoCharacterId}
                 language={language}
+                initialLevel={modeChosen?.level}
                 onEarnPoints={props.onEarnPoints}
                 onMatchEnd={() => props.onDailyEvent?.('ppt')}
                 rankSaveId={props.guild.saveId}

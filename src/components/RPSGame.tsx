@@ -1,4 +1,5 @@
 import { RankingPanel } from './RankingPanel';
+import { difficultyLabel } from '../utils/minigameDifficulty';
 import type { GameChallenge } from '../utils/gameChallenge';
 import { useState, useRef, useEffect } from 'react';
 import { RewardPreview } from './ui/RewardPreview';
@@ -54,7 +55,9 @@ const HANDS = [
 export const MATCH_POINTS = 5;
 export const WINS_NEEDED = 3;
 
-export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onMatchEnd, onExit, rankSaveId, challenge }: {
+export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onMatchEnd, onExit, rankSaveId, challenge, initialLevel }: {
+  /** Dificuldade já escolhida na pergunta do NPC (`MinigameModeGate`). */
+  initialLevel?: 1 | 2;
   /** Modo desafio (Calabouço): nível 1 direto, vence com `goal` rodadas ganhas; sem Bits/ranking. */
   challenge?: GameChallenge;
   rankSaveId?: string;
@@ -77,7 +80,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
   const [thinking, setThinking] = useState(false);
   const [roundMsg, setRoundMsg] = useState('');
   const [matchOver, setMatchOver] = useState<'won' | 'lost' | 'draw' | null>(null);
-  const [level, setLevel] = useState<1 | 2 | null>(challenge ? 1 : null);
+  const [level, setLevel] = useState<1 | 2 | null>(challenge ? 1 : (initialLevel ?? null));
   const need = challenge ? challenge.goal : WINS_NEEDED;
   const [youInv, setYouInv] = useState<RpsInventory>(freshInventory);
   const [petInv, setPetInv] = useState<RpsInventory>(freshInventory);
@@ -191,10 +194,10 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
         <div style={{ display: 'flex', justifyContent: 'center' }}><RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} items={[{ kind: 'bits', amount: MATCH_POINTS }]} /></div>
         <div role="group" aria-label={isPt ? 'Dificuldade' : 'Difficulty'} style={{ display: 'flex', gap: 8, marginTop: 'auto', marginBottom: 'auto' }}>
           <button type="button" data-rps-start={1} onClick={() => setLevel(1)} style={{ ...sm2Button('outline', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64, padding: '0 8px' }}>
-            Easy
+            {difficultyLabel(1, isPt)}
           </button>
           <button type="button" data-rps-start={2} onClick={() => setLevel(2)} style={{ ...sm2Button('primary', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64, padding: '0 8px' }}>
-            Normal
+            {difficultyLabel(2, isPt)}
           </button>
         </div>
         </>

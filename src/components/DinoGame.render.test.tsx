@@ -8,12 +8,12 @@ describe('DinoGame (rodada 4, N3)', () => {
     const props = { evolutionStage: 'rookie', onEarnPoints: () => {}, onScore: () => {}, onExit: () => {} };
     const { container, unmount } = render(<DinoGame {...props} language="en-US" />);
     expect(container.querySelector('[data-game-close-start]')).not.toBeNull();
-    expect(container.querySelector('[data-dino-start="1"]')?.textContent).toBe('Easy');
-    expect(container.querySelector('[data-dino-start="2"]')?.textContent).toBe('Normal');
+    expect(container.querySelector('[data-dino-start="1"]')?.textContent).toBe('Common');
+    expect(container.querySelector('[data-dino-start="2"]')?.textContent).toBe('Advanced');
     expect(screen.queryByText('Start')).toBeNull();
     expect(screen.queryByText('Jump')).toBeNull();
     unmount();
     const r = render(<DinoGame {...props} language="pt-BR" />);
-    expect(r.container.querySelector('[data-dino-start="2"]')?.textContent).toBe('Normal');
+    expect(r.container.querySelector('[data-dino-start="2"]')?.textContent).toBe('Avançado');
   });
 });
