@@ -691,3 +691,7 @@ Conferência: Pillow (`python -I`), prévia em #08191A (nunca magenta/verde). En
 | `areas/lote-lab-evolucao-v2.png` | 512×512, alfa | Centro de Evolução novo | 26,7% / 68,6%, largura 40% | `lote-laboratorio-evolucao.png` | Vesca |
 
 **Também sem arte (decisões do dono pendentes):** (a) anfitriã própria da Forja (hoje a Vitra faz a voz da área; `AREA_NPC_ART.forja`); (b) **fundo novo da Exploração** — a área ficou com o Passeio + Fenda Sem Fim + Calabouço sobre o `bg-exploracao.png` (as posições da Fenda e do Calabouço são as das antigas Oficina e Caderno, provisórias); o canto de baixo à direita está LIVRE para a terceira masmorra; (c) o Mercado ficou sem prédio embaixo à esquerda (onde estava o Soulsmith, 26/81) e o Laboratório sem os prédios de baixo à direita (Arquivo) e do flanco direito (Amigos), e Jogos sem o lobo de baixo (Calabouço): as plataformas ficam vazias até a arte pedir outra coisa; (d) o Arquivo e o Círculo de Amigos perderam o lote (viraram seções do Perfil e do Salão do Clã); os bustos da Tinta e da Zumi seguem só na apresentação do prédio.
+
+## Faísca de Alma / Soul Spark (30/10/2026, REGISTRO §191)
+
+Item `✨` (`SPARK_ITEM_EMOJI`): hoje reusa `icones-ui/energia.png` (`itemArt.ts`). Falta arte própria: ícone 512×512 com alfa real, faísca/chama azul-turquesa (cor de energia do Soulmon), mesmo traço dos itens `item-heart.png` e `item-glitchtama.png`, sem moldura. Trocar é UMA linha em `src/utils/itemArt.ts`.

@@ -122,6 +122,8 @@ export interface GroupBattle {
   /** Efeitos de status do pet e de cada inimigo (PR11): derivados dos eventos do núcleo, só para a cena desenhar. */
   status: { me: StageStatus[]; foes: StageStatus[][] };
   cheer(): void;
+  /** Enche a barra de energia do pet em `amount` (item Faísca de Alma); o núcleo recolhe no próximo passo. */
+  boostEnergy(amount: number): void;
   swipe(dir: -1 | 1): void;
   resolveRing(grade: RingGrade): void;
   /** O `runKey` a que o estado acima pertence (muda no começo da rodada; antes disso o estado é o da rodada anterior). */
@@ -163,6 +165,8 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
   const runId = useRef(0);
   /** Descargas de cheer ainda não recolhidas pelo núcleo. */
   const discharges = useRef(0);
+  /** Energia bruta (item Faísca de Alma) ainda não recolhida pelo núcleo. */
+  const boost = useRef(0);
   /** Descargas já RECOLHIDAS pelo núcleo na luta em curso. */
   const drained = useRef(0);
   /** Relógio da LUTA (s) do último evento e toques aceitos por janela. */
@@ -254,6 +258,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
       anchor.current = { base: 0, wall: wallClock() };
       buckets.current = new Map();
       discharges.current = 0;
+      boost.current = 0;
       drained.current = 0;
       let nRing = 0;
       let nDodge = 0;
@@ -298,6 +303,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
         seed: round.seed, startHp: round.startHp, startEnergy: round.startEnergy,
         hitScale: round.hitScale,
         cheerDrain: () => { const n = discharges.current; discharges.current = 0; drained.current += n; return n; },
+        energyDrain: () => { const x = boost.current; boost.current = 0; return x; },
         withFx: true, // PR16: os turnos do selo vêm dos contadores reais do núcleo (não mudam a luta)
       });
       const queue: GroupEvent[] = [];
@@ -481,6 +487,6 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
 
   return {
     action, hits, hp, foesHp, petEnergy, foeEnergy, meter, phase, ring, dodge, petDodge, charging, status,
-    cheer, swipe, resolveRing, stateKey, clock: () => clockS.current, cheersUsed: () => drained.current,
+    cheer, boostEnergy: (amount: number) => { boost.current += Math.max(0, amount); }, swipe, resolveRing, stateKey, clock: () => clockS.current, cheersUsed: () => drained.current,
   };
 }

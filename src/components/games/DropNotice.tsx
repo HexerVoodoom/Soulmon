@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { sm2Button, sm2Text, SM2_SHADOW_CARD } from '../form/FormKit';
 import { ITEM_ART } from '../../utils/itemArt';
-import { HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from '../../utils/shop';
+import { HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, SPARK_ITEM_EMOJI } from '../../utils/shop';
 import { loadEquipArt } from '../../utils/equipArt';
 import { dropName, dropTitle, type DropGroup, type DropKind } from '../../utils/dungeonDrops';
 
@@ -27,7 +27,7 @@ function DropIcon({ kind }: { kind: DropKind }) {
     void loadEquipArt('fragmento').then(u => { if (vivo) setFrag(u); });
     return () => { vivo = false; };
   }, [kind]);
-  const src = kind === 'heart' ? ITEM_ART[HEART_ITEM_EMOJI] : kind === 'glitchtama' ? ITEM_ART[GLITCHTAMA_EMOJI] : frag;
+  const src = kind === 'heart' ? ITEM_ART[HEART_ITEM_EMOJI] : kind === 'glitchtama' ? ITEM_ART[GLITCHTAMA_EMOJI] : kind === 'spark' ? ITEM_ART[SPARK_ITEM_EMOJI] : frag;
   if (!src) return <span aria-hidden="true" style={pixel} />; // a arte do fragmento carrega sob demanda: o espaço fica reservado
   return <img src={src} alt="" width={ICON_PX} height={ICON_PX} style={pixel} data-drop-icon={kind} />;
 }

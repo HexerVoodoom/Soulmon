@@ -5,7 +5,7 @@
  */
 import { useEffect, useState } from 'react';
 import { ITEM_ART } from './itemArt';
-import { HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './shop';
+import { HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, SPARK_ITEM_EMOJI } from './shop';
 import { loadEquipArt } from './equipArt';
 import { dropName, type DropKind } from './dungeonDrops';
 import stairsIcon from '../assets/soulmon/icones-ui/masmorra-escada.png';
@@ -32,6 +32,7 @@ export function rewardItemLabel(kind: RewardItemKind, isPt: boolean): string {
 export function rewardItemIconSync(kind: RewardItemKind): string | null {
   if (kind === 'heart') return ITEM_ART[HEART_ITEM_EMOJI] ?? null;
   if (kind === 'glitchtama') return ITEM_ART[GLITCHTAMA_EMOJI] ?? null;
+  if (kind === 'spark') return ITEM_ART[SPARK_ITEM_EMOJI] ?? null;
   return null;
 }
 

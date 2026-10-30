@@ -43,7 +43,7 @@ import {
  * roda 2× no StrictMode.
  */
 
-export type SpecialRefusal = 'no-stock' | 'already-full' | 'daily-cap' | 'stage-cap';
+export type SpecialRefusal = 'no-stock' | 'already-full' | 'daily-cap' | 'stage-cap' | 'battle-only';
 
 /**
  * D-97 (19/10/2026): no máximo 3 chips por ESTÁGIO de evolução, TODOS os tipos
@@ -168,6 +168,8 @@ export function specialRefusal(state: SpecialItemState, emoji: string, now: Date
   // O teto do Glitchtama recusa ANTES do decremento: o item volta para a
   // pastinha intacto e vale amanhã. Recusar depois de consumir seria a família
   // de bug do X-6 ao contrário — gastar para não receber nada.
+  // A Faísca de Alma só se usa DENTRO da luta (botão do HUD da Masmorra/Fenda): na pastinha ela volta intacta.
+  if (special.kind === 'spark') return 'battle-only';
   if (special.kind === 'glitchtama' && glitchtamaUsedToday(state, now) >= GLITCHTAMA_PER_DAY) return 'daily-cap';
   // Comida premium: fome quase cheia recusa (o item volta, não se queima à toa), e há 1 uso por dia.
   if (special.kind === 'premium') {

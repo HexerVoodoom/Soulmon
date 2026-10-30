@@ -48,6 +48,10 @@ export interface GroupOptions {
    * because the taps happen DURING the fight; the offline `cheer` list is fixed up front.
    */
   readonly cheerDrain?: () => number;
+  /** Energia BRUTA recebida desde a última chamada (item Faísca de Alma, 30/10/2026): soma direto na barra do especial do jogador. Opt-in. */
+  readonly energyDrain?: () => number;
+  /** Fração de HP inicial de cada inimigo (padrão 1). A CONTINUAÇÃO após o Coraçãozinho segue de onde o inimigo estava. */
+  readonly startFoesHp?: readonly number[];
   /** Efficiency of the area. Default AREA_EFFICIENCY (1); a knob for the ruler to price the alternatives (0.9, or full E per foe). */
   readonly areaEfficiency?: number;
   /**
@@ -138,7 +142,7 @@ export function* groupFightSteps(
     };
   };
   const pl = mk(player, 0, sideSeed(seed, 1), opts.startHp ?? 1, opts.startEnergy ?? 0);
-  const E = foes.map((f, i) => mk(f, i + 1, foeSeed(seed, i), 1, 0));
+  const E = foes.map((f, i) => mk(f, i + 1, foeSeed(seed, i), Math.min(1, Math.max(1e-6, opts.startFoesHp?.[i] ?? 1)), 0));
   const all = [pl, ...E];
   const timed: { t: number; fn: () => void }[] = [];
   for (const ch of opts.cheer ?? []) {
@@ -268,6 +272,10 @@ export function* groupFightSteps(
     if (opts.cheerDrain && pl.sp && pl.dead === Infinity) {
       const n = Math.max(0, Math.floor(opts.cheerDrain()));
       if (n > 0) pl.en += CHEER.energyPerDischarge * n;
+    }
+    if (opts.energyDrain && pl.sp && pl.dead === Infinity) {
+      const x = opts.energyDrain();
+      if (x > 0) pl.en = Math.min(ENERGY_TRIGGER, pl.en + x);
     }
     let tEn = Infinity;
     for (const f of all) {

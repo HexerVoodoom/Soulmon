@@ -930,9 +930,13 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 **Dono de:** as recompensas PURAS da masmorra que o `App` e a descida fora do app compartilham: `applyEnemyDefeated` (abate + bestiário), `applyFloorCleared` (Vínculo), `applyMilestoneItem` (o item do marco, Vínculo, `dungeonRunsCompleted`, fragmentos da run), `countWeeklyMission`. Módulo leve (o `App` o importa de forma estática). **Chamado por:** `App.tsx` (`handleDungeonEnemyDefeated`, `handleDungeonFloorCleared`, `handleGlitchtama`) e `utils/dungeonAway.ts`.
 
+### `src/utils/dungeonRevive.ts`
+
+**Dono de:** o 2º uso do Coraçãozinho (revive na queda, 50% do HP, REGISTRO §191) e a Faísca de Alma (`✨`). **Exports:** `canOfferRevive`, `consumeOne`/`addOne` (inventário imutável), `reviveSeed`, `reviveStart`, `heartsOwned`/`sparksOwned`, `rollSparkDrop`, `REVIVE_HP_FRAC`, `SPARK_ENERGY`. **Chamado por:** `DungeonGame`. **Régua:** `dungeonRevive.test.ts`, `DungeonGame.revive.render.test.tsx`.
+
 ### `src/utils/dungeonDrops.ts`
 
-**Dono de:** a fila do modalzinho de drop da Masmorra (REGISTRO §36). **Exports:** `pushDrop(fila, tipo, qtd, velocidade, id)` (mesmo item soma; em 3× tudo vira um modal), `popDrop`, `dropName`, `dropTitle`, `DropKind` (`heart`/`glitchtama`/`fragments`). **Chamado por:** `DungeonGame`, `games/DropNotice`. **Régua:** `dungeonDrops.test.ts`.
+**Dono de:** a fila do modalzinho de drop da Masmorra (REGISTRO §36). **Exports:** `pushDrop(fila, tipo, qtd, velocidade, id)` (mesmo item soma; em 3× tudo vira um modal), `popDrop`, `dropName`, `dropTitle`, `DropKind` (`heart`/`glitchtama`/`fragments`/`spark`). **Chamado por:** `DungeonGame`, `games/DropNotice`. **Régua:** `dungeonDrops.test.ts`.
 
 ### `src/utils/match3.ts`
 

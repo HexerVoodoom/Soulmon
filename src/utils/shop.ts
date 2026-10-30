@@ -70,6 +70,8 @@ export const HEART_HEAL = 1;   // hearts restored when a heart item is USED
 // Inventory emojis for the consumable items that live in the Items folder.
 export const CHIP_EMOJI: Record<Attr, string> = { power: '👊', harmony: '🎶', benevolence: '🤲' };
 export const HEART_ITEM_EMOJI = '💗';
+/** ✨ Faísca de Alma (30/10/2026): item de LUTA (Masmorra/Fenda) que enche a barra do especial. Não se usa na pastinha. */
+export const SPARK_ITEM_EMOJI = '✨';
 
 // Consumables that live in the Items folder alongside food, but behave
 // differently when USED: chips only add attribute points (no energy), the
@@ -77,7 +79,7 @@ export const HEART_ITEM_EMOJI = '💗';
 // Keyed by their inventory emoji.
 export interface SpecialItem {
   emoji: string;
-  kind: 'chip' | 'heart' | 'glitchtama' | 'premium';
+  kind: 'chip' | 'heart' | 'glitchtama' | 'premium' | 'spark';
   attr?: Attr;
   /** Pontos de tipo por atributo ao usar o chip. Ausente = só `attr` com CHIP_BOOST. */
   boosts?: Record<Attr, number>;
@@ -146,6 +148,11 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
     emoji: HEART_ITEM_EMOJI, kind: 'heart',
     namePt: 'Coraçãozinho', nameEn: 'Little Heart',
     descPt: `Usar cura ${HEART_HEAL} coração`, descEn: `Use to heal ${HEART_HEAL} heart`,
+  },
+  [SPARK_ITEM_EMOJI]: {
+    emoji: SPARK_ITEM_EMOJI, kind: 'spark',
+    namePt: 'Faísca de Alma', nameEn: 'Soul Spark',
+    descPt: 'Na luta da Masmorra ou da Fenda, enche a barra do especial', descEn: 'In a Dungeon or Rift fight, fills the special bar',
   },
   // Comida premium (uma por comida de categoria) — dono: `utils/premiumFood.ts`.
   ...PREMIUM_SPECIAL_ITEMS,

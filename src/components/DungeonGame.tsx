@@ -28,6 +28,8 @@ import { marcarTelaMasmorra } from '../utils/dungeonScreenOpen';
 import { autoDodgeGrade, autoRingGrade } from '../utils/dungeonFight';
 import { pushDrop, popDrop, type DropGroup, type DropKind } from '../utils/dungeonDrops';
 import { DropNotice } from './games/DropNotice';
+import { HEART_ITEM_EMOJI, SPARK_ITEM_EMOJI } from '../utils/shop';
+import { canOfferRevive, consumeOne, addOne, heartsOwned, sparksOwned, reviveSeed, reviveStart, rollSparkDrop, SPARK_ENERGY } from '../utils/dungeonRevive';
 import { readLocal, writeLocal } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { getMaxEnergyForStage } from '../types/progression';
@@ -253,6 +255,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   /** O que passa de um inimigo para o outro: HP (fração) e energia do pet. */
   const hpCarryRef = useRef(1);
   const energyCarryRef = useRef(0);
+  /** 💗 A oferta "Usar Coraçãozinho" aberta na queda (30/10/2026, REGISTRO §180) e a CONTINUAÇÃO da luta depois dela: n-ésima retomada + HP do inimigo na queda. */
+  const [reviveOffer, setReviveOffer] = useState(false);
+  const contRef = useRef<{ n: number; foeFrac: number } | null>(null);
+  const lastFoeFracRef = useRef(1);
   const [hpFrac, setHpFrac] = useState(1);
   /** A confirmação de sair está aberta: a luta espera. */
   const [pausadoConfirm, setPausado] = useState(false);
@@ -307,6 +313,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const enterEnemy = (list: DungeonEnemy[], idx: number) => {
     enemiesRef.current = list;
     enemyIdxRef.current = idx;
+    contRef.current = null; // luta nova: sem continuação pendente
     setEnemyIdx(idx);
     setFightKey(k => k + 1);
   };
@@ -447,6 +454,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     onEnemyDefeated(e.stage);
     addPoints(e.points);
     resumoRef.current.enemies += 1;
+    if (ctx && rollSparkDrop()) { ctx.setGameState(prev => ({ ...prev, foodInventory: addOne(prev.foodInventory, SPARK_ITEM_EMOJI) })); noteDrop('spark', 1); }
     const caiuCoracao = onHeartDrop();
     if (caiuCoracao) { resumoRef.current.hearts += 1; noteDrop('heart', 1); }
     setGotHeart(caiuCoracao);
@@ -516,9 +524,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const rodadaDoNucleo = useCallback((): GroupRound => {
     const e = enemiesRef.current[enemyIdxRef.current];
     const f = dungeonFight(jogadorRef.current, e.foe, dungeonFightSeed(runSeedRef.current, e.floor, e.slot), e.slot === 0); // o escudo de largada (`tal-pve-07`) é só do 1º da escada de cada andar
+    const cont = contRef.current; // continuação após o Coraçãozinho: semente derivada, inimigo com o HP da queda
     return {
-      player: f.player, foes: f.foes, seed: f.seed,
+      player: f.player, foes: f.foes, seed: cont ? reviveSeed(f.seed, cont.n) : f.seed,
       startHp: hpCarryRef.current, startEnergy: energyCarryRef.current,
+      ...(cont ? { options: { startFoesHp: reviveStart(cont.foeFrac).foesHp } } : {}),
       hitScale: f.hitScale,
       castScale: ({ who, ring, dodge }) => f.castScale({ who, ring, dodge }),
     };
@@ -550,6 +560,16 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       defeatEnemy();
       return;
     }
+    // 💗 Antes da derrota: com ao menos 1 Coraçãozinho, oferece a volta com 50% do HP (a luta continua de onde parou).
+    if (ctx && canOfferRevive(gsRef.current?.foodInventory)) {
+      lastFoeFracRef.current = battleRef.current?.foesHp[0] ?? 1;
+      setReviveOffer(true);
+      return;
+    }
+    perder();
+  };
+  /** A derrota de sempre (sem oferta, ou oferta recusada). */
+  const perder = () => {
     // Derrota ou empate (o empate conta como derrota, sem custo): o HP zerou e a descida acaba.
     // C-6 (run `som-01`): sem som de degeneracao. Perder a descida nao custa coracao nem Bits —
     // `handleDungeonLose` é um callback vazio, de propósito. O HP volta com o TEMPO (`hpAgora`).
@@ -571,6 +591,26 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     ring: (n: number) => autoRingGrade(dungeonFightSeed(runSeedRef.current, enemiesRef.current[enemyIdxRef.current]?.floor ?? 0, enemiesRef.current[enemyIdxRef.current]?.slot ?? 0), n),
     dodge: (n: number) => autoDodgeGrade(dungeonFightSeed(runSeedRef.current, enemiesRef.current[enemyIdxRef.current]?.floor ?? 0, enemiesRef.current[enemyIdxRef.current]?.slot ?? 0), n),
   }), []);
+  const aceitarRevive = () => {
+    if (!reviveOffer || !ctx || !canOfferRevive(gsRef.current?.foodInventory)) return;
+    setReviveOffer(false);
+    if (gsRef.current) gsRef.current = { ...gsRef.current, foodInventory: consumeOne(gsRef.current.foodInventory, HEART_ITEM_EMOJI) };
+    ctx.setGameState(prev => ({ ...prev, foodInventory: consumeOne(prev.foodInventory, HEART_ITEM_EMOJI) }));
+    const st = reviveStart(lastFoeFracRef.current);
+    contRef.current = { n: (contRef.current?.n ?? 0) + 1, foeFrac: st.foesHp[0] };
+    hpCarryRef.current = st.hp;
+    energyCarryRef.current = st.energy;
+    setHpFrac(st.hp);
+    salvarHp(st.hp);
+    setFightKey(k => k + 1);
+  };
+  const recusarRevive = () => { setReviveOffer(false); perder(); };
+  const usarFaisca = () => {
+    if (!ctx || sparksOwned(gsRef.current?.foodInventory) < 1) return;
+    if (gsRef.current) gsRef.current = { ...gsRef.current, foodInventory: consumeOne(gsRef.current.foodInventory, SPARK_ITEM_EMOJI) };
+    ctx.setGameState(prev => ({ ...prev, foodInventory: consumeOne(prev.foodInventory, SPARK_ITEM_EMOJI) }));
+    battleRef.current?.boostEnergy(SPARK_ENERGY);
+  };
   const battle = useGroupBattle({
     running: phase === 'fight' && !!enemy,
     paused: pausado, reduced: reduzido.current, runKey: fightKey, seed: seedLuta,
@@ -579,6 +619,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     // ESPECIAL AUTOMÁTICO (REGISTRO §36): sem anel nem esquiva — a nota é o sorteio com semente do número do especial na luta.
     autoSpecial: autoEspecial,
   });
+
+  const battleRef = useRef<typeof battle | null>(null);
+  battleRef.current = battle;
 
   // O próximo passo da descida, SEM toque: outro inimigo do andar, ou o andar de baixo (sem teto).
   const avancar = () => {
@@ -707,7 +750,15 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         isPt={isPt}
         style={BATTLE_LAYER_STYLE}
         mascot
-        belowMascot={!ended && phase !== 'away' ? (
+        belowMascot={!ended && phase !== 'away' ? (<>
+          {fighting && pronto && sparksOwned(gs?.foodInventory) > 0 && (
+            <button type="button" data-dungeon-spark onClick={usarFaisca} disabled={battle.petEnergy >= ENERGY_TRIGGER || reviveOffer}
+              aria-label={isPt ? `Faísca de Alma (${sparksOwned(gs?.foodInventory)}): enche a barra do especial` : `Soul Spark (${sparksOwned(gs?.foodInventory)}): fills the special bar`}
+              style={{ pointerEvents: 'auto', background: 'none', border: 'none', padding: 0, minWidth: 44, minHeight: 44, cursor: 'pointer', color: 'var(--sm2-viewport-ink)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, fontWeight: 700, opacity: battle.petEnergy >= ENERGY_TRIGGER ? 0.4 : 1 }}>
+              <img src={ENERGY_ICON} alt="" width={20} height={20} style={{ imageRendering: 'pixelated' }} />
+              <span className="sm2-num">{sparksOwned(gs?.foodInventory)}</span>
+            </button>
+          )}
           <button
             type="button"
             data-dungeon-speed={speed}
@@ -718,7 +769,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
           >
             {speed}×
           </button>
-        ) : undefined}
+        </>) : undefined}
         cheerRatio={fighting && pronto ? battle.meter / CHEER_TAPS_FULL : 0}
         swipeActive={fighting && battle.phase === 'dodge'}
         onSwipe={battle.swipe}
@@ -915,6 +966,22 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         </BattleStage>
         {/* O modalzinho de drop: a luta continua por trás (nada pausa), toque no véu/cartão fecha, a fila é de `dungeonDrops.ts`. */}
         {drops.length > 0 && <DropNotice group={drops[0]} isPt={isPt} speed={speed} onClose={closeDrop} />}
+        {/* 💗 A queda: antes da derrota, "Usar Coraçãozinho". Esquerda = recusar (derrota normal), direita = confirmar (volta com 50% do HP). */}
+        {reviveOffer && (
+          <div role="dialog" aria-modal="true" data-revive-offer style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.6)', padding: 16 }}>
+            <div style={{ background: 'var(--sm2-surface, #14221f)', color: 'var(--sm2-ink, #fff)', borderRadius: 12, padding: 16, maxWidth: 320, width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <p style={{ margin: 0, fontWeight: 700 }}>{isPt ? 'Seu Soulmon caiu' : 'Your Soulmon went down'}</p>
+              <p style={{ margin: 0 }}>
+                {isPt ? 'Usar um Coraçãozinho para ele voltar com metade da vida e seguir a luta?' : 'Use a Little heart to bring him back with half his HP and keep fighting?'}
+              </p>
+              <p style={{ margin: 0 }} data-revive-count>{isPt ? `Você tem: ${heartsOwned(gs?.foodInventory)}` : `You have: ${heartsOwned(gs?.foodInventory)}`}</p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" data-revive-decline onClick={recusarRevive} style={{ ...sm2Button('outline'), flex: 1, minHeight: 44 }}>{isPt ? 'Não usar' : 'Not now'}</button>
+                <button type="button" data-revive-confirm onClick={aceitarRevive} style={{ ...sm2Button('primary'), flex: 1, minHeight: 44 }}>{isPt ? 'Usar Coraçãozinho' : 'Use Little heart'}</button>
+              </div>
+            </div>
+          </div>
+        )}
       </TorcidaLayer>
     );
   }

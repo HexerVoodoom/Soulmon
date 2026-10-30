@@ -5,9 +5,9 @@
 //  · Em 3× (avanço rápido) TUDO que está na fila vira UM modal só: a luta não pode virar uma fila de avisos.
 //  · Bits não são "item": seguem no painel de resultado (`+N Bits`), não aqui.
 
-import { GLITCHTAMA_EMOJI, SPECIAL_ITEMS } from './shop';
+import { GLITCHTAMA_EMOJI, SPARK_ITEM_EMOJI, SPECIAL_ITEMS } from './shop';
 
-export type DropKind = 'heart' | 'glitchtama' | 'fragments';
+export type DropKind = 'heart' | 'glitchtama' | 'fragments' | 'spark';
 
 export interface DropLine { kind: DropKind; qty: number }
 /** Um modal: uma ou mais linhas (várias só quando coalescido). `id` muda a cada entrada nova (chave de React / reinício do relógio de fechar). */
@@ -41,6 +41,7 @@ export function dropName(kind: DropKind, isPt: boolean): string {
   switch (kind) {
     case 'heart': return isPt ? 'Coraçãozinho' : 'Little heart';
     case 'glitchtama': return isPt ? SPECIAL_ITEMS[GLITCHTAMA_EMOJI].namePt : SPECIAL_ITEMS[GLITCHTAMA_EMOJI].nameEn;
+    case 'spark': return isPt ? SPECIAL_ITEMS[SPARK_ITEM_EMOJI].namePt : SPECIAL_ITEMS[SPARK_ITEM_EMOJI].nameEn;
     case 'fragments': return isPt ? 'Fragmentos do Soulsmith' : 'Soulsmith fragments';
   }
 }
