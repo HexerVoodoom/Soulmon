@@ -635,13 +635,13 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
                   busy={busyId === p.id}
                   disabled={!canGiftToday || gifted}
                   label={!canGiftToday
-                    ? (isPt ? 'Precisa de energia cheia para presentear' : 'Needs full energy to gift')
+                    ? (isPt ? 'Termine as tarefas de hoje para presentear' : "Finish today's tasks to send a gift")
                     : gifted
                       ? (isPt ? 'Já presenteado hoje' : 'Already gifted today')
                       : (isPt ? `Enviar 20 Bits para ${p.name}` : `Send 20 Bits to ${p.name}`)}
                   onClick={() => gift(p.id)}
                   onInert={() => setAddMsg(!canGiftToday
-                    ? (isPt ? 'Para presentear, a energia do seu Soulmon precisa estar cheia.' : 'To send a gift, your Soulmon needs full energy.')
+                    ? (isPt ? 'Para presentear, termine as tarefas de hoje (a mesma meta que libera o Bosque).' : "To send a gift, finish today's tasks (the same goal that unlocks the Grove).")
                     : (isPt ? 'Você já presenteou essa pessoa hoje.' : 'You already gifted this person today.'))}
                 />
               )}

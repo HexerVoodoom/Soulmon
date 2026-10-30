@@ -10,7 +10,7 @@ const area = readFileSync('src/components/nav/AreaView.tsx', 'utf8');
 describe('todo evento do catálogo diário tem emissor', () => {
   const porAreaView = ['dino', 'ppt', 'match3', 'foco', 'arena', 'barrage', 'eco', 'zip', 'patches'];
   const porContarDiaria = ['masmorra', 'comida', 'sono', 'mercado'];
-  const porContarMissao: Record<string, string> = { banho: 'banho', brincar: 'brincar', humor: 'humor', carinho: 'carinho', amigo: 'amigo', torneio: 'torneio' };
+  const porContarMissao: Record<string, string> = { banho: 'banho', humor: 'humor', carinho: 'carinho', amigo: 'amigo', torneio: 'torneio' };
 
   it('calabouco: o App bumpa o evento ao concluir um andar (e sobe o feito vitalício)', () => {
     expect(app).toContain("'calabouco')");

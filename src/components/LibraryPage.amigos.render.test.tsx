@@ -250,14 +250,14 @@ describe('C7 — Amigos: adicionar pelo nome', () => {
     expect(screen.getByRole('button', { name: 'Enviar 20 Bits para Lia' })).toBeTruthy();
   });
 
-  it('presente no Círculo: sem energia cheia fica inerte (aria-disabled) com o motivo; com energia cheia chama sendGift e marca como já presenteado', async () => {
+  it('presente no Círculo: sem a meta do dia fica inerte (aria-disabled) com o motivo; com a meta do dia chama sendGift e marca como já presenteado', async () => {
     vi.mocked(getPlayer).mockResolvedValue({ found: true, player: perfil({ id: 'pid-lia', name: 'Lia' }) });
     vi.mocked(listPlayers).mockResolvedValue({ players: [] });
     vi.mocked(sendGift).mockResolvedValue({} as never);
     const onGiftSent = vi.fn();
     const { unmount } = renderWithCss(<LibraryPage {...props(['pid-lia'])} embedded view="friends" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
-    const inerte = await screen.findByRole('button', { name: 'Precisa de energia cheia para presentear' });
+    const inerte = await screen.findByRole('button', { name: 'Termine as tarefas de hoje para presentear' });
     expect(inerte.getAttribute('aria-disabled')).toBe('true');
     fireEvent.click(inerte);
     expect(sendGift).not.toHaveBeenCalled();

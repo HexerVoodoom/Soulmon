@@ -10,12 +10,12 @@ import { currentBuildingId } from './_gates.js';
 
 export const DAILY_COUNT_CAP = 99;
 export const DAILY_EVENTS = [
-  'dino', 'ppt', 'match3', 'foco', 'masmorra', 'banho', 'carinho', 'brincar',
+  'dino', 'ppt', 'match3', 'foco', 'masmorra', 'banho', 'carinho',
   'comida', 'humor', 'sono', 'mercado', 'amigo', 'arena', 'torneio',
   'barrage', 'eco', 'zip', 'patches', 'calabouco',
 ];
 export const DAILY_MISSION_IDS = [
-  'd-dino', 'd-ppt', 'd-match3', 'd-foco', 'd-masmorra', 'd-banho', 'd-carinho', 'd-brincar',
+  'd-dino', 'd-ppt', 'd-match3', 'd-foco', 'd-masmorra', 'd-banho', 'd-carinho',
   'd-comida', 'd-humor', 'd-sono', 'd-mercado', 'd-amigo', 'd-arena', 'd-torneio',
   'd-barrage', 'd-eco', 'd-zip', 'd-patches', 'd-calabouco',
 ];

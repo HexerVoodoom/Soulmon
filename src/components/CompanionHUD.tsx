@@ -1074,8 +1074,8 @@ export const CompanionHUD = memo(function CompanionHUD({
     teclaRubRef.current = setTimeout(() => {
       teclaRubRef.current = null;
       setIsRubbing(false);
-      const p = propsRef.current;
-      if (p.healthPoints < p.maxHealthPoints) onPetRef.current?.();
+      /* Carinho conta MESMO com a vida cheia (missão "Fazer carinho", 30/10/2026): `onPet` decide sozinho se cura. */
+      onPetRef.current?.();
     }, 2000);
   };
   useEffect(() => () => { if (teclaRubRef.current) clearTimeout(teclaRubRef.current); }, []);
@@ -1114,16 +1114,11 @@ export const CompanionHUD = memo(function CompanionHUD({
       // Every ~500ms emit a small BURST of hearts drifting out from the center.
       rubHeartTickRef.current += 1;
       if (rubHeartTickRef.current % 5 === 0) spawnRubHearts();
-      // Accumulate heal time only while there's HP to restore
-      const p = propsRef.current;
-      if (p.healthPoints < p.maxHealthPoints) {
-        rubAccumRef.current += TICK;
-        if (rubAccumRef.current >= 2000) {
-          rubAccumRef.current -= 2000;
-          onPetRef.current?.();
-        }
-      } else {
-        rubAccumRef.current = 0;
+      // O relógio corre MESMO com a vida cheia (missão "Fazer carinho"): `onPet` conta a missão e recusa a cura sozinho.
+      rubAccumRef.current += TICK;
+      if (rubAccumRef.current >= 2000) {
+        rubAccumRef.current -= 2000;
+        onPetRef.current?.();
       }
     }
   };

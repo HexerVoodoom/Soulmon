@@ -4081,7 +4081,7 @@ export default function App() {
   })), [setGameState]);
   const contarMissao = useCallback((id: WeeklyMissionId) => {
     const doDia: Partial<Record<WeeklyMissionId, DailyEvent>> = {
-      shower: 'banho', 'play-days': 'brincar', 'mood-checkins': 'humor', 'rub-days': 'carinho', 'friend-visit': 'amigo', 'tournament-match': 'torneio',
+      shower: 'banho', 'mood-checkins': 'humor', 'rub-days': 'carinho', 'friend-visit': 'amigo', 'tournament-match': 'torneio',
     };
     setGameState(prev => {
       const dia = playerDayKey(new Date(), prev.playerDayTz);
@@ -7230,7 +7230,7 @@ export default function App() {
                 view={view}
                 saveId={saveId}
                 friends={gameState.friends ?? []}
-                canGiftToday={gameState.energyPoints >= getMaxEnergyForStage(gameState.evolutionStage)}
+                canGiftToday={fioMetaCumprida}
                 onFriendsChange={(friends) => setGameState(prev => ({ ...prev, friends }))}
                 onGiftSent={() => {}}
                 onVisitPlayer={() => contarMissao('friend-visit')}

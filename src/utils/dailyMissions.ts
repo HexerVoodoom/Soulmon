@@ -29,7 +29,7 @@ import { MATERIAL_CAP, MATERIAL_PER_QUEST, materialOf, forDay as buildingForDay,
 import type { QuestMark } from './questMarks';
 
 export type DailyEvent =
-  | 'dino' | 'ppt' | 'match3' | 'foco' | 'masmorra' | 'banho' | 'carinho' | 'brincar'
+  | 'dino' | 'ppt' | 'match3' | 'foco' | 'masmorra' | 'banho' | 'carinho'
   | 'comida' | 'humor' | 'sono' | 'arena' | 'torneio' | 'mercado' | 'amigo'
   | 'barrage' | 'eco' | 'zip' | 'patches' | 'calabouco';
 
@@ -58,8 +58,7 @@ const POOL: readonly DailyMission[] = [
   { id: 'd-foco', event: 'foco', target: 1, building: 'forja.oficina', material: 'gear', descPt: 'Faça um ciclo de foco (Pomodoro) na Oficina', descEn: 'Do one focus cycle (Pomodoro) in the Workshop' },
   { id: 'd-masmorra', event: 'masmorra', target: 1, building: 'exploracao.fenda', material: 'ore', descPt: 'Limpe uma camada da Fenda', descEn: 'Clear an Endless Rift layer' },
   { id: 'd-banho', event: 'banho', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Dê um banho no seu Soulmon', descEn: 'Give your Soulmon a bath' },
-  { id: 'd-carinho', event: 'carinho', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Faça um carinho no seu Soulmon', descEn: 'Pet your Soulmon' },
-  { id: 'd-brincar', event: 'brincar', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Brinque um pouco com o seu Soulmon', descEn: 'Play a little with your Soulmon' },
+  { id: 'd-carinho', event: 'carinho', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Faça carinho no seu Soulmon', descEn: 'Pet your Soulmon' },
   { id: 'd-comida', event: 'comida', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Dê uma comidinha ao seu Soulmon', descEn: 'Give your Soulmon a snack' },
   { id: 'd-humor', event: 'humor', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Conte como você está se sentindo hoje', descEn: 'Tell how you are feeling today' },
   { id: 'd-sono', event: 'sono', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Deixe o seu Soulmon descansar', descEn: 'Let your Soulmon get some rest' },
