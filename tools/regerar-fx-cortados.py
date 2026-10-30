@@ -24,7 +24,7 @@ A = 'E:/Soulmon-assets'
 NAMES = ['orb', 'slash', 'impact', 'cast', 'aura', 'defended']
 FIT = 118
 # Casamentos reprovados a olho (a peca nova veio com vizinha colada ou com outro desenho): ficam como estao -> lista de regeracao.
-SKIP = {('halo_gravitacional', 'defended'), ('ariete', 'cast'), ('runa', 'cast')}
+SKIP = set()  # as 3 pecas antes reprovadas foram refeitas a mao (2026-10-30, recorte guiado da folha original)
 
 
 def cands(e):
