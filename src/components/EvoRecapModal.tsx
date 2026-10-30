@@ -7,8 +7,10 @@ import barraMoldura from '../assets/soulmon/evo/barra-moldura.png';
 import lanterna1 from '../assets/soulmon/evo/lanterna-1.png';
 import lanterna2 from '../assets/soulmon/evo/lanterna-2.png';
 import lanterna3 from '../assets/soulmon/evo/lanterna-3.png';
+import lanternaAnim from '../assets/soulmon/evo/lanterna-anim.webp';
 
-/** O ícone da evolução É A LANTERNA do corvo (30/10/2026, dono): a chama cresce com a barra até o Soulmon evoluir. */
+/** O ícone da evolução É A LANTERNA do corvo (30/10/2026, dono): a chama cresce com a barra até o Soulmon evoluir.
+ *  No recap a lanterna é ANIMADA (`lanterna-anim.webp`, 16 quadros); os 3 estágios estáticos ficam para movimento reduzido. */
 export const lanternaDaEvolucao = (pct: number): string => (pct < 34 ? lanterna1 : pct < 67 ? lanterna2 : lanterna3);
 
 /**
@@ -18,6 +20,8 @@ export const lanternaDaEvolucao = (pct: number): string => (pct < 34 ? lanterna1
  * `prefers-reduced-motion` a regra global do arquivo zera as durações e a barra salta ao valor final.
  * Sem culpa: a tela só existe quando houve progresso (`buildEvoRecap`), então nunca precisa dizer "faltou".
  */
+const reduzMovimento = (): boolean => typeof window !== 'undefined' && !!window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
 export function EvoRecapModal({ recap, language, onClose }: { recap: EvoRecap; language: Language; onClose: () => void }) {
   const isPt = language === 'pt-BR';
   const [filled, setFilled] = useState(false);
@@ -39,7 +43,7 @@ export function EvoRecapModal({ recap, language, onClose }: { recap: EvoRecap; l
       <p style={{ ...sm2Hint, margin: '0 36px', textAlign: 'center', color: 'var(--sm2-ink)', fontWeight: 500 }}>{headline}</p>
       {/* A lanterna do corvo: a chama de dentro acompanha a barra (pequena, média, grande). */}
       <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <img src={lanternaDaEvolucao(shown)} alt="" aria-hidden="true" data-evo-recap-icon width={56} height={56} style={{ imageRendering: 'pixelated', filter: 'drop-shadow(0 0 6px rgba(63,240,224,.55))' }} />
+        <img src={reduzMovimento() ? lanternaDaEvolucao(shown) : lanternaAnim} alt="" aria-hidden="true" data-evo-recap-icon width={64} height={64} style={{ imageRendering: 'pixelated', filter: 'drop-shadow(0 0 6px rgba(63,240,224,.55))' }} />
       </div>
       {/* A barra (30/10/2026, dono): moldura de cobre em PNG (480×128, canal interno x 44–453, y 52–68) e o preenchimento turquesa
           com glow dentro do canal. As porcentagens abaixo são as do canal medido na arte. */}
