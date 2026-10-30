@@ -272,11 +272,11 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
               : (isPt ? 'Seu pet guarda os sonhos.' : 'Your pet keeps the dreams.')}
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" onClick={begin} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }} data-bolhas-again>
-              {isPt ? 'Jogar de novo' : 'Play again'}
-            </button>
             <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
               {isPt ? 'Sair' : 'Exit'}
+            </button>
+            <button type="button" onClick={begin} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }} data-bolhas-again>
+              {isPt ? 'Jogar de novo' : 'Play again'}
             </button>
           </div>
         </>

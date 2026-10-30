@@ -3747,6 +3747,12 @@ export default function App() {
           : "🌀 One Glitchtama a day. It'll wait for you tomorrow.");
         return;
       }
+      if (refused === 'battle-only') {
+        toast(language === 'pt-BR'
+          ? '✨ A Faísca de Alma se usa dentro de uma luta da Masmorra.'
+          : '✨ The Soul Spark is used inside a Dungeon fight.');
+        return;
+      }
       if (refused === 'stage-cap') {
         // D-97: 3 chips por estágio. O chip volta intacto e vale no próximo estágio — sem culpa.
         toast(language === 'pt-BR'
@@ -8119,17 +8125,17 @@ export default function App() {
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button
                         type="button"
-                        style={{ ...sm2Button('primary'), flex: 1 }}
-                        onClick={() => { dispensarPriming(); void handleToggleNotifications(); }}
-                      >
-                        {language === 'pt-BR' ? 'Pode sim' : 'Yes, please'}
-                      </button>
-                      <button
-                        type="button"
                         style={{ ...sm2Button('outline'), flex: 1 }}
                         onClick={dispensarPriming}
                       >
                         {language === 'pt-BR' ? 'Agora não' : 'Not now'}
+                      </button>
+                      <button
+                        type="button"
+                        style={{ ...sm2Button('primary'), flex: 1 }}
+                        onClick={() => { dispensarPriming(); void handleToggleNotifications(); }}
+                      >
+                        {language === 'pt-BR' ? 'Pode sim' : 'Yes, please'}
                       </button>
                     </div>
                   </section>

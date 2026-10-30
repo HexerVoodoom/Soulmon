@@ -37,11 +37,11 @@ export function RefugeInviteCard({ language, onShown, onAccept, onDismiss }: {
           : "I'm spending a few minutes in the Refuge, just breathing. Come with me if you want."}
       </p>
       <div style={{ display: 'flex', gap: 8 }}>
-        <button type="button" data-refugio-convite-aceitar style={{ ...sm2Button('primary'), flex: 1 }} onClick={onAccept}>
-          {isPt ? 'Respirar com o Soulmon' : 'Breathe with Soulmon'}
-        </button>
         <button type="button" data-refugio-convite-dispensar style={{ ...sm2Button('outline'), flex: 1 }} onClick={onDismiss}>
           {isPt ? 'Hoje não' : 'Not today'}
+        </button>
+        <button type="button" data-refugio-convite-aceitar style={{ ...sm2Button('primary'), flex: 1 }} onClick={onAccept}>
+          {isPt ? 'Respirar com o Soulmon' : 'Breathe with Soulmon'}
         </button>
       </div>
     </section>

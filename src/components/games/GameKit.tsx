@@ -205,8 +205,8 @@ function ExitConfirm({ title, stay, leave, onStay, onLeave }: { title: string; s
       <div style={{ width: '100%', maxWidth: 320, display: 'flex', flexDirection: 'column', gap: 12, padding: 16, boxSizing: 'border-box', backgroundColor: 'var(--sm2-surface)', border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-md)' }}>
         <p style={{ ...sm2Text, margin: 0, fontWeight: 500, textAlign: 'center' }}>{title}</p>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button type="button" autoFocus onClick={onStay} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>{stay}</button>
           <button type="button" onClick={onLeave} data-game-confirm-leave style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>{leave}</button>
+          <button type="button" autoFocus onClick={onStay} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>{stay}</button>
         </div>
       </div>
     </div>

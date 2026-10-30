@@ -266,11 +266,11 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
       {!(solved && !challenge) && <div style={{ display: 'flex', gap: 8 }}>
         {solved ? (
           <>
-            <button type="button" onClick={next} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }} data-zip-next>
-              {isPt ? 'Próxima trilha' : 'Next trail'}
-            </button>
             <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
               {isPt ? 'Sair' : 'Exit'}
+            </button>
+            <button type="button" onClick={next} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }} data-zip-next>
+              {isPt ? 'Próxima trilha' : 'Next trail'}
             </button>
           </>
         ) : (

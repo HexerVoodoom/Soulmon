@@ -237,11 +237,11 @@ export function TrocaGame({ language, onEarnPoints, onExit }: EarningGameProps) 
             {earned > 0 ? <BitsReveal value={earned} /> : (isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.')}
           </p>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" onClick={restart} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-              {isPt ? 'De novo' : 'Again'}
-            </button>
             <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
               {isPt ? 'Sair' : 'Exit'}
+            </button>
+            <button type="button" onClick={restart} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
+              {isPt ? 'De novo' : 'Again'}
             </button>
           </div>
         </>

@@ -353,11 +353,11 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
           </p>
           <p style={phaseLine}><BitsReveal value={earned} /></p>
           <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" onClick={() => setPicking(true)} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-              {isPt ? 'Outros' : 'More'}
-            </button>
             <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
               {isPt ? 'Sair' : 'Exit'}
+            </button>
+            <button type="button" onClick={() => setPicking(true)} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
+              {isPt ? 'Outros' : 'More'}
             </button>
           </div>
         </>

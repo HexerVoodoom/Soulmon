@@ -355,8 +355,8 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
               {isPt ? `Refazer custa ${custo} Bits (moeda que você ganhou jogando) e devolve todos os pontos.` : `Rebuilding costs ${custo} Bits (coin you earned by playing) and gives every point back.`}
             </p>
             <div style={{ display: 'flex', gap: 8 }}>
-              <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" onClick={refazer}>{isPt ? 'Refazer' : 'Rebuild'}</button>
               <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" onClick={() => setConfirmando(false)}>{isPt ? 'Agora não' : 'Not now'}</button>
+              <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" onClick={refazer}>{isPt ? 'Refazer' : 'Rebuild'}</button>
             </div>
           </div>
         )}

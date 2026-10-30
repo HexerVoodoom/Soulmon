@@ -319,11 +319,11 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
       {!(solved && !challenge) && <div style={{ display: 'flex', gap: 8 }}>
         {solved ? (
           <>
-            <button type="button" onClick={next} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }} data-patches-next>
-              {isPt ? 'Próxima colcha' : 'Next patchwork'}
-            </button>
             <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
               {isPt ? 'Sair' : 'Exit'}
+            </button>
+            <button type="button" onClick={next} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }} data-patches-next>
+              {isPt ? 'Próxima colcha' : 'Next patchwork'}
             </button>
           </>
         ) : (

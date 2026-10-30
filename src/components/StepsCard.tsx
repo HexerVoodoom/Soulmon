@@ -86,11 +86,11 @@ export function StepsCard({
         {/* Aceitar e recusar têm o MESMO peso: mesma largura, mesma altura,
             lado a lado. Recusa escondida é padrão escuro. */}
         <div className="sm2-conta-two">
-          <button type="button" onClick={onRequestPermission} style={sm2Button('primary')}>
-            {copy.accept}
-          </button>
           <button type="button" onClick={onDismiss} style={sm2Button('outline')}>
             {copy.decline}
+          </button>
+          <button type="button" onClick={onRequestPermission} style={sm2Button('primary')}>
+            {copy.accept}
           </button>
         </div>
       </GroupCard>

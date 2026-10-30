@@ -41,11 +41,11 @@ export function MealInviteCard({ language, petName, meal, kind, onAct, onSkip }:
       <p style={{ ...sm2Text, margin: '0 0 4px', fontWeight: 600 }}>{copy.title}</p>
       <p style={{ ...sm2Text, margin: '0 0 10px' }}>{copy.body}</p>
       <div style={{ display: 'flex', gap: 8 }}>
-        <button type="button" data-meal-invite-act style={{ ...sm2Button('primary'), flex: 1 }} onClick={() => onAct(kind)}>
-          {isPt ? CTA[kind].pt : CTA[kind].en}
-        </button>
         <button type="button" data-meal-invite-skip style={{ ...sm2Button('outline'), flex: 1 }} onClick={onSkip}>
           {isPt ? 'Agora não' : 'Not now'}
+        </button>
+        <button type="button" data-meal-invite-act style={{ ...sm2Button('primary'), flex: 1 }} onClick={() => onAct(kind)}>
+          {isPt ? CTA[kind].pt : CTA[kind].en}
         </button>
       </div>
     </section>
