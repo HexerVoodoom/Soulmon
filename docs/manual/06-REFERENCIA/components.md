@@ -1833,6 +1833,9 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 ### `src/components/BestiaryCollection.tsx`
 **Dono de:** a coleção do Bestiário (M10): uma célula por criatura × estágio do `enemyRoster`; vista = arte e nome, não vista = silhueta sem nome. O número é de coleção ("N de M"), nunca percentual. Chaves antigas fora do roster não contam. **Exports:** `BestiaryCollection({ seen, language })`.
 
+### `src/components/RankingList.tsx`
+**Dono de:** a lista ÚNICA de ranking (30/10/2026): pódio ouro/prata/bronze, top 50, linha do jogador destacada (`aria-current`) e, fora do top 50, linha fixa no fim depois de "…". Só tokens `--sm2-*`; animação só sem `prefers-reduced-motion`. **Exports:** `RankingList`, `RANKING_LIST_SIZE`. **Usa:** `src/utils/rankings.ts`.
+
 ### `src/components/RankingPanel.tsx`
 **Dono de:** a tela de ranking de um jogo: a FAIXA vem antes da lista; com `score`, envia o resultado uma vez ao montar; falha de rede é silenciosa. **Exports:** `RankingPanel({ game, saveId, language, score?, period? })`. **Usa:** `src/utils/rankings.ts`.
 

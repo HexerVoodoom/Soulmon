@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Language } from '../utils/i18n';
+import { ModalSheet } from './form/FormKit';
+import { RankingList, RANKING_LIST_SIZE } from './RankingList';
 import {
   fetchRanking, submitScore, RANKING_TIER_NAMES, isTimeRanked, formatRankTime,
   type RankedGame, type RankingBoard, type RankingPeriod,
@@ -25,7 +27,7 @@ export function RankingPanel({ game, saveId, language, score = null, period = 'w
   useEffect(() => {
     if (!saveId || sent.current) return;
     sent.current = true;
-    const run = score !== null ? submitScore(game, saveId, score, period) : fetchRanking(game, saveId, period);
+    const run = score !== null ? submitScore(game, saveId, score, period) : fetchRanking(game, saveId, period, RANKING_LIST_SIZE);
     run.then(setBoard).catch(() => { /* sem rede: o painel some */ });
   }, [game, saveId, score, period]);
 
@@ -48,16 +50,12 @@ export function RankingPanel({ game, saveId, language, score = null, period = 'w
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}>
         {open ? (isPt ? 'Esconder ranking' : 'Hide ranking') : (isPt ? (period === 'monthly' ? 'Ver ranking do mês' : 'Ver ranking da semana') : (period === 'monthly' ? 'See monthly ranking' : 'See weekly ranking'))}
       </button>
-      {open && (
-        <ol data-ranking-list style={{ margin: 0, paddingLeft: 20 }}>
-          {board.top.length === 0 && <li>{isPt ? 'Ninguém pontuou ainda.' : 'No scores yet.'}</li>}
-          {board.top.map(r => (
-            <li key={r.rank} data-ranking-me={r.me ? 'true' : undefined} style={{ fontWeight: r.me ? 700 : 400 }}>
-              {r.name} · {fmt(r.score)}{r.prizePlace ? ` · ${isPt ? `prêmio ${r.prizePlace}º` : `prize #${r.prizePlace}`}` : ''}
-            </li>
-          ))}
-        </ol>
-      )}
+      <ModalSheet
+        open={open} onClose={() => setOpen(false)} language={language} placement="center"
+        title={period === 'monthly' ? (isPt ? 'Ranking do mês' : 'Monthly ranking') : (isPt ? 'Ranking da semana' : 'Weekly ranking')}
+      >
+        <RankingList rows={board.top} meRank={board.me?.rank ?? null} meScore={board.me?.score ?? null} language={language} format={fmt} />
+      </ModalSheet>
     </div>
   );
 }

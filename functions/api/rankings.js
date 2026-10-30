@@ -13,7 +13,7 @@ import { kv } from './_kv.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import {
-  DEFAULT_PERIOD, cleanScore, isPeriod, isRankedGame, readBoard, scoreIsPlausible, submitScore, TOP_DEFAULT,
+  DEFAULT_PERIOD, cleanScore, isPeriod, isRankedGame, readBoard, scoreIsPlausible, submitScore, TOP_DEFAULT, TOP_MAX,
 } from './_rankings.js';
 import { readRiftLayers } from './_dayCounters.js';
 import { agendarSimuladosDia, stripSimulated } from './_simulados.js';
@@ -80,7 +80,7 @@ export async function onRequest(context) {
     const g2 = takeToken('rankings-submit', id, LIMIT_SUBMIT);
     if (!g2.ok) return tooManyRequests(g2.retryAfter, CORS);
     const r = await submitScore(env, { game, period, saveId: id, score });
-    const board = await readBoard(env, { game, period, saveId: id, top: TOP_DEFAULT });
+    const board = await readBoard(env, { game, period, saveId: id, top: TOP_MAX });
     return json({ ok: true, improved: r.improved, best: r.best, ...board });
   }
 
