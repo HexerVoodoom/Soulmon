@@ -248,6 +248,8 @@ import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/
 import type { AISettings } from './components/AISettingsModal';
 import { SequenciaOnboarding } from './components/onboarding/sequencia/SequenciaOnboarding';
 import { ONBOARDING_VELADO } from './components/onboarding/sequencia/flag';
+import { MercGuildSheet } from './components/MercGuildSheet';
+import { escolherMerc, concluirMerc, mercDeHoje, type MercOrdem } from './utils/mercMission';
 import { SLOTS_REAIS, LigacoesOnboardingContext } from './components/onboarding/sequencia/slotsReais';
 import { IntroCinematica, deveTocarIntro } from './components/onboarding/intro/IntroCinematica';
 import { initialStageForNewSave } from './utils/bbStage';
@@ -854,6 +856,10 @@ export default function App() {
   const [celebrarMeta, setCelebrarMeta] = useState(false);
   /* ONBOARDING_VELADO: "Rever a história" das Configurações (desligado por padrão). */
   const [reverHistoria, setReverHistoria] = useState(false);
+  /* ONBOARDING_VELADO: Guilda dos Mercenarios (plano §11). Painel aberto pelo chip do mapa; escolha e confirmacao rodam em `utils/mercMission.ts`. */
+  const [mercOpen, setMercOpen] = useState(false);
+  const escolherMercenario = useCallback((o: MercOrdem) => setGameState(prev => escolherMerc(prev, o, playerDayKey(new Date(), prev.playerDayTz)).state), []);
+  const confirmarMercenario = useCallback(() => setGameState(prev => concluirMerc(prev, playerDayKey(new Date(), prev.playerDayTz))), []);
   /* ONBOARDING_VELADO: introdução pré-login (1ª abertura) e "Rever a introdução". */
   const [introCinePendente, setIntroCinePendente] = useState(() => deveTocarIntro(readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE)));
   const [reverIntro, setReverIntro] = useState(false);
@@ -8494,6 +8500,18 @@ export default function App() {
             </div>
           )}
 
+          {ONBOARDING_VELADO && pane === 'map' && (
+            <button type="button" data-merc-chip onClick={() => setMercOpen(true)}
+              style={{ position: 'fixed', right: 12, bottom: 'calc(var(--sm-nav-h, 72px) + 16px)', zIndex: 20, minHeight: 44, padding: '0 14px', borderRadius: 12, border: '1px solid var(--sm2-border, #555)', background: 'var(--sm2-surface, #1a1a1a)', color: 'inherit' }}>
+              {language === 'pt-BR' ? 'Guilda dos Mercenários' : 'Mercenary Guild'}
+            </button>
+          )}
+          {ONBOARDING_VELADO && mercOpen && (
+            <MercGuildSheet open onClose={() => setMercOpen(false)} language={language}
+              hoje={mercDeHoje(gameState, playerDayKey(new Date(), gameState.playerDayTz))}
+              bb={gameState.evolutionStage === 'bb'}
+              onChoose={escolherMercenario} onConfirm={confirmarMercenario} />
+          )}
           {ONBOARDING_VELADO && reverHistoria && <SequenciaOnboarding forcar language={language} onDone={() => setReverHistoria(false)} />}
           {ONBOARDING_VELADO && reverIntro && <IntroCinematica language={language} onDone={() => setReverIntro(false)} />}
           {pane === 'settings' && (
