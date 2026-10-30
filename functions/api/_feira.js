@@ -297,7 +297,7 @@ function janela(side, nivel, seed, cheer) {
  * O ataque de UM jogador, PURO e determinístico na semente. O desempenho é a razão entre o que a ficha DELE rende na janela
  * e o que a ficha de referência (equilibrada, do mesmo level, mesma semente) rende — limitada a [0,7; 1,5] —, aplicada ao dano
  * base do estágio. Nunca passa de `ATAQUE_TETO`.
- * @param {{ combatant: any, special: any, dotResist?: number, startEnergy?: number }} side
+ * @param {{ combatant: any, special: any, dotResist?: number, startEnergy?: number, cheerScale?: number }} side
  * @param {number} power `stagePower` 1..5
  */
 export function simularAtaque(side, power, seed, taps) {
