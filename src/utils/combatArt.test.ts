@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { combatBaseElement, combatSceneBg, combatShield, combatShadow, COMBAT_BG_COUNT, COMBAT_SHIELD_COUNT } from './combatArt';
+import { combatBaseElement, combatSceneBg, combatShield, combatGlowColor, COMBAT_BG_COUNT, COMBAT_SHIELD_COUNT } from './combatArt';
 import { VISUAL_ELEMENTS } from './combatFx';
 import { elementIcon, elementIconIds } from './elementIconArt';
 
@@ -25,10 +25,13 @@ describe('combatArt — cenário, escudo e plataforma por elemento (rodada 2, 04
     expect(combatShield('nao-existe')).toBeUndefined();
     expect(combatSceneBg(null)).toBeUndefined();
   });
-  it('plataforma: escura só sobre o cenário de luz; clara no resto (e sem cenário)', () => {
-    expect(combatShadow('luz')).toMatch(/sombra-escura\.png$/);
-    expect(combatShadow('fogo')).toMatch(/sombra-clara\.png$/);
-    expect(combatShadow(null)).toMatch(/sombra-clara\.png$/);
+  it('brilho do especial: cor do elemento (hex), misto sem assinatura usa o 1º componente, desconhecido = undefined', () => {
+    const c = (id: string | null) => combatGlowColor(id);
+    expect(c('fogo')).toMatch(/^#[0-9a-f]{6}$/);
+    expect(c('fogo')).not.toBe(c('sombra'));
+    expect(c('aco_voltaico')).toMatch(/^#[0-9a-f]{6}$/);
+    expect(c('nao-existe')).toBeUndefined();
+    expect(c(null)).toBeUndefined();
   });
   it('ícones de elemento: os 17 base passaram a existir (230 = 17 + 136 + neutro)', () => {
     expect(elementIconIds().length).toBe(230);

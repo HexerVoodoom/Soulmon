@@ -3,6 +3,7 @@
  * BATTLE STAGE — a cena de combate em tela cheia (rodada 5 / I10).
  * O layout é PURO e é testado em números; a cena é testada pelo que ela desenha por ação.
  */
+import { combatGlowColor } from '../../utils/combatArt';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { SPECIAL_INTRO_MS } from '../../utils/combatFx';
@@ -335,5 +336,18 @@ describe('BattleStage — o que a cena desenha', () => {
       // O selo do especial aparece (a classe troca a animação por flash no CSS reduzido), sem círculo de cast.
       expect(!!document.querySelector('[data-stage-special]'), kind).toBe(kind === 'special');
     }
+  });
+
+  it('plataforma: elipse preta ~40% com borda suave (sem PNG) e brilho do especial na cor do elemento', () => {
+    const { container } = render(<BattleStage {...baseProps} me={{ ...me, energy: 1, element: 'fogo' }} foes={[foe(0, { energy: 1, element: 'sombra' })]} />);
+    const plat = container.querySelector('[data-stage-platform]') as HTMLElement;
+    expect(plat.tagName).not.toBe('IMG');
+    expect(plat.style.borderRadius).toBe('50%');
+    expect(plat.style.background).toMatch(/radial-gradient/);
+    expect(plat.style.background).toMatch(/rgba\(0, 0, 0, 0\.4\)/);
+    const glow = (r: string) => (container.querySelector(`[data-stage-sprite="${r}"]`) as HTMLElement).style.getPropertyValue('--bs-glow');
+    expect(glow('me')).toBe(combatGlowColor('fogo'));
+    expect(glow('foe')).toBe(combatGlowColor('sombra'));
+    expect(glow('me')).not.toBe(glow('foe'));
   });
 });

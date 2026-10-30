@@ -855,7 +855,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/combatArt.ts`
 **Dono de:** a arte da CENA de combate por elemento (rodada 2 do Higgsfield, 04/10/2026, `assets/soulmon/combate/`): 17 cenários 9:16 (`bg-<base>.png`, 360×640 ampliados com `pixelated` — a 1080×1920 o WebP passava do teto de 400 KB), 17 escudos levantados (`escudo-<base>.png`, 128²) e a plataforma sob os pés (`sombra-clara`/`sombra-escura`, 256×96). Só os 17 base têm arte: derivado → 1º componente (`DERIVED_ELEMENT_PAIRS`), `planta` → `vida`, `industrial` → `marcial`; `neutro` → `undefined`.
-**Exports:** `combatBaseElement(id)` · `combatSceneBg(id)` (`url(…) center/cover <cor média>` ou `undefined`) · `combatShield(id)` · `combatShadow(sceneElement)` (escura só sobre o cenário de `luz`) · `COMBAT_BG_COUNT`, `COMBAT_SHIELD_COUNT`.
+**Exports:** `combatBaseElement(id)` · `combatSceneBg(id)` (`url(…) center/cover <cor média>` ou `undefined`) · `combatShield(id)` · `combatGlowColor(id)` (hex do brilho do especial = cor do elemento; `undefined` sem assinatura) · `COMBAT_BG_COUNT`, `COMBAT_SHIELD_COUNT`.
 **Quem chama:** só `games/BattleStage.tsx` (chunk preguiçoso da luta — não importar do chunk de entrada). Regra do cenário: `BattleStage` recebe `sceneElement`; Arena e Duelo passam o elemento do INIMIGO (luta-se no terreno dele); Pesadelo e Masmorra não passam (cena fixa / cenário por andar). O escudo do DEFENSOR substitui o flash `defended` do FX no bloqueio (sem arte → `defended`).
 **Régua:** `src/utils/combatArt.test.ts` (17 + 17, mapeamento, plataforma, e os 154 ícones de elemento) + `games/BattleStage.test.tsx` (escudo, fallback neutro, camada do cenário).
 
