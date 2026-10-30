@@ -96,6 +96,6 @@ Os Desfeitos têm vínculos complexos com o seu Soulmon:
 
 ## Líderes
 
-- **Líder dos Rompentes:** uma guerreira em armadura de cobre com espadão gigante e lanterna
+- **Thassia, líder dos Rompentes:** uma guerreira em armadura de cobre com espadão gigante e lanterna
   turquesa (arte do dono: `E:\Soulmon-assets\gerados-2026-10-30\velados\lider-rompentes-dono.png`).
-  Líder da Ordem (Soulmon ultra). Nome [a definir]. Ragan segue como desbravador do trio.
+  Líder da Ordem (Soulmon ultra). Nome: **Thassia**. Ragan segue como desbravador do trio.
