@@ -8,6 +8,7 @@
  */
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
+import { TorcidaLayer } from './games/TorcidaKit';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { sm2Button } from './form/FormKit';
@@ -20,6 +21,7 @@ import { getSpriteForStage } from '../utils/sprites';
 import { usePetScale } from '../hooks/usePetScale';
 import { DUNGEON_SCENES } from '../utils/dungeonScenes';
 import { ENERGY_TRIGGER } from '../utils/combate/specials';
+import { hpPoints } from '../utils/combate/fight';
 import type { Combatant } from '../utils/combate/curve';
 import type { GroupResult } from '../utils/combate/group';
 import type { Language } from '../utils/i18n';
@@ -62,8 +64,8 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   const petScale = usePetScale(evolutionStage, petSprite);
   const petEl = fxElementId(ident.basico.elemento);
   const foeEl = fxElementId(dungeonEnemyElement(enemy));
-  const hpMax = Math.max(1, Math.round(dungeonPlayerSide({ combatant: setup.combatant, family }).combatant.hp));
-  const foeMax = Math.max(1, Math.round(setup.foe.combatant.hp));
+  const hpMax = hpPoints(dungeonPlayerSide({ combatant: setup.combatant, family }).combatant.hp);
+  const foeMax = hpPoints(setup.foe.combatant.hp);
   const bg = DUNGEON_SCENES[(floor - 1) % DUNGEON_SCENES.length].bg;
 
   const [paused, setPaused] = useState(false);
@@ -116,7 +118,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
 
   const battle = useGroupBattle({
     running: !end, paused, reduced: reduced.current, runKey: fightKey, seed: setup.seed,
-    round, scene, onEnd: setEnd, torcida: false, speed, autoSpecial,
+    round, scene, onEnd: setEnd, torcida: true, speed, autoSpecial,
   });
 
   const won = end?.winner === 'player';
@@ -138,7 +140,8 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   const meHp = pronto ? battle.hp : (cont ? reviveStart(cont.foeFrac).hp : setup.startHp);
 
   return (
-    <div data-rogue-fight style={BATTLE_LAYER_STYLE}>
+    <TorcidaLayer onTap={battle.cheer} active={!end && !paused && battle.phase === 'idle'} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot>
+      <div data-rogue-fight style={{ display: 'contents' }} />
       <BattleStage
         specialLabel={specialLabel(isPt, par?.especial)}
         foeSpecialLabel={(f) => dungeonFoeSpecialLabel(isPt, enemy, f.element, f.name)}
@@ -220,6 +223,6 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
           </div>
         )}
       </BattleStage>
-    </div>
+    </TorcidaLayer>
   );
 }

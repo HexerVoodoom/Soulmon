@@ -77,6 +77,8 @@ const COPY = {
   'room.trail': ['A challenge is on the path', 'Há um desafio no caminho'],
   'room.rest': ['The path is quiet', 'O caminho está tranquilo'],
   'room.open': ['Open', 'Abrir'],
+  'room.challenge': ['Take the challenge', 'Aceitar o desafio'],
+  'room.boss.go': ['Face the boss', 'Enfrentar o chefe'],
 } as const;
 
 export type FeiraKey = keyof typeof COPY;

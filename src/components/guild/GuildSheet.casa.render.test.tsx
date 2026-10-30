@@ -126,6 +126,8 @@ describe('a Missão na Feira (prédio da Feira do Hall)', () => {
     expect(container.querySelector('[data-missao-volta-eu]')).not.toBeNull();
     expect(container.querySelector('[data-missao-mandar]')).toBeNull();
     expect(container.querySelector('[data-missao-feita]')!.textContent).not.toMatch(/\d/);
+    // sem ação disponível: diz QUANDO a próxima libera (e nenhum botão)
+    expect(container.querySelector('[data-feira-proxima]')!.textContent).toMatch(/\d/);
   });
 });
 

@@ -76,6 +76,7 @@ export const GUILD_COPY = {
   'guild.missao.volta.titulo': ['Seu Soulmon voltou da investigação.', 'Your Soulmon is back from investigating.'],
   'guild.missao.volta.cla': ['Para o clã: o que ele achou foi para a roda e regou a casa.', 'For the clan: what it found went into the circle and watered the house.'],
   'guild.missao.volta.eu': ['Para você: um lugar no resgate da semana. Se a roda desfizer {nome}, você colhe Honra e, às vezes, a Concha da Maré. Se não, nada se perde.', 'For you: a place in this week’s rescue. If the circle undoes {nome}, you gather Honor and, now and then, the Tide Shell. If not, nothing is lost.'],
+  'guild.missao.proxima': ['Nada para fazer agora. A próxima ação libera amanhã, às {hora} (em {min}).', 'Nothing to do right now. The next action unlocks tomorrow at {hora} (in {min}).'],
   'guild.missao.regra': ['Algo misterioso chegou. Mande seu Soulmon investigar: ele some da Home por um tempo e volta. Cada volta ajuda a roda e a casa. Uma por dia.', 'Something mysterious has arrived. Send your Soulmon to investigate: it leaves the Home for a while and comes back. Each return helps the circle and the house. One a day.'],
   'guild.misterio.fim.honra': ['O Mistério da feira foi encerrado; sua recompensa virou {n} Honra.', 'The fair’s Mystery has ended; your reward became {n} Honor.'],
   'guild.misterio.fim.bits': ['O Mistério da feira foi encerrado; sua recompensa virou {n} Bits.', 'The fair’s Mystery has ended; your reward became {n} Bits.'],

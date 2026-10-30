@@ -3618,3 +3618,8 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 - **Jogos sem dificuldade (um único "Jogar", com o ranking no topo):** Fusão Elemental (Combina 3 — o "Normal/PVP" dele é modo, não dificuldade, e fica como está), Chuva de Almas, Eco do Pet, Trilha do Pet e Colcha.
 - **Fora da pergunta:** Fenda/Masmorra, Refúgio (respiração, bolhas) — sem ranking e sem dificuldade. Tutoriais da Mente seguem dentro dos jogos, inalterados.
 - **Aberto:** Eco, Trilha e Colcha não têm dificuldade fixa (Trilha/Colcha sobem de nível dentro da partida). Se o dono quiser Comum/Avançado neles, é regra nova de jogo.
+
+### Torcida em toda luta + um botão só na Feira (30/10/2026, dono)
+
+- **Torcida:** o dono pediu a opção de torcer em TODA luta, inclusive o Chefe da Feira. Revoga de vez o §2.19 ("sem torcida") também no Calabouço (`RogueFight`: `torcida: true` + `TorcidaLayer` com mascote, o mesmo núcleo/`CHEER` da Arena). Masmorra e Pesadelo já tinham voltado (§70). **Chefe da Feira:** NÃO feito — o replay é do servidor (`simularAtaque`, 1 ataque/dia) e a torcida precisaria entrar na requisição como baldes de toques (`duelCheerEvents`) antes da simulação; depende de protocolo novo cliente+servidor (pendente).
+- **Feira, um botão só:** na sala, o desafio do mistério (chefe/trilha, `FeiraMisterio`) tem prioridade; sem desafio vale "Investigar" (Missão); nunca os dois. Sem ação, a sala diz QUANDO libera (a virada do dia do jogador, `nextPlayerDayStart`; tudo da Feira é 1×/dia).

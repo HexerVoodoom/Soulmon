@@ -9,6 +9,8 @@ import type { FeiraResumo } from '../../utils/feira';
 import type { Language } from '../../utils/i18n';
 
 export function FeiraMisterio({ language, resumo, ocupado, onAbrir }: { language: Language; resumo: FeiraResumo; ocupado: boolean; onAbrir: () => void }) {
+  /** UM botão só (dono, 30/10/2026): o desafio (chefe ou trilha) quando há; no descanso não há ação aqui. */
+  const desafio = resumo.state !== 'rest';
   const isPt = language === 'pt-BR';
   const entrada = resumo.state === 'boss' ? BOSS_ROSTER.find(b => b.id === resumo.bossId) : undefined;
   const nomeChefe = entrada ? bossText(entrada, isPt).name : resumo.state === 'boss' ? resumo.bossId : '';
@@ -26,9 +28,9 @@ export function FeiraMisterio({ language, resumo, ocupado, onAbrir }: { language
           <div style={{ width: `${Math.round(resumo.bossHpPct)}%`, height: '100%', background: 'var(--sm2-primary-fill)' }} />
         </div>
       )}
-      <button type="button" data-feira-misterio-abrir disabled={ocupado} aria-disabled={ocupado ? true : undefined} onClick={onAbrir} className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline">
-        {feiraText(language, 'room.open')}
-      </button>
+      {desafio && <button type="button" data-feira-misterio-abrir disabled={ocupado} aria-disabled={ocupado ? true : undefined} onClick={onAbrir} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
+        {feiraText(language, resumo.state === 'boss' ? 'room.boss.go' : 'room.challenge')}
+      </button>}
     </div>
   );
 }

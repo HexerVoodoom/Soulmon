@@ -9,6 +9,7 @@
  * onde carregar dado por membro.
  */
 import type { FightEvent } from './combate/fight';
+import { anchorOffsetMs, deviceOffsetMs, type PlayerDayAnchor } from './playerDay';
 
 const SLUG = /^[a-z0-9][a-z0-9-]{0,39}$/;
 const int = (v: unknown, lo: number, hi: number): number => {
@@ -260,4 +261,15 @@ export function feiraEventoAbre(e: FeiraEvento | null): boolean {
   if (e.kind === 'boss') return e.canAttack;
   if (e.kind === 'trail') return e.trail.pending && !e.trail.cleared;
   return e.claimable;
+}
+
+/**
+ * O PRÓXIMO INSTANTE em que o dia do jogador vira (meia-noite na âncora do save): a Missão/Chefe/Desafio são 1×/dia, então
+ * "quando volta a ter ação" = esta virada. Sem âncora, a meia-noite do aparelho. Pura: `now` por parâmetro.
+ */
+export function nextPlayerDayStart(now: Date, anchor: PlayerDayAnchor | undefined): Date {
+  const off = anchorOffsetMs(anchor, now) ?? deviceOffsetMs(now);
+  const shifted = new Date(now.getTime() + off);
+  const nextMidnightUtc = Date.UTC(shifted.getUTCFullYear(), shifted.getUTCMonth(), shifted.getUTCDate() + 1);
+  return new Date(nextMidnightUtc - off);
 }

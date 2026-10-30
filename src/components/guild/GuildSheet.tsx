@@ -80,6 +80,7 @@ const FeiraEventoSheet = lazy(() => import('./FeiraEventoSheet'));
 import { GroveCena } from './GroveCena';
 import { GuerraVisor } from './GuerraVisor';
 import { FeiraVisor } from './FeiraVisor';
+import { nextPlayerDayStart } from '../../utils/feira';
 import type { BossFightMe } from './BossFightScreen';
 import { FeiraMisterio } from './FeiraMisterio';
 import type { FeiraCredit } from '../../utils/feiraCredit';
@@ -646,6 +647,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
         {alerta}
         <SalaFeira
           guild={g}
+          tz={tz.current}
           t={t}
           language={language}
           ocupado={ocupado}
@@ -1206,8 +1208,8 @@ function SalaMural({ guild, t, language, marcos }: {
  * (`guild.feira.rodada.feita`). Semana dissipada não tem botão. O resultado da semana que fechou
  * (`lastWeek`) é um fato, nunca um veredito: `recuou` não culpa ninguém.
  */
-function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgateAberto, onRodada, missao, misterioFim, feira }: {
-  guild: GuildView; t: T; language: Language; ocupado: boolean; reducedMotion: boolean;
+function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, resgateAberto, onRodada, missao, misterioFim, feira }: {
+  guild: GuildView; tz?: PlayerDayAnchor; t: T; language: Language; ocupado: boolean; reducedMotion: boolean;
   resgate: React.ReactNode; resgateAberto: boolean; onRodada: () => void;
   /** No Salão (PR3) a rodada é a MISSÃO: mandar o Soulmon, esperar a volta. Sem isto, a Feira antiga (rodada de um toque). */
   missao?: GuildSheetProps['missao'];
@@ -1276,7 +1278,7 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
           {t(raid.lastWeek === 'dissipada' ? 'guild.feira.dissipado.mundo' : 'guild.feira.recuou.mundo')}
         </p>
       )}
-      {!dissipada && !missao && (
+      {!dissipada && !missao && !(feira && feira.resumo.state !== 'rest') && (
         <button
           type="button"
           data-feira-rodada
@@ -1302,12 +1304,17 @@ function SalaFeira({ guild, t, language, ocupado, reducedMotion, resgate, resgat
         }
         // Voltou hoje: SÓ o que a vista já pode mostrar (sem número por pessoa). O ganho é o direito ao resgate da semana.
         if (raid.hitToday) return (
+          <>
           <div data-missao-feita style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <p className="sm2-stats-t" style={{ margin: 0 }}>{t('guild.missao.volta.titulo')}</p>
             <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-cla>{t('guild.missao.volta.cla')}</p>
             <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-eu>{t('guild.missao.volta.eu', { nome })}</p>
           </div>
+          {!(feira && feira.resumo.state !== 'rest') && <ProximaAcao t={t} language={language} tz={tz} agora={agora} />}
+          </>
         );
+        // UM botão só: o desafio do mistério (FeiraMisterio) tem prioridade sobre "Investigar".
+        if (feira && feira.resumo.state !== 'rest') return null;
         return (
           <>
             <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-historia>{t('guild.missao.historia')}</p>
@@ -1368,4 +1375,13 @@ function ResgateFeira({ t, pending, colhido, erro, ocupado, onColher }: {
       )}
     </div>
   );
+}
+
+/** Nenhuma ação agora: diz QUANDO a próxima libera (a virada do dia do jogador; tudo da Feira é 1×/dia). */
+function ProximaAcao({ t, language, tz, agora }: { t: T; language: Language; tz?: PlayerDayAnchor; agora: number }) {
+  const prox = nextPlayerDayStart(new Date(agora), tz);
+  const min = Math.max(1, Math.ceil((prox.getTime() - agora) / 60_000));
+  const tempo = min >= 60 ? `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}min` : `${min} min`;
+  const hora = prox.toLocaleTimeString(language === 'pt-BR' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' });
+  return <p className="sm2-lib-s" style={{ margin: 0 }} data-feira-proxima>{t('guild.missao.proxima', { hora, min: tempo })}</p>;
 }
