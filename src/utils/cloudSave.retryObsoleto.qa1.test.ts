@@ -39,8 +39,8 @@ describe('cloudSaveComRetry — superado por uma chamada mais nova', () => {
     const chamadaS1 = cloudSaveComRetry(ID, { v: 'S1' }, { esperar: () => esperaS1 });
 
     // Deixa o POST de S1 falhar e entrar na espera do backoff.
-    await new Promise(r => setTimeout(r, 0));
-    expect(corpos).toHaveLength(1);
+    // (espera o evento, não um tick fixo: `postar` aguarda o cabeçalho de auth antes do fetch)
+    await vi.waitFor(() => expect(corpos).toHaveLength(1));
 
     // O jogador age: S2 sai e passa.
     const r2 = await cloudSaveComRetry(ID, { v: 'S2' }, { esperar: async () => {} });

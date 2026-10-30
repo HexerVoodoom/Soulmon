@@ -278,5 +278,5 @@ describe('a régua dos cortes — nenhum `play*` cortado volta ao contexto corta
         + 'reintroduzidos e 3.974 testes passando verde.',
       ).toEqual((DECLARADOS[simbolo] ?? []).sort());
     }
-  });
+  }, 120_000); // varre todo `src/` por símbolo (≈9 s sozinho; estoura os 15 s padrão sob carga da suíte paralela)
 });

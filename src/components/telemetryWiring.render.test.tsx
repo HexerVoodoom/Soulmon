@@ -25,6 +25,13 @@ import {
 import { atravessarPerguntasIniciais, passarApresentacaoDaAmbra } from '../test/metasOnboarding';
 import { abrirGuias, escolherGuiaEConfirmar } from '../test/ovoOnboarding';
 
+// Hermético: um `.env` local (ignorado pelo git) com as VITE_FIREBASE_* ligaria o portão de login e a
+// montagem deixaria de ir direto aos termos. Estes casos descrevem o build SEM auth configurada.
+vi.mock('../utils/auth', async () => {
+  const real = await vi.importActual<typeof import('../utils/auth')>('../utils/auth');
+  return { ...real, isAuthConfigured: () => false, getCurrentEmail: async () => null };
+});
+
 const only = (event: string) => pendingTelemetry().filter(r => r.e === event);
 
 describe('fiação da telemetria — onboarding', () => {
