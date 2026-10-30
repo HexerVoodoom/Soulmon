@@ -105,6 +105,13 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
               `Rookie→Champion takes ${R.rookie.gauge} steps (up to ${R.rookie.required}/day); Champion→Ultimate ${R.champion.gauge} (up to ${R.champion.required}/day); Ultimate→Mega ${R.ultimate.gauge} (up to ${R.ultimate.required}/day).`,
             )}
           </p>
+          {/* Forma BB (Onboarding Velado, D3–D5; REGISTRO §204): o estágio ANTES do Rookie. Regra em `utils/bbStage.ts`. */}
+          <p style={para}>
+            {L(
+              'Quem começa pela forma BB não tem meta diária: ela tem 6 corações, nada a desgasta (sem fome, sem cocô, sem perda no fim do dia) e evolui para Rookie quando o Vínculo chega ao nível 2. Enquanto é BB, Torneio, Duelo PvP e Guilda ficam fechados.',
+              'If you start as a BB, there is no daily goal: it has 6 hearts, nothing wears it down (no hunger, no poop, no end-of-day loss) and it evolves into a Rookie once your Bond reaches level 2. While it is a BB, the Tournament, PvP Duel and Guild stay closed.',
+            )}
+          </p>
           {/* WP4.2 — o requisito do Ultra nunca esteve no guia, e ele é o único
               da árvore que não é só "dias completos". Enquanto o único caminho
               era a coleção das três megas, a omissão escondia que o topo pedia

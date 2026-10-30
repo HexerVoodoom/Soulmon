@@ -5,6 +5,7 @@
 import { kvOrThrow } from './_kv.js';
 import { duelSide, maxLevelFor, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { spriteFromSaveState } from './_artLine.js';
+import { bbRefusal } from './_velado.js';
 
 const VALID_ID = /^[a-zA-Z0-9_-]{8,64}$/;
 
@@ -20,6 +21,8 @@ export async function loadDuelSideWithSprite(env, saveId) {
     }
     const state = JSON.parse(value);
     if (!state || typeof state !== 'object' || Array.isArray(state)) return { side: null, spriteUrl: null, artLine: null };
+    // Forma BB (D5): não luta no Duelo PvP. `bbLocked` deixa o chamador dar o MOTIVO em vez de "indisponível".
+    if (bbRefusal(env, state.evolutionStage)) return { side: null, spriteUrl: null, artLine: null, bbLocked: true };
     const { spriteUrl, artLine } = spriteFromSaveState(state);
     return { side: duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) }), spriteUrl, artLine };
   } catch (err) {

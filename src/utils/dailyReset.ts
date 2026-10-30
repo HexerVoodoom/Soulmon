@@ -32,6 +32,7 @@ import { creditGauge, gaugeContribution, gaugeFull } from './evolutionGauge';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
 import { parseDayKeyLocal } from './dayKeyParse';
 import { specialMissionGaugeBonus, markSpecialMissionCredited } from './specialMissions';
+import { isBBStage, BB_MAX_HP } from './bbStage';
 
 /**
  * V2 da revisão de psicologia (`docs/reviews/2026-09-28-catalogo-psicologia.md`):
@@ -121,6 +122,7 @@ export function getNextEvolution(
   evolutionPoints = 0,
 ): string {
   branch = clampBranch(branch) as Attr;
+  if (isBBStage(currentStage)) return 'rookie'; // Forma BB: o próximo passo é o rookie (D4)
   const level = getStageLevel(currentStage);
   if (level === 'rookie') return `champion-${branch}`;
   if (level === 'champion') return `ultimate-${branch}`;
@@ -831,7 +833,38 @@ export function settlePendingRollover<T extends Record<string, any>>(prev: T, no
   return computeDailyReset(prev, { now });
 }
 
+/**
+ * 🥚 FORMA BB (D3) — a virada NÃO COBRA NADA. É o único estágio em que isto vale:
+ * sem requisito diário, sem gauge, sem perda de coração, sem dia perfeito creditado
+ * (nem Vínculo, Bits ou estação por ele), sem folga gasta. Roda a virada normal só
+ * para o que é rotina de dia novo (listas do dia zeradas, `lastResetDate`, cocôs do
+ * dia) e DEVOLVE ao `prev` tudo o que a virada normal creditaria ou cobraria.
+ */
+const BB_KEEP_FROM_PREV = [
+  'perfectDays', 'totalPerfectDays', 'missionPerfectDays', 'evolutionPoints', 'evolutionStage',
+  'unlockedEvolutions', 'currentBranch', 'attributesSinceLastEvolution', 'maxActivityCap',
+  'totalXP', 'bondDaily', 'gamePoints', 'bitsOrigin', 'season', 'habitRhythms',
+  'restDaysLeft', 'restWeekKey', 'specialMission', 'lastDayReport', 'hungerPenalty',
+] as const;
+
+function bbDailyReset<T extends Record<string, any>>(prev: T, now: Date): T {
+  const r: Record<string, any> = computeDailyResetCore(prev, { now });
+  for (const k of BB_KEEP_FROM_PREV) {
+    if (k in prev) r[k] = (prev as any)[k]; else delete r[k];
+  }
+  r.healthPoints = BB_MAX_HP;
+  r.maxHealthPoints = BB_MAX_HP;
+  r.degeneratedByHP = false;
+  r.lastDayWasPerfect = false;
+  return r as T;
+}
+
 export function computeDailyReset<T extends Record<string, any>>(prev: T, opts: DailyResetOptions = {}): T {
+  if (isBBStage(prev.evolutionStage)) return bbDailyReset(prev, opts.now ?? new Date());
+  return computeDailyResetCore(prev, opts);
+}
+
+function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: DailyResetOptions = {}): T {
   const now = opts.now ?? new Date();
   const ontem = new Date(now);
   ontem.setDate(ontem.getDate() - 1);

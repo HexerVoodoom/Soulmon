@@ -16,6 +16,7 @@
 //  · Ausência longa NÃO é perdoada além do teto de 2: o pedido do dono fixou "máx. 2 perdas por retorno" (ver REGISTRO §45).
 //  · O HP do jogo já aceita frações de 0,5 (CLAUDE.md, Corações); nenhum save muda de forma: o campo `hungerPenalty` é novo e opcional.
 import { starvingSince } from './hunger';
+import { isBBStage } from './bbStage';
 import { getPreviousForm } from './dailyReset';
 
 /** Horas CONTÍNUAS de fome para cada perda (decisão do dono). */
@@ -87,6 +88,7 @@ export function msToNextHungerLoss(state: HungerPenaltyState, now: number): numb
  * Aplica a penalidade. Devolve a MESMA referência quando nada muda (cabe em tick/updater sem re-render).
  */
 export function applyHungerPenalty<T extends HungerPenaltyState>(state: T, now: number): T {
+  if (isBBStage((state as { evolutionStage?: unknown }).evolutionStage)) return state; // Forma BB: fome não tira coração
   const since = starvingSince(state.hunger);
   if (since === null) return state;
   const windows = starvingWindows(state.hunger, now);

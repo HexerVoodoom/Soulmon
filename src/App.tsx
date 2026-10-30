@@ -3597,7 +3597,7 @@ export default function App() {
       if (prev.evolutionLocked) return prev;
       // Evolução manual: só evolui com o GAUGE de evolução cheio (11/10/2026;
       // a regra é de `utils/evolutionGauge.ts`, aqui só se delega).
-      if (!gaugeFull(prev.evolutionPoints, prev.evolutionStage, prev.unlockedEvolutions)) return prev;
+      if (!gaugeFull(prev.evolutionPoints, prev.evolutionStage, prev.unlockedEvolutions, prev.totalXP)) return prev;
       // Os 5 iniciais não evoluem (um sprite só, 14/10/2026 — decisão do dono).
       if (isStarterId(prev.demoCharacterId)) return prev;
       // #59 (decisão do dono, 22/09/2026): "Queda: exigir uma virada completa
@@ -7888,7 +7888,7 @@ export default function App() {
                 onEvolve={handleEvolve}
                 canEvolve={(() => {
                   if (isStarterId(gameState.demoCharacterId)) return false;
-                  if (gameState.evolutionLocked || !gaugeFull(gameState.evolutionPoints, gameState.evolutionStage, gameState.unlockedEvolutions)) return false;
+                  if (gameState.evolutionLocked || !gaugeFull(gameState.evolutionPoints, gameState.evolutionStage, gameState.unlockedEvolutions, gameState.totalXP)) return false;
                   // #59 — depois de uma queda por HP, o botão só acende na
                   // virada seguinte. Mesma função que o `handleEvolve` commita.
                   if (!podeEvoluirDepoisDaQueda(gameState)) return false;
