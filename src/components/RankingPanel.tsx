@@ -12,12 +12,14 @@ import {
  * a faixa mede o jogador contra ele mesmo). Com `score`, envia o resultado ao montar (uma vez).
  * Falha de rede é silenciosa: ranking nunca atrapalha o fim da partida.
  */
-export function RankingPanel({ game, saveId, language, score = null, period = 'weekly' }: {
+export function RankingPanel({ game, saveId, language, score = null, period = 'weekly', inline = false }: {
   game: RankedGame;
   saveId?: string;
   language: Language;
   score?: number | null;
   period?: RankingPeriod;
+  /** A tabela direto na tela (sem botão nem modal): a pergunta do Pipo antes do minijogo (30/10/2026). */
+  inline?: boolean;
 }) {
   const isPt = language === 'pt-BR';
   const [board, setBoard] = useState<RankingBoard | null>(null);
@@ -47,6 +49,9 @@ export function RankingPanel({ game, saveId, language, score = null, period = 'w
           {isPt ? `Sua faixa ${period === 'monthly' ? 'no mês' : 'na semana'}: ${tier.pt}` : `Your tier this ${period === 'monthly' ? 'month' : 'week'}: ${tier.en}`}
         </p>
       )}
+      {inline ? (
+        <RankingList rows={board.top} meRank={board.me?.rank ?? null} meScore={board.me?.score ?? null} language={language} format={fmt} />
+      ) : (<>
       <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open}>
         {open ? (isPt ? 'Esconder ranking' : 'Hide ranking') : (isPt ? (period === 'monthly' ? 'Ver ranking do mês' : 'Ver ranking da semana') : (period === 'monthly' ? 'See monthly ranking' : 'See weekly ranking'))}
       </button>
@@ -56,6 +61,7 @@ export function RankingPanel({ game, saveId, language, score = null, period = 'w
       >
         <RankingList rows={board.top} meRank={board.me?.rank ?? null} meScore={board.me?.score ?? null} language={language} format={fmt} />
       </ModalSheet>
+      </>)}
     </div>
   );
 }
