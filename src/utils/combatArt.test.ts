@@ -4,19 +4,22 @@ import { VISUAL_ELEMENTS } from './combatFx';
 import { elementIcon, elementIconIds } from './elementIconArt';
 
 describe('combatArt — cenário, escudo e plataforma por elemento (rodada 2, 04/10/2026)', () => {
-  it('18 cenários e 18 escudos: um por elemento BASE + o neutro', () => {
-    expect(COMBAT_BG_COUNT).toBe(18);
+  // 30/10/2026: fada/industrial/planta ganharam cenário base próprio (21 cenários); os escudos deles ainda faltam (18).
+  it('21 cenários (todo elemento BASE + o neutro) e 18 escudos', () => {
+    expect(COMBAT_BG_COUNT).toBe(21);
     expect(COMBAT_SHIELD_COUNT).toBe(18);
-    for (const el of [...VISUAL_ELEMENTS.filter(e => e !== 'planta' && e !== 'industrial' && e !== 'fada'), 'neutro']) {
+    for (const el of [...VISUAL_ELEMENTS, 'neutro']) {
       expect(combatSceneBg(el), el).toMatch(new RegExp(String.raw`bg-${el}\.png\) center/cover #[0-9a-f]{6}$`));
+    }
+    for (const el of [...VISUAL_ELEMENTS.filter(e => e !== 'planta' && e !== 'industrial' && e !== 'fada'), 'neutro']) {
       expect(combatShield(el), el).toMatch(new RegExp(String.raw`escudo-${el}\.png$`));
     }
   });
   it('derivado usa o 1º componente; planta/industrial nunca viram vida/marcial; neutro tem arte própria; desconhecido → undefined', () => {
     expect(combatBaseElement('vapor')).toBe('fogo');
-    expect(combatBaseElement('planta')).toBeUndefined(); // sem bg-/escudo- base; nunca 'vida'
-    expect(combatSceneBg('planta')).toMatch(/dominio\/planta-1|planta-1/);
-    expect(combatSceneBg('industrial')).toMatch(/industrial-1/);
+    expect(combatBaseElement('planta')).toBe('planta'); // cenário base próprio desde 30/10/2026; nunca 'vida'
+    expect(combatSceneBg('planta')).toMatch(/bg-planta\.png/);
+    expect(combatSceneBg('industrial')).toMatch(/bg-industrial\.png/);
     expect(combatShield('planta')).toBeUndefined(); // cai no `defended` próprio do FX
     expect(combatBaseElement('flora')).toBeDefined();
     expect(combatSceneBg('neutro')).toMatch(/bg-neutro\.png\) center\/cover #285558$/);
