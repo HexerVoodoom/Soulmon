@@ -190,7 +190,9 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // medido no build limpo. Crescimento JUSTIFICADO pelo pedido do dono; corte real segue = partir o `App.tsx` e mandar Feira/Biblioteca para chunks.
   // 29/10/2026 (prévia de recompensa, tag de feito no rodapé, recap da evolução, pesadelo do sono automático e com app fechado, REGISTRO §188–§190):
   // 742_662 -> 779_790 (+37 KB), build limpo. Crescimento JUSTIFICADO pelo pedido do dono; corte real segue = partir o `App.tsx`.
-  'index.js': 779_790,
+  // 30/10/2026: 779_790 -> 799_708 (+19,9 KB), build limpo da v222. Pedidos do dono do dia: conquistas + Pontos de Conquista,
+  // ganho das missões, balão de comer, ranking único, porta dos minijogos, revive/Faísca, HP inteiro. Corte real segue = partir o `App.tsx`.
+  'index.js': 799_708,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.

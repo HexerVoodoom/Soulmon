@@ -1815,6 +1815,7 @@ function* fightSteps(a, b, opts) {
     yield* flush();
     yield* markDead();
     yield* tryCast(0, t);
+    yield* flush();
     yield* tryCast(1, t);
     yield* flush();
     yield* markDead();
@@ -10581,7 +10582,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../node_modules/fflate/esm/browser.js
+// D:/Soulmon/repo/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -13185,6 +13186,30 @@ function sanitizeDefeatedElements(raw) {
 }
 __name(sanitizeDefeatedElements, "sanitizeDefeatedElements");
 
+// api/_conquistas.js
+var ACHIEVEMENT_IDS = [
+  "perfect-day",
+  "habit-7",
+  "habit-21",
+  "habit-66",
+  "first-evolution",
+  "mega-form",
+  "dungeon-10",
+  "tournament-champion",
+  "dias-completos-30",
+  "dex-base-all",
+  "dex-fused-25",
+  "dex-fused-50",
+  "dex-fused-100",
+  "dex-fused-all",
+  "dex-all"
+];
+function sanitizeConquistasPagas(raw) {
+  if (!Array.isArray(raw)) return void 0;
+  return ACHIEVEMENT_IDS.filter((id) => raw.includes(id));
+}
+__name(sanitizeConquistasPagas, "sanitizeConquistasPagas");
+
 // api/_dayPlan.js
 var DAY_PLAN_MAX_IDS = 200;
 var ID_RE2 = /^[\w:.-]{1,120}$/;
@@ -13479,6 +13504,11 @@ async function onRequest7({ request, env }) {
       const q = sanitizeDefeatedElements(state.defeatedElements);
       if (q) state.defeatedElements = q;
       else delete state.defeatedElements;
+    }
+    if ("conquistasPagas" in state) {
+      const q = sanitizeConquistasPagas(state.conquistasPagas);
+      if (q) state.conquistasPagas = q;
+      else delete state.conquistasPagas;
     }
     if ("dayPlan" in state) {
       const q = sanitizeDayPlan(state.dayPlan);
@@ -14177,7 +14207,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-FuMxpw/functionsRoutes-0.7776474743420688.mjs
+// ../.wrangler/tmp/pages-Zrjf8O/functionsRoutes-0.9612948527689466.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -14503,7 +14533,7 @@ var routes = [
   }
 ];
 
-// ../node_modules/path-to-regexp/dist.es2015/index.js
+// D:/Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -14829,7 +14859,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../node_modules/wrangler/templates/pages-template-worker.ts
+// D:/Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
