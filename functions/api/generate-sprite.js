@@ -627,7 +627,8 @@ export async function onRequestPost({ request, env }) {
     }
 
     const tier = await requirePaidTier(env, id);
-    const tierOk = tier.ok || (tier.status === 402
+    // `__freeGen`: só `free-rookie.js` monta esse env (D6); o corpo do cliente não alcança.
+    const tierOk = tier.ok || env.__freeGen === true || (tier.status === 402
       && ((await verifiedAdmin(env, request, id)).admin || (await verifiedBetaFull(env, request, id)).betaFull));
     if (!tierOk) {
       return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS });
