@@ -465,6 +465,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua (Guilda):** `src/utils/community.guild.test.ts`, `src/utils/guildNoSave.contract.test.ts`.
 **Regra de negócio:** Diretório de jogadores, oponentes, ranking, amigos, presentes e a Guilda. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) §56 e §56-A.
 
+### `src/utils/minigameDifficulty.ts`
+**Dono de:** o rótulo da dificuldade dos minijogos — Comum/Avançado (PT) e Common/Advanced (EN), dono 30/10/2026; os ids e valores de save (1/2) não mudaram.
+**Exports:** `MinigameLevel` (type `1 | 2`), `difficultyLabel(level, isPt)`.
+
 ### `src/utils/mente/bolhas.ts`
 **Dono de:** Bolhas do Sonho (Ateliê da Mente / Refúgio, 30/09/2026): o go/no-go do modo `foco` (60 s, ~22% de fiapos escuros que se deixa passar) e o modo `calma` (sem fiapo, sem tempo, sem Bits); a escada de ritmo perto de 75–90% de acerto e o pagamento.
 **Exports:** tipos `BolhasMode`, `BubbleKind`, `Bubble`, `Staircase`; `BOLHAS_FOCO_DURATION_MS`, `BOLHAS_WISP_RATIO`, `BOLHAS_MAX_BITS` (8), `BOLHAS_POINTS_PER_BIT` (6), `BOLHAS_START_INTERVAL_MS`/`_MIN_`/`_MAX_`, `BOLHAS_CALMA_INTERVAL_MS`, `BOLHAS_CALMA_RISE_MS`, `STAIRCASE_WINDOW`/`_MIN_SAMPLES`/`_FAST_ABOVE`/`_SLOW_BELOW`; `initialStaircase`, `recordOutcome`, `riseMsFor`, `spawnBubble` (calma nunca gera fiapo), `bubbleProgress`, `hasEscaped`, `timeLeftMs`, `bolhasBits(score)`.
