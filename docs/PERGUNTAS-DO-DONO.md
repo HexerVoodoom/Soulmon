@@ -631,3 +631,7 @@ Decisões conservadoras tomadas pela orquestração; revisar:
 5. **Golpe básico do simulado no duelo** ainda não usa o elemento dele (`fx.elBasica` nulo); mudar muda a luta do servidor.
 6. **Fada** não está em `VISUAL_ELEMENTS` (arte do duelo cai em neutro); incluir muda o hash visual.
 7. Conferir no app, com sprites reais, a âncora pelo pé (modo Chefe da Feira pode descer alguns px).
+
+## 30/10/2026 — onboarding velado (D8/D9)
+
+1. **Trocar o preço do produto `soulmon.unlock.full` na Play Console** para US$ 3,99 / R$ 19,90 no dia em que o ONBOARDING_VELADO for ligado. O código só troca os rótulos de fallback (`FULL_UNLOCK_PRICE_LABEL(_USD)`); quem cobra é a Play, e `public/termos.html` também precisa mudar nesse dia (o `publishedPrice.test.ts` só trava o HTML contra o preço atual).

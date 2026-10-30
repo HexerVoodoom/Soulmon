@@ -271,3 +271,9 @@ O preço decidido (D9, US$ 3,99) segue; se quiser baixar, a conta agora permite.
 | D23 | Cinemática **híbrida**: quadro a quadro estilo PS1/PS2 (fundos + NPC em 2–4 poses, cortes secos, parallax leve, legenda) nas cenas 2, 5, 8 e 9; **vídeo Gemini mudo + legenda** só na fuga (3) e no resgate (8, se valer). Áudio = música/ambiente do app, sem voz. |
 | D24 | **Tutorial de alimentar** entra na **cena 6, depois da tarefa**: o ancião diz que força = tarefa + alimento; abre a bolsa, arrasta a comida até o BB. |
 | D25 | Arte dos Velados: **busto no padrão NPC** do app (molde canônico), inspirado nas folhas de conceito das 5 Ordens (refs GPT em estilo diferente: servem de ideia, não de estilo). Gerar no ChatGPT. |
+
+## 6.2 Implementação D8/D9/D17 (30/10/2026)
+
+- **D8**: `src/utils/evolutionPaywall.ts` (fonte única) chamada em `canEvolve`, `handleEvolve` e `handleEvolveRequest` (App.tsx). Grátis evolui BB→rookie; do rookie em diante pede `accountTier:'paid'`. Convite `UnlockNudge` motivo `evolve-free` na aba Evolução (copy EN+PT), mesmo funil de telemetria de `evolution`. Não existe validação de evolução no servidor (é 100% cliente); o espelho é `generate-sprite.js` (402 `paid-tier-required`), coberto por teste de paridade.
+- **D9**: `FULL_UNLOCK_PRICE_LABEL(_USD)` viram R$ 19,90 / US$ 3.99 com o interruptor ligado (`*_VELADO` em `monetization.ts`). Play Console e `termos.html` são do dono (ver PERGUNTAS-DO-DONO).
+- **D17 (não implementado)**: as formas são geradas hoje por `useRegenAparencia`/`spriteTrigger.ts` (`spriteBatch`/`birthBatch`: lote da forma-destino + próximas) chamando `functions/api/generate-sprite.js` (exige conta paga, cap por forma e vitalício). Ponto de troca para "sob demanda": `spriteBatch` em `src/utils/spriteTrigger.ts`, limitando o lote à forma que o jogador alcança (`targetFormId`) em vez de pré-gerar o galho; fica para uma tarefa própria por tocar custo/caps do servidor.
