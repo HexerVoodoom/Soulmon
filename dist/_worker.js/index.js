@@ -2952,6 +2952,125 @@ function simulateDuel({ me, opp, seed, taps, elementScale = 0 }) {
 }
 __name(simulateDuel, "simulateDuel");
 
+// api/_claDiretorio.js
+var DIR_PREFIX = "coopDir:";
+var coopDirKey = /* @__PURE__ */ __name((dirId) => `${DIR_PREFIX}${dirId}`, "coopDirKey");
+var coopReqKey = /* @__PURE__ */ __name((save) => `coopReq:${save}`, "coopReqKey");
+var coopReqInPrefix = /* @__PURE__ */ __name((gid) => `coopReqIn:${gid}:`, "coopReqInPrefix");
+var coopReqInKey = /* @__PURE__ */ __name((gid, rid) => `${coopReqInPrefix(gid)}${rid}`, "coopReqInKey");
+var PEDIDO_TTL = 86400 * 7;
+var DIRETORIO_MAX = 30;
+var PEDIDOS_MAX = 30;
+var VALID_OPACO = /^[0-9a-f]{16}$/;
+var idOpacoValido = /* @__PURE__ */ __name((s) => typeof s === "string" && VALID_OPACO.test(s), "idOpacoValido");
+async function idDoDiretorio(env, gid) {
+  const segredo = typeof env?.GUILD_MEMBER_SECRET === "string" ? env.GUILD_MEMBER_SECRET : "";
+  const bytes = new TextEncoder().encode(`soulmon-guild-dir|${segredo}|${gid}`);
+  const h = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
+  return Array.from(h.slice(0, 8), (b) => b.toString(16).padStart(2, "0")).join("");
+}
+__name(idDoDiretorio, "idDoDiretorio");
+function assinaturaDoDiretorio(g, max2) {
+  const size = Array.isArray(g?.members) ? g.members.length : 0;
+  return size > 0 && size < max2 && g.dirClosed !== true ? `${g.name}|${size}` : "x";
+}
+__name(assinaturaDoDiretorio, "assinaturaDoDiretorio");
+async function sincronizarDiretorio(env, g, max2, { prazo = {} } = {}) {
+  const size = Array.isArray(g?.members) ? g.members.length : 0;
+  const dirId = await idDoDiretorio(env, g.id);
+  if (assinaturaDoDiretorio(g, max2) !== "x") await kvOrThrow(env).put(coopDirKey(dirId), JSON.stringify({ gid: g.id, n: g.name, s: size }), { ...prazo, metadata: { n: g.name, s: size } });
+  else await kvOrThrow(env).delete(coopDirKey(dirId));
+}
+__name(sincronizarDiretorio, "sincronizarDiretorio");
+async function tirarDoDiretorio(env, gid) {
+  await kvOrThrow(env).delete(coopDirKey(await idDoDiretorio(env, gid)));
+}
+__name(tirarDoDiretorio, "tirarDoDiretorio");
+async function lerEntrada(env, dirId) {
+  if (!idOpacoValido(dirId)) return null;
+  const raw = await kvOrThrow(env).get(coopDirKey(dirId));
+  if (!raw) return null;
+  try {
+    const e = JSON.parse(raw);
+    return e && typeof e.gid === "string" ? e : null;
+  } catch {
+    return null;
+  }
+}
+__name(lerEntrada, "lerEntrada");
+async function listarDiretorio(env, max2) {
+  const r = await kvOrThrow(env).list({ prefix: DIR_PREFIX, limit: DIRETORIO_MAX * 2 });
+  const out = [];
+  for (const k of r?.keys ?? []) {
+    const dirId = String(k.name).slice(DIR_PREFIX.length);
+    if (!idOpacoValido(dirId)) continue;
+    let meta = k.metadata;
+    if (!meta || typeof meta !== "object") {
+      meta = await lerEntrada(env, dirId);
+      if (!meta) continue;
+    }
+    const size = Math.floor(Number(meta.s));
+    const name = typeof meta.n === "string" ? meta.n : "";
+    if (!name || !(size > 0) || size >= max2) continue;
+    out.push({ dirId, name, size, max: max2 });
+  }
+  return out;
+}
+__name(listarDiretorio, "listarDiretorio");
+async function lerPedido(env, save) {
+  const raw = await kvOrThrow(env).get(coopReqKey(save));
+  if (!raw) return null;
+  try {
+    const p = JSON.parse(raw);
+    return p && typeof p.gid === "string" && idOpacoValido(p.dirId) ? p : null;
+  } catch {
+    return null;
+  }
+}
+__name(lerPedido, "lerPedido");
+async function lerPedidoNoCla(env, gid, rid) {
+  if (!idOpacoValido(rid)) return null;
+  const raw = await kvOrThrow(env).get(coopReqInKey(gid, rid));
+  if (!raw) return null;
+  try {
+    const p = JSON.parse(raw);
+    return p && typeof p.save === "string" ? p : null;
+  } catch {
+    return null;
+  }
+}
+__name(lerPedidoNoCla, "lerPedidoNoCla");
+async function gravarPedido(env, save, gid, dirId, rid, name, agora = Date.now()) {
+  await kvOrThrow(env).put(coopReqKey(save), JSON.stringify({ gid, dirId, rid, at: agora }), { expirationTtl: PEDIDO_TTL });
+  await kvOrThrow(env).put(coopReqInKey(gid, rid), JSON.stringify({ save, name: name ?? null, at: agora }), { expirationTtl: PEDIDO_TTL, metadata: { at: agora } });
+}
+__name(gravarPedido, "gravarPedido");
+async function apagarPedido(env, save) {
+  const p = await lerPedido(env, save);
+  await kvOrThrow(env).delete(coopReqKey(save));
+  if (p?.rid) await kvOrThrow(env).delete(coopReqInKey(p.gid, p.rid));
+  return p;
+}
+__name(apagarPedido, "apagarPedido");
+async function listarPedidos(env, gid) {
+  const r = await kvOrThrow(env).list({ prefix: coopReqInPrefix(gid), limit: PEDIDOS_MAX * 2 });
+  const out = [];
+  for (const k of r?.keys ?? []) {
+    const rid = String(k.name).slice(coopReqInPrefix(gid).length);
+    const p = await lerPedidoNoCla(env, gid, rid);
+    if (!p) continue;
+    const meu = await lerPedido(env, p.save);
+    if (!meu || meu.gid !== gid) {
+      await kvOrThrow(env).delete(k.name);
+      continue;
+    }
+    out.push({ requestId: rid, name: typeof p.name === "string" ? p.name : null, at: Number(p.at) || 0 });
+    if (out.length >= PEDIDOS_MAX) break;
+  }
+  return out.sort((a, b) => a.at - b.at);
+}
+__name(listarPedidos, "listarPedidos");
+
 // api/_coop.js
 var COOP_MAX_MEMBERS = 12;
 var PRESENCA_NOMINAL_MAX = 4;
@@ -3059,7 +3178,18 @@ async function gravarGrupo(env, g, opcoes = {}) {
     conjunta = true;
   }
   const blobPrazo = semPrazo ? {} : { expirationTtl: Math.max(60, Math.floor((g.prazoAte - agora) / 1e3)) };
+  const sigDir = assinaturaDoDiretorio(g, COOP_MAX_MEMBERS);
+  const diretorio = conjunta || g.dirSig !== sigDir;
+  g.dirSig = sigDir;
   await kvOrThrow(env).put(coopKey(g.id), JSON.stringify(g), blobPrazo);
+  try {
+    await gravarIndices(env, g, { novosMembros, codigoNovo, conjunta, semPrazo });
+  } finally {
+    if (diretorio) await sincronizarDiretorio(env, g, COOP_MAX_MEMBERS, { prazo: blobPrazo });
+  }
+}
+__name(gravarGrupo, "gravarGrupo");
+async function gravarIndices(env, g, { novosMembros, codigoNovo, conjunta, semPrazo }) {
   const prazo = semPrazo ? {} : { expirationTtl: COOP_TTL };
   if (!conjunta) {
     await Promise.all([
@@ -3077,7 +3207,7 @@ async function gravarGrupo(env, g, opcoes = {}) {
     if (raw) await kvOrThrow(env).put(coopFioKey(g.id, m), raw, prazo);
   }));
 }
-__name(gravarGrupo, "gravarGrupo");
+__name(gravarIndices, "gravarIndices");
 function precisaRenovar(g, agora = Date.now()) {
   if (Number(g?.bosqueProgress ?? 0) > 0) return !g.semPrazoGravado;
   return !Number.isFinite(g?.prazoAte) || g.prazoAte - agora < PRAZO_RENOVA_ANTES_MS;
@@ -3175,6 +3305,7 @@ async function coopLeave(env, saveId, { exclusao = false, now = /* @__PURE__ */ 
     }
     await kvOrThrow(env).delete(coopKey(g.id));
     await kvOrThrow(env).delete(coopCodeKey(g.code));
+    await tirarDoDiretorio(env, g.id);
   } else {
     await gravarGrupo(env, g);
   }
@@ -4171,6 +4302,7 @@ async function handleDeleteConfirm(env, saveId, body) {
     coop = await coopLeave(env, saveId, { exclusao: true });
   });
   await tentar("coopClaim (resgates da Guilda)", () => apagarClaims(env, saveId));
+  await tentar("coopReq (pedido de entrada em cl\xE3, \xA7203)", () => apagarPedido(env, saveId));
   const push = await deletePushSubscriptions(env, saveId);
   for (const k of c.sprites.blobs) await tentar(k, () => store.delete(k));
   for (const k of c.sprites.imgs) await tentar(k, () => store.delete(k));
@@ -8721,8 +8853,15 @@ var GUILD_ACTIONS = Object.freeze({
   guildFeiraTrailDone: "POST",
   guildLeave: "POST",
   guildRename: "POST",
-  guildNewCode: "POST"
+  guildNewCode: "POST",
+  guildDirectory: "GET",
+  guildRequest: "POST",
+  guildRequestCancel: "POST",
+  guildRequests: "GET",
+  guildRequestDecide: "POST",
+  guildRequestsOpen: "POST"
 });
+var GUILD_REQUEST_LIMIT = { limit: 10, windowMs: 36e5 };
 var limiteDaGuilda = /* @__PURE__ */ __name(() => GUILD_LIGHT, "limiteDaGuilda");
 async function onRequestOptions5() {
   return new Response(null, { headers: CORS5 });
@@ -8799,6 +8938,8 @@ async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date())
     weekKey: semana,
     code: g.code,
     isHost: anfitriaoDe(g) === euSave,
+    // §203: "Aceitar pedidos" (padrão ligado). Só o anfitrião lê; um booleano do clã, nada por pessoa.
+    requestsOpen: g.dirClosed !== true,
     size,
     full: size >= COOP_MAX_MEMBERS,
     members: membros,
@@ -8895,6 +9036,102 @@ async function handleGuild({ request, env }) {
     const g = await grupoDe(env, id, semana);
     return vista(g ? await montar(g, id, hoje) : null);
   }
+  async function entrarNoGrupo(gid, quem, lido = null) {
+    const g = await lerGrupo(env, gid) ?? lido;
+    if (!g) return { erro: "no {g}" };
+    rolarSemana(g, semana);
+    if (g.members.includes(quem)) {
+      await apagarPedido(env, quem);
+      return { g };
+    }
+    if (g.members.length >= COOP_MAX_MEMBERS) return { erro: "{g} full" };
+    g.members.push(quem);
+    g.desde = { ...g.desde || {}, [quem]: hoje };
+    await gravarGrupo(env, g, { novosMembros: [quem] });
+    let confirmado = await lerGrupo(env, g.id);
+    if (confirmado && !confirmado.members.includes(quem)) {
+      if (confirmado.members.length >= COOP_MAX_MEMBERS) {
+        await kvOrThrow(env).delete(coopOfKey(quem));
+        return { erro: "{g} full" };
+      }
+      confirmado.members.push(quem);
+      confirmado.desde = { ...confirmado.desde || {}, [quem]: hoje };
+      await gravarGrupo(env, confirmado, { novosMembros: [quem] });
+      confirmado = await lerGrupo(env, g.id);
+    }
+    if (!confirmado || !confirmado.members.includes(quem)) {
+      await kvOrThrow(env).delete(coopOfKey(quem));
+      return { erro: "join collision" };
+    }
+    await apagarPedido(env, quem);
+    await renovarCartao(env, confirmado.id, quem);
+    return { g: rolarSemana(confirmado, semana) };
+  }
+  __name(entrarNoGrupo, "entrarNoGrupo");
+  if (action === "guildDirectory") {
+    if (await grupoDe(env, id, semana)) return json12({ clans: [], pending: null });
+    const pend = await lerPedido(env, id);
+    const pending = pend ? { dirId: pend.dirId, name: (await lerEntrada(env, pend.dirId))?.n ?? null } : null;
+    const clans = (await listarDiretorio(env, COOP_MAX_MEMBERS)).sort((a, b) => b.size - a.size || a.name.localeCompare(b.name));
+    return json12({ clans, pending });
+  }
+  if (action === "guildRequestCancel") {
+    await apagarPedido(env, id);
+    return json12({ ok: true });
+  }
+  if (action === "guildRequest") {
+    if (await grupoDe(env, id, semana)) return erro("already in a {g}", 409);
+    const dirId = String(body.dirId ?? "");
+    const entrada = idOpacoValido(dirId) ? await lerEntrada(env, dirId) : null;
+    const g = entrada ? await lerGrupo(env, entrada.gid) : null;
+    if (!g) {
+      if (entrada) await kvOrThrow(env).delete(coopDirKey(dirId));
+      return erro("invalid clan", 404);
+    }
+    const atual = await lerPedido(env, id);
+    if (atual && atual.gid === g.id) return json12({ pending: { dirId, name: g.name } });
+    if (atual) return erro("request pending", 409, { pending: { dirId: atual.dirId, name: (await lerEntrada(env, atual.dirId))?.n ?? null } });
+    if (g.dirClosed === true) return erro("requests closed", 409);
+    if (g.members.length >= COOP_MAX_MEMBERS) return erro("{g} full", 409);
+    const gate2 = takeToken("guildRequest", id, GUILD_REQUEST_LIMIT);
+    if (!gate2.ok) return tooManyRequests(gate2.retryAfter, CORS5);
+    const rid = await idOpacoDoMembro(env, g.id, id);
+    const nome = (await getProfile(env, id).catch(() => null))?.name;
+    await gravarPedido(env, id, g.id, dirId, rid, typeof nome === "string" ? nome.slice(0, 40) : null);
+    return json12({ pending: { dirId, name: g.name } });
+  }
+  if (action === "guildRequests" || action === "guildRequestDecide" || action === "guildRequestsOpen") {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro("no {g}", 404);
+    if (anfitriaoDe(g) !== id) return erro("not host", 403);
+    if (action === "guildRequestsOpen") {
+      const fresco = await lerGrupo(env, g.id) ?? g;
+      if (body.open === false) fresco.dirClosed = true;
+      else delete fresco.dirClosed;
+      await gravarGrupo(env, fresco);
+      return vista(await montar(rolarSemana(fresco, semana), id, hoje));
+    }
+    if (action === "guildRequests") return json12({ requests: await listarPedidos(env, g.id) });
+    const rid = String(body.requestId ?? "");
+    const pedido = await lerPedidoNoCla(env, g.id, rid);
+    const dele = pedido ? await lerPedido(env, pedido.save) : null;
+    if (!pedido || !dele || dele.gid !== g.id) {
+      if (idOpacoValido(rid)) await kvOrThrow(env).delete(coopReqInKey(g.id, rid));
+      return json12({ result: "gone", guild: await montar(g, id, hoje) });
+    }
+    if (body.approve !== true) {
+      await apagarPedido(env, pedido.save);
+      return json12({ result: "declined", guild: await montar(g, id, hoje) });
+    }
+    const ja = await grupoDe(env, pedido.save, semana);
+    if (ja) {
+      await apagarPedido(env, pedido.save);
+      return json12({ result: ja.id === g.id ? "approved" : "gone", guild: await montar(g, id, hoje) });
+    }
+    const r = await entrarNoGrupo(g.id, pedido.save);
+    if (r.erro) return erro(r.erro, 409);
+    return json12({ result: "approved", guild: await montar(r.g, id, hoje) });
+  }
   if (action === "guildCreate") {
     const ja = await grupoDe(env, id, semana);
     if (ja) return erro("already in a {g}", 409, { [chave]: await montar(ja, id, hoje) });
@@ -8920,6 +9157,7 @@ async function handleGuild({ request, env }) {
     if (vencedor !== g.id) {
       await kvOrThrow(env).delete(coopKey(g.id));
       await kvOrThrow(env).delete(coopCodeKey(g.code));
+      await tirarDoDiretorio(env, g.id);
       const outro = await grupoDe(env, id, semana);
       return erro("already in a {g}", 409, { [chave]: outro ? await montar(outro, id, hoje) : null });
     }
@@ -8936,32 +9174,12 @@ async function handleGuild({ request, env }) {
     if (host && host !== id && await kvOrThrow(env).get(coopOfKey(host)) !== lido.id) {
       await kvOrThrow(env).delete(coopKey(lido.id));
       await kvOrThrow(env).delete(coopCodeKey(code));
+      await tirarDoDiretorio(env, lido.id);
       return erro("invalid code", 404);
     }
-    const g = await lerGrupo(env, lido.id) ?? lido;
-    rolarSemana(g, semana);
-    if (g.members.includes(id)) return vista(await montar(g, id, hoje));
-    if (g.members.length >= COOP_MAX_MEMBERS) return erro("{g} full", 409);
-    g.members.push(id);
-    g.desde = { ...g.desde || {}, [id]: hoje };
-    await gravarGrupo(env, g, { novosMembros: [id] });
-    let confirmado = await lerGrupo(env, g.id);
-    if (confirmado && !confirmado.members.includes(id)) {
-      if (confirmado.members.length >= COOP_MAX_MEMBERS) {
-        await kvOrThrow(env).delete(coopOfKey(id));
-        return erro("{g} full", 409);
-      }
-      confirmado.members.push(id);
-      confirmado.desde = { ...confirmado.desde || {}, [id]: hoje };
-      await gravarGrupo(env, confirmado, { novosMembros: [id] });
-      confirmado = await lerGrupo(env, g.id);
-    }
-    if (!confirmado || !confirmado.members.includes(id)) {
-      await kvOrThrow(env).delete(coopOfKey(id));
-      return erro("join collision", 409);
-    }
-    await cartao(confirmado);
-    return vista(await montar(rolarSemana(confirmado, semana), id, hoje));
+    const r = await entrarNoGrupo(lido.id, id, lido);
+    if (r.erro) return erro(r.erro, 409);
+    return vista(await montar(r.g, id, hoje));
   }
   if (action === "guildCheckin") {
     const g = await grupoDe(env, id, semana);
@@ -14207,7 +14425,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-Zrjf8O/functionsRoutes-0.9612948527689466.mjs
+// ../.wrangler/tmp/pages-cog5PS/functionsRoutes-0.9826466086697446.mjs
 var routes = [
   {
     routePath: "/api/account",
