@@ -11,10 +11,10 @@
 //   3. A tabela de CUSTO do reroll: 3 grátis por dia do jogador; do 4º em diante só Bits (15, 30, 45 e 45 fixo). Nunca Crédito/Emblema.
 //   4. `arenaSceneOfSeed(seed)` — o cenário da run: sempre uma das duas arenas do Torneio, fixa durante a run (escolhida pela semente).
 // ---------------------------------------------------------------------------
-import { ARENA_COMBO_ELEMENTS, buildArenaRound, type ArenaEnemy } from './arena';
+import { buildArenaRound, type ArenaEnemy } from './arena';
 import { NOVOS_DATA } from './novosSoulmonData';
 import { mulberry32 } from './combate/rng';
-import { arenaCardSeeds, isComboSeed, isStraySeed } from './strayFoes';
+import { arenaCardSeeds, isStraySeed } from './strayFoes';
 import { spendBitsPaidFirst, type BitsOriginState } from './bitsOrigin';
 import { ARENA_BG_SCENES, type DungeonScene } from './dungeonScenes';
 
@@ -66,21 +66,19 @@ export const ARENA_BASE_ELEMENTS: readonly string[] = [...new Set(NOVOS_DATA.map
 const RUN_ELEMENT_MIX = 0x3e1e3e17;
 
 /**
- * §199 (dono, 30/10/2026): o ELEMENTO da run `seed` — o que o card mostra e o de TODO inimigo das 5 rodadas. Antes o card mostrava só os
- * elementos da 1ª rodada (e só a base do combinado), e as rodadas seguintes sorteavam outros: "escolhi um elemento e veio outro".
- * Run combinada = um elemento FUNDIDO (id do sprite, `spriteElement`), então os fundidos também aparecem.
+ * §199 (emenda do dono, 30/10/2026): o elemento BASE da run `seed` — o que o card mostra e o de todo inimigo das 5 rodadas (com uma chance
+ * pequena, `ARENA_FUSED_FOE_CHANCE`, de um inimigo ser um fundido que CONTÉM esse elemento). Fundido não entra no sorteio do elemento.
  */
 export function arenaRunElement(seed: number): string {
-  const pool = isComboSeed(seed) && ARENA_COMBO_ELEMENTS.length > 0 ? ARENA_COMBO_ELEMENTS : ARENA_BASE_ELEMENTS;
-  return pool[Math.floor(mulberry32((seed ^ RUN_ELEMENT_MIX) | 0)() * pool.length)];
+  return ARENA_BASE_ELEMENTS[Math.floor(mulberry32((seed ^ RUN_ELEMENT_MIX) | 0)() * ARENA_BASE_ELEMENTS.length)];
 }
 
 /** Os inimigos da rodada `rodada` (1-based) da run `seed`. Pura: card e luta chamam ESTA. */
 export function arenaFoesOfSeed(seed: number, rodada: number): ArenaEnemy[] {
-  return buildArenaRound(rodada, 1, mulberry32((seed ^ Math.imul(rodada, 0x9e3779b1)) | 0), undefined, isStraySeed(seed), isComboSeed(seed), arenaRunElement(seed));
+  return buildArenaRound(rodada, 1, mulberry32((seed ^ Math.imul(rodada, 0x9e3779b1)) | 0), undefined, isStraySeed(seed), false, arenaRunElement(seed)); // §199 emenda: o fundido vem pela chance por inimigo, não pela run
 }
 
-/** O elemento que o card MOSTRA: o da run (o mesmo de todo inimigo dela; fundido nas combinadas). */
+/** O elemento que o card MOSTRA: o BASE da run. */
 export const arenaCardElements = (seed: number): string[] => [arenaRunElement(seed)];
 
 /**

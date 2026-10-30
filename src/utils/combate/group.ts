@@ -25,6 +25,8 @@ import {
 } from './specials';
 
 const MAX_EVENTS = 400_000;
+/** §195: folga mínima (fração do intervalo) entre o 1º golpe do jogador e o do inimigo que sorteou abrir antes dele. */
+export const FAIR_START_GAP = 0.1;
 
 export interface GroupOptions {
   readonly seed: number;
@@ -48,8 +50,6 @@ export interface GroupOptions {
    * because the taps happen DURING the fight; the offline `cheer` list is fixed up front.
    */
   readonly cheerDrain?: () => number;
-  /** Energia BRUTA recebida desde a última chamada (item Faísca de Alma, 30/10/2026): soma direto na barra do especial do jogador. Opt-in. */
-  readonly energyDrain?: () => number;
   /** Fração de HP inicial de cada inimigo (padrão 1). A CONTINUAÇÃO após o Coraçãozinho segue de onde o inimigo estava. */
   readonly startFoesHp?: readonly number[];
   /** Efficiency of the area. Default AREA_EFFICIENCY (1); a knob for the ruler to price the alternatives (0.9, or full E per foe). */
@@ -140,7 +140,10 @@ export function* groupFightSteps(
   const ph = mulberry32(seed ^ PHASE_SALT);
   const phases = [ph(), ph()];
   for (let i = 1; i < foes.length; i++) phases.push(ph());
-  if (opts.fairStart) for (let i = 1; i < phases.length; i++) phases[i] = Math.max(phases[i], phases[0]);
+  // §195 + correção de 30/10 (v223): `max(fase, a do jogador)` deixava o inimigo que sorteou ANTES no MESMO instante do jogador — o golpe
+  // dos dois saía junto ("parece simultâneo"). Agora quem viria antes entra ESCALONADO depois do jogador: p0 + G·(1 + p) (folga ≥ G do
+  // intervalo; dois desses não colidem porque mantêm a ordem do sorteio).
+  if (opts.fairStart) for (let i = 1; i < phases.length; i++) if (phases[i] <= phases[0]) phases[i] = phases[0] + FAIR_START_GAP * (1 + phases[i]);
 
   const mk = (s: FightSide, who: number, stream: number, hp0: number, en0: number): G => {
     const c = { ...s.combatant, hp: s.combatant.hp * hpS };
@@ -288,10 +291,6 @@ export function* groupFightSteps(
     if (opts.cheerDrain && pl.sp && pl.dead === Infinity) {
       const n = Math.max(0, Math.floor(opts.cheerDrain()));
       if (n > 0) pl.en += CHEER.energyPerDischarge * n;
-    }
-    if (opts.energyDrain && pl.sp && pl.dead === Infinity) {
-      const x = opts.energyDrain();
-      if (x > 0) pl.en = Math.min(ENERGY_TRIGGER, pl.en + x);
     }
     let tEn = Infinity;
     for (const f of all) {

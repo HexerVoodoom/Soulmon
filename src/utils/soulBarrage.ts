@@ -9,7 +9,8 @@
  * velocidade e densidade crescem. Pontos = abates; Bits = `barrageBits(score)` pelo funil
  * de minigames (o teto diário é aplicado fora daqui).
  */
-import { ENEMY_ROSTER, type EnemyStage, type RosterEntry } from './enemyRoster';
+import type { EnemyStage, RosterEntry } from './enemyRoster';
+import { BARRAGE_ROSTER } from './temaInimigos';
 
 /**
  * RODADA 4 (26/10/2026, N6): só inimigos do elemento ESPAÇO (a criatura base e os rookies combinados com espaço do
@@ -17,7 +18,8 @@ import { ENEMY_ROSTER, type EnemyStage, type RosterEntry } from './enemyRoster';
  * ultimate — mais vida cada); inimigo que atravessa até a base TIRA VIDA; sprites maiores; tiro inimigo é o FX de espaço.
  */
 export const BARRAGE_ELEMENT = 'espaco';
-const SPACE_ROSTER: readonly RosterEntry[] = ENEMY_ROSTER.filter(e => e.elements[0] === BARRAGE_ELEMENT && e.stage !== 'mega');
+/** 30/10/2026 (dono): elenco RENOVADO — criaturas próprias da Barrage (`temaInimigos.ts` › `BARRAGE_ROSTER`), ainda só ESPAÇO. */
+const SPACE_ROSTER: readonly RosterEntry[] = BARRAGE_ROSTER.filter(e => e.elements[0] === BARRAGE_ELEMENT && e.stage !== 'mega');
 
 export const FIELD_W = 360;
 export const FIELD_H = 560;

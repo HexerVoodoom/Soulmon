@@ -103,7 +103,7 @@ describe('Supabase — saiu do app', () => {
       try { return JWT_REAL.test(readFileSync(p, 'utf8')); } catch { return false; }
     }).map(rel);
     expect(culpados, 'JWT real commitado — redija e revogue').toEqual([]);
-  });
+  }, 180_000); // varre o repositório INTEIRO (≈30 s com product/ e docs/ grandes); o teto padrão de 15 s é do caso típico
 });
 
 describe('🔴 o desenho: cliente -> /api/transcribe -> Groq', () => {

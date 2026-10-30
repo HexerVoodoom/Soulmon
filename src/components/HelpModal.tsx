@@ -140,7 +140,7 @@ const TERMS: Term[] = [
     descPt: 'Quando a barra enche, a próxima forma começa a tomar corpo — leva um tempo. Volte quando quiser: ela espera por você, e nada se perde.',
   },
   {
-    // Forma BB (Onboarding Velado, D3–D5; REGISTRO §204). Regra em `utils/bbStage.ts`; só aparece no jogo com o interruptor ligado.
+    // Forma BB (Onboarding Velado, D3–D5; REGISTRO §207). Regra em `utils/bbStage.ts`; só aparece no jogo com o interruptor ligado.
     icon: '🥚', en: 'The BB form', pt: 'A forma BB',
     descEn: 'A tiny first form before Rookie: 6 hearts, no daily goal, nothing drains it. It can evolve once your Bond reaches level 2. Tournament, PvP Duel and Guild stay closed until then.',
     descPt: 'Uma forma pequenina antes do Rookie: 6 corações, sem meta diária, nada a desgasta. Pode evoluir quando o seu Vínculo chegar ao nível 2. Torneio, Duelo PvP e Guilda ficam fechados até lá.',
@@ -149,6 +149,11 @@ const TERMS: Term[] = [
     icon: '🔒', en: 'Evolution padlock', pt: 'Cadeado de evolução',
     descEn: 'Tap your current Soulmon on the Evolution page. Locked, it never evolves — the path keeps adding up.',
     descPt: 'Toque no seu Soulmon atual na página de Evolução. Travado, seu Soulmon nunca evolui — o caminho segue somando.',
+  },
+  {
+    icon: '🧪', en: 'Element potion', pt: 'Poção de elemento',
+    descEn: 'In the Laboratory, at the Evolution Center, spend element essences to brew a potion. Give it to your Soulmon from the item folder: at the next evolution it carries that element. Only affects the next evolution; after that your Soulmon returns to its score-based element. A new potion replaces the one waiting.',
+    descPt: 'No Laboratório, no Centro de Evolução, gaste essências de elementos para preparar uma poção. Dê ao Soulmon pela pasta de itens: na próxima evolução ele carrega esse elemento. Vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação dele. Uma poção nova substitui a que estava esperando.',
   },
   {
     icon: '🌀', en: 'Glitchtama', pt: 'Glitchtama',

@@ -137,7 +137,7 @@ import {
 } from './utils/notificationPermission';
 // `CHIP_BOOST`/`HEART_HEAL` saíram daqui de propósito: os números do uso de item
 // especial agora são lidos uma vez só, dentro de `utils/specialItemUse.ts`.
-import { ALL_SHOP_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI } from './utils/shop';
+import { ALL_SHOP_ITEMS, SPECIAL_ITEMS, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, SPARK_HOME_ENERGY } from './utils/shop';
 import { getDungeonBest, rollDungeonHeartDrop } from './utils/dungeonBase';
 import { heartDropBonus, rollPetPassive, getPassive } from './utils/passives';
 import { recordMood, moodFor, moodSummary, type MoodValue } from './utils/mood';
@@ -223,7 +223,7 @@ import { isOnboardingVelado, sanitizeStageId } from './utils/bbStage';
 import { sortearBB } from './data/bbPool';
 import { LINE_FULL_ART } from './utils/lineFullArt';
 import { pedirFreeRookie } from './utils/freeRookie';
-import { fetchEntitlement, spendCredits, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
+import { fetchEntitlement, spendCredits, buyEssence, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
 import { purchase, reconcileSubscription, reconcilePurchases } from './utils/playBilling';
 import { SUBSCRIPTION_SKU, setSubscriptionFromEntitlement, useSubscriptionStatus } from './utils/subscription';
 import { applySubscriptionClaim } from './utils/subscriptionShop';
@@ -632,6 +632,8 @@ const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m
 const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
+const ElementPotionSheet = lazy(() => import('./components/ElementPotionSheet').then(m => ({ default: m.ElementPotionSheet })));
+import { applyPotionOnEvolve, craftPotion, canAffordPotion, isPotionUnlocked } from './utils/elementPotion';
 import { EssencesSection } from './components/EssencesSection';
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
 const AdventureDiary = lazy(() => import('./components/AdventureDiary').then(m => ({ default: m.AdventureDiary })));
@@ -847,6 +849,7 @@ export default function App() {
   }, [setGameState]);
   /** Sub-aba do Laboratório (Evolução / Soulmon / Estatísticas). */
   const [labTab, setLabTab] = useState<LabTab>('evolution');
+  const [potionOpen, setPotionOpen] = useState(false); // Poção de Elemento (Centro de Evolução)
   const pane = paneFor(currentView, labTab);
   /** A área do Mapa da view atual, ou `null` fora de uma área (minimal-ui F4). */
   const area = areaOf(currentView);
@@ -3698,7 +3701,8 @@ export default function App() {
       // WP4.19 — subir de novo depois de uma queda por HP apaga a marca da
       // queda e acende a da volta. A regra é de `dailyReset.ts` (dona), não
       // daqui: `App.tsx` só delega. Cosmética, opt-in, e nunca marca de queda.
-      const base = applyRedemption(prev, newEvolutionStage !== prev.evolutionStage);
+      // Poção de Elemento: o elemento pendente vira o do Soulmon e o campo é limpo (`utils/elementPotion.ts`).
+      const base = applyPotionOnEvolve(applyRedemption(prev, newEvolutionStage !== prev.evolutionStage));
       return {
         ...base,
         evolutionStage: newEvolutionStage,
@@ -3806,17 +3810,15 @@ export default function App() {
           : "🌀 One Glitchtama a day. It'll wait for you tomorrow.");
         return;
       }
-      if (refused === 'battle-only') {
-        toast(language === 'pt-BR'
-          ? '✨ A Faísca de Alma se usa dentro de uma luta da Masmorra.'
-          : '✨ The Soul Spark is used inside a Dungeon fight.');
-        return;
-      }
       if (refused === 'stage-cap') {
         // D-97: 3 chips por estágio. O chip volta intacto e vale no próximo estágio — sem culpa.
         toast(language === 'pt-BR'
           ? `Este Soulmon já recebeu ${CHIPS_PER_STAGE} chips neste estágio. O chip te espera no próximo.`
           : `This Soulmon already got ${CHIPS_PER_STAGE} chips this stage. The chip will wait for the next one.`);
+        return;
+      }
+      if (refused === 'already-full' && special.kind === 'spark') {
+        toast(language === 'pt-BR' ? '✨ A energia já está cheia. A Faísca te espera.' : '✨ Energy is already full. The Spark will wait.');
         return;
       }
       if (refused === 'already-full') {
@@ -3845,6 +3847,12 @@ export default function App() {
       }
       if (special.kind === 'glitchtama') {
         toast(language === 'pt-BR' ? '🌀 Glitchtama! +1 dia completo' : '🌀 Glitchtama! +1 complete day');
+      }
+      if (special.kind === 'spark') {
+        toast(language === 'pt-BR' ? `✨ Faísca de Alma! +${SPARK_HOME_ENERGY} de energia` : `✨ Soul Spark! +${SPARK_HOME_ENERGY} energy`);
+      }
+      if (special.kind === 'potion') {
+        toast(language === 'pt-BR' ? '🧪 Poção dada. Na próxima evolução o Soulmon carrega este elemento.' : '🧪 Potion given. At the next evolution your Soulmon carries this element.');
       }
       if (special.kind === 'premium') {
         toast(language === 'pt-BR' ? '⭐ Comida premium! Fome bem cheia' : '⭐ Premium food! Hunger well filled');
@@ -4513,6 +4521,20 @@ export default function App() {
       return { ...base, credits: ent.credits, accountTier: ent.tier };
     });
     toast(<BitsAmount value={pack.bits} sign="+" size={14} />);
+    return true;
+  }, [language, setGameState, gameState, refuseDemo]);
+
+  /** CAMBISTA (§205): essência por Créditos. O servidor confere elemento, trancado, teto e saldo e cobra; só então a essência entra. */
+  const handleBuyEssence = useCallback(async (element: string, qty: number): Promise<boolean> => {
+    if (isDemoMode(gameState)) { refuseDemo(); return false; }
+    const r = await buyEssence(element, qty);
+    if (!r.ok) {
+      toast(r.reason === 'insufficient'
+        ? (language === 'pt-BR' ? 'Créditos insuficientes.' : 'Not enough credits.')
+        : (language === 'pt-BR' ? 'A compra não foi concluída. Tente de novo.' : 'The purchase did not go through. Try again.'));
+      return false;
+    }
+    setGameState(prev => ({ ...applyEssences(prev, [{ id: r.element, qty: r.qty }]), credits: r.ent.credits, accountTier: r.ent.tier }));
     return true;
   }, [language, setGameState, gameState, refuseDemo]);
 
@@ -7156,6 +7178,26 @@ export default function App() {
           )}
 
           {labTab === 'evolution' && (
+            <div style={{ padding: '0 4px 10px' }}>
+              <button type="button" data-open-element-potion style={sm2Button('outline')} onClick={() => setPotionOpen(true)}>
+                {language === 'pt-BR' ? 'Criar poção de elemento' : 'Create element potion'}
+              </button>
+            </div>
+          )}
+          {labTab === 'evolution' && potionOpen && <Suspense fallback={null}><ElementPotionSheet
+            open={labTab === 'evolution' && potionOpen}
+            language={language}
+            essences={gameState.essences}
+            pending={gameState.evolutionPotion}
+            unlocked={gameState.defeatedElements}
+            onBack={() => setPotionOpen(false)}
+            onCraft={(id) => {
+              // A regra (e a reconferência do saldo sobre o `prev`) mora em `utils/elementPotion.ts`; o toast é efeito, fora do updater.
+              if (!isPotionUnlocked(id, gameState.defeatedElements) || !canAffordPotion(gameState.essences, id)) return;
+              setGameState(prev => craftPotion(prev, id));
+            }}
+          /></Suspense>}
+          {labTab === 'evolution' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><EvolutionPath
               currentStageId={gameState.evolutionStage}
               currentBranch={getDominantBranch() === 'balanced' ? 'harmony' : getDominantBranch() as 'power' | 'harmony' | 'benevolence'}
@@ -7748,6 +7790,7 @@ export default function App() {
               {/* `key` da view: trocar de área remonta e fecha a folha aberta. */}
               <AreaView
                 key={currentView}
+                unlockedElements={gameState.defeatedElements}
                 area={area}
                 wakeGuard={guardWake}
                 naMasmorra={naMasmorra}
@@ -7781,6 +7824,8 @@ export default function App() {
                 emblems={gameState.emblems ?? 0}
                 credits={gameState.credits ?? 0}
                 onExchangeCredits={handleExchangeCredits}
+                onBuyEssence={handleBuyEssence}
+                essences={gameState.essences}
                 accountTier={gameState.accountTier}
                 onUnlock={() => setUnlockReason('shop')}
                 tournament={{

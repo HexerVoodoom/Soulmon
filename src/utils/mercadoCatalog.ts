@@ -34,13 +34,13 @@ export const MERCADO_STALLS: readonly MercadoStall[] = ['itens', 'decoracao', 'b
  * Abas de moeda de cada lojinha, na ordem em que aparecem. Só entra a moeda
  * que de fato compra alguma coisa ali ("conforme o item pertence"): uma aba
  * que abre sempre vazia é uma promessa que a loja não cumpre.
- *  · Itens: Bits (chips) + Créditos (a troca Créditos → Bits, a única coisa
- *    que Créditos fazem nesta tela). Emblemas NÃO: não há consumível de
+ *  · Itens: só Bits (chips). A troca Créditos → Bits mudou em 30/10/2026
+ *    para o Cambista (`CambistaSheet`). Emblemas NÃO: não há consumível de
  *    Emblemas, e não pode haver (só cosmético).
  *  · Decoração e Background: Bits + Emblemas (os prêmios do Torneio).
  */
 export const STALL_CURRENCIES: Record<MercadoStall, readonly CurrencyId[]> = {
-  itens: ['bits', 'credits'],
+  itens: ['bits'],
   decoracao: ['bits', 'emblems'],
   background: ['bits', 'emblems'],
 };

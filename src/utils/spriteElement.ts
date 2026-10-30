@@ -12,11 +12,13 @@
  *  · `starter:<id>`      — os 5 iniciais (`STARTER_ELEMENT`);
  *  · `line:<id>`         — as 4 linhas de `lines/` (kaelen/thalindra/igni/astrase);
  *  · `boss:<id>`         — os 25 chefes de `bosses/` (1º elemento do roster de chefes);
- *  · `desafiante:<id>`   — os 3 desafiantes do Torneio.
+ *  · `desafiante:<id>`   — os 3 desafiantes do Torneio;
+ *  · `tema:<id>`         — inimigos temáticos (pragas do Bosque + elenco da Soul Barrage, `temaInimigos.ts`).
  */
 import { NOVOS_DATA } from './novosSoulmonData';
 import { COMBINADOS_DATA, INIMIGOS_API_DATA } from './enemyRosterData';
 import { STARTER_ELEMENT } from './starterElements';
+import { TEMA_INIMIGOS } from './temaInimigos';
 
 /** As linhas de `lines/`: elemento pelo texto de apresentação delas (bio PT/EN em `PREMADE_CHARACTERS`, c11dc49d). */
 export const LINE_ELEMENT: Readonly<Record<string, string>> = {
@@ -73,6 +75,7 @@ function build(): Record<string, string> {
   for (const [id, el] of Object.entries(LINE_ELEMENT)) t[`line:${id}`] = el;
   for (const [id, el] of Object.entries(BOSS_ELEMENT)) t[`boss:${id}`] = el;
   for (const [id, el] of Object.entries(DESAFIANTE_ELEMENT)) t[`desafiante:${id}`] = el;
+  for (const e of TEMA_INIMIGOS) t[`tema:${e.id}`] = e.element;
   return t;
 }
 export const SPRITE_ELEMENT: Readonly<Record<string, string>> = build();

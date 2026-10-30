@@ -107,7 +107,7 @@ describe('D-67 — tarefa/hábito nunca bloqueados, nos 3 caminhos (app, widget 
     const chamadas = [...app.matchAll(/guardWake\('([a-z0-9-]+)'\)/g)].map(m => m[1]).sort();
     expect(chamadas).toEqual(['feed', 'pet', 'play', 'shower']);
     // e os jogos, por `wakeGuard` (prop) no `start` do AreaView — nunca na navegação
-    expect(areaView).toContain('const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setGame(g); };');
+    expect(areaView).toContain('const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setModeChosen(null); setGame(g); };');
     expect((areaView.match(/wakeGuard/g) ?? []).length).toBe(2); // declaração da prop + o uso no `start`
     expect(app).toContain('wakeGuard={guardWake}');
   });

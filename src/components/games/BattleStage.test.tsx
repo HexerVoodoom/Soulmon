@@ -3,6 +3,7 @@
  * BATTLE STAGE — a cena de combate em tela cheia (rodada 5 / I10).
  * O layout é PURO e é testado em números; a cena é testada pelo que ela desenha por ação.
  */
+import { combatGlowColor } from '../../utils/combatArt';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { SPECIAL_INTRO_MS } from '../../utils/combatFx';
@@ -243,10 +244,10 @@ describe('BattleStage — o que a cena desenha', () => {
   });
 
   it('CENÁRIO por elemento: `sceneElement` com arte vence `scene` (camada suavizada); sem arte, fica o `scene`', () => {
-    const { unmount } = render(<BattleStage {...baseProps} scene="url(x.png) center/cover" sceneElement="vapor" />);
+    const { unmount } = render(<BattleStage {...baseProps} scene="url(x.png) center/cover" sceneElement="heresia" />);
     const camada = document.querySelector('[data-stage-scene]') as HTMLElement;
     expect(camada).not.toBeNull();
-    expect(camada.style.background).toMatch(/bg-fogo\.png/);
+    expect(camada.style.background).toMatch(/bg-luz\.png/);
     expect(camada.style.imageRendering).not.toBe('pixelated');
     expect(document.querySelectorAll('[data-stage-platform]').length).toBeGreaterThan(0);
     unmount();
@@ -335,5 +336,27 @@ describe('BattleStage — o que a cena desenha', () => {
       // O selo do especial aparece (a classe troca a animação por flash no CSS reduzido), sem círculo de cast.
       expect(!!document.querySelector('[data-stage-special]'), kind).toBe(kind === 'special');
     }
+  });
+
+  it('plataforma: elipse preta ~40% com borda suave (sem PNG) e brilho do especial na cor do elemento', () => {
+    const { container } = render(<BattleStage {...baseProps} charging me={{ ...me, energy: 1, element: 'fogo' }} foes={[foe(0, { energy: 1, element: 'sombra' })]} />);
+    const plat = container.querySelector('[data-stage-platform]') as HTMLElement;
+    expect(plat.tagName).not.toBe('IMG');
+    expect(plat.style.borderRadius).toBe('50%');
+    expect(plat.style.background).toMatch(/radial-gradient/);
+    expect(plat.style.background).toMatch(/rgba\(0, 0, 0, 0\.58\)/);
+    const glow = (r: string) => (container.querySelector(`[data-stage-sprite="${r}"]`) as HTMLElement).style.getPropertyValue('--bs-glow');
+    expect(glow('me')).toBe(combatGlowColor('fogo'));
+    expect(glow('foe')).toBe(combatGlowColor('sombra'));
+    expect(glow('me')).not.toBe(glow('foe'));
+    const back = (container.querySelector('[data-stage-charging]') as HTMLElement).style.getPropertyValue('--bs-glow2');
+    expect(back).toBe(combatGlowColor('fogo'));
+    expect((container.querySelector('[data-stage-sprite="me"]') as HTMLElement).style.transformOrigin).toBe('50% 100%');
+  });
+
+  it('elemento misto: brilho externo = 1º componente, brilho de trás = 2º', () => {
+    const { container } = render(<BattleStage {...baseProps} charging me={{ ...me, energy: 1, element: 'vapor' }} />);
+    expect((container.querySelector('[data-stage-sprite="me"]') as HTMLElement).style.getPropertyValue('--bs-glow')).toBe(combatGlowColor('fogo'));
+    expect((container.querySelector('[data-stage-charging]') as HTMLElement).style.getPropertyValue('--bs-glow2')).toBe(combatGlowColor('agua'));
   });
 });

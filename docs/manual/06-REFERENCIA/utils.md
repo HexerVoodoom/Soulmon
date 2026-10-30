@@ -853,11 +853,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Quem chama:** só `utils/fxFacing.ts`.
 **Régua:** `src/utils/fxFacing.contract.test.ts` (reprova tabela velha).
 
-### `src/utils/combatArt.ts`
+### `src/utils/combatArt.ts` · `src/utils/combatArtElementoMedias.data.ts`
 **Dono de:** a arte da CENA de combate por elemento (rodada 2 do Higgsfield, 04/10/2026, `assets/soulmon/combate/`): 17 cenários 9:16 (`bg-<base>.png`, 360×640 ampliados com `pixelated` — a 1080×1920 o WebP passava do teto de 400 KB), 17 escudos levantados (`escudo-<base>.png`, 128²) e a plataforma sob os pés (`sombra-clara`/`sombra-escura`, 256×96). Só os 17 base têm arte: derivado → 1º componente (`DERIVED_ELEMENT_PAIRS`), `planta` → `vida`, `industrial` → `marcial`; `neutro` → `undefined`.
-**Exports:** `combatBaseElement(id)` · `combatSceneBg(id)` (`url(…) center/cover <cor média>` ou `undefined`) · `combatShield(id)` · `combatShadow(sceneElement)` (escura só sobre o cenário de `luz`) · `COMBAT_BG_COUNT`, `COMBAT_SHIELD_COUNT`.
+**Exports:** `combatBaseElement(id)` · `combatSceneBg(id)` (`url(…) center/cover <cor média>` ou `undefined`) · `combatShield(id)` · `combatGlowColor(id)` (hex do brilho do especial = cor do elemento; `undefined` sem assinatura) · `COMBAT_BG_COUNT`, `COMBAT_SHIELD_COUNT`.
 **Quem chama:** só `games/BattleStage.tsx` (chunk preguiçoso da luta — não importar do chunk de entrada). Regra do cenário: `BattleStage` recebe `sceneElement`; Arena e Duelo passam o elemento do INIMIGO (luta-se no terreno dele); Pesadelo e Masmorra não passam (cena fixa / cenário por andar). O escudo do DEFENSOR substitui o flash `defended` do FX no bloqueio (sem arte → `defended`).
 **Régua:** `src/utils/combatArt.test.ts` (17 + 17, mapeamento, plataforma, e os 154 ícones de elemento) + `games/BattleStage.test.tsx` (escudo, fallback neutro, camada do cenário).
+**Cenário próprio do elemento fundido (30/10/2026):** `combate/elemento/<id>.png` (glob) vem ANTES do `bg-<base>`; `sceneBgDoElemento` é o núcleo puro. `combatArtElementoMedias.data.ts` (cor média por id) é GERADO por `tools/instalar-cenarios-elemento.py`, que lê sempre `E:/Soulmon-assets/gerados-2026-10-29/combate-elementos/` (idempotente).
 
 ### `src/utils/energia.ts`
 **Dono de:** a ENERGIA e as mecânicas ativas do PvE (04/10/2026, REGISTRO §20.10). **O modelo:** cada lutador tem UMA barra de energia (0–`ENERGY_MAX` = 100) que enche por ataque DADO (+9), ataque SOFRIDO (+7) e, só o pet do jogador, pelo CHEER: a "barra de cheer" é o medidor de TOQUES (`CHEER_TAPS_FULL` = 24, lento) que, ao encher, despeja energia no pet e zera (o excedente fica). Energia cheia = o ESPECIAL no golpe seguinte. As constantes de energia são IMPORTADAS de `functions/api/_duel.js` (uma regra, um arquivo): o PvP e o PvE enchem do mesmo jeito.
@@ -941,7 +942,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/dungeonRevive.ts`
 
-**Dono de:** o 2º uso do Coraçãozinho (revive na queda, 50% do HP, REGISTRO §191) e a Faísca de Alma (`✨`). **Exports:** `canOfferRevive`, `consumeOne`/`addOne` (inventário imutável), `reviveSeed`, `reviveStart`, `heartsOwned`/`sparksOwned`, `rollSparkDrop`, `REVIVE_HP_FRAC`, `SPARK_ENERGY`. **Chamado por:** `DungeonGame`. **Régua:** `dungeonRevive.test.ts`, `DungeonGame.revive.render.test.tsx`.
+**Dono de:** o 2º uso do Coraçãozinho (revive na queda, 50% do HP, REGISTRO §191) e a Faísca de Alma (`✨`, que NÃO é de luta: usada nos Arquivos restaura a energia da Home — `SPARK_HOME_ENERGY` em `shop.ts`, aplicada por `specialItemUse.ts`). **Exports:** `canOfferRevive`, `consumeOne`/`addOne` (inventário imutável), `reviveSeed`, `reviveStart`, `heartsOwned`/`sparksOwned`, `rollSparkDrop`, `REVIVE_HP_FRAC`. **Chamado por:** `DungeonGame`. **Régua:** `dungeonRevive.test.ts`, `DungeonGame.revive.render.test.tsx`.
 
 ### `src/utils/dungeonDrops.ts`
 
@@ -2926,6 +2927,10 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/App.tsx` (`pausarTrilha`/`retomarTrilha` nos efeitos de `isSleeping` e da janela de descanso e em `handleToggleSound`), `src/components/SettingsPage.tsx` (`ligarTrilha`/`desligarTrilha`/`trilhaPreferida`; ⚰️ o `SettingsModal.tsx` que também os chamava foi apagado em `4a8b8049`), `src/utils/sounds.ts` (`aoGestoSonoro`)
 **Régua:** `src/components/settingsSom.render.test.tsx` (desde `980bc84c`: o toque em "Trilha" na `SettingsPage` liga e desliga a chave própria — `trilhaPreferida()` vai a `true` e volta a `false`); `src/utils/trilha.e0.test.ts` (5, desde `592e2c14` — dormir para/acordar retoma; pet já dormindo, o 1º gesto não religa; desligar o mudo dormindo não acorda; janela de descanso é motivo próprio; retomar sem gesto na sessão não toca; ⚰️ "nenhuma para E0" até `a6c1cd8a`); o ponto de loop comum das camadas é travado por `sonsAssets.contract.test.ts`; o valor de `TRIM_TRILHA_POR_CAMADAS_DB` não tem teste (`grep -n TRIM_TRILHA src/utils/*.test.ts` vazio em 21/09/2026) — **régua: nenhuma**
 
+### `src/utils/elementPotion.ts`
+
+Dono único da Poção de Elemento (30/10/2026): custos (`POTION_COSTS`), filtro E por bases (`elementsMatchingBases`), saldo (`affordablePotionElements`), fabricar (`craftPotion`, via `spendEssences`), dar ao Soulmon (`givePotion`/`applySpecialItem`, sobrescreve `evolutionPotion`) e consumir na evolução (`applyPotionOnEvolve` → `potionElement`, lido por `petElementOf`). Regra do dono: vale SÓ para a próxima evolução — na seguinte `potionElement` é limpo e o elemento volta ao da pontuação (`soulmonMeta.dominantElement`). Chave de inventário `potion:<elementId>`.
+
 ### `src/utils/premiumFood.ts`
 **Dono de:** A COMIDA PREMIUM (chave de inventário `emoji + ★`, números, tetos por dia/semana, drop determinístico) — dono único; o USO mora em `specialItemUse.ts` e o drop em `careRules.completeTask`.
 **Exports:**
@@ -3838,9 +3843,9 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Dono de:** a chave do foco e a descida em background. `src/utils/focusKey.ts` — `hasFocusKey`/`grantFocusKey` sobre `focusKeyDay` do save (dia do jogador, leitura tolerante); concluir o "Prepare to Focus" (etapa 1 da Oficina do Foco; o antigo prédio `exploracao.preparar` migra para `forja.oficina` (ex-`exploracao.oficina`, #187), N8) dá a chave que libera a etapa 2. `src/utils/focusDescent.ts` — `startFocusDescent`/`focusDescentRefusal`: com o timer de foco rodando, só ABRE o `dungeonAway`; a conta e o retorno são os de sempre.
 **Chamado por:** `src/App.tsx`, `src/components/play/PrepararFocoSheet.tsx`. **Régua:** `src/utils/focusKey.test.ts`, `src/utils/focusDescent.test.ts`.
 
-### `src/utils/plantioDefesa.ts` · `src/utils/rpsLevel2.ts`
-**Dono de:** `src/utils/plantioDefesa.ts` — a defesa do jardim (L5-D2): combate fácil contra 3 inimigos pelo motor da Masmorra, sem custo; o servidor decide o dia de proteger. `src/utils/rpsLevel2.ts` — PPT nível 2: 3 pedras, 3 papéis e 3 tesouras por lado, peça usada some; funções puras.
-**Chamado por:** os visores de guilda e o minijogo de PPT.
+### `src/utils/rpsLevel2.ts`
+**Dono de:** `src/utils/rpsLevel2.ts` — PPT nível 2: 3 pedras, 3 papéis e 3 tesouras por lado, peça usada some; funções puras.
+**Chamado por:** o minijogo de PPT. (`plantioDefesa.ts`, a defesa do jardim pelo motor da Masmorra, saiu em 30/10/2026: o servidor decide e o `GroveRaidFight` luta.)
 
 
 ### `src/utils/endlessRift.ts`
@@ -3884,6 +3889,16 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Exports:** `ROGUE_FLOORS`, `ROGUE_PER_FLOOR`, `ROGUE_MAX_STEPS`, `ROGUE_COMBAT_EVERY`, `ROGUE_FLOOR_BONUS`, `ROGUE_MAX_SCORE`, `PathKind`, `BonusKind`, `pathsFor`, `bonusChoices`, `resolveStep`, `rogueScore`, `rogueBits`, `runForDay`.
 **Chamado por:** `src/components/RogueDungeon.tsx`
 
+### `src/utils/groveRaid.ts`
+**Dono de:** o ataque ao Bosque como LUTA de verdade (§204, 30/10/2026): formação de 3 pragas (`groveRaidLineup`, determinística pela semente; a 3ª é champion), a rodada do núcleo v3 contra os 3 slots fáceis do andar 1 ao mesmo tempo (`groveRaidRound`), a simulação sem cena (`simulateGroveRaid`) e o desfecho (`groveRaidOutcome`: só vitória protege, perder custa 0). O servidor segue dono do sorteio e da proteção (`_claPlantio.js`).
+**Exports:** `GROVE_RAID_FOES`, `groveRaidLineup`, `GroveRaidRound`, `groveRaidRound`, `simulateGroveRaid`, `groveRaidOutcome`.
+**Chamado por:** `src/components/guild/PlantioVisor.tsx`, `src/components/guild/GroveRaidFight.tsx`
+
+### `src/utils/temaInimigos.ts` · `src/utils/temaInimigosArt.ts`
+**Dono de:** `temaInimigos.ts` — os inimigos TEMÁTICOS em dados puros (§204): `GROVE_RAIDERS` (5 pragas do Bosque) e `BARRAGE_ROSTER` (6 criaturas de espaço da Soul Barrage renovada), cada uma com UM elemento (`spriteElement` › `tema:<id>`), forma e golpes próprios; `kind: 'api'`, fora do `ENEMY_ROSTER`. `temaInimigosArt.ts` — a arte por `import.meta.glob` de `assets/soulmon/inimigos-tema/<id>-<forma>.png`, com placeholder = base do mesmo elemento (`placeholderOf`, `temaSpriteOf`).
+**Exports:** `GROVE_RAIDERS_DATA`, `BARRAGE_ROSTER_DATA`, `GROVE_RAIDERS`, `BARRAGE_ROSTER`, `TEMA_INIMIGOS` · `TEMA_ART`, `placeholderOf`, `temaSpriteOf`.
+**Chamado por:** `src/utils/soulBarrage.ts`, `src/utils/spriteElement.ts`, `src/utils/groveRaid.ts`, `src/components/SoulBarrage.tsx`, `src/components/guild/PlantioVisor.tsx`
+
 ### `src/utils/soulBarrage.ts`
 **Dono de:** a lógica pura do Soul Barrage (M9), bullet hell vertical do Salão de Jogos: o Soulmon atira sozinho, inimigos do `enemyRoster` descem e atiram, tiro tira 1 vida, a fase sobe a cada `PHASE_SECONDS`. `dt` e `rng` por parâmetro. Pontos = abates; Bits por `barrageBits(score)` pelo funil de minigames (teto diário aplicado fora).
 **Exports:** `FIELD_W`, `FIELD_H`, `PLAYER_R`, `PLAYER_SIZE`, `PLAYER_Y`, `PLAYER_SPEED`, `START_LIVES`, `INVULN_SECONDS`, `barrageBits` e o estado/passo da simulação.
@@ -3911,8 +3926,15 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Dono de:** o "visto" do tutorial de primeira vez de cada jogo do Ateliê (Eco do Pet, Trilha do Pet/Zip, Colcha/Patches): `sanitizeMindGameTutorials` (aceita só `true` literal de chave conhecida; lixo vira `{}`) e `markMindGameTutorial` (idempotente). Campo do save: `mindGameTutorials` (`{ eco?, zip?, patches? }`), gravado AO MOSTRAR, com leitura tolerante em `hydrateSave`.
 **Chamado por:** `src/contexts/GameStateContext.tsx`, `src/App.tsx`, `src/components/nav/AreaView.tsx`. **Régua:** `src/components/mente/mindTutorial.render.test.tsx`.
 
+### `src/utils/elementLabels.ts`
+
+Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt)`). Módulo leve, sem combate: `arena.ts` re-exporta daqui, e `essences.ts` importa direto — é o que impede o overlay desktop (via `specialItemUse` → `elementPotion` → `essences`) de arrastar o motor da Arena e o `class-system`.
+
 ### `src/utils/elementDex.ts`
 **Dono de:** o dex de elementos (27/10/2026): o catálogo (20 base + 190 derivados), o id de elemento de um inimigo (`elementIdOfFoe`: composto libera só o composto, nunca as bases), `applyElementsDefeated` (idempotente) e `sanitizeDefeatedElements` (forma segura do campo `defeatedElements`, espelhada no servidor). Começa vazio para todos, sem retroativo. **Chamado por:** `dungeonRewards.ts`, `GameStateContext.tsx`, `Match3Game.tsx`, `ArenaGame.tsx`, `TournamentPage.tsx`, `ElementDex.tsx`. **Régua:** `elementDex.test.ts`, `functions/api/elementDex.parity.test.js`.
+
+### `src/utils/essenceShop.ts`
+**Dono de:** o preço EXIBIDO das essências no Cambista (30/10/2026, REGISTRO §205) — `ESSENCE_PACK_SIZES` (1 e 5), `essenceUnitPrice` (base 1, par 2, 3+ bases 3, pela `elementComposition`), `essencePackPrice` (5 = 10% off arredondado para baixo). Quem cobra é o servidor (`functions/api/_essenceShop.js`, paridade em `essenceShop.parity.test.js`); a chamada é `buyEssence` em `utils/entitlements.ts`.
 
 ### `src/utils/essences.ts`
 **Dono de:** as essências dos elementos (28/10/2026, REGISTRO §183): `GameState.essences` (`{elementId: qtd}`, só cresce, só coleta) e `essenceAway` (contador do dia da descida AUTOMÁTICA, teto `ESSENCE_AWAY_DAILY_CAP` = 30/dia; a luta ativa não tem teto). **Exports:** `essenceQtyOfStage` (rookie 1, champion 2, ultimate/mega 3), `essenceQtyOfBoss` (5..9), `essenceDropOfFoe`, `applyEssences`, `applyEssencesAway`, `sanitizeEssences`, `sanitizeEssenceAway`, `essenceName` (EN/PT). Espelhado em `functions/api/_essences.js` e `_dayCounters.js`.

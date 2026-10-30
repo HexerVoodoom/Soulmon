@@ -45,9 +45,8 @@ export interface RogueFightProps {
 }
 
 import { useGameStateOptional } from '../contexts/GameStateContext';
-import { HEART_ITEM_EMOJI, SPARK_ITEM_EMOJI } from '../utils/shop';
-import { ENERGY_ICON } from '../utils/rewardIcons';
-import { canOfferRevive, consumeOne, heartsOwned, sparksOwned, reviveSeed, reviveStart, SPARK_ENERGY } from '../utils/dungeonRevive';
+import { HEART_ITEM_EMOJI } from '../utils/shop';
+import { canOfferRevive, consumeOne, heartsOwned, reviveSeed, reviveStart } from '../utils/dungeonRevive';
 
 export function RogueFight({ language, run, step, combatant, skills, petElement, evolutionStage = 'rookie', demoCharacterId, floor, onResult }: RogueFightProps) {
   const isPt = language === 'pt-BR';
@@ -126,11 +125,6 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
     setEnd(null);
     setCont(c => ({ n: (c?.n ?? 0) + 1, foeFrac: st.foesHp[0], key: (c?.key ?? 1) + 1 }));
   };
-  const usarFaisca = () => {
-    if (!ctx || sparksOwned(inv) < 1) return;
-    ctx.setGameState(prev => ({ ...prev, foodInventory: consumeOne(prev.foodInventory, SPARK_ITEM_EMOJI) }));
-    battle.boostEnergy(SPARK_ENERGY);
-  };
   const foeHp = pronto ? (battle.foesHp[0] ?? 1) : 1;
   const meHp = pronto ? battle.hp : (cont ? reviveStart(cont.foeFrac).hp : setup.startHp);
 
@@ -172,14 +166,6 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
         }}
         onPauseChange={setPaused}
       >
-        {!end && sparksOwned(inv) > 0 && (
-          <button type="button" data-rogue-spark onClick={usarFaisca} disabled={battle.petEnergy >= ENERGY_TRIGGER}
-            aria-label={isPt ? `Faísca de Alma (${sparksOwned(inv)}): enche a barra do especial` : `Soul Spark (${sparksOwned(inv)}): fills the special bar`}
-            style={{ position: 'absolute', right: 8, bottom: 56, zIndex: 5, pointerEvents: 'auto', background: 'none', border: 'none', padding: 0, minWidth: 44, minHeight: 44, cursor: 'pointer', color: 'var(--sm2-viewport-ink)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, fontWeight: 700, opacity: battle.petEnergy >= ENERGY_TRIGGER ? 0.4 : 1 }}>
-            <img src={ENERGY_ICON} alt="" width={20} height={20} style={{ imageRendering: 'pixelated' }} />
-            <span className="sm2-num">{sparksOwned(inv)}</span>
-          </button>
-        )}
         {oferta && (
           <div role="dialog" aria-modal="true" data-revive-offer style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.6)', padding: 16 }}>
             <div style={{ background: 'var(--sm2-surface, #14221f)', color: 'var(--sm2-ink, #fff)', borderRadius: 12, padding: 16, maxWidth: 320, width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>

@@ -4,10 +4,6 @@ import type { RankingRow } from '../utils/rankings';
 /** Quantas posições o ranking mostra (igual ao `TOP_MAX` do servidor). */
 export const RANKING_LIST_SIZE = 50;
 
-const RISE_CSS = '@media (prefers-reduced-motion: no-preference){.sm-rank-podium li{animation:sm-rank-rise .4s ease-out both}'
-  + '.sm-rank-podium li[data-place="1"]{animation-delay:.12s}.sm-rank-podium li[data-place="3"]{animation-delay:.2s}}'
-  + '@keyframes sm-rank-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}';
-
 /**
  * Lista ÚNICA de ranking do Soulmon (30/10/2026, pedido do dono): pódio de ouro/prata/bronze, top 50,
  * a linha do jogador destacada no lugar; fora do top 50, a linha dele fixa no FIM, depois de "…", com a posição real.
@@ -70,7 +66,6 @@ export function RankingList({ rows, meRank, meScore, language, format = String, 
 
   return (
     <div data-ranking-list style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-      <style>{RISE_CSS}</style>
       <ol
         data-ranking-podium className="sm-rank-podium"
         aria-label={isPt ? 'Pódio' : 'Podium'}

@@ -6,6 +6,7 @@
 //   GET  /api/entitlements?id=<saveId>          → { tier, credits, adsLeft }
 //   POST /api/entitlements?action=spend         { id, amount, reason }
 //   POST /api/entitlements?action=ad            { id }
+//   POST /api/entitlements?action=buy-essence   { id, element, qty: 1|5, opId }  ← CAMBISTA (§205)
 //   POST /api/entitlements?action=grant         { saveId }   ← CORTESIA (admin)
 //   POST /api/entitlements?action=rebirth-reset { id }       ← RENASCIMENTO (#62)
 //
@@ -58,6 +59,7 @@ import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { isPlayPurchaseVoided, isSteamPurchaseVoided, isSteamOwnershipVoided } from './_billing.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { kv } from './_kv.js';
+import { isKnownEssenceElement, essencePackPrice, ESSENCE_MAX_PER_ELEMENT } from './_essenceShop.js';
 import { bondLevelFor } from './_bond.js';
 import { gateFor } from './_gates.js';
 import { verifiedAdmin, adminPublicView, logAdminSession } from './_admin.js';
@@ -215,6 +217,40 @@ export async function onRequestPost({ request, env }) {
     const ent = await spendCredits(env, saveId, amount, body?.opId);
     if (!ent) return json({ ok: false, reason: 'insufficient' }, 402);
     return json({ ok: true, ...view(ent) });
+  }
+
+  if (action === 'buy-essence') {
+    // CAMBISTA (§205): essência por Créditos. O PREÇO é do servidor (`_essenceShop.js`, pela composição do elemento),
+    // nunca do corpo; `opId` é OBRIGATÓRIO (dinheiro real, gesto novo — não há cliente antigo desta rota).
+    const element = body?.element;
+    const qty = Number(body?.qty);
+    const opId = body?.opId;
+    if (typeof opId !== 'string' || !/^[A-Za-z0-9_-]{8,64}$/.test(opId)) return json({ ok: false, reason: 'bad-op' }, 400);
+    const store = kv(env);
+    const replayKey = `essbuy:${saveId}:${opId}`;
+    // Repetição do MESMO gesto: a mesma resposta, sem cobrar e sem reconferir (o saldo/teto já mudaram por causa dele).
+    const anterior = await store?.get(replayKey);
+    if (anterior) { try { return json({ ...JSON.parse(anterior), replay: true }); } catch { /* segue */ } }
+    if (!isKnownEssenceElement(element)) return json({ ok: false, reason: 'unknown-element' }, 400);
+    const price = essencePackPrice(element, qty);
+    if (!price) return json({ ok: false, reason: 'bad-qty' }, 400);
+    // Trancado (???) e teto: lidos do save GRAVADO no servidor (a Biblioteca é `defeatedElements`).
+    let state = null;
+    try { state = JSON.parse((await store?.get(saveId)) || 'null'); } catch { state = null; }
+    const dex = Array.isArray(state?.defeatedElements) ? state.defeatedElements : [];
+    if (!dex.includes(element)) return json({ ok: false, reason: 'locked' }, 403);
+    const have = Number(state?.essences?.[element]) || 0;
+    if (have + qty > ESSENCE_MAX_PER_ELEMENT) return json({ ok: false, reason: 'cap' }, 409);
+    let ent;
+    if (admin) { logAdminSession('buy-essence'); ent = await readEntitlement(env, saveId); }
+    else {
+      ent = await spendCredits(env, saveId, price, opId);
+      if (!ent) return json({ ok: false, reason: 'insufficient' }, 402);
+    }
+    const out = { ok: true, element, qty, price, ...view(ent) };
+    if (!admin) await store?.put(replayKey, JSON.stringify(out), { expirationTtl: 24 * 60 * 60 });
+    log('essence-buy', saveId, { element, qty, price, admin });
+    return json(out);
   }
 
   if (action === 'rebirth-reset') {

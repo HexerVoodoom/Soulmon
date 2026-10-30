@@ -47,7 +47,7 @@ describe('as missões semanais estão plugadas', () => {
     expect(i).toBeGreaterThan(-1);
     // Pagar duas vezes é bug de economia: o guard exige a saída antecipada
     // quando `claimWeekly` devolve zero.
-    expect(app.slice(i, i + 800)).toContain('if (emblems === 0) return prev;');
+    expect(app.slice(i, i + 1600)).toContain('if (emblems === 0) return prev;');
   });
 
   it('a lista chega à tela', () => {

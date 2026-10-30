@@ -100,3 +100,8 @@ paga (08/09) · `minSdkVersion` 26 · TTL do save renova a cada acesso · exclus
 destino do recibo (declarado em `PLAY-DATA-SAFETY.md` §1) · `applicationId` próprio.
 Para o estado dos secrets do Cloudflare use `npx wrangler secret list` (a última medição, 22/09, está
 em `PLAY-LANCAMENTO.md` §E).
+
+## 30/10/2026 — Cambista: arte do NPC em resolução cheia (sessão LOCAL)
+O NPC do Cambista (Farthing) usa o asset **#389** do Banco de Assets, mas só a prévia 192×192 estava acessível na nuvem.
+Uma sessão local deve trocar `src/assets/soulmon/npcs/npc-mercado-cambista.png` pelo original em resolução cheia
+(`2026-09-23_gpt_image_2_f6c8610c.png`) e rodar o build.

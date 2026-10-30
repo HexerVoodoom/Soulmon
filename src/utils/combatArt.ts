@@ -7,7 +7,6 @@
  *    WebP passava do teto de 400 KB do `orcamentoDeBytes`;
  *  · `escudo-<base>.png` — 17 escudos levantados (128², alfa binário), a defesa
  *    automática do DEFENSOR no lugar do flash `defended` do FX;
- *  · `sombra-clara.png` / `sombra-escura.png` — a plataforma sob os pés (256×96).
  *
  * Só os 17 elementos BASE têm arte; um derivado usa o seu 1º componente
  * (`DERIVED_ELEMENT_PAIRS`), `planta`/`industrial` NÃO têm
@@ -18,8 +17,8 @@
  * isto de nada que esteja no chunk de entrada (`entradaEnxuta.contract.test.ts`).
  */
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
-import sombraClara from '../assets/soulmon/combate/sombra-clara.png';
-import sombraEscura from '../assets/soulmon/combate/sombra-escura.png';
+import { ELEMENT_VISUAL } from './elementVisual.data';
+import { ELEMENTO_BG_MEAN } from './combatArtElementoMedias.data';
 
 const bgs = import.meta.glob('../assets/soulmon/combate/bg-*.png', { eager: true, import: 'default' }) as Record<string, string>;
 const escudos = import.meta.glob('../assets/soulmon/combate/escudo-*.png', { eager: true, import: 'default' }) as Record<string, string>;
@@ -33,6 +32,21 @@ const porId = (mods: Record<string, string>, prefixo: string): Record<string, st
   return out;
 };
 const BG = porId(bgs, 'bg');
+
+// Cenário PRÓPRIO de cada elemento fundido: `combate/elemento/<id>.png` (360×640, instalado por `tools/instalar-cenarios-elemento.py`).
+// Vem ANTES do cenário do elemento base; sem arquivo, cai no base (comportamento anterior).
+const elementoBgs = import.meta.glob('../assets/soulmon/combate/elemento/*.png', { eager: true, import: 'default' }) as Record<string, string>;
+const ELEMENTO_BG: Record<string, string> = {};
+for (const [p, url] of Object.entries(elementoBgs)) {
+  const m = /\/([a-z_]+)\.png$/.exec(p);
+  if (m) ELEMENTO_BG[m[1]] = url;
+}
+
+/** Núcleo puro (testável sem arquivos): o `background` do cenário próprio do elemento, ou `undefined`. */
+export function sceneBgDoElemento(id: string | null | undefined, urls: Record<string, string>, medias: Record<string, string>): string | undefined {
+  if (!id || !urls[id]) return undefined;
+  return `url(${urls[id]}) center/cover ${medias[id] ?? '#1c3a40'}`;
+}
 const ESCUDO = porId(escudos, 'escudo');
 
 /** Cor média medida de cada cenário: pinta o fundo enquanto a imagem carrega (mesma regra de `dungeonScenes.ts`). */
@@ -41,6 +55,7 @@ const BG_MEAN: Record<string, string> = {
   fogo: '#274644', gravidade: '#17434b', luz: '#716c48', marcial: '#245859', morte: '#275455',
   vida: '#1c504c', som: '#1e5c5f', sombra: '#12303b', tempo: '#1c5656', terra: '#39443c',
   vigor: '#274a48', vileza: '#204c42', neutro: '#285558',
+  fada: '#16312f', industrial: '#0c3532', planta: '#0e3830', // 30/10/2026: cenários base próprios
 };
 
 const DERIVED_TO_BASE: Record<string, string> = Object.fromEntries(DERIVED_ELEMENT_PAIRS.map(d => [d.id, d.componentes[0]]));
@@ -55,9 +70,11 @@ export function combatBaseElement(id: string | null | undefined): string | undef
 
 /** `background` shorthand do cenário do elemento (`url(…) center/cover <cor média>`), ou `undefined`. */
 export function combatSceneBg(id: string | null | undefined): string | undefined {
+  const proprio = sceneBgDoElemento(id, ELEMENTO_BG, ELEMENTO_BG_MEAN);
+  if (proprio) return proprio;
   const base = combatBaseElement(id);
   if (base) return `url(${BG[base]}) center/cover ${BG_MEAN[base] ?? ''}`.trim();
-  // planta/industrial: sem `bg-` base, o cenário próprio é o do domínio (variante 1) — nunca o de vida/marcial.
+  // Fallback (save antigo sem a arte): planta/industrial usam o cenário do domínio. Desde 30/10/2026 têm `bg-` próprio, que vem antes.
   return id === 'planta' || id === 'industrial' ? combatDomainSceneBg(id, 0) : undefined;
 }
 
@@ -84,12 +101,37 @@ export function combatShield(id: string | null | undefined): string | undefined 
   return base ? ESCUDO[base] : undefined;
 }
 
+/** Assinatura CIELAB do ícone do elemento → hex sRGB, com luminosidade mínima (brilho legível sobre cenário escuro). */
+function labToHex(L: number, a: number, b: number): string {
+  const fy = (L + 16) / 116, fx = fy + a / 500, fz = fy - b / 200;
+  const inv = (t: number) => (t ** 3 > 0.008856 ? t ** 3 : (t - 16 / 116) / 7.787);
+  const X = 0.95047 * inv(fx), Y = inv(fy), Z = 1.08883 * inv(fz);
+  const lin = [3.2406 * X - 1.5372 * Y - 0.4986 * Z, -0.9689 * X + 1.8758 * Y + 0.0415 * Z, 0.0557 * X - 0.204 * Y + 1.057 * Z];
+  return '#' + lin.map(c => {
+    const g = c <= 0.0031308 ? 12.92 * c : 1.055 * Math.max(c, 0) ** (1 / 2.4) - 0.055;
+    return Math.round(Math.min(1, Math.max(0, g)) * 255).toString(16).padStart(2, '0');
+  }).join('');
+}
+
 /**
- * A plataforma sob os pés: a CLARA (pedra com anel de runa) sobre cenário escuro —
- * quase todos —, a ESCURA sobre cenário claro (hoje só o de `luz`).
+ * Cor do brilho externo do especial: a do ELEMENTO de quem conjura (assinatura do ícone, `elementVisual.data.ts`).
+ * Misto sem assinatura própria usa a do primeiro componente; sem nenhuma, `undefined` (o CSS cai no dourado).
  */
-export function combatShadow(sceneElement: string | null | undefined): string {
-  return combatBaseElement(sceneElement) === 'luz' ? sombraEscura : sombraClara;
+export function combatGlowColor(id: string | null | undefined): string | undefined {
+  if (!id) return undefined;
+  const v = ELEMENT_VISUAL[id] ?? ELEMENT_VISUAL[DERIVED_TO_BASE[id] ?? ''];
+  if (!v) return undefined;
+  return labToHex(Math.max(v[0], 58), v[1] * 1.15, v[2] * 1.15);
+}
+
+/**
+ * Par de cores do especial: [brilho externo, brilho de trás] = 1º e 2º componente do elemento (misto) ou a mesma cor (base).
+ * Cada uma passa por `combatGlowColor`.
+ */
+export function combatGlowPair(id: string | null | undefined): [string | undefined, string | undefined] {
+  const comps = id ? DERIVED_ELEMENT_PAIRS.find(d => d.id === id)?.componentes : undefined;
+  if (!comps) { const c = combatGlowColor(id); return [c, c]; }
+  return [combatGlowColor(comps[0]), combatGlowColor(comps[1])];
 }
 
 /** Guard de instalação: 17 cenários e 17 escudos dos elementos base + os do `neutro` (18). */

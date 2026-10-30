@@ -28,7 +28,7 @@ import { marcarTelaMasmorra } from '../utils/dungeonScreenOpen';
 import { pushDrop, popDrop, type DropGroup, type DropKind } from '../utils/dungeonDrops';
 import { DropNotice } from './games/DropNotice';
 import { HEART_ITEM_EMOJI, SPARK_ITEM_EMOJI } from '../utils/shop';
-import { canOfferRevive, consumeOne, addOne, heartsOwned, sparksOwned, reviveSeed, reviveStart, rollSparkDrop, SPARK_ENERGY } from '../utils/dungeonRevive';
+import { canOfferRevive, consumeOne, addOne, heartsOwned, reviveSeed, reviveStart, rollSparkDrop } from '../utils/dungeonRevive';
 import { readLocal, writeLocal } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { getMaxEnergyForStage } from '../types/progression';
@@ -602,12 +602,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     setFightKey(k => k + 1);
   };
   const recusarRevive = () => { setReviveOffer(false); perder(); };
-  const usarFaisca = () => {
-    if (!ctx || sparksOwned(gsRef.current?.foodInventory) < 1) return;
-    if (gsRef.current) gsRef.current = { ...gsRef.current, foodInventory: consumeOne(gsRef.current.foodInventory, SPARK_ITEM_EMOJI) };
-    ctx.setGameState(prev => ({ ...prev, foodInventory: consumeOne(prev.foodInventory, SPARK_ITEM_EMOJI) }));
-    battleRef.current?.boostEnergy(SPARK_ENERGY);
-  };
   const battle = useGroupBattle({
     running: phase === 'fight' && !!enemy,
     paused: pausado, reduced: reduzido.current, runKey: fightKey, seed: seedLuta,
@@ -747,14 +741,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         style={BATTLE_LAYER_STYLE}
         mascot
         belowMascot={!ended && phase !== 'away' ? (<>
-          {fighting && pronto && sparksOwned(gs?.foodInventory) > 0 && (
-            <button type="button" data-dungeon-spark onClick={usarFaisca} disabled={battle.petEnergy >= ENERGY_TRIGGER || reviveOffer}
-              aria-label={isPt ? `Faísca de Alma (${sparksOwned(gs?.foodInventory)}): enche a barra do especial` : `Soul Spark (${sparksOwned(gs?.foodInventory)}): fills the special bar`}
-              style={{ pointerEvents: 'auto', background: 'none', border: 'none', padding: 0, minWidth: 44, minHeight: 44, cursor: 'pointer', color: 'var(--sm2-viewport-ink)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, fontWeight: 700, opacity: battle.petEnergy >= ENERGY_TRIGGER ? 0.4 : 1 }}>
-              <img src={ENERGY_ICON} alt="" width={20} height={20} style={{ imageRendering: 'pixelated' }} />
-              <span className="sm2-num">{sparksOwned(gs?.foodInventory)}</span>
-            </button>
-          )}
           <button
             type="button"
             data-dungeon-speed={speed}

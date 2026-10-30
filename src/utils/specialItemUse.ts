@@ -1,7 +1,8 @@
-import { CHIP_BOOST, HEART_HEAL, SPECIAL_ITEMS, type Attr } from './shop';
+import { CHIP_BOOST, HEART_HEAL, SPARK_HOME_ENERGY, SPECIAL_ITEMS, type Attr } from './shop';
+import { potionElementOfKey } from './elementPotion';
 import { dayItemGaugeGain } from './evolutionGauge';
 import { playerDayKey, playerDayIso, type PlayerDayAnchor } from './playerDay';
-import { HUNGER_PER_PREMIUM, HUNGER_PREMIUM_REFUSE_AT, eat, hungerAt, type EnergyClock, type HungerRecord } from './hunger';
+import { HUNGER_PER_PREMIUM, HUNGER_PREMIUM_REFUSE_AT, eat, hungerAt, maxEnergyOf, setEnergy, settleEnergy, type EnergyClock, type HungerRecord } from './hunger';
 import {
   PREMIUM_USES_PER_DAY, premiumUsedToday, premiumDroppedToday, premiumDroppedThisWeek,
   weekMondayOf, type PremiumRecord,
@@ -43,7 +44,7 @@ import {
  * roda 2× no StrictMode.
  */
 
-export type SpecialRefusal = 'no-stock' | 'already-full' | 'daily-cap' | 'stage-cap' | 'battle-only';
+export type SpecialRefusal = 'no-stock' | 'already-full' | 'daily-cap' | 'stage-cap';
 
 /**
  * D-97 (19/10/2026): no máximo 3 chips por ESTÁGIO de evolução, TODOS os tipos
@@ -139,6 +140,8 @@ export interface SpecialItemState {
   premiumFood?: PremiumRecord;
   /** Chips usados no estágio atual (D-97) — ver `CHIPS_PER_STAGE`. */
   chipsStage?: ChipStageUse;
+  /** 🧪 Elemento da poção dada ao Soulmon, pendente para a próxima evolução (`utils/elementPotion.ts`). */
+  evolutionPotion?: string;
   playerDayTz?: PlayerDayAnchor;
 }
 
@@ -168,8 +171,8 @@ export function specialRefusal(state: SpecialItemState, emoji: string, now: Date
   // O teto do Glitchtama recusa ANTES do decremento: o item volta para a
   // pastinha intacto e vale amanhã. Recusar depois de consumir seria a família
   // de bug do X-6 ao contrário — gastar para não receber nada.
-  // A Faísca de Alma só se usa DENTRO da luta (botão do HUD da Masmorra/Fenda): na pastinha ela volta intacta.
-  if (special.kind === 'spark') return 'battle-only';
+  // Faísca de Alma: restaura a energia da Home; com ela cheia recusa e o item volta intacto.
+  if (special.kind === 'spark' && settleEnergy({ ...state, energyPoints: state.energyPoints ?? 0 }, now.getTime()).energyPoints >= maxEnergyOf(state)) return 'already-full';
   if (special.kind === 'glitchtama' && glitchtamaUsedToday(state, now) >= GLITCHTAMA_PER_DAY) return 'daily-cap';
   // Comida premium: fome quase cheia recusa (o item volta, não se queima à toa), e há 1 uso por dia.
   if (special.kind === 'premium') {
@@ -281,6 +284,15 @@ export function applySpecialItem<T extends SpecialItemState>(
         },
       },
     };
+  }
+
+  if (special.kind === 'spark') {
+    // Energia da Home (a da comida/Masmorra), pelo ÚNICO caminho que mexe nela: `setEnergy` acerta a regeneração e reposiciona o relógio.
+    return { state: { ...setEnergy({ ...prev, energyPoints: prev.energyPoints ?? 0 }, now.getTime(), (cur) => cur + SPARK_HOME_ENERGY), foodInventory } };
+  }
+  if (special.kind === 'potion') {
+    // Poção de Elemento: grava o elemento pendente (sobrescreve a anterior; a anterior se perde de propósito, spec do dono).
+    return { state: { ...prev, foodInventory, evolutionPotion: potionElementOfKey(emoji) } };
   }
 
   if (special.kind === 'heart') {

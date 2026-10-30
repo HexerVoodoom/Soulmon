@@ -13,7 +13,7 @@ import { SHOP_ITEMS, SPECIAL_ITEMS, CHIP_BOOST, SUBSCRIPTION_ITEMS } from '../..
 import { RAID_TROPHY_ID } from '../../utils/guildRules';
 
 const base = {
-  language: 'en-US' as 'en-US' | 'pt-BR', points: 900, emblems: 12, credits: 0,
+  language: 'en-US' as 'en-US' | 'pt-BR', points: 900, emblems: 12,
   ownedBackgrounds: ['bg-room'] as string[], equippedBackground: 'bg-room' as string | null,
   ownedFurniture: [] as string[], equippedDecor: {} as Record<string, string>,
   missionProgress: {} as Record<string, number>,

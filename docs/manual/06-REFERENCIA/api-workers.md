@@ -645,6 +645,9 @@ Fechamento mensal do Endless Rift (M6): Créditos 50/25/10 para o top 3, pagos S
 ### `functions/api/rankings.js`
 `/api/rankings` (M8): `POST { id, game, score, period? }` submete (melhor score do período) e `GET ?game=&period=&id=&top=` devolve o top N e a posição/faixa de `id`. As duas exigem ID token que derive o saveId (`authorizeSaveAccess`); rate limit por IP (`LIMIT_IP` 60/min) e por submissão (`LIMIT_SUBMIT` 20/min). Regras em `_rankings.js`.
 
+### `functions/api/_essenceShop.js`
+Dono do PREÇO das essências no Cambista (30/10/2026, REGISTRO §205): catálogo dos 210 ids (20 base + 190 pares, gerado de `DERIVED_ELEMENT_PAIRS`), `essenceUnitPrice` (base 1, par 2, 3+ bases 3) e `essencePackPrice` (pacotes 1 e 5; o de 5 = 10% off arredondado para baixo: 4/9/13). Usado por `entitlements.js` `?action=buy-essence` `{ id, element, qty, opId }`: `opId` obrigatório e idempotente (`essbuy:<saveId>:<opId>`, 24 h, + `spendCredits`), elemento desconhecido/qty inválida 400, trancado (fora do `defeatedElements` gravado) 403, teto `ESSENCE_MAX_PER_ELEMENT` 409, sem saldo 402; admin não debita; log `essence-buy`. A essência entra no save pelo cliente após o `ok` (limite honesto do save do cliente, ver `_essences.js`). Réguas: `essenceShop.test.js`, `essenceShop.parity.test.js`.
+
 ### `functions/api/_essences.js`
 Espelho de `sanitizeEssences` (`src/utils/essences.ts`) para o campo `essences` do save (28/10/2026, REGISTRO §183): chaves `[a-z_]{2,24}`, inteiros 1..1.000.000, até 211 chaves; `enforceEssences` torna o campo MONOTÔNICO por elemento (omitir, apagar o save local ou mandar menos não baixa o gravado). `essenceAway` usa `enforceEssenceAway` de `_dayCounters.js`. Régua: `essences.parity.test.js`.
 

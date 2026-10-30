@@ -42,7 +42,13 @@ beforeEach(() => {
 /** A aba Faixa busca o ranking ao abrir; o que importa aqui é a busca de OPONENTES. */
 const buscouOponentes = () => vi.mocked(fetch).mock.calls.some(c => /opponents/.test(String(c[0])));
 
-afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+afterEach(async () => {
+  cleanup();
+  // `call()` (community.ts) espera `authHeaders()` ANTES do fetch: a chamada de um teste anterior
+  // ainda em voo bateria no fetch do teste SEGUINTE e fingiria uma busca de oponentes. Drena aqui.
+  await new Promise(r => setTimeout(r, 60));
+  vi.unstubAllGlobals(); vi.restoreAllMocks();
+});
 
 describe('não existe mais interruptor de PvP', () => {
   it.each([0, xpForLevel(BOND_PVP_MIN_LEVEL)])('com totalXP=%i, nenhum switch na tela', totalXP => {

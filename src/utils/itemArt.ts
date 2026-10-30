@@ -29,6 +29,9 @@ import itemHeart from '../assets/soulmon/items/item-heart.png';
 import itemGlitchtama from '../assets/soulmon/items/item-glitchtama.png';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { premiumKey } from './premiumFood';
+import { potionKey } from './elementPotion';
+import { elementIcon } from './elementIconArt';
+import { ALL_ELEMENT_IDS } from './elementDex';
 
 /** Chave = emoji-identidade do item (FOOD_BY_CATEGORY / SPECIAL_ITEMS). */
 export const ITEM_ART: Record<string, string> = {
@@ -59,4 +62,10 @@ export const ITEM_ART: Record<string, string> = {
 // diferença é a estrelinha que a Mochila desenha por cima (`.sm-premium-star`).
 for (const f of Object.values(FOOD_BY_CATEGORY)) {
   if (ITEM_ART[f.emoji]) ITEM_ART[premiumKey(f.emoji)] = ITEM_ART[f.emoji];
+}
+
+// Poção de Elemento (30/10/2026): a arte é o ÍCONE DO PRÓPRIO ELEMENTO (sem arte nova).
+for (const id of ALL_ELEMENT_IDS) {
+  const icon = elementIcon(id);
+  if (icon) ITEM_ART[potionKey(id)] = icon;
 }

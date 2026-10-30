@@ -12,7 +12,7 @@ import { BitsAmount } from './ui/BitsAmount';
 import { RewardPreview } from './ui/RewardPreview';
 import { fxFrame, prefersReducedMotion } from '../utils/combatFx';
 import type { GameChallenge } from '../utils/gameChallenge';
-import { rosterSpriteOf } from '../utils/novosSoulmon';
+import { temaSpriteOf } from '../utils/temaInimigosArt';
 import {
   FIELD_W, FIELD_H, PLAYER_Y, PLAYER_SPEED, PLAYER_SIZE, SHOT_R, SHOT_DRAW, BARRAGE_ELEMENT, BARRAGE_POINTS_PER_BIT,
   newBarrage, stepBarrage, barrageBits, type BarrageState,
@@ -123,7 +123,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
     const calm = reduced.current;
     const foeImg = (e: BarrageState['enemies'][number]) => {
       let i = imgs.current.foes.get(e.entry.key);
-      if (!i) { i = loadImg(rosterSpriteOf(e.entry)); if (i) imgs.current.foes.set(e.entry.key, i); }
+      if (!i) { i = loadImg(temaSpriteOf(e.entry)); if (i) imgs.current.foes.set(e.entry.key, i); }
       return i;
     };
     const ready = (i?: HTMLImageElement) => !!i && i.complete && i.naturalWidth > 0;

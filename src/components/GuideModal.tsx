@@ -105,7 +105,7 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
               `Rookie→Champion takes ${R.rookie.gauge} steps (up to ${R.rookie.required}/day); Champion→Ultimate ${R.champion.gauge} (up to ${R.champion.required}/day); Ultimate→Mega ${R.ultimate.gauge} (up to ${R.ultimate.required}/day).`,
             )}
           </p>
-          {/* Forma BB (Onboarding Velado, D3–D5; REGISTRO §204): o estágio ANTES do Rookie. Regra em `utils/bbStage.ts`. */}
+          {/* Forma BB (Onboarding Velado, D3–D5; REGISTRO §207): o estágio ANTES do Rookie. Regra em `utils/bbStage.ts`. */}
           <p style={para}>
             {L(
               'Quem começa pela forma BB não tem meta diária: ela tem 6 corações, nada a desgasta (sem fome, sem cocô, sem perda no fim do dia) e evolui para Rookie quando o Vínculo chega ao nível 2. Enquanto é BB, Torneio, Duelo PvP e Guilda ficam fechados.',
@@ -154,6 +154,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
             {L(
               'A evolução é sua: toque no Soulmon na página de Evolução para travar ou destravar o cadeado.',
               'Evolution is yours: tap your Soulmon on the Evolution page to lock or unlock the padlock.',
+            )}
+          </p>
+          <p style={para}>
+            {L(
+              'Poção de elemento: no Centro de Evolução, gaste essências para preparar uma poção. Dê ao Soulmon pela pasta de itens e, na próxima evolução, ele carrega esse elemento. Vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação dele. Outra poção substitui a que espera.',
+              'Element potion: at the Evolution Center, spend essences to brew a potion. Give it to your Soulmon from the item folder and, at the next evolution, it carries that element. Only affects the next evolution; after that your Soulmon returns to its score-based element. Another potion replaces the one waiting.',
             )}
           </p>
           <p style={para}>

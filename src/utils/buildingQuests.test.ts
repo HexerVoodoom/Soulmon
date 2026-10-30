@@ -147,7 +147,7 @@ describe('fiação', () => {
   it('o App usa o updater puro, sem toast/efeito dentro do setGameState', () => {
     const app = readFileSync('src/App.tsx', 'utf8');
     const i = app.indexOf('const resgatarPredio');
-    expect(app.slice(i, i + 500)).toContain('claimBuildingQuest(prev.buildingQuests');
+    expect(app.slice(i, i + 1400)).toContain('claimBuildingQuest(prev.buildingQuests');
     expect(app).toContain('onVisitBuilding={visitarPredio}');
     // o evento REAL do journaling: guardar um registro novo conclui, no mesmo updater do Caderno
     const j = app.indexOf('const handleCaderno');

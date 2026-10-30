@@ -29,7 +29,7 @@ import { sanitizeDayPlan } from './_dayPlan.js';
 import { sanitizeNightmares } from './_nightmares.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
 import { enforceDungeonDaily, enforceCheckIns, enforceArenaReroll, enforceEssenceAway, bumpRiftLayers } from './_dayCounters.js';
-import { enforceEssences } from './_essences.js';
+import { enforceEssences, enforceEssenceSpent } from './_essences.js';
 import { sanitizeRegenUsed } from './_spriteRegen.js';
 import { frameIdOrNull } from './_frames.js';
 import { avatarIdOrNull } from './_avatares.js';
@@ -405,8 +405,8 @@ export async function onRequest({ request, env }) {
     // devolve camada nem janela; omitir o campo mantem o gravado. So parseia o gravado quando algum dos dois campos existe nele.
     let ddAntes; let ddDepois; let recAntes; let recDepois;
     {
-      const temGravado = typeof prev?.value === 'string' && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"') || prev.value.includes('"arenaReroll"') || prev.value.includes('"essences"') || prev.value.includes('"essenceAway"'));
-      if (temGravado || 'dungeonDaily' in state || 'checkIns' in state || 'arenaReroll' in state || 'essences' in state || 'essenceAway' in state) {
+      const temGravado = typeof prev?.value === 'string' && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"') || prev.value.includes('"arenaReroll"') || prev.value.includes('"essences"') || prev.value.includes('"essenceAway"') || prev.value.includes('"essenceSpent"'));
+      if (temGravado || 'dungeonDaily' in state || 'checkIns' in state || 'arenaReroll' in state || 'essences' in state || 'essenceAway' in state || 'essenceSpent' in state) {
         let gravado = {};
         if (temGravado) { try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; } }
         const dd = enforceDungeonDaily(state.dungeonDaily, gravado.dungeonDaily);
@@ -419,8 +419,11 @@ export async function onRequest({ request, env }) {
         const ar = enforceArenaReroll(state.arenaReroll, gravado.arenaReroll);
         if (ar) state.arenaReroll = ar; else delete state.arenaReroll;
         // Essências (28/10/2026, REGISTRO §183): por elemento só crescem; o contador da descida automática segue a regra do arenaReroll.
-        const es = enforceEssences(state.essences, gravado.essences);
+        const es = enforceEssences(state.essences, gravado.essences, state.essenceSpent, gravado.essenceSpent);
         if (es && Object.keys(es).length) state.essences = es; else delete state.essences;
+        // Gasto acumulado (Poção de Elemento, 30/10/2026): monotônico; é ele que autoriza o saldo a baixar.
+        const esp = enforceEssenceSpent(state.essenceSpent, gravado.essenceSpent);
+        if (esp && Object.keys(esp).length) state.essenceSpent = esp; else delete state.essenceSpent;
         const ea = enforceEssenceAway(state.essenceAway, gravado.essenceAway);
         if (ea) state.essenceAway = ea; else delete state.essenceAway;
       }

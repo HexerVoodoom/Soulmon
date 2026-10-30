@@ -13,7 +13,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent, act } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
-import { MercadoStallSheet, ConquistasSheet } from './MercadoSheets';
+import { MercadoStallSheet, ConquistasSheet, CambistaSheet } from './MercadoSheets';
 import { SHOP_ITEMS, TOURNAMENT_ITEMS } from '../../utils/shop';
 import { MISSIONS } from '../../utils/missions';
 
@@ -21,14 +21,12 @@ const base = {
   language: 'en-US' as const,
   points: 260,
   emblems: 12,
-  credits: 32,
   ownedBackgrounds: ['bg-room'] as string[],
   equippedBackground: 'bg-room' as string | null,
   ownedFurniture: [] as string[],
   equippedDecor: {},
   missionProgress: {} as Record<string, number>,
   onBuy: () => true,
-  onExchangeCredits: async () => true,
   onEquip: () => {},
   onEquipFurniture: () => {},
 };
@@ -176,43 +174,134 @@ describe('moeda certa por aba', () => {
     expect(onBuy).toHaveBeenCalledWith(emblemFurn.id);
   });
 
-  it('Itens tem Bits e Créditos, nunca Emblemas; Créditos = diamond credit-ink + a troca', () => {
-    const { container } = abrir({ stall: 'itens', credits: 3 });
+  it('Itens tem só Bits (a troca de Créditos mudou para o Cambista, 30/10/2026); nunca Emblemas nem Créditos', () => {
+    abrir({ stall: 'itens' });
     expect(screen.queryByRole('tab', { name: 'Honor' })).toBeNull();
-    fireEvent.click(screen.getByRole('tab', { name: 'Credits' }));
+    expect(screen.queryByRole('tab', { name: 'Credits' })).toBeNull();
+    expect(document.querySelector('[data-credit-exchange]')).toBeNull();
+  });
+});
+
+import { ALL_ELEMENT_IDS, BASE_ELEMENT_IDS } from '../../utils/elementDex';
+import { elementsMatchingBases } from '../../utils/elementPotion';
+
+describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
+  const abrirC = (p: Partial<Parameters<typeof CambistaSheet>[0]> = {}) =>
+    renderWithCss(<CambistaSheet language="en-US" credits={3} onExchangeCredits={async () => true} {...p} />);
+
+  it('abre na aba Bits: diamante credit-ink + a troca, e nenhum item à venda', () => {
+    const { container } = abrirC();
+    expect(screen.getByRole('tab', { name: 'Bits' }).getAttribute('aria-selected')).toBe('true');
     expect(container.querySelector('[style*="--sm2-credit-ink"]')).not.toBeNull();
     const swap = screen.getByRole('button', { name: 'Swap 1 Credit for 10 Bits' });
     expect(swap.hasAttribute('disabled')).toBe(false);
     expect(screen.getByRole('button', { name: 'Swap 4 Credits for 40 Bits' }).hasAttribute('disabled')).toBe(true);
-    // Nenhum item à venda na aba de Créditos.
     expect(container.querySelector('[data-shop-item]')).toBeNull();
+  });
+
+  it('Essências: lista todos os elementos com preço; sem onBuyEssence não há botão (só vitrine)', () => {
+    const { container } = abrirC();
+    fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
+    expect(container.querySelectorAll('[data-essence-row]').length).toBe(ALL_ELEMENT_IDS.length);
+    expect(container.querySelector('[data-credit-exchange]')).toBeNull();
+    expect(container.querySelector('[data-essence-buy]')).toBeNull();
+    expect(container.textContent).toMatch(/1 per base element, 2 per pair/);
+  });
+
+  it('Essências: preço por linha, ×5 com desconto, posse; trancado (???) sem compra; sem saldo = desabilitado', () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const par = ALL_ELEMENT_IDS.find(id => !BASE_ELEMENT_IDS.includes(id))!;
+    const trancado = BASE_ELEMENT_IDS[1];
+    const { container } = abrirC({ credits: 4, unlockedElements: [fogo, par], essences: { [fogo]: 7 }, onBuyEssence: async () => true });
+    fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
+    const row = (id: string) => container.querySelector(`[data-essence-row="${id}"]`)!;
+    const prices = (id: string) => [...row(id).querySelectorAll('[data-essence-price]')].map(e => e.textContent);
+    expect(prices(fogo)).toEqual(['1', '4']);
+    expect(prices(par)).toEqual(['2', '9']);
+    expect(row(fogo).querySelector('[data-essence-owned]')!.textContent).toBe('×7');
+    expect(row(trancado).querySelector('[data-essence-buy]')).toBeNull();
+    expect(row(trancado).textContent).toMatch(/\?\?\?/);
+    expect((row(fogo).querySelector('[data-essence-buy="5"]') as HTMLButtonElement).disabled).toBe(false);
+    expect((row(par).querySelector('[data-essence-buy="1"]') as HTMLButtonElement).disabled).toBe(false);
+    expect((row(par).querySelector('[data-essence-buy="5"]') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('Essências: Comprar abre a confirmação (Cancelar à esquerda não cobra; Confirmar chama o servidor)', async () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const onBuyEssence = vi.fn(async () => true);
+    const { container } = abrirC({ credits: 10, unlockedElements: [fogo], onBuyEssence });
+    fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
+    fireEvent.click(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy="5"]`)!);
+    let dlg = screen.getByRole('dialog', { name: 'Confirm purchase' });
+    expect(dlg.querySelector('[data-purchase-cost]')!.textContent).toMatch(/^4 /);
+    const btns = [...dlg.querySelectorAll('button[data-purchase-cancel], button[data-purchase-ok]')];
+    expect(btns.map(b => b.hasAttribute('data-purchase-cancel'))).toEqual([true, false]);
+    fireEvent.click(dlg.querySelector('[data-purchase-cancel]')!);
+    expect(onBuyEssence).not.toHaveBeenCalled();
+    fireEvent.click(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy="1"]`)!);
+    dlg = screen.getByRole('dialog', { name: 'Confirm purchase' });
+    fireEvent.click(dlg.querySelector('[data-purchase-ok]')!);
+    await Promise.resolve();
+    expect(onBuyEssence).toHaveBeenCalledWith(fogo, 1);
+  });
+
+  it('Essências em PT: botão Comprar e regra de preço', () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const { container } = abrirC({ language: 'pt-BR', unlockedElements: [fogo], onBuyEssence: async () => true });
+    fireEvent.click(screen.getByRole('tab', { name: 'Essências' }));
+    expect(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy="1"]`)!.textContent).toMatch(/Comprar/);
+    expect(container.textContent).toMatch(/1 por elemento base, 2 por par/);
+  });
+
+  it('Essências: três espaços filtram em E (base sozinha = ela + todo par que a contém)', () => {
+    const { container } = abrirC();
+    fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
+    const ids = () => [...container.querySelectorAll('[data-essence-row]')].map(e => e.getAttribute('data-essence-row'));
+    expect(container.querySelectorAll('[data-slot]').length).toBe(3);
+    const [a, b] = BASE_ELEMENT_IDS;
+    fireEvent.click(container.querySelector('[data-slot="0"]')!);
+    fireEvent.click(container.querySelector(`[data-base="${a}"]`)!);
+    expect(ids()).toEqual(elementsMatchingBases([a]));
+    expect(ids().length).toBeGreaterThan(1);
+    fireEvent.click(container.querySelector('[data-slot="1"]')!);
+    fireEvent.click(container.querySelector(`[data-base="${b}"]`)!);
+    expect(ids()).toEqual(elementsMatchingBases([a, b]));
+    expect(ids().length).toBeLessThan(elementsMatchingBases([a]).length);
+    expect(container.querySelector('[data-cambista-essence-list]')).not.toBeNull();
+  });
+
+  it('Outros: placeholder, em PT também', () => {
+    const { container } = abrirC({ language: 'pt-BR' });
+    fireEvent.click(screen.getByRole('tab', { name: 'Outros' }));
+    expect(container.querySelector('[data-cambista-other]')!.textContent).toMatch(/Em breve/);
   });
 });
 
 describe('convite passivo (WP5.1)', () => {
   const convite = /stays here whenever you want to look/i;
-  it('mora na aba de Créditos de Itens, DEPOIS da troca', () => {
-    const { container } = abrir({ stall: 'itens', accountTier: 'demo', onUnlock: () => {} });
-    expect(screen.queryByText(convite)).toBeNull(); // não na vitrine de Bits
-    fireEvent.click(screen.getByRole('tab', { name: 'Credits' }));
+  const abrirC = (p: Partial<Parameters<typeof CambistaSheet>[0]> = {}) =>
+    renderWithCss(<CambistaSheet language="en-US" credits={3} onExchangeCredits={async () => true} {...p} />);
+
+  it('mora na aba Bits do Cambista, DEPOIS da troca', () => {
+    const { container } = abrirC({ accountTier: 'demo', onUnlock: () => {} });
     const troca = container.querySelector('[data-credit-exchange]')!;
     const card = screen.getByText(convite);
     expect(troca.compareDocumentPosition(card) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
+    expect(screen.queryByText(convite)).toBeNull();
   });
 
   it('nunca na aba de Emblemas', () => {
-    abrir({ stall: 'decoracao', accountTier: 'demo', onUnlock: () => {} });
+    abrir({ stall: 'decoracao' });
     fireEvent.click(screen.getByRole('tab', { name: 'Honor' }));
     expect(screen.queryByText(convite)).toBeNull();
   });
 
   it('quem já pagou não vê; sem onUnlock não há botão que não leva a lugar nenhum', () => {
-    const a = abrir({ stall: 'itens', accountTier: 'paid', onUnlock: () => {} });
-    fireEvent.click(screen.getByRole('tab', { name: 'Credits' }));
+    const a = abrirC({ accountTier: 'paid', onUnlock: () => {} });
     expect(screen.queryByText(convite)).toBeNull();
     a.unmount();
-    abrir({ stall: 'itens', accountTier: 'demo' });
-    fireEvent.click(screen.getByRole('tab', { name: 'Credits' }));
+    abrirC({ accountTier: 'demo' });
     expect(screen.queryByText(convite)).toBeNull();
   });
 });
