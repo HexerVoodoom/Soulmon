@@ -1,7 +1,7 @@
 # Prompts — Velados do onboarding (30/10/2026)
 
 Decisões do dono (30/10): Ordem = nome dos grupos (D22). Ancião e Velado da Mão são
-**Remendados**. Lote = onboarding + Guilda. Estilo **fiel às refs** (cobre, rebite,
+**Remendados**. Lote = onboarding + Guilda (na Guilda, cada Ordem = o **desbravador**, líder do trio; ver `docs/lore/VELADOS-ORDENS.md`). Estilo **fiel às refs** (cobre, rebite,
 capuz, máscara, lanterna turquesa) — exceção explícita à regra "arcano, não steampunk",
 só para os Velados.
 
@@ -31,9 +31,9 @@ Saída: busto quadrado, fundo transparente real (ChatGPT), salvar em
 | `velado-mao` | Remendados | THE HAND: a younger, agile Patched One, a rescuer. Lighter wrapping of patched teal cloth, a slim copper visor helmet with one horizontal turquoise slit; holding up a small round copper lantern-grenade crackling with turquoise light, ready to throw. Determined, alert. |
 | `desfeito` | Os Desfeitos (`os-desfeitos.png`) | THE UNDONE: a hooded wraith whose body is dissolving into black-and-turquoise glitch pixels; a black cracked mask with white static where the eyes should be; rusted copper scraps and loose cables hanging from torn black robes; one clawed hand reaching toward the viewer, its fingers breaking into pixels. Menacing, cold, silent. No gore. |
 | `desfeito-pesadelo` | Os Desfeitos | THE UNDONE'S NIGHTMARE CREATURE: a corrupted beast companion (not humanoid), a hound-like shadow with a cracked copper skull-mask, glitching pixel mane, turquoise static eyes, black smoke tendrils. Bust only. Menacing. |
-| `merc-filtrador` | Filtradores (`ordem-filtradores.png`) | A Filter-Order mercenary: twin round copper gas-filter mask with turquoise lenses, teal hood with cream scarf with leaf runes, starry-night cloak lining, a small turquoise lantern at the chest. Steady, kind. Benevolence. |
-| `merc-tecelao` | Tecelões (`ordem-teceloes.png`) | A Weaver-Order mercenary: smooth white porcelain mask with a single turquoise line, cream and teal hood woven with vines and small bells, a copper crescent blade and chain over the shoulder, one tiny glowing turquoise fairy beside the head. Graceful. Harmony. |
-| `merc-rompente` | Rompentes (`ordem-rompentes.png` + `rompente-garra.png`) | A Breaker-Order mercenary: tall pointed copper great-helm with a turquoise visor slit, heavy riveted copper pauldrons, torn teal hood, fur collar, a huge cleaver hilt over the shoulder and a caged turquoise lantern on a chain. Fierce, powerful. Power. |
+| `merc-filtrador` | Filtradores (`ordem-filtradores.png`) | THE FILTERERS' PATHFINDER (trio leader, a cleric-healer who guides): twin round copper gas-filter mask with turquoise lenses, teal hood with cream scarf with leaf runes, a small turquoise healing lantern held close to the chest, soft healing glow on one gloved hand. Steady, kind. Benevolence. |
+| `merc-tecelao` | Tecelões (`ordem-teceloes.png`) | THE WEAVERS' PATHFINDER (trio leader, a monk-druid): smooth white porcelain mask with a single turquoise line, cream and teal hood overgrown with vines and small bells, a copper crescent blade on a long chain wrapped over the shoulder, one tiny glowing turquoise fairy beside the head. Calm, grounded. Harmony. |
+| `merc-rompente` | Rompentes (`ordem-rompentes.png` + `rompente-garra.png`) | THE BREAKERS' PATHFINDER (trio leader, a heavy two-handed greatsword warrior): tall pointed copper great-helm with a turquoise visor slit, heavy riveted copper pauldrons, torn teal hood, fur collar, a huge cleaver hilt over the shoulder and a caged turquoise lantern on a chain. Fierce, powerful. Power. |
 
 ## Poses (só depois do busto aprovado)
 
