@@ -50,6 +50,24 @@ export function sanitizeEssences(raw: unknown): Record<string, number> {
   return out;
 }
 
+/** Teto do acumulado GASTO por elemento (sanidade). Monotônico no servidor: é o que permite o saldo `essences` baixar sem reabrir o furo. */
+export const ESSENCE_SPENT_MAX_PER_ELEMENT = 1_000_000_000;
+
+/** `GameState.essenceSpent`: quanto de cada essência já foi GASTO na vida (só cresce). Mesma forma de `essences`, teto próprio. Espelho: `_essences.js`. */
+export function sanitizeEssenceSpent(raw: unknown): Record<string, number> {
+  const out: Record<string, number> = {};
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+  let n = 0;
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (!/^[a-z_]{2,24}$/.test(k) || typeof v !== 'number' || !Number.isFinite(v)) continue;
+    const q = Math.min(ESSENCE_SPENT_MAX_PER_ELEMENT, Math.floor(v));
+    if (q < 1) continue;
+    out[k] = q;
+    if (++n >= ESSENCE_MAX_KEYS) break;
+  }
+  return out;
+}
+
 export interface EssenceAway { day: string; count: number }
 export function sanitizeEssenceAway(raw: unknown): EssenceAway | undefined {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
@@ -58,7 +76,7 @@ export function sanitizeEssenceAway(raw: unknown): EssenceAway | undefined {
   return { day: r.day, count: Math.min(999, Math.max(0, Math.floor(r.count))) };
 }
 
-type EssenceState = { essences?: Record<string, number>; essenceAway?: EssenceAway };
+type EssenceState = { essences?: Record<string, number>; essenceAway?: EssenceAway; essenceSpent?: Record<string, number> };
 
 /** Soma drops (ids fora do catálogo e qty<1 são ignorados). Nada novo → o MESMO objeto. */
 export function applyEssences<T extends EssenceState>(prev: T, drops: readonly (EssenceDrop | undefined)[]): T {
@@ -89,4 +107,22 @@ export function essenceName(id: string, isPt: boolean): string {
   if (id === NIGHTMARE_ELEMENT) return isPt ? 'Essência de Pesadelo' : 'Nightmare Essence';
   const el = BASE_ELEMENT_IDS.includes(id) ? elementLabel(id, isPt) : (isPt ? elementoNomeDe(id).pt : elementoNomeDe(id).en);
   return isPt ? `Essência de ${el}` : `${el} Essence`;
+}
+
+/**
+ * GASTAR essências (30/10/2026, Poção de Elemento): desconta do saldo e soma ao acumulado `essenceSpent`. Tudo-ou-nada: se qualquer
+ * custo passa do saldo, devolve `null` (quem chama decide). O servidor deixa o saldo baixar SÓ pelo aumento de `essenceSpent`.
+ */
+export function spendEssences<T extends EssenceState>(prev: T, cost: readonly EssenceDrop[]): T | null {
+  const have = { ...(prev.essences ?? {}) };
+  const spent = { ...(prev.essenceSpent ?? {}) };
+  for (const c of cost) {
+    if (!isEssenceId(c.id) || !(c.qty >= 1)) continue;
+    const q = Math.floor(c.qty);
+    if ((have[c.id] ?? 0) < q) return null;
+    have[c.id] -= q;
+    if (have[c.id] <= 0) delete have[c.id];
+    spent[c.id] = Math.min(ESSENCE_SPENT_MAX_PER_ELEMENT, (spent[c.id] ?? 0) + q);
+  }
+  return { ...prev, essences: have, essenceSpent: spent };
 }

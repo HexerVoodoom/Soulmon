@@ -150,6 +150,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
             )}
           </p>
           <p style={para}>
+            {L(
+              'Poção de elemento: no Centro de Evolução, gaste essências para preparar uma poção. Dê ao Soulmon pela pasta de itens e, na próxima evolução, ele carrega esse elemento. Outra poção substitui a que espera.',
+              'Element potion: at the Evolution Center, spend essences to brew a potion. Give it to your Soulmon from the item folder and, at the next evolution, it carries that element. Another potion replaces the one waiting.',
+            )}
+          </p>
+          <p style={para}>
             {/* INCUBAÇÃO (D-G8b/D-G8c). A copy diz a verdade INTEIRA — leva um
                 tempo, volta quando quiser, nada se perde —, que é a condição
                 R-N do parecer: quem não sabe que nada expira se comporta como

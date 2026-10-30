@@ -619,6 +619,8 @@ const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m
 const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
+import { ElementPotionSheet } from './components/ElementPotionSheet';
+import { applyPotionOnEvolve, craftPotion, canAffordPotion } from './utils/elementPotion';
 import { EssencesSection } from './components/EssencesSection';
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
 const AdventureDiary = lazy(() => import('./components/AdventureDiary').then(m => ({ default: m.AdventureDiary })));
@@ -834,6 +836,7 @@ export default function App() {
   }, [setGameState]);
   /** Sub-aba do Laboratório (Evolução / Soulmon / Estatísticas). */
   const [labTab, setLabTab] = useState<LabTab>('evolution');
+  const [potionOpen, setPotionOpen] = useState(false); // Poção de Elemento (Centro de Evolução)
   const pane = paneFor(currentView, labTab);
   /** A área do Mapa da view atual, ou `null` fora de uma área (minimal-ui F4). */
   const area = areaOf(currentView);
@@ -3639,7 +3642,8 @@ export default function App() {
       // WP4.19 — subir de novo depois de uma queda por HP apaga a marca da
       // queda e acende a da volta. A regra é de `dailyReset.ts` (dona), não
       // daqui: `App.tsx` só delega. Cosmética, opt-in, e nunca marca de queda.
-      const base = applyRedemption(prev, newEvolutionStage !== prev.evolutionStage);
+      // Poção de Elemento: o elemento pendente vira o do Soulmon e o campo é limpo (`utils/elementPotion.ts`).
+      const base = applyPotionOnEvolve(applyRedemption(prev, newEvolutionStage !== prev.evolutionStage));
       return {
         ...base,
         evolutionStage: newEvolutionStage,
@@ -3787,6 +3791,9 @@ export default function App() {
       }
       if (special.kind === 'spark') {
         toast(language === 'pt-BR' ? `✨ Faísca de Alma! +${SPARK_HOME_ENERGY} de energia` : `✨ Soul Spark! +${SPARK_HOME_ENERGY} energy`);
+      }
+      if (special.kind === 'potion') {
+        toast(language === 'pt-BR' ? '🧪 Poção dada. Na próxima evolução o Soulmon carrega este elemento.' : '🧪 Potion given. At the next evolution your Soulmon carries this element.');
       }
       if (special.kind === 'premium') {
         toast(language === 'pt-BR' ? '⭐ Comida premium! Fome bem cheia' : '⭐ Premium food! Hunger well filled');
@@ -7053,6 +7060,25 @@ export default function App() {
             </div>
           )}
 
+          {labTab === 'evolution' && (
+            <div style={{ padding: '0 4px 10px' }}>
+              <button type="button" data-open-element-potion style={sm2Button('outline')} onClick={() => setPotionOpen(true)}>
+                {language === 'pt-BR' ? 'Criar poção de elemento' : 'Create element potion'}
+              </button>
+            </div>
+          )}
+          <ElementPotionSheet
+            open={labTab === 'evolution' && potionOpen}
+            language={language}
+            essences={gameState.essences}
+            pending={gameState.evolutionPotion}
+            onBack={() => setPotionOpen(false)}
+            onCraft={(id) => {
+              // A regra (e a reconferência do saldo sobre o `prev`) mora em `utils/elementPotion.ts`; o toast é efeito, fora do updater.
+              if (!canAffordPotion(gameState.essences, id)) return;
+              setGameState(prev => craftPotion(prev, id));
+            }}
+          />
           {labTab === 'evolution' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><EvolutionPath
               currentStageId={gameState.evolutionStage}
