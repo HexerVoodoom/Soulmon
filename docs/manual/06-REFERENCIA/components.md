@@ -293,6 +293,10 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx` (lazy).
 **Régua:** `src/components/nav/areaShell.render.test.tsx` (o molde), `src/components/mercado/MercadoSheets.render.test.tsx`, `src/components/arena/arenaSheets.render.test.tsx`, `src/components/play/playArea.render.test.tsx`, `src/components/nav/areaLabHall.render.test.tsx`.
 
+### `src/components/guild/BossCheerPrelude.tsx`
+**Dono de:** a torcida do Chefe da Feira (dono, 30/10/2026): tela antes do golpe (cena parada, mascote, barra), até 30 s ou "Go!"; os toques vão em baldes de 3 s para `guildFeiraAttack`, e o servidor (`simularAtaque`) os aplica de forma determinística — sem toques, resultado idêntico ao de antes.
+**Exports:** `BOSS_CHEER_SECONDS`, `BOSS_CHEER_BUCKETS`, `addBossTap(taps, elapsedMs)`, `BossCheerPrelude({ language, bossId, level, poolPct, me, busy, onGo })`.
+
 ### `src/components/guild/BossFightScreen.tsx`
 **Dono de:** a luta contra o chefe da Feira (`PLANO-FEIRA-CHEFE.md` §3, F-08/F-09), só apresentação: toca o replay que o servidor validou (eventos no formato de `fightSteps`, lado 0 = jogador, lado 1 = chefe) na `BattleStage` em modo `boss` e, ao fim (ou ao pular), mostra o `ResultScreen` com `kind="boss"`. Só AGREGADO: a barra é o pool do clã (`poolPctBefore` → `poolPctAfter`, interpolado pelos golpes do jogador) e a única cifra é o dano do próprio jogador (`myDamage`); nada por membro. O chefe "foge" (`<nome> fled, for now` / `<nome> fugiu por ora`) ou, no abate, "O caminho abriu"; recompensa (`rewards.sap`, `rewards.emblems`) só aparece quando dada. Arte: `bossArt(id, 'corpo-inteiro') ?? bossArt(id)` (o Arauto tem corpo inteiro). Sem torcida (o replay é do servidor; nada que o jogador toque muda o resultado) e sem som novo.
 **Exports:** `BossFightScreen(props)`, `BossFightScreenProps`, `BossFightMe`.
