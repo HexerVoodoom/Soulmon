@@ -8,7 +8,7 @@ import { render, screen, act, fireEvent, cleanup } from '@testing-library/react'
 import { DuelScreen, cheerQuality } from './DuelScreen';
 import { specialLeadMs, specialTailMs, impactMs } from '../utils/combatFx';
 import { simulatePvp, DUEL_CHEER_BUCKETS, type DuelSide } from '../utils/combate/duel';
-import { PVP_HP_SCALE } from '../utils/combate/fight';
+import { hpPoints, PVP_HP_SCALE } from '../utils/combate/fight';
 import { CHEER } from '../utils/combate/specials';
 import { duelSide } from '../../functions/api/_duel.js';
 
@@ -60,8 +60,8 @@ describe('DuelScreen — a cena em tela cheia', () => {
     vi.useFakeTimers();
     const me = lado(3), opp = lado(10, 'champion-power');
     montar(vi.fn(), vi.fn(), 'agua', me, opp);
-    expect(document.querySelector('[data-stage-plate="me"]')?.textContent).toContain(`${Math.round(me.combatant.hp * PVP_HP_SCALE)}/`);
-    expect(document.querySelector('[data-stage-plate="foe"]')?.textContent).toContain(`${Math.round(opp.combatant.hp * PVP_HP_SCALE)}/`);
+    expect(document.querySelector('[data-stage-plate="me"]')?.textContent).toContain(`${hpPoints(me.combatant.hp * PVP_HP_SCALE)}/`);
+    expect(document.querySelector('[data-stage-plate="foe"]')?.textContent).toContain(`${hpPoints(opp.combatant.hp * PVP_HP_SCALE)}/`);
   });
 
   it('a luta corre em TEMPO REAL: dura o que o núcleo diz (até o 1º nocaute) mais a pausa final, e entrega UMA vez', () => {
@@ -71,7 +71,7 @@ describe('DuelScreen — a cena em tela cheia', () => {
     const duracao = Math.min(sim.timeMe, sim.timeOpp) * 1000;
     // Antes do 1º golpe nada caiu: as duas barras estão cheias.
     act(() => { vi.advanceTimersByTime(300); });
-    expect(document.querySelector('[data-stage-plate="foe"]')?.textContent).toContain(`${Math.round(lado().combatant.hp * PVP_HP_SCALE)}/`);
+    expect(document.querySelector('[data-stage-plate="foe"]')?.textContent).toContain(`${hpPoints(lado().combatant.hp * PVP_HP_SCALE)}/`);
     const gasto = correr(onDone) + 300;
     expect(onDone).toHaveBeenCalledTimes(1);
     expect(gasto).toBeGreaterThan(duracao - 600);
@@ -224,8 +224,8 @@ describe('DuelScreen — torcida por BALDE de 3 s', () => {
     const taps = onDone.mock.calls[0][0] as number[];
     const servidor = simulatePvp({ me, opp, seed: SEED, taps });
     expect(servidor.events.length).toBeGreaterThan(10);
-    const maxMe = Math.round(me.combatant.hp * PVP_HP_SCALE);
-    const maxOpp = Math.round(opp.combatant.hp * PVP_HP_SCALE);
+    const maxMe = hpPoints(me.combatant.hp * PVP_HP_SCALE);
+    const maxOpp = hpPoints(opp.combatant.hp * PVP_HP_SCALE);
     if (servidor.winner === 'me') {
       expect(document.querySelector('[data-stage-plate="me"]')?.textContent).toContain(`${Math.round(servidor.hpMe * maxMe)}/`);
     } else if (servidor.winner === 'opp') {
