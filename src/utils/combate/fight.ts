@@ -40,7 +40,7 @@ export const HIT_UNIT_H0 = 10;
 export const PVP_HP_SCALE = 1.7;
 
 /**
- * INTEGER HP (owner, 30/10/2026 — REGISTRO §HP inteiro): the core still reasons in HP fractions 0..1, but every
+ * INTEGER HP (owner, 30/10/2026 — REGISTRO §192): the core still reasons in HP fractions 0..1, but every
  * fighter has `hpPoints(hp)` whole points and EVERY change of HP is snapped to them: a damaging hit removes
  * max(1, round(frac·pts)) points (never a fraction), heal and shield are whole points too, and 0 points = knocked out
  * at once. The scale ×30 keeps even the weakest chip hit of the Dungeon (slot 0, power 0.026, at L1) near 1 point (the min-1 rule does not inflate it), so the length and the

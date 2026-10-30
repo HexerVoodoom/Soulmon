@@ -39,7 +39,7 @@ function regressionHash(phaseSalt = PHASE_SALT): { hash: number; first: string; 
   return { hash: x, first: parts[0], last: parts[299] };
 }
 /** FNV-1a of the 300 results, recorded by running the PR1 `fight()` of origin/main (be1ef455) BEFORE the change. */
-// VIDA INTEIRA (30/10/2026, REGISTRO §HP inteiro): re-pinned when HP became whole points (the PR1 fractional value was
+// VIDA INTEIRA (30/10/2026, REGISTRO §192): re-pinned when HP became whole points (the PR1 fractional value was
 // 63614565). The first and last of the 300 fights are unchanged; the hash moves because some fights now end one rounded
 // point earlier/later. It still guards that the u = 1 path is deterministic and that PHASE_SALT matters (the RED below).
 const PR1_MAIN_HASH = 2572250091;
