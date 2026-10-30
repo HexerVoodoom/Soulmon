@@ -2,6 +2,7 @@
 // `enemyRoster*`, ~40 KB com arte). O resto das regras está em `dungeonBase.ts` (leve; entra no chunk de entrada).
 // Quem só precisa de `dungeonFoe`/`getDungeonBest`/… importa de `dungeonBase` e NÃO puxa o roster.
 import { getDungeonEnemySprite } from './sprites';
+import { lineElementOf } from './spriteElement';
 import { getDungeonEncounter } from './novosSoulmon';
 import { soulLevel } from './soulXP';
 import { mulberry32 } from './combate/rng';
@@ -33,7 +34,7 @@ export function buildDungeonWave(
       slot,
       floor,
       foe: dungeonFoe(playerLevel, slot, floor),
-      ...('element' in picked && picked.element ? { element: picked.element, basico: picked.basico, especial: picked.especial } : {}),
+      ...('element' in picked && picked.element ? { element: picked.element, basico: picked.basico, especial: picked.especial } : (lineElementOf(picked.line) ? { element: lineElementOf(picked.line) } : {})),
     };
   });
 }

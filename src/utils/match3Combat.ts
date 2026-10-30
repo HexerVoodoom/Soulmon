@@ -16,6 +16,7 @@
 import { chainMultiplier, match3Bits, trySwap, validMoves, M3_TILE_ELEMENTS, type Board, type Pos, type Rng, type Step } from './match3';
 import { mulberry32 } from './combate/rng';
 import { pickEnemy } from './enemyRoster';
+import { LINE_ELEMENT, rosterEntryElement } from './spriteElement';
 import { elementAdvantage } from './arena';
 import { elementHits } from './combate/curve';
 import { baseDominanteDoElemento } from './soulProfile/ficha/elementoNome';
@@ -119,12 +120,14 @@ export function newCombat(rng: Rng, lines: readonly string[] = [], exclude?: str
     ...(lines.length > 0 ? { line: pick(pool.length > 0 ? pool : [...lines]) } : {}),
   });
   const enemies: M3Enemy[] = [mk(0), mk(1), mk(2)];
+  // O elemento do inimigo É o do sprite dele (`spriteElement.ts`; dono, 30/10/2026) — o sorteio acima só gasta o rng (sequência antiga intacta).
+  for (const e of enemies) { const le = e.line ? LINE_ELEMENT[e.line] : undefined; if (le) e.element = le; }
   if (level !== undefined) {
     // M10: as 3 vagas pedem rookie/champion/ultimate, rebaixadas ao teto do level (progressão do roster); sem repetir criatura.
     // Sorteado DEPOIS do resto, então o rng das jogadas antigas (sem level) não muda.
     const used = new Set<string>();
     const pedido = ['rookie', 'champion', 'ultimate'] as const;
-    enemies.forEach((e, i) => { const r = pickEnemy(level, rng, { stage: pedido[i], used }); used.add(r.id); e.roster = r.key; });
+    enemies.forEach((e, i) => { const r = pickEnemy(level, rng, { stage: pedido[i], used }); used.add(r.id); e.roster = r.key; e.element = rosterEntryElement(r); });
   }
   return { player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP }, enemies, ...(playerElement ? { playerElement } : {}), active: 0, log: [], dealt: 0, taken: 0, defeated: 0, turns: 0, outcome: 'playing' };
 }
@@ -136,8 +139,9 @@ export const M3C_PVP_ENEMY_HP: number = M3C_ENEMY_HP.reduce((a, b) => a + b, 0);
  * Um combate de PVP (1 contra 1): UM inimigo, com os 6 `elements` da partida (o do inimigo sai deles, sorteado pelo `rng`).
  * `roster` = chave do roster quando o adversário é um NPC (bestiário); jogador real não leva nada (arte e level vêm da tela).
  */
-export function newPvpCombat(rng: Rng, elements: readonly string[], roster?: string, playerElement?: string): M3Combat {
-  const el = elements[Math.min(elements.length - 1, Math.floor(rng() * elements.length))];
+export function newPvpCombat(rng: Rng, elements: readonly string[], roster?: string, playerElement?: string, foeElement?: string): M3Combat {
+  // O elemento do oponente é o do SPRITE dele (NPC: o do roster; jogador real: o que o perfil publica); só sem ele cai no sorteio dos 6 da partida.
+  const el = foeElement ?? elements[Math.min(elements.length - 1, Math.floor(rng() * elements.length))];
   return {
     player: { hp: M3C_PLAYER_HP, max: M3C_PLAYER_HP },
     enemies: [{ hp: M3C_PVP_ENEMY_HP, max: M3C_PVP_ENEMY_HP, element: el, ...(roster ? { roster } : {}) }],

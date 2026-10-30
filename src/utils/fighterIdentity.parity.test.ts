@@ -16,7 +16,8 @@ const ficha = (escolas: Ficha['escolas'], elementos: Ficha['elementos']): Ficha 
   totals: { elementos: 6, escolas: 0, recursos: 2, talentos: 0, profissoes: 0 },
 });
 const doServidor = (par: unknown, fallback?: string) =>
-  fighterIdentityFromFx(duelSide({ evolutionStage: 'rookie', soulmonSkills: { rookie: par } }).fx, fallback);
+  // o elemento do sprite do pet (`fallback`) vem do SAVE no servidor (`soulmonMeta.dominantElement`), como o `petElementOf` no cliente
+  fighterIdentityFromFx(duelSide({ evolutionStage: 'rookie', ...(fallback ? { soulmonMeta: { dominantElement: fallback } } : {}), soulmonSkills: { rookie: par } }).fx, fallback);
 
 describe('identidade do lutador: cliente == servidor', () => {
   it('a lista fechada de elementos do servidor é a do app (17 base + 136 pares)', () => {
@@ -29,7 +30,7 @@ describe('identidade do lutador: cliente == servidor', () => {
       const f = ficha({ [escola]: 5 }, { [el]: 3, agua: 2, ...(par ? { [par]: 2 } : {}) });
       const sk = buildStageSkills(f, 'rookie', seed);
       expect(doServidor(sk, 'fogo')).toEqual(fighterIdentity(sk, 'fogo'));
-      expect(fighterIdentityFromFx(fxDoLutador(sk), 'fogo')).toEqual(fighterIdentity(sk, 'fogo'));
+      expect(fighterIdentityFromFx(fxDoLutador(sk, 'fogo'), 'fogo')).toEqual(fighterIdentity(sk, 'fogo'));
       n++;
     }
     expect(n).toBe(90);

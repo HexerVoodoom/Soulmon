@@ -175,9 +175,9 @@ export function ArenaGame({
     family: familyOfSkill(especial),
     area: especial?.area?.tipo === 'circulo' ? 'area' : 'single',
     escolaBasica: basica?.escolaId ?? 'combate_fisico',
-    // MECÂNICA da vantagem elemental (arena.ts, tabela só das 17 bases): segue como estava, na base da ficha (`basica.elementoId`); o que se VÊ é a identidade.
-    elements: arenaElementsFor({ basica: basica?.elementoId, especial: especial?.elementoId }, ident, atributos),
-  }), [estado, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, ident, atributos]);
+    // MECÂNICA da vantagem elemental (arena.ts, tabela só das 17 bases): o elemento do SPRITE manda (a identidade, que já é o `petElement`); só sem ele a base da ficha decide.
+    elements: arenaElementsFor(petElement && petElement !== 'neutro' ? {} : { basica: basica?.elementoId, especial: especial?.elementoId }, ident, atributos),
+  }), [petElement, estado, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, ident, atributos]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const lado = useMemo(() => arenaPlayerSide(jogador), [jogador]);
@@ -249,10 +249,10 @@ export function ArenaGame({
       playerMaxHp: Math.max(1, Math.round(arenaPlayerSide(p).combatant.hp)),
       foeMaxHp: foes.map(f => Math.max(1, Math.round(f.combatant.hp))),
       playerElement: (sp: boolean) => fxElementId(sp ? ident.especial.elemento : ident.basico.elemento),
-      foeElement: (i: number) => fxElementId(inimigosRef.current[i]?.elements[0]),
+      foeElement: (i: number) => fxElementId(inimigosRef.current[i]?.element ?? inimigosRef.current[i]?.elements[0]),
       // A FORMA do golpe vem da skill da FICHA (escola; sem ficha, do elemento) — nunca de índice ou sorteio.
       playerKind: (sp: boolean) => (sp ? ident.especial.forma : ident.basico.forma),
-      foeKind: (foe: number, sp: boolean) => elementStrikeForm(inimigosRef.current[foe]?.elements[0], sp ? 'especial' : 'basica'),
+      foeKind: (foe: number, sp: boolean) => elementStrikeForm(inimigosRef.current[foe]?.element ?? inimigosRef.current[foe]?.elements[0], sp ? 'especial' : 'basica'),
       labels: { blocked: isPt ? 'Defendeu!' : 'Blocked!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
       playerSpecialEscola: ident.especial.escola,
@@ -349,7 +349,7 @@ export function ArenaGame({
             const max = Math.max(1, Math.round(foesLado[i].combatant.hp));
             return {
               key: i, sprite: sprites[i], stage: e.tier, name: nomeDe(e), hp: Math.round(Math.max(0, foesHp(i)) * max), maxHp: max,
-              element: fxElementId(e.elements[0]), down: foesHp(i) <= 1e-9,
+              element: fxElementId(e.element ?? e.elements[0]), down: foesHp(i) <= 1e-9,
               // só quem tem especial (o chefe) mostra a barra de energia
               energy: foesLado[i].special && pronto ? (batalha.foeEnergy[i] ?? 0) / ENERGY_TRIGGER : undefined,
               status: pronto ? batalha.status.foes[i] : undefined,

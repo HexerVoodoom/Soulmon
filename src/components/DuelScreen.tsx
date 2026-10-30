@@ -38,7 +38,7 @@ import { entrarNaSuperficie } from '../utils/musica';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
 import { ARENA_SCENE } from '../utils/dungeonScenes';
 import {
-  fxElementId, impactMs, introMs, prefersReducedMotion, visualElementFor, specialLabel, foeSpecialLabel, duelStatusBoard, stageStatusOf,
+  fxElementId, impactMs, introMs, prefersReducedMotion, FX_FALLBACK_ELEMENT, specialLabel, foeSpecialLabel, duelStatusBoard, stageStatusOf,
   specialLeadMs, specialTailMs, type StageActionKind, type StageStatus,
 } from '../utils/combatFx';
 import { avancar as avancarPortao, bloqueiaAplicar, bloqueiaComecar, fechar as fecharPortao, serializarEspeciais, type ConfigDoPortao, type Portao } from '../utils/specialGate';
@@ -113,7 +113,7 @@ export function DuelScreen({
   // A identidade de combate (dono único): a SUA vem da ficha (sem ela, do `fx` que o servidor publicou do seu save); a do
   // oponente, do `fx` do save dele. O MESMO golpe básico/especial da Arena, Masmorra e Pesadelo, e o que o outro lado vê.
   const meId = useMemo(() => (par ? fighterIdentity(par, petElement) : fighterIdentityFromFx(me.fx, petElement)), [par, petElement, me.fx]);
-  const oppId = useMemo(() => fighterIdentityFromFx(opp.fx, oppElement ?? visualElementFor(oppName)), [opp.fx, oppElement, oppName]);
+  const oppId = useMemo(() => fighterIdentityFromFx(opp.fx, oppElement ?? FX_FALLBACK_ELEMENT), [opp.fx, oppElement]);
   const meEl = fxElementId(meId.basico.elemento);
   const oppEl = fxElementId(oppId.basico.elemento);
   /** O elemento do golpe do lado no papel dado (o básico é o principal; o especial, o dele). */

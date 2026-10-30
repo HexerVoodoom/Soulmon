@@ -181,6 +181,23 @@ export function elementoDoBasico(skills) {
   return idElemento(dom) ?? idElemento(skills?.basica?.elementoId);
 }
 
+/** Espelho de `STARTER_ELEMENT` (src/utils/starterElements.ts); paridade em `spriteElement.parity.test.js`. */
+export const STARTER_ELEMENT = Object.freeze({ industrial: 'terra', nascente: 'som', alento: 'ar', vida: 'vida', meteoro: 'fogo' });
+
+/**
+ * Espelho de `petElementOf` (src/utils/starterElements.ts) — O ELEMENTO DO SPRITE do jogador (dono, 30/10/2026: a arte vence): o inicial
+ * (`demoCharacterId`) ou o dominante do oráculo (`soulmonMeta.dominantElement`), da lista fechada. O corvo do administrador é neutro
+ * (`{ neutro: true }`). Golpe básico E especial usam este; a ficha decide só a forma/escola. Derivado do SAVE no servidor.
+ * @param {any} state
+ * @returns {{ el: string | null, neutro: boolean }}
+ */
+export function petElementDeSave(state) {
+  const meta = state && typeof state === 'object' ? state.soulmonMeta : null;
+  if (meta && typeof meta === 'object' && meta.creature === 'corvo') return { el: null, neutro: true };
+  const ini = typeof state?.demoCharacterId === 'string' && Object.hasOwn(STARTER_ELEMENT, state.demoCharacterId) ? STARTER_ELEMENT[state.demoCharacterId] : null;
+  return { el: ini ?? idElemento(meta && typeof meta === 'object' ? meta.dominantElement : null), neutro: false };
+}
+
 /**
  * A ficha de luta de um lado, derivada do SAVE. Só números e ids de uma lista fechada saem daqui:
  *  - `combatant`: level (derivado e limitado por `maxLevel`), stats e bônus (canal `combinedBonus`, 0 até o PR7/PR8);
@@ -201,6 +218,7 @@ export function duelSide(save, opts = {}) {
     equipment: equipAttrBonus(state.equipment, state.forge),
   });
   const combatant = soulCombatant(state, { maxLevel: opts.maxLevel, bonus });
+  const pet = petElementDeSave(state);
   const skills = state.soulmonSkills && typeof state.soulmonSkills === 'object' ? state.soulmonSkills[fichaStageOf(state.evolutionStage)] : null;
   const basica = escolaOf(skills?.basica);
   const especial = escolaOf(skills?.especial);
@@ -214,7 +232,7 @@ export function duelSide(save, opts = {}) {
   // `familia` + `lex` também saem em `fx`: o CLIENTE recompõe o nome EXATO do especial do oponente (regra fechada, nunca texto do save).
   const lex = especial && typeof familiaSalva === 'string' && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
   // `cheerScale` (PR7b, `tal-pvp-05`): o rendimento da torcida do Duelo do LADO de quem tem o nó (1 sem ele).
-  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: elementoDoBasico(skills), elEspecial: idElemento(skills?.especial?.elementoId) } };
+  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: pet.neutro ? null : (pet.el ?? elementoDoBasico(skills)), elEspecial: pet.neutro ? null : (pet.el ?? idElemento(skills?.especial?.elementoId)) } };
 }
 
 /** Só o combatente (a forma curta de `duelSide`). */

@@ -74,8 +74,11 @@ export function fighterIdentity(par: StageSkills | null | undefined, fallbackEle
   const esp: StageSkill | undefined = par?.especial;
   // `petElementOf` só devolve 'neutro' para o corvinho do administrador: a ficha herdada do oráculo não decide o elemento dele.
   const neutro = fallbackElement === FX_FALLBACK_ELEMENT;
-  const elBasico = neutro ? FX_FALLBACK_ELEMENT : (elementoDoBasico(par) ?? sem);
-  const elEspecial = neutro ? FX_FALLBACK_ELEMENT : (elementoValido(esp?.elementoId) ? esp!.elementoId : elBasico);
+  // DONO (30/10/2026): o elemento do SPRITE manda — golpe básico E especial usam o elemento da arte (`petElementOf`); a ficha decide só a FORMA/escola.
+  // Sem elemento conhecido (`fallbackElement` ausente), a ficha decide como antes.
+  const doSprite = elementoValido(fallbackElement) ? fallbackElement : null;
+  const elBasico = neutro ? FX_FALLBACK_ELEMENT : (doSprite ?? elementoDoBasico(par) ?? sem);
+  const elEspecial = neutro ? FX_FALLBACK_ELEMENT : (doSprite ?? (elementoValido(esp?.elementoId) ? esp!.elementoId : elBasico));
   return {
     basico: golpe(par?.basica?.escolaId, elBasico, 'basica', par?.basica?.formaDoElemento === true),
     especial: { ...golpe(esp?.escolaId, elEspecial, 'especial', esp?.formaDoElemento === true), familia: familyOfSkill(esp) },
@@ -97,12 +100,12 @@ export function fighterIdentityFromFx(fx: Partial<FighterFx> | null | undefined,
 }
 
 /** O `fx` do SEU lado (o treino local do Torneio): o mesmo formato que o servidor publica. */
-export function fxDoLutador(par: StageSkills | null | undefined): FighterFx {
+export function fxDoLutador(par: StageSkills | null | undefined, petElement?: string | null): FighterFx {
   return {
     basica: typeof par?.basica?.escolaId === 'string' ? escolaSkillSegura(par.basica.escolaId) : null,
     especial: typeof par?.especial?.escolaId === 'string' ? escolaSkillSegura(par.especial.escolaId) : null,
     familia: par ? familyOfSkill(par.especial) : null,
-    elBasica: elementoDoBasico(par),
-    elEspecial: elementoValido(par?.especial?.elementoId) ? par!.especial.elementoId : null,
+    elBasica: petElement ?? elementoDoBasico(par),
+    elEspecial: petElement ?? (elementoValido(par?.especial?.elementoId) ? par!.especial.elementoId : null),
   };
 }

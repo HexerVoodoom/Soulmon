@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { readSeenIds, addSeenId, markSeenId } from './librarySeen';
 import { STORAGE_KEYS } from './storageKeys';
-import { opponentElementFor, visualElementFor } from './combatFx';
+import { opponentElementFor } from './combatFx';
 
 describe('librarySeen: oponente enfrentado (simulado ou real) entra nos vistos', () => {
   beforeEach(() => { localStorage.clear(); });
@@ -21,9 +21,9 @@ describe('librarySeen: oponente enfrentado (simulado ou real) entra nos vistos',
   it('addSeenId devolve a mesma referência se já visto', () => {
     const l = ['a']; expect(addSeenId(l, 'a')).toBe(l); expect(addSeenId(l, 'b')).toEqual(['a', 'b']);
   });
-  it('elemento do oponente: o publicado vence; sem ele, o determinístico pelo id', () => {
+  it('elemento do oponente: o publicado vence; sem ele, neutro (nunca hash)', () => {
     expect(opponentElementFor({ id: 'p1', element: 'planta' })).toBe('planta');
-    expect(opponentElementFor({ id: 'p1', element: null })).toBe(visualElementFor('p1'));
-    expect(opponentElementFor({ id: 'p1', element: 'Inválido!' })).toBe(visualElementFor('p1'));
+    expect(opponentElementFor({ id: 'p1', element: null })).toBe('neutro');
+    expect(opponentElementFor({ id: 'p1', element: 'Inválido!' })).toBe('neutro');
   });
 });

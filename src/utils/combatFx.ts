@@ -18,6 +18,7 @@
  * Este arquivo só decide QUAL arte e QUANTO tempo; não desenha nada.
  * Nenhuma regra de jogo mora aqui (dano, gauge, golpe: `arena.ts`/`_duel.js`).
  */
+import { lineElementOf } from './spriteElement';
 import { attackFx, type AttackFxState } from './attackFxArt';
 import { NIGHTMARE_ELEMENT, hasNightmareFx, nightmareFx } from './nightmareElement';
 import { escolaSkillSegura } from './soulProfile/ficha/types';
@@ -71,9 +72,9 @@ export function visualElementFor(seedText: string): string {
   return VISUAL_ELEMENTS[h % VISUAL_ELEMENTS.length];
 }
 
-/** O elemento do OPONENTE de um duelo: o que o perfil público dele publica (jogador real ou simulado, mesmo caminho); sem ele, o determinístico pelo id. */
+/** O elemento do OPONENTE de um duelo: o que o perfil público dele publica (o elemento do sprite dele, `petElementOf`). Sem ele, `neutro` — NUNCA hash/sorteio (dono, 30/10/2026). */
 export function opponentElementFor(opp: { id: string; element?: string | null }): string {
-  return typeof opp.element === "string" && /^[a-z][a-z0-9_-]{0,31}$/.test(opp.element) ? opp.element : visualElementFor(opp.id);
+  return typeof opp.element === "string" && /^[a-z][a-z0-9_-]{0,31}$/.test(opp.element) ? opp.element : FX_FALLBACK_ELEMENT;
 }
 
 /**
@@ -81,7 +82,9 @@ export function opponentElementFor(opp: { id: string; element?: string | null })
  * (ultimate/mega) seguem com o elemento sorteado pelo `stage`.
  */
 export function dungeonEnemyElement(e: { stage?: string; element?: string } | undefined | null): string {
-  return e?.element ?? visualElementFor(e?.stage ?? 'x');
+  if (e?.element) return e.element;
+  // linha antiga: a chave é `<linha>-<estágio>`; o elemento é o do sprite que ela mostra (`spriteElement.ts`). Sem arte conhecida: neutro, nunca hash.
+  return lineElementOf(e?.stage?.split('-')[0]) ?? FX_FALLBACK_ELEMENT;
 }
 /** O selo do ESPECIAL do inimigo: o nome da tabela das criaturas novas; sem ele, o nome por regra (`foeSpecialLabel`). */
 export function dungeonFoeSpecialLabel(

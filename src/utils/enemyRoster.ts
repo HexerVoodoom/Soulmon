@@ -33,9 +33,9 @@ export interface RosterEntry {
   id: string;
   stage: EnemyStage;
   kind: 'base' | 'combinado' | 'api';
-  /** Elemento de combate (nos combinados, o 1º componente). */
+  /** Elemento do SPRITE e dos golpes dele (`spriteElement.ts`): nos combinados, o id FUNDIDO (= slug da arte, ex.: fogo+agua → `vapor`); nos base, o próprio. */
   element: string;
-  /** Nos combinados, os dois elementos; nos base, só o próprio. */
+  /** Nos combinados, os dois COMPONENTES (a tabela de vantagem é só das 17 bases); nos base, só o próprio. */
   elements: readonly string[];
   name: string;
   basico: NovoAttack;
@@ -64,7 +64,7 @@ function build(): RosterEntry[] {
     const base = BASE_BY_ELEMENT[e1];
     const id = `cmb${num}`;
     out.push({
-      key: chaveBestiario(id, 'rookie'), id, stage: 'rookie', kind: 'combinado', element: e1, elements: [e1, e2],
+      key: chaveBestiario(id, 'rookie'), id, stage: 'rookie', kind: 'combinado', element: slug, elements: [e1, e2],
       name, basico: base.basico, especial: base.especial, artFile: `${num}-${slug}`,
     });
   }

@@ -81,7 +81,8 @@ import { familyOfSkill } from '../utils/arena';
 import { usePvpTalents } from '../contexts/useTalentBonus';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { stageSkillsFor } from '../utils/soulProfile/ficha/stageSkillsFor';
-import { visualElementFor, opponentElementFor } from '../utils/combatFx';
+import { FX_FALLBACK_ELEMENT, opponentElementFor } from '../utils/combatFx';
+import { DESAFIANTE_ELEMENT } from '../utils/spriteElement';
 import { getOpponents, playMatchComRetry, playMatch, isFalhaDeRede, startDuel, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
 import { RewardPreview } from './ui/RewardPreview';
@@ -337,7 +338,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       startEnergy: talentosPvp.startEnergy,
       dotResist: talentosPvp.dotResist,
       special: specialOf(familyOfSkill(par?.especial)),
-      fx: fxDoLutador(par),
+      fx: fxDoLutador(par, petElement),
     };
     // O desafiante é o espelho equilibrado 2 levels abaixo do seu (dentro do estágio): o treino é para aprender a torcer.
     setTraining({ seed: Math.floor(Math.random() * 0xffffffff), me, opp: npcSide(combatant.level), npc, stray });
@@ -581,7 +582,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         seed={training.seed}
         petSprite={getSpriteForStage(petStage, petLine, 256)}
         oppSprite={training.stray ? (rosterSpriteOf(training.stray) ?? getSpriteForStage(petStage, petLine, 256)) : training.npc ? tournamentNpcSprite(training.npc, petStage) : getSpriteForStage(petStage, petLine, 256)}
-        oppElement={training.stray ? training.stray.element : training.npc ? visualElementFor(training.npc.id) : undefined}
+        oppElement={training.stray ? training.stray.element : training.npc ? (DESAFIANTE_ELEMENT[training.npc.id] ?? FX_FALLBACK_ELEMENT) : undefined}
         oppStage={training.stray ? undefined : petStage}
         petStage={petStage}
         skills={skills}

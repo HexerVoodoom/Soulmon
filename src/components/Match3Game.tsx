@@ -114,7 +114,7 @@ function combatFor(sd: number, playerLine: string | undefined, level?: number, p
   // PVP: 6 elementos sorteados do pool inteiro (semente por partida) e UM inimigo; Normal: os 6 fixos e o time de 3, como sempre.
   if (pvp) {
     const elements = pvpElementsForSeed(sd);
-    return { combat: newPvpCombat(mulberry32(sd + 99), elements, pvp.roster, petElement), rng: mulberry32(sd ^ 0x5eed), elements };
+    return { combat: newPvpCombat(mulberry32(sd + 99), elements, pvp.roster, petElement, pvp.element), rng: mulberry32(sd ^ 0x5eed), elements };
   }
   return { combat: newCombat(mulberry32(sd + 99), LINES, playerLine, level, petElement), rng: mulberry32(sd ^ 0x5eed), elements: M3_TILE_ELEMENTS };
 }
@@ -1058,7 +1058,7 @@ function Match3PvpEntry(props: Match3Props & { onBack: () => void }) {
     getOpponents(rankSaveId!)
       .then(r => {
         const o = pickPvpOpponent(r.opponents ?? [], level);
-        done(o ? { kind: 'player', level: o.duel?.level ?? level, sprite: opponentSprite(o) } : reserva());
+        done(o ? { kind: 'player', level: o.duel?.level ?? level, sprite: opponentSprite(o), ...(typeof o.element === 'string' ? { element: o.element } : {}) } : reserva());
       })
       .catch(() => done(reserva()));
     return () => { dead = true; clearTimeout(t); };

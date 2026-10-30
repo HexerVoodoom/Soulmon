@@ -23,9 +23,9 @@ describe('corvinho neutro', () => {
     expect(id.basico.elemento).toBe('neutro');
     expect(id.especial.elemento).toBe('neutro');
   });
-  it('fighterIdentity: pet comum continua mandado pela ficha', () => {
+  it('fighterIdentity: pet comum — o elemento do sprite manda nos golpes (30/10/2026); a ficha decide só a forma', () => {
     const id = fighterIdentity(fichaDeFogo, 'terra');
-    expect(id.basico.elemento).toBe('fogo');
-    expect(id.especial.elemento).toBe('agua');
+    expect(id.basico.elemento).toBe('terra');
+    expect(id.especial.elemento).toBe('terra');
   });
 });

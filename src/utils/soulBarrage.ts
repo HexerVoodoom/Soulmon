@@ -17,7 +17,7 @@ import { ENEMY_ROSTER, type EnemyStage, type RosterEntry } from './enemyRoster';
  * ultimate — mais vida cada); inimigo que atravessa até a base TIRA VIDA; sprites maiores; tiro inimigo é o FX de espaço.
  */
 export const BARRAGE_ELEMENT = 'espaco';
-const SPACE_ROSTER: readonly RosterEntry[] = ENEMY_ROSTER.filter(e => e.element === BARRAGE_ELEMENT && e.stage !== 'mega');
+const SPACE_ROSTER: readonly RosterEntry[] = ENEMY_ROSTER.filter(e => e.elements[0] === BARRAGE_ELEMENT && e.stage !== 'mega');
 
 export const FIELD_W = 360;
 export const FIELD_H = 560;

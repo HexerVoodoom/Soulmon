@@ -3,24 +3,19 @@ import { SIMULADOS, ART_LINE_BY_ELEMENT } from './_simulados.data.js';
 import { ART_LINE_IDS } from './_artLine.js';
 import { duelSide } from './_duel.js';
 import { saveDoSimulado } from './_simulados.js';
-import { NOVOS_DATA } from '../../src/utils/novosSoulmonData';
 import { CLASS_ELEMENT_ORDER } from '../../src/utils/soulProfile/types';
 import { STARTER_ELEMENT } from '../../src/utils/starterElements';
 
 describe('simulados: elemento coerente com a criatura (determinístico, nunca sorteado)', () => {
-  it('cobrem os 20 elementos base, cada um com ao menos 1 simulado', () => {
+  it('o elemento é o do SPRITE (prompt da arte): os 8 ids do oráculo, cada um com ao menos 1 simulado', () => {
     const cobertos = new Set(SIMULADOS.map(s => s.element));
-    expect([...cobertos].sort()).toEqual([...CLASS_ELEMENT_ORDER].sort());
+    expect([...cobertos].sort()).toEqual(['agua', 'ar', 'fogo', 'industrial', 'luz', 'planta', 'sombra', 'terra']);
+    for (const s of SIMULADOS) expect(CLASS_ELEMENT_ORDER).toContain(s.element);
   });
-  it('a linha (poder/harmonia/benevolência) é a da criatura base do elemento', () => {
-    const linhaDe = Object.fromEntries(NOVOS_DATA.map(n => [n.element, n.line]));
-    for (const s of SIMULADOS) expect(s.line, `${s.id} ${s.element}`).toBe(linhaDe[s.element]);
-  });
-  it('a artLine de fallback é DERIVADA do elemento e existe na lista fechada', () => {
-    expect(Object.keys(ART_LINE_BY_ELEMENT).sort()).toEqual([...CLASS_ELEMENT_ORDER].sort());
+  it('a artLine de fallback só existe quando tem o MESMO elemento (senão vazia) e está na lista fechada', () => {
     for (const s of SIMULADOS) {
-      expect(s.artLine, s.id).toBe(ART_LINE_BY_ELEMENT[s.element]);
-      expect(ART_LINE_IDS.has(s.artLine)).toBe(true);
+      expect(s.artLine, s.id).toBe(ART_LINE_BY_ELEMENT[s.element] ?? '');
+      if (s.artLine) expect(ART_LINE_IDS.has(s.artLine)).toBe(true);
     }
   });
   it('inicial como arte => o elemento é o do inicial (terra/som/ar/vida/fogo)', () => {

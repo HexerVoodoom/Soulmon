@@ -1,3 +1,4 @@
+import { ENEMY_ROSTER } from './enemyRoster';
 import { describe, it, expect } from 'vitest';
 import {
   newBarrage, stepBarrage, phaseAt, stageOdds, pickWaveStage, STAGE_HP, BASE_Y, BARRAGE_ELEMENT, difficultyAt, barrageBits, FIELD_W, PLAYER_Y, START_LIVES,
@@ -31,7 +32,10 @@ describe('soulBarrage', () => {
     s.t = 100; s.phase = 6;
     const seen = new Set<string>();
     for (let i = 0; i < 600; i++) { stepBarrage(s, 0.05, s.px, 30, rng); s.invuln = 99; for (const e of s.enemies) seen.add(e.entry.element); if (s.over) s.over = false; }
-    expect([...seen]).toEqual([BARRAGE_ELEMENT]);
+    // o elemento do inimigo é o do SPRITE (combinado = id fundido); todos vêm do roster de espaço
+    const permitidos = new Set(ENEMY_ROSTER.filter(e => e.elements[0] === BARRAGE_ELEMENT).map(e => e.element));
+    expect([...seen].every(el => permitidos.has(el as string))).toBe(true);
+    expect(seen.has(BARRAGE_ELEMENT)).toBe(true);
   });
   const leaker = (y: number) => {
     const entry = { key: 'x-rookie', id: 'x', stage: 'rookie' as const, kind: 'base' as const, element: 'espaco', elements: ['espaco'], name: 'x', basico: {} as never, especial: {} as never };
@@ -89,7 +93,7 @@ describe('soulBarrage', () => {
     for (let i = 0; i < 400 && s.enemyShots.length === 0; i++) stepBarrage(s, 0.05, s.px, 1, rng);
     expect(s.enemies.length + s.kills).toBeGreaterThan(0);
     expect(s.enemies[0]?.entry.stage ?? 'rookie').toBe('rookie');
-    expect(s.enemies.every(e => e.entry.element === 'espaco')).toBe(true);
+    expect(s.enemies.every(e => e.entry.elements[0] === 'espaco')).toBe(true);
     expect(s.enemyShots.length).toBeGreaterThan(0);
   });
   it('tiro inimigo tira vida, dá invulnerabilidade e acaba em 0 vidas', () => {

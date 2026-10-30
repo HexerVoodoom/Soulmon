@@ -134,6 +134,8 @@ export function saveDoSimulado(p, day) {
     benevolencePoints: peso('benevolencia'),
     demoCharacterId: artLineOrNull(p.artLine) ?? undefined,
     // REGISTRO 182: o golpe BÁSICO do duelo usa o elemento do simulado (`elementoDoBasico` lê `elementoDominante.id` da ficha do estágio). Só isso: sem escola/especial, a luta não muda.
+    // O ELEMENTO DO SPRITE (= o do prompt com que a arte foi gerada): `petElementDeSave` lê daqui; vale para o básico E o especial.
+    soulmonMeta: { dominantElement: p.element },
     soulmonSkills: { [fichaStageOf(e.evolutionStage)]: { elementoDominante: { id: p.element } } },
   };
 }

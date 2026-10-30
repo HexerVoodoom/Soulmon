@@ -234,6 +234,8 @@ export interface ArenaEnemy {
   nameEn: string;
   /** Base-element ids (1–2) driving the counter chart. */
   elements: string[];
+  /** O elemento do SPRITE (e dos golpes dele): nos combinados o id FUNDIDO; ausente = o 1º de `elements`. */
+  element?: string;
   points: number;
   cls: ArenaEnemyClass;
   /** Sprite tier for getDungeonEnemySprite (resolved by the component, so
@@ -292,7 +294,7 @@ export function buildArenaRound(
       const c = pool[Math.floor(rng() * pool.length)];
       used.add(c.id);
       return {
-        namePt: c.name, nameEn: c.name, elements: [...c.elements], points: shape.points + Math.max(0, difficulty - 1),
+        namePt: c.name, nameEn: c.name, elements: [...c.elements], element: c.element, points: shape.points + Math.max(0, difficulty - 1),
         cls, tier: 'rookie' as const, artFile: c.artFile, form: 'rookie' as const,
       };
     }

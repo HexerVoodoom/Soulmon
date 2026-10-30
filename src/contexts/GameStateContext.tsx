@@ -22,6 +22,7 @@ import { cloudSaveComRetry, reagirContaExcluida } from '../utils/cloudSave';
 import { quarentenarSaveLocal } from '../utils/saveQuarantine';
 import type { MotivoReconciliacao } from '../utils/saveReconcile';
 import { sessaoEncerrando, marcarMudancaPendente, marcarSincronizado } from '../utils/sessionReset';
+import { petElementOf } from '../utils/starterElements';
 // `community.ts` (cliente do Torneio/Guilda) só serve DEPOIS do primeiro paint e
 // só no `.then` do perfil: fora do chunk de entrada (`entradaEnxuta.contract`).
 type PushProfileArg = Parameters<typeof import('../utils/community').pushProfile>[0];
@@ -2128,7 +2129,8 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         frameId: sanitizeEquippedFrame(gameState.equippedFrame),
         // Linha de arte (D-60): é por ela que o oponente é desenhado com a arte DELE. `null` limpa no servidor.
         artLine: spriteLineOf(gameState) ?? null,
-        element: gameState.soulmonMeta?.dominantElement ?? null,
+        // O elemento do SPRITE (inicial → o do inicial; senão o dominante do oráculo): o mesmo `petElementOf` do combate local.
+        element: petElementOf(gameState) ?? null,
         // Sprite próprio gerado (quando existe): permite mostrar o Soulmon real do jogador no Torneio, Biblioteca e Bosque.
         spriteUrl: (() => {
           if (isCorvo(gameState)) return null;

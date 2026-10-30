@@ -302,8 +302,8 @@ describe('D-04: a arena', () => {
     expect(inimigos.map(e => e.getAttribute('data-m3-active'))).toEqual(['1', '0', '0']);
     expect(inimigos[0].getAttribute('aria-current')).toBe('true');
     expect(inimigos[0].textContent).toContain('▸');
-    // três elementos distintos
-    expect(new Set(inimigos.map(e => e.getAttribute('data-m3-element'))).size).toBe(3);
+    // o elemento de cada inimigo é o do SPRITE dele (linhas próprias: fogo/luz), não um sorteio independente da arte (dono, 30/10/2026)
+    for (const e of inimigos) expect(['fogo', 'luz']).toContain(e.getAttribute('data-m3-element'));
   });
 
   it('o inimigo ativo muda quando o 1º cai (a marca vai para o 2º)', async () => {

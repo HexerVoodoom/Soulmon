@@ -18,6 +18,7 @@ import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derive
 import { essenceEn } from './soulProfile/essenceLabels';
 import { M3_KINDS, type Rng } from './match3';
 import { pickEnemy, type RosterEntry } from './enemyRoster';
+import { rosterEntryElement } from './spriteElement';
 
 /** Quantos elementos entram no tabuleiro do PVP (= `M3_KINDS`: a lógica do tabuleiro não muda, só o ícone de cada tipo). */
 export const PVP_ELEMENT_COUNT = M3_KINDS;
@@ -103,10 +104,10 @@ export function pickPvpOpponent<T extends PvpCandidate>(cands: readonly T[], myL
 }
 
 /** O adversário do PVP, já pronto para a tela: arte, level e (só NPC) a chave do roster, que alimenta o bestiário. */
-export interface PvpFoe { kind: 'player' | 'npc'; level: number; sprite?: string; roster?: string }
+export interface PvpFoe { kind: 'player' | 'npc'; level: number; sprite?: string; roster?: string; /** elemento do sprite do oponente */ element?: string }
 
 /** NPC de reserva (sem rede, pool vazio): do roster, no level do jogador, pelo `rng`. */
 export function npcFoe(level: number, rng: Rng): { foe: PvpFoe; entry: RosterEntry } {
   const entry = pickEnemy(level, rng);
-  return { foe: { kind: 'npc', level, roster: entry.key }, entry };
+  return { foe: { kind: 'npc', level, roster: entry.key, element: rosterEntryElement(entry) }, entry };
 }
