@@ -284,9 +284,23 @@ describe('7. weaker by 5% wins 25–40% (IC95)', () => {
     expect(r.p - r.ic).toBeGreaterThanOrEqual(0.25);
     expect(r.p + r.ic).toBeLessThanOrEqual(0.4);
   });
-  it('RED: without variance the weaker never wins', () => {
-    const r = gateUpset(null);
-    expect(r.p - r.ic >= 0.25 && r.p + r.ic <= 0.4).toBe(false);
+  it('without variance the 5% edge never inverts (the stronger wins at least as often as the weaker)', () => {
+    // VIDA INTEIRA (30/10/2026, REGISTRO §HP inteiro): this was 'RED: without variance the weaker never wins'. With whole
+    // HP points a 5% edge can round away to the SAME points per hit, and then the opening phase decides — so the weaker
+    // does win some deterministic fights now. What must still hold is that the edge never turns into a handicap.
+    const ref = specialOf('direct');
+    let outright = 0;
+    let strongWins = 0;
+    for (let s = 0; s < N_SEEDS_UPSET; s++) {
+      const L = RULER_LEVELS[s % RULER_LEVELS.length];
+      const n = REFERENCE_BUILD_NAMES[Math.floor(s / RULER_LEVELS.length) % REFERENCE_BUILD_NAMES.length];
+      const weak = combatantAt(L, REFERENCE_BUILDS[n]);
+      const strong = combatantAt(L, REFERENCE_BUILDS[n], combinedBonus({ talent: 0.05 }));
+      const w = fight({ combatant: strong, special: ref }, { combatant: weak, special: ref }, { seed: s * 7919 + 13, variance: null }).winner;
+      if (w === 'B') outright++;
+      else if (w === 'A') strongWins++;
+    }
+    expect(strongWins).toBeGreaterThanOrEqual(outright);
   });
 });
 

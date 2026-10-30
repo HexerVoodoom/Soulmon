@@ -79,6 +79,7 @@ import {
 } from '../utils/arena';
 import { mulberry32 } from '../utils/combate/rng';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
+import { hpPoints } from '../utils/combate/fight';
 import type { GroupResult } from '../utils/combate/group';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
@@ -181,7 +182,7 @@ export function ArenaGame({
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const lado = useMemo(() => arenaPlayerSide(jogador), [jogador]);
-  const hpMax = Math.max(1, Math.round(lado.combatant.hp));
+  const hpMax = hpPoints(lado.combatant.hp);
 
   /** Sprite por inimigo, sorteado UMA vez por rodada — sortear na pintura trocaria o bicho a cada re-render. */
   const [sprites, setSprites] = useState<string[]>([]);
@@ -246,8 +247,8 @@ export function ArenaGame({
     const p = jogadorRef.current;
     const foes = arenaFoeSides(p, rodadaRef.current - 1, inimigosRef.current.map(e => e.elements));
     return {
-      playerMaxHp: Math.max(1, Math.round(arenaPlayerSide(p).combatant.hp)),
-      foeMaxHp: foes.map(f => Math.max(1, Math.round(f.combatant.hp))),
+      playerMaxHp: hpPoints(arenaPlayerSide(p).combatant.hp),
+      foeMaxHp: foes.map(f => hpPoints(f.combatant.hp)),
       playerElement: (sp: boolean) => fxElementId(sp ? ident.especial.elemento : ident.basico.elemento),
       foeElement: (i: number) => fxElementId(inimigosRef.current[i]?.element ?? inimigosRef.current[i]?.elements[0]),
       // A FORMA do golpe vem da skill da FICHA (escola; sem ficha, do elemento) — nunca de índice ou sorteio.
@@ -346,7 +347,7 @@ export function ArenaGame({
             cheerPending: pronto ? (batalha.meter / CHEER_TAPS_FULL) * (CHEER.energyPerDischarge / ENERGY_TRIGGER) : 0,
           }}
           foes={inimigos.map((e, i) => {
-            const max = Math.max(1, Math.round(foesLado[i].combatant.hp));
+            const max = hpPoints(foesLado[i].combatant.hp);
             return {
               key: i, sprite: sprites[i], stage: e.tier, name: nomeDe(e), hp: Math.round(Math.max(0, foesHp(i)) * max), maxHp: max,
               element: fxElementId(e.element ?? e.elements[0]), down: foesHp(i) <= 1e-9,

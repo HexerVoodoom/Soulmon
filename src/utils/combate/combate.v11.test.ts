@@ -39,7 +39,10 @@ function regressionHash(phaseSalt = PHASE_SALT): { hash: number; first: string; 
   return { hash: x, first: parts[0], last: parts[299] };
 }
 /** FNV-1a of the 300 results, recorded by running the PR1 `fight()` of origin/main (be1ef455) BEFORE the change. */
-const PR1_MAIN_HASH = 63614565;
+// VIDA INTEIRA (30/10/2026, REGISTRO §HP inteiro): re-pinned when HP became whole points (the PR1 fractional value was
+// 63614565). The first and last of the 300 fights are unchanged; the hash moves because some fights now end one rounded
+// point earlier/later. It still guards that the u = 1 path is deterministic and that PHASE_SALT matters (the RED below).
+const PR1_MAIN_HASH = 2572250091;
 
 describe('AC1. regression: u = 1, no hooks, sigma 0.15 reproduces the PR1 main in the 300 declared fights', () => {
   it('passes', () => {
@@ -159,8 +162,11 @@ function specialShortening(L: number, opts: Partial<FightOptions> = {}): number 
   const c = bal(L);
   let a = 0;
   for (let i = 0; i < 200; i++) a += fight({ combatant: c, special: specialOf('direct') }, { combatant: c, special: null }, { seed: i, ...opts }).timeB;
-  const ref = fight({ combatant: c, special: null }, { combatant: c, special: null }, { seed: 1, variance: null, phases: [0, 0], ...opts }).timeB;
-  return 1 - a / 200 / ref;
+  // VIDA INTEIRA (30/10/2026): the reference is the SAME 200 seeds without the special. A single no-variance mirror is a
+  // fixed hit rounded to whole points, so it sits up to one hit (~10%) off the average depending on the level's rounding.
+  let ref = 0;
+  for (let i = 0; i < 200; i++) ref += fight({ combatant: c, special: null }, { combatant: c, special: null }, { seed: i, ...opts }).timeB;
+  return 1 - a / ref;
 }
 
 describe('AC4. normalised hit', () => {

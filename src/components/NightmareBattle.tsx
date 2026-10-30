@@ -56,6 +56,7 @@ import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGro
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { newDefenseSeed } from '../utils/autoDefesa';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
+import { hpPoints } from '../utils/combate/fight';
 import type { GroupResult } from '../utils/combate/group';
 import { dungeonFamily, nightmareFight, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
 import { jeitoDaProfissao } from '../utils/profissaoMasmorra';
@@ -150,7 +151,7 @@ export function NightmareBattle({
   }), [estado, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
-  const hpMax = Math.max(1, Math.round(dungeonPlayerSide(jogador).combatant.hp));
+  const hpMax = hpPoints(dungeonPlayerSide(jogador).combatant.hp);
 
   /* Trap + Escape + devolução de foco vêm do `RitualDialog` (SIS-06, canvas
      Rituais): o × 44 pelado é o primeiro focável, Escape fecha. */
@@ -182,7 +183,7 @@ export function NightmareBattle({
   const petEl = fxElementId(ident.basico.elemento);
   // O elemento do pesadelo é o PRÓPRIO (`pesadelo`, exclusivo da mecânica); sem arte instalada cai no FX procedural.
   const enemyEl = fxElementId(NIGHTMARE_ELEMENT);
-  const foeMax = enemy ? Math.max(1, Math.round(enemy.foe.combatant.hp)) : 1;
+  const foeMax = enemy ? hpPoints(enemy.foe.combatant.hp) : 1;
 
   const novaSemente = () => {
     runSeedRef.current = newDefenseSeed();
@@ -246,8 +247,8 @@ export function NightmareBattle({
     const p = jogadorRef.current;
     const foeEl = fxElementId(NIGHTMARE_ELEMENT);
     return {
-      playerMaxHp: Math.max(1, Math.round(dungeonPlayerSide(p).combatant.hp)),
-      foeMaxHp: [Math.max(1, Math.round(e?.foe.combatant.hp ?? 1))],
+      playerMaxHp: hpPoints(dungeonPlayerSide(p).combatant.hp),
+      foeMaxHp: [hpPoints(e?.foe.combatant.hp ?? 1)],
       playerElement: sp => fxElementId(sp ? ident.especial.elemento : ident.basico.elemento),
       foeElement: () => foeEl,
       playerKind: sp => (sp ? ident.especial.forma : ident.basico.forma),

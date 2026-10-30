@@ -211,6 +211,17 @@ export const MIRROR_SECONDS = 25;
 export const HIT_UNIT_H0 = 10;
 /** A vida dos dois lados do PvP e multiplicada por isto (a luta dura ~38 s; balanco-motores §4). */
 export const PVP_HP_SCALE = 1.7;
+/** VIDA INTEIRA (dono, 30/10/2026): espelho de `HP_POINTS_PER_HP`/`hpPoints`/`damagePoints`/`startPoints` de fight.ts. */
+export const HP_POINTS_PER_HP = 30;
+export function hpPoints(hp) {
+  return Math.max(1, Math.round(hp * HP_POINTS_PER_HP));
+}
+export function damagePoints(frac, pts) {
+  return frac > 1e-9 ? Math.max(1, Math.round(frac * pts)) : 0;
+}
+export function startPoints(frac, pts) {
+  return Math.max(1, Math.round(frac * pts));
+}
 export const EPS = 1e-9;
 export const DRAW_EPS = 1e-6;
 const MAX_EVENTS = 200_000;
@@ -249,8 +260,9 @@ export function* fightSteps(a, b, opts) {
     const c = { ...s.combatant, hp: s.combatant.hp * hpScale };
     const r = mulberry32(sideSeed(seed, i + 1));
     const mult = variance ? ar1Multiplier(r, variance) : () => 1;
+    const pts = hpPoints(c.hp);
     return {
-      c, sp: s.special, mult, hp: opts.startHp?.[i] ?? 1, en: opts.startEnergy?.[i] ?? 0, shield: 0,
+      c, sp: s.special, mult, pts, hp: startPoints(opts.startHp?.[i] ?? 1, pts) / pts, en: opts.startEnergy?.[i] ?? 0, shield: 0,
       next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, dotResist: cleanDotResist(s.dotResist),
     };
   };
@@ -278,17 +290,22 @@ export function* fightSteps(a, b, opts) {
   };
   const hit = (src, v, frac, kind, shieldCap = Infinity) => {
     if (v.dead < Infinity) return;
-    let amt = frac;
+    // VIDA INTEIRA: o golpe vale pontos inteiros (min 1); o evento leva os pontos que SAIRAM da barra
+    const d = damagePoints(frac, v.pts);
+    let lose = d;
     // DoT lançado ANTES de um escudo adversário não é absorvido por ele: `shieldCap` = escudo do alvo NO CAST
-    if (v.shield > EPS) {
-      const ab = Math.min(v.shield, amt, shieldCap);
-      v.shield -= ab;
-      amt -= ab;
+    const sh = Math.round(v.shield * v.pts);
+    if (sh > 0) {
+      const ab = Math.min(sh, lose, shieldCap === Infinity ? Infinity : Math.round(shieldCap * v.pts));
+      v.shield = (sh - ab) / v.pts;
+      lose -= ab;
     }
-    v.hp -= amt;
-    gain(src, frac, ENERGY.perDealt);
-    gain(v, frac, ENERGY.perReceived);
-    pending.push(ev(kind, src === F[0] ? 0 : 1, frac, t));
+    const hp0 = Math.round(v.hp * v.pts);
+    lose = Math.min(lose, hp0);
+    v.hp = (hp0 - lose) / v.pts;
+    gain(src, d / v.pts, ENERGY.perDealt);
+    gain(v, d / v.pts, ENERGY.perReceived);
+    pending.push(ev(kind, src === F[0] ? 0 : 1, lose / v.pts, t));
   };
   const cast = (me, foe, t0, scale) => {
     const sp = me.sp;
@@ -306,10 +323,10 @@ export function* fightSteps(a, b, opts) {
         break;
       }
       case 'heal':
-        me.hp += Math.min(1 - me.hp, E / hitsOn(foe, me));
+        me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + Math.round((E / hitsOn(foe, me)) * me.pts)) / me.pts;
         break;
       case 'shield':
-        me.shield += E / hitsOn(foe, me);
+        me.shield = (Math.round(me.shield * me.pts) + Math.round((E / hitsOn(foe, me)) * me.pts)) / me.pts;
         break;
       case 'atkBuff':
         me.nAtk += E;

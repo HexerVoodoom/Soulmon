@@ -39,6 +39,30 @@ export const HIT_UNIT_H0 = 10;
  */
 export const PVP_HP_SCALE = 1.7;
 
+/**
+ * INTEGER HP (owner, 30/10/2026 — REGISTRO §HP inteiro): the core still reasons in HP fractions 0..1, but every
+ * fighter has `hpPoints(hp)` whole points and EVERY change of HP is snapped to them: a damaging hit removes
+ * max(1, round(frac·pts)) points (never a fraction), heal and shield are whole points too, and 0 points = knocked out
+ * at once. The scale ×30 keeps even the weakest chip hit of the Dungeon (slot 0, power 0.026, at L1) near 1 point (the min-1 rule does not inflate it), so the length and the
+ * win rates of the fights stay where they were. Mirrored in `functions/api/_combate.js`.
+ */
+export const HP_POINTS_PER_HP = 30;
+
+/** Whole HP points of a fighter whose (already scaled) core HP is `hp`; what every screen shows as the max HP. */
+export function hpPoints(hp: number): number {
+  return Math.max(1, Math.round(hp * HP_POINTS_PER_HP));
+}
+
+/** Points removed by a hit worth `frac` of a `pts`-point bar: at least 1 when it does any damage, 0 when it does none. */
+export function damagePoints(frac: number, pts: number): number {
+  return frac > 1e-9 ? Math.max(1, Math.round(frac * pts)) : 0;
+}
+
+/** A starting HP fraction snapped to whole points (at least 1 point while alive; above 1 is allowed — the Feira boss starts "huge"). */
+export function startPoints(frac: number, pts: number): number {
+  return Math.max(1, Math.round(frac * pts));
+}
+
 export const EPS = 1e-9;
 export const DRAW_EPS = 1e-6;
 const MAX_EVENTS = 200_000;
@@ -145,7 +169,7 @@ export interface FightEvent {
   readonly t: number;
   /** 0 = A, 1 = B: who attacks / casts / is knocked out. */
   readonly side: 0 | 1;
-  /** HP fraction dealt (attack/tick); 0 for cast/ko. */
+  /** HP fraction that LEFT the bar (attack/tick) — whole points / pts (INTEGER HP; 0 = fully absorbed); 0 for cast/ko. */
   readonly frac: number;
   readonly hp: readonly [number, number];
   readonly energy: readonly [number, number];
@@ -155,6 +179,8 @@ interface Fighter {
   readonly c: Combatant;
   readonly sp: Special | null;
   readonly mult: () => number;
+  /** Whole HP points of the bar (INTEGER HP). `hp` and `shield` are always multiples of 1/pts. */
+  readonly pts: number;
   hp: number;
   en: number;
   shield: number;
@@ -195,8 +221,9 @@ export function* fightSteps(
     const c = { ...s.combatant, hp: s.combatant.hp * hpScale };
     const r = mulberry32(sideSeed(seed, (i + 1) as 1 | 2));
     const mult = variance ? ar1Multiplier(r, variance) : () => 1;
+    const pts = hpPoints(c.hp);
     return {
-      c, sp: s.special, mult, hp: opts.startHp?.[i] ?? 1, en: opts.startEnergy?.[i] ?? 0, shield: 0,
+      c, sp: s.special, mult, pts, hp: startPoints(opts.startHp?.[i] ?? 1, pts) / pts, en: opts.startEnergy?.[i] ?? 0, shield: 0,
       next: interval(c.spd) * phases[i], casts: 0, dead: Infinity, nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, dotResist: cleanDotResist(s.dotResist),
     };
   };
@@ -231,17 +258,22 @@ export function* fightSteps(
   };
   const hit = (src: Fighter, v: Fighter, frac: number, kind: 'attack' | 'tick', shieldCap = Infinity) => {
     if (v.dead < Infinity) return; // leftover damage expires
-    let amt = frac;
+    // INTEGER HP: the hit is worth whole points (min 1); the event carries the points that left the BAR
+    const d = damagePoints(frac, v.pts);
+    let lose = d;
     // DoT lançado ANTES de um escudo adversário não é absorvido por ele: `shieldCap` = escudo do alvo NO CAST
-    if (v.shield > EPS) {
-      const ab = Math.min(v.shield, amt, shieldCap);
-      v.shield -= ab;
-      amt -= ab;
+    const sh = Math.round(v.shield * v.pts);
+    if (sh > 0) {
+      const ab = Math.min(sh, lose, shieldCap === Infinity ? Infinity : Math.round(shieldCap * v.pts));
+      v.shield = (sh - ab) / v.pts;
+      lose -= ab;
     }
-    v.hp -= amt;
-    gain(src, frac, ENERGY.perDealt);
-    gain(v, frac, ENERGY.perReceived);
-    pending.push(ev(kind, src === F[0] ? 0 : 1, frac, t));
+    const hp0 = Math.round(v.hp * v.pts);
+    lose = Math.min(lose, hp0);
+    v.hp = (hp0 - lose) / v.pts;
+    gain(src, d / v.pts, ENERGY.perDealt);
+    gain(v, d / v.pts, ENERGY.perReceived);
+    pending.push(ev(kind, src === F[0] ? 0 : 1, lose / v.pts, t));
   };
   const cast = (me: Fighter, foe: Fighter, t0: number, scale: number) => {
     const sp = me.sp as Special;
@@ -259,10 +291,10 @@ export function* fightSteps(
         break;
       }
       case 'heal':
-        me.hp += Math.min(1 - me.hp, E / hitsOn(foe, me));
+        me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + Math.round((E / hitsOn(foe, me)) * me.pts)) / me.pts;
         break;
       case 'shield':
-        me.shield += E / hitsOn(foe, me);
+        me.shield = (Math.round(me.shield * me.pts) + Math.round((E / hitsOn(foe, me)) * me.pts)) / me.pts;
         break;
       case 'atkBuff':
         me.nAtk += E;

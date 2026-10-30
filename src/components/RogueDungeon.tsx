@@ -15,6 +15,7 @@ import type { GameChallenge } from '../utils/gameChallenge';
 import { loadDinoGame, loadEcoGame, loadMatch3Game, loadPatchesGame, loadRPSGame, loadZipGame } from './nav/playPrefetch';
 import type { Language } from '../utils/i18n';
 import type { Combatant } from '../utils/combate/curve';
+import { hpPoints } from '../utils/combate/fight';
 import { DUNGEON_SCENES } from '../utils/dungeonScenes';
 import { getSpriteForStage } from '../utils/sprites';
 import { useBackLayer } from '../utils/backStack';
@@ -219,7 +220,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const doneInFloor = (n: number) => Math.max(0, Math.min(ROGUE_PER_FLOOR, run.step - (n - 1) * ROGUE_PER_FLOOR));
   const hpFrac = hpOf(run);
-  const hpMax = Math.max(1, Math.round(combatant.hp * (1 + VIGOR_STEP * run.vigor)));
+  const hpMax = hpPoints(combatant.hp * (1 + VIGOR_STEP * run.vigor));
   const hpNow = Math.max(1, Math.round(hpFrac * hpMax));
   /** Fração da trilha já percorrida (passos resolvidos / total). */
   const walked = Math.min(1, run.step / ROGUE_MAX_STEPS);

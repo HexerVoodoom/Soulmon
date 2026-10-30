@@ -18,7 +18,7 @@
  */
 
 import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
-import { EPS, HIT_UNIT_H0, hitUnit, windowSeconds, type FighterFx, type FightSide } from './fight';
+import { damagePoints, EPS, HIT_UNIT_H0, hitUnit, hpPoints, startPoints, windowSeconds, type FighterFx, type FightSide } from './fight';
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
 import {
   AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special,
@@ -99,6 +99,8 @@ interface G {
   readonly sp: Special | null;
   readonly area: 'single' | 'area';
   readonly mult: () => number;
+  /** Whole HP points (INTEGER HP, see `fight.ts`); `hp` and `shield` are multiples of 1/pts. */
+  readonly pts: number;
   hp: number;
   en: number;
   shield: number;
@@ -135,9 +137,10 @@ export function* groupFightSteps(
   const mk = (s: FightSide, who: number, stream: number, hp0: number, en0: number): G => {
     const c = { ...s.combatant, hp: s.combatant.hp * hpS };
     const r = mulberry32(stream);
+    const pts = hpPoints(c.hp);
     return {
       who, c, sp: s.special, area: s.area ?? 'single', mult: variance ? ar1Multiplier(r, variance) : () => 1,
-      hp: hp0, en: en0, shield: cleanStartShield(s.startShield), next: interval(c.spd) * phases[who], casts: 0, dead: Infinity,
+      pts, hp: startPoints(hp0, pts) / pts, en: en0, shield: Math.round(cleanStartShield(s.startShield) * pts) / pts, next: interval(c.spd) * phases[who], casts: 0, dead: Infinity,
       nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0,
     };
   };
@@ -180,17 +183,22 @@ export function* groupFightSteps(
   };
   const hit = (src: G, v: G, frac: number, kind: 'attack' | 'tick', shieldCap = Infinity) => {
     if (v.dead < Infinity) return;
-    let amt = frac;
+    // INTEGER HP: the hit is worth whole points (min 1); the event carries the points that left the BAR
+    const d = damagePoints(frac, v.pts);
+    let lose = d;
     // DoT lançado ANTES de um escudo adversário não é absorvido por ele: `shieldCap` = escudo do alvo NO CAST
-    if (v.shield > EPS) {
-      const ab = Math.min(v.shield, amt, shieldCap);
-      v.shield -= ab;
-      amt -= ab;
+    const sh = Math.round(v.shield * v.pts);
+    if (sh > 0) {
+      const ab = Math.min(sh, lose, shieldCap === Infinity ? Infinity : Math.round(shieldCap * v.pts));
+      v.shield = (sh - ab) / v.pts;
+      lose -= ab;
     }
-    v.hp -= amt;
-    gain(src, frac, ENERGY.perDealt);
-    gain(v, frac, ENERGY.perReceived);
-    pending.push(ev(kind, src.who, frac));
+    const hp0 = Math.round(v.hp * v.pts);
+    lose = Math.min(lose, hp0);
+    v.hp = (hp0 - lose) / v.pts;
+    gain(src, d / v.pts, ENERGY.perDealt);
+    gain(v, d / v.pts, ENERGY.perReceived);
+    pending.push(ev(kind, src.who, lose / v.pts));
   };
   const cast = (me: G, t0: number, scale: number) => {
     const sp = me.sp as Special;
@@ -230,10 +238,10 @@ export function* groupFightSteps(
         for (const v of spread) v.nVuln += share;
         break;
       case 'heal':
-        me.hp += Math.min(1 - me.hp, Eb / hitsOn(tgt, me));
+        me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + Math.round((Eb / hitsOn(tgt, me)) * me.pts)) / me.pts;
         break;
       case 'shield':
-        me.shield += Eb / hitsOn(tgt, me);
+        me.shield = (Math.round(me.shield * me.pts) + Math.round((Eb / hitsOn(tgt, me)) * me.pts)) / me.pts;
         break;
       case 'atkBuff':
         me.nAtk += Eb;

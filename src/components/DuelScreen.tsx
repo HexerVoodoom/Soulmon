@@ -42,7 +42,7 @@ import {
   specialLeadMs, specialTailMs, type StageActionKind, type StageStatus,
 } from '../utils/combatFx';
 import { avancar as avancarPortao, bloqueiaAplicar, bloqueiaComecar, fechar as fecharPortao, serializarEspeciais, type ConfigDoPortao, type Portao } from '../utils/specialGate';
-import { PVP_HP_SCALE, type FightEvent } from '../utils/combate/fight';
+import { hpPoints, PVP_HP_SCALE, type FightEvent } from '../utils/combate/fight';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
 import { DUEL_CHEER_BUCKETS, simulatePvp, type DuelResult, type DuelSide } from '../utils/combate/duel';
 
@@ -100,7 +100,7 @@ const emSerie = (r: DuelResult): DuelResult => {
   return { ...r, events: v.events, fx: v.fx };
 };
 
-const maxHpOf = (s: DuelSide) => Math.max(1, Math.round(s.combatant.hp * PVP_HP_SCALE));
+const maxHpOf = (s: DuelSide) => hpPoints(s.combatant.hp * PVP_HP_SCALE);
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
 export function DuelScreen({

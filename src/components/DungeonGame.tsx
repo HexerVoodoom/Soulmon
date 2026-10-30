@@ -44,6 +44,7 @@ import {
 } from '../utils/dungeon';
 import { dungeonFamily, dungeonFight, dungeonFightSeed, dungeonPlayerSide, type DungeonPlayerCfg } from '../utils/dungeonFight';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
+import { hpPoints } from '../utils/combate/fight';
 import { CHEER_TAPS_FULL } from '../utils/energia';
 import type { GroupResult } from '../utils/combate/group';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
@@ -210,7 +211,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const nivelJogador = jogador.combatant.level;
-  const hpMax = Math.max(1, Math.round(dungeonPlayerSide(jogador).combatant.hp));
+  const hpMax = hpPoints(dungeonPlayerSide(jogador).combatant.hp);
 
   /* ⏩ AVANÇO RÁPIDO (REGISTRO §36): 1×/3×, preferência do aparelho. Só encurta o relógio da cena e a pausa entre lutas. */
   const [speed, setSpeedState] = useState<DungeonSpeed>(() => sanitizeDungeonSpeed(readLocal(STORAGE_KEYS.DUNGEON_SPEED)));
@@ -287,7 +288,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const ident = useMemo(() => fighterIdentity(par, petElement), [par, petElement]);
   const petEl = fxElementId(ident.basico.elemento);
   const enemyEl = fxElementId(dungeonEnemyElement(enemy));
-  const foeMax = enemy ? Math.max(1, Math.round(enemy.foe.combatant.hp)) : 1;
+  const foeMax = enemy ? hpPoints(enemy.foe.combatant.hp) : 1;
 
   const addPoints = (pts: number) => {
     const ganhos = riftBitsWith(pts, rift.riftBits);
@@ -485,8 +486,10 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     }
     // A cura entre andares (`curaAndar` do ofício) é fração do HP máximo; fica fora da régua do TTK.
     const cura = pve.cura + rift.healBoost; // Tarefa B (`tal-pve-03`): a cura entre andares sobe poucos pontos do HP máximo
-    const heal = Math.ceil(hpMax * cura);
-    hpCarryRef.current = Math.min(1, hpCarryRef.current + cura);
+    // VIDA INTEIRA (30/10/2026): a cura é em pontos inteiros e o texto mostra exatamente o que a barra subiu
+    const ptsNow = Math.round(Math.max(0, hpCarryRef.current) * hpMax);
+    const heal = Math.max(0, Math.min(hpMax - ptsNow, Math.round(hpMax * cura)));
+    hpCarryRef.current = (ptsNow + heal) / hpMax;
     setHpFrac(hpCarryRef.current);
     salvarHp(hpCarryRef.current);
     setRewardMsg(isPt ? `Recuperou ${heal} de HP` : `Recovered ${heal} HP`);
@@ -539,8 +542,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     const p = jogadorRef.current;
     const foeEl = fxElementId(dungeonEnemyElement(e));
     return {
-      playerMaxHp: Math.max(1, Math.round(dungeonPlayerSide(p).combatant.hp)),
-      foeMaxHp: [Math.max(1, Math.round(e?.foe.combatant.hp ?? 1))],
+      playerMaxHp: hpPoints(dungeonPlayerSide(p).combatant.hp),
+      foeMaxHp: [hpPoints(e?.foe.combatant.hp ?? 1)],
       playerElement: sp => fxElementId(sp ? ident.especial.elemento : ident.basico.elemento),
       foeElement: () => foeEl,
       playerKind: sp => (sp ? ident.especial.forma : ident.basico.forma),

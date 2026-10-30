@@ -77,6 +77,10 @@ export declare function cheerEvents(taps: readonly number[], side: 0 | 1, scale?
 export declare const MIRROR_SECONDS: number;
 export declare const HIT_UNIT_H0: number;
 export declare const PVP_HP_SCALE: number;
+export declare const HP_POINTS_PER_HP: number;
+export declare function hpPoints(hp: number): number;
+export declare function damagePoints(frac: number, pts: number): number;
+export declare function startPoints(frac: number, pts: number): number;
 export declare const EPS: number;
 export declare const DRAW_EPS: number;
 export declare function windowSeconds(level: number): number;
