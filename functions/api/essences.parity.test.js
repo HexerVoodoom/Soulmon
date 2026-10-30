@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import * as server from './_essences.js';
 import { enforceEssenceAway, sanitizeEssenceAway } from './_dayCounters.js';
-import { sanitizeEssences, sanitizeEssenceAway as cEssenceAway, ESSENCE_MAX_PER_ELEMENT, ESSENCE_MAX_KEYS, essenceQtyOfBoss } from '../../src/utils/essences';
+import { sanitizeEssences, sanitizeEssenceSpent, sanitizeEssenceAway as cEssenceAway, ESSENCE_MAX_PER_ELEMENT, ESSENCE_MAX_KEYS, essenceQtyOfBoss } from '../../src/utils/essences';
 import { essenceDoChefe } from './_feira.js';
 
 vi.mock('./_auth.js', () => ({
@@ -42,5 +42,31 @@ describe('essências: servidor e app', () => {
     await post(e, { essences: { fogo: 7 }, essenceAway: { day: '2026-10-28', count: 12 } });
     expect(JSON.parse(e.store.get(ID)).essences.fogo).toBe(7);
     expect(JSON.parse(e.store.get(ID)).essenceAway).toEqual({ day: '2026-10-28', count: 12 });
+  });
+  it('essenceSpent: mesma saneação e monotônico', () => {
+    for (const c of [{}, { fogo: 2.9, X: 3, lava: -1, agua: 5e12 }, { fogo: NaN }]) expect(server.sanitizeEssenceSpent(c)).toEqual(sanitizeEssenceSpent(c));
+    for (const v of [null, 5, []]) { expect(server.sanitizeEssenceSpent(v)).toBeUndefined(); expect(sanitizeEssenceSpent(v)).toEqual({}); }
+    expect(server.enforceEssenceSpent({ fogo: 1 }, { fogo: 4, agua: 2 })).toEqual({ fogo: 4, agua: 2 });
+  });
+  it('enforceEssences: saldo só baixa pelo aumento do gasto', () => {
+    expect(server.enforceEssences({ fogo: 100 }, { fogo: 400 }, undefined, undefined)).toEqual({ fogo: 400 });
+    expect(server.enforceEssences({ fogo: 100 }, { fogo: 400 }, { fogo: 300 }, undefined)).toEqual({ fogo: 100 });
+    expect(server.enforceEssences({ fogo: 100 }, { fogo: 400 }, { fogo: 350 }, { fogo: 50 })).toEqual({ fogo: 100 });
+    expect(server.enforceEssences({ fogo: 100 }, { fogo: 400 }, { fogo: 10 }, { fogo: 50 })).toEqual({ fogo: 400 }); // gasto não desce
+    expect(server.enforceEssences({}, { fogo: 300, agua: 5 }, { fogo: 300 }, undefined)).toEqual({ agua: 5 });
+    expect(server.enforceEssences({ fogo: 900 }, { fogo: 400 }, { fogo: 300 }, undefined)).toEqual({ fogo: 900 });
+  });
+  it('save.js: gastar baixa o saldo; mentir sem gasto não; rollback não devolve', async () => {
+    const e = env();
+    await post(e, { essences: { fogo: 500, agua: 300 } });
+    await post(e, { essences: { fogo: 200, agua: 300 } });
+    expect(JSON.parse(e.store.get(ID)).essences).toEqual({ fogo: 500, agua: 300 });
+    await post(e, { essences: { fogo: 200, agua: 300 }, essenceSpent: { fogo: 300 } });
+    const r = JSON.parse(e.store.get(ID));
+    expect(r.essences).toEqual({ fogo: 200, agua: 300 }); expect(r.essenceSpent).toEqual({ fogo: 300 });
+    await post(e, { essences: { fogo: 500, agua: 300 } }); // cliente velho (rollback)
+    const r2 = JSON.parse(e.store.get(ID));
+    expect(r2.essences.fogo).toBe(500); // o cliente velho pode subir (ganho), mas o gasto segue gravado
+    expect(r2.essenceSpent).toEqual({ fogo: 300 });
   });
 });

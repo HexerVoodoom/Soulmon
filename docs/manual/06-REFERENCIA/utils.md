@@ -2926,6 +2926,10 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/App.tsx` (`pausarTrilha`/`retomarTrilha` nos efeitos de `isSleeping` e da janela de descanso e em `handleToggleSound`), `src/components/SettingsPage.tsx` (`ligarTrilha`/`desligarTrilha`/`trilhaPreferida`; ⚰️ o `SettingsModal.tsx` que também os chamava foi apagado em `4a8b8049`), `src/utils/sounds.ts` (`aoGestoSonoro`)
 **Régua:** `src/components/settingsSom.render.test.tsx` (desde `980bc84c`: o toque em "Trilha" na `SettingsPage` liga e desliga a chave própria — `trilhaPreferida()` vai a `true` e volta a `false`); `src/utils/trilha.e0.test.ts` (5, desde `592e2c14` — dormir para/acordar retoma; pet já dormindo, o 1º gesto não religa; desligar o mudo dormindo não acorda; janela de descanso é motivo próprio; retomar sem gesto na sessão não toca; ⚰️ "nenhuma para E0" até `a6c1cd8a`); o ponto de loop comum das camadas é travado por `sonsAssets.contract.test.ts`; o valor de `TRIM_TRILHA_POR_CAMADAS_DB` não tem teste (`grep -n TRIM_TRILHA src/utils/*.test.ts` vazio em 21/09/2026) — **régua: nenhuma**
 
+### `src/utils/elementPotion.ts`
+
+Dono único da Poção de Elemento (30/10/2026): custos (`POTION_COSTS`), filtro E por bases (`elementsMatchingBases`), saldo (`affordablePotionElements`), fabricar (`craftPotion`, via `spendEssences`), dar ao Soulmon (`givePotion`/`applySpecialItem`, sobrescreve `evolutionPotion`) e consumir na evolução (`applyPotionOnEvolve` → `potionElement`, lido por `petElementOf`). Chave de inventário `potion:<elementId>`.
+
 ### `src/utils/premiumFood.ts`
 **Dono de:** A COMIDA PREMIUM (chave de inventário `emoji + ★`, números, tetos por dia/semana, drop determinístico) — dono único; o USO mora em `specialItemUse.ts` e o drop em `careRules.completeTask`.
 **Exports:**

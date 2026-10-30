@@ -73,7 +73,7 @@ describe('C2 - Conquistas: bloqueado com cadeado, liberado com Comprar + preço'
 
 describe('C3 - Panora: Molduras / Backgrounds separados, Bits / Honra dentro', () => {
   const base = {
-    language: 'en-US' as const, points: 2000, emblems: 5, credits: 0,
+    language: 'en-US' as const, points: 2000, emblems: 5,
     ownedBackgrounds: ['bg-room'] as string[], equippedBackground: 'bg-room' as string | null,
     ownedFurniture: [] as string[], equippedDecor: {}, missionProgress: {} as Record<string, number>,
     onBuy: () => true, onExchangeCredits: async () => true, onEquip: () => {}, onEquipFurniture: () => {},

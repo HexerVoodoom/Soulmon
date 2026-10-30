@@ -56,6 +56,7 @@ import {
  * numa área diferente).
  */
 const MercadoStallSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.MercadoStallSheet })));
+const CambistaSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.CambistaSheet })));
 const ConquistasSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.ConquistasSheet })));
 // ⚒️ O Soulsmith (07/10/2026): abre a tela de equipamento do Combate v3 (PR8b), que saiu das Estatísticas. Lazy — a arte dos itens é sob demanda.
 const ForgeCard = lazy(() => import('../ForgeCard'));
@@ -190,6 +191,8 @@ export interface AreaViewProps {
   points: number;
   emblems: number;
   credits: number;
+  /** Dex de elementos (Biblioteca): o Cambista mostra "???" no que não foi desbloqueado. */
+  unlockedElements?: readonly string[];
   onExchangeCredits: (credits: number) => Promise<boolean>;
   accountTier?: 'demo' | 'paid';
   onUnlock?: () => void;
@@ -378,15 +381,15 @@ export function AreaView(props: AreaViewProps) {
   if (area === 'mercado') {
     const lots = mercadoLots(language);
     const open = lots.find(l => l.id === sheet) ?? null;
-    const stall = open && open.id !== 'conquistas' && open.id !== 'restaurante' ? open.id as Exclude<MercadoLotId, 'conquistas' | 'restaurante'> : null;
+    const stall = open && open.id !== 'conquistas' && open.id !== 'restaurante' && open.id !== 'cambista' ? open.id as Exclude<MercadoLotId, 'conquistas' | 'restaurante' | 'cambista'> : null;
     return (
       <AreaScene
         areaId={area}
         language={language}
         background={AREA_BG.mercado}
-        // O Restaurante em obra (14/10/2026) fica FORA do `gated`: sempre aberto, sem Vínculo mínimo, sem missão (não é `BuildingId`).
-        lots={lots.map(l => l.id === 'restaurante'
-          ? ({ ...l, art: MERCADO_LOT_ART.restaurante, onOpen: () => setSheet(l.id) } satisfies AreaLot)
+        // O Restaurante em obra (14/10/2026) e o Cambista (30/10/2026) ficam FORA do `gated`: sempre aberto, sem Vínculo mínimo, sem missão (não é `BuildingId`).
+        lots={lots.map(l => l.id === 'restaurante' || l.id === 'cambista'
+          ? ({ ...l, art: MERCADO_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot)
           : gated([{ ...l, art: MERCADO_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot])[0])}
         notice={lockNote}
       >
@@ -407,16 +410,15 @@ export function AreaView(props: AreaViewProps) {
                 language={language}
                 points={props.points}
                 emblems={props.emblems}
-                credits={props.credits}
-                onExchangeCredits={props.onExchangeCredits}
-                accountTier={props.accountTier}
-                onUnlock={props.onUnlock}
                 initialKind={stall === 'background' ? stallKind : undefined}
                 weekly={props.weekly}
                 onClaimWeekly={props.onClaimWeekly}
                 {...ownership}
                 {...actions}
               />
+            )}
+            {open?.id === 'cambista' && (
+              <CambistaSheet language={language} credits={props.credits} onExchangeCredits={props.onExchangeCredits} accountTier={props.accountTier} onUnlock={props.onUnlock} unlockedElements={props.unlockedElements} />
             )}
             {open?.id === 'conquistas' && (
               <ConquistasSheet language={language} missionProgress={ownership.missionProgress} claimed={ownership.missionClaimed} shop={{ ownedBackgrounds: ownership.ownedBackgrounds, balance: props.points, onBuy: actions.onBuy }} />
