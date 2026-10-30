@@ -314,3 +314,7 @@ O preço decidido (D9, US$ 3,99) segue; se quiser baixar, a conta agora permite.
 | D27 | Recompensa da missão **mantém 3/5** pontos, mesmo com a simulação (46–62% de um tipo para quem repete a Ordem). |
 | D28 | O `freeGen` que sobrevive à exclusão de conta é **declarado na política** (hash irreversível + imagem gerada); sobe a `PRIVACY_VERSION`. |
 | D29 | Pool de BBs começa com **50** (~US$ 1,20), amplia depois. |
+
+> ⚠️ D28 sobe a `PRIVACY_VERSION` para todos (não fica atrás do interruptor): quem
+> abrir a versão com esse merge vê o reconsentimento. Só levar à main **no lançamento
+> oficial** (§7, D15), junto com o interruptor ligado.
