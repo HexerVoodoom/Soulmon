@@ -19,6 +19,7 @@ import { ITEM_ART } from '../utils/itemArt';
 import { FX_ART } from '../utils/fxArt';
 import { ANIM_ART } from '../utils/animArt';
 import { SpriteAnim } from './pixel/SpriteAnim';
+import { FeedBubble } from './home/FeedBubble';
 import { EvolveButton, EVOLVE_BTN_H } from './pixel/EvolveButton';
 import { type SlotId, PET_TOP_OFFSET, PET_LIFT, PET_BOX, PET_RENDER, STAGE_HEIGHT, GROUND_Y } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
@@ -469,6 +470,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   onPetRef.current = onPet;
   const [showerCooldown, setShowerCooldown] = useState(false);
   const [hugBalloon, setHugBalloon] = useState(false);
+  const [feedBubble, setFeedBubble] = useState<{ emoji: string; n: number } | null>(null);
   /* F4 (01/10/2026): no banho o balão mostra o CHUVEIRINHO aprovado (o mesmo do
      botão de banho), não as mãozinhas do abraço — que ficam para a comida. */
   const [balloonKind, setBalloonKind] = useState<'hug' | 'bath'>('hug');
@@ -627,7 +629,7 @@ export const CompanionHUD = memo(function CompanionHUD({
     setEatingEmoji(feedAnim.emoji);
     setEatKey(k => k + 1);
     setIsMunching(true);
-    showHug();
+    setFeedBubble({ emoji: feedAnim.emoji, n: feedAnim.n });
     /* O "+1" flutuante do mock no lugar do balão `+1⚡`: o balão é a VOZ do
        pet, e um número não é fala. Sai do DOM sozinho (1s). */
     setPlusOne(n => n + 1);
@@ -1421,6 +1423,10 @@ export const CompanionHUD = memo(function CompanionHUD({
               </span>
             ))}
 
+            {feedBubble && (
+              <FeedBubble emoji={feedBubble.emoji} runKey={feedBubble.n} reducedMotion={reducedMotion} position={position} onDone={() => setFeedBubble(null)} />
+            )}
+
             {/* Hug balloon — follows pet position, shown after feed or shower */}
             {hugBalloon && (
               <div
@@ -2007,8 +2013,8 @@ export const CompanionHUD = memo(function CompanionHUD({
             aria-haspopup="dialog"
             aria-expanded={mochilaOpen}
             aria-label={(language === 'pt-BR'
-              ? (hasNewItems ? 'Mochila — item novo' : 'Mochila')
-              : (hasNewItems ? 'Backpack — new item' : 'Backpack'))
+              ? (hasNewItems ? 'Arquivos — item novo' : 'Arquivos')
+              : (hasNewItems ? 'Files — new item' : 'Files'))
               + (walkingTo ? (language === 'pt-BR' ? ` — passeando: ${walkingTo}` : ` — out on a stroll to ${walkingTo}`) : '')}
           >
             {hasNewItems && <span className="sm2-deck-dot" aria-hidden="true" />}
