@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import quadroRanking from '../../assets/soulmon/icones-ui/quadro-ranking.png';
 import { AreaSheet } from '../nav/AreaSheet';
 import { RankingPanel } from '../RankingPanel';
 import { sm2Button, ModalSheet } from '../form/FormKit';
@@ -53,12 +52,8 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
           {isPt ? 'Ver ranking' : 'See ranking'}
         </button>
         <ModalSheet open={rankOpen} onClose={() => setRankOpen(false)} language={language} placement="center" sobreTelas title="Ranking">
-          {/* A lista no quadro de cobre do kit (`quadro-ranking.png`, 192², 9-slice de 48 px, miolo transparente). */}
-          <div data-minigame-gate-ranking style={{
-            display: 'flex', flexDirection: 'column', gap: 8, padding: 6,
-            borderStyle: 'solid', borderWidth: 22, borderImage: `url(${quadroRanking}) 48 / 22px stretch`, imageRendering: 'pixelated',
-            background: 'var(--sm2-surface)', backgroundClip: 'padding-box',
-          }}>
+          {/* 30/10/2026 (dono): sem a moldura de cobre; a lista ocupa a largura do modal. */}
+          <div data-minigame-gate-ranking style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {rankings.length > 1 && (
               <div role="tablist" aria-label={isPt ? 'Tabelas de ranking' : 'Ranking boards'} style={{ display: 'flex', gap: 6 }}>
                 {rankings.map((r, i) => (
