@@ -152,13 +152,22 @@ jobs:
         working-directory: desktop
         run: npm run dist -- --publish never
 
-      # Artefato de Actions, não Release: fica 30 dias, é baixado à mão por quem
-      # quer testar, e o `electron-updater` NÃO o enxerga. É a diferença entre
-      # "dá para pegar o .exe deste commit" e "todo mundo recebe este .exe".
+      # Artefato de Actions, não Release: é baixado à mão por quem quer testar, e
+      # o `electron-updater` NÃO o enxerga. É a diferença entre "dá para pegar o
+      # .exe deste commit" e "todo mundo recebe este .exe".
+      #
+      # ⚠️ 7 dias, não 30. O instalador pesa dezenas de MB e divide com o APK do
+      # `android-build.yml` os mesmos 500 MB de cota de artefato do plano grátis
+      # (só repos privados consomem; este é privado) — cota que a conta encheu
+      # em 30/08. Aqui a janela pode ser mais folgada que o `retention-days: 1`
+      # do APK porque este workflow tem filtro de `paths` e só dispara quando o
+      # commit encosta em `desktop/`: são poucas runs, não uma por commit. Sete
+      # dias cobrem "buildou na segunda, testei na sexta"; o que precisa durar
+      # mais sai por tag, no `desktop-release.yml`, como Release.
       - name: Upload installer artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: soulmon-desktop-windows-${{ github.sha }}
           path: |
             desktop/release/*.exe
-          retention-days: 30
+          retention-days: 7
