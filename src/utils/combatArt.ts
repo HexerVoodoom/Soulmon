@@ -39,6 +39,7 @@ const BG_MEAN: Record<string, string> = {
   fogo: '#274644', gravidade: '#17434b', luz: '#716c48', marcial: '#245859', morte: '#275455',
   vida: '#1c504c', som: '#1e5c5f', sombra: '#12303b', tempo: '#1c5656', terra: '#39443c',
   vigor: '#274a48', vileza: '#204c42', neutro: '#285558',
+  fada: '#16312f', industrial: '#0c3532', planta: '#0e3830', // 30/10/2026: cenários base próprios
 };
 
 const DERIVED_TO_BASE: Record<string, string> = Object.fromEntries(DERIVED_ELEMENT_PAIRS.map(d => [d.id, d.componentes[0]]));
@@ -55,7 +56,7 @@ export function combatBaseElement(id: string | null | undefined): string | undef
 export function combatSceneBg(id: string | null | undefined): string | undefined {
   const base = combatBaseElement(id);
   if (base) return `url(${BG[base]}) center/cover ${BG_MEAN[base] ?? ''}`.trim();
-  // planta/industrial: sem `bg-` base, o cenário próprio é o do domínio (variante 1) — nunca o de vida/marcial.
+  // Fallback (save antigo sem a arte): planta/industrial usam o cenário do domínio. Desde 30/10/2026 têm `bg-` próprio, que vem antes.
   return id === 'planta' || id === 'industrial' ? combatDomainSceneBg(id, 0) : undefined;
 }
 
@@ -103,6 +104,16 @@ export function combatGlowColor(id: string | null | undefined): string | undefin
   const v = ELEMENT_VISUAL[id] ?? ELEMENT_VISUAL[DERIVED_TO_BASE[id] ?? ''];
   if (!v) return undefined;
   return labToHex(Math.max(v[0], 58), v[1] * 1.15, v[2] * 1.15);
+}
+
+/**
+ * Par de cores do especial: [brilho externo, brilho de trás] = 1º e 2º componente do elemento (misto) ou a mesma cor (base).
+ * Cada uma passa por `combatGlowColor`.
+ */
+export function combatGlowPair(id: string | null | undefined): [string | undefined, string | undefined] {
+  const comps = id ? DERIVED_ELEMENT_PAIRS.find(d => d.id === id)?.componentes : undefined;
+  if (!comps) { const c = combatGlowColor(id); return [c, c]; }
+  return [combatGlowColor(comps[0]), combatGlowColor(comps[1])];
 }
 
 /** Guard de instalação: 17 cenários e 17 escudos dos elementos base + os do `neutro` (18). */

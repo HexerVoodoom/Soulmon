@@ -1,0 +1,5 @@
+<<<<<<<< HEAD:dist/assets/dungeonRevive-DpQg0SZr.js
+import{dZ as r}from"./index-DAOs8tEt.js";const s=.5,o=.04,c=t=>Math.max(0,Math.floor(t?.[r]??0)),f=t=>c(t)>=1;function M(t,e){const a=Math.floor(t[e]??0);if(a<=0)return t;const n={...t};return a-1>0?n[e]=a-1:delete n[e],n}const d=(t,e)=>({...t,[e]:Math.max(0,Math.floor(t[e]??0))+1}),u=(t,e)=>t^Math.imul(e,2654435761)|0;function i(t){const e=Number.isFinite(t)?t:1;return{hp:s,foesHp:[Math.min(1,Math.max(1e-6,e))],energy:0}}const m=(t=Math.random)=>t()<o;export{u as a,M as b,f as c,m as d,d as e,c as h,i as r};
+========
+import{dQ as r}from"./index-BrI97NX-.js";const s=.5,o=.04,c=t=>Math.max(0,Math.floor(t?.[r]??0)),f=t=>c(t)>=1;function M(t,e){const a=Math.floor(t[e]??0);if(a<=0)return t;const n={...t};return a-1>0?n[e]=a-1:delete n[e],n}const d=(t,e)=>({...t,[e]:Math.max(0,Math.floor(t[e]??0))+1}),u=(t,e)=>t^Math.imul(e,2654435761)|0;function i(t){const e=Number.isFinite(t)?t:1;return{hp:s,foesHp:[Math.min(1,Math.max(1e-6,e))],energy:0}}const m=(t=Math.random)=>t()<o;export{u as a,M as b,f as c,m as d,d as e,c as h,i as r};
+>>>>>>>> origin/main:dist/assets/dungeonRevive-DYN_WRdt.js

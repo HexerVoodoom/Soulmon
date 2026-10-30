@@ -339,15 +339,24 @@ describe('BattleStage — o que a cena desenha', () => {
   });
 
   it('plataforma: elipse preta ~40% com borda suave (sem PNG) e brilho do especial na cor do elemento', () => {
-    const { container } = render(<BattleStage {...baseProps} me={{ ...me, energy: 1, element: 'fogo' }} foes={[foe(0, { energy: 1, element: 'sombra' })]} />);
+    const { container } = render(<BattleStage {...baseProps} charging me={{ ...me, energy: 1, element: 'fogo' }} foes={[foe(0, { energy: 1, element: 'sombra' })]} />);
     const plat = container.querySelector('[data-stage-platform]') as HTMLElement;
     expect(plat.tagName).not.toBe('IMG');
     expect(plat.style.borderRadius).toBe('50%');
     expect(plat.style.background).toMatch(/radial-gradient/);
-    expect(plat.style.background).toMatch(/rgba\(0, 0, 0, 0\.4\)/);
+    expect(plat.style.background).toMatch(/rgba\(0, 0, 0, 0\.58\)/);
     const glow = (r: string) => (container.querySelector(`[data-stage-sprite="${r}"]`) as HTMLElement).style.getPropertyValue('--bs-glow');
     expect(glow('me')).toBe(combatGlowColor('fogo'));
     expect(glow('foe')).toBe(combatGlowColor('sombra'));
     expect(glow('me')).not.toBe(glow('foe'));
+    const back = (container.querySelector('[data-stage-charging]') as HTMLElement).style.getPropertyValue('--bs-glow2');
+    expect(back).toBe(combatGlowColor('fogo'));
+    expect((container.querySelector('[data-stage-sprite="me"]') as HTMLElement).style.transformOrigin).toBe('50% 100%');
+  });
+
+  it('elemento misto: brilho externo = 1º componente, brilho de trás = 2º', () => {
+    const { container } = render(<BattleStage {...baseProps} charging me={{ ...me, energy: 1, element: 'vapor' }} />);
+    expect((container.querySelector('[data-stage-sprite="me"]') as HTMLElement).style.getPropertyValue('--bs-glow')).toBe(combatGlowColor('fogo'));
+    expect((container.querySelector('[data-stage-charging]') as HTMLElement).style.getPropertyValue('--bs-glow2')).toBe(combatGlowColor('agua'));
   });
 });
