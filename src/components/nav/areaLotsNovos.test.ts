@@ -36,8 +36,8 @@ describe('lotes novos (29/09/2026)', () => {
   it('o rinoceronte é o NPC do Duelo, com voz própria nos dois idiomas', () => {
     expect(lotNpcArt('arena', 'duelo')).toBe(npcArenaDuelo);
     expect(lotNpcArt('arena', 'duelo')).not.toBe(AREA_NPC_ART.arena);
-    expect(lotNpcVoice('arena', 'duelo', 'pt-BR').name).toContain('Naia');
-    expect(lotNpcVoice('arena', 'duelo', 'en-US').name).toContain('Naia');
+    expect(lotNpcVoice('arena', 'duelo', 'pt-BR').name).toContain('Tessaria');
+    expect(lotNpcVoice('arena', 'duelo', 'en-US').name).toContain('Tessaria');
   });
 
   it('lote sem voz própria cai na voz da área; o Torneio segue com o Vultrak', () => {
@@ -47,7 +47,7 @@ describe('lotes novos (29/09/2026)', () => {
 
   it('os 10 bustos de lote da leva npcs-flare (30/09/2026) são arte PRÓPRIA — nenhum placeholder no bundle', () => {
     const lotes: Array<[Parameters<typeof lotNpcArt>[0], string, string]> = [
-      ['arena', 'duelo', 'Naia'], ['hall', 'feira', 'Fanfare'], ['jogos', 'mente', 'Tessela'],
+      ['arena', 'duelo', 'Tessaria'], ['hall', 'feira', 'Fanfare'], ['jogos', 'mente', 'Tessela'],
       ['forja', 'refugio', 'Yuzu'], ['mercado', 'conquistas', 'Medra'], ['laboratorio', 'amigos', 'Zumi'],
       ['hall', 'guilda', 'Aurea'], ['laboratorio', 'pet', 'Tinta'], ['laboratorio', 'stats', 'Sumi'],
       ['exploracao', 'passeio', 'Lisel'],

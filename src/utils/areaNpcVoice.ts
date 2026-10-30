@@ -147,7 +147,7 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     lineEn: "We're under construction! Soon the restaurant will open its doors and I'll be able to cook special meals here. Come back soon!",
   },
   'arena:duelo': {
-    namePt: 'Naia, a gladiadora', nameEn: 'Naia, the gladiator', // 07/10/2026: busto trocado a pedido do dono (era Tuska, o rinoceronte). 29/10/2026 (dono): gladiadora de tridente e rede, nada de pescaria
+    namePt: 'Tessaria, a gladiadora', nameEn: 'Tessaria, the gladiator', // 30/10/2026 (dono): era Naia. 07/10/2026: busto trocado a pedido do dono (era Tuska, o rinoceronte). 29/10/2026 (dono): gladiadora de tridente e rede, nada de pescaria
     linePt: 'Um duelo, uma rodada de cada vez. Pode vir.',
     lineEn: 'One duel, one round at a time. Come on.',
   },

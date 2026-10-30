@@ -90,7 +90,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   'forja:ferreiro': FERREIRO_NPC_ART,
   'mercado:restaurante': npcMercadoRestaurante, // Brickle, o caranguejo pedreiro (14/10/2026; restaurante em obra)
   'arena:torneio': npcArena,
-  'arena:duelo': npcArenaDuelo, // Naia (07/10/2026: trocou o Tuska)
+  'arena:duelo': npcArenaDuelo, // Tessaria (era Naia até 30/10/2026; 07/10/2026: trocou o Tuska)
   'arena:guerra': npcArenaGuerra, // Mirevesper: arte escolhida pelo dono em 18/10/2026 — ver docs/ARTE-MELHORIAS-FUTURAS.md
   'hall:feira': npcArenaFeira, // Fanfare (`utils/fairArt.ts` › FAIR_ART_IDS.npc)
   'exploracao:fenda': npcExploracao,
