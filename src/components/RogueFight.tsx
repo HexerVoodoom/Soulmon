@@ -42,6 +42,11 @@ export interface RogueFightProps {
   onResult: (won: boolean, foeName: string, hpLeft: number) => void;
 }
 
+import { useGameStateOptional } from '../contexts/GameStateContext';
+import { HEART_ITEM_EMOJI, SPARK_ITEM_EMOJI } from '../utils/shop';
+import { ENERGY_ICON } from '../utils/rewardIcons';
+import { canOfferRevive, consumeOne, heartsOwned, sparksOwned, reviveSeed, reviveStart, SPARK_ENERGY } from '../utils/dungeonRevive';
+
 export function RogueFight({ language, run, step, combatant, skills, petElement, evolutionStage = 'rookie', demoCharacterId, floor, onResult }: RogueFightProps) {
   const isPt = language === 'pt-BR';
   const lang = isPt ? 'pt' : 'en';
@@ -66,6 +71,14 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   const [end, setEnd] = useState<GroupResult | null>(null);
   const reportedRef = useRef(false);
   const reduced = useRef(prefersReducedMotion());
+  const ctx = useGameStateOptional();
+  const inv = ctx?.gameState.foodInventory;
+  /** 💗 Continuação após o Coraçãozinho (REGISTRO §191): n-ésima retomada + HP do inimigo na queda; `key` reinicia o relógio da cena. */
+  const [cont, setCont] = useState<{ n: number; foeFrac: number; key: number } | null>(null);
+  const fightKey = cont?.key ?? 1;
+  const contRef = useRef(cont);
+  contRef.current = cont;
+  const [declined, setDeclined] = useState(false);
 
   const report = useCallback((won: boolean, hpLeft?: number) => {
     if (reportedRef.current) return;
@@ -76,7 +89,9 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   const round = useCallback((): GroupRound => {
     const f = dungeonFight({ combatant: setup.combatant, family, startShield: setup.startShield }, setup.foe, setup.seed, true);
     return {
-      player: f.player, foes: f.foes, seed: f.seed, startHp: setup.startHp, startEnergy: 0,
+      player: f.player, foes: f.foes, seed: contRef.current ? reviveSeed(f.seed, contRef.current.n) : f.seed,
+      startHp: contRef.current ? reviveStart(contRef.current.foeFrac).hp : setup.startHp, startEnergy: 0,
+      ...(contRef.current ? { options: { startFoesHp: reviveStart(contRef.current.foeFrac).foesHp } } : {}),
       hitScale: f.hitScale,
       castScale: ({ who, ring, dodge }) => f.castScale({ who, ring, dodge }),
     };
@@ -100,14 +115,27 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   }), [setup.seed]);
 
   const battle = useGroupBattle({
-    running: !end, paused, reduced: reduced.current, runKey: 1, seed: setup.seed,
+    running: !end, paused, reduced: reduced.current, runKey: fightKey, seed: setup.seed,
     round, scene, onEnd: setEnd, torcida: false, speed, autoSpecial,
   });
 
   const won = end?.winner === 'player';
-  const pronto = battle.stateKey === 1;
+  const pronto = battle.stateKey === fightKey;
+  const oferta = !!end && !won && !declined && !!ctx && canOfferRevive(inv);
+  const aceitar = () => {
+    if (!oferta || !ctx) return;
+    ctx.setGameState(prev => ({ ...prev, foodInventory: consumeOne(prev.foodInventory, HEART_ITEM_EMOJI) }));
+    const st = reviveStart(battle.foesHp[0] ?? 1);
+    setEnd(null);
+    setCont(c => ({ n: (c?.n ?? 0) + 1, foeFrac: st.foesHp[0], key: (c?.key ?? 1) + 1 }));
+  };
+  const usarFaisca = () => {
+    if (!ctx || sparksOwned(inv) < 1) return;
+    ctx.setGameState(prev => ({ ...prev, foodInventory: consumeOne(prev.foodInventory, SPARK_ITEM_EMOJI) }));
+    battle.boostEnergy(SPARK_ENERGY);
+  };
   const foeHp = pronto ? (battle.foesHp[0] ?? 1) : 1;
-  const meHp = pronto ? battle.hp : setup.startHp;
+  const meHp = pronto ? battle.hp : (cont ? reviveStart(cont.foeFrac).hp : setup.startHp);
 
   return (
     <div data-rogue-fight style={BATTLE_LAYER_STYLE}>
@@ -146,6 +174,27 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
         }}
         onPauseChange={setPaused}
       >
+        {!end && sparksOwned(inv) > 0 && (
+          <button type="button" data-rogue-spark onClick={usarFaisca} disabled={battle.petEnergy >= ENERGY_TRIGGER}
+            aria-label={isPt ? `Faísca de Alma (${sparksOwned(inv)}): enche a barra do especial` : `Soul Spark (${sparksOwned(inv)}): fills the special bar`}
+            style={{ position: 'absolute', right: 8, bottom: 56, zIndex: 5, pointerEvents: 'auto', background: 'none', border: 'none', padding: 0, minWidth: 44, minHeight: 44, cursor: 'pointer', color: 'var(--sm2-viewport-ink)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4, fontWeight: 700, opacity: battle.petEnergy >= ENERGY_TRIGGER ? 0.4 : 1 }}>
+            <img src={ENERGY_ICON} alt="" width={20} height={20} style={{ imageRendering: 'pixelated' }} />
+            <span className="sm2-num">{sparksOwned(inv)}</span>
+          </button>
+        )}
+        {oferta && (
+          <div role="dialog" aria-modal="true" data-revive-offer style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.6)', padding: 16 }}>
+            <div style={{ background: 'var(--sm2-surface, #14221f)', color: 'var(--sm2-ink, #fff)', borderRadius: 12, padding: 16, maxWidth: 320, width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <p style={{ margin: 0, fontWeight: 700 }}>{isPt ? 'Seu Soulmon caiu' : 'Your Soulmon went down'}</p>
+              <p style={{ margin: 0 }}>{isPt ? 'Usar um Coraçãozinho para ele voltar com metade da vida e seguir a luta?' : 'Use a Little heart to bring him back with half his HP and keep fighting?'}</p>
+              <p style={{ margin: 0 }} data-revive-count>{isPt ? `Você tem: ${heartsOwned(inv)}` : `You have: ${heartsOwned(inv)}`}</p>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button type="button" data-revive-decline onClick={() => setDeclined(true)} style={{ ...sm2Button('outline'), flex: 1, minHeight: 44 }}>{isPt ? 'Não usar' : 'Not now'}</button>
+                <button type="button" data-revive-confirm onClick={aceitar} style={{ ...sm2Button('primary'), flex: 1, minHeight: 44 }}>{isPt ? 'Usar Coraçãozinho' : 'Use Little heart'}</button>
+              </div>
+            </div>
+          </div>
+        )}
         {!end && (
           <button
             type="button" data-rogue-speed={speed} onClick={() => setSpeed(s => (s === 1 ? 3 : 1))}
@@ -156,7 +205,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
             {speed}×
           </button>
         )}
-        {end && (
+        {end && !oferta && (
           <div
             role="status" data-rogue-fight-end={won ? 'won' : 'lost'}
             style={{ position: 'absolute', left: 16, right: 16, bottom: 24, zIndex: 6, pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 'var(--sm2-radius-md, 8px)', background: 'var(--sm2-viewport-bg)', border: '1px solid var(--sm2-viewport-ring)', color: 'var(--sm2-viewport-ink)', fontFamily: 'var(--sm2-font-text)', textAlign: 'center' }}
