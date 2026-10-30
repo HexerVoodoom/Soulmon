@@ -14,6 +14,7 @@ import { RewardPreview } from '../ui/RewardPreview';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { BossFightScreen, type BossFightMe } from './BossFightScreen';
 import { FeiraTrailPlay } from './FeiraTrailPlay';
+import { BossCheerPrelude } from './BossCheerPrelude';
 import { ResultScreen, type ResultLedgerRow } from '../games/ResultScreen';
 import { BOSS_ROSTER, bossArt, bossText } from '../../data/bossRoster';
 import {
@@ -27,7 +28,7 @@ import type { Language } from '../../utils/i18n';
 
 export interface FeiraApi {
   get: (id: string, tz?: PlayerDayAnchor) => Promise<FeiraEvento | null>;
-  attack: (id: string, tz?: PlayerDayAnchor) => Promise<FeiraAttack | null>;
+  attack: (id: string, tz?: PlayerDayAnchor, taps?: number[]) => Promise<FeiraAttack | null>;
   claim: (id: string, k?: number, tz?: PlayerDayAnchor) => Promise<FeiraClaim | null>;
   start: (id: string, tz?: PlayerDayAnchor) => Promise<FeiraTrail | null>;
   done: (id: string, s: FeiraSolution, tz?: PlayerDayAnchor) => Promise<FeiraTrailDone | null>;
@@ -56,7 +57,7 @@ export interface FeiraEventoSheetProps {
   skipReplay?: boolean;
 }
 
-type Phase = 'home' | 'fight' | 'trail' | 'trailDone';
+type Phase = 'home' | 'cheer' | 'fight' | 'trail' | 'trailDone';
 const SAFETY_MS = 250;
 
 export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, onClose, onCredit, onEvento, api: apiIn, skipReplay }: FeiraEventoSheetProps) {
@@ -89,19 +90,27 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
     return 'boss.error';
   };
 
-  const doAttack = async () => {
+  /** Atacar abre a TORCIDA antes do golpe (a tela de teste, com `skipReplay`, pula); o golpe sai de `doAttack(taps)`. */
+  const openCheer = () => {
+    if (busy || evento.kind !== 'boss') return;
+    if (skipReplay) { void doAttack(); return; }
+    setNote(null); setPhase('cheer');
+  };
+
+  const doAttack = async (taps?: number[]) => {
     if (busy || evento.kind !== 'boss') return;
     setBusy(true); setNote(null);
     try {
-      const a = await api.attack(saveId, tz);
+      const a = taps && taps.some(n => n > 0) ? await api.attack(saveId, tz, taps) : await api.attack(saveId, tz);
       if (!alive.current) return;
-      if (!a) { setNote('boss.gone'); return; }
+      if (!a) { setPhase('home'); setNote('boss.gone'); return; }
       setBefore(evento.bossHpPct);
       setAttack(a);
       setEvento(a.evento ?? { ...evento, bossHpPct: a.boss.bossHpPct, canAttack: false });
       setPhase('fight');
     } catch (e) {
       if (!alive.current) return;
+      setPhase('home');
       if (e instanceof GuildError && e.kind === 'dailyLimit') setEvento({ ...evento, canAttack: false });
       setNote(bossNote(e));
     } finally { if (alive.current) setBusy(false); }
@@ -179,6 +188,11 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
     } finally { if (alive.current) setBusy(false); }
   };
 
+  // ── a torcida, antes do golpe ──
+  if (phase === 'cheer' && evento.kind === 'boss') {
+    return <BossCheerPrelude language={language} bossId={evento.bossId} level={evento.level} poolPct={evento.bossHpPct} me={me} busy={busy} onGo={taps => void doAttack(taps)} />;
+  }
+
   // ── a luta ──
   if (phase === 'fight' && attack && evento.kind !== 'trail') {
     return (
@@ -224,7 +238,7 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
   let footer: React.ReactNode = null;
   if (phase === 'home') {
     if (evento.kind === 'boss' && evento.canAttack) {
-      footer = <button type="button" disabled={busy} aria-disabled={busy ? true : undefined} aria-busy={busy ? true : undefined} onClick={() => void doAttack()} style={{ ...sm2Button('primary', busy), width: '100%' }} data-feira-atacar>{busy ? t('boss.busy') : t('boss.attack')}</button>;
+      footer = <button type="button" disabled={busy} aria-disabled={busy ? true : undefined} aria-busy={busy ? true : undefined} onClick={openCheer} style={{ ...sm2Button('primary', busy), width: '100%' }} data-feira-atacar>{busy ? t('boss.busy') : t('boss.attack')}</button>;
     } else if (evento.kind === 'trail' && evento.trail.pending && !evento.trail.cleared) {
       footer = <><div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}><RewardPreview mode="before" language={language} items={[{ kind: 'honor' }, { kind: 'xp' }]} /></div><button type="button" disabled={busy} aria-disabled={busy ? true : undefined} onClick={() => void doStart()} style={{ ...sm2Button('primary', busy), width: '100%' }} data-feira-comecar>{t('trail.start')}</button></>;
     } else if (evento.kind === 'rest' && evento.claimable) {

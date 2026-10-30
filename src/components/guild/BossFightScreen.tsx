@@ -8,8 +8,8 @@
  * Só AGREGADO: a barra é a do pool do clã (`poolPct*`) e a única cifra é o dano do PRÓPRIO jogador (`myDamage`).
  * Nenhum dado por membro entra por estas props (LV-G1). Tom: o chefe "recua / foge", nunca "você falhou".
  *
- * Sem torcida (cheer): o replay é validado pelo servidor e nada que o jogador toque muda o resultado, então um
- * toque de torcida aqui seria uma promessa falsa. A `TorcidaLayer` não é montada.
+ * Torcida (cheer, 30/10/2026): acontece ANTES do golpe, em `BossCheerPrelude`; os toques vão na requisição e o SERVIDOR os põe
+ * na simulação. Este replay só toca o que ele devolveu (nenhum toque aqui muda nada).
  * Mudo: nenhum som novo (a `BattleStage` só toca os efeitos que já tinha).
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -108,6 +108,7 @@ export function BossFightScreen(p: BossFightScreenProps) {
     let started = 0;
     let applied = 0;
     let mine = 0;
+    let meNow = 1; // VIDA INTEIRA (30/10/2026): o número do golpe = o que a barra mostrada perdeu
     let finished = false;
     let endId: number | undefined;
     const t0 = performance.now();
@@ -128,15 +129,21 @@ export function BossFightScreen(p: BossFightScreenProps) {
         const e = events[applied];
         applied++;
         if (applied > started) started = applied;
-        setMeHp(clamp01(e.hp[0]));
+        const meBefore = meNow;
+        meNow = clamp01(e.hp[0]);
+        setMeHp(meNow);
         if ((e.kind === 'attack' || e.kind === 'tick') && e.frac > 1e-9) {
           const toBoss = e.side === 0;
+          const mineBefore = mine;
           if (toBoss) {
             mine += e.frac;
             const share = myTotal > 0 ? mine / myTotal : 1;
             setPool(clampPct(p.poolPctBefore + (p.poolPctAfter - p.poolPctBefore) * share));
           }
-          const value = toBoss ? Math.max(1, Math.round(myTotal > 0 ? p.myDamage * (e.frac / myTotal) : 0)) : Math.max(1, Math.round(e.frac * meMax));
+          // cumulativo: os números do chefe somam exatamente `myDamage`; os do pet = a queda inteira da barra dele
+          const value = toBoss
+            ? Math.max(1, myTotal > 0 ? Math.round((p.myDamage * mine) / myTotal) - Math.round((p.myDamage * mineBefore) / myTotal) : 0)
+            : Math.max(1, Math.round(meBefore * meMax) - Math.round(meNow * meMax));
           setHits([{ id: ++seq.current, side: toBoss ? 'foe' : 'me', foe: 0, value, big: specialHit.has(e) }]);
         }
       }

@@ -688,8 +688,9 @@ export const getGuildFeira = (id: string, tz?: PlayerDayAnchor): Promise<FeiraEv
  * O ataque do dia. 404 `not available` → `null`. 429 `dailyLimit` (já bateu hoje) e 409 `raidClosed`/`server` (chefe já caiu / sem chefe)
  * sobem como `GuildError` para a folha dizer com calma.
  */
-export const attackGuildFeira = (id: string, tz?: PlayerDayAnchor): Promise<FeiraAttack | null> =>
-  guildCall<unknown>('guildFeiraAttack', { method: 'POST', body: { id, dayKey: dia(tz) } })
+/** `taps` = toques de torcida por balde de 3 s (o servidor higieniza e põe na janela de quem ataca); ausente = sem torcida. */
+export const attackGuildFeira = (id: string, tz?: PlayerDayAnchor, taps?: number[]): Promise<FeiraAttack | null> =>
+  guildCall<unknown>('guildFeiraAttack', { method: 'POST', body: { id, dayKey: dia(tz), ...(taps ? { taps } : {}) } })
     .then(r => sanitizeFeiraAttack(r))
     .catch(e => { if (feiraAusente(e)) return null; throw e; });
 

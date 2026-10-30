@@ -30,7 +30,7 @@ import {
 import { somarPontos, CASA_PTS_FONTE_DIA_MAX } from './_casa.js';
 import { scoreIsPlausible } from './_rankings.js';
 import { loadDuelSide } from './_duelLoad.js';
-import { duelSide } from './_duel.js';
+import { duelSide, duelCheerEvents } from './_duel.js';
 import {
   fightSteps, combatantAt, REFERENCE_BUILDS, PVP_HP_SCALE, specialOf, cleanStartEnergy, mulberry32,
 } from './_combate.js';
@@ -271,13 +271,13 @@ export function sementeDoServidor() {
 }
 
 /** Quanto dano a repetição rende: soma das frações que o LADO 0 tirou do chefe na janela, e o registro para animar. */
-function janela(side, nivel, seed) {
+function janela(side, nivel, seed, cheer) {
   const chefe = combatantAt(nivel, REFERENCE_BUILDS.balanced);
   const g = fightSteps(
     { combatant: side.combatant, special: side.special, dotResist: side.dotResist },
     { combatant: chefe, special: null, dotResist: 0 },
     {
-      seed, hpScale: PVP_HP_SCALE, startHp: [1, HP_ENORME], startEnergy: [cleanStartEnergy(side.startEnergy), 0],
+      seed, hpScale: PVP_HP_SCALE, ...(cheer && cheer.length ? { cheer } : {}), startHp: [1, HP_ENORME], startEnergy: [cleanStartEnergy(side.startEnergy), 0],
       hitScale: (who) => (who === 1 ? CHEFE_FORCA_NA_SIM : 1),
     },
   );
@@ -300,9 +300,11 @@ function janela(side, nivel, seed) {
  * @param {{ combatant: any, special: any, dotResist?: number, startEnergy?: number }} side
  * @param {number} power `stagePower` 1..5
  */
-export function simularAtaque(side, power, seed) {
+export function simularAtaque(side, power, seed, taps) {
   const nivel = side.combatant.level;
-  const eu = janela(side, nivel, seed);
+  // Torcida (30/10/2026): os toques (baldes de 3 s, higienizados como no Duelo) só entram na janela de QUEM ataca; a referência
+  // segue sem torcida, e o teto do desempenho (DESEMPENHO_MAX) limita o ganho. Sem toques = o ataque de antes, bit a bit.
+  const eu = janela(side, nivel, seed, taps === undefined ? undefined : duelCheerEvents(taps, 0, side.cheerScale));
   const ref = janela({ combatant: combatantAt(nivel, REFERENCE_BUILDS.balanced), special: specialOf('direct'), dotResist: 0, startEnergy: 0 }, nivel, seed);
   const razao = ref.total > 0 ? eu.total / ref.total : 1;
   const desempenho = Math.min(DESEMPENHO_MAX, Math.max(DESEMPENHO_MIN, razao));

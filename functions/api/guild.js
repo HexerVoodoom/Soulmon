@@ -633,7 +633,7 @@ export async function handleGuild({ request, env }) {
       const antes = await lerFeiraHit(env, g.id, estado.k, id);
       if (antes.days.includes(hoje)) return erro('daily limit', 429);
       const perfil = await getProfile(env, id);
-      const r = simularAtaque(await fichaDoAtacante(env, id), stagePower(perfil?.stage), sementeDoServidor());
+      const r = simularAtaque(await fichaDoAtacante(env, id), stagePower(perfil?.stage), sementeDoServidor(), body?.taps);
       await gravarGolpe(env, g.id, estado.k, id, antes, hoje, r.dmg);
       await marcarFeira(env, g.id, estado.k, id, hoje);
       await cartao(g);

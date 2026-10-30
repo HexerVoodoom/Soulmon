@@ -124,6 +124,23 @@ describe('o mistério (tipo, nível, chefe)', () => {
 
 describe('o ataque (re-simulação com semente do servidor)', () => {
   const ficha = (extra = {}, stage = 'champion') => duelSide({ evolutionStage: stage, perfectDays: 12, totalXP: 3000, ...extra }, { maxLevel: 999 });
+  it('torcida: sem toques (ou toques zerados/lixo) = o ataque de antes; com toques é determinístico, dentro do teto e nunca menor', () => {
+    const base = simularAtaque(ficha(), 2, 123456);
+    expect(simularAtaque(ficha(), 2, 123456, undefined)).toEqual(base);
+    expect(simularAtaque(ficha(), 2, 123456, [])).toEqual(base);
+    expect(simularAtaque(ficha(), 2, 123456, 'lixo')).toEqual(base);
+    expect(simularAtaque(ficha(), 2, 123456, [0, 0, 0])).toEqual(base);
+    const taps = [16, 16, 16, 16, 16, 16, 16, 16, 16, 16];
+    const c1 = simularAtaque(ficha(), 2, 123456, taps);
+    expect(simularAtaque(ficha(), 2, 123456, taps)).toEqual(c1);
+    expect(c1.dmg).toBeGreaterThanOrEqual(base.dmg);
+    expect(c1.dmg).toBeLessThanOrEqual(ATAQUE_TETO);
+  });
+  it('torcida: toque acima do teto por balde é aparado (higienização do Duelo)', () => {
+    const cap = simularAtaque(ficha(), 2, 99, [16, 16, 16, 16, 16, 16, 16, 16, 16, 16]);
+    expect(simularAtaque(ficha(), 2, 99, [9999, -5, 'x', 16, 16, 16, 16, 16, 16, 16]).dmg).toBeLessThanOrEqual(ATAQUE_TETO);
+    expect(simularAtaque(ficha(), 2, 99, [9999, 16, 16, 16, 16, 16, 16, 16, 16, 16])).toEqual(cap);
+  });
   it('determinístico na semente; semente diferente, registro diferente; sempre dentro de [1, teto]', () => {
     const a = simularAtaque(ficha(), 2, 123456);
     const b = simularAtaque(ficha(), 2, 123456);
