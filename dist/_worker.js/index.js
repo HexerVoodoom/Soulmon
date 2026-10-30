@@ -10800,7 +10800,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../node_modules/fflate/esm/browser.js
+// D:/Soulmon/repo/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -14461,11 +14461,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-<<<<<<< HEAD
-// ../.wrangler/tmp/pages-zKz4li/functionsRoutes-0.049458419009933086.mjs
-=======
-// ../.wrangler/tmp/pages-MrkGiv/functionsRoutes-0.8683901028427683.mjs
->>>>>>> origin/main
+// ../.wrangler/tmp/pages-2uOCAe/functionsRoutes-0.5230989445332908.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -14791,7 +14787,7 @@ var routes = [
   }
 ];
 
-// ../node_modules/path-to-regexp/dist.es2015/index.js
+// D:/Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -15117,7 +15113,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../node_modules/wrangler/templates/pages-template-worker.ts
+// D:/Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
