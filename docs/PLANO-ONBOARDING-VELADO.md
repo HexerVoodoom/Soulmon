@@ -262,3 +262,12 @@ fica só no prédio.
 
 Com o pool, até **US$ 2,99** (líquido US$ 2,29) fica com ~62% de margem a 3% de conversão.
 O preço decidido (D9, US$ 3,99) segue; se quiser baixar, a conta agora permite.
+
+## 13. Execução — decisões de 30/10/2026
+
+| # | Decisão do dono |
+|---|---|
+| D22 | Os 5 grupos dos Velados se chamam **Ordem** (EN *Order*), ex.: Ordem dos Tecelões. "Clã" fica só para Salão do Clã / Guerra de Clãs. |
+| D23 | Cinemática **híbrida**: quadro a quadro estilo PS1/PS2 (fundos + NPC em 2–4 poses, cortes secos, parallax leve, legenda) nas cenas 2, 5, 8 e 9; **vídeo Gemini mudo + legenda** só na fuga (3) e no resgate (8, se valer). Áudio = música/ambiente do app, sem voz. |
+| D24 | **Tutorial de alimentar** entra na **cena 6, depois da tarefa**: o ancião diz que força = tarefa + alimento; abre a bolsa, arrasta a comida até o BB. |
+| D25 | Arte dos Velados: **busto no padrão NPC** do app (molde canônico), inspirado nas folhas de conceito das 5 Ordens (refs GPT em estilo diferente: servem de ideia, não de estilo). Gerar no ChatGPT. |
