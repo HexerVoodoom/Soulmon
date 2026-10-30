@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type CSSProperties } from 'react';
 import { sm2Hint, sm2Text } from './form/FormKit';
 import { elementIcon } from '../utils/elementIconArt';
 import { elementLabel } from '../utils/arena';
@@ -28,33 +28,46 @@ export interface ElementBaseSlotsProps {
 
 export function ElementBaseSlots({ slots, isPt, onChange }: ElementBaseSlotsProps) {
   const [menu, setMenu] = useState<number | null>(null);
-  const empty = isPt ? 'Vazio' : 'Empty';
-  const clear = isPt ? 'Limpar espaço' : 'Clear slot';
+  const placeholder = isPt ? 'Escolher' : 'Select';
+  const placeholderLong = isPt ? 'Escolha um elemento' : 'Select an element';
+  const clear = isPt ? 'Limpar' : 'Clear';
   const set = (i: number, id: string | null) => { onChange(i, id); setMenu(null); };
+  const field = (open: boolean): CSSProperties => ({
+    all: 'unset', boxSizing: 'border-box', cursor: 'pointer', flex: 1, minWidth: 0, minHeight: 44, padding: '6px 8px',
+    display: 'flex', alignItems: 'center', gap: 6, borderRadius: 10, background: 'var(--sm2-surface)',
+    border: `1.5px solid ${open ? 'var(--sm2-primary-ink)' : 'var(--sm2-line)'}`,
+  });
+  const option: CSSProperties = { all: 'unset', boxSizing: 'border-box', cursor: 'pointer', minHeight: 44, width: '100%', padding: '0 12px', display: 'flex', alignItems: 'center', gap: 10, ...sm2Text };
   return (
-    <>
+    <div style={{ position: 'relative' }}>
+      {/* Campos de seleção (caixa com borda arredondada, como um dropdown): tocar abre o menu logo abaixo; a 1ª opção é sempre "Limpar". */}
       <div style={{ display: 'flex', gap: 8 }} data-potion-slots>
         {slots.map((id, i) => (
-          <button key={i} type="button" data-slot={i} aria-expanded={menu === i} aria-label={`${i + 1}: ${id ? elName(id, isPt) : empty}`}
-            onClick={() => setMenu(menu === i ? null : i)}
-            style={{ all: 'unset', cursor: 'pointer', flex: 1, minWidth: 0, minHeight: 64, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, borderBottom: `2px solid ${menu === i ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)'}` }}>
-            {id ? <ElementIcon id={id} size={32} /> : <span aria-hidden="true" style={{ fontSize: 24, color: 'var(--sm2-muted)' }}>+</span>}
-            <span style={{ ...sm2Hint, textAlign: 'center' }}>{id ? elName(id, isPt) : empty}</span>
+          <button key={i} type="button" data-slot={i} aria-haspopup="listbox" aria-expanded={menu === i}
+            aria-label={`${i + 1}: ${id ? elName(id, isPt) : placeholderLong}`}
+            onClick={() => setMenu(menu === i ? null : i)} style={field(menu === i)}>
+            {id && <ElementIcon id={id} size={20} />}
+            <span style={{ ...sm2Hint, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: id ? 'var(--sm2-ink)' : 'var(--sm2-muted)' }}>
+              {id ? elName(id, isPt) : placeholder}
+            </span>
+            <span aria-hidden="true" style={{ color: 'var(--sm2-muted)', fontSize: 12 }}>{menu === i ? '▴' : '▾'}</span>
           </button>
         ))}
       </div>
       {menu !== null && (
-        <ul data-potion-menu style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2, maxHeight: 220, overflowY: 'auto' }}>
-          {slots[menu] && <li><button type="button" onClick={() => set(menu, null)} style={{ all: 'unset', cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center', ...sm2Text }}>{clear}</button></li>}
+        <ul role="listbox" data-potion-menu
+          style={{ listStyle: 'none', margin: '4px 0 0', padding: '4px 0', display: 'grid', maxHeight: 240, overflowY: 'auto',
+            borderRadius: 10, border: '1.5px solid var(--sm2-line)', background: 'var(--sm2-surface)' }}>
+          <li><button type="button" data-clear onClick={() => set(menu, null)} style={{ ...option, color: 'var(--sm2-muted)' }}>{clear}</button></li>
           {BASE_ELEMENT_IDS.filter(id => !slots.includes(id) || slots[menu] === id).map(id => (
             <li key={id}>
-              <button type="button" data-base={id} onClick={() => set(menu, id)} style={{ all: 'unset', cursor: 'pointer', minHeight: 44, width: '100%', display: 'flex', alignItems: 'center', gap: 10, ...sm2Text }}>
+              <button type="button" role="option" aria-selected={slots[menu] === id} data-base={id} onClick={() => set(menu, id)} style={option}>
                 <ElementIcon id={id} size={24} /><span>{elName(id, isPt)}</span>
               </button>
             </li>
           ))}
         </ul>
       )}
-    </>
+    </div>
   );
 }
