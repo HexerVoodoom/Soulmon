@@ -33,6 +33,16 @@ export const ASSETS: Record<AssetKey, AssetDef> = {
   'video-resgate': { arquivo: 'video-resgate.mp4', cenas: [8], tipo: 'video' },
 };
 
+const ARQUIVOS = import.meta.glob('../../../assets/soulmon/onboarding/*.{png,mp4}', {
+  eager: true,
+  import: 'default',
+}) as Record<string, string>;
+
+/** URL de um arquivo de `src/assets/soulmon/onboarding/` (ausente = undefined). */
+export function arteOnboarding(arquivo: string): string | undefined {
+  return ARQUIVOS[`../../../assets/soulmon/onboarding/${arquivo}`];
+}
+
 export function urlDoAsset(k: AssetKey): string | undefined {
-  return ASSETS[k].url;
+  return ASSETS[k].url ?? arteOnboarding(ASSETS[k].arquivo);
 }

@@ -31,9 +31,9 @@ export const MERC_TIPO: Record<MercOrdem, BranchType> = {
 };
 
 export const MERC_NOME: Record<MercOrdem, { pt: string; en: string; ordemPt: string; ordemEn: string }> = {
-  filtrador: { pt: 'Desbravador dos Filtradores', en: 'Filterer Pathfinder', ordemPt: 'Ordem dos Filtradores', ordemEn: 'Order of the Filterers' },
-  tecelao: { pt: 'Desbravador dos Tecelões', en: 'Weaver Pathfinder', ordemPt: 'Ordem dos Tecelões', ordemEn: 'Order of the Weavers' },
-  rompente: { pt: 'Desbravador dos Rompentes', en: 'Breaker Pathfinder', ordemPt: 'Ordem dos Rompentes', ordemEn: 'Order of the Breakers' },
+  filtrador: { pt: 'Aldric, Desbravador dos Filtradores', en: 'Aldric, Filterer Pathfinder', ordemPt: 'Ordem dos Filtradores', ordemEn: 'Order of the Filterers' },
+  tecelao: { pt: 'Liane, Desbravadora dos Tecelões', en: 'Liane, Weaver Pathfinder', ordemPt: 'Ordem dos Tecelões', ordemEn: 'Order of the Weavers' },
+  rompente: { pt: 'Ragan, Desbravador dos Rompentes', en: 'Ragan, Breaker Pathfinder', ordemPt: 'Ordem dos Rompentes', ordemEn: 'Order of the Breakers' },
 };
 
 /** Retratos placeholder esperados (a arte final vem da `/squad-arte`; ausente = silhueta nomeada). */

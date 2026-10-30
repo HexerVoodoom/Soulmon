@@ -5,6 +5,7 @@
  * Arte provisória: placeholders nomeados (`desfeito.png`/`desfeito-pesadelo.png` entram depois).
  */
 import { useState } from 'react';
+import { arteOnboarding } from '../sequencia/assets';
 import { DUELO_MAX, duelCut, duelFoeStrike, duelPlayerStrike, duelStart, type DueloState } from './dueloLogic';
 
 export interface EtapaDueloProps {
@@ -15,11 +16,11 @@ export interface EtapaDueloProps {
 }
 
 const ART = {
-  anciao: '/onboarding/anciao.png',
-  anciaoSoulmon: '/onboarding/anciao-soulmon.png',
-  desfeito: '/onboarding/desfeito.png',
-  pesadelo: '/onboarding/desfeito-pesadelo.png',
-  jogadorBB: '/onboarding/bb-placeholder.png',
+  anciao: arteOnboarding('velado-anciao.png') ?? '',
+  anciaoSoulmon: arteOnboarding('anciao-soulmon.png') ?? '',
+  desfeito: arteOnboarding('desfeito.png') ?? '',
+  pesadelo: arteOnboarding('desfeito-pesadelo.png') ?? '',
+  jogadorBB: arteOnboarding('bb-placeholder.png') ?? '',
 };
 
 function Bar({ label, hp, max, testId }: { label: string; hp: number; max: number; testId: string }) {

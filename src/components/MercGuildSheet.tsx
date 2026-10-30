@@ -4,6 +4,7 @@ import type { Language } from '../utils/i18n';
 import { ACTIVITY_CATALOG_BY_ID } from '../data/activityCatalog';
 import { MERC_ORDENS, MERC_NOME, MERC_RETRATO, MERC_TIPO, pontosMerc, type MercMissionState, type MercOrdem } from '../utils/mercMission';
 import { ATTR_LABEL } from '../types/attributes';
+import { arteOnboarding } from './onboarding/sequencia/assets';
 
 interface Props {
   open: boolean;
@@ -45,7 +46,9 @@ export function MercGuildSheet({ open, onClose, language = 'pt-BR', hoje, bb = f
             {MERC_ORDENS.map(o => (
               <button key={o} type="button" data-merc-ordem={o} onClick={() => onChoose(o)}
                 style={{ ...sm2Button('outline'), width: '100%', justifyContent: 'flex-start', gap: 12 }}>
-                <span data-merc-retrato={MERC_RETRATO[o]} aria-hidden style={{ width: 40, height: 40, borderRadius: 8, background: 'var(--sm2-surface-2, #2a2a2a)', flexShrink: 0 }} />
+                {arteOnboarding(MERC_RETRATO[o])
+                  ? <img data-merc-retrato={MERC_RETRATO[o]} src={arteOnboarding(MERC_RETRATO[o])} alt="" aria-hidden style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
+                  : <span data-merc-retrato={MERC_RETRATO[o]} aria-hidden style={{ width: 40, height: 40, borderRadius: 8, background: 'var(--sm2-surface-2, #2a2a2a)', flexShrink: 0 }} />}
                 <span style={{ textAlign: 'left' }}>
                   <strong>{t({ pt: MERC_NOME[o].pt, en: MERC_NOME[o].en })}</strong>
                   <br />
