@@ -24,7 +24,7 @@ import itemChipBigPower from '../assets/soulmon/items/item-chip-big-power.png';
 import itemChipBigHarmony from '../assets/soulmon/items/item-chip-big-harmony.png';
 import itemChipBigBenevolence from '../assets/soulmon/items/item-chip-big-benevolence.png';
 import itemChipPrism from '../assets/soulmon/items/item-chip-prism.png';
-import itemSpark from '../assets/soulmon/icones-ui/energia.png';
+import itemSpark from '../assets/soulmon/icones-ui/item-faisca.png';
 import itemHeart from '../assets/soulmon/items/item-heart.png';
 import itemGlitchtama from '../assets/soulmon/items/item-glitchtama.png';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
@@ -52,7 +52,7 @@ export const ITEM_ART: Record<string, string> = {
   '💠': itemChipPrism, // Chip Triplo (D-95): reusa a arte do Prisma, sem arte nova
   '💗': itemHeart,
   '🌀': itemGlitchtama,
-  '✨': itemSpark, // Faísca de Alma (30/10/2026): PROVISÓRIO, reusa o ícone de energia; arte própria em docs/ASSETS-A-GERAR.md
+  '✨': itemSpark, // Faísca de Alma (30/10/2026): arte própria (ChatGPT, alfa real, 96²)
 };
 
 // Comida PREMIUM (`utils/premiumFood.ts`): a MESMA arte da comida de base — a
