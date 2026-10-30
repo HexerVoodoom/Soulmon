@@ -4,6 +4,7 @@ import { essenceName } from '../utils/essences';
 import { ElementBaseSlots, ElementIcon as Icon, elName, emptySlots } from './ElementBaseSlots';
 import { isPotionUnlocked, affordablePotionElements, canAffordPotion, potionCost } from '../utils/elementPotion';
 import type { Language } from '../utils/i18n';
+import { Icon as UiIcon } from './ui/Icon';
 
 /**
  * POÇÃO DE ELEMENTO (Laboratório > Centro de Evolução, 30/10/2026). Três espaços lado a lado; tocar um abre a lista dos elementos BASE;
@@ -56,12 +57,26 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
 
   return (
     <ModalSheet open={open} title={t.title} onClose={onBack} onBack={back} language={language}
-      footer={confirm ? (
-        <button type="button" data-potion-confirm style={sm2Button('primary', !sel || !canAffordPotion(essences, sel))} disabled={!sel || !canAffordPotion(essences, sel)}
-          onClick={() => { if (sel) { onCraft(sel); setConfirm(false); setDone(sel); setPicked(null); } }}>{t.confirmBtn}</button>
-      ) : (
-        <button type="button" data-potion-generate style={sm2Button('primary', !sel)} disabled={!sel} onClick={() => setConfirm(true)}>{t.generate}</button>
-      )}>
+      // 30/10/2026 (dono): botão centralizado no fim do modal, com largura própria e ícone (frasco + o elemento escolhido).
+      footer={(() => {
+        const disabled = confirm ? (!sel || !canAffordPotion(essences, sel)) : !sel;
+        const label = confirm ? t.confirmBtn : t.generate;
+        return (
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <button type="button" {...(confirm ? { 'data-potion-confirm': true } : { 'data-potion-generate': true })}
+              style={{ ...sm2Button('primary', disabled), width: 'auto', minWidth: 220, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10, paddingInline: 24 }}
+              disabled={disabled}
+              onClick={() => {
+                if (!confirm) { setConfirm(true); return; }
+                if (sel) { onCraft(sel); setConfirm(false); setDone(sel); setPicked(null); }
+              }}>
+              <UiIcon name="science" size={22} tone="inherit" />
+              <span>{label}</span>
+              {sel && <Icon id={sel} size={22} />}
+            </button>
+          </div>
+        );
+      })()}>
       <div data-element-potion style={{ display: 'grid', gap: 12 }}>
         {pending && <p style={sm2Hint} data-potion-pending>{t.pending} <strong>{elName(pending, isPt)}</strong></p>}
         {done && <p role="status" style={sm2Text} data-potion-made>{t.made} ({elName(done, isPt)})</p>}

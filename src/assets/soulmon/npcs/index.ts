@@ -62,7 +62,7 @@ import npcHallAmigosMel from './npc-extra-filhote-de-mel.png';
 import npcHallGrove from './npc-n-musa.png'; // D-50 (19/10/2026): o NPC do Grove = a escolha 57 do dono (Lilia, a musa do jardim)
 
 import npcFForjaFerreiro from './npc-mercado-ferreiro.png';
-import npcMercadoCambista from './npc-mercado-cambista.png'; // banco de assets #389 (escolha do dono, 30/10/2026). PROVISÓRIO: só a versão 192² existe no repo; o arquivo em alta resolução está na máquina do dono
+import npcMercadoCambista from './npc-mercado-cambista.png'; // banco de assets #389 (escolha do dono, 30/10/2026), 768² a partir do original 2048² do banco
 import npcMercadoRestaurante from './npc-mercado-restaurante.png';
 /**
  * 🦎 O NPC do SOULSMITH — ÚNICO ponto de troca (07/10/2026). Escolha do dono: o espírito-do-forno vidraceiro
