@@ -35,6 +35,8 @@ export const MERCADO_LOT_ART = {
   // 30/09/2026 (leva lotes-v2, aprovada pelo dono): a torre-treliça própria.
   conquistas: loteMercadoConquistas,
   restaurante: loteRestaurante,
+  // 30/10/2026: o Cambista usa a arte do antigo Soulsmith do Mercado, PROVISÓRIA (o dono pediu um prédio já existente; troca = só este import).
+  cambista: loteFerreiro,
 } as const;
 
 // W5 (19/10/2026): a Guerra foi repintada (coliseu em pedra petróleo com bandeiras vermelhas, sem ossos/grifo; escolha padrão `arena-guerra-a`, 512², alfa real). A versão de 18/10 (grifo e serpente de ossos) saiu do bundle.

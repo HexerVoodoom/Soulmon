@@ -140,6 +140,12 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'A peça chega crua e melhora com o material que você traz. Escolha o lado que quiser reforçar, sem pressa.',
     lineEn: 'A piece arrives rough and gets better with the materials you bring. Choose the side to strengthen, no rush.',
   },
+  // 💱 Cambista (30/10/2026, dono): troca de Créditos por Bits e, em breve, essências. Fala descreve o ofício; sem preço, sem pressa, sem cobrança.
+  'mercado:cambista': {
+    namePt: 'Farthing, o cambista', nameEn: 'Farthing, the exchanger', // criatura verde de tentáculos com balança e bolsas de moedas (#389)
+    linePt: 'Minha balança pesa cada moeda com o mesmo cuidado. Os Créditos entram, os Bits saem; a taxa é a mesma para todos, sem pressa.',
+    lineEn: 'My scale weighs every coin with the same care. Credits go in, Bits come out; the rate is the same for everyone, no rush.',
+  },
   // 🏗️ Restaurante em obra (14/10/2026, dono): caranguejo pedreiro de tijolo. Só fala; sem ação, sem preço, sem cobrança.
   'mercado:restaurante': {
     namePt: 'Brickle, o pedreiro', nameEn: 'Brickle, the bricklayer',

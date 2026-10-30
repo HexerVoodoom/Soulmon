@@ -28,6 +28,8 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   // O Soulsmith (07/10/2026): a oficina de lava do domínio Fogo.
   'forja:ferreiro': [0.131, 0, 0.871, 0.742],
   // O Restaurante em obra (14/10/2026): andaimes e tijolos, alfa > 20.
+  // O Cambista (30/10/2026): arte provisória do antigo Soulsmith do Mercado (`lote-mercado-ferreiro`), alfa > 20.
+  'mercado:cambista': [0.04, 0.08, 0.963, 0.94],
   'mercado:restaurante': [0.027, 0.277, 0.97, 0.97],
   'arena:torneio': [0.073, 0.107, 0.927, 1.0],
   'arena:duelo': [0.167, 0.347, 0.833, 1.0],

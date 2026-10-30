@@ -33,7 +33,7 @@ export function areaDemoLot(id: AreaId, language: Language): { label: string } {
  * área, `propostas/<area>/mock.html`, descontada a barra do topo). Área que
  * ainda não chegou em F5 não aparece aqui e segue no lote de exemplo acima.
  */
-export type MercadoLotId = 'itens' | 'decoracao' | 'background' | 'conquistas' | 'restaurante';
+export type MercadoLotId = 'itens' | 'decoracao' | 'background' | 'conquistas' | 'restaurante' | 'cambista';
 export type ArenaLotId = 'torneio' | 'duelo' | 'guerra';
 // #187 (28/10/2026): o Arquivo (`pet`) virou seção do Perfil e o Círculo de Amigos (`amigos`) seção do Salão do Clã — saíram do mapa do Laboratório.
 export type LaboratorioLotId = 'evolucao' | 'stats' | 'perfil' | 'biblioteca';
@@ -58,7 +58,8 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
   { id: 'conquistas', labelPt: 'Conquistas', labelEn: 'Achievements', ariaPt: 'Entrar em Conquistas', ariaEn: 'Enter Achievements', left: '70%', top: '28%', width: '64%' },
   { id: 'background', labelPt: 'Background', labelEn: 'Background', ariaPt: 'Entrar na lojinha de Background', ariaEn: 'Enter the Background stall', left: '24.3%', top: '51%' },
   { id: 'decoracao', labelPt: 'Decoração', labelEn: 'Decor', ariaPt: 'Entrar na lojinha de Decoração', ariaEn: 'Enter the Decor stall', left: '70%', top: '53.5%', width: '42%' },
-  // ⚒️ #187 (28/10/2026): o Soulsmith (equipamentos) saiu do Mercado e foi para a Forja; o chão livre de baixo à ESQUERDA (26/81) fica vago.
+  // ⚒️ #187 (28/10/2026): o Soulsmith (equipamentos) saiu do Mercado e foi para a Forja; o chão livre de baixo à ESQUERDA (26/81) ficou vago até 30/10/2026, quando recebeu o Cambista (troca de Créditos por Bits + essências; arte provisória do ferreiro, sem Vínculo mínimo, fora de BUILDING_GATES como o Restaurante).
+  { id: 'cambista', labelPt: 'Cambista', labelEn: 'Exchanger', ariaPt: 'Entrar no Cambista', ariaEn: 'Enter the Exchanger', left: '26%', top: '81%', width: '40%' },
   // 🏗️ 14/10/2026 (dono): o Restaurante em obra ocupa a direita de baixo que ficava livre. Só vitrine: NPC e fala, sem ação, sem Vínculo mínimo.
   { id: 'restaurante', labelPt: 'Restaurante', labelEn: 'Restaurant', ariaPt: 'Falar com o pedreiro do Restaurante em obra', ariaEn: 'Talk to the builder of the Restaurant under construction', left: '73%', top: '81%', width: '40%' },
 ];

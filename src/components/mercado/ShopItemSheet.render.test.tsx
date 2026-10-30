@@ -15,7 +15,6 @@ const base = {
   language: 'en-US' as const,
   points: 900,
   emblems: 12,
-  credits: 32,
   ownedBackgrounds: ['bg-room'] as string[],
   equippedBackground: 'bg-room' as string | null,
   ownedFurniture: [] as string[],

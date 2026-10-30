@@ -41,7 +41,7 @@ afterEach(() => vi.restoreAllMocks());
 
 describe('H11 — a tabela lote → NPC é única e completa', () => {
   it('as duas tabelas (arte e voz) cobrem EXATAMENTE os lotes que existem — sem lote órfão, sem lote caindo no anfitrião da área', () => {
-    expect(ALL_KEYS.length).toBe(24); // #187 (28/10/2026): − mercado:ferreiro (foi para a Forja: só mudança de área), − laboratorio:pet e − laboratorio:amigos (viraram seções, ver SECTION_NPC_KEYS). Antes 26
+    expect(ALL_KEYS.length).toBe(25); // 30/10/2026: + mercado:cambista (Farthing). #187 (28/10/2026): − mercado:ferreiro (foi para a Forja: só mudança de área), − laboratorio:pet e − laboratorio:amigos (viraram seções, ver SECTION_NPC_KEYS). Antes 26
     const esperado = [...ALL_KEYS, ...SECTION_NPC_KEYS].sort();
     expect(Object.keys(LOT_NPC_ART).sort()).toEqual(esperado);
     expect(Object.keys(LOT_NPC_VOICE).sort()).toEqual(esperado);
