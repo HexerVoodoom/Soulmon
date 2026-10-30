@@ -184,6 +184,10 @@ export function UnlockAccountModal({ language, reason, onUnlocked, onClose }: Un
             // §81: o cristal do onboarding guarda a criatura que as respostas acabaram de desenhar.
             ? 'O cristal guarda um Soulmon feito de quem você é: o ritual nasce das suas respostas, e só você terá esta criatura.'
             : 'The crystal holds a Soulmon made from who you are: the ritual is born from your answers, and only you will have this creature.')
+          : reason === 'evolve-free'
+          ? (isPt
+            ? 'O modo grátis vai do ovo até o Rookie. Evoluir adiante é parte do Soulmon completo — cuidado e vida nunca estão à venda.'
+            : 'Free mode goes from the egg to Rookie. Evolving further is part of the full Soulmon — care and health are never for sale.')
           : reason === 'task-limit'
           ? (isPt
             ? `No modo grátis cabem ${DEMO_ACTIVITY_TOTAL_CAP} hábitos ativos (os diários; tarefas agendadas não contam) — a rotina inteira do Rookie. `

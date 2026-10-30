@@ -143,6 +143,7 @@ import { heartDropBonus, rollPetPassive, getPassive } from './utils/passives';
 import { recordMood, moodFor, moodSummary, type MoodValue } from './utils/mood';
 import { computeCarePattern, resolveBranch, careHistory } from './utils/carePattern';
 import { evolutionTarget } from './utils/evolutionTarget';
+import { evolutionPaywalled } from './utils/evolutionPaywall';
 import { getMissionProgress, isShopItemUnlocked, completedMissionIds, isMissionComplete } from './utils/missions';
 // Fora do chunk de entrada: só rodam num efeito, depois do primeiro paint.
 const resgatarPresentes = (...a: Parameters<typeof import('./utils/community').resgatarPresentes>) => import('./utils/community').then(m => m.resgatarPresentes(...a));
@@ -3588,6 +3589,8 @@ export default function App() {
 
   const handleEvolveRequest = useCallback(() => {
     if (isStarterId(gameState.demoCharacterId)) return; // os iniciais não evoluem
+    // D8 (ONBOARDING_VELADO): grátis depois do rookie pede conta paga — abre o convite.
+    if (evolutionPaywalled({ velado: ONBOARDING_VELADO, accountTier: gameState.accountTier, evolutionStage })) { setUnlockReason('evolve-free'); return; }
     const { stage: next } = evolutionTarget({
       points: { power: powerPoints, harmony: harmonyPoints, benevolence: benevolencePoints },
       reading: carePatternReading,
@@ -3601,7 +3604,7 @@ export default function App() {
     // qualquer jeito, deixando o jogador diante de um ritual que não commita.
     if (degeneratedByHP) return;
     if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next, spent: gaugeGoalFor(evolutionStage, unlockedEvolutions) });
-  }, [powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP, gameState.demoCharacterId]);
+  }, [powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP, gameState.demoCharacterId, gameState.accountTier, setUnlockReason]);
 
   const handleEvolve = useCallback(() => {
     setGameState(prev => {
@@ -3612,6 +3615,8 @@ export default function App() {
       if (!gaugeFull(prev.evolutionPoints, prev.evolutionStage, prev.unlockedEvolutions, prev.totalXP)) return prev;
       // Os 5 iniciais não evoluem (um sprite só, 14/10/2026 — decisão do dono).
       if (isStarterId(prev.demoCharacterId)) return prev;
+      // D8 (ONBOARDING_VELADO): reconferida sobre o `prev`, é o updater que commita.
+      if (evolutionPaywalled({ velado: ONBOARDING_VELADO, accountTier: prev.accountTier, evolutionStage: prev.evolutionStage })) return prev;
       // #59 (decisão do dono, 22/09/2026): "Queda: exigir uma virada completa
       // antes de re-evoluir (acaba a cura grátis por um clique)". A regra mora
       // em `utils/dailyReset.ts` — aqui só se delega, porque ela tem DOIS
@@ -7102,6 +7107,12 @@ export default function App() {
             </div>
           )}
 
+          {labTab === 'evolution' && evolutionPaywalled({ velado: ONBOARDING_VELADO, accountTier: gameState.accountTier, evolutionStage: gameState.evolutionStage }) && (
+            <div style={{ padding: '0 4px 10px' }}>
+              <UnlockNudge language={language} reason="evolve-free" onOpen={() => setUnlockReason('evolve-free')} />
+            </div>
+          )}
+
           {labTab === 'evolution' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><EvolutionPath
               currentStageId={gameState.evolutionStage}
@@ -7938,6 +7949,7 @@ export default function App() {
                 onEvolve={handleEvolve}
                 canEvolve={(() => {
                   if (isStarterId(gameState.demoCharacterId)) return false;
+                  if (evolutionPaywalled({ velado: ONBOARDING_VELADO, accountTier: gameState.accountTier, evolutionStage: gameState.evolutionStage })) return false;
                   if (gameState.evolutionLocked || !gaugeFull(gameState.evolutionPoints, gameState.evolutionStage, gameState.unlockedEvolutions, gameState.totalXP)) return false;
                   // #59 — depois de uma queda por HP, o botão só acende na
                   // virada seguinte. Mesma função que o `handleEvolve` commita.

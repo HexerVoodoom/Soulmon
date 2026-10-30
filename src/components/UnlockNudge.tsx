@@ -36,8 +36,8 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen, trailin
      todos os convites — a assimetria diz "opcional". */
   const nudgeStyle: CSSProperties = {
     ...sm2Button('outline'),
-    width: '100%', maxWidth: 280, minHeight: reason === 'evolution' || reason === 'reveal-demo' ? 56 : 64, justifyContent: 'flex-start', gap: 12,
-    padding: reason === 'evolution' || reason === 'reveal-demo' ? '10px 12px' : '8px 16px', textAlign: 'left',
+    width: '100%', maxWidth: 280, minHeight: reason === 'evolution' || reason === 'evolve-free' || reason === 'reveal-demo' ? 56 : 64, justifyContent: 'flex-start', gap: 12,
+    padding: reason === 'evolution' || reason === 'evolve-free' || reason === 'reveal-demo' ? '10px 12px' : '8px 16px', textAlign: 'left',
     ...(trailingSpace > 0 ? { paddingRight: 12 + trailingSpace } : {}),
   };
   const isCap = variant !== 'reveal' && reason === 'task-limit';
@@ -46,7 +46,7 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen, trailin
      `gold-ink` pelado, card-botão 56, sem chevron (PRINCÍPIOS §8: âmbar =
      convite, nunca cobrança). A recusa `not-paid` do renascimento usa a
      MESMA peça. Os outros motivos seguem o canvas Atividades. */
-  const isEvo = reason === 'evolution';
+  const isEvo = reason === 'evolution' || reason === 'evolve-free';
   /* Canvas Loja D-L7/LOJA-08: o convite passivo da Loja é a MESMA peça âmbar
      (`auto_awesome` FILL `gold-ink`), com o `chevron_right` no fim. */
   /* Canvas Onboarding-oráculo (RevealDemo, 13.1): a MESMA peça âmbar, 280,
@@ -57,7 +57,9 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen, trailin
 
   const head = variant === 'reveal'
     ? (isPt ? 'Falta revelar a sua criatura' : 'Your creature is still unrevealed')
-    : reason === 'task-limit'
+    : reason === 'evolve-free'
+      ? (isPt ? 'Seu Soulmon quer crescer' : 'Your Soulmon wants to grow')
+      : reason === 'task-limit'
       /* Achado 11 do canvas Atividades: "sem limite" foi VETADO pelo guarda —
          o pago também tem teto (`activityCapFor`). O teto CRESCE com a
          evolução; é isso que se promete. */
@@ -77,7 +79,11 @@ export function UnlockNudge({ language, reason, variant = 'buy', onOpen, trailin
     ? (isPt
       ? 'Você já desbloqueou o completo — responda o ritual quando quiser.'
       : 'You already unlocked the full game — answer the ritual whenever you like.')
-    : (isPt
+    : reason === 'evolve-free'
+      ? (isPt
+        ? `Evoluir além do Rookie faz parte do Soulmon completo (${precoLabel}) — seu progresso continua.`
+        : `Evolving past Rookie is part of the full Soulmon (${precoLabel}) — your progress stays.`)
+      : (isPt
       ? `Desbloqueie o Soulmon completo por ${precoLabel} — seu progresso continua.`
       : `Unlock the full Soulmon for ${precoLabel} — your progress stays.`);
 
