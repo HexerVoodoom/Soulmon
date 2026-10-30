@@ -1,6 +1,7 @@
+import { ALL_ELEMENT_IDS } from "./elementDex";
 import { describe, it, expect } from 'vitest';
 import {
-  POTION_COSTS, potionCost, potionKey, canAffordPotion, elementsMatchingBases, affordablePotionElements, craftPotion, givePotion,
+  POTION_COSTS, potionCost, potionKey, canAffordPotion, elementsMatchingBases, affordablePotionElements, craftPotion, givePotion, isPotionUnlocked,
   applyPotionOnEvolve, isPotionKey, potionCostFor, elementComposition,
 } from './elementPotion';
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
@@ -11,7 +12,7 @@ import { petElementOf } from './starterElements';
 
 const vapor = DERIVED_ELEMENT_PAIRS.find(d => d.id === 'vapor')!; // fogo + agua
 const [a, b] = vapor.componentes;
-const base = (e: Record<string, number> = {}): { essences: Record<string, number>; essenceSpent?: Record<string, number>; foodInventory: Record<string, number> } => ({ essences: e, foodInventory: {} });
+const base = (e: Record<string, number> = {}, defeated: string[] = [...ALL_ELEMENT_IDS]): { defeatedElements?: string[]; essences: Record<string, number>; essenceSpent?: Record<string, number>; foodInventory: Record<string, number> } => ({ defeatedElements: defeated, essences: e, foodInventory: {} });
 
 describe('poção de elemento', () => {
   it('custos: base 300; par 300+300+200; trio genérico', () => {
@@ -36,6 +37,13 @@ describe('poção de elemento', () => {
     expect(affordablePotionElements({ agua: 300 }, ['agua'])).toEqual(['agua']);
     expect(affordablePotionElements({ [a]: 300, [b]: 300, vapor: 199 }, [a])).toEqual([a]); // o par vapor falta 1 de essência final
     expect(affordablePotionElements({ [a]: 300, [b]: 300, vapor: 200 }, [a, b])).toEqual(['vapor']);
+  });
+  it('elemento não desbloqueado na Biblioteca não se fabrica (mesmo com saldo)', () => {
+    const s0 = base({ agua: 300 }, []);
+    expect(isPotionUnlocked('agua', s0.defeatedElements)).toBe(false);
+    expect(craftPotion(s0, 'agua')).toBe(s0);
+    const s1 = base({ agua: 300 }, ['agua']);
+    expect(craftPotion(s1, 'agua').foodInventory[potionKey('agua')]).toBe(1);
   });
   it('fabricar consome exatamente, soma gasto, e é idempotente sem saldo', () => {
     const s0 = base({ [a]: 700, [b]: 300, vapor: 250 });

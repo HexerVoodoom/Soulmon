@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { essenceName } from '../utils/essences';
 import { ElementBaseSlots, ElementIcon as Icon, elName, emptySlots } from './ElementBaseSlots';
-import { affordablePotionElements, canAffordPotion, potionCost } from '../utils/elementPotion';
+import { isPotionUnlocked, affordablePotionElements, canAffordPotion, potionCost } from '../utils/elementPotion';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -18,9 +18,11 @@ export interface ElementPotionSheetProps {
   pending?: string;
   onBack: () => void;
   onCraft: (elementId: string) => void;
+  /** Elementos desbloqueados na Biblioteca (`defeatedElements`). Bloqueado = "???" e não se cria. */
+  unlocked?: readonly string[];
 }
 
-export function ElementPotionSheet({ open, language, essences, pending, onBack, onCraft }: ElementPotionSheetProps) {
+export function ElementPotionSheet({ open, language, essences, pending, onBack, onCraft, unlocked }: ElementPotionSheetProps) {
   const isPt = language === 'pt-BR';
   const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
   const [picked, setPicked] = useState<string | null>(null);
@@ -28,7 +30,8 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
   const [done, setDone] = useState<string | null>(null);
 
   const options = useMemo(() => affordablePotionElements(essences, slots), [essences, slots]);
-  const sel = picked && options.includes(picked) ? picked : null;
+  const isOpen = (id: string) => isPotionUnlocked(id, unlocked);
+  const sel = picked && options.includes(picked) && isOpen(picked) ? picked : null;
   const setSlot = (i: number, id: string | null) => {
     setSlots(s => s.map((v, j) => (j === i ? id : v)));
     setPicked(null); setDone(null);
@@ -46,6 +49,8 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
     confirmBtn: isPt ? 'Confirmar' : 'Confirm',
     made: isPt ? 'Poção criada! Está na pasta de itens.' : 'Potion created! It is in your item folder.',
     pending: isPt ? 'Poção na espera para a próxima evolução:' : 'Potion waiting for the next evolution:',
+    locked: isPt ? 'Elemento ainda não desbloqueado na Biblioteca' : 'Element not yet unlocked in the Library',
+    lockedHint: isPt ? 'Desbloqueie na Biblioteca' : 'Unlock in the Library',
     note: isPt ? 'Dar uma poção ao Soulmon (pasta de itens) troca a que já estava esperando.' : 'Giving a potion to your Soulmon (item folder) replaces the one already waiting.',
   };
 
@@ -70,12 +75,17 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
               <p style={sm2Text} data-potion-none>{t.none}</p>
             ) : (
               <ul data-potion-options style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2 }}>
-                {options.map(id => (
+                {options.map(id => isOpen(id) ? (
                   <li key={id}>
                     <button type="button" data-element={id} aria-pressed={sel === id} onClick={() => setPicked(sel === id ? null : id)}
                       style={{ all: 'unset', cursor: 'pointer', minHeight: 44, width: '100%', display: 'flex', alignItems: 'center', gap: 10, ...sm2Text, fontWeight: sel === id ? 700 : 400, color: sel === id ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)' }}>
                       <Icon id={id} size={24} /><span>{elName(id, isPt)}</span>
                     </button>
+                  </li>
+                ) : (
+                  <li key={id} data-element-locked aria-label={t.locked} style={{ minHeight: 44, display: 'flex', alignItems: 'center', gap: 10, ...sm2Text, color: 'var(--sm2-muted)' }}>
+                    <span aria-hidden="true" style={{ width: 24, textAlign: 'center' }}>?</span><span aria-hidden="true">???</span>
+                    <span style={{ ...sm2Hint, marginLeft: 'auto' }}>{t.lockedHint}</span>
                   </li>
                 ))}
               </ul>

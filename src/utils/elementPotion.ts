@@ -85,15 +85,20 @@ export function affordablePotionElements(essences: Record<string, number> | unde
 }
 
 type PotionState = {
+  defeatedElements?: string[];
   essences?: Record<string, number>;
   essenceSpent?: Record<string, number>;
   foodInventory: Record<string, number>;
   evolutionPotion?: string;
 };
 
+/** O elemento já foi desbloqueado na Biblioteca (dex de elementos vencidos)? Sem isso a poção não aparece com nome nem pode ser criada. */
+export const isPotionUnlocked = (elementId: string, defeated: readonly string[] | undefined): boolean =>
+  (defeated ?? []).includes(elementId);
+
 /** Cria UMA poção: reconfere o saldo sobre o `prev` (toque duplo no mesmo lote) e consome exatamente o custo. Sem saldo = o MESMO objeto. */
 export function craftPotion<T extends PotionState>(prev: T, elementId: string): T {
-  if (!canAffordPotion(prev.essences, elementId)) return prev;
+  if (!isPotionUnlocked(elementId, prev.defeatedElements) || !canAffordPotion(prev.essences, elementId)) return prev;
   const gasto = spendEssences(prev, potionCost(elementId));
   if (!gasto) return prev;
   const k = potionKey(elementId);

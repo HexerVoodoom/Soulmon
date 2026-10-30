@@ -191,6 +191,8 @@ export interface AreaViewProps {
   points: number;
   emblems: number;
   credits: number;
+  /** Dex de elementos (Biblioteca): o Cambista mostra "???" no que não foi desbloqueado. */
+  unlockedElements?: readonly string[];
   onExchangeCredits: (credits: number) => Promise<boolean>;
   accountTier?: 'demo' | 'paid';
   onUnlock?: () => void;
@@ -416,7 +418,7 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {open?.id === 'cambista' && (
-              <CambistaSheet language={language} credits={props.credits} onExchangeCredits={props.onExchangeCredits} accountTier={props.accountTier} onUnlock={props.onUnlock} />
+              <CambistaSheet language={language} credits={props.credits} onExchangeCredits={props.onExchangeCredits} accountTier={props.accountTier} onUnlock={props.onUnlock} unlockedElements={props.unlockedElements} />
             )}
             {open?.id === 'conquistas' && (
               <ConquistasSheet language={language} missionProgress={ownership.missionProgress} claimed={ownership.missionClaimed} shop={{ ownedBackgrounds: ownership.ownedBackgrounds, balance: props.points, onBuy: actions.onBuy }} />

@@ -1895,6 +1895,10 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 ### `src/components/games/ElementAdvantageBadge.tsx`
 **Dono de:** o selo "Super eficiente!/Pouco eficiente" (EN "Super effective!/Not very effective") a partir de `elementAdvantage` (+1/-1; neutro não renderiza). Vai no slot `badge` do `BattleStage` (Arena, Duelo) e sob o ícone do jogador no Combina 3; textos em `pveTags.ts` (`ELEMENT_ADVANTAGE_TAG`). **Chamado por:** `ArenaGame.tsx`, `DuelScreen.tsx`, `Match3Game.tsx`. **Régua:** `ElementAdvantageBadge.test.tsx`.
 
+### `src/components/ElementBaseSlots.tsx`
+
+Dono único da UI do filtro de elementos base: 3 campos de dropdown lado a lado (borda arredondada, "Select"; 1ª opção do menu é "Clear"). Usado pela Poção de Elemento e pelas Essências do Cambista; a regra (E entre as bases) é `elementsMatchingBases` em `utils/elementPotion.ts`. Exporta também `elName`, `ElementIcon`, `emptySlots`.
+
 ### `src/components/ElementPotionSheet.tsx`
 
-Folha da Poção de Elemento (Laboratório › Centro de Evolução): 3 espaços de base, lista filtrada (E) só do que o jogador paga, confirmação com custo e `onCraft`. Regras em `utils/elementPotion.ts`.
+Folha da Poção de Elemento (Laboratório › Centro de Evolução): 3 espaços de base, lista filtrada (E) só do que o jogador paga (elemento ainda não desbloqueado na Biblioteca aparece como "???" e não se cria — `isPotionUnlocked`), confirmação com custo e `onCraft`. Regras em `utils/elementPotion.ts`.

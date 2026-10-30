@@ -18,7 +18,7 @@ import { PixelIcon } from '../ui/PixelIcon';
 import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { CREDIT_COLOR, type CurrencyId } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
-import { elementsMatchingBases } from '../../utils/elementPotion';
+import { elementsMatchingBases, isPotionUnlocked } from '../../utils/elementPotion';
 import { essenceName } from '../../utils/essences';
 import { ElementBaseSlots, ElementIcon, emptySlots } from '../ElementBaseSlots';
 import { GuildOwnedShelf } from './GuildOwnedShelf';
@@ -394,9 +394,11 @@ export interface CambistaSheetProps {
   /** WP5.1 — o canal PASSIVO. `demo` vê o convite permanente na aba Bits (a do dinheiro real). */
   accountTier?: 'demo' | 'paid';
   onUnlock?: () => void;
+  /** Elementos desbloqueados na Biblioteca (`defeatedElements`): o resto aparece como "???". */
+  unlockedElements?: readonly string[];
 }
 
-export function CambistaSheet({ language, credits, onExchangeCredits, accountTier, onUnlock }: CambistaSheetProps) {
+export function CambistaSheet({ language, credits, onExchangeCredits, accountTier, onUnlock, unlockedElements }: CambistaSheetProps) {
   const isPt = language === 'pt-BR';
   const [tab, setTab] = useState<CambistaTab>('bits');
   const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
@@ -452,13 +454,13 @@ export function CambistaSheet({ language, credits, onExchangeCredits, accountTie
           </p>
           <ElementBaseSlots slots={slots} isPt={isPt} onChange={(i, id) => setSlots(v => v.map((x, j) => (j === i ? id : x)))} />
           <ul data-cambista-essence-list style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2, maxHeight: 320, overflowY: 'auto' }}>
-            {elementsMatchingBases(slots).map(id => (
-              <li key={id} data-essence-soon={id} style={{ opacity: 0.7, minHeight: 40, display: 'flex', alignItems: 'center', gap: 10, ...sm2Text }}>
-                <ElementIcon id={id} size={24} />
-                <span style={{ flex: 1, minWidth: 0 }}>{essenceName(id, isPt)}</span>
+            {elementsMatchingBases(slots).map(id => { const known = isPotionUnlocked(id, unlockedElements); return (
+              <li key={id} data-essence-soon={id} data-essence-locked={known ? undefined : ''} style={{ opacity: 0.7, minHeight: 40, display: 'flex', alignItems: 'center', gap: 10, ...sm2Text }}>
+                {known ? <ElementIcon id={id} size={24} /> : <span aria-hidden="true" style={{ width: 24, textAlign: 'center' }}>?</span>}
+                <span style={{ flex: 1, minWidth: 0 }} aria-label={known ? undefined : (isPt ? 'Elemento ainda não desbloqueado na Biblioteca' : 'Element not yet unlocked in the Library')}>{known ? essenceName(id, isPt) : '???'}</span>
                 <span style={{ ...sm2Hint, flexShrink: 0 }}>{isPt ? 'em breve' : 'soon'}</span>
               </li>
-            ))}
+            ); })}
           </ul>
         </section>
       )}

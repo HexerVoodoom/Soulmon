@@ -619,8 +619,8 @@ const MissionsSheet = lazy(() => import('./components/nav/MissionsSheet').then(m
 const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m => ({ default: m.LevelUpOverlay })));
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
-import { ElementPotionSheet } from './components/ElementPotionSheet';
-import { applyPotionOnEvolve, craftPotion, canAffordPotion } from './utils/elementPotion';
+const ElementPotionSheet = lazy(() => import('./components/ElementPotionSheet').then(m => ({ default: m.ElementPotionSheet })));
+import { applyPotionOnEvolve, craftPotion, canAffordPotion, isPotionUnlocked } from './utils/elementPotion';
 import { EssencesSection } from './components/EssencesSection';
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
 const AdventureDiary = lazy(() => import('./components/AdventureDiary').then(m => ({ default: m.AdventureDiary })));
@@ -7067,18 +7067,19 @@ export default function App() {
               </button>
             </div>
           )}
-          <ElementPotionSheet
+          {labTab === 'evolution' && potionOpen && <Suspense fallback={null}><ElementPotionSheet
             open={labTab === 'evolution' && potionOpen}
             language={language}
             essences={gameState.essences}
             pending={gameState.evolutionPotion}
+            unlocked={gameState.defeatedElements}
             onBack={() => setPotionOpen(false)}
             onCraft={(id) => {
               // A regra (e a reconferência do saldo sobre o `prev`) mora em `utils/elementPotion.ts`; o toast é efeito, fora do updater.
-              if (!canAffordPotion(gameState.essences, id)) return;
+              if (!isPotionUnlocked(id, gameState.defeatedElements) || !canAffordPotion(gameState.essences, id)) return;
               setGameState(prev => craftPotion(prev, id));
             }}
-          />
+          /></Suspense>}
           {labTab === 'evolution' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><EvolutionPath
               currentStageId={gameState.evolutionStage}
@@ -7672,6 +7673,7 @@ export default function App() {
               {/* `key` da view: trocar de área remonta e fecha a folha aberta. */}
               <AreaView
                 key={currentView}
+                unlockedElements={gameState.defeatedElements}
                 area={area}
                 wakeGuard={guardWake}
                 naMasmorra={naMasmorra}
