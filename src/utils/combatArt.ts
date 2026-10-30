@@ -7,7 +7,6 @@
  *    WebP passava do teto de 400 KB do `orcamentoDeBytes`;
  *  · `escudo-<base>.png` — 17 escudos levantados (128², alfa binário), a defesa
  *    automática do DEFENSOR no lugar do flash `defended` do FX;
- *  · `sombra-clara.png` / `sombra-escura.png` — a plataforma sob os pés (256×96).
  *
  * Só os 17 elementos BASE têm arte; um derivado usa o seu 1º componente
  * (`DERIVED_ELEMENT_PAIRS`), `planta`/`industrial` NÃO têm
@@ -18,8 +17,7 @@
  * isto de nada que esteja no chunk de entrada (`entradaEnxuta.contract.test.ts`).
  */
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
-import sombraClara from '../assets/soulmon/combate/sombra-clara.png';
-import sombraEscura from '../assets/soulmon/combate/sombra-escura.png';
+import { ELEMENT_VISUAL } from './elementVisual.data';
 
 const bgs = import.meta.glob('../assets/soulmon/combate/bg-*.png', { eager: true, import: 'default' }) as Record<string, string>;
 const escudos = import.meta.glob('../assets/soulmon/combate/escudo-*.png', { eager: true, import: 'default' }) as Record<string, string>;
@@ -84,12 +82,27 @@ export function combatShield(id: string | null | undefined): string | undefined 
   return base ? ESCUDO[base] : undefined;
 }
 
+/** Assinatura CIELAB do ícone do elemento → hex sRGB, com luminosidade mínima (brilho legível sobre cenário escuro). */
+function labToHex(L: number, a: number, b: number): string {
+  const fy = (L + 16) / 116, fx = fy + a / 500, fz = fy - b / 200;
+  const inv = (t: number) => (t ** 3 > 0.008856 ? t ** 3 : (t - 16 / 116) / 7.787);
+  const X = 0.95047 * inv(fx), Y = inv(fy), Z = 1.08883 * inv(fz);
+  const lin = [3.2406 * X - 1.5372 * Y - 0.4986 * Z, -0.9689 * X + 1.8758 * Y + 0.0415 * Z, 0.0557 * X - 0.204 * Y + 1.057 * Z];
+  return '#' + lin.map(c => {
+    const g = c <= 0.0031308 ? 12.92 * c : 1.055 * Math.max(c, 0) ** (1 / 2.4) - 0.055;
+    return Math.round(Math.min(1, Math.max(0, g)) * 255).toString(16).padStart(2, '0');
+  }).join('');
+}
+
 /**
- * A plataforma sob os pés: a CLARA (pedra com anel de runa) sobre cenário escuro —
- * quase todos —, a ESCURA sobre cenário claro (hoje só o de `luz`).
+ * Cor do brilho externo do especial: a do ELEMENTO de quem conjura (assinatura do ícone, `elementVisual.data.ts`).
+ * Misto sem assinatura própria usa a do primeiro componente; sem nenhuma, `undefined` (o CSS cai no dourado).
  */
-export function combatShadow(sceneElement: string | null | undefined): string {
-  return combatBaseElement(sceneElement) === 'luz' ? sombraEscura : sombraClara;
+export function combatGlowColor(id: string | null | undefined): string | undefined {
+  if (!id) return undefined;
+  const v = ELEMENT_VISUAL[id] ?? ELEMENT_VISUAL[DERIVED_TO_BASE[id] ?? ''];
+  if (!v) return undefined;
+  return labToHex(Math.max(v[0], 58), v[1] * 1.15, v[2] * 1.15);
 }
 
 /** Guard de instalação: 17 cenários e 17 escudos dos elementos base + os do `neutro` (18). */

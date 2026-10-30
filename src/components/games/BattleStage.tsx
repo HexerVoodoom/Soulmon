@@ -45,7 +45,7 @@ import {
 import { useCombatV3Art } from './useCombatV3Art';
 import { type RingGrade, type RingSpec } from '../../utils/energia';
 import { SpecialRing, DodgeButtons } from './PveMechanics';
-import { combatSceneBg, combatDomainSceneBg, combatShield, combatShadow } from '../../utils/combatArt';
+import { combatSceneBg, combatDomainSceneBg, combatShield, combatGlowColor } from '../../utils/combatArt';
 import { playAttack, playAttackRanged, playCharge, playDefend, playSpecial } from '../../utils/sounds';
 import { prepararSfxCombate } from '../../utils/sfxCombateCarga';
 
@@ -161,7 +161,7 @@ const BOSS_W_TARGET = 0.68;
 export function stageLayout(w: number, h: number, nFoes: number, boss = false): StageLayout {
   const meSize = Math.round(Math.max(110, Math.min(300, w * 0.64, h * 0.38)));
   const foeSize = Math.round(meSize * (nFoes <= 1 ? 0.66 : 0.5));
-  const platHalf = (s: Spot) => Math.round(s.size * 0.1);
+  const platHalf = (s: Spot) => Math.round(s.size * 0.05);
   // 30/10/2026 (dono): o seu Soulmon desce até quase o pé da tela — os pés passam do fim do campo e pousam sobre a faixa do HUD de baixo.
   const me: Spot = {
     x: Math.round(Math.max(w * 0.32, meSize / 2 + 4)),
@@ -329,20 +329,17 @@ function FighterBars({ fighter, spot, tone, numeric, barsH, fieldW, isPt }: {
   );
 }
 
-/** A sombra/plataforma sob os pés — a arte `combate/sombra-*.png` (256×96), esticada na elipse. */
-function Platform({ spot, half, art }: { spot: Spot; half: number; art: string }) {
-  const w = Math.round(spot.size * 1.05);
+/** A sombra sob os pés: elipse preta ~40% de opacidade com borda suave (gradiente radial), metade do tamanho antigo. */
+function Platform({ spot, half }: { spot: Spot; half: number }) {
+  const w = Math.round(spot.size * 0.53);
   return (
-    <img
-      src={art}
-      alt=""
+    <div
       aria-hidden="true"
       data-stage-platform
-      width={w}
-      height={half * 2}
       style={{
-        position: 'absolute', left: spot.x - w / 2, top: spot.y - half, width: w, height: half * 2, maxWidth: 'none',
-        zIndex: 1, pointerEvents: 'none', imageRendering: 'pixelated',
+        position: 'absolute', left: spot.x - w / 2, top: spot.y - half, width: w, height: half * 2,
+        zIndex: 1, pointerEvents: 'none', borderRadius: '50%',
+        background: 'radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.4) 45%, rgba(0,0,0,0) 100%)',
       }}
     />
   );
@@ -388,6 +385,7 @@ function Fighter({ f, spot, flip, role, zIndex, lunge, hitKey, hitDelay, charged
               display: 'block', width: spot.size, height: spot.size, maxWidth: 'none',
               objectFit: 'contain', imageRendering: 'pixelated',
               ['--flip' as string]: espelha ? '-1' : '1',
+              ...(charged ? { ['--bs-glow' as string]: combatGlowColor(f.element) } : null),
               ['--bs-bounce' as string]: `${Math.max(5, Math.round(spot.size * 0.045))}px`,
               ['--sm-idle-dur' as string]: (role ?? (flip ? 'foe' : 'me')) === 'foe' ? '1.25s' : '1.05s',
               // O palco fixa os lados; a arte de perfil ESQUERDO inverte o espelho (`spriteUrlFacesLeft`), senão luta de costas.
@@ -893,7 +891,6 @@ export function BattleStage({
   const meBody = bodyCenter(layout.me);
   const domainScene = combatDomainSceneBg(sceneDomain, sceneVariant);
   const elementScene = domainScene ?? combatSceneBg(sceneElement);
-  const platformArt = combatShadow(domainScene ? (sceneDomain === 'luz' ? 'luz' : null) : elementScene ? sceneElement : null);
 
   return (
     <div
@@ -947,9 +944,9 @@ export function BattleStage({
         {foes.map((f, i) => {
           const s = layout.foes[i];
           if (!s) return null;
-          return <Platform key={`pl${f.key}`} spot={s} half={layout.platHalf(s)} art={platformArt} />;
+          return <Platform key={`pl${f.key}`} spot={s} half={layout.platHalf(s)}  />;
         })}
-        <Platform spot={layout.me} half={layout.platHalf(layout.me)} art={platformArt} />
+        <Platform spot={layout.me} half={layout.platHalf(layout.me)}  />
 
         {foes.map((f, i) => {
           const s = layout.foes[i];
