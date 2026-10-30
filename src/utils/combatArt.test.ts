@@ -53,6 +53,7 @@ describe('combatArt — cenário próprio do elemento fundido (fixture, sem inst
   it('sem arquivo (ou sem id) devolve undefined, e combatSceneBg segue no cenário do elemento base', () => {
     expect(sceneBgDoElemento('gelo', urls, {})).toBeUndefined();
     expect(sceneBgDoElemento(null, urls, {})).toBeUndefined();
-    expect(combatSceneBg('vapor')).toMatch(/bg-fogo\.png/);
+    // `heresia` (luz + vileza) ainda não tem cenário próprio instalado: cai no do elemento base (luz).
+    expect(combatSceneBg('heresia')).toMatch(/bg-luz\.png/);
   });
 });

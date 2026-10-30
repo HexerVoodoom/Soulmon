@@ -23,6 +23,10 @@ def media_hex(im: Image.Image) -> str:
     r, g, b = (int(round(v)) for v in ImageStat.Stat(im).mean)
     return f'#{r:02x}{g:02x}{b:02x}'
 
+BASES = {'fogo', 'agua', 'terra', 'ar', 'eletricidade', 'arcano', 'sombra', 'luz', 'vileza', 'morte', 'vida', 'vigor',
+         'marcial', 'tempo', 'som', 'gravidade', 'espaco', 'fada', 'industrial', 'planta'}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument('--origem', default='E:/Soulmon-assets/gerados-2026-10-29/combate-elementos')
@@ -33,6 +37,9 @@ def main() -> int:
     saida.mkdir(parents=True, exist_ok=True)
     medias, mudou = {}, 0
     for src in sorted(origem.glob('*.png')):
+        # Os 20 elementos BASE têm cenário próprio em `combate/bg-<id>.png`; aqui só entram os fundidos.
+        if src.stem in BASES:
+            continue
         im = converter(src)
         medias[src.stem] = media_hex(im)
         buf = io.BytesIO(); im.save(buf, 'PNG', optimize=True)
