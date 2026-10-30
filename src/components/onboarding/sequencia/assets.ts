@@ -20,10 +20,10 @@ export interface AssetDef {
 }
 
 export const ASSETS: Record<AssetKey, AssetDef> = {
-  'bg-malha-escura': { arquivo: 'bg-malha-escura.png', cenas: [2, 3], tipo: 'imagem' },
-  'bg-malha-clara': { arquivo: 'bg-malha-clara.png', cenas: [2], tipo: 'imagem' },
-  'bg-bifurcacao': { arquivo: 'bg-bifurcacao.png', cenas: [5], tipo: 'imagem' },
-  'bg-core-cidade': { arquivo: 'bg-core-cidade.png', cenas: [9], tipo: 'imagem' },
+  'bg-malha-escura': { arquivo: 'bg-malha-escura.jpg', cenas: [2, 3], tipo: 'imagem' },
+  'bg-malha-clara': { arquivo: 'bg-malha-clara.jpg', cenas: [2], tipo: 'imagem' },
+  'bg-bifurcacao': { arquivo: 'bg-bifurcacao.jpg', cenas: [5], tipo: 'imagem' },
+  'bg-core-cidade': { arquivo: 'bg-core-cidade.jpg', cenas: [9], tipo: 'imagem' },
   'velado-anciao': { arquivo: 'velado-anciao.png', cenas: [0, 2, 5, 9], tipo: 'imagem' },
   'velado-anciao-mao': { arquivo: 'velado-anciao-mao.png', cenas: [2], tipo: 'imagem' },
   'velado-anciao-preocupado': { arquivo: 'velado-anciao-preocupado.png', cenas: [3, 6, 7], tipo: 'imagem' },
@@ -33,7 +33,7 @@ export const ASSETS: Record<AssetKey, AssetDef> = {
   'video-resgate': { arquivo: 'video-resgate.mp4', cenas: [8], tipo: 'video' },
 };
 
-const ARQUIVOS = import.meta.glob('../../../assets/soulmon/onboarding/*.{png,mp4}', {
+const ARQUIVOS = import.meta.glob('../../../assets/soulmon/onboarding/*.{png,jpg,mp4}', {
   eager: true,
   import: 'default',
 }) as Record<string, string>;
