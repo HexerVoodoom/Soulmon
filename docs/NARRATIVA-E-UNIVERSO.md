@@ -1102,3 +1102,134 @@ todo texto derivado desta bíblia.
 **O teste final, que resume todos:** *se a pessoa soubesse exatamente como o
 app decide isto, ainda acharia a frase gentil — ou perceberia que ela foi
 escrita para fazê-la voltar?*
+
+---
+
+## 18. Core, os Soulmon autônomos e os Desfeitos — 30/10/2026
+
+> Direção narrativa aprovada; mecanismos de origem, autonomia e ruptura ainda
+> exigem decisões. Esta seção não revoga as leis da §5.
+
+### 18.1 Três condições de existência
+
+O universo contém três condições sociais/ecológicas de Soulmon:
+
+- **Contrapartes vinculadas:** Soulmon em desenvolvimento, ligados a um Velado.
+  Todo Velado tem sua própria Contraparte, em estágio variável.
+- **Desgarrados:** Soulmon que alcançaram autonomia suficiente para viver como
+  indivíduos na Malha. Alguns romperam o vínculo humano; outros ainda mantêm
+  contato com sua pessoa de origem, mas já possuem vontade, iniciativa e vida
+  próprias. Desgarrado não significa abandonado.
+- **Selvagens:** Soulmon nativos da Malha, sem vínculo humano conhecido. Podem
+  surgir de padrões de energia que se agregam, assentamentos espontâneos ou
+  fenômenos ambientais. A origem exata permanece aberta.
+
+Essas categorias não são espécies nem escalas morais. Não confundir os selvagens
+com as nove linhas antigas da fauna (§6.7); a relação entre ambos ainda precisa
+ser definida.
+
+### 18.2 A cidade Core
+
+**Core** é uma cidade da Malha, independente das Ordens dos Velados e habitada
+predominantemente por Soulmon desgarrados. Eles construíram uma civilização
+própria, com moradia, ofícios, comércio, espaços coletivos, costumes e
+instituições ainda a desenvolver.
+
+Todos os NPCs residentes de Core são Soulmon. São cidadãos com trabalho,
+objetivos, conflitos, relações e histórias próprias, não mascotes a serviço do
+jogador. Velados podem visitar, negociar e circular pela cidade, mas não são sua
+população.
+
+Entre seus habitantes há Soulmon que ainda mantêm contato com seus humanos,
+Soulmon cujas pessoas de origem deixaram de acessar a Malha e Soulmon cuja
+origem humana é desconhecida. A cidade não deve tratar toda autonomia como
+resultado de rejeição: um Soulmon pode tornar-se independente sem romper o
+vínculo.
+
+### 18.3 Autonomia e desenvolvimento
+
+A hipótese de trabalho é que autonomia plena exige desenvolvimento. **Champion**
+é um possível limiar para que um Soulmon sustente vida social independente, mas
+isso ainda não é regra fechada. O critério deve ser compatível com a anatomia
+das formas descrita na §5.8. Autonomia não equivale a força, superioridade ou
+independência emocional.
+
+O vínculo pode estar ativo, distante ou rompido. Interrupção do uso pelo humano,
+afastamento, dificuldade de conexão ou decisão consciente são causas possíveis;
+nenhuma deve ser automaticamente interpretada como culpa ou abandono.
+
+### 18.4 Soulmon selvagens
+
+A hipótese inicial é que Soulmon selvagens sejam padrões que se agregaram a
+partir de energia assentada, repetições ambientais ou encontros de camadas.
+Ainda é necessário definir o que os diferencia das nove linhas antigas, se podem
+desenvolver linguagem e cultura, se formam comunidades próprias e como são
+reconhecidos sem marcas estigmatizantes. Não fixar uma origem única antes de
+desenvolver a ecologia.
+
+### 18.5 Estágio da Contraparte e hierarquia dos Velados
+
+Todo Velado tem uma Contraparte em desenvolvimento. Seu estágio participa da
+hierarquia das Ordens como sinal de percurso e responsabilidade, nunca como
+medida do valor humano.
+
+| Posição | Estágio da Contraparte |
+|---|---|
+| Integrantes dos trios de campo | Rookie no mínimo; Champion na maioria |
+| Maioria da população civil | Baby ou Rookie |
+| Vice-líderes (há vários por Ordem) | Mega |
+| Líder máximo de cada Ordem | Ultra |
+
+O estágio não nomeia alguém líder por si só: experiência, confiança e
+responsabilidade também contam. A regra de Mega e Ultra descreve a hierarquia
+das Ordens, não necessariamente todos os Soulmon autônomos de Core.
+
+### 18.6 Os Desfeitos
+
+Os **Desfeitos** são uma facção de Velados com relações profundamente
+distorcidas com suas próprias Contrapartes. Muitos rejeitaram o vínculo ou nunca
+conseguiram estabelecê-lo. Entre os mais poderosos, alguns destruíram parte ou
+a totalidade de seus Soulmon para absorver sua energia e ampliar o próprio
+poder.
+
+O processo cobra um preço: compromete a estabilidade do Velado e sua capacidade
+de permanecer conectado à Malha. A maioria perde essa estabilidade e fica
+incapaz de reconectar. Poucos conseguem manter-se estáveis e ascender na
+hierarquia da facção.
+
+O líder é o caso singular: destruiu completamente sua Contraparte, absorveu-a
+e, ainda assim, permaneceu na Malha com a sanidade preservada. Sua força de
+vontade e determinação são excepcionais; seus métodos continuam questionáveis.
+Sua sobrevivência é uma exceção, não uma técnica reproduzível nem uma promessa
+de poder sem consequências.
+
+### 18.7 Contradição cosmológica a resolver
+
+A §5.12 estabelece que a manifestação do jogador não pode deixar de existir
+dentro da Malha: com sustentação zero, a forma se recolhe, mas o padrão permanece
+inteiro. A destruição completa da Contraparte descrita para o líder dos
+Desfeitos contradiz essa lei se for literal.
+
+Antes de canonizar o mecanismo, o dono precisa escolher entre:
+1. **Exceção ontológica real:** os Desfeitos descobriram como violar a
+   continuidade da Contraparte. Isso exige revisar §5.11–§5.12 e seus contratos.
+2. **Destruição da forma, não do padrão:** o corpo é consumido, mas o padrão
+   continua incorporado de algum modo ao Velado.
+3. **Ruptura irreversível do vínculo:** a Contraparte não é aniquilada; sua
+   manifestação torna-se inacessível, enquanto o Velado absorve uma propriedade
+   do vínculo. É a opção mais compatível com as leis atuais, mas altera o sentido
+   literal de “destruir completamente”.
+
+Não escolher por conveniência. O caso do líder só será singular se mecanismo,
+custo e consequência forem coerentes com a ontologia do universo.
+
+### 18.8 Diretrizes e questões abertas
+
+- Core é uma civilização de Soulmon, não uma aldeia de mascotes.
+- Desgarrado não significa rejeitado; selvagem não significa hostil.
+- O estágio da Contraparte informa a estrutura social dos Velados, não o valor
+  da pessoa.
+- Os Desfeitos são uma transgressão extrema, não uma classe ou progressão comum.
+- Ainda falta decidir: limiar de autonomia; governo e organização de Core;
+  origem dos selvagens; relação entre selvagens e linhas antigas; posição dos
+  Desfeitos no mapa político; mecanismo exato da absorção pelo líder.
