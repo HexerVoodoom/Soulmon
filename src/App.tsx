@@ -247,6 +247,9 @@ import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/
 import type { AISettings } from './components/AISettingsModal';
 import { SequenciaOnboarding } from './components/onboarding/sequencia/SequenciaOnboarding';
 import { ONBOARDING_VELADO } from './components/onboarding/sequencia/flag';
+import { SLOTS_REAIS, LigacoesOnboardingContext } from './components/onboarding/sequencia/slotsReais';
+import { IntroCinematica, deveTocarIntro } from './components/onboarding/intro/IntroCinematica';
+import { initialStageForNewSave } from './utils/bbStage';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
 import type { UnlockReason } from './components/unlockReason';
 
@@ -850,6 +853,11 @@ export default function App() {
   const [celebrarMeta, setCelebrarMeta] = useState(false);
   /* ONBOARDING_VELADO: "Rever a história" das Configurações (desligado por padrão). */
   const [reverHistoria, setReverHistoria] = useState(false);
+  /* ONBOARDING_VELADO: introdução pré-login (1ª abertura) e "Rever a introdução". */
+  const [introCinePendente, setIntroCinePendente] = useState(() => deveTocarIntro(readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE)));
+  const [reverIntro, setReverIntro] = useState(false);
+  /* ONBOARDING_VELADO: a sequência narrativa roda uma vez, depois do nascimento. Quem já tinha onboarding ao abrir é jogador estabelecido: nunca interrompe. */
+  const [sequenciaVista, setSequenciaVista] = useState(() => readFlag(STORAGE_KEYS.ONBOARDING_VELADO_VISTO) || readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE));
   const currentViewRef = useRef(currentView);
   currentViewRef.current = currentView;
   // Id estável de comunidade (Tournament/Biblioteca) — mesmo id do cloud save.
@@ -6501,10 +6509,10 @@ export default function App() {
       activities: newActivities,
       tasks: firstTasks,
       eggType: genericLine,
-      evolutionStage: 'rookie',
-      unlockedEvolutions: ['rookie'],
-      healthPoints: getMaxHPForStage('rookie'),
-      maxHealthPoints: getMaxHPForStage('rookie'),
+      evolutionStage: initialStageForNewSave(),
+      unlockedEvolutions: [initialStageForNewSave()],
+      healthPoints: getMaxHPForStage(initialStageForNewSave()),
+      maxHealthPoints: getMaxHPForStage(initialStageForNewSave()),
       maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
       soulmonStages: data.oracleResult.creature.stages,
       fichaJornada: undefined,
@@ -6551,6 +6559,10 @@ export default function App() {
   const handleCompleteTutorial = (item: { name: string; category: ActivityCategory; emoji: string; kind: 'task' | 'habit' }) => {
     writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
     setHasCompletedTutorial(true);
+    criarItemInicial(item);
+  };
+  /* Criação pelo caminho normal de criar (sem a marca do tutorial): usada pela sequência do ONBOARDING_VELADO. */
+  const criarItemInicial = (item: { name: string; category: ActivityCategory; emoji: string; kind: 'task' | 'habit' }) => {
     if (item.kind === 'task') {
       const task: Task = {
         id: `tutorial-${Date.now()}`,
@@ -6898,6 +6910,11 @@ export default function App() {
   // sabiam dizer que estavam offline. O mesmo selo, acima dos três `return`.
   const selo = <OfflineSeal language={language} topOffset={8} />;
 
+  // ONBOARDING_VELADO: a cinemática antes do login, só na 1ª abertura (com Pular).
+  if (ONBOARDING_VELADO && !hasCompletedOnboarding && introCinePendente) {
+    return <IntroCinematica language={language} onDone={() => setIntroCinePendente(false)} />;
+  }
+
   // Show onboarding if not completed — Soulmon: quiz da alma no lugar do ovo
   if (!hasCompletedOnboarding) {
     return (
@@ -6905,6 +6922,35 @@ export default function App() {
         {selo}
         <Suspense fallback={<ScreenSkeleton language={language} />}><SoulmonOnboarding onComplete={handleCompleteOnboarding} onLanguageChange={setLanguage} onStartDemo={handleStartDemo} /></Suspense>
       </>
+    );
+  }
+
+  // ONBOARDING_VELADO: a sequência narrativa no lugar do tutorial, depois do ritual e do nascimento.
+  if (ONBOARDING_VELADO && !sequenciaVista && !gameState.demoCharacterId) {
+    const terminarSequencia = () => {
+      writeFlag(STORAGE_KEYS.ONBOARDING_VELADO_VISTO, true, { silent: true });
+      writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
+      setHasCompletedTutorial(true);
+      setSequenciaVista(true);
+    };
+    return (
+      <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+        {selo}
+        <LigacoesOnboardingContext.Provider value={{
+          tasks: gameState.tasks,
+          maxActivities: activityCap,
+          onCreateTask: criarItemInicial,
+          onCompleteTask: handleToggleTask,
+          foodInventory: gameState.foodInventory,
+          onFeed: handleFeed,
+          spriteUrl: displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? (petChocando ? PLACEHOLDER_ART.forming : getSpriteForStage(gameState.evolutionStage, petLine)),
+          petName: soulmonDisplayName(gameState.soulmonMeta) || undefined,
+          evolutionStage: gameState.evolutionStage,
+          demoCharacterId: gameState.demoCharacterId,
+        }}>
+          <SequenciaOnboarding language={language} slots={SLOTS_REAIS} onDone={terminarSequencia} />
+        </LigacoesOnboardingContext.Provider>
+      </Suspense>
     );
   }
 
@@ -8437,6 +8483,7 @@ export default function App() {
           )}
 
           {ONBOARDING_VELADO && reverHistoria && <SequenciaOnboarding forcar language={language} onDone={() => setReverHistoria(false)} />}
+          {ONBOARDING_VELADO && reverIntro && <IntroCinematica language={language} onDone={() => setReverIntro(false)} />}
           {pane === 'settings' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><SettingsPage
               soundMuted={soundMuted}
@@ -8471,6 +8518,7 @@ export default function App() {
               onOpenOracle={() => goTo('page:oracle')}
               onResetOnboarding={handleResetOnboarding}
               onReplayStory={ONBOARDING_VELADO ? () => setReverHistoria(true) : undefined}
+              onReplayIntro={ONBOARDING_VELADO ? () => setReverIntro(true) : undefined}
               useAI={useAI}
               onToggleAI={() => setUseAI(!useAI)}
               language={language}

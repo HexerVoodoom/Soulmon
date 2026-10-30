@@ -108,6 +108,8 @@ interface SettingsPageProps {
   onResetOnboarding?: () => void;
   /** ONBOARDING_VELADO: reabre a sequência narrativa (D12). Ausente = linha não aparece. */
   onReplayStory?: () => void;
+  /** ONBOARDING_VELADO: reabre a cinemática de introdução. */
+  onReplayIntro?: () => void;
 }
 
 /**
@@ -279,6 +281,7 @@ export function SettingsPage({
   onOpenOracle,
   onResetOnboarding,
   onReplayStory,
+  onReplayIntro,
 }: SettingsPageProps) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [musica, setMusica] = useState(() => musicaPreferida());
@@ -607,6 +610,7 @@ export function SettingsPage({
         {onOpenStudyCards && <ActionRow label={isPt ? 'Meus cartões de estudo' : 'My study cards'} onClick={onOpenStudyCards} />}
         {onOpenCredits && <ActionRow label={isPt ? 'Créditos' : 'Credits'} onClick={onOpenCredits} />}
         {onReplayStory && <ActionRow label={isPt ? 'Rever a história' : 'Replay the story'} onClick={onReplayStory} />}
+        {onReplayIntro && <ActionRow label={isPt ? 'Rever a introdução' : 'Replay the intro'} onClick={onReplayIntro} />}
         {MENU_SHOWS_RITUAL_TOOLS && onOpenOracle && <ActionRow label={isPt ? 'Oráculo' : 'Oracle'} onClick={onOpenOracle} />}
         {MENU_SHOWS_RITUAL_TOOLS && onResetOnboarding && <ActionRow label={isPt ? 'Refazer o ritual' : 'Redo the ritual'} onClick={onResetOnboarding} />}
         {/* A4/A5 (QA rodada 2): os Termos não tinham link dentro do app, e a
