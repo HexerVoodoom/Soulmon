@@ -25,6 +25,8 @@ import {
 } from './specials';
 
 const MAX_EVENTS = 400_000;
+/** §195: folga mínima (fração do intervalo) entre o 1º golpe do jogador e o do inimigo que sorteou abrir antes dele. */
+export const FAIR_START_GAP = 0.1;
 
 export interface GroupOptions {
   readonly seed: number;
@@ -140,7 +142,10 @@ export function* groupFightSteps(
   const ph = mulberry32(seed ^ PHASE_SALT);
   const phases = [ph(), ph()];
   for (let i = 1; i < foes.length; i++) phases.push(ph());
-  if (opts.fairStart) for (let i = 1; i < phases.length; i++) phases[i] = Math.max(phases[i], phases[0]);
+  // §195 + correção de 30/10 (v223): `max(fase, a do jogador)` deixava o inimigo que sorteou ANTES no MESMO instante do jogador — o golpe
+  // dos dois saía junto ("parece simultâneo"). Agora quem viria antes entra ESCALONADO depois do jogador: p0 + G·(1 + p) (folga ≥ G do
+  // intervalo; dois desses não colidem porque mantêm a ordem do sorteio).
+  if (opts.fairStart) for (let i = 1; i < phases.length; i++) if (phases[i] <= phases[0]) phases[i] = phases[0] + FAIR_START_GAP * (1 + phases[i]);
 
   const mk = (s: FightSide, who: number, stream: number, hp0: number, en0: number): G => {
     const c = { ...s.combatant, hp: s.combatant.hp * hpS };

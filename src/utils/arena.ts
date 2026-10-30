@@ -252,8 +252,10 @@ export interface ArenaEnemy {
 
 /** Os rookies de elemento combinado (o pool "combinado" da Arena; só existem na forma rookie). */
 const COMBO_ROOKIES = ENEMY_ROSTER.filter(e => e.kind === 'combinado' && e.stage === 'rookie');
-/** §199: os elementos FUNDIDOS que têm criatura (rookie combinado) — o pool das runs combinadas da Arena. */
-export const ARENA_COMBO_ELEMENTS: readonly string[] = [...new Set(COMBO_ROOKIES.map(e => e.element))].sort();
+/** §199 (emenda do dono, 30/10/2026): chance de UM inimigo de uma run de elemento base ser um FUNDIDO que contém esse elemento. */
+export const ARENA_FUSED_FOE_CHANCE = 0.12;
+/** Os fundidos (rookie combinado) cuja composição inclui o elemento base `el`. */
+export const arenaFusedOf = (el: string) => COMBO_ROOKIES.filter(e => e.elements.includes(el));
 
 export const ARENA_ROUNDS = 5;
 
@@ -285,16 +287,18 @@ export function buildArenaRound(
   stray = false,
   /** Run COMBINADA (`isComboSeed`, `strayFoes.ts`): todos os slots mostram rookies de elemento combinado. Sem isto, nada muda. */
   combo = false,
-  /** §199 (dono, 30/10/2026): o ELEMENTO da run — todo inimigo é desse elemento (fundido nas runs combinadas). Sem ele, o sorteio antigo. */
+  /** §199 (emenda do dono, 30/10/2026): o elemento BASE da run — todo inimigo é dele; com `ARENA_FUSED_FOE_CHANCE` um inimigo é um fundido
+   *  que CONTÉM esse elemento (o elemento dele = o id fundido do sprite). Sem ele, o sorteio antigo. */
   runElement?: string,
 ): ArenaEnemy[] {
   const comp = ARENA_ROUND_COMP[Math.min(Math.max(roundIdx, 1), ARENA_ROUNDS) - 1];
   const used = new Set<string>(); // sem criatura repetida dentro da rodada
   return comp.map(cls => {
     const shape = CLASS_FLAVOR[cls];
-    if (combo && !stray && COMBO_ROOKIES.length > 0) {
-      const ofEl = runElement ? COMBO_ROOKIES.filter(e => e.element === runElement) : [];
-      const base = ofEl.length > 0 ? ofEl : COMBO_ROOKIES;
+    const fusedOk = runElement ? arenaFusedOf(runElement) : [];
+    const fused = !!runElement && !stray && fusedOk.length > 0 && rng() < ARENA_FUSED_FOE_CHANCE;
+    if (fused || (!runElement && combo && !stray && COMBO_ROOKIES.length > 0)) {
+      const base = fused ? fusedOk : COMBO_ROOKIES;
       const fresh = base.filter(e => !used.has(e.id));
       const pool = fresh.length > 0 ? fresh : base;
       const c = pool[Math.floor(rng() * pool.length)];
@@ -335,15 +339,15 @@ export const ARENA_FOES = {
   boss: { hp: 1.2, power: 0.495, special: true },
 } as const;
 
-/** Per-round growth of the foes. power 0.13 → 0.135 em 30/10/2026 (REGISTRO §195, emenda): devolve a vitória a ~62,5% com a largada justa. */
-export const ARENA_ROUND_GROWTH = { hp: 0.04, power: 0.135 } as const;
+/** Per-round growth of the foes. power 0.13 → 0.142 em 30/10/2026 (REGISTRO §195, emendas): compensa a largada justa (65,8%; ver o REGISTRO). */
+export const ARENA_ROUND_GROWTH = { hp: 0.04, power: 0.142 } as const;
 
 /** HP fraction recovered when a round is cleared (the breather between rounds). */
 export const ROUND_CLEAR_HEAL = 0.3;
 
 /**
  * The foe of class `cls` at round `r` (0..4) for a player of level `L`:
- * `{ ...combatantAt(L, balanced), hp: hp × cls.hp × (1 + 0.04·r), bonus: cls.power × (1 + 0.135·r) − 1 }`.
+ * `{ ...combatantAt(L, balanced), hp: hp × cls.hp × (1 + 0.04·r), bonus: cls.power × (1 + 0.142·r) − 1 }`.
  * The boss casts a `direct` special aimed at ONE target.
  */
 export function arenaFoe(L: number, cls: ArenaEnemyClass, r: number): FightSide {

@@ -29,14 +29,16 @@ describe('§195 largada justa na Arena', () => {
   for (const level of [5, 13, 30]) for (const n of [1, 2, 3]) {
     it(`level ${level}, ${n} inimigo(s): o 1º golpe do jogador nunca vem depois do 1º do grupo (velocidade igual)`, () => {
       const before: number[] = [], after: number[] = [], foe: number[] = [];
-      let late = 0;
+      let late = 0, together = 0;
       for (let s = 1; s <= 200; s++) {
         const a = firstAttacks(level, n, s, false), b = firstAttacks(level, n, s, true);
         before.push(a.pl); after.push(b.pl); foe.push(b.foe);
         if (b.pl > b.foe + 1e-9) late++;
+        if (Math.abs(b.pl - b.foe) < 1e-6 && Math.abs(a.pl - a.foe) >= 1e-6) together++; // empate CRIADO pela largada
       }
       console.log(`[largada] L${level} N${n}: jogador antes=${mean(before).toFixed(2)}s depois=${mean(after).toFixed(2)}s · 1º inimigo=${mean(foe).toFixed(2)}s`);
       expect(late).toBe(0);
+      expect(together, 'v223: o 1º golpe do jogador e o do inimigo no mesmo instante (parecia simultâneo)').toBe(0);
     });
   }
 
@@ -55,7 +57,9 @@ describe('§195 largada justa na Arena', () => {
     };
     const a = run(false), b = run(true);
     console.log(`[largada] vitória ${(a.win * 100).toFixed(1)}% → ${(b.win * 100).toFixed(1)}% · duração ${a.dur.toFixed(1)}s → ${b.dur.toFixed(1)}s`);
-    expect(Math.abs(b.win - a.win)).toBeLessThan(0.06);
+    // §195 emenda: a largada dá ~+10 pp; o botão `ARENA_ROUND_GROWTH.power` devolve a vitória à faixa de antes (~62,5%)
+    expect(b.win).toBeGreaterThan(0.58);
+    expect(b.win).toBeLessThan(0.67);
     expect(Math.abs(b.dur - a.dur) / a.dur).toBeLessThan(0.05);
   });
 });

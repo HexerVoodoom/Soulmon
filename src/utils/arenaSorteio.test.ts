@@ -7,8 +7,8 @@ import {
   sanitizeArenaReroll, ARENA_BASE_ELEMENTS, arenaCards, arenaFoesOfSeed, arenaCardElements, arenaSceneOfSeed, applyArenaReroll,
 } from './arenaSorteio';
 import { ARENA_BG_SCENES } from './dungeonScenes';
-import { ARENA_COMBO_ELEMENTS } from './arena';
-import { isComboSeed, isStraySeed } from './strayFoes';
+import { ARENA_FUSED_FOE_CHANCE } from './arena';
+import { isStraySeed } from './strayFoes';
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 
 describe('sorteio geral (sem tema)', () => {
@@ -108,48 +108,32 @@ describe('cenário da Arena', () => {
   });
 });
 
-describe('pool combinado (REGISTRO §180, emenda 28/10)', () => {
-  it('metade das runs comuns usa rookies de elemento combinado (2 elementos, arte NNN-slug); a outra metade o pool base', () => {
-    let combo = 0, base = 0;
-    for (let s = 1; s <= 2000; s++) {
-      if (isStraySeed(s)) { expect(isComboSeed(s)).toBe(false); continue; }
-      const f = arenaFoesOfSeed(s, 2);
-      if (isComboSeed(s)) {
-        combo++;
-        for (const e of f) { expect(e.artFile).toBeTruthy(); expect(e.elements).toHaveLength(2); expect(e.tier).toBe('rookie'); expect(e.creature).toBeUndefined(); }
-        expect(new Set(f.map(e => e.element)).size).toBe(1); // §199: um elemento (fundido) só na run; com uma criatura por fundido, ela pode repetir na rodada
-      } else { base++; for (const e of f) expect(e.artFile).toBeUndefined(); }
-    }
-    expect(combo / (combo + base)).toBeGreaterThan(0.45);
-    expect(combo / (combo + base)).toBeLessThan(0.55);
-  });
-
-  it('cards: mistura os dois pools, determinístico, distintos, no máximo 1 Desgarrado, elemento do card = o da run (base na comum, FUNDIDO na combinada — §199)', () => {
-    let comCombo = 0, comBase = 0;
+describe('§199 emenda (dono, 30/10/2026): elemento BASE da run, fundido só por chance pequena e sempre contendo a base', () => {
+  it('cards: determinísticos, no máximo 1 Desgarrado, elemento do card sempre BASE', () => {
     for (let i = 0; i < 200; i++) {
       const seeds = arenaCards('2026-10-28', `k${i}`, 0);
       expect(arenaCards('2026-10-28', `k${i}`, 0)).toEqual(seeds);
       expect(seeds.filter(isStraySeed).length).toBeLessThanOrEqual(1);
-      for (const s of seeds) { if (isComboSeed(s)) comCombo++; else comBase++; expect((isComboSeed(s) ? ARENA_COMBO_ELEMENTS : CLASS_ELEMENT_ORDER) as readonly string[]).toContain(arenaCardElements(s)[0]); }
+      for (const s of seeds) expect(ARENA_BASE_ELEMENTS).toContain(arenaCardElements(s)[0]);
     }
-    expect(comCombo).toBeGreaterThan(200); expect(comBase).toBeGreaterThan(200);
   });
-});
-
-describe('§199 (dono, 30/10/2026): o elemento escolhido é o elemento de TODO inimigo da run', () => {
-  it('em 400 runs, as 5 rodadas: todo inimigo tem o elemento do card (o fundido nas combinadas)', () => {
+  it('400 runs × 5 rodadas: inimigo base = elemento do card; fundido CONTÉM o elemento do card; fundidos são raros (5–20%)', () => {
+    let fused = 0, total = 0;
     for (let s = 1; s <= 400; s++) {
       const el = arenaCardElements(s)[0];
       for (let r = 1; r <= 5; r++) for (const f of arenaFoesOfSeed(s, r)) {
-        expect(f.element ?? f.elements[0], `seed ${s} rodada ${r}`).toBe(el);
+        total++;
+        if (f.artFile) { fused++; expect(f.elements, `seed ${s} r${r}`).toContain(el); expect(f.element).toBeTruthy(); }
+        else expect(f.elements[0], `seed ${s} r${r}`).toBe(el);
       }
     }
+    expect(fused / total).toBeGreaterThan(0.05);
+    expect(fused / total).toBeLessThan(0.2);
   });
-  it('elementos FUNDIDOS aparecem (cada um com criatura é alcançável) e os base também', () => {
+  it('nenhum fundido no sorteio do elemento; todos os base alcançáveis', () => {
     const vistos = new Set<string>();
-    for (let s = 1; s <= 6000; s++) vistos.add(arenaCardElements(s)[0]);
-    expect(ARENA_COMBO_ELEMENTS.length).toBeGreaterThan(0);
-    for (const e of ARENA_COMBO_ELEMENTS) expect(vistos.has(e), e).toBe(true);
-    for (const e of ARENA_BASE_ELEMENTS) expect(vistos.has(e), e).toBe(true);
+    for (let s = 1; s <= 3000; s++) vistos.add(arenaCardElements(s)[0]);
+    expect([...vistos].sort()).toEqual([...ARENA_BASE_ELEMENTS]);
+    expect(ARENA_FUSED_FOE_CHANCE).toBeLessThanOrEqual(0.15);
   });
 });
