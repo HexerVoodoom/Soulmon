@@ -106,6 +106,16 @@ export function combatGlowColor(id: string | null | undefined): string | undefin
   return labToHex(Math.max(v[0], 58), v[1] * 1.15, v[2] * 1.15);
 }
 
+/**
+ * Par de cores do especial: [brilho externo, brilho de trás] = 1º e 2º componente do elemento (misto) ou a mesma cor (base).
+ * Cada uma passa por `combatGlowColor`.
+ */
+export function combatGlowPair(id: string | null | undefined): [string | undefined, string | undefined] {
+  const comps = id ? DERIVED_ELEMENT_PAIRS.find(d => d.id === id)?.componentes : undefined;
+  if (!comps) { const c = combatGlowColor(id); return [c, c]; }
+  return [combatGlowColor(comps[0]), combatGlowColor(comps[1])];
+}
+
 /** Guard de instalação: 17 cenários e 17 escudos dos elementos base + os do `neutro` (18). */
 export const COMBAT_BG_COUNT = Object.keys(BG).length;
 export const COMBAT_SHIELD_COUNT = Object.keys(ESCUDO).length;
