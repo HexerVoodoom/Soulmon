@@ -107,6 +107,8 @@ export interface Match3Props extends EarningGameProps {
   onEnemySeen?: (rosterKey: string) => void;
   /** Dex de elementos (27/10/2026): ao VENCER, os elementos dos inimigos identificados (roster) do time. Derrota não libera nada. */
   onElementsDefeated?: (ids: readonly string[], drops?: readonly EssenceDrop[]) => void;
+  /** Onboarding (cena 4): avisa cada troca válida, com a pontuação que ela rendeu (0 = trocou sem formar linha). Só observa. */
+  onMove?: (info: { scored: boolean; score: number }) => void;
 }
 
 function freshSeed(): number { return Math.floor(Math.random() * 2 ** 31); }
@@ -128,7 +130,7 @@ function rosterOf(e: { roster?: string } | undefined): { src: string; name: stri
   return entry && src ? { src, name: entry.name } : undefined;
 }
 
-function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, petElement, playerLevel, onEnemySeen, onElementsDefeated, rankSaveId, challenge, onNewOpponent }: Match3Props & { pvp?: PvpFoe; onNewOpponent?: () => void }) {
+function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, petElement, playerLevel, onEnemySeen, onElementsDefeated, onMove, rankSaveId, challenge, onNewOpponent }: Match3Props & { pvp?: PvpFoe; onNewOpponent?: () => void }) {
   const isPt = language === 'pt-BR';
   const pvpRef = useRef(pvp);
   pvpRef.current = pvp;
@@ -349,10 +351,13 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
     showTurnBanner(name, by);
   }, [wait, showTurnBanner]);
 
+  const onMoveRef = useRef(onMove);
+  onMoveRef.current = onMove;
   const play = useCallback(async (a: Pos, d: Pos) => {
     if (busyRef.current || overRef.current || combatRef.current.outcome !== 'playing') return;
     const res = trySwap(boardRef.current, a, d, rngRef.current);
     if (!res.ok) { setSel(null); return; }
+    onMoveRef.current?.({ scored: res.scored, score: res.score });
     busyRef.current = true;
     setBusy(true);
     setSel(null);
