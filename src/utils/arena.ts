@@ -37,18 +37,8 @@ const PAIR_COMPONENTS = new Map<string, [string, string]>(
 );
 
 /** EN labels for the 20 base elements (PT lives in BASE_ELEMENT_LABELS). */
-export const BASE_ELEMENT_LABELS_EN: Record<string, string> = {
-  fogo: 'Fire', agua: 'Water', terra: 'Earth', ar: 'Air', eletricidade: 'Lightning',
-  arcano: 'Arcane', sombra: 'Shadow', luz: 'Light', vileza: 'Vileness', morte: 'Death',
-  vida: 'Life', vigor: 'Vigor', marcial: 'Martial', tempo: 'Time', som: 'Sound',
-  gravidade: 'Gravity', espaco: 'Space', fada: 'Fairy', industrial: 'Industrial', planta: 'Plant',
-};
-
-export function elementLabel(id: string, isPt: boolean): string {
-  return isPt
-    ? (BASE_ELEMENT_LABELS as Record<string, string>)[id] ?? id
-    : BASE_ELEMENT_LABELS_EN[id] ?? id;
-}
+export { BASE_ELEMENT_LABELS_EN, elementLabel } from './elementLabels';
+import { elementLabel } from './elementLabels';
 
 /**
  * Counter chart over the 20 base elements — a curated RING where each element

@@ -8,7 +8,7 @@
  */
 import { BASE_ELEMENT_IDS, elementIdOfFoe, isDexElement } from './elementDex';
 import { NIGHTMARE_ELEMENT } from './nightmareElement';
-import { elementLabel } from './arena';
+import { elementLabel } from './elementLabels';
 import { elementoNomeDe } from './soulProfile/ficha/elementoNome';
 
 /** Teto por elemento no save (sanidade, não regra de jogo). */
