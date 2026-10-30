@@ -19,7 +19,7 @@ import { PET_BACKGROUNDS, GUILD_SCENES_RETIRED, GUILD_SCENES_RETIRED_IDS } from 
 import { RAID_TROPHY_ID, GROVE_STAGES } from '../../utils/guildRules';
 
 const base = {
-  language: 'pt-BR' as const, points: 999, emblems: 999, credits: 0,
+  language: 'pt-BR' as const, points: 999, emblems: 999,
   ownedBackgrounds: ['bg-room'] as string[], equippedBackground: 'bg-room' as string | null,
   ownedFurniture: [] as string[], equippedDecor: {} as Record<string, string>,
   missionProgress: {} as Record<string, number>,

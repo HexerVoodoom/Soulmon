@@ -145,6 +145,11 @@ const TERMS: Term[] = [
     descPt: 'Toque no seu Soulmon atual na página de Evolução. Travado, seu Soulmon nunca evolui — o caminho segue somando.',
   },
   {
+    icon: '🧪', en: 'Element potion', pt: 'Poção de elemento',
+    descEn: 'In the Laboratory, at the Evolution Center, spend element essences to brew a potion. Give it to your Soulmon from the item folder: at the next evolution it carries that element. A new potion replaces the one waiting.',
+    descPt: 'No Laboratório, no Centro de Evolução, gaste essências de elementos para preparar uma poção. Dê ao Soulmon pela pasta de itens: na próxima evolução ele carrega esse elemento. Uma poção nova substitui a que estava esperando.',
+  },
+  {
     icon: '🌀', en: 'Glitchtama', pt: 'Glitchtama',
     descEn: 'Rare item from the first milestone (every 5 layers) of each automatic Endless Rift descent. Using it adds one day of steps to the evolution path — one a day.',
     descPt: 'Item raro do primeiro marco (a cada 5 camadas) de cada descida automática da Fenda. Usar soma um dia de passos ao caminho da evolução — um por dia.',

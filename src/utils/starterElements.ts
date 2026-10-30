@@ -45,7 +45,8 @@ export function starterElementOf(id: unknown): StarterElement | undefined {
 /** O elemento de COMBATE do pet: o do inicial; senão o dominante do oráculo validado (`elementoDoOraculo`: planta/industrial passam como são; id desconhecido→`undefined`). Um lugar só para as telas de luta e a aura.
  *  O corvinho do administrador é NEUTRO (dono, 20/10/2026): o dominante do oráculo que ficou no save dele não vale. É o ÚNICO caso em que
  *  isto devolve `'neutro'` (nenhum elemento do oráculo nem inicial se chama assim) — `fighterIdentity` lê esse valor como "ficha não decide". */
-export function petElementOf(state: { demoCharacterId?: string; soulmonMeta?: { dominantElement?: string; creature?: string } | null }): string | undefined {
+export function petElementOf(state: { demoCharacterId?: string; potionElement?: string; soulmonMeta?: { dominantElement?: string; creature?: string } | null }): string | undefined {
   if (isCorvo({ soulmonMeta: state.soulmonMeta ?? undefined })) return 'neutro';
-  return starterElementOf(state.demoCharacterId) ?? elementoDoOraculo(state.soulmonMeta?.dominantElement);
+  // Poção de Elemento (30/10/2026): o elemento dado numa evolução vence o do oráculo (os iniciais não evoluem, então não colidem).
+  return elementoDoOraculo(state.potionElement) ?? starterElementOf(state.demoCharacterId) ?? elementoDoOraculo(state.soulmonMeta?.dominantElement);
 }

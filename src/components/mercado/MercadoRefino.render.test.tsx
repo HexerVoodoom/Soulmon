@@ -16,7 +16,7 @@ import { weeklyMissionsFor } from '../../utils/weeklyMissions';
 afterEach(cleanup);
 
 const base = {
-  language: 'en-US' as const, points: 2000, emblems: 50, credits: 0,
+  language: 'en-US' as const, points: 2000, emblems: 50,
   ownedBackgrounds: ['bg-room'] as string[], equippedBackground: 'bg-room' as string | null,
   ownedFurniture: [] as string[], equippedDecor: {}, missionProgress: {} as Record<string, number>,
   onBuy: () => true, onExchangeCredits: async () => true, onEquip: () => {}, onEquipFurniture: () => {},

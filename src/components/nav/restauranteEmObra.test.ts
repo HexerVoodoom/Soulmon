@@ -29,4 +29,15 @@ describe('Restaurante em obra (14/10/2026): só vitrine, sem ação', () => {
     expect(r.line.pt).toMatch(/em obra/i);
     expect(r.line.en).toMatch(/construction/i);
   });
+
+  it('Cambista (30/10/2026): lote do Mercado no canto de baixo à esquerda, fora dos portões, com NPC e fala nos dois idiomas', () => {
+    const l = mercadoLots('pt-BR').find(x => x.id === 'cambista') as { left: string; top: string };
+    expect(l).toBeTruthy();
+    expect(l.left).toBe('26%');
+    expect(MERCADO_LOT_ART.cambista).toBeTruthy();
+    expect(lotNpcArt('mercado', 'cambista')).toBeTruthy();
+    expect(lotNpcVoice('mercado', 'cambista', 'pt-BR').name).toContain('Farthing');
+    expect(lotNpcVoice('mercado', 'cambista', 'en-US').line).toMatch(/Credits/);
+    expect(Object.keys(BUILDING_GATES)).not.toContain('mercado.cambista');
+  });
 });

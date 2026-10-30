@@ -99,7 +99,8 @@ import { newUuid } from '../utils/uuid';
 import { sanitizeAvatarId } from '../utils/avatar';
 import { migrateBestiary } from '../utils/bestiaryMigrate';
 import { sanitizeDefeatedElements } from '../utils/elementDex';
-import { sanitizeEssences, sanitizeEssenceAway, type EssenceAway } from '../utils/essences';
+import { sanitizeEssences, sanitizeEssenceSpent, sanitizeEssenceAway, type EssenceAway } from '../utils/essences';
+import { sanitizeElementId } from '../utils/elementPotion';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
 import type { Answers } from '../utils/soulProfile/personality/types';
 
@@ -321,6 +322,12 @@ export interface GameState {
   defeatedElements?: string[];
   /** 💧 Essências dos elementos (28/10/2026, `utils/essences.ts`, REGISTRO §183): `{ elementId: quantidade }`, só cresce, só coleta (sem uso). Servidor: monotônico por elemento (`_essences.js`). */
   essences?: Record<string, number>;
+  /** 💧 Acumulado GASTO por essência (30/10/2026, Poção de Elemento): só cresce; o servidor só deixa `essences` baixar pelo aumento dele. */
+  essenceSpent?: Record<string, number>;
+  /** 🧪 Elemento da poção dada ao Soulmon, pendente para a PRÓXIMA evolução (`utils/elementPotion.ts`). Outra poção sobrescreve. */
+  evolutionPotion?: string;
+  /** 🧪 Elemento que o Soulmon passou a carregar pela última poção consumida numa evolução (lido por `petElementOf`). */
+  potionElement?: string;
   /** Quanto a descida AUTOMÁTICA da Fenda já rendeu de essência no dia do jogador (teto diário `ESSENCE_AWAY_DAILY_CAP`). Servidor: monotônico no dia (`_dayCounters.js`). */
   essenceAway?: EssenceAway;
   /**
@@ -1246,6 +1253,9 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         bestiary: migrateBestiary(strArr(loadedState.bestiary)), // QA: chaves antigas linha-tier ganham as novas id-estágio
         defeatedElements: sanitizeDefeatedElements(loadedState.defeatedElements), // dex de elementos: ausente/lixo = lista vazia
         essences: sanitizeEssences(loadedState.essences), // essências: ausente/lixo = objeto vazio
+        essenceSpent: sanitizeEssenceSpent(loadedState.essenceSpent), // gasto acumulado: ausente/lixo = objeto vazio
+        evolutionPotion: sanitizeElementId(loadedState.evolutionPotion), // poção pendente: id fora do catálogo = nenhuma
+        potionElement: sanitizeElementId(loadedState.potionElement),
         essenceAway: sanitizeEssenceAway(loadedState.essenceAway),
         offerShownWeek: typeof loadedState.offerShownWeek === 'string' ? loadedState.offerShownWeek : undefined,
         offerDismissed: loadedState.offerDismissed === true,

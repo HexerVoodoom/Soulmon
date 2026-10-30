@@ -10800,7 +10800,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// D:/Soulmon/repo/node_modules/fflate/esm/browser.js
+// ../node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -13488,15 +13488,48 @@ function sanitizeEssences(raw) {
   return out;
 }
 __name(sanitizeEssences, "sanitizeEssences");
-function enforceEssences(incoming, stored) {
-  const inc = sanitizeEssences(incoming);
-  const sto = sanitizeEssences(stored);
+var ESSENCE_SPENT_MAX_PER_ELEMENT = 1e9;
+function sanitizeEssenceSpent(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const out = {};
+  let n = 0;
+  for (const [k, v] of Object.entries(raw)) {
+    if (!/^[a-z_]{2,24}$/.test(k) || typeof v !== "number" || !Number.isFinite(v)) continue;
+    const q = Math.min(ESSENCE_SPENT_MAX_PER_ELEMENT, Math.floor(v));
+    if (q < 1) continue;
+    out[k] = q;
+    if (++n >= ESSENCE_MAX_KEYS) break;
+  }
+  return out;
+}
+__name(sanitizeEssenceSpent, "sanitizeEssenceSpent");
+function enforceEssenceSpent(incoming, stored) {
+  const inc = sanitizeEssenceSpent(incoming);
+  const sto = sanitizeEssenceSpent(stored);
   if (!inc) return sto;
   if (!sto) return inc;
   const out = { ...inc };
   for (const [k, v] of Object.entries(sto)) {
     if (!(k in out) && Object.keys(out).length >= ESSENCE_MAX_KEYS) continue;
     out[k] = Math.max(out[k] ?? 0, v);
+  }
+  return out;
+}
+__name(enforceEssenceSpent, "enforceEssenceSpent");
+function enforceEssences(incoming, stored, incomingSpent, storedSpent) {
+  const inc = sanitizeEssences(incoming);
+  const sto = sanitizeEssences(stored);
+  if (!inc) return sto;
+  if (!sto) return inc;
+  const sp = enforceEssenceSpent(incomingSpent, storedSpent) ?? {};
+  const spOld = sanitizeEssenceSpent(storedSpent) ?? {};
+  const out = { ...inc };
+  for (const [k, v] of Object.entries(sto)) {
+    if (!(k in out) && Object.keys(out).length >= ESSENCE_MAX_KEYS) continue;
+    const gasto = Math.max(0, (sp[k] ?? 0) - (spOld[k] ?? 0));
+    const q = Math.max(out[k] ?? 0, v - gasto);
+    if (q >= 1) out[k] = q;
+    else delete out[k];
   }
   return out;
 }
@@ -13760,8 +13793,8 @@ async function onRequest7({ request, env }) {
     let recAntes;
     let recDepois;
     {
-      const temGravado = typeof prev?.value === "string" && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"') || prev.value.includes('"arenaReroll"') || prev.value.includes('"essences"') || prev.value.includes('"essenceAway"'));
-      if (temGravado || "dungeonDaily" in state || "checkIns" in state || "arenaReroll" in state || "essences" in state || "essenceAway" in state) {
+      const temGravado = typeof prev?.value === "string" && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"') || prev.value.includes('"arenaReroll"') || prev.value.includes('"essences"') || prev.value.includes('"essenceAway"') || prev.value.includes('"essenceSpent"'));
+      if (temGravado || "dungeonDaily" in state || "checkIns" in state || "arenaReroll" in state || "essences" in state || "essenceAway" in state || "essenceSpent" in state) {
         let gravado = {};
         if (temGravado) {
           try {
@@ -13783,9 +13816,12 @@ async function onRequest7({ request, env }) {
         const ar = enforceArenaReroll(state.arenaReroll, gravado.arenaReroll);
         if (ar) state.arenaReroll = ar;
         else delete state.arenaReroll;
-        const es = enforceEssences(state.essences, gravado.essences);
+        const es = enforceEssences(state.essences, gravado.essences, state.essenceSpent, gravado.essenceSpent);
         if (es && Object.keys(es).length) state.essences = es;
         else delete state.essences;
+        const esp = enforceEssenceSpent(state.essenceSpent, gravado.essenceSpent);
+        if (esp && Object.keys(esp).length) state.essenceSpent = esp;
+        else delete state.essenceSpent;
         const ea = enforceEssenceAway(state.essenceAway, gravado.essenceAway);
         if (ea) state.essenceAway = ea;
         else delete state.essenceAway;
@@ -14425,7 +14461,11 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
+<<<<<<< HEAD
 // ../.wrangler/tmp/pages-zKz4li/functionsRoutes-0.049458419009933086.mjs
+=======
+// ../.wrangler/tmp/pages-MrkGiv/functionsRoutes-0.8683901028427683.mjs
+>>>>>>> origin/main
 var routes = [
   {
     routePath: "/api/account",
@@ -14751,7 +14791,7 @@ var routes = [
   }
 ];
 
-// D:/Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
+// ../node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -15077,7 +15117,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// D:/Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
+// ../node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
