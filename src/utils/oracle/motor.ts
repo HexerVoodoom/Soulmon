@@ -783,9 +783,9 @@ const ALIGNMENT_MARKINGS: Record<AlignmentId, string[]> = {
     'yin-yang teardrop marks on the shoulders',
   ],
   benevolencia: [
-    'small heart and star speckle markings on the body',
+    'small star and leaf speckle markings on the body', // 30/10/2026 (dono): sem coração — saía coração demais na Benevolência
     'soft cloud-and-sun patches on the chest',
-    'a pale guardian sigil over the heart',
+    'a pale guardian sigil on the chest',
     'freckle constellations that form a smile',
   ],
 };
@@ -1362,7 +1362,7 @@ const TYPE_LOOK: Record<AlignmentId, string[]> = {
   ],
   benevolencia: [
     'a rounded sturdy body', 'a flowing short mantle', 'a soft rounded body', 'a small halo',
-    'angelic feather tufts', 'a protective posture', 'a heart marking', 'a gentle glowing aura',
+    'angelic feather tufts', 'a protective posture', 'a soft glowing chest gem', 'a gentle glowing aura',
     'a tiny cape', 'a pair of small wings', 'a shield emblem', 'a gem pendant',
     'a ribbon sash', 'a little bell charm', 'a noble upright stance', 'a golden trim',
     'a gentle bow', 'open welcoming arms', 'a soft rounded tail', 'a guardian sigil',
@@ -1751,7 +1751,7 @@ const ALIGNMENT_DESIGNS: Record<AlignmentId, string[]> = {
     'BENEVOLENCE-attribute design language: loyal-shepherd bearing, sturdy dependable frame, bell or lantern charm, ivory and amber highlights, protector bearing',
     'BENEVOLENCE-attribute design language: cheerful-champion energy, bouncy confident posture, star and medal motifs, sunny yellow and white highlights, inspiring hero bearing',
     'BENEVOLENCE-attribute design language: serene-priestess aura, flowing graceful lines, subtle halo or petal ornaments, pearl and pale-gold highlights, blessed bearing',
-    'BENEVOLENCE-attribute design language: big-brother bulk, broad gentle frame that shields smaller creatures, shield and heart motifs, silver and warm-white highlights, dependable bearing',
+    'BENEVOLENCE-attribute design language: big-brother bulk, broad gentle frame that shields smaller creatures, shield motifs (no hearts), silver and warm-white highlights, dependable bearing',
   ]
 };
 
