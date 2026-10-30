@@ -438,16 +438,16 @@ export function ResultScreen(p: ResultScreenProps) {
         {p.below && <div data-result-noskip style={{ width: '100%', maxWidth: 348 }}>{p.below}</div>}
       </div>
 
-      {/* Dock fixo, ativo desde 0 ms; sem seta de voltar duplicada. */}
+      {/* Dock fixo, ativo desde 0 ms; sem seta de voltar duplicada. Regra do dono (30/10/2026): ESQUERDA = sair/voltar/cancelar, DIREITA = continuar/avançar/revanche. */}
       <div data-result-dock style={{ display: 'flex', gap: 8, padding: '8px 16px calc(env(safe-area-inset-bottom, 0px) + 12px)', borderTop: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-bg)' }}>
-        {p.onPlayAgain && (
-          <button type="button" data-result-again {...p.againAttrs} onClick={p.onPlayAgain} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-            {p.playAgainLabel ?? (isPt ? 'Jogar de novo' : 'Play again')}
-          </button>
-        )}
         {p.onHome && (
           <button type="button" data-result-home onClick={p.onHome} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
             {p.homeLabel}
+          </button>
+        )}
+        {p.onPlayAgain && (
+          <button type="button" data-result-again {...p.againAttrs} onClick={p.onPlayAgain} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
+            {p.playAgainLabel ?? (isPt ? 'Jogar de novo' : 'Play again')}
           </button>
         )}
       </div>

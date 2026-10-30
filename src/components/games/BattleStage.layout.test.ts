@@ -54,11 +54,11 @@ describe('stageLayout sem boss — byte-idêntico ao de sempre', () => {
     }
   });
 
-  // 30/10/2026 (dono): inimigo desceu para o chão dos cenários de câmera baixa (antes: x 263, y 267).
+  // 30/10/2026 (dono): inimigo desceu para o chão dos cenários de câmera baixa (antes: x 263, y 267; o seu Soulmon de y 604 para 688).
   it('valores de referência (anteriores à mudança)', () => {
     const l = stageLayout(375, 636, 1);
     expect({ me: l.me, foes: l.foes, barsH: l.barsH, plateH: l.plateH }).toEqual({
-      me: { x: 124, y: 604, size: 240 }, foes: [{ x: 255, y: 382, size: 158 }], barsH: 50, plateH: 14,
+      me: { x: 124, y: 688, size: 240 }, foes: [{ x: 255, y: 407, size: 158 }], barsH: 50, plateH: 14,
     });
   });
 });

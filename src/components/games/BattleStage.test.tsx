@@ -6,7 +6,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { SPECIAL_INTRO_MS } from '../../utils/combatFx';
-import { BattleStage, BATTLE_LAYER_STYLE, stageLayout, type StageAction, type StageFighter } from './BattleStage';
+import { BattleStage, BATTLE_LAYER_STYLE, stageLayout, type StageAction, type StageFighter, ME_BELOW_FIELD } from './BattleStage';
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
@@ -36,7 +36,8 @@ describe('stageLayout — profundidade de Game Boy, lutadores BEM maiores (04/10
           expect(s.x - s.size / 2).toBeGreaterThanOrEqual(-1);
           expect(s.x + s.size / 2).toBeLessThanOrEqual(w + 1);
           expect(s.y - s.size * 0.94 - l.barsH).toBeGreaterThanOrEqual(-12); // o bloco de barras (acima da cabeça) cabe no topo
-          expect(s.y + l.platHalf(s)).toBeLessThanOrEqual(h + 1); // e a plataforma, embaixo
+          // e a plataforma, embaixo — o SEU Soulmon pode descer ME_BELOW_FIELD além do campo, sobre a faixa do HUD (dono, 30/10/2026)
+          expect(s.y + l.platHalf(s)).toBeLessThanOrEqual(h + 1 + (s === l.me ? ME_BELOW_FIELD + l.platHalf(s) : 0));
         }
       }
     });

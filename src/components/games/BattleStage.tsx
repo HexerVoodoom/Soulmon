@@ -125,6 +125,8 @@ export interface StageLayout {
 }
 
 const PLATE_H = 14;
+/** Quanto os pés do seu Soulmon ficam ABAIXO do fim do campo (px), sobre a faixa do HUD de baixo (dono, 30/10/2026). */
+export const ME_BELOW_FIELD = 52;
 const BARS_H = 50;
 /** Folga entre o bloco de barras e o topo do sprite (px): as barras ficam ACIMA da cabeça, sem cobri-la (QA L11-10; antes entravam 12 px nela). */
 const BARS_LIFT = 2;
@@ -151,9 +153,10 @@ export function stageLayout(w: number, h: number, nFoes: number, boss = false): 
   const meSize = Math.round(Math.max(110, Math.min(300, w * 0.64, h * 0.38)));
   const foeSize = Math.round(meSize * (nFoes <= 1 ? 0.66 : 0.5));
   const platHalf = (s: Spot) => Math.round(s.size * 0.1);
+  // 30/10/2026 (dono): o seu Soulmon desce até quase o pé da tela — os pés passam do fim do campo e pousam sobre a faixa do HUD de baixo.
   const me: Spot = {
     x: Math.round(Math.max(w * 0.32, meSize / 2 + 4)),
-    y: Math.round(h - meSize * 0.1 - 8),
+    y: Math.round(h + ME_BELOW_FIELD),
     size: meSize,
   };
   if (boss) {
@@ -170,10 +173,11 @@ export function stageLayout(w: number, h: number, nFoes: number, boss = false): 
   // 30/10/2026 (dono): os cenários de câmera baixa têm o CHÃO a partir de ~40% da tela; acima é céu, lava ou água.
   // Os pés dos inimigos pousam na faixa do chão do fundo (≈ 55–61% do campo, logo acima da cabeça do seu Soulmon), lado a lado em vez de empilhados no céu.
   const fr: Array<[number, number]> = nFoes <= 1
-    ? [[0.68, 0.6]]
+    ? [[0.68, 0.64]]
     : nFoes === 2
-      ? [[0.76, 0.6], [0.42, 0.55]]
-      : [[0.82, 0.61], [0.52, 0.55], [0.22, 0.55]];
+      ? [[0.76, 0.65], [0.36, 0.6]]
+      // 3 em TRIÂNGULO (dono, 30/10/2026): os dois das laterais na mesma linha, o do meio um pouco acima/atrás.
+      : [[0.83, 0.65], [0.5, 0.58], [0.17, 0.65]];
   const minY = Math.round(foeSize * SPRITE_TOP + BARS_H + 6);
   const foes: Spot[] = fr.slice(0, Math.max(1, nFoes)).map(([fx, fy]) => ({
     x: Math.round(Math.min(w - foeSize / 2 - 2, Math.max(foeSize / 2 + 2, w * fx))),

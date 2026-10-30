@@ -63,8 +63,20 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
   const gap = size >= 8 ? 0 : 2;
   const clueAt = useMemo(() => new Map(puzzle.clues.map(c => [c.cell, c])), [puzzle]);
 
+  /** A casa sob o dedo (30/10/2026, dono: no celular "a caixa não nasce no número"). Por CONTA sobre a caixa da grade
+   *  (toque − borda) ÷ (casa + vão), não por `elementFromPoint`, que no toque pode cair no vão ou numa camada por cima e
+   *  devolver a casa vizinha. Sem medida (jsdom) volta ao alvo do evento. */
   const cellFromEvent = (e: ReactPointerEvent): number | null => {
-    const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null;
+    const grid = (e.currentTarget as HTMLElement | null)?.closest?.('[data-patches-grid]') as HTMLElement | null;
+    const box = grid?.getBoundingClientRect();
+    if (box && box.width > 0 && box.height > 0) {
+      const step = cell + gap;
+      const col = Math.floor((e.clientX - box.left) / step);
+      const row = Math.floor((e.clientY - box.top) / step);
+      if (col < 0 || row < 0 || col >= size || row >= size) return null;
+      return row * size + col;
+    }
+    const el = (document.elementFromPoint?.(e.clientX, e.clientY) ?? e.target) as HTMLElement | null;
     const v = el?.closest?.('[data-patch-cell]')?.getAttribute('data-patch-cell');
     return v == null ? null : Number(v);
   };
@@ -87,6 +99,8 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
     setStarted(true);
     if (t0.current == null) t0.current = Date.now();
     moved.current = false;
+    // Prende o ponteiro na grade: o arraste segue mesmo se o dedo sair dela, e o navegador não cancela no meio.
+    try { (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId); } catch { /* sem suporte */ }
     setAnchor(c);
     setHover(c);
   };
@@ -177,7 +191,8 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
       width: cell, height: cell, boxSizing: 'border-box', position: 'relative',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       border: '1px solid var(--sm2-muted)', borderRadius: 4, touchAction: 'none', userSelect: 'none',
-      outline: cursor === c ? '2px solid var(--sm2-primary-ink)' : 'none', outlineOffset: -2,
+      // A casa de origem do arraste fica marcada: o retângulo sempre nasce nela.
+      outline: cursor === c || anchor === c ? '2px solid var(--sm2-primary-ink)' : 'none', outlineOffset: -2,
       backgroundColor: inPreview
         ? 'color-mix(in srgb, var(--sm2-ink) 18%, transparent)'
         : idx >= 0
