@@ -249,3 +249,11 @@ Anexar como referência de estilo as outras peças do mesmo elemento (`fx-<id>-i
 **`fx-tita-slash.png`** — Pixel art VFX sprite, same style and palette as the other tita attack effects of this game: a single tita-element crescent slash arc cutting diagonally, complete from tip to tip, no stray fragments cut by the frame. Real transparent background (true alpha channel), no text, no frame. Square 1:1 composition, 128x128.
 
 **`fx-trovao-orb.png`** — Pixel art VFX sprite, same style and palette as the other trovao attack effects of this game: a compact trovao-element energy projectile flying to the RIGHT: a COMPLETE rounded bright head fully inside the frame, with a tapering trail streaming to the left, small sparks around. Real transparent background (true alpha channel), no text, no frame. Square 1:1 composition, 128x128.
+
+## Auditoria 2 (30/10/2026) — caco de vizinha (relato do dono: ataque corpo a corpo da MORTE)
+
+- Defeito: `fx-morte-slash.png` trazia um caco solto à esquerda do crescente (ponta da cabeça do `orb`, que cruza a divisa da folha 3x2). Era a classe "fragmento de peça vizinha", que a régua de borda/corte reto não via (a peça tinha margem e nenhuma reta na arte principal). Medido nas 1.380 peças: 42 com caco grande e lado reto (slash 25, aura 17), e várias outras com cacos menores ou de escala distorcida pelo caco (impact, orb, defended).
+- Correção: `tools/regerar-fx-cortados.py` reescrito (âncoras grandes por centroide, fragmento -> âncora mais próxima, layout 3x2 ou linha de 6, casamento por formato/cor com a peça instalada, só troca se a nova é mais limpa). Trocadas 391 PNGs (169 elementos; inclui aura-96). Antes/depois em `D:/Soulmon/prints-2026-10-29/v4/fx-audit/pares-antes-depois/`.
+- `espinheiro-slash` estava QUEBRADA (duas sementes, sem o crescente) — refeita da folha.
+- Reprovadas a olho e deixadas como estavam (peça nova veio com vizinha colada ou outro desenho): `halo_gravitacional-defended`, `ariete-cast`, `runa-cast` — pendem de regeração/revisão manual.
+- Régua: `fxAtaqueBordas.contract.test.ts` agora também reprova caco de vizinha (`strayCuts`, com teste sintético), peça fora do centro (>7 px), vazia/parcial (área < 500 px ou envergadura < 70%).
