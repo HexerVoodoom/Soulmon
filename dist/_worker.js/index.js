@@ -1602,6 +1602,19 @@ __name(cheerEvents, "cheerEvents");
 var MIRROR_SECONDS = 25;
 var HIT_UNIT_H0 = 10;
 var PVP_HP_SCALE = 1.7;
+var HP_POINTS_PER_HP = 30;
+function hpPoints(hp) {
+  return Math.max(1, Math.round(hp * HP_POINTS_PER_HP));
+}
+__name(hpPoints, "hpPoints");
+function damagePoints(frac, pts2) {
+  return frac > 1e-9 ? Math.max(1, Math.round(frac * pts2)) : 0;
+}
+__name(damagePoints, "damagePoints");
+function startPoints(frac, pts2) {
+  return Math.max(1, Math.round(frac * pts2));
+}
+__name(startPoints, "startPoints");
 var EPS = 1e-9;
 var DRAW_EPS = 1e-6;
 var MAX_EVENTS = 2e5;
@@ -1630,11 +1643,13 @@ function* fightSteps(a, b, opts) {
     const c = { ...s.combatant, hp: s.combatant.hp * hpScale };
     const r = mulberry32(sideSeed(seed, i2 + 1));
     const mult = variance ? ar1Multiplier(r, variance) : () => 1;
+    const pts2 = hpPoints(c.hp);
     return {
       c,
       sp: s.special,
       mult,
-      hp: opts.startHp?.[i2] ?? 1,
+      pts: pts2,
+      hp: startPoints(opts.startHp?.[i2] ?? 1, pts2) / pts2,
       en: opts.startEnergy?.[i2] ?? 0,
       shield: 0,
       next: interval(c.spd) * phases[i2],
@@ -1668,16 +1683,20 @@ function* fightSteps(a, b, opts) {
   }, "gain");
   const hit = /* @__PURE__ */ __name((src, v, frac, kind, shieldCap = Infinity) => {
     if (v.dead < Infinity) return;
-    let amt = frac;
-    if (v.shield > EPS) {
-      const ab = Math.min(v.shield, amt, shieldCap);
-      v.shield -= ab;
-      amt -= ab;
+    const d = damagePoints(frac, v.pts);
+    let lose = d;
+    const sh = Math.round(v.shield * v.pts);
+    if (sh > 0) {
+      const ab = Math.min(sh, lose, shieldCap === Infinity ? Infinity : Math.round(shieldCap * v.pts));
+      v.shield = (sh - ab) / v.pts;
+      lose -= ab;
     }
-    v.hp -= amt;
-    gain(src, frac, ENERGY.perDealt);
-    gain(v, frac, ENERGY.perReceived);
-    pending.push(ev(kind, src === F[0] ? 0 : 1, frac, t));
+    const hp0 = Math.round(v.hp * v.pts);
+    lose = Math.min(lose, hp0);
+    v.hp = (hp0 - lose) / v.pts;
+    gain(src, d / v.pts, ENERGY.perDealt);
+    gain(v, d / v.pts, ENERGY.perReceived);
+    pending.push(ev(kind, src === F[0] ? 0 : 1, lose / v.pts, t));
   }, "hit");
   const cast = /* @__PURE__ */ __name((me, foe, t0, scale) => {
     const sp = me.sp;
@@ -1695,10 +1714,10 @@ function* fightSteps(a, b, opts) {
         break;
       }
       case "heal":
-        me.hp += Math.min(1 - me.hp, E / hitsOn(foe, me));
+        me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + Math.round(E / hitsOn(foe, me) * me.pts)) / me.pts;
         break;
       case "shield":
-        me.shield += E / hitsOn(foe, me);
+        me.shield = (Math.round(me.shield * me.pts) + Math.round(E / hitsOn(foe, me) * me.pts)) / me.pts;
         break;
       case "atkBuff":
         me.nAtk += E;
@@ -8225,7 +8244,7 @@ function sementeDoServidor() {
   return crypto.getRandomValues(new Uint32Array(1))[0];
 }
 __name(sementeDoServidor, "sementeDoServidor");
-function janela(side, nivel, seed) {
+function janela(side, nivel, seed, cheer) {
   const chefe = combatantAt(nivel, REFERENCE_BUILDS.balanced);
   const g = fightSteps(
     { combatant: side.combatant, special: side.special, dotResist: side.dotResist },
@@ -8233,6 +8252,7 @@ function janela(side, nivel, seed) {
     {
       seed,
       hpScale: PVP_HP_SCALE,
+      ...cheer && cheer.length ? { cheer } : {},
       startHp: [1, HP_ENORME],
       startEnergy: [cleanStartEnergy(side.startEnergy), 0],
       hitScale: /* @__PURE__ */ __name((who) => who === 1 ? CHEFE_FORCA_NA_SIM : 1, "hitScale")
@@ -8250,9 +8270,9 @@ function janela(side, nivel, seed) {
   return { total, log: log4 };
 }
 __name(janela, "janela");
-function simularAtaque(side, power, seed) {
+function simularAtaque(side, power, seed, taps) {
   const nivel = side.combatant.level;
-  const eu = janela(side, nivel, seed);
+  const eu = janela(side, nivel, seed, taps === void 0 ? void 0 : duelCheerEvents(taps, 0, side.cheerScale));
   const ref = janela({ combatant: combatantAt(nivel, REFERENCE_BUILDS.balanced), special: specialOf("direct"), dotResist: 0, startEnergy: 0 }, nivel, seed);
   const razao = ref.total > 0 ? eu.total / ref.total : 1;
   const desempenho = Math.min(DESEMPENHO_MAX, Math.max(DESEMPENHO_MIN, razao));
@@ -9104,7 +9124,7 @@ async function handleGuild({ request, env }) {
       const antes = await lerFeiraHit(env, g.id, estado2.k, id);
       if (antes.days.includes(hoje)) return erro("daily limit", 429);
       const perfil = await getProfile(env, id);
-      const r = simularAtaque(await fichaDoAtacante(env, id), stagePower(perfil?.stage), sementeDoServidor());
+      const r = simularAtaque(await fichaDoAtacante(env, id), stagePower(perfil?.stage), sementeDoServidor(), body?.taps);
       await gravarGolpe(env, g.id, estado2.k, id, antes, hoje, r.dmg);
       await marcarFeira(env, g.id, estado2.k, id, hoje);
       await cartao(g);
@@ -12721,7 +12741,7 @@ async function onRequest6(context) {
     const g2 = takeToken("rankings-submit", id, LIMIT_SUBMIT);
     if (!g2.ok) return tooManyRequests(g2.retryAfter, CORS11);
     const r = await submitScore(env, { game, period, saveId: id, score });
-    const board2 = await readBoard(env, { game, period, saveId: id, top: TOP_DEFAULT });
+    const board2 = await readBoard(env, { game, period, saveId: id, top: TOP_MAX });
     return json7({ ok: true, improved: r.improved, best: r.best, ...board2 });
   }
   const top = Number(q.top);
@@ -12984,7 +13004,6 @@ var DAILY_EVENTS = [
   "masmorra",
   "banho",
   "carinho",
-  "brincar",
   "comida",
   "humor",
   "sono",
@@ -13006,7 +13025,6 @@ var DAILY_MISSION_IDS = [
   "d-masmorra",
   "d-banho",
   "d-carinho",
-  "d-brincar",
   "d-comida",
   "d-humor",
   "d-sono",
@@ -14159,7 +14177,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-fxvAot/functionsRoutes-0.6771853924709361.mjs
+// ../.wrangler/tmp/pages-FuMxpw/functionsRoutes-0.7776474743420688.mjs
 var routes = [
   {
     routePath: "/api/account",
