@@ -93,10 +93,10 @@ export const TOUR_STEPS: readonly TourStep[] = [
   },
   {
     id: 'corners', part: 1,
-    title: { en: 'Missions and the Bag', pt: 'Missões e a Mochila' },
+    title: { en: 'Missions and Files', pt: 'Missões e os Arquivos' },
     speech: {
-      en: "Missions live in the icon at the corner of Home. The Bag sits with your care buttons under your Soulmon. The first time you open the map, I'll show you around. You can replay this tour from Settings.",
-      pt: 'As missões ficam no ícone do canto da Home. A Mochila fica junto dos botões de cuidado, embaixo do seu Soulmon. Mostro o mapa na primeira vez que abrir. Dá para rever este tour nas Configurações.',
+      en: "Missions live in the icon at the corner of Home. The Files button sits with your care buttons under your Soulmon. The first time you open the map, I'll show you around. You can replay this tour from Settings.",
+      pt: 'As missões ficam no ícone do canto da Home. Os Arquivos ficam junto dos botões de cuidado, embaixo do seu Soulmon. Mostro o mapa na primeira vez que abrir. Dá para rever este tour nas Configurações.',
     },
   },
 ];

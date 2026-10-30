@@ -90,6 +90,8 @@ const EL_ICON_ENEMY = 26;
 const LINES = Object.keys(OWN_LINE_SPRITES);
 
 export interface Match3Props extends EarningGameProps {
+  /** Modo já escolhido na pergunta do Pipo (`MinigameModeGate`, 30/10/2026): PvE (a rodada normal) ou PvP; pula o seletor de dentro. */
+  initialMode?: 'pve' | 'pvp';
   /** Semente da rodada (testes). Sem ela, sorteada ao abrir/reabrir. */
   seed?: number;
   /** D-85: saldo de Bits e a via de gasto do app (`play.onSpendBits`, devolve `false` se não cobrou). Sem elas, não dá para comprar dica. */
@@ -1017,11 +1019,11 @@ const PVP_SEARCH_TIMEOUT_MS = 6000;
  * o de level mais parecido (`pickPvpOpponent`) e, sem ninguém, cai num NPC do roster. Nome e ranking alheios nunca chegam aqui.
  */
 export function Match3Game(props: Match3Props) {
-  const { language, rankSaveId, challenge, onExit } = props;
+  const { language, rankSaveId, challenge, onExit, initialMode } = props;
   const isPt = language === 'pt-BR';
-  const [mode, setMode] = useState<'pick' | 'normal' | 'pvp'>(rankSaveId && !challenge ? 'pick' : 'normal');
+  const [mode, setMode] = useState<'pick' | 'normal' | 'pvp'>(initialMode ? (initialMode === 'pvp' && rankSaveId && !challenge ? 'pvp' : 'normal') : rankSaveId && !challenge ? 'pick' : 'normal');
   if (mode === 'normal') return <Match3Round {...props} />;
-  if (mode === 'pvp') return <Match3PvpEntry {...props} onBack={() => setMode('pick')} />;
+  if (mode === 'pvp') return <Match3PvpEntry {...props} onBack={() => (initialMode ? onExit() : setMode('pick'))} />;
   const choice: CSSProperties = { ...sm2Button('outline'), width: '100%', minHeight: 64, flexDirection: 'column', gap: 2, padding: '8px 12px' };
   return (
     <GameRoot full>

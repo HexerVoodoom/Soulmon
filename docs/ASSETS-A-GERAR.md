@@ -695,3 +695,13 @@ Conferência: Pillow (`python -I`), prévia em #08191A (nunca magenta/verde). En
 ## Faísca de Alma / Soul Spark (30/10/2026, REGISTRO §191)
 
 Item `✨` (`SPARK_ITEM_EMOJI`): hoje reusa `icones-ui/energia.png` (`itemArt.ts`). Falta arte própria: ícone 512×512 com alfa real, faísca/chama azul-turquesa (cor de energia do Soulmon), mesmo traço dos itens `item-heart.png` e `item-glitchtama.png`, sem moldura. Trocar é UMA linha em `src/utils/itemArt.ts`.
+
+## Quadro da tabela de ranking (pergunta do Pipo, 30/10/2026)
+
+A tabela de ranking agora aparece direto no topo do portão de cada minijogo (`MinigameModeGate`). Hoje o quadro é CSS (borda `--sm2-gold-fill`, fundo `--sm2-surface`, raio `--sm2-radius-sm`). Para ficar lapidado, falta UMA arte (não gerada; pedir pelo ChatGPT desktop):
+
+| Arquivo-alvo | Tamanho | Alfa | O que mostra |
+|---|---|---|---|
+| `src/assets/soulmon/icones-ui/quadro-ranking.png` | 9-slice 96×96 (borda de ~24 px, miolo transparente/liso para esticar) | alfa real | moldura de placar pixel-art no estilo Arcano: cobre/latão com cantos de cristal turquesa, sem texto, sem fundo no miolo; mesma paleta e traço de `item-heart.png`. Esticável em largura (cabe de 280 a 420 px) |
+
+Quando existir: trocar o `border`/`boxShadow` de `[data-minigame-gate-ranking]` por `border-image` (9-slice) em `MinigameModeGate.tsx`.

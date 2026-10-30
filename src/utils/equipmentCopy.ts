@@ -36,8 +36,8 @@ export function refusalText(r: EquipRefusal, isPt: boolean): string {
       : 'Equipment is only bought with Bits you earned by playing. Bits that came from Credits are for other things.';
     case 'no-fragments': return isPt ? 'Ainda faltam fragmentos. Eles vêm das descidas completas da Fenda.' : 'Not enough fragments yet. They come from completed Endless Rift runs.';
     case 'backpack-full': return isPt
-      ? 'A mochila está cheia. Equipar uma peça no lugar de outra não ocupa espaço novo; o talento Bolsa com alça abre mais lugar.'
-      : 'The pack is full. Equipping a piece in place of another takes no new room; the Strapped pouch talent opens more.';
+      ? 'Os Arquivos estão cheios. Equipar uma peça no lugar de outra não ocupa espaço novo; o talento Bolsa com alça abre mais lugar.'
+      : 'Files are full. Equipping a piece in place of another takes no new room; the Strapped pouch talent opens more.';
     case 'already-owned': return isPt ? 'Você já tem este.' : 'You already have this one.';
     default: return isPt ? 'Este item não está à venda.' : 'This item is not for sale.';
   }

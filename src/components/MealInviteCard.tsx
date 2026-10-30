@@ -14,7 +14,7 @@ import type { MealInviteKind, MealKey } from '../utils/mealRhythm';
  * nenhum "faltou": o cartão some sozinho quando a janela fecha.
  */
 const CTA: Record<MealInviteKind, { en: string; pt: string }> = {
-  snack: { en: 'Open the backpack', pt: 'Abrir a mochila' },
+  snack: { en: 'Open Files', pt: 'Abrir os Arquivos' },
   poop: { en: 'Rinse off', pt: 'Dar um banho' },
   pet: { en: 'Give a pat', pt: 'Dar um carinho' },
   tenSeconds: { en: 'Say hi', pt: 'Dizer oi' },

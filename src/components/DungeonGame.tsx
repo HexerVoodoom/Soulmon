@@ -877,8 +877,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                   <p style={phaseLine}>{isPt ? `Marco: a camada ${DUNGEON_MILESTONE_FLOOR} ficou para trás. Da fenda ele trouxe fragmentos que ainda não assentaram.` : `Milestone: layer ${DUNGEON_MILESTONE_FLOOR} is behind you. From the rift he brought fragments that haven't settled yet.`}</p>
                   <p style={phaseLine}>
                     {isPt
-                      ? 'Um Glitchtama, com um dia inteiro preso dentro. Usar dá àquele dia o fechamento que ele não teve. (mochila)'
-                      : 'A Glitchtama, with a whole day caught inside. Using it gives that day the closing it never had. (Backpack)'}
+                      ? 'Um Glitchtama, com um dia inteiro preso dentro. Usar dá àquele dia o fechamento que ele não teve. (Arquivos)'
+                      : 'A Glitchtama, with a whole day caught inside. Using it gives that day the closing it never had. (Files)'}
                   </p>
                   <p style={phaseLine}>{isPt ? 'A próxima descida ficou mais difícil.' : 'The next descent got harder.'}</p>
                 </div>
@@ -915,7 +915,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                 { key: 'xp', kind: 'xp' as const, value: resumo.layers * XP_DUNGEON_FLOOR },
                 // O "coração da mochila" é o ITEM de recuperar vida (a poção em forma de coração), com a arte do item.
                 ...(resumo.hearts > 0 ? [{ key: 'hearts', kind: 'item' as const, itemKind: 'heart' as const, label: rewardItemLabel('heart', isPt), amount: resumo.hearts }] : []),
-                ...(resumo.glitchtama > 0 ? [{ key: 'glitchtama', kind: 'item' as const, itemKind: 'glitchtama' as const, label: isPt ? 'Glitchtama (mochila)' : 'Glitchtama (Backpack)', amount: resumo.glitchtama }] : []),
+                ...(resumo.glitchtama > 0 ? [{ key: 'glitchtama', kind: 'item' as const, itemKind: 'glitchtama' as const, label: isPt ? 'Glitchtama (Arquivos)' : 'Glitchtama (Files)', amount: resumo.glitchtama }] : []),
                 ...(resumo.fragments > 0 ? [{ key: 'fragments', kind: 'item' as const, itemKind: 'fragments' as const, label: rewardItemLabel('fragments', isPt), amount: resumo.fragments }] : []),
               ]}
               emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
@@ -1102,8 +1102,8 @@ function DungeonSummary({ isPt, resumo, capBits, statsOnly = false }: {
     { k: 'bits', n: <><BitsAmount value={resumo.bits} />{capBits ? (isPt ? ' (o teto diário de Bits já foi atingido)' : ' (the daily Bits cap was already reached)') : ''}</> },
   ].filter(l => !statsOnly || l.k !== 'bits');
   const add = (k: string, n: string) => linhas.push({ k, n });
-  if (!statsOnly && resumo.hearts > 0) linhas.push({ k: 'hearts', n: <><RewardLine hearts={resumo.hearts} language={isPt ? 'pt-BR' : 'en-US'} size={16} />{isPt ? ' (mochila)' : ' (Backpack)'}</> });
-  if (!statsOnly && resumo.glitchtama > 0) add('glitchtama', isPt ? `Glitchtama: +${resumo.glitchtama} (mochila)` : `Glitchtama: +${resumo.glitchtama} (Backpack)`);
+  if (!statsOnly && resumo.hearts > 0) linhas.push({ k: 'hearts', n: <><RewardLine hearts={resumo.hearts} language={isPt ? 'pt-BR' : 'en-US'} size={16} />{isPt ? ' (Arquivos)' : ' (Files)'}</> });
+  if (!statsOnly && resumo.glitchtama > 0) add('glitchtama', isPt ? `Glitchtama: +${resumo.glitchtama} (Arquivos)` : `Glitchtama: +${resumo.glitchtama} (Files)`);
   if (!statsOnly && resumo.fragments > 0) add('fragments', isPt ? `Fragmentos do Soulsmith: +${resumo.fragments}` : `Soulsmith fragments: +${resumo.fragments}`);
   if (resumo.recordTo > resumo.recordFrom) add('record', isPt ? `Mais fundo até hoje: camada ${resumo.recordTo}` : `Deepest so far: layer ${resumo.recordTo}`);
   if (resumo.energy > 0) add('energy', isPt ? `Energia usada: ${resumo.energy}` : `Energy used: ${resumo.energy}`);

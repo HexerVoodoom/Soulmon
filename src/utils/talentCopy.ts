@@ -61,7 +61,7 @@ export const TALENT_COPY: Readonly<Record<string, TalentCopy>> = {
   'tal-com-03': { namePt: 'Ampulheta de moeda', nameEn: 'Coin hourglass',
     descPt: `Refazer a árvore custa ${Math.round(RESPEC_STEP * 100)}% menos por grau. É preço, não combate.`,
     descEn: `Rebuilding the tree costs ${Math.round(RESPEC_STEP * 100)}% less per rank. It is price, not combat.` },
-  'tal-com-04': { namePt: 'Bolsa com alça', nameEn: 'Strapped pouch', descPt: `+${BACKPACK_STEP} espaço por grau na mochila (peças guardadas fora dos slots; a mochila começa com ${BACKPACK_BASE}). É capacidade, não combate.`, descEn: `+${BACKPACK_STEP} pack slot per rank (pieces kept outside the slots; the pack starts with ${BACKPACK_BASE}). Capacity, not combat.` },
+  'tal-com-04': { namePt: 'Bolsa com alça', nameEn: 'Strapped pouch', descPt: `+${BACKPACK_STEP} espaço por grau nos Arquivos (peças guardadas fora dos slots; os Arquivos começam com ${BACKPACK_BASE}). É capacidade, não combate.`, descEn: `+${BACKPACK_STEP} Files slot per rank (pieces kept outside the slots; Files starts with ${BACKPACK_BASE}). Capacity, not combat.` },
   'tal-com-05': { namePt: 'Balança', nameEn: 'Scales',
     descPt: 'Refazer UM ponto à sua escolha, em vez da árvore toda, pelo preço de um ponto (Bits que você ganhou jogando). É conveniência, não combate.',
     descEn: 'Take back ONE point of your choice instead of the whole tree, at the price of one point (Bits you earned by playing). Convenience, not combat.' },

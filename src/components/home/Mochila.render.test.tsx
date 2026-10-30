@@ -156,7 +156,7 @@ describe('Mochila — a alternativa acessível', () => {
 
   it('as abas são tabs de verdade (role/aria-selected) e trocam o conteúdo', () => {
     montar();
-    const dialog = screen.getByRole('dialog', { name: 'Mochila' });
+    const dialog = screen.getByRole('dialog', { name: 'Arquivos' });
     const comida = within(dialog).getByRole('tab', { name: 'Comida e chips' });
     const esp = within(dialog).getByRole('tab', { name: 'Especiais' });
     expect(comida.getAttribute('aria-selected')).toBe('true');

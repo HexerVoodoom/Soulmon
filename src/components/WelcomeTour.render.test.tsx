@@ -172,7 +172,7 @@ describe('WelcomeTour — conteúdo', () => {
     expect(txt).toMatch(/you pick the moment/i);
     expect(txt).toMatch(/Missions/);
     expect(txt).toMatch(/first time you open the map/);
-    expect(txt).toMatch(/Bag/);
+    expect(txt).toMatch(/Files/);
     expect(txt).toMatch(/Replay|replay/);
   });
 

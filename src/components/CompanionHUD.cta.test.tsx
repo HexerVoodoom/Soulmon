@@ -195,20 +195,20 @@ describe('CompanionHUD — o balão de fala e o CTA de evolução', () => {
 describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
   it('a faixa tem o botão Mochila (PT/EN) e ele abre a mochila com a comida', async () => {
     const en = renderWithCss(<CompanionHUD {...base} language="en-US" foodInventory={{ '🍎': 2 }} onFeed={() => {}} />);
-    expect(screen.getByRole('button', { name: 'Backpack' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Files' })).toBeTruthy();
     en.unmount();
 
     renderWithCss(<CompanionHUD {...base} foodInventory={{ '🍎': 2 }} onFeed={() => {}} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Mochila' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Arquivos' }));
     // A folha é `lazy` (fora do chunk de entrada): na 1ª abertura o chunk chega assíncrono.
-    expect(await screen.findByRole('dialog', { name: 'Mochila' })).toBeTruthy();
+    expect(await screen.findByRole('dialog', { name: 'Arquivos' })).toBeTruthy();
     // PL-5 (21/09/2026): o nome acessível segue o idioma.
     expect(screen.getByRole('button', { name: 'Maçã × 2' })).toBeTruthy();
   });
 
   it('PL-5: o nome do alimento na mochila é o MESMO da pastinha, por idioma (getFoodName)', async () => {
     const en = renderWithCss(<CompanionHUD {...base} language="en-US" foodInventory={{ '🍎': 2 }} onFeed={() => {}} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Backpack' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Files' }));
     expect(await screen.findByRole('button', { name: 'Apple × 2' })).toBeTruthy();
     en.unmount();
   });
@@ -216,7 +216,7 @@ describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
   it('usar a comida chama `onFeed` — a REGRA continua no App, não aqui', async () => {
     const onFeed = vi.fn();
     renderWithCss(<CompanionHUD {...base} foodInventory={{ '🍎': 2 }} onFeed={onFeed} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Mochila' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Arquivos' }));
     // Tocar no item SÓ seleciona (decisão 3 do dono: item se usa arrastando).
     fireEvent.click(await screen.findByRole('button', { name: 'Maçã × 2' }));
     expect(onFeed).not.toHaveBeenCalled();
@@ -224,13 +224,13 @@ describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Usar Maçã' }));
     expect(onFeed).toHaveBeenCalledWith('🍎');
     // e a folha fecha sozinha: usar é uma ação, não um menu preso
-    expect(screen.queryByRole('dialog', { name: 'Mochila' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Arquivos' })).toBeNull();
   });
 
   it('consumível especial NÃO se mistura com a comida: coraçãozinho e Glitchtama moram em Especiais', async () => {
     renderWithCss(<CompanionHUD {...base} foodInventory={{ '🍎': 1, '💗': 3, '🌀': 1 }} onFeed={() => {}} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Mochila' }));
-    const folha = await screen.findByRole('dialog', { name: 'Mochila' });
+    fireEvent.click(screen.getByRole('button', { name: 'Arquivos' }));
+    const folha = await screen.findByRole('dialog', { name: 'Arquivos' });
     // Pelo NOME ACESSÍVEL do botão (a arte é <img>, utils/itemArt.ts).
     expect(within(folha).queryByRole('button', { name: /Coração|Heart/ })).toBeNull();
     expect(within(folha).queryByRole('button', { name: /Glitchtama/ })).toBeNull();
@@ -242,7 +242,7 @@ describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
 
   it('ESTADO VAZIO: sem comida a mochila explica como conseguir, não some', async () => {
     renderWithCss(<CompanionHUD {...base} foodInventory={{}} onFeed={() => {}} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Mochila' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Arquivos' }));
     expect(await screen.findByText(/Complete tarefas pra ganhar comida/)).toBeTruthy();
   });
 
@@ -252,7 +252,7 @@ describe('CompanionHUD — a MOCHILA é controle de primeira classe', () => {
     const { container, rerender } = renderWithCss(<CompanionHUD {...base} onSleep={onSleep} onShower={onShower} />);
     const grupo = screen.getByRole('group', { name: 'Cuidar do pet' });
     expect(within(grupo).getAllByRole('button').map(b => b.getAttribute('aria-label')))
-      .toEqual(['Mochila', 'Dormir', 'Banho']);
+      .toEqual(['Arquivos', 'Dormir', 'Banho']);
     expect(container.querySelector('.sm2-deck')).toBeNull();
     fireEvent.click(within(grupo).getByRole('button', { name: 'Dormir' }));
     expect(onSleep).toHaveBeenCalledTimes(1);

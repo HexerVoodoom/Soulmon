@@ -157,8 +157,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '💗', en: 'Little Heart', pt: 'Coraçãozinho',
-    descEn: 'Shop item and rare Endless Rift drop. Using it from the Backpack heals 1 HP.',
-    descPt: 'Item da loja e drop raro da Fenda. Usar pela mochila cura 1 HP.',
+    descEn: 'Shop item and rare Endless Rift drop. Using it from Files heals 1 HP.',
+    descPt: 'Item da loja e drop raro da Fenda. Usar pelos Arquivos cura 1 HP.',
   },
   {
     icon: '📈', en: 'Consistency', pt: 'Constância',

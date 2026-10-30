@@ -140,11 +140,11 @@ export interface PlayHandlers {
  * Os minijogos com a pergunta do Pipo antes de abrir (30/10/2026): ranking no topo + escolha. `difficulty` = Comum | Avançado
  * (só a Corrida com obstáculos e o Pedra·Papel·Tesoura têm); os demais mostram um único "Jogar". Sem ranking/Refúgio/Fenda: sem a pergunta.
  */
-const MINIGAME_GATE: Partial<Record<PlayGame, { name: { pt: string; en: string }; rankings: GateRanking[]; difficulty?: boolean }>> = {
+const MINIGAME_GATE: Partial<Record<PlayGame, { name: { pt: string; en: string }; rankings: GateRanking[]; difficulty?: boolean; pveVsPvp?: boolean }>> = {
   dino: { name: { pt: 'Corrida com obstáculos', en: 'Obstacle Run' }, difficulty: true, rankings: [{ game: 'dino-1', label: 'Comum' }, { game: 'dino-2', label: 'Avançado' }] },
   ppt: { name: { pt: 'Pedra · Papel · Tesoura', en: 'Rock · Paper · Scissors' }, difficulty: true, rankings: [{ game: 'ppt' }] },
   barrage: { name: { pt: 'Chuva de Almas', en: 'Soul Barrage' }, rankings: [{ game: 'soul-barrage' }] },
-  match3: { name: { pt: 'Fusão Elemental', en: 'Elemental Fusion' }, rankings: [{ game: 'match3' }] },
+  match3: { name: { pt: 'Fusão Elemental', en: 'Elemental Fusion' }, pveVsPvp: true, rankings: [{ game: 'match3' }] },
   eco: { name: { pt: 'Eco do Pet', en: "Pet's Echo" }, rankings: [{ game: 'eco' }] },
   zip: { name: { pt: 'Trilha do Pet', en: 'Pet Trail' }, rankings: [{ game: 'zip' }] },
   patches: { name: { pt: 'Colcha', en: 'Patchwork' }, rankings: [{ game: 'patches' }] },
@@ -571,6 +571,7 @@ export function AreaView(props: AreaViewProps) {
               rankings={MINIGAME_GATE[game]!.rankings}
               saveId={props.guild.saveId}
               withDifficulty={!!MINIGAME_GATE[game]!.difficulty}
+              pveVsPvp={!!MINIGAME_GATE[game]!.pveVsPvp}
               onPick={level => setModeChosen({ game, level })}
               onBack={exitGame}
             />
@@ -618,7 +619,7 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
-            {game === 'match3' && <Match3Game {...base} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
+            {game === 'match3' && <Match3Game {...base} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
             {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('eco'); }} />}
             {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('zip'); emitFeat('zipSolved'); }} />}
