@@ -613,7 +613,9 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         petElement={petElement}
         petStage={petStage}
         skills={skills}
-        oppElement={opponentElementFor(duel.opp)}
+        // O elemento do rival vem do SAVE dele (o servidor calcula `fx.elBasica` com `petElementDeSave`), não do perfil público,
+        // que só se atualiza quando ele abre o app (dono, 30/10/2026: amigo apareceu com elemento diferente do próprio Soulmon).
+        oppElement={duel.oppSide.fx?.elBasica ?? opponentElementFor(duel.opp)}
         petName={isPt ? 'Você' : 'You'}
         oppName={duel.opp.petName || duel.opp.name}
         isPt={isPt}
