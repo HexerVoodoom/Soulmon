@@ -36,8 +36,7 @@ import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGro
 import { elementIdOfFoe } from '../utils/elementDex';
 import { essenceDropOfFoe, type EssenceDrop } from '../utils/essences';
 import { isStraySeed } from '../utils/strayFoes';
-import { ElementAdvantageBadge } from './games/ElementAdvantageBadge';
-import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
+import { RING_TAG, DODGE_TAG, PERSONAL_TAG, ELEMENT_ADVANTAGE_TAG } from './games/pveTags';
 import { CHEER_TAPS_FULL } from '../utils/energia';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { entrarNaSuperficie } from '../utils/musica';
@@ -257,6 +256,12 @@ export function ArenaGame({
       labels: { blocked: isPt ? 'Defendeu!' : 'Blocked!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
       playerSpecialEscola: ident.especial.escola,
+      // Vantagem elemental (30/10/2026, dono): sai JUNTO DO DANO no inimigo atingido — a mesma conta do combate (`elementAdvantage`).
+      advantageTag: (foe: number, sp: boolean) => {
+        const alvo = inimigosRef.current[foe];
+        const adv = alvo ? elementAdvantage((sp ? p.elements?.especial : p.elements?.basica) ?? '', alvo.elements) : 0;
+        return adv === 1 ? ELEMENT_ADVANTAGE_TAG[lang].up : adv === -1 ? ELEMENT_ADVANTAGE_TAG[lang].down : undefined;
+      },
     };
   }, [ident, isPt, lang]);
 
@@ -365,8 +370,6 @@ export function ArenaGame({
             dodgeRight: isPt ? 'Esquivar para a direita' : 'Dodge right',
           }}
           title={`${isPt ? 'Arena' : 'Arena'} · ${rodada}/${ARENA_ROUNDS}`}
-          // Selo de vantagem elemental (27/10/2026): o golpe básico do jogador contra o alvo atual (a mesma conta do combate, `elementAdvantage`).
-          badge={inimigos[alvoIdx] ? <ElementAdvantageBadge advantage={elementAdvantage(jogador.elements?.basica ?? '', inimigos[alvoIdx].elements)} isPt={isPt} /> : undefined}
           closeLabel={sair}
           onClose={onExit}
           exitConfirm={{

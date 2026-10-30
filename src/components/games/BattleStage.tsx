@@ -167,11 +167,13 @@ export function stageLayout(w: number, h: number, nFoes: number, boss = false): 
     const meBoss: Spot = { x: Math.round(Math.max(w * 0.32, meSmall / 2 + 4)), y: Math.round(h - meSmall * 0.1 - 8), size: meSmall };
     return { me: meBoss, foes: [foe], plateH: PLATE_H, platHalf, barsH: BARS_H, boss: { barTop: BOSS_BAR_TOP, barH: BOSS_BAR_H, barW: Math.round(Math.min(w - 16, 320)) } };
   }
+  // 30/10/2026 (dono): os cenários de câmera baixa têm o CHÃO a partir de ~40% da tela; acima é céu, lava ou água.
+  // Os pés dos inimigos pousam na faixa do chão do fundo (≈ 55–61% do campo, logo acima da cabeça do seu Soulmon), lado a lado em vez de empilhados no céu.
   const fr: Array<[number, number]> = nFoes <= 1
-    ? [[0.7, 0.42]]
+    ? [[0.68, 0.6]]
     : nFoes === 2
-      ? [[0.72, 0.46], [0.34, 0.34]]
-      : [[0.74, 0.5], [0.4, 0.4], [0.8, 0.27]];
+      ? [[0.76, 0.6], [0.42, 0.55]]
+      : [[0.82, 0.61], [0.52, 0.55], [0.22, 0.55]];
   const minY = Math.round(foeSize * SPRITE_TOP + BARS_H + 6);
   const foes: Spot[] = fr.slice(0, Math.max(1, nFoes)).map(([fx, fy]) => ({
     x: Math.round(Math.min(w - foeSize / 2 - 2, Math.max(foeSize / 2 + 2, w * fx))),

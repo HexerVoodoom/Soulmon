@@ -74,6 +74,9 @@ export interface GroupScene {
   labels: { blocked: string; ring: Record<RingGrade, string>; dodge: Partial<Record<DodgeGrade, string>> };
   /** Selo no pet quando o especial dele é pessoal (cura, escudo, buff): sem dano para mostrar. */
   personalTag?: string;
+  /** VANTAGEM ELEMENTAL (30/10/2026, dono): texto que vai JUNTO DO DANO no inimigo quando o golpe do pet é ±1 (`elementAdvantage`).
+   *  Quando existe, toma o lugar da nota do anel no número; neutro (`undefined`) mantém a nota do anel. */
+  advantageTag?(foe: number, special: boolean): string | undefined;
 }
 
 export interface GroupBattleOptions {
@@ -321,7 +324,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
         const dealt = foesNow.map((h, i) => Math.max(0, h - (last.foesHp[i] ?? h)));
         dealt.forEach((d, i) => {
           if (d <= EPS) return;
-          out.push({ id: ++seq.current, side: 'foe', foe: i, value: Math.max(1, Math.round(d * (scene.foeMaxHp[i] ?? 1))), big: special, tag: i === dealt.findIndex(x => x > EPS) ? (special ? scene.labels.ring[ringTagRef.current] : undefined) : undefined });
+          out.push({ id: ++seq.current, side: 'foe', foe: i, value: Math.max(1, Math.round(d * (scene.foeMaxHp[i] ?? 1))), big: special, tag: scene.advantageTag?.(i, special) ?? (i === dealt.findIndex(x => x > EPS) ? (special ? scene.labels.ring[ringTagRef.current] : undefined) : undefined) });
           if (hasSp[i]) fEn[i] = Math.min(ENERGY_TRIGGER, fEn[i] + ENERGY.perReceived * d);
         });
         // o que o pet levou: cada golpe de inimigo do grupo
