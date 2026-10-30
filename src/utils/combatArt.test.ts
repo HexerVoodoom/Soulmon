@@ -4,10 +4,10 @@ import { VISUAL_ELEMENTS } from './combatFx';
 import { elementIcon, elementIconIds } from './elementIconArt';
 
 describe('combatArt — cenário, escudo e plataforma por elemento (rodada 2, 04/10/2026)', () => {
-  // 30/10/2026: fada/industrial/planta ganharam cenário base próprio (21 cenários); os escudos deles ainda faltam (18).
-  it('21 cenários (todo elemento BASE + o neutro) e 18 escudos', () => {
+  // 30/10/2026: fada/industrial/planta ganharam cenário e escudo base próprios (21 + 21).
+  it('21 cenários e 21 escudos (todo elemento BASE + o neutro)', () => {
     expect(COMBAT_BG_COUNT).toBe(21);
-    expect(COMBAT_SHIELD_COUNT).toBe(18);
+    expect(COMBAT_SHIELD_COUNT).toBe(21);
     for (const el of [...VISUAL_ELEMENTS, 'neutro']) {
       expect(combatSceneBg(el), el).toMatch(new RegExp(String.raw`bg-${el}\.png\) center/cover #[0-9a-f]{6}$`));
     }
@@ -20,7 +20,7 @@ describe('combatArt — cenário, escudo e plataforma por elemento (rodada 2, 04
     expect(combatBaseElement('planta')).toBe('planta'); // cenário base próprio desde 30/10/2026; nunca 'vida'
     expect(combatSceneBg('planta')).toMatch(/bg-planta\.png/);
     expect(combatSceneBg('industrial')).toMatch(/bg-industrial\.png/);
-    expect(combatShield('planta')).toBeUndefined(); // cai no `defended` próprio do FX
+    expect(combatShield('planta')).toMatch(/escudo-planta\.png$/); // escudo próprio desde 30/10/2026
     expect(combatBaseElement('flora')).toBeDefined();
     expect(combatSceneBg('neutro')).toMatch(/bg-neutro\.png\) center\/cover #285558$/);
     expect(combatShield('neutro')).toMatch(/escudo-neutro\.png$/);
