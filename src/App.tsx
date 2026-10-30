@@ -217,7 +217,12 @@ import { isCorvo, spriteLineOf } from './utils/corvoPet';
 const gmTools = () => import('./utils/gmTools');
 const corvoAdocao = () => import('./utils/corvoAdocao');
 import { createEntitlementSync } from './utils/entitlementSync';
-import { subscribeAuthState } from './utils/auth';
+import { subscribeAuthState, getIdToken } from './utils/auth';
+import { refreshVeladoTester } from './utils/veladoTester';
+import { isOnboardingVelado, sanitizeStageId } from './utils/bbStage';
+import { sortearBB } from './data/bbPool';
+import { LINE_FULL_ART } from './utils/lineFullArt';
+import { pedirFreeRookie } from './utils/freeRookie';
 import { fetchEntitlement, spendCredits, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
 import { purchase, reconcileSubscription, reconcilePurchases } from './utils/playBilling';
 import { SUBSCRIPTION_SKU, setSubscriptionFromEntitlement, useSubscriptionStatus } from './utils/subscription';
@@ -858,6 +863,17 @@ export default function App() {
   const [reverHistoria, setReverHistoria] = useState(false);
   /* ONBOARDING_VELADO: Guilda dos Mercenarios (plano §11). Painel aberto pelo chip do mapa; escolha e confirmacao rodam em `utils/mercMission.ts`. */
   const [mercOpen, setMercOpen] = useState(false);
+  /* ONBOARDING_VELADO por pessoa: o interruptor de build OU o teste do servidor (`/api/velado-teste`, só chega depois do login).
+     Os pontos abaixo leem `veladoOn` (estado) e não a constante de módulo, para ligarem sem recarregar. Desligado = idêntico. */
+  const [veladoTesterOn, setVeladoTesterOn] = useState(false);
+  const veladoOn = ONBOARDING_VELADO || veladoTesterOn;
+  useEffect(() => {
+    const checar = () => { void getIdToken().then(t => refreshVeladoTester(t)).then(() => setVeladoTesterOn(isOnboardingVelado())); };
+    checar();
+    return subscribeAuthState(checar);
+  }, []);
+  /* Cerimônia BB→rookie: o rookie grátis (`/api/free-rookie`) carrega sem travar a UI; falha = sprite inicial pronto. */
+  const [freeRookie, setFreeRookie] = useState<'idle' | 'loading' | 'done'>('idle');
   const escolherMercenario = useCallback((o: MercOrdem) => setGameState(prev => escolherMerc(prev, o, playerDayKey(new Date(), prev.playerDayTz)).state), []);
   const confirmarMercenario = useCallback(() => setGameState(prev => concluirMerc(prev, playerDayKey(new Date(), prev.playerDayTz))), []);
   /* ONBOARDING_VELADO: introdução pré-login (1ª abertura) e "Rever a introdução". */
@@ -878,6 +894,13 @@ export default function App() {
     if (!id) { id = newUuid(); writeLocal(STORAGE_KEYS.SAVE_ID, id); }
     return id;
   });
+  /* Nascimento: sorteia o BB do pool pela leitura do oráculo (D19). Pool vazio/sem sprite = null = fluxo atual. */
+  const obterBBDoSorteio = useCallback((leitura?: { elemento?: string | null; reino?: string | null }) => {
+    if (initialStageForNewSave() !== 'bb') return null;
+    const bb = sortearBB(saveId, leitura);
+    const url = bb ? LINE_FULL_ART[bb.sprite] : undefined;
+    return bb && url ? { url, formId: 'bb' } : null;
+  }, [saveId]);
   const [editModalOpen, setEditModalOpen] = useState(false);
   /** P4 — "Equilibrar minha semana". Só abre por gesto; nunca sozinho. */
   const [balanceOpen, setBalanceOpen] = useState(false);
@@ -3596,7 +3619,7 @@ export default function App() {
   const handleEvolveRequest = useCallback(() => {
     if (isStarterId(gameState.demoCharacterId)) return; // os iniciais não evoluem
     // D8 (ONBOARDING_VELADO): grátis depois do rookie pede conta paga — abre o convite.
-    if (evolutionPaywalled({ velado: ONBOARDING_VELADO, accountTier: gameState.accountTier, evolutionStage })) { setUnlockReason('evolve-free'); return; }
+    if (evolutionPaywalled({ velado: veladoOn, accountTier: gameState.accountTier, evolutionStage })) { setUnlockReason('evolve-free'); return; }
     const { stage: next } = evolutionTarget({
       points: { power: powerPoints, harmony: harmonyPoints, benevolence: benevolencePoints },
       reading: carePatternReading,
@@ -3610,7 +3633,20 @@ export default function App() {
     // qualquer jeito, deixando o jogador diante de um ritual que não commita.
     if (degeneratedByHP) return;
     if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next, spent: gaugeGoalFor(evolutionStage, unlockedEvolutions) });
-  }, [powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP, gameState.demoCharacterId, gameState.accountTier, setUnlockReason]);
+    // ONBOARDING_VELADO (D6/D20): ao abrir a cerimônia BB→rookie, pede o rookie grátis sem bloquear a UI.
+    // Fallback/falha = segue com o inicial pronto (o acervo/`getSpriteForStage` de sempre).
+    if (veladoOn && next === 'rookie' && sanitizeStageId(String(evolutionStage)) === 'bb' && freeRookie === 'idle') {
+      const rk = gameState.soulmonStages?.find(st => st.stage === 'rookie');
+      if (rk) {
+        setFreeRookie('loading');
+        const dayKey = playerDayKey(new Date(), gameState.playerDayTz);
+        void pedirFreeRookie(rk.imagePrompt, rk.imagePromptFallback).then(image => {
+          if (image) updateSpriteLibrary(prev => recordSprite(prev, { url: image, formId: 'rookie', at: Date.now() }, { adopt: 'now', dayKey }));
+          setFreeRookie('done');
+        });
+      }
+    }
+  }, [powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP, gameState.demoCharacterId, gameState.accountTier, gameState.soulmonStages, gameState.playerDayTz, setUnlockReason, veladoOn, freeRookie, updateSpriteLibrary]);
 
   const handleEvolve = useCallback(() => {
     setGameState(prev => {
@@ -3622,7 +3658,7 @@ export default function App() {
       // Os 5 iniciais não evoluem (um sprite só, 14/10/2026 — decisão do dono).
       if (isStarterId(prev.demoCharacterId)) return prev;
       // D8 (ONBOARDING_VELADO): reconferida sobre o `prev`, é o updater que commita.
-      if (evolutionPaywalled({ velado: ONBOARDING_VELADO, accountTier: prev.accountTier, evolutionStage: prev.evolutionStage })) return prev;
+      if (evolutionPaywalled({ velado: veladoOn, accountTier: prev.accountTier, evolutionStage: prev.evolutionStage })) return prev;
       // #59 (decisão do dono, 22/09/2026): "Queda: exigir uma virada completa
       // antes de re-evoluir (acaba a cura grátis por um clique)". A regra mora
       // em `utils/dailyReset.ts` — aqui só se delega, porque ela tem DOIS
@@ -6922,7 +6958,7 @@ export default function App() {
   const selo = <OfflineSeal language={language} topOffset={8} />;
 
   // ONBOARDING_VELADO: a cinemática antes do login, só na 1ª abertura (com Pular).
-  if (ONBOARDING_VELADO && !hasCompletedOnboarding && introCinePendente) {
+  if (veladoOn && !hasCompletedOnboarding && introCinePendente) {
     return <IntroCinematica language={language} onDone={() => setIntroCinePendente(false)} />;
   }
 
@@ -6931,13 +6967,13 @@ export default function App() {
     return (
       <>
         {selo}
-        <Suspense fallback={<ScreenSkeleton language={language} />}><SoulmonOnboarding onComplete={handleCompleteOnboarding} onLanguageChange={setLanguage} onStartDemo={handleStartDemo} /></Suspense>
+        <Suspense fallback={<ScreenSkeleton language={language} />}><SoulmonOnboarding onComplete={handleCompleteOnboarding} onLanguageChange={setLanguage} onStartDemo={handleStartDemo} obterBB={veladoOn ? obterBBDoSorteio : undefined} /></Suspense>
       </>
     );
   }
 
   // ONBOARDING_VELADO: a sequência narrativa no lugar do tutorial, depois do ritual e do nascimento.
-  if (ONBOARDING_VELADO && !sequenciaVista && !gameState.demoCharacterId) {
+  if (veladoOn && !sequenciaVista && !gameState.demoCharacterId) {
     const terminarSequencia = () => {
       writeFlag(STORAGE_KEYS.ONBOARDING_VELADO_VISTO, true, { silent: true });
       writeFlag(STORAGE_KEYS.TUTORIAL_COMPLETE, true, { silent: true });
@@ -7113,7 +7149,7 @@ export default function App() {
             </div>
           )}
 
-          {labTab === 'evolution' && evolutionPaywalled({ velado: ONBOARDING_VELADO, accountTier: gameState.accountTier, evolutionStage: gameState.evolutionStage }) && (
+          {labTab === 'evolution' && evolutionPaywalled({ velado: veladoOn, accountTier: gameState.accountTier, evolutionStage: gameState.evolutionStage }) && (
             <div style={{ padding: '0 4px 10px' }}>
               <UnlockNudge language={language} reason="evolve-free" onOpen={() => setUnlockReason('evolve-free')} />
             </div>
@@ -7955,7 +7991,7 @@ export default function App() {
                 onEvolve={handleEvolve}
                 canEvolve={(() => {
                   if (isStarterId(gameState.demoCharacterId)) return false;
-                  if (evolutionPaywalled({ velado: ONBOARDING_VELADO, accountTier: gameState.accountTier, evolutionStage: gameState.evolutionStage })) return false;
+                  if (evolutionPaywalled({ velado: veladoOn, accountTier: gameState.accountTier, evolutionStage: gameState.evolutionStage })) return false;
                   if (gameState.evolutionLocked || !gaugeFull(gameState.evolutionPoints, gameState.evolutionStage, gameState.unlockedEvolutions, gameState.totalXP)) return false;
                   // #59 — depois de uma queda por HP, o botão só acende na
                   // virada seguinte. Mesma função que o `handleEvolve` commita.
@@ -8500,20 +8536,20 @@ export default function App() {
             </div>
           )}
 
-          {ONBOARDING_VELADO && pane === 'map' && (
+          {veladoOn && pane === 'map' && (
             <button type="button" data-merc-chip onClick={() => setMercOpen(true)}
               style={{ position: 'fixed', right: 12, bottom: 'calc(var(--sm-nav-h, 72px) + 16px)', zIndex: 20, minHeight: 44, padding: '0 14px', borderRadius: 12, border: '1px solid var(--sm2-border, #555)', background: 'var(--sm2-surface, #1a1a1a)', color: 'inherit' }}>
               {language === 'pt-BR' ? 'Guilda dos Mercenários' : 'Mercenary Guild'}
             </button>
           )}
-          {ONBOARDING_VELADO && mercOpen && (
+          {veladoOn && mercOpen && (
             <MercGuildSheet open onClose={() => setMercOpen(false)} language={language}
               hoje={mercDeHoje(gameState, playerDayKey(new Date(), gameState.playerDayTz))}
               bb={gameState.evolutionStage === 'bb'}
               onChoose={escolherMercenario} onConfirm={confirmarMercenario} />
           )}
-          {ONBOARDING_VELADO && reverHistoria && <SequenciaOnboarding forcar language={language} onDone={() => setReverHistoria(false)} />}
-          {ONBOARDING_VELADO && reverIntro && <IntroCinematica language={language} onDone={() => setReverIntro(false)} />}
+          {veladoOn && reverHistoria && <SequenciaOnboarding forcar language={language} onDone={() => setReverHistoria(false)} />}
+          {veladoOn && reverIntro && <IntroCinematica language={language} onDone={() => setReverIntro(false)} />}
           {pane === 'settings' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><SettingsPage
               soundMuted={soundMuted}
@@ -8547,8 +8583,8 @@ export default function App() {
               demo={demo ? { onLeave: handleLeaveDemo } : undefined}
               onOpenOracle={() => goTo('page:oracle')}
               onResetOnboarding={handleResetOnboarding}
-              onReplayStory={ONBOARDING_VELADO ? () => setReverHistoria(true) : undefined}
-              onReplayIntro={ONBOARDING_VELADO ? () => setReverIntro(true) : undefined}
+              onReplayStory={veladoOn ? () => setReverHistoria(true) : undefined}
+              onReplayIntro={veladoOn ? () => setReverIntro(true) : undefined}
               useAI={useAI}
               onToggleAI={() => setUseAI(!useAI)}
               language={language}
@@ -8930,6 +8966,7 @@ export default function App() {
         spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
       />
 
+      {evolutionCeremony && freeRookie === 'loading' && <p data-free-rookie-loading role="status" style={{ position: 'fixed', bottom: 12, left: 0, right: 0, textAlign: 'center', zIndex: 1000, pointerEvents: 'none', fontSize: 12, opacity: 0.8 }}>{language === 'pt-BR' ? 'Desenhando sua nova forma…' : 'Drawing your new form…'}</p>}
       {evolutionCeremony && (
         <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <EvolutionCeremony
@@ -8943,7 +8980,7 @@ export default function App() {
           reachedAt={gameState.formReachedAt?.[evolutionCeremony.to]}
           fragmentsSpent={evolutionCeremony.spent}
           onEvolved={handleEvolve}
-          onClose={() => setEvolutionCeremony(null)}
+          onClose={() => { setEvolutionCeremony(null); setFreeRookie('idle'); }}
         />
         </Suspense>
       )}

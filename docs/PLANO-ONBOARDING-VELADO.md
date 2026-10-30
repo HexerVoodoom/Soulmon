@@ -305,3 +305,12 @@ O preço decidido (D9, US$ 3,99) segue; se quiser baixar, a conta agora permite.
 - Cena 0 (D1): com `ONBOARDING_VELADO`, a apresentação (AMBRA_INTRO) e o passo do nome mostram o ancião (`velado-anciao`) com as falas `ROTEIRO.c0`, e o bichinho do oráculo (placeholder `dormant`) ao lado como o Soulmon dele. Mesmas perguntas e resultado. Desligado = Ambra/oráculo atuais.
 - Cena 1 (D18): prop injetável `obterBB()` em `SoulmonOnboarding`; devolve `{url, formId}` e o nascimento revela na hora, sem API, com a copy "o berço" (`BERCO`, EN+PT). Default ausente/null = nascimento atual. TODO: ligar a `sortearBB` de `src/data/bbPool.ts` (outra frente).
 - 1ª tarefa antes da cena 6: o ritual já cria a tarefa (`firstTaskValue` -> `firstTaskFrom` -> `initialActivities` no `onComplete`, campo com sugestão pré-preenchida). Escolha: não criar outra; a `EtapaTarefa` da cena 6 só pede o "fez de verdade?" sobre ela.
+
+## 14. Decisões de 30/10/2026 (2ª rodada)
+
+| # | Decisão do dono |
+|---|---|
+| D26 | Prédio: **Mercenary Guild** / Guilda dos Mercenários. |
+| D27 | Recompensa da missão **mantém 3/5** pontos, mesmo com a simulação (46–62% de um tipo para quem repete a Ordem). |
+| D28 | O `freeGen` que sobrevive à exclusão de conta é **declarado na política** (hash irreversível + imagem gerada); sobe a `PRIVACY_VERSION`. |
+| D29 | Pool de BBs começa com **50** (~US$ 1,20), amplia depois. |

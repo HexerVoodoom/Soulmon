@@ -19,7 +19,10 @@ import {
   type LifeArea, type StruggleId, type StrengthId,
 } from '../types/activityCatalog';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
-import { ONBOARDING_VELADO } from './onboarding/sequencia/flag';
+import { ONBOARDING_VELADO as VELADO_BUILD } from './onboarding/sequencia/flag';
+import { isOnboardingVelado } from '../utils/bbStage';
+/* Build OU testador (o teste por pessoa só chega depois do login; lido a cada render/uso, não no load). */
+const veladoLigado = () => VELADO_BUILD || isOnboardingVelado();
 import { ROTEIRO, BERCO, ANCIAO, t as tVelado } from './onboarding/sequencia/copy';
 import { urlDoAsset } from './onboarding/sequencia/assets';
 import { soulmonIntroLines } from '../utils/soulmonIntro';
@@ -276,7 +279,7 @@ interface SoulmonOnboardingProps {
    * Default (ausente) = null = o nascimento atual (sprite gerado). TODO: ligar a `sortearBB` de
    * `src/data/bbPool.ts` quando a frente do sorteio chegar.
    */
-  obterBB?: () => { url: string; formId: string } | null;
+  obterBB?: (leitura?: { elemento?: string | null; reino?: string | null }) => { url: string; formId: string } | null;
 }
 
 /**
@@ -1036,8 +1039,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const iniciarCerimoniaDoReveal = (r: OracleResult) => {
     const inicial = r.creature.stages.find(st => st.stage === 'rookie') ?? r.creature.stages[0];
     if (!inicial) return;
-    if (ONBOARDING_VELADO && obterBB) {
-      const bb = obterBB();
+    if (veladoLigado() && obterBB) {
+      const bb = obterBB({ elemento: r.dominantElement });
       if (bb) { setRevealContaNaoPaga(false); setRevealSprite({ url: bb.url, formId: bb.formId, at: Date.now() }); return; }
     }
     setRevealContaNaoPaga(false);
@@ -1834,7 +1837,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           <NpcSequence
             language={lang}
             label={isPt ? 'Apresentação da Ambra' : 'Ambra introduces herself'}
-            lines={ONBOARDING_VELADO
+            lines={veladoLigado()
               ? ROTEIRO.c0.map(f => ({ speaker: tVelado(ANCIAO.nome, lang), art: urlDoAsset('velado-anciao') ?? FUNCTION_NPC_ART.oraculo, text: tVelado(f, lang) }) satisfies NpcSequenceLine)
               : [{ speaker: 'Ambra', art: FUNCTION_NPC_ART.onboarding, text: AMBRA_FALAS.intro[isPt ? 'pt' : 'en'] } satisfies NpcSequenceLine]}
             onFinish={() => setStep(NAME_STEP)}
@@ -1887,7 +1890,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {step === NAME_STEP && (
           <StepShell title={isPt ? 'Como podemos te chamar?' : 'What should we call you?'}>
             {/* 14/10/2026 (dono): o NPC de boas-vindas é a Ambra (`onboarding`), não a Iris (Oráculo). */}
-            {ONBOARDING_VELADO ? (
+            {veladoLigado() ? (
               <div data-anciao-npc style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
                 <img src={urlDoAsset('velado-anciao') ?? FUNCTION_NPC_ART.oraculo} alt="" width={96} height={96}
                   style={{ width: 96, height: 96, objectFit: 'contain', flexShrink: 0 }} />
@@ -2336,7 +2339,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 display: 'flex', alignItems: 'center', gap: 12, padding: 12, marginBottom: 16, borderRadius: 16,
                 border: '2px solid var(--sm2-gold-fill)', backgroundColor: 'var(--sm2-surface)',
               }}>
-                {ONBOARDING_VELADO ? (
+                {veladoLigado() ? (
                   <>
                     <img data-anciao src={urlDoAsset('velado-anciao') ?? FUNCTION_NPC_ART.oraculo} alt="" aria-hidden="true" width={96} height={96}
                       style={{ width: 96, height: 96, objectFit: 'contain', flexShrink: 0 }} />
@@ -2400,7 +2403,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 cartão desenhado duas vezes divergiria, e o que a pessoa
                 guarda na memória não seria o que ela reencontra. */}
             <div style={{ margin: '8px 0 20px' }}>
-              {ONBOARDING_VELADO && revealSprite && obterBB && (
+              {veladoLigado() && revealSprite && obterBB && (
                 <p data-berco style={{ ...sm2Hint, margin: '0 0 8px', textAlign: 'center' }}>
                   <b>{tVelado(BERCO.titulo, lang)}</b> · {tVelado(BERCO.legenda, lang)}
                 </p>
