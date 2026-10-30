@@ -3,7 +3,8 @@
  * Fix identidade do lutador: o MESMO personagem usa o MESMO golpe básico (elemento PRINCIPAL + forma da escola) e o MESMO
  * especial em Arena, Masmorra, Pesadelo, Duelo e Torneio, e o oponente o vê igual no PvP. O esperado sai da FICHA
  * (`buildStageSkills`) e da tabela da escola, NUNCA do dono único: assim o teste reprova o código antigo (vermelho) e
- * não é circular. Save realista: ficha que comprou o par `vapor` (dominante) e o oráculo diz `fogo` (base).
+ * não é circular. REGRA DO DONO (30/10/2026, docs/ELEMENTO-POR-SPRITE.md): a ARTE manda — elemento do básico e do especial = o do
+ * sprite (`petElement`/`soulmonMeta.dominantElement` = ORACULO), a ficha decide só forma/escola. Save realista: ficha que comprou o par `vapor` (dominante) e o oráculo diz `fogo` (base).
  */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, act, cleanup, fireEvent } from '@testing-library/react';
@@ -58,11 +59,10 @@ const ORACULO = 'fogo'; // `soulmonMeta.dominantElement`: um elemento BASE que N
 
 function esperado(f: Ficha) {
   const par = buildStageSkills(f, 'rookie', 'seed-contrato');
-  const dom = par.elementoDominante!.id;
   return {
     par,
-    basico: { el: fxElementId(dom), forma: SCHOOL_STRIKE_FORM[par.basica.escolaId].basica },
-    especial: { el: fxElementId(par.especial.elementoId), forma: SCHOOL_STRIKE_FORM[par.especial.escolaId].especial },
+    basico: { el: fxElementId(ORACULO), forma: SCHOOL_STRIKE_FORM[par.basica.escolaId].basica },
+    especial: { el: fxElementId(ORACULO), forma: SCHOOL_STRIKE_FORM[par.especial.escolaId].especial },
   };
 }
 
@@ -131,7 +131,7 @@ for (const [rotulo, f] of Object.entries(SAVES)) {
 
     it('Torneio PvP: o SEU lado (ficha local) e o OPONENTE (fx do servidor) saem com a mesma identidade', () => {
       // o servidor deriva do SAVE (`soulmonSkills` congelado), nunca de campo cru do cliente
-      const lado = duelSide({ evolutionStage: 'rookie', perfectDays: 3, soulmonSkills: skills }) as unknown as DuelSide;
+      const lado = duelSide({ evolutionStage: 'rookie', perfectDays: 3, soulmonSkills: skills, soulmonMeta: { dominantElement: ORACULO } }) as unknown as DuelSide;
       const r = duelo({ me: lado, opp: lado, skills, petElement: ORACULO, oppElement: 'agua' });
       for (const v of [r.me, r.foe]) {
         expect([...v.basico.el]).toEqual([ex.basico.el]);
@@ -142,10 +142,13 @@ for (const [rotulo, f] of Object.entries(SAVES)) {
     });
 
     it('treino do Torneio (sem `petElement`): o servidor publica a identidade e a tela a usa', () => {
-      const lado = duelSide({ evolutionStage: 'rookie', perfectDays: 3, soulmonSkills: skills }) as unknown as DuelSide;
+      const lado = duelSide({ evolutionStage: 'rookie', perfectDays: 3, soulmonSkills: skills, soulmonMeta: { dominantElement: ORACULO } }) as unknown as DuelSide;
       const r = duelo({ me: lado, opp: lado, skills });
-      expect([...r.me.basico.el]).toEqual([ex.basico.el]);
-      expect([...r.me.especial.el]).toEqual([ex.especial.el]);
+      // sem `petElement` (sprite desconhecido) a regra cai na ficha, como documentado em `fighterIdentity`; as FORMAS seguem as da escola
+      expect([...r.me.basico.el]).toEqual([fxElementId(ex.par.elementoDominante!.id)]);
+      expect([...r.me.especial.el]).toEqual([fxElementId(ex.par.especial.elementoId)]);
+      expect([...r.me.basico.forma]).toEqual([ex.basico.forma]);
+      expect([...r.me.especial.forma]).toEqual([ex.especial.forma]);
     });
   });
 }
