@@ -20,6 +20,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { sanitizeStageId } from '../utils/bbStage';
 
 const RAIZ = resolve(__dirname, '../..');
 const ler = (p: string) => readFileSync(resolve(RAIZ, p), 'utf8');
@@ -338,8 +339,7 @@ describe('FORMA BB (Onboarding Velado, D3): o id `bb` entra no save sem campo no
     expect(corpoHydrate(CTX)).toContain('getMaxHPForStage(loadedState.evolutionStage');
     expect(CTX).toMatch(/if \(isBBStage\(stage\)\) return BB_MAX_HP;/);
   });
-  it('o save sem `bb` (todo save existente) não muda: o sanitizador devolve o id intacto', async () => {
-    const { sanitizeStageId } = await import('../utils/bbStage');
+  it('o save sem `bb` (todo save existente) não muda: o sanitizador devolve o id intacto', () => {
     for (const id of ['rookie', 'champion-power', 'mega-harmony', 'ultra']) expect(sanitizeStageId(id)).toBe(id);
   });
 });
