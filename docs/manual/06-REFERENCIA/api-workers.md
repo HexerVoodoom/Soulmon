@@ -642,6 +642,12 @@ Fechamento mensal do Endless Rift (M6): Créditos 50/25/10 para o top 3, pagos S
 ### `functions/api/gm-soulmons.js`
 `GET /api/gm-soulmons?cursor=` — lista de Soulmons gerados, só para o GM (M12). Exige Bearer ID token cujo e-mail verificado esteja em `ADMIN_EMAILS`; qualquer outro caso é 403 `forbidden` idêntico. Fonte: `sprite:img:<saveId>:<formId>`; nome do perfil público; paginação por cursor da KV, 24 por página.
 
+### `functions/api/gm-gerar-sprite.js`
+`POST /api/gm-gerar-sprite { prompt (<=12000), model?: 'alpha'|'flare', n?: 1..4 }` — gera sprites só para o GM. Exige Bearer ID token cujo e-mail verificado esteja em `ADMIN_EMAILS`; qualquer outro caso é 403 `forbidden` idêntico. Gera pelo mesmo caminho de `generate-sprite.js` (`_spriteGen.js`, `HF_CREDENTIALS`), grava sob `sprite:gm:<timestamp>:<i>` (nunca em save de jogador) e devolve `{ images: [url] }`. Sem e-mail em URL/log. Régua: `gm-gerar-sprite.test.js`.
+
+### `functions/api/_spriteGen.js`
+Núcleo de geração extraído de `generate-sprite.js` sem mudar comportamento (30/10/2026): API Higgsfield (`generateHf`, `hfRequestBody`, `spriteModel`, `spriteQuality`, polling), chroma-key (`baixarEChavear`), recusa (`isRefusal`) e armazenamento `sprite:blob:<token>` (`republicar`, `guardarBlob`). Chamado por `generate-sprite.js` (que reexporta o que os testes usam) e `gm-gerar-sprite.js`.
+
 ### `functions/api/rankings.js`
 `/api/rankings` (M8): `POST { id, game, score, period? }` submete (melhor score do período) e `GET ?game=&period=&id=&top=` devolve o top N e a posição/faixa de `id`. As duas exigem ID token que derive o saveId (`authorizeSaveAccess`); rate limit por IP (`LIMIT_IP` 60/min) e por submissão (`LIMIT_SUBMIT` 20/min). Regras em `_rankings.js`.
 
