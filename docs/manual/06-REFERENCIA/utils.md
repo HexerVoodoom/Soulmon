@@ -3884,6 +3884,16 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Exports:** `ROGUE_FLOORS`, `ROGUE_PER_FLOOR`, `ROGUE_MAX_STEPS`, `ROGUE_COMBAT_EVERY`, `ROGUE_FLOOR_BONUS`, `ROGUE_MAX_SCORE`, `PathKind`, `BonusKind`, `pathsFor`, `bonusChoices`, `resolveStep`, `rogueScore`, `rogueBits`, `runForDay`.
 **Chamado por:** `src/components/RogueDungeon.tsx`
 
+### `src/utils/groveRaid.ts`
+**Dono de:** o ataque ao Bosque como LUTA de verdade (§204, 30/10/2026): formação de 3 pragas (`groveRaidLineup`, determinística pela semente; a 3ª é champion), a rodada do núcleo v3 contra os 3 slots fáceis do andar 1 ao mesmo tempo (`groveRaidRound`), a simulação sem cena (`simulateGroveRaid`) e o desfecho (`groveRaidOutcome`: só vitória protege, perder custa 0). O servidor segue dono do sorteio e da proteção (`_claPlantio.js`).
+**Exports:** `GROVE_RAID_FOES`, `groveRaidLineup`, `GroveRaidRound`, `groveRaidRound`, `simulateGroveRaid`, `groveRaidOutcome`.
+**Chamado por:** `src/components/guild/PlantioVisor.tsx`, `src/components/guild/GroveRaidFight.tsx`
+
+### `src/utils/temaInimigos.ts` · `src/utils/temaInimigosArt.ts`
+**Dono de:** `temaInimigos.ts` — os inimigos TEMÁTICOS em dados puros (§204): `GROVE_RAIDERS` (5 pragas do Bosque) e `BARRAGE_ROSTER` (6 criaturas de espaço da Soul Barrage renovada), cada uma com UM elemento (`spriteElement` › `tema:<id>`), forma e golpes próprios; `kind: 'api'`, fora do `ENEMY_ROSTER`. `temaInimigosArt.ts` — a arte por `import.meta.glob` de `assets/soulmon/inimigos-tema/<id>-<forma>.png`, com placeholder = base do mesmo elemento (`placeholderOf`, `temaSpriteOf`).
+**Exports:** `GROVE_RAIDERS_DATA`, `BARRAGE_ROSTER_DATA`, `GROVE_RAIDERS`, `BARRAGE_ROSTER`, `TEMA_INIMIGOS` · `TEMA_ART`, `placeholderOf`, `temaSpriteOf`.
+**Chamado por:** `src/utils/soulBarrage.ts`, `src/utils/spriteElement.ts`, `src/utils/groveRaid.ts`, `src/components/SoulBarrage.tsx`, `src/components/guild/PlantioVisor.tsx`
+
 ### `src/utils/soulBarrage.ts`
 **Dono de:** a lógica pura do Soul Barrage (M9), bullet hell vertical do Salão de Jogos: o Soulmon atira sozinho, inimigos do `enemyRoster` descem e atiram, tiro tira 1 vida, a fase sobe a cada `PHASE_SECONDS`. `dt` e `rng` por parâmetro. Pontos = abates; Bits por `barrageBits(score)` pelo funil de minigames (teto diário aplicado fora).
 **Exports:** `FIELD_W`, `FIELD_H`, `PLAYER_R`, `PLAYER_SIZE`, `PLAYER_Y`, `PLAYER_SPEED`, `START_LIVES`, `INVULN_SECONDS`, `barrageBits` e o estado/passo da simulação.

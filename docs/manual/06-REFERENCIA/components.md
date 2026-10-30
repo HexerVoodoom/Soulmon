@@ -1863,6 +1863,9 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 ### `src/components/RogueFight.tsx`
 **Dono de:** a luta do Calabouço em cena (N7): a `BattleStage` com o núcleo v3 decidindo pela semente de `rogueFightSetup`, relógio de `useGroupBattle` com especial automático, avanço rápido 1×/3× e o cartão de fim ("Continuar"). Sair no meio conta como derrota. Superfície muda (nenhum som novo). **Exports:** `RogueFightProps`, `RogueFight`. **Chamado por:** `RogueDungeon`.
 
+### `src/components/guild/GroveRaidFight.tsx`
+**Dono de:** a luta do Bosque em cena (§204): `BattleStage` + `useGroupBattle` com torcida, anel e esquiva contra as 3 pragas de `groveRaidLineup`; cartão de fim ("Continuar"); sair = derrota sem custo. Superfície muda. **Exports:** `GroveRaidFightProps`, `GroveRaidFight`. **Chamado por:** `PlantioVisor` (lazy).
+
 ### `src/components/SoulBarrage.tsx`
 **Dono de:** a tela do Soul Barrage (4º card do Salão de Jogos, M9): desenha o campo e traduz toque em `targetX`; a regra mora em `utils/soulBarrage.ts`. Usa o `RankingPanel`. **Exports:** `SoulBarrage`.
 

@@ -4,7 +4,11 @@ import { render, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { GuildSheet } from './GuildSheet';
 
 // A vitória da defesa é decisão do cliente: aqui ela é determinística (o combate em si tem teste próprio).
-vi.mock('../../utils/plantioDefesa', async (orig) => ({ ...(await orig<typeof import('../../utils/plantioDefesa')>()), lutarDefesa: () => ({ won: true, fightsWon: 3 }) }));
+// §204: a luta é a BattleStage (teste próprio); aqui ela termina vencida assim que monta.
+vi.mock('./GroveRaidFight', async () => {
+  const { useEffect } = await import('react');
+  return { GroveRaidFight: ({ onResult }: { onResult: (w: boolean) => void }) => { useEffect(() => { onResult(true); }, [onResult]); return null; } };
+});
 
 const EU = 'a'.repeat(16);
 const ELE = 'b'.repeat(16);

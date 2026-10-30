@@ -12,10 +12,14 @@
  * nenhum número por pessoa existe na vista. A barra é o crescimento COLETIVO da planta, sem texto de razão.
  * Os botões mostram só o que a pessoa pode fazer agora: o que já foi feito hoje vira o fato, sem botão.
  */
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import type { SoulXPState } from '../../utils/soulXP';
-import { DEFESA_INIMIGOS, inimigosDaDefesa, lutarDefesa } from '../../utils/plantioDefesa';
+import { soulCombatant } from '../../utils/soulXP';
+import { groveRaidLineup } from '../../utils/groveRaid';
+import { temaSpriteOf } from '../../utils/temaInimigosArt';
+/** §204: a luta do Bosque (BattleStage) só carrega quando o jogador entra nela. */
+const GroveRaidFight = lazy(() => import('./GroveRaidFight').then(m => ({ default: m.GroveRaidFight })));
 import { getPlantio, actPlantio, type PlantioAction, type PlantioView, type PlantSpecies } from '../../utils/claApi';
 import { fruitRewards } from '../../utils/claCredit';
 import { ARVORE_SRC, PANORAMA_SRC } from '../../assets/bosque';
@@ -118,7 +122,6 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
 
   const gs = useGameStateOptional()?.gameState;
   const estado = useMemo<SoulXPState>(() => (gs ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP } : { evolutionStage: 'rookie' }), [gs]);
-  const linha = gs?.demoCharacterId;
   const [defendendo, setDefendendo] = useState(false);
   // L5-D2: sem botao 'Plantar' — a terra da estacao e plantada sozinha (idempotente; 409 = outro membro ja plantou).
   const plantando = useRef(false);
@@ -207,7 +210,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
                   {v.wateredToday && <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-regado>{t('guild.plantio.regado')}</p>}
                   {v.protectedToday && <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-protegido>{t('guild.plantio.protegido')}</p>}
                   {defendendo && v.task === 'protect' ? (
-                    <Defesa t={t} estado={estado} linha={linha} ocupado={ocupado} onVenceu={() => { setDefendendo(false); void fazer('claProteger'); }} />
+                    <Defesa t={t} isPt={language === 'pt-BR'} estado={estado} evolutionStage={gs?.evolutionStage} demoCharacterId={gs?.demoCharacterId} ocupado={ocupado} onVenceu={() => { setDefendendo(false); void fazer('claProteger'); }} />
                   ) : (v.canDraw || v.task) && (
                     <>
                     {gate && !gate.liberado && <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-tend-antes>{tendLinhaAntes(language, gate.restam)}</p>}
@@ -245,27 +248,38 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
   );
 }
 
-/** L5-D2: o combate fácil de proteger o jardim (3 inimigos sorteados, só o sprite). Perder não custa nada. */
-function Defesa({ t, estado, linha, ocupado, onVenceu }: { t: ClaT; estado: SoulXPState; linha?: string; ocupado: boolean; onVenceu: () => void }) {
+/**
+ * §204 (30/10/2026): proteger o jardim é uma LUTA DE VERDADE contra 3 pragas do Bosque (`groveRaid.ts`), na BattleStage com
+ * torcida, anel e esquiva. Aqui fica a prévia (os 3 sprites) e o botão; vencer protege, perder não custa nada.
+ */
+function Defesa({ t, isPt, estado, evolutionStage, demoCharacterId, ocupado, onVenceu }: { t: ClaT; isPt: boolean; estado: SoulXPState; evolutionStage?: string; demoCharacterId?: string; ocupado: boolean; onVenceu: () => void }) {
   const [seed, setSeed] = useState(() => (Math.random() * 2 ** 31) | 0);
   const [perdeu, setPerdeu] = useState(false);
-  const inimigos = useMemo(() => inimigosDaDefesa(seed, linha), [seed, linha]);
-  const lutar = () => {
-    if (lutarDefesa(estado, seed).won) { onVenceu(); return; }
+  const [lutando, setLutando] = useState(false);
+  const inimigos = useMemo(() => groveRaidLineup(seed), [seed]);
+  const combatant = useMemo(() => soulCombatant(estado), [estado]);
+  const fim = (won: boolean) => {
+    setLutando(false);
+    if (won) { onVenceu(); return; }
     setPerdeu(true);
     setSeed((Math.random() * 2 ** 31) | 0);
   };
   return (
     <div data-plantio-defesa style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
       <ul aria-label={t('guild.plantio.defesa.aria')} style={{ display: 'flex', gap: 8, listStyle: 'none', padding: 0, margin: 0 }}>
-        {inimigos.slice(0, DEFESA_INIMIGOS).map((src, i) => (
-          <li key={i}><img src={src} alt="" width={64} height={64} draggable={false} style={{ width: 64, height: 64, imageRendering: 'pixelated' }} /></li>
+        {inimigos.map((e, i) => (
+          <li key={i}><img src={temaSpriteOf(e)} alt="" width={64} height={64} draggable={false} style={{ width: 64, height: 64, imageRendering: 'pixelated' }} /></li>
         ))}
       </ul>
       {perdeu && <p role="status" className="sm2-lib-s" style={{ margin: 0 }} data-plantio-defesa-perdeu>{t('guild.plantio.defesa.perdeu')}</p>}
-      <button type="button" data-plantio-lutar disabled={ocupado} aria-disabled={ocupado ? true : undefined} onClick={lutar} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
+      <button type="button" data-plantio-lutar disabled={ocupado || lutando} aria-disabled={ocupado || lutando ? true : undefined} onClick={() => setLutando(true)} className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary sm2-guild-btn">
         <Icon name="swords" size={20} />{t('guild.plantio.defesa.lutar')}
       </button>
+      {lutando && (
+        <Suspense fallback={null}>
+          <GroveRaidFight isPt={isPt} seed={seed} combatant={combatant} evolutionStage={evolutionStage} demoCharacterId={demoCharacterId} onResult={fim} />
+        </Suspense>
+      )}
     </div>
   );
 }
