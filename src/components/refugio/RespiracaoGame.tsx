@@ -163,10 +163,10 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
           {isPt ? 'Tudo bem. Volte quando precisar.' : 'All good. Come back whenever you need.'}
         </p>
         <div style={{ display: 'flex', gap: 8 }}>
-          <button type="button" onClick={onExit} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0 }}>
+          <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0 }}>
             {isPt ? 'Sair' : 'Exit'}
           </button>
-          <button type="button" onClick={() => setScreen('setup')} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0 }}>
+          <button type="button" onClick={() => setScreen('setup')} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0 }}>
             {isPt ? 'De novo' : 'Again'}
           </button>
         </div>
