@@ -271,3 +271,9 @@ O preço decidido (D9, US$ 3,99) segue; se quiser baixar, a conta agora permite.
 | D23 | Cinemática **híbrida**: quadro a quadro estilo PS1/PS2 (fundos + NPC em 2–4 poses, cortes secos, parallax leve, legenda) nas cenas 2, 5, 8 e 9; **vídeo Gemini mudo + legenda** só na fuga (3) e no resgate (8, se valer). Áudio = música/ambiente do app, sem voz. |
 | D24 | **Tutorial de alimentar** entra na **cena 6, depois da tarefa**: o ancião diz que força = tarefa + alimento; abre a bolsa, arrasta a comida até o BB. |
 | D25 | Arte dos Velados: **busto no padrão NPC** do app (molde canônico), inspirado nas folhas de conceito das 5 Ordens (refs GPT em estilo diferente: servem de ideia, não de estilo). Gerar no ChatGPT. |
+
+## Cenas 0 e 1 (implementação, ob-cena0)
+
+- Cena 0 (D1): com `ONBOARDING_VELADO`, a apresentação (AMBRA_INTRO) e o passo do nome mostram o ancião (`velado-anciao`) com as falas `ROTEIRO.c0`, e o bichinho do oráculo (placeholder `dormant`) ao lado como o Soulmon dele. Mesmas perguntas e resultado. Desligado = Ambra/oráculo atuais.
+- Cena 1 (D18): prop injetável `obterBB()` em `SoulmonOnboarding`; devolve `{url, formId}` e o nascimento revela na hora, sem API, com a copy "o berço" (`BERCO`, EN+PT). Default ausente/null = nascimento atual. TODO: ligar a `sortearBB` de `src/data/bbPool.ts` (outra frente).
+- 1ª tarefa antes da cena 6: o ritual já cria a tarefa (`firstTaskValue` -> `firstTaskFrom` -> `initialActivities` no `onComplete`, campo com sugestão pré-preenchida). Escolha: não criar outra; a `EtapaTarefa` da cena 6 só pede o "fez de verdade?" sobre ela.

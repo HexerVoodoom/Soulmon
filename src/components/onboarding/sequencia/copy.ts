@@ -74,6 +74,14 @@ export const BIFURCACAO = {
   ],
 };
 
+/** Cena 1 (D18): o berço revelado, sem esperar a API. */
+export const BERCO = {
+  titulo: { en: 'The cradle', pt: 'O berço' } as Bilingue,
+  legenda: { en: 'This is the cradle your shadow was born in. It will outgrow it.', pt: 'Este é o berço em que a sua sombra nasceu. Ela vai crescer além dele.' } as Bilingue,
+};
+
+export const ANCIAO = { nome: { en: 'The Elder', pt: 'O Ancião' } as Bilingue };
+
 export const UI = {
   pular: { en: 'Skip', pt: 'Pular' } as Bilingue,
   continuar: { en: 'Continue', pt: 'Continuar' } as Bilingue,
