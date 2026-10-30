@@ -51,7 +51,7 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
         <button type="button" data-gate-ranking-open onClick={() => setRankOpen(true)} style={{ ...sm2Button('outline', false), minHeight: 44 }}>
           {isPt ? 'Ver ranking' : 'See ranking'}
         </button>
-        <ModalSheet open={rankOpen} onClose={() => setRankOpen(false)} language={language} placement="center" sobreTelas title="Ranking">
+        <ModalSheet open={rankOpen} onClose={() => setRankOpen(false)} language={language} placement="center" sobreTelas title={isPt ? 'Ranking' : 'Leaderboard'}>
           {/* 30/10/2026 (dono): sem a moldura de cobre; a lista ocupa a largura do modal. */}
           <div data-minigame-gate-ranking style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {rankings.length > 1 && (
