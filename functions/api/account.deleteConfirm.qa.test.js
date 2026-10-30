@@ -129,9 +129,10 @@ describe('(a) sprites gerados por IA saem com a conta', () => {
   it('PARIDADE: os três prefixos repetidos aqui são os de `generate-sprite.js`', () => {
     const dir = dirname(fileURLToPath(import.meta.url));
     const gen = readFileSync(join(dir, 'generate-sprite.js'), 'utf8');
+    const spriteGen = readFileSync(join(dir, '_spriteGen.js'), 'utf8'); // BLOB_PREFIX mora aqui desde a extração
     const acc = readFileSync(join(dir, 'account.js'), 'utf8');
     for (const [nome, literal] of [['CACHE_PREFIX', 'sprite:img:'], ['LOCK_PREFIX', 'sprite:lock:'], ['BLOB_PREFIX', 'sprite:blob:']]) {
-      expect(gen, `${nome} em generate-sprite.js`).toContain(`const ${nome} = '${literal}';`);
+      expect(nome === 'BLOB_PREFIX' ? spriteGen : gen, `${nome} em generate-sprite.js/_spriteGen.js`).toContain(`const ${nome} = '${literal}';`);
       expect(acc, `${literal} em account.js`).toContain(`'${literal}'`);
     }
     // E a rota que serve o blob lê a MESMA chave.
