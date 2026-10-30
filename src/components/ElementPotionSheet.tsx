@@ -1,11 +1,8 @@
 import { useMemo, useState } from 'react';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
-import { elementIcon } from '../utils/elementIconArt';
 import { essenceName } from '../utils/essences';
-import { elementLabel } from '../utils/arena';
-import { elementoNomeDe } from '../utils/soulProfile/ficha/elementoNome';
-import { BASE_ELEMENT_IDS } from '../utils/elementDex';
-import { affordablePotionElements, canAffordPotion, potionCost, POTION_MAX_BASES } from '../utils/elementPotion';
+import { ElementBaseSlots, ElementIcon as Icon, elName, emptySlots } from './ElementBaseSlots';
+import { affordablePotionElements, canAffordPotion, potionCost } from '../utils/elementPotion';
 import type { Language } from '../utils/i18n';
 
 /**
@@ -23,17 +20,9 @@ export interface ElementPotionSheetProps {
   onCraft: (elementId: string) => void;
 }
 
-const elName = (id: string, isPt: boolean) => (BASE_ELEMENT_IDS.includes(id) ? elementLabel(id, isPt) : (isPt ? elementoNomeDe(id).pt : elementoNomeDe(id).en));
-
-function Icon({ id, size }: { id: string; size: number }) {
-  const src = elementIcon(id);
-  return src ? <img src={src} alt="" aria-hidden="true" width={size} height={size} draggable={false} style={{ width: size, height: size, imageRendering: 'pixelated' }} /> : null;
-}
-
 export function ElementPotionSheet({ open, language, essences, pending, onBack, onCraft }: ElementPotionSheetProps) {
   const isPt = language === 'pt-BR';
-  const [slots, setSlots] = useState<(string | null)[]>(() => Array.from({ length: POTION_MAX_BASES }, () => null));
-  const [menu, setMenu] = useState<number | null>(null);
+  const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
   const [picked, setPicked] = useState<string | null>(null);
   const [confirm, setConfirm] = useState(false);
   const [done, setDone] = useState<string | null>(null);
@@ -42,7 +31,7 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
   const sel = picked && options.includes(picked) ? picked : null;
   const setSlot = (i: number, id: string | null) => {
     setSlots(s => s.map((v, j) => (j === i ? id : v)));
-    setMenu(null); setPicked(null); setDone(null);
+    setPicked(null); setDone(null);
   };
   const back = () => { if (confirm) setConfirm(false); else onBack(); };
 
@@ -52,8 +41,6 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
     back: isPt ? 'Voltar' : 'Back',
     hint: isPt ? 'Escolha até 3 elementos base. Aparecem só os elementos que contêm todos eles e que você consegue pagar.' : 'Pick up to 3 base elements. Only elements that contain all of them, and that you can afford, are listed.',
     none: isPt ? 'Nenhum — você não tem essências suficientes para produzir um elemento deste.' : "None — you don't have enough essences to make an element like this.",
-    empty: isPt ? 'Vazio' : 'Empty',
-    clear: isPt ? 'Limpar espaço' : 'Clear slot',
     generate: isPt ? 'Gerar' : 'Generate',
     confirmQ: isPt ? 'Gastar estas essências?' : 'Spend these essences?',
     confirmBtn: isPt ? 'Confirmar' : 'Confirm',
@@ -77,28 +64,7 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
         {!confirm && (
           <>
             <p style={sm2Hint}>{t.hint}</p>
-            <div style={{ display: 'flex', gap: 8 }} data-potion-slots>
-              {slots.map((id, i) => (
-                <button key={i} type="button" data-slot={i} aria-expanded={menu === i} aria-label={`${i + 1}: ${id ? elName(id, isPt) : t.empty}`}
-                  onClick={() => setMenu(menu === i ? null : i)}
-                  style={{ all: 'unset', cursor: 'pointer', flex: 1, minHeight: 64, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4, borderBottom: `2px solid ${menu === i ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)'}` }}>
-                  {id ? <Icon id={id} size={32} /> : <span aria-hidden="true" style={{ fontSize: 24, color: 'var(--sm2-muted)' }}>+</span>}
-                  <span style={{ ...sm2Hint, textAlign: 'center' }}>{id ? elName(id, isPt) : t.empty}</span>
-                </button>
-              ))}
-            </div>
-            {menu !== null && (
-              <ul data-potion-menu style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2, maxHeight: 220, overflowY: 'auto' }}>
-                {slots[menu] && <li><button type="button" onClick={() => setSlot(menu, null)} style={{ all: 'unset', cursor: 'pointer', minHeight: 44, display: 'flex', alignItems: 'center', ...sm2Text }}>{t.clear}</button></li>}
-                {BASE_ELEMENT_IDS.filter(id => !slots.includes(id) || slots[menu] === id).map(id => (
-                  <li key={id}>
-                    <button type="button" data-base={id} onClick={() => setSlot(menu, id)} style={{ all: 'unset', cursor: 'pointer', minHeight: 44, width: '100%', display: 'flex', alignItems: 'center', gap: 10, ...sm2Text }}>
-                      <Icon id={id} size={24} /><span>{elName(id, isPt)}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ElementBaseSlots slots={slots} isPt={isPt} onChange={setSlot} />
 
             {options.length === 0 ? (
               <p style={sm2Text} data-potion-none>{t.none}</p>

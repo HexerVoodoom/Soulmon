@@ -182,6 +182,9 @@ describe('moeda certa por aba', () => {
   });
 });
 
+import { ALL_ELEMENT_IDS, BASE_ELEMENT_IDS } from '../../utils/elementDex';
+import { elementsMatchingBases } from '../../utils/elementPotion';
+
 describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
   const abrirC = (p: Partial<Parameters<typeof CambistaSheet>[0]> = {}) =>
     renderWithCss(<CambistaSheet language="en-US" credits={3} onExchangeCredits={async () => true} {...p} />);
@@ -200,10 +203,27 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
     const { container } = abrirC();
     fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
     expect(container.querySelector('[data-cambista-essences]')).not.toBeNull();
-    expect(container.querySelectorAll('[data-essence-soon]').length).toBeGreaterThan(10);
+    expect(container.querySelectorAll('[data-essence-soon]').length).toBe(ALL_ELEMENT_IDS.length);
     expect(container.querySelector('[data-credit-exchange]')).toBeNull();
-    expect(container.querySelector('[data-cambista-essences] button')).toBeNull();
+    expect(container.querySelector('[data-cambista-essences] [data-essence-soon] button')).toBeNull();
     expect(container.textContent).toMatch(/coming soon/i);
+  });
+
+  it('Essências: três espaços filtram em E (base sozinha = ela + todo par que a contém)', () => {
+    const { container } = abrirC();
+    fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
+    const ids = () => [...container.querySelectorAll('[data-essence-soon]')].map(e => e.getAttribute('data-essence-soon'));
+    expect(container.querySelectorAll('[data-slot]').length).toBe(3);
+    const [a, b] = BASE_ELEMENT_IDS;
+    fireEvent.click(container.querySelector('[data-slot="0"]')!);
+    fireEvent.click(container.querySelector(`[data-base="${a}"]`)!);
+    expect(ids()).toEqual(elementsMatchingBases([a]));
+    expect(ids().length).toBeGreaterThan(1);
+    fireEvent.click(container.querySelector('[data-slot="1"]')!);
+    fireEvent.click(container.querySelector(`[data-base="${b}"]`)!);
+    expect(ids()).toEqual(elementsMatchingBases([a, b]));
+    expect(ids().length).toBeLessThan(elementsMatchingBases([a]).length);
+    expect(container.querySelector('[data-cambista-essence-list]')).not.toBeNull();
   });
 
   it('Outros: placeholder, em PT também', () => {

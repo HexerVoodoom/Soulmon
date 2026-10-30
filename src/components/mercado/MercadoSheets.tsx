@@ -18,8 +18,9 @@ import { PixelIcon } from '../ui/PixelIcon';
 import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { CREDIT_COLOR, type CurrencyId } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
-import { BASE_ELEMENT_LABELS } from '../../utils/soulProfile/derivedElements';
-import { baseElementLabel } from '../../utils/soulProfile/essenceLabels';
+import { elementsMatchingBases } from '../../utils/elementPotion';
+import { essenceName } from '../../utils/essences';
+import { ElementBaseSlots, ElementIcon, emptySlots } from '../ElementBaseSlots';
 import { GuildOwnedShelf } from './GuildOwnedShelf';
 import { SubscriptionShelf } from './SubscriptionShelf';
 import { FrameShelf } from './FrameShelf';
@@ -398,6 +399,7 @@ export interface CambistaSheetProps {
 export function CambistaSheet({ language, credits, onExchangeCredits, accountTier, onUnlock }: CambistaSheetProps) {
   const isPt = language === 'pt-BR';
   const [tab, setTab] = useState<CambistaTab>('bits');
+  const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
   const { flash, say } = useShopFlash();
   const label = (t: CambistaTab) => t === 'bits' ? 'Bits' : t === 'essences' ? (isPt ? 'Essências' : 'Essences') : (isPt ? 'Outros' : 'Other');
   return (
@@ -445,11 +447,16 @@ export function CambistaSheet({ language, credits, onExchangeCredits, accountTie
           <p style={{ ...sm2Hint, margin: 0 }}>
             {isPt ? 'Em breve: essências de cada elemento, em troca de Créditos.' : 'Coming soon: essences of every element, in exchange for Credits.'}
           </p>
-          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {(Object.keys(BASE_ELEMENT_LABELS) as string[]).map(id => (
-              <li key={id} data-essence-soon={id} className="sm2-kit-chip" style={{ opacity: 0.7 }}>
-                <span>{baseElementLabel(id, isPt)}</span>
-                <span style={{ ...sm2Hint, marginLeft: 6 }}>{isPt ? 'em breve' : 'soon'}</span>
+          <p style={{ ...sm2Hint, margin: 0 }}>
+            {isPt ? 'Filtre por até 3 elementos base: aparecem só as essências que contêm todos eles.' : 'Filter by up to 3 base elements: only essences that contain all of them are listed.'}
+          </p>
+          <ElementBaseSlots slots={slots} isPt={isPt} onChange={(i, id) => setSlots(v => v.map((x, j) => (j === i ? id : x)))} />
+          <ul data-cambista-essence-list style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2, maxHeight: 320, overflowY: 'auto' }}>
+            {elementsMatchingBases(slots).map(id => (
+              <li key={id} data-essence-soon={id} style={{ opacity: 0.7, minHeight: 40, display: 'flex', alignItems: 'center', gap: 10, ...sm2Text }}>
+                <ElementIcon id={id} size={24} />
+                <span style={{ flex: 1, minWidth: 0 }}>{essenceName(id, isPt)}</span>
+                <span style={{ ...sm2Hint, flexShrink: 0 }}>{isPt ? 'em breve' : 'soon'}</span>
               </li>
             ))}
           </ul>
