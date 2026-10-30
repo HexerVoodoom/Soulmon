@@ -19,7 +19,7 @@ const ART = {
   anciao: arteOnboarding('velado-anciao.png') ?? '',
   anciaoSoulmon: arteOnboarding('anciao-soulmon.png') ?? '',
   desfeito: arteOnboarding('desfeito.png') ?? '',
-  pesadelo: arteOnboarding('desfeito-pesadelo.png') ?? '',
+  pesadelo: arteOnboarding('desfeito-soulmon.png') ?? arteOnboarding('desfeito-pesadelo.png') ?? '',
   jogadorBB: arteOnboarding('bb-placeholder.png') ?? '',
 };
 
