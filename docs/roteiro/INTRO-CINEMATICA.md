@@ -56,3 +56,10 @@ engrenagem, cano ou vapor; proporção **9:16 vertical** (tela do celular).
    limpo + legenda pelo app (troca de idioma sem reexportar). Trilha da `/squad-som`.
 4. No app: tocar antes do login na 1ª abertura, com Pular; "Rever a introdução" nas
    Configurações.
+
+## Encadeamento dos clipes (dono, 30/10/2026)
+
+Cada clipe recebe **quadro inicial e quadro final**, e o final de um é o inicial do
+seguinte, para os cortes casarem. Sequência dos 13 quadros → **12 clipes**:
+1→2, 2→3a, 3a→3b, 3b→4, 4→5a, 5a→5b, 5b→6, 6→7a, 7a→7b, 7b→8a, 8a→8b, 8b→9.
+Uma conversa nova do Gemini por clipe, anexando as duas imagens.
