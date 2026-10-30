@@ -8,6 +8,7 @@
 // livre depois que o servidor já exige token, entregando um 403 sem explicação.
 
 import { isBillingDisabled, isChatDisabled } from './_killSwitch.js';
+import { isOnboardingVelado } from './_velado.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -32,6 +33,8 @@ export async function onRequestGet({ env }) {
     // esconde compra / IA do chat. Quem GARANTE é o servidor, não este campo.
     billingDisabled: isBillingDisabled(env),
     chatDisabled: isChatDisabled(env),
+    // Onboarding Velado (plano §7): desligado por padrão.
+    onboardingVelado: isOnboardingVelado(env),
   }, {
     headers: { ...CORS, 'Cache-Control': 'public, max-age=300' },
   });

@@ -1,4 +1,5 @@
 import { heartLossCap } from './passives';
+import { isBBStage } from './bbStage';
 import { playerDayKey, type PlayerDayAnchor } from './playerDay';
 import {
   MAX_HEARTS_LOST_PER_DAY,
@@ -132,6 +133,7 @@ export function remainingDrainToday(state: PoopDrainState, now: number): number 
  * que evita re-render à toa).
  */
 export function applyPoopDrain<T extends PoopDrainState>(state: T, opts: PoopDrainOptions): T {
+  if (isBBStage((state as { evolutionStage?: unknown }).evolutionStage)) return state; // Forma BB: cocô não tira coração
   const { now, isSleeping } = opts;
   const shown = state.poopEventsShown || [];
   const cleaned = state.poopEventsCompleted || [];

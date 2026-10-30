@@ -20,6 +20,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { sanitizeStageId } from '../utils/bbStage';
 
 const RAIZ = resolve(__dirname, '../..');
 const ler = (p: string) => readFileSync(resolve(RAIZ, p), 'utf8');
@@ -327,5 +328,18 @@ describe('AUTOVERIFICAÇÃO', () => {
     expect(leiturasOpacas('const { novo } = state;')).toEqual(['destructuring de state']);
     expect(leiturasOpacas('for (const k of Object.keys(state)) {}')).toHaveLength(1);
     expect(leiturasOpacas('for (const field of X) delete state[field];')).toEqual([]);
+  });
+});
+
+describe('FORMA BB (Onboarding Velado, D3): o id `bb` entra no save sem campo novo', () => {
+  it('evolutionStage em hydrateSave passa por sanitizador (`bb` e variantes → `bb`, idempotente)', () => {
+    expect(corpoHydrate(CTX)).toMatch(/evolutionStage:\s*typeof loadedState\.evolutionStage === 'string'\s*\?\s*sanitizeStageId\(loadedState\.evolutionStage\)/);
+  });
+  it('o HP de um save em `bb` não é cortado para 3 na hidratação', () => {
+    expect(corpoHydrate(CTX)).toContain('getMaxHPForStage(loadedState.evolutionStage');
+    expect(CTX).toMatch(/if \(isBBStage\(stage\)\) return BB_MAX_HP;/);
+  });
+  it('o save sem `bb` (todo save existente) não muda: o sanitizador devolve o id intacto', () => {
+    for (const id of ['rookie', 'champion-power', 'mega-harmony', 'ultra']) expect(sanitizeStageId(id)).toBe(id);
   });
 });

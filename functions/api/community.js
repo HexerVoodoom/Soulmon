@@ -40,6 +40,7 @@ import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { bondLevelOf } from './_bond.js';
 import { gateFor } from './_gates.js';
+import { BB_LOCKED_MESSAGE } from './_velado.js';
 import { ehViolacaoDeChave } from './_entitlements.js';
 import { kv, kvOrThrow } from './_kv.js';
 import {
@@ -445,7 +446,12 @@ async function handleCommunity(context) {
   /* Os dois lados de uma partida. `{ res }` = a Response de erro (409: o save do próprio jogador some; 404: o do
      oponente some), devolvida ANTES de qualquer partida ser gasta. */
   const loadDuelSides = async (mySave, oppSave) => {
-    const [meSide, oppSide] = await Promise.all([loadDuelSide(mySave), loadDuelSide(oppSave)]);
+    const [meLoad, oppLoad] = await Promise.all([loadDuelSideWithSprite(env, mySave), loadDuelSideWithSprite(env, oppSave)]);
+    // Forma BB (D5): recusa MOTIVADA (`velado.parity.test.js`). Desligado o interruptor, `bbLocked` nunca vem.
+    if (meLoad.bbLocked) return { res: json({ error: 'bb-locked', reason: 'bb-locked', ...BB_LOCKED_MESSAGE }, 403) };
+    if (oppLoad.bbLocked) return { res: json({ error: 'opponent unavailable' }, 404) };
+    const meSide = meLoad.side;
+    const oppSide = oppLoad.side;
     if (!meSide) return { res: json({ error: 'save unavailable' }, 409) };
     if (!oppSide) return { res: json({ error: 'opponent unavailable' }, 404) };
     return { me: meSide, opp: oppSide };
@@ -489,6 +495,8 @@ async function handleCommunity(context) {
     if (querLigar && !jaEstavaLigado) {
       bondLevel = await bondLevelOf(env, id);
       if (!gateFor('pvp', bondLevel).open) { pvpEnabled = false; pvpBlocked = true; }
+      // Forma BB (D5): não entra no PvP. O estágio vem do SAVE do servidor, não do corpo do perfil.
+      else if ((await loadDuelSideWithSprite(env, id)).bbLocked) { pvpEnabled = false; pvpBlocked = true; }
     }
     // Apelido: a mesma régua do nome da guilda (D-1). O perfil é gravado junto
     // do cloud save, então recusar derrubaria a sincronização inteira — o

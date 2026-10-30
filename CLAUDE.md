@@ -317,7 +317,7 @@ repetir) · **tarefa = EXECUÇÃO** (o valor está em terminar e sair da cabeça
 **Nunca**, nesta área: Google Fit; punição por sono ruim; score de sono na home;
 streak que zera; recompensa por contagem de tarefas.
 
-Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore **nasce direto em rookie** — não existem mais ovo/baby; ver `src/types/progression.ts`.) A evolução é **MANUAL** (`MANUAL_EVOLUTION = true`): a virada do dia nunca evolui sozinha, quem dispara é o jogador na cerimônia. `perfectDays` **só acumulam** — dia não-perfeito não tira nada.
+Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore **nasce direto em rookie** — não existem mais ovo/baby; ver `src/types/progression.ts`. ⚠️ **Exceção única, 30/10/2026 (REGISTRO §204, Onboarding Velado D3–D5): a forma `bb`**, ANTES do rookie, HP **6**, atrás do interruptor `ONBOARDING_VELADO` (desligado por padrão): sem requisito diário, sem gauge, sem perda de coração, sem dreno de fome/cocô, sem folga; evolui para rookie com Vínculo ≥ 2; Torneio, Duelo PvP e Guilda a recusam com motivo. Dono único: `src/utils/bbStage.ts` (espelho mínimo no servidor: `functions/api/_velado.js`, paridade em `velado.parity.test.js`). `bb` **não** entra em `FORM_REQUIREMENTS`: não recrie ovo/baby nem dê escada própria ao BB.) A evolução é **MANUAL** (`MANUAL_EVOLUTION = true`): a virada do dia nunca evolui sozinha, quem dispara é o jogador na cerimônia. `perfectDays` **só acumulam** — dia não-perfeito não tira nada.
 
 > **As três moedas nunca se misturam visualmente.** Bits e Créditos já
 > apareceram com o mesmo ícone 💎 e o jogador não tinha como saber que os

@@ -110,6 +110,18 @@ export const MAX_HP_BY_FORM = {
 export type EvolutionStage = keyof typeof FORM_REQUIREMENTS;
 
 /**
+ * A FORMA BB — o estágio ANTES do rookie (Onboarding Velado, D3; 30/10/2026).
+ * REVOGA PARCIALMENTE o "não existe estágio antes do rookie" (REGISTRO-DE-DECISOES
+ * e CLAUDE.md): vale SÓ para `bb`. Fica fora de `FORM_REQUIREMENTS` de propósito: o BB
+ * não tem requisito diário, gauge nem teto de level próprios, então não entra nas
+ * escadas derivadas daquela tabela (`STAGE_LEVEL_CAPS`, `MAX_STAGE_REQUIREMENT`). Para
+ * nível/sprite ele cai em 'rookie' (`getStageLevel`). As regras vivem em `utils/bbStage.ts`.
+ */
+export const BB_STAGE = 'bb';
+/** HP máximo do BB (D3) — maior que o do rookie, porque nada o tira. */
+export const BB_MAX_HP = 6;
+
+/**
  * Teto de level do Soulmon por estágio (combate v3, PR2), ACUMULADO de
  * `FORM_REQUIREMENTS.cap` (6/7/8/9/10 -> 6/13/21/30/40). Derivado, nunca
  * copiado: se a escada mudar, o teto segue. Não escreva estes números em
