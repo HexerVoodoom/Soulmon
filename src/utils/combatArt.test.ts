@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { combatBaseElement, combatSceneBg, combatShield, combatGlowColor, combatGlowPair, COMBAT_BG_COUNT, COMBAT_SHIELD_COUNT } from './combatArt';
+import { sceneBgDoElemento, combatBaseElement, combatSceneBg, combatShield, combatGlowColor, combatGlowPair, COMBAT_BG_COUNT, COMBAT_SHIELD_COUNT } from './combatArt';
 import { VISUAL_ELEMENTS } from './combatFx';
 import { elementIcon, elementIconIds } from './elementIconArt';
 
@@ -41,5 +41,18 @@ describe('combatArt — cenário, escudo e plataforma por elemento (rodada 2, 04
   it('ícones de elemento: os 17 base passaram a existir (230 = 17 + 136 + neutro)', () => {
     expect(elementIconIds().length).toBe(230);
     for (const el of VISUAL_ELEMENTS) expect(elementIcon(el), el).toBeDefined();
+  });
+});
+
+describe('combatArt — cenário próprio do elemento fundido (fixture, sem instalar arte)', () => {
+  const urls = { vapor: '/x/vapor.png', lava: '/x/lava.png' };
+  it('usa o arquivo do id exato, com a cor média medida ou o fallback #1c3a40', () => {
+    expect(sceneBgDoElemento('vapor', urls, { vapor: '#112233' })).toBe('url(/x/vapor.png) center/cover #112233');
+    expect(sceneBgDoElemento('lava', urls, {})).toBe('url(/x/lava.png) center/cover #1c3a40');
+  });
+  it('sem arquivo (ou sem id) devolve undefined, e combatSceneBg segue no cenário do elemento base', () => {
+    expect(sceneBgDoElemento('gelo', urls, {})).toBeUndefined();
+    expect(sceneBgDoElemento(null, urls, {})).toBeUndefined();
+    expect(combatSceneBg('vapor')).toMatch(/bg-fogo\.png/);
   });
 });

@@ -18,6 +18,7 @@
  */
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { ELEMENT_VISUAL } from './elementVisual.data';
+import { ELEMENTO_BG_MEAN } from './combatArtElementoMedias.data';
 
 const bgs = import.meta.glob('../assets/soulmon/combate/bg-*.png', { eager: true, import: 'default' }) as Record<string, string>;
 const escudos = import.meta.glob('../assets/soulmon/combate/escudo-*.png', { eager: true, import: 'default' }) as Record<string, string>;
@@ -31,6 +32,21 @@ const porId = (mods: Record<string, string>, prefixo: string): Record<string, st
   return out;
 };
 const BG = porId(bgs, 'bg');
+
+// Cenário PRÓPRIO de cada elemento fundido: `combate/elemento/<id>.png` (360×640, instalado por `tools/instalar-cenarios-elemento.py`).
+// Vem ANTES do cenário do elemento base; sem arquivo, cai no base (comportamento anterior).
+const elementoBgs = import.meta.glob('../assets/soulmon/combate/elemento/*.png', { eager: true, import: 'default' }) as Record<string, string>;
+const ELEMENTO_BG: Record<string, string> = {};
+for (const [p, url] of Object.entries(elementoBgs)) {
+  const m = /\/([a-z_]+)\.png$/.exec(p);
+  if (m) ELEMENTO_BG[m[1]] = url;
+}
+
+/** Núcleo puro (testável sem arquivos): o `background` do cenário próprio do elemento, ou `undefined`. */
+export function sceneBgDoElemento(id: string | null | undefined, urls: Record<string, string>, medias: Record<string, string>): string | undefined {
+  if (!id || !urls[id]) return undefined;
+  return `url(${urls[id]}) center/cover ${medias[id] ?? '#1c3a40'}`;
+}
 const ESCUDO = porId(escudos, 'escudo');
 
 /** Cor média medida de cada cenário: pinta o fundo enquanto a imagem carrega (mesma regra de `dungeonScenes.ts`). */
@@ -54,6 +70,8 @@ export function combatBaseElement(id: string | null | undefined): string | undef
 
 /** `background` shorthand do cenário do elemento (`url(…) center/cover <cor média>`), ou `undefined`. */
 export function combatSceneBg(id: string | null | undefined): string | undefined {
+  const proprio = sceneBgDoElemento(id, ELEMENTO_BG, ELEMENTO_BG_MEAN);
+  if (proprio) return proprio;
   const base = combatBaseElement(id);
   if (base) return `url(${BG[base]}) center/cover ${BG_MEAN[base] ?? ''}`.trim();
   // Fallback (save antigo sem a arte): planta/industrial usam o cenário do domínio. Desde 30/10/2026 têm `bg-` próprio, que vem antes.

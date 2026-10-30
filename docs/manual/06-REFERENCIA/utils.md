@@ -853,11 +853,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Quem chama:** só `utils/fxFacing.ts`.
 **Régua:** `src/utils/fxFacing.contract.test.ts` (reprova tabela velha).
 
-### `src/utils/combatArt.ts`
+### `src/utils/combatArt.ts` · `src/utils/combatArtElementoMedias.data.ts`
 **Dono de:** a arte da CENA de combate por elemento (rodada 2 do Higgsfield, 04/10/2026, `assets/soulmon/combate/`): 17 cenários 9:16 (`bg-<base>.png`, 360×640 ampliados com `pixelated` — a 1080×1920 o WebP passava do teto de 400 KB), 17 escudos levantados (`escudo-<base>.png`, 128²) e a plataforma sob os pés (`sombra-clara`/`sombra-escura`, 256×96). Só os 17 base têm arte: derivado → 1º componente (`DERIVED_ELEMENT_PAIRS`), `planta` → `vida`, `industrial` → `marcial`; `neutro` → `undefined`.
 **Exports:** `combatBaseElement(id)` · `combatSceneBg(id)` (`url(…) center/cover <cor média>` ou `undefined`) · `combatShield(id)` · `combatGlowColor(id)` (hex do brilho do especial = cor do elemento; `undefined` sem assinatura) · `COMBAT_BG_COUNT`, `COMBAT_SHIELD_COUNT`.
 **Quem chama:** só `games/BattleStage.tsx` (chunk preguiçoso da luta — não importar do chunk de entrada). Regra do cenário: `BattleStage` recebe `sceneElement`; Arena e Duelo passam o elemento do INIMIGO (luta-se no terreno dele); Pesadelo e Masmorra não passam (cena fixa / cenário por andar). O escudo do DEFENSOR substitui o flash `defended` do FX no bloqueio (sem arte → `defended`).
 **Régua:** `src/utils/combatArt.test.ts` (17 + 17, mapeamento, plataforma, e os 154 ícones de elemento) + `games/BattleStage.test.tsx` (escudo, fallback neutro, camada do cenário).
+**Cenário próprio do elemento fundido (30/10/2026):** `combate/elemento/<id>.png` (glob) vem ANTES do `bg-<base>`; `sceneBgDoElemento` é o núcleo puro. `combatArtElementoMedias.data.ts` (cor média por id) é GERADO por `tools/instalar-cenarios-elemento.py`, que lê sempre `E:/Soulmon-assets/gerados-2026-10-29/combate-elementos/` (idempotente).
 
 ### `src/utils/energia.ts`
 **Dono de:** a ENERGIA e as mecânicas ativas do PvE (04/10/2026, REGISTRO §20.10). **O modelo:** cada lutador tem UMA barra de energia (0–`ENERGY_MAX` = 100) que enche por ataque DADO (+9), ataque SOFRIDO (+7) e, só o pet do jogador, pelo CHEER: a "barra de cheer" é o medidor de TOQUES (`CHEER_TAPS_FULL` = 24, lento) que, ao encher, despeja energia no pet e zera (o excedente fica). Energia cheia = o ESPECIAL no golpe seguinte. As constantes de energia são IMPORTADAS de `functions/api/_duel.js` (uma regra, um arquivo): o PvP e o PvE enchem do mesmo jeito.
@@ -3838,9 +3839,9 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Dono de:** a chave do foco e a descida em background. `src/utils/focusKey.ts` — `hasFocusKey`/`grantFocusKey` sobre `focusKeyDay` do save (dia do jogador, leitura tolerante); concluir o "Prepare to Focus" (etapa 1 da Oficina do Foco; o antigo prédio `exploracao.preparar` migra para `forja.oficina` (ex-`exploracao.oficina`, #187), N8) dá a chave que libera a etapa 2. `src/utils/focusDescent.ts` — `startFocusDescent`/`focusDescentRefusal`: com o timer de foco rodando, só ABRE o `dungeonAway`; a conta e o retorno são os de sempre.
 **Chamado por:** `src/App.tsx`, `src/components/play/PrepararFocoSheet.tsx`. **Régua:** `src/utils/focusKey.test.ts`, `src/utils/focusDescent.test.ts`.
 
-### `src/utils/plantioDefesa.ts` · `src/utils/rpsLevel2.ts`
-**Dono de:** `src/utils/plantioDefesa.ts` — a defesa do jardim (L5-D2): combate fácil contra 3 inimigos pelo motor da Masmorra, sem custo; o servidor decide o dia de proteger. `src/utils/rpsLevel2.ts` — PPT nível 2: 3 pedras, 3 papéis e 3 tesouras por lado, peça usada some; funções puras.
-**Chamado por:** os visores de guilda e o minijogo de PPT.
+### `src/utils/rpsLevel2.ts`
+**Dono de:** `src/utils/rpsLevel2.ts` — PPT nível 2: 3 pedras, 3 papéis e 3 tesouras por lado, peça usada some; funções puras.
+**Chamado por:** o minijogo de PPT. (`plantioDefesa.ts`, a defesa do jardim pelo motor da Masmorra, saiu em 30/10/2026: o servidor decide e o `GroveRaidFight` luta.)
 
 
 ### `src/utils/endlessRift.ts`

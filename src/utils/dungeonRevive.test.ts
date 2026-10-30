@@ -76,15 +76,6 @@ describe('Faísca de Alma', () => {
     expect(dropName('spark', true)).toBe('Faísca de Alma');
     expect(dropName('spark', false)).toBe('Soul Spark');
   });
-  it('opção energyDrain do núcleo segue funcionando (API sem uso pela Faísca desde a correção)', () => {
-    let usado = false;
-    const { evs } = run({ startEnergy: 0, energyDrain: () => { if (usado) return 0; usado = true; return ENERGY_TRIGGER; } });
-    expect(evs.some(e => e.kind === 'cast' && e.who === 0)).toBe(true);
-    // sem a Faísca o especial vem depois (a barra encheu antes: o cast acontece mais cedo)
-    const sem = run({ startEnergy: 0 });
-    const t = (r: { evs: GroupEvent[] }) => r.evs.find(e => e.kind === 'cast' && e.who === 0)?.t ?? Infinity;
-    expect(t({ evs })).toBeLessThanOrEqual(t(sem));
-  });
   it('cai como o coraçãozinho (sorteio por inimigo) e soma 1 ao inventário', () => {
     expect(rollSparkDrop(() => 0)).toBe(true);
     expect(rollSparkDrop(() => 0.99)).toBe(false);

@@ -387,7 +387,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/mercado/MercadoSheets.render.test.tsx`.
 
 ### `src/components/play/MinigameModeGate.tsx`
-**Dono de:** a porta de entrada dos minijogos (dono, 30/10/2026): o NPC do Salão de Jogos (busto + balão) mostra o botão "Ver ranking" (outline, acima dos botões de modo) que abre um MODAL com a tabela (`RankingPanel inline` dentro do quadro de cobre `quadro-ranking.png`, 9-slice 48; Corrida com obstáculos tem abas Comum | Avançado, Comum primeiro) e os botões de modo embaixo — Comum à esquerda, Avançado à direita; Fusão Elemental (`pveVsPvp`) usa PvE | PvP e inicia direto no modo (`Match3Game initialMode`, sem o seletor de dentro); jogo sem dificuldade mostra um botão "Jogar".
+**Dono de:** a porta de entrada dos minijogos (dono, 30/10/2026): o NPC do Salão de Jogos (busto + balão) mostra o botão "Ver ranking" (outline, acima dos botões de modo) que abre um MODAL com a tabela (`RankingPanel inline`; Corrida com obstáculos tem abas Comum | Avançado, Comum primeiro) e os botões de modo embaixo — Comum à esquerda, Avançado à direita; Fusão Elemental (`pveVsPvp`) usa PvE | PvP e inicia direto no modo (`Match3Game initialMode`, sem o seletor de dentro); jogo sem dificuldade mostra um botão "Jogar".
 **Exports:** `GateRanking` (type), `MinigameModeGate({ language, gameName, rankings, saveId, withDifficulty, pveVsPvp?, onPick, … })`.
 
 ### `src/components/play/PlaySheets.tsx`
