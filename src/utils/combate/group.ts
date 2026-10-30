@@ -60,6 +60,13 @@ export interface GroupOptions {
    * loop hundreds of thousands of times and pays nothing).
    */
   readonly withFx?: boolean;
+  /**
+   * LARGADA JUSTA (dono, 30/10/2026, REGISTRO §195): com `true` nenhum inimigo abre ANTES do jogador — a fase de cada inimigo
+   * vira max(a dele, a do jogador). Com N inimigos de fase própria, o 1º golpe do grupo caía em ~1/(N+1) do intervalo e o do
+   * jogador em ~1/2, então ele "demorava para começar". (Adiantar o jogador para a menor fase encurtava a luta e furava a
+   * régua de duração da Arena; atrasar só quem chegaria antes mantém a duração.) Opt-in (a Arena liga); sem ele N = 1 ≡ fight().
+   */
+  readonly fairStart?: boolean;
 }
 
 export type GroupWinner = 'player' | 'foes' | 'draw';
@@ -133,6 +140,7 @@ export function* groupFightSteps(
   const ph = mulberry32(seed ^ PHASE_SALT);
   const phases = [ph(), ph()];
   for (let i = 1; i < foes.length; i++) phases.push(ph());
+  if (opts.fairStart) for (let i = 1; i < phases.length; i++) phases[i] = Math.max(phases[i], phases[0]);
 
   const mk = (s: FightSide, who: number, stream: number, hp0: number, en0: number): G => {
     const c = { ...s.combatant, hp: s.combatant.hp * hpS };
@@ -219,7 +227,7 @@ export function* groupFightSteps(
         for (let k = 1; k <= 3; k++) {
           const vs = [...spread];
           const single = spread.length === 1 && me === pl;
-          const caps = new Map(vs.map((x) => [x, x.shield] as const)); // escudo de cada alvo NO CAST
+          const caps = new Map(all.map((x) => [x, x.shield] as const)); // escudo de TODOS NO CAST (§196: o tick que passa ao próximo inimigo também respeita o escudo que ELE tinha no cast)
           const rec = { owner: me, vs, single };
           dots.push(rec);
           timed.push({
@@ -315,9 +323,8 @@ export function* groupFightSteps(
     }
     yield* flush();
     yield* markDead();
-    for (const f of all) yield* tryCast(f, t);
-    yield* flush();
-    yield* markDead();
+    for (const f of all) { yield* tryCast(f, t); yield* flush(); }
+    yield* markDead(); // §196: os golpes de cada cast saem ANTES do próximo cast do mesmo instante, (só a ORDEM dos eventos muda, o resultado não)
     const pDead = pl.dead < Infinity;
     const fDead = alive().length === 0;
     if (pDead || fDead) {

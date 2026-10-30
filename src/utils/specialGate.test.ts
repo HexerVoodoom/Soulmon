@@ -64,7 +64,7 @@ describe('especiais no MESMO instante (o espelho) saem um de cada vez: cast A, g
     for (let s = 1; s < 3000; s++) {
       const ev = simulatePvp({ me: lado(), opp: lado(), seed: s, taps: [] }).events;
       const i = ev.findIndex(e => e.kind === 'cast');
-      if (i >= 0 && ev[i + 1]?.kind === 'cast' && ev[i + 1].t === ev[i].t) return s;
+      if (i >= 0 && ev[i + 2]?.kind === 'cast' && ev[i + 2].t === ev[i].t) return s; // §196: o núcleo já entrega cast A, golpe A, cast B
     }
     throw new Error('sem semente com casts simultâneos');
   };
@@ -73,7 +73,7 @@ describe('especiais no MESMO instante (o espelho) saem um de cada vez: cast A, g
     const r = simulatePvp({ me: lado(), opp: lado(), seed: semente(), taps: [] });
     const v = serializarEspeciais(r.events, r.fx);
     const i = r.events.findIndex(e => e.kind === 'cast');
-    expect(r.events.slice(i, i + 4).map(e => e.kind)).toEqual(['cast', 'cast', 'attack', 'attack']);
+    expect(r.events.slice(i, i + 4).map(e => `${e.kind}${e.side}`)).toEqual(['cast0', 'attack0', 'cast1', 'attack1']); // §196: o núcleo já sai serializado
     expect(v.events.slice(i, i + 4).map(e => `${e.kind}${e.side}`)).toEqual(['cast0', 'attack0', 'cast1', 'attack1']);
     // mesmo conjunto, mesmo tamanho; os de fora do trecho são os MESMOS objetos
     expect(v.events.length).toBe(r.events.length);

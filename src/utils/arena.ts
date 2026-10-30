@@ -252,6 +252,8 @@ export interface ArenaEnemy {
 
 /** Os rookies de elemento combinado (o pool "combinado" da Arena; só existem na forma rookie). */
 const COMBO_ROOKIES = ENEMY_ROSTER.filter(e => e.kind === 'combinado' && e.stage === 'rookie');
+/** §199: os elementos FUNDIDOS que têm criatura (rookie combinado) — o pool das runs combinadas da Arena. */
+export const ARENA_COMBO_ELEMENTS: readonly string[] = [...new Set(COMBO_ROOKIES.map(e => e.element))].sort();
 
 export const ARENA_ROUNDS = 5;
 
@@ -283,14 +285,18 @@ export function buildArenaRound(
   stray = false,
   /** Run COMBINADA (`isComboSeed`, `strayFoes.ts`): todos os slots mostram rookies de elemento combinado. Sem isto, nada muda. */
   combo = false,
+  /** §199 (dono, 30/10/2026): o ELEMENTO da run — todo inimigo é desse elemento (fundido nas runs combinadas). Sem ele, o sorteio antigo. */
+  runElement?: string,
 ): ArenaEnemy[] {
   const comp = ARENA_ROUND_COMP[Math.min(Math.max(roundIdx, 1), ARENA_ROUNDS) - 1];
   const used = new Set<string>(); // sem criatura repetida dentro da rodada
   return comp.map(cls => {
     const shape = CLASS_FLAVOR[cls];
     if (combo && !stray && COMBO_ROOKIES.length > 0) {
-      const fresh = COMBO_ROOKIES.filter(e => !used.has(e.id));
-      const pool = fresh.length > 0 ? fresh : COMBO_ROOKIES;
+      const ofEl = runElement ? COMBO_ROOKIES.filter(e => e.element === runElement) : [];
+      const base = ofEl.length > 0 ? ofEl : COMBO_ROOKIES;
+      const fresh = base.filter(e => !used.has(e.id));
+      const pool = fresh.length > 0 ? fresh : base;
       const c = pool[Math.floor(rng() * pool.length)];
       used.add(c.id);
       return {
@@ -302,7 +308,7 @@ export function buildArenaRound(
     // Arena segue justa para qualquer elemento do jogador) e o ELEMENTO é o da criatura — o mesmo do ataque e do FX.
     // fraco = Rookie · médio = Champion · chefe = a maior forma com arte (ultra > mega > ultimate), senão o Champion.
     const prefer: NovoAnyStage[] = stray ? (cls === 'boss' ? ['ultra', 'mega', 'ultimate'] : cls === 'medium' ? ['mega', 'ultimate'] : ['ultimate', 'mega']) : cls === 'weak' ? ['rookie'] : cls === 'medium' ? ['champion'] : ['ultra', 'mega', 'ultimate', 'champion'];
-    const picked = pickNovo(prefer, used, rng)!;
+    const picked = (runElement ? pickNovo(prefer, used, rng, runElement) ?? pickNovo(['champion', 'rookie'], used, rng, runElement) : null) ?? pickNovo(prefer, used, rng)!;
     used.add(picked.data.id);
     const nome = novoFormName(picked.data, picked.stage);
     return {
@@ -506,6 +512,8 @@ export interface ArenaRunConfig {
   /** `teto`: the player cheers at the cap (16 taps per 3 s) all the fight. Default: nobody cheers. */
   cheer?: 'nenhum' | 'teto';
   knobs?: ArenaKnobs;
+  /** Largada justa (§195): nenhum inimigo abre antes do jogador. Padrão `true` (é o que a Arena joga); `false` só para a régua medir o antes. */
+  fairStart?: boolean;
 }
 
 export interface ArenaRunResult {
@@ -545,7 +553,7 @@ export function simulateArenaRunV3(cfg: ArenaRunConfig, seed: number, skill: Are
     const foeHp = cfg.knobs?.foeHp ?? 1;
     const foes = arenaFoeSides(p, r, foeEls).map(f => (foeHp === 1 ? f : { ...f, combatant: { ...f.combatant, hp: f.combatant.hp * foeHp } }));
     const g = groupFightSteps(player, foes, {
-      seed: arenaRoundSeed(seed, r), startHp: hp, startEnergy: en, areaEfficiency, cheer,
+      seed: arenaRoundSeed(seed, r), startHp: hp, startEnergy: en, areaEfficiency, cheer, fairStart: cfg.fairStart ?? true,
       hitScale: (who) => {
         if (who === 0) return roleScale;
         return autoDefenseHitScale(Math.min(1, Math.max(0, 0.7 + (rng() * 2 - 1) * 0.25)));

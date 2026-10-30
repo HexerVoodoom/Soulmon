@@ -25,9 +25,12 @@
  * (`specialTailMs`) antes do próximo golpe de QUALQUER lado — dois especiais próximos nunca se atropelam, e nada do núcleo muda.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+
+/** §202: a pausa entre o anúncio do especial (a carga) e o anel de tempo aparecer (ms). */
+export const RING_LEAD_MS = 1000;
 import type { StageAction, StageHit } from './BattleStage';
 import {
-  impactMs, introMs, specialTailMs, castStatus, clearHolders, emptyStatusBoard, isCurseSpecial, stageStatusOf, tickStatus, withRealFx,
+  impactMs, introMs, specialTailMs, isSelfOnlySpecial, castStatus, clearHolders, emptyStatusBoard, isCurseSpecial, stageStatusOf, tickStatus, withRealFx,
   type StageActionKind, type StageStatus, type StatusBoard, type StrikeForm,
 } from '../../utils/combatFx';
 import { cheerTap, dodgeGrade, dodgeSpec, ringSpec, type DodgeGrade, type DodgeSpec, type RingGrade, type RingSpec } from '../../utils/energia';
@@ -369,6 +372,9 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             } else {
               const spec = ringSpec(seed, nRing++);
               setCharging(true);
+              // §202 (dono, 30/10/2026): ~1 s entre o especial ser anunciado (a carga) e o anel aparecer, para dar tempo de reagir.
+              // Pausa de apresentação: o relógio da luta segue parado (`wait` não o avança), então motor e resultado não mudam.
+              if (!(await wait(RING_LEAD_MS))) return;
               setRing({ spec, foe: target, key: ++seq.current });
               setPhaseBoth('ring');
               ringG = await new Promise<RingGrade>((resolve) => { ringResolver.current = resolve; });
@@ -378,7 +384,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             }
             ringTagRef.current = ringG;
             const pForm = scene.playerKind(true);
-            setAction({ id: ++seq.current, actor: 'me', foe: target, kind: 'special', strike: pForm, element: scene.playerElement(true) });
+            setAction({ id: ++seq.current, actor: 'me', foe: target, kind: 'special', strike: pForm, element: scene.playerElement(true), selfOnly: isSelfOnlySpecial(player.special?.family) });
             const scale = round.castScale({ who: 0, ring: ringG, dodge: null, foesHp: ev.foesHp });
             const first = pull(scale); // o núcleo devolve os eventos do especial no mesmo instante
             const batch: GroupEvent[] = [];
@@ -406,6 +412,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           setAction({
             id: ++seq.current, actor: 'foe', foe: casterFoe, kind: 'special', strike: scene.foeKind(casterFoe, true), element: scene.foeElement(casterFoe),
             castMs: spec.castMs, impactMs: spec.impactMs, totalMs: spec.impactMs + 500,
+            selfOnly: isSelfOnlySpecial(foes[casterFoe]?.special?.family), // §198
           });
           if (hasSp[casterFoe]) { fEn[casterFoe] = Math.max(0, fEn[casterFoe] - ENERGY_TRIGGER); setFoeEnergy(fEn.slice()); }
           if (!(await wait(introMs('special')))) return;

@@ -39,7 +39,7 @@ import { PixelIcon } from '../ui/PixelIcon';
 import { PixelMeter } from '../pixel/PixelKit';
 import { sm2Button, sm2Text } from '../form/FormKit';
 import {
-  fxFrame, impactMs, totalMs, introMs, SPECIAL_INTRO_MS, prefersReducedMotion, SPECIAL_LABEL, STATUS_FX, MAX_STATUS_CHIPS, statusAriaLabel, statusGlyphId, statusShort,
+  fxFrame, impactMs, totalMs, introMs, SPECIAL_INTRO_MS, prefersReducedMotion, SPECIAL_LABEL, STATUS_FX, MAX_STATUS_CHIPS, statusAriaLabel, statusGlyphId,
   type StageActionKind, type StageStatus, type StrikeForm,
 } from '../../utils/combatFx';
 import { useCombatV3Art } from './useCombatV3Art';
@@ -100,6 +100,8 @@ export interface StageAction {
   castMs?: number;
   impactMs?: number;
   totalMs?: number;
+  /** §198: especial só de benefício (cura/escudo/buff): só o efeito NO CONJURADOR — sem projétil, corte, investida nem impacto no alvo. */
+  selfOnly?: boolean;
 }
 
 /** O número que sobe do alvo quando o dano CHEGA (o jogo manda no instante do impacto). */
@@ -132,6 +134,13 @@ const BARS_H = 50;
 const BARS_LIFT = 2;
 /** Largura do ícone de elemento ao lado do bloco de barras (a altura é a do bloco). */
 const STAGE_EL_ICON_W = 44;
+/**
+ * §197 (dono, 30/10/2026): o selo de buff/DoT mora de LADO, no canto de cima do Soulmon (ao lado da cabeça), pequeno — não
+ * centrado em cima dele. O pedido de tamanho foi "2× o ícone de elemento"; o literal (2 × 44 = 88 px por selo) cobre o
+ * sprite num campo de 360 px com 3 inimigos, então ficou 22 px (2× o selo antigo de 12 px; metade do ícone de elemento)
+ * ATÉ O DONO CONFIRMAR — é uma constante só (REGISTRO §197, pergunta em aberto).
+ */
+export const STAGE_STATUS_ICON = 22;
 /** Quanto do sprite fica acima dos pés (o resto é a base). */
 const SPRITE_TOP = 0.94;
 /** Modo `boss` (Feira do Chefe): a barra do pool mora no topo do campo e o chefe começa logo abaixo. */
@@ -186,6 +195,13 @@ export function stageLayout(w: number, h: number, nFoes: number, boss = false): 
   }));
   return { me, foes, plateH: PLATE_H, platHalf, barsH: BARS_H };
 }
+
+/**
+ * §200 (dono, 30/10/2026): com 3 inimigos em triângulo, o da ESQUERDA fica à esquerda do seu Soulmon — então ele olha para a
+ * DIREITA (para o centro/jogador), espelhado em relação aos outros. Regra geométrica: o inimigo que está à esquerda do jogador.
+ */
+export const foeFacesRight = (layout: Pick<StageLayout, 'me' | 'foes' | 'boss'>, i: number): boolean =>
+  !layout.boss && layout.foes.length >= 3 && (layout.foes[i]?.x ?? Infinity) < layout.me.x;
 
 /** A forma do golpe: a do `kind`, ou — no especial — a da skill (`strike`, padrão à distância). */
 export const strikeFormOf = (a: Pick<StageAction, 'kind' | 'strike'>): StrikeForm =>
@@ -332,8 +348,8 @@ function Platform({ spot, half, art }: { spot: Spot; half: number; art: string }
   );
 }
 
-function Fighter({ f, spot, flip, zIndex, lunge, hitKey, hitDelay, charged }: {
-  f: StageFighter; spot: Spot; flip: boolean; zIndex: number;
+function Fighter({ f, spot, flip, role, zIndex, lunge, hitKey, hitDelay, charged }: {
+  f: StageFighter; spot: Spot; flip: boolean; role?: 'me' | 'foe'; zIndex: number;
   lunge: { key: number; dx: number; dy: number; dur: number; delay: number } | null;
   hitKey: number; hitDelay: number; charged: boolean;
 }) {
@@ -365,14 +381,15 @@ function Fighter({ f, spot, flip, zIndex, lunge, hitKey, hitDelay, charged }: {
             width={spot.size}
             height={spot.size}
             className={charged && !f.down ? 'sm-bs-bounce sm-bs-charged' : 'sm-bs-bounce'}
-            data-stage-sprite={flip ? 'foe' : 'me'}
+            data-stage-sprite={role ?? (flip ? 'foe' : 'me')}
+            data-stage-faces={flip ? 'left' : 'right'}
             data-stage-charged={charged ? '1' : '0'}
             style={{
               display: 'block', width: spot.size, height: spot.size, maxWidth: 'none',
               objectFit: 'contain', imageRendering: 'pixelated',
               ['--flip' as string]: espelha ? '-1' : '1',
               ['--bs-bounce' as string]: `${Math.max(5, Math.round(spot.size * 0.045))}px`,
-              ['--sm-idle-dur' as string]: flip ? '1.25s' : '1.05s',
+              ['--sm-idle-dur' as string]: (role ?? (flip ? 'foe' : 'me')) === 'foe' ? '1.25s' : '1.05s',
               // O palco fixa os lados; a arte de perfil ESQUERDO inverte o espelho (`spriteUrlFacesLeft`), senão luta de costas.
               ...(espelha ? { transform: 'scaleX(-1)' } : null),
               ...(scale !== undefined ? petScaleStyle(scale) : null),
@@ -520,8 +537,6 @@ function StatusLayer({ status, spot, barsH, isPt, reduced }: { status: StageStat
   ];
   const art = useCombatV3Art(ids);
   const c = bodyCenter(spot);
-  const width = Math.round(Math.max(124, Math.min(200, spot.size * 0.95)));
-  const barsTop = Math.round(spot.y - spot.size * SPRITE_TOP - barsH - BARS_LIFT);
   const loopSrc = !reduced && loopOf ? art[STATUS_FX[loopOf.kind].loop ?? ''] : undefined;
   return (
     <>
@@ -558,9 +573,11 @@ function StatusLayer({ status, spot, barsH, isPt, reduced }: { status: StageStat
       })}
       <div
         data-stage-status-row
+        data-stage-status-side="right"
         style={{
-          position: 'absolute', left: Math.round(spot.x - width / 2), top: barsTop - 2, width, transform: 'translateY(-100%)',
-          display: 'flex', flexWrap: 'wrap-reverse', justifyContent: 'center', gap: 3, zIndex: 3, pointerEvents: 'none',
+          // ao LADO da cabeça (canto de cima, à direita do sprite), em coluna — nunca centrado em cima dele
+          position: 'absolute', left: Math.round(spot.x + spot.size * 0.3), top: Math.round(spot.y - spot.size * SPRITE_TOP),
+          display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 2, zIndex: 3, pointerEvents: 'none',
         }}
       >
         {shown.map((st, i) => {
@@ -579,15 +596,16 @@ function StatusLayer({ status, spot, barsH, isPt, reduced }: { status: StageStat
               data-stage-status-art={glyph ? 'img' : 'css'}
               className={reduced ? undefined : 'sm-bs-stpop'}
               style={{
-                display: 'inline-flex', alignItems: 'center', gap: 3, height: 18, padding: '0 4px', boxSizing: 'border-box', borderRadius: 4,
-                backgroundColor: SCRIM, color: 'var(--sm2-ink)', fontSize: 10, lineHeight: 1, whiteSpace: 'nowrap',
-                border: `1px ${last ? 'dashed' : 'solid'} var(--sm2-line)`,
+                position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: STAGE_STATUS_ICON, height: STAGE_STATUS_ICON,
+                boxSizing: 'border-box', borderRadius: 4, color: 'var(--sm2-ink)', fontSize: 10, lineHeight: 1, whiteSpace: 'nowrap',
+                border: `1px ${last ? 'dashed' : 'solid'} ${last ? 'var(--sm2-line)' : 'transparent'}`,
               }}
             >
-              {glyph && <img src={glyph} alt="" aria-hidden="true" width={12} height={12} style={{ width: 12, height: 12, maxWidth: 'none', imageRendering: 'pixelated' }} />}
-              <span aria-hidden="true" data-stage-status-mark>{def.mark}</span>
-              <span aria-hidden="true">{statusShort(st.kind, isPt, st.variant)}</span>
-              <span aria-hidden="true" className="sm2-num" style={{ opacity: 0.85 }}>{st.turns}</span>
+              {glyph
+                ? <img src={glyph} alt="" aria-hidden="true" width={STAGE_STATUS_ICON} height={STAGE_STATUS_ICON} style={{ width: STAGE_STATUS_ICON, height: STAGE_STATUS_ICON, maxWidth: 'none', imageRendering: 'pixelated' }} />
+                : null}
+              <span aria-hidden="true" data-stage-status-mark style={glyph ? { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' } : { fontSize: 13 }}>{def.mark}</span>
+              <span aria-hidden="true" className="sm2-num" style={{ position: 'absolute', right: -6, bottom: -3, fontSize: 9, padding: '0 2px', borderRadius: 3, backgroundColor: SCRIM }}>{st.turns}</span>
             </span>
           );
         })}
@@ -629,7 +647,8 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
   const form = strikeFormOf(action);
   const landSize = Math.round(toSpot.size * (blocked ? 0.9 : big ? 1.1 : 0.8));
   // Espelho de TODO FX: sai de (para onde a arte olha) × (para onde o golpe vai) — `utils/fxFacing.ts`, dono único. Nunca "inimigo = espelha".
-  const travel = travelOf(action.actor);
+  // §200: a direção vem da GEOMETRIA (o inimigo da esquerda no triângulo ataca para a DIREITA); sem deslocamento, a do lado
+  const travel = Math.abs(dx) < 1 ? travelOf(action.actor) : dx > 0 ? 'right' : 'left';
   const slashFlip = fxMirror(el, 'slash', travel);
   const orb = orbPose(el, travel, ang);
   const fxScale = Math.max(1, meSpot.size / 190);
@@ -640,6 +659,13 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
     layers.push(
       <CastCircle key="castcircle" x={from.x} y={from.y + (action.actor === 'me' ? 18 : 10) + Math.round(meSpot.size * 0.12)} size={Math.round(150 * fxScale)} dur={Math.max(700, intro + (action.impactMs ?? impactMs('special', reduced)) + 200)} reduced={reduced} />,
     );
+  }
+  if (action.selfOnly) {
+    // §198: benefício próprio — o círculo de cast e a aura no conjurador, e nada viaja até o inimigo
+    if (!reduced) layers.push(
+      <Fx key="aura" src={fxFrame(el, 'aura')} x={from.x} y={from.y} size={Math.round((action.actor === 'me' ? meSpot : foeSpot).size * 1.3)} anim="sm-bs-pop" delay={0} dur={intro + Math.max(1000, action.castMs ?? 0)} z={Z_CUTSCENE_AURA} />,
+    );
+    return <>{layers}</>;
   }
   if (!reduced) {
     // O círculo de cast (e a aura) é SÓ do especial carregado — o golpe básico não carrega nada.
@@ -807,21 +833,21 @@ export function BattleStage({
   const foeSpotOf = (i: number) => layout.foes[Math.min(i, layout.foes.length - 1)] ?? layout.foes[0];
   const meLunge = petDodge && !reduced
     ? { key: 100000 + petDodge.id, dx: petDodge.dir * Math.round(layout.me.size * 0.45), dy: 0, dur: 800, delay: 0 }
-    : action && actor === 'me' && strikeFormOf(action) === 'melee' && !reduced
+    : action && actor === 'me' && !action.selfOnly && strikeFormOf(action) === 'melee' && !reduced
       ? (() => {
           const t = foeSpotOf(action.foe);
           const a = bodyCenter(layout.me); const b = bodyCenter(t);
           return { key: action.id, dx: Math.round((b.x - a.x) * 0.78), dy: Math.round((b.y - a.y) * 0.78), dur: totalMs('melee', false), delay: lungeDelay(action) };
         })()
       : null;
-  const foeLunge = (i: number) => action && actor === 'foe' && action.foe === i && strikeFormOf(action) === 'melee' && !reduced
+  const foeLunge = (i: number) => action && actor === 'foe' && action.foe === i && !action.selfOnly && strikeFormOf(action) === 'melee' && !reduced
     ? (() => {
         const a = bodyCenter(layout.foes[i] ?? layout.foes[0]); const b = bodyCenter(layout.me);
         return { key: action.id, dx: Math.round((b.x - a.x) * 0.78), dy: Math.round((b.y - a.y) * 0.78), dur: totalMs('melee', false), delay: lungeDelay(action) };
       })()
     : null;
   const hitOn = (side: 'me' | number) => {
-    if (!action || action.shield) return { key: 0, delay: 0 };
+    if (!action || action.shield || action.selfOnly) return { key: 0, delay: 0 };
     const isTarget = side === 'me' ? action.actor === 'foe' : action.actor === 'me' && action.foe === side;
     return isTarget && !reduced ? { key: action.id, delay: introMs(action.kind) + (action.impactMs ?? impactMs(action.kind, false)) } : { key: 0, delay: 0 };
   };
@@ -930,7 +956,7 @@ export function BattleStage({
           if (!s) return null;
           const ht = hitOn(i);
           return (
-            <Fighter key={`f${f.key}`} f={f} spot={s} flip zIndex={cutActor === 'foe' && action?.foe === i ? Z_CUTSCENE_ACTOR : 2} lunge={foeLunge(i)} hitKey={ht.key} hitDelay={ht.delay} charged={(f.energy ?? 0) >= 0.999} />
+            <Fighter key={`f${f.key}`} f={f} spot={s} flip={!foeFacesRight(layout, i)} role="foe" zIndex={cutActor === 'foe' && action?.foe === i ? Z_CUTSCENE_ACTOR : 2} lunge={foeLunge(i)} hitKey={ht.key} hitDelay={ht.delay} charged={(f.energy ?? 0) >= 0.999} />
           );
         })}
         <Fighter f={me} spot={layout.me} flip={false} zIndex={cutActor === 'me' ? Z_CUTSCENE_ACTOR : 3} lunge={meLunge} hitKey={hitOn('me').key} hitDelay={hitOn('me').delay} charged={charging || (me.energy ?? 0) >= 0.999} />

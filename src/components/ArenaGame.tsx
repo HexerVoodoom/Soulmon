@@ -48,7 +48,7 @@ import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { ResultScreen } from './games/ResultScreen';
-import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorFx, VisorSparks, StatTag, phaseTitle, phaseLine } from './games/GameKit';
+import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorSparks, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { arenaFoesOfSeed, arenaSceneOfSeed } from '../utils/arenaSorteio';
 import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
 import { usePetScale } from '../hooks/usePetScale';
@@ -233,6 +233,7 @@ export function ArenaGame({
       seed: arenaRoundSeed(seed, r),
       startHp: hpCarryRef.current,
       startEnergy: energyCarryRef.current,
+      options: { fairStart: true }, // §195: o pet não começa atrás do grupo
       hitScale: (who, n) => (who === 0
         ? arenaPlayerHitScale(p)
         // a defesa AUTOMÁTICA: o sorteio sai da semente da run e do nº do golpe sofrido (nunca de Math.random)
@@ -495,8 +496,8 @@ export function ArenaGame({
       {fase === 'rodada-limpa' && (
         <>
           <GameVisor height={80} scene={cenaDaRun.bg}>
-            <VisorSprite src={petSprite} alt="" style={{ left: 16, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
-            <VisorFx icon="🏳️" style={{ right: 16, top: 8 }} data-visor-fx="defeat" />
+            {/* §201 (dono, 30/10/2026): a bandeira branca saiu (o dono não gostou); o Soulmon fica centrado no visor. */}
+            <VisorSprite src={petSprite} alt="" style={{ left: '50%', marginLeft: -64, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
           </GameVisor>
           <p style={phaseTitle}>{isPt ? `Rodada ${rodada} vencida` : `Round ${rodada} cleared`}</p>
           <p className="sm2-num" style={phaseLine}>

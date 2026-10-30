@@ -14,7 +14,7 @@ import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { sm2Button } from './form/FormKit';
 import { fxElementId, dungeonEnemyElement, dungeonFoeSpecialLabel, prefersReducedMotion, elementStrikeForm, specialLabel } from '../utils/combatFx';
 import { fighterIdentity } from '../utils/fighterIdentity';
-import { dungeonFamily, dungeonFight, dungeonPlayerSide, autoDodgeGrade, autoRingGrade } from '../utils/dungeonFight';
+import { dungeonFamily, dungeonFight, dungeonPlayerSide } from '../utils/dungeonFight';
 import { dungeonWaveOf } from '../utils/dungeonAway';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { getSpriteForStage } from '../utils/sprites';
@@ -111,14 +111,9 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
     playerSpecialEscola: ident.especial.escola,
   }), [hpMax, foeMax, ident, foeEl, isPt, lang, family]);
 
-  const autoSpecial = useMemo(() => ({
-    ring: (n: number) => autoRingGrade(setup.seed, n),
-    dodge: (n: number) => autoDodgeGrade(setup.seed, n),
-  }), [setup.seed]);
-
   const battle = useGroupBattle({
     running: !end, paused, reduced: reduced.current, runKey: fightKey, seed: setup.seed,
-    round, scene, onEnd: setEnd, torcida: true, speed, autoSpecial,
+    round, scene, onEnd: setEnd, torcida: true, speed, // §202: anel e esquiva interativos (sem autoSpecial)
   });
 
   const won = end?.winner === 'player';
@@ -140,7 +135,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   const meHp = pronto ? battle.hp : (cont ? reviveStart(cont.foeFrac).hp : setup.startHp);
 
   return (
-    <TorcidaLayer onTap={battle.cheer} active={!end && !paused && battle.phase === 'idle'} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot>
+    <TorcidaLayer onTap={battle.cheer} active={!end && !paused && battle.phase === 'idle'} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot swipeActive={battle.phase === 'dodge'} onSwipe={battle.swipe}>
       <div data-rogue-fight style={{ display: 'contents' }} />
       <BattleStage
         specialLabel={specialLabel(isPt, par?.especial)}

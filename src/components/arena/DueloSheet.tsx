@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ARENA_ROUNDS, ARENA_ROUND_COMP, elementLabel, loadBestiaryPool } from '../../utils/arena';
 import { isStraySeed } from '../../utils/strayFoes';
-import { arenaCards, arenaFoesOfSeed, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
+import { arenaCardElements, arenaCards, arenaFoesOfSeed, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
 import { elementIcon } from '../../utils/elementIconArt';
 import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
@@ -80,7 +80,7 @@ function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: 
       {seeds.map((seed, i) => {
         const bossIdx = ARENA_ROUND_COMP[ARENA_ROUNDS - 1].indexOf('boss');
         const boss = arenaFoesOfSeed(seed, ARENA_ROUNDS)[Math.max(0, bossIdx)];
-        const els = [...new Set(arenaFoesOfSeed(seed, 1).map(f => f.elements[0]))];
+        const els = arenaCardElements(seed); // §199: o elemento da RUN (o de todo inimigo, fundido nas combinadas)
         const on = chosen === i;
         return (
           <button

@@ -402,7 +402,9 @@ export function* fightSteps(a, b, opts) {
     }
     yield* flush();
     yield* markDead();
+    // §196: os golpes de cada cast saem ANTES do próximo cast do mesmo instante, (só a ORDEM dos eventos muda; o empate de dois especiais no mesmo instante continua existindo)
     yield* tryCast(0, t);
+    yield* flush();
     yield* tryCast(1, t);
     yield* flush();
     yield* markDead();

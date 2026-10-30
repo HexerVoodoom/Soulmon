@@ -25,7 +25,6 @@ import {
 } from '../utils/dungeonIdle';
 import { applyRiftLayerPaid, dungeonWaveOf, settleDungeonAwayNow, type AwayReport } from '../utils/dungeonAway';
 import { marcarTelaMasmorra } from '../utils/dungeonScreenOpen';
-import { autoDodgeGrade, autoRingGrade } from '../utils/dungeonFight';
 import { pushDrop, popDrop, type DropGroup, type DropKind } from '../utils/dungeonDrops';
 import { DropNotice } from './games/DropNotice';
 import { HEART_ITEM_EMOJI, SPARK_ITEM_EMOJI } from '../utils/shop';
@@ -589,11 +588,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   aoFimRef.current = aoFimImpl;
   const aoFimDaLuta = useCallback((res: GroupResult) => aoFimRef.current(res), []);
 
-  /** A nota de cada especial: função da SEMENTE da luta e do número do especial (igual à da conta fora do app). */
-  const autoEspecial = useMemo(() => ({
-    ring: (n: number) => autoRingGrade(dungeonFightSeed(runSeedRef.current, enemiesRef.current[enemyIdxRef.current]?.floor ?? 0, enemiesRef.current[enemyIdxRef.current]?.slot ?? 0), n),
-    dodge: (n: number) => autoDodgeGrade(dungeonFightSeed(runSeedRef.current, enemiesRef.current[enemyIdxRef.current]?.floor ?? 0, enemiesRef.current[enemyIdxRef.current]?.slot ?? 0), n),
-  }), []);
   const aceitarRevive = () => {
     if (!reviveOffer || !ctx || !canOfferRevive(gsRef.current?.foodInventory)) return;
     setReviveOffer(false);
@@ -619,8 +613,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     paused: pausado, reduced: reduzido.current, runKey: fightKey, seed: seedLuta,
     round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta, torcida: true,
     speed,
-    // ESPECIAL AUTOMÁTICO (REGISTRO §36): sem anel nem esquiva — a nota é o sorteio com semente do número do especial na luta.
-    autoSpecial: autoEspecial,
+    // §202 (dono, 30/10/2026): o anel e a esquiva voltam a ser do JOGADOR na tela (o especial automático do §36 fica só na conta fora do app).
   });
 
   const battleRef = useRef<typeof battle | null>(null);

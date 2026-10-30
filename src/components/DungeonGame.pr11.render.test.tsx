@@ -67,15 +67,14 @@ async function ateInimigoCair(limiteMs = 120_000) {
 
 
 describe('Masmorra — círculo de cast (PR11)', () => {
-  it('o especial do pet (energia cheia) é AUTOMÁTICO (REGISTRO §36): o círculo de cast aparece sozinho, sem anel e sem toque; o golpe básico não tem', async () => {
+  it('§202 (dono, 30/10/2026): energia cheia abre o ANEL ~1 s depois da carga (não mais automático); o toque solta o especial com o círculo de cast', async () => {
     vi.useFakeTimers();
     H.startEnergy = [100];
     montar();
     descer();
-    for (let t = 0; t < 8000 && !document.querySelector('[data-stage-cast="special"]'); t += 100) {
-      await avancar(100);
-      expect(document.querySelector('[data-stage-ring]')).toBeNull(); // nenhum anel, em nenhum instante
-    }
+    for (let t = 0; t < 8000 && !document.querySelector('[data-stage-ring]'); t += 100) await avancar(100);
+    expect(document.querySelector('[data-stage-ring]')).not.toBeNull();
+    for (let t = 0; t < 8000 && !document.querySelector('[data-stage-cast="special"]'); t += 100) await avancar(100);
     expect(document.querySelector('[data-stage-cast="special"]')).not.toBeNull();
   });
 });

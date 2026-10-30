@@ -372,6 +372,15 @@ export const FAMILY_STATUS: Readonly<Record<SpecialFamily, FamilyStatus | null>>
  * a mecânica segue sendo a família `defDebuff` do núcleo (maldição como mecânica própria continua inexistente) e o balanço
  * não muda. A escola vem da skill (PvE) ou do `fx` publicado (Duelo); sem escola, vale a família sozinha.
  */
+/**
+ * §198 (dono, 30/10/2026): especial SÓ DE BENEFÍCIO (cura, escudo, buff de ataque/velocidade — sem dano, sem DoT) não
+ * anima golpe contra o inimigo (nada de projétil, corte ou investida): só o efeito no próprio conjurador. A régua é a
+ * mesma tabela de status (`target: 'self'`), então família nova entra certa sozinha.
+ */
+export function isSelfOnlySpecial(family: SpecialFamily | null | undefined): boolean {
+  return !!family && FAMILY_STATUS[family]?.target === 'self';
+}
+
 export const CURSE_SCHOOL = 'maldicao';
 export function isCurseSpecial(family: SpecialFamily | null | undefined, escola: string | null | undefined): boolean {
   return family === 'defDebuff' && escola === CURSE_SCHOOL;

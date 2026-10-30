@@ -11,7 +11,8 @@
 //   3. A tabela de CUSTO do reroll: 3 grátis por dia do jogador; do 4º em diante só Bits (15, 30, 45 e 45 fixo). Nunca Crédito/Emblema.
 //   4. `arenaSceneOfSeed(seed)` — o cenário da run: sempre uma das duas arenas do Torneio, fixa durante a run (escolhida pela semente).
 // ---------------------------------------------------------------------------
-import { buildArenaRound, type ArenaEnemy } from './arena';
+import { ARENA_COMBO_ELEMENTS, buildArenaRound, type ArenaEnemy } from './arena';
+import { NOVOS_DATA } from './novosSoulmonData';
 import { mulberry32 } from './combate/rng';
 import { arenaCardSeeds, isComboSeed, isStraySeed } from './strayFoes';
 import { spendBitsPaidFirst, type BitsOriginState } from './bitsOrigin';
@@ -60,13 +61,27 @@ function hash(s: string): number {
   return h | 0;
 }
 
-/** Os inimigos da rodada `rodada` (1-based) da run `seed`. Pura: card e luta chamam ESTA. */
-export function arenaFoesOfSeed(seed: number, rodada: number): ArenaEnemy[] {
-  return buildArenaRound(rodada, 1, mulberry32((seed ^ Math.imul(rodada, 0x9e3779b1)) | 0), undefined, isStraySeed(seed), isComboSeed(seed));
+/** §199: os elementos BASE que têm criatura (o pool das runs comuns e Desgarradas). */
+export const ARENA_BASE_ELEMENTS: readonly string[] = [...new Set(NOVOS_DATA.map(n => n.element))].sort();
+const RUN_ELEMENT_MIX = 0x3e1e3e17;
+
+/**
+ * §199 (dono, 30/10/2026): o ELEMENTO da run `seed` — o que o card mostra e o de TODO inimigo das 5 rodadas. Antes o card mostrava só os
+ * elementos da 1ª rodada (e só a base do combinado), e as rodadas seguintes sorteavam outros: "escolhi um elemento e veio outro".
+ * Run combinada = um elemento FUNDIDO (id do sprite, `spriteElement`), então os fundidos também aparecem.
+ */
+export function arenaRunElement(seed: number): string {
+  const pool = isComboSeed(seed) && ARENA_COMBO_ELEMENTS.length > 0 ? ARENA_COMBO_ELEMENTS : ARENA_BASE_ELEMENTS;
+  return pool[Math.floor(mulberry32((seed ^ RUN_ELEMENT_MIX) | 0)() * pool.length)];
 }
 
-/** O conjunto de elementos que o card MOSTRA (os da 1ª rodada). */
-export const arenaCardElements = (seed: number): string[] => [...new Set(arenaFoesOfSeed(seed, 1).map(f => f.elements[0]))];
+/** Os inimigos da rodada `rodada` (1-based) da run `seed`. Pura: card e luta chamam ESTA. */
+export function arenaFoesOfSeed(seed: number, rodada: number): ArenaEnemy[] {
+  return buildArenaRound(rodada, 1, mulberry32((seed ^ Math.imul(rodada, 0x9e3779b1)) | 0), undefined, isStraySeed(seed), isComboSeed(seed), arenaRunElement(seed));
+}
+
+/** O elemento que o card MOSTRA: o da run (o mesmo de todo inimigo dela; fundido nas combinadas). */
+export const arenaCardElements = (seed: number): string[] => [arenaRunElement(seed)];
 
 /**
  * Os 3 cards. `accountKey` = saveId (ou outro identificador estável da conta). Elementos distintos entre os cards: se um card repete

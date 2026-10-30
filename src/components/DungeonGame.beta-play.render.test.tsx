@@ -148,16 +148,17 @@ describe('Avanço rápido 1×/3× no canto inferior direito (o 2× saiu, 14/10/2
     expect(t3).toBeLessThan(t1);
   });
 
-  it('o jogador NÃO precisa tocar para o especial: nunca aparece o anel nem os botões de esquiva', async () => {
+  it('§202 (dono, 30/10/2026): o especial volta a ser do JOGADOR — o anel aparece na luta da Masmorra', async () => {
     vi.useFakeTimers();
     montar();
     descer();
-    for (let t = 0; t < 90_000; t += 250) {
+    let viu = false;
+    for (let t = 0; t < 90_000 && !viu; t += 250) {
       await avancar(250);
-      expect(document.querySelector('[data-stage-ring]')).toBeNull();
-      expect(document.querySelector('[data-stage-dodge]')).toBeNull();
-      if (caiu()) break;
+      viu = !!document.querySelector('[data-stage-ring]');
+      if (!viu && caiu()) break;
     }
+    expect(viu).toBe(true);
   });
 });
 

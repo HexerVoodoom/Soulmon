@@ -40,6 +40,7 @@ import { ARENA_SCENE } from '../utils/dungeonScenes';
 import {
   fxElementId, impactMs, introMs, prefersReducedMotion, FX_FALLBACK_ELEMENT, specialLabel, foeSpecialLabel, duelStatusBoard, stageStatusOf,
   specialLeadMs, specialTailMs, type StageActionKind, type StageStatus,
+  isSelfOnlySpecial,
 } from '../utils/combatFx';
 import { avancar as avancarPortao, bloqueiaAplicar, bloqueiaComecar, fechar as fecharPortao, serializarEspeciais, type ConfigDoPortao, type Portao } from '../utils/specialGate';
 import { hpPoints, PVP_HP_SCALE, type FightEvent } from '../utils/combate/fight';
@@ -196,7 +197,7 @@ export function DuelScreen({
     let portao: Portao | null = null;
     const fire = (e: FightEvent, a: { kind: StageActionKind; strike?: ReturnType<typeof forma> }) => {
       const meu = e.side === 0;
-      setAcao({ id: ++seq.current, actor: meu ? 'me' : 'foe', foe: 0, kind: a.kind, strike: a.strike, element: elementoDe(meu ? 0 : 1, a.kind === 'special' ? 'especial' : 'basica') });
+      setAcao({ id: ++seq.current, actor: meu ? 'me' : 'foe', foe: 0, kind: a.kind, strike: a.strike, element: elementoDe(meu ? 0 : 1, a.kind === 'special' ? 'especial' : 'basica'), selfOnly: a.kind === 'special' && isSelfOnlySpecial((meu ? me : opp).special?.family) });
     };
     const start = (e: FightEvent) => {
       const a = actionOf(e);

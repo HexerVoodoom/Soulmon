@@ -87,10 +87,12 @@ async function entrar(opts: { language?: 'pt-BR' | 'en-US'; escola?: string; onE
   await act(async () => { await Promise.resolve(); await Promise.resolve(); });
   fireEvent.click(screen.getByRole('button', { name: /Entrar na Arena|Enter the Arena/i }));
   await avancar(10);
+  if (H.startEnergy[0] === 100) await avancar(RING_LEAD_MS); // §202: ~1 s entre a carga e o anel
 }
 const camada = () => document.querySelector('[data-torcida-layer]') as HTMLElement;
 const gauge = () => document.querySelector('[data-cheer-mascot]') as HTMLElement;
 const ratio = () => parseFloat(gauge().getAttribute('data-torcida-ratio') ?? 'NaN');
+import { RING_LEAD_MS } from './games/useGroupBattle';
 const avancar = async (ms: number) => { await act(async () => { await vi.advanceTimersByTimeAsync(ms); }); };
 const energia = (de: 'me' | 'foe') => Number(document.querySelector(`[data-stage-plate="${de}"] [data-stage-energy]`)?.getAttribute('aria-valuenow'));
 const mascote = () => screen.getByRole('button', { name: 'Torcer pelo seu Soulmon' });

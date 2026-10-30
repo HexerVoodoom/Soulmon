@@ -119,9 +119,11 @@ export function novoFormName(n: NovoData, stage: NovoAnyStage): string {
  */
 export function pickNovo(
   prefer: readonly NovoAnyStage[], used: ReadonlySet<string>, rng: () => number,
+  /** §199: só criaturas DESTE elemento (o elemento da run da Arena). Sem criatura dele em nenhum estágio pedido = null. */
+  element?: string,
 ): { data: NovoData; stage: NovoAnyStage } | null {
   for (const stage of prefer) {
-    const have = NOVOS_DATA.filter(n => novoHasForm(n.id, stage));
+    const have = NOVOS_DATA.filter(n => novoHasForm(n.id, stage) && (!element || n.element === element));
     if (have.length === 0) continue;
     const fresh = have.filter(n => !used.has(n.id));
     const pool = fresh.length > 0 ? fresh : have;

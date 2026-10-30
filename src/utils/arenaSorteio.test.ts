@@ -4,9 +4,10 @@
 import { describe, it, expect } from 'vitest';
 import {
   ARENA_REROLL_FREE_PER_DAY, ARENA_REROLL_PRICES, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, nextArenaReroll,
-  sanitizeArenaReroll, arenaCards, arenaFoesOfSeed, arenaCardElements, arenaSceneOfSeed, applyArenaReroll,
+  sanitizeArenaReroll, ARENA_BASE_ELEMENTS, arenaCards, arenaFoesOfSeed, arenaCardElements, arenaSceneOfSeed, applyArenaReroll,
 } from './arenaSorteio';
 import { ARENA_BG_SCENES } from './dungeonScenes';
+import { ARENA_COMBO_ELEMENTS } from './arena';
 import { isComboSeed, isStraySeed } from './strayFoes';
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 
@@ -116,21 +117,39 @@ describe('pool combinado (REGISTRO §180, emenda 28/10)', () => {
       if (isComboSeed(s)) {
         combo++;
         for (const e of f) { expect(e.artFile).toBeTruthy(); expect(e.elements).toHaveLength(2); expect(e.tier).toBe('rookie'); expect(e.creature).toBeUndefined(); }
-        expect(new Set(f.map(e => e.artFile)).size).toBe(f.length); // sem repetir na rodada
+        expect(new Set(f.map(e => e.element)).size).toBe(1); // §199: um elemento (fundido) só na run; com uma criatura por fundido, ela pode repetir na rodada
       } else { base++; for (const e of f) expect(e.artFile).toBeUndefined(); }
     }
     expect(combo / (combo + base)).toBeGreaterThan(0.45);
     expect(combo / (combo + base)).toBeLessThan(0.55);
   });
 
-  it('cards: mistura os dois pools, determinístico, distintos, no máximo 1 Desgarrado, elemento do card é base', () => {
+  it('cards: mistura os dois pools, determinístico, distintos, no máximo 1 Desgarrado, elemento do card = o da run (base na comum, FUNDIDO na combinada — §199)', () => {
     let comCombo = 0, comBase = 0;
     for (let i = 0; i < 200; i++) {
       const seeds = arenaCards('2026-10-28', `k${i}`, 0);
       expect(arenaCards('2026-10-28', `k${i}`, 0)).toEqual(seeds);
       expect(seeds.filter(isStraySeed).length).toBeLessThanOrEqual(1);
-      for (const s of seeds) { if (isComboSeed(s)) comCombo++; else comBase++; expect(CLASS_ELEMENT_ORDER as readonly string[]).toContain(arenaCardElements(s)[0]); }
+      for (const s of seeds) { if (isComboSeed(s)) comCombo++; else comBase++; expect((isComboSeed(s) ? ARENA_COMBO_ELEMENTS : CLASS_ELEMENT_ORDER) as readonly string[]).toContain(arenaCardElements(s)[0]); }
     }
     expect(comCombo).toBeGreaterThan(200); expect(comBase).toBeGreaterThan(200);
+  });
+});
+
+describe('§199 (dono, 30/10/2026): o elemento escolhido é o elemento de TODO inimigo da run', () => {
+  it('em 400 runs, as 5 rodadas: todo inimigo tem o elemento do card (o fundido nas combinadas)', () => {
+    for (let s = 1; s <= 400; s++) {
+      const el = arenaCardElements(s)[0];
+      for (let r = 1; r <= 5; r++) for (const f of arenaFoesOfSeed(s, r)) {
+        expect(f.element ?? f.elements[0], `seed ${s} rodada ${r}`).toBe(el);
+      }
+    }
+  });
+  it('elementos FUNDIDOS aparecem (cada um com criatura é alcançável) e os base também', () => {
+    const vistos = new Set<string>();
+    for (let s = 1; s <= 6000; s++) vistos.add(arenaCardElements(s)[0]);
+    expect(ARENA_COMBO_ELEMENTS.length).toBeGreaterThan(0);
+    for (const e of ARENA_COMBO_ELEMENTS) expect(vistos.has(e), e).toBe(true);
+    for (const e of ARENA_BASE_ELEMENTS) expect(vistos.has(e), e).toBe(true);
   });
 });
