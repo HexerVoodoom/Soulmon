@@ -1,5 +1,0 @@
-<<<<<<<< HEAD:dist/assets/realEngine-C9NpJ5N0.js
-import{am as t}from"./index-Cmv5J0Uk.js";async function a(e){const o=await t(()=>import("./index-Cxx-WTzk.js"),[]),s={nome:e.nome,elementos:e.elementos,escolas:e.escolas,recursos:e.recursos,talentos:e.talentos,profissoes:e.profissoes,bestiario:[]},r=o.calcularProgressao(s);return{engine:o,personagem:s,prog:r}}export{a as b};
-========
-import{am as t}from"./index-xQehvxy0.js";async function a(e){const o=await t(()=>import("./index-Cxx-WTzk.js"),[]),s={nome:e.nome,elementos:e.elementos,escolas:e.escolas,recursos:e.recursos,talentos:e.talentos,profissoes:e.profissoes,bestiario:[]},r=o.calcularProgressao(s);return{engine:o,personagem:s,prog:r}}export{a as b};
->>>>>>>> origin/main:dist/assets/realEngine-fLWNO4MZ.js
