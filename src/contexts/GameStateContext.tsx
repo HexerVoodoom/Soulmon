@@ -49,7 +49,7 @@ import { sanitizeTalentPicks } from '../utils/talents';
 import { sanitizeEquipment, type EquipmentState } from '../utils/equipment';
 import { sanitizeForge, type ForgeState } from '../utils/forge';
 import { sanitizeBitsOrigin, type BitsOrigin } from '../utils/bitsOrigin';
-import { ACHIEVEMENT_IDS, gatilhoAntigoTasks100, type AchievementId } from '../utils/achievements';
+import { ACHIEVEMENT_IDS, gatilhoAntigoTasks100, sanitizeConquistasPagas, type AchievementId } from '../utils/achievements';
 import {
   resolvePlayerDayAnchor, sanitizePlayerDayAnchor, deviceOffsetMs,
   type PlayerDayAnchor,
@@ -657,6 +657,8 @@ export interface GameState {
    *  `'dias-completos-30'` (ex-`tasks-100`, decisão #30, 21/09/2026). É a única
    *  conquista persistida — todas as outras são derivadas (`utils/achievements.ts`). */
   conquistasHerdadas?: AchievementId[];
+  /** Conquistas (`utils/achievements.ts`) cujo prêmio em Bits JÁ foi pago (30/10/2026). Ausente = save anterior: o App semeia com as já abertas, sem Bits retroativos. Os Pontos de Conquista são DERIVADOS, nunca gravados. */
+  conquistasPagas?: AchievementId[];
   /** Estado da estação corrente (`utils/seasons.ts`). Fiado em 06/09/2026
    *  (WP4.16): o módulo existia inteiro e nunca era chamado por ninguém. */
   season?: SeasonProgressState;
@@ -1584,6 +1586,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         conquistasHerdadas: Array.isArray(loadedState.conquistasHerdadas)
           ? loadedState.conquistasHerdadas.filter((id): id is AchievementId => (ACHIEVEMENT_IDS as readonly string[]).includes(id))
           : (gatilhoAntigoTasks100(loadedState) ? ['dias-completos-30'] : []),
+        conquistasPagas: sanitizeConquistasPagas(loadedState.conquistasPagas), // ausente/lixo = undefined (o App semeia)
         // `?? undefined`: save antigo simplesmente não tem estação, e a
         // primeira virada tira a foto. Nada a migrar.
         season: (loadedState as { season?: SeasonProgressState }).season ?? undefined,

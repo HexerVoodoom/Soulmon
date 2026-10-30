@@ -23,6 +23,7 @@ import { sanitizeBuildingQuests } from './_buildingQuests.js';
 import { sanitizeDailyMissions, sanitizeFeats, sanitizeFirstTimes, sanitizeMissionsClaimed } from './_dailyMissions.js';
 import { sanitizeFocusLoot } from './_focusLoot.js';
 import { sanitizeDefeatedElements } from './_elementDex.js';
+import { sanitizeConquistasPagas } from './_conquistas.js';
 import { sanitizeDayPlan } from './_dayPlan.js';
 import { sanitizeNightmares } from './_nightmares.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
@@ -357,6 +358,11 @@ export async function onRequest({ request, env }) {
     if ('defeatedElements' in state) {
       const q = sanitizeDefeatedElements(state.defeatedElements);
       if (q) state.defeatedElements = q; else delete state.defeatedElements;
+    }
+    // Conquistas pagas (30/10/2026): lista fechada de ids. Espelho de `sanitizeConquistasPagas` (cliente).
+    if ('conquistasPagas' in state) {
+      const q = sanitizeConquistasPagas(state.conquistasPagas);
+      if (q) state.conquistasPagas = q; else delete state.conquistasPagas;
     }
     // Plano do dia (15/10/2026, REGISTRO §66): dia ISO + listas de ids saneadas (teto 200). Sem forma = ausente.
     if ('dayPlan' in state) {

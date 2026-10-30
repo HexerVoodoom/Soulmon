@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { ACHIEVEMENT_IDS, unlockedAchievements, gatilhoAntigoTasks100 } from './achievements';
+import { ACHIEVEMENT_IDS, ACHIEVEMENT_POINTS, ACHIEVEMENT_BITS, achievementPointsTotal, settleAchievements, sanitizeConquistasPagas, unlockedAchievements, gatilhoAntigoTasks100 } from './achievements';
+import { BASE_ELEMENT_IDS, DERIVED_ELEMENT_IDS } from './elementDex';
 import { EMBLEM_COUNT, emblemArt } from './emblemArt';
 
 const vazio = {
@@ -38,8 +39,48 @@ describe('conquistas (emblemas de arte)', () => {
     expect(gatilhoAntigoTasks100({})).toBe(false);
     expect(unlockedAchievements({ ...vazio, conquistasHerdadas: ['dias-completos-30'] })).toEqual(['dias-completos-30']);
   });
-  it('as 9 conquistas têm arte instalada', () => {
-    expect(EMBLEM_COUNT).toBe(9);
+  it('todas as conquistas têm arte instalada', () => {
+    expect(EMBLEM_COUNT).toBe(ACHIEVEMENT_IDS.length);
     for (const id of ACHIEVEMENT_IDS) expect(typeof emblemArt(id)).toBe('string');
+  });
+});
+
+describe('conquistas do dex de elementos (30/10/2026)', () => {
+  const com = (ids: readonly string[]) => ({ ...vazio, defeatedElements: [...ids] }) as Parameters<typeof unlockedAchievements>[0];
+  it('base: todos os 20 simples abrem; um a menos não', () => {
+    expect(unlockedAchievements(com(BASE_ELEMENT_IDS))).toEqual(['dex-base-all']);
+    expect(unlockedAchievements(com(BASE_ELEMENT_IDS.slice(1)))).toEqual([]);
+  });
+  it('compostos: degraus 25/50/100/todos, contando só compostos do catálogo', () => {
+    expect(unlockedAchievements(com(DERIVED_ELEMENT_IDS.slice(0, 24)))).toEqual([]);
+    expect(unlockedAchievements(com(DERIVED_ELEMENT_IDS.slice(0, 25)))).toEqual(['dex-fused-25']);
+    expect(unlockedAchievements(com(DERIVED_ELEMENT_IDS.slice(0, 100)))).toEqual(['dex-fused-25', 'dex-fused-50', 'dex-fused-100']);
+    expect(unlockedAchievements(com([...DERIVED_ELEMENT_IDS, 'lixo_inexistente']))).toEqual(['dex-fused-25', 'dex-fused-50', 'dex-fused-100', 'dex-fused-all']);
+  });
+  it('todos os elementos só com base + compostos completos', () => {
+    expect(unlockedAchievements(com([...BASE_ELEMENT_IDS, ...DERIVED_ELEMENT_IDS.slice(1)]))).not.toContain('dex-all');
+    expect(unlockedAchievements(com([...BASE_ELEMENT_IDS, ...DERIVED_ELEMENT_IDS]))).toContain('dex-all');
+  });
+});
+
+describe('Pontos de Conquista e prêmio em Bits', () => {
+  it('todo id tem pontos e Bits > 0; o total é a soma das abertas', () => {
+    for (const id of ACHIEVEMENT_IDS) { expect(ACHIEVEMENT_POINTS[id]).toBeGreaterThan(0); expect(ACHIEVEMENT_BITS[id]).toBeGreaterThan(0); }
+    expect(achievementPointsTotal([])).toBe(0);
+    expect(achievementPointsTotal(['perfect-day', 'dex-all'])).toBe(ACHIEVEMENT_POINTS['perfect-day'] + ACHIEVEMENT_POINTS['dex-all']);
+  });
+  it('save sem o campo semeia sem pagar; depois paga só as novas, uma vez (idempotente)', () => {
+    const seed = settleAchievements(['perfect-day'], undefined);
+    expect(seed).toEqual({ next: ['perfect-day'], newly: [], bits: 0 });
+    const nova = settleAchievements(['perfect-day', 'habit-7'], seed.next);
+    expect(nova.newly).toEqual(['habit-7']);
+    expect(nova.bits).toBe(ACHIEVEMENT_BITS['habit-7']);
+    const de_novo = settleAchievements(['perfect-day', 'habit-7'], nova.next);
+    expect(de_novo.newly).toEqual([]);
+    expect(de_novo.bits).toBe(0);
+  });
+  it('sanitizador: lixo vira undefined, ids desconhecidos/repetidos somem', () => {
+    expect(sanitizeConquistasPagas('x')).toBeUndefined();
+    expect(sanitizeConquistasPagas(['habit-7', 'habit-7', 'zzz', 5])).toEqual(['habit-7']);
   });
 });

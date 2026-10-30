@@ -23,6 +23,11 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ## Módulos (ordem alfabética)
 
+### `src/utils/achievementPointsIcon.ts`
+**Dono de:** o ícone dos Pontos de Conquista (30/10/2026): `ACHIEVEMENT_POINTS_ICON`, resolvido por `import.meta.glob` de `assets/soulmon/icones-ui/pontos-conquista.png` com queda para o troféu dourado se a arte sumir.
+**Chamado por:** `components/PetPage.tsx` (linha do total).
+**Régua:** `src/utils/achievements.test.ts`.
+
 ### `src/utils/accountData.ts`
 **Dono de:** Cliente das rotas de CONTA (`functions/api/account.js`): exportação e exclusão dos dados que o servidor guarda — só transporta, o contrato é do servidor.
 **Exports:**
@@ -654,7 +659,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/attackFxArt.test.ts` (`ls src/utils/attackFxArt*.test.ts`, 21/09/2026 — dizia "nenhuma"; ajustado em `66e32d43` para as auras 96²).
 
 ### `src/utils/achievements.ts`
-**Dono de:** as 9 CONQUISTAS exibíveis (emblemas de arte), DERIVADAS do save na leitura — nada persistido (única exceção: `conquistasHerdadas`, abaixo), nenhuma lê streak, **nenhuma conta tarefas** (desde `42b07bec`, decisão #30).
+**Dono de:** as CONQUISTAS exibíveis (15 desde 30/10/2026: +6 do dex de elementos `dex-base-all`, `dex-fused-25/50/100/all`, `dex-all`, lendo `defeatedElements`; Pontos de Conquista `ACHIEVEMENT_POINTS`/`achievementPointsTotal` derivados, prêmio único em Bits `ACHIEVEMENT_BITS` controlado por `settleAchievements` + `conquistasPagas` no save). Antes eram 9 (emblemas de arte), DERIVADAS do save na leitura — nada persistido (única exceção: `conquistasHerdadas`, abaixo), nenhuma lê streak, **nenhuma conta tarefas** (desde `42b07bec`, decisão #30).
 **Exports:**
 - `ACHIEVEMENT_HOW` (texto de posse/instrução de cada emblema, nunca "faltam N") · `achievementShortName(id, isPt)` (o trecho antes do " — " do rótulo).
 - `ACHIEVEMENT_IDS`, `AchievementId`, `ACHIEVEMENT_LABELS` (PT/EN). O 9º id é **`'dias-completos-30'`** ("Trinta dias completos" / "Thirty complete days") — ⚰️ era `'tasks-100'` ("Cem tarefas", `completedTasks + activityLog ≥ 100`) até `42b07bec`.

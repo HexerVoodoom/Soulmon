@@ -78,7 +78,7 @@ import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForSta
 import { gaugeFull, gaugeContribution, gaugeGoalFor } from './utils/evolutionGauge';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
 import { SoulmonWidget, widgetPetName, widgetPetLine, widgetGroveStage } from './plugins/SoulmonWidgetPlugin';
-import { unlockedAchievements } from './utils/achievements';
+import { unlockedAchievements, achievementPointsTotal, settleAchievements, ACHIEVEMENT_POINTS, ACHIEVEMENT_LABELS } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
 import { buildEvoRecap, parseEvoRecapSnapshot, serializeEvoRecapSnapshot, type EvoRecap } from './utils/evoRecap';
@@ -206,7 +206,7 @@ import type { BosqueArvores } from './utils/bosqueArvores';
 import type { OcupadoAcao } from './components/DungeonBusyModal';
 import type { DungeonReturnSummary } from './utils/dungeonReturnSummary';
 import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
-import type { PreviewItem } from './components/ui/RewardPreview';
+import { RewardPreview, type PreviewItem } from './components/ui/RewardPreview';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
@@ -4284,10 +4284,49 @@ export default function App() {
   /* RESGATE DE CONQUISTA (dono, 14/10/2026, REGISTRO §56): resgatar LIBERA a compra no Mercado, nunca concede o item. Idempotente
      (já resgatada devolve `prev`). MIGRAÇÃO: save sem o campo marca como já resgatadas as conquistas já cumpridas — quem já tinha
      item liberado não precisa fazer nada nem perde acesso; as que cumprir depois pedem o Resgatar. */
+  /** Mostra o GANHO de um resgate (pedido do dono, 30/10/2026; mesma linha única do 29/10): toast com `RewardPreview mode="after"`. Fora de updater (footgun 6). */
+  const mostrarGanho = useCallback((titulo: string, items: PreviewItem[]) => {
+    if (items.length === 0) { toast(titulo); return; }
+    toast(<span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>{titulo}<RewardPreview items={items} mode="after" language={language} size={14} /></span>);
+  }, [language]);
+  /** O material pago por um resgate de missão (nome/emoji da tabela lazy do prédio); `qty` 0 (estoque no teto) não mostra nada. */
+  const anunciarMaterial = useCallback((titulo: string, material: string | null, qty: number) => {
+    if (!material || qty <= 0) { toast(titulo); return; }
+    void import('./utils/buildingQuestsCopy').then(({ MATERIALS }) => {
+      const m = MATERIALS.find(x => x.id === material);
+      mostrarGanho(titulo, m ? [{ kind: 'custom', emoji: m.icon, label: language === 'pt-BR' ? m.namePt : m.nameEn, amount: qty }] : []);
+    });
+  }, [mostrarGanho, language]);
   const resgatarConquista = useCallback((id: string) => {
     if (!isMissionComplete(id, missionProgress)) return;
+    if (!(gameStateRef.current.missionsClaimed ?? []).includes(id)) {
+      toast(language === 'pt-BR' ? 'Conquista resgatada: já dá para comprar o item no Mercado.' : 'Achievement claimed: you can now buy the item at the Market.');
+    }
     setGameState(prev => ((prev.missionsClaimed ?? []).includes(id) ? prev : { ...prev, missionsClaimed: [...(prev.missionsClaimed ?? []), id] }));
-  }, [missionProgress, setGameState]);
+  }, [missionProgress, setGameState, language]);
+  /* CONQUISTAS (30/10/2026): o prêmio em Bits sai UMA vez por conquista (`conquistasPagas`); save sem o campo é semeado com as já abertas
+     (sem Bits retroativos). Os Pontos de Conquista são derivados — aqui só se MOSTRA o ganho. */
+  const conquistasAbertas = unlockedAchievements(gameState);
+  const conquistasChave = conquistasAbertas.join(',');
+  useEffect(() => {
+    const cur = gameStateRef.current;
+    const r = settleAchievements(unlockedAchievements(cur), cur.conquistasPagas);
+    if (cur.conquistasPagas !== undefined && r.newly.length === 0) return;
+    setGameState(prev => {
+      const x = settleAchievements(unlockedAchievements(prev), prev.conquistasPagas);
+      if (prev.conquistasPagas !== undefined && x.newly.length === 0) return prev;
+      return { ...prev, conquistasPagas: x.next, gamePoints: (prev.gamePoints ?? 0) + x.bits };
+    });
+    if (r.newly.length > 0) {
+      const pts = r.newly.reduce((n, id) => n + ACHIEVEMENT_POINTS[id], 0);
+      const nome = r.newly.length === 1 ? (language === 'pt-BR' ? ACHIEVEMENT_LABELS[r.newly[0]].pt : ACHIEVEMENT_LABELS[r.newly[0]].en) : String(r.newly.length);
+      mostrarGanho(language === 'pt-BR' ? `Conquista: ${nome}` : `Achievement: ${nome}`, [
+        { kind: 'custom', emoji: '🏆', label: language === 'pt-BR' ? 'Pontos de Conquista' : 'Achievement Points', amount: pts },
+        { kind: 'bits', amount: r.bits },
+      ]);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conquistasChave, gameState.conquistasPagas === undefined]);
   useEffect(() => {
     if (gameState.missionsClaimed !== undefined) return;
     const feitas = completedMissionIds(missionProgress);
@@ -6684,11 +6723,21 @@ export default function App() {
 
   /** Resgata uma missão diária dos outros recursos (`utils/dailyMissions.ts`). Idempotente: reconfere sobre o `prev` (toque duplo não paga 2×). */
   const resgatarDiaria = useCallback((id: string) => {
+    {
+      const cur = gameStateRef.current; const dia = playerDayKey(new Date(), cur.playerDayTz);
+      const r = claimDaily(cur, dia, bondLevelFor(cur.totalXP ?? 0), id);
+      if (r.paid) anunciarMaterial(language === 'pt-BR' ? 'Missão resgatada' : 'Mission claimed', r.paid, (r.state.buildingQuests?.materials[r.paid] ?? 0) - (cur.buildingQuests?.materials?.[r.paid] ?? 0));
+    }
     setGameState(prev => claimDaily(prev, playerDayKey(new Date(), prev.playerDayTz), bondLevelFor(prev.totalXP ?? 0), id).state);
   }, []);
 
   /** Resgata uma PRIMEIRA VEZ (missão única). Idempotente sobre o `prev`. */
   const resgatarPrimeira = useCallback((id: string) => {
+    {
+      const cur = gameStateRef.current; const dia = playerDayKey(new Date(), cur.playerDayTz);
+      const r = claimFirst(cur, dia, bondLevelFor(cur.totalXP ?? 0), id);
+      if (r.paid) anunciarMaterial(language === 'pt-BR' ? 'Primeira vez resgatada' : 'First time claimed', r.paid, (r.state.buildingQuests?.materials[r.paid] ?? 0) - (cur.buildingQuests?.materials?.[r.paid] ?? 0));
+    }
     setGameState(prev => claimFirst(prev, playerDayKey(new Date(), prev.playerDayTz), bondLevelFor(prev.totalXP ?? 0), id).state);
   }, []);
 
@@ -6714,6 +6763,11 @@ export default function App() {
 
   /** Resgata o material do prédio. Idempotente: a recusa é reconferida sobre o `prev` (resgate duplo não paga 2×). */
   const resgatarPredio = useCallback((id: BuildingId) => {
+    {
+      const cur = gameStateRef.current;
+      const r = claimBuildingQuest(cur.buildingQuests, playerDayKey(new Date(), cur.playerDayTz), id, bondLevelFor(cur.totalXP ?? 0));
+      if (r.paid) anunciarMaterial(language === 'pt-BR' ? 'Missão resgatada' : 'Mission claimed', r.paid, (r.state?.materials[r.paid] ?? 0) - (cur.buildingQuests?.materials?.[r.paid] ?? 0));
+    }
     setGameState(prev => {
       const { state, paid } = claimBuildingQuest(prev.buildingQuests, playerDayKey(new Date(), prev.playerDayTz), id, bondLevelFor(prev.totalXP ?? 0));
       // O Soulsmith (07/10/2026): o 1º resgate do prédio concede a peça de nível 1 dele (`utils/forge.ts`); idempotente.
@@ -6724,6 +6778,15 @@ export default function App() {
   /** Paga os Emblemas de uma missão pronta. `claimWeekly` é idempotente e
    *  devolve 0 se já estava paga — pagar duas vezes é bug de economia. */
   const resgatarMissao = useCallback((id: WeeklyMissionId) => {
+    {
+      const cur = gameStateRef.current;
+      const semana = isoWeekKey(playerDayKey(new Date(), cur.playerDayTz));
+      const missao = semana ? weeklyMissionsFor(semana).find(m => m.id === id) : undefined;
+      if (semana && missao) {
+        const { emblems } = claimWeekly(forWeek(cur.weeklyMissions, semana), missao);
+        if (emblems > 0) mostrarGanho(language === 'pt-BR' ? 'Missão da semana resgatada' : 'Weekly mission claimed', [{ kind: 'honor', amount: emblems }]);
+      }
+    }
     setGameState(prev => {
       const semana = isoWeekKey(playerDayKey(new Date(), prev.playerDayTz));
       if (!semana) return prev;
@@ -7147,6 +7210,7 @@ export default function App() {
               stages={gameState.soulmonStages ?? []}
               dominantElement={petElementOf(gameState)}
               achievements={unlockedAchievements(gameState)}
+              achievementPoints={achievementPointsTotal(unlockedAchievements(gameState))}
               unlockedEvolutions={gameState.unlockedEvolutions}
               currentStageId={gameState.evolutionStage}
               demoCharacterId={petLine}

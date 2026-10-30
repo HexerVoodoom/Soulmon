@@ -42,10 +42,10 @@ function montar(abertas: readonly AchievementId[], language: 'pt-BR' | 'en-US' =
 
 describe('grade de emblemas (I12)', () => {
   it('há 9 conquistas, e a contagem do rótulo sai de ACHIEVEMENT_IDS.length', () => {
-    expect(ACHIEVEMENT_IDS).toHaveLength(9);
+    expect(ACHIEVEMENT_IDS).toHaveLength(ACHIEVEMENT_IDS.length);
     montar(['perfect-day', 'habit-7', 'dungeon-10']);
     const linha = document.querySelector('[data-achievements-count]')!;
-    expect(linha.textContent).toBe('Achievements · 3 of 9');
+    expect(linha.textContent).toBe('Achievements · 3 of 15');
     expect(linha.textContent).not.toMatch(/left|remaining|faltam/i);
   });
 
@@ -100,15 +100,15 @@ describe('grade de emblemas (I12)', () => {
 
   it('sem conquista aberta a grade ainda mostra os 9 apagados e a contagem 0', () => {
     montar([]);
-    expect(document.querySelectorAll('[data-emblem-cell]')).toHaveLength(9);
+    expect(document.querySelectorAll('[data-emblem-cell]')).toHaveLength(ACHIEVEMENT_IDS.length);
     expect(document.querySelectorAll('img[data-emblem]')).toHaveLength(0);
-    expect(document.querySelector('[data-achievements-count]')!.textContent).toBe('Achievements · 0 of 9');
+    expect(document.querySelector('[data-achievements-count]')!.textContent).toBe('Achievements · 0 of 15');
   });
 
   it('PT-BR: "Conquistas · N de 9" na linha e no nome acessível da seção', () => {
     montar(['perfect-day'], 'pt-BR');
-    expect(document.querySelector('[data-achievements-count]')!.textContent).toBe('Conquistas · 1 de 9');
-    expect(screen.getByLabelText('Conquistas · 1 de 9')).toBeTruthy();
+    expect(document.querySelector('[data-achievements-count]')!.textContent).toBe('Conquistas · 1 de 15');
+    expect(screen.getByLabelText('Conquistas · 1 de 15')).toBeTruthy();
   });
 
   it('todo ACHIEVEMENT_ID tem texto de "como ganhar" nos dois idiomas', () => {

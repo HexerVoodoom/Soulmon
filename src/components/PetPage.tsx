@@ -39,6 +39,7 @@ import type { ClassTitle } from '../utils/soulProfile/ficha/classTitle';
 import type { CompanheiroVisivel } from '../utils/soulProfile/ficha/companheiro';
 import { auraForElement } from '../utils/attackFxArt';
 import { sigilArt } from '../utils/sigilArt';
+import { ACHIEVEMENT_POINTS_ICON } from '../utils/achievementPointsIcon';
 import { ACHIEVEMENT_IDS, ACHIEVEMENT_LABELS, ACHIEVEMENT_HOW, achievementShortName, type AchievementId } from '../utils/achievements';
 import { emblemArt } from '../utils/emblemArt';
 import { Viewport } from './ui/Viewport';
@@ -54,6 +55,8 @@ interface PetPageProps {
   dominantElement?: string;
   /** Conquistas abertas (`utils/achievements.ts`, derivadas do save pelo App). Vazio = sem faixa. */
   achievements?: readonly AchievementId[];
+  /** Total de Pontos de Conquista (derivado; sem ranking). Ausente = não mostra a linha. */
+  achievementPoints?: number;
   /** Skills já persistidas no save (vêm da nuvem). */
   savedSkills?: Record<FichaStage, StageSkills>;
   /** PR15b: o comportamento gravado por estágio; a derivação local usa o MESMO registro que o save. */
@@ -197,7 +200,7 @@ function SkillRow({ skill, isPt }: { skill: StageSkill; isPt: boolean }) {
 
 export function PetPage({
   stages,
-  dominantElement, achievements = [], unlockedEvolutions, currentStageId, demoCharacterId, petName,
+  dominantElement, achievements = [], achievementPoints, unlockedEvolutions, currentStageId, demoCharacterId, petName,
   savedSkills, fichaJornada, onSkillsComputed, savedClassTitles, onClassTitlesComputed,
   savedCompanheiro, onCompanheiroComputed, language = 'pt-BR', headingLevel = 1,
 }: PetPageProps) {
@@ -364,6 +367,13 @@ export function PetPage({
             <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
               <p className="sm2-num" data-achievements-count style={{ ...sm2Hint, textAlign: 'center' }}>{rotuloConquistas}</p>
             </div>
+            {achievementPoints !== undefined && (
+              <p data-achievement-points style={{ ...sm2Hint, display: 'inline-flex', alignItems: 'center', gap: 6, margin: 0 }}>
+                <img src={ACHIEVEMENT_POINTS_ICON} alt="" aria-hidden="true" width={20} height={20} style={{ imageRendering: 'pixelated' }} />
+                <span className="sm2-num">{achievementPoints}</span>
+                <span>{isPt ? 'Pontos de Conquista' : 'Achievement Points'}</span>
+              </p>
+            )}
             <ul
               style={{
                 listStyle: 'none', margin: 0, padding: 0, width: '100%',
