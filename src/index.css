@@ -8928,9 +8928,14 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 
 /* Recap da evolucao (REGISTRO 190): a barra enche e brilha uma vez. prefers-reduced-motion zera as duracoes pela regra global. */
 .sm2-evo-recap-fill { transition: width 1.4s cubic-bezier(.22, 1, .36, 1); }
+/* 30/10/2026 (dono): preenchimento turquesa com glow EXTERNO e INTERNO, dentro da moldura de cobre (`evo/barra-moldura.png`). */
+.sm2-evo-recap-fill {
+  background: linear-gradient(to bottom, #b8fff6 0%, #3ff0e0 32%, #12c2c0 70%, #0a8f95 100%);
+  box-shadow: inset 0 1px 2px rgba(255,255,255,.75), inset 0 -2px 3px rgba(0,60,70,.55), 0 0 6px 1px rgba(63,240,224,.55);
+}
 @keyframes sm2-evo-recap-glow {
-  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--sm2-primary-ink) 0%, transparent); }
-  45%  { box-shadow: 0 0 14px 3px color-mix(in srgb, var(--sm2-primary-ink) 55%, transparent); }
-  100% { box-shadow: 0 0 6px 1px color-mix(in srgb, var(--sm2-primary-ink) 30%, transparent); }
+  0%   { box-shadow: inset 0 1px 2px rgba(255,255,255,.75), inset 0 -2px 3px rgba(0,60,70,.55), 0 0 4px 0 rgba(63,240,224,.35); }
+  45%  { box-shadow: inset 0 0 6px 2px rgba(220,255,250,.9), inset 0 -2px 3px rgba(0,60,70,.4), 0 0 18px 5px rgba(63,240,224,.85); }
+  100% { box-shadow: inset 0 1px 2px rgba(255,255,255,.75), inset 0 -2px 3px rgba(0,60,70,.55), 0 0 8px 2px rgba(63,240,224,.6); }
 }
 .sm2-evo-recap-glow { animation: sm2-evo-recap-glow 1.6s ease-out 1 forwards; }
