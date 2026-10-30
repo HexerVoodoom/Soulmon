@@ -49,9 +49,10 @@ export async function idDoDiretorio(env, gid) {
  * O chamador guarda a assinatura em `g.dirSig` (no blob) e escreve a entrada DEPOIS do blob e
  * dos índices — a ordem das gravações do clã não muda (ALTO-2 depende dela).
  */
+/** `g.dirClosed === true`: o anfitrião desligou "Aceitar pedidos" — o clã sai da lista e fica fora. */
 export function assinaturaDoDiretorio(g, max) {
   const size = Array.isArray(g?.members) ? g.members.length : 0;
-  return size > 0 && size < max ? `${g.name}|${size}` : 'x';
+  return size > 0 && size < max && g.dirClosed !== true ? `${g.name}|${size}` : 'x';
 }
 
 export async function sincronizarDiretorio(env, g, max, { prazo = {} } = {}) {

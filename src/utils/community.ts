@@ -311,6 +311,8 @@ export interface GuildView {
   code: string;
   /** Só sobre quem pergunta; os ajustes de anfitrião saem daqui. */
   isHost: boolean;
+  /** §203: o clã aparece em "Procurar clã" e recebe pedidos (padrão `true`; servidor antigo = `true`). */
+  requestsOpen: boolean;
   size: number;
   full: boolean;
   /** Ordem de chegada — a UI NÃO reordena. */
@@ -429,6 +431,7 @@ export type GuildErrorKind =
   | 'full'          // 409 guild full
   | 'collision'     // 409 join collision
   | 'invalidClan'   // 404 invalid clan (o clã do diretório sumiu ou encheu e saiu da lista — §203)
+  | 'requestsClosed' // 409 requests closed (o anfitrião desligou "Aceitar pedidos" — §203)
   | 'requestPending' // 409 request pending (já há um pedido em OUTRO clã: um por vez — §203)
   | 'invalidName'   // 400 invalid name
   | 'invalidDay'    // 400 invalid day
@@ -504,6 +507,7 @@ export function sanitizeGuildView(raw: unknown): GuildView | null {
     weekKey: str(r.weekKey, 20),
     code: str(r.code, 16),
     isHost: r.isHost === true,
+    requestsOpen: r.requestsOpen !== false,
     size,
     full: r.full === true,
     members,
@@ -555,6 +559,7 @@ function kindOf(status: number, error: string): GuildErrorKind {
   if (status === 403) return error === 'not host' ? 'notHost' : 'login';
   if (status === 404 && error === 'invalid clan') return 'invalidClan';
   if (status === 409 && error === 'request pending') return 'requestPending';
+  if (status === 409 && error === 'requests closed') return 'requestsClosed';
   if (status === 404) return error === 'invalid code' ? 'invalidCode' : error === 'no guild' ? 'noGuild' : error === 'nothing to claim' ? 'nothingToClaim' : 'server';
   if (status === 409) {
     if (error === 'raid closed') return 'raidClosed';
@@ -678,6 +683,9 @@ export const cancelGuildRequest = (id: string, tz?: PlayerDayAnchor) =>
 /** A fila de pedidos do MEU clã (só o anfitrião; os outros recebem 403). */
 export const getGuildJoinRequests = (id: string, tz?: PlayerDayAnchor) =>
   guildCall<unknown>('guildRequests', { params: { id, dayKey: dia(tz) } }).then(sanitizeJoinRequests);
+/** "Aceitar pedidos" do anfitrião: `false` tira o clã da lista e recusa pedido novo (os pendentes ficam). */
+export const setGuildRequestsOpen = (id: string, open: boolean, tz?: PlayerDayAnchor) =>
+  guildCall<{ guild: unknown }>('guildRequestsOpen', { method: 'POST', body: { id, open, dayKey: dia(tz) } }).then(viewOf);
 /** Aceitar (`approve: true`) ou recusar um pedido. Devolve a vista do clã (já com quem entrou). */
 export const decideGuildRequest = (id: string, requestId: string, approve: boolean, tz?: PlayerDayAnchor) =>
   guildCall<{ guild?: unknown; result?: unknown }>('guildRequestDecide', { method: 'POST', body: { id, requestId, approve, dayKey: dia(tz) } })

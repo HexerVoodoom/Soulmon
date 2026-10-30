@@ -102,3 +102,26 @@ describe('anfitrião: pedidos para entrar', () => {
     expect(container.querySelector('[data-guild-pedidos]')).toBeNull();
   });
 });
+
+describe('anfitrião: "Aceitar pedidos"', () => {
+  it('ligado por padrão; desligar manda open:false e aplica a vista; membro comum não vê a chave', async () => {
+    mockServer({
+      guild: () => ({ json: { guild: vista() } }),
+      guildRequests: () => ({ json: { requests: [] } }),
+      guildRequestsOpen: b => ({ json: { guild: vista({ requestsOpen: b.open }) } }),
+    });
+    const { container } = render(<GuildSheet {...base} />);
+    await waitFor(() => expect(container.querySelector('[data-guild-aceitar-toggle]')).not.toBeNull());
+    const chave = container.querySelector('[data-guild-aceitar-toggle]') as HTMLInputElement;
+    expect(chave.checked).toBe(true);
+    expect(container.querySelector('[data-guild-aceitar-pedidos]')!.textContent).toMatch(/Aceitar pedidos/);
+    fireEvent.click(chave);
+    await waitFor(() => expect((container.querySelector('[data-guild-aceitar-toggle]') as HTMLInputElement).checked).toBe(false));
+    expect(calls.find(c => c.action === 'guildRequestsOpen')!.body.open).toBe(false);
+    cleanup();
+    mockServer({ guild: () => ({ json: { guild: vista({ isHost: false }) } }) });
+    const r2 = render(<GuildSheet {...base} />);
+    await waitFor(() => expect(r2.container.querySelector('[data-cla-info]')).not.toBeNull());
+    expect(r2.container.querySelector('[data-guild-aceitar-toggle]')).toBeNull();
+  });
+});

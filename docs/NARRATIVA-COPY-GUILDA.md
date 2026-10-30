@@ -53,6 +53,9 @@
 | `guild.procurar.cancelar` | Cancelar pedido | Cancel request | botão à esquerda do pendente | REGISTRO §203 |
 | `guild.procurar.erro.sumiu` | Esse clã não está mais na lista. | That clan is no longer listed. | 404 `invalid clan`; âmbar | REGISTRO §203; L9 |
 | `guild.procurar.erro.outro` | Você já pediu para entrar em outro clã. | You already asked to join another clan. | 409 `request pending` | REGISTRO §203 |
+| `guild.procurar.erro.fechado` | Esse clã não está recebendo pedidos agora. | That clan isn’t taking requests right now. | 409 `requests closed`; âmbar | REGISTRO §203 |
+| `guild.pedidos.abertos` | Aceitar pedidos | Accept requests | ficha do clã, chave liga/desliga, só o anfitrião (padrão ligado) | REGISTRO §203 |
+| `guild.pedidos.abertos.nota` | Desligado, o clã some da lista. O código continua valendo. | When off, the clan leaves the list. The code still works. | nota sob a chave | REGISTRO §203; L4 |
 | `guild.pedidos.titulo` | Pedidos para entrar | Requests to join | ficha do clã, só o anfitrião, só com pedido (vazio = silêncio) | REGISTRO §203; L6 |
 | `guild.pedidos.semNome` | Alguém | Someone | pedido sem nome público | REGISTRO §203 |
 | `guild.pedidos.aceitar` | Aceitar | Accept | botão à direita (confirma) | REGISTRO §203 |

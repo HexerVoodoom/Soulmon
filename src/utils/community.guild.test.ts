@@ -81,7 +81,7 @@ describe('erros tipados', () => {
     }
     // login, invalidCode, noGuild, alreadyIn, full, collision, invalidName, rateLimit, unavailable
     // + invalidClan, requestPending (§203, procurar clã)
-    expect(chaves.size).toBe(11);
+    expect(chaves.size).toBe(12); // + requestsClosed (§203, "Aceitar pedidos")
   });
 
   it('fetch que rejeita (offline) é `unavailable`, sem status', async () => {

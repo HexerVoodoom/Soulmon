@@ -11,7 +11,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  getGuildDirectory, requestToJoinGuild, cancelGuildRequest, getGuildJoinRequests, decideGuildRequest,
+  getGuildDirectory, requestToJoinGuild, cancelGuildRequest, getGuildJoinRequests, decideGuildRequest, setGuildRequestsOpen,
   GuildError, type GuildDirectory, type GuildJoinRequest, type GuildView,
 } from '../../utils/community';
 import { GUILD_ERROR_KEY, type GuildKey } from '../../utils/guildCopy';
@@ -135,6 +135,47 @@ export function ProcurarCla({ saveId, t, tz, onJoined }: {
           )}
         </section>
       )}
+    </div>
+  );
+}
+
+/** "Aceitar pedidos" (só o anfitrião): desligado, o clã some da lista; os pendentes continuam aqui. */
+export function AceitarPedidos({ saveId, t, tz, aberto, onGuild }: {
+  saveId: string; t: T; tz?: PlayerDayAnchor; aberto: boolean; onGuild: (g: GuildView | null) => void;
+}) {
+  const [ocupado, setOcupado] = useState(false);
+  const [aviso, setAviso] = useState<GuildKey | null>(null);
+  const vivo = useRef(true);
+  useEffect(() => () => { vivo.current = false; }, []);
+  const alternar = async () => {
+    if (ocupado) return;
+    setOcupado(true);
+    setAviso(null);
+    try {
+      const g = await setGuildRequestsOpen(saveId, !aberto, tz);
+      if (vivo.current && g) onGuild(g);
+    } catch (e) {
+      if (vivo.current) setAviso(GUILD_ERROR_KEY[kindDe(e)]);
+    } finally {
+      if (vivo.current) setOcupado(false);
+    }
+  };
+  return (
+    <div data-guild-aceitar-pedidos>
+      <label className="sm2-guild-row" style={{ cursor: 'pointer' }}>
+        <span className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.pedidos.abertos')}</span>
+        <input
+          type="checkbox"
+          role="switch"
+          checked={aberto}
+          aria-checked={aberto}
+          disabled={ocupado}
+          onChange={() => void alternar()}
+          data-guild-aceitar-toggle
+        />
+      </label>
+      <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.pedidos.abertos.nota')}</p>
+      {aviso && <p role="alert" className="sm2-lib-alert">{t(aviso)}</p>}
     </div>
   );
 }

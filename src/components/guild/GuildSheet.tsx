@@ -53,7 +53,7 @@ import {
   RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, CASA_DOACOES, CASA_BITS_MIN, CASA_STAGES, normalizeGuildCode, type GuildGesture, type CasaStageId,
 } from '../../utils/guildRules';
 import { GuildLoja } from './GuildLoja';
-import { ProcurarCla, PedidosDeEntrada } from './ClaProcurar';
+import { ProcurarCla, PedidosDeEntrada, AceitarPedidos } from './ClaProcurar';
 import { donatableItems } from '../../utils/guildHouse';
 import { isMissionAway, msUntilReturn, type GuildMissionState } from '../../utils/guildMission';
 import { ALL_SHOP_ITEMS } from '../../utils/shop';
@@ -714,6 +714,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
             {g.casa && <p className="sm2-lib-s" style={{ margin: 0 }} data-cla-info-nivel>{t('guild.info.nivel', { estagio: casaStageName(t, g.casa.nivel) })}</p>}
           </section>
           {/* §203: os pedidos para entrar — só o anfitrião, e só quando há pedido (vazio = silêncio). */}
+          {g.isHost && <AceitarPedidos saveId={saveId} t={t} tz={tz.current} aberto={g.requestsOpen} onGuild={v => aplicar(v)} />}
           {g.isHost && <PedidosDeEntrada saveId={saveId} t={t} tz={tz.current} guildKey={`${g.id}:${g.size}`} onGuild={v => aplicar(v)} />}
 
           {g.isHost && ajustes && (

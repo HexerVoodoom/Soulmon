@@ -3666,7 +3666,9 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 - Ações: `guildDirectory` (GET), `guildRequest`, `guildRequestCancel`, `guildRequests` (GET, só anfitrião), `guildRequestDecide`. Só o anfitrião decide (403); a VAGA é conferida na aprovação, com a mesma releitura/retentativa do `guildJoin` (corrida da última vaga nunca passa de 12); aprovar de novo é idempotente; entrar por código apaga o pedido pendente; exclusão de conta apaga o pedido.
 - Custo: `list` do KV só em duas leituras raras (abrir a lista; fila do anfitrião), ambas limitadas (30). `list` é eventualmente consistente (~60 s): um clã recém-cheio pode aparecer, e o pedido/aprovação conferem o blob. Rate limit extra: 10 pedidos/hora por pessoa.
 
+**Emenda do dono (30/10/2026): "Aceitar pedidos" / "Accept requests".** Chave do anfitrião na ficha do clã, padrão LIGADA (campo `dirClosed` no blob; ausente = ligada; ação `guildRequestsOpen`). Desligada: o clã sai do diretório (`assinaturaDoDiretorio` devolve "fora", então `gravarGrupo` apaga `coopDir` e o mantém fora nas gravações seguintes), pedido novo é recusado com 409 `requests closed`, os pendentes continuam visíveis e decidíveis pelo anfitrião, e o código continua valendo. Isso fecha o opt-out que estava no gatilho abaixo.
+
 **Sem expulsão (G7) e sair sem perda (LV-G5) não mudam.** Recusar não avisa ninguém com frase (o pendente só some).
 
-**Gatilho para rever:** spam de pedidos a clãs (subir o limite de cima para baixo, ou deixar o anfitrião "fechar a lista"); diretório com centenas de clãs (paginar/sortear em vez de `list` direto); pedido para que o clã escolha NÃO aparecer na lista (opt-out — hoje todo clã com vaga aparece).
+**Gatilho para rever:** spam de pedidos a clãs (subir o limite de cima para baixo, ou deixar o anfitrião "fechar a lista"); diretório com centenas de clãs (paginar/sortear em vez de `list` direto); (o opt-out entrou na emenda "Aceitar pedidos" acima).
 

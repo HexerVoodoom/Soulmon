@@ -243,3 +243,45 @@ describe('autorização e vaga', () => {
     expect([404, 409]).toContain((await pedir(e, BIA, dirId)).status);
   });
 });
+
+describe('"Aceitar pedidos" (emenda do dono à §203)', () => {
+  const abrir = async (e, id, open) => j(await chamar(e, 'guildRequestsOpen', { id, open }));
+  it('padrão ligado; desligar tira do diretório, recusa pedido novo, mantém o pendente decidível e o código', async () => {
+    const e = novoEnv();
+    const g = await criar(e, ANA);
+    expect(g.requestsOpen).toBe(true);
+    const dirId = (await dir(e, BIA)).clans[0].dirId;
+    await pedir(e, BIA, dirId);
+    const r = await abrir(e, ANA, false);
+    expect(r.status).toBe(200);
+    expect(r.body.guild.requestsOpen).toBe(false);
+    expect(dirKeys(e)).toHaveLength(0);
+    expect((await dir(e, CAU)).clans).toEqual([]);
+    // Sem a entrada, o dirId some (404); com a entrada ainda visível (list eventual), o servidor recusa com 409.
+    expect((await pedir(e, CAU, dirId)).status).toBe(404);
+    e.DIGIAPP_SAVES.store.set(`${DIR_PREFIX}${dirId}`, JSON.stringify({ gid: g.id, n: 'Roda', s: 1 }));
+    const novo = await pedir(e, CAU, dirId);
+    expect(novo.status).toBe(409);
+    expect(novo.body.error).toBe('requests closed');
+    e.DIGIAPP_SAVES.store.delete(`${DIR_PREFIX}${dirId}`);
+    // Fica fora nas gravações seguintes (entrada por código muda o tamanho).
+    await chamar(e, 'guildJoin', { id: DUDA, code: g.code });
+    expect(dirKeys(e)).toHaveLength(0);
+    // O pendente segue visível e aprovável.
+    const fl = (await fila(e, ANA)).body.requests;
+    expect(fl).toHaveLength(1);
+    expect((await decidir(e, ANA, fl[0].requestId, true)).body.result).toBe('approved');
+    // Religar volta à lista.
+    expect((await abrir(e, ANA, true)).body.guild.requestsOpen).toBe(true);
+    expect((await dir(e, CAU)).clans).toHaveLength(1);
+  });
+
+  it('só o anfitrião alterna (403); sem clã = 404', async () => {
+    const e = novoEnv();
+    const g = await criar(e, ANA);
+    await chamar(e, 'guildJoin', { id: BIA, code: g.code });
+    expect((await abrir(e, BIA, false)).status).toBe(403);
+    expect((await abrir(e, CAU, false)).status).toBe(404);
+    expect(dirKeys(e)).toHaveLength(1);
+  });
+});

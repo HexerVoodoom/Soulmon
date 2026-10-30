@@ -204,6 +204,9 @@ export const GUILD_COPY = {
   'guild.procurar.cancelar': ['Cancelar pedido', 'Cancel request'],
   'guild.procurar.erro.sumiu': ['Esse clã não está mais na lista.', 'That clan is no longer listed.'],
   'guild.procurar.erro.outro': ['Você já pediu para entrar em outro clã.', 'You already asked to join another clan.'],
+  'guild.procurar.erro.fechado': ['Esse clã não está recebendo pedidos agora.', 'That clan isn’t taking requests right now.'],
+  'guild.pedidos.abertos': ['Aceitar pedidos', 'Accept requests'],
+  'guild.pedidos.abertos.nota': ['Desligado, o clã some da lista. O código continua valendo.', 'When off, the clan leaves the list. The code still works.'],
   'guild.pedidos.titulo': ['Pedidos para entrar', 'Requests to join'],
   'guild.pedidos.semNome': ['Alguém', 'Someone'],
   'guild.pedidos.aceitar': ['Aceitar', 'Accept'],
@@ -405,6 +408,7 @@ export const GUILD_ERROR_KEY = {
   collision: 'guild.erro.colisao',
   invalidClan: 'guild.procurar.erro.sumiu',
   requestPending: 'guild.procurar.erro.outro',
+  requestsClosed: 'guild.procurar.erro.fechado',
   invalidName: 'guild.erro.nome',
   invalidDay: 'guild.erro.generico',
   // Três que a TELA nunca mostra como alerta (a folha recarrega em silêncio): a

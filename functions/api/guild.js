@@ -57,6 +57,8 @@
 //                                            · 409 request pending (+{pending}: um pedido por vez; o MESMO clã = 200 idempotente) · 429
 //   POST guildRequestCancel {id}           → { ok: true } (sempre; idempotente)
 //   GET  guildRequests  ?id=               → { requests:[{requestId,name,at}] }   404 no guild · 403 not host
+//   POST guildRequestsOpen {id, open}     → { guild }   403 not host · 404 no guild  ("Aceitar pedidos"; OFF tira do diretório,
+//                                            recusa pedido novo com 409 requests closed; os pendentes seguem decidíveis; o código vale igual)
 //   POST guildRequestDecide {id, requestId, approve} → { guild, result:'approved'|'declined'|'gone' }
 //                                            404 no guild · 403 not host · 409 guild full (o pedido fica para depois)
 // Não existe expulsão (G7): o código novo é a ferramenta de fechar a porta.
@@ -160,6 +162,7 @@ export const GUILD_ACTIONS = Object.freeze({
   guildRequestCancel: 'POST',
   guildRequests: 'GET',
   guildRequestDecide: 'POST',
+  guildRequestsOpen: 'POST',
 });
 
 /** Pedir para entrar: no máximo 10 pedidos por hora por pessoa — o anfitrião não vira alvo de spam. */
@@ -272,6 +275,8 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
     weekKey: semana,
     code: g.code,
     isHost: anfitriaoDe(g) === euSave,
+    // §203: "Aceitar pedidos" (padrão ligado). Só o anfitrião lê; um booleano do clã, nada por pessoa.
+    requestsOpen: g.dirClosed !== true,
     size,
     full: size >= COOP_MAX_MEMBERS,
     members: membros,
@@ -449,6 +454,7 @@ export async function handleGuild({ request, env }) {
     const atual = await lerPedido(env, id);
     if (atual && atual.gid === g.id) return json({ pending: { dirId, name: g.name } });
     if (atual) return erro('request pending', 409, { pending: { dirId: atual.dirId, name: (await lerEntrada(env, atual.dirId))?.n ?? null } });
+    if (g.dirClosed === true) return erro('requests closed', 409);
     if (g.members.length >= COOP_MAX_MEMBERS) return erro('{g} full', 409);
     const gate = takeToken('guildRequest', id, GUILD_REQUEST_LIMIT);
     if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS);
@@ -458,10 +464,17 @@ export async function handleGuild({ request, env }) {
     return json({ pending: { dirId, name: g.name } });
   }
 
-  if (action === 'guildRequests' || action === 'guildRequestDecide') {
+  if (action === 'guildRequests' || action === 'guildRequestDecide' || action === 'guildRequestsOpen') {
     const g = await grupoDe(env, id, semana);
     if (!g) return erro('no {g}', 404);
     if (anfitriaoDe(g) !== id) return erro('not host', 403);
+    if (action === 'guildRequestsOpen') {
+      // Releitura antes de gravar (nunca regravar por cima de uma entrada); `gravarGrupo` tira/repõe o diretório.
+      const fresco = (await lerGrupo(env, g.id)) ?? g;
+      if (body.open === false) fresco.dirClosed = true; else delete fresco.dirClosed;
+      await gravarGrupo(env, fresco);
+      return vista(await montar(rolarSemana(fresco, semana), id, hoje));
+    }
     if (action === 'guildRequests') return json({ requests: await listarPedidos(env, g.id) });
     const rid = String(body.requestId ?? '');
     const pedido = await lerPedidoNoCla(env, g.id, rid);
