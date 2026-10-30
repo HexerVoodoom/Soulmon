@@ -60,7 +60,7 @@ const PATH_COPY: Record<PathKind, { en: string; pt: string; icon: string; descEn
 const BONUS_COPY: Record<BonusKind, { en: string; pt: string; icon: string; descEn: string; descPt: string }> = {
   power: { en: '+6% attack', pt: '+6% de ataque', icon: 'bolt', descEn: 'Hit harder this run.', descPt: 'Bata mais forte nesta incursão.' },
   vigor: { en: '+10% health', pt: '+10% de vida', icon: 'favorite', descEn: 'More max health this run.', descPt: 'Mais vida máxima nesta incursão.' },
-  heal: { en: 'Healing ward', pt: 'Proteção de cura', icon: 'auto_awesome', descEn: '15% shield in the next combat.', descPt: 'Escudo de 15% no próximo combate.' },
+  heal: { en: 'Shield', pt: 'Escudo', icon: 'auto_awesome', descEn: '15% shield in the next combat.', descPt: 'Escudo de 15% no próximo combate.' },
 };
 /** O ícone do bônus: a arte P2-02 (96²) quando existe, senão o glifo Material de `BONUS_COPY`. */
 function BonusIcon({ kind, size, label }: { kind: BonusKind; size: number; label?: string }) {
