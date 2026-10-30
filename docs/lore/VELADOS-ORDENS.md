@@ -53,3 +53,43 @@ Os papéis **variam por Ordem**:
   mãos. O mago é um **battle mage** selvagem, corpo a corpo (a figura agachada de
   garras **não é uma fera descontrolada**: é mago). O terceiro é um **ferreiro de
   runas** com martelo de guerra, que forja runas nas armas do trio no meio da luta.
+
+## A cidade CORE e os Soulmon desgarrados
+
+A **CORE** é uma cidade de **Soulmon**: todos os NPCs atuais são Soulmon, e a maioria
+é **desgarrada**. Eles se organizaram numa civilização própria, independente dos
+Velados. O jogador pode visitá-la.
+
+Um desgarrado precisa ter chegado a algum nível de evolução. Os motivos variam:
+
+- se desvinculou do seu humano (o humano parou de jogar ou se desconectou do universo);
+- ou ainda tem contato com o humano, mas chegou a um nível de evolução que lhe dá
+  autonomia e independência.
+
+Existem também os **Soulmon selvagens**, nativos do universo: vestígios de energia que
+se aglomeraram [a definir: origem e regras].
+
+## Soulmon e hierarquia dos Velados
+
+Todo Velado tem o **seu próprio Soulmon** em desenvolvimento, e o estágio dele marca a
+hierarquia:
+
+| Quem | Estágio do Soulmon |
+|---|---|
+| Maior parte da população | bebê (BB) ou rookie |
+| Membros dos trios | no mínimo rookie, a maioria **champion** |
+| Vice-líderes (cada Ordem tem alguns) | **mega** |
+| Líderes de Ordem | **ultra** (só eles) |
+
+## Os Desfeitos e os seus Soulmon
+
+Os Desfeitos têm vínculos complexos com o seu Soulmon:
+
+- A maioria o **refutou** ou **não conseguiu se conectar** com ele.
+- Os mais poderosos **destruíram em algum nível** o próprio Soulmon em troca de poder.
+  Isso os deturpa e leva à insanidade. A maioria perde a estabilidade e o vínculo com
+  o universo para sempre: **se desloga e não pode mais reconectar**. Poucos mantêm a
+  estabilidade e sobem na hierarquia.
+- O **líder dos Desfeitos** foi o único que destruiu **completamente** o seu Soulmon, o
+  **absorveu** e ainda assim continuou no universo e são. A força de vontade e a
+  determinação dele são absurdas; os métodos, questionáveis.
