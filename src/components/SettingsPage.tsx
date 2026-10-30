@@ -106,6 +106,8 @@ interface SettingsPageProps {
   demo?: { onLeave: () => void };
   onOpenOracle?: () => void;
   onResetOnboarding?: () => void;
+  /** ONBOARDING_VELADO: reabre a sequência narrativa (D12). Ausente = linha não aparece. */
+  onReplayStory?: () => void;
 }
 
 /**
@@ -276,6 +278,7 @@ export function SettingsPage({
   demo,
   onOpenOracle,
   onResetOnboarding,
+  onReplayStory,
 }: SettingsPageProps) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [musica, setMusica] = useState(() => musicaPreferida());
@@ -603,6 +606,7 @@ export function SettingsPage({
         <ActionRow label={t.settings.openGlossary} onClick={onOpenGlossary} />
         {onOpenStudyCards && <ActionRow label={isPt ? 'Meus cartões de estudo' : 'My study cards'} onClick={onOpenStudyCards} />}
         {onOpenCredits && <ActionRow label={isPt ? 'Créditos' : 'Credits'} onClick={onOpenCredits} />}
+        {onReplayStory && <ActionRow label={isPt ? 'Rever a história' : 'Replay the story'} onClick={onReplayStory} />}
         {MENU_SHOWS_RITUAL_TOOLS && onOpenOracle && <ActionRow label={isPt ? 'Oráculo' : 'Oracle'} onClick={onOpenOracle} />}
         {MENU_SHOWS_RITUAL_TOOLS && onResetOnboarding && <ActionRow label={isPt ? 'Refazer o ritual' : 'Redo the ritual'} onClick={onResetOnboarding} />}
         {/* A4/A5 (QA rodada 2): os Termos não tinham link dentro do app, e a

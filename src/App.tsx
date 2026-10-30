@@ -245,6 +245,8 @@ const XP_BY_LEVEL: Record<string, number> = {
 };
 import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/labels';
 import type { AISettings } from './components/AISettingsModal';
+import { SequenciaOnboarding } from './components/onboarding/sequencia/SequenciaOnboarding';
+import { ONBOARDING_VELADO } from './components/onboarding/sequencia/flag';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
 import type { UnlockReason } from './components/unlockReason';
 
@@ -846,6 +848,8 @@ export default function App() {
   const [pendingSheet, setPendingSheet] = useState<{ area: AreaId; lot: string; stallKind?: 'frames'; section?: string } | null>(null);
   /* Rodada 7 (M5): a celebração da meta do dia — liga na virada de "não" para "sim". */
   const [celebrarMeta, setCelebrarMeta] = useState(false);
+  /* ONBOARDING_VELADO: "Rever a história" das Configurações (desligado por padrão). */
+  const [reverHistoria, setReverHistoria] = useState(false);
   const currentViewRef = useRef(currentView);
   currentViewRef.current = currentView;
   // Id estável de comunidade (Tournament/Biblioteca) — mesmo id do cloud save.
@@ -8432,6 +8436,7 @@ export default function App() {
             </div>
           )}
 
+          {ONBOARDING_VELADO && reverHistoria && <SequenciaOnboarding forcar language={language} onDone={() => setReverHistoria(false)} />}
           {pane === 'settings' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><SettingsPage
               soundMuted={soundMuted}
@@ -8465,6 +8470,7 @@ export default function App() {
               demo={demo ? { onLeave: handleLeaveDemo } : undefined}
               onOpenOracle={() => goTo('page:oracle')}
               onResetOnboarding={handleResetOnboarding}
+              onReplayStory={ONBOARDING_VELADO ? () => setReverHistoria(true) : undefined}
               useAI={useAI}
               onToggleAI={() => setUseAI(!useAI)}
               language={language}
