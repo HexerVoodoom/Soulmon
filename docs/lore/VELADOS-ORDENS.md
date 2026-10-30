@@ -93,3 +93,9 @@ Os Desfeitos têm vínculos complexos com o seu Soulmon:
 - O **líder dos Desfeitos** foi o único que destruiu **completamente** o seu Soulmon, o
   **absorveu** e ainda assim continuou no universo e são. A força de vontade e a
   determinação dele são absurdas; os métodos, questionáveis.
+
+## Líderes
+
+- **Líder dos Rompentes:** uma guerreira em armadura de cobre com espadão gigante e lanterna
+  turquesa (arte do dono: `E:\Soulmon-assets\gerados-2026-10-30\velados\lider-rompentes-dono.png`).
+  Líder da Ordem (Soulmon ultra). Nome [a definir]. Ragan segue como desbravador do trio.
