@@ -34,6 +34,6 @@ describe('o gate do App', () => {
     const r = buildConsentRecord(new Date('2026-10-28T12:00:00Z'));
     expect(isConsentCurrent(r)).toBe(true);
     expect(r.privacyVersion).toBe(PRIVACY_VERSION);
-    expect(PRIVACY_VERSION).toBe('2026-10-28');
+    expect(PRIVACY_VERSION).toBe('2026-10-30');
   });
 });
