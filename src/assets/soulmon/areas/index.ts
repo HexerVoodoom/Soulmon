@@ -19,6 +19,7 @@ import loteMercadoConquistas from './lote-mercado-conquistas.png';
 // ⚒️ 07/10/2026: o Ferreiro — a oficina de lava do domínio Fogo (`dominios/fogo/predios/lote-fogo-oficina`). Pedido de arte PRÓPRIA em `docs/ARTE-MELHORIAS-FUTURAS.md`.
 import loteFerreiro from './lote-mercado-ferreiro.png';
 // 14/10/2026 (dono): o RESTAURANTE EM OBRA, canto de baixo à direita (Higgsfield gpt_image_2_5 flare, 300², alfa real). Só vitrine, sem ação.
+import loteCambista from './lote-mercado-cambista.png';
 import loteRestaurante from './lote-mercado-restaurante.png';
 import loteTorneio from './lote-arena-torneio.png';
 import loteDuelo from './lote-arena-duelo.png';
@@ -35,6 +36,8 @@ export const MERCADO_LOT_ART = {
   // 30/09/2026 (leva lotes-v2, aprovada pelo dono): a torre-treliça própria.
   conquistas: loteMercadoConquistas,
   restaurante: loteRestaurante,
+  // 30/10/2026: o Cambista = o bazar do deserto (`dominios/deserto/predios/lote-deserto-loja`, escolha do dono; cópia 300² em areas/).
+  cambista: loteCambista,
 } as const;
 
 // W5 (19/10/2026): a Guerra foi repintada (coliseu em pedra petróleo com bandeiras vermelhas, sem ossos/grifo; escolha padrão `arena-guerra-a`, 512², alfa real). A versão de 18/10 (grifo e serpente de ossos) saiu do bundle.

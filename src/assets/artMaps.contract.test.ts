@@ -18,6 +18,8 @@
  * `undefined` — se devolvesse arte, o mapa estaria mentindo.
  */
 import { premiumKey } from '../utils/premiumFood';
+import { potionKey } from '../utils/elementPotion';
+import { ALL_ELEMENT_IDS } from '../utils/elementDex';
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -115,6 +117,7 @@ describe('itens — comidas e especiais ↔ ITEM_ART', () => {
     const conhecidos = new Set([
       ...Object.values(FOOD_BY_CATEGORY).map(f => f.emoji),
       ...Object.values(FOOD_BY_CATEGORY).map(f => premiumKey(f.emoji)), // comida premium (★) reusa a arte da base
+      ...ALL_ELEMENT_IDS.map(potionKey), // Poção de Elemento: a arte é o ícone do elemento
       ...Object.values(CHIP_EMOJI), ...Object.values(BIG_CHIP_EMOJI), PRISM_CHIP_EMOJI, TRIPLE_CHIP_EMOJI, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, SPARK_ITEM_EMOJI,
     ]);
     const orfaos = Object.keys(ITEM_ART).filter(k => !conhecidos.has(k));

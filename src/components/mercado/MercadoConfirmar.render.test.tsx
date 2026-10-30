@@ -6,21 +6,19 @@
 import { describe, it, expect, vi } from 'vitest';
 import { screen, fireEvent, within } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
-import { MercadoStallSheet } from './MercadoSheets';
+import { MercadoStallSheet, CambistaSheet } from './MercadoSheets';
 import { SHOP_ITEMS } from '../../utils/shop';
 
 const base = {
   language: 'en-US' as const,
   points: 1000,
   emblems: 12,
-  credits: 32,
   ownedBackgrounds: ['bg-room'] as string[],
   equippedBackground: 'bg-room' as string | null,
   ownedFurniture: [] as string[],
   equippedDecor: {},
   missionProgress: {} as Record<string, number>,
   onBuy: () => true,
-  onExchangeCredits: async () => true,
   onEquip: () => {},
   onEquipFurniture: () => {},
 };
@@ -87,8 +85,7 @@ describe('D1 — confirmar a compra', () => {
 
   it('a troca de Créditos também confirma antes de gastar', () => {
     const onExchangeCredits = vi.fn(async () => true);
-    abrir({ stall: 'itens', onExchangeCredits, credits: 32 });
-    fireEvent.click(screen.getByRole('tab', { name: 'Credits' }));
+    renderWithCss(<CambistaSheet language="en-US" credits={32} onExchangeCredits={onExchangeCredits} />);
     fireEvent.click(screen.getByRole('button', { name: 'Swap 1 Credit for 10 Bits' }));
     const dlg = screen.getByRole('dialog', { name: 'Confirm purchase' });
     expect(onExchangeCredits).not.toHaveBeenCalled();

@@ -18,6 +18,9 @@ import { PixelIcon } from '../ui/PixelIcon';
 import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { CREDIT_COLOR, type CurrencyId } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
+import { elementsMatchingBases, isPotionUnlocked } from '../../utils/elementPotion';
+import { essenceName } from '../../utils/essences';
+import { ElementBaseSlots, ElementIcon, emptySlots } from '../ElementBaseSlots';
 import { GuildOwnedShelf } from './GuildOwnedShelf';
 import { SubscriptionShelf } from './SubscriptionShelf';
 import { FrameShelf } from './FrameShelf';
@@ -96,11 +99,6 @@ export interface MercadoStallProps extends ShopOwnership, ShopActions {
   language: Language;
   points: number;
   emblems: number;
-  credits: number;
-  onExchangeCredits: (credits: number) => Promise<boolean>;
-  /** WP5.1 — o canal PASSIVO. `demo` vê o convite permanente na aba de Créditos. */
-  accountTier?: 'demo' | 'paid';
-  onUnlock?: () => void;
   /** D-24: a aba em que a lojinha de Background abre (o Perfil leva a `frames`). Padrão: `backgrounds`. */
   initialKind?: StallKind;
   /** D-58: as missões da semana (pagas em Honra) moram no TOPO da aba Honra do Mercado. Sem elas, a aba não as desenha. */
@@ -114,15 +112,15 @@ export const STALL_KIND_ORDER: readonly StallKind[] = ['backgrounds', 'frames'];
 
 /** Uma lojinha de compra (Itens, Decoração ou Background), com abas por moeda. */
 export function MercadoStallSheet(props: MercadoStallProps) {
-  const { stall, language, points, emblems, credits, onExchangeCredits, accountTier, onUnlock, initialKind, weekly, onClaimWeekly } = props;
+  const { stall, language, points, emblems, initialKind, weekly, onClaimWeekly } = props;
   const isPt = language === 'pt-BR';
   const tabs = STALL_CURRENCIES[stall];
-  const [cur, setCur] = useState<CurrencyId>(tabs[0]);
+  const [cur, setCur] = useState<'bits' | 'emblems'>(tabs[0] as 'bits' | 'emblems');
   const { flash, say } = useShopFlash();
   /** C3: a lojinha da Panora vende DUAS coisas — separadas em Backgrounds / Frames; a moeda (Bits / Honra) fica dentro de cada uma. */
   const [kind, setKind] = useState<StallKind>(initialKind ?? 'backgrounds');
   const showFrames = stall === 'background' && kind === 'frames';
-  const balance = cur === 'emblems' ? emblems : cur === 'credits' ? credits : points;
+  const balance = cur === 'emblems' ? emblems : points;
 
   return (
     <div data-mercado-stall={stall} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -136,7 +134,7 @@ export function MercadoStallSheet(props: MercadoStallProps) {
           />
         )}
         {tabs.length > 1 && (
-          <CurrencyPills tabs={tabs} value={cur} onChange={setCur} isPt={isPt} />
+          <CurrencyPills tabs={tabs} value={cur} onChange={c => setCur(c as 'bits' | 'emblems')} isPt={isPt} />
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -156,12 +154,12 @@ export function MercadoStallSheet(props: MercadoStallProps) {
       )}
 
       {/* D2 (02/10/2026): a regra da decoração no TOPO — quantas peças cabem e onde aparecem. */}
-      {stall === 'decoracao' && cur !== 'credits' && <DecorRuleLine language={language} />}
+      {stall === 'decoracao' && <DecorRuleLine language={language} />}
 
       {/* O que a roda deu (cenários do Bosque, Concha da Maré): só EQUIPA, sem preço.
           NO TOPO, antes de ~20 cenários da loja (QA L3 M4): o que se ganhou não se procura no fim.
           Vazio é silêncio — a seção nem desenha o título. */}
-      {cur !== 'credits' && !showFrames && (stall === 'background' || stall === 'decoracao') && (
+      {!showFrames && (stall === 'background' || stall === 'decoracao') && (
         <GuildOwnedShelf
           language={language}
           kind={stall === 'background' ? 'bg' : 'furniture'}
@@ -179,28 +177,7 @@ export function MercadoStallSheet(props: MercadoStallProps) {
           actions={props}
         />
       )}
-      {cur === 'credits' ? (
-        <>
-          <CreditExchange language={language} credits={credits} onExchangeCredits={onExchangeCredits} say={say} />
-          {/* ─── O CONVITE PERMANENTE (WP5.1, canal PASSIVO) ───────────────
-              A pessoa ENCONTRA: fora do cap semanal, não some com
-              `offerDismissed`, sem ×. Mora na aba de Créditos (a do dinheiro
-              real), DEPOIS do que a pessoa veio ver — nunca na de Emblemas,
-              que são cosméticos por regra. */}
-          {cur === 'credits' && accountTier === 'demo' && onUnlock && (
-            <section data-unlock-passive style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-              <p style={{ ...sm2Hint, margin: 0 }}>
-                {isPt
-                  ? 'Sem pressa: isto fica aqui sempre que você quiser olhar.'
-                  : 'No rush — this stays here whenever you want to look.'}
-              </p>
-              <div style={{ maxWidth: 280 }}>
-                <UnlockNudge language={language} reason="shop" onOpen={onUnlock} />
-              </div>
-            </section>
-          )}
-        </>
-      ) : showFrames ? (
+      {showFrames ? (
         <FrameShelf
           language={language}
           currency={cur}
@@ -396,6 +373,103 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
           );
         })}
       </ul>
+    </div>
+  );
+}
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CAMBISTA (30/10/2026, dono) — o prédio da troca. Abas: Bits (a troca Créditos → Bits e o convite
+// passivo, que moravam na lojinha de Itens), Essências (vitrine "em breve" das essências por Créditos;
+// sem compra e sem campo novo no save) e Outros (reservada para futuros itens, como energia).
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type CambistaTab = 'bits' | 'essences' | 'other';
+export const CAMBISTA_TABS: readonly CambistaTab[] = ['bits', 'essences', 'other'];
+
+export interface CambistaSheetProps {
+  language: Language;
+  credits: number;
+  onExchangeCredits: (credits: number) => Promise<boolean>;
+  /** WP5.1 — o canal PASSIVO. `demo` vê o convite permanente na aba Bits (a do dinheiro real). */
+  accountTier?: 'demo' | 'paid';
+  onUnlock?: () => void;
+  /** Elementos desbloqueados na Biblioteca (`defeatedElements`): o resto aparece como "???". */
+  unlockedElements?: readonly string[];
+}
+
+export function CambistaSheet({ language, credits, onExchangeCredits, accountTier, onUnlock, unlockedElements }: CambistaSheetProps) {
+  const isPt = language === 'pt-BR';
+  const [tab, setTab] = useState<CambistaTab>('bits');
+  const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
+  const { flash, say } = useShopFlash();
+  const label = (t: CambistaTab) => t === 'bits' ? 'Bits' : t === 'essences' ? (isPt ? 'Essências' : 'Essences') : (isPt ? 'Outros' : 'Other');
+  return (
+    <div data-cambista data-cambista-tab={tab} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={stickyHead}>
+        <PixelTabs
+          items={CAMBISTA_TABS.map(t => ({ key: t, label: label(t) }))}
+          value={tab}
+          onChange={setTab}
+          ariaLabel={isPt ? 'O que o Cambista troca' : 'What the Exchanger trades'}
+        />
+        {tab === 'bits' && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <ShopStatus flash={flash} idle={idleLine('credits', isPt)} language={language} />
+            </div>
+            <CurrencyBalance currency="credits" value={credits} language={language} />
+          </div>
+        )}
+      </div>
+
+      {tab === 'bits' && (
+        <>
+          <CreditExchange language={language} credits={credits} onExchangeCredits={onExchangeCredits} say={say} />
+          {/* ─── O CONVITE PERMANENTE (WP5.1, canal PASSIVO) ───────────────
+              A pessoa ENCONTRA: fora do cap semanal, não some com `offerDismissed`, sem ×.
+              Mora na aba do dinheiro real, DEPOIS do que a pessoa veio ver. */}
+          {tab === 'bits' && accountTier === 'demo' && onUnlock && (
+            <section data-unlock-passive style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+              <p style={{ ...sm2Hint, margin: 0 }}>
+                {isPt
+                  ? 'Sem pressa: isto fica aqui sempre que você quiser olhar.'
+                  : 'No rush — this stays here whenever you want to look.'}
+              </p>
+              <div style={{ maxWidth: 280 }}>
+                <UnlockNudge language={language} reason="shop" onOpen={onUnlock} />
+              </div>
+            </section>
+          )}
+        </>
+      )}
+
+      {tab === 'essences' && (
+        <section data-cambista-essences aria-label={isPt ? 'Essências' : 'Essences'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <p style={{ ...sm2Hint, margin: 0 }}>
+            {isPt ? 'Em breve: essências de cada elemento, em troca de Créditos.' : 'Coming soon: essences of every element, in exchange for Credits.'}
+          </p>
+          <p style={{ ...sm2Hint, margin: 0 }}>
+            {isPt ? 'Filtre por até 3 elementos base: aparecem só as essências que contêm todos eles.' : 'Filter by up to 3 base elements: only essences that contain all of them are listed.'}
+          </p>
+          <ElementBaseSlots slots={slots} isPt={isPt} onChange={(i, id) => setSlots(v => v.map((x, j) => (j === i ? id : x)))} />
+          <ul data-cambista-essence-list style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2, maxHeight: 320, overflowY: 'auto' }}>
+            {elementsMatchingBases(slots).map(id => { const known = isPotionUnlocked(id, unlockedElements); return (
+              <li key={id} data-essence-soon={id} data-essence-locked={known ? undefined : ''} style={{ opacity: 0.7, minHeight: 40, display: 'flex', alignItems: 'center', gap: 10, ...sm2Text }}>
+                {known ? <ElementIcon id={id} size={24} /> : <span aria-hidden="true" style={{ width: 24, textAlign: 'center' }}>?</span>}
+                <span style={{ flex: 1, minWidth: 0 }} aria-label={known ? undefined : (isPt ? 'Elemento ainda não desbloqueado na Biblioteca' : 'Element not yet unlocked in the Library')}>{known ? essenceName(id, isPt) : '???'}</span>
+                <span style={{ ...sm2Hint, flexShrink: 0 }}>{isPt ? 'em breve' : 'soon'}</span>
+              </li>
+            ); })}
+          </ul>
+        </section>
+      )}
+
+      {tab === 'other' && (
+        <p data-cambista-other style={{ ...sm2Hint, margin: 0 }}>
+          {isPt ? 'Em breve: outras trocas, como energia.' : 'Coming soon: other trades, like energy.'}
+        </p>
+      )}
     </div>
   );
 }

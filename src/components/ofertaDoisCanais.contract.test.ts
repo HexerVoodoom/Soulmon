@@ -40,7 +40,7 @@ describe('canal PASSIVO — a Loja', () => {
   it('fica na aba de Créditos (dinheiro real), nunca na de Emblemas', () => {
     // O Torneio cobra em Emblemas, que são cosméticos por regra; misturar o
     // convite de dinheiro real ali embaralharia as três moedas.
-    expect(shop).toMatch(/cur === 'credits' && accountTier === 'demo'/);
+    expect(shop).toMatch(/tab === 'bits' && accountTier === 'demo'/);
     const torneio = readFileSync('src/components/TournamentPage.tsx', 'utf8');
     expect(torneio).not.toContain('<UnlockNudge');
   });
@@ -97,7 +97,7 @@ describe('o × é terminal, e só para o canal proativo', () => {
   it('mas o card da Loja NÃO depende disso', () => {
     // Dispensar o que te interrompe não é dizer que você nunca mais quer
     // procurar. O card passivo não lê `offerDismissed` em lugar nenhum.
-    const bloco = shop.slice(shop.indexOf("cur === 'credits' && accountTier"), shop.indexOf('</section>', shop.indexOf("cur === 'credits' && accountTier")));
+    const bloco = shop.slice(shop.indexOf("tab === 'bits' && accountTier"), shop.indexOf('</section>', shop.indexOf("tab === 'bits' && accountTier")));
     expect(bloco).toContain('<UnlockNudge');
     expect(bloco).not.toContain('offerDismissed');
   });
