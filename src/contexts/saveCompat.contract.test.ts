@@ -21,6 +21,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { sanitizeStageId } from '../utils/bbStage';
+import { sanitizeMercMission } from '../utils/mercMission';
 
 const RAIZ = resolve(__dirname, '../..');
 const ler = (p: string) => readFileSync(resolve(RAIZ, p), 'utf8');
@@ -343,5 +344,21 @@ describe('FORMA BB (Onboarding Velado, D3): o id `bb` entra no save sem campo no
   });
   it('o save sem `bb` (todo save existente) não muda: o sanitizador devolve o id intacto', () => {
     for (const id of ['rookie', 'champion-power', 'mega-harmony', 'ultra']) expect(sanitizeStageId(id)).toBe(id);
+  });
+});
+
+describe('GUILDA DOS MERCENÁRIOS (§11 do plano do onboarding): `mercMission` entra no save com leitura tolerante', () => {
+  it('hydrateSave lê mercMission por sanitizador (forma errada = ausente) e conquistasPagas segue preservado', () => {
+    const h = corpoHydrate(CTX);
+    expect(h).toMatch(/mercMission:\s*sanitizeMercMission\(loadedState\.mercMission\)/);
+    expect(h).toMatch(/conquistasPagas:\s*sanitizeConquistasPagas\(loadedState\.conquistasPagas\)/);
+  });
+  it('o sanitizador é idempotente e recusa lixo', () => {
+    const ok = { day: 'Fri Oct 30 2026', ordem: 'rompente', activityId: 'x', done: false };
+    expect(sanitizeMercMission(sanitizeMercMission(ok))).toEqual(ok);
+    for (const lixo of [undefined, null, 'x', 7, [], {}, { ...ok, ordem: 'cla' }, { ...ok, day: 3 }]) expect(sanitizeMercMission(lixo)).toBeUndefined();
+  });
+  it('o servidor sanitiza o mesmo campo (paridade em functions/api/mercMission.parity.test.js)', () => {
+    expect(SAVE_JS).toMatch(/'mercMission' in state/);
   });
 });

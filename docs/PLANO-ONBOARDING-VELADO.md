@@ -228,6 +228,29 @@ vale a categoria cujo maior valor é o do tipo):
 de cada um dos três Velados e se a missão vira uma tarefa na lista de atividades ou
 fica só no prédio.
 
+**Execução (30/10/2026, branch `ob-guilda`).** Feito: estado `mercMission {day, ordem, activityId, done}`
+(`src/utils/mercMission.ts`; espelho `functions/api/_mercMission.js`, paridade e linha no
+`saveCompat.contract.test.ts`); sorteio por dia + Ordem entre itens A/B (sem `optInOnly`); pontos 3 (esforço do
+nível 1 = 1) ou 5 (2-3) pelo caminho do `feedFood`; BB recusa; painel `MercGuildSheet` (retratos placeholder
+`merc-filtrador/tecelao/rompente.png`, ainda sem arquivo) aberto por um chip no mapa atrás de `ONBOARDING_VELADO`.
+Sem prédio nem arte. **Rollback:** reverter os commits; um save já com `mercMission` volta a ignorar o campo e os
+pontos pagos ficam (são pontos de atributo comuns).
+
+**Simulação de 30 dias** (`mercMission.simulacao.test.ts`; tarefa normal = 1 comida de categoria sorteada, 4 pts):
+
+| Tarefas/dia | Ordem | Normais | Missão | Missão no total | Pior tipo (parte da missão) |
+|---|---|---|---|---|---|
+| 2 | rotativa | 240 | 98 | 29,0% | 36,9% |
+| 2 | sempre Rompentes | 240 | 110 | 31,4% | 62,5% |
+| 4 | rotativa | 480 | 106 | 18,1% | 19,9% |
+| 4 | sempre Rompentes | 480 | 110 | 18,6% | 45,6% |
+| 6 | rotativa | 720 | 108 | 13,0% | 18,6% |
+| 6 | sempre Rompentes | 720 | 110 | 13,3% | 32,5% |
+
+Leitura: no total a missão não domina (13-31%). **Achado:** quem repete a mesma Ordem todo dia e faz poucas tarefas
+(2/dia) tira ~62% do tipo daquela Ordem da missão; com 4/dia, ~46%. A recompensa foi ligada como o dono decidiu
+(3/5); se o dono quiser frear, a alavanca é `pontosMerc` (ex.: 2/3).
+
 ## 12. Pool de BBs prontos (29/10/2026) — muda D6/D7
 
 | # | Decisão do dono |
