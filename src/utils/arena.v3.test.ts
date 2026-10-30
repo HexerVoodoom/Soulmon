@@ -75,18 +75,18 @@ describe('foes and rules of the group Arena (declared constants)', () => {
     expect(ARENA_FOES.weak).toEqual({ hp: 0.45, power: 0.12 });
     expect(ARENA_FOES.medium).toEqual({ hp: 0.95, power: 0.235 });
     expect(ARENA_FOES.boss).toEqual({ hp: 1.2, power: 0.495, special: true });
-    expect(ARENA_ROUND_GROWTH).toEqual({ hp: 0.04, power: 0.13 });
+    expect(ARENA_ROUND_GROWTH).toEqual({ hp: 0.04, power: 0.135 });
     expect(ROUND_CLEAR_HEAL).toBe(0.3);
     expect(ARENA_ROUNDS).toBe(5);
     expect(ARENA_ROUND_COMP.map((r) => [...r])).toEqual([['medium'], ['weak', 'weak'], ['medium'], ['weak', 'weak', 'weak'], ['boss']]);
     expect(PVE_FAMILY_POWER.arena).toEqual({ direct: 1, dot: 0.95, heal: 1.25, shield: 1.2, atkBuff: 1.35, defDebuff: 1.55, spdBuff: 1.25 });
   });
-  it('arenaFoe(L, cls, r) = balanced mirror with hp × cls.hp × (1 + 0.04 r) and bonus cls.power × (1 + 0.13 r) − 1', () => {
+  it('arenaFoe(L, cls, r) = balanced mirror with hp × cls.hp × (1 + 0.04 r) and bonus cls.power × (1 + 0.135 r) − 1', () => {
     for (const L of RULER_LEVELS) {
       const b = combatantAt(L, REFERENCE_BUILDS.balanced);
       const f = arenaFoe(L, 'medium', 2);
       expect(f.combatant.hp).toBeCloseTo(b.hp * 0.95 * 1.08, 9);
-      expect(f.combatant.bonus).toBeCloseTo(0.235 * 1.26 - 1, 9);
+      expect(f.combatant.bonus).toBeCloseTo(0.235 * 1.27 - 1, 9);
       expect(f.combatant.atk).toBe(b.atk);
       expect(f.special).toBeNull();
     }

@@ -335,15 +335,15 @@ export const ARENA_FOES = {
   boss: { hp: 1.2, power: 0.495, special: true },
 } as const;
 
-/** Per-round growth of the foes (round r = 0..4). */
-export const ARENA_ROUND_GROWTH = { hp: 0.04, power: 0.13 } as const;
+/** Per-round growth of the foes. power 0.13 → 0.135 em 30/10/2026 (REGISTRO §195, emenda): devolve a vitória a ~62,5% com a largada justa. */
+export const ARENA_ROUND_GROWTH = { hp: 0.04, power: 0.135 } as const;
 
 /** HP fraction recovered when a round is cleared (the breather between rounds). */
 export const ROUND_CLEAR_HEAL = 0.3;
 
 /**
  * The foe of class `cls` at round `r` (0..4) for a player of level `L`:
- * `{ ...combatantAt(L, balanced), hp: hp × cls.hp × (1 + 0.04·r), bonus: cls.power × (1 + 0.13·r) − 1 }`.
+ * `{ ...combatantAt(L, balanced), hp: hp × cls.hp × (1 + 0.04·r), bonus: cls.power × (1 + 0.135·r) − 1 }`.
  * The boss casts a `direct` special aimed at ONE target.
  */
 export function arenaFoe(L: number, cls: ArenaEnemyClass, r: number): FightSide {
