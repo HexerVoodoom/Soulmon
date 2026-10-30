@@ -134,6 +134,33 @@ export async function spendCredits(
   return null;
 }
 
+export type EssenceBuyResult =
+  | { ok: true; ent: Entitlement; element: string; qty: number; price: number }
+  | { ok: false; reason: string };
+
+/**
+ * CAMBISTA (§205) — compra essência com Créditos NO SERVIDOR. O preço é decidido lá (composição do elemento); o cliente só aplica
+ * as essências quando isto devolve `ok`. Mesmo `opId` em um reenvio (rede caiu) = mesma resposta, sem cobrar de novo.
+ */
+export async function buyEssence(element: string, qty: number, opId: string = newOpId()): Promise<EssenceBuyResult> {
+  const id = currentSaveId();
+  if (!id) return { ok: false, reason: 'no-save' };
+  for (let tentativa = 0; tentativa < 2; tentativa++) {
+    try {
+      const res = await fetch('/api/entitlements?action=buy-essence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify({ id, element, qty, opId }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) return { ok: false, reason: typeof data?.reason === 'string' ? data.reason : 'error' };
+      return { ok: true, element: data.element, qty: data.qty, price: data.price,
+        ent: { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true } };
+    } catch { /* rede: uma nova tentativa com o MESMO opId */ }
+  }
+  return { ok: false, reason: 'network' };
+}
+
 /** Credita a recompensa do anúncio (o teto diário é aplicado no servidor). */
 export async function claimAdReward(): Promise<Entitlement | null> {
   const id = currentSaveId();

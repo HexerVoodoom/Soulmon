@@ -19,13 +19,14 @@ import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { CREDIT_COLOR, type CurrencyId } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
 import { elementsMatchingBases, isPotionUnlocked } from '../../utils/elementPotion';
-import { essenceName } from '../../utils/essences';
+import { essenceName, ESSENCE_MAX_PER_ELEMENT } from '../../utils/essences';
+import { essencePackPrice, ESSENCE_PACK_SIZES } from '../../utils/essenceShop';
 import { ElementBaseSlots, ElementIcon, emptySlots } from '../ElementBaseSlots';
 import { GuildOwnedShelf } from './GuildOwnedShelf';
 import { SubscriptionShelf } from './SubscriptionShelf';
 import { FrameShelf } from './FrameShelf';
 import {
-  CreditExchange, CurrencyBalance, DecorRuleLine, ShopShelf, ShopStatus, WeeklyMissionList, bgThumb, useShopFlash,
+  CreditExchange, CurrencyBalance, PurchaseConfirmSheet, DecorRuleLine, ShopShelf, ShopStatus, WeeklyMissionList, bgThumb, useShopFlash,
   type ShopActions, type ShopOwnership,
 } from './ShopShelf';
 import type { WeeklyMission, WeeklyMissionId } from '../../utils/weeklyMissions';
@@ -380,8 +381,8 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CAMBISTA (30/10/2026, dono) — o prédio da troca. Abas: Bits (a troca Créditos → Bits e o convite
-// passivo, que moravam na lojinha de Itens), Essências (vitrine "em breve" das essências por Créditos;
-// sem compra e sem campo novo no save) e Outros (reservada para futuros itens, como energia).
+// passivo, que moravam na lojinha de Itens), Essências (compra por Créditos no servidor, §205;
+// sem campo novo no save) e Outros (reservada para futuros itens, como energia).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CambistaTab = 'bits' | 'essences' | 'other';
@@ -396,13 +397,26 @@ export interface CambistaSheetProps {
   onUnlock?: () => void;
   /** Elementos desbloqueados na Biblioteca (`defeatedElements`): o resto aparece como "???". */
   unlockedElements?: readonly string[];
+  /** Saldo de essências (só para mostrar "você tem N" e o teto). */
+  essences?: Record<string, number>;
+  /** §205: compra no SERVIDOR (preço, saldo e trancado decididos lá). Sem a prop, a lista é só vitrine. */
+  onBuyEssence?: (element: string, qty: number) => Promise<boolean>;
 }
 
-export function CambistaSheet({ language, credits, onExchangeCredits, accountTier, onUnlock, unlockedElements }: CambistaSheetProps) {
+export function CambistaSheet({ language, credits, onExchangeCredits, accountTier, onUnlock, unlockedElements, essences, onBuyEssence }: CambistaSheetProps) {
   const isPt = language === 'pt-BR';
   const [tab, setTab] = useState<CambistaTab>('bits');
   const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
   const { flash, say } = useShopFlash();
+  const [pendingEss, setPendingEss] = useState<{ id: string; qty: number; price: number } | null>(null);
+  const [buyingEss, setBuyingEss] = useState(false);
+  const confirmEssence = async () => {
+    const p = pendingEss;
+    if (!p || !onBuyEssence) return;
+    setPendingEss(null);
+    setBuyingEss(true);
+    try { await onBuyEssence(p.id, p.qty); } finally { setBuyingEss(false); }
+  };
   const label = (t: CambistaTab) => t === 'bits' ? 'Bits' : t === 'essences' ? (isPt ? 'Essências' : 'Essences') : (isPt ? 'Outros' : 'Other');
   return (
     <div data-cambista data-cambista-tab={tab} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -446,22 +460,67 @@ export function CambistaSheet({ language, credits, onExchangeCredits, accountTie
 
       {tab === 'essences' && (
         <section data-cambista-essences aria-label={isPt ? 'Essências' : 'Essences'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <p style={{ ...sm2Hint, margin: 0 }}>
-            {isPt ? 'Em breve: essências de cada elemento, em troca de Créditos.' : 'Coming soon: essences of every element, in exchange for Credits.'}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <p style={{ ...sm2Hint, margin: 0, flex: 1, minWidth: 0 }}>
+              {isPt ? 'Essências por Créditos: 1 por elemento base, 2 por par, 3 por tripla. Pacote de 5 sai com 10% de desconto.' : 'Essences for Credits: 1 per base element, 2 per pair, 3 per triple. A pack of 5 is 10% off.'}
+            </p>
+            <CurrencyBalance currency="credits" value={credits} language={language} />
+          </div>
           <p style={{ ...sm2Hint, margin: 0 }}>
             {isPt ? 'Filtre por até 3 elementos base: aparecem só as essências que contêm todos eles.' : 'Filter by up to 3 base elements: only essences that contain all of them are listed.'}
           </p>
           <ElementBaseSlots slots={slots} isPt={isPt} onChange={(i, id) => setSlots(v => v.map((x, j) => (j === i ? id : x)))} />
           <ul data-cambista-essence-list style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2, maxHeight: 320, overflowY: 'auto' }}>
-            {elementsMatchingBases(slots).map(id => { const known = isPotionUnlocked(id, unlockedElements); return (
-              <li key={id} data-essence-soon={id} data-essence-locked={known ? undefined : ''} style={{ opacity: 0.7, minHeight: 40, display: 'flex', alignItems: 'center', gap: 10, ...sm2Text }}>
-                {known ? <ElementIcon id={id} size={24} /> : <span aria-hidden="true" style={{ width: 24, textAlign: 'center' }}>?</span>}
-                <span style={{ flex: 1, minWidth: 0 }} aria-label={known ? undefined : (isPt ? 'Elemento ainda não desbloqueado na Biblioteca' : 'Element not yet unlocked in the Library')}>{known ? essenceName(id, isPt) : '???'}</span>
-                <span style={{ ...sm2Hint, flexShrink: 0 }}>{isPt ? 'em breve' : 'soon'}</span>
-              </li>
-            ); })}
+            {elementsMatchingBases(slots).map(id => {
+              const known = isPotionUnlocked(id, unlockedElements);
+              const owned = essences?.[id] ?? 0;
+              const name = known ? essenceName(id, isPt) : '???';
+              return (
+                <li key={id} data-essence-row={id} data-essence-locked={known ? undefined : ''} style={{ opacity: known ? 1 : 0.6, minHeight: 40, display: 'flex', alignItems: 'center', gap: 8, ...sm2Text }}>
+                  {known ? <ElementIcon id={id} size={24} /> : <span aria-hidden="true" style={{ width: 24, textAlign: 'center' }}>?</span>}
+                  <span style={{ flex: 1, minWidth: 0 }} aria-label={known ? undefined : (isPt ? 'Elemento ainda não desbloqueado na Biblioteca' : 'Element not yet unlocked in the Library')}>
+                    {name}
+                    {known && <span data-essence-owned className="sm2-num" style={{ ...sm2Hint, marginLeft: 6 }}>×{owned}</span>}
+                  </span>
+                  {known && onBuyEssence ? ESSENCE_PACK_SIZES.map(qty => {
+                    const price = essencePackPrice(id, qty);
+                    const can = price > 0 && credits >= price && !buyingEss && owned + qty <= ESSENCE_MAX_PER_ELEMENT;
+                    return (
+                      <button
+                        key={qty}
+                        type="button"
+                        data-essence-buy={qty}
+                        disabled={!can}
+                        aria-label={isPt ? `Comprar ${qty} ${name} por ${price} ${price === 1 ? 'Crédito' : 'Créditos'}` : `Buy ${qty} ${name} for ${price} ${price === 1 ? 'Credit' : 'Credits'}`}
+                        onClick={() => setPendingEss({ id, qty, price })}
+                        style={{ ...sm2Button('outline', !can), flexShrink: 0, padding: '4px 8px', gap: 4 }}
+                      >
+                        <span>{qty === 1 ? (isPt ? 'Comprar' : 'Buy') : '×5'}</span>
+                        <Icon name="diamond" size={14} fill={1} tone="inherit" style={{ color: CREDIT_COLOR }} />
+                        <span className="sm2-num" data-essence-price>{price}</span>
+                      </button>
+                    );
+                  }) : (
+                    <span style={{ ...sm2Hint, flexShrink: 0 }}>{known ? (isPt ? `${essencePackPrice(id, 1)} Créd.` : `${essencePackPrice(id, 1)} Cr.`) : (isPt ? 'trancado' : 'locked')}</span>
+                  )}
+                </li>
+              );
+            })}
           </ul>
+          <PurchaseConfirmSheet
+            open={!!pendingEss}
+            language={language}
+            question={pendingEss
+              ? (isPt
+                ? <>Comprar <span className="sm2-num">{pendingEss.qty}</span> {essenceName(pendingEss.id, true)}?</>
+                : <>Buy <span className="sm2-num">{pendingEss.qty}</span> {essenceName(pendingEss.id, false)}?</>)
+              : null}
+            balance={credits}
+            cost={pendingEss?.price ?? 0}
+            currency="credits"
+            onCancel={() => setPendingEss(null)}
+            onConfirm={() => { void confirmEssence(); }}
+          />
         </section>
       )}
 

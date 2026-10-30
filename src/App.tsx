@@ -217,7 +217,7 @@ const gmTools = () => import('./utils/gmTools');
 const corvoAdocao = () => import('./utils/corvoAdocao');
 import { createEntitlementSync } from './utils/entitlementSync';
 import { subscribeAuthState } from './utils/auth';
-import { fetchEntitlement, spendCredits, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
+import { fetchEntitlement, spendCredits, buyEssence, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
 import { purchase, reconcileSubscription, reconcilePurchases } from './utils/playBilling';
 import { SUBSCRIPTION_SKU, setSubscriptionFromEntitlement, useSubscriptionStatus } from './utils/subscription';
 import { applySubscriptionClaim } from './utils/subscriptionShop';
@@ -4465,6 +4465,20 @@ export default function App() {
     return true;
   }, [language, setGameState, gameState, refuseDemo]);
 
+  /** CAMBISTA (§205): essência por Créditos. O servidor confere elemento, trancado, teto e saldo e cobra; só então a essência entra. */
+  const handleBuyEssence = useCallback(async (element: string, qty: number): Promise<boolean> => {
+    if (isDemoMode(gameState)) { refuseDemo(); return false; }
+    const r = await buyEssence(element, qty);
+    if (!r.ok) {
+      toast(r.reason === 'insufficient'
+        ? (language === 'pt-BR' ? 'Créditos insuficientes.' : 'Not enough credits.')
+        : (language === 'pt-BR' ? 'A compra não foi concluída. Tente de novo.' : 'The purchase did not go through. Try again.'));
+      return false;
+    }
+    setGameState(prev => ({ ...applyEssences(prev, [{ id: r.element, qty: r.qty }]), credits: r.ent.credits, accountTier: r.ent.tier }));
+    return true;
+  }, [language, setGameState, gameState, refuseDemo]);
+
   // Assinatura cosmética (D10): a vigência fica numa store fora do GameState e SÓ abre a vitrine do trimestre.
   const subscription = useSubscriptionStatus();
   useEffect(() => {
@@ -7707,6 +7721,8 @@ export default function App() {
                 emblems={gameState.emblems ?? 0}
                 credits={gameState.credits ?? 0}
                 onExchangeCredits={handleExchangeCredits}
+                onBuyEssence={handleBuyEssence}
+                essences={gameState.essences}
                 accountTier={gameState.accountTier}
                 onUnlock={() => setUnlockReason('shop')}
                 tournament={{

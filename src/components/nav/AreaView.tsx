@@ -194,6 +194,9 @@ export interface AreaViewProps {
   /** Dex de elementos (Biblioteca): o Cambista mostra "???" no que não foi desbloqueado. */
   unlockedElements?: readonly string[];
   onExchangeCredits: (credits: number) => Promise<boolean>;
+  /** Cambista (§205): compra de essência por Créditos (servidor cobra). Sem a prop, a aba fica só vitrine. */
+  onBuyEssence?: (element: string, qty: number) => Promise<boolean>;
+  essences?: Record<string, number>;
   accountTier?: 'demo' | 'paid';
   onUnlock?: () => void;
   /** D-16: o Mercado abre a lojinha de Background já na aba Frames (a moldura trancada do Perfil leva até lá). One-shot por montagem. */
@@ -418,7 +421,7 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {open?.id === 'cambista' && (
-              <CambistaSheet language={language} credits={props.credits} onExchangeCredits={props.onExchangeCredits} accountTier={props.accountTier} onUnlock={props.onUnlock} unlockedElements={props.unlockedElements} />
+              <CambistaSheet language={language} credits={props.credits} onExchangeCredits={props.onExchangeCredits} accountTier={props.accountTier} onUnlock={props.onUnlock} unlockedElements={props.unlockedElements} essences={props.essences} onBuyEssence={props.onBuyEssence} />
             )}
             {open?.id === 'conquistas' && (
               <ConquistasSheet language={language} missionProgress={ownership.missionProgress} claimed={ownership.missionClaimed} shop={{ ownedBackgrounds: ownership.ownedBackgrounds, balance: props.points, onBuy: actions.onBuy }} />

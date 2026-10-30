@@ -199,20 +199,64 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
     expect(container.querySelector('[data-shop-item]')).toBeNull();
   });
 
-  it('Essências: lista os elementos "em breve", sem botão de compra', () => {
+  it('Essências: lista todos os elementos com preço; sem onBuyEssence não há botão (só vitrine)', () => {
     const { container } = abrirC();
     fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
-    expect(container.querySelector('[data-cambista-essences]')).not.toBeNull();
-    expect(container.querySelectorAll('[data-essence-soon]').length).toBe(ALL_ELEMENT_IDS.length);
+    expect(container.querySelectorAll('[data-essence-row]').length).toBe(ALL_ELEMENT_IDS.length);
     expect(container.querySelector('[data-credit-exchange]')).toBeNull();
-    expect(container.querySelector('[data-cambista-essences] [data-essence-soon] button')).toBeNull();
-    expect(container.textContent).toMatch(/coming soon/i);
+    expect(container.querySelector('[data-essence-buy]')).toBeNull();
+    expect(container.textContent).toMatch(/1 per base element, 2 per pair/);
+  });
+
+  it('Essências: preço por linha, ×5 com desconto, posse; trancado (???) sem compra; sem saldo = desabilitado', () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const par = ALL_ELEMENT_IDS.find(id => !BASE_ELEMENT_IDS.includes(id))!;
+    const trancado = BASE_ELEMENT_IDS[1];
+    const { container } = abrirC({ credits: 4, unlockedElements: [fogo, par], essences: { [fogo]: 7 }, onBuyEssence: async () => true });
+    fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
+    const row = (id: string) => container.querySelector(`[data-essence-row="${id}"]`)!;
+    const prices = (id: string) => [...row(id).querySelectorAll('[data-essence-price]')].map(e => e.textContent);
+    expect(prices(fogo)).toEqual(['1', '4']);
+    expect(prices(par)).toEqual(['2', '9']);
+    expect(row(fogo).querySelector('[data-essence-owned]')!.textContent).toBe('×7');
+    expect(row(trancado).querySelector('[data-essence-buy]')).toBeNull();
+    expect(row(trancado).textContent).toMatch(/\?\?\?/);
+    expect((row(fogo).querySelector('[data-essence-buy="5"]') as HTMLButtonElement).disabled).toBe(false);
+    expect((row(par).querySelector('[data-essence-buy="1"]') as HTMLButtonElement).disabled).toBe(false);
+    expect((row(par).querySelector('[data-essence-buy="5"]') as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('Essências: Comprar abre a confirmação (Cancelar à esquerda não cobra; Confirmar chama o servidor)', async () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const onBuyEssence = vi.fn(async () => true);
+    const { container } = abrirC({ credits: 10, unlockedElements: [fogo], onBuyEssence });
+    fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
+    fireEvent.click(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy="5"]`)!);
+    let dlg = screen.getByRole('dialog', { name: 'Confirm purchase' });
+    expect(dlg.querySelector('[data-purchase-cost]')!.textContent).toMatch(/^4 /);
+    const btns = [...dlg.querySelectorAll('button[data-purchase-cancel], button[data-purchase-ok]')];
+    expect(btns.map(b => b.hasAttribute('data-purchase-cancel'))).toEqual([true, false]);
+    fireEvent.click(dlg.querySelector('[data-purchase-cancel]')!);
+    expect(onBuyEssence).not.toHaveBeenCalled();
+    fireEvent.click(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy="1"]`)!);
+    dlg = screen.getByRole('dialog', { name: 'Confirm purchase' });
+    fireEvent.click(dlg.querySelector('[data-purchase-ok]')!);
+    await Promise.resolve();
+    expect(onBuyEssence).toHaveBeenCalledWith(fogo, 1);
+  });
+
+  it('Essências em PT: botão Comprar e regra de preço', () => {
+    const [fogo] = BASE_ELEMENT_IDS;
+    const { container } = abrirC({ language: 'pt-BR', unlockedElements: [fogo], onBuyEssence: async () => true });
+    fireEvent.click(screen.getByRole('tab', { name: 'Essências' }));
+    expect(container.querySelector(`[data-essence-row="${fogo}"] [data-essence-buy="1"]`)!.textContent).toMatch(/Comprar/);
+    expect(container.textContent).toMatch(/1 por elemento base, 2 por par/);
   });
 
   it('Essências: três espaços filtram em E (base sozinha = ela + todo par que a contém)', () => {
     const { container } = abrirC();
     fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
-    const ids = () => [...container.querySelectorAll('[data-essence-soon]')].map(e => e.getAttribute('data-essence-soon'));
+    const ids = () => [...container.querySelectorAll('[data-essence-row]')].map(e => e.getAttribute('data-essence-row'));
     expect(container.querySelectorAll('[data-slot]').length).toBe(3);
     const [a, b] = BASE_ELEMENT_IDS;
     fireEvent.click(container.querySelector('[data-slot="0"]')!);
