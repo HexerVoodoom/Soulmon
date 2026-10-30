@@ -183,7 +183,8 @@ describe('G17(a): o fio renova o prazo junto do grupo', () => {
     await gravarGrupo(e, { ...g, bosqueProgress: 0.5, semPrazoGravado: undefined });
     const semPrazo = e.DIGIAPP_SAVES.puts.find(p => p.k === coopFioKey(gid, A));
     expect(semPrazo.opts).toEqual({});
-    for (const p of e.DIGIAPP_SAVES.puts) expect(p.opts, p.k).toEqual({});
+    // `coopDir:` (§203) leva metadata (nome/tamanho), mas também SEM prazo.
+    for (const p of e.DIGIAPP_SAVES.puts) { const { metadata, ...prazo } = p.opts ?? {}; expect(prazo, p.k).toEqual({}); }
   });
 });
 

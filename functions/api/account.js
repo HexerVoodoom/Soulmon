@@ -120,6 +120,7 @@ import { lerIndice, chaveDoIndice, PUSHIDX_MAX } from './_pushIdentity.js';
 import { writeTombstone, clearTombstone, TOMBSTONE_TTL_SECONDS } from './_accountTombstone.js';
 import { rkKeyFor } from './_rankings.js';
 import { coopLeave, grupoDe, coopOfKey, coopCkKey, coopFioKey, coopMemKey, lerFio, apagarClaims, lerGolpes, semanaDe, semanasDeClaim, coopClaimKey, lerConjunto, coopScenesKey, coopShellKey, coopPartKey, lerDiasCarregados, exportarFeiraDaPessoa } from './_coop.js';
+import { apagarPedido } from './_claDiretorio.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -719,6 +720,7 @@ async function handleDeleteConfirm(env, saveId, body) {
   // fechados viram contagem ANÔNIMA do Bosque (a obra nunca regride, LV-G3).
   await tentar('coop (grupo cooperativo)', async () => { coop = await coopLeave(env, saveId, { exclusao: true }); });
   await tentar('coopClaim (resgates da Guilda)', () => apagarClaims(env, saveId));
+  await tentar('coopReq (pedido de entrada em clã, §203)', () => apagarPedido(env, saveId));
 
   // 4) Inscrições de push ligadas à conta (decisão #23), pelo índice.
   //    Reversível na prática: o aparelho se reinscreve na próxima abertura.

@@ -51,6 +51,14 @@
 //   POST guildLeave   {id}                 → { ok: true } (sempre; idempotente)
 //   POST guildRename  {id, name}           → { guild }   403 not host · 400 invalid name · 404 no guild
 //   POST guildNewCode {id}                 → { guild }   403 not host · 503 try again · 404 no guild
+//   (PROCURAR CLÃ — `_claDiretorio.js`, REGISTRO §203; o código continua valendo igual)
+//   GET  guildDirectory ?id=              → { clans:[{dirId,name,size,max}], pending:{dirId,name}|null }   (com clã: clans=[])
+//   POST guildRequest   {id, dirId}        → { pending }   409 already in a guild · 404 invalid clan · 409 guild full
+//                                            · 409 request pending (+{pending}: um pedido por vez; o MESMO clã = 200 idempotente) · 429
+//   POST guildRequestCancel {id}           → { ok: true } (sempre; idempotente)
+//   GET  guildRequests  ?id=               → { requests:[{requestId,name,at}] }   404 no guild · 403 not host
+//   POST guildRequestDecide {id, requestId, approve} → { guild, result:'approved'|'declined'|'gone' }
+//                                            404 no guild · 403 not host · 409 guild full (o pedido fica para depois)
 // Não existe expulsão (G7): o código novo é a ferramenta de fechar a porta.
 //
 // `dayKey` é o DIA DO JOGADOR (`playerDayKey`), aceito a ±1 do dia UTC — o
@@ -83,6 +91,10 @@ import {
   gravarGolpe, marcarFeira, resgatarChefe, iniciarTrilha, entregarTrilha, FIGHT_SECONDS,
 } from './_feira.js';
 import { lerFeiraHit } from './_coop.js';
+import {
+  listarDiretorio, lerEntrada, idOpacoValido, lerPedido, lerPedidoNoCla, gravarPedido, apagarPedido, listarPedidos,
+  tirarDoDiretorio, coopReqInKey, coopDirKey,
+} from './_claDiretorio.js';
 import { CASA_BITS_POR_DIA, casaStageFor, doarBits, definirSlot, normalizarCasa, totalDaCasa, bitsDaCasa, somarPontos, pontosDeMissao } from './_casa.js';
 
 const CORS = {
@@ -143,7 +155,15 @@ export const GUILD_ACTIONS = Object.freeze({
   guildLeave: 'POST',
   guildRename: 'POST',
   guildNewCode: 'POST',
+  guildDirectory: 'GET',
+  guildRequest: 'POST',
+  guildRequestCancel: 'POST',
+  guildRequests: 'GET',
+  guildRequestDecide: 'POST',
 });
+
+/** Pedir para entrar: no máximo 10 pedidos por hora por pessoa — o anfitrião não vira alvo de spam. */
+export const GUILD_REQUEST_LIMIT = { limit: 10, windowMs: 3_600_000 };
 
 /** A classe de rate limit de uma ação desta rota — sempre a LEVE. */
 export const limiteDaGuilda = () => GUILD_LIGHT;
@@ -365,6 +385,107 @@ export async function handleGuild({ request, env }) {
     return vista(g ? await montar(g, id, hoje) : null);
   }
 
+  /**
+   * Põe `quem` no grupo `gid` (o corpo do `guildJoin`, também usado pela APROVAÇÃO de pedido).
+   * Relê antes de gravar (M2), confere depois de gravar e tenta UMA vez mais na corrida da
+   * última vaga. Devolve `{ g }` (já membro = idempotente) ou `{ erro: '{g} full' | 'join collision' }`.
+   */
+  async function entrarNoGrupo(gid, quem, lido = null) {
+    const g = (await lerGrupo(env, gid)) ?? lido;
+    if (!g) return { erro: 'no {g}' };
+    rolarSemana(g, semana);
+    if (g.members.includes(quem)) { await apagarPedido(env, quem); return { g }; }
+    if (g.members.length >= COOP_MAX_MEMBERS) return { erro: '{g} full' };
+    g.members.push(quem);
+    g.desde = { ...(g.desde || {}), [quem]: hoje };
+    await gravarGrupo(env, g, { novosMembros: [quem] });
+    // Duas pessoas na última vaga ao mesmo tempo: relê e tenta UMA vez mais;
+    // perdendo as duas, erro honesto em vez de "você entrou" falso.
+    let confirmado = await lerGrupo(env, g.id);
+    if (confirmado && !confirmado.members.includes(quem)) {
+      if (confirmado.members.length >= COOP_MAX_MEMBERS) {
+        await kvOrThrow(env).delete(coopOfKey(quem));
+        return { erro: '{g} full' };
+      }
+      confirmado.members.push(quem);
+      confirmado.desde = { ...(confirmado.desde || {}), [quem]: hoje };
+      await gravarGrupo(env, confirmado, { novosMembros: [quem] });
+      confirmado = await lerGrupo(env, g.id);
+    }
+    if (!confirmado || !confirmado.members.includes(quem)) {
+      await kvOrThrow(env).delete(coopOfKey(quem));
+      return { erro: 'join collision' };
+    }
+    // Entrou (por código OU aprovação): o pedido pendente, se havia, deixa de existir.
+    await apagarPedido(env, quem);
+    await renovarCartao(env, confirmado.id, quem);
+    return { g: rolarSemana(confirmado, semana) };
+  }
+
+  // ── PROCURAR CLÃ (§203) ──
+  if (action === 'guildDirectory') {
+    if (await grupoDe(env, id, semana)) return json({ clans: [], pending: null });
+    const pend = await lerPedido(env, id);
+    const pending = pend ? { dirId: pend.dirId, name: (await lerEntrada(env, pend.dirId))?.n ?? null } : null;
+    const clans = (await listarDiretorio(env, COOP_MAX_MEMBERS))
+      .sort((a, b) => b.size - a.size || a.name.localeCompare(b.name));
+    return json({ clans, pending });
+  }
+
+  if (action === 'guildRequestCancel') {
+    await apagarPedido(env, id);
+    return json({ ok: true });
+  }
+
+  if (action === 'guildRequest') {
+    if (await grupoDe(env, id, semana)) return erro('already in a {g}', 409);
+    const dirId = String(body.dirId ?? '');
+    const entrada = idOpacoValido(dirId) ? await lerEntrada(env, dirId) : null;
+    const g = entrada ? await lerGrupo(env, entrada.gid) : null;
+    if (!g) {
+      if (entrada) await kvOrThrow(env).delete(coopDirKey(dirId));
+      return erro('invalid clan', 404);
+    }
+    const atual = await lerPedido(env, id);
+    if (atual && atual.gid === g.id) return json({ pending: { dirId, name: g.name } });
+    if (atual) return erro('request pending', 409, { pending: { dirId: atual.dirId, name: (await lerEntrada(env, atual.dirId))?.n ?? null } });
+    if (g.members.length >= COOP_MAX_MEMBERS) return erro('{g} full', 409);
+    const gate = takeToken('guildRequest', id, GUILD_REQUEST_LIMIT);
+    if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS);
+    const rid = await idOpacoDoMembro(env, g.id, id);
+    const nome = (await getProfile(env, id).catch(() => null))?.name;
+    await gravarPedido(env, id, g.id, dirId, rid, typeof nome === 'string' ? nome.slice(0, 40) : null);
+    return json({ pending: { dirId, name: g.name } });
+  }
+
+  if (action === 'guildRequests' || action === 'guildRequestDecide') {
+    const g = await grupoDe(env, id, semana);
+    if (!g) return erro('no {g}', 404);
+    if (anfitriaoDe(g) !== id) return erro('not host', 403);
+    if (action === 'guildRequests') return json({ requests: await listarPedidos(env, g.id) });
+    const rid = String(body.requestId ?? '');
+    const pedido = await lerPedidoNoCla(env, g.id, rid);
+    const dele = pedido ? await lerPedido(env, pedido.save) : null;
+    // Cancelado, expirado ou trocado por outro clã: some daqui e o anfitrião vê a fila nova.
+    if (!pedido || !dele || dele.gid !== g.id) {
+      if (idOpacoValido(rid)) await kvOrThrow(env).delete(coopReqInKey(g.id, rid));
+      return json({ result: 'gone', guild: await montar(g, id, hoje) });
+    }
+    if (body.approve !== true) {
+      await apagarPedido(env, pedido.save);
+      return json({ result: 'declined', guild: await montar(g, id, hoje) });
+    }
+    const ja = await grupoDe(env, pedido.save, semana);
+    if (ja) {
+      // Já está neste clã (aprovação repetida) ou entrou em outro por código: o pedido acaba aqui.
+      await apagarPedido(env, pedido.save);
+      return json({ result: ja.id === g.id ? 'approved' : 'gone', guild: await montar(g, id, hoje) });
+    }
+    const r = await entrarNoGrupo(g.id, pedido.save);
+    if (r.erro) return erro(r.erro, 409);
+    return json({ result: 'approved', guild: await montar(r.g, id, hoje) });
+  }
+
   if (action === 'guildCreate') {
     // Um coletivo por pessoa (D-G1).
     const ja = await grupoDe(env, id, semana);
@@ -387,6 +508,7 @@ export async function handleGuild({ request, env }) {
     if (vencedor !== g.id) {
       await kvOrThrow(env).delete(coopKey(g.id));
       await kvOrThrow(env).delete(coopCodeKey(g.code));
+      await tirarDoDiretorio(env, g.id);
       const outro = await grupoDe(env, id, semana);
       return erro('already in a {g}', 409, { [chave]: outro ? await montar(outro, id, hoje) : null });
     }
@@ -410,37 +532,15 @@ export async function handleGuild({ request, env }) {
     if (host && host !== id && (await kvOrThrow(env).get(coopOfKey(host))) !== lido.id) {
       await kvOrThrow(env).delete(coopKey(lido.id));
       await kvOrThrow(env).delete(coopCodeKey(code));
+      await tirarDoDiretorio(env, lido.id);
       return erro('invalid code', 404);
     }
     // M2 (L2-backend): RELÊ imediatamente antes de gravar. A cópia lida pelo
     // código podia ser velha — gravá-la ressuscitava quem acabou de sair (ou
     // foi excluído) e recuava o Bosque por um instante.
-    const g = (await lerGrupo(env, lido.id)) ?? lido;
-    rolarSemana(g, semana);
-    if (g.members.includes(id)) return vista(await montar( g, id, hoje));
-    if (g.members.length >= COOP_MAX_MEMBERS) return erro('{g} full', 409);
-    g.members.push(id);
-    g.desde = { ...(g.desde || {}), [id]: hoje };
-    await gravarGrupo(env, g, { novosMembros: [id] });
-    // Duas pessoas na última vaga ao mesmo tempo: relê e tenta UMA vez mais;
-    // perdendo as duas, erro honesto em vez de "você entrou" falso.
-    let confirmado = await lerGrupo(env, g.id);
-    if (confirmado && !confirmado.members.includes(id)) {
-      if (confirmado.members.length >= COOP_MAX_MEMBERS) {
-        await kvOrThrow(env).delete(coopOfKey(id));
-        return erro('{g} full', 409);
-      }
-      confirmado.members.push(id);
-      confirmado.desde = { ...(confirmado.desde || {}), [id]: hoje };
-      await gravarGrupo(env, confirmado, { novosMembros: [id] });
-      confirmado = await lerGrupo(env, g.id);
-    }
-    if (!confirmado || !confirmado.members.includes(id)) {
-      await kvOrThrow(env).delete(coopOfKey(id));
-      return erro('join collision', 409);
-    }
-    await cartao(confirmado);
-    return vista(await montar( rolarSemana(confirmado, semana), id, hoje));
+    const r = await entrarNoGrupo(lido.id, id, lido);
+    if (r.erro) return erro(r.erro, 409);
+    return vista(await montar(r.g, id, hoje));
   }
 
   if (action === 'guildCheckin') {

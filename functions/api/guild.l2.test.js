@@ -240,8 +240,10 @@ describe('B5 — gesto numa roda de 2 não diz o tipo', () => {
 export const ORCAMENTO = {
   // +1 leitura (11/10, casa da guilda): o cartão do membro resume também `coopCasa:<gid>:<save>`.
   // +1 leitura (R5/A, 26/10, Loja do clã): a vista lê `coopLoja:<gid>` (uma por vista, não por membro).
-  criar: { get: 17, put: 5 },
-  entrar: { get: 29, put: 3 },
+  // +1 escrita (30/10, §203): a entrada do clã no diretório `coopDir:<dirId>` nasce junto.
+  criar: { get: 17, put: 6 },
+  // +1 leitura (30/10, §203): entrar apaga o pedido pendente de quem entra (`coopReq:<save>`).
+  entrar: { get: 30, put: 3 },
   // +1 leitura (29/09, M-2): o PRIMEIRO fio numa guilda lê `coopDias` para
   // herdar os dias distintos; os fios seguintes não leem.
   fio: { get: 27, put: 2 },

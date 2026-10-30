@@ -1832,6 +1832,9 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 **Chamado por:** `src/components/mercado/MercadoSheets.tsx` (`MercadoStallSheet`, stall `background`).
 **Régua:** `src/components/mercado/MercadoC.render.test.tsx`.
 
+### `src/components/guild/ClaProcurar.tsx` (30/10/2026, procurar clã — REGISTRO §203)
+**Dono de:** `ProcurarCla` (sem clã: lista de clãs com vaga com nome e "n de max", "Pedir para entrar", pendente com "Cancelar pedido") e `PedidosDeEntrada` (só o anfitrião, na ficha do clã: Recusar à esquerda, Aceitar à direita; sem pedido = silêncio). Cada peça carrega o próprio dado por `utils/community.ts` (`getGuildDirectory`, `requestToJoinGuild`, `cancelGuildRequest`, `getGuildJoinRequests`, `decideGuildRequest`); copy em `utils/guildCopy.ts` (`guild.procurar.*`, `guild.pedidos.*`). **Chamado por:** `GuildSheet.tsx`. **Régua:** `ClaProcurar.render.test.tsx`.
+
 ### `src/components/guild/PracaVisor.tsx`, `PlantioVisor.tsx`, `MisterioVisor.tsx` e `claUi.tsx` (18/10/2026, prédios do clã)
 **Dono de:** os três visores do clã e o encanamento comum. `src/components/guild/PracaVisor.tsx` (`PracaVisor`, `SalaPraca`, `PRACA_VISOR_HEIGHT`): 4 slots de decoração e o presente diário. `src/components/guild/PlantioVisor.tsx` (`PlantioVisor`, `SalaPlantio`, `PLANTIO_VISOR_HEIGHT`): o plantio coletivo. `src/components/guild/MisterioVisor.tsx` (`MisterioVisor`, `SalaMisterio`, `MISTERIO_VISOR_HEIGHT`): o mistério diário. `src/components/guild/claUi.tsx` (`ClaT`, `ClaOnReward`, `ClaSalaProps`, `decorName`, `rewardText`, `useClaBuilding`): tipos e ganchos que as três salas dividem. Onde moram (§141): a Praça no Clan Hall, o Plantio na sala do Grove e o Mistério na sala da Feira (`room="feira"`, cartão `guild.feira.predios.titulo`).
 **Chamado por:** `src/components/guild/GuildSheet.tsx`. **Régua:** `src/components/guild/GuildSheet.cla.render.test.tsx`.

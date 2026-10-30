@@ -384,7 +384,7 @@ dado existir):
 | **Nunca streak social recíproco nem accountability com prazo** | Snapchat 📰: ansiedade documentada, senha entregue a amigos | Streak entre amigos | — | ✅ |
 | **Coop: progresso COLETIVO + presença binária** | Item 4.2 (31,3%) 📊: um grupo que mostrasse contribuição individual reinventaria o leaderboard **entre amigos — onde dói mais**. Regra 5 do dossiê: **meta somada, nunca confrontada** | Mostrar quanto cada membro fez | `vistaDoGrupo` (invariante de SERVIDOR) | ✅ 07/09 |
 | **Sair é um toque; a meta ENCOLHE junto** | Exigência escrita do item 4.3 | Confirmação; meta fixa | `target = members × 5` derivado | ✅ |
-| **Entrada só por código de convite** | Grupo achável é raide de estranho; o diretório já respeita consentimento (N-4) | Busca de grupos | `coopJoin` | ✅ |
+| **Entrada só por código de convite** ⚠️ emendada pela §203 (30/10/2026): há também "Procurar clã" com APROVAÇÃO do anfitrião | Grupo achável é raide de estranho; o diretório já respeita consentimento (N-4) | Busca de grupos | `coopJoin` | ✅ (código) · §203 |
 | **Meta 5×; sem recompensa; sem gate de Vínculo** | 🧭 dono (08/09). 5 e não 7: exigir dia completo por pressão social desfaz o perdão da Fase 1 | Bits por meta batida | `COOP_CHECKINS_POR_MEMBRO` | ✅ |
 | **Cada membro escreve só a PRÓPRIA presença** (`coopCk:<gid>:<saveId>`) | Achado do QA (08/09): `coopCheckin` fazia ler-modificar-gravar sobre o blob do grupo. **Dois membros marcando na mesma noite — o caso normal de um grupo de quatro** — e a segunda gravação apagava a primeira, sem erro. O progresso do grupo, que é a única coisa que o modo entrega, ficava menor que a verdade | Blob compartilhado no caminho quente | `community.js`; guard provado vermelho por mutação | ✅ **corrigido — a corrida foi removida, não mitigada** |
 | **Entrar confere a própria entrada e admite colisão** | Achado do QA: duas pessoas na última vaga → a última gravação vencia e o perdedor recebia **200 com a vista do grupo**, para depois o grupo sumir sem nenhum evento que explicasse | Sucesso falso | `coopJoin` → `409 join collision` | ✅ corrigido |
@@ -3653,3 +3653,20 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 - **§201 Arena sem a bandeira branca** na tela de rodada vencida; o Soulmon fica centrado no visor. Desistir segue pelo voltar com confirmação.
 - **§202 Anel e esquiva interativos em toda luta de grupo na tela** (Masmorra e Fenda deixam o `autoSpecial`; a conta fora do app — `dungeonAway` — segue automática) e ~1 s (`RING_LEAD_MS`) entre a carga do especial e o anel aparecer. Pausa de apresentação: o relógio da luta fica parado, motor e paridade não mudam. Duelo/Torneio não têm anel (o servidor re-simula com toques) — fora do escopo.
 - **Elementos (item 3):** `spriteElement.contract.test.ts` verde; Arena usa `e.element ?? e.elements[0]` para o FX e o sprite do inimigo vem da mesma criatura; pet = identidade (`fighterIdentity`).
+
+## §203 — Procurar clã: diretório de clãs com vaga + pedido aprovado pelo anfitrião (30/10/2026)
+
+**Decisão (pedido do dono):** no Salão da Guilda, quem NÃO tem clã ganha "Procurar um clã": a lista dos clãs com vaga (tamanho < `COOP_MAX_MEMBERS`, hoje 12), cada um com nome e "n de max", e "Pedir para entrar". O **anfitrião** (`hostSave`) vê os pedidos na ficha do clã com **Recusar (esquerda) / Aceitar (direita)**; aceito, a pessoa entra **sem código** e já está no clã na próxima carga. O código continua valendo como antes.
+
+**O que muda na regra antiga ("Entrada só por código", tabela da Guilda):** a alternativa que tinha perdido era "busca de grupos" porque grupo achável = raide de estranho. O que mudou: ninguém entra por estar na lista — entrar exige o **consentimento ativo do anfitrião** por pedido, que é o que o código protegia. A lista mostra só nome do clã e tamanho; nenhum membro, nenhum código, nenhum id interno.
+
+**Desenho (servidor, `functions/api/_claDiretorio.js` + `guild.js`):**
+- `coopDir:<dirId>` uma chave por clã com vaga (valor + metadata `{n,s}`), `dirId` opaco (hash do gid com `GUILD_MEMBER_SECRET`). Mantida por `gravarGrupo` (todo caminho que muda nome/tamanho grava por ali) e apagada quando o clã enche ou some. Escreve só quando nome|tamanho muda ou o prazo renova (assinatura `dirSig` no blob). Chave por clã, não índice único: sem ler-modificar-gravar compartilhado (KV sem CAS).
+- `coopReq:<saveId>` (o pedido de quem pede; UM por pessoa; 7 d) + `coopReqIn:<gid>:<requestId>` (a fila do clã; `requestId` = `idOpacoDoMembro`, A4). O lado do requerente é a verdade: cancelou/trocou/entrou em outro → o registro do clã é resto e some na leitura.
+- Ações: `guildDirectory` (GET), `guildRequest`, `guildRequestCancel`, `guildRequests` (GET, só anfitrião), `guildRequestDecide`. Só o anfitrião decide (403); a VAGA é conferida na aprovação, com a mesma releitura/retentativa do `guildJoin` (corrida da última vaga nunca passa de 12); aprovar de novo é idempotente; entrar por código apaga o pedido pendente; exclusão de conta apaga o pedido.
+- Custo: `list` do KV só em duas leituras raras (abrir a lista; fila do anfitrião), ambas limitadas (30). `list` é eventualmente consistente (~60 s): um clã recém-cheio pode aparecer, e o pedido/aprovação conferem o blob. Rate limit extra: 10 pedidos/hora por pessoa.
+
+**Sem expulsão (G7) e sair sem perda (LV-G5) não mudam.** Recusar não avisa ninguém com frase (o pendente só some).
+
+**Gatilho para rever:** spam de pedidos a clãs (subir o limite de cima para baixo, ou deixar o anfitrião "fechar a lista"); diretório com centenas de clãs (paginar/sortear em vez de `list` direto); pedido para que o clã escolha NÃO aparecer na lista (opt-out — hoje todo clã com vaga aparece).
+

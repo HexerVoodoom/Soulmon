@@ -428,6 +428,8 @@ export type GuildErrorKind =
   | 'alreadyIn'     // 409 already in a guild (carrega a vista, quando o servidor a manda)
   | 'full'          // 409 guild full
   | 'collision'     // 409 join collision
+  | 'invalidClan'   // 404 invalid clan (o clã do diretório sumiu ou encheu e saiu da lista — §203)
+  | 'requestPending' // 409 request pending (já há um pedido em OUTRO clã: um por vez — §203)
   | 'invalidName'   // 400 invalid name
   | 'invalidDay'    // 400 invalid day
   | 'goalNotMet'    // 400 goal not met (o fio: a meta de coração ainda não bateu; NÃO é frase de tela)
@@ -551,6 +553,8 @@ function kindOf(status: number, error: string): GuildErrorKind {
   if (status === 410) return 'deleted';
   if (status === 429) return error === 'daily limit' ? 'dailyLimit' : 'rateLimit';
   if (status === 403) return error === 'not host' ? 'notHost' : 'login';
+  if (status === 404 && error === 'invalid clan') return 'invalidClan';
+  if (status === 409 && error === 'request pending') return 'requestPending';
   if (status === 404) return error === 'invalid code' ? 'invalidCode' : error === 'no guild' ? 'noGuild' : error === 'nothing to claim' ? 'nothingToClaim' : 'server';
   if (status === 409) {
     if (error === 'raid closed') return 'raidClosed';
@@ -624,6 +628,60 @@ export const createGuild = (id: string, name: string, tz?: PlayerDayAnchor) =>
 
 export const joinGuild = (id: string, code: string, tz?: PlayerDayAnchor) =>
   guildCall<{ guild: unknown }>('guildJoin', { method: 'POST', body: { id, code, dayKey: dia(tz) } }).then(viewOf);
+
+// ── PROCURAR CLÃ (REGISTRO §203): diretório de clãs com vaga + pedido aprovado pelo anfitrião ──
+/** Um clã do diretório: id OPACO (`dirId`), nunca o id do clã nem o código. */
+export interface GuildDirectoryClan { dirId: string; name: string; size: number; max: number }
+export interface GuildPending { dirId: string; name: string | null }
+export interface GuildDirectory { clans: GuildDirectoryClan[]; pending: GuildPending | null }
+/** Um pedido visto pelo anfitrião: id opaco por clã + o nome público de quem pediu. */
+export interface GuildJoinRequest { requestId: string; name: string | null; at: number }
+
+const OPACO = /^[0-9a-f]{16}$/;
+function sanitizePending(raw: unknown): GuildPending | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, unknown>;
+  if (typeof r.dirId !== 'string' || !OPACO.test(r.dirId)) return null;
+  return { dirId: r.dirId, name: typeof r.name === 'string' && r.name ? str(r.name, 40) : null };
+}
+export function sanitizeGuildDirectory(raw: unknown): GuildDirectory {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const clans = (Array.isArray(r.clans) ? r.clans : []).flatMap((c): GuildDirectoryClan[] => {
+    if (!c || typeof c !== 'object') return [];
+    const x = c as Record<string, unknown>;
+    const size = Math.floor(Number(x.size)), max = Math.floor(Number(x.max));
+    if (typeof x.dirId !== 'string' || !OPACO.test(x.dirId) || typeof x.name !== 'string' || !x.name) return [];
+    if (!(size > 0) || !(max > 0) || size >= max) return [];
+    return [{ dirId: x.dirId, name: str(x.name, 40), size, max }];
+  }).slice(0, 50);
+  return { clans, pending: sanitizePending(r.pending) };
+}
+export function sanitizeJoinRequests(raw: unknown): GuildJoinRequest[] {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  return (Array.isArray(r.requests) ? r.requests : []).flatMap((q): GuildJoinRequest[] => {
+    if (!q || typeof q !== 'object') return [];
+    const x = q as Record<string, unknown>;
+    if (typeof x.requestId !== 'string' || !OPACO.test(x.requestId)) return [];
+    return [{ requestId: x.requestId, name: typeof x.name === 'string' && x.name ? str(x.name, 40) : null, at: Number(x.at) || 0 }];
+  }).slice(0, 50);
+}
+
+/** Os clãs com vaga e o meu pedido pendente (com clã: lista vazia). */
+export const getGuildDirectory = (id: string, tz?: PlayerDayAnchor) =>
+  guildCall<unknown>('guildDirectory', { params: { id, dayKey: dia(tz) } }).then(sanitizeGuildDirectory);
+/** Pedir para entrar (um pedido por vez; o mesmo clã de novo é idempotente). */
+export const requestToJoinGuild = (id: string, dirId: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ pending?: unknown }>('guildRequest', { method: 'POST', body: { id, dirId, dayKey: dia(tz) } }).then(r => sanitizePending(r.pending));
+/** Cancelar o meu pedido (idempotente). */
+export const cancelGuildRequest = (id: string, tz?: PlayerDayAnchor) =>
+  guildCall<unknown>('guildRequestCancel', { method: 'POST', body: { id, dayKey: dia(tz) } }).then(() => undefined);
+/** A fila de pedidos do MEU clã (só o anfitrião; os outros recebem 403). */
+export const getGuildJoinRequests = (id: string, tz?: PlayerDayAnchor) =>
+  guildCall<unknown>('guildRequests', { params: { id, dayKey: dia(tz) } }).then(sanitizeJoinRequests);
+/** Aceitar (`approve: true`) ou recusar um pedido. Devolve a vista do clã (já com quem entrou). */
+export const decideGuildRequest = (id: string, requestId: string, approve: boolean, tz?: PlayerDayAnchor) =>
+  guildCall<{ guild?: unknown; result?: unknown }>('guildRequestDecide', { method: 'POST', body: { id, requestId, approve, dayKey: dia(tz) } })
+    .then(r => ({ guild: viewOf(r), result: (r.result === 'approved' || r.result === 'declined' ? r.result : 'gone') as 'approved' | 'declined' | 'gone' }));
 
 /** "Firmar meu fio" (no servidor: `guildCheckin`, idempotente por dia). */
 export const guildCheckin = (id: string, tz?: PlayerDayAnchor) =>

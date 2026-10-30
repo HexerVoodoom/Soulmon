@@ -43,6 +43,21 @@
 | `guild.entrar.boasvindas.pet` | Chão novo. Cheira a videira. | New ground. Smells like vine. | fala do pet ao chegar à roda | L11 (reage ao agora) |
 | `guild.erro.nome` | O nome não pode ter contato nem link. | Names can't carry contacts or links. | 400 `invalid name`; alerta âmbar `gold-ink`, nunca `danger` | §13; footgun 10 |
 | `guild.erro.codigo` | Esse código não abriu nenhuma clareira. | That code didn't open any clearing. | 404 no join; âmbar | L9 (não acusa a pessoa) |
+| `guild.procurar.botao.abrir` | Procurar um clã | Find a clan | GuildSheet sem clã, botão `outline` (diretório, §203) | REGISTRO §203 |
+| `guild.procurar.titulo` | Clãs com lugar | Clans with room | GuildSheet sem clã, título da lista | REGISTRO §203 |
+| `guild.procurar.vazio` | Nenhum clã com lugar agora. Você pode criar o seu. | No clan has room right now. You can start your own. | lista vazia | REGISTRO §203; L4 |
+| `guild.procurar.tamanho` | {n} de {max} | {n} of {max} | linha do clã: tamanho (do servidor) e teto `GUILD_MAX_MEMBERS` — nunca presença | REGISTRO §203 |
+| `guild.procurar.pedir` | Pedir para entrar | Request to join | botão da linha (à direita) | REGISTRO §203 |
+| `guild.procurar.pendente` | Pedido enviado a {nome}. Quem cuida do clã decide. | Request sent to {nome}. The clan host decides. | pedido pendente | REGISTRO §203 |
+| `guild.procurar.pendente.semNome` | Pedido enviado. Quem cuida do clã decide. | Request sent. The clan host decides. | pedido pendente sem nome legível | REGISTRO §203 |
+| `guild.procurar.cancelar` | Cancelar pedido | Cancel request | botão à esquerda do pendente | REGISTRO §203 |
+| `guild.procurar.erro.sumiu` | Esse clã não está mais na lista. | That clan is no longer listed. | 404 `invalid clan`; âmbar | REGISTRO §203; L9 |
+| `guild.procurar.erro.outro` | Você já pediu para entrar em outro clã. | You already asked to join another clan. | 409 `request pending` | REGISTRO §203 |
+| `guild.pedidos.titulo` | Pedidos para entrar | Requests to join | ficha do clã, só o anfitrião, só com pedido (vazio = silêncio) | REGISTRO §203; L6 |
+| `guild.pedidos.semNome` | Alguém | Someone | pedido sem nome público | REGISTRO §203 |
+| `guild.pedidos.aceitar` | Aceitar | Accept | botão à direita (confirma) | REGISTRO §203 |
+| `guild.pedidos.recusar` | Recusar | Decline | botão à esquerda | REGISTRO §203 |
+| `guild.pedidos.aria` | Pedido de {nome} | Request from {nome} | `aria-label` da linha | REGISTRO §203 |
 | `guild.erro.cheia` | Esta roda está cheia. | This circle is full. | 409 `guild full`; âmbar | L3 |
 | `guild.erro.jaEmOutra` | Esta conta já tem uma roda. | This account already has a circle. | 409 `already in a guild`; âmbar + botão `guild.sair.botao` ali | L1 (sujeito é a conta, não a pessoa) |
 | `guild.erro.colisao` | Tente de novo. | Try once more. | 409 `join collision` | §13 |

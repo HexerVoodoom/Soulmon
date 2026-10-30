@@ -18,6 +18,7 @@ import { minimizeForAi, redactionCount } from './_redact.js';
 import { lerCasa, recolherCasaDetalhe } from './_casa.js';
 import { artLineOrNull, spriteUrlOrNull, spriteFromSaveState } from './_artLine.js';
 import { DUEL_SAVE_MAX_CHARS } from './_duel.js';
+import { assinaturaDoDiretorio, sincronizarDiretorio, tirarDoDiretorio } from './_claDiretorio.js';
 
 /** Teto da Guilda (D-G1: o coop EVOLUI para guilda de até 12). Era 4. */
 export const COOP_MAX_MEMBERS = 12;
@@ -242,7 +243,20 @@ export async function gravarGrupo(env, g, opcoes = {}) {
     conjunta = true;
   }
   const blobPrazo = semPrazo ? {} : { expirationTtl: Math.max(60, Math.floor((g.prazoAte - agora) / 1000)) };
+  // O DIRETÓRIO (§203) segue o blob: nome/tamanho mudaram ou o prazo renovou → a entrada é
+  // regravada (ou some, se o clã encheu). A assinatura vai NO blob, gravado logo abaixo.
+  const sigDir = assinaturaDoDiretorio(g, COOP_MAX_MEMBERS);
+  const diretorio = conjunta || g.dirSig !== sigDir;
+  g.dirSig = sigDir;
   await kvOrThrow(env).put(coopKey(g.id), JSON.stringify(g), blobPrazo);
+  try {
+    await gravarIndices(env, g, { novosMembros, codigoNovo, conjunta, semPrazo });
+  } finally {
+    if (diretorio) await sincronizarDiretorio(env, g, COOP_MAX_MEMBERS, { prazo: blobPrazo });
+  }
+}
+
+async function gravarIndices(env, g, { novosMembros, codigoNovo, conjunta, semPrazo }) {
   const prazo = semPrazo ? {} : { expirationTtl: COOP_TTL };
   if (!conjunta) {
     await Promise.all([
@@ -429,6 +443,7 @@ export async function coopLeave(env, saveId, { exclusao = false, now = new Date(
     }
     await kvOrThrow(env).delete(coopKey(g.id));
     await kvOrThrow(env).delete(coopCodeKey(g.code));
+    await tirarDoDiretorio(env, g.id);
   } else {
     await gravarGrupo(env, g);
   }
