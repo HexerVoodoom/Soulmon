@@ -1452,6 +1452,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Dono de:** o elemento base dos 5 iniciais (REGISTRO §75) — dados leves.
 **Exports:** `STARTER_ELEMENT` (`industrial`→terra, `nascente`→som, `alento`→ar, `vida`→vida, `meteoro`→fogo), `STARTER_ALIGNMENT` (Poder/Harmonia/Benevolência), `starterElementOf(id)`, `petElementOf(state)` (o elemento de combate do pet: o do inicial, senão `soulmonMeta.dominantElement`; usado pelo `App` em Arena/Masmorra/Pesadelo/Torneio/aura).
 
+### `src/utils/spriteElement.ts`
+**Dono de:** a regra "um sprite tem UM elemento, em todo lugar" (dono, 30/10/2026) — dados puros, sem import de PNG. Tabela e evidência em [`ELEMENTO-POR-SPRITE.md`](../../ELEMENTO-POR-SPRITE.md); guardado por `spriteElement.contract.test.ts`.
+**Exports:** `SPRITE_ELEMENT` (chaves `novo:`/`cmb:`/`api:`/`starter:`/`line:`/`boss:`/`desafiante:` → elemento), `LINE_ELEMENT`, `LINE_BOSS_ART`, `DESAFIANTE_ELEMENT`, `BOSS_ELEMENT` (1º id do catálogo, decisão do dono), `spriteElementOf(key)`, `lineElementOf(line)`, `rosterEntryElement(e)` (fundido = id fundido; vantagem soma os componentes).
+
 ### `src/utils/starterSkills.ts`
 **Dono de:** o par básica/especial dos iniciais (`StageSkills` sintético, 1 elemento + 1 escola por inicial, `STARTER_SCHOOL`). `starterSkillsFor(id)`. Puxa o motor da ficha: só por `import()` dinâmico (o `App` grava em `soulmonSkills` uma vez).
 
