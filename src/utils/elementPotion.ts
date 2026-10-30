@@ -119,12 +119,18 @@ export function givePotion<T extends PotionState>(prev: T, key: string): T {
 export const sanitizeElementId = (raw: unknown): string | undefined => (isDexElement(raw) ? raw : undefined);
 
 /**
- * Na evolução: o elemento pendente vira o elemento do Soulmon (`potionElement`) e `evolutionPotion` é limpo. Sem poção = o MESMO objeto.
- * Limite honesto: `potionElement` vale para o combate/aura (`petElementOf`); o SPRITE da forma segue sendo o da linha (a arte não muda por elemento).
+ * Na evolução: o elemento pendente vira o elemento do Soulmon (`potionElement`) e `evolutionPotion` é limpo. REGRA DO DONO (30/10/2026):
+ * a poção vale SÓ para a próxima evolução. Na evolução SEGUINTE (sem poção pendente) `potionElement` é LIMPO e o elemento volta ao da
+ * pontuação (`petElementOf` cai para `soulmonMeta.dominantElement`). Sem nada pendente nem ativo = o MESMO objeto.
+ * Limite honesto: `potionElement` vale para o combate/aura (`petElementOf`); o SPRITE da forma segue sendo o da linha. A arte da forma
+ * com poção pode influenciar a seguinte esteticamente; a LÓGICA de elemento não.
  */
 export function applyPotionOnEvolve<T extends { evolutionPotion?: string; potionElement?: string }>(prev: T): T {
   const id = sanitizeElementId(prev.evolutionPotion);
-  if (!id) return prev.evolutionPotion === undefined ? prev : { ...prev, evolutionPotion: undefined };
+  if (!id) {
+    if (prev.evolutionPotion === undefined && prev.potionElement === undefined) return prev;
+    return { ...prev, evolutionPotion: undefined, potionElement: undefined };
+  }
   return { ...prev, evolutionPotion: undefined, potionElement: id };
 }
 
@@ -135,8 +141,8 @@ export const POTION_SPECIAL_ITEMS: Record<string, SpecialItem> = Object.fromEntr
     const item: SpecialItem = {
       emoji: key, kind: 'potion',
       namePt: `Poção de ${essenceName(id, true).replace(/^Essência de /, '')}`, nameEn: `${essenceName(id, false).replace(/ Essence$/, '')} Potion`,
-      descPt: 'Dê ao Soulmon: na próxima evolução ele passa a carregar este elemento. Outra poção substitui esta.',
-      descEn: 'Give it to your Soulmon: at the next evolution it carries this element. Another potion replaces this one.',
+      descPt: 'Dê ao Soulmon: na próxima evolução ele passa a carregar este elemento. Vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação dele. Outra poção substitui esta.',
+      descEn: 'Give it to your Soulmon: at the next evolution it carries this element. Only affects the next evolution; after that your Soulmon returns to its score-based element. Another potion replaces this one.',
     };
     return [key, item];
   }),

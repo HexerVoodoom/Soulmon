@@ -151,8 +151,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              'Poção de elemento: no Centro de Evolução, gaste essências para preparar uma poção. Dê ao Soulmon pela pasta de itens e, na próxima evolução, ele carrega esse elemento. Outra poção substitui a que espera.',
-              'Element potion: at the Evolution Center, spend essences to brew a potion. Give it to your Soulmon from the item folder and, at the next evolution, it carries that element. Another potion replaces the one waiting.',
+              'Poção de elemento: no Centro de Evolução, gaste essências para preparar uma poção. Dê ao Soulmon pela pasta de itens e, na próxima evolução, ele carrega esse elemento. Vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação dele. Outra poção substitui a que espera.',
+              'Element potion: at the Evolution Center, spend essences to brew a potion. Give it to your Soulmon from the item folder and, at the next evolution, it carries that element. Only affects the next evolution; after that your Soulmon returns to its score-based element. Another potion replaces the one waiting.',
             )}
           </p>
           <p style={para}>

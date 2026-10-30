@@ -50,9 +50,10 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
     confirmBtn: isPt ? 'Confirmar' : 'Confirm',
     made: isPt ? 'Poção criada! Está na pasta de itens.' : 'Potion created! It is in your item folder.',
     pending: isPt ? 'Poção na espera para a próxima evolução:' : 'Potion waiting for the next evolution:',
+    once: isPt ? 'Vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação dele.' : 'Only affects the next evolution; after that your Soulmon returns to its score-based element.',
     locked: isPt ? 'Elemento ainda não desbloqueado na Biblioteca' : 'Element not yet unlocked in the Library',
     lockedHint: isPt ? 'Desbloqueie na Biblioteca' : 'Unlock in the Library',
-    note: isPt ? 'Dar uma poção ao Soulmon (pasta de itens) troca a que já estava esperando.' : 'Giving a potion to your Soulmon (item folder) replaces the one already waiting.',
+    note: isPt ? 'Dar uma poção ao Soulmon (pasta de itens) troca a que já estava esperando. Vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação dele.' : 'Giving a potion to your Soulmon (item folder) replaces the one already waiting. Only affects the next evolution; after that your Soulmon returns to its score-based element.',
   };
 
   return (
@@ -78,7 +79,7 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
         );
       })()}>
       <div data-element-potion style={{ display: 'grid', gap: 12 }}>
-        {pending && <p style={sm2Hint} data-potion-pending>{t.pending} <strong>{elName(pending, isPt)}</strong></p>}
+        {pending && <p style={sm2Hint} data-potion-pending>{t.pending} <strong>{elName(pending, isPt)}</strong><br />{t.once}</p>}
         {done && <p role="status" style={sm2Text} data-potion-made>{t.made} ({elName(done, isPt)})</p>}
 
         {!confirm && (

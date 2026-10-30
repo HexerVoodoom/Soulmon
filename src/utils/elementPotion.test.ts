@@ -76,7 +76,15 @@ describe('poção de elemento', () => {
   it('evolução consome a poção uma vez e o elemento passa a valer', () => {
     const s = applyPotionOnEvolve({ evolutionPotion: 'lava' });
     expect(s).toEqual({ evolutionPotion: undefined, potionElement: 'lava' });
-    expect(applyPotionOnEvolve(s)).toBe(s);
     expect(petElementOf({ potionElement: 'lava', soulmonMeta: { dominantElement: 'fogo' } })).toBe('lava');
+  });
+  it('a poção vale só para a PRÓXIMA evolução; a seguinte volta ao elemento da pontuação', () => {
+    const meta = { dominantElement: 'fogo' };
+    const e1 = applyPotionOnEvolve({ evolutionPotion: 'lava' as string | undefined, potionElement: undefined as string | undefined });
+    expect(petElementOf({ potionElement: e1.potionElement, soulmonMeta: meta })).toBe('lava');
+    const e2 = applyPotionOnEvolve(e1);
+    expect(e2.potionElement).toBeUndefined();
+    expect(petElementOf({ potionElement: e2.potionElement, soulmonMeta: meta })).toBe(petElementOf({ soulmonMeta: meta }));
+    expect(applyPotionOnEvolve(e2)).toBe(e2);
   });
 });

@@ -1901,4 +1901,4 @@ Dono único da UI do filtro de elementos base: 3 campos de dropdown lado a lado 
 
 ### `src/components/ElementPotionSheet.tsx`
 
-Folha da Poção de Elemento (Laboratório › Centro de Evolução): 3 espaços de base, lista filtrada (E) só do que o jogador paga (elemento ainda não desbloqueado na Biblioteca aparece como "???" e não se cria — `isPotionUnlocked`), confirmação com custo e `onCraft`. Regras em `utils/elementPotion.ts`.
+Folha da Poção de Elemento (Laboratório › Centro de Evolução): 3 espaços de base, lista filtrada (E) só do que o jogador paga (elemento ainda não desbloqueado na Biblioteca aparece como "???" e não se cria — `isPotionUnlocked`), confirmação com custo e `onCraft`. Regras em `utils/elementPotion.ts`. Avisa (aviso da poção na espera e nota) que vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação.

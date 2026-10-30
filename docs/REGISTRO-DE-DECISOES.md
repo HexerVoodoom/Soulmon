@@ -3694,3 +3694,10 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 
 **Limite honesto:** a essência em si mora no save do cliente (como sempre, §183): o servidor cobra certo, mas não impede um cliente adulterado de criar essência sem pagar — o que já era verdade antes. **Alternativa que perdeu:** o servidor gravar a essência direto no save (exigiria reconciliar com o save em trânsito do cliente e a revisão ADR-004). **Gatilho para rever:** essência ganhar uso com valor de dinheiro real/competitivo, ou abuso visível nos logs `essence-buy`.
 
+
+## §206 — Poção de Elemento: vale só para a próxima evolução (30/10/2026, dono)
+
+- **Regra:** a poção faz SÓ a próxima evolução assumir o elemento dela. Na evolução seguinte o Soulmon volta ao elemento da pontuação (`soulmonMeta.dominantElement` via `petElementOf`). A forma com poção segue sendo a base da arte da próxima, então pode influenciá-la esteticamente; a lógica de elemento não.
+- **Bug corrigido:** `applyPotionOnEvolve` só limpava `evolutionPotion`; `potionElement` ficava para sempre. Agora, numa evolução sem poção pendente, `potionElement` é limpo. Régua: `src/utils/elementPotion.test.ts`.
+- **Texto ao jogador:** folha da poção (aviso da poção na espera e nota), descrição do item, Ajuda e Guia dizem "Vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação dele."
+- **Servidor:** nenhum espelho; o elemento é calculado só no cliente (`potionElement` é só campo de save).
