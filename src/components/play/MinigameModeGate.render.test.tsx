@@ -1,12 +1,14 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from 'vitest';
-import { render, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { render, fireEvent, cleanup } from '@testing-library/react';
 import { MinigameModeGate } from './MinigameModeGate';
 import { difficultyLabel } from '../../utils/minigameDifficulty';
 
 vi.mock('../RankingPanel', () => ({ RankingPanel: ({ game, inline }: { game: string; inline?: boolean }) => <div data-ranking-panel={game} data-inline={inline ? 'yes' : undefined} /> }));
 
 const base = { gameName: 'Corrida com obstáculos', saveId: 's1', onPick: () => {}, onBack: () => {} };
+
+afterEach(cleanup);
 
 describe('MinigameModeGate (pedido do dono, 30/10/2026)', () => {
   it('rótulos: Comum/Avançado (PT) e Common/Advanced (EN); ids internos 1/2 intactos', () => {
@@ -19,18 +21,22 @@ describe('MinigameModeGate (pedido do dono, 30/10/2026)', () => {
     const { container } = render(<MinigameModeGate {...base} language="pt-BR" withDifficulty rankings={[{ game: 'dino-1' }, { game: 'dino-2' }]} onPick={onPick} />);
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Pipo');
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Comum ou no modo Avançado');
-    const rank = container.querySelector('[data-minigame-gate-ranking]')!;
+    const abrir = container.querySelector('[data-gate-ranking-open]') as HTMLElement;
+    expect(abrir.textContent).toBe('Ver ranking');
+    expect(document.body.querySelector('[data-ranking-panel]')).toBeNull();
     const botoes = [...container.querySelectorAll('[data-gate-pick]')] as HTMLElement[];
     expect(botoes.map(b => b.textContent)).toEqual(['Comum', 'Avançado']);
-    expect(rank.compareDocumentPosition(botoes[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    // Tabela inline (sem botão "ver ranking"), uma por vez, com abas Comum | Avançado (Comum primeiro).
-    expect(container.querySelectorAll('[data-ranking-panel]')).toHaveLength(1);
-    expect(container.querySelector('[data-ranking-panel]')!.getAttribute('data-ranking-panel')).toBe('dino-1');
-    expect(container.querySelector('[data-ranking-panel]')!.getAttribute('data-inline')).toBe('yes');
-    const abas = [...container.querySelectorAll('[data-gate-rank-tab]')] as HTMLElement[];
+    expect(abrir.compareDocumentPosition(botoes[0]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // O modal abre ao clicar; tabela uma por vez, com abas Comum | Avançado (Comum primeiro).
+    fireEvent.click(abrir);
+    const doc = document.body;
+    expect(doc.querySelectorAll('[data-ranking-panel]')).toHaveLength(1);
+    expect(doc.querySelector('[data-ranking-panel]')!.getAttribute('data-ranking-panel')).toBe('dino-1');
+    expect(doc.querySelector('[data-ranking-panel]')!.getAttribute('data-inline')).toBe('yes');
+    const abas = [...doc.querySelectorAll('[data-gate-rank-tab]')] as HTMLElement[];
     expect(abas.map(a => a.textContent)).toEqual(['Comum', 'Avançado']);
     fireEvent.click(abas[1]);
-    expect(container.querySelector('[data-ranking-panel]')!.getAttribute('data-ranking-panel')).toBe('dino-2');
+    expect(doc.querySelector('[data-ranking-panel]')!.getAttribute('data-ranking-panel')).toBe('dino-2');
     fireEvent.click(botoes[1]);
     expect(onPick).toHaveBeenCalledWith(2);
   });
@@ -40,7 +46,8 @@ describe('MinigameModeGate (pedido do dono, 30/10/2026)', () => {
     const { container } = render(<MinigameModeGate {...base} gameName="Fusão Elemental" language="pt-BR" withDifficulty={false} pveVsPvp rankings={[{ game: 'match3' }]} onPick={onPick} />);
     const botoes = [...container.querySelectorAll('[data-gate-pick]')] as HTMLElement[];
     expect(botoes.map(b => b.textContent)).toEqual(['PvE', 'PvP']);
-    expect(container.querySelectorAll('[data-gate-rank-tab]')).toHaveLength(0);
+    fireEvent.click(container.querySelector('[data-gate-ranking-open]')!);
+    expect(document.body.querySelectorAll('[data-gate-rank-tab]')).toHaveLength(0);
     fireEvent.click(botoes[0]);
     expect(onPick).toHaveBeenCalledWith(1);
   });

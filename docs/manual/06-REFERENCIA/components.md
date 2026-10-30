@@ -387,7 +387,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/mercado/MercadoSheets.render.test.tsx`.
 
 ### `src/components/play/MinigameModeGate.tsx`
-**Dono de:** a porta de entrada dos minijogos (dono, 30/10/2026): o NPC do Salão de Jogos (busto + balão) mostra a TABELA do ranking direto no topo (`RankingPanel inline`, num quadro CSS; Corrida com obstáculos tem abas Comum | Avançado, Comum primeiro) e os botões de modo embaixo — Comum à esquerda, Avançado à direita; Fusão Elemental (`pveVsPvp`) usa PvE | PvP e inicia direto no modo (`Match3Game initialMode`, sem o seletor de dentro); jogo sem dificuldade mostra um botão "Jogar".
+**Dono de:** a porta de entrada dos minijogos (dono, 30/10/2026): o NPC do Salão de Jogos (busto + balão) mostra o botão "Ver ranking" (outline, acima dos botões de modo) que abre um MODAL com a tabela (`RankingPanel inline` dentro do quadro de cobre `quadro-ranking.png`, 9-slice 48; Corrida com obstáculos tem abas Comum | Avançado, Comum primeiro) e os botões de modo embaixo — Comum à esquerda, Avançado à direita; Fusão Elemental (`pveVsPvp`) usa PvE | PvP e inicia direto no modo (`Match3Game initialMode`, sem o seletor de dentro); jogo sem dificuldade mostra um botão "Jogar".
 **Exports:** `GateRanking` (type), `MinigameModeGate({ language, gameName, rankings, saveId, withDifficulty, pveVsPvp?, onPick, … })`.
 
 ### `src/components/play/PlaySheets.tsx`
@@ -1855,7 +1855,7 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 **Dono de:** a lista ÚNICA de ranking (30/10/2026): pódio ouro/prata/bronze, top 50, linha do jogador destacada (`aria-current`) e, fora do top 50, linha fixa no fim depois de "…". Só tokens `--sm2-*`; animação só sem `prefers-reduced-motion`. **Exports:** `RankingList`, `RANKING_LIST_SIZE`. **Usa:** `src/utils/rankings.ts`.
 
 ### `src/components/RankingPanel.tsx`
-**Dono de:** a tela de ranking de um jogo: a FAIXA vem antes da lista; com `score`, envia o resultado uma vez ao montar; falha de rede é silenciosa. **Exports:** `RankingPanel({ game, saveId, language, score?, period?, inline? })` (`inline` = a lista direto na tela, sem botão nem modal, usada pelo `MinigameModeGate`). **Usa:** `src/utils/rankings.ts`.
+**Dono de:** a tela de ranking de um jogo: a FAIXA vem antes da lista; com `score`, envia o resultado uma vez ao montar; falha de rede é silenciosa. **Exports:** `RankingPanel({ game, saveId, language, score?, period?, inline? })` (`inline` = a lista direto na tela, sem botão nem modal, usada dentro do modal do `MinigameModeGate`). **Usa:** `src/utils/rankings.ts`.
 
 ### `src/components/RogueDungeon.tsx`
 **Dono de:** a tela do prédio `exploracao.dungeon` (ex-`jogos.dungeon`, #187) (Calabouço, M7 + N7): um MAPA em tela cheia (cenário de `DUNGEON_SCENES`, 3 nós = os 3 andares numa trilha SVG, o Soulmon no nó atual) com a folha de baixo para escolher 1 de 3 caminhos e 1 de 3 bônus; o combate é uma luta visível (`RogueFight`) e os demais desafios são os jogos reais em modo desafio. Regras em `utils/rogueDungeon.ts`. Não é o Endless Rift (`DungeonGame.tsx`). **Exports:** `RogueDungeonProps`, `RogueDungeon`. **Usa:** `RogueFight`.
