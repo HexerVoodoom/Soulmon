@@ -88,6 +88,12 @@ beforeEach(() => {
 });
 afterEach(() => { vi.restoreAllMocks(); cleanup(); });
 
+/** Saída do clã em DUAS confirmações (dono, 30/10/2026): "Sair" e depois o botão final. */
+function confirmarSaida() {
+  fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
+  fireEvent.click(screen.getByRole('button', { name: /^(Apagar e sair|Sair do clã)$/ }));
+}
+
 describe('o fenômeno: 3 estados × 4 tipos, sem número nenhum', () => {
   it('aberto: o visor é uma imagem nomeada pelo tipo, o cabeçalho é o da abertura e a linha sóbria usa as CONSTANTES', async () => {
     vi.mocked(getGuild).mockResolvedValue(vista());
@@ -543,6 +549,7 @@ describe('salas: a Feira e o Salão não se misturam', () => {
     await montar({ room: 'salao' });
     await waitFor(() => expect(getGuildRewards).toHaveBeenCalledTimes(1));
     fireEvent.click(screen.getByText(PT('guild.sair.botao')));
+    confirmarSaida(); // dupla confirmação (dono, 30/10/2026)
     await waitFor(() => expect(screen.getByText(PT('guild.criar.botao'))).toBeTruthy());
     await waitFor(() => expect(document.querySelector('[data-feira-colher]')).toBeTruthy());
     expect(getGuildRewards).toHaveBeenCalledTimes(2);

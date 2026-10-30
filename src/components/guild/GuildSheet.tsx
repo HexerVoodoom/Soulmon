@@ -68,6 +68,7 @@ import { getSpriteForStage } from '../../utils/sprites';
 // `src/styles/tokens.md`: a fonte é SUBSETADA, e um nome fora dele renderiza um
 // <span> VAZIO — sem erro e sem aparecer em teste nenhum.
 import { Icon } from '../ui/Icon';
+import { ConfirmDialog } from '../ConfirmDialog';
 import { InfoTip } from '../ui/InfoTip';
 import { Field } from '../form/FormKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
@@ -152,6 +153,9 @@ const kindOf = (e: unknown): GuildErrorKind => (e instanceof GuildError ? e.kind
 
 export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pendentesDoDia, mySprite, playerDayTz, room = 'salao', onClaimed, onScenes, accountTier, onUnlock, onLogin, casa, missao, cla, feira }: GuildSheetProps) {
   const t = useCallback((k: GuildKey, vars?: Record<string, string | number>) => guildText(language, k, vars), [language]);
+  /** Saída do clã em DUAS confirmações (dono, 30/10/2026 — revoga o "um toque" do LV-G5: saiu sem querer, era o único
+   *  membro e o clã foi apagado com tudo que tinha sido doado). 0 = fechado, 1 = "sair?", 2 = a confirmação final. */
+  const [sairEtapa, setSairEtapa] = useState<0 | 1 | 2>(0);
   const [load, setLoad] = useState<Load>({ status: 'loading' });
   const [aviso, setAviso] = useState<GuildKey | null>(null);
   const [anuncio, setAnuncio] = useState('');
@@ -820,23 +824,14 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
         <div className="sm2-stats-card" data-guild-card="mural">
           <SalaMural guild={g} t={t} language={language} marcos={marcos} />
         </div>
-        {/* Saída limpa (LV-G5): um toque, sem diálogo de confirmação e sem penalidade — e SEMPRE ao
-            alcance (QA L3 M5): fixa no rodapé da folha, porque uma roda de 12 põe a saída a três telas
-            de rolagem. Um "tem certeza?" aqui seria o app negociando com quem quer sair. A nota é só o
-            fato. `outline`, nunca `quiet`/`ghost` (D-S10). */}
+        {/* Saída do clã (LV-G5 revisto em 30/10/2026): sempre ao alcance no rodapé, mas com DUPLA confirmação.
+            A 2ª etapa diz o que se perde — com um membro só, o clã e o que foi doado somem para sempre. */}
         <div className="sm2-guild-foot" data-guild-foot>
           <button
             type="button"
             disabled={ocupado}
             aria-disabled={ocupado ? true : undefined}
-            onClick={() => {
-              // A faixa de permanência sai da memória do aparelho ANTES de a saída a apagar.
-              const local = readGroveLocal();
-              const weeks = local ? permanenceBand(local.joinedDay, load.day) : 0;
-              void agir(async () => { await leaveGuild(saveId); return null; }, {
-                depois: () => track('guild_leave', { size: Math.max(0, Math.min(11, g.size - 1)), weeks }),
-              });
-            }}
+            onClick={() => setSairEtapa(1)}
             className={`${btn} sm2-kit-btn-outline sm2-guild-btn`}
             // D1: sair é vermelho (cor e borda), com o ícone de saída antes do texto.
             style={{ color: 'var(--sm2-danger-ink)', borderColor: 'var(--sm2-danger-ink)' }}
@@ -847,6 +842,42 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
           </button>
           <p className="sm2-lib-s" style={{ margin: 0 }}>{t('guild.sair.nota')}</p>
         </div>
+        <ConfirmDialog
+          isOpen={sairEtapa === 1}
+          onClose={() => setSairEtapa(0)}
+          onConfirm={() => setSairEtapa(2)}
+          language={language}
+          destructive
+          title={language === 'pt-BR' ? 'Sair do clã?' : 'Leave the clan?'}
+          message={language === 'pt-BR' ? `Você vai deixar ${g.name}.` : `You are about to leave ${g.name}.`}
+          cancelLabel={language === 'pt-BR' ? 'Ficar' : 'Stay'}
+          confirmLabel={language === 'pt-BR' ? 'Sair' : 'Leave'}
+        />
+        <ConfirmDialog
+          isOpen={sairEtapa === 2}
+          onClose={() => setSairEtapa(0)}
+          onConfirm={() => {
+            setSairEtapa(0);
+            // A faixa de permanência sai da memória do aparelho ANTES de a saída a apagar.
+            const local = readGroveLocal();
+            const weeks = local ? permanenceBand(local.joinedDay, load.day) : 0;
+            void agir(async () => { await leaveGuild(saveId); return null; }, {
+              depois: () => track('guild_leave', { size: Math.max(0, Math.min(11, g.size - 1)), weeks }),
+            });
+          }}
+          language={language}
+          destructive
+          title={language === 'pt-BR' ? 'Tem certeza mesmo?' : 'Are you really sure?'}
+          message={g.size <= 1
+            ? (language === 'pt-BR'
+              ? 'Você é o ÚNICO membro. Ao sair, o clã é apagado para sempre, com tudo o que foi doado a ele. Não dá para desfazer nem voltar.'
+              : 'You are the ONLY member. Leaving deletes the clan forever, with everything donated to it. This cannot be undone.')
+            : (language === 'pt-BR'
+              ? 'Para voltar, vai precisar do código do clã de novo.'
+              : 'To come back you will need the clan code again.')}
+          cancelLabel={language === 'pt-BR' ? 'Ficar' : 'Stay'}
+          confirmLabel={g.size <= 1 ? (language === 'pt-BR' ? 'Apagar e sair' : 'Delete and leave') : (language === 'pt-BR' ? 'Sair do clã' : 'Leave clan')}
+        />
       </>
     );
   }

@@ -89,6 +89,12 @@ beforeEach(() => {
 });
 afterEach(() => { vi.restoreAllMocks(); vi.useRealTimers(); });
 
+/** Saída do clã em DUAS confirmações (dono, 30/10/2026): "Sair" e depois o botão final. */
+function confirmarSaida() {
+  fireEvent.click(screen.getByRole('button', { name: 'Sair' }));
+  fireEvent.click(screen.getByRole('button', { name: /^(Apagar e sair|Sair do clã)$/ }));
+}
+
 describe('sem roda', () => {
   it('não ter roda NÃO é erro: convite a criar e a entrar, sem alerta', async () => {
     vi.mocked(getGuild).mockResolvedValue(null);
@@ -398,13 +404,14 @@ describe('anfitrião × membro, e ajustes', () => {
 });
 
 describe('sair é limpo (LV-G5)', () => {
-  it('um toque, SEM diálogo de confirmação, e a tela volta a oferecer criar/entrar', async () => {
+  it('duas confirmações (revisto em 30/10/2026), e a tela volta a oferecer criar/entrar', async () => {
     const confirmar = vi.spyOn(window, 'confirm').mockReturnValue(true);
     vi.mocked(getGuild).mockResolvedValue(vista(3));
     vi.mocked(leaveGuild).mockResolvedValue({ ok: true });
     await montar();
     // "Sair" está na primeira tela, sem abrir ajustes nem rolar por um menu
     fireEvent.click(screen.getByText(PT('guild.sair.botao')));
+    confirmarSaida(); // dupla confirmação (dono, 30/10/2026)
     await screen.findByText(PT('guild.criar.botao'));
     expect(leaveGuild).toHaveBeenCalledTimes(1);
     expect(leaveGuild).toHaveBeenCalledWith('save-12345678');
@@ -423,6 +430,7 @@ describe('sair é limpo (LV-G5)', () => {
     vi.mocked(leaveGuild).mockRejectedValue(erro('server'));
     await montar();
     fireEvent.click(screen.getByText(PT('guild.sair.botao')));
+    confirmarSaida(); // dupla confirmação (dono, 30/10/2026)
     expect((await screen.findByRole('alert')).textContent).toBe(PT('guild.erro.generico'));
     expect(screen.getByRole('heading', { name: 'Roda da manhã' })).toBeTruthy();
   });
@@ -601,6 +609,7 @@ describe('a folha aberta de verdade (Hall → Salão da Guilda): foco, fundo ine
     const b = await screen.findByText(PT('guild.sair.botao'));
     (b.closest('button') as HTMLElement).focus();
     fireEvent.click(b);
+    confirmarSaida(); // dupla confirmação (dono, 30/10/2026)
     await screen.findByText(PT('guild.criar.botao'));
     await waitFor(() => expect(screen.getByRole('dialog').contains(document.activeElement)).toBe(true));
   });
@@ -899,6 +908,7 @@ describe('a memória do aparelho e a telemetria do Bosque', () => {
     await montar();
     expect(readGroveLocal()).not.toBeNull();
     fireEvent.click(screen.getByText(PT('guild.sair.botao')));
+    confirmarSaida(); // dupla confirmação (dono, 30/10/2026)
     await screen.findByText(PT('guild.criar.botao'));
     expect(readGroveLocal()).toBeNull();
     expect(vi.mocked(track).mock.calls.filter(([e]) => e === 'guild_leave')).toEqual([['guild_leave', { size: 3, weeks: 0 }]]);
@@ -1025,6 +1035,7 @@ describe('L4 M5: "Seguir o próprio caminho" fica SEMPRE ao alcance (rodapé da 
     // continua sendo UM toque, sem diálogo
     vi.mocked(leaveGuild).mockResolvedValue({ ok: true });
     fireEvent.click(within(foot).getByText(PT('guild.sair.botao')));
+    confirmarSaida(); // dupla confirmação (dono, 30/10/2026)
     await screen.findByText(PT('guild.criar.botao'));
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(leaveGuild).toHaveBeenCalledWith('save-12345678');
