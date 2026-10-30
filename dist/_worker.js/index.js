@@ -10580,6 +10580,59 @@ async function onRequest5({ request, env }) {
 }
 __name(onRequest5, "onRequest");
 
+// api/_essenceShop.js
+var ESSENCE_MAX_PER_ELEMENT = 1e6;
+var ESSENCE_PACK_SIZES = (
+  /** @type {const} */
+  [1, 5]
+);
+var ESSENCE_PACK_DISCOUNT = 0.1;
+var BASE_ELEMENTS = [
+  "fogo",
+  "agua",
+  "terra",
+  "ar",
+  "eletricidade",
+  "arcano",
+  "sombra",
+  "luz",
+  "vileza",
+  "morte",
+  "vida",
+  "vigor",
+  "marcial",
+  "tempo",
+  "som",
+  "gravidade",
+  "espaco",
+  "fada",
+  "industrial",
+  "planta"
+];
+var PAIRS_RAW = "vapor:fogo+agua lava:fogo+terra incendio:fogo+ar plasma:fogo+eletricidade fogo_feiticeiro:fogo+arcano fogo_negro:fogo+sombra chama_solar:fogo+luz fogo_infernal:fogo+vileza chama_azul:fogo+morte fenix:fogo+vida fervor:fogo+vigor pantano:agua+terra gelo:agua+ar agua_viva:agua+eletricidade mare:agua+arcano abismo:agua+sombra prisma:agua+luz acido:agua+vileza veneno:agua+morte nascente:agua+vida correnteza:agua+vigor areia:terra+ar magnetismo:terra+eletricidade cristal:terra+arcano obsidiana:terra+sombra ouro_vivo:terra+luz solo_profano:terra+vileza ossuario:terra+morte flora:terra+vida tita:terra+vigor tempestade:ar+eletricidade eter:ar+arcano murmurio:ar+sombra aurora:ar+luz enxofre:ar+vileza miasma:ar+morte alento:ar+vida impeto:ar+vigor fluxo:eletricidade+arcano trovao_negro:eletricidade+sombra fulgor:eletricidade+luz tormento:eletricidade+vileza galvanismo:eletricidade+morte sinapse:eletricidade+vida reflexo:eletricidade+vigor ocultismo:arcano+sombra runa:arcano+luz pacto:arcano+vileza alma:arcano+morte essencia:arcano+vida encantamento:arcano+vigor crepusculo:sombra+luz terror:sombra+vileza espectro:sombra+morte parasita:sombra+vida assassinio:sombra+vigor heresia:luz+vileza julgamento:luz+morte santidade:luz+vida bravura:luz+vigor praga:vileza+morte mutacao:vileza+vida carnificina:vileza+vigor equilibrio:morte+vida ceifa:morte+vigor vitalidade:vida+vigor forja:marcial+fogo tempera:marcial+agua aco:marcial+terra esgrima:marcial+ar aco_voltaico:marcial+eletricidade arsenal:marcial+arcano lamina_oculta:marcial+sombra lamina_radiante:marcial+luz serrilha:marcial+vileza fio_funebre:marcial+morte lamina_viva:marcial+vida maestria:marcial+vigor pira_eterna:tempo+fogo erosao:tempo+agua fossil:tempo+terra aceleracao:tempo+ar instante:tempo+eletricidade cronomancia:tempo+arcano entropia:tempo+sombra eon:tempo+luz ruina:tempo+vileza ocaso:tempo+morte florescer:tempo+vida frenesi:tempo+vigor contratempo:tempo+marcial estrondo:som+fogo sonar:som+agua terremoto:som+terra estampido:som+ar trovao:som+eletricidade cantico:som+arcano sussurro:som+sombra harmonia:som+luz dissonancia:som+vileza requiem:som+morte melodia:som+vida brado:som+vigor cadencia:som+marcial eco:som+tempo fornalha_estelar:gravidade+fogo voragem:gravidade+agua colapso:gravidade+terra vacuo:gravidade+ar magnetar:gravidade+eletricidade singularidade:gravidade+arcano buraco_negro:gravidade+sombra halo_gravitacional:gravidade+luz jugo:gravidade+vileza implosao:gravidade+morte ancora_vital:gravidade+vida peso_descomunal:gravidade+vigor ariete:gravidade+marcial dilatacao:gravidade+tempo onda_de_choque:gravidade+som meteoro:espaco+fogo cometa:espaco+agua asteroide:espaco+terra estratosfera:espaco+ar pulsar:espaco+eletricidade portal:espaco+arcano vazio:espaco+sombra constelacao:espaco+luz devorador:espaco+vileza nebulosa:espaco+morte semente_estelar:espaco+vida gigante_estelar:espaco+vigor lamina_sideral:espaco+marcial continuum:espaco+tempo silencio_cosmico:espaco+som dobra:espaco+gravidade fogo_fatuo:fada+fogo orvalho:fada+agua circulo_feerico:fada+terra brisa_cintilante:fada+ar glitter:fada+eletricidade feerie:fada+arcano sonho_sombrio:fada+sombra arco_iris:fada+luz encanto_traicoeiro:fada+vileza banshee:fada+morte coracao:fada+vida graca:fada+vigor lamina_purpurina:fada+marcial sono_encantado:fada+tempo cancao_feerica:fada+som leveza:fada+gravidade poeira_estelar:fada+espaco fornalha:industrial+fogo hidraulica:industrial+agua mineracao:industrial+terra pneumatica:industrial+ar usina:industrial+eletricidade artificio:industrial+arcano fuligem:industrial+sombra holofote:industrial+luz poluicao:industrial+vileza ferro_velho:industrial+morte biomecanica:industrial+vida exoesqueleto:industrial+vigor armaria:industrial+marcial relojoaria:industrial+tempo britadeira:industrial+som prensa:industrial+gravidade estacao_orbital:industrial+espaco brinquedo:industrial+fada queimada:planta+fogo mangue:planta+agua raiz_profunda:planta+terra polen:planta+ar fotossintese:planta+eletricidade druidismo:planta+arcano fungo:planta+sombra girassol:planta+luz espinheiro:planta+vileza murcha:planta+morte seiva:planta+vida carvalho:planta+vigor bambu:planta+marcial estacoes:planta+tempo farfalhar:planta+som trepadeira:planta+gravidade arvore_mundo:planta+espaco jardim_encantado:planta+fada estufa:planta+industrial";
+var COMPOSITION = new Map(BASE_ELEMENTS.map((b) => [b, [b]]));
+for (const tok of PAIRS_RAW.split(" ")) {
+  const [id, comp] = tok.split(":");
+  const [a, b] = comp.split("+");
+  COMPOSITION.set(id, a === b ? [a] : [a, b]);
+}
+var isKnownEssenceElement = /* @__PURE__ */ __name((id) => typeof id === "string" && COMPOSITION.has(id), "isKnownEssenceElement");
+var essenceBaseCount = /* @__PURE__ */ __name((id) => COMPOSITION.get(id)?.length ?? 0, "essenceBaseCount");
+function essenceUnitPrice(id) {
+  const n = essenceBaseCount(id);
+  return n <= 0 ? 0 : Math.min(3, n);
+}
+__name(essenceUnitPrice, "essenceUnitPrice");
+function essencePackPrice(id, qty) {
+  const unit = essenceUnitPrice(id);
+  if (!unit || !ESSENCE_PACK_SIZES.includes(
+    /** @type {1|5} */
+    qty
+  )) return 0;
+  return qty === 1 ? unit : Math.floor(qty * unit * (1 - ESSENCE_PACK_DISCOUNT));
+}
+__name(essencePackPrice, "essencePackPrice");
+
 // api/entitlements.js
 var GRANT_RATE = { limit: 10, windowMs: 6e4 };
 function secretEquals2(a, b) {
@@ -10674,6 +10727,46 @@ async function onRequestPost3({ request, env }) {
     const ent = await spendCredits(env, saveId, amount, body?.opId);
     if (!ent) return json5({ ok: false, reason: "insufficient" }, 402);
     return json5({ ok: true, ...view(ent) });
+  }
+  if (action === "buy-essence") {
+    const element = body?.element;
+    const qty = Number(body?.qty);
+    const opId = body?.opId;
+    if (typeof opId !== "string" || !/^[A-Za-z0-9_-]{8,64}$/.test(opId)) return json5({ ok: false, reason: "bad-op" }, 400);
+    const store = kv(env);
+    const replayKey = `essbuy:${saveId}:${opId}`;
+    const anterior = await store?.get(replayKey);
+    if (anterior) {
+      try {
+        return json5({ ...JSON.parse(anterior), replay: true });
+      } catch {
+      }
+    }
+    if (!isKnownEssenceElement(element)) return json5({ ok: false, reason: "unknown-element" }, 400);
+    const price = essencePackPrice(element, qty);
+    if (!price) return json5({ ok: false, reason: "bad-qty" }, 400);
+    let state = null;
+    try {
+      state = JSON.parse(await store?.get(saveId) || "null");
+    } catch {
+      state = null;
+    }
+    const dex = Array.isArray(state?.defeatedElements) ? state.defeatedElements : [];
+    if (!dex.includes(element)) return json5({ ok: false, reason: "locked" }, 403);
+    const have = Number(state?.essences?.[element]) || 0;
+    if (have + qty > ESSENCE_MAX_PER_ELEMENT) return json5({ ok: false, reason: "cap" }, 409);
+    let ent;
+    if (admin) {
+      logAdminSession("buy-essence");
+      ent = await readEntitlement(env, saveId);
+    } else {
+      ent = await spendCredits(env, saveId, price, opId);
+      if (!ent) return json5({ ok: false, reason: "insufficient" }, 402);
+    }
+    const out = { ok: true, element, qty, price, ...view(ent) };
+    if (!admin) await store?.put(replayKey, JSON.stringify(out), { expirationTtl: 24 * 60 * 60 });
+    log2("essence-buy", saveId, { element, qty, price, admin });
+    return json5(out);
   }
   if (action === "rebirth-reset") {
     const store = kv(env);
@@ -10800,7 +10893,7 @@ async function hashToken(token) {
 }
 __name(hashToken, "hashToken");
 
-// ../node_modules/fflate/esm/browser.js
+// D:/Soulmon/repo/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -13472,7 +13565,7 @@ function sanitizeNightmares(raw) {
 __name(sanitizeNightmares, "sanitizeNightmares");
 
 // api/_essences.js
-var ESSENCE_MAX_PER_ELEMENT = 1e6;
+var ESSENCE_MAX_PER_ELEMENT2 = 1e6;
 var ESSENCE_MAX_KEYS = 211;
 function sanitizeEssences(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
@@ -13480,7 +13573,7 @@ function sanitizeEssences(raw) {
   let n = 0;
   for (const [k, v] of Object.entries(raw)) {
     if (!/^[a-z_]{2,24}$/.test(k) || typeof v !== "number" || !Number.isFinite(v)) continue;
-    const q = Math.min(ESSENCE_MAX_PER_ELEMENT, Math.floor(v));
+    const q = Math.min(ESSENCE_MAX_PER_ELEMENT2, Math.floor(v));
     if (q < 1) continue;
     out[k] = q;
     if (++n >= ESSENCE_MAX_KEYS) break;
@@ -14461,7 +14554,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-dFVvik/functionsRoutes-0.0570381562227662.mjs
+// ../.wrangler/tmp/pages-LUOFMD/functionsRoutes-0.22505505182149488.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -14787,7 +14880,7 @@ var routes = [
   }
 ];
 
-// ../node_modules/path-to-regexp/dist.es2015/index.js
+// D:/Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens = [];
   var i2 = 0;
@@ -15113,7 +15206,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// ../node_modules/wrangler/templates/pages-template-worker.ts
+// D:/Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;
