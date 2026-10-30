@@ -29,12 +29,15 @@ export { BB_EVOLVE_MIN_BOND };
 let onboardingVelado = false;
 
 /** O interruptor `ONBOARDING_VELADO` (desligado por padrão). Quem liga é o servidor (`/api/config`). */
-export function isOnboardingVelado(): boolean { return onboardingVelado; }
+let veladoTester = false;
+export function isOnboardingVelado(): boolean { return onboardingVelado || veladoTester; }
+/** Interruptor por pessoa (plano §7, `/api/velado-teste`): só `true` liga. */
+export function setVeladoTester(on: unknown): void { veladoTester = on === true; }
 export function setOnboardingVelado(on: unknown): void { onboardingVelado = on === true; }
 
 /** O estágio inicial de um save NOVO: `'bb'` só com o interruptor ligado. */
 export function initialStageForNewSave(): 'bb' | 'rookie' {
-  return onboardingVelado ? BB_STAGE : 'rookie';
+  return isOnboardingVelado() ? BB_STAGE : 'rookie';
 }
 
 export function isBBStage(stage: unknown): boolean {

@@ -28,3 +28,20 @@ export const BB_LOCKED_MESSAGE = {
   pt: 'Seu Velado ainda está pequeno demais para isto. Cresça o Vínculo e deixe-o evoluir.',
   en: 'Your Veiled one is still too small for this. Grow your Bond and let it evolve.',
 };
+
+/**
+ * Interruptor POR PESSOA (plano §7): lista de testers em `env.ONBOARDING_VELADO_TESTERS` — HASHES
+ * (sha256 hex de `velado-tester:<email normalizado>`), separados por vírgula/espaço; nunca e-mail.
+ * Vazia/ausente = ninguém. Somar com o global é feito pelo cliente (global OU tester).
+ */
+export async function veladoTesterHash(email) {
+  const data = new TextEncoder().encode(`velado-tester:${String(email ?? '').trim().toLowerCase()}`);
+  const d = await crypto.subtle.digest('SHA-256', data);
+  return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+export async function isVeladoTester(env, email) {
+  const lista = String(env?.ONBOARDING_VELADO_TESTERS ?? '').toLowerCase().split(/[\s,]+/).filter(Boolean);
+  if (!email || lista.length === 0) return false;
+  return lista.includes(await veladoTesterHash(email));
+}

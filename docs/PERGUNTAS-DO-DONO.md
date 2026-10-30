@@ -631,3 +631,6 @@ Decisões conservadoras tomadas pela orquestração; revisar:
 5. **Golpe básico do simulado no duelo** ainda não usa o elemento dele (`fx.elBasica` nulo); mudar muda a luta do servidor.
 6. **Fada** não está em `VISUAL_ELEMENTS` (arte do duelo cai em neutro); incluir muda o hash visual.
 7. Conferir no app, com sprites reais, a âncora pelo pé (modo Chefe da Feira pode descer alguns px).
+
+## Onboarding Velado — frase de privacidade (30/10/2026)
+O servidor passa a guardar, sem prazo e fora da exclusão de conta, a chave `freeGen:<saveId>` (hash do e-mail → URL do primeiro rookie gerado) e, opcionalmente, hashes de e-mails de teste. Para a política (NÃO alterada ainda), sugestão: "Guardamos, de forma irreversível (sem seu e-mail em claro), que sua conta já usou a geração gratuita e qual foi o desenho, para que recriar a conta devolva o mesmo Soulmon e não conceda outra geração gratuita. Isso permanece mesmo após excluir a conta." Aprova o texto (e o "para sempre", D6)?
