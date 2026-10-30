@@ -12,7 +12,7 @@ import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
 import { welcomeBackLine } from '../utils/welcomeBack';
 import { PixelIcon } from './ui/PixelIcon';
 import { Icon } from './ui/Icon';
-import { UI_ICON_ART } from '../assets/soulmon/icones-ui';
+import { UI_ICON_ART, pastaGlifo, pastaAbertaGlifo, displayLuzAcesa, displayLuzApagada } from '../assets/soulmon/icones-ui';
 import { Viewport, usePrefersReducedMotion, useVarreduraDeSintonia } from './ui/Viewport';
 import { NEST_ART, DEFAULT_NEST } from './nestArt';
 import { ITEM_ART } from '../utils/itemArt';
@@ -2017,8 +2017,8 @@ export const CompanionHUD = memo(function CompanionHUD({
               + (walkingTo ? (language === 'pt-BR' ? ` — passeando: ${walkingTo}` : ` — out on a stroll to ${walkingTo}`) : '')}
           >
             {hasNewItems && <span className="sm2-deck-dot" aria-hidden="true" />}
-            {/* 07/10/2026 (pedido do dono): a MOCHILA é um asset PNG (pixel art `UI_ICON_ART.mochila`, com a aba turquesa recolorida para marrom), não glifo vetorial. A mesma arte aparece no passeio, ao pé do pet. */}
-            <PixelIcon name="mochila" size={24} />
+            {/* 30/10/2026 (dono): a mochila virou a PASTA (o universo é digital) — fechada, e aberta enquanto a mochila está aberta. P1-09. */}
+            <PixelIcon src={mochilaOpen ? pastaAbertaGlifo : pastaGlifo} size={24} />
           </button>
           <button
             type="button"
@@ -2031,9 +2031,10 @@ export const CompanionHUD = memo(function CompanionHUD({
           >
             {/* Dormindo, o botão vira "Acordar": o sol da rodada 3 (30/09/2026)
                 substituiu o glifo `wb_sunny` que esperava a arte. */}
+            {/* 30/10/2026 (dono): a soneca é a LUZ DO DISPLAY — acesa acordado, apagada dormindo (P1-09). */}
             {isSleeping
-              ? <PixelIcon name="acordar" size={24} />
-              : <PixelIcon name="dormir" size={24} />}
+              ? <PixelIcon src={displayLuzApagada} size={24} />
+              : <PixelIcon src={displayLuzAcesa} size={24} />}
           </button>
           <button
             type="button"
