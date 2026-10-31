@@ -174,6 +174,12 @@ export async function confirmDelete(saveId: string, confirmToken: string): Promi
   });
 }
 
+/** `YYYY-MM-DD` do dia LOCAL (nome de arquivo). `toISOString` é UTC: depois das 21h no Brasil daria amanhã. */
+function diaLocalDoArquivo(now: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
+}
+
 /**
  * Entrega o arquivo ao usuário. Exportar sem entregar não é exportação.
  * Devolve `false` quando o ambiente não sabe baixar (jsdom, WebView antigo),
@@ -185,7 +191,7 @@ export function downloadExport(payload: AccountExport, now = new Date()): boolea
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `soulmon-meus-dados-${now.toISOString().slice(0, 10)}.json`;
+  a.download = `soulmon-meus-dados-${diaLocalDoArquivo(now)}.json`;
   document.body.appendChild(a);
   a.click();
   a.remove();

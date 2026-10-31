@@ -256,3 +256,15 @@ describe('o humor do dia é UMA entrada por dia do jogador', () => {
     expect(moodFor(log, chave)).toBe(5);
   });
 });
+
+describe('dayKeyParts — regressão: dia que não existe no calendário', () => {
+  it('recusa 31/02 e mês 13 nos dois formatos, aceita 29/02 bissexto', async () => {
+    const { dayKeyParts, dayKeyToIso } = await import('./playerDay');
+    expect(dayKeyParts('2026-02-31')).toBeNull();
+    expect(dayKeyParts('2026-13-01')).toBeNull();
+    expect(dayKeyParts('Tue Feb 31 2026')).toBeNull();
+    expect(dayKeyToIso('2026-00-10')).toBeNull();
+    expect(dayKeyParts('2028-02-29')).toEqual({ y: 2028, m: 2, d: 29 });
+    expect(dayKeyToIso('Fri Oct 30 2026')).toBe('2026-10-30');
+  });
+});

@@ -166,6 +166,13 @@ export function playerDayIso(now: Date, anchor: PlayerDayAnchor | undefined): st
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
 }
 
+/** O dia existe no calendário? `2026-02-31` e `2026-13-01` não — sem isto rolavam para março/janeiro seguinte. */
+function diaDeVerdade(y: number, m: number, d: number): { y: number; m: number; d: number } | null {
+  if (m < 1 || m > 12 || d < 1) return null;
+  const t = new Date(Date.UTC(y, m - 1, d));
+  return t.getUTCMonth() === m - 1 && t.getUTCDate() === d ? { y, m, d } : null;
+}
+
 /**
  * As partes (`y`, `m` 1–12, `d`) de uma chave de dia em QUALQUER dos dois
  * formatos que circulam no app: `YYYY-MM-DD` (o que `bornAt` documenta e o que
@@ -180,12 +187,12 @@ export function dayKeyParts(key: unknown): { y: number; m: number; d: number } |
   if (typeof key !== 'string') return null;
   const s = key.trim();
   const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
-  if (iso) return { y: Number(iso[1]), m: Number(iso[2]), d: Number(iso[3]) };
+  if (iso) return diaDeVerdade(Number(iso[1]), Number(iso[2]), Number(iso[3]));
   const nativo = /^[A-Z][a-z]{2} ([A-Z][a-z]{2}) (\d{2}) (\d{4})$/.exec(s);
   if (!nativo) return null;
   const m = MESES.indexOf(nativo[1]) + 1;
   const d = Number(nativo[2]);
-  return m >= 1 && d >= 1 && d <= 31 ? { y: Number(nativo[3]), m, d } : null;
+  return m >= 1 ? diaDeVerdade(Number(nativo[3]), m, d) : null;
 }
 
 /** A mesma chave em `YYYY-MM-DD` (ou `null` se não for uma chave de dia). */

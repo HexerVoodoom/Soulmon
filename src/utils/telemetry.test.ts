@@ -689,6 +689,12 @@ describe('guard de segundo plano', () => {
     expect(dias[0].p?.effort).toBe(5); // o fechamento vence
   });
 
+  it('regressão: fila de oculto corrompida (não-lista) não engole o evento seguinte', () => {
+    localStorage.setItem('soulmon-telemetry-hidden', '{"x":1}');
+    oculto(() => { track('install'); });
+    expect(pendingHiddenTelemetry().map(r => r.e)).toEqual(['install']);
+  });
+
   it('drenar com a aba AINDA oculta é no-op (senão devolveria tudo à mesma fila)', () => {
     oculto(() => {
       track('install');

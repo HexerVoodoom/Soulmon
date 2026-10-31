@@ -874,6 +874,12 @@ function readQueue(): TelemetryRecord[] {
   return Array.isArray(q) ? q : [];
 }
 
+/** Fila do app oculto. Valor que não é lista (save editado, versão antiga) vira fila vazia, igual a `readQueue`. */
+function readHidden(): HiddenRecord[] {
+  const h = readJson<HiddenRecord[]>(K_HIDDEN, []);
+  return Array.isArray(h) ? h : [];
+}
+
 function writeQueue(q: TelemetryRecord[]): void {
   writeJson(K_QUEUE, q, { silent: true });
 }
@@ -1018,7 +1024,7 @@ export function track(event: TelemetryEvent, props?: TelemetryProps, day?: strin
     // dezenas de `day_active` do mesmo dia até bater o teto — e o teto
     // descartava justamente os eventos que vinham DEPOIS.
     if (isDocumentHidden()) {
-      let pendente = readJson<HiddenRecord[]>(K_HIDDEN, []);
+      let pendente = readHidden();
       if (ONCE_PER_DAY.includes(record.e)) {
         pendente = pendente.filter(r => !(r.e === record.e && r.d === record.d));
       }
@@ -1084,7 +1090,7 @@ export const MAX_HIDDEN = 50;
 export function drainHiddenTelemetry(): number {
   try {
     if (isDocumentHidden()) return 0;
-    const pendente = readJson<HiddenRecord[]>(K_HIDDEN, []);
+    const pendente = readHidden();
     if (pendente.length === 0) return 0;
     removeLocal(K_HIDDEN, { silent: true });
     for (const r of pendente) track(r.e, r.p, r.d);
@@ -1096,7 +1102,7 @@ export function drainHiddenTelemetry(): number {
 
 /** Só para teste — o que espera a aba voltar. */
 export function pendingHiddenTelemetry(): Array<{ e: TelemetryEvent; d: string }> {
-  return readJson<HiddenRecord[]>(K_HIDDEN, []).map(r => ({ e: r.e, d: r.d }));
+  return readHidden().map(r => ({ e: r.e, d: r.d }));
 }
 
 // ---------------------------------------------------------------------------
