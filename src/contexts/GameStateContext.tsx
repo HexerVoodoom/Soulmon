@@ -64,7 +64,7 @@ import { createNightmareState, sanitizeNightmareState } from '../utils/nightmare
 import type { PlayLog } from '../utils/petNeeds';
 import type { StepsRecord } from '../utils/steps';
 import { sanitizeStepGoal } from '../utils/steps';
-import { sanitizeMercMission, type MercMissionState } from '../utils/mercMission';
+import { sanitizeMercMission, type MercMissionState } from '../utils/mercMissionSave';
 import { sanitizeSpecialMission, type SpecialMissionState } from '../utils/specialMissions';
 import { resolveLanguage } from '../utils/i18n';
 import { soulmonDisplayName } from '../utils/petName';

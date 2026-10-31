@@ -20,10 +20,8 @@ import { CATEGORY_ATTRIBUTES, type BranchType } from '../types/attributes';
 import type { CatalogItem } from '../types/activityCatalog';
 import { isBBStage } from './bbStage';
 
-export type MercOrdem = 'filtrador' | 'tecelao' | 'rompente';
-export const MERC_ORDENS: readonly MercOrdem[] = ['filtrador', 'tecelao', 'rompente'];
-
-export interface MercMissionState { day: string; ordem: MercOrdem; activityId: string; done: boolean }
+import { MERC_ORDENS, sanitizeMercMission, type MercOrdem, type MercMissionState } from './mercMissionSave';
+export { MERC_ORDENS, sanitizeMercMission, type MercOrdem, type MercMissionState };
 
 /** Tipo (atributo) de cada Ordem principal. */
 export const MERC_TIPO: Record<MercOrdem, BranchType> = {
@@ -40,16 +38,6 @@ export const MERC_NOME: Record<MercOrdem, { pt: string; en: string; ordemPt: str
 export const MERC_RETRATO: Record<MercOrdem, string> = {
   filtrador: 'merc-filtrador.png', tecelao: 'merc-tecelao.png', rompente: 'merc-rompente.png',
 };
-
-/** Leitura tolerante: forma errada = ausente. Idempotente. Espelho exato: `functions/api/_mercMission.js`. */
-export function sanitizeMercMission(raw: unknown): MercMissionState | undefined {
-  if (!raw || typeof raw !== 'object') return undefined;
-  const r = raw as Record<string, unknown>;
-  if (typeof r.day !== 'string' || r.day.length === 0 || r.day.length > 40) return undefined;
-  if (typeof r.ordem !== 'string' || !(MERC_ORDENS as readonly string[]).includes(r.ordem)) return undefined;
-  if (typeof r.activityId !== 'string' || r.activityId.length === 0 || r.activityId.length > 64) return undefined;
-  return { day: r.day, ordem: r.ordem as MercOrdem, activityId: r.activityId, done: r.done === true };
-}
 
 /** A Ordem de uma categoria: a do maior valor em `CATEGORY_ATTRIBUTES` (dono único da tabela, sem segunda cópia). */
 export function ordemDaCategoria(c: CatalogItem['category']): MercOrdem {
