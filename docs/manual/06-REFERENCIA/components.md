@@ -1933,6 +1933,9 @@ Folha da Poção de Elemento (Laboratório › Centro de Evolução): 3 espaços
 ### `src/components/onboarding/sequencia/SequenciaOnboarding.tsx`
 **Dono de:** a sequência do onboarding do Velado (ponto de entrada; "Rever a história" ignora o interruptor).
 
+### `src/components/onboarding/sequencia/SequenciaReal.tsx`
+**Dono de:** `SequenciaReal`: a sequência do onboarding com as ligações reais (`SLOTS_REAIS`) num módulo só, que o App carrega `lazy` para levar Match3Game/BattleStage para fora da entrada.
+
 ### `src/components/onboarding/sequencia/SequenciaPlayer.tsx`
 **Dono de:** o player de cenas e quadros; slots das etapas interativas, stub quando ausentes.
 

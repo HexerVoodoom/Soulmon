@@ -3966,6 +3966,18 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 ### `src/utils/mercMission.ts`
 **Dono de:** a Guilda dos Mercenários do onboarding velado (plano §11): missão do dia, `sanitizeMercMission` e a pergunta de honestidade; campo de save `mercMission`.
 
+### `src/utils/mercMissionSave.ts`
+**Dono de:** os tipos de `mercMission` e o `sanitizeMercMission` sem o catálogo de atividades, para a entrada (`GameStateContext`) não puxar o `mercMission.ts` inteiro. Espelho: `functions/api/_mercMission.js`.
+
+### `src/utils/elementosLote1.data.ts`
+**Dono de:** o lote 1 dos 50 elementos curados do class-system (30/10/2026). Dados puros `[número, slug, nome, elem1 dominante, elem2, elem3]`; sem arte própria, cai no rookie do elemento dominante.
+
+### `src/utils/elementosLote2.data.ts`
+**Dono de:** o lote 2 dos 50 elementos curados, no mesmo formato do lote 1.
+
+### `src/utils/elementosLote3.data.ts`
+**Dono de:** o lote 3 dos 50 elementos curados, no mesmo formato do lote 1.
+
 ### `src/utils/veladoTester.ts`
 **Dono de:** `refreshVeladoTester`: pergunta ao servidor se o usuário logado está no teste do Velado e aplica o resultado; nunca lança, falha = desligado.
 
