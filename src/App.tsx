@@ -1044,6 +1044,18 @@ export default function App() {
   }), []);
   const [messageTrigger, setMessageTrigger] = useState(0);
   const [feedAnim, setFeedAnim] = useState<{ emoji: string; n: number } | null>(null);
+  /* O `n` é sequência própria (nunca volta a 1) porque o sinal se apaga depois
+     da animação: `feedAnim` entra no `busy` da geração de sprite, e um sinal
+     que nunca se apagava deixava a fila travada para sempre após a 1ª comida. */
+  const feedSeqRef = useRef(0);
+  const feedAnimTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dispararFeedAnim = useCallback((emoji: string) => {
+    feedSeqRef.current += 1;
+    setFeedAnim({ emoji, n: feedSeqRef.current });
+    if (feedAnimTimerRef.current) clearTimeout(feedAnimTimerRef.current);
+    feedAnimTimerRef.current = setTimeout(() => setFeedAnim(null), 1600);
+  }, []);
+  useEffect(() => () => { if (feedAnimTimerRef.current) clearTimeout(feedAnimTimerRef.current); }, []);
   const [careEvent, setCareEvent] = useState<CareEvent | null>(null);
   const [showEvolutionChoice, setShowEvolutionChoice] = useState(false);
   const [useAI, setUseAI] = useState(true);
@@ -3157,7 +3169,7 @@ export default function App() {
               [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
             },
           }));
-          setFeedAnim(prev => ({ emoji: food.emoji, n: (prev?.n ?? 0) + 1 }));
+          dispararFeedAnim(food.emoji);
         }
         // O mesmo caminho de fala do resto do app — o pet reage, não um banner.
         setMessageTrigger(prev => prev + 1);
@@ -3837,7 +3849,7 @@ export default function App() {
       else playFeed();
 
       setGameState(prev => applySpecialItem(prev, foodEmoji, agora).state);
-      setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
+      dispararFeedAnim(foodEmoji);
 
       if (special.kind === 'chip') {
         const n = chipsUsedThisStage(gameState) + 1;
@@ -3884,7 +3896,7 @@ export default function App() {
     marcarGestoDoDia('feed');
     contarDiaria('comida');
     atenderRefeicao('snack');
-    setFeedAnim(prev => ({ emoji: foodEmoji, n: (prev?.n ?? 0) + 1 }));
+    dispararFeedAnim(foodEmoji);
   }, [gameState.foodInventory, gameState.careCaps, gameState.healthPoints, gameState.maxHealthPoints, language, guardWake]);
 
   /* ☀️🌤️🌙 CHECK-IN DA JANELA (beta-2 4.1, `utils/checkIns.ts`): a recompensa sai TODA do updater (`claimCheckIn` reconfere a janela
@@ -6134,7 +6146,7 @@ export default function App() {
           [food.emoji]: (prev.foodInventory[food.emoji] ?? 0) + 1,
         },
       }));
-      setFeedAnim(prev => ({ emoji: food.emoji, n: (prev?.n ?? 0) + 1 }));
+      dispararFeedAnim(food.emoji);
     }
     toast(language === 'pt-BR'
       ? `🥾 Verificado pelos seus passos hoje — +1 comida de bônus.`

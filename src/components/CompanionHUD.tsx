@@ -618,14 +618,25 @@ export const CompanionHUD = memo(function CompanionHUD({
    */
   const mensagemAtualRef = useRef(message);
   mensagemAtualRef.current = message;
+  /* Os sinais abaixo são contadores que moram no App e sobrevivem à troca de
+     tela; o HUD não. Cada ref guarda o valor visto na MONTAGEM, e o efeito só
+     age quando o contador anda depois dela — sem isso, sair da Home e voltar
+     repetia a última animação de comer e a última fala. */
+  const triggerVistoRef = useRef(triggerMessage);
+  const feedVistoRef = useRef(feedAnim?.n ?? 0);
+  const fullVistoRef = useRef(fullSignal);
+  const healCapVistoRef = useRef(healCapSignal);
+  const speakVistoRef = useRef(speakSignal?.n ?? 0);
   useEffect(() => {
     // 0 é a montagem: ninguém fez nada ainda, e abrir o app não é um evento.
-    if (!triggerMessage) return;
+    if (!triggerMessage || triggerMessage === triggerVistoRef.current) return;
+    triggerVistoRef.current = triggerMessage;
     speak(mensagemAtualRef.current);
   }, [triggerMessage, speak]);
 
   useEffect(() => {
-    if (!feedAnim) return;
+    if (!feedAnim || feedAnim.n === feedVistoRef.current) return;
+    feedVistoRef.current = feedAnim.n;
     setEatingEmoji(feedAnim.emoji);
     setEatKey(k => k + 1);
     setIsMunching(true);
@@ -642,19 +653,22 @@ export const CompanionHUD = memo(function CompanionHUD({
   // tom de `petVoice.ts`. Em 21/09/2026 (copy §1.2 e §1.9) viraram os kinds
   // `full` e `healCap` do dono único, `PET_VOICE_LINES`.
   useEffect(() => {
-    if (!fullSignal) return;
+    if (!fullSignal || fullSignal === fullVistoRef.current) return;
+    fullVistoRef.current = fullSignal;
     speak(petVoiceLine('full', language === 'pt-BR', Math.random(), petPassive), 3500);
   }, [fullSignal]);
 
   useEffect(() => {
-    if (!healCapSignal) return;
+    if (!healCapSignal || healCapSignal === healCapVistoRef.current) return;
+    healCapVistoRef.current = healCapSignal;
     speak(petVoiceLine('healCap', language === 'pt-BR', Math.random(), petPassive), 3500);
   }, [healCapSignal]);
 
   // WP3.2 — os quatro gestos mudos ganham voz. Um efeito só, chaveado pelo
   // contador: a fala é do gesto, e o `kind` escolhe a tabela.
   useEffect(() => {
-    if (!speakSignal?.n) return;
+    if (!speakSignal?.n || speakSignal.n === speakVistoRef.current) return;
+    speakVistoRef.current = speakSignal.n;
     // WP3.10 — o traço entra aqui, lido do ESTADO (nunca por parâmetro que
     // quem chama possa esquecer). Sem traço, ou sem fala para este gesto, cai
     // na genérica.
