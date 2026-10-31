@@ -144,15 +144,49 @@ function emptyEntitlement() {
   };
 }
 __name(emptyEntitlement, "emptyEntitlement");
+var EntitlementIlegivelError = class extends Error {
+  static {
+    __name(this, "EntitlementIlegivelError");
+  }
+  constructor(saveId) {
+    super("entitlement-unreadable");
+    this.name = "EntitlementIlegivelError";
+    this.status = 503;
+    this.code = "entitlement-unavailable";
+    this.saveIdPrefix = String(saveId).slice(0, 8);
+  }
+};
+function respostaEntitlementIlegivel(err2, headers3) {
+  if (!(err2 instanceof EntitlementIlegivelError)) return null;
+  return Response.json({ error: err2.code }, { status: err2.status, headers: headers3 });
+}
+__name(respostaEntitlementIlegivel, "respostaEntitlementIlegivel");
+function comEntitlementLegivel(handler, headers3) {
+  return async (context) => {
+    try {
+      return await handler(context);
+    } catch (err2) {
+      const r = respostaEntitlementIlegivel(err2, headers3);
+      if (r) return r;
+      throw err2;
+    }
+  };
+}
+__name(comEntitlementLegivel, "comEntitlementLegivel");
 async function readEntitlement(env, saveId) {
   const raw = await kvOrThrow(env).get(ENT_PREFIX + saveId);
   if (!raw) return emptyEntitlement();
+  let parsed;
   try {
-    const parsed = JSON.parse(raw);
-    return { ...emptyEntitlement(), ...parsed };
+    parsed = JSON.parse(raw);
   } catch {
-    return emptyEntitlement();
+    parsed = void 0;
   }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    console.error(JSON.stringify({ event: "entitlement.unreadable", saveIdPrefix: String(saveId).slice(0, 8), bytes: raw.length }));
+    throw new EntitlementIlegivelError(saveId);
+  }
+  return { ...emptyEntitlement(), ...parsed };
 }
 __name(readEntitlement, "readEntitlement");
 async function writeEntitlement(env, saveId, ent) {
@@ -4065,7 +4099,14 @@ async function collect(env, saveId) {
     gifts = null;
   }
   const entRaw = await store.get(ENT_PREFIX + saveId);
-  const entitlement = entRaw ? await readEntitlement(env, saveId) : null;
+  let entitlement = null;
+  if (entRaw) {
+    try {
+      entitlement = await readEntitlement(env, saveId);
+    } catch (err2) {
+      if (!(err2 instanceof EntitlementIlegivelError)) throw err2;
+    }
+  }
   const rankKeys = (await listPrefix(env, "rank:")).filter((k) => k.endsWith(`:${saveId}`));
   const ranks = [];
   for (const k of rankKeys) {
@@ -4385,7 +4426,7 @@ async function handleDeleteConfirm(env, saveId, body) {
   });
 }
 __name(handleDeleteConfirm, "handleDeleteConfirm");
-async function onRequest({ request, env }) {
+async function onRequestBruto({ request, env }) {
   const url = new URL(request.url);
   const method = request.method;
   if (method !== "GET" && method !== "POST") {
@@ -4413,7 +4454,8 @@ async function onRequest({ request, env }) {
   if (method === "POST" && action === "delete-confirm") return handleDeleteConfirm(env, saveId, body);
   return json({ error: "Unknown action" }, 400);
 }
-__name(onRequest, "onRequest");
+__name(onRequestBruto, "onRequestBruto");
+var onRequest = comEntitlementLegivel(onRequestBruto, CORS);
 
 // api/_betaFull.js
 async function verifiedBetaFull(env, request, saveId) {
@@ -4874,7 +4916,7 @@ async function entView(env, request, saveId, ent) {
   return (await verifiedBetaFull(env, request, saveId)).betaFull ? betaFullPublicView(v) : v;
 }
 __name(entView, "entView");
-async function onRequestPost({ request, env }) {
+async function onRequestPostBruto({ request, env }) {
   const url = new URL(request.url);
   if (url.searchParams.get("action") !== "verify") return json2({ error: "Unknown action" }, 400);
   const provider = url.searchParams.get("provider") ?? "play";
@@ -4949,7 +4991,7 @@ async function onRequestPost({ request, env }) {
     consumeToken: provider === "play" && result.product.consumable ? body.purchaseToken : void 0
   });
 }
-__name(onRequestPost, "onRequestPost");
+__name(onRequestPostBruto, "onRequestPostBruto");
 async function handleSubscription(env, saveId, body) {
   const result = await verifyPlaySubscription(env, { purchaseToken: body?.purchaseToken, saveId });
   if (!result.ok) {
@@ -4980,6 +5022,7 @@ async function handleSubscription(env, saveId, body) {
   return json2({ ok: true, duplicate: !changed, ...publicView(ent) });
 }
 __name(handleSubscription, "handleSubscription");
+var onRequestPost = comEntitlementLegivel(onRequestPostBruto, CORS2);
 
 // api/_branchLegacy.js
 var NEW_TO_OLD = { power: "virus", harmony: "data", benevolence: "vaccine" };
@@ -5115,9 +5158,18 @@ async function importPrivateKey(pem) {
 __name(importPrivateKey, "importPrivateKey");
 var cachedToken2 = null;
 var cachedExpiry2 = 0;
+var inflight = null;
 async function getFcmAccessToken(serviceAccount) {
   const now = Math.floor(Date.now() / 1e3);
   if (cachedToken2 && now < cachedExpiry2 - 60) return cachedToken2;
+  if (inflight) return inflight;
+  inflight = trocarToken(serviceAccount, now).finally(() => {
+    inflight = null;
+  });
+  return inflight;
+}
+__name(getFcmAccessToken, "getFcmAccessToken");
+async function trocarToken(serviceAccount, now) {
   const header = b64url2(enc2.encode(JSON.stringify({ alg: "RS256", typ: "JWT" })));
   const claims = b64url2(enc2.encode(JSON.stringify({
     iss: serviceAccount.client_email,
@@ -5149,7 +5201,7 @@ async function getFcmAccessToken(serviceAccount) {
   cachedExpiry2 = now + (data.expires_in || 3600);
   return cachedToken2;
 }
-__name(getFcmAccessToken, "getFcmAccessToken");
+__name(trocarToken, "trocarToken");
 async function sendFcmPush(token, notif, projectId, accessToken) {
   const res = await fetch(
     `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`,
@@ -5183,7 +5235,11 @@ async function sendFcmPush(token, notif, projectId, accessToken) {
       })
     }
   );
-  if (res.ok) return { status: res.status, ok: true };
+  if (res.ok) {
+    await res.body?.cancel?.().catch(() => {
+    });
+    return { status: res.status, ok: true };
+  }
   const body = await res.json().catch(() => null);
   return { status: res.status, ok: false, error: body?.error?.status };
 }
@@ -6629,6 +6685,98 @@ async function onRequestPost2({ request, env }) {
 }
 __name(onRequestPost2, "onRequestPost");
 
+// api/_rankIndex.js
+var TTL2 = 86400 * 120;
+var RANK_INDEX_PREFIX = "rankIndex:";
+var indexKey = /* @__PURE__ */ __name((season) => `${RANK_INDEX_PREFIX}${season}`, "indexKey");
+var rankPrefix = /* @__PURE__ */ __name((season) => `rank:${season}:`, "rankPrefix");
+function vazio() {
+  return { v: 1, p: {}, done: false, cursor: null };
+}
+__name(vazio, "vazio");
+async function lerIndice2(env, season) {
+  const raw = await kvOrThrow(env).get(indexKey(season));
+  if (!raw) return vazio();
+  try {
+    const o = JSON.parse(raw);
+    if (!o || typeof o !== "object" || !o.p || typeof o.p !== "object" || Array.isArray(o.p)) return vazio();
+    return { v: 1, p: o.p, done: o.done === true, cursor: typeof o.cursor === "string" ? o.cursor : null };
+  } catch {
+    return vazio();
+  }
+}
+__name(lerIndice2, "lerIndice");
+async function gravar(env, season, idx) {
+  await kvOrThrow(env).put(indexKey(season), JSON.stringify(idx), { expirationTtl: TTL2 });
+}
+__name(gravar, "gravar");
+async function indexarPontos(env, season, id, points) {
+  try {
+    const idx = await lerIndice2(env, season);
+    idx.p[id] = Number(points) || 0;
+    await gravar(env, season, idx);
+  } catch (err2) {
+    console.warn(JSON.stringify({ event: "rankIndex.write.failed", season, err: String(err2?.message ?? err2).slice(0, 80) }));
+  }
+}
+__name(indexarPontos, "indexarPontos");
+async function podarIndice(env, season, ids2) {
+  if (!ids2.length) return;
+  const idx = await lerIndice2(env, season);
+  let mudou = false;
+  for (const id of ids2) if (id in idx.p) {
+    delete idx.p[id];
+    mudou = true;
+  }
+  if (mudou) await gravar(env, season, idx);
+}
+__name(podarIndice, "podarIndice");
+async function completarIndice(env, season, orcamento = 100) {
+  const idx = await lerIndice2(env, season);
+  if (idx.done) return idx;
+  const store = kvOrThrow(env);
+  const pre = rankPrefix(season);
+  let gastos = 0;
+  let cursor = idx.cursor ?? void 0;
+  let done = false;
+  const limit = Math.max(1, Math.min(1e3, orcamento));
+  while (!done) {
+    const page = await store.list({ prefix: pre, cursor, limit });
+    let faltam = 0;
+    for (const k of page.keys) if (!(k.name.slice(pre.length) in idx.p) && !Number.isFinite(k.metadata?.pts)) faltam++;
+    if (gastos > 0 && gastos + faltam > orcamento) break;
+    for (const k of page.keys) {
+      const id = k.name.slice(pre.length);
+      if (id in idx.p) continue;
+      if (Number.isFinite(k.metadata?.pts)) {
+        idx.p[id] = k.metadata.pts;
+        continue;
+      }
+      const raw = await store.get(k.name);
+      gastos++;
+      if (!raw) continue;
+      try {
+        idx.p[id] = Number(JSON.parse(raw)?.points) || 0;
+      } catch {
+      }
+    }
+    if (page.list_complete || !page.cursor) {
+      done = true;
+      cursor = void 0;
+    } else cursor = page.cursor;
+    if (gastos >= orcamento) break;
+  }
+  const atual = await lerIndice2(env, season);
+  const out = { v: 1, p: { ...idx.p, ...atual.p }, done, cursor: done ? null : cursor ?? null };
+  await gravar(env, season, out);
+  return out;
+}
+__name(completarIndice, "completarIndice");
+function ordenar(p) {
+  return Object.entries(p).map(([owner, points]) => ({ owner, points: Number(points) || 0 })).sort((a, b) => b.points - a.points || (a.owner < b.owner ? -1 : a.owner > b.owner ? 1 : 0));
+}
+__name(ordenar, "ordenar");
+
 // api/_velado.js
 var BB_STAGE = "bb";
 var isOnboardingVelado = /* @__PURE__ */ __name((env) => flagOn(env?.ONBOARDING_VELADO), "isOnboardingVelado");
@@ -7310,7 +7458,8 @@ async function garantirRankDaSeason(env, p, now) {
   const points = Math.round(p.skill * 380 + rng() * 60);
   const jogos = 3 + Math.floor(p.skill * 14 + rng() * 6);
   const wins = Math.round(jogos * (0.3 + p.skill * 0.5));
-  await store.put(key, JSON.stringify({ points, wins, losses: Math.max(0, jogos - wins), day: SIM_EPOCH, matchesToday: 0 }), { expirationTtl: 86400 * 120 });
+  await store.put(key, JSON.stringify({ points, wins, losses: Math.max(0, jogos - wins), day: SIM_EPOCH, matchesToday: 0 }), { expirationTtl: 86400 * 120, metadata: { pts: points } });
+  await indexarPontos(env, season, p.id, points);
 }
 __name(garantirRankDaSeason, "garantirRankDaSeason");
 async function escreverScores(env, p, day2, now) {
@@ -9698,11 +9847,16 @@ async function getRank(env, season, id) {
 }
 __name(getRank, "getRank");
 async function putRank(env, season, id, rec) {
-  await kvOrThrow(env).put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120 });
+  await kvOrThrow(env).put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120, metadata: { pts: Number(rec?.points) || 0 } });
+  await indexarPontos(env, season, id, rec?.points);
 }
 __name(putRank, "putRank");
 var rerollKey = /* @__PURE__ */ __name((id) => `reroll:${id}`, "rerollKey");
 var rerollUsado = /* @__PURE__ */ __name(async (env, id) => !!await kvOrThrow(env).get(rerollKey(id)).catch(() => null), "rerollUsado");
+var RANK_INDEX_BUDGET = 100;
+var RANK_SCAN_MAX = 150;
+var CLOSE_INDEX_BUDGET = 500;
+var CLOSE_SCAN_MAX = 40;
 async function listPrefix2(env, prefix, limit = 100) {
   const out = [];
   let cursor;
@@ -10201,19 +10355,33 @@ async function handleCommunity(context) {
   if ((action === "rank" || action === "seasonResult") && method === "GET") {
     const season = url.searchParams.get("season") || currentSeason();
     if (!/^\d{4}-\d{2}$/.test(season)) return json3({ error: "invalid season" }, 400);
-    const keys = await listPrefix2(env, `rank:${season}:`, 300);
-    const rows = [];
-    const meId = url.searchParams.get("id");
-    if (action === "rank" && meId) {
-      const denied = await denyUnlessOwner(meId);
+    const meIdIdx = url.searchParams.get("id");
+    if (action === "rank" && meIdIdx) {
+      const denied = await denyUnlessOwner(meIdIdx);
       if (denied) return denied;
     }
+    const autenticado = action === "rank" && !!meIdIdx;
+    const indice = autenticado ? await completarIndice(env, season, RANK_INDEX_BUDGET) : await lerIndice2(env, season);
+    const ordenados = indice.done ? ordenar(indice.p) : null;
+    const keys = ordenados ? ordenados.slice(0, RANK_SCAN_MAX).map((r) => `rank:${season}:${r.owner}`) : await listPrefix2(env, `rank:${season}:`, 300);
+    const semLinha = [];
+    const rows = [];
+    const meId = meIdIdx;
     let meRow = null;
     const allPoints = [];
     for (const k of keys) {
+      if (ordenados && rows.length >= 50) break;
       const raw = await kvOrThrow(env).get(k);
-      if (!raw) continue;
-      const rec = JSON.parse(raw);
+      if (!raw) {
+        semLinha.push(k.slice(`rank:${season}:`.length));
+        continue;
+      }
+      let rec;
+      try {
+        rec = JSON.parse(raw);
+      } catch {
+        continue;
+      }
       allPoints.push({ owner: k.slice(`rank:${season}:`.length), points: Number(rec.points) || 0 });
       const ownerSave = k.slice(`rank:${season}:`.length);
       const p = await getProfile(env, ownerSave);
@@ -10245,9 +10413,20 @@ async function handleCommunity(context) {
       });
     }
     rows.sort((a, b) => b.points - a.points);
+    if (autenticado && semLinha.length) await podarIndice(env, season, semLinha);
     if (action === "seasonResult") return json3({ season, top3: rows.slice(0, 3) });
     let myPlace = null;
-    if (meId) {
+    if (ordenados && meId) {
+      const at = ordenados.findIndex((r) => r.owner === meId);
+      if (at >= 0) myPlace = at + 1;
+      if (!meRow && at >= 0) {
+        const p = await getProfile(env, meId);
+        if (isHidden(p)) {
+          const rec = await getRank(env, season, meId);
+          meRow = { id: await ensurePid(env, p), points: rec.points, wins: rec.wins, losses: rec.losses, lifetime: p.lifetimePoints ?? 0, hidden: true };
+        }
+      }
+    } else if (meId) {
       allPoints.sort((a, b) => b.points - a.points || (a.owner < b.owner ? -1 : a.owner > b.owner ? 1 : 0));
       const at = allPoints.findIndex((r) => r.owner === meId);
       if (at >= 0) myPlace = at + 1;
@@ -10262,12 +10441,25 @@ async function handleCommunity(context) {
     if (await kvOrThrow(env).get(closedKey)) {
       return json3({ ok: true, season, awarded: 0, already: true });
     }
-    const keys = await listPrefix2(env, `rank:${season}:`, 300);
+    const indice = await completarIndice(env, season, CLOSE_INDEX_BUDGET);
+    let keys;
+    if (indice.done) {
+      keys = ordenar(indice.p).filter((r) => !isSimuladoId(r.owner)).slice(0, CLOSE_SCAN_MAX).map((r) => `rank:${season}:${r.owner}`);
+    } else {
+      console.warn(JSON.stringify({ event: "season.close.fallback", season, indexed: Object.keys(indice.p).length }));
+      keys = await listPrefix2(env, `rank:${season}:`, 300);
+    }
     const rows = [];
     for (const k of keys) {
       const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
-      rows.push({ id: k.slice(`rank:${season}:`.length), points: JSON.parse(raw).points });
+      let rec;
+      try {
+        rec = JSON.parse(raw);
+      } catch {
+        continue;
+      }
+      rows.push({ id: k.slice(`rank:${season}:`.length), points: Number(rec?.points) || 0 });
     }
     rows.sort((a, b) => b.points - a.points);
     const top3 = [];
@@ -10336,7 +10528,13 @@ async function handleCommunity(context) {
     await putProfile(env, id, me);
     if ((await getProfile(env, friendSave))?.simulated === true) return json3({ ok: true });
     const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
-    const gifts = raw ? JSON.parse(raw) : [];
+    let gifts = [];
+    try {
+      const lido = raw ? JSON.parse(raw) : [];
+      gifts = Array.isArray(lido) ? lido : [];
+    } catch {
+      gifts = [];
+    }
     gifts.push({ from: isHidden(me) ? "" : me.name, bits: 20, at: Date.now(), gid: crypto.randomUUID() });
     await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
     return json3({ ok: true });
@@ -10716,7 +10914,7 @@ async function onRequestOptions8() {
   return new Response(null, { headers: CORS8 });
 }
 __name(onRequestOptions8, "onRequestOptions");
-async function onRequestGet4({ request, env }) {
+async function onRequestGetBruto({ request, env }) {
   const url = new URL(request.url);
   if (url.searchParams.get("action") === "beta-full") {
     return json5({ betaFull: (await verifiedBetaFull(env, request)).betaFull }, 200);
@@ -10740,8 +10938,8 @@ async function onRequestGet4({ request, env }) {
   const view = admin ? adminPublicView(publicView(ent)) : { ...base, admin: false };
   return json5({ ...view, adsEnabled: env.ADMOB_SSV_ENABLED === "true" });
 }
-__name(onRequestGet4, "onRequestGet");
-async function onRequestPost3({ request, env }) {
+__name(onRequestGetBruto, "onRequestGetBruto");
+async function onRequestPostBruto2({ request, env }) {
   const url = new URL(request.url);
   const action = url.searchParams.get("action");
   if (action === "grant") return handleGrant(request, env);
@@ -10832,7 +11030,9 @@ async function onRequestPost3({ request, env }) {
   }
   return json5({ error: "Not found" }, 404);
 }
-__name(onRequestPost3, "onRequestPost");
+__name(onRequestPostBruto2, "onRequestPostBruto");
+var onRequestGet4 = comEntitlementLegivel(onRequestGetBruto, CORS8);
+var onRequestPost3 = comEntitlementLegivel(onRequestPostBruto2, CORS8);
 
 // api/fcm-subscribe.js
 var CORS9 = {
@@ -12462,7 +12662,7 @@ async function respostaDeRegenRepetida(env, id, formId, opId, op) {
   return Response.json({ error: "regen-duplicate" }, { status: 409, headers: CORS10 });
 }
 __name(respostaDeRegenRepetida, "respostaDeRegenRepetida");
-async function onRequestPost5({ request, env }) {
+async function onRequestPostBruto3({ request, env }) {
   let lock = null;
   let regenOp = null;
   let regenId = null;
@@ -12654,7 +12854,8 @@ async function onRequestPost5({ request, env }) {
     await destravar(env, lock);
   }
 }
-__name(onRequestPost5, "onRequestPost");
+__name(onRequestPostBruto3, "onRequestPostBruto");
+var onRequestPost5 = comEntitlementLegivel(onRequestPostBruto3, CORS10);
 
 // api/free-rookie.js
 async function onRequestPost6({ request, env }) {
@@ -13015,7 +13216,7 @@ async function onRequestGet5({ request, env }) {
   return Response.json({ items }, { headers });
 }
 __name(onRequestGet5, "onRequestGet");
-async function onRequestPost7({ request, env }) {
+async function onRequestPostBruto4({ request, env }) {
   const bloqueio = await gate(request, env);
   if (bloqueio) return bloqueio;
   let body = null;
@@ -13032,7 +13233,8 @@ async function onRequestPost7({ request, env }) {
   if (r.status === "not-found") return Response.json({ error: "not-found" }, { status: 404, headers });
   return Response.json({ ok: true, ...r }, { headers });
 }
-__name(onRequestPost7, "onRequestPost");
+__name(onRequestPostBruto4, "onRequestPostBruto");
+var onRequestPost7 = comEntitlementLegivel(onRequestPostBruto4, { "Cache-Control": "no-store" });
 
 // api/gm-soulmons.js
 var PAGE = 24;
@@ -13815,7 +14017,7 @@ async function onRequestOptions12() {
   return new Response(null, { headers: CORS12 });
 }
 __name(onRequestOptions12, "onRequestOptions");
-async function onRequest7({ request, env }) {
+async function onRequestBruto2({ request, env }) {
   const url = new URL(request.url);
   let body = null;
   if (request.method === "POST") {
@@ -14069,11 +14271,12 @@ async function onRequest7({ request, env }) {
   }
   return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS12 });
 }
-__name(onRequest7, "onRequest");
+__name(onRequestBruto2, "onRequestBruto");
+var onRequest7 = comEntitlementLegivel(onRequestBruto2, CORS12);
 
 // api/sprite-admin.js
 var json9 = /* @__PURE__ */ __name((o, status = 200) => Response.json(o, { status, headers: { "Cache-Control": "no-store" } }), "json");
-async function onRequestPost9({ request, env }) {
+async function onRequestPostBruto5({ request, env }) {
   if (!env?.METRICS_ADMIN_KEY) return json9({ error: "Not found" }, 404);
   const gate2 = takeToken("sprite-admin", clientKey(request), { limit: 20, windowMs: 6e4 });
   if (!gate2.ok) return tooManyRequests(gate2.retryAfter);
@@ -14099,7 +14302,8 @@ async function onRequestPost9({ request, env }) {
   console.log(JSON.stringify({ event: "sprite.admin.release-form", saveIdPrefix: id.slice(0, 8), formId, antes, depois: forms[formId] }));
   return json9({ ok: true, formId, antes, depois: forms[formId] });
 }
-__name(onRequestPost9, "onRequestPost");
+__name(onRequestPostBruto5, "onRequestPostBruto");
+var onRequestPost9 = comEntitlementLegivel(onRequestPostBruto5, { "Cache-Control": "no-store" });
 
 // api/sprite-image.js
 var IMMUTABLE = "public, max-age=31536000, immutable";
@@ -14668,7 +14872,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-dlPzjL/functionsRoutes-0.9293894207534089.mjs
+// ../.wrangler/tmp/pages-94W9iZ/functionsRoutes-0.6638434706717938.mjs
 var routes = [
   {
     routePath: "/api/account",
