@@ -59,7 +59,13 @@ export function SequenciaPlayer({ quadros, language, slots, onDone, onChoice, on
   const fim = useRef(false);
   const q: Quadro | undefined = quadros[i];
 
+  // Transição preta em curso: um 2º toque (escolha, pular) nos 350 ms não
+  // pode avançar de novo nem repetir `onChoice`; e o timer morre com o player.
+  const transicao = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (transicao.current) clearTimeout(transicao.current); }, []);
+
   const ir = useCallback((n: number) => {
+    if (transicao.current) return;
     if (n >= quadros.length) {
       if (!fim.current) { fim.current = true; onDone(); }
       return;
@@ -67,7 +73,7 @@ export function SequenciaPlayer({ quadros, language, slots, onDone, onChoice, on
     const alvo = quadros[n];
     if (alvo.tipo === 'cena' && alvo.transicaoPreta) {
       setPreto(true);
-      setTimeout(() => { setI(n); setPreto(false); }, 350);
+      transicao.current = setTimeout(() => { transicao.current = null; setI(n); setPreto(false); }, 350);
     } else setI(n);
   }, [quadros, onDone]);
 
@@ -111,7 +117,7 @@ export function SequenciaPlayer({ quadros, language, slots, onDone, onChoice, on
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {q.opcoes.map((o) => (
                   <button key={o.id} type="button" style={botao}
-                    onClick={() => { onChoice?.(o.id); ir(proximo(quadros, i)); }}>{t(o.rotulo, language)}</button>
+                    onClick={() => { if (transicao.current) return; onChoice?.(o.id); ir(proximo(quadros, i)); }}>{t(o.rotulo, language)}</button>
                 ))}
               </div>
             </div>

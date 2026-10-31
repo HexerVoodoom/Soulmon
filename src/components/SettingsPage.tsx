@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   ActionRow, Disclosure, Field, GroupCard, Segment, SwitchRow, TimeField, sm2Button, sm2Hint, sm2Text,
 } from './form/FormKit';
@@ -306,21 +306,33 @@ export function SettingsPage({
     ? new Date(lastSyncRaw).toLocaleString(isPt ? 'pt-BR' : 'en-US', { dateStyle: 'short', timeStyle: 'short' })
     : null;
 
+  // Timers dos avisos num ref: copiar 2x não encurta o "copiado", e o "erro" de
+  // uma restauração anterior não volta para `idle` NO MEIO de uma nova (isso
+  // reabilitava o botão durante o `loading` e permitia restaurar 2x).
+  const copiedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const restoreTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    if (restoreTimer.current) clearTimeout(restoreTimer.current);
+  }, []);
+
   const handleCopy = () => {
     if (!saveId) return;
     navigator.clipboard.writeText(saveId).then(() => {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+      copiedTimer.current = setTimeout(() => setCopied(false), 2000);
     });
   };
 
   const handleRestore = async () => {
     const id = restoreInput.trim();
     if (!id) return;
+    if (restoreTimer.current) { clearTimeout(restoreTimer.current); restoreTimer.current = null; }
     setRestoreStatus('loading');
     const ok = await onRestoreFromCloud(id);
     setRestoreStatus(ok ? 'ok' : 'err');
-    if (!ok) setTimeout(() => setRestoreStatus('idle'), 3000);
+    if (!ok) restoreTimer.current = setTimeout(() => setRestoreStatus('idle'), 3000);
   };
 
   return (
