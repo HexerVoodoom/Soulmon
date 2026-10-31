@@ -4,6 +4,7 @@
  * forma SÍNCRONA (`buildDungeonWave`). Chave = `NNN-slug` (`RosterEntry.artFile`).
  */
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
+import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 
 const FILES = import.meta.glob('../assets/soulmon/novos-arquivo/combinados/*.png', { eager: true, import: 'default' }) as Record<string, string>;
 
@@ -15,6 +16,12 @@ const COMBINADOS_PNG: Record<string, string> = Object.fromEntries(
 
 /** Lote 1 (trios curados) sem PNG próprio: cai para o rookie da criatura base do elemento DOMINANTE (1º componente). PNG próprio vence. */
 for (const [num, slug, , dominante] of COMBINADOS_LOTE1_DATA) {
+  const key = `${num}-${slug}`;
+  const fallback = NOVOS_ROOKIE[`../assets/soulmon/novos/${dominante}-rookie.png`];
+  if (!COMBINADOS_PNG[key] && fallback) COMBINADOS_PNG[key] = fallback;
+}
+/** Lote 2 (trios curados) sem PNG próprio: cai para o rookie da criatura base do elemento DOMINANTE (1º componente). PNG próprio vence. */
+for (const [num, slug, , dominante] of COMBINADOS_LOTE2_DATA) {
   const key = `${num}-${slug}`;
   const fallback = NOVOS_ROOKIE[`../assets/soulmon/novos/${dominante}-rookie.png`];
   if (!COMBINADOS_PNG[key] && fallback) COMBINADOS_PNG[key] = fallback;

@@ -18,6 +18,7 @@
 import { NOVOS_DATA } from './novosSoulmonData';
 import { COMBINADOS_DATA, INIMIGOS_API_DATA } from './enemyRosterData';
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
+import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 import { STARTER_ELEMENT } from './starterElements';
 import { TEMA_INIMIGOS } from './temaInimigos';
 
@@ -72,6 +73,7 @@ function build(): Record<string, string> {
   for (const n of NOVOS_DATA) t[`novo:${n.element}`] = n.element;
   for (const [num, slug] of COMBINADOS_DATA) t[`cmb:${num}`] = slug; // slug do arquivo = id fundido (manifest.combination)
   for (const [num, slug] of COMBINADOS_LOTE1_DATA) t[`cmb:${num}`] = slug; // lote 1
+  for (const [num, slug] of COMBINADOS_LOTE2_DATA) t[`cmb:${num}`] = slug; // lote 2
   for (const [id, , , el] of INIMIGOS_API_DATA) t[`api:${id}`] = el;
   for (const [id, el] of Object.entries(STARTER_ELEMENT)) t[`starter:${id}`] = el;
   for (const [id, el] of Object.entries(LINE_ELEMENT)) t[`line:${id}`] = el;
