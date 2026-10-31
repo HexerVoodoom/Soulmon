@@ -58,6 +58,7 @@ import { pickRankedOpponents } from './_rankedPick.js';
 import { loadDuelSide as loadDuelSideShared, loadDuelSideWithSprite } from './_duelLoad.js';
 import { avatarIdOrNull } from './_avatares.js';
 import { artLineOrNull, spriteUrlOrNull } from './_artLine.js';
+import { formsFromSaveState } from './_formHistory.js';
 import { frameIdOrNull } from './_frames.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -1077,6 +1078,25 @@ async function handleCommunity(context) {
   }
 
   // ── Amigos ────────────────────────────────────────────────────────────────
+  // ── Formas que o Soulmon de um AMIGO já teve (leitura autenticada, só entre amigos) ─────────────────────────
+  // `id` = saveId do chamador (autorizado como dono), `friend` = pid do amigo. 403 se o amigo não está na lista de
+  // quem pede (mesmo padrão de `friends`/`gift`); amigo escondido/inexistente responde igual ao não-amigo (não confirma a conta).
+  if (action === 'forms' && method === 'GET') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const friendPid = url.searchParams.get('friend') || '';
+    const friendSave = VALID_ID.test(friendPid) ? await saveIdForPublicId(env, friendPid) : null;
+    const me = await getProfile(env, id);
+    const p = friendSave ? await getProfile(env, friendSave) : null;
+    if (!friendSave || !me || !(me.friends || []).includes(friendSave) || !p || isHidden(p)) return json({ error: 'not friends' }, 403);
+    let state = null;
+    try {
+      const value = await kvOrThrow(env).get(friendSave);
+      if (typeof value === 'string' && value.length <= DUEL_SAVE_MAX_CHARS) state = JSON.parse(value);
+    } catch { state = null; }
+    return json({ forms: formsFromSaveState(state, p.element).map(({ stage, spriteUrl, element, date }) => ({ stage, spriteUrl, element, date })) });
+  }
+
   if (action === 'friends' && method === 'POST') {
     const { friendId, remove } = body;
     if (!VALID_ID.test(id || '') || !VALID_ID.test(friendId || '')) return json({ error: 'invalid id' }, 400);
