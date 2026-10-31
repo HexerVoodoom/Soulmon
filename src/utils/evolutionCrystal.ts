@@ -45,6 +45,7 @@ export const CRYSTAL_BLOCKED_LOTS: readonly string[] = [
   'hall.grove',
   'arena.torneio',
   'arena.duelo',        // Arena livre
+  'arena.guerra',       // Guerra de Clãs (dono, 31/10)
 ];
 
 export function crystalBlocksLot(area: string, lotId: string | null | undefined): boolean {
