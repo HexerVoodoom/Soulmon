@@ -15,6 +15,7 @@
  */
 import { NOVOS_DATA, novoHasForm, novoFormName, type NovoAttack } from './novosSoulmonData';
 import { COMBINADOS_DATA, INIMIGOS_API_DATA } from './enemyRosterData';
+import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 
 export type EnemyStage = 'rookie' | 'champion' | 'ultimate' | 'mega';
 export const ENEMY_STAGES: readonly EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
@@ -61,6 +62,15 @@ function build(): RosterEntry[] {
     }
   }
   for (const [num, slug, name, e1, e2] of COMBINADOS_DATA) {
+    const base = BASE_BY_ELEMENT[e1];
+    const id = `cmb${num}`;
+    out.push({
+      key: chaveBestiario(id, 'rookie'), id, stage: 'rookie', kind: 'combinado', element: slug, elements: [e1, e2],
+      name, basico: base.basico, especial: base.especial, artFile: `${num}-${slug}`,
+    });
+  }
+  // lote 2 dos elementos curados (trios): 2 primeiros componentes mandam nos golpes, como os outros trios
+  for (const [num, slug, name, e1, e2] of COMBINADOS_LOTE2_DATA) {
     const base = BASE_BY_ELEMENT[e1];
     const id = `cmb${num}`;
     out.push({

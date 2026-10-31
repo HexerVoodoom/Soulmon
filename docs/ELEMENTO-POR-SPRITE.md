@@ -330,3 +330,28 @@ Linhas 193-211 têm 3+ componentes: o jogo guarda só 2 (`COMBINADOS_DATA`) para
 | sim_0048 | terra |
 | sim_0049 | industrial |
 | sim_0050 | luz |
+
+
+### Lote 2 dos 50 curados (229-245, sem PNG ainda): `COMBINADOS_LOTE2_DATA` em `src/utils/elementosLote2.data.ts`
+
+Arte de reserva = rookie da criatura base do 1º componente (`enemyRosterArt.ts`); um `combinados/NNN-slug.png` real vence sozinho. Ainda NÃO estão no manifest nem em `fxFacingTable.ts` (sem FX; cai em `neutro`). Prompts de arte em `E:/Soulmon-assets/elementos-novos/lote2/`.
+
+| n | arquivo (futuro) | elemento | componentes |
+|---|---|---|---|
+| 229 | combinados/229-materia_escura.png | materia_escura | gravidade+sombra+arcano |
+| 230 | combinados/230-milagre.png | milagre | luz+vida+arcano |
+| 231 | combinados/231-memoria.png | memoria | tempo+arcano+luz |
+| 232 | combinados/232-coral_celeste.png | coral_celeste | som+luz+arcano |
+| 233 | combinados/233-via_lactea.png | via_lactea | espaco+luz+arcano |
+| 234 | combinados/234-delirio.png | delirio | vileza+som+arcano |
+| 235 | combinados/235-cacador_de_almas.png | cacador_de_almas | marcial+morte+sombra |
+| 236 | combinados/236-presagio.png | presagio | tempo+sombra+espaco |
+| 237 | combinados/237-horizonte_de_eventos.png | horizonte_de_eventos | gravidade+espaco+sombra |
+| 238 | combinados/238-lamina_do_juizo.png | lamina_do_juizo | marcial+luz+morte |
+| 239 | combinados/239-bencao_marcial.png | bencao_marcial | luz+marcial+vigor |
+| 240 | combinados/240-arauto.png | arauto | marcial+som+luz |
+| 241 | combinados/241-farol.png | farol | luz+espaco+som |
+| 242 | combinados/242-carniceiro.png | carniceiro | vileza+vigor+morte |
+| 243 | combinados/243-entropia_final.png | entropia_final | tempo+morte+gravidade |
+| 244 | combinados/244-gladiador.png | gladiador | marcial+vigor+som |
+| 245 | combinados/245-punho_gravitico.png | punho_gravitico | marcial+gravidade+vigor |
