@@ -251,7 +251,7 @@ const XP_BY_LEVEL: Record<string, number> = {
 };
 import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/labels';
 import type { AISettings } from './components/AISettingsModal';
-import { SequenciaOnboarding } from './components/onboarding/sequencia/SequenciaOnboarding';
+const SequenciaOnboarding = lazy(() => import('./components/onboarding/sequencia/SequenciaOnboarding').then(m => ({ default: m.SequenciaOnboarding })));
 import { ONBOARDING_VELADO } from './components/onboarding/sequencia/flag';
 // Mercenário (velado): leva o catálogo de atividades (~dezenas de KB) — fora da entrada.
 const MercGuildSheet = lazy(() => import('./components/MercGuildSheet').then(m => ({ default: m.MercGuildSheet })));
@@ -8595,7 +8595,7 @@ export default function App() {
               onChoose={escolherMercenario} onConfirm={confirmarMercenario} />
             </Suspense>
           )}
-          {veladoOn && reverHistoria && <SequenciaOnboarding forcar language={language} onDone={() => setReverHistoria(false)} />}
+          {veladoOn && reverHistoria && <Suspense fallback={null}><SequenciaOnboarding forcar language={language} onDone={() => setReverHistoria(false)} /></Suspense>}
           {veladoOn && reverIntro && <IntroCinematica language={language} onDone={() => setReverIntro(false)} />}
           {pane === 'settings' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><SettingsPage
