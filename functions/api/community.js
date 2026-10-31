@@ -985,7 +985,11 @@ async function handleCommunity(context) {
     for (const k of keys) {
       const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
-      rows.push({ id: k.slice(`rank:${season}:`.length), points: JSON.parse(raw).points });
+      // Linha ilegível não derruba o fechamento (o cron só tenta no dia 1 e a season ficaria sem pódio), e
+      // `points` não numérico vira 0 como no `rank` — `NaN` no `sort` embaralhava o pódio.
+      let rec;
+      try { rec = JSON.parse(raw); } catch { continue; }
+      rows.push({ id: k.slice(`rank:${season}:`.length), points: Number(rec?.points) || 0 });
     }
     rows.sort((a, b) => b.points - a.points);
     // M11: simulado nunca leva prêmio — o troféu desce para o próximo jogador REAL (mesma regra de `payablePlacements`).
@@ -1078,7 +1082,9 @@ async function handleCommunity(context) {
     if ((await getProfile(env, friendSave))?.simulated === true) return json({ ok: true });
 
     const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
-    const gifts = raw ? JSON.parse(raw) : [];
+    // Lista ilegível na KV não pode dar 500 DEPOIS do `giftLog` gravado (o presente do dia sumia): recomeça vazia.
+    let gifts = [];
+    try { const lido = raw ? JSON.parse(raw) : []; gifts = Array.isArray(lido) ? lido : []; } catch { gifts = []; }
     gifts.push({ from: isHidden(me) ? '' : me.name, bits: 20, at: Date.now(), gid: crypto.randomUUID() });
     await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
     return json({ ok: true });
