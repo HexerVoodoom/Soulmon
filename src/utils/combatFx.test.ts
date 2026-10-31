@@ -22,8 +22,8 @@ describe('inventário da arte de skill por elemento (a base da cena de combate)'
     }
   });
 
-  it('o glob achou a arte inteira: 230 elementos × 6 estados', () => {
-    expect(ATTACK_FX_COUNT).toBe(230 * 6);
+  it('o glob achou a arte inteira: 280 elementos × 6 estados', () => {
+    expect(ATTACK_FX_COUNT).toBe(280 * 6);
   });
 
   it('id sem arte cai no neutro; planta/industrial têm arte própria (sem alias)', () => {

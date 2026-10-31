@@ -130,10 +130,10 @@ describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => 
 
 describe('arquivo de ramos e combinados (sem consumidor)', () => {
   const ARQ = join(process.cwd(), 'src/assets/soulmon/novos-arquivo');
-  it('manifest bate com os PNGs (120 ramos + 211 combinados), 256² RGBA, sem órfão', () => {
+  it('manifest bate com os PNGs (120 ramos + 261 combinados), 256² RGBA, sem órfão', () => {
     const m = JSON.parse(readFileSync(join(ARQ, 'manifest.json'), 'utf8'));
     expect(m.branches).toHaveLength(120);
-    expect(m.combined).toHaveLength(211);
+    expect(m.combined).toHaveLength(261);
     const listados = new Set<string>([...m.branches, ...m.combined].map((x: { file: string }) => x.file));
     const reais = [...readdirSync(join(ARQ, 'combinados')).map(f => `combinados/${f}`),
       ...readdirSync(join(ARQ, 'ramos')).flatMap(d => readdirSync(join(ARQ, 'ramos', d)).map(f => `ramos/${d}/${f}`))];
@@ -141,6 +141,15 @@ describe('arquivo de ramos e combinados (sem consumidor)', () => {
     for (const f of reais) {
       const b = readFileSync(join(ARQ, f));
       expect([b.readUInt32BE(16), b.readUInt32BE(20), b[25]]).toEqual([256, 256, 6]);
+    }
+  });
+  it('formas champion/ultimate/mega dos 50 curados (212-261): 150 PNGs 256² RGBA, 3 por id', () => {
+    const d = join(ARQ, 'combinados-formas');
+    const fs = readdirSync(d);
+    expect(fs).toHaveLength(150);
+    for (const f of fs) {
+      const b = readFileSync(join(d, f));
+      expect([b.readUInt32BE(16), b.readUInt32BE(20), b[25]], f).toEqual([256, 256, 6]);
     }
   });
   it('nenhum arquivo de src importa o arquivo (fica fora do bundle)', () => {

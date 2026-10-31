@@ -4167,6 +4167,622 @@
    "role": "misto",
    "realm": "novo",
    "seed": "311000"
+  },
+  {
+   "n": 212,
+   "file": "combinados/212-geiser.png",
+   "combination": "Geiser",
+   "components": [
+    "fogo",
+    "agua",
+    "terra"
+   ],
+   "name": "Geyzor",
+   "lote": 1
+  },
+  {
+   "n": 213,
+   "file": "combinados/213-vulcao.png",
+   "combination": "Vulcao",
+   "components": [
+    "fogo",
+    "terra",
+    "ar"
+   ],
+   "name": "Vulkar",
+   "lote": 1
+  },
+  {
+   "n": 214,
+   "file": "combinados/214-deserto.png",
+   "combination": "Deserto",
+   "components": [
+    "fogo",
+    "terra",
+    "tempo"
+   ],
+   "name": "Dunarid",
+   "lote": 1
+  },
+  {
+   "n": 215,
+   "file": "combinados/215-relampago_seco.png",
+   "combination": "Relampago Seco",
+   "components": [
+    "fogo",
+    "ar",
+    "eletricidade"
+   ],
+   "name": "Fulgaru",
+   "lote": 1
+  },
+  {
+   "n": 216,
+   "file": "combinados/216-supernova.png",
+   "combination": "Supernova",
+   "components": [
+    "fogo",
+    "gravidade",
+    "espaco"
+   ],
+   "name": "Novarok",
+   "lote": 1
+  },
+  {
+   "n": 217,
+   "file": "combinados/217-nevasca.png",
+   "combination": "Nevasca",
+   "components": [
+    "agua",
+    "terra",
+    "ar"
+   ],
+   "name": "Blizzo",
+   "lote": 1
+  },
+  {
+   "n": 218,
+   "file": "combinados/218-permafrost.png",
+   "combination": "Permafrost",
+   "components": [
+    "agua",
+    "terra",
+    "tempo"
+   ],
+   "name": "Frostal",
+   "lote": 1
+  },
+  {
+   "n": 219,
+   "file": "combinados/219-monsoes.png",
+   "combination": "Monsoes",
+   "components": [
+    "agua",
+    "ar",
+    "vida"
+   ],
+   "name": "Monsun",
+   "lote": 1
+  },
+  {
+   "n": 220,
+   "file": "combinados/220-peste_negra.png",
+   "combination": "Peste Negra",
+   "components": [
+    "agua",
+    "vileza",
+    "morte"
+   ],
+   "name": "Plaguor",
+   "lote": 1
+  },
+  {
+   "n": 221,
+   "file": "combinados/221-coro_dos_afogados.png",
+   "combination": "Coro Dos Afogados",
+   "components": [
+    "agua",
+    "morte",
+    "som"
+   ],
+   "name": "Drownell",
+   "lote": 1
+  },
+  {
+   "n": 222,
+   "file": "combinados/222-ossario_vivo.png",
+   "combination": "Ossario Vivo",
+   "components": [
+    "terra",
+    "morte",
+    "vida"
+   ],
+   "name": "Bonegrow",
+   "lote": 1
+  },
+  {
+   "n": 223,
+   "file": "combinados/223-jardim_eterno.png",
+   "combination": "Jardim Eterno",
+   "components": [
+    "terra",
+    "vida",
+    "tempo"
+   ],
+   "name": "Evergro",
+   "lote": 1
+  },
+  {
+   "n": 224,
+   "file": "combinados/224-aurora_boreal.png",
+   "combination": "Aurora Boreal",
+   "components": [
+    "ar",
+    "eletricidade",
+    "luz"
+   ],
+   "name": "Borealis",
+   "lote": 1
+  },
+  {
+   "n": 225,
+   "file": "combinados/225-duelista_temporal.png",
+   "combination": "Duelista Temporal",
+   "components": [
+    "ar",
+    "marcial",
+    "tempo"
+   ],
+   "name": "Chronduel",
+   "lote": 1
+  },
+  {
+   "n": 226,
+   "file": "combinados/226-pulso_cosmico.png",
+   "combination": "Pulso Cosmico",
+   "components": [
+    "eletricidade",
+    "som",
+    "espaco"
+   ],
+   "name": "Cosmopulse",
+   "lote": 1
+  },
+  {
+   "n": 227,
+   "file": "combinados/227-sabbat.png",
+   "combination": "Sabbat",
+   "components": [
+    "arcano",
+    "sombra",
+    "vileza"
+   ],
+   "name": "Sabbatu",
+   "lote": 1
+  },
+  {
+   "n": 228,
+   "file": "combinados/228-hipnose.png",
+   "combination": "Hipnose",
+   "components": [
+    "arcano",
+    "sombra",
+    "som"
+   ],
+   "name": "Hypnore",
+   "lote": 1
+  },
+  {
+   "n": 229,
+   "file": "combinados/229-materia_escura.png",
+   "combination": "Materia Escura",
+   "components": [
+    "gravidade",
+    "sombra",
+    "arcano"
+   ],
+   "name": "Voidmass",
+   "lote": 2
+  },
+  {
+   "n": 230,
+   "file": "combinados/230-milagre.png",
+   "combination": "Milagre",
+   "components": [
+    "luz",
+    "vida",
+    "arcano"
+   ],
+   "name": "Miraclo",
+   "lote": 2
+  },
+  {
+   "n": 231,
+   "file": "combinados/231-memoria.png",
+   "combination": "Memoria",
+   "components": [
+    "tempo",
+    "arcano",
+    "luz"
+   ],
+   "name": "Remembra",
+   "lote": 2
+  },
+  {
+   "n": 232,
+   "file": "combinados/232-coral_celeste.png",
+   "combination": "Coral Celeste",
+   "components": [
+    "som",
+    "luz",
+    "arcano"
+   ],
+   "name": "Choralis",
+   "lote": 2
+  },
+  {
+   "n": 233,
+   "file": "combinados/233-via_lactea.png",
+   "combination": "Via Lactea",
+   "components": [
+    "espaco",
+    "luz",
+    "arcano"
+   ],
+   "name": "Galaxu",
+   "lote": 2
+  },
+  {
+   "n": 234,
+   "file": "combinados/234-delirio.png",
+   "combination": "Delirio",
+   "components": [
+    "vileza",
+    "som",
+    "arcano"
+   ],
+   "name": "Deliro",
+   "lote": 2
+  },
+  {
+   "n": 235,
+   "file": "combinados/235-cacador_de_almas.png",
+   "combination": "Cacador De Almas",
+   "components": [
+    "marcial",
+    "morte",
+    "sombra"
+   ],
+   "name": "Soulreap",
+   "lote": 2
+  },
+  {
+   "n": 236,
+   "file": "combinados/236-presagio.png",
+   "combination": "Presagio",
+   "components": [
+    "tempo",
+    "sombra",
+    "espaco"
+   ],
+   "name": "Omenyx",
+   "lote": 2
+  },
+  {
+   "n": 237,
+   "file": "combinados/237-horizonte_de_eventos.png",
+   "combination": "Horizonte De Eventos",
+   "components": [
+    "gravidade",
+    "espaco",
+    "sombra"
+   ],
+   "name": "Eventor",
+   "lote": 2
+  },
+  {
+   "n": 238,
+   "file": "combinados/238-lamina_do_juizo.png",
+   "combination": "Lamina Do Juizo",
+   "components": [
+    "marcial",
+    "luz",
+    "morte"
+   ],
+   "name": "Judgeblade",
+   "lote": 2
+  },
+  {
+   "n": 239,
+   "file": "combinados/239-bencao_marcial.png",
+   "combination": "Bencao Marcial",
+   "components": [
+    "luz",
+    "marcial",
+    "vigor"
+   ],
+   "name": "Blessarm",
+   "lote": 2
+  },
+  {
+   "n": 240,
+   "file": "combinados/240-arauto.png",
+   "combination": "Arauto",
+   "components": [
+    "marcial",
+    "som",
+    "luz"
+   ],
+   "name": "Heraldo",
+   "lote": 2
+  },
+  {
+   "n": 241,
+   "file": "combinados/241-farol.png",
+   "combination": "Farol",
+   "components": [
+    "luz",
+    "espaco",
+    "som"
+   ],
+   "name": "Beaconel",
+   "lote": 2
+  },
+  {
+   "n": 242,
+   "file": "combinados/242-carniceiro.png",
+   "combination": "Carniceiro",
+   "components": [
+    "vileza",
+    "vigor",
+    "morte"
+   ],
+   "name": "Gorevor",
+   "lote": 2
+  },
+  {
+   "n": 243,
+   "file": "combinados/243-entropia_final.png",
+   "combination": "Entropia Final",
+   "components": [
+    "tempo",
+    "morte",
+    "gravidade"
+   ],
+   "name": "Entropyx",
+   "lote": 2
+  },
+  {
+   "n": 244,
+   "file": "combinados/244-gladiador.png",
+   "combination": "Gladiador",
+   "components": [
+    "marcial",
+    "vigor",
+    "som"
+   ],
+   "name": "Gladiox",
+   "lote": 2
+  },
+  {
+   "n": 245,
+   "file": "combinados/245-punho_gravitico.png",
+   "combination": "Punho Gravitico",
+   "components": [
+    "marcial",
+    "gravidade",
+    "vigor"
+   ],
+   "name": "Gravifist",
+   "lote": 2
+  },
+  {
+   "n": 246,
+   "file": "combinados/246-avatar_elemental.png",
+   "combination": "Avatar Elemental",
+   "components": [
+    "fogo",
+    "agua",
+    "terra",
+    "ar"
+   ],
+   "name": "Elemantis",
+   "lote": 3
+  },
+  {
+   "n": 247,
+   "file": "combinados/247-titano_forjado.png",
+   "combination": "Titano Forjado",
+   "components": [
+    "fogo",
+    "terra",
+    "vigor",
+    "marcial"
+   ],
+   "name": "Forjatan",
+   "lote": 3
+  },
+  {
+   "n": 248,
+   "file": "combinados/248-cataclismo.png",
+   "combination": "Cataclismo",
+   "components": [
+    "fogo",
+    "terra",
+    "gravidade",
+    "espaco"
+   ],
+   "name": "Cataclix",
+   "lote": 3
+  },
+  {
+   "n": 249,
+   "file": "combinados/249-sopro_do_dragao.png",
+   "combination": "Sopro Do Dragao",
+   "components": [
+    "fogo",
+    "ar",
+    "vigor",
+    "marcial"
+   ],
+   "name": "Dragalen",
+   "lote": 3
+  },
+  {
+   "n": 250,
+   "file": "combinados/250-ragnarok.png",
+   "combination": "Ragnarok",
+   "components": [
+    "fogo",
+    "morte",
+    "tempo",
+    "gravidade"
+   ],
+   "name": "Ragnavor",
+   "lote": 3
+  },
+  {
+   "n": 251,
+   "file": "combinados/251-genesis.png",
+   "combination": "Genesis",
+   "components": [
+    "agua",
+    "terra",
+    "luz",
+    "vida"
+   ],
+   "name": "Genesia",
+   "lote": 3
+  },
+  {
+   "n": 252,
+   "file": "combinados/252-tempestade_perfeita.png",
+   "combination": "Tempestade Perfeita",
+   "components": [
+    "agua",
+    "ar",
+    "eletricidade",
+    "som"
+   ],
+   "name": "Stormaris",
+   "lote": 3
+  },
+  {
+   "n": 253,
+   "file": "combinados/253-leviata.png",
+   "combination": "Leviata",
+   "components": [
+    "agua",
+    "sombra",
+    "morte",
+    "gravidade"
+   ],
+   "name": "Leviathor",
+   "lote": 3
+  },
+  {
+   "n": 254,
+   "file": "combinados/254-senhor_da_praga.png",
+   "combination": "Senhor Da Praga",
+   "components": [
+    "agua",
+    "vileza",
+    "morte",
+    "vida"
+   ],
+   "name": "Plagalor",
+   "lote": 3
+  },
+  {
+   "n": 255,
+   "file": "combinados/255-sinfonia_do_caos.png",
+   "combination": "Sinfonia Do Caos",
+   "components": [
+    "arcano",
+    "sombra",
+    "vileza",
+    "som"
+   ],
+   "name": "Chaosonia",
+   "lote": 3
+  },
+  {
+   "n": 256,
+   "file": "combinados/256-vontade_absoluta.png",
+   "combination": "Vontade Absoluta",
+   "components": [
+    "arcano",
+    "luz",
+    "vigor",
+    "som"
+   ],
+   "name": "Volitara",
+   "lote": 3
+  },
+  {
+   "n": 257,
+   "file": "combinados/257-arquiteto_da_realidade.png",
+   "combination": "Arquiteto Da Realidade",
+   "components": [
+    "arcano",
+    "tempo",
+    "gravidade",
+    "espaco"
+   ],
+   "name": "Realarch",
+   "lote": 3
+  },
+  {
+   "n": 258,
+   "file": "combinados/258-ceifador_estelar.png",
+   "combination": "Ceifador Estelar",
+   "components": [
+    "sombra",
+    "morte",
+    "marcial",
+    "espaco"
+   ],
+   "name": "Stellareap",
+   "lote": 3
+  },
+  {
+   "n": 259,
+   "file": "combinados/259-renascimento.png",
+   "combination": "Renascimento",
+   "components": [
+    "luz",
+    "morte",
+    "vida",
+    "tempo"
+   ],
+   "name": "Reborniel",
+   "lote": 3
+  },
+  {
+   "n": 260,
+   "file": "combinados/260-juizo_final.png",
+   "combination": "Juizo Final",
+   "components": [
+    "luz",
+    "morte",
+    "tempo",
+    "som"
+   ],
+   "name": "Judicarum",
+   "lote": 3
+  },
+  {
+   "n": 261,
+   "file": "combinados/261-cavaleiro_absoluto.png",
+   "combination": "Cavaleiro Absoluto",
+   "components": [
+    "luz",
+    "vigor",
+    "marcial",
+    "tempo"
+   ],
+   "name": "Absolknight",
+   "lote": 3
   }
  ]
 }

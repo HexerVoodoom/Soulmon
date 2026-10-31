@@ -16,8 +16,8 @@ const files = listFxFiles() as Record<string, Record<string, string>>;
 const ids = Object.keys(files).sort();
 
 describe('a tabela de direção da arte é a MEDIDA dos PNG (nunca escrita à mão)', () => {
-  it('cobre todo elemento com arte de FX (230 + pesadelo), nem um a mais', () => {
-    expect(ids.length).toBe(231);
+  it('cobre todo elemento com arte de FX (280 + pesadelo), nem um a mais', () => {
+    expect(ids.length).toBe(281);
     expect(Object.keys(FX_FACING_TABLE).sort()).toEqual(ids);
   });
 

@@ -78,7 +78,7 @@ export async function measureFacing(file, estado) {
 }
 
 /** Projétil cujo centroide é quase central (rastro aberto dos dois lados) mas a cabeça é VISÍVEL a olho: decisão por inspeção. */
-export const ORB_OVERRIDE = { onda_de_choque: 'R' };
+export const ORB_OVERRIDE = { onda_de_choque: 'R', arauto: 'R' };
 
 export function listFxFiles() {
   const out = {};

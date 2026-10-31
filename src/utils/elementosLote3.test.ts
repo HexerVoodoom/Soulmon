@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 import { COMBINADOS_LOTE3_DATA } from './elementosLote3.data';
 import { ELEMENT_VISUAL } from './elementVisual.data';
 import { ENEMY_ROSTER, rosterEntryOfKey } from './enemyRoster';
@@ -32,7 +34,7 @@ describe('lote 3 dos elementos curados: 16 de 4 componentes', () => {
     }
   });
 
-  it('visual, roster, elemento do sprite e arte (própria ou reserva do dominante) resolvem', () => {
+  it('visual, roster, elemento do sprite e arte própria resolvem', () => {
     for (const [num, slug, name, e1, e2] of COMBINADOS_LOTE3_DATA) {
       expect(ELEMENT_VISUAL[slug], slug).toHaveLength(4);
       const e = rosterEntryOfKey(`cmb${num}-rookie`);
@@ -44,6 +46,14 @@ describe('lote 3 dos elementos curados: 16 de 4 componentes', () => {
       expect(rosterEntryElement(e!)).toBe(slug);
       expect(rosterSpriteOf(e!), slug).toBeTruthy();
       expect(COMBINADOS_ART[`${num}-${slug}`], slug).toBeTruthy();
+      expect(rosterSpriteOf(e!), slug).toBe(COMBINADOS_ART[`${num}-${slug}`]);
+      const art = path.resolve(__dirname, '../assets/soulmon');
+      const ARQ = 'novos-' + 'arquivo';
+      expect(fs.existsSync(path.join(art, `${ARQ}/combinados/${num}-${slug}.png`)), slug).toBe(true);
+      expect(fs.existsSync(path.join(art, `elementos/el-${slug}.png`)), `ícone ${slug}`).toBe(true);
+      for (const s of ['orb', 'slash', 'impact', 'cast', 'aura', 'aura-96', 'defended']) expect(fs.existsSync(path.join(art, `fx-ataque/fx-${slug}-${s}.png`)), `${slug} ${s}`).toBe(true);
+      expect(fs.existsSync(path.join(art, `combate/elemento/${slug}.png`)), `cenário ${slug}`).toBe(true);
+      for (const st of ['champion', 'ultimate', 'mega']) expect(fs.existsSync(path.join(art, `${ARQ}/combinados-formas/${num}-${slug}-${st}.png`)), `${slug} ${st}`).toBe(true);
     }
     const keys = ENEMY_ROSTER.map(x => x.key);
     expect(new Set(keys).size).toBe(keys.length);

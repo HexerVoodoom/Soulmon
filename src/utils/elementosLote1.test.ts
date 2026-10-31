@@ -1,6 +1,6 @@
 /**
  * LOTE 1 dos 50 elementos curados do class-system (17 trios): registrado em roster, cor, sprite->elemento e arte de reserva.
- * Sem PNG próprio ainda: a arte cai no rookie da criatura base do elemento dominante (1º componente).
+ * Arte própria instalada (tools/instalar-elementos-novos.py).
  */
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
@@ -42,12 +42,18 @@ describe('lote 1 dos elementos curados (17 trios)', () => {
       expect(rosterEntryElement(e!)).toBe(id);
     }
   });
-  it('arte de reserva: toda entrada resolve um sprite (rookie do elemento dominante) e um PNG próprio, se entrar, vence', () => {
-    for (const [num, id, , dom] of COMBINADOS_LOTE1_DATA) {
+  it('arte própria: PNG combinados/NNN-slug.png existe, é o que o roster mostra e o ícone/FX dele existem', () => {
+    const art = path.resolve(__dirname, '../assets/soulmon');
+    const ARQ = 'novos-' + 'arquivo';
+    for (const [num, id] of COMBINADOS_LOTE1_DATA) {
       const e = ENEMY_ROSTER.find(x => x.artFile === `${num}-${id}`)!;
+      expect(fs.existsSync(path.join(art, `${ARQ}/combinados/${num}-${id}.png`)), id).toBe(true);
       expect(COMBINADOS_ART[`${num}-${id}`], id).toBeTruthy();
-      expect(rosterSpriteOf(e), id).toBeTruthy();
-      expect(rosterSpriteOf(e)).toBe(rosterSpriteOf(ENEMY_ROSTER.find(x => x.kind === 'base' && x.element === dom && x.stage === 'rookie')!));
+      expect(rosterSpriteOf(e), id).toBe(COMBINADOS_ART[`${num}-${id}`]);
+      expect(fs.existsSync(path.join(art, `elementos/el-${id}.png`)), `ícone ${id}`).toBe(true);
+      for (const s of ['orb', 'slash', 'impact', 'cast', 'aura', 'aura-96', 'defended']) expect(fs.existsSync(path.join(art, `fx-ataque/fx-${id}-${s}.png`)), `${id} ${s}`).toBe(true);
+      expect(fs.existsSync(path.join(art, `combate/elemento/${id}.png`)), `cenário ${id}`).toBe(true);
+      for (const st of ['champion', 'ultimate', 'mega']) expect(fs.existsSync(path.join(art, `${ARQ}/combinados-formas/${num}-${id}-${st}.png`)), `${id} ${st}`).toBe(true);
     }
   });
   it('têm cor (Lab) própria e o brilho do combate resolve', () => {

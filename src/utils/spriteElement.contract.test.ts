@@ -30,11 +30,11 @@ describe('todo arquivo de criatura tem elemento', () => {
     for (const el of els) expect(SPRITE_ELEMENT['novo:' + el], el).toBe(el);
     expect(new Set(NOVOS_DATA.map(n => n.element))).toEqual(els);
   });
-  it('combinados/: elemento = id fundido do manifest, 211 de 211', () => {
+  it('combinados/: elemento = id fundido do manifest, 261 de 261', () => {
     const man = JSON.parse(fs.readFileSync(path.join(ART, 'novos-' + 'arquivo/manifest.json'), 'utf8')).combined as { n: number; file: string; combination: string; components: string[] }[];
     const files = ls('novos-' + 'arquivo/combinados');
-    expect(files.length).toBe(211);
-    expect(man.length).toBe(211);
+    expect(files.length).toBe(261);
+    expect(man.length).toBe(261);
     for (const m of man) {
       const num = String(m.n).padStart(3, '0');
       expect(files, num).toContain(m.file.replace('combinados/', ''));
@@ -49,8 +49,8 @@ describe('todo arquivo de criatura tem elemento', () => {
       expect(rosterEntryElement(e)).toBe(e.element);
       // componentes de 2 elementos batem com o manifest
       const m = man.find(x => String(x.n).padStart(3, '0') === e.artFile!.split('-')[0]);
-      if (!m) continue; // lotes 1-3 (212-261): sem PNG/manifest ainda — cobertos por elementosLote{1,2,3}.test.ts
-      expect([...e.elements]).toEqual(m.components.slice(0, 2));
+      expect(m, e.artFile).toBeDefined();
+      expect([...e.elements]).toEqual(m!.components.slice(0, 2));
     }
   });
   it('inimigos-api, iniciais, linhas, chefes, desafiantes', () => {
