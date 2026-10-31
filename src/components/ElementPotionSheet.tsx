@@ -73,7 +73,7 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
               }}>
               <UiIcon name="science" size={22} tone="inherit" />
               <span>{label}</span>
-              {sel && <Icon id={sel} size={22} />}
+              {sel && <Icon id={sel} size={24} />}
             </button>
           </div>
         );

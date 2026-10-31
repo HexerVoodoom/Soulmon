@@ -53,7 +53,7 @@ const FOMO: RegExp[] = [
   /tempo limitado/i,
   /limited[- ]time/i,
   /\bcorra\b(?! o m[áa]ximo)/i, // "corra o máximo que conseguir" é instrução do jogo de correr
-  /\bhurry\b/i,
+  /\bhurry\b(?! yet\b)/i, // "There is no hurry yet" (onboarding, copy.ts) mantida por decisão do dono em 31/10/2026
   /\bfaltam? s[óo](?!\w)/i, // "faltam só 3!": contagem que apressa (gate/talento do Combate v3)
   /\bonly \d+ (?:left|more|to go)\b/i,
 ];
