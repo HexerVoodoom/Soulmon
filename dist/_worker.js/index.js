@@ -6629,6 +6629,30 @@ async function onRequestPost2({ request, env }) {
 }
 __name(onRequestPost2, "onRequestPost");
 
+// api/_velado.js
+var BB_STAGE = "bb";
+var isOnboardingVelado = /* @__PURE__ */ __name((env) => flagOn(env?.ONBOARDING_VELADO), "isOnboardingVelado");
+function bbRefusal(env, evolutionStage) {
+  return isOnboardingVelado(env) && evolutionStage === BB_STAGE ? "bb-locked" : null;
+}
+__name(bbRefusal, "bbRefusal");
+var BB_LOCKED_MESSAGE = {
+  pt: "Seu Velado ainda est\xE1 pequeno demais para isto. Cres\xE7a o V\xEDnculo e deixe-o evoluir.",
+  en: "Your Veiled one is still too small for this. Grow your Bond and let it evolve."
+};
+async function veladoTesterHash(email) {
+  const data = new TextEncoder().encode(`velado-tester:${String(email ?? "").trim().toLowerCase()}`);
+  const d = await crypto.subtle.digest("SHA-256", data);
+  return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+__name(veladoTesterHash, "veladoTesterHash");
+async function isVeladoTester(env, email) {
+  const lista = String(env?.ONBOARDING_VELADO_TESTERS ?? "").toLowerCase().split(/[\s,]+/).filter(Boolean);
+  if (!email || lista.length === 0) return false;
+  return lista.includes(await veladoTesterHash(email));
+}
+__name(isVeladoTester, "isVeladoTester");
+
 // api/metrics.js
 var CORS4 = {
   "Access-Control-Allow-Origin": "*",
@@ -7431,6 +7455,7 @@ async function loadDuelSideWithSprite(env, saveId) {
     }
     const state = JSON.parse(value);
     if (!state || typeof state !== "object" || Array.isArray(state)) return { side: null, spriteUrl: null, artLine: null };
+    if (bbRefusal(env, state.evolutionStage)) return { side: null, spriteUrl: null, artLine: null, bbLocked: true };
     const { spriteUrl, artLine } = spriteFromSaveState(state);
     return { side: duelSide(state, { maxLevel: maxLevelFor(metadata?.f, Date.now()) }), spriteUrl, artLine };
   } catch (err2) {
@@ -9132,6 +9157,9 @@ async function handleGuild({ request, env }) {
     if (r.erro) return erro(r.erro, 409);
     return json12({ result: "approved", guild: await montar(r.g, id, hoje) });
   }
+  if ((action === "guildCreate" || action === "guildJoin") && (await loadDuelSideWithSprite(env, id)).bbLocked) {
+    return erro("bb-locked", 403, { reason: "bb-locked", ...BB_LOCKED_MESSAGE });
+  }
   if (action === "guildCreate") {
     const ja = await grupoDe(env, id, semana);
     if (ja) return erro("already in a {g}", 409, { [chave]: await montar(ja, id, hoje) });
@@ -9816,7 +9844,11 @@ async function handleCommunity(context) {
   }, "forfeitPending");
   const loadDuelSide2 = /* @__PURE__ */ __name((saveId) => loadDuelSide(env, saveId), "loadDuelSide");
   const loadDuelSides = /* @__PURE__ */ __name(async (mySave, oppSave) => {
-    const [meSide, oppSide] = await Promise.all([loadDuelSide2(mySave), loadDuelSide2(oppSave)]);
+    const [meLoad, oppLoad] = await Promise.all([loadDuelSideWithSprite(env, mySave), loadDuelSideWithSprite(env, oppSave)]);
+    if (meLoad.bbLocked) return { res: json3({ error: "bb-locked", reason: "bb-locked", ...BB_LOCKED_MESSAGE }, 403) };
+    if (oppLoad.bbLocked) return { res: json3({ error: "opponent unavailable" }, 404) };
+    const meSide = meLoad.side;
+    const oppSide = oppLoad.side;
     if (!meSide) return { res: json3({ error: "save unavailable" }, 409) };
     if (!oppSide) return { res: json3({ error: "opponent unavailable" }, 404) };
     return { me: meSide, opp: oppSide };
@@ -9835,6 +9867,9 @@ async function handleCommunity(context) {
     if (querLigar && !jaEstavaLigado) {
       bondLevel = await bondLevelOf(env, id);
       if (!gateFor("pvp", bondLevel).open) {
+        pvpEnabled = false;
+        pvpBlocked = true;
+      } else if ((await loadDuelSideWithSprite(env, id)).bbLocked) {
         pvpEnabled = false;
         pvpBlocked = true;
       }
@@ -10404,7 +10439,9 @@ async function onRequestGet2({ env }) {
     // Kill-switches do beta (`_killSwitch.js`, BETA-CONTINGENCIA §0): a UI
     // esconde compra / IA do chat. Quem GARANTE é o servidor, não este campo.
     billingDisabled: isBillingDisabled(env),
-    chatDisabled: isChatDisabled(env)
+    chatDisabled: isChatDisabled(env),
+    // Onboarding Velado (plano §7): desligado por padrão.
+    onboardingVelado: isOnboardingVelado(env)
   }, {
     headers: { ...CORS7, "Cache-Control": "public, max-age=300" }
   });
@@ -10892,6 +10929,31 @@ async function hashToken(token) {
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
 }
 __name(hashToken, "hashToken");
+
+// api/_freeGen.js
+var FREEGEN_PREFIX = "freeGen:";
+var freeGenKey = /* @__PURE__ */ __name((saveId) => `${FREEGEN_PREFIX}${saveId}`, "freeGenKey");
+async function freeRookie(store, saveId, generate) {
+  const k = freeGenKey(saveId);
+  const raw = await store.get(k);
+  if (raw) {
+    try {
+      const g = JSON.parse(raw);
+      if (g?.image) return { image: g.image, cached: true };
+    } catch {
+    }
+  }
+  let r = null;
+  try {
+    r = await generate();
+  } catch {
+    r = null;
+  }
+  if (!r?.image) return { image: null, fallback: true };
+  await store.put(k, JSON.stringify({ image: r.image, provider: r.provider ?? null, at: Date.now() }));
+  return { image: r.image, cached: false };
+}
+__name(freeRookie, "freeRookie");
 
 // D:/Soulmon/repo/node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
@@ -12433,7 +12495,7 @@ async function onRequestPost5({ request, env }) {
       );
     }
     const tier = await requirePaidTier(env, id);
-    const tierOk = tier.ok || tier.status === 402 && ((await verifiedAdmin(env, request, id)).admin || (await verifiedBetaFull(env, request, id)).betaFull);
+    const tierOk = tier.ok || env.__freeGen === true || tier.status === 402 && ((await verifiedAdmin(env, request, id)).admin || (await verifiedBetaFull(env, request, id)).betaFull);
     if (!tierOk) {
       return Response.json({ error: tier.reason }, { status: tier.status, headers: CORS10 });
     }
@@ -12593,6 +12655,30 @@ async function onRequestPost5({ request, env }) {
   }
 }
 __name(onRequestPost5, "onRequestPost");
+
+// api/free-rookie.js
+async function onRequestPost6({ request, env }) {
+  const corpo = await request.json().catch(() => null);
+  if (!corpo || typeof corpo.id !== "string" || typeof corpo.formId !== "string" || typeof corpo.prompt !== "string") {
+    return Response.json({ error: "bad-request" }, { status: 400 });
+  }
+  const auth = await authorizeSaveAccess(request, env, corpo.id);
+  if (!auth.ok) return Response.json({ error: auth.reason }, { status: authStatus(auth) });
+  const { id, formId, prompt, promptFallback } = corpo;
+  const generate = /* @__PURE__ */ __name(async () => {
+    const req2 = new Request(request.url, {
+      method: "POST",
+      headers: request.headers,
+      body: JSON.stringify({ id, formId, prompt, promptFallback })
+      // sem referenceImageUrls, sem regenerate
+    });
+    const r = await onRequestPost5({ request: req2, env: { ...env, __freeGen: true } });
+    return r.ok ? await r.json().catch(() => null) : null;
+  }, "generate");
+  const out = await freeRookie(kvOrThrow(env), id, generate);
+  return Response.json(out);
+}
+__name(onRequestPost6, "onRequestPost");
 
 // api/_dayCounters.js
 var ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
@@ -12929,7 +13015,7 @@ async function onRequestGet5({ request, env }) {
   return Response.json({ items }, { headers });
 }
 __name(onRequestGet5, "onRequestGet");
-async function onRequestPost6({ request, env }) {
+async function onRequestPost7({ request, env }) {
   const bloqueio = await gate(request, env);
   if (bloqueio) return bloqueio;
   let body = null;
@@ -12946,7 +13032,7 @@ async function onRequestPost6({ request, env }) {
   if (r.status === "not-found") return Response.json({ error: "not-found" }, { status: 404, headers });
   return Response.json({ ok: true, ...r }, { headers });
 }
-__name(onRequestPost6, "onRequestPost");
+__name(onRequestPost7, "onRequestPost");
 
 // api/gm-soulmons.js
 var PAGE = 24;
@@ -13194,7 +13280,7 @@ async function reconcileToken(env, purchaseToken, kind) {
   return { status: 200, outcome: read.entitled ? "active" : "closed" };
 }
 __name(reconcileToken, "reconcileToken");
-async function onRequestPost7({ request, env }) {
+async function onRequestPost8({ request, env }) {
   if (!pubsubAuthConfigured(env) || !env.ANDROID_PACKAGE_NAME) return json8({ error: "rtdn-not-configured" }, 503);
   if (!await verifyPubsubPush(request, env)) return json8({ error: "Unauthorized" }, 401);
   if (!kv(env)) return json8({ error: "Storage not bound" }, 500);
@@ -13246,7 +13332,7 @@ async function onRequestPost7({ request, env }) {
   }
   return json8({ ok: true, outcome: result.outcome });
 }
-__name(onRequestPost7, "onRequestPost");
+__name(onRequestPost8, "onRequestPost");
 
 // api/_buildingQuests.js
 var MATERIAL_CAP = 99;
@@ -13520,6 +13606,21 @@ function sanitizeConquistasPagas(raw) {
   return ACHIEVEMENT_IDS.filter((id) => raw.includes(id));
 }
 __name(sanitizeConquistasPagas, "sanitizeConquistasPagas");
+
+// api/_mercMission.js
+var MERC_ORDENS = ["filtrador", "tecelao", "rompente"];
+function sanitizeMercMission(raw) {
+  if (!raw || typeof raw !== "object") return void 0;
+  const r = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  if (typeof r.day !== "string" || r.day.length === 0 || r.day.length > 40) return void 0;
+  if (typeof r.ordem !== "string" || !MERC_ORDENS.includes(r.ordem)) return void 0;
+  if (typeof r.activityId !== "string" || r.activityId.length === 0 || r.activityId.length > 64) return void 0;
+  return { day: r.day, ordem: r.ordem, activityId: r.activityId, done: r.done === true };
+}
+__name(sanitizeMercMission, "sanitizeMercMission");
 
 // api/_dayPlan.js
 var DAY_PLAN_MAX_IDS = 200;
@@ -13854,6 +13955,11 @@ async function onRequest7({ request, env }) {
       if (q) state.conquistasPagas = q;
       else delete state.conquistasPagas;
     }
+    if ("mercMission" in state) {
+      const q = sanitizeMercMission(state.mercMission);
+      if (q) state.mercMission = q;
+      else delete state.mercMission;
+    }
     if ("dayPlan" in state) {
       const q = sanitizeDayPlan(state.dayPlan);
       if (q) state.dayPlan = q;
@@ -13967,7 +14073,7 @@ __name(onRequest7, "onRequest");
 
 // api/sprite-admin.js
 var json9 = /* @__PURE__ */ __name((o, status = 200) => Response.json(o, { status, headers: { "Cache-Control": "no-store" } }), "json");
-async function onRequestPost8({ request, env }) {
+async function onRequestPost9({ request, env }) {
   if (!env?.METRICS_ADMIN_KEY) return json9({ error: "Not found" }, 404);
   const gate2 = takeToken("sprite-admin", clientKey(request), { limit: 20, windowMs: 6e4 });
   if (!gate2.ok) return tooManyRequests(gate2.retryAfter);
@@ -13993,7 +14099,7 @@ async function onRequestPost8({ request, env }) {
   console.log(JSON.stringify({ event: "sprite.admin.release-form", saveIdPrefix: id.slice(0, 8), formId, antes, depois: forms[formId] }));
   return json9({ ok: true, formId, antes, depois: forms[formId] });
 }
-__name(onRequestPost8, "onRequestPost");
+__name(onRequestPost9, "onRequestPost");
 
 // api/sprite-image.js
 var IMMUTABLE = "public, max-age=31536000, immutable";
@@ -14082,7 +14188,7 @@ async function onRequestOptions13() {
   return new Response(null, { status: 204, headers: CORS13 });
 }
 __name(onRequestOptions13, "onRequestOptions");
-async function onRequestPost9({ request, env }) {
+async function onRequestPost10({ request, env }) {
   const limited = costGate2(request);
   if (limited) return limited;
   let body;
@@ -14173,7 +14279,7 @@ async function onRequestPost9({ request, env }) {
     headers: { "Content-Type": "application/json", ...CORS13 }
   });
 }
-__name(onRequestPost9, "onRequestPost");
+__name(onRequestPost10, "onRequestPost");
 async function onRequestDelete2({ request, env }) {
   const limited = costGate2(request);
   if (limited) return limited;
@@ -14237,7 +14343,7 @@ async function onRequestOptions14() {
   return new Response(null, { headers: CORS14 });
 }
 __name(onRequestOptions14, "onRequestOptions");
-async function onRequestPost10({ request, env }) {
+async function onRequestPost11({ request, env }) {
   try {
     const body = await request.json().catch(() => null) ?? {};
     const goalMin = minimizeForAi(String(body.goalText || "").slice(0, 2e3).trim(), 300);
@@ -14310,7 +14416,7 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
     return Response.json({ error: "Internal error" }, { status: 500, headers: CORS14 });
   }
 }
-__name(onRequestPost10, "onRequestPost");
+__name(onRequestPost11, "onRequestPost");
 
 // api/top-ai.js
 var BUCKETS = ["chat", "sprite", "transcribe", "suggest"];
@@ -14366,7 +14472,7 @@ async function onRequestOptions15() {
   return new Response(null, { headers: CORS15 });
 }
 __name(onRequestOptions15, "onRequestOptions");
-async function onRequestPost11({ request, env }) {
+async function onRequestPost12({ request, env }) {
   const gate2 = takeToken("transcribe", clientKey(request), LIMITE);
   if (!gate2.ok) {
     console.warn("[transcribe] rate limited", { retryAfter: gate2.retryAfter });
@@ -14445,7 +14551,15 @@ async function onRequestPost11({ request, env }) {
   }
   return json11({ text: String(dados?.text ?? "").slice(0, 2e3) });
 }
-__name(onRequestPost11, "onRequestPost");
+__name(onRequestPost12, "onRequestPost");
+
+// api/velado-teste.js
+async function onRequestGet9({ request, env }) {
+  const claims = await verifyIdToken(bearerToken(request), env.FIREBASE_PROJECT_ID);
+  const tester = claims ? await isVeladoTester(env, claims.email) : false;
+  return Response.json({ tester }, { headers: { "Cache-Control": "private, no-store" } });
+}
+__name(onRequestGet9, "onRequestGet");
 
 // gm/_gmPage.js
 var FIREBASE_VERSION = "10.12.2";
@@ -14476,7 +14590,7 @@ function gmHeaders(nonce) {
 __name(gmHeaders, "gmHeaders");
 
 // gm/rift.js
-async function onRequestGet9({ env }) {
+async function onRequestGet10({ env }) {
   const nonce = gmNonce();
   const cfg = { apiKey: env?.FIREBASE_API_KEY || "", authDomain: env?.FIREBASE_AUTH_DOMAIN || "", projectId: env?.FIREBASE_PROJECT_ID || "" };
   const cfgJson = JSON.stringify(cfg).replace(/</g, "\\u003c");
@@ -14504,10 +14618,10 @@ firebase.initializeApp(cfg);firebase.auth().onAuthStateChanged(u=>{if(u){load(u)
 <\/script></body></html>`;
   return new Response(html, { headers: gmHeaders(nonce) });
 }
-__name(onRequestGet9, "onRequestGet");
+__name(onRequestGet10, "onRequestGet");
 
 // gm/soulmons.js
-async function onRequestGet10({ env }) {
+async function onRequestGet11({ env }) {
   const nonce = gmNonce();
   const cfg = { apiKey: env?.FIREBASE_API_KEY || "", authDomain: env?.FIREBASE_AUTH_DOMAIN || "", projectId: env?.FIREBASE_PROJECT_ID || "" };
   const cfgJson = JSON.stringify(cfg).replace(/</g, "\\u003c");
@@ -14530,7 +14644,7 @@ firebase.initializeApp(cfg);firebase.auth().onAuthStateChanged(u=>{if(u){load(u)
 <\/script></body></html>`;
   return new Response(html, { headers: gmHeaders(nonce) });
 }
-__name(onRequestGet10, "onRequestGet");
+__name(onRequestGet11, "onRequestGet");
 
 // .well-known/assetlinks.json.js
 var DEFAULT_PACKAGE = "com.soulmon";
@@ -14554,7 +14668,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-LUOFMD/functionsRoutes-0.22505505182149488.mjs
+// ../.wrangler/tmp/pages-UpGOQe/functionsRoutes-0.6721845628059966.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -14662,6 +14776,13 @@ var routes = [
     modules: [onRequestPost4]
   },
   {
+    routePath: "/api/free-rookie",
+    mountPath: "/api",
+    method: "POST",
+    middlewares: [],
+    modules: [onRequestPost6]
+  },
+  {
     routePath: "/api/generate-sprite",
     mountPath: "/api",
     method: "OPTIONS",
@@ -14687,7 +14808,7 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost6]
+    modules: [onRequestPost7]
   },
   {
     routePath: "/api/gm-soulmons",
@@ -14729,7 +14850,7 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost7]
+    modules: [onRequestPost8]
   },
   {
     routePath: "/api/save",
@@ -14743,7 +14864,7 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost8]
+    modules: [onRequestPost9]
   },
   {
     routePath: "/api/sprite-image",
@@ -14771,7 +14892,7 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost9]
+    modules: [onRequestPost10]
   },
   {
     routePath: "/api/suggest-tasks",
@@ -14785,7 +14906,7 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost10]
+    modules: [onRequestPost11]
   },
   {
     routePath: "/api/top-ai",
@@ -14806,21 +14927,28 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost11]
+    modules: [onRequestPost12]
+  },
+  {
+    routePath: "/api/velado-teste",
+    mountPath: "/api",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet9]
   },
   {
     routePath: "/gm/rift",
     mountPath: "/gm",
     method: "GET",
     middlewares: [],
-    modules: [onRequestGet9]
+    modules: [onRequestGet10]
   },
   {
     routePath: "/gm/soulmons",
     mountPath: "/gm",
     method: "GET",
     middlewares: [],
-    modules: [onRequestGet10]
+    modules: [onRequestGet11]
   },
   {
     routePath: "/.well-known/assetlinks.json",
