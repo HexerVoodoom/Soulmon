@@ -250,7 +250,8 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
       const a = argsRef.current;
       if (running.current || a.busy || !a.enabled) return;
       const input: SpriteTriggerInput = { ...a.trigger, library: a.library };
-      const batch = a.newborn ? birthBatch(input) : spriteBatch(input);
+      // No cristal (31/10/2026) o lote é o da forma-destino, mesmo com o acervo ainda vazio.
+      const batch = a.trigger.crystalFormId ? spriteBatch(input) : a.newborn ? birthBatch(input) : spriteBatch(input);
       if (!batch) return;
       // Ocasião A é o NASCIMENTO: não há história a proteger, então a forma
       // atual adota na hora em vez de perguntar.

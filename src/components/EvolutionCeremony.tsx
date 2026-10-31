@@ -179,9 +179,9 @@ export function EvolutionCeremony({
           >
             <img src={PLACEHOLDER_ART.forming} alt="" style={{ ...pixel, left: 0, top: 0, width: CRYSTAL, height: CRYSTAL, objectFit: 'contain' }} />
             {phase === 'racha' && (
-              <svg data-cer-cracks viewBox="0 0 144 144" width={CRYSTAL} height={CRYSTAL} style={{ position: 'absolute', left: 0, top: 0, filter: 'drop-shadow(0 0 4px #40e0d0)' }}>
+              <svg data-cer-cracks viewBox="0 0 144 144" width={CRYSTAL} height={CRYSTAL} style={{ position: 'absolute', left: 0, top: 0, filter: 'drop-shadow(0 0 3px #40e0d0) drop-shadow(0 0 8px #40e0d0)' }}>
                 {CRACKS.map((d, i) => (
-                  <path key={i} d={d} fill="none" stroke="#7ffff0" strokeWidth={2.5} strokeLinecap="square" style={{ animationDelay: `${i * 120}ms` }} />
+                  <path key={i} d={d} fill="none" stroke="#f2fffd" strokeWidth={3} strokeLinecap="square" style={{ animationDelay: `${i * 120}ms` }} />
                 ))}
               </svg>
             )}
