@@ -19,8 +19,8 @@ import { isStrayFoe } from './wildFoeLabel';
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
 
 describe('roster de inimigos (M10): cobertura', () => {
-  it('20 base × 4 estágios + 211 combinados rookie + 5 da API (à parte) = 296 entradas, chaves únicas', () => {
-    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 5);
+  it('20 base × 4 estágios + 211 combinados rookie + 17 do lote 1 + 5 da API (à parte) = 313 entradas, chaves únicas', () => {
+    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 5);
     expect(ENEMY_ROSTER_KEYS.size).toBe(ENEMY_ROSTER.length);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'combinado').every(e => e.stage === 'rookie' && e.elements.length === 2)).toBe(true);
   });
@@ -33,7 +33,7 @@ describe('roster de inimigos (M10): cobertura', () => {
   });
   it('todo elemento base aparece em todos os estágios; toda entrada tem arte e nome', () => {
     for (const n of NOVOS_DATA) for (const s of ORDEM) expect(rosterEntryOfKey(`${n.id}-${s}`), `${n.id}-${s}`).toBeDefined();
-    expect(Object.keys(COMBINADOS_ART)).toHaveLength(211);
+    expect(Object.keys(COMBINADOS_ART)).toHaveLength(211 + 17); // +17 do lote 1 (arte de reserva)
     for (const e of ENEMY_ROSTER) {
       expect(rosterSpriteOf(e), e.key).toBeTruthy();
       expect(e.name.length, e.key).toBeGreaterThan(0);

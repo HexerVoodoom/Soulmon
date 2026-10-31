@@ -330,3 +330,28 @@ Linhas 193-211 têm 3+ componentes: o jogo guarda só 2 (`COMBINADOS_DATA`) para
 | sim_0048 | terra |
 | sim_0049 | industrial |
 | sim_0050 | luz |
+
+
+### Lote 1 dos 50 curados (212-228, sem PNG ainda): `COMBINADOS_LOTE1_DATA` em `src/utils/elementosLote1.data.ts`
+
+Arte de reserva = rookie da criatura base do 1º componente (`enemyRosterArt.ts`); um `combinados/NNN-slug.png` real vence sozinho. Ainda NÃO estão no manifest (o teste do manifest exige o PNG), nem em `fxFacingTable.ts` (sem FX; cai em `neutro`). Prompts de arte em `E:/Soulmon-assets/elementos-novos/lote1/`.
+
+| n | arquivo (futuro) | elemento | componentes |
+|---|---|---|---|
+| 212 | combinados/212-geiser.png | geiser | fogo+agua+terra |
+| 213 | combinados/213-vulcao.png | vulcao | fogo+terra+ar |
+| 214 | combinados/214-deserto.png | deserto | fogo+terra+tempo |
+| 215 | combinados/215-relampago_seco.png | relampago_seco | fogo+ar+eletricidade |
+| 216 | combinados/216-supernova.png | supernova | fogo+gravidade+espaco |
+| 217 | combinados/217-nevasca.png | nevasca | agua+terra+ar |
+| 218 | combinados/218-permafrost.png | permafrost | agua+terra+tempo |
+| 219 | combinados/219-monsoes.png | monsoes | agua+ar+vida |
+| 220 | combinados/220-peste_negra.png | peste_negra | agua+vileza+morte |
+| 221 | combinados/221-coro_dos_afogados.png | coro_dos_afogados | agua+morte+som |
+| 222 | combinados/222-ossario_vivo.png | ossario_vivo | terra+morte+vida |
+| 223 | combinados/223-jardim_eterno.png | jardim_eterno | terra+vida+tempo |
+| 224 | combinados/224-aurora_boreal.png | aurora_boreal | ar+eletricidade+luz |
+| 225 | combinados/225-duelista_temporal.png | duelista_temporal | ar+marcial+tempo |
+| 226 | combinados/226-pulso_cosmico.png | pulso_cosmico | eletricidade+som+espaco |
+| 227 | combinados/227-sabbat.png | sabbat | arcano+sombra+vileza |
+| 228 | combinados/228-hipnose.png | hipnose | arcano+sombra+som |

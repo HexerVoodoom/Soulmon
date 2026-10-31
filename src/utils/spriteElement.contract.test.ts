@@ -48,7 +48,8 @@ describe('todo arquivo de criatura tem elemento', () => {
       expect(e.element).toBe(SPRITE_ELEMENT['cmb:' + e.artFile!.split('-')[0]]);
       expect(rosterEntryElement(e)).toBe(e.element);
       // componentes de 2 elementos batem com o manifest
-      const m = man.find(x => String(x.n).padStart(3, '0') === e.artFile!.split('-')[0])!;
+      const m = man.find(x => String(x.n).padStart(3, '0') === e.artFile!.split('-')[0]);
+      if (!m) continue; // lote 1 (212-228): sem PNG/manifest ainda — coberto por elementosLote1.test.ts
       expect([...e.elements]).toEqual(m.components.slice(0, 2));
     }
   });
