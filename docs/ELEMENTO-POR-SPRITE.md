@@ -19,6 +19,7 @@ Decisão do dono (30/10/2026): **um sprite tem UM elemento e ele vale em todo lu
 - Simulados: `element` = elemento do prompt (33/50 mudaram), `artLine` só quando existe linha/inicial do MESMO elemento (senão vazio); save do simulado ganha `soulmonMeta.dominantElement`.
 
 ## Tabelas
+### Corvo neutro (1): `mascote:corvo` = `neutro` — a ÚNICA criatura neutra (31/10/2026, REGISTRO §211; `RAVEN_ENTRY`, sai só pelo `withRaven`, 1/1000).
 ### Base (20): `novos/<elemento>-<estágio>.png` — prefixo do arquivo = elemento (NOVOS_DATA).
 ### Iniciais (5): industrial=terra, nascente=som, alento=ar, vida=vida, meteoro=fogo (`STARTER_ELEMENT`, pedido do dono).
 ### Inimigos da API (5): cinderkit=fogo, ashimp=fogo, tailhorn=terra, tidewark=agua, gloomhorn=sombra (escolha manual de `INIMIGOS_API_DATA`; nenhuma evidência contrária encontrada).

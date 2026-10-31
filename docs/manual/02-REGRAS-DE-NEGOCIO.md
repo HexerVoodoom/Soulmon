@@ -6211,6 +6211,12 @@ Tudo abaixo é o que o código de `b93f75e9` faz. Decisões: `REGISTRO-DE-DECISO
 **Régua.** `CompletionTag.render.test.tsx`, `restWindow.autoSleepNightmare.test.ts`, `combate/dotShield.regression.test.ts`, `combate.parity.test.js`, `gates.parity.test.js`, `essences.parity.test.js`, `winrateModos.sim.test.ts`, `consent.versoes.contract.test.ts`. **Não coberto neste delta:** a arte e a posição dos prédios do Hall/Arena/Forja no Mapa (→ `03-FLUXO-DE-TELAS.md`, `docs/INVENTARIO-ASSETS.md`).
 
 
+## 66. 🐦‍⬛ O corvo neutro e o bestiário de todo encontro (31/10/2026, REGISTRO §211)
+
+- **Neutro = só o corvo** (`RAVEN_ENTRY`, `enemyRoster.ts`): forma única, entra na Biblioteca (aba Selvagens) e aparece como inimigo com chance **1/1000 por sorteio** em Masmorra, Calabouço, Pesadelo, Combina 3, Arena livre e Desgarrado do Torneio — pelo portão `withRaven`, sem sorteio a mais. Nenhuma outra criatura é neutra (`corvoNeutro.contract.test.ts`).
+- **Todo inimigo VISTO entra no bestiário** (antes só o abate da masmorra e o Combina 3): Masmorra, Calabouço, Arena e Desgarrado do Torneio chamam `applyBestiarySeen`.
+- Jogador: o Oráculo nunca dá `neutro` (0 exato); só o corvinho do administrador é neutro.
+
 ## Beta-full (REGISTRO §98)
 
 E-mail verificado presente em `BETA_EMAILS` é tratado como conta paga: o servidor devolve `tier: 'paid'` + `betaFull: true` (derivado do token, nunca gravado), o ovo vai direto a "Chocar" e o ritual completo roda sem compra. Remover o e-mail da lista rebaixa na leitura seguinte. Ver `functions/api/_betaFull.js` e `docs/BETA-FECHADO-RUNBOOK.md`.

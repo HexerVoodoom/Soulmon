@@ -19,6 +19,7 @@
  * Nenhuma regra de jogo mora aqui (dano, gauge, golpe: `arena.ts`/`_duel.js`).
  */
 import { lineElementOf } from './spriteElement';
+import { rosterEntryOfKey } from './enemyRoster';
 import { attackFx, type AttackFxState } from './attackFxArt';
 import { NIGHTMARE_ELEMENT, hasNightmareFx, nightmareFx } from './nightmareElement';
 import { escolaSkillSegura } from './soulProfile/ficha/types';
@@ -83,6 +84,10 @@ export function opponentElementFor(opp: { id: string; element?: string | null })
  */
 export function dungeonEnemyElement(e: { stage?: string; element?: string } | undefined | null): string {
   if (e?.element) return e.element;
+  // 31/10/2026 (bug do dono, "Embrit de fogo com elemento NEUTRO"): inimigo SEM `element` cuja chave é do roster (`embrit-rookie`, onda
+  // restaurada de um save/instantâneo anterior ao campo) era lido como LINHA antiga (`embrit` não é linha) e caía no neutro. A chave manda.
+  const doRoster = rosterEntryOfKey(e?.stage)?.element;
+  if (doRoster) return doRoster;
   // linha antiga: a chave é `<linha>-<estágio>`; o elemento é o do sprite que ela mostra (`spriteElement.ts`). Sem arte conhecida: neutro, nunca hash.
   return lineElementOf(e?.stage?.split('-')[0]) ?? FX_FALLBACK_ELEMENT;
 }

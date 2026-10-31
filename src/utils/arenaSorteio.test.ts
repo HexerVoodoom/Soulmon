@@ -122,6 +122,7 @@ describe('§199 emenda (dono, 30/10/2026): elemento BASE da run, fundido só por
     for (let s = 1; s <= 400; s++) {
       const el = arenaCardElements(s)[0];
       for (let r = 1; r <= 5; r++) for (const f of arenaFoesOfSeed(s, r)) {
+        if (f.element === 'neutro') continue; // o corvo (31/10, 1/1000 pelo `withRaven`) não é do elemento da run
         total++;
         if (f.artFile) { fused++; expect(f.elements, `seed ${s} r${r}`).toContain(el); expect(f.element).toBeTruthy(); }
         else expect(f.elements[0], `seed ${s} r${r}`).toBe(el);

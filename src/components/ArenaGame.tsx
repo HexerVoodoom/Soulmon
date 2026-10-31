@@ -53,7 +53,8 @@ import { arenaFoesOfSeed, arenaSceneOfSeed } from '../utils/arenaSorteio';
 import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
-import { novoSoulmonById } from '../utils/novosSoulmon';
+import { novoSoulmonById, rosterSpriteOf } from '../utils/novosSoulmon';
+import { RAVEN_ENTRY } from '../utils/enemyRoster';
 import { COMBINADOS_ART } from '../utils/enemyRosterArt';
 import {
   ARENA_ROUNDS,
@@ -73,6 +74,7 @@ import {
   elementAdvantage,
   familyOfSkill,
   loadBestiaryPool,
+  arenaFoeKey,
   type ArenaEnemy,
   type ArenaPlayerCfg,
   type BestiaryCreature,
@@ -113,13 +115,17 @@ export interface ArenaGameProps {
   onEarnPoints?: (points: number) => void;
   /** Dex de elementos (27/10/2026): ao vencer uma RODADA, os elementos dos inimigos dela. */
   onElementsDefeated?: (ids: readonly string[], drops?: readonly EssenceDrop[]) => void;
+  /** Bestiário (31/10/2026): todo inimigo VISTO numa rodada entra na Biblioteca (abas Selvagem/Desgarrado). */
+  onEnemySeen?: (enemyKey: string) => void;
   onExit: () => void;
 }
 
 export function ArenaGame({
-  evolutionStage, demoCharacterId, language, skills, petElement, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onExit,
+  evolutionStage, demoCharacterId, language, skills, petElement, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onEnemySeen, onExit,
 }: ArenaGameProps) {
   const elementsDefeatedRef = useRef(onElementsDefeated);
+  const enemySeenRef = useRef(onEnemySeen);
+  enemySeenRef.current = onEnemySeen;
   elementsDefeatedRef.current = onElementsDefeated;
   // Música (11/10/2026): na Arena toca o "Stone Hall Combat" (se o interruptor "Música" está ligado).
   useEffect(() => entrarNaSuperficie('arena'), []);
@@ -204,7 +210,8 @@ export function ArenaGame({
     inimigosRef.current = novos;
     rodadaRef.current = n;
     setInimigos(novos);
-    setSprites(novos.map(e => (e.artFile ? COMBINADOS_ART[e.artFile] : undefined) ?? novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
+    for (const e of novos) { const k = arenaFoeKey(e); if (k) enemySeenRef.current?.(k); }
+    setSprites(novos.map(e => (arenaFoeKey(e) === RAVEN_ENTRY.key ? rosterSpriteOf(RAVEN_ENTRY) : undefined) ?? (e.artFile ? COMBINADOS_ART[e.artFile] : undefined) ?? novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
     setFightKey(k => k + 1);
     setFase('luta');
   }, []);

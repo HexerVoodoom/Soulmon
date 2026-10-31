@@ -103,6 +103,8 @@ class ChallengeBoundary extends Component<{ isPt: boolean; onBack: () => void; c
 
 export interface RogueDungeonProps {
   language: Language;
+  /** Bestiário (31/10/2026): o inimigo de cada luta entra na Biblioteca. */
+  onEnemySeen?: (enemyKey: string) => void;
   /** Dia do jogador em ISO (reset diário). */
   todayKey: string;
   /** Incursão guardada no save (de qualquer dia: outro dia vira incursão nova). */
@@ -143,7 +145,7 @@ const sheetStyle = {
 } as const;
 const hudText = { margin: 0, color: 'var(--sm2-viewport-ink)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm, 14px)', textShadow: '0 1px 2px rgba(0,0,0,.9)' } as const;
 
-export function RogueDungeon({ language, todayKey, saved, onChange, combatant, saveId, onEarnPoints, evolutionStage = 'rookie', demoCharacterId, petName, petElement, playerLevel, skills, onClose }: RogueDungeonProps) {
+export function RogueDungeon({ language, todayKey, saved, onChange, combatant, saveId, onEarnPoints, evolutionStage = 'rookie', demoCharacterId, petName, petElement, playerLevel, skills, onClose, onEnemySeen }: RogueDungeonProps) {
   // S18: o Calabouço toca o "Dungeon Theme" inteiro (mapa e escolhas; a luta troca para a música de combate).
   useEffect(() => entrarNaSuperficie('masmorra-mapa'), []);
   const isPt = language === 'pt-BR';
@@ -355,7 +357,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
       {fighting && !finished && (
         <Suspense fallback={<p style={{ ...hudText, position: 'absolute', left: 0, right: 0, bottom: 24, textAlign: 'center', zIndex: 4 }}>{isPt ? 'Carregando a luta…' : 'Loading the fight…'}</p>}>
           <ChallengeBoundary isPt={isPt} onBack={() => setFighting(false)}>
-            <RogueFight language={language} run={run} step={run.step} combatant={combatant} skills={skills} petElement={petElement} evolutionStage={evolutionStage} demoCharacterId={demoCharacterId} floor={floor} onResult={fightResult} />
+            <RogueFight language={language} run={run} step={run.step} combatant={combatant} skills={skills} petElement={petElement} evolutionStage={evolutionStage} demoCharacterId={demoCharacterId} floor={floor} onResult={fightResult} onEnemySeen={onEnemySeen} />
           </ChallengeBoundary>
         </Suspense>
       )}

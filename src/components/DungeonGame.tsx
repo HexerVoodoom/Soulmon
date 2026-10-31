@@ -127,7 +127,7 @@ const PANEL: CSSProperties = {
 };
 
 // ── Game ───────────────────────────────────────────────────────────────────
-export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skills, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onRunEnd, onEnemyDefeated, onEarnPoints, onExit, onExitToMap, bits = 0, onSpendBits, rankSaveId }: {
+export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skills, profissao, profissaoNome, language, onEnter, onLose, onHeartDrop, onGlitchtama, onFloorCleared, onRunEnd, onEnemyDefeated, onEnemySeen, onEarnPoints, onExit, onExitToMap, bits = 0, onSpendBits, rankSaveId }: {
   evolutionStage: string;
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos inimigos). */
   demoCharacterId?: string;
@@ -166,6 +166,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
    *  única por linha e tier — inventar um id novo aqui criaria uma segunda
    *  identidade para a mesma criatura. */
   onEnemyDefeated: (enemyKey?: string) => void;
+  /** Bestiário (31/10/2026): o inimigo ENCONTRADO entra na Biblioteca mesmo que o jogador perca (antes só o abate registrava). */
+  onEnemySeen?: (enemyKey: string) => void;
   /** Grants Bits. */
   onEarnPoints: (pts: number) => void;
   /** WP4.5 — Bits em caixa, para a compra de profundidade. */
@@ -279,6 +281,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const enemyIdxRef = useRef(0);
 
   const enemy = enemies[enemyIdx];
+  const enemySeenKey = enemy?.stage;
+  useEffect(() => { if (enemySeenKey) onEnemySeen?.(enemySeenKey); }, [enemySeenKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const petScale = usePetScale(evolutionStage, petSprite);
   const ladderLen = LADDER_TIERS.length;

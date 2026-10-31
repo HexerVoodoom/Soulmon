@@ -19,8 +19,8 @@ import { isStrayFoe } from './wildFoeLabel';
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
 
 describe('roster de inimigos (M10): cobertura', () => {
-  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16 (lotes 1-3) + 5 da API (à parte) = 346 entradas, chaves únicas', () => {
-    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 5);
+  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16 (lotes 1-3) + 5 da API (à parte) + o corvo neutro (31/10) = 347 entradas, chaves únicas', () => {
+    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 5 + 1);
     expect(ENEMY_ROSTER_KEYS.size).toBe(ENEMY_ROSTER.length);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'combinado').every(e => e.stage === 'rookie' && e.elements.length === 2)).toBe(true);
   });
@@ -90,7 +90,7 @@ describe('roster de inimigos (M10): progressão', () => {
     for (let i = 1; i <= 400; i++) ids.add(pickEnemy(1, mulberry32(i)).kind);
     expect([...ids].sort()).toEqual(['api', 'base', 'combinado']);
     const used = new Set(ENEMY_ROSTER.filter(e => e.stage === 'rookie').slice(1).map(e => e.id));
-    expect(pickEnemy(1, () => 0, { used }).id).toBe(ENEMY_ROSTER.filter(e => e.stage === 'rookie')[0].id);
+    expect(pickEnemy(1, () => 0.5, { used }).id).toBe(ENEMY_ROSTER.filter(e => e.stage === 'rookie')[0].id);
   });
   it('masmorra: level 1 → onda toda rookie; level 22+ → a escada sobe até mega', () => {
     for (let seed = 1; seed <= 30; seed++) {
@@ -145,6 +145,6 @@ describe('contrato: elemento x criatura base (selvagem/desgarrado)', () => {
   });
   it('os 211 combinados e os 5 da API só usam elementos base válidos', () => {
     const ok = new Set<string>(CLASS_ELEMENT_ORDER);
-    for (const e of ENEMY_ROSTER.filter(x => x.kind !== 'base')) for (const el of e.elements) expect(ok.has(el), `${e.key} ${el}`).toBe(true);
+    for (const e of ENEMY_ROSTER.filter(x => x.kind !== 'base' && x.kind !== 'mascote')) for (const el of e.elements) expect(ok.has(el), `${e.key} ${el}`).toBe(true);
   });
 });

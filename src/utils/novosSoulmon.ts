@@ -6,6 +6,7 @@
  * (personagens prontos, sombras do Pesadelo, NPCs da Biblioteca, Elemental Fusion, bosque seguem nas 9 linhas antigas).
  * Arte: 256² RGBA (Rookie/Champion: Lanczos a partir de 1024², alfa >=250 vira 255; formas altas pixelizadas: vizinho mais próximo 1024²->256², alfa binário), orientada à direita/de frente.
  */
+import CORVO_NEUTRO_ART from '../assets/soulmon/corvo-neutro/corvo-neutro.png';
 import {
   NOVOS_DATA, FORMAS_ALTAS, novoDataOfStage, novoFormName, novoHasForm, pickNovo,
   type NovoData, type NovoStage, type NovoHighStage, type NovoAnyStage, type NovoAttack, type NovoLine,
@@ -182,6 +183,7 @@ export const novoSoulmonOfStage = (stage: string | undefined | null): NovoSoulmo
 
 /** Sprite de uma entrada do roster (base ou combinado), ou `undefined` se a arte não existir. */
 export function rosterSpriteOf(e: RosterEntry): string | undefined {
+  if (e.kind === 'mascote') return CORVO_NEUTRO_ART;
   return e.kind === 'base' ? BY_ID[e.id]?.sprite(e.stage) : e.kind === 'api' ? INIMIGOS_API_ART[e.artFile ?? ''] : COMBINADOS_ART[e.artFile ?? ''];
 }
 
