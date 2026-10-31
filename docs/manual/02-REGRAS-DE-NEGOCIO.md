@@ -1072,6 +1072,8 @@ barras de energia), `src/components/EvoTrail.tsx` (a trilha na Home).
 <a id="atributos"></a>
 ## 15. 👊🎶🤲 Atributos e galhos
 
+> **§209 (31/10/2026, dono):** ao evoluir, Benevolência, Harmonia e Poder voltam a **zero** (em `handleEvolve`, mesma regra de `resetAlignmentPoints`) — o galho/elemento da evolução é decidido ANTES, com os pontos de antes. O recap da cerimônia avisa. Concessão única do beta: 1 Zerador de Pontos 🔄 para quem já jogava (`applyBetaResetGrant`, `utils/betaResetGrant.ts`).
+
 **Em uma frase.** A categoria da tarefa vira comida, a comida vira ponto de
 atributo, e o atributo escolhe o galho da próxima evolução.
 

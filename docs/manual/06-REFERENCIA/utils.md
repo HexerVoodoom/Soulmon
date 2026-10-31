@@ -2937,6 +2937,10 @@ dominância populacional — por isso ±15%. Régua nova:
 
 Dono único da Poção de Elemento (30/10/2026): custos (`POTION_COSTS`), filtro E por bases (`elementsMatchingBases`), saldo (`affordablePotionElements`), fabricar (`craftPotion`, via `spendEssences`), dar ao Soulmon (`givePotion`/`applySpecialItem`, sobrescreve `evolutionPotion`) e consumir na evolução (`applyPotionOnEvolve` → `potionElement`, lido por `petElementOf`). Regra do dono: vale SÓ para a próxima evolução — na seguinte `potionElement` é limpo e o elemento volta ao da pontuação (`soulmonMeta.dominantElement`). Chave de inventário `potion:<elementId>`.
 
+### `src/utils/betaResetGrant.ts`
+
+Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/`harmonyPoints`/`benevolencePoints` — usado no commit da evolução em `handleEvolve` e pelo item), o Zerador de Pontos 🔄 (`RESET_POINTS_EMOJI`, kind `reset` em `SPECIAL_ITEMS`), a concessão única do beta (`applyBetaResetGrant`, chamada no fim de `hydrateSave`; flag `grants.resetBHP_beta_2026_10`; `BETA_RESET_CUTOFF` 01/11/2026 por `bornAt`), `sanitizeGrants` e a linha do recap (`pointsResetLine`). Só cliente — o servidor não valida pontos nem inventário.
+
 ### `src/utils/premiumFood.ts`
 **Dono de:** A COMIDA PREMIUM (chave de inventário `emoji + ★`, números, tetos por dia/semana, drop determinístico) — dono único; o USO mora em `specialItemUse.ts` e o drop em `careRules.completeTask`.
 **Exports:**

@@ -3733,6 +3733,19 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 
 **Alternativa que perdeu:** manter a incubação de 30 min + cerimônia com vídeo. **Gatilho para rever:** geração de sprite passar de ~10 min com frequência (o cristal vira espera longa).
 
+## §209 — Evoluir zera Benevolência, Harmonia e Poder + Zerador de Pontos do beta (31/10/2026, dono)
+
+**Dono:** "Quando um Soulmon evolui, ele reseta todos os pontos de Benevolência, Harmonia e Poder. Volta pro zero." (confirmado em modal: é REGRA, e o jogador é avisado no recap). E: "Dá para todo mundo um único item que reseta os 3 tipos pra zero. Isso é só agora, no beta, pra quem já está jogando. Não precisa notificação, só coloca no inventário."
+
+1. **Reset na evolução.** No commit da evolução (`handleEvolve` em `App.tsx`, a revelação do cristal §208) `powerPoints`/`harmonyPoints`/`benevolencePoints` vão a 0 (`resetAlignmentPoints`, `utils/betaResetGrant.ts`). O galho/elemento DESTA evolução é decidido antes, com os pontos de antes (`evolutionTarget` ou o `branch` gravado no cristal); o reset vem depois do uso. `attributesSinceLastEvolution` já zerava (e vira `fichaJornada`, histórico imutável — intacto). `handleEvolveToUnlocked` (voltar a uma forma já desbloqueada) não é evolução nova: não zera.
+2. **Recap:** a cerimônia mostra "Os pontos de Benevolência, Harmonia e Poder recomeçam do zero para a próxima forma." / EN "Benevolence, Harmony and Power points start again from zero for the next form." (`data-cer-points-reset`); mesma frase na Ajuda (Poder/Harmonia/Benevolência) e no Guia (seção de evolução).
+3. **Interações.** Poção (§206) intacta: ela decide o elemento pelo `evolutionPotion`, não pelos pontos. Renascimento e reroll já zeravam os 3 pontos — coerente. Degeneração (queda por HP) não zera: não é evolução.
+4. **Zerador de Pontos 🔄** (`SPECIAL_ITEMS`, kind `reset`): usar pede `confirm` (não dá para desfazer) e zera só os 3 pontos — não mexe em elemento, forma, poção nem no log do estágio. Arte: reusa a do Chip Prisma.
+5. **Concessão única do beta:** no load (`hydrateSave` → `applyBetaResetGrant`), se não há `grants.resetBHP_beta_2026_10`: onboarding concluído (árvore do oráculo, personagem demo ou `bornAt`) e `bornAt` anterior a 01/11/2026 (ou ausente = save anterior a 06/09) → +1 🔄 e a flag; nascido depois → só a flag. Sem toast. A flag mora no save (sobe para a nuvem).
+6. **Servidor:** os pontos e o `foodInventory` não são validados em `functions/api` (só o cliente) — sem espelho. Limite conhecido: restaurar um backup local anterior à flag pode re-conceder.
+
+**Alternativa que perdeu:** manter os pontos acumulados entre formas (o dominante viraria permanente depois da primeira forma). **Gatilho para rever:** o dono achar que zerar desfaz a identidade de quem investiu num atributo por várias formas.
+
 ## §210 — Biblioteca: tocar num Soulmon de outro jogador mostra TODAS as formas que a pessoa já viu (31/10/2026, dono)
 
 **Dono:** "Na biblioteca, quando for o Soulmon de algum amigo meu que eu vi, eu quero tocar nele e ver todas as formas que eu já encontrei antes, e não só a atual." E, no mesmo dia: "Quando eu adicionar um amigo, quero poder ver todas as formas que o Soulmon dele já teve."

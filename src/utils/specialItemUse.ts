@@ -1,5 +1,6 @@
 import { CHIP_BOOST, HEART_HEAL, SPARK_HOME_ENERGY, SPECIAL_ITEMS, type Attr } from './shop';
 import { potionElementOfKey } from './elementPotion';
+import { resetAlignmentPoints } from './betaResetGrant';
 import { dayItemGaugeGain } from './evolutionGauge';
 import { playerDayKey, playerDayIso, type PlayerDayAnchor } from './playerDay';
 import { HUNGER_PER_PREMIUM, HUNGER_PREMIUM_REFUSE_AT, eat, hungerAt, maxEnergyOf, setEnergy, settleEnergy, type EnergyClock, type HungerRecord } from './hunger';
@@ -293,6 +294,11 @@ export function applySpecialItem<T extends SpecialItemState>(
   if (special.kind === 'potion') {
     // Poção de Elemento: grava o elemento pendente (sobrescreve a anterior; a anterior se perde de propósito, spec do dono).
     return { state: { ...prev, foodInventory, evolutionPotion: potionElementOfKey(emoji) } };
+  }
+
+  if (special.kind === 'reset') {
+    // 🔄 Zerador (`utils/betaResetGrant.ts`): só os 3 pontos. Elemento, forma, poção e o log do estágio ficam.
+    return { state: { ...resetAlignmentPoints(prev), foodInventory } };
   }
 
   if (special.kind === 'heart') {

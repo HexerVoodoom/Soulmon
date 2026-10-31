@@ -128,8 +128,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '👊', en: 'Power / 🎶 Harmony / 🤲 Benevolence', pt: 'Poder / 🎶 Harmonia / 🤲 Benevolência',
-    descEn: 'Attribute points from feeding. The dominant one picks which branch it evolves into.',
-    descPt: 'Pontos de atributo ganhos alimentando. O dominante define o galho da evolução.',
+    descEn: 'Attribute points from feeding. The dominant one picks which branch it evolves into. Benevolence, Harmony and Power points start again from zero for the next form.',
+    descPt: 'Pontos de atributo ganhos alimentando. O dominante define o galho da evolução. Os pontos de Benevolência, Harmonia e Poder recomeçam do zero para a próxima forma.',
   },
   {
     // INCUBAÇÃO (D-G8b/D-G8c). Sem número e sem unidade de tempo (R-I); diz

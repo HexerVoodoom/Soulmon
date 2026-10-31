@@ -3762,6 +3762,9 @@ export default function App() {
         perfectDays: 0,
         evolutionPoints: 0,
         attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
+        // §209 (31/10/2026, dono): ao evoluir, Benevolência, Harmonia e Poder voltam a ZERO. O galho/elemento DESTA
+        // evolução já foi decidido acima com os pontos de antes (`alvo`); o reset vem depois do uso.
+        powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, // = `resetAlignmentPoints` (utils/betaResetGrant.ts)
         chipsStage: undefined, // D-97: a contagem de chips é por estágio
         // PR15b: o que se fez no estágio que TERMINA vira o comportamento do que NASCE — gravado uma vez, imutável.
         fichaJornada: registrarEstagio(
@@ -3886,6 +3889,10 @@ export default function App() {
       if (special.kind === 'glitchtama' || special.kind === 'heart') playTaskComplete();
       else playFeed();
 
+      // 🔄 Zerador: não dá para desfazer — confirmação simples antes (`utils/betaResetGrant.ts`).
+      if (special.kind === 'reset' && !window.confirm(language === 'pt-BR'
+        ? 'Zerar Benevolência, Harmonia e Poder? Isso não pode ser desfeito.'
+        : 'Reset Benevolence, Harmony and Power to zero? This cannot be undone.')) return;
       setGameState(prev => applySpecialItem(prev, foodEmoji, agora).state);
       dispararFeedAnim(foodEmoji);
 
