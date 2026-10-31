@@ -16,6 +16,7 @@
  *  · `tema:<id>`         — inimigos temáticos (pragas do Bosque + elenco da Soul Barrage, `temaInimigos.ts`).
  */
 import { NOVOS_DATA } from './novosSoulmonData';
+import { COMBINADOS_LOTE3_DATA } from './elementosLote3.data';
 import { COMBINADOS_DATA, INIMIGOS_API_DATA } from './enemyRosterData';
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
 import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
@@ -74,6 +75,7 @@ function build(): Record<string, string> {
   for (const [num, slug] of COMBINADOS_DATA) t[`cmb:${num}`] = slug; // slug do arquivo = id fundido (manifest.combination)
   for (const [num, slug] of COMBINADOS_LOTE1_DATA) t[`cmb:${num}`] = slug; // lote 1
   for (const [num, slug] of COMBINADOS_LOTE2_DATA) t[`cmb:${num}`] = slug; // lote 2
+  for (const [num, slug] of COMBINADOS_LOTE3_DATA) t[`cmb:${num}`] = slug; // lote 3
   for (const [id, , , el] of INIMIGOS_API_DATA) t[`api:${id}`] = el;
   for (const [id, el] of Object.entries(STARTER_ELEMENT)) t[`starter:${id}`] = el;
   for (const [id, el] of Object.entries(LINE_ELEMENT)) t[`line:${id}`] = el;
