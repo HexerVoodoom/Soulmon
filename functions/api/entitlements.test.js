@@ -83,11 +83,13 @@ describe('entitlements.js — leitura', () => {
     expect(res.status).toBe(500);
   });
 
-  it('entitlement corrompido no KV degrada para conta zerada, não explode', async () => {
+  // Decisão do dono (31/10/2026): degradar para conta zerada deixava a próxima gravação apagar tier e Créditos.
+  it('entitlement corrompido no KV dá 503 tipado e não regrava o registro', async () => {
     const e = { DIGIAPP_SAVES: fakeKV({ [ENT_PREFIX + ID]: '{isto não é json' }) };
     const res = await onRequestGet({ request: new Request(`https://x/api/entitlements?id=${ID}`), env: e });
-    expect(res.status).toBe(200);
-    expect((await res.json()).credits).toBe(0);
+    expect(res.status).toBe(503);
+    expect(await res.json()).toEqual({ error: 'entitlement-unavailable' });
+    expect(await e.DIGIAPP_SAVES.get(ENT_PREFIX + ID)).toBe('{isto não é json');
   });
 });
 

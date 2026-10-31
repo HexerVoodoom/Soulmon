@@ -36,6 +36,7 @@
 //   POST coopCheckin {id}              → "apareci hoje" (idempotente no dia)
 //   POST coopLeave   {id}              → sai, sem penalidade e sem confirmação
 
+import { lerIndice, indexarPontos, completarIndice, podarIndice, ordenar } from './_rankIndex.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { bondLevelOf } from './_bond.js';
@@ -214,12 +215,19 @@ async function getRank(env, season, id) {
   return raw ? JSON.parse(raw) : { points: 0, wins: 0, losses: 0, day: today(), matchesToday: 0 };
 }
 async function putRank(env, season, id, rec) {
-  await kvOrThrow(env).put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120 });
+  // `metadata.pts` deixa o preenchimento do índice (`_rankIndex.js`) ler os pontos pelo `list`, sem um `get` por linha.
+  await kvOrThrow(env).put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120, metadata: { pts: Number(rec?.points) || 0 } });
+  await indexarPontos(env, season, id, rec?.points);
 }
 /** Reroll dos 3 oponentes (27/10/2026): UM por intervalo entre combates. Chave própria (não toca o `rank:`: não cria linha
  *  no ranking nem corre contra o `putRank` de uma partida). Nasce no reroll, morre em `settleMatch`; TTL de 1 dia por segurança. */
 const rerollKey = (id) => `reroll:${id}`;
 const rerollUsado = async (env, id) => !!(await kvOrThrow(env).get(rerollKey(id)).catch(() => null));
+/** Orçamentos de subrequest do índice da season (`_rankIndex.js`): `get`s de preenchimento por leitura e linhas relidas. */
+const RANK_INDEX_BUDGET = 100;
+const RANK_SCAN_MAX = 150;
+const CLOSE_INDEX_BUDGET = 500;
+const CLOSE_SCAN_MAX = 40;
 async function listPrefix(env, prefix, limit = 100) {
   const out = [];
   let cursor;
@@ -906,26 +914,41 @@ async function handleCommunity(context) {
   if ((action === 'rank' || action === 'seasonResult') && method === 'GET') {
     const season = url.searchParams.get('season') || currentSeason();
     if (!/^\d{4}-\d{2}$/.test(season)) return json({ error: 'invalid season' }, 400);
-    const keys = await listPrefix(env, `rank:${season}:`, 300);
+    // Índice ordenado (REGISTRO §23, `_rankIndex.js`): com ele completo, a ordem e o `myPlace` vêm da season INTEIRA e
+    // só os primeiros colocados são relidos. Enquanto o preenchimento de quem já tinha `rank:` não termina, o caminho
+    // antigo (300 chaves em ordem de saveId) segue valendo — cada leitura avança um lote.
+    // Consulta anônima só LÊ o índice (L07-04); a autenticada avança o preenchimento. `meId` já passou por
+    // `denyUnlessOwner` logo abaixo — a ordem aqui é só porque o índice decide quais chaves ler.
+    const meIdIdx = url.searchParams.get('id');
+    if (action === 'rank' && meIdIdx) {
+      const denied = await denyUnlessOwner(meIdIdx);
+      if (denied) return denied;
+    }
+    const autenticado = action === 'rank' && !!meIdIdx;
+    const indice = autenticado ? await completarIndice(env, season, RANK_INDEX_BUDGET) : await lerIndice(env, season);
+    const ordenados = indice.done ? ordenar(indice.p) : null;
+    const keys = ordenados
+      ? ordenados.slice(0, RANK_SCAN_MAX).map(r => `rank:${season}:${r.owner}`)
+      : await listPrefix(env, `rank:${season}:`, 300);
+    const semLinha = [];
     const rows = [];
     // `me`: quem optou por sair da lista continua vendo o PRÓPRIO lugar — só
     // ela (ator autorizado), nunca por consulta anônima.
-    const meId = url.searchParams.get('id');
-    if (action === 'rank' && meId) {
-      const denied = await denyUnlessOwner(meId);
-      if (denied) return denied;
-    }
+    const meId = meIdIdx;
     let meRow = null;
     // R8 (04/10/2026): Mestre = top 100 e Grão-Mestre = top 20 da season. A posição do PRÓPRIO jogador
     // (`myPlace`) sai de TODAS as linhas lidas — inclusive as ocultas da lista pública, que também
     // ocupam lugar — e só volta a quem passou por `denyUnlessOwner` (nunca em consulta anônima).
-    // Limite herdado: `listPrefix` lê até 300 chaves; com mais de 300 jogadores na season a posição
-    // deixa de ser confiável (plano em docs/REGISTRO-DE-DECISOES.md §23: índice ordenado no servidor).
+    // O limite antigo de 300 chaves em ordem de saveId só vale enquanto o índice ordenado da season
+    // (REGISTRO §23, acima) não terminou de ser preenchido.
     const allPoints = [];
     for (const k of keys) {
+      // Lista pública cheia: no caminho do índice o resto da varredura não muda nada (só o `me` oculto, abaixo).
+      if (ordenados && rows.length >= 50) break;
       const raw = await kvOrThrow(env).get(k);
-      if (!raw) continue;
-      const rec = JSON.parse(raw);
+      if (!raw) { semLinha.push(k.slice(`rank:${season}:`.length)); continue; }
+      let rec;
+      try { rec = JSON.parse(raw); } catch { continue; }
       allPoints.push({ owner: k.slice(`rank:${season}:`.length), points: Number(rec.points) || 0 });
       // Atenção: a chave do rank é o saveId. Esta variável já se chamou `pid`,
       // o que ajudava a esconder que o ranking publicava a chave do save.
@@ -954,9 +977,21 @@ async function handleCommunity(context) {
       });
     }
     rows.sort((a, b) => b.points - a.points);
+    if (autenticado && semLinha.length) await podarIndice(env, season, semLinha); // conta apagada / linha vencida: sai da ordem
     if (action === 'seasonResult') return json({ season, top3: rows.slice(0, 3) });
     let myPlace = null;
-    if (meId) {
+    if (ordenados && meId) {
+      const at = ordenados.findIndex(r => r.owner === meId);
+      if (at >= 0) myPlace = at + 1;
+      // Oculto e fora da faixa varrida: a linha `me` sai da leitura direta, como antes.
+      if (!meRow && at >= 0) {
+        const p = await getProfile(env, meId);
+        if (isHidden(p)) {
+          const rec = await getRank(env, season, meId);
+          meRow = { id: await ensurePid(env, p), points: rec.points, wins: rec.wins, losses: rec.losses, lifetime: p.lifetimePoints ?? 0, hidden: true };
+        }
+      }
+    } else if (meId) {
       allPoints.sort((a, b) => (b.points - a.points) || (a.owner < b.owner ? -1 : a.owner > b.owner ? 1 : 0));
       const at = allPoints.findIndex(r => r.owner === meId);
       if (at >= 0) myPlace = at + 1;
@@ -980,7 +1015,19 @@ async function handleCommunity(context) {
     if (await kvOrThrow(env).get(closedKey)) {
       return json({ ok: true, season, awarded: 0, already: true });
     }
-    const keys = await listPrefix(env, `rank:${season}:`, 300);
+    // Índice ordenado (REGISTRO §23): o pódio sai da season INTEIRA, não das 300 primeiras chaves por saveId. Os
+    // primeiros colocados são RECONFERIDOS na linha `rank:` (o índice é só candidato). Os primeiros colocados são RECONFERIDOS na linha `rank:` (o índice é só candidato).
+    const indice = await completarIndice(env, season, CLOSE_INDEX_BUDGET);
+    // Índice ainda incompleto depois do lote: o cron chama UMA vez, então a season fecha mesmo assim, pelo caminho
+    // antigo (300 chaves `rank:` em ordem de saveId), com log para o dono saber que o pódio saiu do limite herdado.
+    let keys;
+    if (indice.done) {
+      // Simulado é pulado ANTES da releitura (nunca premia e não gasta subrequest); o teto conta só candidatos reais.
+      keys = ordenar(indice.p).filter(r => !isSimuladoId(r.owner)).slice(0, CLOSE_SCAN_MAX).map(r => `rank:${season}:${r.owner}`);
+    } else {
+      console.warn(JSON.stringify({ event: 'season.close.fallback', season, indexed: Object.keys(indice.p).length }));
+      keys = await listPrefix(env, `rank:${season}:`, 300);
+    }
     const rows = [];
     for (const k of keys) {
       const raw = await kvOrThrow(env).get(k);

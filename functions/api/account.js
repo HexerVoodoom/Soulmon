@@ -112,8 +112,7 @@
 
 import {
   VALID_ID, ENT_PREFIX, ORDER_PREFIX, RETENTION_TTL_SECONDS, readEntitlement,
-  anonimizarClaims,
-} from './_entitlements.js';
+  anonimizarClaims, comEntitlementLegivel, EntitlementIlegivelError } from './_entitlements.js';
 import { requireVerifiedOwner } from './_auth.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { lerIndice, chaveDoIndice, PUSHIDX_MAX } from './_pushIdentity.js';
@@ -450,7 +449,15 @@ async function collect(env, saveId) {
   // certo para o jogo e errado para exportação. Exportar um entitlement que
   // nunca existiu inventa dado. Por isso a checagem crua antes.
   const entRaw = await store.get(ENT_PREFIX + saveId);
-  const entitlement = entRaw ? await readEntitlement(env, saveId) : null;
+  // `ent:` ilegível (EntitlementIlegivelError, já logado na leitura) NÃO bloqueia exportar nem excluir a conta: segue
+  // como "sem entitlement" — a exclusão então não regrava o registro (nada a minimizar que se possa ler) e ele fica
+  // intacto até o dono examinar. Qualquer outra falha continua subindo.
+  let entitlement = null;
+  if (entRaw) {
+    try { entitlement = await readEntitlement(env, saveId); } catch (err) {
+      if (!(err instanceof EntitlementIlegivelError)) throw err;
+    }
+  }
 
   const rankKeys = (await listPrefix(env, 'rank:')).filter(k => k.endsWith(`:${saveId}`));
   /** @type {Array<{ season: string, record: any }>} */
@@ -848,7 +855,7 @@ async function handleDeleteConfirm(env, saveId, body) {
   });
 }
 
-export async function onRequest({ request, env }) {
+async function onRequestBruto({ request, env }) {
   const url = new URL(request.url);
   const method = request.method;
   if (method !== 'GET' && method !== 'POST') {
@@ -884,3 +891,6 @@ export async function onRequest({ request, env }) {
 
   return json({ error: 'Unknown action' }, 400);
 }
+
+// `ent:` ilegível vira 503 com log (`_entitlements.js` › `EntitlementIlegivelError`), nunca 500 genérico.
+export const onRequest = comEntitlementLegivel(onRequestBruto, CORS);

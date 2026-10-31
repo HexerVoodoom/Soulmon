@@ -32,6 +32,7 @@
 //   • scores de `_rankings.js` (`submitScore`), semanais e mensais por jogo.
 // ---------------------------------------------------------------------------
 
+import { indexarPontos } from './_rankIndex.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { flagOn } from './_killSwitch.js';
 import { getProfile, putProfile, indexPublicId, claimNick } from './_profile.js';
@@ -269,7 +270,8 @@ async function garantirRankDaSeason(env, p, now) {
   const points = Math.round(p.skill * 380 + rng() * 60);
   const jogos = 3 + Math.floor(p.skill * 14 + rng() * 6);
   const wins = Math.round(jogos * (0.3 + p.skill * 0.5));
-  await store.put(key, JSON.stringify({ points, wins, losses: Math.max(0, jogos - wins), day: SIM_EPOCH, matchesToday: 0 }), { expirationTtl: 86400 * 120 });
+  await store.put(key, JSON.stringify({ points, wins, losses: Math.max(0, jogos - wins), day: SIM_EPOCH, matchesToday: 0 }), { expirationTtl: 86400 * 120, metadata: { pts: points } });
+  await indexarPontos(env, season, p.id, points); // índice ordenado da season (REGISTRO §23)
 }
 
 /** Escreve os scores do dia do simulado nos rankings (`submitScore`: só o MELHOR vale no período). */

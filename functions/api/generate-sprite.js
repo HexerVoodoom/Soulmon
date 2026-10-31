@@ -60,7 +60,7 @@
 import { chromaKeyPng, chromaKeyOfPrompt, BadChromaError } from './_chroma.js';
 import { guardAiRequest, VALID_FORM_ID } from './_aiGuard.js';
 import { legacyFormIdOf } from './_branchLegacy.js';
-import { requirePaidTier } from './_entitlements.js';
+import { requirePaidTier, comEntitlementLegivel } from './_entitlements.js';
 import { reserveRegen, completeRegen, refundRegen, REGEN_STALE_MS } from './_spriteRegen.js';
 import { verifiedAdmin } from './_admin.js';
 import { verifiedBetaFull } from './_betaFull.js';
@@ -571,7 +571,7 @@ async function respostaDeRegenRepetida(env, id, formId, opId, op) {
   return Response.json({ error: 'regen-duplicate' }, { status: 409, headers: CORS });
 }
 
-export async function onRequestPost({ request, env }) {
+async function onRequestPostBruto({ request, env }) {
   let lock = null;
   // "Gerar de novo" (rodada 5, `_spriteRegen.js`): o gesto cobrado (`opId`) e se a imagem já chegou ao jogador. No `finally`, gesto
   // cobrado e NÃO entregue = débito devolvido (idempotente) — cobre recusa de teto, falha do provedor, republicação e exceção.
@@ -864,3 +864,6 @@ export async function onRequestPost({ request, env }) {
     await destravar(env, lock);
   }
 }
+
+// `ent:` ilegível vira 503 com log (`_entitlements.js` › `EntitlementIlegivelError`), nunca 500 genérico.
+export const onRequestPost = comEntitlementLegivel(onRequestPostBruto, CORS);
