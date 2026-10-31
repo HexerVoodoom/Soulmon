@@ -253,9 +253,11 @@ import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/
 import type { AISettings } from './components/AISettingsModal';
 import { SequenciaOnboarding } from './components/onboarding/sequencia/SequenciaOnboarding';
 import { ONBOARDING_VELADO } from './components/onboarding/sequencia/flag';
-import { MercGuildSheet } from './components/MercGuildSheet';
-import { escolherMerc, concluirMerc, mercDeHoje, type MercOrdem } from './utils/mercMission';
-import { SLOTS_REAIS, LigacoesOnboardingContext } from './components/onboarding/sequencia/slotsReais';
+// Mercenário (velado): leva o catálogo de atividades (~dezenas de KB) — fora da entrada.
+const MercGuildSheet = lazy(() => import('./components/MercGuildSheet').then(m => ({ default: m.MercGuildSheet })));
+import type { MercOrdem } from './utils/mercMissionSave';
+// Sequência do onboarding velado com etapas reais: leva Match3Game/BattleStage junto, só monta no 1º uso (fora da entrada).
+const SequenciaReal = lazy(() => import('./components/onboarding/sequencia/SequenciaReal').then(m => ({ default: m.SequenciaReal })));
 import { IntroCinematica, deveTocarIntro } from './components/onboarding/intro/IntroCinematica';
 import { initialStageForNewSave } from './utils/bbStage';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
@@ -877,8 +879,8 @@ export default function App() {
   }, []);
   /* Cerimônia BB→rookie: o rookie grátis (`/api/free-rookie`) carrega sem travar a UI; falha = sprite inicial pronto. */
   const [freeRookie, setFreeRookie] = useState<'idle' | 'loading' | 'done'>('idle');
-  const escolherMercenario = useCallback((o: MercOrdem) => setGameState(prev => escolherMerc(prev, o, playerDayKey(new Date(), prev.playerDayTz)).state), []);
-  const confirmarMercenario = useCallback(() => setGameState(prev => concluirMerc(prev, playerDayKey(new Date(), prev.playerDayTz))), []);
+  const escolherMercenario = useCallback((o: MercOrdem) => { void import('./utils/mercMission').then(m => setGameState(prev => m.escolherMerc(prev, o, playerDayKey(new Date(), prev.playerDayTz)).state)); }, []);
+  const confirmarMercenario = useCallback(() => { void import('./utils/mercMission').then(m => setGameState(prev => m.concluirMerc(prev, playerDayKey(new Date(), prev.playerDayTz)))); }, []);
   /* ONBOARDING_VELADO: introdução pré-login (1ª abertura) e "Rever a introdução". */
   const [introCinePendente, setIntroCinePendente] = useState(() => deveTocarIntro(readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE)));
   const [reverIntro, setReverIntro] = useState(false);
@@ -7005,7 +7007,7 @@ export default function App() {
     return (
       <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
         {selo}
-        <LigacoesOnboardingContext.Provider value={{
+        <SequenciaReal language={language} onDone={terminarSequencia} ligacoes={{
           tasks: gameState.tasks,
           maxActivities: activityCap,
           onCreateTask: criarItemInicial,
@@ -7016,9 +7018,7 @@ export default function App() {
           petName: soulmonDisplayName(gameState.soulmonMeta) || undefined,
           evolutionStage: gameState.evolutionStage,
           demoCharacterId: gameState.demoCharacterId,
-        }}>
-          <SequenciaOnboarding language={language} slots={SLOTS_REAIS} onDone={terminarSequencia} />
-        </LigacoesOnboardingContext.Provider>
+        }} />
       </Suspense>
     );
   }
@@ -8588,10 +8588,12 @@ export default function App() {
             </button>
           )}
           {veladoOn && mercOpen && (
+            <Suspense fallback={null}>
             <MercGuildSheet open onClose={() => setMercOpen(false)} language={language}
-              hoje={mercDeHoje(gameState, playerDayKey(new Date(), gameState.playerDayTz))}
+              hoje={gameState.mercMission && gameState.mercMission.day === playerDayKey(new Date(), gameState.playerDayTz) ? gameState.mercMission : null}
               bb={gameState.evolutionStage === 'bb'}
               onChoose={escolherMercenario} onConfirm={confirmarMercenario} />
+            </Suspense>
           )}
           {veladoOn && reverHistoria && <SequenciaOnboarding forcar language={language} onDone={() => setReverHistoria(false)} />}
           {veladoOn && reverIntro && <IntroCinematica language={language} onDone={() => setReverIntro(false)} />}
