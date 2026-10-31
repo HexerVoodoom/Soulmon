@@ -94,3 +94,24 @@ describe('LibraryPage — abas do Hall', () => {
     expect(dlg.querySelector('[data-dex-ref="agua"]')).toBeNull();
   });
 });
+
+describe('Bestiário — modalzinho do encontrado (31/10/2026)', () => {
+  it('tocar num visto abre nome + elemento; fecha por X e Escape; trancado não é botão', async () => {
+    const e = ENEMY_ROSTER.find(x => !isStrayFoe(x.stage))!;
+    render({ bestiary: [e.key] });
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    fireEvent.click(screen.getAllByRole('tab')[1]);
+    const btns = document.querySelectorAll('[data-bestiary-open]');
+    expect(btns.length).toBe(1);
+    expect(document.querySelector('[data-bestiary-cell][data-seen="0"] button')).toBeNull();
+    fireEvent.click(btns[0]);
+    const dlg = screen.getByRole('dialog');
+    expect(within(dlg).getByText(e.name)).toBeTruthy();
+    expect(dlg.querySelector(`[data-bestiary-element="${e.element}"]`)?.textContent).toMatch(/^Element: \S/);
+    fireEvent.click(within(dlg).getByLabelText('Close'));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.click(document.querySelector('[data-bestiary-open]')!);
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});
