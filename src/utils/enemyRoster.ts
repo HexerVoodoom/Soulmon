@@ -14,6 +14,7 @@
  * `dungeon.ts`; o id não tem hífen (`novoDataOfStage` corta no 1º).
  */
 import { NOVOS_DATA, novoHasForm, novoFormName, type NovoAttack } from './novosSoulmonData';
+import { COMBINADOS_LOTE3_DATA } from './elementosLote3.data';
 import { COMBINADOS_DATA, INIMIGOS_API_DATA } from './enemyRosterData';
 
 export type EnemyStage = 'rookie' | 'champion' | 'ultimate' | 'mega';
@@ -73,6 +74,15 @@ function build(): RosterEntry[] {
     out.push({
       key: chaveBestiario(id, stage), id, stage, kind: 'api', element: el, elements: [el],
       name, basico: base.basico, especial: base.especial, artFile: `${id}-${stage}`, bancoN: num,
+    });
+  }
+  // lote 3 dos elementos curados (4 componentes): 2 primeiros mandam nos golpes
+  for (const [num, slug, name, e1, e2] of COMBINADOS_LOTE3_DATA) {
+    const base = BASE_BY_ELEMENT[e1];
+    const id = `cmb${num}`;
+    out.push({
+      key: chaveBestiario(id, 'rookie'), id, stage: 'rookie', kind: 'combinado', element: slug, elements: [e1, e2],
+      name, basico: base.basico, especial: base.especial, artFile: `${num}-${slug}`,
     });
   }
   return out;

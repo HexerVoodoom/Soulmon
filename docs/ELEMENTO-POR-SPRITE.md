@@ -275,6 +275,23 @@ Os prompts de `E:/Soulmon-assets/out/rodada3/poderosos/prompts.json` descrevem a
 | 209 | combinados/209-primordial.png | primordial | fogo+agua+terra+ar+eletricidade |
 | 210 | combinados/210-ciclo.png | ciclo | vida+morte+luz+sombra |
 | 211 | combinados/211-nulo.png | nulo | 20 elementos |
+| lote 3 (30/10/2026) | 16 curados de 4 componentes, sem arte propria: sprite cai no rookie do 1o componente; dados em `src/utils/elementosLote3.data.ts` | | |
+| 246 | combinados/246-avatar_elemental.png (pendente) | avatar_elemental | fogo+agua+terra+ar |
+| 247 | combinados/247-titano_forjado.png (pendente) | titano_forjado | fogo+terra+vigor+marcial |
+| 248 | combinados/248-cataclismo.png (pendente) | cataclismo | fogo+terra+gravidade+espaco |
+| 249 | combinados/249-sopro_do_dragao.png (pendente) | sopro_do_dragao | fogo+ar+vigor+marcial |
+| 250 | combinados/250-ragnarok.png (pendente) | ragnarok | fogo+morte+tempo+gravidade |
+| 251 | combinados/251-genesis.png (pendente) | genesis | agua+terra+luz+vida |
+| 252 | combinados/252-tempestade_perfeita.png (pendente) | tempestade_perfeita | agua+ar+eletricidade+som |
+| 253 | combinados/253-leviata.png (pendente) | leviata | agua+sombra+morte+gravidade |
+| 254 | combinados/254-senhor_da_praga.png (pendente) | senhor_da_praga | agua+vileza+morte+vida |
+| 255 | combinados/255-sinfonia_do_caos.png (pendente) | sinfonia_do_caos | arcano+sombra+vileza+som |
+| 256 | combinados/256-vontade_absoluta.png (pendente) | vontade_absoluta | arcano+luz+vigor+som |
+| 257 | combinados/257-arquiteto_da_realidade.png (pendente) | arquiteto_da_realidade | arcano+tempo+gravidade+espaco |
+| 258 | combinados/258-ceifador_estelar.png (pendente) | ceifador_estelar | sombra+morte+marcial+espaco |
+| 259 | combinados/259-renascimento.png (pendente) | renascimento | luz+morte+vida+tempo |
+| 260 | combinados/260-juizo_final.png (pendente) | juizo_final | luz+morte+tempo+som |
+| 261 | combinados/261-cavaleiro_absoluto.png (pendente) | cavaleiro_absoluto | luz+vigor+marcial+tempo |
 
 Linhas 193-211 têm 3+ componentes: o jogo guarda só 2 (`COMBINADOS_DATA`) para a vantagem; o id fundido de cada uma (`chama_demoniaca`...`nulo`) NÃO está em `PARES`/`DERIVED_ELEMENT_PAIRS` (mas tem ícone `el-<id>.png`, cor em `elementVisual.data.ts` e direção em `fxFacingTable.ts`). 137 (planta) e 138 (industrial) são ids base.
 ### Simulados (50): elemento = `base` do prompt (paleta confere: planta=verde/rosa-flor, industrial=cromo/latão, luz=rosa-aurora/marfim, agua=azul/marinho, terra=argila/ocre, fogo=vermelho/laranja, sombra=violeta/preto, ar=azul-céu/prata)
