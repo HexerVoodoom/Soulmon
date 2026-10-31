@@ -14,7 +14,10 @@
  * `dungeon.ts`; o id não tem hífen (`novoDataOfStage` corta no 1º).
  */
 import { NOVOS_DATA, novoHasForm, novoFormName, type NovoAttack } from './novosSoulmonData';
+import { COMBINADOS_LOTE3_DATA } from './elementosLote3.data';
 import { COMBINADOS_DATA, INIMIGOS_API_DATA } from './enemyRosterData';
+import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
+import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 
 export type EnemyStage = 'rookie' | 'champion' | 'ultimate' | 'mega';
 export const ENEMY_STAGES: readonly EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
@@ -68,11 +71,38 @@ function build(): RosterEntry[] {
       name, basico: base.basico, especial: base.especial, artFile: `${num}-${slug}`,
     });
   }
+  // lote 1 dos elementos curados (trios): 2 primeiros componentes mandam nos golpes, como os outros trios
+  for (const [num, slug, name, e1, e2] of COMBINADOS_LOTE1_DATA) {
+    const base = BASE_BY_ELEMENT[e1];
+    const id = `cmb${num}`;
+    out.push({
+      key: chaveBestiario(id, 'rookie'), id, stage: 'rookie', kind: 'combinado', element: slug, elements: [e1, e2],
+      name, basico: base.basico, especial: base.especial, artFile: `${num}-${slug}`,
+    });
+  }
+  // lote 2 dos elementos curados (trios): 2 primeiros componentes mandam nos golpes, como os outros trios
+  for (const [num, slug, name, e1, e2] of COMBINADOS_LOTE2_DATA) {
+    const base = BASE_BY_ELEMENT[e1];
+    const id = `cmb${num}`;
+    out.push({
+      key: chaveBestiario(id, 'rookie'), id, stage: 'rookie', kind: 'combinado', element: slug, elements: [e1, e2],
+      name, basico: base.basico, especial: base.especial, artFile: `${num}-${slug}`,
+    });
+  }
   for (const [id, stage, name, el, num] of INIMIGOS_API_DATA) {
     const base = BASE_BY_ELEMENT[el];
     out.push({
       key: chaveBestiario(id, stage), id, stage, kind: 'api', element: el, elements: [el],
       name, basico: base.basico, especial: base.especial, artFile: `${id}-${stage}`, bancoN: num,
+    });
+  }
+  // lote 3 dos elementos curados (4 componentes): 2 primeiros mandam nos golpes
+  for (const [num, slug, name, e1, e2] of COMBINADOS_LOTE3_DATA) {
+    const base = BASE_BY_ELEMENT[e1];
+    const id = `cmb${num}`;
+    out.push({
+      key: chaveBestiario(id, 'rookie'), id, stage: 'rookie', kind: 'combinado', element: slug, elements: [e1, e2],
+      name, basico: base.basico, especial: base.especial, artFile: `${num}-${slug}`,
     });
   }
   return out;

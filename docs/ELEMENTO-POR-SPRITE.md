@@ -275,6 +275,23 @@ Os prompts de `E:/Soulmon-assets/out/rodada3/poderosos/prompts.json` descrevem a
 | 209 | combinados/209-primordial.png | primordial | fogo+agua+terra+ar+eletricidade |
 | 210 | combinados/210-ciclo.png | ciclo | vida+morte+luz+sombra |
 | 211 | combinados/211-nulo.png | nulo | 20 elementos |
+| lote 3 (30/10/2026) | 16 curados de 4 componentes, sem arte propria: sprite cai no rookie do 1o componente; dados em `src/utils/elementosLote3.data.ts` | | |
+| 246 | combinados/246-avatar_elemental.png (pendente) | avatar_elemental | fogo+agua+terra+ar |
+| 247 | combinados/247-titano_forjado.png (pendente) | titano_forjado | fogo+terra+vigor+marcial |
+| 248 | combinados/248-cataclismo.png (pendente) | cataclismo | fogo+terra+gravidade+espaco |
+| 249 | combinados/249-sopro_do_dragao.png (pendente) | sopro_do_dragao | fogo+ar+vigor+marcial |
+| 250 | combinados/250-ragnarok.png (pendente) | ragnarok | fogo+morte+tempo+gravidade |
+| 251 | combinados/251-genesis.png (pendente) | genesis | agua+terra+luz+vida |
+| 252 | combinados/252-tempestade_perfeita.png (pendente) | tempestade_perfeita | agua+ar+eletricidade+som |
+| 253 | combinados/253-leviata.png (pendente) | leviata | agua+sombra+morte+gravidade |
+| 254 | combinados/254-senhor_da_praga.png (pendente) | senhor_da_praga | agua+vileza+morte+vida |
+| 255 | combinados/255-sinfonia_do_caos.png (pendente) | sinfonia_do_caos | arcano+sombra+vileza+som |
+| 256 | combinados/256-vontade_absoluta.png (pendente) | vontade_absoluta | arcano+luz+vigor+som |
+| 257 | combinados/257-arquiteto_da_realidade.png (pendente) | arquiteto_da_realidade | arcano+tempo+gravidade+espaco |
+| 258 | combinados/258-ceifador_estelar.png (pendente) | ceifador_estelar | sombra+morte+marcial+espaco |
+| 259 | combinados/259-renascimento.png (pendente) | renascimento | luz+morte+vida+tempo |
+| 260 | combinados/260-juizo_final.png (pendente) | juizo_final | luz+morte+tempo+som |
+| 261 | combinados/261-cavaleiro_absoluto.png (pendente) | cavaleiro_absoluto | luz+vigor+marcial+tempo |
 
 Linhas 193-211 têm 3+ componentes: o jogo guarda só 2 (`COMBINADOS_DATA`) para a vantagem; o id fundido de cada uma (`chama_demoniaca`...`nulo`) NÃO está em `PARES`/`DERIVED_ELEMENT_PAIRS` (mas tem ícone `el-<id>.png`, cor em `elementVisual.data.ts` e direção em `fxFacingTable.ts`). 137 (planta) e 138 (industrial) são ids base.
 ### Simulados (50): elemento = `base` do prompt (paleta confere: planta=verde/rosa-flor, industrial=cromo/latão, luz=rosa-aurora/marfim, agua=azul/marinho, terra=argila/ocre, fogo=vermelho/laranja, sombra=violeta/preto, ar=azul-céu/prata)
@@ -330,3 +347,51 @@ Linhas 193-211 têm 3+ componentes: o jogo guarda só 2 (`COMBINADOS_DATA`) para
 | sim_0048 | terra |
 | sim_0049 | industrial |
 | sim_0050 | luz |
+
+
+### Lote 1 dos 50 curados (212-228, sem PNG ainda): `COMBINADOS_LOTE1_DATA` em `src/utils/elementosLote1.data.ts`
+
+Arte de reserva = rookie da criatura base do 1º componente (`enemyRosterArt.ts`); um `combinados/NNN-slug.png` real vence sozinho. Ainda NÃO estão no manifest (o teste do manifest exige o PNG), nem em `fxFacingTable.ts` (sem FX; cai em `neutro`). Prompts de arte em `E:/Soulmon-assets/elementos-novos/lote1/`.
+
+| n | arquivo (futuro) | elemento | componentes |
+|---|---|---|---|
+| 212 | combinados/212-geiser.png | geiser | fogo+agua+terra |
+| 213 | combinados/213-vulcao.png | vulcao | fogo+terra+ar |
+| 214 | combinados/214-deserto.png | deserto | fogo+terra+tempo |
+| 215 | combinados/215-relampago_seco.png | relampago_seco | fogo+ar+eletricidade |
+| 216 | combinados/216-supernova.png | supernova | fogo+gravidade+espaco |
+| 217 | combinados/217-nevasca.png | nevasca | agua+terra+ar |
+| 218 | combinados/218-permafrost.png | permafrost | agua+terra+tempo |
+| 219 | combinados/219-monsoes.png | monsoes | agua+ar+vida |
+| 220 | combinados/220-peste_negra.png | peste_negra | agua+vileza+morte |
+| 221 | combinados/221-coro_dos_afogados.png | coro_dos_afogados | agua+morte+som |
+| 222 | combinados/222-ossario_vivo.png | ossario_vivo | terra+morte+vida |
+| 223 | combinados/223-jardim_eterno.png | jardim_eterno | terra+vida+tempo |
+| 224 | combinados/224-aurora_boreal.png | aurora_boreal | ar+eletricidade+luz |
+| 225 | combinados/225-duelista_temporal.png | duelista_temporal | ar+marcial+tempo |
+| 226 | combinados/226-pulso_cosmico.png | pulso_cosmico | eletricidade+som+espaco |
+| 227 | combinados/227-sabbat.png | sabbat | arcano+sombra+vileza |
+| 228 | combinados/228-hipnose.png | hipnose | arcano+sombra+som |
+### Lote 2 dos 50 curados (229-245, sem PNG ainda): `COMBINADOS_LOTE2_DATA` em `src/utils/elementosLote2.data.ts`
+
+Arte de reserva = rookie da criatura base do 1º componente (`enemyRosterArt.ts`); um `combinados/NNN-slug.png` real vence sozinho. Ainda NÃO estão no manifest nem em `fxFacingTable.ts` (sem FX; cai em `neutro`). Prompts de arte em `E:/Soulmon-assets/elementos-novos/lote2/`.
+
+| n | arquivo (futuro) | elemento | componentes |
+|---|---|---|---|
+| 229 | combinados/229-materia_escura.png | materia_escura | gravidade+sombra+arcano |
+| 230 | combinados/230-milagre.png | milagre | luz+vida+arcano |
+| 231 | combinados/231-memoria.png | memoria | tempo+arcano+luz |
+| 232 | combinados/232-coral_celeste.png | coral_celeste | som+luz+arcano |
+| 233 | combinados/233-via_lactea.png | via_lactea | espaco+luz+arcano |
+| 234 | combinados/234-delirio.png | delirio | vileza+som+arcano |
+| 235 | combinados/235-cacador_de_almas.png | cacador_de_almas | marcial+morte+sombra |
+| 236 | combinados/236-presagio.png | presagio | tempo+sombra+espaco |
+| 237 | combinados/237-horizonte_de_eventos.png | horizonte_de_eventos | gravidade+espaco+sombra |
+| 238 | combinados/238-lamina_do_juizo.png | lamina_do_juizo | marcial+luz+morte |
+| 239 | combinados/239-bencao_marcial.png | bencao_marcial | luz+marcial+vigor |
+| 240 | combinados/240-arauto.png | arauto | marcial+som+luz |
+| 241 | combinados/241-farol.png | farol | luz+espaco+som |
+| 242 | combinados/242-carniceiro.png | carniceiro | vileza+vigor+morte |
+| 243 | combinados/243-entropia_final.png | entropia_final | tempo+morte+gravidade |
+| 244 | combinados/244-gladiador.png | gladiador | marcial+vigor+som |
+| 245 | combinados/245-punho_gravitico.png | punho_gravitico | marcial+gravidade+vigor |
