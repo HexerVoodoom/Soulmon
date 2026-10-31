@@ -205,7 +205,7 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // PR soma +1,2 KB: o texto/barra de carregamento da intro em DOM). O vídeo da intro caiu de 2,5 MB para 0,7 MB.
   'index.css': 190_071,
   'bg-forja.webp': 424_334, // 29/10/2026: fundo da Forja (pixel art denso) 14 KB acima do teto; borrar para caber estragaria o pixel
-  'evolution-bg.mp4': 3_917_240, // 3,7 MB — fundo de UMA cerimônia; correção #3 (WebM/CSS)
+  // ⚰️ 'evolution-bg.mp4' (3,7 MB) saiu em 31/10/2026: a cerimônia da evolução foi refeita em CSS (o cristal, REGISTRO §208) e o vídeo foi apagado.
 };
 
 const RAIZ = resolve(__dirname, '../..');
@@ -306,8 +306,8 @@ describe('orçamento de bytes (decisão #31) — lido do dist/', () => {
     const problema = avaliar('gigante-Abcdefgh.webp', TETO_IMAGEM + 1, TETO_IMAGEM, 0);
     expect(problema).toContain('gigante-Abcdefgh.webp');
     expect(problema).toMatch(/arquivo novo/);
-    // Vídeo em dívida que CRESCEU 1 byte (mídia não tem folga) → reprovado.
-    expect(avaliar('evolution-bg-Abcdefgh.mp4', DIVIDA_ATUAL['evolution-bg.mp4'] + 1, TETO_VIDEO, 0)).toMatch(/cresceu/);
+    // Mídia em dívida que CRESCEU 1 byte (mídia não tem folga) → reprovada.
+    expect(avaliar('bg-forja-Abcdefgh.webp', DIVIDA_ATUAL['bg-forja.webp'] + 1, TETO_IMAGEM, 0)).toMatch(/cresceu/);
     // Dívida registrada para arquivo que não existe → linha morta (o guard cobra a remoção).
     const medidor = (n: string) => (n === 'index-Abcdefgh.js' ? DIVIDA_ATUAL['index.js'] : 0);
     expect(dividasMortas({ 'index.js': 1, 'fantasma.webp': 999_999 }, ['index-Abcdefgh.js'], medidor, tetoPorExtensao)).toEqual(['fantasma.webp']);

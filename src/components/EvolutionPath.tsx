@@ -29,6 +29,7 @@
  * desempate por ritmo de cuidado, e a situação de cada nó dita em PALAVRAS no
  * `aria-label` (WCAG 1.4.1: cor e posição nunca são o único portador).
  */
+import { EvolveButton } from './pixel/EvolveButton';
 import { useState, useMemo, useEffect, useRef, type CSSProperties } from 'react';
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
 import { getSpriteForStage, isStarterId, type StarterId } from '../utils/sprites';
@@ -446,9 +447,10 @@ export function EvolutionPath({
        a barra encheu agora e a forma está sendo feita. As três metades que o
        parecer R-N exige estão aqui — leva um tempo · volta quando quiser ·
        nada se perde —, e sem número nem unidade de tempo (R-I). */
+    /* 💎 31/10/2026: "incubando" agora é o CRISTAL — o jogador tocou Evoluir e a forma nova está sendo desenhada. */
     ? (isPt
-        ? 'A próxima forma está tomando corpo. Leva um tempo — volte quando quiser, ela espera por você.'
-        : 'The next form is taking shape. It takes a while — come back whenever you like, it waits for you.')
+        ? 'Seu Soulmon está no cristal, evoluindo. A forma nova está tomando corpo — volte quando quiser, ela espera por você.'
+        : 'Your Soulmon is in the crystal, evolving. The new form is taking shape — come back whenever you like, it waits for you.')
     : prontoParaEvoluir
     ? (evolutionLocked
         /* Copy §3.3 (21/09/2026): a linha canônica da §5.7, verbatim. O "mas
@@ -1067,6 +1069,15 @@ export function EvolutionPath({
             </p>
           )}
           <p style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{fraseProgresso}</p>
+          {/* 💎 31/10/2026 (dono): barra a 100% → o botão Evoluir aparece aqui também (o mesmo gesto do visor e da Home). */}
+          {evoluiNoToque && (
+            <EvolveButton
+              language={isPt ? 'pt-BR' : 'en-US'}
+              onClick={onEvolveRequest}
+              reducedMotion={movimentoReduzido}
+              style={{ alignSelf: 'center', marginTop: 4 }}
+            />
+          )}
           {!prontoParaEvoluir && gaugeGoal > 0 && (
             <p data-evo-gauge-unlock style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
               {fragmentHowText(language)}

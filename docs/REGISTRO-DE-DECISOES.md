@@ -3718,3 +3718,17 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 **Alternativa que perdeu:** dar ao BB uma linha em `FORM_REQUIREMENTS` (gauge/required zerados). Perdeu porque contamina as escadas derivadas (teto de level, requisito máximo, energia) e convida a "ajustar o BB" por número em vez de por regra.
 
 **Gatilho para rever:** o BB evoluir sem o jogador ter feito nada útil (Vínculo 2 muito barato), ou o interruptor ligado em produção (D15): aí a recusa por estágio pode virar dado do perfil em vez de leitura do save.
+
+## §208 — Evolução pelo CRISTAL: botão a 100%, cristal parado, transformação sem vídeo (31/10/2026, dono)
+
+**Pedido:** "Refaz a tela de evolução: aquele vídeo de beijo não tá legal, nem o efeito de sunburst atrás. [...] quando tiver atingido o suficiente para evoluir, aparece o botão Evoluir; quando o usuário tocar, ele vai para o módulo do cristal [...] Quando está em cristal ele fica parado. Quando estiver pronto, aí ele transforma."
+
+**Decidido (modal do dono):**
+1. Barra de Fragmentos a 100% → botão **Evoluir** na Home (sobre o pet) e no Centro de Evolução (`EvolutionPath`). ⚰️ A espera fixa de 30 min da incubação (D-G8c) deixa de travar o botão: a espera agora é o tempo REAL de desenhar a forma nova.
+2. O toque põe o Soulmon **no cristal** (`evolutionCrystal` no save, dono `src/utils/evolutionCrystal.ts`): o destino (forma + galho) é decidido no toque, o lote de sprite da forma-destino parte só agora, e na Home ele fica parado dentro do cristal (arte `PLACEHOLDER_ART.forming`, a mesma do nascimento). Sobrevive ao reload. Sem espelho no servidor: a evolução continua sendo estado do cliente (o servidor não valida estágio).
+3. No cristal ficam fechados **só** Masmorra (Calabouço), Fenda Sem Fim, Feira, Grove e Arena (Torneio + Arena livre), com o aviso "Seu Soulmon está no cristal, evoluindo." Cuidar, tarefas, minijogos e Passeio seguem.
+4. Pronto → a cerimônia abre sozinha (Home ou Centro de Evolução, nunca no meio de minijogo): o cristal treme, racha em luz turquesa, estilhaça e revela a forma nova. **Sem vídeo, sem sunburst** — `evolution-bg.mp4` (3,7 MB), o thumb e o `EvolutionLight` foram apagados. Movimento reduzido = fade simples.
+5. Falha: falha gravada, ou nenhuma arte em 10 min → "Tentar de novo" (quando `canManualRetry` deixa) e "Evoluir assim" (arte de reserva). Teto da forma/conta → segue direto com a reserva. O cristal nunca prende.
+6. Mantidos: Poção de Elemento (só na próxima evolução, `applyPotionOnEvolve` no commit), recap da evolução, cadeado, queda (o cristal só vale com `from === evolutionStage`).
+
+**Alternativa que perdeu:** manter a incubação de 30 min + cerimônia com vídeo. **Gatilho para rever:** geração de sprite passar de ~10 min com frequência (o cristal vira espera longa).

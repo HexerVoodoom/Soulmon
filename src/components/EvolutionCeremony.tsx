@@ -1,49 +1,37 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { getSpriteForStage } from '../utils/sprites';
-import { EvolutionLight } from './EvolutionLight';
-import { ANIM_ART } from '../utils/animArt';
+import { PLACEHOLDER_ART } from '../utils/placeholderArt';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { usePrefersReducedMotion } from './ui/Viewport';
-import { Icon } from './ui/Icon';
 import { ritualLabel } from './ritual/RitualKit';
 import { sm2Button, sm2Hint } from './form/FormKit';
 import { fragmentsGatherLine, fragmentsSpentLine } from '../utils/soulFragment';
 import { entrarNaSuperficie } from '../utils/musica';
 import { SoulFragmentIcon } from './ui/SoulFragmentIcon';
-import evolutionBgVideo from '../assets/video/evolution-bg.mp4';
-import evolutionBgThumb from '../assets/video/evolution-bg-thumb.webp';
 
 /**
- * EvolutionCeremony — a cerimônia da evolução MANUAL.
- * ====================================================
+ * EvolutionCeremony — a TRANSFORMAÇÃO que fecha o cristal da evolução.
+ * =====================================================================
  *
- * Canvas Evolução (`Cerimonia`/`CerimoniaReduzida`, D-E6, DECISÕES §24,
- * 20/09/2026): o diálogo z-500 é um **VISOR de tela cheia** + o aparelho
- * embaixo. Dentro do vidro (`--sm2-viewport-bg`): o vídeo como CENÁRIO
- * (`cover`, `image-rendering: auto` — ilustração/transição, como o
- * `bg-room`), o burst `gain-evolution-burst` 96² a **3× = 288** atrás da
- * forma evoluída a **128** (0,5× — a mesma escala da Home e da Ficha) e a
- * faísca `anim-sparkle-pop` quadro 4 (64² a 2×) no canto superior direito,
- * fora da criatura (X2). Fora do vidro, a faixa `surface` com filete de
- * cobre 3px carrega "EVOLVED INTO" (`.lab` Rubik 12/500), o nome Cinzel 24,
- * a data (`formReachedAt`, 02 §45) e o primário "Let's keep going together"
- * (a saída relacional do marco, RIT-20). Texto e botão NUNCA ficam sobre o
- * vídeo: contraste sobre imagem não é medível por token.
+ * Refeita em 31/10/2026 (pedido do dono, REGISTRO §208): o vídeo de fundo e o
+ * sunburst saíram. O jogador tocou Evoluir, o Soulmon passou um tempo NO
+ * CRISTAL (`utils/evolutionCrystal.ts`) enquanto a forma nova era desenhada, e
+ * quando ela fica pronta esta tela conta a transformação dentro do jogo, em
+ * quatro tempos (CSS puro, sem vídeo nem imagem nova):
  *
- * Movimento: os sprites da forma ATUAL e da PRÓXIMA intercalam em branco
- * por `TOTAL_MS`, acelerando — mas **nunca abaixo de `MIN_STEP_MS` = 340 ms**
- * (B3, WCAG 2.3.1: menos de 3 flashes por segundo). Antes o intervalo caía a
- * 55 ms — 18 trocas por segundo, sobre um vídeo a tela cheia.
+ *   1. `treme`     — o cristal (a mesma arte do nascimento, `PLACEHOLDER_ART.forming`) treme;
+ *   2. `racha`     — rachaduras de luz turquesa riscam o cristal;
+ *   3. `estilhaca` — ele estilhaça em fragmentos que voam para fora;
+ *   4. `revela`    — a forma nova aparece no lugar, e a faixa diz o nome.
  *
- * `prefers-reduced-motion` muda a ESTRUTURA, não a pausa (D7): o quadro
- * parado antes (64) → `arrow_forward` → depois (128), sem burst (X1: a 3× o
- * centrado no "depois" vazaria do vidro), sem vídeo (o poster fica), e a
- * evolução é commitada na montagem. A cerimônia continua ESPERANDO o gesto —
- * movimento reduzido reduz o movimento, nunca a saída.
+ * A evolução é commitada (`onEvolved`) no começo da revelação.
+ * `prefers-reduced-motion` troca tudo por um fade simples para a forma nova e
+ * commita na montagem. A cerimônia continua ESPERANDO o gesto de saída
+ * (RIT-20). Escape só depois de `done`.
  *
  * Acessibilidade (§10.4 b): `role="dialog"` + `aria-modal`, foco preso e
- * devolvido (`useDialogA11y`); Escape só depois de `done` — fechar antes
- * seria abandonar a evolução no meio, e o commit acontece em `onEvolved`.
+ * devolvido (`useDialogA11y`). Nada pisca: o tremor é deslocamento e a luz
+ * cresce uma vez só (WCAG 2.3.1).
  */
 interface EvolutionCeremonyProps {
   fromStage: string;
@@ -59,48 +47,64 @@ interface EvolutionCeremonyProps {
   reachedAt?: string;
   /** Fragmentos de Alma que esta evolução USA (o custo do estágio). Dito uma vez, ao terminar; ausente = não mostra a linha. */
   fragmentsSpent?: number;
-  /** Chamado quando a animação termina (commit da evolução no estado). */
+  /** Chamado quando a forma nova aparece (commit da evolução no estado). */
   onEvolved: () => void;
   /** Fecha a tela (depois do resultado). */
   onClose: () => void;
 }
 
-export const TOTAL_MS = 3000;
-/** Piso do intervalo de troca (B3): 340 ms → < 3 trocas/s. */
-export const MIN_STEP_MS = 340;
-
-// Agenda de alternância: intervalos progressivamente menores somando ~3s,
-// com o piso de `MIN_STEP_MS`.
-export function buildSchedule(): number[] {
-  const steps: number[] = [];
-  let t = 0;
-  let interval = 480;
-  while (t + interval < TOTAL_MS) {
-    steps.push(t + interval);
-    t += interval;
-    interval = Math.max(MIN_STEP_MS, interval * 0.82);
-  }
-  return steps;
-}
+export type CeremonyPhase = 'treme' | 'racha' | 'estilhaca' | 'revela';
+/** Quando cada tempo COMEÇA (ms desde a montagem). */
+export const PHASE_AT: Readonly<Record<CeremonyPhase, number>> = { treme: 0, racha: 1400, estilhaca: 2600, revela: 3200 };
+export const TOTAL_MS = 3800;
 
 const SPRITE = 128;
-const BEFORE = 64;
-const BURST = 288;
-const SPARK = 128;
+const CRYSTAL = 144;
+/** Fragmentos do estilhaço: ângulo (graus), distância e tamanho — determinísticos, nada de sorteio no render. */
+export const SHARDS: ReadonlyArray<{ a: number; d: number; s: number }> = Array.from({ length: 14 }, (_, i) => ({
+  a: (i * 360) / 14 + (i % 2 ? 9 : -7),
+  d: 110 + ((i * 37) % 70),
+  s: 10 + ((i * 13) % 12),
+}));
 
 const pixel: CSSProperties = { position: 'absolute', imageRendering: 'pixelated', display: 'block', maxWidth: 'none' };
+
+const CSS = [
+  '@keyframes sm2-cer-treme { 0%,100% { transform: translate(0,0) } 25% { transform: translate(-2px,1px) } 50% { transform: translate(2px,-1px) } 75% { transform: translate(-1px,-2px) } }',
+  '@keyframes sm2-cer-risca { from { stroke-dashoffset: 120 } to { stroke-dashoffset: 0 } }',
+  '@keyframes sm2-cer-voa { from { transform: translate(-50%,-50%) rotate(var(--a)) translate(0,0); opacity: 1 } to { transform: translate(-50%,-50%) rotate(var(--a)) translate(var(--d),0) rotate(140deg); opacity: 0 } }',
+  '@keyframes sm2-cer-luz { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.4) } 40% { opacity: .9 } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.6) } }',
+  '@keyframes sm2-cer-surge { from { opacity: 0; transform: scale(.82) } to { opacity: 1; transform: scale(1) } }',
+  '@keyframes sm2-cer-fade { from { opacity: 0 } to { opacity: 1 } }',
+  '[data-cer-crystal][data-phase="treme"] { animation: sm2-cer-treme .2s steps(2) infinite; }',
+  '[data-cer-crystal][data-phase="racha"] { animation: sm2-cer-treme .1s steps(2) infinite; }',
+  '[data-cer-cracks] path { stroke-dasharray: 120; stroke-dashoffset: 120; animation: sm2-cer-risca .9s ease-out forwards; }',
+  '[data-cer-shard] { animation: sm2-cer-voa .7s cubic-bezier(.2,.7,.3,1) forwards; }',
+  '[data-cer-flash] { animation: sm2-cer-luz .8s ease-out forwards; }',
+  '[data-cer-sprite][data-reveal="anim"] { animation: sm2-cer-surge .6s ease-out both; }',
+  '[data-cer-sprite][data-reveal="fade"] { animation: sm2-cer-fade .6s ease-out both; }',
+].join('\n');
+
+const CRACKS = [
+  'M72 20 L66 48 L78 70 L62 96 L70 124',
+  'M66 48 L40 58 L30 80',
+  'M78 70 L104 78 L112 100',
+  'M62 96 L44 110',
+  'M70 30 L92 40 L100 58',
+];
 
 export function EvolutionCeremony({
   fromStage, toStage, toName, language, demoCharacterId, fromSpriteUrl, toSpriteUrl, reachedAt, fragmentsSpent, onEvolved, onClose,
 }: EvolutionCeremonyProps) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
-  const [showNext, setShowNext] = useState(false);
+  const [phase, setPhase] = useState<CeremonyPhase>(reduced ? 'revela' : 'treme');
   const [done, setDone] = useState(false);
   const evolvedRef = useRef(false);
   // S18: o tema da cerimônia acompanha a cerimônia e o cartão final; fechar devolve a música anterior (crossfade).
   useEffect(() => entrarNaSuperficie('evolucao'), []);
 
+  // No cristal o visor mostra o cristal, não a forma de partida; ela fica só como `data-` para quem inspeciona.
   const fromSprite = fromSpriteUrl ?? getSpriteForStage(fromStage, demoCharacterId);
   const toSprite = toSpriteUrl ?? getSpriteForStage(toStage, demoCharacterId);
 
@@ -114,20 +118,17 @@ export function EvolutionCeremony({
       onEvolved();
     };
     if (reduced) {
-      setShowNext(true);
+      setPhase('revela');
       setDone(true);
       commit();
       return;
     }
-    const timers: number[] = [];
-    buildSchedule().forEach((at, i) => {
-      timers.push(window.setTimeout(() => setShowNext(i % 2 === 0), at));
-    });
-    timers.push(window.setTimeout(() => {
-      setShowNext(true);
-      setDone(true);
-      commit();
-    }, TOTAL_MS));
+    const timers = [
+      window.setTimeout(() => setPhase('racha'), PHASE_AT.racha),
+      window.setTimeout(() => setPhase('estilhaca'), PHASE_AT.estilhaca),
+      window.setTimeout(() => { setPhase('revela'); commit(); }, PHASE_AT.revela),
+      window.setTimeout(() => setDone(true), TOTAL_MS),
+    ];
     return () => timers.forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduced]);
@@ -139,6 +140,7 @@ export function EvolutionCeremony({
   }, [reachedAt, isPt]);
 
   const titulo = isPt ? 'Evolução' : 'Evolution';
+  const cristalVisivel = phase === 'treme' || phase === 'racha';
 
   return (
     <div
@@ -148,6 +150,8 @@ export function EvolutionCeremony({
       aria-label={titulo}
       tabIndex={-1}
       data-evolution-ceremony
+      data-cer-phase={phase}
+      data-cer-from={fromSprite}
       style={{
         position: 'fixed', inset: 0, zIndex: 500,
         display: 'flex', flexDirection: 'column',
@@ -155,88 +159,63 @@ export function EvolutionCeremony({
         outline: 'none',
       }}
     >
-      {/* ── O VISOR de tela cheia: tudo que é cena fica aqui dentro. ── */}
+      <style>{CSS}</style>
+      {/* ── O VISOR de tela cheia: a cena é o cristal, no vidro escuro de sempre. ── */}
       <div
         className="sm2-viewport-screen sm2-visor"
         aria-hidden="true"
         data-cer-glass
         style={{
-          flex: 1, minHeight: 0, borderRadius: 0,
+          flex: 1, minHeight: 0, borderRadius: 0, position: 'relative', overflow: 'hidden',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          backgroundImage: `url(${evolutionBgThumb})`,
-          backgroundSize: 'cover', backgroundPosition: 'center',
-          imageRendering: 'auto',
+          background: 'radial-gradient(circle at 50% 50%, rgba(64,224,208,.16) 0%, var(--sm2-viewport-bg, #071414) 62%)',
         }}
       >
-        {/* O cenário: vídeo em `cover` — ilustração, não grade (transição
-            declarada, Home X11). Sob movimento reduzido só o quadro (poster). */}
-        {!reduced && (
-          <video
-            autoPlay loop muted playsInline
-            poster={evolutionBgThumb}
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', imageRendering: 'auto' }}
+        {cristalVisivel && (
+          <div
+            data-cer-crystal
+            data-phase={phase}
+            style={{ position: 'absolute', left: '50%', top: '50%', width: CRYSTAL, height: CRYSTAL, margin: `-${CRYSTAL / 2}px 0 0 -${CRYSTAL / 2}px` }}
           >
-            <source src={evolutionBgVideo} type="video/mp4" />
-          </video>
+            <img src={PLACEHOLDER_ART.forming} alt="" style={{ ...pixel, left: 0, top: 0, width: CRYSTAL, height: CRYSTAL, objectFit: 'contain' }} />
+            {phase === 'racha' && (
+              <svg data-cer-cracks viewBox="0 0 144 144" width={CRYSTAL} height={CRYSTAL} style={{ position: 'absolute', left: 0, top: 0, filter: 'drop-shadow(0 0 4px #40e0d0)' }}>
+                {CRACKS.map((d, i) => (
+                  <path key={i} d={d} fill="none" stroke="#7ffff0" strokeWidth={2.5} strokeLinecap="square" style={{ animationDelay: `${i * 120}ms` }} />
+                ))}
+              </svg>
+            )}
+          </div>
         )}
-
-        {reduced ? (
+        {phase === 'estilhaca' && (
           <>
-            {/* D7: antes (64) → seta → depois (128), o quadro parado. */}
-            <img
-              src={fromSprite}
-              alt=""
-              data-cer-before
-              style={{ ...pixel, width: BEFORE, height: BEFORE, left: '50%', top: '50%', margin: `-${BEFORE / 2}px 0 0 -${SPRITE}px`, objectFit: 'contain' }}
-            />
-            <span
-              data-cer-arrow
-              style={{ position: 'absolute', left: '50%', top: '50%', margin: '-12px 0 0 -52px', color: 'var(--sm2-viewport-ink)', display: 'block', lineHeight: 0 }}
-            >
-              <Icon name="arrow_forward" size={24} tone="viewport" />
-            </span>
-            <img
-              src={toSprite}
-              alt=""
-              data-cer-sprite
-              style={{ ...pixel, width: SPRITE, height: SPRITE, left: '50%', top: '50%', margin: `-${SPRITE / 2}px 0 0 0`, objectFit: 'contain' }}
-            />
-          </>
-        ) : (
-          <>
-            {/* O burst a 3× atrás da criatura: os raios passam 80 px além
-                dela e o centro ciano aparece nas frestas (X1). Só ao concluir. */}
-            {done && (
-              <EvolutionLight size={BURST} />
-            )}
-            {/* Sprite: branco durante a intercalação, cor ao concluir. */}
-            <img
-              src={showNext ? toSprite : fromSprite}
-              alt=""
-              data-cer-sprite
-              style={{
-                ...pixel, width: SPRITE, height: SPRITE, objectFit: 'contain',
-                left: '50%', top: '50%', margin: `-${SPRITE / 2}px 0 0 -${SPRITE / 2}px`,
-                filter: done ? 'none' : 'brightness(0) invert(1)',
-              }}
-            />
-            {/* A faísca (quadro 4, a dispersão) no canto superior direito,
-                fora da criatura — 0 px de sobreposição (X2). */}
-            {done && (
+            <span data-cer-flash style={{ position: 'absolute', left: '50%', top: '50%', width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(127,255,240,.95) 0%, rgba(64,224,208,.35) 45%, transparent 70%)', pointerEvents: 'none' }} />
+            {SHARDS.map((sh, i) => (
               <span
-                data-cer-spark
+                key={i}
+                data-cer-shard
                 style={{
-                  position: 'absolute', left: '50%', top: '50%', width: SPARK, height: SPARK,
-                  margin: '-160px 0 0 64px',
-                  backgroundImage: `url(${ANIM_ART.sparklePop.src})`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundSize: `${ANIM_ART.sparklePop.frames * SPARK}px ${SPARK}px`,
-                  backgroundPosition: `-${(ANIM_ART.sparklePop.frames - 1) * SPARK}px 0`,
-                  imageRendering: 'pixelated', pointerEvents: 'none',
-                }}
+                  position: 'absolute', left: '50%', top: '50%', width: sh.s, height: Math.round(sh.s * 1.4),
+                  background: 'linear-gradient(135deg, #b8fff6 0%, #40e0d0 55%, #1b8f86 100%)',
+                  clipPath: 'polygon(50% 0, 100% 40%, 70% 100%, 0 70%)',
+                  ['--a' as string]: `${sh.a}deg`, ['--d' as string]: `${sh.d}px`,
+                } as CSSProperties}
               />
-            )}
+            ))}
           </>
+        )}
+        {phase === 'revela' && (
+          <img
+            src={toSprite}
+            alt=""
+            data-cer-sprite
+            data-reveal={reduced ? 'fade' : 'anim'}
+            style={{
+              ...pixel, width: SPRITE, height: SPRITE, objectFit: 'contain',
+              left: '50%', top: '50%', margin: `-${SPRITE / 2}px 0 0 -${SPRITE / 2}px`,
+              filter: 'drop-shadow(0 0 10px rgba(64,224,208,.55))',
+            }}
+          />
         )}
         <span className="sm2-viewport-glass" style={{ borderRadius: 0 }} />
       </div>

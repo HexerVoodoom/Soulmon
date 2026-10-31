@@ -55,12 +55,13 @@ import { ConfirmDialog } from './components/ConfirmDialog';
 import { Toaster } from './components/ui/sonner';
 import { GamePopups } from './components/GamePopups';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
-import { emptyIncubation, incubationFor, incubationReady, isIncubating } from './utils/spriteTrigger';
+import { emptyIncubation, incubationFor, incubationReady } from './utils/spriteTrigger';
+import { activeCrystal, crystalPhase, startCrystal, type CrystalPhase } from './utils/evolutionCrystal';
 import { spriteText } from './utils/spriteCopy';
 import { UNLOCK_NEEDED_EVENT } from './utils/unlockEvent';
 import { MAX_GENERATE_CHARACTER_USES, generateCharacterUsesLeft, spendGenerateCharacterUse } from './utils/generateCharacterUses';
 import { useRegenAparencia } from './hooks/useRegenAparencia';
-import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, isAccountCapped, isFormCapped, markTuneSeen, recordSprite, type SpriteLibrary } from './utils/spriteLibrary';
+import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, isAccountCapped, isFormCapped, markTuneSeen, recordSprite, canManualRetry, type SpriteLibrary } from './utils/spriteLibrary';
 import { PLACEHOLDER_ART } from './utils/placeholderArt';
 import { getSpriteForStage, isStarterId, migrateEggType, setOwnSprites, STARTER_IDS } from './utils/sprites';
 import { setPetSizeSeed, sizeSeedOf } from './utils/spriteScale';
@@ -960,20 +961,13 @@ export default function App() {
   /** A forma-destino está incubando AGORA? É o que o aviso da Home pergunta —
    *  derivado, nunca persistido (o nível do Vínculo ensinou por que: dois
    *  donos do mesmo número é o footgun 9 na forma mais cara). */
-  const incubandoAgora = useMemo(() => {
-    const { stage: proxima } = evolutionTarget({
-      points: { power: gameState.powerPoints, harmony: gameState.harmonyPoints, benevolence: gameState.benevolencePoints },
-      reading: carePatternReading,
-      currentBranch: gameState.currentBranch,
-      evolutionStage: gameState.evolutionStage,
-      unlockedEvolutions: gameState.unlockedEvolutions,
-      evolutionPoints: gameState.evolutionPoints,
-    });
-    if (proxima === gameState.evolutionStage) return false;
-    return isIncubating(gameState.incubation, proxima, agoraParaIncubacao);
-  }, [gameState.incubation, gameState.powerPoints, gameState.harmonyPoints, gameState.benevolencePoints,
-      gameState.currentBranch, gameState.evolutionStage, gameState.unlockedEvolutions,
-      gameState.evolutionPoints, carePatternReading, agoraParaIncubacao]);
+  const incubandoAgora = useMemo(
+    // 💎 31/10/2026 (dono): a espera da evolução passou a ser o CRISTAL — o jogador
+    // toca Evoluir com a barra cheia e o Soulmon entra no cristal enquanto a forma
+    // nova é desenhada (`utils/evolutionCrystal.ts`). "Tomando corpo" = no cristal.
+    () => !!activeCrystal(gameState),
+    [gameState.evolutionCrystal, gameState.evolutionStage], // eslint-disable-line react-hooks/exhaustive-deps
+  );
 
   //    2. A escrita. Roda quando o jogador fica APTO, e de propósito **não
   //       olha o acervo de sprites**: `spriteBatch` devolve `null` para conta
@@ -1176,6 +1170,7 @@ export default function App() {
       setGameState(prev => ({ ...prev, spriteLibrary: fn(prev.spriteLibrary ?? emptySpriteLibrary()) })),
     [setGameState],
   );
+  const spriteGenOn = (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0;
   const spriteGen = useSpriteGeneration({
     trigger: {
       evolutionStage: gameState.evolutionStage,
@@ -1184,6 +1179,8 @@ export default function App() {
       evolutionPoints: gameState.evolutionPoints,
       points: { power: gameState.powerPoints, harmony: gameState.harmonyPoints, benevolence: gameState.benevolencePoints },
       reading: carePatternReading,
+      // 💎 O lote da próxima forma só parte com o Soulmon NO CRISTAL (31/10/2026).
+      crystalFormId: activeCrystal(gameState)?.to ?? null,
     },
     library: spriteAcervo,
     updateLibrary: updateSpriteLibrary,
@@ -1200,7 +1197,7 @@ export default function App() {
     busy: rolloverPending || !!evolutionCeremony || showDailyReport || !!careEvent || !!feedAnim,
     // NÃO é pré-checagem de tier (quem decide é o servidor): é o corte de quem
     // não tem árvore própria e portanto não teria prompt para mandar.
-    enabled: (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0,
+    enabled: spriteGenOn,
     // F-1: a ocasiao A (`birthBatch`) nao tinha chamador, e quem paga chegava ao
     // reveal vendo a MESMA arte de reserva do demo gratis -- o primeiro sprite
     // proprio so nascia na vespera da primeira evolucao, dias depois.
@@ -1211,6 +1208,35 @@ export default function App() {
     // gerar duas vezes.
     newborn: isNewbornLibrary(spriteAcervo),
   });
+  /* 💎 O CRISTAL (31/10/2026, dono): a fase vem de `utils/evolutionCrystal.ts` — gerando · falhou · pronto. */
+  const cristal = activeCrystal(gameState);
+  const [cristalPulado, setCristalPulado] = useState<string | null>(null);
+  const [agoraCristal, setAgoraCristal] = useState(() => Date.now());
+  useEffect(() => {
+    if (!cristal) return;
+    const id = setInterval(() => setAgoraCristal(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, [cristal]);
+  const cristalFase: CrystalPhase | null = !cristal ? null
+    : freeRookie === 'loading' ? 'gerando'
+    : crystalPhase({
+      crystal: cristal,
+      library: spriteAcervo,
+      canGenerate: spriteGenOn && (gameState.soulmonStages ?? []).some(st => creatureFormId(st) === cristal.to),
+      generating: spriteGen.generating,
+      now: agoraCristal,
+      skipped: cristalPulado === cristal.since,
+    });
+  const cristalFaseRef = useRef(cristalFase);
+  cristalFaseRef.current = cristalFase;
+  /* Pronto → ele TRANSFORMA: a cerimônia abre sozinha na Home ou no Centro de Evolução (nunca no meio de um minijogo). */
+  const cristalNaTela = currentView === 'home' || (areaOf(currentView) === 'laboratorio' && labTab === 'evolution');
+  useEffect(() => {
+    if (!cristal || cristalFase !== 'pronto' || evolutionCeremony || !cristalNaTela) return;
+    setEvolutionCeremony({ from: cristal.from, to: cristal.to, spent: gaugeGoalFor(cristal.from, gameState.unlockedEvolutions) });
+  }, [cristal, cristalFase, evolutionCeremony, cristalNaTela, gameState.unlockedEvolutions]);
+  const handleCristalRetry = useCallback(() => { if (cristal) spriteGen.retry(cristal.to); }, [cristal, spriteGen]);
+  const handleCristalSeguir = useCallback(() => { if (cristal) setCristalPulado(cristal.since); }, [cristal]);
   /* "CHOCANDO" (20/10/2026, dono): quem tem criatura do oráculo mas ainda não recebeu NENHUM sprite próprio (a geração leva um tempo) vê o cristal com
      o ser dentro e "seu Soulmon está chocando", em vez do inicial de reserva. Entra no jogo e no tutorial normalmente; quando o sprite chega o visor
      troca com o fade de sempre. Para quando a geração para de vez (teto da conta ou da forma): aí volta a arte de reserva, nunca um cristal eterno. */
@@ -3637,7 +3663,7 @@ export default function App() {
     if (isStarterId(gameState.demoCharacterId)) return; // os iniciais não evoluem
     // D8 (ONBOARDING_VELADO): grátis depois do rookie pede conta paga — abre o convite.
     if (evolutionPaywalled({ velado: veladoOn, accountTier: gameState.accountTier, evolutionStage })) { setUnlockReason('evolve-free'); return; }
-    const { stage: next } = evolutionTarget({
+    const { stage: next, branch: nextBranch } = evolutionTarget({
       points: { power: powerPoints, harmony: harmonyPoints, benevolence: benevolencePoints },
       reading: carePatternReading,
       currentBranch,
@@ -3649,7 +3675,16 @@ export default function App() {
     // causa de uma queda, e o `handleEvolve` do outro lado recusaria de
     // qualquer jeito, deixando o jogador diante de um ritual que não commita.
     if (degeneratedByHP) return;
-    if (next !== evolutionStage) setEvolutionCeremony({ from: evolutionStage, to: next, spent: gaugeGoalFor(evolutionStage, unlockedEvolutions) });
+    if (next === evolutionStage) return;
+    /* 💎 O TOQUE põe o Soulmon NO CRISTAL (31/10/2026): a forma nova começa a ser desenhada agora e a cerimônia só toca quando ela fica
+       pronta (efeito abaixo). Já no cristal e pronto, o toque abre a cerimônia; no meio da geração, nada. */
+    const noCristal = activeCrystal(gameState);
+    if (noCristal) {
+      if (cristalFaseRef.current === 'pronto') setEvolutionCeremony({ from: noCristal.from, to: noCristal.to, spent: gaugeGoalFor(evolutionStage, unlockedEvolutions) });
+      return;
+    }
+    setGameState(prev => (activeCrystal(prev) || prev.evolutionStage !== evolutionStage ? prev
+      : { ...prev, evolutionCrystal: startCrystal(prev.evolutionStage, next, nextBranch, new Date()) }));
     // ONBOARDING_VELADO (D6/D20): ao abrir a cerimônia BB→rookie, pede o rookie grátis sem bloquear a UI.
     // Fallback/falha = segue com o inicial pronto (o acervo/`getSpriteForStage` de sempre).
     if (veladoOn && next === 'rookie' && sanitizeStageId(String(evolutionStage)) === 'bb' && freeRookie === 'idle') {
@@ -3663,7 +3698,7 @@ export default function App() {
         });
       }
     }
-  }, [powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP, gameState.demoCharacterId, gameState.accountTier, gameState.soulmonStages, gameState.playerDayTz, setUnlockReason, veladoOn, freeRookie, updateSpriteLibrary]);
+  }, [powerPoints, harmonyPoints, benevolencePoints, evolutionStage, unlockedEvolutions, currentBranch, evolutionPoints, carePatternReading, degeneratedByHP, gameState.demoCharacterId, gameState.accountTier, gameState.soulmonStages, gameState.playerDayTz, gameState.evolutionCrystal, setUnlockReason, veladoOn, freeRookie, updateSpriteLibrary]);
 
   const handleEvolve = useCallback(() => {
     setGameState(prev => {
@@ -3692,7 +3727,9 @@ export default function App() {
       // dado), sem significado nenhum. É a ideia dos care mistakes do v-pet de
       // 97: o jeito como você cuidou define quem seu bicho vira, e nenhum jeito
       // é melhor que o outro. Ver utils/carePattern.ts.
-      const alvo = evolutionTarget({
+      // 💎 No cristal, o destino é o que o TOQUE decidiu (o empate se resolve uma vez, no gesto).
+      const cristalAtivo = activeCrystal(prev);
+      const alvo = cristalAtivo ? { stage: cristalAtivo.to, branch: cristalAtivo.branch } : evolutionTarget({
         points: { power: prev.powerPoints, harmony: prev.harmonyPoints, benevolence: prev.benevolencePoints },
         // `careHistory(prev)`, não `prev.completedTasks`: a página de Evolução
         // prevê o galho com tarefas + activityLog, e ler só as tarefas aqui
@@ -3703,11 +3740,9 @@ export default function App() {
         unlockedEvolutions: prev.unlockedEvolutions,
         evolutionPoints: prev.evolutionPoints,
       });
-      // INCUBAÇÃO (D-G8c): ficar apto abre a espera; o gesto só completa depois
-      // dela. Reconferida sobre o `prev` pelo mesmo motivo do `podeEvoluirDepoisDaQueda`
-      // acima — é este updater que commita, o botão é sinal de UI. A regra mora
-      // em `utils/spriteTrigger.ts` e NÃO é reescrita aqui.
-      if (!incubationReady(prev.incubation, alvo.stage, new Date())) return prev;
+      // 💎 31/10/2026: a INCUBAÇÃO de 30 min (D-G8c) deu lugar ao CRISTAL — a espera agora é o tempo real de desenhar a forma nova
+      // (`utils/evolutionCrystal.ts`), e o portão é o próprio fluxo: a cerimônia só abre com a fase `pronto`.
+      if (alvo.stage === prev.evolutionStage) return prev;
       const newCurrentBranch = alvo.branch;
       newEvolutionStage = alvo.stage;
       newHP = getMaxHPForStage(newEvolutionStage);
@@ -3719,6 +3754,7 @@ export default function App() {
       const base = applyPotionOnEvolve(applyRedemption(prev, newEvolutionStage !== prev.evolutionStage));
       return {
         ...base,
+        evolutionCrystal: undefined,
         evolutionStage: newEvolutionStage,
         currentBranch: newCurrentBranch,
         healthPoints: newHP,
@@ -5075,6 +5111,7 @@ export default function App() {
          preserva é o tempo JUNTOS, que é do jogador; aqui o que se descarta é
          um relógio que pertencia a formas que não existem mais. */
       incubation: emptyIncubation(),
+      evolutionCrystal: undefined,
     }));
   }, []);
 
@@ -7806,6 +7843,7 @@ export default function App() {
                 area={area}
                 wakeGuard={guardWake}
                 naMasmorra={naMasmorra}
+                emCristal={!!cristal}
                 initialGame={area === 'jogos' && refugeLaunch ? 'respiracao' : undefined}
                 onInitialGameConsumed={handleRefugeLaunchConsumed}
                 initialSheet={pendingSheet && pendingSheet.area === area ? pendingSheet.lot : undefined}
@@ -8031,6 +8069,9 @@ export default function App() {
                    segue na arte de reserva, que nunca é erro. */
                 ownSpriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url}
                 chocando={petChocando}
+                emCristal={cristalFase}
+                onCristalRetry={cristal && canManualRetry(spriteAcervo, cristal.to) ? handleCristalRetry : undefined}
+                onCristalSeguir={handleCristalSeguir}
                 healthPoints={gameState.healthPoints}
                 maxHealthPoints={gameState.maxHealthPoints}
                 dominantBranch={getDominantBranch()}
@@ -8065,10 +8106,8 @@ export default function App() {
                     evolutionPoints: gameState.evolutionPoints,
                   });
                   if (next === gameState.evolutionStage) return false;
-                  // INCUBAÇÃO (D-G8c) — mesma função que o `handleEvolve`
-                  // commita. Regra copiada diverge em silêncio (footgun 9), e
-                  // estes dois já divergiram uma vez.
-                  return incubationReady(gameState.incubation, next, agoraParaIncubacao);
+                  // 💎 31/10/2026: o botão aparece assim que a barra chega a 100%; no CRISTAL ele some (o Soulmon já está evoluindo).
+                  return !activeCrystal(gameState);
                 })()}
                 onEvolveRequest={handleEvolveRequest}
                 careEvent={careEvent}
@@ -8278,8 +8317,8 @@ export default function App() {
                         <Icon name="egg" size={20} fill={1} tone="gold" />
                         <p className="sm2-notice-body" style={{ flex: 1, minWidth: 0, marginTop: 0 }}>
                           {isPtA
-                            ? 'A próxima forma está tomando corpo. Leva um tempo — volte quando quiser, ela espera por você.'
-                            : 'The next form is taking shape. It takes a while — come back whenever you like, it waits for you.'}
+                            ? 'Seu Soulmon está no cristal, evoluindo. A forma nova está tomando corpo — volte quando quiser, ela espera por você.'
+                            : 'Your Soulmon is in the crystal, evolving. The new form is taking shape — come back whenever you like, it waits for you.'}
                         </p>
                       </div>
                     </div>

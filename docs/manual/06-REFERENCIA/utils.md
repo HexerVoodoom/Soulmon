@@ -1025,6 +1025,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`, `src/utils/dailyReset.ts`, `src/utils/spriteTrigger.ts`, `src/utils/specialItemUse.ts`, `src/utils/gmTools.ts`, `src/contexts/GameStateContext.tsx`, `src/components/EvolutionPath.tsx`, `src/components/EvolutionGaugeMini.tsx`.
 **Régua:** `src/utils/evolutionGauge.test.ts` (regra, migração, simulação leve/médio/intenso).
 
+### `src/utils/evolutionCrystal.ts`
+**Dono de:** o CRISTAL da evolução (31/10/2026, REGISTRO §208) — puro. Barra a 100% → botão Evoluir → o toque grava `evolutionCrystal {v,from,to,branch,since}` no save (o destino é decidido NO toque) e só então o lote de sprite da forma-destino parte (`SpriteTriggerInput.crystalFormId`). Fases `gerando`/`falhou`/`pronto` (`crystalPhase`): pronto com a arte nova, sem geração possível ou no teto; falhou com falha gravada ou sem arte em `CRYSTAL_STUCK_MS` (10 min) → "Tentar de novo"/"Evoluir assim" (nunca prende). Bloqueia SÓ Masmorra (`exploracao.dungeon`), Fenda Sem Fim, Feira, Grove e Arena (`CRYSTAL_BLOCKED_LOTS`, aplicado no `AreaView`).
+**Exports:** `EvolutionCrystal` · `CrystalPhase` · `CRYSTAL_STUCK_MS` · `CRYSTAL_BLOCKED_LOTS` · `crystalBlocksLot` · `crystalRefusalText` · `sanitizeCrystal` · `activeCrystal` · `startCrystal` · `crystalPhase`.
+**Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`, `src/components/nav/AreaView.tsx`.
+**Régua:** `src/utils/evolutionCrystal.test.ts`, `src/components/evolucaoCristal.render.test.tsx`.
+
 ### `src/utils/evoRecap.ts`
 **Dono de:** o recap da evolução (REGISTRO §190, 29/10/2026) — puro, sem React/storage/`Date`. O "ontem" sai do relatório da virada (`antes = evolutionPoints - gaugeGain`); o snapshot persistido (`STORAGE_KEYS.EVO_RECAP_SNAPSHOT`) só marca o que já foi mostrado. Devolve `null` se já visto, sem ganho, estágio final (meta ≤ 0) ou dado incoerente.
 **Exports:** `EvoRecapSnapshot` · `EvoRecap` · `EvoRecapReport` · `parseEvoRecapSnapshot` · `serializeEvoRecapSnapshot` · `buildEvoRecap`.

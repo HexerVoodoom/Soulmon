@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState, type ComponentProps, type ReactNode } from 'react';
+import { crystalBlocksLot, crystalRefusalText } from '../../utils/evolutionCrystal';
 import { emitFeat } from '../../utils/feats';
 import type { AreaId } from '../../navigation';
 import type { MindGameId, MindGameTutorials } from '../../utils/mente/mindTutorials';
@@ -163,6 +164,8 @@ export interface AreaViewProps {
   wakeGuard?: (action: string) => boolean;
   /** O Soulmon JÁ está na descida (`soulmonNaMasmorra`): tocar a Fenda entra direto na tela da descida, sem a folha com o CTA. */
   naMasmorra?: boolean;
+  /** 💎 O Soulmon está no CRISTAL da evolução: Masmorra, Fenda, Feira, Grove e Arena recusam com o aviso curto (`utils/evolutionCrystal.ts`). */
+  emCristal?: boolean;
   /** Abre um jogo direto ao montar (o convite ao Refúgio abre a respiração).
    *  One-shot: o `App` limpa pelo `onInitialGameConsumed`. */
   initialGame?: PlayGame;
@@ -322,11 +325,13 @@ export function AreaView(props: AreaViewProps) {
   /** Forma BB (D5): Torneio, Duelo e Guilda recusam, com motivo (mesma faixa de aviso do cadeado). */
   const bbBlocks = (lotId: string | null | undefined) =>
     !!lotId && `${area}.${lotId}` in BB_LOCKED_BUILDINGS && bbRefusal({ evolutionStage: props.evolutionStage }) !== null;
-  const initialDemoBlocked = demoBlocks(props.initialSheet) || bbBlocks(props.initialSheet);
+  const cristalBlocks = (lotId: string | null | undefined) => !!props.emCristal && crystalBlocksLot(area, lotId);
+  const initialDemoBlocked = demoBlocks(props.initialSheet) || bbBlocks(props.initialSheet) || cristalBlocks(props.initialSheet);
   const initialLock = props.initialSheet && !initialDemoBlocked ? lockOf(props.initialSheet) : null;
   const [sheet, setSheet] = useState<string | null>(initialLock || initialDemoBlocked ? null : props.initialSheet ?? null);
   const [lockNote, setLockNote] = useState<string | null>(
-    bbBlocks(props.initialSheet) ? bbRefusalText(language === 'pt-BR')
+    cristalBlocks(props.initialSheet) ? crystalRefusalText(language === 'pt-BR')
+      : bbBlocks(props.initialSheet) ? bbRefusalText(language === 'pt-BR')
       : initialDemoBlocked ? demoRefusalText(language === 'pt-BR')
       : initialLock ? buildingLockLine(initialLock.minBond, language) : null);
   useEffect(() => {
@@ -337,6 +342,7 @@ export function AreaView(props: AreaViewProps) {
   /** Tranca os prédios fechados: arte cinza + cadeado, e o toque só mostra o aviso neutro. */
   const gated = (lots: AreaLot[]): AreaLot[] => lots.map(l => {
     // DEMO: prédio social → toque inerte, com a recusa curta na mesma faixa de aviso.
+    if (cristalBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(crystalRefusalText(language === 'pt-BR')) };
     if (bbBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(bbRefusalText(language === 'pt-BR')) };
     if (demoBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(demoRefusalText(language === 'pt-BR')) };
     const g = lockOf(l.id);

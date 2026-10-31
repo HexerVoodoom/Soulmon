@@ -52,6 +52,13 @@ export interface SpriteTriggerInput {
   points: AttrPoints;
   reading: CareReading;
   library: SpriteLibrary;
+  /**
+   * O CRISTAL (31/10/2026, `utils/evolutionCrystal.ts`): quando o chamador passa
+   * o campo, a ocasião C só parte com o Soulmon NO CRISTAL — e só a forma que o
+   * toque decidiu. `null` = apto mas fora do cristal: não gera ainda. Ausente =
+   * comportamento antigo (gera os líderes assim que a barra enche).
+   */
+  crystalFormId?: string | null;
 }
 
 export interface SpriteBatch {
@@ -97,6 +104,11 @@ export function spriteBatch(input: SpriteTriggerInput): SpriteBatch | null {
   const faltam = pointsToEvolve(input.evolutionStage, input.evolutionPoints ?? 0, input.unlockedEvolutions);
 
   if (faltam <= 0) {
+    if (input.crystalFormId !== undefined) {
+      if (!input.crystalFormId) return null;
+      const ids = generatable(input, [input.crystalFormId]);
+      return ids.length ? { occasion: 'C', formIds: ids } : null;
+    }
     const target = targetFormId(input);
     if (!target) return null;
     // `vesperForms` migrou da ocasião B para cá (D-G8c): o empate de galho

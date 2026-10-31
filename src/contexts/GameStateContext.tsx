@@ -1,4 +1,5 @@
 import { normalizeGuildMission } from '../utils/guildMission';
+import { sanitizeCrystal } from '../utils/evolutionCrystal';
 import { sanitizeRogueRun, type RogueRun } from '../utils/rogueDungeonSave';
 import { sanitizeDungeonReturnSummary, type DungeonReturnSummary } from '../utils/dungeonReturnSummary';
 import { sanitizeFocusKeyDay } from '../utils/focusKey';
@@ -348,6 +349,8 @@ export interface GameState {
    * para forma sem registro: quem já estava apto não ganha um relógio novo.
    */
   incubation?: import('../utils/spriteTrigger').Incubation;
+  /** O CRISTAL da evolução (31/10/2026, `utils/evolutionCrystal.ts`): o jogador tocou Evoluir e a forma nova está sendo desenhada. */
+  evolutionCrystal?: import('../utils/evolutionCrystal').EvolutionCrystal;
   /** WP1.3 — os três gestos do primeiro dia (`utils/firstDay.ts`). Some
    *  sozinho na virada; nunca vira lista de pendências. */
   firstDay?: import('../utils/firstDay').FirstDayProgress | null;
@@ -1503,6 +1506,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         })(),
         soulmonManifestacao: sanitizeManifestacao(loadedState.soulmonManifestacao),
         evolutionLocked: loadedState.evolutionLocked === true,
+        evolutionCrystal: sanitizeCrystal(loadedState.evolutionCrystal),
         incubation: (() => {
           const v = loadedState.incubation as { v?: unknown; since?: unknown } | undefined;
           if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined;

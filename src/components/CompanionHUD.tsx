@@ -21,6 +21,7 @@ import { ANIM_ART } from '../utils/animArt';
 import { SpriteAnim } from './pixel/SpriteAnim';
 import { FeedBubble } from './home/FeedBubble';
 import { EvolveButton, EVOLVE_BTN_H } from './pixel/EvolveButton';
+import { sm2Button } from './form/FormKit';
 import { type SlotId, PET_TOP_OFFSET, PET_LIFT, PET_BOX, PET_RENDER, STAGE_HEIGHT, GROUND_Y } from '../utils/petStage';
 import { PetStageDecor } from './PetStageDecor';
 import { PET_BACKGROUNDS, isDarkBackground } from '../utils/backgrounds';
@@ -181,6 +182,12 @@ interface CompanionHUDProps {
   /** O Soulmon PRÓPRIO ainda está sendo gerado (20/10/2026, dono): em vez da arte de reserva (um inicial qualquer), o visor mostra o
    *  cristal com o ser dentro e a legenda "está chocando"; quando o sprite chega, a troca faz o fade de sempre (`sm-visor-swap`). */
   chocando?: boolean;
+  /** 💎 O CRISTAL da evolução (31/10/2026, `utils/evolutionCrystal.ts`): o Soulmon fica PARADO dentro do cristal enquanto a forma nova é desenhada. */
+  emCristal?: 'gerando' | 'falhou' | 'pronto' | null;
+  /** Falhou: tenta desenhar de novo (ausente = o teto não deixa). */
+  onCristalRetry?: () => void;
+  /** Falhou: segue a evolução com a arte de reserva — o cristal nunca prende. */
+  onCristalSeguir?: () => void;
   /** Pose do sprite (Configurações → "Virar Soulmon" / "Voar"). Sem ela: chão, sem espelho. */
   spritePose?: Partial<SpritePose>;
   healthPoints: number;
@@ -322,6 +329,9 @@ export const CompanionHUD = memo(function CompanionHUD({
   demoCharacterId,
   ownSpriteUrl,
   chocando,
+  emCristal = null,
+  onCristalRetry,
+  onCristalSeguir,
   spritePose,
   healthPoints,
   maxHealthPoints, 
@@ -745,8 +755,10 @@ export const CompanionHUD = memo(function CompanionHUD({
      vezes só porque mudou de ideia.
      Não anda dormindo, não anda com a aba escondida (ninguém vê, e o timer
      ainda custa bateria) e não anda em `prefers-reduced-motion`. */
+  // 💎 No cristal ele fica PARADO, no centro (pedido do dono, 31/10/2026).
+  useEffect(() => { if (emCristal) setWalkPx(0); }, [emCristal]);
   useEffect(() => {
-    if (reducedMotion || isSleeping) return;
+    if (reducedMotion || isSleeping || emCristal) return;
     /* O grupo do pet cresce `CENA_ZOOM` a partir do centro: cada passo lógico
        anda `CENA_ZOOM` na tela, então o alcance lógico encolhe na mesma razão. */
     const alcance = telaW / 2 / CENA_ZOOM - PET_RENDER / 2 - 6;
@@ -774,7 +786,7 @@ export const CompanionHUD = memo(function CompanionHUD({
       });
     }, WALK_TICK_MS);
     return () => clearInterval(id);
-  }, [reducedMotion, isSleeping, telaW]);
+  }, [reducedMotion, isSleeping, telaW, emCristal]);
 
   /* A PISCADA, em intervalo irregular (2,6–7,8s). Regular seria pisca-pisca. */
   useEffect(() => {
@@ -932,7 +944,7 @@ export const CompanionHUD = memo(function CompanionHUD({
      QUEBRADO — sem `onError`, nada caía na arte de reserva. Guarda a URL que
      falhou; uma URL nova (regeneração) tenta de novo. */
   const [spriteQuebrado, setSpriteQuebrado] = useState<string | null>(null);
-  const sprite = (ownSpriteUrl && ownSpriteUrl !== spriteQuebrado ? ownSpriteUrl : undefined)
+  const sprite = emCristal ? PLACEHOLDER_ART.forming : (ownSpriteUrl && ownSpriteUrl !== spriteQuebrado ? ownSpriteUrl : undefined)
     ?? (chocando ? PLACEHOLDER_ART.forming : getSpriteForStage(evolutionStage, demoCharacterId));
   /* Porte por estágio (utils/spriteScale.ts): escala a CAIXA VISÍVEL do bicho, com origem nos pés — layout, chão e alvo de toque ficam. */
   const petScale = usePetScale(evolutionStage, sprite);
@@ -1560,7 +1572,14 @@ export const CompanionHUD = memo(function CompanionHUD({
                   ...(noAr ? { transform: 'translateX(-50%) scale(.7)', opacity: 0.6 } : null),
                 }}
               />
-              {chocando && (
+              {emCristal && (
+                <span data-pet-cristal={emCristal} role="status" style={{ position: 'absolute', left: '50%', bottom: -8, transform: 'translateX(-50%)', whiteSpace: 'nowrap', padding: '2px 10px', borderRadius: 999, background: 'rgba(7,20,20,.78)', border: '1px solid var(--sm2-line, #2b4a47)', color: 'var(--sm2-ink, #e8f3f1)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 600, pointerEvents: 'none', zIndex: 2 }}>
+                  {emCristal === 'falhou'
+                    ? (language === 'pt-BR' ? 'A forma nova não veio desta vez' : "The new form didn't come this time")
+                    : (language === 'pt-BR' ? 'Seu Soulmon está no cristal, evoluindo…' : 'Your Soulmon is in the crystal, evolving…')}
+                </span>
+              )}
+              {chocando && !emCristal && (
                 <span data-pet-chocando role="status" style={{ position: 'absolute', left: '50%', bottom: -8, transform: 'translateX(-50%)', whiteSpace: 'nowrap', padding: '2px 10px', borderRadius: 999, background: 'rgba(7,20,20,.78)', border: '1px solid var(--sm2-line, #2b4a47)', color: 'var(--sm2-ink, #e8f3f1)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-xs, 11px)', fontWeight: 600, pointerEvents: 'none', zIndex: 2 }}>
                   {language === 'pt-BR' ? 'Seu Soulmon está chocando…' : 'Your Soulmon is hatching…'}
                 </span>
@@ -1895,6 +1914,18 @@ export const CompanionHUD = memo(function CompanionHUD({
             no RODAPÉ (`bottom`), em ponta oposta ao balão (topo): as duas
             faixas não se cruzam por construção (`CompanionHUD.cta.test`).
             Sem "into X": o botão não diz a forma. */}
+        {emCristal === 'falhou' && (
+          <div data-cristal-falhou style={{ position: 'absolute', zIndex: 30, left: '50%', top: BUBBLE_GAP, transform: 'translateX(-50%)', display: 'flex', gap: 8 }}>
+            {onCristalRetry && (
+              <button type="button" onClick={onCristalRetry} style={{ ...sm2Button('primary', false, 'sm'), whiteSpace: 'nowrap' }}>
+                {language === 'pt-BR' ? 'Tentar de novo' : 'Try again'}
+              </button>
+            )}
+            <button type="button" onClick={onCristalSeguir} style={{ ...sm2Button('outline', false, 'sm'), whiteSpace: 'nowrap', background: 'var(--sm2-surface)' }}>
+              {language === 'pt-BR' ? 'Evoluir assim' : 'Evolve anyway'}
+            </button>
+          </div>
+        )}
         {canEvolve && !isSleeping && (
           /* B3 (02/10/2026): CENTRALIZADO no ALTO da área do pet, com
              acabamento próprio (`EvolveButton`: moldura pixel dupla + brilho
