@@ -29,14 +29,7 @@ export interface SequenciaPlayerProps {
   onSlotDone?: (slot: string, resultado?: Record<string, unknown>) => void;
 }
 
-const CSS = `
-@keyframes seq-glitch{0%,100%{transform:translate(0);filter:none}20%{transform:translate(-3px,1px);filter:hue-rotate(40deg)}40%{transform:translate(3px,-2px)}60%{transform:translate(-2px,2px);filter:saturate(2)}80%{transform:translate(2px,0)}}
-@keyframes seq-pixels{0%{opacity:.0}50%{opacity:.5}100%{opacity:.15}}
-@keyframes seq-clarao{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
-@keyframes seq-fade{from{opacity:1}to{opacity:0}}
-@keyframes seq-parallax{from{transform:translateX(-1.5%) scale(1.05)}to{transform:translateX(1.5%) scale(1.05)}}
-@media (prefers-reduced-motion: reduce){.seq-anim{animation:none!important}}
-`;
+// Keyframes e o corte em movimento reduzido de `.seq-anim` moram no src/index.css.
 
 function Arte({ k, extra, language }: { k: AssetKey; extra?: CSSProperties; language: Language }) {
   const url = urlDoAsset(k);
@@ -92,7 +85,6 @@ export function SequenciaPlayer({ quadros, language, slots, onDone, onChoice, on
 
   return (
     <div style={raiz} data-testid="sequencia-player" data-quadro={i}>
-      <style>{CSS}</style>
       {q.tipo === 'slot' ? (
         (() => {
           const Slot = slots?.[q.slot];

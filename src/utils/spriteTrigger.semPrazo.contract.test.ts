@@ -50,13 +50,17 @@ describe('R-J — a espera é UNIFORME e nada a encurta', () => {
   it('`INCUBATION_MIN_MS` tem dono único: nenhum outro arquivo de src o redeclara', () => {
     // Mesma regra do alvo de loudness (`loudness.ts`): número de política se
     // escreve num lugar só, senão a segunda cópia é a que alguém ajusta.
-    const { execSync } = require('node:child_process') as typeof import('node:child_process');
-    const saida = execSync(
-      `grep -rln "INCUBATION_MIN_MS\\s*=" ${SRC} || true`,
-      { encoding: 'utf8' },
-    ).trim().split('\n').filter(Boolean);
-    // Separador normalizado: no Windows o `grep` devolve `src/utils/…` com `/`
-    // depois de um `SRC` em `\`, e a comparação crua reprovava o dono certo.
+    // Varredura em Node (sem `grep` do sistema: caminho do Windows e shell variam).
+    const { readdirSync, statSync } = require('node:fs') as typeof import('node:fs');
+    const saida: string[] = [];
+    const walk = (dir: string) => {
+      for (const n of readdirSync(dir)) {
+        const p = join(dir, n);
+        if (statSync(p).isDirectory()) walk(p);
+        else if (/\.(ts|tsx|js|jsx|mjs|cjs)$/.test(n) && /INCUBATION_MIN_MS\s*=/.test(readFileSync(p, 'utf8'))) saida.push(p);
+      }
+    };
+    walk(SRC);
     const norm = (p: string) => p.trim().replace(/\\/g, '/');
     expect(saida.map(norm)).toEqual([norm(join(SRC, 'utils/spriteTrigger.ts'))]);
   });

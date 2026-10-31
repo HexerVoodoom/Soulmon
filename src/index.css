@@ -5909,6 +5909,8 @@ select:focus-visible {
   .sm-result-in, .sm-result-in--on { opacity: 1; transform: none; transition: none; }
   .sm-result-banner, .sm-result-sparks img { animation: none !important; }
   .sm-result-pet { animation: none !important; }
+  .sm-rank-podium li { animation: none !important; } /* podio do ranking: entra parado */
+  .seq-anim { animation: none !important; } /* sequencia do onboarding: clarao/glitch/preto sem animacao */
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
@@ -8942,4 +8944,12 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 
 /* Podio do ranking (RankingList): entrada em subida, so sem reduced-motion. */
 @keyframes sm-rank-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion: no-preference){.sm-rank-podium li{animation:sm-rank-rise .4s ease-out both}.sm-rank-podium li[data-place="1"]{animation-delay:.12s}.sm-rank-podium li[data-place="3"]{animation-delay:.2s}}
+.sm-rank-podium li{animation:sm-rank-rise .4s ease-out both}.sm-rank-podium li[data-place="1"]{animation-delay:.12s}.sm-rank-podium li[data-place="3"]{animation-delay:.2s}
+/* o corte em movimento reduzido mora no bloco canonico (nao abrir outro @media prefers-reduced-motion aqui). */
+
+/* Sequencia do onboarding (SequenciaPlayer): keyframes; o corte em movimento reduzido de .seq-anim mora no bloco canonico. */
+@keyframes seq-glitch{0%,100%{transform:translate(0);filter:none}20%{transform:translate(-3px,1px);filter:hue-rotate(40deg)}40%{transform:translate(3px,-2px)}60%{transform:translate(-2px,2px);filter:saturate(2)}80%{transform:translate(2px,0)}}
+@keyframes seq-pixels{0%{opacity:.0}50%{opacity:.5}100%{opacity:.15}}
+@keyframes seq-clarao{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
+@keyframes seq-fade{from{opacity:1}to{opacity:0}}
+@keyframes seq-parallax{from{transform:translateX(-1.5%) scale(1.05)}to{transform:translateX(1.5%) scale(1.05)}}

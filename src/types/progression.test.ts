@@ -224,6 +224,6 @@ describe('não existe segundo número de evolução (D5 / WP4.1)', () => {
   it('quem decide a evolução manual é o GAUGE (`gaugeFull`, 11/10/2026)', () => {
     const app = ler('src/App.tsx');
     const corpo = app.slice(app.indexOf('const handleEvolve = useCallback'));
-    expect(corpo.slice(0, 600)).toMatch(/gaugeFull\(prev\.evolutionPoints, prev\.evolutionStage, prev\.unlockedEvolutions\)/);
+    expect(corpo.slice(0, 600)).toMatch(/gaugeFull\(prev\.evolutionPoints, prev\.evolutionStage, prev\.unlockedEvolutions(?:, prev\.totalXP)?\)/);
   });
 });
