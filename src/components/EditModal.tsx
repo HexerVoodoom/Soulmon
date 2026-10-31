@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ActivityCategory } from '../types/attributes';
 import { CATEGORY_ICONS } from '../types/category-icons';
-import { useHabitSchedule } from '../hooks/useItemForm';
+import { chaveDoItem, useHabitSchedule } from '../hooks/useItemForm';
 import { CategoryChips, HabitAnchorFields, HabitScheduleFields, StepsFields } from './CreateModal';
 import { Field, ModalSheet, SM2_SHADOW_CARD, sm2Button, sm2Label } from './form/FormKit';
 import { HabitConstancy } from './HabitConstancy';
@@ -70,14 +70,25 @@ export function EditModal({
   const [alarmTime, setAlarmTime] = useState('');
   const sched = useHabitSchedule({ isOpen, initial: initialData });
 
+  // O App manda um objeto NOVO do mesmo hábito a cada mudança de estado (virada
+  // do dia, adoção da nuvem): chavear o reset no objeto apagava o que a pessoa
+  // estava digitando. O reset só anda ao abrir ou ao trocar de item (pelo id),
+  // e o dado é lido por ref — o mesmo padrão de `useItemForm`.
+  const initialRef = useRef(initialData);
+  initialRef.current = initialData;
+  const chaveInicial = chaveDoItem(initialData);
+
   useEffect(() => {
+    const initialData = initialRef.current;
     if (isOpen && initialData) {
       setName(initialData.name);
       setCategory(initialData.category as ActivityCategory);
       setSteps(initialData.steps || []);
       setAlarmTime(initialData.alarm?.time || '');
     }
-  }, [isOpen, initialData]);
+    // `initialData` sai das deps de propósito (ver `chaveDoItem`).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, chaveInicial]);
 
   const handleSave = () => {
     if (!name.trim() || (canEditWeekdays && !sched.isValid)) return;

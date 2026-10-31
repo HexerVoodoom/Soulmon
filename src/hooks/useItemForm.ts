@@ -49,7 +49,7 @@ interface UseItemFormProps {
  * salvo NO MEIO da digitação e o que a pessoa escreveu sumia. Recarrega só ao
  * abrir ou ao trocar de item (o `id`); sem `id`, vale "tem item / não tem".
  */
-function chaveDoItem(item: unknown): string {
+export function chaveDoItem(item: unknown): string {
   if (!item || typeof item !== 'object') return '';
   const id = (item as { id?: unknown }).id;
   return typeof id === 'string' || typeof id === 'number' ? `id:${id}` : 'item';

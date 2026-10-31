@@ -1,5 +1,5 @@
 import { missionsInQueueOrder } from '../../utils/missionOrder';
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { bitsStyle, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR, CREDIT_TO_BITS, EMBLEMS_PER_LOSS, EMBLEMS_PER_WIN, MINIGAME_BITS_PER_DAY, type CurrencyId } from '../../utils/currencies';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import { creditExchangeRoom } from '../../utils/bitsOrigin';
@@ -145,9 +145,15 @@ export interface ShopFlash { id: string; ok: boolean; msg: ReactNode }
 /** O "falar" da loja: região `status` + vibração curta. Um por prateleira. */
 export function useShopFlash() {
   const [flash, setFlash] = useState<ShopFlash | null>(null);
+  // Um timer só: duas falas seguidas do MESMO item (comprar 2x) não podem ter a
+  // segunda apagada pelo timer da primeira; e nada de setState depois de desmontar.
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
   const say = (id: string, ok: boolean, msg: ReactNode) => {
-    setFlash({ id, ok, msg });
-    setTimeout(() => setFlash(f => (f && f.id === id ? null : f)), 2600);
+    const next = { id, ok, msg };
+    setFlash(next);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => setFlash(f => (f === next ? null : f)), 2600);
     try { navigator.vibrate?.(ok ? 25 : 60); } catch { /* noop */ }
   };
   return { flash, say };
