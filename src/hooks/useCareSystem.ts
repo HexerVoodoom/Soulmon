@@ -72,7 +72,10 @@ export function useCareSystem({
         restWindow: gameState.rest?.window ?? null,
         aligned: ritmo,
       });
-      setGameState(prev => ({
+      // Só agenda se o estado AINDA está sem agenda: o sorteio é aleatório, e um
+      // segundo disparo antes do commit (StrictMode, adoção da nuvem no meio)
+      // trocaria a hora de um cocô já agendado.
+      setGameState(prev => (prev.poopEventsScheduled?.length ? prev : {
         ...prev,
         poopEventsScheduled: [startOfDay + h1 * 3600000, startOfDay + h2 * 3600000],
       }));
@@ -109,6 +112,8 @@ export function useCareSystem({
               },
             );
             setGameState((prev: any) => {
+              // Idempotente: o mesmo índice nunca entra duas vezes em `poopEventsShown`.
+              if ((prev.poopEventsShown || []).includes(index)) return prev;
               const newShown = [...(prev.poopEventsShown || []), index];
               let newScheduled = prev.poopEventsScheduled || [];
               // First poop just appeared → schedule the second 8-10h later, so

@@ -25,9 +25,11 @@ export function useOrdemCongelada(doneIds: readonly string[], ms: number = ORDEM
     setCongelados(prev => new Set([...prev, ...novos]));
     // Um prazo POR conclusão: a limpeza do efeito NÃO cancela os prazos pendentes (uma 2ª conclusão não pode
     // deixar a 1ª congelada para sempre); eles só caem junto com o componente.
-    timers.current.push(window.setTimeout(() => {
+    const t = window.setTimeout(() => {
+      timers.current = timers.current.filter(x => x !== t); // o prazo que venceu sai da lista (não acumula numa sessão longa)
       setCongelados(prev => { const n = new Set(prev); novos.forEach(id => n.delete(id)); return n; });
-    }, ms));
+    }, ms);
+    timers.current.push(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chave, ms]);
   useEffect(() => () => { timers.current.forEach(t => window.clearTimeout(t)); timers.current = []; }, []);

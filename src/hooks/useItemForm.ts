@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ActivityCategory } from '../types/attributes';
 import {
   DEFAULT_EFFORT,
@@ -40,6 +40,21 @@ interface UseItemFormProps {
   defaultCategory?: ActivityCategory;
 }
 
+/**
+ * A IDENTIDADE do item em edição, para o efeito que (re)preenche o formulário.
+ *
+ * O chamador passa `gameState.tasks.find(...)`: o OBJETO muda sempre que o estado
+ * é reconstruído (virada do dia, adoção da nuvem ao voltar ao app), mesmo sem o
+ * item ter mudado. Com o objeto nas deps, o formulário aberto voltava ao valor
+ * salvo NO MEIO da digitação e o que a pessoa escreveu sumia. Recarrega só ao
+ * abrir ou ao trocar de item (o `id`); sem `id`, vale "tem item / não tem".
+ */
+function chaveDoItem(item: unknown): string {
+  if (!item || typeof item !== 'object') return '';
+  const id = (item as { id?: unknown }).id;
+  return typeof id === 'string' || typeof id === 'number' ? `id:${id}` : 'item';
+}
+
 const DEFAULT_CATEGORIES: ActivityCategory[] = [
   'Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness',
 ];
@@ -61,8 +76,13 @@ export function useItemForm({ isOpen, initialData, defaultCategory = DEFAULT_CAT
   const [hasStart, setHasStart] = useState(false);
   const [startDate, setStartDate] = useState('');
 
+  const initialRef = useRef(initialData);
+  initialRef.current = initialData;
+  const chaveInicial = chaveDoItem(initialData);
+
   useEffect(() => {
     if (!isOpen) return;
+    const initialData = initialRef.current;
 
     if (initialData) {
       setName(initialData.name);
@@ -101,7 +121,9 @@ export function useItemForm({ isOpen, initialData, defaultCategory = DEFAULT_CAT
       setHasStart(false);
       setStartDate(todayIso());
     }
-  }, [isOpen, initialData]);
+    // `initialData` sai das deps de propósito (ver `chaveDoItem`).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, chaveInicial]);
 
   const calculatePresetTime = (preset: '2h' | '1h' | '30min'): string => {
     if (!hasDeadline || !deadlineTime) return '';
@@ -213,8 +235,13 @@ export function useHabitSchedule({ isOpen, initial }: UseHabitScheduleProps) {
   const [anchorAfter, setAnchorAfter] = useState('');
   const [anchorWhere, setAnchorWhere] = useState('');
 
+  const initialRef = useRef(initial);
+  initialRef.current = initial;
+  const chaveInicial = chaveDoItem(initial);
+
   useEffect(() => {
     if (!isOpen) return;
+    const initial = initialRef.current;
     const s = normalizeSchedule({ schedule: initial?.schedule, weekDays: initial?.weekDays });
     setKind(s.kind);
     setWeekDays(s.kind === 'weekdays' ? s.days : (initial?.weekDays ?? ALL_WEEK_DAYS));
@@ -226,7 +253,9 @@ export function useHabitSchedule({ isOpen, initial }: UseHabitScheduleProps) {
     setFromCompletion(s.kind === 'everyNDays' ? s.from === 'completion' : true);
     setAnchorAfter(initial?.anchor?.after ?? '');
     setAnchorWhere(initial?.anchor?.where ?? '');
-  }, [isOpen, initial]);
+    // `initial` sai das deps de propósito (ver `chaveDoItem`).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, chaveInicial]);
 
   const toggleWeekDay = (day: number) => {
     setWeekDays(prev =>

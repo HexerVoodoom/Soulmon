@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readLocal, writeLocal } from '../utils/safeStorage';
 import { applyStatusBarTheme } from '../utils/statusBar';
@@ -64,8 +64,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     setModeState(next);
   }, []);
 
+  // Memoizado: um objeto novo por render re-renderizaria todo consumidor de `useTheme()` à toa.
+  const value = useMemo(() => ({ mode, resolvedTheme, setMode }), [mode, resolvedTheme, setMode]);
+
   return (
-    <ThemeContext.Provider value={{ mode, resolvedTheme, setMode }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );
