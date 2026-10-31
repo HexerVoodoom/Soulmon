@@ -656,3 +656,19 @@ Espelho de `sanitizeConquistasPagas` (`src/utils/achievements.ts`) para o campo 
 
 ### `functions/api/_elementDex.js`
 Espelho de `sanitizeDefeatedElements` (`src/utils/elementDex.ts`) para o campo `defeatedElements` do save (dex de elementos, 27/10/2026): só a forma — strings `[a-z_]{2,24}`, sem repetir, teto 210; sem forma de lista o campo é descartado. `save.js` o aplica; nunca recusa o save. Régua: `elementDex.parity.test.js`, `save.elementDex.test.js`.
+
+### `functions/api/_freeGen.js`
+**Dono de:** a geração grátis do rookie por e-mail (D6/D20), chave `freeGen:<saveId>`, nunca apagada com a conta.
+
+### `functions/api/_mercMission.js`
+**Dono de:** o espelho server-side de `sanitizeMercMission` (só a forma; paridade em teste).
+
+### `functions/api/_velado.js`
+**Dono de:** o espelho mínimo da forma BB no servidor (D3/D5).
+
+### `functions/api/free-rookie.js`
+**Dono de:** POST `/api/free-rookie`: rookie grátis por e-mail, reusa o fluxo de `generate-sprite`.
+
+### `functions/api/velado-teste.js`
+**Dono de:** "o usuário logado está no teste do Velado?"; responde só sobre o próprio token.
+

@@ -19,6 +19,12 @@ import {
   type LifeArea, type StruggleId, type StrengthId,
 } from '../types/activityCatalog';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
+import { ONBOARDING_VELADO as VELADO_BUILD } from './onboarding/sequencia/flag';
+import { isOnboardingVelado } from '../utils/bbStage';
+/* Build OU testador (o teste por pessoa só chega depois do login; lido a cada render/uso, não no load). */
+const veladoLigado = () => VELADO_BUILD || isOnboardingVelado();
+import { ROTEIRO, BERCO, ANCIAO, t as tVelado } from './onboarding/sequencia/copy';
+import { urlDoAsset } from './onboarding/sequencia/assets';
 import { soulmonIntroLines } from '../utils/soulmonIntro';
 import { getPassive, rollPetPassive } from '../utils/passives';
 import { ScreenSkeleton } from './ui/ScreenSkeleton';
@@ -268,6 +274,12 @@ interface SoulmonOnboardingProps {
   introPetPassive?: string;
   /** Só em 'upgrade': categorias das atividades do jogador, para o "gosto" da apresentação. */
   introCategories?: readonly ActivityCategory[];
+  /**
+   * ONBOARDING_VELADO, cena 1 (D18): entrega o BB sorteado para o nascimento, sem esperar a API.
+   * Default (ausente) = null = o nascimento atual (sprite gerado). TODO: ligar a `sortearBB` de
+   * `src/data/bbPool.ts` quando a frente do sorteio chegar.
+   */
+  obterBB?: (leitura?: { elemento?: string | null; reino?: string | null }) => { url: string; formId: string } | null;
 }
 
 /**
@@ -320,7 +332,7 @@ export const GOOGLE_SEM_RESPOSTA_MS = 120_000;
 
 interface SavedProfile extends OracleInput { seed: number }
 
-export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel, savedTestAnswers, onLanguageChange, onStartDemo, introPetPassive, introCategories }: SoulmonOnboardingProps) {
+export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel, savedTestAnswers, onLanguageChange, onStartDemo, introPetPassive, introCategories, obterBB }: SoulmonOnboardingProps) {
   // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
   // nativo cai na constante publicada (`utils/priceLabel.ts`).
   const isUpgrade = mode === 'upgrade';
@@ -1027,6 +1039,10 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const iniciarCerimoniaDoReveal = (r: OracleResult) => {
     const inicial = r.creature.stages.find(st => st.stage === 'rookie') ?? r.creature.stages[0];
     if (!inicial) return;
+    if (veladoLigado() && obterBB) {
+      const bb = obterBB({ elemento: r.dominantElement });
+      if (bb) { setRevealContaNaoPaga(false); setRevealSprite({ url: bb.url, formId: bb.formId, at: Date.now() }); return; }
+    }
     setRevealContaNaoPaga(false);
     setRevealEsperando(true);
     let encerrado = false;
@@ -1821,7 +1837,9 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
           <NpcSequence
             language={lang}
             label={isPt ? 'Apresentação da Ambra' : 'Ambra introduces herself'}
-            lines={[{ speaker: 'Ambra', art: FUNCTION_NPC_ART.onboarding, text: AMBRA_FALAS.intro[isPt ? 'pt' : 'en'] } satisfies NpcSequenceLine]}
+            lines={veladoLigado()
+              ? ROTEIRO.c0.map(f => ({ speaker: tVelado(ANCIAO.nome, lang), art: urlDoAsset('velado-anciao') ?? FUNCTION_NPC_ART.oraculo, text: tVelado(f, lang) }) satisfies NpcSequenceLine)
+              : [{ speaker: 'Ambra', art: FUNCTION_NPC_ART.onboarding, text: AMBRA_FALAS.intro[isPt ? 'pt' : 'en'] } satisfies NpcSequenceLine]}
             onFinish={() => setStep(NAME_STEP)}
           />
         )}
@@ -1872,6 +1890,17 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
         {step === NAME_STEP && (
           <StepShell title={isPt ? 'Como podemos te chamar?' : 'What should we call you?'}>
             {/* 14/10/2026 (dono): o NPC de boas-vindas é a Ambra (`onboarding`), não a Iris (Oráculo). */}
+            {veladoLigado() ? (
+              <div data-anciao-npc style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <img src={urlDoAsset('velado-anciao') ?? FUNCTION_NPC_ART.oraculo} alt="" width={96} height={96}
+                  style={{ width: 96, height: 96, objectFit: 'contain', flexShrink: 0 }} />
+                <img data-soulmon-anciao src={PLACEHOLDER_ART.dormant} alt="" width={48} height={48}
+                  style={{ width: 48, height: 48, objectFit: 'contain', flexShrink: 0 }} />
+                <p style={{ ...sm2Hint, margin: 0 }}>
+                  <strong>{tVelado(ANCIAO.nome, lang)}</strong>{' — '}{tVelado(ROTEIRO.c0[1], lang)}
+                </p>
+              </div>
+            ) : (
             <div data-onboarding-npc style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
               <img src={FUNCTION_NPC_ART.onboarding} alt="" width={96} height={96}
                 style={{ width: 96, height: 96, objectFit: 'contain', flexShrink: 0 }} />
@@ -1880,6 +1909,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 {' — '}{functionNpcVoice('onboarding', isPt ? 'pt-BR' : 'en-US').line}
               </p>
             </div>
+            )}
             <Field id="onb-nick" type="text" value={nickname} autoFocus maxLength={24}
               aria-label={isPt ? 'Seu nome' : 'Your name'}
               /* A legenda de privacidade ("pode ser inventado") saiu por B1; o
@@ -2309,12 +2339,28 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 display: 'flex', alignItems: 'center', gap: 12, padding: 12, marginBottom: 16, borderRadius: 16,
                 border: '2px solid var(--sm2-gold-fill)', backgroundColor: 'var(--sm2-surface)',
               }}>
-                <img src={FUNCTION_NPC_ART.oraculo} alt="" aria-hidden="true" width={96} height={96}
+                {veladoLigado() ? (
+                  <>
+                    <img data-anciao src={urlDoAsset('velado-anciao') ?? FUNCTION_NPC_ART.oraculo} alt="" aria-hidden="true" width={96} height={96}
+                      style={{ width: 96, height: 96, objectFit: 'contain', flexShrink: 0 }} />
+                    <img data-soulmon-anciao src={PLACEHOLDER_ART.dormant} alt="" aria-hidden="true" width={48} height={48}
+                      style={{ width: 48, height: 48, objectFit: 'contain', flexShrink: 0 }} />
+                    <div role="status" aria-live="polite" aria-label={tVelado(ANCIAO.nome, lang)} style={{ minWidth: 0 }}>
+                      <b style={{ display: 'block', marginBottom: 4, fontSize: 12, letterSpacing: '0.06em', color: 'var(--sm2-gold-ink)' }}>{tVelado(ANCIAO.nome, lang)}</b>
+                      <p style={{ ...sm2Text, margin: '0 0 6px' }}>{tVelado(ROTEIRO.c0[0], lang)}</p>
+                      <p style={{ ...sm2Text, margin: 0 }}>{falaDaIris(result, lingua)}</p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <img src={FUNCTION_NPC_ART.oraculo} alt="" aria-hidden="true" width={96} height={96}
                   style={{ width: 96, height: 96, objectFit: 'contain', flexShrink: 0 }} />
                 <div role="status" aria-live="polite" aria-label={isPt ? 'Iris, a Oráculo, fala' : 'Iris, the Oracle, speaks'} style={{ minWidth: 0 }}>
                   <b style={{ display: 'block', marginBottom: 4, fontSize: 12, letterSpacing: '0.06em', color: 'var(--sm2-gold-ink)' }}>Iris</b>
                   <p style={{ ...sm2Text, margin: 0 }}>{falaDaIris(result, lingua)}</p>
-                </div>
+                    </div>
+                  </>
+                )}
               </div>
               <h2 className="sm2-title" style={{ ...tituloOnboarding, textAlign: 'center', marginBottom: 12 }}>{result.creature.baseName}</h2>
               <div style={{
@@ -2357,6 +2403,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
                 cartão desenhado duas vezes divergiria, e o que a pessoa
                 guarda na memória não seria o que ela reencontra. */}
             <div style={{ margin: '8px 0 20px' }}>
+              {veladoLigado() && revealSprite && obterBB && (
+                <p data-berco style={{ ...sm2Hint, margin: '0 0 8px', textAlign: 'center' }}>
+                  <b>{tVelado(BERCO.titulo, lang)}</b> · {tVelado(BERCO.legenda, lang)}
+                </p>
+              )}
               <BirthCard
                 spriteUrl={revealSprite?.url}
                 pending={revealSprite ? null : revealEsperando ? 'forming' : 'dormant'}

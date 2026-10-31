@@ -20,6 +20,8 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+import { sanitizeStageId } from '../utils/bbStage';
+import { sanitizeMercMission } from '../utils/mercMission';
 
 const RAIZ = resolve(__dirname, '../..');
 const ler = (p: string) => readFileSync(resolve(RAIZ, p), 'utf8');
@@ -46,6 +48,8 @@ const GAME_STATE = 'soulmon_state_v1';
  * aqui no mesmo PR (e daí em diante também não pode sumir).
  */
 const NOVAS_DESDE_20_10_2026: readonly string[] = [
+  'soulmon-intro-cinematica-vista',
+  'soulmon-onboarding-velado-visto',
   'soulmon-last-active-at',
   'soulmon-save-quarantine-v1',
   'soulmon-local-stale-v1',
@@ -327,5 +331,34 @@ describe('AUTOVERIFICAÇÃO', () => {
     expect(leiturasOpacas('const { novo } = state;')).toEqual(['destructuring de state']);
     expect(leiturasOpacas('for (const k of Object.keys(state)) {}')).toHaveLength(1);
     expect(leiturasOpacas('for (const field of X) delete state[field];')).toEqual([]);
+  });
+});
+
+describe('FORMA BB (Onboarding Velado, D3): o id `bb` entra no save sem campo novo', () => {
+  it('evolutionStage em hydrateSave passa por sanitizador (`bb` e variantes → `bb`, idempotente)', () => {
+    expect(corpoHydrate(CTX)).toMatch(/evolutionStage:\s*typeof loadedState\.evolutionStage === 'string'\s*\?\s*sanitizeStageId\(loadedState\.evolutionStage\)/);
+  });
+  it('o HP de um save em `bb` não é cortado para 3 na hidratação', () => {
+    expect(corpoHydrate(CTX)).toContain('getMaxHPForStage(loadedState.evolutionStage');
+    expect(CTX).toMatch(/if \(isBBStage\(stage\)\) return BB_MAX_HP;/);
+  });
+  it('o save sem `bb` (todo save existente) não muda: o sanitizador devolve o id intacto', () => {
+    for (const id of ['rookie', 'champion-power', 'mega-harmony', 'ultra']) expect(sanitizeStageId(id)).toBe(id);
+  });
+});
+
+describe('GUILDA DOS MERCENÁRIOS (§11 do plano do onboarding): `mercMission` entra no save com leitura tolerante', () => {
+  it('hydrateSave lê mercMission por sanitizador (forma errada = ausente) e conquistasPagas segue preservado', () => {
+    const h = corpoHydrate(CTX);
+    expect(h).toMatch(/mercMission:\s*sanitizeMercMission\(loadedState\.mercMission\)/);
+    expect(h).toMatch(/conquistasPagas:\s*sanitizeConquistasPagas\(loadedState\.conquistasPagas\)/);
+  });
+  it('o sanitizador é idempotente e recusa lixo', () => {
+    const ok = { day: 'Fri Oct 30 2026', ordem: 'rompente', activityId: 'x', done: false };
+    expect(sanitizeMercMission(sanitizeMercMission(ok))).toEqual(ok);
+    for (const lixo of [undefined, null, 'x', 7, [], {}, { ...ok, ordem: 'cla' }, { ...ok, day: 3 }]) expect(sanitizeMercMission(lixo)).toBeUndefined();
+  });
+  it('o servidor sanitiza o mesmo campo (paridade em functions/api/mercMission.parity.test.js)', () => {
+    expect(SAVE_JS).toMatch(/'mercMission' in state/);
   });
 });

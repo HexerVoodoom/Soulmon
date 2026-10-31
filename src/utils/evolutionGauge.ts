@@ -21,6 +21,7 @@
  *
  * Funções PURAS: sem React, sem localStorage.
  */
+import { isBBStage, bbEvolveReady } from './bbStage';
 import {
   FORM_REQUIREMENTS,
   getStageLevel,
@@ -60,7 +61,9 @@ export function creditGauge(points: number, doneWeight: number, stage: string): 
 }
 
 /** O gauge está cheio (o gesto de evoluir pode acender)? */
-export function gaugeFull(points: number | undefined, stage: string, unlockedEvolutions?: readonly string[]): boolean {
+export function gaugeFull(points: number | undefined, stage: string, unlockedEvolutions?: readonly string[], totalXP?: number): boolean {
+  // Forma BB (D4): não há gauge — a porta da cerimônia abre pelo Vínculo ≥ 2 (utils/bbStage.ts).
+  if (isBBStage(stage)) return bbEvolveReady(totalXP);
   const goal = gaugeGoalFor(stage, unlockedEvolutions);
   return goal > 0 && safe(points) >= goal;
 }

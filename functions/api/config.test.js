@@ -53,7 +53,7 @@ describe('/api/config — o que o desktop decide a partir daqui', () => {
       VAPID_JWK: '{"d":"segredo"}',
       SEASON_ADMIN_KEY: 'admin-segredo',
     });
-    expect(Object.keys(corpo).sort()).toEqual(['authRequired', 'billingDisabled', 'chatDisabled', 'transcribeAvailable']);
+    expect(Object.keys(corpo).sort()).toEqual(['authRequired', 'billingDisabled', 'chatDisabled', 'onboardingVelado', 'transcribeAvailable']);
     expect(JSON.stringify(corpo)).not.toMatch(/segredo/);
   });
 });

@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { isBBStage } from '../utils/bbStage';
 import { CareEvent } from '../components/CareSystem';
 import { showNotification } from '../utils/notifications';
 import type { Language } from '../utils/i18n';
@@ -49,6 +50,7 @@ export function useCareSystem({
   // when the first appears (clamped to the awake day).
   useEffect(() => {
     if (gameState.lastResetDate !== new Date().toDateString()) return;
+    if (isBBStage(gameState.evolutionStage)) return; // Forma BB: sem cocô agendado (D3)
 
     if (!gameState.poopEventsScheduled || gameState.poopEventsScheduled.length === 0) {
       const today = new Date();

@@ -1902,3 +1902,58 @@ Dono único da UI do filtro de elementos base: 3 campos de dropdown lado a lado 
 ### `src/components/ElementPotionSheet.tsx`
 
 Folha da Poção de Elemento (Laboratório › Centro de Evolução): 3 espaços de base, lista filtrada (E) só do que o jogador paga (elemento ainda não desbloqueado na Biblioteca aparece como "???" e não se cria — `isPotionUnlocked`), confirmação com custo e `onCraft`. Regras em `utils/elementPotion.ts`. Avisa (aviso da poção na espera e nota) que vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação.
+
+### `src/components/MercGuildSheet.tsx`
+**Dono de:** a ficha da Guilda dos Mercenários (missão do dia, "Sim, fiz"); o BB fica de fora e só vê o convite para voltar depois.
+
+### `src/components/onboarding/etapas/EtapaAlimentar.tsx`
+**Dono de:** a etapa em que o ancião ensina "força = tarefa + alimento": arrastar o alimento até o Soulmon (D24).
+
+### `src/components/onboarding/etapas/EtapaDuelo.tsx`
+**Dono de:** a etapa do duelo do onboarding (cena 7, D16), totalmente local, sem servidor nem recompensa; compõe `dueloLogic`.
+
+### `src/components/onboarding/etapas/EtapaPuzzle.tsx`
+**Dono de:** a etapa do puzzle (cena 4, D13): meta mínima de trocas que formam linha e o passo a passo.
+
+### `src/components/onboarding/etapas/EtapaTarefa.tsx`
+**Dono de:** a etapa em que o jogador cria e conclui a primeira tarefa pelo caminho normal do App (cena 6).
+
+### `src/components/onboarding/etapas/dueloLogic.ts`
+**Dono de:** a lógica pura do duelo do onboarding (dupla jogador + BB contra o Desfeito).
+
+### `src/components/onboarding/etapas/tipos.ts`
+**Dono de:** o contrato dos slots do player: toda etapa recebe `onDone`.
+
+### `src/components/onboarding/intro/IntroCinematica.tsx`
+**Dono de:** a cinemática "A Parede" (flag ligado, primeira abertura, antes do login); vídeo ausente = tela preta com legendas.
+
+### `src/components/onboarding/intro/copy.ts`
+**Dono de:** as legendas EN/PT da cinemática, 9 planos.
+
+### `src/components/onboarding/sequencia/SequenciaOnboarding.tsx`
+**Dono de:** a sequência do onboarding do Velado (ponto de entrada; "Rever a história" ignora o interruptor).
+
+### `src/components/onboarding/sequencia/SequenciaPlayer.tsx`
+**Dono de:** o player de cenas e quadros; slots das etapas interativas, stub quando ausentes.
+
+### `src/components/onboarding/sequencia/assets.ts`
+**Dono de:** o mapa central de arte da sequência (arquivo ausente = silhueta nomeada).
+
+### `src/components/onboarding/sequencia/cenas.ts`
+**Dono de:** a definição das cenas 0–9.
+
+### `src/components/onboarding/sequencia/copy.ts`
+**Dono de:** o roteiro do ancião Remendado.
+
+### `src/components/onboarding/sequencia/flag.ts`
+**Dono de:** o interruptor do onboarding do Velado, desligado por padrão.
+
+### `src/components/onboarding/sequencia/logic.ts`
+**Dono de:** a lógica pura de quadros: avançar e pular a fala (D12), nunca a etapa interativa.
+
+### `src/components/onboarding/sequencia/slotsReais.tsx`
+**Dono de:** o que o App liga às etapas reais (tarefa, alimentar, puzzle, duelo).
+
+### `src/components/onboarding/sequencia/types.ts`
+**Dono de:** os tipos de props que toda frente encaixa num slot.
+

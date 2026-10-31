@@ -9,7 +9,8 @@ import { sanitizeSpritePose, mergeSpritePose, registerSpritePoseWriter, register
 import { sanitizeChipsStage } from '../utils/specialItemUse';
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
-import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS } from '../types/progression';
+import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS, BB_MAX_HP } from '../types/progression';
+import { isBBStage, sanitizeStageId } from '../utils/bbStage';
 import { sanitizeDungeonAway, sanitizeDungeonDaily, type DungeonAway } from '../utils/dungeonIdle';
 import { sanitizeHunger, sanitizeEnergyClock } from '../utils/hunger';
 import { sanitizeHungerPenalty } from '../utils/hungerPenalty';
@@ -63,6 +64,7 @@ import { createNightmareState, sanitizeNightmareState } from '../utils/nightmare
 import type { PlayLog } from '../utils/petNeeds';
 import type { StepsRecord } from '../utils/steps';
 import { sanitizeStepGoal } from '../utils/steps';
+import { sanitizeMercMission, type MercMissionState } from '../utils/mercMission';
 import { sanitizeSpecialMission, type SpecialMissionState } from '../utils/specialMissions';
 import { resolveLanguage } from '../utils/i18n';
 import { soulmonDisplayName } from '../utils/petName';
@@ -666,6 +668,8 @@ export interface GameState {
   conquistasHerdadas?: AchievementId[];
   /** Conquistas (`utils/achievements.ts`) cujo prêmio em Bits JÁ foi pago (30/10/2026). Ausente = save anterior: o App semeia com as já abertas, sem Bits retroativos. Os Pontos de Conquista são DERIVADOS, nunca gravados. */
   conquistasPagas?: AchievementId[];
+  /** Guilda dos Mercenários (plano do onboarding velado §11): a missão de UM dia, de UMA Ordem. Ausente = nunca escolheu. Leitura tolerante via `sanitizeMercMission`. */
+  mercMission?: MercMissionState;
   /** Estado da estação corrente (`utils/seasons.ts`). Fiado em 06/09/2026
    *  (WP4.16): o módulo existia inteiro e nunca era chamado por ninguém. */
   season?: SeasonProgressState;
@@ -846,6 +850,7 @@ export interface GameState {
 }
 
 export function getMaxHPForStage(stage: GameState['evolutionStage']): number {
+  if (isBBStage(stage)) return BB_MAX_HP; // Forma BB (D3): HP 6, e nada o tira (utils/bbStage.ts)
   return MAX_HP_BY_FORM[getStageLevel(stage)];
 }
 
@@ -1231,8 +1236,9 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         benevolencePoints: num(loadedState.benevolencePoints, 0),
         lastResetDate: typeof loadedState.lastResetDate === 'string'
           ? loadedState.lastResetDate : new Date().toDateString(),
+        // Leitura tolerante + migração idempotente do id (`'bb'` e variantes → `'bb'`; resto intacto).
         evolutionStage: typeof loadedState.evolutionStage === 'string'
-          ? loadedState.evolutionStage : 'rookie',
+          ? sanitizeStageId(loadedState.evolutionStage) : 'rookie',
         energyPoints: num(loadedState.energyPoints, 0),
         perfectDays: num(loadedState.perfectDays, 0),
         evolutionPoints: hydrateEvolutionPoints(loadedState),
@@ -1597,6 +1603,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           ? loadedState.conquistasHerdadas.filter((id): id is AchievementId => (ACHIEVEMENT_IDS as readonly string[]).includes(id))
           : (gatilhoAntigoTasks100(loadedState) ? ['dias-completos-30'] : []),
         conquistasPagas: sanitizeConquistasPagas(loadedState.conquistasPagas), // ausente/lixo = undefined (o App semeia)
+        mercMission: sanitizeMercMission(loadedState.mercMission),
         // `?? undefined`: save antigo simplesmente não tem estação, e a
         // primeira virada tira a foto. Nada a migrar.
         season: (loadedState as { season?: SeasonProgressState }).season ?? undefined,

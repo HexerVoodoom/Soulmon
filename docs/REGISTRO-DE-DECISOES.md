@@ -3677,7 +3677,6 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 
 **Gatilho para rever:** spam de pedidos a clãs (subir o limite de cima para baixo, ou deixar o anfitrião "fechar a lista"); diretório com centenas de clãs (paginar/sortear em vez de `list` direto); (o opt-out entrou na emenda "Aceitar pedidos" acima).
 
-
 ## §204 — Bosque: o ataque ao Plantio vira luta de verdade + inimigos temáticos (pragas do Bosque e Soul Barrage renovada) (30/10/2026, dono)
 
 - **O que era:** proteger o Plantio (tarefa `protect`, sorteada pelo servidor em `claSortear`) era um botão "Lutar" que resolvia na hora com `lutarDefesa` (`plantioDefesa.ts`, `playSequence` contra os slots 0..2 do andar 1) e chamava `claProteger` se vencesse.
@@ -3703,3 +3702,19 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 - **Bug corrigido:** `applyPotionOnEvolve` só limpava `evolutionPotion`; `potionElement` ficava para sempre. Agora, numa evolução sem poção pendente, `potionElement` é limpo. Régua: `src/utils/elementPotion.test.ts`.
 - **Texto ao jogador:** folha da poção (aviso da poção na espera e nota), descrição do item, Ajuda e Guia dizem "Vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação dele."
 - **Servidor:** nenhum espelho; o elemento é calculado só no cliente (`potionElement` é só campo de save).
+
+## §207 — Forma BB: revogação PARCIAL do "a árvore nasce em rookie" (30/10/2026)
+
+**Decisão (Onboarding Velado, D3–D5; `docs/PLANO-ONBOARDING-VELADO.md` §4):** existe um estágio `bb` ANTES do rookie. Revoga **só para `bb`** o que o CLAUDE.md dizia ("não existem mais ovo/baby"; o estágio anterior ao rookie custaria sprite, HP, requisito e masmorra). Ovo e baby continuam apagados.
+
+**Regra (dono único `src/utils/bbStage.ts`; constantes em `types/progression.ts`):**
+- HP máx **6**. Sem requisito diário, gauge, perda de coração, dreno de cocô/fome nem folga: `computeDailyReset` roda só a rotina de dia novo e devolve ao save tudo o que a virada normal creditaria ou cobraria; `applyHungerPenalty` e `applyPoopDrain` não agem; o cocô nem é agendado.
+- Evolui para rookie quando `bondLevelFor(totalXP) >= 2` (D4) — mesma cerimônia manual (`gaugeFull(..., totalXP)` é a porta única; `getNextEvolution('bb')` = `rookie`).
+- Torneio, Duelo PvP e Guilda recusam o BB **com motivo** (`bbRefusal` → `'bb-locked'`, padrão de `rebirthRefusal`): cliente em `AreaView` (aviso na faixa do cadeado) e servidor em `_duelLoad.js`/`community.js` (duelo e ligar PvP) e `guild.js` (criar/entrar), espelho em `functions/api/_velado.js` com paridade travada em `velado.parity.test.js`.
+- `bb` fica FORA de `FORM_REQUIREMENTS`: nível/sprite caem em rookie (`getStageLevel`); `STAGE_LEVEL_CAPS` e `MAX_STAGE_REQUIREMENT` não mudam.
+- Save: sem campo novo. `evolutionStage` passa por `sanitizeStageId` em `hydrateSave` (variantes → `bb`, idempotente); linha em `saveCompat.contract.test.ts`. Save sem `bb` (todos os existentes) fica idêntico.
+- **Interruptor `ONBOARDING_VELADO`** (var do Worker; `/api/config` → `onboardingVelado`; desligado por padrão e na falha de rede). Manda em quem CHEGA a ser BB (`initialStageForNewSave`) e nas recusas do servidor. As regras do cliente seguem o ID do estágio de propósito: a config chega depois do 1º render e um save que já é BB não pode perder corações nessa corrida. A seleção por lista de e-mails de teste (plano §7) fica para o endpoint por usuário.
+
+**Alternativa que perdeu:** dar ao BB uma linha em `FORM_REQUIREMENTS` (gauge/required zerados). Perdeu porque contamina as escadas derivadas (teto de level, requisito máximo, energia) e convida a "ajustar o BB" por número em vez de por regra.
+
+**Gatilho para rever:** o BB evoluir sem o jogador ter feito nada útil (Vínculo 2 muito barato), ou o interruptor ligado em produção (D15): aí a recusa por estágio pode virar dado do perfil em vez de leitura do save.

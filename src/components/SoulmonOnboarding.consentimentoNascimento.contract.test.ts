@@ -19,6 +19,6 @@ describe('texto do consentimento sobre a data de nascimento', () => {
   it('as versões de termos e política não foram mexidas', () => {
     const consent = readFileSync(new URL('../utils/consent.ts', import.meta.url), 'utf8');
     expect(consent).toMatch(/TERMS_VERSION = '2026-10-26'/);
-    expect(consent).toMatch(/PRIVACY_VERSION = '2026-10-28'/);
+    expect(consent).toMatch(/PRIVACY_VERSION = '2026-10-30'/);
   });
 });

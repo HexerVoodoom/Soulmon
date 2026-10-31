@@ -311,9 +311,11 @@ export const TELEMETRY_PURCHASE_REASON = { ...TELEMETRY_UNLOCK_REASON, onboardin
  * origem daqui a 30 dias. Uma tradução com dono único é o que impede a
  * terceira perna de ser esquecida na próxima vez.
  */
-export function unlockReasonCode(reason: 'task-limit' | 'evolution' | 'report' | 'shop' | 'reveal-demo' | 'ovo'): number {
+export function unlockReasonCode(reason: 'task-limit' | 'evolution' | 'report' | 'shop' | 'reveal-demo' | 'ovo' | 'evolve-free'): number {
   switch (reason) {
     case 'task-limit': return TELEMETRY_UNLOCK_REASON.taskLimit;
+    // D8: o convite de evolução da conta grátis cai no funil da árvore de evolução.
+    case 'evolve-free':
     case 'evolution': return TELEMETRY_UNLOCK_REASON.evolution;
     case 'report': return TELEMETRY_UNLOCK_REASON.report;
     case 'shop': return TELEMETRY_UNLOCK_REASON.shop;

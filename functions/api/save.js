@@ -24,6 +24,7 @@ import { sanitizeDailyMissions, sanitizeFeats, sanitizeFirstTimes, sanitizeMissi
 import { sanitizeFocusLoot } from './_focusLoot.js';
 import { sanitizeDefeatedElements } from './_elementDex.js';
 import { sanitizeConquistasPagas } from './_conquistas.js';
+import { sanitizeMercMission } from './_mercMission.js';
 import { sanitizeDayPlan } from './_dayPlan.js';
 import { sanitizeNightmares } from './_nightmares.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
@@ -363,6 +364,11 @@ export async function onRequest({ request, env }) {
     if ('conquistasPagas' in state) {
       const q = sanitizeConquistasPagas(state.conquistasPagas);
       if (q) state.conquistasPagas = q; else delete state.conquistasPagas;
+    }
+    // Guilda dos Mercenarios (30/10/2026): {day, ordem, activityId, done}, so a forma. Espelho de `sanitizeMercMission` (cliente).
+    if ('mercMission' in state) {
+      const q = sanitizeMercMission(state.mercMission);
+      if (q) state.mercMission = q; else delete state.mercMission;
     }
     // Plano do dia (15/10/2026, REGISTRO §66): dia ISO + listas de ids saneadas (teto 200). Sem forma = ausente.
     if ('dayPlan' in state) {

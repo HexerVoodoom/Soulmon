@@ -631,3 +631,11 @@ Decisões conservadoras tomadas pela orquestração; revisar:
 5. **Golpe básico do simulado no duelo** ainda não usa o elemento dele (`fx.elBasica` nulo); mudar muda a luta do servidor.
 6. **Fada** não está em `VISUAL_ELEMENTS` (arte do duelo cai em neutro); incluir muda o hash visual.
 7. Conferir no app, com sprites reais, a âncora pelo pé (modo Chefe da Feira pode descer alguns px).
+
+## 30/10/2026 — onboarding velado (D8/D9)
+
+1. **Trocar o preço do produto `soulmon.unlock.full` na Play Console** para US$ 3,99 / R$ 19,90 no dia em que o ONBOARDING_VELADO for ligado. O código só troca os rótulos de fallback (`FULL_UNLOCK_PRICE_LABEL(_USD)`); quem cobra é a Play, e `public/termos.html` também precisa mudar nesse dia (o `publishedPrice.test.ts` só trava o HTML contra o preço atual).
+## Onboarding Velado — frase de privacidade (30/10/2026)
+O servidor passa a guardar, sem prazo e fora da exclusão de conta, a chave `freeGen:<saveId>` (hash do e-mail → URL do primeiro rookie gerado) e, opcionalmente, hashes de e-mails de teste. Para a política (NÃO alterada ainda), sugestão: "Guardamos, de forma irreversível (sem seu e-mail em claro), que sua conta já usou a geração gratuita e qual foi o desenho, para que recriar a conta devolva o mesmo Soulmon e não conceda outra geração gratuita. Isso permanece mesmo após excluir a conta." Aprova o texto (e o "para sempre", D6)?
+
+**RESPONDIDA (D28, 30/10/2026):** dono aprovou; política (PT/EN, `privacidade.html` 6d) declara hash do e-mail + URL da imagem, mantidos após a exclusão; `PRIVACY_VERSION` = 2026-10-30.

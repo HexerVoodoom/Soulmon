@@ -154,6 +154,10 @@ export const STORAGE_KEYS = {
   // um número velho como se fosse novo. É órfão inofensivo: nada o lê.
   // Segundo onboarding: tutorial do jogo + criação obrigatória da 1ª tarefa
   TUTORIAL_COMPLETE: 'soulmon-tutorial-complete',
+  /** ONBOARDING_VELADO: a introdução cinematográfica pré-login já tocou. */
+  INTRO_CINEMATICA_VISTA: 'soulmon-intro-cinematica-vista',
+  /** ONBOARDING_VELADO: a sequência narrativa (puzzle/tarefa/alimentar/duelo) já foi vista. */
+  ONBOARDING_VELADO_VISTO: 'soulmon-onboarding-velado-visto',
   /** Até quando o botão "Gerar personagem" (Configurações › Sua conta) fica em espera (ms epoch). */
   GENERATE_CHARACTER_UNTIL: 'soulmon-generate-character-until',
   /** Quantos dos usos do botão "Gerar Soulmon" (teste fechado, `utils/generateCharacterUses.ts`) já foram gastos neste aparelho. */

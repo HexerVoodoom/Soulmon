@@ -695,3 +695,8 @@ node scripts/docs-delta.mjs          # o manual está defasado? por doc
 Para uma rodada completa da squad de documentação (medir → redigir → verificar → indexar → travar), use a skill **`/squad-docs`**. Para a sincronização pós-merge, **`/manter-docs`**. Para uma correção pontual, edite o doc dono à mão, rode o guard e carimbe conforme [12-COMO-MANTER.md](12-COMO-MANTER.md) §6.
 
 **A trava que este arquivo guarda:** um doc novo em `docs/` só nasce se entrar neste mapa. O item (a) do guard fica vermelho enquanto ele não entrar, e a etiqueta certa (`vivo`/`registro`/`pesquisa`/`plano`) é obrigatória — "é antigo demais para indexar" não é uma saída, é como a pasta `historico-digiapp/` nasceu.
+
+| [arte/FILA-ASSETS-ONBOARDING.md](../arte/FILA-ASSETS-ONBOARDING.md) | fila de arte do onboarding velado | vivo | não |
+| [arte/PROMPTS-VELADOS.md](../arte/PROMPTS-VELADOS.md) | prompts da arte dos Velados | vivo | não |
+| [lore/VELADOS-ORDENS.md](../lore/VELADOS-ORDENS.md) | lore das ordens dos Velados | vivo | não |
+| [roteiro/INTRO-CINEMATICA.md](../roteiro/INTRO-CINEMATICA.md) | roteiro da cinemática "A Parede" | vivo | não |

@@ -3953,3 +3953,19 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 
 ### `src/utils/sonsRecompensa.ts`
 **Dono de:** a ESPECIFICAÇÃO em dados (lista de parciais `sine`/`triangle`) dos três sons da revelação de recompensa — `playRewardPop`, `playCoinRoll`, `playCoinLand`, categoria `arcade`. `sounds.ts` toca a lista no `AudioContext`; o teste de loudness a renderiza em Node e mede o LUFS-M para calibrar o offset de `loudness.ts`. NÃO OUVIDO (sem escuta humana). **Chamado por:** `utils/sounds.ts`. **Régua:** `sonsRecompensa.loudness.test.ts`.
+
+### `src/utils/bbStage.ts`
+**Dono de:** a forma BB, estágio ANTES do rookie (Onboarding Velado, REGISTRO §207): HP máx 6, sem requisito diário, evolui quando `bondLevelFor(totalXP) >= 2`, `bbRefusal` para torneio/duelo/guilda, `sanitizeStageId` e o interruptor `isOnboardingVelado`.
+
+### `src/utils/evolutionPaywall.ts`
+**Dono de:** a regra única do D8: conta grátis evolui BB para rookie de graça; a partir de rookie, evoluir exige conta paga.
+
+### `src/utils/freeRookie.ts`
+**Dono de:** `pedirFreeRookie`: POST `/api/free-rookie`, devolve a imagem do rookie grátis por e-mail ou `null` (o chamador usa o inicial pronto).
+
+### `src/utils/mercMission.ts`
+**Dono de:** a Guilda dos Mercenários do onboarding velado (plano §11): missão do dia, `sanitizeMercMission` e a pergunta de honestidade; campo de save `mercMission`.
+
+### `src/utils/veladoTester.ts`
+**Dono de:** `refreshVeladoTester`: pergunta ao servidor se o usuário logado está no teste do Velado e aplica o resultado; nunca lança, falha = desligado.
+

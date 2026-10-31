@@ -50,6 +50,17 @@ export function gateFor(feature: GateFeature, bondLevel: unknown): GateResult {
   return { open: lvl >= minBond, minBond, bondLevel: lvl };
 }
 
+/**
+ * Vínculo que habilita a cerimônia de evoluir da forma BB para rookie (Onboarding Velado, D4).
+ * Mora AQUI (dono único das comparações de Vínculo com número), mas fora de `GATES`: não é um portão
+ * de recurso (não entra em `gatesOpenedBetween`) e o servidor não decide evolução (sem espelho).
+ */
+export const BB_EVOLVE_MIN_BOND = 2;
+export function bbEvolveGate(bondLevel: unknown): GateResult {
+  const lvl = levelOf(bondLevel);
+  return { open: lvl >= BB_EVOLVE_MIN_BOND, minBond: BB_EVOLVE_MIN_BOND, bondLevel: lvl };
+}
+
 /** A Masmorra deixa entrar neste andar? Os andares baixos nunca têm portão. */
 export function masmorraFloorOpen(floor: number, bondLevel: unknown): boolean {
   return floor < MASMORRA_ALTO_A_PARTIR_DO_ANDAR || gateFor('masmorraAlto', bondLevel).open;

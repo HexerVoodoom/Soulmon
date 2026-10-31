@@ -10,6 +10,7 @@ import { getSpriteForStage, STARTER_NAMES, type StarterId } from './sprites';
 import { STAGE_NAMES } from './oracle/base';
 import type { CreatureStage, StageId, AlignmentId } from './oracle';
 import { STARTER_ELEMENT, type StarterElement } from './starterElements';
+import { ONBOARDING_VELADO } from '../components/onboarding/sequencia/flag';
 
 export type AccountTier = 'demo' | 'paid';
 
@@ -139,16 +140,21 @@ export const CREDIT_PACKS: CreditPack[] = [
  * por tier em `functions/api/_aiGuard.js` › `AI_LIMITS`.
  */
 export const FULL_UNLOCK_SKU = 'soulmon.unlock.full';
+/** D9 (docs/PLANO-ONBOARDING-VELADO.md §6): preço novo, só com ONBOARDING_VELADO ligado.
+*  ⚠️ O produto na Play Console NÃO é trocado por código — o dono troca no lançamento
+*  (docs/PERGUNTAS-DO-DONO.md). `termos.html` também muda junto nesse dia. */
+export const FULL_UNLOCK_PRICE_LABEL_VELADO = 'R$ 19,90';
+export const FULL_UNLOCK_PRICE_LABEL_USD_VELADO = 'US$ 3.99';
 /** Rotulo do preco do desbloqueio completo. **Ao mudar aqui, mude tambem
  *  `public/termos.html`** (secao 4, PT e EN) — o HTML estatico nao importa TS,
  *  entao quem guarda a igualdade e `src/utils/publishedPrice.test.ts`, que
  *  reprova a divergencia em vez de confiar neste comentario. */
-export const FULL_UNLOCK_PRICE_LABEL = 'R$ 29,90';
+export const FULL_UNLOCK_PRICE_LABEL = ONBOARDING_VELADO ? FULL_UNLOCK_PRICE_LABEL_VELADO : 'R$ 29,90';
 /** Preco de referencia em dolar, so para os Termos EM INGLES (decisao do dono
  *  #25, 21/09/2026). Valor de `docs/PLANO-PRODUTO.md` Parte 3 (R$ 29,90 /
  *  US$ 6,99) — confirmar no Play Console antes da 1a venda. O app NUNCA
  *  cobra por este rotulo: quem cobra e o Play, em moeda local. */
-export const FULL_UNLOCK_PRICE_LABEL_USD = 'US$ 6.99';
+export const FULL_UNLOCK_PRICE_LABEL_USD = ONBOARDING_VELADO ? FULL_UNLOCK_PRICE_LABEL_USD_VELADO : 'US$ 6.99';
 
 // ── Anúncio recompensado — DESLIGADO (decisão D-13, 25/08/2026) ─────────────
 // O caminho anúncio → moeda premium → reroll aleatório fica FECHADO: com o

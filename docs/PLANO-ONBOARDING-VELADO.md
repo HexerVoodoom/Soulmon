@@ -228,6 +228,29 @@ vale a categoria cujo maior valor é o do tipo):
 de cada um dos três Velados e se a missão vira uma tarefa na lista de atividades ou
 fica só no prédio.
 
+**Execução (30/10/2026, branch `ob-guilda`).** Feito: estado `mercMission {day, ordem, activityId, done}`
+(`src/utils/mercMission.ts`; espelho `functions/api/_mercMission.js`, paridade e linha no
+`saveCompat.contract.test.ts`); sorteio por dia + Ordem entre itens A/B (sem `optInOnly`); pontos 3 (esforço do
+nível 1 = 1) ou 5 (2-3) pelo caminho do `feedFood`; BB recusa; painel `MercGuildSheet` (retratos placeholder
+`merc-filtrador/tecelao/rompente.png`, ainda sem arquivo) aberto por um chip no mapa atrás de `ONBOARDING_VELADO`.
+Sem prédio nem arte. **Rollback:** reverter os commits; um save já com `mercMission` volta a ignorar o campo e os
+pontos pagos ficam (são pontos de atributo comuns).
+
+**Simulação de 30 dias** (`mercMission.simulacao.test.ts`; tarefa normal = 1 comida de categoria sorteada, 4 pts):
+
+| Tarefas/dia | Ordem | Normais | Missão | Missão no total | Pior tipo (parte da missão) |
+|---|---|---|---|---|---|
+| 2 | rotativa | 240 | 98 | 29,0% | 36,9% |
+| 2 | sempre Rompentes | 240 | 110 | 31,4% | 62,5% |
+| 4 | rotativa | 480 | 106 | 18,1% | 19,9% |
+| 4 | sempre Rompentes | 480 | 110 | 18,6% | 45,6% |
+| 6 | rotativa | 720 | 108 | 13,0% | 18,6% |
+| 6 | sempre Rompentes | 720 | 110 | 13,3% | 32,5% |
+
+Leitura: no total a missão não domina (13-31%). **Achado:** quem repete a mesma Ordem todo dia e faz poucas tarefas
+(2/dia) tira ~62% do tipo daquela Ordem da missão; com 4/dia, ~46%. A recompensa foi ligada como o dono decidiu
+(3/5); se o dono quiser frear, a alavanca é `pontosMerc` (ex.: 2/3).
+
 ## 12. Pool de BBs prontos (29/10/2026) — muda D6/D7
 
 | # | Decisão do dono |
@@ -262,3 +285,36 @@ fica só no prédio.
 
 Com o pool, até **US$ 2,99** (líquido US$ 2,29) fica com ~62% de margem a 3% de conversão.
 O preço decidido (D9, US$ 3,99) segue; se quiser baixar, a conta agora permite.
+
+## 13. Execução — decisões de 30/10/2026
+
+| # | Decisão do dono |
+|---|---|
+| D22 | Os 5 grupos dos Velados se chamam **Ordem** (EN *Order*), ex.: Ordem dos Tecelões. "Clã" fica só para Salão do Clã / Guerra de Clãs. |
+| D23 | Cinemática **híbrida**: quadro a quadro estilo PS1/PS2 (fundos + NPC em 2–4 poses, cortes secos, parallax leve, legenda) nas cenas 2, 5, 8 e 9; **vídeo Gemini mudo + legenda** só na fuga (3) e no resgate (8, se valer). Áudio = música/ambiente do app, sem voz. |
+| D24 | **Tutorial de alimentar** entra na **cena 6, depois da tarefa**: o ancião diz que força = tarefa + alimento; abre a bolsa, arrasta a comida até o BB. |
+| D25 | Arte dos Velados: **busto no padrão NPC** do app (molde canônico), inspirado nas folhas de conceito das 5 Ordens (refs GPT em estilo diferente: servem de ideia, não de estilo). Gerar no ChatGPT. |
+
+## 6.2 Implementação D8/D9/D17 (30/10/2026)
+
+- **D8**: `src/utils/evolutionPaywall.ts` (fonte única) chamada em `canEvolve`, `handleEvolve` e `handleEvolveRequest` (App.tsx). Grátis evolui BB→rookie; do rookie em diante pede `accountTier:'paid'`. Convite `UnlockNudge` motivo `evolve-free` na aba Evolução (copy EN+PT), mesmo funil de telemetria de `evolution`. Não existe validação de evolução no servidor (é 100% cliente); o espelho é `generate-sprite.js` (402 `paid-tier-required`), coberto por teste de paridade.
+- **D9**: `FULL_UNLOCK_PRICE_LABEL(_USD)` viram R$ 19,90 / US$ 3.99 com o interruptor ligado (`*_VELADO` em `monetization.ts`). Play Console e `termos.html` são do dono (ver PERGUNTAS-DO-DONO).
+- **D17 (não implementado)**: as formas são geradas hoje por `useRegenAparencia`/`spriteTrigger.ts` (`spriteBatch`/`birthBatch`: lote da forma-destino + próximas) chamando `functions/api/generate-sprite.js` (exige conta paga, cap por forma e vitalício). Ponto de troca para "sob demanda": `spriteBatch` em `src/utils/spriteTrigger.ts`, limitando o lote à forma que o jogador alcança (`targetFormId`) em vez de pré-gerar o galho; fica para uma tarefa própria por tocar custo/caps do servidor.
+## Cenas 0 e 1 (implementação, ob-cena0)
+
+- Cena 0 (D1): com `ONBOARDING_VELADO`, a apresentação (AMBRA_INTRO) e o passo do nome mostram o ancião (`velado-anciao`) com as falas `ROTEIRO.c0`, e o bichinho do oráculo (placeholder `dormant`) ao lado como o Soulmon dele. Mesmas perguntas e resultado. Desligado = Ambra/oráculo atuais.
+- Cena 1 (D18): prop injetável `obterBB()` em `SoulmonOnboarding`; devolve `{url, formId}` e o nascimento revela na hora, sem API, com a copy "o berço" (`BERCO`, EN+PT). Default ausente/null = nascimento atual. TODO: ligar a `sortearBB` de `src/data/bbPool.ts` (outra frente).
+- 1ª tarefa antes da cena 6: o ritual já cria a tarefa (`firstTaskValue` -> `firstTaskFrom` -> `initialActivities` no `onComplete`, campo com sugestão pré-preenchida). Escolha: não criar outra; a `EtapaTarefa` da cena 6 só pede o "fez de verdade?" sobre ela.
+
+## 14. Decisões de 30/10/2026 (2ª rodada)
+
+| # | Decisão do dono |
+|---|---|
+| D26 | Prédio: **Mercenary Guild** / Guilda dos Mercenários. |
+| D27 | Recompensa da missão **mantém 3/5** pontos, mesmo com a simulação (46–62% de um tipo para quem repete a Ordem). |
+| D28 | O `freeGen` que sobrevive à exclusão de conta é **declarado na política** (hash irreversível + imagem gerada); sobe a `PRIVACY_VERSION`. |
+| D29 | Pool de BBs começa com **50** (~US$ 1,20), amplia depois. |
+
+> ⚠️ D28 sobe a `PRIVACY_VERSION` para todos (não fica atrás do interruptor): quem
+> abrir a versão com esse merge vê o reconsentimento. Só levar à main **no lançamento
+> oficial** (§7, D15), junto com o interruptor ligado.

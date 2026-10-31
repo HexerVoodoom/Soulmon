@@ -19,6 +19,8 @@
  * 3. **Nunca lança.** Quem chama está no meio de uma pintura de tela.
  */
 
+import { setOnboardingVelado } from './bbStage';
+
 export interface ServerConfig {
   /** Todas as rotas de save/dinheiro exigem ID token do Firebase. */
   authRequired: boolean;
@@ -31,9 +33,11 @@ export interface ServerConfig {
   billingDisabled: boolean;
   /** Kill-switch `CHAT_DISABLED`: o chat fica nas respostas locais. Mesma exceção. */
   chatDisabled: boolean;
+  /** Interruptor `ONBOARDING_VELADO` (plano §7): liga a forma BB / o onboarding novo. Desligado por padrão e na falha. */
+  onboardingVelado: boolean;
 }
 
-const DESLIGADO: ServerConfig = { authRequired: false, transcribeAvailable: false, billingDisabled: false, chatDisabled: false };
+const DESLIGADO: ServerConfig = { authRequired: false, transcribeAvailable: false, billingDisabled: false, chatDisabled: false, onboardingVelado: false };
 
 /** A promessa em voo, para N chamadas simultâneas virarem UMA requisição. */
 let emVoo: Promise<ServerConfig> | null = null;
@@ -49,9 +53,10 @@ export function fetchServerConfig(): Promise<ServerConfig> {
         transcribeAvailable: d?.transcribeAvailable === true,
         billingDisabled: d?.billingDisabled === true,
         chatDisabled: d?.chatDisabled === true,
+        onboardingVelado: d?.onboardingVelado === true,
       }))
       .catch(() => DESLIGADO)
-      .then(c => { resolvido = c; return c; });
+      .then(c => { resolvido = c; setOnboardingVelado(c.onboardingVelado); return c; });
   }
   return emVoo;
 }

@@ -16,7 +16,7 @@
 // `FULL_UNLOCK_PRICE_LABEL_USD` (US$). A metade PT é o que vem antes de
 // `<h1 id="en">`; a EN é o que vem depois.
 // ---------------------------------------------------------------------------
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { FULL_UNLOCK_PRICE_LABEL, FULL_UNLOCK_PRICE_LABEL_USD } from './monetization';
@@ -95,5 +95,28 @@ describe('preço do desbloqueio completo — Termos x código', () => {
     expect(marcados(enDivergente).length).toBe(1);
     expect(valor(marcados(ptDivergente)[0])).not.toBe(valor(FULL_UNLOCK_PRICE_LABEL));
     expect(valor(marcados(enDivergente)[0])).not.toBe(valor(FULL_UNLOCK_PRICE_LABEL_USD));
+  });
+});
+
+
+describe('D9 — preço atrás do interruptor ONBOARDING_VELADO', () => {
+  afterEach(() => { vi.unstubAllEnvs(); vi.resetModules(); });
+
+  it('desligado: preço atual (R$ 29,90 / US$ 6.99), igual ao publicado nos Termos', async () => {
+    vi.stubEnv('VITE_ONBOARDING_VELADO', '');
+    vi.resetModules();
+    const m = await import('./monetization');
+    expect(valor(m.FULL_UNLOCK_PRICE_LABEL)).toBe(29.9);
+    expect(valor(m.FULL_UNLOCK_PRICE_LABEL_USD)).toBe(6.99);
+  });
+
+  it('ligado: US$ 3,99 / R$ 19,90', async () => {
+    vi.stubEnv('VITE_ONBOARDING_VELADO', 'true');
+    vi.resetModules();
+    const m = await import('./monetization');
+    expect(valor(m.FULL_UNLOCK_PRICE_LABEL)).toBe(19.9);
+    expect(valor(m.FULL_UNLOCK_PRICE_LABEL_USD)).toBe(3.99);
+    expect(m.FULL_UNLOCK_PRICE_LABEL).toContain('R$');
+    expect(m.FULL_UNLOCK_PRICE_LABEL_USD).toContain('US$');
   });
 });

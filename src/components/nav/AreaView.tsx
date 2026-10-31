@@ -15,6 +15,7 @@ import type { Combatant } from '../../utils/combate/curve';
 import { buildingGateFor, buildingLockLine, type BuildingId } from '../../utils/gates';
 import type { DailyEvent } from '../../utils/dailyMissions';
 import { isDemoBlockedLot, isDemoHiddenLot, demoRefusalText } from '../../utils/demoMode';
+import { bbRefusal, bbRefusalText, BB_LOCKED_BUILDINGS } from '../../utils/bbStage';
 import { useBackLayer } from '../../utils/backStack';
 import { playerDayIso, type PlayerDayAnchor } from '../../utils/playerDay';
 import type { GuildGoal } from '../../utils/community';
@@ -318,11 +319,15 @@ export function AreaView(props: AreaViewProps) {
   const enter = (lotId: string) => { onVisitBuilding?.(`${area}.${lotId}` as BuildingId); setSheet(lotId); };
   /** DEMO: o prédio é social e a demo não entra em PvP/ranking/comunidade. */
   const demoBlocks = (lotId: string | null | undefined) => !!props.demo && !!lotId && isDemoBlockedLot(area, lotId);
-  const initialDemoBlocked = demoBlocks(props.initialSheet);
+  /** Forma BB (D5): Torneio, Duelo e Guilda recusam, com motivo (mesma faixa de aviso do cadeado). */
+  const bbBlocks = (lotId: string | null | undefined) =>
+    !!lotId && `${area}.${lotId}` in BB_LOCKED_BUILDINGS && bbRefusal({ evolutionStage: props.evolutionStage }) !== null;
+  const initialDemoBlocked = demoBlocks(props.initialSheet) || bbBlocks(props.initialSheet);
   const initialLock = props.initialSheet && !initialDemoBlocked ? lockOf(props.initialSheet) : null;
   const [sheet, setSheet] = useState<string | null>(initialLock || initialDemoBlocked ? null : props.initialSheet ?? null);
   const [lockNote, setLockNote] = useState<string | null>(
-    initialDemoBlocked ? demoRefusalText(language === 'pt-BR')
+    bbBlocks(props.initialSheet) ? bbRefusalText(language === 'pt-BR')
+      : initialDemoBlocked ? demoRefusalText(language === 'pt-BR')
       : initialLock ? buildingLockLine(initialLock.minBond, language) : null);
   useEffect(() => {
     if (!lockNote) return;
@@ -332,6 +337,7 @@ export function AreaView(props: AreaViewProps) {
   /** Tranca os prédios fechados: arte cinza + cadeado, e o toque só mostra o aviso neutro. */
   const gated = (lots: AreaLot[]): AreaLot[] => lots.map(l => {
     // DEMO: prédio social → toque inerte, com a recusa curta na mesma faixa de aviso.
+    if (bbBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(bbRefusalText(language === 'pt-BR')) };
     if (demoBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(demoRefusalText(language === 'pt-BR')) };
     const g = lockOf(l.id);
     if (!g) return { ...l, mark: props.buildingMarks?.[`${area}.${l.id}` as BuildingId] ?? undefined };

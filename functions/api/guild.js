@@ -69,6 +69,8 @@
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { kv, kvOrThrow } from './_kv.js';
+import { loadDuelSideWithSprite } from './_duelLoad.js';
+import { BB_LOCKED_MESSAGE } from './_velado.js';
 import { getProfile, newPid, stagePower } from './_profile.js';
 import {
   COOP_MAX_MEMBERS, PRESENCA_NOMINAL_MAX,
@@ -497,6 +499,11 @@ export async function handleGuild({ request, env }) {
     const r = await entrarNoGrupo(g.id, pedido.save);
     if (r.erro) return erro(r.erro, 409);
     return json({ result: 'approved', guild: await montar(r.g, id, hoje) });
+  }
+
+  // Forma BB (D5): a Guilda é trancada ao BB, com o motivo. O estágio vem do SAVE do servidor (`_velado.js`).
+  if ((action === 'guildCreate' || action === 'guildJoin') && (await loadDuelSideWithSprite(env, id)).bbLocked) {
+    return erro('bb-locked', 403, { reason: 'bb-locked', ...BB_LOCKED_MESSAGE });
   }
 
   if (action === 'guildCreate') {
