@@ -243,7 +243,7 @@ export interface ArenaEnemy {
 /** Os rookies de elemento combinado (o pool "combinado" da Arena; só existem na forma rookie). */
 const COMBO_ROOKIES = ENEMY_ROSTER.filter(e => e.kind === 'combinado' && e.stage === 'rookie');
 /** §199 (emenda do dono, 30/10/2026): chance de UM inimigo de uma run de elemento base ser um FUNDIDO que contém esse elemento. */
-export const ARENA_FUSED_FOE_CHANCE = 0.12;
+export const ARENA_FUSED_FOE_CHANCE = 0.5; // 30/10 (2ª emenda do dono): "variados do elemento escolhido, não só o base" — era 0.12
 /** Os fundidos (rookie combinado) cuja composição inclui o elemento base `el`. */
 export const arenaFusedOf = (el: string) => COMBO_ROOKIES.filter(e => e.elements.includes(el));
 

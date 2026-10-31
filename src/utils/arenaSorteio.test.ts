@@ -117,7 +117,7 @@ describe('§199 emenda (dono, 30/10/2026): elemento BASE da run, fundido só por
       for (const s of seeds) expect(ARENA_BASE_ELEMENTS).toContain(arenaCardElements(s)[0]);
     }
   });
-  it('400 runs × 5 rodadas: inimigo base = elemento do card; fundido CONTÉM o elemento do card; fundidos são raros (5–20%)', () => {
+  it('400 runs × 5 rodadas: inimigo base = elemento do card; fundido CONTÉM o elemento do card; a FAMÍLIA do elemento aparece (fundidos 30–60%)', () => {
     let fused = 0, total = 0;
     for (let s = 1; s <= 400; s++) {
       const el = arenaCardElements(s)[0];
@@ -127,13 +127,13 @@ describe('§199 emenda (dono, 30/10/2026): elemento BASE da run, fundido só por
         else expect(f.elements[0], `seed ${s} r${r}`).toBe(el);
       }
     }
-    expect(fused / total).toBeGreaterThan(0.05);
-    expect(fused / total).toBeLessThan(0.2);
+    expect(fused / total).toBeGreaterThan(0.3);
+    expect(fused / total).toBeLessThan(0.6);
   });
   it('nenhum fundido no sorteio do elemento; todos os base alcançáveis', () => {
     const vistos = new Set<string>();
     for (let s = 1; s <= 3000; s++) vistos.add(arenaCardElements(s)[0]);
     expect([...vistos].sort()).toEqual([...ARENA_BASE_ELEMENTS]);
-    expect(ARENA_FUSED_FOE_CHANCE).toBeLessThanOrEqual(0.15);
+    expect(ARENA_FUSED_FOE_CHANCE).toBeGreaterThanOrEqual(0.3);
   });
 });
