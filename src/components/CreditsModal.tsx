@@ -1,5 +1,5 @@
 import { useCreditPackLabels, useUnlockPriceLabel } from '../utils/priceLabel';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Icon } from './ui/Icon';
 import { CREDIT_COLOR } from '../utils/currencies';
 import { ModalSheet, sm2Hint, sm2TitleStyle } from './form/FormKit';
@@ -86,9 +86,14 @@ export function CreditsModal({
   const lojaFechada = isBillingAvailable() && lojaAberta === false;
   const canAffordReroll = credits >= REROLL_COST_CREDITS;
 
+  // Um timer só: o da fala anterior não apaga a seguinte antes da hora, e nada
+  // de setState depois de a folha fechar.
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (flashTimer.current) clearTimeout(flashTimer.current); }, []);
   const flash = (text: string, ok: boolean) => {
     setMessage({ text, ok });
-    setTimeout(() => setMessage(null), 3200);
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setMessage(null), 3200);
   };
 
   /** Toda ação que fala com o servidor passa por aqui: um só dono do estado

@@ -85,7 +85,9 @@ function daysSince(iso: string | undefined, now: Date): number {
   if (!iso) return 0;
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return 0;
-  return Math.max(0, Math.floor((dayKeyToDate(dayKeyOf(now)).getTime() - dayKeyToDate(dayKeyOf(d)).getTime()) / DAY_MS));
+  // `round`, não `floor`: entre duas meias-noites locais com horário de verão no meio
+  // a diferença é 23h, e o `floor` perdia um dia inteiro.
+  return Math.max(0, Math.round((dayKeyToDate(dayKeyOf(now)).getTime() - dayKeyToDate(dayKeyOf(d)).getTime()) / DAY_MS));
 }
 
 /**

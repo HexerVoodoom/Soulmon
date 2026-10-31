@@ -54,5 +54,8 @@ export function useDungeonReturn(state: GameState, everyMs = 30_000): { returnAt
     if (away.pausedAt !== undefined) return { returnAt: null, msLeft: null }; // foco pausado: sem retorno marcado (não há relógio correndo)
     const returnAt = projected && projected.key === key ? projected.at : Math.min(away.since + DUNGEON_AWAY_MAX_MS, away.until ?? Infinity);
     return { returnAt, msLeft: Math.max(0, returnAt - now) };
-  }, [away, projected, key, now]);
+    // `key` já carrega o `away` serializado: o objeto sai das deps porque o `sanitizeDungeonAway` cria um novo a cada
+    // render, e com ele o memo nunca segurava nada.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projected, key, now]);
 }

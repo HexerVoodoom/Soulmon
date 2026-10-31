@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 
 /**
  * A CELEBRAÇÃO (rodada 7, M5, 04/10/2026): um estouro curto de faíscas quando
@@ -17,10 +17,14 @@ const SPARKS = 12;
 
 export function Celebration({ fixed = false, onDone }: { fixed?: boolean; onDone?: () => void }) {
   const [alive, setAlive] = useState(true);
+  // `onDone` chega como arrow nova a cada render do pai (o App re-renderiza o
+  // tempo todo): chavear o timer nele o reiniciava, e a celebração não acabava.
+  const onDoneRef = useRef(onDone);
+  onDoneRef.current = onDone;
   useEffect(() => {
-    const t = window.setTimeout(() => { setAlive(false); onDone?.(); }, 1300);
+    const t = window.setTimeout(() => { setAlive(false); onDoneRef.current?.(); }, 1300);
     return () => window.clearTimeout(t);
-  }, [onDone]);
+  }, []);
   if (!alive) return null;
   return (
     <span

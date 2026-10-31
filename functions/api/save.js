@@ -7,7 +7,7 @@
 // escreve. Sem isso, bastava editar o localStorage para virar assinante ou se
 // dar créditos infinitos.
 
-import { VALID_ID, readEntitlement, publicView } from './_entitlements.js';
+import { VALID_ID, readEntitlement, publicView, comEntitlementLegivel } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { betaGate, BETA_CLOSED_MESSAGE } from './_betaAccess.js';
 import { takeIpQuota } from './_ipHash.js';
@@ -167,7 +167,7 @@ export async function onRequestOptions() {
   return new Response(null, { headers: CORS });
 }
 
-export async function onRequest({ request, env }) {
+async function onRequestBruto({ request, env }) {
   const url = new URL(request.url);
   // Só o POST tem corpo. Lemos antes de resolver o id porque o id pode vir
   // dele (ver abaixo).
@@ -480,3 +480,6 @@ export async function onRequest({ request, env }) {
 
   return Response.json({ error: 'Method not allowed' }, { status: 405, headers: CORS });
 }
+
+// `ent:` ilegível vira 503 com log (`_entitlements.js` › `EntitlementIlegivelError`), nunca 500 genérico.
+export const onRequest = comEntitlementLegivel(onRequestBruto, CORS);

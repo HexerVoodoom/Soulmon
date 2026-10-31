@@ -53,8 +53,7 @@
 
 import {
   VALID_ID, publicView, spendCredits, grantAdReward, auditRefunds,
-  grantCourtesy, COURTESY_PROVIDER, resetSpriteLifetimeOnRebirth, readEntitlement,
-} from './_entitlements.js';
+  grantCourtesy, COURTESY_PROVIDER, resetSpriteLifetimeOnRebirth, readEntitlement, comEntitlementLegivel } from './_entitlements.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { isPlayPurchaseVoided, isSteamPurchaseVoided, isSteamOwnershipVoided } from './_billing.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
@@ -137,7 +136,7 @@ export async function onRequestOptions() {
   return new Response(null, { headers: CORS });
 }
 
-export async function onRequestGet({ request, env }) {
+async function onRequestGetBruto({ request, env }) {
   const url = new URL(request.url);
   // BETA-FULL antes do save existir (tela do ovo, saveId ainda aleatório): só o TOKEN decide.
   if (url.searchParams.get('action') === 'beta-full') {
@@ -179,7 +178,7 @@ export async function onRequestGet({ request, env }) {
   return json({ ...view, adsEnabled: env.ADMOB_SSV_ENABLED === 'true' });
 }
 
-export async function onRequestPost({ request, env }) {
+async function onRequestPostBruto({ request, env }) {
   const url = new URL(request.url);
   const action = url.searchParams.get('action');
 
@@ -299,3 +298,7 @@ export async function onRequestPost({ request, env }) {
   // e o que não existe respondem igual.
   return json({ error: 'Not found' }, 404);
 }
+
+// `ent:` ilegível vira 503 com log (`_entitlements.js` › `EntitlementIlegivelError`), nunca 500 genérico.
+export const onRequestGet = comEntitlementLegivel(onRequestGetBruto, CORS);
+export const onRequestPost = comEntitlementLegivel(onRequestPostBruto, CORS);

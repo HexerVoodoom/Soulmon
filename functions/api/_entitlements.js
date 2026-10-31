@@ -162,15 +162,52 @@ function emptyEntitlement() {
   };
 }
 
+/**
+ * Registro `ent:` existe mas não é legível (decisão do dono, 31/10/2026). Antes, `readEntitlement` devolvia um registro
+ * VAZIO nesse caso, e a próxima gravação sobrescrevia a conta: tier pago, Créditos e `consumedOrders` sumiam sem aviso.
+ * Agora a leitura FALHA com este erro tipado — quem chamou não chega a gravar nada — e a rota responde 503
+ * (`respostaEntitlementIlegivel` / `comEntitlementLegivel`). O registro corrompido fica intacto para o dono examinar.
+ */
+export class EntitlementIlegivelError extends Error {
+  constructor(saveId) {
+    super('entitlement-unreadable');
+    this.name = 'EntitlementIlegivelError';
+    this.status = 503;
+    this.code = 'entitlement-unavailable';
+    this.saveIdPrefix = String(saveId).slice(0, 8);
+  }
+}
+
+/** A Response 503 do erro acima, ou `null` se `err` for outra coisa (aí quem chamou relança). */
+export function respostaEntitlementIlegivel(err, headers) {
+  if (!(err instanceof EntitlementIlegivelError)) return null;
+  return Response.json({ error: err.code }, { status: err.status, headers });
+}
+
+/** Envolve um handler de rota: `EntitlementIlegivelError` vira 503 com os cabeçalhos da rota; o resto segue o caminho de sempre. */
+export function comEntitlementLegivel(handler, headers) {
+  return async (context) => {
+    try {
+      return await handler(context);
+    } catch (err) {
+      const r = respostaEntitlementIlegivel(err, headers);
+      if (r) return r;
+      throw err;
+    }
+  };
+}
+
 export async function readEntitlement(env, saveId) {
   const raw = await kvOrThrow(env).get(ENT_PREFIX + saveId);
   if (!raw) return emptyEntitlement();
-  try {
-    const parsed = JSON.parse(raw);
-    return { ...emptyEntitlement(), ...parsed };
-  } catch {
-    return emptyEntitlement();
+  let parsed;
+  try { parsed = JSON.parse(raw); } catch { parsed = undefined; }
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    // O log sai AQUI, uma vez, para valer também para quem captura o erro e recusa por conta própria (`requirePaidTier`, `_aiGuard`).
+    console.error(JSON.stringify({ event: 'entitlement.unreadable', saveIdPrefix: String(saveId).slice(0, 8), bytes: raw.length }));
+    throw new EntitlementIlegivelError(saveId);
   }
+  return { ...emptyEntitlement(), ...parsed };
 }
 
 export async function writeEntitlement(env, saveId, ent) {

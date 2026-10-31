@@ -51,5 +51,7 @@ export function tzOffsetMs(instant: Date, timeZone: string): number {
     Number(parts.minute),
     Number(parts.second)
   );
-  return asUtc - instant.getTime();
+  // As partes não têm milissegundo: medir contra o instante cheio deixava o
+  // offset até 999 ms torto (−3h − 500 ms em vez de −3h). Mede contra o segundo.
+  return asUtc - (instant.getTime() - instant.getUTCMilliseconds());
 }

@@ -13,14 +13,14 @@
 
 import { kv, kvOrThrow } from './_kv.js';
 import { METRICS_KEY_HEADER, secretEquals } from './metrics.js';
-import { VALID_ID, readEntitlement, writeEntitlement } from './_entitlements.js';
+import { VALID_ID, readEntitlement, writeEntitlement, comEntitlementLegivel } from './_entitlements.js';
 import { VALID_FORM_ID } from './_aiGuard.js';
 import { legacyFormIdOf } from './_branchLegacy.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 
 const json = (o, status = 200) => Response.json(o, { status, headers: { 'Cache-Control': 'no-store' } });
 
-export async function onRequestPost({ request, env }) {
+async function onRequestPostBruto({ request, env }) {
   if (!env?.METRICS_ADMIN_KEY) return json({ error: 'Not found' }, 404);
   const gate = takeToken('sprite-admin', clientKey(request), { limit: 20, windowMs: 60_000 });
   if (!gate.ok) return tooManyRequests(gate.retryAfter);
@@ -48,3 +48,6 @@ export async function onRequestPost({ request, env }) {
   console.log(JSON.stringify({ event: 'sprite.admin.release-form', saveIdPrefix: id.slice(0, 8), formId, antes, depois: forms[formId] }));
   return json({ ok: true, formId, antes, depois: forms[formId] });
 }
+
+// `ent:` ilegível vira 503 com log (`_entitlements.js` › `EntitlementIlegivelError`), nunca 500 genérico.
+export const onRequestPost = comEntitlementLegivel(onRequestPostBruto, { 'Cache-Control': 'no-store' });

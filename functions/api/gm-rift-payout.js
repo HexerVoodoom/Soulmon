@@ -7,6 +7,7 @@
 // admin). Qualquer outro caso — sem token, token inválido, não-GM, `ADMIN_EMAILS` vazio, Firebase desligado — é 403 `forbidden`
 // idêntico. Sem e-mail em URL. Quem credita é `_riftPayout.js` (`grantRankPrize`: marca de pago dentro do `ent`).
 
+import { comEntitlementLegivel } from './_entitlements.js';
 import { kv } from './_kv.js';
 import { verifiedAdmin } from './_admin.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
@@ -31,7 +32,7 @@ export async function onRequestGet({ request, env }) {
   return Response.json({ items }, { headers });
 }
 
-export async function onRequestPost({ request, env }) {
+async function onRequestPostBruto({ request, env }) {
   const bloqueio = await gate(request, env);
   if (bloqueio) return bloqueio;
   let body = null;
@@ -44,3 +45,6 @@ export async function onRequestPost({ request, env }) {
   if (r.status === 'not-found') return Response.json({ error: 'not-found' }, { status: 404, headers });
   return Response.json({ ok: true, ...r }, { headers });
 }
+
+// `ent:` ilegível vira 503 com log (`_entitlements.js` › `EntitlementIlegivelError`), nunca 500 genérico.
+export const onRequestPost = comEntitlementLegivel(onRequestPostBruto, { 'Cache-Control': 'no-store' });

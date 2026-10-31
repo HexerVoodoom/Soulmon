@@ -67,10 +67,19 @@ describe('CompanionHUD — o pet reage ao que você fez (WP3.8)', () => {
     // Esta é a metade que impede o bipe: `message` é derivado do estado (vida,
     // energia, sono, progresso) e muda o tempo todo. Se ele disparasse a fala,
     // o pet falaria sozinho a cada tick.
-    const { rerender } = renderWithCss(<CompanionHUD {...base} triggerMessage={1} />);
+    // Monta em 0 e pulsa depois: montar já com o contador andado é a volta de
+    // outra tela, e essa NÃO fala (o pulso velho não se repete na remontagem).
+    const { rerender } = renderWithCss(<CompanionHUD {...base} triggerMessage={0} />);
+    rerender(<CompanionHUD {...base} triggerMessage={1} />);
     expect(screen.getByText('Que tal uma comidinha?')).toBeTruthy();
     rerender(<CompanionHUD {...base} message="Estou com sono…" triggerMessage={1} />);
     expect(screen.queryByText('Estou com sono…'), 'o pet falou sem ninguém ter feito nada').toBeNull();
+  });
+
+  it('remontar com o contador já andado (voltar de outra tela) não repete fala nem comida', () => {
+    renderWithCss(<CompanionHUD {...base} triggerMessage={3} feedAnim={{ emoji: '🍎', n: 2 }} />);
+    expect(screen.queryByText('Que tal uma comidinha?'), 'a fala velha voltou na remontagem').toBeNull();
+    expect(document.body.textContent).not.toContain('+1');
   });
 
   it('a fala passa pelo `speak`: emoji não vai para o balão', () => {

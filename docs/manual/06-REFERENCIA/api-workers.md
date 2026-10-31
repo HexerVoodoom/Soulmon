@@ -395,6 +395,9 @@
 **Régua:** `functions/api/_pushTargets.test.js`.
 **Avisos do arquivo:** sem validar, o worker faria `fetch()` num endereço arbitrário 4×/dia por até um ano, com JWT VAPID de produção no cabeçalho.
 
+### `functions/api/_rankIndex.js`
+**Dono de:** o índice ordenável da season do Torneio (`rankIndex:<season>`, REGISTRO §23, 31/10/2026): candidatos `{saveId: pontos}` regravados em todo `putRank`, preenchidos por lote a partir de cursor; a verdade continua na linha `rank:`. O `closeSeason` usa o índice e, incompleto, cai nas 300 chaves com log `season.close.fallback`.
+
 ### `functions/api/_rateLimit.js`
 **Dono de:** o teto de requisição por IP, por CUSTO (não segurança) — um `Map` em memória do isolate, janela deslizante.
 **Exports:**

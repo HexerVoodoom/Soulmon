@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { AlertLine, sm2Button, sm2Hint } from './form/FormKit';
 import { InfoTip } from './ui/InfoTip';
 import { Icon } from './ui/Icon';
@@ -58,7 +58,15 @@ export function AccountSection({ language, onEntitlementChange, onSignedIn }: Ac
     return () => { cancelled = true; };
   }, []);
 
-  const flash = (text: string, ok = false) => { setMessage({ text, ok }); setTimeout(() => setMessage(null), 4000); };
+  // Um timer só: o da fala anterior não apaga a seguinte antes da hora, e nada
+  // de setState depois de desmontar.
+  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (flashTimer.current) clearTimeout(flashTimer.current); }, []);
+  const flash = (text: string, ok = false) => {
+    setMessage({ text, ok });
+    if (flashTimer.current) clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setMessage(null), 4000);
+  };
 
   const handleRestore = async () => {
     if (!isBillingAvailable()) {

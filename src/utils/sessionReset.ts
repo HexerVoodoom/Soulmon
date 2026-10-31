@@ -188,6 +188,12 @@ export function guardarCopiaDeSeguranca(motivo: string): boolean {
   });
 }
 
+/** `YYYY-MM-DD` do dia LOCAL (nome de arquivo). `toISOString` é UTC: depois das 21h no Brasil daria amanhã. */
+function diaLocalDoArquivo(now: Date): string {
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${now.getFullYear()}-${p(now.getMonth() + 1)}-${p(now.getDate())}`;
+}
+
 /** Conteúdo do arquivo "Exportar backup": o save local, como está. `null` = não há save. */
 export function montarBackupLocal(now = new Date()): { nome: string; json: string } | null {
   const bruto = readLocal(STORAGE_KEYS.GAME_STATE);
@@ -195,7 +201,7 @@ export function montarBackupLocal(now = new Date()): { nome: string; json: strin
   let state: unknown = bruto;
   try { state = JSON.parse(bruto); } catch { /* texto cru */ }
   return {
-    nome: `soulmon-backup-${now.toISOString().slice(0, 10)}.json`,
+    nome: `soulmon-backup-${diaLocalDoArquivo(now)}.json`,
     json: JSON.stringify({ format: 'soulmon-local-backup-v1', generatedAt: now.toISOString(), state }, null, 2),
   };
 }

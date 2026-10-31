@@ -341,6 +341,16 @@ describe('community — fechar a season é IDEMPOTENTE (WP4.18)', () => {
     });
     expect(await set.json()).toMatchObject({ awarded: 1 });
   });
+
+  it('regressão (QA loops 30/10): linha de rank ilegível ou sem pontos não derruba nem embaralha o pódio', async () => {
+    const env = envSeason();
+    env.DIGIAPP_SAVES.store.set(`rank:2026-08:${'0'.repeat(32)}`, '{quebrado');
+    env.DIGIAPP_SAVES.store.set(`rank:2026-08:${'1'.repeat(32)}`, JSON.stringify({ points: 'x' }));
+    const res = await fechar(env);
+    expect(res.status).toBe(200);
+    const p = JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${CAMPEAO}`));
+    expect(p.pendingTrophies).toEqual([{ season: '2026-08', place: 1 }]);
+  });
 });
 
 describe('community — a FAIXA do Torneio nunca rebaixa (WP4.13 / achado E5)', () => {

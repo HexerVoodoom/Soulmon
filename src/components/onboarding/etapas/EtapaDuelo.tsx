@@ -72,8 +72,8 @@ export function EtapaDuelo({ onDone, language = 'pt-BR', playerSprite }: EtapaDu
         <Bar label={pt ? 'Pesadelo' : 'Nightmare'} hp={s.pesadelo} max={DUELO_MAX.pesadelo} testId="hp-pesadelo" />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <Art src={ART.desfeito} alt="Desfeito" />
-        <Art src={ART.pesadelo} alt="Soulmon-pesadelo" />
+        <Art src={ART.desfeito} alt={pt ? 'Desfeito' : 'The Undone'} />
+        <Art src={ART.pesadelo} alt={pt ? 'Soulmon-pesadelo' : 'Nightmare Soulmon'} />
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         <Art src={playerSprite ?? ART.jogadorBB} alt={pt ? 'Seu Soulmon' : 'Your Soulmon'} />

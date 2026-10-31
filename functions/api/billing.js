@@ -32,7 +32,7 @@
 //   Steam: STEAM_PUBLISHER_KEY, STEAM_APP_ID
 // Sem eles a rota da loja em questão responde 503 e NUNCA concede nada.
 
-import { VALID_ID, publicView, applyVerifiedPurchase, applySubscriptionState, claimOrder, lookupOrderOwner, readEntitlement } from './_entitlements.js';
+import { VALID_ID, publicView, applyVerifiedPurchase, applySubscriptionState, claimOrder, lookupOrderOwner, readEntitlement, comEntitlementLegivel } from './_entitlements.js';
 import { isBillingDisabled, BILLING_DISABLED_MESSAGE } from './_killSwitch.js';
 import { betaGate, BETA_CLOSED_MESSAGE } from './_betaAccess.js';
 import { verifiedBetaFull, betaFullPublicView } from './_betaFull.js';
@@ -94,7 +94,7 @@ async function entView(env, request, saveId, ent) {
   return (await verifiedBetaFull(env, request, saveId)).betaFull ? betaFullPublicView(v) : v;
 }
 
-export async function onRequestPost({ request, env }) {
+async function onRequestPostBruto({ request, env }) {
   const url = new URL(request.url);
   if (url.searchParams.get('action') !== 'verify') return json({ error: 'Unknown action' }, 400);
 
@@ -231,3 +231,6 @@ async function handleSubscription(env, saveId, body) {
 
   return json({ ok: true, duplicate: !changed, ...publicView(ent) });
 }
+
+// `ent:` ilegível vira 503 com log (`_entitlements.js` › `EntitlementIlegivelError`), nunca 500 genérico.
+export const onRequestPost = comEntitlementLegivel(onRequestPostBruto, CORS);

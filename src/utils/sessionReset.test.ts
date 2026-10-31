@@ -185,6 +185,11 @@ describe('backup local', () => {
     expect(b.nome).toBe('soulmon-backup-2026-10-13.json');
     expect(JSON.parse(b.json).state).toEqual({ totalXP: 5 });
   });
+  it('regressão: nome do backup usa o dia LOCAL, não o UTC (23h30 local continua sendo hoje)', () => {
+    mem.set(STORAGE_KEYS.GAME_STATE, '{}');
+    const b = montarBackupLocal(new Date(2026, 9, 13, 23, 30))!;
+    expect(b.nome).toBe('soulmon-backup-2026-10-13.json');
+  });
   it('allowlist não vaza chave de save/identidade', () => {
     for (const k of [STORAGE_KEYS.GAME_STATE, STORAGE_KEYS.SAVE_ID, STORAGE_KEYS.USER_EMAIL, STORAGE_KEYS.SYNC_PENDING]) {
       expect(SOBREVIVEM_AO_LOGOUT).not.toContain(k);

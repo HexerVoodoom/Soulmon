@@ -29,14 +29,7 @@ export interface SequenciaPlayerProps {
   onSlotDone?: (slot: string, resultado?: Record<string, unknown>) => void;
 }
 
-const CSS = `
-@keyframes seq-glitch{0%,100%{transform:translate(0);filter:none}20%{transform:translate(-3px,1px);filter:hue-rotate(40deg)}40%{transform:translate(3px,-2px)}60%{transform:translate(-2px,2px);filter:saturate(2)}80%{transform:translate(2px,0)}}
-@keyframes seq-pixels{0%{opacity:.0}50%{opacity:.5}100%{opacity:.15}}
-@keyframes seq-clarao{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
-@keyframes seq-fade{from{opacity:1}to{opacity:0}}
-@keyframes seq-parallax{from{transform:translateX(-1.5%) scale(1.05)}to{transform:translateX(1.5%) scale(1.05)}}
-@media (prefers-reduced-motion: reduce){.seq-anim{animation:none!important}}
-`;
+// Keyframes e o corte em movimento reduzido de `.seq-anim` moram no src/index.css.
 
 function Arte({ k, extra, language }: { k: AssetKey; extra?: CSSProperties; language: Language }) {
   const url = urlDoAsset(k);
@@ -66,7 +59,13 @@ export function SequenciaPlayer({ quadros, language, slots, onDone, onChoice, on
   const fim = useRef(false);
   const q: Quadro | undefined = quadros[i];
 
+  // Transição preta em curso: um 2º toque (escolha, pular) nos 350 ms não
+  // pode avançar de novo nem repetir `onChoice`; e o timer morre com o player.
+  const transicao = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => { if (transicao.current) clearTimeout(transicao.current); }, []);
+
   const ir = useCallback((n: number) => {
+    if (transicao.current) return;
     if (n >= quadros.length) {
       if (!fim.current) { fim.current = true; onDone(); }
       return;
@@ -74,7 +73,7 @@ export function SequenciaPlayer({ quadros, language, slots, onDone, onChoice, on
     const alvo = quadros[n];
     if (alvo.tipo === 'cena' && alvo.transicaoPreta) {
       setPreto(true);
-      setTimeout(() => { setI(n); setPreto(false); }, 350);
+      transicao.current = setTimeout(() => { transicao.current = null; setI(n); setPreto(false); }, 350);
     } else setI(n);
   }, [quadros, onDone]);
 
@@ -92,7 +91,6 @@ export function SequenciaPlayer({ quadros, language, slots, onDone, onChoice, on
 
   return (
     <div style={raiz} data-testid="sequencia-player" data-quadro={i}>
-      <style>{CSS}</style>
       {q.tipo === 'slot' ? (
         (() => {
           const Slot = slots?.[q.slot];
@@ -119,7 +117,7 @@ export function SequenciaPlayer({ quadros, language, slots, onDone, onChoice, on
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {q.opcoes.map((o) => (
                   <button key={o.id} type="button" style={botao}
-                    onClick={() => { onChoice?.(o.id); ir(proximo(quadros, i)); }}>{t(o.rotulo, language)}</button>
+                    onClick={() => { if (transicao.current) return; onChoice?.(o.id); ir(proximo(quadros, i)); }}>{t(o.rotulo, language)}</button>
                 ))}
               </div>
             </div>

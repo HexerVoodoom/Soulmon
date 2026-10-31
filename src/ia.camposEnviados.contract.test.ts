@@ -46,6 +46,11 @@ const CAMPOS_DECLARADOS: Record<string, Record<string, string[][]>> = {
   '/api/generate-sprite': {
     'src/utils/spriteGen.ts': [['prompt', 'referenceImageUrls', 'promptFallback', 'formId', 'regenerate', 'regenPaid', 'opId']],
   },
+  '/api/free-rookie': {
+    // Rookie grátis do onboarding Velado (D6/D20): o MESMO prompt de sprite do /api/generate-sprite,
+    // subconjunto das chaves dele (sem referência nem cobrança).
+    'src/utils/freeRookie.ts': [['formId', 'prompt', 'promptFallback']],
+  },
 };
 
 /** Quem chama `suggestTasks` (e portanto manda texto da pessoa ao Groq), e o

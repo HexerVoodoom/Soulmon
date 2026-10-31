@@ -496,7 +496,7 @@ export function CambistaSheet({ language, credits, onExchangeCredits, accountTie
                         style={{ ...sm2Button('outline', !can), flexShrink: 0, padding: '4px 8px', gap: 4 }}
                       >
                         <span>{qty === 1 ? (isPt ? 'Comprar' : 'Buy') : '×5'}</span>
-                        <Icon name="diamond" size={14} fill={1} tone="inherit" style={{ color: CREDIT_COLOR }} />
+                        <Icon name="diamond" size={20} fill={1} tone="inherit" style={{ color: CREDIT_COLOR }} />
                         <span className="sm2-num" data-essence-price>{price}</span>
                       </button>
                     );
