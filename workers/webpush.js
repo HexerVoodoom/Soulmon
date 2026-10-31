@@ -119,5 +119,8 @@ export async function sendWebPush(sub, payload, vapidJWK, vapidPublicKey, contac
     },
     body,
   });
+  // Corpo nunca lido segura a conexão no Worker (o runtime avisa "stalled
+  // response" e o lote de 100 envios paralelos espera conexão livre): descarta.
+  await res.body?.cancel?.().catch(() => {});
   return { status: res.status, ok: res.ok };
 }

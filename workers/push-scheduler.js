@@ -38,16 +38,6 @@ const VAPID_PUBLIC_KEY = 'BIO7RjZ9yeknwdZPD8k8hKJ6EHqIPVap8JQNP2AR300fbpvcPEMPwR
 // nenhuma.
 const CONTACT = 'mailto:mateus.sprnd@gmail.com';
 
-// Drains every key under `prefix`, running `handle(sub, name)` for each —
-// `handle` returns 'sent' | 'failed' | 'removed' (and deletes the KV entry
-// itself when 'removed', mirroring the stale-subscription cleanup).
-/**
- * WP1.17 — idade da criatura em dias, se a inscrição souber (`bornAt`).
- *
- * O dado morre junto com a subscription: não existe registro separado, e
- * cancelar o push apaga a idade junto. Ausente ou ilegível devolve `null`, e
- * `pushCopy` entende `null` como "copy de sempre" — nunca como dia 0.
- */
 /**
  * A BASE do dia é MEIA-NOITE EM BRT (`T03:00:00Z`), não meia-noite UTC
  * (`00-skeptic-r2` #11): o cron das 22h BRT é 01:00 UTC do dia seguinte —
@@ -58,6 +48,13 @@ const CONTACT = 'mailto:mateus.sprnd@gmail.com';
  */
 export const AGE_DAY_BASE_UTC = 'T03:00:00Z';
 
+/**
+ * WP1.17 — idade da criatura em dias, se a inscrição souber (`bornAt`).
+ *
+ * O dado morre junto com a subscription: não existe registro separado, e
+ * cancelar o push apaga a idade junto. Ausente ou ilegível devolve `null`, e
+ * `pushCopy` entende `null` como "copy de sempre" — nunca como dia 0.
+ */
 export function ageDaysOf(sub, now) {
   const nascimento = Date.parse(`${sub?.bornAt ?? ''}${AGE_DAY_BASE_UTC}`);
   if (!Number.isFinite(nascimento)) return null;
@@ -72,6 +69,9 @@ export function ageDaysOf(sub, now) {
   return dias === -1 ? 0 : null;
 }
 
+// Drains every key under `prefix`, running `handle(sub, name)` for each —
+// `handle` returns 'sent' | 'failed' | 'removed' (and deletes the KV entry
+// itself when 'removed', mirroring the stale-subscription cleanup).
 async function drainPrefix(env, prefix, handle, counts) {
   let cursor;
   do {

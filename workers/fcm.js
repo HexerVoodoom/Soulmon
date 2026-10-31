@@ -37,6 +37,11 @@ async function importPrivateKey(pem) {
 // within the same warm isolate; a cold start just re-signs.
 let cachedToken = null;
 let cachedExpiry = 0;
+// A troca EM VOO: o `drainPrefix` processa 100 inscrições em paralelo e, na
+// passada preguiçosa (`lazyFcm`), todas chegam aqui com o cache vazio ao mesmo
+// tempo — sem dividir a mesma promessa, cada uma assinava e trocava o seu
+// próprio token (até 100 trocas OAuth por lote em vez de uma).
+let inflight = null;
 
 /**
  * Exchange a Firebase service account for a short-lived OAuth2 access token
@@ -46,7 +51,12 @@ let cachedExpiry = 0;
 export async function getFcmAccessToken(serviceAccount) {
   const now = Math.floor(Date.now() / 1000);
   if (cachedToken && now < cachedExpiry - 60) return cachedToken;
+  if (inflight) return inflight;
+  inflight = trocarToken(serviceAccount, now).finally(() => { inflight = null; });
+  return inflight;
+}
 
+async function trocarToken(serviceAccount, now) {
   const header = b64url(enc.encode(JSON.stringify({ alg: 'RS256', typ: 'JWT' })));
   const claims = b64url(enc.encode(JSON.stringify({
     iss: serviceAccount.client_email,
@@ -122,7 +132,11 @@ export async function sendFcmPush(token, notif, projectId, accessToken) {
     },
   );
 
-  if (res.ok) return { status: res.status, ok: true };
+  if (res.ok) {
+    // Corpo não lido segura a conexão no Worker (mesma razão de `webpush.js`).
+    await res.body?.cancel?.().catch(() => {});
+    return { status: res.status, ok: true };
+  }
 
   const body = await res.json().catch(() => null);
   return { status: res.status, ok: false, error: body?.error?.status };
