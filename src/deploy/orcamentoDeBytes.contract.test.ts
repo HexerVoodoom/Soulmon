@@ -199,7 +199,9 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // estado de cristal no save, bloqueios e cerimônia nova (sem vídeo). Corte real segue = partir o `App.tsx`.
   // 01/11/2026: 831_387 -> 885_104 (+52.4 KB), build limpo da v242. Pool de 280 BBs (bbPool, PR #467) + desgarrado de jogador
   // nos encontros, recuperação em 2 dias e nomes dos 50 curados (REGISTRO §213). Corte real segue = partir o `App.tsx`.
-  'index.js': 885_104,
+  // 01/11/2026: 885_104 -> 895_367 (+10 KB), build limpo da v244. Oficina do Foco (salvar, hábitos, ✓ sincronizado com a origem),
+  // âncora do pé na sombra (spriteFeetTable) e nome nas notificações. Corte real segue = partir o `App.tsx`.
+  'index.js': 895_367,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
@@ -207,7 +209,9 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // frentes anteriores sem re-medir; o `dist/` commitado da main media 179_728). Esta PR não mexe em CSS.
   // 21/10/2026 (splash sem texto assado, REGISTRO §168, L11-08): 180_815 -> 190_071 em build limpo sobre a main (a main já media 188_832; esta
   // PR soma +1,2 KB: o texto/barra de carregamento da intro em DOM). O vídeo da intro caiu de 2,5 MB para 0,7 MB.
-  'index.css': 190_071,
+  // 01/11/2026: 190_071 -> 199_237 (+9 KB), build limpo da v244: selo NEW em imagem, aviso de recuperação do desgarrado e
+  // estilos que entraram na main pelas outras frentes do dia.
+  'index.css': 199_237,
   'bg-forja.webp': 424_334, // 29/10/2026: fundo da Forja (pixel art denso) 14 KB acima do teto; borrar para caber estragaria o pixel
   // ⚰️ 'evolution-bg.mp4' (3,7 MB) saiu em 31/10/2026: a cerimônia da evolução foi refeita em CSS (o cristal, REGISTRO §208) e o vídeo foi apagado.
 };

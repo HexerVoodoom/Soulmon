@@ -1587,6 +1587,7 @@ function toAttrBonus(b) {
 }
 __name(toAttrBonus, "toAttrBonus");
 var SPECIAL_BUDGET_HITS = 3;
+var SPECIAL_FAMILIES = ["direct", "dot", "heal", "shield", "atkBuff", "defDebuff", "spdBuff"];
 var SPECIAL_POWER = { direct: 1, dot: 1, heal: 1, shield: 1, atkBuff: 1.01, defDebuff: 1.01, spdBuff: 1.82 };
 function specialOf(family) {
   const f = typeof family === "string" && Object.prototype.hasOwnProperty.call(SPECIAL_POWER, family) ? family : "direct";
@@ -1896,6 +1897,7 @@ var BUILDING_GATES = {
   "mercado.decoracao": { minBond: 2 },
   "mercado.background": { minBond: 3 },
   "forja.ferreiro": { minBond: 2 },
+  "forja.hexsmith": { minBond: 2 },
   "jogos.salao": { minBond: 1 },
   "exploracao.dungeon": { minBond: 3 },
   "jogos.mente": { minBond: 3 },
@@ -2636,12 +2638,71 @@ function vantagemElemental(atacante, defensor) {
 }
 __name(vantagemElemental, "vantagemElemental");
 function aplicarElementosDuelo(me, opp, escala = 1) {
-  const advMe = vantagemElemental(me.fx?.elBasica, opp.fx?.elBasica);
-  const advOpp = vantagemElemental(opp.fx?.elBasica, me.fx?.elBasica);
+  const advMe = vantagemElemental(me.fx?.elBasica, opp.fx?.elDefesa ?? opp.fx?.elBasica);
+  const advOpp = vantagemElemental(opp.fx?.elBasica, me.fx?.elDefesa ?? me.fx?.elBasica);
   const com = /* @__PURE__ */ __name((c, adv) => adv === 0 ? c : { ...c, bonus: (1 + c.bonus) / (1 - escala * adv / 10) - 1 }, "com");
   return { meCombatant: com(me.combatant, advMe), oppCombatant: com(opp.combatant, advOpp) };
 }
 __name(aplicarElementosDuelo, "aplicarElementosDuelo");
+
+// api/_hexsmith.js
+var HEX_SLOTS = ["coroa", "amuleto", "garra", "couraca", "luvas"];
+var HEX_ELEMENT_SLOTS = ["amuleto", "garra", "couraca"];
+var HEX_STRIKES = ["ranged", "melee"];
+var HEX_MAX_OWNED = 3 * 210 + 7 + 2;
+var ELEMENT_IDS = /* @__PURE__ */ new Set([...COUNTER_RING, ...Object.keys(BASE_DO_PAR)]);
+function parseHexItem(id) {
+  if (typeof id !== "string") return void 0;
+  const i2 = id.indexOf(":");
+  if (i2 < 1) return void 0;
+  const slot = id.slice(0, i2);
+  const value = id.slice(i2 + 1);
+  if (!HEX_SLOTS.includes(slot)) return void 0;
+  if (HEX_ELEMENT_SLOTS.includes(slot)) return ELEMENT_IDS.has(value) ? { slot, value } : void 0;
+  if (slot === "coroa") return (
+    /** @type {readonly string[]} */
+    SPECIAL_FAMILIES.includes(value) ? { slot, value } : void 0
+  );
+  return HEX_STRIKES.includes(value) ? { slot, value } : void 0;
+}
+__name(parseHexItem, "parseHexItem");
+function sanitizeHexsmith(raw) {
+  if (!raw || typeof raw !== "object") return { owned: [], equipped: {} };
+  const r = (
+    /** @type {Record<string, unknown>} */
+    raw
+  );
+  const owned = [];
+  if (Array.isArray(r.owned)) {
+    for (const id of r.owned) {
+      if (owned.length >= HEX_MAX_OWNED) break;
+      if (parseHexItem(id) && !owned.includes(id)) owned.push(id);
+    }
+  }
+  const equipped = {};
+  const eq = r.equipped && typeof r.equipped === "object" ? (
+    /** @type {Record<string, unknown>} */
+    r.equipped
+  ) : {};
+  for (const slot of HEX_SLOTS) {
+    const id = eq[slot];
+    if (typeof id === "string" && owned.includes(id) && parseHexItem(id)?.slot === slot) equipped[slot] = id;
+  }
+  return { owned, equipped };
+}
+__name(sanitizeHexsmith, "sanitizeHexsmith");
+function hexOverrides(raw) {
+  const { equipped } = sanitizeHexsmith(raw);
+  const v = /* @__PURE__ */ __name((slot) => equipped[slot] ? parseHexItem(equipped[slot])?.value : void 0, "v");
+  const out = {};
+  const pairs = [["coroa", "specialFamily"], ["amuleto", "specialElement"], ["garra", "basicElement"], ["couraca", "defenseElement"], ["luvas", "strike"]];
+  for (const [slot, key] of pairs) {
+    const x2 = v(slot);
+    if (x2) out[key] = x2;
+  }
+  return out;
+}
+__name(hexOverrides, "hexOverrides");
 
 // api/_duel.js
 var DUEL_PENDING_MS = 5 * 60 * 1e3;
@@ -2946,9 +3007,11 @@ function duelSide(save, opts = {}) {
   const especial = escolaOf(skills?.especial);
   const familiaSalva = skills?.especial?.familia;
   const gravada = fichaJornadaFamilia(state.fichaJornada, fichaStageOf(state.evolutionStage));
-  const family = especial ? gravada ?? (typeof familiaSalva === "string" && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial]) : "direct";
+  const familyFicha = especial ? gravada ?? (typeof familiaSalva === "string" && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial]) : "direct";
+  const hx = hexOverrides(state.hexsmith);
+  const family = hx.specialFamily ?? familyFicha;
   const lex = especial && typeof familiaSalva === "string" && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
-  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: pet.neutro ? null : pet.el ?? elementoDoBasico(skills), elEspecial: pet.neutro ? null : pet.el ?? idElemento(skills?.especial?.elementoId) } };
+  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: hx.basicElement ?? (pet.neutro ? null : pet.el ?? elementoDoBasico(skills)), elEspecial: hx.specialElement ?? (pet.neutro ? null : pet.el ?? idElemento(skills?.especial?.elementoId)), ...hx.defenseElement ? { elDefesa: hx.defenseElement } : {} } };
 }
 __name(duelSide, "duelSide");
 function duelSeed(...parts) {
@@ -13895,6 +13958,7 @@ var FIRST_TIME_IDS = [
   "visit:mercado.decoracao",
   "visit:mercado.background",
   "visit:forja.ferreiro",
+  "visit:forja.hexsmith",
   "visit:jogos.salao",
   "visit:forja.refugio",
   "visit:jogos.mente",
@@ -14391,6 +14455,7 @@ async function onRequestBruto2({ request, env }) {
     if ("talentPicks" in state) state.talentPicks = sanitizeTalentPicks(state.talentPicks, bondLevelFor(state.totalXP));
     if ("equipment" in state) state.equipment = sanitizeEquipment(state.equipment);
     if ("forge" in state) state.forge = sanitizeForge(state.forge);
+    if ("hexsmith" in state) state.hexsmith = sanitizeHexsmith(state.hexsmith);
     if ("bitsOrigin" in state) {
       const o = sanitizeBitsOrigin(state.bitsOrigin);
       if (o) state.bitsOrigin = o;
@@ -15162,7 +15227,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-QOa4UO/functionsRoutes-0.9820302055297642.mjs
+// ../.wrangler/tmp/pages-OjFcFZ/functionsRoutes-0.8273748146907238.mjs
 var routes = [
   {
     routePath: "/api/account",
