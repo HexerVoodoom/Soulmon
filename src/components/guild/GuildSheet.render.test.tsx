@@ -14,9 +14,9 @@
  *  5. teclado: o foco nunca cai em `<body>`, o fundo fica inerte e o voltar do
  *     Android fecha a folha de verdade.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { screen, waitFor, fireEvent, cleanup, act, within } from '@testing-library/react';
-import { renderWithCss } from '../../test/renderEnv';
+import { aquecerRender, renderWithCss } from '../../test/renderEnv';
 
 vi.mock('../../utils/community', async (orig) => {
   const real = await orig<typeof import('../../utils/community')>();
@@ -74,6 +74,12 @@ const montar = async (over = {}) => {
   await waitFor(() => expect(screen.queryByText(PT('guild.salao.carregando'))).toBeNull());
   return r;
 };
+
+// Custos únicos (parse do index.css; chunks lazy da folha) pagos num hook com teto próprio, não dentro do 1º caso.
+beforeAll(async () => {
+  aquecerRender();
+  await Promise.all([import('./GroveFolha'), import('./FeiraEventoSheet')]);
+}, 120_000);
 
 beforeEach(() => {
   for (const f of [getGuild, createGuild, joinGuild, guildThread, guildGesture, leaveGuild, renameGuild, newGuildCode]) vi.mocked(f).mockReset();

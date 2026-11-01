@@ -2,7 +2,7 @@
 /**
  * As missões diárias dos outros recursos na folha de Missões (14/10/2026, REGISTRO §52) e o fim do ícone de "login diário" na Home.
  */
-import { describe, it, expect, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, beforeAll, vi } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { MissionsSheet } from './MissionsSheet';
 import { AvisosLink } from './AvisosLink';
@@ -12,6 +12,13 @@ import { CROSSINGS_EMPTY } from '../../types/travessias';
 import { bumpDaily, claimDaily, claimFirst, dailyMissionsFor, markFirstForEvent, type DailyMissionsState, type FirstTimesState } from '../../utils/dailyMissions';
 
 afterEach(cleanup);
+
+// O 1º `render` da folha pagava, DENTRO do teto do teste, o import frio dos três painéis lazy (ShopShelf, MercadoSheets,
+// DailyMissionBoard — grafo grande, ~3x mais lento com a suíte inteira rodando). Paga aqui, num hook com teto próprio;
+// os casos passam a esperar só o ESTADO (o painel montado), e a espera deixa de ser o teto do runner.
+beforeAll(async () => {
+  await Promise.all([import('../mercado/ShopShelf'), import('../mercado/MercadoSheets'), import('./DailyMissionBoard')]);
+}, 120_000);
 
 const DAY = '2026-10-14';
 const lista = dailyMissionsFor(DAY, 1);

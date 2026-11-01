@@ -4,11 +4,11 @@
  * Estados: sem status · 1 · vários (+k) · expirando · alvo derrubado · movimento reduzido · sem arte (fallback em CSS).
  * Regra: a MESMA informação (efeito, turnos, forma, texto) aparece com e sem movimento.
  */
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, cleanup, act } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach, beforeAll } from 'vitest';
+import { render, cleanup, waitFor } from '@testing-library/react';
 import { BattleStage, type StageAction, type StageFighter } from './BattleStage';
 import { STATUS_FX, STATUS_FX_KINDS, MAX_STATUS_CHIPS, statusAriaLabel, type StageStatus, type StatusFxKind } from '../../utils/combatFx';
-import { resetCombatV3ArtCache } from '../../utils/combatV3Art';
+import { COMBAT_V3_ART_IDS, loadCombatV3Art, resetCombatV3ArtCache } from '../../utils/combatV3Art';
 
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); resetCombatV3ArtCache(); });
 
@@ -16,8 +16,15 @@ const me: StageFighter = { key: 'me', sprite: 'me.png', name: 'Eu', hp: 40, maxH
 const foe = (extra: Partial<StageFighter> = {}): StageFighter => ({ key: 0, sprite: 'foe.png', name: 'Rival', hp: 30, maxHp: 60, element: 'agua', ...extra });
 const base = { scene: 'url(x.png) center/cover #123', title: 'Duelo', closeLabel: 'Sair', onClose: () => {} };
 const reduzir = () => vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce'), media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {}, onchange: null, dispatchEvent: () => false }));
-/** Espera as imagens sob demanda chegarem (carga preguiçosa: o 1º import dinâmico pode levar mais que um tique sob carga). */
-const flush = async () => { await act(async () => { await new Promise(r => setTimeout(r, 400)); }); };
+/**
+ * A arte de combate entra por `import()` sob demanda. Antes o teste dormia 400 ms fixos esperando isso — sob carga o
+ * 1º import dinâmico passava de 400 ms e a asserção rodava antes da imagem; com a máquina livre, sobrava 400 ms por teste.
+ * Agora (1) o `beforeAll` paga o import frio UMA vez, num hook com teto próprio, e (2) cada teste espera pelo ESTADO que
+ * afirma (seletor presente), sem relógio fixo. `afterEach` zera o cache da arte, mas o módulo já está avaliado: a
+ * promessa resolve em microtarefas.
+ */
+beforeAll(async () => { await Promise.all(COMBAT_V3_ART_IDS.map((id) => loadCombatV3Art(id))); }, 90_000);
+const quando = (cond: () => unknown) => waitFor(() => { expect(cond()).toBeTruthy(); }, { timeout: 10_000 });
 
 const chips = () => [...document.querySelectorAll('[data-stage-status]')] as HTMLElement[];
 const chip = (kind: StatusFxKind) => document.querySelector(`[data-stage-status="${kind}"]`) as HTMLElement | null;
@@ -98,7 +105,7 @@ describe('selos de status — um por efeito, com efeito e turnos no aria-label',
 
   it('a arte chega depois (carga preguiçosa): o glifo e o loop aparecem, e é UMA camada animada por lutador', async () => {
     render(<BattleStage {...base} me={me} foes={[foe({ status: [{ kind: 'debuff', variant: 'def', turns: 3 }, { kind: 'dot', turns: 3 }, { kind: 'buff', variant: 'atk', turns: 2 }] })]} />);
-    await flush();
+    await quando(() => chip('debuff')?.querySelector('img') && document.querySelector('[data-stage-fx-loop]'));
     expect(chip('debuff')!.getAttribute('data-stage-status-art')).toBe('img');
     expect(chip('debuff')!.querySelector('img')).not.toBeNull();
     expect(document.querySelectorAll('[data-stage-fx-loop]')).toHaveLength(1); // orçamento: no máximo 1 camada animada por lutador
@@ -107,7 +114,7 @@ describe('selos de status — um por efeito, com efeito e turnos no aria-label',
 
   it('cura e escudo desenham a peça estática existente (fx-heal / fx-shield) — sem loop', async () => {
     render(<BattleStage {...base} me={{ ...me, status: [{ kind: 'escudo', turns: 3 }] }} foes={[foe({ status: [{ kind: 'cura', turns: 1 }] })]} />);
-    await flush();
+    await quando(() => document.querySelector('[data-stage-fx-still="escudo"]') && document.querySelector('[data-stage-fx-still="cura"]'));
     expect(document.querySelector('[data-stage-fx-still="escudo"]')).not.toBeNull();
     expect(document.querySelector('[data-stage-fx-still="cura"]')).not.toBeNull();
     expect(document.querySelector('[data-stage-fx-loop]')).toBeNull();
@@ -120,7 +127,7 @@ describe('movimento reduzido: reduz o movimento e MANTÉM a informação', () =>
   it('o selo tem o mesmo aria-label, a mesma forma, o mesmo texto e os mesmos turnos nos dois modos; só o loop e a entrada animada saem', async () => {
     const lido = () => chips().map(c => ({ aria: c.getAttribute('aria-label'), texto: c.textContent, turns: c.getAttribute('data-stage-status-turns') }));
     const { unmount } = render(<BattleStage {...base} isPt me={me} foes={[foe({ status })]} />);
-    await flush();
+    await quando(() => document.querySelector('[data-stage-fx-loop]') && chips().length === 2 && chips().every(c => c.getAttribute('data-stage-status-art') === 'img'));
     const normal = lido();
     expect(document.querySelector('[data-stage-fx-loop]')).not.toBeNull();
     expect(chips().every(c => c.className.includes('sm-bs-stpop'))).toBe(true);
@@ -128,7 +135,7 @@ describe('movimento reduzido: reduz o movimento e MANTÉM a informação', () =>
 
     reduzir();
     render(<BattleStage {...base} isPt me={me} foes={[foe({ status })]} />);
-    await flush();
+    await quando(() => chips().length === 2 && chips().every(c => c.getAttribute('data-stage-status-art') === 'img'));
     expect(lido()).toEqual(normal); // a mesma informação
     expect(normal.length).toBe(2);
     // sem movimento: nenhuma camada em loop e nenhum selo com animação
@@ -174,7 +181,7 @@ describe('círculo de cast do especial (`data-stage-cast="special"`)', () => {
 
   it('com a arte carregada: a peça fx-cast-circle', async () => {
     render(<BattleStage {...base} me={me} foes={[foe()]} action={acao('special')} />);
-    await flush();
+    await quando(() => document.querySelector('[data-stage-cast="special"][data-stage-cast-art="img"]'));
     const c = document.querySelector('[data-stage-cast="special"]') as HTMLElement;
     expect(c.getAttribute('data-stage-cast-art')).toBe('img');
     expect(c.querySelector('img')).not.toBeNull();

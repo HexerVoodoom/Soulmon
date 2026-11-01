@@ -5,7 +5,7 @@
  * Antes eram dois acessos (`kind` daily/weekly) e dois ícones; o teste antigo de "Weekly" e de PT-BR falhava na main por assumir
  * essa estrutura e o rótulo antigo. Agora: as abas navegam e PRESERVAM estado, o ícone é um só e fica sempre (esmaecido sem pendência).
  */
-import { describe, it, expect, afterEach, vi } from 'vitest';
+import { describe, it, expect, afterEach, beforeAll, vi } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { MissionsSheet, type MissionsTab } from './MissionsSheet';
 import { MissionsLink } from './MissionsLink';
@@ -15,6 +15,13 @@ import { completeBuildingQuest, claimBuildingQuest, type BuildingQuestState } fr
 import { weeklyMissionsFor } from '../../utils/weeklyMissions';
 
 afterEach(cleanup);
+
+// O 1º `render` da folha pagava, DENTRO do teto do teste, o import frio dos três painéis lazy (ShopShelf, MercadoSheets,
+// DailyMissionBoard — grafo grande, ~3x mais lento com a suíte inteira rodando). Paga aqui, num hook com teto próprio;
+// os casos passam a esperar só o ESTADO (o painel montado), e a espera deixa de ser o teto do runner.
+beforeAll(async () => {
+  await Promise.all([import('../mercado/ShopShelf'), import('../mercado/MercadoSheets'), import('./DailyMissionBoard')]);
+}, 120_000);
 
 const [m] = weeklyMissionsFor('2026-W41');
 const sheet = (language: 'en-US' | 'pt-BR', initialTab: MissionsTab = 'daily', state?: BuildingQuestState) => render(
