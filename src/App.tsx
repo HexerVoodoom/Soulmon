@@ -201,6 +201,9 @@ import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMi
 import type { ClaReward } from './utils/claApi';
 import { soulmonNaMasmorra } from './utils/dungeonIdle';
 import { applyElementsDefeated } from './utils/elementDex';
+import { ackLibrary, libraryNewCount } from './utils/libraryNew';
+import { recordStrayPlayerSeen, type StrayPlayer } from './utils/strayPlayers';
+import { useLibraryNewNotice } from './components/LibraryNewBadge';
 import { applyEssences, type EssenceDrop } from './utils/essences';
 import { NIGHTMARE_ELEMENT } from './utils/nightmareElement';
 import { applyBestiarySeen, applyEnemyDefeated, applyFloorCleared, applyMilestoneItem } from './utils/dungeonRewards';
@@ -4366,6 +4369,14 @@ export default function App() {
   const handleBestiarySeen = useCallback((enemyKey: string) => {
     setGameState(prev => applyBestiarySeen(prev, enemyKey));
   }, []);
+  /** §213: viu um desgarrado de JOGADOR no mundo — entra na Biblioteca (aba Desgarrado), idempotente. */
+  const handleStrayPlayerSeen = useCallback((s: StrayPlayer) => {
+    setGameState(prev => recordStrayPlayerSeen(prev, s, playerDayIso(new Date(), prev.playerDayTz)));
+  }, []);
+  /** Aviso NEW (01/11/2026): a Biblioteca abriu → tudo o que existe conta como visto (idempotente). */
+  const handleLibraryOpened = useCallback(() => { setGameState(prev => ackLibrary(prev)); }, []);
+  // Um aviso discreto quando algo entra na Biblioteca (1 ou várias entradas = o MESMO aviso). Regra em `utils/libraryNew.ts`.
+  useLibraryNewNotice(libraryNewCount(gameState));
 
   /* 🫧 CONVITE AO REFÚGIO — a regra inteira é de `utils/refugio/convite.ts`;
      aqui só se grava o estado e se navega. Nada paga, nada conta. */
@@ -7506,6 +7517,9 @@ export default function App() {
                 mySprite={minhaCriaturaUrl}
                 bestiary={gameState.bestiary}
                 defeatedElements={gameState.defeatedElements}
+                strayPlayersSeen={gameState.strayPlayersSeen}
+                libraryAck={gameState.libraryAck}
+                onLibraryOpened={handleLibraryOpened}
                 language={language}
                 embedded
               />
@@ -7908,6 +7922,7 @@ export default function App() {
                   },
                   totalXP: gameState.totalXP,
                   onElementsDefeated: handleElementsDefeated,
+                  onStrayPlayerSeen: handleStrayPlayerSeen,
                   onMatchPlayed: won => setGameState(prev => awardBondXP(
                     prev, { kind: 'tournamentMatch', won }, playerDayKey(new Date(), prev.playerDayTz),
                   )),

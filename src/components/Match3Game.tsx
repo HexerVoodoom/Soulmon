@@ -28,7 +28,7 @@ import { fxFrame } from '../utils/combatFx';
 import { fxMirror } from '../utils/fxFacing';
 import { OWN_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
 import { rosterEntryOfKey } from '../utils/enemyRoster';
-import { elementIdOfFoe } from '../utils/elementDex';
+import { dexIdsOfFoe } from '../utils/elementDex';
 import { essenceDropOfFoe, type EssenceDrop } from '../utils/essences';
 import { ElementAdvantageBadge } from './games/ElementAdvantageBadge';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
@@ -216,7 +216,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
     if (overRef.current) return;
     overRef.current = true;
     if (combatRef.current.outcome === 'win' && elementsDefeatedRef.current) {
-      const ids = combatRef.current.enemies.map(e => elementIdOfFoe(rosterEntryOfKey(e.roster)?.elements)).filter((x): x is string => !!x);
+      const ids = combatRef.current.enemies.flatMap(e => dexIdsOfFoe(rosterEntryOfKey(e.roster)));
       if (ids.length > 0) elementsDefeatedRef.current(ids, combatRef.current.enemies.map(e => { const r = rosterEntryOfKey(e.roster); return r ? essenceDropOfFoe(r.elements, r.stage) : undefined; }).filter((d): d is EssenceDrop => !!d));
     }
     if (challengeRef.current) { challengeRef.current.onResult(combatRef.current.outcome === 'win'); return; }

@@ -61,8 +61,10 @@ import { TOURNAMENT_LADDER, getTierStanding, resolveSeasonPlace } from '../utils
 import { availableFrames, frameById, resolveEquippedFrame, type FrameContext } from '../utils/frames';
 import { type RosterEntry } from '../utils/enemyRoster';
 import { strayForTournament } from '../utils/strayFoes';
+import { sanitizeStrayPool, strayPlayerForTournament, type StrayPlayer } from '../utils/strayPlayers';
+import { getStrays } from '../utils/community';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
-import { elementIdOfFoe } from '../utils/elementDex';
+import { dexIdsOfFoe, elementIdOfFoe } from '../utils/elementDex';
 import { essenceQtyOfStage, type EssenceDrop } from '../utils/essences';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
 import { TOURNAMENT_NPCS, npcSide, tournamentNpcSprite, type TournamentNpc } from '../utils/tournamentNpcs';
@@ -140,6 +142,8 @@ interface TournamentPageProps {
   onElementsDefeated?: (ids: readonly string[], drops?: readonly EssenceDrop[]) => void;
   /** Bestiário (31/10/2026): o Desgarrado do treino entra na Biblioteca ao ser enfrentado. */
   onEnemySeen?: (enemyKey: string) => void;
+  /** §213: viu um desgarrado de JOGADOR (90+ dias sem entrar) no Torneio vazio — registra na Biblioteca. */
+  onStrayPlayerSeen?: (s: StrayPlayer) => void;
   /* D-58 (19/10/2026): o Torneio é SÓ de lutas. A loja de Emblemas e o botão "Train" saíram; a Honra se gasta no Mercado (aba Honra,
      com as missões da semana no topo). */
   /** Onde pôr o indicador da faixa: o canto direito da linha do título (que é
@@ -244,7 +248,7 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
   );
 }
 
-export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, onElementsDefeated, onEnemySeen, headSlot, onCoverChange }: TournamentPageProps) {
+export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, onElementsDefeated, onEnemySeen, onStrayPlayerSeen, headSlot, onCoverChange }: TournamentPageProps) {
   // Música (19/10/2026): o Torneio toca o "Stone Hall Combat" (se o interruptor "Música" está ligado). Antes de qualquer return (hooks).
   useEffect(() => entrarNaSuperficie('torneio'), []);
   const isPt = language === 'pt-BR';
@@ -317,7 +321,15 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
      podia ser testado". Agora há uma sombra de treino, 100% LOCAL: sem rede, sem
      Vínculo, sem partida gasta, sem Honra, sem pontos e sem XP — não rende nem
      custa nada. A luta é a mesma `DuelScreen`, com a mesma simulação. */
-  const [training, setTraining] = useState<{ seed: number; me: DuelSide; opp: DuelSide; npc?: TournamentNpc; stray?: RosterEntry } | null>(null);
+  const [training, setTraining] = useState<{ seed: number; me: DuelSide; opp: DuelSide; npc?: TournamentNpc; stray?: RosterEntry; wildPlayer?: StrayPlayer } | null>(null);
+  /** §213: o desgarrado de JOGADOR do dia (pool do servidor). Aparece como SELVAGEM; falha de rede = nenhum, em silêncio. */
+  const [strayPool, setStrayPool] = useState<StrayPlayer[]>([]);
+  useEffect(() => {
+    let vivo = true;
+    getStrays().then(r => { if (vivo) setStrayPool(sanitizeStrayPool(r?.strays)); }).catch(() => {});
+    return () => { vivo = false; };
+  }, []);
+  const wildPlayer = useMemo(() => strayPlayerForTournament(strayPool, saveId, new Date().toISOString().slice(0, 10)), [strayPool, saveId]);
   /** O resultado do treino LOCAL: vitória, derrota ou empate (neutro). `null` = sem diálogo. */
   const stray = useMemo(() => strayForTournament(saveId, new Date().toISOString().slice(0, 10)), [saveId]);
   const [trainingOutcome, setTrainingOutcome] = useState<'win' | 'loss' | 'draw' | null>(null);
@@ -326,7 +338,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   const gs = ctx?.gameState;
   const talentosPvp = usePvpTalents(); // o MESMO canal por atributo que o servidor aplica no duelo (teto 5% na soma dos três), PR7b
   /** `npc` (R8): o desafiante NPC do Torneio vazio — o MESMO treino, com o retrato e o nome dele; nada de rede, partida ou ganho. */
-  const startTraining = (npc?: TournamentNpc, stray?: RosterEntry) => {
+  const startTraining = (npc?: TournamentNpc, stray?: RosterEntry, wildPlayer?: StrayPlayer) => {
     // O SEU lado: o combatente do save (level e ramo) e a família do especial da ficha. O treino é 100% LOCAL, então
     // a semente pode ser sorteada aqui (não vale nada: sem partida, sem pontos, sem Honra).
     const estado: SoulXPState = gs
@@ -344,7 +356,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     };
     // O desafiante é o espelho equilibrado 2 levels abaixo do seu (dentro do estágio): o treino é para aprender a torcer.
     if (stray) onEnemySeen?.(stray.key);
-    setTraining({ seed: Math.floor(Math.random() * 0xffffffff), me, opp: npcSide(combatant.level), npc, stray });
+    if (wildPlayer) onStrayPlayerSeen?.(wildPlayer);
+    setTraining({ seed: Math.floor(Math.random() * 0xffffffff), me, opp: npcSide(combatant.level), npc, stray, wildPlayer });
   };
 
   /* H13 (02/10/2026): o interruptor "Participar do PvP" saiu — o personagem já
@@ -584,18 +597,18 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         opp={training.opp}
         seed={training.seed}
         petSprite={getSpriteForStage(petStage, petLine, 256)}
-        oppSprite={training.stray ? (rosterSpriteOf(training.stray) ?? getSpriteForStage(petStage, petLine, 256)) : training.npc ? tournamentNpcSprite(training.npc, petStage) : getSpriteForStage(petStage, petLine, 256)}
-        oppElement={training.stray ? training.stray.element : training.npc ? (DESAFIANTE_ELEMENT[training.npc.id] ?? FX_FALLBACK_ELEMENT) : undefined}
-        oppStage={training.stray ? undefined : petStage}
+        oppSprite={training.wildPlayer ? (training.wildPlayer.spriteUrl ?? getSpriteForStage(petStage, petLine, 256)) : training.stray ? (rosterSpriteOf(training.stray) ?? getSpriteForStage(petStage, petLine, 256)) : training.npc ? tournamentNpcSprite(training.npc, petStage) : getSpriteForStage(petStage, petLine, 256)}
+        oppElement={training.wildPlayer ? (training.wildPlayer.element ?? FX_FALLBACK_ELEMENT) : training.stray ? training.stray.element : training.npc ? (DESAFIANTE_ELEMENT[training.npc.id] ?? FX_FALLBACK_ELEMENT) : undefined}
+        oppStage={training.stray || training.wildPlayer ? undefined : petStage}
         petStage={petStage}
         skills={skills}
         petName={isPt ? 'Você' : 'You'}
-        oppName={training.stray ? wildFoeLabel(training.stray.stage, isPt) : training.npc ? (isPt ? training.npc.namePt : training.npc.nameEn) : (isPt ? 'Sombra de treino' : 'Training shadow')}
+        oppName={training.wildPlayer ? wildFoeLabel('rookie', isPt) : training.stray ? wildFoeLabel(training.stray.stage, isPt) : training.npc ? (isPt ? training.npc.namePt : training.npc.nameEn) : (isPt ? 'Sombra de treino' : 'Training shadow')}
         isPt={isPt}
         onDone={taps => {
           const w = simulatePvp({ me: training.me, opp: training.opp, seed: training.seed, taps }).winner;
           // Dex de elementos: vencer o Desgarrado do Torneio sem par libera o elemento dele (o treino de NPC não libera: o elemento é só visual).
-          if (w === 'me' && training.stray) { const id = elementIdOfFoe(training.stray.elements); if (id) onElementsDefeated?.([id], [{ id, qty: essenceQtyOfStage(training.stray.stage) }]); }
+          if (w === 'me' && training.stray) { const id = elementIdOfFoe(training.stray.elements); const dex = dexIdsOfFoe(training.stray); if (dex.length) onElementsDefeated?.(dex, id ? [{ id, qty: essenceQtyOfStage(training.stray.stage) }] : []); }
           setTrainingOutcome(w === 'me' ? 'win' : w === 'opp' ? 'loss' : 'draw');
           setTraining(null);
         }}
@@ -774,6 +787,23 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                 <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{isPt ? 'Treino' : 'Training'} · {getStageLevel(petStage)}</p>
               </div>
               <button type="button" onClick={() => startTraining(undefined, stray)} aria-label={isPt ? 'Desafiar o Soulmon desgarrado (treino, sem prêmio)' : 'Fight — challenge the Stray Soulmon (training, no reward)'} style={{ ...sm2Button('primary', false, 'sm'), flexShrink: 0, minWidth: 88 }}>
+                {isPt ? 'Desafiar' : 'Fight'}
+              </button>
+            </div>
+          )}
+
+          {/* §213 (01/11/2026, dono): o Soulmon de um jogador ausente há 90+ dias aparece no mundo como SELVAGEM (sem nome do
+              dono nem do bicho). Treino local, sem partida nem Honra; desafiar = visto → Biblioteca, aba Desgarrado. */}
+          {opponents?.length === 0 && !loadFailed && wildPlayer && (
+            <div data-torneio-stray-player={wildPlayer.sid} style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', minHeight: 56 }}>
+              <MiniGlass size={64}>
+                {wildPlayer.spriteUrl && <img src={wildPlayer.spriteUrl} alt="" width={64} height={64} style={{ width: 64, height: 64, objectFit: 'contain', display: 'block', imageRendering: 'pixelated' }} />}
+              </MiniGlass>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ ...sm2Text, margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{wildFoeLabel('rookie', isPt)}</p>
+                <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{isPt ? 'Treino' : 'Training'} · {getStageLevel(petStage)}</p>
+              </div>
+              <button type="button" onClick={() => startTraining(undefined, undefined, wildPlayer)} aria-label={isPt ? 'Desafiar o Soulmon selvagem (treino, sem prêmio)' : 'Fight — challenge the Wild Soulmon (training, no reward)'} style={{ ...sm2Button('primary', false, 'sm'), flexShrink: 0, minWidth: 88 }}>
                 {isPt ? 'Desafiar' : 'Fight'}
               </button>
             </div>

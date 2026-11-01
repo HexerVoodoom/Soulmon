@@ -3995,3 +3995,12 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 ### `src/utils/veladoTester.ts`
 **Dono de:** `refreshVeladoTester`: pergunta ao servidor se o usuário logado está no teste do Velado e aplica o resultado; nunca lança, falha = desligado.
 
+
+### `src/utils/elementosCurados.ts`
+**Dono de:** os 50 elementos curados (212–261, lotes 1–3) + `neutro` no dex da BIBLIOTECA (01/11/2026): ids, componentes e nome exibido. Fora de `ALL_ELEMENT_IDS` (Loja/Poção não mudam). **Chamado por:** `elementDex.ts` (`LIBRARY_ELEMENT_IDS`, `dexIdsOfFoe`), `ElementDex.tsx`. **Régua:** `elementosCurados.test.ts`.
+
+### `src/utils/libraryNew.ts`
+**Dono de:** o aviso de entrada nova na Biblioteca (01/11/2026): `GameState.libraryAck = {b,e,s}` (tamanhos de bestiary/defeatedElements/strayPlayersSeen na última abertura), o que é NEW (`libraryNewKeys`/`libraryNewCount`), a abertura que grava o visto (`ackLibrary`) e o texto exato do aviso. Save antigo nasce sem NEW retroativo. **Chamado por:** `App.tsx`, `LibraryPage.tsx`, `GameStateContext.tsx`. **Régua:** `libraryNew.test.ts`, `LibraryNewBadge.render.test.tsx`.
+
+### `src/utils/strayPlayers.ts`
+**Dono de:** o lado cliente dos desgarrados de JOGADORES (REGISTRO §213): forma do pool de `community?action=strays`, o registro do que a pessoa viu (`GameState.strayPlayersSeen`, só cresce) e a escolha estável do dia no Torneio vazio. No mundo aparece como selvagem. **Chamado por:** `TournamentPage.tsx`, `App.tsx`, `GameStateContext.tsx`. **Régua:** `strayPlayers.test.ts`.

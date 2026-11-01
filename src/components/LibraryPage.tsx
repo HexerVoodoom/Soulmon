@@ -32,7 +32,10 @@ import { elementIcon } from '../utils/elementIconArt';
 import { dexElementName } from './ElementDex';
 import { readAllForms, recordForms, sanitizeForm, formStageLabel, isCurrentForm, type SeenForm } from '../utils/libraryForms';
 import { CoopPanel } from './CoopPanel';
-import { BestiaryCollection } from './BestiaryCollection';
+import { BestiaryCollection, StrayPlayersCollection } from './BestiaryCollection';
+import { NewBadge } from './LibraryNewBadge';
+import { libraryNewKeys, type LibraryAck } from '../utils/libraryNew';
+import type { StrayPlayerSeen } from '../utils/strayPlayers';
 import { ElementDex } from './ElementDex';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
@@ -75,6 +78,12 @@ interface LibraryPageProps {
   bestiary?: string[];
   /** `GameState.defeatedElements`: o dex da aba Elemento (só na visão `directory`). */
   defeatedElements?: string[];
+  /** §213: desgarrados de JOGADORES já vistos (`GameState.strayPlayersSeen`) — categoria própria na aba Desgarrado. */
+  strayPlayersSeen?: StrayPlayerSeen[];
+  /** Aviso NEW (01/11/2026): os contadores da última abertura (`GameState.libraryAck`). */
+  libraryAck?: LibraryAck;
+  /** A Biblioteca (visão `directory`) abriu: grava o "visto" (`ackLibrary`). O selo desta visita já foi congelado. */
+  onLibraryOpened?: () => void;
 }
 
 // Entrada unificada da lista — jogador real ou NPC de teste (ver
@@ -144,7 +153,10 @@ function RowAction({
   );
 }
 
-export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, playerDayTz, mySprite, language, embedded = false, view, bestiary, defeatedElements }: LibraryPageProps) {
+export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, playerDayTz, mySprite, language, embedded = false, view, bestiary, defeatedElements, strayPlayersSeen, libraryAck, onLibraryOpened }: LibraryPageProps) {
+  // Selo NEW (01/11/2026): o que estava novo AO ABRIR fica marcado durante esta visita; a abertura grava o "visto".
+  const [novos] = useState(() => libraryNewKeys({ bestiary, defeatedElements, strayPlayersSeen, libraryAck }));
+  useEffect(() => { if (view === 'directory') onLibraryOpened?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const isPt = language === 'pt-BR';
   const [search, setSearch] = useState('');
   const [players, setPlayers] = useState<DirectoryPlayer[] | null>(null);
@@ -462,9 +474,10 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
                 document.getElementById('sm2-libtab-' + next.key)?.focus();
               }}
               className={active ? 'sm2-kit-tab sm2-kit-tab-on' : 'sm2-kit-tab'}
-              style={{ flex: '1 0 auto', padding: '0 12px', whiteSpace: 'nowrap' }}
+              style={{ flex: '1 0 auto', padding: '0 12px', whiteSpace: 'nowrap', gap: 6 }}
             >
               {item.label}
+              {((item.key === 'wild' && (novos.bestiary.size > 0 || novos.strays.size > 0)) || (item.key === 'element' && novos.elements.size > 0)) && <NewBadge overlay={false} hidden />}
             </button>
           );
         })}
@@ -500,12 +513,15 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
             <>
               {/* 28/10/2026 (dono): Selvagem e Desgarrado moram na MESMA aba, em duas seções. */}
               <h3 className="sm2-lib-s" style={{ margin: '0 0 6px', fontWeight: 600 }}>{isPt ? 'Selvagem' : 'Wild'}</h3>
-              <BestiaryCollection seen={bestiary} mode="wild" language={language} />
+              <BestiaryCollection seen={bestiary} mode="wild" language={language} isNew={novos.bestiary} />
               <h3 className="sm2-lib-s" style={{ margin: '16px 0 6px', fontWeight: 600 }}>{isPt ? 'Desgarrado' : 'Stray'}</h3>
-              <BestiaryCollection seen={bestiary} mode="stray" language={language} />
+              <BestiaryCollection seen={bestiary} mode="stray" language={language} isNew={novos.bestiary} />
+              {/* §213: Soulmon de jogadores ausentes há 90+ dias que a pessoa já viu (no mundo aparecem como selvagens). */}
+              <h3 className="sm2-lib-s" style={{ margin: '16px 0 6px', fontWeight: 600 }}>{isPt ? 'Desgarrados de jogadores' : 'Strays from players'}</h3>
+              <StrayPlayersCollection seen={strayPlayersSeen} language={language} isNew={novos.strays} />
             </>
           )}
-          {libTab === 'element' && <ElementDex defeated={defeatedElements} language={language} />}
+          {libTab === 'element' && <ElementDex defeated={defeatedElements} language={language} isNew={novos.elements} />}
         </div>
       )}
 

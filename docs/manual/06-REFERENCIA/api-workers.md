@@ -664,7 +664,7 @@ Espelho de `sanitizeEssences` (`src/utils/essences.ts`) para o campo `essences` 
 Espelho de `sanitizeConquistasPagas` (`src/utils/achievements.ts`) para o campo `conquistasPagas` do save (30/10/2026, prêmio em Bits das conquistas pago uma vez): lista fechada de ids de `ACHIEVEMENT_IDS`, sem repetir; sem forma de lista o campo é descartado. `save.js` o aplica; nunca recusa o save. Os Pontos de Conquista não são gravados (derivados). Régua: `conquistas.parity.test.js`.
 
 ### `functions/api/_elementDex.js`
-Espelho de `sanitizeDefeatedElements` (`src/utils/elementDex.ts`) para o campo `defeatedElements` do save (dex de elementos, 27/10/2026): só a forma — strings `[a-z_]{2,24}`, sem repetir, teto 210; sem forma de lista o campo é descartado. `save.js` o aplica; nunca recusa o save. Régua: `elementDex.parity.test.js`, `save.elementDex.test.js`.
+Espelho de `sanitizeDefeatedElements` (`src/utils/elementDex.ts`) para o campo `defeatedElements` do save (dex de elementos, 27/10/2026): só a forma — strings `[a-z_]{2,24}`, sem repetir, teto 261 (01/11/2026: + 50 curados + neutro na Biblioteca); sem forma de lista o campo é descartado. `save.js` o aplica; nunca recusa o save. Régua: `elementDex.parity.test.js`, `save.elementDex.test.js`.
 
 ### `functions/api/_freeGen.js`
 **Dono de:** a geração grátis do rookie por e-mail (D6/D20), chave `freeGen:<saveId>`, nunca apagada com a conta.
@@ -681,3 +681,9 @@ Espelho de `sanitizeDefeatedElements` (`src/utils/elementDex.ts`) para o campo `
 ### `functions/api/velado-teste.js`
 **Dono de:** "o usuário logado está no teste do Velado?"; responde só sobre o próprio token.
 
+
+### `functions/api/_strays.js`
+Regra dos DESGARRADOS DE JOGADORES (01/11/2026, REGISTRO §213): desgarrado = Soulmon de quem está há 90 dias (`STRAY_INACTIVE_DAYS`) sem entrar. Último acesso = maior de `profile.lastLoginAt` (tocado no GET do save por `touchLastLogin`, no máximo 1 escrita/dia, e no POST do perfil) e `profile.updatedAt`; sem data, escondido, simulado ou sem pid = nunca. `strayView` devolve só `{sid, stage, spriteUrl?, element?}` (`sid` = SHA-256 do pid). Usado por `community.js` (`action=strays`) e `save.js`. Régua: `strays.contract.test.js`.
+
+### `functions/api/_libraryAck.js`
+Espelho de forma de dois campos do save da Biblioteca (01/11/2026): `libraryAck` (`{b,e,s}` inteiros 0..100000, contadores do aviso NEW, `src/utils/libraryNew.ts`) e `strayPlayersSeen` (desgarrados de jogadores vistos, `src/utils/strayPlayers.ts`; sid 24 hex, sem repetir, teto 200, sprite por `spriteUrlOrNull`). `save.js` aplica; nunca recusa o save. Régua: `strays.contract.test.js`.

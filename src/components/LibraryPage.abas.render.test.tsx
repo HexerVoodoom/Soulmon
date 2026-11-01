@@ -15,7 +15,7 @@ vi.mock('../utils/community', async (orig) => {
 import { LibraryPage } from './LibraryPage';
 import { ENEMY_ROSTER } from '../utils/enemyRoster';
 import { isStrayFoe } from '../utils/wildFoeLabel';
-import { ALL_ELEMENT_IDS } from '../utils/elementDex';
+import { LIBRARY_ELEMENT_IDS } from '../utils/elementDex';
 
 const base = { saveId: 's', friends: [], onFriendsChange: () => {}, view: 'directory' as const, embedded: true };
 const render = (over: Partial<Parameters<typeof LibraryPage>[0]> = {}, language: 'pt-BR' | 'en-US' = 'en-US') =>
@@ -64,17 +64,17 @@ describe('LibraryPage — abas do Hall', () => {
     render();
     fireEvent.click(screen.getByRole('tab', { name: 'Element' }));
     const painel = document.querySelector('[data-element-dex]') as HTMLElement;
-    expect(painel.querySelectorAll('[data-element-cell="locked"]').length).toBe(ALL_ELEMENT_IDS.length);
+    expect(painel.querySelectorAll('[data-element-cell="locked"]').length).toBe(LIBRARY_ELEMENT_IDS.length);
     expect(painel.querySelector('img')).toBeNull();
     expect(painel.textContent).not.toMatch(/Fire|Water/);
     expect(painel.innerHTML).not.toContain('fogo');
-    expect(document.querySelector('[data-element-count]')!.textContent).toBe('0 / 210');
+    expect(document.querySelector('[data-element-count]')!.textContent).toBe('0 / 261');
   });
 
   it('Elemento destrancado abre a ficha com forte/fraco contra, e os trancados ali são "?"', () => {
     render({ defeatedElements: ['fogo', 'lava'] });
     fireEvent.click(screen.getByRole('tab', { name: 'Element' }));
-    expect(document.querySelector('[data-element-count]')!.textContent).toBe('2 / 210');
+    expect(document.querySelector('[data-element-count]')!.textContent).toBe('2 / 261');
     fireEvent.click(document.querySelector('[data-element-cell="fogo"]')!);
     const dlg = screen.getByRole('dialog');
     expect(within(dlg).getByText('Strong against')).toBeTruthy();

@@ -362,6 +362,8 @@ Fila com uso/formato/prompt: `docs/ASSETS-A-GERAR.md`. Squad: `/squad-arte` (8 a
 
 `soulmon/corvo/corvo-<id>.png` (512, RGBA) e `corvo-<id>-256.png`, 11 ids da arvore (rookie = mascote original). Recolor programatico de `mascot-raven.png` por `scripts/gen-corvo-forms.py`; conferencia `scripts/check-corvo-forms.py`. Ainda sem consumidor (integracao e de outra fatia). Notas: `docs/reviews/admin-corvo/arte-notas.md`.
 
+`soulmon/corvo-neutro/corvo-neutro.png` (256, RGBA, alfa real): arte final de 31/10/2026 (origem `gerados-2026-10-31/corvo-neutro/corvo-1.png`), substitui o provisorio; usado por `enemyRoster`/`novosSoulmon`.
+
 ## Lote P2 (14/10/2026, Higgsfield gpt_image_2_5, alfa real)
 
 | Arquivo | Pasta | Tamanho | Uso |
