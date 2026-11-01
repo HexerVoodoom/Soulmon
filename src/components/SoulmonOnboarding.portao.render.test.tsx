@@ -131,10 +131,8 @@ describe('portão de identidade', () => {
     ir('I am 18 or older');
     expect(btn('Continue').disabled).toBe(false);
     botao('Continue');
-    // §81: depois dos Termos a Ambra se apresenta; um toque e vem o nome.
-    expect(document.querySelector('[data-npc-sequence]')).toBeTruthy();
-    expect(screen.queryByText('What should we call you?')).toBeNull();
-    passarApresentacaoDaAmbra();
+    // Depois dos Termos vem o NICKNAME (1ª pergunta); só então a Ambra se apresenta.
+    expect(document.querySelector('[data-npc-sequence]')).toBeNull();
     expect(screen.getByText('What should we call you?')).toBeTruthy();
   });
 
