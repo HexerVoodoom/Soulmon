@@ -68,6 +68,7 @@ describe('rotas do clã: praça', () => {
 
 describe('rotas do clã: dia do servidor, não do cliente', () => {
   const d = n => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+  // D2 (dono, 01/11/2026): a função do dia é ATRIBUÍDA pelo servidor (1 'protect' por clã/dia), sem moeda.
   it('alternar dayKey D-1/D/D+1 não dá 2º presente, 2ª rega/proteção nem fura o teto do mistério', async () => {
     const { e, idB } = await setup();
     const chaves = [d(-1), d(0), d(1)];
@@ -75,12 +76,12 @@ describe('rotas do clã: dia do servidor, não do cliente', () => {
     for (const k of chaves) st.push((await post(e, 'claPresente', { id: A, to: idB, dayKey: k })).status);
     expect(st.sort()).toEqual([200, 409, 409]);
     await post(e, 'claPlantar', { id: A, dayKey: d(0) });
-    // D2: regar/proteger exigem o sorteio do dia; a ação sorteada vale 1x só, qualquer dayKey.
     const sorteio = async (id) => (await post(e, 'claSortear', { id })).json.task;
-    const kA = await sorteio(A), kB = await sorteio(B);
+    const kA = await sorteio(A);
     const reg = [];
     for (const k of chaves) reg.push((await post(e, kA === 'water' ? 'claRegar' : 'claProteger', { id: A, dayKey: k })).status);
     expect(reg.sort()).toEqual([200, 409, 409]);
+    const kB = await sorteio(B);
     const pr = [];
     for (const k of chaves) pr.push((await post(e, kB === 'water' ? 'claRegar' : 'claProteger', { id: B, dayKey: k })).status);
     expect(pr.sort()).toEqual([200, 409, 409]);
@@ -90,6 +91,16 @@ describe('rotas do clã: dia do servidor, não do cliente', () => {
       if (r.json.counted) contou++;
     }
     expect(contou).toBe(10);
+  });
+
+  it('cada membro recebe uma função; exatamente 1 protect, e ninguém fica preso a uma proteção já gasta', async () => {
+    const { e } = await setup();
+    await post(e, 'claPlantar', { id: A });
+    const kA = (await post(e, 'claSortear', { id: A })).json.task;
+    expect((await post(e, kA === 'water' ? 'claRegar' : 'claProteger', { id: A })).status).toBe(200);
+    const kB = (await post(e, 'claSortear', { id: B })).json.task; // B lê DEPOIS de A agir
+    expect([kA, kB].filter(k => k === 'protect')).toHaveLength(1);
+    expect((await post(e, kB === 'water' ? 'claRegar' : 'claProteger', { id: B })).status).toBe(200);
   });
 });
 

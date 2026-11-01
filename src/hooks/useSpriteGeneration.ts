@@ -31,6 +31,9 @@ import {
 } from '../utils/spriteLibrary';
 import { spriteBatch, birthBatch, type SpriteTriggerInput } from '../utils/spriteTrigger';
 
+/** Depois de um lote com falha, quanto esperar antes de reavaliar o próximo (5 min). */
+export const SPRITE_REEVALUATE_AFTER_FAILURE_MS = 5 * 60 * 1000;
+
 /** Espera o app ficar ocioso. Devolve o cancelador. */
 export function whenIdle(fn: () => void): () => void {
   const w = window as Window & {
@@ -98,6 +101,19 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
   const manualPendente = useRef<Set<string>>(new Set());
   const argsRef = useRef(args);
   argsRef.current = args;
+  /**
+   * Reavaliação do lote (QA, 31/10/2026): o fim de um lote (`setGenerating([])`)
+   * não mexe em nenhuma dependência do efeito "O lote", então o PRÓXIMO lote
+   * devendo só saía quando outra coisa mudava (ex.: reabrir o app). Este
+   * contador entra nas dependências e é o empurrão explícito.
+   */
+  const [reavaliar, setReavaliar] = useState(0);
+  /** Um timer só para a reavaliação adiada; limpo ao desmontar. */
+  const reavaliarTimer = useRef<number | null>(null);
+  useEffect(() => () => {
+    if (reavaliarTimer.current !== null) window.clearTimeout(reavaliarTimer.current);
+    reavaliarTimer.current = null;
+  }, []);
 
   const tune = useCallback((formId: string) => {
     updateLibrary(prev => tuneVisor(prev, formId));
@@ -169,9 +185,19 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
           argsRef.current.updateLibrary(prev => recordFailure(prev, formId, kind, { manual: opts.manual }));
         },
         isCancelled: () => !opts.regenerate && argsRef.current.busy,
-      }).finally(() => {
+      }).then(res => res.failed.length > 0, () => true).then(falhou => {
         running.current = false;
         setGenerating([]);
+        // Lote limpo: reavalia na hora (o próximo lote devendo parte em
+        // seguida). Lote com falha: espera SPRITE_REEVALUATE_AFTER_FAILURE_MS
+        // — nunca um laço imediato de retentativa, que queimaria o teto.
+        if (reavaliarTimer.current !== null) window.clearTimeout(reavaliarTimer.current);
+        reavaliarTimer.current = null;
+        if (!falhou) { setReavaliar(n => n + 1); return; }
+        reavaliarTimer.current = window.setTimeout(() => {
+          reavaliarTimer.current = null;
+          setReavaliar(n => n + 1);
+        }, SPRITE_REEVALUATE_AFTER_FAILURE_MS);
       });
     },
     [],
@@ -260,7 +286,8 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
     // `library` entra de propósito: quando um lote grava um sprite, a
     // reconciliação roda de novo e pega o PRÓXIMO lote devendo — que é como
     // "duas vésperas acumuladas viram dois lotes em sequência".
-  }, [enabled, busy, stages, library, trigger.evolutionStage, trigger.evolutionPoints, trigger.crystalFormId, newborn, executarLote]);
+    // `reavaliar` entra pelo mesmo motivo: o FIM do lote não muda mais nada.
+  }, [enabled, busy, stages, library, trigger.evolutionStage, trigger.evolutionPoints, trigger.crystalFormId, newborn, executarLote, reavaliar]);
 
   return { generating, tunedAnnouncement, clearAnnouncement, tune, retry, force };
 }

@@ -104,6 +104,9 @@ function coords(e: { clientX?: number; clientY?: number }): [number, number] {
   return [Number(e.clientX ?? 0), Number(e.clientY ?? 0)];
 }
 
+/** Janela da trava do botão "Usar": dois toques dentro dela gastam um item só. */
+export const USAR_TRAVA_MS = 400;
+
 export function Mochila({
   open, onClose, foodInventory, language, onUse, petTargetRef, onTargetChange, petName, materials, onGoToBuilding, demo,
 }: MochilaProps) {
@@ -114,6 +117,19 @@ export function Mochila({
   const arrastoRef = useRef<Arrasto | null>(null);
   /** O `click` que o navegador dispara depois de um arrasto NÃO é um toque. */
   const engolirCliqueRef = useRef(false);
+  /**
+   * Trava do botão "Usar" (QA, 31/10/2026): um toque duplo rápido chamava
+   * `onUse` duas vezes e gastava 2 itens. Guarda o último uso por item; dentro
+   * de `USAR_TRAVA_MS` o segundo toque é engolido. Toque espaçado usa normal.
+   */
+  const ultimoUsoRef = useRef<Map<string, number>>(new Map());
+  const usarComTrava = useCallback((emoji: string) => {
+    const agora = Date.now();
+    const antes = ultimoUsoRef.current.get(emoji);
+    if (antes !== undefined && agora - antes < USAR_TRAVA_MS) return;
+    ultimoUsoRef.current.set(emoji, agora);
+    onUse(emoji);
+  }, [onUse]);
   const limparRef = useRef<(() => void) | null>(null);
   const dialogRef = useDialogA11y<HTMLDivElement>(open, onClose);
 
@@ -396,7 +412,7 @@ export function Mochila({
                 aria-label={isPt
                   ? `Usar ${getFoodName(selecionadoVisivel, language)}`
                   : `Use ${getFoodName(selecionadoVisivel, language)}`}
-                onClick={() => onUse(selecionadoVisivel)}
+                onClick={() => usarComTrava(selecionadoVisivel)}
               >
                 {isPt ? 'Usar' : 'Use'}
               </button>
