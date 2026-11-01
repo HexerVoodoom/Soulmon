@@ -8965,7 +8965,7 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 }
 .sm2-new-badge__img {
   display: block;
-  height: 16px;
+  height: 12px;
   width: auto;
   image-rendering: pixelated;
 }
