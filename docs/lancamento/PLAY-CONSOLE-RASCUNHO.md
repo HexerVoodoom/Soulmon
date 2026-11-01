@@ -6,9 +6,9 @@
 
 | Campo | Valor |
 |---|---|
-| Preço Brasil | R$ 19,90 (D9, decidido) — **confirmar no console** |
-| Preço EUA | US$ 3,99 (D9) — **confirmar no console** |
-| Demais países | [preço a definir pelo dono] (a Play converte; conferir arredondamento) |
+| Preço Brasil | R$ 19,90 — **CONFIRMADO pelo dono** |
+| Preço EUA | US$ 3,99 — **CONFIRMADO pelo dono** |
+| Demais países | Conversão automática da Play (decidido pelo dono) |
 | Quando trocar | No dia em que `ONBOARDING_VELADO` for ligado (PERGUNTAS-DO-DONO, 30/10, item 1) |
 | Código | `FULL_UNLOCK_PRICE_LABEL(_USD)` já seguem D9 com o interruptor ligado; `publishedPrice.test.ts` trava o HTML |
 | Assinatura trimestral de cenários | [preço a definir pelo dono] (sem decisão nova neste plano) |
@@ -43,7 +43,7 @@ You start free with a baby Soulmon, and it evolves into its first form from your
 
 ## 5. Velados (se entrar na ficha)
 
-O Oráculo vira um Velado ancião (D1) e há a Guilda de Mercenários com Velados das Ordens (D22: "Ordem"/*Order*). Sugestão: **não citar nome de personagem** na ficha; no máximo "um ancião que apresenta a missão". Nomes do ancião e do Velado da Mão: [nome a definir pelo dono]. Revisar `narrative-critic` antes de colar.
+O Oráculo vira um Velado ancião (D1) e há a Guilda de Mercenários com Velados das Ordens (D22: "Ordem"/*Order*). Sugestão: **não citar nome de personagem** na ficha; no máximo "um ancião que apresenta a missão". **Decisão do dono:** o ancião e o Velado da Mão ficam SEM nome nos textos ("o Ancião", "o Velado da Mão"). Revisar `narrative-critic` antes de colar.
 
 ## 6. Itens do console que são do dono
 
@@ -54,8 +54,18 @@ O Oráculo vira um Velado ancião (D1) e há a Guilda de Mercenários com Velado
 
 ## 7. Lacunas abertas
 
-1. Preços fora BR/EUA, assinatura e créditos: [preço a definir pelo dono].
-2. Nomes do ancião e do Velado da Mão.
-3. Decisão de reaceite ao subir `TERMS_VERSION` (#24).
-4. Contagem de caracteres das descrições novas não foi medida contra o limite de 4.000.
+1. Assinatura trimestral e créditos: [preço a definir pelo dono].
+2. Contagem de caracteres: ver §8.
 5. Termos §8 (IA/crise) e MIS-15 já constam em `termos.html`; não foram alterados no rascunho.
+
+## 8. Decisões do dono (01/11/2026)
+
+- Preços BR R$ 19,90 e EUA US$ 3,99 confirmados; outros países por conversão automática da Play.
+- Ancião e Velado da Mão sem nome nos textos.
+- **Reaceite: SIM.** Jogadores atuais reaceitam os Termos quando `TERMS_VERSION` subir (responde #24 / QA-13). A versão ainda NÃO foi subida; sobe junto da publicação de `termos.html`.
+
+## 9. Medição
+
+- Trecho PT novo: 502 caracteres (bloco antigo: 953). Descrição longa PT resultante: cerca de 3.644 de 4.000 (a vigente tem 3.843).
+- Trecho EN novo: 450 caracteres. A ficha EN vigente tem 3.825; o bloco EN antigo não foi isolado, então o total EN novo não foi calculado (a vigente tem folga de 175 e o trecho novo é curto; reconferir ao colar).
+- `publishedPrice.test.ts` rodado contra `termos.rascunho.html` (cópia temporária do teste, apontando para o rascunho e para `FULL_UNLOCK_PRICE_LABEL_VELADO` / `_USD_VELADO`): 7/7 passaram. Ao promover o HTML para `public/`, o teste real só passa com `ONBOARDING_VELADO` ligado (sem ele os rótulos são R$ 29,90 / US$ 6.99).
