@@ -17,7 +17,7 @@ import { renderWithCss, installFakeStorage } from '../test/renderEnv';
 import { SoulmonOnboarding } from './SoulmonOnboarding';
 import { LUZ_EXPANDE_MS, LUZ_SOME_MS, LUZ_REDUZIDA_MS, OVO_TOQUES_PARA_BOTOES } from './OnboardingOvo';
 import { PREMADE_CHARACTERS } from '../utils/monetization';
-import { atravessarPerguntasIniciais, passarApresentacaoDaAmbra, ateAsMetas, responderMetas } from '../test/metasOnboarding';
+import { atravessarPerguntasIniciais, passarApresentacaoDaAmbra, informarNickname, ateAsMetas, responderMetas } from '../test/metasOnboarding';
 import { tocarOvo, abrirGuias, escolherGuiaEConfirmar, passarDespedidaDaAmbra } from '../test/ovoOnboarding';
 import { pendingTelemetry, resetTelemetryForTest, TELEMETRY_UNLOCK_REASON } from '../utils/telemetry';
 import { paidArrivalVitals, hungerAt, tierOf, hungerLevelOf, starvingSince, HUNGER_FAIR_MIN, maxEnergyOf } from '../utils/hunger';
@@ -77,6 +77,7 @@ describe('§81 — a Ambra depois dos Termos', () => {
   it('EN — a apresentação é a NpcSequence (Ambra grande, janela de texto, Skip no canto), com o texto do dono', () => {
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     passarTermos();
+    informarNickname();
     const seq = document.querySelector('[data-npc-sequence]') as HTMLElement;
     expect(seq).toBeTruthy();
     expect(seq.querySelector('[data-npc-name]')?.textContent).toBe('Ambra');
@@ -84,7 +85,7 @@ describe('§81 — a Ambra depois dos Termos', () => {
     expect(seq.textContent).toContain('Welcome. I am Ambra. Here you will find the depths of your soul and evolve alongside your Soulmon.');
     expect(seq.textContent).toContain("Let's get to know you first.");
     expect(seq.querySelector('[data-npc-skip]')?.textContent).toBe('Skip');
-    // ainda não é a pergunta do nome
+    // o nome já foi dado ANTES da apresentação
     expect(screen.queryByText('What should we call you?')).toBeNull();
   });
 
@@ -92,22 +93,26 @@ describe('§81 — a Ambra depois dos Termos', () => {
     localStorage.setItem('soulmon-language', 'pt-BR');
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     passarTermos(true);
+    informarNickname('Corvo Azul', true);
     const seq = document.querySelector('[data-npc-sequence]') as HTMLElement;
     expect(seq.textContent).toContain('Bem-vindo. Eu sou a Ambra. Aqui você vai encontrar as profundezas da sua alma e evoluir junto ao seu Soulmon. Vamos te conhecer primeiro.');
     expect(seq.querySelector('[data-npc-skip]')?.textContent).toBe('Pular');
   });
 
-  it('tocar na tela OU "Skip" levam ao mesmo lugar: a 1ª pergunta (o nome)', () => {
+  it('tocar na tela OU "Skip" levam ao mesmo lugar: a 1ª pergunta do ritual (o nome já veio antes)', () => {
     const a = renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     passarTermos();
-    passarApresentacaoDaAmbra();
     expect(screen.getByText('What should we call you?')).toBeTruthy();
+    informarNickname();
+    passarApresentacaoDaAmbra();
+    expect(document.querySelector('button[aria-pressed]')).toBeTruthy();
     a.unmount();
     installFakeStorage();
     renderWithCss(<SoulmonOnboarding onComplete={() => {}} />);
     passarTermos();
+    informarNickname();
     fireEvent.click(document.querySelector('[data-npc-skip]')!);
-    expect(screen.getByText('What should we call you?')).toBeTruthy();
+    expect(document.querySelector('button[aria-pressed]')).toBeTruthy();
   });
 
   it('quem retoma de um passo já gravado NÃO revê a apresentação', async () => {
