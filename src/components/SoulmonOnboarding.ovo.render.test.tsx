@@ -33,6 +33,23 @@ vi.mock('../utils/playBilling', async (importOriginal) => {
   };
 });
 
+// A GERAÇÃO fica PRESA no teste (promessa que só este arquivo resolve). Sem isso, as duas asserções da luz que olham a
+// tela de espera (`.sm2-ora-wait`) corriam contra a geração real: com `utils/soulProfile` já carregado no worker, o
+// `generateOracleComplete` termina dentro do mesmo `advanceTimersByTimeAsync`, o passo pula para o reveal e a tela de
+// espera some antes da asserção (reproduzido pré-carregando o módulo no `beforeAll`: falha 1/1). Sob a suíte inteira
+// isso dependia de quanto tempo real o import levava — daí o "passa sozinho, falha às vezes".
+const geracao = vi.hoisted(() => ({ soltar: [] as Array<() => void> }));
+vi.mock('../utils/soulProfile', async (importOriginal) => {
+  const orig = await importOriginal<typeof import('../utils/soulProfile')>();
+  return {
+    ...orig,
+    generateOracleComplete: (...a: Parameters<typeof orig.generateOracleComplete>) =>
+      new Promise<Awaited<ReturnType<typeof orig.generateOracleComplete>>>((ok, falha) => {
+        geracao.soltar.push(() => { orig.generateOracleComplete(...a).then(ok, falha); });
+      }),
+  };
+});
+
 const btn = (nome: string | RegExp) => screen.getByRole('button', { name: nome }) as HTMLButtonElement;
 const only = (event: string) => pendingTelemetry().filter(r => r.e === event);
 
@@ -142,6 +159,7 @@ describe('§81 — o ovo-cristal', () => {
   beforeEach(async () => {
     vi.useFakeTimers(); installFakeStorage(); resetTelemetryForTest(); movimentoReduzido(false);
     compra.purchase.mockReset();
+    geracao.soltar.length = 0;
     Object.defineProperty(navigator, 'vibrate', { value: vi.fn(), configurable: true, writable: true });
   });
   afterEach(() => { vi.useRealTimers(); });

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { onRequest } from './guild.js';
 import { fakeKV } from './_claKv.testkit.js';
 
@@ -68,19 +68,28 @@ describe('rotas do clã: praça', () => {
 
 describe('rotas do clã: dia do servidor, não do cliente', () => {
   const d = n => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
-  it('alternar dayKey D-1/D/D+1 não dá 2º presente, 2ª rega/proteção nem fura o teto do mistério', async () => {
+  // A moeda do `claSortear` (crypto.getRandomValues) é fixada: antes o teste dependia dela e falhava ~1/4 das vezes
+  // (A e B sorteavam 'protect' juntos; a proteção é 1 por clã/dia, então B ficava sem ação: [409,409,409]).
+  afterEach(() => vi.restoreAllMocks());
+  it.each([[0, 0], [0, 1], [1, 0], [1, 1]])('alternar dayKey D-1/D/D+1 não dá 2º presente, 2ª rega/proteção nem fura o teto do mistério (moedas %i/%i)', async (moedaA, moedaB) => {
     const { e, idB } = await setup();
+    const moedas = [moedaA, moedaB];
     const chaves = [d(-1), d(0), d(1)];
     const st = [];
     for (const k of chaves) st.push((await post(e, 'claPresente', { id: A, to: idB, dayKey: k })).status);
     expect(st.sort()).toEqual([200, 409, 409]);
     await post(e, 'claPlantar', { id: A, dayKey: d(0) });
     // D2: regar/proteger exigem o sorteio do dia; a ação sorteada vale 1x só, qualquer dayKey.
+    // só as 2 moedas do sorteio; o resto segue aleatório.
+    const real = crypto.getRandomValues.bind(crypto);
+    vi.spyOn(crypto, 'getRandomValues').mockImplementation(a => { if (!moedas.length) return real(a); a[0] = moedas.shift(); return a; });
     const sorteio = async (id) => (await post(e, 'claSortear', { id })).json.task;
-    const kA = await sorteio(A), kB = await sorteio(B);
+    // B sorteia DEPOIS de A agir (como no app real): se A protegeu, a regra do sorteio deixa só aguar para B.
+    const kA = await sorteio(A);
     const reg = [];
     for (const k of chaves) reg.push((await post(e, kA === 'water' ? 'claRegar' : 'claProteger', { id: A, dayKey: k })).status);
     expect(reg.sort()).toEqual([200, 409, 409]);
+    const kB = await sorteio(B);
     const pr = [];
     for (const k of chaves) pr.push((await post(e, kB === 'water' ? 'claRegar' : 'claProteger', { id: B, dayKey: k })).status);
     expect(pr.sort()).toEqual([200, 409, 409]);
