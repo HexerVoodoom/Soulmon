@@ -280,6 +280,11 @@ interface SoulmonOnboardingProps {
    * `src/data/bbPool.ts` quando a frente do sorteio chegar.
    */
   obterBB?: (leitura?: { elemento?: string | null; reino?: string | null }) => { url: string; formId: string } | null;
+  /**
+   * D31: o pagante que JÁ ENTRA pagando ganha o BB exclusivo GERADO (prompt do estágio bb em `creature.bbPrompts`).
+   * Devolve `null` para free / falha / estouro da espera: o nascimento cai no `obterBB` (pool, D30). Nunca gera para free.
+   */
+  obterBBExclusivo?: (prompts?: { imagePrompt: string; imagePromptFallback: string }) => Promise<{ url: string; formId: string } | null>;
 }
 
 /**
@@ -332,7 +337,7 @@ export const GOOGLE_SEM_RESPOSTA_MS = 120_000;
 
 interface SavedProfile extends OracleInput { seed: number }
 
-export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel, savedTestAnswers, onLanguageChange, onStartDemo, introPetPassive, introCategories, obterBB }: SoulmonOnboardingProps) {
+export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed, onCancel, savedTestAnswers, onLanguageChange, onStartDemo, introPetPassive, introCategories, obterBB, obterBBExclusivo }: SoulmonOnboardingProps) {
   // WP5.8 — o preço que o Play vai cobrar NESTE aparelho; fora do Android
   // nativo cai na constante publicada (`utils/priceLabel.ts`).
   const isUpgrade = mode === 'upgrade';
@@ -1040,8 +1045,22 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     const inicial = r.creature.stages.find(st => st.stage === 'rookie') ?? r.creature.stages[0];
     if (!inicial) return;
     if (veladoLigado() && obterBB) {
-      const bb = obterBB({ elemento: r.dominantElement });
-      if (bb) { setRevealContaNaoPaga(false); setRevealSprite({ url: bb.url, formId: bb.formId, at: Date.now() }); return; }
+      const doPool = () => {
+        const bb = obterBB({ elemento: r.dominantElement });
+        if (bb) { setRevealContaNaoPaga(false); setRevealSprite({ url: bb.url, formId: bb.formId, at: Date.now() }); }
+        return !!bb;
+      };
+      if (obterBBExclusivo && r.creature.bbPrompts) {
+        // D31: pagante -> BB exclusivo gerado (com espera própria); free/falha -> pool. A espera só aparece enquanto decide.
+        setRevealContaNaoPaga(false);
+        setRevealEsperando(true);
+        void obterBBExclusivo(r.creature.bbPrompts).then(ex => {
+          if (ex) setRevealSprite({ url: ex.url, formId: ex.formId, at: Date.now() });
+          else doPool();
+        }).catch(() => { doPool(); }).finally(() => setRevealEsperando(false));
+        return;
+      }
+      if (doPool()) return;
     }
     setRevealContaNaoPaga(false);
     setRevealEsperando(true);

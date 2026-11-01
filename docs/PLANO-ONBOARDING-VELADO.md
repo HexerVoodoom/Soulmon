@@ -318,3 +318,15 @@ O preço decidido (D9, US$ 3,99) segue; se quiser baixar, a conta agora permite.
 > ⚠️ D28 sobe a `PRIVACY_VERSION` para todos (não fica atrás do interruptor): quem
 > abrir a versão com esse merge vê o reconsentimento. Só levar à main **no lançamento
 > oficial** (§7, D15), junto com o interruptor ligado.
+
+## 15. Decisões de 31/10/2026 — pool instalado e quem gera o BB
+
+| # | Decisão do dono |
+|---|---|
+| D30 | O jogador **FREE** recebe um **BB PRONTO do pool** (sem custo de API). |
+| D31 | Quem **JÁ ENTRA pagante** (`accountTier` `paid` na criação do Soulmon) ganha o **PRÓPRIO bebê exclusivo GERADO** já no início (mesmo pipeline/prompt de sprite dos pagantes, estágio bb: bebê fofinho e redondo, forma única). |
+| D32 | Quem decide pagar **DEPOIS** de já ter o BB free do pool **NÃO** ganha BB gerado: mantém o BB do pool e a **primeira forma exclusiva dele é o rookie**. Quem paga de cara tem 1 exclusivo a mais. |
+
+Refina D6/D18–D20: a geração grátis por e-mail continua só no que o plano já define para o rookie do free; **não existe geração nova para free**.
+
+**Implementação (atrás de `ONBOARDING_VELADO`/`veladoOn`; desligado = idêntico):** os 280 BBs do pool (um por elemento, 256x256 alfa real, ~9,7 MB de PNG) estão em `src/assets/soulmon/bb/`; `data/bbPool.ts` (puro) lista as entradas e `data/bbPoolArt.ts` resolve a chave em URL (glob). O sorteio filtra por elemento da leitura; elemento sem BB = qualquer (fallback). O pagante gera pelo `generate-sprite` com `formId: 'bb'` (`VALID_FORM_ID` aceita `bb`; tetos por forma e da conta valem como para qualquer forma) e cai no pool se falhar ou passar de 12 s. O oráculo só monta `creature.bbPrompts` com o interruptor ligado.

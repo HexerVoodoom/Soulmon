@@ -219,14 +219,15 @@ function lifetimeUsed(ent, bucket) {
 }
 
 /**
- * As ONZE formas da árvore, e só elas (`src/types/progression.ts:51-55`).
+ * As ONZE formas da árvore + o `bb` (D31: BB exclusivo do pagante que já entra pagando), e só elas
+ * (`src/types/progression.ts:51-55`).
  *
  * O `formId` vem do CLIENTE, e o contador por forma mora dentro do registro de
  * entitlement — aceitar texto livre aqui seria deixar o cliente inflar um
  * registro que só o servidor escreve, uma chave por requisição. Conjunto
  * fechado: o pior caso do dicionário são 11 entradas, para sempre.
  */
-export const VALID_FORM_ID = /^(?:rookie|ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))$/;
+export const VALID_FORM_ID = /^(?:bb|rookie|ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))$/;
 
 /** Tira a chave ANTIGA da forma: `formUsed` já somou o valor dela na nova. */
 function foldLegacyForm(aiForms, formId) {

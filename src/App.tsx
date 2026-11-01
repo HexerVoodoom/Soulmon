@@ -225,7 +225,8 @@ import { subscribeAuthState, getIdToken } from './utils/auth';
 import { refreshVeladoTester } from './utils/veladoTester';
 import { isOnboardingVelado, sanitizeStageId } from './utils/bbStage';
 import { sortearBB } from './data/bbPool';
-import { LINE_FULL_ART } from './utils/lineFullArt';
+import { BB_POOL_ART } from './data/bbPoolArt';
+import { gerarBBExclusivo, gerarBBPeloPipeline } from './utils/bbNascimento';
 import { pedirFreeRookie } from './utils/freeRookie';
 import { fetchEntitlement, spendCredits, buyEssence, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
 import { purchase, reconcileSubscription, reconcilePurchases } from './utils/playBilling';
@@ -907,9 +908,20 @@ export default function App() {
   const obterBBDoSorteio = useCallback((leitura?: { elemento?: string | null; reino?: string | null }) => {
     if (initialStageForNewSave() !== 'bb') return null;
     const bb = sortearBB(saveId, leitura);
-    const url = bb ? LINE_FULL_ART[bb.sprite] : undefined;
+    const url = bb ? BB_POOL_ART[bb.sprite] : undefined;
     return bb && url ? { url, formId: 'bb' } : null;
   }, [saveId]);
+  /* D31: quem JÁ ENTRA pagante (entitlement `paid` agora) ganha o BB exclusivo gerado; free/falha/estouro = null (cai no pool, D30). */
+  const obterBBExclusivo = useCallback(async (prompts?: { imagePrompt: string; imagePromptFallback: string }) => {
+    if (initialStageForNewSave() !== 'bb' || !prompts) return null;
+    const ent = await fetchEntitlement().catch(() => null);
+    const url = await gerarBBExclusivo({
+      pago: ent?.tier === 'paid',
+      prompts,
+      gerar: gerarBBPeloPipeline,
+    });
+    return url ? { url, formId: 'bb' } : null;
+  }, []);
   const [editModalOpen, setEditModalOpen] = useState(false);
   /** P4 — "Equilibrar minha semana". Só abre por gesto; nunca sozinho. */
   const [balanceOpen, setBalanceOpen] = useState(false);
@@ -7060,7 +7072,7 @@ export default function App() {
     return (
       <>
         {selo}
-        <Suspense fallback={<ScreenSkeleton language={language} />}><SoulmonOnboarding onComplete={handleCompleteOnboarding} onLanguageChange={setLanguage} onStartDemo={handleStartDemo} obterBB={veladoOn ? obterBBDoSorteio : undefined} /></Suspense>
+        <Suspense fallback={<ScreenSkeleton language={language} />}><SoulmonOnboarding onComplete={handleCompleteOnboarding} onLanguageChange={setLanguage} onStartDemo={handleStartDemo} obterBB={veladoOn ? obterBBDoSorteio : undefined} obterBBExclusivo={veladoOn ? obterBBExclusivo : undefined} /></Suspense>
       </>
     );
   }

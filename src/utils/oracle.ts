@@ -291,6 +291,8 @@ export interface OracleResult {
      *  2ª família distinta e, mais raro ainda, um OBJETO (só no 2º slot). */
     family: FamilyResult;
     stages: CreatureStage[];
+    /** D31 (Onboarding Velado): prompts do BB exclusivo do pagante. Só existe com o interruptor ligado. */
+    bbPrompts?: { imagePrompt: string; imagePromptFallback: string };
   };
 }
 

@@ -3971,6 +3971,9 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 ### `src/utils/bbStage.ts`
 **Dono de:** a forma BB, estágio ANTES do rookie (Onboarding Velado, REGISTRO §207): HP máx 6, sem requisito diário, evolui quando `bondLevelFor(totalXP) >= 2`, `bbRefusal` para torneio/duelo/guilda, `sanitizeStageId` e o interruptor `isOnboardingVelado`.
 
+### `src/utils/bbNascimento.ts`
+**Dono de:** quem é o BB no NASCIMENTO (Onboarding Velado D30-D32): `deveGerarBBExclusivo` e `gerarBBExclusivo` — o pagante que JÁ ENTRA pagando gera o BB exclusivo pelo pipeline de sprite (formId `bb`, prompt do estágio bb em `creature.bbPrompts`), com espera `BB_EXCLUSIVO_ESPERA_MS` (12 s) e `null` em falha (cai no BB do pool, `data/bbPool.ts`). Free nunca gera; quem paga depois (`jaTemBB`) não gera BB. **Chamado por:** `App.tsx` (`obterBBExclusivo`) → `SoulmonOnboarding`. **Régua:** `bbNascimento.test.ts`, `bbNascimento.ligacao.test.ts`.
+
 ### `src/utils/evolutionPaywall.ts`
 **Dono de:** a regra única do D8: conta grátis evolui BB para rookie de graça; a partir de rookie, evoluir exige conta paga.
 
