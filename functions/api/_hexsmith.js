@@ -83,42 +83,62 @@ export function hexCost(id) {
 }
 
 /** @param {unknown} v */
-const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+const num = (v) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : 0);
 
 /**
- * PAGAMENTO dos HEXes no save (01/11/2026, REGISTRO §216). Todo item que entra em `owned` e NAO estava no save gravado precisa ser
- * coberto pela QUEDA, do gravado para o recebido, de poções do elemento, fragmentos e Bits (`gamePoints`). A queda é um orçamento
- * consumido item a item, na ordem da lista; item sem cobertura é REVERTIDO (sai da posse e do slot). Recursos não são tocados.
- * Item já possuído no gravado não cobra de novo. Sem save gravado, o orçamento é zero (nenhum HEX nasce de graça).
- * @param {unknown} incomingHex  `state.hexsmith` recebido
- * @param {Record<string, any>} incoming  o state recebido (já saneado: `equipment.fragments` clampado)
- * @param {Record<string, any> | undefined} stored  o state gravado (ou undefined)
- * @returns {{ hexsmith: { owned: string[], equipped: Record<string, string> }, revoked: string[] }}
+ * A FORJA no servidor (REGISTRO §216, ação `POST /api/save?id=&action=hexForge`): lê o save GRAVADO, confere o saldo com `HEX_COSTS`
+ * (poções do elemento, `equipment.fragments`, Bits GANHOS = `gamePoints` menos o `bitsOrigin.paidLeft`), debita e entrega o item.
+ * Espelho de `forgeHexItem` (`src/utils/hexsmith.ts`; `hexsmith.parity.test.js` compara). Item já possuído = `already`, sem cobrança.
+ * @param {Record<string, any>} stored  o state gravado
+ * @param {unknown} itemId
+ * @returns {{ ok: true, already: boolean, state: Record<string, any> } | { ok: false, reason: 'invalid' | 'potions' | 'fragments' | 'bits' }}
  */
-export function enforceHexPayment(incomingHex, incoming, stored) {
-  const hx = sanitizeHexsmith(incomingHex);
-  const before = new Set(sanitizeHexsmith(stored?.hexsmith).owned);
-  const added = hx.owned.filter((id) => !before.has(id));
-  if (!added.length) return { hexsmith: hx, revoked: [] };
-  const fIn = incoming?.foodInventory && typeof incoming.foodInventory === 'object' ? incoming.foodInventory : {};
-  const fSt = stored?.foodInventory && typeof stored.foodInventory === 'object' ? stored.foodInventory : {};
-  /** @type {Record<string, number>} */
-  const potionBudget = {};
-  let fragBudget = Math.max(0, num(stored?.equipment?.fragments) - num(incoming?.equipment?.fragments));
-  let bitsBudget = Math.max(0, num(stored?.gamePoints) - num(incoming?.gamePoints));
-  /** @type {string[]} */
-  const revoked = [];
-  for (const id of added) {
-    const c = /** @type {NonNullable<ReturnType<typeof hexCost>>} */ (hexCost(id));
-    const k = c.potionElement ? `potion:${c.potionElement}` : '';
-    if (k && !(k in potionBudget)) potionBudget[k] = Math.max(0, num(fSt[k]) - num(fIn[k]));
-    const ok = (!c.potions || potionBudget[k] >= c.potions) && fragBudget >= c.fragments && bitsBudget >= c.bits;
-    if (!ok) { revoked.push(id); continue; }
-    if (c.potions) potionBudget[k] -= c.potions;
-    fragBudget -= c.fragments;
-    bitsBudget -= c.bits;
+export function forgeOnServer(stored, itemId) {
+  const c = typeof itemId === 'string' ? hexCost(itemId) : undefined;
+  if (!c) return { ok: false, reason: 'invalid' };
+  const id = /** @type {string} */ (itemId);
+  const hx = sanitizeHexsmith(stored.hexsmith);
+  if (hx.owned.includes(id)) return { ok: true, already: true, state: stored };
+  if (hx.owned.length >= HEX_MAX_OWNED) return { ok: false, reason: 'invalid' };
+  const food = stored.foodInventory && typeof stored.foodInventory === 'object' && !Array.isArray(stored.foodInventory) ? stored.foodInventory : {};
+  const k = c.potionElement ? `potion:${c.potionElement}` : '';
+  if (c.potions > 0 && num(food[k]) < c.potions) return { ok: false, reason: 'potions' };
+  const frag = num(stored.equipment?.fragments);
+  if (c.fragments > 0 && frag < c.fragments) return { ok: false, reason: 'fragments' };
+  const gp = num(stored.gamePoints);
+  const paidLeft = num(stored.bitsOrigin?.paidLeft);
+  if (c.bits > 0 && Math.max(0, gp - Math.min(gp, paidLeft)) < c.bits) return { ok: false, reason: 'bits' };
+  const next = { ...stored };
+  if (c.potions > 0) {
+    const foodInventory = { ...food, [k]: num(food[k]) - c.potions };
+    if (foodInventory[k] <= 0) delete foodInventory[k];
+    next.foodInventory = foodInventory;
   }
-  if (!revoked.length) return { hexsmith: hx, revoked };
-  const owned = hx.owned.filter((id) => !revoked.includes(id));
-  return { hexsmith: sanitizeHexsmith({ owned, equipped: hx.equipped }), revoked };
+  if (c.fragments > 0) next.equipment = { ...stored.equipment, fragments: frag - c.fragments };
+  if (c.bits > 0) {
+    next.gamePoints = gp - c.bits;
+    // = `spendBits` -> `spendBitsPaidFirst` do cliente: o Bit pago sai primeiro e nunca fica acima do saldo.
+    if (stored.bitsOrigin && typeof stored.bitsOrigin === 'object') {
+      const left = Math.min(Math.max(0, paidLeft - c.bits), next.gamePoints);
+      if (left !== paidLeft) next.bitsOrigin = { ...stored.bitsOrigin, paidLeft: left };
+    }
+  }
+  const slot = /** @type {{ slot: string }} */ (parseHexItem(id)).slot;
+  const equipped = hx.equipped[slot] ? hx.equipped : { ...hx.equipped, [slot]: id };
+  next.hexsmith = { owned: [...hx.owned, id], equipped };
+  return { ok: true, already: false, state: next };
+}
+
+/**
+ * POSSE DE HEX vem só do servidor (REGISTRO §216): no POST do save, `owned` = o do save GRAVADO (o cliente não acrescenta nem tira);
+ * o `equipped` do cliente vale, desde que seja de item possuído no slot certo. Campo ausente no recebido = o gravado inteiro.
+ * Sem save gravado, a posse é vazia.
+ * @param {unknown} incomingHex  `state.hexsmith` recebido (ou undefined, se o campo não veio)
+ * @param {Record<string, any> | undefined} stored
+ * @returns {{ owned: string[], equipped: Record<string, string> }}
+ */
+export function enforceStoredHexOwned(incomingHex, stored) {
+  const sto = sanitizeHexsmith(stored?.hexsmith);
+  const inc = incomingHex && typeof incomingHex === 'object' ? /** @type {Record<string, unknown>} */ (incomingHex) : undefined;
+  return sanitizeHexsmith({ owned: sto.owned, equipped: inc ? inc.equipped : sto.equipped });
 }

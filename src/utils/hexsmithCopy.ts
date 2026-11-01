@@ -66,6 +66,10 @@ export const HEX_UI = {
   fragments: p('fragments', 'fragmentos'),
   bitsEarned: p('earned Bits', 'Bits ganhos'),
   forged: p('Forged. The line is rewritten.', 'Forjado. A linha foi reescrita.'),
+  forging: p('Forging…', 'Forjando…'),
+  forgeOffline: p('No connection. The HEX is forged on the server; nothing was charged. Try again when you are online.', 'Sem conexão. O HEX é forjado no servidor; nada foi cobrado. Tente de novo quando estiver online.'),
+  forgeFailed: p('The forge did not answer. Nothing was charged; try again.', 'A forja não respondeu. Nada foi cobrado; tente de novo.'),
+  forgeNoFunds: p('The server did not find the balance for this HEX. Nothing was charged.', 'O servidor não encontrou saldo para este HEX. Nada foi cobrado.'),
   close: p('Back to the Ports', 'Voltar às Portas'),
   noMatch: p('No unlocked element has all these bases yet. Elements unlock in the Drive.', 'Nenhum elemento desbloqueado tem todas essas bases ainda. Os elementos se desbloqueiam no Drive.'),
 };

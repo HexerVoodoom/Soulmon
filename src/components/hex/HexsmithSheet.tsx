@@ -25,12 +25,15 @@ import { fichaStageOf } from '../../utils/soulProfile/ficha/stageSkillsFor';
 import type { StageSkills } from '../../utils/soulProfile/ficha/skills';
 import type { FichaStage } from '../../utils/soulProfile/ficha/types';
 import {
-  HEX_ELEMENT_SLOTS, HEX_SLOTS, equipHexItem, forgeHexItem, hexCost, hexForgeRefusal, hexItemId, hexOverrides, hexValuesOf, parseHexItem,
+  HEX_ELEMENT_SLOTS, HEX_SLOTS, equipHexItem, applyServerHexForge, hexCost, hexForgeRefusal, hexItemId, hexOverrides, hexValuesOf, parseHexItem,
   sanitizeHexsmith, unequipHexSlot, type HexSlot, type HexStrike,
 } from '../../utils/hexsmith';
 import type { SpecialFamily } from '../../utils/combate/specials';
 import { HEX_FAMILY_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_UI, hexName, hexRefusalText, tx } from '../../utils/hexsmithCopy';
 import { getSpriteForStage } from '../../utils/sprites';
+import { cloudHexForge } from '../../utils/cloudSave';
+import { readLocal } from '../../utils/safeStorage';
+import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { HEX_ART, HEX_MAP_ART, resolveHexSlotArt } from '../../assets/soulmon/hex';
 import { HexSlotGlyph } from './HexSlotGlyph';
 
@@ -75,6 +78,7 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
   const isPt = language === 'pt-BR';
   const [open, setOpen] = useState<HexSlot | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
+  const [forjando, setForjando] = useState(false);
   const gs = ctx?.gameState;
   const hx = useMemo(() => sanitizeHexsmith(gs?.hexsmith), [gs?.hexsmith]);
   const over = useMemo(() => hexOverrides(hx), [hx]);
@@ -96,10 +100,21 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
     return v ? elName(v, isPt) : tx(HEX_UI.original, isPt);
   };
 
-  const forge = (id: string) => {
+  // §216: a forja é do SERVIDOR (debita e entrega numa escrita). O cliente só aplica o que ele confirmou; sem rede, não forja.
+  const forge = async (id: string) => {
     if (isDemoMode(gs)) { setAviso(demoRefusalText(isPt)); return; }
-    if (hexForgeRefusal(gs, id)) return;
-    setGameState((prev) => forgeHexItem(prev, id));
+    if (forjando || hexForgeRefusal(gs, id)) return;
+    const saveId = readLocal(STORAGE_KEYS.SAVE_ID);
+    if (!saveId) { setAviso(tx(HEX_UI.forgeOffline, isPt)); return; }
+    setForjando(true);
+    setAviso(tx(HEX_UI.forging, isPt));
+    const r = await cloudHexForge(saveId, gs, id);
+    setForjando(false);
+    if (!r.ok) {
+      setAviso(tx(r.kind === 'offline' ? HEX_UI.forgeOffline : r.kind === 'saldo' ? HEX_UI.forgeNoFunds : HEX_UI.forgeFailed, isPt));
+      return;
+    }
+    setGameState((prev) => applyServerHexForge(prev, id, !r.already));
     setAviso(tx(HEX_UI.forged, isPt));
   };
 
