@@ -41,7 +41,7 @@ export function CareSystem({ careEvent, onCareEventComplete, language = 'en-US' 
         data-care-poop
         role="img"
         aria-label={isPt ? 'Cocô para limpar — dê um banho' : 'Poop to clean — use the shower'}
-        style={{ left: `${CARE_X_PCT}%`, top: `${GROUND_Y}%`, marginLeft: -FX_PX / 2, marginTop: -FX_PX + 16, width: FX_PX, height: FX_PX, pointerEvents: 'none' }}
+        style={{ left: `${CARE_X_PCT}%`, top: `${GROUND_Y}%`, marginLeft: -FX_PX / 2, marginTop: -FX_PX - 8, width: FX_PX, height: FX_PX, pointerEvents: 'none' }}
       >
         <SpriteAnim
           key={`plop-${careEvent.requestTime}`}
