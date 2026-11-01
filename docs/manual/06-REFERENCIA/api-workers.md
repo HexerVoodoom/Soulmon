@@ -194,6 +194,10 @@
 **Dono de:** a **linha de arte pública** de um perfil (D-60, 19/10/2026): `ART_LINE_IDS` (lista fechada: 5 iniciais, 6 linhas da masmorra e o corvinho) e `artLineOrNull(raw)` (id válido ou `null`). Só um id, sem dado pessoal; existe para o cliente desenhar o oponente com a arte dele e não com a árvore genérica descartada. Paridade com `src/utils/sprites.ts` travada em `src/utils/artLine.test.ts`.
 **Consumidores:** `community.js` (`publicProfile`, `match`, linhas do rank; ausente no corpo herda o gravado, `null` limpa, lixo vira `null`).
 
+### `functions/api/_formHistory.js`
+**Dono de:** o HISTÓRICO DE FORMAS de um Soulmon derivado do save no KV (`state.spriteLibrary.sprites[<formId>] = { url, at }`), REGISTRO §210. `formsFromSaveState(rawState, element)` devolve `{stage, formId, spriteUrl, element, date}[]` ordenado por estágio e data, no máximo `MAX_FORMAS` (8); toda URL passa por `spriteUrlOrNull`. Só leitura, sem dado pessoal.
+**Consumidores:** `community.js` (`GET community?action=forms`, só para amigo do solicitante; não-amigo recebe 403).
+
 ### `functions/api/_accountTombstone.js`
 **Dono de:** a **lápide de conta apagada** `del:done:<saveId>` — o registro que impede outro aparelho do titular, ainda logado, de recriar o save 3 s depois da exclusão (QA Rodada 1, `03-arquitetura-r1.md` §2.5; nasceu na `qa/rodada-a`, 21/09/2026). Mora em módulo próprio porque tem dois leitores e `save.js` não pode importar `account.js`.
 **Exports:**
