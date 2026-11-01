@@ -3797,3 +3797,5 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 3. **D32.** O upgrade (`handleUpgradeRevealed`) não toca no BB; `gerarBBExclusivo` só roda no nascimento e recusa `jaTemBB`.
 
 **Régua:** `data/bbPool.pool280.test.ts`, `utils/bbNascimento.test.ts`, `utils/bbNascimento.ligacao.test.ts`, `functions/api/_aiGuard.formBB.test.js`. **Alternativa que perdeu:** adicionar um estágio `bb` em `soulmonStages` (mudaria a árvore de todo save). **Gatilho para rever:** o dono querer BB gerado também para quem paga depois, ou o custo do BB do pagante pesar na conta do §12.
+
+**Adendo §214 (31/10/2026, dono):** D33 — "paga de cara" é quem tem a compra confirmada pelo SERVIDOR (entitlement) até o momento do reveal, inclusive quem comprou no meio do onboarding; quem compra depois do reveal segue D32. D34 — o BB exclusivo consome 1 geração do teto vitalício da conta e conta como mais uma forma no teto por forma: aceito.
