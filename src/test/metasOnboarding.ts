@@ -27,10 +27,10 @@ export function passarApresentacaoDaAmbra(): void {
 
 /** O passo do nome: passa pela Ambra, digita e segue. Para na 1ª pergunta do ritual. */
 export function responderNome(nome = 'Corvo Azul', pt = false): void {
-  passarApresentacaoDaAmbra();
   const campo = screen.getByLabelText(pt ? 'Seu nome' : 'Your name');
   fireEvent.change(campo, { target: { value: nome } });
   clicarContinuar(pt);
+  passarApresentacaoDaAmbra(); // a Ambra vem DEPOIS do nome
 }
 
 /** As 6 do ritual + os 20 itens do teste (sempre a 1ª opção). Para na 1ª

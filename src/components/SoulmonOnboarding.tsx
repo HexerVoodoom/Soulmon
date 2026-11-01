@@ -681,7 +681,15 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const [revealCompraAberta, setRevealCompraAberta] = useState(false);
   /** Quando o reveal apareceu — vira FAIXA em `reveal_seen.duration` (WP0.12). */
   const revealAbertoEmRef = useRef(0);
-  const [nickname, setNickname] = useState(gate?.nickname ?? '');
+  // O NICKNAME é a 1ª pergunta (antes até da apresentação da Ambra). Quem já tem um (rascunho do portão ou o `userName`
+  // local de um save antigo) chega com o campo preenchido: o passo conta como respondido e é pulado na retomada.
+  const [nickname, setNickname] = useState(() => {
+    const doRascunho = gate?.nickname ?? '';
+    if (doRascunho.trim().length >= 2) return doRascunho;
+    if (isUpgrade) return doRascunho;
+    const local = (readLocal(STORAGE_KEYS.USER_NAME) ?? '').trim().slice(0, 24);
+    return local.length >= 2 ? local : doRascunho;
+  });
   /** Batismo do Soulmon. `null` = a pessoa não encostou no campo, e o que
    *  aparece na tela é a sugestão (`registerDisplayName`). Guardar assim, em
    *  vez de semear o estado por efeito, é o que faz MANTER o sugerido custar
@@ -1114,7 +1122,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === IDENTITY_STEP || step === TERMS_STEP) return;
     if (!canAdvance()) return;
     // B1 + 01/10/2026: do nome vai-se direto às perguntas do ritual.
-    if (step === NAME_STEP) { setStep(QUIZ_START); return; }
+    if (step === NAME_STEP) { setStep(gate?.step === undefined ? AMBRA_INTRO : QUIZ_START); return; }
     if (step === GOAL_STEP) { setStep(STRUGGLE_STEP); return; }
     if (step === STRUGGLE_STEP) { setStep(STRENGTH_STEP); return; }
     if (step === STRENGTH_STEP) { setStarterOff([]); setStep(STARTER_STEP); return; }
@@ -1286,7 +1294,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
    *  (§81); quem retoma de um passo que já gravou (o nome ou adiante) segue direto, sem rever a apresentação. */
   const depoisDoAceite = (): number => {
     const alvo = passoDeRetomada();
-    return alvo === NAME_STEP && gate?.step === undefined ? AMBRA_INTRO : alvo;
+    // O nome vem ANTES da Ambra; quem já tem nickname (passo pulado) vê a apresentação direto antes do ritual.
+    return alvo === QUIZ_START && gate?.step === undefined ? AMBRA_INTRO : alvo;
   };
 
   /** Depois de autenticar, `App.tsx` recarrega a página e conclui a adoção do
@@ -1859,7 +1868,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             lines={veladoLigado()
               ? ROTEIRO.c0.map(f => ({ speaker: tVelado(ANCIAO.nome, lang), art: urlDoAsset('velado-anciao') ?? FUNCTION_NPC_ART.oraculo, text: tVelado(f, lang) }) satisfies NpcSequenceLine)
               : [{ speaker: 'Ambra', art: FUNCTION_NPC_ART.onboarding, text: AMBRA_FALAS.intro[isPt ? 'pt' : 'en'] } satisfies NpcSequenceLine]}
-            onFinish={() => setStep(NAME_STEP)}
+            onFinish={() => setStep(QUIZ_START)}
           />
         )}
 
