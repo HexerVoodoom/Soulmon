@@ -19,7 +19,7 @@ import { fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
 import { AreaScene } from './AreaScene';
 import { AreaSheet } from './AreaSheet';
-import { areaNpcVoice } from '../../utils/areaNpcVoice';
+import { areaNpcVoice, LOT_NPC_VOICE } from '../../utils/areaNpcVoice';
 
 vi.mock('../../utils/community', async (orig) => {
   const real = await orig<typeof import('../../utils/community')>();
@@ -98,8 +98,13 @@ describe('Hall — a Biblioteca (D4) com a saudação da Lumi', () => {
 
   it('a Lumi recebe no Hall, nos dois idiomas, sem prometer o que já existe como "em breve"', () => {
     for (const lang of ['pt-BR', 'en-US'] as const) {
-      const { name, line } = areaNpcVoice('hall', lang);
-      expect(name).toContain('Lumi');
+      expect(areaNpcVoice('hall', lang).name).toContain('Lumi');
+      // 01/11/2026: o lote `biblioteca` (Drive) agora tem anfitriã própria, a Glifa.
+      const isPt = lang === 'pt-BR';
+      const v = LOT_NPC_VOICE['laboratorio:biblioteca'];
+      const name = isPt ? v.namePt : v.nameEn;
+      const line = isPt ? v.linePt : v.lineEn;
+      expect(name).toContain('Glifa');
       expect(line).not.toMatch(/em breve|soon/i);
       // A Lumi é o NPC do lote único do Hall (`biblioteca`) — mora dentro da
       // folha aberta, não mais num anfitrião fixo da cena.
@@ -121,12 +126,12 @@ describe('Hall — a Biblioteca (D4) com a saudação da Lumi', () => {
       onFriendsChange: () => {}, language: 'pt-BR' as const,
     };
     const solta = renderWithCss(<LibraryPage {...base} />);
-    expect(solta.container.querySelector('h1')?.textContent).toContain('Biblioteca');
+    expect(solta.container.querySelector('h1')?.textContent).toContain('Drive');
     solta.unmount();
     const dentro = renderWithCss(<LibraryPage {...base} embedded />);
     expect(dentro.container.querySelector('h1')).toBeNull();
     // a legenda foi para o "?" (varredura K6): abre o tooltip antes de ler
-    fireEvent.click(dentro.getByRole('button', { name: 'Sobre a Biblioteca' }));
+    fireEvent.click(dentro.getByRole('button', { name: 'Sobre o Drive' }));
     expect(document.body.textContent).toContain('Veja outros jogadores');
     dentro.unmount();
   });

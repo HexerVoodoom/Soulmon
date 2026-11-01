@@ -112,7 +112,12 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   // 'exploracao:dungeon' tem voz própria abaixo (beta3 M3).
   'jogos:salao': AREA_NPC_VOICE.jogos,
   'laboratorio:evolucao': AREA_NPC_VOICE.laboratorio,
-  'laboratorio:biblioteca': AREA_NPC_VOICE.hall, // D-50 (19/10/2026): a Biblioteca foi do Hall para o Laboratório — a anfitriã Lumi vai com ela
+  'laboratorio:biblioteca': {
+    namePt: 'Glifa, a arquivista', nameEn: 'Glifa, the archivist',
+    // 01/11/2026 (pedido do dono): a Biblioteca virou Drive e ganhou anfitriã própria (era a Lumi).
+    linePt: 'Todo Soulmon que já cruzou o seu caminho tem uma página guardada aqui.',
+    lineEn: 'Every Soulmon that has crossed your path has a page saved here.',
+  },
   // 01/10/2026 (pedido do dono): as bancas de Itens e de Decoração mostravam
   // "Grom", mas os bustos são outras criaturas. Nomes próprios (loremaster):
   // a criatura-cogumelo das miudezas é Lamela (as lâminas sob o chapéu do

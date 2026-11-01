@@ -51,8 +51,8 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
     made: isPt ? 'Poção criada! Está na pasta de itens.' : 'Potion created! It is in your item folder.',
     pending: isPt ? 'Poção na espera para a próxima evolução:' : 'Potion waiting for the next evolution:',
     once: isPt ? 'Vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação dele.' : 'Only affects the next evolution; after that your Soulmon returns to its score-based element.',
-    locked: isPt ? 'Elemento ainda não desbloqueado na Biblioteca' : 'Element not yet unlocked in the Library',
-    lockedHint: isPt ? 'Desbloqueie na Biblioteca' : 'Unlock in the Library',
+    locked: isPt ? 'Elemento ainda não desbloqueado no Drive' : 'Element not yet unlocked in the Drive',
+    lockedHint: isPt ? 'Desbloqueie no Drive' : 'Unlock in the Drive',
     note: isPt ? 'Dar uma poção ao Soulmon (pasta de itens) troca a que já estava esperando. Vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação dele.' : 'Giving a potion to your Soulmon (item folder) replaces the one already waiting. Only affects the next evolution; after that your Soulmon returns to its score-based element.',
   };
 

@@ -120,7 +120,7 @@ const LABORATORIO_LOTS: AreaLotSpec<LaboratorioLotId>[] = [
   // D-50 (19/10/2026, dono): a Biblioteca e o Círculo de Amigos SAEM do Hall e vêm para o Laboratório. Ficam nos dois flancos do Santuário (que é estreito:
   // só ~32% da cena é opaca), à esquerda e à direita, num só andar. D-47: a Biblioteca aparece INTEIRA já na primeira tela, sem rolagem (a cena É a viewport) —
   // `areaLotGeometry.contract.test.ts` mede a caixa dela em 360×640. Larguras 32% (W5; antes 34%): com 36% a caixa encosta no Santuário (guard H11). Arte: a que já existe nos lotes.
-  { id: 'biblioteca', labelPt: 'Biblioteca', labelEn: 'Library', ariaPt: 'Entrar na Biblioteca', ariaEn: 'Enter the Library', left: '20.5%', top: '61.6%', width: '48%' },
+  { id: 'biblioteca', labelPt: 'Drive', labelEn: 'Drive', ariaPt: 'Entrar no Drive', ariaEn: 'Enter the Drive', left: '20.5%', top: '61.6%', width: '48%' },
 ];
 
 // D-50 (19/10/2026, dono): o Hall fica com EXATAMENTE três prédios — Feira, Clan Hall (o administrativo do clã) e Grove — um por plataforma do fundo

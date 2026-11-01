@@ -455,8 +455,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Não ganha XP (o Vínculo fica fixo) e não entra no PvP (Torneio, Duelo, Biblioteca e Clã ficam fechados). Para ter uma conta, saia da demo em Configurações.`,
-              `It earns no XP (Bond stays fixed) and does not enter PvP (Tournament, Duel, Library and Clan stay closed). To get an account, leave the demo in Settings.`,
+              `Não ganha XP (o Vínculo fica fixo) e não entra no PvP (Torneio, Duelo, Drive e Clã ficam fechados). Para ter uma conta, saia da demo em Configurações.`,
+              `It earns no XP (Bond stays fixed) and does not enter PvP (Tournament, Duel, Drive and Clan stay closed). To get an account, leave the demo in Settings.`,
             )}
           </p>
         </>

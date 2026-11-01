@@ -705,3 +705,38 @@ A tabela de ranking agora aparece direto no topo do portão de cada minijogo (`M
 | `src/assets/soulmon/icones-ui/quadro-ranking.png` | 9-slice 96×96 (borda de ~24 px, miolo transparente/liso para esticar) | alfa real | moldura de placar pixel-art no estilo Arcano: cobre/latão com cantos de cristal turquesa, sem texto, sem fundo no miolo; mesma paleta e traço de `item-heart.png`. Esticável em largura (cabe de 280 a 420 px) |
 
 Quando existir: trocar o `border`/`boxShadow` de `[data-minigame-gate-ranking]` por `border-image` (9-slice) em `MinigameModeGate.tsx`.
+
+## 22. O Drive — prédio e anfitriã de dados (pedido do dono, 01/11/2026)
+
+**Contexto:** a Biblioteca virou **Drive** (só texto visível). O dono quer o prédio e a NPC **digitais e imateriais: feitos de dados/informação**, não de pedra e estante. Os dois assumem sozinhos ao cair com o nome-alvo (ver §21). Alfa real, ChatGPT desktop ou `gpt_image_2_5 --variant flare --background transparent` (ver `assets-transparencia-real`).
+
+| Arquivo-alvo (`src/assets/soulmon/…`) | Tamanho | O que mostra | Posição | Provisório |
+|---|---|---|---|---|
+| `areas/lote-lab-biblioteca-v2.png` | 512×512, alfa | o prédio do Drive: estrutura de luz e informação | 16,2% / 44,4%, largura 32% | `lote-hall-biblioteca.png` |
+| `npcs/<nome-da-NPC>.png` (busto) | molde de NPC do dono | a anfitriã do Drive | — (`AREA_NPC_ART`) | Lumi |
+
+Depois de instalar o prédio, remedir `LOT_ART_BOUNDS` (`utils/areaLotGeometry.ts`).
+
+**Prédio — prompt** (colar depois do bloco `[PRÉDIO]`):
+```
+A small isometric pixel-art landmark for a monster-raising RPG, entirely made of DATA and INFORMATION rather than matter: an immaterial archive tower that exists as light. A vertical stack of translucent turquoise (#5FF3E0) data panes and floating file-folder silhouettes orbiting a central core of falling glyph streams, hairline circuit traces and tiny pixel-grid fragments that dissolve into particles at the edges, as if the building is still being downloaded. Soft scan-line shimmer, a few drifting bits (squares of light), no solid walls, no bricks, no bookshelves, no gears. Base: a faint holographic glyph disc, not stone. COLORS: do NOT make it monochrome. Turquoise (#5FF3E0) only for the central glyph core and a few accents; folders in warm amber and golden yellow; data panes in violet, magenta-pink and soft sky blue; drifting bits in coral orange, lime green and white; base disc in deep indigo with pink and gold runes; near-black navy shadows; one small aged-copper clasp. Chunky visible pixels, flat colors, cel shading 2 to 3 tones. Transparent background, no text, no logos, no frame.
+```
+
+**NPC — prompt** (molde do dono; sem imagem de referência):
+```
+Generate an original creature NPC for a monster-raising RPG inspired by Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft. Do not copy any existing franchise character. Detailed pixel-art CHARACTER PORTRAIT, BUST ONLY, 32-bit era, cel shading 2 to 3 tones, transparent background.
+CREATURE: a spirit-of-information, half moth, half living cursor: a pale translucent body whose edges break into drifting pixels and falling glyphs, moth-like wings made of two thin data-panes, a soft ghostly face with calm open eyes (no big smile), antennae ending in tiny blinking cursor-lights. Elements: aurora and spirit with a hint of circuit.
+PROFESSION: archivist and host of the Drive. Makes it unmistakable: a floating file-folder held open at its chest, a halo ring of orbiting index cards, a small copper tag-clasp at the neck.
+It belongs to a place that is made of light and stored memory: translucent panes, scan lines, data rain.
+COLORS: ONE dominant color: pale iridescent white-cyan body, with violet-pink aurora gradients on the wings, plus small glowing turquoise soul-crystal accents (#5FF3E0) as the shared signature of the world. No steampunk, no gears, no leather, no top hat.
+```
+**Gerado no ChatGPT em 01/11/2026** (prédio v2 colorido aprovado em visual pelo dono após a v1 monocromática; NPC v1). Ainda NÃO baixado/instalado: conferir alfa real (o xadrez pode estar assado) antes de instalar.
+
+Nome da anfitriã: **a definir pelo dono** (hoje `{name}` = Lumi).
+
+**Propostas extras de anfitriã do Drive (01/11/2026, pedido do dono — gerado no ChatGPT, não baixado):**
+- **Restinho** (nome provisório; inspirada no Cubone): órfão de dados com pelo lavanda, usando como capacete a casca-crânio rachada de um ícone de arquivo deletado, segurando um osso que é cabo de dados partido; guardiã dos arquivos perdidos/deletados, cesta de lixeira com disquete. Triste e calma. Cores: lavanda, branco-osso, âmbar, coral, turquesa.
+- **Guarda-Fogo** (nome provisório; inspirado em Grobyc/Gobryc de Chrono Cross, que se escreve "Grobyc"): ciborgue estoico, metade fera-lobo de pelo verde-acinzentado, metade hardware (antebraço de rack de servidor, rabo de cabo, olho-viseira azul); vigia do firewall com escudo de cadeado e crachá. Cores: verde-acinzentado, âmbar, azul-aço, sinais vermelho/laranja, turquesa.
+Ambas pelo molde do dono, sem referência, alfa a conferir. O dono escolhe quem fica como anfitriã (ou se viram NPCs de outros prédios).
+
+**Rodada Cubone+Digimon (01/11/2026, ChatGPT, não baixada):** a 1ª rodada (CRT, 404, CD-ROM, headphone, nuvem) foi reprovada pelo dono: "nada parece Cubone". Regra: manter a **silhueta** (lagarto-dino em pé, barrigudo, braços curtos, cauda grossa, crânio branco de verdade na cabeça, osso de verdade na mão) e só acrescentar o traço Digimon (marcas de circuito, cauda com ponta de pixels, olhos grandes). 5 versões, corpo inteiro: marrom/ciano (arquivos deletados), laranja-areia/verde (arquivos antigos), verde-musgo/magenta (corrompidos), castanho/azul (senhas), lavanda/dourado (fotos). Crânio-objeto (CRT, nuvem…) NÃO funciona; tem de ser crânio.

@@ -111,7 +111,7 @@ export function areaHint(id: AreaId, isPt: boolean): string {
     case 'arena': return isPt ? 'Torneio, Arena livre e Guerra' : 'Tournament, Open Arena and Clan War';
     case 'exploracao': return isPt ? 'Passeio, Fenda e Calabouço' : 'Stroll, Endless Rift and Dungeon';
     case 'forja': return isPt ? 'Foco, Caderno, Refúgio e Soulsmith' : 'Focus, Journal, Refuge and Soulsmith';
-    case 'laboratorio': return isPt ? 'Evolução, Vínculo, Biblioteca e Perfil' : 'Evolution, Bond, Library and Profile';
+    case 'laboratorio': return isPt ? 'Evolução, Vínculo, Drive e Perfil' : 'Evolution, Bond, Drive and Profile';
     case 'hall': return isPt ? 'Feira, Clan Hall (e amigos) e Grove' : 'Fair, Clan Hall (and friends) and Grove';
   }
 }
