@@ -1,22 +1,29 @@
 /**
- * Arte da HEXSMITH — ponto de entrada da arte final (01/11/2026). Ainda NÃO existe arte própria: tudo é `undefined` e a tela cai no
- * fallback CSS/SVG inline (`components/hex/HexSlotGlyph.tsx`). Quando a arte entrar (fila em `docs/ASSETS-A-GERAR.md`), importe o PNG
- * aqui e preencha a entrada — a tela não muda.
+ * Arte da HEXSMITH — ponto de entrada da arte final (01/11/2026). A arte é resolvida por `import.meta.glob` (o mesmo padrão de
+ * `resolveArt` em `assets/soulmon/areas/index.ts`): assim que o PNG cair nesta pasta com o nome-alvo, a tela passa a usá-lo sozinha;
+ * enquanto não existir, `undefined` → a tela cai no glifo SVG inline (`components/hex/HexSlotGlyph.tsx`).
  *
- *  · `slotIcon[slot]`  — ícone do TIPO de slot (silhueta do slot vazio), PNG transparente ~128px.
- *  · `socket`          — o encaixe/nó de circuito atrás do slot (não é caixa de ícone: é parte do traçado do circuito).
- *  · `circuit`         — textura opcional das linhas de circuito hex ao fundo do mapa.
+ * Nomes-alvo: `slot-coroa.png`, `slot-amuleto.png`, `slot-garra.png`, `slot-couraca.png`, `slot-luvas.png` (silhueta do slot vazio,
+ * PNG com alfa real) e `forjar.png` (ícone do botão Forjar).
  */
 import type { HexSlot } from '../../../utils/hexsmith';
 
+const ARTE = import.meta.glob('./{slot-*,forjar}.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+
+const art = (nome: string): string | undefined => ARTE[`./${nome}.png`];
+
 export const HEX_ART: {
   readonly slotIcon: Readonly<Partial<Record<HexSlot, string>>>;
-  readonly socket?: string;
-  readonly circuit?: string;
+  readonly forge?: string;
 } = {
-  slotIcon: {},
-  socket: undefined,
-  circuit: undefined,
+  slotIcon: {
+    coroa: art('slot-coroa'),
+    amuleto: art('slot-amuleto'),
+    garra: art('slot-garra'),
+    couraca: art('slot-couraca'),
+    luvas: art('slot-luvas'),
+  },
+  forge: art('forjar'),
 };
 
 /** A arte do slot, ou `undefined` (= use o glifo SVG inline). */

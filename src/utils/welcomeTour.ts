@@ -165,6 +165,7 @@ export const MAP_TOUR_STEPS: readonly TourStep[] = [
     bRow('forja.caderno', 'Your journal.', 'O seu caderno.'),
     bRow('forja.refugio', 'Slow breathing for hard moments.', 'Respiração lenta para momentos difíceis.'),
     bRow('forja.ferreiro', 'Upgrades for its gear.', 'Aprimora os equipamentos dele.'),
+    bRow('forja.hexsmith', 'Rewrites its hex code with element potions.', 'Reescreve o código hex dele com poções de elemento.'),
   ]),
   mapStep('hall', { en: 'Your Clan.', pt: 'O seu Clã.' }, [
     bRow('hall.guilda', 'Your Clan.', 'O seu Clã.'),

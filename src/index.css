@@ -8979,5 +8979,64 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
   z-index: 1;
 }
 
-/* Hexsmith (01/11/2026): foco visível nos encaixes e no catálogo (os botões usam all:unset). */
-[data-hex-slot]:focus-visible,[data-hex-item]:focus-visible{outline:2px solid var(--sm2-primary-ink);outline-offset:2px;}
+/* ── Hexsmith (01/11/2026, revisão minimalista) ─────────────────────────────
+   Tudo por token. Botões sem `all: unset`: reset explícito + foco/disabled do DS.
+   `.sm2-hex-row` = o desenho TONAL do `Chip` (FormKit) em linha inteira:
+   escolhido = `primary-soft` + fronteira e tinta `primary-ink` + negrito;
+   não dá para forjar = tinta `muted` (escolhido mantém fundo/fronteira). */
+.sm2-hex { display: grid; gap: var(--sm2-space-4); width: 100%; max-width: 420px; margin: 0 auto; box-sizing: border-box; }
+.sm2-hex-map { position: relative; width: 100%; max-width: 360px; aspect-ratio: 1 / 1; margin: 0 auto; }
+.sm2-hex-map-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sm2-hex-sprite { position: absolute; left: 50%; top: 50%; width: 42%; height: 42%; transform: translate(-50%, -50%); object-fit: contain; image-rendering: pixelated; }
+.sm2-hex-art { display: block; flex: none; object-fit: contain; }
+.sm2-hex-slot {
+  position: absolute; transform: translate(-50%, -50%);
+  display: grid; justify-items: center; gap: var(--sm2-space-1);
+  min-width: 64px; min-height: 64px; padding: var(--sm2-space-1); margin: 0;
+  background: none; border: 0; border-radius: var(--sm2-radius-md); cursor: pointer;
+  color: var(--sm2-ink); text-align: center;
+  transition: background-color var(--sm2-dur-tap) var(--sm2-ease);
+  &:hover { background-color: var(--sm2-primary-soft); }
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+}
+.sm2-hex-slot-label {
+  display: block; max-width: 112px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); font-weight: 500; line-height: var(--sm2-leading-body);
+  color: var(--sm2-muted); text-decoration: underline dotted var(--sm2-line); text-underline-offset: 3px;
+  &[data-on="true"] { color: var(--sm2-ink); }
+}
+.sm2-hex-code {
+  list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sm2-space-half);
+  font-family: var(--sm2-font-mono); font-size: var(--sm2-text-sm); line-height: var(--sm2-leading-body); color: var(--sm2-muted);
+  & li[data-on="true"] { color: var(--sm2-ink); }
+  & strong { color: var(--sm2-primary-ink); }
+}
+.sm2-hex-panel { display: grid; gap: var(--sm2-space-4); min-width: 0; grid-template-columns: minmax(0, 1fr); }
+.sm2-hex-group { display: grid; gap: var(--sm2-space-2); }
+.sm2-hex-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sm2-space-1); }
+.sm2-hex-balance {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--sm2-space-2); margin: 0;
+  font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); line-height: var(--sm2-leading-body); color: var(--sm2-muted);
+}
+.sm2-hex-row {
+  box-sizing: border-box; width: 100%; min-height: 44px; margin: 0;
+  display: flex; align-items: center; gap: var(--sm2-space-2); padding: var(--sm2-space-1) var(--sm2-space-3);
+  border: 1px solid transparent; border-radius: var(--sm2-radius-md); background: none; text-align: left;
+  font-family: var(--sm2-font-text); font-size: var(--sm2-text-sm); font-weight: 400; line-height: var(--sm2-leading-body); color: var(--sm2-ink);
+  transition: background-color var(--sm2-dur-tap) var(--sm2-ease), border-color var(--sm2-dur-tap) var(--sm2-ease);
+  &[data-ok="false"] { color: var(--sm2-muted); }
+  &[data-on="true"] { background-color: var(--sm2-primary-soft); border-color: var(--sm2-primary-ink); color: var(--sm2-primary-ink); font-weight: 700; }
+  &[data-on="true"][data-ok="false"] { color: var(--sm2-muted); }
+}
+button.sm2-hex-row {
+  cursor: pointer;
+  &:hover:not([data-on="true"]) { background-color: var(--sm2-surface-2); }
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+}
+.sm2-hex-row-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sm2-hex-row-tag { display: inline-flex; align-items: center; gap: var(--sm2-space-half); flex: none; font-size: var(--sm2-text-xs); font-weight: 500; }
+.sm2-hex-row-cost {
+  display: inline-flex; flex-direction: column; align-items: flex-end; gap: 0; flex: none; white-space: nowrap;
+  font-size: var(--sm2-text-xs); font-weight: 400; color: var(--sm2-muted);
+}
+.sm2-hex-footer { display: grid; gap: var(--sm2-space-2); justify-items: center; }

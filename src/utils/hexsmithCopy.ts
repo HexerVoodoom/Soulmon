@@ -45,7 +45,7 @@ export function hexRefusalText(r: HexRefusal, isPt: boolean, el?: string): strin
 
 export const HEX_UI = {
   title: p('Hexsmith', 'Hexsmith'),
-  intro: p('Each slot rewrites one line of your Soulmon\'s hex code. Items are kept forever; one per slot.', 'Cada encaixe reescreve uma linha do código hex do Soulmon. Os itens ficam para sempre; um por encaixe.'),
+  intro: p('Tap a slot to forge or equip. Each slot rewrites one line of your Soulmon\'s hex code; one item per slot, and forged items stay in your collection forever.', 'Toque num encaixe para forjar ou equipar. Cada encaixe reescreve uma linha do código hex do Soulmon; um item por encaixe, e o que você forja fica na coleção para sempre.'),
   code: p('Hex code', 'Código hex'),
   was: p('was', 'era'),
   original: p('original', 'original'),
@@ -57,14 +57,12 @@ export const HEX_UI = {
   clear: p('Empty the slot', 'Esvaziar o encaixe'),
   forge: p('Forge', 'Forjar'),
   catalog: p('Forge', 'Forja'),
-  search: p('Search element', 'Buscar elemento'),
-  onlyAffordable: p('Only what I can forge', 'Só o que dá para forjar'),
+  filterHint: p('Filter by up to 3 base elements: only elements that contain all of them are listed. What you can forge comes first.', 'Filtre por até 3 elementos base: aparecem só os elementos que contêm todos eles. O que dá para forjar vem primeiro.'),
   balance: p('You have', 'Você tem'),
   potions: p('potions', 'poções'),
   fragments: p('fragments', 'fragmentos'),
   bitsEarned: p('earned Bits', 'Bits ganhos'),
   forged: p('Forged. The line is rewritten.', 'Forjado. A linha foi reescrita.'),
   close: p('Back to the slots', 'Voltar aos encaixes'),
-  noMatch: p('No element with that name.', 'Nenhum elemento com esse nome.'),
-  keep: p('Forged items never leave your collection.', 'Itens forjados nunca saem da sua coleção.'),
+  noMatch: p('No unlocked element has all these bases yet. Elements unlock in the Drive.', 'Nenhum elemento desbloqueado tem todas essas bases ainda. Os elementos se desbloqueiam no Drive.'),
 };

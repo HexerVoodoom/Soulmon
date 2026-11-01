@@ -3,18 +3,23 @@
  * (coroa na cabeça, amuleto no peito, garra numa mão, luvas na outra, couraça no corpo), ligados por linhas de circuito hex.
  * Tocar um encaixe abre o painel dele: os itens POSSUÍDOS (equipar / esvaziar) e a FORJA (catálogo com custo e o motivo da recusa).
  *
+ * Revisão minimalista (01/11/2026, dono + Squad Alpha): uma rolagem só (a do `ModalSheet`); filtro por ELEMENTOS BASE = o mesmo
+ * `ElementBaseSlots` + `elementsMatchingBases` do Laboratório e do Cambista; elemento não desbloqueado no Drive não aparece;
+ * seleção tonal do DS (`.sm2-hex-row`, o desenho do `Chip`); um ícone por encaixe; tudo por token (`index.css`, bloco Hexsmith).
+ *
  * Regras: TODAS em `utils/hexsmith.ts` (a tela só mostra e chama os puros, e o motivo que desabilita o botão é o que aparece em texto).
- * Textos: `utils/hexsmithCopy.ts`. Arte final: `assets/soulmon/hex` (hoje vazia → glifos SVG inline). Sem botão de vender/descartar.
+ * Textos: `utils/hexsmithCopy.ts`. Arte final: `assets/soulmon/hex` (glob; sem arquivo → glifos SVG). Sem botão de vender/descartar.
  */
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import type { Language } from '../../utils/i18n';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
-import { ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text } from '../form/FormKit';
-import { ElementIcon, elName } from '../ElementBaseSlots';
+import { ActionRow, Disclosure, ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Text } from '../form/FormKit';
+import { ElementBaseSlots, ElementIcon, elName, emptySlots } from '../ElementBaseSlots';
 import { BitsAmount } from '../ui/BitsAmount';
+import { Icon } from '../ui/Icon';
 import { combatGlowColor } from '../../utils/combatArt';
 import { earnedBits } from '../../utils/bitsOrigin';
-import { potionKey } from '../../utils/elementPotion';
+import { elementsMatchingBases, isPotionUnlocked, potionKey } from '../../utils/elementPotion';
 import { isDemoMode, demoRefusalText } from '../../utils/demoMode';
 import { fighterIdentity } from '../../utils/fighterIdentity';
 import { fichaStageOf } from '../../utils/soulProfile/ficha/stageSkillsFor';
@@ -27,7 +32,7 @@ import {
 import type { SpecialFamily } from '../../utils/combate/specials';
 import { HEX_FAMILY_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_UI, hexRefusalText, tx } from '../../utils/hexsmithCopy';
 import { getSpriteForStage } from '../../utils/sprites';
-import { resolveHexSlotArt } from '../../assets/soulmon/hex';
+import { HEX_ART, resolveHexSlotArt } from '../../assets/soulmon/hex';
 import { HexSlotGlyph } from './HexSlotGlyph';
 
 export interface HexsmithSheetProps {
@@ -44,11 +49,16 @@ export interface HexsmithSheetProps {
 /** Posição de cada encaixe no mapa (% do quadro) e o ponto do corpo onde a linha encosta. */
 const LAYOUT: Readonly<Record<HexSlot, { x: number; y: number; ax: number; ay: number }>> = {
   coroa: { x: 50, y: 9, ax: 50, ay: 30 },
-  garra: { x: 12, y: 46, ax: 36, ay: 50 },
-  luvas: { x: 88, y: 46, ax: 64, ay: 50 },
-  amuleto: { x: 15, y: 84, ax: 46, ay: 48 },
-  couraca: { x: 85, y: 84, ax: 54, ay: 62 },
+  garra: { x: 14, y: 46, ax: 36, ay: 50 },
+  luvas: { x: 86, y: 46, ax: 64, ay: 50 },
+  amuleto: { x: 17, y: 86, ax: 46, ay: 48 },
+  couraca: { x: 83, y: 86, ax: 54, ay: 62 },
 };
+
+/** Degraus de `tokens.md` §6.1: `nav` 32 no mapa (o encaixe é um destino), `action` 24 nas linhas e no botão, `inline` 20 no saldo. */
+const ICON_MAP = 32;
+const ICON_ROW = 24;
+const ICON_INLINE = 20;
 
 /** Nome legível do VALOR de um item (elemento, família ou alcance). */
 export function hexValueName(slot: HexSlot, value: string, isPt: boolean): string {
@@ -91,18 +101,17 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
   };
 
   return (
-    <section data-hexsmith aria-label={tx(HEX_UI.title, isPt)} style={{ display: 'grid', gap: 14, maxWidth: 420, margin: '0 auto', width: '100%', boxSizing: 'border-box' }}>
+    <section data-hexsmith aria-label={tx(HEX_UI.title, isPt)} className="sm2-hex">
       <p style={sm2Hint}>{tx(HEX_UI.intro, isPt)}</p>
 
       {/* O MAPA DE SLOTS */}
-      <div data-hex-map style={{ position: 'relative', width: '100%', maxWidth: 360, aspectRatio: '1 / 1', margin: '0 auto' }}>
-        <svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}>
-          <polygon points="50,14 83,32 83,68 50,86 17,68 17,32" fill="none" stroke="var(--sm2-line)" strokeWidth="0.6" strokeDasharray="2 1.5" />
+      <div data-hex-map className="sm2-hex-map">
+        <svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" className="sm2-hex-map-lines">
           {HEX_SLOTS.map((s) => {
             const L = LAYOUT[s];
             const on = !!hx.equipped[s];
             const c = on ? (HEX_ELEMENT_SLOTS.includes(s) ? combatGlowColor(now[s]) : undefined) ?? 'var(--sm2-primary-ink)' : 'var(--sm2-line)';
-            // circuito em L (horizontal depois vertical), com um nó no encosto
+            // circuito em L (vertical depois horizontal), com um nó no encosto
             return (
               <g key={s}>
                 <polyline points={`${L.x},${L.y} ${L.x},${L.ay} ${L.ax},${L.ay}`} fill="none" stroke={c} strokeWidth={on ? 0.9 : 0.6} />
@@ -111,44 +120,40 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
             );
           })}
         </svg>
-        {sprite && (
-          <img src={sprite} alt={isPt ? 'Seu Soulmon' : 'Your Soulmon'} draggable={false}
-            style={{ position: 'absolute', left: '50%', top: '50%', width: '42%', height: '42%', transform: 'translate(-50%,-50%)', objectFit: 'contain', imageRendering: 'pixelated' }} />
-        )}
+        {sprite && <img src={sprite} alt={isPt ? 'Seu Soulmon' : 'Your Soulmon'} draggable={false} className="sm2-hex-sprite" />}
         {HEX_SLOTS.map((s) => {
           const L = LAYOUT[s];
           const id = hx.equipped[s];
           const it = id ? parseHexItem(id) : undefined;
-          const valueName = it ? hexValueName(s, it.value, isPt) : tx(HEX_UI.empty, isPt);
+          const slotName = tx(HEX_SLOT_COPY[s].name, isPt);
+          const valueName = it ? hexValueName(s, it.value, isPt) : undefined;
           return (
-            <button key={s} type="button" data-hex-slot={s} data-hex-filled={!!id}
-              aria-label={`${tx(HEX_SLOT_COPY[s].name, isPt)}: ${valueName}`} aria-haspopup="dialog"
+            <button key={s} type="button" data-hex-slot={s} data-hex-filled={!!id} className="sm2-hex-slot"
+              aria-label={`${slotName}: ${valueName ?? tx(HEX_UI.empty, isPt)}`} aria-haspopup="dialog"
               onClick={() => { setAviso(null); setOpen(s); }}
-              style={{ all: 'unset', cursor: 'pointer', position: 'absolute', left: `${L.x}%`, top: `${L.y}%`, transform: 'translate(-50%,-50%)', display: 'grid', justifyItems: 'center', gap: 2, minWidth: 64, minHeight: 64, textAlign: 'center', borderRadius: 8 }}>
-              <SlotFace slot={s} value={it?.value} size={44} />
-              <span style={{ ...sm2Label, fontSize: 11, color: id ? 'var(--sm2-ink)' : 'var(--sm2-muted)', maxWidth: 84, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{tx(HEX_SLOT_COPY[s].name, isPt)}</span>
+              style={{ left: `${L.x}%`, top: `${L.y}%` }}>
+              <SlotFace slot={s} value={it?.value} size={ICON_MAP} />
+              <span className="sm2-hex-slot-label" data-on={!!id}>{valueName ? `${slotName} · ${valueName}` : slotName}</span>
             </button>
           );
         })}
       </div>
 
-      {/* O CÓDIGO HEX legível */}
-      <div data-hex-code style={{ display: 'grid', gap: 4 }}>
-        <h3 style={{ ...sm2Label, margin: 0 }}>{tx(HEX_UI.code, isPt)}</h3>
-        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2, fontFamily: 'var(--sm2-font-mono, ui-monospace, monospace)' }}>
+      {/* O CÓDIGO HEX legível — avançado, fica fechado */}
+      <Disclosure label={tx(HEX_UI.code, isPt)}>
+        <ul data-hex-code className="sm2-hex-code">
           {HEX_SLOTS.map((s) => {
             const v = now[s];
             return (
-              <li key={s} data-hex-line={s} style={{ ...sm2Text, fontSize: 13, color: v ? 'var(--sm2-ink)' : 'var(--sm2-muted)' }}>
+              <li key={s} data-hex-line={s} data-on={!!v}>
                 {tx(HEX_SLOT_COPY[s].line, isPt)}: {v
-                  ? <><strong style={{ color: 'var(--sm2-primary-ink)' }}>{hexValueName(s, v, isPt)}</strong>{hexValueName(s, v, isPt) !== origName(s) && <> ({tx(HEX_UI.was, isPt)} {origName(s)})</>}</>
+                  ? <><strong>{hexValueName(s, v, isPt)}</strong>{hexValueName(s, v, isPt) !== origName(s) && <> ({tx(HEX_UI.was, isPt)} {origName(s)})</>}</>
                   : <>{origName(s)} · {tx(HEX_UI.original, isPt)}</>}
               </li>
             );
           })}
         </ul>
-      </div>
-      <p style={sm2Hint}>{tx(HEX_UI.keep, isPt)}</p>
+      </Disclosure>
 
       {open && (
         <SlotPanel slot={open} isPt={isPt} language={language} gs={gs} aviso={aviso}
@@ -161,19 +166,16 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
   );
 }
 
-/** O rosto do slot: arte final se houver; senão o ícone do elemento (pelado, sem caixa) ou o glifo SVG do tipo, na cor do valor. */
+/**
+ * O rosto do slot — UM ícone só: com elemento, o ícone do ELEMENTO (já vem na cor dele); coroa/luvas com valor, o glifo em
+ * `primary-ink`; vazio, a arte final do slot (se já existir na pasta) ou o glifo tracejado em `muted`.
+ */
 function SlotFace({ slot, value, size }: { slot: HexSlot; value?: string; size: number }) {
-  const art = !value ? resolveHexSlotArt(slot) : undefined;
-  if (art) return <img src={art} alt="" aria-hidden="true" width={size} height={size} style={{ width: size, height: size, objectFit: 'contain' }} />;
-  if (value && HEX_ELEMENT_SLOTS.includes(slot)) {
-    return (
-      <span style={{ position: 'relative', width: size, height: size, display: 'inline-grid', placeItems: 'center' }}>
-        <HexSlotGlyph slot={slot} size={size} color={combatGlowColor(value) ?? 'var(--sm2-primary-ink)'} filled />
-        <span style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}><ElementIcon id={value} size={Math.round(size * 0.55)} /></span>
-      </span>
-    );
-  }
-  return <HexSlotGlyph slot={slot} size={size} color={value ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)'} filled={!!value} />;
+  if (value && HEX_ELEMENT_SLOTS.includes(slot)) return <ElementIcon id={value} size={size} />;
+  if (value) return <HexSlotGlyph slot={slot} size={size} color="var(--sm2-primary-ink)" filled />;
+  const art = resolveHexSlotArt(slot);
+  if (art) return <img src={art} alt="" aria-hidden="true" width={size} height={size} className="sm2-hex-art" />;
+  return <HexSlotGlyph slot={slot} size={size} color="var(--sm2-muted)" />;
 }
 
 interface PanelProps {
@@ -183,9 +185,9 @@ interface PanelProps {
 }
 
 function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip, onClear }: PanelProps) {
-  const [q, setQ] = useState('');
-  const [onlyOk, setOnlyOk] = useState(false);
+  const [bases, setBases] = useState<(string | null)[]>(emptySlots);
   const [picked, setPicked] = useState<string | null>(null);
+  const refusalId = useId();
   const hx = sanitizeHexsmith(gs.hexsmith);
   const isEl = HEX_ELEMENT_SLOTS.includes(slot);
   const mine = hx.owned.filter((id) => parseHexItem(id)!.slot === slot);
@@ -194,93 +196,100 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
   const frags = gs.equipment?.fragments ?? 0;
 
   const catalog = useMemo(() => {
-    const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-    const nq = norm(q.trim());
-    return hexValuesOf(slot)
+    const values = isEl
+      ? elementsMatchingBases(bases).filter((v) => isPotionUnlocked(v, gs.defeatedElements))
+      : hexValuesOf(slot);
+    return values
       .map((v) => hexItemId(slot, v))
       .filter((id) => !hx.owned.includes(id))
-      .filter((id) => !nq || norm(hexValueName(slot, parseHexItem(id)!.value, isPt)).includes(nq))
-      .filter((id) => !onlyOk || !hexForgeRefusal(gs, id))
       .sort((a, b) => Number(!!hexForgeRefusal(gs, a)) - Number(!!hexForgeRefusal(gs, b)));
-  }, [slot, q, onlyOk, gs, hx.owned, isPt]);
+  }, [slot, isEl, bases, gs, hx.owned]);
 
   const sel = picked && catalog.includes(picked) ? picked : null;
-  const selCost = sel ? hexCost(sel)! : null;
   const selRefusal = sel ? hexForgeRefusal(gs, sel) : undefined;
-  const selName = sel ? hexValueName(slot, parseHexItem(sel)!.value, isPt) : '';
+  const selValue = sel ? parseHexItem(sel)!.value : '';
+  const selName = sel ? hexValueName(slot, selValue, isPt) : '';
 
   return (
     <ModalSheet open title={`${tx(HEX_SLOT_COPY[slot].name, isPt)} · ${tx(HEX_SLOT_COPY[slot].effect, isPt)}`} onClose={onClose} language={language as Language}
-      footer={sel && selCost ? (
-        <div data-hex-forge-footer style={{ display: 'grid', gap: 6, justifyItems: 'center' }}>
-          <button type="button" data-hex-forge={sel} disabled={!!selRefusal} aria-describedby={selRefusal ? 'hex-refusal' : undefined}
+      footer={sel ? (
+        <div data-hex-forge-footer className="sm2-hex-footer">
+          <button type="button" data-hex-forge={sel} disabled={!!selRefusal} aria-describedby={selRefusal ? refusalId : undefined}
             onClick={() => { onForge(sel); setPicked(null); }}
-            style={{ ...sm2Button('primary', !!selRefusal), width: 'auto', minWidth: 220, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            style={sm2Button('primary', !!selRefusal)}>
+            {HEX_ART.forge && <img src={HEX_ART.forge} alt="" aria-hidden="true" width={ICON_ROW} height={ICON_ROW} className="sm2-hex-art" />}
             <span>{tx(HEX_UI.forge, isPt)}: {selName}</span>
+            <SlotFace slot={slot} value={selValue} size={ICON_ROW} />
           </button>
-          {selRefusal && <p id="hex-refusal" data-hex-refusal={selRefusal} style={{ ...sm2Hint, textAlign: 'center', margin: 0 }}>{hexRefusalText(selRefusal, isPt, isEl ? selName : undefined)}</p>}
+          {selRefusal && <p id={refusalId} data-hex-refusal={selRefusal} style={{ ...sm2Hint, textAlign: 'center' }}>{hexRefusalText(selRefusal, isPt, isEl ? selName : undefined)}</p>}
         </div>
       ) : undefined}>
-      <div data-hex-panel={slot} style={{ display: 'grid', gap: 14, minWidth: 0, gridTemplateColumns: 'minmax(0, 1fr)' }}>
+      <div data-hex-panel={slot} className="sm2-hex-panel">
         {aviso && <p role="status" data-hex-aviso style={sm2Text}>{aviso}</p>}
 
-        <section aria-label={tx(HEX_UI.owned, isPt)} style={{ display: 'grid', gap: 6 }}>
+        <section aria-label={tx(HEX_UI.owned, isPt)} className="sm2-hex-group">
           <h3 style={{ ...sm2Label, margin: 0 }}>{tx(HEX_UI.owned, isPt)}</h3>
           {mine.length === 0 ? <p style={sm2Hint} data-hex-none-owned>{tx(HEX_UI.noneOwned, isPt)}</p> : (
-            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 4 }}>
+            <ul className="sm2-hex-list">
               {mine.map((id) => {
                 const v = parseHexItem(id)!.value;
                 const on = equipped === id;
                 return (
-                  <li key={id} data-hex-owned={id} style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 44 }}>
-                    <SlotFace slot={slot} value={v} size={28} />
-                    <span style={{ ...sm2Text, flex: 1, fontWeight: on ? 700 : 400 }}>{hexValueName(slot, v, isPt)}</span>
-                    {on
-                      ? <span style={{ ...sm2Hint, color: 'var(--sm2-primary-ink)' }} data-hex-is-equipped>{tx(HEX_UI.equipped, isPt)}</span>
-                      : <button type="button" data-hex-equip={id} onClick={() => onEquip(id)} style={{ ...sm2Button('outline', false, 'sm'), width: 'auto' }}>{tx(HEX_UI.equip, isPt)}</button>}
+                  <li key={id} data-hex-owned={id}>
+                    {on ? (
+                      <>
+                        <div className="sm2-hex-row" data-on="true" data-hex-is-equipped>
+                          <SlotFace slot={slot} value={v} size={ICON_ROW} />
+                          <span className="sm2-hex-row-name">{hexValueName(slot, v, isPt)}</span>
+                          <span className="sm2-hex-row-tag"><Icon name="check" size={ICON_INLINE} fill={1} tone="inherit" />{tx(HEX_UI.equipped, isPt)}</span>
+                        </div>
+                        <div data-hex-clear><ActionRow label={tx(HEX_UI.clear, isPt)} onClick={onClear} language={language as Language} /></div>
+                      </>
+                    ) : (
+                      <div className="sm2-hex-row">
+                        <SlotFace slot={slot} value={v} size={ICON_ROW} />
+                        <span className="sm2-hex-row-name">{hexValueName(slot, v, isPt)}</span>
+                        <button type="button" data-hex-equip={id} onClick={() => onEquip(id)} style={sm2Button('outline', false, 'sm')}>{tx(HEX_UI.equip, isPt)}</button>
+                      </div>
+                    )}
                   </li>
                 );
               })}
             </ul>
           )}
-          {equipped && <button type="button" data-hex-clear onClick={onClear} style={{ ...sm2Button('quiet'), width: 'auto', justifySelf: 'start' }}>{tx(HEX_UI.clear, isPt)}</button>}
         </section>
 
-        <section aria-label={tx(HEX_UI.catalog, isPt)} style={{ display: 'grid', gap: 8 }}>
+        <section aria-label={tx(HEX_UI.catalog, isPt)} className="sm2-hex-group">
           <h3 style={{ ...sm2Label, margin: 0 }}>{tx(HEX_UI.catalog, isPt)}</h3>
-          <p data-hex-balance style={{ ...sm2Hint, display: 'flex', flexWrap: 'wrap', gap: '4px 12px', alignItems: 'center', margin: 0 }}>
-            <span>{tx(HEX_UI.balance, isPt)}:</span>
-            <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><BitsAmount value={bits} size={14} /> {tx(HEX_UI.bitsEarned, isPt)}</span>
-            {!isEl && <span className="sm2-num">{frags} {tx(HEX_UI.fragments, isPt)}</span>}
-            {isEl && sel && <span className="sm2-num">{gs.foodInventory[potionKey(parseHexItem(sel)!.value)] ?? 0} {tx(HEX_UI.potions, isPt)} · {selName}</span>}
+          <p data-hex-balance className="sm2-hex-balance">
+            <span>{tx(HEX_UI.balance, isPt)}</span>
+            <BitsAmount value={bits} size={ICON_INLINE} unit={tx(HEX_UI.bitsEarned, isPt)} />
+            <span aria-hidden="true">{tx(HEX_UI.bitsEarned, isPt)}</span>
           </p>
           {isEl && (
-            <div style={{ display: 'grid', gap: 6 }}>
-              <input type="search" value={q} onChange={(e) => setQ(e.target.value)} aria-label={tx(HEX_UI.search, isPt)} placeholder={tx(HEX_UI.search, isPt)} data-hex-search
-                style={{ ...sm2Text, minHeight: 44, padding: '0 12px', borderRadius: 10, border: '1px solid var(--sm2-line)', background: 'var(--sm2-surface-2)', color: 'var(--sm2-ink)', width: '100%', boxSizing: 'border-box' }} />
-              <label style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
-                <input type="checkbox" checked={onlyOk} onChange={(e) => setOnlyOk(e.target.checked)} data-hex-only-affordable />
-                {tx(HEX_UI.onlyAffordable, isPt)}
-              </label>
-            </div>
+            <>
+              <p style={sm2Hint}>{tx(HEX_UI.filterHint, isPt)}</p>
+              <ElementBaseSlots slots={bases} isPt={isPt} onChange={(i, id) => { setBases((v) => v.map((x, j) => (j === i ? id : x))); setPicked(null); }} />
+            </>
           )}
-          {catalog.length === 0 ? <p style={sm2Hint}>{tx(HEX_UI.noMatch, isPt)}</p> : (
-            <ul data-hex-catalog style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2, maxHeight: isEl ? 320 : undefined, overflowY: 'auto' }}>
+          {catalog.length === 0 ? <p style={sm2Hint} data-hex-none>{tx(HEX_UI.noMatch, isPt)}</p> : (
+            <ul data-hex-catalog className="sm2-hex-list">
               {catalog.map((id) => {
                 const v = parseHexItem(id)!.value;
                 const c = hexCost(id)!;
                 const ok = !hexForgeRefusal(gs, id);
                 const pot = isEl ? gs.foodInventory[potionKey(v)] ?? 0 : 0;
+                const on = sel === id;
                 return (
                   <li key={id}>
-                    <button type="button" data-hex-item={id} data-hex-affordable={ok} aria-pressed={sel === id} onClick={() => setPicked(sel === id ? null : id)}
-                      style={{ all: 'unset', cursor: 'pointer', boxSizing: 'border-box', width: '100%', minHeight: 44, display: 'flex', alignItems: 'center', gap: 10, padding: '2px 4px', borderBottom: sel === id ? '2px solid var(--sm2-primary-ink)' : '2px solid transparent' }}>
-                      <SlotFace slot={slot} value={v} size={28} />
-                      <span style={{ ...sm2Text, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: sel === id ? 700 : 400, color: ok ? 'var(--sm2-ink)' : 'var(--sm2-muted)' }}>{hexValueName(slot, v, isPt)}</span>
-                      <span className="sm2-num" style={{ ...sm2Hint, display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    <button type="button" data-hex-item={id} data-hex-affordable={ok} aria-pressed={on} className="sm2-hex-row"
+                      data-on={on} data-ok={ok} onClick={() => setPicked(on ? null : id)}>
+                      {on ? <Icon name="check" size={ICON_ROW} fill={1} tone="inherit" /> : <SlotFace slot={slot} value={v} size={ICON_ROW} />}
+                      <span className="sm2-hex-row-name">{hexValueName(slot, v, isPt)}</span>
+                      <span className="sm2-hex-row-cost sm2-num">
                         {c.potions > 0 && <span>{pot}/{c.potions} {tx(HEX_UI.potions, isPt)}</span>}
                         {c.fragments > 0 && <span>{frags}/{c.fragments} {tx(HEX_UI.fragments, isPt)}</span>}
-                        <BitsAmount value={c.bits} size={12} dim={bits < c.bits} />
+                        <BitsAmount value={c.bits} size={ICON_INLINE} dim={bits < c.bits} />
                       </span>
                     </button>
                   </li>

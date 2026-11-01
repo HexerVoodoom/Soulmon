@@ -1,6 +1,7 @@
 /**
  * Glifo SVG inline do TIPO de slot da Hexsmith (fallback enquanto a arte final não entra em `assets/soulmon/hex`).
- * Ícone pelado (sem caixa): só o traço da peça. `filled` = slot ocupado (traço cheio na cor do valor); vazio = silhueta tracejada.
+ * Ícone pelado (sem caixa): só o traço da peça. Cor sempre por token (`var(--sm2-*)`), passada pelo chamador.
+ * `filled` = slot ocupado (traço cheio); vazio = silhueta tracejada. Sem brilho: o estado vem da cor, não de sombra.
  */
 import type { HexSlot } from '../../utils/hexsmith';
 
@@ -17,12 +18,14 @@ const PATHS: Readonly<Record<HexSlot, string>> = {
   luvas: 'M7 20 L7 11 L7 6 M10 11 L10 4 M13 11 L13 4.5 M16 12 L16 6.5 M7 13 Q6 9 4 10 M7 20 L16 20 L16 12',
 };
 
+/** Traço no viewBox 24: 2 = o peso do Material Symbols Rounded na escala de ícone. */
+const STROKE = 2;
+
 export function HexSlotGlyph({ slot, size, color, filled = false }: { slot: HexSlot; size: number; color: string; filled?: boolean }) {
   return (
-    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" data-hex-glyph={slot}
-      style={{ display: 'block', filter: filled ? `drop-shadow(0 0 4px ${color})` : undefined }}>
-      <path d={PATHS[slot]} fill="none" stroke={color} strokeWidth={filled ? 1.8 : 1.3} strokeLinecap="round" strokeLinejoin="round"
-        strokeDasharray={filled ? undefined : '2 1.6'} opacity={filled ? 1 : 0.85} />
+    <svg aria-hidden="true" width={size} height={size} viewBox="0 0 24 24" data-hex-glyph={slot} style={{ display: 'block', flex: 'none' }}>
+      <path d={PATHS[slot]} fill="none" stroke={color} strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round"
+        strokeDasharray={filled ? undefined : '2 2.5'} />
     </svg>
   );
 }

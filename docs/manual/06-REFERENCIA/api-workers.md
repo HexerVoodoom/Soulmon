@@ -687,3 +687,6 @@ Regra dos DESGARRADOS DE JOGADORES (01/11/2026, REGISTRO §213): desgarrado = So
 
 ### `functions/api/_libraryAck.js`
 Espelho de forma de dois campos do save da Biblioteca (01/11/2026): `libraryAck` (`{b,e,s}` inteiros 0..100000, contadores do aviso NEW, `src/utils/libraryNew.ts`) e `strayPlayersSeen` (desgarrados de jogadores vistos, `src/utils/strayPlayers.ts`; sid 24 hex, sem repetir, teto 200, sprite por `spriteUrlOrNull`). `save.js` aplica; nunca recusa o save. Régua: `strays.contract.test.js`.
+
+### `functions/api/_hexsmith.js`
+**Dono de:** o espelho no servidor de `src/utils/hexsmith.ts`: `sanitizeHexsmith` (chamado pelo `save.js` no campo `hexsmith`) e `hexOverrides` (lido pelo `_duel.js`: família do especial, `elBasica`, `elEspecial` e `elDefesa` da couraça). Paridade: `hexsmith.parity.test.js`. Não confere pagamento (itens não dão % de atributo).

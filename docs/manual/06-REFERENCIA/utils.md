@@ -4010,3 +4010,9 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 
 ### `src/utils/strayPlayerEncounter.ts`
 **Dono de:** o desgarrado de JOGADOR nos encontros (REGISTRO §213 emenda): chance determinística de 1/40 por chave de encontro (`strayPlayerForEncounter`), o pool da sessão (`loadStrayPool`), o hook `useStrayPlayerEncounters` (arte/rótulo por cima do inimigo) e o receptor do "visto" registrado pelo App. Nunca no Torneio. **Chamado por:** `DungeonGame.tsx`, `RogueFight.tsx`, `Match3Game.tsx`, `ArenaGame.tsx`, `App.tsx`. **Régua:** `strayPlayerEncounter.test.ts`.
+
+## `src/utils/hexsmith.ts` (01/11/2026)
+**Dono de:** as regras da Hexsmith (Forja). Cinco slots (`HEX_SLOTS`: coroa = família do especial, amuleto = elemento do especial, garra = elemento do básico, couraça = elemento de defesa, luvas = alcance só visual); ids `slot:valor` (`parseHexItem`, `hexValuesOf`); custo `hexCost`/`HEX_COSTS` (poções do próprio elemento ou fragmentos + Bits GANHOS); `hexForgeRefusal`/`forgeHexItem`/`equipHexItem`/`unequipHexSlot` (posse só cresce, um por slot); `sanitizeHexsmith`; e a leitura para o combate: `hexOverrides`, `hexFamily`, `hexArenaElements` (base dominante), `hexIdentity` (visual). Espelho: `functions/api/_hexsmith.js` (`hexsmith.parity.test.js`).
+
+## `src/utils/hexsmithCopy.ts` (01/11/2026)
+**Dono de:** os textos EN/PT-BR da tela da Hexsmith (`components/hex/HexsmithSheet.tsx`): rótulos dos slots, código hex e motivos de recusa em tom de convite.
