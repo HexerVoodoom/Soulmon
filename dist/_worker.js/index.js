@@ -2703,6 +2703,69 @@ function hexOverrides(raw) {
   return out;
 }
 __name(hexOverrides, "hexOverrides");
+var HEX_COSTS = {
+  element: { potions: 3, bits: 1500, fragments: 0 },
+  coroa: { potions: 0, bits: 2e3, fragments: 20 },
+  luvas: { potions: 0, bits: 500, fragments: 5 }
+};
+function hexCost(id) {
+  const it = parseHexItem(id);
+  if (!it) return void 0;
+  if (HEX_ELEMENT_SLOTS.includes(it.slot)) return { ...HEX_COSTS.element, potionElement: it.value };
+  return { ...it.slot === "coroa" ? HEX_COSTS.coroa : HEX_COSTS.luvas };
+}
+__name(hexCost, "hexCost");
+var num = /* @__PURE__ */ __name((v) => typeof v === "number" && Number.isFinite(v) && v > 0 ? v : 0, "num");
+function forgeOnServer(stored, itemId) {
+  const c = typeof itemId === "string" ? hexCost(itemId) : void 0;
+  if (!c) return { ok: false, reason: "invalid" };
+  const id = (
+    /** @type {string} */
+    itemId
+  );
+  const hx = sanitizeHexsmith(stored.hexsmith);
+  if (hx.owned.includes(id)) return { ok: true, already: true, state: stored };
+  if (hx.owned.length >= HEX_MAX_OWNED) return { ok: false, reason: "invalid" };
+  const food = stored.foodInventory && typeof stored.foodInventory === "object" && !Array.isArray(stored.foodInventory) ? stored.foodInventory : {};
+  const k = c.potionElement ? `potion:${c.potionElement}` : "";
+  if (c.potions > 0 && num(food[k]) < c.potions) return { ok: false, reason: "potions" };
+  const frag = num(stored.equipment?.fragments);
+  if (c.fragments > 0 && frag < c.fragments) return { ok: false, reason: "fragments" };
+  const gp = num(stored.gamePoints);
+  const paidLeft = num(stored.bitsOrigin?.paidLeft);
+  if (c.bits > 0 && Math.max(0, gp - Math.min(gp, paidLeft)) < c.bits) return { ok: false, reason: "bits" };
+  const next = { ...stored };
+  if (c.potions > 0) {
+    const foodInventory = { ...food, [k]: num(food[k]) - c.potions };
+    if (foodInventory[k] <= 0) delete foodInventory[k];
+    next.foodInventory = foodInventory;
+  }
+  if (c.fragments > 0) next.equipment = { ...stored.equipment, fragments: frag - c.fragments };
+  if (c.bits > 0) {
+    next.gamePoints = gp - c.bits;
+    if (stored.bitsOrigin && typeof stored.bitsOrigin === "object") {
+      const left = Math.min(Math.max(0, paidLeft - c.bits), next.gamePoints);
+      if (left !== paidLeft) next.bitsOrigin = { ...stored.bitsOrigin, paidLeft: left };
+    }
+  }
+  const slot = (
+    /** @type {{ slot: string }} */
+    parseHexItem(id).slot
+  );
+  const equipped = hx.equipped[slot] ? hx.equipped : { ...hx.equipped, [slot]: id };
+  next.hexsmith = { owned: [...hx.owned, id], equipped };
+  return { ok: true, already: false, state: next };
+}
+__name(forgeOnServer, "forgeOnServer");
+function enforceStoredHexOwned(incomingHex, stored) {
+  const sto = sanitizeHexsmith(stored?.hexsmith);
+  const inc = incomingHex && typeof incomingHex === "object" ? (
+    /** @type {Record<string, unknown>} */
+    incomingHex
+  ) : void 0;
+  return sanitizeHexsmith({ owned: sto.owned, equipped: inc ? inc.equipped : sto.equipped });
+}
+__name(enforceStoredHexOwned, "enforceStoredHexOwned");
 
 // api/_duel.js
 var DUEL_PENDING_MS = 5 * 60 * 1e3;
@@ -7119,11 +7182,11 @@ function applyAggregate(agg, events) {
 __name(applyAggregate, "applyAggregate");
 function summarizeNorthStar(totals) {
   const t = totals && typeof totals === "object" ? totals : {};
-  const num2 = /* @__PURE__ */ __name((k) => typeof t[k] === "number" && Number.isFinite(t[k]) ? t[k] : 0, "num");
+  const num3 = /* @__PURE__ */ __name((k) => typeof t[k] === "number" && Number.isFinite(t[k]) ? t[k] : 0, "num");
   const read = /* @__PURE__ */ __name((prefix) => {
-    const active = num2(prefix);
+    const active = num3(prefix);
     let onTarget = 0;
-    for (let n = NORTH_STAR_GOAL_DAYS; n <= 7; n++) onTarget += num2(`${prefix}.goal_days.${n}`);
+    for (let n = NORTH_STAR_GOAL_DAYS; n <= 7; n++) onTarget += num3(`${prefix}.goal_days.${n}`);
     return { weekly_active: active, on_target: onTarget, rate: active > 0 ? onTarget / active : null };
   }, "read");
   const by_tier = {};
@@ -13283,7 +13346,7 @@ function layersDelta(antes, depois) {
   return d.layers;
 }
 __name(layersDelta, "layersDelta");
-var num = /* @__PURE__ */ __name((v, lo, hi) => typeof v === "number" && Number.isFinite(v) ? Math.min(hi, Math.max(lo, Math.floor(v))) : lo, "num");
+var num2 = /* @__PURE__ */ __name((v, lo, hi) => typeof v === "number" && Number.isFinite(v) ? Math.min(hi, Math.max(lo, Math.floor(v))) : lo, "num");
 async function readRiftLastro(store, saveId, nowMs = Date.now(), month2 = monthOf(nowMs)) {
   const raw = await store.get(riftLayersKey(month2, saveId));
   if (raw === null || raw === void 0) return null;
@@ -13293,9 +13356,9 @@ async function readRiftLastro(store, saveId, nowMs = Date.now(), month2 = monthO
   } catch {
     v = null;
   }
-  if (typeof v === "number") return { n: num(v, 0, 1e6), base: 1, rec: 0, d: "", dn: 0 };
+  if (typeof v === "number") return { n: num2(v, 0, 1e6), base: 1, rec: 0, d: "", dn: 0 };
   if (!v || typeof v !== "object") return null;
-  return { n: num(v.n, 0, 1e6), base: num(v.base, 1, DUNGEON_MAX_LAYER), rec: num(v.rec, 0, DUNGEON_MAX_LAYER), d: typeof v.d === "string" ? v.d : "", dn: num(v.dn, 0, 1e6) };
+  return { n: num2(v.n, 0, 1e6), base: num2(v.base, 1, DUNGEON_MAX_LAYER), rec: num2(v.rec, 0, DUNGEON_MAX_LAYER), d: typeof v.d === "string" ? v.d : "", dn: num2(v.dn, 0, 1e6) };
 }
 __name(readRiftLastro, "readRiftLastro");
 async function readRiftLayers(store, saveId, nowMs = Date.now()) {
@@ -13309,10 +13372,10 @@ async function bumpRiftLayers(store, saveId, antes, depois, nowMs = Date.now(), 
   const month2 = monthOf(nowMs);
   const day2 = isoDayUtc(nowMs);
   let l = await readRiftLastro(store, saveId, nowMs, month2);
-  const recDepois = num(ctx.recordDepois, 0, DUNGEON_MAX_LAYER);
+  const recDepois = num2(ctx.recordDepois, 0, DUNGEON_MAX_LAYER);
   if (!l) {
     const ant = await readRiftLastro(store, saveId, nowMs, prevMonthOf(nowMs)).catch(() => null);
-    const rec0 = ant ? Math.max(ant.rec, ant.base + ant.n - 1) : num(ctx.recordAntes, 0, DUNGEON_MAX_LAYER);
+    const rec0 = ant ? Math.max(ant.rec, ant.base + ant.n - 1) : num2(ctx.recordAntes, 0, DUNGEON_MAX_LAYER);
     l = { n: 0, base: riftStartLayer(rec0), rec: rec0, d: day2, dn: 0 };
   }
   if (l.d !== day2) {
@@ -14438,6 +14501,33 @@ async function onRequestBruto2({ request, env }) {
     state.credits = admin ? ADMIN_CREDITS_DISPLAY : ent.credits;
     return Response.json({ found: true, state, revision: revisionOf(metadata) }, { headers: CORS12 });
   }
+  if (request.method === "POST" && url.searchParams.get("action") === "hexForge") {
+    const acctGate = takeToken("save-write", saveId, SAVE_WRITE_RATE_ACCOUNT);
+    if (!acctGate.ok) return tooManyRequests(acctGate.retryAfter, CORS12);
+    const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    if (typeof prev?.value !== "string") return Response.json({ error: "no-save" }, { status: 404, headers: CORS12 });
+    const cur = revisionOf(prev.metadata);
+    const base = body?.baseRevision;
+    if (Number.isInteger(base) && base >= 0 && base !== cur) {
+      return Response.json({ error: "conflict", revision: cur }, { status: 409, headers: CORS12 });
+    }
+    let stored;
+    try {
+      stored = JSON.parse(prev.value);
+    } catch {
+      stored = null;
+    }
+    if (!stored || typeof stored !== "object" || Array.isArray(stored)) return Response.json({ error: "no-save" }, { status: 404, headers: CORS12 });
+    const r = forgeOnServer(stored, body?.itemId);
+    if (!r.ok) return Response.json({ error: r.reason }, { status: r.reason === "invalid" ? 400 : 402, headers: CORS12 });
+    const campos = /* @__PURE__ */ __name((st) => ({ hexsmith: st.hexsmith, gamePoints: st.gamePoints, foodInventory: st.foodInventory, equipment: st.equipment, bitsOrigin: st.bitsOrigin }), "campos");
+    if (r.already) return Response.json({ ok: true, already: true, revision: cur, ...campos(stored) }, { headers: CORS12 });
+    const serialized = JSON.stringify(r.state);
+    const h = await sha256Hex2(serialized);
+    const f = firstSeenMeta(prev.metadata).f ?? Date.now();
+    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS, metadata: { t: Date.now(), f, r: cur + 1, h } });
+    return Response.json({ ok: true, already: false, revision: cur + 1, ...campos(r.state) }, { headers: CORS12 });
+  }
   if (request.method === "POST") {
     const acctGate = takeToken("save-write", saveId, SAVE_WRITE_RATE_ACCOUNT);
     if (!acctGate.ok) return tooManyRequests(acctGate.retryAfter, CORS12);
@@ -14455,7 +14545,6 @@ async function onRequestBruto2({ request, env }) {
     if ("talentPicks" in state) state.talentPicks = sanitizeTalentPicks(state.talentPicks, bondLevelFor(state.totalXP));
     if ("equipment" in state) state.equipment = sanitizeEquipment(state.equipment);
     if ("forge" in state) state.forge = sanitizeForge(state.forge);
-    if ("hexsmith" in state) state.hexsmith = sanitizeHexsmith(state.hexsmith);
     if ("bitsOrigin" in state) {
       const o = sanitizeBitsOrigin(state.bitsOrigin);
       if (o) state.bitsOrigin = o;
@@ -14542,6 +14631,24 @@ async function onRequestBruto2({ request, env }) {
       if (mexeu.length) console.warn("save: estagio da fichaJornada ja gravado, mantido o do servidor", { saveIdPrefix: saveId.slice(0, 8), estagios: mexeu });
       if (ficha) state.fichaJornada = ficha;
       else delete state.fichaJornada;
+    }
+    {
+      const gravadoTemHex = typeof prev?.value === "string" && prev.value.includes('"hexsmith"');
+      if (gravadoTemHex || "hexsmith" in state) {
+        let gravado;
+        if (gravadoTemHex) {
+          try {
+            gravado = JSON.parse(prev.value);
+          } catch {
+            gravado = void 0;
+          }
+        }
+        const veio = "hexsmith" in state ? state.hexsmith : void 0;
+        state.hexsmith = enforceStoredHexOwned(veio, gravado);
+        const pedidos = Array.isArray(veio?.owned) ? veio.owned : [];
+        const ignorados = pedidos.filter((id) => typeof id === "string" && !state.hexsmith.owned.includes(id));
+        if (ignorados.length) console.warn("save: HEX fora da posse gravada ignorado", { saveIdPrefix: saveId.slice(0, 8), ignorados: ignorados.slice(0, 10) });
+      }
     }
     let ddAntes;
     let ddDepois;
@@ -15227,7 +15334,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-bbP59J/functionsRoutes-0.7980075866311326.mjs
+// ../.wrangler/tmp/pages-vatyGm/functionsRoutes-0.9228164021777785.mjs
 var routes = [
   {
     routePath: "/api/account",
