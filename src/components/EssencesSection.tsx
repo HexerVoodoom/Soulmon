@@ -23,7 +23,7 @@ export function EssencesSection({ essences, language = 'en-US' }: { essences: Re
           return (
             <li key={id} data-essence={id}>
               <button type="button" aria-label={`${name}: ${n}`} aria-pressed={openId === id} onClick={() => setOpenId(openId === id ? null : id)}
-                style={{ all: 'unset', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, minHeight: 32, minWidth: 32 }}>
+                className="sm2-lab-essence">
                 {!icon && <span className="sm2-lib-s">{name}</span>}
                 {icon && <img src={icon} alt="" aria-hidden="true" width={24} height={24} draggable={false} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />}
                 <span className="sm2-num">{n}</span>
