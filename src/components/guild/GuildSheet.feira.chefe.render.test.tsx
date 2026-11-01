@@ -3,9 +3,9 @@
  * A SALA DA FEIRA com o mistério do Chefe (`docs/PLANO-FEIRA-CHEFE.md`, F-09): só o agregado do clã e o gesto de reabrir a folha.
  * Com a Feira DESLIGADA (a vista sem `feira`) a sala é exatamente a de antes: nenhum bloco novo.
  */
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach, afterEach } from 'vitest';
 import { screen, waitFor, fireEvent, cleanup } from '@testing-library/react';
-import { renderWithCss } from '../../test/renderEnv';
+import { aquecerRender, renderWithCss } from '../../test/renderEnv';
 
 vi.mock('../../utils/community', async (orig) => {
   const real = await orig<typeof import('../../utils/community')>();
@@ -38,6 +38,14 @@ const montar = async (feira = true) => {
   await waitFor(() => expect(screen.queryByText(GUILD_COPY['guild.salao.carregando'][0])).toBeNull());
   return r;
 };
+
+// O 1º caso pagava, dentro do teto dele, o import frio do chunk lazy da folha do Chefe (FeiraEventoSheet + a luta) e o
+// parse do index.css (19,6 s medido sob carga). Os dois custos únicos vão para um hook com teto próprio; o caso passa a
+// esperar só o ESTADO (a folha montada).
+beforeAll(async () => {
+  aquecerRender();
+  await Promise.all([import('./FeiraEventoSheet'), import('./GroveFolha')]);
+}, 120_000);
 
 beforeEach(() => {
   for (const f of [getGuild, getGuildRewards, getGuildFeira]) vi.mocked(f).mockReset();

@@ -24,7 +24,7 @@
  * sintéticas provando que o detector acusa o que deve acusar e não acusa o que
  * não deve. Sem isso um guard passa sempre, pelo motivo errado.
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { ts, fonteDe } from '../test/tsAst';
@@ -497,15 +497,30 @@ describe('guard de asset — escala de render (uma grade de pixel só)', () => {
     expect(naGrade(escala({ w: 64, h: 64 }, { w: 32, h: 16 }))).toBe(false);
   });
 
+  // O import frio de `utils/petStage` + `utils/shop` (grafo grande, transformado pelo Vite) é o grosso do custo do 1º caso
+  // do visor — 6,6 s ocioso, >15 s com a suíte inteira disputando CPU. Paga aqui, num hook com teto próprio, e o caso passa a
+  // medir só o que afirma (a metadata dos PNGs).
+  beforeAll(async () => {
+    await import('../utils/petStage');
+    await import('../utils/shop');
+  }, 120_000);
+
+  /** Cada PNG é medido UMA vez (o inventário é lido por 2 casos; sharp.metadata é I/O). */
+  const medidas = new Map<string, Promise<{ w: number; h: number }>>();
+
   /** Todo PNG que o visor desenha, com a caixa em px em que ele é desenhado. */
   async function pecasDoVisor(): Promise<Array<{ nome: string; src: { w: number; h: number }; box: { w: number; h: number } }>> {
     const { BASE_SLOTS, DECOR_SLOTS } = await import('../utils/petStage');
     const { ALL_SHOP_ITEMS } = await import('../utils/shop');
     const pecas: Array<{ nome: string; src: { w: number; h: number }; box: { w: number; h: number } }> = [];
 
-    const medir = async (arquivo: string) => {
-      const m = await sharp(arquivo).metadata();
-      return { w: m.width ?? 0, h: m.height ?? 0 };
+    const medir = (arquivo: string) => {
+      let dim = medidas.get(arquivo);
+      if (!dim) {
+        dim = sharp(arquivo).metadata().then((m) => ({ w: m.width ?? 0, h: m.height ?? 0 }));
+        medidas.set(arquivo, dim);
+      }
+      return dim;
     };
 
     // A mobília base (o berço), que fica DEBAIXO do pet — o pior vizinho
@@ -515,20 +530,28 @@ describe('guard de asset — escala de render (uma grade de pixel só)', () => {
 
     // A decoração: id do item da loja → `decor/<id>.png` (a convenção de nome
     // é do `utils/decorArt.ts`; arquivo faltando aqui é achado por si só).
+    const decor: Array<{ nome: string; arquivo: string; box: { w: number; h: number } }> = [];
     for (const item of ALL_SHOP_ITEMS) {
       if (item.kind !== 'furniture' || !item.slot) continue;
       const arquivo = path.join(ASSETS, 'decor', `${item.id}.png`);
       if (!fs.existsSync(arquivo)) continue;
       const slot = DECOR_SLOTS[item.slot];
-      pecas.push({ nome: `decor/${item.id}.png`, src: await medir(arquivo), box: { w: slot.w, h: slot.h } });
+      decor.push({ nome: `decor/${item.id}.png`, arquivo, box: { w: slot.w, h: slot.h } });
     }
+    // Em paralelo: eram N awaits em série sobre I/O de disco (o que a carga multiplica).
+    pecas.push(...await Promise.all(decor.map(async (d) => ({ nome: d.nome, src: await medir(d.arquivo), box: d.box }))));
     return pecas;
   }
 
   it('o inventário de peças do visor não está vazio (senão o guard passa por omissão)', async () => {
     const pecas = await pecasDoVisor();
     expect(pecas.length).toBeGreaterThan(10);
-  });
+    // Teto próprio, justificado: este é o PRIMEIRO caso a pagar o import frio de
+    // `utils/petStage` + `utils/shop` (grafo grande) e a ler a metadata de todo o
+    // `decor/`; custo intrínseco de contrato que lê centenas de PNGs. Sob carga
+    // (suíte inteira + outras sessões) passava de 15 s. O custo repetido já saiu
+    // (`medidas` mede cada PNG uma vez).
+  }, 60_000);
 
   it('REGRESSÃO (passa hoje): o sprite do pet cai em escala inteira', async () => {
     // O que JÁ foi consertado, e a prova de que o guard mede a coisa certa:

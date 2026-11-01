@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeAll } from 'vitest';
 import { cleanup, fireEvent, render, waitFor } from '@testing-library/react';
 import { afterEach } from 'vitest';
 import { RogueDungeon } from './RogueDungeon';
+import { loadDinoGame, loadEcoGame, loadMatch3Game, loadPatchesGame, loadRPSGame } from './nav/playPrefetch';
 import { combatantAt, REFERENCE_BUILDS } from '../utils/combate/level';
 import { challengeFor, emptyRun, pathsFor, type RogueRun } from '../utils/rogueDungeon';
 
@@ -14,6 +15,13 @@ vi.mock('./mente/ZipGame', () => ({
 }));
 
 afterEach(cleanup);
+
+// Os jogos reais e a luta entram por `lazy()`; o 1º caso que abre um deles pagava o import frio do grafo inteiro DENTRO do
+// teto do teste (24,5 s medido sob carga, contra um teto de 15 s). Paga aqui, num hook com teto próprio; os casos esperam
+// só o ESTADO (o jogo/luta montado).
+beforeAll(async () => {
+  await Promise.all([loadDinoGame(), loadEcoGame(), loadMatch3Game(), loadPatchesGame(), loadRPSGame(), import('./RogueFight'), import('./SoulBarrage')]);
+}, 180_000);
 const D = '2026-10-25';
 const combatant = combatantAt(20, REFERENCE_BUILDS.balanced);
 
