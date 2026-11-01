@@ -63,3 +63,62 @@ export function hexOverrides(raw) {
   for (const [slot, key] of pairs) { const x = v(slot); if (x) out[key] = x; }
   return out;
 }
+
+/**
+ * Custos (espelho de `HEX_COSTS` em `src/utils/hexsmith.ts`; `hexsmith.parity.test.js` compara). `potions` = poções do PRÓPRIO
+ * elemento do item (chave `potion:<elemento>` em `foodInventory`); `fragments` = `equipment.fragments`; `bits` = `gamePoints`.
+ */
+export const HEX_COSTS = {
+  element: { potions: 3, bits: 1500, fragments: 0 },
+  coroa: { potions: 0, bits: 2000, fragments: 20 },
+  luvas: { potions: 0, bits: 500, fragments: 5 },
+};
+
+/** @param {string} id @returns {{ potions: number, potionElement?: string, bits: number, fragments: number } | undefined} */
+export function hexCost(id) {
+  const it = parseHexItem(id);
+  if (!it) return undefined;
+  if (HEX_ELEMENT_SLOTS.includes(it.slot)) return { ...HEX_COSTS.element, potionElement: it.value };
+  return { ...(it.slot === 'coroa' ? HEX_COSTS.coroa : HEX_COSTS.luvas) };
+}
+
+/** @param {unknown} v */
+const num = (v) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+
+/**
+ * PAGAMENTO dos HEXes no save (01/11/2026, REGISTRO §216). Todo item que entra em `owned` e NAO estava no save gravado precisa ser
+ * coberto pela QUEDA, do gravado para o recebido, de poções do elemento, fragmentos e Bits (`gamePoints`). A queda é um orçamento
+ * consumido item a item, na ordem da lista; item sem cobertura é REVERTIDO (sai da posse e do slot). Recursos não são tocados.
+ * Item já possuído no gravado não cobra de novo. Sem save gravado, o orçamento é zero (nenhum HEX nasce de graça).
+ * @param {unknown} incomingHex  `state.hexsmith` recebido
+ * @param {Record<string, any>} incoming  o state recebido (já saneado: `equipment.fragments` clampado)
+ * @param {Record<string, any> | undefined} stored  o state gravado (ou undefined)
+ * @returns {{ hexsmith: { owned: string[], equipped: Record<string, string> }, revoked: string[] }}
+ */
+export function enforceHexPayment(incomingHex, incoming, stored) {
+  const hx = sanitizeHexsmith(incomingHex);
+  const before = new Set(sanitizeHexsmith(stored?.hexsmith).owned);
+  const added = hx.owned.filter((id) => !before.has(id));
+  if (!added.length) return { hexsmith: hx, revoked: [] };
+  const fIn = incoming?.foodInventory && typeof incoming.foodInventory === 'object' ? incoming.foodInventory : {};
+  const fSt = stored?.foodInventory && typeof stored.foodInventory === 'object' ? stored.foodInventory : {};
+  /** @type {Record<string, number>} */
+  const potionBudget = {};
+  let fragBudget = Math.max(0, num(stored?.equipment?.fragments) - num(incoming?.equipment?.fragments));
+  let bitsBudget = Math.max(0, num(stored?.gamePoints) - num(incoming?.gamePoints));
+  /** @type {string[]} */
+  const revoked = [];
+  for (const id of added) {
+    const c = /** @type {NonNullable<ReturnType<typeof hexCost>>} */ (hexCost(id));
+    const k = c.potionElement ? `potion:${c.potionElement}` : '';
+    if (k && !(k in potionBudget)) potionBudget[k] = Math.max(0, num(fSt[k]) - num(fIn[k]));
+    const ok = (!c.potions || potionBudget[k] >= c.potions) && fragBudget >= c.fragments && bitsBudget >= c.bits;
+    if (!ok) { revoked.push(id); continue; }
+    if (c.potions) potionBudget[k] -= c.potions;
+    fragBudget -= c.fragments;
+    bitsBudget -= c.bits;
+  }
+  if (!revoked.length) return { hexsmith: hx, revoked };
+  const owned = hx.owned.filter((id) => !revoked.includes(id));
+  return { hexsmith: sanitizeHexsmith({ owned, equipped: hx.equipped }), revoked };
+}

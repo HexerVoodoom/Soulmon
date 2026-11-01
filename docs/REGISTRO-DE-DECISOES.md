@@ -3813,3 +3813,16 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 3. **Testes mudados de propósito** (`loudness.contract.test.ts`): (a) "música ≤ degrau de Conclusão" virou "≤ teto S3"; (b) "em combate desce ao degrau do Arcade (−25)" virou "≤ degrau de Sintonia (−19)", pois −16 + offset −3 = −19. `OFFSET_MUSICA_EM_COMBATE_DB` (−3) e a escada de SFX/voz ficam intactos. **Risco aceito:** em combate a música (−19) fica 6 dB acima do golpe (Arcade, −25); se o dono sentir o golpe coberto, o remédio é aumentar o offset de combate, não baixar a trilha fora dele.
 
 **Alternativa que perdeu:** subir só o `busTrilha` por literal — viola o dono único (`loudness.ts`).
+
+## §216 — O servidor confere o pagamento dos HEXes da Hexsmith (01/11/2026, pedido do dono)
+
+**Pedido:** a Hexsmith cobrava só no cliente; um cliente adulterado ganhava HEX de graça. Custos padrão aprovados: HEX de elemento = 3 poções do elemento + 1500 Bits; coroa = 20 fragmentos + 2000 Bits; luvas = 5 fragmentos + 500 Bits (`HEX_COSTS`).
+
+1. **Regra (`functions/api/_hexsmith.js` › `enforceHexPayment`, chamado no POST do `save.js`).** Todo item em `hexsmith.owned` que NÃO está no save gravado precisa ser coberto pela QUEDA, gravado → recebido, de `foodInventory['potion:<elemento>']`, `equipment.fragments` e `gamePoints`. A queda vira um orçamento consumido item a item na ordem da lista; item sem cobertura é REVERTIDO (sai da posse e do slot) e o resto do save é gravado. Recursos não são tocados. Item já possuído no gravado não cobra de novo; trocar o equipado é livre.
+2. **Modelo seguido.** O mesmo de essências/contadores do dia (`_essences.js`, `_dayCounters.js`): o gravado é a verdade, o recebido é saneado contra ele, e o save nunca é recusado por isso (reverte só o campo).
+3. **Fonte dos custos.** As Pages Functions não importam de `src/`; `HEX_COSTS`/`hexCost` são espelhados e `hexsmith.parity.test.js` compara as duas cópias.
+4. **Conta sem save gravado:** orçamento zero, nenhum HEX nasce de graça.
+
+**Limites declarados.** (a) A cobertura olha o saldo líquido entre dois saves: Bits/fragmentos/poções GANHOS no mesmo intervalo da forja escondem parte da queda e podem reverter uma compra legítima (o item volta a poder ser forjado; o débito já gravado não é devolvido). (b) O servidor confere `gamePoints`, não a origem do Bit (Bit de Crédito × ganho, `bitsOrigin`) — isso segue só no cliente. (c) Queda de recurso gasta em outra coisa no mesmo intervalo pode ser "aproveitada" para cobrir um HEX.
+
+**Régua:** `functions/api/save.hexPayment.test.js` (compra legítima, ganho sem pagamento, pagamento parcial, saldo insuficiente, conta nova, item já possuído), `functions/api/hexsmith.parity.test.js`. **Alternativa que perdeu:** ação de forja no servidor (endpoint que debita e concede) — fecha o limite (a), mas exige mudar o fluxo do cliente e o modelo de save inteiro. **Gatilho para rever:** relato de HEX "sumindo" após forjar (limite a) → mover a forja para uma ação do servidor.

@@ -19,7 +19,7 @@ import { bondLevelFor } from './_bond.js';
 import { sanitizeTalentPicks } from './_talents.js';
 import { sanitizeEquipment, sanitizeBitsOrigin } from './_equipment.js';
 import { sanitizeForge } from './_forge.js';
-import { sanitizeHexsmith } from './_hexsmith.js';
+import { sanitizeHexsmith, enforceHexPayment } from './_hexsmith.js';
 import { sanitizeBuildingQuests } from './_buildingQuests.js';
 import { sanitizeDailyMissions, sanitizeFeats, sanitizeFirstTimes, sanitizeMissionsClaimed } from './_dailyMissions.js';
 import { sanitizeFocusLoot } from './_focusLoot.js';
@@ -415,6 +415,16 @@ async function onRequestBruto({ request, env }) {
       const { ficha, mexeu } = enforceImmutableFicha(state.fichaJornada, guardado);
       if (mexeu.length) console.warn('save: estagio da fichaJornada ja gravado, mantido o do servidor', { saveIdPrefix: saveId.slice(0, 8), estagios: mexeu });
       if (ficha) state.fichaJornada = ficha; else delete state.fichaJornada;
+    }
+    // Pagamento da Hexsmith (REGISTRO §216, `_hexsmith.js` › `enforceHexPayment`): HEX novo na posse sem a queda correspondente de
+    // poções/fragmentos/Bits em relação ao gravado é REVERTIDO (o resto do save segue). Só parseia o gravado quando há item da posse ausente do texto gravado.
+    // Atalho: todo id da posse já aparece no texto gravado → nada novo a cobrar, sem parse (o enforce confirma quando não aparece).
+    if ('hexsmith' in state && state.hexsmith.owned.some((id) => !(typeof prev?.value === 'string' && prev.value.includes(`"${id}"`)))) {
+      let gravado;
+      if (typeof prev?.value === 'string') { try { gravado = JSON.parse(prev.value); } catch { gravado = undefined; } }
+      const { hexsmith, revoked } = enforceHexPayment(state.hexsmith, state, gravado);
+      if (revoked.length) console.warn('save: HEX sem pagamento revertido', { saveIdPrefix: saveId.slice(0, 8), revoked });
+      state.hexsmith = hexsmith;
     }
     // Contadores DIARIOS monotonicos (beta-2 6.1/4.1, `_dayCounters.js`): camadas da masmorra e janelas de check-in do dia do jogador so
     // crescem dentro do dia e o dia so anda para a frente (ate o dia do servidor + 1). Apagar o save local ou voltar o contador nao

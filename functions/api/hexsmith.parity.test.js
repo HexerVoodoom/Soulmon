@@ -15,6 +15,10 @@ describe('hexsmith: servidor = app', () => {
     expect(srv.HEX_STRIKES).toEqual([...app.HEX_STRIKES]);
     expect(srv.HEX_MAX_OWNED).toBe(app.HEX_MAX_OWNED);
   });
+  it('custos: HEX_COSTS e hexCost iguais (o servidor cobra o que o app cobra, §216)', () => {
+    expect(srv.HEX_COSTS).toEqual(app.HEX_COSTS);
+    for (const id of ['garra:agua', 'amuleto:fogo', 'couraca:terra', 'coroa:heal', 'luvas:melee', 'luvas:ranged', 'x:y']) expect(srv.hexCost(id)).toEqual(app.hexCost(id));
+  });
   it('todo item valido do app e valido no servidor, e vice-versa', () => {
     for (const slot of app.HEX_SLOTS) {
       for (const v of app.hexValuesOf(slot)) expect(srv.parseHexItem(`${slot}:${v}`)).toEqual(app.parseHexItem(`${slot}:${v}`));
