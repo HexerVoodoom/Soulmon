@@ -33,6 +33,7 @@ import { essenceDropOfFoe, type EssenceDrop } from '../utils/essences';
 import { ElementAdvantageBadge } from './games/ElementAdvantageBadge';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
+import { useStrayPlayerEncounters } from '../utils/strayPlayerEncounter';
 import { petScaleStyle } from '../utils/spriteScale';
 /* Rodada 4 (N2): o porte reduzido por estágio vale só na Home e nos combates; no minigame o bicho tem o tamanho cheio. */
 const PET_SCALE_MINIGAME = 1;
@@ -144,7 +145,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
 
   const first = useMemo(() => {
     const sd = seed ?? freshSeed();
-    return { round: newRound(sd), battle: combatFor(sd, demoCharacterId, playerLevel, pvp, petElement) };
+    return { sd, round: newRound(sd), battle: combatFor(sd, demoCharacterId, playerLevel, pvp, petElement) };
   }, [seed, demoCharacterId, playerLevel, pvp]);
   const [elements, setElements] = useState<readonly string[]>(first.battle.elements);
   const [board, setBoard] = useState<Board>(first.round.board);
@@ -157,6 +158,8 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
     if (!onEnemySeen) return;
     for (const e of combat.enemies) if (e.roster) onEnemySeen(e.roster);
   }, [combat.enemies, onEnemySeen]);
+  // §213: desgarrado de JOGADOR por cima de um inimigo da Fenda (só arte/rótulo; nunca no PvP). Raro, determinístico pela semente.
+  const wildPlayers = useStrayPlayerEncounters(combat.enemies.map((_, i) => (pvp ? null : `m3|${first.sd}|${i}`)));
   const enemyRngRef = useRef<Rng>(first.battle.rng);
   const [sel, setSelState] = useState<Pos | null>(null);
   const selRef = useRef<Pos | null>(null);
@@ -651,8 +654,9 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
           const line = e.line && e.line in OWN_LINE_SPRITES ? e.line : LINES[i];
           const ros = rosterOf(e);
           // PVP: arte do adversário (jogador real ou NPC) e o rótulo genérico — o nome do roster/da pessoa nunca aparece
-          const src = pvp ? (pvp.sprite ?? ros?.src ?? '') : (ros?.src ?? OWN_LINE_SPRITES[line as keyof typeof OWN_LINE_SPRITES][ENEMY_STAGES[i]]);
-          const enemyName = pvp ? `${isPt ? 'Oponente' : 'Opponent'} ${isPt ? 'nv' : 'Lv'} ${pvp.level}` : wildFoeLabel(ros ? e.roster : ENEMY_STAGES[i], isPt);
+          const wp = wildPlayers[i];
+          const src = pvp ? (pvp.sprite ?? ros?.src ?? '') : (wp?.spriteUrl ?? ros?.src ?? OWN_LINE_SPRITES[line as keyof typeof OWN_LINE_SPRITES][ENEMY_STAGES[i]]);
+          const enemyName = pvp ? `${isPt ? 'Oponente' : 'Opponent'} ${isPt ? 'nv' : 'Lv'} ${pvp.level}` : wp ? wildFoeLabel('rookie', isPt) : wildFoeLabel(ros ? e.roster : ENEMY_STAGES[i], isPt);
           const isActive = combat.outcome === 'playing' && combat.active === i;
           const down = e.hp <= 0;
           const icon = elementIcon(e.element);

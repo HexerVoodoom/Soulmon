@@ -159,6 +159,7 @@ describe('2. ponto novo sem o predicado reprova', () => {
       'components/perfil/ProfileEditor.tsx': 'só abre em Configurações > Perfil; o perfil público só sobe com PvP ligado (nunca na demo)',
       'utils/giftsCredited.ts': 'confirma presentes (giftsAck) só depois de um save confirmado na nuvem — na demo não há POST de save, então nunca dispara',
       'components/Match3Game.tsx': 'PVP do Elemental Fusion: só é oferecido com `rankSaveId` (saveId de CONTA; a demo não tem) e a rota `opponents` exige token — sem conta o jogo abre o Normal direto',
+      'utils/strayPlayerEncounter.ts': 'só LÊ o pool anônimo e público de desgarrados (`action=strays`, sem id nem token); na demo não grava nada na nuvem (o visto vai ao save local)',
       'hooks/useGroveWatch.ts': 'só consulta quem já tem memória de roda no aparelho — a demo não tem (Guilda bloqueada)',
     };
     // Só import de VALOR conta: `import type` não executa nada (fairArt, groveLocal, groveStage, guildCopy e

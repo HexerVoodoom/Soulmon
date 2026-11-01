@@ -34,6 +34,8 @@ import { TorcidaLayer } from './games/TorcidaKit';
 import { playDefeat, playVictory } from '../utils/sounds';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
 import { dexIdsOfFoe } from '../utils/elementDex';
+import { useStrayPlayerEncounters } from '../utils/strayPlayerEncounter';
+import { wildFoeLabel } from '../utils/wildFoeLabel';
 import { essenceDropOfFoe, type EssenceDrop } from '../utils/essences';
 import { isStraySeed } from '../utils/strayFoes';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG, ELEMENT_ADVANTAGE_TAG } from './games/pveTags';
@@ -314,7 +316,9 @@ export function ArenaGame({
     montarRodada(n, pool);
   }, [pool, rodada, pontos, onEarnPoints, montarRodada, rift.riftBits]);
 
-  const nomeDe = (e: ArenaEnemy) => (isPt ? e.namePt : e.nameEn);
+  // §213: desgarrado de JOGADOR por cima de um inimigo da rodada (só arte/rótulo). Raro, determinístico por run+rodada+posição.
+  const wildPlayers = useStrayPlayerEncounters(inimigos.map((_, i) => `arena|${runSeedRef.current}|${rodadaRef.current}|${i}`));
+  const nomeDe = (e: ArenaEnemy, i?: number) => (i !== undefined && wildPlayers[i] ? wildFoeLabel('rookie', isPt) : isPt ? e.namePt : e.nameEn);
   const sair = isPt ? 'Sair' : 'Leave';
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const petScale = usePetScale(evolutionStage, petSprite);
@@ -357,7 +361,7 @@ export function ArenaGame({
           foes={inimigos.map((e, i) => {
             const max = hpPoints(foesLado[i].combatant.hp);
             return {
-              key: i, sprite: sprites[i], stage: e.tier, name: nomeDe(e), hp: Math.round(Math.max(0, foesHp(i)) * max), maxHp: max,
+              key: i, sprite: wildPlayers[i]?.spriteUrl ?? sprites[i], stage: e.tier, name: nomeDe(e, i), hp: Math.round(Math.max(0, foesHp(i)) * max), maxHp: max,
               element: fxElementId(e.element ?? e.elements[0]), down: foesHp(i) <= 1e-9,
               // só quem tem especial (o chefe) mostra a barra de energia
               energy: foesLado[i].special && pronto ? (batalha.foeEnergy[i] ?? 0) / ENERGY_TRIGGER : undefined,

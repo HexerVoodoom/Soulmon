@@ -65,6 +65,7 @@ import { RewardPreview } from './ui/RewardPreview';
 import type { LText } from '../utils/oracle';
 import type { Language } from '../utils/i18n';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
+import { useStrayPlayerEncounters } from '../utils/strayPlayerEncounter';
 
 /**
  * Dungeon minigame — an AUTOMATIC, endless descent, in the full-screen `BattleStage`.
@@ -282,6 +283,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
 
   const enemy = enemies[enemyIdx];
   const enemySeenKey = enemy?.stage;
+  // §213: desgarrado de JOGADOR por cima do inimigo (só arte/rótulo; raro, determinístico por andar+posição+inimigo).
+  const [wildPlayer] = useStrayPlayerEncounters([enemy ? `dungeon|${floor}|${enemyIdx}|${enemy.stage}` : null]);
   useEffect(() => { if (enemySeenKey) onEnemySeen?.(enemySeenKey); }, [enemySeenKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const petScale = usePetScale(evolutionStage, petSprite);
@@ -772,7 +775,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
             cheerPending: pronto ? (battle.meter / CHEER_TAPS_FULL) * (CHEER.energyPerDischarge / ENERGY_TRIGGER) : 0,
           }}
           foes={[{
-            key: `${floor}-${enemyIdx}`, sprite: enemy.sprite, stage: enemy.stage, name: wildFoeLabel(enemy.stage, isPt), hp: Math.round(Math.max(0, foeHpFrac) * foeMax), maxHp: foeMax,
+            key: `${floor}-${enemyIdx}`, sprite: wildPlayer?.spriteUrl ?? enemy.sprite, stage: enemy.stage, name: wildPlayer ? wildFoeLabel('rookie', isPt) : wildFoeLabel(enemy.stage, isPt), hp: Math.round(Math.max(0, foeHpFrac) * foeMax), maxHp: foeMax,
             element: enemyEl, down: foeHpFrac <= 1e-9,
             // só quem tem especial (o mega) mostra a barra de energia
             energy: enemy.foe.special && pronto ? (battle.foeEnergy[0] ?? 0) / ENERGY_TRIGGER : undefined,
