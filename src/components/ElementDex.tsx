@@ -84,7 +84,7 @@ export function ElementDex({ defeated, language = 'en-US', isNew }: { defeated: 
         })}
       </ul>
       {openId && m && (
-        <RitualDialog onClose={() => setOpenId(null)} labelledBy="sm2-dex-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320}>
+        <RitualDialog onClose={() => setOpenId(null)} labelledBy="sm2-dex-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320} closeOnBackdrop>
           <h2 id="sm2-dex-title" className="sm2-lib-h2" style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}>
             {dexElementName(openId, isPt)}
           </h2>

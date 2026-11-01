@@ -71,11 +71,13 @@ export interface RitualDialogProps {
    *  `[data-theme]`, então o atributo no cartão basta). F2 (01/10/2026): o
    *  prêmio da manhã é claro mesmo com o app no escuro. Ausente = segue o app. */
   theme?: 'light' | 'dark';
+  /** Tocar no véu, fora do cartão, fecha (01/11/2026, dono: modais do Drive). Opt-in: cerimônias seguem só pelo X. */
+  closeOnBackdrop?: boolean;
 }
 
 export function RitualDialog({
   label, labelledBy, onClose, zIndex = 200, maxWidth = 340, closeLabel, closeLast = false, closeSide = 'start',
-  focusContainer = false, veilRole, children, style, className, theme,
+  focusContainer = false, veilRole, children, style, className, theme, closeOnBackdrop = false,
 }: RitualDialogProps) {
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   const closeButton = closeLabel ? <CloseX onClose={onClose} label={closeLabel} side={closeSide} inOrder={closeLast} /> : null;
@@ -91,6 +93,8 @@ export function RitualDialog({
   return (
     <div
       {...(veilRole ? { role: veilRole, 'aria-live': 'polite' as const } : null)}
+      data-ritual-veil
+      onClick={closeOnBackdrop ? e => { if (e.target === e.currentTarget) onClose(); } : undefined}
       style={{
         position: 'fixed', inset: 0, zIndex,
         background: RITUAL_SCRIM,
