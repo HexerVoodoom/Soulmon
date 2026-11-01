@@ -34,11 +34,11 @@ describe('intro pré-login', () => {
     expect(introVista()).toBe(true);
   });
 
-  it('tempos batem com o vídeo real: 66,5 s e início de cada plano pelos clipes de 5,5 s', () => {
-    expect(PLANOS_INTRO.reduce((a, p) => a + p.s, 0)).toBe(66.5);
+  it('tempos batem com o vídeo v2: 72,85 s e início de cada plano', () => {
+    expect(PLANOS_INTRO.reduce((a, p) => a + p.s, 0)).toBeCloseTo(72.85, 2);
     const inicios: number[] = []; let acc = 0;
     for (const p of PLANOS_INTRO) { inicios.push(acc); acc += p.s; }
-    expect(inicios).toEqual([0, 5.5, 11, 22, 27.5, 38.5, 44, 55, 60.5]);
+    expect(inicios.map((x) => Math.round(x * 100) / 100)).toEqual([0, 5.98, 11.96, 23.84, 29.91, 41.79, 47.77, 59.73, 65.71]);
   });
 
   it('com vídeo, a legenda segue o currentTime', () => {
