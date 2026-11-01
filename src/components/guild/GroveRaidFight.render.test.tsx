@@ -9,9 +9,8 @@ vi.mock('../games/BattleStage', async importOriginal => {
   const mod = await importOriginal<typeof import('../games/BattleStage')>();
   return { ...mod, BattleStage: (p: Record<string, any>) => { seen.props = p; return mod.BattleStage(p as never); } };
 });
-import { GroveRaidFight, groveRaidScene } from './GroveRaidFight';
-import { PET_BACKGROUNDS } from '../../utils/backgrounds';
-import { GROVE_STAGES } from '../../utils/guildRules';
+import { GroveRaidFight, GROVE_RAID_SCENE } from './GroveRaidFight';
+import { PANORAMA_SRC } from '../../assets/bosque';
 
 const cb = combatantAt(10, REFERENCE_BUILDS.balanced);
 
@@ -31,11 +30,19 @@ describe('GroveRaidFight', () => {
     expect(seen.props?.me.sprite).toBe('/forma-evoluida.webp');
   });
 
-  it('o fundo é o cenário do Bosque do estágio do clã; sem estágio, o do nível 1', () => {
-    render(<GroveRaidFight isPt={false} seed={42} combatant={cb} bosqueStage="copa" onResult={vi.fn()} />);
-    expect(seen.props?.scene).toBe(PET_BACKGROUNDS['bg-guild-copa'].css);
-    expect(groveRaidScene(null)).toBe(PET_BACKGROUNDS['bg-guild-clareira'].css);
-    expect(groveRaidScene('inventado')).toBe(PET_BACKGROUNDS['bg-guild-clareira'].css);
-    for (const st of GROVE_STAGES) expect(groveRaidScene(st)).toBe(PET_BACKGROUNDS[`bg-guild-${st}`].css);
+  it('o fundo é o PANORAMA do Plantio (CSS url(), mesmo enquadramento do visor), não um bg-guild', () => {
+    render(<GroveRaidFight isPt={false} seed={42} combatant={cb} onResult={vi.fn()} />);
+    expect(seen.props?.scene).toBe(GROVE_RAID_SCENE);
+    expect(GROVE_RAID_SCENE).toMatch(/^url\(.+\) 40% 88% \/ auto 230% no-repeat/);
+    expect(GROVE_RAID_SCENE).toContain(PANORAMA_SRC);
+  });
+
+  it('desenha as plantas plantadas no nível certo; sem plantas, nenhuma', () => {
+    const { container, rerender } = render(<GroveRaidFight isPt seed={42} combatant={cb} niveis={{ outono: 2, verao: 5, inverno: 0 }} onResult={vi.fn()} />);
+    const pl = [...container.querySelectorAll('[data-grove-raid-planta]')].map(x => [x.getAttribute('data-grove-raid-planta'), x.getAttribute('data-nivel')]);
+    expect(pl).toEqual([['outono', '2'], ['verao', '5']]);
+    rerender(<GroveRaidFight isPt seed={42} combatant={cb} onResult={vi.fn()} />);
+    expect(container.querySelector('[data-grove-raid-planta]')).toBeNull();
+    expect(container.querySelector('[data-grove-raid-plantas]')).toBeNull();
   });
 });
