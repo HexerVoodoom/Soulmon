@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 /** §204: a luta do Bosque monta na BattleStage com os 3 inimigos e sair conta como derrota (sem custo). */
-import { describe, expect, it, vi } from 'vitest';
-import { render } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { cleanup, render } from '@testing-library/react';
 import { combatantAt, REFERENCE_BUILDS } from '../../utils/combate/level';
 
 const seen: { props: Record<string, any> | null } = { props: null };
@@ -16,6 +16,8 @@ import { GROVE_STAGES } from '../../utils/guildRules';
 const cb = combatantAt(10, REFERENCE_BUILDS.balanced);
 
 describe('GroveRaidFight', () => {
+  afterEach(() => cleanup()); // sem desmontar, os efeitos assíncronos da BattleStage estouram depois do teste (Unhandled Error no CI)
+
   it('monta a cena da luta', () => {
     const onResult = vi.fn();
     const { container } = render(<GroveRaidFight isPt={false} seed={42} combatant={cb} onResult={onResult} />);
