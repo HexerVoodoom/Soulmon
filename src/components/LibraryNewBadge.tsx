@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
+import newTag from '../assets/soulmon/ui/new-tag.png';
 import { LIBRARY_NEW_BADGE, LIBRARY_NEW_TEXT } from '../utils/libraryNew';
 
 /**
@@ -14,7 +15,8 @@ import { LIBRARY_NEW_BADGE, LIBRARY_NEW_TEXT } from '../utils/libraryNew';
 export function NewBadge({ overlay = false, hidden = false }: { overlay?: boolean; hidden?: boolean }) {
   return (
     <span className={overlay ? 'sm2-new-badge sm2-new-badge--overlay' : 'sm2-new-badge'} data-library-new-badge aria-hidden={overlay || hidden ? 'true' : undefined}>
-      {LIBRARY_NEW_BADGE}
+      <img className="sm2-new-badge__img" src={newTag} alt="" aria-hidden="true" draggable={false} />
+      <span className="sm2-sr-only">{LIBRARY_NEW_BADGE}</span>
     </span>
   );
 }
