@@ -6,7 +6,7 @@ import { HungerIndicator } from './home/HungerIndicator';
 import type { EnergyStatus } from '../utils/hunger';
 import { sanitizeSpritePose, mirrorSprite, AIR_LIFT_PX, type SpritePose } from '../utils/spritePose';
 import { getSpriteForStage, demoTintFilter, artFacesLeft, type StarterId } from '../utils/sprites';
-import { usePetScale } from '../hooks/usePetScale';
+import { usePetScale, useGroundDrop } from '../hooks/usePetScale';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
 import { petVoiceLine, type PetVoiceKind } from '../utils/petVoice';
 import { welcomeBackLine } from '../utils/welcomeBack';
@@ -948,6 +948,8 @@ export const CompanionHUD = memo(function CompanionHUD({
     ?? (chocando ? PLACEHOLDER_ART.forming : getSpriteForStage(evolutionStage, demoCharacterId));
   /* Porte por estágio (utils/spriteScale.ts): escala a CAIXA VISÍVEL do bicho, com origem nos pés — layout, chão e alvo de toque ficam. */
   const petScale = usePetScale(evolutionStage, sprite);
+  /* O PNG tem linhas transparentes embaixo (0–25%): alinhar pela caixa deixava o pé PAIRANDO acima da sombra. Desce o sprite até o último pixel opaco tocar a linha de chão. */
+  const petGroundDrop = useGroundDrop(sprite, petScale, PET_RENDER);
 
   /* ── A SINTONIA, vista de dentro do visor (`spec` §2.1 e §2.3.1) ──────────
      A tabela do §2.1 é a tabela DESTA tela, e cobra a varredura de 400 ms nas
@@ -1654,6 +1656,7 @@ export const CompanionHUD = memo(function CompanionHUD({
                     transform: `scaleY(${getSquashScale()})`,
                     transformOrigin: 'bottom',
                     scale: petScale,
+                    position: 'relative', top: petGroundDrop,
                     /* Prioridade: o que o USUÁRIO acabou de fazer vence o que o
                        bicho faz sozinho. Piscada e saudação são as últimas. */
                     animation: isRubbing

@@ -21,6 +21,8 @@
  * Funções puras, sem React. Só `measureVisibleFill` toca canvas (e cai no
  * conservador `FAILED_FILL` se o canvas não existir ou a imagem for de outra origem).
  */
+import { SPRITE_FEET_TABLE } from './spriteFeetTable';
+
 
 export type ScaleStage = 'rookie' | 'champion' | 'ultimate' | 'mega' | 'ultra';
 
@@ -186,7 +188,37 @@ const bottomCache = new Map<string, number>();
 
 /** Base da caixa visível (0..1, fração da altura do canvas) já medida; sem medida = `DEFAULT_BOTTOM`. */
 export function visibleBottomOf(url: string | undefined | null): number {
-  return (url && bottomCache.get(url)) || DEFAULT_BOTTOM;
+  return knownBottomOf(url) ?? DEFAULT_BOTTOM;
+}
+
+/** Nome do arquivo sem pasta, query e extensão (`/assets/igni-rookie-Ab3dE9xZ.png?v=1` → `igni-rookie-Ab3dE9xZ`). */
+function baseKeyOf(url: string): string {
+  const file = url.split(/[?#]/)[0].split('/').pop() ?? '';
+  return file.replace(/\.[a-z0-9]+$/i, '');
+}
+
+/**
+ * Pé CONHECIDO (0..1) ou `null`: primeiro a tabela medida do PNG empacotado (`spriteFeetTable.ts`, síncrona — o primeiro
+ * quadro já sai certo), depois a medição de runtime (arte que chega por URL: sprites dos jogadores). O build do Vite
+ * acrescenta um hash de 8 caracteres ao nome; tenta o nome exato e depois sem o hash.
+ */
+export function knownBottomOf(url: string | undefined | null): number | null {
+  if (!url) return null;
+  const key = baseKeyOf(url);
+  const tab = SPRITE_FEET_TABLE[key] ?? SPRITE_FEET_TABLE[key.replace(/-[A-Za-z0-9_-]{8}$/, '')];
+  if (tab) return tab / 1000;
+  return bottomCache.get(url) ?? null;
+}
+
+/**
+ * Quanto (px, + = para baixo) descer um sprite renderizado em `size` px (com `scale` em torno do pé da CAIXA) para o pé
+ * VISÍVEL cair na borda de baixo da caixa — onde a sombra/chão está. 0 enquanto o pé não é conhecido (layout histórico).
+ */
+export function groundDropPx(url: string | undefined | null, scale: number, size: number): number {
+  const b = knownBottomOf(url);
+  if (b === null || !(size > 0)) return 0;
+  const s = Number.isFinite(scale) && scale > 0 ? scale : 1;
+  return Math.round((1 - Math.min(1, Math.max(0.2, b))) * s * size);
 }
 
 /**
