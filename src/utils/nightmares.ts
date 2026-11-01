@@ -344,6 +344,15 @@ export function nightmareSlots(top: number): number[] {
 // 3. Pendência
 // ---------------------------------------------------------------------------
 
+/**
+ * Assinatura estável da noite `key` no `rest` (o que `nightmaresFor` lê dela). Serve de dependência para quem memoiza algo
+ * derivado da oferta: quando a noite chega/muda, a assinatura muda; durante a luta ela não muda.
+ */
+export function nightmareNightSignature(rest: RestState | undefined, key: string): string {
+  const n = rest?.nights?.find((x) => x.date === key);
+  return n ? `${key}|${n.onTime ? 1 : 0}|${n.sleptAt ?? ''}|${n.wokeAt ?? ''}` : `${key}|-`;
+}
+
 /** Há um pesadelo do dia de hoje (a noite que acabou) ainda não combatido? */
 export function hasPendingNightmare(
   nm: NightmareState,

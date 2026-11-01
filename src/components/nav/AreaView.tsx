@@ -465,6 +465,7 @@ export function AreaView(props: AreaViewProps) {
               onFloorCleared={play.onFloorCleared}
               onRunEnd={play.onRunEnd}
               onEnemyDefeated={play.onDungeonEnemyDefeated}
+              onEnemySeen={play.onBestiarySeen}
               onEarnPoints={props.onEarnPoints}
               rankSaveId={props.guild.saveId}
               /* WP4.5 — o sumidouro recorrente: comprar profundidade com Bits. */
@@ -490,7 +491,7 @@ export function AreaView(props: AreaViewProps) {
         <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open} onClose={close} headSlotRef={open?.id === 'torneio' ? setTournamentHead : undefined} hideClose={open?.id === 'torneio' && tournamentDuelOpen}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'torneio' && (
-              <TournamentPage {...props.tournament} skills={props.skills} headSlot={tournamentHead} onCoverChange={setTournamentDuelOpen} />
+              <TournamentPage {...props.tournament} onEnemySeen={props.play.onBestiarySeen} skills={props.skills} headSlot={tournamentHead} onCoverChange={setTournamentDuelOpen} />
             )}
             {open?.id === 'duelo' && (
               <DueloSheet
@@ -515,6 +516,7 @@ export function AreaView(props: AreaViewProps) {
               skills={props.skills}
               petElement={props.petElement}
               onElementsDefeated={props.play.onElementsDefeated}
+              onEnemySeen={props.play.onBestiarySeen}
               onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('arena'); }}
               onExit={() => setDuelOpen(false)}
             />
@@ -576,7 +578,7 @@ export function AreaView(props: AreaViewProps) {
         {rogueFull && play.rogue && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
             <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
-              <RogueDungeon language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} skills={props.skills} onClose={close} />
+              <RogueDungeon language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} skills={props.skills} onClose={close} onEnemySeen={play.onBestiarySeen} />
             </Suspense>
           </div>
         )}

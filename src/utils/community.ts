@@ -148,6 +148,10 @@ export interface PlayerDetail extends DirectoryPlayer {
 export const getPlayer = (id: string) =>
   call<{ found: boolean; player?: PlayerDetail }>('player', { params: { id } });
 
+/** Formas que o Soulmon de um AMIGO já teve (o servidor lê do save dele; 403 se não for amigo). Só `{stage, spriteUrl, element, date}`. */
+export const getFriendForms = (saveId: string, friendPid: string) =>
+  call<{ forms: { stage: string; spriteUrl: string | null; element: string | null; date: number }[] }>('forms', { params: { id: saveId, friend: friendPid } });
+
 export interface Opponent {
   id: string; name: string; petName: string; stage: string; element?: string | null;
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;

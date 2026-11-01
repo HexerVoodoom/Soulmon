@@ -28,9 +28,9 @@ describe('cristal da evolução — estado', () => {
 });
 
 describe('cristal — bloqueios (decisão do dono: Masmorra, Fenda, Feira, Grove, Arena)', () => {
-  it('fecha exatamente os seis prédios', () => {
+  it('fecha exatamente os sete prédios', () => {
     expect([...CRYSTAL_BLOCKED_LOTS].sort()).toEqual(
-      ['arena.duelo', 'arena.torneio', 'exploracao.dungeon', 'exploracao.fenda', 'hall.feira', 'hall.grove'].sort(),
+      ['arena.duelo', 'arena.guerra', 'arena.torneio', 'exploracao.dungeon', 'exploracao.fenda', 'hall.feira', 'hall.grove'].sort(),
     );
     expect(crystalBlocksLot('arena', 'torneio')).toBe(true);
     expect(crystalBlocksLot('exploracao', 'fenda')).toBe(true);

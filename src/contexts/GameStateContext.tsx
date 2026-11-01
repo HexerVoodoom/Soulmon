@@ -95,6 +95,7 @@ import {
 } from '../utils/safeStorage';
 import { toast } from 'sonner';
 import { onboardingProfileFrom } from '../utils/catalogOnboarding';
+import { applyBetaResetGrant, sanitizeGrants, type Grants } from '../utils/betaResetGrant';
 import { normalizeEntries, type CadernoEntry } from '../utils/cadernoSave';
 import { sanitizeEquippedFrame, sanitizeOwnedFrames } from '../utils/frames';
 import { spriteLineOf, isCorvo } from '../utils/corvoPet';
@@ -440,6 +441,8 @@ export interface GameState {
    * pode zerá-lo.
    */
   bornAt?: string;
+  /** Concessões únicas já entregues (`utils/betaResetGrant.ts`) — flag no save em nuvem para nunca dar 2×. */
+  grants?: Grants;
   /** Attribute points accumulated since the last evolution — drives branch selection */
   attributesSinceLastEvolution: { power: number; harmony: number; benevolence: number };
   /** Version B: food stockpile keyed by food emoji */
@@ -1188,7 +1191,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
     onboardingTimeZone(),
     new Date(),
   );
-  return {
+  // 🔄 Concessão única do beta (`utils/betaResetGrant.ts`): idempotente pela flag `grants`.
+  return applyBetaResetGrant({
         ...loadedState,
         // Não basta ser array: cada ITEM é percorrido sem checagem (a virada faz
         // `activity.steps.length`). Item irrecuperável é DESCARTADO.
@@ -1692,7 +1696,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         stepsConsent: loadedState.stepsConsent === 'granted' || loadedState.stepsConsent === 'declined'
           ? loadedState.stepsConsent
           : undefined,
-      } as GameState;
+        grants: sanitizeGrants(loadedState.grants),
+      } as GameState);
 }
 
 /** Estado de instalação nova. Também é o fallback de qualquer falha de carga. */

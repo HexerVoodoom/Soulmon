@@ -2937,6 +2937,14 @@ dominância populacional — por isso ±15%. Régua nova:
 
 Dono único da Poção de Elemento (30/10/2026): custos (`POTION_COSTS`), filtro E por bases (`elementsMatchingBases`), saldo (`affordablePotionElements`), fabricar (`craftPotion`, via `spendEssences`), dar ao Soulmon (`givePotion`/`applySpecialItem`, sobrescreve `evolutionPotion`) e consumir na evolução (`applyPotionOnEvolve` → `potionElement`, lido por `petElementOf`). Regra do dono: vale SÓ para a próxima evolução — na seguinte `potionElement` é limpo e o elemento volta ao da pontuação (`soulmonMeta.dominantElement`). Chave de inventário `potion:<elementId>`.
 
+### `src/utils/betaResetGrant.ts`
+
+Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/`harmonyPoints`/`benevolencePoints` — usado no commit da evolução em `handleEvolve` e pelo item), o Zerador de Pontos 🔄 (`RESET_POINTS_EMOJI`, kind `reset` em `SPECIAL_ITEMS`), a concessão única do beta (`applyBetaResetGrant`, chamada no fim de `hydrateSave`; flag `grants.resetBHP_beta_2026_10`; `BETA_RESET_CUTOFF` 02/11/2026 por `bornAt`), `sanitizeGrants` e a linha do recap (`pointsResetLine`). Só cliente — o servidor não valida pontos nem inventário.
+
+### `src/utils/libraryForms.ts`
+**Dono de:** as FORMAS JÁ VISTAS dos Soulmon de outros jogadores na Biblioteca (REGISTRO §210, 31/10/2026): `{ [idDoJogador]: SeenForm[] }` na chave `STORAGE_KEYS.LIBRARY_FORMS`, só no aparelho (não vai no save em nuvem). Dedupe por estágio + URL, no máximo 8 formas por criatura, URL só de host permitido (`isSafeSpriteSrc`), leitura tolerante a lixo; junta com o histórico do amigo vindo de `community.js?action=forms`.
+**Consumidores:** `LibraryPage.tsx` (grava a forma atual ao carregar a lista e abre o modal com todas).
+
 ### `src/utils/premiumFood.ts`
 **Dono de:** A COMIDA PREMIUM (chave de inventário `emoji + ★`, números, tetos por dia/semana, drop determinístico) — dono único; o USO mora em `specialItemUse.ts` e o drop em `careRules.completeTask`.
 **Exports:**

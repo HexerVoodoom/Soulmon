@@ -3,7 +3,7 @@
  * além da Fenda: como UM dos 3 desafios da Arena (às vezes) e como o adversário que preenche o Torneio quando não há par humano.
  * Tudo determinístico (semente da run / id da conta + dia), nunca `Math.random`.
  */
-import { ENEMY_ROSTER, type RosterEntry } from './enemyRoster';
+import { ENEMY_ROSTER, RAVEN_ENTRY, withRaven, type RosterEntry } from './enemyRoster';
 import { isStrayFoe } from './wildFoeLabel';
 import { mulberry32 } from './combate/rng';
 
@@ -43,5 +43,5 @@ export const STRAY_ROSTER: readonly RosterEntry[] = ENEMY_ROSTER.filter(e => isS
 export function strayForTournament(saveId: string, dayKey: string): RosterEntry {
   let h = 2166136261;
   for (const ch of `${saveId}|${dayKey}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
-  return STRAY_ROSTER[mulberry32(h | 0)() * STRAY_ROSTER.length | 0];
+  return withRaven(mulberry32(h | 0), r => STRAY_ROSTER[r() * STRAY_ROSTER.length | 0], () => RAVEN_ENTRY); // 31/10: o corvo, 1/1000
 }

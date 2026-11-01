@@ -6,7 +6,7 @@
  * Contrato com o `RogueDungeon`: `onResult(won)` é chamado UMA vez, só depois do jogador tocar em "Continuar" (ou sair da luta, o
  * que conta como derrota). A superfície NASCE MUDA: nenhum som novo aqui (os golpes tocam os sons que a `BattleStage` já tem).
  */
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { TorcidaLayer } from './games/TorcidaKit';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
@@ -42,13 +42,15 @@ export interface RogueFightProps {
   floor: number;
   /** Chamado UMA vez, depois de "Continuar" (ou de sair da luta = derrota). */
   onResult: (won: boolean, foeName: string, hpLeft: number) => void;
+  /** Bestiário (31/10/2026): a chave do inimigo desta luta. */
+  onEnemySeen?: (enemyKey: string) => void;
 }
 
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { HEART_ITEM_EMOJI } from '../utils/shop';
 import { canOfferRevive, consumeOne, heartsOwned, reviveSeed, reviveStart } from '../utils/dungeonRevive';
 
-export function RogueFight({ language, run, step, combatant, skills, petElement, evolutionStage = 'rookie', demoCharacterId, floor, onResult }: RogueFightProps) {
+export function RogueFight({ language, run, step, combatant, skills, petElement, evolutionStage = 'rookie', demoCharacterId, floor, onResult, onEnemySeen }: RogueFightProps) {
   const isPt = language === 'pt-BR';
   const lang = isPt ? 'pt' : 'en';
   const setup = useMemo(() => rogueFightSetup(run, step, combatant), [run, step, combatant]);
@@ -59,6 +61,8 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
     const wave = dungeonWaveOf(setup.seed, setup.ref.floor, combatant.level, evolutionStage);
     return wave[Math.min(wave.length - 1, setup.ref.slot)];
   }, [setup, combatant.level, evolutionStage]);
+  const seenKey = enemy?.stage;
+  useEffect(() => { if (seenKey) onEnemySeen?.(seenKey); }, [seenKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const petScale = usePetScale(evolutionStage, petSprite);
   const petEl = fxElementId(ident.basico.elemento);

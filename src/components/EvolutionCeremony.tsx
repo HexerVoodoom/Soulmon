@@ -6,6 +6,7 @@ import { usePrefersReducedMotion } from './ui/Viewport';
 import { ritualLabel } from './ritual/RitualKit';
 import { sm2Button, sm2Hint } from './form/FormKit';
 import { fragmentsGatherLine, fragmentsSpentLine } from '../utils/soulFragment';
+import { pointsResetLine } from '../utils/betaResetGrant';
 import { entrarNaSuperficie } from '../utils/musica';
 import { SoulFragmentIcon } from './ui/SoulFragmentIcon';
 
@@ -257,6 +258,10 @@ export function EvolutionCeremony({
             <SoulFragmentIcon size={16} />
             <span>{done ? fragmentsSpentLine(fragmentsSpent, language) : fragmentsGatherLine(language)}</span>
           </p>
+        )}
+        {/* §209 (31/10/2026, dono): a evolução zera os 3 pontos — o jogador é avisado no recap. */}
+        {done && (
+          <p data-cer-points-reset style={sm2Hint}>{pointsResetLine(language)}</p>
         )}
         {/* A saída é do jogador — a cerimônia espera o gesto (RIT-20). O
             botão só existe quando há o que sair; antes, a faixa é status. */}

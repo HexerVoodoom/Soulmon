@@ -35,7 +35,7 @@ export interface RosterEntry {
   key: string;
   id: string;
   stage: EnemyStage;
-  kind: 'base' | 'combinado' | 'api';
+  kind: 'base' | 'combinado' | 'api' | 'mascote';
   /** Elemento do SPRITE e dos golpes dele (`spriteElement.ts`): nos combinados, o id FUNDIDO (= slug da arte, ex.: fogo+agua → `vapor`); nos base, o próprio. */
   element: string;
   /** Nos combinados, os dois COMPONENTES (a tabela de vantagem é só das 17 bases); nos base, só o próprio. */
@@ -108,8 +108,33 @@ function build(): RosterEntry[] {
   return out;
 }
 
-/** Tudo que existe (base + combinados). */
-export const ENEMY_ROSTER: readonly RosterEntry[] = build();
+/**
+ * O CORVO NEUTRO (dono, 31/10/2026, REGISTRO §206): o mascote é a ÚNICA criatura de elemento `neutro`. Forma única (sem evolução),
+ * fora de todo pool comum: aparece só pelo `withRaven` (1 em `RAVEN_SPAWN_CHANCE⁻¹` por sorteio de inimigo, em todo evento que gera criatura).
+ */
+export const RAVEN_ID = 'corvo';
+export const RAVEN_ENTRY: RosterEntry = {
+  key: chaveBestiario(RAVEN_ID, 'rookie'), id: RAVEN_ID, stage: 'rookie', kind: 'mascote', element: 'neutro', elements: ['neutro'],
+  name: 'Corvinho', basico: { pt: 'Bicada de Lanterna', en: 'Lantern Peck' }, especial: { pt: 'Fagulha Turquesa', en: 'Turquoise Ember' },
+  artFile: 'corvo-neutro',
+};
+/** Chance por SORTEIO de inimigo de o corvo aparecer no lugar do sorteado: 1/1000 (dono). */
+export const RAVEN_SPAWN_CHANCE = 1 / 1000;
+
+/**
+ * O PORTÃO CENTRAL do corvo: roda `pick` com o `rng` do chamador (a sequência de sorteios NÃO muda) e, se o PRIMEIRO número que o
+ * sorteio consumiu for < `RAVEN_SPAWN_CHANCE`, troca o resultado pelo corvo (`raven()`). Probabilidade exata = 1/1000 por chamada
+ * (o 1º número é uniforme) e nenhum `rng()` a mais: card e luta da Arena, ondas da masmorra e replays seguem determinísticos.
+ */
+export function withRaven<T>(rng: () => number, pick: (r: () => number) => T, raven: () => T): T {
+  let first: number | undefined;
+  const r = () => { const v = rng(); if (first === undefined) first = v; return v; };
+  const out = pick(r);
+  return first !== undefined && first < RAVEN_SPAWN_CHANCE ? raven() : out;
+}
+
+/** Tudo que existe (base + combinados + o corvo, que só sai pelo `withRaven`). */
+export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY];
 export const ENEMY_ROSTER_KEYS: ReadonlySet<string> = new Set(ENEMY_ROSTER.map(e => e.key));
 const BY_KEY: ReadonlyMap<string, RosterEntry> = new Map(ENEMY_ROSTER.map(e => [e.key, e]));
 export const rosterEntryOfKey = (key: string | undefined | null): RosterEntry | undefined => (key ? BY_KEY.get(key) : undefined);
@@ -136,6 +161,12 @@ export function capEnemyStage(requested: EnemyStage, level: number): EnemyStage 
 export function pickEnemy(
   level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string> } = {},
 ): RosterEntry {
+  return withRaven(rng, r => pickEnemyComum(level, r, opts), () => RAVEN_ENTRY);
+}
+
+function pickEnemyComum(
+  level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string> },
+): RosterEntry {
   const max = maxEnemyStageForLevel(level);
   let stage: EnemyStage;
   if (opts.stage) stage = capEnemyStage(opts.stage, level);
@@ -143,7 +174,7 @@ export function pickEnemy(
     const open = ENEMY_STAGES.slice(0, ENEMY_STAGES.indexOf(max) + 1);
     stage = open[Math.floor(rng() * open.length)];
   }
-  const have = ENEMY_ROSTER.filter(e => e.stage === stage);
+  const have = ENEMY_ROSTER.filter(e => e.stage === stage && e.kind !== 'mascote');
   const fresh = opts.used ? have.filter(e => !opts.used!.has(e.id)) : have;
   const pool = fresh.length > 0 ? fresh : have;
   return pool[Math.floor(rng() * pool.length)];

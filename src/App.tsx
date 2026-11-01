@@ -3762,6 +3762,9 @@ export default function App() {
         perfectDays: 0,
         evolutionPoints: 0,
         attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
+        // §209 (31/10/2026, dono): ao evoluir, Benevolência, Harmonia e Poder voltam a ZERO. O galho/elemento DESTA
+        // evolução já foi decidido acima com os pontos de antes (`alvo`); o reset vem depois do uso.
+        powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, // = `resetAlignmentPoints` (utils/betaResetGrant.ts)
         chipsStage: undefined, // D-97: a contagem de chips é por estágio
         // PR15b: o que se fez no estágio que TERMINA vira o comportamento do que NASCE — gravado uma vez, imutável.
         fichaJornada: registrarEstagio(
@@ -3886,6 +3889,10 @@ export default function App() {
       if (special.kind === 'glitchtama' || special.kind === 'heart') playTaskComplete();
       else playFeed();
 
+      // 🔄 Zerador: não dá para desfazer — confirmação simples antes (`utils/betaResetGrant.ts`).
+      if (special.kind === 'reset' && !window.confirm(language === 'pt-BR'
+        ? 'Zerar Benevolência, Harmonia e Poder? Isso não pode ser desfeito.'
+        : 'Reset Benevolence, Harmony and Power to zero? This cannot be undone.')) return;
       setGameState(prev => applySpecialItem(prev, foodEmoji, agora).state);
       dispararFeedAnim(foodEmoji);
 
@@ -6010,6 +6017,8 @@ export default function App() {
     setGoodDreamNow(false);
     setNightmareOpen(false);
   }, [setGameState]);
+  /** A oferta sumiu com o convite aberto (virou o dia, noite desfeita): fecha SEM gravar a noite como lutada. */
+  const vanishNightmare = useCallback(() => setNightmareOpen(false), []);
   const closeNightmare = useCallback(() => {
     if (goodDreamNow) { claimGoodDreamNow(); return; }
     markNightmareDay(false); // fechar pelo × sem lutar NÃO conta para os 6 dias do sonho bom (dono, 15/10/2026)
@@ -9412,6 +9421,7 @@ export default function App() {
              "Bom dia" (`onClose`). */
           onLose={markNightmareFought}
           onClose={closeNightmare}
+          onVanish={vanishNightmare}
         />
         )}
         </PresentationSlot>

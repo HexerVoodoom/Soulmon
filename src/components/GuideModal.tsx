@@ -163,6 +163,12 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
             )}
           </p>
           <p style={para}>
+            {L(
+              'Os pontos de Benevolência, Harmonia e Poder recomeçam do zero para a próxima forma.',
+              'Benevolence, Harmony and Power points start again from zero for the next form.',
+            )}
+          </p>
+          <p style={para}>
             {/* INCUBAÇÃO (D-G8b/D-G8c). A copy diz a verdade INTEIRA — leva um
                 tempo, volta quando quiser, nada se perde —, que é a condição
                 R-N do parecer: quem não sabe que nada expira se comporta como

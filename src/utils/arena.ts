@@ -13,7 +13,7 @@
 // (`builder/balanco-motores.md` §6) — recalibrate with that script, never by hand.
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { novoFormName, pickNovo, type NovoAnyStage } from './novosSoulmonData';
-import { ENEMY_ROSTER } from './enemyRoster';
+import { ENEMY_ROSTER, ENEMY_ROSTER_KEYS, RAVEN_ENTRY, withRaven } from './enemyRoster';
 import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { CUSTO_PONTO_PAR } from './soulProfile/ficha/cascata';
 import { baseDominanteDoElemento } from './soulProfile/ficha/elementoNome';
@@ -247,6 +247,12 @@ export const ARENA_FUSED_FOE_CHANCE = 0.5; // 30/10 (2ª emenda do dono): "varia
 /** Os fundidos (rookie combinado) cuja composição inclui o elemento base `el`. */
 export const arenaFusedOf = (el: string) => COMBO_ROOKIES.filter(e => e.elements.includes(el));
 
+/** A chave do BESTIÁRIO (`<id>-<estágio>`) de um inimigo da Arena, ou `undefined` (forma fora do roster, ex.: ultra). 31/10/2026: a Arena não registrava. */
+export function arenaFoeKey(e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form'>): string | undefined {
+  const k = e.artFile ? `cmb${e.artFile.split('-')[0]}-rookie` : e.creature && e.form ? `${e.creature}-${e.form}` : undefined;
+  return k && ENEMY_ROSTER_KEYS.has(k) ? k : undefined;
+}
+
 export const ARENA_ROUNDS = 5;
 
 /** Round composition: 1,3 = one medium · 2 = two weak · 4 = three weak · 5 = boss. THE declared composition (the ruler reads it). */
@@ -283,7 +289,12 @@ export function buildArenaRound(
 ): ArenaEnemy[] {
   const comp = ARENA_ROUND_COMP[Math.min(Math.max(roundIdx, 1), ARENA_ROUNDS) - 1];
   const used = new Set<string>(); // sem criatura repetida dentro da rodada
-  return comp.map(cls => {
+  // 31/10/2026 (dono): cada inimigo passa pelo portão central do corvo (`withRaven`): 1/1000, sem sorteio a mais (card = luta).
+  return comp.map(cls => withRaven<ArenaEnemy>(rng, rr => arenaFoeComum(cls, rr), () => ({
+    namePt: RAVEN_ENTRY.name, nameEn: RAVEN_ENTRY.name, elements: ['neutro'], element: 'neutro',
+    points: CLASS_FLAVOR[cls].points + Math.max(0, difficulty - 1), cls, tier: CLASS_FLAVOR[cls].tier, creature: RAVEN_ENTRY.id, form: 'rookie' as const,
+  })));
+  function arenaFoeComum(cls: ArenaEnemyClass, rng: () => number): ArenaEnemy {
     const shape = CLASS_FLAVOR[cls];
     const fusedOk = runElement ? arenaFusedOf(runElement) : [];
     const fused = !!runElement && !stray && fusedOk.length > 0 && rng() < ARENA_FUSED_FOE_CHANCE;
@@ -316,7 +327,7 @@ export function buildArenaRound(
       form: picked.stage,
       ...(stray ? { stray: true as const } : {}),
     };
-  });
+  }
 }
 
 

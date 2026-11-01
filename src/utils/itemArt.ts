@@ -55,6 +55,7 @@ export const ITEM_ART: Record<string, string> = {
   '💠': itemChipPrism, // Chip Triplo (D-95): reusa a arte do Prisma, sem arte nova
   '💗': itemHeart,
   '🌀': itemGlitchtama,
+  '🔄': itemChipPrism, // Zerador de Pontos (31/10/2026): reusa o Prisma (os 3 atributos), sem arte nova
   '✨': itemSpark, // Faísca de Alma (30/10/2026): arte própria (ChatGPT, alfa real, 96²)
 };
 

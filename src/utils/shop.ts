@@ -4,6 +4,7 @@ import type { SlotId, DecorFit } from './petStage';
 import { GUILD_COPY_CORE } from './guildCopyCore';
 import { PREMIUM_SPECIAL_ITEMS } from './premiumFood';
 import { POTION_SPECIAL_ITEMS } from './elementPotion';
+import { RESET_POINTS_EMOJI } from './betaResetGrant';
 
 export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'furniture' | 'emblem';
 
@@ -82,7 +83,7 @@ export const SPARK_HOME_ENERGY = 5;
 // Keyed by their inventory emoji.
 export interface SpecialItem {
   emoji: string;
-  kind: 'chip' | 'heart' | 'glitchtama' | 'premium' | 'spark' | 'potion';
+  kind: 'chip' | 'heart' | 'glitchtama' | 'premium' | 'spark' | 'potion' | 'reset';
   attr?: Attr;
   /** Pontos de tipo por atributo ao usar o chip. Ausente = só `attr` com CHIP_BOOST. */
   boosts?: Record<Attr, number>;
@@ -156,6 +157,13 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
     emoji: SPARK_ITEM_EMOJI, kind: 'spark',
     namePt: 'Faísca de Alma', nameEn: 'Soul Spark',
     descPt: `Restaura ${SPARK_HOME_ENERGY} de energia`, descEn: `Restores ${SPARK_HOME_ENERGY} energy`,
+  },
+  // 🔄 Zerador de Pontos (31/10/2026, concessão do beta) — dono: `utils/betaResetGrant.ts`.
+  [RESET_POINTS_EMOJI]: {
+    emoji: RESET_POINTS_EMOJI, kind: 'reset',
+    namePt: 'Zerador de Pontos', nameEn: 'Point Reset',
+    descPt: 'Zera Benevolência, Harmonia e Poder. Não muda elemento, forma nem poção.',
+    descEn: 'Resets Benevolence, Harmony and Power to zero. Element, form and potion stay.',
   },
   // Comida premium (uma por comida de categoria) — dono: `utils/premiumFood.ts`.
   ...PREMIUM_SPECIAL_ITEMS,

@@ -1072,6 +1072,8 @@ barras de energia), `src/components/EvoTrail.tsx` (a trilha na Home).
 <a id="atributos"></a>
 ## 15. 👊🎶🤲 Atributos e galhos
 
+> **§209 (31/10/2026, dono):** ao evoluir, Benevolência, Harmonia e Poder voltam a **zero** (em `handleEvolve`, mesma regra de `resetAlignmentPoints`) — o galho/elemento da evolução é decidido ANTES, com os pontos de antes. O recap da cerimônia avisa. Concessão única do beta: 1 Zerador de Pontos 🔄 para quem já jogava (`applyBetaResetGrant`, `utils/betaResetGrant.ts`).
+
 **Em uma frase.** A categoria da tarefa vira comida, a comida vira ponto de
 atributo, e o atributo escolhe o galho da próxima evolução.
 
@@ -6210,6 +6212,12 @@ Tudo abaixo é o que o código de `b93f75e9` faz. Decisões: `REGISTRO-DE-DECISO
 
 **Régua.** `CompletionTag.render.test.tsx`, `restWindow.autoSleepNightmare.test.ts`, `combate/dotShield.regression.test.ts`, `combate.parity.test.js`, `gates.parity.test.js`, `essences.parity.test.js`, `winrateModos.sim.test.ts`, `consent.versoes.contract.test.ts`. **Não coberto neste delta:** a arte e a posição dos prédios do Hall/Arena/Forja no Mapa (→ `03-FLUXO-DE-TELAS.md`, `docs/INVENTARIO-ASSETS.md`).
 
+
+## 66. 🐦‍⬛ O corvo neutro e o bestiário de todo encontro (31/10/2026, REGISTRO §211)
+
+- **Neutro = só o corvo** (`RAVEN_ENTRY`, `enemyRoster.ts`): forma única, entra na Biblioteca (aba Selvagens) e aparece como inimigo com chance **1/1000 por sorteio** em Masmorra, Calabouço, Pesadelo, Combina 3, Arena livre e Desgarrado do Torneio — pelo portão `withRaven`, sem sorteio a mais. Nenhuma outra criatura é neutra (`corvoNeutro.contract.test.ts`).
+- **Todo inimigo VISTO entra no bestiário** (antes só o abate da masmorra e o Combina 3): Masmorra, Calabouço, Arena e Desgarrado do Torneio chamam `applyBestiarySeen`.
+- Jogador: o Oráculo nunca dá `neutro` (0 exato); só o corvinho do administrador é neutro.
 
 ## Beta-full (REGISTRO §98)
 

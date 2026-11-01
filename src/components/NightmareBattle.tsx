@@ -411,12 +411,16 @@ export function NightmareBattle({
       {/* ── Convite ─────────────────────────────────────────────────── */}
       {phase === 'intro' && (
         <>
-          <div className="nm-glitch" data-nightmare-shadow aria-hidden="true">
-            <img className="nm-glitch__img" data-visor-enemy src={wave[0]?.sprite ?? INTRO_FALLBACK} alt="" width={160} height={160} draggable={false} />
-          </div>
-          <h2 style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>{isPt ? NIGHTMARE_INTRO_TITLE.pt : NIGHTMARE_INTRO_TITLE.en}</h2>
-          <p style={{ ...sm2Text, margin: 0, fontWeight: 600 }} data-nightmare-name>{title}</p>
-          <p style={{ ...sm2Text, margin: 0 }} data-nightmare-flavor>{flavor}</p>
+          {wave.length > 0 && (
+            <>
+              <div className="nm-glitch" data-nightmare-shadow aria-hidden="true">
+                <img className="nm-glitch__img" data-visor-enemy src={wave[0]?.sprite ?? INTRO_FALLBACK} alt="" width={160} height={160} draggable={false} />
+              </div>
+              <h2 style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>{isPt ? NIGHTMARE_INTRO_TITLE.pt : NIGHTMARE_INTRO_TITLE.en}</h2>
+              <p style={{ ...sm2Text, margin: 0, fontWeight: 600 }} data-nightmare-name>{title}</p>
+              <p style={{ ...sm2Text, margin: 0 }} data-nightmare-flavor>{flavor}</p>
+            </>
+          )}
 
           {wave.length > 0 ? (
             <>

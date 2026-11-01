@@ -138,6 +138,8 @@ interface TournamentPageProps {
   onMatchPlayed: (won: boolean) => void;
   /** Dex de elementos (27/10/2026): ao VENCER um oponente de elemento conhecido (a ficha publicada dele, ou o Desgarrado do treino). */
   onElementsDefeated?: (ids: readonly string[], drops?: readonly EssenceDrop[]) => void;
+  /** Bestiário (31/10/2026): o Desgarrado do treino entra na Biblioteca ao ser enfrentado. */
+  onEnemySeen?: (enemyKey: string) => void;
   /* D-58 (19/10/2026): o Torneio é SÓ de lutas. A loja de Emblemas e o botão "Train" saíram; a Honra se gasta no Mercado (aba Honra,
      com as missões da semana no topo). */
   /** Onde pôr o indicador da faixa: o canto direito da linha do título (que é
@@ -242,7 +244,7 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
   );
 }
 
-export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, onElementsDefeated, headSlot, onCoverChange }: TournamentPageProps) {
+export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, onElementsDefeated, onEnemySeen, headSlot, onCoverChange }: TournamentPageProps) {
   // Música (19/10/2026): o Torneio toca o "Stone Hall Combat" (se o interruptor "Música" está ligado). Antes de qualquer return (hooks).
   useEffect(() => entrarNaSuperficie('torneio'), []);
   const isPt = language === 'pt-BR';
@@ -341,6 +343,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       fx: fxDoLutador(par, petElement),
     };
     // O desafiante é o espelho equilibrado 2 levels abaixo do seu (dentro do estágio): o treino é para aprender a torcer.
+    if (stray) onEnemySeen?.(stray.key);
     setTraining({ seed: Math.floor(Math.random() * 0xffffffff), me, opp: npcSide(combatant.level), npc, stray });
   };
 

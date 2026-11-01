@@ -24,11 +24,13 @@
 import { useEffect, useState } from 'react';
 import { opponentSprite } from '../utils/opponentArt';
 import { isSafeSpriteSrc } from '../utils/spriteLibrary';
-import { listPlayers, getPlayer, addFriend, removeFriend, sendGift, suggestNames, type DirectoryPlayer } from '../utils/community';
+import { listPlayers, getPlayer, getFriendForms, addFriend, removeFriend, sendGift, suggestNames, type DirectoryPlayer } from '../utils/community';
 import { LIBRARY_NPCS } from '../utils/libraryNpcs';
 import { PlayerDetailModal } from './PlayerDetailModal';
 import { RitualDialog } from './ritual/RitualKit';
-import { elementLabel } from '../utils/arena';
+import { elementIcon } from '../utils/elementIconArt';
+import { dexElementName } from './ElementDex';
+import { readAllForms, recordForms, sanitizeForm, formStageLabel, isCurrentForm, type SeenForm } from '../utils/libraryForms';
 import { CoopPanel } from './CoopPanel';
 import { BestiaryCollection } from './BestiaryCollection';
 import { ElementDex } from './ElementDex';
@@ -179,6 +181,9 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   /** Pet aberto no painel simples da Biblioteca do Hall. */
   const [selectedPet, setSelectedPet] = useState<LibraryEntry | null>(null);
   const [seen, setSeen] = useState<string[]>(readSeenIds);
+  /** Formas já vistas de cada Soulmon (aparelho) — junta o que a Biblioteca vê agora com o que o servidor conta dos AMIGOS. */
+  const [formsMap, setFormsMap] = useState<Record<string, SeenForm[]>>(readAllForms);
+  const formaAtualDe = (p: LibraryEntry) => ({ stage: p.stage, spriteUrl: isSafeSpriteSrc(p.spriteUrl) ? p.spriteUrl : null, element: p.element ?? null, date: Date.now() });
   const markSeen = (id: string) => {
     setSeen(prev => {
       if (prev.includes(id)) return prev;
@@ -249,6 +254,29 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
     }, 250);
     return () => { vivo = false; clearTimeout(t); };
   }, [addName, tab]);
+
+  /**
+   * REGISTRO DE FORMAS (31/10/2026): todo Soulmon que a pessoa já viu (aberto aqui, enfrentado no Torneio ou amigo) tem a forma
+   * ATUAL gravada quando a Biblioteca o carrega — é isso que migra quem já estava em `LIBRARY_SEEN` para "1 forma". As formas
+   * antigas dos AMIGOS vêm do servidor (`action=forms`, só entre amigos), no cadastro e a cada abertura da Biblioteca.
+   */
+  const vistosKey = seen.join(',');
+  useEffect(() => {
+    const todos = [...((players ?? []) as LibraryEntry[]), ...(friendPlayers ?? [])].filter(p => !p.isNpc && !p.unresolved && (seen.includes(p.id) || friends.includes(p.id)));
+    if (todos.length === 0) return;
+    for (const p of todos) recordForms(p.id, [formaAtualDe(p)]);
+    setFormsMap(readAllForms());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [players, friendPlayers, vistosKey, friendsKey]);
+  useEffect(() => {
+    let vivo = true;
+    friendsKey.split(',').filter(Boolean).forEach(pid => {
+      getFriendForms(saveId, pid)
+        .then(r => { if (vivo && Array.isArray(r.forms)) { recordForms(pid, r.forms); setFormsMap(readAllForms()); } })
+        .catch(() => { /* sem rede / 403: fica o que já foi visto */ });
+    });
+    return () => { vivo = false; };
+  }, [friendsKey, saveId, reloadKey]);
 
   const toggleFriend = async (p: DirectoryPlayer) => {
     setBusyId(p.id);
@@ -555,23 +583,41 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       )}
 
       {selectedPet && (() => {
-        const sprite = isSafeSpriteSrc(selectedPet.spriteUrl) ? selectedPet.spriteUrl : opponentSprite(selectedPet);
+        const atual = sanitizeForm(formaAtualDe(selectedPet));
+        const vistas = formsMap[selectedPet.id] ?? [];
+        // Só o que foi visto: sem histórico, a forma atual é a única (a gravação roda ao carregar a lista).
+        const formas: SeenForm[] = vistas.length > 0 ? vistas : (atual ? [atual] : []);
+        const nome = selectedPet.petName || selectedPet.name;
         return (
           <RitualDialog onClose={() => setSelectedPet(null)} labelledBy="sm2-pet-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320}>
             <h2 id="sm2-pet-title" className="sm2-lib-h2" style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}>
-              {selectedPet.petName || selectedPet.name}
+              {nome}
             </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-              <img src={sprite} alt={selectedPet.petName || selectedPet.name} width={160} height={160} style={{ display: 'block', width: 160, height: 160, objectFit: 'contain', imageRendering: 'pixelated' }} />
-              {selectedPet.element && (
-                <p className="sm2-lib-s" style={{ margin: 0 }}>
-                  {isPt ? 'Elemento' : 'Element'}: {elementLabel(selectedPet.element, isPt)}
-                </p>
-              )}
-              <p className="sm2-lib-s" style={{ margin: 0 }}>
-                {isPt ? 'Dono' : 'Owner'}: {selectedPet.isNpc ? (isPt ? 'demonstração' : 'demo') : selectedPet.name}
-              </p>
-            </div>
+            <ul data-pet-forms aria-label={isPt ? 'Formas que você já viu' : 'Forms you have seen'} style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '55vh', overflowY: 'auto' }}>
+              {formas.map(f => {
+                const atualAqui = isCurrentForm(f, atual);
+                const src = opponentSprite({ ...selectedPet, stage: f.stage, spriteUrl: f.spriteUrl });
+                const icon = f.element ? elementIcon(f.element) : undefined;
+                return (
+                  <li key={f.stage + '|' + (f.spriteUrl ?? '')} data-pet-form={f.stage} data-current={atualAqui ? '1' : '0'} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <img src={src} alt={`${nome} — ${formStageLabel(f.stage, isPt)}`} width={96} height={96} style={{ display: 'block', width: 96, height: 96, flex: '0 0 96px', objectFit: 'contain', imageRendering: 'pixelated' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 0 }}>
+                      <span className="sm2-stats-t" style={{ margin: 0 }}>{formStageLabel(f.stage, isPt)}</span>
+                      {f.element && (
+                        <span className="sm2-lib-s" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          {icon && <img src={icon} alt="" aria-hidden="true" width={20} height={20} style={{ width: 20, height: 20, objectFit: 'contain' }} />}
+                          {dexElementName(f.element, isPt)}
+                        </span>
+                      )}
+                      {atualAqui && <span className="sm2-lib-s" data-pet-form-now style={{ color: 'var(--sm2-primary-ink)', fontWeight: 600 }}>{isPt ? 'Forma atual' : 'Current form'}</span>}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="sm2-lib-s" style={{ margin: '12px 0 0' }}>
+              {isPt ? 'Dono' : 'Owner'}: {selectedPet.isNpc ? (isPt ? 'demonstração' : 'demo') : selectedPet.name}
+            </p>
           </RitualDialog>
         );
       })()}

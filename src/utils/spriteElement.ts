@@ -13,6 +13,7 @@
  *  · `line:<id>`         — as 4 linhas de `lines/` (kaelen/thalindra/igni/astrase);
  *  · `boss:<id>`         — os 25 chefes de `bosses/` (1º elemento do roster de chefes);
  *  · `desafiante:<id>`   — os 3 desafiantes do Torneio;
+ *  · `mascote:corvo`     — o corvo neutro (31/10/2026), o ÚNICO sprite `neutro`;
  *  · `tema:<id>`         — inimigos temáticos (pragas do Bosque + elenco da Soul Barrage, `temaInimigos.ts`).
  */
 import { NOVOS_DATA } from './novosSoulmonData';
@@ -82,6 +83,7 @@ function build(): Record<string, string> {
   for (const [id, el] of Object.entries(BOSS_ELEMENT)) t[`boss:${id}`] = el;
   for (const [id, el] of Object.entries(DESAFIANTE_ELEMENT)) t[`desafiante:${id}`] = el;
   for (const e of TEMA_INIMIGOS) t[`tema:${e.id}`] = e.element;
+  t['mascote:corvo'] = 'neutro'; // o corvo neutro (31/10/2026): a ÚNICA criatura neutra
   return t;
 }
 export const SPRITE_ELEMENT: Readonly<Record<string, string>> = build();
@@ -98,7 +100,7 @@ export function lineElementOf(line: string | null | undefined): string | undefin
 }
 
 /** Elemento de uma entrada do roster (`RosterEntry`): base = o próprio; combinado = o id FUNDIDO (não o 1º componente); api = o escolhido. */
-export function rosterEntryElement(e: { kind: 'base' | 'combinado' | 'api'; id: string; element: string; artFile?: string }): string {
+export function rosterEntryElement(e: { kind: 'base' | 'combinado' | 'api' | 'mascote'; id: string; element: string; artFile?: string }): string {
   if (e.kind === 'combinado' && e.artFile) return SPRITE_ELEMENT[`cmb:${e.artFile.split('-')[0]}`] ?? e.element;
   return e.element;
 }
