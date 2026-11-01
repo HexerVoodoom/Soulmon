@@ -9734,6 +9734,34 @@ function avatarIdOrNull(raw) {
 }
 __name(avatarIdOrNull, "avatarIdOrNull");
 
+// api/_formHistory.js
+var MAX_FORMAS = 8;
+var ORDEM = { rookie: 0, champion: 1, ultimate: 2, mega: 3, ultra: 4 };
+var ID_FORMA = /^(rookie|ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))$/;
+var ELEMENTO = /^[a-z][a-z0-9_-]{0,31}$/;
+var estagioDaForma = /* @__PURE__ */ __name((formId) => String(formId).split("-")[0], "estagioDaForma");
+function formsFromSaveState(rawState, element) {
+  const state = (
+    /** @type {any} */
+    rawState
+  );
+  if (!state || typeof state !== "object" || Array.isArray(state)) return [];
+  const sprites = state.spriteLibrary && typeof state.spriteLibrary === "object" ? state.spriteLibrary.sprites : null;
+  if (!sprites || typeof sprites !== "object" || Array.isArray(sprites)) return [];
+  const el = typeof element === "string" && ELEMENTO.test(element) ? element : null;
+  const out = [];
+  for (const [formId, e] of Object.entries(sprites)) {
+    if (!ID_FORMA.test(formId) || !e || typeof e !== "object") continue;
+    const spriteUrl = spriteUrlOrNull(e.url);
+    if (!spriteUrl) continue;
+    const date = Number.isFinite(+e.at) && +e.at > 0 ? Math.floor(+e.at) : 0;
+    out.push({ stage: estagioDaForma(formId), formId, spriteUrl, element: el, date });
+  }
+  out.sort((a, b) => ORDEM[a.stage] - ORDEM[b.stage] || a.date - b.date || a.formId.localeCompare(b.formId));
+  return out.slice(0, MAX_FORMAS);
+}
+__name(formsFromSaveState, "formsFromSaveState");
+
 // api/_frames.js
 var FRAME_IDS = /* @__PURE__ */ new Set([
   "rank-madeira",
@@ -10490,6 +10518,23 @@ async function handleCommunity(context) {
       await putProfile(env, id, p);
     }
     return json3({ trophies });
+  }
+  if (action === "forms" && method === "GET") {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const friendPid = url.searchParams.get("friend") || "";
+    const friendSave = VALID_ID4.test(friendPid) ? await saveIdForPublicId(env, friendPid) : null;
+    const me = await getProfile(env, id);
+    const p = friendSave ? await getProfile(env, friendSave) : null;
+    if (!friendSave || !me || !(me.friends || []).includes(friendSave) || !p || isHidden(p)) return json3({ error: "not friends" }, 403);
+    let state = null;
+    try {
+      const value = await kvOrThrow(env).get(friendSave);
+      if (typeof value === "string" && value.length <= DUEL_SAVE_MAX_CHARS) state = JSON.parse(value);
+    } catch {
+      state = null;
+    }
+    return json3({ forms: formsFromSaveState(state, p.element).map(({ stage, spriteUrl, element, date }) => ({ stage, spriteUrl, element, date })) });
   }
   if (action === "friends" && method === "POST") {
     const { friendId, remove } = body;
@@ -14872,7 +14917,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-dS0Hh9/functionsRoutes-0.5281141358840608.mjs
+// ../.wrangler/tmp/pages-pbUve3/functionsRoutes-0.7770726905797625.mjs
 var routes = [
   {
     routePath: "/api/account",
