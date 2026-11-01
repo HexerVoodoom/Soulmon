@@ -603,7 +603,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
         const formas: SeenForm[] = vistas.length > 0 ? vistas : (atual ? [atual] : []);
         const nome = selectedPet.petName || selectedPet.name;
         return (
-          <RitualDialog onClose={() => setSelectedPet(null)} labelledBy="sm2-pet-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320}>
+          <RitualDialog onClose={() => setSelectedPet(null)} labelledBy="sm2-pet-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320} closeOnBackdrop>
             <h2 id="sm2-pet-title" className="sm2-lib-h2" style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}>
               {nome}
             </h2>

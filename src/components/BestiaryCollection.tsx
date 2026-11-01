@@ -59,7 +59,7 @@ export function BestiaryCollection({ seen, mode, language = 'en-US', isNew, play
         {extra.map((s, i) => <StrayPlayerCell key={s.sid} s={s} n={entries.length + i + 1} isPt={isPt} isNew={playersNew?.has(s.sid)} />)}
       </ul>
       {openEntry && (
-        <RitualDialog onClose={() => setOpenKey(null)} labelledBy="sm2-bestiary-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320}>
+        <RitualDialog onClose={() => setOpenKey(null)} labelledBy="sm2-bestiary-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320} closeOnBackdrop>
           <h2 id="sm2-bestiary-title" className="sm2-lib-h2" style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}>{openEntry.name}</h2>
           <div data-bestiary-detail={openEntry.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
             {rosterSpriteOf(openEntry) && (

@@ -319,6 +319,9 @@ interface CompanionHUDProps {
   feedAnim?: { emoji: string; n: number } | null;
 }
 
+/** Fator de porte do Soulmon na Home (01/11/2026, dono: "uns 30% menor"). */
+export const HOME_PET_SIZE = 0.7;
+
 export const CompanionHUD = memo(function CompanionHUD({
   companionMood, 
   energyLevel, 
@@ -947,7 +950,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   const sprite = emCristal ? PLACEHOLDER_ART.forming : (ownSpriteUrl && ownSpriteUrl !== spriteQuebrado ? ownSpriteUrl : undefined)
     ?? (chocando ? PLACEHOLDER_ART.forming : getSpriteForStage(evolutionStage, demoCharacterId));
   /* Porte por estágio (utils/spriteScale.ts): escala a CAIXA VISÍVEL do bicho, com origem nos pés — layout, chão e alvo de toque ficam. */
-  const petScale = usePetScale(evolutionStage, sprite);
+  /* 01/11/2026 (dono): na Home o bicho fica 30% menor para ocupar menos do visor; sombra e âncora do pé seguem o mesmo fator. */
+  const petScale = usePetScale(evolutionStage, sprite) * HOME_PET_SIZE;
   /* O PNG tem linhas transparentes embaixo (0–25%): alinhar pela caixa deixava o pé PAIRANDO acima da sombra. Desce o sprite até o último pixel opaco tocar a linha de chão. */
   const petGroundDrop = useGroundDrop(sprite, petScale, PET_RENDER);
 
