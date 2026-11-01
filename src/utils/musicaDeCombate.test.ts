@@ -172,3 +172,57 @@ describe('o alvo do fade vem de loudness.ts', () => {
     expect(fakes.length).toBe(1); // mesmo elemento
   });
 });
+
+describe('Pesadelo (01/11/2026): a trilha tem de TOCAR quando o Pesadelo abre', () => {
+  it('a superfície `pesadelo` escolhe a faixa `pesadelo` (nunca `combate` nem o tema)', async () => {
+    const { escolherFaixa, FAIXA_DE_COMBATE } = await import('./musica');
+    expect(FAIXA_DE_COMBATE.pesadelo).toBe('pesadelo');
+    expect(escolherFaixa('pesadelo', true)).toBe('pesadelo');
+    expect(escolherFaixa('pesadelo', false)).toBeNull();
+  });
+
+  it('a janela de DESCANSO (relógio) não cala o Pesadelo — ele abre ao acordar, muitas vezes antes das 07h', () => {
+    consentirMusicaDeCombate(true);
+    pausarMusicaDeCombate('descanso');
+    pedirMusicaDeCombate('pesadelo');
+    expect(musicaDeCombateTocando()).toBe('pesadelo');
+    expect(doArquivo('musica-pesadelo')!.tocou).toBe(1);
+  });
+
+  it('...mas sono real e mudo continuam calando o Pesadelo', () => {
+    consentirMusicaDeCombate(true);
+    pausarMusicaDeCombate('mudo');
+    pedirMusicaDeCombate('pesadelo');
+    expect(musicaDeCombateTocando()).toBeNull();
+  });
+
+  it('o descanso continua calando o combate comum (a regra geral não mudou)', () => {
+    consentirMusicaDeCombate(true);
+    pausarMusicaDeCombate('descanso');
+    pedirMusicaDeCombate('combate');
+    expect(musicaDeCombateTocando()).toBeNull();
+  });
+
+  it('pausa de descanso que chega com o Pesadelo já tocando não o interrompe', () => {
+    consentirMusicaDeCombate(true);
+    pedirMusicaDeCombate('pesadelo');
+    pausarMusicaDeCombate('descanso');
+    vi.advanceTimersByTime(1000);
+    expect(doArquivo('musica-pesadelo')!.pausou).toBe(0);
+    expect(musicaDeCombateTocando()).toBe('pesadelo');
+  });
+
+  it('play() recusado (abriu sem toque): o PRÓXIMO gesto tenta de novo', async () => {
+    let recusar = true;
+    class Recusa extends FakeAudio { play() { this.tocou++; return recusar ? Promise.reject(new Error('NotAllowedError')) : Promise.resolve(); } }
+    vi.stubGlobal('Audio', Recusa);
+    consentirMusicaDeCombate(true);
+    pedirMusicaDeCombate('pesadelo');
+    await Promise.resolve(); await Promise.resolve();
+    expect(musicaDeCombateTocando()).toBeNull();
+    recusar = false;
+    window.dispatchEvent(new Event('pointerdown'));
+    expect(musicaDeCombateTocando()).toBe('pesadelo');
+    expect(doArquivo('musica-pesadelo')!.tocou).toBe(2);
+  });
+});

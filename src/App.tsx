@@ -6017,6 +6017,8 @@ export default function App() {
     setGoodDreamNow(false);
     setNightmareOpen(false);
   }, [setGameState]);
+  /** A oferta sumiu com o convite aberto (virou o dia, noite desfeita): fecha SEM gravar a noite como lutada. */
+  const vanishNightmare = useCallback(() => setNightmareOpen(false), []);
   const closeNightmare = useCallback(() => {
     if (goodDreamNow) { claimGoodDreamNow(); return; }
     markNightmareDay(false); // fechar pelo × sem lutar NÃO conta para os 6 dias do sonho bom (dono, 15/10/2026)
@@ -9419,6 +9421,7 @@ export default function App() {
              "Bom dia" (`onClose`). */
           onLose={markNightmareFought}
           onClose={closeNightmare}
+          onVanish={vanishNightmare}
         />
         )}
         </PresentationSlot>

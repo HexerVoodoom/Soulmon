@@ -32,7 +32,37 @@ const pausas = new Set<MotivoDePausa>();
 const players: Partial<Record<MusicaDeCombate, PlayerDeStreaming>> = {};
 let cicloLigado = false;
 
-const podeTocar = (f: MusicaDeCombate): boolean => consentida && pausas.size === 0 && pedida === f;
+/**
+ * O Pesadelo abre sozinho na PRIMEIRA abertura/acordar do dia, a qualquer hora — muitas vezes ainda dentro da janela de
+ * descanso (23h–07h). A pausa `descanso` é pelo RELÓGIO (calar som antes da hora de dormir/acordar); quem acabou de
+ * acordar o Soulmon por gesto está acordado, e o convite do Pesadelo ficava MUDO até a janela acabar (01/11/2026: "tive
+ * a impressão de que não tocou"). `sono` (pet dormindo de verdade) e `mudo` continuam calando o Pesadelo.
+ */
+export function pausasQueCalam(f: MusicaDeCombate, ps: ReadonlySet<MotivoDePausa> = pausas): number {
+  let n = 0;
+  for (const m of ps) if (!(f === 'pesadelo' && m === 'descanso')) n++;
+  return n;
+}
+
+const podeTocar = (f: MusicaDeCombate): boolean => consentida && pausasQueCalam(f) === 0 && pedida === f;
+
+/** O navegador recusou o `play()` (o Pesadelo abre sem toque do jogador): o PRÓXIMO gesto tenta de novo. */
+const GESTOS = ['pointerdown', 'touchend', 'keydown', 'click'] as const;
+let gestoArmado = false;
+function aoGestoRetomar(): void {
+  desarmarGesto();
+  if (pedida && podeTocar(pedida)) playerDe(pedida).comecar();
+}
+function desarmarGesto(): void {
+  if (!gestoArmado || typeof window === 'undefined') return;
+  for (const g of GESTOS) window.removeEventListener(g, aoGestoRetomar, true);
+  gestoArmado = false;
+}
+function armarGesto(): void {
+  if (gestoArmado || typeof window === 'undefined' || typeof window.addEventListener !== 'function') return;
+  for (const g of GESTOS) window.addEventListener(g, aoGestoRetomar, { capture: true, passive: true });
+  gestoArmado = true;
+}
 
 function alvo(f: MusicaDeCombate): number {
   return db2lin(GANHO_MUSICA_DB + TRIM_MUSICAS_DE_COMBATE_DB[f] + (emCombate ? OFFSET_MUSICA_EM_COMBATE_DB : 0));
@@ -46,6 +76,7 @@ function playerDe(f: MusicaDeCombate): PlayerDeStreaming {
       bus: b => b.busTrilha,
       podeTocar: () => podeTocar(f),
       alvo: () => alvo(f),
+      aoRecusarPlay: armarGesto,
     });
     players[f] = p;
   }
@@ -105,7 +136,7 @@ export function consentirMusicaDeCombate(on: boolean): void {
 /** Gancho do App (via `pausarTrilha`): sono / descanso / mudo. Um motivo por chamada. */
 export function pausarMusicaDeCombate(m: MotivoDePausa): void {
   pausas.add(m);
-  for (const f of faixas()) players[f]?.parar(); // dormir/mudo não é troca de cena: rampa curta
+  for (const f of faixas()) if (pausasQueCalam(f) > 0) players[f]?.parar(); // dormir/mudo não é troca de cena: rampa curta
 }
 
 /** Fim de UMA pausa: só volta se nenhum outro motivo segue vivo e há faixa pedida. */
@@ -132,4 +163,5 @@ export function esquecerMusicaDeCombate(): void {
   pedida = null;
   emCombate = true;
   pausas.clear();
+  desarmarGesto();
 }
