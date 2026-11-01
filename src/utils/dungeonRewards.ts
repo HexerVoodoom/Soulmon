@@ -10,7 +10,7 @@ import { isoWeekKey } from './offerMoment';
 import { bumpWeekly, forWeek, type WeeklyMissionId } from './weeklyMissions';
 import { GLITCHTAMA_EMOJI } from './shop';
 import { rosterEntryOfKey } from './enemyRoster';
-import { applyElementsDefeated, elementIdOfFoe } from './elementDex';
+import { applyElementsDefeated, dexIdsOfFoe } from './elementDex';
 import { applyEssences, applyEssencesAway, essenceDropOfFoe } from './essences';
 
 /** Conta uma missão semanal (a mesma conta de `contarMissao` do App, sem o setState). */
@@ -28,7 +28,7 @@ export function applyEnemyDefeated<T extends Pick<GameState, 'dungeonKills' | 'b
     bestiary: enemyKey && !(prev.bestiary ?? []).includes(enemyKey) ? [...(prev.bestiary ?? []), enemyKey] : prev.bestiary,
   };
   // Dex de elementos (27/10/2026): vencer um inimigo IDENTIFICADO libera o elemento dele (composto = só o composto).
-  const comDex = applyElementsDefeated(abatido, [elementIdOfFoe(rosterEntryOfKey(enemyKey)?.elements)]);
+  const comDex = applyElementsDefeated(abatido, dexIdsOfFoe(rosterEntryOfKey(enemyKey)));
   // Essências (28/10/2026, REGISTRO §183): a do PRÓPRIO elemento, pelo estágio. Luta ativa = sem teto; descida automática (`away`) = teto diário.
   const e = rosterEntryOfKey(enemyKey);
   const drop = e ? essenceDropOfFoe(e.elements, e.stage) : undefined;

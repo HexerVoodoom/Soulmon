@@ -23,6 +23,8 @@ import { sanitizeBuildingQuests } from './_buildingQuests.js';
 import { sanitizeDailyMissions, sanitizeFeats, sanitizeFirstTimes, sanitizeMissionsClaimed } from './_dailyMissions.js';
 import { sanitizeFocusLoot } from './_focusLoot.js';
 import { sanitizeDefeatedElements } from './_elementDex.js';
+import { sanitizeLibraryAck, sanitizeStrayPlayersSeen } from './_libraryAck.js';
+import { touchLastLogin } from './_strays.js';
 import { sanitizeConquistasPagas } from './_conquistas.js';
 import { sanitizeMercMission } from './_mercMission.js';
 import { sanitizeDayPlan } from './_dayPlan.js';
@@ -281,6 +283,8 @@ async function onRequestBruto({ request, env }) {
         console.warn('save: renovação de TTL falhou, leitura segue', { saveIdPrefix: saveId.slice(0, 8), err: String(err) });
       }
     }
+    // Último acesso (§213, desgarrados): abrir o app logado = GET do save. No máximo 1 escrita/dia; falha não derruba a leitura.
+    await touchLastLogin(env, saveId);
     const state = JSON.parse(raw);
     // Sobrepõe com a verdade do servidor — o que estiver gravado no save é
     // apenas um espelho e pode estar desatualizado (ou ter sido forjado).
@@ -359,6 +363,15 @@ async function onRequestBruto({ request, env }) {
     if ('defeatedElements' in state) {
       const q = sanitizeDefeatedElements(state.defeatedElements);
       if (q) state.defeatedElements = q; else delete state.defeatedElements;
+    }
+    // Biblioteca (01/11/2026): contadores do aviso "NEW" e desgarrados de jogadores vistos (§213). Espelhos de forma do cliente.
+    if ('libraryAck' in state) {
+      const q = sanitizeLibraryAck(state.libraryAck);
+      if (q) state.libraryAck = q; else delete state.libraryAck;
+    }
+    if ('strayPlayersSeen' in state) {
+      const q = sanitizeStrayPlayersSeen(state.strayPlayersSeen);
+      if (q) state.strayPlayersSeen = q; else delete state.strayPlayersSeen;
     }
     // Conquistas pagas (30/10/2026): lista fechada de ids. Espelho de `sanitizeConquistasPagas` (cliente).
     if ('conquistasPagas' in state) {

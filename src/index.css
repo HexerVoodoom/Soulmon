@@ -8953,3 +8953,28 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
 @keyframes seq-clarao{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
 @keyframes seq-fade{from{opacity:1}to{opacity:0}}
 @keyframes seq-parallax{from{transform:translateX(-1.5%) scale(1.05)}to{transform:translateX(1.5%) scale(1.05)}}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   SELO "NEW" DA BIBLIOTECA (01/11/2026, `components/LibraryNewBadge.tsx`)
+   Par de ouro do sistema (fill + on-gold), nunca `gold-fill` como tinta. Discreto: texto xs, caixa alta, sem animação.
+   `--overlay` sobrepõe ligeiramente o canto superior direito do ícone (o pai é `position: relative`). */
+.sm2-new-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 4px;
+  border-radius: var(--sm2-radius-sm);
+  background-color: var(--sm2-gold-fill);
+  color: var(--sm2-on-gold);
+  font-family: var(--sm2-font-text);
+  font-size: var(--sm2-text-xs);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: .04em;
+  pointer-events: none;
+}
+.sm2-new-badge--overlay {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  z-index: 1;
+}

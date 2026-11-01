@@ -33,7 +33,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer } from './games/TorcidaKit';
 import { playDefeat, playVictory } from '../utils/sounds';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
-import { elementIdOfFoe } from '../utils/elementDex';
+import { dexIdsOfFoe } from '../utils/elementDex';
 import { essenceDropOfFoe, type EssenceDrop } from '../utils/essences';
 import { isStraySeed } from '../utils/strayFoes';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG, ELEMENT_ADVANTAGE_TAG } from './games/pveTags';
@@ -282,7 +282,7 @@ export function ArenaGame({
       // C-1 (run `som-01`): a rodada limpa NÃO toca `playTaskComplete`. PR18 (pedido do dono, 06/10/2026): ganhou o som
       // PRÓPRIO de vitória de combate (`playVictory`, categoria `arcade`) — o corte C-1 continua valendo para o resto.
       playVictory();
-      const ids = inimigosRef.current.map(e => elementIdOfFoe(e.elements)).filter((x): x is string => !!x);
+      const ids = inimigosRef.current.flatMap(e => dexIdsOfFoe(e));
       if (ids.length > 0) elementsDefeatedRef.current?.(ids, inimigosRef.current.map(e => essenceDropOfFoe(e.elements, e.tier)).filter((d): d is EssenceDrop => !!d));
       setPontos(p => p + inimigosRef.current.reduce((s, e) => s + e.points, 0));
       setFase('rodada-limpa');

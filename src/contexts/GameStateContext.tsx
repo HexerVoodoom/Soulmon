@@ -103,6 +103,8 @@ import { newUuid } from '../utils/uuid';
 import { sanitizeAvatarId } from '../utils/avatar';
 import { migrateBestiary } from '../utils/bestiaryMigrate';
 import { sanitizeDefeatedElements } from '../utils/elementDex';
+import { sanitizeLibraryAck, type LibraryAck } from '../utils/libraryNew';
+import { sanitizeStrayPlayersSeen, type StrayPlayerSeen } from '../utils/strayPlayers';
 import { sanitizeEssences, sanitizeEssenceSpent, sanitizeEssenceAway, type EssenceAway } from '../utils/essences';
 import { sanitizeElementId } from '../utils/elementPotion';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
@@ -324,6 +326,10 @@ export interface GameState {
   bestiary?: string[];
   /** Dex de elementos (27/10/2026): ids (20 base + 190 derivados) de elementos de inimigos identificados já VENCIDOS. Começa vazio para todos (sem retroativo), só cresce. Dono: `utils/elementDex.ts`. */
   defeatedElements?: string[];
+  /** Aviso "NEW" da Biblioteca (01/11/2026, `utils/libraryNew.ts`): tamanhos de bestiary/defeatedElements/strayPlayersSeen na última abertura. */
+  libraryAck?: LibraryAck;
+  /** Desgarrados de JOGADORES vistos (01/11/2026, REGISTRO §213, `utils/strayPlayers.ts`): só cresce; aba Desgarrado da Biblioteca. */
+  strayPlayersSeen?: StrayPlayerSeen[];
   /** 💧 Essências dos elementos (28/10/2026, `utils/essences.ts`, REGISTRO §183): `{ elementId: quantidade }`, só cresce, só coleta (sem uso). Servidor: monotônico por elemento (`_essences.js`). */
   essences?: Record<string, number>;
   /** 💧 Acumulado GASTO por essência (30/10/2026, Poção de Elemento): só cresce; o servidor só deixa `essences` baixar pelo aumento dele. */
@@ -1265,6 +1271,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         formReachedAt: (loadedState.formReachedAt as Record<string, string>) ?? {},
         bestiary: migrateBestiary(strArr(loadedState.bestiary)), // QA: chaves antigas linha-tier ganham as novas id-estágio
         defeatedElements: sanitizeDefeatedElements(loadedState.defeatedElements), // dex de elementos: ausente/lixo = lista vazia
+        strayPlayersSeen: sanitizeStrayPlayersSeen(loadedState.strayPlayersSeen), // §213: ausente/lixo = lista vazia
+        libraryAck: sanitizeLibraryAck(loadedState.libraryAck, { bestiary: migrateBestiary(strArr(loadedState.bestiary)), defeatedElements: sanitizeDefeatedElements(loadedState.defeatedElements), strayPlayersSeen: sanitizeStrayPlayersSeen(loadedState.strayPlayersSeen) }), // ausente = tamanhos atuais (sem NEW retroativo)
         essences: sanitizeEssences(loadedState.essences), // essências: ausente/lixo = objeto vazio
         essenceSpent: sanitizeEssenceSpent(loadedState.essenceSpent), // gasto acumulado: ausente/lixo = objeto vazio
         evolutionPotion: sanitizeElementId(loadedState.evolutionPotion), // poção pendente: id fora do catálogo = nenhuma

@@ -60,6 +60,7 @@ import { avatarIdOrNull } from './_avatares.js';
 import { artLineOrNull, spriteUrlOrNull } from './_artLine.js';
 import { formsFromSaveState } from './_formHistory.js';
 import { frameIdOrNull } from './_frames.js';
+import { isStrayProfile, strayView, STRAY_POOL_MAX } from './_strays.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -104,7 +105,7 @@ async function withDuelLock(key, fn) {
 // Duas classes, porque o custo delas é diferente em uma ordem de grandeza:
 // `players`/`opponents`/`rank` varrem até 300 chaves do KV por chamada; as
 // demais leem uma ou duas. Ver `_rateLimit.js` para o que este teto NÃO é.
-const HEAVY_ACTIONS = new Set(['players', 'opponents', 'rank', 'seasonResult', 'names']);
+const HEAVY_ACTIONS = new Set(['players', 'opponents', 'rank', 'seasonResult', 'names', 'strays']);
 const HEAVY_LIMIT = { limit: 20, windowMs: 60_000 };   // 20 varreduras/min/IP
 const LIGHT_LIMIT = { limit: 120, windowMs: 60_000 };  // 2/s/IP no resto
 
@@ -112,7 +113,7 @@ const LIGHT_LIMIT = { limit: 120, windowMs: 60_000 };  // 2/s/IP no resto
 // de cache é uma varredura de 300 chaves de KV que NÃO acontece. `opponents` e
 // `player` ficam de fora: o primeiro é aleatório por chamada, o segundo é por
 // alvo e tem cardinalidade alta demais para valer cache.
-const CACHEABLE_ACTIONS = new Set(['players', 'rank', 'seasonResult']);
+const CACHEABLE_ACTIONS = new Set(['players', 'rank', 'seasonResult', 'strays']);
 const EDGE_TTL_SECONDS = 60;
 const today = () => new Date().toISOString().slice(0, 10);
 const currentSeason = () => new Date().toISOString().slice(0, 7); // YYYY-MM
@@ -551,6 +552,8 @@ async function handleCommunity(context) {
       friends: prev.friends || [],
       createdAt: prev.createdAt || Date.now(),
       updatedAt: Date.now(),
+      // §213: gravar o próprio perfil é acesso do dono (o GET do save também toca, `_strays.js`).
+      lastLoginAt: Date.now(),
       // `friends` guarda saveId internamente (nunca sai daqui assim) — só o
       // mapa reverso conhece a correspondência.
       pid: (pidAntigo && !pidLegado) ? pidAntigo : newPid(),
@@ -655,6 +658,23 @@ async function handleCommunity(context) {
        escondido, ele não é buscado. */
     players.sort((a, b) => String(a.name ?? '').localeCompare(String(b.name ?? '')));
     return json({ players });
+  }
+
+  // ── Desgarrados de jogadores (§213): Soulmon de quem está há 90+ dias sem entrar. Anônimo, público, cache de borda. ──
+  if (action === 'strays' && method === 'GET') {
+    const keys = await listPrefix(env, 'profile:', 300);
+    const now = Date.now();
+    const strays = [];
+    for (const k of keys) {
+      const raw = await kvOrThrow(env).get(k);
+      if (!raw) continue;
+      let p;
+      try { p = JSON.parse(raw); } catch { continue; }
+      if (!isStrayProfile(p, now, k.slice('profile:'.length))) continue;
+      strays.push(await strayView(p));
+      if (strays.length >= STRAY_POOL_MAX) break;
+    }
+    return json({ strays });
   }
 
   if (action === 'player' && method === 'GET') {

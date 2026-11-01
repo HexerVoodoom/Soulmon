@@ -152,6 +152,9 @@ export const getPlayer = (id: string) =>
 export const getFriendForms = (saveId: string, friendPid: string) =>
   call<{ forms: { stage: string; spriteUrl: string | null; element: string | null; date: number }[] }>('forms', { params: { id: saveId, friend: friendPid } });
 
+/** Desgarrados de jogadores (§213): o pool anônimo do servidor (90+ dias sem entrar). Sanear com `sanitizeStrayPool`. */
+export const getStrays = () => call<{ strays: unknown }>('strays');
+
 export interface Opponent {
   id: string; name: string; petName: string; stage: string; element?: string | null;
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;

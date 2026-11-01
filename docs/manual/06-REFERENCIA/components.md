@@ -1953,3 +1953,6 @@ Folha da Poção de Elemento (Laboratório › Centro de Evolução): 3 espaços
 ### `src/components/onboarding/sequencia/types.ts`
 **Dono de:** os tipos de props que toda frente encaixa num slot.
 
+
+### `src/components/LibraryNewBadge.tsx`
+Selo "NEW" (`NewBadge`, tokens `--sm2-gold-fill`/`--sm2-on-gold`, classe `.sm2-new-badge`) e o aviso discreto de entrada nova na Biblioteca (`useLibraryNewNotice`: um toast de id fixo, o mesmo para 1 ou várias entradas). Regra em `utils/libraryNew.ts`. Régua: `LibraryNewBadge.render.test.tsx`.
