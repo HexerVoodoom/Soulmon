@@ -185,7 +185,7 @@ describe('Oficina do Foco', () => {
     expect(localStorage.getItem(STORAGE_KEYS.FOCO_WORKSHOP_PLAN)).not.toBeNull();
   });
 
-  it('Brain Dump tem tempo escolhido e cronômetro; If-Then sugere; a última etapa é a lista', () => {
+  it('Brain Dump tem tempo escolhido e a contagem no próprio botão; If-Then sugere; a última etapa é a lista', () => {
     const { container, getByLabelText, getByText } = render(createElement(OficinaSheet, { language: 'pt-BR', todayKey: DIA }));
     fireEvent.change(getByLabelText('Nome da sessão'), { target: { value: 'Estudar' } });
     for (let i = 0; i < 5; i++) fireEvent.click(getByText('Próxima etapa'));
@@ -193,12 +193,12 @@ describe('Oficina do Foco', () => {
     fireEvent.click(q(container, '[data-oficina-suggestion="0"]')!);
     expect((container.querySelectorAll('[data-oficina-if-then] input')[0] as HTMLInputElement).value).toContain('Se eu sentar');
     fireEvent.click(getByText('Próxima etapa'));
-    expect(q(container, '[data-oficina-dump-clock]')!.textContent).toBe('05:00');
+    expect(q(container, '[data-oficina-dump-start]')!.textContent).toBe('Começar 5 minutos');
     fireEvent.click(Array.from(container.querySelectorAll('[data-oficina-brain-dump] [role="radio"]')).find(b => b.textContent === '3 min')!);
-    expect(q(container, '[data-oficina-dump-clock]')!.textContent).toBe('03:00');
+    expect(q(container, '[data-oficina-dump-start]')!.textContent).toBe('Começar 3 minutos');
     fireEvent.click(q(container, '[data-oficina-dump-start]')!);
     act(() => { vi.advanceTimersByTime(61_000); });
-    expect(q(container, '[data-oficina-dump-clock]')!.textContent).toBe('01:59');
+    expect(q(container, '[data-oficina-dump-start]')!.textContent).toBe('Reiniciar · 01:59');
     act(() => { vi.advanceTimersByTime(130_000); });
     expect(q(container, '[data-oficina-dump-fim]')).not.toBeNull();
     fireEvent.click(getByText('Próxima etapa'));

@@ -27,8 +27,9 @@ export const DEFAULT_DUMP_MINUTES = 5;
 export const MAX_NAME = 60;
 export const MAX_TEXT = 2000;
 
-export interface PlanTask { id: string; name: string; completed: boolean }
-export type PlanTag = 'quick' | 'frog' | Quadrant;
+/** `kind: 'habit'` = um hábito de hoje que entrou na escolha (id `habit:<id>`, montado no App). */
+export interface PlanTask { id: string; name: string; completed: boolean; kind?: 'habit' }
+export type PlanTag = 'habit' | 'quick' | 'frog' | Quadrant;
 export interface PlanItem { id: string; name: string; tags: PlanTag[] }
 
 export interface SessionDraft {
@@ -111,7 +112,7 @@ export function buildPlan(d: SessionDraft, tasks: readonly PlanTask[]): PlanItem
     const t = open.get(id);
     if (!t) return;
     const cur = out.get(id);
-    if (cur) { if (!cur.tags.includes(tag)) cur.tags.push(tag); } else out.set(id, { id, name: t.name, tags: [tag] });
+    if (cur) { if (!cur.tags.includes(tag)) cur.tags.push(tag); } else out.set(id, { id, name: t.name, tags: t.kind === 'habit' ? ['habit', tag] : [tag] });
   };
   for (const id of d.twoMin) add(id, 'quick');
   if (d.frog) add(d.frog, 'frog');
@@ -127,7 +128,10 @@ export const startDump = (now: number, minutes: number): number => now + dumpMs(
 export const dumpRemaining = (endAt: number | null, now: number): number => (endAt === null ? 0 : Math.max(0, endAt - now));
 
 // ── Salvar / concluir ────────────────────────────────────────────────────────
-export const canSave = (d: SessionDraft): boolean => d.name.trim().length > 0 && isFocusEnvironmentId(d.environment);
+export const canSave = (d: SessionDraft): boolean => missingToSave(d) === null;
+/** O que falta para salvar (o botão nunca fica mudo: a folha diz isto e leva até o campo). */
+export const missingToSave = (d: SessionDraft): 'name' | 'environment' | null =>
+  d.name.trim().length === 0 ? 'name' : !isFocusEnvironmentId(d.environment) ? 'environment' : null;
 
 /** Concluir o PROCESSO exige um plano e a sessão pronta — nunca um número de tarefas. */
 export const canCompleteSession = (s: FocoSession): boolean => s.status === 'ready' && s.plan.length > 0;
@@ -175,7 +179,7 @@ export function normalizeSession(raw: unknown): FocoSession | null {
     ? r.plan.flatMap((p): PlanItem[] => {
         const o = p as Record<string, unknown> | null;
         if (!o || typeof o.id !== 'string' || typeof o.name !== 'string') return [];
-        const tags = Array.isArray(o.tags) ? o.tags.filter((t): t is PlanTag => t === 'quick' || t === 'frog' || (QUADRANTS as readonly unknown[]).includes(t)) : [];
+        const tags = Array.isArray(o.tags) ? o.tags.filter((t): t is PlanTag => t === 'habit' || t === 'quick' || t === 'frog' || (QUADRANTS as readonly unknown[]).includes(t)) : [];
         return [{ id: o.id.slice(0, 80), name: o.name.slice(0, 200), tags }];
       }).slice(0, MAX_POOL)
     : [];

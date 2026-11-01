@@ -3,7 +3,7 @@
  * Só desenha e coleta: a ordem das etapas, as escolhas e a lista final são de `utils/focoSessao.ts`.
  * Nada aqui toca nas tarefas do jogo — escolher/ordenar é local; concluir é a folha da Oficina.
  */
-import { useEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { CheckRow, Field, Segment, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { Icon } from '../ui/Icon';
@@ -12,12 +12,12 @@ import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 import type { Language } from '../../utils/i18n';
 import {
   FOCUS_ENVIRONMENTS, FOCUS_EXTRA_BASE_CHANCE, FOCUS_EXTRA_CHANCE_PER_CYCLE, FOCUS_EXTRA_MAX_CHANCE,
-  FOCUS_LOOT_DAILY_CAP, isFocusEnvironmentId,
+  FOCUS_LOOT_DAILY_CAP,
 } from '../../utils/focusExpedition';
 import { formatClock, type FocoModeId } from '../../utils/focoTimer';
 import {
   DUMP_MINUTE_OPTIONS, MAX_POOL, MAX_TWO_MIN, QUADRANTS, STEP_ORDER, buildPlan, canSave, dumpRemaining, lengthLabel,
-  matrixOrder, nextStep, prevStep, setFrog, setQuadrant, startDump, stepNumber, toggleTwoMin,
+  matrixOrder, missingToSave, nextStep, prevStep, setFrog, setQuadrant, startDump, stepNumber, toggleTwoMin,
   type PlanTask, type Quadrant, type SessionDraft, type StepId,
 } from '../../utils/focoSessao';
 
@@ -28,7 +28,7 @@ const STEPS: Record<StepId, { pt: string; en: string; icon: string; infoPt: stri
   eisenhower: { pt: 'Matriz de Eisenhower', en: 'Eisenhower matrix', icon: 'schedule', infoPt: 'Classifique as tarefas que quiser. A lista abaixo se ordena sozinha: fazer, agendar, delegar. “Deixar de lado” sai da sessão. Isto não muda a sua Home.', infoEn: 'Sort any tasks you like. The list below orders itself: do, schedule, delegate. “Drop” leaves the session. This does not change your Home.' },
   sapo: { pt: 'O sapo primeiro', en: 'Eat the frog', icon: 'eco', infoPt: 'Escolha a tarefa mais difícil ou mais evitada. Ela vai logo depois dos dois minutos.', infoEn: 'Pick the hardest or most avoided task. It goes right after the two-minute items.' },
   'se-entao': { pt: 'Se… então…', en: 'If… then…', icon: 'flag', infoPt: 'Ligue um gatilho concreto a uma ação que você quer iniciar.', infoEn: 'Connect a concrete cue to an action you want to start.' },
-  esvaziar: { pt: 'Esvaziar a cabeça', en: 'Brain dump', icon: 'psychology', infoPt: 'Escolha um tempo e escreva tudo o que está na sua cabeça até ele acabar. O que pende, com um primeiro passo.', infoEn: 'Pick a time and write down everything on your mind until it runs out. What is pending, with a first step.' },
+  esvaziar: { pt: 'Descarregar a mente', en: 'Brain dump', icon: 'psychology', infoPt: 'Tirar da cabeça o que ocupa espaço deixa a atenção livre para a sessão. Não precisa organizar nem resolver: só escrever. O que for pendência, anote com um primeiro passo pequeno.', infoEn: 'Getting what takes up space out of your head frees your attention for the session. No need to organize or solve anything: just write. For anything pending, note one small first step.' },
   revisar: { pt: 'Sua lista', en: 'Your list', icon: 'check_circle', infoPt: 'A lista do que você vai fazer, em ordem. Dê um nome e salve; depois é só ativar o Pomodoro.', infoEn: 'What you will do, in order. Name it and save; then just start the Pomodoro.' },
 };
 
@@ -57,11 +57,11 @@ const softLink: CSSProperties = { ...sm2Button('quiet'), minHeight: 40, padding:
 const selectStyle: CSSProperties = { minHeight: 44, color: 'var(--sm2-ink)', background: 'var(--sm2-surface)', border: '1px solid var(--sm2-border)', borderRadius: 8 };
 
 /** Uma linha tocável de lista (picker): 44px de alvo, estado em aria-checked, sem ícone em caixa. */
-function PickRow({ role, checked, onClick, children, ...rest }: { role: 'checkbox' | 'radio'; checked: boolean; onClick: () => void; children: React.ReactNode } & Record<string, unknown>) {
+function PickRow({ role, checked, onClick, children, habit, ...rest }: { role: 'checkbox' | 'radio'; checked: boolean; onClick: () => void; children: React.ReactNode; habit?: React.ReactNode } & Record<string, unknown>) {
   return <button type="button" role={role} aria-checked={checked} onClick={onClick} {...rest}
     style={{ ...sm2Button(checked ? 'primary' : 'outline'), display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 8, textAlign: 'left', width: '100%', minHeight: 44 }}>
     <Icon name={checked ? 'check_circle' : 'radio_button_unchecked'} size={20} tone="inherit" />
-    <span style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>{children}</span>
+    <span style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>{children}</span>{habit}
   </button>;
 }
 
@@ -74,6 +74,8 @@ export function OficinaPlano({ language, tasks, initial, onSave, onCancel }: {
   const [step, setStep] = useState<StepId>('preparar');
   const [dumpEnd, setDumpEnd] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [missing, setMissing] = useState<'name' | 'environment' | null>(null);
+  const rootRef = useRef<HTMLElement>(null);
   useEffect(() => {
     if (dumpEnd === null) return;
     const tick = () => setNow(Date.now());
@@ -85,15 +87,25 @@ export function OficinaPlano({ language, tasks, initial, onSave, onCancel }: {
 
   const pool = tasks.filter(t => !t.completed).slice(0, MAX_POOL);
   const set = <K extends keyof SessionDraft>(key: K, value: SessionDraft[K]) => setDraft(p => ({ ...p, [key]: value }));
+  useEffect(() => { if (missing && missingToSave(draft) !== missing) setMissing(missingToSave(draft)); }, [draft, missing]);
   const meta = STEPS[step];
   const plan = buildPlan(draft, tasks);
   const ordered = matrixOrder(draft, pool);
   const left = dumpRemaining(dumpEnd, now);
   const dumpDone = dumpEnd !== null && left === 0;
-  const empty = <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Você não tem tarefas abertas. Pode pular esta etapa.' : 'You have no open tasks. You can skip this step.'}</p>;
+  /** Salvar nunca fica mudo (dono, 01/11/2026: o botão desabilitado parecia quebrado): diz o que falta e leva até lá. */
+  const trySave = () => {
+    const why = missingToSave(draft);
+    setMissing(why);
+    if (why === null) { if (canSave(draft)) onSave(draft); return; }
+    if (why === 'environment') setStep('ritmo');
+    else rootRef.current?.querySelector('input')?.focus();
+  };
+  const habitChip = (t: PlanTask) => (t.kind === 'habit' ? <TagChips tags={['habit']} isPt={isPt} /> : null);
+  const empty = <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Você não tem tarefas nem hábitos abertos hoje. Pode pular esta etapa.' : 'You have no open tasks or habits today. You can skip this step.'}</p>;
 
   return (
-    <section data-oficina-plano style={{ ...sheetCard, alignItems: 'stretch', gap: 12 }}>
+    <section ref={rootRef} data-oficina-plano style={{ ...sheetCard, alignItems: 'stretch', gap: 12 }}>
       <header style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Planejar sessão' : 'Plan session'}</p>
         <button type="button" data-oficina-cancel-session onClick={onCancel} style={softLink}>{isPt ? 'Cancelar' : 'Cancel'}</button>
@@ -139,11 +151,11 @@ export function OficinaPlano({ language, tasks, initial, onSave, onCancel }: {
 
         {step === 'dois-minutos' && (pool.length === 0 ? empty : <div data-oficina-two-min role="group" aria-label={isPt ? 'Tarefas de dois minutos' : 'Two-minute tasks'} style={{ display: 'grid', gap: 6 }}>
           <p style={{ ...sm2Hint, margin: 0 }} role="status">{isPt ? `${draft.twoMin.length} de ${MAX_TWO_MIN} escolhidas` : `${draft.twoMin.length} of ${MAX_TWO_MIN} chosen`}</p>
-          {pool.map(t => <PickRow key={t.id} role="checkbox" data-oficina-pick={t.id} checked={draft.twoMin.includes(t.id)} onClick={() => setDraft(d => toggleTwoMin(d, t.id))}>{t.name}</PickRow>)}
+          {pool.map(t => <PickRow key={t.id} role="checkbox" data-oficina-pick={t.id} checked={draft.twoMin.includes(t.id)} onClick={() => setDraft(d => toggleTwoMin(d, t.id))} habit={habitChip(t)}>{t.name}</PickRow>)}
         </div>)}
 
         {step === 'eisenhower' && (pool.length === 0 ? empty : <div data-oficina-matrix style={{ display: 'grid', gap: 8 }}>
-          {pool.map(t => <label key={t.id} style={{ ...sm2Text, display: 'grid', gap: 4 }}><span style={{ overflowWrap: 'anywhere' }}>{t.name}</span>
+          {pool.map(t => <label key={t.id} style={{ ...sm2Text, display: 'grid', gap: 4 }}><span style={{ overflowWrap: 'anywhere', display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>{t.name}{habitChip(t)}</span>
             <select data-oficina-quadrant={t.id} aria-label={`${isPt ? 'Quadrante de' : 'Quadrant for'} ${t.name}`} value={draft.matrix[t.id] ?? ''} onChange={e => setDraft(d => setQuadrant(d, t.id, (e.target.value || null) as Quadrant | null))} style={selectStyle}>
               <option value="">{isPt ? 'Sem classificar' : 'Unsorted'}</option>
               {QUADRANTS.map(q => <option key={q} value={q}>{isPt ? QUADRANT_LONG[q].pt : QUADRANT_LONG[q].en}</option>)}
@@ -155,7 +167,7 @@ export function OficinaPlano({ language, tasks, initial, onSave, onCancel }: {
         </div>)}
 
         {step === 'sapo' && (pool.length === 0 ? empty : <div data-oficina-frog role="radiogroup" aria-label={isPt ? 'A tarefa mais difícil' : 'The hardest task'} style={{ display: 'grid', gap: 6 }}>
-          {pool.map(t => <PickRow key={t.id} role="radio" data-oficina-pick={t.id} checked={draft.frog === t.id} onClick={() => setDraft(d => setFrog(d, t.id))}>{t.name}</PickRow>)}
+          {pool.map(t => <PickRow key={t.id} role="radio" data-oficina-pick={t.id} checked={draft.frog === t.id} onClick={() => setDraft(d => setFrog(d, t.id))} habit={habitChip(t)}>{t.name}</PickRow>)}
         </div>)}
 
         {step === 'se-entao' && <div data-oficina-if-then style={{ display: 'grid', gap: 8 }}>
@@ -166,14 +178,17 @@ export function OficinaPlano({ language, tasks, initial, onSave, onCancel }: {
         </div>}
 
         {step === 'esvaziar' && <div data-oficina-brain-dump style={{ display: 'grid', gap: 8 }}>
-          <div role="radiogroup" aria-label={isPt ? 'Tempo do brain dump' : 'Brain dump time'} style={{ display: 'flex', gap: 8 }}>
+          <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Escreva tudo o que estiver na cabeça, sem ordem e sem julgar. Quando o tempo acabar, a cabeça fica mais leve para focar.' : 'Write down everything on your mind, in any order, no judging. When the time is up, your head is lighter for focus.'}</p>
+          <div role="radiogroup" aria-label={isPt ? 'Tempo para descarregar' : 'Brain dump time'} style={{ display: 'flex', gap: 8 }}>
             {DUMP_MINUTE_OPTIONS.map(m => <Segment key={m} selected={draft.dumpMinutes === m} onSelect={() => { set('dumpMinutes', m); setDumpEnd(null); }} label={`${m} min`} />)}
           </div>
-          <p role="timer" data-oficina-dump-clock className="sm2-num" style={{ ...sm2Text, margin: 0, fontSize: 'var(--sm2-text-lg, 20px)' }}>{formatClock(dumpEnd === null ? draft.dumpMinutes * 60_000 : left)}</p>
-          {dumpDone && <p role="status" data-oficina-dump-fim style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'O tempo acabou. Termine a frase e siga em frente.' : 'Time is up. Finish your thought and move on.'}</p>}
-          <button type="button" data-oficina-dump-start style={sm2Button('outline')} onClick={() => { const t = Date.now(); setNow(t); setDumpEnd(startDump(t, draft.dumpMinutes)); }}>{dumpEnd === null ? (isPt ? `Começar ${draft.dumpMinutes} minutos` : `Start ${draft.dumpMinutes} minutes`) : (isPt ? 'Reiniciar' : 'Restart')}</button>
-          <label style={{ ...sm2Text, display: 'grid', gap: 4 }}>{isPt ? 'O que está na sua cabeça (fica só nesta sessão)' : 'What is on your mind (stays in this session)'}
-            <textarea data-oficina-dump value={draft.dump} onChange={e => set('dump', e.target.value)} rows={5} maxLength={2000} style={{ ...sm2Text, boxSizing: 'border-box', width: '100%', color: 'var(--sm2-ink)', background: 'var(--sm2-surface)', border: '1px solid var(--sm2-border)', borderRadius: 8, padding: 10 }} />
+          <button type="button" data-oficina-dump-start style={sm2Button(dumpEnd === null ? 'primary' : 'outline')} onClick={() => { const t = Date.now(); setNow(t); setDumpEnd(startDump(t, draft.dumpMinutes)); }}>
+            {dumpEnd === null ? (isPt ? `Começar ${draft.dumpMinutes} minutos` : `Start ${draft.dumpMinutes} minutes`) : `${isPt ? 'Reiniciar' : 'Restart'} · ${formatClock(left)}`}
+          </button>
+          {dumpDone && <p role="status" data-oficina-dump-fim style={{ ...sm2Text, margin: 0 }}>{isPt ? 'Tempo! Feche a última ideia e siga. O que você escreveu fica guardado na sessão.' : "Time's up! Wrap up your last thought and move on. What you wrote stays with the session."}</p>}
+          <label style={{ ...sm2Text, display: 'grid', gap: 4 }}>{isPt ? 'O que está na sua cabeça' : "What's on your mind"}
+            <textarea data-oficina-dump value={draft.dump} onChange={e => set('dump', e.target.value)} rows={5} maxLength={2000} placeholder={isPt ? 'Ex.: responder o Lucas, comprar ração, aquela ideia do projeto…' : 'e.g. reply to Lucas, buy pet food, that project idea…'} style={{ ...sm2Text, boxSizing: 'border-box', width: '100%', color: 'var(--sm2-ink)', background: 'var(--sm2-surface)', border: '1px solid var(--sm2-border)', borderRadius: 8, padding: 10 }} />
+            <span style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Fica só nesta sessão, neste aparelho.' : 'Stays in this session, on this device.'}</span>
           </label>
         </div>}
 
@@ -185,18 +200,19 @@ export function OficinaPlano({ language, tasks, initial, onSave, onCancel }: {
           {draft.dump.trim() && <p style={{ ...sm2Hint, margin: 0, overflowWrap: 'anywhere' }} data-oficina-review-dump><Icon name="psychology" size={20} tone="primary" /> {draft.dump}</p>}
           <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? `Cada foco concluído rende um item; extra: ${FOCUS_EXTRA_BASE_CHANCE * 100}%, +${FOCUS_EXTRA_CHANCE_PER_CYCLE * 100}% por ciclo, até ${FOCUS_EXTRA_MAX_CHANCE * 100}%.` : `Each completed focus earns an item; extra: ${FOCUS_EXTRA_BASE_CHANCE * 100}%, +${FOCUS_EXTRA_CHANCE_PER_CYCLE * 100}% per cycle, up to ${FOCUS_EXTRA_MAX_CHANCE * 100}%.`}</p>
           <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? `Concluir a sessão rende 1 item pequeno (até 2 por dia); limite de ${FOCUS_LOOT_DAILY_CAP} itens por dia.` : `Completing the session earns 1 small item (up to 2 a day); daily limit of ${FOCUS_LOOT_DAILY_CAP} items.`}</p>
-          {!draft.name.trim() && <p role="status" style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Dê um nome à sessão (no topo) para salvar.' : 'Name the session (at the top) to save it.'}</p>}
-          {!isFocusEnvironmentId(draft.environment) && <p role="status" style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Escolha o ambiente na etapa do ritmo.' : 'Pick an environment in the rhythm step.'}</p>}
         </div>}
       </div>
 
+      {missing && <p role="alert" data-oficina-save-missing style={{ ...sm2Text, margin: 0, color: 'var(--sm2-gold-ink, var(--sm2-ink))' }}>{missing === 'name'
+        ? (isPt ? 'Dê um nome à sessão, no topo. Depois toque em Salvar sessão de novo.' : 'Just add a session name at the top, then tap Save session again.')
+        : (isPt ? 'Escolha para onde o Soulmon vai: toque num ambiente e volte para salvar.' : 'Choose where Soulmon goes: pick an environment, then come back to save.')}</p>}
       <footer style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {step !== 'preparar' && <button type="button" data-oficina-back onClick={() => setStep(prevStep(step))} style={softLink}>{isPt ? 'Voltar' : 'Back'}</button>}
         {step !== 'revisar' && <>
           <button type="button" data-oficina-skip onClick={() => setStep(nextStep(step))} style={softLink}>{isPt ? 'Pular' : 'Skip'}</button>
           <button type="button" data-oficina-next onClick={() => setStep(nextStep(step))} style={{ ...sm2Button('primary'), marginLeft: 'auto' }}>{isPt ? 'Próxima etapa' : 'Next step'}</button>
         </>}
-        {step === 'revisar' && <button type="button" data-oficina-save-session disabled={!canSave(draft)} onClick={() => onSave(draft)} style={{ ...sm2Button('primary'), marginLeft: 'auto' }}>{isPt ? 'Salvar sessão' : 'Save session'}</button>}
+        {step === 'revisar' && <button type="button" data-oficina-save-session onClick={trySave} style={{ ...sm2Button('primary'), marginLeft: 'auto' }}>{isPt ? 'Salvar sessão' : 'Save session'}</button>}
       </footer>
     </section>
   );

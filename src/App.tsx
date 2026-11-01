@@ -8001,8 +8001,25 @@ export default function App() {
                       settleDungeonAwayNow(gameStateRef.current, setGameState, Date.now(), true);
                     });
                   },
-                  focusTasks: gameState.tasks.map(({ id, name, completed, steps }) => ({ id, name, completed, steps })),
-                  onCompleteFocusTask: handleToggleTask,
+                  /* Focus Workshop (01/11/2026, pedido do dono): os HÁBITOS de hoje ainda abertos entram na escolha junto das
+                     tarefas, com id `habit:<id>` (não colide com tarefa) e `kind: 'habit'` (etiqueta "Hábito" na lista). */
+                  focusTasks: [
+                    ...gameState.tasks.map(({ id, name, completed, steps }) => ({ id, name, completed, steps })),
+                    ...(() => {
+                      const hoje = new Date();
+                      const dk = hoje.toDateString();
+                      return activitiesForWeekDay(gameState as any, hoje.getDay(), dk)
+                        .filter((a: any) => !(a.steps?.length > 0 ? a.steps.every((st: any) => st.completed) : !!a.completedToday && a.lastCompletedDate === dk))
+                        .map((a: any) => ({ id: `habit:${a.id}`, name: String(a.name), completed: false, kind: 'habit' as const }));
+                    })(),
+                  ],
+                  /* Hábito sem etapas conclui pelo handler real do hábito; hábito COM etapas fecha na última etapa (dono dele é
+                     a Home), então aqui só fica o ✓ local da sessão. */
+                  onCompleteFocusTask: (id: string) => {
+                    if (!id.startsWith('habit:')) { handleToggleTask(id); return; }
+                    const act = gameState.activities.find(a => String(a.id) === id.slice(6));
+                    if (act && act.steps.length === 0) handleToggleActivityCompletion(act.id);
+                  },
                   onFocusReward: (request: FocusLootRequest, completedCycles: number) => {
                     const roll = rollFocusLoot(request.environment, completedCycles);
                     const preview = applyFocusLoot(gameState, request, roll);

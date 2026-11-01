@@ -9,7 +9,7 @@ import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { playerDayIso } from '../../utils/playerDay';
 import { OficinaPlano } from './OficinaPlano';
 
-type PrepTask = { id: string; name: string; completed: boolean; steps?: Array<{ id: string; label: string; completed: boolean }> };
+type PrepTask = { id: string; name: string; completed: boolean; kind?: 'habit'; steps?: Array<{ id: string; label: string; completed: boolean }> };
 
 /**
  * PREPARE TO FOCUS (beta3 F1): o prédio da PREPARAÇÃO da sessão — o mesmo fluxo de etapas que morava na Focus Workshop
@@ -29,7 +29,7 @@ export function PrepararFocoSheet({ language, todayKey, tasks = [], keyActive = 
   const saveDraft = (draft: SessionDraft) => {
     const prev = normalizeSession(readJson<unknown>(STORAGE_KEYS.FOCO_WORKSHOP_PLAN, null));
     const next = buildSession(draft, tasks, { id: `foco-${Date.now()}`, day, prev: prev?.status === 'ready' ? prev : null });
-    if (!next) { setSaveError(isPt ? 'Falta algo para salvar: escolha ao menos uma tarefa ou escreva um plano.' : 'Something is missing: pick at least one task or write a plan.'); return; }
+    if (!next) { setSaveError(isPt ? 'Falta o nome da sessão ou o ambiente do Soulmon.' : 'The session name or the Soulmon environment is missing.'); return; }
     if (!writeJson(STORAGE_KEYS.FOCO_WORKSHOP_PLAN, next)) { setSaveError(isPt ? 'Não deu para salvar a sessão neste aparelho. Tente de novo.' : "Couldn't save the session on this device. Try again."); return; }
     setSaveError(null);
     onPrepared();

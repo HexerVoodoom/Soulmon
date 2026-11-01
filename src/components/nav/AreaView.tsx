@@ -116,7 +116,7 @@ export interface PlayHandlers {
    *  Sem ele (testes antigos), cai no dia UTC do aparelho. */
   todayKey?: string;
   /** Tarefas canônicas para o planejamento local da Oficina do Foco. */
-  focusTasks?: Array<{ id: string; name: string; completed: boolean; steps?: Array<{ id: string; label: string; completed: boolean }> }>;
+  focusTasks?: Array<{ id: string; name: string; completed: boolean; kind?: 'habit'; steps?: Array<{ id: string; label: string; completed: boolean }> }>;
   onCompleteFocusTask?: (taskId: string) => void;
   onFocusReward?: (request: FocusLootRequest, completedCycles: number) => FocusRewardResult;
   onPlanReward?: (request: FocusLootRequest) => FocusRewardResult;
