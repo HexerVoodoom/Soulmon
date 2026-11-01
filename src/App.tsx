@@ -155,6 +155,7 @@ import {
   type CreditPack, type AccountTier,
 } from './utils/monetization';
 import { fitHabitCreates } from './utils/habitCreate';
+import { focusCheckTarget, focusTasksFor } from './utils/focusOrigin';
 import { contaCotaDeHabitos } from './utils/atividadesLista';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
 import { applyFrameBuy, frameBuyRefusal } from './utils/frameBuy';
@@ -2736,22 +2737,27 @@ export default function App() {
     });
   }, [gameState, language, falar]);
 
-  const handleUpdateStep = (activityId: string, stepId: string) => {
-    const activity = gameState.activities.find(a => a.id === activityId);
-    const step = activity?.steps.find(s => s.id === stepId);
+  const handleUpdateStep = (activityId: string, stepId: string) => handleCompleteSteps(activityId, [stepId]);
 
+  /**
+   * Conclui UMA ou VÁRIAS etapas de um hábito num só `setGameState(prev => …)` (01/11/2026): a Focus Workshop
+   * marca o hábito com etapas inteiro de uma vez. Chamar `handleUpdateStep` N vezes no mesmo toque lia o
+   * `gameState` velho a cada chamada (a última etapa não "fechava" o hábito, nem pagava o fechamento).
+   * Cada etapa passa pela MESMA regra (`applyStep`), em sequência, sobre o `prev` da anterior.
+   */
+  const handleCompleteSteps = (activityId: string, stepIdsIn: string[]) => {
+    const activity = gameState.activities.find(a => a.id === activityId);
     // Completed steps cannot be unchecked — only daily reset restores them
-    if (step?.completed) return;
+    const stepIds = stepIdsIn.filter(id => activity?.steps.some(s => s.id === id && !s.completed));
+    if (stepIds.length === 0) return;
 
     // Esta etapa fecha a atividade? Calculado FORA do updater, para o resumo de
     // ganhos não depender de ler estado de dentro dele (StrictMode roda o
     // updater 2×).
     const justFinishedActivity =
-      activity && activity.steps.every(s => s.completed || s.id === stepId) ? activity : null;
+      activity && activity.steps.every(s => s.completed || stepIds.includes(s.id)) ? activity : null;
 
-
-    // Allow checking without confirmation
-    setGameState(prev => {
+    const applyStep = (prev: GameState, stepId: string): GameState => {
         // Duplo toque antes do re-render: a etapa já feita não paga de novo (nem refaz nada).
         if (prev.activities.find(a => a.id === activityId)?.steps.find(s => s.id === stepId)?.completed) return prev;
         const updatedActivities = prev.activities.map(act =>
@@ -2828,7 +2834,9 @@ export default function App() {
             new Date().toDateString(), playerDayKey(new Date(), prev.playerDayTz),
           )
           : next;
-      });
+    };
+    // Allow checking without confirmation
+    setGameState(prev => stepIds.reduce(applyStep, prev));
 
       playTaskComplete();
       if (justFinishedActivity) {
@@ -2850,7 +2858,7 @@ export default function App() {
       if (!hasShownFirstTaskPopup) {
         // Check if ANY step has been completed before this one
         const anyStepCompleted = gameState.activities.some(a =>
-          a.steps.some(s => s.completed && s.id !== stepId)
+          a.steps.some(s => s.completed && !stepIds.includes(s.id))
         ) || gameState.tasks.some(t => t.completed);
 
         if (!anyStepCompleted) {
@@ -8003,22 +8011,21 @@ export default function App() {
                   },
                   /* Focus Workshop (01/11/2026, pedido do dono): os HÁBITOS de hoje ainda abertos entram na escolha junto das
                      tarefas, com id `habit:<id>` (não colide com tarefa) e `kind: 'habit'` (etiqueta "Hábito" na lista). */
-                  focusTasks: [
-                    ...gameState.tasks.map(({ id, name, completed, steps }) => ({ id, name, completed, steps })),
-                    ...(() => {
-                      const hoje = new Date();
-                      const dk = hoje.toDateString();
-                      return activitiesForWeekDay(gameState as any, hoje.getDay(), dk)
-                        .filter((a: any) => !(a.steps?.length > 0 ? a.steps.every((st: any) => st.completed) : !!a.completedToday && a.lastCompletedDate === dk))
-                        .map((a: any) => ({ id: `habit:${a.id}`, name: String(a.name), completed: false, kind: 'habit' as const }));
-                    })(),
-                  ],
-                  /* Hábito sem etapas conclui pelo handler real do hábito; hábito COM etapas fecha na última etapa (dono dele é
-                     a Home), então aqui só fica o ✓ local da sessão. */
+                  /* Focus Workshop: tarefas + HÁBITOS de hoje (id `habit:<id>`, `kind: 'habit'`). Também vão os já CONCLUÍDOS
+                     hoje (`completed: true`): a sessão mostra ✓ quando a origem foi marcada fora da Oficina (a tarefa concluída
+                     sai de `tasks` e vive em `completedTasks`; o hábito concluído continua na lista do dia). */
+                  focusTasks: (() => {
+                    const hoje = new Date();
+                    const dk = hoje.toDateString();
+                    return focusTasksFor(gameState.tasks, gameState.completedTasks ?? [], activitiesForWeekDay(gameState as any, hoje.getDay(), dk) as any, dk);
+                  })(),
+                  /* "Se puxou de lá, marca nos dois" (dono, 01/11/2026): o ✓ da Oficina conclui a ORIGEM pelo handler real —
+                     tarefa, hábito simples ou hábito com etapas (todas as etapas abertas num só updater). */
                   onCompleteFocusTask: (id: string) => {
-                    if (!id.startsWith('habit:')) { handleToggleTask(id); return; }
-                    const act = gameState.activities.find(a => String(a.id) === id.slice(6));
-                    if (act && act.steps.length === 0) handleToggleActivityCompletion(act.id);
+                    const alvo = focusCheckTarget(id, gameState.activities);
+                    if (alvo?.kind === 'task') handleToggleTask(alvo.id);
+                    else if (alvo?.kind === 'habit') handleToggleActivityCompletion(alvo.id);
+                    else if (alvo?.kind === 'steps') handleCompleteSteps(alvo.id, alvo.stepIds);
                   },
                   onFocusReward: (request: FocusLootRequest, completedCycles: number) => {
                     const roll = rollFocusLoot(request.environment, completedCycles);
