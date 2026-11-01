@@ -25,7 +25,7 @@ import { TagChips } from './OficinaTags';
 import { OficinaPlano } from './OficinaPlano';
 
 /** A folha inteira já é lazy (AreaView); o planejamento viaja junto, fora do chunk de entrada. */
-type WorkshopTask = { id: string; name: string; completed: boolean; steps?: Array<{ id: string; label: string; completed: boolean }> };
+type WorkshopTask = { id: string; name: string; completed: boolean; kind?: 'habit'; steps?: Array<{ id: string; label: string; completed: boolean }> };
 export type FocusRewardResult = { accepted: boolean; items: FocusLootItem[]; chancePercent: number };
 
 const loadWorkshopSession = (): FocoSession | null => normalizeSession(readJson<unknown>(STORAGE_KEYS.FOCO_WORKSHOP_PLAN, null));

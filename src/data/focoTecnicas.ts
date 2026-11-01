@@ -56,7 +56,7 @@ export const FOCO_TECNICAS: readonly FocoTecnica[] = [
   },
   {
     id: 'esvaziar', icon: 'psychology', evidencia: 'moderada',
-    namePt: 'Esvaziar a cabeça', nameEn: 'Brain dump',
+    namePt: 'Descarregar a mente', nameEn: 'Brain dump',
     linePt: 'Anote o que pende, com um primeiro passo.', lineEn: 'Write down what is pending, with a first step.',
     howPt: 'Antes de começar, anote no papel tudo o que está na sua cabeça e, para o que importa, o primeiro passo. Pendências sem plano tendem a voltar como pensamento intruso; um plano concreto reduz isso. Há ensaios pequenos, com efeito modesto.',
     howEn: 'Before you start, write down everything on your mind and, for what matters, the first step. Unplanned loose ends tend to return as intrusive thoughts; a concrete plan reduces that. There are small trials with a modest effect.',
