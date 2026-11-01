@@ -4,11 +4,12 @@
  * enquanto não existir, `undefined` → a tela cai no glifo SVG inline (`components/hex/HexSlotGlyph.tsx`).
  *
  * Nomes-alvo: `slot-coroa.png`, `slot-amuleto.png`, `slot-garra.png`, `slot-couraca.png`, `slot-luvas.png` (silhueta do slot vazio,
- * PNG com alfa real) e `forjar.png` (ícone do botão Forjar).
+ * PNG com alfa real), `forjar.png` (ícone do botão Forjar) e `mapa-portas.png` (640², a placa de circuito com o hexágono central
+ * vazado e as 5 portas; sem ela o mapa fica só com o sprite e as portas).
  */
 import type { HexSlot } from '../../../utils/hexsmith';
 
-const ARTE = import.meta.glob('./{slot-*,forjar}.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const ARTE = import.meta.glob('./{slot-*,forjar,mapa-portas}.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 const art = (nome: string): string | undefined => ARTE[`./${nome}.png`];
 
@@ -28,3 +29,6 @@ export const HEX_ART: {
 
 /** A arte do slot, ou `undefined` (= use o glifo SVG inline). */
 export const resolveHexSlotArt = (slot: HexSlot): string | undefined => HEX_ART.slotIcon[slot];
+
+/** A placa do mapa (`mapa-portas.png`), ou `undefined`. */
+export const HEX_MAP_ART: string | undefined = art('mapa-portas');

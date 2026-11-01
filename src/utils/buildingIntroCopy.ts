@@ -51,7 +51,7 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
   'forja.hexsmith': {
     place: { en: 'Hexsmith', pt: 'Hexsmith' },
     hello: { en: "I'm {name}. I read the hex code that runs through every Soulmon.", pt: 'Eu sou {name}. Eu leio o código hex que corre em cada Soulmon.' },
-    what: { en: 'With element potions, I rewrite a few lines of it, element by element.', pt: 'Com poções de elemento, eu reescrevo algumas linhas dele, elemento por elemento.' },
+    what: { en: 'With element potions, I forge HEXes and set them in its Ports, rewriting a few lines of it.', pt: 'Com poções de elemento, eu forjo HEXes e os encaixo nas Portas dele, reescrevendo algumas linhas.' },
     invite: { en: 'Bring a potion whenever you like, no rush.', pt: 'Traga uma poção quando quiser, sem pressa.' },
   },
   'jogos.salao': {

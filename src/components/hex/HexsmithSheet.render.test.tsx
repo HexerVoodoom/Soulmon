@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * A tela da Hexsmith (01/11/2026): 5 encaixes no mapa, forjar com saldo debita e equipa, recusa mostra o motivo, trocar não tira a posse,
+ * A tela da Hexsmith (01/11/2026): 5 Portas no mapa, forjar com saldo debita e equipa, recusa mostra o motivo, trocar não tira a posse,
  * esvaziar mantém o item, e não existe botão de vender/descartar.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
@@ -44,7 +44,7 @@ describe('HexsmithSheet', () => {
     expect(container.innerHTML).toBe('');
   });
 
-  it('mostra os 5 encaixes ao redor do Soulmon, todos vazios, com rótulo acessível', () => {
+  it('mostra as 5 Portas ao redor do Soulmon, todos vazios, com rótulo acessível', () => {
     abrir({});
     const slots = document.querySelectorAll('[data-hex-slot]');
     expect(slots).toHaveLength(5);
@@ -55,12 +55,18 @@ describe('HexsmithSheet', () => {
     expect(document.querySelectorAll('[data-hex-line]')).toHaveLength(5);
   });
 
-  it('o rótulo do encaixe mostra o valor atual; encaixe cheio = um ícone só (o do elemento)', () => {
+  it('o rótulo da Porta mostra o valor atual; Porta cheia = um ícone só (o do elemento)', () => {
     abrir({ hexsmith: { owned: ['garra:agua'], equipped: { garra: 'garra:agua' } } });
     const g = q('[data-hex-slot="garra"]');
     expect(g.textContent).toBe('Garra · Água');
+    expect(g.getAttribute('aria-label')).toBe('Porta da Garra: Água');
     expect(g.querySelectorAll('img, svg')).toHaveLength(1);
     expect(g.querySelector('[data-hex-glyph]')).toBeNull();
+    // arte final em vigor: porta vazia usa o PNG da porta (apagado), não o glifo SVG
+    const c = q('[data-hex-slot="coroa"]');
+    expect(c.querySelector('[data-hex-glyph]')).toBeNull();
+    expect(c.querySelector('img')!.getAttribute('data-empty')).toBe('true');
+    expect(document.querySelector('[data-hex-map] img[src*="mapa-portas"]')).not.toBeNull();
     expect(q('[data-hex-slot="coroa"]').textContent).toBe('Coroa');
   });
 
@@ -152,6 +158,6 @@ describe('HexsmithSheet', () => {
 
   it('EN: rótulos em inglês', () => {
     abrir({}, 'en');
-    expect(q('[data-hex-slot="coroa"]').getAttribute('aria-label')).toMatch(/^Crown: Empty/);
+    expect(q('[data-hex-slot="coroa"]').getAttribute('aria-label')).toMatch(/^Crown Port: Empty/);
   });
 });

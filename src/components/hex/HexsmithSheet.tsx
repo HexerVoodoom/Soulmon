@@ -17,7 +17,6 @@ import { ActionRow, Disclosure, ModalSheet, sm2Button, sm2Hint, sm2Label, sm2Tex
 import { ElementBaseSlots, ElementIcon, elName, emptySlots } from '../ElementBaseSlots';
 import { BitsAmount } from '../ui/BitsAmount';
 import { Icon } from '../ui/Icon';
-import { combatGlowColor } from '../../utils/combatArt';
 import { earnedBits } from '../../utils/bitsOrigin';
 import { elementsMatchingBases, isPotionUnlocked, potionKey } from '../../utils/elementPotion';
 import { isDemoMode, demoRefusalText } from '../../utils/demoMode';
@@ -30,9 +29,9 @@ import {
   sanitizeHexsmith, unequipHexSlot, type HexSlot, type HexStrike,
 } from '../../utils/hexsmith';
 import type { SpecialFamily } from '../../utils/combate/specials';
-import { HEX_FAMILY_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_UI, hexRefusalText, tx } from '../../utils/hexsmithCopy';
+import { HEX_FAMILY_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_UI, hexName, hexRefusalText, tx } from '../../utils/hexsmithCopy';
 import { getSpriteForStage } from '../../utils/sprites';
-import { HEX_ART, resolveHexSlotArt } from '../../assets/soulmon/hex';
+import { HEX_ART, HEX_MAP_ART, resolveHexSlotArt } from '../../assets/soulmon/hex';
 import { HexSlotGlyph } from './HexSlotGlyph';
 
 export interface HexsmithSheetProps {
@@ -46,14 +45,18 @@ export interface HexsmithSheetProps {
   demoCharacterId?: string;
 }
 
-/** Posição de cada encaixe no mapa (% do quadro) e o ponto do corpo onde a linha encosta. */
-const LAYOUT: Readonly<Record<HexSlot, { x: number; y: number; ax: number; ay: number }>> = {
-  coroa: { x: 50, y: 9, ax: 50, ay: 30 },
-  garra: { x: 14, y: 46, ax: 36, ay: 50 },
-  luvas: { x: 86, y: 46, ax: 64, ay: 50 },
-  amuleto: { x: 17, y: 86, ax: 46, ay: 48 },
-  couraca: { x: 83, y: 86, ax: 54, ay: 62 },
+/**
+ * Centro de cada PORTA em % de `mapa-portas.png` (640², medido em 01/11/2026 pelo centróide do vazado de cada hexágono, Pillow).
+ * O hexágono central (49,8 / 53,5; ~27% de largura) recebe o sprite. A placa já desenha as trilhas: nada de linha em CSS/SVG.
+ */
+const PORTS: Readonly<Record<HexSlot, { x: number; y: number }>> = {
+  coroa: { x: 49.9, y: 16.5 },
+  amuleto: { x: 12.0, y: 42.1 },
+  garra: { x: 87.7, y: 42.1 },
+  couraca: { x: 21.1, y: 82.3 },
+  luvas: { x: 78.6, y: 82.3 },
 };
+const CORE = { x: 49.8, y: 53.5 };
 
 /** Degraus de `tokens.md` §6.1: `nav` 32 no mapa (o encaixe é um destino), `action` 24 nas linhas e no botão, `inline` 20 no saldo. */
 const ICON_MAP = 32;
@@ -106,30 +109,18 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
 
       {/* O MAPA DE SLOTS */}
       <div data-hex-map className="sm2-hex-map">
-        <svg aria-hidden="true" viewBox="0 0 100 100" preserveAspectRatio="none" className="sm2-hex-map-lines">
-          {HEX_SLOTS.map((s) => {
-            const L = LAYOUT[s];
-            const on = !!hx.equipped[s];
-            const c = on ? (HEX_ELEMENT_SLOTS.includes(s) ? combatGlowColor(now[s]) : undefined) ?? 'var(--sm2-primary-ink)' : 'var(--sm2-line)';
-            // circuito em L (vertical depois horizontal), com um nó no encosto
-            return (
-              <g key={s}>
-                <polyline points={`${L.x},${L.y} ${L.x},${L.ay} ${L.ax},${L.ay}`} fill="none" stroke={c} strokeWidth={on ? 0.9 : 0.6} />
-                <circle cx={L.ax} cy={L.ay} r={1.2} fill={c} />
-              </g>
-            );
-          })}
-        </svg>
-        {sprite && <img src={sprite} alt={isPt ? 'Seu Soulmon' : 'Your Soulmon'} draggable={false} className="sm2-hex-sprite" />}
+        <img src={HEX_MAP_ART} alt="" aria-hidden="true" draggable={false} className="sm2-hex-map-art" />
+        {sprite && <img src={sprite} alt={isPt ? 'Seu Soulmon' : 'Your Soulmon'} draggable={false} className="sm2-hex-sprite" style={{ left: `${CORE.x}%`, top: `${CORE.y}%` }} />}
         {HEX_SLOTS.map((s) => {
-          const L = LAYOUT[s];
+          const L = PORTS[s];
           const id = hx.equipped[s];
           const it = id ? parseHexItem(id) : undefined;
+          const portName = tx(HEX_SLOT_COPY[s].port, isPt);
           const slotName = tx(HEX_SLOT_COPY[s].name, isPt);
           const valueName = it ? hexValueName(s, it.value, isPt) : undefined;
           return (
             <button key={s} type="button" data-hex-slot={s} data-hex-filled={!!id} className="sm2-hex-slot"
-              aria-label={`${slotName}: ${valueName ?? tx(HEX_UI.empty, isPt)}`} aria-haspopup="dialog"
+              aria-label={`${portName}: ${valueName ?? tx(HEX_UI.empty, isPt)}`} aria-haspopup="dialog"
               onClick={() => { setAviso(null); setOpen(s); }}
               style={{ left: `${L.x}%`, top: `${L.y}%` }}>
               <SlotFace slot={s} value={it?.value} size={ICON_MAP} />
@@ -167,15 +158,14 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
 }
 
 /**
- * O rosto do slot — UM ícone só: com elemento, o ícone do ELEMENTO (já vem na cor dele); coroa/luvas com valor, o glifo em
- * `primary-ink`; vazio, a arte final do slot (se já existir na pasta) ou o glifo tracejado em `muted`.
+ * O rosto da porta — UM ícone só: com elemento, o ícone do ELEMENTO (já vem na cor dele); coroa/luvas com valor, a arte da porta
+ * cheia; vazia, a mesma arte apagada (`data-empty`). Sem arte na pasta → glifo SVG (fallback).
  */
 function SlotFace({ slot, value, size }: { slot: HexSlot; value?: string; size: number }) {
   if (value && HEX_ELEMENT_SLOTS.includes(slot)) return <ElementIcon id={value} size={size} />;
-  if (value) return <HexSlotGlyph slot={slot} size={size} color="var(--sm2-primary-ink)" filled />;
   const art = resolveHexSlotArt(slot);
-  if (art) return <img src={art} alt="" aria-hidden="true" width={size} height={size} className="sm2-hex-art" />;
-  return <HexSlotGlyph slot={slot} size={size} color="var(--sm2-muted)" />;
+  if (art) return <img src={art} alt="" aria-hidden="true" width={size} height={size} className="sm2-hex-art" data-empty={!value} />;
+  return <HexSlotGlyph slot={slot} size={size} color={value ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)'} filled={!!value} />;
 }
 
 interface PanelProps {
@@ -211,14 +201,14 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
   const selName = sel ? hexValueName(slot, selValue, isPt) : '';
 
   return (
-    <ModalSheet open title={`${tx(HEX_SLOT_COPY[slot].name, isPt)} · ${tx(HEX_SLOT_COPY[slot].effect, isPt)}`} onClose={onClose} language={language as Language}
+    <ModalSheet open title={`${tx(HEX_SLOT_COPY[slot].port, isPt)} · ${tx(HEX_SLOT_COPY[slot].effect, isPt)}`} onClose={onClose} language={language as Language}
       footer={sel ? (
         <div data-hex-forge-footer className="sm2-hex-footer">
           <button type="button" data-hex-forge={sel} disabled={!!selRefusal} aria-describedby={selRefusal ? refusalId : undefined}
             onClick={() => { onForge(sel); setPicked(null); }}
             style={sm2Button('primary', !!selRefusal)}>
             {HEX_ART.forge && <img src={HEX_ART.forge} alt="" aria-hidden="true" width={ICON_ROW} height={ICON_ROW} className="sm2-hex-art" />}
-            <span>{tx(HEX_UI.forge, isPt)}: {selName}</span>
+            <span>{tx(HEX_UI.forge, isPt)}: {hexName(selName, isPt)}</span>
             <SlotFace slot={slot} value={selValue} size={ICON_ROW} />
           </button>
           {selRefusal && <p id={refusalId} data-hex-refusal={selRefusal} style={{ ...sm2Hint, textAlign: 'center' }}>{hexRefusalText(selRefusal, isPt, isEl ? selName : undefined)}</p>}

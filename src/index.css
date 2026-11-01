@@ -8986,21 +8986,22 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
    não dá para forjar = tinta `muted` (escolhido mantém fundo/fronteira). */
 .sm2-hex { display: grid; gap: var(--sm2-space-4); width: 100%; max-width: 420px; margin: 0 auto; box-sizing: border-box; }
 .sm2-hex-map { position: relative; width: 100%; max-width: 360px; aspect-ratio: 1 / 1; margin: 0 auto; }
-.sm2-hex-map-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
-.sm2-hex-sprite { position: absolute; left: 50%; top: 50%; width: 42%; height: 42%; transform: translate(-50%, -50%); object-fit: contain; image-rendering: pixelated; }
-.sm2-hex-art { display: block; flex: none; object-fit: contain; }
+.sm2-hex-map-art { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.sm2-hex-sprite { position: absolute; width: 22%; height: 22%; transform: translate(-50%, -50%); object-fit: contain; image-rendering: pixelated; }
+.sm2-hex-art { display: block; flex: none; object-fit: contain; &[data-empty="true"] { filter: grayscale(1); opacity: .55; } }
 .sm2-hex-slot {
   position: absolute; transform: translate(-50%, -50%);
-  display: grid; justify-items: center; gap: var(--sm2-space-1);
-  min-width: 64px; min-height: 64px; padding: var(--sm2-space-1); margin: 0;
-  background: none; border: 0; border-radius: var(--sm2-radius-md); cursor: pointer;
-  color: var(--sm2-ink); text-align: center;
+  display: grid; place-items: center;
+  width: 48px; height: 48px; padding: 0; margin: 0;
+  background: none; border: 0; border-radius: var(--sm2-radius-md); cursor: pointer; color: var(--sm2-ink);
   transition: background-color var(--sm2-dur-tap) var(--sm2-ease);
   &:hover { background-color: var(--sm2-primary-soft); }
   &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
 }
+/* o rótulo pendura abaixo da porta (fora do fluxo, para o ícone ficar no centro do hexágono) */
 .sm2-hex-slot-label {
-  display: block; max-width: 112px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  position: absolute; top: calc(100% + var(--sm2-space-5)); left: 50%; transform: translateX(-50%);
+  display: block; max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center;
   font-family: var(--sm2-font-text); font-size: var(--sm2-text-xs); font-weight: 500; line-height: var(--sm2-leading-body);
   color: var(--sm2-muted); text-decoration: underline dotted var(--sm2-line); text-underline-offset: 3px;
   &[data-on="true"] { color: var(--sm2-ink); }

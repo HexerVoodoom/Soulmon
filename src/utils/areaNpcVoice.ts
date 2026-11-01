@@ -196,8 +196,8 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
   // 🔣 01/11/2026: a Hexsmith — reescreve o código hex do Soulmon com poções de elemento. Convite, sem preço e sem prometer efeito.
   'forja:hexsmith': {
     namePt: 'Hexsmith', nameEn: 'Hexsmith',
-    linePt: 'Traga suas poções de elemento. Eu reescrevo o código hex do seu Soulmon, linha por linha, sem pressa.',
-    lineEn: "Bring your element potions. I rewrite your Soulmon's hex code, line by line, no rush.",
+    linePt: 'Traga suas poções de elemento. Eu forjo HEXes e reescrevo o código hex do seu Soulmon, Porta por Porta, sem pressa.',
+    lineEn: "Bring your element potions. I forge HEXes and rewrite your Soulmon's hex code, Port by Port, no rush.",
   },
   'forja:refugio': {
     namePt: 'Yuzu, a guardiã da fonte', nameEn: 'Yuzu, the spring warden', // 29/10/2026: novo NPC (guardiã de fonte quente; era Marim, o mensageiro da maré)
