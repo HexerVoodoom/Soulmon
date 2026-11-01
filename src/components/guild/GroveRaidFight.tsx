@@ -22,20 +22,15 @@ import type { Combatant } from '../../utils/combate/curve';
 import type { GroupResult } from '../../utils/combate/group';
 import { groveRaidLineup, groveRaidRound } from '../../utils/groveRaid';
 import { temaSpriteOf } from '../../utils/temaInimigosArt';
-import { PANORAMA_SRC } from '../../assets/bosque';
-import { sceneCss } from '../../utils/backgroundPortrait';
-import { PET_BACKGROUNDS } from '../../utils/backgrounds';
-import { GROVE_STAGES } from '../../utils/guildRules';
+import { PANORAMA_SRC, ARVORE_SRC } from '../../assets/bosque';
+import { ESTACOES_BOSQUE, type EstacaoBosque } from '../../utils/bosqueArvores';
 
 /**
- * O fundo da luta: o cenário do Bosque do ESTÁGIO atual do clã (`bg-guild-<estágio>`, o mesmo do Ritual/Praça); sem estágio,
- * o do nível 1 (clareira). Leitura do dono (01/11/2026) de "o mapa em que aparecem as plantas plantadas" — a confirmar.
- * Sem arte do estágio, cai no panorama (como CSS de verdade: `url(...)`, não a URL crua).
+ * O fundo da luta: o PANORAMA do Plantio (dono, 01/11/2026), o mesmo cenário do `PlantioVisor`/`GroveVisor`/`GroveCena` onde
+ * aparecem as plantas plantadas, com o MESMO enquadramento do visor do Plantio (o terreno da clareira). CSS `background`
+ * de verdade (`url(...)`), nunca a URL crua.
  */
-export function groveRaidScene(stage?: string | null): string {
-  const id = `bg-guild-${(GROVE_STAGES as readonly string[]).includes(stage ?? '') ? stage : GROVE_STAGES[0]}`;
-  return (PET_BACKGROUNDS[id] ? sceneCss(id) : undefined) ?? `url(${PANORAMA_SRC})`;
-}
+export const GROVE_RAID_SCENE = `url(${PANORAMA_SRC}) 40% 88% / auto 230% no-repeat #1d3a2a`;
 
 export interface GroveRaidFightProps {
   isPt: boolean;
@@ -47,12 +42,12 @@ export interface GroveRaidFightProps {
   demoCharacterId?: string;
   /** O sprite ATUAL do jogador (a forma evoluída escolhida — a mesma fonte da Home e do Calabouço); sem ele, o do estágio. */
   mySprite?: string | null;
-  /** O estágio do Bosque do clã (`guild.bosque.stage`); decide o cenário. */
-  bosqueStage?: string | null;
+  /** Nível (1..5) de cada planta do Bosque; 0/ausente = nada. Só VISUAL (atrás dos lutadores): não toca em regra, dano nem resultado. */
+  niveis?: Partial<Record<EstacaoBosque, number>>;
   onResult: (won: boolean) => void;
 }
 
-export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evolutionStage = 'rookie', demoCharacterId, mySprite, bosqueStage, onResult }: GroveRaidFightProps) {
+export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evolutionStage = 'rookie', demoCharacterId, mySprite, niveis, onResult }: GroveRaidFightProps) {
   const lang = isPt ? 'pt' : 'en';
   const par = stageSkillsFor(skills, evolutionStage);
   const ident = useMemo(() => fighterIdentity(par, petElement), [par, petElement]);
@@ -104,7 +99,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
         specialLabel={specialLabel(isPt, par?.especial)}
         foeSpecialLabel={f => { const e = lineup.find(x => fxElementId(x.element) === f.element); return e ? (isPt ? e.especial.pt : e.especial.en) : f.name; }}
         isPt={isPt}
-        scene={groveRaidScene(bosqueStage)}
+        scene={GROVE_RAID_SCENE}
         me={{
           key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, pronto ? battle.hp : 1) * hpMax), maxHp: hpMax,
           element: fxElementId(ident.basico.elemento), energy: (pronto ? battle.petEnergy : 0) / ENERGY_TRIGGER, status: pronto ? battle.status.me : undefined,
@@ -137,6 +132,14 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
         }}
         onPauseChange={setPaused}
       >
+        {ESTACOES_BOSQUE.some(e => (niveis?.[e] ?? 0) > 0) && (
+          <div aria-hidden="true" data-grove-raid-plantas style={{ position: 'absolute', left: 0, right: 0, bottom: '30%', height: '26%', zIndex: 1, pointerEvents: 'none', display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end' }}>
+            {ESTACOES_BOSQUE.filter(e => (niveis?.[e] ?? 0) > 0).map(e => {
+              const nv = Math.min(5, niveis?.[e] ?? 0);
+              return <img key={e} src={ARVORE_SRC[e][nv]} alt="" draggable={false} data-grove-raid-planta={e} data-nivel={nv} style={{ height: '100%', width: 'auto', maxWidth: '24%', objectFit: 'contain', objectPosition: 'bottom' }} />;
+            })}
+          </div>
+        )}
         {end && (
           <div role="status" data-grove-raid-end={won ? 'won' : 'lost'} style={{ position: 'absolute', left: 16, right: 16, bottom: 24, zIndex: 6, pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 'var(--sm2-radius-md, 8px)', background: 'var(--sm2-viewport-bg)', border: '1px solid var(--sm2-viewport-ring)', color: 'var(--sm2-viewport-ink)', fontFamily: 'var(--sm2-font-text)', textAlign: 'center' }}>
             <p style={{ margin: 0, fontSize: 'var(--sm2-text-md, 16px)', fontWeight: 700 }}>
