@@ -174,13 +174,12 @@ describe('a escada: teto S3, ordem e degrau derivado', () => {
     expect([...ORDEM_DA_ESCADA].sort()).toEqual(Object.keys(ALVO_LUFS_M).sort());
   });
 
-  it('a música fica no MÁXIMO no degrau de Conclusão (relaxado de "abaixo do Arcade" a pedido do dono, 11/10/2026)', () => {
-    expect(ALVO_TRILHA_LUFS_S).toBeLessThanOrEqual(ALVO_LUFS_M.conclusao);
+  it('a música fica no MÁXIMO no teto de programa S3 (relaxado de "abaixo do Arcade" em 11/10/2026 e de "≤ Conclusão" em 01/11/2026, relato do dono: trilha muito baixa; REGISTRO §215)', () => {
     expect(ALVO_TRILHA_LUFS_S).toBeLessThanOrEqual(TETO_LUFS_INTEGRADO);
   });
 
-  it('em combate a música desce ao degrau do Arcade: o golpe (o que mais repete) não é coberto', () => {
-    expect(ALVO_TRILHA_LUFS_S + OFFSET_MUSICA_EM_COMBATE_DB).toBeLessThanOrEqual(ALVO_LUFS_M.arcade);
+  it('em combate a música desce ao degrau de Sintonia/Cuidado (−19), não mais ao do Arcade (−25): a trilha subiu 6 dB a pedido do dono (REGISTRO §215) e o offset de −3 dB fica', () => {
+    expect(ALVO_TRILHA_LUFS_S + OFFSET_MUSICA_EM_COMBATE_DB).toBeLessThanOrEqual(ALVO_LUFS_M.sintonia);
   });
 
   it('o ganho de reprodução da música é DERIVADO (alvo − masterização) e cabe no teto de true peak', () => {

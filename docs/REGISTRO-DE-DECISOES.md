@@ -3803,3 +3803,13 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 **Régua:** `data/bbPool.pool280.test.ts`, `utils/bbNascimento.test.ts`, `utils/bbNascimento.ligacao.test.ts`, `functions/api/_aiGuard.formBB.test.js`. **Alternativa que perdeu:** adicionar um estágio `bb` em `soulmonStages` (mudaria a árvore de todo save). **Gatilho para rever:** o dono querer BB gerado também para quem paga depois, ou o custo do BB do pagante pesar na conta do §12.
 
 **Adendo §214 (31/10/2026, dono):** D33 — "paga de cara" é quem tem a compra confirmada pelo SERVIDOR (entitlement) até o momento do reveal, inclusive quem comprou no meio do onboarding; quem compra depois do reveal segue D32. D34 — o BB exclusivo consome 1 geração do teto vitalício da conta e conta como mais uma forma no teto por forma: aceito.
+
+## §215 — Trilha sobe +6 dB: alvo de reprodução da música de −22 para −16 LUFS-S (01/11/2026, relato do dono)
+
+**Dono:** "a trilha sonora do jogo tá muito baixa, mesmo com volume mais alto é difícil ouvir."
+
+1. **Regra.** `ALVO_TRILHA_LUFS_S` −22 → **−16** (= `TETO_LUFS_INTEGRADO`); `GANHO_MUSICA_DB` (derivado, mastering −28) +6 → **+12 dB**. Vale para trilha, tema e músicas de combate/Pesadelo/masmorra/evolução/meditação (todas leem o mesmo ganho). Integrado pior caso medido −28,4 + 12 = −16,4 (≤ −16); true peak pior caso (meditação −15,1) + 12 = −3,1 dBTP (≤ −1), e o limitador do master segue como rede.
+2. **Slider.** Não existe slider de volume de música em Configurações: a música é um interruptor único (§129, `musicaLigada`), o `busTrilha` vai a 1 ou 0. Logo não há curva quadrática nem teto < 1 a corrigir; a causa era só o nível-alvo.
+3. **Testes mudados de propósito** (`loudness.contract.test.ts`): (a) "música ≤ degrau de Conclusão" virou "≤ teto S3"; (b) "em combate desce ao degrau do Arcade (−25)" virou "≤ degrau de Sintonia (−19)", pois −16 + offset −3 = −19. `OFFSET_MUSICA_EM_COMBATE_DB` (−3) e a escada de SFX/voz ficam intactos. **Risco aceito:** em combate a música (−19) fica 6 dB acima do golpe (Arcade, −25); se o dono sentir o golpe coberto, o remédio é aumentar o offset de combate, não baixar a trilha fora dele.
+
+**Alternativa que perdeu:** subir só o `busTrilha` por literal — viola o dono único (`loudness.ts`).
