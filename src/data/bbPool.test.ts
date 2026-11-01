@@ -16,9 +16,9 @@ describe('sortearBB', () => {
     expect(sortearBB('x', { elemento: 'nada', reino: 'mare' }, pool)!.id).toBe('c');
     expect(pool).toContain(sortearBB('x', { elemento: 'nada' }, pool));
   });
-  it('pool vazio = null; pool real tem 3 placeholders', () => {
+  it('pool vazio = null; pool real não é placeholder', () => {
     expect(sortearBB('x', null, [])).toBeNull();
-    expect(BB_POOL).toHaveLength(3);
+    expect(BB_POOL.length).toBeGreaterThan(3);
   });
 });
 

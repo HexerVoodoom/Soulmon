@@ -9,6 +9,7 @@
  * Testes e scripts que precisam do corpo síncrono importam daqui.
  */
 import { SPRITE_FACING_PROMPT } from '../spritePose';
+import { isOnboardingVelado } from '../bbStage';
 import { FAMILY_KIN, CHAMPION_MORPHS_EXTRA, PERFECT_MORPHS_EXTRA, MEGA_MORPHS_EXTRA, ELEMENT_MOTIFS, THEME_MOTIFS, type EvoShape, type KinGroup } from './formas';
 import { REALM_MOTIFS, ROLE_METAMORPHS_EXTRA } from './formasReino';
 import type { OracleInputSync, OracleInputWithClass, FamiliasOraculo, ElementId, RoleId, AlignmentId, RealmId, LText, OracleInput, OracleOverrides, ScoreEntry, ArchetypeResult, CreatureStage, OracleResult, FamilySlot, FamilyResult, QuestionEffects, CaminhoRitual } from '../oracle';
@@ -1501,6 +1502,9 @@ const GENRE_REFERENCES =
   'Digimon, Pokémon, Monster Rancher, Yu-Gi-Oh, Warhammer, Palworld, Legend of Mana, ' +
   'Final Fantasy, Hello Kitty, Tamagotchi, Ragnarok Online and World of Warcraft';
 
+/** Estágio BB (D31): o bebê fofinho e redondo, forma única do pagante que já entra pagando. */
+export const BB_LEVEL_BLOCK = 'a tiny newborn baby creature, very round and chubby, soft blob-like body, Baby stage: the smallest, cutest form of its species';
+
 /** Rosto neutro e com pouco detalhe (decisão do dono, 15/10/2026): vale em todo estágio e nas duas variantes. */
 export const NEUTRAL_FACE_CLAUSE = 'Simple neutral face with minimal facial detail, small plain eyes, no smile, no frown.';
 
@@ -2568,6 +2572,16 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
     }),
   });
 
+  // ----- BB exclusivo (Onboarding Velado D31): só com o interruptor ligado; não consome o `rng` -----
+  const bbPrompts = isOnboardingVelado()
+    ? composeSpritePrompts({
+        concept: spriteConcept, colorDesc, accent: accentFor(dominantAlignment, colorDesc, dominantElement, goldTrim), chroma,
+        ...visualFor(dominantAlignment),
+        favoriteCreature, rebirth: rebirthClause,
+        levelBlock: BB_LEVEL_BLOCK,
+      })
+    : undefined;
+
   // ----- 3 linhas de evolução: champion → perfeito → mega por TIPO -----
   const usedShapes = new Set<string>();
   const petElements: ElementId[] = [dominantElement, ...(secondaryElement ? [secondaryElement] : [])];
@@ -2691,6 +2705,7 @@ export function generateOracleWithFamilies(input: OracleInputSync | OracleInputW
       fusion: { a: { pt: fusionA.pt, en: fusionA.en }, b: { pt: fusionB.pt, en: fusionB.en } },
       family,
       stages,
+      ...(bbPrompts ? { bbPrompts } : {}),
     },
   };
 }
