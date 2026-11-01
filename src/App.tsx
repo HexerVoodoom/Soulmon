@@ -158,7 +158,7 @@ import { fitHabitCreates } from './utils/habitCreate';
 import { contaCotaDeHabitos } from './utils/atividadesLista';
 import { applyShopBuy, shopBuyRefusal } from './utils/shopBuy';
 import { applyFrameBuy, frameBuyRefusal } from './utils/frameBuy';
-import { soulmonDisplayName } from './utils/petName';
+import { soulmonDisplayName, notificationPetName } from './utils/petName';
 import { rolledRareCheer, type PetVoiceKind } from './utils/petVoice';
 import {
   emptyFirstDay, markGesture, shouldShowFirstDay, type FirstDayGesture,
@@ -9165,7 +9165,7 @@ export default function App() {
         activities={gameState.activities}
         tasks={gameState.tasks}
         userName={userName}
-        petName={getCurrentStageName()}
+        petName={notificationPetName(gameState.soulmonMeta, getCurrentStageName())}
         /* WP1.17 — a idade da criatura viaja com a inscrição de push, e morre
            com ela: cancelar o push apaga a idade junto. */
         bornAt={gameState.bornAt}

@@ -18,3 +18,17 @@ export function soulmonDisplayName(
   if (batizado) return batizado;
   return meta?.baseName?.trim() || '';
 }
+
+/**
+ * O nome que vai para as NOTIFICAÇÕES (locais e push do servidor).
+ *
+ * Antes o App passava o nome do ESTÁGIO (espécie) ao NotificationManager, então
+ * renomear o Soulmon nunca chegava ao texto agendado nem ao registro de push.
+ * Agora é o apelido atual, e o nome do estágio só vale quando não há nenhum.
+ */
+export function notificationPetName(
+  meta: { baseName?: string; petName?: string } | null | undefined,
+  stageName: string,
+): string {
+  return soulmonDisplayName(meta) || stageName;
+}
