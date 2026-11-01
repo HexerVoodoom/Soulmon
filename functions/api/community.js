@@ -60,7 +60,7 @@ import { avatarIdOrNull } from './_avatares.js';
 import { artLineOrNull, spriteUrlOrNull } from './_artLine.js';
 import { formsFromSaveState } from './_formHistory.js';
 import { frameIdOrNull } from './_frames.js';
-import { isStrayProfile, strayView, STRAY_POOL_MAX } from './_strays.js';
+import { isStrayProfile, strayView, STRAY_POOL_MAX, markStrayIfInactive, strayFieldsOf, strayRecoveryProgress, playerDayOf, STRAY_RECOVERY_DAYS } from './_strays.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
@@ -554,6 +554,8 @@ async function handleCommunity(context) {
       updatedAt: Date.now(),
       // §213: gravar o próprio perfil é acesso do dono (o GET do save também toca, `_strays.js`).
       lastLoginAt: Date.now(),
+      // Emenda: a marca de desgarrado e a recuperação atravessam a regravação do perfil (logar não limpa).
+      ...strayFieldsOf(markStrayIfInactive(prev, Date.now())),
       // `friends` guarda saveId internamente (nunca sai daqui assim) — só o
       // mapa reverso conhece a correspondência.
       pid: (pidAntigo && !pidLegado) ? pidAntigo : newPid(),
@@ -661,6 +663,17 @@ async function handleCommunity(context) {
   }
 
   // ── Desgarrados de jogadores (§213): Soulmon de quem está há 90+ dias sem entrar. Anônimo, público, cache de borda. ──
+  // O dono pergunta se o Soulmon DELE está desgarrado e quanto falta (aviso da Home). Só o dono lê.
+  if (action === 'strayStatus' && method === 'GET') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const p = await getProfile(env, id);
+    const stray = !!p && Number(p.strayedAt) > 0;
+    const tz = url.searchParams.get('off');
+    const today = playerDayOf(Date.now(), tz !== null && Number.isFinite(Number(tz)) ? { offsetMs: Number(tz) } : null);
+    return json({ stray, progress: stray ? strayRecoveryProgress(p, today) : 0, needed: STRAY_RECOVERY_DAYS });
+  }
+
   if (action === 'strays' && method === 'GET') {
     const keys = await listPrefix(env, 'profile:', 300);
     const now = Date.now();

@@ -24,7 +24,7 @@ import { sanitizeDailyMissions, sanitizeFeats, sanitizeFirstTimes, sanitizeMissi
 import { sanitizeFocusLoot } from './_focusLoot.js';
 import { sanitizeDefeatedElements } from './_elementDex.js';
 import { sanitizeLibraryAck, sanitizeStrayPlayersSeen } from './_libraryAck.js';
-import { touchLastLogin } from './_strays.js';
+import { touchLastLogin, recoverStrayFromSave } from './_strays.js';
 import { sanitizeConquistasPagas } from './_conquistas.js';
 import { sanitizeMercMission } from './_mercMission.js';
 import { sanitizeDayPlan } from './_dayPlan.js';
@@ -488,6 +488,8 @@ async function onRequestBruto({ request, env }) {
     });
     // Camadas do Endless Rift no MES (so cresce; lastro do score aceito em /api/rankings). Falha aqui nunca derruba o save.
     await bumpRiftLayers(kvOrThrow(env), saveId, ddAntes, ddDepois, Date.now(), { recordAntes: recAntes, recordDepois: recDepois }).catch(() => {});
+    // §213 emenda: desgarrado recupera com 2 dias completos seguidos, recalculados AQUI a partir do save gravado.
+    await recoverStrayFromSave(env, saveId, state);
     return Response.json({ ok: true, revision: cur + 1 }, { headers: CORS });
   }
 

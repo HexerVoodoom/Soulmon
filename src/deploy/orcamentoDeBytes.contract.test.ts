@@ -197,7 +197,9 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // Corte real segue = partir o `App.tsx`.
   // 31/10/2026 (noite): 822_311 -> 831_387 (+8.9 KB), build limpo da v237. Evolução em cristal (REGISTRO §208): botão Evoluir na Home,
   // estado de cristal no save, bloqueios e cerimônia nova (sem vídeo). Corte real segue = partir o `App.tsx`.
-  'index.js': 831_387,
+  // 01/11/2026: 831_387 -> 885_104 (+52.4 KB), build limpo da v242. Pool de 280 BBs (bbPool, PR #467) + desgarrado de jogador
+  // nos encontros, recuperação em 2 dias e nomes dos 50 curados (REGISTRO §213). Corte real segue = partir o `App.tsx`.
+  'index.js': 885_104,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.

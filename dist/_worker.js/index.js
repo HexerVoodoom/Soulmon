@@ -5387,7 +5387,7 @@ function lifetimeUsed(ent, bucket) {
   return n;
 }
 __name(lifetimeUsed, "lifetimeUsed");
-var VALID_FORM_ID = /^(?:rookie|ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))$/;
+var VALID_FORM_ID = /^(?:bb|rookie|ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))$/;
 function foldLegacyForm(aiForms, formId) {
   const out = { ...aiForms || {} };
   const antigo = legacyFormIdOf(formId);
@@ -9827,14 +9827,105 @@ function lastActiveAt(p) {
   return Math.max(ts(p.lastLoginAt), ts(p.updatedAt));
 }
 __name(lastActiveAt, "lastActiveAt");
+function isInactive(p, now) {
+  const t = lastActiveAt(p);
+  return t > 0 && now - t >= STRAY_INACTIVE_MS;
+}
+__name(isInactive, "isInactive");
 function isStrayProfile(p, now, saveId = p?.id) {
   if (!p || typeof p !== "object" || p.publicHidden === true) return false;
   if (isSimuladoId(saveId) || isSimuladoId(p.id)) return false;
   if (typeof p.pid !== "string" || !p.pid) return false;
-  const t = lastActiveAt(p);
-  return t > 0 && now - t >= STRAY_INACTIVE_MS;
+  if (ts(p.strayedAt) > 0) return true;
+  return isInactive(p, now);
 }
 __name(isStrayProfile, "isStrayProfile");
+function markStrayIfInactive(p, now) {
+  if (!p || typeof p !== "object" || ts(p.strayedAt) > 0 || !isInactive(p, now)) return p;
+  return { ...p, strayedAt: now, strayRecovery: { streak: 0, lastDay: null } };
+}
+__name(markStrayIfInactive, "markStrayIfInactive");
+function strayFieldsOf(p) {
+  return p && ts(p.strayedAt) > 0 ? { strayedAt: p.strayedAt, strayRecovery: p.strayRecovery ?? { streak: 0, lastDay: null } } : {};
+}
+__name(strayFieldsOf, "strayFieldsOf");
+var STRAY_RECOVERY_DAYS = 2;
+var DAY_RE2 = /^\d{4}-\d{2}-\d{2}$/;
+function playerDayOf(ms, tz) {
+  if (tz && typeof tz.zone === "string") {
+    try {
+      return new Intl.DateTimeFormat("en-CA", { timeZone: tz.zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ms));
+    } catch {
+    }
+  }
+  const off = tz && Number.isFinite(tz.offsetMs) && Math.abs(tz.offsetMs) <= 14 * 36e5 ? tz.offsetMs : 0;
+  return new Date(ms + off).toISOString().slice(0, 10);
+}
+__name(playerDayOf, "playerDayOf");
+var prevDay = /* @__PURE__ */ __name((d) => new Date(Date.parse(`${d}T00:00:00Z`) - 864e5).toISOString().slice(0, 10), "prevDay");
+function dateOf(v) {
+  if (typeof v !== "string") return null;
+  if (/^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0, 10);
+  const m = /^[A-Za-z]{3} ([A-Za-z]{3}) (\d{2}) (\d{4})$/.exec(v.trim());
+  if (!m) return null;
+  const mes = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].indexOf(m[1]);
+  return mes < 0 ? null : `${m[3]}-${String(mes + 1).padStart(2, "0")}-${m[2]}`;
+}
+__name(dateOf, "dateOf");
+function isDayCompleteInSave(state, day2) {
+  if (!state || typeof state !== "object" || !DAY_RE2.test(day2)) return false;
+  const tz = state.playerDayTz;
+  const done = Array.isArray(state.completedTasks) ? state.completedTasks : [];
+  const algumNoDia = done.some((c) => {
+    const t = Date.parse(c?.completedAt);
+    return Number.isFinite(t) && playerDayOf(t, tz) === day2;
+  });
+  if (!algumNoDia) return false;
+  const tasks = Array.isArray(state.tasks) ? state.tasks : [];
+  if (tasks.some((t) => t && t.completed !== true && typeof t.deadline?.date === "string" && t.deadline.date.slice(0, 10) <= day2)) return false;
+  const wd = (/* @__PURE__ */ new Date(`${day2}T12:00:00Z`)).getUTCDay();
+  const acts = Array.isArray(state.activities) ? state.activities : [];
+  for (const a of acts) {
+    if (!a || typeof a !== "object") continue;
+    const dias = Array.isArray(a.weekDays) ? a.weekDays : [];
+    if (dias.length > 0 && !dias.includes(wd)) continue;
+    if (dateOf(a.lastCompletedDate) !== day2) return false;
+  }
+  return true;
+}
+__name(isDayCompleteInSave, "isDayCompleteInSave");
+function strayRecoveryProgress(p, today3) {
+  const r = p?.strayRecovery;
+  if (!r || typeof r.lastDay !== "string" || !Number.isInteger(r.streak)) return 0;
+  return r.lastDay === today3 || r.lastDay === prevDay(today3) ? Math.min(r.streak, STRAY_RECOVERY_DAYS) : 0;
+}
+__name(strayRecoveryProgress, "strayRecoveryProgress");
+function applyStrayRecovery(p, state, today3, now = Date.now()) {
+  if (!p || ts(p.strayedAt) === 0 || !isDayCompleteInSave(state, today3)) return p;
+  const r = p.strayRecovery && typeof p.strayRecovery === "object" ? p.strayRecovery : { streak: 0, lastDay: null };
+  if (r.lastDay === today3) return p;
+  const streak = r.lastDay === prevDay(today3) && Number.isInteger(r.streak) ? r.streak + 1 : 1;
+  if (streak >= STRAY_RECOVERY_DAYS) {
+    const { strayedAt: _a2, strayRecovery: _b2, ...rest } = p;
+    return { ...rest, recoveredAt: now };
+  }
+  return { ...p, strayRecovery: { streak, lastDay: today3 } };
+}
+__name(applyStrayRecovery, "applyStrayRecovery");
+async function recoverStrayFromSave(env, saveId, state, now = Date.now()) {
+  try {
+    const p = await getProfile(env, saveId);
+    if (!p || ts(p.strayedAt) === 0) return false;
+    const next = applyStrayRecovery(p, state, playerDayOf(now, state?.playerDayTz), now);
+    if (next === p) return false;
+    await putProfile(env, saveId, next);
+    return true;
+  } catch (err2) {
+    console.warn("strays: recupera\xE7\xE3o falhou", { saveIdPrefix: String(saveId).slice(0, 8), err: String(err2) });
+    return false;
+  }
+}
+__name(recoverStrayFromSave, "recoverStrayFromSave");
 async function strayIdOf(pid) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`soulmon-stray:${pid}`));
   return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 24);
@@ -9854,7 +9945,7 @@ async function touchLastLogin(env, saveId, now = Date.now()) {
   try {
     const p = await getProfile(env, saveId);
     if (!p || now - ts(p.lastLoginAt) < LAST_LOGIN_TOUCH_MS) return false;
-    await putProfile(env, saveId, { ...p, lastLoginAt: now });
+    await putProfile(env, saveId, { ...markStrayIfInactive(p, now), lastLoginAt: now });
     return true;
   } catch (err2) {
     console.warn("strays: toque de \xFAltimo acesso falhou", { saveIdPrefix: String(saveId).slice(0, 8), err: String(err2) });
@@ -10172,6 +10263,8 @@ async function handleCommunity(context) {
       updatedAt: Date.now(),
       // §213: gravar o próprio perfil é acesso do dono (o GET do save também toca, `_strays.js`).
       lastLoginAt: Date.now(),
+      // Emenda: a marca de desgarrado e a recuperação atravessam a regravação do perfil (logar não limpa).
+      ...strayFieldsOf(markStrayIfInactive(prev, Date.now())),
       // `friends` guarda saveId internamente (nunca sai daqui assim) — só o
       // mapa reverso conhece a correspondência.
       pid: pidAntigo && !pidLegado ? pidAntigo : newPid()
@@ -10249,6 +10342,15 @@ async function handleCommunity(context) {
     }
     players.sort((a, b) => String(a.name ?? "").localeCompare(String(b.name ?? "")));
     return json3({ players });
+  }
+  if (action === "strayStatus" && method === "GET") {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const p = await getProfile(env, id);
+    const stray = !!p && Number(p.strayedAt) > 0;
+    const tz = url.searchParams.get("off");
+    const today3 = playerDayOf(Date.now(), tz !== null && Number.isFinite(Number(tz)) ? { offsetMs: Number(tz) } : null);
+    return json3({ stray, progress: stray ? strayRecoveryProgress(p, today3) : 0, needed: STRAY_RECOVERY_DAYS });
   }
   if (action === "strays" && method === "GET") {
     const keys = await listPrefix2(env, "profile:", 300);
@@ -14003,7 +14105,7 @@ __name(sanitizeMercMission, "sanitizeMercMission");
 // api/_dayPlan.js
 var DAY_PLAN_MAX_IDS = 200;
 var ID_RE2 = /^[\w:.-]{1,120}$/;
-var DAY_RE2 = /^\d{4}-\d{2}-\d{2}$/;
+var DAY_RE3 = /^\d{4}-\d{2}-\d{2}$/;
 function cleanIds(v) {
   if (!Array.isArray(v)) return [];
   return [...new Set(v.filter((x2) => typeof x2 === "string" && ID_RE2.test(x2)))].slice(0, DAY_PLAN_MAX_IDS);
@@ -14015,7 +14117,7 @@ function sanitizeDayPlan(raw) {
     /** @type {Record<string, unknown>} */
     raw
   );
-  if (typeof r.day !== "string" || !DAY_RE2.test(r.day)) return void 0;
+  if (typeof r.day !== "string" || !DAY_RE3.test(r.day)) return void 0;
   const offered = cleanIds(r.offered);
   const picked = cleanIds(r.picked).filter((id) => offered.includes(id));
   return { day: r.day, offered, picked, confirmed: r.confirmed === true };
@@ -14454,6 +14556,7 @@ async function onRequestBruto2({ request, env }) {
     });
     await bumpRiftLayers(kvOrThrow(env), saveId, ddAntes, ddDepois, Date.now(), { recordAntes: recAntes, recordDepois: recDepois }).catch(() => {
     });
+    await recoverStrayFromSave(env, saveId, state);
     return Response.json({ ok: true, revision: cur + 1 }, { headers: CORS12 });
   }
   return Response.json({ error: "Method not allowed" }, { status: 405, headers: CORS12 });
@@ -14812,7 +14915,7 @@ __name(onRequestPost11, "onRequestPost");
 // api/top-ai.js
 var BUCKETS = ["chat", "sprite", "transcribe", "suggest"];
 var TOP_N = 20;
-var DAY_RE3 = /^\d{4}-\d{2}-\d{2}$/;
+var DAY_RE4 = /^\d{4}-\d{2}-\d{2}$/;
 var json10 = /* @__PURE__ */ __name((o, status = 200) => Response.json(o, { status, headers: { "Cache-Control": "no-store" } }), "json");
 function ranking(bucket, entradas, limites = AI_LIMITS) {
   const teto = limites[bucket]?.perAccountByTier?.paid ?? limites[bucket]?.perAccount ?? 0;
@@ -14825,7 +14928,7 @@ async function onRequestGet8({ request, env }) {
   if (!gate2.ok) return tooManyRequests(gate2.retryAfter);
   if (!secretEquals(request.headers.get(METRICS_KEY_HEADER) ?? "", env.METRICS_ADMIN_KEY)) return json10({ error: "Unauthorized" }, 401);
   const day2 = new URL(request.url).searchParams.get("day") ?? serverDay();
-  if (!DAY_RE3.test(day2)) return json10({ error: "Invalid day" }, 400);
+  if (!DAY_RE4.test(day2)) return json10({ error: "Invalid day" }, 400);
   if (!kv(env)) return json10({ error: "Unavailable" }, 503);
   const store = kvOrThrow(env);
   const out = {};
@@ -15059,7 +15162,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-GBPVhz/functionsRoutes-0.021934404313359135.mjs
+// ../.wrangler/tmp/pages-elDe50/functionsRoutes-0.6099812633893419.mjs
 var routes = [
   {
     routePath: "/api/account",

@@ -1956,3 +1956,7 @@ Folha da Poção de Elemento (Laboratório › Centro de Evolução): 3 espaços
 
 ### `src/components/LibraryNewBadge.tsx`
 Selo "NEW" (`NewBadge`, tokens `--sm2-gold-fill`/`--sm2-on-gold`, classe `.sm2-new-badge`) e o aviso discreto de entrada nova na Biblioteca (`useLibraryNewNotice`: um toast de id fixo, o mesmo para 1 ou várias entradas). Regra em `utils/libraryNew.ts`. Régua: `LibraryNewBadge.render.test.tsx`.
+
+### `src/components/home/StrayRecoveryNotice.tsx`
+Aviso curto na Home (REGISTRO §213 emenda 2): o Soulmon do jogador está desgarrado e volta com todas as tarefas do dia em 2 dias seguidos, com o progresso 0/2, 1/2 (`community?action=strayStatus`, só o dono). Classe `.sm2-lib-alert` (âmbar). Não monta na demo.
+

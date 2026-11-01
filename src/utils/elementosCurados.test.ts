@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CURATED_ELEMENT_IDS, ELEMENTOS_CURADOS, curatedElementName } from './elementosCurados';
+import { CURATED_ELEMENT_IDS, CURATED_ELEMENT_NAMES, ELEMENTOS_CURADOS, curatedElementName } from './elementosCurados';
 import { ALL_ELEMENT_IDS, LIBRARY_ELEMENT_IDS, ELEMENT_DEX_MAX, applyElementsDefeated, dexIdsOfFoe, dexUnlockedSet, sanitizeDefeatedElements } from './elementDex';
 import { ENEMY_ROSTER, RAVEN_ENTRY } from './enemyRoster';
 import { elementIcon } from './elementIconArt';
@@ -23,7 +23,16 @@ describe('Biblioteca: os 50 elementos curados (212–261) e o corvo neutro', () 
       expect(elementIcon(id), id).toBeTruthy();
       expect(curatedElementName(id, true).length).toBeGreaterThan(1);
     }
-    expect(curatedElementName('relampago_seco', true)).toBe('Relampago seco');
+    expect(curatedElementName('relampago_seco', true)).toBe('Relâmpago Seco');
+    expect(curatedElementName('relampago_seco', false)).toBe('Dry Lightning');
+    expect(curatedElementName('neutro', true)).toBe('Neutro');
+  });
+  it('todo curado e o neutro têm nome próprio PT e EN na tabela (nunca o fallback do slug)', () => {
+    for (const id of CURATED_ELEMENT_IDS) {
+      expect(CURATED_ELEMENT_NAMES[id], id).toBeDefined();
+      expect(CURATED_ELEMENT_NAMES[id].pt).not.toBe(id);
+    }
+    expect(Object.keys(CURATED_ELEMENT_NAMES).sort()).toEqual([...CURATED_ELEMENT_IDS].sort());
   });
   it('cada Soulmon dos 50 está no roster como rookie (aba Selvagem) e vencê-lo destranca o elemento curado', () => {
     for (const e of ELEMENTOS_CURADOS) {

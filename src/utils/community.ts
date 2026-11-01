@@ -154,6 +154,9 @@ export const getFriendForms = (saveId: string, friendPid: string) =>
 
 /** Desgarrados de jogadores (§213): o pool anônimo do servidor (90+ dias sem entrar). Sanear com `sanitizeStrayPool`. */
 export const getStrays = () => call<{ strays: unknown }>('strays');
+/** O Soulmon DESTA conta está desgarrado? Progresso da recuperação (2 dias completos seguidos). Só o dono lê. */
+export const getStrayStatus = (saveId: string) =>
+  call<{ stray: boolean; progress: number; needed: number }>('strayStatus', { params: { id: saveId, off: String(-new Date().getTimezoneOffset() * 60_000) } });
 
 export interface Opponent {
   id: string; name: string; petName: string; stage: string; element?: string | null;

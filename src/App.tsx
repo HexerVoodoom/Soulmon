@@ -203,6 +203,8 @@ import { soulmonNaMasmorra } from './utils/dungeonIdle';
 import { applyElementsDefeated } from './utils/elementDex';
 import { ackLibrary, libraryNewCount } from './utils/libraryNew';
 import { recordStrayPlayerSeen, type StrayPlayer } from './utils/strayPlayers';
+import { setStrayPlayerSeenHandler } from './utils/strayPlayerEncounter';
+import { StrayRecoveryNotice } from './components/home/StrayRecoveryNotice';
 import { useLibraryNewNotice } from './components/LibraryNewBadge';
 import { applyEssences, type EssenceDrop } from './utils/essences';
 import { NIGHTMARE_ELEMENT } from './utils/nightmareElement';
@@ -4386,6 +4388,8 @@ export default function App() {
     setGameState(prev => recordStrayPlayerSeen(prev, s, playerDayIso(new Date(), prev.playerDayTz)));
   }, []);
   /** Aviso NEW (01/11/2026): a Biblioteca abriu → tudo o que existe conta como visto (idempotente). */
+  // §213 (emenda): masmorras, Combina 3 e Arena avisam o "visto" por este receptor (`utils/strayPlayerEncounter.ts`).
+  useEffect(() => setStrayPlayerSeenHandler(handleStrayPlayerSeen), [handleStrayPlayerSeen]);
   const handleLibraryOpened = useCallback(() => { setGameState(prev => ackLibrary(prev)); }, []);
   // Um aviso discreto quando algo entra na Biblioteca (1 ou várias entradas = o MESMO aviso). Regra em `utils/libraryNew.ts`.
   useLibraryNewNotice(libraryNewCount(gameState));
@@ -7934,7 +7938,6 @@ export default function App() {
                   },
                   totalXP: gameState.totalXP,
                   onElementsDefeated: handleElementsDefeated,
-                  onStrayPlayerSeen: handleStrayPlayerSeen,
                   onMatchPlayed: won => setGameState(prev => awardBondXP(
                     prev, { kind: 'tournamentMatch', won }, playerDayKey(new Date(), prev.playerDayTz),
                   )),
@@ -8061,6 +8064,8 @@ export default function App() {
 
           {pane === 'main' && (
             <div data-home-col style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* §213 emenda: o Soulmon de quem voltou depois de 90+ dias está desgarrado até 2 dias completos seguidos. */}
+              <StrayRecoveryNotice saveId={saveId} language={language} disabled={demo} refreshKey={dailyDone} />
               {/* HUD do topo: SÓ a marca (o `<h1>` da Home) + o selo do dia.
                   A leitura de HP/energia mora no VIDRO (`VisorBar`, em pixel,
                   no `CompanionHUD`) — e só lá. A barra DOM que este componente

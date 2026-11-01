@@ -26,6 +26,7 @@ import type { Combatant } from '../utils/combate/curve';
 import type { GroupResult } from '../utils/combate/group';
 import type { Language } from '../utils/i18n';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
+import { useStrayPlayerEncounters } from '../utils/strayPlayerEncounter';
 import { rogueFightSetup, type RogueRun } from '../utils/rogueDungeon';
 
 export interface RogueFightProps {
@@ -62,6 +63,8 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
     return wave[Math.min(wave.length - 1, setup.ref.slot)];
   }, [setup, combatant.level, evolutionStage]);
   const seenKey = enemy?.stage;
+  // §213: desgarrado de JOGADOR por cima do inimigo (só arte/rótulo; raro, determinístico pela semente da luta).
+  const [wildPlayer] = useStrayPlayerEncounters([enemy ? `rogue|${setup.seed}|${step}` : null]);
   useEffect(() => { if (seenKey) onEnemySeen?.(seenKey); }, [seenKey]); // eslint-disable-line react-hooks/exhaustive-deps
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const petScale = usePetScale(evolutionStage, petSprite);
@@ -145,7 +148,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
           element: petEl, energy: (pronto ? battle.petEnergy : 0) / ENERGY_TRIGGER, status: pronto ? battle.status.me : undefined,
         }}
         foes={[{
-          key: `rogue-${step}`, sprite: enemy.sprite, stage: enemy.stage, name: wildFoeLabel(enemy.stage, isPt), hp: Math.round(Math.max(0, foeHp) * foeMax), maxHp: foeMax,
+          key: `rogue-${step}`, sprite: wildPlayer?.spriteUrl ?? enemy.sprite, stage: enemy.stage, name: wildPlayer ? wildFoeLabel('rookie', isPt) : wildFoeLabel(enemy.stage, isPt), hp: Math.round(Math.max(0, foeHp) * foeMax), maxHp: foeMax,
           element: foeEl, down: foeHp <= 1e-9,
           energy: setup.foe.special && pronto ? (battle.foeEnergy[0] ?? 0) / ENERGY_TRIGGER : undefined,
           status: pronto ? battle.status.foes[0] : undefined,
