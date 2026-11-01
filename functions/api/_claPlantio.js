@@ -176,35 +176,69 @@ async function estado(env, g, hoje) {
   return { est, planta, membros, membro, cresc: avaliarCrescimento({ plantedDay: planta.plantedDay, today: hoje, membros, membro }) };
 }
 
-/** Rega 1x/dia/membro, só com o sorteio 'water' do dia (sem sorteio prévio — cliente antigo — sorteia 'water' internamente). `reason`: 'no-plant' | 'grown' | 'no-draw' | 'already-watered'. */
+/** Rega 1x/dia/membro, só com a função 'water' do dia (`funcaoAtribuida`; cliente antigo sem `claSortear` também). `reason`: 'no-plant' | 'grown' | 'no-draw' | 'already-watered'. */
 export async function regar(env, g, save, hoje) {
   const s = await estado(env, g, hoje);
   if (!s.planta) return { ok: false, reason: 'no-plant' };
   if (s.cresc.mature) return { ok: false, reason: 'grown' };
   const m = s.membro[save];
-  // D2: UMA ação por dia por pessoa. Cliente antigo regava sem `claSortear`: sem sorteio HOJE o servidor sorteia aqui
-  // (a ação pedida vira a do dia). Com sorteio de OUTRA ação hoje, vale a regra de uma ação por dia.
+  // D2: UMA ação por dia por pessoa, a da função do dia (`funcaoAtribuida`). Cliente antigo regava sem `claSortear`:
+  // a função atribuída vale do mesmo jeito (e fica gravada aqui).
+  if (funcaoDeHoje(g, m, save, hoje) !== 'water') return { ok: false, reason: 'no-draw' };
   if (m.sorteio?.day !== hoje) m.sorteio = { day: hoje, kind: 'water' };
-  else if (m.sorteio.kind !== 'water') return { ok: false, reason: 'no-draw' };
   if (m.water.includes(hoje)) return { ok: false, reason: 'already-watered' };
   m.water = [...m.water, hoje].slice(-PLANTIO_HIST_MAX);
   await gravarMembro(env, g.id, save, m);
   return { ok: true };
 }
 
+/** FNV-1a 32 bits: semente estável do sorteio do dia (sem persistência, sem `Math.random`). */
+function hash32(str) {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h >>> 0;
+}
+
 /**
- * L5-D2: UMA ação por vez por pessoa, SORTEADA AQUI entre aguar e proteger (o cliente não escolhe).
- * Idempotente no dia: repetir devolve o mesmo sorteio. Se a proteção do dia já foi feita por alguém, só sobra aguar.
- * Concluir a ação do sorteio (rega ou proteção) fecha o dia; 
-eason: 'no-plant' | 'grown'.
+ * Decisão do dono (01/11/2026): "o servidor sorteia no início do dia uma função para cada". A função do dia é
+ * DETERMINÍSTICA por (clã, dia do servidor): exatamente 1 membro 'protect', os demais 'water'. Antes cada um tirava
+ * uma moeda na hora, e quem tirava 'protect' depois da proteção do dia já feita ficava sem ação.
+ *
+ * Candidatos ao 'protect': quem já era membro ANTES de hoje (`g.desde` < hoje, ou sem data). Quem entra no meio do dia
+ * recebe 'water' — assim a escolha não muda com a entrada de ninguém. Clã sem nenhum candidato (criado hoje): o
+ * primeiro membro da lista, que só cresce no fim.
+ * @returns {'water'|'protect'}
  */
-export async function sortear(env, g, save, hoje, moeda = () => crypto.getRandomValues(new Uint8Array(1))[0] & 1) {
+export function funcaoAtribuida(g, save, hoje) {
+  const membros = Array.isArray(g?.members) ? g.members : [];
+  let cands = membros.filter(m => { const d = g.desde?.[m]; return !d || d < hoje; });
+  if (!cands.length && membros.length) cands = [membros[0]];
+  if (!cands.length) return 'water';
+  let protetor = cands[0], menor = hash32(`${g.id}|${hoje}|${cands[0]}`);
+  for (const m of cands.slice(1)) {
+    const h = hash32(`${g.id}|${hoje}|${m}`);
+    if (h < menor || (h === menor && m < protetor)) { menor = h; protetor = m; }
+  }
+  return protetor === save ? 'protect' : 'water';
+}
+
+/** A função de hoje: o que já ficou gravado hoje (sorteio anterior ao deploy, idempotência) ou a atribuída. */
+function funcaoDeHoje(g, m, save, hoje) {
+  return m.sorteio?.day === hoje ? m.sorteio.kind : funcaoAtribuida(g, save, hoje);
+}
+
+/**
+ * L5-D2: UMA ação por dia por pessoa — agora ATRIBUÍDA pelo servidor (`funcaoAtribuida`), não moeda. Mesma rota e
+ * mesmo formato (`{ ok, kind }`): o cliente que "sorteia" passa a ler a função do dia. Idempotente no dia.
+ * `reason`: 'no-plant' | 'grown'.
+ */
+export async function sortear(env, g, save, hoje) {
   const s = await estado(env, g, hoje);
   if (!s.planta) return { ok: false, reason: 'no-plant' };
   if (s.cresc.mature) return { ok: false, reason: 'grown' };
   const m = s.membro[save];
   if (m.sorteio?.day === hoje) return { ok: true, kind: m.sorteio.kind };
-  const kind = s.cresc.todayProtected || moeda() === 0 ? 'water' : 'protect';
+  const kind = funcaoAtribuida(g, save, hoje);
   m.sorteio = { day: hoje, kind };
   await gravarMembro(env, g.id, save, m);
   return { ok: true, kind };
@@ -215,10 +249,9 @@ export async function proteger(env, g, save, hoje, selo = Math.random().toString
   const s = await estado(env, g, hoje);
   if (!s.planta) return { ok: false, reason: 'no-plant' };
   if (s.cresc.mature) return { ok: false, reason: 'grown' };
-  // D2: uma ação por dia por pessoa. Sem sorteio HOJE (cliente antigo) o servidor sorteia 'protect' aqui; com sorteio de
-  // OUTRA ação hoje, vale a regra de uma ação por dia.
+  // D2: só quem tem a função 'protect' hoje protege (1 por clã/dia por construção; o selo abaixo segue de trava).
   const sorteadoHoje = s.membro[save].sorteio?.day === hoje;
-  if (sorteadoHoje && s.membro[save].sorteio.kind !== 'protect') return { ok: false, reason: 'no-draw' };
+  if (funcaoDeHoje(g, s.membro[save], save, hoje) !== 'protect') return { ok: false, reason: 'no-draw' };
   if (s.cresc.todayProtected || await kvOrThrow(env).get(protKey(g.id, hoje))) return { ok: false, reason: 'already-protected' };
   if (!sorteadoHoje) s.membro[save].sorteio = { day: hoje, kind: 'protect' };
   await kvOrThrow(env).put(protKey(g.id, hoje), JSON.stringify({ selo }), { expirationTtl: 86400 * 3 });

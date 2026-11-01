@@ -30,7 +30,7 @@
 //   POST claPresenteClaim {id, dayKey, giftId} → { claimed:{item,receipt}, praca }   404 nothing to claim
 //   GET  claPlantio   ?id=&dayKey=         → { plantio }   404 no guild   (o PLANTIO: `_claPlantio.js`)
 //   POST claPlantar|claRegar|claProteger|claColher {id, dayKey} → { plantio, fruit? }
-//   POST claSortear {id, dayKey} → { plantio, task:'water'|'protect' } (o servidor sorteia a ação do dia; aditivo)
+//   POST claSortear {id, dayKey} → { plantio, task:'water'|'protect' } (a função do dia, atribuída pelo servidor: 1 'protect' por clã/dia; aditivo)
 //        409 already planted|already watered|already protected|already harvested|not grown|grown · 404 no plant
 //   GET  claMisterio  ?id=&dayKey=         → { misterio }   404 no guild   (o MISTÉRIO: `_claMisterio.js`)
 //   POST claMisterioEnviar {id, dayKey}    → { misterio }   409 already sent|reward pending

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { fakeKV } from './_claKv.testkit.js';
 import {
-  estacaoDoDia, arvoreDe, frutoDe, avaliarCrescimento, plantar, regar, proteger, sortear, colher, vistaDoPlantio,
+  estacaoDoDia, arvoreDe, frutoDe, avaliarCrescimento, plantar, regar, proteger, sortear, colher, vistaDoPlantio, funcaoAtribuida,
   PLANTIO_DIAS, ARVORE_TIER_MAX, migrarEspecie, normalizarPlanta, normalizarMembro, lerPlanta, plantioKey, arvoresKey,
 } from './_claPlantio.js';
 import { diaDeNum, numDia } from './_coop.js';
@@ -10,8 +10,9 @@ const env = () => ({ DIGIAPP_SAVES: fakeKV() });
 const A = 'saveA', B = 'saveB', C = 'saveC';
 const grupo = (members = [A, B]) => ({ id: 'g1', members, desde: {} });
 const dia = (base, n) => diaDeNum(numDia(base) + n);
-/** D2: o sorteio do dia, forçado ('water' | 'protect'); regar/proteger exigem ele. */
-const tirar = (e, g, m, d, kind) => sortear(e, g, m, d, () => (kind === 'water' ? 0 : 1));
+/** D2 (dono, 01/11/2026): a função do dia é ATRIBUÍDA pelo servidor — 1 'protect' por clã/dia, os demais 'water'. */
+const protetorDe = (g, d) => g.members.find(m => funcaoAtribuida(g, m, d) === 'protect');
+const reganteDe = (g, d) => g.members.find(m => funcaoAtribuida(g, m, d) === 'water');
 
 describe('plantio: calendário', () => {
   it('estação e espécie por mês (hemisfério sul)', () => {
@@ -34,48 +35,74 @@ describe('plantio: uma por estação', () => {
     expect(await plantar(e, g.id, B, '2026-05-30')).toEqual({ ok: false, reason: 'already-planted' });
     expect((await plantar(e, g.id, B, '2026-06-02')).ok).toBe(true);
   });
-  it('rega 1x por dia por membro; sem planta = no-plant', async () => {
+  it('rega 1x por dia por membro (só quem tem a função water); sem planta = no-plant', async () => {
     const e = env(); const g = grupo();
     expect((await regar(e, g, A, '2026-04-02')).reason).toBe('no-plant');
     await plantar(e, g.id, A, '2026-04-02');
-    // Cliente antigo (sem claSortear): o servidor sorteia 'water' internamente e rega.
-    expect((await regar(e, g, A, '2026-04-02')).ok).toBe(true);
-    expect((await regar(e, g, A, '2026-04-02')).reason).toBe('already-watered');
-    await tirar(e, g, B, '2026-04-02', 'water');
-    expect((await regar(e, g, B, '2026-04-02')).ok).toBe(true);
-    await tirar(e, g, A, '2026-04-03', 'water');
-    expect((await regar(e, g, A, '2026-04-03')).ok).toBe(true);
+    const r = reganteDe(g, '2026-04-02');
+    // Cliente antigo (sem claSortear): a função atribuída vale do mesmo jeito.
+    expect((await regar(e, g, r, '2026-04-02')).ok).toBe(true);
+    expect((await regar(e, g, r, '2026-04-02')).reason).toBe('already-watered');
+    expect((await regar(e, g, protetorDe(g, '2026-04-02'), '2026-04-02')).reason).toBe('no-draw');
   });
-  it('proteção: só 1 membro por dia', async () => {
+  it('proteção: só o protetor do dia, 1 por clã/dia', async () => {
     const e = env(); const g = grupo();
     await plantar(e, g.id, A, '2026-04-02');
-    // Cliente antigo (sem claSortear): proteger sorteia 'protect' internamente.
-    await tirar(e, g, B, '2026-04-02', 'protect'); // B sorteia 'protect' ANTES de A proteger (depois o sorteio vira 'water')
-    expect((await proteger(e, g, A, '2026-04-02')).ok).toBe(true);
-    expect((await proteger(e, g, B, '2026-04-02')).reason).toBe('already-protected');
-    await tirar(e, g, B, '2026-04-03', 'protect');
-    expect((await proteger(e, g, B, '2026-04-03')).ok).toBe(true);
+    const p = protetorDe(g, '2026-04-02');
+    expect((await proteger(e, g, reganteDe(g, '2026-04-02'), '2026-04-02')).reason).toBe('no-draw');
+    expect((await proteger(e, g, p, '2026-04-02')).ok).toBe(true);
+    expect((await proteger(e, g, p, '2026-04-02')).reason).toBe('already-protected');
   });
-  it('D2: uma ação por dia — quem tirou "water" não protege e quem tirou "protect" não rega', async () => {
-    const e = env(); const g = grupo();
-    await plantar(e, g.id, A, '2026-04-02');
-    await tirar(e, g, A, '2026-04-02', 'water');
-    await tirar(e, g, B, '2026-04-02', 'protect');
-    expect((await proteger(e, g, A, '2026-04-02')).reason).toBe('no-draw');
-    expect((await regar(e, g, B, '2026-04-02')).reason).toBe('no-draw');
-    expect((await regar(e, g, A, '2026-04-02')).ok).toBe(true);
-    expect((await proteger(e, g, B, '2026-04-02')).ok).toBe(true);
+  it('D2: sortear devolve a função atribuída (idempotente) e ninguém fica sem ação', async () => {
+    const e = env(); const g = grupo([A, B, C]); const d = '2026-04-02';
+    await plantar(e, g.id, A, d);
+    const kinds = [];
+    for (const m of g.members) {
+      const k = (await sortear(e, g, m, d)).kind;
+      expect((await sortear(e, g, m, d)).kind).toBe(k);
+      kinds.push(k);
+      expect((await (k === 'water' ? regar : proteger)(e, g, m, d)).ok).toBe(true);
+    }
+    expect(kinds.filter(k => k === 'protect')).toHaveLength(1);
+  });
+});
+
+describe('plantio: atribuição da função do dia', () => {
+  const g = { id: 'clã-x', members: ['s1', 's2', 's3', 's4', 's5'], desde: {} };
+  it('exatamente 1 protect por (clã, dia), determinístico', () => {
+    for (let i = 0; i < 60; i++) {
+      const d = dia('2026-04-01', i);
+      const f = g.members.map(m => funcaoAtribuida(g, m, d));
+      expect(f.filter(x => x === 'protect')).toHaveLength(1);
+      expect(g.members.map(m => funcaoAtribuida(g, m, d))).toEqual(f);
+    }
+  });
+  it('o protetor varia entre os dias (não é sempre o mesmo membro)', () => {
+    const ps = new Set(Array.from({ length: 60 }, (_, i) => protetorDe(g, dia('2026-04-01', i))));
+    expect(ps.size).toBeGreaterThan(1);
+  });
+  it('quem entra no meio do dia recebe water, e a entrada não muda o protetor de hoje', () => {
+    const d = '2026-04-10';
+    const antes = protetorDe(g, d);
+    const g2 = { ...g, members: [...g.members, 'novo'], desde: { novo: d } };
+    expect(funcaoAtribuida(g2, 'novo', d)).toBe('water');
+    expect(protetorDe(g2, d)).toBe(antes);
+  });
+  it('clã criado hoje (todos com desde = hoje): o primeiro membro protege', () => {
+    const d = '2026-04-10';
+    const g3 = { id: 'novo', members: ['f', 'x'], desde: { f: d, x: d } };
+    expect(funcaoAtribuida(g3, 'f', d)).toBe('protect');
+    expect(funcaoAtribuida(g3, 'x', d)).toBe('water');
   });
 });
 
 describe('plantio: crescimento, atraso e colheita', () => {
-  const cuidar = async (e, g, d, { regadores, protetor = g.members[0] } = {}) => {
-    // D2: uma ação por pessoa por dia; o protetor não rega.
-    const regam = regadores ?? g.members.filter(m => m !== protetor);
-    if (protetor) await tirar(e, g, protetor, d, 'protect');
-    for (const m of regam) await tirar(e, g, m, d, 'water');
+  // D2: o protetor é o atribuído do dia e não rega. `semProtecao` pula a proteção; `nRegam` limita quantos regam.
+  const cuidar = async (e, g, d, { semProtecao = false, nRegam } = {}) => {
+    const protetor = protetorDe(g, d);
+    const regam = g.members.filter(m => m !== protetor).slice(0, nRegam ?? g.members.length);
     for (const m of regam) await regar(e, g, m, d);
-    if (protetor) await proteger(e, g, protetor, d);
+    if (!semProtecao) await proteger(e, g, protetor, d);
   };
   it('14 dias cuidados completam; o dia seguinte já não rega', async () => {
     const e = env(); const g = grupo(); const ini = '2026-04-01';
@@ -89,9 +116,9 @@ describe('plantio: crescimento, atraso e colheita', () => {
     const e = env(); const g = grupo([A, B, C]); const ini = '2026-04-01';
     await plantar(e, g.id, A, ini);
     await cuidar(e, g, dia(ini, 0));                                     // ok
-    await cuidar(e, g, dia(ini, 1), { protetor: null });                  // sem proteção
-    await cuidar(e, g, dia(ini, 2), { regadores: [A], protetor: B });     // 1 de 3 < metade (2)
-    await cuidar(e, g, dia(ini, 3), { regadores: [A, B], protetor: C });  // 2 de 3 = ok
+    await cuidar(e, g, dia(ini, 1), { semProtecao: true });  // sem proteção
+    await cuidar(e, g, dia(ini, 2), { nRegam: 1 });          // 1 de 3 < metade (2)
+    await cuidar(e, g, dia(ini, 3), { nRegam: 2 });          // 2 de 3 = ok
     const v = await vistaDoPlantio(e, g, A, dia(ini, 4)); // hoje (dia 4) sem nada: pendente, não atraso
     expect(v.progress).toBe(Math.round((2 / PLANTIO_DIAS) * 100));
     expect(v.delayed).toBe(true);
