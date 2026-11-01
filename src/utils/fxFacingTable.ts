@@ -187,7 +187,7 @@ export const FX_FACING_TABLE: Readonly<Record<string, string>> = {
   mutacao: 'RLS',
   nascente: 'RLL',
   nebulosa: 'RLS',
-  neutro: 'RRL',
+  neutro: 'RRR',
   nevasca: 'RLL',
   nucleo: 'RLS',
   nulo: 'RLL',

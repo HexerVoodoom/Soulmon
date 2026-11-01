@@ -642,13 +642,13 @@ async function verifyIdToken(idToken, projectId) {
       false,
       ["verify"]
     );
-    const ok = await crypto.subtle.verify(
+    const ok2 = await crypto.subtle.verify(
       "RSASSA-PKCS1-v1_5",
       key,
       b64urlToBytes(parts[2]),
       new TextEncoder().encode(`${parts[0]}.${parts[1]}`)
     );
-    if (!ok) return null;
+    if (!ok2) return null;
     return {
       email: normalizeEmail2(payload.email),
       authTime: typeof payload.auth_time === "number" && Number.isFinite(payload.auth_time) ? payload.auth_time : 0
@@ -7950,15 +7950,15 @@ function avaliarCrescimento({ plantedDay, today: today3, membros, membro }) {
     const base = eleg.length || 1;
     const regou = eleg.filter((m) => membro[m.save]?.water?.includes(d)).length;
     const prot = membros.some((m) => membro[m.save]?.prot?.includes(d));
-    const ok = regou >= Math.ceil(base / 2) && prot;
+    const ok2 = regou >= Math.ceil(base / 2) && prot;
     if (d === today3) {
       todayWatered = regou >= Math.ceil(base / 2);
       todayProtected = prot;
     }
-    if (ok && !maturedOn) {
+    if (ok2 && !maturedOn) {
       cared++;
       if (cared >= PLANTIO_DIAS) maturedOn = d;
-    } else if (!ok && d !== today3 && !maturedOn) delays++;
+    } else if (!ok2 && d !== today3 && !maturedOn) delays++;
   }
   return { cared: Math.min(cared, PLANTIO_DIAS), delays, mature: !!maturedOn, maturedOn, todayWatered, todayProtected };
 }
@@ -9816,6 +9816,53 @@ function frameIdOrNull(raw) {
 }
 __name(frameIdOrNull, "frameIdOrNull");
 
+// api/_strays.js
+var STRAY_INACTIVE_DAYS = 90;
+var STRAY_INACTIVE_MS = STRAY_INACTIVE_DAYS * 864e5;
+var LAST_LOGIN_TOUCH_MS = 864e5;
+var STRAY_POOL_MAX = 30;
+var ts = /* @__PURE__ */ __name((v) => typeof v === "number" && Number.isFinite(v) && v > 0 ? v : 0, "ts");
+function lastActiveAt(p) {
+  if (!p || typeof p !== "object") return 0;
+  return Math.max(ts(p.lastLoginAt), ts(p.updatedAt));
+}
+__name(lastActiveAt, "lastActiveAt");
+function isStrayProfile(p, now, saveId = p?.id) {
+  if (!p || typeof p !== "object" || p.publicHidden === true) return false;
+  if (isSimuladoId(saveId) || isSimuladoId(p.id)) return false;
+  if (typeof p.pid !== "string" || !p.pid) return false;
+  const t = lastActiveAt(p);
+  return t > 0 && now - t >= STRAY_INACTIVE_MS;
+}
+__name(isStrayProfile, "isStrayProfile");
+async function strayIdOf(pid) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`soulmon-stray:${pid}`));
+  return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 24);
+}
+__name(strayIdOf, "strayIdOf");
+var STAGE = /^[A-Za-z0-9_.-]{1,40}$/;
+var ELEMENT = /^[a-z][a-z0-9_-]{0,31}$/;
+async function strayView(p) {
+  const out = { sid: await strayIdOf(p.pid), stage: STAGE.test(String(p.stage ?? "")) ? p.stage : "rookie" };
+  const sprite = spriteUrlOrNull(p.spriteUrl);
+  if (sprite) out.spriteUrl = sprite;
+  if (typeof p.element === "string" && ELEMENT.test(p.element)) out.element = p.element;
+  return out;
+}
+__name(strayView, "strayView");
+async function touchLastLogin(env, saveId, now = Date.now()) {
+  try {
+    const p = await getProfile(env, saveId);
+    if (!p || now - ts(p.lastLoginAt) < LAST_LOGIN_TOUCH_MS) return false;
+    await putProfile(env, saveId, { ...p, lastLoginAt: now });
+    return true;
+  } catch (err2) {
+    console.warn("strays: toque de \xFAltimo acesso falhou", { saveIdPrefix: String(saveId).slice(0, 8), err: String(err2) });
+    return false;
+  }
+}
+__name(touchLastLogin, "touchLastLogin");
+
 // api/community.js
 var CORS6 = {
   "Access-Control-Allow-Origin": "*",
@@ -9852,10 +9899,10 @@ async function withDuelLock(key, fn) {
   }
 }
 __name(withDuelLock, "withDuelLock");
-var HEAVY_ACTIONS = /* @__PURE__ */ new Set(["players", "opponents", "rank", "seasonResult", "names"]);
+var HEAVY_ACTIONS = /* @__PURE__ */ new Set(["players", "opponents", "rank", "seasonResult", "names", "strays"]);
 var HEAVY_LIMIT = { limit: 20, windowMs: 6e4 };
 var LIGHT_LIMIT = { limit: 120, windowMs: 6e4 };
-var CACHEABLE_ACTIONS = /* @__PURE__ */ new Set(["players", "rank", "seasonResult"]);
+var CACHEABLE_ACTIONS = /* @__PURE__ */ new Set(["players", "rank", "seasonResult", "strays"]);
 var EDGE_TTL_SECONDS = 60;
 var today2 = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), "today");
 var currentSeason = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 7), "currentSeason");
@@ -10123,6 +10170,8 @@ async function handleCommunity(context) {
       friends: prev.friends || [],
       createdAt: prev.createdAt || Date.now(),
       updatedAt: Date.now(),
+      // §213: gravar o próprio perfil é acesso do dono (o GET do save também toca, `_strays.js`).
+      lastLoginAt: Date.now(),
       // `friends` guarda saveId internamente (nunca sai daqui assim) — só o
       // mapa reverso conhece a correspondência.
       pid: pidAntigo && !pidLegado ? pidAntigo : newPid()
@@ -10200,6 +10249,25 @@ async function handleCommunity(context) {
     }
     players.sort((a, b) => String(a.name ?? "").localeCompare(String(b.name ?? "")));
     return json3({ players });
+  }
+  if (action === "strays" && method === "GET") {
+    const keys = await listPrefix2(env, "profile:", 300);
+    const now = Date.now();
+    const strays = [];
+    for (const k of keys) {
+      const raw = await kvOrThrow(env).get(k);
+      if (!raw) continue;
+      let p;
+      try {
+        p = JSON.parse(raw);
+      } catch {
+        continue;
+      }
+      if (!isStrayProfile(p, now, k.slice("profile:".length))) continue;
+      strays.push(await strayView(p));
+      if (strays.length >= STRAY_POOL_MAX) break;
+    }
+    return json3({ strays });
   }
   if (action === "player" && method === "GET") {
     const targetSave = await saveIdForPublicId(env, id);
@@ -12479,8 +12547,8 @@ function spriteModel(env) {
 __name(spriteModel, "spriteModel");
 function spriteQuality(env, model = "alpha") {
   const q = String(env.SPRITE_QUALITY || "").trim().toLowerCase();
-  const ok = model === "flare" ? ["low", "medium", "high", "xhigh", "max"] : ["low", "medium", "high"];
-  return ok.includes(q) ? q : "low";
+  const ok2 = model === "flare" ? ["low", "medium", "high", "xhigh", "max"] : ["low", "medium", "high"];
+  return ok2.includes(q) ? q : "low";
 }
 __name(spriteQuality, "spriteQuality");
 function hfRequestBody(env, model, prompt, referenceImageUrls) {
@@ -12701,7 +12769,7 @@ var SPRITE_TOKEN2 = /^[0-9a-f]{32}$/;
 function referenciasSeguras(request, referenceImageUrls) {
   if (!Array.isArray(referenceImageUrls)) return void 0;
   const origem = new URL(request.url).origin;
-  const ok = [];
+  const ok2 = [];
   for (const raw of referenceImageUrls.slice(0, MAX_REFERENCE_URLS)) {
     if (typeof raw !== "string" || raw.length > 512) continue;
     let u;
@@ -12713,9 +12781,9 @@ function referenciasSeguras(request, referenceImageUrls) {
     if (u.protocol !== "https:" || u.origin !== origem) continue;
     if (u.pathname !== "/api/sprite-image") continue;
     if (!SPRITE_TOKEN2.test(u.searchParams.get("k") || "")) continue;
-    ok.push(u.toString());
+    ok2.push(u.toString());
   }
-  return ok.length ? ok : void 0;
+  return ok2.length ? ok2 : void 0;
 }
 __name(referenciasSeguras, "referenciasSeguras");
 async function respostaDeRegenRepetida(env, id, formId, opId, op) {
@@ -13850,7 +13918,7 @@ function sanitizeFocusLoot(raw) {
 __name(sanitizeFocusLoot, "sanitizeFocusLoot");
 
 // api/_elementDex.js
-var ELEMENT_DEX_MAX = 210;
+var ELEMENT_DEX_MAX = 261;
 function sanitizeDefeatedElements(raw) {
   if (!Array.isArray(raw)) return void 0;
   const out = [];
@@ -13861,6 +13929,37 @@ function sanitizeDefeatedElements(raw) {
   return out;
 }
 __name(sanitizeDefeatedElements, "sanitizeDefeatedElements");
+
+// api/_libraryAck.js
+var LIBRARY_ACK_MAX = 1e5;
+var ok = /* @__PURE__ */ __name((v) => typeof v === "number" && Number.isInteger(v) && v >= 0 && v <= LIBRARY_ACK_MAX, "ok");
+function sanitizeLibraryAck(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  if (!ok(raw.b) || !ok(raw.e) || !ok(raw.s)) return void 0;
+  return { b: raw.b, e: raw.e, s: raw.s };
+}
+__name(sanitizeLibraryAck, "sanitizeLibraryAck");
+var STRAY_SEEN_MAX = 200;
+var SID = /^[a-f0-9]{24}$/;
+var STAGE2 = /^[A-Za-z0-9_.-]{1,40}$/;
+var ELEMENT2 = /^[a-z][a-z0-9_-]{0,31}$/;
+var DAY = /^\d{4}-\d{2}-\d{2}$/;
+function sanitizeStrayPlayersSeen(raw) {
+  if (!Array.isArray(raw)) return void 0;
+  const out = [];
+  for (const v of raw) {
+    if (!v || typeof v !== "object" || typeof v.sid !== "string" || !SID.test(v.sid) || out.some((o) => o.sid === v.sid)) continue;
+    const item = { sid: v.sid, stage: typeof v.stage === "string" && STAGE2.test(v.stage) ? v.stage : "rookie" };
+    const sprite = spriteUrlOrNull(v.spriteUrl);
+    if (sprite) item.spriteUrl = sprite;
+    if (typeof v.element === "string" && ELEMENT2.test(v.element)) item.element = v.element;
+    item.at = typeof v.at === "string" && DAY.test(v.at) ? v.at : "1970-01-01";
+    out.push(item);
+    if (out.length >= STRAY_SEEN_MAX) break;
+  }
+  return out;
+}
+__name(sanitizeStrayPlayersSeen, "sanitizeStrayPlayersSeen");
 
 // api/_conquistas.js
 var ACHIEVEMENT_IDS = [
@@ -14164,6 +14263,7 @@ async function onRequestBruto2({ request, env }) {
         console.warn("save: renova\xE7\xE3o de TTL falhou, leitura segue", { saveIdPrefix: saveId.slice(0, 8), err: String(err2) });
       }
     }
+    await touchLastLogin(env, saveId);
     const state = JSON.parse(raw);
     const ent = publicView(await readEntitlement(env, saveId));
     const { admin } = await verifiedAdmin(env, request, saveId);
@@ -14228,6 +14328,16 @@ async function onRequestBruto2({ request, env }) {
       const q = sanitizeDefeatedElements(state.defeatedElements);
       if (q) state.defeatedElements = q;
       else delete state.defeatedElements;
+    }
+    if ("libraryAck" in state) {
+      const q = sanitizeLibraryAck(state.libraryAck);
+      if (q) state.libraryAck = q;
+      else delete state.libraryAck;
+    }
+    if ("strayPlayersSeen" in state) {
+      const q = sanitizeStrayPlayersSeen(state.strayPlayersSeen);
+      if (q) state.strayPlayersSeen = q;
+      else delete state.strayPlayersSeen;
     }
     if ("conquistasPagas" in state) {
       const q = sanitizeConquistasPagas(state.conquistasPagas);
@@ -14949,7 +15059,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-snp1yZ/functionsRoutes-0.5505365437287524.mjs
+// ../.wrangler/tmp/pages-GBPVhz/functionsRoutes-0.021934404313359135.mjs
 var routes = [
   {
     routePath: "/api/account",
