@@ -6,7 +6,7 @@ import { lotNpcVoice } from '../../utils/areaNpcVoice';
 import { NpcSpeech } from './NpcSpeech';
 import { useBackLayer } from '../../utils/backStack';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
-import { NPC_MAX_WIDTH_PCT, NPC_BASE_UNDER_SHEET, NPC_TOP_PAD_PX } from './npcScale';
+import { NPC_MAX_WIDTH_PCT, NPC_BASE_UNDER_SHEET, NPC_TOP_PAD_PX, npcFrameFor } from './npcScale';
 import { BackCircleButton } from '../ui/BackCircleButton';
 import { ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
@@ -63,6 +63,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   const { slot, slotRef } = useModalInfoSlot();
   const npcKey = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
   if (!open) return null;
+  const frame = npcFrameFor(areaId, lotId);
 
   const npcSrc = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
   const npc = npcVoice ?? (areaId ? lotNpcVoice(areaId, lotId, language) : { name: '', line: '' });
@@ -135,7 +136,10 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
             style={{
               height: '100%', width: 'auto', maxWidth: `${NPC_MAX_WIDTH_PCT}%`,
               flex: 'none', objectFit: 'contain', objectPosition: 'bottom',
-              transform: `translateY(${100 * NPC_BASE_UNDER_SHEET}%)`,
+              transform: frame
+                ? `translateY(${100 * (NPC_BASE_UNDER_SHEET + frame.underSheet)}%) scale(${frame.zoom})`
+                : `translateY(${100 * NPC_BASE_UNDER_SHEET}%)`,
+              ...(frame ? { transformOrigin: 'left bottom', ...(frame.flushLeft ? { marginLeft: -12 } : {}) } : {}),
               pointerEvents: 'none',
               filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.6))',
             }}
