@@ -8042,21 +8042,53 @@ async function regar(env, g, save, hoje) {
   if (!s.planta) return { ok: false, reason: "no-plant" };
   if (s.cresc.mature) return { ok: false, reason: "grown" };
   const m = s.membro[save];
+  if (funcaoDeHoje(g, m, save, hoje) !== "water") return { ok: false, reason: "no-draw" };
   if (m.sorteio?.day !== hoje) m.sorteio = { day: hoje, kind: "water" };
-  else if (m.sorteio.kind !== "water") return { ok: false, reason: "no-draw" };
   if (m.water.includes(hoje)) return { ok: false, reason: "already-watered" };
   m.water = [...m.water, hoje].slice(-PLANTIO_HIST_MAX);
   await gravarMembro(env, g.id, save, m);
   return { ok: true };
 }
 __name(regar, "regar");
-async function sortear(env, g, save, hoje, moeda = () => crypto.getRandomValues(new Uint8Array(1))[0] & 1) {
+function hash322(str) {
+  let h = 2166136261;
+  for (let i2 = 0; i2 < str.length; i2++) {
+    h ^= str.charCodeAt(i2);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+__name(hash322, "hash32");
+function funcaoAtribuida(g, save, hoje) {
+  const membros = Array.isArray(g?.members) ? g.members : [];
+  let cands = membros.filter((m) => {
+    const d = g.desde?.[m];
+    return !d || d < hoje;
+  });
+  if (!cands.length && membros.length) cands = [membros[0]];
+  if (!cands.length) return "water";
+  let protetor = cands[0], menor = hash322(`${g.id}|${hoje}|${cands[0]}`);
+  for (const m of cands.slice(1)) {
+    const h = hash322(`${g.id}|${hoje}|${m}`);
+    if (h < menor || h === menor && m < protetor) {
+      menor = h;
+      protetor = m;
+    }
+  }
+  return protetor === save ? "protect" : "water";
+}
+__name(funcaoAtribuida, "funcaoAtribuida");
+function funcaoDeHoje(g, m, save, hoje) {
+  return m.sorteio?.day === hoje ? m.sorteio.kind : funcaoAtribuida(g, save, hoje);
+}
+__name(funcaoDeHoje, "funcaoDeHoje");
+async function sortear(env, g, save, hoje) {
   const s = await estado(env, g, hoje);
   if (!s.planta) return { ok: false, reason: "no-plant" };
   if (s.cresc.mature) return { ok: false, reason: "grown" };
   const m = s.membro[save];
   if (m.sorteio?.day === hoje) return { ok: true, kind: m.sorteio.kind };
-  const kind = s.cresc.todayProtected || moeda() === 0 ? "water" : "protect";
+  const kind = funcaoAtribuida(g, save, hoje);
   m.sorteio = { day: hoje, kind };
   await gravarMembro(env, g.id, save, m);
   return { ok: true, kind };
@@ -8067,7 +8099,7 @@ async function proteger(env, g, save, hoje, selo = Math.random().toString(36).sl
   if (!s.planta) return { ok: false, reason: "no-plant" };
   if (s.cresc.mature) return { ok: false, reason: "grown" };
   const sorteadoHoje = s.membro[save].sorteio?.day === hoje;
-  if (sorteadoHoje && s.membro[save].sorteio.kind !== "protect") return { ok: false, reason: "no-draw" };
+  if (funcaoDeHoje(g, s.membro[save], save, hoje) !== "protect") return { ok: false, reason: "no-draw" };
   if (s.cresc.todayProtected || await kvOrThrow(env).get(protKey(g.id, hoje))) return { ok: false, reason: "already-protected" };
   if (!sorteadoHoje) s.membro[save].sorteio = { day: hoje, kind: "protect" };
   await kvOrThrow(env).put(protKey(g.id, hoje), JSON.stringify({ selo }), { expirationTtl: 86400 * 3 });
@@ -8362,7 +8394,7 @@ var CHEFE_EMBLEMAS_TETO = 10;
 var TRILHA_SEIVA = 3;
 var TRILHA_EMBLEMAS = 1;
 var TRILHA_TENTATIVAS_DIA = 12;
-function hash322(texto) {
+function hash323(texto) {
   let h = 2166136261;
   const s = String(texto);
   for (let i2 = 0; i2 < s.length; i2++) {
@@ -8371,7 +8403,7 @@ function hash322(texto) {
   }
   return h >>> 0;
 }
-__name(hash322, "hash32");
+__name(hash323, "hash32");
 function nivelDoMisterio(k) {
   const n = Math.max(0, Math.floor(Number(k) || 0));
   return Math.min(NIVEL_MAX, 1 + n);
@@ -8396,7 +8428,7 @@ __name(danoBaseFor, "danoBaseFor");
 function kindDoMisterio(gid, k) {
   const n = Math.max(0, Math.floor(Number(k) || 0));
   if (n === 0) return "boss";
-  return hash322(`${gid}:${n}`) % 100 < TRAIL_PCT ? "trail" : "boss";
+  return hash323(`${gid}:${n}`) % 100 < TRAIL_PCT ? "trail" : "boss";
 }
 __name(kindDoMisterio, "kindDoMisterio");
 var BOSS_ROSTER = Object.freeze([
@@ -8427,8 +8459,8 @@ var BOSS_ROSTER = Object.freeze([
 var ARAUTO = Object.freeze({ id: "arauto-do-fim", element: "juizo_final" });
 function bossDoMisterio(gid, k) {
   const level = nivelDoMisterio(k);
-  if (level >= ARAUTO_NIVEL_MIN && (level === NIVEL_MAX || hash322(`${gid}:${k}:arauto`) % 4 === 0)) return ARAUTO;
-  return BOSS_ROSTER[hash322(`${gid}:${k}:boss`) % BOSS_ROSTER.length];
+  if (level >= ARAUTO_NIVEL_MIN && (level === NIVEL_MAX || hash323(`${gid}:${k}:arauto`) % 4 === 0)) return ARAUTO;
+  return BOSS_ROSTER[hash323(`${gid}:${k}:boss`) % BOSS_ROSTER.length];
 }
 __name(bossDoMisterio, "bossDoMisterio");
 var maisDias = /* @__PURE__ */ __name((dia, n) => diaDeNum(numDia(dia) + n), "maisDias");
@@ -8720,7 +8752,7 @@ function seededRng(seed) {
   };
 }
 __name(seededRng, "seededRng");
-var jogoDaTrilha = /* @__PURE__ */ __name((save, dia, k) => TRAIL_GAMES[hash322(`${save}:${dia}:${k}`) % TRAIL_GAMES.length], "jogoDaTrilha");
+var jogoDaTrilha = /* @__PURE__ */ __name((save, dia, k) => TRAIL_GAMES[hash323(`${save}:${dia}:${k}`) % TRAIL_GAMES.length], "jogoDaTrilha");
 function vizinhos(cell, size) {
   const r = Math.floor(cell / size), c = cell % size, out = [];
   if (r > 0) out.push(cell - size);
@@ -14917,7 +14949,7 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-GSUUwd/functionsRoutes-0.3013034272476973.mjs
+// ../.wrangler/tmp/pages-snp1yZ/functionsRoutes-0.5505365437287524.mjs
 var routes = [
   {
     routePath: "/api/account",
