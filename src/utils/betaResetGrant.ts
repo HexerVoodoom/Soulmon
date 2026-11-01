@@ -16,7 +16,7 @@
 export const RESET_POINTS_EMOJI = '🔄';
 export const BETA_RESET_GRANT = 'resetBHP_beta_2026_10';
 /** Nascidos (dia do jogador) a partir desta data são jogadores novos — não recebem. */
-export const BETA_RESET_CUTOFF = new Date('2026-11-01T00:00:00');
+export const BETA_RESET_CUTOFF = new Date('2026-11-02T00:00:00');
 
 export type Grants = Record<string, true>;
 
