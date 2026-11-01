@@ -24,6 +24,12 @@ import type { RosterEntry } from './enemyRoster';
 import type { DodgeGrade, RingGrade } from './energia';
 
 export const GROVE_RAID_FOES = 3;
+/**
+ * RITMO DA LUTA (01/11/2026, dono: "a luta é longa, encurte em um terço"): todo dano, dos dois lados, vale `GROVE_RAID_PACE`×.
+ * Como os DOIS lados batem mais forte, quem ganhava continua ganhando (taxa de vitória igual) e a luta cai para ~2/3 do tempo
+ * (de ~54 s para ~36 s medidos em `groveRaid.test.ts`). Não mexe na vida nem nos golpes: só no tempo até alguém cair.
+ */
+export const GROVE_RAID_PACE = 1.5;
 /** Os slots fáceis da escada (os três mais fracos do andar 1). */
 const SLOTS = [0, 1, 2] as const;
 
@@ -50,7 +56,11 @@ export interface GroveRaidRound {
 export function groveRaidRound(p: DungeonPlayerCfg, seed: number): GroveRaidRound {
   const L = p.combatant.level;
   const f = dungeonFight(p, dungeonFoe(L, SLOTS[0], 1), seed, true);
-  return { player: f.player, foes: SLOTS.map(s => dungeonFoe(L, s, 1)), seed: f.seed, hitScale: f.hitScale, castScale: f.castScale };
+  return {
+    player: f.player, foes: SLOTS.map(s => dungeonFoe(L, s, 1)), seed: f.seed,
+    hitScale: (who, n) => f.hitScale(who, n) * GROVE_RAID_PACE,
+    castScale: i => f.castScale(i) * GROVE_RAID_PACE,
+  };
 }
 
 /** Joga a luta inteira sem cena (testes e paridade): `ring`/`dodge` respondem cada especial. */

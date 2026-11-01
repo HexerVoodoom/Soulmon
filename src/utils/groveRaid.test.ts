@@ -1,6 +1,6 @@
 /** §204: a luta do Bosque — formação, determinismo, desfecho, elementos e arte com placeholder. */
 import { describe, expect, it } from 'vitest';
-import { GROVE_RAID_FOES, groveRaidLineup, groveRaidOutcome, groveRaidRound, simulateGroveRaid } from './groveRaid';
+import { GROVE_RAID_PACE, GROVE_RAID_FOES, groveRaidLineup, groveRaidOutcome, groveRaidRound, simulateGroveRaid } from './groveRaid';
 import { GROVE_RAIDERS, BARRAGE_ROSTER, TEMA_INIMIGOS } from './temaInimigos';
 import { ENEMY_ROSTER } from './enemyRoster';
 import { SPRITE_ELEMENT } from './spriteElement';
@@ -33,6 +33,16 @@ describe('groveRaid', () => {
       let w = 0;
       for (let s = 0; s < 60; s++) if (simulateGroveRaid(cfg(L), s * 31 + 1).winner === 'player') w++;
       expect(w / 60, `level ${L}`).toBeGreaterThan(0.6);
+    }
+  });
+
+  it('luta ENCURTADA em ~1/3 (01/11/2026): dura ~2/3 do ritmo antigo e a taxa de vitória não cai', () => {
+    expect(GROVE_RAID_PACE).toBe(1.5);
+    for (const L of [1, 10, 25]) {
+      let w = 0, t = 0;
+      for (let s = 0; s < 40; s++) { const r = simulateGroveRaid(cfg(L), s * 31 + 1); if (r.winner === 'player') w++; t += r.t; }
+      expect(w / 40, `level ${L}`).toBeGreaterThanOrEqual(0.95);
+      expect(t / 40, `level ${L}`).toBeLessThan(42); // antes do ritmo: ~54 s
     }
   });
 

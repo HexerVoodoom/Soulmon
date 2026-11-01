@@ -631,7 +631,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
           <div className="sm2-stats-card" data-guild-card="plantio">
             <SalaPlantio
               saveId={saveId} language={language} t={t} tz={tz.current} reducedMotion={reducedMotion}
-              onReward={cla.onReward} onAnnounce={setAnuncio}
+              onReward={cla.onReward} onAnnounce={setAnuncio} mySprite={meuSprite} guild={g}
               unico={{
                 onEntrar: () => setPanorama(true), metaCumprida: metaDoDiaCumprida, goal: fioGoal, pendentes: pendentesDoDia,
                 cena: arvore => <GroveCena language={language} guild={g} mySprite={meuSprite} reducedMotion={reducedMotion}>{arvore}</GroveCena>,
