@@ -4,6 +4,8 @@
  * esta tela só mostra. `onResult(won)` é chamado UMA vez, depois de "Continuar" (sair = derrota, que não custa nada).
  * Nasce MUDA (R-NOVA): nenhum som novo além dos que a `BattleStage` já toca.
  */
+import { useHexOverrides } from '../../hooks/useHexOverrides';
+import { hexFamily, hexIdentity } from '../../utils/hexsmith';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { BattleStage, BATTLE_LAYER_STYLE } from '../games/BattleStage';
 import { TorcidaLayer } from '../games/TorcidaKit';
@@ -50,8 +52,9 @@ export interface GroveRaidFightProps {
 export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evolutionStage = 'rookie', demoCharacterId, mySprite, niveis, onResult }: GroveRaidFightProps) {
   const lang = isPt ? 'pt' : 'en';
   const par = stageSkillsFor(skills, evolutionStage);
-  const ident = useMemo(() => fighterIdentity(par, petElement), [par, petElement]);
-  const family = dungeonFamily(par?.especial);
+  const hx = useHexOverrides(); // 🔣 Hexsmith: o que os itens equipados reescrevem
+  const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
+  const family = hexFamily(dungeonFamily(par?.especial), hx);
   const lineup = useMemo(() => groveRaidLineup(seed), [seed]);
   const cfg = useMemo(() => ({ combatant, family }), [combatant, family]);
   const proto = useMemo(() => groveRaidRound(cfg, seed), [cfg, seed]);

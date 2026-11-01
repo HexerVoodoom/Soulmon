@@ -50,6 +50,7 @@ import { sanitizeCelebratedLevel } from '../utils/levelUp';
 import { sanitizeTalentPicks } from '../utils/talents';
 import { sanitizeEquipment, type EquipmentState } from '../utils/equipment';
 import { sanitizeForge, type ForgeState } from '../utils/forge';
+import { sanitizeHexsmith, type HexsmithState } from '../utils/hexsmith';
 import { sanitizeBitsOrigin, type BitsOrigin } from '../utils/bitsOrigin';
 import { ACHIEVEMENT_IDS, gatilhoAntigoTasks100, sanitizeConquistasPagas, type AchievementId } from '../utils/achievements';
 import {
@@ -658,6 +659,9 @@ export interface GameState {
   /** 🔨 O SOULSMITH (07/10/2026, `utils/forge.ts`): UM objeto — o nível 1..5 de cada peça e as escolhas A/B dos níveis 2..N. Peça possuída sem
    *  registro vale o nível equivalente do tier (compra antiga, sem confisco). O bônus é derivado; materiais ficam em `buildingQuests`. */
   forge?: ForgeState;
+  /** 🔣 A HEXSMITH (01/11/2026, `utils/hexsmith.ts`): itens que reescrevem elemento/especial/alcance do Soulmon. Posse só cresce (nunca
+   *  se perde nem se vende); UM equipado por slot. Lixo sai item a item na carga e no servidor (`_hexsmith.js`). Leitura: `?? EMPTY_HEXSMITH`. */
+  hexsmith?: HexsmithState;
   /** 💠 PROCEDÊNCIA dos Bits (PR8, `utils/bitsOrigin.ts`): quanto do saldo veio de Crédito e o câmbio do dia (teto de +25%).
    *  Sem o campo todo Bit conta como ganho. */
   bitsOrigin?: BitsOrigin;
@@ -1605,6 +1609,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // Equipamento e procedência dos Bits (PR8): lixo é descartado peça a peça (`utils/equipment.ts`, `utils/bitsOrigin.ts`).
         equipment: sanitizeEquipment(loadedState.equipment),
         forge: sanitizeForge(loadedState.forge),
+        hexsmith: sanitizeHexsmith(loadedState.hexsmith),
         bitsOrigin: sanitizeBitsOrigin(loadedState.bitsOrigin),
         totalPerfectDays: num(loadedState.totalPerfectDays, 0),
         // #41/#60: save anterior à decisão não tem o campo, e o vitalício antigo

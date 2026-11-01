@@ -103,6 +103,8 @@ export const FORJA_LOT_ART = {
   caderno: resolveArt('lote-forja-caderno', loteCaderno),
   refugio: resolveArt('lote-forja-refugio', loteRefugio),
   ferreiro: resolveArt('lote-forja-ferreiro', loteFerreiro),
+  // 01/11/2026: a Hexsmith. Arte própria `lote-forja-hexsmith.png` já instalada (ChatGPT); provisória de reserva = a oficina de lava do Soulsmith.
+  hexsmith: resolveArt('lote-forja-hexsmith', loteFerreiro),
 } as const;
 
 // 🏛️ Os três prédios de Jogos (30/09/2026). O Salão herda as duas artes que já

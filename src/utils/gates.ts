@@ -101,7 +101,7 @@ export function gateLine(feature: GateFeature, bondLevel: unknown, language: str
 
 /** Os prédios (lotes) das sete áreas do Mapa: `<área>.<lote>`. Os ids são estáveis (o save e os testes os citam); `laboratorio.pet` e `laboratorio.amigos` são prédios SEM lote próprio desde #187 (moram dentro do Perfil e do Salão do Clã). */
 export type BuildingId =
-  | 'mercado.itens' | 'mercado.conquistas' | 'mercado.decoracao' | 'mercado.background' | 'forja.ferreiro'
+  | 'mercado.itens' | 'mercado.conquistas' | 'mercado.decoracao' | 'mercado.background' | 'forja.ferreiro' | 'forja.hexsmith'
   | 'jogos.salao' | 'exploracao.dungeon' | 'jogos.mente'
   | 'arena.duelo' | 'arena.torneio' | 'arena.guerra'
   | 'exploracao.passeio' | 'exploracao.fenda' | 'forja.caderno' | 'forja.oficina' | 'forja.refugio'
@@ -153,6 +153,7 @@ export const BUILDING_GATES: Readonly<Record<BuildingId, GateRule>> = {
   // O Soulsmith (07/10/2026): equipamentos. Vínculo 2 — o mesmo da Decoração: o primeiro Vínculo é a Loja de Itens e o resto
   // da vitrine abre com o uso (equipamento só se compra com Bits GANHOS, e o teto de 5% é o mesmo para quem entra mais tarde).
   'forja.ferreiro': { minBond: 2 },
+  'forja.hexsmith': { minBond: 2 }, // 01/11/2026: a Hexsmith; mesmo Vínculo do Soulsmith (default — o dono ajusta aqui)
   'jogos.salao': { minBond: 1 },
   'exploracao.dungeon': { minBond: 3 }, // beta3 M3: jogo rogue novo; conservador, mesmo portão do Ateliê da Mente
   'forja.refugio': { minBond: 1 }, // beta3 M3: o Refúgio mudou de Jogos para a Exploração (sempre livre)

@@ -19,7 +19,7 @@ describe('tabela prédio → material', () => {
     expect(QUEST_BUILDINGS).not.toContain('forja.ferreiro'); // #187: o Soulsmith saiu do Mercado para a Forja, e segue sem missão/material
     expect(QUEST_BUILDINGS).not.toContain('laboratorio.perfil');
     expect(QUEST_BUILDINGS).not.toContain('arena.guerra'); // a guerra rende na casa do clã, sem material
-    expect(QUEST_BUILDINGS.length).toBe(Object.keys(BUILDING_GATES).filter(id => !id.startsWith('mercado.') && id !== 'forja.ferreiro' && id !== 'laboratorio.perfil' && id !== 'arena.guerra' && id !== 'hall.grove' && id !== 'exploracao.preparar' && id !== 'exploracao.dungeon').length);
+    expect(QUEST_BUILDINGS.length).toBe(Object.keys(BUILDING_GATES).filter(id => !id.startsWith('mercado.') && id !== 'forja.ferreiro' && id !== 'forja.hexsmith' && id !== 'laboratorio.perfil' && id !== 'arena.guerra' && id !== 'hall.grove' && id !== 'exploracao.preparar' && id !== 'exploracao.dungeon').length);
     expect(QUEST_BUILDINGS).not.toContain('exploracao.preparar'); // beta3 F1: rende a chave da Oficina, sem material
     expect(QUEST_BUILDINGS).not.toContain('exploracao.dungeon'); // beta3 M3: placeholder do Calabouço, sem material
     expect(QUEST_BUILDINGS).not.toContain('hall.grove'); // D-50: o bosque rende no clã, sem material

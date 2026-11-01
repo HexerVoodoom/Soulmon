@@ -193,6 +193,12 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Três caminhos a cada passo. Escolha um e veja até onde vocês chegam hoje.',
     lineEn: 'Three paths at every step. Pick one and see how far you two get today.',
   },
+  // 🔣 01/11/2026: a Hexsmith — reescreve o código hex do Soulmon com poções de elemento. Convite, sem preço e sem prometer efeito.
+  'forja:hexsmith': {
+    namePt: 'Hexsmith', nameEn: 'Hexsmith',
+    linePt: 'Traga suas poções de elemento. Eu reescrevo o código hex do seu Soulmon, linha por linha, sem pressa.',
+    lineEn: "Bring your element potions. I rewrite your Soulmon's hex code, line by line, no rush.",
+  },
   'forja:refugio': {
     namePt: 'Yuzu, a guardiã da fonte', nameEn: 'Yuzu, the spring warden', // 29/10/2026: novo NPC (guardiã de fonte quente; era Marim, o mensageiro da maré)
     linePt: 'A água está morna. Entre quando quiser, sem pressa.',

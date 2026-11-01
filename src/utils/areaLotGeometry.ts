@@ -27,6 +27,7 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'mercado:conquistas': [0.253, 0.027, 0.75, 0.973],
   // O Soulsmith (07/10/2026): a oficina de lava do domínio Fogo.
   'forja:ferreiro': [0.131, 0, 0.871, 0.742],
+  'forja:hexsmith': [0.111, 0.037, 0.889, 0.965], // 01/11/2026: `lote-forja-hexsmith.png` (ChatGPT, oficina de cristal com poções de elemento), alfa > 20
   // O Restaurante em obra (14/10/2026): andaimes e tijolos, alfa > 20.
   // O Cambista (30/10/2026): o bazar do deserto (`lote-deserto-loja`, escolha do dono), alfa > 20.
   'mercado:cambista': [0.097, 0.067, 0.897, 0.937],
@@ -67,6 +68,7 @@ export const LOT_HIT_INSET: Record<string, LotBounds> = {
   'hall:guilda': [0, 0.25, 0, 0], // 29/10/2026: Salão ocupa a plataforma grande; a torre não rouba o toque do Grove
   'laboratorio:biblioteca': [0, 0.1, 0.18, 0.15], // 29/10/2026: Biblioteca ocupa a plataforma; as bordas não roubam o toque do Vínculo nem do Centro
   'laboratorio:evolucao': [0, 0.25, 0, 0],
+  'forja:hexsmith': [0, 0, 0, 0.25], // 01/11/2026: a base da oficina de cristal não rouba o toque do Refúgio logo abaixo
   'forja:caderno': [0, 0.25, 0, 0], // 29/10/2026: Caderno logo abaixo do Soulsmith; a cúpula não rouba o toque dele // 29/10/2026: Biblioteca maior logo acima; o topo do Centro não rouba o toque dela
 };
 

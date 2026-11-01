@@ -16,7 +16,7 @@ describe('lotes novos (29/09/2026)', () => {
     expect(hallLots('pt-BR').map(l => l.id)).toEqual(['feira', 'grove', 'guilda']); // D-50 (19/10/2026): Biblioteca e Amigos saíram do Hall
     expect(laboratorioLots('en-US').map(l => l.id)).toEqual(['evolucao', 'stats', 'perfil', 'biblioteca']); // beta-2 (11): o Perfil do Soulmon; #187: o Arquivo e o Círculo de Amigos viraram seções
     expect(exploracaoLots('pt-BR').map(l => l.id)).toEqual(['passeio', 'fenda', 'dungeon']); // #187: a Exploração recebe as masmorras e mantém o Passeio
-    expect(forjaLots('pt-BR').map(l => l.id).sort()).toEqual(['caderno', 'ferreiro', 'oficina', 'refugio']); // #187: a Forja
+    expect(forjaLots('pt-BR').map(l => l.id).sort()).toEqual(['caderno', 'ferreiro', 'hexsmith', 'oficina', 'refugio']); // #187: a Forja
     expect(jogosLots('pt-BR').map(l => l.id)).toEqual(['salao', 'mente']); // o Calabouço saiu de Jogos
   });
 

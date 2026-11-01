@@ -48,6 +48,12 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     what: { en: 'Pieces arrive rough here and take shape with the materials you bring.', pt: 'As peças chegam cruas e ganham forma com os materiais que você traz.' },
     invite: { en: 'Choose the side you want to strengthen, no rush.', pt: 'Escolha o lado que quer reforçar, sem pressa.' },
   },
+  'forja.hexsmith': {
+    place: { en: 'Hexsmith', pt: 'Hexsmith' },
+    hello: { en: "I'm {name}. I read the hex code that runs through every Soulmon.", pt: 'Eu sou {name}. Eu leio o código hex que corre em cada Soulmon.' },
+    what: { en: 'With element potions, I rewrite a few lines of it, element by element.', pt: 'Com poções de elemento, eu reescrevo algumas linhas dele, elemento por elemento.' },
+    invite: { en: 'Bring a potion whenever you like, no rush.', pt: 'Traga uma poção quando quiser, sem pressa.' },
+  },
   'jogos.salao': {
     place: { en: 'Game Hall', pt: 'Salão de Jogos' },
     hello: { en: "I'm {name}. This is my hall.", pt: 'Eu sou {name}. Este é o meu salão.' },

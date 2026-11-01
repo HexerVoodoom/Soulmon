@@ -8978,3 +8978,6 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
   right: -6px;
   z-index: 1;
 }
+
+/* Hexsmith (01/11/2026): foco visível nos encaixes e no catálogo (os botões usam all:unset). */
+[data-hex-slot]:focus-visible,[data-hex-item]:focus-visible{outline:2px solid var(--sm2-primary-ink);outline-offset:2px;}
