@@ -25,6 +25,12 @@ export function passarApresentacaoDaAmbra(): void {
   if (avanca) fireEvent.click(avanca);
 }
 
+/** Só o nickname (1ª pergunta, ANTES da Ambra): digita e segue — a apresentação fica na tela. */
+export function informarNickname(nome = 'Corvo Azul', pt = false): void {
+  fireEvent.change(screen.getByLabelText(pt ? 'Seu nome' : 'Your name'), { target: { value: nome } });
+  clicarContinuar(pt);
+}
+
 /** O passo do nome: passa pela Ambra, digita e segue. Para na 1ª pergunta do ritual. */
 export function responderNome(nome = 'Corvo Azul', pt = false): void {
   const campo = screen.getByLabelText(pt ? 'Seu nome' : 'Your name');

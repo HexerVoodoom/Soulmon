@@ -461,7 +461,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   // não se avança ao onboarding. Reaproveita o id -9 (era a tela do Google,
   // que saiu): o código de telemetria desse degrau continua o mesmo.
   const TERMS_STEP = -9;
-  // B1 (checklist do dono, 01/10/2026): o NOME DO JOGADOR é a PRIMEIRA
+  // B1 (checklist do dono, 01/10/2026; 01/11/2026: agora ANTES até da Ambra/ancião): o NOME DO JOGADOR é a PRIMEIRA
   // pergunta depois da conta — antes de metas, escolha e ritual. Era o
   // "apelido" do cadastro final; o valor é o mesmo (`userName`).
   const NAME_STEP = -10;
@@ -683,6 +683,8 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
   const revealAbertoEmRef = useRef(0);
   // O NICKNAME é a 1ª pergunta (antes até da apresentação da Ambra). Quem já tem um (rascunho do portão ou o `userName`
   // local de um save antigo) chega com o campo preenchido: o passo conta como respondido e é pulado na retomada.
+  /** A apresentação passa UMA vez: voltar ao nome e seguir de novo não a repete. */
+  const ambraVista = useRef(false);
   const [nickname, setNickname] = useState(() => {
     const doRascunho = gate?.nickname ?? '';
     if (doRascunho.trim().length >= 2) return doRascunho;
@@ -1122,7 +1124,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
     if (step === IDENTITY_STEP || step === TERMS_STEP) return;
     if (!canAdvance()) return;
     // B1 + 01/10/2026: do nome vai-se direto às perguntas do ritual.
-    if (step === NAME_STEP) { setStep(gate?.step === undefined ? AMBRA_INTRO : QUIZ_START); return; }
+    if (step === NAME_STEP) { setStep(gate?.step === undefined && !ambraVista.current ? AMBRA_INTRO : QUIZ_START); return; }
     if (step === GOAL_STEP) { setStep(STRUGGLE_STEP); return; }
     if (step === STRUGGLE_STEP) { setStep(STRENGTH_STEP); return; }
     if (step === STRENGTH_STEP) { setStarterOff([]); setStep(STARTER_STEP); return; }
@@ -1868,7 +1870,7 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
             lines={veladoLigado()
               ? ROTEIRO.c0.map(f => ({ speaker: tVelado(ANCIAO.nome, lang), art: urlDoAsset('velado-anciao') ?? FUNCTION_NPC_ART.oraculo, text: tVelado(f, lang) }) satisfies NpcSequenceLine)
               : [{ speaker: 'Ambra', art: FUNCTION_NPC_ART.onboarding, text: AMBRA_FALAS.intro[isPt ? 'pt' : 'en'] } satisfies NpcSequenceLine]}
-            onFinish={() => setStep(QUIZ_START)}
+            onFinish={() => { ambraVista.current = true; setStep(QUIZ_START); }}
           />
         )}
 
