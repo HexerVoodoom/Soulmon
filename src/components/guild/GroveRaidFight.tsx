@@ -23,6 +23,19 @@ import type { GroupResult } from '../../utils/combate/group';
 import { groveRaidLineup, groveRaidRound } from '../../utils/groveRaid';
 import { temaSpriteOf } from '../../utils/temaInimigosArt';
 import { PANORAMA_SRC } from '../../assets/bosque';
+import { sceneCss } from '../../utils/backgroundPortrait';
+import { PET_BACKGROUNDS } from '../../utils/backgrounds';
+import { GROVE_STAGES } from '../../utils/guildRules';
+
+/**
+ * O fundo da luta: o cenário do Bosque do ESTÁGIO atual do clã (`bg-guild-<estágio>`, o mesmo do Ritual/Praça); sem estágio,
+ * o do nível 1 (clareira). Leitura do dono (01/11/2026) de "o mapa em que aparecem as plantas plantadas" — a confirmar.
+ * Sem arte do estágio, cai no panorama (como CSS de verdade: `url(...)`, não a URL crua).
+ */
+export function groveRaidScene(stage?: string | null): string {
+  const id = `bg-guild-${(GROVE_STAGES as readonly string[]).includes(stage ?? '') ? stage : GROVE_STAGES[0]}`;
+  return (PET_BACKGROUNDS[id] ? sceneCss(id) : undefined) ?? `url(${PANORAMA_SRC})`;
+}
 
 export interface GroveRaidFightProps {
   isPt: boolean;
@@ -32,10 +45,14 @@ export interface GroveRaidFightProps {
   petElement?: string;
   evolutionStage?: string;
   demoCharacterId?: string;
+  /** O sprite ATUAL do jogador (a forma evoluída escolhida — a mesma fonte da Home e do Calabouço); sem ele, o do estágio. */
+  mySprite?: string | null;
+  /** O estágio do Bosque do clã (`guild.bosque.stage`); decide o cenário. */
+  bosqueStage?: string | null;
   onResult: (won: boolean) => void;
 }
 
-export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evolutionStage = 'rookie', demoCharacterId, onResult }: GroveRaidFightProps) {
+export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evolutionStage = 'rookie', demoCharacterId, mySprite, bosqueStage, onResult }: GroveRaidFightProps) {
   const lang = isPt ? 'pt' : 'en';
   const par = stageSkillsFor(skills, evolutionStage);
   const ident = useMemo(() => fighterIdentity(par, petElement), [par, petElement]);
@@ -43,7 +60,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
   const lineup = useMemo(() => groveRaidLineup(seed), [seed]);
   const cfg = useMemo(() => ({ combatant, family }), [combatant, family]);
   const proto = useMemo(() => groveRaidRound(cfg, seed), [cfg, seed]);
-  const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
+  const petSprite = mySprite || getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const petScale = usePetScale(evolutionStage, petSprite);
   const hpMax = hpPoints(dungeonPlayerSide(cfg).combatant.hp);
   const foeMax = proto.foes.map(f => hpPoints(f.combatant.hp));
@@ -87,7 +104,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
         specialLabel={specialLabel(isPt, par?.especial)}
         foeSpecialLabel={f => { const e = lineup.find(x => fxElementId(x.element) === f.element); return e ? (isPt ? e.especial.pt : e.especial.en) : f.name; }}
         isPt={isPt}
-        scene={PANORAMA_SRC}
+        scene={groveRaidScene(bosqueStage)}
         me={{
           key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, pronto ? battle.hp : 1) * hpMax), maxHp: hpMax,
           element: fxElementId(ident.basico.elemento), energy: (pronto ? battle.petEnergy : 0) / ENERGY_TRIGGER, status: pronto ? battle.status.me : undefined,
