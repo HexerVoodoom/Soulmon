@@ -68,14 +68,15 @@ describe('action=strays', () => {
     for (const proibido of ['Fulano', 'Bichinho', 'pidA', A, B, 'friends', 'lastLoginAt', 'atacante']) expect(txt).not.toContain(proibido);
     expect(list[0].sid).toMatch(/^[a-f0-9]{24}$/);
   });
-  it('o dono volta (GET do save toca lastLoginAt) → sai do pool na hora', async () => {
+  it('emenda: o dono volta (GET do save toca lastLoginAt) → fica MARCADO e continua no pool (logar não recupera)', async () => {
     const velho = Date.now() - 200 * DAY;
     const { env, store } = mkEnv({ [D]: { pid: 'pidD'.padEnd(24, '0'), stage: 'champion', updatedAt: velho, lastLoginAt: velho } });
     expect((await (await strays(env)).json()).strays).toHaveLength(1);
     expect(await touchLastLogin(env, D)).toBe(true);
     expect(JSON.parse(store.get(`profile:${D}`)).lastLoginAt).toBeGreaterThan(velho);
     resetRateLimits();
-    expect((await (await strays(env)).json()).strays).toEqual([]);
+    expect((await (await strays(env)).json()).strays).toHaveLength(1);
+    expect(JSON.parse(store.get(`profile:${D}`)).strayedAt).toBeGreaterThan(0);
   });
 });
 

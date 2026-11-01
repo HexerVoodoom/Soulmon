@@ -204,6 +204,7 @@ import { applyElementsDefeated } from './utils/elementDex';
 import { ackLibrary, libraryNewCount } from './utils/libraryNew';
 import { recordStrayPlayerSeen, type StrayPlayer } from './utils/strayPlayers';
 import { setStrayPlayerSeenHandler } from './utils/strayPlayerEncounter';
+import { StrayRecoveryNotice } from './components/home/StrayRecoveryNotice';
 import { useLibraryNewNotice } from './components/LibraryNewBadge';
 import { applyEssences, type EssenceDrop } from './utils/essences';
 import { NIGHTMARE_ELEMENT } from './utils/nightmareElement';
@@ -8051,6 +8052,8 @@ export default function App() {
 
           {pane === 'main' && (
             <div data-home-col style={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
+              {/* §213 emenda: o Soulmon de quem voltou depois de 90+ dias está desgarrado até 2 dias completos seguidos. */}
+              <StrayRecoveryNotice saveId={saveId} language={language} disabled={demo} refreshKey={dailyDone} />
               {/* HUD do topo: SÓ a marca (o `<h1>` da Home) + o selo do dia.
                   A leitura de HP/energia mora no VIDRO (`VisorBar`, em pixel,
                   no `CompanionHUD`) — e só lá. A barra DOM que este componente
