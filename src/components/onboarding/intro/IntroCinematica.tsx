@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { entrarNaSuperficie } from '../../../utils/musica';
+import { musicaLigada } from '../../../utils/audioBus';
 import type { Language } from '../../../utils/i18n';
 import { readFlag, writeFlag } from '../../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../../utils/storageKeys';
@@ -20,6 +22,16 @@ interface Props { language: Language; onDone: () => void; videoSrc?: string }
 export function IntroCinematica({ language, onDone, videoSrc = VIDEO_SRC }: Props) {
   const isPt = language === 'pt-BR';
   const [i, setI] = useState(0);
+  /** Trilha 'A Parede': NASCE DESLIGADA (S2) e só soa por gesto (D11): o botão é o gesto. Respeita o interruptor global de música. */
+  const [som, setSom] = useState(false);
+  const sairDoSom = useRef<(() => void) | null>(null);
+  const globalLigado = musicaLigada();
+  const alternarSom = () => {
+    if (sairDoSom.current) { sairDoSom.current(); sairDoSom.current = null; setSom(false); return; }
+    sairDoSom.current = entrarNaSuperficie('intro');
+    setSom(true);
+  };
+  useEffect(() => () => { sairDoSom.current?.(); sairDoSom.current = null; }, []);
   const fim = () => { marcarIntroVista(); onDone(); };
 
   useEffect(() => {
@@ -43,6 +55,13 @@ export function IntroCinematica({ language, onDone, videoSrc = VIDEO_SRC }: Prop
       <p data-testid="intro-legenda" data-plano={i + 1} aria-live="polite" style={{ position: 'relative', margin: 0, padding: '0 24px 96px', textAlign: 'center', fontSize: 18, textShadow: '0 1px 4px #000' }}>
         {isPt ? plano.pt : plano.en}
       </p>
+      {globalLigado && (
+        <button type="button" data-testid="intro-som" aria-pressed={som} onClick={alternarSom}
+          aria-label={som ? (isPt ? 'Desligar o som' : 'Turn sound off') : (isPt ? 'Ligar o som' : 'Turn sound on')}
+          style={{ position: 'absolute', top: 16, left: 16, background: 'transparent', color: '#fff', border: '1px solid #fff8', borderRadius: 8, padding: '8px 14px', cursor: 'pointer', opacity: 0.8 }}>
+          {som ? '♪' : '♪̸'}<span style={{ marginLeft: 6 }}>{som ? (isPt ? 'Som' : 'Sound') : (isPt ? 'Som desligado' : 'Sound off')}</span>
+        </button>
+      )}
       <button type="button" data-testid="intro-pular" onClick={fim}
         style={{ position: 'absolute', top: 16, right: 16, background: 'transparent', color: '#fff', border: '1px solid #fff8', borderRadius: 8, padding: '8px 14px', cursor: 'pointer' }}>
         {isPt ? 'Pular' : 'Skip'}

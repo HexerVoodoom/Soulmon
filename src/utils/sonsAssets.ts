@@ -481,6 +481,29 @@ export const MUSICAS_DE_COMBATE = {
       },
     ],
   },
-} as const satisfies Record<'combate' | 'pesadelo' | 'masmorra' | 'evolucao' | 'meditacao', ManifestoDeMusica>;
+  parede: {
+    nome: 'A Parede',
+    duracaoS: 69.48,
+    /** A intro dura 72,9 s e a faixa 69,5 s (fade-out de 5 s): não chega a repetir; se repetir, volta com respiro. */
+    pausaEntreVoltasS: 8,
+    fadeInS: 2,
+    origem: 'suno/fornecida-pelo-dono',
+    geradoEm: '2026-11-01',
+    formatos: [
+      {
+        url: '/sounds/tema-parede.webm',
+        mime: 'audio/webm; codecs="opus"',
+        sha256: '1b8094b69d383e14b07fac9bc504bac3db2237b110a2b0736e188506c1e88fa5',
+        bytes: 274563,
+      },
+      {
+        url: '/sounds/tema-parede.m4a',
+        mime: 'audio/mp4; codecs="mp4a.40.2"',
+        sha256: 'bbcf079f9d8ff287fdf25e52786bba95037084b0e1ad7d510e1aa7a372cb7d36',
+        bytes: 296035,
+      },
+    ],
+  },
+} as const satisfies Record<'combate' | 'pesadelo' | 'masmorra' | 'evolucao' | 'meditacao' | 'parede', ManifestoDeMusica>;
 
 export type MusicaDeCombate = keyof typeof MUSICAS_DE_COMBATE;
