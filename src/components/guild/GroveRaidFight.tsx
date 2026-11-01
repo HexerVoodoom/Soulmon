@@ -22,7 +22,15 @@ import type { Combatant } from '../../utils/combate/curve';
 import type { GroupResult } from '../../utils/combate/group';
 import { groveRaidLineup, groveRaidRound } from '../../utils/groveRaid';
 import { temaSpriteOf } from '../../utils/temaInimigosArt';
-import { PANORAMA_SRC } from '../../assets/bosque';
+import { PANORAMA_SRC, ARVORE_SRC } from '../../assets/bosque';
+import { ESTACOES_BOSQUE, type EstacaoBosque } from '../../utils/bosqueArvores';
+
+/**
+ * O fundo da luta: o PANORAMA do Plantio (dono, 01/11/2026), o mesmo cenário do `PlantioVisor`/`GroveVisor`/`GroveCena` onde
+ * aparecem as plantas plantadas, com o MESMO enquadramento do visor do Plantio (o terreno da clareira). CSS `background`
+ * de verdade (`url(...)`), nunca a URL crua.
+ */
+export const GROVE_RAID_SCENE = `url(${PANORAMA_SRC}) 40% 88% / auto 230% no-repeat #1d3a2a`;
 
 export interface GroveRaidFightProps {
   isPt: boolean;
@@ -32,10 +40,14 @@ export interface GroveRaidFightProps {
   petElement?: string;
   evolutionStage?: string;
   demoCharacterId?: string;
+  /** O sprite ATUAL do jogador (a forma evoluída escolhida — a mesma fonte da Home e do Calabouço); sem ele, o do estágio. */
+  mySprite?: string | null;
+  /** Nível (1..5) de cada planta do Bosque; 0/ausente = nada. Só VISUAL (atrás dos lutadores): não toca em regra, dano nem resultado. */
+  niveis?: Partial<Record<EstacaoBosque, number>>;
   onResult: (won: boolean) => void;
 }
 
-export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evolutionStage = 'rookie', demoCharacterId, onResult }: GroveRaidFightProps) {
+export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evolutionStage = 'rookie', demoCharacterId, mySprite, niveis, onResult }: GroveRaidFightProps) {
   const lang = isPt ? 'pt' : 'en';
   const par = stageSkillsFor(skills, evolutionStage);
   const ident = useMemo(() => fighterIdentity(par, petElement), [par, petElement]);
@@ -43,7 +55,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
   const lineup = useMemo(() => groveRaidLineup(seed), [seed]);
   const cfg = useMemo(() => ({ combatant, family }), [combatant, family]);
   const proto = useMemo(() => groveRaidRound(cfg, seed), [cfg, seed]);
-  const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
+  const petSprite = mySprite || getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const petScale = usePetScale(evolutionStage, petSprite);
   const hpMax = hpPoints(dungeonPlayerSide(cfg).combatant.hp);
   const foeMax = proto.foes.map(f => hpPoints(f.combatant.hp));
@@ -87,7 +99,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
         specialLabel={specialLabel(isPt, par?.especial)}
         foeSpecialLabel={f => { const e = lineup.find(x => fxElementId(x.element) === f.element); return e ? (isPt ? e.especial.pt : e.especial.en) : f.name; }}
         isPt={isPt}
-        scene={PANORAMA_SRC}
+        scene={GROVE_RAID_SCENE}
         me={{
           key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, pronto ? battle.hp : 1) * hpMax), maxHp: hpMax,
           element: fxElementId(ident.basico.elemento), energy: (pronto ? battle.petEnergy : 0) / ENERGY_TRIGGER, status: pronto ? battle.status.me : undefined,
@@ -120,6 +132,14 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
         }}
         onPauseChange={setPaused}
       >
+        {ESTACOES_BOSQUE.some(e => (niveis?.[e] ?? 0) > 0) && (
+          <div aria-hidden="true" data-grove-raid-plantas style={{ position: 'absolute', left: 0, right: 0, bottom: '30%', height: '26%', zIndex: 1, pointerEvents: 'none', display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end' }}>
+            {ESTACOES_BOSQUE.filter(e => (niveis?.[e] ?? 0) > 0).map(e => {
+              const nv = Math.min(5, niveis?.[e] ?? 0);
+              return <img key={e} src={ARVORE_SRC[e][nv]} alt="" draggable={false} data-grove-raid-planta={e} data-nivel={nv} style={{ height: '100%', width: 'auto', maxWidth: '24%', objectFit: 'contain', objectPosition: 'bottom' }} />;
+            })}
+          </div>
+        )}
         {end && (
           <div role="status" data-grove-raid-end={won ? 'won' : 'lost'} style={{ position: 'absolute', left: 16, right: 16, bottom: 24, zIndex: 6, pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 'var(--sm2-radius-md, 8px)', background: 'var(--sm2-viewport-bg)', border: '1px solid var(--sm2-viewport-ring)', color: 'var(--sm2-viewport-ink)', fontFamily: 'var(--sm2-font-text)', textAlign: 'center' }}>
             <p style={{ margin: 0, fontSize: 'var(--sm2-text-md, 16px)', fontWeight: 700 }}>

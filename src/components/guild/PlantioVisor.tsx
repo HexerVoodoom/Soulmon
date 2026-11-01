@@ -17,6 +17,9 @@ import { useGameStateOptional } from '../../contexts/GameStateContext';
 import type { SoulXPState } from '../../utils/soulXP';
 import { soulCombatant } from '../../utils/soulXP';
 import { groveRaidLineup } from '../../utils/groveRaid';
+import { playerDayIso } from '../../utils/playerDay';
+import { petElementOf } from '../../utils/starterElements';
+import type { FichaSkills } from '../../utils/soulProfile/ficha/stageSkillsFor';
 import { temaSpriteOf } from '../../utils/temaInimigosArt';
 /** §204: a luta do Bosque (BattleStage) só carrega quando o jogador entra nela. */
 const GroveRaidFight = lazy(() => import('./GroveRaidFight').then(m => ({ default: m.GroveRaidFight })));
@@ -26,7 +29,7 @@ import { ARVORE_SRC, PANORAMA_SRC } from '../../assets/bosque';
 import { LOT_NPC_ART } from '../../assets/soulmon/npcs';
 import { NpcSpeech } from '../nav/NpcSpeech';
 import { tendGate, tendLinhaAntes, tendFalaLilia } from '../../utils/groveTend';
-import { ESTACAO_DA_ESPECIE, nivelDoPlantio, type EstacaoBosque } from '../../utils/bosqueArvores';
+import { ESTACAO_DA_ESPECIE, ESTACOES_BOSQUE, nivelDaArvore, nivelDoPlantio, registrarPlantio, type BosqueArvores, type EstacaoBosque } from '../../utils/bosqueArvores';
 import { SPRITES } from './GroveVisor';
 import type { GuildKey } from '../../utils/guildCopy';
 import { Icon } from '../ui/Icon';
@@ -109,7 +112,7 @@ function ArvoreNaCena({ stage, species, planted, mature }: { stage: number; spec
   return <img src={ARVORE_SRC[e][nivel]} alt="" draggable={false} data-plantio-planta data-nivel={nivel} className="sm2-grove-cena-arvore" />;
 }
 
-export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, onAnnounce, unico }: Omit<ClaSalaProps, 'guild' | 'mySprite'> & { unico?: PlantioUnico }) {
+export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, onAnnounce, unico, mySprite, guild, arvores }: Omit<ClaSalaProps, 'guild' | 'mySprite'> & { unico?: PlantioUnico; mySprite?: string; /** As árvores do Bosque no save: a luta as desenha. */ arvores?: BosqueArvores; guild?: { bosque?: { stage?: string | null } } }) {
   const { view, setView, status, ocupado, erro, agir, recarregar } = useClaBuilding(() => getPlantio(saveId, tz));
 
   const fazer = async (acao: PlantioAction) => {
@@ -123,6 +126,12 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
   const gs = useGameStateOptional()?.gameState;
   const estado = useMemo<SoulXPState>(() => (gs ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP } : { evolutionStage: 'rookie' }), [gs]);
   const [defendendo, setDefendendo] = useState(false);
+  /** O nível de cada planta do Bosque (a mesma conta do `GroveFolha`); só visual na luta. */
+  const niveis = useMemo(() => {
+    if (!arvores && !view) return undefined;
+    const ef = view ? registrarPlantio(arvores ?? {}, view, playerDayIso(new Date(), tz)) : (arvores ?? {});
+    return Object.fromEntries(ESTACOES_BOSQUE.map(e => [e, nivelDaArvore(ef, e)])) as Record<EstacaoBosque, number>;
+  }, [arvores, view, tz]);
   // L5-D2: sem botao 'Plantar' — a terra da estacao e plantada sozinha (idempotente; 409 = outro membro ja plantou).
   const plantando = useRef(false);
   useEffect(() => {
@@ -210,7 +219,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
                   {v.wateredToday && <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-regado>{t('guild.plantio.regado')}</p>}
                   {v.protectedToday && <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-protegido>{t('guild.plantio.protegido')}</p>}
                   {defendendo && v.task === 'protect' ? (
-                    <Defesa t={t} isPt={language === 'pt-BR'} estado={estado} evolutionStage={gs?.evolutionStage} demoCharacterId={gs?.demoCharacterId} ocupado={ocupado} onVenceu={() => { setDefendendo(false); void fazer('claProteger'); }} />
+                    <Defesa t={t} isPt={language === 'pt-BR'} estado={estado} evolutionStage={gs?.evolutionStage} demoCharacterId={gs?.demoCharacterId} skills={gs?.soulmonSkills} petElement={gs ? petElementOf(gs) : undefined} mySprite={mySprite} niveis={niveis} ocupado={ocupado} onVenceu={() => { setDefendendo(false); void fazer('claProteger'); }} />
                   ) : (v.canDraw || v.task) && (
                     <>
                     {gate && !gate.liberado && <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-tend-antes>{tendLinhaAntes(language, gate.restam)}</p>}
@@ -252,7 +261,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
  * §204 (30/10/2026): proteger o jardim é uma LUTA DE VERDADE contra 3 pragas do Bosque (`groveRaid.ts`), na BattleStage com
  * torcida, anel e esquiva. Aqui fica a prévia (os 3 sprites) e o botão; vencer protege, perder não custa nada.
  */
-function Defesa({ t, isPt, estado, evolutionStage, demoCharacterId, ocupado, onVenceu }: { t: ClaT; isPt: boolean; estado: SoulXPState; evolutionStage?: string; demoCharacterId?: string; ocupado: boolean; onVenceu: () => void }) {
+function Defesa({ t, isPt, estado, evolutionStage, demoCharacterId, skills, petElement, mySprite, niveis, ocupado, onVenceu }: { t: ClaT; isPt: boolean; estado: SoulXPState; evolutionStage?: string; demoCharacterId?: string; skills?: FichaSkills; petElement?: string; mySprite?: string; niveis?: Record<EstacaoBosque, number>; ocupado: boolean; onVenceu: () => void }) {
   const [seed, setSeed] = useState(() => (Math.random() * 2 ** 31) | 0);
   const [perdeu, setPerdeu] = useState(false);
   const [lutando, setLutando] = useState(false);
@@ -277,7 +286,7 @@ function Defesa({ t, isPt, estado, evolutionStage, demoCharacterId, ocupado, onV
       </button>
       {lutando && (
         <Suspense fallback={null}>
-          <GroveRaidFight isPt={isPt} seed={seed} combatant={combatant} evolutionStage={evolutionStage} demoCharacterId={demoCharacterId} onResult={fim} />
+          <GroveRaidFight isPt={isPt} seed={seed} combatant={combatant} skills={skills} petElement={petElement} evolutionStage={evolutionStage} demoCharacterId={demoCharacterId} mySprite={mySprite} niveis={niveis} onResult={fim} />
         </Suspense>
       )}
     </div>
