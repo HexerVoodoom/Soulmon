@@ -478,7 +478,7 @@ export function CambistaSheet({ language, credits, onExchangeCredits, accountTie
               return (
                 <li key={id} data-essence-row={id} data-essence-locked={known ? undefined : ''} style={{ opacity: known ? 1 : 0.6, minHeight: 40, display: 'flex', alignItems: 'center', gap: 8, ...sm2Text }}>
                   {known ? <ElementIcon id={id} size={24} /> : <span aria-hidden="true" style={{ width: 24, textAlign: 'center' }}>?</span>}
-                  <span style={{ flex: 1, minWidth: 0 }} aria-label={known ? undefined : (isPt ? 'Elemento ainda não desbloqueado na Biblioteca' : 'Element not yet unlocked in the Library')}>
+                  <span style={{ flex: 1, minWidth: 0 }} aria-label={known ? undefined : (isPt ? 'Elemento ainda não desbloqueado no Drive' : 'Element not yet unlocked in the Drive')}>
                     {name}
                     {known && <span data-essence-owned className="sm2-num" style={{ ...sm2Hint, marginLeft: 6 }}>×{owned}</span>}
                   </span>

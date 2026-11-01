@@ -388,11 +388,11 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
         {!embedded && (
           <h1 className="sm2-lib-h2">
             <Icon name="groups" size={24} tone="muted" />
-            {isPt ? 'Biblioteca' : 'Library'}
+            {isPt ? 'Drive' : 'Drive'}
           </h1>
         )}
         {/* K6 (04/10/2026): a legenda da Biblioteca mora atrás do "?". */}
-        <InfoTip language={language} label={isPt ? 'Sobre a Biblioteca' : 'About the Library'} align="left" style={{ minHeight: 24, justifyContent: 'flex-start' }}>
+        <InfoTip language={language} label={isPt ? 'Sobre o Drive' : 'About the Drive'} align="left" style={{ minHeight: 24, justifyContent: 'flex-start' }}>
           {seenOnly
             ? (isPt ? 'Os Soulmons que já cruzaram o seu caminho.' : 'The Soulmons that have crossed your path.')
             : (isPt ? 'Veja outros jogadores e seus Soulmon.' : 'See other players and their Soulmon.')}
@@ -452,7 +452,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       {/* Abas SIS-04 (D-S3): a ativa em `primary-ink` + sublinhado 3px + glifo
           FILL 1; "onde estou" nunca é placa cheia. */}
       {hallTabs && (
-      <div role="tablist" aria-label={isPt ? 'Seções da Biblioteca' : 'Library sections'} className="sm2-kit-tabs" data-library-tabs>
+      <div role="tablist" aria-label={isPt ? 'Seções do Drive' : 'Drive sections'} className="sm2-kit-tabs" data-library-tabs>
         {LIB_TABS.map(item => {
           const active = libTab === item.key;
           return (

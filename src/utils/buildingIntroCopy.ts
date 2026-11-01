@@ -145,9 +145,9 @@ export const BUILDING_INTRO_COPY: Record<BuildingId, BuildingIntroText> = {
     invite: { en: 'It is just to look at.', pt: 'É só para olhar.' },
   },
   'laboratorio.biblioteca': {
-    place: { en: 'Library', pt: 'Biblioteca' },
-    hello: { en: "I'm {name}, your host in the Library.", pt: 'Eu sou {name}, a anfitriã da Biblioteca.' },
-    what: { en: 'Every Soulmon that has crossed your path has a page in the Library.', pt: 'Todo Soulmon que já cruzou o seu caminho tem uma página na Biblioteca.' },
+    place: { en: 'Drive', pt: 'Drive' },
+    hello: { en: "I'm {name}, the archivist of the Drive.", pt: 'Eu sou {name}, a arquivista do Drive.' },
+    what: { en: 'Every Soulmon that has crossed your path has a page in the Drive.', pt: 'Todo Soulmon que já cruzou o seu caminho tem uma página no Drive.' },
     invite: { en: 'Come and read them.', pt: 'Venha ler.' },
   },
   'laboratorio.amigos': {
