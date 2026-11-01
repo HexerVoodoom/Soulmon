@@ -77,14 +77,14 @@ export const ALVO_MASTERIZACAO_MUSICA_LUFS_S = -28.0;
  * §4.1 — alvo da MÚSICA (trilha, tema e as músicas de combate) na reprodução, em LUFS-S
  * (janela curta de 3 s, EBU Tech 3341).
  *
- * ⚠️ **Subiu de −28 para −22 em 11/10/2026 (pedido do dono: "a música está muito baixa").**
+ * ⚠️ **Subiu de −22 para −16 em 01/11/2026 (relato do dono: "a trilha sonora tá muito baixa, mesmo com volume mais alto é difícil ouvir"; REGISTRO §215): ganho +6 → +12 dB, no teto de programa S3 (−16 LUFS), true peak da música ainda ≤ −3 dBTP. Antes: subiu de −28 para −22 em 11/10/2026 (pedido do dono: "a música está muito baixa").**
  * A regra antiga era "a trilha fica ABAIXO do último degrau de SFX (Arcade, −25)"; ela foi
  * relaxada para "NO MÁXIMO no degrau de Conclusão (−22)", e é por isso que a música em
  * combate desce de volta (`OFFSET_MUSICA_EM_COMBATE_DB`). A diferença entre este alvo e o
  * de masterização vira o ganho de reprodução (`GANHO_MUSICA_DB`), aplicado no nó de fade
  * de cada música — nunca um literal em `tema.ts`/`trilha.ts`.
  */
-export const ALVO_TRILHA_LUFS_S = -22.0;
+export const ALVO_TRILHA_LUFS_S = -16.0;
 
 /** Ganho de reprodução da música: alvo − masterização. DERIVADO, nunca digitado. */
 export const GANHO_MUSICA_DB = ALVO_TRILHA_LUFS_S - ALVO_MASTERIZACAO_MUSICA_LUFS_S;
