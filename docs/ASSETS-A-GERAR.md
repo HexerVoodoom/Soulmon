@@ -754,3 +754,11 @@ NPC e prédio novos da Forja: a Hexsmith reescreve o "código hex" do Soulmon (e
 **Pendente do dono:** Vínculo mínimo da Hexsmith (default 2) e aprovar a arte do prédio/busto.
 
 **Hexsmith — arte da UI e dos itens (01/11/2026, falta):** ícone por tipo de slot (coroa, amuleto, garra, couraça, luvas) e textura de circuito hex. Entram em `src/assets/soulmon/hex/index.ts` (`HEX_ART`, hoje vazio, cai nos glifos SVG de `components/hex/HexSlotGlyph.tsx`). Alfa real, colorido, sem moldura em volta do ícone (regra "ícone nunca dentro de box").
+
+**Hexsmith — nomes e assets da tela (01/11/2026, dono):** os itens se chamam **HEXes** ("HEX de Água"); os encaixes, **Portas** (EN: Ports). Fundo do mapa = **placa de circuito hex**.
+| Arquivo-alvo (`src/assets/soulmon/hex/`) | O que é |
+|---|---|
+| `mapa-portas.png` | placa de circuito hex, alfa real: hexágono central vazio para o Soulmon + 5 portas vazias (cima, meio-esq, meio-dir, baixo-esq, baixo-dir) ligadas por trilhas turquesa; cada porta com cor própria |
+| `slot-coroa.png` … `slot-luvas.png` | ícone de cada tipo de HEX (coroa de shards, amuleto hex, garra com circuito, couraça com runa, manoplas), pixel art com contorno escuro, sem box |
+| `forjar.png` | martelo de cristal batendo num chip hex com faíscas |
+Prompts completos no transcrito da sessão de 01/11; o ChatGPT desktop já tem uma folha de 6 ícones gerada (conversa mais recente), falta baixar e fatiar por alfa.
