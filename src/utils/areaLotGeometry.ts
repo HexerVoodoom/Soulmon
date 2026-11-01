@@ -50,7 +50,7 @@ export const LOT_ART_BOUNDS: Record<string, LotBounds> = {
   'laboratorio:stats': [0.184, 0, 0.818, 0.742],
   'laboratorio:perfil': [0.02, 0.487, 0.98, 0.97], // P2b (14/10/2026): `lote-laboratorio-perfil` (espelho-d'água da alma, alfa > 20)
   // D-50 (19/10/2026): Biblioteca e Círculo de Amigos mudaram do Hall para o Laboratório. W5 (19/10/2026): arte nova do Clã/Feira/Grove/Evolução/Arquivo/Vínculo/Amigos/Guerra/Caderno/Oficina — 512², recorte da bbox + ~4% de margem, caixa medida com alfa > 20.
-  'laboratorio:biblioteca': [0.117, 0, 0.883, 0.742],
+  'laboratorio:biblioteca': [0.162, 0, 0.838, 1], // 01/11/2026: prédio de dados do Drive (ChatGPT), medido alfa > 20,
   'hall:grove': [0.18, 0.0, 0.82, 0.742],
   'hall:guilda': [0.184, 0.0, 0.816, 0.742],
 };
