@@ -143,6 +143,34 @@ export function forgeHexItem<T extends HexForgeState>(prev: T, id: string): T {
   return { ...next, hexsmith: { owned: [...hx.owned, id], equipped } };
 }
 
+/**
+ * Aplica no estado LOCAL a forja que o SERVIDOR já confirmou (REGISTRO §216, `cloudHexForge`): `paid` = o servidor debitou, então
+ * o cliente debita o mesmo custo (sem recusar: a verdade é a do servidor; nada fica negativo); `paid: false` = já era seu, só a posse.
+ */
+export function applyServerHexForge<T extends HexForgeState>(prev: T, id: string, paid: boolean): T {
+  const cost = hexCost(id);
+  if (!cost) return prev;
+  const hx = sanitizeHexsmith(prev.hexsmith);
+  if (hx.owned.includes(id)) return prev;
+  let next: T = prev;
+  if (paid) {
+    if (cost.potions > 0) {
+      const k = potionKey(cost.potionElement!);
+      const foodInventory = { ...prev.foodInventory, [k]: Math.max(0, (prev.foodInventory[k] ?? 0) - cost.potions) };
+      if (foodInventory[k] <= 0) delete foodInventory[k];
+      next = { ...next, foodInventory };
+    }
+    if (cost.fragments > 0 && next.equipment) next = { ...next, equipment: { ...next.equipment, fragments: Math.max(0, next.equipment.fragments - cost.fragments) } };
+    if (cost.bits > 0) {
+      const bal = next.gamePoints ?? 0;
+      next = spendBits(next, Math.min(bal, cost.bits));
+    }
+  }
+  const slot = parseHexItem(id)!.slot;
+  const equipped = hx.equipped[slot] ? hx.equipped : { ...hx.equipped, [slot]: id };
+  return { ...next, hexsmith: { owned: [...hx.owned, id], equipped } };
+}
+
 /** Equipa um item possuído no slot dele (troca o que estava). Não possuído = o MESMO objeto. Nada se perde: o anterior fica na posse. */
 export function equipHexItem<T extends { hexsmith?: HexsmithState }>(prev: T, id: string): T {
   const hx = sanitizeHexsmith(prev.hexsmith);

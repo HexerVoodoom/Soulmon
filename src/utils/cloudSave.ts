@@ -289,6 +289,44 @@ async function postar(saveId: string, state: unknown, base: number | null): Prom
   }
 }
 
+/** Resultado da forja de HEX no servidor (REGISTRO §216). `already` = já era seu (nada cobrado). */
+export type HexForgeOutcome =
+  | { ok: true; already: boolean }
+  | { ok: false; kind: 'offline' | 'saldo' | 'conflict' | 'server' };
+
+/**
+ * FORJA DE HEX pelo SERVIDOR (REGISTRO §216): o servidor lê o save gravado, confere o saldo, debita e entrega o item numa escrita só.
+ * Entra na MESMA fila dos POSTs do save: primeiro sobe o estado local (o saldo que o jogador vê é o que o servidor confere), depois
+ * forja com a revisão resultante. Sem rede/sem confirmação = falha, e o cliente NÃO forja localmente.
+ */
+export async function cloudHexForge(saveId: string, state: unknown, itemId: string): Promise<HexForgeOutcome> {
+  if (ehDemo(state)) return { ok: false, kind: 'server' };
+  const anterior = filaDePosts.get(saveId) ?? Promise.resolve();
+  const minha = anterior.then(async (): Promise<HexForgeOutcome> => {
+    const sync = await enviarSerializado(saveId, state);
+    if (!sync.ok) return { ok: false, kind: sync.kind === 'offline' ? 'offline' : sync.kind === 'conflict' ? 'conflict' : 'server' };
+    try {
+      const base = lerRevisao(saveId);
+      const res = await fetch(`/api/save?id=${saveId}&action=hexForge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify(base === null ? { itemId } : { itemId, baseRevision: base }),
+      });
+      const data: unknown = await res.json().catch(() => null);
+      if (!res.ok) return { ok: false, kind: res.status === 402 ? 'saldo' : res.status === 409 ? 'conflict' : 'server' };
+      const r = revisaoDoCorpo(data);
+      if (r !== undefined && r >= (lerRevisao(saveId) ?? 0)) gravarRevisao(saveId, r);
+      return { ok: true, already: !!(data as { already?: unknown } | null)?.already };
+    } catch {
+      return { ok: false, kind: 'offline' };
+    }
+  });
+  const cauda = minha.then(() => undefined);
+  filaDePosts.set(saveId, cauda);
+  void cauda.then(() => { if (filaDePosts.get(saveId) === cauda) filaDePosts.delete(saveId); });
+  return minha;
+}
+
 // ---------------------------------------------------------------------------
 // R-2 — ORÇAMENTO DE RETRY POR `saveId`, COM TETO E JANELA.
 //

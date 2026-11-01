@@ -63,3 +63,82 @@ export function hexOverrides(raw) {
   for (const [slot, key] of pairs) { const x = v(slot); if (x) out[key] = x; }
   return out;
 }
+
+/**
+ * Custos (espelho de `HEX_COSTS` em `src/utils/hexsmith.ts`; `hexsmith.parity.test.js` compara). `potions` = poções do PRÓPRIO
+ * elemento do item (chave `potion:<elemento>` em `foodInventory`); `fragments` = `equipment.fragments`; `bits` = `gamePoints`.
+ */
+export const HEX_COSTS = {
+  element: { potions: 3, bits: 1500, fragments: 0 },
+  coroa: { potions: 0, bits: 2000, fragments: 20 },
+  luvas: { potions: 0, bits: 500, fragments: 5 },
+};
+
+/** @param {string} id @returns {{ potions: number, potionElement?: string, bits: number, fragments: number } | undefined} */
+export function hexCost(id) {
+  const it = parseHexItem(id);
+  if (!it) return undefined;
+  if (HEX_ELEMENT_SLOTS.includes(it.slot)) return { ...HEX_COSTS.element, potionElement: it.value };
+  return { ...(it.slot === 'coroa' ? HEX_COSTS.coroa : HEX_COSTS.luvas) };
+}
+
+/** @param {unknown} v */
+const num = (v) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : 0);
+
+/**
+ * A FORJA no servidor (REGISTRO §216, ação `POST /api/save?id=&action=hexForge`): lê o save GRAVADO, confere o saldo com `HEX_COSTS`
+ * (poções do elemento, `equipment.fragments`, Bits GANHOS = `gamePoints` menos o `bitsOrigin.paidLeft`), debita e entrega o item.
+ * Espelho de `forgeHexItem` (`src/utils/hexsmith.ts`; `hexsmith.parity.test.js` compara). Item já possuído = `already`, sem cobrança.
+ * @param {Record<string, any>} stored  o state gravado
+ * @param {unknown} itemId
+ * @returns {{ ok: true, already: boolean, state: Record<string, any> } | { ok: false, reason: 'invalid' | 'potions' | 'fragments' | 'bits' }}
+ */
+export function forgeOnServer(stored, itemId) {
+  const c = typeof itemId === 'string' ? hexCost(itemId) : undefined;
+  if (!c) return { ok: false, reason: 'invalid' };
+  const id = /** @type {string} */ (itemId);
+  const hx = sanitizeHexsmith(stored.hexsmith);
+  if (hx.owned.includes(id)) return { ok: true, already: true, state: stored };
+  if (hx.owned.length >= HEX_MAX_OWNED) return { ok: false, reason: 'invalid' };
+  const food = stored.foodInventory && typeof stored.foodInventory === 'object' && !Array.isArray(stored.foodInventory) ? stored.foodInventory : {};
+  const k = c.potionElement ? `potion:${c.potionElement}` : '';
+  if (c.potions > 0 && num(food[k]) < c.potions) return { ok: false, reason: 'potions' };
+  const frag = num(stored.equipment?.fragments);
+  if (c.fragments > 0 && frag < c.fragments) return { ok: false, reason: 'fragments' };
+  const gp = num(stored.gamePoints);
+  const paidLeft = num(stored.bitsOrigin?.paidLeft);
+  if (c.bits > 0 && Math.max(0, gp - Math.min(gp, paidLeft)) < c.bits) return { ok: false, reason: 'bits' };
+  const next = { ...stored };
+  if (c.potions > 0) {
+    const foodInventory = { ...food, [k]: num(food[k]) - c.potions };
+    if (foodInventory[k] <= 0) delete foodInventory[k];
+    next.foodInventory = foodInventory;
+  }
+  if (c.fragments > 0) next.equipment = { ...stored.equipment, fragments: frag - c.fragments };
+  if (c.bits > 0) {
+    next.gamePoints = gp - c.bits;
+    // = `spendBits` -> `spendBitsPaidFirst` do cliente: o Bit pago sai primeiro e nunca fica acima do saldo.
+    if (stored.bitsOrigin && typeof stored.bitsOrigin === 'object') {
+      const left = Math.min(Math.max(0, paidLeft - c.bits), next.gamePoints);
+      if (left !== paidLeft) next.bitsOrigin = { ...stored.bitsOrigin, paidLeft: left };
+    }
+  }
+  const slot = /** @type {{ slot: string }} */ (parseHexItem(id)).slot;
+  const equipped = hx.equipped[slot] ? hx.equipped : { ...hx.equipped, [slot]: id };
+  next.hexsmith = { owned: [...hx.owned, id], equipped };
+  return { ok: true, already: false, state: next };
+}
+
+/**
+ * POSSE DE HEX vem só do servidor (REGISTRO §216): no POST do save, `owned` = o do save GRAVADO (o cliente não acrescenta nem tira);
+ * o `equipped` do cliente vale, desde que seja de item possuído no slot certo. Campo ausente no recebido = o gravado inteiro.
+ * Sem save gravado, a posse é vazia.
+ * @param {unknown} incomingHex  `state.hexsmith` recebido (ou undefined, se o campo não veio)
+ * @param {Record<string, any> | undefined} stored
+ * @returns {{ owned: string[], equipped: Record<string, string> }}
+ */
+export function enforceStoredHexOwned(incomingHex, stored) {
+  const sto = sanitizeHexsmith(stored?.hexsmith);
+  const inc = incomingHex && typeof incomingHex === 'object' ? /** @type {Record<string, unknown>} */ (incomingHex) : undefined;
+  return sanitizeHexsmith({ owned: sto.owned, equipped: inc ? inc.equipped : sto.equipped });
+}

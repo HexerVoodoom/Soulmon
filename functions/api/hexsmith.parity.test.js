@@ -15,6 +15,25 @@ describe('hexsmith: servidor = app', () => {
     expect(srv.HEX_STRIKES).toEqual([...app.HEX_STRIKES]);
     expect(srv.HEX_MAX_OWNED).toBe(app.HEX_MAX_OWNED);
   });
+  it('custos: HEX_COSTS e hexCost iguais (o servidor cobra o que o app cobra, §216)', () => {
+    expect(srv.HEX_COSTS).toEqual(app.HEX_COSTS);
+    for (const id of ['garra:agua', 'amuleto:fogo', 'couraca:terra', 'coroa:heal', 'luvas:melee', 'luvas:ranged', 'x:y']) expect(srv.hexCost(id)).toEqual(app.hexCost(id));
+  });
+  it('forja do servidor = forgeHexItem do app (debito, Bit de Credito, recusa, ja possuido)', () => {
+    const estados = [
+      { gamePoints: 5000, foodInventory: { 'potion:agua': 3 }, equipment: { owned: [], equipped: {}, fragments: 25 }, hexsmith: { owned: [], equipped: {} } },
+      { gamePoints: 2500, foodInventory: {}, equipment: { owned: [], equipped: {}, fragments: 20 }, bitsOrigin: { day: 'd', free: 0, fromCredits: 600, paidLeft: 600 }, hexsmith: { owned: ['coroa:dot'], equipped: { coroa: 'coroa:dot' } } },
+      { gamePoints: 100, foodInventory: { 'potion:agua': 9 }, equipment: { owned: [], equipped: {}, fragments: 0 } },
+    ];
+    for (const st of estados) {
+      for (const id of ['garra:agua', 'coroa:heal', 'coroa:dot', 'luvas:melee']) {
+        const a = app.forgeHexItem(st, id);
+        const r = srv.forgeOnServer(st, id);
+        if (a === st) expect(r.ok === false || r.already).toBe(true);
+        else { expect(r.ok && !r.already).toBe(true); expect(r.state).toEqual(a); }
+      }
+    }
+  });
   it('todo item valido do app e valido no servidor, e vice-versa', () => {
     for (const slot of app.HEX_SLOTS) {
       for (const v of app.hexValuesOf(slot)) expect(srv.parseHexItem(`${slot}:${v}`)).toEqual(app.parseHexItem(`${slot}:${v}`));

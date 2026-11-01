@@ -14,7 +14,9 @@ import { ALL_ELEMENT_IDS } from '../../utils/elementDex';
 import { hexRefusalText } from '../../utils/hexsmithCopy';
 import HexsmithSheet from './HexsmithSheet';
 
+const forjaServidor = vi.fn(async (): Promise<{ ok: true; already: boolean } | { ok: false; kind: string }> => ({ ok: true, already: false }));
 vi.mock('../../utils/cloudSave', () => ({
+  cloudHexForge: () => forjaServidor(),
   cloudSave: () => Promise.resolve({ ok: true }),
   cloudSaveComRetry: () => Promise.resolve({ ok: true }),
   emailToSaveId: async () => 'x',
@@ -34,8 +36,9 @@ function abrir(save: Record<string, unknown>, language = 'pt-BR') {
 }
 const q = (sel: string) => document.querySelector<HTMLButtonElement>(sel)!;
 const click = (el: Element) => act(() => { fireEvent.click(el); });
+const forjar = (id: string) => act(async () => { fireEvent.click(q(`[data-hex-forge="${id}"]`)); await Promise.resolve(); await Promise.resolve(); });
 
-beforeEach(() => { installDomGlobals(); localStorage.clear(); vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('sem rede')))); });
+beforeEach(() => { installDomGlobals(); localStorage.clear(); forjaServidor.mockClear(); forjaServidor.mockImplementation(async () => ({ ok: true, already: false })); vi.stubGlobal('fetch', vi.fn(() => Promise.reject(new Error('sem rede')))); });
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('HexsmithSheet', () => {
@@ -70,11 +73,13 @@ describe('HexsmithSheet', () => {
     expect(q('[data-hex-slot="coroa"]').textContent).toBe('Coroa');
   });
 
-  it('forjar com saldo debita poções e Bits e equipa no slot vazio; o código hex mostra o reescrito', () => {
+  it('forjar com saldo (servidor confirma) debita poções e Bits e equipa no slot vazio; o código hex mostra o reescrito', async () => {
+    localStorage.setItem(STORAGE_KEYS.SAVE_ID, 'a'.repeat(32));
     abrir({ gamePoints: 2000, foodInventory: { [potionKey('agua')]: 3 } });
     click(q('[data-hex-slot="garra"]'));
     click(q('[data-hex-item="garra:agua"]'));
-    click(q('[data-hex-forge="garra:agua"]'));
+    await forjar('garra:agua');
+    expect(forjaServidor).toHaveBeenCalledTimes(1);
     const s = estado();
     expect(s.bits).toBe(2000 - HEX_COSTS.element.bits);
     expect(s.food[potionKey('agua')]).toBeUndefined();
@@ -82,6 +87,19 @@ describe('HexsmithSheet', () => {
     expect(s.hx.equipped.garra).toBe('garra:agua');
     click(screen.getByRole('button', { name: 'Código hex', hidden: true }));
     expect(q('[data-hex-line="garra"]').textContent).toMatch(/Água.*era/);
+  });
+
+  it('sem rede: erro claro e NADA forja localmente (§216)', async () => {
+    localStorage.setItem(STORAGE_KEYS.SAVE_ID, 'a'.repeat(32));
+    forjaServidor.mockImplementation(async () => ({ ok: false, kind: 'offline' }));
+    abrir({ gamePoints: 2000, foodInventory: { [potionKey('agua')]: 3 } });
+    click(q('[data-hex-slot="garra"]'));
+    click(q('[data-hex-item="garra:agua"]'));
+    await forjar('garra:agua');
+    const s = estado();
+    expect(s.bits).toBe(2000);
+    expect(s.hx?.owned ?? []).toEqual([]);
+    expect(document.querySelector('[data-hex-aviso]')!.textContent).toMatch(/Sem conexão/);
   });
 
   it('recusa: o Forjar fica desabilitado e o motivo aparece (convite, sem cobrança)', () => {
