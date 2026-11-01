@@ -185,6 +185,15 @@ Original de 0:29,95 (706 002 B). Ganho −11,4 dB.
 
 Original de 3:43,2 (5 297 929 B). Ganho −13,3 dB; a faixa já termina em fade.
 
+#### "A Parede" — trilha da intro pré-login (`components/onboarding/intro/IntroCinematica.tsx`, superfície `intro` em `utils/musica.ts`)
+
+| Arquivo · SHA-256 · bytes | Formato |
+|---|---|
+| `public/sounds/tema-parede.webm` · `1b8094b69d383e14b07fac9bc504bac3db2237b110a2b0736e188506c1e88fa5` · 274 563 B | Opus mono 32 kbps |
+| `public/sounds/tema-parede.m4a` · `bbcf079f9d8ff287fdf25e52786bba95037084b0e1ad7d510e1aa7a372cb7d36` · 296 035 B | AAC-LC mono 32 kbps, faststart |
+
+Origem: **Suno** (`soulmon cave (1).mp3`, SHA-256 do original `e21d74525ebef41fba223ab22a96fe6dc8f994c7647a0506677f20ef8d2f144d`, 1 610 180 B, 1:09,5, sem vocais), gerada pelo dono em 01/11/2026. Prompt do dono: trilha misteriosa e espiritual, caverna, linha Chrono Cross / FF IX / Pokémon / Digimon, para o Soulmon, loop. Termos: o dono tem assinatura Suno; **plano e termos comerciais a confirmar pelo dono**. O repo prova procedência, não originalidade (S9); a escuta é do dono (S8). Reencode: ganho −13,0 dB + fade-out de 5 s (a faixa, 69,5 s, é mais curta que a intro, 72,9 s; sem loop obrigatório). Medidas (ffmpeg `ebur128`): webm LUFS-S mediano −28,0 / integrado −27,6 / true peak −12,8 dBTP; m4a −27,7 / −27,4 / −12,3. Com `GANHO_MUSICA_DB` (+12 dB) e trim −1,5 dB (`TRIM_MUSICAS_DE_COMBATE_DB.parede`, crista alta): integrado pior ≈ −16,9 LUFS e true peak pior ≈ −1,8 dBTP (S3: ≤ −16 LUFS e ≤ −1 dBTP). Nasce desligada: só soa pelo botão de som da intro (gesto, D11/S2) e respeita o interruptor global de Música.
+
 #### Licença — o que está declarado e o que falta
 
 ⚠️ **Pendência do dono — nada aqui afirma licença.** O Soulmon NÃO registra termo algum do Suno. Estado em

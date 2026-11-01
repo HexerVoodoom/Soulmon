@@ -23,7 +23,8 @@ const NOVAS_S18 = ['masmorra', 'evolucao', 'meditacao'] as const;
 /** As três do Suno (tema + combate + pesadelo); S18 (26/10/2026) acrescentou três trilhas fornecidas pelo dono. */
 const MUSICAS_SUNO = [TEMA_DO_JOGO, MUSICAS_DE_COMBATE.combate, MUSICAS_DE_COMBATE.pesadelo];
 const MUSICAS_S18 = NOVAS_S18.map(k => MUSICAS_DE_COMBATE[k]);
-const MUSICAS = [...MUSICAS_SUNO, ...MUSICAS_S18];
+const MUSICA_PAREDE = MUSICAS_DE_COMBATE.parede;
+const MUSICAS = [...MUSICAS_SUNO, ...MUSICAS_S18, MUSICA_PAREDE];
 const FORMATOS_DAS_MUSICAS = MUSICAS.flatMap(m => [...m.formatos]);
 const TETO_TEMA_POR_FORMATO_BYTES = 2.5 * 1024 * 1024;
 /** O conjunto anterior (tema + dungeon/pvp, 13/10 e 19/10/2026): o novo não pode pesar mais que ele. */
@@ -86,6 +87,13 @@ describe('S17 — as músicas em streaming (tema + Stone Hall Combat/Nightmare):
     }
   });
 
+  it('A Parede (01/11/2026): origem Suno, hash do original e termos a confirmar escritos', () => {
+    const attr = readFileSync(join(raiz, 'docs', 'Attributions.md'), 'utf8');
+    expect(MUSICA_PAREDE.origem).toBe('suno/fornecida-pelo-dono');
+    expect(attr).toContain('e21d74525ebef41fba223ab22a96fe6dc8f994c7647a0506677f20ef8d2f144d');
+    expect(attr).toMatch(/A Parede[\s\S]{0,1800}termos comerciais a confirmar pelo dono/);
+  });
+
   it('S18 — as 3 trilhas novas: origem "fornecida pelo dono" (gerador NÃO declarado, nada de licença inventada), hash e pendência escritos', () => {
     const attr = readFileSync(join(raiz, 'docs', 'Attributions.md'), 'utf8');
     for (const m of MUSICAS_S18) {
@@ -130,7 +138,7 @@ describe('S17 — as músicas em streaming (tema + Stone Hall Combat/Nightmare):
     // S18: as 3 novas têm orçamento próprio (≤ 2,5 MB por formato, acima) e, juntas, ≤ 12 MB nos dois formatos (medido: ~8,1 MB).
     const novas = MUSICAS_S18.flatMap(m => [...m.formatos]).reduce((s, f) => s + f.bytes, 0);
     expect(novas, `${novas} bytes`).toBeLessThanOrEqual(12 * 1024 * 1024);
-    expect(Object.keys(MUSICAS_DE_COMBATE).sort()).toEqual(['combate', 'evolucao', 'masmorra', 'meditacao', 'pesadelo']);
+    expect(Object.keys(MUSICAS_DE_COMBATE).sort()).toEqual(['combate', 'evolucao', 'masmorra', 'meditacao', 'parede', 'pesadelo']);
   });
 
   it('cada formato cabe no orçamento próprio (≤ 2,5 MB) e é o ÚNICO motivo de o S6 de 300 KB não valer para ele', () => {

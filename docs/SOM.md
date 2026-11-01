@@ -514,3 +514,7 @@ Fora do S6, fora do pré-cache; o `sw.js` já ignora `Range` em `/sounds/tema-`.
 **15.4 Loudness.** Offsets em `loudness.ts` medidos em Node no sinal nominal (a 48 kHz, medidor K-weighting de `src/test/lufsM.ts`): pop −39,1 → **+14,1 dB**, roll → **+10,91 dB**, land → **+6,49 dB**, alvo `arcade` (−25 LUFS-M); `sonsRecompensa.loudness.test.ts` re-mede e reprova se sair da tolerância ou passar do teto de true peak. **Guardas atualizados:** `sounds.contract.test.ts` (19 símbolos), `cortes.contract.test.ts` A-3 (único chamador: `hooks/useRewardReveal.ts`), `loudness.contract.test.ts` (categoria e offset).
 
 **15.5 Pendência.** NENHUM dos três sons foi ouvido por agente (gate humano S8): é medição de sinal, não escuta.
+
+## 16. Trilha da intro "A Parede" (01/11/2026)
+
+Faixa `parede` (`tema-parede.webm`/`.m4a`, mono, 274 563 / 296 035 B, fora do S6, fora do pré-cache), superfície `intro` em `musica.ts`. **Nasce DESLIGADA (S2):** o botão de som no canto superior esquerdo da `IntroCinematica` é o gesto (D11) e chama `entrarNaSuperficie('intro')`; sem o botão, silêncio. Se o interruptor global de Música estiver desligado o botão nem aparece. Medidas e procedência: `Attributions.md`. Escuta final: do dono.

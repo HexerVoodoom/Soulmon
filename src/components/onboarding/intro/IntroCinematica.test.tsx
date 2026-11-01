@@ -10,6 +10,34 @@ import { SEQUENCIA_VELADO } from '../sequencia/cenas';
 beforeEach(() => { localStorage.clear(); vi.useFakeTimers(); });
 afterEach(() => { cleanup(); vi.useRealTimers(); localStorage.clear(); });
 
+vi.mock('../../../utils/musica', () => ({ entrarNaSuperficie: vi.fn(() => vi.fn()) }));
+import * as musica from '../../../utils/musica';
+import { definirMusicaLigada } from '../../../utils/audioBus';
+
+describe('trilha da intro (S2/D11)', () => {
+  it('nasce desligada: nada pedido até o gesto; o botão liga e desliga e a saída limpa', () => {
+    const sair = vi.fn();
+    vi.mocked(musica.entrarNaSuperficie).mockClear().mockReturnValue(sair);
+    const { unmount } = render(<IntroCinematica language="pt-BR" onDone={() => {}} />);
+    expect(musica.entrarNaSuperficie).not.toHaveBeenCalled();
+    const b = screen.getByTestId('intro-som');
+    expect(b.getAttribute('aria-pressed')).toBe('false');
+    fireEvent.click(b);
+    expect(musica.entrarNaSuperficie).toHaveBeenCalledWith('intro');
+    expect(b.getAttribute('aria-pressed')).toBe('true');
+    fireEvent.click(b);
+    expect(sair).toHaveBeenCalledTimes(1);
+    fireEvent.click(b);
+    unmount();
+    expect(sair).toHaveBeenCalledTimes(2); // desmontar fecha o 3º gesto aberto
+  });
+  it('interruptor global de música desligado: sem botão', () => {
+    definirMusicaLigada(false);
+    render(<IntroCinematica language="en-US" onDone={() => {}} />);
+    expect(screen.queryByTestId('intro-som')).toBeNull();
+  });
+});
+
 describe('intro pré-login', () => {
   it('flag desligado: não toca; ligado: toca na 1ª abertura sem onboarding e só uma vez', () => {
     expect(deveTocarIntro(false)).toBe(false);

@@ -106,6 +106,7 @@ describe('S18 — masmorra (mapa), evolução e meditação têm faixa própria'
     ['masmorra-mapa', 'masmorra'],
     ['evolucao', 'evolucao'],
     ['meditacao', 'meditacao'],
+    ['intro', 'parede'],
   ] as const)('ligada: %s → %s; desligada → null; sem o degrau de combate', (s, f) => {
     expect(escolherFaixa(s, true)).toBe(f);
     expect(escolherFaixa(s, false)).toBeNull();
@@ -133,6 +134,7 @@ describe('S18 — masmorra (mapa), evolução e meditação têm faixa própria'
   });
   it('as telas ligam cada faixa à superfície certa (a fonte, não a memória)', () => {
     const lê = (p: string) => readFileSync(new URL(p, import.meta.url), 'utf8');
+    expect(lê('../components/onboarding/intro/IntroCinematica.tsx')).toContain("entrarNaSuperficie('intro')");
     expect(lê('../components/EvolutionCeremony.tsx')).toContain("entrarNaSuperficie('evolucao')");
     expect(lê('../components/refugio/RespiracaoGame.tsx')).toContain("entrarNaSuperficie('meditacao')");
     expect(lê('../components/mente/BolhasGame.tsx')).toContain("calma ? entrarNaSuperficie('meditacao')");
