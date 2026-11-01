@@ -93,8 +93,7 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
               <ul data-potion-options style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2 }}>
                 {options.map(id => isOpen(id) ? (
                   <li key={id}>
-                    <button type="button" data-element={id} aria-pressed={sel === id} onClick={() => setPicked(sel === id ? null : id)}
-                      style={{ all: 'unset', cursor: 'pointer', minHeight: 44, width: '100%', display: 'flex', alignItems: 'center', gap: 10, ...sm2Text, fontWeight: sel === id ? 700 : 400, color: sel === id ? 'var(--sm2-primary-ink)' : 'var(--sm2-ink)' }}>
+                    <button type="button" data-element={id} aria-pressed={sel === id} onClick={() => setPicked(sel === id ? null : id)} className="sm2-lab-option">
                       <Icon id={id} size={24} /><span>{elName(id, isPt)}</span>
                     </button>
                   </li>

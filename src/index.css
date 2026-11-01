@@ -9038,3 +9038,34 @@ button.sm2-hex-row {
   font-size: var(--sm2-text-xs); font-weight: 400; color: var(--sm2-muted);
 }
 .sm2-hex-footer { display: grid; gap: var(--sm2-space-2); justify-items: center; }
+
+/* ── Laboratório e Cambista (01/11/2026, na régua do DS) ────────────────────
+   Campo de elemento, opção de menu/lista e essência: reset explícito de botão (sem `all: unset`), tudo por token,
+   alvo 44, foco visível. Mesmo desenho TONAL da Hexsmith (`.sm2-hex-row`). */
+.sm2-lab-field, .sm2-lab-option, .sm2-lab-essence {
+  box-sizing: border-box; margin: 0; cursor: pointer; text-align: left; color: var(--sm2-ink);
+  font-family: var(--sm2-font-text); line-height: var(--sm2-leading-body);
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+}
+.sm2-lab-field {
+  flex: 1; min-width: 0; min-height: 44px; padding: var(--sm2-space-1) var(--sm2-space-2);
+  display: flex; align-items: center; gap: var(--sm2-space-1); border-radius: var(--sm2-radius-md);
+  background: var(--sm2-surface); border: 1.5px solid var(--sm2-line);
+  &[aria-expanded="true"] { border-color: var(--sm2-primary-ink); }
+}
+.sm2-lab-caret { color: var(--sm2-muted); font-size: var(--sm2-text-xs); }
+.sm2-lab-menu {
+  list-style: none; margin: var(--sm2-space-1) 0 0; padding: var(--sm2-space-1) 0; display: grid; max-height: 240px; overflow-y: auto;
+  border-radius: var(--sm2-radius-md); border: 1.5px solid var(--sm2-line); background: var(--sm2-surface);
+}
+.sm2-lab-option {
+  width: 100%; min-height: 44px; padding: 0 var(--sm2-space-3); display: flex; align-items: center; gap: var(--sm2-space-2);
+  background: none; border: 1px solid transparent; border-radius: var(--sm2-radius-md); font-size: var(--sm2-text-sm); font-weight: 400;
+  &:hover:not([aria-pressed="true"]):not([aria-selected="true"]) { background-color: var(--sm2-surface-2); }
+  &[aria-pressed="true"], &[aria-selected="true"] { background-color: var(--sm2-primary-soft); border-color: var(--sm2-primary-ink); color: var(--sm2-primary-ink); font-weight: 700; }
+  &[data-muted="true"] { color: var(--sm2-muted); }
+}
+.sm2-lab-essence {
+  display: inline-flex; align-items: center; gap: var(--sm2-space-2); min-height: 44px; min-width: 44px; padding: 0 var(--sm2-space-1);
+  background: none; border: 0; border-radius: var(--sm2-radius-md);
+}
