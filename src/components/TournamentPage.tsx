@@ -51,6 +51,8 @@
  * 16 (Silkscreen só dentro do vidro); o resultado num `RitualDialog` com o
  * visor 288×112 da arena e as duas criaturas a 64 na vitória.
  */
+import { useHexOverrides } from '../hooks/useHexOverrides';
+import { hexFamily } from '../utils/hexsmith';
 import type { FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { markSeenId } from '../utils/librarySeen';
 import { useEffect, useMemo, useState } from 'react';
@@ -323,6 +325,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   const [trainingOutcome, setTrainingOutcome] = useState<'win' | 'loss' | 'draw' | null>(null);
   // O level e o ramo do treino vêm do estado do save (`soulCombatant`); sem provider (demo, testes) cai no estágio.
   const ctx = useGameStateOptional();
+  const hx = useHexOverrides(); // 🔣 Hexsmith: o treino usa o mesmo código reescrito que o servidor aplica no duelo
   const gs = ctx?.gameState;
   const talentosPvp = usePvpTalents(); // o MESMO canal por atributo que o servidor aplica no duelo (teto 5% na soma dos três), PR7b
   /** `npc` (R8): o desafiante NPC do Torneio vazio — o MESMO treino, com o retrato e o nome dele; nada de rede, partida ou ganho. */
@@ -339,7 +342,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       cheerScale: talentosPvp.cheerScale,
       startEnergy: talentosPvp.startEnergy,
       dotResist: talentosPvp.dotResist,
-      special: specialOf(familyOfSkill(par?.especial)),
+      special: specialOf(hexFamily(familyOfSkill(par?.especial), hx)),
       fx: fxDoLutador(par, petElement),
     };
     // O desafiante é o espelho equilibrado 2 levels abaixo do seu (dentro do estágio): o treino é para aprender a torcer.

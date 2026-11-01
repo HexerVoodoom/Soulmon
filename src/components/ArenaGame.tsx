@@ -29,6 +29,8 @@
  * VISOR 348×160 (`games/GameKit.tsx`). O erro `sem-motor` é `cloud_off` num `role=status` (é rede,
  * não medalha).
  */
+import { useHexOverrides } from '../hooks/useHexOverrides';
+import { hexArenaElements, hexFamily, hexIdentity } from '../utils/hexsmith';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer } from './games/TorcidaKit';
 import { playDefeat, playVictory } from '../utils/sounds';
@@ -161,7 +163,8 @@ export function ArenaGame({
   const basica = par?.basica;
   const especial = par?.especial;
   // A identidade de combate (dono único): o MESMO golpe básico/especial da Masmorra, do Pesadelo, do Torneio e do PvP.
-  const ident = useMemo(() => fighterIdentity(par, petElement), [par, petElement]);
+  const hx = useHexOverrides(); // 🔣 Hexsmith: o que os itens equipados reescrevem
+  const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const atributos = attrs ?? DEFAULT_ARENA_ATTRIBUTES;
   // CENÁRIO (28/10/2026): sempre uma das duas arenas do Torneio, fixa durante a run (escolhida pela semente).
   const cenaDaRun = useMemo(() => arenaSceneOfSeed(seedLuta), [seedLuta]);
@@ -181,12 +184,12 @@ export function ArenaGame({
   riftRef.current = rift;
   const jogador = useMemo<ArenaPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
-    family: familyOfSkill(especial),
+    family: hexFamily(familyOfSkill(especial), hx),
     area: especial?.area?.tipo === 'circulo' ? 'area' : 'single',
     escolaBasica: basica?.escolaId ?? 'combate_fisico',
     // MECÂNICA da vantagem elemental (arena.ts, tabela só das 17 bases): o elemento do SPRITE manda (a identidade, que já é o `petElement`); só sem ele a base da ficha decide.
-    elements: arenaElementsFor(petElement && petElement !== 'neutro' ? {} : { basica: basica?.elementoId, especial: especial?.elementoId }, ident, atributos),
-  }), [petElement, estado, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, ident, atributos]);
+    elements: hexArenaElements(arenaElementsFor(petElement && petElement !== 'neutro' ? {} : { basica: basica?.elementoId, especial: especial?.elementoId }, ident, atributos), hx),
+  }), [hx, petElement, estado, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, ident, atributos]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const lado = useMemo(() => arenaPlayerSide(jogador), [jogador]);

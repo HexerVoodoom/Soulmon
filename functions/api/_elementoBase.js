@@ -86,8 +86,9 @@ export function vantagemElemental(atacante, defensor) {
  * estao e o teto `COMBAT_BONUS_CAP` nao e tocado (o selo e modificador de golpe, nao bonus de atributo). Sem elemento = neutro.
  */
 export function aplicarElementosDuelo(me, opp, escala = 1) {
-  const advMe = vantagemElemental(me.fx?.elBasica, opp.fx?.elBasica);
-  const advOpp = vantagemElemental(opp.fx?.elBasica, me.fx?.elBasica);
+  // Hexsmith (01/11/2026): a Couraca troca o elemento que DEFENDE (`elDefesa`); sem ela vale o do basico.
+  const advMe = vantagemElemental(me.fx?.elBasica, opp.fx?.elDefesa ?? opp.fx?.elBasica);
+  const advOpp = vantagemElemental(opp.fx?.elBasica, me.fx?.elDefesa ?? me.fx?.elBasica);
   const com = (c, adv) => (adv === 0 ? c : { ...c, bonus: (1 + c.bonus) / (1 - (escala * adv) / 10) - 1 });
   return { meCombatant: com(me.combatant, advMe), oppCombatant: com(opp.combatant, advOpp) };
 }

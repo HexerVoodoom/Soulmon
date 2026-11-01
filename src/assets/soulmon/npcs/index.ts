@@ -63,6 +63,7 @@ import npcHallAmigosMel from './npc-extra-filhote-de-mel.png';
 import npcHallGrove from './npc-n-musa.png'; // D-50 (19/10/2026): o NPC do Grove = a escolha 57 do dono (Lilia, a musa do jardim)
 
 import npcFForjaFerreiro from './npc-mercado-ferreiro.png';
+import npcForjaHexsmith from './npc-forja-hexsmith.png'; // 01/11/2026: a Hexsmith (reescreve o código hex com poções de elemento)
 import npcMercadoCambista from './npc-mercado-cambista.png'; // banco de assets #389 (escolha do dono, 30/10/2026), 768² a partir do original 2048² do banco
 import npcMercadoRestaurante from './npc-mercado-restaurante.png';
 /**
@@ -101,6 +102,7 @@ export const LOT_NPC_ART: Record<string, string> = {
   // 04/10/2026: bustos PRÓPRIOS (`entrada-dono/npc-exploracao-*`, 768², alfa binário); até aqui eram
   // os da Kova e da Selene. As versões `-b` ficaram fora do bundle (`E:/Soulmon-assets/instalados/alternativas/`).
   'forja:oficina': npcExploracaoOficina, // Lume (vagalume do coro; 07/10/2026 trocou o Tique)
+  'forja:hexsmith': npcForjaHexsmith, // Hexsmith (01/11/2026): busto recortado do #561 (banco `026a3d39`), 768² alfa real
   'forja:caderno': npcForjaCaderno, // Trilho (maquinista-fantasma que desenha paisagens; 29/10/2026 trocou a Opala)
   // Os três prédios de Jogos (30/09/2026): o Pipo segue no Salão (jogos livres).
   'jogos:salao': npcJogos,

@@ -1960,3 +1960,9 @@ Selo "NEW" (`NewBadge`, tokens `--sm2-gold-fill`/`--sm2-on-gold`, classe `.sm2-n
 ### `src/components/home/StrayRecoveryNotice.tsx`
 Aviso curto na Home (REGISTRO §213 emenda 2): o Soulmon do jogador está desgarrado e volta com todas as tarefas do dia em 2 dias seguidos, com o progresso 0/2, 1/2 (`community?action=strayStatus`, só o dono). Classe `.sm2-lib-alert` (âmbar). Não monta na demo.
 
+
+### `src/components/hex/HexsmithSheet.tsx`
+**Dono de:** a tela da Hexsmith no lote `forja:hexsmith` (lazy em `nav/AreaView.tsx`): mapa de 5 encaixes ao redor do Soulmon, código hex e o painel de cada encaixe (itens possuídos, forja com filtro por elementos). Regras em `utils/hexsmith.ts`; textos em `utils/hexsmithCopy.ts`.
+
+### `src/components/hex/HexSlotGlyph.tsx`
+**Dono de:** os glifos SVG de cada tipo de encaixe da Hexsmith, usados enquanto a arte de `src/assets/soulmon/hex/` não existe.

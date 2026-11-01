@@ -52,7 +52,7 @@ export interface DuelSide {
   /** Tarefa B (`tal-pvp-06`): fraction of the DoT damage this side receives that never lands. */
   readonly dotResist?: number;
   /** The schools of the basic and of the special strike (cosmetic: the form of the blow on screen). */
-  readonly fx?: { readonly basica: string | null; readonly especial: string | null; /** PR9: família do especial (lista fechada das 7) — o cliente nomeia o especial do oponente por regra. */ readonly familia?: string | null; /** PR9b: o ID do nome exato do especial (índice do substantivo, formato, elementos) — recomposto no aparelho, nunca texto do save. */ readonly lex?: { readonly n: number; readonly f: number; readonly el: string; readonly elB: string } | null; /** Identidade de combate: o elemento do golpe BÁSICO (o principal do Soulmon) e o do ESPECIAL, derivados do save no servidor. */ readonly elBasica?: string | null; readonly elEspecial?: string | null };
+  readonly fx?: { readonly basica: string | null; readonly especial: string | null; /** PR9: família do especial (lista fechada das 7) — o cliente nomeia o especial do oponente por regra. */ readonly familia?: string | null; /** PR9b: o ID do nome exato do especial (índice do substantivo, formato, elementos) — recomposto no aparelho, nunca texto do save. */ readonly lex?: { readonly n: number; readonly f: number; readonly el: string; readonly elB: string } | null; /** Identidade de combate: o elemento do golpe BÁSICO (o principal do Soulmon) e o do ESPECIAL, derivados do save no servidor. */ readonly elBasica?: string | null; readonly elEspecial?: string | null; /** Hexsmith (01/11/2026): o elemento que DEFENDE (Couraça); ausente = o do básico. */ readonly elDefesa?: string | null };
 }
 
 export type DuelWinner = 'me' | 'opp' | 'draw';
@@ -84,8 +84,9 @@ const withElement = (c: Combatant, adv: number, scale: number): Combatant => (ad
 
 /** The whole fight, pure and deterministic; the same function the server runs (`simulateDuel` of `_duel.js`). */
 export function simulatePvp(args: { me: Pick<DuelSide, 'combatant' | 'special' | 'cheerScale' | 'startEnergy' | 'dotResist' | 'fx'>; opp: Pick<DuelSide, 'combatant' | 'special' | 'startEnergy' | 'dotResist' | 'fx'>; seed: number; taps?: unknown; /** 0 = Torneio/Duelo ranqueado (sem elemento, padrão); 0.5 = Guerra de Guildas (±0,5 golpe). */ elementScale?: 0 | 0.5 }): DuelResult {
-  const advMe = duelElementAdvantage(args.me.fx?.elBasica, args.opp.fx?.elBasica);
-  const advOpp = duelElementAdvantage(args.opp.fx?.elBasica, args.me.fx?.elBasica);
+  // Hexsmith (01/11/2026): a Couraça troca o elemento que DEFENDE (`elDefesa`); sem ela vale o do básico. Espelho de `aplicarElementosDuelo`.
+  const advMe = duelElementAdvantage(args.me.fx?.elBasica, args.opp.fx?.elDefesa ?? args.opp.fx?.elBasica);
+  const advOpp = duelElementAdvantage(args.opp.fx?.elBasica, args.me.fx?.elDefesa ?? args.me.fx?.elBasica);
   const a: FightSide = { combatant: withElement(args.me.combatant, advMe, args.elementScale ?? 0), special: args.me.special, dotResist: args.me.dotResist };
   const b: FightSide = { combatant: withElement(args.opp.combatant, advOpp, args.elementScale ?? 0), special: args.opp.special, dotResist: args.opp.dotResist };
   const fx: FightFxPair[] = [];

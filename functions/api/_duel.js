@@ -42,6 +42,7 @@ import { talentAttrBonus, talentCheerScale, talentStartEnergy, talentDotResist }
 import { equipAttrBonus } from './_equipment.js';
 import { fichaJornadaFamilia } from './_fichaJornada.js';
 import { aplicarElementosDuelo } from './_elementoBase.js';
+import { hexOverrides } from './_hexsmith.js';
 
 export { PVP_HP_SCALE };
 
@@ -226,13 +227,16 @@ export function duelSide(save, opts = {}) {
   // PR15c: a familia GRAVADA em `fichaJornada` (saneada e imutavel no `save.js`) tem precedencia sobre o cache `soulmonSkills`,
   // que e editavel. So vale na lista fechada; rookie nao tem registro e cai no cache como antes.
   const gravada = fichaJornadaFamilia(state.fichaJornada, fichaStageOf(state.evolutionStage));
-  const family = especial
+  const familyFicha = especial
     ? (gravada ?? (typeof familiaSalva === 'string' && SPECIAL_FAMILY_IDS.includes(familiaSalva) ? familiaSalva : ESCOLA_FAMILY[especial]))
     : 'direct';
+  // Hexsmith (01/11/2026): os itens EQUIPADOS reescrevem familia do especial e elementos (saneados do save, `_hexsmith.js`).
+  const hx = hexOverrides(state.hexsmith);
+  const family = hx.specialFamily ?? familyFicha;
   // `familia` + `lex` também saem em `fx`: o CLIENTE recompõe o nome EXATO do especial do oponente (regra fechada, nunca texto do save).
   const lex = especial && typeof familiaSalva === 'string' && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
   // `cheerScale` (PR7b, `tal-pvp-05`): o rendimento da torcida do Duelo do LADO de quem tem o nó (1 sem ele).
-  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: pet.neutro ? null : (pet.el ?? elementoDoBasico(skills)), elEspecial: pet.neutro ? null : (pet.el ?? idElemento(skills?.especial?.elementoId)) } };
+  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: hx.basicElement ?? (pet.neutro ? null : (pet.el ?? elementoDoBasico(skills))), elEspecial: hx.specialElement ?? (pet.neutro ? null : (pet.el ?? idElemento(skills?.especial?.elementoId))), ...(hx.defenseElement ? { elDefesa: hx.defenseElement } : {}) } };
 }
 
 /** Só o combatente (a forma curta de `duelSide`). */

@@ -31,7 +31,7 @@ import type { Language } from './i18n';
 
 export type ExploracaoLotId = 'passeio' | 'fenda' | 'dungeon';
 /** A Forja (#187, 28/10/2026): tudo que era da Exploração menos o Passeio (Oficina do Foco, Caderno, Refúgio) + o Soulsmith (ex-Mercado). */
-export type ForjaLotId = 'oficina' | 'caderno' | 'refugio' | 'ferreiro';
+export type ForjaLotId = 'oficina' | 'caderno' | 'refugio' | 'ferreiro' | 'hexsmith';
 export type JogosLotId = 'salao' | 'mente';
 
 interface PlayLotSpec<K extends string> {
@@ -68,6 +68,8 @@ const EXPLORACAO_LOTS: PlayLotSpec<ExploracaoLotId>[] = [
 // lotes já tinham; o Soulsmith (ex-Mercado) assenta no tablado de CIMA À ESQUERDA, onde morava o Passeio.
 const FORJA_LOTS: PlayLotSpec<ForjaLotId>[] = [
   { id: 'ferreiro', labelPt: 'Soulsmith', labelEn: 'Soulsmith', ariaPt: 'Entrar no Soulsmith', ariaEn: 'Enter the Soulsmith', left: '24%', top: '34.3%', width: '52.3%' },
+  // 🔣 01/11/2026: a Hexsmith no tablado de CIMA À DIREITA — o único livre da Forja (espelho do Soulsmith, acima do Refúgio, longe da Oficina de baixo).
+  { id: 'hexsmith', labelPt: 'Hexsmith', labelEn: 'Hexsmith', ariaPt: 'Entrar na Hexsmith', ariaEn: 'Enter the Hexsmith', left: '76%', top: '29.5%', width: '46%' },
   // 🛠️ 04/10/2026 (pedido do dono, `docs/PLANO-OFICINA-FOCO.md`): a GRANDE clareira de baixo, que estava
   // vazia, ganha dois prédios lado a lado — técnicas de foco/produtividade e o Caderno (journaling).
   // PT "Caderno" e não "Diário": já existe o Diário de Aventuras (o álbum do pet).

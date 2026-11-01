@@ -271,3 +271,6 @@ Os dois são **acréscimo**, nunca renomeação (linha vermelha #20 — save só
 **Dono de:** a EXECUÇÃO do cronograma da revelação de recompensa (dono, 28/10/2026): quem já estourou (`isShown`), quem está rolando/pousou (`isRolling`/`isLanded`), `skip` (toque pula, sem som) e o som. É o ÚNICO chamador de `playRewardPop`/`playCoinRoll`/`playCoinLand` e guarda a D11 (`sonoLiberado`: aba visível + áudio já liberado por um gesto da sessão). Movimento reduzido / `instant` = tudo no estado final e mudo.
 **Exports:** `useRewardReveal(steps, { active, instant?, sound? })` · `sonoLiberado()` · `prefersReducedMotion()`.
 **Chamado por:** `src/components/games/ResultScreen.tsx`, `DungeonReturnModal.tsx`, `ui/BitsReveal.tsx`. **Régua:** `games/ResultScreen.reveal.render.test.tsx`, `utils/cortes.contract.test.ts` (A-3).
+
+### `src/hooks/useHexOverrides.ts`
+**Dono de:** ler do save (`GameState.hexsmith`) o que os itens da Hexsmith equipados reescrevem (`hexOverrides`). Usado por Arena, Masmorra, Pesadelo, Bosque, Desafio e treino do Torneio. Sem Provider = nada.

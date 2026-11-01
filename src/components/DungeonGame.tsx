@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useHexOverrides } from '../hooks/useHexOverrides';
+import { hexFamily, hexIdentity } from '../utils/hexsmith';
 import type { CSSProperties, ReactNode } from 'react';
 import { useBackLayer } from '../utils/backStack';
 import { RewardLine } from './ui/RewardLine';
@@ -193,6 +195,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
 
   // O level e o ramo vêm do estado do save (`soulCombatant`); sem provider (demo, testes) cai no estágio.
   const ctx = useGameStateOptional();
+  const hx = useHexOverrides(); // 🔣 Hexsmith: o que os itens equipados reescrevem
   const gs = ctx?.gameState;
   const estado = useMemo<SoulXPState>(
     () => (gs
@@ -205,11 +208,11 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const rift = useRiftTalents(); // Tarefa B: cura entre andares, Bits e escudo de largada (fora do canal de 5%: não são % de combate)
   const jogador = useMemo<DungeonPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
-    family: dungeonFamily(par?.especial),
+    family: hexFamily(dungeonFamily(par?.especial), hx),
     jeito,
     startShield: rift.startShield,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [estado, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao]);
+  }), [hx, estado, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const nivelJogador = jogador.combatant.level;
@@ -291,7 +294,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const ladderLen = LADDER_TIERS.length;
   const scene = runScenes[(floor - 1) % Math.max(1, runScenes.length)] ?? DUNGEON_SCENES[0];
   // A identidade de combate (dono único): o mesmo golpe básico/especial da Arena, do Torneio e do PvP.
-  const ident = useMemo(() => fighterIdentity(par, petElement), [par, petElement]);
+  const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const petEl = fxElementId(ident.basico.elemento);
   const enemyEl = fxElementId(dungeonEnemyElement(enemy));
   const foeMax = enemy ? hpPoints(enemy.foe.combatant.hp) : 1;

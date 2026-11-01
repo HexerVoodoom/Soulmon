@@ -740,3 +740,25 @@ Nome da anfitriã: **a definir pelo dono** (hoje `{name}` = Lumi).
 Ambas pelo molde do dono, sem referência, alfa a conferir. O dono escolhe quem fica como anfitriã (ou se viram NPCs de outros prédios).
 
 **Rodada Cubone+Digimon (01/11/2026, ChatGPT, não baixada):** a 1ª rodada (CRT, 404, CD-ROM, headphone, nuvem) foi reprovada pelo dono: "nada parece Cubone". Regra: manter a **silhueta** (lagarto-dino em pé, barrigudo, braços curtos, cauda grossa, crânio branco de verdade na cabeça, osso de verdade na mão) e só acrescentar o traço Digimon (marcas de circuito, cauda com ponta de pixels, olhos grandes). 5 versões, corpo inteiro: marrom/ciano (arquivos deletados), laranja-areia/verde (arquivos antigos), verde-musgo/magenta (corrompidos), castanho/azul (senhas), lavanda/dourado (fotos). Crânio-objeto (CRT, nuvem…) NÃO funciona; tem de ser crânio.
+
+## Hexsmith (01/11/2026)
+
+NPC e prédio novos da Forja: a Hexsmith reescreve o "código hex" do Soulmon (elementos de ataque/defesa/especial) com chips de essência.
+
+**Feito (arte + registro):**
+- Busto `src/assets/soulmon/npcs/npc-forja-hexsmith.png` — 768² RGBA alfa real, RECORTADO (cabeça + ombros) do #561 do banco (`higgsfield-banco/npcs-criaturas-evolucoes/personagens-femininas/2026-10-09_gpt_image_2_5_026a3d39.png`); não havia recorte pronto em `E:\Soulmon-assets`, `_gemini_out` nem `npcs/`.
+- Prédio `src/assets/soulmon/areas/lote-forja-hexsmith.png` — 512² alfa real (cantos 0), gerado no app ChatGPT (oficina de cristal hexagonal, bancada de chips de essência coloridos, runas flutuando, bigorna de cristal). Original 1254² em `E:\Soulmon-assets\out\forja-hexsmith\hexsmith-chatgpt-1.png`. Caixa opaca (alfa > 20) `[0.111, 0.037, 0.889, 0.965]`.
+- Lote `hexsmith` da Forja no tablado de CIMA À DIREITA (o único livre; espelho do Soulsmith), `left 76% / top 29.5% / width 46%`, miolo de toque na base para não roubar o Refúgio. Registro: `LOT_NPC_ART`/`LOT_NPC_VOICE` (`forja:hexsmith`), `BUILDING_INTRO_COPY['forja.hexsmith']`, `BuildingId` + `BUILDING_GATES` (Vínculo 2, espelho em `functions/api/_gates.js`), fora de `QUEST_BUILDINGS` (sem missão, como o Soulsmith).
+
+**Falta (outro agente):** ícones dos itens/chips do hex e a tela da Hexsmith (`src/components/hex*`, `src/utils/hex*`) — ponto de encaixe marcado `TODO hexsmith-ui` em `AreaView.tsx`; hoje o lote abre o `ForgeCard` (Soulsmith) provisório.
+**Pendente do dono:** Vínculo mínimo da Hexsmith (default 2) e aprovar a arte do prédio/busto.
+
+**Hexsmith — arte da UI e dos itens (01/11/2026, falta):** ícone por tipo de slot (coroa, amuleto, garra, couraça, luvas) e textura de circuito hex. Entram em `src/assets/soulmon/hex/index.ts` (`HEX_ART`, hoje vazio, cai nos glifos SVG de `components/hex/HexSlotGlyph.tsx`). Alfa real, colorido, sem moldura em volta do ícone (regra "ícone nunca dentro de box").
+
+**Hexsmith — nomes e assets da tela (01/11/2026, dono):** os itens se chamam **HEXes** ("HEX de Água"); os encaixes, **Portas** (EN: Ports). Fundo do mapa = **placa de circuito hex**.
+| Arquivo-alvo (`src/assets/soulmon/hex/`) | O que é |
+|---|---|
+| `mapa-portas.png` | placa de circuito hex, alfa real: hexágono central vazio para o Soulmon + 5 portas vazias (cima, meio-esq, meio-dir, baixo-esq, baixo-dir) ligadas por trilhas turquesa; cada porta com cor própria |
+| `slot-coroa.png` … `slot-luvas.png` | ícone de cada tipo de HEX (coroa de shards, amuleto hex, garra com circuito, couraça com runa, manoplas), pixel art com contorno escuro, sem box |
+| `forjar.png` | martelo de cristal batendo num chip hex com faíscas |
+Prompts completos no transcrito da sessão de 01/11; o ChatGPT desktop já tem uma folha de 6 ícones gerada (conversa mais recente), falta baixar e fatiar por alfa.

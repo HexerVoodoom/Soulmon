@@ -27,7 +27,7 @@ describe('#187: as áreas e os lotes', () => {
     expect(areaHint('forja', true)).not.toBe(areaHint('forja', false));
   });
   it('Forja = Soulsmith + Oficina + Caderno + Refúgio; Exploração = Passeio + as duas masmorras; Jogos e Arena sem as masmorras', () => {
-    expect(ids(forjaLots('pt-BR'))).toEqual(['caderno', 'ferreiro', 'oficina', 'refugio']);
+    expect(ids(forjaLots('pt-BR'))).toEqual(['caderno', 'ferreiro', 'hexsmith', 'oficina', 'refugio']);
     expect(ids(exploracaoLots('pt-BR'))).toEqual(['dungeon', 'fenda', 'passeio']);
     expect(ids(jogosLots('pt-BR'))).toEqual(['mente', 'salao']);
     expect(ids(arenaLots('pt-BR'))).toEqual(['duelo', 'guerra', 'torneio']);
@@ -91,6 +91,7 @@ describe('#187: os ids de prédio acompanham o lote, e o save antigo migra sozin
   });
   it('o Soulsmith segue sem missão/material (agora na Forja); Arquivo e Amigos seguem com missão', () => {
     expect(QUEST_BUILDINGS).not.toContain('forja.ferreiro');
+    expect(QUEST_BUILDINGS).not.toContain('forja.hexsmith'); // 01/11/2026: a Hexsmith não tem missão (como o Soulsmith)
     expect(QUEST_BUILDINGS).toEqual(expect.arrayContaining(['laboratorio.pet', 'laboratorio.amigos', 'forja.oficina', 'forja.caderno', 'forja.refugio', 'exploracao.fenda']));
   });
 });

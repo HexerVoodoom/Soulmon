@@ -19,6 +19,7 @@ import { bondLevelFor } from './_bond.js';
 import { sanitizeTalentPicks } from './_talents.js';
 import { sanitizeEquipment, sanitizeBitsOrigin } from './_equipment.js';
 import { sanitizeForge } from './_forge.js';
+import { sanitizeHexsmith } from './_hexsmith.js';
 import { sanitizeBuildingQuests } from './_buildingQuests.js';
 import { sanitizeDailyMissions, sanitizeFeats, sanitizeFirstTimes, sanitizeMissionsClaimed } from './_dailyMissions.js';
 import { sanitizeFocusLoot } from './_focusLoot.js';
@@ -328,6 +329,8 @@ async function onRequestBruto({ request, env }) {
     // fragmentos sao clampados. O bonus do duelo e recalculado daqui (`_duel.js`) e o teto de 5% limita um save forjado.
     if ('equipment' in state) state.equipment = sanitizeEquipment(state.equipment);
     if ('forge' in state) state.forge = sanitizeForge(state.forge);
+    // Hexsmith (01/11/2026): item fora do catalogo, slot forjado e posse repetida saem; o duelo le os overrides daqui (`_duel.js`).
+    if ('hexsmith' in state) state.hexsmith = sanitizeHexsmith(state.hexsmith);
     if ('bitsOrigin' in state) {
       const o = sanitizeBitsOrigin(state.bitsOrigin);
       if (o) state.bitsOrigin = o; else delete state.bitsOrigin;

@@ -6,6 +6,8 @@
  * Contrato com o `RogueDungeon`: `onResult(won)` é chamado UMA vez, só depois do jogador tocar em "Continuar" (ou sair da luta, o
  * que conta como derrota). A superfície NASCE MUDA: nenhum som novo aqui (os golpes tocam os sons que a `BattleStage` já tem).
  */
+import { useHexOverrides } from '../hooks/useHexOverrides';
+import { hexFamily, hexIdentity } from '../utils/hexsmith';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { TorcidaLayer } from './games/TorcidaKit';
@@ -56,8 +58,9 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   const lang = isPt ? 'pt' : 'en';
   const setup = useMemo(() => rogueFightSetup(run, step, combatant), [run, step, combatant]);
   const par = stageSkillsFor(skills, evolutionStage);
-  const ident = useMemo(() => fighterIdentity(par, petElement), [par, petElement]);
-  const family = dungeonFamily(par?.especial);
+  const hx = useHexOverrides(); // 🔣 Hexsmith: o que os itens equipados reescrevem
+  const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
+  const family = hexFamily(dungeonFamily(par?.especial), hx);
   const enemy = useMemo(() => {
     const wave = dungeonWaveOf(setup.seed, setup.ref.floor, combatant.level, evolutionStage);
     return wave[Math.min(wave.length - 1, setup.ref.slot)];
