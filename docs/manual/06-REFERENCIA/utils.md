@@ -2858,6 +2858,9 @@ dominância populacional — por isso ±15%. Régua nova:
 **Dono de:** o timer da Oficina do Foco e o registro dos "foquei" (04/10/2026). O tempo é um timestamp (`endAt`): `startPhase`, `pause`, `resume`, `remainingMs`, `settle`, `formatClock`; modos `FOCO_MODES` (25/5, 50/10), pausa longa a cada 4 focos no 25/5 (`isLongBreak`); `normalizeTimer`/`normalizeSessions` higienizam o storage; `recordSession` soma por dia (guarda `KEEP_DAYS`); `armEndNotice`/`fireEndNotice` avisam ao fim (notificação local só com permissão JÁ concedida, nunca a pede, + vibração curta).
 **Chaves:** `STORAGE_KEYS.FOCO_TIMER`, `FOCO_SESSIONS`, `FOCO_VIBRATE` — só do aparelho, fora do save. `isVibrateOn`/`setVibrateOn`: a vibração ao fim é LIGADA por padrão (interruptor em Configurações).
 
+### `src/utils/focusOrigin.ts`
+**Dono de:** a ORIGEM do que a Focus Workshop lista (01/11/2026): `focusTasksFor` (tarefas abertas + concluídas hoje + hábitos do dia como `habit:<id>`, `kind: 'habit'`) e `focusCheckTarget` (o ✓ da Oficina conclui a tarefa, o hábito simples ou todas as etapas abertas do hábito com etapas, via `handleCompleteSteps` no App). Puro. **Régua:** `components/play/OficinaOrigem.sync.render.test.tsx`.
+
 ### `src/utils/focoSessao.ts`
 **Dono de:** a máquina de estados PURA da sessão da Oficina (10/10/2026): `STEP_ORDER` (ordem das etapas), `toggleTwoMin`/`setQuadrant`/`setFrog`, `matrixOrder`, `buildPlan` (a lista organizada: dois minutos → sapo → quadrantes; "deixar de lado" sai), `startDump`/`dumpRemaining` (brain dump por timestamp), `saveSession`/`markDone`/`completeSession`/`canCompleteSession` (exige plano, nunca contagem de tarefas), `normalizeSession`/`normalizeHistory`/`recordDone`. Só LÊ `{id,name,completed}` das tarefas: nunca muda a ordem da Home. **Chaves:** `FOCO_WORKSHOP_PLAN` (sessão atual) e `FOCO_WORKSHOPS` (registro mínimo das concluídas) — aparelho, fora do save. **Régua:** `focoSessao.test.ts`.
 
