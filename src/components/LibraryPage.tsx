@@ -32,7 +32,7 @@ import { elementIcon } from '../utils/elementIconArt';
 import { dexElementName } from './ElementDex';
 import { readAllForms, recordForms, sanitizeForm, formStageLabel, isCurrentForm, type SeenForm } from '../utils/libraryForms';
 import { CoopPanel } from './CoopPanel';
-import { BestiaryCollection, StrayPlayersCollection } from './BestiaryCollection';
+import { BestiaryCollection } from './BestiaryCollection';
 import { NewBadge } from './LibraryNewBadge';
 import { libraryNewKeys, type LibraryAck } from '../utils/libraryNew';
 import type { StrayPlayerSeen } from '../utils/strayPlayers';
@@ -515,10 +515,8 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
               <h3 className="sm2-lib-s" style={{ margin: '0 0 6px', fontWeight: 600 }}>{isPt ? 'Selvagem' : 'Wild'}</h3>
               <BestiaryCollection seen={bestiary} mode="wild" language={language} isNew={novos.bestiary} />
               <h3 className="sm2-lib-s" style={{ margin: '16px 0 6px', fontWeight: 600 }}>{isPt ? 'Desgarrado' : 'Stray'}</h3>
-              <BestiaryCollection seen={bestiary} mode="stray" language={language} isNew={novos.bestiary} />
-              {/* §213: Soulmon de jogadores ausentes há 90+ dias que a pessoa já viu (no mundo aparecem como selvagens). */}
-              <h3 className="sm2-lib-s" style={{ margin: '16px 0 6px', fontWeight: 600 }}>{isPt ? 'Desgarrados de jogadores' : 'Strays from players'}</h3>
-              <StrayPlayersCollection seen={strayPlayersSeen} language={language} isNew={novos.strays} />
+              {/* 01/11/2026 (dono): desgarrado de jogador (§213) junto, sem distinção. */}
+              <BestiaryCollection seen={bestiary} mode="stray" language={language} isNew={novos.bestiary} players={strayPlayersSeen} playersNew={novos.strays} />
             </>
           )}
           {libTab === 'element' && <ElementDex defeated={defeatedElements} language={language} isNew={novos.elements} />}
