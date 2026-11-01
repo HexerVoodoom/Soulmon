@@ -75,7 +75,6 @@ export function measureNpcTopTrim(src: string): Promise<number> {
  */
 export interface NpcFrame { zoom: number; underSheet: number; flushLeft: boolean }
 export const NPC_FRAME_OVERRIDES: Record<string, NpcFrame> = {
-  'forja:hexsmith': { zoom: 1.22, underSheet: 0.08, flushLeft: true },
 };
 export function npcFrameFor(areaId?: string, lotId?: string | null): NpcFrame | undefined {
   return areaId && lotId ? NPC_FRAME_OVERRIDES[`${areaId}:${lotId}`] : undefined;
