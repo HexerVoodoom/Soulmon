@@ -24,7 +24,7 @@ abrir o jogo com uma sequência narrativa curta que ensina o laço central:
 | D7 | O que se gera ⚰️ (substituído por D18) | **BB na criação; rookie sob demanda**, só quando o BB está prestes a evoluir (paga a 2ª imagem só de quem voltou). |
 | D8 | Free depois do BB | **Evolui até rookie e trava**; dali a evolução pede a compra. |
 | D9 | Preço | Desbloqueio completo **US$ 3,99 / R$ 19,90** (hoje R$ 29,90 / US$ 6,99). ⚰️ Era US$ 1,99; revisto no mesmo dia pela conta do §6.1. |
-| D17 | Custo do pagante | **Formas sob demanda**: só o galho que o jogador alcança é gerado (pior caso cai de 15 para ~8 imagens). |
+| D17 | Custo do pagante | **Formas sob demanda**: só o galho que o jogador alcança é gerado (pior caso cai de 15 para ~8 imagens). **Implementado** (ver §6.2). |
 | D10 | Iniciais prontos | **Continuam no modo DEMO** (e como reserva quando a geração falhar). |
 | D11 | "Você fez de verdade?" | Pergunta **sem castigo**: "ainda não" → o ancião espera ("vamos juntos, faço companhia"); "sim" → avança. |
 | D12 | Pular | **Pula a fala, não as etapas**. Puzzle, tarefa e duelo são obrigatórios; "Rever a história" nas Configurações. |
@@ -299,7 +299,7 @@ O preço decidido (D9, US$ 3,99) segue; se quiser baixar, a conta agora permite.
 
 - **D8**: `src/utils/evolutionPaywall.ts` (fonte única) chamada em `canEvolve`, `handleEvolve` e `handleEvolveRequest` (App.tsx). Grátis evolui BB→rookie; do rookie em diante pede `accountTier:'paid'`. Convite `UnlockNudge` motivo `evolve-free` na aba Evolução (copy EN+PT), mesmo funil de telemetria de `evolution`. Não existe validação de evolução no servidor (é 100% cliente); o espelho é `generate-sprite.js` (402 `paid-tier-required`), coberto por teste de paridade.
 - **D9**: `FULL_UNLOCK_PRICE_LABEL(_USD)` viram R$ 19,90 / US$ 3.99 com o interruptor ligado (`*_VELADO` em `monetization.ts`). Play Console e `termos.html` são do dono (ver PERGUNTAS-DO-DONO).
-- **D17 (não implementado)**: as formas são geradas hoje por `useRegenAparencia`/`spriteTrigger.ts` (`spriteBatch`/`birthBatch`: lote da forma-destino + próximas) chamando `functions/api/generate-sprite.js` (exige conta paga, cap por forma e vitalício). Ponto de troca para "sob demanda": `spriteBatch` em `src/utils/spriteTrigger.ts`, limitando o lote à forma que o jogador alcança (`targetFormId`) em vez de pré-gerar o galho; fica para uma tarefa própria por tocar custo/caps do servidor.
+- **D17 (implementado; confirmado pelo dono em 01/11/2026)**: já está no código, sem tarefa pendente. O nascimento gera só o `rookie` (`birthBatch`, D-G5b) e a forma seguinte só é gerada na incubação, quando o jogador fica apto (`spriteBatch`, ocasião C): com o cristal (`crystalFormId`), exatamente a forma que o toque escolheu; sem ele, a forma-destino. Em empate de galho o lote cobre os líderes empatados (`vesperForms`, **até 3 formas**) — decisão do dono: **mantém assim**, porque o empate só se resolve no toque da cerimônia. O servidor (`generate-sprite.js`: conta paga, cap por forma e vitalício) não mudou.
 ## Cenas 0 e 1 (implementação, ob-cena0)
 
 - Cena 0 (D1): com `ONBOARDING_VELADO`, a apresentação (AMBRA_INTRO) e o passo do nome mostram o ancião (`velado-anciao`) com as falas `ROTEIRO.c0`, e o bichinho do oráculo (placeholder `dormant`) ao lado como o Soulmon dele. Mesmas perguntas e resultado. Desligado = Ambra/oráculo atuais.
