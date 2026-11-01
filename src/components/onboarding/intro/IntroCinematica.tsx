@@ -5,7 +5,7 @@ import { STORAGE_KEYS } from '../../../utils/storageKeys';
 import { onboardingVeladoLigado } from '../sequencia/flag';
 import { PLANOS_INTRO } from './copy';
 
-/** O vídeo ainda não existe: com ele ausente o glob devolve {} e a tela fica preta com as legendas. */
+/** Sem o arquivo o glob devolve {} e a tela fica preta só com as legendas (fallback). */
 const VIDEOS = import.meta.glob('../../../assets/soulmon/intro/intro-parede.mp4', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 const VIDEO_SRC: string | undefined = Object.values(VIDEOS)[0];
 
@@ -29,10 +29,17 @@ export function IntroCinematica({ language, onDone, videoSrc = VIDEO_SRC }: Prop
     return () => clearTimeout(t);
   }, [i, onDone]);
 
+  /** Com vídeo, o relógio dele manda: realinha a legenda ao currentTime (carregamento lento não dessincroniza). */
+  const sync = (t: number) => {
+    let acc = 0, k = 0;
+    for (; k < PLANOS_INTRO.length - 1; k++) { acc += PLANOS_INTRO[k].s; if (t < acc) break; }
+    if (k !== i) setI(k);
+  };
+
   const plano = PLANOS_INTRO[i];
   return (
     <div data-testid="intro-cinematica" style={{ position: 'fixed', inset: 0, zIndex: 600, background: '#000', color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center' }}>
-      {videoSrc && <video src={videoSrc} autoPlay muted playsInline style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
+      {videoSrc && <video src={videoSrc} autoPlay muted playsInline onTimeUpdate={e => sync(e.currentTarget.currentTime)} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
       <p data-testid="intro-legenda" data-plano={i + 1} aria-live="polite" style={{ position: 'relative', margin: 0, padding: '0 24px 96px', textAlign: 'center', fontSize: 18, textShadow: '0 1px 4px #000' }}>
         {isPt ? plano.pt : plano.en}
       </p>

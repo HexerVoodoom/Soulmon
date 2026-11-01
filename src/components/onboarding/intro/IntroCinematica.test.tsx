@@ -34,6 +34,21 @@ describe('intro pré-login', () => {
     expect(introVista()).toBe(true);
   });
 
+  it('tempos batem com o vídeo real: 66,5 s e início de cada plano pelos clipes de 5,5 s', () => {
+    expect(PLANOS_INTRO.reduce((a, p) => a + p.s, 0)).toBe(66.5);
+    const inicios: number[] = []; let acc = 0;
+    for (const p of PLANOS_INTRO) { inicios.push(acc); acc += p.s; }
+    expect(inicios).toEqual([0, 5.5, 11, 22, 27.5, 38.5, 44, 55, 60.5]);
+  });
+
+  it('com vídeo, a legenda segue o currentTime', () => {
+    const { container } = render(<IntroCinematica language="en-US" onDone={() => {}} videoSrc="x.mp4" />);
+    const v = container.querySelector('video') as HTMLVideoElement;
+    Object.defineProperty(v, 'currentTime', { value: 30, configurable: true });
+    fireEvent.timeUpdate(v);
+    expect(screen.getByTestId('intro-legenda').getAttribute('data-plano')).toBe('5');
+  });
+
   it('Pular chama onDone na hora', () => {
     const onDone = vi.fn();
     render(<IntroCinematica language="pt-BR" onDone={onDone} />);
