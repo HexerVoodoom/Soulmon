@@ -853,6 +853,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Quem chama:** só `utils/fxFacing.ts`.
 **Régua:** `src/utils/fxFacing.contract.test.ts` (reprova tabela velha).
 
+### `src/utils/spriteFeetTable.ts`
+**Dono de:** a tabela GERADA de onde fica o PÉ de cada sprite de criatura (`node scripts/sprite-feet.mjs` mede o último pixel opaco, alfa > 16, dos PNG de `lines/`, `bosses/`, `dino/` etc.; não editar à mão). Chave = nome do arquivo sem extensão; valor = base visível em milésimos da altura. Existe porque os PNG têm até ~25% de linhas transparentes embaixo e o layout ancorava a sombra pela caixa — o bicho flutuava acima dela.
+**Exports:** `SPRITE_FEET_TABLE`.
+**Quem chama:** só `utils/spriteScale.ts` (`knownBottomOf` / `groundDropPx`); a arte que chega por URL (sprite do jogador) é medida em runtime pelo canvas.
+**Régua:** `src/utils/spriteFeet.contract.test.ts` (remede os PNG e falha se algum sprite do roster ficar acima da tolerância).
+
 ### `src/utils/combatArt.ts` · `src/utils/combatArtElementoMedias.data.ts`
 **Dono de:** a arte da CENA de combate por elemento (rodada 2 do Higgsfield, 04/10/2026, `assets/soulmon/combate/`): 17 cenários 9:16 (`bg-<base>.png`, 360×640 ampliados com `pixelated` — a 1080×1920 o WebP passava do teto de 400 KB), 17 escudos levantados (`escudo-<base>.png`, 128²) e a plataforma sob os pés (`sombra-clara`/`sombra-escura`, 256×96). Só os 17 base têm arte: derivado → 1º componente (`DERIVED_ELEMENT_PAIRS`), `planta` → `vida`, `industrial` → `marcial`; `neutro` → `undefined`.
 **Exports:** `combatBaseElement(id)` · `combatSceneBg(id)` (`url(…) center/cover <cor média>` ou `undefined`) · `combatShield(id)` · `combatGlowColor(id)` (hex do brilho do especial = cor do elemento; `undefined` sem assinatura) · `COMBAT_BG_COUNT`, `COMBAT_SHIELD_COUNT`.

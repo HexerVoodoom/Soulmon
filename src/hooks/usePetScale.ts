@@ -1,5 +1,5 @@
 import { useEffect, useReducer } from 'react';
-import { feetShiftPx, getPetSizeSeed, measureVisibleFill, petScaleFor, petScaleStyle, subscribeFill, visibleBottomOf, visibleFillOf } from '../utils/spriteScale';
+import { feetShiftPx, groundDropPx, getPetSizeSeed, measureVisibleFill, petScaleFor, petScaleStyle, subscribeFill, visibleBottomOf, visibleFillOf } from '../utils/spriteScale';
 
 /**
  * Fator de escala do bicho do jogador nesta tela (dono: `utils/spriteScale.ts`).
@@ -33,4 +33,18 @@ export function useFeetShift(url: string | undefined | null, scale: number | und
     return subscribeFill(bump);
   }, [url]);
   return feetShiftPx(visibleBottomOf(url), scale ?? 1, size);
+}
+
+/**
+ * Quanto (px, + = para baixo) descer o sprite da Home para o PÉ visível pousar na linha do chão/sombra (a borda de baixo da
+ * caixa). A tabela do PNG empacotado responde no primeiro quadro; sprite de URL (jogador) entra assim que o canvas mede.
+ */
+export function useGroundDrop(url: string | undefined | null, scale: number, size: number): number {
+  const [, bump] = useReducer((n: number) => n + 1, 0);
+  useEffect(() => {
+    if (!url) return;
+    void measureVisibleFill(url);
+    return subscribeFill(bump);
+  }, [url]);
+  return groundDropPx(url, scale, size);
 }
