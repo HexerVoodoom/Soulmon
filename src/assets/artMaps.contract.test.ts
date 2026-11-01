@@ -28,6 +28,7 @@ import { ACHIEVEMENT_IDS } from '../utils/achievements';
 import { emblemArt, EMBLEM_COUNT } from '../utils/emblemArt';
 import { DUNGEON_LINE_NAMES } from '../utils/sprites';
 import { lineIcon, LINE_ICON_COUNT } from '../utils/lineIcons';
+import { RESET_POINTS_EMOJI } from '../utils/betaResetGrant';
 import { LINE_FULL_ART, lineFullSprite } from '../utils/lineFullArt';
 import { DUELO_OPONENTE_ART, dueloOponenteArt } from '../utils/dueloArt';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
@@ -118,7 +119,7 @@ describe('itens — comidas e especiais ↔ ITEM_ART', () => {
       ...Object.values(FOOD_BY_CATEGORY).map(f => f.emoji),
       ...Object.values(FOOD_BY_CATEGORY).map(f => premiumKey(f.emoji)), // comida premium (★) reusa a arte da base
       ...ALL_ELEMENT_IDS.map(potionKey), // Poção de Elemento: a arte é o ícone do elemento
-      ...Object.values(CHIP_EMOJI), ...Object.values(BIG_CHIP_EMOJI), PRISM_CHIP_EMOJI, TRIPLE_CHIP_EMOJI, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, SPARK_ITEM_EMOJI,
+      ...Object.values(CHIP_EMOJI), ...Object.values(BIG_CHIP_EMOJI), PRISM_CHIP_EMOJI, TRIPLE_CHIP_EMOJI, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, SPARK_ITEM_EMOJI, RESET_POINTS_EMOJI, // Zerador de Pontos do beta (betaResetGrant)
     ]);
     const orfaos = Object.keys(ITEM_ART).filter(k => !conhecidos.has(k));
     expect(orfaos).toEqual([]);
