@@ -42,7 +42,7 @@ há um teste (`footgun 9`) que reprova a cópia.
    público" é punido por qualquer som não solicitado, e o app tem de funcionar **100% mudo** —
    som nunca é o único canal de nada. A fronteira da D11 é o **pacote inteiro**: ela mora no
    chamador tanto quanto em `sounds.ts`.
-2. **S2 — a trilha nasce desligada** e só começa por gesto. (⚠️ **S17, 07/10/2026, decisão do dono:** a música-TEMA é a ÚNICA exceção — a preferência nasce LIGADA; o autoplay continua proibido: ela só começa no primeiro gesto da sessão. Música é uma por vez — ⚠️ **emendado em 11/10/2026 (§10):** as duas preferências agora CONVIVEM, o diretor alterna por superfície com crossfade e nunca soam juntas.) *Porque* autoplay viola a D11 por
+2. **S2 — a trilha nasce desligada** e só começa por gesto. (⚠️ **S17, 07/10/2026, decisão do dono:** a música-TEMA é a ÚNICA exceção — a preferência nasce LIGADA; o autoplay continua proibido: ela só começa no primeiro gesto da sessão. ⚠️ **02/11/2026, decisão do dono:** a trilha da intro "A Parede" também nasce LIGADA (respeita o interruptor global); o navegador só libera o áudio no 1º gesto, e o botão da intro desliga/religa. Música é uma por vez — ⚠️ **emendado em 11/10/2026 (§10):** as duas preferências agora CONVIVEM, o diretor alterna por superfície com crossfade e nunca soam juntas.) *Porque* autoplay viola a D11 por
    extensão: música contínua não é presença nem confirmação de ação.
 3. **S3 — ≤ −16 LUFS integrado e true peak ≤ −1 dBTP** (ITU-R BS.1770 / EBU R 128). *Porque* é o
    único alvo com norma citada; a alternativa em dBFS mistura régua de pico com régua de
