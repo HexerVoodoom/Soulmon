@@ -55,7 +55,10 @@ export function IntroCinematica({ language, onDone, videoSrc = VIDEO_SRC }: Prop
   return (
     <div data-testid="intro-cinematica" style={{ position: 'fixed', inset: 0, zIndex: 600, background: '#000', color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center' }}>
       {videoSrc && <video src={videoSrc} autoPlay muted playsInline onTimeUpdate={e => sync(e.currentTarget.currentTime)} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
-      <p data-testid="intro-legenda" data-plano={i + 1} aria-live="polite" style={{ position: 'relative', margin: 0, padding: '0 24px 96px', textAlign: 'center', fontFamily: 'var(--sm-font-pixel)', fontSize: 24, lineHeight: 1.5, letterSpacing: '0.02em', textShadow: '0 2px 6px #000' }}>
+      <style>{'@keyframes intro-leg-in{from{opacity:0}to{opacity:1}}@keyframes intro-leg-out{from{opacity:1}to{opacity:0}}'}</style>
+      <p key={i} data-testid="intro-legenda" data-plano={i + 1} aria-live="polite"
+        style={{ position: 'absolute', inset: 0, margin: 0, padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', pointerEvents: 'none', fontSize: 30, lineHeight: 1.4, textShadow: '0 2px 8px #000',
+          animation: `intro-leg-in 0.9s ease-out both, intro-leg-out 0.9s ease-in ${Math.max(0, plano.s - 0.9)}s forwards` }}>
         {isPt ? plano.pt : plano.en}
       </p>
       {globalLigado && (
