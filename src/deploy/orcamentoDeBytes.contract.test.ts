@@ -212,6 +212,7 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // 01/11/2026: 190_071 -> 199_237 (+9 KB), build limpo da v244: selo NEW em imagem, aviso de recuperação do desgarrado e
   // estilos que entraram na main pelas outras frentes do dia.
   'index.css': 199_237,
+  'intro-parede.mp4': 4_400_000, // 02/11/2026: cinemática pré-login de 66 s (PR #477). Recomprimida de 24 MB para 4,3 MB (540x960, crf 35, sem áudio); 800 KB exigiria cortar duração.
   'bg-forja.webp': 424_334, // 29/10/2026: fundo da Forja (pixel art denso) 14 KB acima do teto; borrar para caber estragaria o pixel
   // ⚰️ 'evolution-bg.mp4' (3,7 MB) saiu em 31/10/2026: a cerimônia da evolução foi refeita em CSS (o cristal, REGISTRO §208) e o vídeo foi apagado.
 };
