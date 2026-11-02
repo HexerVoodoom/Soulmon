@@ -14,27 +14,29 @@ vi.mock('../../../utils/musica', () => ({ entrarNaSuperficie: vi.fn(() => vi.fn(
 import * as musica from '../../../utils/musica';
 import { definirMusicaLigada } from '../../../utils/audioBus';
 
-describe('trilha da intro (S2/D11)', () => {
-  it('nasce desligada: nada pedido até o gesto; o botão liga e desliga e a saída limpa', () => {
+describe('trilha da intro (nasce ligada por decisão do dono)', () => {
+  it('nasce ligada: pede a superfície ao montar; o botão desliga e religa e a saída limpa', () => {
+    definirMusicaLigada(true);
     const sair = vi.fn();
     vi.mocked(musica.entrarNaSuperficie).mockClear().mockReturnValue(sair);
     const { unmount } = render(<IntroCinematica language="pt-BR" onDone={() => {}} />);
-    expect(musica.entrarNaSuperficie).not.toHaveBeenCalled();
-    const b = screen.getByTestId('intro-som');
-    expect(b.getAttribute('aria-pressed')).toBe('false');
-    fireEvent.click(b);
     expect(musica.entrarNaSuperficie).toHaveBeenCalledWith('intro');
+    const b = screen.getByTestId('intro-som');
     expect(b.getAttribute('aria-pressed')).toBe('true');
     fireEvent.click(b);
     expect(sair).toHaveBeenCalledTimes(1);
+    expect(b.getAttribute('aria-pressed')).toBe('false');
     fireEvent.click(b);
+    expect(b.getAttribute('aria-pressed')).toBe('true');
     unmount();
-    expect(sair).toHaveBeenCalledTimes(2); // desmontar fecha o 3º gesto aberto
+    expect(sair).toHaveBeenCalledTimes(2);
   });
   it('interruptor global de música desligado: sem botão', () => {
     definirMusicaLigada(false);
+    vi.mocked(musica.entrarNaSuperficie).mockClear();
     render(<IntroCinematica language="en-US" onDone={() => {}} />);
     expect(screen.queryByTestId('intro-som')).toBeNull();
+    expect(musica.entrarNaSuperficie).not.toHaveBeenCalled();
   });
 });
 
