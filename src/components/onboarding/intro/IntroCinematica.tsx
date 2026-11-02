@@ -61,7 +61,7 @@ export function IntroCinematica({ language, onDone, videoSrc = VIDEO_SRC }: Prop
       {globalLigado && (
         <button type="button" data-testid="intro-som" aria-pressed={som} onClick={alternarSom}
           aria-label={som ? (isPt ? 'Desligar o som' : 'Turn sound off') : (isPt ? 'Ligar o som' : 'Turn sound on')}
-          style={{ position: 'absolute', top: 16, left: 16, background: 'transparent', color: '#fff', border: '1px solid #fff8', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', opacity: 0.85, fontSize: 18, lineHeight: 1 }}>
+          style={{ position: 'absolute', top: 16, left: 16, background: 'transparent', color: '#fff', border: '1px solid #fff8', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', opacity: 0.85, font: '18px/1 system-ui, sans-serif' }}>
           {som ? '🔊' : '🔇'}
         </button>
       )}
