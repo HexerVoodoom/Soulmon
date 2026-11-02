@@ -32,6 +32,8 @@ export interface DayGoalsModalProps {
   /** DEMO: atividades do catálogo oferecidas pré-preenchidas (desmarcadas). Nada é criado sem o toque; as marcadas viram atividade via `onAcceptSuggestions`, que devolve os ids criados. */
   suggestions?: readonly CatalogItem[];
   onAcceptSuggestions?: (items: CatalogItem[]) => string[];
+  /** "Comprometer-me com uma tarefa" (menu do +): o MESMO modal, mas o pai já filtrou só o que NÃO foi comprometido. Confirmar só ACRESCENTA; sem oferta reduzida, sem sugestões, sem "Hoje não". */
+  mode?: 'add';
   /** Modo "Hoje" (metas + compromisso). */
   fuse?: {
     /** O que o motor do check-in sabe: ordem do foco (ontem primeiro) e a oferta reduzida. */
@@ -45,7 +47,7 @@ export interface DayGoalsModalProps {
   };
 }
 
-export function DayGoalsModal({ candidates, language, initiallyPicked = [], onConfirm, onClose, fuse, suggestions = [], onAcceptSuggestions }: DayGoalsModalProps) {
+export function DayGoalsModal({ candidates, language, initiallyPicked = [], onConfirm, onClose, fuse, suggestions = [], onAcceptSuggestions, mode }: DayGoalsModalProps) {
   const isPt = language === 'pt-BR';
   const [picked, setPicked] = useState<ReadonlySet<string>>(() => new Set(initiallyPicked));
   const [accepted, setAccepted] = useState<readonly string[]>([]);
@@ -63,8 +65,9 @@ export function DayGoalsModal({ candidates, language, initiallyPicked = [], onCo
     const ids = [...candidates.filter(c => picked.has(c.id)).map(c => c.id), ...created];
     onConfirm(ids, fuse ? dayPlanFocusIds(ids, fuse.taskIds, fuse.plan, MAX_DAILY_FOCUS) : []);
   };
-  const tiny = fuse ? habits.filter(h => (fuse.plan.tinyOffer ?? []).includes(h.id)) : [];
-  const struggle = fuse ? tinyOfferIntro(fuse.soulStruggle, isPt) : null;
+  const adding = mode === 'add';
+  const tiny = fuse && !adding ? habits.filter(h => (fuse.plan.tinyOffer ?? []).includes(h.id)) : [];
+  const struggle = fuse && !adding ? tinyOfferIntro(fuse.soulStruggle, isPt) : null;
 
   const group = (key: string, label: string, items: readonly DayPlanCandidate[]) => items.length === 0 ? null : (
     <section key={key} data-day-goals-group={key} aria-label={label} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -82,7 +85,7 @@ export function DayGoalsModal({ candidates, language, initiallyPicked = [], onCo
   return (
     <ModalSheet
       open
-      title={fuse ? (isPt ? 'Hoje' : 'Today') : (isPt ? 'Metas de hoje' : "Today's goals")}
+      title={adding ? (isPt ? 'Comprometer-me com uma tarefa' : 'Commit to a task') : fuse ? (isPt ? 'Hoje' : 'Today') : (isPt ? 'Metas de hoje' : "Today's goals")}
       onClose={onClose}
       dismissOnBackdrop={false}
       placement="center"
@@ -93,7 +96,7 @@ export function DayGoalsModal({ candidates, language, initiallyPicked = [], onCo
           <button type="button" data-day-goals-confirm onClick={confirm} style={{ ...sm2Button('primary'), width: '100%' }}>
             {isPt ? 'Confirmar' : 'Confirm'}
           </button>
-          {fuse && (
+          {fuse && !adding && (
             <button type="button" data-day-goals-skip onClick={onClose} style={{ ...sm2Button('outline'), width: '100%', marginTop: 8 }}>
               {isPt ? 'Hoje não, obrigado' : 'Not today, thanks'}
             </button>
@@ -102,7 +105,11 @@ export function DayGoalsModal({ candidates, language, initiallyPicked = [], onCo
       )}
     >
       <p style={sm2Hint}>
-        {fuse
+        {adding
+          ? (isPt
+            ? 'Marque o que você quer fazer hoje. O que já está no seu compromisso não aparece aqui e não sai de lá.'
+            : "Check what you want to do today. What you already committed to isn't listed here and stays committed.")
+          : fuse
           ? (isPt
             ? `Marque o que você quer fazer hoje. As tarefas marcadas viram seu foco (até ${MAX_DAILY_FOCUS}).`
             : `Check what you want to do today. Checked tasks become your focus (up to ${MAX_DAILY_FOCUS}).`)
@@ -112,7 +119,7 @@ export function DayGoalsModal({ candidates, language, initiallyPicked = [], onCo
       </p>
       {group('habits', isPt ? 'Hábitos' : 'Habits', habits)}
       {group('tasks', isPt ? 'Tarefas' : 'Tasks', tasks)}
-      {suggestions.length > 0 && (
+      {!adding && suggestions.length > 0 && (
         <section data-day-goals-group="suggestions" aria-label={isPt ? 'Sugestões' : 'Suggestions'} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
           <h3 style={{ ...sm2Hint, margin: 0, letterSpacing: '0.1em', textTransform: 'uppercase', fontWeight: 600 }}>{isPt ? 'Sugestões' : 'Suggestions'}</h3>
           {suggestions.map(i => (

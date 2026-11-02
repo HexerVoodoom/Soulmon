@@ -157,6 +157,22 @@ export function confirmDayPlan(prev: DayPlan | undefined, todayIso: string, pick
   return { day: todayIso, offered, picked: [...new Set(picked)].filter(id => offered.includes(id)), confirmed: true };
 }
 
+/** Ids já comprometidos HOJE (plano do dia de hoje, marcados). Plano de outro dia = ninguém comprometido. */
+export function committedIds(plan: DayPlan | undefined, todayIso: string): ReadonlySet<string> {
+  return plan && plan.day === todayIso ? new Set(plan.picked) : EMPTY;
+}
+
+/** "Comprometer-me com uma tarefa": só o que ainda NÃO foi comprometido hoje. Quem já está no plano não volta à lista. */
+export function uncommittedCandidates(plan: DayPlan | undefined, todayIso: string, candidates: readonly DayPlanCandidate[]): DayPlanCandidate[] {
+  const done = committedIds(plan, todayIso);
+  return candidates.filter(c => !done.has(c.id));
+}
+
+/** ACRESCENTA compromissos ao plano de hoje — nunca remove um já comprometido (une `picked`; `confirmDayPlan` substituiria). */
+export function addToDayPlan(prev: DayPlan | undefined, todayIso: string, ids: readonly string[]): DayPlan {
+  return confirmDayPlan(prev, todayIso, [...committedIds(prev, todayIso), ...ids]);
+}
+
 /** O que o motor do check-in (`checkInPlan`) sabe e interessa à ordem do foco: ids, nada mais. */
 export interface DayPlanFocusSource {
   carryOver?: readonly { id: string }[];

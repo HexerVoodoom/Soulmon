@@ -139,3 +139,22 @@ describe('DayGoalsModal em modo "Hoje" (fuse)', () => {
     expect(onConfirm).not.toHaveBeenCalled();
   });
 });
+
+describe('DayGoalsModal mode="add" (Comprometer-me com uma tarefa)', () => {
+  it('título próprio, só as candidatas recebidas, sem "Hoje não" e sem sugestões; confirmar devolve só o marcado', () => {
+    const onConfirm = vi.fn();
+    renderWithCss(<DayGoalsModal mode="add" candidates={[CANDS[2]]} language="pt-BR" onConfirm={onConfirm}
+      onClose={vi.fn()} fuse={{ plan: {}, taskIds: new Set(['t1']) }} suggestions={[{ id: 'x', emoji: 'x', name: { pt: 'Sug', en: 'Sug' } } as never]} />);
+    expect(screen.getByText('Comprometer-me com uma tarefa')).toBeTruthy();
+    expect(screen.getAllByRole('checkbox')).toHaveLength(1);
+    expect(screen.queryByText('Hoje não, obrigado')).toBeNull();
+    expect(screen.queryByText('Sug')).toBeNull();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Pagar conta' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    expect(onConfirm).toHaveBeenLastCalledWith(['t1'], ['t1']);
+  });
+  it('EN', () => {
+    renderWithCss(<DayGoalsModal mode="add" candidates={CANDS} language="en-US" onConfirm={vi.fn()} onClose={vi.fn()} />);
+    expect(screen.getByText('Commit to a task')).toBeTruthy();
+  });
+});
