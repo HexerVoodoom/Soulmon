@@ -289,7 +289,7 @@ import {
 } from './utils/rituals';
 import {
   triageQueue, toOpen, toSomeday, drop, postpone, isHaunted, isActive, restore,
-  shrink, effortOf, focusComplete, plannedEffort, isOvercommitted, completeTaskStep,
+  shrink, effortOf, focusComplete, setFocus, focusTasks, plannedEffort, isOvercommitted, completeTaskStep,
 } from './utils/taskTriage';
 import { isPremiumKey } from './utils/premiumFood';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './components/form/FormKit';
@@ -301,7 +301,7 @@ import {
 import { normalizeSchedule, weekDaysForSchedule, HABIT_WEIGHT, MAX_DAILY_FOCUS, cheerReached } from './types/taskModel';
 import { equilibrarSemana, valeEquilibrar } from './utils/weekBalance';
 import { needsCatalogOnboarding, markCatalogOnboardingSeen, onboardingProfileFrom } from './utils/catalogOnboarding';
-import { dayPlanView, dayPlanCandidates, dayPlanInvite, needsDayPlan, migrateDayPlan, showDayPlan, confirmDayPlan, isHiddenByPlan } from './utils/dayPlan';
+import { dayPlanView, dayPlanCandidates, dayPlanInvite, needsDayPlan, migrateDayPlan, showDayPlan, confirmDayPlan, isHiddenByPlan, uncommittedCandidates, addToDayPlan } from './utils/dayPlan';
 import { activitiesFromCatalogChoice, withoutExisting } from './utils/catalogChoice';
 import { loadCatalog } from './data/catalogoCarga';
 import { pickCatalogLevelInviteCandidate, applyLevelChange } from './utils/catalogLevelSignal';
@@ -933,6 +933,8 @@ export default function App() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [createInitialKind, setCreateInitialKind] = useState<'task' | 'habit'>('habit');
   const [createChoiceOpen, setCreateChoiceOpen] = useState(false);
+  /** "Comprometer-me com uma tarefa" (3ª opção do +): o modal do começo do dia só com o que ainda não foi comprometido hoje. */
+  const [commitMoreOpen, setCommitMoreOpen] = useState(false);
   // F4 do catálogo: o CTA de "+" abre o NAVEGADOR primeiro (docs/PLANO-CATALOGO-ATIVIDADES.md
   // §5); "Algo que não está aqui?" dentro dele é que abre o `CreateModal`
   // legado (inalterado) para criar do zero/tarefa avulsa.
@@ -2263,6 +2265,11 @@ export default function App() {
     () => dayPlanCandidates(gameState as any, new Date()),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [gameState.activities, gameState.tasks, gameState.habitRhythms, dayPlanToday],
+  );
+  /** O que ainda NÃO está comprometido hoje: alimenta a 3ª opção do + e o modal dela. */
+  const uncommittedNow = useMemo(
+    () => uncommittedCandidates(gameState.dayPlan, dayPlanToday, dayPlanCandidatesNow),
+    [gameState.dayPlan, dayPlanToday, dayPlanCandidatesNow],
   );
   // DEMO: o "Plan my day" abre com sugestões do catálogo (recomendador + foco do jogador); fora da demo, nada muda.
   // O módulo puxa o catálogo inteiro (~31 KB): fora do chunk de entrada, só a demo carrega (`import()`).
@@ -9038,8 +9045,46 @@ export default function App() {
           <button type="button" data-create-choice="task" style={sm2Button('outline')} onClick={() => {
             setCreateChoiceOpen(false); setCreateInitialKind('task'); setCreateModalOpen(true);
           }}>{language === 'pt-BR' ? 'Nova tarefa (pontual ou em dias específicos)' : 'New task (one-off or on specific days)'}</button>
+          {/* Só aparece com algo ainda NÃO comprometido hoje (e depois do onboarding). */}
+          {dayPlanActive && uncommittedNow.length > 0 && (
+            <button type="button" data-create-choice="commit" style={sm2Button('outline')} onClick={() => {
+              setCreateChoiceOpen(false); setCommitMoreOpen(true);
+            }}>{language === 'pt-BR' ? 'Comprometer-me com uma tarefa' : 'Commit to a task'}</button>
+          )}
         </div>
       </ModalSheet>
+
+      {commitMoreOpen && uncommittedNow.length > 0 && (
+        <Suspense fallback={null}>
+          <DayGoalsModal
+            mode="add"
+            candidates={uncommittedNow}
+            language={language}
+            fuse={{
+              plan: checkInPlan(gameState as any, new Date()),
+              taskIds: new Set(gameState.tasks.map(t => String(t.id))),
+            }}
+            /* ACRESCENTA ao compromisso do dia: o plano é a união (nunca remove), o foco novo soma ao que já era foco
+               (até MAX_DAILY_FOCUS, o corte é de `setFocus`). Sem Vínculo nem missão de novo: o check-in do dia é um só. */
+            onConfirm={(ids, focusIds) => {
+              const dia = playerDayKey(new Date(), gameState.playerDayTz);
+              const hoje = playerDayIso(new Date(), gameState.playerDayTz);
+              if (ids.length > 0) {
+                setGameState(prev => {
+                  const jaFoco = focusTasks(prev.tasks as any[], dia).map(t => String(t.id));
+                  return {
+                    ...prev,
+                    dayPlan: addToDayPlan(prev.dayPlan, hoje, ids),
+                    tasks: setFocus(prev.tasks as any, [...jaFoco, ...focusIds], dia) as any,
+                  } as any;
+                });
+              }
+              setCommitMoreOpen(false);
+            }}
+            onClose={() => setCommitMoreOpen(false)}
+          />
+        </Suspense>
+      )}
 
       {createModalOpen && (
         <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}><CreateModal
