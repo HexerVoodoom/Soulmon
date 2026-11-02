@@ -8711,8 +8711,8 @@ export default function App() {
               onChoose={escolherMercenario} onConfirm={confirmarMercenario} />
             </Suspense>
           )}
-          {veladoOn && reverHistoria && <Suspense fallback={null}><SequenciaOnboarding forcar language={language} onDone={() => setReverHistoria(false)} /></Suspense>}
-          {veladoOn && reverIntro && <IntroCinematica language={language} onDone={() => setReverIntro(false)} />}
+          {reverHistoria && <Suspense fallback={null}><SequenciaOnboarding forcar language={language} onDone={() => setReverHistoria(false)} /></Suspense>}
+          {reverIntro && <IntroCinematica language={language} onDone={() => setReverIntro(false)} />}
           {pane === 'settings' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><SettingsPage
               soundMuted={soundMuted}
@@ -8746,8 +8746,8 @@ export default function App() {
               demo={demo ? { onLeave: handleLeaveDemo } : undefined}
               onOpenOracle={() => goTo('page:oracle')}
               onResetOnboarding={handleResetOnboarding}
-              onReplayStory={veladoOn ? () => setReverHistoria(true) : undefined}
-              onReplayIntro={veladoOn ? () => setReverIntro(true) : undefined}
+              onReplayStory={() => setReverHistoria(true)}
+              onReplayIntro={() => setReverIntro(true)}
               useAI={useAI}
               onToggleAI={() => setUseAI(!useAI)}
               language={language}

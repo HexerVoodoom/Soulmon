@@ -621,8 +621,8 @@ export function SettingsPage({
         <ActionRow label={t.settings.openGlossary} onClick={onOpenGlossary} />
         {onOpenStudyCards && <ActionRow label={isPt ? 'Meus cartões de estudo' : 'My study cards'} onClick={onOpenStudyCards} />}
         {onOpenCredits && <ActionRow label={isPt ? 'Créditos' : 'Credits'} onClick={onOpenCredits} />}
-        {onReplayStory && <ActionRow label={isPt ? 'Rever a história' : 'Replay the story'} onClick={onReplayStory} />}
-        {onReplayIntro && <ActionRow label={isPt ? 'Rever a introdução' : 'Replay the intro'} onClick={onReplayIntro} />}
+        {onReplayIntro && <ActionRow label={isPt ? 'Ver abertura' : 'Watch the opening'} onClick={onReplayIntro} />}
+        {onReplayStory && <ActionRow label={isPt ? 'Ver intro' : 'Watch the intro'} onClick={onReplayStory} />}
         {MENU_SHOWS_RITUAL_TOOLS && onOpenOracle && <ActionRow label={isPt ? 'Oráculo' : 'Oracle'} onClick={onOpenOracle} />}
         {MENU_SHOWS_RITUAL_TOOLS && onResetOnboarding && <ActionRow label={isPt ? 'Refazer o ritual' : 'Redo the ritual'} onClick={onResetOnboarding} />}
         {/* A4/A5 (QA rodada 2): os Termos não tinham link dentro do app, e a
