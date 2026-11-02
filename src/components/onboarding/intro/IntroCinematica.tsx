@@ -55,14 +55,14 @@ export function IntroCinematica({ language, onDone, videoSrc = VIDEO_SRC }: Prop
   return (
     <div data-testid="intro-cinematica" style={{ position: 'fixed', inset: 0, zIndex: 600, background: '#000', color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center' }}>
       {videoSrc && <video src={videoSrc} autoPlay muted playsInline onTimeUpdate={e => sync(e.currentTarget.currentTime)} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />}
-      <p data-testid="intro-legenda" data-plano={i + 1} aria-live="polite" style={{ position: 'relative', margin: 0, padding: '0 24px 96px', textAlign: 'center', fontSize: 18, textShadow: '0 1px 4px #000' }}>
+      <p data-testid="intro-legenda" data-plano={i + 1} aria-live="polite" style={{ position: 'relative', margin: 0, padding: '0 24px 96px', textAlign: 'center', fontFamily: 'var(--sm-font-pixel)', fontSize: 24, lineHeight: 1.5, letterSpacing: '0.02em', textShadow: '0 2px 6px #000' }}>
         {isPt ? plano.pt : plano.en}
       </p>
       {globalLigado && (
         <button type="button" data-testid="intro-som" aria-pressed={som} onClick={alternarSom}
           aria-label={som ? (isPt ? 'Desligar o som' : 'Turn sound off') : (isPt ? 'Ligar o som' : 'Turn sound on')}
-          style={{ position: 'absolute', top: 16, left: 16, background: 'transparent', color: '#fff', border: '1px solid #fff8', borderRadius: 8, padding: '8px 14px', cursor: 'pointer', opacity: 0.8 }}>
-          {som ? '♪' : '♪̸'}<span style={{ marginLeft: 6 }}>{som ? (isPt ? 'Som ligado' : 'Sound on') : (isPt ? 'Som desligado' : 'Sound off')}</span>
+          style={{ position: 'absolute', top: 16, left: 16, background: 'transparent', color: '#fff', border: '1px solid #fff8', borderRadius: 8, padding: '8px 12px', cursor: 'pointer', opacity: 0.85, fontSize: 18, lineHeight: 1 }}>
+          {som ? '🔊' : '🔇'}
         </button>
       )}
       <button type="button" data-testid="intro-pular" onClick={fim}
