@@ -5463,3 +5463,8 @@ O dono mandou `archive (5).zip` com cinco PNGs (1024×1024, alfa real, brilho su
 ### 01/11/2026 — D17 (formas sob demanda) marcada como implementada
 
 O dono confirmou que o D17 está cumprido pelo que já existe: nascimento só `rookie` (D-G5b), forma seguinte gerada na incubação (cristal ou forma-destino), e em empate de galho o lote segue cobrindo os líderes empatados (até 3 formas). Só documentação: `PLANO-ONBOARDING-VELADO.md` (tabela e §6.2); nenhum código mudou.
+
+## Sincronização do manual — 02/11/2026 (8649fa42 → 5229b1be)
+- doc-mantenedor: 11 docs do manual atualizados (01–05, 07, 08, 06/api-workers, components, hooks-contexts-types, utils) com deltas de 01/11; verificação por amostragem de símbolos (1 correção no 08).
+- Cobertura parcial declarada: mudanças de comportamento sem export novo em src/utils, textos/estados de ~100 componentes, e seções antigas do 02 (§13, §17, §20, §47, §56-A, §59) ainda descrevem o estado anterior. `DEEP_START_BASE_COST` segue citado no utils.md/02 sem existir no código.
+- ⚠️ `scripts/docs-delta.mjs` lista `functions/gm/*` como apagado, mas os arquivos existem (falso positivo).
