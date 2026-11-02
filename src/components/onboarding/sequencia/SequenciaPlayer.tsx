@@ -107,7 +107,7 @@ export function SequenciaPlayer({ quadros, language, slots, onDone, onChoice, on
             <>
               {q.fundo && <Arte k={q.fundo} language={language} extra={{ position: 'absolute', inset: '-3%', width: '106%', height: '106%',
                 ...(q.tipo === 'cena' && q.parallax ? { animation: 'seq-parallax 9s ease-in-out infinite alternate' } : {}) }} />}
-              {q.npc && <Arte k={q.npc} language={language} extra={{ position: 'absolute', bottom: '14%', left: '50%', width: '46%', height: '52%', marginLeft: '-23%' }} />}
+              {q.npc && <Arte k={q.npc} language={language} extra={{ position: 'absolute', bottom: '14%', left: '50%', width: '46%', height: '52%', marginLeft: '-23%', objectFit: 'contain' }} />}
             </>
           )}
           {efeito && <Glitch efeito={efeito} />}

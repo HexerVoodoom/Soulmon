@@ -259,12 +259,12 @@ const XP_BY_LEVEL: Record<string, number> = {
 };
 import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/labels';
 import type { AISettings } from './components/AISettingsModal';
-const SequenciaOnboarding = lazy(() => import('./components/onboarding/sequencia/SequenciaOnboarding').then(m => ({ default: m.SequenciaOnboarding })));
 import { ONBOARDING_VELADO } from './components/onboarding/sequencia/flag';
 // Mercenário (velado): leva o catálogo de atividades (~dezenas de KB) — fora da entrada.
 const MercGuildSheet = lazy(() => import('./components/MercGuildSheet').then(m => ({ default: m.MercGuildSheet })));
 import type { MercOrdem } from './utils/mercMissionSave';
 // Sequência do onboarding velado com etapas reais: leva Match3Game/BattleStage junto, só monta no 1º uso (fora da entrada).
+const SequenciaRevisao = lazy(() => import('./components/onboarding/sequencia/SequenciaReal').then(m => ({ default: m.SequenciaRevisao })));
 const SequenciaReal = lazy(() => import('./components/onboarding/sequencia/SequenciaReal').then(m => ({ default: m.SequenciaReal })));
 import { IntroCinematica, deveTocarIntro } from './components/onboarding/intro/IntroCinematica';
 import { initialStageForNewSave } from './utils/bbStage';
@@ -8711,7 +8711,13 @@ export default function App() {
               onChoose={escolherMercenario} onConfirm={confirmarMercenario} />
             </Suspense>
           )}
-          {reverHistoria && <Suspense fallback={null}><SequenciaOnboarding forcar language={language} onDone={() => setReverHistoria(false)} /></Suspense>}
+          {reverHistoria && <Suspense fallback={null}><SequenciaRevisao language={language} onDone={() => setReverHistoria(false)} ligacoes={{
+            maxActivities: activityCap,
+            spriteUrl: displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine),
+            petName: soulmonDisplayName(gameState.soulmonMeta) || undefined,
+            evolutionStage: gameState.evolutionStage,
+            demoCharacterId: gameState.demoCharacterId,
+          }} /></Suspense>}
           {reverIntro && <IntroCinematica language={language} onDone={() => setReverIntro(false)} />}
           {pane === 'settings' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><SettingsPage
