@@ -433,7 +433,7 @@ export type NovoNpcId =
   | 'alquimistaLimo' | 'alquimistaLimoCostas' | 'enfermeira' | 'colheita' | 'tempo' | 'musa'
   | 'ossarioFera' | 'ossarioForma' | 'serpentePlumadaFera' | 'serpentePlumadaForma'
   | 'broto' | 'corvo' | 'cozinheiro' | 'besouro'
-  | 'luaTronoSentada' | 'luaTronoDePe';
+  | 'luaTronoSentada' | 'luaTronoDePe' | 'sereiaPintora';
 
 export interface NovoNpcVoice extends ExtraNpcVoice {
   category: NovoNpcCategory;
@@ -519,6 +519,11 @@ export const NOVO_NPC_VOICE: Record<NovoNpcId, NovoNpcVoice> = {
     category: 'mistico', namePt: 'Selene', nameEn: 'Selene', officePt: 'Deusa da lua no trono (de pé)', officeEn: 'Moon goddess on her throne (standing)',
     linePt: 'Levanto o cajado e a lua responde. Venha ver.',
     lineEn: 'I raise the staff and the moon answers. Come and see.',
+  },
+  sereiaPintora: {
+    category: 'mistico', namePt: 'Maré', nameEn: 'Tide', officePt: 'Sereia pintora', officeEn: 'Mermaid painter',
+    linePt: 'Cada onda é uma tinta. Pinto o que o mar guardou para você.',
+    lineEn: 'Every wave is a pigment. I paint what the sea kept for you.',
   },
 };
 

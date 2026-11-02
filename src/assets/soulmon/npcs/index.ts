@@ -205,6 +205,7 @@ import npcNCozinheiro from './npc-n-cozinheiro.png';
 import npcNBesouro from './npc-n-besouro.png';
 import npcNLuaTronoSentada from './npc-n-luaTronoSentada.png';
 import npcNLuaTronoDePe from './npc-n-luaTronoDePe.png';
+import npcNSereiaPintora from './npc-n-sereiaPintora.png';
 
 /**
  * NPCs NOVOS (15/10/2026, leva `E:/novos npcs` — 17 PNG do Higgsfield, 15 instalados):
@@ -235,6 +236,7 @@ export const NOVO_NPC_ART: Record<NovoNpcId, string> = {
   besouro: npcNBesouro,
   luaTronoSentada: npcNLuaTronoSentada,
   luaTronoDePe: npcNLuaTronoDePe,
+  sereiaPintora: npcNSereiaPintora, // Maré (02/11/2026): corpo inteiro 726×1100, alfa binário, regerada com fundo transparente
 };
 
 /** Resolve o NPC de UMA folha (área + id do lote). Sem lote aberto, ou lote
