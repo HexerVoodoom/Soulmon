@@ -478,6 +478,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/components/play/PasseioSheet.tsx` (o "Fiz"), `src/App.tsx` (meta do dia cumprida).
 **Régua:** `src/components/play/PasseioSheet.render.test.tsx`.
 
+### `src/components/ui/SpriteFx.tsx`
+**Dono de:** FX por folha 3×2 (6 quadros, `.sm-fxs` por `steps()` no `index.css`; quadro parado ou some em `prefers-reduced-motion`) e o título de resultado com lettering na arte (`ResultBanner`, VICTORY/DEFEAT/DRAW em PNG alfa real, `aria-label` PT/EN).
+**Props principais:** `SpriteFx`: `sheet` (`fusao`/`bau`/`recompensa`/`evolucao`), `size`, `ms`, `loops`, `delayMs`, `still` (`last`/`hide`); `ResultBanner`: `kind`, `isPt`, `width`.
+**Exports:** `SpriteFx`, `ResultBanner`, `bannerForOutcome`.
+**Chamado por:** `games/ResultScreen.tsx`, `ui/Celebration.tsx`, `Match3Game.tsx`, `EvolutionCeremony.tsx`, `DuelScreen.tsx`.
+**Régua:** `src/components/games/fxPack.render.test.tsx`.
+
 ### `src/components/nav/AreaScene.tsx`
 **Dono de:** o MOLDE de uma área do Mapa (minimal-ui F4) — fundo de cena e "lotes" (construções clicáveis, posicionadas em % sobre a cena). ⚠️ **Decisão do dono, 28/09/2026: não existe mais NPC anfitrião fixo no rodapé da cena.** Cada lote tem o NPC dele próprio, mostrado só dentro da folha que abre ao tocá-lo (`AreaSheet`, via `lotNpcArt`) — a `AreaScene` não desenha NPC nem balão de fala nenhum. Não decide o conteúdo de cada folha — isso é do `AreaView`.
 **Props principais:** `areaId: AreaId`, `language`, `lots: AreaLot[]` (`id`, `label`, `left`/`top`, `ariaLabel`, `onOpen`, `art?` — a arte isométrica do lote, desde F5), `background?` (fundo pintado 9:16 em `cover`, desde F5; sem ele, o degradê de tokens), `children?` (onde entra o `AreaSheet` aberto, no mesmo empilhamento da cena).

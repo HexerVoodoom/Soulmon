@@ -9,6 +9,7 @@
 // gone since the canvas Jogos, DECISÕES §25: the scene is the `cover` of a
 // visor now — `games/GameKit.tsx` — and continuous motion without purpose was
 // the thing `prefers-reduced-motion` never reached.)
+import dueloBg from '../assets/soulmon/bg/duelo-bg.png';
 import classicRetro from '../assets/soulmon/bg/dungeon-classic-retro.png';
 import classicVhs from '../assets/soulmon/bg/dungeon-classic-vhs.png';
 import classicSol from '../assets/soulmon/bg/dungeon-classic-sol.png';
@@ -155,6 +156,8 @@ export function nightmareScene(dayKey: string = localDayKey(new Date())): Dungeo
 
 /** A cena da ARENA (`ArenaGame`) — o Abismo Violeta (`dungeon-4`, canvas `Arena`). */
 export const ARENA_SCENE: DungeonScene = SPIRIT_BG_SCENES[3];
+/** A cena PRÓPRIA do Duelo (02/11/2026, `bg/duelo-bg`): clareira circular, duas plataformas frente a frente sobre uma poça turquesa. */
+export const DUEL_SCENE: DungeonScene = { namePt: 'Clareira do Duelo', nameEn: 'Duel Clearing', accent: '#3fd2d9', bg: `url(${dueloBg}) center/cover` };
 /** As duas arenas do Torneio (Arena Noturna, Coliseu Ancião): o cenário da Arena livre (28/10/2026), escolhido por run em `arenaSorteio.ts`. */
 export const ARENA_BG_SCENES: readonly DungeonScene[] = SPIRIT_BG_SCENES.filter(s => s.nameEn === 'Night Arena' || s.nameEn === 'Elder Colosseum');
 /** A cena do DINO — o corredor em ruínas (`minigame-dino`), atrás do parallax. */

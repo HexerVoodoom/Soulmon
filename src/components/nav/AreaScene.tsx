@@ -5,6 +5,7 @@ import { lotArtBounds, lotHitBounds, lotLabelLift, lotLabelOffset } from '../../
 import { lotArtFilter } from './lotHalo';
 import { MissionMark } from '../play/MissionMark';
 import type { QuestMark as MissionMarkKind } from '../../utils/questMarks';
+import { BUILDING_PLATE } from '../../utils/fxPackArt';
 import { LockBadge, LockNotice, lockLabel } from '../ui/LockBadge';
 
 /**
@@ -201,13 +202,15 @@ export function AreaScene({ areaId, language, lots, background, notice, children
           )}
           <span
             data-area-lot-label
+            data-area-lot-plate=""
             style={{
               marginTop: -4, pointerEvents: 'auto',
               position: 'relative', left: lotLabelOffset(areaId, lot.id)[0], top: `calc(${lotLabelOffset(areaId, lot.id)[1]}px - ${lotLabelLift(areaId, lot.id)}cqw)`,
-              padding: '2px 9px',
-              borderRadius: 999,
-              background: 'rgba(8,25,26,.85)',
-              border: '1px solid rgba(95,243,224,.35)',
+              // Placa pintada 9-slice (T1, 02/11/2026): moldura de madeira e cristal com miolo liso; o texto continua sendo do app.
+              padding: '0 4px',
+              border: '9px solid transparent',
+              borderImage: `url(${BUILDING_PLATE}) 18 fill / 9px stretch`,
+              imageRendering: 'pixelated',
               fontFamily: 'var(--sm2-font-display)',
               fontSize: 'var(--sm2-text-xs)',
               fontWeight: 800,

@@ -9,6 +9,8 @@ import { fragmentsGatherLine, fragmentsSpentLine } from '../utils/soulFragment';
 import { pointsResetLine } from '../utils/betaResetGrant';
 import { entrarNaSuperficie } from '../utils/musica';
 import { SoulFragmentIcon } from './ui/SoulFragmentIcon';
+import { SpriteFx } from './ui/SpriteFx';
+import { SCENE_BG } from '../utils/fxPackArt';
 
 /**
  * EvolutionCeremony — a TRANSFORMAÇÃO que fecha o cristal da evolução.
@@ -169,7 +171,8 @@ export function EvolutionCeremony({
         style={{
           flex: 1, minHeight: 0, borderRadius: 0, position: 'relative', overflow: 'hidden',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'radial-gradient(circle at 50% 50%, rgba(64,224,208,.16) 0%, var(--sm2-viewport-bg, #071414) 62%)',
+          // Fundo pintado (B9, 02/11/2026): o santuário de cristal; o brilho do centro fica por cima, e o vidro escuro é o fallback.
+          background: `radial-gradient(circle at 50% 50%, rgba(64,224,208,.16) 0%, transparent 62%), url(${SCENE_BG.evolucao}) center/cover, var(--sm2-viewport-bg, #071414)`,
         }}
       >
         {cristalVisivel && (
@@ -190,6 +193,7 @@ export function EvolutionCeremony({
         )}
         {phase === 'estilhaca' && (
           <>
+            <SpriteFx sheet="evolucao" size={288} ms={900} still="hide" data-cer-fx="" style={{ position: 'absolute', left: '50%', top: '50%', marginLeft: -144, marginTop: -144 }} />
             <span data-cer-flash style={{ position: 'absolute', left: '50%', top: '50%', width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(127,255,240,.95) 0%, rgba(64,224,208,.35) 45%, transparent 70%)', pointerEvents: 'none' }} />
             {SHARDS.map((sh, i) => (
               <span

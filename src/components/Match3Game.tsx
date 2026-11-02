@@ -12,6 +12,8 @@ import { BitsAmount } from './ui/BitsAmount';
 import { Icon } from './ui/Icon';
 import { bitsStyle } from '../utils/currencies';
 import { usePrefersReducedMotion } from './ui/Viewport';
+import { SpriteFx } from './ui/SpriteFx';
+import { SCENE_BG } from '../utils/fxPackArt';
 import { elementIcon } from '../utils/elementIconArt';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { readNumber, writeLocal } from '../utils/safeStorage';
@@ -711,7 +713,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   );
 
   return (
-    <GameRoot full>
+    <GameRoot full style={{ background: `url(${SCENE_BG.fusion}) center/cover var(--sm2-bg)` }}>
       <GameHeader
         title={isPt ? 'Elemental Fusion' : 'Elemental Fusion'}
         language={language}
@@ -902,6 +904,14 @@ function PowerFx({ fx, reduced }: { fx: Fx; reduced: boolean }) {
   const ring: CSSProperties = { ...base, left: x1 - ringPx / 2, top: y1 - ringPx / 2, width: ringPx, height: ringPx, boxSizing: 'border-box', borderRadius: '50%', opacity: 0 };
   return (
     <>
+      {full && att && (
+        // Fusão elemental (F1, 02/11/2026): as peças se juntam, fundem e estouram no Soulmon que ataca; 6 quadros por steps(), uma vez.
+        <SpriteFx
+          sheet="fusao" size={Math.round(auraPx * 1.15)} ms={FX_AURA_MS} delayMs={Math.round(delay)} still="hide"
+          data-m3-fusion-fx=""
+          style={{ position: 'absolute', zIndex: 3, left: att.x - (auraPx * 1.15) / 2, top: att.y - (auraPx * 1.15) / 2 }}
+        />
+      )}
       {full && att && auraSrc && (
         <span
           aria-hidden="true"

@@ -688,6 +688,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `components/PetPage.tsx` (`emblemArt`, faixa de conquistas), `components/MilestoneCeremony.tsx` (`emblemFor`, no lugar do `tierIcon` emoji).
 **Régua:** `src/utils/achievements.test.ts` (as 9 têm arte). ⚰️ `tasks-100.png` → `dias-completos-30.png` em `42b07bec`, **mesma arte** (ainda desenha "100"; redesenhar é da `squad-arte`).
 
+### `src/utils/fxPackArt.ts`
+**Dono de:** as artes geradas em 02/11/2026 — fundos (`SCENE_BG`: fusion, torneioLobby, duelo, evolucao), títulos de resultado (`RESULT_BANNER`), placa 9-slice de prédio (`BUILDING_PLATE`) e as folhas de FX (`FX_SHEET`).
+**Exports:** `SCENE_BG`, `RESULT_BANNER`, `BUILDING_PLATE`, `FX_SHEET`, `ResultBannerKind`.
+**Chamado por:** `components/ui/SpriteFx.tsx`, `Match3Game.tsx`, `TournamentPage.tsx`, `EvolutionCeremony.tsx`, `nav/AreaScene.tsx`.
+**Régua:** `src/components/games/fxPack.render.test.tsx`.
+
 ### `src/utils/gainArt.ts`
 **Dono de:** peças estáticas de ganho (96²) e movimento (64²) da entrega 2, dentro do visor — `GAIN_ART` (perfectDay, levelup, chest, confetti, evolutionBurst, focusSeal, heal) e `MOVE_ART` (dustPuff, speedLines, jumpArc, landImpact, sleepZ, wakeStretch, poof).
 **Chamado por:** `components/EvolutionCeremony.tsx` (`evolutionBurst` de `GAIN_ART`); os demais momentos seguem listados no cabeçalho do arquivo, sem chamador ainda.

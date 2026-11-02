@@ -36,7 +36,8 @@ import { TorcidaLayer } from './games/TorcidaKit';
 import { playDefeat, playVictory } from '../utils/sounds';
 import { entrarNaSuperficie } from '../utils/musica';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageHit } from './games/BattleStage';
-import { ARENA_SCENE } from '../utils/dungeonScenes';
+import { ResultBanner } from './ui/SpriteFx';
+import { DUEL_SCENE } from '../utils/dungeonScenes';
 import {
   fxElementId, impactMs, introMs, prefersReducedMotion, FX_FALLBACK_ELEMENT, specialLabel, foeSpecialLabel, duelStatusBoard, stageStatusOf,
   specialLeadMs, specialTailMs, type StageActionKind, type StageStatus,
@@ -314,7 +315,7 @@ export function DuelScreen({
   return (
     <TorcidaLayer onTap={cheer} active={cheering && !pausado} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot cheerRatio={barra / CHEER.tapsFull}>
       <BattleStage
-        scene={ARENA_SCENE.bg}
+        scene={DUEL_SCENE.bg}
         sceneElement={oppEl}
         specialLabel={par?.especial ? specialLabel(isPt, par.especial) : (me.fx?.lex ? foeSpecialLabel(isPt, meEl, 'me', me.fx.familia, me.fx.lex) : specialLabel(isPt))}
         foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia, opp.fx?.lex)}
@@ -334,6 +335,12 @@ export function DuelScreen({
         onPauseChange={setPausado}
         status={fimDaLuta ? (isPt ? 'Conferindo o resultado…' : 'Checking the result…') : undefined}
       />
+      {/* Título do fim da luta (P1/P2/P3, 02/11/2026): lettering na arte; a palavra oficial do resultado segue sendo a do servidor (`status`). */}
+      {fimDaLuta && (
+        <div data-duel-banner style={{ position: 'fixed', left: 0, right: 0, top: '18%', zIndex: 130, pointerEvents: 'none' }}>
+          <ResultBanner kind={sim.current.winner === 'me' ? 'victory' : sim.current.winner === 'opp' ? 'defeat' : 'draw'} isPt={isPt} width={260} />
+        </div>
+      )}
     </TorcidaLayer>
   );
 }

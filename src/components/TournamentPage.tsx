@@ -104,6 +104,7 @@ import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { sm2Tag } from './TaskMeta';
 import { bondXP, bondLevelFor, meetsPvpBond, xpToPvpBond, xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
 import tournamentFinal from '../assets/soulmon/bg/tournament-final.png';
+import { SCENE_BG } from '../utils/fxPackArt';
 
 interface TournamentPageProps {
   saveId: string;
@@ -633,6 +634,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingBottom: 24 }}>
+      {/* Cena do lobby/chaves (B2, 02/11/2026): a entrada da arena, distinta da cena da final (`tournament-final`, usada no resultado). Decorativa. */}
+      <div aria-hidden="true" data-torneio-lobby-bg style={{ height: 112, borderRadius: 12, border: '1px solid var(--sm2-line)', background: `url(${SCENE_BG.torneioLobby}) center 30%/cover var(--sm2-surface-2)`, imageRendering: 'pixelated' }} />
       {/* minimal-ui F5 — o título "Torneio" é do `AreaSheet`; aqui fica a
           rodada da semana (RITUAL, não tranca — `utils/tournamentSeason.ts`)
           e os Emblemas, ícone em ouro + número com serifa: as três moedas

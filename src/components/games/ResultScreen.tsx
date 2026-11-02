@@ -19,6 +19,7 @@ import { PixelMeter } from '../pixel/PixelKit';
 import { BitsAmount } from '../ui/BitsAmount';
 import { Icon } from '../ui/Icon';
 import { RewardIcon, RewardPop } from '../ui/RewardPop';
+import { ResultBanner, SpriteFx, bannerForOutcome } from '../ui/SpriteFx';
 import { useRewardReveal } from '../../hooks/useRewardReveal';
 import type { RevealStep } from '../../utils/rewardReveal';
 import { POP_STAGGER_MS, STAIRS_STAGGER_MS } from '../../utils/rewardReveal';
@@ -325,6 +326,11 @@ export function ResultScreen(p: ResultScreenProps) {
         {/* O título e a frase ficam na leitura (o foco inicial é o título); hero, selo, faixa, livro e notas vão ao leitor pela região viva. */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%', maxWidth: 348 }}>
           <div className="sm-result-banner" style={{ textAlign: 'center' }}>
+            {/* Título com o lettering NA ARTE (02/11/2026, decisão do dono): VICTORY / DEFEAT / DRAW em PNG alfa real. O `<h2>` abaixo segue com o texto do app (foco, leitor de tela e fallback). */}
+            <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }} data-result-banner-wrap>
+              {(record || p.outcome === 'win') && step >= 1 && <SpriteFx sheet="recompensa" size={128} ms={900} still="hide" style={{ position: 'absolute', left: '50%', top: '50%', marginLeft: -64, marginTop: -64 }} data-result-reward-fx />}
+              <ResultBanner kind={bannerForOutcome(p.outcome)} isPt={isPt} width={240} style={{ position: 'relative' }} />
+            </div>
             <h2
               ref={titleRef}
               tabIndex={-1}
@@ -402,6 +408,7 @@ export function ResultScreen(p: ResultScreenProps) {
             <div aria-hidden="true" style={{ width: '100%' }} data-result-ledger>
               {ledger.length > 0 ? (
                 <>
+                  {ledgerShown && (record || p.outcome === 'win') && <div style={{ display: 'flex', justifyContent: 'center' }}><SpriteFx sheet="bau" size={72} ms={900} still="last" data-result-chest-fx /></div>}
                   <div className={`sm-result-in${ledgerShown ? ' sm-result-in--on' : ''}`} style={{ ...sm2Hint, fontWeight: 500, marginBottom: 4 }}>{p.ledgerLabel ?? (isPt ? 'Ganhou' : 'Earned')}</div>
                   {ledger.map(r => {
                     const key = `row-${r.key}`;

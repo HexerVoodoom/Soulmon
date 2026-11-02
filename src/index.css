@@ -5793,6 +5793,9 @@ select:focus-visible {
   10%, 90% { opacity: 1; }
 }
 
+/* FX por folha 3×2 (`components/ui/SpriteFx`): 6 quadros por steps(), termina no último; movimento reduzido = quadro parado ou some. */
+.sm-fxs { display: block; flex: none; background-repeat: no-repeat; background-size: 300% 200%; background-position: 100% 100%; image-rendering: pixelated; pointer-events: none; animation: sm-fxs-play var(--fxs-ms, 720ms) steps(1, end) var(--fxs-delay, 0ms) var(--fxs-n, 1) both; }
+@keyframes sm-fxs-play { 0% { background-position: 0 0; } 16.667% { background-position: 50% 0; } 33.333% { background-position: 100% 0; } 50% { background-position: 0 100%; } 66.667% { background-position: 50% 100%; } 83.333% { background-position: 100% 100%; } }
 @media (prefers-reduced-motion: reduce) {
   .sm2-intro-bar-fill { animation: none; transform: scaleX(1); } /* intro: barra cheia (REGISTRO §168) */
   .sm2-intro-load-done { animation: none; opacity: 1; }
@@ -5815,6 +5818,7 @@ select:focus-visible {
   /* WP1.1: o casulo do reveal para de pulsar e continua sendo um casulo. */
   .sm-reveal-cocoon, .sm-reveal-cocoon-img { animation: none !important; }
   /* Celebração (rodada 7, M5): sem movimento ela nem renderiza; o texto de estado basta. */
+  .sm-fxs { animation: none; } .sm-fxs[data-fxs-still="hide"] { display: none; }
   .sm2-celebrate { display: none !important; }
   /* WP2.4: a cerimônia do marco aparece parada — a informação é a mesma. */
   .sm-milestone-pop { animation: none !important; }
