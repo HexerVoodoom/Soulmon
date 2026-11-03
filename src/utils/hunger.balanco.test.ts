@@ -58,9 +58,9 @@ describe('a curva fome × energia cabe no orçamento do REGISTRO §30', () => {
   it('o "leve" (2 conclusões) ainda paga pelo menos 1 camada por dia; o "médio" (4) paga 4+; o "intenso" (9) chega a 9+', () => {
     const e = Object.fromEntries(perfis);
     expect(e[2]).toBeGreaterThanOrEqual(1);
-    expect(e[2]).toBeLessThanOrEqual(3);
+    expect(e[2]).toBeLessThanOrEqual(5); // 03/11/2026: comida +50 de fome (1,5 de 3 níveis, pedido do dono) subiu o leve de ~2,6 para 4,2
     expect(e[4]).toBeGreaterThanOrEqual(4);
-    expect(e[4]).toBeLessThanOrEqual(12); // 26/10/2026: unidade 60 min dobrou a tabela (4 → 11,8; era 6,0 a 120 min) — REGISTRO §40-bis
+    expect(e[4]).toBeLessThanOrEqual(18); // 26/10/2026: unidade 60 min dobrou a tabela (4 → 11,8; era 6,0 a 120 min) — REGISTRO §40-bis 03/11/2026: comida +50 → 16,4.
     expect(e[9]).toBeGreaterThanOrEqual(9);
   });
   it('o teto é o RELÓGIO: nem 12 comidas por dia passam de 24 h ÷ ENERGY_REGEN_MINUTES', () => {
