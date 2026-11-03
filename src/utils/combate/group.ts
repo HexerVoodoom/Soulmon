@@ -20,6 +20,7 @@
 import { attacksPerWindow, hitsToKnockOut, type Combatant } from './curve';
 import { damagePoints, EPS, HIT_UNIT_H0, hitUnit, hpPoints, startPoints, windowSeconds, type FighterFx, type FightSide } from './fight';
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
+import { escolherAlvo } from './alvo';
 import {
   AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special,
 } from './specials';
@@ -67,6 +68,11 @@ export interface GroupOptions {
    * régua de duração da Arena; atrasar só quem chegaria antes mantém a duração.) Opt-in (a Arena liga); sem ele N = 1 ≡ fight().
    */
   readonly fairStart?: boolean;
+  /**
+   * ALVO POR TOQUE (03/11/2026, dono): lido a cada golpe/especial do jogador; devolve o índice do inimigo que ele escolheu
+   * (`null` = sem escolha). Escolhido morto ou inválido cai no 1º vivo (`combate/alvo.ts`). Sem a opção, nada muda.
+   */
+  readonly target?: () => number | null;
 }
 
 export type GroupWinner = 'player' | 'foes' | 'draw';
@@ -167,7 +173,12 @@ export function* groupFightSteps(
   let tPrev = 0;
   const pending: GroupEvent[] = [];
   const alive = () => E.filter((f) => f.dead === Infinity);
-  const target = () => alive()[0];
+  // ALVO POR TOQUE (03/11/2026): o jogador mira o inimigo escolhido enquanto vive; sem escolha, o 1º vivo (como sempre).
+  const target = (): G | undefined => {
+    if (!opts.target) return alive()[0];
+    const f = E[escolherAlvo(E.map((x) => (x.dead === Infinity ? 1 : 0)), opts.target())];
+    return f && f.dead === Infinity ? f : alive()[0];
+  };
   const hitsOn = (a: G, d: G) => hitsToKnockOut(a.c, d.c) / u;
   /** DoT ticks still to land: who each pending tick lands on (single: the current target, as the tick itself will pick). */
   const dots: { owner: G; vs: readonly G[]; single: boolean }[] = [];

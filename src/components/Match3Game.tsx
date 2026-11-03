@@ -23,8 +23,9 @@ import {
   match3Bits, newRound, trySwap, type Board, type Pos, type Rng, type Step, type Tile,
 } from '../utils/match3';
 import {
-  M3C_DEFEAT_BONUS, M3C_MAX_STREAK, M3_HINTS_PER_GAME, M3_HINT_PRICE_BITS, applyEnemySteps, applyPlayerSteps, m3BoardAdvantage, chooseMove, combatScore, hintAction, newCombat, newPvpCombat, playTurn, type M3Combat, type M3Element,
+  M3C_DEFEAT_BONUS, M3C_MAX_STREAK, M3_HINTS_PER_GAME, M3_HINT_PRICE_BITS, applyEnemySteps, applyPlayerSteps, mirarInimigo, m3BoardAdvantage, chooseMove, combatScore, hintAction, newCombat, newPvpCombat, playTurn, type M3Combat, type M3Element,
 } from '../utils/match3Combat';
+import { tocarAlvo } from '../utils/combate/alvo';
 import { mulberry32 } from '../utils/combate/rng';
 import { FX_AURA_MS, FX_BURST_MS, FX_NUM_MS, FX_ORB_PX, FX_ORB_PX_BIG, FX_TRAVEL_MS, planFx, powerShots, type FxSlot, type PowerShot } from '../utils/match3Powers';
 import { fxFrame } from '../utils/combatFx';
@@ -156,6 +157,14 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   const rngRef = useRef<Rng>(first.round.rng);
   const [combat, setCombat] = useState<M3Combat>(first.battle.combat);
   const combatRef = useRef<M3Combat>(first.battle.combat);
+  /** ALVO POR TOQUE (03/11/2026, dono): o inimigo escolhido (`null` = o ativo, regra de sempre); vale a partir da PRÓXIMA jogada. */
+  const [alvo, setAlvo] = useState<number | null>(null);
+  const alvoRef = useRef<number | null>(null);
+  const mirar = useCallback((i: number) => {
+    const next = tocarAlvo(combatRef.current.enemies.map(e => e.hp), alvoRef.current, i);
+    alvoRef.current = next;
+    setAlvo(next);
+  }, []);
   // M10: os 3 inimigos do roster entram em cena juntos → bestiário (idempotente no App).
   useEffect(() => {
     if (!onEnemySeen) return;
@@ -371,7 +380,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
     clearHint();
     setConfirmBuy(false);
     say('', '');
-    const base = combatRef.current;
+    const base = alvoRef.current != null ? mirarInimigo(combatRef.current, alvoRef.current) : combatRef.current;
     // a jogada VÁLIDA inteira (dano do jogador, rodada extra OU a vez do inimigo) é a conta pura; a tela só a mostra por partes
     const ex = playTurn(base, res.steps, res.board, rngRef.current, streakRef.current);
     setBoard(res.swapped);
@@ -532,6 +541,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
     boardRef.current = r.board;
     rngRef.current = r.rng;
     combatRef.current = c.combat;
+    alvoRef.current = null; setAlvo(null);
     enemyRngRef.current = c.rng;
     overRef.current = false;
     busyRef.current = false;
@@ -666,6 +676,8 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
           const nome = `${enemyName},${elementName(e.element, isPt)}${isActive ? (isPt ? ', ativo' : ', active') : ''}${down ? (isPt ? ', recuou' : ', stepped back') : ''}`;
           const preAuraSrc = enemyAura && enemyAura.activeIndex === i ? fxFrame(enemyAura.element, 'aura') : undefined;
           const preAuraPx = Math.round(enemyPx * AURA_SCALE);
+          const podeMirar = !pvp && combat.enemies.length > 1 && combat.outcome === 'playing' && !down;
+          const mirado = podeMirar && alvo === i;
           return (
             <div
               key={i}
@@ -702,6 +714,22 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
                   >
                     <img src={preAuraSrc} alt="" draggable={false} style={{ width: '100%', height: '100%', imageRendering: 'pixelated', display: 'block' }} />
                   </span>
+                )}
+                {podeMirar && (
+                  <button
+                    type="button"
+                    data-m3-target={i}
+                    data-m3-target-on={mirado ? '1' : '0'}
+                    aria-pressed={mirado}
+                    aria-label={isPt ? `Mirar em ${enemyName}` : `Target ${enemyName}`}
+                    onClick={() => mirar(i)}
+                    style={{
+                      position: 'absolute', inset: 0, zIndex: 3, padding: 0, margin: 0, minWidth: 44, minHeight: 44, cursor: 'pointer',
+                      background: 'none', borderRadius: '50%', boxSizing: 'border-box',
+                      border: mirado ? '2px dashed var(--sm2-gold-fill)' : '2px solid transparent',
+                      boxShadow: mirado ? '0 0 10px var(--sm2-gold-fill)' : 'none',
+                    }}
+                  />
                 )}
                 <img src={src} alt="" aria-hidden="true" draggable={false} width={enemyPx} height={enemyPx} style={{ position: 'relative', zIndex: 1, width: enemyPx, height: enemyPx, maxWidth: '100%', imageRendering: 'pixelated', objectFit: 'contain', opacity: down ? 0.3 : 1, filter: down ? 'grayscale(1)' : undefined }} />
               </div>

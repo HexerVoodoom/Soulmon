@@ -19,6 +19,7 @@ import { pickEnemy } from './enemyRoster';
 import { LINE_ELEMENT, rosterEntryElement } from './spriteElement';
 import { elementAdvantage } from './arena';
 import { elementHits } from './combate/curve';
+import { escolherAlvo, tocarAlvo } from './combate/alvo';
 import { baseDominanteDoElemento } from './soulProfile/ficha/elementoNome';
 
 /** Id de elemento (ícone). No Normal são os 6 de `M3_TILE_ELEMENTS`; no PVP, 6 sorteados do pool inteiro (`match3Pvp.ts`). */
@@ -94,8 +95,13 @@ export interface M3Combat {
   elements?: readonly string[];
   /** Elemento do Soulmon do jogador (base ou par): o defensor da conta de vantagem dos golpes do INIMIGO. Ausente = neutro. */
   playerElement?: string;
-  /** Índice (0..2) do inimigo ativo. */
+  /** Índice (0..2) do inimigo ativo (o 1º de pé: é quem responde). */
   active: number;
+  /**
+   * ALVO POR TOQUE (03/11/2026, dono): o inimigo que o jogador escolheu para levar os golpes dele. Ausente/caído = o ativo
+   * (regra de sempre, `combate/alvo.ts`). Não muda dano nem balanço — só em quem o dano cai.
+   */
+  target?: number;
   log: M3Event[];
   /** Dano total causado pelo jogador / recebido. */
   dealt: number;
@@ -165,21 +171,28 @@ export function applyPlayerSteps(state: M3Combat, steps: readonly Step[]): M3Com
     for (const k of st.kinds) porElemento.set(k, (porElemento.get(k) ?? 0) + 1);
     for (const k of [...porElemento.keys()].sort((a, b) => a - b)) {
       if (s.outcome !== 'playing') return s;
-      const alvo = s.enemies[s.active];
+      const ia = escolherAlvo(s.enemies.map(e => e.hp), s.target ?? s.active);
+      const alvo = s.enemies[ia];
       const elTile = (s.elements ?? M3_TILE_ELEMENTS)[k];
       const bruto = Math.round(porElemento.get(k)! * M3C_DMG_PER_TILE * chainMultiplier(st.chain) * m3ElementMult(elTile, alvo.element));
       const dmg = Math.min(alvo.hp, bruto); // a sobra se perde
       alvo.hp -= dmg;
       s.dealt += dmg;
-      s.log.push({ by: 'player', element: (s.elements ?? M3_TILE_ELEMENTS)[k], dmg, target: s.active as 0 | 1 | 2 });
+      s.log.push({ by: 'player', element: (s.elements ?? M3_TILE_ELEMENTS)[k], dmg, target: ia as 0 | 1 | 2 });
       if (alvo.hp <= 0) {
         s.defeated += 1;
-        if (s.active >= s.enemies.length - 1) s.outcome = 'win';
-        else s.active += 1;
+        if (s.enemies.every(e => e.hp <= 0)) s.outcome = 'win';
+        else s.active = escolherAlvo(s.enemies.map(e => e.hp)); // quem responde: o 1º de pé
       }
     }
   }
   return s;
+}
+
+/** ALVO POR TOQUE: o toque no inimigo `i` vira o alvo dos PRÓXIMOS golpes do jogador (só com 2+ inimigos e ele de pé). */
+export function mirarInimigo(state: M3Combat, i: number): M3Combat {
+  const t = tocarAlvo(state.enemies.map(e => e.hp), state.target ?? null, i);
+  return t === (state.target ?? null) ? state : { ...state, target: t ?? undefined };
 }
 
 /** D-84: a jogada formou uma combinação de 4+ peças (nasce uma peça especial) — vale uma RODADA EXTRA. */

@@ -752,6 +752,14 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Quem chama:** `NightmareBattle`, `DungeonGame`, `DuelScreen` (`torcidaTap`), `TorcidaKit`.
 **Régua:** `src/utils/torcida.test.ts` — a torcida só soma (gauge vazio ou parcial dá o golpe-base, nunca menos).
 
+### `src/utils/combate/alvo.ts`
+**Dono de:** ALVO POR TOQUE (03/11/2026, dono): quem o jogador mira numa luta contra vários inimigos. O inimigo tocado vira o alvo a partir do PRÓXIMO golpe; se ele cai (ou a escolha é inválida), volta a regra automática de sempre (o 1º vivo). Sem escolha o resultado é idêntico ao de antes — não muda dano nem balanço.
+**Exports:**
+- `escolherAlvo(hp, preferido?)` — índice mirado: o preferido se válido e vivo; senão o 1º vivo; sem vivos, 0.
+- `tocarAlvo(hp, atual, tocado)` — a escolha depois de um toque (só com 2+ inimigos e o tocado vivo; senão mantém `atual`).
+**Chamado por:** `combate/group.ts` (`GroupOptions.target`), `components/games/useGroupBattle.ts` (`picked`/`target`/`pickTarget`, passados ao `BattleStage` por `ArenaGame` e `GroveRaidFight` via `onPickFoe`/`picked`), `match3Combat.ts` (`M3Combat.target`, `mirarInimigo`) e `Match3Game`.
+**Régua:** `src/utils/combate/alvo.test.ts`, `src/utils/match3Combat.alvo.test.ts`, `src/components/games/BattleStage.alvo.test.tsx` e o bloco ALVO POR TOQUE de `src/components/Match3Game.render.test.tsx`.
+
 ### `src/utils/combate/bonus.ts`
 **Dono de:** O teto único de bônus de dano do combate v3: `min(talento + equipamento + Comércio + Renascimento, 5%)`, não empilhável, vale no PvP (REGISTRO §24).
 **Exports:**
