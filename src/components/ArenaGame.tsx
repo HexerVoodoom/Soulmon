@@ -33,6 +33,7 @@ import { useHexOverrides } from '../hooks/useHexOverrides';
 import { hexArenaElements, hexFamily, hexIdentity } from '../utils/hexsmith';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer } from './games/TorcidaKit';
+import { useBattleSpeed, BattleSpeedButton } from './games/BattleSpeed';
 import { playDefeat, playVictory } from '../utils/sounds';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
 import { dexIdsOfFoe } from '../utils/elementDex';
@@ -299,12 +300,13 @@ export function ArenaGame({
     }
   }, []);
 
+  const { speed, cycle: cycleSpeed } = useBattleSpeed();
   const batalha = useGroupBattle({
     // A luta só para quando `aoFimDaRodada` leva a fase embora: o último golpe zera os inimigos e o relógio
     // ainda precisa do `END_BEAT` para o fim aparecer (A3, rodada 7: não desligar por `vivos.length`).
     running: fase === 'luta',
     paused: pausado, reduced: reduzido.current, runKey: fightKey, seed: seedLuta,
-    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaRodada,
+    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaRodada, speed,
   });
 
   const proximaRodada = useCallback(() => {
@@ -380,6 +382,7 @@ export function ArenaGame({
           dodge={pronto ? batalha.dodge : null}
           onDodge={batalha.swipe}
           petDodge={pronto ? batalha.petDodge : null}
+          fast={speed > 1}
           mechLabels={{
             strike: isPt ? 'Golpear' : 'Strike',
             dodgeLeft: isPt ? 'Esquivar para a esquerda' : 'Dodge left',
@@ -397,6 +400,7 @@ export function ArenaGame({
         >
           {/* Gancho de estado (sem texto): em que passo a luta está. */}
           <span hidden data-arena-fase={fase} />
+          {fase === 'luta' && <BattleSpeedButton speed={speed} onCycle={cycleSpeed} isPt={isPt} corner />}
         </BattleStage>
       </TorcidaLayer>
     );

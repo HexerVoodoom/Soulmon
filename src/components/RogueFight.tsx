@@ -11,6 +11,7 @@ import { hexFamily, hexIdentity } from '../utils/hexsmith';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { TorcidaLayer } from './games/TorcidaKit';
+import { useBattleSpeed, BattleSpeedButton } from './games/BattleSpeed';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { sm2Button } from './form/FormKit';
@@ -78,7 +79,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   const bg = DUNGEON_SCENES[(floor - 1) % DUNGEON_SCENES.length].bg;
 
   const [paused, setPaused] = useState(false);
-  const [speed, setSpeed] = useState<1 | 3>(1);
+  const { speed, cycle: cycleSpeed } = useBattleSpeed();
   const [end, setEnd] = useState<GroupResult | null>(null);
   const reportedRef = useRef(false);
   const reduced = useRef(prefersReducedMotion());
@@ -189,16 +190,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
             </div>
           </div>
         )}
-        {!end && (
-          <button
-            type="button" data-rogue-speed={speed} onClick={() => setSpeed(s => (s === 1 ? 3 : 1))}
-            aria-label={isPt ? `Avanço rápido: ${speed}×. Toque para mudar para ${speed === 1 ? 3 : 1}×.` : `Fast forward: ${speed}×. Tap to change to ${speed === 1 ? 3 : 1}×.`}
-            className="sm2-num"
-            style={{ position: 'absolute', right: 8, bottom: 8, zIndex: 5, pointerEvents: 'auto', background: 'none', border: 'none', boxShadow: 'none', padding: 0, minWidth: 44, minHeight: 44, cursor: 'pointer', color: 'var(--sm2-viewport-ink)', fontSize: 16, fontWeight: 700, textShadow: '0 1px 2px rgba(0,0,0,.9)' }}
-          >
-            {speed}×
-          </button>
-        )}
+        {!end && <BattleSpeedButton speed={speed} onCycle={cycleSpeed} isPt={isPt} corner attr="data-rogue-speed" />}
         {end && !oferta && (
           <div
             role="status" data-rogue-fight-end={won ? 'won' : 'lost'}

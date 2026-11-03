@@ -103,8 +103,8 @@ describe('Avanço rápido 1×/3× no canto inferior direito (o 2× saiu, 14/10/2
     descer();
     await avancar(10);
     const ff = () => document.querySelector('[data-dungeon-speed]') as HTMLButtonElement;
-    expect(ff().textContent).toContain('1×');
-    expect(ff().getAttribute('aria-label')).toMatch(/Fast forward: 1×/);
+    expect(ff().textContent).toContain('1x');
+    expect(ff().getAttribute('aria-label')).toMatch(/Fast forward: off/);
     const mascote = document.querySelector('[data-cheer-mascot]')!;
     expect(mascote.contains(ff())).toBe(true); // mora no canto da torcida…
     expect(mascote.lastElementChild).toBe(ff()); // …como o último filho, abaixo do botão do Cheer
@@ -112,10 +112,10 @@ describe('Avanço rápido 1×/3× no canto inferior direito (o 2× saiu, 14/10/2
     expect(ff().style.borderStyle).toBe('none'); expect(ff().style.backgroundColor).toBe('transparent'); expect(ff().style.boxShadow).toBe('none'); // sem box
     expect(ff().style.minHeight).toBe('44px');
     fireEvent.click(ff());
-    expect(ff().textContent).toContain('3×');
+    expect(ff().textContent).toContain('Fast');
     expect(localStorage.getItem(STORAGE_KEYS.DUNGEON_SPEED)).toBe('3');
     fireEvent.click(ff());
-    expect(ff().textContent).toContain('1×');
+    expect(ff().textContent).toContain('1x');
   });
 
   it('a preferência volta na próxima abertura; lixo no armazenamento vira 1×', async () => {
@@ -125,13 +125,13 @@ describe('Avanço rápido 1×/3× no canto inferior direito (o 2× saiu, 14/10/2
     // o montar() limpa? não: ele só grava o save — a velocidade guardada vale
     descer();
     await avancar(10);
-    expect((document.querySelector('[data-dungeon-speed]') as HTMLElement).textContent).toContain('3×');
+    expect((document.querySelector('[data-dungeon-speed]') as HTMLElement).textContent).toContain('Fast');
     cleanup();
     localStorage.setItem(STORAGE_KEYS.DUNGEON_SPEED, 'abc');
     montar();
     descer();
     await avancar(10);
-    expect((document.querySelector('[data-dungeon-speed]') as HTMLElement).textContent).toContain('1×');
+    expect((document.querySelector('[data-dungeon-speed]') as HTMLElement).textContent).toContain('1x');
   });
 
   it('em 3× a luta termina mais cedo no relógio de parede do que em 1× (mesmo resultado, menos espera)', async () => {
