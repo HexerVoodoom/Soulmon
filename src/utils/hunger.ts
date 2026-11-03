@@ -34,8 +34,8 @@ import { getMaxEnergyForStage } from '../types/progression';
 export const HUNGER_MAX = 100;
 /** Horas para a fome ir de CHEIA a ZERO, com o app aberto ou fechado. */
 export const HUNGER_FULL_TO_EMPTY_HOURS = 14;
-/** Fome devolvida por UMA comida comum (cada atividade concluída rende uma). */
-export const HUNGER_PER_FOOD = 40;
+/** Fome devolvida por UMA comida comum (cada atividade concluída rende uma; 50 = 1,5 de 3 níveis, pedido do dono 03/11/2026). */
+export const HUNGER_PER_FOOD = 50;
 /** Fome devolvida pela comida premium ★ (era +5 de energia). */
 export const HUNGER_PER_PREMIUM = 100;
 /** Com a fome neste nível ou acima a comida premium é RECUSADA (o item volta para a pastinha: não queimar à toa). */
