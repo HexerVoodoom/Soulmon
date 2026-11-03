@@ -21,8 +21,15 @@ const base = (over: Partial<ResultScreenProps> = {}): ResultScreenProps => ({
 
 describe('títulos de resultado (P1/P2/P3)', () => {
   it('cada outcome do ResultScreen mostra o banner certo e mantém o título em texto', () => {
-    for (const [o, kind] of [['win', 'victory'], ['record', 'victory'], ['tired', 'defeat'], ['calm', 'draw']] as const) {
+    for (const [o, kind] of [['win', 'win'], ['record', 'win'], ['tired', 'lose'], ['calm', 'draw']] as const) {
       const { unmount } = render(<ResultScreen {...base({ outcome: o, recordNote: 'New best' })} />);
+      const img = document.querySelector('[data-result-banner]') as HTMLImageElement;
+      expect(img.getAttribute('data-result-banner')).toBe(kind);
+      expect(img.getAttribute('src')).toBe(RESULT_BANNER[kind]);
+      unmount();
+    }
+    for (const [o, kind] of [['win', 'victory'], ['record', 'victory'], ['tired', 'defeat'], ['calm', 'draw']] as const) {
+      const { unmount } = render(<ResultScreen {...base({ outcome: o, recordNote: 'New best', bannerSet: 'epic' })} />);
       const img = document.querySelector('[data-result-banner]') as HTMLImageElement;
       expect(img.getAttribute('data-result-banner')).toBe(kind);
       expect(img.getAttribute('src')).toBe(RESULT_BANNER[kind]);
@@ -34,15 +41,20 @@ describe('títulos de resultado (P1/P2/P3)', () => {
     const pt = render(<ResultBanner kind="defeat" isPt width={200} />);
     expect(pt.container.querySelector('img')!.getAttribute('aria-label')).toBe('Derrota');
     pt.unmount();
+    const w = render(<ResultBanner kind="lose" isPt width={200} />);
+    expect(w.container.querySelector('img')!.getAttribute('aria-label')).toBe('Derrota');
+    w.unmount();
     const en = render(<ResultBanner kind="draw" isPt={false} />);
     expect(en.container.querySelector('img')!.getAttribute('alt')).toBe('Draw');
   });
   it('mapa de desfecho', () => {
-    expect([bannerForOutcome('win'), bannerForOutcome('record'), bannerForOutcome('tired'), bannerForOutcome('calm')]).toEqual(['victory', 'victory', 'defeat', 'draw']);
+    expect([bannerForOutcome('win'), bannerForOutcome('record'), bannerForOutcome('tired'), bannerForOutcome('calm')]).toEqual(['win', 'win', 'lose', 'draw']);
+    expect([bannerForOutcome('win', 'epic'), bannerForOutcome('record', 'epic'), bannerForOutcome('tired', 'epic'), bannerForOutcome('calm', 'epic')]).toEqual(['victory', 'victory', 'defeat', 'draw']);
   });
   it('Torneio, RPS, Arena e Duelo usam a tela/peça com banner', () => {
     for (const f of ['components/TournamentPage.tsx', 'components/RPSGame.tsx', 'components/ArenaGame.tsx']) expect(src(f)).toMatch(/<ResultScreen/);
     expect(src('components/DuelScreen.tsx')).toMatch(/<ResultBanner/);
+    expect(src('components/TournamentPage.tsx')).toMatch(/bannerSet="epic"/);
   });
 });
 

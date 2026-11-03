@@ -1086,6 +1086,7 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
     <ResultScreen
       language={isPt ? 'pt-BR' : 'en-US'}
       mode="dialog"
+      bannerSet="epic"
       outcome={draw ? 'calm' : result.won ? 'win' : 'tired'}
       gameName={isPt ? 'Torneio' : 'Tournament'}
       title={title}

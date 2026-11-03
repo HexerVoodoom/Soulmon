@@ -19,7 +19,7 @@ import { PixelMeter } from '../pixel/PixelKit';
 import { BitsAmount } from '../ui/BitsAmount';
 import { Icon } from '../ui/Icon';
 import { RewardIcon, RewardPop } from '../ui/RewardPop';
-import { ResultBanner, SpriteFx, bannerForOutcome } from '../ui/SpriteFx';
+import { ResultBanner, SpriteFx, bannerForOutcome, type BannerSet } from '../ui/SpriteFx';
 import { useRewardReveal } from '../../hooks/useRewardReveal';
 import type { RevealStep } from '../../utils/rewardReveal';
 import { POP_STAGGER_MS, STAIRS_STAGGER_MS } from '../../utils/rewardReveal';
@@ -81,6 +81,8 @@ export interface ResultScreenProps {
   kind?: 'boss';
   pool?: ResultPool;
   outcome: ResultOutcome;
+  /** Par do título: `epic` = VICTORY/DEFEAT (Torneio); `game` = WIN/LOSE (minigames, padrão). */
+  bannerSet?: BannerSet;
   /** Nome do jogo, na barra (sem seta de voltar). */
   gameName: string;
   title: string;
@@ -329,7 +331,7 @@ export function ResultScreen(p: ResultScreenProps) {
             {/* Título com o lettering NA ARTE (02/11/2026, decisão do dono): VICTORY / DEFEAT / DRAW em PNG alfa real. O `<h2>` abaixo segue com o texto do app (foco, leitor de tela e fallback). */}
             <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }} data-result-banner-wrap>
               {(record || p.outcome === 'win') && step >= 1 && <SpriteFx sheet="recompensa" size={128} ms={900} still="hide" style={{ position: 'absolute', left: '50%', top: '50%', marginLeft: -64, marginTop: -64 }} data-result-reward-fx />}
-              <ResultBanner kind={bannerForOutcome(p.outcome)} isPt={isPt} width={240} style={{ position: 'relative' }} />
+              <ResultBanner kind={bannerForOutcome(p.outcome, p.bannerSet ?? 'game')} isPt={isPt} width={240} style={{ position: 'relative' }} />
             </div>
             <h2
               ref={titleRef}

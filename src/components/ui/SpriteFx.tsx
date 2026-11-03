@@ -30,11 +30,17 @@ const BANNER_LABEL: Record<ResultBannerKind, { pt: string; en: string }> = {
   victory: { pt: 'Vitória', en: 'Victory' },
   defeat: { pt: 'Derrota', en: 'Defeat' },
   draw: { pt: 'Empate', en: 'Draw' },
+  win: { pt: 'Vitória', en: 'Win' },
+  lose: { pt: 'Derrota', en: 'Lose' },
 };
 
 /** O desfecho do `ResultScreen` (`win`/`record` → victory, `tired` → defeat, `calm` → draw). */
-export function bannerForOutcome(outcome: 'win' | 'record' | 'calm' | 'tired'): ResultBannerKind {
-  return outcome === 'win' || outcome === 'record' ? 'victory' : outcome === 'tired' ? 'defeat' : 'draw';
+export type BannerSet = 'epic' | 'game';
+/** `epic` (Torneio/Duelo) = VICTORY/DEFEAT; `game` (minigames, padrão) = WIN/LOSE. O empate (amarelo) é o mesmo nos dois. */
+export function bannerForOutcome(outcome: 'win' | 'record' | 'calm' | 'tired', set: BannerSet = 'game'): ResultBannerKind {
+  if (outcome === 'calm') return 'draw';
+  const won = outcome === 'win' || outcome === 'record';
+  return set === 'epic' ? (won ? 'victory' : 'defeat') : (won ? 'win' : 'lose');
 }
 
 /** Título de resultado com o lettering na arte (PNG alfa real, 512 px de base). Sem a arte o texto do app segue no `<h2>`. */
