@@ -667,4 +667,21 @@ describe('ALVO POR TOQUE (03/11/2026): tocar num inimigo muda o alvo a partir da
       expect(hp(1)).toBe(M3C_ENEMY_HP[0]);
     }
   });
+  it('o anel tracejado só dura 1 s após o toque; a escolha (aria-pressed) fica', () => {
+    vi.useFakeTimers();
+    try {
+      montar();
+      const b = () => document.querySelector<HTMLButtonElement>('[data-m3-target="1"]')!;
+      expect(b().getAttribute('data-m3-target-ring')).toBe('0');
+      fireEvent.click(b());
+      expect(b().getAttribute('data-m3-target-ring')).toBe('1');
+      expect(b().style.border).toContain('dashed');
+      act(() => { vi.advanceTimersByTime(1001); });
+      expect(b().getAttribute('data-m3-target-ring')).toBe('0');
+      expect(b().style.border).not.toContain('dashed');
+      expect(b().getAttribute('aria-pressed')).toBe('true');
+      fireEvent.click(b());
+      expect(b().getAttribute('data-m3-target-ring')).toBe('1');
+    } finally { vi.useRealTimers(); }
+  });
 });

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /** ALVO POR TOQUE (03/11/2026, dono): com 2+ inimigos, tocar num inimigo vivo escolhe o alvo do próximo golpe. */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, cleanup, fireEvent, screen } from '@testing-library/react';
+import { render, cleanup, fireEvent, screen, act } from '@testing-library/react';
 import { useState } from 'react';
 
 vi.mock('../../utils/sounds', () => ({ playAttack: vi.fn(), playAttackRanged: vi.fn(), playSpecial: vi.fn(), playVictory: vi.fn(), playDefend: vi.fn(), playCharge: vi.fn(), playDefeat: vi.fn() }));
@@ -30,6 +30,25 @@ describe('BattleStage: alvo por toque', () => {
     expect(screen.getByRole('button', { name: 'Mirar em R1' }).getAttribute('aria-pressed')).toBe('true');
     expect(container.querySelector('[data-stage-target-on="1"]')?.getAttribute('data-stage-target')).toBe('1');
     expect(screen.getByRole('button', { name: 'Mirar em R0' }).getAttribute('aria-pressed')).toBe('false');
+  });
+  it('o anel aparece só por 1 s após o toque e some; a escolha (aria-pressed) fica; tocar de novo reacende', () => {
+    vi.useFakeTimers();
+    try {
+      const { container } = render(<Cena foes={[foe(0), foe(1)]} onPick={() => {}} />);
+      const ring = () => container.querySelector('[data-stage-target="1"]') as HTMLElement;
+      expect(ring().getAttribute('data-stage-target-ring')).toBe('0');
+      fireEvent.click(ring());
+      expect(ring().getAttribute('data-stage-target-ring')).toBe('1');
+      expect(ring().style.border).toContain('dashed');
+      act(() => { vi.advanceTimersByTime(999); });
+      expect(ring().getAttribute('data-stage-target-ring')).toBe('1');
+      act(() => { vi.advanceTimersByTime(2); });
+      expect(ring().getAttribute('data-stage-target-ring')).toBe('0');
+      expect(ring().style.border).not.toContain('dashed');
+      expect(ring().getAttribute('aria-pressed')).toBe('true');
+      fireEvent.click(ring());
+      expect(ring().getAttribute('data-stage-target-ring')).toBe('1');
+    } finally { vi.useRealTimers(); }
   });
   it('luta 1×1 ou sem onPickFoe: nenhum botão de mira; rótulo em EN', () => {
     render(<BattleStage scene="#123" me={me} foes={[foe(0)]} onPickFoe={() => {}} title="A" closeLabel="X" onClose={() => {}} />);

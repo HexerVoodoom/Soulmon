@@ -30,6 +30,7 @@ import {
   M3C_DEFEAT_BONUS, M3C_MAX_STREAK, M3_HINTS_PER_GAME, M3_HINT_PRICE_BITS, applyEnemySteps, applyPlayerSteps, mirarInimigo, m3BoardAdvantage, chooseMove, combatScore, hintAction, newCombat, newPvpCombat, playTurn, type M3Combat, type M3Element, type M3Exchange,
 } from '../utils/match3Combat';
 import { tocarAlvo } from '../utils/combate/alvo';
+import { useMiraFlash } from './games/useMiraFlash';
 import { mulberry32 } from '../utils/combate/rng';
 import { FX_AURA_MS, FX_BURST_MS, FX_NUM_MS, FX_ORB_PX, FX_ORB_PX_BIG, FX_TRAVEL_MS, planFx, powerShots, type FxSlot, type PowerShot } from '../utils/match3Powers';
 import { fxFrame } from '../utils/combatFx';
@@ -192,11 +193,13 @@ function Match3Round({ pvp: pvpProp, language, evolutionStage, demoCharacterId, 
   /** ALVO POR TOQUE (03/11/2026, dono): o inimigo escolhido (`null` = o ativo, regra de sempre); vale a partir da PRÓXIMA jogada. */
   const [alvo, setAlvo] = useState<number | null>(null);
   const alvoRef = useRef<number | null>(null);
+  const [miraFlash, flashMira] = useMiraFlash();
   const mirar = useCallback((i: number) => {
     const next = tocarAlvo(combatRef.current.enemies.map(e => e.hp), alvoRef.current, i);
     alvoRef.current = next;
     setAlvo(next);
-  }, []);
+    if (next === i) flashMira(i); // marcador só por 1 s após o toque
+  }, [flashMira]);
   // M10: os 3 inimigos do roster entram em cena juntos → bestiário (idempotente no App).
   useEffect(() => {
     if (!onEnemySeen) return;
@@ -784,6 +787,7 @@ function Match3Round({ pvp: pvpProp, language, evolutionStage, demoCharacterId, 
           const preAuraPx = Math.round(enemyPx * AURA_SCALE);
           const podeMirar = !pvp && combat.enemies.length > 1 && combat.outcome === 'playing' && !down;
           const mirado = podeMirar && alvo === i;
+          const marca = podeMirar && miraFlash === i; // marcador só por 1 s após o toque
           return (
             <div
               key={i}
@@ -826,14 +830,15 @@ function Match3Round({ pvp: pvpProp, language, evolutionStage, demoCharacterId, 
                     type="button"
                     data-m3-target={i}
                     data-m3-target-on={mirado ? '1' : '0'}
+                    data-m3-target-ring={marca ? '1' : '0'}
                     aria-pressed={mirado}
                     aria-label={isPt ? `Mirar em ${enemyName}` : `Target ${enemyName}`}
                     onClick={() => mirar(i)}
                     style={{
                       position: 'absolute', inset: 0, zIndex: 3, padding: 0, margin: 0, minWidth: 44, minHeight: 44, cursor: 'pointer',
                       background: 'none', borderRadius: '50%', boxSizing: 'border-box',
-                      border: mirado ? '2px dashed var(--sm2-gold-fill)' : '2px solid transparent',
-                      boxShadow: mirado ? '0 0 10px var(--sm2-gold-fill)' : 'none',
+                      border: marca ? '2px dashed var(--sm2-gold-fill)' : '2px solid transparent',
+                      boxShadow: marca ? '0 0 10px var(--sm2-gold-fill)' : 'none',
                     }}
                   />
                 )}

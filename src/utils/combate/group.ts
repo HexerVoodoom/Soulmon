@@ -227,7 +227,8 @@ export function* groupFightSteps(
     const Eb = SPECIAL_BUDGET_HITS * sp.power * scale;
     const iv = interval(me.c.spd);
     const enemies = me === pl ? alive() : [pl];
-    const tgt = enemies[0];
+    // ALVO POR TOQUE: o especial single do jogador vai no inimigo escolhido (antes ignorava: sempre o 1º vivo)
+    const tgt = me === pl ? target() : enemies[0];
     if (!tgt) return;
     const isArea = me.area === 'area' && AREA_FAMILIES.includes(sp.family);
     const spread = isArea ? enemies : [tgt];

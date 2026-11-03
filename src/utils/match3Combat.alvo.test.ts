@@ -21,6 +21,15 @@ describe('Match-3: alvo por toque', () => {
     expect(c.enemies[0].hp).toBe(c.enemies[0].max);
     expect(c.active).toBe(0);
   });
+  it('combinação de 4+ e peça especial disparada (o "especial" do Match-3) também caem no escolhido', () => {
+    const c0 = mirarInimigo(novo(), 1);
+    const especial: Step = { ...passo([0, 0, 0, 0, 0, 0, 0]), triggered: [{ r: 0, c: 0 }] as unknown as Step['triggered'] };
+    const c = applyPlayerSteps(c0, [passo([1, 1, 1, 1]), especial]);
+    expect(c.log.every(l => l.target === 1)).toBe(true);
+    expect(c.enemies[1].hp).toBeLessThan(c.enemies[1].max);
+    expect(c.enemies[0].hp).toBe(c.enemies[0].max);
+    expect(c.enemies[2].hp).toBe(c.enemies[2].max);
+  });
   it('escolhido caído: volta ao 1º de pé; todos caídos = vitória', () => {
     const base = novo();
     const c0: M3Combat = { ...base, target: 2, enemies: base.enemies.map((e, i) => ({ ...e, hp: i === 2 ? 1 : e.hp })) };
