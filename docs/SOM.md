@@ -13,6 +13,8 @@
 > Em 07/09/2026 nenhum usuário tinha usado o app (`docs/STATUS.md`): tudo sobre "o usuário" foi escrito como `[hipótese]`.
 > ⚰️ Premissa vencida em 20/10/2026: o app está em teste fechado na Google Play com usuários reais; a telemetria passa a ter dado real, e as hipóteses `[hipótese]` deste doc podem ser confrontadas com ele. Ver CLAUDE.md › Compatibilidade.
 
+> Prompts de Suno para as trilhas que faltam (uma por minigame; Fenda e Calabouço distintos): `docs/som/PROMPTS-TRILHAS-FALTANTES.md`.
+
 ## 1. Onde o som mora
 
 | O quê | Arquivo |
