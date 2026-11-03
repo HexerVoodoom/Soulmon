@@ -26,12 +26,7 @@ import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
 import { BackCircleButton } from '../ui/BackCircleButton';
 import { Viewport } from '../ui/Viewport';
 import { MiniGlass } from '../ui/MiniGlass';
-import hpEnemyFrame from '../../assets/soulmon/hud/bars/hp-enemy-frame.png';
-import hpEnemyFill from '../../assets/soulmon/hud/bars/hp-enemy-fill.png';
-import hpPlayerFrame from '../../assets/soulmon/hud/bars/hp-player-frame.png';
-import hpPlayerFill from '../../assets/soulmon/hud/bars/hp-player-fill.png';
-import specialFrame from '../../assets/soulmon/hud/bars/special-frame.png';
-import specialFill from '../../assets/soulmon/hud/bars/special-fill.png';
+import { PixelMeter } from '../pixel/PixelKit';
 import { SPARK_ART } from '../../utils/fxArt';
 import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from '../form/FormKit';
 import { InfoTip } from '../ui/InfoTip';
@@ -341,43 +336,6 @@ export function VisorSparks({ style }: { style?: CSSProperties }) {
  * As duas leituras de HP como APARELHO (D-J5): fora do vidro, `.meter` vetor,
  * "You" em `primary-fill`, o outro em `gold-fill` — nunca ❤️, nunca vermelho.
  */
-/**
- * A MOLDURA pintada das barras (rodada 5, 03/11/2026, `hud/bars/` fatiado de `folha-barras.png`): a moldura é a imagem por cima
- * e o preenchimento é a faixa recortada pela porcentagem (`clip-path`), encaixada no buraco medido da moldura (`hole`, em %).
- * `player` = HP turquesa, `enemy` = HP vermelho, `special` = energia dourado-turquesa (com o soquete da chama à esquerda).
- */
-export const ART_METER = {
-  player: { frame: hpPlayerFrame, fill: hpPlayerFill, ratio: 957 / 174, hole: [43.7, 10.8, 25.3, 10.6] },
-  enemy: { frame: hpEnemyFrame, fill: hpEnemyFill, ratio: 957 / 172, hole: [43, 10.8, 25.6, 10.6] },
-  special: { frame: specialFrame, fill: specialFill, ratio: 963 / 193, hole: [40.9, 9.9, 32.1, 19.9] },
-} as const;
-export type ArtMeterKind = keyof typeof ART_METER;
-
-/** O encaixe (moldura + buraco) de uma barra pintada; `children` vai DENTRO do buraco. */
-export function ArtMeterFrame({ kind, children, style }: { kind: ArtMeterKind; children: ReactNode; style?: CSSProperties }) {
-  const a = ART_METER[kind];
-  const [t, r, b, l] = a.hole;
-  return (
-    <div data-art-meter={kind} style={{ position: 'relative', width: '100%', aspectRatio: `${a.ratio}`, flex: 'none', ...style }}>
-      <div style={{ position: 'absolute', top: `${t}%`, right: `${r}%`, bottom: `${b}%`, left: `${l}%`, overflow: 'hidden' }}>{children}</div>
-      {/* `div` com fundo, não `<img>`: quem procura o SPRITE por `[data-…] img` (Fusão, Combate) não pode achar a moldura. */}
-      <div aria-hidden="true" style={{ position: 'absolute', inset: 0, backgroundImage: `url(${a.frame})`, backgroundSize: '100% 100%', pointerEvents: 'none' }} />
-    </div>
-  );
-}
-
-/** A barra de HP pintada: mesmo contrato de acessibilidade do `PixelMeter` (progressbar 0–100 + `aria-label`). */
-export function ArtMeter({ ratio, kind, label, style }: { ratio: number; kind: ArtMeterKind; label: string; style?: CSSProperties }) {
-  const pct = Math.round(Math.min(1, Math.max(0, ratio)) * 100);
-  return (
-    <div className="sm2-kit-meter sm-art-meter" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label={label} style={{ width: '100%', ...style }}>
-      <ArtMeterFrame kind={kind}>
-        <div className="sm-art-meter-fill" aria-hidden="true" style={{ width: '100%', height: '100%', backgroundImage: `url(${ART_METER[kind].fill})`, backgroundSize: '100% 100%', clipPath: `inset(0 ${100 - pct}% 0 0)` }} />
-      </ArtMeterFrame>
-    </div>
-  );
-}
-
 export function HpBars({ bars }: {
   bars: Array<{ label: string; cur: number; max: number; tone: 'cyan' | 'gold' }>;
 }) {
@@ -386,7 +344,7 @@ export function HpBars({ bars }: {
       {bars.map(b => (
         <div key={b.label} style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
           <p style={{ ...sm2Hint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{b.label}</p>
-          <ArtMeter ratio={b.max > 0 ? b.cur / b.max : 0} kind={b.tone === 'cyan' ? 'player' : 'enemy'} label={b.label} style={{ maxWidth: 180 }} />
+          <PixelMeter ratio={b.max > 0 ? b.cur / b.max : 0} tone={b.tone} height={10} label={b.label} />
         </div>
       ))}
     </div>
