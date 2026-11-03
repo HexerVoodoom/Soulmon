@@ -34,6 +34,7 @@ import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKI
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
 import { hasFocusKeyOrLegacy, grantFocusKey, focusSessionStamp } from './utils/focusKey';
+import { grantRefugioEnergy } from './utils/refugio/energia';
 import { focusDescentRefusal, isFocusDescent, pauseFocusDescent, resumeFocusDescent, startFocusDescent } from './utils/focusDescent';
 import { assinarTelaMasmorra, telaMasmorraAberta } from './utils/dungeonScreenOpen';
 import { applyFocusLoot, rollFocusLoot, rollPlanLoot, type FocusLootRequest } from './utils/focusExpedition';
@@ -7981,6 +7982,7 @@ export default function App() {
                   onRunEnd: handleDungeonRunEnd,
                   onDungeonEnemyDefeated: handleDungeonEnemyDefeated,
                   onBestiarySeen: handleBestiarySeen,
+                  onRefugioComplete: () => setGameState(prev => grantRefugioEnergy(prev, Date.now())),
                   onElementsDefeated: handleElementsDefeated,
                   mindTutorials: { seen: gameState.mindGameTutorials ?? {}, onShown: id => setGameState(prev => { const m = markMindGameTutorial(prev.mindGameTutorials, id); return m === prev.mindGameTutorials ? prev : { ...prev, mindGameTutorials: m }; }) },
                   onDinoScore: handleDinoScore,
