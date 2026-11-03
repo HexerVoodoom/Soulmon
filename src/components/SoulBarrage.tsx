@@ -14,8 +14,9 @@ import { RewardPreview } from './ui/RewardPreview';
 import { fxFrame, prefersReducedMotion } from '../utils/combatFx';
 import type { GameChallenge } from '../utils/gameChallenge';
 import { temaSpriteOf } from '../utils/temaInimigosArt';
+import { BARRAGE_ROSTER } from '../utils/temaInimigos';
 import {
-  FIELD_W, FIELD_H, PLAYER_SPEED, PLAYER_SIZE, SHOT_R, SHOT_DRAW, BARRAGE_ELEMENT, BARRAGE_POINTS_PER_BIT, BEAM_HALF_W, SPECIAL_COST,
+  FIELD_W, FIELD_H, PLAYER_SPEED, PLAYER_SIZE, SHOT_R, SHOT_DRAW, BARRAGE_ELEMENT, BARRAGE_POINTS_PER_BIT, BIG_SHOT_R, SPECIAL_COST,
   newBarrage, stepBarrage, barrageBits, activateSpecial, specialKindOf, type BarrageState, type BarrageSpecial,
 } from '../utils/soulBarrage';
 import { emitFeat } from '../utils/feats';
@@ -70,7 +71,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
   const specialBtn = useRef<HTMLButtonElement>(null);
   const hudRef = useRef<HTMLSpanElement>(null);
-  const imgs = useRef<{ pet?: HTMLImageElement; orb?: HTMLImageElement; foeOrb?: HTMLImageElement; foes: Map<string, HTMLImageElement>; foeOrbs: Map<string, HTMLImageElement> }>({ foes: new Map(), foeOrbs: new Map() });
+  const imgs = useRef<{ pet?: HTMLImageElement; orb?: HTMLImageElement; foeOrb?: HTMLImageElement; boss?: HTMLImageElement; foes: Map<string, HTMLImageElement>; foeOrbs: Map<string, HTMLImageElement> }>({ foes: new Map(), foeOrbs: new Map() });
 
   const loadImg = (src: string | undefined) => { if (!src) return undefined; const i = new Image(); i.src = src; return i; };
 
@@ -169,6 +170,17 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
           ctx.fillStyle = '#E9F5F2'; ctx.fillRect(e.x - bw / 2, e.y - e.size / 2 - 4, bw * (e.hp / e.maxHp), 4);
         }
       }
+      // Boss: o maior dos ultimates da Chuva, com barra de vida larga no topo
+      if (s.boss) {
+        const bo = s.boss;
+        if (!imgs.current.boss) { const ent = BARRAGE_ROSTER.find(e => e.stage === 'ultimate') ?? BARRAGE_ROSTER[BARRAGE_ROSTER.length - 1]; imgs.current.boss = loadImg(ent ? temaSpriteOf(ent) : undefined); }
+        const bi = imgs.current.boss;
+        if (ready(bi)) ctx.drawImage(bi!, bo.x - bo.size / 2, bo.y - bo.size / 2, bo.size, bo.size);
+        else { ctx.fillStyle = '#7a2fb0'; ctx.fillRect(bo.x - bo.size / 3, bo.y - bo.size / 3, bo.size * 0.66, bo.size * 0.66); }
+        const bw = FIELD_W - 32;
+        ctx.fillStyle = '#2a1238'; ctx.fillRect(16, 6, bw, 8);
+        ctx.fillStyle = '#e9f5f2'; ctx.fillRect(16, 6, bw * Math.max(0, bo.hp / bo.maxHp), 8);
+      }
       // tiros
       const orb = imgs.current.orb;
       for (const b of s.shots) {
@@ -189,11 +201,11 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
         } else { ctx.fillStyle = '#ff5a5a'; ctx.beginPath(); ctx.arc(b.x, b.y, 6, 0, Math.PI * 2); ctx.fill(); }
       }
       // Especial (Avançado): feixe, pulso e escudo
-      for (const b of s.beams) {
-        const a = 1 - b.t / 0.4;
-        const grad = ctx.createLinearGradient(0, 0, 0, s.py);
-        grad.addColorStop(0, 'rgba(233,245,242,0)'); grad.addColorStop(1, 'rgba(120,230,240,' + (0.75 * a).toFixed(2) + ')');
-        ctx.fillStyle = grad; ctx.fillRect(b.x - BEAM_HALF_W * (0.6 + 0.4 * a), 0, BEAM_HALF_W * 2 * (0.6 + 0.4 * a), s.py);
+      // O projétil grande do especial: o MESMO orbe do especial de combate, enorme, subindo pela tela
+      for (const g of s.bigShots) {
+        const sz = BIG_SHOT_R * 4;
+        if (ready(orb)) { ctx.save(); ctx.translate(g.x, g.y); ctx.rotate(-Math.PI / 2); ctx.drawImage(orb!, -sz / 2, -sz / 2, sz, sz); ctx.restore(); }
+        else { ctx.fillStyle = 'rgba(120,230,240,0.8)'; ctx.beginPath(); ctx.arc(g.x, g.y, BIG_SHOT_R, 0, Math.PI * 2); ctx.fill(); }
       }
       if (s.pulse > 0) {
         ctx.strokeStyle = 'rgba(120,230,240,' + (s.pulse * 1.6).toFixed(2) + ')'; ctx.lineWidth = 6;
@@ -344,7 +356,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
           playAgainIcon={lotIconName('jogos', 'salao')} dailyEvent="barrage"
           language={language}
           outcome={prevBest > 0 && finalScore > prevBest ? 'record' : 'calm'}
-          bannerText={prevBest > 0 && finalScore > prevBest ? undefined : (isPt ? 'Completo' : 'Complete')}
+          bannerKind={prevBest > 0 && finalScore > prevBest ? undefined : 'complete'}
           gameName={isPt ? 'Chuva de Almas' : 'Soul Barrage'}
           title={isPt ? 'Chuva encerrada' : 'Barrage over'}
           line={prevBest > 0 && finalScore > prevBest

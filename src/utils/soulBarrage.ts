@@ -55,12 +55,17 @@ export interface Enemy {
   /** Tamanho do desenho e raio da hitbox (crescem com o estágio). */
   size: number; r: number;
 }
+export interface Boss {
+  x: number; y: number; hp: number; maxHp: number; t: number; fireIn: number; cannon: 0 | 1; size: number; r: number;
+}
+/** O projétil grande do especial (`hitBoss`: já tirou a fatia do boss). */
+export interface BigShot { x: number; y: number; hitBoss: boolean }
 export interface Shot { x: number; y: number; vx: number; vy: number; /** Dano (padrão 1); o Overdrive dobra. */ dmg?: number }
 
 /**
  * ESPECIAL (modo Avançado, pedido do dono 03/11/2026): botão no canto inferior direito, coerente com o especial do Soulmon
  * (a FAMÍLIA do especial da ficha). Carrega com abates (pontos do inimigo) e a cada fase; custa `SPECIAL_COST`.
- *  beam      (direct, dot)   tiro grande reto: limpa os tiros inimigos no caminho e causa dano triplo.
+ *  beam      (direct, dot)   o MESMO projétil do especial de combate (`fxFrame(elemento, 'orb')`), enorme, sobe pela tela: mata na hora tudo no caminho (menos o boss: tira `BEAM_BOSS_FRACTION` da vida dele) e apaga os tiros inimigos.
  *  shield    (shield)        escudo que absorve o próximo golpe (até `SHIELD_SECONDS`).
  *  heal      (heal)          +1 vida (até `MAX_LIVES`).
  *  overdrive (atkBuff)       `OVERDRIVE_SECONDS` com cadência e dano dobrados.
@@ -69,8 +74,19 @@ export interface Shot { x: number; y: number; vx: number; vy: number; /** Dano (
  */
 export type BarrageSpecial = 'beam' | 'shield' | 'heal' | 'overdrive' | 'pulse' | 'slow';
 export const SPECIAL_COST = 100;
-export const BEAM_HALF_W = 32;
-export const BEAM_DAMAGE = 3;
+/** Raio do projétil grande do especial (desenho ~ 4× o raio) e a velocidade com que sobe. */
+export const BIG_SHOT_R = 56;
+export const BIG_SHOT_SPEED = 900;
+/** Fração da vida MÁXIMA do boss que o projétil grande tira (uma vez por projétil). */
+export const BEAM_BOSS_FRACTION = 0.15;
+/** BOSS (pedido do dono, 03/11/2026): a cada `BOSS_EVERY` pontos entra um boss grande com dois canhões e muita vida; enquanto vive, nenhuma leva nova nasce. */
+export const BOSS_EVERY = 600;
+export const BOSS_BASE_HP = 60;
+export const BOSS_HP_STEP = 20;
+export const BOSS_POINTS = 200;
+export const BOSS_SIZE = 150;
+export const BOSS_R = 62;
+export const BOSS_Y = 96;
 export const PULSE_DAMAGE = 3;
 export const SHIELD_SECONDS = 10;
 export const OVERDRIVE_SECONDS = 6;
@@ -93,11 +109,13 @@ export interface BarrageState {
   t: number; phase: number; score: number; lives: number; invuln: number;
   px: number; py: number; fireIn: number; spawnIn: number; scroll: number;
   /** Especial (Avançado): carga 0..SPECIAL_COST, temporizadores de efeito e feixes a desenhar. */
-  charge: number; shield: number; overdrive: number; slow: number; pulse: number; beams: { x: number; t: number }[];
+  charge: number; shield: number; overdrive: number; slow: number; pulse: number; bigShots: BigShot[];
+  /** Boss ativo (ou `null`), a pontuação do próximo e quantos já vieram. */
+  boss: Boss | null; nextBossAt: number; bosses: number;
   enemies: Enemy[]; shots: Shot[]; enemyShots: Shot[];
   kills: number; over: boolean; usedIds: Set<string>;
 }
-export interface StepEvents { blocked?: boolean; hit: boolean; kills: number; phaseUp: boolean; over: boolean; leaked: number }
+export interface StepEvents { blocked?: boolean; bossSpawned?: boolean; bossDefeated?: boolean; hit: boolean; kills: number; phaseUp: boolean; over: boolean; leaked: number }
 
 export const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
@@ -105,7 +123,8 @@ export function newBarrage(): BarrageState {
   return {
     t: 0, phase: 1, score: 0, lives: START_LIVES, invuln: 0, px: FIELD_W / 2, py: PLAYER_Y, fireIn: 0.3, spawnIn: 0.8, scroll: 0,
     enemies: [], shots: [], enemyShots: [], kills: 0, over: false, usedIds: new Set(),
-    charge: 0, shield: 0, overdrive: 0, slow: 0, pulse: 0, beams: [],
+    charge: 0, shield: 0, overdrive: 0, slow: 0, pulse: 0, bigShots: [],
+    boss: null, nextBossAt: BOSS_EVERY, bosses: 0,
   };
 }
 
@@ -150,6 +169,13 @@ const hit = (ax: number, ay: number, ar: number, bx: number, by: number, br: num
   return dx * dx + dy * dy <= r * r;
 };
 
+function spawnBoss(s: BarrageState) {
+  const hp = BOSS_BASE_HP + BOSS_HP_STEP * s.bosses;
+  s.boss = { x: FIELD_W / 2, y: -BOSS_SIZE, hp, maxHp: hp, t: 0, fireIn: 1.2, cannon: 0, size: BOSS_SIZE, r: BOSS_R };
+  s.bosses += 1;
+  s.nextBossAt += BOSS_EVERY;
+}
+
 /** Um golpe no jogador: o escudo absorve (sem tirar vida); senão tira 1 vida. */
 function takeHit(s: BarrageState, ev: StepEvents, invuln: number) {
   if (s.shield > 0) { s.shield = 0; s.invuln = Math.min(invuln, 0.6); ev.blocked = true; return; }
@@ -165,9 +191,7 @@ export function activateSpecial(s: BarrageState, kind: BarrageSpecial): boolean 
   s.charge = 0;
   switch (kind) {
     case 'beam':
-      s.beams.push({ x: s.px, t: 0 });
-      for (const e of s.enemies) if (e.y < s.py && Math.abs(e.x - s.px) <= BEAM_HALF_W + e.r) e.hp -= BEAM_DAMAGE;
-      s.enemyShots = s.enemyShots.filter(b => !(b.y < s.py && Math.abs(b.x - s.px) <= BEAM_HALF_W));
+      s.bigShots.push({ x: s.px, y: s.py - PLAYER_SIZE / 2, hitBoss: false });
       break;
     case 'shield': s.shield = SHIELD_SECONDS; break;
     case 'heal': s.lives = Math.min(MAX_LIVES, s.lives + 1); break;
@@ -175,6 +199,7 @@ export function activateSpecial(s: BarrageState, kind: BarrageSpecial): boolean 
     case 'pulse':
       s.pulse = 0.5; s.enemyShots = [];
       for (const e of s.enemies) if (e.y > 0) e.hp -= PULSE_DAMAGE;
+      if (s.boss) s.boss.hp -= PULSE_DAMAGE;
       break;
     case 'slow': s.slow = SLOW_SECONDS; break;
   }
@@ -251,8 +276,6 @@ export function stepBarrage(s: BarrageState, dtRaw: number, targetX: number, lev
   }
   s.shield = Math.max(0, s.shield - dt); s.overdrive = Math.max(0, s.overdrive - dt);
   s.slow = Math.max(0, s.slow - dt); s.pulse = Math.max(0, s.pulse - dt);
-  for (const b of s.beams) b.t += dt;
-  s.beams = s.beams.filter(b => b.t < 0.4);
   const edt = s.slow > 0 ? dt * 0.5 : dt;
   s.invuln = Math.max(0, s.invuln - dt);
 
@@ -265,10 +288,13 @@ export function stepBarrage(s: BarrageState, dtRaw: number, targetX: number, lev
   }
 
   // spawn
-  s.spawnIn -= dt;
-  if (s.spawnIn <= 0) {
-    s.spawnIn = d.spawnEvery * (0.8 + rng() * 0.4);
-    spawnWave(s, rng);
+  if (!s.boss && s.score >= s.nextBossAt) { spawnBoss(s); ev.bossSpawned = true; }
+  if (!s.boss) {
+    s.spawnIn -= dt;
+    if (s.spawnIn <= 0) {
+      s.spawnIn = d.spawnEvery * (0.8 + rng() * 0.4);
+      spawnWave(s, rng);
+    }
   }
 
   // movimento
@@ -280,6 +306,35 @@ export function stepBarrage(s: BarrageState, dtRaw: number, targetX: number, lev
     e.fireIn -= edt;
     if (e.fireIn <= 0 && e.y > 0 && e.y < s.py - 80) { fire(s, e, rng); e.fireIn = d.fireEvery * (0.85 + rng() * 0.3); }
   }
+  // Boss: desce até a posição, balança de lado e atira por DOIS canhões (um de cada vez), mirando no jogador.
+  if (s.boss) {
+    const b = s.boss;
+    b.t += edt;
+    b.y = Math.min(BOSS_Y, b.y + 90 * edt);
+    b.x = FIELD_W / 2 + Math.sin(b.t * 0.7) * (FIELD_W / 2 - b.size / 2 - 8);
+    b.fireIn -= edt;
+    if (b.fireIn <= 0 && b.y >= BOSS_Y - 1) {
+      b.fireIn = Math.max(0.45, d.fireEvery * 0.45) * (0.9 + rng() * 0.2);
+      b.cannon = b.cannon === 0 ? 1 : 0;
+      const cx = b.x + (b.cannon === 0 ? -b.size * 0.3 : b.size * 0.3);
+      const base = Math.atan2(s.py - b.y, s.px - cx);
+      const n = Math.min(5, d.fanSize + 1);
+      for (let i = 0; i < n; i++) {
+        if (s.enemyShots.length >= MAX_ENEMY_SHOTS) break;
+        const a = base + (i - (n - 1) / 2) * 0.2;
+        s.enemyShots.push({ x: cx, y: b.y + b.size / 2, vx: Math.cos(a) * d.bulletSpeed, vy: Math.sin(a) * d.bulletSpeed });
+      }
+    }
+  }
+  // Projétil grande: sobe, mata na hora o que toca (menos o boss: uma fatia da vida dele) e apaga os tiros inimigos.
+  for (const g of s.bigShots) {
+    g.y -= BIG_SHOT_SPEED * dt;
+    for (const e of s.enemies) if (e.hp > 0 && hit(g.x, g.y, BIG_SHOT_R, e.x, e.y, e.r)) e.hp = 0;
+    s.enemyShots = s.enemyShots.filter(b => !hit(g.x, g.y, BIG_SHOT_R, b.x, b.y, 4));
+    if (s.boss && !g.hitBoss && hit(g.x, g.y, BIG_SHOT_R, s.boss.x, s.boss.y, s.boss.r)) { s.boss.hp -= Math.ceil(s.boss.maxHp * BEAM_BOSS_FRACTION); g.hitBoss = true; }
+  }
+  s.bigShots = s.bigShots.filter(g => g.y > -BIG_SHOT_R);
+
   // Quem atravessa até a base some. Fora da invulnerabilidade, a leva inteira tira 1 vida só e abre a janela;
   // durante a invulnerabilidade, o vazamento é descartado sem tirar vida.
   const through = s.enemies.filter(e => e.y >= BASE_Y).length;
@@ -298,7 +353,16 @@ export function stepBarrage(s: BarrageState, dtRaw: number, targetX: number, lev
       if (e.hp > 0 && hit(b.x, b.y, SHOT_R, e.x, e.y, e.r)) { e.hp -= b.dmg ?? 1; b.y = -999; break; }
     }
   }
+  if (s.boss) {
+    const bo = s.boss;
+    for (const b of s.shots) if (b.y > -500 && hit(b.x, b.y, SHOT_R, bo.x, bo.y, bo.r)) { bo.hp -= b.dmg ?? 1; b.y = -999; }
+  }
   s.shots = s.shots.filter(b => b.y > -500);
+  if (s.boss && s.boss.hp <= 0) {
+    s.score += BOSS_POINTS; s.kills += 1; ev.kills += 1; ev.bossDefeated = true;
+    if (level === 2) s.charge = Math.min(SPECIAL_COST, s.charge + BOSS_POINTS / 2);
+    s.boss = null; s.enemyShots = [];
+  }
   const alive: Enemy[] = [];
   for (const e of s.enemies) {
     if (e.hp > 0) { alive.push(e); continue; }

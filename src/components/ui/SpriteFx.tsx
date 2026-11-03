@@ -32,6 +32,7 @@ const BANNER_LABEL: Record<ResultBannerKind, { pt: string; en: string }> = {
   draw: { pt: 'Empate', en: 'Draw' },
   win: { pt: 'Vitória', en: 'Win' },
   lose: { pt: 'Derrota', en: 'Lose' },
+  complete: { pt: 'Completo', en: 'Complete' },
 };
 
 /** O desfecho do `ResultScreen` (`win`/`record` → victory, `tired` → defeat, `calm` → draw). */

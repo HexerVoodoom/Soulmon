@@ -20,6 +20,7 @@ import { BitsAmount } from '../ui/BitsAmount';
 import { Icon } from '../ui/Icon';
 import { RewardIcon, RewardPop } from '../ui/RewardPop';
 import { ResultBanner, SpriteFx, bannerForOutcome, type BannerSet } from '../ui/SpriteFx';
+import type { ResultBannerKind } from '../../utils/fxPackArt';
 import { useRewardReveal } from '../../hooks/useRewardReveal';
 import type { RevealStep } from '../../utils/rewardReveal';
 import { POP_STAGGER_MS, STAIRS_STAGGER_MS } from '../../utils/rewardReveal';
@@ -111,8 +112,8 @@ export interface ResultScreenProps {
   opponentSrc?: string;
   /** O recurso que acabou (missão do dia): com ele a tela mostra a linha da missão do dia desse jogo. */
   dailyEvent?: DailyEvent;
-  /** Título em TEXTO no lugar do banner de arte (fim normal "Complete" do Soul Barrage, até existir a arte). */
-  bannerText?: string;
+  /** Banner de arte que substitui o do desfecho (fim normal "Complete" da Chuva de Almas). */
+  bannerKind?: ResultBannerKind;
   /** Segundo combatente (Torneio): outro `VisorSprite` dentro do vidro; com ele o pet vai para a esquerda. */
   visorOpponent?: ReactNode;
   /** `background` da cena do visor. */
@@ -361,9 +362,7 @@ export function ResultScreen(p: ResultScreenProps) {
             {!p.visorOpponent && p.petSrc && (
               <img src={p.petSrc} alt="" aria-hidden="true" draggable={false} data-result-pet={mood} className={p.opponentSrc && p.outcome === 'tired' ? 'sm-result-loser' : 'sm-result-pet-free'} style={{ width: p.opponentSrc ? 104 : 128, height: p.opponentSrc ? 104 : 128, objectFit: 'contain', imageRendering: 'pixelated', position: 'relative', zIndex: 2, marginRight: -30, flex: 'none' }} />
             )}
-            {p.bannerText
-              ? <span data-result-banner="text" style={{ position: 'relative', zIndex: 1, fontFamily: 'var(--sm2-font-pixel)', fontSize: 'var(--sm2-text-xl)', letterSpacing: 2, textTransform: 'uppercase', color: 'var(--sm2-gold, var(--sm2-ink))', textShadow: '0 2px 0 rgba(0,0,0,.55)', padding: '0 8px' }}>{p.bannerText}</span>
-              : <ResultBanner kind={bannerForOutcome(p.outcome, p.bannerSet ?? 'game')} isPt={isPt} width={p.visorOpponent || !p.petSrc ? 240 : p.opponentSrc ? 180 : 210} style={{ position: 'relative', zIndex: 1 }} />}
+            <ResultBanner kind={p.bannerKind ?? bannerForOutcome(p.outcome, p.bannerSet ?? 'game')} isPt={isPt} width={p.visorOpponent || !p.petSrc ? 240 : p.opponentSrc ? 180 : 210} style={{ position: 'relative', zIndex: 1 }} />
             {!p.visorOpponent && p.opponentSrc && (
               <img src={p.opponentSrc} alt="" aria-hidden="true" draggable={false} data-result-opponent className={p.outcome === 'tired' ? 'sm-result-pet-free' : p.outcome === 'calm' ? undefined : 'sm-result-loser'} style={{ width: 104, height: 104, objectFit: 'contain', imageRendering: 'pixelated', position: 'relative', zIndex: 2, marginLeft: -30, flex: 'none' }} />
             )}

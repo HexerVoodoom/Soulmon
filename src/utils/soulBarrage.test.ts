@@ -124,7 +124,7 @@ describe('soulBarrage', () => {
   });
 });
 
-import { activateSpecial, specialReady, specialKindOf, SPECIAL_COST, PLAYER_MIN_Y, FIELD_H as FH, MAX_LIVES } from './soulBarrage';
+import { BOSS_EVERY, BOSS_BASE_HP, BOSS_POINTS, activateSpecial, specialReady, specialKindOf, SPECIAL_COST, PLAYER_MIN_Y, FIELD_H as FH, MAX_LIVES } from './soulBarrage';
 
 describe('soulBarrage — modo Avançado (Y livre + Especial)', () => {
   const foe = (s: ReturnType<typeof newBarrage>, x: number, y: number, hp = 6) => {
@@ -146,14 +146,36 @@ describe('soulBarrage — modo Avançado (Y livre + Especial)', () => {
     expect(activateSpecial(s, 'beam')).toBe(true);
     expect(s.charge).toBe(0);
   });
-  it('tiro grande: limpa tiros inimigos no caminho e dá dano triplo', () => {
+  it('projétil grande: mata na hora o que está no caminho e apaga tiros inimigos; fora do caminho não faz nada', () => {
     const s = newBarrage(); s.charge = SPECIAL_COST;
-    foe(s, s.px, 100, 6); foe(s, s.px + 200, 100, 6);
-    s.enemyShots.push({ x: s.px, y: 300, vx: 0, vy: 0 }, { x: s.px + 150, y: 300, vx: 0, vy: 0 });
+    foe(s, s.px, 300, 11); foe(s, s.px + 120, 300, 11);
+    s.enemyShots.push({ x: s.px, y: 200, vx: 0, vy: 0 }, { x: s.px + 120, y: 200, vx: 0, vy: 0 });
     activateSpecial(s, 'beam');
-    expect(s.enemies[0].hp).toBe(3);
-    expect(s.enemies[1].hp).toBe(6);
+    for (let i = 0; i < 12; i++) stepBarrage(s, 0.05, s.px, 2, seeded(4), s.py);
+    expect(s.enemies).toHaveLength(1);
+    expect(s.enemies[0].x).toBeGreaterThan(s.px + 60);
     expect(s.enemyShots).toHaveLength(1);
+    expect(s.score).toBe(10);
+  });
+  it('boss: entra a cada BOSS_EVERY pontos, segura as levas, o projétil grande tira 15% e a morte paga', () => {
+    const s = newBarrage();
+    s.score = BOSS_EVERY; s.spawnIn = 0;
+    const ev = stepBarrage(s, 0.05, s.px, 2, seeded(5), s.py);
+    expect(ev.bossSpawned).toBe(true);
+    expect(s.boss?.maxHp).toBe(BOSS_BASE_HP);
+    for (let i = 0; i < 40; i++) stepBarrage(s, 0.05, s.px, 2, seeded(5), s.py);
+    expect(s.enemies).toHaveLength(0);
+    s.boss!.t = 0; s.charge = SPECIAL_COST;
+    activateSpecial(s, 'beam');
+    const hp0 = s.boss!.hp;
+    for (let i = 0; i < 14; i++) stepBarrage(s, 0.05, s.px, 2, seeded(5), s.py);
+    expect(hp0 - s.boss!.hp).toBeGreaterThanOrEqual(Math.ceil(BOSS_BASE_HP * 0.15));
+    s.boss!.hp = 1; const before = s.score;
+    s.shots.push({ x: s.boss!.x, y: s.boss!.y, vx: 0, vy: 0 });
+    const ev2 = stepBarrage(s, 0.001, s.px, 2, seeded(5), s.py);
+    expect(ev2.bossDefeated).toBe(true);
+    expect(s.score).toBeGreaterThanOrEqual(before + BOSS_POINTS);
+    expect(s.nextBossAt).toBe(BOSS_EVERY * 2);
   });
   it('escudo absorve um golpe sem tirar vida; cura respeita o teto; pulso limpa a tela; slow reduz a velocidade', () => {
     const s = newBarrage(); s.charge = SPECIAL_COST; activateSpecial(s, 'shield');
