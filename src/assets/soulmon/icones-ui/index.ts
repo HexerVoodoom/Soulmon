@@ -50,6 +50,12 @@ import atributoHabilidade from './atributo-habilidade.png';
 import iconQuest from './quest.png';
 // 05/10/2026: o "!" de quest, a mesma linha do "?" (ouro, faísca turquesa), 96².
 import iconQuestExclamacao from './quest-exclamacao.png';
+import rankMadeira from '../ranks/rank-madeira.png';
+import rankBronze from '../ranks/rank-bronze.png';
+import rankPrata from '../ranks/rank-prata.png';
+import rankOuro from '../ranks/rank-ouro.png';
+import rankPlatina from '../ranks/rank-platina.png';
+import rankDiamante from '../ranks/rank-diamante.png';
 
 export const UI_ICON_ART = {
   mapa: iconMapa,
@@ -88,7 +94,10 @@ export const CHIP_MOEDA_SLICE = { top: 18, right: 48, bottom: 18, left: 48 } as 
  * cobre, tema Semente→Lendário, `insignia-faixa-*.png`, ainda em disco) não casam mais; as 7 faixas usam o
  * glifo. Arte nova de metal por faixa = prompt P3 do dono (`docs/AJUSTES-RODADA-7-2026-10-04.md`).
  */
-export const TIER_INSIGNIA_ART: Partial<Record<string, string>> = {};
+export const TIER_INSIGNIA_ART: Partial<Record<string, string>> = {
+  // Rodada 5 (03/11/2026): os 6 brasões de metal (`ranks/rank-<faixa>.png`, fatiados de `folha-ranks.png`). Mestre e Grão-Mestre seguem no glifo.
+  madeira: rankMadeira, bronze: rankBronze, prata: rankPrata, ouro: rankOuro, platina: rankPlatina, diamante: rankDiamante,
+};
 
 /** Céu do visor (64²): sol + 5 fases da lua. ⚠️ SEM CHAMADA (30/09/2026): nenhum visor
  *  desenha céu/fase da lua hoje — a arte espera o consumidor. */

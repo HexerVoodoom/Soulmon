@@ -244,7 +244,7 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
       data-tier-insignia={id}
       width={size}
       height={size}
-      style={{ width: size, height: size, display: 'block', imageRendering: 'pixelated', filter: state === 'next' ? 'grayscale(1) brightness(0.55)' : undefined }}
+      style={{ width: size, height: size, display: 'block', objectFit: 'contain', filter: state === 'next' ? 'grayscale(1) brightness(0.55)' : undefined }}
     />
   );
 }

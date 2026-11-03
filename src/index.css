@@ -5866,7 +5866,7 @@ select:focus-visible {
   .sm-bs-bounce, .sm-cheer-jump, .sm-bs-dodge-hint, .sm-bs-charge, .sm-bs-energy-full > i { animation: none !important; }
   .sm-bs-charged { animation: none !important; filter: drop-shadow(0 0 10px var(--bs-glow, var(--sm2-gold-fill))); }
   .sm-bs-charge { opacity: .6; }
-  .sm-bs-energy > i, .sm-bs-energy > b { transition: none !important; }
+  .sm-bs-energy > i, .sm-bs-energy > b, .sm-art-meter-fill { transition: none !important; }
   /* o balao do mascote so PISCA (sem subir nem crescer) */
   .sm-cheer-bubble { animation: sm-bs-flash 700ms linear 1 both !important; }
   .sm2-viewport { animation: none !important; }
@@ -8736,6 +8736,11 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 .sm-bs-energy > b { display: block; flex: none; height: 100%; background-color: color-mix(in srgb, var(--sm2-gold-fill) 55%, transparent); transition: width var(--sm2-dur-page) var(--sm2-ease); }
 .sm-bs-energy > i { display: block; flex: none; height: 100%; background-color: var(--sm2-ink); transition: width var(--sm2-dur-page) var(--sm2-ease); }
 .sm-bs-energy-full > i { background-color: var(--sm2-gold-fill); animation: sm-bs-glow 800ms ease-in-out infinite; }
+/* Rodada 5 (03/11/2026): dentro da moldura pintada (`ArtMeterFrame`), a energia ocupa o buraco inteiro, sem caixa propria. */
+[data-art-meter] .sm-bs-energy { height: 100%; border: 0; border-radius: 0; background-color: transparent; }
+/* depois de `.sm2-kit-meter` (mesma especificidade): a barra pintada não tem caixa própria */
+.sm-art-meter { display: block; height: auto; overflow: visible; border: 0; border-radius: 0; background-color: transparent; }
+.sm-art-meter-fill { transition: clip-path var(--sm2-dur-page) var(--sm2-ease); }
 /* O mascote da torcida (estilo Digimon 1): pula a cada toque, com o balao ao lado. */
 @keyframes sm-cheer-jump { 0% { transform: translateY(0) scale(1, 1); } 30% { transform: translateY(-14px) scale(.92, 1.1); } 60% { transform: translateY(0) scale(1.1, .9); } 100% { transform: translateY(0) scale(1, 1); } }
 .sm-cheer-jump { animation: sm-cheer-jump 360ms ease-out 1; }

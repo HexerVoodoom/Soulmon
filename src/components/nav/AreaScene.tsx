@@ -6,7 +6,7 @@ import { lotArtFilter } from './lotHalo';
 import { MissionMark } from '../play/MissionMark';
 import type { QuestMark as MissionMarkKind } from '../../utils/questMarks';
 import { Icon } from '../ui/Icon';
-import { lotIconName } from '../../utils/lotIcons';
+import { lotIconArt, lotIconName } from '../../utils/lotIcons';
 import { LockBadge, LockNotice, lockLabel } from '../ui/LockBadge';
 
 /**
@@ -218,7 +218,9 @@ export function AreaScene({ areaId, language, lots, background, notice, children
               textAlign: 'center',
             }}
           >
-            <Icon name={lotIconName(areaId, lot.id)} size={20} tone="gold" />
+            {lotIconArt(areaId, lot.id)
+              ? <img src={lotIconArt(areaId, lot.id)} alt="" aria-hidden="true" draggable={false} width={20} height={20} data-lot-icon-art style={{ width: 20, height: 20, display: 'block', flex: 'none' }} />
+              : <Icon name={lotIconName(areaId, lot.id)} size={20} tone="gold" />}
             {lot.label}
           </span>
         </button>

@@ -37,6 +37,7 @@ import { petScaleFor, petScaleStyle, scaleStageOf, visibleFillOf } from '../../u
 import { useFeetShift } from '../../hooks/usePetScale';
 import { PixelIcon } from '../ui/PixelIcon';
 import { PixelMeter } from '../pixel/PixelKit';
+import { ArtMeter, ArtMeterFrame, ART_METER } from './GameKit';
 import { sm2Button, sm2Text } from '../form/FormKit';
 import {
   fxFrame, impactMs, totalMs, introMs, SPECIAL_INTRO_MS, prefersReducedMotion, SPECIAL_LABEL, STATUS_FX, MAX_STATUS_CHIPS, statusAriaLabel, statusGlyphId,
@@ -129,7 +130,8 @@ export interface StageLayout {
 const PLATE_H = 14;
 /** Quanto os pés do seu Soulmon ficam ABAIXO do fim do campo (px), sobre a faixa do HUD de baixo (dono, 30/10/2026). */
 export const ME_BELOW_FIELD = 52;
-const BARS_H = 50;
+const BARS_H = 66; // nome + HP pintado (moldura 5,5:1) + energia pintada (5:1), as duas com largura máx. ART_BAR_MAX_W
+const ART_BAR_MAX_W = 128;
 /** Folga entre o bloco de barras e o topo do sprite (px): as barras ficam ACIMA da cabeça, sem cobri-la (QA L11-10; antes entravam 12 px nela). */
 const BARS_LIFT = 2;
 /** Largura do ícone de elemento ao lado do bloco de barras (a altura é a do bloco). */
@@ -309,8 +311,9 @@ function FighterBars({ fighter, spot, tone, numeric, barsH, fieldW, isPt }: {
           </span>
         )}
       </div>
-      <PixelMeter ratio={fighter.maxHp > 0 ? fighter.hp / fighter.maxHp : 0} tone={tone} height={8} label={fighter.name} />
+      <ArtMeter ratio={fighter.maxHp > 0 ? fighter.hp / fighter.maxHp : 0} kind={tone === 'cyan' ? 'player' : 'enemy'} label={fighter.name} style={{ maxWidth: ART_BAR_MAX_W, alignSelf: 'center' }} />
       {energy !== undefined && (
+        <ArtMeterFrame kind="special" style={{ maxWidth: ART_BAR_MAX_W, alignSelf: 'center' }}>
         <div
           role="progressbar"
           aria-valuemin={0}
@@ -320,9 +323,10 @@ function FighterBars({ fighter, spot, tone, numeric, barsH, fieldW, isPt }: {
           data-stage-energy
           className={full ? 'sm-bs-energy sm-bs-energy-full' : 'sm-bs-energy'}
         >
-          <i style={{ width: `${Math.round(Math.min(1, Math.max(0, energy)) * 100)}%` }} />
+          <i style={{ width: `${Math.round(Math.min(1, Math.max(0, energy)) * 100)}%`, backgroundImage: `url(${ART_METER.special.fill})`, backgroundSize: `${Math.round(10000 / Math.max(1, Math.round(Math.min(1, Math.max(0, energy)) * 100)))}% 100%`, backgroundPosition: 'left center' }} />
           {pending > 0 && <b aria-hidden="true" data-stage-energy-pending style={{ width: `${Math.round(pending * 100)}%` }} />}
         </div>
+        </ArtMeterFrame>
       )}
     </div>
     </div>
