@@ -52,7 +52,7 @@ describe('cerimônia do cristal — 6 tempos', () => {
     expect(q('[data-cer-sprite]')!.getAttribute('src')).toBe('/nova.png');
     expect(q('[data-cer-sprite]')!.style.width).toBe(`${FORMA_W}%`);
     expect(q('[data-cer-pedestal]')!.getAttribute('src')).toBe(EVOLUCAO_ART.pedestal);
-    expect(q('[data-cer-leaves]')!.style.backgroundImage).toContain(EVOLUCAO_ART.leaves.src);
+    expect(q('[data-cer-embers]')!.style.backgroundImage).toContain(EVOLUCAO_ART.embers.src);
     act(() => { vi.advanceTimersByTime(SURGE_MS + RESPIRO_MS - 1); });
     expect(document.body.textContent).not.toContain('Seguimos juntos');
     act(() => { vi.advanceTimersByTime(1); });
@@ -84,7 +84,7 @@ describe('cerimônia — movimento reduzido', () => {
     expect(document.querySelector('[data-cer-sprite]')?.getAttribute('data-reveal')).toBe('fade');
     expect(document.querySelector('[data-cer-pedestal]')).toBeTruthy();
     expect(document.querySelector('[data-cer-shard]')).toBeNull();
-    expect(document.querySelector('[data-cer-leaves]')).toBeNull();
+    expect(document.querySelector('[data-cer-embers]')).toBeNull();
     expect(document.querySelector('[data-cer-crystal]')).toBeNull();
   });
 });

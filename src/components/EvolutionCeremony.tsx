@@ -18,7 +18,7 @@ import { quadroDaTira } from './OnboardingOvo';
  *
  * Refeita em 31/10/2026 (REGISTRO §208: sem vídeo nem sunburst) e de novo em
  * 03/11/2026 (revisão visual aprovada pelo dono, P1+P2): a cena fica ANCORADA no
- * altar do fundo pintado (`SCENE_BG.evolucao`, B-bg2: centro do altar ≈ 61% da
+ * altar do fundo pintado (`SCENE_BG.evolucao`, B-bg v2: centro do altar ≈ 61.3% da
  * altura) dentro de um PALCO de proporção fixa 9:16 que cobre o vidro — então o
  * cristal e a forma nova pisam no altar em qualquer tela. Seis tempos (~6 s):
  *
@@ -26,7 +26,7 @@ import { quadroDaTira } from './OnboardingOvo';
  *   2. `carrega`   — o cristal carrega luz (`EVOLUCAO_ART.build`, 3 quadros);
  *   3. `racha`     — rachaduras crescem (`EVOLUCAO_ART.cracks`, 5 quadros) e ele treme;
  *   4. `estilhaca` — cacos de cristal (`EVOLUCAO_ART.shards`) voam + o flash turquesa;
- *   5. `revela`    — a forma NOVA, grande (58% da largura), sobre o pedestal, com folhas subindo;
+ *   5. `revela`    — a forma NOVA, grande (58% da largura), sobre o pedestal, com brasas subindo;
  *   6. respiro de `RESPIRO_MS` antes da faixa final (`done`).
  *
  * A evolução é commitada (`onEvolved`) no começo da revelação.
@@ -71,7 +71,7 @@ export const RESPIRO_MS = 600;
 export const TOTAL_MS = PHASE_AT.revela + SURGE_MS + RESPIRO_MS; // 6000
 
 /** Geometria no palco 9:16 (frações do palco): o altar do B-bg2. */
-export const ALTAR_Y = 61;
+export const ALTAR_Y = 61.3;
 /** Largura da forma nova no palco (55–60%, pedido da revisão). */
 export const FORMA_W = 58;
 const CRISTAL_W = 80;
@@ -103,9 +103,9 @@ const CSS = [
   '[data-cer-flash] { animation: sm2-cer-luz .9s ease-out forwards; }',
   `[data-cer-sprite][data-reveal="anim"] { animation: sm2-cer-surge ${SURGE_MS}ms ease-out both; }`,
   '[data-cer-sprite][data-reveal="fade"] { animation: none; }',
-  `[data-cer-leaves] { animation: sm2-cer-tira 1.2s steps(${EVOLUCAO_ART.leaves.frames - 1}) infinite; }`,
+  `[data-cer-embers] { animation: sm2-cer-tira 1.2s steps(${EVOLUCAO_ART.embers.frames - 1}) infinite; }`,
   '[data-cer-card] { animation: sm2-cer-fade .5s ease-out both; }',
-  '@media (prefers-reduced-motion: reduce) { [data-cer-leaves], [data-cer-card] { animation: none; } }',
+  '@media (prefers-reduced-motion: reduce) { [data-cer-embers], [data-cer-card] { animation: none; } }',
 ].join('\n');
 
 export function EvolutionCeremony({
@@ -249,9 +249,9 @@ export function EvolutionCeremony({
                 }}
               />
               {!reduced && (
-                <span data-cer-leaves style={{
+                <span data-cer-embers style={{
                   position: 'absolute', left: '50%', bottom: `${100 - ALTAR_Y}%`, width: '70%', aspectRatio: '1 / 1', transform: 'translateX(-50%)',
-                  pointerEvents: 'none', ...quadroDaTira(EVOLUCAO_ART.leaves.src, EVOLUCAO_ART.leaves.frames, 0),
+                  pointerEvents: 'none', ...quadroDaTira(EVOLUCAO_ART.embers.src, EVOLUCAO_ART.embers.frames, 0),
                 }} />
               )}
             </>
@@ -280,8 +280,8 @@ export function EvolutionCeremony({
             backgroundImage: `url(${EVOLUCAO_ART.card})`, backgroundSize: '100% 100%', imageRendering: 'pixelated',
             display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, paddingTop: '8%',
           }}>
-            <img data-cer-card-from src={fromSprite} alt="" style={{ ...pixel, left: '17.6%', top: '21.6%', width: '15%', height: 'auto', transform: 'translate(-50%,-50%)' }} />
-            <img data-cer-card-to src={toSprite} alt="" style={{ ...pixel, left: '82.4%', top: '21.6%', width: '15%', height: 'auto', transform: 'translate(-50%,-50%)' }} />
+            <img data-cer-card-from src={fromSprite} alt="" style={{ ...pixel, left: '19.76%', top: '18.2%', width: '10%', height: 'auto', transform: 'translate(-50%,-50%)' }} />
+            <img data-cer-card-to src={toSprite} alt="" style={{ ...pixel, left: '80.16%', top: '18.2%', width: '10%', height: 'auto', transform: 'translate(-50%,-50%)' }} />
             <p style={{ ...ritualLabel, letterSpacing: '.1em', margin: 0 }}>{isPt ? 'EVOLUIU PARA' : 'EVOLVED INTO'}</p>
             <h1 style={{
               fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-xl)', fontWeight: 600,

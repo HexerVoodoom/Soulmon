@@ -13,7 +13,7 @@ import bBg2 from '../assets/soulmon/bg/evolucao-bg.png';
 import bCrystalBuild from '../assets/soulmon/criacao-evolucao/b-crystal-build.png';
 import bCracks from '../assets/soulmon/criacao-evolucao/b-cracks.png';
 import bFlash from '../assets/soulmon/criacao-evolucao/b-flash.png';
-import bLeaves from '../assets/soulmon/criacao-evolucao/b-leaves.png';
+import bEmbers from '../assets/soulmon/criacao-evolucao/b-embers.png';
 import bCard from '../assets/soulmon/criacao-evolucao/b-card.png';
 import bPedestal from '../assets/soulmon/criacao-evolucao/b-pedestal.png';
 import bShards from '../assets/soulmon/criacao-evolucao/b-shards.png';
@@ -44,8 +44,8 @@ export const EVOLUCAO_ART = {
   /** O cristal rachando (5 quadros). */
   cracks: { src: bCracks, frames: 5 } as Tira,
   flash: bFlash,
-  /** Folhas e brilhos subindo (6 quadros). */
-  leaves: { src: bLeaves, frames: 6 } as Tira,
+  /** Brasas de chama de alma subindo (6 quadros). */
+  embers: { src: bEmbers, frames: 6 } as Tira,
   /** Moldura do cartão final: soquete redondo à esquerda (antes) e à direita (depois), cordão de luz. */
   card: bCard,
   pedestal: bPedestal,
