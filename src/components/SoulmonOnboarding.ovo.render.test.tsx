@@ -182,7 +182,7 @@ describe('§81 — o ovo-cristal', () => {
     expect(cristal).toBeTruthy();
     expect(cristal.getAttribute('aria-label')).toBe('Crystal with a sleeping being inside. Tap to wake it.');
     expect((cristal.querySelector('[data-ovo-arte]') as HTMLElement).getAttribute('data-ovo-arte')).toBe('dormant');
-    expect((cristal.querySelector('img') as HTMLImageElement).getAttribute('src')).toContain('dormant');
+    expect((cristal.querySelector('[data-ovo-rachadura]') as HTMLElement).getAttribute('data-ovo-rachadura')).toBe('0');
     expect(screen.queryByText('How do you want to start?')).toBeNull();
     expect(screen.queryByText(/Start now/)).toBeNull();
     expect(screen.queryByText('Your soul\'s creature')).toBeNull();
@@ -195,7 +195,7 @@ describe('§81 — o ovo-cristal', () => {
     await ateOOvo();
     const vibra = navigator.vibrate as unknown as ReturnType<typeof vi.fn>;
     const pulso = () => document.querySelector('[data-ovo-pulso]') as HTMLElement;
-    expect(pulso().style.animation).toBe('none');
+    expect(pulso().style.animation).toContain('sm-ovo-convite'); // o pulso que convida o 1º toque
     tocarOvo(1);
     expect(pulso().style.animation).toContain('sm-ovo-balanco');
     expect(pulso().getAttribute('data-ovo-pulso')).toBe('1');

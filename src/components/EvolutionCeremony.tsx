@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { getSpriteForStage } from '../utils/sprites';
-import { PLACEHOLDER_ART } from '../utils/placeholderArt';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { usePrefersReducedMotion } from './ui/Viewport';
 import { ritualLabel } from './ritual/RitualKit';
@@ -9,32 +8,39 @@ import { fragmentsGatherLine, fragmentsSpentLine } from '../utils/soulFragment';
 import { pointsResetLine } from '../utils/betaResetGrant';
 import { entrarNaSuperficie } from '../utils/musica';
 import { SoulFragmentIcon } from './ui/SoulFragmentIcon';
-import { SpriteFx } from './ui/SpriteFx';
 import { SCENE_BG } from '../utils/fxPackArt';
+import { EVOLUCAO_ART } from '../utils/criacaoEvolucaoArt';
+import { quadroDaTira } from './OnboardingOvo';
 
 /**
  * EvolutionCeremony — a TRANSFORMAÇÃO que fecha o cristal da evolução.
  * =====================================================================
  *
- * Refeita em 31/10/2026 (pedido do dono, REGISTRO §208): o vídeo de fundo e o
- * sunburst saíram. O jogador tocou Evoluir, o Soulmon passou um tempo NO
- * CRISTAL (`utils/evolutionCrystal.ts`) enquanto a forma nova era desenhada, e
- * quando ela fica pronta esta tela conta a transformação dentro do jogo, em
- * quatro tempos (CSS puro, sem vídeo nem imagem nova):
+ * Refeita em 31/10/2026 (REGISTRO §208: sem vídeo nem sunburst) e de novo em
+ * 03/11/2026 (revisão visual aprovada pelo dono, P1+P2): a cena fica ANCORADA no
+ * altar do fundo pintado (`SCENE_BG.evolucao`, B-bg2: centro do altar ≈ 61% da
+ * altura) dentro de um PALCO de proporção fixa 9:16 que cobre o vidro — então o
+ * cristal e a forma nova pisam no altar em qualquer tela. Seis tempos (~6 s):
  *
- *   1. `treme`     — o cristal (a mesma arte do nascimento, `PLACEHOLDER_ART.forming`) treme;
- *   2. `racha`     — rachaduras de luz turquesa riscam o cristal;
- *   3. `estilhaca` — ele estilhaça em fragmentos que voam para fora;
- *   4. `revela`    — a forma nova aparece no lugar, e a faixa diz o nome.
+ *   1. `despede`   — a forma ANTIGA (`fromSprite`) se despede dentro do cristal;
+ *   2. `carrega`   — o cristal carrega luz (`EVOLUCAO_ART.build`, 3 quadros);
+ *   3. `racha`     — rachaduras crescem (`EVOLUCAO_ART.cracks`, 5 quadros) e ele treme;
+ *   4. `estilhaca` — cacos de cristal (`EVOLUCAO_ART.shards`) voam + o flash turquesa;
+ *   5. `revela`    — a forma NOVA, grande (58% da largura), sobre o pedestal, com folhas subindo;
+ *   6. respiro de `RESPIRO_MS` antes da faixa final (`done`).
  *
  * A evolução é commitada (`onEvolved`) no começo da revelação.
- * `prefers-reduced-motion` troca tudo por um fade simples para a forma nova e
- * commita na montagem. A cerimônia continua ESPERANDO o gesto de saída
- * (RIT-20). Escape só depois de `done`.
+ * `prefers-reduced-motion`: nenhuma animação longa — mostra o estado final
+ * (forma nova no pedestal) e commita na montagem. A cerimônia continua ESPERANDO
+ * o gesto de saída (RIT-20). Escape só depois de `done`. Não há "pular ao tocar"
+ * (o comportamento não existia; não foi inventado aqui).
+ *
+ * Faixa final enxuta: o cartão antes→depois (`EVOLUCAO_ART.card`, forma antiga e
+ * nova nos dois soquetes) com o nome no meio; data e fragmentos numa linha só; o
+ * aviso dos pontos zerados (§209) pequeno; o botão em destaque.
  *
  * Acessibilidade (§10.4 b): `role="dialog"` + `aria-modal`, foco preso e
- * devolvido (`useDialogA11y`). Nada pisca: o tremor é deslocamento e a luz
- * cresce uma vez só (WCAG 2.3.1).
+ * devolvido (`useDialogA11y`). Nada pisca: o flash cresce uma vez só (WCAG 2.3.1).
  */
 interface EvolutionCeremonyProps {
   fromStage: string;
@@ -56,58 +62,63 @@ interface EvolutionCeremonyProps {
   onClose: () => void;
 }
 
-export type CeremonyPhase = 'treme' | 'racha' | 'estilhaca' | 'revela';
+export type CeremonyPhase = 'despede' | 'carrega' | 'racha' | 'estilhaca' | 'revela';
 /** Quando cada tempo COMEÇA (ms desde a montagem). */
-export const PHASE_AT: Readonly<Record<CeremonyPhase, number>> = { treme: 0, racha: 1400, estilhaca: 2600, revela: 3200 };
-export const TOTAL_MS = 3800;
+export const PHASE_AT: Readonly<Record<CeremonyPhase, number>> = { despede: 0, carrega: 1200, racha: 2600, estilhaca: 3800, revela: 4600 };
+/** A entrada da forma nova (anim `surge`) e o respiro antes da faixa final. */
+export const SURGE_MS = 800;
+export const RESPIRO_MS = 600;
+export const TOTAL_MS = PHASE_AT.revela + SURGE_MS + RESPIRO_MS; // 6000
 
-const SPRITE = 128;
-const CRYSTAL = 144;
-/** Fragmentos do estilhaço: ângulo (graus), distância e tamanho — determinísticos, nada de sorteio no render. */
-export const SHARDS: ReadonlyArray<{ a: number; d: number; s: number }> = Array.from({ length: 14 }, (_, i) => ({
+/** Geometria no palco 9:16 (frações do palco): o altar do B-bg2. */
+export const ALTAR_Y = 61;
+/** Largura da forma nova no palco (55–60%, pedido da revisão). */
+export const FORMA_W = 58;
+const CRISTAL_W = 80;
+
+/** Fragmentos do estilhaço: ângulo (graus), distância (% do palco) e tamanho — determinísticos, nada de sorteio no render. */
+export const SHARDS: ReadonlyArray<{ a: number; d: number; s: number; f: number }> = Array.from({ length: 14 }, (_, i) => ({
   a: (i * 360) / 14 + (i % 2 ? 9 : -7),
-  d: 110 + ((i * 37) % 70),
-  s: 10 + ((i * 13) % 12),
+  d: 34 + ((i * 37) % 22),
+  s: 7 + ((i * 13) % 6),
+  f: i % EVOLUCAO_ART.shards.frames,
 }));
 
 const pixel: CSSProperties = { position: 'absolute', imageRendering: 'pixelated', display: 'block', maxWidth: 'none' };
 
 const CSS = [
   '@keyframes sm2-cer-treme { 0%,100% { transform: translate(0,0) } 25% { transform: translate(-2px,1px) } 50% { transform: translate(2px,-1px) } 75% { transform: translate(-1px,-2px) } }',
-  '@keyframes sm2-cer-risca { from { stroke-dashoffset: 120 } to { stroke-dashoffset: 0 } }',
+  '@keyframes sm2-cer-tira { from { background-position: 0 0 } to { background-position: 100% 0 } }',
+  '@keyframes sm2-cer-despede { 0% { opacity: .95; transform: translate(-50%,-50%) scale(1) } 70% { opacity: .7 } 100% { opacity: 0; transform: translate(-50%,-62%) scale(.7) } }',
   '@keyframes sm2-cer-voa { from { transform: translate(-50%,-50%) rotate(var(--a)) translate(0,0); opacity: 1 } to { transform: translate(-50%,-50%) rotate(var(--a)) translate(var(--d),0) rotate(140deg); opacity: 0 } }',
-  '@keyframes sm2-cer-luz { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.4) } 40% { opacity: .9 } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.6) } }',
-  '@keyframes sm2-cer-surge { from { opacity: 0; transform: scale(.82) } to { opacity: 1; transform: scale(1) } }',
+  '@keyframes sm2-cer-luz { 0% { opacity: 0; transform: translate(-50%,-50%) scale(.3) } 35% { opacity: 1 } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5) } }',
+  '@keyframes sm2-cer-surge { from { opacity: 0; transform: translateX(-50%) scale(.7) } to { opacity: 1; transform: translateX(-50%) scale(1) } }',
   '@keyframes sm2-cer-fade { from { opacity: 0 } to { opacity: 1 } }',
-  '[data-cer-crystal][data-phase="treme"] { animation: sm2-cer-treme .2s steps(2) infinite; }',
+  '[data-cer-crystal][data-phase="carrega"] { animation: sm2-cer-treme .3s steps(2) infinite; }',
   '[data-cer-crystal][data-phase="racha"] { animation: sm2-cer-treme .1s steps(2) infinite; }',
-  '[data-cer-cracks] path { stroke-dasharray: 120; stroke-dashoffset: 120; animation: sm2-cer-risca .9s ease-out forwards; }',
-  '[data-cer-shard] { animation: sm2-cer-voa .7s cubic-bezier(.2,.7,.3,1) forwards; }',
-  '[data-cer-flash] { animation: sm2-cer-luz .8s ease-out forwards; }',
-  '[data-cer-sprite][data-reveal="anim"] { animation: sm2-cer-surge .6s ease-out both; }',
-  '[data-cer-sprite][data-reveal="fade"] { animation: sm2-cer-fade .6s ease-out both; }',
+  `[data-cer-crystal-art][data-tira="build"] { animation: sm2-cer-tira 1.3s steps(${EVOLUCAO_ART.build.frames - 1}) forwards; }`,
+  `[data-cer-crystal-art][data-tira="cracks"] { animation: sm2-cer-tira 1.1s steps(${EVOLUCAO_ART.cracks.frames - 1}) forwards; }`,
+  '[data-cer-from-sprite] { animation: sm2-cer-despede 1.2s ease-in forwards; }',
+  '[data-cer-shard] { animation: sm2-cer-voa .8s cubic-bezier(.2,.7,.3,1) forwards; }',
+  '[data-cer-flash] { animation: sm2-cer-luz .9s ease-out forwards; }',
+  `[data-cer-sprite][data-reveal="anim"] { animation: sm2-cer-surge ${SURGE_MS}ms ease-out both; }`,
+  '[data-cer-sprite][data-reveal="fade"] { animation: none; }',
+  `[data-cer-leaves] { animation: sm2-cer-tira 1.2s steps(${EVOLUCAO_ART.leaves.frames - 1}) infinite; }`,
+  '[data-cer-card] { animation: sm2-cer-fade .5s ease-out both; }',
+  '@media (prefers-reduced-motion: reduce) { [data-cer-leaves], [data-cer-card] { animation: none; } }',
 ].join('\n');
-
-const CRACKS = [
-  'M72 20 L66 48 L78 70 L62 96 L70 124',
-  'M66 48 L40 58 L30 80',
-  'M78 70 L104 78 L112 100',
-  'M62 96 L44 110',
-  'M70 30 L92 40 L100 58',
-];
 
 export function EvolutionCeremony({
   fromStage, toStage, toName, language, demoCharacterId, fromSpriteUrl, toSpriteUrl, reachedAt, fragmentsSpent, onEvolved, onClose,
 }: EvolutionCeremonyProps) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
-  const [phase, setPhase] = useState<CeremonyPhase>(reduced ? 'revela' : 'treme');
+  const [phase, setPhase] = useState<CeremonyPhase>(reduced ? 'revela' : 'despede');
   const [done, setDone] = useState(false);
   const evolvedRef = useRef(false);
   // S18: o tema da cerimônia acompanha a cerimônia e o cartão final; fechar devolve a música anterior (crossfade).
   useEffect(() => entrarNaSuperficie('evolucao'), []);
 
-  // No cristal o visor mostra o cristal, não a forma de partida; ela fica só como `data-` para quem inspeciona.
   const fromSprite = fromSpriteUrl ?? getSpriteForStage(fromStage, demoCharacterId);
   const toSprite = toSpriteUrl ?? getSpriteForStage(toStage, demoCharacterId);
 
@@ -127,6 +138,7 @@ export function EvolutionCeremony({
       return;
     }
     const timers = [
+      window.setTimeout(() => setPhase('carrega'), PHASE_AT.carrega),
       window.setTimeout(() => setPhase('racha'), PHASE_AT.racha),
       window.setTimeout(() => setPhase('estilhaca'), PHASE_AT.estilhaca),
       window.setTimeout(() => { setPhase('revela'); commit(); }, PHASE_AT.revela),
@@ -143,7 +155,9 @@ export function EvolutionCeremony({
   }, [reachedAt, isPt]);
 
   const titulo = isPt ? 'Evolução' : 'Evolution';
-  const cristalVisivel = phase === 'treme' || phase === 'racha';
+  const cristalVisivel = phase === 'despede' || phase === 'carrega' || phase === 'racha';
+  const tira = phase === 'racha' ? EVOLUCAO_ART.cracks : EVOLUCAO_ART.build;
+  const temFragmentos = fragmentsSpent !== undefined && fragmentsSpent > 0;
 
   return (
     <div
@@ -163,65 +177,86 @@ export function EvolutionCeremony({
       }}
     >
       <style>{CSS}</style>
-      {/* ── O VISOR de tela cheia: a cena é o cristal, no vidro escuro de sempre. ── */}
+      {/* ── O VISOR de tela cheia: o santuário (B-bg2) num palco 9:16 que cobre o vidro (container query). ── */}
       <div
         className="sm2-viewport-screen sm2-visor"
         aria-hidden="true"
         data-cer-glass
         style={{
           flex: 1, minHeight: 0, borderRadius: 0, position: 'relative', overflow: 'hidden',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          // Fundo pintado (B9, 02/11/2026): o santuário de cristal; o brilho do centro fica por cima, e o vidro escuro é o fallback.
-          background: `radial-gradient(circle at 50% 50%, rgba(64,224,208,.16) 0%, transparent 62%), url(${SCENE_BG.evolucao}) center/cover, var(--sm2-viewport-bg, #071414)`,
-        }}
+          containerType: 'size', background: 'var(--sm2-viewport-bg, #071414)',
+        } as CSSProperties}
       >
-        {cristalVisivel && (
-          <div
-            data-cer-crystal
-            data-phase={phase}
-            style={{ position: 'absolute', left: '50%', top: '50%', width: CRYSTAL, height: CRYSTAL, margin: `-${CRYSTAL / 2}px 0 0 -${CRYSTAL / 2}px` }}
-          >
-            <img src={PLACEHOLDER_ART.forming} alt="" style={{ ...pixel, left: 0, top: 0, width: CRYSTAL, height: CRYSTAL, objectFit: 'contain' }} />
-            {phase === 'racha' && (
-              <svg data-cer-cracks viewBox="0 0 144 144" width={CRYSTAL} height={CRYSTAL} style={{ position: 'absolute', left: 0, top: 0, filter: 'drop-shadow(0 0 3px #40e0d0) drop-shadow(0 0 8px #40e0d0)' }}>
-                {CRACKS.map((d, i) => (
-                  <path key={i} d={d} fill="none" stroke="#f2fffd" strokeWidth={3} strokeLinecap="square" style={{ animationDelay: `${i * 120}ms` }} />
-                ))}
-              </svg>
-            )}
-          </div>
-        )}
-        {phase === 'estilhaca' && (
-          <>
-            <SpriteFx sheet="evolucao" size={288} ms={900} still="hide" data-cer-fx="" style={{ position: 'absolute', left: '50%', top: '50%', marginLeft: -144, marginTop: -144 }} />
-            <span data-cer-flash style={{ position: 'absolute', left: '50%', top: '50%', width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(127,255,240,.95) 0%, rgba(64,224,208,.35) 45%, transparent 70%)', pointerEvents: 'none' }} />
-            {SHARDS.map((sh, i) => (
+        <div
+          data-cer-stage
+          style={{
+            position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)',
+            width: 'max(100cqw, calc(100cqh * 9 / 16))', height: 'max(100cqh, calc(100cqw * 16 / 9))',
+            backgroundImage: `url(${SCENE_BG.evolucao})`, backgroundSize: '100% 100%', imageRendering: 'pixelated',
+          }}
+        >
+          {cristalVisivel && (
+            <div
+              data-cer-crystal
+              data-phase={phase}
+              style={{ position: 'absolute', left: `${(100 - CRISTAL_W) / 2}%`, width: `${CRISTAL_W}%`, aspectRatio: '1 / 1', bottom: `${100 - ALTAR_Y - 3}%` }}
+            >
               <span
-                key={i}
-                data-cer-shard
-                style={{
-                  position: 'absolute', left: '50%', top: '50%', width: sh.s, height: Math.round(sh.s * 1.4),
-                  background: 'linear-gradient(135deg, #b8fff6 0%, #40e0d0 55%, #1b8f86 100%)',
-                  clipPath: 'polygon(50% 0, 100% 40%, 70% 100%, 0 70%)',
-                  ['--a' as string]: `${sh.a}deg`, ['--d' as string]: `${sh.d}px`,
-                } as CSSProperties}
+                key={phase === 'racha' ? 'cracks' : 'build'}
+                data-cer-crystal-art
+                data-tira={phase === 'despede' ? 'parado' : phase === 'racha' ? 'cracks' : 'build'}
+                style={{ position: 'absolute', inset: 0, ...quadroDaTira(tira.src, tira.frames, 0) }}
               />
-            ))}
-          </>
-        )}
-        {phase === 'revela' && (
-          <img
-            src={toSprite}
-            alt=""
-            data-cer-sprite
-            data-reveal={reduced ? 'fade' : 'anim'}
-            style={{
-              ...pixel, width: SPRITE, height: SPRITE, objectFit: 'contain',
-              left: '50%', top: '50%', margin: `-${SPRITE / 2}px 0 0 -${SPRITE / 2}px`,
-              filter: 'drop-shadow(0 0 10px rgba(64,224,208,.55))',
-            }}
-          />
-        )}
+              {/* A despedida: a forma antiga, dentro do cristal, se apaga subindo. */}
+              {phase === 'despede' && (
+                <img data-cer-from-sprite src={fromSprite} alt="" style={{
+                  ...pixel, left: '50%', top: '42%', width: '34%', height: 'auto', objectFit: 'contain',
+                  filter: 'drop-shadow(0 0 6px rgba(127,255,240,.8))', mixBlendMode: 'screen',
+                }} />
+              )}
+            </div>
+          )}
+          {phase === 'estilhaca' && (
+            <>
+              <img data-cer-flash src={EVOLUCAO_ART.flash} alt="" style={{ ...pixel, left: '50%', top: `${ALTAR_Y - 22}%`, width: '120%', height: 'auto', pointerEvents: 'none' }} />
+              {SHARDS.map((sh, i) => (
+                <span
+                  key={i}
+                  data-cer-shard
+                  style={{
+                    position: 'absolute', left: '50%', top: `${ALTAR_Y - 22}%`, width: `${sh.s}%`, aspectRatio: '1 / 1',
+                    ...quadroDaTira(EVOLUCAO_ART.shards.src, EVOLUCAO_ART.shards.frames, sh.f),
+                    ['--a' as string]: `${sh.a}deg`, ['--d' as string]: `${sh.d}cqw`,
+                  } as CSSProperties}
+                />
+              ))}
+            </>
+          )}
+          {phase === 'revela' && (
+            <>
+              <img data-cer-pedestal src={EVOLUCAO_ART.pedestal} alt="" style={{
+                ...pixel, left: '50%', top: `${ALTAR_Y}%`, width: '62%', height: 'auto', transform: 'translate(-50%,-50%)',
+              }} />
+              <img
+                src={toSprite}
+                alt=""
+                data-cer-sprite
+                data-reveal={reduced ? 'fade' : 'anim'}
+                style={{
+                  ...pixel, width: `${FORMA_W}%`, aspectRatio: '1 / 1', height: 'auto', objectFit: 'contain',
+                  left: '50%', bottom: `${100 - ALTAR_Y + 1}%`, transform: 'translateX(-50%)', transformOrigin: '50% 100%',
+                  filter: 'drop-shadow(0 0 12px rgba(64,224,208,.55))',
+                }}
+              />
+              {!reduced && (
+                <span data-cer-leaves style={{
+                  position: 'absolute', left: '50%', bottom: `${100 - ALTAR_Y}%`, width: '70%', aspectRatio: '1 / 1', transform: 'translateX(-50%)',
+                  pointerEvents: 'none', ...quadroDaTira(EVOLUCAO_ART.leaves.src, EVOLUCAO_ART.leaves.frames, 0),
+                }} />
+              )}
+            </>
+          )}
+        </div>
         <span className="sm2-viewport-glass" style={{ borderRadius: 0 }} />
       </div>
 
@@ -233,49 +268,61 @@ export function EvolutionCeremony({
           flex: 'none',
           backgroundColor: 'var(--sm2-surface)',
           borderTop: '3px solid var(--sm2-viewport-ring)',
-          padding: '16px 16px calc(24px + env(safe-area-inset-bottom, 0px))',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+          padding: '12px 16px calc(20px + env(safe-area-inset-bottom, 0px))',
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
           textAlign: 'center',
         }}
       >
-        <p style={{ ...ritualLabel, letterSpacing: '.1em' }}>
-          {done ? (isPt ? 'EVOLUIU PARA' : 'EVOLVED INTO') : (isPt ? 'EVOLUINDO' : 'EVOLVING')}
-        </p>
-        <h1
-          style={{
-            fontFamily: 'var(--sm2-font-display)',
-            fontSize: 'var(--sm2-text-xl)',
-            fontWeight: 600,
-            lineHeight: 'var(--sm2-leading-title)',
-            color: done ? 'var(--sm2-ink)' : 'var(--sm2-muted)',
-            margin: 0,
-          }}
-        >
-          {done ? toName : '…'}
-        </h1>
-        <p style={sm2Hint} aria-hidden={!done}>{done ? data : ' '}</p>
-        {/* O CONSUMO (REGISTRO §153): os Fragmentos de Alma juntados são usados
-            aqui. Dito como o que deu forma à evolução — uma vez, no ato, sem
-            número que desce nem conta do que sobrou. */}
-        {fragmentsSpent !== undefined && fragmentsSpent > 0 && (
-          <p data-cer-fragments style={{ ...sm2Hint, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-            <SoulFragmentIcon size={16} />
-            <span>{done ? fragmentsSpentLine(fragmentsSpent, language) : fragmentsGatherLine(language)}</span>
+        {done ? (
+          /* O cartão antes → depois: a forma antiga no soquete da esquerda, a nova no da direita, o nome no meio. */
+          <div data-cer-card style={{
+            position: 'relative', width: 'min(100%, 320px)', aspectRatio: '540 / 324',
+            backgroundImage: `url(${EVOLUCAO_ART.card})`, backgroundSize: '100% 100%', imageRendering: 'pixelated',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, paddingTop: '8%',
+          }}>
+            <img data-cer-card-from src={fromSprite} alt="" style={{ ...pixel, left: '17.6%', top: '21.6%', width: '15%', height: 'auto', transform: 'translate(-50%,-50%)' }} />
+            <img data-cer-card-to src={toSprite} alt="" style={{ ...pixel, left: '82.4%', top: '21.6%', width: '15%', height: 'auto', transform: 'translate(-50%,-50%)' }} />
+            <p style={{ ...ritualLabel, letterSpacing: '.1em', margin: 0 }}>{isPt ? 'EVOLUIU PARA' : 'EVOLVED INTO'}</p>
+            <h1 style={{
+              fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-xl)', fontWeight: 600,
+              lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)', margin: 0, padding: '0 18%',
+            }}>{toName}</h1>
+          </div>
+        ) : (
+          <>
+            <p style={{ ...ritualLabel, letterSpacing: '.1em', margin: 0 }}>{isPt ? 'EVOLUINDO' : 'EVOLVING'}</p>
+            {/* Sem "…" (revisão 03/11/2026): uma frase calma enquanto o cristal trabalha. */}
+            <h1 style={{
+              fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-lg, 18px)', fontWeight: 600,
+              lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-muted)', margin: 0,
+            }}>{isPt ? 'Algo está mudando' : 'Something is changing'}</h1>
+          </>
+        )}
+        {/* Data e fragmentos numa linha só (REGISTRO §153: os Fragmentos de Alma são USADOS aqui, ditos uma vez). */}
+        {(done || temFragmentos) && (
+          <p data-cer-linha style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', gap: 4 }}>
+            {done && <span data-cer-date>{data}</span>}
+            {done && temFragmentos && <span aria-hidden="true">·</span>}
+            {temFragmentos && (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <SoulFragmentIcon size={16} />
+                <span data-cer-fragments>{done ? fragmentsSpentLine(fragmentsSpent!, language) : fragmentsGatherLine(language)}</span>
+              </span>
+            )}
           </p>
         )}
-        {/* §209 (31/10/2026, dono): a evolução zera os 3 pontos — o jogador é avisado no recap. */}
+        {/* §209 (31/10/2026, dono): a evolução zera os 3 pontos — aviso pequeno, não compete com o clima. */}
         {done && (
-          <p data-cer-points-reset style={sm2Hint}>{pointsResetLine(language)}</p>
+          <p data-cer-points-reset style={{ ...sm2Hint, margin: 0, fontSize: 'var(--text-xs)', opacity: 0.75 }}>{pointsResetLine(language)}</p>
         )}
-        {/* A saída é do jogador — a cerimônia espera o gesto (RIT-20). O
-            botão só existe quando há o que sair; antes, a faixa é status. */}
+        {/* A saída é do jogador — a cerimônia espera o gesto (RIT-20). */}
         {done ? (
-          <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), minWidth: 240, marginTop: 8 }}>
+          <button type="button" data-cer-close onClick={onClose} style={{ ...sm2Button('primary'), minWidth: 260, marginTop: 6 }}>
             {/* Copy §3.2: a mesma saída relacional do `MilestoneCeremony`. */}
             {isPt ? 'Seguimos juntos' : 'We keep going together'}
           </button>
         ) : (
-          <span aria-busy="true" style={{ display: 'block', minHeight: 48, marginTop: 8 }} />
+          <span aria-busy="true" style={{ display: 'block', minHeight: 48, marginTop: 6 }} />
         )}
       </div>
     </div>

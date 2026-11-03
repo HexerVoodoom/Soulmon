@@ -212,7 +212,7 @@ describe('Gerando — a espera é ritual (D-Q6, D-Q11, R1, R3)', () => {
     expect(vidro.style.height).toBe('192px');
     const casulo = vidro.querySelector('img.sm2-ora-cocoon') as HTMLImageElement;
     expect(casulo.className).toContain('sm2-ora-pulse');
-    expect(casulo.getAttribute('src')).toContain('forming');
+    expect(casulo.getAttribute('src')).toContain('crystal-open'); // 03/11/2026: o cristal já aberto, não o fechado
     expect(casulo.width).toBe(128);
     expect(casulo.style.opacity).toBe('');
     expect(status.querySelector('.sm2-ora-spin .sm2-icon')?.textContent).toBe('sync');

@@ -62,7 +62,6 @@ const EXCECOES: Readonly<Record<string, Partial<Record<Regra, number>>>> = {
   'MealRhythmRows.tsx': { fontSize: 1 },
   'MorningDream.tsx': { fontSize: 1 },
   'NpcSequence.tsx': { fontSize: 2 },
-  'OnboardingOvo.tsx': { fontSize: 1 },
   'OraclePage.tsx': { checkbox: 2, fontSize: 4 },
   'PetStageDecor.tsx': { fontSize: 2 },
   'PixelizerCard.tsx': { checkbox: 1 },

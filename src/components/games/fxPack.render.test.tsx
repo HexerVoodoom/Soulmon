@@ -84,7 +84,8 @@ describe('FX por folha', () => {
   });
   it('Match3 e Cerimônia ligam a fusão e a evolução', () => {
     expect(src('components/Match3Game.tsx')).toMatch(/sheet="fusao"/);
-    expect(src('components/EvolutionCeremony.tsx')).toMatch(/sheet="evolucao"/);
+    // 03/11/2026: a Cerimônia trocou a folha F4 (altar duplicado com o fundo) pelas artes de `EVOLUCAO_ART`.
+    expect(src('components/EvolutionCeremony.tsx')).toMatch(/EVOLUCAO_ART.shards/);
   });
 });
 
