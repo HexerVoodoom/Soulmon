@@ -95,8 +95,8 @@ describe('reroll: cobrança só em Bits, sobre o prev', () => {
 });
 
 describe('cenário da Arena', () => {
-  it('só as duas arenas do Torneio, determinístico, e as duas aparecem', () => {
-    expect(ARENA_BG_SCENES.map(s => s.nameEn)).toEqual(['Night Arena', 'Elder Colosseum']);
+  it('só as três arenas exclusivas, determinístico, e as três aparecem', () => {
+    expect(ARENA_BG_SCENES.map(s => s.nameEn)).toEqual(['Night Arena', 'Elder Colosseum', 'Crystal Pit']);
     const vistos = new Set<string>();
     for (let seed = 1; seed < 100; seed++) {
       const c = arenaSceneOfSeed(seed);
@@ -104,7 +104,7 @@ describe('cenário da Arena', () => {
       expect(arenaSceneOfSeed(seed)).toBe(c);
       vistos.add(c.nameEn);
     }
-    expect(vistos.size).toBe(2);
+    expect(vistos.size).toBe(3);
   });
 });
 

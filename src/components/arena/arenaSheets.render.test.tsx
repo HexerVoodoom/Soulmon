@@ -79,7 +79,7 @@ describe('Torneio', () => {
 });
 
 describe('Torneio — faixa e luta', () => {
-  it('o indicador da faixa é o glifo da faixa (Bronze) em 32, sem box, e o Torneio não leva marca de missão', async () => {
+  it('o indicador da faixa é o brasão da faixa (Bronze) em 48, sem box, e o Torneio não leva marca de missão', async () => {
     const { container } = renderWithCss(<TournamentPage {...base} />);
     expect(container.querySelector('[data-mission-mark]')).toBeNull();
     const ind = await waitFor(() => {
@@ -87,9 +87,9 @@ describe('Torneio — faixa e luta', () => {
       expect(el).not.toBeNull();
       return el as HTMLElement;
     });
-    const glifo = ind.querySelector('.sm2-icon') as HTMLElement;
-    expect(glifo.textContent).toContain('military_tech');
-    expect(glifo.style.fontSize).toBe('32px');
+    const brasao = ind.querySelector('img[data-tier-insignia]') as HTMLImageElement;
+    expect(brasao.getAttribute('data-tier-insignia')).toBe('bronze');
+    expect(brasao.style.width).toBe('48px');
   });
 
   it('D-58: o botão "Train" saiu do Torneio (com e sem Vínculo mínimo)', () => {

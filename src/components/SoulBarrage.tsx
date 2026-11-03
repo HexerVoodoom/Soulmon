@@ -8,6 +8,9 @@ import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
 import { sm2Button } from './form/FormKit';
 import { ResultScreen } from './games/ResultScreen';
+import { SCENE_BG, sceneBackground } from '../utils/fxPackArt';
+import heartFull from '../assets/soulmon/hud/bars/heart-full.png';
+import heartEmpty from '../assets/soulmon/hud/bars/heart-empty.png';
 import { GameRoot, GameHeader, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
 import { RewardPreview } from './ui/RewardPreview';
@@ -71,6 +74,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
   const specialBtn = useRef<HTMLButtonElement>(null);
   const hudRef = useRef<HTMLSpanElement>(null);
+  const heartsRef = useRef<HTMLSpanElement>(null);
   const imgs = useRef<{ pet?: HTMLImageElement; orb?: HTMLImageElement; foeOrb?: HTMLImageElement; boss?: HTMLImageElement; foes: Map<string, HTMLImageElement>; foeOrbs: Map<string, HTMLImageElement> }>({ foes: new Map(), foeOrbs: new Map() });
 
   const loadImg = (src: string | undefined) => { if (!src) return undefined; const i = new Image(); i.src = src; return i; };
@@ -151,9 +155,10 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       if (ev.hit && !calm) { try { navigator.vibrate?.(30); } catch { /* noop */ } }
 
       // fundo: faixas que rolam para cima
+      // o cenário (`SCENE_BG.barrage`) fica ATRÁS do canvas (CSS); o canvas só escurece um pouco e desenha as estrelas sutis
       ctx.clearRect(0, 0, FIELD_W, FIELD_H);
-      ctx.fillStyle = '#0b1220'; ctx.fillRect(0, 0, FIELD_W, FIELD_H);
-      ctx.fillStyle = 'rgba(233,245,242,0.35)';
+      ctx.fillStyle = 'rgba(5, 18, 24, 0.35)'; ctx.fillRect(0, 0, FIELD_W, FIELD_H);
+      ctx.fillStyle = 'rgba(233,245,242,0.18)';
       for (let i = 0; i < 40; i++) {
         const x = (i * 97) % FIELD_W;
         const y = (((i * 53) % FIELD_H) - (calm ? 0 : s.scroll) * (0.5 + (i % 3) * 0.4)) % FIELD_H;
@@ -228,7 +233,12 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
         btn.style.setProperty('--charge', pct + '%');
         btn.dataset.ready = s.charge >= SPECIAL_COST ? 'true' : 'false';
       }
-      const nextHud = `${isPt ? 'Fase' : 'Phase'} ${s.phase} · ${s.score} · ${'♥'.repeat(Math.max(0, s.lives))}`;
+      const nextHud = `${isPt ? 'Fase' : 'Phase'} ${s.phase} · ${s.score}`;
+      const livesNow = Math.max(0, s.lives);
+      if (heartsRef.current && heartsRef.current.dataset.lives !== String(livesNow)) {
+        heartsRef.current.dataset.lives = String(livesNow);
+        heartsRef.current.querySelectorAll('img').forEach((im, i) => { im.src = i < livesNow ? heartFull : heartEmpty; });
+      }
       if (hudRef.current && nextHud !== hudText) {
         hudText = nextHud;
         hudRef.current.textContent = nextHud;
@@ -272,7 +282,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   const fireSpecial = () => { if (phase === 'playing' && !paused) activateSpecial(g.current, special); };
 
   return (
-    <GameRoot style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}>
+    <GameRoot style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)', background: sceneBackground('barrage') }}>
       <GameHeader
         title={isPt ? 'Chuva de Almas' : 'Soul Barrage'}
         sub={<span className="sm2-num">{isPt ? 'Recorde' : 'Best'} {best}</span>}
@@ -298,7 +308,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
           onPointerMove={moveTo}
           role="application"
           aria-label={level === 2 ? (isPt ? 'Campo da Chuva de Almas. Arraste para mover em qualquer direção.' : 'Soul Barrage field. Drag to move in any direction.') : (isPt ? 'Campo da Chuva de Almas. Use as setas para mover.' : 'Soul Barrage field. Use the arrow keys to move.')}
-          style={{ display: 'block', height: '100%', maxWidth: '100%', aspectRatio: `${FIELD_W} / ${FIELD_H}`, touchAction: 'none', imageRendering: 'pixelated', background: '#0b1220' }}
+          style={{ display: 'block', height: '100%', maxWidth: '100%', aspectRatio: `${FIELD_W} / ${FIELD_H}`, touchAction: 'none', imageRendering: 'pixelated', background: `url(${SCENE_BG.barrage}) center/cover #0b1220` }}
         />
         <span
           aria-live="off"
@@ -307,6 +317,9 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
           style={{ position: 'absolute', left: 8, top: 8, padding: '2px 6px', fontFamily: 'var(--sm2-font-pixel)', fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-viewport-ink)', backgroundColor: 'color-mix(in srgb, var(--sm2-viewport-bg) 78%, transparent)', borderRadius: 'var(--sm2-radius-sm)' }}
         >
           <span ref={hudRef}>{isPt ? 'Fase' : 'Phase'} 1 · 0</span>
+          <span ref={heartsRef} data-lives="3" aria-hidden="true" style={{ display: 'inline-flex', gap: 2, marginLeft: 6, verticalAlign: 'middle' }}>
+            {[0, 1, 2].map(i => <img key={i} src={heartFull} alt="" width={14} height={11} style={{ display: 'block' }} />)}
+          </span>
         </span>
         {level === 2 && phase === 'playing' && (
           <button

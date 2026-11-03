@@ -4,6 +4,7 @@ import { lotIconName } from '../../utils/lotIcons';
 import { MindTutorialScreen, MindTutorialLink, useMindTutorial } from './MindTutorial';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint } from '../form/FormKit';
+import { sceneBackground } from '../../utils/fxPackArt';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { BitsAmount } from '../ui/BitsAmount';
 import { RankingPanel } from '../RankingPanel';
@@ -207,7 +208,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
   if (tut.open) return <MindTutorialScreen game="patches" title={title} language={language} evolutionStage={evolutionStage} demoCharacterId={demoCharacterId} onExit={onExit} onDone={tut.hide} />;
 
   return (
-    <GameRoot>
+    <GameRoot full style={{ background: sceneBackground('patches') }}>
       <GameHeader
         title={title}
         language={language}

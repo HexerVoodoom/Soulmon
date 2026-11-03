@@ -5,12 +5,18 @@
  */
 import coliseuMadeira from '../assets/soulmon/bg/coliseu-madeira.png';
 import coliseuBronze from '../assets/soulmon/bg/coliseu-bronze.png';
+import coliseuPrata from '../assets/soulmon/bg/coliseu-prata.png';
+import coliseuOuro from '../assets/soulmon/bg/coliseu-ouro.png';
+import coliseuPlatina from '../assets/soulmon/bg/coliseu-platina.png';
+import coliseuDiamante from '../assets/soulmon/bg/coliseu-diamante.png';
 import type { DungeonScene } from './dungeonScenes';
 
 export const COLISEU_TIERS = ['madeira', 'bronze', 'prata', 'ouro', 'platina', 'diamante'] as const;
 export type ColiseuTier = (typeof COLISEU_TIERS)[number];
 
-const ART: Partial<Record<ColiseuTier, string>> = { madeira: coliseuMadeira, bronze: coliseuBronze };
+const ART: Partial<Record<ColiseuTier, string>> = {
+  madeira: coliseuMadeira, bronze: coliseuBronze, prata: coliseuPrata, ouro: coliseuOuro, platina: coliseuPlatina, diamante: coliseuDiamante,
+};
 const NAME: Record<ColiseuTier, { pt: string; en: string }> = {
   madeira: { pt: 'Coliseu de Madeira', en: 'Wooden Coliseum' },
   bronze: { pt: 'Coliseu de Bronze', en: 'Bronze Coliseum' },

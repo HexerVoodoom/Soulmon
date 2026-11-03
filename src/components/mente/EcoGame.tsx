@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import { MindTutorialScreen, MindTutorialLink, useMindTutorial } from './MindTutorial';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { sceneBackground } from '../../utils/fxPackArt';
 import { GameRoot, GameHeader, GameStory, GameVisor, VisorSprite, phaseTitle, phaseLine, gameExitConfirm } from '../games/GameKit';
 import { BitsAmount } from '../ui/BitsAmount';
 import { ResultScreen } from '../games/ResultScreen';
@@ -169,7 +170,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
   if (tut.open) return <MindTutorialScreen game="eco" title={title} language={language} evolutionStage={evolutionStage} demoCharacterId={demoCharacterId} onExit={onExit} onDone={tut.hide} />;
 
   return (
-    <GameRoot>
+    <GameRoot full style={{ background: sceneBackground('eco') }}>
       <GameHeader
         title={title}
         language={language}
