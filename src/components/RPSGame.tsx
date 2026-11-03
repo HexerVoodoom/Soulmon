@@ -271,7 +271,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
       )}
       {matchOver && (
         <ResultScreen
-          playAgainIcon={lotIconName('jogos', 'salao')}
+          playAgainIcon={lotIconName('jogos', 'salao')} dailyEvent="ppt"
           language={language}
           outcome={matchOver === 'won' ? 'win' : matchOver === 'draw' ? 'calm' : 'tired'}
           gameName={isPt ? 'Pedra, Papel, Tesoura' : 'Rock Paper Scissors'}

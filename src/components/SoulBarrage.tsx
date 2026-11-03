@@ -56,7 +56,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   const [finalScore, setFinalScore] = useState(0);
   const [earned, setEarned] = useState(0);
   const [prevBest, setPrevBest] = useState(0);
-  const [best, setBest] = useState(() => readNumber(STORAGE_KEYS.BARRAGE_BEST, 0));
+  const [best, setBest] = useState(() => readNumber(level === 2 ? STORAGE_KEYS.BARRAGE_BEST_2 : STORAGE_KEYS.BARRAGE_BEST, 0));
   const onEarnRef = useRef(onEarnPoints);
   onEarnRef.current = onEarnPoints;
   const bestRef = useRef(best);
@@ -236,7 +236,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       if (pts > 0) onEarnRef.current(pts);
       emitFeat('barrageBest', Math.floor(score));
       const nb = Math.max(bestRef.current, score);
-      writeLocal(STORAGE_KEYS.BARRAGE_BEST, String(nb));
+      writeLocal(level === 2 ? STORAGE_KEYS.BARRAGE_BEST_2 : STORAGE_KEYS.BARRAGE_BEST, String(nb));
       setBest(nb);
       setPhase('over');
     };
@@ -341,7 +341,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       </>)}
       {phase === 'over' && (
         <ResultScreen
-          playAgainIcon={lotIconName('jogos', 'salao')}
+          playAgainIcon={lotIconName('jogos', 'salao')} dailyEvent="barrage"
           language={language}
           outcome={prevBest > 0 && finalScore > prevBest ? 'record' : 'calm'}
           bannerText={prevBest > 0 && finalScore > prevBest ? undefined : (isPt ? 'Completo' : 'Complete')}

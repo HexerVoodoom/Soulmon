@@ -193,6 +193,8 @@ import {
   bumpWeekly, forWeek, claimWeekly, weeklyMissionsFor,
   type WeeklyMissionId,
 } from './utils/weeklyMissions';
+import { ResultExtrasContext } from './components/games/ResultExtrasContext';
+import { buildResultExtras } from './utils/resultExtras';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/currencies';
 import { arenaRerollCost, arenaRerollsToday, applyArenaReroll } from './utils/arenaSorteio';
 import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst } from './utils/bitsOrigin';
@@ -7892,6 +7894,7 @@ export default function App() {
           {area && (
             <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>
               {/* `key` da view: trocar de área remonta e fecha a folha aberta. */}
+              <ResultExtrasContext.Provider value={buildResultExtras(gameState, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0), language === 'pt-BR')}>
               <AreaView
                 key={currentView}
                 unlockedElements={gameState.defeatedElements}
@@ -8092,6 +8095,7 @@ export default function App() {
                 hallContent={hallContent}
                 guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, pendentesDoDia, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend }, feira: { me: feiraMe, onCredit: handleFeiraCredit }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
               />
+              </ResultExtrasContext.Provider>
             </Suspense>
           )}
 

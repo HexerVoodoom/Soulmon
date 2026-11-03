@@ -335,7 +335,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
       {/* O fim do dia: tela padrão (Proposta D). Concluir os 3 andares = vitória; a incursão que acabou antes = calma, sem luto. */}
       {!ch && !fighting && finished && (
         <ResultScreen
-          playAgainIcon={lotIconName('exploracao', 'fenda')}
+          playAgainIcon={lotIconName('exploracao', 'fenda')} dailyEvent="calabouco"
           language={language}
           outcome={run.over ? 'tired' : 'win'}
           gameName={isPt ? 'Incursão do dia' : "Today's run"}

@@ -526,6 +526,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Dono de:** o ícone de cada prédio na pílula do mapa (03/11/2026, dono: a placa de madeira saiu; ficou pílula escura com ícone + nome). Só nomes do subset do `Icon`.
 **Exports:** `LOT_ICON` (`area:lote` → nome do ícone) · `lotIconName(areaId, lotId)` (fallback `home`).
 **Quem chama:** `components/nav/AreaScene.tsx`.
+### `src/utils/resultExtras.ts`
+**Dono de:** os extras da tela de resultado (03/11/2026, dono): a barra de Bits do dia (só com o teto em 100%) e a linha da missão do dia do jogo que acabou. Puro; o `App` monta e entrega pelo contexto.
+**Exports:** `buildResultExtras(state, day, bondLevel, isPt)` · tipos `ResultExtras`, `ResultMission`.
+**Quem chama:** `App.tsx` (Provider); lê `components/games/ResultScreen.tsx`.
 ### `src/utils/refugio/energia.ts`
 **Dono de:** a energia do Refúgio (02/11/2026, pedido do dono): concluir UMA atividade (respiração inteira ou 30 bolhas calmas) devolve metade da energia máxima, 1× por dia do jogador somando as duas. Sem número nem aviso na tela.
 **Exports:** `REFUGIO_ENERGY_FRACTION` (0,5) · `REFUGIO_BUBBLES_TO_COMPLETE` (30) · `sanitizeRefugioEnergyDay` (leitura tolerante de `refugioEnergyDay`) · `refugioEnergyTaken` · `grantRefugioEnergy` (puro, idempotente; passa por `setEnergy`, que limita ao máximo).

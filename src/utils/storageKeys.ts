@@ -88,6 +88,8 @@ export const STORAGE_KEYS = {
   DINO_BEST: 'soulmon-dino-best',
   /** Melhor pontuação do Soul Barrage (Salão de Jogos), no aparelho. */
   BARRAGE_BEST: 'soulmon-barrage-best',
+  /** Recorde local do modo Avançado da Chuva de Almas (o Comum segue em `BARRAGE_BEST`). */
+  BARRAGE_BEST_2: 'soulmon-barrage-best-2',
   /** H17 (01/10/2026) — ids de jogador/criatura que a pessoa já abriu na
    *  Biblioteca do Hall (JSON `string[]`). Só decide o que a lista mostra sem
    *  busca; não é progresso, não pontua e não vai para a nuvem. */

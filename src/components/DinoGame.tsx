@@ -696,7 +696,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       )}
       {phase === 'over' && (
         <ResultScreen
-          playAgainIcon={lotIconName('jogos', 'salao')}
+          playAgainIcon={lotIconName('jogos', 'salao')} dailyEvent="dino"
           language={language}
           outcome={prevBest > 0 && finalScore > prevBest ? 'record' : 'calm'}
           gameName={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}

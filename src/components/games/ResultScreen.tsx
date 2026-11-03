@@ -27,6 +27,8 @@ import { ENERGY_ICON, RECORD_SEAL_ICON, useRewardItemIcon, type RewardItemKind }
 import { sm2Button, sm2Hint } from '../form/FormKit';
 import { CURRENCIES, emblemStyle } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
+import type { DailyEvent } from '../../utils/dailyMissions';
+import { useResultExtras } from './ResultExtrasContext';
 
 /** Desfecho visual: `record` = pico, `win` = alegria, `calm` = fim neutro, `tired` = sem vitória (acolhedor, nunca luto). */
 export type ResultOutcome = 'win' | 'record' | 'calm' | 'tired';
@@ -107,6 +109,8 @@ export interface ResultScreenProps {
   petSrc?: string;
   /** Sprite do adversário nos combates (à direita do banner): o vencedor anima com efeito, o que perdeu fica parado. Sem ele, só o pet. */
   opponentSrc?: string;
+  /** O recurso que acabou (missão do dia): com ele a tela mostra a linha da missão do dia desse jogo. */
+  dailyEvent?: DailyEvent;
   /** Título em TEXTO no lugar do banner de arte (fim normal "Complete" do Soul Barrage, até existir a arte). */
   bannerText?: string;
   /** Segundo combatente (Torneio): outro `VisorSprite` dentro do vidro; com ele o pet vai para a esquerda. */
@@ -297,6 +301,10 @@ export function ResultScreen(p: ResultScreenProps) {
   const mood = MOOD[p.outcome];
   const ledgerShown = ledger.length === 0 || reveal.isShown(`row-${ledger[0].key}`);
   const notesOn = step >= RESULT_FINAL_STEP && !reveal.animated;
+  const extras = useResultExtras();
+  const mission = p.dailyEvent ? extras?.missions[p.dailyEvent] : undefined;
+  /** A barra de Bits do dia só aparece com o teto em 100% (pedido do dono, 03/11/2026). */
+  const bitsCapped = !!extras && extras.bitsToday >= extras.bitsCap;
 
   return (
     <div
@@ -456,6 +464,24 @@ export function ResultScreen(p: ResultScreenProps) {
                 </div>
               ) : (
                 <p className={stageCls(4)} style={{ ...sm2Hint, textAlign: 'center' }} data-result-empty>{p.emptyLedgerLine}</p>
+              )}
+            </div>
+          )}
+
+          {(mission || bitsCapped) && (
+            <div aria-hidden="true" className={`sm-result-in${notesOn ? ' sm-result-in--on' : ''}`} data-result-extras style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {mission && (
+                <div data-result-mission style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'space-between' }}>
+                  <span style={{ ...sm2Hint, textAlign: 'left', minWidth: 0 }}>{mission.label}</span>
+                  <span className="sm2-num" style={{ ...sm2Hint, flex: 'none', color: mission.status === 'available' ? 'var(--sm2-ink)' : 'var(--sm2-accent, var(--sm2-ink))' }}>
+                    {mission.status === 'claimed' ? (isPt ? 'Resgatada' : 'Claimed') : mission.status === 'ready' ? (isPt ? 'Pronta' : 'Ready') : `${mission.count}/${mission.target}`}
+                  </span>
+                </div>
+              )}
+              {bitsCapped && extras && (
+                <div data-result-bitscap>
+                  <PixelMeter ratio={1} tone="gold" height={12} label={isPt ? `Bits de hoje: ${extras.bitsToday}/${extras.bitsCap}` : `Today's Bits: ${extras.bitsToday}/${extras.bitsCap}`} />
+                </div>
               )}
             </div>
           )}

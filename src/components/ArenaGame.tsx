@@ -535,7 +535,7 @@ export function ArenaGame({
       {/* Fim da run: tela padrão (Proposta D). A "rodada limpa" acima é intermediária (a run segue) e fica COMPACTA, inline: não é resultado. */}
       {(fase === 'venceu' || fase === 'perdeu' || fase === 'empatou') && (
         <ResultScreen
-          playAgainIcon={lotIconName('arena', 'duelo')}
+          playAgainIcon={lotIconName('arena', 'duelo')} dailyEvent="arena"
           language={language}
           outcome={fase === 'venceu' ? 'win' : fase === 'empatou' ? 'calm' : 'tired'}
           gameName="Arena"

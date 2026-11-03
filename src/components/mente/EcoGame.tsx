@@ -281,7 +281,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
 
       {phase === 'done' && (
         <ResultScreen
-          playAgainIcon={lotIconName('jogos', 'mente')}
+          playAgainIcon={lotIconName('jogos', 'mente')} dailyEvent="eco"
           language={language}
           outcome="win"
           gameName={title}

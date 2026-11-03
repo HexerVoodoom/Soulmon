@@ -782,7 +782,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
 
       {over ? (
         <ResultScreen
-          playAgainIcon={lotIconName('jogos', 'salao')}
+          playAgainIcon={lotIconName('jogos', 'salao')} dailyEvent="match3"
           language={language}
           outcome={newBest && !pvp ? 'record' : win ? 'win' : 'tired'}
           gameName={isPt ? 'Combina 3' : 'Match 3'}
