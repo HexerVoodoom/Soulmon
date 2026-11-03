@@ -1,5 +1,6 @@
 import { RankingPanel } from './RankingPanel';
 import { ResultScreen } from './games/ResultScreen';
+import { lotIconName } from '../utils/lotIcons';
 import { getOpponents } from '../utils/community';
 import { opponentSprite } from '../utils/opponentArt';
 import { npcFoe, pickPvpOpponent, pvpElementsForSeed, tileElementName, type PvpFoe } from '../utils/match3Pvp';
@@ -781,6 +782,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
 
       {over ? (
         <ResultScreen
+          playAgainIcon={lotIconName('jogos', 'salao')}
           language={language}
           outcome={newBest && !pvp ? 'record' : win ? 'win' : 'tired'}
           gameName={isPt ? 'Combina 3' : 'Match 3'}

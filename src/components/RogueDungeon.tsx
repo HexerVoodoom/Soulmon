@@ -6,6 +6,7 @@
  * A masmorra/Endless Rift (`DungeonGame.tsx`) é outra coisa e não é tocada. A superfície NASCE MUDA (nenhum som novo).
  */
 import { BackCircleButton } from './ui/BackCircleButton';
+import { lotIconName } from '../utils/lotIcons';
 import { Component, lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { entrarNaSuperficie } from '../utils/musica';
 import { Icon } from './ui/Icon';
@@ -334,6 +335,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
       {/* O fim do dia: tela padrão (Proposta D). Concluir os 3 andares = vitória; a incursão que acabou antes = calma, sem luto. */}
       {!ch && !fighting && finished && (
         <ResultScreen
+          playAgainIcon={lotIconName('exploracao', 'fenda')}
           language={language}
           outcome={run.over ? 'tired' : 'win'}
           gameName={isPt ? 'Incursão do dia' : "Today's run"}
