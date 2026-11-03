@@ -144,12 +144,12 @@ export interface PlayHandlers {
 
 /**
  * Os minijogos com a pergunta do Pipo antes de abrir (30/10/2026): ranking no topo + escolha. `difficulty` = Comum | Avançado
- * (só a Corrida com obstáculos e o Pedra·Papel·Tesoura têm); os demais mostram um único "Jogar". Sem ranking/Refúgio/Fenda: sem a pergunta.
+ * (a Corrida com obstáculos, o Pedra·Papel·Tesoura e a Chuva de Almas têm); os demais mostram um único "Jogar". Sem ranking/Refúgio/Fenda: sem a pergunta.
  */
 const MINIGAME_GATE: Partial<Record<PlayGame, { name: { pt: string; en: string }; rankings: GateRanking[]; difficulty?: boolean; pveVsPvp?: boolean }>> = {
   dino: { name: { pt: 'Corrida com obstáculos', en: 'Obstacle Run' }, difficulty: true, rankings: [{ game: 'dino-1', label: 'Comum' }, { game: 'dino-2', label: 'Avançado' }] },
   ppt: { name: { pt: 'Pedra · Papel · Tesoura', en: 'Rock · Paper · Scissors' }, difficulty: true, rankings: [{ game: 'ppt' }] },
-  barrage: { name: { pt: 'Chuva de Almas', en: 'Soul Barrage' }, rankings: [{ game: 'soul-barrage' }] },
+  barrage: { name: { pt: 'Chuva de Almas', en: 'Soul Barrage' }, difficulty: true, rankings: [{ game: 'soul-barrage', label: 'Comum' }, { game: 'soul-barrage-2', label: 'Avançado' }] },
   match3: { name: { pt: 'Fusão Elemental', en: 'Elemental Fusion' }, pveVsPvp: true, rankings: [{ game: 'match3' }] },
   eco: { name: { pt: 'Eco do Pet', en: "Pet's Echo" }, rankings: [{ game: 'eco' }] },
   zip: { name: { pt: 'Trilha do Pet', en: 'Pet Trail' }, rankings: [{ game: 'zip' }] },
@@ -624,6 +624,8 @@ export function AreaView(props: AreaViewProps) {
                 demoCharacterId={props.demoCharacterId}
                 petElement={props.petElement}
                 playerLevel={props.playerLevel}
+                initialLevel={modeChosen?.level}
+                specialFamily={props.skills?.[props.evolutionStage as FichaStage]?.especial.familia}
                 language={language}
                 onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('barrage'); }}
                 rankSaveId={props.guild.saveId}

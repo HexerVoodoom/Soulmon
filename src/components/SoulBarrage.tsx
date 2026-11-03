@@ -15,10 +15,11 @@ import { fxFrame, prefersReducedMotion } from '../utils/combatFx';
 import type { GameChallenge } from '../utils/gameChallenge';
 import { temaSpriteOf } from '../utils/temaInimigosArt';
 import {
-  FIELD_W, FIELD_H, PLAYER_Y, PLAYER_SPEED, PLAYER_SIZE, SHOT_R, SHOT_DRAW, BARRAGE_ELEMENT, BARRAGE_POINTS_PER_BIT,
-  newBarrage, stepBarrage, barrageBits, type BarrageState,
+  FIELD_W, FIELD_H, PLAYER_SPEED, PLAYER_SIZE, SHOT_R, SHOT_DRAW, BARRAGE_ELEMENT, BARRAGE_POINTS_PER_BIT, BEAM_HALF_W, SPECIAL_COST,
+  newBarrage, stepBarrage, barrageBits, activateSpecial, specialKindOf, type BarrageState, type BarrageSpecial,
 } from '../utils/soulBarrage';
 import { emitFeat } from '../utils/feats';
+import { ADVANCED_BITS_FACTOR, difficultyLabel } from '../utils/minigameDifficulty';
 
 /**
  * Soul Barrage (EN) / Chuva de Almas (PT) — bullet hell vertical do Salão de Jogos (BETA3 M9).
@@ -26,7 +27,7 @@ import { emitFeat } from '../utils/feats';
  * Superfície NASCE MUDA (R-NOVA): nenhum som. Bits pelo MESMO funil dos minigames
  * (`onEarnPoints`, teto diário aplicado fora). Score semanal: ranking genérico `soul-barrage`.
  */
-export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playerLevel = 1, language, onEarnPoints, rankSaveId, onExit, challenge }: {
+export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playerLevel = 1, initialLevel, specialFamily, language, onEarnPoints, rankSaveId, onExit, challenge }: {
   /** Modo desafio (Calabouço): vence sobrevivendo `goal` segundos; sem Bits/recorde/ranking. */
   challenge?: GameChallenge;
   evolutionStage: string;
@@ -34,12 +35,18 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   /** Elemento dominante do Soulmon: escolhe o sprite `fx-<el>-orb` do tiro. */
   petElement?: string;
   playerLevel?: number;
+  /** 1 = Comum (setas/arrasto em X); 2 = Avançado (arrasto livre em X e Y, sem setas, botão Especial). Desafio sempre Comum. */
+  initialLevel?: 1 | 2;
+  /** Família do especial do Soulmon (`StageSkills.especial.familia`): escolhe o efeito do botão Especial. */
+  specialFamily?: string;
   language: Language;
   onEarnPoints: (pts: number) => void;
   rankSaveId?: string;
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
+  const level: 1 | 2 = challenge ? 1 : initialLevel === 2 ? 2 : 1;
+  const special: BarrageSpecial = specialKindOf(specialFamily);
   const challengeRef = useRef(challenge);
   challengeRef.current = challenge;
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -59,6 +66,9 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   const keysRef = useRef({ left: false, right: false, btnLeft: false, btnRight: false });
   const g = useRef<BarrageState>(newBarrage());
   const targetX = useRef(FIELD_W / 2);
+  const targetY = useRef(FIELD_H - 70);
+  const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
+  const specialBtn = useRef<HTMLButtonElement>(null);
   const hudRef = useRef<HTMLSpanElement>(null);
   const imgs = useRef<{ pet?: HTMLImageElement; orb?: HTMLImageElement; foeOrb?: HTMLImageElement; foes: Map<string, HTMLImageElement>; foeOrbs: Map<string, HTMLImageElement> }>({ foes: new Map(), foeOrbs: new Map() });
 
@@ -108,6 +118,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   const start = () => {
     g.current = newBarrage();
     targetX.current = FIELD_W / 2;
+    targetY.current = g.current.py;
     setEarned(0);
     setPhase('playing');
   };
@@ -135,7 +146,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       if (dirRef.current !== 0) {
         targetX.current = Math.min(FIELD_W, Math.max(0, targetX.current + dirRef.current * PLAYER_SPEED * Math.min(dt, 0.05)));
       }
-      const ev = stepBarrage(s, dt, targetX.current, playerLevel, Math.random);
+      const ev = stepBarrage(s, dt, targetX.current, level, Math.random, level === 2 ? targetY.current : undefined);
       if (ev.hit && !calm) { try { navigator.vibrate?.(30); } catch { /* noop */ } }
 
       // fundo: faixas que rolam para cima
@@ -177,14 +188,34 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
           ctx.restore();
         } else { ctx.fillStyle = '#ff5a5a'; ctx.beginPath(); ctx.arc(b.x, b.y, 6, 0, Math.PI * 2); ctx.fill(); }
       }
+      // Especial (Avançado): feixe, pulso e escudo
+      for (const b of s.beams) {
+        const a = 1 - b.t / 0.4;
+        const grad = ctx.createLinearGradient(0, 0, 0, s.py);
+        grad.addColorStop(0, 'rgba(233,245,242,0)'); grad.addColorStop(1, 'rgba(120,230,240,' + (0.75 * a).toFixed(2) + ')');
+        ctx.fillStyle = grad; ctx.fillRect(b.x - BEAM_HALF_W * (0.6 + 0.4 * a), 0, BEAM_HALF_W * 2 * (0.6 + 0.4 * a), s.py);
+      }
+      if (s.pulse > 0) {
+        ctx.strokeStyle = 'rgba(120,230,240,' + (s.pulse * 1.6).toFixed(2) + ')'; ctx.lineWidth = 6;
+        ctx.beginPath(); ctx.arc(s.px, s.py, (0.5 - s.pulse) * 2 * FIELD_H, 0, Math.PI * 2); ctx.stroke();
+      }
+      if (s.slow > 0) { ctx.fillStyle = 'rgba(80,140,255,0.08)'; ctx.fillRect(0, 0, FIELD_W, FIELD_H); }
       // jogador (pisca na invulnerabilidade)
       const pet = imgs.current.pet;
       if (calm && s.invuln > 0) ctx.globalAlpha = 0.5;
       if (calm || !(s.invuln > 0 && Math.floor(s.t * 12) % 2 === 0)) {
-        if (ready(pet)) ctx.drawImage(pet!, s.px - PLAYER_SIZE / 2, PLAYER_Y - PLAYER_SIZE / 2, PLAYER_SIZE, PLAYER_SIZE);
-        else { ctx.fillStyle = '#E9F5F2'; ctx.fillRect(s.px - 12, PLAYER_Y - 12, 24, 24); }
+        if (ready(pet)) ctx.drawImage(pet!, s.px - PLAYER_SIZE / 2, s.py - PLAYER_SIZE / 2, PLAYER_SIZE, PLAYER_SIZE);
+        else { ctx.fillStyle = '#E9F5F2'; ctx.fillRect(s.px - 12, s.py - 12, 24, 24); }
       }
       ctx.globalAlpha = 1;
+      if (s.shield > 0) { ctx.strokeStyle = 'rgba(120,230,240,0.85)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(s.px, s.py, PLAYER_SIZE * 0.62, 0, Math.PI * 2); ctx.stroke(); }
+      if (s.overdrive > 0) { ctx.strokeStyle = 'rgba(255,200,90,0.8)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(s.px, s.py, PLAYER_SIZE * 0.55, 0, Math.PI * 2); ctx.stroke(); }
+      const btn = specialBtn.current;
+      if (btn) {
+        const pct = Math.round((s.charge / SPECIAL_COST) * 100);
+        btn.style.setProperty('--charge', pct + '%');
+        btn.dataset.ready = s.charge >= SPECIAL_COST ? 'true' : 'false';
+      }
       const nextHud = `${isPt ? 'Fase' : 'Phase'} ${s.phase} · ${s.score} · ${'♥'.repeat(Math.max(0, s.lives))}`;
       if (hudRef.current && nextHud !== hudText) {
         hudText = nextHud;
@@ -198,7 +229,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       if (!s.over && !survived) { raf = requestAnimationFrame(tick); return; }
       if (ch) { ch.onResult(survived); return; }
       const score = s.score;
-      const pts = barrageBits(score);
+      const pts = barrageBits(score) * (level === 2 ? ADVANCED_BITS_FACTOR : 1);
       setFinalScore(score);
       setPrevBest(bestRef.current);
       setEarned(pts);
@@ -211,12 +242,22 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [phase, paused, hidden, playerLevel, isPt]);
+  }, [phase, paused, hidden, level, isPt]);
 
   const moveTo = (e: React.PointerEvent<HTMLCanvasElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
-    if (r.width > 0) targetX.current = ((e.clientX - r.left) / r.width) * FIELD_W;
+    if (r.width <= 0) return;
+    if (level === 2) {
+      // Avançado: arrasto RELATIVO (o dedo não cobre o Soulmon), em X e Y.
+      const d = drag.current;
+      if (!d) return;
+      targetX.current = Math.min(FIELD_W, Math.max(0, d.tx + ((e.clientX - d.x) / r.width) * FIELD_W));
+      targetY.current = Math.min(FIELD_H, Math.max(0, d.ty + ((e.clientY - d.y) / r.height) * FIELD_H));
+      return;
+    }
+    targetX.current = ((e.clientX - r.left) / r.width) * FIELD_W;
   };
+  const fireSpecial = () => { if (phase === 'playing' && !paused) activateSpecial(g.current, special); };
 
   return (
     <GameRoot style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)' }}>
@@ -226,8 +267,8 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
         language={language}
         infoLabel={isPt ? 'Como se joga' : 'How to play'}
         info={isPt
-          ? `Arraste, use as setas (ou A/D) ou os botões: o seu Soulmon atira sozinho. Desvie dos tiros e barre os inimigos (3 vidas; 1 s invulnerável ao perder uma). ${BARRAGE_POINTS_PER_BIT} pontos = 1 Bit`
-          : `Drag, use the arrow keys (or A/D) or the buttons: your Soulmon fires on its own. Dodge shots and stop the enemies (3 lives; 1 s invulnerable after losing one). ${BARRAGE_POINTS_PER_BIT} points = 1 Bit`}
+          ? (level === 2 ? `Arraste o dedo para mover o Soulmon em qualquer direção: ele atira sozinho. Desviar e abater enche o botão Especial (o efeito é o do especial dele). Bits ×${ADVANCED_BITS_FACTOR}. ` : '') + `Arraste, use as setas (ou A/D) ou os botões: o seu Soulmon atira sozinho. Desvie dos tiros e barre os inimigos (3 vidas; 1 s invulnerável ao perder uma). ${BARRAGE_POINTS_PER_BIT} pontos = 1 Bit`
+          : (level === 2 ? `Drag a finger to move the Soulmon in any direction: it fires on its own. Defeating foes fills the Special button (its effect matches the Soulmon's special). Bits ×${ADVANCED_BITS_FACTOR}. ` : '') + `Drag, use the arrow keys (or A/D) or the buttons: your Soulmon fires on its own. Dodge shots and stop the enemies (3 lives; 1 s invulnerable after losing one). ${BARRAGE_POINTS_PER_BIT} points = 1 Bit`}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
         exitConfirm={phase === 'playing' || (phase === 'ready' && challenge) ? gameExitConfirm(isPt, isPt ? 'da partida' : 'this run') : undefined}
@@ -239,10 +280,12 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
           data-barrage-canvas
           width={FIELD_W}
           height={FIELD_H}
-          onPointerDown={e => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* noop */ } moveTo(e); }}
+          onPointerDown={e => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* noop */ } drag.current = { x: e.clientX, y: e.clientY, tx: g.current.px, ty: g.current.py }; moveTo(e); }}
+          onPointerUp={() => { drag.current = null; }}
+          onPointerCancel={() => { drag.current = null; }}
           onPointerMove={moveTo}
           role="application"
-          aria-label={isPt ? 'Campo da Chuva de Almas. Use as setas para mover.' : 'Soul Barrage field. Use the arrow keys to move.'}
+          aria-label={level === 2 ? (isPt ? 'Campo da Chuva de Almas. Arraste para mover em qualquer direção.' : 'Soul Barrage field. Drag to move in any direction.') : (isPt ? 'Campo da Chuva de Almas. Use as setas para mover.' : 'Soul Barrage field. Use the arrow keys to move.')}
           style={{ display: 'block', height: '100%', maxWidth: '100%', aspectRatio: `${FIELD_W} / ${FIELD_H}`, touchAction: 'none', imageRendering: 'pixelated', background: '#0b1220' }}
         />
         <span
@@ -253,8 +296,21 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
         >
           <span ref={hudRef}>{isPt ? 'Fase' : 'Phase'} 1 · 0</span>
         </span>
+        {level === 2 && phase === 'playing' && (
+          <button
+            ref={specialBtn}
+            type="button"
+            data-barrage-special={special}
+            data-ready="false"
+            onPointerDown={e => { e.preventDefault(); fireSpecial(); }}
+            aria-label={isPt ? 'Especial' : 'Special'}
+            style={{ ...sm2Button('primary'), position: 'absolute', right: 10, bottom: 10, minWidth: 96, minHeight: 48, touchAction: 'none', overflow: 'hidden', background: 'linear-gradient(to right, var(--sm2-accent, #3fd0c9) var(--charge, 0%), color-mix(in srgb, var(--sm2-viewport-bg) 80%, transparent) var(--charge, 0%))', color: 'var(--sm2-viewport-ink)' }}
+          >
+            {isPt ? 'Especial' : 'Special'}
+          </button>
+        )}
       </div>
-      {phase === 'playing' && (
+      {phase === 'playing' && level === 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flex: 'none' }}>
           {(['left', 'right'] as const).map(side => {
             const key = side === 'left' ? 'btnLeft' : 'btnRight';
@@ -288,6 +344,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
           playAgainIcon={lotIconName('jogos', 'salao')}
           language={language}
           outcome={prevBest > 0 && finalScore > prevBest ? 'record' : 'calm'}
+          bannerText={prevBest > 0 && finalScore > prevBest ? undefined : (isPt ? 'Completo' : 'Complete')}
           gameName={isPt ? 'Chuva de Almas' : 'Soul Barrage'}
           title={isPt ? 'Chuva encerrada' : 'Barrage over'}
           line={prevBest > 0 && finalScore > prevBest
@@ -295,7 +352,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
             : (isPt ? 'Ele está pronto quando você estiver.' : 'He is ready when you are.')}
           hero={{ label: isPt ? 'Pontos' : 'Score', value: finalScore }}
           recordNote={isPt ? `Novo recorde, antes ${prevBest}` : `New best, was ${prevBest}`}
-          strip={prevBest > 0 ? [{ key: 'best', label: isPt ? 'Recorde' : 'Best', value: best, hideOnRecord: true }] : undefined}
+          strip={[...(level === 2 ? [{ key: 'level', label: isPt ? 'Dificuldade' : 'Difficulty', value: difficultyLabel(2, isPt) }] : []), ...(prevBest > 0 ? [{ key: 'best', label: isPt ? 'Recorde' : 'Best', value: best, hideOnRecord: true }] : [])]}
           ledger={[{ key: 'bits', kind: 'bits', value: earned }]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           petSrc={getSpriteForStage(evolutionStage, demoCharacterId, 256)}
@@ -303,7 +360,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
           onPlayAgain={start}
           homeLabel={isPt ? 'Sair' : 'Exit'}
           onHome={onExit}
-          below={<RankingPanel key={finalScore} game="soul-barrage" saveId={rankSaveId} language={language} score={finalScore} />}
+          below={<RankingPanel key={finalScore} game={level === 2 ? 'soul-barrage-2' : 'soul-barrage'} saveId={rankSaveId} language={language} score={finalScore} />}
         />
       )}
     </GameRoot>

@@ -177,6 +177,7 @@ export function BossFightScreen(p: BossFightScreenProps) {
         line={isPt ? `Você causou ${p.myDamage} de dano.` : `You dealt ${p.myDamage} damage.`}
         pool={{ label: isPt ? 'Força do chefe' : 'Boss strength', before: p.poolPctBefore, after: p.poolPctAfter }}
         petSrc={p.me.sprite}
+        opponentSrc={art || undefined}
         ledger={ledger}
         homeLabel={isPt ? 'Continuar' : 'Continue'}
         onHome={p.onDone}

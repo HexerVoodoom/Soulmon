@@ -4,7 +4,7 @@ import { authHeaders } from './auth';
 import { emitFeat, RANK_TIER_ORDER } from './feats';
 
 // `dino` (sem nível) só existe para cliente antigo; o novo envia `dino-1`/`dino-2`. `zip`/`patches`: TEMPO em ms (menor vence).
-export type RankedGame = 'dino' | 'dino-1' | 'dino-2' | 'ppt' | 'match3' | 'eco' | 'endless-rift' | 'rogue-dungeon' | 'soul-barrage' | 'zip' | 'patches';
+export type RankedGame = 'dino' | 'dino-1' | 'dino-2' | 'ppt' | 'match3' | 'eco' | 'endless-rift' | 'rogue-dungeon' | 'soul-barrage' | 'soul-barrage-2' | 'zip' | 'patches';
 
 /** Jogos de tempo (menor é melhor): o score é o tempo de resolução em ms. */
 export const TIME_RANKED_GAMES: readonly RankedGame[] = ['zip', 'patches'];

@@ -105,6 +105,10 @@ export interface ResultScreenProps {
   notes?: ReactNode;
   /** Sprite do pet no visor (omitido = visor só com a cena). */
   petSrc?: string;
+  /** Sprite do adversário nos combates (à direita do banner): o vencedor anima com efeito, o que perdeu fica parado. Sem ele, só o pet. */
+  opponentSrc?: string;
+  /** Título em TEXTO no lugar do banner de arte (fim normal "Complete" do Soul Barrage, até existir a arte). */
+  bannerText?: string;
   /** Segundo combatente (Torneio): outro `VisorSprite` dentro do vidro; com ele o pet vai para a esquerda. */
   visorOpponent?: ReactNode;
   /** `background` da cena do visor. */
@@ -345,11 +349,16 @@ export function ResultScreen(p: ResultScreenProps) {
 
           {/* O Soulmon colado no título do resultado, com um pouco de sobreposição (aprovado pelo dono, 03/11/2026). Sem o box do visor. */}
           <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 150 }} data-result-banner-wrap>
-            {(record || p.outcome === 'win') && step >= 1 && <SpriteFx sheet="recompensa" size={128} ms={900} still="hide" style={{ position: 'absolute', right: 24, top: '50%', marginTop: -64 }} data-result-reward-fx />}
+            {(record || p.outcome === 'win') && step >= 1 && <SpriteFx sheet="recompensa" size={128} ms={900} still="hide" style={{ position: 'absolute', ...(p.opponentSrc ? { left: 4 } : { right: 24 }), top: '50%', marginTop: -64 }} data-result-reward-fx />}
             {!p.visorOpponent && p.petSrc && (
-              <img src={p.petSrc} alt="" aria-hidden="true" draggable={false} data-result-pet={mood} className="sm-result-pet-free" style={{ width: 128, height: 128, objectFit: 'contain', imageRendering: 'pixelated', position: 'relative', zIndex: 2, marginRight: -30, flex: 'none' }} />
+              <img src={p.petSrc} alt="" aria-hidden="true" draggable={false} data-result-pet={mood} className={p.opponentSrc && p.outcome === 'tired' ? 'sm-result-loser' : 'sm-result-pet-free'} style={{ width: p.opponentSrc ? 104 : 128, height: p.opponentSrc ? 104 : 128, objectFit: 'contain', imageRendering: 'pixelated', position: 'relative', zIndex: 2, marginRight: -30, flex: 'none' }} />
             )}
-            <ResultBanner kind={bannerForOutcome(p.outcome, p.bannerSet ?? 'game')} isPt={isPt} width={p.visorOpponent || !p.petSrc ? 240 : 210} style={{ position: 'relative', zIndex: 1 }} />
+            {p.bannerText
+              ? <span data-result-banner="text" style={{ position: 'relative', zIndex: 1, fontFamily: 'var(--sm2-font-pixel)', fontSize: 'var(--sm2-text-xl)', letterSpacing: 2, textTransform: 'uppercase', color: 'var(--sm2-gold, var(--sm2-ink))', textShadow: '0 2px 0 rgba(0,0,0,.55)', padding: '0 8px' }}>{p.bannerText}</span>
+              : <ResultBanner kind={bannerForOutcome(p.outcome, p.bannerSet ?? 'game')} isPt={isPt} width={p.visorOpponent || !p.petSrc ? 240 : p.opponentSrc ? 180 : 210} style={{ position: 'relative', zIndex: 1 }} />}
+            {!p.visorOpponent && p.opponentSrc && (
+              <img src={p.opponentSrc} alt="" aria-hidden="true" draggable={false} data-result-opponent className={p.outcome === 'tired' ? 'sm-result-pet-free' : p.outcome === 'calm' ? undefined : 'sm-result-loser'} style={{ width: 104, height: 104, objectFit: 'contain', imageRendering: 'pixelated', position: 'relative', zIndex: 2, marginLeft: -30, flex: 'none' }} />
+            )}
           </div>
 
           {p.hero && (

@@ -762,3 +762,5 @@ NPC e prédio novos da Forja: a Hexsmith reescreve o "código hex" do Soulmon (e
 | `slot-coroa.png` … `slot-luvas.png` | ícone de cada tipo de HEX (coroa de shards, amuleto hex, garra com circuito, couraça com runa, manoplas), pixel art com contorno escuro, sem box |
 | `forjar.png` | martelo de cristal batendo num chip hex com faíscas |
 Prompts completos no transcrito da sessão de 01/11; o ChatGPT desktop já tem uma folha de 6 ícones gerada (conversa mais recente), falta baixar e fatiar por alfa.
+
+**Chuva de Almas — banner "Complete" (03/11/2026, dono):** fim normal (sem recorde) da partida usa hoje TEXTO ("Complete"/"Completo", `bannerText` do `ResultScreen`). Falta o banner de arte no estilo dos WIN/LOSE/DRAW (`RESULT_BANNER`), lettering "COMPLETE", alfa real; ao existir, trocar `bannerText` por um `ResultBannerKind` novo `complete`.
