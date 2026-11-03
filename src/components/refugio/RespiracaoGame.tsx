@@ -47,7 +47,10 @@ export function CrisisNote({ isPt }: { isPt: boolean }) {
   return <SupportNote isPt={isPt} data-respiracao-crisis />;
 }
 
-export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onExit }: MiniGameBaseProps) {
+export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onExit, onComplete }: MiniGameBaseProps & {
+  /** A sessão foi até o fim (sair antes não conta): devolve a energia do dia. */
+  onComplete?: () => void;
+}) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
   useEffect(() => entrarNaSuperficie('meditacao'), []); // S18: a trilha de meditação acompanha a respiração
@@ -80,6 +83,7 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
         setElapsed(total);
         setHolding(false);
         setScreen('done');
+        onComplete?.();
         return;
       }
       setElapsed(e);

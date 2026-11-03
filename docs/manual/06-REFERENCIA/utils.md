@@ -522,6 +522,11 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx` (fila de avisos da Home, `key: 'refugio'`), `src/contexts/GameStateContext.tsx` (load).
 **Régua:** `src/utils/refugio/convite.test.ts`, `src/components/filaDeAvisos.contract.test.ts`.
 
+### `src/utils/refugio/energia.ts`
+**Dono de:** a energia do Refúgio (02/11/2026, pedido do dono): concluir UMA atividade (respiração inteira ou 30 bolhas calmas) devolve metade da energia máxima, 1× por dia do jogador somando as duas. Sem número nem aviso na tela.
+**Exports:** `REFUGIO_ENERGY_FRACTION` (0,5) · `REFUGIO_BUBBLES_TO_COMPLETE` (30) · `sanitizeRefugioEnergyDay` (leitura tolerante de `refugioEnergyDay`) · `refugioEnergyTaken` · `grantRefugioEnergy` (puro, idempotente; passa por `setEnergy`, que limita ao máximo).
+**Chamado por:** `src/App.tsx` (`onRefugioComplete`), `src/contexts/GameStateContext.tsx`, `src/components/mente/BolhasGame.tsx`. **Régua:** `src/utils/refugio/energia.test.ts`.
+
 ### `src/utils/refugio/respiracao.ts`
 **Dono de:** Respirar com o Soulmon (Refúgio, 30/09/2026): os ritmos (calma 4-0-6, quadrada 4-4-4-4), as durações de 1 a 3 min arredondadas para ciclos inteiros e a fase de um instante. Não mede nada e não tem pagamento.
 **Exports:** tipos `BreathPhase`, `BreathPattern`; `BREATH_PATTERNS`, `BREATH_DURATIONS_MIN`; `cycleMs`, `phaseAt`, `fillLevel`, `sessionMs`.

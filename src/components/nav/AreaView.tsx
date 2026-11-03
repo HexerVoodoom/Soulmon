@@ -105,6 +105,8 @@ export interface PlayHandlers {
   onDungeonEnemyDefeated: (enemyKey?: string) => void;
   /** M10: inimigo visto fora da masmorra (Combina 3) — só o bestiário. */
   onBestiarySeen?: (enemyKey: string) => void;
+  /** Refúgio (02/11/2026): uma atividade foi concluída (respiração inteira / 30 bolhas calmas) → energia do dia, 1×/dia (`utils/refugio/energia.ts`). */
+  onRefugioComplete?: () => void;
   /** Dex de elementos (27/10/2026): ids de elemento de inimigos identificados VENCIDOS (Combina 3 e Arena). */
   onElementsDefeated?: (ids: readonly string[], drops?: readonly import('../../utils/essences').EssenceDrop[]) => void;
   /** Tutorial da 1ª abertura dos jogos do Ateliê da Mente (26/10/2026): o que já foi visto (save) e como gravar AO MOSTRAR. */
@@ -646,9 +648,9 @@ export function AreaView(props: AreaViewProps) {
             {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('eco'); }} />}
             {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('zip'); emitFeat('zipSolved'); }} />}
             {game === 'patches' && <PatchesGame {...base} tutorial={mindTut('patches')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('patches'); emitFeat('patchesSolved'); }} />}
-            {/* Refúgio — NÃO recebem `onEarnPoints`: não pagam, não pontuam. */}
-            {game === 'respiracao' && <RespiracaoGame {...base} />}
-            {game === 'bolhas-calmas' && <BolhasGame {...base} mode="calma" />}
+            {/* Refúgio — NÃO recebem `onEarnPoints`: não pagam Bits nem pontuam. Concluir devolve a energia do dia (`onComplete`, 1×/dia). */}
+            {game === 'respiracao' && <RespiracaoGame {...base} onComplete={play.onRefugioComplete} />}
+            {game === 'bolhas-calmas' && <BolhasGame {...base} mode="calma" onComplete={play.onRefugioComplete} />}
           </Suspense>
           </div>
         )}

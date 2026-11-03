@@ -9,6 +9,7 @@ import { MINI_FX, REFUGIO_SCENE_SUAVE } from '../../utils/visorScenes';
 import { getSpriteForStage } from '../../utils/sprites';
 import { petScaleStyle } from '../../utils/spriteScale';
 import { entrarNaSuperficie } from '../../utils/musica';
+import { REFUGIO_BUBBLES_TO_COMPLETE } from '../../utils/refugio/energia';
 import {
   bolhasBits, bubbleProgress, hasEscaped, initialStaircase, recordOutcome, spawnBubble, timeLeftMs,
   BOLHAS_CALMA_INTERVAL_MS, BOLHAS_MAX_BITS, BOLHAS_POINTS_PER_BIT,
@@ -47,8 +48,10 @@ interface Fx { id: number; x: number; y: number; kind: 'pop' | 'smoke'; until: n
 
 type Phase = 'intro' | 'play' | 'done';
 
-export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, mode, onEarnPoints }: MiniGameBaseProps & {
+export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, mode, onEarnPoints, onComplete }: MiniGameBaseProps & {
   mode: 'foco' | 'calma';
+  /** Só `calma` (Refúgio): chamado UMA vez quando estoura `REFUGIO_BUBBLES_TO_COMPLETE` bolhas. */
+  onComplete?: () => void;
   onEarnPoints?: (pts: number) => void;
 }) {
   const isPt = language === 'pt-BR';
@@ -58,6 +61,7 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
   // Calma começa direto (não há o que explicar antes; as refs já nascem zeradas).
   const [phase, setPhase] = useState<Phase>(calma ? 'play' : 'intro');
   const [, setFrame] = useState(0);
+  const calmPops = useRef(0); // Refúgio: bolhas estouradas, só para a energia do dia (nunca aparece na tela)
   const [score, setScore] = useState(0);
   const [earned, setEarned] = useState(0);
   const [blowing, setBlowing] = useState(false);
@@ -152,7 +156,10 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
     if (!reduced) { try { navigator.vibrate?.(15); } catch { /* noop */ } }
     if (b.kind === 'dream') {
       fx.current = [...fx.current, { id, x: pos.x, y: pos.y, kind: 'pop', until: now + POP_MS }];
-      if (!calma) {
+      if (calma) {
+        calmPops.current += 1;
+        if (calmPops.current === REFUGIO_BUBBLES_TO_COMPLETE) onComplete?.();
+      } else {
         stair.current = recordOutcome(stair.current, true);
         scoreRef.current += 1;
         setScore(scoreRef.current);

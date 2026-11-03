@@ -402,7 +402,7 @@ export function MenteSheet({ language, onStart, bitsToday }: {
   );
 }
 
-/** Refúgio — para momentos difíceis. Nada aqui pontua, paga ou mede. */
+/** Refúgio — para momentos difíceis. Nada aqui pontua ou mede; concluir uma atividade devolve a energia do dia (1×, `utils/refugio/energia.ts`). */
 export function RefugioSheet({ language, onStart }: { language: Language; onStart: (g: RefugioGame) => void }) {
   const isPt = language === 'pt-BR';
   return (
@@ -410,8 +410,8 @@ export function RefugioSheet({ language, onStart }: { language: Language; onStar
         <ModalInfo language={language} label={isPt ? 'Sobre o Refúgio' : 'About the Refuge'} align="right">
           <InfoTipSection title={isPt ? 'O Refúgio' : 'The Refuge'}>
             {isPt
-              ? 'Um canto para quando o dia pesar. Aqui nada pontua, nada paga e nada é medido.'
-              : 'A corner for when the day feels heavy. Nothing here scores, pays or measures anything.'}
+              ? 'Um canto para quando o dia pesar. Aqui nada pontua e nada é medido. O primeiro respiro do dia devolve um pouco de energia ao seu Soulmon.'
+              : 'A corner for when the day feels heavy. Nothing here scores or measures anything. The first calm moment of the day gives your Soulmon some energy back.'}
           </InfoTipSection>
           <InfoTipSection title={isPt ? 'Respirar com o Soulmon' : 'Breathe with your Soulmon'}>
             {isPt ? 'Siga uma bolha que enche e esvazia devagar. Seu Soulmon respira junto.' : 'Follow a bubble that slowly fills and empties. Your Soulmon breathes along.'}

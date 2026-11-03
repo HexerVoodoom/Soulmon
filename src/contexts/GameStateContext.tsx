@@ -3,6 +3,7 @@ import { sanitizeCrystal } from '../utils/evolutionCrystal';
 import { sanitizeRogueRun, type RogueRun } from '../utils/rogueDungeonSave';
 import { sanitizeDungeonReturnSummary, type DungeonReturnSummary } from '../utils/dungeonReturnSummary';
 import { sanitizeFocusKeyDay } from '../utils/focusKey';
+import { sanitizeRefugioEnergyDay } from '../utils/refugio/energia';
 import { sanitizeClaReceipts } from '../utils/claCredit';
 import { sanitizeBosqueArvores, type BosqueArvores } from '../utils/bosqueArvoresSave';
 import { sanitizeFichaJornada, type FichaJornada } from '../utils/fichaJornada';
@@ -585,6 +586,8 @@ export interface GameState {
   guildDonatedItem?: string | null;
   /** beta3 F1: dia do jogador (AAAA-MM-DD) em que o "Prepare to Focus" deu a chave que libera a Focus Workshop (`utils/focusKey.ts`). */
   focusKeyDay?: string;
+  /** 02/11/2026: dia do jogador (AAAA-MM-DD) em que o Refúgio já devolveu a energia do dia (`utils/refugio/energia.ts`; 1×/dia). */
+  refugioEnergyDay?: string;
   /** beta3 M7: incursão do Calabouço roguelike do dia (`utils/rogueDungeon.ts`) (outro dia = incursão nova na leitura, via `runForDay`). */
   rogueDungeon?: RogueRun;
   /** beta3: resumo da volta SOZINHA do Soulmon da masmorra, guardado até o jogador fechar o aviso (sobrevive a fechar o app). Opcional: save antigo não tem. */
@@ -1478,6 +1481,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         claReceipts: sanitizeClaReceipts(loadedState.claReceipts),
         bosqueArvores: sanitizeBosqueArvores(loadedState.bosqueArvores),
         focusKeyDay: sanitizeFocusKeyDay(loadedState.focusKeyDay),
+        refugioEnergyDay: sanitizeRefugioEnergyDay(loadedState.refugioEnergyDay),
         rogueDungeon: sanitizeRogueRun(loadedState.rogueDungeon),
         dungeonReturnPending: sanitizeDungeonReturnSummary(loadedState.dungeonReturnPending),
         guildDonatedItem: (() => { const v = str(loadedState.guildDonatedItem); return v && /^[a-z0-9][a-z0-9_-]{1,39}$/.test(v) ? v : null; })(),
