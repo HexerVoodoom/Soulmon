@@ -23,7 +23,7 @@ import {
   hpAgora, gravarHp, podeDescer, msAteDescer, formatarEspera,
   DUNGEON_ENERGY_PER_LAYER, DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_MAX_LAYER, dungeonLayerCap, startLayerFor, isMilestoneLayer,
   layersAffordable, spendLayer, layerRefusal, recordLayerCleared, sanitizeDepthRecord,
-  nextDungeonSpeed, sanitizeDungeonSpeed, DUNGEON_AWAY_MAX_HOURS, type DungeonSpeed, type DungeonAway, type DungeonAwayPlayer,
+  DUNGEON_AWAY_MAX_HOURS, type DungeonAway, type DungeonAwayPlayer,
 } from '../utils/dungeonIdle';
 import { applyRiftLayerPaid, dungeonWaveOf, settleDungeonAwayNow, type AwayReport } from '../utils/dungeonAway';
 import { marcarTelaMasmorra } from '../utils/dungeonScreenOpen';
@@ -31,7 +31,6 @@ import { pushDrop, popDrop, type DropGroup, type DropKind } from '../utils/dunge
 import { DropNotice } from './games/DropNotice';
 import { HEART_ITEM_EMOJI, SPARK_ITEM_EMOJI } from '../utils/shop';
 import { canOfferRevive, consumeOne, addOne, heartsOwned, reviveSeed, reviveStart, rollSparkDrop } from '../utils/dungeonRevive';
-import { readLocal, writeLocal } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { getMaxEnergyForStage } from '../types/progression';
 import { settleEnergy } from '../utils/hunger';
@@ -52,6 +51,7 @@ import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/sta
 import { fighterIdentity } from '../utils/fighterIdentity';
 import { fxElementId, dungeonEnemyElement, dungeonFoeSpecialLabel, prefersReducedMotion, elementStrikeForm, specialLabel } from '../utils/combatFx';
 import { TorcidaLayer } from './games/TorcidaKit';
+import { useBattleSpeed, BattleSpeedButton } from './games/BattleSpeed';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { entrarNaSuperficie } from '../utils/musica';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
@@ -219,15 +219,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const hpMax = hpPoints(dungeonPlayerSide(jogador).combatant.hp);
 
   /* ⏩ AVANÇO RÁPIDO (REGISTRO §36): 1×/3×, preferência do aparelho. Só encurta o relógio da cena e a pausa entre lutas. */
-  const [speed, setSpeedState] = useState<DungeonSpeed>(() => sanitizeDungeonSpeed(readLocal(STORAGE_KEYS.DUNGEON_SPEED)));
-  const speedRef = useRef(speed);
-  speedRef.current = speed;
-  const cycleSpeed = () => {
-    const n = nextDungeonSpeed(speedRef.current);
-    speedRef.current = n;
-    setSpeedState(n);
-    writeLocal(STORAGE_KEYS.DUNGEON_SPEED, String(n));
-  };
+  const { speed, speedRef, cycle: cycleSpeed } = useBattleSpeed();
   /* 🎁 O modalzinho de DROP: fila (a lógica é de `utils/dungeonDrops.ts`; em 3× tudo vira um aviso só). */
   const [drops, setDrops] = useState<DropGroup[]>([]);
   const dropSeq = useRef(0);
@@ -751,16 +743,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         style={BATTLE_LAYER_STYLE}
         mascot
         belowMascot={!ended && phase !== 'away' ? (<>
-          <button
-            type="button"
-            data-dungeon-speed={speed}
-            onClick={cycleSpeed}
-            aria-label={isPt ? `Avanço rápido: ${speed}×. Toque para mudar para ${nextDungeonSpeed(speed)}×.` : `Fast forward: ${speed}×. Tap to change to ${nextDungeonSpeed(speed)}×.`}
-            className="sm2-num"
-            style={{ pointerEvents: 'auto', background: 'none', border: 'none', boxShadow: 'none', padding: 0, minWidth: 44, minHeight: 44, cursor: 'pointer', color: 'var(--sm2-viewport-ink)', fontSize: 16, fontWeight: 700, textShadow: '0 1px 2px rgba(0,0,0,.9), 0 0 3px rgba(0,0,0,.8)', WebkitTextStroke: '0.5px rgba(0,0,0,.6)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}
-          >
-            {speed}×
-          </button>
+          <BattleSpeedButton speed={speed} onCycle={cycleSpeed} isPt={isPt} attr="data-dungeon-speed" />
         </>) : undefined}
         cheerRatio={fighting && pronto ? battle.meter / CHEER_TAPS_FULL : 0}
         swipeActive={fighting && battle.phase === 'dodge'}

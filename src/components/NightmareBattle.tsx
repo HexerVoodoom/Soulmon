@@ -52,6 +52,7 @@ import { getSpriteForStage, DUNGEON_LINE_SPRITES } from '../utils/sprites';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
 import { TorcidaLayer } from './games/TorcidaKit';
+import { useBattleSpeed, BattleSpeedButton } from './games/BattleSpeed';
 import { CHEER_TAPS_FULL, type RingGrade } from '../utils/energia';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
@@ -278,10 +279,11 @@ export function NightmareBattle({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rarity, onWin, onLose]);
 
+  const { speed, cycle: cycleSpeed } = useBattleSpeed();
   const battle = useGroupBattle({
     running: open && phase === 'fight' && !!enemy,
     paused: pausado, reduced: reduced.current, runKey: fightKey, seed: seedLuta,
-    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta, torcida: true,
+    round: rodadaDoNucleo, scene: cena, onEnd: aoFimDaLuta, torcida: true, speed,
   });
   const batteryRef = useRef<typeof battle | null>(null);
   batteryRef.current = battle;
@@ -367,6 +369,7 @@ export function NightmareBattle({
           dodge={pronto ? battle.dodge : null}
           onDodge={battle.swipe}
           petDodge={pronto ? battle.petDodge : null}
+          fast={speed > 1}
           mechLabels={{
             strike: isPt ? 'Golpear' : 'Strike',
             dodgeLeft: isPt ? 'Esquivar para a esquerda' : 'Dodge left',
@@ -382,7 +385,9 @@ export function NightmareBattle({
             leave: isPt ? 'Sair' : 'Leave',
           }}
           onPauseChange={setPausado}
-        />
+        >
+          <BattleSpeedButton speed={speed} onCycle={cycleSpeed} isPt={isPt} corner />
+        </BattleStage>
       </TorcidaLayer>
     );
   }

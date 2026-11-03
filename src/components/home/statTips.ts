@@ -73,14 +73,14 @@ export function statTip(kind: StatTipKind, isPt: boolean): StatTip {
     upLabel,
     downLabel,
     up: isPt
-      ? `com o tempo: +1 a cada ${ENERGY_REGEN_MINUTES} min bem alimentado, metade da velocidade com fome, parada se faminto. Comer não enche a energia.`
-      : `with time: +1 every ${ENERGY_REGEN_MINUTES} min when well fed, half speed when hungry, stopped when starving. Eating doesn't fill energy.`,
+      ? `quanto mais bem alimentado, mais rápido enche (+1 a cada ${ENERGY_REGEN_MINUTES} min no melhor caso).`
+      : `the better fed, the faster it fills (+1 every ${ENERGY_REGEN_MINUTES} min at best).`,
     down: isPt
-      ? `recomeça do zero a cada dia, e cada camada da Masmorra gasta ${DUNGEON_ENERGY_PER_LAYER}.`
-      : `starts again from zero each day, and each Dungeon layer spends ${DUNGEON_ENERGY_PER_LAYER}.`,
-    useLabel: isPt ? 'Serve para' : 'Used for',
+      ? `cada camada da Masmorra gasta ${DUNGEON_ENERGY_PER_LAYER}.`
+      : `each Dungeon layer spends ${DUNGEON_ENERGY_PER_LAYER}.`,
+    useLabel: isPt ? 'Usada em' : 'Used in',
     use: isPt
-      ? `descer a Masmorra: ${DUNGEON_ENERGY_PER_LAYER} por camada. Subir de nível enche de novo.`
-      : `going down the Dungeon: ${DUNGEON_ENERGY_PER_LAYER} per layer. Leveling up fills it again.`,
+      ? `descer a Masmorra (${DUNGEON_ENERGY_PER_LAYER} por camada).`
+      : `going down the Dungeon (${DUNGEON_ENERGY_PER_LAYER} per layer).`,
   };
 }

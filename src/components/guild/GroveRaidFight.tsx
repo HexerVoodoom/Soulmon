@@ -10,6 +10,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { BattleStage, BATTLE_LAYER_STYLE } from '../games/BattleStage';
 import { TorcidaLayer } from '../games/TorcidaKit';
 import { useGroupBattle, type GroupRound, type GroupScene } from '../games/useGroupBattle';
+import { useBattleSpeed, BattleSpeedButton } from '../games/BattleSpeed';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from '../games/pveTags';
 import { sm2Button } from '../form/FormKit';
 import { fxElementId, prefersReducedMotion, elementStrikeForm, specialLabel } from '../../utils/combatFx';
@@ -91,7 +92,8 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
     playerSpecialEscola: ident.especial.escola,
   }), [hpMax, foeMax, ident, foeEl, isPt, lang, family]);
 
-  const battle = useGroupBattle({ running: !end, paused, reduced: reduced.current, runKey: 1, seed, round, scene, onEnd: setEnd, torcida: true });
+  const { speed, cycle: cycleSpeed } = useBattleSpeed();
+  const battle = useGroupBattle({ running: !end, paused, reduced: reduced.current, runKey: 1, seed, round, scene, onEnd: setEnd, torcida: true, speed });
   const pronto = battle.stateKey === 1;
   const won = end?.winner === 'player';
 
@@ -124,6 +126,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
         dodge={pronto ? battle.dodge : null}
         onDodge={battle.swipe}
         petDodge={pronto ? battle.petDodge : null}
+        fast={speed > 1}
         mechLabels={{ strike: isPt ? 'Golpear' : 'Strike', dodgeLeft: isPt ? 'Esquivar para a esquerda' : 'Dodge left', dodgeRight: isPt ? 'Esquivar para a direita' : 'Dodge right' }}
         title={isPt ? 'Bosque · ataque' : 'Grove · raid'}
         closeLabel={isPt ? 'Sair da luta (não custa nada)' : 'Leave the fight (costs nothing)'}
@@ -143,6 +146,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
             })}
           </div>
         )}
+        {!end && <BattleSpeedButton speed={speed} onCycle={cycleSpeed} isPt={isPt} corner />}
         {end && (
           <div role="status" data-grove-raid-end={won ? 'won' : 'lost'} style={{ position: 'absolute', left: 16, right: 16, bottom: 24, zIndex: 6, pointerEvents: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: 12, borderRadius: 'var(--sm2-radius-md, 8px)', background: 'var(--sm2-viewport-bg)', border: '1px solid var(--sm2-viewport-ring)', color: 'var(--sm2-viewport-ink)', fontFamily: 'var(--sm2-font-text)', textAlign: 'center' }}>
             <p style={{ margin: 0, fontSize: 'var(--sm2-text-md, 16px)', fontWeight: 700 }}>
