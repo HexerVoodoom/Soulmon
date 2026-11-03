@@ -13,7 +13,7 @@
  * Tudo determinístico: o rng do tabuleiro vem por PARÂMETRO (`mulberry32` de `combate/rng`) — nunca `Math.random`.
  * O estado é imutável: cada função devolve um estado novo.
  */
-import { chainMultiplier, match3Bits, trySwap, validMoves, M3_TILE_ELEMENTS, type Board, type Pos, type Rng, type Step } from './match3';
+import { chainMultiplier, match3Bits, trySwap, validMoves, M3_TILE_ELEMENTS, type Board, type BoardRules, type Pos, type Rng, type Step } from './match3';
 import { mulberry32 } from './combate/rng';
 import { pickEnemy } from './enemyRoster';
 import { LINE_ELEMENT, rosterEntryElement } from './spriteElement';
@@ -164,7 +164,10 @@ const cloneCombat = (s: M3Combat): M3Combat => ({
  * da cascata), todos no inimigo ATIVO. A sobra de um golpe que zera o HP é descartada; o próximo inimigo assume para o evento seguinte.
  * Terminada a vitória (3 derrotados), o resto é ignorado.
  */
-export function applyPlayerSteps(state: M3Combat, steps: readonly Step[]): M3Combat {
+/** `mult(k, chain)` = multiplicador extra do BOSS (`utils/match3Boss.ts`) por tipo de peça e passo da cascata; ausente = 1. */
+export type M3DamageMult = (k: number, chain: number) => number;
+
+export function applyPlayerSteps(state: M3Combat, steps: readonly Step[], mult?: M3DamageMult): M3Combat {
   const s = cloneCombat(state);
   for (const st of steps) {
     const porElemento = new Map<number, number>();
@@ -174,7 +177,7 @@ export function applyPlayerSteps(state: M3Combat, steps: readonly Step[]): M3Com
       const ia = escolherAlvo(s.enemies.map(e => e.hp), s.target ?? s.active);
       const alvo = s.enemies[ia];
       const elTile = (s.elements ?? M3_TILE_ELEMENTS)[k];
-      const bruto = Math.round(porElemento.get(k)! * M3C_DMG_PER_TILE * chainMultiplier(st.chain) * m3ElementMult(elTile, alvo.element));
+      const bruto = Math.round(porElemento.get(k)! * M3C_DMG_PER_TILE * chainMultiplier(st.chain) * m3ElementMult(elTile, alvo.element) * (mult ? mult(k, st.chain) : 1));
       const dmg = Math.min(alvo.hp, bruto); // a sobra se perde
       alvo.hp -= dmg;
       s.dealt += dmg;
@@ -240,14 +243,14 @@ export interface EnemyMove { a: Pos; b: Pos; swapped: Board; steps: Step[]; boar
  * A vez do inimigo da frente (D-83): UMA troca (a melhor, `chooseMove`) no mesmo tabuleiro, com o rng do tabuleiro. Uma combinação de 4+
  * dá outra troca (D-84), até `M3C_MAX_STREAK` seguidas. Cada troca tira HP do jogador pela fórmula do combate; HP 0 = derrota.
  */
-export function enemyPhase(state: M3Combat, board: Board, boardRng: Rng): { state: M3Combat; board: Board; moves: EnemyMove[] } {
+export function enemyPhase(state: M3Combat, board: Board, boardRng: Rng, rules: BoardRules = {}): { state: M3Combat; board: Board; moves: EnemyMove[] } {
   let s = state;
   let b = board;
   const moves: EnemyMove[] = [];
   for (let i = 0; i < M3C_MAX_STREAK && s.outcome === 'playing'; i++) {
     const m = chooseMove(b);
     if (!m) break;
-    const r = trySwap(b, m.a, m.b, boardRng);
+    const r = trySwap(b, m.a, m.b, boardRng, rules);
     if (!r.ok) break;
     moves.push({ a: m.a, b: m.b, swapped: r.swapped, steps: r.steps, board: r.board, reshuffled: r.reshuffled });
     s = applyEnemySteps(s, r.steps);
@@ -272,13 +275,16 @@ export interface M3Exchange {
  * (sem resposta do inimigo e SEM consumir turno: `turns` só conta jogadas que passam a vez). Senão conta o turno e o inimigo joga (`enemyPhase`).
  * Ao chegar a `M3C_MAX_TURNS` sem fim, a rodada acaba como derrota sem custo.
  */
-export function playTurn(state: M3Combat, steps: readonly Step[], board: Board, boardRng: Rng, streak = 1): M3Exchange {
+/** Opções do BOSS: multiplicador de dano, regras de tabuleiro (também na vez do inimigo) e a regra 5 (especial NÃO dá vez extra). */
+export interface M3TurnOpts { mult?: M3DamageMult; rules?: BoardRules; noExtra?: boolean }
+
+export function playTurn(state: M3Combat, steps: readonly Step[], board: Board, boardRng: Rng, streak = 1, opts: M3TurnOpts = {}): M3Exchange {
   if (state.outcome !== 'playing') return { state, board, extra: false, enemyMoves: [] };
-  let s = applyPlayerSteps(state, steps);
+  let s = applyPlayerSteps(state, steps, opts.mult);
   if (s.outcome !== 'playing') return { state: { ...s, turns: s.turns + 1 }, board, extra: false, enemyMoves: [] };
-  if (grantsExtraTurn(steps) && streak < M3C_MAX_STREAK) return { state: s, board, extra: true, enemyMoves: [] };
+  if (!opts.noExtra && grantsExtraTurn(steps) && streak < M3C_MAX_STREAK) return { state: s, board, extra: true, enemyMoves: [] };
   s = { ...s, turns: s.turns + 1 };
-  const ph = enemyPhase(s, board, boardRng);
+  const ph = enemyPhase(s, board, boardRng, opts.rules);
   s = ph.state;
   if (s.outcome === 'playing' && s.turns >= M3C_MAX_TURNS) s = { ...s, outcome: 'loss' };
   return { state: s, board: ph.board, extra: false, enemyMoves: ph.moves };

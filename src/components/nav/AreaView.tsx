@@ -109,6 +109,8 @@ export interface PlayHandlers {
   onRefugioComplete?: () => void;
   /** Dex de elementos (27/10/2026): ids de elemento de inimigos identificados VENCIDOS (Combina 3 e Arena). */
   onElementsDefeated?: (ids: readonly string[], drops?: readonly import('../../utils/essences').EssenceDrop[]) => void;
+  /** BOSS do Elemental Fusion (03/11/2026): venceu um boss → +1 Fragmento de Boss no save. */
+  onBossShard?: () => void;
   /** Tutorial da 1ª abertura dos jogos do Ateliê da Mente (26/10/2026): o que já foi visto (save) e como gravar AO MOSTRAR. */
   mindTutorials?: { seen: MindGameTutorials; onShown: (id: MindGameId) => void };
   onDinoScore: (score: number) => void;
@@ -645,7 +647,7 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
-            {game === 'match3' && <Match3Game {...base} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
+            {game === 'match3' && <Match3Game {...base} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} onBossShard={play.onBossShard} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
             {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('eco'); }} />}
             {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('zip'); emitFeat('zipSolved'); }} />}
