@@ -105,6 +105,7 @@ import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { sm2Tag } from './TaskMeta';
 import { bondXP, bondLevelFor, meetsPvpBond, xpToPvpBond, xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
 import tournamentFinal from '../assets/soulmon/bg/tournament-final.png';
+import { coliseuSceneFor } from '../utils/coliseuScenes';
 import { SCENE_BG } from '../utils/fxPackArt';
 
 interface TournamentPageProps {
@@ -585,6 +586,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   if (training) {
     return (
       <DuelScreen
+        scene={coliseuSceneFor(standing?.tier.id).bg}
         me={training.me}
         opp={training.opp}
         seed={training.seed}
@@ -612,6 +614,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   if (duel) {
     return (
       <DuelScreen
+        scene={coliseuSceneFor(standing?.tier.id).bg}
         me={duel.me}
         opp={duel.oppSide}
         seed={duel.seed}

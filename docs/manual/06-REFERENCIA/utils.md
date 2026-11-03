@@ -530,6 +530,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Dono de:** os extras da tela de resultado (03/11/2026, dono): a barra de Bits do dia (só com o teto em 100%) e a linha da missão do dia do jogo que acabou. Puro; o `App` monta e entrega pelo contexto.
 **Exports:** `buildResultExtras(state, day, bondLevel, isPt)` · tipos `ResultExtras`, `ResultMission`.
 **Quem chama:** `App.tsx` (Provider); lê `components/games/ResultScreen.tsx`.
+### `src/utils/coliseuScenes.ts`
+**Dono de:** o coliseu EXCLUSIVO do Torneio por faixa (03/11/2026, dono). Faixa sem arte cai na maior abaixo que tem; Mestre/Grão-Mestre usam o Diamante.
+**Exports:** `coliseuSceneFor(tierId)` · `coliseuTierOf(tierId)` · `COLISEU_TIERS`.
+**Quem chama:** `components/TournamentPage.tsx` (prop `scene` do `DuelScreen`).
 ### `src/utils/refugio/energia.ts`
 **Dono de:** a energia do Refúgio (02/11/2026, pedido do dono): concluir UMA atividade (respiração inteira ou 30 bolhas calmas) devolve metade da energia máxima, 1× por dia do jogador somando as duas. Sem número nem aviso na tela.
 **Exports:** `REFUGIO_ENERGY_FRACTION` (0,5) · `REFUGIO_BUBBLES_TO_COMPLETE` (30) · `sanitizeRefugioEnergyDay` (leitura tolerante de `refugioEnergyDay`) · `refugioEnergyTaken` · `grantRefugioEnergy` (puro, idempotente; passa por `setEnergy`, que limita ao máximo).
