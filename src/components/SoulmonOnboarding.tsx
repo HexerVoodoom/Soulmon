@@ -19,6 +19,7 @@ import {
   type LifeArea, type StruggleId, type StrengthId,
 } from '../types/activityCatalog';
 import { PLACEHOLDER_ART } from '../utils/placeholderArt';
+import { CRIACAO_ART } from '../utils/criacaoEvolucaoArt';
 import { ONBOARDING_VELADO as VELADO_BUILD } from './onboarding/sequencia/flag';
 import { isOnboardingVelado } from '../utils/bbStage';
 /* Build OU testador (o teste por pessoa só chega depois do login; lido a cada render/uso, não no load). */
@@ -2300,9 +2301,11 @@ export function SoulmonOnboarding({ onComplete, mode = 'onboarding', onRevealed,
               breathing={false}
               screenStyle={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
             >
+              {/* 03/11/2026: depois do "Chocar" o cristal já está ABERTO (luz saindo), não o fechado de antes. */}
               <img
                 className="sm2-ora-cocoon sm2-ora-pulse"
-                src={PLACEHOLDER_ART.forming}
+                data-ora-cristal-aberto
+                src={CRIACAO_ART.crystalOpen}
                 alt=""
                 width={128}
                 height={128}
