@@ -1085,7 +1085,7 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
   const title = draw ? (isPt ? 'Empate' : 'Draw') : result.won ? (isPt ? 'Vitória' : 'Victory') : (isPt ? 'Derrota' : 'Defeat');
   return (
     <ResultScreen
-      playAgainIcon={lotIconName('arena', 'torneio')}
+      playAgainIcon={lotIconName('arena', 'torneio')} dailyEvent="torneio"
       language={isPt ? 'pt-BR' : 'en-US'}
       mode="dialog"
       bannerSet="epic"
@@ -1103,8 +1103,7 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
         { key: 'xp', kind: 'xp', value: bondXP({ kind: 'tournamentMatch', won: result.won }) },
       ]}
       petSrc={petSpriteSrc}
-      scene={`url(${tournamentFinal}) center/cover`}
-      visorOpponent={result.won ? <VisorSprite src={opponentSprite({ ...result.opponent, id: result.opponent.name })} alt="" idle={false} flip style={{ right: 8, bottom: 6 }} data-visor-enemy /> : undefined}
+      opponentSrc={opponentSprite({ ...result.opponent, id: result.opponent.name })}
       playAgainLabel={isPt ? 'Continuar' : 'Continue'}
       onPlayAgain={onClose}
       onDismiss={onClose}

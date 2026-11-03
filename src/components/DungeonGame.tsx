@@ -871,7 +871,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                Copy §4 (L5, §7): perda só sobre o que foi apostado de propósito (a descida). Sem "descansar" (§5.12:
                vocabulário da criatura que acaba) — o verbo é RECUPERAR. Tela padrão: `ResultScreen` (Proposta D). */
             <ResultScreen
-              playAgainIcon={lotIconName('exploracao', 'dungeon')}
+              playAgainIcon={lotIconName('exploracao', 'dungeon')} dailyEvent="masmorra"
               language={language}
               outcome={resumo.recordTo > resumo.recordFrom ? 'record' : endReason === 'hp' ? 'tired' : 'calm'}
               gameName={isPt ? 'Fenda Sem Fim' : 'Endless Rift'}
@@ -901,6 +901,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               ]}
               emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
               petSrc={petSprite}
+              opponentSrc={wildPlayer?.spriteUrl ?? enemy?.sprite}
               scene={scene.bg}
               notes={(
                 <>

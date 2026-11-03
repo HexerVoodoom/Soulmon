@@ -295,7 +295,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
 
       {solved && !challenge && (
         <ResultScreen
-          playAgainIcon={lotIconName('jogos', 'mente')}
+          playAgainIcon={lotIconName('jogos', 'mente')} dailyEvent="patches"
           language={language}
           outcome="win"
           gameName={title}

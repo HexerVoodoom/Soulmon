@@ -242,7 +242,7 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
 
       {solved && !challenge && (
         <ResultScreen
-          playAgainIcon={lotIconName('jogos', 'mente')}
+          playAgainIcon={lotIconName('jogos', 'mente')} dailyEvent="zip"
           language={language}
           outcome="win"
           gameName={title}
