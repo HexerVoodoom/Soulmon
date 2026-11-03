@@ -271,6 +271,7 @@ const SequenciaRevisao = lazy(() => import('./components/onboarding/sequencia/Se
 const SequenciaReal = lazy(() => import('./components/onboarding/sequencia/SequenciaReal').then(m => ({ default: m.SequenciaReal })));
 import { IntroCinematica, deveTocarIntro } from './components/onboarding/intro/IntroCinematica';
 import { initialStageForNewSave } from './utils/bbStage';
+import { addBossShards } from './utils/bossShards';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
 import type { UnlockReason } from './components/unlockReason';
 
@@ -7987,6 +7988,7 @@ export default function App() {
                   onBestiarySeen: handleBestiarySeen,
                   onRefugioComplete: () => setGameState(prev => grantRefugioEnergy(prev, Date.now())),
                   onElementsDefeated: handleElementsDefeated,
+                  onBossShard: () => setGameState(prev => ({ ...prev, bossShards: addBossShards(prev.bossShards) })),
                   mindTutorials: { seen: gameState.mindGameTutorials ?? {}, onShown: id => setGameState(prev => { const m = markMindGameTutorial(prev.mindGameTutorials, id); return m === prev.mindGameTutorials ? prev : { ...prev, mindGameTutorials: m }; }) },
                   onDinoScore: handleDinoScore,
                   /* 🏛️ Prédios de Jogos (30/09/2026): o dia do JOGADOR em ISO

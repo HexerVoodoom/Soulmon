@@ -22,6 +22,7 @@ import { resolve } from 'node:path';
 import { STORAGE_KEYS } from '../utils/storageKeys';
 import { sanitizeStageId } from '../utils/bbStage';
 import { sanitizeMercMission } from '../utils/mercMission';
+import { sanitizeBossShards } from '../utils/bossShards';
 
 const RAIZ = resolve(__dirname, '../..');
 const ler = (p: string) => readFileSync(resolve(RAIZ, p), 'utf8');
@@ -362,5 +363,19 @@ describe('GUILDA DOS MERCENÁRIOS (§11 do plano do onboarding): `mercMission` e
   });
   it('o servidor sanitiza o mesmo campo (paridade em functions/api/mercMission.parity.test.js)', () => {
     expect(SAVE_JS).toMatch(/'mercMission' in state/);
+  });
+});
+
+describe('FRAGMENTO DE BOSS (03/11/2026): `bossShards` entra no save com leitura tolerante', () => {
+  it('hydrateSave lê bossShards por sanitizador (lixo = ausente)', () => {
+    expect(corpoHydrate(CTX)).toMatch(/bossShards:\s*sanitizeBossShards\(loadedState\.bossShards\)/);
+  });
+  it('o sanitizador é idempotente e recusa lixo', () => {
+    expect(sanitizeBossShards(sanitizeBossShards(3))).toBe(3);
+    expect(sanitizeBossShards(-2)).toBe(0);
+    for (const lixo of [undefined, null, 'x', '3', [], {}, NaN]) expect(sanitizeBossShards(lixo)).toBeUndefined();
+  });
+  it('o servidor sanitiza o mesmo campo (paridade em functions/api/bossShards.parity.test.js)', () => {
+    expect(SAVE_JS).toMatch(/'bossShards' in state/);
   });
 });

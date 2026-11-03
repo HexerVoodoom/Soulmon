@@ -28,6 +28,7 @@ import { sanitizeLibraryAck, sanitizeStrayPlayersSeen } from './_libraryAck.js';
 import { touchLastLogin, recoverStrayFromSave } from './_strays.js';
 import { sanitizeConquistasPagas } from './_conquistas.js';
 import { sanitizeMercMission } from './_mercMission.js';
+import { sanitizeBossShards } from './_bossShards.js';
 import { sanitizeDayPlan } from './_dayPlan.js';
 import { sanitizeNightmares } from './_nightmares.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
@@ -407,6 +408,11 @@ async function onRequestBruto({ request, env }) {
       if (q) state.conquistasPagas = q; else delete state.conquistasPagas;
     }
     // Guilda dos Mercenarios (30/10/2026): {day, ordem, activityId, done}, so a forma. Espelho de `sanitizeMercMission` (cliente).
+    // Fragmento de Boss (03/11/2026): inteiro 0..1e6, so a forma. Espelho de `sanitizeBossShards` (cliente).
+    if ('bossShards' in state) {
+      const q = sanitizeBossShards(state.bossShards);
+      if (q !== undefined) state.bossShards = q; else delete state.bossShards;
+    }
     if ('mercMission' in state) {
       const q = sanitizeMercMission(state.mercMission);
       if (q) state.mercMission = q; else delete state.mercMission;

@@ -68,6 +68,7 @@ import type { PlayLog } from '../utils/petNeeds';
 import type { StepsRecord } from '../utils/steps';
 import { sanitizeStepGoal } from '../utils/steps';
 import { sanitizeMercMission, type MercMissionState } from '../utils/mercMissionSave';
+import { sanitizeBossShards } from '../utils/bossShards';
 import { sanitizeSpecialMission, type SpecialMissionState } from '../utils/specialMissions';
 import { resolveLanguage } from '../utils/i18n';
 import { soulmonDisplayName } from '../utils/petName';
@@ -689,6 +690,8 @@ export interface GameState {
   conquistasPagas?: AchievementId[];
   /** Guilda dos Mercenários (plano do onboarding velado §11): a missão de UM dia, de UMA Ordem. Ausente = nunca escolheu. Leitura tolerante via `sanitizeMercMission`. */
   mercMission?: MercMissionState;
+  /** Fragmento de Boss (03/11/2026): +1 por BOSS vencido no Elemental Fusion; ainda sem uso. Ausente = 0. Leitura tolerante via `sanitizeBossShards`. */
+  bossShards?: number;
   /** Estado da estação corrente (`utils/seasons.ts`). Fiado em 06/09/2026
    *  (WP4.16): o módulo existia inteiro e nunca era chamado por ninguém. */
   season?: SeasonProgressState;
@@ -1629,6 +1632,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           : (gatilhoAntigoTasks100(loadedState) ? ['dias-completos-30'] : []),
         conquistasPagas: sanitizeConquistasPagas(loadedState.conquistasPagas), // ausente/lixo = undefined (o App semeia)
         mercMission: sanitizeMercMission(loadedState.mercMission),
+        bossShards: sanitizeBossShards(loadedState.bossShards),
         // `?? undefined`: save antigo simplesmente não tem estação, e a
         // primeira virada tira a foto. Nada a migrar.
         season: (loadedState as { season?: SeasonProgressState }).season ?? undefined,
