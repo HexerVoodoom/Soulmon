@@ -52,6 +52,7 @@
  * visor 288×112 da arena e as duas criaturas a 64 na vitória.
  */
 import { useHexOverrides } from '../hooks/useHexOverrides';
+import { lotIconName } from '../utils/lotIcons';
 import { hexFamily } from '../utils/hexsmith';
 import type { FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { markSeenId } from '../utils/librarySeen';
@@ -1084,6 +1085,7 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
   const title = draw ? (isPt ? 'Empate' : 'Draw') : result.won ? (isPt ? 'Vitória' : 'Victory') : (isPt ? 'Derrota' : 'Defeat');
   return (
     <ResultScreen
+      playAgainIcon={lotIconName('arena', 'torneio')}
       language={isPt ? 'pt-BR' : 'en-US'}
       mode="dialog"
       bannerSet="epic"

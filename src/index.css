@@ -5796,6 +5796,11 @@ select:focus-visible {
 /* FX por folha 3×2 (`components/ui/SpriteFx`): 6 quadros por steps(), termina no último; movimento reduzido = quadro parado ou some. */
 .sm-fxs { display: block; flex: none; background-repeat: no-repeat; background-size: 300% 200%; background-position: 100% 100%; image-rendering: pixelated; pointer-events: none; animation: sm-fxs-play var(--fxs-ms, 720ms) steps(1, end) var(--fxs-delay, 0ms) var(--fxs-n, 1) both; }
 @keyframes sm-fxs-play { 0% { background-position: 0 0; } 16.667% { background-position: 50% 0; } 33.333% { background-position: 100% 0; } 50% { background-position: 0 100%; } 66.667% { background-position: 50% 100%; } 83.333% { background-position: 100% 100%; } }
+/* Resultado (03/11/2026): os prêmios SAEM do baú, uma vez; o Soulmon livre ao lado do título pula devagar. */
+.sm-result-fromchest { animation: sm-result-fromchest 700ms ease-out 1 both; }
+@keyframes sm-result-fromchest { 0% { opacity: 0; transform: translate(-90px, 18px) scale(.35); } 45% { opacity: 1; transform: translate(-14px, -12px) scale(1.08); } 100% { opacity: 1; transform: translate(0, 0) scale(1); } }
+.sm-result-pet-free { animation: sm-result-hop 2.4s ease-in-out infinite; }
+@keyframes sm-result-hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 @media (prefers-reduced-motion: reduce) {
   .sm2-intro-bar-fill { animation: none; transform: scaleX(1); } /* intro: barra cheia (REGISTRO §168) */
   .sm2-intro-load-done { animation: none; opacity: 1; }
@@ -5819,6 +5824,7 @@ select:focus-visible {
   .sm-reveal-cocoon, .sm-reveal-cocoon-img { animation: none !important; }
   /* Celebração (rodada 7, M5): sem movimento ela nem renderiza; o texto de estado basta. */
   .sm-fxs { animation: none; } .sm-fxs[data-fxs-still="hide"] { display: none; }
+  .sm-result-fromchest, .sm-result-pet-free { animation: none; }
   .sm2-celebrate { display: none !important; }
   /* WP2.4: a cerimônia do marco aparece parada — a informação é a mesma. */
   .sm-milestone-pop { animation: none !important; }

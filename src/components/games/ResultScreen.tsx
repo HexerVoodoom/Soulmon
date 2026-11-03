@@ -112,6 +112,8 @@ export interface ResultScreenProps {
   /** Ações. `onPlayAgain` ausente = só o botão de sair. */
   playAgainLabel?: string;
   onPlayAgain?: () => void;
+  /** Ícone do botão de revanche: o do PRÉDIO onde mora a atividade (`utils/lotIcons.ts`). Ausente = `replay`. */
+  playAgainIcon?: string;
   /** Sem `onHome` não há botão de sair (o Torneio tem uma ação só: "Continuar"). */
   homeLabel?: string;
   onHome?: () => void;
@@ -313,26 +315,23 @@ export function ResultScreen(p: ResultScreenProps) {
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, padding: '12px 16px 16px' }}>
         <p style={{ ...sm2Hint, textAlign: 'center' }} data-result-game>{p.gameName}</p>
 
-        <div className={`sm-result-visor ${MOOD_CLASS[mood]}${record ? ' sm-result-visor--record' : ''}${animated ? ' sm-result-visor--live' : ''}`} aria-hidden="true">
-          <GameVisor height={84} scene={p.scene}>
-            {p.petSrc && (
-              <div className="sm-result-pet" data-result-pet={mood} style={{ position: 'absolute', left: p.visorOpponent ? 8 : '50%', marginLeft: p.visorOpponent ? 0 : -64, bottom: 6, width: 128, height: 128 }}>
-                <VisorSprite src={p.petSrc} style={{ left: 0, bottom: 0 }} data-visor-pet />
-              </div>
-            )}
-            {p.visorOpponent}
-            {(record || p.outcome === 'win') && step >= 1 && <div className="sm-result-sparks"><VisorSparks /></div>}
-          </GameVisor>
-        </div>
+        {p.visorOpponent && (
+          <div className={`sm-result-visor ${MOOD_CLASS[mood]}${record ? ' sm-result-visor--record' : ''}${animated ? ' sm-result-visor--live' : ''}`} aria-hidden="true">
+            <GameVisor height={84} scene={p.scene}>
+              {p.petSrc && (
+                <div className="sm-result-pet" data-result-pet={mood} style={{ position: 'absolute', left: p.visorOpponent ? 8 : '50%', marginLeft: p.visorOpponent ? 0 : -64, bottom: 6, width: 128, height: 128 }}>
+                  <VisorSprite src={p.petSrc} style={{ left: 0, bottom: 0 }} data-visor-pet />
+                </div>
+              )}
+              {p.visorOpponent}
+              {(record || p.outcome === 'win') && step >= 1 && <div className="sm-result-sparks"><VisorSparks /></div>}
+            </GameVisor>
+          </div>
+        )}
 
         {/* O título e a frase ficam na leitura (o foco inicial é o título); hero, selo, faixa, livro e notas vão ao leitor pela região viva. */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12, width: '100%', maxWidth: 348 }}>
           <div className="sm-result-banner" style={{ textAlign: 'center' }}>
-            {/* Título com o lettering NA ARTE (02/11/2026, decisão do dono): VICTORY / DEFEAT / DRAW em PNG alfa real. O `<h2>` abaixo segue com o texto do app (foco, leitor de tela e fallback). */}
-            <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }} data-result-banner-wrap>
-              {(record || p.outcome === 'win') && step >= 1 && <SpriteFx sheet="recompensa" size={128} ms={900} still="hide" style={{ position: 'absolute', left: '50%', top: '50%', marginLeft: -64, marginTop: -64 }} data-result-reward-fx />}
-              <ResultBanner kind={bannerForOutcome(p.outcome, p.bannerSet ?? 'game')} isPt={isPt} width={240} style={{ position: 'relative' }} />
-            </div>
             <h2
               ref={titleRef}
               tabIndex={-1}
@@ -341,7 +340,16 @@ export function ResultScreen(p: ResultScreenProps) {
             >
               {p.title}
             </h2>
-            {p.line && <p style={{ margin: '4px 0 0', fontSize: 'var(--sm2-text-sm)', lineHeight: 'var(--sm2-leading-body)', color: 'var(--sm2-muted)' }} data-result-line {...p.lineAttrs}>{p.line}</p>}
+            {p.line && <p className="sm2-sr-only" data-result-line {...p.lineAttrs}>{p.line}</p>}
+          </div>
+
+          {/* O Soulmon colado no título do resultado, com um pouco de sobreposição (aprovado pelo dono, 03/11/2026). Sem o box do visor. */}
+          <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 150 }} data-result-banner-wrap>
+            {(record || p.outcome === 'win') && step >= 1 && <SpriteFx sheet="recompensa" size={128} ms={900} still="hide" style={{ position: 'absolute', right: 24, top: '50%', marginTop: -64 }} data-result-reward-fx />}
+            {!p.visorOpponent && p.petSrc && (
+              <img src={p.petSrc} alt="" aria-hidden="true" draggable={false} data-result-pet={mood} className="sm-result-pet-free" style={{ width: 128, height: 128, objectFit: 'contain', imageRendering: 'pixelated', position: 'relative', zIndex: 2, marginRight: -30, flex: 'none' }} />
+            )}
+            <ResultBanner kind={bannerForOutcome(p.outcome, p.bannerSet ?? 'game')} isPt={isPt} width={p.visorOpponent || !p.petSrc ? 240 : 210} style={{ position: 'relative', zIndex: 1 }} />
           </div>
 
           {p.hero && (
@@ -409,14 +417,15 @@ export function ResultScreen(p: ResultScreenProps) {
           {(ledger.length > 0 || p.emptyLedgerLine) && (
             <div aria-hidden="true" style={{ width: '100%' }} data-result-ledger>
               {ledger.length > 0 ? (
-                <>
-                  {ledgerShown && (record || p.outcome === 'win') && <div style={{ display: 'flex', justifyContent: 'center' }}><SpriteFx sheet="bau" size={72} ms={900} still="last" data-result-chest-fx /></div>}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} data-result-loot>
+                  {(record || p.outcome === 'win') && <div style={{ flex: 'none', width: 104, height: 104, marginLeft: -4 }}>{ledgerShown && <SpriteFx sheet="bau" size={104} ms={900} still="last" data-result-chest-fx />}</div>}
+                  <div style={{ flex: 1, minWidth: 0 }}>
                   <div className={`sm-result-in${ledgerShown ? ' sm-result-in--on' : ''}`} style={{ ...sm2Hint, fontWeight: 500, marginBottom: 4 }}>{p.ledgerLabel ?? (isPt ? 'Ganhou' : 'Earned')}</div>
                   {ledger.map(r => {
                     const key = `row-${r.key}`;
                     const shown = reveal.isShown(key);
                     return (
-                      <div key={r.key} className={rowCls(key)} data-result-row={r.kind} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 36, borderBottom: '1px solid var(--sm2-line)' }}>
+                      <div key={r.key} className={`${rowCls(key)}${shown && !still ? ' sm-result-fromchest' : ''}`} data-result-row={r.kind} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, minHeight: 36, borderBottom: '1px solid var(--sm2-line)' }}>
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-ink)', textAlign: 'left' }}>
                           {r.kind === 'item' && <ItemRowIcon r={r} on={shown} still={still} />}
                           {r.kind === 'xp' && <Icon name="star" size={20} fill={1} tone="gold" />}
@@ -434,7 +443,8 @@ export function ResultScreen(p: ResultScreenProps) {
                       </div>
                     );
                   })}
-                </>
+                  </div>
+                </div>
               ) : (
                 <p className={stageCls(4)} style={{ ...sm2Hint, textAlign: 'center' }} data-result-empty>{p.emptyLedgerLine}</p>
               )}
@@ -448,15 +458,16 @@ export function ResultScreen(p: ResultScreenProps) {
       </div>
 
       {/* Dock fixo, ativo desde 0 ms; sem seta de voltar duplicada. Regra do dono (30/10/2026): ESQUERDA = sair/voltar/cancelar, DIREITA = continuar/avançar/revanche. */}
-      <div data-result-dock style={{ display: 'flex', gap: 8, padding: '8px 16px calc(env(safe-area-inset-bottom, 0px) + 12px)', borderTop: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-bg)' }}>
-        {p.onHome && (
-          <button type="button" data-result-home onClick={p.onHome} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-            {p.homeLabel}
+      <div data-result-dock style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '8px 16px calc(env(safe-area-inset-bottom, 0px) + 12px)', borderTop: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-bg)' }}>
+        {p.onPlayAgain && (
+          <button type="button" data-result-again {...p.againAttrs} onClick={p.onPlayAgain} style={{ ...sm2Button('primary'), width: '100%', padding: '0 8px', gap: 8 }}>
+            <Icon name={p.playAgainIcon ?? 'replay'} size={24} tone="inherit" />
+            {p.playAgainLabel ?? (isPt ? 'Jogar de novo' : 'Play again')}
           </button>
         )}
-        {p.onPlayAgain && (
-          <button type="button" data-result-again {...p.againAttrs} onClick={p.onPlayAgain} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0, padding: '0 8px' }}>
-            {p.playAgainLabel ?? (isPt ? 'Jogar de novo' : 'Play again')}
+        {p.onHome && (
+          <button type="button" data-result-home onClick={p.onHome} style={{ ...sm2Button('outline'), width: '100%', padding: '0 8px' }}>
+            {p.homeLabel}
           </button>
         )}
       </div>

@@ -13,6 +13,7 @@
  * Mudo: nenhum som novo (a `BattleStage` só toca os efeitos que já tinha).
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { lotIconName } from '../../utils/lotIcons';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageFighter, type StageHit } from '../games/BattleStage';
 import { ResultScreen, type ResultLedgerRow } from '../games/ResultScreen';
 import type { FightEvent } from '../../utils/combate/fight';
@@ -167,6 +168,7 @@ export function BossFightScreen(p: BossFightScreenProps) {
     if (p.rewards?.emblems && p.rewards.emblems > 0) ledger.push({ key: 'emblems', kind: 'honor', value: p.rewards.emblems });
     return (
       <ResultScreen
+        playAgainIcon={lotIconName('hall', 'feira')}
         language={p.language}
         kind="boss"
         outcome={defeated ? 'win' : 'calm'}

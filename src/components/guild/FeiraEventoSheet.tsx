@@ -10,6 +10,7 @@
  * Chamada e crédito são injetáveis (`api`, `onCredit`) para teste; o crédito passa por `creditFeiraOnce` (idempotente por recibo).
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { lotIconName } from '../../utils/lotIcons';
 import { RewardPreview } from '../ui/RewardPreview';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { BossFightScreen, type BossFightMe } from './BossFightScreen';
@@ -218,6 +219,7 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
     if (doneRow.sap > 0) ledger.push({ key: 'sap', kind: 'node', label: t('rest.sap'), node: <span className="sm2-num" data-result-sap style={{ fontWeight: 600 }}>+{doneRow.sap}</span> });
     return (
       <ResultScreen
+        playAgainIcon={lotIconName('hall', 'feira')}
         language={language}
         outcome="win"
         gameName={t('trail.gameName')}

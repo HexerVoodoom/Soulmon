@@ -1,5 +1,6 @@
 import { RankingPanel } from './RankingPanel';
 import { difficultyLabel, ADVANCED_BITS_FACTOR } from '../utils/minigameDifficulty';
+import { lotIconName } from '../utils/lotIcons';
 import type { GameChallenge } from '../utils/gameChallenge';
 import { useState, useRef, useEffect } from 'react';
 import { RewardPreview } from './ui/RewardPreview';
@@ -270,6 +271,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
       )}
       {matchOver && (
         <ResultScreen
+          playAgainIcon={lotIconName('jogos', 'salao')}
           language={language}
           outcome={matchOver === 'won' ? 'win' : matchOver === 'draw' ? 'calm' : 'tired'}
           gameName={isPt ? 'Pedra, Papel, Tesoura' : 'Rock Paper Scissors'}
