@@ -72,6 +72,8 @@ const END_BEAT_MS = 1100;
 type Phase = 'fight' | 'done';
 
 export interface DuelScreenProps {
+  /** CSS `background` da arena (o Torneio passa o coliseu da faixa, `utils/coliseuScenes.ts`). Ausente = a clareira do Duelo. */
+  scene?: string;
   /** A ficha do SEU lado e a do oponente, como o servidor mandou em `duelStart` (no treino, a local). */
   me: DuelSide;
   opp: DuelSide;
@@ -106,7 +108,7 @@ const maxHpOf = (s: DuelSide) => hpPoints(s.combatant.hp * PVP_HP_SCALE);
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
 export function DuelScreen({
-  me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, petStage = 'rookie', oppStage, skills, oppElement, onDone, onClose,
+  me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, petStage = 'rookie', oppStage, skills, oppElement, onDone, onClose, scene,
 }: DuelScreenProps) {
   // Música (19/10/2026): a luta (ranqueada ou treino) toca o "Stone Hall Combat" em combate; empilha sobre o torneio e, ao sair, volta a ele.
   useEffect(() => entrarNaSuperficie('duelo'), []);
@@ -315,7 +317,7 @@ export function DuelScreen({
   return (
     <TorcidaLayer onTap={cheer} active={cheering && !pausado} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot cheerRatio={barra / CHEER.tapsFull}>
       <BattleStage
-        scene={DUEL_SCENE.bg}
+        scene={scene ?? DUEL_SCENE.bg}
         sceneElement={oppEl}
         specialLabel={par?.especial ? specialLabel(isPt, par.especial) : (me.fx?.lex ? foeSpecialLabel(isPt, meEl, 'me', me.fx.familia, me.fx.lex) : specialLabel(isPt))}
         foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia, opp.fx?.lex)}

@@ -158,7 +158,7 @@ export function nightmareScene(dayKey: string = localDayKey(new Date())): Dungeo
 export const ARENA_SCENE: DungeonScene = SPIRIT_BG_SCENES[3];
 /** A cena PRÓPRIA do Duelo (02/11/2026, `bg/duelo-bg`): clareira circular, duas plataformas frente a frente sobre uma poça turquesa. */
 export const DUEL_SCENE: DungeonScene = { namePt: 'Clareira do Duelo', nameEn: 'Duel Clearing', accent: '#3fd2d9', bg: `url(${dueloBg}) center/cover` };
-/** As duas arenas do Torneio (Arena Noturna, Coliseu Ancião): o cenário da Arena livre (28/10/2026), escolhido por run em `arenaSorteio.ts`. */
+/** As arenas EXCLUSIVAS da Arena livre (Arena Noturna, Coliseu Ancião), escolhidas por run em `arenaSorteio.ts`; o Torneio usa o coliseu por faixa (`coliseuScenes.ts`). */
 export const ARENA_BG_SCENES: readonly DungeonScene[] = SPIRIT_BG_SCENES.filter(s => s.nameEn === 'Night Arena' || s.nameEn === 'Elder Colosseum');
 /** A cena do DINO — o corredor em ruínas (`minigame-dino`), atrás do parallax. */
 export const DINO_SCENE: DungeonScene = SPIRIT_BG_SCENES[10];
@@ -167,7 +167,8 @@ export const DINO_SCENE: DungeonScene = SPIRIT_BG_SCENES[10];
 // pet, e no campo de batalha (uma caixa ALTA, `cover`) o `bg-sakura` virava um tile enorme repetido. A masmorra só sorteia cenas VERTICAIS
 // (as 5 clássicas + as pintadas 9:16); régua em `dungeonScenes.verticais.test.ts`.
 /** O pool do sorteio da masmorra: só cenas verticais (9:16). */
-export const RUN_SCENE_POOL: readonly DungeonScene[] = [...SPIRIT_BG_SCENES, ...DUNGEON_SCENES];
+// 03/11/2026 (dono): as duas arenas (Arena Noturna, Coliseu Ancião) são EXCLUSIVAS da Arena — saíram do sorteio da masmorra.
+export const RUN_SCENE_POOL: readonly DungeonScene[] = [...SPIRIT_BG_SCENES.filter(s => !ARENA_BG_SCENES.includes(s)), ...DUNGEON_SCENES];
 
 /**
  * Scenes for one run: 5 picks without repeats, drawn at random from the painted
