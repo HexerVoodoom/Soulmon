@@ -218,7 +218,7 @@ export function AreaScene({ areaId, language, lots, background, notice, children
               textAlign: 'center',
             }}
           >
-            <Icon name={lotIconName(areaId, lot.id)} size={16} tone="gold" />
+            <Icon name={lotIconName(areaId, lot.id)} size={20} tone="gold" />
             {lot.label}
           </span>
         </button>
