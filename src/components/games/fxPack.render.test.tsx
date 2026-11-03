@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { ResultScreen, type ResultScreenProps } from './ResultScreen';
 import { ResultBanner, SpriteFx, bannerForOutcome } from '../ui/SpriteFx';
 import { Celebration } from '../ui/Celebration';
-import { BUILDING_PLATE, RESULT_BANNER, SCENE_BG } from '../../utils/fxPackArt';
+import { RESULT_BANNER, SCENE_BG } from '../../utils/fxPackArt';
 import { AreaScene } from '../nav/AreaScene';
 import { DUEL_SCENE } from '../../utils/dungeonScenes';
 
@@ -98,14 +98,14 @@ describe('fundos e placa', () => {
     expect(DUEL_SCENE.bg).toContain('duelo-bg');
     for (const u of Object.values(SCENE_BG)) expect(u).toBeTruthy();
   });
-  it('placa de prédio é a border-image do rótulo do lote no AreaScene', () => {
+  it('rótulo do lote é uma pílula simples com ícone (a placa de madeira saiu em 03/11/2026)', () => {
     const { container } = render(
       <AreaScene areaId="mercado" language="en-US" lots={[{ id: 'loja', label: 'Shop', left: '50%', top: '60%', ariaLabel: 'Shop', onOpen: () => {} }]} />,
     );
     const label = container.querySelector('[data-area-lot-label]') as HTMLElement | null;
     expect(label).toBeTruthy();
-    expect(label!.textContent).toBe('Shop');
-    expect(label!.hasAttribute('data-area-lot-plate')).toBe(true);
-    expect(label!.style.borderImage || label!.getAttribute('style') || '').toContain(BUILDING_PLATE.split('/').pop()!.split('.')[0]);
+    expect(label!.textContent).toContain('Shop');
+    expect(label!.querySelector('.sm2-icon')).toBeTruthy();
+    expect(label!.style.borderImage || '').not.toContain('url(');
   });
 });

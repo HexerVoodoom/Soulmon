@@ -8,3 +8,6 @@ export function difficultyLabel(level: MinigameLevel, isPt: boolean): string {
   if (level === 1) return isPt ? 'Comum' : 'Common';
   return isPt ? 'Avançado' : 'Advanced';
 }
+
+/** O modo Avançado paga mais Bits para compensar a dificuldade (pedido do dono, 03/11/2026): Corrida e Pedra·Papel·Tesoura × 2. O teto diário de Bits dos minijogos continua valendo. */
+export const ADVANCED_BITS_FACTOR = 2;

@@ -643,12 +643,12 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   const arena = (
     <div data-m3-arena data-m3-compact={compact ? '' : undefined} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'stretch', gap: 8, flex: '1 0 auto', minHeight: 0 }}>
       <div data-m3-player data-m3-pos="top-left" data-m3-hp={combat.player.hp} style={{ width: playerPx + 8, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, flex: 'none', alignSelf: 'flex-start' }}>
-        <img src={playerSprite} alt="" aria-hidden="true" draggable={false} width={playerPx} height={playerPx} style={{ width: playerPx, height: playerPx, imageRendering: 'pixelated', objectFit: 'contain', ...petScaleStyle(petScale) }} />
         {playerElIcon && (
           <img src={playerElIcon} alt="" draggable={false} width={EL_ICON_PLAYER} height={EL_ICON_PLAYER} data-m3-player-element={petElement} style={{ imageRendering: 'pixelated' }} />
         )}
         <ElementAdvantageBadge advantage={vantagemElemental} isPt={isPt} onScene={false} />
-        <HpBars bars={[{ label: isPt ? 'Seu Soulmon' : 'Your Soulmon', cur: combat.player.hp, max: combat.player.max, tone: 'cyan' }]} />
+        <HpBars bars={[{ label: playerLabel, cur: combat.player.hp, max: combat.player.max, tone: 'cyan' }]} />
+        <img src={playerSprite} alt="" aria-hidden="true" draggable={false} width={playerPx} height={playerPx} style={{ width: playerPx, height: playerPx, imageRendering: 'pixelated', objectFit: 'contain', ...petScaleStyle(petScale) }} />
       </div>
       {boardNode}
       <div role="group" aria-label={pvp ? (isPt ? 'Oponente' : 'Opponent') : (isPt ? 'Time da fenda' : 'Rift team')} data-m3-enemies data-m3-pos="bottom-right" style={{ display: 'flex', flexDirection: 'row-reverse', gap: 6, minWidth: 0, justifyContent: 'flex-start', alignItems: 'flex-end', alignSelf: 'flex-end' }}>
@@ -713,7 +713,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
   );
 
   return (
-    <GameRoot full style={{ background: `url(${SCENE_BG.fusion}) center/cover var(--sm2-bg)` }}>
+    <GameRoot full style={{ background: `linear-gradient(to top, rgba(3, 38, 44, .92) 0%, rgba(4, 52, 58, .6) 28%, transparent 55%), url(${SCENE_BG.fusion}) center/cover var(--sm2-bg)` }}>
       <GameHeader
         title={isPt ? 'Elemental Fusion' : 'Elemental Fusion'}
         language={language}

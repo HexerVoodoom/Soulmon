@@ -11,6 +11,7 @@ import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
 import { sm2Button } from './form/FormKit';
 import { ResultScreen } from './games/ResultScreen';
+import { ADVANCED_BITS_FACTOR } from '../utils/minigameDifficulty';
 import { GameRoot, GameHeader, GAME_VISOR_W, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
 import { fxFrame } from '../utils/combatFx';
@@ -588,7 +589,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
 
       // Game over
       const score = Math.floor(s.score);
-      const pts = Math.floor(score / 100);
+      const pts = Math.floor(score / 100) * (s.level === 2 ? ADVANCED_BITS_FACTOR : 1);
       setFinalScore(score);
       setPrevBest(readNumber(STORAGE_KEYS.DINO_BEST, 0));
       setPlayedLevel(s.level === 2 ? 2 : 1);
@@ -630,8 +631,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
         language={language}
         infoLabel={isPt ? 'Como se joga' : 'How to play'}
         info={isPt
-          ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit. Avançado: Dash (Shift/X) cria um campo de força que destrói obstáculos; pegue o cristal para +1 carga'
-          : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit. Advanced: Dash (Shift/X) raises a force field that smashes obstacles; grab the crystal for +1 charge'}
+          ? 'Pule os inimigos! Eles ficam mais fortes com o tempo. 100 de score = 1 Bit (2 no Avançado). Avançado: Dash (Shift/X) cria um campo de força que destrói obstáculos; pegue o cristal para +1 carga'
+          : 'Jump the enemies! They get scarier over time. 100 score = 1 Bit (2 in Advanced). Advanced: Dash (Shift/X) raises a force field that smashes obstacles; grab the crystal for +1 charge'}
         closeLabel={isPt ? 'Sair' : 'Exit'}
         onClose={onExit}
         exitConfirm={phase === 'playing' ? gameExitConfirm(isPt, 'da corrida') : undefined}

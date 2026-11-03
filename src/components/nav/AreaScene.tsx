@@ -5,7 +5,8 @@ import { lotArtBounds, lotHitBounds, lotLabelLift, lotLabelOffset } from '../../
 import { lotArtFilter } from './lotHalo';
 import { MissionMark } from '../play/MissionMark';
 import type { QuestMark as MissionMarkKind } from '../../utils/questMarks';
-import { BUILDING_PLATE } from '../../utils/fxPackArt';
+import { Icon } from '../ui/Icon';
+import { lotIconName } from '../../utils/lotIcons';
 import { LockBadge, LockNotice, lockLabel } from '../ui/LockBadge';
 
 /**
@@ -202,15 +203,13 @@ export function AreaScene({ areaId, language, lots, background, notice, children
           )}
           <span
             data-area-lot-label
-            data-area-lot-plate=""
             style={{
               marginTop: -4, pointerEvents: 'auto',
               position: 'relative', left: lotLabelOffset(areaId, lot.id)[0], top: `calc(${lotLabelOffset(areaId, lot.id)[1]}px - ${lotLabelLift(areaId, lot.id)}cqw)`,
-              // Placa pintada 9-slice (T1, 02/11/2026): moldura de madeira e cristal com miolo liso; o texto continua sendo do app.
-              padding: '0 4px',
-              border: '9px solid transparent',
-              borderImage: `url(${BUILDING_PLATE}) 18 fill / 9px stretch`,
-              imageRendering: 'pixelated',
+              // Pílula simples (03/11/2026, dono): fundo escuro, fio de cobre, ícone + nome curto. Sem placa de madeira.
+              display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px 3px 7px', whiteSpace: 'nowrap',
+              borderRadius: 999, background: 'color-mix(in srgb, #06171A 82%, transparent)', border: '1px solid rgba(200, 150, 80, .75)',
+              boxShadow: '0 1px 4px rgba(0,0,0,.55)',
               fontFamily: 'var(--sm2-font-display)',
               fontSize: 'var(--sm2-text-xs)',
               fontWeight: 800,
@@ -219,6 +218,7 @@ export function AreaScene({ areaId, language, lots, background, notice, children
               textAlign: 'center',
             }}
           >
+            <Icon name={lotIconName(areaId, lot.id)} size={20} tone="gold" />
             {lot.label}
           </span>
         </button>

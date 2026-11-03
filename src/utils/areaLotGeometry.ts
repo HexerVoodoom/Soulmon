@@ -129,7 +129,7 @@ export function lotHitRects(
   const b = lotHitBounds(areaId, lot.id);
   const [ox, oy] = lotLabelOffset(areaId, lot.id);
   const art: Rect = { x0: x0 + b[0] * bw, y0: y0 + b[1] * bw, x1: x0 + b[2] * bw, y1: y0 + b[3] * bw };
-  const labelW = Math.min(bw, lot.label.length * 7.5 + 20);
+  const labelW = Math.min(bw, lot.label.length * 7.5 + 38);
   const lift = (lotLabelLift(areaId, lot.id) / 100) * bw;
   const label: Rect = { x0: x0 + (bw - labelW) / 2 + ox, y0: y0 + bw + oy - lift, x1: x0 + (bw + labelW) / 2 + ox, y1: y0 + total + oy - lift };
   return [art, label];
