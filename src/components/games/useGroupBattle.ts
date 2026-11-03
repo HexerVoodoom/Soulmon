@@ -35,6 +35,7 @@ import {
 } from '../../utils/combatFx';
 import { cheerTap, dodgeGrade, dodgeSpec, ringSpec, type DodgeGrade, type DodgeSpec, type RingGrade, type RingSpec } from '../../utils/energia';
 import { groupFightSteps, type GroupEvent, type GroupOptions, type GroupResult } from '../../utils/combate/group';
+import { escolherAlvo, tocarAlvo } from '../../utils/combate/alvo';
 import type { FightSide } from '../../utils/combate/fight';
 import { CHEER, ENERGY, ENERGY_TRIGGER } from '../../utils/combate/specials';
 
@@ -133,6 +134,11 @@ export interface GroupBattle {
   clock(): number;
   /** Quantas descargas de torcida o núcleo já recolheu nesta luta (o Pesadelo lê para a regra de vitória). */
   cheersUsed(): number;
+  /** ALVO POR TOQUE (03/11/2026): o inimigo que o jogador escolheu (`null` = regra automática) e o mirado de fato agora. */
+  picked: number | null;
+  target: number;
+  /** Toque num inimigo: vira o alvo a partir do PRÓXIMO golpe do pet (só com 2+ inimigos e ele vivo; `combate/alvo.ts`). */
+  pickTarget(foe: number): void;
 }
 
 export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
@@ -156,6 +162,10 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
   const [charging, setCharging] = useState(false);
   const [status, setStatus] = useState<GroupBattle['status']>({ me: [], foes: [[]] });
   const [stateKey, setStateKey] = useState(-1);
+  const [picked, setPicked] = useState<number | null>(null);
+  const pickedRef = useRef<number | null>(null);
+  const foesHpRef = useRef<number[]>([1]);
+  foesHpRef.current = foesHp;
 
   const mtr = useRef(0);
   const seq = useRef(0);
@@ -202,6 +212,13 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
     dodgeAt.current = wallClock() - dodgeStart.current;
     setPetDodge({ id: ++seq.current, dir });
   }, [wallClock]);
+
+  const pickTarget = useCallback((foe: number) => {
+    const next = tocarAlvo(foesHpRef.current, pickedRef.current, foe);
+    if (next === pickedRef.current) return;
+    pickedRef.current = next;
+    setPicked(next);
+  }, []);
 
   const resolveRing = useCallback((grade: RingGrade) => {
     const r = ringResolver.current;
@@ -258,6 +275,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
       buckets.current = new Map();
       discharges.current = 0;
       drained.current = 0;
+      pickedRef.current = null; setPicked(null); // rodada nova, inimigos novos: volta à regra automática
       let nRing = 0;
       let nDodge = 0;
       let hpNow = round.startHp;
@@ -301,6 +319,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
         seed: round.seed, startHp: round.startHp, startEnergy: round.startEnergy,
         hitScale: round.hitScale,
         cheerDrain: () => { const n = discharges.current; discharges.current = 0; drained.current += n; return n; },
+        target: () => pickedRef.current, // ALVO POR TOQUE: lido a cada golpe do pet
         withFx: true, // PR16: os turnos do selo vêm dos contadores reais do núcleo (não mudam a luta)
       });
       const queue: GroupEvent[] = [];
@@ -313,8 +332,10 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
         if (r.done) { result = r.value; return null; }
         return r.value;
       };
+      /** O inimigo que o golpe do pet acertou de fato (o que perdeu vida); sem diferença, o alvo da regra. */
+      const hitFoe = (e: GroupEvent, before: readonly number[]) => { const i = e.foesHp.findIndex((h, k) => h < (before[k] ?? h) - EPS); return i >= 0 ? i : alivePos(before); };
       const showHits = (list: StageHit[]) => { if (list.length) setHits(list); };
-      const alivePos = (a: readonly number[]) => Math.max(0, a.findIndex(h => h > EPS));
+      const alivePos = (a: readonly number[]) => escolherAlvo(a, pickedRef.current);
 
       /** Aplica um grupo de eventos do mesmo instante: HP, energia, números. */
       const apply = (batch: GroupEvent[], special: boolean, dodgeG: DodgeGrade | null) => {
@@ -458,7 +479,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           if (!(await waitTo(start))) return;
           setAction({
             id: ++seq.current, actor: first.who === 0 ? 'me' : 'foe',
-            foe: first.who === 0 ? alivePos(foesNow) : foeIdx, kind,
+            foe: first.who === 0 ? hitFoe(first, foesNow) : foeIdx, kind,
             element: first.who === 0 ? scene.playerElement(false) : scene.foeElement(foeIdx),
             shield: blocked ? scene.playerElement(false) : null,
           });
@@ -488,6 +509,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
 
   return {
     action, hits, hp, foesHp, petEnergy, foeEnergy, meter, phase, ring, dodge, petDodge, charging, status,
+    picked, target: escolherAlvo(foesHp, picked), pickTarget,
     cheer, swipe, resolveRing, stateKey, clock: () => clockS.current, cheersUsed: () => drained.current,
   };
 }

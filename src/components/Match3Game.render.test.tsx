@@ -648,3 +648,23 @@ describe('D-99/D-100: posição dos Soulmon e o poder do combo', () => {
     expect(tAura - tBanner).toBeLessThanOrEqual(1100);
   });
 });
+
+describe('ALVO POR TOQUE (03/11/2026): tocar num inimigo muda o alvo a partir da próxima jogada', () => {
+  it('o 3º vira botão pressionado e a jogada seguinte tira vida dele, não do ativo', async () => {
+    montar();
+    const p = previsao(1);
+    const alvos = [...document.querySelectorAll<HTMLButtonElement>('[data-m3-target]')];
+    expect(alvos.length).toBe(3);
+    expect(alvos[2].getAttribute('aria-label')).toMatch(/^Target /);
+    fireEvent.click(alvos[2]);
+    expect(document.querySelector('[data-m3-target="2"]')!.getAttribute('aria-pressed')).toBe('true');
+    expect(document.querySelector('[data-m3-target="0"]')!.getAttribute('aria-pressed')).toBe('false');
+    const dano = p.combates[1].dealt;
+    await jogarEscolhido(p.moves[0]);
+    const hp = (n: number) => Number(document.querySelector(`[data-m3-enemy="${n}"]`)!.getAttribute('data-m3-hp'));
+    if (dano > 0) {
+      expect(hp(3)).toBeLessThan(M3C_ENEMY_HP[2]);
+      expect(hp(1)).toBe(M3C_ENEMY_HP[0]);
+    }
+  });
+});

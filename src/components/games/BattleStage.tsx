@@ -719,6 +719,12 @@ export interface BattleStageProps {
   foes: StageFighter[];
   /** Índice do inimigo mirado (mostra o HP numérico dele). */
   target?: number;
+  /**
+   * ALVO POR TOQUE (03/11/2026, dono): com 2+ inimigos, cada inimigo vivo vira um botão ("Mirar em <nome>") e o toque
+   * escolhe o alvo a partir do PRÓXIMO golpe do pet. `picked` = a escolha atual (`null` = regra automática): ganha o marcador.
+   */
+  onPickFoe?: (foe: number) => void;
+  picked?: number | null;
   /** A ação em curso (investida/projétil/escudo). `null` = parado. */
   action?: StageAction | null;
   /** Título curto no canto superior esquerdo ("Arena · 2/5", "Duelo"). */
@@ -807,7 +813,7 @@ function bannerLabel(
 
 /** A cena inteira. Envolva-a numa `TorcidaLayer style={BATTLE_LAYER_STYLE} mascot`. */
 export function BattleStage({
-  scene, sceneElement, sceneDomain, sceneVariant = 0, me, foes, target = 0, action, hit, badge, title, closeLabel, closeIcon = 'close', onClose, exitConfirm, onPauseChange, hud, status,
+  scene, sceneElement, sceneDomain, sceneVariant = 0, me, foes, target = 0, onPickFoe, picked = null, action, hit, badge, title, closeLabel, closeIcon = 'close', onClose, exitConfirm, onPauseChange, hud, status,
   charging = false, fast = false, ring, onRingGrade, dodge, onDodge, petDodge, mechLabels, specialLabel, foeSpecialLabel, isPt = false, boss, children,
 }: BattleStageProps) {
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -977,6 +983,31 @@ export function BattleStage({
         })}
         {!me.down && !!me.status?.length && <StatusLayer key="st-me" status={me.status} spot={layout.me} barsH={layout.barsH} isPt={isPt} reduced={reduced} />}
 
+        {/* ALVO POR TOQUE: o botão invisível sobre cada inimigo vivo + o marcador do escolhido (anel dourado). */}
+        {onPickFoe && foes.length > 1 && !boss && foes.map((f, i) => {
+          const s = layout.foes[i];
+          if (!s || f.down) return null;
+          const c = bodyCenter(s);
+          const d = Math.max(44, Math.round(s.size * 0.9));
+          const on = picked === i;
+          return (
+            <button
+              key={`alvo${f.key}`}
+              type="button"
+              data-stage-target={i}
+              data-stage-target-on={on ? '1' : '0'}
+              aria-pressed={on}
+              aria-label={isPt ? `Mirar em ${f.name}` : `Target ${f.name}`}
+              onClick={() => onPickFoe(i)}
+              style={{
+                position: 'absolute', left: c.x - d / 2, top: c.y - d / 2, width: d, height: d, zIndex: 3,
+                padding: 0, margin: 0, background: 'none', cursor: 'pointer', borderRadius: '50%', boxSizing: 'border-box',
+                border: on ? '2px dashed var(--sm2-gold-fill)' : '2px solid transparent',
+                boxShadow: on ? '0 0 10px var(--sm2-gold-fill)' : 'none',
+              }}
+            />
+          );
+        })}
         {action && <ActionFx key={action.id} action={action} layout={layout} reduced={reduced} />}
         {charging && !action?.shield && (
           <div key="charge" aria-hidden="true" data-stage-charging className="sm-bs-charge" style={{ position: 'absolute', left: layout.me.x - layout.me.size * 0.7, top: meBody.y - layout.me.size * 0.7, width: layout.me.size * 1.4, height: layout.me.size * 1.4, zIndex: 2, pointerEvents: 'none', borderRadius: '50%', ...(combatGlowPair(me.element)[1] ? { ['--bs-glow2' as string]: combatGlowPair(me.element)[1] } : null) } as CSSProperties} />

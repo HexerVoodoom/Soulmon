@@ -118,6 +118,9 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
             status: pronto ? battle.status.foes[i] : undefined,
           };
         })}
+        target={pronto ? battle.target : 0}
+        picked={pronto ? battle.picked : null}
+        onPickFoe={battle.pickTarget}
         action={pronto ? battle.action : null}
         hit={pronto ? battle.hits : []}
         charging={pronto && battle.charging}

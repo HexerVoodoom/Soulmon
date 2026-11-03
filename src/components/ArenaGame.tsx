@@ -337,7 +337,7 @@ export function ArenaGame({
     const foesLado = arenaFoeSides(jogador, rodada - 1, inimigos.map(e => e.elements));
     const hpFrac = pronto ? batalha.hp : hpCarryRef.current;
     const foesHp = (i: number) => (pronto ? (batalha.foesHp[i] ?? 1) : 1);
-    const alvoIdx = Math.max(0, inimigos.findIndex((_, i) => foesHp(i) > 1e-9));
+    const alvoIdx = pronto ? batalha.target : Math.max(0, inimigos.findIndex((_, i) => foesHp(i) > 1e-9));
     return (
       <TorcidaLayer
         onTap={batalha.cheer}
@@ -375,6 +375,8 @@ export function ArenaGame({
             };
           })}
           target={alvoIdx}
+          picked={pronto ? batalha.picked : null}
+          onPickFoe={batalha.pickTarget}
           action={pronto ? batalha.action : null}
           hit={pronto ? batalha.hits : []}
           charging={pronto && batalha.charging}
