@@ -38,7 +38,7 @@ import { getProfile } from './_profile.js';
 /** Allowlist de jogos com ranking. Id estável: vira parte da chave KV. */
 // `dino` (sem nível) fica só para LER/aceitar recorde antigo e cliente antigo; o cliente novo envia `dino-1`/`dino-2` (QA beta3 R4, decisão 6).
 // `zip`/`patches`: ranking SEMANAL por TEMPO de resolução (decisão 5; MENOR é melhor — ver `LOWER_IS_BETTER`).
-export const RANKED_GAMES = Object.freeze(['dino', 'dino-1', 'dino-2', 'ppt', 'match3', 'eco', 'endless-rift', 'rogue-dungeon', 'soul-barrage', 'zip', 'patches']);
+export const RANKED_GAMES = Object.freeze(['dino', 'dino-1', 'dino-2', 'ppt', 'match3', 'eco', 'endless-rift', 'rogue-dungeon', 'soul-barrage', 'soul-barrage-2', 'zip', 'patches']);
 
 /** Jogos em que o MENOR score vence (tempo em ms). A chave KV usa o score direto (ordem crescente) em vez do invertido. */
 export const LOWER_IS_BETTER = Object.freeze(['zip', 'patches']);
@@ -71,6 +71,7 @@ export const TIER_CUTS = Object.freeze({
   'endless-rift': [0, 25, 100, 250, 500, 999],
   'rogue-dungeon': [0, 6, 12, 18, 24, 30],
   'soul-barrage': [0, 150, 400, 800, 1400, 2200],
+  'soul-barrage-2': [0, 150, 400, 800, 1400, 2200],
 });
 
 /**
@@ -82,7 +83,7 @@ export const TIER_CUTS = Object.freeze({
 export const MAX_SCORE_BY_GAME = Object.freeze({
   'endless-rift': 999, 'rogue-dungeon': 33,
   dino: 100_000, 'dino-1': 100_000, 'dino-2': 100_000,
-  ppt: 200, match3: 100_000, eco: 100, 'soul-barrage': 50_000,
+  ppt: 200, match3: 100_000, eco: 100, 'soul-barrage': 50_000, 'soul-barrage-2': 50_000,
 });
 /** Jogos de TEMPO (ms): faixa plausível [min, max]. Resolver em < 2 s é impossível; > 30 min não é recorde de ninguém. */
 export const TIME_BOUNDS_MS = Object.freeze({ zip: [2000, 1_800_000], patches: [2000, 1_800_000] });

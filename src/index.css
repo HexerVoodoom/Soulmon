@@ -5800,6 +5800,8 @@ select:focus-visible {
 .sm-result-fromchest { animation: sm-result-fromchest 700ms ease-out 1 both; }
 @keyframes sm-result-fromchest { 0% { opacity: 0; transform: translate(-90px, 18px) scale(.35); } 45% { opacity: 1; transform: translate(-14px, -12px) scale(1.08); } 100% { opacity: 1; transform: translate(0, 0) scale(1); } }
 .sm-result-pet-free { animation: sm-result-hop 2.4s ease-in-out infinite; }
+/* Quem perdeu no resultado do combate: parado, um pouco apagado. */
+.sm-result-loser { filter: saturate(.55) brightness(.85); transform: translateY(6px); }
 @keyframes sm-result-hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 @media (prefers-reduced-motion: reduce) {
   .sm2-intro-bar-fill { animation: none; transform: scaleX(1); } /* intro: barra cheia (REGISTRO §168) */

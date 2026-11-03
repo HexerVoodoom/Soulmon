@@ -123,3 +123,52 @@ describe('soulBarrage', () => {
     expect(s.score).toBe(10);
   });
 });
+
+import { activateSpecial, specialReady, specialKindOf, SPECIAL_COST, PLAYER_MIN_Y, FIELD_H as FH, MAX_LIVES } from './soulBarrage';
+
+describe('soulBarrage — modo Avançado (Y livre + Especial)', () => {
+  const foe = (s: ReturnType<typeof newBarrage>, x: number, y: number, hp = 6) => {
+    s.enemies.push({ x, y, vx: 0, vy: 0, hp, maxHp: hp, fireIn: 99, entry: ENEMY_ROSTER[0], stage: 'rookie', points: 10, t: 0, size: 60, r: 22 });
+  };
+  it('Y livre só no nível 2, dentro dos limites; nível 1 fica na base', () => {
+    const a = newBarrage(); const b = newBarrage();
+    for (let i = 0; i < 40; i++) { stepBarrage(a, 0.05, a.px, 2, seeded(1), 0); stepBarrage(b, 0.05, b.px, 1, seeded(1), 0); }
+    expect(a.py).toBe(PLAYER_MIN_Y);
+    expect(b.py).toBe(PLAYER_Y);
+    for (let i = 0; i < 80; i++) stepBarrage(a, 0.05, a.px, 2, seeded(1), 9999);
+    expect(a.py).toBeLessThanOrEqual(FH);
+  });
+  it('especial carrega com abates e só dispara cheio', () => {
+    const s = newBarrage();
+    expect(activateSpecial(s, 'beam')).toBe(false);
+    s.charge = SPECIAL_COST;
+    expect(specialReady(s)).toBe(true);
+    expect(activateSpecial(s, 'beam')).toBe(true);
+    expect(s.charge).toBe(0);
+  });
+  it('tiro grande: limpa tiros inimigos no caminho e dá dano triplo', () => {
+    const s = newBarrage(); s.charge = SPECIAL_COST;
+    foe(s, s.px, 100, 6); foe(s, s.px + 200, 100, 6);
+    s.enemyShots.push({ x: s.px, y: 300, vx: 0, vy: 0 }, { x: s.px + 150, y: 300, vx: 0, vy: 0 });
+    activateSpecial(s, 'beam');
+    expect(s.enemies[0].hp).toBe(3);
+    expect(s.enemies[1].hp).toBe(6);
+    expect(s.enemyShots).toHaveLength(1);
+  });
+  it('escudo absorve um golpe sem tirar vida; cura respeita o teto; pulso limpa a tela; slow reduz a velocidade', () => {
+    const s = newBarrage(); s.charge = SPECIAL_COST; activateSpecial(s, 'shield');
+    s.enemyShots.push({ x: s.px, y: s.py, vx: 0, vy: 0 });
+    const ev = stepBarrage(s, 0.01, s.px, 2, seeded(2), s.py);
+    expect(ev.blocked).toBe(true); expect(s.lives).toBe(START_LIVES);
+    s.charge = SPECIAL_COST; s.lives = MAX_LIVES; activateSpecial(s, 'heal'); expect(s.lives).toBe(MAX_LIVES);
+    s.charge = SPECIAL_COST; s.enemyShots.push({ x: 5, y: 5, vx: 0, vy: 0 }); foe(s, 100, 50, 6); activateSpecial(s, 'pulse');
+    expect(s.enemyShots).toHaveLength(0); expect(s.enemies[0].hp).toBe(3);
+    const t = newBarrage(); t.charge = SPECIAL_COST; activateSpecial(t, 'slow'); foe(t, 100, 50); t.enemies[0].vy = 100;
+    stepBarrage(t, 0.05, t.px, 2, seeded(3), t.py);
+    expect(t.enemies[0].y).toBeCloseTo(52.5, 1);
+  });
+  it('família do especial → efeito', () => {
+    expect(['direct', 'dot', undefined].map(specialKindOf)).toEqual(['beam', 'beam', 'beam']);
+    expect(['shield', 'heal', 'atkBuff', 'defDebuff', 'spdBuff'].map(specialKindOf)).toEqual(['shield', 'heal', 'overdrive', 'pulse', 'slow']);
+  });
+});

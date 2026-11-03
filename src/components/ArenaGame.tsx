@@ -553,6 +553,7 @@ export function ArenaGame({
           ledger={[{ key: 'bits', kind: 'bits', value: fase === 'venceu' ? riftBitsWith(pontos, rift.riftBits) : 0 }]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           petSrc={petSprite}
+          opponentSrc={sprites[sprites.length - 1]}
           scene={cenaDaRun.bg}
           playAgainLabel={isPt ? 'Tentar de novo' : 'Try again'}
           onPlayAgain={comecar}

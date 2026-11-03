@@ -803,6 +803,7 @@ function Match3Round({ pvp, language, evolutionStage, demoCharacterId, onEarnPoi
           ledger={[{ key: 'bits', kind: 'bits', value: earned }]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           petSrc={playerSprite}
+          opponentSrc={pvp ? pvp.sprite : (wildPlayers[0]?.spriteUrl ?? rosterOf(combat.enemies[0])?.src)}
           playAgainLabel={isPt ? 'De novo' : 'Again'}
           onPlayAgain={restart}
           homeLabel={isPt ? 'Sair' : 'Exit'}

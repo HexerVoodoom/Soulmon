@@ -55,21 +55,57 @@ export interface Enemy {
   /** Tamanho do desenho e raio da hitbox (crescem com o estágio). */
   size: number; r: number;
 }
-export interface Shot { x: number; y: number; vx: number; vy: number }
+export interface Shot { x: number; y: number; vx: number; vy: number; /** Dano (padrão 1); o Overdrive dobra. */ dmg?: number }
+
+/**
+ * ESPECIAL (modo Avançado, pedido do dono 03/11/2026): botão no canto inferior direito, coerente com o especial do Soulmon
+ * (a FAMÍLIA do especial da ficha). Carrega com abates (pontos do inimigo) e a cada fase; custa `SPECIAL_COST`.
+ *  beam      (direct, dot)   tiro grande reto: limpa os tiros inimigos no caminho e causa dano triplo.
+ *  shield    (shield)        escudo que absorve o próximo golpe (até `SHIELD_SECONDS`).
+ *  heal      (heal)          +1 vida (até `MAX_LIVES`).
+ *  overdrive (atkBuff)       `OVERDRIVE_SECONDS` com cadência e dano dobrados.
+ *  pulse     (defDebuff)     onda que apaga todos os tiros inimigos e fere todos os inimigos.
+ *  slow      (spdBuff)       `SLOW_SECONDS` com inimigos e tiros à metade da velocidade.
+ */
+export type BarrageSpecial = 'beam' | 'shield' | 'heal' | 'overdrive' | 'pulse' | 'slow';
+export const SPECIAL_COST = 100;
+export const BEAM_HALF_W = 32;
+export const BEAM_DAMAGE = 3;
+export const PULSE_DAMAGE = 3;
+export const SHIELD_SECONDS = 10;
+export const OVERDRIVE_SECONDS = 6;
+export const SLOW_SECONDS = 5;
+export const MAX_LIVES = 5;
+/** Menor altura que o Soulmon alcança no modo Avançado (a faixa de baixo ~65% do campo). */
+export const PLAYER_MIN_Y = FIELD_H * 0.35;
+/** Família do especial da ficha → efeito do botão (família ausente/desconhecida = tiro grande). */
+export function specialKindOf(family?: string): BarrageSpecial {
+  switch (family) {
+    case 'shield': return 'shield';
+    case 'heal': return 'heal';
+    case 'atkBuff': return 'overdrive';
+    case 'defDebuff': return 'pulse';
+    case 'spdBuff': return 'slow';
+    default: return 'beam';
+  }
+}
 export interface BarrageState {
   t: number; phase: number; score: number; lives: number; invuln: number;
-  px: number; fireIn: number; spawnIn: number; scroll: number;
+  px: number; py: number; fireIn: number; spawnIn: number; scroll: number;
+  /** Especial (Avançado): carga 0..SPECIAL_COST, temporizadores de efeito e feixes a desenhar. */
+  charge: number; shield: number; overdrive: number; slow: number; pulse: number; beams: { x: number; t: number }[];
   enemies: Enemy[]; shots: Shot[]; enemyShots: Shot[];
   kills: number; over: boolean; usedIds: Set<string>;
 }
-export interface StepEvents { hit: boolean; kills: number; phaseUp: boolean; over: boolean; leaked: number }
+export interface StepEvents { blocked?: boolean; hit: boolean; kills: number; phaseUp: boolean; over: boolean; leaked: number }
 
 export const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
 export function newBarrage(): BarrageState {
   return {
-    t: 0, phase: 1, score: 0, lives: START_LIVES, invuln: 0, px: FIELD_W / 2, fireIn: 0.3, spawnIn: 0.8, scroll: 0,
+    t: 0, phase: 1, score: 0, lives: START_LIVES, invuln: 0, px: FIELD_W / 2, py: PLAYER_Y, fireIn: 0.3, spawnIn: 0.8, scroll: 0,
     enemies: [], shots: [], enemyShots: [], kills: 0, over: false, usedIds: new Set(),
+    charge: 0, shield: 0, overdrive: 0, slow: 0, pulse: 0, beams: [],
   };
 }
 
@@ -114,6 +150,37 @@ const hit = (ax: number, ay: number, ar: number, bx: number, by: number, br: num
   return dx * dx + dy * dy <= r * r;
 };
 
+/** Um golpe no jogador: o escudo absorve (sem tirar vida); senão tira 1 vida. */
+function takeHit(s: BarrageState, ev: StepEvents, invuln: number) {
+  if (s.shield > 0) { s.shield = 0; s.invuln = Math.min(invuln, 0.6); ev.blocked = true; return; }
+  s.lives -= 1; s.invuln = invuln; ev.hit = true;
+  if (s.lives <= 0) { s.over = true; ev.over = true; }
+}
+
+export const specialReady = (s: BarrageState): boolean => !s.over && s.charge >= SPECIAL_COST;
+
+/** Dispara o Especial se a carga estiver cheia. Devolve se disparou. Muta `s`; os abates saem no próximo `stepBarrage`. */
+export function activateSpecial(s: BarrageState, kind: BarrageSpecial): boolean {
+  if (!specialReady(s)) return false;
+  s.charge = 0;
+  switch (kind) {
+    case 'beam':
+      s.beams.push({ x: s.px, t: 0 });
+      for (const e of s.enemies) if (e.y < s.py && Math.abs(e.x - s.px) <= BEAM_HALF_W + e.r) e.hp -= BEAM_DAMAGE;
+      s.enemyShots = s.enemyShots.filter(b => !(b.y < s.py && Math.abs(b.x - s.px) <= BEAM_HALF_W));
+      break;
+    case 'shield': s.shield = SHIELD_SECONDS; break;
+    case 'heal': s.lives = Math.min(MAX_LIVES, s.lives + 1); break;
+    case 'overdrive': s.overdrive = OVERDRIVE_SECONDS; break;
+    case 'pulse':
+      s.pulse = 0.5; s.enemyShots = [];
+      for (const e of s.enemies) if (e.y > 0) e.hp -= PULSE_DAMAGE;
+      break;
+    case 'slow': s.slow = SLOW_SECONDS; break;
+  }
+  return true;
+}
+
 /** Sorteia do roster do ESPAÇO no estágio pedido (sem ele, cai no rookie); evita repetir os últimos ids da leva. */
 function pickSpaceEnemy(stage: EnemyStage, used: ReadonlySet<string>, rng: Rng): RosterEntry {
   let have = SPACE_ROSTER.filter(e => e.stage === stage);
@@ -150,7 +217,7 @@ function spawnWave(s: BarrageState, rng: Rng) {
 
 function fire(s: BarrageState, e: Enemy, rng: Rng) {
   const d = difficultyAt(s.phase);
-  const base = Math.atan2(PLAYER_Y - e.y, s.px - e.x); // mira no jogador
+  const base = Math.atan2(s.py - e.y, s.px - e.x); // mira no jogador
   const n = d.fanSize;
   const spread = 0.22;
   for (let i = 0; i < n; i++) {
@@ -164,27 +231,37 @@ function fire(s: BarrageState, e: Enemy, rng: Rng) {
  * Avança a simulação `dt` segundos (clampado) e devolve o que aconteceu. Muta `s`.
  * `targetX` = onde o dedo/mouse está (o Soulmon segue com velocidade máxima, nunca teleporta).
  */
-export function stepBarrage(s: BarrageState, dtRaw: number, targetX: number, _level: number, rng: Rng): StepEvents {
+export function stepBarrage(s: BarrageState, dtRaw: number, targetX: number, level: number, rng: Rng, targetY?: number): StepEvents {
   const ev: StepEvents = { hit: false, kills: 0, phaseUp: false, over: false, leaked: 0 };
   if (s.over) return { ...ev, over: true };
   const dt = clamp(dtRaw, 0, 0.05);
   s.t += dt;
   s.scroll += dt * 60;
   const ph = phaseAt(s.t);
-  if (ph > s.phase) { s.phase = ph; ev.phaseUp = true; s.score += 50; }
+  if (ph > s.phase) { s.phase = ph; ev.phaseUp = true; s.score += 50; if (level === 2) s.charge = Math.min(SPECIAL_COST, s.charge + 20); }
   const d = difficultyAt(s.phase);
 
   // jogador
   const dx = clamp(targetX, PLAYER_SIZE / 2, FIELD_W - PLAYER_SIZE / 2) - s.px;
   const step = PLAYER_SPEED * dt;
   s.px += Math.abs(dx) <= step ? dx : Math.sign(dx) * step;
+  if (level === 2 && targetY !== undefined) {
+    const dy = clamp(targetY, PLAYER_MIN_Y, FIELD_H - PLAYER_SIZE / 2 - 4) - s.py;
+    s.py += Math.abs(dy) <= step ? dy : Math.sign(dy) * step;
+  }
+  s.shield = Math.max(0, s.shield - dt); s.overdrive = Math.max(0, s.overdrive - dt);
+  s.slow = Math.max(0, s.slow - dt); s.pulse = Math.max(0, s.pulse - dt);
+  for (const b of s.beams) b.t += dt;
+  s.beams = s.beams.filter(b => b.t < 0.4);
+  const edt = s.slow > 0 ? dt * 0.5 : dt;
   s.invuln = Math.max(0, s.invuln - dt);
 
   // tiro automático contínuo
   s.fireIn -= dt;
+  const every = s.overdrive > 0 ? SHOT_EVERY / 2 : SHOT_EVERY;
   while (s.fireIn <= 0) {
-    s.fireIn += SHOT_EVERY;
-    if (s.shots.length < MAX_PLAYER_SHOTS) s.shots.push({ x: s.px, y: PLAYER_Y - PLAYER_SIZE / 2, vx: 0, vy: -SHOT_SPEED });
+    s.fireIn += every;
+    if (s.shots.length < MAX_PLAYER_SHOTS) s.shots.push({ x: s.px, y: s.py - PLAYER_SIZE / 2, vx: 0, vy: -SHOT_SPEED, ...(s.overdrive > 0 ? { dmg: 2 } : {}) });
   }
 
   // spawn
@@ -196,32 +273,29 @@ export function stepBarrage(s: BarrageState, dtRaw: number, targetX: number, _le
 
   // movimento
   for (const e of s.enemies) {
-    e.t += dt;
-    e.x += (e.vx + Math.sin(e.t * 1.6 + e.maxHp) * 28) * dt;
+    e.t += edt;
+    e.x += (e.vx + Math.sin(e.t * 1.6 + e.maxHp) * 28) * edt;
     e.x = clamp(e.x, e.size / 2, FIELD_W - e.size / 2);
-    e.y += e.vy * dt;
-    e.fireIn -= dt;
-    if (e.fireIn <= 0 && e.y > 0 && e.y < PLAYER_Y - 80) { fire(s, e, rng); e.fireIn = d.fireEvery * (0.85 + rng() * 0.3); }
+    e.y += e.vy * edt;
+    e.fireIn -= edt;
+    if (e.fireIn <= 0 && e.y > 0 && e.y < s.py - 80) { fire(s, e, rng); e.fireIn = d.fireEvery * (0.85 + rng() * 0.3); }
   }
   // Quem atravessa até a base some. Fora da invulnerabilidade, a leva inteira tira 1 vida só e abre a janela;
   // durante a invulnerabilidade, o vazamento é descartado sem tirar vida.
   const through = s.enemies.filter(e => e.y >= BASE_Y).length;
   if (through > 0) {
     s.enemies = s.enemies.filter(e => e.y < BASE_Y);
-    if (s.invuln <= 0) {
-      s.lives -= 1; s.invuln = INVULN_SECONDS; ev.leaked = through; ev.hit = true;
-      if (s.lives <= 0) { s.over = true; ev.over = true; }
-    }
+    if (s.invuln <= 0) { ev.leaked = through; takeHit(s, ev, INVULN_SECONDS); }
   }
   for (const b of s.shots) { b.x += b.vx * dt; b.y += b.vy * dt; }
   s.shots = s.shots.filter(b => b.y > -20);
-  for (const b of s.enemyShots) { b.x += b.vx * dt; b.y += b.vy * dt; }
+  for (const b of s.enemyShots) { b.x += b.vx * edt; b.y += b.vy * edt; }
   s.enemyShots = s.enemyShots.filter(b => b.y < FIELD_H + 20 && b.y > -40 && b.x > -20 && b.x < FIELD_W + 20);
 
   // tiros do jogador × inimigos
   for (const b of s.shots) {
     for (const e of s.enemies) {
-      if (e.hp > 0 && hit(b.x, b.y, SHOT_R, e.x, e.y, e.r)) { e.hp -= 1; b.y = -999; break; }
+      if (e.hp > 0 && hit(b.x, b.y, SHOT_R, e.x, e.y, e.r)) { e.hp -= b.dmg ?? 1; b.y = -999; break; }
     }
   }
   s.shots = s.shots.filter(b => b.y > -500);
@@ -229,18 +303,18 @@ export function stepBarrage(s: BarrageState, dtRaw: number, targetX: number, _le
   for (const e of s.enemies) {
     if (e.hp > 0) { alive.push(e); continue; }
     s.score += e.points; s.kills += 1; ev.kills += 1;
+    if (level === 2) s.charge = Math.min(SPECIAL_COST, s.charge + e.points);
   }
   s.enemies = alive;
 
   // colisão com o jogador (tiro inimigo ou corpo)
   if (s.invuln <= 0) {
-    const bullet = s.enemyShots.findIndex(b => hit(b.x, b.y, 6, s.px, PLAYER_Y, PLAYER_R));
-    const body = s.enemies.findIndex(e => hit(e.x, e.y, e.r - 2, s.px, PLAYER_Y, PLAYER_R));
+    const bullet = s.enemyShots.findIndex(b => hit(b.x, b.y, 6, s.px, s.py, PLAYER_R));
+    const body = s.enemies.findIndex(e => hit(e.x, e.y, e.r - 2, s.px, s.py, PLAYER_R));
     if (bullet >= 0 || body >= 0) {
       if (bullet >= 0) s.enemyShots.splice(bullet, 1);
       if (body >= 0) s.enemies.splice(body, 1);
-      s.lives -= 1; s.invuln = INVULN_SECONDS; ev.hit = true;
-      if (s.lives <= 0) { s.over = true; ev.over = true; }
+      takeHit(s, ev, INVULN_SECONDS);
     }
   }
   return ev;
