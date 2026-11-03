@@ -714,6 +714,12 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Quem chama:** `ArenaGame`, `DungeonGame` e `NightmareBattle` (a Masmorra e o Pesadelo, com 1 inimigo por luta, desde o PR4 — o `usePveBattle` foi apagado).
 **Régua:** `ArenaGame.torcida.render.test.tsx`, `DungeonGame.defesaAuto.render.test.tsx` e `NightmareBattle.render.test.tsx` (instrumentam a entrada do núcleo por `vi.mock`); `arena.semRandom.contract.test.ts` e `dungeon.v3.test.ts` (sem `Math.random`).
 
+### `src/components/games/useMiraFlash.ts`
+**Dono de:** o marcador do ALVO POR TOQUE (dono, 03/11/2026): o anel tracejado dourado aparece só por 1 s depois do toque num inimigo e some; a escolha continua valendo (`aria-pressed`). Tocar de novo reacende. Estático, então vale igual com movimento reduzido.
+**Exports:** `MIRA_FLASH_MS` (1000) · `useMiraFlash()` → `[foe | null, flash(foe)]`.
+**Quem chama:** `BattleStage` e `Match3Game`.
+**Régua:** `BattleStage.alvo.test.tsx`, `Match3Game.render.test.tsx` (ALVO POR TOQUE).
+
 ### `src/components/games/useCombatV3Art.ts`
 **Dono de:** o hook que entrega as URLs da arte de `utils/combatV3Art.ts` assim que carregam (PR11). Enquanto a imagem não chega — ou se ela não existe — o valor é `undefined` e o chamador desenha o fallback em CSS.
 **Exports:** `useCombatV3Art(ids)` → `Record<id, url | undefined>`.

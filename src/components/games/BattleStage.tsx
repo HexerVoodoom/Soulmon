@@ -30,6 +30,7 @@ import { tileElementName } from '../../utils/match3Pvp';
 import { BackCircleButton } from '../ui/BackCircleButton';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
+import { useMiraFlash } from './useMiraFlash';
 import { Icon } from '../ui/Icon';
 import { spriteUrlFacesLeft } from '../../utils/sprites';
 import { fxMirror, orbPose, travelOf } from '../../utils/fxFacing';
@@ -825,6 +826,7 @@ export function BattleStage({
   const layout = stageLayout(w, h, foes.length, !!boss);
   const reducedRef = useRef(prefersReducedMotion());
   const reduced = reducedRef.current || fast;
+  const [miraFlash, flashMira] = useMiraFlash();
   const [confirmingRaw, setConfirming] = useState(false);
   // Sem `exitConfirm` (a luta acabou com a confirmação aberta) o diálogo some: a pausa tem que sumir junto.
   const confirming = confirmingRaw && !!exitConfirm;
@@ -994,6 +996,7 @@ export function BattleStage({
           const c = bodyCenter(s);
           const d = Math.max(44, Math.round(s.size * 0.9));
           const on = picked === i;
+          const marca = miraFlash === i; // marcador só por 1 s após o toque
           return (
             <button
               key={`alvo${f.key}`}
@@ -1002,12 +1005,13 @@ export function BattleStage({
               data-stage-target-on={on ? '1' : '0'}
               aria-pressed={on}
               aria-label={isPt ? `Mirar em ${f.name}` : `Target ${f.name}`}
-              onClick={() => onPickFoe(i)}
+              data-stage-target-ring={marca ? '1' : '0'}
+              onClick={() => { onPickFoe(i); flashMira(i); }}
               style={{
                 position: 'absolute', left: c.x - d / 2, top: c.y - d / 2, width: d, height: d, zIndex: 3,
                 padding: 0, margin: 0, background: 'none', cursor: 'pointer', borderRadius: '50%', boxSizing: 'border-box',
-                border: on ? '2px dashed var(--sm2-gold-fill)' : '2px solid transparent',
-                boxShadow: on ? '0 0 10px var(--sm2-gold-fill)' : 'none',
+                border: marca ? '2px dashed var(--sm2-gold-fill)' : '2px solid transparent',
+                boxShadow: marca ? '0 0 10px var(--sm2-gold-fill)' : 'none',
               }}
             />
           );
