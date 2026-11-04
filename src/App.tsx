@@ -5297,6 +5297,25 @@ export default function App() {
     }).catch(() => { /* perfil corrompido: a masmorra e a voz seguem no padrão */ });
     return () => { vivo = false; };
   }, [manifestacaoPronta, setGameState]);
+  /* Causa do "Especial" genérico em combate: o cache `soulmonSkills` só era gravado ao ABRIR a página do Pet (e para
+     os iniciais). Quem tem perfil do Oráculo mas entrou direto numa luta (aparelho novo, save restaurado, cache
+     antigo sem família) lutava com `skills` indefinido e via "ESPECIAL!". Mesmo padrão da manifestação: no boot,
+     com perfil local, monta a ficha e grava o par de skills; import dinâmico, nunca sobrescreve cache já completo. */
+  const jornadaDasSkills = gameState.fichaJornada;
+  useEffect(() => {
+    if (starterDoSave || starterSkillsProntas) return;
+    const saved = readJson<(OracleInput & { seed: number }) | null>(STORAGE_KEYS.SOULMON_PROFILE, null);
+    if (!saved?.soulProfile) return;
+    let vivo = true;
+    Promise.all([
+      import('./utils/soulProfile/ficha/fromInput'),
+      import('./utils/soulProfile/identity'),
+    ]).then(([{ buildFichaESkills }, { identityKey }]) => {
+      if (!vivo) return;
+      handleSkillsComputed(buildFichaESkills(saved, identityKey(saved), jornadaDasSkills).stageSkills as NonNullable<GameState['soulmonSkills']>);
+    }).catch(() => { /* perfil corrompido: segue o selo padrão */ });
+    return () => { vivo = false; };
+  }, [starterDoSave, starterSkillsProntas, jornadaDasSkills, handleSkillsComputed]);
   const manifestacaoAtual = gameState.soulmonManifestacao?.[getStageLevel(gameState.evolutionStage) as keyof Manifestacao];
 
   /* PR15b: depois de uma evolução registrada, os caches da ficha (skills, classes, companheiro, manifestação) são
