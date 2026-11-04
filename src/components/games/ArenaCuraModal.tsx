@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PixelIcon } from '../ui/PixelIcon';
 import { ModalSheet, sm2Button, sm2Hint } from '../form/FormKit';
 import type { Language } from '../../utils/i18n';
@@ -9,6 +9,7 @@ import type { Language } from '../../utils/i18n';
  * A vida aparece como 3 corações (ícone `hp`, cada um = 1/3 do HP) que enchem do "antes" ao "depois".
  */
 const HEARTS = 3;
+const AUTO_S = 3;
 
 interface Props {
   language: Language;
@@ -29,13 +30,22 @@ export function ArenaCuraModal({ language, antes, depois, pontos, rodada, totalR
   const hp = cheio ? depois : antes;
   const fill = (k: number) => Math.max(0, Math.min(1, hp * HEARTS - k));
   const label = isPt ? 'Pronto pro combate' : 'Ready to fight';
+  /* Segue sozinho em 3 s se ninguém tocar (dono, 04/11/2026). */
+  const [resta, setResta] = useState(AUTO_S);
+  const nextRef = useRef(onNext);
+  nextRef.current = onNext;
+  useEffect(() => {
+    if (resta <= 0) { nextRef.current(); return; }
+    const t = setTimeout(() => setResta(r => r - 1), 1000);
+    return () => clearTimeout(t);
+  }, [resta]);
   return (
     <ModalSheet open placement="center" closeSide="none" dismissOnBackdrop={false} language={language} maxWidth={360}
       title={isPt ? `Rodada ${rodada} de ${totalRodadas} vencida` : `Round ${rodada} of ${totalRodadas} cleared`}
       onClose={onNext}
       footer={(
         <button type="button" data-arena-proxima onClick={onNext} aria-label={label} style={{ ...sm2Button('primary'), width: '100%' }}>
-          {label}
+          {label} ({resta})
         </button>
       )}>
       <div data-arena-cura-modal style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
