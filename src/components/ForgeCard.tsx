@@ -28,6 +28,9 @@ import { ATTR_EFFECT, forgeRefusalText } from '../utils/forgeCopy';
 import { stockOf } from '../utils/buildingQuests';
 import { MATERIALS } from '../utils/buildingQuestsCopy';
 import { MaterialIcon } from './MaterialIcon';
+import { VitraMap, type VitraChakra } from './forge/VitraMap';
+import { Icon } from './ui/Icon';
+import { forgeReadySlots } from '../utils/lotIndicators';
 
 function useArt(nome: string): string | null {
   const [url, setUrl] = useState<string | null>(null);
@@ -70,8 +73,15 @@ function ForgeDialogShell({ mode, onClose, children }: { mode: string; onClose: 
   );
 }
 
-export default function ForgeCard({ language = 'pt-BR' }: { language?: string }) {
+/**
+ * `view="map"` (04/11/2026, pedido do dono): o Soulsmith como MAPA de chakras (`forge/VitraMap`), no esquema da Hexsmith — a figura de vidro
+ * soprado no centro, um equipamento por chakra e, ao tocar, o balão com as duas opções de aprimoramento. `view="list"` (padrão) é a lista de
+ * cartões anterior, mantida como reserva e para os testes antigos; as regras e os motivos de recusa são os MESMOS nos dois.
+ */
+export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list' }: { language?: string; view?: 'list' | 'map' }) {
   const ctx = useGameStateOptional();
+  const [pop, setPop] = useState<string | null>(null);
+  const [popChoice, setPopChoice] = useState<ForgeChoice>('a');
   const [aviso, setAviso] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [escolha, setEscolha] = useState<ForgeChoice>('a');
@@ -126,14 +136,20 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
     const choice = escolha;
     setDialog(null);
     setAviso(null);
-    if (d.mode === 'upgrade') pend.current = { id: d.id, from: levelNow(view, d.id) };
+    if (d.mode === 'upgrade') { runUpgrade(d.id, choice); return; }
     setGameState((prev) => {
-      const v = prevView(prev);
-      if (d.mode === 'upgrade') {
-        const r = applyUpgrade(v, d.id, choice);
-        return r.ok ? merge(prev, r.state) : prev;
-      }
-      const r = applyRedo(v, d.id, d.level, choice, pay ?? 'bits');
+      const r = applyRedo(prevView(prev), d.id, d.level, choice, pay ?? 'bits');
+      return r.ok ? merge(prev, r.state) : prev;
+    });
+  };
+
+  /** O aprimoramento confirmado (do modal da lista ou do balão do mapa): o `prev` do updater decide; a celebração nasce quando o nível sobe no save. */
+  const runUpgrade = (id: string, choice: ForgeChoice) => {
+    if (isDemoMode(gameState)) { setPop(null); setAviso(demoRefusalText(isPt)); return; }
+    pend.current = { id, from: levelNow(view, id) };
+    setPop(null);
+    setGameState((prev) => {
+      const r = applyUpgrade(prevView(prev), id, choice);
       return r.ok ? merge(prev, r.state) : prev;
     });
   };
@@ -322,6 +338,94 @@ export default function ForgeCard({ language = 'pt-BR' }: { language?: string })
       </ForgeDialogShell>
     );
   };
+
+  /** O balão ao lado do chakra: as duas opções de aprimoramento, estilizadas, mais o custo e o motivo da recusa (o mesmo texto da lista). */
+  const balao = (piece: ForgePiece) => {
+    const level = levelNow(view, piece.id);
+    const nome = itemName(piece.slot, piece.tier, isPt);
+    const possui = level > 0;
+    const max = possui && level >= FORGE_MAX_LEVEL;
+    const to = level + 1;
+    const recusa = possui && !max ? upgradeRefusal(view, piece.id) : undefined;
+    const opcoes: { c: ForgeChoice; attr: 'atk' | 'def' | 'spd' }[] = [{ c: 'a', attr: PRIMARY_ATTR[piece.slot] }, { c: 'b', attr: ALT_ATTR[piece.slot] }];
+    return (
+      <div role="dialog" aria-label={nome} className="sm2-vit-card" data-forge-pop={piece.id}>
+        <p className="sm2-vit-card-title"><b>{nome}</b><span className="sm2-num">{possui ? (isPt ? `Nv ${level}` : `Lv ${level}`) : (isPt ? 'Ainda não forjado' : 'Not forged yet')}</span></p>
+        {max && <p className="sm2-stats-s" data-forge-max>{isPt ? 'No nível máximo.' : 'At the top level.'}</p>}
+        {possui && !max && (
+          <>
+            <div role="radiogroup" aria-label={isPt ? 'O que este nível dá' : 'What this level gives'} className="sm2-vit-opts">
+              {opcoes.map(({ c, attr }) => {
+                const fx = ATTR_EFFECT[attr];
+                return (
+                  <button key={c} type="button" role="radio" aria-checked={popChoice === c} className="sm2-vit-opt" data-forge-option={c} data-forge-attr={attr}
+                    data-on={popChoice === c || undefined} onClick={() => setPopChoice(c)}>
+                    <b>{isPt ? fx.shortPt : fx.shortEn} · +{pct(LEVEL_PCT[to - 1], isPt)}</b>
+                    <span>{isPt ? fx.effectPt : fx.effectEn}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <span className="sm2-stats-s sm2-vit-costs">
+              {custoTexto(piece, to).map(({ m, n, have }) => (
+                <span key={m.id} data-forge-cost={m.id} data-enough={have >= n || undefined}><MaterialIcon id={m.id} emoji={m.icon} />{isPt ? m.namePt : m.nameEn} {have}/{n}</span>
+              ))}
+            </span>
+            {recusa && recusa !== 'no-materials' && <span className="sm2-stats-s" data-forge-why>{forgeRefusalText(recusa, isPt, level)}</span>}
+            <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-forge-upgrade-btn={piece.id} disabled={!!recusa}
+              onClick={() => runUpgrade(piece.id, popChoice)}
+              aria-label={isPt ? `Aprimorar ${nome} para o nível ${to}` : `Upgrade ${nome} to level ${to}`}>
+              {isPt ? 'Aprimorar' : 'Upgrade'}
+            </button>
+          </>
+        )}
+        {level >= 2 && (
+          <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-forge-reforge={piece.id}
+            onClick={() => { setAviso(null); setPop(null); setDialog({ mode: 'reforge', id: piece.id }); }}
+            aria-label={isPt ? `Reforjar ${nome}` : `Reforge ${nome}`}>
+            {isPt ? 'Reforjar' : 'Reforge'}
+          </button>
+        )}
+      </div>
+    );
+  };
+
+  if (viewMode === 'map') {
+    const readyNow = forgeReadySlots({ ...gameState, equipment: eq });
+    const chakras: VitraChakra[] = EQUIP_SLOTS.map((slot) => {
+      const id = eq.equipped[slot];
+      const piece = (id && FORGE_PIECES.find((p) => p.id === id)) || FORGE_PIECES.find((p) => p.slot === slot && p.tier === 1)!;
+      const level = levelNow(view, piece.id);
+      const nome = itemName(piece.slot, piece.tier, isPt);
+      const festa = celebra && celebra.id === piece.id ? celebra : null;
+      const reduzido = festa ? prefersReducedMotion() : false;
+      return {
+        slot, pieceId: piece.id, owned: level > 0, ready: readyNow.has(slot), open: pop === piece.id,
+        label: `${nome}${level > 0 ? ` · ${isPt ? 'Nv' : 'Lv'} ${level}` : ''}${readyNow.has(slot) ? (isPt ? ' · pode aprimorar' : ' · can upgrade') : ''}`,
+        face: (
+          <>
+            <Art nome={forgeArtName(piece.id, level)} size={44} />
+            {festa && !reduzido && SPARKS.slice(0, 6).map((sp, i) => <span key={i} className="sm-forge-spark" aria-hidden="true" data-forge-fx="spark" style={{ ['--dx' as string]: sp.dx, ['--dy' as string]: sp.dy, animationDelay: sp.delay }} />)}
+          </>
+        ),
+        popover: balao(piece),
+        onToggle: () => { setAviso(null); if (pop === piece.id) { setPop(null); return; } setPopChoice('a'); setPop(piece.id); },
+      };
+    });
+    return (
+      <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card data-forge-view="map">
+        <p id="sm2-equip-title" className="sm2-stats-lab" style={{ margin: '0 0 8px' }}>Soulsmith</p>
+        <VitraMap chakras={chakras} label={isPt ? 'Equipamentos do Soulsmith' : 'Soulsmith equipment'} onBackdrop={() => setPop(null)} />
+        {celebra && (
+          <span role="status" className="sm-forge-seal sm2-num" data-forge-seal data-motion={prefersReducedMotion() ? 'reduced' : 'full'} style={{ display: 'block', textAlign: 'center', marginTop: 8, fontWeight: 500, color: 'var(--sm2-primary-ink)' }}>
+            <Icon name="auto_awesome" size={20} tone="primary" /> {isPt ? 'Aprimorado!' : 'Upgraded!'} <span key={celebra.key} className="sm-forge-pulse" data-forge-level-pulse>{isPt ? `Nv ${celebra.to}` : `Lv ${celebra.to}`}</span>
+          </span>
+        )}
+        {aviso && <p className="sm2-stats-s" role="status" data-equip-aviso style={{ marginTop: 10 }}>{aviso}</p>}
+        {modal()}
+      </section>
+    );
+  }
 
   return (
     <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card>

@@ -820,6 +820,8 @@ const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ d
 import type { QuickAddResult } from './utils/quickAdd';
 import { funSessionStatus, funRoundRefusal, startFunRound } from './utils/funSession';
 import type { CreateAction } from './utils/chatActions';
+const EvoBanner = lazy(() => import('./components/EvoBanner'));
+const fetchEvoFeed = () => import('./utils/community').then(m => m.getEvoFeed());
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const RevisaoGame = lazy(() => import('./components/mente/RevisaoGame').then(m => ({ default: m.RevisaoGame })));
 const SettingsPage = lazy(() => import('./components/SettingsPage').then(m => ({ default: m.SettingsPage })));
@@ -8025,6 +8027,10 @@ export default function App() {
               />
             );
           })()}
+          {/* Faixa de evoluções (04/11/2026): logo abaixo da linha do voltar; feed global + a própria evolução. */}
+          <Suspense fallback={null}>
+            <EvoBanner language={language} stage={gameState.evolutionStage} playerName={userName} petName={soulmonDisplayName(gameState.soulmonMeta)} fetchFeed={fetchEvoFeed} />
+          </Suspense>
 
           {pane === 'map' && (
             <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}>

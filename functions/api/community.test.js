@@ -184,7 +184,7 @@ describe('community — a lista de ações com ator está completa', () => {
 
     const declaradas = new Set(ACOES_COM_ATOR.map(a => a.action));
     // Ações públicas de leitura: não agem em nome de ninguém.
-    const publicas = new Set(['players', 'player', 'opponents', 'rank', 'seasonResult', 'names', 'strays']); // strays (§213): pool anônimo, não lê id
+    const publicas = new Set(['players', 'player', 'opponents', 'rank', 'seasonResult', 'names', 'strays', 'evoFeed']); // evoFeed (04/11/2026): feed global sem id; strays (§213): pool anônimo, não lê id
     // Protegida por chave de admin, não por dono.
     const admin = new Set(['closeSeason']);
 

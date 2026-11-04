@@ -5,6 +5,8 @@ import { LOT_MARK_GAP, LOT_MARK_MIN_TOP, LOT_MARK_SIZE, lotArtBounds, lotHitBoun
 import { lotArtFilter } from './lotHalo';
 import { MissionMark } from '../play/MissionMark';
 import { LotCoin } from './LotCoin';
+import { LotIndicator } from './LotIndicator';
+import type { LotIndicatorId } from '../../utils/lotIndicators';
 import type { QuestMark as MissionMarkKind } from '../../utils/questMarks';
 import { Icon } from '../ui/Icon';
 import { lotIconArt, lotIconName } from '../../utils/lotIcons';
@@ -46,6 +48,8 @@ export interface AreaLot {
   mark?: MissionMarkKind;
   /** Moeda de recurso disponível aqui (`utils/lotMarks.ts`): ao lado do "!", acima do prédio. */
   coin?: boolean;
+  /** Há algo a GASTAR no prédio (aprimorar no Soulsmith, pontos de talento no Santuário) — `utils/lotIndicators.ts`; mesma camada das marcas. */
+  indicator?: LotIndicatorId;
   /** Prédio trancado pelo Vínculo (`BUILDING_GATES`): arte cinza, cadeado e o Vínculo pedido. O toque ainda chega em `onOpen` (que mostra o aviso). */
   locked?: { minBond: number };
 }
@@ -227,9 +231,9 @@ export function AreaScene({ areaId, language, lots, background, notice, children
           (dentro do lote o vizinho de cima, de z maior, tapava a marca). A camada é um contêiner de tamanho = a cena (cqw/cqh); cada fileira
           repete a conta de `lotMarkRects` em CSS: base `LOT_MARK_GAP` px acima do TOPO DESENHADO da arte, centrada na arte, nunca acima do
           piso `LOT_MARK_MIN_TOP`; "!" e moeda lado a lado. Não intercepta toque (o sinal é só visual, H11). Z 100: empata com o lote mais alto e ganha pela ordem no DOM, e os jogos (z 100, depois no DOM) a cobrem. */}
-      {lots.some(l => (l.mark || l.coin) && !l.locked) && (
+      {lots.some(l => (l.mark || l.coin || l.indicator) && !l.locked) && (
         <div data-lot-marks-layer aria-hidden={lots.some(l => l.mark && !l.locked) ? undefined : true} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 100, containerType: 'size' }}>
-          {lots.filter(l => (l.mark || l.coin) && !l.locked).map(l => {
+          {lots.filter(l => (l.mark || l.coin || l.indicator) && !l.locked).map(l => {
             const b = lotArtBounds(areaId, l.id) ?? [0, 0, 1, 1];
             const w = parseFloat(l.width ?? LOT_WIDTH_DEFAULT);
             const bw = `max(${w}cqw, 120px)`;
@@ -248,6 +252,7 @@ export function AreaScene({ areaId, language, lots, background, notice, children
               >
                 {l.mark && <MissionMark kind={l.mark} isPt={isPt} size={LOT_MARK_SIZE} />}
                 {l.coin && <LotCoin isPt={isPt} />}
+                {l.indicator && <LotIndicator kind={l.indicator} isPt={isPt} />}
               </span>
             );
           })}

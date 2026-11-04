@@ -536,6 +536,16 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:** `tallyEssences(drops)` · `essenceLedgerRows(drops)` · `essenceIconSrc(id)` · `essenceName` (reexport).
 **Quem chama:** `ArenaGame.tsx`, `Match3Game.tsx`, `DungeonGame.tsx`, `TournamentPage.tsx`, `guild/FeiraEventoSheet.tsx`, `games/ResultScreen.tsx`.
 **Régua:** `src/utils/resultEssences.test.ts`.
+### `src/utils/evoFeed.ts`
+**Dono de:** a faixa de evoluções no cliente (04/11/2026, dono): monta a frase "<jogador> acabou de evoluir <criatura> para o nível <forma> através da <alinhamento>" (PT/EN), sanea o feed do servidor e mantém a fila sem repetir. Puro.
+**Exports:** `EvoEvent` · `parseEvoStage` · `isEvoStep` · `sanitizeEvoEvents` · `evoKey` · `evoText` · `enqueueEvo`.
+**Quem chama:** `components/EvoBanner.tsx`.
+**Régua:** `src/utils/evoFeed.test.ts`.
+### `src/utils/lotIndicators.ts`
+**Dono de:** os indicadores "há o que gastar" sobre os prédios do mapa (04/11/2026, dono): Soulsmith com aprimoramento possível (`forgeReadySlots`) e Santuário do Vínculo com pontos de talento livres (`talentPointsFree`). Puro, só lê o save.
+**Exports:** `LotIndicatorId` · `forgeReadySlots(gs)` · `talentPointsFree(gs)` · `lotIndicators(gs)`.
+**Quem chama:** `nav/AreaView.tsx`, `ForgeCard.tsx`, `TalentTreeEntry.tsx`.
+**Régua:** `src/utils/lotIndicators.test.ts`.
 ### `src/utils/lotMarks.ts`
 **Dono de:** as marcas sobre os prédios do mapa (04/11/2026, dono): `lotMissionMarks` leva o "!"/"?" a TODO prédio com missão (Passeio, Torneio pela semana, Conquistas, missões do dia por prédio, Caderno; "?" vence "!") e `lotCoins` liga a MOEDA de recurso (raio da energia amarelo) nos prédios com recurso disponível agora. Puro, `nowMs` por parâmetro.
 **Exports:** `DAILY_EVENT_BUILDING` · `lotMissionMarks(input)` · `LotCoinId` · `LOT_COIN_RULES` (lista tipada; hoje só o Refúgio: energia do dia não tomada e energia abaixo do máximo) · `lotCoins(state, nowMs)`.

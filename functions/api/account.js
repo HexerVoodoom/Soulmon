@@ -96,7 +96,7 @@
 //
 //   0. token · 1. `collect` · 2. LÁPIDE · 3. `friends[]` alheios (varredura —
 //   pode estourar; ainda reversível, e a lápide é desfeita se estourar) ·
-//   3b. grupo cooperativo · 4. push por índice · 5. sprites · 6. minimizar `ent:` · 7. `rank:*`,
+//   3b. grupo cooperativo · 3c. faixa de evoluções · 4. push por índice · 5. sprites · 6. minimizar `ent:` · 7. `rank:*`,
 //   `gifts:`, `pid:`, `profile:` · 8. **o save** · 9. token de confirmação.
 //
 // O save é o ÚLTIMO a cair: é o que a pessoa mais quer ver sumir, e é também
@@ -120,6 +120,7 @@ import { writeTombstone, clearTombstone, TOMBSTONE_TTL_SECONDS } from './_accoun
 import { rkKeyFor } from './_rankings.js';
 import { coopLeave, grupoDe, coopOfKey, coopCkKey, coopFioKey, coopMemKey, lerFio, apagarClaims, lerGolpes, semanaDe, semanasDeClaim, coopClaimKey, lerConjunto, coopScenesKey, coopShellKey, coopPartKey, lerDiasCarregados, exportarFeiraDaPessoa } from './_coop.js';
 import { apagarPedido } from './_claDiretorio.js';
+import { EVO_FEED_KEY, EVO_FEED_BLOB_TTL_S, readFeed, purgeFeedOf } from './_evoFeed.js';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -728,6 +729,12 @@ async function handleDeleteConfirm(env, saveId, body) {
   await tentar('coop (grupo cooperativo)', async () => { coop = await coopLeave(env, saveId, { exclusao: true }); });
   await tentar('coopClaim (resgates da Guilda)', () => apagarClaims(env, saveId));
   await tentar('coopReq (pedido de entrada em clã, §203)', () => apagarPedido(env, saveId));
+  // 3c) Faixa de evoluções: o saveId, o apelido e a criatura moram no blob global. Só regrava se a pessoa está nele.
+  await tentar(EVO_FEED_KEY, async () => {
+    const feed = readFeed(await store.get(EVO_FEED_KEY));
+    const sem = purgeFeedOf(feed, saveId);
+    if (sem.length !== feed.length) await store.put(EVO_FEED_KEY, JSON.stringify(sem), { expirationTtl: EVO_FEED_BLOB_TTL_S });
+  });
 
   // 4) Inscrições de push ligadas à conta (decisão #23), pelo índice.
   //    Reversível na prática: o aparelho se reinscreve na próxima abertura.

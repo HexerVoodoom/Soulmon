@@ -94,6 +94,8 @@ export const STORAGE_KEYS = {
    *  Biblioteca do Hall (JSON `string[]`). Só decide o que a lista mostra sem
    *  busca; não é progresso, não pontua e não vai para a nuvem. */
   LIBRARY_SEEN: 'soulmon-library-seen',
+  /** Faixa de evoluções: `at` (relógio do servidor) do último aviso do feed já mostrado neste aparelho. */
+  EVO_SEEN_AT: 'soulmon-evo-seen-at',
   /** 31/10/2026 — formas já vistas de cada Soulmon de outro jogador (`{ [id]: SeenForm[] }`, ≤ 8 por criatura). Só no aparelho, como `LIBRARY_SEEN`. Dono: `utils/libraryForms.ts`. */
   LIBRARY_FORMS: 'soulmon-library-forms',
   /** Dia (ISO do jogador) em que o bônus do Picross do dia já foi pago neste aparelho. */

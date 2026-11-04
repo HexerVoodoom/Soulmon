@@ -527,8 +527,8 @@ export function SettingsPage({
               {onToggleShowInPublicList && (
                 <span data-data-help-text="public-list">
                   {isPt
-                    ? 'Seu apelido e seu Soulmon aparecem para outros jogadores do Torneio. Desligado, você some da lista na hora e continua podendo jogar.'
-                    : 'Your nickname and Soulmon show to other Tournament players. Off, you leave the list right away and can still play.'}
+                    ? 'Seu apelido e seu Soulmon aparecem para outros jogadores do Torneio e na faixa de evoluções. Desligado, você some da lista na hora, sai da faixa e continua podendo jogar.'
+                    : 'Your nickname and Soulmon show to other Tournament players and on the evolution banner. Off, you leave the list right away, leave the banner and can still play.'}
                 </span>
               )}
             </span>
@@ -551,7 +551,7 @@ export function SettingsPage({
           <SwitchRow
             checked={showInPublicList}
             onToggle={onToggleShowInPublicList}
-            label={isPt ? 'Aparecer na lista pública do Torneio' : 'Show me on the public Tournament list'}
+            label={isPt ? 'Aparecer na lista pública do Torneio e na faixa de evoluções' : 'Show me on the public Tournament list and the evolution banner'}
           />
         )}
       </Group>

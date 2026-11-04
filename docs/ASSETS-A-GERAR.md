@@ -899,3 +899,18 @@ Slot opcional já ligado: `src/assets/soulmon/barrage/barra-especial.png` (resol
 | `src/assets/soulmon/barrage/barra-especial.png` | 192×96 (2:1), uma peça só; interior da barra vazado (translúcido) para o preenchimento de carga aparecer por baixo | real (`gpt_image_2 --background transparent`, nunca chroma) | `Pixel-art horizontal special-charge bar frame for a mobile shoot-em-up, 2:1. A slim dark-turquoise capsule with a hollow translucent inside; an ornate soul crystal with a small flame at the right end, thin copper rim and copper pipes along the top and bottom edges, fine circuit traces in turquoise glow, a few tiny leaves curling from the corners, everything joined by cables. No gears, no text, no background, no drop shadow. Real transparent alpha. Dark turquoise tone matching the app Home.` |
 
 Identidade: `docs/REGRA-IDENTIDADE-SOULMON.md` (turquesa escuro, cristal da alma com chama, cobre, circuito, folhinhas, sem engrenagem).
+
+## Soulsmith (Vitra) — mapa de chakras (04/11/2026, dono)
+
+A tela do Soulsmith virou um mapa no esquema da Hexsmith (`components/forge/VitraMap.tsx`). Hoje desenha uma figura de vidro em SVG (fallback); a arte final entra sozinha por glob.
+
+| Arquivo-alvo (`src/assets/soulmon/vitra/`) | Formato | O que é |
+|---|---|---|
+| `vitra-mapa.png` | 1024×1024, 1:1, fundo OPACO (sem alfa), PNG | placa do mapa: figura HUMANOIDE de vidro quente sendo soprado, ainda pastosa, no centro; PRETO no miolo, ganhando luz e cor para as bordas. Três pontos de chakra livres (vazios, sem ícone): coração em 50%/33%, mão esquerda em 21%/57%, mão direita em 79%/57% (da largura/altura) |
+
+Os ícones dos equipamentos já existem (`equipArt`); o chakra só os emoldura em CSS.
+
+**Prompt completo (ChatGPT, anexar a arte da Home e `lote-forja-ferreiro.png` como referência):**
+`Square 1:1 full-bleed illustration, 1024x1024, opaque background, painterly pixel-friendly fantasy game art in the Soulmon style. A humanoid figure made of HOT MOLTEN GLASS being blown, still pasty and soft, standing centered, arms slightly out from the body and legs apart, a thin copper blowpipe leaving its mouth and going up out of frame. The figure is BLACK at its centre (heart and torso almost pure black) and gains light and colour toward its edges: deep teal glow, then amber and ember orange rims, with a few tiny cyan bubbles trapped in the glass. The background is a dark closed turquoise-teal (the same tone as the app Home), fading from black behind the figure to a faint warm ember rim at the corners. Soul crystals with a small flame inside float in small quantity around the figure. Always present but sparse: copper pipes and tubing, thin digital circuit traces glowing faintly, and small branches of tiny leaves, everything connected by cables as if the plant were integrated with the machine. Leave three small clear empty spots (heart, left hand, right hand) with no objects on them. No gears, no steampunk, no text, no letters, no watermark, no frame, no extra characters.`
+
+**Checklist de identidade (`docs/REGRA-IDENTIDADE-SOULMON.md`) antes de instalar:** base turquesa escuro como a Home; cristais da alma com chama; canos de cobre, circuitos e folhinhas em pouca quantidade, tudo ligado por cabo; SEM engrenagem/steampunk; figura preta no centro e colorida nas bordas; três pontos livres nas posições acima. Sem esses elementos, REJEITAR e voltar ao gerador. Instalar: salvar como `vitra-mapa.png` e conferir os 3 chakras sobre os pontos livres (a tela usa o arquivo sozinha).
