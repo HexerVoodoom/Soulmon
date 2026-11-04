@@ -224,7 +224,7 @@ export function ChamaGame({ language, evolutionStage, demoCharacterId, onExit, o
               <button key={m} type="button" data-chama-min={m} aria-pressed={m === minutos} onClick={() => setMinutos(m)} style={chip(m === minutos)}>{m} min</button>
             ))}
           </div>
-          <button type="button" data-chama-olhos-fechados aria-pressed={olhosFechados} onClick={() => setOlhosFechados(v => !v)} style={chip(olhosFechados)}>
+          <button type="button" data-chama-olhos-fechados aria-pressed={olhosFechados} onClick={() => setOlhosFechados(v => !v)} style={{ ...chip(olhosFechados), flex: 'none' }}>
             {isPt ? 'Modo olhos fechados' : 'Eyes-closed mode'}
           </button>
           <button type="button" data-chama-start onClick={comecar} style={sm2Button('primary')}>{isPt ? 'Começar' : 'Start'}</button>
