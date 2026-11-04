@@ -5807,6 +5807,7 @@ select:focus-visible {
   .sm2-intro-bar-fill { animation: none; transform: scaleX(1); } /* intro: barra cheia (REGISTRO §168) */
   .sm2-intro-load-done { animation: none; opacity: 1; }
   .nm-glitch__img { animation: none; } /* §88: glitch do convite do pesadelo */
+  .sm-game-card__btn { transition: none; } .sm-game-card__btn:active { transform: none; } /* GameCard */
   /* SENTINELA-MOVIMENTO-REDUZIDO-CANONICO: este tem de ser o ÚLTIMO bloco
      `prefers-reduced-motion` do arquivo, e é o único que pode existir daqui
      para baixo. `styles/tokens.contrast.test.ts` lê o ÚLTIMO bloco via
@@ -9093,4 +9094,60 @@ button.sm2-hex-row {
 .sm2-lab-essence {
   display: inline-flex; align-items: center; gap: var(--sm2-space-2); min-height: 44px; min-width: 44px; padding: 0 var(--sm2-space-1);
   background: none; border: 0; border-radius: var(--sm2-radius-md);
+}
+
+/* ── Carta de jogo (GameCard, 04/11/2026) ───────────────────────────────────
+   Retrato 3:4, arte sangrando no topo, nome em Cinzel numa faixa, moldura
+   arcana discreta (linha dupla turquesa, cantos de cristal). Só tokens sm2. */
+.sm-game-card-grid {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sm2-space-3);
+}
+.sm-game-card { display: flex; flex-direction: column; gap: var(--sm2-space-1); min-width: 0; }
+.sm-game-card__btn {
+  position: relative; display: flex; flex-direction: column; width: 100%;
+  aspect-ratio: 3 / 4; padding: 0; overflow: hidden; cursor: pointer; text-align: left;
+  border: 1px solid var(--sm2-primary-deep); border-radius: var(--sm2-radius-md);
+  background: var(--sm2-surface-2); color: var(--sm2-ink);
+  box-shadow: inset 0 0 0 3px var(--sm2-surface-2), inset 0 0 0 4px var(--sm2-primary-soft);
+  transition: transform .12s ease, box-shadow .12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.sm-game-card__btn::before, .sm-game-card__btn::after {
+  content: ''; position: absolute; z-index: 2; width: 8px; height: 8px;
+  background: var(--sm2-primary-ink); transform: rotate(45deg); opacity: .8; pointer-events: none;
+}
+.sm-game-card__btn::before { top: -4px; left: calc(50% - 4px); }
+.sm-game-card__btn::after { bottom: -4px; left: calc(50% - 4px); }
+.sm-game-card__btn:active { transform: scale(.97); box-shadow: inset 0 0 0 3px var(--sm2-surface-2), inset 0 0 0 4px var(--sm2-primary-ink); }
+.sm-game-card__btn:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+.sm-game-card__art { position: relative; flex: 1 1 auto; min-height: 0; display: block; }
+.sm-game-card__art > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.sm-game-card__placeholder {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background:
+    radial-gradient(circle at 50% 40%, var(--sm2-primary-soft), transparent 65%),
+    linear-gradient(160deg, var(--sm2-surface) 0%, var(--sm2-bg) 100%);
+}
+.sm-game-card__glyph { width: 48px; height: 48px; object-fit: contain; image-rendering: pixelated; opacity: .9; }
+.sm-game-card__initial {
+  font-family: var(--sm2-font-display); font-weight: 700; font-size: 40px; line-height: 1;
+  color: var(--sm2-primary-ink); opacity: .7;
+}
+.sm-game-card__banner {
+  position: relative; display: block; margin: 0 6px; margin-top: -14px; z-index: 1;
+  padding: 4px 6px; text-align: center;
+  font-family: var(--sm2-font-display); font-weight: 600; font-size: var(--sm2-text-sm, 13px);
+  line-height: 1.2; color: var(--sm2-ink);
+  background: var(--sm2-surface); border: 1px solid var(--sm2-primary-deep); border-radius: var(--sm2-radius-sm);
+  overflow-wrap: anywhere; /* 360px: coluna de ~150px; o nome quebra em vez de cortar */
+}
+.sm-game-card__desc {
+  display: block; padding: 4px 8px 8px; text-align: center;
+  font-size: var(--sm2-text-xs, 12px); line-height: 1.3; color: var(--sm2-muted);
+}
+.sm-game-card__badges {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sm2-space-1);
+  font-size: var(--sm2-text-xs, 12px); color: var(--sm2-muted);
 }
