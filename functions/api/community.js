@@ -62,7 +62,8 @@ import { avatarIdOrNull } from './_avatares.js';
 import { artLineOrNull, spriteUrlOrNull } from './_artLine.js';
 import { formsFromSaveState } from './_formHistory.js';
 import { frameIdOrNull } from './_frames.js';
-import { EVO_FEED_KEY, isEvolution, buildEvent, readFeed, pushEvent, purgeFeedOf, feedView } from './_evoFeed.js';
+import { EVO_FEED_KEY, EVO_FEED_VIEW, EVO_FEED_BLOB_TTL_S, peakOf, parseStage, decideEvo, buildEvent, readFeed, pushEvent, purgeFeedOf, liveFeed, publicEvent } from './_evoFeed.js';
+import { flagOn } from './_killSwitch.js';
 import { isStrayProfile, strayView, STRAY_POOL_MAX, markStrayIfInactive, strayFieldsOf, strayRecoveryProgress, playerDayOf, STRAY_RECOVERY_DAYS } from './_strays.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -108,7 +109,7 @@ async function withDuelLock(key, fn) {
 // Duas classes, porque o custo delas é diferente em uma ordem de grandeza:
 // `players`/`opponents`/`rank` varrem até 300 chaves do KV por chamada; as
 // demais leem uma ou duas. Ver `_rateLimit.js` para o que este teto NÃO é.
-const HEAVY_ACTIONS = new Set(['players', 'opponents', 'rank', 'seasonResult', 'names', 'strays']);
+const HEAVY_ACTIONS = new Set(['players', 'opponents', 'rank', 'seasonResult', 'names', 'strays', 'evoFeed']); // evoFeed: até 20 perfis por leitura
 const HEAVY_LIMIT = { limit: 20, windowMs: 60_000 };   // 20 varreduras/min/IP
 const LIGHT_LIMIT = { limit: 120, windowMs: 60_000 };  // 2/s/IP no resto
 
@@ -575,6 +576,9 @@ async function handleCommunity(context) {
       publicHidden,
       ...(especialNome ? { especialNome } : {}),
       ...(especialNomeAt ? { especialNomeAt } : {}),
+      // Faixa de evoluções: atravessam a regravação; o bloco abaixo só os faz subir.
+      evoPeakRank: peakOf(prev) ?? undefined,
+      evoFeedAt: Number(prev.evoFeedAt) > 0 ? Number(prev.evoFeedAt) : undefined,
       attrs: body.attrs && typeof body.attrs === 'object'
         ? { power: attrFinito(body.attrs.power), harmony: attrFinito(body.attrs.harmony), benevolence: attrFinito(body.attrs.benevolence) }
         : (prev.attrs || { power: 0, harmony: 0, benevolence: 0 }),
@@ -590,28 +594,40 @@ async function handleCommunity(context) {
       // mapa reverso conhece a correspondência.
       pid: (pidAntigo && !pidLegado) ? pidAntigo : newPid(),
     };
+    // Faixa de evoluções (04/11/2026, `_evoFeed.js`): o aviso nasce do estágio do SAVE acima do pico da conta, nunca do corpo do perfil. O pico e o cooldown
+    // moram no perfil e sobem antes da gravação: reenviar, alternar estágio ou forjar o corpo não anuncia de novo. Melhor esforço: o feed nunca derruba o perfil.
+    const evoNow = Date.now();
+    const evoPicoAntes = peakOf(prev);
+    let evoEvento = null;
+    try {
+      // Só lê o save quando o corpo diz que passou do pico (ou no 1º perfil): perfil é gravado o tempo todo.
+      if (evoPicoAntes === null || (parseStage(profile.stage)?.rank ?? -1) > evoPicoAntes) {
+        const bruto = await kvOrThrow(env).get(id);
+        const salvo = typeof bruto === 'string' && bruto.length <= DUEL_SAVE_MAX_CHARS ? JSON.parse(bruto) : null;
+        const { peak, announce } = decideEvo({ peak: evoPicoAntes, stage: profile.stage, savedStage: salvo?.evolutionStage, lastAt: prev.evoFeedAt, now: evoNow });
+        if (peak !== null) profile.evoPeakRank = peak;
+        if (announce && !publicHidden && profile.pvpEnabled === true && !flagOn(env?.EVO_FEED_DISABLED)) {
+          evoEvento = buildEvent({ by: id, name: profile.name, petName: profile.petName, stage: profile.stage, now: evoNow });
+          if (evoEvento) profile.evoFeedAt = evoNow;
+        }
+      }
+    } catch { evoEvento = null; /* save ilegível: sem aviso */ }
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
-    // Faixa de evoluções (04/11/2026, `_evoFeed.js`): subiu de estágio E já aparece na lista pública (PvP aberto pelo gate de Vínculo, sem `publicHidden`)
-    // → entra no feed global. Quem se esconde sai dele na hora. Melhor esforço: o feed nunca derruba a gravação do perfil.
+    // Saiu da lista (escondeu-se ou desligou o PvP): limpa o blob. Se esta escrita falhar, o filtro de `evoFeed` na leitura já não mostra a pessoa.
+    const evoSaiu = (publicHidden && prev.publicHidden !== true) || (!profile.pvpEnabled && prev.pvpEnabled === true);
     try {
-      const sobe = !publicHidden && profile.pvpEnabled === true && isEvolution(prev.stage, profile.stage);
-      if (sobe || (publicHidden && prev.publicHidden !== true)) {
-        const now = Date.now();
-        let feed = readFeed(await kvOrThrow(env).get(EVO_FEED_KEY));
-        if (publicHidden) feed = purgeFeedOf(feed, id);
-        else {
-          const ev = buildEvent({ by: id, name: profile.name, petName: profile.petName, stage: profile.stage, now });
-          if (ev) feed = pushEvent(feed, ev, now);
-        }
-        await kvOrThrow(env).put(EVO_FEED_KEY, JSON.stringify(feed));
+      if (evoEvento || evoSaiu) {
+        const atual = readFeed(await kvOrThrow(env).get(EVO_FEED_KEY));
+        const feed = evoEvento ? pushEvent(atual, evoEvento, evoNow) : purgeFeedOf(atual, id);
+        await kvOrThrow(env).put(EVO_FEED_KEY, JSON.stringify(feed), { expirationTtl: EVO_FEED_BLOB_TTL_S });
       }
     } catch { /* feed é cosmético */ }
     // A escolha mudou: tira da borda, deste ponto de presença, as listas públicas
     // de 60 s que ainda mostrariam a pessoa. Melhor esforço — o cache da borda é
     // por URL e por ponto de presença, então outro ponto pode servir a lista
     // velha até `EDGE_TTL_SECONDS`. O servidor em si já responde certo.
-    if (publicHidden !== (prev.publicHidden === true) && typeof caches !== 'undefined' && caches.default) {
+    if ((publicHidden !== (prev.publicHidden === true) || evoSaiu) && typeof caches !== 'undefined' && caches.default) {
       const base = `${url.origin}${url.pathname}?action=`;
       const season = currentSeason();
       await Promise.all([
@@ -739,8 +755,19 @@ async function handleCommunity(context) {
   }
 
   // Faixa de evoluções (04/11/2026): o feed global curto, sem saveId/pid (`_evoFeed.js`). Cache de borda de 60 s como as outras listas públicas.
+  // A régua é AQUI, na leitura: quem hoje não está na lista pública não sai, mesmo que a limpeza do blob tenha falhado. Nome e criatura são os atuais.
   if (action === 'evoFeed' && method === 'GET') {
-    return json({ events: feedView(readFeed(await kvOrThrow(env).get(EVO_FEED_KEY)), Date.now()) });
+    if (flagOn(env?.EVO_FEED_DISABLED)) return json({ events: [] });
+    const events = [];
+    for (const ev of liveFeed(readFeed(await kvOrThrow(env).get(EVO_FEED_KEY)), Date.now())) {
+      if (events.length >= EVO_FEED_VIEW) break;
+      let p = null;
+      try { p = await getProfile(env, ev.by); } catch { continue; } // sem como conferir: não publica
+      if (!p || !p.pvpEnabled || isHidden(p)) continue;
+      const vista = publicEvent(ev, p);
+      if (vista) events.push(vista);
+    }
+    return json({ events });
   }
 
   if (action === 'player' && method === 'GET') {

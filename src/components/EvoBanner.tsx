@@ -2,10 +2,12 @@
  * A FAIXA DE EVOLUÇÕES (04/11/2026, pedido do dono): uma tira logo abaixo da linha do voltar que rola "<jogador> acabou de evoluir <criatura> para o nível
  * <forma> através da <alinhamento>". Feed GLOBAL (`getEvoFeed`, só quem está na lista pública — ver `functions/api/_evoFeed.js`) + o aviso LOCAL da própria
  * evolução (na hora, sem esperar a rede). Vários avisos entram em FILA, um por vez. Não captura toque (`pointer-events: none`). Movimento reduzido:
- * a frase fica parada alguns segundos e passa para a próxima. Sem aviso na fila, a faixa não ocupa lugar.
+ * a frase fica parada alguns segundos e passa para a próxima. O que já passou neste aparelho não volta (`EVO_SEEN_AT`), nem aviso com mais de 1 h. Sem aviso na fila, a faixa não ocupa lugar.
  */
 import { useEffect, useRef, useState } from 'react';
-import { enqueueEvo, evoText, isEvoStep, parseEvoStage, sanitizeEvoEvents, type EvoEvent } from '../utils/evoFeed';
+import { enqueueEvo, evoText, freshEvoEvents, isEvoStep, parseEvoStage, sanitizeEvoEvents, type EvoEvent } from '../utils/evoFeed';
+import { readNumber, writeLocal } from '../utils/safeStorage';
+import { STORAGE_KEYS } from '../utils/storageKeys';
 
 const POLL_MS = 3 * 60 * 1000;
 const STATIC_MS = 6000;
@@ -40,7 +42,7 @@ export default function EvoBanner({ language, stage, playerName, petName, fetchF
     prevStage.current = stage;
     if (!before || !stage || before === stage || !isEvoStep(before, stage)) return;
     const s = parseEvoStage(stage);
-    if (s && playerName && petName) push([{ name: playerName, pet: petName, tier: s.tier, branch: s.branch, at: now() }]);
+    if (s && playerName && petName) push([{ name: playerName, pet: petName, tier: s.tier, branch: s.branch, at: now(), local: true }]);
   }, [stage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // feed global: ao montar e a cada POLL_MS com a aba visível
@@ -49,7 +51,10 @@ export default function EvoBanner({ language, stage, playerName, petName, fetchF
     let vivo = true;
     const tick = () => {
       if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
-      fetchFeed().then((r) => { if (vivo) push(sanitizeEvoEvents((r as { events?: unknown } | null)?.events)); }).catch(() => {});
+      fetchFeed().then((r) => {
+        if (!vivo) return;
+        push(freshEvoEvents(sanitizeEvoEvents((r as { events?: unknown } | null)?.events), readNumber(STORAGE_KEYS.EVO_SEEN_AT, 0), now(), playerName));
+      }).catch(() => {});
     };
     tick();
     const t = setInterval(tick, POLL_MS);
@@ -58,6 +63,10 @@ export default function EvoBanner({ language, stage, playerName, petName, fetchF
 
   const head = queue[0];
   const next = () => setQueue((q) => q.slice(1));
+  // Entrou na tira = visto. A fila anda do mais velho para o mais novo: fechar no meio deixa só os seguintes para a próxima abertura.
+  useEffect(() => {
+    if (head && !head.local && head.at > readNumber(STORAGE_KEYS.EVO_SEEN_AT, 0)) writeLocal(STORAGE_KEYS.EVO_SEEN_AT, String(head.at));
+  }, [head]);
   useEffect(() => {
     if (!head || !still) return;
     const t = setTimeout(next, STATIC_MS);

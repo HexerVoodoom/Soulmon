@@ -623,6 +623,7 @@ guardam). O que resolve é **rotacionar**, não reescrever histórico.
 | Chat respondendo mal / cota estourando | `npx wrangler secret put CHAT_DISABLED` (1) — §0.2 |
 | Flood em /api/crash | `npx wrangler secret put CRASH_DISABLED` (1) — §0.4 |
 | Imagens gastando demais | `npx wrangler secret put SPRITE_DISABLED` (1) — §0.5 |
+| Faixa de evoluções com abuso | `npx wrangler secret put EVO_FEED_DISABLED` (1): `evoFeed` responde vazio e nada novo entra; limpar o blob: `npx wrangler kv key delete evofeed:v1 --namespace-id 20b3ba78a3e84265b5e2d4cd0d411d43 --remote` |
 | Gente de fora usando o beta | `BETA_CLOSED` + `BETA_EMAILS` — §0.6 |
 | Backup antes de mexer em save | `node scripts/backup-saves.mjs` — §0.3 |
 | Binding derrubou compras | `npx wrangler secret delete PLAY_REQUIRE_ACCOUNT_BINDING` |

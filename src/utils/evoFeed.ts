@@ -2,13 +2,17 @@
  * FAIXA DE EVOLUÇÕES, lado do cliente (04/11/2026): o texto da frase, a limpeza do que o servidor devolve (`functions/api/_evoFeed.js`) e a
  * fila (sem repetir). Puro: sem React, sem rede, sem relógio próprio. A frase é montada AQUI com listas fechadas — nunca HTML do servidor.
  */
-export interface EvoEvent { name: string; pet: string; tier: string; branch: string | null; at: number }
+/** `local`: o aviso da própria evolução, nascido no aparelho (não move a marca do que já foi visto no feed). */
+export interface EvoEvent { name: string; pet: string; tier: string; branch: string | null; at: number; local?: boolean }
+
+/** Aviso mais velho que isto não é "acabou de evoluir": não entra na faixa. */
+export const EVO_MAX_AGE_MS = 60 * 60 * 1000;
 
 const TIERS = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'] as const;
 const BRANCH_PT: Record<string, string> = { power: 'do Poder', harmony: 'da Harmonia', benevolence: 'da Benevolência' };
 const BRANCH_EN: Record<string, string> = { power: 'Power', harmony: 'Harmony', benevolence: 'Benevolence' };
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-const clean = (v: unknown, max: number): string => (typeof v === 'string' ? v.replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, max) : '');
+const clean = (v: unknown, max: number): string => (typeof v === 'string' ? v.replace(/\p{C}/gu, '').replace(/[<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, max) : '');
 
 /** `champion-harmony` → `{ tier, branch }`; fora da lista → `null`. */
 export function parseEvoStage(id: unknown): { tier: string; branch: string | null } | null {
@@ -42,6 +46,11 @@ export function sanitizeEvoEvents(raw: unknown): EvoEvent[] {
     out.push({ name, pet, tier, branch, at });
   }
   return out;
+}
+
+/** O que do feed ainda vale mostrar: mais novo que o último visto (a faixa não repete a cada abertura), recente, e não a própria conta (o aviso local já mostrou). */
+export function freshEvoEvents(events: readonly EvoEvent[], lastSeenAt: number, now: number, ownName?: string): EvoEvent[] {
+  return events.filter((e) => e.at > lastSeenAt && now - e.at <= EVO_MAX_AGE_MS && e.name !== ownName);
 }
 
 export const evoKey = (e: EvoEvent) => `${e.name}|${e.pet}|${e.tier}|${e.branch ?? ''}`;

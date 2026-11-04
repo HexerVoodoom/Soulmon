@@ -25,6 +25,11 @@ describe('política de privacidade × tela de Configurações', () => {
     expect(tela).toContain('Show me on the public Tournament list');
   });
 
+  it('o rótulo da tela cita a faixa de evoluções, em PT e em EN', () => {
+    expect(tela).toContain('Aparecer na lista pública do Torneio e na faixa de evoluções');
+    expect(tela).toContain('Show me on the public Tournament list and the evolution banner');
+  });
+
   it('diz que é automático no Vínculo 5 e que o grupo cooperativo é um círculo à parte', () => {
     expect(html).toMatch(/Bond level 5/);
     expect(html).toMatch(/Vínculo nível 5/);
@@ -56,6 +61,7 @@ describe('servidor: toda rota que serve dado de outra pessoa passa pela régua i
     ["action === 'opponents'"],
     ["action === 'friends'"],
     ["action === 'gift'"],
+    ["action === 'evoFeed'"],
   ])('%s consulta isHidden', marca => {
     expect(trecho(marca)).toMatch(/isHidden\(|semEscondidos/);
   });
