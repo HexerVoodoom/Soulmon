@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, cleanup, fireEvent, render } from '@testing-library/react';
+import { ResultExtrasContext } from './ResultExtrasContext';
 import { ResultScreen, RESULT_FINAL_STEP, formatResultTime, type ResultScreenProps } from './ResultScreen';
 
 function reducedMotion(on: boolean) {
@@ -126,5 +127,16 @@ describe('ResultScreen', () => {
   it('formatResultTime: m:ss.d', () => {
     expect(formatResultTime(42_130)).toBe('0:42.1');
     expect(formatResultTime(75_900)).toBe('1:15.9');
+  });
+
+  it('teto de Bits: cor/ícone dos Bits e texto visível com o máximo, longe do baú', () => {
+    const ex = { bitsToday: 60, bitsCap: 60, missions: [] } as never;
+    render(<ResultExtrasContext.Provider value={ex}><ResultScreen {...base({ language: 'pt-BR' })} /></ResultExtrasContext.Provider>);
+    const cap = document.querySelector('[data-result-bitscap]') as HTMLElement;
+    expect(cap).toBeTruthy();
+    expect(cap.style.marginTop).toBe('16px');
+    expect(cap.querySelector('[data-result-bitscap-label]')!.textContent).toMatch(/Você já ganhou o máximo de hoje:\s*60/);
+    expect(cap.querySelector('[data-bits-amount]')).toBeTruthy();
+    expect(cap.querySelector('[role="progressbar"]')!.getAttribute('aria-label')).toBe('Bits de hoje: 60 de 60 (máximo)');
   });
 });
