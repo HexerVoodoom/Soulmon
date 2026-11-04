@@ -14,7 +14,7 @@ import type { Language } from '../../utils/i18n';
 import { RewardPreview } from '../ui/RewardPreview';
 import { ECO_MAX_BITS } from '../../utils/mente/eco';
 import { ZIP_MAX_BITS } from '../../utils/mente/zip';
-import { PATCHES_MAX_BITS } from '../../utils/mente/patches';
+import { SELO_MAX_BITS } from '../../utils/mente/selo';
 import { SupportNote } from '../refugio/SupportNote';
 import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 import { PixelIcon } from '../ui/PixelIcon';
@@ -247,7 +247,7 @@ export function PptSheet({ language, onStart }: { language: Language; onStart: (
 // ════════════════════════════════════════════════════════════════════════════
 
 export type SalaoGame = 'dino' | 'ppt' | 'match3' | 'barrage';
-export type MenteGame = 'eco' | 'zip' | 'patches';
+export type MenteGame = 'eco' | 'zip' | 'selo';
 export type RefugioGame = 'respiracao' | 'bolhas-calmas';
 
 /** Salão de Jogos — jogos livres: a Corrida com obstáculos e o PPT, as mesmas folhas de sempre.
@@ -345,7 +345,7 @@ function GameRow({ id, title, asks, meta, cta, onStart, dataKey }: {
   );
 }
 
-/** Ateliê da Mente — o Eco do Pet e os dois jogos de grade (Trilha e Colcha). */
+/** Ateliê da Mente — o Eco do Pet e os dois jogos de grade (Trilha e Selo Faltante). */
 export function MenteSheet({ language, onStart, bitsToday }: {
   language: Language;
   /** Bits de minijogo já creditados hoje (o teto é compartilhado). */
@@ -371,11 +371,11 @@ export function MenteSheet({ language, onStart, bitsToday }: {
       meta: <span style={bitsStyle}>{upTo(ZIP_MAX_BITS)}</span>,
     },
     {
-      id: 'patches',
-      title: isPt ? 'Colcha' : 'Patchwork',
-      asks: isPt ? 'Pede: dividir pelo espaço' : 'Asks: split the space',
-      detail: isPt ? 'Divida a grade em retângulos: cada um leva um número, que é a área dele.' : 'Split the grid into rectangles: each holds one number, which is its area.',
-      meta: <span style={bitsStyle}>{upTo(PATCHES_MAX_BITS)}</span>,
+      id: 'selo',
+      title: isPt ? 'Selo Faltante' : 'Missing Seal',
+      asks: isPt ? 'Pede: achar o padrão' : 'Asks: find the pattern',
+      detail: isPt ? 'Descubra o padrão da grade de selos e escolha o que falta. Exercita raciocínio.' : 'Find the pattern in the grid of seals and pick the missing one. It exercises reasoning.',
+      meta: <span style={bitsStyle}>{upTo(SELO_MAX_BITS)}</span>,
     },
   ];
   return (

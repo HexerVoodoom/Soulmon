@@ -5,12 +5,14 @@ import { getSpriteForStage } from '../../utils/sprites';
 import { MINI_FX } from '../../utils/visorScenes';
 import type { Language } from '../../utils/i18n';
 import { GameRoot, GameHeader } from '../games/GameKit';
-import type { MindGameId } from '../../utils/mente/mindTutorials';
+import type { MindTutorialGame } from '../../utils/mente/mindTutorials';
+import { SeloSeal } from './SeloSeal';
+import type { SeloPanel } from '../../utils/mente/selo';
 
 /**
  * TUTORIAL DA 1ª ABERTURA dos jogos do Ateliê da Mente (26/10/2026): 4 passos, cada um uma frase + uma mini-demonstração
  * com as pedras/números/retângulos do próprio jogo (CSS puro; movimento reduzido = quadro final parado). Voz do app: descreve o
- * que o jogo pede, sem cobrar nem prometer efeito. Regras conferidas em `EcoGame`/`ZipGame`/`PatchesGame`.
+ * que o jogo pede, sem cobrar nem prometer efeito. Regras conferidas em `EcoGame`/`ZipGame`/`SeloGame` (e `PatchesGame`, legado do Calabouço).
  * Mora no chunk lazy de cada jogo — nada disto entra no JS de entrada. O "visto" NÃO é gravado aqui: o jogo grava AO MOSTRAR.
  */
 
@@ -55,7 +57,10 @@ const inRect = (p: { r: number; c: number; h: number; w: number }, i: number) =>
   Math.floor(i / 4) >= p.r && Math.floor(i / 4) < p.r + p.h && (i % 4) >= p.c && (i % 4) < p.c + p.w;
 
 const SEQ = [0, 2, 1];
-const STEPS: Record<MindGameId, Step[]> = {
+// Selo Faltante: uma linha 1-2-3 pontos, círculo cheio, gema que gira.
+const SP = (count: number, dir: number, shape = 0, fill = 2, marks = 0): SeloPanel => ({ shape, count, dir, fill, marks });
+const SEAL_ROW = [SP(1, 0), SP(2, 1), SP(3, 2)];
+const STEPS: Record<MindTutorialGame, Step[]> = {
   eco: [
     { pt: 'Seu Soulmon canta uma sequência de pedras.', en: 'Your Soulmon sings a sequence of stones.', art: (t, pet) => <Row><Pet pet={pet} /><Stone i={SEQ[t % 3]} on /></Row> },
     { pt: 'Repare na ordem em que elas acendem.', en: 'Notice the order they light up in.', art: t => <Row>{[0, 1, 2, 3].map(i => <Stone key={i} i={i} on={SEQ[t % 3] === i} />)}</Row> },
@@ -77,6 +82,12 @@ const STEPS: Record<MindGameId, Step[]> = {
       const n = 4 + (t % 3);
       return <Grid cols={3} rows={3}>{i => <span key={i} style={{ ...cell, backgroundColor: ZIP_PATH.indexOf(i) < n ? PAL[0] : PAL[3], outline: ZIP_PATH[n - 1] === i ? '2px solid var(--sm2-primary-ink)' : 'none' }}>{ZIP_NUM[i] ?? ''}</span>}</Grid>;
     } },
+  ],
+  selo: [
+    { pt: 'Uma grade de selos: falta o do canto de baixo.', en: 'A grid of seals: the bottom corner one is missing.', art: () => <Row>{SEAL_ROW.slice(0, 2).map((p, k) => <SeloSeal key={k} panel={p} size={56} />)}<span style={{ ...sm2Text, fontWeight: 700 }}>?</span></Row> },
+    { pt: 'Cada linha segue um padrão: aqui, um ponto a mais e a gema girando.', en: 'Each row follows a pattern: here, one more dot and the gem turning.', art: t => <Row>{SEAL_ROW.slice(0, 1 + (t % 3)).map((p, k) => <SeloSeal key={k} panel={p} size={56} />)}</Row> },
+    { pt: 'Repare na forma, nos pontos, na gema, no preenchimento e nas folhas do anel.', en: 'Look at the shape, the dots, the gem, the fill and the leaves on the ring.', art: t => <Row>{[0, 1, 2].map(k => <SeloSeal key={k} panel={SP(2, k, (k + t) % 5, k % 3, (1 << k) | 1)} size={56} />)}</Row> },
+    { pt: 'Escolha, entre seis, o selo que completa a grade.', en: 'Pick, out of six, the seal that completes the grid.', art: t => <Row>{[SP(3, 2), SP(3, 3), SP(2, 2)].map((p, k) => <span key={k} style={{ opacity: t % 3 === k || k === 0 ? 1 : 0.5 }}><SeloSeal panel={p} size={56} /></span>)}</Row> },
   ],
   patches: [
     { pt: 'Divida a grade inteira em retângulos.', en: 'Split the whole grid into rectangles.', art: t => {
@@ -101,7 +112,7 @@ const TICK_MS = 750;
 
 /** O tutorial: passos com "Próximo", "Pular" e, no último, "Entendi, jogar". `onDone` serve aos dois (o visto já foi gravado ao mostrar). */
 export function MindTutorial({ game, language, evolutionStage, demoCharacterId, onDone }: {
-  game: MindGameId; language: Language; evolutionStage: string; demoCharacterId?: string; onDone: () => void;
+  game: MindTutorialGame; language: Language; evolutionStage: string; demoCharacterId?: string; onDone: () => void;
 }) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
@@ -156,7 +167,7 @@ export function useMindTutorial(tutorial: MindTutorialProp | undefined) {
 
 /** Tela do tutorial no lugar da rodada: o header do jogo fica, e o × dele sai do jogo (= pulado, o visto já foi gravado). */
 export function MindTutorialScreen({ game, title, language, evolutionStage, demoCharacterId, onExit, onDone }: {
-  game: MindGameId; title: string; language: Language; evolutionStage: string; demoCharacterId?: string; onExit: () => void; onDone: () => void;
+  game: MindTutorialGame; title: string; language: Language; evolutionStage: string; demoCharacterId?: string; onExit: () => void; onDone: () => void;
 }) {
   const isPt = language === 'pt-BR';
   return (

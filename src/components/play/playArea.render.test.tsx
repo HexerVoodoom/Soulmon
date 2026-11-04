@@ -46,7 +46,7 @@ const dubleDe = (nome: string) => (p: Record<string, unknown>) => { recebidas[no
 vi.mock('../mente/EcoGame', () => ({ EcoGame: dubleDe('eco') }));
 vi.mock('../mente/BolhasGame', () => ({ BolhasGame: (p: Record<string, unknown>) => dubleDe(`bolhas-${p.mode as string}`)(p) }));
 vi.mock('../mente/ZipGame', () => ({ ZipGame: dubleDe('zip') }));
-vi.mock('../mente/PatchesGame', () => ({ PatchesGame: dubleDe('patches') }));
+vi.mock('../mente/SeloGame', () => ({ SeloGame: dubleDe('selo') }));
 vi.mock('../refugio/RespiracaoGame', () => ({ RespiracaoGame: dubleDe('respiracao') }));
 
 import { AreaView, type AreaViewProps, type PlayHandlers } from '../nav/AreaView';
@@ -312,13 +312,14 @@ describe('Jogos — os três prédios', () => {
     expect(recebidas.rps.onEarnPoints).toBe(p.onEarnPoints);
   });
 
-  it('Ateliê da Mente: só o Eco do Pet + Trilha e Colcha (os outros saíram da lista), e cada um recebe o onEarnPoints do App (o funil do teto diário)', async () => {
+  it('Ateliê da Mente: só o Eco do Pet + Trilha e Selo Faltante (os outros saíram da lista), e cada um recebe o onEarnPoints do App (o funil do teto diário)', async () => {
     const p = props({ area: 'jogos' });
-    for (const id of ['eco', 'zip', 'patches']) {
+    for (const id of ['eco', 'zip', 'selo']) {
       const { container, unmount } = renderWithCss(<PlayAreaView {...p} />);
       fireEvent.click(container.querySelector('[data-area-lot="mente"]')!);
       fireEvent.click(await achar(container, `[data-mente-start="${id}"]`));
-      fireEvent.click(await achar(container, '[data-gate-play]'));
+      // O Selo Faltante não tem ranking: abre direto, sem a pergunta do Pipo.
+      if (id !== 'selo') fireEvent.click(await achar(container, '[data-gate-play]'));
       await achar(container, `[data-jogo="${id}"]`);
       // Os três embrulham o funil para avisar a missão do dia / os feitos (L4): o Bit continua passando intacto ao onEarnPoints do App.
       (recebidas[id].onEarnPoints as (pts: number) => void)(3);
@@ -327,13 +328,13 @@ describe('Jogos — os três prédios', () => {
     }
   });
 
-  it('Ateliê da Mente: a lista tem exatamente Eco do Pet, Trilha e Colcha, nos dois idiomas', async () => {
+  it('Ateliê da Mente: a lista tem exatamente Eco do Pet, Trilha e Selo Faltante, nos dois idiomas', async () => {
     for (const language of ['pt-BR', 'en-US'] as const) {
       const { container, unmount } = renderWithCss(<PlayAreaView {...props({ area: 'jogos', language })} />);
       fireEvent.click(container.querySelector('[data-area-lot="mente"]')!);
       await achar(container, '[data-mente]');
       const ids = [...container.querySelectorAll('[data-mente-start]')].map(e => e.getAttribute('data-mente-start'));
-      expect(ids).toEqual(['eco', 'zip', 'patches']);
+      expect(ids).toEqual(['eco', 'zip', 'selo']);
       unmount();
     }
   });

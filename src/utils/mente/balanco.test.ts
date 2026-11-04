@@ -14,6 +14,7 @@ import { M3C_DEFEAT_BONUS, M3C_ENEMY_HP, M3C_MAX_TURNS, chooseMove, combatScore,
 import { mulberry32 } from '../combate/rng';
 import { ZIP_MAX_BITS, zipBits } from './zip';
 import { PATCHES_MAX_BITS, patchesBits } from './patches';
+import { SELO_MAX_BITS, SELO_ROUND, seloBits } from './selo';
 
 /**
  * O BALANÇO DOS MINIJOGOS LEVES (30/09/2026, `docs/BALANCO-MINIJOGOS.md`).
@@ -153,13 +154,20 @@ const puzzles = (p: Perfil): Medida[] => LADOS.flatMap(l => [
   puzzleGrade('Colcha', p, l, patchesBits(l)),
 ]);
 
+// Selo Faltante (04/11/2026): 8 matrizes por rodada; típico ~18 s e ~79% de acerto (a escada mira isso); experiente ~11 s, 8/8.
+const SELO_SEG = { típico: 18, experiente: 11 } as const;
+const SELO_ACERTOS = { típico: Math.round(SELO_ROUND * 0.79), experiente: SELO_ROUND } as const;
+function selo(p: Perfil): Medida {
+  return medir('Selo Faltante', p, seloBits(SELO_ACERTOS[p.nome]), SELO_ROUND * SELO_SEG[p.nome] * 1000);
+}
+
 // Revisão: 1×/dia; ~15 s por cartão.
 function revisao(p: Perfil): Medida {
   return medir('Revisão da Malha', p, REVIEW_SESSION_BITS, REVIEW_SESSION_SIZE * (p === TIPICO ? 15 : 9) * 1000);
 }
 
 const PERFIS = [TIPICO, EXPERIENTE];
-const LEVES = PERFIS.flatMap(p => [eco(p), bolhas(p), troca(p), picross(p, 5), picross(p, 7), picross(p, 10), dino(p), ppt(p), combina3(p), ...puzzles(p)]);
+const LEVES = PERFIS.flatMap(p => [eco(p), bolhas(p), troca(p), picross(p, 5), picross(p, 7), picross(p, 10), dino(p), ppt(p), combina3(p), selo(p), ...puzzles(p)]);
 
 /** A faixa de Bits/minuto do jogador TÍPICO nos jogos leves. */
 const FAIXA_TIPICA = { min: 2.5, max: 9 };
@@ -193,6 +201,7 @@ describe('balanço dos minijogos leves (Bits por minuto)', () => {
     expect(ecoBits(ECO_START_LENGTH + ECO_MAX_BITS)).toBe(ECO_MAX_BITS);
     expect(bolhas(EXPERIENTE).bits).toBe(BOLHAS_MAX_BITS);
     expect(trocaBits(TROCA_DECK_SIZE)).toBe(TROCA_MAX_BITS);
+    expect(seloBits(SELO_ROUND)).toBe(SELO_MAX_BITS);
     expect(picrossBits(10, true)).toBe(PICROSS_MAX_BITS);
     // Elemental Fusion (combate): o placar de uma partida PERFEITA (todo o HP do time + o bônus dos três) paga o que a conta diz e NUNCA passa do
     // teto — e o combate paga ≤ à regra antiga dos pontos (a mediana do típico/experiente fica em 3–4 Bits, como ficava com 20 movimentos).

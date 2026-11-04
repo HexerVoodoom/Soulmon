@@ -27,6 +27,7 @@ export const loadEcoGame = () => import('../mente/EcoGame');
 export const loadBolhasGame = () => import('../mente/BolhasGame');
 export const loadZipGame = () => import('../mente/ZipGame');
 export const loadPatchesGame = () => import('../mente/PatchesGame');
+export const loadSeloGame = () => import('../mente/SeloGame');
 export const loadRespiracaoGame = () => import('../refugio/RespiracaoGame');
 
 type Loader = () => Promise<unknown>;
@@ -34,7 +35,7 @@ type Loader = () => Promise<unknown>;
 /** Ordem: o que o dono mais abre primeiro. */
 const GAME_LOADERS: Loader[] = [
   loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame,
-  loadZipGame, loadPatchesGame, loadRespiracaoGame,
+  loadZipGame, loadSeloGame, loadRespiracaoGame,
 ];
 
 type IdleWindow = Window & {

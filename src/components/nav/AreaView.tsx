@@ -38,7 +38,7 @@ import type { FocusRewardResult } from '../play/OficinaSheet';
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
 import type { PasseioAchado } from '../play/PasseioSheet';
 import {
-  usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame, loadZipGame, loadPatchesGame,
+  usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame, loadZipGame, loadSeloGame,
   loadRespiracaoGame,
 } from './playPrefetch';
 
@@ -87,7 +87,7 @@ const RPSGame = lazy(() => loadRPSGame().then(m => ({ default: m.RPSGame })));
 const EcoGame = lazy(() => loadEcoGame().then(m => ({ default: m.EcoGame })));
 const BolhasGame = lazy(() => loadBolhasGame().then(m => ({ default: m.BolhasGame })));
 const ZipGame = lazy(() => loadZipGame().then(m => ({ default: m.ZipGame })));
-const PatchesGame = lazy(() => loadPatchesGame().then(m => ({ default: m.PatchesGame })));
+const SeloGame = lazy(() => loadSeloGame().then(m => ({ default: m.SeloGame })));
 const RespiracaoGame = lazy(() => loadRespiracaoGame().then(m => ({ default: m.RespiracaoGame })));
 
 /** Os handlers dos minijogos da Exploração e de Jogos — prontos no `App`, os
@@ -155,7 +155,6 @@ const MINIGAME_GATE: Partial<Record<PlayGame, { name: { pt: string; en: string }
   match3: { name: { pt: 'Fusão Elemental', en: 'Elemental Fusion' }, pveVsPvp: true, rankings: [{ game: 'match3' }] },
   eco: { name: { pt: 'Eco do Pet', en: "Pet's Echo" }, rankings: [{ game: 'eco' }] },
   zip: { name: { pt: 'Trilha do Pet', en: 'Pet Trail' }, rankings: [{ game: 'zip' }] },
-  patches: { name: { pt: 'Colcha', en: 'Patchwork' }, rankings: [{ game: 'patches' }] },
 };
 
 export type PlayGame = 'masmorra' | SalaoGame | MenteGame | RefugioGame;
@@ -652,7 +651,8 @@ export function AreaView(props: AreaViewProps) {
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
             {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('eco'); }} />}
             {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('zip'); emitFeat('zipSolved'); }} />}
-            {game === 'patches' && <PatchesGame {...base} tutorial={mindTut('patches')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('patches'); emitFeat('patchesSolved'); }} />}
+            {/* Selo Faltante (04/11/2026, substitui a Colcha): sem ranking; a rodada fechada conta a missão do dia e o feito, mesmo com 0 Bits. */}
+            {game === 'selo' && <SeloGame {...base} tutorial={mindTut('selo')} onEarnPoints={(pts) => { if (pts > 0) props.onEarnPoints(pts); props.onDailyEvent?.('selo'); emitFeat('seloSolved'); }} />}
             {/* Refúgio — NÃO recebem `onEarnPoints`: não pagam Bits nem pontuam. Concluir devolve a energia do dia (`onComplete`, 1×/dia). */}
             {game === 'respiracao' && <RespiracaoGame {...base} onComplete={play.onRefugioComplete} />}
             {game === 'bolhas-calmas' && <BolhasGame {...base} mode="calma" onComplete={play.onRefugioComplete} />}

@@ -21,7 +21,7 @@ import recompensaSheet from '../assets/soulmon/fx-pack/recompensa-sheet.png';
 import evolucaoSheet from '../assets/soulmon/fx-pack/evolucao-sheet.png';
 
 export const SCENE_BG = { fusion: fusionBg, torneioLobby: torneioLobbyBg, duelo: dueloBg, evolucao: evolucaoBg,
-  barrage: barrageBg, eco: ecoBg, zip: zipBg, patches: patchesBg } as const;
+  barrage: barrageBg, eco: ecoBg, zip: zipBg, patches: patchesBg, selo: patchesBg } as const;
 /** O `background` de tela cheia de um minijogo: degradê turquesa escuro embaixo (legibilidade) sobre a cena. */
 export function sceneBackground(key: keyof typeof SCENE_BG): string {
   return `linear-gradient(to top, rgba(3, 38, 44, .92) 0%, rgba(4, 52, 58, .55) 30%, transparent 58%), url(${SCENE_BG[key]}) center/cover var(--sm2-bg)`;
