@@ -641,3 +641,17 @@ Decisões conservadoras tomadas pela orquestração; revisar:
 O servidor passa a guardar, sem prazo e fora da exclusão de conta, a chave `freeGen:<saveId>` (hash do e-mail → URL do primeiro rookie gerado) e, opcionalmente, hashes de e-mails de teste. Para a política (NÃO alterada ainda), sugestão: "Guardamos, de forma irreversível (sem seu e-mail em claro), que sua conta já usou a geração gratuita e qual foi o desenho, para que recriar a conta devolva o mesmo Soulmon e não conceda outra geração gratuita. Isso permanece mesmo após excluir a conta." Aprova o texto (e o "para sempre", D6)?
 
 **RESPONDIDA (D28, 30/10/2026):** dono aprovou; política (PT/EN, `privacidade.html` 6d) declara hash do e-mail + URL da imagem, mantidos após a exclusão; `PRIVACY_VERSION` = 2026-10-30.
+
+## 04/11/2026 — Molduras do widget V-Pet: o que criar no Play Console
+
+O código está pronto e NÃO cria nada na Play. Enquanto o produto não existir lá, a moldura trancada mostra "Indisponível" (o preço vem da própria Play, nunca escrito no app). A moldura de cada elemento também vem SOZINHA quando o Soulmon evolui para ele.
+
+**Criar 20 produtos "Produtos no app" (gerenciados, NÃO consumíveis, status Ativo), um por elemento base.** Mesma configuração para todos; preço sugerido **R$ 4,90 (US$ 0,99)** cada, ajustável por país. ID exato (não dá para trocar depois), título sugerido "Moldura do widget: <Elemento>", descrição "Casco do widget V-Pet com o tema do elemento <Elemento>. Compra única, vale para sempre.":
+
+`moldura_fogo`, `moldura_agua`, `moldura_terra`, `moldura_ar`, `moldura_eletricidade`, `moldura_arcano`, `moldura_sombra`, `moldura_luz`, `moldura_vileza`, `moldura_morte`, `moldura_vida`, `moldura_vigor`, `moldura_marcial`, `moldura_tempo`, `moldura_som`, `moldura_gravidade`, `moldura_espaco`, `moldura_fada`, `moldura_industrial`, `moldura_planta`
+
+Decisões que ficaram com a recomendação do lead (responda só se discordar):
+1. Preço único de R$ 4,90 para os 20 (recomendado: sim). Alternativa: pacote com todas.
+2. Quem compra "sombra" e depois evolui para sombra não recebe reembolso (conforme você decidiu).
+3. Reembolso na Play tira a moldura comprada (a diária de conferência já existente); se o jogador a tinha usada, o widget volta ao casco padrão.
+4. Arte: `moldura_vpet_<elemento>.png` em `android/app/src/main/res/drawable-nodpi/` (576x384, MESMA abertura LCD do `vpet_moldura.png`; aceita também `.webp` com o mesmo nome). Peso: o casco atual tem 280 KB; 20 iguais somam ~5,6 MB no APK. Recomendo PNG de 8 bits com paleta (pngquant) ou WebP sem perdas. Prévia opcional no app: `src/assets/soulmon/widget-molduras/<elemento>.png|webp`.

@@ -156,6 +156,11 @@ function emptyEntitlement() {
      * pode tocar nela, e ela não concede tier nem Créditos.
      */
     sub: null,
+    /**
+     * MOLDURAS DO WIDGET V-PET compradas (ids de elemento base). Só `applyVerifiedPurchase` escreve (a partir de uma compra
+     * verificada na Play); `auditRefunds` tira a do pedido reembolsado. COSMÉTICO: nada de regra de jogo lê isto.
+     */
+    frames: [],
     adDate: today(),
     adCount: 0,
     updatedAt: Date.now(),
@@ -309,6 +314,8 @@ export function publicView(ent) {
     // forma `{ tier, credits, adsLeft }` não veem campo novo em conta demo.
     ...(provider ? { provider } : {}),
     // Só quando a conta já teve assinatura: contas sem ela mantêm o formato de sempre.
+    // Só quando há alguma: contas sem moldura mantêm o formato de sempre.
+    ...(Array.isArray(ent.frames) && ent.frames.length ? { frames: [...ent.frames] } : {}),
     ...(ent.sub ? { subActive: isSubscriptionActive(ent), subUntil: Number(ent.sub.until) || 0 } : {}),
   };
 }
@@ -673,7 +680,7 @@ export function podarOrderDetails(details, max = ORDER_HISTORY_MAX) {
  * saber o que desfazer depois (ver auditRefunds).
  */
 export async function applyVerifiedPurchase(env, saveId, {
-  orderId, grantTier, grantCredits, provider, productId, purchaseToken,
+  orderId, grantTier, grantCredits, grantFrame, provider, productId, purchaseToken,
 }) {
   const ent = await readEntitlement(env, saveId);
   if (orderId && ent.consumedOrders.includes(orderId)) {
@@ -698,12 +705,17 @@ export async function applyVerifiedPurchase(env, saveId, {
   }
   if (grantTier === 'paid') ent.tier = 'paid';
   if (grantCredits > 0) ent.credits += grantCredits;
+  if (typeof grantFrame === 'string') {
+    if (!Array.isArray(ent.frames)) ent.frames = [];
+    if (!ent.frames.includes(grantFrame)) ent.frames.push(grantFrame);
+  }
   if (orderId) {
     ent.consumedOrders.push(orderId);
     ent.orderDetails.push({
       orderId, provider, productId, purchaseToken,
       grantTier: grantTier ?? null,
       grantCredits: grantCredits ?? 0,
+      ...(typeof grantFrame === 'string' ? { grantFrame } : {}),
     });
     // Mantém as listas limitadas — só precisamos do histórico recente.
     if (ent.consumedOrders.length > ORDER_HISTORY_MAX) ent.consumedOrders = ent.consumedOrders.slice(-ORDER_HISTORY_MAX);
@@ -800,6 +812,7 @@ export async function grantCourtesy(env, saveId, max = courtesyMaxFrom(env)) {
     orderId,
     grantTier: 'paid',
     grantCredits: 0,
+    grantFrame: null,
     provider: COURTESY_PROVIDER,
     productId: COURTESY_PROVIDER,
     purchaseToken: null,
@@ -874,6 +887,11 @@ export async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
     // O jogador que reembolsa depois de gastar sai no lucro dessa diferença —
     // cobrar dele um saldo que não existe mais só criaria uma conta travada.
     if (order.grantCredits > 0) fresh.credits = Math.max(0, fresh.credits - order.grantCredits);
+    // Moldura de widget comprada e reembolsada: sai da conta (outra compra viva do MESMO elemento a mantém).
+    if (typeof order.grantFrame === 'string' && Array.isArray(fresh.frames)
+        && !fresh.orderDetails.some(o => o !== order && !o.voided && o.grantFrame === order.grantFrame)) {
+      fresh.frames = fresh.frames.filter(f => f !== order.grantFrame);
+    }
   }
 
   // O TIER É DERIVADO, não decrementado. A versão anterior fazia

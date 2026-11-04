@@ -2057,3 +2057,9 @@ Aviso curto na Home (REGISTRO §213 emenda 2): o Soulmon do jogador está desgar
 ### `src/components/perfil/EspecialNomeEditor.tsx`
 **Dono de:** o campo "Nome do seu especial" na carta do Perfil do Soulmon (Laboratório): valida na tela com a mesma regra do servidor, avisa em âmbar e mostra quantos dias faltam para a próxima troca (a troca semanal é decidida no servidor). Vazio volta ao nome padrão.
 **Chamado por:** `src/components/perfil/SoulmonPerfil.tsx`.
+
+### `src/components/WidgetFramePicker.tsx`
+
+**Dono de:** a escolha da moldura do widget V-Pet, em Configurações, usando `src/utils/widgetFrames.ts`.
+
+**Chamado por:** `src/components/SettingsPage.tsx`.

@@ -38,6 +38,23 @@ object WidgetVpet {
     /** Speech text, right of the sprite and above the icon row. */
     val text = Box(sprite.r + 12, inner.t, inner.r, iconRow.t - 6)
 
+    /**
+     * Casing variants (owner, 04/11/2026): one per BASE element, drawable `moldura_vpet_<element>` (576x384, the SAME
+     * LCD opening as `vpet_moldura`). The allowlist is the 20 base ids; anything else (or a missing file) falls back to
+     * the default casing, so a bad pref or art that is not in the APK yet can never break the widget.
+     */
+    val FRAME_ELEMENTS: Set<String> = setOf(
+        "fogo", "agua", "terra", "ar", "eletricidade", "arcano", "sombra", "luz", "vileza", "morte",
+        "vida", "vigor", "marcial", "tempo", "som", "gravidade", "espaco", "fada", "industrial", "planta",
+    )
+
+    /** Drawable name of the chosen casing, or null = default casing (empty/unknown id). */
+    fun frameDrawableName(id: String?): String? =
+        if (id != null && id in FRAME_ELEMENTS) "moldura_vpet_$id" else null
+
+    /** The resource id to draw: the variant when it exists in the APK (`variantRes` != 0), else the default. */
+    fun pickCasing(variantRes: Int, defaultRes: Int): Int = if (variantRes != 0) variantRes else defaultRes
+
     /** Hunger shown full-colour only when the pet is hungry (same rule as the hungry line). */
     fun isHungry(now: Long, hungryAt: Long?): Boolean = hungryAt != null && now >= hungryAt
 }
