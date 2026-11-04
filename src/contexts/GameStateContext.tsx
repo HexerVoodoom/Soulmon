@@ -506,6 +506,8 @@ export interface GameState {
   checkIns?: { day: string; claimed: Array<'morning' | 'afternoon' | 'night'> };
   /** 🎲 Rerolls dos 3 cards da Arena livre feitos no dia do jogador (28/10/2026, `utils/arenaSorteio.ts`): 3 grátis, depois Bits. O contador (dia ISO + n) também é a semente dos cards, então reabrir mostra os mesmos. Servidor: monotônico no dia (`_dayCounters.js`). */
   arenaReroll?: ArenaReroll;
+  /** 🔁 Runs da Arena TERMINADAS no dia (04/11/2026, `applyArenaRunEnd`): cada fim de run re-sorteia os 3 cards de graça (entra na semente), sem tocar no `arenaReroll`. Sem valor econômico: o servidor só repassa. */
+  arenaRuns?: ArenaReroll;
   /**
    * P2 — a folga da semana (`REST_DAYS_PER_WEEK`, `utils/dailyReset.ts`).
    *
@@ -1400,6 +1402,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         dungeonDaily: sanitizeDungeonDaily(loadedState.dungeonDaily),
         checkIns: sanitizeCheckIns(loadedState.checkIns),
         arenaReroll: sanitizeArenaReroll(loadedState.arenaReroll),
+        arenaRuns: sanitizeArenaReroll(loadedState.arenaRuns),
         // Folga da semana (P2). `undefined` é o certo para save antigo: a
         // virada lê isso como "a folga daquela semana estava inteira".
         restDaysLeft: typeof loadedState.restDaysLeft === 'number'

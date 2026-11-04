@@ -116,7 +116,7 @@ export interface PlayHandlers {
   onDinoScore: (score: number) => void;
   onSpendBits?: (pts: number) => boolean;
   /** Arena livre (28/10/2026): contador de rerolls do save, dia do jogador e o pedido de reroll (o App desconta Bits e grava). */
-  arena?: { dayIso: string; reroll?: ArenaReroll; onReroll: () => boolean };
+  arena?: { dayIso: string; reroll?: ArenaReroll; onReroll: () => boolean; runs?: ArenaReroll; onRunEnd?: () => void };
   /** Dia do JOGADOR (`playerDayKey`) — o Picross do dia e a Revisão leem daqui.
    *  Sem ele (testes antigos), cai no dia UTC do aparelho. */
   todayKey?: string;
@@ -502,7 +502,7 @@ export function AreaView(props: AreaViewProps) {
               <DueloSheet
                 language={language}
                 evolutionStage={props.evolutionStage}
-                arena={{ dayIso: props.play.arena?.dayIso ?? playerDayIso(new Date(), undefined), accountKey: props.guild.saveId ?? 'local', reroll: props.play.arena?.reroll, bits: props.points, onReroll: props.play.arena?.onReroll ?? (() => false) }}
+                arena={{ dayIso: props.play.arena?.dayIso ?? playerDayIso(new Date(), undefined), accountKey: props.guild.saveId ?? 'local', reroll: props.play.arena?.reroll, runs: props.play.arena?.runs, bits: props.points, onReroll: props.play.arena?.onReroll ?? (() => false) }}
                 onStart={(seed) => { setSheet(null); setDuelSeed(seed); setDuelOpen(true); }}
               />
             )}
@@ -523,6 +523,7 @@ export function AreaView(props: AreaViewProps) {
               onElementsDefeated={props.play.onElementsDefeated}
               onEnemySeen={props.play.onBestiarySeen}
               onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('arena'); }}
+              onRunEnd={props.play.arena?.onRunEnd}
               onExit={() => setDuelOpen(false)}
             />
           </Suspense>

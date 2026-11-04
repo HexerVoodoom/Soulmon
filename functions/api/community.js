@@ -743,18 +743,29 @@ async function handleCommunity(context) {
       if (!p.pvpEnabled || p.id === me || isHidden(p)) continue;
       pool.push({ profile: p, pub: await publicProfile(env, p), saveId: k.slice('profile:'.length) });
     }
-    // TORNEIO = ranqueado: o servidor sorteia (aleatório) dentre quem está perto da faixa de quem pede
-    // (`lifetimePoints`, a medida da faixa). Sem `id` (consulta anônima) cai no sorteio por proximidade de 0.
+    // TORNEIO = ranqueado: o servidor sorteia (aleatório) dentre quem está MAIS PERTO de quem pede no RANKING
+    // DA SEASON (pontos da season, a mesma ordem que a tela mostra). Antes media por `lifetimePoints`
+    // (monotônico, só sobe em vitória e nunca cai): o jogador subia de posição e a lista continuava a mesma,
+    // porque a vizinhança por pontos de carreira quase não mexe. Desempate: `lifetimePoints`.
+    // Pontos alheios NÃO saem na resposta (o payload público de oponente não leva pontos).
+    const season = currentSeason();
+    const myRank = id ? await getRank(env, season, id) : null;
+    const indice = await lerIndice(env, season);
+    const pontosDaSeason = async (saveId) => (typeof indice.p[saveId] === 'number'
+      ? indice.p[saveId]
+      : (await getRank(env, season, saveId)).points ?? 0);
+    const myPoints = myRank ? (Number(myRank.points) || 0) : 0;
     const meProfileRaw = me ? await kvOrThrow(env).get(`profile:${me}`) : null;
-    const myPoints = meProfileRaw ? (JSON.parse(meProfileRaw).lifetimePoints ?? 0) : 0;
+    const myLifetime = meProfileRaw ? (JSON.parse(meProfileRaw).lifetimePoints ?? 0) : 0;
+    const comPontos = await Promise.all(pool.map(async e => ({
+      ...e, score: await pontosDaSeason(e.saveId), lifetime: e.profile.lifetimePoints ?? 0,
+    })));
     const sorted = pickRankedOpponents(
-      pool.map(e => ({ ...e, lifetime: e.profile.lifetimePoints ?? 0 })),
-      myPoints,
+      comPontos,
+      { score: myPoints, lifetime: myLifetime },
       () => { const b = new Uint32Array(1); crypto.getRandomValues(b); return b[0] / 4294967296; },
     );
     pool.length = 0; pool.push(...sorted);
-    const season = currentSeason();
-    const myRank = id ? await getRank(env, season, id) : null;
     const matchesLeft = myRank
       ? MATCHES_PER_DAY - (myRank.day === today() ? myRank.matchesToday : 0)
       : MATCHES_PER_DAY;

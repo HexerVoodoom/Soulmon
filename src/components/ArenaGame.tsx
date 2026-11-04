@@ -123,11 +123,13 @@ export interface ArenaGameProps {
   onElementsDefeated?: (ids: readonly string[], drops?: readonly EssenceDrop[]) => void;
   /** Bestiário (31/10/2026): todo inimigo VISTO numa rodada entra na Biblioteca (abas Selvagem/Desgarrado). */
   onEnemySeen?: (enemyKey: string) => void;
+  /** A run TERMINOU (vitória, derrota ou empate): o chamador re-sorteia os 3 cards de graça (`applyArenaRunEnd`). Uma vez por run. */
+  onRunEnd?: () => void;
   onExit: () => void;
 }
 
 export function ArenaGame({
-  evolutionStage, demoCharacterId, language, skills, petElement, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onEnemySeen, onExit,
+  evolutionStage, demoCharacterId, language, skills, petElement, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onEnemySeen, onRunEnd, onExit,
 }: ArenaGameProps) {
   const elementsDefeatedRef = useRef(onElementsDefeated);
   const enemySeenRef = useRef(onEnemySeen);
@@ -144,6 +146,8 @@ export function ArenaGame({
   const [rodada, setRodada] = useState(1);
   const [inimigos, setInimigos] = useState<ArenaEnemy[]>([]);
   const [pontos, setPontos] = useState(0);
+  /** Quanto de HP (fração) o fôlego entre rodadas devolveu: o número do modal "+X HP". */
+  const [curaFrac, setCuraFrac] = useState(0);
   /** A confirmação de sair está aberta: a luta espera. */
   const [pausado, setPausado] = useState(false);
   const reduzido = useRef(prefersReducedMotion());
@@ -196,6 +200,18 @@ export function ArenaGame({
   jogadorRef.current = jogador;
   const lado = useMemo(() => arenaPlayerSide(jogador), [jogador]);
   const hpMax = hpPoints(lado.combatant.hp);
+
+  /* Fim de run (04/11/2026, dono): avisa UMA vez por run, para o trio da Arena ser sorteado de novo sem gastar reroll.
+     A chave é a semente da luta: a revanche (semente nova) é outra run. */
+  const runEndRef = useRef(onRunEnd);
+  runEndRef.current = onRunEnd;
+  const fimAvisadoRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (fase !== 'venceu' && fase !== 'perdeu' && fase !== 'empatou') return;
+    if (fimAvisadoRef.current === seedLuta) return;
+    fimAvisadoRef.current = seedLuta;
+    runEndRef.current?.();
+  }, [fase, seedLuta]);
 
   /** Sprite por inimigo, sorteado UMA vez por rodada — sortear na pintura trocaria o bicho a cada re-render. */
   const [sprites, setSprites] = useState<string[]>([]);
@@ -284,7 +300,9 @@ export function ArenaGame({
   const aoFimDaRodada = useCallback((res: GroupResult) => {
     if (res.winner === 'player') {
       // Fôlego entre rodadas — a regra da simulação (`ROUND_CLEAR_HEAL`), e é ela que faz a run inteira ser possível.
-      hpCarryRef.current = Math.min(1, res.hpLeft + ROUND_CLEAR_HEAL);
+      const depois = Math.min(1, res.hpLeft + ROUND_CLEAR_HEAL);
+      setCuraFrac(Math.max(0, depois - Math.max(0, res.hpLeft)));
+      hpCarryRef.current = depois;
       energyCarryRef.current = res.energyLeft;
       // C-1 (run `som-01`): a rodada limpa NÃO toca `playTaskComplete`. PR18 (pedido do dono, 06/10/2026): ganhou o som
       // PRÓPRIO de vitória de combate (`playVictory`, categoria `arcade`) — o corte C-1 continua valendo para o resto.
@@ -321,6 +339,11 @@ export function ArenaGame({
     setRodada(n);
     montarRodada(n, pool);
   }, [pool, rodada, pontos, onEarnPoints, montarRodada, rift.riftBits]);
+
+  // Última rodada vencida: sem modal nem tela intermediária, fecha a run direto.
+  useEffect(() => {
+    if (fase === 'rodada-limpa' && rodada >= ARENA_ROUNDS) proximaRodada();
+  }, [fase, rodada, proximaRodada]);
 
   // §213: desgarrado de JOGADOR por cima de um inimigo da rodada (só arte/rótulo). Raro, determinístico por run+rodada+posição.
   const wildPlayers = useStrayPlayerEncounters(inimigos.map((_, i) => `arena|${runSeedRef.current}|${rodadaRef.current}|${i}`));
@@ -514,24 +537,19 @@ export function ArenaGame({
         </>
       )}
 
-      {fase === 'rodada-limpa' && (
-        <>
-          <GameVisor height={80} scene={cenaDaRun.bg}>
-            {/* §201 (dono, 30/10/2026): a bandeira branca saiu (o dono não gostou); o Soulmon fica centrado no visor. */}
-            <VisorSprite src={petSprite} alt="" style={{ left: '50%', marginLeft: -64, bottom: 8, ...petScaleStyle(petScale) }} data-visor-pet />
-          </GameVisor>
-          <p style={phaseTitle}>{isPt ? `Rodada ${rodada} vencida` : `Round ${rodada} cleared`}</p>
-          <p className="sm2-num" style={phaseLine}>
-            {isPt
-              ? `Você recuperou um pouco de vida. Total: ${pontos} Bits.`
-              : `You recovered some health. Total: ${pontos} Bits.`}
-          </p>
-          <button type="button" onClick={proximaRodada} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 320, alignSelf: 'center' }}>
-            {rodada >= ARENA_ROUNDS
-              ? (isPt ? 'Terminar' : 'Finish')
-              : (isPt ? 'Próxima rodada' : 'Next round')}
-          </button>
-        </>
+      {/* Entre rodadas (04/11/2026, dono): sem página intermediária — só um MODAL com a vida recuperada e o botão do próximo round.
+          A última rodada vencida não abre modal: vai direto ao fim da run (efeito abaixo). */}
+      {fase === 'rodada-limpa' && rodada < ARENA_ROUNDS && (
+        <div data-arena-cura-modal style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, backgroundColor: 'rgba(0,0,0,0.45)' }}>
+          <div role="dialog" aria-modal="true" aria-labelledby="arena-cura-titulo" style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 320, padding: 16, borderRadius: 12, backgroundColor: 'var(--sm2-surface)', border: '1px solid var(--sm2-line)', boxShadow: SM2_SHADOW_CARD }}>
+            <p id="arena-cura-titulo" className="sm2-num" style={phaseTitle}>
+              {isPt ? `+${Math.round(curaFrac * hpMax)} HP recuperado` : `+${Math.round(curaFrac * hpMax)} HP recovered`}
+            </p>
+            <button type="button" data-arena-proxima onClick={proximaRodada} style={{ ...sm2Button('primary'), width: '100%' }}>
+              {isPt ? 'Próxima rodada' : 'Next round'}
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Fim da run: tela padrão (Proposta D). A "rodada limpa" acima é intermediária (a run segue) e fica COMPACTA, inline: não é resultado. */}
@@ -557,7 +575,8 @@ export function ArenaGame({
           petSrc={petSprite}
           opponentSrc={sprites[sprites.length - 1]}
           scene={cenaDaRun.bg}
-          playAgainLabel={isPt ? 'Tentar de novo' : 'Try again'}
+          /* Vitória não pode soar como derrota (dono, 04/11/2026): venceu = "Lutar de novo"; derrota/empate = "Tentar de novo". */
+          playAgainLabel={fase === 'venceu' ? (isPt ? 'Lutar de novo' : 'Battle again') : (isPt ? 'Tentar de novo' : 'Try again')}
           onPlayAgain={comecar}
           homeLabel={sair}
           onHome={onExit}

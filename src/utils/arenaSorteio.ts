@@ -85,8 +85,11 @@ export const arenaCardElements = (seed: number): string[] => [arenaRunElement(se
  * Os 3 cards. `accountKey` = saveId (ou outro identificador estável da conta). Elementos distintos entre os cards: se um card repete
  * elemento de outro, tenta a semente vizinha (até 64 vezes); sem saída, aceita o melhor (nunca trava).
  */
-export function arenaCards(dayIso: string, accountKey: string, rerollCount: number, n = 3): number[] {
-  const rng = mulberry32(hash(`${dayIso}|${accountKey}|${Math.max(0, Math.floor(rerollCount) || 0)}`));
+export function arenaCards(dayIso: string, accountKey: string, rerollCount: number, n = 3, runsDone = 0): number[] {
+  // 04/11/2026 (dono): ao TERMINAR uma run (vitória, derrota ou empate) o trio é sorteado de novo, de graça — o nº de runs
+  // terminadas no dia (`arenaRuns`) entra na semente. 0 runs = a semente de sempre (mesmos cards de antes da regra).
+  const runs = Math.max(0, Math.floor(runsDone) || 0);
+  const rng = mulberry32(hash(`${dayIso}|${accountKey}|${Math.max(0, Math.floor(rerollCount) || 0)}${runs > 0 ? `|run${runs}` : ''}`));
   const seeds = arenaCardSeeds(() => (rng() * 0x100000000) | 0, n);
   const taken = new Set<string>();
   return seeds.map(s0 => {
@@ -117,4 +120,12 @@ export function applyArenaReroll<T extends BitsOriginState & { arenaReroll?: Are
   if (bits < cost) return prev;
   const next = { ...prev, arenaReroll: nextArenaReroll(prev.arenaReroll, dayIso), gamePoints: bits - cost };
   return cost > 0 ? spendBitsPaidFirst(next, cost) : next;
+}
+
+/**
+ * Runs da Arena TERMINADAS no dia (`arenaRuns {day,count}`, mesma forma do `arenaReroll`). Cada fim de run soma 1 e
+ * re-sorteia os 3 cards (`arenaCards(..., runsDone)`), SEM tocar no contador do reroll (que é o pago/limitado).
+ */
+export function applyArenaRunEnd<T extends { arenaRuns?: ArenaReroll }>(prev: T, dayIso: string): T {
+  return { ...prev, arenaRuns: nextArenaReroll(prev.arenaRuns, dayIso) };
 }

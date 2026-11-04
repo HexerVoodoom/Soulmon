@@ -400,6 +400,12 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       .catch(() => { setRerolled(true); })
       .finally(() => setRerolling(false));
   };
+  /** Relê o ranking sem apagar o que está na tela (a insígnia não pisca entre lutas). */
+  const reloadRank = () => {
+    getRank(undefined, saveId)
+      .then(r => { setRank(r.rank ?? []); setMeRank(r.me ?? null); setServerPlace(typeof r.myPlace === 'number' ? r.myPlace : null); setRankFailed(false); })
+      .catch(() => { /* mantém o ranking anterior */ });
+  };
   useEffect(() => {
     if (!rank) {
       /* `?? []` é DEFESA, não redundância: se a resposta vier sem `rank`,
@@ -481,7 +487,9 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       setFighting(null);
       setDuel(null);
       // A semente depende da partida do dia: a lista velha já não vale.
+      // A posição também mudou: o ranking é relido (antes só carregava uma vez e a janela ±3 ficava parada).
       loadOpponents();
+      reloadRank();
     }
   };
 

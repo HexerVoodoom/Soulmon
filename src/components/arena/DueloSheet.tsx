@@ -53,12 +53,15 @@ export interface ArenaRerollProps {
   bits: number;
   /** Pede o reroll (o chamador desconta e grava); `false` = recusado. */
   onReroll: () => boolean;
+  /** Runs terminadas no dia (`arenaRuns`): cada uma re-sorteia o trio de graça. */
+  runs?: ArenaReroll;
 }
 
 function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: (seed: number) => void; arena: ArenaRerollProps }) {
   const done = arenaRerollsToday(arena.reroll, arena.dayIso);
   // 3 desafios do DIA, determinísticos (mesmos ao reabrir), elementos distintos, no máximo 1 Desgarrado.
-  const seeds = useMemo(() => arenaCards(arena.dayIso, arena.accountKey, done), [arena.dayIso, arena.accountKey, done]);
+  const runsDone = arenaRerollsToday(arena.runs, arena.dayIso);
+  const seeds = useMemo(() => arenaCards(arena.dayIso, arena.accountKey, done, 3, runsDone), [arena.dayIso, arena.accountKey, done, runsDone]);
   const cost = arenaRerollCost(done);
   const free = arenaRerollsFreeLeft(done);
   const canReroll = arena.bits >= cost;

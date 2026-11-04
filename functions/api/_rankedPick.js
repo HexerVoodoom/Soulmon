@@ -12,21 +12,27 @@
 // ---------------------------------------------------------------------------
 
 /** Quantos candidatos mais próximos entram no sorteio (3 devolvidos entre eles). */
-export const RANKED_WINDOW = 6;
+export const RANKED_WINDOW = 4;
 export const RANKED_PICKS = 3;
 
 /**
- * `pool`: `[{ lifetime?: number, ...resto }]`. Devolve até `n` itens do pool, sorteados dentre os
- * `window` mais próximos de `myPoints`. Pura: o `rng` vem de fora (`() => [0,1)`).
+ * `pool`: `[{ score?: number, lifetime?: number, ...resto }]`. Devolve até `n` itens do pool, sorteados
+ * dentre os `window` mais próximos de `me`. `score` = pontos da SEASON (a posição que a tela mostra, muda a
+ * cada luta); `lifetime` só desempata. `me` aceita número (legado: compara `lifetime`) ou `{ score, lifetime }`.
+ * Pura: o `rng` vem de fora (`() => [0,1)`).
  */
-export function pickRankedOpponents(pool, myPoints, rng, n = RANKED_PICKS, window = RANKED_WINDOW) {
-  const me = Number.isFinite(myPoints) ? myPoints : 0;
+export function pickRankedOpponents(pool, me, rng, n = RANKED_PICKS, window = RANKED_WINDOW) {
+  const fin = v => (Number.isFinite(v) ? v : 0);
+  const legado = typeof me !== 'object' || me === null;
+  const alvo = legado ? fin(me) : fin(me.score);
+  const alvoLife = legado ? 0 : fin(me.lifetime);
   const tagged = pool.map(item => ({
     item,
-    d: Math.abs((Number.isFinite(item.lifetime) ? item.lifetime : 0) - me),
+    d: Math.abs((legado ? fin(item.lifetime) : fin(item.score)) - alvo),
+    d2: legado ? 0 : Math.abs(fin(item.lifetime) - alvoLife),
     tie: rng(),
   }));
-  tagged.sort((a, b) => a.d - b.d || a.tie - b.tie);
+  tagged.sort((a, b) => a.d - b.d || a.d2 - b.d2 || a.tie - b.tie);
   const near = tagged.slice(0, Math.max(n, window)).map(t => t.item);
   for (let i = near.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
