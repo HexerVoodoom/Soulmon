@@ -209,8 +209,10 @@ function drawPet(ctx: CanvasRenderingContext2D, img: HTMLImageElement, groundY: 
   ctx.restore();
 }
 
-export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit, rankSaveId, petElement, challenge, initialLevel }: {
+export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onScore, onExit, rankSaveId, petElement, challenge, initialLevel, onReplayRound }: {
   /** Dificuldade já escolhida na pergunta do NPC (`MinigameModeGate`): começa direto, sem os CTAs de dentro. */
+  /** Sessão de diversão (`utils/funSession.ts`): jogar de novo conta uma rodada. `false` = sem energia (o AreaView fecha o jogo). Ausente = sem custo. */
+  onReplayRound?: () => boolean;
   initialLevel?: 1 | 2;
   /** Modo desafio (Calabouço): vence ao atingir `goal` de score; sem Bits/recorde/ranking. */
   challenge?: GameChallenge;
@@ -716,7 +718,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
           petSrc={getSpriteForStage(evolutionStage, demoCharacterId, 256)}
           scene={DINO_SCENE.bg}
           playAgainLabel={isPt ? 'Correr de novo' : 'Run again'}
-          onPlayAgain={() => start(playedLevel)}
+          onPlayAgain={() => { if (onReplayRound && !onReplayRound()) return; start(playedLevel); }}
           homeLabel={isPt ? 'Sair' : 'Exit'}
           onHome={onExit}
           below={<RankingPanel key={`${playedLevel}-${finalScore}`} game={playedLevel === 2 ? 'dino-2' : 'dino-1'} saveId={rankSaveId} language={language} score={finalScore} />}

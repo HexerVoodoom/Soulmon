@@ -373,13 +373,17 @@ export function AreaView(props: AreaViewProps) {
      não gasta rodada. Uma cobrança por abertura (`funChargedRef`); recusa (sem energia) fecha o jogo. */
   const funApi = props.play?.funSession; // `play` é opcional na prática: áreas sem jogos montam sem ele
   const funChargedRef = useRef<string | null>(null);
+  /* Sem energia: fecha o jogo e devolve à folha do Salão, com o aviso em destaque. */
+  const [funRefused, setFunRefused] = useState(false);
+  const refuseFun = () => { setGame(null); setModeChosen(null); setFunRefused(true); setSheet('salao'); };
+  const replayRound = () => { if (!funApi || funApi.onStartRound()) return true; refuseFun(); return false; };
   const funRunning = !!game && isFunGame(game) && (!MINIGAME_GATE[game] || modeChosen?.game === game);
   const funKey = funRunning ? `${game}:${modeChosen?.level ?? 0}:${modeChosen ? 'm' : 'n'}` : null;
   useEffect(() => {
     if (!funKey) { funChargedRef.current = null; return; }
     if (funChargedRef.current === funKey || !funApi) return;
     funChargedRef.current = funKey;
-    if (!funApi.onStartRound()) setGame(null);
+    if (!funApi.onStartRound()) refuseFun();
   }, [funKey, funApi]);
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -473,6 +477,7 @@ export function AreaView(props: AreaViewProps) {
   /** A porta do Salão: sem sessão nem energia, não abre (a folha já mostra a frase calma). */
   const startSalao = (g: PlayGame) => {
     if (funGate && isFunGame(g) && !funGate.status(Date.now()).canPlay) return;
+    setFunRefused(false);
     start(g);
   };
   /** A Fenda Sem Fim (a antiga Masmorra): mora na Exploração (#187, 28/10/2026; esteve na Arena de beta3 N10 até então); o jogo abre em tela cheia sobre a cena da área. */
@@ -601,7 +606,7 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'ferreiro' && <ForgeCard language={language} />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
             {open?.id === 'hexsmith' && <HexsmithSheet language={language} sprite={props.guild.mySprite} demoCharacterId={props.demoCharacterId} evolutionStage={props.evolutionStage} skills={props.skills} petElement={props.petElement} />}
-            {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={startSalao} funStatus={play.funSession?.status} />}
+            {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={startSalao} funStatus={play.funSession?.status} refused={funRefused} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
             {open?.id === 'dungeon' && !play.rogue && <RogueDungeonPlaceholder language={language} />}
@@ -641,6 +646,7 @@ export function AreaView(props: AreaViewProps) {
                 initialLevel={modeChosen?.level}
                 onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('dino'); }}
                 onScore={play.onDinoScore}
+                onReplayRound={replayRound}
                 petElement={props.petElement}
                 rankSaveId={props.guild.saveId}
                 onExit={exitGame}
@@ -653,6 +659,7 @@ export function AreaView(props: AreaViewProps) {
                 petElement={props.petElement}
                 playerLevel={props.playerLevel}
                 initialLevel={modeChosen?.level}
+                onReplayRound={replayRound}
                 specialFamily={props.skills?.[props.evolutionStage as FichaStage]?.especial.familia}
                 language={language}
                 onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('barrage'); }}
@@ -668,12 +675,13 @@ export function AreaView(props: AreaViewProps) {
                 initialLevel={modeChosen?.level}
                 onEarnPoints={props.onEarnPoints}
                 onMatchEnd={() => props.onDailyEvent?.('ppt')}
+                onReplayRound={replayRound}
                 rankSaveId={props.guild.saveId}
                 onExit={exitGame}
               />
             )}
             {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
-            {game === 'match3' && <Match3Game {...base} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} onBossShard={play.onBossShard} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
+            {game === 'match3' && <Match3Game {...base} onReplayRound={replayRound} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} onBossShard={play.onBossShard} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
             {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('eco'); }} />}
             {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('zip'); emitFeat('zipSolved'); }} />}
