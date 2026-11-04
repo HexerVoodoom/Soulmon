@@ -24,7 +24,7 @@ function pct(v: unknown): number {
   return Math.min(100, Math.max(0, n));
 }
 
-export const FEIRA_TRAIL_GAMES = ['picross', 'zip', 'patches', 'troca', 'eco'] as const;
+export const FEIRA_TRAIL_GAMES = ['picross', 'zip', 'selo', 'troca', 'eco', 'patches'] as const; // `patches` (Colcha) só p/ trilha já aberta; o servidor não sorteia mais
 export type FeiraTrailGame = (typeof FEIRA_TRAIL_GAMES)[number];
 
 /** O evento que a VOLTA da Missão encontra (ou que a folha relê). */
@@ -188,6 +188,8 @@ export function sanitizeFeiraClaim(raw: unknown): FeiraClaim | null {
 export interface ZipInstance { size: number; numbers: number[] }
 export interface PatchClueIn { cell: number; area: number; shape: 'square' | 'tall' | 'wide' | 'any' }
 export interface PatchesInstance { size: number; clues: PatchClueIn[] }
+export interface SeloPanelIn { shape: number; count: number; dir: number; fill: number; marks: number }
+export interface SeloInstance { grid: SeloPanelIn[]; options: SeloPanelIn[] }
 export interface PicrossInstance { size: number; rows: number[][]; cols: number[][] }
 export interface TrocaCardIn { forma: 'young' | 'grown'; lugar: 'sky' | 'cave'; rule: 'forma' | 'lugar'; art: number }
 export interface TrocaInstance { deck: TrocaCardIn[] }
@@ -196,6 +198,7 @@ export interface EcoInstance { par: number }
 export type FeiraTrail =
   | { k: number; game: 'zip'; seed: number; puzzle: ZipInstance }
   | { k: number; game: 'patches'; seed: number; puzzle: PatchesInstance }
+  | { k: number; game: 'selo'; seed: number; puzzle: SeloInstance }
   | { k: number; game: 'picross'; seed: number; puzzle: PicrossInstance }
   | { k: number; game: 'troca'; seed: number; puzzle: TrocaInstance }
   | { k: number; game: 'eco'; seed: number; puzzle: EcoInstance };
@@ -223,6 +226,15 @@ export function sanitizeFeiraTrail(raw: unknown): FeiraTrail | null {
         return { cell: int(o.cell, 0, size * size - 1), area: int(o.area, 1, size * size), shape };
       });
       return clues.length > 0 ? { k, game: 'patches', seed, puzzle: { size, clues } } : null;
+    }
+    case 'selo': {
+      const panel = (c: unknown): SeloPanelIn => {
+        const o = obj(c) ?? {};
+        return { shape: int(o.shape, 0, 4), count: int(o.count, 1, 6), dir: int(o.dir, 0, 7), fill: int(o.fill, 0, 2), marks: int(o.marks, 1, 15) };
+      };
+      const grid = (Array.isArray(p.grid) ? p.grid.slice(0, 8) : []).map(panel);
+      const options = (Array.isArray(p.options) ? p.options.slice(0, 6) : []).map(panel);
+      return grid.length === 8 && options.length === 6 ? { k, game: 'selo', seed, puzzle: { grid, options } } : null;
     }
     case 'picross': {
       const size = int(p.size, 3, 10);
@@ -253,12 +265,13 @@ export function sanitizeFeiraTrail(raw: unknown): FeiraTrail | null {
 export type FeiraSolution =
   | { path: number[] }
   | { rects: Array<{ r: number; c: number; h: number; w: number }> }
+  | { choice: number }
   | { cells: number[][] }
   | { sides: Array<'left' | 'right'> }
   | { score: number };
 
 /** Tempo mínimo (ms) entre `start` e `done` por jogo — espelha `TRAIL_MIN_MS` do servidor. O cliente ESPERA este piso antes de enviar. */
-export const FEIRA_TRAIL_MIN_MS: Readonly<Record<FeiraTrailGame, number>> = Object.freeze({ picross: 8000, zip: 4000, patches: 4000, troca: 10000, eco: 6000 });
+export const FEIRA_TRAIL_MIN_MS: Readonly<Record<FeiraTrailGame, number>> = Object.freeze({ picross: 8000, zip: 4000, patches: 4000, selo: 6000, troca: 10000, eco: 6000 });
 
 export interface FeiraTrailDone { reward: { emblems: number; sap: number }; receipt: string; evento: FeiraEvento | null }
 

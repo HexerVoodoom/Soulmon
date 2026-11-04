@@ -343,8 +343,8 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
     setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
   'bg-mission-colcha': {
-    namePt: 'Colcha de Retalhos',
-    nameEn: 'Patchwork Quilt',
+    namePt: 'Selos de Luz',
+    nameEn: 'Light Seals',
     css: `url(${bgMissionColchaImg})`, baseColor: '#144b45',
     setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
