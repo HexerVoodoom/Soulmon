@@ -52,9 +52,11 @@ export function BossSplash({ monster, art, portrait, kicker, title, intro, cards
             style={{ width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' }} />
         </div>
       ) : null}
-      <div style={{ position: usePortrait ? 'absolute' : 'relative', left: 0, right: 0, bottom: 0, flex: 'none', boxSizing: 'border-box', maxHeight: '62%', overflowY: 'auto',
+      <div style={{ position: usePortrait ? 'absolute' : 'relative', left: 0, right: 0, bottom: 0, flex: 'none', boxSizing: 'border-box', maxHeight: '62%',
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, padding: '40px 16px calc(env(safe-area-inset-bottom, 0px) + 16px)',
         background: 'linear-gradient(to top, var(--sm2-bg) 62%, transparent)' }}>
+        {/* Regras longas rolam aqui; o botão e a dica ficam SEMPRE à vista (QA 04/11/2026: em 360×740 o OK caía fora da tela). */}
+        <div data-boss-splash-body style={{ flex: '0 1 auto', minHeight: 0, width: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
         <p data-boss-splash-kicker style={{ ...sm2Hint, margin: 0, color: 'var(--sm2-danger-ink)', fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase' }}>{kicker}</p>
         <h2 id="boss-splash-title" style={{ margin: 0, textAlign: 'center', fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-xl)', color: 'var(--sm2-danger-ink)' }}>{title}</h2>
         <p data-boss-splash-name style={{ ...sm2Text, margin: 0, textAlign: 'center', fontWeight: 700 }}>{monster}</p>
@@ -69,6 +71,7 @@ export function BossSplash({ monster, art, portrait, kicker, title, intro, cards
             ))}
           </ol>
         )}
+        </div>
         <button type="button" data-m3-boss-ok data-boss-splash-ok onClick={e => { e.stopPropagation(); onDone(); }} style={{ ...sm2Button('primary'), minWidth: 140 }}>{okLabel}</button>
         <p style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{tapHint}</p>
       </div>

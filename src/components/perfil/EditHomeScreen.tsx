@@ -81,7 +81,7 @@ export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equipp
         <p style={{ ...sm2Hint, margin: 0, textAlign: 'center', maxWidth: 420 }}>
           {slots.length > 0
             ? (isPt ? 'Toque num ponto para pôr uma peça, ou numa peça para trocá-la.' : 'Tap a dot to place an item, or an item to swap it.')
-            : (isPt ? 'O cenário atual da Home não aceita decoração.' : "The Home's current scene doesn't take decoration.")}
+            : (isPt ? 'Este cenário não aceita decoração. Toque no quadrado do canto para escolher outro.' : "This scene doesn't take decoration. Tap the square in the corner to pick another.")}
         </p>
 
         {/* O retângulo da Home: mesma altura do palco real, mesma ancoragem dos espaços. */}
