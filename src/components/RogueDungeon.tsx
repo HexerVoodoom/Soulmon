@@ -117,7 +117,7 @@ export interface RogueDungeonProps {
   combatant: Combatant;
   saveId?: string;
   /** Bits pelo funil/teto diário existente dos minigames. */
-  onEarnPoints?: (points: number) => void;
+  onEarnPoints?: (points: number) => number | void;
   /** Dados do Soulmon para os jogos em modo desafio e para a luta (arte/sprite/golpes). */
   evolutionStage?: string;
   demoCharacterId?: string;
@@ -163,12 +163,13 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
   // Fim da incursão: paga os Bits UMA vez (o teto diário do app limita). `paidRef` trava remontagem/re-render antes de o save voltar com
   // `paid`; `onEarnPoints` (instável, vem inline do pai) fica fora das deps, lido pelo ref.
   const paidRef = useRef(false);
+  const [bitsPagos, setBitsPagos] = useState<number | null>(null); // o creditado (teto diário); null = pago em outra sessão, mostra o cheio
   const earnRef = useRef(onEarnPoints);
   earnRef.current = onEarnPoints;
   useEffect(() => {
     if (!finished || run.paid || paidRef.current) return;
     paidRef.current = true;
-    if (run.won > 0) earnRef.current?.(rogueBits(run));
+    if (run.won > 0) setBitsPagos(earnRef.current?.(rogueBits(run)) ?? rogueBits(run));
     onChange(markPaid(run));
   }, [finished, run, onChange]);
 
@@ -349,7 +350,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
           rootAttrs={{ 'data-rogue-over': true }}
           hero={{ label: isPt ? 'Pontos' : 'Score', value: rogueScore(run) }}
           strip={[{ key: 'won', label: isPt ? 'Desafios vencidos' : 'Challenges won', value: run.won }]}
-          ledger={[{ key: 'bits', kind: 'bits', value: run.won > 0 ? rogueBits(run) : 0 }]}
+          ledger={[{ key: 'bits', kind: 'bits', value: run.won > 0 ? (bitsPagos ?? rogueBits(run)) : 0 }]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           notes={note ? <p data-rogue-note style={text}>{note}</p> : undefined}
           petSrc={petSprite}

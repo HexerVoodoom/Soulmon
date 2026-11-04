@@ -90,7 +90,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
       setSolveMs(t0.current != null ? Math.max(0, Date.now() - t0.current) : 0);
       const bits = patchesBits(size);
       setEarned(bits);
-      if (!paid.current) { paid.current = true; if (challenge) challenge.onResult(true); else onEarnPoints(bits); }
+      if (!paid.current) { paid.current = true; if (challenge) challenge.onResult(true); else setEarned(onEarnPoints(bits) ?? bits); }
     }
   };
 

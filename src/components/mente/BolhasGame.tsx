@@ -92,7 +92,7 @@ export function BolhasGame({ language, evolutionStage, demoCharacterId, onExit, 
     // Só o foco paga, uma vez por rodada, e só se houver o que pagar.
     if (!calma && bits > 0 && !paid.current && onEarnPoints) {
       paid.current = true;
-      onEarnPoints(bits);
+      setEarned(onEarnPoints(bits) ?? bits);
     }
   }, [calma, onEarnPoints]);
 

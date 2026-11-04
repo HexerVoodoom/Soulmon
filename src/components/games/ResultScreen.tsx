@@ -246,6 +246,9 @@ export function ResultScreen(p: ResultScreenProps) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [summary, setSummary] = useState('');
 
+  const extras = useResultExtras();
+  // Teto diário gasto: o livro vem vazio porque o funil creditou 0, e "rodada leve" soaria como culpa do jogador. Texto neutro.
+  const emptyLedgerLine = p.emptyLedgerLine && extras && extras.bitsToday >= extras.bitsCap ? (isPt ? 'Sem Bits desta vez.' : 'No Bits this time.') : p.emptyLedgerLine;
   const ledger = (p.ledger ?? []).filter(r => !((r.kind === 'bits' || r.kind === 'honor' || r.kind === 'xp') && r.value <= 0) && !(r.kind === 'essence' && !(r.qty >= 1)));
   const strip = (p.strip ?? []).filter(c => !(record && c.hideOnRecord));
   const stats = p.stats ?? [];
@@ -273,7 +276,7 @@ export function ResultScreen(p: ResultScreenProps) {
     recordText,
     ...stats.map(c => `${c.label}: ${typeof c.value === 'number' || typeof c.value === 'string' ? c.value : ''}`),
     ...ledger.map(r => r.kind === 'bits' ? `${r.value} Bits` : r.kind === 'honor' ? `+${r.value} ${honorName}` : r.kind === 'xp' ? `+${r.value} XP` : r.kind === 'item' ? `${r.label}${r.amount ? ` ×${r.amount}` : ''}` : r.kind === 'essence' ? `${essenceName(r.id, isPt)} ×${r.qty}` : r.label),
-    ledger.length === 0 ? p.emptyLedgerLine : '',
+    ledger.length === 0 ? emptyLedgerLine : '',
   ].filter(Boolean).join('. ');
 
   // A região viva existe vazia desde a montagem e recebe o resumo logo depois (leitor de tela só anuncia mudança).
@@ -305,7 +308,6 @@ export function ResultScreen(p: ResultScreenProps) {
   const mood = MOOD[p.outcome];
   const ledgerShown = ledger.length === 0 || reveal.isShown(`row-${ledger[0].key}`);
   const notesOn = step >= RESULT_FINAL_STEP && !reveal.animated;
-  const extras = useResultExtras();
   const mission = p.dailyEvent ? extras?.missions[p.dailyEvent] : undefined;
   /** A barra de Bits do dia só aparece com o teto em 100% (pedido do dono, 03/11/2026). */
   const bitsCapped = !!extras && extras.bitsToday >= extras.bitsCap;
@@ -433,7 +435,7 @@ export function ResultScreen(p: ResultScreenProps) {
             </div>
           )}
 
-          {(ledger.length > 0 || p.emptyLedgerLine) && (
+          {(ledger.length > 0 || emptyLedgerLine) && (
             <div aria-hidden="true" style={{ width: '100%' }} data-result-ledger>
               {ledger.length > 0 ? (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }} data-result-loot>
@@ -467,7 +469,7 @@ export function ResultScreen(p: ResultScreenProps) {
                   </div>
                 </div>
               ) : (
-                <p className={stageCls(4)} style={{ ...sm2Hint, textAlign: 'center' }} data-result-empty>{p.emptyLedgerLine}</p>
+                <p className={stageCls(4)} style={{ ...sm2Hint, textAlign: 'center' }} data-result-empty>{emptyLedgerLine}</p>
               )}
             </div>
           )}
