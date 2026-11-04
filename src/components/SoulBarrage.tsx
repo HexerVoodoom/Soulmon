@@ -8,7 +8,7 @@ import { readNumber, writeLocal } from '../utils/safeStorage';
 import type { Language } from '../utils/i18n';
 import { sm2Button } from './form/FormKit';
 import { ResultScreen } from './games/ResultScreen';
-import { SCENE_BG, sceneBackground } from '../utils/fxPackArt';
+import { SCENE_BG } from '../utils/fxPackArt';
 import heartFull from '../assets/soulmon/hud/bars/heart-full.png';
 import heartEmpty from '../assets/soulmon/hud/bars/heart-empty.png';
 import { GameRoot, GameHeader, phaseTitle, phaseLine, gameExitConfirm } from './games/GameKit';
@@ -157,7 +157,6 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       // fundo: faixas que rolam para cima
       // o cenário (`SCENE_BG.barrage`) fica ATRÁS do canvas (CSS); o canvas só escurece um pouco e desenha as estrelas sutis
       ctx.clearRect(0, 0, FIELD_W, FIELD_H);
-      ctx.fillStyle = 'rgba(5, 18, 24, 0.35)'; ctx.fillRect(0, 0, FIELD_W, FIELD_H);
       ctx.fillStyle = 'rgba(233,245,242,0.18)';
       for (let i = 0; i < 40; i++) {
         const x = (i * 97) % FIELD_W;
@@ -266,8 +265,9 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
     return () => cancelAnimationFrame(raf);
   }, [phase, paused, hidden, level, isPt]);
 
-  const moveTo = (e: React.PointerEvent<HTMLCanvasElement>) => {
-    const r = e.currentTarget.getBoundingClientRect();
+  const moveTo = (e: React.PointerEvent<HTMLElement>) => {
+    const r = canvasRef.current?.getBoundingClientRect();
+    if (!r) return;
     if (r.width <= 0) return;
     if (level === 2) {
       // Avançado: arrasto RELATIVO (o dedo não cobre o Soulmon), em X e Y.
@@ -282,7 +282,8 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   const fireSpecial = () => { if (phase === 'playing' && !paused) activateSpecial(g.current, special); };
 
   return (
-    <GameRoot style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)', background: sceneBackground('barrage') }}>
+    // Tela cheia (04/11/2026, dono): o fundo da área do jogo cobre a tela toda; o campo não fica mais numa "janela" com outro fundo atrás.
+    <GameRoot style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)', background: `linear-gradient(rgba(5,18,24,.35), rgba(5,18,24,.35)), url(${SCENE_BG.barrage}) center/cover #0b1220` }}>
       <GameHeader
         title={isPt ? 'Chuva de Almas' : 'Soul Barrage'}
         sub={<span className="sm2-num">{isPt ? 'Recorde' : 'Best'} {best}</span>}
@@ -296,19 +297,19 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
         exitConfirm={phase === 'playing' || (phase === 'ready' && challenge) ? gameExitConfirm(isPt, isPt ? 'da partida' : 'this run') : undefined}
         onPauseChange={setPaused}
       />
-      <div style={{ position: 'relative', flex: '1 1 0', minHeight: 240, display: 'flex', justifyContent: 'center', overflow: 'hidden' }}>
+      <div data-barrage-area style={{ position: 'relative', flex: '1 1 0', minHeight: 240, display: 'flex', justifyContent: 'center', overflow: 'hidden', touchAction: 'none' }}
+        onPointerDown={e => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* noop */ } drag.current = { x: e.clientX, y: e.clientY, tx: g.current.px, ty: g.current.py }; moveTo(e); }}
+        onPointerUp={() => { drag.current = null; }}
+        onPointerCancel={() => { drag.current = null; }}
+        onPointerMove={moveTo}>
         <canvas
           ref={canvasRef}
           data-barrage-canvas
           width={FIELD_W}
           height={FIELD_H}
-          onPointerDown={e => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* noop */ } drag.current = { x: e.clientX, y: e.clientY, tx: g.current.px, ty: g.current.py }; moveTo(e); }}
-          onPointerUp={() => { drag.current = null; }}
-          onPointerCancel={() => { drag.current = null; }}
-          onPointerMove={moveTo}
           role="application"
           aria-label={level === 2 ? (isPt ? 'Campo da Chuva de Almas. Arraste para mover em qualquer direção.' : 'Soul Barrage field. Drag to move in any direction.') : (isPt ? 'Campo da Chuva de Almas. Use as setas para mover.' : 'Soul Barrage field. Use the arrow keys to move.')}
-          style={{ display: 'block', height: '100%', maxWidth: '100%', aspectRatio: `${FIELD_W} / ${FIELD_H}`, touchAction: 'none', imageRendering: 'pixelated', background: `url(${SCENE_BG.barrage}) center/cover #0b1220` }}
+          style={{ display: 'block', height: '100%', maxWidth: '100%', aspectRatio: `${FIELD_W} / ${FIELD_H}`, touchAction: 'none', imageRendering: 'pixelated', background: 'transparent' }}
         />
         <span
           aria-live="off"
