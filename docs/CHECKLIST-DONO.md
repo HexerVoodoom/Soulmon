@@ -1,6 +1,6 @@
 # Checklist do dono
 
-> **Dono do documento:** a sessão do checklist, a pedido do dono em 04/11/2026. **Base das tabelas:** `main` em `c27646058`; §1 atualizada até #540. #530 e #533–#535 não foram conferidos.
+> **Dono do documento:** a sessão do checklist, a pedido do dono em 04/11/2026. **Base das tabelas §2–§6:** `main` em `c27646058`, ainda não refeitas; a seção "Checkup da onda" vale sobre elas, em `f13c521be`.
 > **Fontes:** mensagens do dono de 03–04/11, [BACKLOG-PRODUTO](BACKLOG-PRODUTO.md), [PEDIDOS-DO-DONO-2026-10-28](PEDIDOS-DO-DONO-2026-10-28.md), [PERGUNTAS-DO-DONO](PERGUNTAS-DO-DONO.md), [ASSETS-A-GERAR](ASSETS-A-GERAR.md).
 > **Regra:** ✅ só com evidência lida no código ou no diff (`alpha-fiscal-entrega`), nunca por relato de agente. Título de PR não prova nada.
 > **Não cobre:** visual, som e aparelho. Nada aqui foi compilado, executado ou aberto em aparelho; a conferência foi só leitura. ✅ quer dizer "o código faz", não "ficou bonito".
@@ -9,6 +9,34 @@
 Legenda: ✅ feito · 🟡 parcial · ❌ não · ⬜ aberto · ❓ decisão do dono · 📱 só dá para provar no aparelho · ⚰️ órfão (revogado ou superado).
 Responsável: **Dono** decide ou confere; **Arte** é fila de geração; **A atribuir** é código sem sessão designada.
 
+## Checkup da onda (04/11/2026)
+
+**Veredito: ainda não pronto.** O código da `main` está saudável, mas faltam o #562 e os itens do dono abaixo.
+
+Evidência:
+- CI, Android e Workers Builds verdes em `793d842a6`. Depois disso entraram #564, #563 e #552; o CI da `main` deles não foi lido aqui.
+- O #558 quebrou o deploy da web e o APK por `export const` sem `declare` em um `.d.ts`. Corrigido no #560, com teste de contrato.
+- Autenticação do save ativa em produção: `GET /api/save` sem token responde 401 (sonda com id inexistente).
+- Os 3 testes duvidosos do QA passam em checkout completo. As falhas vieram de worktree parcial. A suíte inteira local não fechou limpa; a prova é o CI.
+- **Bytes:** `index.js` com 935.485 B (`vite build` em `00e793323`, sem o passo de WebP), 31.926 B acima do limite de 903.559 B. O web não trava; o contrato reprova no próximo release.
+- **Alta de `PRIVACY_VERSION` para 2026-11-04:** cada jogador vê uma tela bloqueante de aceite uma vez (`App.tsx:7266`). Funciona offline.
+
+Corrigir logo, sem bloquear a onda:
+- Filtro do nome do especial: homóglifos, nome invisível e contato (`insta joao123`) passam.
+- Busca de jogadores lê só os primeiros 300 perfis, e `?search=` aleatório gera até 300 leituras de KV.
+- Molduras: `POST /api/save` com `widgetFramesOwned` libera todas sem pagar (lido no código, não executado).
+- `orderId` ausente, moldura perdida em escrita concorrente e `isConsentCurrent` com `===`.
+- Glossário e `_chatKnowledge` ainda dizem que não há novo aceite, o que está errado.
+
+Só o dono:
+1. **Cloudflare:** criar regra de Rate Limiting em `/api/feedback`, sem ela o teto é por isolate.
+2. **Secrets:** `RESEND_API_KEY` e `FEEDBACK_FROM`; testar um envio real (o remetente padrão de sandbox pode só entregar ao dono da conta).
+3. **Play Console:** deixar os SKUs `moldura_*` inativos até a arte estar no APK (0 de 20 em `drawable-nodpi`); atualizar Data Safety com feedback e feed.
+4. **Build na Play:** AAB novo, depois do corte de bytes ou de aceitar a dívida. Widget adaptativo e microfone (#505) só chegam assim; o resto vai pelo Worker (`server.url`).
+5. **Aparelho:** widget, double tap, escada da Arena, vitrine 1,75×, feira com servidor, som, tela de aceite.
+6. **Decisões:** prazo de limpeza da caixa de feedback (a política não dá prazo); risco de moldura grátis pelo save; §21 (métrica de outro jogador) contra a faixa de evoluções; revisão jurídica de transferência internacional.
+7. **Limpeza:** apagar `D:/soulmon-bytes-dist` (5.012 arquivos, D: em 97%, E: cheio).
+
 ## 1. O que importa agora
 
 **Nada dos PRs #500–#529 está em um AAB.** A Play segue no versionCode 22 (1.3.0-beta2, 21/10). O conserto do microfone (#505) mexe no manifesto, então só chega ao aparelho com AAB novo. O último `release:` no git é a v253, anterior a todos eles, e o repo não tem workflow de deploy web: o código não diz se o Worker recebeu algum.
@@ -16,9 +44,7 @@ Responsável: **Dono** decide ou confere; **Arte** é fila de geração; **A atr
 **O próximo build reprova no orçamento de bytes.** O limite do `index.js` é 903.559 B; o REGISTRO §220 registra build de 927.969 B (~24,4 KB acima). O contrato só passa hoje porque lê o `dist/` antigo da v253. Re-medir antes do release.
 
 **Bugs e lacunas sem responsável:**
-- Cartas ilustradas: o #535 diz instalar 10 artes (não conferido); hoje só o Refúgio as usa.
 - Respiração: a cena é 100% procedural, sem os assets pedidos.
-- Feira: `bg/feira-batalha.png` não existe, então o "mapa próprio" ainda é o `visor-feira.png`.
 - Cosméticos: 0 de 108 artes e nenhum item com `element`, logo o exclusivo de elemento não aparece para ninguém.
 - Trilhas animadas: nenhum doc tem os prompts pedidos; `PROMPTS-TRILHAS-FALTANTES.md` ainda diz "Calma até no combate", e as 11 faixas de minijogo estão pendentes.
 - Vitrine: a escala ficou em 1,75×, não 2,5×, por escolha do agente.
@@ -40,8 +66,8 @@ Responsável: **Dono** decide ou confere; **Arte** é fila de geração; **A atr
 | Soul Barrage: double tap solta o especial, rótulo perto da barra | ✅ #540 | `soulBarrage.ts` `registerTap`, `data-barrage-doubletap`; só no modo Avançado | sensação em toque real; limites de tempo são estimativa |
 | Soul Barrage: asset da barra do especial | 🟡 Arte | slot em `assets/soulmon/barrage/index.ts`; `barra-especial.png` na fila | arte não gerada |
 | Mente e Diversão voltam para lista | ✅ #540 | `PlaySheets`; Refúgio mantém `GameCard` | tela |
-| Widget redimensionável com texto por prioridade | 🟡 PR #542, aguardando CI | `SoulmonWidgetAdaptiveProvider`, `WidgetAdaptive.kt`; Gradle e 5 testes passaram localmente | nunca visto em aparelho; é o 6º widget no seletor |
-| Arena escala: Rookie, Champion, Ultimate, sem subir ao perder | 🟡 PR #543, com conflito | `arenaLadder`, §222; números vêm de simulação | não jogado; a dificuldade inicial segue igual à de hoje |
+| Widget redimensionável com texto por prioridade | ✅ #542 | `SoulmonWidgetAdaptiveProvider`, `WidgetAdaptive.kt`; Gradle e 5 testes passaram localmente | nunca visto em aparelho; só chega com AAB novo |
+| Arena escala: Rookie, Champion, Ultimate, sem subir ao perder | ✅ #543 | `arenaLadder`, §222; números vêm de simulação | não jogado; a dificuldade inicial segue igual à de hoje |
 
 ## 2. Pedidos de 04/11/2026
 
