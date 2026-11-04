@@ -164,4 +164,7 @@
          a gravação existe só enquanto a tela do chat está aberta e a pessoa
          está com o botão apertado. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Capacitor (BridgeWebChromeClient) pede RECORD_AUDIO + MODIFY_AUDIO_SETTINGS juntos
+         para o getUserMedia do WebView; sem esta linha o pedido volta negado. -->
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
 </manifest>

@@ -404,6 +404,12 @@ export function ChatBox({
       }
     } else {
       // Start recording
+      /* Sem motor de gravação na plataforma (WebView antigo, contexto não
+         seguro): avisar em vez de ficar "ativo e mudo". */
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+        toast.error(copiaErro(MIC_ERR.noEngine, isPt));
+        return;
+      }
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         // Desmontou enquanto a permissão estava aberta: ninguém vai parar isto.
@@ -465,22 +471,18 @@ export function ChatBox({
         micRef.current = mic;
         setMediaRecorder(recorder);
         setIsRecording(true);
+        toast.info(copiaErro(MIC_ERR.recording, isPt));
       } catch (error) {
-        // Silently handle microphone permission errors
-        if (error instanceof Error) {
-          if (error.name === 'NotAllowedError' || error.name === 'NotFoundError') {
-            // User denied permission or no microphone available
-            onSendMessage(isPt
-              ? 'Não consegui acessar o microfone. Dá para escrever aqui do mesmo jeito 🎤'
-              : 'I could not reach the microphone. You can still type here 🎤');
-            return;
-          }
-        }
-        // Only log other unexpected errors
+        /* Antes isto virava uma "mensagem do usuário" no chat; agora é aviso.
+           NotAllowedError no Android também vem do WebView negando o pedido
+           quando falta MODIFY_AUDIO_SETTINGS no manifesto (Capacitor exige). */
+        const nome = error instanceof Error ? error.name : '';
         if (import.meta.env.DEV) console.warn('Microphone access issue:', error);
-        onSendMessage(isPt
-          ? 'Deu algo errado com o microfone 🎤'
-          : 'Something went wrong with the microphone 🎤');
+        toast.error(copiaErro(
+          nome === 'NotAllowedError' || nome === 'SecurityError' ? MIC_ERR.denied
+            : nome === 'NotFoundError' || nome === 'NotReadableError' ? MIC_ERR.noDevice
+            : MIC_ERR.noEngine,
+          isPt));
       }
     }
   };
