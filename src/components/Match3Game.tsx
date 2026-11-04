@@ -296,13 +296,13 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
     }
     const final = combatScore(combatRef.current);
     const bits = match3Bits(final);
-    setEarned(bits);
+    // O que a tela mostra é o que entrou (teto diário): o funil devolve o creditado.
+    setEarned(bits > 0 ? (onEarnPoints(bits) ?? bits) : 0);
     const prevBest = readNumber(STORAGE_KEYS.MATCH3_BEST, 0);
     setHadBest(prevBest > 0);
     // PVP: sem recorde nem ranking (decisão do dono, 26/10/2026) — só os Bits, pelo mesmo funil do Normal
     if (!pvpRef.current && final > prevBest) { writeLocal(STORAGE_KEYS.MATCH3_BEST, String(final)); setBest(final); setNewBest(prevBest > 0); }
     setOver(true);
-    if (bits > 0) onEarnPoints(bits);
   }, [onEarnPoints]);
 
   const say = useCallback((pt: string, en: string) => setNote(isPt ? pt : en), [isPt]);

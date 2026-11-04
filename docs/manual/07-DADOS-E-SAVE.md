@@ -312,6 +312,7 @@ Todos opcionais, com sanitizador próprio no `hydrateSave` (ausente/lixo → aus
 | `essences?` | `Record<elemento, n>` | essências dos elementos (28/10/2026, REGISTRO §183): só cresce, só coleta. Servidor: monotônico por elemento (`_essences.js`) | `utils/essences.ts` |
 | `essenceAway?` | `EssenceAway` | quanto a descida automática já rendeu de essência no dia (teto `ESSENCE_AWAY_DAILY_CAP`). Servidor: monotônico no dia (`_dayCounters.js`) | `utils/essences.ts` |
 | `arenaReroll?` | `ArenaReroll` | rerolls dos 3 cards da Arena livre no dia do jogador (3 grátis, depois Bits); o contador também é a semente dos cards. Servidor: monotônico no dia | `utils/arenaSorteio.ts` |
+| `arenaLadder?` | `number` | a escada da Arena (§222): runs vencidas; decide a forma por rodada e a força dos inimigos. Ausente = 0. Servidor: só cresce | `utils/arena.ts` |
 
 `specialMission?`/`stepGoal?` estão em §2.12-D e `hunger`/`energyClock`/`dungeonDaily`/`checkIns` em §2.12-C. `eggType` agora é `StarterId` (`'industrial' | 'nascente' | 'alento' | 'vida' | 'meteoro'`) — §5.6.
 

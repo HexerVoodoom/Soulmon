@@ -198,7 +198,7 @@ import {
 } from './utils/weeklyMissions';
 import { ResultExtrasContext } from './components/games/ResultExtrasContext';
 import { buildResultExtras } from './utils/resultExtras';
-import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/currencies';
+import { BITS_EXCHANGE, creditMinigameBits, minigameBitsGranted, minigameBitsToday } from './utils/currencies';
 import { arenaRerollCost, arenaRerollsToday, applyArenaReroll, applyArenaRunEnd } from './utils/arenaSorteio';
 import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst } from './utils/bitsOrigin';
 import { applyGuildSlot } from './utils/guildHouse';
@@ -4579,8 +4579,12 @@ export default function App() {
   // O buff de BRINCAR (utils/petNeeds.ts) é consumido AQUI, que é o funil único
   // por onde passam os Bits de Dino, PPT e Masmorra. `minigameMultiplier` é
   // sempre ≥ 1 por construção — este caminho não tem como reduzir ganho.
-  const handleEarnGamePoints = useCallback((pts: number) => {
-    if (pts <= 0) return;
+  /** Bits de minijogo já creditados hoje que o `gameState` ainda não mostra (créditos do mesmo lote de render). */
+  const bitsPendentesRef = useRef<{ day: string; earned: number }>({ day: '', earned: 0 });
+  /** Devolve os Bits REALMENTE creditados (pelo mesmo `minigameBitsGranted` do `creditMinigameBits`), para a tela de resultado
+   *  mostrar o que entrou, e não o que o jogo pediu: teto gasto = 0, teto atingido no meio = parcial. */
+  const handleEarnGamePoints = useCallback((pts: number): number => {
+    if (pts <= 0) return 0;
     const mult = playBuffSpentRef.current ? 1 : minigameMultiplier(gameState, new Date());
     const total = mult > 1 ? Math.round(pts * mult) : pts;
     setGameState(prev => {
@@ -4599,11 +4603,18 @@ export default function App() {
          interrompe minijogo nenhum — os Bits só param de somar. */
       return creditMinigameBits(base, total, playerDayKey(new Date(), prev.playerDayTz));
     });
+    const dia = playerDayKey(new Date(), gameStateRef.current.playerDayTz);
+    const pend = bitsPendentesRef.current;
+    const ja = Math.max(minigameBitsToday(gameStateRef.current, dia), pend.day === dia ? pend.earned : 0);
+    const creditado = minigameBitsGranted(ja, total);
+    bitsPendentesRef.current = { day: dia, earned: ja + creditado };
     if (mult > 1) {
       // Fora do updater (footgun 6): no StrictMode ele roda 2×.
       playBuffSpentRef.current = true;
       toast(<>{language === 'pt-BR' ? '🎈 A brincadeira rendeu: ' : '🎈 Playtime paid off: '}<BitsAmount value={total - pts} sign="+" size={14} />{language === 'pt-BR' ? ' extras!' : ' bonus!'}</>);
     }
+    // O bônus da brincadeira aparece no toast; a tela de resultado mostra a base, limitada ao que entrou.
+    return Math.min(pts, creditado);
   }, [gameState, language, setGameState]);
 
   /**
@@ -8185,8 +8196,9 @@ export default function App() {
                     dayIso: playerDayIso(new Date(), gameState.playerDayTz),
                     reroll: gameState.arenaReroll,
                     runs: gameState.arenaRuns,
-                    // Fim de run (vitória/derrota/empate): novo trio de graça, sem gastar o reroll.
-                    onRunEnd: () => setGameState(prev => applyArenaRunEnd(prev, playerDayIso(new Date(), prev.playerDayTz))),
+                    ladder: gameState.arenaLadder,
+                    // Fim de run (vitória/derrota/empate): novo trio de graça, sem gastar o reroll; a vitória sobe a escada (§222).
+                    onRunEnd: (outcome) => setGameState(prev => applyArenaRunEnd(prev, playerDayIso(new Date(), prev.playerDayTz), outcome)),
                     onReroll: () => {
                       const dia = playerDayIso(new Date(), gameState.playerDayTz);
                       const custo = arenaRerollCost(arenaRerollsToday(gameState.arenaReroll, dia));
