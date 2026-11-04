@@ -6,6 +6,9 @@ import android.content.ComponentName
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.Build
+import android.os.Bundle
+import android.util.SizeF
 import android.view.View
 import android.widget.RemoteViews
 import com.soulmon.R
@@ -122,8 +125,8 @@ object WidgetRenderer {
         }
     }
 
-    private fun spriteBitmap(context: Context, spriteId: Int, sizeDp: Int): Bitmap? {
-        val px = (sizeDp * context.resources.displayMetrics.density).toInt().coerceAtLeast(1)
+    private fun spriteBitmap(context: Context, spriteId: Int, sizeDp: Int, maxPx: Int = Int.MAX_VALUE): Bitmap? {
+        val px = (sizeDp * context.resources.displayMetrics.density).toInt().coerceIn(1, maxPx)
         return try {
             val opts = BitmapFactory.Options().apply { inScaled = false }
             val raw = BitmapFactory.decodeResource(context.resources, spriteId, opts) ?: return null
@@ -265,6 +268,98 @@ object WidgetRenderer {
         mgr.updateAppWidget(appWidgetId, views)
     }
 
+    /**
+     * The resizable widget (REGISTRO §221). API 31+ hands the system one RemoteViews per
+     * size and it swaps them without waking the app; below that, the size reported in the
+     * options picks one layout (portrait reading: minWidth x maxHeight).
+     *
+     * One sprite bitmap, shared by every layout, capped at the 256px of the source art, so
+     * the size map carries the same Bitmap object in each RemoteViews instead of a bigger
+     * one per layout: this payload crosses binder.
+     */
+    fun renderAdaptive(
+        context: Context,
+        mgr: AppWidgetManager,
+        appWidgetId: Int,
+        options: Bundle = mgr.getAppWidgetOptions(appWidgetId),
+    ) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val spriteId = resolveSprite(
+            context,
+            prefs.getString("current_stage", "rookie") ?: "rookie",
+            prefs.getString("egg_type", "") ?: "",
+            prefs.getString("branch_type", "data") ?: "data",
+        )
+        val sprite = spriteBitmap(context, spriteId, 96, 256)
+        val petName = prefs.getString("pet_name", "Soulmon") ?: "Soulmon"
+        val line = adaptiveLine(context)
+        fun build(shape: WidgetAdaptive.Shape) = adaptiveViews(context, shape, sprite, spriteId, petName, line)
+
+        val views = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            RemoteViews(WidgetAdaptive.SIZE_KEYS.associate { SizeF(it.widthDp, it.heightDp) to build(it.shape) })
+        } else {
+            build(
+                WidgetAdaptive.chooseShape(
+                    options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH),
+                    options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT),
+                ),
+            )
+        }
+        mgr.updateAppWidget(appWidgetId, views)
+    }
+
+    private fun adaptiveViews(
+        context: Context,
+        shape: WidgetAdaptive.Shape,
+        sprite: Bitmap?,
+        spriteId: Int,
+        petName: String,
+        line: String,
+    ): RemoteViews {
+        val layoutId = when (shape) {
+            WidgetAdaptive.Shape.SQUARE -> R.layout.widget_soulmon_adaptive_square
+            WidgetAdaptive.Shape.HORIZONTAL -> R.layout.widget_soulmon_adaptive_horizontal
+            WidgetAdaptive.Shape.VERTICAL -> R.layout.widget_soulmon_adaptive_vertical
+        }
+        val views = RemoteViews(context.packageName, layoutId)
+        if (sprite != null) {
+            views.setImageViewBitmap(R.id.widget_sprite, sprite)
+            views.setImageViewBitmap(R.id.widget_sprite_2, sprite)
+        } else {
+            views.setImageViewResource(R.id.widget_sprite, spriteId)
+            views.setImageViewResource(R.id.widget_sprite_2, spriteId)
+        }
+        // The square has no text views: only the creature, by the owner's request.
+        if (shape != WidgetAdaptive.Shape.SQUARE) {
+            views.setTextViewText(R.id.widget_pet_name, petName)
+            views.setTextViewText(R.id.widget_message, line)
+        }
+        attachClick(context, views)
+        return views
+    }
+
+    private fun adaptiveLine(context: Context): String {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val task = prefs.getString("next_task", null)
+        return when (
+            WidgetAdaptive.selectMessage(
+                now = System.currentTimeMillis(),
+                hungryAt = if (prefs.contains("hungry_at")) prefs.getLong("hungry_at", 0L) else null,
+                hasPoop = prefs.getBoolean("has_poop", false),
+                nextTask = task,
+                dayEndsAt = if (prefs.contains("day_ends_at")) prefs.getLong("day_ends_at", 0L) else null,
+                completed = prefs.getInt("completed_tasks", 0),
+                total = prefs.getInt("total_tasks", 0),
+            )
+        ) {
+            WidgetAdaptive.Message.HUNGRY -> context.getString(R.string.widget_line_hungry)
+            WidgetAdaptive.Message.POOP -> context.getString(R.string.widget_line_poop)
+            WidgetAdaptive.Message.TASK -> context.getString(R.string.widget_line_task, task)
+            WidgetAdaptive.Message.DAY_CLOSED -> context.getString(R.string.widget_line_day_closed)
+            WidgetAdaptive.Message.SUPPORT -> context.getString(R.string.widget_line_support)
+        }
+    }
+
     // Refresh every active instance of all widget variants.
     fun updateAll(context: Context) {
         val mgr = AppWidgetManager.getInstance(context)
@@ -278,6 +373,8 @@ object WidgetRenderer {
             renderChat(context, mgr, id, R.layout.widget_soulmon_chat)
         for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetScreenProvider::class.java)))
             renderScreen(context, mgr, id, R.layout.widget_soulmon_screen)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetAdaptiveProvider::class.java)))
+            renderAdaptive(context, mgr, id)
     }
 
     private fun attachClick(context: Context, views: RemoteViews) {

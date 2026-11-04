@@ -92,6 +92,20 @@ class SoulmonWidgetPlugin : Plugin() {
         if (groveStage in GROVE_STAGE_IDS) editor.putString("grove_stage", groveStage) else editor.remove("grove_stage")
         editor.putBoolean("needs_intervention", call.data.optBoolean("needsIntervention", false))
 
+        /*
+         * REGISTRO §221 — the resizable widget. New keys only; absent = removed, and the
+         * renderer reads absence as "nothing to say" (see WidgetAdaptive.selectMessage).
+         *  · `hungry_at`: the INSTANT the creature gets hungry, so an hourly refresh with
+         *    the app closed still gets it right (hunger falls by timestamp).
+         *  · `next_task`, `day_ends_at`: the name is only valid until that device midnight.
+         */
+        val hungryAt = call.data.optLong("hungryAtMs", -1L)
+        if (hungryAt >= 0L) editor.putLong("hungry_at", hungryAt) else editor.remove("hungry_at")
+        val nextTask = call.getString("nextTaskName")?.trim().orEmpty()
+        if (nextTask.isNotEmpty()) editor.putString("next_task", nextTask) else editor.remove("next_task")
+        val dayEndsAt = call.data.optLong("dayEndsAtMs", -1L)
+        if (dayEndsAt >= 0L) editor.putLong("day_ends_at", dayEndsAt) else editor.remove("day_ends_at")
+
         editor.apply()
 
         // Push update to all active widget instances (all 3 variants)
