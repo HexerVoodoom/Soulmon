@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type CSSProperties } from 'react';
 import { lotIconName } from '../../utils/lotIcons';
 import { MindTutorialScreen, MindTutorialLink, useMindTutorial } from './MindTutorial';
 import type { EarningGameProps } from './types';
@@ -24,6 +24,9 @@ import { SeloSeal, seloLabel } from './SeloSeal';
  */
 
 type Phase = 'intro' | 'play' | 'reveal' | 'done';
+
+/** A linha de fase mora sobre a cena pintada do Ateliê: o `muted` padrão some no turquesa. */
+const linhaNaCena: CSSProperties = { ...phaseLine, color: 'var(--sm2-ink)', textShadow: '0 1px 4px rgba(0,0,0,0.9)' };
 
 export function SeloGame({ language, evolutionStage, demoCharacterId, onEarnPoints, onExit, challenge, tutorial }: EarningGameProps) {
   const isPt = language === 'pt-BR';
@@ -158,7 +161,7 @@ export function SeloGame({ language, evolutionStage, demoCharacterId, onEarnPoin
           </div>
           {phase === 'reveal' && (
             <>
-              <p style={phaseLine} data-selo-feedback={picked === puzzle.answer ? 'ok' : 'miss'}>
+              <p style={linhaNaCena} data-selo-feedback={picked === puzzle.answer ? 'ok' : 'miss'}>
                 {picked === puzzle.answer
                   ? (isPt ? 'Esse completa o padrão.' : 'That one completes the pattern.')
                   : (isPt ? 'O selo destacado era o que completava. Bora o próximo.' : 'The highlighted seal was the one. On to the next.')}
@@ -173,7 +176,7 @@ export function SeloGame({ language, evolutionStage, demoCharacterId, onEarnPoin
 
       {phase === 'intro' && (
         <>
-          <p style={phaseLine}>
+          <p style={linhaNaCena}>
             {isPt ? 'Descubra o padrão da grade e escolha o selo que falta.' : 'Find the pattern in the grid and pick the missing seal.'}
           </p>
           <button type="button" onClick={start} style={sm2Button('primary')} data-selo-start>
@@ -184,7 +187,7 @@ export function SeloGame({ language, evolutionStage, demoCharacterId, onEarnPoin
 
       {phase === 'done' && (
         <>
-          <p style={phaseLine} data-selo-done>
+          <p style={linhaNaCena} data-selo-done>
             {earned > 0 ? <>{isPt ? 'Rodada fechada.' : 'Round complete.'} <BitsAmount value={earned} sign="+" /></> : (isPt ? 'Rodada fechada. Bora mais uma?' : 'Round complete. Another go?')}
           </p>
           <ResultScreen
