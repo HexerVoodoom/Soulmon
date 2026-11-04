@@ -318,7 +318,7 @@ export function DuelScreen({
     <TorcidaLayer onTap={cheer} active={cheering && !pausado} isPt={isPt} style={BATTLE_LAYER_STYLE} mascot cheerRatio={barra / CHEER.tapsFull}>
       <BattleStage
         scene={scene ?? DUEL_SCENE.bg}
-        sceneElement={oppEl}
+        sceneElement={scene ? null : oppEl}
         specialLabel={par?.especial ? specialLabel(isPt, par.especial) : (me.fx?.lex ? foeSpecialLabel(isPt, meEl, 'me', me.fx.familia, me.fx.lex) : specialLabel(isPt))}
         foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia, opp.fx?.lex)}
         isPt={isPt}
