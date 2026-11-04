@@ -25,6 +25,10 @@ import { temaSpriteOf } from '../../utils/temaInimigosArt';
 const GroveRaidFight = lazy(() => import('./GroveRaidFight').then(m => ({ default: m.GroveRaidFight })));
 import { getPlantio, actPlantio, type PlantioAction, type PlantioView, type PlantSpecies } from '../../utils/claApi';
 import { fruitRewards } from '../../utils/claCredit';
+import stage0 from '../../assets/soulmon/plantio/plant-stage-0.png';
+import stage1 from '../../assets/soulmon/plantio/plant-stage-1.png';
+import stage2 from '../../assets/soulmon/plantio/plant-stage-2.png';
+import stage3 from '../../assets/soulmon/plantio/plant-stage-3.png';
 import { ARVORE_SRC, PANORAMA_SRC } from '../../assets/bosque';
 import { LOT_NPC_ART } from '../../assets/soulmon/npcs';
 import { NpcSpeech } from '../nav/NpcSpeech';
@@ -36,13 +40,15 @@ import { Icon } from '../ui/Icon';
 import { InfoTip, ModalInfo } from '../ui/InfoTip';
 import { useClaBuilding, type ClaSalaProps, type ClaT } from './claUi';
 
+/** Os 4 estágios do Visor (rodada 5): semente, broto, planta, planta com o fruto. Mesma caixa, base alinhada. */
+const PLANT_STAGE_SRC = [stage0, stage1, stage2, stage3] as const;
+
 export const PLANTIO_VISOR_HEIGHT = 220;
 const H = PLANTIO_VISOR_HEIGHT;
 /** Altura da CAIXA do sprite, em px do vidro. Os 5 níveis de uma árvore dividem a mesma caixa (base alinhada, escala relativa
  *  preservada): o broto é pequeno e a completa enche a caixa, sem tabela de alturas por nível. */
 /** A completa (nível 4) mede esta altura no vidro; a caixa de cada árvore se ajusta por `SPRITES` (cada folha tem a sua escala). */
 const COMPLETA_PX = 180;
-const caixaPx = (e: EstacaoBosque): number => Math.round((COMPLETA_PX * SPRITES[e].H) / SPRITES[e].h4);
 
 interface PlantioVisorProps {
   stage: number;
@@ -55,7 +61,7 @@ interface PlantioVisorProps {
 
 export function PlantioVisor({ stage, species, planted, mature, reducedMotion, label }: PlantioVisorProps) {
   const nivel = nivelDoPlantio({ planted, mature, stage });
-  const src = nivel > 0 ? ARVORE_SRC[ESTACAO_DA_ESPECIE[species]][nivel] : null;
+  const src = nivel > 0 ? PLANT_STAGE_SRC[mature ? 3 : Math.min(3, Math.max(0, Math.floor(stage) || 0))] : null;
   return (
     <span
       className="sm2-viewport-screen sm2-visor sm2-plantio-screen"
@@ -77,7 +83,7 @@ export function PlantioVisor({ stage, species, planted, mature, reducedMotion, l
           data-plantio-planta
           data-plantio-fruto={mature ? '' : undefined}
           className={mature && !reducedMotion ? 'sm2-casa-glow' : undefined}
-          style={{ height: caixaPx(ESTACAO_DA_ESPECIE[species]), width: 'auto', display: 'block', imageRendering: 'pixelated', marginBottom: 6, position: 'relative' }}
+          style={{ height: COMPLETA_PX, width: 'auto', display: 'block', imageRendering: 'pixelated', marginBottom: 6, position: 'relative' }}
         />
       ) : (
         <span aria-hidden="true" style={{ width: 96, height: 14, marginBottom: 18, borderRadius: '50%', border: '2px dashed var(--sm2-primary, #6EFFFB)', opacity: 0.7 }} />

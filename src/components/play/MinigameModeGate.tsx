@@ -6,6 +6,7 @@ import { lotNpcArt } from '../../assets/soulmon/npcs';
 import { lotNpcVoice } from '../../utils/areaNpcVoice';
 import { difficultyLabel } from '../../utils/minigameDifficulty';
 import type { Language } from '../../utils/i18n';
+import quadroRanking from '../../assets/soulmon/icones-ui/quadro-ranking.png';
 import type { RankedGame } from '../../utils/rankings';
 
 /**
@@ -53,7 +54,7 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
         </button>
         <ModalSheet open={rankOpen} onClose={() => setRankOpen(false)} language={language} placement="center" sobreTelas title={isPt ? 'Ranking' : 'Leaderboard'}>
           {/* 30/10/2026 (dono): sem a moldura de cobre; a lista ocupa a largura do modal. */}
-          <div data-minigame-gate-ranking style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div data-minigame-gate-ranking style={{ display: 'flex', flexDirection: 'column', gap: 8, borderStyle: 'solid', borderWidth: 28, borderImage: `url(${quadroRanking}) 82 / 28px stretch`, padding: 4, imageRendering: 'pixelated' }}>
             {rankings.length > 1 && (
               <div role="tablist" aria-label={isPt ? 'Tabelas de ranking' : 'Ranking boards'} style={{ display: 'flex', gap: 6 }}>
                 {rankings.map((r, i) => (

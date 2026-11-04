@@ -14,6 +14,8 @@ import chevron from '../assets/soulmon/fx/gain-levelup.png';
 /** O chevron do level up (96², exibido a 48 = 0,5×). */
 export const LEVELUP_CHEVRON: string = chevron;
 
+import bannerPt from '../assets/soulmon/levelup/levelup-banner-pt.png';
+
 const modules = import.meta.glob('../assets/soulmon/levelup/*.png', {
   eager: true,
   import: 'default',
@@ -28,4 +30,4 @@ for (const [path, url] of Object.entries(modules)) {
 }
 
 /** URL do slot, ou `undefined` (sem arte instalada → o overlay usa o fallback procedural). */
-export const levelUpArt = (slot: LevelUpSlot): string | undefined => ART[slot];
+export const levelUpArt = (slot: LevelUpSlot, language?: string): string | undefined => (slot === 'banner' && language === 'pt' ? bannerPt : ART[slot]);
