@@ -2,6 +2,7 @@ package com.soulmon.plugins
 
 import android.content.Context
 import com.soulmon.widget.WidgetRenderer
+import com.soulmon.widget.WidgetVpet
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
@@ -105,6 +106,13 @@ class SoulmonWidgetPlugin : Plugin() {
         if (nextTask.isNotEmpty()) editor.putString("next_task", nextTask) else editor.remove("next_task")
         val dayEndsAt = call.data.optLong("dayEndsAtMs", -1L)
         if (dayEndsAt >= 0L) editor.putLong("day_ends_at", dayEndsAt) else editor.remove("day_ends_at")
+
+        /*
+         * 04/11/2026 — V-Pet casing chosen by the player: an element id from the 20-base allowlist (`WidgetVpet.FRAME_ELEMENTS`);
+         * anything else REMOVES the key and the renderer draws the default casing.
+         */
+        val vpetFrame = call.getString("vpetFrame") ?: ""
+        if (WidgetVpet.frameDrawableName(vpetFrame) != null) editor.putString("vpet_frame", vpetFrame) else editor.remove("vpet_frame")
 
         editor.apply()
 

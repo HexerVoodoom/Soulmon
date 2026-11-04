@@ -8,6 +8,7 @@
 // dar créditos infinitos.
 
 import { VALID_ID, readEntitlement, publicView, comEntitlementLegivel } from './_entitlements.js';
+import { COUNTER_RING } from './_elementoBase.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { betaGate, BETA_CLOSED_MESSAGE } from './_betaAccess.js';
 import { takeIpQuota } from './_ipHash.js';
@@ -348,6 +349,10 @@ async function onRequestBruto({ request, env }) {
     if ('equippedFrame' in state) state.equippedFrame = frameIdOrNull(state.equippedFrame);
     if ('avatarId' in state) state.avatarId = avatarIdOrNull(state.avatarId);
     if ('ownedFrames' in state) state.ownedFrames = clampOwnedFrames(state.ownedFrames);
+    // Molduras do WIDGET V-Pet (cosmético, 04/11/2026): só ids dos 20 elementos base, sem repetição. A posse COMPRADA vive no
+    // entitlement (`ent.frames`), nunca aqui; esta lista é só a que a evolução libera.
+    if ('widgetFramesOwned' in state) state.widgetFramesOwned = Array.isArray(state.widgetFramesOwned) ? [...new Set(state.widgetFramesOwned.filter(v => COUNTER_RING.includes(v)))] : [];
+    if ('widgetFrame' in state && !COUNTER_RING.includes(state.widgetFrame)) state.widgetFrame = null;
     // Talentos (Combate v3 / PR7): o vetor e VALIDADO contra o Vinculo do proprio save (`totalXP` -> `bondLevelFor`,
     // o teto de pontos = level). Invalido (id desconhecido, grau a mais, pontos a mais) e DESCARTADO, nunca
     // corrigido. Limite honesto: `totalXP` tambem e escrito pelo cliente (ver `_bond.js`); o teto de 5% do canal

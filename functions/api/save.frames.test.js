@@ -56,3 +56,24 @@ describe('save.js — molduras', () => {
     expect('ownedFrames' in lido(e)).toBe(false);
   });
 });
+
+describe('save.js — molduras do WIDGET V-Pet (widgetFramesOwned / widgetFrame)', () => {
+  it('só os 20 elementos base, sem repetição; a escolhida fora do catálogo vira null', async () => {
+    const e = mk();
+    await post(e, { widgetFramesOwned: ['fogo', 'vapor', 'fogo', 5, 'sombra'], widgetFrame: 'vapor' });
+    expect(lido(e).widgetFramesOwned).toEqual(['fogo', 'sombra']);
+    expect(lido(e).widgetFrame).toBeNull();
+    await post(e, { widgetFramesOwned: ['luz'], widgetFrame: 'luz' });
+    expect(lido(e)).toMatchObject({ widgetFramesOwned: ['luz'], widgetFrame: 'luz' });
+  });
+
+  it('lista que não é lista vira vazia; save antigo não ganha campo', async () => {
+    const e = mk();
+    await post(e, { widgetFramesOwned: 'fogo' });
+    expect(lido(e).widgetFramesOwned).toEqual([]);
+    const e2 = mk();
+    await post(e2, { petName: 'Bolha' });
+    expect('widgetFramesOwned' in lido(e2)).toBe(false);
+    expect('widgetFrame' in lido(e2)).toBe(false);
+  });
+});
