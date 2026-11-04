@@ -4915,6 +4915,11 @@ export default function App() {
     setGameState(prev => ({ ...prev, equippedDecor: applyDecorEquip(prev.equippedDecor ?? {}, id, slot) }));
   }, []);
 
+  /** Editar Home: grava o rascunho inteiro de uma vez (mesmo campo que a loja usa). */
+  const handleSaveHomeDecor = useCallback((decor: Partial<Record<SlotId, string>>) => {
+    setGameState(prev => ({ ...prev, equippedDecor: { ...decor } }));
+  }, []);
+
   // 💎 Créditos (monetização) — TODA operação de saldo passa pelo SERVIDOR
   // (utils/entitlements.ts). O `credits` do GameState é só espelho pra UI;
   // quem decide é functions/api/_entitlements.js. Nunca aplique o efeito de
@@ -8850,6 +8855,13 @@ export default function App() {
                 onChangeName: handleChangeUserName,
                 petName: soulmonDisplayName(gameState.soulmonMeta),
                 onChangePetName: handleChangePetName,
+                editHome: {
+                  ownedFurniture: gameState.ownedFurniture ?? [],
+                  equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
+                  equippedBackground: visibleBackground(gameState.equippedBackground),
+                  onSave: handleSaveHomeDecor,
+                  onOpenShop: () => { setPendingSheet({ area: 'mercado', lot: 'background' }); goTo(areaView('mercado')); },
+                },
               }}
               onOpenCredits={demo ? undefined : openCredits}
               demo={demo ? { onLeave: handleLeaveDemo } : undefined}

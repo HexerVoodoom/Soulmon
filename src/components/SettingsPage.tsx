@@ -18,6 +18,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { desligarMusica, ligarMusica, musicaPreferida } from '../utils/musica';
 import { APP_VERSION, FeedbackRow, BugReportRow } from './FeedbackLink';
 import { ProfileEditor } from './perfil/ProfileEditor';
+import { EditHomeScreen, type EditHomeProps } from './perfil/EditHomeScreen';
 import { UserAvatar } from './ui/UserAvatar';
 import { BondXpBar } from './perfil/BondXpBar';
 import { GmPanel, type GmActions } from './GmPanel';
@@ -101,6 +102,8 @@ interface SettingsPageProps {
     petStage: string; totalXP?: number; onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
     userName?: string; onChangeName?: (name: string) => void;
     petName?: string; onChangePetName?: (name: string) => void;
+    /** Editar Home: sem isto a linha nao existe. */
+    editHome?: Pick<EditHomeProps, 'ownedFurniture' | 'equippedDecor' | 'equippedBackground' | 'onSave' | 'onOpenShop'>;
   };
   /** Créditos e ferramentas do ritual (vieram do menu da Home, que saiu). */
   onOpenCredits?: () => void;
@@ -286,6 +289,7 @@ export function SettingsPage({
   onReplayIntro,
 }: SettingsPageProps) {
   const [profileOpen, setProfileOpen] = useState(false);
+  const [editHomeOpen, setEditHomeOpen] = useState(false);
   const [musica, setMusica] = useState(() => musicaPreferida());
   const isPt = language === 'pt-BR';
   const t = useTranslation(language);
@@ -354,6 +358,26 @@ export function SettingsPage({
             <span style={{ ...sm2Text, flex: 1 }}>{isPt ? 'Editar perfil' : 'Edit profile'}</span>
             <Icon name="chevron_right" size={24} tone="muted" />
           </button>
+          {profile.editHome && (
+            <button
+              type="button"
+              data-edit-home-open
+              onClick={() => setEditHomeOpen(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 56, background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--sm2-ink)', textAlign: 'left' }}
+            >
+              <span style={{ width: 32, display: 'flex', justifyContent: 'center' }}><Icon name="home" size={24} tone="muted" /></span>
+              <span style={{ ...sm2Text, flex: 1 }}>{isPt ? 'Editar Home' : 'Edit Home'}</span>
+              <Icon name="chevron_right" size={24} tone="muted" />
+            </button>
+          )}
+          {profile.editHome && editHomeOpen && (
+            <EditHomeScreen
+              language={language}
+              {...profile.editHome}
+              onSave={(d) => { profile.editHome!.onSave(d); setEditHomeOpen(false); }}
+              onClose={() => setEditHomeOpen(false)}
+            />
+          )}
           <ProfileEditor
             open={profileOpen}
             onClose={() => setProfileOpen(false)}
