@@ -1,5 +1,8 @@
 # Soulmon — Guia para agentes
 
+> **REGRA MÁXIMA DE IDENTIDADE (dono, 04/11/2026):** todo asset/design do Soulmon leva turquesa ESCURO no tom fechado da Home, cristais da alma com chama/brilho dentro (quase sempre o elemento principal) e — em pouca quantidade — canos de cobre, circuitos digitais e ramos de folhinhas, tudo ligado por cabo, planta integrada à máquina. Cada contexto é um ecossistema diferente, o core fica. Sem engrenagem/steampunk. "Arcano, natureza + magia" não basta no prompt. Texto canônico: `docs/REGRA-IDENTIDADE-SOULMON.md`.
+> **Checklist de revisão de arte:** asset sem esses elementos (turquesa escuro, cristal com chama, cobre/circuito/folhinhas) é REJEITADO.
+
 > ## 🟢 LEIA PRIMEIRO — O SOULMON ESTÁ EM PRODUÇÃO (desde 20/10/2026)
 >
 > - **Google Play:** app `com.soulmon` no Play Console (conta Mojoceramon), **teste interno ativo** com o

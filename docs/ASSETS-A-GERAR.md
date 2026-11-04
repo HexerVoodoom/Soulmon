@@ -1,5 +1,8 @@
 ﻿# Assets a gerar — lista completa, por família, com uso, formato e prompt
 
+> **REGRA MÁXIMA DE IDENTIDADE (dono, 04/11/2026):** todo asset/design do Soulmon leva turquesa ESCURO no tom fechado da Home, cristais da alma com chama/brilho dentro (quase sempre o elemento principal) e — em pouca quantidade — canos de cobre, circuitos digitais e ramos de folhinhas, tudo ligado por cabo, planta integrada à máquina. Cada contexto é um ecossistema diferente, o core fica. Sem engrenagem/steampunk. "Arcano, natureza + magia" não basta no prompt. Texto canônico: `docs/REGRA-IDENTIDADE-SOULMON.md`.
+> **Checklist de revisão de arte:** asset sem esses elementos (turquesa escuro, cristal com chama, cobre/circuito/folhinhas) é REJEITADO.
+
 > **Data:** 15/09/2026 · **Base:** `INVENTARIO-ASSETS.md` (o que existe, medido) + as decisões do
 > dono D1–D9 (15/09). Este documento é a **fila de trabalho**: cada linha "falta" tem uso,
 > tela, formato, destino no repo, mapa que registra e o prompt pronto.
@@ -655,7 +658,7 @@ linhas de Soulmon por elemento (nova fila, não incluída aqui).
 |---|---|---|---|---|
 | Selo/medalha "novo recorde" | 1 | `src/assets/soulmon/icons/icon-record-seal.png` | PNG RGBA 1024x1024 (reduzir com *nearest* se preciso), fundo transparente | `items/item-heart.png`, `icons/icon-trophy-gold.png` (estilo) |
 
-Prompt (EN): "Create a single pixel-art game icon: a round 'NEW RECORD' medal seal. Gold-and-copper circular medal with a small teal crystal gem in the center, two tiny leaf laurels hugging the lower half, a short ribbon with two tails below, a couple of small cyan sparkle stars around it. 16-bit pixel art, crisp hard pixel edges, flat shading with 3 tones per material, dark navy 1px outline, magical-nature mood (arcane, calm, NOT steampunk, no gears), handheld creature-collector UI icon look. Centered, ~80% of the square canvas. TRANSPARENT background with real alpha (no drawn checkerboard, no shadow, no glow halo). No text, letters or numbers."
+Prompt (EN): "Create a single pixel-art game icon: a round 'NEW RECORD' medal seal. Gold-and-copper circular medal with a small teal crystal gem in the center, two tiny leaf laurels hugging the lower half, a short ribbon with two tails below, a couple of small cyan sparkle stars around it. 16-bit pixel art, crisp hard pixel edges, flat shading with 3 tones per material, dark navy 1px outline, Soulmon identity (dark deep-teal base in the Home tone, soul crystal with a flame inside, small copper pipes, circuit lines and tiny leafy branches joined by cable; calm, NOT steampunk, no gears), handheld creature-collector UI icon look. Centered, ~80% of the square canvas. TRANSPARENT background with real alpha (no drawn checkerboard, no shadow, no glow halo). No text, letters or numbers."
 
 Conferência: Pillow (`python -I`), prévia em #08191A (nunca magenta/verde). Enquanto não existe, o ResultScreen usa o troféu dourado (`icons/icon-trophy-gold.png`) como selo provisório.
 
