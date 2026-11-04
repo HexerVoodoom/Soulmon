@@ -99,8 +99,12 @@ describe('sessão de diversão: fluxo real no AreaView', () => {
     renderWithCss(<Harness energy={0} />);
     await achar('[data-barrage-open]');
     expect(q('[data-fun-nudged]')).toBeNull();
+    const subir = vi.fn();
+    Element.prototype.scrollTo = subir as never;
     await toque('[data-barrage-open]');
     expect(q('[data-fun-nudged]')).not.toBeNull();
+    // Com a lista rolada o aviso estaria fora da tela: o toque sobe a lista até ele.
+    expect(subir).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
     expect(q('[data-gate-pick]')).toBeNull();
   }, 60000);
 
