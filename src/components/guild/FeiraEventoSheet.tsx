@@ -24,6 +24,7 @@ import {
 import { FEIRA_TRAIL_MIN_MS, mapFeiraLog, type FeiraAttack, type FeiraClaim, type FeiraEvento, type FeiraSolution, type FeiraTrail, type FeiraTrailDone } from '../../utils/feira';
 import { feiraText, type FeiraKey } from '../../utils/feiraCopy';
 import { creditFeiraOnce, type FeiraCredit } from '../../utils/feiraCredit';
+import { markFeiraDesafioDone } from '../../utils/feiraDesafio';
 import type { PlayerDayAnchor } from '../../utils/playerDay';
 import type { Language } from '../../utils/i18n';
 
@@ -105,6 +106,7 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
       const a = taps && taps.some(n => n > 0) ? await api.attack(saveId, tz, taps) : await api.attack(saveId, tz);
       if (!alive.current) return;
       if (!a) { setPhase('home'); setNote('boss.gone'); return; }
+      markFeiraDesafioDone();
       setBefore(evento.bossHpPct);
       setAttack(a);
       setEvento(a.evento ?? { ...evento, bossHpPct: a.boss.bossHpPct, canAttack: false });
@@ -171,6 +173,7 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
       if (!alive.current) return;
       if (!r) { setNote('boss.gone'); return; }
       credit({ receipt: r.receipt || `feira-trilha:${trail.k}:${new Date().toISOString().slice(0, 10)}`, emblems: r.reward.emblems, bits: 0, trophyId: null });
+      markFeiraDesafioDone();
       setDoneRow(r.reward);
       if (r.evento) setEvento(r.evento);
       else if (evento.kind === 'trail') setEvento({ ...evento, trail: { ...evento.trail, pending: false, cleared: true }, gate: null });
@@ -265,6 +268,7 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
               <div style={{ width: `${Math.round(evento.bossHpPct)}%`, height: '100%', background: 'var(--sm2-primary-fill)' }} />
             </div>
             <p style={{ ...sm2Hint, margin: 0 }}>{evento.canAttack ? t('boss.shared') : t('boss.today')}</p>
+            {evento.canAttack && <p style={{ ...sm2Hint, margin: '4px 0 0' }} data-feira-mesmo-dia>{t('boss.sameDay')}</p>}
           </div>
         )}
         {phase === 'home' && evento.kind === 'trail' && (

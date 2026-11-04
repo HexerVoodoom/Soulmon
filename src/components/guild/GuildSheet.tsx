@@ -56,6 +56,7 @@ import { GuildLoja } from './GuildLoja';
 import { ProcurarCla, PedidosDeEntrada, AceitarPedidos } from './ClaProcurar';
 import { donatableItems } from '../../utils/guildHouse';
 import { isMissionAway, msUntilReturn, type GuildMissionState } from '../../utils/guildMission';
+import { feiraDesafioStatus, readFeiraDesafio } from '../../utils/feiraDesafio';
 import { ALL_SHOP_ITEMS } from '../../utils/shop';
 import { DECOR_ART } from '../../utils/decorArt';
 import { hasClaimedReceipt, rememberClaimedReceipt, markClaimAttempt, hadClaimAttempt } from '../../utils/guildClaimLocal';
@@ -1225,6 +1226,10 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
   feira?: { resumo: NonNullable<GuildView['feira']>; ocupado: boolean; onAbrir: () => void };
 }) {
   const raid = guild.raid;
+  // O DESAFIO DO DIA (dono, 04/11/2026): com a Missão, o inimigo só está na sala no MESMO dia em que o Soulmon voltou com
+  // ele; noutro dia sem luta ele "escapou" e a sala volta a pedir a investigação. Sem Missão (Feira antiga) nada muda.
+  const desafioSt = missao ? feiraDesafioStatus(readFeiraDesafio(), playerDayKey(new Date(), tz)) : 'open';
+  const desafioAtivo = !!feira && feira.resumo.state !== 'rest' && (desafioSt === 'open' || desafioSt === 'done' || !!raid?.hitToday);
   // Relógio da volta ("volta em X min"): só roda enquanto o Soulmon está fora.
   const [agora, setAgora] = useState(() => Date.now());
   const returnAt = missao?.state?.returnAt ?? 0;
@@ -1284,7 +1289,7 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           {t(raid.lastWeek === 'dissipada' ? 'guild.feira.dissipado.mundo' : 'guild.feira.recuou.mundo')}
         </p>
       )}
-      {!dissipada && !missao && !(feira && feira.resumo.state !== 'rest') && (
+      {!dissipada && !missao && !desafioAtivo && (
         <button
           type="button"
           data-feira-rodada
@@ -1299,7 +1304,7 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
           {raid.hitToday ? t('guild.feira.rodada.feita') : t('guild.feira.rodada.botao')}
         </button>
       )}
-      {feira && <FeiraMisterio language={language} resumo={feira.resumo} ocupado={feira.ocupado} onAbrir={feira.onAbrir} />}
+      {feira && (feira.resumo.state === 'rest' || desafioAtivo) && <FeiraMisterio language={language} resumo={feira.resumo} ocupado={feira.ocupado} onAbrir={feira.onAbrir} />}
       {/* UM card, UMA ação (dono, 27/10/2026): a história do que rola na feira, o gesto de mandar, o "fora" e a volta. */}
       {!dissipada && missao && (() => {
         const fora = isMissionAway(missao.state, agora);
@@ -1316,13 +1321,14 @@ function SalaFeira({ guild, tz, t, language, ocupado, reducedMotion, resgate, re
             <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-cla>{t('guild.missao.volta.cla')}</p>
             <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-volta-eu>{t('guild.missao.volta.eu', { nome })}</p>
           </div>
-          {!(feira && feira.resumo.state !== 'rest') && <ProximaAcao t={t} language={language} tz={tz} agora={agora} />}
+          {!desafioAtivo && <ProximaAcao t={t} language={language} tz={tz} agora={agora} />}
           </>
         );
         // UM botão só: o desafio do mistério (FeiraMisterio) tem prioridade sobre "Investigar".
-        if (feira && feira.resumo.state !== 'rest') return null;
+        if (desafioAtivo) return null;
         return (
           <>
+            {desafioSt === 'escaped' && <p className="sm2-stats-t" role="status" style={{ margin: 0 }} data-feira-escapou>{t('guild.missao.escapou')}</p>}
             <p className="sm2-lib-s" style={{ margin: 0 }} data-missao-historia>{t('guild.missao.historia')}</p>
             <button
               type="button"

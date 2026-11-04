@@ -17,7 +17,10 @@ import { lotIconName } from '../../utils/lotIcons';
 import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageFighter, type StageHit } from '../games/BattleStage';
 import { ResultScreen, type ResultLedgerRow } from '../games/ResultScreen';
 import type { FightEvent } from '../../utils/combate/fight';
-import { impactMs, introMs, prefersReducedMotion, type StageActionKind } from '../../utils/combatFx';
+import { impactMs, introMs, prefersReducedMotion, specialLeadMs, specialTailMs, type StageActionKind } from '../../utils/combatFx';
+import { avancar as avancarPortao, bloqueiaAplicar, bloqueiaComecar, fechar as fecharPortao, type ConfigDoPortao, type Portao } from '../../utils/specialGate';
+import { FEIRA_SCENE } from '../../utils/dungeonScenes';
+import { ENERGY_TRIGGER } from '../../utils/combate/specials';
 import { BOSS_ROSTER, bossArt, bossText } from '../../data/bossRoster';
 import type { Language } from '../../utils/i18n';
 
@@ -91,6 +94,7 @@ export function BossFightScreen(p: BossFightScreenProps) {
   const [action, setAction] = useState<StageAction | null>(null);
   const [hits, setHits] = useState<StageHit[]>([]);
   const [meHp, setMeHp] = useState(1);
+  const [energy, setEnergy] = useState<{ me: number; foe: number }>({ me: 0, foe: 0 });
   const [pool, setPool] = useState(clampPct(p.poolPctBefore));
   const seq = useRef(0);
   const reduced = useRef(prefersReducedMotion());
@@ -112,27 +116,57 @@ export function BossFightScreen(p: BossFightScreenProps) {
     let meNow = 1; // VIDA INTEIRA (30/10/2026): o número do golpe = o que a barra mostrada perdeu
     let finished = false;
     let endId: number | undefined;
-    const t0 = performance.now();
+    /* O PROJÉTIL DO ESPECIAL SUMIA (bug, 04/11/2026): a cena tem UM `action`, e o replay acelerado (`speed`) disparava o
+       golpe seguinte — às vezes no MESMO tick — por cima do especial, que nunca chegava a aparecer. Agora é o mesmo
+       portão do Duelo (`utils/specialGate.ts`): no `cast` o relógio PARA pela cena + trajeto + cauda, e só depois o
+       próximo golpe começa. O tempo do portão é de PAREDE (não acelera). Só encenação: o replay do servidor é o mesmo. */
+    const cfgPortao: ConfigDoPortao = { leadMs: specialLeadMs(rd), tailMs: specialTailMs(rd), respiroS: (impactMs('ranged', rd) / 1000) * speed };
+    let portao: Portao | null = null;
+    let clock = 0;
+    let last = performance.now();
+    const fire = (e: FightEvent, k: StageActionKind) => {
+      const mineSide = e.side === 0;
+      setAction({ id: ++seq.current, actor: mineSide ? 'me' : 'foe', foe: 0, kind: k, strike: k === 'special' ? 'ranged' : undefined, element: mineSide ? p.me.element : bossElement });
+    };
     const id = window.setInterval(() => {
       if (finished) return;
-      const clock = ((performance.now() - t0) / 1000) * speed;
-      while (started < events.length) {
+      const now = performance.now();
+      const dt = Math.max(0, now - last);
+      last = now;
+      if (portao) {
+        const passo = avancarPortao(portao, dt, clock, cfgPortao);
+        portao = passo.portao;
+        clock = passo.relogioS;
+      } else {
+        clock += (dt / 1000) * speed;
+      }
+      while (!bloqueiaComecar(portao) && started < events.length) {
         const e = events[started];
         const k = kindOf(e);
-        if (e.t - (k ? leadS(k) : 0) > clock) break;
-        if (k) {
-          const mineSide = e.side === 0;
-          setAction({ id: ++seq.current, actor: mineSide ? 'me' : 'foe', foe: 0, kind: k, strike: k === 'special' ? 'ranged' : undefined, element: mineSide ? p.me.element : bossElement });
+        if (k === 'special') {
+          if (e.t > clock) break;
+          fire(e, k);
+          const f = fecharPortao(started, e.t, clock, cfgPortao);
+          portao = f.portao;
+          clock = f.relogioS;
+          started++;
+          break;
         }
+        if (e.t - (k ? leadS(k) * speed : 0) > clock) break;
+        if (k) fire(e, k);
         started++;
       }
-      while (applied < events.length && events[applied].t <= clock) {
+      while (
+        applied < events.length && events[applied].t <= clock && !bloqueiaAplicar(portao, applied)
+        && !(events[applied].kind === 'cast' && applied >= started)
+      ) {
         const e = events[applied];
         applied++;
         if (applied > started) started = applied;
         const meBefore = meNow;
         meNow = clamp01(e.hp[0]);
         setMeHp(meNow);
+        setEnergy({ me: Math.max(0, e.energy[0]), foe: Math.max(0, e.energy[1]) });
         if ((e.kind === 'attack' || e.kind === 'tick') && e.frac > 1e-9) {
           const toBoss = e.side === 0;
           const mineBefore = mine;
@@ -148,7 +182,7 @@ export function BossFightScreen(p: BossFightScreenProps) {
           setHits([{ id: ++seq.current, side: toBoss ? 'foe' : 'me', foe: 0, value, big: specialHit.has(e) }]);
         }
       }
-      if (applied >= events.length) {
+      if (applied >= events.length && !portao) {
         finished = true;
         setPool(clampPct(p.poolPctAfter));
         endId = window.setTimeout(() => setPhase('result'), rd ? 300 : END_BEAT_MS);
@@ -187,10 +221,11 @@ export function BossFightScreen(p: BossFightScreenProps) {
   }
 
   const foe: StageFighter = { key: `boss-${p.bossId}`, sprite: art, name: text.name, hp: pool, maxHp: 100, element: bossElement };
-  const meFighter: StageFighter = { key: 'me', sprite: p.me.sprite, scale: p.me.scale, name: p.me.name, hp: meHp * meMax, maxHp: meMax, element: p.me.element };
+  const meFighter: StageFighter = { key: 'me', sprite: p.me.sprite, scale: p.me.scale, name: p.me.name, hp: meHp * meMax, maxHp: meMax, element: p.me.element, energy: energy.me / ENERGY_TRIGGER };
   return (
     <div style={BATTLE_LAYER_STYLE} data-boss-fight data-boss-id={p.bossId}>
       <BattleStage
+        scene={FEIRA_SCENE.bg}
         me={meFighter}
         foes={[foe]}
         action={action}

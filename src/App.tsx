@@ -200,6 +200,8 @@ import { arenaRerollCost, arenaRerollsToday, applyArenaReroll, applyArenaRunEnd 
 import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst } from './utils/bitsOrigin';
 import { applyGuildSlot } from './utils/guildHouse';
 import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMission';
+import { recordFeiraDesafio } from './utils/feiraDesafio';
+import { scheduleFeiraVolta, cancelFeiraVolta } from './utils/feiraNotificacao';
 // Prédios do clã: só TIPO aqui. O código entra por import() dinâmico (fora do chunk de entrada; `/api/guild` não pode
 // entrar nele — entradaEnxuta.contract.test.ts).
 import type { ClaReward } from './utils/claApi';
@@ -4806,6 +4808,8 @@ export default function App() {
   const [, voltouDaMissao] = useState(0); // re-render na hora da volta: o pet reaparece mesmo se o registro estiver esperando a rede
   useEffect(() => {
     if (!guildMission || !saveId) return;
+    // O aviso da volta (dono, 04/11/2026): agendado enquanto ele está fora; cancelado quando a volta é registrada.
+    if (Date.now() < guildMission.returnAt) scheduleFeiraVolta(guildMission.returnAt, Date.now(), language, notificationsEnabled);
     let alive = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let busy = false;
@@ -4817,6 +4821,9 @@ export default function App() {
       try {
         const { hitGuildRaidEvento } = await import('./utils/community');
         const volta = await hitGuildRaidEvento(saveId, gameState.playerDayTz);
+        cancelFeiraVolta();
+        // O DESAFIO DO DIA: o inimigo que ele trouxe só vale HOJE (amanhã "escapou"). Descanso não é desafio.
+        if (volta.evento && volta.evento.kind !== 'rest') recordFeiraDesafio(playerDayKey(new Date(), gameState.playerDayTz), volta.evento.k);
         // FEIRA DO CHEFE: o evento da volta entra na fila (um por vez). Ausente (Feira desligada / servidor antigo) = nada muda.
         if (volta.evento && feiraEventoAbre(volta.evento) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraShownKey(volta.evento, playerDayKey(new Date(), gameState.playerDayTz))) setFeiraEvento(volta.evento);
         if (alive) encerrar();
@@ -4831,7 +4838,7 @@ export default function App() {
     const aoVoltar = () => { if (!document.hidden) void tentar(); };
     document.addEventListener('visibilitychange', aoVoltar);
     return () => { alive = false; if (timer) clearTimeout(timer); document.removeEventListener('visibilitychange', aoVoltar); };
-  }, [guildMission, saveId, gameState.playerDayTz, setGameState]);
+  }, [guildMission, saveId, gameState.playerDayTz, setGameState, language, notificationsEnabled]);
 
   const handleEquipBackground = useCallback((id: string | null) => {
     setGameState(prev => ({ ...prev, equippedBackground: id }));

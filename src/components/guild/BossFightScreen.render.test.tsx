@@ -30,9 +30,26 @@ describe('BossFightScreen', () => {
     expect(bar().textContent).toContain('Lv 15');
     act(() => { vi.advanceTimersByTime(2200); });
     expect(Number(bar().getAttribute('data-stage-boss-pct'))).toBeLessThan(62);
-    act(() => { vi.advanceTimersByTime(6000); });
+    // a barra de ENERGIA do especial do SEU Soulmon aparece como na Arena/Duelo (dono, 04/11/2026)
+    expect(container.querySelector('[data-stage-energy]')).not.toBeNull();
+    // o especial segura o relógio (cena + trajeto + cauda): o resultado vem depois dele, não por cima
+    act(() => { vi.advanceTimersByTime(12000); });
     expect(container.querySelector('[data-result-kind="boss"]')).not.toBeNull();
     expect(screen.getByText('You dealt 1000 damage.')).toBeTruthy();
+  });
+
+  it('o especial do jogador não é atropelado: enquanto a cena dele roda, nenhum golpe novo começa', () => {
+    vi.useFakeTimers();
+    // o chefe ataca LOGO depois do especial: antes do conserto o golpe dele trocava a ação e o projétil sumia
+    const evs: FightEvent[] = [ev('cast', 0.5, 0, 0), ev('attack', 0.5, 0, 0.06), ev('attack', 0.6, 1, 0.05, [0.95, 1]), ev('attack', 0.7, 1, 0.05, [0.9, 1])];
+    const { container } = render(<BossFightScreen {...base} events={evs} />);
+    act(() => { vi.advanceTimersByTime(700); });
+    expect(container.querySelector('[data-stage-special]')).not.toBeNull();
+    // a barra do SEU pet ainda não caiu: os golpes do chefe esperam o especial terminar
+    const meHp = () => container.querySelector('[data-stage-plate="me"]')?.textContent;
+    const antes = meHp();
+    act(() => { vi.advanceTimersByTime(600); });
+    expect(meHp()).toBe(antes);
   });
 
   it('resultado: o chefe foge (nunca "falhou"), só o dano do próprio jogador e o pool', () => {
