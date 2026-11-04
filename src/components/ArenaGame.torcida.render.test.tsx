@@ -122,8 +122,8 @@ async function ate(cond: () => boolean, maxMs = 30_000) {
 }
 /** Vence a rodada atual (foes frágeis) e abre a próxima. */
 async function proximaRodada() {
-  expect(await ate(() => temBotao('Próxima rodada'))).toBe(true);
-  fireEvent.click(screen.getByRole('button', { name: 'Próxima rodada' }));
+  expect(await ate(() => temBotao('Pronto pro combate'))).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: /Pronto pro combate/ }));
   await avancar(10);
 }
 
@@ -369,10 +369,13 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
     await entrar();
     expect(await ate(() => document.querySelector('[data-arena-cura-modal]') !== null)).toBe(true);
     const modal = document.querySelector('[data-arena-cura-modal] [role="dialog"]')!;
-    expect(modal.textContent).toMatch(/^\+\d+ HP recuperado/);
+    expect(modal.textContent).toMatch(/Fôlego recuperado/);
+    expect(modal.textContent).toMatch(/Você recuperou \+\d+ de vida/);
     expect(Number(/\+(\d+)/.exec(modal.textContent!)![1])).toBeGreaterThan(0);
-    expect(document.body.textContent).not.toMatch(/Rodada 1 vencida/); // sem a página intermediária
-    fireEvent.click(screen.getByRole('button', { name: 'Próxima rodada' }));
+    expect(modal.querySelectorAll('[data-heart-fill]').length).toBe(3); // 3 corações enchendo
+    // fundo: o cenário da run escurecido, não preto chapado
+    expect(document.querySelector('[data-arena-cura-modal]')!.getAttribute('data-cena')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Pronto pro combate/ }));
     await avancar(10);
     expect(document.querySelector('[data-arena-cura-modal]')).toBeNull();
     expect(document.querySelectorAll('[data-stage-sprite="foe"]').length).toBe(2); // rodada 2 em luta
