@@ -3959,6 +3959,6 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 
 **Como aparece.** Para o dono, `comNomeDoEspecial` aplica o nome por cima da ficha em leitura (o cache `soulmonSkills` não é reescrito). Para os outros, `DuelScreen` recebe `oppEspecialNome` (Torneio/Duelo); sem nome, o nome por regra de sempre.
 
-**Limites declarados.** Só vai ao servidor quando o perfil é publicado (PvP ligado e Vínculo >= 5); fora disso o nome vale só para o dono. Nome recusado apaga o nome anterior (o pedido diz que recusado cai no padrão) e, como a troca já foi gasta, a nova só vale após a semana. Lista de palavrões é conservadora, não exaustiva.
+**Limites declarados.** Só vai ao servidor quando o perfil é publicado (PvP ligado e Vínculo >= 5); fora disso o nome vale só para o dono. Emenda de 04/11/2026 (dono): nome recusado NÃO muda nada — fica o anterior, não gasta a troca semanal e o app avisa para tentar outro. Lista de palavrões é conservadora, não exaustiva.
 
 **O que falsificaria.** Nome ofensivo passando pelo filtro (ampliar a lista) ou queixa de falso positivo em nome comum (migrar as raízes longas para só-palavra-inteira).

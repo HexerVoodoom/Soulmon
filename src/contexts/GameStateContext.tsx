@@ -2229,7 +2229,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
           if (resposta.especialNomeRejected || resposta.especialNomeLimit) {
             const pt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
             toast.warning(resposta.especialNomeRejected
-              ? (pt ? 'Esse nome de especial não pôde ser usado. Voltou ao nome padrão.' : 'That special name could not be used. Back to the default name.')
+              ? (pt ? 'Esse nome de especial não pôde ser usado. O nome anterior continua; tente outro.' : 'That special name could not be used. Your previous name stays; try another.')
               : (pt ? 'O nome do especial só muda uma vez por semana.' : 'The special name can only change once a week.'));
           }
         }

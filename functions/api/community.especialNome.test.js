@@ -68,7 +68,7 @@ describe('nome do especial (perfil publico)', () => {
     expect(perfilDe(env).especialNome).toBe('Raio Solar 2');
   });
 
-  it('forma: mais de 20, simbolos e contato voltam ao nome padrao e avisam', async () => {
+  it('forma: mais de 20, simbolos e contato sao recusados, avisam e nao mudam nada', async () => {
     for (const ruim of ['a'.repeat(21), 'Raio!', 'raio@sol', 'x.com sol', 'Zap: 1234', '<b>x</b>']) {
       const env = mundo();
       const j = await (await salvar(env, { especialNome: ruim })).json();
@@ -76,6 +76,18 @@ describe('nome do especial (perfil publico)', () => {
       expect(j.especialNome, ruim).toBe('');
       expect(perfilDe(env).especialNome, ruim).toBeUndefined();
     }
+  });
+
+  it('recusado NAO muda nada: fica o nome anterior e a troca da semana nao e gasta', async () => {
+    const env = mundo();
+    const ok = await (await salvar(env, { especialNome: 'Primeiro' })).json();
+    const ruim = await (await salvar(env, { especialNome: 'Caralho' })).json();
+    expect(ruim.especialNomeRejected).toBe(true);
+    expect(ruim.especialNome).toBe('Primeiro');
+    expect(ruim.especialNomeAt).toBe(ok.especialNomeAt);
+    expect(perfilDe(env).especialNome).toBe('Primeiro');
+    env.DIGIAPP_SAVES.store.set(`profile:${BRUNO}`, JSON.stringify({ ...perfilDe(env), especialNomeAt: Date.now() - 8 * DIA }));
+    expect((await (await salvar(env, { especialNome: 'Segundo' })).json()).especialNome).toBe('Segundo');
   });
 
   it('filtro de palavrao PT e EN (inclusive leet, repeticao e espacos); palavra comum passa', async () => {
