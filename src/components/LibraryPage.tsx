@@ -162,6 +162,8 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   const isPt = language === 'pt-BR';
   const [search, setSearch] = useState('');
   const [petBases, setPetBases] = useState<(string | null)[]>(emptySlots);
+  // Filtro por bases da aba Selvagens: um estado só para Selvagem + Desgarrado.
+  const [wildBases, setWildBases] = useState<(string | null)[]>(emptySlots);
   const [players, setPlayers] = useState<DirectoryPlayer[] | null>(null);
   /** Erro de CARGA (rede/servidor). Separado de "lista vazia", de propósito. */
   const [loadError, setLoadError] = useState(false);
@@ -376,7 +378,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   const carregando = list === null;
 
   const LIB_TABS = [
-    { key: 'found' as const, label: isPt ? 'Encontrados' : 'Encountered' },
+    { key: 'found' as const, label: isPt ? 'Outros jogadores' : 'Other players' },
     { key: 'wild' as const, label: isPt ? 'Selvagens' : 'Wild' },
     { key: 'element' as const, label: isPt ? 'Elemento' : 'Element' },
   ];
@@ -517,12 +519,15 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
         <div role="tabpanel" id="sm2-libpanel" aria-labelledby={'sm2-libtab-' + libTab} data-library-panel={libTab}>
           {libTab === 'wild' && (
             <>
+              <div style={{ margin: '0 0 12px' }} data-base-filter>
+                <ElementBaseSlots slots={wildBases} isPt={isPt} onChange={(i, v) => setWildBases(s => s.map((x, j) => (j === i ? v : x)))} />
+              </div>
               {/* 28/10/2026 (dono): Selvagem e Desgarrado moram na MESMA aba, em duas seções. */}
               <h3 className="sm2-lib-s" style={{ margin: '0 0 6px', fontWeight: 600 }}>{isPt ? 'Selvagem' : 'Wild'}</h3>
-              <BestiaryCollection seen={bestiary} mode="wild" language={language} isNew={novos.bestiary} />
+              <BestiaryCollection seen={bestiary} mode="wild" language={language} isNew={novos.bestiary} bases={wildBases} />
               <h3 className="sm2-lib-s" style={{ margin: '16px 0 6px', fontWeight: 600 }}>{isPt ? 'Desgarrado' : 'Stray'}</h3>
               {/* 01/11/2026 (dono): desgarrado de jogador (§213) junto, sem distinção. */}
-              <BestiaryCollection seen={bestiary} mode="stray" language={language} isNew={novos.bestiary} players={strayPlayersSeen} playersNew={novos.strays} />
+              <BestiaryCollection seen={bestiary} mode="stray" language={language} isNew={novos.bestiary} players={strayPlayersSeen} playersNew={novos.strays} bases={wildBases} />
             </>
           )}
           {libTab === 'element' && <ElementDex defeated={defeatedElements} language={language} isNew={novos.elements} />}
