@@ -98,7 +98,8 @@ describe('inimigos do bestiário', () => {
     const boss = buildArenaRound(5, 1, rng, POOL);
     expect(boss).toHaveLength(1);
     expect(boss[0].cls).toBe('boss');
-    expect(boss[0].tier).toBe('mega');
+    expect(boss[0].dropTier).toBe('mega'); // §222: o drop segue a classe; a forma vem da escada
+    expect(boss[0].form).toBe('rookie');
   });
 });
 

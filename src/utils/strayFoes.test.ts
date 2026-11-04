@@ -29,8 +29,9 @@ describe('Desgarrados como oponentes', () => {
 
   it('rodada de desgarrado usa formas fortes; sem o flag, a rodada é a de antes (mesmo rng)', () => {
     for (let r = 1; r <= 5; r++) {
-      const stray = buildArenaRound(r, 1, mulberry32(r), undefined, true);
+      const stray = buildArenaRound(r, 1, mulberry32(r), undefined, true, false, undefined, 32); // §222: topo da escada
       expect(stray.every(e => e.stray === true && STRONG.has(e.form as string))).toBe(true);
+      expect(buildArenaRound(r, 1, mulberry32(r), undefined, true).every(e => e.stray === undefined && e.form === 'rookie')).toBe(true); // escada 0: run comum
     }
     const a = buildArenaRound(2, 1, mulberry32(9), undefined);
     const b = buildArenaRound(2, 1, mulberry32(9), undefined, false);
