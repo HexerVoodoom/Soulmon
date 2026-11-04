@@ -64,11 +64,15 @@ describe('intro pré-login', () => {
     expect(introVista()).toBe(true);
   });
 
-  it('tempos batem com a trilha A Parede: 72,85 s e início de cada plano', () => {
-    expect(PLANOS_INTRO.reduce((a, p) => a + p.s, 0)).toBeCloseTo(72.85, 2);
-    const inicios: number[] = []; let acc = 0;
-    for (const p of PLANOS_INTRO) { inicios.push(acc); acc += p.s; }
-    expect(inicios.map((x) => Math.round(x * 100) / 100)).toEqual([0, 5.98, 11.96, 23.84, 29.91, 41.79, 47.77, 59.73, 65.71]);
+  it('v3 curta: ~35 s no total, nenhum plano passa de 5 s', () => {
+    const total = PLANOS_INTRO.reduce((a, p) => a + p.s, 0);
+    expect(total).toBeLessThanOrEqual(36);
+    expect(Math.max(...PLANOS_INTRO.map(p => p.s))).toBeLessThanOrEqual(5);
+  });
+
+  it('cada troca de plano tem a estática de sintonia', () => {
+    const { container } = render(<IntroCinematica language="en-US" onDone={() => {}} paineis={['a.webp', 'b.webp']} />);
+    expect(container.querySelector('[data-intro-sintonia]')).not.toBeNull();
   });
 
   it('painéis: um por plano, trocam junto com a legenda; sem vídeo', () => {
