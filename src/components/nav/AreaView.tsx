@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type ComponentProps, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { crystalBlocksLot, crystalRefusalText } from '../../utils/evolutionCrystal';
 import { emitFeat } from '../../utils/feats';
 import type { AreaId } from '../../navigation';
@@ -36,6 +36,7 @@ import type { QuestMark } from '../../utils/questMarks';
 import type { FocusLootRequest } from '../../utils/focusExpedition';
 import type { FocusRewardResult } from '../play/OficinaSheet';
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
+import { isFunGame, type FunSessionStatus } from '../../utils/funSession';
 import type { PasseioAchado } from '../play/PasseioSheet';
 import {
   usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame, loadZipGame, loadSeloGame,
@@ -114,6 +115,9 @@ export interface PlayHandlers {
   /** Tutorial da 1ª abertura dos jogos do Ateliê da Mente (26/10/2026): o que já foi visto (save) e como gravar AO MOSTRAR. */
   mindTutorials?: { seen: MindGameTutorials; onShown: (id: MindGameId) => void };
   onDinoScore: (score: number) => void;
+  /** 🎟️ Sessão dos minijogos de diversão (04/11/2026, `utils/funSession.ts`): o estado AGORA e a porta que começa uma rodada
+   *  (cobra 1 energia ao abrir sessão; `false` = sem energia). Ausente (testes antigos) = jogos do Salão sem custo. */
+  funSession?: { status: (nowMs: number) => FunSessionStatus; onStartRound: () => boolean };
   onSpendBits?: (pts: number) => boolean;
   /** Arena livre (28/10/2026): contador de rerolls do save, dia do jogador e o pedido de reroll (o App desconta Bits e grava). */
   arena?: { dayIso: string; reroll?: ArenaReroll; onReroll: () => boolean; runs?: ArenaReroll; onRunEnd?: () => void };
@@ -363,6 +367,18 @@ export function AreaView(props: AreaViewProps) {
   const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? null);
   /** O Pipo perguntou o modo (30/10/2026, `MinigameModeGate`): o jogo só monta depois da resposta; `level` só nos jogos com dificuldade. */
   const [modeChosen, setModeChosen] = useState<{ game: PlayGame; level?: 1 | 2 } | null>(null);
+  /* 🎟️ A rodada do Salão é cobrada quando o jogo COMEÇA de fato (depois da pergunta do NPC, se houver): voltar da pergunta
+     não gasta rodada. Uma cobrança por abertura (`funChargedRef`); recusa (sem energia) fecha o jogo. */
+  const funApi = props.play?.funSession; // `play` é opcional na prática: áreas sem jogos montam sem ele
+  const funChargedRef = useRef<string | null>(null);
+  const funRunning = !!game && isFunGame(game) && (!MINIGAME_GATE[game] || modeChosen?.game === game);
+  const funKey = funRunning ? `${game}:${modeChosen?.level ?? 0}:${modeChosen ? 'm' : 'n'}` : null;
+  useEffect(() => {
+    if (!funKey) { funChargedRef.current = null; return; }
+    if (funChargedRef.current === funKey || !funApi) return;
+    funChargedRef.current = funKey;
+    if (!funApi.onStartRound()) setGame(null);
+  }, [funKey, funApi]);
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
@@ -448,7 +464,15 @@ export function AreaView(props: AreaViewProps) {
     );
   }
 
+  /* 🎟️ Jogo do Salão: sem sessão nem energia, não abre (a folha mostra a frase). A rodada é cobrada quando o jogo COMEÇA (após a
+     pergunta do NPC, se houver) — voltar da pergunta não gasta rodada. */
+  const funGate = funApi;
   const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setModeChosen(null); setGame(g); };
+  /** A porta do Salão: sem sessão nem energia, não abre (a folha já mostra a frase calma). */
+  const startSalao = (g: PlayGame) => {
+    if (funGate && isFunGame(g) && !funGate.status(Date.now()).canPlay) return;
+    start(g);
+  };
   /** A Fenda Sem Fim (a antiga Masmorra): mora na Exploração (#187, 28/10/2026; esteve na Arena de beta3 N10 até então); o jogo abre em tela cheia sobre a cena da área. */
   const renderMasmorra = () => {
     const { play } = props;
@@ -575,7 +599,7 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'ferreiro' && <ForgeCard language={language} />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
             {open?.id === 'hexsmith' && <HexsmithSheet language={language} sprite={props.guild.mySprite} demoCharacterId={props.demoCharacterId} evolutionStage={props.evolutionStage} skills={props.skills} petElement={props.petElement} />}
-            {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
+            {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={startSalao} funStatus={play.funSession?.status} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
             {open?.id === 'dungeon' && !play.rogue && <RogueDungeonPlaceholder language={language} />}

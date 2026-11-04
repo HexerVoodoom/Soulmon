@@ -1,4 +1,5 @@
-import { useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { FUN_SESSION_COST, FUN_SESSION_ROUNDS, FUN_SESSION_MS, formatMmSs, type FunSessionStatus } from '../../utils/funSession';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { clearBonus } from '../DungeonGame';
@@ -253,10 +254,46 @@ export type RefugioGame = 'respiracao' | 'bolhas-calmas';
 /** Salão de Jogos — jogos livres: a Corrida com obstáculos e o PPT, as mesmas folhas de sempre.
  *  I2 (01/10/2026): cada jogo é um CARD próprio (`sheetCard`), não mais dois
  *  blocos separados por um filete. */
-export function SalaoSheet({ language, onStart, bitsToday }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number }) {
+/** 🎟️ A linha da sessão de diversão (04/11/2026, `utils/funSession.ts`): o custo, ou as rodadas e o relógio da sessão aberta,
+ *  ou — sem energia — um convite calmo para as outras atividades. Atualiza a cada segundo. */
+export function FunSessionLine({ language, status }: { language: Language; status: (nowMs: number) => FunSessionStatus }) {
+  const isPt = language === 'pt-BR';
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
+  const st = status(now);
+  const mins = Math.round(FUN_SESSION_MS / 60000);
+  if (st.active) {
+    return (
+      <p data-fun-session="active" style={{ ...sm2Text, margin: 0 }}>
+        {isPt
+          ? `Rodadas restantes: ${st.roundsLeft} · expira em ${formatMmSs(st.msLeft)}`
+          : `Rounds left: ${st.roundsLeft} · expires in ${formatMmSs(st.msLeft)}`}
+      </p>
+    );
+  }
+  if (!st.canPlay) {
+    return (
+      <p data-fun-session="blocked" role="status" style={{ ...sm2Hint, margin: 0 }}>
+        {isPt
+          ? 'Sem energia para jogar agora. Que tal uma tarefa, o Ateliê da Mente ou o Refúgio? A energia volta com o tempo.'
+          : 'No energy to play right now. How about a task, the Mind Atelier or the Refuge? Energy comes back over time.'}
+      </p>
+    );
+  }
+  return (
+    <p data-fun-session="cost" style={{ ...sm2Hint, margin: 0 }}>
+      {isPt
+        ? `${FUN_SESSION_COST} energia = ${FUN_SESSION_ROUNDS} rodadas (${mins} min)`
+        : `${FUN_SESSION_COST} energy = ${FUN_SESSION_ROUNDS} rounds (${mins} min)`}
+    </p>
+  );
+}
+
+export function SalaoSheet({ language, onStart, bitsToday, funStatus }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number; funStatus?: (nowMs: number) => FunSessionStatus }) {
   const isPt = language === 'pt-BR';
   return (
     <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-4, 16px)' }}>
+      {funStatus && <FunSessionLine language={language} status={funStatus} />}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <BitsHoje language={language} earned={bitsToday} />
         <ModalInfo language={language} label={isPt ? 'Como funciona o Salão' : 'How the Hall works'} align="right">
