@@ -233,6 +233,10 @@ export const STORAGE_KEYS = {
   /** Preferência da OFICINA DO FOCO: vibração curta ao fim. LIGADA por padrão (decisão do dono,
    *  04/10/2026): só `'false'` desliga. Interruptor em Configurações › Seus dados. */
   FOCO_VIBRATE: 'soulmon-foco-vibrate',
+  /** CHAMA (trataka, 04/11/2026): o último dia (`AAAA-MM-DD`) em que a sessão concluída pagou os Bits fixos. Aparelho. Dono: `components/refugio/ChamaGame.tsx`. */
+  CHAMA_PAGO: 'soulmon-chama-pago',
+  /** CHAMA: o aviso de segurança da 1ª vez já foi visto (`'1'`). Aparelho. */
+  CHAMA_AVISO: 'soulmon-chama-aviso',
   /** CADERNO — chave LEGADA (04/10/2026, 1ª versão: só no aparelho). O Caderno agora mora em
    *  `GameState.caderno` (save na nuvem do titular); esta chave só é LIDA para migrar as
    *  anotações antigas para o save uma vez e é apagada em seguida. Dono: `utils/cadernoLocal.ts`. */

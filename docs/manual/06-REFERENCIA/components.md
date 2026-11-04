@@ -1444,6 +1444,19 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/components/refugio/refugeInvite.render.test.tsx`, `src/components/filaDeAvisos.contract.test.ts`.
 
+### `src/components/refugio/CenaSubaquatica.tsx`
+**Dono de:** a cena subaquática em tela cheia da Respiração (degradê, raios, bolhas, algas e coral) e o guia água-viva. Arte opcional em `src/assets/soulmon/respiracao/{fundo,meio,frente}.webp`, com camada procedural quando falta. Movimento reduzido: cena parada.
+**Exports:** `CenaSubaquatica`, `AguaViva`.
+**Chamado por:** `src/components/refugio/RespiracaoGame.tsx`.
+**Régua:** `src/components/refugio/chama.render.test.tsx`.
+
+### `src/components/refugio/ChamaGame.tsx`
+**Dono de:** o exercício Chama (trataka, 04/11/2026): aviso da 1ª vez, escolha de duração e modo olhos fechados, sessão em tela cheia com chama lenta (WCAG 2.3.1), sino + vibração, wake lock, toque duplo privado e Bits fixos 1×/dia. Arte opcional em `src/assets/soulmon/chama/fundo.webp`. É a exceção do Refúgio: soa nas trocas e paga Bits.
+**Exports:** `ChamaGame`, `ChamaViva`.
+**Depende de:** `src/utils/refugio/chama.ts`, `src/utils/refugio/sinoChama.ts`.
+**Chamado por:** `src/components/nav/AreaView.tsx`.
+**Régua:** `src/components/refugio/chama.render.test.tsx`.
+
 ### `src/components/refugio/RespiracaoGame.tsx`
 **Dono de:** Respirar com o Soulmon — escolher ritmo e 1–3 min; a bolha enche e esvazia sozinha e o pet respira junto (movimento reduzido: opacidade + barra, sem escala). Aviso de ajuda profissional nas três telas. Sem pontuação, sem Bits. Delta `bcfe7ca6..e3d55bb8` (01/10/2026, leva `visores`): os três `GameVisor` recebem `scene={REFUGIO_SCENE}` e a bolha é o sprite 48² `MINI_FX.bolhaRespiro` com `BUBBLE = 144` (3× inteiro; ⚰️ 136 px com círculo e borda em CSS).
 **Exports:** `RespiracaoGame(props: MiniGameBaseProps)`, `CrisisNote({ isPt })`.

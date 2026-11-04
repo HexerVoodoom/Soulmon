@@ -49,6 +49,8 @@ const GAME_STATE = 'soulmon_state_v1';
  * aqui no mesmo PR (e daí em diante também não pode sumir).
  */
 const NOVAS_DESDE_20_10_2026: readonly string[] = [
+  'soulmon-chama-pago',
+  'soulmon-chama-aviso',
   'soulmon-feira-desafio',
   'soulmon-barrage-best-2',
   'soulmon-library-forms',
