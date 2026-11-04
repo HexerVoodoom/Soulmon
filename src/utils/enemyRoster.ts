@@ -158,6 +158,16 @@ function buildRamos(): RosterEntry[] {
  */
 export const RAMO_CHANCE = 1 / 3;
 
+/**
+ * RAMO SEM RNG A MAIS (Arena e Desgarrado do Torneio, §221): quem já gasta UM número `u` do `rng` para escolher a criatura decide o ramo
+ * com os bits BAIXOS do mesmo `u` (mulberry32 dá 32 bits; o índice da criatura usa os altos), então a CONTAGEM de chamadas de `rng`
+ * não muda e card = luta segue valendo. `hit` = 1 em `RAMO_CHANCE`; `pick` = índice em `n` ramos.
+ */
+export function ramoFromRoll(u: number, n: number): { hit: boolean; pick: number } {
+  const frac = (x: number) => x - Math.floor(x);
+  return { hit: n > 0 && frac(u * 4096) < RAMO_CHANCE, pick: n > 0 ? Math.min(n - 1, Math.floor(frac(u * 16777216) * n)) : 0 };
+}
+
 /** Tudo que existe (base + combinados + o corvo, que só sai pelo `withRaven` + os ramos). */
 export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos()];
 export const ENEMY_ROSTER_KEYS: ReadonlySet<string> = new Set(ENEMY_ROSTER.map(e => e.key));

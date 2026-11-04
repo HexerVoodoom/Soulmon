@@ -13,7 +13,7 @@
 // (`builder/balanco-motores.md` §6) — recalibrate with that script, never by hand.
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { novoFormName, pickNovo, type NovoAnyStage } from './novosSoulmonData';
-import { ENEMY_ROSTER, ENEMY_ROSTER_KEYS, RAVEN_ENTRY, withRaven } from './enemyRoster';
+import { ENEMY_ROSTER, ENEMY_ROSTER_KEYS, RAVEN_ENTRY, ramoFromRoll, rosterEntryOfKey, withRaven } from './enemyRoster';
 import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { CUSTO_PONTO_PAR } from './soulProfile/ficha/cascata';
 import { baseDominanteDoElemento } from './soulProfile/ficha/elementoNome';
@@ -238,6 +238,8 @@ export interface ArenaEnemy {
   stray?: true;
   /** Run COMBINADA (28/10/2026, REGISTRO §180 emenda): o inimigo é um rookie de elemento combinado (2 elementos). `artFile` = `NNN-slug` da arte (`COMBINADOS_ART`). Só arte/nome/elementos; a força segue sendo do slot. */
   artFile?: string;
+  /** §221 (04/11/2026): o inimigo é um RAMO evoluído (`kind: 'ramo'`); = a chave do bestiário/roster (`<criatura><ramo>-<estágio>`). Só arte/nome; a força segue sendo do slot. */
+  ramoKey?: string;
 }
 
 /** Os rookies de elemento combinado (o pool "combinado" da Arena; só existem na forma rookie). */
@@ -248,8 +250,8 @@ export const ARENA_FUSED_FOE_CHANCE = 0.5; // 30/10 (2ª emenda do dono): "varia
 export const arenaFusedOf = (el: string) => COMBO_ROOKIES.filter(e => e.elements.includes(el));
 
 /** A chave do BESTIÁRIO (`<id>-<estágio>`) de um inimigo da Arena, ou `undefined` (forma fora do roster, ex.: ultra). 31/10/2026: a Arena não registrava. */
-export function arenaFoeKey(e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form'>): string | undefined {
-  const k = e.artFile ? `cmb${e.artFile.split('-')[0]}-rookie` : e.creature && e.form ? `${e.creature}-${e.form}` : undefined;
+export function arenaFoeKey(e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form'> & { ramoKey?: string }): string | undefined {
+  const k = e.ramoKey ? e.ramoKey : e.artFile ? `cmb${e.artFile.split('-')[0]}-rookie` : e.creature && e.form ? `${e.creature}-${e.form}` : undefined;
   return k && ENEMY_ROSTER_KEYS.has(k) ? k : undefined;
 }
 
@@ -313,7 +315,24 @@ export function buildArenaRound(
     // Arena segue justa para qualquer elemento do jogador) e o ELEMENTO é o da criatura — o mesmo do ataque e do FX.
     // fraco = Rookie · médio = Champion · chefe = a maior forma com arte (ultra > mega > ultimate), senão o Champion.
     const prefer: NovoAnyStage[] = stray ? (cls === 'boss' ? ['ultra', 'mega', 'ultimate'] : cls === 'medium' ? ['mega', 'ultimate'] : ['ultimate', 'mega']) : cls === 'weak' ? ['rookie'] : cls === 'medium' ? ['champion'] : ['ultra', 'mega', 'ultimate', 'champion'];
-    const picked = (runElement ? pickNovo(prefer, used, rng, runElement) ?? pickNovo(['champion', 'rookie'], used, rng, runElement) : null) ?? pickNovo(prefer, used, rng)!;
+    // §221 (dono, 04/11/2026): ramo evoluído só em nível ALTO — o chefe (mega) e, na run Desgarrada, qualquer slot (ultimate/mega). Zero `rng` a mais:
+    // o ramo sai dos bits baixos do MESMO número que escolhe a criatura (`ramoFromRoll`), então a contagem de sorteios não muda (card = luta).
+    let u0: number | undefined;
+    const rngU = () => { const v = rng(); u0 ??= v; return v; };
+    const picked = (runElement ? pickNovo(prefer, used, rngU, runElement) ?? pickNovo(['champion', 'rookie'], used, rngU, runElement) : null) ?? pickNovo(prefer, used, rngU)!;
+    const ramoStage = stray ? (cls === 'weak' ? 'ultimate' : 'mega') : cls === 'boss' ? 'mega' : undefined;
+    if (ramoStage && u0 !== undefined) {
+      const ramos = ENEMY_ROSTER.filter(e => e.kind === 'ramo' && e.stage === ramoStage && (!runElement || e.element === runElement) && !used.has(e.id));
+      const roll = ramoFromRoll(u0, ramos.length);
+      if (roll.hit) {
+        const r = ramos[roll.pick];
+        used.add(r.id);
+        return {
+          namePt: r.name, nameEn: r.name, elements: [r.element], points: shape.points + Math.max(0, difficulty - 1),
+          cls, tier: shape.tier, form: ramoStage, ramoKey: r.key, ...(stray ? { stray: true as const } : {}),
+        };
+      }
+    }
     used.add(picked.data.id);
     const nome = novoFormName(picked.data, picked.stage);
     return {

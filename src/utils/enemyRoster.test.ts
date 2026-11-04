@@ -16,7 +16,9 @@ import { newCombat } from './match3Combat';
 import { applyBestiarySeen, applyEnemyDefeated } from './dungeonRewards';
 import { mulberry32 } from './combate/rng';
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
-import { STRAY_ROSTER } from './strayFoes';
+import { STRAY_ROSTER, strayForTournament } from './strayFoes';
+import { buildArenaRound, arenaFoeKey } from './arena';
+import { ARENA_BASE_ELEMENTS } from './arenaSorteio';
 import { isStrayFoe } from './wildFoeLabel';
 
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
@@ -202,7 +204,7 @@ describe('ramos evoluídos como inimigos (§220)', () => {
     }
     expect(vistos.size).toBe(120);
   });
-  it('quem não olha o level do jogador nunca recebe ramo: level desconhecido, chefe do Elemental Fusion, Torneio', () => {
+  it('quem não olha o level do jogador nunca recebe ramo: level desconhecido, chefe do Elemental Fusion (o Torneio e a Arena têm regra própria, §221)', () => {
     for (let seed = 1; seed <= 500; seed++) {
       expect(pickEnemy(Number.POSITIVE_INFINITY, mulberry32(seed), { stage: 'mega' }).kind).not.toBe('ramo');
       expect(ramoDe(newBossCombat(mulberry32(seed)).enemies[0].roster!)).toBe(false);
@@ -216,5 +218,59 @@ describe('ramos evoluídos como inimigos (§220)', () => {
       if (ramoDe(e.stage)) { achou++; expect(e.sprite).toBeTruthy(); expect(e.element).toBe(rosterEntryOfKey(e.stage)!.element); }
     }
     expect(achou).toBeGreaterThan(0);
+  });
+});
+
+describe('ramos na Arena e no Desgarrado do Torneio (§221)', () => {
+  const isRamoKey = (k?: string) => !!k && rosterEntryOfKey(k)?.kind === 'ramo';
+  it('chefe do Elemental Fusion continua sem ramo (semRamos), por muitas sementes', () => {
+    for (let seed = 1; seed <= 3000; seed++) expect(isRamoKey(newBossCombat(mulberry32(seed)).enemies[0].roster)).toBe(false);
+  });
+  it('Arena comum: ramo só no CHEFE e em mega; fraco e médio nunca', () => {
+    let achou = 0;
+    for (let seed = 1; seed <= 4000; seed++) for (let r = 1; r <= 5; r++) for (const e of buildArenaRound(r, 1, mulberry32(seed * 7 + r), undefined, false, false, ARENA_BASE_ELEMENTS[seed % ARENA_BASE_ELEMENTS.length])) {
+      if (!e.ramoKey) continue;
+      achou++;
+      expect(e.cls).toBe('boss'); expect(e.form).toBe('mega');
+      expect(isRamoKey(arenaFoeKey(e))).toBe(true);
+      expect(rosterEntryOfKey(e.ramoKey)!.element).toBe(e.elements[0]);
+    }
+    expect(achou).toBeGreaterThan(0);
+  });
+  it('Arena Desgarrada: ramo só em ultimate/mega, nunca champion/rookie, e com a arte resolvida', () => {
+    let achou = 0;
+    for (let seed = 1; seed <= 3000; seed++) for (let r = 1; r <= 5; r++) for (const e of buildArenaRound(r, 1, mulberry32(seed * 13 + r), undefined, true, false, ARENA_BASE_ELEMENTS[seed % ARENA_BASE_ELEMENTS.length])) {
+      if (!e.ramoKey) continue;
+      achou++;
+      expect(['ultimate', 'mega']).toContain(e.form); expect(e.stray).toBe(true);
+      expect(rosterSpriteOf(rosterEntryOfKey(e.ramoKey)!)).toBeTruthy();
+    }
+    expect(achou).toBeGreaterThan(0);
+  });
+  it('determinismo e contagem de sorteios: mesma semente = mesmo resultado; ramo não consome rng a mais', () => {
+    for (const stray of [false, true]) for (let seed = 1; seed <= 400; seed++) {
+      const conta = (): { out: unknown; n: number } => { let n = 0; const g = mulberry32(seed); const out = buildArenaRound(5, 1, () => { n++; return g(); }, undefined, stray, false, 'fogo'); return { out, n }; };
+      const a = conta(), b = conta();
+      expect(b).toEqual(a);
+    }
+    // a contagem de rng é a de antes: um chefe sorteado pela via antiga (sem ramo) gasta o mesmo nº de chamadas que um que virou ramo
+    const contagens = new Set<number>();
+    for (let seed = 1; seed <= 600; seed++) { let n = 0; const g = mulberry32(seed); buildArenaRound(5, 1, () => { n++; return g(); }, undefined, false, false, 'fogo'); contagens.add(n); }
+    expect(contagens.size).toBeLessThanOrEqual(3); // varia só por corvo/fundido (já existentes), nunca por ramo
+  });
+  it('Desgarrado do Torneio: ultimate/mega, ramo aparece, estável por conta e dia, nunca champion', () => {
+    let ramos = 0;
+    for (let i = 0; i < 4000; i++) {
+      const e = strayForTournament(`conta-${i}`, '2026-11-04');
+      expect(e).toBe(strayForTournament(`conta-${i}`, '2026-11-04'));
+      if (e.kind === 'mascote') continue;
+      expect(['ultimate', 'mega']).toContain(e.stage);
+      if (e.kind === 'ramo') ramos++;
+    }
+    expect(ramos).toBeGreaterThan(0);
+    expect(ramos / 4000).toBeLessThan(0.5);
+  });
+  it('sem exclusão por identificador: os 3 Soulmon de teste de 04/11 não têm id no código, só ficam de fora por não terem sido baixados', () => {
+    expect(new Set(ENEMY_ROSTER.filter(e => e.kind === 'ramo').map(e => e.artFile))).toEqual(new Set(Object.keys(RAMOS_ART)));
   });
 });
