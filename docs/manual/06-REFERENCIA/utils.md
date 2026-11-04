@@ -545,6 +545,17 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/refugio/RespiracaoGame.tsx`.
 **Régua:** `src/utils/refugio/respiracao.test.ts`, `src/components/mente/revisaoRespiracao.render.test.tsx`.
 
+### `src/utils/refugio/chama.ts`
+**Dono de:** Chama (trataka, 04/11/2026): o roteiro da sessão de 3/5/10 min (chegada 20 s, ciclos de olhar 60 s + olhos fechados 40 s, repouso, fecho 10 s; a sobra de tempo vai para o repouso), a fase de um instante, a visibilidade da chama, os textos PT/EN e a regra do prêmio fixo 1×/dia só ao concluir.
+**Exports:** tipos `ChamaFase`, `ChamaSegmento`, `ChamaMomento`; `CHAMA_DURACOES_MIN`, `CHAMA_DURACAO_PADRAO`, `CHAMA_BITS`, constantes de fase; `ciclosPara`, `roteiro`, `sessaoMs`, `faseEm`, `chamaVisivel`, `premioDevido`, `diaLocal`, `textoFase`.
+**Chamado por:** `src/components/refugio/ChamaGame.tsx`.
+**Régua:** `src/utils/refugio/chama.test.ts`, `src/components/refugio/chama.render.test.tsx`.
+
+### `src/utils/refugio/sinoChama.ts`
+**Dono de:** o sino suave sintetizado e a vibração curta das trocas de fase da Chama; respeita `isMuted` e `isVibrateOn`.
+**Exports:** `tocarSinoChama`.
+**Chamado por:** `src/components/refugio/ChamaGame.tsx`.
+
 ### `src/utils/supportLine.ts`
 **Dono de:** os números e o link de apoio que o app mostra (CVV 188; 988; 116 123; findahelpline.com; `tel:188`) — um dono só desde 30/09/2026, porque duas cópias divergem e número errado em tela de crise pune quem pediu ajuda.
 **Exports:** `HELPLINE_DIRECTORY_URL`, `HELPLINE_TEL_BR`, `helplineDirectoryLabel(isPt)`, `helplineNumbers(isPt)`, `notProfessionalHelp(isPt)`.

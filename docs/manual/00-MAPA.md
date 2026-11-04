@@ -703,3 +703,4 @@ Para uma rodada completa da squad de documentação (medir → redigir → verif
 | [arte/PROMPTS-VELADOS.md](../arte/PROMPTS-VELADOS.md) | prompts da arte dos Velados | vivo | não |
 | [lore/VELADOS-ORDENS.md](../lore/VELADOS-ORDENS.md) | lore das ordens dos Velados | vivo | não |
 | [roteiro/INTRO-CINEMATICA.md](../roteiro/INTRO-CINEMATICA.md) | roteiro da cinemática "A Parede" | vivo | não |
+| [pesquisa/2026-11-04-jogo-cognitivo-e-chama.md](../pesquisa/2026-11-04-jogo-cognitivo-e-chama.md) | pesquisa do jogo cognitivo e do desenho da Chama (trataka) | pesquisa | não |

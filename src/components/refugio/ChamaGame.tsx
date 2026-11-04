@@ -4,6 +4,7 @@ import type { MiniGameBaseProps } from '../mente/types';
 import { sm2Button, sm2Hint } from '../form/FormKit';
 import { GameRoot, GameHeader, VisorSprite } from '../games/GameKit';
 import { usePrefersReducedMotion } from '../ui/Viewport';
+import { BitsAmount } from '../ui/BitsAmount';
 import { getSpriteForStage } from '../../utils/sprites';
 import { entrarNaSuperficie } from '../../utils/musica';
 import { readLocal, writeLocal } from '../../utils/safeStorage';
@@ -228,7 +229,9 @@ export function ChamaGame({ language, evolutionStage, demoCharacterId, onExit, o
           </button>
           <button type="button" data-chama-start onClick={comecar} style={sm2Button('primary')}>{isPt ? 'Começar' : 'Start'}</button>
           <p style={{ ...sm2Hint, ...tinta, textAlign: 'center', margin: 0 }}>
-            {isPt ? `Concluir a primeira sessão do dia rende ${CHAMA_BITS} Bits. Sair antes não tira nada.` : `Finishing your first session of the day gives ${CHAMA_BITS} Bits. Leaving early costs nothing.`}
+            {isPt ? 'Concluir a primeira sessão do dia rende ' : 'Finishing your first session of the day gives '}
+            <BitsAmount value={CHAMA_BITS} size={12} />
+            {isPt ? '. Sair antes não tira nada.' : '. Leaving early costs nothing.'}
           </p>
         </div>
       </GameRoot>
@@ -250,7 +253,7 @@ export function ChamaGame({ language, evolutionStage, demoCharacterId, onExit, o
               {isPt ? `Você voltou ${voltas} ${voltas === 1 ? 'vez' : 'vezes'}. Voltar é o exercício.` : `You came back ${voltas} ${voltas === 1 ? 'time' : 'times'}. Coming back is the practice.`}
             </p>
           )}
-          {pago > 0 && <p data-chama-bits style={{ margin: 0 }}>+{pago} Bits</p>}
+          {pago > 0 && <p data-chama-bits style={{ margin: 0 }}><BitsAmount value={pago} sign="+" /></p>}
           <div style={{ display: 'flex', gap: 8, width: '100%' }}>
             <button type="button" onClick={onExit} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, color: '#dff7f3' }}>{closeLabel}</button>
             <button type="button" onClick={() => setTela('setup')} style={{ ...sm2Button('primary'), flex: 1, minWidth: 0 }}>{isPt ? 'De novo' : 'Again'}</button>
