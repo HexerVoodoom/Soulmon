@@ -26,6 +26,10 @@ export const MIC_ERR = {
   unavailable: { en: 'Spoken messages are not available right now. You can type instead.', pt: 'O recado falado não está disponível agora. Você pode escrever.' },
   serverError: { en: "I couldn't turn that into text. Try again in a moment, or type it.", pt: 'Não consegui transformar em texto. Tente de novo daqui a pouco, ou escreva.' },
   offline: { en: "No internet connection. Your recording was not sent. Try again when you're back online.", pt: 'Sem conexão com a internet. A gravação não foi enviada. Tente de novo quando voltar.' },
+  denied: { en: "The microphone was blocked. Allow it in the phone settings (Apps > Soulmon > Permissions), or type here.", pt: 'O microfone foi bloqueado. Libere em Configurações do celular (Apps > Soulmon > Permissões), ou escreva aqui.' },
+  noDevice: { en: 'This device has no microphone available for the app. You can type instead.', pt: 'Este aparelho não tem microfone disponível para o app. Você pode escrever.' },
+  noEngine: { en: "Recording is not supported on this device or app version. Update the app, or type instead.", pt: 'Gravar não é suportado neste aparelho ou versão do app. Atualize o app, ou escreva.' },
+  recording: { en: 'Recording. Tap the button again to stop and turn it into text.', pt: 'Gravando. Toque no botão de novo para parar e virar texto.' },
   autoStop60: { en: 'Recording stopped at 60 seconds. Your message is being sent to text.', pt: 'A gravação parou aos 60 segundos. Estamos transformando em texto.' },
 } satisfies Record<string, Par>;
 
