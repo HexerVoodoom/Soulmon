@@ -81,7 +81,12 @@ describe('sanitizadores', () => {
     expect(sanitizeFeiraTrail({ k: 0, game: 'zip', seed: 5, puzzle: { size: 5, numbers: [0] } })).toBeNull();
     expect(sanitizeFeiraTrail({ k: 0, game: 'jogo-x', seed: 5, puzzle: {} })).toBeNull();
     expect(sanitizeFeiraTrail({ k: 0, game: 'eco', seed: 5, puzzle: { par: 5 } })).toMatchObject({ puzzle: { par: 5 } });
-    expect(FEIRA_TRAIL_MIN_MS).toEqual({ picross: 8000, zip: 4000, patches: 4000, troca: 10000, eco: 6000 });
+    // Selo: 8 casas + 6 opções; instância truncada é recusada; a Colcha de uma trilha antiga ainda é lida.
+    const pn = { shape: 1, count: 2, dir: 3, fill: 1, marks: 5 };
+    expect(sanitizeFeiraTrail({ k: 0, game: 'selo', seed: 5, puzzle: { grid: Array(8).fill(pn), options: Array(6).fill(pn) } })?.game).toBe('selo');
+    expect(sanitizeFeiraTrail({ k: 0, game: 'selo', seed: 5, puzzle: { grid: Array(7).fill(pn), options: Array(6).fill(pn) } })).toBeNull();
+    expect(sanitizeFeiraTrail({ k: 0, game: 'patches', seed: 5, puzzle: { size: 4, clues: [{ cell: 0, area: 4, shape: 'square' }] } })?.game).toBe('patches');
+    expect(FEIRA_TRAIL_MIN_MS).toEqual({ picross: 8000, zip: 4000, patches: 4000, selo: 6000, troca: 10000, eco: 6000 });
   });
 
   it('vista: `feira` só entra quando o servidor manda (desligada = vista idêntica à de hoje)', () => {

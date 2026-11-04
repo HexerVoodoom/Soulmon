@@ -54,7 +54,8 @@ const COPY = {
   'trail.keepGoing': ['Continue', 'Continuar'],
 
   'game.zip': ['Join the numbers in order, filling every square.', 'Ligue os números em ordem, preenchendo todas as casas.'],
-  'game.patches': ['Tap two corners to draw a patch. Each patch holds one clue and matches its size.', 'Toque em dois cantos para desenhar uma colcha. Cada uma guarda uma pista e tem aquele tamanho.'],
+  'game.patches': ['Tap two corners to draw a block. Each block holds one clue and matches its size.', 'Toque em dois cantos para desenhar um bloco. Cada um guarda uma pista e tem aquele tamanho.'],
+  'game.selo': ['Find the rule in the grid and pick the seal that fits the empty spot.', 'Ache a regra na grade e escolha o selo que cabe no espaço vazio.'],
   'game.picross': ['Fill squares to match the numbers on each row and column.', 'Pinte as casas para bater com os números de cada linha e coluna.'],
   'game.troca': ['Sort each card to the side the current rule says.', 'Mande cada carta para o lado que a regra do momento pede.'],
   'game.eco': ['Watch the stones light up, then repeat the order.', 'Veja as pedras acenderem e repita a ordem.'],
