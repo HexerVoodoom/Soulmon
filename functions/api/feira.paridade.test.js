@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { generateZip, validateZip, seededRng as rngZip } from '../../src/utils/mente/zip.ts';
 import { generatePatches, validatePatches } from '../../src/utils/mente/patches.ts';
+import { seloForLevel } from '../../src/utils/mente/selo.ts';
 import { seededRng as rngSrc } from '../../src/utils/mente/eco.ts';
 import {
-  BOSS_ROSTER, ARAUTO, seededRng, gerarZip, validarZip, gerarColcha, validarColcha, TRAIL_PUZZLE_SIZE, gerarPicross, validarPicross,
+  BOSS_ROSTER, ARAUTO, seededRng, gerarZip, validarZip, gerarColcha, validarColcha, gerarSelo, validarSelo, TRAIL_SELO_LEVEL, TRAIL_PUZZLE_SIZE, gerarPicross, validarPicross,
 } from './_feira.js';
 import { cluesOf, matchesClues } from '../../src/utils/mente/picross.ts';
 
@@ -49,6 +50,21 @@ describe('o RNG e os geradores da Trilha espelham `src/utils/mente/*`', () => {
       const troca = fonte.solution.slice(); [troca[1], troca[2]] = [troca[2], troca[1]];
       for (const caminho of [rev, troca, fonte.solution.slice(1), [...fonte.solution, 0]]) expect(validarZip(meu, caminho)).toBe(validateZip(fonte, caminho));
     }
+  });
+  it('Selo: a mesma semente dá as MESMAS 8 casas, as MESMAS opções e a MESMA resposta, em todos os níveis', () => {
+    for (const seed of [1, 7, 99, 2024, 31337, 987654]) {
+      for (const nivel of [1, 2, 3, 4, 5, 6, 7]) {
+        const fonte = seloForLevel(nivel, rngSrc(seed));
+        const meu = gerarSelo(nivel, seededRng(seed));
+        expect(meu.grid).toEqual(fonte.grid.slice(0, 8));
+        expect(meu.options).toEqual(fonte.options);
+        expect(meu.solution).toBe(fonte.answer);
+        expect(validarSelo(meu, fonte.answer)).toBe(true);
+        expect(validarSelo(meu, (fonte.answer + 1) % 6)).toBe(false);
+        expect(validarSelo(meu, 'x')).toBe(false);
+      }
+    }
+    expect(TRAIL_SELO_LEVEL).toBeGreaterThanOrEqual(1);
   });
   it('Colcha: a mesma semente dá as MESMAS pistas e a solução passa nos dois validadores', () => {
     for (const seed of [1, 7, 99, 2024, 31337, 987654]) {

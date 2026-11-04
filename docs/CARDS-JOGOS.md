@@ -7,7 +7,7 @@ ilustração sangrando até a borda (o nome entra por cima numa faixa, na parte 
 baixo; deixar o terço inferior sem detalhe importante). Sem o arquivo, a carta
 mostra um placeholder procedural — o build não depende da arte.
 
-Estilo comum: arcano, natureza + magia, cristal turquesa, noturno, expressão
+Estilo comum: `docs/REGRA-IDENTIDADE-SOULMON.md` (pixel art, turquesa escuro, cristal com chama, cobre, circuito, cabo, folhinhas), noturno, expressão
 calma; **nada de engrenagem/steampunk**; sem texto na imagem.
 
 | id | jogo (PT / EN) | menu | conceito da ilustração |

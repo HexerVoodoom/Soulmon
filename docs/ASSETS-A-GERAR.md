@@ -774,7 +774,7 @@ O slot já está ligado (`FEIRA_SCENE` em `src/utils/dungeonScenes.ts`, glob opc
 
 
 **Cosméticos novos: temas e elementos (04/11/2026, dono: "mais variedade de cor, não tudo turquesa"):** 108 peças a gerar no ChatGPT (32 cenários, 32 molduras, 44 decorações). Nenhuma tem arte ainda.
-- **Padrão:** o de 23/09 (`GUIA-CONSISTENCIA-2026-09-23.md`), arcano, natureza + magia, sem engrenagem/cartola/goggles/arreio (nada de steampunk), sem personagem. **Exceção pedida pelo dono:** a paleta de cada linha SUBSTITUI o turquesa/petróleo dos blocos do §1; turquesa no máximo como brilho pequeno.
+- **Padrão:** o de 23/09 (`GUIA-CONSISTENCIA-2026-09-23.md`), arcano, natureza + magia, sem engrenagem/cartola/goggles/arreio (nada de steampunk), sem personagem. **Variedade de cor pedida pelo dono, dentro da regra máxima:** a paleta de cada linha pinta o assunto e suas luzes; turquesa escuro fica em sombra, pedra e cristal; a chama do cristal pode levar a cor do tema; cobre, circuito, cabo e folhinhas entram em pouca quantidade em toda peça.
 - **Transparência:** molduras e decorações com alfa real, nunca chroma. Cenário não tem alfa.
 - **Tamanho:** é a caixa-contrato de arte; o palco desenha a decoração maior (`DECOR_RENDER_SCALE`, `utils/petStage.ts`).
 - **Instalar:** decoração em `src/assets/decor/<id>.png` + item em `utils/shop.ts`; moldura em `assets/soulmon/molduras/<id>.png` + `FRAMES`; cenário em `utils/backgrounds.ts` + item `bg`. Coluna "Exclusivo" = preencher `element` no item (`utils/elementExclusive.ts`). Preço: faixas de `utils/decorPrices.ts`.

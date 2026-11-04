@@ -446,12 +446,16 @@ export async function resgatarChefe(env, g, save, pedidoK) {
 
 // ===========================================================================
 // A TRILHA (o Desafio): puzzles deterministas SEMEADOS PELO SERVIDOR. O servidor entrega a instância e RECONFERE a solução
-// regerando-a da semente guardada (nunca confia no que o cliente diz da instância). Os geradores de Zip e Colcha espelham
-// `src/utils/mente/{zip,patches}.ts` (mesmo rng ⇒ mesma instância; paridade em `feira.paridade.test.js`).
+// regerando-a da semente guardada (nunca confia no que o cliente diz da instância). Os geradores de Zip, Selo (e a Colcha aposentada) espelham
+// `src/utils/mente/{zip,selo,patches}.ts` (mesmo rng ⇒ mesma instância; paridade em `feira.paridade.test.js`).
 // ===========================================================================
-export const TRAIL_GAMES = Object.freeze(['picross', 'zip', 'patches', 'troca', 'eco']);
+// 04/11/2026: a Colcha (`patches`) saiu do sorteio e o Selo Faltante (`selo`) ocupa O MESMO ÍNDICE (assim `jogoDaTrilha` dá o
+// mesmo jogo para os demais). `patches` segue ACEITO (gerar/conferir/piso) para a trilha já aberta hoje não quebrar.
+export const TRAIL_GAMES = Object.freeze(['picross', 'zip', 'selo', 'troca', 'eco']);
+export const TRAIL_GAMES_ACEITOS = Object.freeze([...TRAIL_GAMES, 'patches']);
+export const TRAIL_SELO_LEVEL = 3;
 /** Tempo mínimo plausível entre `start` e `done` (ms), por jogo — mais rápido que isso não é gente. */
-export const TRAIL_MIN_MS = Object.freeze({ picross: 8000, zip: 4000, patches: 4000, troca: 10000, eco: 6000 });
+export const TRAIL_MIN_MS = Object.freeze({ picross: 8000, zip: 4000, patches: 4000, selo: 6000, troca: 10000, eco: 6000 });
 export const TRAIL_PUZZLE_SIZE = 5;
 export const TROCA_CARTAS = 30;
 export const TROCA_PAR = 24;
@@ -604,6 +608,100 @@ export function validarColcha(p, rects) {
   return porRect.every(n => n === 1);
 }
 
+// Selo Faltante (espelho de `src/utils/mente/selo.ts › seloForLevel`; o servidor guarda só a semente e regera)
+const SELO_ATTRS = ['shape', 'count', 'dir', 'fill', 'marks'];
+const SELO_DOMAIN = { shape: [0, 4], count: [1, 6], dir: [0, 7], fill: [0, 2], marks: [1, 15] };
+const seloInt = (rng, min, max) => min + Math.floor(rng() * (max - min + 1));
+function seloShuffle(arr, rng) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i -= 1) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  return a;
+}
+const seloRuleCount = (level) => [1, 2, 2, 3, 3, 4, 4][level - 1];
+function seloRules(level, rng) {
+  const n = seloRuleCount(level);
+  const rules = { shape: 'const', count: 'const', dir: 'const', fill: 'const', marks: 'const' };
+  const chosen = [];
+  if (level >= 6) { rules.marks = 'xor'; chosen.push('marks'); }
+  if (level >= 4) { rules.count = 'arith'; chosen.push('count'); }
+  for (const a of seloShuffle(['shape', 'count', 'dir', 'fill'].filter(x => !chosen.includes(x)), rng)) {
+    if (chosen.length >= n) break;
+    chosen.push(a);
+    if (a === 'shape' || a === 'fill') rules[a] = 'distribution';
+    else if (a === 'dir') rules[a] = rng() < 0.5 ? 'progression' : 'distribution';
+    else rules[a] = rng() < 0.5 || level < 3 ? 'progression' : 'distribution';
+  }
+  return rules;
+}
+function seloFill(attr, rule, rng) {
+  const [min, max] = SELO_DOMAIN[attr];
+  const out = [];
+  if (rule === 'const') return Array(9).fill(seloInt(rng, min, max));
+  if (rule === 'distribution') {
+    const vals = seloShuffle(Array.from({ length: max - min + 1 }, (_, i) => min + i), rng).slice(0, 3);
+    const k = rng() < 0.5 ? 1 : 2;
+    for (let r = 0; r < 3; r += 1) for (let c = 0; c < 3; c += 1) out.push(vals[(c + r * k) % 3]);
+    return out;
+  }
+  if (rule === 'progression') {
+    if (attr === 'dir') {
+      const d = rng() < 0.5 ? 1 : 2;
+      const sign = rng() < 0.5 ? 1 : -1;
+      for (let r = 0; r < 3; r += 1) {
+        const s = seloInt(rng, 0, 7);
+        for (let c = 0; c < 3; c += 1) out.push((((s + sign * c * d) % 8) + 8) % 8);
+      }
+      return out;
+    }
+    const d = rng() < 0.6 ? 1 : 2;
+    const down = rng() < 0.4;
+    for (let r = 0; r < 3; r += 1) {
+      const s = seloInt(rng, min, max - 2 * d);
+      for (let c = 0; c < 3; c += 1) out.push(down ? s + (2 - c) * d : s + c * d);
+    }
+    return out;
+  }
+  if (rule === 'arith') {
+    const plus = rng() < 0.5;
+    for (let r = 0; r < 3; r += 1) {
+      if (plus) { const a = seloInt(rng, 1, max - 1); const b = seloInt(rng, 1, max - a); out.push(a, b, a + b); }
+      else { const a = seloInt(rng, 2, max); const b = seloInt(rng, 1, a - 1); out.push(a, b, a - b); }
+    }
+    return out;
+  }
+  for (let r = 0; r < 3; r += 1) {
+    let a = 0; let b = 0;
+    do { a = seloInt(rng, 1, 15); b = seloInt(rng, 1, 15); } while (a === b);
+    out.push(a, b, a ^ b);
+  }
+  return out;
+}
+function seloErrados(attr, right, n, grid, rng) {
+  const [min, max] = SELO_DOMAIN[attr];
+  const seen = [...new Set(grid.slice(0, 8).map(p => p[attr]))].filter(v => v !== right);
+  const rest = Array.from({ length: max - min + 1 }, (_, i) => min + i).filter(v => v !== right && !seen.includes(v));
+  return [...seloShuffle(seen, rng), ...seloShuffle(rest, rng)].slice(0, n);
+}
+const seloIgual = (a, b) => SELO_ATTRS.every(k => a[k] === b[k]);
+/** Instância do Selo: as 8 casas visíveis, as 6 opções e (em `solution`, que NUNCA sai) o índice da certa. */
+export function gerarSelo(level, rng) {
+  const rules = seloRules(level, rng);
+  const cols = Object.fromEntries(SELO_ATTRS.map(a => [a, seloFill(a, rules[a], rng)]));
+  const grid = Array.from({ length: 9 }, (_, i) => ({ shape: cols.shape[i], count: cols.count[i], dir: cols.dir[i], fill: cols.fill[i], marks: cols.marks[i] }));
+  const right = grid[8];
+  const order = [...seloShuffle(SELO_ATTRS.filter(a => rules[a] !== 'const'), rng), ...seloShuffle(SELO_ATTRS.filter(a => rules[a] === 'const'), rng)];
+  const A = order[0]; const B = order[1];
+  const aVals = [right[A], ...seloErrados(A, right[A], 2, grid, rng)];
+  const bVals = [right[B], ...seloErrados(B, right[B], 1, grid, rng)];
+  const opts = [];
+  for (const av of aVals) for (const bv of bVals) opts.push({ ...right, [A]: av, [B]: bv });
+  const options = seloShuffle(opts, rng);
+  return { grid: grid.slice(0, 8), options, solution: options.findIndex(o => seloIgual(o, right)) };
+}
+export function validarSelo(p, escolha) {
+  return Number.isInteger(escolha) && escolha === p.solution;
+}
+
 // Picross (grade sorteada pela semente; QUALQUER grade que bata as pistas vale, como no jogo do cliente)
 const pistaDaLinha = (linha) => {
   const out = []; let run = 0;
@@ -650,6 +748,7 @@ export function gerarInstancia(game, seed) {
   const rng = seededRng(seed);
   if (game === 'zip') return gerarZip(TRAIL_PUZZLE_SIZE, rng);
   if (game === 'patches') return gerarColcha(TRAIL_PUZZLE_SIZE, rng);
+  if (game === 'selo') return gerarSelo(TRAIL_SELO_LEVEL, rng);
   if (game === 'picross') return gerarPicross(TRAIL_PUZZLE_SIZE, rng);
   if (game === 'troca') return gerarTroca(rng);
   return { par: REFLEXO_PAR.eco };
@@ -666,6 +765,7 @@ export function solucaoDaTrilha(game, seed) {
   const p = gerarInstancia(game, seed);
   if (game === 'zip') return { path: p.solution };
   if (game === 'patches') return { rects: p.solution };
+  if (game === 'selo') return { choice: p.solution };
   if (game === 'picross') return { cells: p.solution.map(r => r.map(v => (v ? 1 : 0))) };
   if (game === 'troca') return { sides: p.deck.map(ladoCerto) };
   return { score: REFLEXO_PAR.eco };
@@ -673,6 +773,7 @@ export function solucaoDaTrilha(game, seed) {
 
 /** Confere a resposta do cliente contra a instância REGERADA da semente guardada. */
 export function conferirTrilha(game, seed, corpo) {
+  if (game === 'selo') return validarSelo(gerarInstancia(game, seed), corpo?.choice);
   const p = instanciaDaTrilha(game, seed);
   if (game === 'zip') return validarZip(p, corpo?.path);
   if (game === 'patches') return validarColcha(p, corpo?.rects);
@@ -690,7 +791,7 @@ export async function iniciarTrilha(env, g, save, hoje, estado) {
   if (estado.phase !== 'trail') return { ok: false, reason: 'no-trail' };
   const atual = await lerJson(env, feiraTrailKey(g.id, estado.k, save));
   if (diaValido(atual?.clearedDay)) return { ok: false, reason: 'already-cleared' };
-  const mesmoDia = atual && atual.day === hoje && TRAIL_GAMES.includes(atual.game) && Number.isInteger(atual.seed);
+  const mesmoDia = atual && atual.day === hoje && TRAIL_GAMES_ACEITOS.includes(atual.game) && Number.isInteger(atual.seed);
   const reg = mesmoDia ? atual : { k: estado.k, day: hoje, game: jogoDaTrilha(save, hoje, estado.k), seed: sementeDoServidor(), startedAt: Date.now(), attempts: 0, clearedDay: null };
   if (!mesmoDia) await kvOrThrow(env).put(feiraTrailKey(g.id, estado.k, save), JSON.stringify(reg), { expirationTtl: FEIRA_TRILHA_TTL });
   return { ok: true, trail: { k: estado.k, game: reg.game, seed: reg.seed >>> 0, puzzle: instanciaDaTrilha(reg.game, reg.seed) } };
@@ -706,7 +807,7 @@ export async function entregarTrilha(env, g, save, hoje, estado, corpo) {
   const reg = await lerJson(env, feiraTrailKey(g.id, estado.k, save));
   const receipt = await reciboDaFeira('trilha', save, g.id, estado.k);
   if (diaValido(reg?.clearedDay)) return { ok: false, reason: 'already-cleared', receipt };
-  if (!reg || reg.day !== hoje || !TRAIL_GAMES.includes(reg.game) || !Number.isInteger(reg.seed)) return { ok: false, reason: 'no-start' };
+  if (!reg || reg.day !== hoje || !TRAIL_GAMES_ACEITOS.includes(reg.game) || !Number.isInteger(reg.seed)) return { ok: false, reason: 'no-start' };
   if ((reg.attempts ?? 0) >= TRILHA_TENTATIVAS_DIA) return { ok: false, reason: 'limit' };
   const tentativas = (Number.isInteger(reg.attempts) ? reg.attempts : 0) + 1;
   if (Date.now() - (Number(reg.startedAt) || 0) < TRAIL_MIN_MS[reg.game]) {
