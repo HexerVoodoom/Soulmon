@@ -226,9 +226,9 @@ export function AreaScene({ areaId, language, lots, background, notice, children
       {/* CAMADA DAS MARCAS (dono, 04/11/2026): "!"/"?" e a moeda de recurso ficam ACIMA do prédio, numa camada própria por cima de TODOS os lotes
           (dentro do lote o vizinho de cima, de z maior, tapava a marca). A camada é um contêiner de tamanho = a cena (cqw/cqh); cada fileira
           repete a conta de `lotMarkRects` em CSS: base `LOT_MARK_GAP` px acima do TOPO DESENHADO da arte, centrada na arte, nunca acima do
-          piso `LOT_MARK_MIN_TOP`; "!" e moeda lado a lado. Não intercepta toque (o sinal é só visual, H11). */}
+          piso `LOT_MARK_MIN_TOP`; "!" e moeda lado a lado. Não intercepta toque (o sinal é só visual, H11). Z 100: empata com o lote mais alto e ganha pela ordem no DOM, e os jogos (z 100, depois no DOM) a cobrem. */}
       {lots.some(l => (l.mark || l.coin) && !l.locked) && (
-        <div data-lot-marks-layer aria-hidden={lots.some(l => l.mark && !l.locked) ? undefined : true} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 120, containerType: 'size' }}>
+        <div data-lot-marks-layer aria-hidden={lots.some(l => l.mark && !l.locked) ? undefined : true} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 100, containerType: 'size' }}>
           {lots.filter(l => (l.mark || l.coin) && !l.locked).map(l => {
             const b = lotArtBounds(areaId, l.id) ?? [0, 0, 1, 1];
             const w = parseFloat(l.width ?? LOT_WIDTH_DEFAULT);
