@@ -27,6 +27,7 @@ import { questMarks, questMarkLabel } from './utils/questMarks';
 import { markMindGameTutorial } from './utils/mente/mindTutorials';
 import { applyFeat, emitFeat, subscribeFeats } from './utils/feats';
 import { bumpDaily, claimDaily, claimFirst, dailyForDay, dailyMissionsMark, firstTimesMark, markFirst, markFirstForEvent, type DailyEvent } from './utils/dailyMissions';
+import { lotCoins, lotMissionMarks } from './utils/lotMarks';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
@@ -7987,7 +7988,12 @@ export default function App() {
                 demo={demo}
                 bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
                 onVisitBuilding={visitarPredio}
-                buildingMarks={buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0))}
+                buildingMarks={lotMissionMarks({
+                  buildings: buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
+                  passeio: marcasDeMissao.passeio, weekly: marcasDeMissao.torneio, conquistas: marcasDeMissao.conquistas,
+                  dailyMissions: gameState.dailyMissions, day: playerDayKey(new Date(), gameState.playerDayTz), bondLevel: bondLevelFor(gameState.totalXP ?? 0),
+                })}
+                buildingCoins={lotCoins(gameState, Date.now())}
                 onLayerChange={setAreaLayerOpen}
                 onGoToMap={() => goTo('map')}
                 language={language}

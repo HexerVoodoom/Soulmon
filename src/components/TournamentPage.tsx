@@ -67,6 +67,7 @@ import { strayForTournament } from '../utils/strayFoes';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
 import { dexIdsOfFoe, elementIdOfFoe } from '../utils/elementDex';
 import { essenceQtyOfStage, type EssenceDrop } from '../utils/essences';
+import { essenceIconSrc, essenceName } from '../utils/resultEssences';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
 import { TOURNAMENT_NPCS, npcSide, tournamentNpcSprite, type TournamentNpc } from '../utils/tournamentNpcs';
 import { getSpriteForStage } from '../utils/sprites';
@@ -326,6 +327,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   /** O resultado do treino LOCAL: vitória, derrota ou empate (neutro). `null` = sem diálogo. */
   const stray = useMemo(() => strayForTournament(saveId, new Date().toISOString().slice(0, 10)), [saveId]);
   const [trainingOutcome, setTrainingOutcome] = useState<'win' | 'loss' | 'draw' | null>(null);
+  /** A essência que o Desgarrado do treino deixou (a mesma creditada por `onElementsDefeated`): aparece no aviso do treino. */
+  const [trainingEssence, setTrainingEssence] = useState<EssenceDrop | null>(null);
   // O level e o ramo do treino vêm do estado do save (`soulCombatant`); sem provider (demo, testes) cai no estágio.
   const ctx = useGameStateOptional();
   const hx = useHexOverrides(); // 🔣 Hexsmith: o treino usa o mesmo código reescrito que o servidor aplica no duelo
@@ -610,7 +613,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         onDone={taps => {
           const w = simulatePvp({ me: training.me, opp: training.opp, seed: training.seed, taps }).winner;
           // Dex de elementos: vencer o Desgarrado do Torneio sem par libera o elemento dele (o treino de NPC não libera: o elemento é só visual).
-          if (w === 'me' && training.stray) { const id = elementIdOfFoe(training.stray.elements); const dex = dexIdsOfFoe(training.stray); if (dex.length) onElementsDefeated?.(dex, id ? [{ id, qty: essenceQtyOfStage(training.stray.stage) }] : []); }
+          if (w === 'me' && training.stray) { const id = elementIdOfFoe(training.stray.elements); const dex = dexIdsOfFoe(training.stray); if (dex.length) { const drop = id ? { id, qty: essenceQtyOfStage(training.stray.stage) } : undefined; onElementsDefeated?.(dex, drop ? [drop] : []); setTrainingEssence(onElementsDefeated && drop ? drop : null); } }
+          else setTrainingEssence(null);
           setTrainingOutcome(w === 'me' ? 'win' : w === 'opp' ? 'loss' : 'draw');
           setTraining(null);
         }}
@@ -1062,7 +1066,14 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           <h2 data-treino-resultado style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>
             {trainingOutcome === 'win' ? (isPt ? 'Treino vencido' : 'Training won') : trainingOutcome === 'draw' ? (isPt ? 'Treino empatado' : 'Training drawn') : (isPt ? 'Treino perdido' : 'Training lost')}
           </h2>
-          <p style={sm2Hint}>{isPt ? 'Sem prêmio e sem custo.' : 'No reward, no cost.'}</p>
+          {trainingEssence && trainingOutcome === 'win' ? (
+            <div data-treino-essence={trainingEssence.id} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <img src={essenceIconSrc(trainingEssence.id)} alt="" aria-hidden="true" width={24} height={24} style={{ width: 24, height: 24, imageRendering: 'pixelated' }} />
+              <span style={{ ...sm2Hint, color: 'var(--sm2-ink)' }}>{essenceName(trainingEssence.id, isPt)}</span>
+              <span className="sm2-num" style={{ fontWeight: 600 }}>×{trainingEssence.qty}</span>
+            </div>
+          ) : null}
+          <p style={sm2Hint}>{trainingEssence && trainingOutcome === 'win' ? (isPt ? 'Sem Bits e sem custo.' : 'No Bits, no cost.') : (isPt ? 'Sem prêmio e sem custo.' : 'No reward, no cost.')}</p>
           <button type="button" onClick={() => setTrainingOutcome(null)} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 260 }}>
             {isPt ? 'Continuar' : 'Continue'}
           </button>

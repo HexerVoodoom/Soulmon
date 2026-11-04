@@ -531,6 +531,16 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Dono de:** o ícone de cada prédio na pílula do mapa (03/11/2026, dono: a placa de madeira saiu; ficou pílula escura com ícone + nome). Só nomes do subset do `Icon`.
 **Exports:** `LOT_ICON` (`area:lote` → nome do ícone) · `lotIconName(areaId, lotId)` (fallback `home`).
 **Quem chama:** `components/nav/AreaScene.tsx`.
+### `src/utils/resultEssences.ts`
+**Dono de:** as essências na tela de resultado (04/11/2026, dono): junta os drops da partida por id e os entrega como linhas `kind: 'essence'` do livro "Ganhou" do `ResultScreen`. Puro; não credita nada (quem credita é `applyEssences`).
+**Exports:** `tallyEssences(drops)` · `essenceLedgerRows(drops)` · `essenceIconSrc(id)` · `essenceName` (reexport).
+**Quem chama:** `ArenaGame.tsx`, `Match3Game.tsx`, `DungeonGame.tsx`, `TournamentPage.tsx`, `guild/FeiraEventoSheet.tsx`, `games/ResultScreen.tsx`.
+**Régua:** `src/utils/resultEssences.test.ts`.
+### `src/utils/lotMarks.ts`
+**Dono de:** as marcas sobre os prédios do mapa (04/11/2026, dono): `lotMissionMarks` leva o "!"/"?" a TODO prédio com missão (Passeio, Torneio pela semana, Conquistas, missões do dia por prédio, Caderno; "?" vence "!") e `lotCoins` liga a MOEDA de recurso (raio da energia amarelo) nos prédios com recurso disponível agora. Puro, `nowMs` por parâmetro.
+**Exports:** `DAILY_EVENT_BUILDING` · `lotMissionMarks(input)` · `LotCoinId` · `LOT_COIN_RULES` (lista tipada; hoje só o Refúgio: energia do dia não tomada e energia abaixo do máximo) · `lotCoins(state, nowMs)`.
+**Quem chama:** `App.tsx` (props `buildingMarks`/`buildingCoins` do `AreaView`).
+**Régua:** `src/utils/lotMarks.test.ts`, `src/components/nav/AreaView.marcasAcima.render.test.tsx`.
 ### `src/utils/resultExtras.ts`
 **Dono de:** os extras da tela de resultado (03/11/2026, dono): a barra de Bits do dia (só com o teto em 100%) e a linha da missão do dia do jogo que acabou. Puro; o `App` monta e entrega pelo contexto.
 **Exports:** `buildResultExtras(state, day, bondLevel, isPt)` · tipos `ResultExtras`, `ResultMission`.

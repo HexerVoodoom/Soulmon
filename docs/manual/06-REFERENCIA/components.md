@@ -1542,6 +1542,12 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 ### `src/components/ui/RewardPop.tsx`
 **Dono de:** as peças de desenho da REVELAÇÃO DE RECOMPENSA (dono, 28/10/2026): `RewardPop` (o que nasce minúsculo, passa um pouco do tamanho e assenta — keyframes `sm-pop-in` no fim do `index.css`; invisível mas ocupando o lugar antes de nascer), `RewardIcon` (ícone pelado em pixel-art dentro de `RewardPop`) e `RollingCount` (odômetro de caça-níquel: colunas de dígitos que rolam de 0 ao valor; o valor final fica sempre no DOM em `sm2-sr-only`, os dígitos são desenhados por CSS `::before` para o `textContent` não poluir). Quem sequencia é `hooks/useRewardReveal.ts`; o cronograma é `utils/rewardReveal.ts`. **Usado em:** `games/ResultScreen.tsx`, `DungeonReturnModal.tsx`, `ui/BitsAmount.tsx` (prop `roll`), `ui/BitsReveal.tsx`. **Régua:** `games/ResultScreen.reveal.render.test.tsx`.
 
+### `src/components/ui/EnergyCost.tsx`
+**Dono de:** o ícone de custo de energia nos botões e cartões (04/11/2026, dono). Decorativo (`aria-hidden`), `data-energy-cost`. **Usado em:** `play/PlaySheets.tsx` (Salão, Masmorra), `PlayCard.tsx` (Brincar), `DungeonGame.tsx` (Descer), `play/OficinaSheet.tsx` (iniciar foco). Régua: `play/energiaCusto.render.test.tsx`.
+
+### `src/components/nav/LotCoin.tsx`
+**Dono de:** a moeda de recurso sobre o prédio do mapa (04/11/2026, dono): raio da energia amarelo num círculo escuro de fio de cobre; só indica que há recurso a pegar. **Usado em:** `nav/AreaScene.tsx` (camada de marcas). Regra de quando acende: `src/utils/lotMarks.ts`.
+
 ### `src/components/ui/BitsReveal.tsx`
 **Dono de:** a linha ÚNICA de Bits de um fim de partida com a revelação padrão (a moeda estoura, o número rola e pousa com o "ding"; toque pula). **Usado em:** `mente/TrocaGame.tsx`, `mente/PicrossGame.tsx`, `mente/RevisaoGame.tsx`. Telas com mais de uma linha de recompensa usam `ResultScreen`. **Régua:** `mente/revisaoRespiracao.render.test.tsx`.
 

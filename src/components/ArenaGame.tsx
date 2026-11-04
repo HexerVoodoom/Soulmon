@@ -54,6 +54,7 @@ import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { ResultScreen } from './games/ResultScreen';
+import { essenceLedgerRows } from '../utils/resultEssences';
 import { ArenaCuraModal } from './games/ArenaCuraModal';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorSparks, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { arenaFoesOfSeed, arenaSceneOfSeed } from '../utils/arenaSorteio';
@@ -144,6 +145,8 @@ export function ArenaGame({
 
   const [pool, setPool] = useState<BestiaryCreature[] | null>(null);
   const [fase, setFase] = useState<Fase>('carregando');
+  /** Essências que a run rendeu (as mesmas creditadas por `onElementsDefeated`): entram no livro "Ganhou". */
+  const [essenciasRun, setEssenciasRun] = useState<EssenceDrop[]>([]);
   const [rodada, setRodada] = useState(1);
   const [inimigos, setInimigos] = useState<ArenaEnemy[]>([]);
   const [pontos, setPontos] = useState(0);
@@ -247,6 +250,7 @@ export function ArenaGame({
     setSeedLuta(runSeedRef.current);
     hpCarryRef.current = 1;
     energyCarryRef.current = 0;
+    setEssenciasRun([]);
     setPontos(0);
     setRodada(1);
     montarRodada(1, pool);
@@ -309,7 +313,11 @@ export function ArenaGame({
       // PRÓPRIO de vitória de combate (`playVictory`, categoria `arcade`) — o corte C-1 continua valendo para o resto.
       playVictory();
       const ids = inimigosRef.current.flatMap(e => dexIdsOfFoe(e));
-      if (ids.length > 0) elementsDefeatedRef.current?.(ids, inimigosRef.current.map(e => essenceDropOfFoe(e.elements, e.tier)).filter((d): d is EssenceDrop => !!d));
+      if (ids.length > 0) {
+        const drops = inimigosRef.current.map(e => essenceDropOfFoe(e.elements, e.tier)).filter((d): d is EssenceDrop => !!d);
+        elementsDefeatedRef.current?.(ids, drops);
+        if (elementsDefeatedRef.current && drops.length > 0) setEssenciasRun(prev => [...prev, ...drops]);
+      }
       setPontos(p => p + inimigosRef.current.reduce((s, e) => s + e.points, 0));
       setFase('rodada-limpa');
     } else {
@@ -563,7 +571,7 @@ export function ArenaGame({
               ? (isPt ? 'Vocês caíram juntos. Não custou nenhum coração, só a run.' : 'You both held your ground. It cost no hearts, only the run.')
               : (isPt ? 'Não custou nenhum coração, só a run. Ele está recuperando o fôlego.' : 'It cost no hearts, only the run. He is catching his breath.')}
           hero={{ label: isPt ? 'Rodadas vencidas' : 'Rounds cleared', value: fase === 'venceu' ? ARENA_ROUNDS : Math.max(0, rodada - 1) }}
-          ledger={[{ key: 'bits', kind: 'bits', value: fase === 'venceu' ? riftBitsWith(pontos, rift.riftBits) : 0 }]}
+          ledger={[{ key: 'bits', kind: 'bits', value: fase === 'venceu' ? riftBitsWith(pontos, rift.riftBits) : 0 }, ...essenceLedgerRows(essenciasRun)]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           petSrc={petSprite}
           opponentSrc={sprites[sprites.length - 1]}

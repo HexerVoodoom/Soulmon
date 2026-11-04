@@ -23,6 +23,8 @@ import {
 } from '../../utils/focoSessao';
 import { TagChips } from './OficinaTags';
 import { OficinaPlano } from './OficinaPlano';
+import { EnergyCost } from '../ui/EnergyCost';
+import { DUNGEON_ENERGY_PER_LAYER } from '../../utils/dungeonIdle';
 
 /** A folha inteira já é lazy (AreaView); o planejamento viaja junto, fora do chunk de entrada. */
 type WorkshopTask = { id: string; name: string; completed: boolean; kind?: 'habit'; steps?: Array<{ id: string; label: string; completed: boolean }> };
@@ -201,7 +203,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
         <div style={{ display: 'flex', gap: 8, width: '100%', flexWrap: 'wrap' }}>
           {!timer && <RewardPreview mode="before" language={language} size={14} items={[{ kind: 'custom', emoji: '🎁', label: isPt ? 'material de foco' : 'focus material' }]} />}
           {timer && <button type="button" data-oficina-cancel onClick={cancelarTimer} style={{ ...sm2Button('outline'), flex: ended ? 0 : 1 }}>{ended && timer.phase === 'focus' ? (isPt ? 'Agora não' : 'Not now') : (isPt ? 'Cancelar' : 'Cancel')}</button>}
-          {!timer && <button type="button" data-oficina-start onClick={startSessionFocus} style={{ ...sm2Button('primary'), flex: 1 }}>{canStartSessionFocus ? (isPt ? 'Enviar Soulmon e iniciar' : 'Send Soulmon & start') : (isPt ? 'Planejar sessão e escolher cenário' : 'Plan a session & choose a scene')}</button>}
+          {!timer && <button type="button" data-oficina-start onClick={startSessionFocus} style={{ ...sm2Button('primary'), flex: 1 }}>{canStartSessionFocus ? (isPt ? 'Enviar Soulmon e iniciar' : 'Send Soulmon & start') : (isPt ? 'Planejar sessão e escolher cenário' : 'Plan a session & choose a scene')}{canStartSessionFocus && onFocusStart && <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />}</button>}
           {timer?.status === 'running' && <button type="button" data-oficina-pause onClick={() => { if (timer.phase === 'focus') onFocusPause?.(); apply(pause(timer, Date.now())); }} style={{ ...sm2Button('primary'), flex: 1 }}><Icon name="pause" size={20} tone="inherit" /> {isPt ? 'Pausar' : 'Pause'}</button>}
           {timer?.status === 'paused' && <button type="button" data-oficina-resume onClick={() => { const r = resume(timer, Date.now()); if (timer.phase === 'focus') onFocusResume?.(r.endAt ?? undefined); apply(r); }} style={{ ...sm2Button('primary'), flex: 1 }}><Icon name="play_arrow" size={20} tone="inherit" /> {isPt ? 'Continuar' : 'Resume'}</button>}
           {ended && timer?.phase === 'focus' && <button type="button" data-oficina-foquei onClick={feito} style={{ ...sm2Button('primary'), flex: 1 }}>{isPt ? 'Foquei' : 'I focused'}</button>}
