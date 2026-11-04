@@ -3983,3 +3983,5 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 **Privacidade.** Só texto, tipo, versão, build, plataforma e idioma; nunca uid, e-mail, saveId, IP ou user agent. Novo operador (serviço de e-mail) declarado em `privacidade.html` §6e, `PLAY-DATA-SAFETY.md` e `PRIVACY_VERSION` 2026-11-04 (reabre o aceite).
 
 **O que falsificaria.** Spam pelo endpoint anônimo (balde por IP/conta é amortecedor; subir para Turnstile ou exigir login) ou mensagens só na KV porque o envio nunca foi configurado.
+
+**Auditoria de segurança (04/11/2026).** Um único `put` por mensagem (sem segundo `put` com `emailed: true`); `MAX_WRITES_PER_DAY` = 50 e teto próprio de e-mail por dia (no máximo o mesmo); chave do limitador IPv6 normalizada para /64; recusa por `Content-Length` antes de ler o corpo. `PRIVACY_VERSION` = 2026-11-04 é UMA alta que cobre feedback (§6, §6e: Resend/Gmail, retenção, fora da cópia e da exclusão da conta) e a faixa de evoluções do PR #562 (§5, §8). O banner de termos informa e quem aceitou versão antiga volta a ver o aceite (A3).

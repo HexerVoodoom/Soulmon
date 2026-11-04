@@ -6,7 +6,7 @@
 // na caixa de revisão (`soulmon.revisor@gmail.com`).
 //
 // ENTREGA (nada se perde):
-//   1. a mensagem é gravada ANTES na KV (`feedback:<dia>:<id>`, TTL 90 dias): é o
+//   1. a mensagem é gravada ANTES na KV (`feedback:<dia>:<id>`, TTL 90 dias, UM put só): é o
 //      fallback e o histórico. O dono lê com `GET /api/feedback?day=AAAA-MM-DD` +
 //      `X-Metrics-Key` (mesmo segredo de `/api/crash`);
 //   2. se houver `RESEND_API_KEY` (secret), manda o e-mail via Resend (fetch, sem
@@ -42,7 +42,8 @@ export const LANGS = ['pt-BR', 'en'];
 export const PLATS = ['apk', 'web'];
 export const MAX_MESSAGE = 2000;
 export const MAX_BODY_BYTES = 8 * 1024;
-export const MAX_WRITES_PER_DAY = 300;
+export const MAX_WRITES_PER_DAY = 50;
+export const MAX_EMAILS_PER_DAY = 50;
 const VER_RE = /^[0-9A-Za-z.+-]{1,32}$/;
 const RATE_IP = { limit: 5, windowMs: 10 * 60_000 };
 const RATE_ACCOUNT = { limit: 5, windowMs: 10 * 60_000 };
@@ -56,9 +57,25 @@ const CORS = {
 };
 const json = (obj, status = 200) => Response.json(obj, { status, headers: { 'Cache-Control': 'no-store', ...CORS } });
 
-let escritas = { day: '', n: 0 };
+let escritas = { day: '', n: 0, emails: 0 };
 /** Só para teste. */
-export function resetFeedbackMemory() { escritas = { day: '', n: 0 }; }
+export function resetFeedbackMemory() { escritas = { day: '', n: 0, emails: 0 }; }
+
+/** Balde do limitador: IPv6 vira o prefixo /64 (um cliente controla o /64 inteiro). IPv4 e demais ficam como vieram. */
+export function rateKey(ip) {
+  if (!ip || !ip.includes(':')) return ip;
+  let h = ip.split('%')[0].toLowerCase();
+  const v4 = h.match(/^(.*:)(\d+\.\d+\.\d+\.\d+)$/); // ::ffff:1.2.3.4 -> IPv4 puro
+  if (v4) return /^(::ffff:|0:0:0:0:0:ffff:)$/.test(v4[1]) ? v4[2] : ip;
+  const parts = h.split('::');
+  if (parts.length > 2) return ip;
+  const head = parts[0] ? parts[0].split(':') : [];
+  const tail = parts.length === 2 && parts[1] ? parts[1].split(':') : [];
+  const fill = parts.length === 2 ? 8 - head.length - tail.length : 0;
+  const groups = [...head, ...Array(Math.max(fill, 0)).fill('0'), ...tail];
+  if (groups.length !== 8) return ip;
+  return `${groups.slice(0, 4).map(g => g.replace(/^0+(?=.)/, '')).join(':')}::/64`;
+}
 
 /** Tira caracteres de controle (menos \n e \t) e de direção, normaliza quebras e apara. */
 export function cleanMessage(text) {
@@ -135,9 +152,11 @@ export async function sendEmail(env, r, receivedAt, fetchImpl = fetch) {
 
 async function receive({ request, env }, fetchImpl) {
   if (flagOn(env?.FEEDBACK_DISABLED)) return json({ error: 'feedback-disabled' }, 503);
-  const gate = takeToken('feedback', clientKey(request), RATE_IP);
+  const gate = takeToken('feedback', rateKey(clientKey(request)), RATE_IP);
   if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS);
 
+  const declared = Number(request.headers.get('Content-Length'));
+  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES) return json({ error: 'invalid-body' }, 413);
   const raw = await request.text().catch(() => null);
   if (raw === null || raw.length > MAX_BODY_BYTES) return json({ error: 'invalid-body' }, 400);
   let body = null;
@@ -158,7 +177,7 @@ async function receive({ request, env }, fetchImpl) {
 
   if (!kv(env)) return json({ error: 'unavailable' }, 503);
   const day = serverDay();
-  if (escritas.day !== day) escritas = { day, n: 0 };
+  if (escritas.day !== day) escritas = { day, n: 0, emails: 0 };
   if (escritas.n >= MAX_WRITES_PER_DAY) return tooManyRequests(3600, CORS);
   escritas.n++;
 
@@ -167,13 +186,15 @@ async function receive({ request, env }, fetchImpl) {
   const key = `${FEEDBACK_PREFIX}${day}:${id}`;
   try {
     // Grava ANTES de tentar o e-mail: nada se perde.
-    await kvOrThrow(env).put(key, JSON.stringify({ ...r, at: receivedAt, emailed: false }), { expirationTtl: FEEDBACK_TTL_SECONDS });
+    await kvOrThrow(env).put(key, JSON.stringify({ ...r, at: receivedAt }), { expirationTtl: FEEDBACK_TTL_SECONDS });
   } catch {
     return json({ error: 'unavailable' }, 503);
   }
-  const emailed = await sendEmail(env, r, receivedAt, fetchImpl);
-  if (emailed) {
-    try { await kvOrThrow(env).put(key, JSON.stringify({ ...r, at: receivedAt, emailed: true }), { expirationTtl: FEEDBACK_TTL_SECONDS }); } catch { /* já guardado */ }
+  // Teto próprio de e-mail por dia: passou dele, a mensagem fica só guardada.
+  let emailed = false;
+  if (escritas.emails < MAX_EMAILS_PER_DAY) {
+    escritas.emails++;
+    emailed = await sendEmail(env, r, receivedAt, fetchImpl);
   }
   return json({ ok: true, delivered: emailed ? 'email' : 'stored' });
 }

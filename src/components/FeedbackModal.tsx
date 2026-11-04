@@ -27,8 +27,8 @@ export function feedbackCopy(language: Language) {
     retry: pt ? 'Tentar de novo' : 'Try again',
     close: pt ? 'Fechar' : 'Close',
     privacy: pt
-      ? 'Vai só o texto, o tipo, a versão do app e a plataforma. Nada da sua conta.'
-      : 'Only your text, the type, the app version and the platform are sent. Nothing from your account.',
+      ? 'Não guardamos nada da sua conta junto com a mensagem. Não escreva dados pessoais.'
+      : 'We do not store anything from your account with the message. Do not write personal data.',
     sentTitle: pt ? 'Mensagem enviada' : 'Message sent',
     sentBody: pt ? 'Obrigado! Quem faz o Soulmon vai ler.' : 'Thank you! The people who make Soulmon will read it.',
     errNetwork: pt ? 'Sem conexão. Seu texto continua aqui; tente de novo.' : 'No connection. Your text is still here; try again.',

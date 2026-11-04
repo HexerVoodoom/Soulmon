@@ -1,19 +1,20 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   onRequest, resetFeedbackMemory, sanitizeFeedback, cleanMessage, emailSubject, emailText,
-  MAX_MESSAGE, FEEDBACK_PREFIX, FEEDBACK_TTL_SECONDS, MAX_WRITES_PER_DAY,
+  MAX_MESSAGE, FEEDBACK_PREFIX, FEEDBACK_TTL_SECONDS, MAX_WRITES_PER_DAY, MAX_EMAILS_PER_DAY, MAX_BODY_BYTES, rateKey,
 } from './feedback.js';
 import { resetRateLimits } from './_rateLimit.js';
 
 function fakeKV() {
   const store = new Map();
   const ttls = new Map();
-  return {
-    store, ttls,
+  const kvo = {
+    store, ttls, puts: 0,
     get: async (k, o) => { const r = store.get(k) ?? null; return r !== null && o?.type === 'json' ? JSON.parse(r) : r; },
-    put: async (k, v, o) => { store.set(k, v); ttls.set(k, o?.expirationTtl); },
+    put: async (k, v, o) => { kvo.puts++; store.set(k, v); ttls.set(k, o?.expirationTtl); },
     list: async ({ prefix, limit }) => ({ keys: [...store.keys()].filter(k => k.startsWith(prefix)).slice(0, limit).map(name => ({ name })) }),
   };
+  return kvo;
 }
 const envCom = (extra = {}) => ({ SOULMON_SAVES: fakeKV(), ...extra });
 const valido = (over = {}) => ({ type: 'bug', message: 'Travou ao abrir a loja', ver: '1.3.0-beta3', build: 'dev', plat: 'web', lang: 'pt-BR', ...over });
@@ -75,20 +76,22 @@ describe('e-mail em texto puro, sem injeção', () => {
 });
 
 describe('entrega e fallback', () => {
-  it('grava na KV com TTL ANTES do e-mail e marca emailed', async () => {
+  it('grava na KV com TTL ANTES do e-mail com UM put só', async () => {
     const env = envCom({ RESEND_API_KEY: 'k' });
     await call(post(valido()), env, async () => new Response('{}', { status: 200 }));
+    expect(env.SOULMON_SAVES.store.size).toBe(1);
+    expect(env.SOULMON_SAVES.puts).toBe(1);
     const [k] = [...env.SOULMON_SAVES.store.keys()];
     expect(k.startsWith(FEEDBACK_PREFIX)).toBe(true);
     expect(env.SOULMON_SAVES.ttls.get(k)).toBe(FEEDBACK_TTL_SECONDS);
-    expect(JSON.parse(env.SOULMON_SAVES.store.get(k))).toMatchObject({ type: 'bug', emailed: true });
+    expect(JSON.parse(env.SOULMON_SAVES.store.get(k))).toMatchObject({ type: 'bug' });
   });
   it('sem RESEND_API_KEY: guarda e responde ok/stored', async () => {
     const env = envCom();
     const res = await call(post(valido()), env);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({ ok: true, delivered: 'stored' });
-    expect(JSON.parse([...env.SOULMON_SAVES.store.values()][0]).emailed).toBe(false);
+    expect(env.SOULMON_SAVES.puts).toBe(1);
   });
   it('e-mail falha: mensagem continua guardada e a resposta é ok', async () => {
     const env = envCom({ RESEND_API_KEY: 'k' });
@@ -127,6 +130,41 @@ describe('limite de taxa', () => {
       ultimo = (await call(post(valido()), env)).status;
     }
     expect(ultimo).toBe(429);
+  });
+});
+
+describe('endurecimento (auditoria 04/11)', () => {
+  it('tetos: 50 gravações por dia e e-mail no máximo igual', () => {
+    expect(MAX_WRITES_PER_DAY).toBe(50);
+    expect(MAX_EMAILS_PER_DAY).toBeLessThanOrEqual(MAX_WRITES_PER_DAY);
+  });
+  it('depois de 50 mensagens o e-mail não passa de 50 e a 51ª é 429', async () => {
+    const env = envCom({ RESEND_API_KEY: 'k' });
+    const f = vi.fn(async () => new Response('{}', { status: 200 }));
+    let ultimo = 0;
+    for (let i = 0; i <= MAX_WRITES_PER_DAY; i++) { resetRateLimits(); ultimo = (await call(post(valido()), env, f)).status; }
+    expect(ultimo).toBe(429);
+    expect(f.mock.calls.length).toBeLessThanOrEqual(MAX_EMAILS_PER_DAY);
+  });
+  it('IPv6 do mesmo /64 divide o balde; /64 diferente e IPv4 não', async () => {
+    expect(rateKey('2001:db8:1:2:aaaa::1')).toBe(rateKey('2001:DB8:1:2:0:0:0:ffff'));
+    expect(rateKey('2001:db8:1:3::1')).not.toBe(rateKey('2001:db8:1:2::1'));
+    expect(rateKey('1.2.3.4')).toBe('1.2.3.4');
+    expect(rateKey('::ffff:1.2.3.4')).toBe('1.2.3.4');
+    expect(rateKey(null)).toBe(null);
+    const env = envCom();
+    for (let i = 0; i < 5; i++) expect((await call(post(valido(), `2001:db8:1:2:${i}::${i}`), env)).status).toBe(200);
+    expect((await call(post(valido(), '2001:db8:1:2:ffff::9'), env)).status).toBe(429);
+    expect((await call(post(valido(), '2001:db8:1:9::1'), env)).status).toBe(200);
+  });
+  it('Content-Length acima do limite é recusado sem ler o corpo', async () => {
+    const env = envCom();
+    const req = new Request('https://s/api/feedback', { method: 'POST', body: JSON.stringify(valido()), headers: { 'CF-Connecting-IP': '3.3.3.3', 'Content-Length': String(MAX_BODY_BYTES + 1) } });
+    const spy = vi.spyOn(req, 'text');
+    const res = await call(req, env);
+    expect(res.status).toBe(413);
+    expect(spy).not.toHaveBeenCalled();
+    expect(env.SOULMON_SAVES.store.size).toBe(0);
   });
 });
 
