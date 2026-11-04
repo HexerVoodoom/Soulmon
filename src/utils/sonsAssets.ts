@@ -504,6 +504,51 @@ export const MUSICAS_DE_COMBATE = {
       },
     ],
   },
-} as const satisfies Record<'combate' | 'pesadelo' | 'masmorra' | 'evolucao' | 'meditacao' | 'parede', ManifestoDeMusica>;
+  // 04/11/2026: faixas próprias do Refúgio, geradas pelo dono no Suno (`docs/SOM.md` §17). O fim já vem em fade; volta com respiro.
+  respiracao: {
+    nome: 'Respiração subaquática',
+    duracaoS: 237.53,
+    pausaEntreVoltasS: 8,
+    fadeInS: 3,
+    origem: 'suno/fornecida-pelo-dono',
+    geradoEm: '2026-11-04',
+    formatos: [
+      {
+        url: '/sounds/tema-respiracao.webm',
+        mime: 'audio/webm; codecs="opus"',
+        sha256: 'a80f2c9ab5110f548db639a43392147baf5d940fee8cc9b1e2e82b9acee5f889',
+        bytes: 2158415,
+      },
+      {
+        url: '/sounds/tema-respiracao.m4a',
+        mime: 'audio/mp4; codecs="mp4a.40.2"',
+        sha256: '17d17bc70161276fa92ad1081b9cce6b65f9a96961df008d6f15adfb0cd5c722',
+        bytes: 1957519,
+      },
+    ],
+  },
+  chama: {
+    nome: 'Concentração (Trataka)',
+    duracaoS: 224.93,
+    pausaEntreVoltasS: 8,
+    fadeInS: 3,
+    origem: 'suno/fornecida-pelo-dono',
+    geradoEm: '2026-11-04',
+    formatos: [
+      {
+        url: '/sounds/tema-chama.webm',
+        mime: 'audio/webm; codecs="opus"',
+        sha256: 'd3fe23c51dc03f4853531845d7d09b80ab87b00b35df59a14e1940e15a3e4aa8',
+        bytes: 1918090,
+      },
+      {
+        url: '/sounds/tema-chama.m4a',
+        mime: 'audio/mp4; codecs="mp4a.40.2"',
+        sha256: 'ca9837a0ecbff8870fdbc01ec3e1f3255d6e71d04e57d4ace4b64ca5c3e73260',
+        bytes: 1854223,
+      },
+    ],
+  },
+} as const satisfies Record<'combate' | 'pesadelo' | 'masmorra' | 'evolucao' | 'meditacao' | 'parede' | 'respiracao' | 'chama', ManifestoDeMusica>;
 
 export type MusicaDeCombate = keyof typeof MUSICAS_DE_COMBATE;

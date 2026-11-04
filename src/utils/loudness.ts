@@ -102,12 +102,13 @@ export const OFFSET_MUSICA_EM_COMBATE_DB = -3.0;
  * dBTP; m4a com fade-out de 3 s no fim); pesadelo webm −28,1 / m4a −28,0 (integrado −28,4/−28,3; true peak −17,4/−17,2
  * dBTP; fade-out de 3 s). Resíduo ≤ 0,1 dB → 0. Com o ganho de reprodução: integrado pior −22,2, true peak pior −9,8 dBTP
  * (tema). Remasterizar = medir de novo. */
-export const TRIM_MUSICAS_DE_COMBATE_DB: Record<'combate' | 'pesadelo' | 'masmorra' | 'evolucao' | 'meditacao' | 'parede', number> = {
-  combate: 0, pesadelo: 0, masmorra: 0, evolucao: 0, meditacao: 0, parede: -1.5,
+export const TRIM_MUSICAS_DE_COMBATE_DB: Record<'combate' | 'pesadelo' | 'masmorra' | 'evolucao' | 'meditacao' | 'parede' | 'respiracao' | 'chama', number> = {
+  combate: 0, pesadelo: 0, masmorra: 0, evolucao: 0, meditacao: 0, parede: -1.5, respiracao: 0, chama: -0.3,
 };
 /* S18 (26/10/2026): masmorra/evolucao/meditacao masterizadas com ganho ÚNICO por faixa para ALVO_MASTERIZACAO_MUSICA_LUFS_S e
  * medidas depois do encode (ffmpeg ebur128, LUFS-S mediano; webm / m4a): masmorra −28,0 / −27,8 (true peak −16,8 / −16,6),
  * evolucao −28,0 / −28,1 (−16,7 / −16,7), meditacao −28,0 / −28,1 (−15,1 / −15,6). Resíduo ≤ 0,2 dB → trim 0. */
+/* 04/11/2026: respiracao −28,0 / −28,0 (integrado −28,1 / −28,1; true peak −16,8 / −16,5) e chama −28,0 / −28,0 (integrado −27,8 / −27,9; true peak −16,0 / −14,8), webm / m4a. Com o ganho de reprodução a chama daria integrado −15,8, acima do teto S3 de −16; trim −0,3 dB leva a −16,1. */
 /* 01/11/2026: parede (trilha da intro, mono) −28,0 / −27,7 (integrado −27,6 / −27,4; true peak −12,8 / −12,3). Mono e com crista alta: tocada a +12 dB (ganho de reprodução) passaria de −1 dBTP e de −16 LUFS integrado; trim −1,5 dB leva o pior formato a integrado ≈ −16,9 e true peak ≈ −1,8 dBTP. */
 
 /**

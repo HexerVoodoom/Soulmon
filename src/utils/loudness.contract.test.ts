@@ -209,7 +209,12 @@ describe('a escada: teto S3, ordem e degrau derivado', () => {
     // trim negativo de propósito (crista alta): S3 manda (integrado pior −27,4; true peak pior −12,3)
     expect(-27.4 + TRIM_MUSICAS_DE_COMBATE_DB.parede + GANHO_MUSICA_DB).toBeLessThanOrEqual(-16);
     expect(-12.3 + TRIM_MUSICAS_DE_COMBATE_DB.parede + GANHO_MUSICA_DB).toBeLessThanOrEqual(TETO_DBTP);
-    expect(Object.keys(TRIM_MUSICAS_DE_COMBATE_DB).sort()).toEqual(['combate', 'evolucao', 'masmorra', 'meditacao', 'parede', 'pesadelo']);
+    // 04/11/2026: respiracao/chama, pior formato medido: integrado −28,1 / −27,8; true peak −16,5 / −14,8
+    expect(-28.1 + TRIM_MUSICAS_DE_COMBATE_DB.respiracao + GANHO_MUSICA_DB).toBeLessThanOrEqual(-16);
+    expect(-27.8 + TRIM_MUSICAS_DE_COMBATE_DB.chama + GANHO_MUSICA_DB).toBeLessThanOrEqual(-16);
+    expect(-16.5 + TRIM_MUSICAS_DE_COMBATE_DB.respiracao + GANHO_MUSICA_DB).toBeLessThanOrEqual(TETO_DBTP);
+    expect(-14.8 + TRIM_MUSICAS_DE_COMBATE_DB.chama + GANHO_MUSICA_DB).toBeLessThanOrEqual(TETO_DBTP);
+    expect(Object.keys(TRIM_MUSICAS_DE_COMBATE_DB).sort()).toEqual(['chama', 'combate', 'evolucao', 'masmorra', 'meditacao', 'parede', 'pesadelo', 'respiracao']);
   });
 
   it('o teto de true peak é o do S3, e a tolerância é a do §3.4', () => {

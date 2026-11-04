@@ -24,7 +24,9 @@ const NOVAS_S18 = ['masmorra', 'evolucao', 'meditacao'] as const;
 const MUSICAS_SUNO = [TEMA_DO_JOGO, MUSICAS_DE_COMBATE.combate, MUSICAS_DE_COMBATE.pesadelo];
 const MUSICAS_S18 = NOVAS_S18.map(k => MUSICAS_DE_COMBATE[k]);
 const MUSICA_PAREDE = MUSICAS_DE_COMBATE.parede;
-const MUSICAS = [...MUSICAS_SUNO, ...MUSICAS_S18, MUSICA_PAREDE];
+/** 04/11/2026: as faixas próprias do Refúgio, do Suno do dono. */
+const MUSICAS_REFUGIO = [MUSICAS_DE_COMBATE.respiracao, MUSICAS_DE_COMBATE.chama];
+const MUSICAS = [...MUSICAS_SUNO, ...MUSICAS_S18, MUSICA_PAREDE, ...MUSICAS_REFUGIO];
 const FORMATOS_DAS_MUSICAS = MUSICAS.flatMap(m => [...m.formatos]);
 const TETO_TEMA_POR_FORMATO_BYTES = 2.5 * 1024 * 1024;
 /** O conjunto anterior (tema + dungeon/pvp, 13/10 e 19/10/2026): o novo não pode pesar mais que ele. */
@@ -105,7 +107,7 @@ describe('S17 — as músicas em streaming (tema + Stone Hall Combat/Nightmare):
   });
 
   it('a procedência é "fornecida pelo dono, gerada no Suno" e a verificação dos termos é pendência ESCRITA (nada de licença inventada)', () => {
-    for (const m of MUSICAS_SUNO) {
+    for (const m of [...MUSICAS_SUNO, ...MUSICAS_REFUGIO]) {
       expect(m.origem, m.nome).toBe('suno/fornecida-pelo-dono');
       expect(m.geradoEm, m.nome).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     }
@@ -138,7 +140,10 @@ describe('S17 — as músicas em streaming (tema + Stone Hall Combat/Nightmare):
     // S18: as 3 novas têm orçamento próprio (≤ 2,5 MB por formato, acima) e, juntas, ≤ 12 MB nos dois formatos (medido: ~8,1 MB).
     const novas = MUSICAS_S18.flatMap(m => [...m.formatos]).reduce((s, f) => s + f.bytes, 0);
     expect(novas, `${novas} bytes`).toBeLessThanOrEqual(12 * 1024 * 1024);
-    expect(Object.keys(MUSICAS_DE_COMBATE).sort()).toEqual(['combate', 'evolucao', 'masmorra', 'meditacao', 'parede', 'pesadelo']);
+    // 04/11/2026: as 2 do Refúgio, juntas, ≤ 8,5 MB nos dois formatos (medido: ~7,9 MB).
+    const refugio = MUSICAS_REFUGIO.flatMap(m => [...m.formatos]).reduce((s, f) => s + f.bytes, 0);
+    expect(refugio, `${refugio} bytes`).toBeLessThanOrEqual(8.5 * 1024 * 1024);
+    expect(Object.keys(MUSICAS_DE_COMBATE).sort()).toEqual(['chama', 'combate', 'evolucao', 'masmorra', 'meditacao', 'parede', 'pesadelo', 'respiracao']);
   });
 
   it('cada formato cabe no orçamento próprio (≤ 2,5 MB) e é o ÚNICO motivo de o S6 de 300 KB não valer para ele', () => {
