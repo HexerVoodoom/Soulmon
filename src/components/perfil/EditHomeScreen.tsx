@@ -5,7 +5,7 @@ import { BackArrow } from '../ui/BackArrow';
 import { Icon } from '../ui/Icon';
 import { PetStageDecor } from '../PetStageDecor';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
-import { PET_BACKGROUNDS } from '../../utils/backgrounds';
+import { PET_BACKGROUNDS, visibleBackground } from '../../utils/backgrounds';
 import { DECOR_SLOTS, STAGE_HEIGHT, decorRenderBox, slotBoxStyle, type SlotId } from '../../utils/petStage';
 import { DECOR_ART } from '../../utils/decorArt';
 import {
@@ -36,8 +36,10 @@ export interface EditHomeProps {
 const DOT = 14;
 const HIT = 44;
 
-export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equippedBackground, onSave, onClose, onOpenShop }: EditHomeProps) {
+export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equippedBackground: rawBackground, onSave, onClose, onOpenShop }: EditHomeProps) {
   const isPt = language === 'pt-BR';
+  // Mesma leitura da Home: cenário aposentado não desenha (o save nunca é tocado).
+  const equippedBackground = visibleBackground(rawBackground);
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   const [draft, setDraft] = useState<DecorMap>(() => ({ ...equippedDecor }));
   const [picking, setPicking] = useState<SlotId | null>(null);
@@ -157,7 +159,7 @@ export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equipp
                 selected={!draft[picking]}
                 label={isPt ? 'Vazio' : 'Empty'}
                 onClick={() => { setDraft(d => pickDecor(d, picking, null)); setPicking(null); }}
-                leading={<Icon name="close" size={24} tone="muted" />}
+                leading={<span aria-hidden style={{ width: 24, height: 24, borderRadius: '50%', border: '2px dashed var(--sm2-muted)', boxSizing: 'border-box' }} />}
               />
             </li>
             {options.map(it => (
@@ -169,7 +171,7 @@ export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equipp
                   onClick={() => { setDraft(d => pickDecor(d, picking, it.id)); setPicking(null); }}
                   leading={DECOR_ART[it.id]
                     ? <img src={DECOR_ART[it.id]} alt="" width={40} height={40} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                    : <span aria-hidden style={{ fontSize: 28, lineHeight: 1 }}>{it.icon}</span>}
+                    : <span aria-hidden style={{ fontSize: '1.75rem', lineHeight: 1 }}>{it.icon}</span>}
                 />
               </li>
             ))}

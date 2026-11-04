@@ -548,6 +548,14 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx` (`leading` do `HomeHud`).
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
+### `src/components/perfil/EditHomeScreen.tsx`
+**Dono de:** "Editar Home" (04/11/2026) — tela cheia, em portal, aberta pela linha do grupo Perfil das Configurações: o retângulo da Home com o cenário aplicado, ponto branco a 50% em cada espaço vazio e folha (`ModalSheet`) com as peças que a pessoa tem e cabem no espaço, mais "Vazio". Tudo é rascunho local até Salvar.
+**Props principais:** `EditHomeProps` — `language`, `ownedFurniture`, `equippedDecor`, `equippedBackground`, `onSave(decor)`, `onClose`, `onOpenShop?`.
+**Exports:** `EditHomeScreen`, `EditHomeProps`.
+**Estado/efeitos relevantes:** `draft` (cópia de `equippedDecor`) e `picking` (espaço aberto); reusa `PetStageDecor` para desenhar o rascunho; Salvar só fica ativo com mudança; o pet fica de fora.
+**Chamado por:** `components/SettingsPage.tsx` (`profile.editHome`, montado no `App.tsx` com `handleSaveHomeDecor`, que grava o mesmo `equippedDecor` da loja).
+**Régua:** `src/components/perfil/EditHomeScreen.render.test.tsx`.
+
 ### `src/components/perfil/DemoSoundButton.tsx`
 **Dono de:** o botão de SOM da demo do portfólio (15/10/2026): no lugar do avatar na Home, liga/desliga todo o áudio pelo mudo existente; alvo 44, aria PT/EN. A demo não abre Configurações.
 **Props principais:** `muted`, `language`, `onToggle`.

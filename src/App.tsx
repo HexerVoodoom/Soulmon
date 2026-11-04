@@ -8858,7 +8858,7 @@ export default function App() {
                 editHome: {
                   ownedFurniture: gameState.ownedFurniture ?? [],
                   equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
-                  equippedBackground: visibleBackground(gameState.equippedBackground),
+                  equippedBackground: gameState.equippedBackground ?? null,
                   onSave: handleSaveHomeDecor,
                   onOpenShop: () => { setPendingSheet({ area: 'mercado', lot: 'background' }); goTo(areaView('mercado')); },
                 },
