@@ -18,6 +18,8 @@ import { ZIP_MAX_BITS } from '../../utils/mente/zip';
 import { SELO_MAX_BITS } from '../../utils/mente/selo';
 import { SupportNote } from '../refugio/SupportNote';
 import { GameCard, GameCardGrid } from './GameCard';
+import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
+import { PixelIcon } from '../ui/PixelIcon';
 // Beta-2 (backlog 9.1): o velociraptor e a tesoura SAIRAM do Salão (o dono não gostou). Reuso de arte que já existe,
 // pelada, sem moldura: a bota de caminhada (`ativ-corpo-caminhar`) para a Corrida e o punho de pedra (`hand-rock`,
 // o mesmo do jogo) para o Pedra-papel-tesoura. Nenhum asset novo.
@@ -250,7 +252,7 @@ export type SalaoGame = 'dino' | 'ppt' | 'match3' | 'barrage';
 export type MenteGame = 'eco' | 'zip' | 'selo';
 export type RefugioGame = 'respiracao' | 'bolhas-calmas' | 'chama';
 
-/** Salão de Jogos — jogos livres. 04/11/2026: cada jogo é uma CARTA ilustrada (`GameCard`), em grade de duas colunas; os números do jogo viram selos sob a carta. */
+/** Salão de Jogos — jogos livres, em LISTA de cards (o dono pediu a lista de volta em 04/11/2026; as cartas ilustradas ficaram só no Refúgio). */
 /** 🎟️ A linha da sessão de diversão (04/11/2026, `utils/funSession.ts`): o custo, ou as rodadas e o relógio da sessão aberta,
  *  ou — sem energia — um convite calmo para as outras atividades. Atualiza a cada segundo. */
 export function FunSessionLine({ language, status, nudge = 0 }: { language: Language; status: (nowMs: number) => FunSessionStatus; nudge?: number }) {
@@ -299,8 +301,6 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, ref
   const [nudge, setNudge] = useState(refused ? 1 : 0);
   const onStart = (g: SalaoGame) => { if (funStatus && !funStatus(Date.now()).canPlay) { setNudge(n => n + 1); return; } abrir(g); };
   const isPt = language === 'pt-BR';
-  const [dinoBest] = useState(() => readNumber(STORAGE_KEYS.DINO_BEST, 0));
-  const [m3Best] = useState(() => readNumber(STORAGE_KEYS.MATCH3_BEST, 0));
   return (
     <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-4, 16px)' }}>
       {funStatus && <FunSessionLine language={language} status={funStatus} nudge={nudge} />}
@@ -329,41 +329,65 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, ref
           </InfoTipSection>
         </ModalInfo>
       </div>
-      <GameCardGrid>
-        <GameCard
-          id="dino" icon={iconCorrida} onPress={() => onStart('dino')} dataAttrs={{ 'data-dino-start': '' }}
-          title={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}
-          description={isPt ? 'Pule obstáculos até onde der' : 'Jump and run as far as you can'}
-          badges={dinoBest > 0 ? (
-            <span className="sm2-num">
-              {isPt ? 'recorde' : 'best'} {dinoBest} · <span style={bitsStyle}><BitsAmount value={Math.floor(dinoBest / DINO_POINTS_PER_BIT)} /></span>
-            </span>
-          ) : undefined}
-        />
-        <GameCard
-          id="ppt" icon={iconPpt} onPress={() => onStart('ppt')} dataAttrs={{ 'data-ppt-start': '' }}
-          title={isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}
-          description={isPt ? `Vença ${WINS_NEEDED} rodadas do seu Soulmon` : `Win ${WINS_NEEDED} rounds vs your Soulmon`}
-          badges={<span className="sm2-num" style={bitsStyle}><BitsAmount value={MATCH_POINTS} /> {isPt ? 'por vitória' : 'per win'}</span>}
-        />
-        <GameCard
-          id="match3" icon={iconCombina} onPress={() => onStart('match3')} dataAttrs={{ 'data-match3-start': '' }}
-          title="Elemental Fusion"
-          description={isPt ? 'Alinhe 3 peças e golpeie' : 'Match 3 tiles to strike'}
-          badges={
-            <span className="sm2-num">
-              {m3Best > 0 && <>{isPt ? 'recorde' : 'best'} {m3Best} · </>}
-              <span style={bitsStyle}><RewardPreview mode="before" language={language} items={[{ kind: 'bits', max: M3C_MAX_BITS }]} /></span>
-            </span>
-          }
-        />
-        <GameCard
-          id="barrage" icon={iconCorrida} onPress={() => onStart('barrage')} dataAttrs={{ 'data-barrage-open': '' }}
-          title={isPt ? 'Chuva de Almas' : 'Soul Barrage'}
-          description={isPt ? 'Desvie dos tiros e revide' : 'Dodge the shots, fire back'}
-        />
-      </GameCardGrid>
+      <ul style={{ ...sheetCardList, gap: 'var(--sm2-space-4, 16px)' }}>
+        <li style={sheetCard}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <PixelIcon src={iconCorrida} size={32} style={{ flexShrink: 0 }} />
+            <p style={sheetCardTitle}>{isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}</p>
+          </div>
+          <DinoSheet language={language} onStart={() => onStart('dino')} />
+        </li>
+        <li style={sheetCard}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <PixelIcon src={iconPpt} size={32} style={{ flexShrink: 0 }} />
+            <p style={sheetCardTitle}>{isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}</p>
+          </div>
+          <PptSheet language={language} onStart={() => onStart('ppt')} />
+        </li>
+        <li style={sheetCard}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <PixelIcon src={iconCombina} size={32} style={{ flexShrink: 0 }} />
+            <p style={sheetCardTitle}>Elemental Fusion</p>
+          </div>
+          <Match3Sheet language={language} onStart={() => onStart('match3')} />
+        </li>
+        <li style={sheetCard}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <PixelIcon src={iconCorrida} size={32} style={{ flexShrink: 0 }} />
+            <p style={sheetCardTitle}>{isPt ? 'Chuva de Almas' : 'Soul Barrage'}</p>
+          </div>
+          <div data-barrage style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <button type="button" data-barrage-open onClick={() => onStart('barrage')} style={cta}>
+              {isPt ? 'Jogar' : 'Play'}
+            </button>
+          </div>
+        </li>
+      </ul>
     </div>
+  );
+}
+
+/** Um jogo do Ateliê: CARD próprio (I2) com o CTA PRIMÁRIO (H14). */
+function GameRow({ id, title, asks, meta, cta, onStart, dataKey }: {
+  id: string; title: string; asks: string; meta?: ReactNode; cta: string;
+  onStart: () => void; dataKey: 'mente' | 'refugio';
+}) {
+  return (
+    <li style={sheetCard}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+        <span style={{ ...sheetCardTitle, flex: 1, minWidth: 0 }}>{title}</span>
+        {meta !== undefined && <span className="sm2-num" style={{ ...sm2Hint, flexShrink: 0 }}>{meta}</span>}
+      </div>
+      <p style={{ ...sm2Hint, margin: 0, color: 'var(--sm2-gold-ink)' }}>{asks}</p>
+      <button
+        type="button"
+        {...{ [`data-${dataKey}-start`]: id }}
+        onClick={onStart}
+        style={{ ...sm2Button('primary'), width: '100%' }}
+      >
+        {cta}
+      </button>
+    </li>
   );
 }
 
@@ -376,25 +400,26 @@ export function MenteSheet({ language, onStart, bitsToday }: {
 }) {
   const isPt = language === 'pt-BR';
   const upTo = (n: number) => <RewardPreview mode="before" language={language} items={[{ kind: 'bits', max: n }]} />;
+  const cta = isPt ? 'Jogar' : 'Play';
   const rows: { id: MenteGame; title: string; asks: string; detail: string; meta: ReactNode }[] = [
     {
       id: 'eco',
       title: isPt ? 'Eco do Pet' : "Pet's Echo",
-      asks: isPt ? 'Lembrar uma sequência' : 'Remember a sequence',
+      asks: isPt ? 'Pede: lembrar uma sequência' : 'Asks: remember a sequence',
       detail: isPt ? 'Repita a sequência que o seu Soulmon mostra. Ela cresce a cada acerto.' : 'Repeat the sequence your Soulmon shows. It grows with every match.',
       meta: <span style={bitsStyle}>{upTo(ECO_MAX_BITS)}</span>,
     },
     {
       id: 'zip',
       title: isPt ? 'Trilha do Pet' : 'Pet Trail',
-      asks: isPt ? 'Planejar um caminho' : 'Plan a route',
+      asks: isPt ? 'Pede: planejar um caminho' : 'Asks: plan a route',
       detail: isPt ? 'Trace um caminho só pelos números, em ordem, passando por todas as casas.' : 'Trace one path through the numbers, in order, covering every cell.',
       meta: <span style={bitsStyle}>{upTo(ZIP_MAX_BITS)}</span>,
     },
     {
       id: 'selo',
       title: isPt ? 'Selo Faltante' : 'Missing Seal',
-      asks: isPt ? 'Achar o padrão' : 'Find the pattern',
+      asks: isPt ? 'Pede: achar o padrão' : 'Asks: find the pattern',
       detail: isPt ? 'Descubra o padrão da grade de selos e escolha o que falta. Exercita raciocínio.' : 'Find the pattern in the grid of seals and pick the missing one. It exercises reasoning.',
       meta: <span style={bitsStyle}>{upTo(SELO_MAX_BITS)}</span>,
     },
@@ -414,15 +439,11 @@ export function MenteSheet({ language, onStart, bitsToday }: {
           ))}
         </ModalInfo>
       </div>
-      <GameCardGrid>
+      <ul style={sheetCardList}>
         {rows.map(r => (
-          <GameCard
-            key={r.id} id={r.id} title={r.title} description={r.asks}
-            badges={<span className="sm2-num">{r.meta}</span>}
-            onPress={() => onStart(r.id)} dataAttrs={{ 'data-mente-start': r.id }}
-          />
+          <GameRow key={r.id} dataKey="mente" id={r.id} title={r.title} asks={r.asks} meta={r.meta} cta={cta} onStart={() => onStart(r.id)} />
         ))}
-      </GameCardGrid>
+      </ul>
     </div>
   );
 }
