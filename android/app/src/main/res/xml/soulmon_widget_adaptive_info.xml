@@ -10,5 +10,6 @@
     android:initialLayout="@layout/widget_soulmon_adaptive_horizontal"
     android:resizeMode="horizontal|vertical"
     android:widgetCategory="home_screen"
+    android:widgetFeatures="hide_from_picker"
     android:description="@string/widget_adaptive_description"
     android:previewImage="@drawable/widget_preview" />
