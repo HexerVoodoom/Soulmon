@@ -641,6 +641,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         oppElement={duel.oppSide.fx?.elBasica ?? opponentElementFor(duel.opp)}
         petName={isPt ? 'Você' : 'You'}
         oppName={duel.opp.petName || duel.opp.name}
+        oppEspecialNome={duel.opp.especialNome}
         isPt={isPt}
         onDone={taps => { void resolveMatch(duel.opp, taps, false, duel.seed, duel.oppSide.fx?.elBasica ?? undefined); }}
         onClose={() => leaveDuel(duel.opp)}

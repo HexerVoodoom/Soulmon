@@ -54,6 +54,7 @@ import { COOP_ALIASES, handleGuild } from './guild.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_honra.js';
 import { sanitizarNomeDeGuilda } from './_coop.js';
+import { nomeEspecialValido, ESPECIAL_NOME_COOLDOWN_MS } from './_especialNomeRegra.js';
 import { pickRankedOpponents } from './_rankedPick.js';
 import { loadDuelSide as loadDuelSideShared, loadDuelSideWithSprite } from './_duelLoad.js';
 import { avatarIdOrNull } from './_avatares.js';
@@ -188,6 +189,8 @@ async function publicProfile(env, p, extra = {}) {
     avatarId: avatarIdOrNull(p.avatarId), frameId: frameIdOrNull(p.frameId), artLine: artLineOrNull(p.artLine),
     ...(/^[a-z][a-z0-9_-]{0,31}$/.test(String(p.element ?? '')) ? { element: p.element } : {}),
     ...(sUrl ? { spriteUrl: sUrl } : {}),
+    // Nome do especial escolhido pelo jogador: revalidado na SAÍDA (perfil antigo ou KV editado nunca vaza texto fora da regra).
+    ...(nomeEspecialValido(p.especialNome) ? { especialNome: nomeEspecialValido(p.especialNome) } : {}),
     unlockedStages: p.unlockedStages, pvpEnabled: p.pvpEnabled,
     // ⚰️ `tasksDone` NÃO sai daqui (WP4.11, exposição E3, proibição #21).
     // "X tarefas feitas" de outro jogador é score de vida real num diretório
@@ -525,6 +528,29 @@ async function handleCommunity(context) {
     const petNameOk = (v) => typeof v === 'string' && v.length > 0 && sanitizarNomeDeGuilda(v) !== null;
     const prevPet = petNameOk(prev.petName) ? String(prev.petName).slice(0, 32) : '';
     const publicHidden = typeof body.publicHidden === 'boolean' ? body.publicHidden : prev.publicHidden === true;
+    // Nome do especial (aditivo): ausente no corpo herda o gravado (cliente antigo não apaga). Vazio/`null` volta ao nome padrão
+    // e não conta na troca semanal. Inválido (forma, contato ou palavrão PT/EN) cai no padrão e avisa. Trocar por OUTRO nome
+    // só a cada ESPECIAL_NOME_COOLDOWN_MS, medido aqui (o relógio do cliente não vale); repetir o nome gravado não gasta nada.
+    let especialNome = nomeEspecialValido(prev.especialNome) || '';
+    let especialNomeAt = Number(prev.especialNomeAt) > 0 ? Number(prev.especialNomeAt) : 0;
+    let especialNomeRejected = false;
+    let especialNomeLimit = false;
+    if ('especialNome' in body) {
+      const pedido = body.especialNome;
+      if (pedido === null || (typeof pedido === 'string' && pedido.trim() === '')) {
+        especialNome = '';
+      } else {
+        const novo = typeof pedido === 'string' ? nomeEspecialValido(pedido) : null;
+        const sobContato = novo ? sanitizarNomeDeGuilda(novo) : null; // a régua de contato do apelido
+        if (!novo || sobContato !== novo) {
+          especialNome = '';
+          especialNomeRejected = true;
+        } else if (novo !== especialNome) {
+          if (especialNomeAt && Date.now() - especialNomeAt < ESPECIAL_NOME_COOLDOWN_MS) especialNomeLimit = true;
+          else { especialNome = novo; especialNomeAt = Date.now(); }
+        }
+      }
+    }
     const profile = {
       id,
       name: apelidoFinal || sanitizarNomeDeGuilda(prev.name) || 'Anônimo',
@@ -545,6 +571,8 @@ async function handleCommunity(context) {
         : (prev.unlockedStages || []),
       pvpEnabled,
       publicHidden,
+      ...(especialNome ? { especialNome } : {}),
+      ...(especialNomeAt ? { especialNomeAt } : {}),
       attrs: body.attrs && typeof body.attrs === 'object'
         ? { power: attrFinito(body.attrs.power), harmony: attrFinito(body.attrs.harmony), benevolence: attrFinito(body.attrs.benevolence) }
         : (prev.attrs || { power: 0, harmony: 0, benevolence: 0 }),
@@ -578,6 +606,9 @@ async function handleCommunity(context) {
       ok: true, id: profile.pid, pvpEnabled: profile.pvpEnabled, publicHidden,
       ...(nameRejected ? { nameRejected: true } : {}),
       ...(nameTaken ? { nameTaken: true } : {}),
+      ...('especialNome' in body || especialNome ? { especialNome, especialNomeAt } : {}),
+      ...(especialNomeRejected ? { especialNomeRejected: true } : {}),
+      ...(especialNomeLimit ? { especialNomeLimit: true } : {}),
       ...(pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: gateFor('pvp', bondLevel).minBond } : {}),
     });
   }
