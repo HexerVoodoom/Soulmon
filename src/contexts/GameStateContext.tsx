@@ -414,6 +414,10 @@ export interface GameState {
    *  `soulmonSkills`: determinístico pela identidade, recomputável só de um
    *  perfil que não vai à nuvem. Decisão 2 do PLANO-ORACULO.md §9. */
   soulmonCompanheiro?: CompanheiroVisivel;
+  /** Nome do especial escolhido pelo jogador (público; `''` = padrão). O servidor filtra e limita a troca a 1/semana
+   *  (`functions/api/_especialNomeRegra.js`); este campo reflete a resposta dele. `especialNomeAt` = quando o servidor aceitou. */
+  especialNome?: string;
+  especialNomeAt?: number;
   /** Talento e profissão da ficha por estágio (`ficha/manifestacao.ts`) — o
    *  que o class-system MANIFESTA (fala do pet, jeito na masmorra) sem que a
    *  ficha apareça. Cache pelo mesmo motivo de `soulmonSkills`; preenchido
@@ -1544,6 +1548,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           return { id: v.id, nome: { pt: v.nome.pt, en: v.nome.en } };
         })(),
         soulmonManifestacao: sanitizeManifestacao(loadedState.soulmonManifestacao),
+        especialNome: typeof loadedState.especialNome === 'string' ? loadedState.especialNome.slice(0, 20) : undefined,
+        especialNomeAt: typeof loadedState.especialNomeAt === 'number' && Number.isFinite(loadedState.especialNomeAt) ? loadedState.especialNomeAt : undefined,
         evolutionLocked: loadedState.evolutionLocked === true,
         evolutionCrystal: sanitizeCrystal(loadedState.evolutionCrystal),
         incubation: (() => {
@@ -2213,7 +2219,24 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         publicHidden: gameState.hideFromPublicList === true,
         attrs: { power: gameState.powerPoints, harmony: gameState.harmonyPoints, benevolence: gameState.benevolencePoints },
         tasksDone: gameState.completedTasks?.length ?? 0,
+        // Nome do especial (aditivo): só vai quando a pessoa já mexeu nele (`''` = voltar ao padrão); ausente = o servidor herda.
+        ...(gameState.especialNome !== undefined ? { especialNome: gameState.especialNome } : {}),
       }).then(resposta => {
+        // O servidor decide o nome do especial (filtro e troca semanal): o save local passa a refletir a resposta.
+        // `setGameState` só roda quando algo difere, então não reagenda o envio em loop.
+        if (resposta && typeof resposta.especialNome === 'string') {
+          const nome = resposta.especialNome;
+          const em = typeof resposta.especialNomeAt === 'number' ? resposta.especialNomeAt : undefined;
+          if (nome !== (gameState.especialNome ?? '') || em !== gameState.especialNomeAt) {
+            setGameState(prev => (prev.especialNome === nome && prev.especialNomeAt === em ? prev : { ...prev, especialNome: nome, especialNomeAt: em }));
+          }
+          if (resposta.especialNomeRejected || resposta.especialNomeLimit) {
+            const pt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
+            toast.warning(resposta.especialNomeRejected
+              ? (pt ? 'Esse nome de especial não pôde ser usado. Voltou ao nome padrão.' : 'That special name could not be used. Back to the default name.')
+              : (pt ? 'O nome do especial só muda uma vez por semana.' : 'The special name can only change once a week.'));
+          }
+        }
         // ── H13 (02/10/2026): a recusa NÃO desliga mais nada nem avisa ────────
         // Sem interruptor, `pvpEnabled` é sempre `true` e "ligar" não é um gesto
         // da pessoa — então não há o que desfazer nem o que avisar aqui (o aviso

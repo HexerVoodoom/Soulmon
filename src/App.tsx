@@ -101,6 +101,7 @@ import { hashString, creatureFormId, ELEMENT_INFO } from './utils/oracle/base';
 import type { OracleInput, OracleResult, ElementId } from './utils/oracle';
 import type { Manifestacao } from './utils/soulProfile/ficha/manifestacaoSave';
 import { skillsTemFamilia, fichaStageOf } from './utils/soulProfile/ficha/stageSkillsFor';
+import { comNomeDoEspecial } from './utils/soulProfile/ficha/especialNome';
 import { registrarEstagio, completarEstagios, ESTAGIOS_COM_JANELA } from './utils/fichaJornada';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
 
@@ -5316,6 +5317,8 @@ export default function App() {
     }).catch(() => { /* perfil corrompido: segue o selo padrão */ });
     return () => { vivo = false; };
   }, [starterDoSave, starterSkillsProntas, jornadaDasSkills, handleSkillsComputed]);
+  // O nome do especial escolhido pelo jogador, por cima da ficha (só leitura: o cache do save não muda).
+  const skillsDoJogador = useMemo(() => comNomeDoEspecial(gameState.soulmonSkills, gameState.especialNome), [gameState.soulmonSkills, gameState.especialNome]);
   const manifestacaoAtual = gameState.soulmonManifestacao?.[getStageLevel(gameState.evolutionStage) as keyof Manifestacao];
 
   /* PR15b: depois de uma evolução registrada, os caches da ficha (skills, classes, companheiro, manifestação) são
@@ -7621,11 +7624,14 @@ export default function App() {
                   benevolencePoints: gameState.benevolencePoints,
                   degeneratedByHP: gameState.degeneratedByHP,
                   petPassive: gameState.petPassive,
-                  skills: gameState.soulmonSkills,
+                  skills: skillsDoJogador,
                   petElement: petElementOf(gameState),
                   equipment: gameState.equipment,
                   forge: gameState.forge,
                 }}
+                especialNome={gameState.especialNome ?? ''}
+                especialNomeAt={gameState.especialNomeAt}
+                onSaveEspecialNome={nome => setGameState(prev => (prev.especialNome === nome ? prev : { ...prev, especialNome: nome }))}
               />
             </Suspense>
           )}
@@ -8065,7 +8071,7 @@ export default function App() {
                 demoCharacterId={petLine}
                 petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
                 playerLevel={soulLevel(gameState)}
-                skills={gameState.soulmonSkills}
+                skills={skillsDoJogador}
                 profissao={manifestacaoAtual?.profissao}
                 profissaoNome={manifestacaoAtual?.profissaoNome}
                 petElement={petElementOf(gameState)}
@@ -9697,7 +9703,7 @@ export default function App() {
           petStage={gameState.evolutionStage}
           demoCharacterId={petLine}
           petElement={petElementOf(gameState)}
-          skills={gameState.soulmonSkills}
+          skills={skillsDoJogador}
           soul={gameState}
           profissao={manifestacaoAtual?.profissao}
           language={language}

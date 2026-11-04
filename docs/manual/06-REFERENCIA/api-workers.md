@@ -706,3 +706,8 @@ Espelho de forma de dois campos do save da Biblioteca (01/11/2026): `libraryAck`
 - **`_dailyMissions.js` / `_gates.js`.** ⚰️ `brincar`/`d-brincar` saíram das missões diárias (`carinho` substitui; presente exige a meta do dia); entrou `visit:forja.hexsmith`; `_gates.js` ganhou `'forja.hexsmith': { minBond: 2 }`.
 - **`_simulados.js` / `_simulados.data.js`:** elemento do simulado alinhado ao do sprite (teste `_simulados.elemento.test.js`; o detalhe dos dados não é reproduzido aqui). **`config.js`:** devolve `onboardingVelado`.
 - **Workers.** `workers/fcm.js`: a troca OAuth em voo é dividida (uma promessa compartilhada — antes até 100 trocas por lote na passada `lazyFcm`) e o corpo da resposta é liberado; `workers/webpush.js`: corpo nunca lido é descartado (evita "stalled response" nos lotes de 100 envios); `workers/push-scheduler.js`: idade da criatura em dias (`bornAt`, `null` = copy de sempre) e `drainPrefix` documentado.
+
+### `functions/api/_especialNomeRegra.js`
+**Dono de:** a regra do nome PÚBLICO do especial (REGISTRO §222), pura e sem KV, usada pelo servidor (`community.js`, perfil) e pela tela (`components/perfil/EspecialNomeEditor.tsx`): até 20 caracteres, letras/números/espaço, filtro de palavrão PT+EN (palavra inteira; raízes longas também no texto colado; normaliza acento, leet e repetição).
+**Exports:** `ESPECIAL_NOME_MAX` · `ESPECIAL_NOME_COOLDOWN_MS` (7 dias) · `temPalavrao(texto)` · `nomeEspecialValido(raw)` (nome limpo ou `null`). O `community.js` ainda passa o nome pela régua de contato do apelido (`sanitizarNomeDeGuilda`) e decide a troca semanal.
+**Chamado por:** `functions/api/community.js` (`profile` POST e `publicProfile`), `src/components/perfil/EspecialNomeEditor.tsx`.

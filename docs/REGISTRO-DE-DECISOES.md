@@ -3961,3 +3961,15 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 **O que provaria que está errado.** Widget F que mostra fome o dia quase inteiro, ou o dono preferir a tarefa à fome: gatear por estoque ou baixar a régua para `HUNGER_FAIR_MIN`. Falha de render por tamanho do mapa em aparelho real: mandar só o layout escolhido também no API 31+.
 
 **Evidência.** Compilou (`assembleDebug`) e os 5 JUnit passaram nesta máquina. Não testado em aparelho nem em launcher real. Precisa de AAB novo.
+
+## §222 — Nome público do especial, escolhido pelo jogador (04/11/2026, pedido do dono)
+
+**Decisão.** O jogador escolhe o nome do especial do Soulmon (Laboratório > Perfil), visível a quem duela contra ele. Mora no perfil público que já é gravado e entregue (`community.js`: `especialNome` + `especialNomeAt`), sem leitura nova de KV (o `prev` do upsert já vinha lido; oponentes e `player` já passam por `publicProfile`).
+
+**Regras.** Até 20 caracteres; só letras, números e espaço; contato recusado pela MESMA régua do apelido (`sanitizarNomeDeGuilda`); filtro de palavrão PT+EN novo e puro em `functions/api/_especialNomeRegra.js` (palavra inteira + raízes longas no texto colado; normaliza acento, leet e letras repetidas) — o apelido NÃO tinha filtro de palavrão, só de contato; não existe mecanismo de denúncia no app para reaproveitar. Troca por outro nome: 1 por semana, medida no servidor (`especialNomeAt`, o relógio do cliente não vale); repetir o mesmo nome não gasta; vazio/`null` volta ao padrão e não conta. Recusado (forma, contato, palavrão) cai no nome padrão e a resposta traz `especialNomeRejected`. Ausente no corpo herda o gravado (cliente antigo não apaga). A saída revalida o texto: perfil antigo ou KV adulterado nunca vaza nome fora da regra.
+
+**Como aparece.** Para o dono, `comNomeDoEspecial` aplica o nome por cima da ficha em leitura (o cache `soulmonSkills` não é reescrito). Para os outros, `DuelScreen` recebe `oppEspecialNome` (Torneio/Duelo); sem nome, o nome por regra de sempre.
+
+**Limites declarados.** Só vai ao servidor quando o perfil é publicado (PvP ligado e Vínculo >= 5); fora disso o nome vale só para o dono. Nome recusado apaga o nome anterior (o pedido diz que recusado cai no padrão) e, como a troca já foi gasta, a nova só vale após a semana. Lista de palavrões é conservadora, não exaustiva.
+
+**O que falsificaria.** Nome ofensivo passando pelo filtro (ampliar a lista) ou queixa de falso positivo em nome comum (migrar as raízes longas para só-palavra-inteira).
