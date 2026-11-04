@@ -246,6 +246,8 @@ export interface CompletedTask {
   effort?: Effort;
   /** Era uma tarefa assombrada quando foi concluída (bônus de alívio). */
   wasHaunted?: boolean;
+  /** O que a conclusão rendeu — o estorno do "Desmarcar" (`utils/taskUncomplete.ts`). Ausente em entrada antiga. */
+  receipt?: import('../utils/taskUncomplete').TaskCompletionReceipt;
 }
 
 export interface ActivityStats {

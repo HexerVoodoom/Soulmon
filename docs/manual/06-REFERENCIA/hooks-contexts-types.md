@@ -46,6 +46,12 @@
 **Régua:** `src/hooks/useDialogA11y.test.tsx`.
 **Avisos do arquivo:** trata de propósito quatro casos que a versão ingênua erra — diálogos empilhados (contagem de referência em `lockCount`/`inertRefs`), restauro exato do `overflow` original, `inert` ausente em WebView antigo (cai em `aria-hidden` + o trap de Tab), e desmontagem abrupta (nada em estado React, tudo no cleanup do efeito, contagens saneadas com `Math.max(0, …)`). O hook **não** desenha véu — cada diálogo continua dono do próprio véu.
 
+### `src/hooks/useLongPress.ts`
+**Dono de:** o gesto TOCAR E SEGURAR (~500 ms) das linhas da lista do dia (dono 04/11/2026).
+**Exports:** `useLongPress(onLongPress)` — handlers de ponteiro + `onClickCapture` (engole o toque curto depois do segurar) + `onContextMenu` (botão direito, tecla Menu, Shift+F10, toque longo nativo); `LONG_PRESS_MS` (500); `MOVE_TOL_PX` (10 — mexer mais que isso, ou o navegador assumir a rolagem, cancela).
+**Chamado por:** `src/components/pixel/RitualPanel.tsx` (`RitualRow` › `onLongPress`).
+**Régua:** `src/components/DailyRituals.segurar.render.test.tsx`.
+
 ### `src/hooks/useOrdemCongelada.ts`
 **Dono de:** a ordem da lista da Home não saltar sob o dedo (QA L06-07, dono 21/10/2026): devolve os ids recém-concluídos, que ficam ~2 s no lugar antes de descer.
 **Sincronização 01/11/2026:** o prazo que venceu sai de `timers.current` (a lista não acumula timers numa sessão longa).

@@ -34,6 +34,7 @@
 import { useLayoutEffect, useRef, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import type { Language } from '../../utils/i18n';
 import { Icon } from '../ui/Icon';
+import { useLongPress } from '../../hooks/useLongPress';
 import { SM2_SHADOW_CARD, sm2Button, sm2Hint } from '../form/FormKit';
 
 /** A superfície do painel — a mesma do resto do sistema (FormKit). */
@@ -235,6 +236,8 @@ export interface RitualRowProps {
   /** `View all`: a linha NÃO marca nada — sem checkbox, o toque inteiro abre a edição. */
   editOnly?: boolean;
   onEdit?: () => void;
+  /** Tocar e SEGURAR (~500 ms) ou menu de contexto (`useLongPress`): a ação secundária da linha. */
+  onLongPress?: () => void;
   /** Expansor das etapas, no lugar do checkbox. */
   expandable?: boolean;
   expanded?: boolean;
@@ -251,10 +254,11 @@ export interface RitualRowProps {
 
 export function RitualRow({
   kind, name, subtitle, value, max, done = false, dimmed = false, haunted = false, inert = false,
-  onToggle, editOnly = false, onEdit, expandable = false, expanded = false, onExpand,
+  onToggle, editOnly = false, onEdit, onLongPress, expandable = false, expanded = false, onExpand,
   children, language, toggleLabelPt, toggleLabelEn, flipKey, below,
 }: RitualRowProps) {
   const isPt = language === 'pt-BR';
+  const segurar = useLongPress(onLongPress);
   const isHaunted = haunted && !done;
   /* A tinta do título: uma só regra, por estado (D-A3). */
   const tinta = isHaunted
@@ -295,7 +299,12 @@ export function RitualRow({
       /* Lido pela medição de densidade (T4) do roteiro de verificação. */
       data-action-unit
     >
-      <div className="sm2-ritual-row" style={{ gap: GAP }}>
+      <div
+        className="sm2-ritual-row"
+        data-long-press={onLongPress ? 'true' : undefined}
+        {...segurar}
+        style={{ gap: GAP, ...(onLongPress ? { WebkitTouchCallout: 'none', userSelect: 'none' } : {}) }}
+      >
         {/* O CHECKBOX BRONZE à ESQUERDA do nome (beta-2, 2.2). O selo do tipo
             (tarefa/hábito) saiu: a lista já se divide em `Tasks`/`Habits`, e o
             ícone repetia a informação. */}

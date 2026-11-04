@@ -219,6 +219,7 @@ import type { DungeonReturnSummary } from './utils/dungeonReturnSummary';
 import { spendBits, addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './utils/equipment';
 import { RewardPreview, type PreviewItem } from './components/ui/RewardPreview';
 import { snapshotCompletion, undoCompletion, UNDO_WINDOW_MS } from './utils/completionUndo';
+import { uncompleteTask, uncompleteBlock, uncompleteBlockText, type TaskCompletionReceipt } from './utils/taskUncomplete';
 import { useDeferredFlush } from './hooks/useDeferredFlush';
 import { adminFromEntitlement, setAdminFlag, useAdmin } from './utils/adminFlag';
 import { isCorvo, spriteLineOf } from './utils/corvoPet';
@@ -3288,7 +3289,28 @@ export default function App() {
           // invoca 2× e o toast saía dobrado). A flag é idempotente; quem
           // dispara é a linha depois do updater.
           concluiu = next !== prev;
-          return next;
+          if (!concluiu) return next;
+          // ↩️ RECIBO da conclusão (`utils/taskUncomplete.ts`): o que entrou, para o
+          // "Desmarcar" do segurar estornar exatamente isso — e nada além.
+          const agoraRecibo = new Date();
+          const naHora = prev.tasks.find(t => t.id === taskId);
+          const comida = FOOD_BY_CATEGORY[task.category]?.emoji;
+          const premio = Object.keys(feito.foodInventory).find(k => isPremiumKey(k) && (feito.foodInventory[k] ?? 0) > (prev.foodInventory[k] ?? 0));
+          const proxima = feito.tasks.find(t => !prev.tasks.some(p => p.id === t.id));
+          const receipt: TaskCompletionReceipt = {
+            food: comida ? { [comida]: relief ? 2 : 1 } : {},
+            ...(premio ? { premium: premio, premiumDay: feito.premiumFood?.day, premiumWeek: feito.premiumFood?.week } : {}),
+            xp: Math.max(0, (next.totalXP ?? 0) - (feito.totalXP ?? 0)),
+            day: playerDayKey(agoraRecibo, prev.playerDayTz),
+            ...(relief ? { mission: 'haunted-done' as const, week: prev.weeklyMissions?.week } : {}),
+            ...(proxima ? { nextId: proxima.id } : {}),
+            task: (naHora ?? task) as unknown as TaskCompletionReceipt['task'],
+          };
+          const ct = next.completedTasks;
+          const ult = ct[ct.length - 1];
+          return ult && ult.id === taskId
+            ? { ...next, completedTasks: [...ct.slice(0, -1), { ...ult, receipt }] }
+            : next;
         });
         // Microtask: React 18 agenda o flush do lote num microtask criado no
         // primeiro `setState`, então este roda DEPOIS do updater acima.
@@ -3546,6 +3568,16 @@ export default function App() {
     setEditingTask(taskId);
     setTaskEditModalOpen(true);
   }, []);
+
+  /* SEGURAR uma tarefa JÁ marcada (04/11/2026): "Desmarcar / Editar". O estorno é
+     do recibo da conclusão (`utils/taskUncomplete.ts`) — nunca pela metade. */
+  const [holdDone, setHoldDone] = useState<{ id: string; completedAt?: string } | null>(null);
+  const handleUncompleteTask = useCallback((ref: { id: string; completedAt: string }) => {
+    setGameState(prev => uncompleteTask(prev, ref.id, ref.completedAt, new Date()));
+    setHoldDone(null);
+    setDoneTag(null);
+    toast(language === 'pt-BR' ? 'Tarefa desmarcada. A recompensa foi devolvida.' : 'Task unchecked. The reward was returned.');
+  }, [setGameState, language]);
 
   /**
    * Grava o que a barra de captura de uma linha entendeu.
@@ -8683,6 +8715,7 @@ export default function App() {
                     onToggleTask={handleToggleTask}
                     onToggleTaskStep={handleToggleTaskStep}
                     onEditTask={handleEditTask}
+                    onHoldDoneTask={setHoldDone}
                     onPostponeNudge={handlePostponeNudge}
                     onEditActivity={handleEditActivity}
                     onToggleActivity={handleToggleActivityCompletion}
@@ -9039,6 +9072,39 @@ export default function App() {
         onCreateFromScratch={() => { setCatalogBrowserOpen(false); setCreateInitialKind('habit'); setCreateModalOpen(true); }}
       />
       </Suspense>
+
+      {holdDone && (() => {
+        const isPt = language === 'pt-BR';
+        const entrada = holdDone.completedAt ? gameState.completedTasks.find(c => c.id === holdDone.id && c.completedAt === holdDone.completedAt) : undefined;
+        const bloqueio = holdDone.completedAt ? uncompleteBlock(gameState, holdDone.id, holdDone.completedAt, new Date()) : 'not-found';
+        // Editar: a tarefa ainda na lista (3 s da animação) ou a próxima ocorrência; sem nenhuma, não há o que editar.
+        const alvo = gameState.tasks.find(t => t.id === holdDone.id)?.id
+          ?? (entrada?.receipt?.nextId && gameState.tasks.some(t => t.id === entrada.receipt!.nextId) ? entrada.receipt.nextId : undefined);
+        const nome = entrada?.name ?? gameState.tasks.find(t => t.id === holdDone.id)?.name ?? '';
+        const dica = { ...sm2Hint, margin: '4px 0 0' } as const;
+        return (
+          <ModalSheet open title={nome} language={language} onClose={() => setHoldDone(null)} placement="center" maxWidth={360}>
+            <div style={{ display: 'grid', gap: 10 }} data-hold-menu>
+              <div>
+                <button type="button" data-hold-action="uncheck" disabled={!!bloqueio} aria-disabled={!!bloqueio}
+                  style={{ ...sm2Button('outline'), width: '100%', ...(bloqueio ? { color: 'var(--sm2-muted)', cursor: 'default' } : {}) }}
+                  onClick={() => { if (!bloqueio && holdDone.completedAt) handleUncompleteTask({ id: holdDone.id, completedAt: holdDone.completedAt }); }}>
+                  {isPt ? 'Desmarcar' : 'Uncheck'}
+                </button>
+                {bloqueio && <p data-hold-why style={dica}>{uncompleteBlockText(bloqueio, isPt)}</p>}
+              </div>
+              <div>
+                <button type="button" data-hold-action="edit" disabled={!alvo} aria-disabled={!alvo}
+                  style={{ ...sm2Button('outline'), width: '100%', ...(!alvo ? { color: 'var(--sm2-muted)', cursor: 'default' } : {}) }}
+                  onClick={() => { if (alvo) { setHoldDone(null); handleEditTask(alvo); } }}>
+                  {isPt ? 'Editar' : 'Edit'}
+                </button>
+                {!alvo && <p data-hold-why style={dica}>{isPt ? 'Não se repete: desmarque para editar.' : 'It doesn’t repeat: uncheck it to edit.'}</p>}
+              </div>
+            </div>
+          </ModalSheet>
+        );
+      })()}
 
       <ModalSheet
         open={createChoiceOpen}
