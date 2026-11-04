@@ -354,9 +354,9 @@ export function AreaView(props: AreaViewProps) {
   /** Tranca os prédios fechados: arte cinza + cadeado, e o toque só mostra o aviso neutro. */
   const gated = (lots: AreaLot[]): AreaLot[] => lots.map(l => {
     // DEMO: prédio social → toque inerte, com a recusa curta na mesma faixa de aviso.
-    if (cristalBlocks(l.id)) return { ...l, mark: undefined, coin: false, onOpen: () => setLockNote(crystalRefusalText(language === 'pt-BR')) };
-    if (bbBlocks(l.id)) return { ...l, mark: undefined, coin: false, onOpen: () => setLockNote(bbRefusalText(language === 'pt-BR')) };
-    if (demoBlocks(l.id)) return { ...l, mark: undefined, coin: false, onOpen: () => setLockNote(demoRefusalText(language === 'pt-BR')) };
+    if (cristalBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(crystalRefusalText(language === 'pt-BR')) };
+    if (bbBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(bbRefusalText(language === 'pt-BR')) };
+    if (demoBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(demoRefusalText(language === 'pt-BR')) };
     const g = lockOf(l.id);
     if (!g) return { ...l, mark: props.buildingMarks?.[`${area}.${l.id}` as BuildingId] ?? undefined, coin: (props.buildingCoins?.[`${area}.${l.id}` as BuildingId]?.length ?? 0) > 0 };
     return { ...l, mark: undefined, locked: { minBond: g.minBond }, onOpen: () => setLockNote(buildingLockLine(g.minBond, language)) };
