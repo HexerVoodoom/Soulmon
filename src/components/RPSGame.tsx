@@ -57,8 +57,10 @@ const HANDS = [
 export const MATCH_POINTS = 5;
 export const WINS_NEEDED = 3;
 
-export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onMatchEnd, onExit, rankSaveId, challenge, initialLevel }: {
+export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoints, onMatchEnd, onExit, rankSaveId, challenge, initialLevel, onReplayRound }: {
   /** Dificuldade já escolhida na pergunta do NPC (`MinigameModeGate`). */
+  /** Sessão de diversão: a revanche volta à escolha de nível e a rodada conta ao ESCOLHER (quem sai dali não gasta). `false` = sem energia. */
+  onReplayRound?: () => boolean;
   initialLevel?: 1 | 2;
   /** Modo desafio (Calabouço): nível 1 direto, vence com `goal` rodadas ganhas; sem Bits/ranking. */
   challenge?: GameChallenge;
@@ -195,10 +197,10 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
         <>
         <div style={{ display: 'flex', justifyContent: 'center' }}><RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} items={[{ kind: 'bits', amount: MATCH_POINTS }]} /></div>
         <div role="group" aria-label={isPt ? 'Dificuldade' : 'Difficulty'} style={{ display: 'flex', gap: 8, marginTop: 'auto', marginBottom: 'auto' }}>
-          <button type="button" data-rps-start={1} onClick={() => setLevel(1)} style={{ ...sm2Button('outline', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64, padding: '0 8px' }}>
+          <button type="button" data-rps-start={1} onClick={() => { if (onReplayRound && !onReplayRound()) return; setLevel(1); }} style={{ ...sm2Button('outline', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64, padding: '0 8px' }}>
             {difficultyLabel(1, isPt)}
           </button>
-          <button type="button" data-rps-start={2} onClick={() => setLevel(2)} style={{ ...sm2Button('primary', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64, padding: '0 8px' }}>
+          <button type="button" data-rps-start={2} onClick={() => { if (onReplayRound && !onReplayRound()) return; setLevel(2); }} style={{ ...sm2Button('primary', false, 'lg'), flex: 1, minWidth: 0, minHeight: 64, padding: '0 8px' }}>
             {difficultyLabel(2, isPt)}
           </button>
         </div>

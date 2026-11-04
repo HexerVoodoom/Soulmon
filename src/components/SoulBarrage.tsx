@@ -31,7 +31,7 @@ import { ADVANCED_BITS_FACTOR, difficultyLabel } from '../utils/minigameDifficul
  * Superfície NASCE MUDA (R-NOVA): nenhum som. Bits pelo MESMO funil dos minigames
  * (`onEarnPoints`, teto diário aplicado fora). Score semanal: ranking genérico `soul-barrage`.
  */
-export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playerLevel = 1, initialLevel, specialFamily, language, onEarnPoints, rankSaveId, onExit, challenge }: {
+export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playerLevel = 1, initialLevel, onReplayRound, specialFamily, language, onEarnPoints, rankSaveId, onExit, challenge }: {
   /** Modo desafio (Calabouço): vence sobrevivendo `goal` segundos; sem Bits/recorde/ranking. */
   challenge?: GameChallenge;
   evolutionStage: string;
@@ -40,6 +40,8 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   petElement?: string;
   playerLevel?: number;
   /** 1 = Comum (setas/arrasto em X); 2 = Avançado (arrasto livre em X e Y, sem setas, botão Especial). Desafio sempre Comum. */
+  /** Sessão de diversão: jogar de novo conta uma rodada. `false` = sem energia. */
+  onReplayRound?: () => boolean;
   initialLevel?: 1 | 2;
   /** Família do especial do Soulmon (`StageSkills.especial.familia`): escolhe o efeito do botão Especial. */
   specialFamily?: string;
@@ -383,7 +385,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           petSrc={getSpriteForStage(evolutionStage, demoCharacterId, 256)}
           playAgainLabel={isPt ? 'Jogar de novo' : 'Play again'}
-          onPlayAgain={start}
+          onPlayAgain={() => { if (onReplayRound && !onReplayRound()) return; start(); }}
           homeLabel={isPt ? 'Sair' : 'Exit'}
           onHome={onExit}
           below={<RankingPanel key={finalScore} game={level === 2 ? 'soul-barrage-2' : 'soul-barrage'} saveId={rankSaveId} language={language} score={finalScore} />}

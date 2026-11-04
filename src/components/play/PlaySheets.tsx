@@ -256,7 +256,7 @@ export type RefugioGame = 'respiracao' | 'bolhas-calmas' | 'chama';
  *  blocos separados por um filete. */
 /** 🎟️ A linha da sessão de diversão (04/11/2026, `utils/funSession.ts`): o custo, ou as rodadas e o relógio da sessão aberta,
  *  ou — sem energia — um convite calmo para as outras atividades. Atualiza a cada segundo. */
-export function FunSessionLine({ language, status }: { language: Language; status: (nowMs: number) => FunSessionStatus }) {
+export function FunSessionLine({ language, status, nudge = 0 }: { language: Language; status: (nowMs: number) => FunSessionStatus; nudge?: number }) {
   const isPt = language === 'pt-BR';
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
@@ -273,7 +273,7 @@ export function FunSessionLine({ language, status }: { language: Language; statu
   }
   if (!st.canPlay) {
     return (
-      <p data-fun-session="blocked" role="status" style={{ ...sm2Hint, margin: 0 }}>
+      <p key={nudge} data-fun-session="blocked" data-fun-nudged={nudge > 0 || undefined} role={nudge > 0 ? 'alert' : 'status'} style={nudge > 0 ? { ...sm2Text, margin: 0, padding: 8, borderRadius: 8, outline: '2px solid currentColor' } : { ...sm2Hint, margin: 0 }}>
         {isPt
           ? 'Sem energia para jogar agora. Que tal uma tarefa, o Ateliê da Mente ou o Refúgio? A energia volta com o tempo.'
           : 'No energy to play right now. How about a task, the Mind Atelier or the Refuge? Energy comes back over time.'}
@@ -289,11 +289,14 @@ export function FunSessionLine({ language, status }: { language: Language; statu
   );
 }
 
-export function SalaoSheet({ language, onStart, bitsToday, funStatus }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number; funStatus?: (nowMs: number) => FunSessionStatus }) {
+export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, refused }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number; funStatus?: (nowMs: number) => FunSessionStatus; refused?: boolean }) {
+  /* Tocar em Jogar sem energia: o toque responde (o aviso ganha destaque e é anunciado), em vez de não fazer nada. */
+  const [nudge, setNudge] = useState(refused ? 1 : 0);
+  const onStart = (g: SalaoGame) => { if (funStatus && !funStatus(Date.now()).canPlay) { setNudge(n => n + 1); return; } abrir(g); };
   const isPt = language === 'pt-BR';
   return (
     <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-4, 16px)' }}>
-      {funStatus && <FunSessionLine language={language} status={funStatus} />}
+      {funStatus && <FunSessionLine language={language} status={funStatus} nudge={nudge} />}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <BitsHoje language={language} earned={bitsToday} />
         <ModalInfo language={language} label={isPt ? 'Como funciona o Salão' : 'How the Hall works'} align="right">

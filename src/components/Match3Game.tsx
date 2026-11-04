@@ -103,6 +103,8 @@ const LINES = Object.keys(OWN_LINE_SPRITES);
 
 export interface Match3Props extends EarningGameProps {
   /** Modo já escolhido na pergunta do Pipo (`MinigameModeGate`, 30/10/2026): PvE (a rodada normal) ou PvP; pula o seletor de dentro. */
+  /** Sessão de diversão: 'De novo' conta uma rodada (também no PvP). `false` = sem energia. */
+  onReplayRound?: () => boolean;
   initialMode?: 'pve' | 'pvp';
   /** Semente da rodada (testes). Sem ela, sorteada ao abrir/reabrir. */
   seed?: number;
@@ -150,7 +152,7 @@ function rosterOf(e: { roster?: string } | undefined): { src: string; name: stri
   return entry && src ? { src, name: entry.name } : undefined;
 }
 
-function Match3Round({ pvp: pvpProp, language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, petElement, playerLevel, onEnemySeen, onElementsDefeated, onMove, rankSaveId, challenge, onNewOpponent, onBossShard }: Match3Props & { pvp?: PvpFoe; onNewOpponent?: () => void }) {
+function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, petElement, playerLevel, onEnemySeen, onElementsDefeated, onMove, rankSaveId, challenge, onNewOpponent, onBossShard }: Match3Props & { pvp?: PvpFoe; onNewOpponent?: () => void }) {
   const isPt = language === 'pt-BR';
   const first = useMemo(() => {
     const sd = seed ?? freshSeed();
@@ -985,7 +987,7 @@ function Match3Round({ pvp: pvpProp, language, evolutionStage, demoCharacterId, 
           petSrc={playerSprite}
           opponentSrc={pvp ? pvp.sprite : (wildPlayers[0]?.spriteUrl ?? rosterOf(combat.enemies[0])?.src)}
           playAgainLabel={isPt ? 'De novo' : 'Again'}
-          onPlayAgain={restart}
+          onPlayAgain={() => { if (onReplayRound && !onReplayRound()) return; restart(); }}
           homeLabel={isPt ? 'Sair' : 'Exit'}
           onHome={onExit}
           below={boss
