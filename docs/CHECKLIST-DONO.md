@@ -1,6 +1,6 @@
 # Checklist do dono
 
-> **Dono do documento:** a sessão do checklist, a pedido do dono em 04/11/2026. **Base:** `main` em `c27646058` (#528/#529); o #530 entrou depois e ainda não foi conferido.
+> **Dono do documento:** a sessão do checklist, a pedido do dono em 04/11/2026. **Base das tabelas:** `main` em `c27646058`; §1 atualizada até #540. #530 e #533–#535 não foram conferidos.
 > **Fontes:** mensagens do dono de 03–04/11, [BACKLOG-PRODUTO](BACKLOG-PRODUTO.md), [PEDIDOS-DO-DONO-2026-10-28](PEDIDOS-DO-DONO-2026-10-28.md), [PERGUNTAS-DO-DONO](PERGUNTAS-DO-DONO.md), [ASSETS-A-GERAR](ASSETS-A-GERAR.md).
 > **Regra:** ✅ só com evidência lida no código ou no diff (`alpha-fiscal-entrega`), nunca por relato de agente. Título de PR não prova nada.
 > **Não cobre:** visual, som e aparelho. Nada aqui foi compilado, executado ou aberto em aparelho; a conferência foi só leitura. ✅ quer dizer "o código faz", não "ficou bonito".
@@ -16,26 +16,32 @@ Responsável: **Dono** decide ou confere; **Arte** é fila de geração; **A atr
 **O próximo build reprova no orçamento de bytes.** O limite do `index.js` é 903.559 B; o REGISTRO §220 registra build de 927.969 B (~24,4 KB acima). O contrato só passa hoje porque lê o `dist/` antigo da v253. Re-medir antes do release.
 
 **Bugs e lacunas sem responsável:**
-- Mochila: o selo do chip redutor mostra um "2" vermelho em vez de "−2" (`index.css`, `.sm3-item-arte[data-reduce]::after`, o `content` começa com o caractere de controle U+0091).
-- Cartas ilustradas: 0 de 10 artes; `assets/soulmon/cards/` está vazia e tudo cai no placeholder.
+- Cartas ilustradas: o #535 diz instalar 10 artes (não conferido); hoje só o Refúgio as usa.
 - Respiração: a cena é 100% procedural, sem os assets pedidos.
 - Feira: `bg/feira-batalha.png` não existe, então o "mapa próprio" ainda é o `visor-feira.png`.
 - Cosméticos: 0 de 108 artes e nenhum item com `element`, logo o exclusivo de elemento não aparece para ninguém.
 - Trilhas animadas: nenhum doc tem os prompts pedidos; `PROMPTS-TRILHAS-FALTANTES.md` ainda diz "Calma até no combate", e as 11 faixas de minijogo estão pendentes.
-- Patchwork: saiu do Ateliê, mas segue na trilha da Feira, nas missões ("Colcha de retalhos") e na loja (`bg-mission-colcha`).
 - Vitrine: a escala ficou em 1,75×, não 2,5×, por escolha do agente.
 - Energia dos minijogos: só no cliente e no save; o servidor não valida.
 - Autoplay da intro: depende de `VITE_ONBOARDING_VELADO`, desligado. Em produção só "Ver abertura" a mostra.
 - Os 3 Soulmon de teste estão fora apenas porque nunca foram baixados; não há filtro no código.
 
 **Decisões do dono (modal, 04/11):**
-- Chama: mantém os 5 Bits e a energia. Nada a fazer.
-- Fundos de missão: mantém 1500 Bits. Nada a fazer.
-- Patchwork: **tirar de tudo**, inclusive da trilha da Feira e do servidor; saves antigos seguem válidos. ⬜ A atribuir.
-- Chip redutor: **selo também na loja**, junto com o conserto do bug da Mochila. ⬜ A atribuir.
-- Ramos: **entram na Arena e no desgarrado do Torneio**; o chefe da Fusão fica de fora. ⬜ A atribuir.
-- Vitrine: fica em 1,75× até conferir no aparelho se 2,5× cabe sem cortar. 📱 QA visual.
-- AAB novo: **depois das lacunas de código** e da re-medição de bytes; o upload na Play é do dono.
+- Chama: mantém os 5 Bits e a energia. Fundos de missão: mantêm 1500 Bits.
+- Patchwork: ✅ #537 (`_feira.js` `TRAIL_GAMES` com `selo`; `patches` aceito só em trilha já guardada; `PatchesGame` segue para incursões antigas do Calabouço).
+- Chip redutor: ✅ #538 (`index.css` `2 2`; selo em `ShopShelf` e `ShopItemSheet`). Não visto na tela.
+- Ramos: ✅ #536 (`arena.ts`, `strayFoes.ts` `STRAY_RAMOS`; chefe da Fusão fora). A escada do #543 restringe onde aparecem. Os 3 de teste seguem sem filtro, pois não há identificador no código.
+- Vitrine: fica em 1,75× até conferir no aparelho. 📱
+- AAB novo: depois das lacunas de código, dos widgets e da re-medição de bytes; o upload é do dono.
+
+**Pedidos posteriores (04/11):**
+| Pedido | Estado | Evidência | Não verificado |
+|---|---|---|---|
+| Soul Barrage: double tap solta o especial, rótulo perto da barra | ✅ #540 | `soulBarrage.ts` `registerTap`, `data-barrage-doubletap`; só no modo Avançado | sensação em toque real; limites de tempo são estimativa |
+| Soul Barrage: asset da barra do especial | 🟡 Arte | slot em `assets/soulmon/barrage/index.ts`; `barra-especial.png` na fila | arte não gerada |
+| Mente e Diversão voltam para lista | ✅ #540 | `PlaySheets`; Refúgio mantém `GameCard` | tela |
+| Widget redimensionável com texto por prioridade | 🟡 PR #542, aguardando CI | `SoulmonWidgetAdaptiveProvider`, `WidgetAdaptive.kt`; Gradle e 5 testes passaram localmente | nunca visto em aparelho; é o 6º widget no seletor |
+| Arena escala: Rookie, Champion, Ultimate, sem subir ao perder | 🟡 PR #543, com conflito | `arenaLadder`, §222; números vêm de simulação | não jogado; a dificuldade inicial segue igual à de hoje |
 
 ## 2. Pedidos de 04/11/2026
 
