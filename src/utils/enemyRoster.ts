@@ -2,7 +2,7 @@
  * ROSTER DE INIMIGOS — dono único de "quem pode aparecer, em que estágio e a partir de que level" (M10, 25/10/2026).
  *
  * Existe: 20 criaturas base (1 por elemento; contrato em enemyRoster.test.ts) × rookie/champion/ultimate/mega (Ultra é só o chefe da Arena, não sorteia aqui)
- * + 5 inimigos da API "à parte" (27/10/2026, `INIMIGOS_API_DATA`: não contam na distribuição por elemento, podem repetir elemento) + 138 rookies de elemento COMBINADO (arte em `assets/soulmon/novos-arquivo/combinados`, só a forma rookie). DADOS PUROS, sem
+ * + 40 ramos evoluídos × champion/ultimate/mega (`RAMOS_INIMIGOS_DATA`, REGISTRO §220) + 5 inimigos da API "à parte" (27/10/2026, `INIMIGOS_API_DATA`: não contam na distribuição por elemento, podem repetir elemento) + 138 rookies de elemento COMBINADO (arte em `assets/soulmon/novos-arquivo/combinados`, só a forma rookie). DADOS PUROS, sem
  * asset: a arte entra por `enemyRosterArt.ts`/`novosSoulmon.ts`, e a Arena/testes importam este módulo sem puxar PNG.
  *
  * PROGRESSÃO (arte, nunca força): a força do inimigo continua sendo do SLOT da escada (`dungeonFoe`); o level do jogador só
@@ -15,7 +15,7 @@
  */
 import { NOVOS_DATA, novoHasForm, novoFormName, type NovoAttack } from './novosSoulmonData';
 import { COMBINADOS_LOTE3_DATA } from './elementosLote3.data';
-import { COMBINADOS_DATA, INIMIGOS_API_DATA } from './enemyRosterData';
+import { COMBINADOS_DATA, INIMIGOS_API_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
 import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 
@@ -35,7 +35,7 @@ export interface RosterEntry {
   key: string;
   id: string;
   stage: EnemyStage;
-  kind: 'base' | 'combinado' | 'api' | 'mascote';
+  kind: 'base' | 'combinado' | 'api' | 'mascote' | 'ramo';
   /** Elemento do SPRITE e dos golpes dele (`spriteElement.ts`): nos combinados, o id FUNDIDO (= slug da arte, ex.: fogo+agua → `vapor`); nos base, o próprio. */
   element: string;
   /** Nos combinados, os dois COMPONENTES (a tabela de vantagem é só das 17 bases); nos base, só o próprio. */
@@ -43,7 +43,7 @@ export interface RosterEntry {
   name: string;
   basico: NovoAttack;
   especial: NovoAttack;
-  /** Nos combinados: o `NNN-slug` do arquivo de arte; nos `api`: `<id>-<estágio>`. */
+  /** Nos combinados: o `NNN-slug` do arquivo de arte; nos `api`: `<id>-<estágio>`; nos `ramo`: `<elemento>/<ramo>-<estágio>`. */
   artFile?: string;
   /** Nos `api`: o nº do sprite no banco Higgsfield (rastreio). */
   bancoN?: number;
@@ -133,8 +133,33 @@ export function withRaven<T>(rng: () => number, pick: (r: () => number) => T, ra
   return first !== undefined && first < RAVEN_SPAWN_CHANCE ? raven() : out;
 }
 
-/** Tudo que existe (base + combinados + o corvo, que só sai pelo `withRaven`). */
-export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY];
+/**
+ * OS RAMOS EVOLUÍDOS (dono, 04/11/2026, REGISTRO §220): só existem em champion/ultimate/mega e só saem de `pickEnemy` com level FINITO, dentro do
+ * teto de `ENEMY_STAGE_UNLOCK_LEVEL`. Entram no FIM do roster: o número `#N` das células do Bestiário dos que já existiam não muda.
+ */
+function buildRamos(): RosterEntry[] {
+  const out: RosterEntry[] = [];
+  for (const [creature, el, ramo, champion, ultimate, mega] of RAMOS_INIMIGOS_DATA) {
+    const base = BASE_BY_ELEMENT[el];
+    const id = `${creature}${ramo}`;
+    for (const [stage, name] of [['champion', champion], ['ultimate', ultimate], ['mega', mega]] as const) {
+      out.push({
+        key: chaveBestiario(id, stage), id, stage, kind: 'ramo', element: el, elements: [el],
+        name, basico: base.basico, especial: base.especial, artFile: `${el}/${ramo}-${stage}`,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * Fatia do sorteio de um estágio que vai para os ramos (pedido: não afogar os atuais): 1 em 3, repartida entre os 40 do estágio.
+ * Sem isto, o sorteio uniforme daria 40/62 (65%) em champion. Ajuste aqui; o guarda em `enemyRoster.test.ts` mede a fatia.
+ */
+export const RAMO_CHANCE = 1 / 3;
+
+/** Tudo que existe (base + combinados + o corvo, que só sai pelo `withRaven` + os ramos). */
+export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos()];
 export const ENEMY_ROSTER_KEYS: ReadonlySet<string> = new Set(ENEMY_ROSTER.map(e => e.key));
 const BY_KEY: ReadonlyMap<string, RosterEntry> = new Map(ENEMY_ROSTER.map(e => [e.key, e]));
 export const rosterEntryOfKey = (key: string | undefined | null): RosterEntry | undefined => (key ? BY_KEY.get(key) : undefined);
@@ -156,16 +181,17 @@ export function capEnemyStage(requested: EnemyStage, level: number): EnemyStage 
 /**
  * Sorteia UM inimigo respeitando a progressão. `opts.stage` = o estágio que o slot pede (rebaixado ao teto do level); sem ele,
  * sorteia entre os estágios liberados (1 chamada de `rng` a mais). `opts.used` = ids já na onda: saem do sorteio enquanto
- * sobrar alguém. Determinístico dado `rng`.
+ * sobrar alguém. `opts.semRamos` = fora os ramos (quem pede arte alta sem olhar o level do jogador, ex.: chefe do Elemental Fusion); level
+ * desconhecido (infinito) também não sorteia ramo. Determinístico dado `rng`; continua 1 só chamada de `rng` para escolher a entrada.
  */
 export function pickEnemy(
-  level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string> } = {},
+  level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string>; semRamos?: boolean } = {},
 ): RosterEntry {
   return withRaven(rng, r => pickEnemyComum(level, r, opts), () => RAVEN_ENTRY);
 }
 
 function pickEnemyComum(
-  level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string> },
+  level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string>; semRamos?: boolean },
 ): RosterEntry {
   const max = maxEnemyStageForLevel(level);
   let stage: EnemyStage;
@@ -174,8 +200,15 @@ function pickEnemyComum(
     const open = ENEMY_STAGES.slice(0, ENEMY_STAGES.indexOf(max) + 1);
     stage = open[Math.floor(rng() * open.length)];
   }
-  const have = ENEMY_ROSTER.filter(e => e.stage === stage && e.kind !== 'mascote');
+  const comRamos = Number.isFinite(level) && !opts.semRamos;
+  const have = ENEMY_ROSTER.filter(e => e.stage === stage && e.kind !== 'mascote' && (comRamos || e.kind !== 'ramo'));
   const fresh = opts.used ? have.filter(e => !opts.used!.has(e.id)) : have;
   const pool = fresh.length > 0 ? fresh : have;
-  return pool[Math.floor(rng() * pool.length)];
+  const ramos = pool.filter(e => e.kind === 'ramo');
+  const outros = pool.filter(e => e.kind !== 'ramo');
+  const u = rng();
+  if (ramos.length === 0 || outros.length === 0) return pool[Math.floor(u * pool.length)];
+  return u < RAMO_CHANCE
+    ? ramos[Math.floor((u / RAMO_CHANCE) * ramos.length)]
+    : outros[Math.min(outros.length - 1, Math.floor(((u - RAMO_CHANCE) / (1 - RAMO_CHANCE)) * outros.length))];
 }

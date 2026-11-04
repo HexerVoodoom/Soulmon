@@ -77,7 +77,7 @@ describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => 
       const forma = ['rookie', 'rookie', 'rookie', 'champion', 'ultimate', 'mega'] as const;
       wave.forEach((e, i) => {
         const n = novoSoulmonOfStage(e.stage);
-        if (!n) { expect(e.stage, e.stage).toMatch(/^(cmb\d{3}-rookie|[a-z]+-(rookie|champion|ultimate))$/); return; } // rookie de elemento combinado (M10)
+        if (!n) { expect(e.stage, e.stage).toMatch(/^(cmb\d{3}-rookie|[a-z]+-(rookie|champion|ultimate|mega))$/); return; } // rookie de elemento combinado (M10)
         expect(n, e.stage).toBeDefined();
         expect(e.element).toBe(n.element);
         expect(e.name).toBe(n.name(forma[i]));
@@ -128,7 +128,7 @@ describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => 
   });
 });
 
-describe('arquivo de ramos e combinados (sem consumidor)', () => {
+describe('arquivo de ramos e combinados (fora do bundle salvo pelo enemyRosterArt)', () => {
   const ARQ = join(process.cwd(), 'src/assets/soulmon/novos-arquivo');
   it('manifest bate com os PNGs (120 ramos + 261 combinados), 256² RGBA, sem órfão', () => {
     const m = JSON.parse(readFileSync(join(ARQ, 'manifest.json'), 'utf8'));
@@ -152,12 +152,12 @@ describe('arquivo de ramos e combinados (sem consumidor)', () => {
       expect([b.readUInt32BE(16), b.readUInt32BE(20), b[25]], f).toEqual([256, 256, 6]);
     }
   });
-  it('nenhum arquivo de src importa o arquivo (fica fora do bundle)', () => {
+  it('nenhum arquivo de src fora do enemyRosterArt importa o arquivo', () => {
     const walk = (d: string): string[] => readdirSync(d, { withFileTypes: true }).flatMap(e =>
       e.isDirectory() ? (e.name === 'assets' ? [] : walk(join(d, e.name))) : /\.(ts|tsx)$/.test(e.name) ? [join(d, e.name)] : []);
     for (const f of walk(join(process.cwd(), 'src'))) {
       if (f.endsWith('novosSoulmon.test.ts')) continue;
-      if (/enemyRoster(Art|Data)?\.ts$/.test(f)) continue; // M10: `enemyRosterArt.ts` é o ÚNICO consumidor (glob só dos 138 combinados); os outros só citam o caminho em comentário
+      if (/enemyRoster(Art|Data)?\.ts$/.test(f)) continue; // M10: `enemyRosterArt.ts` é o ÚNICO consumidor (glob dos combinados e, §220, dos 120 ramos; `combinados-formas/` segue sem consumidor); os outros só citam o caminho em comentário
       expect(readFileSync(f, 'utf8'), f).not.toContain('novos-arquivo');
     }
   });

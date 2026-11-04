@@ -80,7 +80,7 @@ export function bossBoardRules(rules: readonly BossRuleId[]): BoardRules {
 /** O combate do BOSS: UM inimigo com o HP do jogador, um roster de estágio final (level alto = a arte mais imponente). */
 export const BOSS_ROSTER_LEVEL = 99;
 export function newBossCombat(rng: Rng, playerHp: number = M3C_PLAYER_HP, playerElement?: string): M3Combat {
-  const r = pickEnemy(BOSS_ROSTER_LEVEL, rng, { stage: 'ultimate' });
+  const r = pickEnemy(BOSS_ROSTER_LEVEL, rng, { stage: 'ultimate', semRamos: true });
   return {
     player: { hp: playerHp, max: playerHp },
     enemies: [{ hp: playerHp, max: playerHp, element: rosterEntryElement(r), roster: r.key }],
