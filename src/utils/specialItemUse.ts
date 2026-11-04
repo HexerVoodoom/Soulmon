@@ -45,7 +45,7 @@ import {
  * roda 2× no StrictMode.
  */
 
-export type SpecialRefusal = 'no-stock' | 'already-full' | 'daily-cap' | 'stage-cap';
+export type SpecialRefusal = 'no-stock' | 'already-full' | 'daily-cap' | 'stage-cap' | 'nothing-to-reduce';
 
 /**
  * D-97 (19/10/2026): no máximo 3 chips por ESTÁGIO de evolução, TODOS os tipos
@@ -72,6 +72,17 @@ export function sanitizeChipsStage(v: unknown): ChipStageUse | undefined {
 
 export function chipsUsedThisStage(state: { evolutionStage?: string; chipsStage?: ChipStageUse }): number {
   const reg = state.chipsStage;
+  return reg && reg.stage === (state.evolutionStage ?? 'rookie') ? Math.max(0, reg.used) : 0;
+}
+
+/**
+ * Chips de REDUÇÃO (dono, 04/11/2026): limite PRÓPRIO de 3 por estágio, que NÃO soma com o dos
+ * chips que aumentam — dá para usar 3 que somam e 3 que reduzem no mesmo estágio. Mesmo molde
+ * de `chipsStage` (registro `chipsReduceStage`, vale só para o estágio gravado nele).
+ */
+export const REDUCE_CHIPS_PER_STAGE = 3;
+export function reduceChipsUsedThisStage(state: { evolutionStage?: string; chipsReduceStage?: ChipStageUse }): number {
+  const reg = state.chipsReduceStage;
   return reg && reg.stage === (state.evolutionStage ?? 'rookie') ? Math.max(0, reg.used) : 0;
 }
 
@@ -141,6 +152,8 @@ export interface SpecialItemState {
   premiumFood?: PremiumRecord;
   /** Chips usados no estágio atual (D-97) — ver `CHIPS_PER_STAGE`. */
   chipsStage?: ChipStageUse;
+  /** Chips de REDUÇÃO usados no estágio atual — contador separado (`REDUCE_CHIPS_PER_STAGE`). */
+  chipsReduceStage?: ChipStageUse;
   /** 🧪 Elemento da poção dada ao Soulmon, pendente para a próxima evolução (`utils/elementPotion.ts`). */
   evolutionPotion?: string;
   playerDayTz?: PlayerDayAnchor;
@@ -151,6 +164,10 @@ export interface SpecialItemState {
  * antigo não é apagado, é simplesmente ignorado, que é o que torna esta leitura
  * idempotente sob a virada.
  */
+function pointsOf(state: SpecialItemState, a: Attr): number {
+  return a === 'power' ? state.powerPoints : a === 'harmony' ? state.harmonyPoints : state.benevolencePoints;
+}
+
 export function glitchtamaUsedToday(state: SpecialItemState, now: Date): number {
   const hoje = playerDayKey(now, state.playerDayTz);
   const reg = state.glitchtamaUse;
@@ -181,7 +198,11 @@ export function specialRefusal(state: SpecialItemState, emoji: string, now: Date
     if (hungerAt(state.hunger, now.getTime()) >= HUNGER_PREMIUM_REFUSE_AT) return 'already-full';
   }
   // D-97: limite de chips por estágio. Recusa ANTES do decremento: o chip volta intacto.
-  if (special.kind === 'chip' && chipsUsedThisStage(state) >= CHIPS_PER_STAGE) return 'stage-cap';
+  if (special.kind === 'chip' && special.reduce) {
+    if (reduceChipsUsedThisStage(state) >= REDUCE_CHIPS_PER_STAGE) return 'stage-cap';
+    // Tipo já em 0: não há o que tirar — recusa e o chip volta intacto (não se queima à toa).
+    if (special.attr && pointsOf(state, special.attr) <= 0) return 'nothing-to-reduce';
+  } else if (special.kind === 'chip' && chipsUsedThisStage(state) >= CHIPS_PER_STAGE) return 'stage-cap';
   // Só o coraçãozinho recusa por estado: ele é a única cura comprável, e gastar
   // um com a vida cheia queimaria o item por nada.
   if (special.kind === 'heart' && state.healthPoints >= state.maxHealthPoints) return 'already-full';
@@ -322,6 +343,25 @@ export function applySpecialItem<T extends SpecialItemState>(
   // largar o tipo do estado — e era exatamente disso que o updater inline vivia.
   const boost = (a: Attr) => special.boosts?.[a] ?? (special.attr === a ? CHIP_BOOST : 0);
   const since = prev.attributesSinceLastEvolution;
+  if (special.reduce) {
+    // Redução: clamp em 0 nos pontos totais e nos do estágio (nunca negativos).
+    const cut = (v: number | undefined, a: Attr) => Math.max(0, (v ?? 0) + boost(a));
+    return {
+      state: {
+        ...prev,
+        foodInventory,
+        chipsReduceStage: { stage: prev.evolutionStage ?? 'rookie', used: reduceChipsUsedThisStage(prev) + 1 },
+        powerPoints: cut(prev.powerPoints, 'power'),
+        harmonyPoints: cut(prev.harmonyPoints, 'harmony'),
+        benevolencePoints: cut(prev.benevolencePoints, 'benevolence'),
+        attributesSinceLastEvolution: {
+          power: cut(since?.power, 'power'),
+          harmony: cut(since?.harmony, 'harmony'),
+          benevolence: cut(since?.benevolence, 'benevolence'),
+        },
+      },
+    };
+  }
   return {
     state: {
       ...prev,

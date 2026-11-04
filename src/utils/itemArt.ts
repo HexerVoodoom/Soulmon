@@ -30,6 +30,7 @@ import itemGlitchtama from '../assets/soulmon/items/item-glitchtama.png';
 import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { premiumKey } from './premiumFood';
 import { potionKey } from './elementPotion';
+import { REDUCE_CHIP_SUFFIX } from './shop';
 import { elementIcon } from './elementIconArt';
 import { ALL_ELEMENT_IDS } from './elementDex';
 
@@ -58,6 +59,11 @@ export const ITEM_ART: Record<string, string> = {
   '🔄': itemChipPrism, // Zerador de Pontos (31/10/2026): reusa o Prisma (os 3 atributos), sem arte nova
   '✨': itemSpark, // Faísca de Alma (30/10/2026): arte própria (ChatGPT, alfa real, 96²)
 };
+
+// Chips de REDUÇÃO (04/11/2026): a arte do chip comum do mesmo tipo; a Mochila desenha o "−" por cima (`data-reduce`).
+for (const [k, base] of [['👊', itemChipPower], ['🎶', itemChipHarmony], ['🤲', itemChipBenevolence]] as const) {
+  ITEM_ART[k + REDUCE_CHIP_SUFFIX] = base;
+}
 
 // Comida PREMIUM (`utils/premiumFood.ts`): a MESMA arte da comida de base — a
 // diferença é a estrelinha que a Mochila desenha por cima (`.sm-premium-star`).

@@ -23,7 +23,7 @@ type Props = Parameters<typeof MercadoStallSheet>[0];
 const abrir = (props: Partial<Props> & { stall: Props['stall'] }) => renderWithCss(<MercadoStallSheet {...base} {...props} />);
 
 describe('8.1 — descrição do chip: nome, efeito, valor', () => {
-  const chips = SHOP_ITEMS.filter(i => i.kind === 'chip' && !i.id.startsWith('chip-big-') && i.id !== 'chip-triple');
+  const chips = SHOP_ITEMS.filter(i => i.kind === 'chip' && !i.id.startsWith('chip-big-') && i.id !== 'chip-triple' && !i.id.startsWith('chip-reduce-'));
   it('os três chips: "+3 Poder/Harmonia/Benevolência" e "+3 Power/Harmony/Benevolence", sem parágrafo', () => {
     expect(chips).toHaveLength(3);
     expect(CHIP_BOOST).toBe(3);

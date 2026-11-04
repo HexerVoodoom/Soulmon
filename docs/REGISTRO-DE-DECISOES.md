@@ -3900,3 +3900,9 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 - Alternativa que perdeu: cobrar 1 energia por rodada (duro demais, pedido do dono).
 - O que falsifica: se o uso das outras atividades não subir, ou se jogadores reclamarem de bloqueio, rever custo/rodadas.
 - Limite conhecido: "jogar de novo" DENTRO de um jogo não conta rodada nova (só a entrada pela folha do Salão).
+## §219 — Chips Redutores no lugar do Chip Triplo (04/11/2026, pedido do dono)
+- **Decisão do dono:** o Chip Triplo sai da loja; entram chips que REDUZEM um tipo, com limite próprio — 3 que somam e 3 que reduzem por estágio.
+- **Como (leitura literal):** um redutor por tipo (Poder/Harmonia/Benevolência), −3 (`REDUCE_CHIP_BOOST`, espelho do chip comum), 360 Bits (preço do comum). Clamp em 0 nos pontos totais e nos do estágio; tipo já em 0 recusa (`'nothing-to-reduce'`) sem consumir. Contador `chipsReduceStage` (save, sanitizado como `chipsStage`, zerado nos mesmos pontos do `App.tsx`). Chave no inventário = emoji do chip comum + `➖`; arte = a do chip comum, com "−" por cima na Mochila (`data-reduce`).
+- **Chip Triplo já possuído:** fica em `SPECIAL_ITEMS` e segue usável (+9/+9/+9, conta no limite dos que somam) — mesma regra do Prisma (D-94); sem reembolso nem conversão.
+- **Alternativa que perdeu:** redutor maior (−6) ou um só redutor genérico; limite único somando os dois tipos.
+- **O que falsificaria:** jogadores usando redutor + somador para "zerar e redistribuir" a cada estágio (vira compra de evolução por Bits).

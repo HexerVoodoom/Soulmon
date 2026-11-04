@@ -119,7 +119,7 @@ import {
 } from './utils/careRules';
 import { feedTimesFor, rubHealFor } from './utils/careCaps';
 import { applyRub, applyFeed, rubDecision } from './utils/careUpdaters';
-import { applySpecialItem, specialRefusal, chipsUsedThisStage, CHIPS_PER_STAGE } from './utils/specialItemUse';
+import { applySpecialItem, specialRefusal, chipsUsedThisStage, CHIPS_PER_STAGE, reduceChipsUsedThisStage, REDUCE_CHIPS_PER_STAGE } from './utils/specialItemUse';
 import { playerDayKey, playerDayIso, dayKeyToIso } from './utils/playerDay';
 import { REVIEW_EMPTY } from './utils/mente/revisao';
 import { shouldInviteRefuge, markRefugeShown, dismissRefugeInvite, acceptRefugeInvite } from './utils/refugio/convite';
@@ -3838,6 +3838,7 @@ export default function App() {
         // evolução já foi decidido acima com os pontos de antes (`alvo`); o reset vem depois do uso.
         powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, // = `resetAlignmentPoints` (utils/betaResetGrant.ts)
         chipsStage: undefined, // D-97: a contagem de chips é por estágio
+        chipsReduceStage: undefined, // idem, chips de redução (limite próprio)
         // PR15b: o que se fez no estágio que TERMINA vira o comportamento do que NASCE — gravado uma vez, imutável.
         fichaJornada: registrarEstagio(
           prev.fichaJornada, fichaStageOf(newEvolutionStage), prev.attributesSinceLastEvolution,
@@ -3935,6 +3936,16 @@ export default function App() {
           : "🌀 One Glitchtama a day. It'll wait for you tomorrow.");
         return;
       }
+      if (refused === 'stage-cap' && special.kind === 'chip' && special.reduce) {
+        toast(language === 'pt-BR'
+          ? `Este Soulmon já recebeu ${REDUCE_CHIPS_PER_STAGE} chips redutores neste estágio. O chip te espera no próximo.`
+          : `This Soulmon already got ${REDUCE_CHIPS_PER_STAGE} reducer chips this stage. The chip will wait for the next one.`);
+        return;
+      }
+      if (refused === 'nothing-to-reduce') {
+        toast(language === 'pt-BR' ? 'Esse tipo já está em 0. O chip te espera.' : "That type is already at 0. The chip will wait.");
+        return;
+      }
       if (refused === 'stage-cap') {
         // D-97: 3 chips por estágio. O chip volta intacto e vale no próximo estágio — sem culpa.
         toast(language === 'pt-BR'
@@ -3968,7 +3979,12 @@ export default function App() {
       setGameState(prev => applySpecialItem(prev, foodEmoji, agora).state);
       dispararFeedAnim(foodEmoji);
 
-      if (special.kind === 'chip') {
+      if (special.kind === 'chip' && special.reduce) {
+        const n = reduceChipsUsedThisStage(gameState) + 1;
+        toast(language === 'pt-BR'
+          ? `Este Soulmon pode receber ${REDUCE_CHIPS_PER_STAGE} chips redutores neste estágio · ${n} de ${REDUCE_CHIPS_PER_STAGE}`
+          : `This Soulmon can get ${REDUCE_CHIPS_PER_STAGE} reducer chips this stage · ${n} of ${REDUCE_CHIPS_PER_STAGE}`);
+      } else if (special.kind === 'chip') {
         const n = chipsUsedThisStage(gameState) + 1;
         toast(language === 'pt-BR'
           ? `Este Soulmon pode receber ${CHIPS_PER_STAGE} chips neste estágio · ${n} de ${CHIPS_PER_STAGE}`
@@ -5008,6 +5024,7 @@ export default function App() {
       benevolencePoints: 0,
       attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
         chipsStage: undefined, // D-97: a contagem de chips é por estágio
+        chipsReduceStage: undefined, // idem, chips de redução (limite próprio)
       currentBranch: 'harmony',
       degeneratedByHP: false,
       soulmonStages: result.creature.stages,
@@ -5098,6 +5115,7 @@ export default function App() {
         maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
         attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
         chipsStage: undefined, // D-97: a contagem de chips é por estágio
+        chipsReduceStage: undefined, // idem, chips de redução (limite próprio)
         currentBranch: 'harmony',
         degeneratedByHP: false,
         soulmonStages: result.creature.stages,
@@ -6470,6 +6488,7 @@ export default function App() {
         // Reset recent branch window — next evolution reflects habits going forward
         attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
         chipsStage: undefined, // D-97: a contagem de chips é por estágio
+        chipsReduceStage: undefined, // idem, chips de redução (limite próprio)
       };
     });
     playDegenerate();

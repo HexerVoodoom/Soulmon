@@ -473,6 +473,8 @@ export interface GameState {
   premiumFood?: { day: string; dropped: number; used: number; week: string; weekDropped: number };
   /** Chips usados no ESTÁGIO atual, todos os tipos (D-97, limite 3 — `utils/specialItemUse.ts`). */
   chipsStage?: { stage: string; used: number };
+  /** Chips de REDUÇÃO usados no estágio (limite próprio, `REDUCE_CHIPS_PER_STAGE`). */
+  chipsReduceStage?: { stage: string; used: number };
   /** Bits de MINIJOGO já creditados no DIA DO JOGADOR — o teto que a decisão
    *  #61/#63 pede (`utils/currencies.ts` › `MINIGAME_BITS_PER_DAY`). Os Bits do
    *  dia completo NÃO passam por aqui. */
@@ -1361,6 +1363,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // não registra uso de chip, então não há como saber quem já usou — ninguém é
         // bloqueado por dado que não existe. Presente e válido: mantém (idempotente).
         chipsStage: sanitizeChipsStage(loadedState.chipsStage),
+        chipsReduceStage: sanitizeChipsStage(loadedState.chipsReduceStage),
         // Tetos da comida premium. Save antigo entra `undefined` = tudo livre.
         premiumFood: (() => {
           const p = obj<unknown>(loadedState.premiumFood);
