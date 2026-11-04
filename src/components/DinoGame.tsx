@@ -223,7 +223,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
   /** Modo demo (utils/monetization.ts): personagem pré-pronto — sobrepõe o sprite do pet (nunca dos obstáculos). */
   demoCharacterId?: string;
   language: Language;
-  onEarnPoints: (pts: number) => void;
+  onEarnPoints: (pts: number) => number | void;
   /** Mission counter: reports the final score of each run. */
   onScore: (score: number) => void;
   onExit: () => void;
@@ -596,7 +596,8 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       setFinalScore(score);
       setPrevBest(readNumber(STORAGE_KEYS.DINO_BEST, 0));
       setPlayedLevel(s.level === 2 ? 2 : 1);
-      setEarned(pts);
+      // O que a tela mostra é o que entrou: o funil devolve o creditado (teto diário), não o pedido.
+      setEarned(pts > 0 ? (onEarnPoints(pts) ?? pts) : 0);
       // C-6 (run `som-01`): `pts === 0` significa score ABAIXO de 100 — ou seja,
       // a primeira partida de quem esta aprendendo o minijogo recebia o som de
       // perder a forma. Fim de partida sem ponto e silencioso; o placar final
@@ -604,7 +605,6 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       // C-11 (decisão do dono, 30/09/2026): vencer um minijogo NÃO é concluir
       // uma tarefa — pela R-CAT a categoria vem do EVENTO, e `playTaskComplete`
       // é a categoria de conclusão. Fica mudo até existir a categoria arcade.
-      if (pts > 0) onEarnPoints(pts);
       if (s.level === 2) emitFeat('dinoNormalBest', score);
       onScore(score);
       setBest(prev => {

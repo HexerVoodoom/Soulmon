@@ -120,7 +120,7 @@ export interface ArenaGameProps {
   /** A SEMENTE da primeira run, escolhida na folha da Arena (`DueloSheet`): o jogador SELECIONA os adversários
    *  (Arena) — o Torneio é o que sorteia. Sem ela (ou na revanche) a semente é nova. */
   seed?: number;
-  onEarnPoints?: (points: number) => void;
+  onEarnPoints?: (points: number) => number | void;
   /** Dex de elementos (27/10/2026): ao vencer uma RODADA, os elementos dos inimigos dela. */
   onElementsDefeated?: (ids: readonly string[], drops?: readonly EssenceDrop[]) => void;
   /** Bestiário (31/10/2026): todo inimigo VISTO numa rodada entra na Biblioteca (abas Selvagem/Desgarrado). */
@@ -147,6 +147,7 @@ export function ArenaGame({
 
   const [pool, setPool] = useState<BestiaryCreature[] | null>(null);
   const [fase, setFase] = useState<Fase>('carregando');
+  const [bitsGanhos, setBitsGanhos] = useState(0);
   /** Essências que a run rendeu (as mesmas creditadas por `onElementsDefeated`): entram no livro "Ganhou". */
   const [essenciasRun, setEssenciasRun] = useState<EssenceDrop[]>([]);
   const [rodada, setRodada] = useState(1);
@@ -260,6 +261,7 @@ export function ArenaGame({
     setEssenciasRun([]);
     setPontos(0);
     setRodada(1);
+    setBitsGanhos(0);
     montarRodada(1, pool);
   }, [pool, montarRodada]);
 
@@ -347,7 +349,8 @@ export function ArenaGame({
   const proximaRodada = useCallback(() => {
     if (!pool) return;
     if (rodada >= ARENA_ROUNDS) {
-      onEarnPoints?.(riftBitsWith(pontos, rift.riftBits));
+      const pedido = riftBitsWith(pontos, rift.riftBits);
+      setBitsGanhos(onEarnPoints?.(pedido) ?? pedido); // o creditado (teto diário), não o pedido
       setFase('venceu');
       return;
     }
@@ -578,7 +581,7 @@ export function ArenaGame({
               ? (isPt ? 'Vocês caíram juntos. Não custou nenhum coração, só a run.' : 'You both held your ground. It cost no hearts, only the run.')
               : (isPt ? 'Não custou nenhum coração, só a run. Ele está recuperando o fôlego.' : 'It cost no hearts, only the run. He is catching his breath.')}
           hero={{ label: isPt ? 'Rodadas vencidas' : 'Rounds cleared', value: fase === 'venceu' ? ARENA_ROUNDS : Math.max(0, rodada - 1) }}
-          ledger={[{ key: 'bits', kind: 'bits', value: fase === 'venceu' ? riftBitsWith(pontos, rift.riftBits) : 0 }, ...essenceLedgerRows(essenciasRun)]}
+          ledger={[{ key: 'bits', kind: 'bits', value: fase === 'venceu' ? bitsGanhos : 0 }, ...essenceLedgerRows(essenciasRun)]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           petSrc={petSprite}
           opponentSrc={sprites[sprites.length - 1]}
