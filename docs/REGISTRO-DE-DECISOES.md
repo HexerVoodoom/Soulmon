@@ -3837,3 +3837,59 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 - **Como:** `utils/feiraDesafio.ts` (registro do APARELHO em `STORAGE_KEYS.FEIRA_DESAFIO`, **sem campo novo no save**); `SalaFeira` só mostra o mistério (Chefe/Desafio) com a volta de hoje (`open`/`done` ou `raid.hitToday`); `utils/feiraNotificacao.ts` (APK `SoulmonAlarm`, web timer, só com o interruptor ligado). `FEIRA_SCENE` (`dungeonScenes.ts`) com slot `bg/feira-batalha.png` (a gerar, `ASSETS-A-GERAR.md`; até lá `visor-feira`). `BossFightScreen` usa o portão do especial do Duelo (`specialGate.ts`) — conserto do projétil do especial que sumia — e a energia reconstruída dos `cast` (`feiraEnergyAt`).
 - **Alternativa que perdeu:** trava no servidor (o ataque exigir a volta do dia). Ficou só no cliente nesta rodada; o servidor segue com 1 ataque/dia/pessoa.
 - **O que falsificaria:** queda de ataques ao chefe (o "escapou" vira frustração em vez de convite), ou o aviso sendo desligado logo depois de chegar.
+
+## §218 — Cenários mais caros em faixas ×2 / ×3 / ×5, e a prévia grande também nas Conquistas (04/11/2026, dono)
+- **Decisão do dono:** "os backgrounds estão baratos demais" — uns ×2, outros ×3, outros ×5, na loja comum e nos cenários de conquista. E tocar num cenário das Conquistas abre a MESMA folha de prévia grande da lojinha de Background.
+- **Critério (objetivo, do código):** ×2 = 1ª leva (`bg-night`…`bg-synthwave`, nasceu gradiente CSS e foi repintada); ×3 = 2ª/3ª leva (`bg-attic`…`bg-cloud-terrace`, pintada do zero com chão na linha do palco); ×5 = `bg-mission-*` (só compra depois de cumprir E resgatar a conquista). `bg-room` segue grátis. Cenários de Honra (torneio) e da assinatura não mudam (outra moeda / resgate). Quem já comprou continua dono (posse em `ownedBackgrounds`, preço não é relido).
+- **Como:** preços em `utils/shop.ts`; `ConquistasSheet` (`components/mercado/MercadoSheets.tsx`) reusa `ShopItemSheet` (nova prop `hidePrimary`: travado/já seu/sem loja = só prévia; liberado = o Comprar leva ao Confirmar do card). Testes em `MercadoC.render.test.tsx`.
+- **Alternativa que perdeu:** ×5 só para conquistas difíceis (por alvo da missão) — critério de dificuldade é subjetivo; ficou "toda conquista = ×5".
+- **O que falsificaria:** compras de cenário caírem a ~zero por 30 dias, ou Bits acumulando sem sumidouro.
+
+| id | antes | depois | faixa | motivo |
+|---|---|---|---|---|
+| `bg-night` | 150 | 300 | ×2 | 1ª leva (nasceu gradiente CSS, repintada depois); cenário básico de entrada |
+| `bg-desert` | 150 | 300 | ×2 | 1ª leva (nasceu gradiente CSS, repintada depois); cenário básico de entrada |
+| `bg-matrix` | 150 | 300 | ×2 | 1ª leva (nasceu gradiente CSS, repintada depois); cenário básico de entrada |
+| `bg-forest` | 150 | 300 | ×2 | 1ª leva (nasceu gradiente CSS, repintada depois); cenário básico de entrada |
+| `bg-ocean` | 150 | 300 | ×2 | 1ª leva (nasceu gradiente CSS, repintada depois); cenário básico de entrada |
+| `bg-gameboy` | 150 | 300 | ×2 | 1ª leva (nasceu gradiente CSS, repintada depois); cenário básico de entrada |
+| `bg-snow` | 180 | 360 | ×2 | 1ª leva (nasceu gradiente CSS, repintada depois); cenário básico de entrada |
+| `bg-lava` | 180 | 360 | ×2 | 1ª leva (nasceu gradiente CSS, repintada depois); cenário básico de entrada |
+| `bg-sakura` | 180 | 360 | ×2 | 1ª leva (nasceu gradiente CSS, repintada depois); cenário básico de entrada |
+| `bg-toytown` | 200 | 400 | ×2 | 1ª leva (nasceu gradiente CSS, repintada depois); cenário básico de entrada |
+| `bg-synthwave` | 250 | 500 | ×2 | 1ª leva (nasceu gradiente CSS, repintada depois); cenário básico de entrada |
+| `bg-attic` | 180 | 540 | ×3 | 2ª/3ª leva, pintado do zero com chão na linha do palco |
+| `bg-arcade` | 180 | 540 | ×3 | 2ª/3ª leva, pintado do zero com chão na linha do palco |
+| `bg-library` | 200 | 600 | ×3 | 2ª/3ª leva, pintado do zero com chão na linha do palco |
+| `bg-shrine` | 200 | 600 | ×3 | 2ª/3ª leva, pintado do zero com chão na linha do palco |
+| `bg-rooftop` | 200 | 600 | ×3 | 2ª/3ª leva, pintado do zero com chão na linha do palco |
+| `bg-cloudsea` | 220 | 660 | ×3 | 2ª/3ª leva, pintado do zero com chão na linha do palco |
+| `bg-observatory` | 220 | 660 | ×3 | 2ª/3ª leva, pintado do zero com chão na linha do palco |
+| `bg-swamp` | 220 | 660 | ×3 | 2ª/3ª leva, pintado do zero com chão na linha do palco |
+| `bg-lakeside` | 160 | 480 | ×3 | 2ª/3ª leva, pintado do zero com chão na linha do palco |
+| `bg-crystal-grove` | 200 | 600 | ×3 | 2ª/3ª leva, pintado do zero com chão na linha do palco |
+| `bg-ember-cavern` | 220 | 660 | ×3 | 2ª/3ª leva, pintado do zero com chão na linha do palco |
+| `bg-night-greenhouse` | 200 | 600 | ×3 | 2ª/3ª leva, pintado do zero com chão na linha do palco |
+| `bg-cozy-loft` | 180 | 540 | ×3 | 2ª/3ª leva, pintado do zero com chão na linha do palco |
+| `bg-cloud-terrace` | 240 | 720 | ×3 | 2ª/3ª leva, pintado do zero com chão na linha do palco |
+| `bg-mission-filecity` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-infinity` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-coliseum` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-abyss` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-dinoland` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-aurora` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-chuva` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-meada` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-colcha` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-corrida` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-campo` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-mao` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-andares` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-fundo` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-habitante` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-guardiao` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-cliente` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-traco` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-espaco` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+| `bg-mission-ouro` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
+

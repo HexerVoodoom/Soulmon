@@ -165,7 +165,7 @@ export function DecorFitTag({ fits, isPt }: { fits: ShopItem['fits']; isPt: bool
 }
 
 export function ShopItemSheet({
-  item, language, currency, balance, owned, equipped, onClose, onBuy, onEquip, bitsPrice, emblemPrice,
+  item, language, currency, balance, owned, equipped, onClose, onBuy, onEquip, bitsPrice, emblemPrice, hidePrimary,
 }: {
   item: ShopItem | null;
   language: Language;
@@ -181,6 +181,8 @@ export function ShopItemSheet({
   /** O preço desenhado como o card o desenha (mono primary-ink / serifa gold-ink). */
   bitsPrice: (value: number, dim: boolean) => ReactNode;
   emblemPrice: (value: number, dim: boolean) => ReactNode;
+  /** Só a prévia (sem Comprar/Equipar): usado pela folha de Conquistas quando o cenário ainda está travado ou já é seu. */
+  hidePrimary?: boolean;
 }) {
   const isPt = language === 'pt-BR';
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -245,7 +247,7 @@ export function ShopItemSheet({
                 {currency === 'emblems' ? emblemPrice(item.price, !affordable) : bitsPrice(item.price, !affordable)}
               </p>
             )}
-            <button
+            {!hidePrimary && <button
               type="button"
               data-item-primary
               onClick={() => { if (owned) onEquip(item); else onBuy(item); }}
@@ -253,7 +255,7 @@ export function ShopItemSheet({
               style={{ ...sm2Button(owned || affordable ? 'primary' : 'outline'), width: '100%' }}
             >
               {owned ? (equipped ? (isPt ? 'Tirar' : 'Unequip') : (isPt ? 'Equipar' : 'Equip')) : (isPt ? 'Comprar' : 'Buy')}
-            </button>
+            </button>}
           </div>
         )}
       </ModalSheet>
