@@ -21,7 +21,7 @@ describe('C2 - Conquistas: bloqueado com cadeado, liberado com Comprar + preço'
         language="en-US"
         missionProgress={over.progress ?? {}}
         claimed={over.claimed ?? []}
-        shop={{ ownedBackgrounds: over.owned ?? [], balance: over.balance ?? 1000, onBuy: over.onBuy ?? (() => true) }}
+        shop={{ ownedBackgrounds: over.owned ?? [], balance: over.balance ?? 5000, onBuy: over.onBuy ?? (() => true) }}
       />,
     );
   const irParaJogos = () => fireEvent.click(screen.getByRole('tab', { name: 'Games' }));
@@ -68,6 +68,65 @@ describe('C2 - Conquistas: bloqueado com cadeado, liberado com Comprar + preço'
     irParaJogos();
     expect(document.querySelector('[data-mission-owned]')).toBeTruthy();
     expect(document.querySelector('[data-mission-buy]')).toBeNull();
+  });
+});
+
+describe('Conquistas: tocar no cenário abre a MESMA folha de prévia da lojinha (ShopItemSheet)', () => {
+  const abrir = (over: { progress?: Record<string, number>; claimed?: string[]; owned?: string[]; balance?: number; onBuy?: (id: string) => boolean; semLoja?: boolean }) =>
+    renderWithCss(
+      <ConquistasSheet
+        language="en-US"
+        missionProgress={over.progress ?? {}}
+        claimed={over.claimed ?? []}
+        shop={over.semLoja ? undefined : { ownedBackgrounds: over.owned ?? [], balance: over.balance ?? 5000, onBuy: over.onBuy ?? (() => true) }}
+      />,
+    );
+  const irParaJogos = () => fireEvent.click(screen.getByRole('tab', { name: 'Games' }));
+
+  it('travado: abre a prévia grande (com zoom) e sem botão de comprar', () => {
+    abrir({});
+    irParaJogos();
+    expect(document.querySelector(`[data-item-sheet="${reward.id}"]`)).toBeNull();
+    fireEvent.click(document.querySelector(`[data-mission-preview="${reward.id}"]`)!);
+    const sheet = document.querySelector(`[data-item-sheet="${reward.id}"]`) as HTMLElement;
+    expect(sheet).toBeTruthy();
+    expect(sheet.querySelector('[data-item-zoom]')).toBeTruthy();
+    expect(sheet.querySelector('[data-item-primary]')).toBeNull();
+  });
+
+  it('liberado: o Comprar da folha leva ao Confirmar do card, e o Confirmar chama onBuy', () => {
+    const onBuy = vi.fn(() => true);
+    abrir({ progress: { [m.id]: m.target }, claimed: [m.id], onBuy });
+    irParaJogos();
+    fireEvent.click(document.querySelector(`[data-mission-preview="${reward.id}"]`)!);
+    const sheet = document.querySelector(`[data-item-sheet="${reward.id}"]`) as HTMLElement;
+    expect(sheet.textContent).toContain(String(reward.price));
+    fireEvent.click(sheet.querySelector('[data-item-primary]')!);
+    expect(onBuy).not.toHaveBeenCalled();
+    fireEvent.click(document.querySelector(`[data-mission-buy-confirm="${reward.id}"]`)!);
+    expect(onBuy).toHaveBeenCalledWith(reward.id);
+  });
+
+  it('já é seu ou sem loja (ícone de Missões): só a prévia, sem botão', () => {
+    const r = abrir({ progress: { [m.id]: m.target }, claimed: [m.id], owned: [reward.id] });
+    irParaJogos();
+    fireEvent.click(document.querySelector(`[data-mission-preview="${reward.id}"]`)!);
+    expect(document.querySelector(`[data-item-sheet="${reward.id}"] [data-item-primary]`)).toBeNull();
+    r.unmount();
+    abrir({ progress: { [m.id]: m.target }, claimed: [m.id], semLoja: true });
+    irParaJogos();
+    fireEvent.click(document.querySelector(`[data-mission-preview="${reward.id}"]`)!);
+    expect(document.querySelector(`[data-item-sheet="${reward.id}"]`)).toBeTruthy();
+    expect(document.querySelector(`[data-item-sheet="${reward.id}"] [data-item-primary]`)).toBeNull();
+  });
+});
+
+describe('Preço dos cenários (dono, 04/11/2026): faixas ×2 / ×3 / ×5', () => {
+  it('bg-room segue grátis; todo cenário à venda em Bits custa pelo menos 300', () => {
+    const bgs = SHOP_ITEMS.filter(i => i.kind === 'bg');
+    expect(bgs.find(i => i.id === 'bg-room')!.price).toBe(0);
+    for (const b of bgs.filter(i => i.id !== 'bg-room')) expect(b.price).toBeGreaterThanOrEqual(300);
+    for (const b of bgs.filter(i => i.id.startsWith('bg-mission-'))) expect(b.price).toBe(1500);
   });
 });
 

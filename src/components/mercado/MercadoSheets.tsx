@@ -11,7 +11,7 @@ import { resolveGo, type MissionNav } from '../nav/MissionCard';
 import { UnlockNudge } from '../UnlockAccountModal';
 import { STALL_CURRENCIES, stallItems, type MercadoStall } from '../../utils/mercadoCatalog';
 import { MISSIONS, MISSION_CATEGORIES, isMissionComplete, type MissionCategory } from '../../utils/missions';
-import { SHOP_ITEMS } from '../../utils/shop';
+import { SHOP_ITEMS, type ShopItem } from '../../utils/shop';
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
 import { MiniGlass } from '../ui/MiniGlass';
 import { PixelIcon } from '../ui/PixelIcon';
@@ -25,6 +25,7 @@ import { ElementBaseSlots, ElementIcon, emptySlots } from '../ElementBaseSlots';
 import { GuildOwnedShelf } from './GuildOwnedShelf';
 import { SubscriptionShelf } from './SubscriptionShelf';
 import { FrameShelf } from './FrameShelf';
+import { ShopItemSheet } from './ShopItemSheet';
 import {
   CreditExchange, CurrencyBalance, PurchaseConfirmSheet, DecorRuleLine, ShopShelf, ShopStatus, WeeklyMissionList, bgThumb, useShopFlash,
   type ShopActions, type ShopOwnership,
@@ -239,6 +240,8 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
   const [confirmando, setConfirmando] = useState<string | null>(null);
   const [aviso, setAviso] = useState<{ id: string; ok: boolean; msg: string } | null>(null);
   const [cat, setCat] = useState<MissionCategory>(MISSION_CATEGORIES[0]);
+  /** Cenário tocado — abre a MESMA folha de prévia grande da lojinha de Background (ShopItemSheet). */
+  const [preview, setPreview] = useState<{ item: ShopItem; missionId: string; buyable: boolean } | null>(null);
   const list = missionsInQueueOrder(
     MISSIONS.filter(m => m.category === cat),
     m => {
@@ -316,12 +319,20 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
               {go.lockNote && !resgatada && <p data-mission-lock style={{ ...sm2Hint, margin: 0 }}>{go.lockNote}</p>}
               {rewardName && (
                 <div data-mission-reward style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <button
+                    type="button"
+                    data-mission-preview={reward!.id}
+                    aria-label={isPt ? `Ver ${rewardName}` : `View ${rewardName}`}
+                    onClick={() => setPreview({ item: reward!, missionId: m.id, buyable: !!shop && resgatada && !shop.ownedBackgrounds.includes(reward!.id) })}
+                    style={{ padding: 0, border: 'none', background: 'none', cursor: 'pointer', flex: 'none', display: 'flex' }}
+                  >
                   <MiniGlass size={52} style={{ width: 96, height: 52, flex: 'none' }}>
                     {thumb
                       ? <img src={thumb} alt="" width={96} height={52} className="sm2-shop-bg" />
                       : <span aria-hidden="true" style={{ position: 'absolute', inset: 0, background: PET_BACKGROUNDS[reward!.id]?.css }} />}
                     {!resgatada && <span aria-hidden="true" className="sm2-shop-veil" />}
                   </MiniGlass>
+                  </button>
                   <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span style={{ ...sm2Hint, letterSpacing: '0.06em', textTransform: 'uppercase', fontWeight: 600 }}>
                       {isPt ? 'O que ganha' : 'What you get'}
@@ -374,6 +385,28 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
           );
         })}
       </ul>
+      <ShopItemSheet
+        item={preview?.item ?? null}
+        language={language}
+        currency="bits"
+        balance={shop?.balance ?? 0}
+        owned={!!preview && !!shop && shop.ownedBackgrounds.includes(preview.item.id)}
+        equipped={false}
+        hidePrimary={!preview?.buyable}
+        onClose={() => setPreview(null)}
+        onBuy={it => {
+          const mid = preview?.missionId;
+          setPreview(null);
+          if (!shop || !mid) return;
+          const nome = isPt ? it.namePt : it.nameEn;
+          if (shop.balance < it.price) { setAviso({ id: mid, ok: false, msg: isPt ? `Faltam Bits para ${nome}. Eles vêm dos minijogos.` : `Not enough Bits for ${nome} yet. They come from the minigames.` }); return; }
+          setAviso(null);
+          setConfirmando(mid);
+        }}
+        onEquip={() => setPreview(null)}
+        bitsPrice={(v, dim) => <BitsAmount value={v} size={16} style={dim ? { color: 'var(--sm2-muted)' } : undefined} />}
+        emblemPrice={(v) => <span className="sm2-num">{v}</span>}
+      />
     </div>
   );
 }
