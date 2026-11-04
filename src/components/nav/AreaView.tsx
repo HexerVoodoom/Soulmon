@@ -370,15 +370,16 @@ export function AreaView(props: AreaViewProps) {
   const [modeChosen, setModeChosen] = useState<{ game: PlayGame; level?: 1 | 2 } | null>(null);
   /* 🎟️ A rodada do Salão é cobrada quando o jogo COMEÇA de fato (depois da pergunta do NPC, se houver): voltar da pergunta
      não gasta rodada. Uma cobrança por abertura (`funChargedRef`); recusa (sem energia) fecha o jogo. */
+  const funApi = props.play?.funSession; // `play` é opcional na prática: áreas sem jogos montam sem ele
   const funChargedRef = useRef<string | null>(null);
   const funRunning = !!game && isFunGame(game) && (!MINIGAME_GATE[game] || modeChosen?.game === game);
   const funKey = funRunning ? `${game}:${modeChosen?.level ?? 0}:${modeChosen ? 'm' : 'n'}` : null;
   useEffect(() => {
     if (!funKey) { funChargedRef.current = null; return; }
-    if (funChargedRef.current === funKey || !props.play.funSession) return;
+    if (funChargedRef.current === funKey || !funApi) return;
     funChargedRef.current = funKey;
-    if (!props.play.funSession.onStartRound()) setGame(null);
-  }, [funKey, props.play.funSession]);
+    if (!funApi.onStartRound()) setGame(null);
+  }, [funKey, funApi]);
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
@@ -466,7 +467,7 @@ export function AreaView(props: AreaViewProps) {
 
   /* 🎟️ Jogo do Salão: sem sessão nem energia, não abre (a folha mostra a frase). A rodada é cobrada quando o jogo COMEÇA (após a
      pergunta do NPC, se houver) — voltar da pergunta não gasta rodada. */
-  const funGate = props.play.funSession;
+  const funGate = funApi;
   const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setModeChosen(null); setGame(g); };
   /** A porta do Salão: sem sessão nem energia, não abre (a folha já mostra a frase calma). */
   const startSalao = (g: PlayGame) => {
