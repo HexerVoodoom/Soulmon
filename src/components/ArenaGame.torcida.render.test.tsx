@@ -368,13 +368,12 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
     H.foeHp = 0.3;
     await entrar();
     expect(await ate(() => document.querySelector('[data-arena-cura-modal]') !== null)).toBe(true);
-    const modal = document.querySelector('[data-arena-cura-modal] [role="dialog"]')!;
-    expect(modal.textContent).toMatch(/Fôlego recuperado/);
+    const modal = document.querySelector('[data-arena-cura-modal]')!.closest('[role="dialog"]')!;
+    expect(modal.textContent).toMatch(/Rodada 1 de \d vencida/);
     expect(modal.textContent).toMatch(/Você recuperou \+\d+ de vida/);
     expect(Number(/\+(\d+)/.exec(modal.textContent!)![1])).toBeGreaterThan(0);
     expect(modal.querySelectorAll('[data-heart-fill]').length).toBe(3); // 3 corações enchendo
-    // fundo: o cenário da run escurecido, não preto chapado
-    expect(document.querySelector('[data-arena-cura-modal]')!.getAttribute('data-cena')).toBeTruthy();
+    expect(document.querySelector('[data-stage-sprite="foe"]')).not.toBeNull(); // a luta continua na tela atrás do modal
     fireEvent.click(screen.getByRole('button', { name: /Pronto pro combate/ }));
     await avancar(10);
     expect(document.querySelector('[data-arena-cura-modal]')).toBeNull();

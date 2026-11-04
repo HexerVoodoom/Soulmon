@@ -356,7 +356,10 @@ export function ArenaGame({
   /* A LUTA: tela cheia, profundidade de Game Boy, barra de HP e de energia nos pés, golpes com a arte do
      elemento. Enquanto o estado do relógio ainda é o da rodada anterior (`stateKey`), a cena pinta a rodada
      nova cheia — sem piscar os inimigos caídos da anterior. */
-  if (fase === 'luta') {
+  /* Entre rodadas (04/11/2026, dono): a luta fica CONGELADA na tela (o cenário da Arena não some) e o modal padrão
+     mostra a vida recuperada. A última rodada vencida não abre modal: vai direto ao fim da run (efeito acima). */
+  const entreRodadas = fase === 'rodada-limpa' && rodada < ARENA_ROUNDS;
+  if (fase === 'luta' || entreRodadas) {
     const pronto = batalha.stateKey === fightKey;
     const foesLado = arenaFoeSides(jogador, rodada - 1, inimigos.map(e => e.elements));
     const hpFrac = pronto ? batalha.hp : hpCarryRef.current;
@@ -365,7 +368,7 @@ export function ArenaGame({
     return (
       <TorcidaLayer
         onTap={batalha.cheer}
-        active={!pausado && batalha.phase === 'idle'}
+        active={!entreRodadas && !pausado && batalha.phase === 'idle'}
         isPt={isPt}
         style={BATTLE_LAYER_STYLE}
         mascot
@@ -429,6 +432,10 @@ export function ArenaGame({
           <span hidden data-arena-fase={fase} />
           {fase === 'luta' && <BattleSpeedButton speed={speed} onCycle={cycleSpeed} isPt={isPt} corner />}
         </BattleStage>
+        {entreRodadas && (
+          <ArenaCuraModal language={isPt ? 'pt-BR' : 'en-US'} antes={Math.max(0, hpCarryRef.current - curaFrac)} depois={hpCarryRef.current}
+            pontos={Math.round(curaFrac * hpMax)} rodada={rodada} totalRodadas={ARENA_ROUNDS} onNext={proximaRodada} />
+        )}
       </TorcidaLayer>
     );
   }
@@ -536,13 +543,6 @@ export function ArenaGame({
             {isPt ? 'Entrar na Arena' : 'Enter the Arena'}
           </button>
         </>
-      )}
-
-      {/* Entre rodadas (04/11/2026, dono): sem página intermediária — só um MODAL com a vida recuperada e o botão do próximo round.
-          A última rodada vencida não abre modal: vai direto ao fim da run (efeito abaixo). */}
-      {fase === 'rodada-limpa' && rodada < ARENA_ROUNDS && (
-        <ArenaCuraModal isPt={isPt} antes={Math.max(0, hpCarryRef.current - curaFrac)} depois={hpCarryRef.current} pontos={Math.round(curaFrac * hpMax)}
-          scene={cenaDaRun.bg} rodada={rodada} totalRodadas={ARENA_ROUNDS} onNext={proximaRodada} />
       )}
 
       {/* Fim da run: tela padrão (Proposta D). A "rodada limpa" acima é intermediária (a run segue) e fica COMPACTA, inline: não é resultado. */}
