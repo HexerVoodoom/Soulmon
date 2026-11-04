@@ -104,6 +104,22 @@ export function enforceArenaReroll(incoming, stored, nowMs = Date.now()) {
   return monotonic(sanitizeArenaReroll(incoming), sanitizeArenaReroll(stored), (a, b) => ({ day: a.day, count: Math.max(a.count, b.count) }), nowMs);
 }
 
+/** Espelho de `sanitizeArenaLadder` (`src/utils/arena.ts`, §222). @param {unknown} raw @returns {number} */
+export const ARENA_LADDER_MAX = 999;
+export function sanitizeArenaLadder(raw) {
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) return 0;
+  return Math.min(ARENA_LADDER_MAX, Math.max(0, Math.floor(raw)));
+}
+
+/**
+ * A escada da Arena só cresce: cliente antigo que omite o campo, ou save local apagado, não derruba o que já foi conquistado.
+ * Sem valor econômico (subir só torna a Arena mais difícil), então não há o que validar além da forma.
+ * @param {unknown} incoming @param {unknown} stored @returns {number}
+ */
+export function enforceArenaLadder(incoming, stored) {
+  return Math.max(sanitizeArenaLadder(incoming), sanitizeArenaLadder(stored));
+}
+
 // ---------------------------------------------------------------------------
 // LASTRO DO SCORE DO ENDLESS RIFT (QA beta3 R1/R2/R3, decisão do dono 1).
 //

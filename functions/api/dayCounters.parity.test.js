@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import * as srv from './_dayCounters.js';
 import { sanitizeDungeonDaily, DUNGEON_MAX_LAYER } from '../../src/utils/dungeonIdle';
 import { sanitizeArenaReroll, ARENA_REROLL_MAX_COUNT } from '../../src/utils/arenaSorteio';
+import { sanitizeArenaLadder, ARENA_LADDER_MAX } from '../../src/utils/arena';
 import { sanitizeCheckIns, CHECKIN_SLOTS } from '../../src/utils/checkIns';
 
 describe('contadores diários: servidor e app concordam na FORMA', () => {
@@ -25,6 +26,14 @@ describe('contadores diários: servidor e app concordam na FORMA', () => {
     for (const c of [...casos, { day: '2026-10-13', count: 3 }, { day: '2026-10-13', count: -1 }, { day: '2026-10-13', count: 1e9 }, { day: 5, count: 2 }, { day: '2026-10-13', count: 2.9 }]) {
       expect(srv.sanitizeArenaReroll(c), JSON.stringify(c)).toEqual(sanitizeArenaReroll(c));
     }
+  });
+  it('arenaLadder: mesma saneação e só cresce (cliente antigo que omite não zera)', () => {
+    expect(srv.ARENA_LADDER_MAX).toBe(ARENA_LADDER_MAX);
+    for (const c of [null, undefined, 'x', [], {}, 3, 0, -2, 2.9, NaN, Infinity, 1e9]) expect(srv.sanitizeArenaLadder(c), String(c)).toBe(sanitizeArenaLadder(c));
+    expect(srv.enforceArenaLadder(undefined, 7)).toBe(7);
+    expect(srv.enforceArenaLadder(2, 7)).toBe(7);
+    expect(srv.enforceArenaLadder(8, 7)).toBe(8);
+    expect(srv.enforceArenaLadder('lixo', undefined)).toBe(0);
   });
   it('servidor: rerolls só crescem no dia e o dia só anda para a frente', () => {
     const d = '2026-10-13'; const now = Date.parse('2026-10-13T12:00:00Z');
