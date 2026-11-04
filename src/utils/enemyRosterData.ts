@@ -234,3 +234,52 @@ export const INIMIGOS_API_DATA: ReadonlyArray<readonly [string, 'rookie' | 'cham
   ['tidewark', 'ultimate', 'Tidewark', 'agua', 746], // R14
   ['gloomhorn', 'champion', 'Gloomhorn', 'sombra', 823], // R42
 ];
+
+/**
+ * OS 40 RAMOS EVOLUÍDOS COMO INIMIGOS (dono, 04/11/2026, REGISTRO §220): os 2 ramos de alinhamento que cada uma das 20 criaturas não usa,
+ * cada um em champion/ultimate/mega (120 sprites, `assets/soulmon/novos-arquivo/ramos/<elemento>/<ramo>-<estágio>.png`). Elemento e golpes =
+ * os da criatura. Nomes GERADOS (raiz da criatura + sufixo fixo por ramo e estágio; PT = EN como `FORMAS_ALTAS`): o dono renomeia aqui, sem
+ * migração (a chave do bestiário usa o id `<criatura><ramo>`). [id da criatura, elemento, ramo, nome champion, nome ultimate, nome mega].
+ */
+export const RAMOS_INIMIGOS_DATA: ReadonlyArray<readonly [string, string, string, string, string, string]> = [
+  ['embrit', 'fogo', 'benevolencia', 'Embrellis', 'Embrelyra', 'Embrethiel'],
+  ['embrit', 'fogo', 'harmonia', 'Embraris', 'Embralune', 'Embranthos'],
+  ['spinvex', 'vileza', 'benevolencia', 'Spinvellis', 'Spinvelyra', 'Spinvethiel'],
+  ['spinvex', 'vileza', 'harmonia', 'Spinvaris', 'Spinvalune', 'Spinvanthos'],
+  ['ossumi', 'morte', 'benevolencia', 'Ossuellis', 'Ossuelyra', 'Ossuethiel'],
+  ['ossumi', 'morte', 'harmonia', 'Ossuaris', 'Ossualune', 'Ossuanthos'],
+  ['umbrae', 'sombra', 'benevolencia', 'Umbrellis', 'Umbrelyra', 'Umbrethiel'],
+  ['umbrae', 'sombra', 'harmonia', 'Umbraris', 'Umbralune', 'Umbranthos'],
+  ['brawnu', 'vigor', 'benevolencia', 'Brawnellis', 'Brawnelyra', 'Brawnethiel'],
+  ['brawnu', 'vigor', 'harmonia', 'Brawnaris', 'Brawnalune', 'Brawnanthos'],
+  ['kenjo', 'marcial', 'benevolencia', 'Kenvellis', 'Kenvelyra', 'Kenvethiel'],
+  ['kenjo', 'marcial', 'harmonia', 'Kenvaris', 'Kenvalune', 'Kenvanthos'],
+  ['runix', 'arcano', 'benevolencia', 'Runellis', 'Runelyra', 'Runethiel'],
+  ['runix', 'arcano', 'poder', 'Runarok', 'Runaxion', 'Runokhan'],
+  ['chronib', 'tempo', 'benevolencia', 'Chronellis', 'Chronelyra', 'Chronethiel'],
+  ['chronib', 'tempo', 'poder', 'Chronarok', 'Chronaxion', 'Chronokhan'],
+  ['voidlet', 'espaco', 'benevolencia', 'Voidellis', 'Voidelyra', 'Voidethiel'],
+  ['voidlet', 'espaco', 'poder', 'Voidarok', 'Voidaxion', 'Voidokhan'],
+  ['gravul', 'gravidade', 'benevolencia', 'Gravellis', 'Gravelyra', 'Gravethiel'],
+  ['gravul', 'gravidade', 'poder', 'Gravarok', 'Gravaxion', 'Gravokhan'],
+  ['vibri', 'som', 'benevolencia', 'Vibrellis', 'Vibrelyra', 'Vibrethiel'],
+  ['vibri', 'som', 'poder', 'Vibrarok', 'Vibraxion', 'Vibrokhan'],
+  ['voltrix', 'eletricidade', 'benevolencia', 'Voltellis', 'Voltelyra', 'Voltethiel'],
+  ['voltrix', 'eletricidade', 'poder', 'Voltarok', 'Voltaxion', 'Voltokhan'],
+  ['sprouti', 'vida', 'harmonia', 'Sproutaris', 'Sproutalune', 'Sproutanthos'],
+  ['sprouti', 'vida', 'poder', 'Sproutarok', 'Sproutaxion', 'Sproutokhan'],
+  ['solion', 'luz', 'harmonia', 'Soliaris', 'Solialune', 'Solianthos'],
+  ['solion', 'luz', 'poder', 'Soliarok', 'Soliaxion', 'Soliokhan'],
+  ['bubbo', 'agua', 'harmonia', 'Bubbaris', 'Bubbalune', 'Bubbanthos'],
+  ['bubbo', 'agua', 'poder', 'Bubbarok', 'Bubbaxion', 'Bubbokhan'],
+  ['pebblo', 'terra', 'harmonia', 'Pebblaris', 'Pebblalune', 'Pebblanthos'],
+  ['pebblo', 'terra', 'poder', 'Pebblarok', 'Pebblaxion', 'Pebblokhan'],
+  ['zephir', 'ar', 'harmonia', 'Zepharis', 'Zephalune', 'Zephanthos'],
+  ['zephir', 'ar', 'poder', 'Zepharok', 'Zephaxion', 'Zephokhan'],
+  ['glimmi', 'fada', 'harmonia', 'Glimmaris', 'Glimmalune', 'Glimmanthos'],
+  ['glimmi', 'fada', 'poder', 'Glimmarok', 'Glimmaxion', 'Glimmokhan'],
+  ['smeltu', 'industrial', 'benevolencia', 'Smeltellis', 'Smeltelyra', 'Smeltethiel'],
+  ['smeltu', 'industrial', 'harmonia', 'Smeltaris', 'Smeltalune', 'Smeltanthos'],
+  ['brotto', 'planta', 'benevolencia', 'Brottellis', 'Brottelyra', 'Brottethiel'],
+  ['brotto', 'planta', 'poder', 'Brottarok', 'Brottaxion', 'Brottokhan'],
+];

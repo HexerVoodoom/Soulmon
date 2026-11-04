@@ -3907,3 +3907,14 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 - **Chip Triplo já possuído:** fica em `SPECIAL_ITEMS` e segue usável (+9/+9/+9, conta no limite dos que somam) — mesma regra do Prisma (D-94); sem reembolso nem conversão.
 - **Alternativa que perdeu:** redutor maior (−6) ou um só redutor genérico; limite único somando os dois tipos.
 - **O que falsificaria:** jogadores usando redutor + somador para "zerar e redistribuir" a cada estágio (vira compra de evolução por Bits).
+
+## §220 — Os ramos evoluídos arquivados viram inimigos de nível alto (04/11/2026, decisão do dono; emenda §78)
+- **Decisão do dono:** todos os sprites de ramo em `novos-arquivo/ramos/` (40 ramos × champion/ultimate/mega = 120) podem aparecer como inimigos, no level do estágio deles. O "sem consumidor" do §78 cai só para `ramos/`.
+- **Como:** `kind: 'ramo'` em `enemyRoster.ts`, id `<criatura><ramo>`, um elemento só = o da criatura, golpes da criatura. Tetos de sempre (champion 7, ultimate 14, mega 22). Entram no fim de `ENEMY_ROSTER`, e os `#N` antigos do Bestiário não mudam; o Bestiário ganha +40 em Selvagem e +80 em Desgarrado.
+- **Chance (`RAMO_CHANCE` = 1/3, decisão do agente, ajustável):** um terço do sorteio de cada estágio alto vai para os ramos, cada ramo 0,83%. Entrada antiga por sorteio: champion 4,55% → 3,03%; ultimate 4,76% → 3,17%; mega 5% → 3,33%. Rookie não muda. Onda da masmorra com ao menos um ramo: 33% no level 7+, 56% no 14+, 70% no 22+.
+- **Fora, de propósito:** quem não olha o level do jogador não sorteia ramo: chefe do Elemental Fusion (`semRamos`), Desgarrado do Torneio (`STRAY_ROSTER`), chamada sem level. A Arena sorteia de `NOVOS_DATA` e não mudou.
+- **Nomes:** gerados (raiz + sufixo por ramo e estágio, PT = EN), renomeáveis em `RAMOS_INIMIGOS_DATA` sem migração.
+- **Alternativa que perdeu:** sorteio uniforme (ramos seriam 65% de champion, afogando os atuais) e carga preguiçosa da arte (a onda é síncrona; o custo é só URL, fora do chunk de entrada).
+- **Custo medido:** `index.js` +3.320 B (924.649 → 927.969 em build de `vite`), ~1,27 MB de WebP em 120 arquivos (maior 16 KB). A `main` já construía `index.js` acima da folga da dívida (903.559 B) antes desta mudança: re-medir em `orcamentoDeBytes` no próximo release.
+- **Exclusão:** os 3 Soulmon de teste do Higgsfield gerados em 04/11/2026 não entraram: nada no repo com data desde 03/11 em `novos-arquivo`, e nada foi baixado.
+- **O que falsificaria:** jogadores deixando de reconhecer as criaturas base nos níveis altos, ou o dono vendo ramos demais em tela: baixar `RAMO_CHANCE`.

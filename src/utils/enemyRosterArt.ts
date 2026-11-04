@@ -42,3 +42,10 @@ const API_FILES = import.meta.glob('../assets/soulmon/inimigos-api/*.png', { eag
 export const INIMIGOS_API_ART: Readonly<Record<string, string>> = Object.fromEntries(
   Object.entries(API_FILES).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1).replace(/\.png$/, ''), url]),
 );
+
+const RAMOS_FILES = import.meta.glob('../assets/soulmon/novos-arquivo/ramos/*/*.png', { eager: true, import: 'default' }) as Record<string, string>;
+
+/** ARTE dos 120 sprites de ramo evoluído (REGISTRO §220). Chave = `<elemento>/<ramo>-<estágio>` (`RosterEntry.artFile`). Só URL, e este módulo fica fora do chunk de entrada (chega por `novosSoulmon.ts`). */
+export const RAMOS_ART: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(RAMOS_FILES).map(([path, url]) => [path.slice(path.indexOf('/ramos/') + 7).replace(/\.png$/, ''), url]),
+);

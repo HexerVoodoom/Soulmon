@@ -2,10 +2,13 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
-  ENEMY_ROSTER, ENEMY_ROSTER_KEYS, ENEMY_STAGE_UNLOCK_LEVEL, maxEnemyStageForLevel, pickEnemy, rosterEntryOfKey, type EnemyStage,
+  ENEMY_ROSTER, ENEMY_ROSTER_KEYS, ENEMY_STAGE_UNLOCK_LEVEL, RAMO_CHANCE, maxEnemyStageForLevel, pickEnemy, rosterEntryOfKey, type EnemyStage,
 } from './enemyRoster';
-import { NOVOS_DATA } from './novosSoulmonData';
-import { COMBINADOS_ART, INIMIGOS_API_ART } from './enemyRosterArt';
+import { NOVOS_DATA, FORMAS_ALTAS } from './novosSoulmonData';
+import { RAMOS_INIMIGOS_DATA } from './enemyRosterData';
+import { newBossCombat } from './match3Boss';
+import { SPRITE_ELEMENT, rosterEntryElement } from './spriteElement';
+import { COMBINADOS_ART, INIMIGOS_API_ART, RAMOS_ART } from './enemyRosterArt';
 import { INIMIGOS_API_DATA } from './enemyRosterData';
 import { rosterSpriteOf } from './novosSoulmon';
 import { buildDungeonWave } from './dungeon';
@@ -19,8 +22,8 @@ import { isStrayFoe } from './wildFoeLabel';
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
 
 describe('roster de inimigos (M10): cobertura', () => {
-  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16 (lotes 1-3) + 5 da API (à parte) + o corvo neutro (31/10) = 347 entradas, chaves únicas', () => {
-    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 5 + 1);
+  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16 (lotes 1-3) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) = 467 entradas, chaves únicas', () => {
+    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 5 + 1 + 120);
     expect(ENEMY_ROSTER_KEYS.size).toBe(ENEMY_ROSTER.length);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'combinado').every(e => e.stage === 'rookie' && e.elements.length === 2)).toBe(true);
   });
@@ -146,5 +149,72 @@ describe('contrato: elemento x criatura base (selvagem/desgarrado)', () => {
   it('os 211 combinados e os 5 da API só usam elementos base válidos', () => {
     const ok = new Set<string>(CLASS_ELEMENT_ORDER);
     for (const e of ENEMY_ROSTER.filter(x => x.kind !== 'base' && x.kind !== 'mascote')) for (const el of e.elements) expect(ok.has(el), `${e.key} ${el}`).toBe(true);
+  });
+});
+
+describe('ramos evoluídos como inimigos (§220)', () => {
+  const ramos = ENEMY_ROSTER.filter(e => e.kind === 'ramo');
+  const ramoDe = (k: string) => rosterEntryOfKey(k)?.kind === 'ramo';
+  it('os 120 PNGs viram 120 entradas: arte própria, 1 elemento = o da criatura, golpes da criatura', () => {
+    expect(ramos).toHaveLength(120);
+    expect(RAMOS_INIMIGOS_DATA).toHaveLength(40);
+    expect(Object.keys(RAMOS_ART)).toHaveLength(120);
+    expect(new Set(ramos.map(e => e.artFile))).toEqual(new Set(Object.keys(RAMOS_ART)));
+    for (const e of ramos) {
+      expect(rosterSpriteOf(e), e.key).toBe(RAMOS_ART[e.artFile!]);
+      const n = NOVOS_DATA.find(x => x.element === e.element)!;
+      expect(e.artFile!.startsWith(`${n.element}/`), e.key).toBe(true);
+      expect(e.elements).toEqual([n.element]);
+      expect(rosterEntryElement(e)).toBe(n.element);
+      expect(SPRITE_ELEMENT[`ramo:${e.artFile!.split('-')[0]}`], e.key).toBe(n.element);
+      expect(e.basico).toBe(n.basico);
+      expect(e.especial).toBe(n.especial);
+      expect(e.id.startsWith(n.id) && e.id !== n.id, e.key).toBe(true);
+      expect(e.artFile, 'não repete o ramo que a criatura já usa').not.toContain(`/${n.line}-`);
+    }
+  });
+  it('nomes: formato de FORMAS_ALTAS, únicos no roster inteiro e sem -mon', () => {
+    const outros = [...ENEMY_ROSTER.filter(e => e.kind !== 'ramo').map(e => e.name), ...Object.values(FORMAS_ALTAS).flatMap(o => Object.values(o))];
+    for (const e of ramos) {
+      expect(e.name, e.key).toMatch(/^[A-Z][a-z]{4,14}$/);
+      expect(e.name, e.key).not.toMatch(/mon$/i);
+      expect(outros, e.key).not.toContain(e.name);
+    }
+    expect(new Set(ramos.map(e => e.name)).size).toBe(120);
+  });
+  it('nenhum ramo abaixo do level: rookie não existe e o teto vale em toda faixa', () => {
+    expect(ramos.some(e => (e.stage as string) === 'rookie')).toBe(false);
+    for (let seed = 1; seed <= 2000; seed++) {
+      const lv = 1 + seed % 30;
+      const pedido = (['champion', 'ultimate', 'mega', undefined] as const)[seed % 4];
+      const e = pickEnemy(lv, mulberry32(seed), pedido ? { stage: pedido } : {});
+      if (e.kind === 'ramo') expect(lv, e.key).toBeGreaterThanOrEqual(ENEMY_STAGE_UNLOCK_LEVEL[e.stage]);
+      if (lv < 7) expect(e.kind).not.toBe('ramo');
+    }
+  });
+  it('a fatia dos ramos é RAMO_CHANCE em cada estágio, e os 120 aparecem', () => {
+    const vistos = new Set<string>();
+    for (const stage of ['champion', 'ultimate', 'mega'] as const) {
+      const N = 30000;
+      let r = 0;
+      for (let i = 0; i < N; i++) { const e = pickEnemy(30, () => (i + 0.5) / N, { stage }); if (e.kind === 'ramo') { r++; vistos.add(e.key); } }
+      expect(r / N).toBeCloseTo(RAMO_CHANCE - 0.001, 1); // o 1º número < 1/1000 vira corvo
+    }
+    expect(vistos.size).toBe(120);
+  });
+  it('quem não olha o level do jogador nunca recebe ramo: level desconhecido, chefe do Elemental Fusion, Torneio', () => {
+    for (let seed = 1; seed <= 500; seed++) {
+      expect(pickEnemy(Number.POSITIVE_INFINITY, mulberry32(seed), { stage: 'mega' }).kind).not.toBe('ramo');
+      expect(ramoDe(newBossCombat(mulberry32(seed)).enemies[0].roster!)).toBe(false);
+    }
+    expect(STRAY_ROSTER.some(e => e.kind === 'ramo')).toBe(false);
+  });
+  it('as ondas altas mostram ramo com chave válida do bestiário', () => {
+    let achou = 0;
+    for (let seed = 1; seed <= 100; seed++) for (const e of buildDungeonWave(1, 'mega', mulberry32(seed), 30)) {
+      expect(ENEMY_ROSTER_KEYS.has(e.stage), e.stage).toBe(true);
+      if (ramoDe(e.stage)) { achou++; expect(e.sprite).toBeTruthy(); expect(e.element).toBe(rosterEntryOfKey(e.stage)!.element); }
+    }
+    expect(achou).toBeGreaterThan(0);
   });
 });

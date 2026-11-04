@@ -3987,17 +3987,21 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 
 ### `src/utils/enemyRoster.ts`
 **Dono de:** "quem pode aparecer como inimigo, em que estágio e a partir de que level" (M10): 17 criaturas base × rookie/champion/ultimate/mega + 138 rookies de elemento combinado. Dados puros, sem asset. O level do jogador só decide até que estágio de ARTE o slot mostra; a força continua do slot da escada.
-**Exports:** `EnemyStage`, `ENEMY_STAGES`, `ENEMY_STAGE_UNLOCK_LEVEL`, `RosterEntry`, `chaveBestiario(id, stage)`, `ENEMY_ROSTER`, `ENEMY_ROSTER_KEYS`, `rosterEntryOfKey(key)`, `pickEnemy`, `RAVEN_ID`, `RAVEN_ENTRY`, `RAVEN_SPAWN_CHANCE`, `withRaven(rng, pick, raven)`.
+**Exports:** `EnemyStage`, `ENEMY_STAGES`, `ENEMY_STAGE_UNLOCK_LEVEL`, `RosterEntry`, `chaveBestiario(id, stage)`, `ENEMY_ROSTER`, `ENEMY_ROSTER_KEYS`, `rosterEntryOfKey(key)`, `pickEnemy`, `RAVEN_ID`, `RAVEN_ENTRY`, `RAVEN_SPAWN_CHANCE`, `withRaven(rng, pick, raven)`, `RAMO_CHANCE`.
+**Ramos evoluídos (04/11/2026, REGISTRO §220):** `kind: 'ramo'`, 120 entradas (40 ramos × champion/ultimate/mega) no fim de `ENEMY_ROSTER`. `pickEnemy` dá `RAMO_CHANCE` (1/3) do estágio a eles, com 1 só `rng`; `opts.semRamos` e level infinito os tiram do sorteio.
 **Corvo neutro (31/10/2026, REGISTRO §206):** `RosterEntry.kind` ganhou `'mascote'`, e `element` passa a ser o id FUNDIDO nos combinados (slug da arte; `elements` guarda os dois componentes — a tabela de vantagem é só das bases). `RAVEN_ENTRY` (id `corvo`, "Corvinho", elemento `neutro`, forma única, `artFile: 'corvo-neutro'`) entra no fim de `ENEMY_ROSTER`, fora de todo pool comum: aparece só por `withRaven(rng, pick, raven)` com chance `RAVEN_SPAWN_CHANCE` = 1/1000 por sorteio de inimigo. Os combinados também vêm dos lotes curados (`elementosLote1/2/3.data.ts`, trios e 4 componentes: os 2 primeiros mandam nos golpes).
 
 ### `src/utils/enemyRosterArt.ts`
-**Dono de:** a URL da arte dos 138 rookies combinados (`import.meta.glob` eager devolve só a URL; síncrono porque a onda da masmorra é montada sem await). **Exports:** `COMBINADOS_ART` (chave `NNN-slug`).
+**Dono de:** a URL da arte dos 138 rookies combinados (`import.meta.glob` eager devolve só a URL; síncrono porque a onda da masmorra é montada sem await). **Exports:** `COMBINADOS_ART` (chave `NNN-slug`), `INIMIGOS_API_ART`, `RAMOS_ART` (chave `<elemento>/<ramo>-<estágio>`, §220).
 
 ### `src/utils/enemyRosterData.ts`
 **Dono de:** os 138 rookies de elemento combinado como dados puros (gerado de `assets/soulmon/novos-arquivo/manifest.json`): `[número, slug, nome, elemento 1, elemento 2]`; o elemento de combate é o 1º. **Exports:** `COMBINADOS_DATA`.
 
 ### `src/utils/wildFoeLabel.ts`
 **Dono de:** o rótulo exibido de todo Soulmon sem dono (inimigo de masmorra/Fenda/Calabouço; NPC, Torneio, Arena e PVP ficam de fora): estágios menores = "Soulmon selvagem"/"Wild Soulmon"; ultimate/mega/ultra (e o chefe de andar) = "Soulmon desgarrado"/"Stray Soulmon". Decisão do dono, 27/10/2026: nenhum nome próprio na tela; id/arte/chave do bestiário não mudam. **Exports:** `WILD_FOE_STRONG_STAGES`, `wildFoeLabel(tier, isPt)` (aceita estágio puro ou chave `<id>-<estágio>`). No bestiário a célula vista mostra `#<nº da coleção>`.
+
+### `src/utils/enemyRosterData.ts` (RAMOS_INIMIGOS_DATA)
+**Dono de (acréscimo 04/11/2026, §220):** os 40 ramos evoluídos: `[id da criatura, elemento, ramo, nome champion, nome ultimate, nome mega]`. Nomes gerados, renomeáveis sem migração.
 
 ### `src/utils/enemyRosterData.ts` (INIMIGOS_API_DATA)
 **Dono de (acréscimo 27/10/2026):** os 5 inimigos da API "à parte" (poda de 27/10/2026: o dono manteve R10/R14/R12/R19/R42 do banco; não contam na distribuição por elemento e podem repetir elemento; `[id, estágio, nome interno, elemento, nº do banco]`; arte em `assets/soulmon/inimigos-api/<id>-<estágio>.png`, carregada por `INIMIGOS_API_ART` em `enemyRosterArt.ts`; `RosterEntry.kind === 'api'`). Roster total: 17×4 + 138 + 5 = 211.

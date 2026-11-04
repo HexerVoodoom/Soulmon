@@ -6275,3 +6275,10 @@ Tudo abaixo é o que o código de `5229b1be` faz. Decisões: `REGISTRO-DE-DECISO
 ## Beta-full (REGISTRO §98)
 
 E-mail verificado presente em `BETA_EMAILS` é tratado como conta paga: o servidor devolve `tier: 'paid'` + `betaFull: true` (derivado do token, nunca gravado), o ovo vai direto a "Chocar" e o ritual completo roda sem compra. Remover o e-mail da lista rebaixa na leitura seguinte. Ver `functions/api/_betaFull.js` e `docs/BETA-FECHADO-RUNBOOK.md`.
+
+## 🌿 Ramos evoluídos como inimigos (04/11/2026, REGISTRO §220)
+
+- Os 120 sprites de ramo são inimigos só nos tetos do estágio: champion a partir do level 7, ultimate 14, mega 22. Nunca rookie.
+- Um elemento só (o da criatura) e os golpes da criatura. Um terço do sorteio de cada estágio alto (`RAMO_CHANCE`), cerca de 0,83% por ramo.
+- Fora do sorteio: chefe do Combina 3, Desgarrado do Torneio, Arena e qualquer chamada sem level do jogador.
+- Bestiário: +40 em Selvagem, +80 em Desgarrado, depois das entradas antigas.

@@ -23,6 +23,7 @@ Decisão do dono (30/10/2026): **um sprite tem UM elemento e ele vale em todo lu
 ### Base (20): `novos/<elemento>-<estágio>.png` — prefixo do arquivo = elemento (NOVOS_DATA).
 ### Iniciais (5): industrial=terra, nascente=som, alento=ar, vida=vida, meteoro=fogo (`STARTER_ELEMENT`, pedido do dono).
 ### Inimigos da API (5): cinderkit=fogo, ashimp=fogo, tailhorn=terra, tidewark=agua, gloomhorn=sombra (escolha manual de `INIMIGOS_API_DATA`; nenhuma evidência contrária encontrada).
+### Ramos evoluídos (120, §220): `ramo:<elemento>/<ramo>` = pasta do arquivo = elemento da criatura (`RAMOS_INIMIGOS_DATA`).
 ### Linhas de `lines/` (4) — evidência: bio PT/EN em `PREMADE_CHARACTERS` (commit c11dc49d), não prompt Higgsfield
 | linha | elemento | evidência |
 |---|---|---|

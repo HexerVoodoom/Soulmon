@@ -37,7 +37,7 @@ export function arenaCardSeeds(draw: () => number, n = 3): number[] {
   return out;
 }
 
-export const STRAY_ROSTER: readonly RosterEntry[] = ENEMY_ROSTER.filter(e => isStrayFoe(e.stage) && e.kind !== 'combinado');
+export const STRAY_ROSTER: readonly RosterEntry[] = ENEMY_ROSTER.filter(e => isStrayFoe(e.stage) && e.kind !== 'combinado' && e.kind !== 'ramo'); // §220: o Torneio não olha o level do jogador; ramo só com teto de level
 
 /** O Desgarrado que preenche o Torneio sem par, estável por conta e dia (`dayKey` = AAAA-MM-DD). */
 export function strayForTournament(saveId: string, dayKey: string): RosterEntry {
