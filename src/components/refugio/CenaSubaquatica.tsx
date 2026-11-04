@@ -25,6 +25,8 @@ const CSS = `
 `;
 
 const camada: CSSProperties = { position: 'absolute', inset: 0, pointerEvents: 'none' };
+/** SVG é elemento substituído: `inset: 0` não o estica (a silhueta parava no meio da tela). A folga de 2% cobre a deriva lateral. */
+const silhueta: CSSProperties = { ...camada, left: '-2%', right: 'auto', width: '104%', height: '100%' };
 const img = (src: string): CSSProperties => ({ ...camada, backgroundImage: `url(${src})`, backgroundSize: 'cover', backgroundPosition: 'center' });
 
 /** Bolhas fixas (determinísticas): posição, tamanho, duração e atraso. */
@@ -60,7 +62,7 @@ export function CenaSubaquatica({ level, reduced, children }: { level: number; r
       {meio
         ? <div data-camada="meio-arte" style={{ ...img(meio), ...anim('sm-sub-deriva 30s ease-in-out infinite') }} />
         : (
-          <svg data-camada="meio" viewBox="0 0 400 300" preserveAspectRatio="xMidYMax slice" style={{ ...camada, ...anim('sm-sub-deriva 30s ease-in-out infinite') }}>
+          <svg data-camada="meio" viewBox="0 0 400 300" preserveAspectRatio="xMidYMax slice" style={{ ...silhueta, ...anim('sm-sub-deriva 30s ease-in-out infinite') }}>
             <g fill="#0a2a3d" opacity="0.7">
               <path d="M0 300 C40 250 70 270 110 240 C150 215 190 260 240 235 C290 210 330 250 400 225 L400 300 Z" />
               {[30, 95, 170, 260, 340].map((x, i) => (
@@ -88,7 +90,7 @@ export function CenaSubaquatica({ level, reduced, children }: { level: number; r
       {frente
         ? <div data-camada="frente-arte" style={{ ...img(frente), ...anim('sm-sub-deriva 22s ease-in-out infinite reverse') }} />
         : (
-          <svg data-camada="frente" viewBox="0 0 400 300" preserveAspectRatio="xMidYMax slice" style={{ ...camada, ...anim('sm-sub-deriva 22s ease-in-out infinite reverse') }}>
+          <svg data-camada="frente" viewBox="0 0 400 300" preserveAspectRatio="xMidYMax slice" style={{ ...silhueta, ...anim('sm-sub-deriva 22s ease-in-out infinite reverse') }}>
             <g fill="#03111c" opacity="0.85">
               <path d="M0 300 L0 270 C20 262 30 280 55 268 C70 250 60 230 80 228 C95 240 90 265 120 272 L150 300 Z" />
               <path d="M260 300 C280 280 300 286 320 262 C330 240 352 246 360 262 C372 280 390 276 400 270 L400 300 Z" />
