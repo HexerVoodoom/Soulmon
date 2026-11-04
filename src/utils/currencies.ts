@@ -248,6 +248,21 @@ export function remainingMinigameBits(state: MinigameBitsState, dayKey: string):
 }
 
 /**
+ * Quanto de um pedido de `amount` Bits o teto do dia REALMENTE credita, dado o
+ * quanto já foi creditado hoje (`already`). É a regra única: `creditMinigameBits`
+ * a usa para creditar e o funil do `App` a usa para dizer à tela de resultado o
+ * valor creditado (o que a tela mostra = o que entrou).
+ */
+export function minigameBitsGranted(already: number, amount: number): number {
+  // `Math.floor(NaN)` é NaN e NaN <= 0 é falso: a quantia passava pelo teto e
+  // gravava `gamePoints: NaN` (perde o saldo todo no próximo save). Só número
+  // finito credita; Infinity já é limitado pelo teto do dia logo abaixo.
+  if (typeof amount !== 'number' || Number.isNaN(amount)) return 0;
+  const pedido = Math.max(0, Math.floor(amount));
+  return Math.max(0, Math.min(pedido, MINIGAME_BITS_PER_DAY - Math.max(0, already)));
+}
+
+/**
  * Credita Bits de MINIJOGO sobre o `prev`, respeitando o teto do dia.
  *
  * Função PURA e feita para rodar DENTRO de um updater (`setGameState`): o
@@ -266,13 +281,7 @@ export function creditMinigameBits<T extends MinigameBitsState & BitsOriginState
   amount: number,
   dayKey: string,
 ): T {
-  // `Math.floor(NaN)` é NaN e NaN <= 0 é falso: a quantia passava pelo teto e
-  // gravava `gamePoints: NaN` (perde o saldo todo no próximo save). Só número
-  // finito credita; Infinity já é limitado pelo teto do dia logo abaixo.
-  if (typeof amount !== 'number' || Number.isNaN(amount)) return prev;
-  const pedido = Math.max(0, Math.floor(amount));
-  if (pedido <= 0) return prev;
-  const ganho = Math.min(pedido, remainingMinigameBits(prev, dayKey));
+  const ganho = minigameBitsGranted(minigameBitsToday(prev, dayKey), amount);
   if (ganho <= 0) return prev;
   // PR8: Bit de minijogo é Bit GANHO e soma ao ganho grátis do dia (a base do teto de +25% do câmbio).
   return noteFreeBits({

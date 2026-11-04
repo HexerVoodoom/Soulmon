@@ -124,6 +124,27 @@ describe('ResultScreen', () => {
     expect(document.querySelector('[data-result-hero]')).toBeNull();
   });
 
+  it('teto gasto: livro vazio (0 creditado) não mostra Bits e a linha vazia não culpa a rodada', () => {
+    const ex = { bitsToday: 60, bitsCap: 60, missions: [] } as never;
+    render(<ResultExtrasContext.Provider value={ex}><ResultScreen {...base({ language: 'pt-BR', ledger: [{ key: 'bits', kind: 'bits', value: 0 }], emptyLedgerLine: 'Rodada leve, sem Bits desta vez.' })} /></ResultExtrasContext.Provider>);
+    expect(document.querySelector('[data-result-bits-pop]')).toBeNull();
+    expect(document.querySelector('[data-result-empty]')!.textContent).toBe('Sem Bits desta vez.');
+    expect(document.querySelector('[data-result-bitscap]')).toBeTruthy();
+  });
+
+  it('teto parcial: o livro mostra o valor creditado recebido, sem recalcular', () => {
+    const ex = { bitsToday: 60, bitsCap: 60, missions: [] } as never;
+    render(<ResultExtrasContext.Provider value={ex}><ResultScreen {...base({ language: 'pt-BR', ledger: [{ key: 'bits', kind: 'bits', value: 40 }] })} /></ResultExtrasContext.Provider>);
+    expect(document.querySelector('[data-result-ledger]')!.textContent).toMatch(/40/);
+    expect(document.querySelector('[data-result-ledger]')!.textContent).not.toMatch(/150/);
+  });
+
+  it('sem teto: a linha vazia original fica', () => {
+    const ex = { bitsToday: 10, bitsCap: 60, missions: [] } as never;
+    render(<ResultExtrasContext.Provider value={ex}><ResultScreen {...base({ language: 'pt-BR', ledger: [{ key: 'bits', kind: 'bits', value: 0 }], emptyLedgerLine: 'Rodada leve, sem Bits desta vez.' })} /></ResultExtrasContext.Provider>);
+    expect(document.querySelector('[data-result-empty]')!.textContent).toBe('Rodada leve, sem Bits desta vez.');
+  });
+
   it('formatResultTime: m:ss.d', () => {
     expect(formatResultTime(42_130)).toBe('0:42.1');
     expect(formatResultTime(75_900)).toBe('1:15.9');

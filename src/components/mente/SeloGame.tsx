@@ -58,7 +58,8 @@ export function SeloGame({ language, evolutionStage, demoCharacterId, onEarnPoin
     // Uma vez por rodada (o feito/missão do dia conta a rodada, mesmo sem Bits).
     if (!paid.current) {
       paid.current = true;
-      onEarnPoints(bits);
+      if (bits > 0) setEarned(onEarnPoints(bits) ?? bits);
+      else onEarnPoints(bits);
     }
   };
 
