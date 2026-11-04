@@ -59,10 +59,10 @@ describe('EnergyTimer (contagem ao vivo dentro da dica da energia, REGISTRO §43
 
 describe('HungerIndicator', () => {
   it('três estados legíveis SEM depender de cor: nome acessível em palavras e uma arte por estado', () => {
-    const casos = [['fed', 3, 'Fome: bem alimentado, nível 3 de 3'], ['fair', 2, 'Fome: com um pouco de fome, nível 2 de 3'], ['starving', 0, 'Fome: faminto, nível 1 de 3']] as const;
+    const casos = [['fed', 100, 'Fome: bem alimentado, nível 3 de 3'], ['fair', 50, 'Fome: com um pouco de fome, nível 1,5 de 3'], ['starving', 5, 'Fome: faminto, nível 1 de 3']] as const;
     const arts = new Set<string | null>();
-    for (const [tier, , nome] of casos) {
-      const { unmount } = render(<HungerIndicator tier={tier} value={50} language="pt-BR" />);
+    for (const [tier, v, nome] of casos) {
+      const { unmount } = render(<HungerIndicator tier={tier} value={v} language="pt-BR" />);
       const el = document.querySelector('[data-hunger-indicator]')!;
       expect(el.getAttribute('aria-label')).toBe(nome);
       expect(el.getAttribute('data-hunger-tier')).toBe(tier);
