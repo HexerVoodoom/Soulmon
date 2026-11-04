@@ -4066,6 +4066,11 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 - `function temaSpriteOf(e: RosterEntry): string | undefined` — o sprite de qualquer entrada do roster: `TEMA_ART[artFile]` para `kind: 'api'`, senão `rosterSpriteOf(e)`, senão `placeholderOf(e)`.
 **Chamado por:** `src/components/guild/GroveRaidFight.tsx`, `src/components/guild/PlantioVisor.tsx`, `src/components/SoulBarrage.tsx`.
 
+### `src/utils/bossSplash.ts`
+**Dono de:** quais monstros aparecem no splash do boss dos minigames: o chefe (tier `chefe` da Feira, sem o Arauto) do Fusion sorteado pela semente, e o Arauto do Fim na Chuva de Almas; resolve o retrato 9:16 opcional em `assets/soulmon/boss/<id>.webp`.
+**Exports:** `fusionBossMonster`, `barrageSpecialMonster`, `FUSION_BOSS_POOL`, `BOSS_PORTRAIT`, `SPECIAL_BARRAGE_BOSS_ID`, `SplashMonster`.
+**Chamado por:** `src/components/Match3Game.tsx`, `src/components/SoulBarrage.tsx`
+
 ### `src/utils/soulBarrage.ts`
 **Dono de:** a lógica pura do Soul Barrage (M9), bullet hell vertical do Salão de Jogos: o Soulmon atira sozinho, inimigos do `enemyRoster` descem e atiram, tiro tira 1 vida, a fase sobe a cada `PHASE_SECONDS`. `dt` e `rng` por parâmetro. Pontos = abates; Bits por `barrageBits(score)` pelo funil de minigames (teto diário aplicado fora).
 **Exports:** `FIELD_W`, `FIELD_H`, `PLAYER_R`, `PLAYER_SIZE`, `PLAYER_Y`, `PLAYER_SPEED`, `START_LIVES`, `INVULN_SECONDS`, `barrageBits` e o estado/passo da simulação.

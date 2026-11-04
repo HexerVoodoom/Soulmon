@@ -712,6 +712,11 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Exports:** `useBattleSpeed()` (`{ speed, speedRef, cycle }`) · `BattleSpeedButton({ speed, onCycle, isPt, corner?, attr? })` · `battleSpeedLabel`.
 **Quem chama:** `DungeonGame`, `NightmareBattle`, `ArenaGame`, `RogueFight`, `GroveRaidFight`. Fora de propósito: o Torneio ranqueado e os replays de servidor (`DuelScreen`, `BossFightScreen`), cujo resultado já vem decidido.
 **Régua:** `DungeonGame.beta-play.render.test.tsx`.
+### `src/components/games/BossSplash.tsx`
+**Dono de:** o splash de TELA CHEIA do boss dos minigames (04/11/2026): arte grande (slot `portrait` 9:16 de `assets/soulmon/boss/<id>.webp`, fallback no sprite), título, nome do monstro e, opcional, cartões das regras. Toque em qualquer lugar pula; sem movimento com `prefers-reduced-motion`.
+**Exports:** `BossSplash`, `BossSplashCard`.
+**Chamado por:** `src/components/Match3Game.tsx` (3 regras), `src/components/SoulBarrage.tsx` (boss especial, sem cartões). **Régua:** `games/BossSplash.render.test.tsx`.
+
 ### `src/components/games/ResultExtrasContext.ts`
 **Dono de:** o contexto que leva os extras do resultado (`utils/resultExtras.ts`) do `App` até o `ResultScreen` sem prop-drilling. Sem Provider = sem extras.
 **Exports:** `ResultExtrasContext` · `useResultExtras()`.

@@ -19,7 +19,7 @@ describe('Elemental Fusion — BOSS', () => {
   it('a semente de teste é de boss', () => { expect(isBossMatch(BOSS_SEED)).toBe(true); });
 
   it('cartão com as 3 regras; jogo só começa depois do OK; barra de regras e o Boss com o HP do jogador', () => {
-    renderWithCss(<Match3Game language="en-US" evolutionStage="rookie" onEarnPoints={() => {}} onExit={() => {}} seed={BOSS_SEED} />);
+    renderWithCss(<Match3Game language="en-US" evolutionStage="rookie" onEarnPoints={() => {}} onExit={() => {}} seed={BOSS_SEED} rankSaveId="t" initialMode="pve" />);
     const dlg = screen.getByRole('dialog');
     const rules = drawBossRules(BOSS_SEED);
     expect(dlg.querySelectorAll('[data-m3-boss-rule-card]')).toHaveLength(3);
@@ -43,7 +43,7 @@ describe('Elemental Fusion — BOSS', () => {
   });
 
   it('em PT o cartão sai em português', () => {
-    renderWithCss(<Match3Game language="pt-BR" evolutionStage="rookie" onEarnPoints={() => {}} onExit={() => {}} seed={BOSS_SEED} />);
+    renderWithCss(<Match3Game language="pt-BR" evolutionStage="rookie" onEarnPoints={() => {}} onExit={() => {}} seed={BOSS_SEED} rankSaveId="t" initialMode="pve" />);
     expect(screen.getByRole('dialog').textContent).toContain('Um Boss apareceu!');
   });
 });
