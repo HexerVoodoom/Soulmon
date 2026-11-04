@@ -48,5 +48,7 @@ describe('Feedback da Home', () => {
     expect(a.getAttribute('target')).toBeNull();
     expect(a.textContent).toBe('');
     expect(a.querySelector('[data-pixel-icon="enviar"]')).not.toBeNull();
+    // Acima da cena do pet (`sm-pet-sticky`, z 5, depois no DOM): com 5 o ícone ficava invisível e sem toque.
+    expect(Number(a.style.zIndex)).toBeGreaterThan(5);
   });
 });
