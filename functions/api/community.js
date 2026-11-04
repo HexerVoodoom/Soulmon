@@ -14,6 +14,7 @@
 //
 //   POST profile   {id, name, stage, unlockedStages[], pvpEnabled, createdAt?}
 //   GET  players   ?search=&limit=      → diretório público
+//   GET  evoFeed                        → faixa de evoluções (feed global curto, sem saveId; `_evoFeed.js`)
 //   GET  player    ?id=                 → perfil detalhado
 //   GET  opponents ?id=                 → 3 oponentes com pvp habilitado
 //   POST duelStart {id, opponentId}     → abre o duelo: gasta a partida e sorteia a semente
@@ -61,6 +62,7 @@ import { avatarIdOrNull } from './_avatares.js';
 import { artLineOrNull, spriteUrlOrNull } from './_artLine.js';
 import { formsFromSaveState } from './_formHistory.js';
 import { frameIdOrNull } from './_frames.js';
+import { EVO_FEED_KEY, isEvolution, buildEvent, readFeed, pushEvent, purgeFeedOf, feedView } from './_evoFeed.js';
 import { isStrayProfile, strayView, STRAY_POOL_MAX, markStrayIfInactive, strayFieldsOf, strayRecoveryProgress, playerDayOf, STRAY_RECOVERY_DAYS } from './_strays.js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -114,7 +116,7 @@ const LIGHT_LIMIT = { limit: 120, windowMs: 60_000 };  // 2/s/IP no resto
 // de cache é uma varredura de 300 chaves de KV que NÃO acontece. `opponents` e
 // `player` ficam de fora: o primeiro é aleatório por chamada, o segundo é por
 // alvo e tem cardinalidade alta demais para valer cache.
-const CACHEABLE_ACTIONS = new Set(['players', 'rank', 'seasonResult', 'strays']);
+const CACHEABLE_ACTIONS = new Set(['players', 'rank', 'seasonResult', 'strays', 'evoFeed']);
 const EDGE_TTL_SECONDS = 60;
 const today = () => new Date().toISOString().slice(0, 10);
 const currentSeason = () => new Date().toISOString().slice(0, 7); // YYYY-MM
@@ -590,6 +592,21 @@ async function handleCommunity(context) {
     };
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
+    // Faixa de evoluções (04/11/2026, `_evoFeed.js`): subiu de estágio E já aparece na lista pública (PvP aberto pelo gate de Vínculo, sem `publicHidden`)
+    // → entra no feed global. Quem se esconde sai dele na hora. Melhor esforço: o feed nunca derruba a gravação do perfil.
+    try {
+      const sobe = !publicHidden && profile.pvpEnabled === true && isEvolution(prev.stage, profile.stage);
+      if (sobe || (publicHidden && prev.publicHidden !== true)) {
+        const now = Date.now();
+        let feed = readFeed(await kvOrThrow(env).get(EVO_FEED_KEY));
+        if (publicHidden) feed = purgeFeedOf(feed, id);
+        else {
+          const ev = buildEvent({ by: id, name: profile.name, petName: profile.petName, stage: profile.stage, now });
+          if (ev) feed = pushEvent(feed, ev, now);
+        }
+        await kvOrThrow(env).put(EVO_FEED_KEY, JSON.stringify(feed));
+      }
+    } catch { /* feed é cosmético */ }
     // A escolha mudou: tira da borda, deste ponto de presença, as listas públicas
     // de 60 s que ainda mostrariam a pessoa. Melhor esforço — o cache da borda é
     // por URL e por ponto de presença, então outro ponto pode servir a lista
@@ -598,7 +615,7 @@ async function handleCommunity(context) {
       const base = `${url.origin}${url.pathname}?action=`;
       const season = currentSeason();
       await Promise.all([
-        `${base}players`, `${base}rank`, `${base}rank&season=${season}`, `${base}seasonResult&season=${season}`,
+        `${base}players`, `${base}evoFeed`, `${base}rank`, `${base}rank&season=${season}`, `${base}seasonResult&season=${season}`,
       ].map(u => caches.default.delete(new Request(u)).catch(() => {})));
     }
     if (pidLegado) await kvOrThrow(env).delete(`${PID_PREFIX}${pidAntigo}`);
@@ -719,6 +736,11 @@ async function handleCommunity(context) {
       if (strays.length >= STRAY_POOL_MAX) break;
     }
     return json({ strays });
+  }
+
+  // Faixa de evoluções (04/11/2026): o feed global curto, sem saveId/pid (`_evoFeed.js`). Cache de borda de 60 s como as outras listas públicas.
+  if (action === 'evoFeed' && method === 'GET') {
+    return json({ events: feedView(readFeed(await kvOrThrow(env).get(EVO_FEED_KEY)), Date.now()) });
   }
 
   if (action === 'player' && method === 'GET') {

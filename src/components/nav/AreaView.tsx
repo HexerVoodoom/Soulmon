@@ -1,10 +1,12 @@
-import { lazy, Suspense, useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { crystalBlocksLot, crystalRefusalText } from '../../utils/evolutionCrystal';
 import { emitFeat } from '../../utils/feats';
 import type { AreaId } from '../../navigation';
 import type { MindGameId, MindGameTutorials } from '../../utils/mente/mindTutorials';
 import type { Language } from '../../utils/i18n';
 import { AreaScene, type AreaLot } from './AreaScene';
+import { useGameStateOptional } from '../../contexts/GameStateContext';
+import { lotIndicators } from '../../utils/lotIndicators';
 import { AreaSheet } from './AreaSheet';
 import { mercadoLots, arenaLots, laboratorioLots, hallLots, type MercadoLotId, type LaboratorioLotId } from '../../utils/areaSheetCopy';
 import { AREA_BG, MERCADO_LOT_ART, ARENA_LOT_ART, PLAY_AREA_BG, EXPLORACAO_LOT_ART, FORJA_LOT_ART, FORJA_BG, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART, HALL_BG, LABORATORIO_BG } from '../../assets/soulmon/areas';
@@ -351,6 +353,8 @@ export function AreaView(props: AreaViewProps) {
     const t = setTimeout(() => setLockNote(null), 5000);
     return () => clearTimeout(t);
   }, [lockNote]);
+  const gsForIndicators = useGameStateOptional()?.gameState;
+  const lotFlags = useMemo(() => lotIndicators(gsForIndicators), [gsForIndicators]);
   /** Tranca os prédios fechados: arte cinza + cadeado, e o toque só mostra o aviso neutro. */
   const gated = (lots: AreaLot[]): AreaLot[] => lots.map(l => {
     // DEMO: prédio social → toque inerte, com a recusa curta na mesma faixa de aviso.
@@ -358,7 +362,7 @@ export function AreaView(props: AreaViewProps) {
     if (bbBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(bbRefusalText(language === 'pt-BR')) };
     if (demoBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(demoRefusalText(language === 'pt-BR')) };
     const g = lockOf(l.id);
-    if (!g) return { ...l, mark: props.buildingMarks?.[`${area}.${l.id}` as BuildingId] ?? undefined, coin: (props.buildingCoins?.[`${area}.${l.id}` as BuildingId]?.length ?? 0) > 0 };
+    if (!g) return { ...l, mark: props.buildingMarks?.[`${area}.${l.id}` as BuildingId] ?? undefined, coin: (props.buildingCoins?.[`${area}.${l.id}` as BuildingId]?.length ?? 0) > 0, indicator: lotFlags[`${area}.${l.id}`] };
     return { ...l, mark: undefined, locked: { minBond: g.minBond }, onOpen: () => setLockNote(buildingLockLine(g.minBond, language)) };
   });
   const [duelOpen, setDuelOpen] = useState(false);
@@ -605,7 +609,7 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'oficina' && play.focusKeyActive !== false && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} onFocusCycle={() => props.onDailyEvent?.('foco')} planInPrepare={play.focusKeyActive !== undefined} onFocusStart={play.onFocusStart} onFocusPause={play.onFocusPause} onFocusResume={play.onFocusResume} onFocusCancel={play.onFocusCancel} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
-            {open?.id === 'ferreiro' && <ForgeCard language={language} />}
+            {open?.id === 'ferreiro' && <ForgeCard language={language} view="map" />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
             {open?.id === 'hexsmith' && <HexsmithSheet language={language} sprite={props.guild.mySprite} demoCharacterId={props.demoCharacterId} evolutionStage={props.evolutionStage} skills={props.skills} petElement={props.petElement} />}
             {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={startSalao} funStatus={play.funSession?.status} refused={funRefused} />}

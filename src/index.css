@@ -9067,6 +9067,51 @@ button.sm2-hex-row {
 }
 .sm2-hex-footer { display: grid; gap: var(--sm2-space-2); justify-items: center; }
 
+/* ── Soulsmith (Vitra) em mapa de chakras (04/11/2026) ─────────────────────
+   Mesmo esquema da Hexsmith: placa quadrada, três pontos, balão ao lado. Tudo por token (cores de brasa só na figura de vidro, que é arte). */
+.sm2-vit-map { position: relative; width: 100%; max-width: 360px; aspect-ratio: 1 / 1; margin: 0 auto; border-radius: var(--sm2-radius-md); overflow: visible; background: #000; }
+.sm2-vit-figure { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: var(--sm2-radius-md); pointer-events: none; }
+.sm2-vit-backdrop { position: absolute; inset: 0; border-radius: var(--sm2-radius-md); }
+.sm2-vit-spot { position: absolute; width: 0; height: 0; }
+.sm2-vit-chakra {
+  position: absolute; left: 0; top: 0; transform: translate(-50%, -50%);
+  display: grid; place-items: center; width: 56px; height: 56px; padding: 0; margin: 0; cursor: pointer;
+  border-radius: 50%; border: 1px solid var(--sm2-line); background: color-mix(in srgb, #06171A 78%, transparent); color: var(--sm2-ink);
+  transition: box-shadow var(--sm2-dur-tap) var(--sm2-ease), border-color var(--sm2-dur-tap) var(--sm2-ease);
+  &[data-owned="true"] { border-color: color-mix(in srgb, var(--sm2-gold-ink) 70%, transparent); }
+  &:not([data-owned="true"]) > img, &:not([data-owned="true"]) > span { opacity: .45; filter: grayscale(1); }
+  &:hover { border-color: var(--sm2-primary-ink); }
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 3px; }
+  &[data-open="true"] { border-color: var(--sm2-primary-ink); }
+  /* há aprimoramento possível: brilho leve no chakra */
+  &[data-ready="true"] { border-color: var(--sm2-gold-ink); box-shadow: 0 0 0 2px color-mix(in srgb, var(--sm2-gold-ink) 40%, transparent), 0 0 14px 2px color-mix(in srgb, var(--sm2-gold-ink) 55%, transparent); animation: sm2-vit-glow 2.4s ease-in-out infinite; }
+}
+@keyframes sm2-vit-glow { 50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--sm2-gold-ink) 55%, transparent), 0 0 22px 4px color-mix(in srgb, var(--sm2-gold-ink) 70%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .sm2-vit-chakra[data-ready="true"] { animation: none; } }
+.sm2-vit-pop { position: absolute; z-index: 5; width: min(210px, 62vw); }
+.sm2-vit-pop[data-side="below"] { left: 0; top: 40px; transform: translateX(-50%); width: min(250px, 80vw); }
+.sm2-vit-pop[data-side="right"] { left: 38px; top: 0; transform: translateY(-30%); }
+.sm2-vit-pop[data-side="left"] { right: 38px; top: 0; transform: translateY(-30%); }
+.sm2-vit-card {
+  display: grid; gap: var(--sm2-space-2); padding: var(--sm2-space-3); box-sizing: border-box;
+  background: color-mix(in srgb, #06171A 94%, transparent); border: 1px solid color-mix(in srgb, var(--sm2-gold-ink) 65%, transparent);
+  border-radius: var(--sm2-radius-md); box-shadow: 0 6px 18px rgba(0, 0, 0, .55); color: var(--sm2-ink);
+  font-family: var(--sm2-font-text); font-size: var(--sm2-text-sm);
+}
+.sm2-vit-card-title { display: flex; justify-content: space-between; align-items: baseline; gap: var(--sm2-space-2); margin: 0; font-size: var(--sm2-text-sm); }
+.sm2-vit-card-title > span { font-size: var(--sm2-text-xs); color: var(--sm2-muted); }
+.sm2-vit-opts { display: grid; gap: var(--sm2-space-1); }
+.sm2-vit-opt {
+  display: grid; gap: 2px; text-align: left; min-height: 44px; margin: 0; padding: var(--sm2-space-1) var(--sm2-space-2); cursor: pointer; box-sizing: border-box;
+  border: 1px solid var(--sm2-line); border-radius: var(--sm2-radius-md); background: none; color: var(--sm2-ink); font: inherit;
+  & > b { font-weight: 600; font-size: var(--sm2-text-xs); }
+  & > span { font-size: var(--sm2-text-xs); color: var(--sm2-muted); }
+  &[data-on="true"] { background-color: var(--sm2-primary-soft); border-color: var(--sm2-primary-ink); color: var(--sm2-primary-ink); }
+  &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
+}
+.sm2-vit-costs { display: flex; flex-wrap: wrap; gap: var(--sm2-space-2); }
+.sm2-vit-costs > span { display: inline-flex; align-items: center; gap: 3px; }
+
 /* ── Laboratório e Cambista (01/11/2026, na régua do DS) ────────────────────
    Campo de elemento, opção de menu/lista e essência: reset explícito de botão (sem `all: unset`), tudo por token,
    alvo 44, foco visível. Mesmo desenho TONAL da Hexsmith (`.sm2-hex-row`). */
@@ -9153,3 +9198,8 @@ button.sm2-hex-row {
   display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sm2-space-1);
   font-size: var(--sm2-text-xs, 12px); color: var(--sm2-muted);
 }
+
+/* Faixa de evolucoes (04/11/2026): a frase cruza a tira uma vez e a fila passa para a proxima. Movimento reduzido: o componente troca por texto parado. */
+.sm2-evo-run { display: inline-block; padding-left: 100%; animation: sm2-evo-run 14s linear 1 forwards; }
+@keyframes sm2-evo-run { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+@media (prefers-reduced-motion: reduce) { .sm2-evo-run { animation: none; padding-left: 0; } }
