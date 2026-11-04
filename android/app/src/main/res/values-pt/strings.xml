@@ -7,4 +7,12 @@
     <string name="widget_grove_copa">Copa</string>
     <string name="widget_grove_mata">Mata</string>
     <string name="widget_grove_bosque_antigo">Bosque antigo</string>
+    <!-- Widget F, redimensionavel (REGISTRO 221) -->
+    <string name="widget_adaptive_label">Soulmon (redimensionável)</string>
+    <string name="widget_adaptive_description">Redimensione: o quadrado mostra seu Soulmon; mais largo ou mais alto ganha uma frase</string>
+    <string name="widget_line_hungry">Tô com uma fominha, se você quiser.</string>
+    <string name="widget_line_poop">Um banhinho cairia super bem.</string>
+    <string name="widget_line_task">Quando der: %1$s</string>
+    <string name="widget_line_day_closed">Isso fecha a lista de hoje. Agora, sossego.</string>
+    <string name="widget_line_support">Aqui com você, um dia de cada vez.</string>
 </resources>

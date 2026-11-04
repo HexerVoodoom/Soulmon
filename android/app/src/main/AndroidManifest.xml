@@ -43,6 +43,20 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
+        <!-- WIDGET F — redimensionável: quadrado, horizontal ou vertical (REGISTRO §221).
+             Os A..E ficam registrados: tirar um receiver apaga o widget já colocado. -->
+        <receiver
+            android:name=".widget.SoulmonWidgetAdaptiveProvider"
+            android:label="@string/widget_adaptive_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/soulmon_widget_adaptive_info" />
+        </receiver>
+
         <!-- WIDGET A — horizontal (sprite + info ao lado) -->
         <receiver
             android:name=".widget.SoulmonWidgetProvider"

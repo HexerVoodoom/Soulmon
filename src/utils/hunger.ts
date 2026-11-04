@@ -111,6 +111,15 @@ export function hungerAt(rec: HungerRecord | undefined, t: number): number {
   return Math.min(HUNGER_MAX, Math.max(0, rec.v - elapsed * DECAY_PER_MS));
 }
 
+/**
+ * O instante (ms) em que a fome fica abaixo de "bem alimentado" (`HUNGER_FED_MIN`), a mesma régua de `needsAttention`; `null` sem
+ * registro (fome cheia). O widget guarda o INSTANTE, e não o nível, para acertar com o app fechado sem copiar a taxa no Kotlin.
+ */
+export function hungryFrom(rec: HungerRecord | undefined): number | null {
+  if (!rec) return null;
+  return rec.v < HUNGER_FED_MIN ? rec.at : Math.ceil(rec.at + (rec.v - HUNGER_FED_MIN) / DECAY_PER_MS);
+}
+
 export function tierOf(v: number): HungerTier {
   return v >= HUNGER_FED_MIN ? 'fed' : v >= HUNGER_FAIR_MIN ? 'fair' : 'starving';
 }

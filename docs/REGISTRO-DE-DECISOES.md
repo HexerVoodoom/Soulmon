@@ -3932,3 +3932,21 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 - **Custo medido:** `index.js` +3.320 B (924.649 → 927.969 em build de `vite`), ~1,27 MB de WebP em 120 arquivos (maior 16 KB). A `main` já construía `index.js` acima da folga da dívida (903.559 B) antes desta mudança: re-medir em `orcamentoDeBytes` no próximo release.
 - **Exclusão:** os 3 Soulmon de teste do Higgsfield gerados em 04/11/2026 não entraram: nada no repo com data desde 03/11 em `novos-arquivo`, e nada foi baixado.
 - **O que falsificaria:** jogadores deixando de reconhecer as criaturas base nos níveis altos, ou o dono vendo ramos demais em tela: baixar `RAMO_CHANCE`.
+
+## §221 — Widget único redimensionável: quadrado só com o Soulmon, horizontal/vertical com uma frase (04/11/2026, pedido do dono)
+
+**Decisão.** Novo provider `SoulmonWidgetAdaptiveProvider` (`resizeMode="horizontal|vertical"`). API 31+ recebe um mapa de `RemoteViews` por tamanho; API 26..30 escolhe o layout pelo tamanho reportado em `onAppWidgetOptionsChanged`. A regra de tamanho e a de frase são puras em `WidgetAdaptive.kt`, com JUnit (`WidgetAdaptiveTest.kt`). Prioridade da frase: fome, depois cocô, depois a tarefa que falta, depois lista fechada (parabéns que nomeia o ato, L12), depois apoio.
+
+**Alternativa que perdeu.** Tirar os 5 widgets antigos do manifest: apagaria o widget já colocado de quem atualizar. Ficam registrados e no seletor. `hide_from_picker` (API 28+) resolveria o seletor sem tirar o receiver, mas o efeito em launcher de fabricante não foi testado; fica para depois de testar em aparelho.
+
+**Escolhas que o pedido não fixou.**
+- "Com fome" = abaixo de `HUNGER_FED_MIN` (60), a régua de `needsAttention`, mas **sem** a condição de ter comida no estoque daquela função, porque o dono pediu fome como prioridade. Da fome cheia até 60 são 5,6 h, então a frase de fome aparece com frequência e pode esconder a tarefa.
+- "Tarefa faltando" para com a META cumprida (`dailyGoalFor`), mesmo com itens sobrando: o item a mais não é cobrado (mesma regra do `useProgressTracking`). Ordem: foco de hoje, hábitos do dia, tarefas abertas.
+- A frase de fome reusa a voz de `needsAttention`, embora a bíblia §5.9 vete fome em texto: a precedência é código > bíblia, e o sistema de fome (beta-2) é posterior a ela.
+- O nome da tarefa fica visível na tela inicial, inclusive para quem olha o aparelho.
+
+**Até onde a frase é verdade.** O widget não roda o jogo: atualiza quando o estado muda com o app aberto e no refresh de cerca de 1 h (WorkManager, que o Android pode atrasar). A fome vai como instante (`hungry_at`), então vira sozinha no refresh seguinte, com atraso de até ~1 h ou mais, e comida dada em outro aparelho só aparece ao abrir o app aqui. Cocô, tarefa e placar só mudam com o app aberto. Depois da meia-noite do aparelho (`day_ends_at`) a lista é de ontem: tarefa e parabéns saem e fica a frase de apoio. Dado antigo, sem as chaves novas, também cai na frase de apoio.
+
+**O que provaria que está errado.** Widget F que mostra fome o dia quase inteiro, ou o dono preferir a tarefa à fome: gatear por estoque ou baixar a régua para `HUNGER_FAIR_MIN`. Falha de render por tamanho do mapa em aparelho real: mandar só o layout escolhido também no API 31+.
+
+**Evidência.** Compilou (`assembleDebug`) e os 5 JUnit passaram nesta máquina. Não testado em aparelho nem em launcher real. Precisa de AAB novo.

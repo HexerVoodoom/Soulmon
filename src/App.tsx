@@ -30,7 +30,7 @@ import { bumpDaily, claimDaily, claimFirst, dailyForDay, dailyMissionsMark, firs
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
-import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
+import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, hungryFrom, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
@@ -80,7 +80,7 @@ import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { gaugeFull, gaugeContribution, gaugeGoalFor } from './utils/evolutionGauge';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
-import { SoulmonWidget, widgetPetName, widgetPetLine, widgetGroveStage } from './plugins/SoulmonWidgetPlugin';
+import { SoulmonWidget, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt } from './plugins/SoulmonWidgetPlugin';
 import { unlockedAchievements, achievementPointsTotal, settleAchievements, ACHIEVEMENT_POINTS, ACHIEVEMENT_LABELS } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
@@ -2577,11 +2577,19 @@ export default function App() {
       // Vazio = o plugin remove a chave. Sem timer: roda quando `grove` muda.
       petLine: widgetPetLine(gameState),
       groveStage: widgetGroveStage(grove),
+      // Widget redimensionável (REGISTRO §221): a fome vai como INSTANTE para o refresh de hora em hora acertar com o app fechado.
+      ...(() => {
+        const hungryAtMs = hungryFrom(gameState.hunger);
+        return hungryAtMs === null ? {} : { hungryAtMs };
+      })(),
+      nextTaskName: widgetNextTask(gameState as never, new Date(), dailyDone, dailyTotal),
+      dayEndsAtMs: widgetDayEndsAt(new Date()),
     }).catch(() => {});
   }, [gameState.evolutionStage, gameState.currentBranch, gameState.eggType,
       gameState.healthPoints, gameState.maxHealthPoints, gameState.energyPoints,
       gameState.poopEventsShown, gameState.poopEventsCompleted, dailyDone, dailyTotal,
-      gameState.habitRhythms, gameState.totalXP, gameState.soulmonMeta, grove]);
+      gameState.habitRhythms, gameState.totalXP, gameState.soulmonMeta, grove,
+      gameState.hunger, gameState.tasks, gameState.activities, gameState.dayPlan]);
 
   /**
    * A fatia que `utils/petNeeds.ts` lê. `hasPoop` é DERIVADO (o dono do cocô é

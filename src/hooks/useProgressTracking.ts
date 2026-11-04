@@ -87,6 +87,18 @@ function useTodayKey(resetSignal?: string): string {
   return today;
 }
 
+/** O hábito do dia está fechado? Dono único: o numerador da meta e o widget perguntam aqui. */
+export function activityDoneOn(
+  activity: { steps: Array<{ completed: boolean }>; completedToday?: boolean; lastCompletedDate?: string },
+  dayKey: string,
+): boolean {
+  return activity.steps.length > 0
+    // Hábito com etapas fecha na ÚLTIMA etapa — `completedToday` nunca é
+    // escrito para ele, então quem só usa hábitos em etapas via sempre 0.
+    ? activity.steps.every(s => s.completed)
+    : !!activity.completedToday && activity.lastCompletedDate === dayKey;
+}
+
 /**
  * PESO DE ESFORÇO CONCLUÍDO NO DIA — a MESMA unidade da meta (`dailyGoalFor`).
  *
@@ -113,11 +125,7 @@ export function doneWeightFor(
   // ler `weekDays` cru aqui deixava o numerador cego para os agendamentos
   // flexíveis (`timesPerWeek`/`everyNDays`) que o denominador já entende.
   activitiesForWeekDay(state as any, weekDay, dayKey).forEach((activity: any) => {
-    const isComplete = activity.steps.length > 0
-      // Hábito com etapas fecha na ÚLTIMA etapa — `completedToday` nunca é
-      // escrito para ele, então quem só usa hábitos em etapas via sempre 0.
-      ? activity.steps.every((s: Step) => s.completed)
-      : !!activity.completedToday && activity.lastCompletedDate === dayKey;
+    const isComplete = activityDoneOn(activity, dayKey);
     // Mesmo peso da META e da VIRADA (`habitWeightOf`: 0 para item `optInOnly` do
     // catálogo). Com `HABIT_WEIGHT` fixo a barra mostrava um dia completo que a
     // virada não contava.

@@ -4,6 +4,11 @@ import { spriteLineOf, CORVO_LINE, type CorvoCarrier } from '../utils/corvoPet';
 import { resolveArtLineId, isStarterId, type StarterId } from '../utils/sprites';
 import { groveStageAt, type GroveLocal } from '../utils/groveLocal';
 import { GROVE_STAGES, type GroveStageId } from '../utils/guildRules';
+import { activitiesForWeekDay, habitWeightOf } from '../utils/dailyReset';
+import { hiddenForDayKey, type DayPlan } from '../utils/dayPlan';
+import { focusTasks, parseDayValue, taskStatus, type TriageTask } from '../utils/taskTriage';
+import { activityDoneOn } from '../hooks/useProgressTracking';
+import type { PlayerDayAnchor } from '../utils/playerDay';
 
 /**
  * O nome que vai para `pet_name` no widget — e é o MESMO da Home.
@@ -44,6 +49,48 @@ export function widgetGroveStage(local: GroveLocal | null): '' | GroveStageId {
   const idx = Math.max(local.index, local.pending?.index ?? 0);
   const id = groveStageAt(idx);
   return id && (GROVE_STAGES as readonly string[]).includes(id) ? id : '';
+}
+
+/** Teto do nome no widget: o layout corta com reticências; isto só evita mandar um texto enorme. */
+const WIDGET_TASK_NAME_MAX = 60;
+
+export interface WidgetTaskState {
+  evolutionStage: string;
+  tasks: TriageTask[];
+  activities: Array<{ id?: string; name?: string; steps?: Array<{ completed: boolean }>; completedToday?: boolean; lastCompletedDate?: string; weekDays?: number[] }>;
+  dayPlan?: DayPlan;
+  playerDayTz?: PlayerDayAnchor;
+}
+
+/**
+ * `next_task` do widget (REGISTRO §221): o nome do que ainda falta hoje, ou vazio.
+ *
+ * Vazio com a META cumprida, mesmo com itens sobrando: a meta do dia é o combinado
+ * (`dailyGoalFor`), e apontar o item 7 para quem fez os 6 da meta é a cobrança que o
+ * `useProgressTracking` já tirou do widget. Ordem: foco de hoje, hábitos do dia, tarefas
+ * abertas. Tarefa adiada para outro dia (`startDate` futuro) não aparece.
+ */
+export function widgetNextTask(state: WidgetTaskState, now: Date, done: number, goal: number): string {
+  if (goal <= 0 || done >= goal) return '';
+  const dayKey = now.toDateString();
+  const hidden = hiddenForDayKey(state.dayPlan, dayKey, state.playerDayTz);
+  const startOfTomorrow = widgetDayEndsAt(now);
+  const tasks = state.tasks.filter(t => {
+    if (t.completed || taskStatus(t) !== 'open' || hidden.has(String(t.id))) return false;
+    const start = t.startDate ? parseDayValue(t.startDate) : null;
+    return !start || start.getTime() < startOfTomorrow;
+  });
+  const habits = (activitiesForWeekDay(state as never, now.getDay(), dayKey) as WidgetTaskState['activities'])
+    .filter(a => habitWeightOf(a as never) > 0 && !activityDoneOn({ ...a, steps: a.steps ?? [] }, dayKey));
+  const next = [...focusTasks(tasks, dayKey), ...habits, ...tasks]
+    .map(item => (item.name ?? '').replace(/\s+/g, ' ').trim())
+    .find(Boolean);
+  return next ? next.slice(0, WIDGET_TASK_NAME_MAX) : '';
+}
+
+/** A próxima meia-noite do aparelho: o mesmo dia de `useProgressTracking` (`toDateString`). */
+export function widgetDayEndsAt(now: Date): number {
+  return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
 }
 
 export interface DigiWidgetData {
@@ -92,6 +139,13 @@ export interface DigiWidgetData {
   petLine?: '' | typeof CORVO_LINE | StarterId;
   /** Id do estágio do Bosque ou `''` (vazio = o plugin remove `grove_stage`). Ver `widgetGroveStage`. */
   groveStage?: '' | GroveStageId;
+  /* REGISTRO §221, widget redimensionável. Opcionais: APK velho ignora; ausente = o plugin remove. */
+  /** Instante (ms) em que a fome passa a contar. Ausente = sem registro de fome. Ver `hungryFrom`. */
+  hungryAtMs?: number;
+  /** O que falta hoje, ou vazio. Ver `widgetNextTask`. */
+  nextTaskName?: string;
+  /** Até quando `nextTaskName` e o placar do dia valem. Ver `widgetDayEndsAt`. */
+  dayEndsAtMs?: number;
 }
 
 export interface SoulmonWidgetPlugin {
