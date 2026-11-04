@@ -87,7 +87,10 @@ export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equipp
             imageRendering: 'pixelated',
           }}
         >
-          <PetStageDecor equippedDecor={draft} equippedBackground={equippedBackground} trophies={[]} language={language} />
+          {/* Brilho branco em volta dos objetos: mostra o que dá para tocar (dono, 04/11/2026). */}
+          <div data-edit-glow style={{ position: 'absolute', inset: 0, filter: 'drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px #fff)' }}>
+            <PetStageDecor equippedDecor={draft} equippedBackground={equippedBackground} trophies={[]} language={language} />
+          </div>
           {slots.map(slotId => {
             const slot = DECOR_SLOTS[slotId];
             const filled = !!draft[slotId];
