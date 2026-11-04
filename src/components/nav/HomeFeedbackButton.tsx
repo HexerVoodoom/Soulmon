@@ -18,7 +18,9 @@ export function HomeFeedbackButton({ language }: { language: Language }) {
       data-home-feedback
       className="sm2-corner-link"
       style={{
-        position: 'absolute', top: '100%', left: 0, marginTop: 4, zIndex: 5,
+        position: 'absolute', top: '100%', left: 0, marginTop: 4,
+        // 6, não 5: a cena do pet (`sm-pet-sticky`, z 5) vem depois no DOM e cobria o ícone e o toque.
+        zIndex: 6,
         width: 44, height: 44,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
