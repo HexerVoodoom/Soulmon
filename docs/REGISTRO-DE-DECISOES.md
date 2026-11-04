@@ -3962,3 +3962,13 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 **Limites declarados.** Só vai ao servidor quando o perfil é publicado (PvP ligado e Vínculo >= 5); fora disso o nome vale só para o dono. Nome recusado apaga o nome anterior (o pedido diz que recusado cai no padrão) e, como a troca já foi gasta, a nova só vale após a semana. Lista de palavrões é conservadora, não exaustiva.
 
 **O que falsificaria.** Nome ofensivo passando pelo filtro (ampliar a lista) ou queixa de falso positivo em nome comum (migrar as raízes longas para só-palavra-inteira).
+
+## §223 — Feedback da Home: modal do Soulmon que envia direto, sem abrir o e-mail (04/11/2026, pedido do dono)
+
+**Decisão.** O besourinho da Home abre `FeedbackModal` (Feedback, Sugestão ou Bug + texto de 1 a 2000 caracteres + Enviar) e o texto vai a `POST /api/feedback`, que o grava na KV (`feedback:<dia>:<id>`, TTL 90 dias) ANTES de tentar o e-mail e o encaminha a `soulmon.revisor@gmail.com` por Resend (`RESEND_API_KEY`, secret do dono). Falha de envio mantém o rascunho e oferece "Tentar de novo".
+
+**Alternativa que perdeu.** `mailto:` (era o botão): depende de app de e-mail configurado, não entrega nada se a pessoa desiste no meio. O `mailto` das Configurações (`feedbackMailto`, `bugMailto`) segue como estava.
+
+**Privacidade.** Só texto, tipo, versão, build, plataforma e idioma; nunca uid, e-mail, saveId, IP ou user agent. Novo operador (serviço de e-mail) declarado em `privacidade.html` §6e, `PLAY-DATA-SAFETY.md` e `PRIVACY_VERSION` 2026-11-04 (reabre o aceite).
+
+**O que falsificaria.** Spam pelo endpoint anônimo (balde por IP/conta é amortecedor; subir para Turnstile ou exigir login) ou mensagens só na KV porque o envio nunca foi configurado.
