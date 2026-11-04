@@ -28,7 +28,14 @@ Responsável: **Dono** decide ou confere; **Arte** é fila de geração; **A atr
 - Autoplay da intro: depende de `VITE_ONBOARDING_VELADO`, desligado. Em produção só "Ver abertura" a mostra.
 - Os 3 Soulmon de teste estão fora apenas porque nunca foram baixados; não há filtro no código.
 
-**Decisões abertas de 04/11:** Chama paga 5 Bits e também devolve energia; Patchwork na trilha da Feira; selo do redutor na loja; os 20 fundos de missão a 1500 Bits fixos; ramos fora de Arena, chefe da Fusão e desgarrado do Torneio.
+**Decisões do dono (modal, 04/11):**
+- Chama: mantém os 5 Bits e a energia. Nada a fazer.
+- Fundos de missão: mantém 1500 Bits. Nada a fazer.
+- Patchwork: **tirar de tudo**, inclusive da trilha da Feira e do servidor; saves antigos seguem válidos. ⬜ A atribuir.
+- Chip redutor: **selo também na loja**, junto com o conserto do bug da Mochila. ⬜ A atribuir.
+- Ramos: **entram na Arena e no desgarrado do Torneio**; o chefe da Fusão fica de fora. ⬜ A atribuir.
+- Vitrine: fica em 1,75× até conferir no aparelho se 2,5× cabe sem cortar. 📱 QA visual.
+- AAB novo: **depois das lacunas de código** e da re-medição de bytes; o upload na Play é do dono.
 
 ## 2. Pedidos de 04/11/2026
 
