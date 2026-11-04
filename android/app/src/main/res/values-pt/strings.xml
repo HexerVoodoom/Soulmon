@@ -15,4 +15,11 @@
     <string name="widget_line_task">Quando der: %1$s</string>
     <string name="widget_line_day_closed">Isso fecha a lista de hoje. Agora, sossego.</string>
     <string name="widget_line_support">Aqui com você, um dia de cada vez.</string>
+    <!-- Widgets G (transparente) e H (V-Pet) -->
+    <string name="widget_clear_label">Soulmon</string>
+    <string name="widget_clear_description">Seu Soulmon direto no papel de parede, sem fundo</string>
+    <string name="widget_vpet_label">Soulmon V-Pet</string>
+    <string name="widget_vpet_description">Seu Soulmon numa tela retrô; largo, ocupa mais espaço</string>
+    <string name="widget_vpet_content">Soulmon V-Pet</string>
+    <string name="widget_name_count">%1$s · %2$s hoje</string>
 </resources>

@@ -6,6 +6,17 @@ import android.content.ComponentName
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
+import android.graphics.Rect
+import android.graphics.Typeface
+import android.text.Layout
+import android.text.StaticLayout
+import android.text.TextPaint
+import android.text.TextUtils
 import android.os.Build
 import android.os.Bundle
 import android.util.SizeF
@@ -360,6 +371,152 @@ object WidgetRenderer {
         }
     }
 
+    /**
+     * Widget "Soulmon" (transparent): no background at all, the creature straight on the wallpaper.
+     * Text is white with a tight black shadow; only the speech line sits in a low-opacity rounded box.
+     */
+    fun renderClear(context: Context, mgr: AppWidgetManager, appWidgetId: Int) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val spriteId = resolveSprite(
+            context,
+            prefs.getString("current_stage", "rookie") ?: "rookie",
+            prefs.getString("egg_type", "") ?: "",
+            prefs.getString("branch_type", "data") ?: "data",
+        )
+        val views = RemoteViews(context.packageName, R.layout.widget_soulmon_clear)
+        val sprite = spriteBitmap(context, spriteId, 96, 256)
+        if (sprite != null) {
+            views.setImageViewBitmap(R.id.widget_sprite, sprite)
+            views.setImageViewBitmap(R.id.widget_sprite_2, sprite)
+        } else {
+            views.setImageViewResource(R.id.widget_sprite, spriteId)
+            views.setImageViewResource(R.id.widget_sprite_2, spriteId)
+        }
+        val petName = prefs.getString("pet_name", "Soulmon") ?: "Soulmon"
+        val counter = taskCounter(prefs.getInt("completed_tasks", 0), prefs.getInt("total_tasks", 0))
+        views.setTextViewText(
+            R.id.widget_pet_name,
+            if (counter != null) context.getString(R.string.widget_name_count, petName, counter) else petName,
+        )
+        views.setTextViewText(R.id.widget_message, adaptiveLine(context))
+        attachClick(context, views)
+        mgr.updateAppWidget(appWidgetId, views)
+    }
+
+    /**
+     * Widget "Soulmon V-Pet": everything is drawn into ONE 576x384 bitmap (the casing's size),
+     * because RemoteViews cannot pin content to a percentage of an aspect-fit image. The LCD,
+     * scanlines, creature, speech text and status icons go under the casing (real alpha), and
+     * every box comes from `WidgetVpet`, inside the opening, so nothing can overflow the screen.
+     */
+    fun renderVpet(context: Context, mgr: AppWidgetManager, appWidgetId: Int) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val spriteId = resolveSprite(
+            context,
+            prefs.getString("current_stage", "rookie") ?: "rookie",
+            prefs.getString("egg_type", "") ?: "",
+            prefs.getString("branch_type", "data") ?: "data",
+        )
+        val hungry = WidgetVpet.isHungry(
+            System.currentTimeMillis(),
+            if (prefs.contains("hungry_at")) prefs.getLong("hungry_at", 0L) else null,
+        )
+        val poop = prefs.getBoolean("has_poop", false)
+        val views = RemoteViews(context.packageName, R.layout.widget_soulmon_vpet)
+        val bmp = try {
+            drawVpet(context, spriteId, adaptiveLine(context), hungry, poop)
+        } catch (e: OutOfMemoryError) {
+            null
+        }
+        if (bmp != null) views.setImageViewBitmap(R.id.widget_vpet, bmp)
+        else views.setImageViewResource(R.id.widget_vpet, R.drawable.vpet_moldura)
+        attachClick(context, views)
+        mgr.updateAppWidget(appWidgetId, views)
+    }
+
+    private fun drawVpet(context: Context, spriteId: Int, line: String, hungry: Boolean, poop: Boolean): Bitmap {
+        val raw = BitmapFactory.Options().apply { inScaled = false }
+        val out = Bitmap.createBitmap(WidgetVpet.W, WidgetVpet.H, Bitmap.Config.ARGB_8888)
+        val c = Canvas(out)
+        val crisp = Paint().apply { isFilterBitmap = false; isAntiAlias = false }
+
+        // LCD, a few px larger than the opening so the casing's inner edge hides the seam.
+        val lcd = Paint().apply { color = Color.parseColor("#0F2A29") }
+        c.drawRect(
+            (WidgetVpet.SCREEN_L - 4).toFloat(), (WidgetVpet.SCREEN_T - 4).toFloat(),
+            (WidgetVpet.SCREEN_R + 4).toFloat(), (WidgetVpet.SCREEN_B + 4).toFloat(), lcd,
+        )
+        val scan = Paint().apply { color = Color.argb(46, 0, 0, 0) }
+        var y = WidgetVpet.SCREEN_T
+        while (y < WidgetVpet.SCREEN_B) {
+            c.drawRect(WidgetVpet.SCREEN_L.toFloat(), y.toFloat(), WidgetVpet.SCREEN_R.toFloat(), (y + 1).toFloat(), scan)
+            y += 3
+        }
+
+        // Creature: square, as large as the sprite box allows, centred horizontally, on the floor.
+        val sp = WidgetVpet.sprite
+        val side = minOf(sp.w, sp.h)
+        val sx = sp.l + (sp.w - side) / 2
+        val sy = sp.b - side
+        BitmapFactory.decodeResource(context.resources, spriteId, raw)?.let {
+            c.drawBitmap(it, null, Rect(sx, sy, sx + side, sy + side), crisp)
+            it.recycle()
+        }
+
+        // Speech text, white, shrunk until it fits the box; ellipsized as the last resort.
+        val tb = WidgetVpet.text
+        val tp = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        }
+        fun layout(sizePx: Float, maxLines: Int): StaticLayout {
+            tp.textSize = sizePx
+            return StaticLayout.Builder.obtain(line, 0, line.length, tp, tb.w)
+                .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+                .setMaxLines(maxLines)
+                .setEllipsize(TextUtils.TruncateAt.END)
+                .build()
+        }
+        var size = 26f
+        var lay = layout(size, Int.MAX_VALUE)
+        while (lay.height > tb.h && size > 13f) {
+            size -= 1f
+            lay = layout(size, Int.MAX_VALUE)
+        }
+        if (lay.height > tb.h) {
+            val fit = (tb.h / (lay.height / lay.lineCount.toFloat())).toInt().coerceAtLeast(1)
+            lay = layout(size, fit)
+        }
+        c.save()
+        c.clipRect(tb.l, tb.t, tb.r, tb.b)
+        c.translate(tb.l.toFloat(), tb.t + (tb.h - lay.height) / 2f)
+        lay.draw(c)
+        c.restore()
+
+        // Status icons: low-opacity black silhouette by default, full colour when it applies.
+        val row = WidgetVpet.iconRow
+        val iy = row.t + (row.h - WidgetVpet.ICON) / 2
+        fun icon(resId: Int, x: Int, active: Boolean) {
+            val ic = BitmapFactory.decodeResource(context.resources, resId, raw) ?: return
+            val p = Paint(crisp)
+            if (!active) {
+                p.colorFilter = PorterDuffColorFilter(Color.BLACK, PorterDuff.Mode.SRC_IN)
+                p.alpha = 70
+            }
+            c.drawBitmap(ic, null, Rect(x, iy, x + WidgetVpet.ICON, iy + WidgetVpet.ICON), p)
+            ic.recycle()
+        }
+        icon(R.drawable.vpet_icon_fome, row.l, hungry)
+        icon(R.drawable.fx_poop, row.l + WidgetVpet.ICON + WidgetVpet.ICON_GAP, poop)
+
+        // Casing on top.
+        BitmapFactory.decodeResource(context.resources, R.drawable.vpet_moldura, raw)?.let {
+            c.drawBitmap(it, 0f, 0f, crisp)
+            it.recycle()
+        }
+        return out
+    }
+
     // Refresh every active instance of all widget variants.
     fun updateAll(context: Context) {
         val mgr = AppWidgetManager.getInstance(context)
@@ -375,6 +532,10 @@ object WidgetRenderer {
             renderScreen(context, mgr, id, R.layout.widget_soulmon_screen)
         for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetAdaptiveProvider::class.java)))
             renderAdaptive(context, mgr, id)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetClearProvider::class.java)))
+            renderClear(context, mgr, id)
+        for (id in mgr.getAppWidgetIds(ComponentName(context, SoulmonWidgetVpetProvider::class.java)))
+            renderVpet(context, mgr, id)
     }
 
     private fun attachClick(context: Context, views: RemoteViews) {

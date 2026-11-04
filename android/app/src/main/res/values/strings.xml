@@ -19,4 +19,11 @@
     <string name="widget_line_task">When you\'re ready: %1$s</string>
     <string name="widget_line_day_closed">That closes today\'s list. Let\'s take it easy.</string>
     <string name="widget_line_support">Here with you, one day at a time.</string>
+    <!-- Widgets G (transparent) and H (V-Pet) -->
+    <string name="widget_clear_label">Soulmon</string>
+    <string name="widget_clear_description">Your Soulmon straight on the wallpaper, no background</string>
+    <string name="widget_vpet_label">Soulmon V-Pet</string>
+    <string name="widget_vpet_description">Your Soulmon inside a retro screen; wide, takes more room</string>
+    <string name="widget_vpet_content">Soulmon V-Pet</string>
+    <string name="widget_name_count">%1$s · %2$s today</string>
 </resources>
