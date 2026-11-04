@@ -420,7 +420,7 @@ describe('Salão de Jogos — ícone de cada jogo (11/10/2026)', () => {
     expect(cards.length).toBe(4); // + Soul Barrage (M9); + Elemental Fusion (11/10/2026, REGISTRO §36)
     for (const c of cards) {
       // Com a ilustração da carta no lugar, o ícone sai; sem ela, é o ícone pelado no placeholder.
-      const img = c.querySelector('img[data-pixel-icon], img[data-game-card-art]') as HTMLImageElement;
+      const img = c.querySelector('img[data-pixel-icon]') as HTMLImageElement;
       expect(img).toBeTruthy();
       expect(img.getAttribute('alt')).toBe('');
       expect(img.parentElement!.style.background).toBe('');
