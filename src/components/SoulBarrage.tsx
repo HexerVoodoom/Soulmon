@@ -24,6 +24,9 @@ import {
 } from '../utils/soulBarrage';
 import { BARRAGE_ART } from '../assets/soulmon/barrage';
 import { emitFeat } from '../utils/feats';
+import { BossSplash } from './games/BossSplash';
+import { barrageSpecialMonster } from '../utils/bossSplash';
+import { entrarNaSuperficie } from '../utils/musica';
 import { ADVANCED_BITS_FACTOR, difficultyLabel } from '../utils/minigameDifficulty';
 
 /**
@@ -59,6 +62,11 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [phase, setPhase] = useState<'ready' | 'playing' | 'over'>('ready');
   const [paused, setPaused] = useState(false);
+  // boss ESPECIAL: splash (a partida espera) e música de chefe enquanto ele vive
+  const [splash, setSplash] = useState(false);
+  const [bossMusic, setBossMusic] = useState(false);
+  const specialMonster = barrageSpecialMonster(isPt);
+  useEffect(() => (bossMusic ? entrarNaSuperficie('chefe-minigame') : undefined), [bossMusic]);
   const [hidden, setHidden] = useState(() => typeof document !== 'undefined' && document.visibilityState === 'hidden');
   const [finalScore, setFinalScore] = useState(0);
   const [earned, setEarned] = useState(0);
@@ -127,6 +135,8 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
 
   const start = () => {
     g.current = newBarrage();
+    setSplash(false);
+    setBossMusic(false);
     targetX.current = FIELD_W / 2;
     targetY.current = g.current.py;
     setEarned(0);
@@ -134,7 +144,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   };
 
   useEffect(() => {
-    if (phase !== 'playing' || paused || hidden) return;
+    if (phase !== 'playing' || paused || hidden || splash) return;
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext('2d')!;
     ctx.imageSmoothingEnabled = false;
@@ -157,6 +167,8 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
         targetX.current = Math.min(FIELD_W, Math.max(0, targetX.current + dirRef.current * PLAYER_SPEED * Math.min(dt, 0.05)));
       }
       const ev = stepBarrage(s, dt, targetX.current, level, Math.random, level === 2 ? targetY.current : undefined);
+      if (ev.bossSpawned) { setBossMusic(true); imgs.current.boss = undefined; if (ev.bossSpecial) setSplash(true); }
+      if (ev.bossDefeated) setBossMusic(false);
       if (ev.hit && !calm) { try { navigator.vibrate?.(30); } catch { /* noop */ } }
 
       // fundo: faixas que rolam para cima
@@ -182,7 +194,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       // Boss: o maior dos ultimates da Chuva, com barra de vida larga no topo
       if (s.boss) {
         const bo = s.boss;
-        if (!imgs.current.boss) { const ent = BARRAGE_ROSTER.find(e => e.stage === 'ultimate') ?? BARRAGE_ROSTER[BARRAGE_ROSTER.length - 1]; imgs.current.boss = loadImg(ent ? temaSpriteOf(ent) : undefined); }
+        if (!imgs.current.boss) { if (bo.special) imgs.current.boss = loadImg(specialMonster.art); else { const ent = BARRAGE_ROSTER.find(e => e.stage === 'ultimate') ?? BARRAGE_ROSTER[BARRAGE_ROSTER.length - 1]; imgs.current.boss = loadImg(ent ? temaSpriteOf(ent) : undefined); } }
         const bi = imgs.current.boss;
         if (ready(bi)) ctx.drawImage(bi!, bo.x - bo.size / 2, bo.y - bo.size / 2, bo.size, bo.size);
         else { ctx.fillStyle = '#7a2fb0'; ctx.fillRect(bo.x - bo.size / 3, bo.y - bo.size / 3, bo.size * 0.66, bo.size * 0.66); }
@@ -264,11 +276,12 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       const nb = Math.max(bestRef.current, score);
       writeLocal(level === 2 ? STORAGE_KEYS.BARRAGE_BEST_2 : STORAGE_KEYS.BARRAGE_BEST, String(nb));
       setBest(nb);
+      setBossMusic(false);
       setPhase('over');
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [phase, paused, hidden, level, isPt]);
+  }, [phase, paused, hidden, splash, level, isPt]); // eslint-disable-line react-hooks/exhaustive-deps -- specialMonster é derivado de isPt
 
   const moveTo = (e: React.PointerEvent<HTMLElement>) => {
     const r = canvasRef.current?.getBoundingClientRect();
@@ -376,6 +389,19 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
             );
           })}
         </div>
+      )}
+      {phase === 'playing' && splash && (
+        <BossSplash
+          monster={specialMonster.name}
+          art={specialMonster.art}
+          portrait={specialMonster.portrait}
+          kicker={isPt ? 'Boss especial' : 'Special Boss'}
+          title={isPt ? 'Um Boss especial chegou!' : 'A Special Boss has arrived!'}
+          intro={isPt ? 'Muita vida, mais tiros e ele se move de um lado a outro. Aguente firme.' : 'Lots of health, more shots, and it sweeps from side to side. Hold on.'}
+          okLabel={isPt ? 'Vamos lá' : "Let's go"}
+          tapHint={isPt ? 'Toque em qualquer lugar para continuar' : 'Tap anywhere to continue'}
+          onDone={() => setSplash(false)}
+        />
       )}
       {phase === 'ready' && (<>
         <div style={{ display: 'flex', justifyContent: 'center' }}><RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} items={[{ kind: 'bits' }]} /></div>
