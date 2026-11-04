@@ -94,7 +94,7 @@ export function SeloGame({ language, evolutionStage, demoCharacterId, onEarnPoin
       : (isPt ? `Selo ${idx + 1} de ${SELO_ROUND}` : `Seal ${idx + 1} of ${SELO_ROUND}`);
 
   return (
-    <GameRoot full style={{ background: sceneBackground('selo') }}>
+    <GameRoot full style={{ background: `linear-gradient(to bottom, rgba(0,0,0,.6), transparent 130px), ${sceneBackground('selo')}` }}>
       <GameHeader
         title={title}
         language={language}

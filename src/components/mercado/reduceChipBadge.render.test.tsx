@@ -4,6 +4,7 @@ import { fireEvent } from '@testing-library/react';
 import { readFileSync } from 'node:fs';
 import { renderWithCss } from '../../test/renderEnv';
 import { MercadoStallSheet } from './MercadoSheets';
+import { REDUCE_CHIP_BOOST } from '../../utils/shop';
 
 const base = {
   language: 'en-US' as const, points: 900, emblems: 12,
@@ -13,11 +14,11 @@ const base = {
   onBuy: () => true, onExchangeCredits: async () => true, onEquip: () => {}, onEquipFurniture: () => {},
 };
 
-describe('chip de redução: selo menos 2', () => {
+describe('chip de redução: selo igual ao efeito real', () => {
   it('o CSS usa o sinal de menos real (U+2212), sem caractere de controle', () => {
     const css = readFileSync('src/index.css', 'utf8');
     const m = css.match(/\.sm3-item-arte\[data-reduce\]::after\s*\{[^}]*content:\s*'([^']*)'/)!;
-    expect(m[1]).toBe(String.raw`\2212 2`);
+    expect(m[1]).toBe(String.raw`\2212 ${REDUCE_CHIP_BOOST}`);
     expect(/[\u0080-\u009f]/.test(css)).toBe(false);
   });
   it('prateleira e folha mostram o selo no redutor e nao no chip comum', () => {

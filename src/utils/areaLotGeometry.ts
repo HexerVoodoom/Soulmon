@@ -141,6 +141,19 @@ export const LOT_MARK_SIZE = 32;
 export const LOT_MARK_GAP = 4;
 /** Piso das marcas: um prédio colado no topo da cena (o arco do Passeio, a torre das Conquistas) não manda a marca para fora da tela; nele a marca desce até aqui e cobre um pedaço do topo da arte (o único caso de sobreposição). */
 export const LOT_MARK_MIN_TOP = 8;
+/**
+ * Quanto a fileira de marcas DESCE (px) nos lotes em que o espaço acima do prédio é o rótulo do vizinho: a marca pousa no topo da
+ * própria arte em vez de tapar o nome de outro prédio (QA 04/11/2026: a moeda do Refúgio cobria "Hexsmith"). O contrato reprova marca sobre rótulo alheio.
+ */
+export const LOT_MARK_DROP: Record<string, number> = {
+  'forja:refugio': LOT_MARK_SIZE + LOT_MARK_GAP,
+  'mercado:background': LOT_MARK_SIZE + LOT_MARK_GAP,
+  'mercado:decoracao': LOT_MARK_SIZE + LOT_MARK_GAP,
+};
+
+export function lotMarkDrop(areaId: AreaId, lotId: string): number {
+  return LOT_MARK_DROP[`${areaId}:${lotId}`] ?? 0;
+}
 
 /**
  * As marcas ("!"/"?" e a moeda de recurso) ficam ACIMA do prédio (dono, 04/11/2026): a base da fileira pousa `LOT_MARK_GAP` px acima
@@ -161,7 +174,7 @@ export function lotMarkRects(
   const y0 = pct(lot.top) * viewH - 0.8 * total;
   const b = lotArtBounds(areaId, lot.id) ?? [0, 0, 1, 1];
   const cx = x0 + ((b[0] + b[2]) / 2) * bw;
-  const bottom = Math.max(y0 + b[1] * bw - LOT_MARK_GAP, LOT_MARK_MIN_TOP + LOT_MARK_SIZE);
+  const bottom = Math.max(y0 + b[1] * bw - LOT_MARK_GAP + lotMarkDrop(areaId, lot.id), LOT_MARK_MIN_TOP + LOT_MARK_SIZE);
   const rowW = count * LOT_MARK_SIZE + Math.max(0, count - 1) * LOT_MARK_GAP;
   return Array.from({ length: count }, (_, i): Rect => {
     const left = cx - rowW / 2 + i * (LOT_MARK_SIZE + LOT_MARK_GAP);

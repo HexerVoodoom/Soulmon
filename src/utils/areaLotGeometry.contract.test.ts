@@ -12,7 +12,7 @@ import { describe, it, expect } from 'vitest';
 import { readdirSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
 import sharp from 'sharp';
-import { LOT_ART_BOUNDS, LOT_MARK_GAP, LOT_MARK_MIN_TOP, LOT_MARK_SIZE, lotArtBounds, lotHitRects, lotMarkRects, type Rect } from './areaLotGeometry';
+import { LOT_ART_BOUNDS, LOT_MARK_GAP, LOT_MARK_MIN_TOP, LOT_MARK_SIZE, lotArtBounds, lotHitRects, lotMarkDrop, lotMarkRects, type Rect } from './areaLotGeometry';
 import { mercadoLots, arenaLots, laboratorioLots, hallLots } from './areaSheetCopy';
 import { exploracaoLots, forjaLots, jogosLots } from './playAreaLots';
 import { MERCADO_LOT_ART, ARENA_LOT_ART, EXPLORACAO_LOT_ART, FORJA_LOT_ART, JOGOS_LOT_ART, LABORATORIO_LOT_ART, HALL_LOT_ART } from '../assets/soulmon/areas';
@@ -121,23 +121,34 @@ describe('marcas sobre o prédio ("!", "?" e a moeda) — ACIMA da arte, sem sob
         for (const l of lots) {
           const bw = Math.max(pct(l.width) / 100 * w, 120);
           const y0 = parseFloat(l.top) / 100 * h - 0.8 * (bw + 22);
+          const drop = lotMarkDrop(area, l.id);
           const artTop = y0 + (lotArtBounds(area, l.id)?.[1] ?? 0) * bw;
           const um = lotMarkRects(area, l, w, h, 1);
           const dois = lotMarkRects(area, l, w, h, 2);
-          const cabe = artTop - LOT_MARK_GAP - LOT_MARK_SIZE >= LOT_MARK_MIN_TOP; // há espaço acima do prédio?
+          const cabe = artTop - LOT_MARK_GAP - LOT_MARK_SIZE + drop >= LOT_MARK_MIN_TOP; // há espaço acima do prédio?
           for (const r of [...um, ...dois]) {
             expect(r.y0, `${area}:${l.id} ${w}×${h} fora da tela`).toBeGreaterThanOrEqual(LOT_MARK_MIN_TOP - 1e-6);
             // com espaço: a base fica exatamente `LOT_MARK_GAP` acima do topo da arte (nunca por cima do prédio)
-            if (cabe) expect(r.y1, `${area}:${l.id} ${w}×${h}`).toBeCloseTo(artTop - LOT_MARK_GAP, 5);
+            if (cabe) expect(r.y1, `${area}:${l.id} ${w}×${h}`).toBeCloseTo(artTop - LOT_MARK_GAP + drop, 5);
           }
           expect(um[0].x1 - um[0].x0).toBeCloseTo(LOT_MARK_SIZE, 5);
           // com duas, nenhuma encosta na outra (folga = LOT_MARK_GAP)
           expect(dois[1].x0 - dois[0].x1, `${area}:${l.id} as duas marcas`).toBeCloseTo(LOT_MARK_GAP, 5);
           // e, havendo espaço, nenhuma toca a caixa opaca do prédio
           const [art] = lotHitRects(area, l, w, h);
-          if (cabe) for (const r of dois) expect(inter(r, art), `${area}:${l.id} marca sobre o prédio`).toBe(false);
+          if (cabe && !drop) for (const r of dois) expect(inter(r, art), `${area}:${l.id} marca sobre o prédio`).toBe(false);
         }
       }
+    });
+  }
+
+  for (const [w, h] of VIEWPORTS) {
+    it(`${w}×${h}: nenhuma marca cobre o rótulo de outro prédio`, () => {
+      const ruins: string[] = [];
+      for (const [area, lots] of AREAS) for (const l of lots) for (const n of [1, 2]) for (const m of lotMarkRects(area, l, w, h, n)) for (const q of lots) {
+        if (q.id !== l.id && inter(m, lotHitRects(area, q, w, h)[1])) ruins.push(`${area}:${l.id} sobre o rótulo de ${q.id}`);
+      }
+      expect(ruins).toEqual([]);
     });
   }
 
