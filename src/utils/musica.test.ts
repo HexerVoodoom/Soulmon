@@ -136,7 +136,7 @@ describe('S18 — masmorra (mapa), evolução e meditação têm faixa própria'
     const lê = (p: string) => readFileSync(new URL(p, import.meta.url), 'utf8');
     expect(lê('../components/onboarding/intro/IntroCinematica.tsx')).toContain("entrarNaSuperficie('intro')");
     expect(lê('../components/EvolutionCeremony.tsx')).toContain("entrarNaSuperficie('evolucao')");
-    expect(lê('../components/refugio/RespiracaoGame.tsx')).toContain("entrarNaSuperficie('meditacao')");
+    expect(lê('../components/refugio/RespiracaoGame.tsx')).toContain("entrarNaSuperficie('respiracao')");
     expect(lê('../components/mente/BolhasGame.tsx')).toContain("calma ? entrarNaSuperficie('meditacao')");
     expect(lê('../components/RogueDungeon.tsx')).toContain("entrarNaSuperficie('masmorra-mapa')");
     expect(lê('../components/DungeonGame.tsx')).toContain("emDescida ? 'masmorra' : 'masmorra-mapa'");

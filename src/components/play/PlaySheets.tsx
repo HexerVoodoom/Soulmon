@@ -249,7 +249,7 @@ export function PptSheet({ language, onStart }: { language: Language; onStart: (
 
 export type SalaoGame = 'dino' | 'ppt' | 'match3' | 'barrage';
 export type MenteGame = 'eco' | 'zip' | 'selo';
-export type RefugioGame = 'respiracao' | 'bolhas-calmas';
+export type RefugioGame = 'respiracao' | 'bolhas-calmas' | 'chama';
 
 /** Salão de Jogos — jogos livres: a Corrida com obstáculos e o PPT, as mesmas folhas de sempre.
  *  I2 (01/10/2026): cada jogo é um CARD próprio (`sheetCard`), não mais dois
@@ -453,8 +453,11 @@ export function RefugioSheet({ language, onStart }: { language: Language; onStar
           <InfoTipSection title={isPt ? 'Respirar com o Soulmon' : 'Breathe with your Soulmon'}>
             {isPt ? 'Siga uma bolha que enche e esvazia devagar. Seu Soulmon respira junto.' : 'Follow a bubble that slowly fills and empties. Your Soulmon breathes along.'}
           </InfoTipSection>
-          <InfoTipSection title={isPt ? 'Bolhas calmas' : 'Calm bubbles'} last>
+          <InfoTipSection title={isPt ? 'Bolhas calmas' : 'Calm bubbles'}>
             {isPt ? 'Só estourar bolhas, no seu ritmo.' : 'Just pop bubbles, at your own pace.'}
+          </InfoTipSection>
+          <InfoTipSection title={isPt ? 'Chama' : 'Flame'} last>
+            {isPt ? 'Olhe uma chama, feche os olhos e guarde a imagem. Um sino suave guia as trocas.' : 'Gaze at a flame, close your eyes and hold the image. A soft bell guides each change.'}
           </InfoTipSection>
         </ModalInfo>
       <ul style={sheetCardList}>
@@ -471,6 +474,13 @@ export function RefugioSheet({ language, onStart }: { language: Language; onStar
           asks={isPt ? 'Sem tempo, sem placar' : 'No timer, no score'}
           cta={isPt ? 'Começar' : 'Start'}
           onStart={() => onStart('bolhas-calmas')}
+        />
+        <GameRow
+          dataKey="refugio" id="chama"
+          title={isPt ? 'Chama' : 'Flame'}
+          asks={isPt ? '3, 5 ou 10 minutos' : '3, 5 or 10 minutes'}
+          cta={isPt ? 'Começar' : 'Start'}
+          onStart={() => onStart('chama')}
         />
       </ul>
       <SupportNote isPt={isPt} data-refugio-ajuda />

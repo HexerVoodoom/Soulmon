@@ -41,6 +41,7 @@ import type { PasseioAchado } from '../play/PasseioSheet';
 import {
   usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame, loadZipGame, loadSeloGame,
   loadRespiracaoGame,
+  loadChamaGame,
 } from './playPrefetch';
 
 /**
@@ -90,6 +91,7 @@ const BolhasGame = lazy(() => loadBolhasGame().then(m => ({ default: m.BolhasGam
 const ZipGame = lazy(() => loadZipGame().then(m => ({ default: m.ZipGame })));
 const SeloGame = lazy(() => loadSeloGame().then(m => ({ default: m.SeloGame })));
 const RespiracaoGame = lazy(() => loadRespiracaoGame().then(m => ({ default: m.RespiracaoGame })));
+const ChamaGame = lazy(() => loadChamaGame().then(m => ({ default: m.ChamaGame })));
 
 /** Os handlers dos minijogos da Exploração e de Jogos — prontos no `App`, os
  *  MESMOS que a antiga `ActivitiesPage` repassava. Nenhuma regra nasce aqui:
@@ -680,6 +682,8 @@ export function AreaView(props: AreaViewProps) {
             {/* Refúgio — NÃO recebem `onEarnPoints`: não pagam Bits nem pontuam. Concluir devolve a energia do dia (`onComplete`, 1×/dia). */}
             {game === 'respiracao' && <RespiracaoGame {...base} onComplete={play.onRefugioComplete} />}
             {game === 'bolhas-calmas' && <BolhasGame {...base} mode="calma" onComplete={play.onRefugioComplete} />}
+            {/* Chama (04/11/2026): a exceção do Refúgio que paga — Bits FIXOS da sessão concluída, 1×/dia, pelo mesmo funil. */}
+            {game === 'chama' && <ChamaGame {...base} onEarnPoints={props.onEarnPoints} onComplete={play.onRefugioComplete} />}
           </Suspense>
           </div>
         )}
