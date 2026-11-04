@@ -134,3 +134,37 @@ export function lotHitRects(
   const label: Rect = { x0: x0 + (bw - labelW) / 2 + ox, y0: y0 + bw + oy - lift, x1: x0 + (bw + labelW) / 2 + ox, y1: y0 + total + oy - lift };
   return [art, label];
 }
+
+/** Lado de uma marca sobre o prédio ("!", "?" ou a moeda de recurso), em px. */
+export const LOT_MARK_SIZE = 32;
+/** Folga entre a base das marcas e o TOPO desenhado do prédio, e entre duas marcas lado a lado, em px. */
+export const LOT_MARK_GAP = 4;
+/** Piso das marcas: um prédio colado no topo da cena (o arco do Passeio, a torre das Conquistas) não manda a marca para fora da tela; nele a marca desce até aqui e cobre um pedaço do topo da arte (o único caso de sobreposição). */
+export const LOT_MARK_MIN_TOP = 8;
+
+/**
+ * As marcas ("!"/"?" e a moeda de recurso) ficam ACIMA do prédio (dono, 04/11/2026): a base da fileira pousa `LOT_MARK_GAP` px acima
+ * do topo desenhado da arte, centrada na arte; com duas, lado a lado, sem tocar. Nunca sai da tela por cima (`LOT_MARK_MIN_TOP`). Espelha o `AreaScene` (mesma conta em CSS).
+ * Devolve os retângulos na ordem da fileira (esquerda → direita).
+ */
+export function lotMarkRects(
+  areaId: AreaId,
+  lot: { id: string; left: string; top: string; width?: string; label: string },
+  viewW: number,
+  viewH: number,
+  count: number,
+): Rect[] {
+  const pct = (s: string) => parseFloat(s) / 100;
+  const bw = Math.max(pct(lot.width ?? '38%') * viewW, LOT_MIN_WIDTH_PX);
+  const total = bw + LOT_LABEL_H;
+  const x0 = pct(lot.left) * viewW - bw / 2;
+  const y0 = pct(lot.top) * viewH - 0.8 * total;
+  const b = lotArtBounds(areaId, lot.id) ?? [0, 0, 1, 1];
+  const cx = x0 + ((b[0] + b[2]) / 2) * bw;
+  const bottom = Math.max(y0 + b[1] * bw - LOT_MARK_GAP, LOT_MARK_MIN_TOP + LOT_MARK_SIZE);
+  const rowW = count * LOT_MARK_SIZE + Math.max(0, count - 1) * LOT_MARK_GAP;
+  return Array.from({ length: count }, (_, i): Rect => {
+    const left = cx - rowW / 2 + i * (LOT_MARK_SIZE + LOT_MARK_GAP);
+    return { x0: left, y0: bottom - LOT_MARK_SIZE, x1: left + LOT_MARK_SIZE, y1: bottom };
+  });
+}

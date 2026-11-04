@@ -1,5 +1,6 @@
 import { RankingPanel } from './RankingPanel';
 import { ResultScreen } from './games/ResultScreen';
+import { essenceLedgerRows } from '../utils/resultEssences';
 import { lotIconName } from '../utils/lotIcons';
 import { getOpponents } from '../utils/community';
 import { opponentSprite } from '../utils/opponentArt';
@@ -161,6 +162,8 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seed, demoCharacterId, playerLevel, pvpProp]);
   const [boss, setBoss] = useState<BossRound | null>(first.boss);
+  /** Essências da rodada (as mesmas creditadas por `onElementsDefeated`): entram no livro "Ganhou". */
+  const [essenciasRodada, setEssenciasRodada] = useState<EssenceDrop[]>([]);
   const bossRef = useRef(boss);
   bossRef.current = boss;
   // no BOSS a partida é contra o boss, mesmo vindo do PvP: a tela não mostra o oponente
@@ -269,7 +272,11 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
     overRef.current = true;
     if (combatRef.current.outcome === 'win' && elementsDefeatedRef.current) {
       const ids = combatRef.current.enemies.flatMap(e => dexIdsOfFoe(rosterEntryOfKey(e.roster)));
-      if (ids.length > 0) elementsDefeatedRef.current(ids, combatRef.current.enemies.map(e => { const r = rosterEntryOfKey(e.roster); return r ? essenceDropOfFoe(r.elements, r.stage) : undefined; }).filter((d): d is EssenceDrop => !!d));
+      if (ids.length > 0) {
+        const drops = combatRef.current.enemies.map(e => { const r = rosterEntryOfKey(e.roster); return r ? essenceDropOfFoe(r.elements, r.stage) : undefined; }).filter((d): d is EssenceDrop => !!d);
+        elementsDefeatedRef.current(ids, drops);
+        setEssenciasRodada(drops);
+      }
     }
     if (challengeRef.current) { challengeRef.current.onResult(combatRef.current.outcome === 'win'); return; }
     // BOSS: sem Bits, sem recorde nem ranking; vencer = +1 Fragmento de Boss
@@ -637,6 +644,7 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
     if (pvpProp && onNewOpponent) { onNewOpponent(); return; }
     timers.current.forEach(clearTimeout);
     timers.current.clear();
+    setEssenciasRodada([]);
     const sd = seed === undefined ? freshSeed() : seed + 1;
     const r = newRound(sd);
     const nb = bossFor(sd, challenge);
@@ -981,8 +989,8 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
           recordNote={isPt ? 'Novo recorde' : 'New best'}
           strip={pvp || boss || !hadBest ? undefined : [{ key: 'best', label: isPt ? 'Seu recorde' : 'Your best', value: best, hideOnRecord: true }]}
           ledger={boss
-            ? (win ? [{ key: 'boss-shard', kind: 'item', label: isPt ? 'Fragmento de Boss' : 'Boss Shard', amount: 1 }] : [])
-            : [{ key: 'bits', kind: 'bits', value: earned }]}
+            ? [...(win ? [{ key: 'boss-shard', kind: 'item' as const, label: isPt ? 'Fragmento de Boss' : 'Boss Shard', amount: 1 }] : []), ...essenceLedgerRows(essenciasRodada)]
+            : [{ key: 'bits', kind: 'bits' as const, value: earned }, ...essenceLedgerRows(essenciasRodada)]}
           emptyLedgerLine={boss ? (isPt ? 'Sem Fragmento de Boss desta vez.' : 'No Boss Shard this time.') : (isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.')}
           petSrc={playerSprite}
           opponentSrc={pvp ? pvp.sprite : (wildPlayers[0]?.spriteUrl ?? rosterOf(combat.enemies[0])?.src)}

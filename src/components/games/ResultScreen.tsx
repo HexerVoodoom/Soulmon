@@ -29,6 +29,7 @@ import { sm2Button, sm2Hint } from '../form/FormKit';
 import { CURRENCIES, emblemStyle } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
 import type { DailyEvent } from '../../utils/dailyMissions';
+import { essenceIconSrc, essenceName } from '../../utils/resultEssences';
 import { useResultExtras } from './ResultExtrasContext';
 
 /** Desfecho visual: `record` = pico, `win` = alegria, `calm` = fim neutro, `tired` = sem vitória (acolhedor, nunca luto). */
@@ -66,6 +67,8 @@ export type ResultLedgerRow =
   | { key: string; kind: 'xp'; value: number }
   /** `itemKind` resolve o ícone pelo resolvedor único (`utils/rewardIcons`); `icon` é o escape para uma arte avulsa. */
   | { key: string; kind: 'item'; label: string; amount?: number; icon?: string; itemKind?: RewardItemKind }
+  /** Essência de um elemento (drop de inimigo derrotado): ícone do elemento + nome + ×qtd. */
+  | { key: string; kind: 'essence'; id: string; qty: number }
   | { key: string; kind: 'node'; label: string; node: ReactNode }
   | { key: string; kind: 'text'; label: string };
 
@@ -243,7 +246,7 @@ export function ResultScreen(p: ResultScreenProps) {
   const titleRef = useRef<HTMLHeadingElement>(null);
   const [summary, setSummary] = useState('');
 
-  const ledger = (p.ledger ?? []).filter(r => !((r.kind === 'bits' || r.kind === 'honor' || r.kind === 'xp') && r.value <= 0));
+  const ledger = (p.ledger ?? []).filter(r => !((r.kind === 'bits' || r.kind === 'honor' || r.kind === 'xp') && r.value <= 0) && !(r.kind === 'essence' && !(r.qty >= 1)));
   const strip = (p.strip ?? []).filter(c => !(record && c.hideOnRecord));
   const stats = p.stats ?? [];
   const honorName = CURRENCIES.emblems.name[isPt ? 'pt' : 'en'];
@@ -269,7 +272,7 @@ export function ResultScreen(p: ResultScreenProps) {
     p.deepest ? `${p.deepest.label}: ${p.deepest.value}` : '',
     recordText,
     ...stats.map(c => `${c.label}: ${typeof c.value === 'number' || typeof c.value === 'string' ? c.value : ''}`),
-    ...ledger.map(r => r.kind === 'bits' ? `${r.value} Bits` : r.kind === 'honor' ? `+${r.value} ${honorName}` : r.kind === 'xp' ? `+${r.value} XP` : r.kind === 'item' ? `${r.label}${r.amount ? ` ×${r.amount}` : ''}` : r.label),
+    ...ledger.map(r => r.kind === 'bits' ? `${r.value} Bits` : r.kind === 'honor' ? `+${r.value} ${honorName}` : r.kind === 'xp' ? `+${r.value} XP` : r.kind === 'item' ? `${r.label}${r.amount ? ` ×${r.amount}` : ''}` : r.kind === 'essence' ? `${essenceName(r.id, isPt)} ×${r.qty}` : r.label),
     ledger.length === 0 ? p.emptyLedgerLine : '',
   ].filter(Boolean).join('. ');
 
@@ -445,7 +448,8 @@ export function ResultScreen(p: ResultScreenProps) {
                         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-ink)', textAlign: 'left' }}>
                           {r.kind === 'item' && <ItemRowIcon r={r} on={shown} still={still} />}
                           {r.kind === 'xp' && <Icon name="star" size={20} fill={1} tone="gold" />}
-                          {r.kind === 'bits' ? 'Bits' : r.kind === 'honor' ? honorName : r.kind === 'xp' ? 'XP' : r.label}
+                          {r.kind === 'essence' && <RewardIcon src={essenceIconSrc(r.id) ?? null} size={24} on={shown} still={still} data-result-essence-icon={r.id} />}
+                          {r.kind === 'bits' ? 'Bits' : r.kind === 'honor' ? honorName : r.kind === 'xp' ? 'XP' : r.kind === 'essence' ? essenceName(r.id, isPt) : r.label}
                         </span>
                         {r.kind === 'bits' && (
                           <RewardPop on={shown} still={still} data-result-bits-pop>
@@ -455,6 +459,7 @@ export function ResultScreen(p: ResultScreenProps) {
                         {r.kind === 'honor' && <RewardPop on={shown} still={still}><span className="sm2-num" data-result-honor style={{ ...emblemStyle, fontSize: 20 }}>+{r.value}</span></RewardPop>}
                         {r.kind === 'xp' && <RewardPop on={shown} still={still}><span className="sm2-num" data-result-xp style={{ fontSize: 20 }}>+{r.value}</span></RewardPop>}
                         {r.kind === 'node' && <span style={{ display: 'inline-flex', alignItems: 'center' }}>{r.node}</span>}
+                        {r.kind === 'essence' && <span className="sm2-num" data-result-essence={r.id} style={{ fontWeight: 600 }}>×{r.qty}</span>}
                         {r.kind === 'item' && r.amount ? <span className="sm2-num" style={{ fontWeight: 600 }}>×{r.amount}</span> : null}
                       </div>
                     );
