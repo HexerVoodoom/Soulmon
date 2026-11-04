@@ -8,7 +8,7 @@
  */
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { renderHook, act, cleanup } from '@testing-library/react';
-import { useGroupBattle, type GroupRound, type GroupScene } from './useGroupBattle';
+import { useGroupBattle, RAPIDO_RING_GRADE, type GroupRound, type GroupScene } from './useGroupBattle';
 import type { GroupResult } from '../../utils/combate/group';
 import { dungeonFight, dungeonFightSeed, autoRingGrade, autoDodgeGrade, type DungeonPlayerCfg } from '../../utils/dungeonFight';
 import { dungeonWaveOf, playAutoFight } from '../../utils/dungeonAway';
@@ -29,13 +29,13 @@ const scene = (): GroupScene => ({
   labels: { blocked: 'B', ring: { ruim: 'r', bom: 'b', otimo: 'o' }, dodge: {} },
 });
 
-async function lutar(speed: number, auto: boolean): Promise<{ res: GroupResult; gastoMs: number; viuAnel: boolean }> {
+async function lutar(speed: number, auto: boolean, notas: (string | null)[] = []): Promise<{ res: GroupResult; gastoMs: number; viuAnel: boolean }> {
   vi.useFakeTimers();
   let res: GroupResult | null = null;
   let viuAnel = false;
   const round = (): GroupRound => {
     const f = dungeonFight(cfg, enemy.foe, fseed, false);
-    return { player: f.player, foes: f.foes, seed: f.seed, startHp: 1, startEnergy: 100, hitScale: f.hitScale, castScale: ({ who, ring, dodge }) => f.castScale({ who, ring, dodge }) };
+    return { player: f.player, foes: f.foes, seed: f.seed, startHp: 1, startEnergy: 100, hitScale: f.hitScale, castScale: ({ who, ring, dodge }) => { if (who === 0) notas.push(ring); return f.castScale({ who, ring, dodge }); } };
   };
   const { result } = renderHook(() => useGroupBattle({
     running: true, paused: false, reduced: false, runKey: 1, seed: 7, round, scene, torcida: false, speed,
@@ -99,5 +99,18 @@ describe('Masmorra — avanço rápido e especial automático', () => {
     expect(a).toEqual(b);
     const d1 = [0, 1, 2].map(n => autoDodgeGrade(fseed, n));
     expect(d1).toEqual([0, 1, 2].map(n => autoDodgeGrade(fseed, n)));
+  });
+
+  it('MODO RÁPIDO (04/11/2026): sem o automático, em 2× e 3× o anel NUNCA abre e todo especial do pet sai com intensidade MÉDIA (bom)', async () => {
+    expect(RAPIDO_RING_GRADE).toBe('bom');
+    for (const v of [2, 3]) {
+      const notas: (string | null)[] = [];
+      const r = await lutar(v, false, notas);
+      cleanup(); vi.useRealTimers();
+      expect(r.viuAnel).toBe(false);
+      expect(r.res).toBeTruthy();
+      expect(notas.length).toBeGreaterThan(0);
+      expect(notas.every(n => n === 'bom')).toBe(true);
+    }
   });
 });

@@ -26,6 +26,9 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+/** Modo rápido (speed > 1): a nota fixa do especial do pet, o meio da faixa do anel (`ruim` < `bom` < `otimo`). */
+export const RAPIDO_RING_GRADE: RingGrade = 'bom';
+
 /** §202: a pausa entre o anúncio do especial (a carga) e o anel de tempo aparecer (ms). */
 export const RING_LEAD_MS = 1000;
 import type { StageAction, StageHit } from './BattleStage';
@@ -384,6 +387,11 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             if (auto) {
               // ESPECIAL AUTOMÁTICO (§36): sem anel — o Soulmon carrega sozinho; a nota é o sorteio com semente do número do cast.
               ringG = auto.ring(nRing++);
+            } else if ((optsRef.current.speed ?? 1) > 1) {
+              // MODO RÁPIDO (dono, 04/11/2026): sem anel de carga — ao encher a energia o Soulmon solta o especial sozinho
+              // com a intensidade do MEIO da faixa (`bom`, multiplicador 1). Em 1× nada muda: o anel abre como sempre.
+              nRing++;
+              ringG = RAPIDO_RING_GRADE;
             } else {
               const spec = ringSpec(seed, nRing++);
               setCharging(true);
