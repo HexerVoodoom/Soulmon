@@ -90,6 +90,11 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `anniversary.test.ts`
 **Regra de negócio:** Aniversário de mês/ano da relação, contado a partir de `bornAt`. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/editHome.ts`
+**Dono de:** a lógica pura do "Editar Home" (04/11/2026): `editableSlots` (espaços que o cenário oferece), `decorOptionsForSlot` (peças possuídas que ocupam o espaço e servem no cenário), `ownedFittingCount`, `pickDecor` (sobre `applyDecorEquip`; `null` esvazia), `decorEqual`, tipo `DecorMap`.
+**Chamado por:** `components/perfil/EditHomeScreen.tsx`.
+**Régua:** `src/components/perfil/EditHomeScreen.render.test.tsx`.
+
 ### `src/utils/elementoDoOraculo.ts`
 **Dono de:** validar o id do oráculo (27/10/2026, REGISTRO §150 revisto): o alias `planta`→`vida` / `industrial`→`aco` foi APAGADO; planta e industrial passam como são (ícone, FX, cenário e criatura próprios).
 **Exports:**

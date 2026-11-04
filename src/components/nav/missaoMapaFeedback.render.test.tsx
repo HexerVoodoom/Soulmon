@@ -52,3 +52,14 @@ describe('Feedback da Home', () => {
     expect(Number(a.style.zIndex)).toBeGreaterThan(5);
   });
 });
+
+describe('Feedback da Home: ícone', () => {
+  it('besouro em CONTORNO (Outlined, viewBox 960) dentro do círculo do anel de canto', () => {
+    const { container } = render(<HomeFeedbackButton language="pt-BR" />);
+    const a = container.querySelector('[data-home-feedback]') as HTMLAnchorElement;
+    expect(a.style.borderRadius).toBe('50%');
+    expect(a.style.width).toBe('44px');
+    const svg = a.querySelector('svg[data-bug-outline]') as SVGElement;
+    expect(svg.getAttribute('viewBox')).toBe('0 -960 960 960');
+  });
+});
