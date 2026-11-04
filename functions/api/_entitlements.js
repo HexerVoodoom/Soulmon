@@ -812,6 +812,7 @@ export async function grantCourtesy(env, saveId, max = courtesyMaxFrom(env)) {
     orderId,
     grantTier: 'paid',
     grantCredits: 0,
+    grantFrame: null,
     provider: COURTESY_PROVIDER,
     productId: COURTESY_PROVIDER,
     purchaseToken: null,

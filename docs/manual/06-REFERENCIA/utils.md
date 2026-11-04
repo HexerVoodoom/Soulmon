@@ -4197,3 +4197,9 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 **Dono de:** aplicar o nome do especial escolhido pelo jogador POR CIMA da ficha, em leitura (REGISTRO §222): o cache `soulmonSkills` do save não é reescrito; sem nome, devolve a própria ficha.
 **Exports:** `comNomeDoEspecial(skills, nome)`.
 **Chamado por:** `src/App.tsx` (as telas de luta e o Perfil recebem a ficha já com o nome).
+
+### `src/utils/widgetFrames.ts`
+
+**Dono de:** as molduras do widget V-Pet por elemento base: catálogo, posse (evolução ou compra real) e moldura equipada.
+
+**Chamado por:** `src/components/WidgetFramePicker.tsx`, `src/contexts/GameStateContext.tsx`.
