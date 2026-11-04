@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { elementIcon } from '../utils/elementIconArt';
 import { nightmareIcon } from '../utils/nightmareElement';
 import { essenceName } from '../utils/essences';
+import { ElementBaseSlots, emptySlots } from './ElementBaseSlots';
+import { elementMatchesBases } from '../utils/elementPotion';
 
 /**
  * ESSÊNCIAS (Laboratório > Arquivo, logo abaixo da coleção de Sonhos; 28/10/2026, REGISTRO §183). Só as com quantidade > 0.
@@ -11,11 +13,20 @@ import { essenceName } from '../utils/essences';
 export function EssencesSection({ essences, language = 'en-US' }: { essences: Record<string, number> | undefined; language?: string }) {
   const isPt = language === 'pt-BR';
   const [openId, setOpenId] = useState<string | null>(null);
-  const list = Object.entries(essences ?? {}).filter(([, n]) => n > 0);
-  if (list.length === 0) return null;
+  // Filtro por bases (o mesmo do Cambista, `ElementBaseSlots` + regra E de `elementMatchesBases`).
+  const [bases, setBases] = useState<(string | null)[]>(emptySlots);
+  const all = Object.entries(essences ?? {}).filter(([, n]) => n > 0);
+  if (all.length === 0) return null;
+  const list = all.filter(([id]) => elementMatchesBases(id, bases));
   return (
     <section data-essences aria-label={isPt ? 'Essências' : 'Essences'}>
       <p className="sm2-lib-s" style={{ margin: '0 0 8px' }}>{isPt ? 'Essências' : 'Essences'}</p>
+      <div style={{ margin: '0 0 12px' }} data-base-filter>
+        <ElementBaseSlots slots={bases} isPt={isPt} onChange={(i, v) => { setBases(s => s.map((x, j) => (j === i ? v : x))); setOpenId(null); }} />
+      </div>
+      {list.length === 0 && (
+        <p className="sm2-lib-s" data-filter-empty style={{ margin: 0 }}>{isPt ? 'Nenhuma essência com essas bases.' : 'No essence with these bases.'}</p>
+      )}
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexWrap: 'wrap', gap: 12 }}>
         {list.map(([id, n]) => {
           const icon = id === 'pesadelo' ? nightmareIcon() : elementIcon(id);

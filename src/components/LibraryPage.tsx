@@ -37,6 +37,8 @@ import { NewBadge } from './LibraryNewBadge';
 import { libraryNewKeys, type LibraryAck } from '../utils/libraryNew';
 import type { StrayPlayerSeen } from '../utils/strayPlayers';
 import { ElementDex } from './ElementDex';
+import { ElementBaseSlots, emptySlots } from './ElementBaseSlots';
+import { elementMatchesBases, selectedBases } from '../utils/elementPotion';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import { MiniGlass } from './ui/MiniGlass';
@@ -159,6 +161,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   useEffect(() => { if (view === 'directory') onLibraryOpened?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const isPt = language === 'pt-BR';
   const [search, setSearch] = useState('');
+  const [petBases, setPetBases] = useState<(string | null)[]>(emptySlots);
   const [players, setPlayers] = useState<DirectoryPlayer[] | null>(null);
   /** Erro de CARGA (rede/servidor). Separado de "lista vazia", de propósito. */
   const [loadError, setLoadError] = useState(false);
@@ -323,6 +326,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   /** Nome que a linha mostra: no Hall é o da CRIATURA (C6); fora dele, o do jogador. */
   const nomeDe = (p: LibraryEntry) => (seenOnly ? (p.petName || p.name) : p.name);
   const searchLower = search.trim().toLowerCase();
+  const filteringPets = selectedBases(petBases).length > 0;
   const npcMatches: LibraryEntry[] = LIBRARY_NPCS.filter(p => !searchLower || p.name.toLowerCase().includes(searchLower) || p.petName.toLowerCase().includes(searchLower));
   const directoryAll: LibraryEntry[] | null = players === null ? null : [...(players ?? []), ...(seenOnly ? LIBRARY_NPCS : npcMatches)];
   const onlySeen = seenOnly;
@@ -332,6 +336,8 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       // Sem busca: só os já vistos e os amigos (H17). COM busca: o diretório inteiro — senão jogador novo nunca aparece (QA R7).
       .filter(p => searchLower !== '' || seen.includes(p.id) || friends.includes(p.id))
       .filter(p => !searchLower || p.petName.toLowerCase().includes(searchLower) || p.name.toLowerCase().includes(searchLower))
+      // Filtro por bases do elemento (o mesmo do Cambista): Soulmon cujo elemento contém todas as bases escolhidas.
+      .filter(p => elementMatchesBases(p.element, petBases))
       .sort((a, b) => nomeDe(a).localeCompare(nomeDe(b), language, { sensitivity: 'base' }))
     : directoryAll;
 
@@ -561,13 +567,21 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
         </div>
       )}
 
+      {seenOnly && tab === 'directory' && !outroPainel && (
+        <div style={{ margin: '0 0 12px' }} data-base-filter>
+          <ElementBaseSlots slots={petBases} isPt={isPt} onChange={(i, v) => setPetBases(s => s.map((x, j) => (j === i ? v : x)))} />
+        </div>
+      )}
+
       {/* ── Vazio: UMA frase, sem ilustração, sem "0 friends" ── */}
       {list && list.length === 0 && tab !== 'coop' && !outroPainel && !(loadError && tab === 'directory') && (
         <p className="sm2-lib-s" style={{ textAlign: 'center', padding: '24px 0', margin: 0 }}>
           {tab === 'friends'
             ? (isPt ? 'Você ainda não tem amigos. Digite o nome de alguém acima.' : 'You have no friends yet. Type someone’s name above.')
             : onlySeen
-              ? (searchLower
+              ? (filteringPets
+                ? (isPt ? 'Nenhum Soulmon com essas bases.' : 'No Soulmon with these bases.')
+                : searchLower
                 ? (isPt ? 'Nenhum Soulmon com esse nome.' : 'No Soulmon has that name.')
                 : (isPt ? 'Os Soulmons que você abrir ficam guardados nesta lista. Para achar alguém novo, busque pelo nome.' : 'The Soulmons you open stay on this list. To find someone new, search by name.'))
               : (isPt ? 'Nenhum jogador com esse nome.' : 'No player by that name.')}

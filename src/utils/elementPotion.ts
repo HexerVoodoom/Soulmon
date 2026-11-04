@@ -72,11 +72,25 @@ export function canAffordPotion(essences: Record<string, number> | undefined, el
 
 /** Filtro E: elementos cuja composição contém TODAS as bases escolhidas (sem escolha = todos). Ordem do catálogo. */
 export function elementsMatchingBases(selected: readonly (string | null | undefined)[]): string[] {
-  const sel = [...new Set(selected.filter((s): s is string => typeof s === 'string' && BASE_ELEMENT_IDS.includes(s)))];
-  return ALL_ELEMENT_IDS.filter(id => {
-    const comp = elementComposition(id) ?? [];
-    return sel.every(s => comp.includes(s));
-  });
+  return ALL_ELEMENT_IDS.filter(id => compositionHasBases(elementComposition(id), selected));
+}
+
+/** Bases válidas escolhidas no filtro (sem repetição, sem vazio). */
+export function selectedBases(selected: readonly (string | null | undefined)[]): string[] {
+  return [...new Set(selected.filter((s): s is string => typeof s === 'string' && BASE_ELEMENT_IDS.includes(s)))];
+}
+
+/** Regra única do filtro por bases (E): a composição contém TODAS as bases escolhidas. Sem escolha = passa tudo; composição desconhecida só passa sem escolha. */
+export function compositionHasBases(comp: readonly string[] | undefined, selected: readonly (string | null | undefined)[]): boolean {
+  const sel = selectedBases(selected);
+  if (sel.length === 0) return true;
+  return !!comp && sel.every(s => comp.includes(s));
+}
+
+/** O mesmo filtro aplicado a um id de elemento qualquer (Drive, Essências). `pesadelo`/curados sem composição saem quando há filtro. */
+export function elementMatchesBases(id: string | null | undefined, selected: readonly (string | null | undefined)[]): boolean {
+  if (selectedBases(selected).length === 0) return true;
+  return !!id && compositionHasBases(elementComposition(id), selected);
 }
 
 /** Os que cabem no filtro E o jogador consegue pagar. */
