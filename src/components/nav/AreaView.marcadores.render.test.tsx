@@ -29,7 +29,8 @@ const base = (over: Record<string, unknown> = {}): ComponentProps<typeof AreaVie
 }) as unknown as ComponentProps<typeof AreaView>;
 
 const lote = (c: HTMLElement, id: string) => c.querySelector(`[data-area-lot="${id}"]`) as HTMLElement;
-const marca = (c: HTMLElement, id: string) => lote(c, id).querySelector('[data-mission-mark]') as HTMLElement | null;
+/** As marcas moram numa camada própria por cima dos lotes (dono, 04/11/2026): a caixa `data-lot-marks-box` é o clone invisível do lote. */
+const marca = (c: HTMLElement, id: string) => c.querySelector(`[data-lot-marks-box="${id}"] [data-mission-mark]`) as HTMLElement | null;
 
 describe('marcadores de missão nos prédios', () => {
   it('"!" no Caderno quando a missão está disponível; nos outros prédios, nada', () => {
@@ -55,7 +56,7 @@ describe('marcadores de missão nos prédios', () => {
     const onVisitBuilding = vi.fn();
     const { container } = renderWithCss(<AreaView {...base({ onVisitBuilding, buildingMarks: { 'forja.caderno': 'ready' } })} />);
     const m = marca(container, 'caderno')!;
-    expect((m.parentElement as HTMLElement).style.pointerEvents).toBe('none');
+    expect((m.closest('[data-lot-marks-box]') as HTMLElement).style.pointerEvents).toBe('none');
     expect(container.querySelector('[data-claim], [data-resgatar]')).toBeNull();
     await act(async () => { fireEvent.click(lote(container, 'caderno')); });
     expect(onVisitBuilding).toHaveBeenCalledWith('forja.caderno');

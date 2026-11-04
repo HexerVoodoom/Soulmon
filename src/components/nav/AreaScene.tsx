@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import type { AreaId } from '../../navigation';
-import { lotArtBounds, lotHitBounds, lotLabelLift, lotLabelOffset } from '../../utils/areaLotGeometry';
+import { LOT_MARK_GAP, LOT_MARK_MIN_TOP, LOT_MARK_SIZE, lotArtBounds, lotHitBounds, lotLabelLift, lotLabelOffset } from '../../utils/areaLotGeometry';
 import { lotArtFilter } from './lotHalo';
 import { MissionMark } from '../play/MissionMark';
+import { LotCoin } from './LotCoin';
 import type { QuestMark as MissionMarkKind } from '../../utils/questMarks';
 import { Icon } from '../ui/Icon';
 import { lotIconArt, lotIconName } from '../../utils/lotIcons';
@@ -43,6 +44,8 @@ export interface AreaLot {
   width?: string;
   /** Marcador de missão sobre o lote (04/10/2026): "!" disponível, "?" pronta (`utils/questMarks.ts`). */
   mark?: MissionMarkKind;
+  /** Moeda de recurso disponível aqui (`utils/lotMarks.ts`): ao lado do "!", acima do prédio. */
+  coin?: boolean;
   /** Prédio trancado pelo Vínculo (`BUILDING_GATES`): arte cinza, cadeado e o Vínculo pedido. O toque ainda chega em `onOpen` (que mostra o aviso). */
   locked?: { minBond: number };
 }
@@ -195,12 +198,6 @@ export function AreaScene({ areaId, language, lots, background, notice, children
               <LockBadge minBond={lot.locked.minBond} language={language} />
             </span>
           )}
-          {lot.mark && !lot.locked && (
-            // Preso ao TOPO DA ARTE (não da caixa do lote): o lote mais alto da cena (ex.: a Masmorra) tinha a marca fora da tela.
-            <span style={{ position: 'absolute', top: `${(lotArtBounds(areaId, lot.id)?.[1] ?? 0) * 100}%`, left: '50%', transform: 'translate(-50%, 60%)', pointerEvents: 'none' }}>
-              <MissionMark kind={lot.mark} isPt={isPt} size={32} />
-            </span>
-          )}
           <span
             data-area-lot-label
             style={{
@@ -225,6 +222,37 @@ export function AreaScene({ areaId, language, lots, background, notice, children
           </span>
         </button>
       ))}
+
+      {/* CAMADA DAS MARCAS (dono, 04/11/2026): "!"/"?" e a moeda de recurso ficam ACIMA do prédio, numa camada própria por cima de TODOS os lotes
+          (dentro do lote o vizinho de cima, de z maior, tapava a marca). A camada é um contêiner de tamanho = a cena (cqw/cqh); cada fileira
+          repete a conta de `lotMarkRects` em CSS: base `LOT_MARK_GAP` px acima do TOPO DESENHADO da arte, centrada na arte, nunca acima do
+          piso `LOT_MARK_MIN_TOP`; "!" e moeda lado a lado. Não intercepta toque (o sinal é só visual, H11). Z 100: empata com o lote mais alto e ganha pela ordem no DOM, e os jogos (z 100, depois no DOM) a cobrem. */}
+      {lots.some(l => (l.mark || l.coin) && !l.locked) && (
+        <div data-lot-marks-layer aria-hidden={lots.some(l => l.mark && !l.locked) ? undefined : true} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 100, containerType: 'size' }}>
+          {lots.filter(l => (l.mark || l.coin) && !l.locked).map(l => {
+            const b = lotArtBounds(areaId, l.id) ?? [0, 0, 1, 1];
+            const w = parseFloat(l.width ?? LOT_WIDTH_DEFAULT);
+            const bw = `max(${w}cqw, 120px)`;
+            const y0 = `(${parseFloat(l.top)}cqh - 0.8 * (${bw} + 22px))`;
+            return (
+              <span
+                key={l.id}
+                data-lot-marks-box={l.id}
+                data-lot-marks
+                style={{
+                  position: 'absolute', display: 'flex', alignItems: 'flex-end', gap: LOT_MARK_GAP, pointerEvents: 'none',
+                  left: `calc(${parseFloat(l.left)}cqw - ${bw} / 2 + ${(b[0] + b[2]) / 2} * ${bw})`,
+                  top: `max(${LOT_MARK_MIN_TOP}px, calc(${y0} + ${b[1]} * ${bw} - ${LOT_MARK_GAP + LOT_MARK_SIZE}px))`,
+                  transform: 'translateX(-50%)',
+                }}
+              >
+                {l.mark && <MissionMark kind={l.mark} isPt={isPt} size={LOT_MARK_SIZE} />}
+                {l.coin && <LotCoin isPt={isPt} />}
+              </span>
+            );
+          })}
+        </div>
+      )}
 
       {lots.length === 0 && (
         <p

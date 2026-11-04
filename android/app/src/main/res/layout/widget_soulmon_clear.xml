@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget "Soulmon" transparente: SEM fundo, a criatura direto no papel de parede. Texto branco com
+     sombra preta curta; so a frase fica numa caixa escura de baixa opacidade. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:padding="6dp"
+    android:gravity="center_vertical">
+
+    <ViewFlipper
+        android:layout_width="72dp"
+        android:layout_height="72dp"
+        android:autoStart="true"
+        android:flipInterval="450">
+        <ImageView
+            android:id="@+id/widget_sprite"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:contentDescription="@null"
+            android:src="@drawable/sprite_starter_industrial" />
+        <ImageView
+            android:id="@+id/widget_sprite_2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:paddingTop="4dp"
+            android:contentDescription="@null"
+            android:src="@drawable/sprite_starter_industrial" />
+    </ViewFlipper>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/widget_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/widget_clear_speech"
+            android:padding="8dp"
+            android:textSize="13sp"
+            android:textColor="#FFFFFF"
+            android:shadowColor="#FF000000"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="2.5"
+            android:maxLines="3"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/widget_pet_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:paddingStart="2dp"
+            android:text="Soulmon"
+            android:textSize="13sp"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="#FFFFFF"
+            android:shadowColor="#FF000000"
+            android:shadowDx="0"
+            android:shadowDy="0"
+            android:shadowRadius="2.5"
+            android:includeFontPadding="false"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+</LinearLayout>

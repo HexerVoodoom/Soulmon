@@ -548,6 +548,14 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx` (`leading` do `HomeHud`).
 **Régua:** `src/components/nav/nav.render.test.tsx`.
 
+### `src/components/perfil/EditHomeScreen.tsx`
+**Dono de:** "Editar Home" (04/11/2026) — tela cheia, em portal, aberta pela linha do grupo Perfil das Configurações: o retângulo da Home com o cenário aplicado, ponto branco a 50% em cada espaço vazio e folha (`ModalSheet`) com as peças que a pessoa tem e cabem no espaço, mais "Vazio". Tudo é rascunho local até Salvar.
+**Props principais:** `EditHomeProps` — `language`, `ownedFurniture`, `equippedDecor`, `equippedBackground`, `onSave(decor)`, `onClose`, `onOpenShop?`.
+**Exports:** `EditHomeScreen`, `EditHomeProps`.
+**Estado/efeitos relevantes:** `draft` (cópia de `equippedDecor`) e `picking` (espaço aberto); reusa `PetStageDecor` para desenhar o rascunho; Salvar só fica ativo com mudança; o pet fica de fora.
+**Chamado por:** `components/SettingsPage.tsx` (`profile.editHome`, montado no `App.tsx` com `handleSaveHomeDecor`, que grava o mesmo `equippedDecor` da loja).
+**Régua:** `src/components/perfil/EditHomeScreen.render.test.tsx`.
+
 ### `src/components/perfil/DemoSoundButton.tsx`
 **Dono de:** o botão de SOM da demo do portfólio (15/10/2026): no lugar do avatar na Home, liga/desliga todo o áudio pelo mudo existente; alvo 44, aria PT/EN. A demo não abre Configurações.
 **Props principais:** `muted`, `language`, `onToggle`.
@@ -704,6 +712,11 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Exports:** `useBattleSpeed()` (`{ speed, speedRef, cycle }`) · `BattleSpeedButton({ speed, onCycle, isPt, corner?, attr? })` · `battleSpeedLabel`.
 **Quem chama:** `DungeonGame`, `NightmareBattle`, `ArenaGame`, `RogueFight`, `GroveRaidFight`. Fora de propósito: o Torneio ranqueado e os replays de servidor (`DuelScreen`, `BossFightScreen`), cujo resultado já vem decidido.
 **Régua:** `DungeonGame.beta-play.render.test.tsx`.
+### `src/components/games/BossSplash.tsx`
+**Dono de:** o splash de TELA CHEIA do boss dos minigames (04/11/2026): arte grande (slot `portrait` 9:16 de `assets/soulmon/boss/<id>.webp`, fallback no sprite), título, nome do monstro e, opcional, cartões das regras. Toque em qualquer lugar pula; sem movimento com `prefers-reduced-motion`.
+**Exports:** `BossSplash`, `BossSplashCard`.
+**Chamado por:** `src/components/Match3Game.tsx` (3 regras), `src/components/SoulBarrage.tsx` (boss especial, sem cartões). **Régua:** `games/BossSplash.render.test.tsx`.
+
 ### `src/components/games/ResultExtrasContext.ts`
 **Dono de:** o contexto que leva os extras do resultado (`utils/resultExtras.ts`) do `App` até o `ResultScreen` sem prop-drilling. Sem Provider = sem extras.
 **Exports:** `ResultExtrasContext` · `useResultExtras()`.
@@ -1528,6 +1541,12 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 
 ### `src/components/ui/RewardPop.tsx`
 **Dono de:** as peças de desenho da REVELAÇÃO DE RECOMPENSA (dono, 28/10/2026): `RewardPop` (o que nasce minúsculo, passa um pouco do tamanho e assenta — keyframes `sm-pop-in` no fim do `index.css`; invisível mas ocupando o lugar antes de nascer), `RewardIcon` (ícone pelado em pixel-art dentro de `RewardPop`) e `RollingCount` (odômetro de caça-níquel: colunas de dígitos que rolam de 0 ao valor; o valor final fica sempre no DOM em `sm2-sr-only`, os dígitos são desenhados por CSS `::before` para o `textContent` não poluir). Quem sequencia é `hooks/useRewardReveal.ts`; o cronograma é `utils/rewardReveal.ts`. **Usado em:** `games/ResultScreen.tsx`, `DungeonReturnModal.tsx`, `ui/BitsAmount.tsx` (prop `roll`), `ui/BitsReveal.tsx`. **Régua:** `games/ResultScreen.reveal.render.test.tsx`.
+
+### `src/components/ui/EnergyCost.tsx`
+**Dono de:** o ícone de custo de energia nos botões e cartões (04/11/2026, dono). Decorativo (`aria-hidden`), `data-energy-cost`. **Usado em:** `play/PlaySheets.tsx` (Salão, Masmorra), `PlayCard.tsx` (Brincar), `DungeonGame.tsx` (Descer), `play/OficinaSheet.tsx` (iniciar foco). Régua: `play/energiaCusto.render.test.tsx`.
+
+### `src/components/nav/LotCoin.tsx`
+**Dono de:** a moeda de recurso sobre o prédio do mapa (04/11/2026, dono): raio da energia amarelo num círculo escuro de fio de cobre; só indica que há recurso a pegar. **Usado em:** `nav/AreaScene.tsx` (camada de marcas). Regra de quando acende: `src/utils/lotMarks.ts`.
 
 ### `src/components/ui/BitsReveal.tsx`
 **Dono de:** a linha ÚNICA de Bits de um fim de partida com a revelação padrão (a moeda estoura, o número rola e pousa com o "ding"; toque pula). **Usado em:** `mente/TrocaGame.tsx`, `mente/PicrossGame.tsx`, `mente/RevisaoGame.tsx`. Telas com mais de uma linha de recompensa usam `ResultScreen`. **Régua:** `mente/revisaoRespiracao.render.test.tsx`.

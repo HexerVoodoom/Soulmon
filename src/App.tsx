@@ -27,10 +27,11 @@ import { questMarks, questMarkLabel } from './utils/questMarks';
 import { markMindGameTutorial } from './utils/mente/mindTutorials';
 import { applyFeat, emitFeat, subscribeFeats } from './utils/feats';
 import { bumpDaily, claimDaily, claimFirst, dailyForDay, dailyMissionsMark, firstTimesMark, markFirst, markFirstForEvent, type DailyEvent } from './utils/dailyMissions';
+import { lotCoins, lotMissionMarks } from './utils/lotMarks';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
-import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
+import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, hungryFrom, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
@@ -80,7 +81,7 @@ import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { gaugeFull, gaugeContribution, gaugeGoalFor } from './utils/evolutionGauge';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
-import { SoulmonWidget, widgetPetName, widgetPetLine, widgetGroveStage } from './plugins/SoulmonWidgetPlugin';
+import { SoulmonWidget, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt } from './plugins/SoulmonWidgetPlugin';
 import { unlockedAchievements, achievementPointsTotal, settleAchievements, ACHIEVEMENT_POINTS, ACHIEVEMENT_LABELS } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
@@ -2577,11 +2578,19 @@ export default function App() {
       // Vazio = o plugin remove a chave. Sem timer: roda quando `grove` muda.
       petLine: widgetPetLine(gameState),
       groveStage: widgetGroveStage(grove),
+      // Widget redimensionável (REGISTRO §221): a fome vai como INSTANTE para o refresh de hora em hora acertar com o app fechado.
+      ...(() => {
+        const hungryAtMs = hungryFrom(gameState.hunger);
+        return hungryAtMs === null ? {} : { hungryAtMs };
+      })(),
+      nextTaskName: widgetNextTask(gameState as never, new Date(), dailyDone, dailyTotal),
+      dayEndsAtMs: widgetDayEndsAt(new Date()),
     }).catch(() => {});
   }, [gameState.evolutionStage, gameState.currentBranch, gameState.eggType,
       gameState.healthPoints, gameState.maxHealthPoints, gameState.energyPoints,
       gameState.poopEventsShown, gameState.poopEventsCompleted, dailyDone, dailyTotal,
-      gameState.habitRhythms, gameState.totalXP, gameState.soulmonMeta, grove]);
+      gameState.habitRhythms, gameState.totalXP, gameState.soulmonMeta, grove,
+      gameState.hunger, gameState.tasks, gameState.activities, gameState.dayPlan]);
 
   /**
    * A fatia que `utils/petNeeds.ts` lê. `hasPoop` é DERIVADO (o dono do cocô é
@@ -4907,6 +4916,11 @@ export default function App() {
     setGameState(prev => ({ ...prev, equippedDecor: applyDecorEquip(prev.equippedDecor ?? {}, id, slot) }));
   }, []);
 
+  /** Editar Home: grava o rascunho inteiro de uma vez (mesmo campo que a loja usa). */
+  const handleSaveHomeDecor = useCallback((decor: Partial<Record<SlotId, string>>, background: string | null) => {
+    setGameState(prev => ({ ...prev, equippedDecor: { ...decor }, equippedBackground: background }));
+  }, []);
+
   // 💎 Créditos (monetização) — TODA operação de saldo passa pelo SERVIDOR
   // (utils/entitlements.ts). O `credits` do GameState é só espelho pra UI;
   // quem decide é functions/api/_entitlements.js. Nunca aplique o efeito de
@@ -5283,6 +5297,25 @@ export default function App() {
     }).catch(() => { /* perfil corrompido: a masmorra e a voz seguem no padrão */ });
     return () => { vivo = false; };
   }, [manifestacaoPronta, setGameState]);
+  /* Causa do "Especial" genérico em combate: o cache `soulmonSkills` só era gravado ao ABRIR a página do Pet (e para
+     os iniciais). Quem tem perfil do Oráculo mas entrou direto numa luta (aparelho novo, save restaurado, cache
+     antigo sem família) lutava com `skills` indefinido e via "ESPECIAL!". Mesmo padrão da manifestação: no boot,
+     com perfil local, monta a ficha e grava o par de skills; import dinâmico, nunca sobrescreve cache já completo. */
+  const jornadaDasSkills = gameState.fichaJornada;
+  useEffect(() => {
+    if (starterDoSave || starterSkillsProntas) return;
+    const saved = readJson<(OracleInput & { seed: number }) | null>(STORAGE_KEYS.SOULMON_PROFILE, null);
+    if (!saved?.soulProfile) return;
+    let vivo = true;
+    Promise.all([
+      import('./utils/soulProfile/ficha/fromInput'),
+      import('./utils/soulProfile/identity'),
+    ]).then(([{ buildFichaESkills }, { identityKey }]) => {
+      if (!vivo) return;
+      handleSkillsComputed(buildFichaESkills(saved, identityKey(saved), jornadaDasSkills).stageSkills as NonNullable<GameState['soulmonSkills']>);
+    }).catch(() => { /* perfil corrompido: segue o selo padrão */ });
+    return () => { vivo = false; };
+  }, [starterDoSave, starterSkillsProntas, jornadaDasSkills, handleSkillsComputed]);
   const manifestacaoAtual = gameState.soulmonManifestacao?.[getStageLevel(gameState.evolutionStage) as keyof Manifestacao];
 
   /* PR15b: depois de uma evolução registrada, os caches da ficha (skills, classes, companheiro, manifestação) são
@@ -7974,7 +8007,12 @@ export default function App() {
                 demo={demo}
                 bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
                 onVisitBuilding={visitarPredio}
-                buildingMarks={buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0))}
+                buildingMarks={lotMissionMarks({
+                  buildings: buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
+                  passeio: marcasDeMissao.passeio, weekly: marcasDeMissao.torneio, conquistas: marcasDeMissao.conquistas,
+                  dailyMissions: gameState.dailyMissions, day: playerDayKey(new Date(), gameState.playerDayTz), bondLevel: bondLevelFor(gameState.totalXP ?? 0),
+                })}
+                buildingCoins={lotCoins(gameState, Date.now())}
                 onLayerChange={setAreaLayerOpen}
                 onGoToMap={() => goTo('map')}
                 language={language}
@@ -8843,6 +8881,14 @@ export default function App() {
                 onChangeName: handleChangeUserName,
                 petName: soulmonDisplayName(gameState.soulmonMeta),
                 onChangePetName: handleChangePetName,
+                editHome: {
+                  ownedFurniture: gameState.ownedFurniture ?? [],
+                  equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
+                  equippedBackground: gameState.equippedBackground ?? null,
+                  ownedBackgrounds: gameState.ownedBackgrounds ?? [],
+                  onSave: handleSaveHomeDecor,
+                  onOpenShop: () => { setPendingSheet({ area: 'mercado', lot: 'background' }); goTo(areaView('mercado')); },
+                },
               }}
               onOpenCredits={demo ? undefined : openCredits}
               demo={demo ? { onLeave: handleLeaveDemo } : undefined}

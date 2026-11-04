@@ -215,3 +215,46 @@ describe('double tap (Especial)', () => {
     expect(registerTap(at(1000), at(1100, 100 + DOUBLE_TAP_DIST + 1, 100)).double).toBe(false);
   });
 });
+
+import { newBarrage as nb2, stepBarrage as step2, BOSS_EVERY as BE2, BOSS_BASE_HP as BBH2, BOSS_Y, FIELD_W as FW2, SPECIAL_BOSS_HP_MULT, isSpecialBossIndex } from './soulBarrage';
+
+describe('boss: comum parado no centro; especial anda, tem mais vida e mais balas', () => {
+  const spawn = (bosses: number) => {
+    const s = nb2(); s.bosses = bosses; s.nextBossAt = BE2; s.score = BE2; s.spawnIn = 0;
+    step2(s, 0.016, FW2 / 2, 1, () => 0.5);
+    return s;
+  };
+  const run = (bosses: number) => {
+    const s = spawn(bosses); const xs: number[] = []; let shots = 0;
+    for (let i = 0; i < 600; i++) {
+      s.lives = 99; s.boss!.hp = s.boss!.maxHp; s.invuln = 99;
+      const before = s.enemyShots.length;
+      step2(s, 0.016, FW2 / 2, 1, () => 0.5);
+      shots = Math.max(shots, s.enemyShots.length - Math.min(before, s.enemyShots.length));
+      xs.push(s.boss!.x);
+    }
+    return { s, xs, shots };
+  };
+  it('regra do especial: o 3º, 6º...', () => {
+    expect([0, 1, 2, 3, 4, 5].map(isSpecialBossIndex)).toEqual([false, false, true, false, false, true]);
+  });
+  it('boss comum fica parado e centralizado', () => {
+    const { xs, s } = run(0);
+    expect(s.boss!.special).toBe(false);
+    expect(new Set(xs).size).toBe(1);
+    expect(xs[0]).toBe(FW2 / 2);
+    expect(s.boss!.y).toBe(BOSS_Y);
+  });
+  it('boss especial se move na horizontal, com mais vida e mais balas por rajada', () => {
+    const c = run(0), e = run(2);
+    expect(e.s.boss!.special).toBe(true);
+    expect(Math.max(...e.xs) - Math.min(...e.xs)).toBeGreaterThan(100);
+    expect(e.s.boss!.maxHp).toBe((BBH2 + 20 * 2) * SPECIAL_BOSS_HP_MULT);
+    expect(e.s.boss!.maxHp).toBeGreaterThan(c.s.boss!.maxHp * 3);
+    expect(e.shots).toBeGreaterThan(c.shots);
+  });
+  it('spawn do especial sinaliza bossSpecial', () => {
+    const s = nb2(); s.bosses = 2; s.score = BE2; s.nextBossAt = BE2; s.spawnIn = 0;
+    expect(step2(s, 0.016, FW2 / 2, 1, () => 0.5).bossSpecial).toBe(true);
+  });
+});

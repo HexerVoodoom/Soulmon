@@ -195,6 +195,8 @@ export interface AreaViewProps {
   onVisitBuilding?: (id: BuildingId) => void;
   /** O marcador da missão de cada prédio hoje (`buildingMarks`): "!" disponível (some ao fazer a missão), "?" pronta (não recolhe aqui). Ausente = nenhum. */
   buildingMarks?: Partial<Record<BuildingId, QuestMark>>;
+  /** Recurso disponível agora em cada prédio (`lotCoins`): vira a moeda amarela ao lado do "!". Ausente = nenhuma. */
+  buildingCoins?: Partial<Record<BuildingId, readonly string[]>>;
   /** Avisa se há camada de tela cheia aberta (folha/jogo/duelo). Estável (setState). */
   onLayerChange?: (open: boolean) => void;
   /** Vai ao MAPA (a masmorra sai direto para ele, 14/10/2026). Sem a prop, a masmorra volta à área. */
@@ -356,7 +358,7 @@ export function AreaView(props: AreaViewProps) {
     if (bbBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(bbRefusalText(language === 'pt-BR')) };
     if (demoBlocks(l.id)) return { ...l, mark: undefined, onOpen: () => setLockNote(demoRefusalText(language === 'pt-BR')) };
     const g = lockOf(l.id);
-    if (!g) return { ...l, mark: props.buildingMarks?.[`${area}.${l.id}` as BuildingId] ?? undefined };
+    if (!g) return { ...l, mark: props.buildingMarks?.[`${area}.${l.id}` as BuildingId] ?? undefined, coin: (props.buildingCoins?.[`${area}.${l.id}` as BuildingId]?.length ?? 0) > 0 };
     return { ...l, mark: undefined, locked: { minBond: g.minBond }, onOpen: () => setLockNote(buildingLockLine(g.minBond, language)) };
   });
   const [duelOpen, setDuelOpen] = useState(false);

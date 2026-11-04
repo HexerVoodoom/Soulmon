@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { ENERGY_ICON } from '../../utils/rewardIcons';
+import { EnergyCost } from '../ui/EnergyCost';
 import { FUN_SESSION_COST, FUN_SESSION_ROUNDS, FUN_SESSION_MS, formatMmSs, type FunSessionStatus } from '../../utils/funSession';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
@@ -169,6 +171,7 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
       {/* H11: o botão vem ANTES das duas notas — a ação primeiro, o miúdo depois. */}
       <button type="button" data-masmorra-start onClick={onStart} style={cta}>
         {isPt ? 'Descer à Fenda' : 'Go down the Rift'}
+        <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />
       </button>
       <BitsHoje language={language} earned={bitsToday} />
     </div>
@@ -180,7 +183,7 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
 const DINO_POINTS_PER_BIT = 100;
 import { BARRAGE_POINTS_PER_BIT } from '../../utils/soulBarrage';
 
-export function DinoSheet({ language, onStart }: { language: Language; onStart: () => void }) {
+export function DinoSheet({ language, onStart, energyCost }: { language: Language; onStart: () => void; /** Abrir gasta energia (sessão de diversão sem rodadas sobrando): o botão mostra o ícone. */ energyCost?: boolean }) {
   const isPt = language === 'pt-BR';
   const [best] = useState(() => readNumber(STORAGE_KEYS.DINO_BEST, 0));
   return (
@@ -200,13 +203,14 @@ export function DinoSheet({ language, onStart }: { language: Language; onStart: 
           lia como descrição do jogo, não como a ação de abri-lo. */}
       <button type="button" data-dino-start onClick={onStart} style={cta}>
         {isPt ? 'Jogar' : 'Play'}
+        {energyCost && <EnergyCost amount={FUN_SESSION_COST} />}
       </button>
     </div>
   );
 }
 
 // ── Elemental Fusion ───────────────────────────────────────────────────────────────
-export function Match3Sheet({ language, onStart }: { language: Language; onStart: () => void }) {
+export function Match3Sheet({ language, onStart, energyCost }: { language: Language; onStart: () => void; /** Abrir gasta energia (sessão de diversão sem rodadas sobrando): o botão mostra o ícone. */ energyCost?: boolean }) {
   const isPt = language === 'pt-BR';
   const [best] = useState(() => readNumber(STORAGE_KEYS.MATCH3_BEST, 0));
   return (
@@ -217,13 +221,14 @@ export function Match3Sheet({ language, onStart }: { language: Language; onStart
       </div>
       <button type="button" data-match3-start onClick={onStart} style={cta}>
         {isPt ? 'Jogar' : 'Play'}
+        {energyCost && <EnergyCost amount={FUN_SESSION_COST} />}
       </button>
     </div>
   );
 }
 
 // ── Pedra, papel e tesoura ──────────────────────────────────────────────────
-export function PptSheet({ language, onStart }: { language: Language; onStart: () => void }) {
+export function PptSheet({ language, onStart, energyCost }: { language: Language; onStart: () => void; /** Abrir gasta energia (sessão de diversão sem rodadas sobrando): o botão mostra o ícone. */ energyCost?: boolean }) {
   const isPt = language === 'pt-BR';
   return (
     <div data-ppt style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -233,6 +238,7 @@ export function PptSheet({ language, onStart }: { language: Language; onStart: (
       </div>
       <button type="button" data-ppt-start onClick={onStart} style={cta}>
         {isPt ? 'Jogar' : 'Play'}
+        {energyCost && <EnergyCost amount={FUN_SESSION_COST} />}
       </button>
     </div>
   );
@@ -288,7 +294,8 @@ export function FunSessionLine({ language, status, nudge = 0 }: { language: Lang
     );
   }
   return (
-    <p data-fun-session="cost" style={{ ...sm2Hint, margin: 0 }}>
+    <p data-fun-session="cost" style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
+      <img src={ENERGY_ICON} alt="" aria-hidden="true" width={16} height={16} style={{ width: 16, height: 16, imageRendering: 'pixelated' }} />
       {isPt
         ? `${FUN_SESSION_COST} energia = ${FUN_SESSION_ROUNDS} rodadas (${mins} min)`
         : `${FUN_SESSION_COST} energy = ${FUN_SESSION_ROUNDS} rounds (${mins} min)`}
@@ -301,6 +308,8 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, ref
   const [nudge, setNudge] = useState(refused ? 1 : 0);
   const onStart = (g: SalaoGame) => { if (funStatus && !funStatus(Date.now()).canPlay) { setNudge(n => n + 1); return; } abrir(g); };
   const isPt = language === 'pt-BR';
+  /* Abrir uma partida gasta energia SÓ quando não há sessão ativa (as rodadas da sessão já foram pagas): sem `funStatus` (testes antigos) = sem custo. */
+  const paga = !!funStatus && funStatus(Date.now()).costsEnergy;
   return (
     <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-4, 16px)' }}>
       {funStatus && <FunSessionLine language={language} status={funStatus} nudge={nudge} />}
@@ -335,21 +344,21 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, ref
             <PixelIcon src={iconCorrida} size={32} style={{ flexShrink: 0 }} />
             <p style={sheetCardTitle}>{isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}</p>
           </div>
-          <DinoSheet language={language} onStart={() => onStart('dino')} />
+          <DinoSheet language={language} onStart={() => onStart('dino')} energyCost={paga} />
         </li>
         <li style={sheetCard}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <PixelIcon src={iconPpt} size={32} style={{ flexShrink: 0 }} />
             <p style={sheetCardTitle}>{isPt ? 'Pedra, papel e tesoura' : 'Rock, paper, scissors'}</p>
           </div>
-          <PptSheet language={language} onStart={() => onStart('ppt')} />
+          <PptSheet language={language} onStart={() => onStart('ppt')} energyCost={paga} />
         </li>
         <li style={sheetCard}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <PixelIcon src={iconCombina} size={32} style={{ flexShrink: 0 }} />
             <p style={sheetCardTitle}>Elemental Fusion</p>
           </div>
-          <Match3Sheet language={language} onStart={() => onStart('match3')} />
+          <Match3Sheet language={language} onStart={() => onStart('match3')} energyCost={paga} />
         </li>
         <li style={sheetCard}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -359,6 +368,7 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, ref
           <div data-barrage style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <button type="button" data-barrage-open onClick={() => onStart('barrage')} style={cta}>
               {isPt ? 'Jogar' : 'Play'}
+              {paga && <EnergyCost amount={FUN_SESSION_COST} />}
             </button>
           </div>
         </li>

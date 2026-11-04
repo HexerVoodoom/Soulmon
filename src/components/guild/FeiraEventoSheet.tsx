@@ -17,6 +17,7 @@ import { BossFightScreen, type BossFightMe } from './BossFightScreen';
 import { FeiraTrailPlay } from './FeiraTrailPlay';
 import { BossCheerPrelude } from './BossCheerPrelude';
 import { ResultScreen, type ResultLedgerRow } from '../games/ResultScreen';
+import { essenceIconSrc, essenceName, tallyEssences } from '../../utils/resultEssences';
 import { BOSS_ROSTER, bossArt, bossText } from '../../data/bossRoster';
 import {
   attackGuildFeira, claimGuildFeira, doneGuildFeiraTrail, getGuildFeira, startGuildFeiraTrail, GuildError,
@@ -288,6 +289,12 @@ export function FeiraEventoSheet({ language, saveId, tz, evento: eventoIn, me, o
                 {collected.emblems > 0 && <li>{t('rest.emblems')} +{collected.emblems}</li>}
                 {collected.bits > 0 && <li>{t('rest.bits')} +{collected.bits}</li>}
                 {collected.sap > 0 && <li>{t('rest.sap')} +{collected.sap}</li>}
+                {tallyEssences((collected.essences ?? []).map(e => ({ id: e.id, qty: e.n }))).map(e => (
+                  <li key={e.id} data-feira-essence={e.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                    {essenceIconSrc(e.id) && <img src={essenceIconSrc(e.id)} alt="" aria-hidden="true" width={20} height={20} style={{ width: 20, height: 20, imageRendering: 'pixelated' }} />}
+                    {essenceName(e.id, isPt)} ×{e.qty}
+                  </li>
+                ))}
               </ul>
             )}
           </div>

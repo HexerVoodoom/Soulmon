@@ -57,6 +57,8 @@ export interface Enemy {
 }
 export interface Boss {
   x: number; y: number; hp: number; maxHp: number; t: number; fireIn: number; cannon: 0 | 1; size: number; r: number;
+  /** BOSS ESPECIAL (04/11/2026): muito mais vida, mais balas e anda na HORIZONTAL. Os demais ficam parados no centro. */
+  special: boolean;
 }
 /** O projétil grande do especial (`hitBoss`: já tirou a fatia do boss). */
 export interface BigShot { x: number; y: number; hitBoss: boolean }
@@ -84,6 +86,12 @@ export const BOSS_EVERY = 600;
 export const BOSS_BASE_HP = 60;
 export const BOSS_HP_STEP = 20;
 export const BOSS_POINTS = 200;
+/** Boss ESPECIAL: todo `SPECIAL_BOSS_EVERY`-ésimo boss (o 3º, o 6º…), ou seja, o 1º aos 600 pts e o especial por volta de 1800. */
+export const SPECIAL_BOSS_EVERY = 3;
+export const SPECIAL_BOSS_HP_MULT = 4;
+export const SPECIAL_BOSS_SIZE = 190;
+export const SPECIAL_BOSS_R = 78;
+export const isSpecialBossIndex = (index: number): boolean => (index + 1) % SPECIAL_BOSS_EVERY === 0;
 export const BOSS_SIZE = 150;
 export const BOSS_R = 62;
 export const BOSS_Y = 96;
@@ -115,7 +123,7 @@ export interface BarrageState {
   enemies: Enemy[]; shots: Shot[]; enemyShots: Shot[];
   kills: number; over: boolean; usedIds: Set<string>;
 }
-export interface StepEvents { blocked?: boolean; bossSpawned?: boolean; bossDefeated?: boolean; hit: boolean; kills: number; phaseUp: boolean; over: boolean; leaked: number }
+export interface StepEvents { blocked?: boolean; bossSpawned?: boolean; bossSpecial?: boolean; bossDefeated?: boolean; hit: boolean; kills: number; phaseUp: boolean; over: boolean; leaked: number }
 
 export const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
@@ -170,8 +178,10 @@ const hit = (ax: number, ay: number, ar: number, bx: number, by: number, br: num
 };
 
 function spawnBoss(s: BarrageState) {
-  const hp = BOSS_BASE_HP + BOSS_HP_STEP * s.bosses;
-  s.boss = { x: FIELD_W / 2, y: -BOSS_SIZE, hp, maxHp: hp, t: 0, fireIn: 1.2, cannon: 0, size: BOSS_SIZE, r: BOSS_R };
+  const special = isSpecialBossIndex(s.bosses);
+  const hp = (BOSS_BASE_HP + BOSS_HP_STEP * s.bosses) * (special ? SPECIAL_BOSS_HP_MULT : 1);
+  const size = special ? SPECIAL_BOSS_SIZE : BOSS_SIZE;
+  s.boss = { x: FIELD_W / 2, y: -size, hp, maxHp: hp, t: 0, fireIn: 1.2, cannon: 0, size, r: special ? SPECIAL_BOSS_R : BOSS_R, special };
   s.bosses += 1;
   s.nextBossAt += BOSS_EVERY;
 }
@@ -288,7 +298,7 @@ export function stepBarrage(s: BarrageState, dtRaw: number, targetX: number, lev
   }
 
   // spawn
-  if (!s.boss && s.score >= s.nextBossAt) { spawnBoss(s); ev.bossSpawned = true; }
+  if (!s.boss && s.score >= s.nextBossAt) { spawnBoss(s); ev.bossSpawned = true; ev.bossSpecial = !!(s.boss as Boss | null)?.special; }
   if (!s.boss) {
     s.spawnIn -= dt;
     if (s.spawnIn <= 0) {
@@ -311,14 +321,15 @@ export function stepBarrage(s: BarrageState, dtRaw: number, targetX: number, lev
     const b = s.boss;
     b.t += edt;
     b.y = Math.min(BOSS_Y, b.y + 90 * edt);
-    b.x = FIELD_W / 2 + Math.sin(b.t * 0.7) * (FIELD_W / 2 - b.size / 2 - 8);
+    // Só o boss ESPECIAL anda (na horizontal); os demais ficam parados, centralizados.
+    b.x = b.special ? FIELD_W / 2 + Math.sin(b.t * 0.7) * (FIELD_W / 2 - b.size / 2 - 8) : FIELD_W / 2;
     b.fireIn -= edt;
     if (b.fireIn <= 0 && b.y >= BOSS_Y - 1) {
-      b.fireIn = Math.max(0.45, d.fireEvery * 0.45) * (0.9 + rng() * 0.2);
+      b.fireIn = Math.max(b.special ? 0.3 : 0.45, d.fireEvery * (b.special ? 0.3 : 0.45)) * (0.9 + rng() * 0.2);
       b.cannon = b.cannon === 0 ? 1 : 0;
       const cx = b.x + (b.cannon === 0 ? -b.size * 0.3 : b.size * 0.3);
       const base = Math.atan2(s.py - b.y, s.px - cx);
-      const n = Math.min(5, d.fanSize + 1);
+      const n = b.special ? Math.min(9, d.fanSize + 3) : Math.min(5, d.fanSize + 1);
       for (let i = 0; i < n; i++) {
         if (s.enemyShots.length >= MAX_ENEMY_SHOTS) break;
         const a = base + (i - (n - 1) / 2) * 0.2;
