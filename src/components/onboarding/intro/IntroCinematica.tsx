@@ -21,6 +21,15 @@ const CAMERA: readonly [number, number, number, number, number, number][] = [
 ];
 /** Ruído de TV (feTurbulence) em data URI; a posição salta em steps() para "chiar". */
 const RUIDO = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 1.4 -.2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`;
+/**
+ * Logo final (04/11/2026, dono): vídeo do Gemini com fundo magenta, recortado por chroma-key (ffmpeg colorkey) para VP9 com alfa.
+ * Navegador sem VP9-alfa (Safari/iOS) cai no último quadro em webp.
+ */
+const LOGO_VIDEO: string | undefined = Object.values(import.meta.glob('../../../assets/soulmon/intro/logo-final.webm', { eager: true, query: '?url', import: 'default' }) as Record<string, string>)[0];
+const LOGO_IMG: string | undefined = Object.values(import.meta.glob('../../../assets/soulmon/intro/logo-final.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>)[0];
+/** O vídeo do logo dura 10 s; depois dele segura 1 s. Teto para quando o vídeo não toca. */
+const LOGO_SEGURA_S = 1;
+const LOGO_TETO_S = 11.5;
 /** Duração da "sintonia" (estática entre um plano e outro), em segundos. */
 const SINTONIA = 0.55;
 const CSS_INTRO = `
@@ -72,12 +81,23 @@ export function IntroCinematica({ language, onDone, paineis = PAINEIS }: Props) 
   }, [globalLigado]);
   const fim = () => { marcarIntroVista(); onDone(); };
 
+  /** Depois do último plano entra o logo animado; a intro termina quando ele acaba (ou no teto, se o vídeo não tocar). */
+  const [logo, setLogo] = useState(false);
+  const [logoSemVideo, setLogoSemVideo] = useState(false);
+  const fimRef = useRef(fim);
+  fimRef.current = fim;
   useEffect(() => {
+    if (logo) return;
     const t = setTimeout(() => {
-      if (i + 1 >= PLANOS_INTRO.length) { marcarIntroVista(); onDone(); } else setI(i + 1);
+      if (i + 1 >= PLANOS_INTRO.length) setLogo(true); else setI(i + 1);
     }, PLANOS_INTRO[i].s * 1000);
     return () => clearTimeout(t);
-  }, [i, onDone]);
+  }, [i, logo]);
+  useEffect(() => {
+    if (!logo) return;
+    const t = setTimeout(() => fimRef.current(), LOGO_TETO_S * 1000);
+    return () => clearTimeout(t);
+  }, [logo]);
 
   /** Pré-carrega o próximo painel (a fusão não pisca em rede lenta). */
   useEffect(() => { const nx = paineis[i + 1]; if (nx) { const im = new Image(); im.src = nx; } }, [i, paineis]);
@@ -86,7 +106,7 @@ export function IntroCinematica({ language, onDone, paineis = PAINEIS }: Props) 
   return (
     <div data-testid="intro-cinematica" style={{ position: 'fixed', inset: 0, zIndex: 600, background: '#000', color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center' }}>
       <style>{CSS_INTRO}</style>
-      {paineis[i] && (() => {
+      {!logo && paineis[i] && (() => {
         const [z0, x0, y0, z1, x1, y1] = CAMERA[i % CAMERA.length];
         const cam = { position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', ['--z0' as string]: z0, ['--x0' as string]: `${x0}%`, ['--y0' as string]: `${y0}%`, ['--z1' as string]: z1, ['--x1' as string]: `${x1}%`, ['--y1' as string]: `${y1}%`,
           animation: `intro-cam ${plano.s + SINTONIA}s ease-in-out both` } as const;
@@ -103,21 +123,30 @@ export function IntroCinematica({ language, onDone, paineis = PAINEIS }: Props) 
           </div>
         );
       })()}
+      {logo && (
+        <div data-testid="intro-logo" aria-label="Soulmon" role="img" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          {LOGO_VIDEO && !logoSemVideo
+            ? <video src={LOGO_VIDEO} poster={LOGO_IMG} autoPlay muted playsInline onError={() => setLogoSemVideo(true)}
+                onEnded={() => { setTimeout(() => fimRef.current(), LOGO_SEGURA_S * 1000); }}
+                style={{ width: 'min(92vw, 460px)', height: 'auto' }} />
+            : LOGO_IMG && <img src={LOGO_IMG} alt="" draggable={false} style={{ width: 'min(92vw, 460px)', height: 'auto', animation: 'intro-sinal .8s steps(1, end) both' }} />}
+        </div>
+      )}
       {/* Monitor CRT: scanlines rolando, cintilação, chiado constante e vinheta. */}
       <div aria-hidden="true" data-intro-scan style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'repeating-linear-gradient(0deg, rgba(0,0,0,.55) 0 1px, transparent 1px 3px)', animation: 'intro-flicker 3.2s steps(8) infinite, intro-roll 0.6s linear infinite', mixBlendMode: 'multiply' }} />
       <div aria-hidden="true" data-intro-fx style={{ position: 'absolute', inset: 0, pointerEvents: 'none', backgroundImage: RUIDO, opacity: 0.09, mixBlendMode: 'screen', animation: 'intro-chiado .5s steps(5) infinite' }} />
       <div aria-hidden="true" style={{ position: 'absolute', inset: 0, pointerEvents: 'none', background: 'radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,.8) 100%)' }} />
       {/* Troca de plano = mau contato: estática cheia, faixas rolando e um clarão, como girar o dial entre estações. */}
-      <div key={`s${i}`} aria-hidden="true" data-intro-sintonia
+      <div key={logo ? 'slogo' : `s${i}`} aria-hidden="true" data-intro-sintonia
         style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', background: '#0b0d10', backgroundImage: RUIDO, animation: `intro-sintonia ${SINTONIA}s steps(9, end) both, intro-chiado .2s steps(4) infinite` }}>
         <div style={{ position: 'absolute', inset: '-40% 0', background: 'repeating-linear-gradient(0deg, rgba(255,255,255,.22) 0 3px, transparent 3px 19px, rgba(63,210,217,.25) 19px 23px, transparent 23px 41px)', animation: `intro-faixas ${SINTONIA / 2}s steps(6) infinite` }} />
       </div>
-      <p key={i} data-testid="intro-legenda" data-plano={i + 1} aria-live="polite"
+      {!logo && <p key={i} data-testid="intro-legenda" data-plano={i + 1} aria-live="polite"
         style={{ position: 'absolute', inset: 0, margin: 0, padding: '0 28px', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', paddingBottom: '13vh', boxSizing: 'border-box', textAlign: 'center', pointerEvents: 'none',
           fontFamily: "var(--sm2-font-display, 'Cinzel'), Georgia, serif", fontWeight: 700, fontSize: 24, lineHeight: 1.45, textTransform: 'uppercase', letterSpacing: '.1em', textWrap: 'balance',
           animation: `intro-leg-in .5s steps(6, end) ${SINTONIA}s both, intro-leg-rgb 2.6s steps(1, end) ${SINTONIA}s infinite, intro-leg-out .3s ease-in ${Math.max(0, plano.s - 0.3)}s forwards` }}>
         {isPt ? plano.pt : plano.en}
-      </p>
+      </p>}
       {globalLigado && (
         <button type="button" data-testid="intro-som" aria-pressed={som} onClick={alternarSom}
           aria-label={som ? (isPt ? 'Desligar o som' : 'Turn sound off') : (isPt ? 'Ligar o som' : 'Turn sound on')}

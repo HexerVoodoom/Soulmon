@@ -60,14 +60,19 @@ describe('intro pré-login', () => {
     act(() => { vi.advanceTimersByTime(PLANOS_INTRO[0].s * 1000); });
     expect(screen.getByTestId('intro-legenda').textContent).toBe(PLANOS_INTRO[1].en);
     for (let i = 1; i < 9; i++) act(() => { vi.advanceTimersByTime(PLANOS_INTRO[i].s * 1000); });
+    // depois do último plano entra o logo; sem o vídeo tocar (jsdom), o teto encerra
+    expect(onDone).not.toHaveBeenCalled();
+    expect(screen.getByTestId('intro-logo')).toBeTruthy();
+    expect(screen.queryByTestId('intro-legenda')).toBeNull();
+    act(() => { vi.advanceTimersByTime(11_500); });
     expect(onDone).toHaveBeenCalledTimes(1);
     expect(introVista()).toBe(true);
   });
 
-  it('v3 curta: ~35 s no total, nenhum plano passa de 5 s', () => {
+  it('v3.1: ~42,5 s de planos (sem o logo), nenhum plano passa de 5,5 s', () => {
     const total = PLANOS_INTRO.reduce((a, p) => a + p.s, 0);
-    expect(total).toBeLessThanOrEqual(36);
-    expect(Math.max(...PLANOS_INTRO.map(p => p.s))).toBeLessThanOrEqual(5);
+    expect(total).toBeLessThanOrEqual(43);
+    expect(Math.max(...PLANOS_INTRO.map(p => p.s))).toBeLessThanOrEqual(5.5);
   });
 
   it('cada troca de plano tem a estática de sintonia', () => {
