@@ -312,6 +312,7 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
     await entrar({ onEarnPoints: onEarn, onRunEnd });
     expect(await ate(() => document.querySelector('[data-result-title]')?.textContent === 'Arena encerrada', 30_000)).toBe(true);
     expect(onRunEnd).toHaveBeenCalledTimes(1); // derrota também re-sorteia o trio
+    expect(onRunEnd).toHaveBeenCalledWith('loss'); // §222: derrota segura a escada
     expect(screen.queryByRole('button', { name: /Lutar de novo/ })).toBeNull();
     expect(document.querySelector('[data-result-line]')!.textContent).toMatch(/Não custou nenhum coração, só a run/);
     expect(document.querySelector('[data-battle-stage]')).toBeNull();
@@ -388,6 +389,7 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
     expect(await ate(() => document.querySelector('[data-result-title]') !== null)).toBe(true);
     await avancar(100);
     expect(onRunEnd).toHaveBeenCalledTimes(1);
+    expect(onRunEnd).toHaveBeenCalledWith('win'); // §222: só a vitória sobe a escada
   });
 });
 

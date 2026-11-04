@@ -8196,8 +8196,9 @@ export default function App() {
                     dayIso: playerDayIso(new Date(), gameState.playerDayTz),
                     reroll: gameState.arenaReroll,
                     runs: gameState.arenaRuns,
-                    // Fim de run (vitória/derrota/empate): novo trio de graça, sem gastar o reroll.
-                    onRunEnd: () => setGameState(prev => applyArenaRunEnd(prev, playerDayIso(new Date(), prev.playerDayTz))),
+                    ladder: gameState.arenaLadder,
+                    // Fim de run (vitória/derrota/empate): novo trio de graça, sem gastar o reroll; a vitória sobe a escada (§222).
+                    onRunEnd: (outcome) => setGameState(prev => applyArenaRunEnd(prev, playerDayIso(new Date(), prev.playerDayTz), outcome)),
                     onReroll: () => {
                       const dia = playerDayIso(new Date(), gameState.playerDayTz);
                       const custo = arenaRerollCost(arenaRerollsToday(gameState.arenaReroll, dia));
