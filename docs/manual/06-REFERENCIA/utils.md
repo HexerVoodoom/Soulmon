@@ -4193,3 +4193,7 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 **Exports:** `tx(par, isPt)` · `HEX_SLOT_COPY` (nome, porta, efeito e linha de cada slot) · `hexName(value, isPt)` (`HEX de X` / `X HEX`) · `HEX_FAMILY_COPY` · `HEX_STRIKE_COPY` · `hexRefusalText(r, isPt, el?)` (o motivo que desabilita "Forjar", em tom de convite: onde se consegue o que falta) · `HEX_UI` (rótulos da tela, incluindo as mensagens de forja offline/falha/sem saldo — "nada foi cobrado"). Regras e números vêm de `hexsmith.ts`; nada de literal de regra aqui.
 **Chamado por:** `src/components/hex/HexsmithSheet.tsx`.
 
+### `src/utils/soulProfile/ficha/especialNome.ts`
+**Dono de:** aplicar o nome do especial escolhido pelo jogador POR CIMA da ficha, em leitura (REGISTRO §222): o cache `soulmonSkills` do save não é reescrito; sem nome, devolve a própria ficha.
+**Exports:** `comNomeDoEspecial(skills, nome)`.
+**Chamado por:** `src/App.tsx` (as telas de luta e o Perfil recebem a ficha já com o nome).

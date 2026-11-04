@@ -38,7 +38,7 @@ export function EspecialNomeEditor({ language, nome, nomeAt, onSave, now = Date.
       />
       {!valido
         ? <FieldWarn id="especial-nome-ajuda">{isPt ? 'Use só letras, números e espaço, sem palavrões.' : 'Letters, numbers and spaces only, no bad words.'}</FieldWarn>
-        : <p id="especial-nome-ajuda" style={{ ...sm2Hint, margin: 0, fontSize: 12 }}>
+        : <p id="especial-nome-ajuda" style={{ ...sm2Hint, margin: 0 }}>
           {travado
             ? (isPt ? `Dá para trocar de novo em ${dias} ${dias === 1 ? 'dia' : 'dias'}.` : `You can change it again in ${dias} ${dias === 1 ? 'day' : 'days'}.`)
             : (isPt ? `Até ${ESPECIAL_NOME_MAX} caracteres. Quem lutar contra você vê este nome. Troca: uma vez por semana. Vazio volta ao padrão.`
