@@ -196,7 +196,7 @@ import {
 import { ResultExtrasContext } from './components/games/ResultExtrasContext';
 import { buildResultExtras } from './utils/resultExtras';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsToday } from './utils/currencies';
-import { arenaRerollCost, arenaRerollsToday, applyArenaReroll } from './utils/arenaSorteio';
+import { arenaRerollCost, arenaRerollsToday, applyArenaReroll, applyArenaRunEnd } from './utils/arenaSorteio';
 import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst } from './utils/bitsOrigin';
 import { applyGuildSlot } from './utils/guildHouse';
 import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMission';
@@ -8069,6 +8069,9 @@ export default function App() {
                   arena: {
                     dayIso: playerDayIso(new Date(), gameState.playerDayTz),
                     reroll: gameState.arenaReroll,
+                    runs: gameState.arenaRuns,
+                    // Fim de run (vitória/derrota/empate): novo trio de graça, sem gastar o reroll.
+                    onRunEnd: () => setGameState(prev => applyArenaRunEnd(prev, playerDayIso(new Date(), prev.playerDayTz))),
                     onReroll: () => {
                       const dia = playerDayIso(new Date(), gameState.playerDayTz);
                       const custo = arenaRerollCost(arenaRerollsToday(gameState.arenaReroll, dia));

@@ -83,11 +83,11 @@ function skillsCom(escola: string): Partial<Record<string, StageSkills>> {
   return { rookie: { basica: mk('basica'), especial: mk('especial') } as unknown as StageSkills };
 }
 
-async function entrar(opts: { language?: 'pt-BR' | 'en-US'; escola?: string; onExit?: () => void; onEarnPoints?: (n: number) => void } = {}) {
+async function entrar(opts: { language?: 'pt-BR' | 'en-US'; escola?: string; onExit?: () => void; onEarnPoints?: (n: number) => void; onRunEnd?: () => void } = {}) {
   renderWithCss(
     <ArenaGame
       evolutionStage="rookie" language={opts.language ?? 'pt-BR'} skills={skillsCom(opts.escola ?? 'combate_fisico')}
-      onExit={opts.onExit ?? (() => {})} onEarnPoints={opts.onEarnPoints}
+      onExit={opts.onExit ?? (() => {})} onEarnPoints={opts.onEarnPoints} onRunEnd={opts.onRunEnd}
     />,
   );
   await act(async () => { await Promise.resolve(); await Promise.resolve(); });
@@ -308,8 +308,11 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
   it('derrota: a run acaba sem pontos, com texto neutro, e dá para tentar de novo', async () => {
     H.playerHp = 0.0001;
     const onEarn = vi.fn();
-    await entrar({ onEarnPoints: onEarn });
+    const onRunEnd = vi.fn();
+    await entrar({ onEarnPoints: onEarn, onRunEnd });
     expect(await ate(() => document.querySelector('[data-result-title]')?.textContent === 'Arena encerrada', 30_000)).toBe(true);
+    expect(onRunEnd).toHaveBeenCalledTimes(1); // derrota também re-sorteia o trio
+    expect(screen.queryByRole('button', { name: /Lutar de novo/ })).toBeNull();
     expect(document.querySelector('[data-result-line]')!.textContent).toMatch(/Não custou nenhum coração, só a run/);
     expect(document.querySelector('[data-battle-stage]')).toBeNull();
     expect(onEarn).not.toHaveBeenCalled();
@@ -351,10 +354,38 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
     contagem.push(document.querySelectorAll('[data-stage-sprite="foe"]').length);
     expect(contagem).toEqual([1, 2, 1, 3, 1]);
     expect(document.querySelector('[data-stage-plate="foe"] [data-stage-energy]')).not.toBeNull(); // o chefe
-    expect(await ate(() => temBotao('Terminar'))).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Terminar' }));
+    // Última rodada: sem modal nem tela intermediária — vai direto ao resultado.
+    expect(await ate(() => document.querySelector('[data-result-title]') !== null)).toBe(true);
+    expect(document.querySelector('[data-arena-cura-modal]')).toBeNull();
     expect(document.querySelector('[data-result-title]')!.textContent).toBe('Arena vencida');
     expect(onEarn).toHaveBeenCalledWith(50);
+    // Vitória não diz "Tentar de novo".
+    expect(screen.getByRole('button', { name: /Lutar de novo/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Tentar de novo/ })).toBeNull();
+  });
+
+  it('entre rodadas: MODAL com "+X HP recuperado" e o botão leva direto ao próximo round', async () => {
+    H.foeHp = 0.3;
+    await entrar();
+    expect(await ate(() => document.querySelector('[data-arena-cura-modal]') !== null)).toBe(true);
+    const modal = document.querySelector('[data-arena-cura-modal] [role="dialog"]')!;
+    expect(modal.textContent).toMatch(/^\+\d+ HP recuperado/);
+    expect(Number(/\+(\d+)/.exec(modal.textContent!)![1])).toBeGreaterThan(0);
+    expect(document.body.textContent).not.toMatch(/Rodada 1 vencida/); // sem a página intermediária
+    fireEvent.click(screen.getByRole('button', { name: 'Próxima rodada' }));
+    await avancar(10);
+    expect(document.querySelector('[data-arena-cura-modal]')).toBeNull();
+    expect(document.querySelectorAll('[data-stage-sprite="foe"]').length).toBe(2); // rodada 2 em luta
+  });
+
+  it('fim da run avisa onRunEnd UMA vez (vitória) — é o que re-sorteia o trio sem gastar reroll', async () => {
+    H.foeHp = 0.01;
+    const onRunEnd = vi.fn();
+    await entrar({ onRunEnd });
+    for (let r = 1; r <= 4; r++) await proximaRodada();
+    expect(await ate(() => document.querySelector('[data-result-title]') !== null)).toBe(true);
+    await avancar(100);
+    expect(onRunEnd).toHaveBeenCalledTimes(1);
   });
 });
 

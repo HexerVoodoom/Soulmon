@@ -138,3 +138,18 @@ describe('§199 emenda (dono, 30/10/2026): elemento BASE da run, fundido só por
     expect(ARENA_FUSED_FOE_CHANCE).toBeGreaterThanOrEqual(0.3);
   });
 });
+
+describe('fim de run re-sorteia o trio SEM gastar reroll (04/11/2026)', () => {
+  it('cada run terminada muda os 3 cards; 0 runs = semente antiga', async () => {
+    const { arenaCards, applyArenaRunEnd, arenaRerollsToday } = await import('./arenaSorteio');
+    const d = '2026-11-04';
+    expect(arenaCards(d, 'acc', 0, 3, 0)).toEqual(arenaCards(d, 'acc', 0));
+    const a = arenaCards(d, 'acc', 0, 3, 0), b = arenaCards(d, 'acc', 0, 3, 1), c = arenaCards(d, 'acc', 0, 3, 2);
+    expect(b).not.toEqual(a); expect(c).not.toEqual(b);
+    const s0: { arenaReroll: { day: string; count: number }; gamePoints: number; arenaRuns?: { day: string; count: number } } = { arenaReroll: { day: d, count: 2 }, gamePoints: 100 };
+    const s1 = applyArenaRunEnd(s0, d);
+    expect(arenaRerollsToday(s1.arenaRuns, d)).toBe(1);
+    expect(s1.arenaReroll).toEqual({ day: d, count: 2 }); // reroll intocado
+    expect(s1.gamePoints).toBe(100);                       // nenhum Bit gasto
+  });
+});

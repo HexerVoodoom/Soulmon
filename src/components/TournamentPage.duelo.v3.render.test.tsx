@@ -63,6 +63,20 @@ describe('Torneio v3 — a fiação do duelo', () => {
     expect(JSON.stringify(match.body)).not.toMatch(/stats|level|combatant|won/i); // nada que decida o resultado sai do cliente
   });
 
+  it('depois da luta, a lista de oponentes E o ranking são relidos (o rank mudou; antes o ranking só carregava uma vez)', async () => {
+    const chamadas = stubApi({ won: true, draw: false, outcome: 'win', myScore: 40, oppScore: 0, points: 20, matchesLeft: 4, opponent: { name: 'Rival', petName: 'Bicho', stage: 'rookie' } });
+    render(<TournamentPage {...base} onEarnEmblems={() => {}} onMatchPlayed={() => {}} />);
+    await screen.findByRole('button', { name: /Fight — challenge Rival/ });
+    const conta = (re: RegExp) => chamadas.filter(c => re.test(c.url)).length;
+    const opp0 = conta(/action=opponents/), rank0 = conta(/action=rank/);
+    await lutar();
+    await waitFor(() => expect(chamadas.some(c => /action=match/.test(c.url))).toBe(true));
+    await waitFor(() => {
+      expect(conta(/action=opponents/)).toBeGreaterThan(opp0);
+      expect(conta(/action=rank/)).toBeGreaterThan(rank0);
+    });
+  });
+
   it('VITÓRIA: Honra e Vínculo como sempre', async () => {
     stubApi({ won: true, draw: false, outcome: 'win', myScore: 40, oppScore: 0, points: 20, matchesLeft: 4, opponent: { name: 'Rival', petName: 'Bicho', stage: 'rookie' } });
     const onEarn = vi.fn(), onPlayed = vi.fn();
