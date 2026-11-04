@@ -44,8 +44,8 @@ function phaseWord(phase: BreathPhase, isPt: boolean): string {
 }
 
 /** O aviso de ajuda — mesma peça do Refúgio (`SupportNote`, dono dos números: `utils/supportLine.ts`). */
-export function CrisisNote({ isPt }: { isPt: boolean }) {
-  return <SupportNote isPt={isPt} data-respiracao-crisis />;
+export function CrisisNote({ isPt, style }: { isPt: boolean; style?: CSSProperties }) {
+  return <SupportNote isPt={isPt} style={style} data-respiracao-crisis />;
 }
 
 export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onExit, onComplete }: MiniGameBaseProps & {
@@ -186,9 +186,10 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
   // muda de opacidade e a barra abaixo mostra o enchimento.
   const petScale = reduced ? 1 : 0.94 + 0.08 * level;
   const ease = `${TICK_MS}ms linear`;
+  // A raiz usa `backgroundColor`, não `background`: ao sair da rodada o React limparia o atalho e levaria junto a cor do GameRoot (tela final transparente sobre o Mapa).
   const tinta: CSSProperties = { color: '#e8fbff', textShadow: '0 1px 6px rgba(0,20,35,0.8)' };
   return (
-    <GameRoot style={{ background: '#061a2b' }}>
+    <GameRoot style={{ backgroundColor: '#061a2b' }}>
       <CenaSubaquatica level={level} reduced={reduced} />
       <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: 12, flex: 1, minHeight: 0, ...tinta }}>
       <GameHeader run activity title={title} closeLabel={closeLabel} onClose={onExit} />
@@ -246,10 +247,10 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
         </span>
       </button>
       <p style={{ ...phaseLine, ...tinta }}>{isPt ? 'Se preferir, só olhe a água-viva.' : 'Or just watch the jellyfish.'}</p>
-      <button type="button" data-respiracao-stop onClick={finish} style={sm2Button('quiet')}>
+      <button type="button" data-respiracao-stop onClick={finish} style={{ ...sm2Button('quiet'), ...tinta }}>
         {isPt ? 'Terminar' : 'Finish'}
       </button>
-      <CrisisNote isPt={isPt} />
+      <CrisisNote isPt={isPt} style={tinta} />
       </div>
     </GameRoot>
   );
