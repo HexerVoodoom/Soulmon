@@ -30,18 +30,17 @@ const CSS_INTRO = `
 @keyframes intro-chiado{0%{background-position:0 0}20%{background-position:-60px 40px}40%{background-position:70px -30px}60%{background-position:-20px -80px}80%{background-position:90px 60px}100%{background-position:0 0}}
 @keyframes intro-sintonia{0%{opacity:1}12%{opacity:.85}18%{opacity:1}30%{opacity:.35}36%{opacity:1}55%{opacity:.9}70%{opacity:.5}78%{opacity:.8}100%{opacity:0}}
 @keyframes intro-faixas{0%{transform:translateY(-30%)}100%{transform:translateY(30%)}}
-@keyframes intro-sinal{0%{opacity:0;transform:translateX(-14%) skewX(18deg) scaleY(1.25);filter:contrast(2.4) saturate(3) hue-rotate(80deg) brightness(1.6);clip-path:inset(32% 0 41% 0)}
- 14%{opacity:1;transform:translateX(9%) skewX(-10deg);clip-path:inset(0 0 62% 0);filter:contrast(2) hue-rotate(-60deg) brightness(1.3)}
- 26%{transform:translateX(-5%) skewX(6deg);clip-path:inset(48% 0 6% 0);filter:contrast(1.7) invert(.25)}
+@keyframes intro-sinal{0%{opacity:0;transform:translateX(-14%);filter:contrast(2.4) saturate(3) hue-rotate(80deg) brightness(1.6);clip-path:inset(32% 0 41% 0)}
+ 14%{opacity:1;transform:translateX(9%);clip-path:inset(0 0 62% 0);filter:contrast(2) hue-rotate(-60deg) brightness(1.3)}
+ 26%{transform:translateX(-5%);clip-path:inset(48% 0 6% 0);filter:contrast(1.7) invert(.25)}
  38%{transform:translateX(3%);clip-path:inset(0);filter:contrast(1.5) hue-rotate(30deg)}
- 50%{transform:translateX(-2%) skewX(-3deg);clip-path:inset(18% 0 22% 0)}
+ 50%{transform:translateX(-2%);clip-path:inset(18% 0 22% 0)}
  64%{transform:none;clip-path:inset(0);filter:contrast(1.2)}
  100%{opacity:1;transform:none;clip-path:inset(0);filter:none}}
-@keyframes intro-3d{0%,31%,35%,66%,71%,100%{transform:none}32%{transform:perspective(600px) rotateY(9deg) rotateX(-4deg) scale(1.04)}33.5%{transform:perspective(600px) rotateY(-6deg) skewX(4deg)}67%{transform:perspective(500px) rotateX(10deg) scale(1.06) translateY(-1.5%)}69%{transform:perspective(500px) rotateX(-5deg) rotateZ(-1.2deg)}}
 @keyframes intro-aberr-r{0%,40%,46%,78%,83%,100%{transform:translate(0,0);opacity:0}41%{transform:translate(2.2%,.4%);opacity:.55}44%{transform:translate(-1.4%,0);opacity:.4}79%{transform:translate(3%,-.6%);opacity:.6}82%{transform:translate(1%,0);opacity:.3}}
 @keyframes intro-aberr-c{0%,40%,46%,78%,83%,100%{transform:translate(0,0);opacity:0}41%{transform:translate(-2.2%,-.4%);opacity:.55}44%{transform:translate(1.4%,0);opacity:.4}79%{transform:translate(-3%,.6%);opacity:.6}82%{transform:translate(-1%,0);opacity:.3}}
 @keyframes intro-rasgo{0%,55%,62%,88%,93%,100%{clip-path:inset(100% 0 0 0);transform:none}56%{clip-path:inset(22% 0 70% 0);transform:translateX(-7%)}58%{clip-path:inset(60% 0 31% 0);transform:translateX(5%)}60%{clip-path:inset(8% 0 86% 0);transform:translateX(-3%)}89%{clip-path:inset(71% 0 17% 0);transform:translateX(9%)}91%{clip-path:inset(40% 0 52% 0);transform:translateX(-6%)}}
-@keyframes intro-leg-in{0%{opacity:0;transform:translateX(-6px) skewX(12deg);letter-spacing:.3em}20%{opacity:1;transform:translateX(4px) skewX(-6deg)}35%{opacity:.4}45%{opacity:1;transform:none;letter-spacing:.1em}100%{opacity:1;transform:none;letter-spacing:.1em}}
+@keyframes intro-leg-in{0%{opacity:0;transform:translateX(-6px);letter-spacing:.3em}20%{opacity:1;transform:translateX(4px)}35%{opacity:.4}45%{opacity:1;transform:none;letter-spacing:.1em}100%{opacity:1;transform:none;letter-spacing:.1em}}
 @keyframes intro-leg-out{from{opacity:1}to{opacity:0}}
 @keyframes intro-leg-rgb{0%,70%,76%,100%{text-shadow:0 2px 10px #000,0 0 0 transparent,0 0 0 transparent}71%{text-shadow:0 2px 10px #000,-3px 0 0 rgba(255,40,90,.85),3px 0 0 rgba(40,230,255,.85)}73%{text-shadow:0 2px 10px #000,4px 1px 0 rgba(255,40,90,.85),-4px -1px 0 rgba(40,230,255,.85)}}
 @media (prefers-reduced-motion: reduce){[data-intro-cam],[data-intro-scan],[data-intro-fx],[data-intro-sintonia]{animation:none!important}[data-intro-sintonia],[data-intro-fx]{display:none}}
@@ -95,7 +94,7 @@ export function IntroCinematica({ language, onDone, paineis = PAINEIS }: Props) 
         return (
           <div key={`p${i}`} data-testid="intro-painel" data-plano={i + 1} aria-hidden="true"
             style={{ position: 'absolute', inset: 0, overflow: 'hidden', animation: `intro-sinal ${SINTONIA + 0.15}s steps(1, end) both` }}>
-            <div data-intro-fx style={{ position: 'absolute', inset: 0, animation: `intro-3d ${5.3 + (i % 3) * 1.1}s linear ${0.4 + (i % 2) * 0.9}s infinite` }}>
+            <div data-intro-fx style={{ position: 'absolute', inset: 0 }}>
               <img data-intro-cam src={paineis[i]} alt="" draggable={false} style={cam} />
               <img data-intro-fx src={paineis[i]} alt="" draggable={false} style={{ ...cam, mixBlendMode: 'screen', filter: 'sepia(1) saturate(9) hue-rotate(-50deg) brightness(.8)', animation: `${cam.animation}, intro-aberr-r ${3.7 + (i % 2)}s steps(1, end) infinite` }} />
               <img data-intro-fx src={paineis[i]} alt="" draggable={false} style={{ ...cam, mixBlendMode: 'screen', filter: 'sepia(1) saturate(9) hue-rotate(150deg) brightness(.8)', animation: `${cam.animation}, intro-aberr-c ${3.7 + (i % 2)}s steps(1, end) infinite` }} />
