@@ -50,7 +50,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   /** Família do especial do Soulmon (`StageSkills.especial.familia`): escolhe o efeito do botão Especial. */
   specialFamily?: string;
   language: Language;
-  onEarnPoints: (pts: number) => void;
+  onEarnPoints: (pts: number) => number | void;
   rankSaveId?: string;
   onExit: () => void;
 }) {
@@ -270,8 +270,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       const pts = barrageBits(score) * (level === 2 ? ADVANCED_BITS_FACTOR : 1);
       setFinalScore(score);
       setPrevBest(bestRef.current);
-      setEarned(pts);
-      if (pts > 0) onEarnRef.current(pts);
+      setEarned(pts > 0 ? (onEarnRef.current(pts) ?? pts) : 0);
       emitFeat('barrageBest', Math.floor(score));
       const nb = Math.max(bestRef.current, score);
       writeLocal(level === 2 ? STORAGE_KEYS.BARRAGE_BEST_2 : STORAGE_KEYS.BARRAGE_BEST, String(nb));

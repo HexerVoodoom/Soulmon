@@ -118,7 +118,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
     // Uma vez por rodada, e só se houver o que pagar.
     if (bits > 0 && !paid.current) {
       paid.current = true;
-      onEarnPoints(bits);
+      setEarned(onEarnPoints(bits) ?? bits);
     }
   };
 
