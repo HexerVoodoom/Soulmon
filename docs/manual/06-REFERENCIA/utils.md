@@ -3990,6 +3990,11 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Exports:** `PATCHES_MAX_BITS = 10`, `PATCHES_MIN_SIZE = 4`, `PATCHES_MAX_SIZE = 8`, `PatchShape`, `Rect`, `PatchClue`, `patchesBits`, `patchesForLevel`, `placeRect`, `rectBetween`, `rectHas`, `validatePatches`, `seededRng`.
 **Chamado por:** `src/components/mente/PatchesGame.tsx`
 
+### `src/utils/mente/selo.ts`
+**Dono de:** a regra pura do Selo Faltante: gerador semeado de matrizes, 6 opções balanceadas, escada de 7 níveis e pagamento.
+**Exports:** `seloForLevel`, `seloStep`, `seloBits`, `seloRuleCount`, `samePanel`, constantes `SELO_*`.
+**Chamado por:** `src/components/mente/SeloGame.tsx`
+
 ### `src/utils/mente/zip.ts`
 **Dono de:** a regra pura da Trilha do Pet (id `zip`, EN "Pet Trail"): um caminho único que passa pelos números em ordem e preenche todas as casas. O gerador monta o caminho hamiltoniano primeiro; todo puzzle tem solução.
 **Exports:** `ZIP_MAX_BITS = 10`, `ZIP_MIN_SIZE = 4`, `ZIP_MAX_SIZE = 8`, `ZipPuzzle`, `zipSizeForLevel`, `zipBits`, `zipForLevel`, `validateZip`, `canStep`, `areAdjacent`.

@@ -12,12 +12,12 @@ export const DAILY_COUNT_CAP = 99;
 export const DAILY_EVENTS = [
   'dino', 'ppt', 'match3', 'foco', 'masmorra', 'banho', 'carinho',
   'comida', 'humor', 'sono', 'mercado', 'amigo', 'arena', 'torneio',
-  'barrage', 'eco', 'zip', 'patches', 'calabouco',
+  'barrage', 'eco', 'zip', 'patches', 'calabouco', 'selo',
 ];
 export const DAILY_MISSION_IDS = [
   'd-dino', 'd-ppt', 'd-match3', 'd-foco', 'd-masmorra', 'd-banho', 'd-carinho',
   'd-comida', 'd-humor', 'd-sono', 'd-mercado', 'd-amigo', 'd-arena', 'd-torneio',
-  'd-barrage', 'd-eco', 'd-zip', 'd-patches', 'd-calabouco',
+  'd-barrage', 'd-eco', 'd-zip', 'd-patches', 'd-calabouco', 'd-selo',
 ];
 export const FIRST_TIME_IDS = [
   'first-minigame', 'first-focus', 'first-stroll', 'first-dungeon',
@@ -37,7 +37,7 @@ export const MISSION_IDS = [
 ];
 export const FEAT_CAP = 999999;
 export const FEAT_KEYS = [
-  'zipSolved', 'patchesSolved', 'rogueFloors', 'dinoDashSmashed', 'pptNormalWins', 'clanShopBuys', 'regens', 'focusPrepared',
+  'zipSolved', 'patchesSolved', 'rogueFloors', 'dinoDashSmashed', 'pptNormalWins', 'clanShopBuys', 'regens', 'focusPrepared', 'seloSolved',
   'barrageBest', 'dinoNormalBest', 'rankTier',
 ];
 const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);

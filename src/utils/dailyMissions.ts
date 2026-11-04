@@ -31,7 +31,7 @@ import type { QuestMark } from './questMarks';
 export type DailyEvent =
   | 'dino' | 'ppt' | 'match3' | 'foco' | 'masmorra' | 'banho' | 'carinho'
   | 'comida' | 'humor' | 'sono' | 'arena' | 'torneio' | 'mercado' | 'amigo'
-  | 'barrage' | 'eco' | 'zip' | 'patches' | 'calabouco';
+  | 'barrage' | 'eco' | 'zip' | 'patches' | 'calabouco' | 'selo';
 
 export interface DailyMission {
   /** Estável (o save e os testes o citam). */
@@ -45,6 +45,8 @@ export interface DailyMission {
   material: MaterialId;
   descPt: string;
   descEn: string;
+  /** Aposentada: fica no catálogo só para o save antigo (ids/eventos válidos); nunca é sorteada. */
+  retired?: true;
 }
 
 /**
@@ -71,13 +73,15 @@ const POOL: readonly DailyMission[] = [
   { id: 'd-barrage', event: 'barrage', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Encare uma Chuva de Almas', descEn: 'Face a Soul Barrage' },
   { id: 'd-eco', event: 'eco', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Jogue uma rodada do Eco do Pet', descEn: 'Play a round of Pet Echo' },
   { id: 'd-zip', event: 'zip', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Resolva uma Trilha do Pet', descEn: 'Solve a Pet Trail' },
-  { id: 'd-patches', event: 'patches', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Monte uma Colcha', descEn: 'Piece together a Patchwork' },
+  { id: 'd-patches', event: 'patches', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Monte uma Colcha', descEn: 'Piece together a Patchwork', retired: true },
   { id: 'd-calabouco', event: 'calabouco', target: 1, building: 'exploracao.dungeon', material: 'ore', descPt: 'Conclua um andar do Calabouço', descEn: 'Finish a Dungeon floor' },
+  // 04/11/2026: o Selo Faltante substitui a Colcha no rodízio do Ateliê (a Colcha fica aposentada acima).
+  { id: 'd-selo', event: 'selo', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Complete uma rodada do Selo Faltante', descEn: 'Finish a round of Missing Seal' },
 ];
 
 /** Rodízios (rodada 6): UMA do Salão e UMA do Ateliê por dia, em ordem fixa; o Calabouço entra todo dia. */
 const ROTA_SALAO: readonly string[] = ['d-dino', 'd-ppt', 'd-match3', 'd-barrage'];
-const ROTA_MENTE: readonly string[] = ['d-eco', 'd-zip', 'd-patches'];
+const ROTA_MENTE: readonly string[] = ['d-eco', 'd-zip', 'd-selo'];
 const FIXA_CALABOUCO = 'd-calabouco';
 const NA_ROTA: readonly string[] = [...ROTA_SALAO, ...ROTA_MENTE, FIXA_CALABOUCO];
 
@@ -94,7 +98,7 @@ export const DAILY_MISSION_COUNT = 6;
 export const DAILY_COUNT_CAP = 99;
 
 /** O catálogo inteiro — existe para o teste varrer o vocabulário e a soma de recompensa. */
-export function dailyMissionPool(): readonly DailyMission[] { return POOL; }
+export function dailyMissionPool(): readonly DailyMission[] { return POOL.filter(m => !m.retired); }
 
 /** Listas fechadas que o servidor espelha (`functions/api/_dailyMissions.js`, travado por `dailyMissions.parity.test.js`). */
 export const DAILY_MISSION_IDS: readonly string[] = POOL.map(m => m.id);
@@ -107,7 +111,7 @@ export const DAILY_EVENTS: readonly DailyEvent[] = POOL.map(m => m.event);
  */
 export function dailyMissionsFor(day: string, bondLevel: unknown): DailyMission[] {
   const rng = mulberry32(hashString(`daily-missions:${day}`));
-  const resto = POOL.filter(m => !NA_ROTA.includes(m.id));
+  const resto = POOL.filter(m => !NA_ROTA.includes(m.id) && !m.retired);
   for (let i = resto.length - 1; i > 0; i -= 1) {
     const j = Math.floor(rng() * (i + 1));
     [resto[i], resto[j]] = [resto[j], resto[i]];

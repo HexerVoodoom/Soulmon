@@ -212,12 +212,13 @@ describe('primeiras vezes (missões únicas)', () => {
 
 describe('rodízio da rodada 6: Salão, Ateliê e Calabouço', () => {
   const dia = (n: number) => new Date(Date.UTC(2026, 9, 1 + n)).toISOString().slice(0, 10);
-  it('com tudo aberto: 1 do Salão (dino/ppt/match3/barrage), 1 do Ateliê (eco/zip/patches) e o Calabouço, TODO dia; os 4 e os 3 giram', () => {
+  it('com tudo aberto: 1 do Salão (dino/ppt/match3/barrage), 1 do Ateliê (eco/zip/selo) e o Calabouço, TODO dia; os 4 e os 3 giram', () => {
     const salao = new Set<string>(); const mente = new Set<string>();
     for (let n = 0; n < 24; n += 1) {
       const ev = dailyMissionsFor(dia(n), 99).map(m => m.event);
       const s = ev.filter(e => ['dino', 'ppt', 'match3', 'barrage'].includes(e));
-      const m = ev.filter(e => ['eco', 'zip', 'patches'].includes(e));
+      const m = ev.filter(e => ['eco', 'zip', 'selo', 'patches'].includes(e));
+      expect(ev).not.toContain('patches'); // a Colcha está aposentada (04/11/2026)
       expect(s.length).toBe(1); expect(m.length).toBe(1); expect(ev).toContain('calabouco');
       expect(ev.length).toBe(DAILY_MISSION_COUNT);
       salao.add(s[0]); mente.add(m[0]);

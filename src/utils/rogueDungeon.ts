@@ -145,11 +145,12 @@ export function simulateRogueCombat(
 // Cada caminho que não é combate sorteia (determinístico por dia+passo) um minigame real do app em "modo desafio"
 // (`challenge` do componente: meta curta, sem Bits/recorde/ranking do jogo; o que conta é o ranking do Calabouço).
 
-export type ChallengeGame = 'match3' | 'dino' | 'rps' | 'zip' | 'patches' | 'eco' | 'barrage';
+/** `patches` (Colcha) saiu do sorteio em 04/11/2026; segue no tipo para incursões salvas antes disso. */
+export type ChallengeGame = 'match3' | 'dino' | 'rps' | 'zip' | 'patches' | 'selo' | 'eco' | 'barrage';
 export type LightKind = Exclude<PathKind, 'combat'>;
-/** Pool por caminho: puzzle = Zip/Patches; minigame = Elemental Fusion/Obstacle Run/PPT/Soul Barrage; explore = prova de mente (Eco). */
+/** Pool por caminho: puzzle = Zip/Selo Faltante; minigame = Elemental Fusion/Obstacle Run/PPT/Soul Barrage; explore = prova de mente (Eco). */
 export const CHALLENGE_POOL: Record<LightKind, readonly ChallengeGame[]> = {
-  puzzle: ['zip', 'patches'],
+  puzzle: ['zip', 'selo'],
   minigame: ['match3', 'dino', 'rps', 'barrage'],
   explore: ['eco'],
 };

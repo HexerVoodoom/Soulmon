@@ -8,7 +8,7 @@ const app = readFileSync('src/App.tsx', 'utf8');
 const area = readFileSync('src/components/nav/AreaView.tsx', 'utf8');
 
 describe('todo evento do catálogo diário tem emissor', () => {
-  const porAreaView = ['dino', 'ppt', 'match3', 'foco', 'arena', 'barrage', 'eco', 'zip', 'patches'];
+  const porAreaView = ['dino', 'ppt', 'match3', 'foco', 'arena', 'barrage', 'eco', 'zip', 'selo'];
   const porContarDiaria = ['masmorra', 'comida', 'sono', 'mercado'];
   const porContarMissao: Record<string, string> = { banho: 'banho', humor: 'humor', carinho: 'carinho', amigo: 'amigo', torneio: 'torneio' };
 

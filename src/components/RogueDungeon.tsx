@@ -13,7 +13,7 @@ import { Icon } from './ui/Icon';
 import { rogueBonusIcon } from '../utils/rogueBonusArt';
 import { rogueCardArt } from '../utils/rogueCardArt';
 import type { GameChallenge } from '../utils/gameChallenge';
-import { loadDinoGame, loadEcoGame, loadMatch3Game, loadPatchesGame, loadRPSGame, loadZipGame } from './nav/playPrefetch';
+import { loadDinoGame, loadEcoGame, loadMatch3Game, loadPatchesGame, loadRPSGame, loadSeloGame, loadZipGame } from './nav/playPrefetch';
 import type { Language } from '../utils/i18n';
 import type { Combatant } from '../utils/combate/curve';
 import { hpPoints } from '../utils/combate/fight';
@@ -39,6 +39,7 @@ const RPSGame = lazy(() => loadRPSGame().then(m => ({ default: m.RPSGame })));
 const EcoGame = lazy(() => loadEcoGame().then(m => ({ default: m.EcoGame })));
 const ZipGame = lazy(() => loadZipGame().then(m => ({ default: m.ZipGame })));
 const PatchesGame = lazy(() => loadPatchesGame().then(m => ({ default: m.PatchesGame })));
+const SeloGame = lazy(() => loadSeloGame().then(m => ({ default: m.SeloGame })));
 const RogueFight = lazy(() => import('./RogueFight').then(m => ({ default: m.RogueFight })));
 const SoulBarrage = lazy(() => import('./SoulBarrage').then(m => ({ default: m.SoulBarrage })));
 
@@ -48,6 +49,7 @@ const GAME_GOAL_COPY: Record<ChallengeGame, (goal: number) => { en: string; pt: 
   rps: g => ({ en: `Rock Paper Scissors: win ${g} rounds first.`, pt: `Pedra, Papel, Tesoura: vença ${g} rodadas primeiro.` }),
   zip: () => ({ en: 'Pet Trail: solve the puzzle.', pt: 'Trilha do Pet: resolva o puzzle.' }),
   patches: () => ({ en: 'Patchwork: solve the puzzle.', pt: 'Colcha: resolva o puzzle.' }),
+  selo: () => ({ en: 'Missing Seal: pick the seal that completes the grid.', pt: 'Selo Faltante: escolha o selo que completa a grade.' }),
   eco: g => ({ en: `Pet Echo: repeat an echo of ${g} stones.`, pt: `Eco do Pet: repita um eco de ${g} pedras.` }),
   barrage: g => ({ en: `Soul Barrage: survive ${g} seconds.`, pt: `Soul Barrage: sobreviva ${g} segundos.` }),
 };
@@ -213,6 +215,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
       case 'rps': return <RPSGame {...gameProps} />;
       case 'zip': return <ZipGame {...gameProps} />;
       case 'patches': return <PatchesGame {...gameProps} />;
+      case 'selo': return <SeloGame {...gameProps} />;
       case 'eco': return <EcoGame {...gameProps} />;
       case 'barrage': return <SoulBarrage {...gameProps} petElement={petElement} playerLevel={playerLevel} />;
     }

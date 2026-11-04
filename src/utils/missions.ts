@@ -130,8 +130,9 @@ export const MISSIONS: Mission[] = [
     namePt: 'Fio da meada', nameEn: 'Thread Finder', descPt: 'Resolva 10 Trilhas do Pet', descEn: 'Solve 10 Pet Trails',
     progress: s => s.feats?.zipSolved ?? 0 },
   { id: 'mission-patches-10', category: 'games', icon: '🧶', iconName: 'grid_view', target: 10, bgReward: 'bg-mission-colcha',
-    namePt: 'Colcha de retalhos', nameEn: 'Patchwork Maker', descPt: 'Monte 10 Colchas', descEn: 'Piece together 10 Patchworks',
-    progress: s => s.feats?.patchesSolved ?? 0 },
+    namePt: 'Colcha de retalhos', nameEn: 'Patchwork Maker', descPt: 'Complete 10 rodadas do Selo Faltante', descEn: 'Finish 10 rounds of Missing Seal',
+    // 04/11/2026: o Selo Faltante substitui a Colcha; as Colchas já montadas continuam contando (mesmo id e mesmo prêmio).
+    progress: s => (s.feats?.patchesSolved ?? 0) + (s.feats?.seloSolved ?? 0) },
   { id: 'mission-dino-normal-500', category: 'games', icon: '⚡', iconName: 'timer', target: 500, bgReward: 'bg-mission-corrida',
     namePt: 'Corrida no Normal', nameEn: 'Normal Runner', descPt: 'Faça 500 de score na Corrida com obstáculos no Normal', descEn: 'Score 500 in the Obstacle Run on Normal',
     progress: s => s.feats?.dinoNormalBest ?? 0 },
