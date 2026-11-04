@@ -88,11 +88,11 @@ describe('Cena subaquática da Respiração', () => {
     expect(q(container, '[data-camada="bolhas"]')).toBeNull();
     expect(q(container, '[data-cena-subaquatica]').innerHTML).not.toMatch(/animation:/);
   });
-  it('sem arte pintada, entram as camadas procedurais', () => {
+  it('com a arte pintada instalada, entram as camadas de arte e as bolhas', () => {
     const { container } = renderWithCss(<CenaSubaquatica level={0} reduced={false} />);
-    expect(q(container, '[data-camada="fundo"]')).toBeTruthy();
-    expect(q(container, '[data-camada="meio"]')).toBeTruthy();
-    expect(q(container, '[data-camada="frente"]')).toBeTruthy();
+    expect(q(container, '[data-camada="fundo-arte"]')).toBeTruthy();
+    expect(q(container, '[data-camada="meio-arte"]')).toBeTruthy();
+    expect(q(container, '[data-camada="frente-arte"]')).toBeTruthy();
     expect(q(container, '[data-camada="bolhas"]')).toBeTruthy();
   });
 });
