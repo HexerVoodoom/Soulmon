@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { reduceChipsUsedThisStage, REDUCE_CHIPS_PER_STAGE } from './specialItemUse';
+import { REDUCE_CHIP_EMOJI, REDUCE_CHIP_BOOST, isReduceChipKey } from './shop';
 import { applySpecialItem, specialRefusal, glitchtamaUsedToday, GLITCHTAMA_PER_DAY, CHIPS_PER_STAGE, chipsUsedThisStage, sanitizeChipsStage, type SpecialItemState } from './specialItemUse';
 import { playerDayKey } from './playerDay';
 import { SHOP_ITEMS, BIG_CHIP_BOOST, BIG_CHIP_EMOJI, PRISM_CHIP_EMOJI, PRISM_CHIP_BOOST, CHIP_BOOST, HEART_HEAL, CHIP_EMOJI, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, TRIPLE_CHIP_EMOJI, TRIPLE_CHIP_BOOST, SPECIAL_ITEMS } from './shop';
@@ -287,7 +289,9 @@ describe('chips maiores e prisma (D-12/D-13)', () => {
     expect(preco('chip-big-benevolence')).toBe(840);
     expect(SHOP_ITEMS.find(i => i.id === 'chip-prism')).toBeUndefined();
     expect(SHOP_ITEMS.some(i => i.icon === PRISM_CHIP_EMOJI)).toBe(false);
-    expect(preco('chip-triple')).toBe(2400);
+    // 04/11/2026: o Chip Triplo saiu da loja.
+    expect(SHOP_ITEMS.find(i => i.id === 'chip-triple')).toBeUndefined();
+    expect(SHOP_ITEMS.some(i => i.icon === TRIPLE_CHIP_EMOJI)).toBe(false);
   });
 
   it.each([['power', 'powerPoints'], ['harmony', 'harmonyPoints'], ['benevolence', 'benevolencePoints']] as const)(
@@ -321,10 +325,9 @@ describe('D-94 prisma já possuído segue usável', () => {
   });
 });
 
-describe('D-95 chip triplo', () => {
-  it('da +9 em cada atributo e vem da loja com o emoji próprio', () => {
-    const it = SHOP_ITEMS.find(i => i.id === 'chip-triple')!;
-    expect(it.icon).toBe(TRIPLE_CHIP_EMOJI);
+describe('D-95 chip triplo (fora da loja desde 04/11/2026, quem tem segue usando)', () => {
+  it('o já possuído dá +9 em cada atributo', () => {
+    expect(SPECIAL_ITEMS[TRIPLE_CHIP_EMOJI]).toBeDefined();
     expect(TRIPLE_CHIP_BOOST).toBe(9);
     const { state } = applySpecialItem(estado({ foodInventory: { [TRIPLE_CHIP_EMOJI]: 1 } }), TRIPLE_CHIP_EMOJI, AGORA);
     expect([state.powerPoints, state.harmonyPoints, state.benevolencePoints]).toEqual([9, 9, 9]);
@@ -384,5 +387,68 @@ describe('D-97 limite de 3 chips por estágio', () => {
     expect(sanitizeChipsStage({ stage: 'rookie', used: 2.9 })).toEqual({ stage: 'rookie', used: 2 });
     const uma = sanitizeChipsStage({ stage: 'champion', used: 3 });
     expect(sanitizeChipsStage(uma)).toEqual(uma);
+  });
+});
+
+describe('chips de REDUÇÃO (04/11/2026)', () => {
+  it('a loja vende um redutor por tipo, ao preço do chip comum', () => {
+    for (const a of ['power', 'harmony', 'benevolence'] as const) {
+      const it = SHOP_ITEMS.find(i => i.id === `chip-reduce-${a}`)!;
+      expect(it.icon).toBe(REDUCE_CHIP_EMOJI[a]);
+      expect(it.price).toBe(360);
+      expect(isReduceChipKey(it.icon)).toBe(true);
+      expect(SPECIAL_ITEMS[it.icon].reduce).toBe(true);
+    }
+    expect(isReduceChipKey(CHIP_EMOJI.power)).toBe(false);
+  });
+  it.each([['power', 'powerPoints'], ['harmony', 'harmonyPoints'], ['benevolence', 'benevolencePoints']] as const)(
+    'redutor de %s tira 3 só nele', (attr, pontos) => {
+      const prev = estado({ foodInventory: { [REDUCE_CHIP_EMOJI[attr]]: 1 }, powerPoints: 10, harmonyPoints: 10, benevolencePoints: 10,
+        attributesSinceLastEvolution: { power: 5, harmony: 5, benevolence: 5 }, totalXP: 70 });
+      const { state, refused } = applySpecialItem(prev, REDUCE_CHIP_EMOJI[attr], AGORA);
+      expect(refused).toBeUndefined();
+      expect(state[pontos]).toBe(10 - REDUCE_CHIP_BOOST);
+      expect(state.attributesSinceLastEvolution[attr]).toBe(2);
+      expect(state.powerPoints + state.harmonyPoints + state.benevolencePoints).toBe(27);
+      expect(state.totalXP).toBe(70);
+      expect(state.foodInventory[REDUCE_CHIP_EMOJI[attr]]).toBeUndefined();
+    });
+  it('clamp em 0 (total e do estágio)', () => {
+    const prev = estado({ foodInventory: { [REDUCE_CHIP_EMOJI.power]: 1 }, powerPoints: 2,
+      attributesSinceLastEvolution: { power: 1, harmony: 0, benevolence: 0 } });
+    const { state } = applySpecialItem(prev, REDUCE_CHIP_EMOJI.power, AGORA);
+    expect(state.powerPoints).toBe(0);
+    expect(state.attributesSinceLastEvolution.power).toBe(0);
+  });
+  it('tipo já em 0: recusa sem consumir', () => {
+    const prev = estado({ foodInventory: { [REDUCE_CHIP_EMOJI.harmony]: 1 }, harmonyPoints: 0 });
+    const r = applySpecialItem(prev, REDUCE_CHIP_EMOJI.harmony, AGORA);
+    expect(r.refused).toBe('nothing-to-reduce');
+    expect(r.state).toBe(prev);
+  });
+  it('limites independentes: 3 que somam + 3 que reduzem no mesmo estágio; o 4º de cada recusa', () => {
+    let st = estado({ foodInventory: { [CHIP_EMOJI.power]: 9, [REDUCE_CHIP_EMOJI.harmony]: 9 }, evolutionStage: 'rookie',
+      powerPoints: 0, harmonyPoints: 30 });
+    for (let i = 0; i < 3; i++) {
+      let r = applySpecialItem(st, CHIP_EMOJI.power, AGORA); expect(r.refused).toBeUndefined(); st = r.state;
+      r = applySpecialItem(st, REDUCE_CHIP_EMOJI.harmony, AGORA); expect(r.refused).toBeUndefined(); st = r.state;
+    }
+    expect(chipsUsedThisStage(st)).toBe(3);
+    expect(reduceChipsUsedThisStage(st)).toBe(REDUCE_CHIPS_PER_STAGE);
+    expect(st.powerPoints).toBe(9);
+    expect(st.harmonyPoints).toBe(21);
+    expect(applySpecialItem(st, CHIP_EMOJI.power, AGORA).refused).toBe('stage-cap');
+    expect(applySpecialItem(st, REDUCE_CHIP_EMOJI.harmony, AGORA).refused).toBe('stage-cap');
+    // redutor no teto não trava o que soma (e vice-versa)
+    const soReducao = { ...st, chipsStage: undefined };
+    expect(specialRefusal(soReducao, CHIP_EMOJI.power, AGORA)).toBeUndefined();
+    const soSoma = { ...st, chipsReduceStage: undefined };
+    expect(specialRefusal(soSoma, REDUCE_CHIP_EMOJI.harmony, AGORA)).toBeUndefined();
+    // evoluir zera os dois
+    const evoluiu = { ...st, evolutionStage: 'champion' };
+    expect(reduceChipsUsedThisStage(evoluiu)).toBe(0);
+  });
+  it('save antigo sem o campo: 0 redutores usados', () => {
+    expect(reduceChipsUsedThisStage(estado({}))).toBe(0);
   });
 });

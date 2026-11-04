@@ -23,6 +23,7 @@ import { useCallback, useEffect, useRef, useState, type RefObject, type PointerE
 import type { Language } from '../../utils/i18n';
 import { SPECIAL_ITEMS } from '../../utils/shop';
 import { isPremiumKey } from '../../utils/premiumFood';
+import { isReduceChipKey } from '../../utils/shop';
 import { ITEM_ART } from '../../utils/itemArt';
 import { MaterialIcon } from '../MaterialIcon';
 import { getFoodDesc, getFoodName } from '../ItemsWindow';
@@ -329,7 +330,7 @@ export function Mochila({
                       setSelecionado(emoji);
                     }}
                   >
-                    <span className="sm3-item-arte" aria-hidden="true" data-premium={isPremiumKey(emoji) || undefined}>
+                    <span className="sm3-item-arte" aria-hidden="true" data-premium={isPremiumKey(emoji) || undefined} data-reduce={isReduceChipKey(emoji) || undefined}>
                       {ITEM_ART[emoji] && <img src={ITEM_ART[emoji]} alt="" width={32} height={32} draggable={false} />}
                     </span>
                     <span className="sm3-item-nome">{nome}</span>

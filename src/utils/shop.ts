@@ -66,12 +66,25 @@ export const TRIPLE_CHIP_EMOJI = '💠';
 export const TRIPLE_CHIP_PRICE = 2400;
 // D-96: preço dos chips +100% (180→360, maiores 420→840).
 export const CHIP_PRICE = 360;
+// Chips de REDUÇÃO (dono, 04/11/2026): espelho dos comuns — cada um TIRA ${CHIP_BOOST} pontos de UM tipo
+// (clamp em 0), mesmo preço, e têm limite PRÓPRIO por estágio (`REDUCE_CHIPS_PER_STAGE`), separado dos chips que somam.
+// Chave no inventário = emoji do chip comum + `REDUCE_CHIP_SUFFIX` (mesmo molde da comida premium ★):
+// a arte é a do chip comum e a Mochila desenha o "−" por cima (`data-reduce`).
+export const REDUCE_CHIP_SUFFIX = '➖';
+export const REDUCE_CHIP_BOOST = 3;
+export const REDUCE_CHIP_PRICE = 360;
 export const BIG_CHIP_PRICE = 840;
 export const HEART_HEAL = 1;   // hearts restored when a heart item is USED
 
 // Inventory emojis for the consumable items that live in the Items folder.
 export const CHIP_EMOJI: Record<Attr, string> = { power: '👊', harmony: '🎶', benevolence: '🤲' };
 export const HEART_ITEM_EMOJI = '💗';
+export const REDUCE_CHIP_EMOJI: Record<Attr, string> = {
+  power: CHIP_EMOJI.power + REDUCE_CHIP_SUFFIX,
+  harmony: CHIP_EMOJI.harmony + REDUCE_CHIP_SUFFIX,
+  benevolence: CHIP_EMOJI.benevolence + REDUCE_CHIP_SUFFIX,
+};
+export const isReduceChipKey = (key: string): boolean => key.endsWith(REDUCE_CHIP_SUFFIX) && key.length > REDUCE_CHIP_SUFFIX.length;
 /** ✨ Faísca de Alma (30/10/2026, corrigida pelo dono no mesmo dia): usada nos Arquivos, restaura a ENERGIA DA HOME (a que a comida regenera e a Masmorra gasta). */
 export const SPARK_ITEM_EMOJI = '✨';
 /** Energia da Home restaurada por 1 Faísca (como a comida premium antiga, +5; teto = máximo do estágio). */
@@ -87,6 +100,8 @@ export interface SpecialItem {
   attr?: Attr;
   /** Pontos de tipo por atributo ao usar o chip. Ausente = só `attr` com CHIP_BOOST. */
   boosts?: Record<Attr, number>;
+  /** Chip de REDUÇÃO: os `boosts` são negativos, o clamp é em 0 e o limite por estágio é o próprio. */
+  reduce?: boolean;
   namePt: string;
   nameEn: string;
   descPt: string;
@@ -148,6 +163,24 @@ export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
     namePt: 'Chip Triplo', nameEn: 'Triple Chip',
     descPt: `+${TRIPLE_CHIP_BOOST} em cada atributo`, descEn: `+${TRIPLE_CHIP_BOOST} to each attribute`,
   },
+  [REDUCE_CHIP_EMOJI.power]: {
+    emoji: REDUCE_CHIP_EMOJI.power, kind: 'chip', attr: 'power', reduce: true,
+    boosts: { power: -REDUCE_CHIP_BOOST, harmony: 0, benevolence: 0 },
+    namePt: 'Chip Redutor de Poder', nameEn: 'Power Reducer Chip',
+    descPt: `−${REDUCE_CHIP_BOOST} Poder`, descEn: `−${REDUCE_CHIP_BOOST} Power`,
+  },
+  [REDUCE_CHIP_EMOJI.harmony]: {
+    emoji: REDUCE_CHIP_EMOJI.harmony, kind: 'chip', attr: 'harmony', reduce: true,
+    boosts: { power: 0, harmony: -REDUCE_CHIP_BOOST, benevolence: 0 },
+    namePt: 'Chip Redutor de Harmonia', nameEn: 'Harmony Reducer Chip',
+    descPt: `−${REDUCE_CHIP_BOOST} Harmonia`, descEn: `−${REDUCE_CHIP_BOOST} Harmony`,
+  },
+  [REDUCE_CHIP_EMOJI.benevolence]: {
+    emoji: REDUCE_CHIP_EMOJI.benevolence, kind: 'chip', attr: 'benevolence', reduce: true,
+    boosts: { power: 0, harmony: 0, benevolence: -REDUCE_CHIP_BOOST },
+    namePt: 'Chip Redutor de Benevolência', nameEn: 'Benevolence Reducer Chip',
+    descPt: `−${REDUCE_CHIP_BOOST} Benevolência`, descEn: `−${REDUCE_CHIP_BOOST} Benevolence`,
+  },
   [HEART_ITEM_EMOJI]: {
     emoji: HEART_ITEM_EMOJI, kind: 'heart',
     namePt: 'Coraçãozinho', nameEn: 'Little Heart',
@@ -200,9 +233,17 @@ export const SHOP_ITEMS: ShopItem[] = [
     descPt: `+${BIG_CHIP_BOOST} Benevolência`, descEn: `+${BIG_CHIP_BOOST} Benevolence`, price: BIG_CHIP_PRICE },
   // D-94 (19/10/2026): o Chip Prisma ('inútil') saiu da LOJA. Continua em `SPECIAL_ITEMS`
   // (catálogo de USO): quem já o tem na pastinha mantém e usa.
-  { id: 'chip-triple', kind: 'chip', icon: TRIPLE_CHIP_EMOJI,
-    namePt: 'Chip Triplo', nameEn: 'Triple Chip',
-    descPt: `+${TRIPLE_CHIP_BOOST} em cada atributo`, descEn: `+${TRIPLE_CHIP_BOOST} to each attribute`, price: TRIPLE_CHIP_PRICE },
+  // 04/11/2026 (dono): o Chip Triplo SAIU DA LOJA. Continua em `SPECIAL_ITEMS`: quem já o tem na pastinha
+  // mantém e usa (mesma regra do Prisma, D-94). No lugar, os chips que REDUZEM um tipo:
+  { id: 'chip-reduce-power', kind: 'chip', icon: REDUCE_CHIP_EMOJI.power, attr: 'power',
+    namePt: 'Chip Redutor de Poder', nameEn: 'Power Reducer Chip',
+    descPt: `−${REDUCE_CHIP_BOOST} Poder`, descEn: `−${REDUCE_CHIP_BOOST} Power`, price: REDUCE_CHIP_PRICE },
+  { id: 'chip-reduce-harmony', kind: 'chip', icon: REDUCE_CHIP_EMOJI.harmony, attr: 'harmony',
+    namePt: 'Chip Redutor de Harmonia', nameEn: 'Harmony Reducer Chip',
+    descPt: `−${REDUCE_CHIP_BOOST} Harmonia`, descEn: `−${REDUCE_CHIP_BOOST} Harmony`, price: REDUCE_CHIP_PRICE },
+  { id: 'chip-reduce-benevolence', kind: 'chip', icon: REDUCE_CHIP_EMOJI.benevolence, attr: 'benevolence',
+    namePt: 'Chip Redutor de Benevolência', nameEn: 'Benevolence Reducer Chip',
+    descPt: `−${REDUCE_CHIP_BOOST} Benevolência`, descEn: `−${REDUCE_CHIP_BOOST} Benevolence`, price: REDUCE_CHIP_PRICE },
   // ⚰️ O CORAÇÃOZINHO NÃO É MAIS VENDIDO (06/09/2026, D7+D15). Ele custava 150
   // Bits, e Créditos compram Bits (`BITS_EXCHANGE`, 1→10): eram 15 Créditos por
   // +1 coração, sem cap — dinheiro comprando a volta do único recurso que a
