@@ -110,8 +110,7 @@ export function RevisaoGame({
       next = done.state;
       working.current = next;
       onReviewChange(next);
-      if (done.bits > 0) onEarnPoints(done.bits);
-      setEarned(done.bits);
+      setEarned(done.bits > 0 ? (onEarnPoints(done.bits) ?? done.bits) : 0);
       setScreen('done');
       return;
     }

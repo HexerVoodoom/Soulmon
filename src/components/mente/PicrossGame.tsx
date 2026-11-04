@@ -117,9 +117,8 @@ export function PicrossGame({ language, onEarnPoints, onExit, todayKey }: Earnin
       if (!idsHoje.includes(pattern.id)) writeJson(STORAGE_KEYS.PICROSS_BASE_PAID, { day: todayKey, ids: [...idsHoje, pattern.id] });
       const bits = repetido ? 0 : picrossBits(n, payDaily);
       setSolved(true);
-      setEarned(bits);
+      setEarned(bits > 0 ? (onEarnPoints(bits) ?? bits) : 0);
       setDone(s => new Set(s).add(pattern.id));
-      if (bits > 0) onEarnPoints(bits);
     }
   };
 

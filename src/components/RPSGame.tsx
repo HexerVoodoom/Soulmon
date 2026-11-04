@@ -71,12 +71,13 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
    *  comum dos minijogos. */
   demoCharacterId?: string;
   language: Language;
-  onEarnPoints: (pts: number) => void;
+  onEarnPoints: (pts: number) => number | void;
   /** A partida chegou ao fim (vitória OU derrota) — a missão do dia conta o jogo, não o resultado (REGISTRO §52). */
   onMatchEnd?: () => void;
   onExit: () => void;
 }) {
   const isPt = language === 'pt-BR';
+  const [earned, setEarned] = useState(0);
   const [playerWins, setPlayerWins] = useState(0);
   const [petWins, setPetWins] = useState(0);
   const [playerHand, setPlayerHand] = useState<Hand | null>(null);
@@ -128,7 +129,8 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
         challenge.onResult(pw >= need);
       } else if (pw >= WINS_NEEDED || (exhausted && pw > ew)) {
         // C-11 (30/09/2026): vencer a partida não é concluir tarefa (R-CAT) — mudo.
-        onEarnPoints(level === 2 ? MATCH_POINTS * ADVANCED_BITS_FACTOR : MATCH_POINTS);
+        const pedido = level === 2 ? MATCH_POINTS * ADVANCED_BITS_FACTOR : MATCH_POINTS;
+        setEarned(onEarnPoints(pedido) ?? pedido);
         if (level === 2) emitFeat('pptNormalWins');
         onMatchEnd?.();
         setMatchOver('won');
@@ -284,7 +286,7 @@ export function RPSGame({ evolutionStage, demoCharacterId, language, onEarnPoint
               ? (isPt ? 'Ninguém cedeu. Vocês estão no mesmo passo.' : 'Neither gave way. You are in step.')
               : (isPt ? 'Seu Soulmon levou esta. Nada foi cobrado.' : 'Your Soulmon took this one. Nothing was charged.')}
           hero={{ label: isPt ? 'Você × Soulmon' : 'You × Soulmon', value: `${playerWins} × ${petWins}` }}
-          ledger={[{ key: 'bits', kind: 'bits', value: matchOver === 'won' ? (level === 2 ? MATCH_POINTS * ADVANCED_BITS_FACTOR : MATCH_POINTS) : 0 }]}
+          ledger={[{ key: 'bits', kind: 'bits', value: matchOver === 'won' ? earned : 0 }]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           petSrc={petSprite}
           scene={`url(${rpsScene}) center/cover`}

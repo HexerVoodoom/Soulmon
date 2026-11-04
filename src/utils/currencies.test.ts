@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CURRENCIES, CREDIT_TO_BITS, BITS_EXCHANGE, EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, creditMinigameBits, minigameBitsToday, MINIGAME_BITS_PER_DAY } from './currencies';
+import { CURRENCIES, CREDIT_TO_BITS, BITS_EXCHANGE, EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, creditMinigameBits, minigameBitsGranted, minigameBitsToday, MINIGAME_BITS_PER_DAY } from './currencies';
 import { SHOP_ITEMS, TOURNAMENT_ITEMS, ALL_SHOP_ITEMS } from './shop';
 import { PET_BACKGROUNDS } from './backgrounds';
 
@@ -144,5 +144,27 @@ describe('creditMinigameBits — entrada não finita não envenena o saldo', () 
     const r = creditMinigameBits(prev, 30, dia);
     expect(r.gamePoints).toBe(40);
     expect(r.minigameBits?.earned).toBe(30);
+  });
+});
+
+describe('minigameBitsGranted — o valor mostrado é o creditado', () => {
+  const dia = 'Mon Sep 28 2026';
+  it('teto gasto: 0', () => {
+    expect(minigameBitsGranted(MINIGAME_BITS_PER_DAY, 150)).toBe(0);
+  });
+  it('teto atingido no meio: parcial', () => {
+    expect(minigameBitsGranted(MINIGAME_BITS_PER_DAY - 40, 150)).toBe(40);
+  });
+  it('sem teto no caminho: o pedido inteiro', () => {
+    expect(minigameBitsGranted(0, 37)).toBe(37);
+  });
+  it('lixo não credita', () => {
+    expect(minigameBitsGranted(0, NaN)).toBe(0);
+    expect(minigameBitsGranted(0, -5)).toBe(0);
+  });
+  it.each([0, 60, 110, 149, 150])('o que o funil mostra é o que creditMinigameBits soma (já ganhos: %i)', (ja) => {
+    const prev = { gamePoints: 10, minigameBits: { day: dia, earned: ja } };
+    const depois = creditMinigameBits(prev, 150, dia);
+    expect((depois.gamePoints ?? 0) - 10).toBe(minigameBitsGranted(ja, 150));
   });
 });

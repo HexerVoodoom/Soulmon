@@ -120,18 +120,20 @@ export interface ArenaGameProps {
   /** A SEMENTE da primeira run, escolhida na folha da Arena (`DueloSheet`): o jogador SELECIONA os adversários
    *  (Arena) — o Torneio é o que sorteia. Sem ela (ou na revanche) a semente é nova. */
   seed?: number;
-  onEarnPoints?: (points: number) => void;
+  onEarnPoints?: (points: number) => number | void;
   /** Dex de elementos (27/10/2026): ao vencer uma RODADA, os elementos dos inimigos dela. */
   onElementsDefeated?: (ids: readonly string[], drops?: readonly EssenceDrop[]) => void;
   /** Bestiário (31/10/2026): todo inimigo VISTO numa rodada entra na Biblioteca (abas Selvagem/Desgarrado). */
   onEnemySeen?: (enemyKey: string) => void;
   /** A run TERMINOU (vitória, derrota ou empate): o chamador re-sorteia os 3 cards de graça (`applyArenaRunEnd`). Uma vez por run. */
-  onRunEnd?: () => void;
+  onRunEnd?: (outcome: 'win' | 'loss' | 'draw') => void;
+  /** §222: o valor da escada no save (`arenaLadder`). Congelado no começo de cada run: o card é a luta, mesmo que a vitória grave o novo valor. */
+  ladder?: number;
   onExit: () => void;
 }
 
 export function ArenaGame({
-  evolutionStage, demoCharacterId, language, skills, petElement, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onEnemySeen, onRunEnd, onExit,
+  evolutionStage, demoCharacterId, language, skills, petElement, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onEnemySeen, onRunEnd, ladder = 0, onExit,
 }: ArenaGameProps) {
   const elementsDefeatedRef = useRef(onElementsDefeated);
   const enemySeenRef = useRef(onEnemySeen);
@@ -145,6 +147,7 @@ export function ArenaGame({
 
   const [pool, setPool] = useState<BestiaryCreature[] | null>(null);
   const [fase, setFase] = useState<Fase>('carregando');
+  const [bitsGanhos, setBitsGanhos] = useState(0);
   /** Essências que a run rendeu (as mesmas creditadas por `onElementsDefeated`): entram no livro "Ganhou". */
   const [essenciasRun, setEssenciasRun] = useState<EssenceDrop[]>([]);
   const [rodada, setRodada] = useState(1);
@@ -167,6 +170,10 @@ export function ArenaGame({
   const hpCarryRef = useRef(1);
   const energyCarryRef = useRef(0);
   const rodadaRef = useRef(1);
+  const ladderPropRef = useRef(ladder);
+  ladderPropRef.current = ladder;
+  /** A escada DESTA run: lida em `comecar`, nunca muda durante a luta. */
+  const runLadderRef = useRef(ladder);
   const inimigosRef = useRef<ArenaEnemy[]>([]);
 
   const par = skills?.[stage];
@@ -214,7 +221,7 @@ export function ArenaGame({
     if (fase !== 'venceu' && fase !== 'perdeu' && fase !== 'empatou') return;
     if (fimAvisadoRef.current === seedLuta) return;
     fimAvisadoRef.current = seedLuta;
-    runEndRef.current?.();
+    runEndRef.current?.(fase === 'venceu' ? 'win' : fase === 'perdeu' ? 'loss' : 'draw');
   }, [fase, seedLuta]);
 
   /** Sprite por inimigo, sorteado UMA vez por rodada — sortear na pintura trocaria o bicho a cada re-render. */
@@ -233,7 +240,7 @@ export function ArenaGame({
 
   const montarRodada = useCallback((n: number, poolAtual: BestiaryCreature[]) => {
     // O sabor da rodada vem da semente da run (determinístico: a mesma run, os mesmos bichos).
-    const novos = arenaFoesOfSeed(runSeedRef.current, n); // a MESMA função do card da DueloSheet
+    const novos = arenaFoesOfSeed(runSeedRef.current, n, runLadderRef.current); // a MESMA função do card da DueloSheet
     inimigosRef.current = novos;
     rodadaRef.current = n;
     setInimigos(novos);
@@ -247,12 +254,14 @@ export function ArenaGame({
     if (!pool) return;
     runSeedRef.current = chosenSeedRef.current ?? newDefenseSeed();
     chosenSeedRef.current = undefined;
+    runLadderRef.current = ladderPropRef.current;
     setSeedLuta(runSeedRef.current);
     hpCarryRef.current = 1;
     energyCarryRef.current = 0;
     setEssenciasRun([]);
     setPontos(0);
     setRodada(1);
+    setBitsGanhos(0);
     montarRodada(1, pool);
   }, [pool, montarRodada]);
 
@@ -264,7 +273,7 @@ export function ArenaGame({
     const els = inimigosRef.current.map(e => e.elements);
     return {
       player: { ...arenaPlayerSide(p), startShield: r === 0 ? riftRef.current.startShield : 0 }, // só na 1ª rodada
-      foes: arenaFoeSides(p, r, els),
+      foes: arenaFoeSides(p, r, els, runLadderRef.current),
       seed: arenaRoundSeed(seed, r),
       startHp: hpCarryRef.current,
       startEnergy: energyCarryRef.current,
@@ -281,7 +290,7 @@ export function ArenaGame({
 
   const cena = useCallback((): GroupScene => {
     const p = jogadorRef.current;
-    const foes = arenaFoeSides(p, rodadaRef.current - 1, inimigosRef.current.map(e => e.elements));
+    const foes = arenaFoeSides(p, rodadaRef.current - 1, inimigosRef.current.map(e => e.elements), runLadderRef.current);
     return {
       playerMaxHp: hpPoints(arenaPlayerSide(p).combatant.hp),
       foeMaxHp: foes.map(f => hpPoints(f.combatant.hp)),
@@ -314,7 +323,7 @@ export function ArenaGame({
       playVictory();
       const ids = inimigosRef.current.flatMap(e => dexIdsOfFoe(e));
       if (ids.length > 0) {
-        const drops = inimigosRef.current.map(e => essenceDropOfFoe(e.elements, e.tier)).filter((d): d is EssenceDrop => !!d);
+        const drops = inimigosRef.current.map(e => essenceDropOfFoe(e.elements, e.dropTier)).filter((d): d is EssenceDrop => !!d);
         elementsDefeatedRef.current?.(ids, drops);
         if (elementsDefeatedRef.current && drops.length > 0) setEssenciasRun(prev => [...prev, ...drops]);
       }
@@ -340,7 +349,8 @@ export function ArenaGame({
   const proximaRodada = useCallback(() => {
     if (!pool) return;
     if (rodada >= ARENA_ROUNDS) {
-      onEarnPoints?.(riftBitsWith(pontos, rift.riftBits));
+      const pedido = riftBitsWith(pontos, rift.riftBits);
+      setBitsGanhos(onEarnPoints?.(pedido) ?? pedido); // o creditado (teto diário), não o pedido
       setFase('venceu');
       return;
     }
@@ -369,7 +379,7 @@ export function ArenaGame({
   const entreRodadas = fase === 'rodada-limpa' && rodada < ARENA_ROUNDS;
   if (fase === 'luta' || entreRodadas) {
     const pronto = batalha.stateKey === fightKey;
-    const foesLado = arenaFoeSides(jogador, rodada - 1, inimigos.map(e => e.elements));
+    const foesLado = arenaFoeSides(jogador, rodada - 1, inimigos.map(e => e.elements), runLadderRef.current);
     const hpFrac = pronto ? batalha.hp : hpCarryRef.current;
     const foesHp = (i: number) => (pronto ? (batalha.foesHp[i] ?? 1) : 1);
     const alvoIdx = pronto ? batalha.target : Math.max(0, inimigos.findIndex((_, i) => foesHp(i) > 1e-9));
@@ -404,7 +414,7 @@ export function ArenaGame({
             return {
               key: i, sprite: wildPlayers[i]?.spriteUrl ?? sprites[i], stage: e.tier, name: nomeDe(e, i), hp: Math.round(Math.max(0, foesHp(i)) * max), maxHp: max,
               element: fxElementId(e.element ?? e.elements[0]), down: foesHp(i) <= 1e-9,
-              // só quem tem especial (o chefe) mostra a barra de energia
+              // só quem tem especial (o chefe e, §222, toda forma acima de Rookie) mostra a barra de energia
               energy: foesLado[i].special && pronto ? (batalha.foeEnergy[i] ?? 0) / ENERGY_TRIGGER : undefined,
               status: pronto ? batalha.status.foes[i] : undefined,
             };
@@ -571,7 +581,7 @@ export function ArenaGame({
               ? (isPt ? 'Vocês caíram juntos. Não custou nenhum coração, só a run.' : 'You both held your ground. It cost no hearts, only the run.')
               : (isPt ? 'Não custou nenhum coração, só a run. Ele está recuperando o fôlego.' : 'It cost no hearts, only the run. He is catching his breath.')}
           hero={{ label: isPt ? 'Rodadas vencidas' : 'Rounds cleared', value: fase === 'venceu' ? ARENA_ROUNDS : Math.max(0, rodada - 1) }}
-          ledger={[{ key: 'bits', kind: 'bits', value: fase === 'venceu' ? riftBitsWith(pontos, rift.riftBits) : 0 }, ...essenceLedgerRows(essenciasRun)]}
+          ledger={[{ key: 'bits', kind: 'bits', value: fase === 'venceu' ? bitsGanhos : 0 }, ...essenceLedgerRows(essenciasRun)]}
           emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
           petSrc={petSprite}
           opponentSrc={sprites[sprites.length - 1]}

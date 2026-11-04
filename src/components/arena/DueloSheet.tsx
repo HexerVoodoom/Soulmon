@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ARENA_ROUNDS, ARENA_ROUND_COMP, elementLabel, loadBestiaryPool } from '../../utils/arena';
-import { isStraySeed } from '../../utils/strayFoes';
-import { arenaCardElements, arenaCards, arenaFoesOfSeed, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
+import { arenaCardElements, arenaCards, arenaFoesOfSeed, arenaRunIsStray, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
 import { elementIcon } from '../../utils/elementIconArt';
 import { Icon } from '../ui/Icon';
 import { ModalInfo } from '../ui/InfoTip';
@@ -55,6 +54,8 @@ export interface ArenaRerollProps {
   onReroll: () => boolean;
   /** Runs terminadas no dia (`arenaRuns`): cada uma re-sorteia o trio de graça. */
   runs?: ArenaReroll;
+  /** §222: o valor da escada (`arenaLadder`): o card mostra o que a luta vai ter. */
+  ladder?: number;
 }
 
 function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: (seed: number) => void; arena: ArenaRerollProps }) {
@@ -82,7 +83,7 @@ function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: 
       </p>
       {seeds.map((seed, i) => {
         const bossIdx = ARENA_ROUND_COMP[ARENA_ROUNDS - 1].indexOf('boss');
-        const boss = arenaFoesOfSeed(seed, ARENA_ROUNDS)[Math.max(0, bossIdx)];
+        const boss = arenaFoesOfSeed(seed, ARENA_ROUNDS, arena.ladder)[Math.max(0, bossIdx)];
         const els = arenaCardElements(seed); // §199: o elemento da RUN (o de todo inimigo, fundido nas combinadas)
         const on = chosen === i;
         return (
@@ -102,7 +103,7 @@ function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: 
                 {els.map(e => elementLabel(e, isPt)).join(' · ')}
               </span>
               <span style={{ ...sm2Hint, display: 'block' }}>
-                {isStraySeed(seed) && <span data-arena-stray>{isPt ? 'Desgarrado · ' : 'Stray · '}</span>}
+                {arenaRunIsStray(seed, arena.ladder) && <span data-arena-stray>{isPt ? 'Desgarrado · ' : 'Stray · '}</span>}
                 {isPt ? 'Chefe: ' : 'Boss: '}{boss ? (isPt ? boss.namePt : boss.nameEn) : '—'}
               </span>
             </span>

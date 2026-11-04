@@ -177,7 +177,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   /** Bestiário (31/10/2026): o inimigo ENCONTRADO entra na Biblioteca mesmo que o jogador perca (antes só o abate registrava). */
   onEnemySeen?: (enemyKey: string) => void;
   /** Grants Bits. */
-  onEarnPoints: (pts: number) => void;
+  onEarnPoints: (pts: number) => number | void;
   /** WP4.5 — Bits em caixa, para a compra de profundidade. */
   bits?: number;
   /** WP4.5 — cobra os Bits e devolve se deu. Quem decide é quem tem o save. */
@@ -298,9 +298,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
 
   const addPoints = (pts: number) => {
     const ganhos = riftBitsWith(pts, rift.riftBits);
-    onEarnPoints(ganhos); // Bits ganhos: o talento soma por cima; o placar da run fica na base (o funil aplica o teto diário)
+    const creditado = onEarnPoints(ganhos) ?? ganhos; // Bits ganhos: o talento soma por cima; o placar da run fica na base (o funil aplica o teto diário)
     runScoreRef.current += pts;
-    resumoRef.current.bits += ganhos;
+    resumoRef.current.bits += creditado; // o que entrou (teto diário), não o pedido
   };
 
   // Record the run score, then leave the dungeon.

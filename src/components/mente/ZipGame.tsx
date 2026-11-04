@@ -72,7 +72,7 @@ export function ZipGame({ language, evolutionStage, demoCharacterId, onEarnPoint
     setSolveMs(t0.current != null ? Math.max(0, Date.now() - t0.current) : 0);
     const bits = zipBits(size);
     setEarned(bits);
-    if (!paid.current) { paid.current = true; if (challenge) challenge.onResult(true); else onEarnPoints(bits); }
+    if (!paid.current) { paid.current = true; if (challenge) challenge.onResult(true); else setEarned(onEarnPoints(bits) ?? bits); }
   }, [path, solved, puzzle, size, onEarnPoints, challenge]);
 
   /** Entra numa casa: começa, estende, desfaz até ela ou volta um passo. */

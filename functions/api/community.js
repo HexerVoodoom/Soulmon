@@ -544,8 +544,8 @@ async function handleCommunity(context) {
       } else {
         const novo = typeof pedido === 'string' ? nomeEspecialValido(pedido) : null;
         const sobContato = novo ? sanitizarNomeDeGuilda(novo) : null; // a régua de contato do apelido
+        // Recusado NÃO muda nada: fica o nome anterior, a troca semanal não é gasta e a resposta avisa para tentar outro.
         if (!novo || sobContato !== novo) {
-          especialNome = '';
           especialNomeRejected = true;
         } else if (novo !== especialNome) {
           if (especialNomeAt && Date.now() - especialNomeAt < ESPECIAL_NOME_COOLDOWN_MS) especialNomeLimit = true;
