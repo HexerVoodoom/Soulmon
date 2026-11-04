@@ -7,6 +7,8 @@ import { LIBRARY_ELEMENT_IDS, BASE_ELEMENT_IDS, dexUnlockedSet, elementComponent
 import { curatedComponents, curatedElementName, isCuratedElement } from '../utils/elementosCurados';
 import { NewBadge } from './LibraryNewBadge';
 import { elementMatchups } from '../utils/elementDexMatchups';
+import { ElementBaseSlots, emptySlots } from './ElementBaseSlots';
+import { compositionHasBases, selectedBases } from '../utils/elementPotion';
 
 /**
  * DEX DE ELEMENTOS (aba "Elemento" da Biblioteca, 27/10/2026): os 20 base + 190 derivados + 50 curados (212–261) + neutro (01/11/2026). Trancado = "?" SEM nome e SEM ícone (nem
@@ -49,6 +51,12 @@ export function ElementDex({ defeated, language = 'en-US', isNew }: { defeated: 
   const isPt = language === 'pt-BR';
   const unlocked = useMemo(() => dexUnlockedSet(defeated), [defeated]);
   const [openId, setOpenId] = useState<string | null>(null);
+  // Filtro por bases (o mesmo do Cambista): com filtro, só os já destrancados que batem (trancado não revela composição).
+  const [bases, setBases] = useState<(string | null)[]>(emptySlots);
+  const filtering = selectedBases(bases).length > 0;
+  const shown = filtering
+    ? LIBRARY_ELEMENT_IDS.filter(id => unlocked.has(id) && compositionHasBases(elementComponents(id) ?? curatedComponents(id) ?? [id], bases))
+    : LIBRARY_ELEMENT_IDS;
   const count = LIBRARY_ELEMENT_IDS.filter(id => unlocked.has(id)).length;
   const comps = openId ? (elementComponents(openId) ?? curatedComponents(openId)) : undefined;
   // Curado: a vantagem é a do 1º componente (o dominante, que dá os golpes); neutro não tem anel (listas vazias).
@@ -58,8 +66,14 @@ export function ElementDex({ defeated, language = 'en-US', isNew }: { defeated: 
       <p className="sm2-lib-s" style={{ margin: '0 0 8px' }}>
         <span className="sm2-num" data-element-count>{count} / {LIBRARY_ELEMENT_IDS.length}</span>
       </p>
+      <div style={{ margin: '0 0 12px' }} data-base-filter>
+        <ElementBaseSlots slots={bases} isPt={isPt} onChange={(i, v) => setBases(s => s.map((x, j) => (j === i ? v : x)))} />
+      </div>
+      {filtering && shown.length === 0 && (
+        <p className="sm2-lib-s" data-filter-empty style={{ textAlign: 'center', padding: '16px 0', margin: 0 }}>{isPt ? 'Nenhum elemento com essas bases.' : 'No element with these bases.'}</p>
+      )}
       <ul style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: 8, listStyle: 'none', padding: 0, margin: 0 }}>
-        {LIBRARY_ELEMENT_IDS.map((id, i) => {
+        {shown.map((id, i) => {
           if (!unlocked.has(id)) {
             // Trancado: nenhum id, nome ou ícone na célula (nem no aria).
             return (
