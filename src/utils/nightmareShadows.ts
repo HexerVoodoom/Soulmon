@@ -14,12 +14,16 @@
  */
 import { DUNGEON_LINE_SPRITES } from './sprites';
 import shadow1 from '../assets/soulmon/dino/dino-shadow-1.png';
+import shadow1b from '../assets/soulmon/dino/dino-shadow-1b.png';
 import shadow1c from '../assets/soulmon/dino/dino-shadow-1c.png';
 import shadow2 from '../assets/soulmon/dino/dino-shadow-2.png';
 import shadow2b from '../assets/soulmon/dino/dino-shadow-2b.png';
+import shadow2c from '../assets/soulmon/dino/dino-shadow-2c.png';
+import shadow3 from '../assets/soulmon/dino/dino-shadow-3.png';
 import shadow3b from '../assets/soulmon/dino/dino-shadow-3b.png';
 import shadow3c from '../assets/soulmon/dino/dino-shadow-3c.png';
 import shadow4 from '../assets/soulmon/dino/dino-shadow-4.png';
+import shadow4b from '../assets/soulmon/dino/dino-shadow-4b.png';
 import shadow4c from '../assets/soulmon/dino/dino-shadow-4c.png';
 
 export type ShadowStage = 'rookie' | 'champion' | 'ultimate' | 'mega';
@@ -40,10 +44,10 @@ export const SHADOW_SLOTS: ReadonlyArray<ReadonlyArray<ShadowSlot>> = [
 /** A arte real, por id (`dino-shadow-<id>.png`, 128², alfa). Instalada em 13/10/2026 (leva low do Higgsfield). */
 /**
  * D-78 (19/10/2026): as silhuetas de Serah (`1b`, `4b`), Nautil (`2c`) e Akashai (`3`) foram removidas — o dono
- * aposentou essas linhas de todo lugar visível. Os 4 slots reaproveitam, ENQUANTO a arte nova não vem, a silhueta
+ * aposentou essas linhas de todo lugar visível. Os 4 slots reaproveitam, ATÉ a arte nova chegar (rodada 5, 04/11/2026: as 4 silhuetas novas 1b, 2c, 3 e 4b já estão instaladas), a silhueta
  * de outro slot do MESMO degrau (caixa de colisão compatível). Pedir 4 silhuetas novas ao squad-arte.
  */
-export const SHADOW_ART: Readonly<Record<string, string>> = { '1': shadow1, '1b': shadow1c, '1c': shadow1c, '2': shadow2, '2b': shadow2b, '2c': shadow2b, '3': shadow3b, '3b': shadow3b, '3c': shadow3c, '4': shadow4, '4b': shadow4c, '4c': shadow4c };
+export const SHADOW_ART: Readonly<Record<string, string>> = { '1': shadow1, '1b': shadow1b, '1c': shadow1c, '2': shadow2, '2b': shadow2b, '2c': shadow2c, '3': shadow3, '3b': shadow3b, '3c': shadow3c, '4': shadow4, '4b': shadow4b, '4c': shadow4c };
 
 export interface ShadowSource { id: string; src: string; /** `true` = arte real; `false` = placeholder pintado de preto em tempo de desenho. */ art: boolean }
 

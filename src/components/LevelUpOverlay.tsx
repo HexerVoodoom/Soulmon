@@ -64,7 +64,7 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
   const [shown, setShown] = useState(reduced ? event.to : event.from);
   const [bannerOk, setBannerOk] = useState(true);
   const gains = levelUpGains(event.from, event.to);
-  const bannerArt = levelUpArt('banner');
+  const bannerArt = levelUpArt('banner', language);
   const frameArt = levelUpArt('frame');
   const many = event.to - event.from > 1;
 
