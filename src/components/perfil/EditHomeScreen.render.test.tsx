@@ -22,7 +22,7 @@ function setup(over: Record<string, unknown> = {}) {
     equippedDecor: { 'floor-left': indoorLeft[0].id } as Record<string, string>,
     equippedBackground: BG, onSave, onClose, ...over,
   };
-  render(<EditHomeScreen {...(props as never)} />);
+  render(<EditHomeScreen {...(props as unknown as Parameters<typeof EditHomeScreen>[0])} />);
   return { onSave, onClose };
 }
 const slot = (id: string) => document.querySelector(`[data-edit-slot="${id}"]`) as HTMLButtonElement;
