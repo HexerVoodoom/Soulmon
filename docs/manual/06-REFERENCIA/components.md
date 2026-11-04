@@ -2048,3 +2048,7 @@ Aviso curto na Home (REGISTRO §213 emenda 2): o Soulmon do jogador está desgar
 ### `src/components/EvolutionLight.tsx` — ⚰️ apagado
 
 ⚰️ **Apagado em `63719e356` (31/10/2026, REGISTRO §208).** Era a luz procedural da cerimônia de evolução; a transformação refeita (`EvolutionCeremony`: `treme`/`racha`/`estilhaca`/`revela`) não a usa mais, e o `LevelUpOverlay` tem luz própria.
+
+### `src/components/perfil/EspecialNomeEditor.tsx`
+**Dono de:** o campo "Nome do seu especial" na carta do Perfil do Soulmon (Laboratório): valida na tela com a mesma regra do servidor, avisa em âmbar e mostra quantos dias faltam para a próxima troca (a troca semanal é decidida no servidor). Vazio volta ao nome padrão.
+**Chamado por:** `src/components/perfil/SoulmonPerfil.tsx`.

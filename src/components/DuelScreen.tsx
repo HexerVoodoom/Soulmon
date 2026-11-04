@@ -93,6 +93,8 @@ export interface DuelScreenProps {
   skills?: FichaSkills;
   /** Elemento do oponente (o servidor não o publica: o chamador dá um visual determinístico). */
   oppElement?: string;
+  /** Nome do especial que o OPONENTE escolheu (público, já filtrado no servidor); sem ele, o nome por regra. */
+  oppEspecialNome?: string;
   /** Fim da luta animada: os toques de cada BALDE vão para o servidor decidir. */
   onDone: (taps: number[]) => void;
   onClose: () => void;
@@ -108,7 +110,7 @@ const maxHpOf = (s: DuelSide) => hpPoints(s.combatant.hp * PVP_HP_SCALE);
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
 export function DuelScreen({
-  me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, petStage = 'rookie', oppStage, skills, oppElement, onDone, onClose, scene,
+  me, opp, seed, petSprite, oppSprite, petName, oppName, isPt, petElement, petStage = 'rookie', oppStage, skills, oppElement, oppEspecialNome, onDone, onClose, scene,
 }: DuelScreenProps) {
   // Música (19/10/2026): a luta (ranqueada ou treino) toca o "Stone Hall Combat" em combate; empilha sobre o torneio e, ao sair, volta a ele.
   useEffect(() => entrarNaSuperficie('duelo'), []);
@@ -320,7 +322,7 @@ export function DuelScreen({
         scene={scene ?? DUEL_SCENE.bg}
         sceneElement={scene ? null : oppEl}
         specialLabel={par?.especial ? specialLabel(isPt, par.especial) : (me.fx?.lex ? foeSpecialLabel(isPt, meEl, 'me', me.fx.familia, me.fx.lex) : specialLabel(isPt))}
-        foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia, opp.fx?.lex)}
+        foeSpecialLabel={(f) => oppEspecialNome?.trim() || foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia, opp.fx?.lex)}
         isPt={isPt}
         me={{ key: 'me', sprite: petSprite, scale: petScale, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER, status: status.me, cheerPending: (barra / CHEER.tapsFull) * (CHEER.pvpEnergyPerDischarge / ENERGY_TRIGGER) }}
         foes={[{ key: 'opp', sprite: oppSprite, stage: oppStage, name: oppName, hp: Math.round(hpFrac.opp * maxOpp), maxHp: maxOpp, element: oppEl, down: fimDaLuta && hpFrac.opp <= 0, energy: energia.opp / ENERGY_TRIGGER, status: status.opp }]}

@@ -85,6 +85,8 @@ export interface PublicProfileInput {
   publicHidden?: boolean;
   attrs?: { power: number; harmony: number; benevolence: number };
   tasksDone?: number;
+  /** Nome do especial escolhido (até 20, letras/números/espaço). `''` volta ao padrão; ausente o servidor herda. */
+  especialNome?: string;
 }
 
 /**
@@ -115,6 +117,13 @@ export interface ProfilePushResult {
   minBondLevel?: number;
   /** Outra conta já usa este apelido: o servidor manteve o anterior. */
   nameTaken?: boolean;
+  /** O nome do especial GRAVADO (`''` = padrão) e quando foi aceito; só vêm quando o corpo tinha o campo ou há nome. */
+  especialNome?: string;
+  especialNomeAt?: number;
+  /** Nome recusado (forma, contato ou palavrão): voltou ao padrão. */
+  especialNomeRejected?: boolean;
+  /** Troca recusada: só uma por semana (medida no servidor). */
+  especialNomeLimit?: boolean;
 }
 
 /** Reserva o apelido (único, sem diferenciar maiúsculas). Lança `Error('name taken')` quando outra conta já o usa. */
@@ -138,6 +147,7 @@ export interface DirectoryPlayer {
   id: string; name: string; petName: string; stage: string; element?: string | null;
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
   unlockedStages: string[]; pvpEnabled: boolean; daysPlaying: number;
+  especialNome?: string;
 }
 export const listPlayers = (search = '') =>
   call<{ players: DirectoryPlayer[] }>('players', { params: search ? { search } : {} });
@@ -163,6 +173,8 @@ export interface Opponent {
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;
   /** Duelo fantasma v3 (PR5): só o level com que cada um luta (já com o teto S1) — a ficha inteira vem em `duelStart`. */
   duel?: { level: number } | null;
+  /** Nome do especial que o jogador escolheu (já filtrado no servidor); ausente = nome padrão. */
+  especialNome?: string;
 }
 /** `reroll` sorteia os 3 de novo; o servidor só aceita UM entre combates (429 `reroll used`). `rerolled` = já usado. */
 export const getOpponents = (id: string, reroll = false) =>
