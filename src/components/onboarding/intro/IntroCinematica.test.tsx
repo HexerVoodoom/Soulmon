@@ -64,19 +64,26 @@ describe('intro pré-login', () => {
     expect(introVista()).toBe(true);
   });
 
-  it('tempos batem com o vídeo v2: 72,85 s e início de cada plano', () => {
+  it('tempos batem com a trilha A Parede: 72,85 s e início de cada plano', () => {
     expect(PLANOS_INTRO.reduce((a, p) => a + p.s, 0)).toBeCloseTo(72.85, 2);
     const inicios: number[] = []; let acc = 0;
     for (const p of PLANOS_INTRO) { inicios.push(acc); acc += p.s; }
     expect(inicios.map((x) => Math.round(x * 100) / 100)).toEqual([0, 5.98, 11.96, 23.84, 29.91, 41.79, 47.77, 59.73, 65.71]);
   });
 
-  it('com vídeo, a legenda segue o currentTime', () => {
-    const { container } = render(<IntroCinematica language="en-US" onDone={() => {}} videoSrc="x.mp4" />);
-    const v = container.querySelector('video') as HTMLVideoElement;
-    Object.defineProperty(v, 'currentTime', { value: 30, configurable: true });
-    fireEvent.timeUpdate(v);
-    expect(screen.getByTestId('intro-legenda').getAttribute('data-plano')).toBe('5');
+  it('painéis: um por plano, trocam junto com a legenda; sem vídeo', () => {
+    const paineis = PLANOS_INTRO.map((_, k) => `p${k + 1}.webp`);
+    const { container } = render(<IntroCinematica language="en-US" onDone={() => {}} paineis={paineis} />);
+    expect(container.querySelector('video')).toBeNull();
+    expect(screen.getByTestId('intro-painel').querySelector('img')?.getAttribute('src')).toBe('p1.webp');
+    act(() => { vi.advanceTimersByTime(PLANOS_INTRO[0].s * 1000); });
+    expect(screen.getByTestId('intro-painel').getAttribute('data-plano')).toBe('2');
+    expect(screen.getByTestId('intro-painel').querySelector('img')?.getAttribute('src')).toBe('p2.webp');
+  });
+
+  it('os painéis existem nos assets', () => {
+    const { container } = render(<IntroCinematica language="en-US" onDone={() => {}} />);
+    expect(container.querySelector('[data-testid="intro-painel"] img')?.getAttribute('src')).toBeTruthy();
   });
 
   it('Pular chama onDone na hora', () => {
