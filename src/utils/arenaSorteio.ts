@@ -11,7 +11,7 @@
 //   3. A tabela de CUSTO do reroll: 3 grátis por dia do jogador; do 4º em diante só Bits (15, 30, 45 e 45 fixo). Nunca Crédito/Emblema.
 //   4. `arenaSceneOfSeed(seed)` — o cenário da run: sempre uma das duas arenas do Torneio, fixa durante a run (escolhida pela semente).
 // ---------------------------------------------------------------------------
-import { buildArenaRound, type ArenaEnemy } from './arena';
+import { ARENA_ROUNDS, arenaLadderStage, buildArenaRound, nextArenaLadder, sanitizeArenaLadder, type ArenaEnemy } from './arena';
 import { NOVOS_DATA } from './novosSoulmonData';
 import { mulberry32 } from './combate/rng';
 import { arenaCardSeeds, isStraySeed } from './strayFoes';
@@ -74,9 +74,12 @@ export function arenaRunElement(seed: number): string {
 }
 
 /** Os inimigos da rodada `rodada` (1-based) da run `seed`. Pura: card e luta chamam ESTA. */
-export function arenaFoesOfSeed(seed: number, rodada: number): ArenaEnemy[] {
-  return buildArenaRound(rodada, 1, mulberry32((seed ^ Math.imul(rodada, 0x9e3779b1)) | 0), undefined, isStraySeed(seed), false, arenaRunElement(seed)); // §199 emenda: o fundido vem pela chance por inimigo, não pela run
+export function arenaFoesOfSeed(seed: number, rodada: number, ladder = 0): ArenaEnemy[] {
+  return buildArenaRound(rodada, 1, mulberry32((seed ^ Math.imul(rodada, 0x9e3779b1)) | 0), undefined, isStraySeed(seed), false, arenaRunElement(seed), ladder); // §199 emenda: o fundido vem pela chance por inimigo, não pela run
 }
+
+/** §222: a run desta semente MOSTRA Desgarrado? Só depois que a escada leva a última rodada a Ultimate; antes, a semente é uma run comum. */
+export const arenaRunIsStray = (seed: number, ladder = 0): boolean => isStraySeed(seed) && arenaLadderStage(ladder, ARENA_ROUNDS) === 'ultimate';
 
 /** O elemento que o card MOSTRA: o BASE da run. */
 export const arenaCardElements = (seed: number): string[] => [arenaRunElement(seed)];
@@ -126,6 +129,7 @@ export function applyArenaReroll<T extends BitsOriginState & { arenaReroll?: Are
  * Runs da Arena TERMINADAS no dia (`arenaRuns {day,count}`, mesma forma do `arenaReroll`). Cada fim de run soma 1 e
  * re-sorteia os 3 cards (`arenaCards(..., runsDone)`), SEM tocar no contador do reroll (que é o pago/limitado).
  */
-export function applyArenaRunEnd<T extends { arenaRuns?: ArenaReroll }>(prev: T, dayIso: string): T {
-  return { ...prev, arenaRuns: nextArenaReroll(prev.arenaRuns, dayIso) };
+export function applyArenaRunEnd<T extends { arenaRuns?: ArenaReroll; arenaLadder?: number }>(prev: T, dayIso: string, outcome: 'win' | 'loss' | 'draw' = 'loss'): T {
+  // §222: vitória sobe 1 degrau da escada; derrota e empate seguram. Sem valor gravado = 0 (começa de baixo).
+  return { ...prev, arenaRuns: nextArenaReroll(prev.arenaRuns, dayIso), arenaLadder: nextArenaLadder(sanitizeArenaLadder(prev.arenaLadder), outcome) };
 }
