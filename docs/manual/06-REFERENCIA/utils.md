@@ -884,6 +884,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `App.tsx` (volta da Missão), `GuildSheet.tsx` (`SalaFeira`), `FeiraEventoSheet.tsx` (lutou/cumpriu).
 **Régua:** `src/utils/feiraDesafio.test.ts`, `GuildSheet.feira.chefe.render.test.tsx`.
 
+### `src/utils/funSession.ts`
+**Dono de:** a sessão dos minijogos de DIVERSÃO do Salão (dono, 04/11/2026): 1 energia da Home abre 3 rodadas (dino/ppt/match3/barrage) por 30 min; depois cobra de novo. Porta única pura `startFunRound` (sobre `setEnergy`); save `funSession` opcional.
+**Exports:** `startFunRound`, `funSessionStatus`, `funRoundRefusal`, `activeFunSession`, `sanitizeFunSession`, `isFunGame`, `formatMmSs`, `FUN_SESSION_COST`, `FUN_SESSION_ROUNDS`, `FUN_SESSION_MS`, `FUN_GAMES`.
+**Chamado por:** `App.tsx` (`play.funSession`), `AreaView.tsx` (`startSalao`), `PlaySheets.tsx` (`FunSessionLine`), `GameStateContext.tsx` (`hydrateSave`).
+**Régua:** `src/utils/funSession.test.ts`.
+
 ### `src/utils/feiraNotificacao.ts`
 **Dono de:** o aviso local "Seu Soulmon voltou da investigação na feira" na hora da volta da Missão: APK = `SoulmonAlarm` (hora do dia), web = timer com permissão já concedida; só com o interruptor de notificações ligado; cancelado quando a volta é registrada.
 **Exports:** `scheduleFeiraVolta`, `cancelFeiraVolta`, `feiraVoltaCopy`, `hhmmOf`, `FEIRA_VOLTA_TAG`, `FeiraVoltaDeps`.

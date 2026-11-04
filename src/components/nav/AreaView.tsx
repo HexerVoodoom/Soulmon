@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState, type ComponentProps, type ReactNode } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState, type ComponentProps, type ReactNode } from 'react';
 import { crystalBlocksLot, crystalRefusalText } from '../../utils/evolutionCrystal';
 import { emitFeat } from '../../utils/feats';
 import type { AreaId } from '../../navigation';
@@ -368,6 +368,17 @@ export function AreaView(props: AreaViewProps) {
   const [game, setGame] = useState<PlayGame | null>(props.initialGame ?? null);
   /** O Pipo perguntou o modo (30/10/2026, `MinigameModeGate`): o jogo só monta depois da resposta; `level` só nos jogos com dificuldade. */
   const [modeChosen, setModeChosen] = useState<{ game: PlayGame; level?: 1 | 2 } | null>(null);
+  /* 🎟️ A rodada do Salão é cobrada quando o jogo COMEÇA de fato (depois da pergunta do NPC, se houver): voltar da pergunta
+     não gasta rodada. Uma cobrança por abertura (`funChargedRef`); recusa (sem energia) fecha o jogo. */
+  const funChargedRef = useRef<string | null>(null);
+  const funRunning = !!game && isFunGame(game) && (!MINIGAME_GATE[game] || modeChosen?.game === game);
+  const funKey = funRunning ? `${game}:${modeChosen?.level ?? 0}:${modeChosen ? 'm' : 'n'}` : null;
+  useEffect(() => {
+    if (!funKey) { funChargedRef.current = null; return; }
+    if (funChargedRef.current === funKey || !props.play.funSession) return;
+    funChargedRef.current = funKey;
+    if (!props.play.funSession.onStartRound()) setGame(null);
+  }, [funKey, props.play.funSession]);
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
@@ -456,13 +467,11 @@ export function AreaView(props: AreaViewProps) {
   /* 🎟️ Jogo do Salão: sem sessão nem energia, não abre (a folha mostra a frase). A rodada é cobrada quando o jogo COMEÇA (após a
      pergunta do NPC, se houver) — voltar da pergunta não gasta rodada. */
   const funGate = props.play.funSession;
-  const start = (g: PlayGame) => {
-    if (props.wakeGuard?.(g)) return;
-    if (funGate && isFunGame(g)) {
-      if (!funGate.status(Date.now()).canPlay) return;
-      if (!MINIGAME_GATE[g] && !funGate.onStartRound()) return;
-    }
-    setSheet(null); setModeChosen(null); setGame(g);
+  const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setModeChosen(null); setGame(g); };
+  /** A porta do Salão: sem sessão nem energia, não abre (a folha já mostra a frase calma). */
+  const startSalao = (g: PlayGame) => {
+    if (funGate && isFunGame(g) && !funGate.status(Date.now()).canPlay) return;
+    start(g);
   };
   /** A Fenda Sem Fim (a antiga Masmorra): mora na Exploração (#187, 28/10/2026; esteve na Arena de beta3 N10 até então); o jogo abre em tela cheia sobre a cena da área. */
   const renderMasmorra = () => {
@@ -590,7 +599,7 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'ferreiro' && <ForgeCard language={language} />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
             {open?.id === 'hexsmith' && <HexsmithSheet language={language} sprite={props.guild.mySprite} demoCharacterId={props.demoCharacterId} evolutionStage={props.evolutionStage} skills={props.skills} petElement={props.petElement} />}
-            {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} funStatus={play.funSession?.status} />}
+            {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={startSalao} funStatus={play.funSession?.status} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
             {open?.id === 'dungeon' && !play.rogue && <RogueDungeonPlaceholder language={language} />}
@@ -613,7 +622,7 @@ export function AreaView(props: AreaViewProps) {
               saveId={props.guild.saveId}
               withDifficulty={!!MINIGAME_GATE[game]!.difficulty}
               pveVsPvp={!!MINIGAME_GATE[game]!.pveVsPvp}
-              onPick={level => { if (funGate && isFunGame(game) && !funGate.onStartRound()) { setGame(null); return; } setModeChosen({ game, level }); }}
+              onPick={level => setModeChosen({ game, level })}
               onBack={exitGame}
             />
           </div>
