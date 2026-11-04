@@ -66,6 +66,7 @@ describe('Selo Faltante: gerador puro', () => {
 describe('Selo Faltante: missão do dia, conquista e servidor', () => {
   it('o Ateliê gira Eco/Trilha/Selo; a Colcha fica só como id válido do save antigo', async () => {
     const { DAILY_EVENTS, DAILY_MISSION_IDS, dailyMissionPool } = await import('../dailyMissions');
+    // @ts-expect-error espelho JS do servidor, sem declaração de tipos
     const srv = await import('../../../functions/api/_dailyMissions.js');
     for (const list of [DAILY_EVENTS as readonly string[], srv.DAILY_EVENTS]) expect(list).toEqual(expect.arrayContaining(['selo', 'patches']));
     for (const list of [DAILY_MISSION_IDS, srv.DAILY_MISSION_IDS]) expect(list).toEqual(expect.arrayContaining(['d-selo', 'd-patches']));

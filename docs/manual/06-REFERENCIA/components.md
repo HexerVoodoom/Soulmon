@@ -1891,7 +1891,13 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 **Dono de:** a tela do Soul Barrage (4º card do Salão de Jogos, M9): desenha o campo e traduz toque em `targetX`; a regra mora em `utils/soulBarrage.ts`. Usa o `RankingPanel`. **Exports:** `SoulBarrage`.
 
 ### `src/components/mente/PatchesGame.tsx`
-**Dono de:** a tela da Colcha (minigame da Oficina da Mente, id `patches`); só aplica a regra de `utils/mente/patches.ts`. **Exports:** `PatchesGame`.
+**Dono de:** a tela da Colcha (id `patches`; fora do menu desde 04/11/2026, só para incursões salvas do Calabouço); só aplica a regra de `utils/mente/patches.ts`. **Exports:** `PatchesGame`.
+
+### `src/components/mente/SeloGame.tsx`
+**Dono de:** a tela do Selo Faltante (minigame da Oficina da Mente, id `selo`, substitui a Colcha no menu); só aplica a regra de `utils/mente/selo.ts`. **Exports:** `SeloGame`.
+
+### `src/components/mente/SeloSeal.tsx`
+**Dono de:** o desenho SVG de um selo e a descrição dele para leitor de tela. **Exports:** `SeloSeal`, `seloLabel`. **Chamado por:** `SeloGame.tsx`, `MindTutorial.tsx`.
 
 ### `src/components/mente/ZipGame.tsx`
 **Dono de:** a tela da Trilha do Pet (minigame da Oficina da Mente, id `zip`); só aplica a regra de `utils/mente/zip.ts`. **Exports:** `ZipGame`.
