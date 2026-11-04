@@ -32,9 +32,9 @@ function useFrameContext(saveId: string, owned: string[]): FrameContext {
 }
 
 /** EDITAR PERFIL: e-mail (em breve), moldura e foto. Só IDs de listas fechadas vão para o save. */
-export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, petStage, onChangeAvatar, onChangeFrame, userName = '', onChangeName, petName = '', onChangePetName, onOpenFrameShop }: {
+export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, petStage, petElement, onChangeAvatar, onChangeFrame, userName = '', onChangeName, petName = '', onChangePetName, onOpenFrameShop }: {
   open: boolean; onClose: () => void; language: Language; saveId: string; email?: string | null;
-  avatarId: string | null; equippedFrame: string | null; ownedFrames: string[]; petStage: string;
+  avatarId: string | null; equippedFrame: string | null; ownedFrames: string[]; petStage: string; petElement?: string;
   onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
   /** Nome público do jogador (B8). Sem `onChangeName` o campo não aparece. */
   userName?: string; onChangeName?: (name: string) => void;
@@ -157,7 +157,7 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
         <p style={sm2Hint}>{isPt ? 'Trocar o e-mail: em breve.' : 'Changing your email: coming soon.'}</p>
 
         <h3 style={sec}>{isPt ? 'Moldura' : 'Frame'}</h3>
-        <FrameSelector ctx={ctx} equipped={frame?.id ?? null} onEquip={onChangeFrame} previewSrc={lineIconForStage(petStage, 32) ?? getSpriteForStage(petStage)} isPt={isPt} onOpenShop={onOpenFrameShop ?? requestOpenFrameShop} />
+        <FrameSelector ctx={ctx} equipped={frame?.id ?? null} onEquip={onChangeFrame} previewSrc={lineIconForStage(petStage, 32) ?? getSpriteForStage(petStage)} isPt={isPt} petElement={petElement} onOpenShop={onOpenFrameShop ?? requestOpenFrameShop} />
 
         <h3 style={sec}>{isPt ? 'Foto' : 'Picture'}</h3>
         <Field type="search" value={q} onChange={e => setQ(e.target.value)} aria-label={isPt ? 'Buscar foto' : 'Search pictures'} placeholder={isPt ? 'Buscar' : 'Search'} />

@@ -95,6 +95,8 @@ interface SettingsPageProps {
   gm?: GmActions;
   /** Perfil (Tarefa C): foto + moldura. Sem isto o grupo "Perfil" não existe. */
   profile?: {
+    /** Elemento do Soulmon (molduras exclusivas de elemento). */
+    petElement?: string;
     saveId: string; email?: string | null; avatarId: string | null; equippedFrame: string | null; ownedFrames: string[];
     petStage: string; totalXP?: number; onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
     userName?: string; onChangeName?: (name: string) => void;
@@ -362,6 +364,7 @@ export function SettingsPage({
             equippedFrame={profile.equippedFrame}
             ownedFrames={profile.ownedFrames}
             petStage={profile.petStage}
+            petElement={profile.petElement}
             onChangeAvatar={profile.onChangeAvatar}
             onChangeFrame={profile.onChangeFrame}
             userName={profile.userName}

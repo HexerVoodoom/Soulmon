@@ -1,3 +1,4 @@
+import { elementShopVisible } from '../../utils/elementExclusive';
 import { useState, type CSSProperties, type ReactNode } from 'react';
 import { Icon } from '../ui/Icon';
 import { MiniGlass } from '../ui/MiniGlass';
@@ -36,11 +37,12 @@ const mainBtn: CSSProperties = { flex: 1, minWidth: 0, alignSelf: 'stretch', dis
 export function SubscriptionShelf({ language, kind, ownership, actions }: {
   language: Language;
   kind: 'bg' | 'furniture';
-  ownership: Pick<ShopOwnership, 'ownedBackgrounds' | 'equippedBackground' | 'ownedFurniture' | 'equippedDecor' | 'missionProgress' | 'missionClaimed' | 'subscriptionActive'>;
+  ownership: Pick<ShopOwnership, 'ownedBackgrounds' | 'equippedBackground' | 'ownedFurniture' | 'equippedDecor' | 'missionProgress' | 'missionClaimed' | 'subscriptionActive' | 'petElement'>;
   actions: Pick<ShopActions, 'onEquip' | 'onEquipFurniture' | 'onClaimSubscription'>;
 }) {
   const isPt = language === 'pt-BR';
-  const items = SUBSCRIPTION_ITEMS.filter(i => i.kind === kind);
+  const items = SUBSCRIPTION_ITEMS.filter(i => i.kind === kind
+    && elementShopVisible(i, ownership.petElement, [...ownership.ownedBackgrounds, ...ownership.ownedFurniture]));
   const [said, setSaid] = useState('');
   /** 8.2 - a miniatura abre a pre-visualizacao (a mesma dos cenarios da loja). */
   const [preview, setPreview] = useState<ShopItem | null>(null);

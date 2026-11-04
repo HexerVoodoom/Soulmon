@@ -681,6 +681,18 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `dailyReset.escudos.test.ts`, `dailyReset.test.ts`
 **Regra de negócio:** A virada do dia: perda de HP, meta do dia, degeneração e a rota de redenção. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/decorPrices.ts`
+
+**O que faz:** tabela da decoração de Bits: preço antigo, faixa (×2/×3/×5) e motivo. O preço vivo mora em `utils/shop.ts`.
+
+**Régua:** `src/utils/decorPrices.test.ts`.
+
+### `src/utils/elementExclusive.ts`
+
+**O que faz:** `elementShopVisible` decide se um cosmético com `element` aparece à venda; `petHasElement` conta um elemento derivado como seus dois componentes. Item já possuído segue visível.
+
+**Régua:** `src/utils/decorPrices.test.ts`.
+
 ### `src/utils/decorRules.ts`
 **Dono de:** a regra REAL da decoração dita ao jogador (D2, 02/10/2026): limite de peças e por que uma peça não aparece no cenário atual.
 **Exports:** `DECOR_MAX_TOTAL`, `decorBlockReason(item, bg)`, `decorReasonText(reason, isPt)`, `decorRuleText(isPt)`, `DecorBlockReason`.

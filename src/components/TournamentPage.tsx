@@ -1044,6 +1044,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             onEquip={onEquipFrame}
             bits={bits}
             onBuy={onBuyFrame}
+            petElement={petElement}
             previewSrc={lineIconForStage(petStage, 32) ?? getSpriteForStage(petStage)}
             isPt={isPt}
           />

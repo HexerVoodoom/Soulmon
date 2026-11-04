@@ -275,3 +275,7 @@ lugar e corta a cabeça dele nas telas baixas, a menos que a janela também
 cresça (o que custa altura da lista de atividades — o motivo declarado de a
 janela existir). É troca de um defeito por outro e a escolha é do dono. Mexer em
 `PET_TOP_OFFSET` sem mexer em `--sm-petstage-h` **não** é o conserto.
+
+## Escala no palco (04/11/2026)
+
+A caixa de `DECOR_SLOTS` segue sendo o contrato da arte. O palco desenha maior via `DECOR_RENDER_SCALE` (`utils/petStage.ts`): cantos, chão e parede 2,5×, vitrine 1,75× (alvo medido pelo dono em print de 720 px). O canto esquerdo foi de x=16 para x=18 para não sair do palco a 390 px. Na prateleira da loja a peça foi de 0,5× para 0,85×.

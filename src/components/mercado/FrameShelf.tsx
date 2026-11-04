@@ -1,3 +1,4 @@
+import { elementShopVisible } from '../../utils/elementExclusive';
 import { useState } from 'react';
 import { Icon } from '../ui/Icon';
 import { BitsAmount } from '../ui/BitsAmount';
@@ -13,7 +14,9 @@ import type { CurrencyId } from '../../utils/currencies';
  * (`origin: 'shop'`, preço em Bits); a aba Honra existe mas hoje vem vazia (nenhuma moldura custa Honra).
  * Compra em dois toques (Comprar -> Confirmar), como o resto do Mercado. A regra é de `utils/frameBuy.ts`.
  */
-export function FrameShelf({ language, currency, balance, owned, onBuy }: {
+export function FrameShelf({ language, currency, balance, owned, onBuy, petElement }: {
+  /** Elemento do Soulmon: esconde molduras exclusivas de outro elemento que a pessoa não tem. */
+  petElement?: string;
   language: Language;
   currency: CurrencyId;
   balance: number;
@@ -24,7 +27,7 @@ export function FrameShelf({ language, currency, balance, owned, onBuy }: {
   const isPt = language === 'pt-BR';
   const [confirmando, setConfirmando] = useState<string | null>(null);
   const [aviso, setAviso] = useState<{ id: string; msg: string } | null>(null);
-  const items: FrameDef[] = currency === 'bits' ? FRAMES.filter(f => f.origin === 'shop') : [];
+  const items: FrameDef[] = currency === 'bits' ? FRAMES.filter(f => f.origin === 'shop' && elementShopVisible(f, petElement, owned)) : [];
 
   if (items.length === 0) {
     return <p data-frame-shelf-empty style={{ ...sm2Hint, textAlign: 'center', padding: '16px 0', margin: 0 }}>{isPt ? 'Nenhuma moldura à venda nesta moeda ainda.' : 'No frames for sale in this currency yet.'}</p>;

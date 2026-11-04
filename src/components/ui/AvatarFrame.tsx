@@ -1,3 +1,4 @@
+import { elementShopVisible } from '../../utils/elementExclusive';
 import type { CSSProperties, ReactNode } from 'react';
 import { Icon } from './Icon';
 import { MiniGlass } from './MiniGlass';
@@ -100,7 +101,9 @@ function howText(f: FrameDef, isPt: boolean): ReactNode {
  * aparecem com o jeito de conseguir (tracejado, `aria-disabled`, fora do Tab — nunca opacidade, D-J14).
  * `previewSrc` é a criatura do jogador (a mesma que aparece no ranking).
  */
-export function FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt, bits = 0, onBuy, onOpenShop }: {
+export function FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt, bits = 0, onBuy, onOpenShop, petElement }: {
+  /** Elemento do Soulmon: molduras exclusivas de outro elemento que a pessoa não tem nem aparecem. */
+  petElement?: string;
   ctx: FrameContext;
   /** Id da moldura em uso (já resolvido: `null` = sem moldura). */
   equipped: string | null;
@@ -138,7 +141,7 @@ export function FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt, bits =
           {equipped === null && <Icon name="check" size={20} tone="primary" />}
         </button>
       </li>
-      {FRAMES.map(f => {
+      {FRAMES.filter(f => elementShopVisible(f, petElement, ctx.owned)).map(f => {
         const ok = frameAvailable(f, ctx);
         const on = ok && equipped === f.id;
         const name = isPt ? f.namePt : f.nameEn;
