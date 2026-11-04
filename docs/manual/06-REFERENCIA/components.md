@@ -682,6 +682,11 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Exports:** `DuelScreen` (props `me`/`opp` = `DuelSide`, `seed`, sprites/nomes, `petElement?`/`oppElement?`/`skills?`, `onDone(taps)` — os toques de cada BALDE —, `onClose`); `cheerQuality`/`CHEER_MS`/`CHEER_TARGET` (o anel por TIMING — guardados, sem UI).
 **Quem chama:** `TournamentPage` (`fight` chama `startDuel`; o treino monta as fichas locais com `soulCombatant` e `npcSide`; o × antes do fim chama `leaveDuel` = derrota). Sair antes do fim NÃO entrega o resultado depois.
 **Régua:** `src/components/DuelScreen.render.test.tsx` e `TournamentPage.duelo.v3.render.test.tsx`. Nasce muda (R-NOVA).
+### `src/components/games/ArenaCuraModal.tsx`
+**Dono de:** o modal de fôlego entre rodadas da Arena (04/11/2026): cenário da run escurecido, 3 corações que enchem do "antes" ao "depois", e o botão "Pronto pro combate".
+**Exports:** `ArenaCuraModal(props)`.
+**Chamado por:** `ArenaGame.tsx`.
+
 ### `src/components/games/BattleSpeed.tsx`
 **Dono de:** o botão de velocidade PADRÃO dos combates (03/11/2026, dono): "1x" ↔ "Fast" (o fator interno segue 3×, `DUNGEON_SPEEDS`), com UMA preferência por aparelho (`STORAGE_KEYS.DUNGEON_SPEED`). Só encurta o relógio da cena (`useGroupBattle.speed`); o resultado da luta é o mesmo.
 **Exports:** `useBattleSpeed()` (`{ speed, speedRef, cycle }`) · `BattleSpeedButton({ speed, onCycle, isPt, corner?, attr? })` · `battleSpeedLabel`.
