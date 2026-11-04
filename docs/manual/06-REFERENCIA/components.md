@@ -458,11 +458,18 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/components/nav/avisos.render.test.tsx`.
 
+### `src/components/nav/HomeFeedbackButton.tsx`
+**Dono de:** o botão só-ícone abaixo do avatar da Home (`mailto:` para a caixa de revisão).
+**Props principais:** `language`.
+**Exports:** `HomeFeedbackButton(props)`.
+**Chamado por:** `src/App.tsx`.
+**Régua:** `src/components/nav/missaoMapaFeedback.render.test.tsx`.
+
 ### `src/components/nav/MissionsLink.tsx`
 **Dono de:** o ícone de Missões da Home (rodada 7, M8, 04/10/2026) — botão fixo no canto superior direito, logo abaixo do `CornerLink` do Mapa, no mesmo anel. Glifo de quest: "!" com missão disponível, "?" com missão pronta (vence o "!"), "?" esmaecido sem pendência. Parado, sem número e sem som.
 **Props principais:** `kind` (`daily`|`weekly`, um ícone por acesso), `row` (linha da pilha), `mark: QuestMark` (de `questMarks().dailyCorner`/`weeklyCorner`), `tone?` (`weeklyTone`), `markLabel`, `label`, `onClick`.
 **Exports:** `MissionsLink(props)`.
-**Chamado por:** `src/App.tsx` (só com `currentView === 'home'`).
+**Chamado por:** `src/App.tsx` (`currentView` `home` e `map`).
 **Régua:** `src/styles/iconScale.contract.test.ts` (glifo 24).
 
 ### `src/components/nav/MissionsSheet.tsx`

@@ -17,6 +17,7 @@ import {
   openSourceFromUrl, afterBadDayGapBucket, trackRetentionOnOpen,
 } from './utils/telemetry';
 import { CornerLink } from './components/nav/CornerLink';
+import { HomeFeedbackButton } from './components/nav/HomeFeedbackButton';
 import { MissionsLink } from './components/nav/MissionsLink';
 import { AvisosLink } from './components/nav/AvisosLink';
 import { visibleBackground } from './utils/backgrounds';
@@ -8166,14 +8167,18 @@ export default function App() {
                 leading={demo ? (
                   <DemoSoundButton muted={soundMuted} language={language} onToggle={handleToggleSound} />
                 ) : (
-                  <ProfileAvatarButton
-                    avatarId={gameState.avatarId}
-                    frameId={gameState.equippedFrame}
-                    seed={saveId}
-                    level={bondLevelFor(gameState.totalXP ?? 0)}
-                    language={language}
-                    onClick={() => goTo('page:settings')}
-                  />
+                  <>
+                    <ProfileAvatarButton
+                      avatarId={gameState.avatarId}
+                      frameId={gameState.equippedFrame}
+                      seed={saveId}
+                      level={bondLevelFor(gameState.totalXP ?? 0)}
+                      language={language}
+                      onClick={() => goTo('page:settings')}
+                    />
+                    {/* Feedback/bug só-ícone, logo abaixo do avatar (dono, 04/11/2026). */}
+                    <HomeFeedbackButton language={language} />
+                  </>
                 )}
               />
 
@@ -9003,6 +9008,18 @@ export default function App() {
           side="left"
           label={language === 'pt-BR' ? 'Início' : 'Home'}
           onClick={goBack}
+        />
+      )}
+      {/* Missões também no MAPA (dono, 04/11/2026): o mesmo ícone "!"/"?" da Home, no canto superior DIREITO
+          (espelho da casinha; as moedas moram embaixo), abrindo a mesma folha de Missões. */}
+      {currentView === 'map' && (
+        <MissionsLink
+          mark={marcasDeMissao.corner}
+          tone="gold"
+          row={0}
+          markLabel={questMarkLabel(marcasDeMissao.corner, language === 'pt-BR')}
+          label={language === 'pt-BR' ? 'Missões' : 'Missions'}
+          onClick={abrirMissoes}
         />
       )}
 
