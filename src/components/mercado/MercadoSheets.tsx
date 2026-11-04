@@ -1,3 +1,4 @@
+import { elementShopVisible } from '../../utils/elementExclusive';
 import { missionsInQueueOrder } from '../../utils/missionOrder';
 import { useState, type CSSProperties } from 'react';
 import { PixelTabs } from '../pixel/PixelKit';
@@ -185,13 +186,15 @@ export function MercadoStallSheet(props: MercadoStallProps) {
           currency={cur}
           balance={balance}
           owned={props.ownedFrames ?? []}
+          petElement={props.petElement}
           onBuy={props.onBuyFrame}
         />
       ) : (
         <ShopShelf
           language={language}
           // B1: cenário de conquista só se compra no prédio Conquistas; aqui só aparece se já é seu (para equipar).
-          items={stallItems(stall, cur).filter(i => i.unlock?.kind !== 'mission' || props.ownedBackgrounds.includes(i.id) || (props.ownedFurniture ?? []).includes(i.id))}
+          items={stallItems(stall, cur).filter(i => (i.unlock?.kind !== 'mission' || props.ownedBackgrounds.includes(i.id) || (props.ownedFurniture ?? []).includes(i.id))
+            && elementShopVisible(i, props.petElement, [...props.ownedBackgrounds, ...(props.ownedFurniture ?? [])]))}
           currency={cur}
           balance={balance}
           ownership={props}

@@ -7987,6 +7987,7 @@ export default function App() {
                   missionClaimed: gameState.missionsClaimed,
                   ownedFrames: gameState.ownedFrames ?? [],
                   subscriptionActive: subscription.active,
+                  petElement: petElementOf(gameState),
                 }}
                 actions={{ onBuy: handleShopBuy, onBuyFrame: id => handleFrameBuy(id), onEquip: handleEquipBackground, onEquipFurniture: handleEquipFurniture, onClaimSubscription: handleClaimSubscription }}
                 points={gameState.gamePoints ?? 0}
@@ -8832,6 +8833,7 @@ export default function App() {
                 avatarId: gameState.avatarId ?? null,
                 equippedFrame: gameState.equippedFrame ?? null,
                 ownedFrames: gameState.ownedFrames ?? [],
+                petElement: petElementOf(gameState),
                 petStage: gameState.evolutionStage,
                 totalXP: gameState.totalXP ?? 0,
                 onChangeAvatar: (id) => setGameState(prev => prev.avatarId === id ? prev : { ...prev, avatarId: sanitizeAvatarId(id) }),

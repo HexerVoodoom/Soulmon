@@ -1,6 +1,6 @@
 import { ALL_SHOP_ITEMS } from '../utils/shop';
 import { PET_BACKGROUNDS } from '../utils/backgrounds';
-import { DECOR_SLOTS, SLOT_ORDER, decorFitsSetting, slotBoxStyle, type SlotId } from '../utils/petStage';
+import { DECOR_SLOTS, SLOT_ORDER, decorFitsSetting, decorRenderBox, slotBoxStyle, type SlotId } from '../utils/petStage';
 import { DECOR_ART } from '../utils/decorArt';
 import iconTrophyGold from '../assets/icons/icon-trophy-gold.png';
 import iconTrophySilver from '../assets/icons/icon-trophy-silver.png';
@@ -78,14 +78,15 @@ export function PetStageDecor({ equippedDecor, equippedBackground, trophies, lan
           );
         }
 
-        const emojiSize = Math.round(Math.min(slot.w, slot.h) * 0.78);
+        const rb = decorRenderBox(slot);
+        const emojiSize = Math.round(Math.min(rb.w, rb.h) * 0.78);
         return (
           <div key={slotId} style={{ ...box, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }} title={label}>
             {/* Sombra de contato — só para o que está apoiado no chão. */}
             {slot.anchor === 'ground' && (
               <span style={{
                 position: 'absolute', bottom: -3, left: '50%', transform: 'translateX(-50%)',
-                width: Math.round(slot.w * 0.8), height: 7, borderRadius: '50%',
+                width: Math.round(rb.w * 0.8), height: 9, borderRadius: '50%',
                 background: 'rgba(0,0,0,0.28)', filter: 'blur(2px)',
               }} />
             )}

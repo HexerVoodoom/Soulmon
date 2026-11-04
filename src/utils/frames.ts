@@ -43,6 +43,8 @@ export interface AvatarFrame {
   origin: FrameOrigin;
   /** `rank`: o id da faixa (`tournamentTiers.ts`) que a libera. */
   tierId?: string;
+  /** Moldura EXCLUSIVA de elemento: só à venda para Soulmon desse elemento (`utils/elementExclusive.ts`). */
+  element?: string;
   /** `shop`: preço em Bits. */
   price?: number;
   /** `achievement`/`event`: como se consegue, em uma linha (o que a folha mostra quando está trancada). */

@@ -3893,6 +3893,13 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 | `bg-mission-espaco` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
 | `bg-mission-ouro` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
 
+## §220 — Decoração maior e mais cara em faixas ×2 / ×3 / ×5; cosmético exclusivo de elemento (04/11/2026, dono)
+
+**Decisão:** decoração desenhada 2,5× maior no palco (vitrine 1,75×), alvo medido pelo dono: fliperama ≈ 230 px e tapete ≈ 350 px em print de 720 px; preços 2×/3×/5× por riqueza (`utils/decorPrices.ts`); campo `element` em item de loja e moldura: exclusivo só aparece à venda para Soulmon daquele elemento.
+**Regras escolhidas pelo agente (o pedido não detalhou):** elemento derivado conta como seus dois componentes; posse é permanente, mesmo se o elemento mudar; sem elemento conhecido (Corvo `neutro`) nenhum exclusivo aparece. Nenhum item existente foi marcado, para não tirar da vitrine o que todos veem hoje.
+**Alternativa que perdeu:** mudar `DECOR_SLOTS` direto. Quebraria o contrato de grade de arte (`assets.contract`).
+**O que falsifica:** peça cobrindo o Soulmon ou a interface em aparelho real; loja vazia de exclusivos para quem troca de elemento com frequência.
+
 ## Sessão de diversão: minijogos do Salão custam energia (04/11/2026)
 
 Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusion, Chuva de Almas) gastam a energia da Home para limitar o tempo de jogo e empurrar para outras atividades, sem ser duro. **1 energia abre uma sessão de 3 rodadas (qualquer jogo do Salão) válida por 30 min**; acabaram as rodadas ou o tempo, a próxima custa mais 1. Ateliê da Mente, Refúgio e Masmorra ficam fora. Porta única pura `startFunRound` (`src/utils/funSession.ts`), sobre `setEnergy`, como `spendLayer`; a rodada conta ao COMEÇAR o jogo (depois da pergunta do NPC). Save: `funSession` opcional (ausente = sem sessão). Energia não é validada no servidor (só o save é guardado), então segue o caminho do cliente igual à Masmorra.

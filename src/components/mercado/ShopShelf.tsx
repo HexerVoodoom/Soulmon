@@ -204,6 +204,8 @@ export interface ShopOwnership {
   /** A vitrine do trimestre da assinatura está aberta? (`utils/subscription.ts`.)
    *  Só a `SubscriptionShelf` lê isto — a prateleira de Bits nunca. */
   subscriptionActive?: boolean;
+  /** Elemento do Soulmon (`petElementOf`): filtra os cosméticos EXCLUSIVOS de elemento à venda. */
+  petElement?: string;
 }
 
 export interface ShopActions {
@@ -306,8 +308,8 @@ export function ShopShelf({
       );
     }
     const png = DECOR_ART[item.id] ?? ITEM_ART[item.icon];
-    // Peça de CHÃO fica a 1× (textura; o vidro recorta), o resto a 0,5×.
-    const scale = item.slot === 'rug' ? 1 : 0.5;
+    // Peça de CHÃO fica a 1× (textura; o vidro recorta), o resto a 0,85× (era 0,5×: "minúsculas", dono 04/11/2026).
+    const scale = item.slot === 'rug' ? 1 : 0.85;
     return (
       <MiniGlass size={GLASS_ITEM} style={ring}>
         {png
