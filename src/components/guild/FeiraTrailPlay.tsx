@@ -15,6 +15,7 @@ import type { Language } from '../../utils/i18n';
 import type { FeiraSolution, FeiraTrail } from '../../utils/feira';
 import { canStep, validateZip } from '../../utils/mente/zip';
 import { placeRect, rectBetween, rectHas, validatePatches, type Rect } from '../../utils/mente/patches';
+import { SeloSeal, seloLabel } from '../mente/SeloSeal';
 import { CROSSED, EMPTY, FILLED, matchesClues, type CellMark } from '../../utils/mente/picross';
 import { sideFor, type TrocaSide } from '../../utils/mente/troca';
 import { checkTap, growSequence, playbackIntervalMs, seededRng, startSequence, ECO_STONES, type Stone } from '../../utils/mente/eco';
@@ -47,6 +48,7 @@ export function FeiraTrailPlay({ language, trail, onSubmit, busy }: FeiraTrailPl
   const rule = (k: Parameters<typeof feiraText>[1]) => <p style={{ ...sm2Hint, textAlign: 'center', margin: '0 0 8px' }} data-trail-rule>{t(k)}</p>;
 
   if (trail.game === 'zip') return <ZipPlay trail={trail} rule={rule('game.zip')} send={send} t={t} />;
+  if (trail.game === 'selo') return <SeloPlay trail={trail} rule={rule('game.selo')} send={send} language={language} />;
   if (trail.game === 'patches') return <PatchesPlay trail={trail} rule={rule('game.patches')} send={send} />;
   if (trail.game === 'picross') return <PicrossPlay trail={trail} rule={rule('game.picross')} send={send} />;
   if (trail.game === 'troca') return <TrocaPlay trail={trail} rule={rule('game.troca')} send={send} t={t} />;
@@ -75,6 +77,33 @@ function ZipPlay({ trail, rule, send }: { trail: Extract<FeiraTrail, { game: 'zi
         })}
       </div>
       {send(ok, () => ({ path }), () => setPath([]))}
+    </div>
+  );
+}
+
+function SeloPlay({ trail, rule, send, language }: { trail: Extract<FeiraTrail, { game: 'selo' }>; rule: ReactElement; send: Send; language: Language }) {
+  const { grid, options } = trail.puzzle;
+  const [pick, setPick] = useState<number | null>(null);
+  const isPt = language === 'pt-BR';
+  const chosen = pick !== null ? options[pick] : null;
+  return (
+    <div data-trail-game="selo">
+      {rule}
+      <div style={gridStyle(3)} role="group">
+        {Array.from({ length: 9 }, (_, i) => (
+          <div key={i} data-selo-cell={i} aria-label={i < 8 ? seloLabel(grid[i], isPt) : undefined} style={{ ...cellStyle(false), display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'default' }}>
+            {i < 8 ? <SeloSeal panel={grid[i]} size={CELL - 8} /> : chosen ? <SeloSeal panel={chosen} size={CELL - 8} /> : '?'}
+          </div>
+        ))}
+      </div>
+      <div style={{ ...gridStyle(3), marginTop: 10 }} role="group">
+        {options.map((o, i) => (
+          <button key={i} type="button" style={cellStyle(pick === i)} onClick={() => setPick(i)} aria-label={seloLabel(o, isPt)} aria-pressed={pick === i} data-selo-option={i}>
+            <SeloSeal panel={o} size={CELL - 8} />
+          </button>
+        ))}
+      </div>
+      {send(pick !== null, () => ({ choice: pick ?? 0 }), () => setPick(null))}
     </div>
   );
 }

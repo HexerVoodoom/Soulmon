@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import { onRequest } from './guild.js';
 import { feiraEvtKey, feiraTrailKey, feiraDeadKey, feiraDoneKey, feiraGateKey, feiraHitKey } from './_coop.js';
-import { TRAIL_GAMES, solucaoDaTrilha, jogoDaTrilha, TRILHA_TENTATIVAS_DIA, TRAIL_MAX_DAYS } from './_feira.js';
+import { TRAIL_GAMES, TRAIL_GAMES_ACEITOS, instanciaDaTrilha, solucaoDaTrilha, jogoDaTrilha, TRILHA_TENTATIVAS_DIA, TRAIL_MAX_DAYS } from './_feira.js';
 
 /**
  * A TRILHA (F-06): o desafio pessoal semeado pelo servidor e conferido por SOLUÇÃO. Cumprir abre a porta da PRÓPRIA pessoa e
@@ -251,5 +251,36 @@ describe('o fim da Trilha (sem estagnação, LV-G3/G9) e o descanso', () => {
     await done(e, M[1], solucaoDaTrilha(t.game, t.seed));
     for (const k of kv.puts) expect(k, k).toMatch(/^(feira(Trail|Gate|Evt|Dead|Done):|coopCasa:|coopMem:)/);
     expect(kv.store.has(feiraHitKey(gid, 0, M[1]))).toBe(false);
+  });
+});
+
+describe('Colcha aposentada (04/11/2026): trilha já aberta com `patches` segue valendo', () => {
+  it('o sorteio novo nunca devolve `patches`, mas o Selo ocupa o lugar e `patches` continua ACEITO', () => {
+    expect(TRAIL_GAMES).not.toContain('patches');
+    expect(TRAIL_GAMES).toContain('selo');
+    expect(TRAIL_GAMES_ACEITOS).toContain('patches');
+    for (let i = 0; i < 300; i++) expect(jogoDaTrilha(`s${i}`, '2026-11-10', 1)).not.toBe('patches');
+  });
+  it('reabrir no mesmo dia devolve a MESMA Colcha guardada (mesma semente), sem solução', async () => {
+    const { e, kv, gid } = await roda();
+    kv.store.set(feiraTrailKey(gid, 0, M[1]), JSON.stringify({ k: 0, day: '2026-11-10', game: 'patches', seed: 4321, startedAt: Date.now(), attempts: 0, clearedDay: null }));
+    const j = await J(await start(e, M[1]));
+    expect(j.trail.game).toBe('patches');
+    expect(j.trail.seed).toBe(4321);
+    expect(j.trail.puzzle).toEqual(instanciaDaTrilha('patches', 4321));
+    expect(JSON.stringify(j)).not.toMatch(/solution/);
+  });
+  it('entregar a solução da Colcha guardada cumpre o desafio; solução errada é recusada', async () => {
+    const { e, kv, gid } = await roda();
+    kv.store.set(feiraTrailKey(gid, 0, M[1]), JSON.stringify({ k: 0, day: '2026-11-10', game: 'patches', seed: 4321, startedAt: Date.now() - 120_000, attempts: 0, clearedDay: null }));
+    expect((await done(e, M[1], { rects: [] })).status).toBe(400);
+    expect((await done(e, M[1], solucaoDaTrilha('patches', 4321))).status).toBe(200);
+  });
+  it('o Selo novo: resposta certa cumpre, índice errado não', async () => {
+    const { e, kv, gid } = await roda();
+    kv.store.set(feiraTrailKey(gid, 0, M[1]), JSON.stringify({ k: 0, day: '2026-11-10', game: 'selo', seed: 777, startedAt: Date.now() - 120_000, attempts: 0, clearedDay: null }));
+    const certo = solucaoDaTrilha('selo', 777).choice;
+    expect((await done(e, M[1], { choice: (certo + 1) % 6 })).status).toBe(400);
+    expect((await done(e, M[1], { choice: certo })).status).toBe(200);
   });
 });
