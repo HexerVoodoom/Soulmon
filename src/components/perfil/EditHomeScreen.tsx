@@ -33,7 +33,7 @@ export interface EditHomeProps {
   onOpenShop?: () => void;
 }
 
-const DOT = 14;
+const DOT = 20;
 const HIT = 44;
 
 export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equippedBackground: rawBackground, onSave, onClose, onOpenShop }: EditHomeProps) {
@@ -115,7 +115,8 @@ export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equipp
                 {!filled && (
                   <span aria-hidden="true" data-edit-dot style={{
                     width: DOT, height: DOT, borderRadius: '50%', background: '#fff', opacity: 0.5,
-                    boxShadow: '0 0 0 3px rgba(255,255,255,.18)',
+                    // alvo: bolinha branca, um vão vazio e um anel só de contorno em volta (dono, 04/11/2026).
+                    outline: '2px solid #fff', outlineOffset: 5,
                   }} />
                 )}
               </button>
