@@ -1,6 +1,6 @@
 import { QuestGlyph } from '../play/MissionMark';
 import type { QuestMark, QuestTone } from '../../utils/questMarks';
-import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE } from './cornerAnchor';
+import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE, CORNER_RING_STYLE } from './cornerAnchor';
 
 /**
  * O ÍCONE DE MISSÕES na Home (rodada 7, M8, 04/10/2026): logo abaixo do link do
@@ -49,7 +49,8 @@ export function MissionsLink({ mark, tone = 'gold', label, markLabel, onClick, r
       }}
     >
       {/* 04/10/2026 ("?") e 05/10/2026 ("!"): a arte de quest do dono. */}
-      <span aria-hidden="true" style={{ display: 'flex' }}>
+      {/* No Mapa (row 0) mora no MESMO anel da casinha (dono, 04/11/2026). */}
+      <span aria-hidden="true" data-corner-ring={row === 0 ? '' : undefined} style={row === 0 ? CORNER_RING_STYLE : { display: 'flex' }}>
         <QuestGlyph kind={mark === 'available' ? 'available' : 'ready'} tone={mark ? tone : 'gold'} size={32} />
       </span>
     </button>
