@@ -1545,6 +1545,18 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 ### `src/components/ui/EnergyCost.tsx`
 **Dono de:** o ícone de custo de energia nos botões e cartões (04/11/2026, dono). Decorativo (`aria-hidden`), `data-energy-cost`. **Usado em:** `play/PlaySheets.tsx` (Salão, Masmorra), `PlayCard.tsx` (Brincar), `DungeonGame.tsx` (Descer), `play/OficinaSheet.tsx` (iniciar foco). Régua: `play/energiaCusto.render.test.tsx`.
 
+### `src/components/EvoBanner.tsx`
+**Dono de:** a faixa de evoluções logo abaixo da linha do voltar (04/11/2026, dono): feed global + aviso local da própria evolução, em fila, sem bloquear toque; movimento reduzido fica parado. **Usado em:** `App.tsx` (`lazy`). **Régua:** `EvoBanner.render.test.tsx`.
+
+### `src/components/TalentTreeEntry.tsx`
+**Dono de:** a entrada da árvore de talentos na `StatsPage` (04/11/2026, dono): cartão com os pontos livres e botão que abre a árvore em TELA CHEIA. **Usado em:** `StatsPage.tsx`. **Régua:** `TalentTreeEntry.render.test.tsx`.
+
+### `src/components/forge/VitraMap.tsx`
+**Dono de:** o layout do Soulsmith em mapa de chakras (04/11/2026, dono): figura de vidro soprado (SVG de fallback ou `vitra-mapa.png`) e os três chakras com o balão ao lado. Só layout; as regras ficam em `ForgeCard.tsx`. **Usado em:** `ForgeCard.tsx` (`view="map"`). **Régua:** `ForgeCard.mapa.render.test.tsx`.
+
+### `src/components/nav/LotIndicator.tsx`
+**Dono de:** o disco com ícone dourado "há o que gastar" sobre o prédio (04/11/2026, dono). **Usado em:** `nav/AreaScene.tsx` (camada de marcas), `TalentTreeEntry.tsx`. Regra de quando acende: `src/utils/lotIndicators.ts`.
+
 ### `src/components/nav/LotCoin.tsx`
 **Dono de:** a moeda de recurso sobre o prédio do mapa (04/11/2026, dono): raio da energia amarelo num círculo escuro de fio de cobre; só indica que há recurso a pegar. **Usado em:** `nav/AreaScene.tsx` (camada de marcas). Regra de quando acende: `src/utils/lotMarks.ts`.
 

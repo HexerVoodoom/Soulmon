@@ -477,6 +477,11 @@ Cloudflare Workers (`workers/`), deploy **manual** (`cd workers && ../node_modul
 **Exports:** `FRAME_IDS`, `frameIdOrNull`.
 **Régua:** `src/utils/avatar.test.ts` (paridade com `FRAMES`), `functions/api/avatarPerfil.save.test.js`.
 
+### `functions/api/_evoFeed.js`
+**Dono de:** a faixa de evoluções no servidor (04/11/2026, dono): feed global curto, escrito pela ação `profile` de `community.js` quando o estágio sobe, só de quem já está na lista pública (PvP aberto, sem `publicHidden`; quem se esconde sai do feed). Estágio e alinhamento de lista fechada; a resposta nunca leva saveId nem pid.
+**Exports:** `EVO_FEED_KEY` · `EVO_FEED_MAX` · `EVO_FEED_TTL_MS` · `EVO_FEED_VIEW` · `parseStage` · `isEvolution` · `buildEvent` · `readFeed` · `pushEvent` · `purgeFeedOf` · `feedView`.
+**Régua:** `functions/api/community.evoFeed.test.js`.
+
 ### `functions/api/_equipment.js`
 **Dono de:** o ESPELHO de `src/utils/equipment.ts` no servidor (PR8): sanea o campo `equipment` e o registro `bitsOrigin` do save (`save.js`) e dá a parcela de equipamento por atributo do canal de bônus do duelo (`_duel.js › duelSide`). Slot forjado é descartado; o teto de 5% limita um save forjado.
 **Exports:** `EQUIP_SLOTS`, `SLOT_ATTR`, `TIER_PCT`, `FRAGMENTS_MAX`, `EQUIP`, `sanitizeEquipment`, `equipAttrBonus`, `sanitizeBitsOrigin`.

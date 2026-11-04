@@ -23,7 +23,7 @@ export function LotIndicator({ kind, isPt, size = 28 }: { kind: LotIndicatorId; 
         background: 'color-mix(in srgb, #06171A 92%, transparent)', border: '2px solid rgba(200, 150, 80, .9)', boxShadow: '0 1px 3px rgba(0,0,0,.6)',
       }}
     >
-      <Icon name={c.icon} size={Math.round(size * 0.64)} tone="gold" fill={1} />
+      <Icon name={c.icon} size={20} tone="gold" fill={1} />
     </span>
   );
 }

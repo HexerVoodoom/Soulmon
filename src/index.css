@@ -5804,6 +5804,8 @@ select:focus-visible {
 .sm-result-loser { filter: saturate(.55) brightness(.85); transform: translateY(6px); }
 @keyframes sm-result-hop { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
 @media (prefers-reduced-motion: reduce) {
+  .sm2-vit-chakra[data-ready="true"] { animation: none; }
+  .sm2-evo-run { animation: none; padding-left: 0; }
   .sm2-intro-bar-fill { animation: none; transform: scaleX(1); } /* intro: barra cheia (REGISTRO §168) */
   .sm2-intro-load-done { animation: none; opacity: 1; }
   .nm-glitch__img { animation: none; } /* §88: glitch do convite do pesadelo */
@@ -9087,7 +9089,6 @@ button.sm2-hex-row {
   &[data-ready="true"] { border-color: var(--sm2-gold-ink); box-shadow: 0 0 0 2px color-mix(in srgb, var(--sm2-gold-ink) 40%, transparent), 0 0 14px 2px color-mix(in srgb, var(--sm2-gold-ink) 55%, transparent); animation: sm2-vit-glow 2.4s ease-in-out infinite; }
 }
 @keyframes sm2-vit-glow { 50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--sm2-gold-ink) 55%, transparent), 0 0 22px 4px color-mix(in srgb, var(--sm2-gold-ink) 70%, transparent); } }
-@media (prefers-reduced-motion: reduce) { .sm2-vit-chakra[data-ready="true"] { animation: none; } }
 .sm2-vit-pop { position: absolute; z-index: 5; width: min(210px, 62vw); }
 .sm2-vit-pop[data-side="below"] { left: 0; top: 40px; transform: translateX(-50%); width: min(250px, 80vw); }
 .sm2-vit-pop[data-side="right"] { left: 38px; top: 0; transform: translateY(-30%); }
@@ -9202,4 +9203,3 @@ button.sm2-hex-row {
 /* Faixa de evolucoes (04/11/2026): a frase cruza a tira uma vez e a fila passa para a proxima. Movimento reduzido: o componente troca por texto parado. */
 .sm2-evo-run { display: inline-block; padding-left: 100%; animation: sm2-evo-run 14s linear 1 forwards; }
 @keyframes sm2-evo-run { from { transform: translateX(0); } to { transform: translateX(-100%); } }
-@media (prefers-reduced-motion: reduce) { .sm2-evo-run { animation: none; padding-left: 0; } }
