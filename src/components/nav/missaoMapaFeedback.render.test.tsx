@@ -40,12 +40,12 @@ describe('Feedback da Home', () => {
     expect(q.get('body')).toContain('Platform: web');
     expect(q.get('body')).toContain('What you expected:');
   });
-  it('botão só-ícone com aria-label e href mailto, sem texto visível', () => {
+  it('botão só-ícone com aria-label, sem mailto e sem texto visível', () => {
     const { container } = render(<HomeFeedbackButton language="pt-BR" />);
-    const a = container.querySelector('[data-home-feedback]') as HTMLAnchorElement;
+    const a = container.querySelector('[data-home-feedback]') as HTMLButtonElement;
+    expect(a.tagName).toBe('BUTTON');
     expect(a.getAttribute('aria-label')).toBe('Enviar feedback ou reportar bug');
-    expect(a.getAttribute('href')).toMatch(/^mailto:soulmon\.revisor@gmail\.com\?/);
-    expect(a.getAttribute('target')).toBeNull();
+    expect(a.getAttribute('href')).toBeNull();
     expect(a.textContent).toBe('');
     expect(a.querySelector('svg')).not.toBeNull();
     // Acima da cena do pet (`sm-pet-sticky`, z 5, depois no DOM): com 5 o ícone ficava invisível e sem toque.
@@ -56,7 +56,7 @@ describe('Feedback da Home', () => {
 describe('Feedback da Home: ícone', () => {
   it('besouro em CONTORNO (Outlined, viewBox 960) dentro do círculo do anel de canto', () => {
     const { container } = render(<HomeFeedbackButton language="pt-BR" />);
-    const a = container.querySelector('[data-home-feedback]') as HTMLAnchorElement;
+    const a = container.querySelector('[data-home-feedback]') as HTMLButtonElement;
     expect(a.style.borderRadius).toBe('50%');
     expect(a.style.width).toBe('44px');
     const svg = a.querySelector('svg[data-bug-outline]') as SVGElement;

@@ -3871,6 +3871,11 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Régua:** `src/utils/petPushEvents.test.ts`, `workers/pushBudget.parity.test.js`.
 **Regra de negócio:** `REGISTRO-DE-DECISOES.md` §113 (push ligado por padrão, eventos, teto) e §114 (cocô 2×/dia).
 
+### `src/utils/feedbackClient.ts`
+**Dono de:** o envio do modal de feedback da Home a `POST /api/feedback`. Só tipo, texto e diagnóstico não pessoal (versão, build, plataforma, idioma); `Authorization` só quando há login (limite por conta no servidor).
+**Exports:** `FeedbackType`, `FEEDBACK_TYPES`, `FEEDBACK_MAX` (2000), `buildFeedbackPayload(type, message, language)`, `sendFeedback(type, message, language, fetchImpl?)` → `{ ok, delivered }` ou `{ ok: false, reason: invalid | rate | server | network }`; nunca lança.
+**Quem usa:** `components/nav/HomeFeedbackButton.tsx`.
+
 ### `src/utils/crashReport.ts`
 **Dono de:** o relatório de falha leve (beta-play-01): monta e envia a `/api/crash` um relatório mínimo — `kind` (boundary | error | rejection), `msg` (≤200) e `stack` (≤800) limpos, `ver`, `route` sem query/ids, `plat` (apk | web). Nunca conteúdo do usuário nem identidade; falha silenciosa.
 **Exports:**

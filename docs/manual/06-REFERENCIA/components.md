@@ -853,6 +853,11 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'EvolveTaskModal.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** ver o aviso da fila em `EvolutionCeremony.tsx` acima — este modal já reapareceu por baixo da cerimônia, cobrando tarefas; hoje entra na fila de intersticiais declarada no `App.tsx`.
 
+### `src/components/FeedbackModal.tsx`
+**Dono de:** o modal de feedback da Home (REGISTRO §223): `ModalSheet` com Feedback/Sugestão/Bug (`Segment`), textarea (contador /2000), Enviar/Tentar de novo, estados de envio/sucesso/erro em PT/EN. Controlado pelo pai: o rascunho nunca se perde em falha.
+**Exports:** `FeedbackModal`, `feedbackCopy(language)`, tipo `FeedbackStatus`.
+**Quem usa:** `components/nav/HomeFeedbackButton.tsx`.
+
 ### `src/components/FirstDayCard.tsx`
 **Dono de:** o cartão do primeiro dia (WP1.3) na Home — ensina os três gestos não-descobríveis (carinho, comida, marcar tarefa) sem virar checklist de cobrança.
 **Props principais:** `FirstDayCardProps` — `progress: FirstDayProgress` (`src/utils/firstDay.ts`), `language`.

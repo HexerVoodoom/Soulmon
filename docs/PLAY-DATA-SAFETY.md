@@ -267,6 +267,7 @@ lado certo para errar.
 - **Informações de exercícios físicos** *(passos — opcional)* ← **não esqueça**
 - ~~Informações de saúde~~ → subiu para "Coletado e compartilhado" em 20/10/2026 (o humor vai ao Groq no chat — ver 2.6)
 - **IDs do dispositivo ou outros IDs** *(token FCM / endpoint Web Push — opcional; ver 2.7, decisão de 21/09/2026)*
+- **Outro conteúdo gerado pelo usuário** *(mensagem de feedback/sugestão/bug digitada no modal da Home e enviada só ao tocar em Enviar; `POST /api/feedback`; texto + tipo + versão/build/plataforma/idioma; **sem** `saveId`, e-mail, IP ou user agent; guardada 90 dias na KV `feedback:*` e encaminhada por e-mail à caixa de revisão por um serviço de envio de e-mail (Resend) — **compartilhada** com esse operador de e-mail, finalidade: comunicação com o desenvolvedor / suporte; política §6e, 04/11/2026)*
 - **Registros de falhas / Diagnóstico** *(crash reporting próprio, **não vinculado à conta**, não compartilhado — ver 2.7)*
 - **Histórico de compras** inclui a **assinatura trimestral** (token + vigência — ver 2.2)
 

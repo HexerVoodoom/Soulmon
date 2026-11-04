@@ -552,6 +552,16 @@ Cloudflare Workers (`workers/`), deploy **manual** (`cd workers && ../node_modul
 **Erros:** `400` corpo grande/inválido/fora da allowlist · `429` · `503` sem KV · `404`/`401` na leitura · `405`.
 **Cliente:** `src/utils/crashReport.ts`. **Leitura:** `node scripts/crash-report.mjs`. **Data Safety:** `docs/PLAY-DATA-SAFETY.md` §2.7.
 
+### `functions/api/feedback.js`
+**Rota:** `/api/feedback` · **Métodos:** `POST` (mensagem de feedback/sugestão/bug do modal da Home), `GET` (leitura do dono), `OPTIONS` — via `onRequest`.
+**Dono de:** a entrega da mensagem à caixa de revisão (REGISTRO §223). `sanitizeFeedback` é allowlist (`type` feedback|suggestion|bug, `message` 1–2000, `ver`, `build`, `plat`, `lang`); campo extra (uid, e-mail, saveId) derruba o corpo. `cleanMessage` tira controle/direção. Grava na KV ANTES do e-mail; `sendEmail` usa Resend (texto puro) só com `env.RESEND_API_KEY`.
+**Auth:** `POST` anônimo; token Firebase opcional só para o balde por conta. `GET` exige `X-Metrics-Key` == `env.METRICS_ADMIN_KEY` (404 sem a variável).
+**Rate limit:** `_rateLimit.js`, buckets `feedback` (5/10 min/IP), `feedback-acct` (5/10 min, hash do sub) e teto diário de gravações do isolate.
+**Grava/lê:** `kv(env)`, chave `feedback:<YYYY-MM-DD>:<id>` = `{ type, message, ver, build, plat, lang, at, emailed }`, TTL 90 dias.
+**Env:** `RESEND_API_KEY` (secret), `FEEDBACK_FROM`, `FEEDBACK_TO`, `FEEDBACK_DISABLED` (kill-switch).
+**Erros:** `400` corpo inválido/tipo/mensagem · `429` · `503` sem KV/desligado · `404`/`401` na leitura · `405`.
+**Cliente:** `src/utils/feedbackClient.ts`. **Privacidade:** `public/privacidade.html` §6e, `docs/PLAY-DATA-SAFETY.md`.
+
 ### Chat agente (11/10/2026) — `functions/api/_chatActions.js`, `_chatKnowledge.js`, `_chatKnowledge.data.js`, `_llm.js`
 
 **`functions/api/_chatActions.js`** — definição das ferramentas (`TOOLS`) e o schema fechado das ações (`validateToolCall`, `sanitizeToolCalls`, `MAX_ACTIONS`). O modelo só propõe; nada grava.
