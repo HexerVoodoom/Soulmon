@@ -54,6 +54,7 @@ import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
 import { sm2Button, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { ResultScreen } from './games/ResultScreen';
+import { ArenaCuraModal } from './games/ArenaCuraModal';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, VisorSparks, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { arenaFoesOfSeed, arenaSceneOfSeed } from '../utils/arenaSorteio';
 import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
@@ -540,16 +541,8 @@ export function ArenaGame({
       {/* Entre rodadas (04/11/2026, dono): sem página intermediária — só um MODAL com a vida recuperada e o botão do próximo round.
           A última rodada vencida não abre modal: vai direto ao fim da run (efeito abaixo). */}
       {fase === 'rodada-limpa' && rodada < ARENA_ROUNDS && (
-        <div data-arena-cura-modal style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, backgroundColor: 'rgba(0,0,0,0.45)' }}>
-          <div role="dialog" aria-modal="true" aria-labelledby="arena-cura-titulo" style={{ display: 'flex', flexDirection: 'column', gap: 12, width: '100%', maxWidth: 320, padding: 16, borderRadius: 12, backgroundColor: 'var(--sm2-surface)', border: '1px solid var(--sm2-line)', boxShadow: SM2_SHADOW_CARD }}>
-            <p id="arena-cura-titulo" className="sm2-num" style={phaseTitle}>
-              {isPt ? `+${Math.round(curaFrac * hpMax)} HP recuperado` : `+${Math.round(curaFrac * hpMax)} HP recovered`}
-            </p>
-            <button type="button" data-arena-proxima onClick={proximaRodada} style={{ ...sm2Button('primary'), width: '100%' }}>
-              {isPt ? 'Próxima rodada' : 'Next round'}
-            </button>
-          </div>
-        </div>
+        <ArenaCuraModal isPt={isPt} antes={Math.max(0, hpCarryRef.current - curaFrac)} depois={hpCarryRef.current} pontos={Math.round(curaFrac * hpMax)}
+          scene={cenaDaRun.bg} rodada={rodada} totalRodadas={ARENA_ROUNDS} onNext={proximaRodada} />
       )}
 
       {/* Fim da run: tela padrão (Proposta D). A "rodada limpa" acima é intermediária (a run segue) e fica COMPACTA, inline: não é resultado. */}
