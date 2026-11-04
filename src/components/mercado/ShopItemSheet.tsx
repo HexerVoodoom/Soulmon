@@ -8,6 +8,7 @@ import type { ShopItem } from '../../utils/shop';
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
 import { DECOR_ART } from '../../utils/decorArt';
 import { ITEM_ART } from '../../utils/itemArt';
+import { isReduceChipKey } from '../../utils/shop';
 import { decorFitLabel } from '../../utils/decorRules';
 import type { Language } from '../../utils/i18n';
 
@@ -75,7 +76,9 @@ function FloatingPreview({ anchor, item, onClose }: { anchor: HTMLElement | null
       }}
     >
       {png
-        ? <img src={png} alt="" style={{ height: size, width: 'auto', maxWidth: '78vw', objectFit: 'contain', imageRendering: 'pixelated', filter: 'drop-shadow(0 8px 14px rgba(0,0,0,.55))' }} />
+        ? <span className="sm3-item-arte" data-reduce={isReduceChipKey(item.icon) || undefined} style={{ width: 'auto', height: 'auto' }}>
+            <img src={png} alt="" style={{ height: size, width: 'auto', maxWidth: '78vw', objectFit: 'contain', imageRendering: 'pixelated', filter: 'drop-shadow(0 8px 14px rgba(0,0,0,.55))' }} />
+          </span>
         : <span style={{ fontSize: Math.round(size * 0.7), lineHeight: 1, filter: 'drop-shadow(0 8px 14px rgba(0,0,0,.55))' }}>{item.icon}</span>}
     </div>,
     document.body,
@@ -235,7 +238,9 @@ export function ShopItemSheet({
                 style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: 44, minHeight: 44, padding: 0, background: 'none', border: 'none', cursor: 'zoom-in' }}
               >
                 {itemThumb
-                  ? <img src={itemThumb} alt="" style={{ height: 40, width: 'auto', objectFit: 'contain', imageRendering: 'pixelated' }} />
+                  ? <span className="sm3-item-arte" data-reduce={isReduceChipKey(item.icon) || undefined} style={{ width: 'auto', height: 'auto' }}>
+                      <img src={itemThumb} alt="" style={{ height: 40, width: 'auto', objectFit: 'contain', imageRendering: 'pixelated' }} />
+                    </span>
                   : <span aria-hidden="true" style={{ fontSize: 32, lineHeight: 1 }}>{item.icon}</span>}
               </button>
             )}

@@ -8837,11 +8837,13 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
 /* Chip de REDUÇÃO (04/11/2026): arte do chip comum + um "−" no canto. */
 .sm3-item-arte[data-reduce] { position: relative; }
 .sm3-item-arte[data-reduce]::after {
-  content: '2';
+  content: '\2212 2';
   position: absolute; top: -6px; right: -4px;
   font-size: 16px; font-weight: 800; line-height: 1;
   color: var(--sm2-danger, #e5484d);
 }
+.sm2-shop-reduce { overflow: visible; }
+.sm2-shop-reduce.sm3-item-arte[data-reduce]::after { top: 2px; right: 3px; }
 .sm3-item-arte[data-premium]::after {
   content: '\2605';
   position: absolute; top: -4px; right: -5px;

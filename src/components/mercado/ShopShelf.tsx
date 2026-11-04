@@ -17,6 +17,7 @@ import type { ShopItem } from '../../utils/shop';
 import { PET_BACKGROUNDS } from '../../utils/backgrounds';
 import { DECOR_ART } from '../../utils/decorArt';
 import { ITEM_ART } from '../../utils/itemArt';
+import { isReduceChipKey } from '../../utils/shop';
 import { MISSIONS, isShopItemUnlocked } from '../../utils/missions';
 import { weeklyTarget } from '../../utils/missionTargets';
 import { MissionCard, MissionCardList, resolveGo, type MissionNav } from '../nav/MissionCard';
@@ -313,7 +314,11 @@ export function ShopShelf({
     return (
       <MiniGlass size={GLASS_ITEM} style={ring}>
         {png
-          ? <img src={png} alt="" className="sm2-shop-art" style={{ transform: `translate(-50%, -50%) scale(${scale})` }} />
+          ? (isReduceChipKey(item.icon)
+            ? <span className="sm3-item-arte sm2-shop-reduce" data-reduce style={{ position: 'absolute', inset: 0, width: 'auto', height: 'auto' }}>
+                <img src={png} alt="" className="sm2-shop-art" style={{ transform: `translate(-50%, -50%) scale(${scale})` }} />
+              </span>
+            : <img src={png} alt="" className="sm2-shop-art" style={{ transform: `translate(-50%, -50%) scale(${scale})` }} />)
           : <span aria-hidden="true" style={{ fontSize: 28, lineHeight: 1 }}>{item.icon}</span>}
         {veil}
       </MiniGlass>
