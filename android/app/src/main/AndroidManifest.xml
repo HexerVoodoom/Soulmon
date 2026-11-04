@@ -43,6 +43,31 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
+        <!-- Widgets G (transparente) e H (V-Pet): escolha no seletor do Android. Os anteriores ficam registrados. -->
+        <receiver
+            android:name=".widget.SoulmonWidgetClearProvider"
+            android:label="@string/widget_clear_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/soulmon_widget_clear_info" />
+        </receiver>
+
+        <receiver
+            android:name=".widget.SoulmonWidgetVpetProvider"
+            android:label="@string/widget_vpet_label"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/soulmon_widget_vpet_info" />
+        </receiver>
+
         <!-- WIDGET F — redimensionável: quadrado, horizontal ou vertical (REGISTRO §221).
              Os A..E ficam registrados: tirar um receiver apaga o widget já colocado. -->
         <receiver
