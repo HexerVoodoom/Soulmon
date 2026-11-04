@@ -478,8 +478,13 @@ export function ResultScreen(p: ResultScreenProps) {
                 </div>
               )}
               {bitsCapped && extras && (
-                <div data-result-bitscap>
-                  <PixelMeter ratio={1} tone="gold" height={12} label={isPt ? `Bits de hoje: ${extras.bitsToday}/${extras.bitsCap}` : `Today's Bits: ${extras.bitsToday}/${extras.bitsCap}`} />
+                <div data-result-bitscap style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                  {/* Teto diário de Bits (pedido do dono 04/11): cor e ícone dos Bits, texto visível, longe do baú. */}
+                  <span style={{ ...sm2Hint, display: 'inline-flex', alignItems: 'center', gap: 6, textAlign: 'left' }} data-result-bitscap-label>
+                    {isPt ? 'Você já ganhou o máximo de hoje:' : "You've earned today's max:"}
+                    <BitsAmount value={extras.bitsCap} size={14} />
+                  </span>
+                  <PixelMeter ratio={1} tone="cyan" height={8} label={isPt ? `Bits de hoje: ${extras.bitsToday} de ${extras.bitsCap} (máximo)` : `Today's Bits: ${extras.bitsToday} of ${extras.bitsCap} (max)`} />
                 </div>
               )}
             </div>
