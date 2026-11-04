@@ -1,4 +1,4 @@
-/** Legendas da cinemática "A Parede" (docs/roteiro/INTRO-CINEMATICA.md): 9 planos, EN/PT, duração em segundos. Tempos = vídeo v2 de 72,9 s (início de cada plano: 0, 5,98, 11,96, 23,84, 29,91, 41,79, 47,77, 59,73, 65,71). */
+/** Legendas da cinemática "A Parede" (docs/roteiro/INTRO-CINEMATICA.md): 9 planos, EN/PT, duração em segundos. Tempos = trilha "A Parede", 72,9 s (início de cada plano: 0, 5,98, 11,96, 23,84, 29,91, 41,79, 47,77, 59,73, 65,71). */
 export interface PlanoIntro { s: number; en: string; pt: string }
 
 export const PLANOS_INTRO: readonly PlanoIntro[] = [
