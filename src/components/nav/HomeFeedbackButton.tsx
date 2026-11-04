@@ -23,7 +23,7 @@ export function HomeFeedbackButton({ language }: { language: Language }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}
     >
-      <PixelIcon name="enviar" size={28} />
+      <PixelIcon name="enviar" size={32} />
     </a>
   );
 }
