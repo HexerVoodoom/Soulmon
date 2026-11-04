@@ -61,7 +61,7 @@ import { getDungeonEnemySprite, getSpriteForStage } from '../utils/sprites';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
 import { novoSoulmonById, rosterSpriteOf } from '../utils/novosSoulmon';
-import { RAVEN_ENTRY } from '../utils/enemyRoster';
+import { RAVEN_ENTRY, rosterEntryOfKey } from '../utils/enemyRoster';
 import { COMBINADOS_ART } from '../utils/enemyRosterArt';
 import {
   ARENA_ROUNDS,
@@ -235,7 +235,7 @@ export function ArenaGame({
     rodadaRef.current = n;
     setInimigos(novos);
     for (const e of novos) { const k = arenaFoeKey(e); if (k) enemySeenRef.current?.(k); }
-    setSprites(novos.map(e => (arenaFoeKey(e) === RAVEN_ENTRY.key ? rosterSpriteOf(RAVEN_ENTRY) : undefined) ?? (e.artFile ? COMBINADOS_ART[e.artFile] : undefined) ?? novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
+    setSprites(novos.map(e => (arenaFoeKey(e) === RAVEN_ENTRY.key ? rosterSpriteOf(RAVEN_ENTRY) : undefined) ?? (e.ramoKey ? rosterSpriteOf(rosterEntryOfKey(e.ramoKey)!) : undefined) ?? (e.artFile ? COMBINADOS_ART[e.artFile] : undefined) ?? novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
     setFightKey(k => k + 1);
     setFase('luta');
   }, []);

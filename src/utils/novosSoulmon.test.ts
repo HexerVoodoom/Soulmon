@@ -116,8 +116,12 @@ describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => 
       for (let r = 1; r <= ARENA_ROUNDS; r++) {
         const a = buildArenaRound(r, 1, mulberry32(seed + r), []);
         expect(buildArenaRound(r, 1, mulberry32(seed + r), [])).toEqual(a);
-        expect(new Set(a.map(e => e.creature)).size).toBe(a.length);
+        expect(new Set(a.map(e => e.creature ?? e.ramoKey)).size).toBe(a.length);
         for (const e of a) {
+          if (e.ramoKey) { // §221: só o CHEFE (mega) pode ser ramo evoluído; fraco/médio seguem criatura nova
+            expect(e.cls).toBe('boss'); expect(e.form).toBe('mega'); expect(e.creature).toBeUndefined();
+            continue;
+          }
           const n = NOVOS_SOULMON.find(x => x.id === e.creature)!;
           expect(e.elements).toEqual([n.element]);
           expect(e.form).toBe(e.cls === 'weak' ? 'rookie' : e.cls === 'medium' ? 'champion' : 'ultra'); // chefe: ultra > mega > ultimate

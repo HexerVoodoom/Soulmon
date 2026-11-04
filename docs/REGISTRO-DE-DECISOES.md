@@ -3900,6 +3900,13 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 **Alternativa que perdeu:** mudar `DECOR_SLOTS` direto. Quebraria o contrato de grade de arte (`assets.contract`).
 **O que falsifica:** peça cobrindo o Soulmon ou a interface em aparelho real; loja vazia de exclusivos para quem troca de elemento com frequência.
 
+## §221 — Ramos evoluídos também na Arena e no Desgarrado do Torneio (04/11/2026, decisão do dono; emenda §220)
+- **Decisão do dono:** os ramos entram também na Arena (`buildArenaRound`) e no Desgarrado do Torneio (`strayForTournament`), só em nível alto. Chefe do Elemental Fusion continua sem ramo (`semRamos`).
+- **Como:** Arena comum: só o CHEFE, em mega. Arena Desgarrada: qualquer slot, fraco em ultimate, médio e chefe em mega. Torneio: o Desgarrado (ultimate/mega) pode ser ramo. Chance = `RAMO_CHANCE` (1/3) nesses slots; respeita o elemento da run. Fraco/médio da Arena comum e champion nunca.
+- **Determinismo:** zero `rng` a mais. O ramo sai dos bits baixos do MESMO número que já escolhia a criatura (`ramoFromRoll`), então card = luta e a contagem de sorteios não mudam; só muda QUEM sai nos ~1/3 dos slots elegíveis. Sem servidor: Arena e treino do Torneio são 100% locais (nenhum `functions/` importa roster/arena), nenhum contrato novo; `ArenaEnemy.ramoKey` é campo aditivo só do cliente.
+- **Exclusão dos 3 de teste (04/11):** não há identificador no código/dados (o roster é a lista fechada `RAMOS_INIMIGOS_DATA` × `RAMOS_ART`, travada por teste 1:1); continuam fora só por nunca terem sido baixados.
+- **Rollback:** reverter o PR não toca save (nada persistido; o bestiário já conhece as chaves de ramo desde §220).
+
 ## Sessão de diversão: minijogos do Salão custam energia (04/11/2026)
 
 Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusion, Chuva de Almas) gastam a energia da Home para limitar o tempo de jogo e empurrar para outras atividades, sem ser duro. **1 energia abre uma sessão de 3 rodadas (qualquer jogo do Salão) válida por 30 min**; acabaram as rodadas ou o tempo, a próxima custa mais 1. Ateliê da Mente, Refúgio e Masmorra ficam fora. Porta única pura `startFunRound` (`src/utils/funSession.ts`), sobre `setEnergy`, como `spendLayer`; a rodada conta ao COMEÇAR o jogo (depois da pergunta do NPC). Save: `funSession` opcional (ausente = sem sessão). Energia não é validada no servidor (só o save é guardado), então segue o caminho do cliente igual à Masmorra.

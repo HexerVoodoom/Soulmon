@@ -3,7 +3,7 @@
  * além da Fenda: como UM dos 3 desafios da Arena (às vezes) e como o adversário que preenche o Torneio quando não há par humano.
  * Tudo determinístico (semente da run / id da conta + dia), nunca `Math.random`.
  */
-import { ENEMY_ROSTER, RAVEN_ENTRY, withRaven, type RosterEntry } from './enemyRoster';
+import { ENEMY_ROSTER, RAVEN_ENTRY, ramoFromRoll, withRaven, type RosterEntry } from './enemyRoster';
 import { isStrayFoe } from './wildFoeLabel';
 import { mulberry32 } from './combate/rng';
 
@@ -37,11 +37,17 @@ export function arenaCardSeeds(draw: () => number, n = 3): number[] {
   return out;
 }
 
-export const STRAY_ROSTER: readonly RosterEntry[] = ENEMY_ROSTER.filter(e => isStrayFoe(e.stage) && e.kind !== 'combinado' && e.kind !== 'ramo'); // §220: o Torneio não olha o level do jogador; ramo só com teto de level
+export const STRAY_ROSTER: readonly RosterEntry[] = ENEMY_ROSTER.filter(e => isStrayFoe(e.stage) && e.kind !== 'combinado' && e.kind !== 'ramo');
+/** §221 (dono, 04/11/2026): os ramos evoluídos ULTIMATE/MEGA também podem ser o Desgarrado do Torneio (forma alta; champion fica de fora). */
+export const STRAY_RAMOS: readonly RosterEntry[] = ENEMY_ROSTER.filter(e => isStrayFoe(e.stage) && e.kind === 'ramo');
 
 /** O Desgarrado que preenche o Torneio sem par, estável por conta e dia (`dayKey` = AAAA-MM-DD). */
 export function strayForTournament(saveId: string, dayKey: string): RosterEntry {
   let h = 2166136261;
   for (const ch of `${saveId}|${dayKey}`) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
-  return withRaven(mulberry32(h | 0), r => STRAY_ROSTER[r() * STRAY_ROSTER.length | 0], () => RAVEN_ENTRY); // 31/10: o corvo, 1/1000
+  return withRaven(mulberry32(h | 0), r => {
+    const u = r(); // UM só número (como antes): o índice usa os bits altos e o ramo, os baixos (`ramoFromRoll`)
+    const ramo = ramoFromRoll(u, STRAY_RAMOS.length);
+    return ramo.hit ? STRAY_RAMOS[ramo.pick] : STRAY_ROSTER[u * STRAY_ROSTER.length | 0];
+  }, () => RAVEN_ENTRY); // 31/10: o corvo, 1/1000
 }
