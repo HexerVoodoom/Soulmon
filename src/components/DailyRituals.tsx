@@ -110,6 +110,8 @@ export interface DailyRitualsProps {
   /** Subitem de uma tarefa (o último fecha a tarefa — quem fecha é o App). */
   onToggleTaskStep?: (taskId: string, stepId: string) => void;
   onEditTask: (taskId: string) => void;
+  /** Segurar uma tarefa JÁ marcada: abre "Desmarcar / Editar". `completedAt` ausente = conclusão ainda nos 3 s de animação. */
+  onHoldDoneTask?: (ref: { id: string; completedAt?: string }) => void;
   onPostponeNudge: (taskId: string) => void;
   onEditActivity: (activityId: string) => void;
   onToggleActivity: (activityId: string) => void;
@@ -136,7 +138,7 @@ const SWIPE_RATIO = 2;
 
 export function DailyRituals({
   tasks, activities, completedTasks, habitRhythms, language, now,
-  expanded, onExpand, onToggleTask, onToggleTaskStep, onEditTask, onPostponeNudge,
+  expanded, onExpand, onToggleTask, onToggleTaskStep, onEditTask, onHoldDoneTask, onPostponeNudge,
   onEditActivity, onToggleActivity, onUpdateStep, onRestoreTask, onCreate, ctaLabel, emptyMessage,
   variant = 'panel', dayComplete = false, goal, dayPlan, onOpenSettings,
 }: DailyRitualsProps) {
@@ -272,6 +274,8 @@ export function DailyRituals({
         done={task.completed}
         haunted={isHaunted(task, now)}
         onToggle={() => { if (!task.completed) onToggleTask(task.id); }}
+        /* Segurar: pendente → edição; marcada → "Desmarcar / Editar". */
+        onLongPress={task.completed ? (onHoldDoneTask ? () => onHoldDoneTask({ id: task.id }) : undefined) : () => onEditTask(task.id)}
         language={language}
         expandable={comFilhos}
         expanded={aberta}
@@ -327,6 +331,7 @@ export function DailyRituals({
         done
         inert
         onToggle={() => {}}
+        onLongPress={onHoldDoneTask ? () => onHoldDoneTask({ id: c.id, completedAt: c.completedAt }) : undefined}
         language={language}
         toggleLabelPt={`Tarefa concluída: ${c.name}`}
         toggleLabelEn={`Task completed: ${c.name}`}
