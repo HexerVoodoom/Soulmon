@@ -889,3 +889,13 @@ O slot já está ligado (`FEIRA_SCENE` em `src/utils/dungeonScenes.ts`, glob opc
 | `bg-el-planta` | bg | Elemento Planta | jungle canopy with giant leaves and shafts of green light; palette: leaf green and sap yellow | 1200×648 (1,85:1), [PET-BOX] | **sim** (`planta`) |
 | `frame-el-planta` | frame | Elemento Planta | ring of broad leaves and vines; palette: leaf green and sap yellow | 192×192 (1:1), abertura central 96 px vazia, alfa real | **sim** (`planta`) |
 | `furn-el-planta` | furniture | Elemento Planta | calm carnivorous plant in a clay pot; palette: leaf green and sap yellow | 48×52 (~1:1), `ground`, slot `floor-right` | **sim** (`planta`) |
+
+## Barra do Especial da Chuva de Almas (pedido do dono, 04/11/2026)
+
+Slot opcional já ligado: `src/assets/soulmon/barrage/barra-especial.png` (resolvido por `import.meta.glob` em `assets/soulmon/barrage/index.ts`). Sem o arquivo, o botão Especial segue com a barra atual (gradiente CSS); com ele, a arte vira o fundo do botão por cima do preenchimento de carga.
+
+| Alvo | Tamanho | Alfa | Prompt |
+|---|---|---|---|
+| `src/assets/soulmon/barrage/barra-especial.png` | 192×96 (2:1), uma peça só; interior da barra vazado (translúcido) para o preenchimento de carga aparecer por baixo | real (`gpt_image_2 --background transparent`, nunca chroma) | `Pixel-art horizontal special-charge bar frame for a mobile shoot-em-up, 2:1. A slim dark-turquoise capsule with a hollow translucent inside; an ornate soul crystal with a small flame at the right end, thin copper rim and copper pipes along the top and bottom edges, fine circuit traces in turquoise glow, a few tiny leaves curling from the corners, everything joined by cables. No gears, no text, no background, no drop shadow. Real transparent alpha. Dark turquoise tone matching the app Home.` |
+
+Identidade: `docs/REGRA-IDENTIDADE-SOULMON.md` (turquesa escuro, cristal da alma com chama, cobre, circuito, folhinhas, sem engrenagem).

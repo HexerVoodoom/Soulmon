@@ -383,3 +383,23 @@ export function stepBarrage(s: BarrageState, dtRaw: number, targetX: number, lev
   }
   return ev;
 }
+
+/**
+ * DOUBLE TAP (04/11/2026, dono): dois toques rápidos e juntos na área de jogo disparam o Especial carregado. Um TOQUE é um
+ * apertar-e-soltar curto e quase parado (senão é arrasto de movimento); o 2º conta se vier logo e perto do 1º.
+ */
+export const TAP_MAX_MS = 250;
+export const TAP_MAX_MOVE = 14;
+export const DOUBLE_TAP_MS = 350;
+export const DOUBLE_TAP_DIST = 48;
+export interface TapPoint { t: number; x: number; y: number }
+/** O apertar-e-soltar foi um toque (curto e quase parado)? */
+export const isTap = (downAt: TapPoint, up: TapPoint): boolean =>
+  up.t - downAt.t <= TAP_MAX_MS && Math.hypot(up.x - downAt.x, up.y - downAt.y) <= TAP_MAX_MOVE;
+/** Registra um toque. `double` = este é o 2º toque de um double tap (e o par é consumido: um 3º toque começa de novo). */
+export function registerTap(prev: TapPoint | null, tap: TapPoint): { double: boolean; last: TapPoint | null } {
+  if (prev && tap.t - prev.t <= DOUBLE_TAP_MS && tap.t >= prev.t && Math.hypot(tap.x - prev.x, tap.y - prev.y) <= DOUBLE_TAP_DIST) {
+    return { double: true, last: null };
+  }
+  return { double: false, last: tap };
+}

@@ -2,7 +2,7 @@ import { ENEMY_ROSTER } from './enemyRoster';
 import { describe, it, expect } from 'vitest';
 import {
   newBarrage, stepBarrage, phaseAt, stageOdds, pickWaveStage, STAGE_HP, BASE_Y, BARRAGE_ELEMENT, difficultyAt, barrageBits, FIELD_W, PLAYER_Y, START_LIVES,
-  PHASE_SECONDS, INVULN_SECONDS,
+  PHASE_SECONDS, INVULN_SECONDS, isTap, registerTap, DOUBLE_TAP_MS, DOUBLE_TAP_DIST,
 } from './soulBarrage';
 
 const seeded = (seed = 7) => () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 2 ** 32; };
@@ -192,5 +192,26 @@ describe('soulBarrage — modo Avançado (Y livre + Especial)', () => {
   it('família do especial → efeito', () => {
     expect(['direct', 'dot', undefined].map(specialKindOf)).toEqual(['beam', 'beam', 'beam']);
     expect(['shield', 'heal', 'atkBuff', 'defDebuff', 'spdBuff'].map(specialKindOf)).toEqual(['shield', 'heal', 'overdrive', 'pulse', 'slow']);
+  });
+});
+
+describe('double tap (Especial)', () => {
+  const at = (t: number, x = 100, y = 100) => ({ t, x, y });
+  it('apertar-e-soltar curto e parado é toque; arrasto ou demora não é', () => {
+    expect(isTap(at(0), at(120, 103, 102))).toBe(true);
+    expect(isTap(at(0), at(400))).toBe(false);
+    expect(isTap(at(0), at(100, 160, 100))).toBe(false);
+  });
+  it('dois toques juntos e rápidos = double; o par é consumido', () => {
+    const a = registerTap(null, at(1000));
+    expect(a.double).toBe(false);
+    const b = registerTap(a.last, at(1200, 110, 105));
+    expect(b.double).toBe(true);
+    expect(b.last).toBeNull();
+    expect(registerTap(b.last, at(1300)).double).toBe(false);
+  });
+  it('devagar demais ou longe demais não é double', () => {
+    expect(registerTap(at(1000), at(1000 + DOUBLE_TAP_MS + 1)).double).toBe(false);
+    expect(registerTap(at(1000), at(1100, 100 + DOUBLE_TAP_DIST + 1, 100)).double).toBe(false);
   });
 });

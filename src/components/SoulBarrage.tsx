@@ -20,8 +20,9 @@ import { temaSpriteOf } from '../utils/temaInimigosArt';
 import { BARRAGE_ROSTER } from '../utils/temaInimigos';
 import {
   FIELD_W, FIELD_H, PLAYER_SPEED, PLAYER_SIZE, SHOT_R, SHOT_DRAW, BARRAGE_ELEMENT, BARRAGE_POINTS_PER_BIT, BIG_SHOT_R, SPECIAL_COST,
-  newBarrage, stepBarrage, barrageBits, activateSpecial, specialKindOf, type BarrageState, type BarrageSpecial,
+  newBarrage, stepBarrage, barrageBits, activateSpecial, specialKindOf, isTap, registerTap, type TapPoint, type BarrageState, type BarrageSpecial,
 } from '../utils/soulBarrage';
+import { BARRAGE_ART } from '../assets/soulmon/barrage';
 import { emitFeat } from '../utils/feats';
 import { ADVANCED_BITS_FACTOR, difficultyLabel } from '../utils/minigameDifficulty';
 
@@ -74,6 +75,8 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
   const targetX = useRef(FIELD_W / 2);
   const targetY = useRef(FIELD_H - 70);
   const drag = useRef<{ x: number; y: number; tx: number; ty: number } | null>(null);
+  const tapDown = useRef<TapPoint | null>(null);
+  const lastTap = useRef<TapPoint | null>(null);
   const specialBtn = useRef<HTMLButtonElement>(null);
   const hudRef = useRef<HTMLSpanElement>(null);
   const heartsRef = useRef<HTMLSpanElement>(null);
@@ -282,6 +285,17 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
     targetX.current = ((e.clientX - r.left) / r.width) * FIELD_W;
   };
   const fireSpecial = () => { if (phase === 'playing' && !paused) activateSpecial(g.current, special); };
+  /* Double tap na área (Avançado): o toque curto e parado conta; o arrasto de movimento nunca conta. Sem carga, `activateSpecial` não faz nada. */
+  const tapDownAt = (e: React.PointerEvent<HTMLElement>) => { tapDown.current = { t: e.timeStamp, x: e.clientX, y: e.clientY }; };
+  const tapUpAt = (e: React.PointerEvent<HTMLElement>) => {
+    const d = tapDown.current; tapDown.current = null;
+    if (level !== 2 || !d) return;
+    const up = { t: e.timeStamp, x: e.clientX, y: e.clientY };
+    if (!isTap(d, up)) { lastTap.current = null; return; }
+    const r = registerTap(lastTap.current, up);
+    lastTap.current = r.last;
+    if (r.double) fireSpecial();
+  };
 
   return (
     // Tela cheia (04/11/2026, dono): o fundo da área do jogo cobre a tela toda; o campo não fica mais numa "janela" com outro fundo atrás.
@@ -300,9 +314,9 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
         onPauseChange={setPaused}
       />
       <div data-barrage-area style={{ position: 'relative', flex: '1 1 0', minHeight: 240, display: 'flex', justifyContent: 'center', overflow: 'hidden', touchAction: 'none' }}
-        onPointerDown={e => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* noop */ } drag.current = { x: e.clientX, y: e.clientY, tx: g.current.px, ty: g.current.py }; moveTo(e); }}
-        onPointerUp={() => { drag.current = null; }}
-        onPointerCancel={() => { drag.current = null; }}
+        onPointerDown={e => { try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* noop */ } drag.current = { x: e.clientX, y: e.clientY, tx: g.current.px, ty: g.current.py }; tapDownAt(e); moveTo(e); }}
+        onPointerUp={e => { drag.current = null; tapUpAt(e); }}
+        onPointerCancel={() => { drag.current = null; tapDown.current = null; }}
         onPointerMove={moveTo}>
         <canvas
           ref={canvasRef}
@@ -330,11 +344,13 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
             type="button"
             data-barrage-special={special}
             data-ready="false"
-            onPointerDown={e => { e.preventDefault(); fireSpecial(); }}
+            onPointerDown={e => { e.preventDefault(); e.stopPropagation(); fireSpecial(); }}
+            onPointerUp={e => e.stopPropagation()}
             aria-label={isPt ? 'Especial' : 'Special'}
-            style={{ ...sm2Button('primary'), position: 'absolute', right: 10, bottom: 10, minWidth: 96, minHeight: 48, touchAction: 'none', overflow: 'hidden', background: 'linear-gradient(to right, var(--sm2-accent, #3fd0c9) var(--charge, 0%), color-mix(in srgb, var(--sm2-viewport-bg) 80%, transparent) var(--charge, 0%))', color: 'var(--sm2-viewport-ink)' }}
+            style={{ ...sm2Button('primary'), position: 'absolute', right: 10, bottom: 10, minWidth: 96, minHeight: 48, touchAction: 'none', overflow: 'hidden', background: `linear-gradient(to right, var(--sm2-accent, #3fd0c9) var(--charge, 0%), color-mix(in srgb, var(--sm2-viewport-bg) 80%, transparent) var(--charge, 0%))${BARRAGE_ART.specialBar ? `, url(${BARRAGE_ART.specialBar}) center/100% 100% no-repeat` : ''}`, color: 'var(--sm2-viewport-ink)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 1.1 }}
           >
-            {isPt ? 'Especial' : 'Special'}
+            <span>{isPt ? 'Especial' : 'Special'}</span>
+            <span data-barrage-doubletap style={{ fontSize: 'var(--sm2-text-xs, 11px)', opacity: 0.85 }}>{isPt ? 'Toque duplo' : 'Double tap'}</span>
           </button>
         )}
       </div>
