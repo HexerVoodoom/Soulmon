@@ -36,6 +36,7 @@ import type { QuestMark } from '../../utils/questMarks';
 import type { FocusLootRequest } from '../../utils/focusExpedition';
 import type { FocusRewardResult } from '../play/OficinaSheet';
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
+import { isFunGame, type FunSessionStatus } from '../../utils/funSession';
 import type { PasseioAchado } from '../play/PasseioSheet';
 import {
   usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame, loadZipGame, loadPatchesGame,
@@ -114,6 +115,9 @@ export interface PlayHandlers {
   /** Tutorial da 1ª abertura dos jogos do Ateliê da Mente (26/10/2026): o que já foi visto (save) e como gravar AO MOSTRAR. */
   mindTutorials?: { seen: MindGameTutorials; onShown: (id: MindGameId) => void };
   onDinoScore: (score: number) => void;
+  /** 🎟️ Sessão dos minijogos de diversão (04/11/2026, `utils/funSession.ts`): o estado AGORA e a porta que começa uma rodada
+   *  (cobra 1 energia ao abrir sessão; `false` = sem energia). Ausente (testes antigos) = jogos do Salão sem custo. */
+  funSession?: { status: (nowMs: number) => FunSessionStatus; onStartRound: () => boolean };
   onSpendBits?: (pts: number) => boolean;
   /** Arena livre (28/10/2026): contador de rerolls do save, dia do jogador e o pedido de reroll (o App desconta Bits e grava). */
   arena?: { dayIso: string; reroll?: ArenaReroll; onReroll: () => boolean; runs?: ArenaReroll; onRunEnd?: () => void };
@@ -449,7 +453,17 @@ export function AreaView(props: AreaViewProps) {
     );
   }
 
-  const start = (g: PlayGame) => { if (props.wakeGuard?.(g)) return; setSheet(null); setModeChosen(null); setGame(g); };
+  /* 🎟️ Jogo do Salão: sem sessão nem energia, não abre (a folha mostra a frase). A rodada é cobrada quando o jogo COMEÇA (após a
+     pergunta do NPC, se houver) — voltar da pergunta não gasta rodada. */
+  const funGate = props.play.funSession;
+  const start = (g: PlayGame) => {
+    if (props.wakeGuard?.(g)) return;
+    if (funGate && isFunGame(g)) {
+      if (!funGate.status(Date.now()).canPlay) return;
+      if (!MINIGAME_GATE[g] && !funGate.onStartRound()) return;
+    }
+    setSheet(null); setModeChosen(null); setGame(g);
+  };
   /** A Fenda Sem Fim (a antiga Masmorra): mora na Exploração (#187, 28/10/2026; esteve na Arena de beta3 N10 até então); o jogo abre em tela cheia sobre a cena da área. */
   const renderMasmorra = () => {
     const { play } = props;
@@ -576,7 +590,7 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'ferreiro' && <ForgeCard language={language} />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
             {open?.id === 'hexsmith' && <HexsmithSheet language={language} sprite={props.guild.mySprite} demoCharacterId={props.demoCharacterId} evolutionStage={props.evolutionStage} skills={props.skills} petElement={props.petElement} />}
-            {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
+            {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} funStatus={play.funSession?.status} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
             {open?.id === 'dungeon' && !play.rogue && <RogueDungeonPlaceholder language={language} />}
@@ -599,7 +613,7 @@ export function AreaView(props: AreaViewProps) {
               saveId={props.guild.saveId}
               withDifficulty={!!MINIGAME_GATE[game]!.difficulty}
               pveVsPvp={!!MINIGAME_GATE[game]!.pveVsPvp}
-              onPick={level => setModeChosen({ game, level })}
+              onPick={level => { if (funGate && isFunGame(game) && !funGate.onStartRound()) { setGame(null); return; } setModeChosen({ game, level }); }}
               onBack={exitGame}
             />
           </div>

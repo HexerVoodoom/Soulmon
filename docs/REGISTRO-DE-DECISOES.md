@@ -3893,3 +3893,10 @@ anged-cc0-*.wav`); nada é instalado antes da escolha.
 | `bg-mission-espaco` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
 | `bg-mission-ouro` | 300 | 1500 | ×5 | exclusivo de conquista (só compra após cumprir e resgatar a missão), fim de jogo |
 
+## Sessão de diversão: minijogos do Salão custam energia (04/11/2026)
+
+Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusion, Chuva de Almas) gastam a energia da Home para limitar o tempo de jogo e empurrar para outras atividades, sem ser duro. **1 energia abre uma sessão de 3 rodadas (qualquer jogo do Salão) válida por 30 min**; acabaram as rodadas ou o tempo, a próxima custa mais 1. Ateliê da Mente, Refúgio e Masmorra ficam fora. Porta única pura `startFunRound` (`src/utils/funSession.ts`), sobre `setEnergy`, como `spendLayer`; a rodada conta ao COMEÇAR o jogo (depois da pergunta do NPC). Save: `funSession` opcional (ausente = sem sessão). Energia não é validada no servidor (só o save é guardado), então segue o caminho do cliente igual à Masmorra.
+
+- Alternativa que perdeu: cobrar 1 energia por rodada (duro demais, pedido do dono).
+- O que falsifica: se o uso das outras atividades não subir, ou se jogadores reclamarem de bloqueio, rever custo/rodadas.
+- Limite conhecido: "jogar de novo" DENTRO de um jogo não conta rodada nova (só a entrada pela folha do Salão).

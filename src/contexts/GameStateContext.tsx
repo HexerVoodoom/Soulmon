@@ -1,3 +1,4 @@
+import { sanitizeFunSession } from '../utils/funSession';
 import { normalizeGuildMission } from '../utils/guildMission';
 import { sanitizeCrystal } from '../utils/evolutionCrystal';
 import { sanitizeRogueRun, type RogueRun } from '../utils/rogueDungeonSave';
@@ -502,6 +503,8 @@ export interface GameState {
   /** 🚧 Camadas da masmorra COMEÇADAS no dia do jogador (beta-2 6.1): o limite diário (REMOVIDO em beta3 F2; o contador segue) morava no
    *  save — reabrir o app, entrar/sair ou retirar o Soulmon não devolvem camada. O servidor só aceita o contador monotônico no dia. */
   dungeonDaily?: { day: string; layers: number };
+  /** 🎟️ Sessão dos minijogos de diversão (04/11/2026, `utils/funSession.ts`): 1 energia = 3 rodadas em 30 min. Ausente = nenhuma sessão. */
+  funSession?: { startedAt: number; rounds: number };
   /** ☀️🌤️🌙 Check-ins do dia já resgatados (beta-2 4.1, `utils/checkIns.ts`): UMA recompensa por janela por dia do jogador; sem histórico. */
   checkIns?: { day: string; claimed: Array<'morning' | 'afternoon' | 'night'> };
   /** 🎲 Rerolls dos 3 cards da Arena livre feitos no dia do jogador (28/10/2026, `utils/arenaSorteio.ts`): 3 grátis, depois Bits. O contador (dia ISO + n) também é a semente dos cards, então reabrir mostra os mesmos. Servidor: monotônico no dia (`_dayCounters.js`). */
@@ -1400,6 +1403,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         energyClock: sanitizeEnergyClock(loadedState.energyClock),
         hungerPenalty: sanitizeHungerPenalty(loadedState.hungerPenalty),
         dungeonDaily: sanitizeDungeonDaily(loadedState.dungeonDaily),
+        funSession: sanitizeFunSession(loadedState.funSession),
         checkIns: sanitizeCheckIns(loadedState.checkIns),
         arenaReroll: sanitizeArenaReroll(loadedState.arenaReroll),
         arenaRuns: sanitizeArenaReroll(loadedState.arenaRuns),

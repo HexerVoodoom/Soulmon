@@ -811,6 +811,7 @@ const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ d
 // A barra de captura NÃO é lazy: ela fica na primeira tela e o ganho dela é
 // justamente não ter espera nenhuma entre lembrar e anotar.
 import type { QuickAddResult } from './utils/quickAdd';
+import { funSessionStatus, funRoundRefusal, startFunRound } from './utils/funSession';
 import type { CreateAction } from './utils/chatActions';
 const StatsPage = lazy(() => import('./components/StatsPage').then(m => ({ default: m.StatsPage })));
 const RevisaoGame = lazy(() => import('./components/mente/RevisaoGame').then(m => ({ default: m.RevisaoGame })));
@@ -8026,6 +8027,16 @@ export default function App() {
                   onDungeonEnemyDefeated: handleDungeonEnemyDefeated,
                   onBestiarySeen: handleBestiarySeen,
                   onRefugioComplete: () => setGameState(prev => grantRefugioEnergy(prev, Date.now())),
+                  funSession: {
+                    status: (now) => funSessionStatus(gameState, now),
+                    /* Espelha a recusa sobre o estado da tela e reconfere dentro do updater (porta única `startFunRound`). */
+                    onStartRound: () => {
+                      const now = Date.now();
+                      if (funRoundRefusal(gameState, now)) return false;
+                      setGameState(prev => startFunRound(prev, now));
+                      return true;
+                    },
+                  },
                   onElementsDefeated: handleElementsDefeated,
                   onBossShard: () => setGameState(prev => ({ ...prev, bossShards: addBossShards(prev.bossShards) })),
                   mindTutorials: { seen: gameState.mindGameTutorials ?? {}, onShown: id => setGameState(prev => { const m = markMindGameTutorial(prev.mindGameTutorials, id); return m === prev.mindGameTutorials ? prev : { ...prev, mindGameTutorials: m }; }) },
