@@ -4916,8 +4916,8 @@ export default function App() {
   }, []);
 
   /** Editar Home: grava o rascunho inteiro de uma vez (mesmo campo que a loja usa). */
-  const handleSaveHomeDecor = useCallback((decor: Partial<Record<SlotId, string>>) => {
-    setGameState(prev => ({ ...prev, equippedDecor: { ...decor } }));
+  const handleSaveHomeDecor = useCallback((decor: Partial<Record<SlotId, string>>, background: string | null) => {
+    setGameState(prev => ({ ...prev, equippedDecor: { ...decor }, equippedBackground: background }));
   }, []);
 
   // 💎 Créditos (monetização) — TODA operação de saldo passa pelo SERVIDOR
@@ -8859,6 +8859,7 @@ export default function App() {
                   ownedFurniture: gameState.ownedFurniture ?? [],
                   equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
                   equippedBackground: gameState.equippedBackground ?? null,
+                  ownedBackgrounds: gameState.ownedBackgrounds ?? [],
                   onSave: handleSaveHomeDecor,
                   onOpenShop: () => { setPendingSheet({ area: 'mercado', lot: 'background' }); goTo(areaView('mercado')); },
                 },

@@ -103,7 +103,7 @@ interface SettingsPageProps {
     userName?: string; onChangeName?: (name: string) => void;
     petName?: string; onChangePetName?: (name: string) => void;
     /** Editar Home: sem isto a linha nao existe. */
-    editHome?: Pick<EditHomeProps, 'ownedFurniture' | 'equippedDecor' | 'equippedBackground' | 'onSave' | 'onOpenShop'>;
+    editHome?: Pick<EditHomeProps, 'ownedFurniture' | 'equippedDecor' | 'equippedBackground' | 'ownedBackgrounds' | 'onSave' | 'onOpenShop'>;
   };
   /** Créditos e ferramentas do ritual (vieram do menu da Home, que saiu). */
   onOpenCredits?: () => void;
@@ -374,7 +374,7 @@ export function SettingsPage({
             <EditHomeScreen
               language={language}
               {...profile.editHome}
-              onSave={(d) => { profile.editHome!.onSave(d); setEditHomeOpen(false); }}
+              onSave={(d, b) => { profile.editHome!.onSave(d, b); setEditHomeOpen(false); }}
               onClose={() => setEditHomeOpen(false)}
             />
           )}
