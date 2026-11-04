@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { FUN_SESSION_COST, FUN_SESSION_ROUNDS, FUN_SESSION_MS, formatMmSs, type FunSessionStatus } from '../../utils/funSession';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
@@ -257,6 +257,14 @@ export function FunSessionLine({ language, status, nudge = 0 }: { language: Lang
   const isPt = language === 'pt-BR';
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
+  /* O aviso mora no topo da lista: com a lista rolada, o toque na 2ª fileira não mostraria resposta nenhuma. Sobe só a lista (`scrollIntoView` moveria a folha inteira). */
+  const aviso = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (nudge <= 0) return;
+    let el = aviso.current?.parentElement ?? null;
+    while (el && getComputedStyle(el).overflowY !== 'auto') el = el.parentElement;
+    el?.scrollTo?.({ top: 0, behavior: 'smooth' });
+  }, [nudge]);
   const st = status(now);
   const mins = Math.round(FUN_SESSION_MS / 60000);
   if (st.active) {
@@ -270,7 +278,7 @@ export function FunSessionLine({ language, status, nudge = 0 }: { language: Lang
   }
   if (!st.canPlay) {
     return (
-      <p key={nudge} data-fun-session="blocked" data-fun-nudged={nudge > 0 || undefined} role={nudge > 0 ? 'alert' : 'status'} style={nudge > 0 ? { ...sm2Text, margin: 0, padding: 8, borderRadius: 8, outline: '2px solid currentColor' } : { ...sm2Hint, margin: 0 }}>
+      <p key={nudge} ref={aviso} data-fun-session="blocked" data-fun-nudged={nudge > 0 || undefined} role={nudge > 0 ? 'alert' : 'status'} style={nudge > 0 ? { ...sm2Text, margin: 0, padding: 8, borderRadius: 8, outline: '2px solid currentColor' } : { ...sm2Hint, margin: 0 }}>
         {isPt
           ? 'Sem energia para jogar agora. Que tal uma tarefa, o Ateliê da Mente ou o Refúgio? A energia volta com o tempo.'
           : 'No energy to play right now. How about a task, the Mind Atelier or the Refuge? Energy comes back over time.'}
