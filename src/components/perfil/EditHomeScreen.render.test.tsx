@@ -34,7 +34,25 @@ describe('Editar Home', () => {
     expect(slot('floor-left').getAttribute('data-filled')).toBe('true');
     expect(slot('floor-right').getAttribute('data-filled')).toBe('false');
     expect(slot('floor-right').querySelector('[data-edit-dot]')).toBeTruthy();
-    expect(slot('floor-left').querySelector('[data-edit-dot]')).toBeNull();
+    // Espaço com peça também leva marcador (e segue tocável).
+    expect(slot('floor-left').querySelector('[data-edit-dot]')).toBeTruthy();
+  });
+
+  it('todo espaço do cenário leva marcador, com ou sem peça', () => {
+    setup();
+    for (const id of PET_BACKGROUNDS[BG].slots) {
+      expect(slot(id), id).toBeTruthy();
+      expect(slot(id).querySelector('[data-edit-dot]'), id).toBeTruthy();
+    }
+    // Espaço com peça abre a folha de troca.
+    fireEvent.click(slot('floor-left'));
+    expect(document.querySelector('[data-edit-options]')).toBeTruthy();
+  });
+
+  it('peça guardada que o cenário não desenha conta como espaço livre (ponto, não oculto)', () => {
+    setup({ equippedDecor: { 'floor-left': outdoorLeft!.id }, ownedFurniture: [outdoorLeft!.id] });
+    expect(slot('floor-left').getAttribute('data-filled')).toBe('false');
+    expect(slot('floor-left').querySelector('[data-edit-dot]')).toBeTruthy();
   });
 
   it('só lista o que a pessoa tem E cabe no espaço/cenário', () => {
@@ -55,7 +73,7 @@ describe('Editar Home', () => {
     expect(onSave).not.toHaveBeenCalled();
     expect(slot('floor-right').getAttribute('data-filled')).toBe('true');
     fireEvent.click(document.querySelector('[data-edit-home-save]')!);
-    expect(onSave).toHaveBeenCalledWith({ 'floor-left': indoorLeft[0].id, 'floor-right': rightItem!.id });
+    expect(onSave).toHaveBeenCalledWith({ 'floor-left': indoorLeft[0].id, 'floor-right': rightItem!.id }, BG);
   });
 
   it('Vazio desequipa no rascunho', () => {
@@ -64,7 +82,7 @@ describe('Editar Home', () => {
     fireEvent.click(document.querySelector('[data-edit-option="empty"]')!);
     expect(slot('floor-left').getAttribute('data-filled')).toBe('false');
     fireEvent.click(document.querySelector('[data-edit-home-save]')!);
-    expect(onSave).toHaveBeenCalledWith({});
+    expect(onSave).toHaveBeenCalledWith({}, BG);
   });
 
   it('Cancelar descarta: fecha sem salvar', () => {
@@ -87,5 +105,29 @@ describe('Editar Home', () => {
     fireEvent.click(document.querySelector('[data-edit-home-shop]')!);
     expect(onOpenShop).toHaveBeenCalled();
     expect(screen.getByText(/ainda não tem decoração/)).toBeTruthy();
+  });
+
+  it('trocar cenário: lista os que a pessoa tem, é rascunho e Salvar entrega o cenário', () => {
+    const other = Object.keys(PET_BACKGROUNDS).find(id => id !== BG && PET_BACKGROUNDS[id].slots.length > 0)!;
+    const { onSave } = setup({ ownedBackgrounds: [BG, other, 'bg-nao-existe'] });
+    fireEvent.click(document.querySelector('[data-edit-bg-open]')!);
+    expect(document.querySelector(`[data-edit-bg-option="${BG}"]`)).toBeTruthy();
+    expect(document.querySelector('[data-edit-bg-option="bg-nao-existe"]')).toBeNull();
+    fireEvent.click(document.querySelector(`[data-edit-bg-option="${other}"]`)!);
+    expect(onSave).not.toHaveBeenCalled();
+    expect((document.querySelector('[data-edit-home-save]') as HTMLButtonElement).disabled).toBe(false);
+    for (const id of PET_BACKGROUNDS[other].slots) expect(slot(id)).toBeTruthy();
+    fireEvent.click(document.querySelector('[data-edit-home-save]')!);
+    expect(onSave).toHaveBeenCalledWith({ 'floor-left': indoorLeft[0].id }, other);
+  });
+
+  it('trocar cenário e Cancelar descarta', () => {
+    const other = Object.keys(PET_BACKGROUNDS).find(id => id !== BG && PET_BACKGROUNDS[id].slots.length > 0)!;
+    const { onSave, onClose } = setup({ ownedBackgrounds: [BG, other] });
+    fireEvent.click(document.querySelector('[data-edit-bg-open]')!);
+    fireEvent.click(document.querySelector(`[data-edit-bg-option="${other}"]`)!);
+    fireEvent.click(document.querySelector('[data-edit-home-cancel]')!);
+    expect(onClose).toHaveBeenCalled();
+    expect(onSave).not.toHaveBeenCalled();
   });
 });

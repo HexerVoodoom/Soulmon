@@ -140,3 +140,23 @@ describe('ResultScreen', () => {
     expect(cap.querySelector('[role="progressbar"]')!.getAttribute('aria-label')).toBe('Bits de hoje: 60 de 60 (máximo)');
   });
 });
+
+describe('ResultScreen: essências no livro "Ganhou"', () => {
+  it('mostra a essência ao lado dos Bits/XP, com ícone, nome e quantidade; qty 0 some', () => {
+    reducedMotion(true);
+    render(<ResultScreen {...base({ ledger: [
+      { key: 'bits', kind: 'bits', value: 12 }, { key: 'xp', kind: 'xp', value: 5 },
+      { key: 'essence-fogo', kind: 'essence', id: 'fogo', qty: 3 }, { key: 'essence-agua', kind: 'essence', id: 'agua', qty: 0 },
+    ] })} />);
+    const ledger = document.querySelector('[data-result-ledger]')!;
+    const ess = ledger.querySelector('[data-result-essence="fogo"]')!;
+    expect(ess.textContent).toBe('×3');
+    expect(ledger.querySelector('[data-result-essence-icon="fogo"]')).toBeTruthy();
+    expect(ledger.querySelector('[data-result-xp]')).toBeTruthy();
+    expect(ledger.querySelector('[data-result-essence="agua"]')).toBeNull();
+    expect(ledger.textContent).toMatch(/Fire Essence/);
+    const live = document.querySelector('[role="status"][data-result-live]')!;
+    act(() => { vi.advanceTimersByTime(160); });
+    expect(live.textContent).toMatch(/Fire Essence ×3/);
+  });
+});

@@ -33,7 +33,7 @@ import { pedirMusicaDeCombate } from './musicaDeCombate';
 import type { MusicaDeCombate } from './sonsAssets';
 
 /** `pesadelo` (15/10/2026): o convite e a luta do Pesadelo. `torneio`/`duelo` (19/10/2026): o lobby e a luta do PvP. */
-export type Superficie = 'casa' | 'masmorra' | 'arena' | 'pesadelo' | 'torneio' | 'duelo' | 'masmorra-mapa' | 'evolucao' | 'meditacao' | 'intro' | 'respiracao' | 'chama';
+export type Superficie = 'casa' | 'masmorra' | 'arena' | 'pesadelo' | 'torneio' | 'duelo' | 'masmorra-mapa' | 'evolucao' | 'meditacao' | 'intro' | 'respiracao' | 'chama' | 'chefe-minigame';
 export type FaixaDeMusica = 'tema' | MusicaDeCombate;
 
 /** A tabela superfície → faixa de COMBATE (a que o interruptor de música liga). A Home não tem: é o tema. */
@@ -50,13 +50,16 @@ export const FAIXA_DE_COMBATE: Record<Exclude<Superficie, 'casa'>, MusicaDeComba
   // 04/11/2026: a Respiração subaquática e a Chama têm faixa própria do dono (Suno), `docs/SOM.md` §17.
   respiracao: 'respiracao',
   chama: 'chama',
+  // 04/11/2026: boss do Elemental Fusion e boss especial da Chuva de Almas. Por ora a faixa de combate existente; quando a
+  // `chefe-adrenalina` (Suno, pendente do dono) chegar, só esta linha muda para a faixa nova.
+  'chefe-minigame': 'combate',
   intro: 'parede', // 01/11/2026: a trilha da intro 'A Parede'; só o botão de som da intro entra aqui (nasce desligado)
 };
 
 /** Em combate a música desce o offset da política. O lobby do Torneio NÃO é luta. */
 export const SUPERFICIE_EM_COMBATE: Record<Superficie, boolean> = {
   casa: false, torneio: false, masmorra: true, arena: true, duelo: true, pesadelo: true,
-  'masmorra-mapa': false, evolucao: false, meditacao: false, intro: false, respiracao: false, chama: false, // exploração/cerimônia/calma: sem o degrau de combate
+  'masmorra-mapa': false, evolucao: false, meditacao: false, intro: false, respiracao: false, chama: false, 'chefe-minigame': true, // exploração/cerimônia/calma: sem o degrau de combate
 };
 
 /** Pura: a faixa que deve soar dada a superfície e a preferência única. `null` = silêncio. */

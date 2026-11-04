@@ -11,6 +11,10 @@ import { sm2Button } from './form/FormKit';
 import { GameRoot, GameHeader, GameVisor, VisorSprite, StatTag, phaseTitle, phaseLine } from './games/GameKit';
 import { BitsAmount } from './ui/BitsAmount';
 import { ResultScreen } from './games/ResultScreen';
+import { EnergyCost } from './ui/EnergyCost';
+import { essenceLedgerRows } from '../utils/resultEssences';
+import { essenceDropOfFoe, type EssenceDrop } from '../utils/essences';
+import { rosterEntryOfKey } from '../utils/enemyRoster';
 import { RankingPanel } from './RankingPanel';
 import { applyRiftLayer, riftBestThisMonth, RIFT_RANKING_FROM, RIFT_GAME_ID, type RiftMonthState } from '../utils/endlessRift';
 import { submitScore as submitRankingScore } from '../utils/rankings';
@@ -266,7 +270,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   /** Por que a descida acabou: HP zerado, energia acabou, o portão do Vínculo fechou, ou o teto de camadas do Lv. */
   const [endReason, setEndReason] = useState<'hp' | 'sealed' | 'energy' | 'deep' | 'daily'>('hp');
   /** O RESUMO da descida (REGISTRO §31): o que ela rendeu, contado aqui e mostrado no fim. */
-  const resumoRef = useRef({ layers: 0, enemies: 0, bits: 0, hearts: 0, glitchtama: 0, fragments: 0, energy: 0, recordFrom: 0, recordTo: 0 });
+  const resumoRef = useRef({ layers: 0, enemies: 0, bits: 0, hearts: 0, glitchtama: 0, fragments: 0, energy: 0, recordFrom: 0, recordTo: 0, essences: [] as EssenceDrop[] });
   const [resumo, setResumo] = useState(resumoRef.current);
   /** O marco do andar 5 já foi pago NESTA descida (idempotência: uma vez por descida). */
   const milestoneRef = useRef(false);
@@ -418,7 +422,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const startRun = () => {
     const now = Date.now();
     if (!podeDescer(hpState, now)) return;
-    resumoRef.current = { layers: 0, enemies: 0, bits: 0, hearts: 0, glitchtama: 0, fragments: 0, energy: 0, recordFrom: recorde, recordTo: recorde };
+    resumoRef.current = { layers: 0, enemies: 0, bits: 0, hearts: 0, glitchtama: 0, fragments: 0, energy: 0, recordFrom: recorde, recordTo: recorde, essences: [] };
     riftPagoRef.current.clear();
     recordeRef.current = recorde;
     if (!pagarCamada()) return; // a 1ª camada também custa energia; sem ela o botão nem acende
@@ -457,6 +461,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     onEnemyDefeated(e.stage);
     addPoints(e.points);
     resumoRef.current.enemies += 1;
+    { const r = rosterEntryOfKey(e.stage); const d = r ? essenceDropOfFoe(r.elements, r.stage) : undefined; if (d) resumoRef.current.essences = [...resumoRef.current.essences, d]; }
     if (ctx && rollSparkDrop()) { ctx.setGameState(prev => ({ ...prev, foodInventory: addOne(prev.foodInventory, SPARK_ITEM_EMOJI) })); noteDrop('spark', 1); }
     const caiuCoracao = onHeartDrop();
     if (caiuCoracao) { resumoRef.current.hearts += 1; noteDrop('heart', 1); }
@@ -672,7 +677,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     const { report, away, hp } = r;
     resumoRef.current = {
       layers: report.layers, enemies: report.enemies, bits: report.bits, hearts: report.hearts, glitchtama: report.glitchtama,
-      fragments: report.fragments, energy: report.energy, recordFrom: report.recordFrom, recordTo: report.recordTo,
+      fragments: report.fragments, energy: report.energy, recordFrom: report.recordFrom, recordTo: report.recordTo, essences: [],
     };
     setResumo({ ...resumoRef.current });
     recordeRef.current = Math.max(recordeRef.current, report.recordTo);
@@ -898,6 +903,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                 ...(resumo.hearts > 0 ? [{ key: 'hearts', kind: 'item' as const, itemKind: 'heart' as const, label: rewardItemLabel('heart', isPt), amount: resumo.hearts }] : []),
                 ...(resumo.glitchtama > 0 ? [{ key: 'glitchtama', kind: 'item' as const, itemKind: 'glitchtama' as const, label: isPt ? 'Glitchtama (Arquivos)' : 'Glitchtama (Files)', amount: resumo.glitchtama }] : []),
                 ...(resumo.fragments > 0 ? [{ key: 'fragments', kind: 'item' as const, itemKind: 'fragments' as const, label: rewardItemLabel('fragments', isPt), amount: resumo.fragments }] : []),
+                ...essenceLedgerRows(resumo.essences),
               ]}
               emptyLedgerLine={isPt ? 'Rodada leve, sem Bits desta vez.' : 'A light round, no Bits this time.'}
               petSrc={petSprite}
@@ -1050,6 +1056,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         <button type="button" onClick={startRun} disabled={espera > 0 || !temEnergia} style={{ ...sm2Button('primary', espera > 0 || !temEnergia), width: '100%', maxWidth: 320 }}>
           {/* Copy §4: fenda se DESCE; não se "entra" nem se "inicia run". */}
           {isPt ? 'Descer' : 'Go down'}
+          <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />
         </button>
         {/* Abaixo do piso: recuperação, não punição — sem culpa, sem coração, sem Bits. Verbo RECUPERAR (a bíblia veta "descansar" sobre a criatura). */}
         {espera > 0 && (

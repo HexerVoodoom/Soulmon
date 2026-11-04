@@ -9,7 +9,7 @@ import { PET_BACKGROUNDS, visibleBackground } from '../../utils/backgrounds';
 import { DECOR_SLOTS, STAGE_HEIGHT, decorRenderBox, slotBoxStyle, type SlotId } from '../../utils/petStage';
 import { DECOR_ART } from '../../utils/decorArt';
 import {
-  decorEqual, decorOptionsForSlot, editableSlots, ownedFittingCount, pickDecor, type DecorMap,
+  decorEqual, decorOptionsForSlot, editableSlots, ownedBackgroundOptions, ownedFittingCount, pickDecor, slotHoldsDrawnItem, type DecorMap,
 } from '../../utils/editHome';
 import type { Language } from '../../utils/i18n';
 
@@ -20,33 +20,40 @@ import type { Language } from '../../utils/i18n';
  *
  * Tudo é RASCUNHO local: `onSave` recebe o mapa final (o App grava em `equippedDecor`, o mesmo campo da loja) e
  * `onClose` descarta. O pet fica de fora de propósito — a tela é sobre o cenário, e o pet taparia o centro do chão.
- * O cenário NÃO se troca aqui (fora do pedido): ele vem do que está equipado na Home.
+ * O cenário também é rascunho: um controle num canto livre do retângulo abre a lista dos cenários que a pessoa tem.
+ * Todo espaço que o cenário oferece leva marcador, com ou sem peça (peça que não é desenhada conta como livre).
  */
 export interface EditHomeProps {
   language: Language;
   ownedFurniture: string[];
   equippedDecor: DecorMap;
   equippedBackground: string | null;
-  onSave: (decor: DecorMap) => void;
+  /** Cenários que a pessoa tem (o equipado entra sempre). */
+  ownedBackgrounds?: string[];
+  onSave: (decor: DecorMap, background: string | null) => void;
   onClose: () => void;
   /** Estado vazio: leva à loja de Decoração. */
   onOpenShop?: () => void;
 }
 
-const DOT = 14;
+const DOT = 20;
 const HIT = 44;
 
-export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equippedBackground: rawBackground, onSave, onClose, onOpenShop }: EditHomeProps) {
+export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equippedBackground: rawBackground, ownedBackgrounds = [], onSave, onClose, onOpenShop }: EditHomeProps) {
   const isPt = language === 'pt-BR';
   // Mesma leitura da Home: cenário aposentado não desenha (o save nunca é tocado).
-  const equippedBackground = visibleBackground(rawBackground);
+  const savedBackground = visibleBackground(rawBackground);
+  const [bgDraft, setBgDraft] = useState<string | null>(savedBackground);
+  const [pickingBg, setPickingBg] = useState(false);
+  const equippedBackground = bgDraft;
   const dialogRef = useDialogA11y<HTMLDivElement>(true, onClose);
   const [draft, setDraft] = useState<DecorMap>(() => ({ ...equippedDecor }));
   const [picking, setPicking] = useState<SlotId | null>(null);
 
   const bg = equippedBackground ? PET_BACKGROUNDS[equippedBackground] : null;
   const slots = editableSlots(equippedBackground);
-  const dirty = !decorEqual(draft, equippedDecor);
+  const dirty = !decorEqual(draft, equippedDecor) || bgDraft !== savedBackground;
+  const bgOptions = ownedBackgroundOptions(ownedBackgrounds, savedBackground);
   const nothingOwned = ownedFittingCount(equippedBackground, ownedFurniture) === 0 && Object.keys(draft).length === 0;
   const slotName = (s: SlotId) => (isPt ? DECOR_SLOTS[s].namePt : DECOR_SLOTS[s].nameEn);
   const options = picking ? decorOptionsForSlot(picking, equippedBackground, ownedFurniture) : [];
@@ -87,10 +94,30 @@ export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equipp
             imageRendering: 'pixelated',
           }}
         >
-          <PetStageDecor equippedDecor={draft} equippedBackground={equippedBackground} trophies={[]} language={language} />
+          {/* Brilho branco em volta dos objetos: mostra o que dá para tocar (dono, 04/11/2026). */}
+          <div data-edit-glow style={{ position: 'absolute', inset: 0, filter: 'drop-shadow(0 0 2px #fff) drop-shadow(0 0 6px #fff)' }}>
+            <PetStageDecor equippedDecor={draft} equippedBackground={equippedBackground} trophies={[]} language={language} />
+          </div>
+          <button
+            type="button"
+            data-edit-bg-open
+            aria-label={isPt ? 'Trocar cenário' : 'Change scene'}
+            onClick={() => setPickingBg(true)}
+            style={{
+              position: 'absolute', left: 8, top: 8, zIndex: 4, width: HIT, height: HIT, padding: 0, cursor: 'pointer',
+              background: 'none', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            <span aria-hidden="true" style={{
+              width: 28, height: 28, borderRadius: 8, opacity: 0.85, boxSizing: 'border-box',
+              border: '2px solid #fff', boxShadow: '0 0 0 3px rgba(255,255,255,.18)',
+              background: bg ? `${bg.css} center bottom / cover no-repeat, ${bg.baseColor ?? 'var(--sm2-surface)'}` : 'var(--sm2-surface)',
+              imageRendering: 'pixelated',
+            }} />
+          </button>
           {slots.map(slotId => {
             const slot = DECOR_SLOTS[slotId];
-            const filled = !!draft[slotId];
+            const filled = slotHoldsDrawnItem(slotId, draft, equippedBackground);
             const box = slotBoxStyle(slot);
             const rb = decorRenderBox(slot);
             // Centro visual da caixa do espaço (a caixa já vem ancorada ao chão/parede).
@@ -112,12 +139,13 @@ export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equipp
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                 }}
               >
-                {!filled && (
-                  <span aria-hidden="true" data-edit-dot style={{
-                    width: DOT, height: DOT, borderRadius: '50%', background: '#fff', opacity: 0.5,
-                    boxShadow: '0 0 0 3px rgba(255,255,255,.18)',
-                  }} />
-                )}
+                <span aria-hidden="true" data-edit-dot style={{
+                  width: DOT, height: DOT, borderRadius: '50%', background: '#fff', opacity: 0.5,
+                  // alvo: bolinha branca, um vão vazio e um anel só de contorno em volta (dono, 04/11/2026).
+                  outline: '2px solid #fff', outlineOffset: 5,
+                  // Espaço com peça: o mesmo marcador, no centro da caixa, sem roubar o toque da peça.
+                  ...(filled ? { position: 'absolute' as const, left: '50%', top: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' as const } : null),
+                }} />
               </button>
             );
           })}
@@ -145,10 +173,33 @@ export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equipp
         <button type="button" data-edit-home-cancel onClick={onClose} style={{ ...sm2Button('outline'), flex: 1 }}>
           {isPt ? 'Cancelar' : 'Cancel'}
         </button>
-        <button type="button" data-edit-home-save onClick={() => onSave(draft)} disabled={!dirty} style={{ ...sm2Button('primary', !dirty), flex: 1 }}>
+        <button type="button" data-edit-home-save onClick={() => onSave(draft, bgDraft)} disabled={!dirty} style={{ ...sm2Button('primary', !dirty), flex: 1 }}>
           {isPt ? 'Salvar' : 'Save'}
         </button>
       </div>
+
+      <ModalSheet open={pickingBg} title={isPt ? 'Cenário' : 'Scene'} onClose={() => setPickingBg(false)} language={language} sobreTelas>
+        <ul data-edit-bg-options style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {bgOptions.map(id => {
+            const b = PET_BACKGROUNDS[id];
+            return (
+              <li key={id}>
+                <OptionRow
+                  dataKey={id}
+                  attr="data-edit-bg-option"
+                  selected={bgDraft === id}
+                  label={isPt ? b.namePt : b.nameEn}
+                  onClick={() => { setBgDraft(id); setPickingBg(false); }}
+                  leading={<span aria-hidden style={{
+                    width: 40, height: 40, borderRadius: 8, boxSizing: 'border-box', border: '1px solid var(--sm2-line)',
+                    background: `${b.css} center bottom / cover no-repeat, ${b.baseColor ?? 'var(--sm2-surface)'}`, imageRendering: 'pixelated',
+                  }} />}
+                />
+              </li>
+            );
+          })}
+        </ul>
+      </ModalSheet>
 
       <ModalSheet open={picking !== null} title={picking ? slotName(picking) : ''} onClose={() => setPicking(null)} language={language} sobreTelas>
         {picking && (
@@ -195,13 +246,13 @@ export function EditHomeScreen({ language, ownedFurniture, equippedDecor, equipp
   );
 }
 
-function OptionRow({ selected, label, leading, onClick, dataKey }: {
-  selected: boolean; label: string; leading: ReactNode; onClick: () => void; dataKey: string;
+function OptionRow({ selected, label, leading, onClick, dataKey, attr = 'data-edit-option' }: {
+  selected: boolean; label: string; leading: ReactNode; onClick: () => void; dataKey: string; attr?: string;
 }) {
   return (
     <button
       type="button"
-      data-edit-option={dataKey}
+      {...{ [attr]: dataKey }}
       onClick={onClick}
       aria-pressed={selected}
       style={{

@@ -531,6 +531,16 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Dono de:** o ícone de cada prédio na pílula do mapa (03/11/2026, dono: a placa de madeira saiu; ficou pílula escura com ícone + nome). Só nomes do subset do `Icon`.
 **Exports:** `LOT_ICON` (`area:lote` → nome do ícone) · `lotIconName(areaId, lotId)` (fallback `home`).
 **Quem chama:** `components/nav/AreaScene.tsx`.
+### `src/utils/resultEssences.ts`
+**Dono de:** as essências na tela de resultado (04/11/2026, dono): junta os drops da partida por id e os entrega como linhas `kind: 'essence'` do livro "Ganhou" do `ResultScreen`. Puro; não credita nada (quem credita é `applyEssences`).
+**Exports:** `tallyEssences(drops)` · `essenceLedgerRows(drops)` · `essenceIconSrc(id)` · `essenceName` (reexport).
+**Quem chama:** `ArenaGame.tsx`, `Match3Game.tsx`, `DungeonGame.tsx`, `TournamentPage.tsx`, `guild/FeiraEventoSheet.tsx`, `games/ResultScreen.tsx`.
+**Régua:** `src/utils/resultEssences.test.ts`.
+### `src/utils/lotMarks.ts`
+**Dono de:** as marcas sobre os prédios do mapa (04/11/2026, dono): `lotMissionMarks` leva o "!"/"?" a TODO prédio com missão (Passeio, Torneio pela semana, Conquistas, missões do dia por prédio, Caderno; "?" vence "!") e `lotCoins` liga a MOEDA de recurso (raio da energia amarelo) nos prédios com recurso disponível agora. Puro, `nowMs` por parâmetro.
+**Exports:** `DAILY_EVENT_BUILDING` · `lotMissionMarks(input)` · `LotCoinId` · `LOT_COIN_RULES` (lista tipada; hoje só o Refúgio: energia do dia não tomada e energia abaixo do máximo) · `lotCoins(state, nowMs)`.
+**Quem chama:** `App.tsx` (props `buildingMarks`/`buildingCoins` do `AreaView`).
+**Régua:** `src/utils/lotMarks.test.ts`, `src/components/nav/AreaView.marcasAcima.render.test.tsx`.
 ### `src/utils/resultExtras.ts`
 **Dono de:** os extras da tela de resultado (03/11/2026, dono): a barra de Bits do dia (só com o teto em 100%) e a linha da missão do dia do jogo que acabou. Puro; o `App` monta e entrega pelo contexto.
 **Exports:** `buildResultExtras(state, day, bondLevel, isPt)` · tipos `ResultExtras`, `ResultMission`.
@@ -4066,6 +4076,11 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 - `function temaSpriteOf(e: RosterEntry): string | undefined` — o sprite de qualquer entrada do roster: `TEMA_ART[artFile]` para `kind: 'api'`, senão `rosterSpriteOf(e)`, senão `placeholderOf(e)`.
 **Chamado por:** `src/components/guild/GroveRaidFight.tsx`, `src/components/guild/PlantioVisor.tsx`, `src/components/SoulBarrage.tsx`.
 
+### `src/utils/bossSplash.ts`
+**Dono de:** quais monstros aparecem no splash do boss dos minigames: o chefe (tier `chefe` da Feira, sem o Arauto) do Fusion sorteado pela semente, e o Arauto do Fim na Chuva de Almas; resolve o retrato 9:16 opcional em `assets/soulmon/boss/<id>.webp`.
+**Exports:** `fusionBossMonster`, `barrageSpecialMonster`, `FUSION_BOSS_POOL`, `BOSS_PORTRAIT`, `SPECIAL_BARRAGE_BOSS_ID`, `SplashMonster`.
+**Chamado por:** `src/components/Match3Game.tsx`, `src/components/SoulBarrage.tsx`
+
 ### `src/utils/soulBarrage.ts`
 **Dono de:** a lógica pura do Soul Barrage (M9), bullet hell vertical do Salão de Jogos: o Soulmon atira sozinho, inimigos do `enemyRoster` descem e atiram, tiro tira 1 vida, a fase sobe a cada `PHASE_SECONDS`. `dt` e `rng` por parâmetro. Pontos = abates; Bits por `barrageBits(score)` pelo funil de minigames (teto diário aplicado fora).
 **Exports:** `FIELD_W`, `FIELD_H`, `PLAYER_R`, `PLAYER_SIZE`, `PLAYER_Y`, `PLAYER_SPEED`, `START_LIVES`, `INVULN_SECONDS`, `barrageBits` e o estado/passo da simulação.
@@ -4178,3 +4193,7 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 **Exports:** `tx(par, isPt)` · `HEX_SLOT_COPY` (nome, porta, efeito e linha de cada slot) · `hexName(value, isPt)` (`HEX de X` / `X HEX`) · `HEX_FAMILY_COPY` · `HEX_STRIKE_COPY` · `hexRefusalText(r, isPt, el?)` (o motivo que desabilita "Forjar", em tom de convite: onde se consegue o que falta) · `HEX_UI` (rótulos da tela, incluindo as mensagens de forja offline/falha/sem saldo — "nada foi cobrado"). Regras e números vêm de `hexsmith.ts`; nada de literal de regra aqui.
 **Chamado por:** `src/components/hex/HexsmithSheet.tsx`.
 
+### `src/utils/soulProfile/ficha/especialNome.ts`
+**Dono de:** aplicar o nome do especial escolhido pelo jogador POR CIMA da ficha, em leitura (REGISTRO §222): o cache `soulmonSkills` do save não é reescrito; sem nome, devolve a própria ficha.
+**Exports:** `comNomeDoEspecial(skills, nome)`.
+**Chamado por:** `src/App.tsx` (as telas de luta e o Perfil recebem a ficha já com o nome).

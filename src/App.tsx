@@ -27,6 +27,7 @@ import { questMarks, questMarkLabel } from './utils/questMarks';
 import { markMindGameTutorial } from './utils/mente/mindTutorials';
 import { applyFeat, emitFeat, subscribeFeats } from './utils/feats';
 import { bumpDaily, claimDaily, claimFirst, dailyForDay, dailyMissionsMark, firstTimesMark, markFirst, markFirstForEvent, type DailyEvent } from './utils/dailyMissions';
+import { lotCoins, lotMissionMarks } from './utils/lotMarks';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
@@ -100,6 +101,7 @@ import { hashString, creatureFormId, ELEMENT_INFO } from './utils/oracle/base';
 import type { OracleInput, OracleResult, ElementId } from './utils/oracle';
 import type { Manifestacao } from './utils/soulProfile/ficha/manifestacaoSave';
 import { skillsTemFamilia, fichaStageOf } from './utils/soulProfile/ficha/stageSkillsFor';
+import { comNomeDoEspecial } from './utils/soulProfile/ficha/especialNome';
 import { registrarEstagio, completarEstagios, ESTAGIOS_COM_JANELA } from './utils/fichaJornada';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
 
@@ -4938,8 +4940,8 @@ export default function App() {
   }, []);
 
   /** Editar Home: grava o rascunho inteiro de uma vez (mesmo campo que a loja usa). */
-  const handleSaveHomeDecor = useCallback((decor: Partial<Record<SlotId, string>>) => {
-    setGameState(prev => ({ ...prev, equippedDecor: { ...decor } }));
+  const handleSaveHomeDecor = useCallback((decor: Partial<Record<SlotId, string>>, background: string | null) => {
+    setGameState(prev => ({ ...prev, equippedDecor: { ...decor }, equippedBackground: background }));
   }, []);
 
   // 💎 Créditos (monetização) — TODA operação de saldo passa pelo SERVIDOR
@@ -5340,6 +5342,27 @@ export default function App() {
     }).catch(() => { /* perfil corrompido: a masmorra e a voz seguem no padrão */ });
     return () => { vivo = false; };
   }, [manifestacaoPronta, setGameState]);
+  /* Causa do "Especial" genérico em combate: o cache `soulmonSkills` só era gravado ao ABRIR a página do Pet (e para
+     os iniciais). Quem tem perfil do Oráculo mas entrou direto numa luta (aparelho novo, save restaurado, cache
+     antigo sem família) lutava com `skills` indefinido e via "ESPECIAL!". Mesmo padrão da manifestação: no boot,
+     com perfil local, monta a ficha e grava o par de skills; import dinâmico, nunca sobrescreve cache já completo. */
+  const jornadaDasSkills = gameState.fichaJornada;
+  useEffect(() => {
+    if (starterDoSave || starterSkillsProntas) return;
+    const saved = readJson<(OracleInput & { seed: number }) | null>(STORAGE_KEYS.SOULMON_PROFILE, null);
+    if (!saved?.soulProfile) return;
+    let vivo = true;
+    Promise.all([
+      import('./utils/soulProfile/ficha/fromInput'),
+      import('./utils/soulProfile/identity'),
+    ]).then(([{ buildFichaESkills }, { identityKey }]) => {
+      if (!vivo) return;
+      handleSkillsComputed(buildFichaESkills(saved, identityKey(saved), jornadaDasSkills).stageSkills as NonNullable<GameState['soulmonSkills']>);
+    }).catch(() => { /* perfil corrompido: segue o selo padrão */ });
+    return () => { vivo = false; };
+  }, [starterDoSave, starterSkillsProntas, jornadaDasSkills, handleSkillsComputed]);
+  // O nome do especial escolhido pelo jogador, por cima da ficha (só leitura: o cache do save não muda).
+  const skillsDoJogador = useMemo(() => comNomeDoEspecial(gameState.soulmonSkills, gameState.especialNome), [gameState.soulmonSkills, gameState.especialNome]);
   const manifestacaoAtual = gameState.soulmonManifestacao?.[getStageLevel(gameState.evolutionStage) as keyof Manifestacao];
 
   /* PR15b: depois de uma evolução registrada, os caches da ficha (skills, classes, companheiro, manifestação) são
@@ -7645,11 +7668,14 @@ export default function App() {
                   benevolencePoints: gameState.benevolencePoints,
                   degeneratedByHP: gameState.degeneratedByHP,
                   petPassive: gameState.petPassive,
-                  skills: gameState.soulmonSkills,
+                  skills: skillsDoJogador,
                   petElement: petElementOf(gameState),
                   equipment: gameState.equipment,
                   forge: gameState.forge,
                 }}
+                especialNome={gameState.especialNome ?? ''}
+                especialNomeAt={gameState.especialNomeAt}
+                onSaveEspecialNome={nome => setGameState(prev => (prev.especialNome === nome ? prev : { ...prev, especialNome: nome }))}
               />
             </Suspense>
           )}
@@ -8031,7 +8057,12 @@ export default function App() {
                 demo={demo}
                 bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
                 onVisitBuilding={visitarPredio}
-                buildingMarks={buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0))}
+                buildingMarks={lotMissionMarks({
+                  buildings: buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
+                  passeio: marcasDeMissao.passeio, weekly: marcasDeMissao.torneio, conquistas: marcasDeMissao.conquistas,
+                  dailyMissions: gameState.dailyMissions, day: playerDayKey(new Date(), gameState.playerDayTz), bondLevel: bondLevelFor(gameState.totalXP ?? 0),
+                })}
+                buildingCoins={lotCoins(gameState, Date.now())}
                 onLayerChange={setAreaLayerOpen}
                 onGoToMap={() => goTo('map')}
                 language={language}
@@ -8085,7 +8116,7 @@ export default function App() {
                 demoCharacterId={petLine}
                 petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
                 playerLevel={soulLevel(gameState)}
-                skills={gameState.soulmonSkills}
+                skills={skillsDoJogador}
                 profissao={manifestacaoAtual?.profissao}
                 profissaoNome={manifestacaoAtual?.profissaoNome}
                 petElement={petElementOf(gameState)}
@@ -8904,6 +8935,7 @@ export default function App() {
                   ownedFurniture: gameState.ownedFurniture ?? [],
                   equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
                   equippedBackground: gameState.equippedBackground ?? null,
+                  ownedBackgrounds: gameState.ownedBackgrounds ?? [],
                   onSave: handleSaveHomeDecor,
                   onOpenShop: () => { setPendingSheet({ area: 'mercado', lot: 'background' }); goTo(areaView('mercado')); },
                 },
@@ -9716,7 +9748,7 @@ export default function App() {
           petStage={gameState.evolutionStage}
           demoCharacterId={petLine}
           petElement={petElementOf(gameState)}
-          skills={gameState.soulmonSkills}
+          skills={skillsDoJogador}
           soul={gameState}
           profissao={manifestacaoAtual?.profissao}
           language={language}
