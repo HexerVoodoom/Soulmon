@@ -21,6 +21,7 @@ const COPY = {
   'boss.busy': ['Going…', 'Indo…'],
   'boss.shared': ['The whole clan wears it down together. It never heals.', 'O clã inteiro vai desgastando junto. Ele nunca se recupera.'],
   'boss.today': ['Your turn today is done. It comes back tomorrow.', 'A sua vez de hoje já foi. Ela volta amanhã.'],
+  'boss.sameDay': ['Win today: by tomorrow it escapes.', 'Vença hoje: amanhã ele escapa.'],
   'boss.gone': ['The way is open. Nothing to fight right now.', 'O caminho está aberto. Nada para enfrentar agora.'],
   'boss.offline': ['No connection right now. Nothing was spent, try again in a moment.', 'Sem conexão agora. Nada foi gasto, tente de novo daqui a pouco.'],
   'boss.error': ['Something got stuck. Nothing was spent, try again in a moment.', 'Algo travou. Nada foi gasto, tente de novo daqui a pouco.'],

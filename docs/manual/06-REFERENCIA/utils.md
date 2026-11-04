@@ -878,6 +878,18 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `FeiraEventoSheet.tsx`, `FeiraTrailPlay.tsx`, `FeiraMisterio.tsx`.
 **Régua:** `FeiraEventoSheet.render.test.tsx` (bloco `copy`).
 
+### `src/utils/feiraDesafio.ts`
+**Dono de:** o desafio do DIA da Feira (dono, 04/11/2026): a volta da Missão grava `{ day, k, done }` em `STORAGE_KEYS.FEIRA_DESAFIO` (aparelho, nunca no save); `feiraDesafioStatus` diz `open`/`done` no mesmo dia do jogador e `escaped` em outro dia sem luta ("O inimigo apareceu, mas escapou").
+**Exports:** `feiraDesafioStatus`, `sanitizeFeiraDesafio`, `readFeiraDesafio`, `recordFeiraDesafio`, `markFeiraDesafioDone`, `FeiraDesafio`, `FeiraDesafioStatus`.
+**Chamado por:** `App.tsx` (volta da Missão), `GuildSheet.tsx` (`SalaFeira`), `FeiraEventoSheet.tsx` (lutou/cumpriu).
+**Régua:** `src/utils/feiraDesafio.test.ts`, `GuildSheet.feira.chefe.render.test.tsx`.
+
+### `src/utils/feiraNotificacao.ts`
+**Dono de:** o aviso local "Seu Soulmon voltou da investigação na feira" na hora da volta da Missão: APK = `SoulmonAlarm` (hora do dia), web = timer com permissão já concedida; só com o interruptor de notificações ligado; cancelado quando a volta é registrada.
+**Exports:** `scheduleFeiraVolta`, `cancelFeiraVolta`, `feiraVoltaCopy`, `hhmmOf`, `FEIRA_VOLTA_TAG`, `FeiraVoltaDeps`.
+**Chamado por:** `App.tsx` (efeito da Missão).
+**Régua:** `src/utils/feiraNotificacao.test.ts`.
+
 ### `src/utils/feiraCredit.ts`
 **Dono de:** o crédito da Feira no aparelho UMA vez por recibo (`creditFeiraOnce`): usa a memória de recibos de `guildClaimLocal` (a mesma do resgate semanal); `apply` roda fora de updater e o recibo só é gravado depois dele (se `apply` lançar, tenta de novo). Reabrir a folha ou receber o 409 `already claimed` (mesmo recibo) não credita de novo.
 **Exports:** `creditFeiraOnce(credit, apply)`, `FeiraCredit`.

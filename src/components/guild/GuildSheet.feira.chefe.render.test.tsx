@@ -104,3 +104,37 @@ describe('sala da Feira × mistério', () => {
     expect((document.querySelector('[data-feira-misterio-abrir]') as HTMLButtonElement).disabled).toBe(false);
   });
 });
+
+describe('sala da Feira × desafio do dia (dono, 04/11/2026)', () => {
+  const boss = { state: 'boss', level: 3, bossId: 'arauto-do-fim', bossHpPct: 62, hitters: [] };
+  const montarMissao = async () => {
+    const r = renderWithCss(<GuildSheet saveId="save-12345678" language="pt-BR" metaDoDiaCumprida room="feira" feira={{ me, onCredit: vi.fn() }} missao={{ state: null, onSend: vi.fn() }} />);
+    await waitFor(() => expect(screen.queryByText(GUILD_COPY['guild.salao.carregando'][0])).toBeNull());
+    return r;
+  };
+  it('o Soulmon voltou HOJE com o inimigo: o desafio aparece', async () => {
+    const { playerDayKey } = await import('../../utils/playerDay');
+    const { recordFeiraDesafio } = await import('../../utils/feiraDesafio');
+    recordFeiraDesafio(playerDayKey(new Date(), undefined), 1);
+    vi.mocked(getGuild).mockResolvedValue(vista(boss));
+    await montarMissao();
+    await waitFor(() => expect(sala().querySelector('[data-feira-misterio-abrir]')).not.toBeNull());
+    expect(sala().querySelector('[data-feira-escapou]')).toBeNull();
+  });
+  it('voltou ONTEM e não lutou: "O inimigo apareceu, mas escapou" e a sala pede nova investigação', async () => {
+    const { recordFeiraDesafio } = await import('../../utils/feiraDesafio');
+    recordFeiraDesafio('1999-01-01', 1);
+    vi.mocked(getGuild).mockResolvedValue(vista(boss));
+    await montarMissao();
+    await waitFor(() => expect(sala().querySelector('[data-feira-escapou]')).not.toBeNull());
+    expect(sala().querySelector('[data-feira-escapou]')!.textContent).toContain('O inimigo apareceu, mas escapou');
+    expect(sala().querySelector('[data-feira-misterio-abrir]')).toBeNull();
+    expect(sala().querySelector('[data-missao-mandar]')).not.toBeNull();
+  });
+  it('sem ter mandado investigar hoje: nada de inimigo, só "Mandar investigar"', async () => {
+    vi.mocked(getGuild).mockResolvedValue(vista(boss));
+    await montarMissao();
+    await waitFor(() => expect(sala().querySelector('[data-missao-mandar]')).not.toBeNull());
+    expect(sala().querySelector('[data-feira-misterio-abrir]')).toBeNull();
+  });
+});

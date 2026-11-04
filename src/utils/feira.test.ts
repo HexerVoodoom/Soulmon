@@ -207,3 +207,18 @@ describe('crédito UMA vez por recibo', () => {
     expect(feiraShownKey(e, '2026-10-29')).not.toBe(feiraShownKey(e, '2026-10-28'));
   });
 });
+
+describe('mapFeiraLog — a energia do especial (reconstruída dos casts)', async () => {
+  const { mapFeiraLog, feiraEnergyAt } = await import('./feira');
+  it('sobe até cheia no especial e esvazia nele', () => {
+    const ev = mapFeiraLog([{ k: 'a', t: 2, s: 0, f: 0.1 }, { k: 'c', t: 4, s: 0, f: 0 }, { k: 'a', t: 4, s: 0, f: 0.2 }, { k: 'a', t: 6, s: 0, f: 0.1 }]);
+    expect(ev[0].energy[0]).toBeCloseTo(50);
+    expect(ev[1].energy[0]).toBe(0);
+    expect(ev[2].energy[0]).toBe(0);
+    expect(ev[3].energy[0]).toBeCloseTo(4);
+  });
+  it('sem próximo especial: ritmo base, teto 100', () => {
+    expect(feiraEnergyAt(0, null, 10)).toBe(20);
+    expect(feiraEnergyAt(0, null, 999)).toBe(100);
+  });
+});

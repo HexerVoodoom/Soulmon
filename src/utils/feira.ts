@@ -113,12 +113,33 @@ export function sanitizeFeiraAttack(raw: unknown): FeiraAttack | null {
  * O registro do servidor no formato que a `BossFightScreen` toca (`FightEvent`). Só apresentação: o dano já está fechado
  * no servidor. O HP do SEU bicho desce com os golpes do lado 1; o do chefe é só informativo (a barra do clã vem de `poolPct*`).
  */
+/** Ritmo de energia (pontos/s) depois do último especial, quando não há outro para mirar — o `ENERGY.perSecond` do núcleo. */
+const FEIRA_ENERGY_IDLE_PER_S = 2;
+
+/**
+ * A ENERGIA de exibição (0..`ENERGY_TRIGGER`=100) no instante `t` (dono, 04/11/2026: a luta da Feira mostra a barra de
+ * especial como a Arena/Duelo). O registro do servidor não traz energia, então ela é RECONSTRUÍDA a partir dos `cast`:
+ * sobe de 0 (`prev` = início ou último especial já soltado) até cheia exatamente no próximo especial (`next`); sem
+ * próximo, sobe no ritmo base. Só apresentação.
+ */
+export function feiraEnergyAt(prev: number, next: number | null, t: number): number {
+  if (next === null) return Math.min(100, Math.max(0, (t - prev) * FEIRA_ENERGY_IDLE_PER_S));
+  const span = next - prev;
+  return span <= 0 ? 100 : Math.min(100, Math.max(0, ((t - prev) / span) * 100));
+}
+
 export function mapFeiraLog(log: readonly FeiraLogEntry[]): FightEvent[] {
   const ordered = [...log].sort((x, y) => x.t - y.t);
   let me = 1;
   let foe = 1;
+  const casts: [number[], number[]] = [[], []];
+  for (const e of ordered) if (e.k === 'c') casts[e.s].push(e.t);
+  const used = [0, 0];
+  const prev = [0, 0];
+  const energyOf = (side: 0 | 1, t: number) => feiraEnergyAt(prev[side], casts[side][used[side]] ?? null, t);
   const out: FightEvent[] = [];
   for (const e of ordered) {
+    if (e.k === 'c') { prev[e.s] = e.t; used[e.s]++; } // o especial SOLTOU: a barra dele esvazia aqui
     const hit = e.k === 'a' || e.k === 't';
     if (hit && e.s === 1) me = Math.max(0, me - e.f);
     if (hit && e.s === 0) foe = Math.max(0, foe - e.f);
@@ -128,7 +149,7 @@ export function mapFeiraLog(log: readonly FeiraLogEntry[]): FightEvent[] {
       side: e.s,
       frac: hit ? e.f : 0,
       hp: [me, foe],
-      energy: [0, 0],
+      energy: [energyOf(0, e.t), energyOf(1, e.t)],
     });
   }
   return out;

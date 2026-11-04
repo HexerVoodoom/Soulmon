@@ -42,10 +42,10 @@ export function ArenaCuraModal({ isPt, antes, depois, pontos, scene, rodada, tot
         style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, width: '100%', maxWidth: 320, padding: '20px 18px 18px', borderRadius: 16,
           background: 'linear-gradient(180deg, color-mix(in srgb, var(--sm2-surface) 92%, #3fd2d9), var(--sm2-surface))',
           border: '1px solid color-mix(in srgb, var(--sm2-line) 50%, #3fd2d9)', boxShadow: `${SM2_SHADOW_CARD}, 0 0 28px rgba(63,210,217,.18)`, animation: 'arena-cura-in .35s ease-out both' }}>
-        <p style={{ margin: 0, fontSize: 12, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--sm2-ink-2, var(--sm2-ink))', opacity: .75 }}>
+        <p style={{ margin: 0, fontSize: 'var(--sm2-text-xs)', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--sm2-ink-2, var(--sm2-ink))', opacity: .75 }}>
           {isPt ? `Rodada ${rodada} de ${totalRodadas} vencida` : `Round ${rodada} of ${totalRodadas} cleared`}
         </p>
-        <p id="arena-cura-titulo" style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 700, fontSize: 22, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--sm2-ink)', textAlign: 'center' }}>
+        <p id="arena-cura-titulo" style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 700, fontSize: 'var(--sm2-text-xl)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--sm2-ink)', textAlign: 'center' }}>
           {isPt ? 'Fôlego recuperado' : 'Second wind'}
         </p>
         <div role="img" aria-label={isPt ? `Vida em ${Math.round(depois * 100)}%` : `Health at ${Math.round(depois * 100)}%`} data-arena-cura-coracoes
@@ -54,22 +54,22 @@ export function ArenaCuraModal({ isPt, antes, depois, pontos, scene, rodada, tot
             const f = fill(k);
             const ganhou = cheio && fill(k) > Math.max(0, Math.min(1, antes * HEARTS - k)) + 1e-6;
             return (
-              <span key={k} data-heart-fill={f.toFixed(2)} style={{ position: 'relative', width: 44, height: 44, lineHeight: 0,
+              <span key={k} data-heart-fill={f.toFixed(2)} style={{ position: 'relative', width: 32, height: 32, lineHeight: 0,
                 animation: ganhou ? `arena-cura-pulse .45s ease-out ${0.9 + k * 0.12}s both` : undefined }}>
-                <PixelIcon name="hp" size={44} style={{ position: 'absolute', inset: 0, filter: 'grayscale(1) brightness(.32)' }} />
+                <PixelIcon name="hp" size={32} style={{ position: 'absolute', inset: 0, filter: 'grayscale(1) brightness(.32)' }} />
                 <span style={{ position: 'absolute', inset: 0, clipPath: `inset(${(1 - f) * 100}% 0 0 0)`, transition: `clip-path .9s cubic-bezier(.3,.7,.2,1) ${k * 0.12}s` }}>
-                  <PixelIcon name="hp" size={44} />
+                  <PixelIcon name="hp" size={32} />
                 </span>
               </span>
             );
           })}
         </div>
-        <p className="sm2-num" style={{ margin: 0, fontSize: 15, color: 'var(--sm2-ink)', textAlign: 'center' }}>
-          {isPt ? <>Você recuperou <b style={{ color: '#ff6b7a' }}>+{pontos}</b> de vida</> : <>You recovered <b style={{ color: '#ff6b7a' }}>+{pontos}</b> health</>}
+        <p className="sm2-num" style={{ margin: 0, fontSize: 'var(--sm2-text-sm)', color: 'var(--sm2-ink)', textAlign: 'center' }}>
+          {isPt ? 'Você recuperou ' : 'You recovered '}<b style={{ color: '#ff6b7a' }}>+{pontos}</b>{isPt ? ' de vida' : ' health'}
         </p>
         <button type="button" data-arena-proxima onClick={onNext} aria-label={isPt ? 'Pronto pro combate' : 'Ready to fight'}
           style={{ marginTop: 4, width: '100%', minHeight: 52, border: 0, borderRadius: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            background: 'linear-gradient(180deg, #4fe3ea, #1f9aa3)', color: '#04161a', fontFamily: 'var(--sm2-font-display)', fontWeight: 800, fontSize: 17, letterSpacing: '.1em', textTransform: 'uppercase',
+            background: 'linear-gradient(180deg, #4fe3ea, #1f9aa3)', color: '#04161a', fontFamily: 'var(--sm2-font-display)', fontWeight: 800, fontSize: 'var(--sm2-text-md)', letterSpacing: '.1em', textTransform: 'uppercase',
             boxShadow: 'inset 0 -3px 0 rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.45)', animation: 'arena-cura-cta 1.6s ease-in-out 1.2s infinite' }}>
           <span aria-hidden="true">⚔</span>
           {isPt ? 'Pronto pro combate' : 'Ready to fight'}

@@ -762,3 +762,9 @@ NPC e prédio novos da Forja: a Hexsmith reescreve o "código hex" do Soulmon (e
 | `slot-coroa.png` … `slot-luvas.png` | ícone de cada tipo de HEX (coroa de shards, amuleto hex, garra com circuito, couraça com runa, manoplas), pixel art com contorno escuro, sem box |
 | `forjar.png` | martelo de cristal batendo num chip hex com faíscas |
 Prompts completos no transcrito da sessão de 01/11; o ChatGPT desktop já tem uma folha de 6 ícones gerada (conversa mais recente), falta baixar e fatiar por alfa.
+
+**Feira — cenário PRÓPRIO da luta (04/11/2026, dono: "o combate da feira precisa do seu próprio mapa"):** falta a arte.
+| Arquivo-alvo | O que é |
+|---|---|
+| `src/assets/soulmon/bg/feira-batalha.png` | fundo VERTICAL 9:16 (360×640 ou múltiplo) da luta contra o chefe da Feira: chão de praça da feira à noite, tendas e bandeirolas ao fundo, lanternas, névoa turquesa do mistério; topo livre para a barra do chefe, centro-baixo livre para o Soulmon; sem plataforma, sem personagem, sem texto (regra dos cenários de combate) |
+O slot já está ligado (`FEIRA_SCENE` em `src/utils/dungeonScenes.ts`, glob opcional): basta salvar o arquivo com esse nome. Até lá usa `bg/visor-feira.png` (horizontal, recortado em `cover`).
