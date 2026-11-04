@@ -24,23 +24,23 @@ const render = (over: Partial<Parameters<typeof LibraryPage>[0]> = {}, language:
 describe('LibraryPage — abas do Hall', () => {
   beforeEach(() => { vi.useFakeTimers({ shouldAdvanceTime: true }); });
 
-  it('mostra as 3 abas (EN e PT), a primeira ativa, e Encontrados segue com a busca', async () => {
+  it('mostra as 3 abas (EN e PT), a primeira ativa, e a primeira aba segue com a busca', async () => {
     render();
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
     const tabs = screen.getAllByRole('tab');
-    expect(tabs.map(t => t.textContent)).toEqual(['Encountered', 'Wild', 'Element']);
+    expect(tabs.map(t => t.textContent)).toEqual(['Other players', 'Wild', 'Element']);
     expect(tabs[0].getAttribute('aria-selected')).toBe('true');
     expect(screen.getByRole('textbox')).toBeTruthy();
   });
 
-  it('PT: Encontrados · Selvagens · Elemento', () => {
+  it('PT: Outros jogadores · Selvagens · Elemento', () => {
     render({}, 'pt-BR');
-    expect(screen.getAllByRole('tab').map(t => t.textContent)).toEqual(['Encontrados', 'Selvagens', 'Elemento']);
+    expect(screen.getAllByRole('tab').map(t => t.textContent)).toEqual(['Outros jogadores', 'Selvagens', 'Elemento']);
   });
 
   it('teclado: seta para a direita troca de aba', () => {
     render();
-    fireEvent.keyDown(screen.getByRole('tab', { name: 'Encountered' }), { key: 'ArrowRight' });
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Other players' }), { key: 'ArrowRight' });
     expect(screen.getByRole('tab', { name: 'Wild' }).getAttribute('aria-selected')).toBe('true');
   });
 

@@ -83,3 +83,28 @@ describe('Drive — Soulmons', () => {
     expect(screen.getByText('No Soulmon with these bases.')).toBeTruthy();
   });
 });
+
+describe('Drive — Selvagens (Selvagem + Desgarrado)', () => {
+  it('um filtro só vale para as duas seções; vazio em ambas quando nada bate', async () => {
+    const { ENEMY_ROSTER } = await import('../utils/enemyRoster');
+    const { isStrayFoe } = await import('../utils/wildFoeLabel');
+    const { BASE_ELEMENT_IDS } = await import('../utils/elementDex');
+    const base = (e: { element: string }) => (BASE_ELEMENT_IDS as readonly string[]).includes(e.element);
+    const wild = ENEMY_ROSTER.find(e => !isStrayFoe(e.stage) && base(e))!;
+    const stray = ENEMY_ROSTER.find(e => isStrayFoe(e.stage) && base(e) && e.element === wild.element)!;
+    const outro = (BASE_ELEMENT_IDS as readonly string[]).find(b => b !== wild.element)!;
+    renderWithCss(<LibraryPage saveId="s" friends={[]} onFriendsChange={() => {}} view="directory" embedded language="pt-BR" bestiary={[wild.key, stray.key]} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Selvagens' }));
+    expect(document.querySelectorAll('[data-base-filter]').length).toBe(1);
+    const cells = (m: string) => [...document.querySelectorAll(`[data-bestiary="${m}"] [data-bestiary-cell]`)].map(c => c.getAttribute('data-bestiary-cell'));
+    pick(0, wild.element);
+    expect(cells('wild')).toEqual([wild.key]);
+    expect(cells('stray')).toContain(stray.key);
+    expect(cells('stray').every(k => ENEMY_ROSTER.find(e => e.key === k)!.element === wild.element)).toBe(true);
+    pick(1, outro);
+    expect(cells('wild')).toEqual([]);
+    expect(cells('stray')).toEqual([]);
+    expect(document.querySelectorAll('[data-filter-empty]').length).toBe(2);
+    expect(screen.getAllByText('Nenhum Soulmon com essas bases.').length).toBe(2);
+  });
+});
