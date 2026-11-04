@@ -3881,6 +3881,11 @@ Textos das recusas do Soulsmith (EN/PT); só a tela lazy os lê.
 **Régua:** `src/utils/petPushEvents.test.ts`, `workers/pushBudget.parity.test.js`.
 **Regra de negócio:** `REGISTRO-DE-DECISOES.md` §113 (push ligado por padrão, eventos, teto) e §114 (cocô 2×/dia).
 
+### `src/utils/feedbackClient.ts`
+**Dono de:** o envio do modal de feedback da Home a `POST /api/feedback`. Só tipo, texto e diagnóstico não pessoal (versão, build, plataforma, idioma); `Authorization` só quando há login (limite por conta no servidor).
+**Exports:** `FeedbackType`, `FEEDBACK_TYPES`, `FEEDBACK_MAX` (2000), `buildFeedbackPayload(type, message, language)`, `sendFeedback(type, message, language, fetchImpl?)` → `{ ok, delivered }` ou `{ ok: false, reason: invalid | rate | server | network }`; nunca lança.
+**Quem usa:** `components/nav/HomeFeedbackButton.tsx`.
+
 ### `src/utils/crashReport.ts`
 **Dono de:** o relatório de falha leve (beta-play-01): monta e envia a `/api/crash` um relatório mínimo — `kind` (boundary | error | rejection), `msg` (≤200) e `stack` (≤800) limpos, `ver`, `route` sem query/ids, `plat` (apk | web). Nunca conteúdo do usuário nem identidade; falha silenciosa.
 **Exports:**
@@ -4207,3 +4212,9 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 **Dono de:** aplicar o nome do especial escolhido pelo jogador POR CIMA da ficha, em leitura (REGISTRO §222): o cache `soulmonSkills` do save não é reescrito; sem nome, devolve a própria ficha.
 **Exports:** `comNomeDoEspecial(skills, nome)`.
 **Chamado por:** `src/App.tsx` (as telas de luta e o Perfil recebem a ficha já com o nome).
+
+### `src/utils/widgetFrames.ts`
+
+**Dono de:** as molduras do widget V-Pet por elemento base: catálogo, posse (evolução ou compra real) e moldura equipada.
+
+**Chamado por:** `src/components/WidgetFramePicker.tsx`, `src/contexts/GameStateContext.tsx`.

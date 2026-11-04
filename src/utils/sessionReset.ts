@@ -268,6 +268,7 @@ export async function encerrarSessao(opts: EncerrarSessaoOpts): Promise<void> {
     limparEstadoLocalDaConta();
 
     try { const { clearSubscriptionStatus } = await import('./subscription'); clearSubscriptionStatus(); } catch { /* store ausente */ }
+    try { const { clearPaidWidgetFrames } = await import('./widgetFrames'); clearPaidWidgetFrames(); } catch { /* store ausente */ }
     try { const { setAdminFlag } = await import('./adminFlag'); setAdminFlag(false); } catch { /* store ausente */ }
   } finally {
     if (opts.recarregar !== null) {

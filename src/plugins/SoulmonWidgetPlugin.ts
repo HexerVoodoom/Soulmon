@@ -146,6 +146,8 @@ export interface DigiWidgetData {
   nextTaskName?: string;
   /** Até quando `nextTaskName` e o placar do dia valem. Ver `widgetDayEndsAt`. */
   dayEndsAtMs?: number;
+  /** Moldura do widget V-Pet: id de elemento base ou `''` (= casco padrão; o plugin remove a chave). Ver `utils/widgetFrames.ts`. */
+  vpetFrame?: string;
 }
 
 export interface SoulmonWidgetPlugin {

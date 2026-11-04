@@ -452,6 +452,7 @@ Estágios/HP máx: rookie/champion/ultimate=3 · mega=4 · ultra=5. (A árvore *
   Doze/otimização de bateria em ROMs de fabricante (MIUI, EMUI etc.) do que uma
   subscription de Web Push crua, e dá visibilidade de entrega pelo Firebase
   Console. Web Push continua ativo (cobre PWA/desktop); os dois convivem.
+- **Molduras do widget V-Pet (04/11/2026, dono):** UMA por elemento BASE (20), dono `src/utils/widgetFrames.ts`. Posse = união de `GameState.widgetFramesOwned` (liberada na EVOLUÇÃO para um Soulmon daquele elemento, efeito em `App.tsx`) e `ent.frames` no SERVIDOR (compra com dinheiro real, produto permanente `moldura_<elemento>` pelo mesmo `/api/billing?action=verify`; `PRODUCTS[..].grantFrame`; reembolso tira). Escolha em `widgetFrame`; o widget recebe `vpetFrame` (`''` = casco padrão) e o Kotlin procura o drawable `moldura_vpet_<elemento>` — **arquivo ausente = casco padrão**, nunca quebra. Seletor `components/WidgetFramePicker.tsx` (aba Widget da lojinha de Background e linha em Configurações). Cosmético puro. Produtos a criar na Play: `docs/PERGUNTAS-DO-DONO.md` (04/11/2026).
 - Widgets Android: `android/.../widget/WidgetRenderer.kt` + layouts. Dados via
   `SoulmonWidgetPlugin` (SharedPreferences; ⚰️ era `DigiWidgetPlugin` até 07/09/2026). Testes: `npx vitest run` cobre lógica de reset.
   ⚠️ **O widget NÃO COBRA, e agora há régua** (`src/plugins/widgetSemCobranca.contract.test.ts`,

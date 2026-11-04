@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
-  ActionRow, Disclosure, Field, GroupCard, Segment, SwitchRow, TimeField, sm2Button, sm2Hint, sm2Text,
+  ActionRow, ModalSheet, Disclosure, Field, GroupCard, Segment, SwitchRow, TimeField, sm2Button, sm2Hint, sm2Text,
 } from './form/FormKit';
 import { Icon } from './ui/Icon';
 import { InfoTip } from './ui/InfoTip';
@@ -19,6 +19,8 @@ import { desligarMusica, ligarMusica, musicaPreferida } from '../utils/musica';
 import { APP_VERSION, FeedbackRow, BugReportRow } from './FeedbackLink';
 import { ProfileEditor } from './perfil/ProfileEditor';
 import { EditHomeScreen, type EditHomeProps } from './perfil/EditHomeScreen';
+import { WidgetFramePicker } from './WidgetFramePicker';
+import type { WidgetFramePickerData } from '../utils/widgetFrames';
 import { UserAvatar } from './ui/UserAvatar';
 import { BondXpBar } from './perfil/BondXpBar';
 import { GmPanel, type GmActions } from './GmPanel';
@@ -104,6 +106,8 @@ interface SettingsPageProps {
     petName?: string; onChangePetName?: (name: string) => void;
     /** Editar Home: sem isto a linha nao existe. */
     editHome?: Pick<EditHomeProps, 'ownedFurniture' | 'equippedDecor' | 'equippedBackground' | 'ownedBackgrounds' | 'onSave' | 'onOpenShop'>;
+    /** Moldura do widget V-Pet (`utils/widgetFrames.ts`): sem isto a linha não existe. */
+    widgetFrames?: WidgetFramePickerData;
   };
   /** Créditos e ferramentas do ritual (vieram do menu da Home, que saiu). */
   onOpenCredits?: () => void;
@@ -290,6 +294,7 @@ export function SettingsPage({
 }: SettingsPageProps) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [editHomeOpen, setEditHomeOpen] = useState(false);
+  const [widgetFramesOpen, setWidgetFramesOpen] = useState(false);
   const [musica, setMusica] = useState(() => musicaPreferida());
   const isPt = language === 'pt-BR';
   const t = useTranslation(language);
@@ -369,6 +374,23 @@ export function SettingsPage({
               <span style={{ ...sm2Text, flex: 1 }}>{isPt ? 'Editar Home' : 'Edit Home'}</span>
               <Icon name="chevron_right" size={24} tone="muted" />
             </button>
+          )}
+          {profile.widgetFrames && (
+            <button
+              type="button"
+              data-widget-frames-open
+              onClick={() => setWidgetFramesOpen(true)}
+              style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 56, background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--sm2-ink)', textAlign: 'left' }}
+            >
+              <span style={{ width: 32 }} />
+              <span style={{ ...sm2Text, flex: 1 }}>{isPt ? 'Moldura do widget' : 'Widget frame'}</span>
+              <Icon name="chevron_right" size={24} tone="muted" />
+            </button>
+          )}
+          {profile.widgetFrames && (
+            <ModalSheet open={widgetFramesOpen} title={isPt ? 'Moldura do widget' : 'Widget frame'} onClose={() => setWidgetFramesOpen(false)} language={language}>
+              <WidgetFramePicker language={language} data={profile.widgetFrames} />
+            </ModalSheet>
           )}
           {profile.editHome && editHomeOpen && (
             <EditHomeScreen

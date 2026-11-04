@@ -8883,10 +8883,10 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
    estrelinha discreta no canto superior direito. So CSS: a estrela e marca,
    nao icone interativo, e nao tem animacao. */
 .sm3-item-arte[data-premium] { position: relative; }
-/* Chip de REDUÇÃO (04/11/2026): arte do chip comum + um "−" no canto. */
+/* Chip de REDUÇÃO (04/11/2026): arte do chip comum + o valor real no canto (`REDUCE_CHIP_BOOST`). */
 .sm3-item-arte[data-reduce] { position: relative; }
 .sm3-item-arte[data-reduce]::after {
-  content: '\2212 2';
+  content: '\2212 3';
   position: absolute; top: -6px; right: -4px;
   font-size: 16px; font-weight: 800; line-height: 1;
   color: var(--sm2-danger, #e5484d);

@@ -23,6 +23,7 @@ import { useBackLayer } from '../../utils/backStack';
 import { playerDayIso, type PlayerDayAnchor } from '../../utils/playerDay';
 import type { GuildGoal } from '../../utils/community';
 import type { ShopActions, ShopOwnership } from '../mercado/ShopShelf';
+import type { WidgetFramePickerData } from '../../utils/widgetFrames';
 import type { MercadoStallProps } from '../mercado/MercadoSheets';
 import type { TournamentPage as TournamentPageT } from '../TournamentPage';
 import type { GuildSheet as GuildSheetT } from '../guild/GuildSheet';
@@ -206,6 +207,8 @@ export interface AreaViewProps {
   /** Posse + progresso de missão — o mesmo objeto para Mercado e Torneio. */
   ownership: ShopOwnership;
   actions: ShopActions;
+  /** Seletor de moldura do widget V-Pet (aba Widget da lojinha de Background). */
+  widgetFrames?: WidgetFramePickerData;
   points: number;
   emblems: number;
   credits: number;
@@ -460,6 +463,7 @@ export function AreaView(props: AreaViewProps) {
                 initialKind={stall === 'background' ? stallKind : undefined}
                 weekly={props.weekly}
                 onClaimWeekly={props.onClaimWeekly}
+                widgetFrames={props.widgetFrames}
                 {...ownership}
                 {...actions}
               />

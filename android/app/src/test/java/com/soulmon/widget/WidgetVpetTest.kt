@@ -41,4 +41,19 @@ class WidgetVpetTest {
         assertFalse(WidgetVpet.isHungry(1000, 2000))
         assertTrue(WidgetVpet.isHungry(2000, 2000))
     }
+
+    @Test fun frameNameOnlyForTheTwentyBaseElements() {
+        assertEquals(20, WidgetVpet.FRAME_ELEMENTS.size)
+        assertEquals("moldura_vpet_fogo", WidgetVpet.frameDrawableName("fogo"))
+        assertEquals("moldura_vpet_espaco", WidgetVpet.frameDrawableName("espaco"))
+        assertEquals(null, WidgetVpet.frameDrawableName(""))
+        assertEquals(null, WidgetVpet.frameDrawableName(null))
+        assertEquals(null, WidgetVpet.frameDrawableName("vapor"))
+        assertEquals(null, WidgetVpet.frameDrawableName("../fogo"))
+    }
+
+    @Test fun missingArtFallsBackToTheDefaultCasing() {
+        assertEquals(7, WidgetVpet.pickCasing(0, 7))
+        assertEquals(9, WidgetVpet.pickCasing(9, 7))
+    }
 }

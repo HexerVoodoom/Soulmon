@@ -1,6 +1,7 @@
 import { STORAGE_KEYS } from './storageKeys';
 import { authHeaders } from './auth';
 import { readLocal } from './safeStorage';
+import { sanitizeOwnedWidgetFrames, setPaidWidgetFramesFromEntitlement } from './widgetFrames';
 
 // Entitlements no CLIENTE — espelho somente-leitura do que o servidor decidiu.
 //
@@ -32,6 +33,8 @@ export interface Entitlement {
   subActive?: boolean;
   /** Fim do período atual (epoch ms), como a Google informou. Só para a UI dizer a data. */
   subUntil?: number;
+  /** Molduras do widget V-Pet COMPRADAS (ids de elemento base; só o servidor escreve). Ausente = nenhuma. Cosmético. */
+  frames?: string[];
 }
 
 /** Normaliza a resposta do GET: `admin` só é true com o literal `true`. */
@@ -46,6 +49,7 @@ export function sanitizeEntitlement(raw: unknown): Entitlement | null {
     admin: r.admin === true,
     ...(r.betaFull === true ? { betaFull: true } : {}),
     ...(typeof r.subActive === 'boolean' ? { subActive: r.subActive } : {}),
+    ...(sanitizeOwnedWidgetFrames(r.frames).length ? { frames: sanitizeOwnedWidgetFrames(r.frames) } : {}),
     ...(typeof r.subUntil === 'number' && Number.isFinite(r.subUntil) && r.subUntil > 0 ? { subUntil: r.subUntil } : {}),
   };
 }
@@ -236,11 +240,10 @@ export async function verifyPurchase(productId: string, purchaseToken: string): 
     if (!res.ok || !data.ok) {
       return { ok: false, reason: data.reason || `http-${res.status}` };
     }
-    return {
-      ok: true,
-      ent: sanitizeEntitlement(data) ?? { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true },
-      consumeToken: data.consumeToken,
-    };
+    const ent = sanitizeEntitlement(data) ?? { tier: data.tier, credits: data.credits, adsLeft: data.adsLeft, admin: data.admin === true };
+    // Toda compra confirmada (nova, reconciliada ou restaurada) passa por aqui: as molduras do widget V-Pet acompanham o servidor.
+    setPaidWidgetFramesFromEntitlement(ent);
+    return { ok: true, ent, consumeToken: data.consumeToken };
   } catch {
     return { ok: false, reason: 'network' };
   }

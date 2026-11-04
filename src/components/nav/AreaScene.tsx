@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import type { AreaId } from '../../navigation';
-import { LOT_MARK_GAP, LOT_MARK_MIN_TOP, LOT_MARK_SIZE, lotArtBounds, lotHitBounds, lotLabelLift, lotLabelOffset } from '../../utils/areaLotGeometry';
+import { LOT_MARK_GAP, LOT_MARK_MIN_TOP, LOT_MARK_SIZE, lotArtBounds, lotHitBounds, lotLabelLift, lotLabelOffset, lotMarkDrop } from '../../utils/areaLotGeometry';
 import { lotArtFilter } from './lotHalo';
 import { MissionMark } from '../play/MissionMark';
 import { LotCoin } from './LotCoin';
@@ -246,7 +246,7 @@ export function AreaScene({ areaId, language, lots, background, notice, children
                 style={{
                   position: 'absolute', display: 'flex', alignItems: 'flex-end', gap: LOT_MARK_GAP, pointerEvents: 'none',
                   left: `calc(${parseFloat(l.left)}cqw - ${bw} / 2 + ${(b[0] + b[2]) / 2} * ${bw})`,
-                  top: `max(${LOT_MARK_MIN_TOP}px, calc(${y0} + ${b[1]} * ${bw} - ${LOT_MARK_GAP + LOT_MARK_SIZE}px))`,
+                  top: `max(${LOT_MARK_MIN_TOP}px, calc(${y0} + ${b[1]} * ${bw} - ${LOT_MARK_GAP + LOT_MARK_SIZE - lotMarkDrop(areaId, l.id)}px))`,
                   transform: 'translateX(-50%)',
                 }}
               >

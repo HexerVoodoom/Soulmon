@@ -242,6 +242,10 @@ import { gerarBBExclusivo, gerarBBPeloPipeline } from './utils/bbNascimento';
 import { pedirFreeRookie } from './utils/freeRookie';
 import { fetchEntitlement, spendCredits, buyEssence, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
 import { purchase, reconcileSubscription, reconcilePurchases } from './utils/playBilling';
+import {
+  effectiveOwnedFrames, grantFrameOnEvolution, resolveWidgetFrame, setPaidWidgetFramesFromEntitlement, usePaidWidgetFrames,
+  sanitizeSelectedWidgetFrame, widgetFrameProductId, type WidgetFramePickerData,
+} from './utils/widgetFrames';
 import { SUBSCRIPTION_SKU, setSubscriptionFromEntitlement, useSubscriptionStatus } from './utils/subscription';
 import { applySubscriptionClaim } from './utils/subscriptionShop';
 
@@ -1777,6 +1781,9 @@ export default function App() {
     toast(language === 'pt-BR' ? 'Progresso salvo na nuvem!' : 'Progress saved to the cloud!');
   }, [gameState, language]);
 
+  /** Molduras do widget V-Pet COMPRADAS (espelho do servidor, fora do save) + as da evolução = a posse efetiva. */
+  const paidWidgetFrames = usePaidWidgetFrames();
+
   // Sincroniza tier/créditos com o SERVIDOR ao abrir e ao trocar de save. O
   // que estiver no localStorage é só espelho — se alguém editou à mão, isto
   // sobrescreve com a verdade. Offline mantém o espelho (o servidor recusa
@@ -1795,6 +1802,7 @@ export default function App() {
         setAdminFlag(adminFromEntitlement(ent));
         // Vitrine da assinatura (D10): vem do servidor, fica numa store fora do save e só a vitrine lê.
         setSubscriptionFromEntitlement(ent);
+        setPaidWidgetFramesFromEntitlement(ent);
         if (!ent) return;
         setGameState(prev => (prev.credits === ent.credits && prev.accountTier === ent.tier)
           ? prev
@@ -1807,6 +1815,7 @@ export default function App() {
       if (!saveId) return;
       void reconcilePurchases().then(ent => {
         if (!ent) return;
+        setPaidWidgetFramesFromEntitlement(ent);
         setGameState(prev => (prev.credits === ent.credits && prev.accountTier === ent.tier)
           ? prev
           : { ...prev, credits: ent.credits, accountTier: ent.tier });
@@ -2588,12 +2597,25 @@ export default function App() {
       })(),
       nextTaskName: widgetNextTask(gameState as never, new Date(), dailyDone, dailyTotal),
       dayEndsAtMs: widgetDayEndsAt(new Date()),
+      // Moldura do widget V-Pet: o escolhido SE ainda é do jogador, senão '' (casco padrão). Arquivo ausente no APK = padrão também.
+      vpetFrame: resolveWidgetFrame(gameState.widgetFrame, effectiveOwnedFrames(gameState.widgetFramesOwned, paidWidgetFrames)),
     }).catch(() => {});
   }, [gameState.evolutionStage, gameState.currentBranch, gameState.eggType,
       gameState.healthPoints, gameState.maxHealthPoints, gameState.energyPoints,
       gameState.poopEventsShown, gameState.poopEventsCompleted, dailyDone, dailyTotal,
       gameState.habitRhythms, gameState.totalXP, gameState.soulmonMeta, grove,
-      gameState.hunger, gameState.tasks, gameState.activities, gameState.dayPlan]);
+      gameState.hunger, gameState.tasks, gameState.activities, gameState.dayPlan,
+      gameState.widgetFrame, gameState.widgetFramesOwned, paidWidgetFrames]);
+
+  // Moldura do widget V-Pet LIBERADA NA EVOLUÇÃO (dono, 04/11/2026): quando o Soulmon já evoluiu e o elemento base dele ainda não
+  // tem moldura na posse, ela entra. Idempotente (`grantFrameOnEvolution` devolve a mesma referência sem novidade); cobre também quem
+  // evoluiu antes desta versão e quem recebeu a Poção de Elemento.
+  useEffect(() => {
+    setGameState(prev => {
+      const next = grantFrameOnEvolution(prev);
+      return next === prev.widgetFramesOwned ? prev : { ...prev, widgetFramesOwned: [...(next ?? [])] };
+    });
+  }, [gameState.evolutionStage, gameState.unlockedEvolutions, gameState.potionElement, gameState.soulmonMeta, gameState.demoCharacterId, setGameState]);
 
   /**
    * A fatia que `utils/petNeeds.ts` lê. `hasPoop` é DERIVADO (o dono do cocô é
@@ -4942,6 +4964,28 @@ export default function App() {
   const syncEntitlement = useCallback((ent: { tier: 'demo' | 'paid'; credits: number }) => {
     setGameState(prev => ({ ...prev, credits: ent.credits, accountTier: ent.tier }));
   }, []);
+
+  /** Escolher a moldura do widget (`null` = a padrão). Só vale se já é do jogador; a leitura (`resolveWidgetFrame`) reconfere. */
+  const handleSelectWidgetFrame = useCallback((id: string | null) => {
+    const next = sanitizeSelectedWidgetFrame(id);
+    setGameState(prev => (prev.widgetFrame ?? null) === next ? prev : { ...prev, widgetFrame: next });
+  }, [setGameState]);
+
+  /** Comprar a moldura do widget com DINHEIRO REAL (produto permanente `moldura_<elemento>`). Só concede depois do servidor confirmar na Play. */
+  const handleBuyWidgetFrame = useCallback(async (element: string): Promise<{ ok: true } | { ok: false; reason: string }> => {
+    if (isDemoMode(gameState)) { refuseDemo(); return { ok: false, reason: 'demo' }; }
+    const result = await purchase(widgetFrameProductId(element));
+    if (!result.ok) return { ok: false, reason: result.reason };
+    setPaidWidgetFramesFromEntitlement(result.ent);
+    syncEntitlement(result.ent);
+    handleSelectWidgetFrame(element);
+    return { ok: true };
+  }, [syncEntitlement, gameState, refuseDemo, handleSelectWidgetFrame]);
+
+  const widgetFramePicker = useMemo<WidgetFramePickerData>(() => {
+    const owned = effectiveOwnedFrames(gameState.widgetFramesOwned, paidWidgetFrames);
+    return { owned, selected: resolveWidgetFrame(gameState.widgetFrame, owned), onSelect: handleSelectWidgetFrame, onBuy: handleBuyWidgetFrame };
+  }, [gameState.widgetFramesOwned, gameState.widgetFrame, paidWidgetFrames, handleSelectWidgetFrame, handleBuyWidgetFrame]);
 
   const handleWatchAd = useCallback(async (): Promise<boolean> => {
     if (isDemoMode(gameState)) { refuseDemo(); return false; }
@@ -8050,6 +8094,7 @@ export default function App() {
                   subscriptionActive: subscription.active,
                   petElement: petElementOf(gameState),
                 }}
+                widgetFrames={widgetFramePicker}
                 actions={{ onBuy: handleShopBuy, onBuyFrame: id => handleFrameBuy(id), onEquip: handleEquipBackground, onEquipFurniture: handleEquipFurniture, onClaimSubscription: handleClaimSubscription }}
                 points={gameState.gamePoints ?? 0}
                 emblems={gameState.emblems ?? 0}
@@ -8912,6 +8957,7 @@ export default function App() {
                   onSave: handleSaveHomeDecor,
                   onOpenShop: () => { setPendingSheet({ area: 'mercado', lot: 'background' }); goTo(areaView('mercado')); },
                 },
+                widgetFrames: widgetFramePicker,
               }}
               onOpenCredits={demo ? undefined : openCredits}
               demo={demo ? { onLeave: handleLeaveDemo } : undefined}

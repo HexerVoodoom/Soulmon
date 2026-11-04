@@ -422,19 +422,27 @@ object WidgetRenderer {
             if (prefs.contains("hungry_at")) prefs.getLong("hungry_at", 0L) else null,
         )
         val poop = prefs.getBoolean("has_poop", false)
+        val casing = vpetCasingRes(context, prefs.getString("vpet_frame", ""))
         val views = RemoteViews(context.packageName, R.layout.widget_soulmon_vpet)
         val bmp = try {
-            drawVpet(context, spriteId, adaptiveLine(context), hungry, poop)
+            drawVpet(context, spriteId, adaptiveLine(context), hungry, poop, casing)
         } catch (e: OutOfMemoryError) {
             null
         }
         if (bmp != null) views.setImageViewBitmap(R.id.widget_vpet, bmp)
-        else views.setImageViewResource(R.id.widget_vpet, R.drawable.vpet_moldura)
+        else views.setImageViewResource(R.id.widget_vpet, casing)
         attachClick(context, views)
         mgr.updateAppWidget(appWidgetId, views)
     }
 
-    private fun drawVpet(context: Context, spriteId: Int, line: String, hungry: Boolean, poop: Boolean): Bitmap {
+    /** The chosen element casing if the art is in the APK, else the default one (never throws, never 0). */
+    private fun vpetCasingRes(context: Context, frameId: String?): Int {
+        val name = WidgetVpet.frameDrawableName(frameId) ?: return R.drawable.vpet_moldura
+        val variant = context.resources.getIdentifier(name, "drawable", context.packageName)
+        return WidgetVpet.pickCasing(variant, R.drawable.vpet_moldura)
+    }
+
+    private fun drawVpet(context: Context, spriteId: Int, line: String, hungry: Boolean, poop: Boolean, casing: Int): Bitmap {
         val raw = BitmapFactory.Options().apply { inScaled = false }
         val out = Bitmap.createBitmap(WidgetVpet.W, WidgetVpet.H, Bitmap.Config.ARGB_8888)
         val c = Canvas(out)
@@ -510,7 +518,9 @@ object WidgetRenderer {
         icon(R.drawable.fx_poop, row.l + WidgetVpet.ICON + WidgetVpet.ICON_GAP, poop)
 
         // Casing on top.
-        BitmapFactory.decodeResource(context.resources, R.drawable.vpet_moldura, raw)?.let {
+        // A variant that fails to decode (corrupt/oversized art) falls back to the default casing instead of a bare LCD.
+        (BitmapFactory.decodeResource(context.resources, casing, raw)
+            ?: BitmapFactory.decodeResource(context.resources, R.drawable.vpet_moldura, raw))?.let {
             c.drawBitmap(it, 0f, 0f, crisp)
             it.recycle()
         }

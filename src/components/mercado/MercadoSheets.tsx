@@ -26,6 +26,8 @@ import { ElementBaseSlots, ElementIcon, emptySlots } from '../ElementBaseSlots';
 import { GuildOwnedShelf } from './GuildOwnedShelf';
 import { SubscriptionShelf } from './SubscriptionShelf';
 import { FrameShelf } from './FrameShelf';
+import { WidgetFramePicker } from '../WidgetFramePicker';
+import type { WidgetFramePickerData } from '../../utils/widgetFrames';
 import { ShopItemSheet } from './ShopItemSheet';
 import {
   CreditExchange, CurrencyBalance, PurchaseConfirmSheet, DecorRuleLine, ShopShelf, ShopStatus, WeeklyMissionList, bgThumb, useShopFlash,
@@ -107,11 +109,13 @@ export interface MercadoStallProps extends ShopOwnership, ShopActions {
   /** D-58: as missões da semana (pagas em Honra) moram no TOPO da aba Honra do Mercado. Sem elas, a aba não as desenha. */
   weekly?: { mission: WeeklyMission; count: number; done: boolean; claimed: boolean }[];
   onClaimWeekly?: (id: WeeklyMissionId) => void;
+  /** Moldura do WIDGET V-Pet (dinheiro real, `utils/widgetFrames.ts`): a 3ª aba da lojinha de Background. Sem isto a aba não existe. */
+  widgetFrames?: WidgetFramePickerData;
 }
 
-/** As duas abas da lojinha de Background (D-24): Backgrounds à esquerda (abre nela), Frames à direita. */
-export type StallKind = 'backgrounds' | 'frames';
-export const STALL_KIND_ORDER: readonly StallKind[] = ['backgrounds', 'frames'];
+/** As abas da lojinha de Background (D-24): Backgrounds à esquerda (abre nela), Frames à direita. */
+export type StallKind = 'backgrounds' | 'frames' | 'widget';
+export const STALL_KIND_ORDER: readonly StallKind[] = ['backgrounds', 'frames', 'widget'];
 
 /** Uma lojinha de compra (Itens, Decoração ou Background), com abas por moeda. */
 export function MercadoStallSheet(props: MercadoStallProps) {
@@ -123,6 +127,8 @@ export function MercadoStallSheet(props: MercadoStallProps) {
   /** C3: a lojinha da Panora vende DUAS coisas — separadas em Backgrounds / Frames; a moeda (Bits / Honra) fica dentro de cada uma. */
   const [kind, setKind] = useState<StallKind>(initialKind ?? 'backgrounds');
   const showFrames = stall === 'background' && kind === 'frames';
+  /** A aba do widget V-Pet não tem moeda do jogo: o preço vem da Play. */
+  const showWidget = stall === 'background' && kind === 'widget' && !!props.widgetFrames;
   const balance = cur === 'emblems' ? emblems : points;
 
   return (
@@ -130,26 +136,26 @@ export function MercadoStallSheet(props: MercadoStallProps) {
       <div style={stickyHead}>
         {stall === 'background' && (
           <PixelTabs
-            items={STALL_KIND_ORDER.map(k => ({ key: k, label: k === 'frames' ? (isPt ? 'Molduras' : 'Frames') : 'Backgrounds' }))}
+            items={STALL_KIND_ORDER.filter(k => k !== 'widget' || !!props.widgetFrames).map(k => ({ key: k, label: k === 'frames' ? (isPt ? 'Molduras' : 'Frames') : k === 'widget' ? 'Widget' : 'Backgrounds' }))}
             value={kind}
             onChange={setKind}
             ariaLabel={isPt ? 'O que a Panora vende' : 'What Panora sells'}
           />
         )}
-        {tabs.length > 1 && (
+        {tabs.length > 1 && !showWidget && (
           <CurrencyPills tabs={tabs} value={cur} onChange={c => setCur(c as 'bits' | 'emblems')} isPt={isPt} />
         )}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {!showWidget && <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <ShopStatus flash={flash} idle={idleLine(cur, isPt)} language={language} />
           </div>
           <CurrencyBalance currency={cur} value={balance} language={language} />
-        </div>
+        </div>}
       </div>
 
 
       {/* D-58 (19/10/2026): as missões da semana (pagas em Honra) abrem a aba Honra — a torneira ao lado do ralo, e só ali. */}
-      {cur === 'emblems' && weekly && weekly.length > 0 && (
+      {!showWidget && cur === 'emblems' && weekly && weekly.length > 0 && (
         <section data-mercado-weekly aria-label={isPt ? 'Missões da semana' : 'Weekly missions'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <h3 className="sm2-title" style={{ margin: 0, fontSize: 'var(--sm2-text-md)' }}>{isPt ? 'Esta semana' : 'This week'}</h3>
           <WeeklyMissionList language={language} weeklyMissions={weekly} onClaimWeekly={onClaimWeekly} />
@@ -162,7 +168,7 @@ export function MercadoStallSheet(props: MercadoStallProps) {
       {/* O que a roda deu (cenários do Bosque, Concha da Maré): só EQUIPA, sem preço.
           NO TOPO, antes de ~20 cenários da loja (QA L3 M4): o que se ganhou não se procura no fim.
           Vazio é silêncio — a seção nem desenha o título. */}
-      {!showFrames && (stall === 'background' || stall === 'decoracao') && (
+      {!showFrames && !showWidget && (stall === 'background' || stall === 'decoracao') && (
         <GuildOwnedShelf
           language={language}
           kind={stall === 'background' ? 'bg' : 'furniture'}
@@ -172,7 +178,7 @@ export function MercadoStallSheet(props: MercadoStallProps) {
       )}
       {/* O conjunto do trimestre da assinatura: sempre visível (escurecido com o porquê
           quando a vitrine está fechada), de graça no resgate, posse permanente depois. */}
-      {cur === 'bits' && !showFrames && (stall === 'background' || stall === 'decoracao') && (
+      {cur === 'bits' && !showFrames && !showWidget && (stall === 'background' || stall === 'decoracao') && (
         <SubscriptionShelf
           language={language}
           kind={stall === 'background' ? 'bg' : 'furniture'}
@@ -180,7 +186,9 @@ export function MercadoStallSheet(props: MercadoStallProps) {
           actions={props}
         />
       )}
-      {showFrames ? (
+      {showWidget ? (
+        <WidgetFramePicker language={language} data={props.widgetFrames!} />
+      ) : showFrames ? (
         <FrameShelf
           language={language}
           currency={cur}

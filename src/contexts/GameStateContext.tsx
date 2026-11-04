@@ -103,6 +103,7 @@ import { onboardingProfileFrom } from '../utils/catalogOnboarding';
 import { applyBetaResetGrant, sanitizeGrants, type Grants } from '../utils/betaResetGrant';
 import { normalizeEntries, type CadernoEntry } from '../utils/cadernoSave';
 import { sanitizeEquippedFrame, sanitizeOwnedFrames } from '../utils/frames';
+import { sanitizeOwnedWidgetFrames, sanitizeSelectedWidgetFrame } from '../utils/widgetFrames';
 import { spriteLineOf, isCorvo } from '../utils/corvoPet';
 import { newUuid } from '../utils/uuid';
 import { sanitizeAvatarId } from '../utils/avatar';
@@ -688,6 +689,11 @@ export interface GameState {
   /** Id da moldura EQUIPADA (qualquer origem) ou `null` = sem moldura. Leitura: `?? null`; se deixou de valer (lugar de Mestre
    *  perdido), a tela desenha sem moldura (`resolveEquippedFrame`) e o id fica guardado. */
   equippedFrame?: string | null;
+  /** 🖼️ MOLDURAS DO WIDGET V-PET (04/11/2026, `utils/widgetFrames.ts`) — COSMÉTICA. Elementos base cuja moldura a EVOLUÇÃO liberou
+   *  (as COMPRADAS vivem no servidor, `ent.frames`). Leitura: `?? []`; save antigo entra vazio. */
+  widgetFramesOwned?: string[];
+  /** Moldura do widget ESCOLHIDA (id de elemento base) ou `null`/ausente = a padrão. Se a posse some (reembolso), o widget cai na padrão. */
+  widgetFrame?: string | null;
   /** 🧑 FOTO DE PERFIL (Tarefa C, 06/10/2026): id de um NPC da lista fechada (`assets/avatares/catalogo.json`; `utils/avatar.ts`). Só o ID vai
    *  para o save e o servidor (`functions/api/save.js` confere contra a lista). Ausente/`null` = o padrão determinístico do saveId. Leitura: `?? null`. */
   avatarId?: string | null;
@@ -1631,6 +1637,9 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // Molduras: lixo é descartado (`utils/frames.ts`), nunca derruba o load; save antigo entra vazio / sem moldura.
         ownedFrames: sanitizeOwnedFrames(loadedState.ownedFrames),
         equippedFrame: sanitizeEquippedFrame(loadedState.equippedFrame),
+        // Molduras do widget: lixo é descartado, save antigo entra vazio / padrão (`utils/widgetFrames.ts`).
+        widgetFramesOwned: sanitizeOwnedWidgetFrames(loadedState.widgetFramesOwned),
+        widgetFrame: sanitizeSelectedWidgetFrame(loadedState.widgetFrame),
         // Foto de perfil: só id bem formado (`utils/avatar.ts`); o catálogo é conferido na tela e no servidor.
         avatarId: sanitizeAvatarId(loadedState.avatarId),
         // Talentos: vetor inválido para o Vínculo do save é DESCARTADO (`utils/talents.ts`), nunca corrigido.

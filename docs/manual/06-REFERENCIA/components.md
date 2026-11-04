@@ -853,6 +853,11 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'EvolveTaskModal.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** ver o aviso da fila em `EvolutionCeremony.tsx` acima — este modal já reapareceu por baixo da cerimônia, cobrando tarefas; hoje entra na fila de intersticiais declarada no `App.tsx`.
 
+### `src/components/FeedbackModal.tsx`
+**Dono de:** o modal de feedback da Home (REGISTRO §223): `ModalSheet` com Feedback/Sugestão/Bug (`Segment`), textarea (contador /2000), Enviar/Tentar de novo, estados de envio/sucesso/erro em PT/EN. Controlado pelo pai: o rascunho nunca se perde em falha.
+**Exports:** `FeedbackModal`, `feedbackCopy(language)`, tipo `FeedbackStatus`.
+**Quem usa:** `components/nav/HomeFeedbackButton.tsx`.
+
 ### `src/components/FirstDayCard.tsx`
 **Dono de:** o cartão do primeiro dia (WP1.3) na Home — ensina os três gestos não-descobríveis (carinho, comida, marcar tarefa) sem virar checklist de cobrança.
 **Props principais:** `FirstDayCardProps` — `progress: FirstDayProgress` (`src/utils/firstDay.ts`), `language`.
@@ -2064,3 +2069,9 @@ Aviso curto na Home (REGISTRO §213 emenda 2): o Soulmon do jogador está desgar
 ### `src/components/perfil/EspecialNomeEditor.tsx`
 **Dono de:** o campo "Nome do seu especial" na carta do Perfil do Soulmon (Laboratório): valida na tela com a mesma regra do servidor, avisa em âmbar e mostra quantos dias faltam para a próxima troca (a troca semanal é decidida no servidor). Vazio volta ao nome padrão.
 **Chamado por:** `src/components/perfil/SoulmonPerfil.tsx`.
+
+### `src/components/WidgetFramePicker.tsx`
+
+**Dono de:** a escolha da moldura do widget V-Pet, em Configurações, usando `src/utils/widgetFrames.ts`.
+
+**Chamado por:** `src/components/SettingsPage.tsx`.
