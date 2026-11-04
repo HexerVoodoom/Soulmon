@@ -23,7 +23,7 @@ const PET_SCALE_MINIGAME = 1;
  *
  * NÃO mede nada, NÃO pontua, NÃO paga — por isso recebe `MiniGameBaseProps`,
  * sem o callback de Bits. Funciona sem toque nenhum; o botão de segurar é só um
- * apoio para quem quer acompanhar com o dedo. Nasce MUDO (R-NOVA) quanto a SFX; a música "Meditation Theme" é a exceção pedida pelo dono (S18, REGISTRO), sob o interruptor "Música".
+ * apoio para quem quer acompanhar com o dedo. Nasce MUDO (R-NOVA) quanto a SFX; a música própria "Respiração subaquática" é a exceção pedida pelo dono (S18, REGISTRO; `docs/SOM.md` §17), sob o interruptor "Música".
  * Movimento reduzido troca a escala por uma barra de preenchimento — reduz o
  * MOVIMENTO, nunca a pausa.
  */
@@ -54,7 +54,7 @@ export function RespiracaoGame({ language, evolutionStage, demoCharacterId, onEx
 }) {
   const isPt = language === 'pt-BR';
   const reduced = usePrefersReducedMotion();
-  useEffect(() => entrarNaSuperficie('respiracao'), []); // S18 (04/11: superfície própria, cai na trilha de meditação sem faixa nova): a trilha de meditação acompanha a respiração
+  useEffect(() => entrarNaSuperficie('respiracao'), []); // S18; 04/11/2026: superfície e faixa próprias ("Respiração subaquática")
   const [screen, setScreen] = useState<Screen>('setup');
   const [patternId, setPatternId] = useState(BREATH_PATTERNS[0].id);
   const [minutes, setMinutes] = useState(BREATH_DURATIONS_MIN[0]);

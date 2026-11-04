@@ -8,8 +8,9 @@
  *     Masmorra (lobby, fim, retorno)
  *       e Calabouço ......... "masmorra" ("Dungeon Theme", S18; as LUTAS da descida seguem em `combate`)
  *     Cerimônia de evolução . "evolucao" ("Evolution Theme", S18)
- *     Meditação (Respiração,
- *       Bolhas calmas) ...... "meditacao" ("Meditation Theme", S18)
+ *     Bolhas calmas ......... "meditacao" ("Meditation Theme", S18)
+ *     Respiração subaquática  "respiracao" (04/11/2026)
+ *     Chama (Trataka) ....... "chama" (04/11/2026)
  *
  * Este módulo é só a TABELA e o apply: não toca nada, não tem constante de loudness, não lê relógio. Quem toca é o
  * `tema.ts` (streaming, `busTema`) e o `musicaDeCombate.ts` (streaming, `busTrilha`); o loop de camadas de `trilha.ts`
@@ -46,11 +47,9 @@ export const FAIXA_DE_COMBATE: Record<Exclude<Superficie, 'casa'>, MusicaDeComba
   'masmorra-mapa': 'masmorra',
   evolucao: 'evolucao',
   meditacao: 'meditacao',
-  // 04/11/2026: superfícies próprias da Respiração subaquática e da Chama. Por ora caem na "Meditation Theme";
-  // quando as faixas do Suno chegarem (`/sounds/tema-respiracao.{webm,m4a}` e `/sounds/tema-chama.{webm,m4a}`),
-  // entram como `respiracao`/`chama` em `MUSICAS_DE_COMBATE` (sonsAssets.ts, com sha256/bytes) e trocam aqui.
-  respiracao: 'meditacao',
-  chama: 'meditacao',
+  // 04/11/2026: a Respiração subaquática e a Chama têm faixa própria do dono (Suno), `docs/SOM.md` §17.
+  respiracao: 'respiracao',
+  chama: 'chama',
   intro: 'parede', // 01/11/2026: a trilha da intro 'A Parede'; só o botão de som da intro entra aqui (nasce desligado)
 };
 

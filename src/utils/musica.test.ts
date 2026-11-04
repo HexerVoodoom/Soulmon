@@ -107,6 +107,8 @@ describe('S18 — masmorra (mapa), evolução e meditação têm faixa própria'
     ['evolucao', 'evolucao'],
     ['meditacao', 'meditacao'],
     ['intro', 'parede'],
+    ['respiracao', 'respiracao'],
+    ['chama', 'chama'],
   ] as const)('ligada: %s → %s; desligada → null; sem o degrau de combate', (s, f) => {
     expect(escolherFaixa(s, true)).toBe(f);
     expect(escolherFaixa(s, false)).toBeNull();

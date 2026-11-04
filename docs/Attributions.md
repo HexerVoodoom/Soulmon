@@ -194,6 +194,17 @@ Original de 3:43,2 (5 297 929 B). Ganho −13,3 dB; a faixa já termina em fade.
 
 Origem: **Suno** (`soulmon cave (1).mp3`, SHA-256 do original `e21d74525ebef41fba223ab22a96fe6dc8f994c7647a0506677f20ef8d2f144d`, 1 610 180 B, 1:09,5, sem vocais), gerada pelo dono em 01/11/2026. Prompt do dono: trilha misteriosa e espiritual, caverna, linha Chrono Cross / FF IX / Pokémon / Digimon, para o Soulmon, loop. Termos: o dono tem assinatura Suno; **plano e termos comerciais a confirmar pelo dono**. O repo prova procedência, não originalidade (S9); a escuta é do dono (S8). Reencode: ganho −13,0 dB + fade-out de 5 s (a faixa, 69,5 s, é mais curta que a intro, 72,9 s; sem loop obrigatório). Medidas (ffmpeg `ebur128`): webm LUFS-S mediano −28,0 / integrado −27,6 / true peak −12,8 dBTP; m4a −27,7 / −27,4 / −12,3. Com `GANHO_MUSICA_DB` (+12 dB) e trim −1,5 dB (`TRIM_MUSICAS_DE_COMBATE_DB.parede`, crista alta): integrado pior ≈ −16,9 LUFS e true peak pior ≈ −1,8 dBTP (S3: ≤ −16 LUFS e ≤ −1 dBTP). Nasce desligada: só soa pelo botão de som da intro (gesto, D11/S2) e respeita o interruptor global de Música.
 
+#### "Respiração subaquática" e "Concentração (Trataka)" — Refúgio (04/11/2026; superfícies `respiracao` e `chama` em `utils/musica.ts`)
+
+| Arquivo · SHA-256 · bytes | Formato |
+|---|---|
+| `public/sounds/tema-respiracao.webm` · `a80f2c9ab5110f548db639a43392147baf5d940fee8cc9b1e2e82b9acee5f889` · 2 158 415 B | Opus 64 kbps |
+| `public/sounds/tema-respiracao.m4a` · `17d17bc70161276fa92ad1081b9cce6b65f9a96961df008d6f15adfb0cd5c722` · 1 957 519 B | AAC-LC 64 kbps, faststart |
+| `public/sounds/tema-chama.webm` · `d3fe23c51dc03f4853531845d7d09b80ab87b00b35df59a14e1940e15a3e4aa8` · 1 918 090 B | Opus 64 kbps |
+| `public/sounds/tema-chama.m4a` · `ca9837a0ecbff8870fdbc01ec3e1f3255d6e71d04e57d4ace4b64ca5c3e73260` · 1 854 223 B | AAC-LC 64 kbps, faststart |
+
+Origem: **gerada por IA no Suno pelo dono**, entregue em MP3 em 04/11/2026 (`Respiração subaquática.mp3`, SHA-256 `7983cf466e5f2c3d136825e0de64ce1fa7d242fa7ceeaa3ecae12095b7b476d2`, 5 369 075 B, 3:57,5; `concentração (trataka).mp3`, SHA-256 `9bbe6c791ef7267f74080eb4cdeef9c1c9c9362e0fa84ac636942b73455b54db`, 5 035 593 B, 3:44,9). Data e id de geração no Suno não registrados; `geradoEm` do manifesto é a data da entrega. Plano: ver "Licença" abaixo, sem afirmar nada além. O repo prova procedência, não originalidade (S9); a escuta é do dono (S8). Reencode: ganho −12,4 dB + fade-out de 2 s (Respiração) e −12,3 dB + fade-out de 3 s (Chama). Medidas: `SOM.md` §17.
+
 #### Licença — o que está declarado e o que falta
 
 ⚠️ **Pendência do dono — nada aqui afirma licença.** O Soulmon NÃO registra termo algum do Suno. Estado em

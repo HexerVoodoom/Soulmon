@@ -488,7 +488,7 @@ sono, descanso e mudo; guards de loudness e de manifesto; R-NOVA e D11.
 | `masmorra-mapa`: lobby, fim e retorno do Endless Rift (`DungeonGame`, fases `intro`/`ended`/`away`) e todo o Calabouço (`RogueDungeon`) | "Dungeon Theme" (`tema-masmorra`) | não |
 | `masmorra`: a descida (`fight`/`enemy-down`/`floor-clear`) | segue "Stone Hall Combat" | sim |
 | `evolucao`: `EvolutionCeremony` montada (cerimônia + cartão final) | "Evolution Theme" (`tema-evolucao`), por cima do estalo `playEvolve` | não |
-| `meditacao`: `RespiracaoGame` e `BolhasGame mode="calma"` | "Meditation Theme" (`tema-meditacao`) | não |
+| `meditacao`: `BolhasGame mode="calma"` (⚠️ 04/11/2026: a Respiração saiu para faixa própria, §17) | "Meditation Theme" (`tema-meditacao`) | não |
 
 Mesmo interruptor "Música" (§13), mesmo gesto (D11), crossfade de 1,2 s. R-NOVA (superfície nova nasce muda) foi revogada pelo dono SÓ para estas.
 
@@ -520,3 +520,16 @@ Fora do S6, fora do pré-cache; o `sw.js` já ignora `Range` em `/sounds/tema-`.
 ## 16. Trilha da intro "A Parede" (01/11/2026)
 
 Faixa `parede` (`tema-parede.webm`/`.m4a`, mono, 274 563 / 296 035 B, fora do S6, fora do pré-cache), superfície `intro` em `musica.ts`. **Nasce DESLIGADA (S2):** o botão de som no canto superior esquerdo da `IntroCinematica` é o gesto (D11) e chama `entrarNaSuperficie('intro')`; sem o botão, silêncio. Se o interruptor global de Música estiver desligado o botão nem aparece. Medidas e procedência: `Attributions.md`. Escuta final: do dono.
+
+## 17. Faixas próprias do Refúgio: Respiração subaquática e Chama (04/11/2026)
+
+Pedido do dono: as superfícies `respiracao` (`RespiracaoGame`) e `chama` (`ChamaGame`) deixam a "Meditation Theme" e ganham faixa própria, do Suno dele. Mesmo interruptor "Música", gesto (D11), crossfade, sem o degrau de combate. "Meditation Theme" fica nas Bolhas calmas e na superfície `meditacao`.
+
+| Faixa | Original (LUFS-S / integrado / TP) | Ganho | WebM (LUFS-S / integrado / TP) | M4A (LUFS-S / integrado / TP) | Bytes WebM / M4A |
+|---|---|---|---|---|---|
+| Respiração subaquática (237,53 s) | −15,6 / −15,7 / −4,3 | −12,4 dB + fade-out 2 s | −28,0 / −28,1 / −16,8 | −28,0 / −28,1 / −16,5 | 2 158 415 / 1 957 519 |
+| Concentração (Trataka) (224,93 s) | −15,7 / −15,5 / −3,6 | −12,3 dB + fade-out 3 s | −28,0 / −27,8 / −16,0 | −28,0 / −27,9 / −14,8 | 1 918 090 / 1 854 223 |
+
+Medido com ffmpeg-static `ebur128`, depois do encode (a mesma régua dá −28,0 / −28,1 / −15,1 na `tema-meditacao.webm` instalada). Trim: respiracao 0; chama −0,3 dB, porque +12 dB de reprodução daria integrado −15,8, acima do teto S3. Encode: `libopus -b:a 64k -vbr on -application audio` e `aac -b:a 64k -movflags +faststart`, `-vn -map_metadata -1`, 48 kHz, estéreo. Cada formato ≤ 2,5 MiB, fora do S6 e do pré-cache.
+
+**Loop:** o player não faz loop sem emenda; recomeça o arquivo depois de `pausaEntreVoltasS` com fade-in. As duas: fade-out na masterização, 8 s de respiro, fade-in de 3 s, como a "Meditation Theme". Nenhum agente ouviu as faixas; a escuta é do dono. Procedência: `Attributions.md`.

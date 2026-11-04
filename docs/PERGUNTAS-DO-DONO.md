@@ -577,6 +577,8 @@ P1–P8 e os 4 ajustes foram todos respondidos no modal. Nada pendente.
 
 ## Beta3 som
 
+- **Escuta das 2 faixas do Refúgio (04/11/2026) — sua, nenhum agente ouviu:** "Respiração subaquática" e "Concentração (Trataka)". Conferir volume relativo às outras trilhas, a volta (fade-out, 8 s de silêncio, fade-in de 3 s) e confirmar que foram geradas no plano Pro do Suno.
+
 - **Escuta final das 3 trilhas novas (S18, 26/10/2026) — sua, nenhum agente ouviu:** "Dungeon Theme" (lobby/fim/retorno do Endless Rift e todo o Calabouço), "Evolution Theme" (acompanha a cerimônia, junto do estalo antigo) e "Meditation Theme" (Respiração e Bolhas calmas). Conferir em fone e no alto-falante do celular: volume relativo ao tema/combate, loop sem estalo, e se a Evolution Theme (30 s) casa com a cerimônia (3 s + cartão). Conservador: as lutas da descida continuam no "Stone Hall Combat"; o estalo `playEvolve` continua.
 - **Procedência das 3 trilhas:** de qual gerador/plano vieram? `Attributions.md` registra só "fornecida pelo dono" e hash; nada de licença afirmada.
 

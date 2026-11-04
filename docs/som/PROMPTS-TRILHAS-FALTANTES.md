@@ -7,7 +7,7 @@
 ## 1. Inventário do que toca hoje
 
 O diretor é `src/utils/musica.ts` (tabela `FAIXA_DE_COMBATE`); o manifesto é `MUSICAS_DE_COMBATE` em
-`src/utils/sonsAssets.ts`; os arquivos moram em `public/sounds/`. Hoje existem **7 faixas**:
+`src/utils/sonsAssets.ts`; os arquivos moram em `public/sounds/`. Em 03/11/2026 existiam **7 faixas** (⚠️ 04/11/2026: entraram `tema-respiracao` e `tema-chama`, `SOM.md` §17; a Respiração não usa mais `meditacao`):
 
 | Faixa | Arquivo | Superfície (`Superficie`) |
 |---|---|---|
