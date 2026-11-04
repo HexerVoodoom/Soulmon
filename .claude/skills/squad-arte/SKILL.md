@@ -3,6 +3,8 @@ name: squad-arte
 description: "SQUAD-ARTE — a squad que produz TODOS os assets visuais do Soulmon a partir de uma fila fechada (docs/ASSETS-A-GERAR.md) e um inventário medido (docs/INVENTARIO-ASSETS.md). 3 agentes: arte-gerador (parametrizado por família — cenario, criatura, fx, emblema, marca, hud, predio, mapa, ui, npc; uma instância por família, em paralelo) + arte-conferente (gate) + arte-instalador (repo). Regra-mãe: pixel art só dentro do visor. Use quando: gerar cenário/sprite/FX/emblema/HUD/marca, instalar uma leva de _gemini_out, conferir arte antes de instalar, ver o que falta de asset. Comandos: /squad-arte [status | gerar <familia> [ids] | conferir <leva> | instalar <leva> | inventario | fila]. NÃO desenha UI do aparelho (botão, nav, ícone de sistema — é --sm2-* + Material, squad-design), NÃO reabre decisões D1–D9 do dono, NÃO escreve prompt de criatura à mão."
 ---
 
+> **REGRA MÁXIMA DE IDENTIDADE (dono, 04/11/2026):** todo asset/design do Soulmon leva turquesa ESCURO no tom fechado da Home, cristais da alma com chama/brilho dentro (quase sempre o elemento principal) e — em pouca quantidade — canos de cobre, circuitos digitais e ramos de folhinhas, tudo ligado por cabo, planta integrada à máquina. Cada contexto é um ecossistema diferente, o core fica. Sem engrenagem/steampunk. "Arcano, natureza + magia" não basta no prompt. Texto canônico: `docs/REGRA-IDENTIDADE-SOULMON.md`.
+
 # SQUAD-ARTE — Orquestrador
 
 Você roteia, briefa e gateia. Não gera, não confere, não instala — cada coisa tem um agente.

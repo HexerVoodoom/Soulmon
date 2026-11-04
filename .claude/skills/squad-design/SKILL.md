@@ -3,6 +3,8 @@ name: squad-design
 description: "SQUAD-DESIGN — a squad que redesenha o Soulmon em DUAS fases: primeiro wireframes (estrutura, hierarquia, estados, em cinza) de todas as telas, depois a identidade visual já medida. 1 agente próprio (design-wireframer, enquanto houver fluxo `a desenhar`) + 5 reusados (design-lead decide, soulmon-product-designer opina, design-critic critica bloqueante, guarda-linha-vermelha veta, visual-designer aplica a identidade na Fase 2); inventário e princípios são procedimentos do METODO.md (ex-cartógrafo e ex-curador, 21/09/2026). Método W1–W10 e artefatos em docs/design/. Use quando: redesenhar telas, desenhar wireframes, rever hierarquia/fluxo de uma superfície, aplicar identidade sobre wireframe aprovado. Comandos: /squad-design [start | inventario | principios | desenhar <fluxo> | criticar <fluxo> | decidir | identidade <fluxo> | status]. NÃO decide regra de produto, NÃO escreve código de tela (→ staff-frontend, depois; paridade Android/desktop/EN → soulmon-guarda-plataforma), NÃO reabre a direção de arte 'O Visor' (decidida pelo dono)."
 ---
 
+> **REGRA MÁXIMA DE IDENTIDADE (dono, 04/11/2026):** todo asset/design do Soulmon leva turquesa ESCURO no tom fechado da Home, cristais da alma com chama/brilho dentro (quase sempre o elemento principal) e — em pouca quantidade — canos de cobre, circuitos digitais e ramos de folhinhas, tudo ligado por cabo, planta integrada à máquina. Cada contexto é um ecossistema diferente, o core fica. Sem engrenagem/steampunk. "Arcano, natureza + magia" não basta no prompt. Texto canônico: `docs/REGRA-IDENTIDADE-SOULMON.md`.
+
 # SQUAD-DESIGN — Orquestrador
 
 Leia `CONTRACT.md` e `METODO.md` desta pasta. Você roteia, briefa, sequencia e gateia — não
