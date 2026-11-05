@@ -76,10 +76,10 @@ describe('focoSessao — salvar e concluir', () => {
     expect(saveSession(emptyDraft(), tasks, { id: 'x', day: '2026-10-10' })).toBeNull();
     expect(canSave(ready())).toBe(true);
   });
-  it('concluir o processo exige plano (não um número de tarefas) e é idempotente', () => {
+  it('concluir o processo não exige lista nem número de tarefas (§238) e é idempotente', () => {
     const empty = saveSession(ready(), tasks, { id: 's1', day: '2026-10-10' })!;
-    expect(canCompleteSession(empty)).toBe(false);
-    expect(completeSession(empty)).toBe(empty);
+    expect(canCompleteSession(empty)).toBe(true);
+    expect(completeSession(empty).status).toBe('completed');
     const one = saveSession(setFrog(ready(), 'a'), tasks, { id: 's2', day: '2026-10-10' })!;
     expect(canCompleteSession(one)).toBe(true);
     const done = completeSession(one);

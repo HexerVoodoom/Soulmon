@@ -58,15 +58,13 @@ function useNow(active: boolean): number {
   return now;
 }
 
-export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = () => {}, onFocusReward, onPlanReward, onFocusCycle, planInPrepare = false, onFocusStart, onFocusPause, onFocusResume, onFocusCancel }: {
+export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = () => {}, onFocusReward, onPlanReward, onFocusCycle, onFocusStart, onFocusPause, onFocusResume, onFocusCancel }: {
   language: Language; todayKey?: string; tasks?: WorkshopTask[]; onCompleteTask?: (taskId: string) => void;
   onFocusReward?: (request: FocusLootRequest, completedCycles: number) => FocusRewardResult;
   /** Recompensa por concluir o processo (1 item, teto diário no ledger). Sem ela, concluir não paga. */
   onPlanReward?: (request: FocusLootRequest) => FocusRewardResult;
   /** Um ciclo de foco (Pomodoro) terminou de verdade — a missão do dia conta o evento (REGISTRO §52). */
   onFocusCycle?: () => void;
-  /** beta3 F1: o planejamento da sessão mora no prédio "Prepare to Focus"; aqui só se executa a sessão pronta. */
-  planInPrepare?: boolean;
   /** beta3 F1: o timer de foco começou — abre a descida da masmorra em background e devolve o que aconteceu (para o aviso). */
   onFocusStart?: (focusEndsAt?: number) => 'started' | 'busy' | 'no-hp' | 'no-energy';
   /** A descida do foco acompanha o timer: pausar congela, continuar retoma (com o novo fim), cancelar retira o Soulmon (livre, com o que rendeu). */
@@ -83,8 +81,8 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
   const [tab, setTab] = useState<'session' | 'guides'>('session');
   const [session, setSession] = useState<FocoSession | null>(loadWorkshopSession);
   const [history, setHistory] = useState<DoneSession[]>(() => normalizeHistory(readJson<unknown>(STORAGE_KEYS.FOCO_WORKSHOPS, [])));
-  const [editing, setEditing] = useState(() => !planInPrepare && !loadWorkshopSession());
-  const [prepHint, setPrepHint] = useState(false);
+  const [editing, setEditing] = useState(() => !loadWorkshopSession());
+  const [completeBlocked, setCompleteBlocked] = useState(false);
   const [descent, setDescent] = useState<'started' | 'busy' | 'no-hp' | 'no-energy' | null>(null);
   const [initial, setInitial] = useState<SessionDraft>(emptyDraft);
   const [expanded, setExpanded] = useState(false);
@@ -138,7 +136,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
   };
   const pickMode = (m: FocoModeId) => { setMode(m); if (session?.status === 'ready') writeSession({ ...session, mode: m }); };
   const hoje = sessionsToday(days, day);
-  const startEdit = () => { if (planInPrepare) { setPrepHint(true); return; } setInitial(session ? toDraft(session) : emptyDraft()); setEditing(true); setTab('session'); };
+  const startEdit = () => { setInitial(session ? toDraft(session) : emptyDraft()); setEditing(true); setTab('session'); };
   const saveDraft = (draft: SessionDraft) => {
     const next = buildSession(draft, tasks, { id: `foco-${Date.now()}`, day, prev: session?.status === 'ready' ? session : null });
     if (!next) return;
@@ -152,8 +150,13 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
   };
   const completeSession = () => {
     if (!session || session.status === 'completed') return;
-    const next = finishSession(session);
-    if (next === session) return;
+    /* O botão nunca fica mudo: com o foco no relógio, diz o que falta. Na pausa, conclui e a pausa conta como ciclo fechado. */
+    if (timer?.phase === 'focus') { setCompleteBlocked(true); return; }
+    setCompleteBlocked(false);
+    const closed = timer?.sessionId === session.id ? { ...session, completedCycles: Math.min(99, session.completedCycles + 1) } : session;
+    const next = finishSession(closed);
+    if (next === closed) return;
+    if (timer?.sessionId === session.id) apply(null);
     writeSession(next);
     const h = recordDone(history, next);
     setHistory(h); writeJson(STORAGE_KEYS.FOCO_WORKSHOPS, h, { silent: true });
@@ -162,7 +165,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
     }
   };
   const deleteSession = () => { if (timer?.sessionId === session?.id) { if (timer?.phase === 'focus') { onFocusCancel?.(); setDescent(null); } apply(null); } writeSession(null); setEditing(false); setConfirmDelete(false); setExpanded(false); setLootNotice(null); };
-  const newSession = () => { if (planInPrepare) { setPrepHint(true); return; } writeSession(null); setPlanNotice(null); setInitial(emptyDraft()); setEditing(true); setExpanded(false); setTab('session'); };
+  const newSession = () => { writeSession(null); setPlanNotice(null); setInitial(emptyDraft()); setEditing(true); setExpanded(false); setTab('session'); };
   const left = timer ? remainingMs(timer, now) : FOCO_MODES[mode].focusMin * 60_000;
   const ended = timer?.status === 'ended';
   const timerLabel = timer ? (timer.phase === 'focus' ? (isPt ? 'Foco' : 'Focus') : (isPt ? 'Pausa' : 'Break')) : (isPt ? 'Foco' : 'Focus');
@@ -223,7 +226,6 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
                 ? (isPt ? 'O Soulmon está sem fôlego para descer agora.' : 'Your Soulmon is too out of breath to go down right now.')
                 : (isPt ? 'Sem energia para a descida agora.' : 'No energy for a descent right now.')}
         </p>}
-        {prepHint && <p role="status" data-oficina-prepare-hint style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{isPt ? 'Planeje a sessão no prédio "Preparar o Foco".' : 'Plan the session in the "Prepare to Focus" building.'}</p>}
         {hoje > 0 && <p data-oficina-hoje style={{ ...sm2Hint, margin: 0 }}>{isPt ? `Hoje: ${hoje} ${hoje === 1 ? 'foco' : 'focos'}` : `Today: ${hoje} ${hoje === 1 ? 'focus' : 'focuses'}`}</p>}
       </div>
 
@@ -266,13 +268,14 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
             ? `${isPt ? 'Sessão concluída. O Soulmon trouxe' : 'Session complete. Soulmon brought'}: ${planNotice.items.map(item => `${item.icon} ${isPt ? item.namePt : item.nameEn}`).join(' · ')}`
             : (isPt ? 'Sessão concluída. O limite de itens de hoje já foi alcançado.' : 'Session complete. Today’s item limit has been reached.')}
         </p>}
+        {completeBlocked && timer?.phase === 'focus' && <p role="alert" data-oficina-complete-blocked style={{ ...sm2Text, margin: 0 }}>{isPt ? 'O foco ainda está no relógio. Termine ou cancele o timer, lá em cima, e conclua a sessão.' : 'The focus timer is still on. Finish or cancel it, up top, then complete the session.'}</p>}
         {confirmDelete && <p role="alert" style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Excluir esta sessão?' : 'Delete this session?'}</p>}
         <footer style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {session.status === 'ready' && <>
             {!timer && <button type="button" onClick={startEdit} style={softLink}>{isPt ? 'Editar sessão' : 'Edit session'}</button>}
             {!confirmDelete ? <button type="button" onClick={() => setConfirmDelete(true)} style={softLink}>{isPt ? 'Excluir sessão' : 'Delete session'}</button> : <><button type="button" onClick={deleteSession} style={{ ...softLink, color: 'var(--sm2-danger-ink)' }}>{isPt ? 'Confirmar exclusão' : 'Confirm delete'}</button><button type="button" onClick={() => setConfirmDelete(false)} style={softLink}>{isPt ? 'Manter' : 'Keep'}</button></>}
             <button type="button" data-oficina-session-pomodoro disabled={!!timer} onClick={startSessionFocus} style={{ ...sm2Button('outline'), marginLeft: 'auto' }}>{isPt ? 'Iniciar Pomodoro' : 'Start Pomodoro'}</button>
-            <button type="button" data-oficina-complete-session disabled={!!timer || session.plan.length === 0} onClick={completeSession} style={sm2Button('primary')}>{isPt ? 'Concluir sessão' : 'Complete session'}</button>
+            <button type="button" data-oficina-complete-session onClick={completeSession} style={sm2Button('primary')}>{isPt ? 'Concluir sessão' : 'Complete session'}</button>
           </>}
           {session.status === 'completed' && <button type="button" data-oficina-new-session onClick={newSession} style={{ ...sm2Button('outline'), marginLeft: 'auto' }}>{isPt ? 'Nova sessão' : 'New session'}</button>}
         </footer>
