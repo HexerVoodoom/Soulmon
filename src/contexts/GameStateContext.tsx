@@ -10,6 +10,7 @@ import { sanitizeBosqueArvores, type BosqueArvores } from '../utils/bosqueArvore
 import { sanitizeFichaJornada, type FichaJornada } from '../utils/fichaJornada';
 import { sanitizeSpritePose, mergeSpritePose, registerSpritePoseWriter, registerSpritePoseReader, type SpritePose } from '../utils/spritePose';
 import { sanitizeChipsStage } from '../utils/specialItemUse';
+import { sanitizeGlitchtamaDrop } from '../utils/glitchtamaDrop';
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS, BB_MAX_HP } from '../types/progression';
@@ -475,6 +476,8 @@ export interface GameState {
   /** Quantos 🌀 Glitchtama foram usados no DIA DO JOGADOR — o teto que impede
    *  a masmorra de comprar a escada de evolução (`utils/specialItemUse.ts`). */
   glitchtamaUse?: { day: string; used: number };
+  /** O drop RARO do 🌀 na masmorra: semana (segunda) do último drop e quantos caíram (teto 1/semana — `utils/glitchtamaDrop.ts`). */
+  glitchtamaDrop?: { week: string; dropped: number };
   /** Tetos da comida premium (drop por dia/semana, uso por dia) — `utils/premiumFood.ts`. */
   premiumFood?: { day: string; dropped: number; used: number; week: string; weekDropped: number };
   /** Chips usados no ESTÁGIO atual, todos os tipos (D-97, limite 3 — `utils/specialItemUse.ts`). */
@@ -1372,6 +1375,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           const g = obj<unknown>(loadedState.glitchtamaUse);
           return typeof g.day === 'string' ? { day: g.day, used: num(g.used, 0) } : undefined;
         })(),
+        // Teto semanal do drop do Glitchtama. Save antigo entra `undefined` = nenhum drop na semana (nunca fica travado).
+        glitchtamaDrop: sanitizeGlitchtamaDrop(loadedState.glitchtamaDrop),
         // D-97: chips por estágio. Ausente/lixo → `undefined` (0 usados): o save antigo
         // não registra uso de chip, então não há como saber quem já usou — ninguém é
         // bloqueado por dado que não existe. Presente e válido: mantém (idempotente).

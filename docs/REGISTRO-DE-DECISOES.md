@@ -4010,3 +4010,12 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 
 **O que falsificaria.** Jogadores alternando para fugir de custo de cuidado de forma que o jogo não previu. **Rollback:** reverter o PR.
 
+## §226 — Glitchtama raro: 1% por marco, no máximo 1 por semana (05/11/2026, decisão do dono)
+
+**Decisão.** O dono achou que o Soulmon evoluía rápido demais e que o Glitchtama caía demais (era garantido 1 por descida, no primeiro marco). Agora cada marco (camada múltipla de 5) sorteia **1%**, com **teto de 1 drop por semana** do jogador (segunda a domingo, dia do jogador), gravado no save (`glitchtamaDrop {week, dropped}`). O limite de 1 uso por dia e o estoque já guardado NÃO mudam. A regra é uma função só (`utils/glitchtamaDrop.ts`), usada pela tela (`DungeonGame`) e pela descida fora do app (`dungeonAway.ts`).
+
+**Como fica.** Marco sem drop é silencioso (sem aviso, sem item); a recompensa da run (Vínculo, fragmentos, `dungeonRunsCompleted`) continua 1× por descida, no primeiro marco. O sorteio da descida fora do app é semeado por (seed, camada): reabrir o app ou reprocessar não re-sorteia nem dá o item duas vezes. Save antigo sem o campo entra como "nenhum drop na semana".
+
+**Alternativa que perdeu.** Manter o garantido e baixar só o uso (já era 1/dia); ou teto diário em vez de semanal.
+
+**O que falsificaria.** Jogadores relatando que nunca viram um Glitchtama em meses (1% x ~1 marco/dia pode ser baixo demais: subir a chance) ou a evolução ainda rápida demais mesmo assim (o gauge de evolução, não o item, é o gargalo). Rollback: `GLITCHTAMA_DROP_CHANCE` e `GLITCHTAMA_DROPS_PER_WEEK` em `utils/glitchtamaDrop.ts`.

@@ -111,7 +111,7 @@ export interface SpecialItem {
   descEn: string;
 }
 
-// 🌀 Glitchtama — dropped by completing all 5 dungeon floors. Using it grants
+// 🌀 Glitchtama — rare drop at dungeon milestones (1% per 5 layers, max 1/week; `glitchtamaDrop.ts`). Using it grants
 // one perfect day (an evolution point), no questions asked.
 export const GLITCHTAMA_EMOJI = '🌀';
 
