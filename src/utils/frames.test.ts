@@ -20,8 +20,8 @@ describe('molduras — catálogo', () => {
     expect(rank).toEqual(TOURNAMENT_LADDER.map(t => t.id));
   });
 
-  it('as quatro origens existem, cada uma com o dado que a descreve', () => {
-    expect(new Set(FRAMES.map(f => f.origin))).toEqual(new Set(['rank', 'shop', 'achievement', 'event']));
+  it('as cinco origens (básica + quatro) existem, cada uma com o dado que a descreve', () => {
+    expect(new Set(FRAMES.map(f => f.origin))).toEqual(new Set(['basic', 'rank', 'shop', 'achievement', 'event']));
     for (const f of FRAMES) {
       expect(f.namePt && f.nameEn).toBeTruthy();
       if (f.origin === 'shop') expect(f.price).toBeGreaterThan(0);
