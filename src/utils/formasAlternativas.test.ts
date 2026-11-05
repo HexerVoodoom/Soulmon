@@ -41,7 +41,8 @@ describe('formas alternativas (05/11/2026)', () => {
 
   it('equipar só o que foi desbloqueado; sempre 3 ocultas; sanitizador tolerante', () => {
     expect(equiparFormaAlt({ 'mega-power': ['fogo'] }, undefined, 'mega-power', 'agua')).toBeUndefined();
-    expect(ocultasDaForma(undefined, 'mega-power')).toBe(3);
+    expect(ocultasDaForma(undefined, 'mega-power', 40)).toBe(3);
+    expect(ocultasDaForma({ 'mega-power': ['a', 'b'] }, 'mega-power', 3)).toBe(1);
     expect(sanitizeFormasAlt({ 'mega-power': ['fogo', 'fogo', 7, 'X'], rookie: ['fogo'], lixo: 1 })).toEqual({ 'mega-power': ['fogo'] });
     expect(sanitizeFormaAltEquipada('x')).toBeUndefined();
   });

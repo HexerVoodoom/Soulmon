@@ -9,6 +9,8 @@ import { RitualDialog } from '../ritual/RitualKit';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { SoulNode } from './SoulNode';
 import { ALT_ORIGINAL, ocultasDaForma, type FormasAlt } from '../../utils/formasAlternativas';
+import { ALL_ELEMENT_IDS } from '../../utils/elementDex';
+import { CURATED_ELEMENT_IDS } from '../../utils/elementosCurados';
 import { elementoNomeDe } from '../../utils/soulProfile/ficha/elementoNome';
 
 export interface FormaAltItem {
@@ -29,7 +31,7 @@ interface Props {
 }
 
 export function FormasAlternativasSheet({ isPt, formId, nomeDaForma, itens, formasAlt, equipada, onEquip, onClose }: Props) {
-  const ocultas = ocultasDaForma(formasAlt, formId);
+  const ocultas = ocultasDaForma(formasAlt, formId, new Set([...ALL_ELEMENT_IDS, ...CURATED_ELEMENT_IDS]).size);
   const equipadaEf = equipada ?? itens[0]?.elemento;
   const nomeEl = (el: string) => (el === ALT_ORIGINAL || el === '__atual' ? (isPt ? 'Original' : 'Original') : (isPt ? elementoNomeDe(el).pt : elementoNomeDe(el).en));
   const titulo = isPt ? 'Formas alternativas' : 'Alternate forms';

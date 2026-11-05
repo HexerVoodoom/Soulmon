@@ -30,7 +30,6 @@ import {
   emptySpriteLibrary, type SpriteLibrary,
 } from '../utils/spriteLibrary';
 import { baseFormOfKey } from '../utils/formasAlternativas';
-import { elementoNomeDe } from '../utils/soulProfile/ficha/elementoNome';
 import { spriteBatch, birthBatch, type SpriteTriggerInput } from '../utils/spriteTrigger';
 
 /** Depois de um lote com falha, quanto esperar antes de reavaliar o próximo (5 min). */
@@ -147,12 +146,14 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
       // uma falha inventada aqui gastaria o teto manual do jogador por um erro
       // que é nosso. Melhor não partir.
       // Forma alternativa (`forma@elemento`, utils/formasAlternativas.ts): o prompt é o da forma, com o elemento da variante.
-      const promptDe = (id: string): CreatureStage | undefined => {
-        const base = byForm.get(baseFormOfKey(id));
+      const promptDe = (id: string): CreatureStage | undefined => byForm.get(baseFormOfKey(id));
+      // O nome do elemento entra só na hora do pedido (import sob demanda: fora do bundle de entrada).
+      const comElemento = async (id: string, st: CreatureStage): Promise<CreatureStage> => {
         const el = id.includes('@') ? id.split('@')[1] : null;
-        if (!base || !el || base.imagePrompt.includes('Elemental theme of this form')) return base;
+        if (!el || st.imagePrompt.includes('Elemental theme of this form')) return st;
+        const { elementoNomeDe } = await import('../utils/soulProfile/ficha/elementoNome');
         const frase = ` Elemental theme of this form: ${elementoNomeDe(el).en}.`;
-        return { ...base, imagePrompt: base.imagePrompt + frase, imagePromptFallback: base.imagePromptFallback + frase };
+        return { ...st, imagePrompt: st.imagePrompt + frase, imagePromptFallback: st.imagePromptFallback + frase };
       };
       const alvos = formIds.filter(id => promptDe(id));
       if (alvos.length === 0) return;
@@ -162,8 +163,9 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
 
       void runSpriteBatch(alvos, {
         generate: async formId => {
-          const stage = promptDe(formId);
-          if (!stage) throw new Error(`forma sem prompt: ${formId}`);
+          const st0 = promptDe(formId);
+          if (!st0) throw new Error(`forma sem prompt: ${formId}`);
+          const stage = await comElemento(formId, st0);
           // Cadeia image2image: a forma anterior já existe quando a próxima é
           // pedida — é o que a geração incremental compra de graça (§8.6).
           // Na regeneração manual (`opts.regenerate`) ou quando a forma gerada é a PRÓPRIA forma atual,

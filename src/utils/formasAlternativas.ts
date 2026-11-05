@@ -13,8 +13,6 @@
  * Cosmético: não muda atributo, galho nem regra — só qual desenho representa a forma. Funções PURAS; o `App.tsx` só delega.
  */
 import type { SpriteLibrary } from './spriteLibrary';
-import { ALL_ELEMENT_IDS } from './elementDex';
-import { CURATED_ELEMENT_IDS } from './elementosCurados';
 import { getStageLevel } from '../types/progression';
 import type { ElementoJornada } from './elementoJornada';
 
@@ -120,8 +118,7 @@ export function spriteVisorOf(lib: SpriteLibrary, formas: FormasAlt | undefined,
 }
 
 /** Quantos elementos ainda faltam desbloquear nesta forma (para o número de "???"). */
-export function ocultasDaForma(formas: FormasAlt | undefined, formId: string): number {
-  const total = new Set([...ALL_ELEMENT_IDS, ...CURATED_ELEMENT_IDS]).size;
+export function ocultasDaForma(formas: FormasAlt | undefined, formId: string, total: number): number {
   const tem = formas?.[formId]?.length ?? 1;
   return Math.max(0, Math.min(ALT_OCULTAS, total - Math.max(1, tem)));
 }

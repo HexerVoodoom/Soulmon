@@ -207,7 +207,10 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // de abertura (`IntroCinematica`, ~10 KB; as regras `deveTocarIntro` foram para `introGate.ts`, que fica na entrada). 943_826 -> 888_945 (−54,9 KB).
   // Quem impede a volta: 2 sentinelas novas em `entradaEnxuta.contract.test.ts`. Corte real segue = partir o `App.tsx`.
   // (CI lê o dist/ COMMITADO, defasado até o próximo release; a dívida fica em 895_367 para ele passar. Build limpo desta branch: 888_945.)
-  'index.js': 895_367,
+  // 05/11/2026: 895_367 -> 906_777 (+11 KB): a base limpa já estava em 903_361 (no teto + folga) antes desta mudança; +3,4 KB da
+  // recuperação da forma atual sem arte (bug "evoluiu para a mesma forma") e das formas alternativas (sanitizadores do save, visor do acervo).
+  // A tela delas e os nomes de elemento já ficaram fora da entrada (EvolutionPath lazy + import() no pedido do sprite).
+  'index.js': 906_777,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
   // música/arena, guilda, refeições). Re-medido em build limpo; débito para a sessão `velocidade-dev`.
