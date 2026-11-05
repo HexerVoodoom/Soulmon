@@ -473,7 +473,7 @@ export interface ArenaPlayerCfg {
   escolaBasica?: EscolaSkillId;
   /** Absent = neutral element (what the balance sample measures). */
   elements?: ArenaElements;
-  /** §225: elemento do especial para a regra nova. Só a medição passa enquanto `EFEITOS_PVE_LIGADOS` for `false`. */
+  /** §226: elemento do especial para a regra nova. Só a medição passa enquanto `EFEITOS_PVE_LIGADOS` for `false`. */
   efeitoElemento?: string;
 }
 
@@ -603,7 +603,7 @@ export interface ArenaRunConfig {
   ladder?: number;
   /** §222: todos os inimigos deste elemento (mede o pior e o melhor confronto). */
   foeElement?: string;
-  /** §225: ver `ArenaPlayerCfg.efeitoElemento`. */
+  /** §226: ver `ArenaPlayerCfg.efeitoElemento`. */
   efeitoElemento?: string;
 }
 

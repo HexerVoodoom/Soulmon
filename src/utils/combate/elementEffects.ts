@@ -1,5 +1,5 @@
 /**
- * EFEITO DE COMBATE PELO ELEMENTO DO ESPECIAL (dono, 04/11/2026; REGISTRO §225).
+ * EFEITO DE COMBATE PELO ELEMENTO DO ESPECIAL (dono, 04/11/2026; REGISTRO §226).
  *
  * O efeito depende do elemento do ESPECIAL, não do Soulmon: água com especial de fogo pode queimar. E nem todo especial
  * tem efeito: a FAMÍLIA continua decidindo a mecânica e `direct` é só dano. O elemento apenas diz qual é o "sabor" de
@@ -8,7 +8,7 @@
  * Dono único da tabela. Função pura: o núcleo não conhece elemento.
  */
 import { DERIVED_ELEMENT_PAIRS } from '../soulProfile/derivedElements';
-import type { Special, SpecialEffect, SpecialFamily } from './specials';
+import { EFFECT_TUNE_PESADELO, type Special, type SpecialEffect, type SpecialFamily } from './specials';
 
 export type EfeitoElemento =
   | 'queimadura' | 'veneno' | 'maldicao' | 'silencio' | 'lentidao' | 'curaContinua'
@@ -58,7 +58,7 @@ export function efeitoVisivel(
 }
 
 /**
- * §225: as regras novas LIGADAS em PvE. Só entra o que passa em ±3pp no gate `efeitosPve.medicao.test.ts`.
+ * §226: as regras novas LIGADAS em PvE. Só entra o que passa em ±3pp no gate `efeitosPve.medicao.test.ts`.
  * Lentidão reprovou: nenhum ajuste passou nos três motores ao mesmo tempo.
  */
 export const EFEITOS_PVE_LIGADOS: readonly EfeitoElemento[] = ['silencio', 'curaContinua'];
@@ -74,8 +74,8 @@ const MECANICA: Partial<Record<EfeitoElemento, SpecialEffect>> = {
 };
 
 /** O especial com a regra do elemento. Sem elemento ou sem mecânica: o mesmo objeto, sem `effect`. PvP nunca chama. */
-export function comEfeitoDoElemento(sp: Special, elemento: string | null | undefined): Special {
+export function comEfeitoDoElemento(sp: Special, elemento: string | null | undefined, pesadelo = false): Special {
   const e = efeitoDoEspecial(sp.family, elemento);
   const effect = e ? MECANICA[e] : undefined;
-  return effect ? { ...sp, effect } : sp;
+  return effect ? { ...sp, effect, ...(pesadelo ? { tune: EFFECT_TUNE_PESADELO } : {}) } : sp;
 }

@@ -571,7 +571,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/perfil/perfilNivel.render.test.tsx`.
 
 ### `src/components/perfil/ProfileEditor.tsx`
-**Dono de:** a folha "Editar perfil" (Configurações › Perfil): e-mail desativado ("em breve"), moldura (`FrameSelector`, contexto de rank vivo via `getRank(undefined, saveId)`) e foto em grade com busca e filtro por domínio (miniaturas lazy, 64 px, cabe em 375 px). Só IDs de lista fechada saem daqui.
+**Dono de:** a folha "Editar perfil" (Configurações › Perfil): e-mail desativado ("em breve"), moldura (`FrameSelector` — sem opção "sem moldura": o frame básico preto, grátis e padrão, vem primeiro; contexto de rank vivo via `getRank(undefined, saveId)`) e foto em grade com busca e filtro por domínio (miniaturas lazy, 64 px, cabe em 375 px). Só IDs de lista fechada saem daqui.
 **Exports:** `ProfileEditor(props)`.
 **Chamado por:** `src/components/SettingsPage.tsx`.
 **Régua:** `src/utils/avatar.test.ts`.
@@ -1536,6 +1536,14 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/components/EvoRecapModal.render.test.tsx`.
 
+### `src/components/EvolutionStatsModal.tsx`
+**Dono de:** o modalzinho de DEPOIS da evolução (05/11/2026, pedido do dono): Vida, Ataque, Defesa e Velocidade do Soulmon em "antes → depois (+N)". Só desenha; os números vêm de `utils/evolutionStatsDelta.ts`. Delta 0 = "+0", negativo = "−N" (peso 400, sem vermelho). Sem animação própria (o fade do `ModalSheet` já respeita movimento reduzido). Glifos existentes: `favorite`, `swords`, `military_tech`, `bolt`.
+**Props principais:** `delta` (`EvoStatsDelta`), `stageName`, `language`, `onClose()`.
+**Exports:** `EvolutionStatsModal(props)`.
+**Depende de:** `form/FormKit` (`ModalSheet`, centralizado), `ui/Icon`, `utils/evolutionStatsDelta`, `utils/soulXP` (`soulLevelLabel`).
+**Chamado por:** `src/App.tsx` (id `evoStats` da fila de apresentação).
+**Régua:** `src/components/EvolutionStatsModal.render.test.tsx`.
+
 ### `src/components/ui/RewardPreview.tsx`
 **Dono de:** a linha ÚNICA de recompensas antes e depois de uma ação (`docs/RECOMPENSAS-VISIVEIS.md`, 29/10/2026). `mode="before"`: valor fixo `+N`, faixa `até N`/`up to N`, ou só o ícone; `mode="after"`: o valor realmente concedido (some se 0). Nenhuma regra mora aqui: quem chama deriva os números das funções que concedem.
 **Props principais:** `items`, `mode` (`'before' | 'after'`), `language`, `size` (padrão 20).
@@ -1641,7 +1649,7 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Chamado por:** `SettingsPage.tsx` (Tobi em Configurações, Faro em "Sua conta"), `RestWindowCard.tsx` (Sona), (a Nuri, `cuidados`, não é mais usada na Mochila desde 14/10/2026; sem chamada hoje).
 
 ### `src/components/ui/AvatarFrame.tsx`
-**Dono de:** o DESENHO das molduras de avatar (R8, 04/10/2026) e o seletor. `AvatarFrame` envolve o avatar (normalmente um `MiniGlass`) com a ARTE da moldura (`FRAME_ART`, `utils/frames.ts`: canvas 192² com abertura de 96 centrada) desenhada por cima, a abertura em 94% do lado do avatar e o transbordo reservado na `margin`; id sem arte cai no anel CSS do `look`; `null` = sem moldura. Mestre/Grão-Mestre escrevem o `#N` (`plaque`) como texto vivo na plaquinha. `FrameSelector` lista "Sem moldura" + o catálogo: as disponíveis são botões (`aria-pressed`), as trancadas mostram como se consegue (tracejado, `aria-disabled`, fora do Tab — nunca opacidade).
+**Dono de:** o DESENHO das molduras de avatar (R8, 04/10/2026) e o seletor. `AvatarFrame` envolve o avatar (normalmente um `MiniGlass`) com a ARTE da moldura (`FRAME_ART`, `utils/frames.ts`: canvas 192² com abertura de 96 centrada) desenhada por cima, a abertura em 94% do lado do avatar e o transbordo reservado na `margin`; id sem arte cai no anel CSS do `look`; o frame BÁSICO (`origin: 'basic'`, preto, 2px, grátis e padrão de todos) é só `outline` sem margem — não desloca layout — e `null` não existe mais (`frameOrBasic`/`resolveEquippedFrame` devolvem o básico). Mestre/Grão-Mestre escrevem o `#N` (`plaque`) como texto vivo na plaquinha. `FrameSelector` lista o catálogo: as disponíveis são botões (`aria-pressed`), as trancadas mostram como se consegue (tracejado, `aria-disabled`, fora do Tab — nunca opacidade).
 **Exports:** `AvatarFrame({ frame, children, style?, size = 32, plaque? })` · `FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt })`.
 **Chamado por:** `src/components/TournamentPage.tsx` (linha do próprio jogador no ranking; diálogo "Moldura" aberto pela folha das faixas).
 **Régua:** `src/components/TournamentPage.r8.render.test.tsx`.

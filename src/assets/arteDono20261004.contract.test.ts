@@ -21,8 +21,10 @@ const ls = (dir: string) => fs.readdirSync(path.join(ASSETS, dir)).filter(f => f
 
 describe('molduras — FRAMES ↔ FRAME_ART ↔ assets/soulmon/molduras', () => {
   it('toda moldura do catálogo tem arte, e nenhuma arte sem moldura', () => {
-    expect(Object.keys(FRAME_ART).sort()).toEqual(FRAMES.map(f => f.id).sort());
-    expect(ls('soulmon/molduras')).toEqual(FRAMES.map(f => f.id).sort());
+    // o frame básico (preto simples, pedido do dono) é CSS puro: a única moldura sem arte, de propósito
+    const comArte = FRAMES.filter(f => f.origin !== 'basic').map(f => f.id).sort();
+    expect(Object.keys(FRAME_ART).sort()).toEqual(comArte);
+    expect(ls('soulmon/molduras')).toEqual(comArte);
   });
   it('id inventado não ganha arte (o AvatarFrame cai no anel CSS)', () => {
     expect(frameArt('nao-existe')).toBeUndefined();

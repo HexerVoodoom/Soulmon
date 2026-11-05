@@ -152,6 +152,7 @@ export function NightmareBattle({
     combatant: soulCombatant(estado, bonusTalento),
     family: hexFamily(dungeonFamily(par?.especial), hx),
     efeitoElemento: efeitoElementoPve(hexFamily(dungeonFamily(par?.especial), hx), ident.especial.elemento),
+    pesadelo: true,
     jeito: jeitoDaProfissao(profissao),
     startShield: rift.startShield,
   // eslint-disable-next-line react-hooks/exhaustive-deps

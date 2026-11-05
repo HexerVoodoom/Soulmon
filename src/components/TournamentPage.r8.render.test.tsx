@@ -98,8 +98,10 @@ describe('R8 — molduras (cosmético)', () => {
     expect(document.querySelector('[data-frame-option="rank-ouro"][data-frame-locked]')).not.toBeNull();
     fireEvent.click(document.querySelector('button[data-frame-option="loja-brasa"]') as HTMLElement);
     expect(onEquip).toHaveBeenCalledWith('loja-brasa');
-    fireEvent.click(document.querySelector('button[data-frame-option="none"]') as HTMLElement);
-    expect(onEquip).toHaveBeenLastCalledWith(null);
+    // não existe "sem moldura": a básica é a primeira opção, grátis
+    expect(document.querySelector('[data-frame-option="none"]')).toBeNull();
+    fireEvent.click(document.querySelector('button[data-frame-option="basico"]') as HTMLElement);
+    expect(onEquip).toHaveBeenLastCalledWith('basico');
   });
 
   it('a linha de OUTRA pessoa no ranking leva a moldura que o servidor publicou (frameId)', async () => {
@@ -115,5 +117,21 @@ describe('R8 — molduras (cosmético)', () => {
     });
     fireEvent.click(ind);
     expect(document.querySelector('[data-avatar-frame="rank-ouro"]')).not.toBeNull();
+  });
+
+  it('perfil visto por outros, sem frameId ou com "none", mostra o frame básico (e o meu, sem escolha, também)', async () => {
+    stubApi({ rank: [
+      { id: saveId, name: 'Eu', stage: 'rookie', points: 40, lifetime: 150 },
+      { id: 'b'.repeat(32), name: 'Ana', stage: 'rookie', points: 30, lifetime: 100 },
+      { id: 'c'.repeat(32), name: 'Bia', stage: 'rookie', points: 20, lifetime: 90, frameId: 'none' },
+    ] });
+    render(<TournamentPage {...base} ownedFrames={[]} equippedFrame={null} />);
+    const ind = await waitFor(() => {
+      const el = document.querySelector('[data-tier-indicator]');
+      expect(el).not.toBeNull();
+      return el as HTMLElement;
+    });
+    fireEvent.click(ind);
+    expect(document.querySelectorAll('[data-avatar-frame="basico"]').length).toBeGreaterThanOrEqual(3);
   });
 });

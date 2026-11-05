@@ -1,5 +1,5 @@
 /**
- * §225: GATE da regra nova em PvE. Pareado: mesma semente e célula, com e sem o efeito do elemento.
+ * §226: GATE da regra nova em PvE. Pareado: mesma semente e célula, com e sem o efeito do elemento.
  * Critério: vitória dentro de ±3pp em Arena, Masmorra e Pesadelo. Só efeito que passa entra em `EFEITOS_PVE_LIGADOS`.
  */
 import { describe, expect, it, vi } from 'vitest';
@@ -8,7 +8,7 @@ import { simulateDungeonRunV3, simulateNightmareV3 } from '../dungeonFight';
 import { REFERENCE_BUILD_NAMES, REFERENCE_BUILDS, RULER_LEVELS, combatantAt } from './level';
 import { EFEITOS_PVE_LIGADOS, comEfeitoDoElemento } from './elementEffects';
 import { groupFightSteps } from './group';
-import { EFFECT_TUNE, specialOf, type SpecialFamily } from './specials';
+import { EFFECT_TUNE, EFFECT_TUNE_PESADELO, specialOf, type SpecialFamily } from './specials';
 
 vi.setConfig({ testTimeout: 600_000 });
 
@@ -33,7 +33,7 @@ const fmt = (d: number[]) => `arena ${d[0].toFixed(1)} masmorra ${d[1].toFixed(1
 
 const GRADE = process.env.EFEITOS_GRADE === '1';
 
-describe('§225: efeitos em PvE', () => {
+describe('§226: efeitos em PvE', () => {
   it('sem par no elemento, o especial é o mesmo objeto', () => {
     const sp = specialOf('direct');
     expect(comEfeitoDoElemento(sp, 'fogo')).toBe(sp);
@@ -81,18 +81,16 @@ describe('§225: efeitos em PvE', () => {
 
   it.skipIf(!GRADE)('grade de calibração (só com EFEITOS_GRADE=1)', () => {
     const t0 = { ...EFFECT_TUNE };
-    for (const x of [1, 2, 3, 4]) {
-      Object.assign(EFFECT_TUNE, { silenceHits: x, silenceKeep: 1 });
-      console.log(`[grade] silencio X=${x} keep=1 | ${fmt(deltas('defDebuff', 'som'))}`);
-    }
-    for (const sc of [0.05, 0.1, 0.15, 0.25]) for (const k of [0.3, 0.4, 0.5, 0.6]) {
+    const p0 = { ...EFFECT_TUNE_PESADELO };
+    for (const sc of [0.15, 0.2, 0.25, 0.3]) for (const k of [0.55, 0.6, 0.65, 0.7]) {
       Object.assign(EFFECT_TUNE, { slowScale: sc, slowKeep: k });
-      console.log(`[grade] lentidao scale=${sc} keep=${k} | ${fmt(deltas('defDebuff', 'ar'))}`);
+      console.log(`[grade] AM scale=${sc} keep=${k} | ${fmt(deltas('defDebuff', 'ar'))}`);
     }
-    for (const h of [1.02, 1.04, 1.06, 1.08, 1.1]) {
-      Object.assign(EFFECT_TUNE, { hotScale: h });
-      console.log(`[grade] cura hot=${h} | ${fmt(deltas('shield', 'vida'))}`);
+    for (const sc of [0.02, 0.05, 0.1, 0.15]) for (const k of [0.35, 0.4, 0.45, 0.5]) {
+      Object.assign(EFFECT_TUNE_PESADELO, { slowScale: sc, slowKeep: k });
+      console.log(`[grade] P scale=${sc} keep=${k} | ${fmt(deltas('defDebuff', 'ar'))}`);
     }
+    Object.assign(EFFECT_TUNE_PESADELO, p0);
     Object.assign(EFFECT_TUNE, t0);
   });
 });

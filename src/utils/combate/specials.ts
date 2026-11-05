@@ -31,22 +31,27 @@ export const SPECIAL_POWER: Readonly<Record<SpecialFamily, number>> = {
   spdBuff: 1.82,
 };
 
-/** §225: regra nova do núcleo de grupo (só PvE; `fight.ts` ignora). Ausente = a família pura, byte a byte. */
+/** §226: regra nova do núcleo de grupo (só PvE; `fight.ts` ignora). Ausente = a família pura, byte a byte. */
 export type SpecialEffect = 'hot' | 'slow' | 'silence';
 
 export interface Special {
   readonly family: SpecialFamily;
   readonly power: number;
   readonly effect?: SpecialEffect;
+  /** §226: botões próprios do Pesadelo; ausente = os de `EFFECT_TUNE`. */
+  readonly tune?: EffectTune;
 }
 
 /**
- * §225: os botões das mecânicas novas. Só o gate `efeitosPve.medicao.test.ts` autoriza mudar.
+ * §226: os botões das mecânicas novas. Só o gate `efeitosPve.medicao.test.ts` autoriza mudar.
  * - `silenceHits`: golpes do alvo sem poder soltar o especial, qualquer que seja ele. `silenceKeep`: fração do orçamento que segue como `defDebuff`.
  * - `slowScale`: multiplica os golpes de lentidão. `slowKeep`: fração do orçamento que segue como `defDebuff`.
  * - `hotScale`: multiplica o total curado pelos 3 pulsos.
  */
 export const EFFECT_TUNE = { silenceHits: 2, silenceKeep: 1, slowScale: 0.25, slowKeep: 0.6, hotScale: 1.05 };
+export type EffectTune = typeof EFFECT_TUNE;
+/** §226 (dono, 05/11): o Pesadelo pode ter balanço próprio para qualquer mecânica. */
+export const EFFECT_TUNE_PESADELO: EffectTune = { ...EFFECT_TUNE };
 
 export function specialOf(family: SpecialFamily): Special {
   return { family, power: SPECIAL_POWER[family] };

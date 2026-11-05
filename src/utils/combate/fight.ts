@@ -141,7 +141,7 @@ export interface FighterFx {
   readonly shield: number;
   readonly shieldHits: number;
   readonly dot: number;
-  /** §225, só `group.ts`: golpes de silêncio, de lentidão, e pulsos de cura contínua que faltam. */
+  /** §226, só `group.ts`: golpes de silêncio, de lentidão, e pulsos de cura contínua que faltam. */
   readonly nSil?: number;
   readonly nSlow?: number;
   readonly hot?: number;

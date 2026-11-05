@@ -44,8 +44,10 @@ export interface DungeonPlayerCfg {
   dodge?: Readonly<Record<DodgeGrade, number>>;
   /** `tal-pve-07` (Tarefa B): opening shield, fraction of the player's HP. Absent = 0 (the gates' simulations never set it). */
   startShield?: number;
-  /** §225: elemento do especial para a regra nova. Só a medição passa enquanto `EFEITOS_PVE_LIGADOS` for `false`. */
+  /** §226: elemento do especial para a regra nova. Só a medição passa enquanto `EFEITOS_PVE_LIGADOS` for `false`. */
   efeitoElemento?: string;
+  /** §226: usa os botões próprios do Pesadelo. */
+  pesadelo?: boolean;
 }
 
 /** The family of the special: the SPECIAL skill's own `familia` (PR9); without it, the default of its school. */
@@ -57,7 +59,7 @@ const jeitoOf = (p: DungeonPlayerCfg): JeitoPve => jeitoParaPve(p.jeito ?? JEITO
 export function dungeonPlayerSide(p: DungeonPlayerCfg, opening = true): FightSide {
   return {
     combatant: { ...p.combatant, hp: p.combatant.hp * jeitoOf(p).hp },
-    special: comEfeitoDoElemento(specialOf(p.family), p.efeitoElemento),
+    special: comEfeitoDoElemento(specialOf(p.family), p.efeitoElemento, p.pesadelo),
     area: 'single',
     startShield: opening ? p.startShield : 0,
   };
@@ -159,7 +161,7 @@ export interface SequenceConfig {
   /** Tarefa B: `tal-pve-07` (opening shield) and `tal-pve-03` (extra heal between floors). The gates never set them. */
   startShield?: number;
   healBoost?: number;
-  /** §225: ver `DungeonPlayerCfg.efeitoElemento`. */
+  /** §226: ver `DungeonPlayerCfg.efeitoElemento`. */
   efeitoElemento?: string;
   /** Knobs of the gates only. */
   knobs?: { foe?: DungeonFoeKnobs; contraTeto?: number; ring?: Readonly<Record<RingGrade, number>>; dodge?: Readonly<Record<DodgeGrade, number>> };
@@ -194,7 +196,7 @@ export function playSequence(
   for (let i = 0; i < refs.length; i++) {
     const ref = refs[i];
     const fseed = dungeonFightSeed(seed, ref.floor, ref.slot);
-    const f = dungeonFight(p, ref.nightmare ? nightmareFoe(cfg.level, ref.slot, cfg.knobs?.foe) : dungeonFoe(cfg.level, ref.slot, ref.floor, cfg.knobs?.foe), fseed, ref.slot === 0);
+    const f = dungeonFight(ref.nightmare ? { ...p, pesadelo: true } : p, ref.nightmare ? nightmareFoe(cfg.level, ref.slot, cfg.knobs?.foe) : dungeonFoe(cfg.level, ref.slot, ref.floor, cfg.knobs?.foe), fseed, ref.slot === 0);
     const rng = mulberry32((seed * 7919 + i) | 0);
     const g = groupFightSteps(f.player, f.foes, { seed: f.seed, startHp: hp, startEnergy: en, hitScale: f.hitScale });
     let step = g.next();
