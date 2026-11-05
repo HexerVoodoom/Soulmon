@@ -12,6 +12,7 @@ import { CORNER_BOX, CORNER_BOX_TOP, CORNER_RING_STYLE, CORNER_SIDE } from './co
  * (Histórico) **Sem anel (14/10/2026, pedido do dono):** o círculo em volta da casinha e do ícone do Mapa (C14/H2) saiu — o ícone
  * lê sobre a cena sem brilho externo (removido na rodada 6, L2) e o alvo de toque (56px, ≥ 44) é o mesmo. O anel segue no voltar das áreas e nos avisos.
  *
+ * **O Mapa da Home aparece a 44px** (dono, 05/11/2026: "tem espaço, principalmente na esquerda"): cresce para a esquerda, a partir da borda direita, dentro da mesma caixa de 56.
  * **Ícone pelado, 32px (papel `nav` da escala, tokens.md §6.1)** — a regra
  * "ícone nunca dentro de box" vale aqui sem exceção (a exceção D1 é só do
  * voltar em círculo e dos cuidados). O alvo de 44px é do BOTÃO, invisível.
@@ -48,7 +49,7 @@ export function CornerLink({ icon, label, side, onClick }: {
       {icon === 'home' ? (
         <span data-corner-ring style={CORNER_RING_STYLE}><PixelIcon name={icon} size={32} /></span>
       ) : (
-        <PixelIcon name={icon} size={32} />
+        <span data-corner-map-icon style={{ display: 'inline-flex', transform: 'scale(1.375)', transformOrigin: 'right center' }}><PixelIcon name={icon} size={32} /></span>
       )}
     </button>
   );
