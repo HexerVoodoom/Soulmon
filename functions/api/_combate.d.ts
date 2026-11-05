@@ -54,7 +54,10 @@ export declare function firstLevelOfStage(stage: number): number;
 export declare function stageBase(stage: number): number;
 export declare function autoHp(level: number): number;
 export declare function distributePoints(level: number, weights: StatWeights): StatWeights;
-export declare function combatantAt(level: number, weights: StatWeights, bonus?: number | Partial<AttrBonus>): Combatant;
+export interface StatFloor { s: number; atk: number; def: number; spd: number }
+export declare function combatantAt(level: number, weights: StatWeights, bonus?: number | Partial<AttrBonus>, floor?: StatFloor): Combatant;
+export declare function statMaxOfStage(s: number): number;
+export declare function sanitizeStatFloor(v: unknown): StatFloor | undefined;
 export declare const COMBAT_BONUS_CAP: number;
 export declare function combinedBonus(sources: { talent?: number; equipment?: number; commerce?: number; rebirth?: number }): number;
 export interface AttrBonus { atk: number; def: number; spd: number }

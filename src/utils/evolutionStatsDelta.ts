@@ -8,9 +8,8 @@
  * O bônus (talentos/equipamento) fica de fora: ele é igual antes e depois, então não é efeito da evolução.
  *
  * `antes` e `depois` são dois SAVES (o de antes de evoluir e o já evoluído); a diferença sai da própria derivação do combate,
- * nunca de uma conta paralela. O delta pode ser NEGATIVO: ao evoluir, os pontos de alinhamento voltam a zero (§209) e a
- * distribuição de ATK/DEF/SPD volta ao equilíbrio, então um Soulmon muito especializado pode perder 1 ponto em um atributo
- * enquanto os outros sobem. A tela mostra isso sem esconder (sem vermelho, sem veredito).
+ * nunca de uma conta paralela. O delta nunca é negativo: o reset de §209 chegou a tirar 1 de Defesa/Velocidade em Ultimate→Mega e
+ * Mega→Ultra, e o piso do REGISTRO §229 (`evoStatFloor`, `utils/soulXP.ts › nextStatFloor`) acabou com isso.
  */
 import { soulCombatant, soulLevel, type SoulXPState } from './soulXP';
 import { hpPoints } from './combate/fight';
@@ -49,9 +48,7 @@ export function evolutionStatsDelta(before: SoulXPState, after: SoulXPState): Ev
   };
 }
 
-/** O texto do delta: "+N", "+0" ou "−N" (menos tipográfico). */
+/** O texto do delta: "+N" ou "+0". Evoluir nunca reduz (REGISTRO §229), então não há "−N"; um valor negativo (impossível) mostra "+0". */
 export function formatDelta(delta: number): string {
-  if (delta > 0) return `+${delta}`;
-  if (delta < 0) return `\u2212${Math.abs(delta)}`;
-  return '+0';
+  return `+${Math.max(0, delta)}`;
 }

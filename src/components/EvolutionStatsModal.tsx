@@ -8,7 +8,7 @@ import type { Language } from '../utils/i18n';
  * O MODALZINHO DEPOIS DA EVOLUÇÃO (05/11/2026, pedido do dono): quanto subiu cada atributo do Soulmon, "antes → depois (+N)".
  * Os números vêm de `utils/evolutionStatsDelta.ts` (a derivação do combate); aqui só se desenha. Entra na fila central como
  * `evoStats`, depois da cerimônia. Sem animação própria: o fade do `ModalSheet` já respeita `prefers-reduced-motion`.
- * Delta 0 aparece como "+0" e delta negativo como "−N", ambos em peso 400 e sem vermelho (descrição, nunca veredito).
+ * Delta 0 aparece como "+0" em peso 400. Não existe "−N": evoluir nunca reduz um atributo (REGISTRO §229).
  */
 const STATS: Record<EvoStatId, { icon: string; pt: string; en: string }> = {
   hp: { icon: 'favorite', pt: 'Vida', en: 'HP' },

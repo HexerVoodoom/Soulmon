@@ -4032,6 +4032,34 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 
 **O que falsificaria.** Proporção de algum elemento reprovada pelo dono (trocar o número em `PESO_CORTE`); ou o servidor passar a publicar um id de Soulmon (trocar a chave). **Rollback:** tirar `impacto` das ações (ausente = corte, comportamento anterior).
 
+
+## §229 — Evoluir nunca reduz um atributo: piso de combate gravado na evolução (05/11/2026, decisão do dono)
+
+**Decisão.** "Evoluir nunca reduz": nenhum atributo de combate do Soulmon (Vida, Ataque, Defesa, Velocidade) fica abaixo do que era antes de evoluir por causa do reset de §209. O dono aceitou o efeito de balanço medido abaixo ("Aceitar e seguir").
+
+**Causa.** Ao evoluir, `powerPoints`/`harmonyPoints`/`benevolencePoints` voltam a zero (§209) e a distribuição de ATK/DEF/SPD volta ao equilíbrio. Varredura exaustiva (todo level, 66 distribuições de pontos, antes → depois): só há queda de 1 ponto, só em Defesa ou Velocidade, só em Ultimate→Mega (antes nos levels 20–21, depois no 22) e Mega→Ultra (antes nos 29–30, depois no 31). Ataque e Vida nunca caem.
+
+**Regra.** O `handleEvolve` grava `evoStatFloor { s, atk, def, spd }` no save: o maior de cada atributo de ANTES (já com o piso anterior dentro), marcado com o índice do estágio de DESTINO (`nextStatFloor`, `utils/soulXP.ts`). `combatantAt` aplica o piso só quando o estágio do level bate com `s`, ANTES do bônus de PvP. Espelho no servidor: `_combate.js` (`combatantAt`, `soulCombatant`, `sanitizeStatFloor`, `statMaxOfStage`), travado por `combate.parity.test.js` (inclui piso inválido, de outro estágio e lixo). No servidor, o teto de level do duelo (S1) desliga o piso.
+
+**Contra ganho acumulável.** (1) O piso é inerte fora do estágio `s`: degenerar o desliga e uma nova evolução o REESCREVE a partir do derivado do estágio de baixo, nunca o soma. (2) "Trocar forma" não muda de estágio e não grava nada. (3) `sanitizeStatFloor` limita cada valor ao teto legítimo do estágio anterior (`statMaxOfStage(s − 1)`), no hidrate e no servidor, então um save adulterado nunca passa do que um jogador legítimo teria. (4) O piso morre no Renascimento e nos resets de Soulmon novo.
+
+**Medição (1500 sementes por célula, skill média, família direta, build equilibrada depois de evoluir; "antes" = comportamento anterior, sem piso).** Só mudam os levels 22–23 (Mega) e 31–32 (Ultra), e só para quem tinha Defesa ou Velocidade especializada:
+
+| level depois | especializado em | Arena | Masmorra (andares, 6) | Pesadelo |
+|---|---|---|---|---|
+| 22 | Defesa | 70,9% → 82,0% (+11,1pp) | 3,47 → 3,80 | 87,2% → 92,0% (+4,8pp) |
+| 22 | Velocidade | 70,9% → 73,3% (+2,4pp) | 3,47 → 3,75 | 87,2% → 90,9% (+3,7pp) |
+| 23 | Defesa | 71,3% → 81,5% (+10,3pp) | 3,48 → 3,81 | 87,2% → 92,0% (+4,8pp) |
+| 31 | Defesa | 71,1% → 79,7% (+8,6pp) | 3,47 → 3,74 | 87,2% → 90,7% (+3,5pp) |
+| 31 | Velocidade | 71,1% → 73,5% (+2,4pp) | 3,47 → 3,71 | 87,2% → 90,1% (+2,9pp) |
+| 32 | Defesa | 71,2% → 79,8% (+8,6pp) | 3,47 → 3,74 | 87,2% → 90,7% (+3,5pp) |
+
+Todas as outras células (Ataque, levels 24+ e 33+, Velocidade em 23 e 32) deram +0,0pp. A régua era ±3pp: essas células saem dela (até +11,1pp na Arena e +4,8pp no Pesadelo) e a decisão do dono foi aceitar, porque o valor só devolve o poder que o jogador já tinha no level anterior. Um ponto de Defesa pesa muito em Mega/Ultra (a curva já está na parte íngreme: 12 contra 11).
+
+**Alternativa que perdeu.** Piso sem estado (o máximo do estágio anterior para todos): sobe também as builds equilibradas, ganho que ninguém perdeu. Manter a queda e só documentar. Compensar no botão de dificuldade da Arena (`ARENA_ROUND_GROWTH`): global e sensível, para uma região de 2 levels.
+
+**O que falsificaria.** Queixa de Arena/Pesadelo fáceis demais para Mega/Ultra recém-evoluídos especializados, ou o piso aparecendo em level fora de 22–23/31–32 (o teste `evolucaoNuncaReduz.test.ts` varre tudo). **Rollback:** reverter o PR (o campo `evoStatFloor` solto no save é ignorado).
+
 ## §228 — Efeito de combate pelo elemento do especial (04/11/2026, decisão do dono)
 
 - **Regra:** o efeito depende do ELEMENTO DO ESPECIAL, não do Soulmon (água com especial de fogo pode queimar), e nem todo especial tem efeito: a família continua decidindo a mecânica, `direct` é só dano. O elemento só dá o sabor de uma família que já deixa estado. Tabela única em `src/utils/combate/elementEffects.ts`; derivado herda do primeiro componente com par na família.

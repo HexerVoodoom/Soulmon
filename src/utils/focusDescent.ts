@@ -33,7 +33,7 @@ export function startFocusDescent(prev: GameState, nowMs: number, seed: number =
   const paid = spendLayer(prev, nowMs);
   const c = soulCombatant({
     evolutionStage: prev.evolutionStage, perfectDays: prev.perfectDays, powerPoints: prev.powerPoints, harmonyPoints: prev.harmonyPoints,
-    benevolencePoints: prev.benevolencePoints, degeneratedByHP: prev.degeneratedByHP,
+    benevolencePoints: prev.benevolencePoints, degeneratedByHP: prev.degeneratedByHP, evoStatFloor: prev.evoStatFloor,
   });
   const cap = dungeonLayerCap(c.level, bondLevelFor(prev.totalXP ?? 0));
   const layer = startLayerFor(sanitizeDepthRecord(prev.dungeonDepthRecord), cap);

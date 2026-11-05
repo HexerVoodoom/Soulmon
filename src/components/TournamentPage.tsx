@@ -339,7 +339,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     // O SEU lado: o combatente do save (level e ramo) e a família do especial da ficha. O treino é 100% LOCAL, então
     // a semente pode ser sorteada aqui (não vale nada: sem partida, sem pontos, sem Honra).
     const estado: SoulXPState = gs
-      ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP }
+      ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP, evoStatFloor: gs.evoStatFloor }
       : { evolutionStage: petStage };
     const combatant = soulCombatant(estado, talentosPvp.bonus);
     const par = stageSkillsFor(skills, petStage);

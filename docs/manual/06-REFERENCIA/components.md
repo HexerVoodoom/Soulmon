@@ -1537,7 +1537,7 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Régua:** `src/components/EvoRecapModal.render.test.tsx`.
 
 ### `src/components/EvolutionStatsModal.tsx`
-**Dono de:** o modalzinho de DEPOIS da evolução (05/11/2026, pedido do dono): Vida, Ataque, Defesa e Velocidade do Soulmon em "antes → depois (+N)". Só desenha; os números vêm de `utils/evolutionStatsDelta.ts`. Delta 0 = "+0", negativo = "−N" (peso 400, sem vermelho). Sem animação própria (o fade do `ModalSheet` já respeita movimento reduzido). Glifos existentes: `favorite`, `swords`, `military_tech`, `bolt`.
+**Dono de:** o modalzinho de DEPOIS da evolução (05/11/2026, pedido do dono): Vida, Ataque, Defesa e Velocidade do Soulmon em "antes → depois (+N)". Só desenha; os números vêm de `utils/evolutionStatsDelta.ts`. Delta 0 = "+0" (peso 400); nunca há "−N" (evoluir nunca reduz, REGISTRO §229). Sem animação própria (o fade do `ModalSheet` já respeita movimento reduzido). Glifos existentes: `favorite`, `swords`, `military_tech`, `bolt`.
 **Props principais:** `delta` (`EvoStatsDelta`), `stageName`, `language`, `onClose()`.
 **Exports:** `EvolutionStatsModal(props)`.
 **Depende de:** `form/FormKit` (`ModalSheet`, centralizado), `ui/Icon`, `utils/evolutionStatsDelta`, `utils/soulXP` (`soulLevelLabel`).

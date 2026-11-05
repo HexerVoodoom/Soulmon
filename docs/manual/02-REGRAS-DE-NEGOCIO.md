@@ -1074,6 +1074,7 @@ barras de energia), `src/components/EvoTrail.tsx` (a trilha na Home).
 ## 15. 👊🎶🤲 Atributos e galhos
 
 > **§209 (31/10/2026, dono):** ao evoluir, Benevolência, Harmonia e Poder voltam a **zero** (em `handleEvolve`, mesma regra de `resetAlignmentPoints`) — o galho/elemento da evolução é decidido ANTES, com os pontos de antes. O recap da cerimônia avisa. Concessão única do beta: 1 Zerador de Pontos 🔄 para quem já jogava (`applyBetaResetGrant`, `utils/betaResetGrant.ts`).
+> **§229 (05/11/2026, dono): evoluir nunca reduz.** O reset acima chegou a tirar 1 ponto de Defesa/Velocidade em Ultimate→Mega e Mega→Ultra (nunca Ataque nem Vida). O `handleEvolve` grava `evoStatFloor` (o maior de cada atributo de antes, para o estágio de destino; `nextStatFloor`, `utils/soulXP.ts`) e `soulCombatant`/`combatantAt` (e o espelho `_combate.js`) nunca deixam o atributo ficar abaixo dele nesse estágio. O piso é inerte fora do estágio, é reescrito (nunca somado) a cada evolução, "Trocar forma" não grava nada e o valor é limitado ao teto legítimo do estágio anterior. Efeito de balanço medido e aceito (até +11,1pp na Arena e +4,8pp no Pesadelo nos levels 22–23 e 31–32, só para build especializada em Defesa/Velocidade): `REGISTRO-DE-DECISOES.md` §229.
 
 **Em uma frase.** A categoria da tarefa vira comida, a comida vira ponto de
 atributo, e o atributo escolhe o galho da próxima evolução.
