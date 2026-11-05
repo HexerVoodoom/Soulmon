@@ -4059,3 +4059,13 @@ Todas as outras células (Ataque, levels 24+ e 33+, Velocidade em 23 e 32) deram
 **Alternativa que perdeu.** Piso sem estado (o máximo do estágio anterior para todos): sobe também as builds equilibradas, ganho que ninguém perdeu. Manter a queda e só documentar. Compensar no botão de dificuldade da Arena (`ARENA_ROUND_GROWTH`): global e sensível, para uma região de 2 levels.
 
 **O que falsificaria.** Queixa de Arena/Pesadelo fáceis demais para Mega/Ultra recém-evoluídos especializados, ou o piso aparecendo em level fora de 22–23/31–32 (o teste `evolucaoNuncaReduz.test.ts` varre tudo). **Rollback:** reverter o PR (o campo `evoStatFloor` solto no save é ignorado).
+
+## §228 — Efeito de combate pelo elemento do especial (04/11/2026, decisão do dono)
+
+- **Regra:** o efeito depende do ELEMENTO DO ESPECIAL, não do Soulmon (água com especial de fogo pode queimar), e nem todo especial tem efeito: a família continua decidindo a mecânica, `direct` é só dano. O elemento só dá o sabor de uma família que já deixa estado. Tabela única em `src/utils/combate/elementEffects.ts`; derivado herda do primeiro componente com par na família.
+- **PvP (Torneio/Duelo) só visual.** `fight.ts` e `_combate.js` não mudam; silêncio, lentidão e cura contínua não aparecem no PvP porque o selo mentiria. Reafirma o §177.
+- **Físico e mágico só visuais:** mesmo `atkBuff`, selo diferente.
+- **Silêncio não cancela:** a barra segue cheia e o especial sai quando acabar.
+- **Inimigos causam efeitos em PvE**, só depois de medir; desligado até lá.
+- **Alternativa que perdeu:** 25% do orçamento de todo especial vira o efeito do elemento (mediu dentro da régua no protótipo, mas o dono quer especial de dano direto puro).
+- **O que falsifica:** se a medição de Arena/Masmorra sair de ±3pp em vitória contra a mesma família sem efeito, a mecânica nova não liga; se poucos jogadores chegarem a um efeito (família com peso baixo no elemento), rever `AFINIDADE_ELEMENTO`.

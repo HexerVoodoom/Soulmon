@@ -7,7 +7,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  FAMILY_STATUS, MAX_STATUS_CHIPS, STATUS_FX, STATUS_FX_KINDS, UNREACHABLE_STATUS_FX,
+  FAMILY_STATUS, GLIFOS_PENDENTES, MAX_STATUS_CHIPS, STATUS_FX, STATUS_FX_KINDS, UNREACHABLE_STATUS_FX,
   castStatus, clearHolders, emptyStatusBoard, stageStatusOf, statusAriaLabel, statusFxOfFamily, statusGlyphId, statusLabel,
   statusShort, statusTurnsFor, tickStatus,
 } from './combatFx';
@@ -46,7 +46,7 @@ describe('STATUS_FX — a tabela cobre todos os efeitos', () => {
   });
 
   it('a arte citada na tabela é a que JÁ está instalada (nenhuma peça nova, nenhum id solto)', () => {
-    const ids = new Set(COMBAT_V3_ART_IDS);
+    const ids = new Set([...COMBAT_V3_ART_IDS, ...GLIFOS_PENDENTES]);
     for (const k of STATUS_FX_KINDS) {
       const d = STATUS_FX[k];
       for (const g of Object.values(d.glyph)) expect(ids.has(g), `glifo ${g}`).toBe(true);
