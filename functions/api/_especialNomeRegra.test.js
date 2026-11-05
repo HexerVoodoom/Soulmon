@@ -40,4 +40,13 @@ describe('nomeEspecialValido — contato', () => {
     expect(nomeEspecialValido('Nova 2026')).toBe('Nova 2026');
     expect(nomeEspecialValido('Nova 1234567')).toBeNull();
   });
+  it('"www" não contamina nomes legítimos com w (colapso de letras repetidas)', () => {
+    for (const n of ['Wolf', 'Shadow', 'Owen', 'Swan', 'Dawn', 'Rowan', 'Wow', 'Wawa']) {
+      expect(temContato(n)).toBe(false);
+      expect(nomeEspecialValido(n)).toBe(n);
+    }
+  });
+  it('"www" e variantes continuam barradas', () => {
+    for (const n of ['www.x.com', 'w w w x', 'wwwgmail', 'WWW', 'wwwx', 'ｗｗｗ', 'w.w.w', 'wwww x']) expect(temContato(n)).toBe(true);
+  });
 });
