@@ -34,7 +34,9 @@ Só o dono:
 3. **Play Console:** deixar os SKUs `moldura_*` inativos até a arte estar no APK (0 de 20 em `drawable-nodpi`); atualizar Data Safety com feedback e feed.
 4. **Build na Play:** AAB novo, depois do corte de bytes ou de aceitar a dívida. Widget adaptativo e microfone (#505) só chegam assim; o resto vai pelo Worker (`server.url`).
 5. **Aparelho:** widget, double tap, escada da Arena, vitrine 1,75×, feira com servidor, som, tela de aceite.
-6. **Decisões:** prazo de limpeza da caixa de feedback (a política não dá prazo); risco de moldura grátis pelo save; §21 (métrica de outro jogador) contra a faixa de evoluções; revisão jurídica de transferência internacional.
+6. **Feedback, retenção 90 dias (decidido 04/11):** a KV já expira em 90 dias e a política diz isso (teste trava). MANUAL: o e-mail já entregue na caixa `soulmon.revisor@gmail.com` não se apaga por código; criar filtro/rotina na caixa para apagar mensagens `[Soulmon ...]` com mais de 90 dias (e conferir o prazo de logs do Resend).
+6b. **Busca de jogadores:** depois do deploy, rodar o backfill do índice de apelidos até `done: true`: `POST /api/community?action=backfillNicks` com `{"adminKey":"<SEASON_ADMIN_KEY>","cursor":"<cursor da resposta anterior>"}` (40 perfis por chamada; idempotente, não rouba apelido de ninguém).
+6c. **Decisões:** risco de moldura grátis pelo save; §21 (métrica de outro jogador) contra a faixa de evoluções; revisão jurídica de transferência internacional.
 7. **Limpeza:** apagar `D:/soulmon-bytes-dist` (5.012 arquivos, D: em 97%, E: cheio).
 
 ## 1. O que importa agora
