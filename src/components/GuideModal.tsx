@@ -500,8 +500,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `A cada ${DUNGEON_MILESTONE_FLOOR} camadas há um marco: a próxima descida começa dali, e o primeiro marco de cada descida rende o item 🌀 (veja Itens).`,
-              `Every ${DUNGEON_MILESTONE_FLOOR} layers is a milestone: the next descent starts there, and the first milestone of each descent earns the 🌀 item (see Items).`,
+              `A cada ${DUNGEON_MILESTONE_FLOOR} camadas há um marco: a próxima descida começa dali, e cada marco tem 1% de chance de render o item 🌀, no máximo um por semana (veja Itens).`,
+              `Every ${DUNGEON_MILESTONE_FLOOR} layers is a milestone: the next descent starts there, and each milestone has a 1% chance to earn the 🌀 item, at most one a week (see Items).`,
             )}
           </p>
           <p style={para}>
