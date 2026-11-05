@@ -23,10 +23,10 @@ export function evolutionFrameOf(state) {
   if (!state || typeof state !== 'object') return null;
   const evo = state.unlockedEvolutions;
   if (!Array.isArray(evo) || evo.length <= 1) return null;
-  const { el, neutro } = petElementDeSave(state);
+  const { el, neutro, base: baseReg } = petElementDeSave(state);
   if (neutro) return null;
   const potion = typeof state.potionElement === 'string' && COUNTER_RING.includes(baseDominante(state.potionElement)) ? state.potionElement : null;
-  const base = baseDominante(potion ?? el ?? '');
+  const base = !potion && baseReg ? baseReg : baseDominante(potion ?? el ?? '');
   return COUNTER_RING.includes(base) ? base : null;
 }
 

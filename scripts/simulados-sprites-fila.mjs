@@ -1,7 +1,7 @@
 /**
  * FILA LOCAL DE SPRITES DOS SIMULADOS — manual, sem gerar por padrão. NUNCA grava no KV e nunca roda em CI.
  *
- * O prompt é o do Oráculo real (`prompts.json`, de `simulados-prompts-run.mjs`; REGISTRO §231). Cada simulado precisa da
+ * O prompt é o do Oráculo real (`prompts.json`, de `simulados-prompts-run.mjs`; REGISTRO §234). Cada simulado precisa da
  * CADEIA do rookie à forma atual, porque a forma nova usa a anterior como referência, como no jogador. É ela que define o custo.
  * Não há chave Higgsfield local: a geração vai pelo playground, com a rota do jogador, e este script só prepara e recebe.
  *

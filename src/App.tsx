@@ -93,7 +93,9 @@ import { isEmbedMode } from './utils/embedMode';
 import { buildDemoPatch, leaveDemo, keepDemoVitalsFull, localizeDemoActivities } from './utils/demoStart';
 import { newUuid } from './utils/uuid';
 import type { StarterId } from './utils/sprites';
-import { petElementOf } from './utils/starterElements';
+import { petElementOf, petBaseOf } from './utils/starterElements';
+import { registrarElementoDoEstagio, stagesComElemento } from './utils/elementoCombinado';
+import { identityKey } from './utils/soulProfile/identity';
 import {
   readFlag, readFlagOr, readFlagState, readJson, readLocal, readNumber, removeLocal, writeFlag, writeJson, writeLocal,
 } from './utils/safeStorage';
@@ -673,6 +675,25 @@ const AdventureDiary = lazy(() => import('./components/AdventureDiary').then(m =
  *  prop cria objeto novo a cada render (mesmo motivo de `EMPTY_DECOR`). */
 const EMPTY_RHYTHM = emptyRhythm();
 
+/** §232: a chave da sorte e as afinidades da leitura. Sem perfil local, a semente da criatura; a sorte fica congelada no save de qualquer modo. */
+function dadosDaSorte(seed: number | undefined, sufixo = ''): { chave: string; afinidades?: Record<string, number> } {
+  const perfil = readJson<(OracleInput & { seed?: number }) | null>(STORAGE_KEYS.SOULMON_PROFILE, null);
+  let chave = `seed:${seed ?? 0}`;
+  try { if (perfil?.soulProfile) chave = identityKey(perfil); } catch { /* perfil corrompido: fica a semente */ }
+  return { chave: chave + sufixo, afinidades: perfil?.soulProfile?.oracle?.classElements as Record<string, number> | undefined };
+}
+
+/** §232: o registro do Soulmon que nasce. `u` herdada = nova leitura não rola a sorte de novo; renascer passa sem ela e tem sorte nova. */
+function nascerElementoJornada(dominante: string | undefined, seed: number | undefined, herdada?: { u: number } | null, sufixo = '') {
+  return registrarElementoDoEstagio(herdada ? { v: 1, u: herdada.u, estagios: {} } : undefined, { stage: 'rookie', base: dominante, ...dadosDaSorte(seed, sufixo) });
+}
+
+/** §232: o estágio que nasce numa evolução. Oráculo só: inicial e corvo têm elemento próprio. Imutável. */
+function elementoAoEvoluir(prev: Pick<GameState, 'elementoJornada' | 'demoCharacterId' | 'soulmonMeta'>, destino: string): GameState['elementoJornada'] {
+  if (prev.demoCharacterId || prev.soulmonMeta?.creature === 'corvo') return prev.elementoJornada;
+  return registrarElementoDoEstagio(prev.elementoJornada, { stage: fichaStageOf(destino), base: prev.soulmonMeta?.dominantElement, ...dadosDaSorte(prev.soulmonMeta?.seed) });
+}
+
 /**
  * Registra a conclusão de um hábito NO MESMO DIA em que ela acontece.
  *
@@ -1230,6 +1251,8 @@ export default function App() {
       setGameState(prev => ({ ...prev, spriteLibrary: fn(prev.spriteLibrary ?? emptySpriteLibrary()) })),
     [setGameState],
   );
+  /** §232: as formas por desenhar pedem o elemento combinado do estágio. */
+  const stagesDoSprite = useMemo(() => stagesComElemento(gameState.soulmonStages, gameState.elementoJornada), [gameState.soulmonStages, gameState.elementoJornada]);
   const spriteGenOn = (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0;
   const spriteGen = useSpriteGeneration({
     trigger: {
@@ -1244,7 +1267,7 @@ export default function App() {
     },
     library: spriteAcervo,
     updateLibrary: updateSpriteLibrary,
-    stages: gameState.soulmonStages,
+    stages: stagesDoSprite,
     dayKey: dayKeyOf(new Date()),
     // As quatro regras de janela do §3.3: nada parte (e nada troca de rosto)
     // durante a VIRADA DO DIA, a cerimônia, o relatório diário ou uma animação
@@ -1347,7 +1370,7 @@ export default function App() {
   const regenAparencia = useRegenAparencia({
     library: spriteAcervo,
     updateLibrary: updateSpriteLibrary,
-    stages: gameState.soulmonStages,
+    stages: stagesDoSprite,
     formId: gameState.evolutionStage,
     accountTier: gameState.accountTier,
     credits: gameState.credits ?? 0,
@@ -3823,11 +3846,11 @@ export default function App() {
       return;
     }
     setGameState(prev => (activeCrystal(prev) || prev.evolutionStage !== evolutionStage ? prev
-      : { ...prev, evolutionCrystal: startCrystal(prev.evolutionStage, next, nextBranch, new Date()) }));
+      : { ...prev, elementoJornada: elementoAoEvoluir(prev, next), evolutionCrystal: startCrystal(prev.evolutionStage, next, nextBranch, new Date()) }));
     // ONBOARDING_VELADO (D6/D20): ao abrir a cerimônia BB→rookie, pede o rookie grátis sem bloquear a UI.
     // Fallback/falha = segue com o inicial pronto (o acervo/`getSpriteForStage` de sempre).
     if (veladoOn && next === 'rookie' && sanitizeStageId(String(evolutionStage)) === 'bb' && freeRookie === 'idle') {
-      const rk = gameState.soulmonStages?.find(st => st.stage === 'rookie');
+      const rk = stagesDoSprite?.find(st => st.stage === 'rookie');
       if (rk) {
         setFreeRookie('loading');
         const dayKey = playerDayKey(new Date(), gameState.playerDayTz);
@@ -3908,6 +3931,7 @@ export default function App() {
         powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, // = `resetAlignmentPoints` (utils/betaResetGrant.ts)
         chipsStage: undefined, // D-97: a contagem de chips é por estágio
         chipsReduceStage: undefined, // idem, chips de redução (limite próprio)
+        elementoJornada: elementoAoEvoluir(prev, newEvolutionStage),
         // PR15b: o que se fez no estágio que TERMINA vira o comportamento do que NASCE — gravado uma vez, imutável.
         fichaJornada: registrarEstagio(
           prev.fichaJornada, fichaStageOf(newEvolutionStage), prev.attributesSinceLastEvolution,
@@ -5145,6 +5169,7 @@ export default function App() {
       degeneratedByHP: false,
       soulmonStages: result.creature.stages,
       fichaJornada: undefined,
+      elementoJornada: nascerElementoJornada(result.dominantElement, result.seed, prev.elementoJornada),
       soulmonMeta: {
         ...prev.soulmonMeta,
         seed: result.seed,
@@ -5237,6 +5262,7 @@ export default function App() {
         degeneratedByHP: false,
         soulmonStages: result.creature.stages,
         fichaJornada: undefined,
+        elementoJornada: nascerElementoJornada(result.dominantElement, result.seed, null, `|renasceu:${now.toISOString()}`),
         soulmonMeta: {
           ...prev.soulmonMeta,
           seed: result.seed,
@@ -5313,6 +5339,7 @@ export default function App() {
          outra coisa seria inventar. */
       soulmonStages: result.creature.stages,
       fichaJornada: undefined,
+      elementoJornada: nascerElementoJornada(result.dominantElement, result.seed),
       /* Adota o desenho do reveal, exatamente como o nascimento faz. Sem isto
          o acervo de quem acabou de comprar (que nasce VAZIO — o demo nunca
          gera sprite) pediria a forma inicial de novo e entregaria outro bicho.
@@ -6895,6 +6922,7 @@ export default function App() {
       maxActivityCap: FORM_REQUIREMENTS.rookie.cap,
       soulmonStages: data.oracleResult.creature.stages,
       fichaJornada: undefined,
+      elementoJornada: nascerElementoJornada(data.oracleResult.dominantElement, data.oracleResult.seed),
       /* WP1.1 — ADOTA o desenho que a pessoa acabou de ver no reveal.
          Sem isto o acervo geraria a forma inicial de novo, e a criatura que
          entra no jogo seria OUTRA — a cerimônia teria mostrado um bicho que
@@ -8111,6 +8139,7 @@ export default function App() {
               {/* `key` da view: trocar de área remonta e fecha a folha aberta. */}
               <ResultExtrasContext.Provider value={buildResultExtras(gameState, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0), language === 'pt-BR')}>
               <AreaView
+                petBase={petBaseOf(gameState)}
                 key={currentView}
                 unlockedElements={gameState.defeatedElements}
                 area={area}

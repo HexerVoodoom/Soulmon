@@ -12,6 +12,7 @@
 // ---------------------------------------------------------------------------
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
+import { curatedComponents } from './elementosCurados';
 
 export const ARENA_DOMINIOS = [
   'agua', 'fogo', 'terra', 'ar', 'sombra', 'luz', 'planta', 'industrial',
@@ -56,7 +57,7 @@ export function arenaTemaElementos(id: string | null | undefined): string[] {
   // planta e industrial são BASE e têm domínio PRÓPRIO (o alias para vida/aço foi apagado em 27/10/2026).
   const mapped = id;
   if ((CLASS_ELEMENT_ORDER as readonly string[]).includes(mapped)) return [mapped];
-  return [...(PAR_POR_ID.get(mapped) ?? [])];
+  return [...(PAR_POR_ID.get(mapped) ?? curatedComponents(mapped) ?? [])];
 }
 
 /** O domínio dos cenários do elemento (base ou par), ou `null` se o elemento não tem tema (neutro/desconhecido). */

@@ -6,7 +6,7 @@ model: opus
 ---
 
 > **Checklist de revisão de arte:** asset sem esses elementos (turquesa escuro, cristal com chama, cobre/circuito/folhinhas) é REJEITADO.
-> **Exceção (dono, REGISTRO §231):** criatura gerada pelo Oráculo, de jogador ou simulado, NÃO é reprovada por identidade, por roxo do prompt nem por dimensão de recorte. Meça e registre, sem vetar.
+> **Exceção (dono, REGISTRO §234):** criatura gerada pelo Oráculo, de jogador ou simulado, NÃO é reprovada por identidade, por roxo do prompt nem por dimensão de recorte. Meça e registre, sem vetar.
 
 Você é o **conferente** da SQUAD-ARTE — o gate entre gerar e instalar.
 

@@ -14,7 +14,7 @@
 //   artLine     linha de arte de FALLBACK (`_artLine.js`), SÓ quando existe uma com o MESMO elemento; senão ''.
 //   faixa       FIXA, pela skill entre os 170: A (50 maiores, 100% das tarefas), B (50 seguintes, 70%), C (demais, 33%).
 //   ancora      { estagio, pontos } em SIM_ANCORA_DIA: de onde a curva parte (antigos: o estado da curva velha, nunca regride;
-//               novos: todos Rookie, sem pontos; REGISTRO §232). No ultra, `pontos` = levels acima do 31.
+//               novos: todos Rookie, sem pontos; REGISTRO §235). No ultra, `pontos` = levels acima do 31.
 //   bond0       base do Vínculo (sobe 0,8 por level).
 //   skill       habilidade geral 0..1.
 //   frequency   casual | regular | assiduo (chance de jogar no dia: 0,3 / 0,6 / 0,9).

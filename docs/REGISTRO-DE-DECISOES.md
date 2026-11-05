@@ -4070,8 +4070,40 @@ Todas as outras células (Ataque, levels 24+ e 33+, Velocidade em 23 e 32) deram
 - **Calibração (05/11/2026, dono):** queimadura e veneno ficam só visuais. Silêncio impede o especial do alvo por X golpes dele, qualquer que seja o especial (X = 2; `defDebuff` inteiro). Cura contínua: Vida + `shield`, 3 pulsos, total × 1,05. Lentidão: Ar + `defDebuff`, mesma regra em Arena e Masmorra (golpes × 0,3, `defDebuff` × 0,58); o Pesadelo tem balanço próprio para qualquer mecânica (`EFFECT_TUNE_PESADELO`; lentidão × 0,15 e × 0,4). Gate: `efeitosPve.medicao.test.ts`.
 - **Alternativa que perdeu:** 25% do orçamento de todo especial vira o efeito do elemento (mediu dentro da régua no protótipo, mas o dono quer especial de dano direto puro).
 - **O que falsifica:** se a medição de Arena/Masmorra sair de ±3pp em vitória contra a mesma família sem efeito, a mecânica nova não liga; se poucos jogadores chegarem a um efeito (família com peso baixo no elemento), rever `AFINIDADE_ELEMENTO`.
+## §232 — Elemento combinado por estágio: mais componentes a cada evolução, com sorte fixa por Soulmon (05/11/2026, decisão do dono)
 
-## §230 — Simulados: 170 perfis, evolução por faixa e formas sob demanda (05/11/2026, decisão do dono)
+**Pedido.** "A cada evolução aumente muito as chances de terem elementos combinados." Rookie praticamente sempre básico, Champion já com dois, Ultimate com três, Mega e Ultra com quatro, e um Ultra de um elemento só continua possível.
+
+**Decisão.**
+- % de 1/2/3/4 componentes: Rookie 95/5/0/0, Champion 35/60/5/0, Ultimate 15/30/50/5, Mega 10/20/40/30, Ultra 5/10/25/60. Dono único: `utils/elementoCombinado.ts`.
+- Uma sorte `u` por Soulmon, fixa no save. As chances acumuladas só sobem, então nunca perde complexidade ao evoluir. Nova leitura herda a sorte; renascer dá sorte nova (vida nova). Sem reroll e sem venda.
+- O elemento de combate muda a cada evolução e vale a partir da próxima evolução de quem já existe (`elementoJornada` no save; `petElementOf`: poção > inicial > estágio > oráculo). Forma sem registro segue no elemento de nascimento.
+- Contém sempre a base nº 1 (o elemento do oráculo). Pares para 2 componentes; para 3 e 4, só os 50 curados do app.
+- Degenerar volta ao elemento daquele nível. Trocar forma (§225) é o mesmo nível, portanto o mesmo elemento. Registro imutável por estágio no cliente e no servidor (`_elementoJornada.js`).
+- Sprite novo só em formas novas: o prompt recebe o elemento (`stagesComElemento`). A arte de forma já desenhada não muda.
+- Vantagem pela base nº 1 (P0): `petBaseOf` no cliente, `fx.elVantagem` no servidor. Ficha, pontos, cascata, classe e profissão não mudam; revoga só a nota "gerações 1 e 2" para o elemento exibido.
+- Recomendadas seguidas por delegação do dono: Ultra puro sem mecânica própria e sem selo novo nesta entrega; iniciais e corvo de fora; percentuais nunca aparecem ao jogador; `petElementDeSave` passa a ler `potionElement`, como o cliente.
+
+**Limite real, para o dono rever.** Nenhum curado contém planta, industrial ou fada. Com "contém a base nº 1" + "só curados", quem nasce planta ou industrial (20,6% de 800 perfis sem quiz) fica no par. Efetivo no Ultra, somando todos: 5/27,5/19,8/47,6. Os demais seguem a tabela exata. Correção natural: curados novos com essas bases (arte nova), ou aceitar.
+
+**Medido** (`elementoCombinado.balanco.test.ts`, 3.000 runs por célula, SE ~0,8pp; régua ±3pp da sessão contra k=1):
+| Modo | k=1 | k=2 | k=3 | k=4 | Prova vermelha (melhor de k, P2) |
+|---|---|---|---|---|---|
+| Arena, nível 6 | 71,2 | 71,6 | 71,1 | 71,8 | 73,3 / 73,9 / 76,5 |
+| Arena, nível 40 | 71,7 | 71,8 | 71,1 | 72,2 | 73,4 / 73,9 / 76,6 |
+| Guerra (escala 0,5) | 49,1 | 49,3 | 49,5 | 48,7 | 52,9 / 56,3 / 59,0 |
+| Combina 3 (dano recebido, %) | 100,33 | 100,01 | 100,26 | 100,26 | 99,01 / 98,37 / 97,45 |
+
+Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combina 3 a medida é o multiplicador, não a taxa de vitória.
+
+**Corte × concussão (§227):** curado herda a média inteira dos componentes, como o par. Só visual.
+
+**Alternativas que perderam.** Sorteio independente por estágio (permitiria regressão); vantagem por todos os componentes no ataque (P2, estoura a régua); combinações sem nome; catálogo novo.
+
+**O que falsificaria.** k real por estágio fora da tabela em mais de 2pp nas bases com curado; taxa de vitória por k fora de ±3pp em produção; um curado concentrando demais a população. **Rollback:** reverter o PR. O campo no save é ignorado pelo código antigo.
+
+
+## §233 — Simulados: 170 perfis, evolução por faixa e formas sob demanda (05/11/2026, decisão do dono)
 
 **Decisão do dono:** 120 simulados novos, nomes aprovados por ele. Evoluem como quem faz 100% das tarefas (top 50), 70% (top 100) e 33% (demais). Faixa fixa pela skill, não rank ao vivo. Partida escalonada. Média de tarefas sobre a meta diária: 74, 107 e 225 dias até o Ultra. Simulado não cai por HP. Placares com menos simulados, deixando espaço a reais (`PLACAR_SIMS_MAX` = 15 por jogo), e o Torneio segue com todos para manter o top 50 populado. Sprites no padrão de jogador com alfa real: exceção à `REGRA-IDENTIDADE-SOULMON.md`, com decisão final depois de 3 prévias. Formas sob demanda atrás de `SIMULADOS_FORMAS_ON`, desligada. O dono afirma que o Workers Paid está ativo; o painel de cobrança não foi conferido.
 
@@ -4081,21 +4113,21 @@ Todas as outras células (Ataque, levels 24+ e 33+, Velocidade em 23 e 32) deram
 
 **O que falsificaria:** jogador real sem aparecer nos placares, simulado recebendo prêmio, ou elemento do simulado diferente do sprite. **Rollback:** reverter o commit; as âncoras não apagam dado do KV.
 
-## §231 — Criatura do Oráculo fora da régua de identidade; simulado gerado pelo Oráculo (05/11/2026, decisão do dono; emenda §230)
+## §234 — Criatura do Oráculo fora da régua de identidade; simulado gerado pelo Oráculo (05/11/2026, decisão do dono; emenda §233)
 
 **Decisão do dono.** A regra máxima de identidade continua valendo para cards, cenários, UI, NPC e demais assets, mas NÃO vale para criaturas geradas pelo Oráculo, de jogador ou simulado. Isso inclui o roxo que o próprio prompt do Oráculo pede e a dimensão de recorte. O sprite de simulado sai do mesmo Oráculo do jogador, com o elemento secundário automático. A prévia com prompt próprio foi reprovada ("bem fora do estilo dos soulmon"); a prévia 2 pelo Oráculo foi aprovada.
 
-**Como fica.** `scripts/simulados-prompts.ts` roda `buildSoulProfile` + `generateOracleComplete` com entrada determinística por id, com elemento e alinhamento por override. O servidor lê o prompt pronto em `sim:prompt:<id>:<forma>`, porque as Functions não importam o Oráculo. Fundo verde (ou magenta, quando o prompt pedir) e recorte `chromaKeyPng`, como no jogador: fecha o conflito aberto no §230, sem alfa real. A forma nova usa a anterior como referência.
+**Como fica.** `scripts/simulados-prompts.ts` roda `buildSoulProfile` + `generateOracleComplete` com entrada determinística por id, com elemento e alinhamento por override. O servidor lê o prompt pronto em `sim:prompt:<id>:<forma>`, porque as Functions não importam o Oráculo. Fundo verde (ou magenta, quando o prompt pedir) e recorte `chromaKeyPng`, como no jogador: fecha o conflito aberto no §233, sem alfa real. A forma nova usa a anterior como referência.
 
 **Alternativas que perderam.** Texto de estilo próprio em `_simFormas.js` (reprovado pelo dono). Forçar `secondaryElement: null` para o elemento ficar mais puro (dono manteve o automático). Prompts como módulo de dados no Worker (cerca de 850 prompts dentro do bundle das Functions).
 
 **O que falsificaria.** Dono reprovar o lote por estilo; simulado com elemento visual incoerente em volume. **Rollback:** reverter o PR; sem chave `sim:prompt:` nada é gerado.
 
-## §232 — Simulados: novos em Rookie, teto Champion, forma só sob demanda (05/11/2026, decisão do dono; emenda §230)
+## §235 — Simulados: novos em Rookie, teto Champion, forma só sob demanda (05/11/2026, decisão do dono; emenda §233)
 
 **Decisão do dono.** "Por enquanto jogador real-fake está no máximo em champion. Nenhum nasce champion, os novos todos são rookie." Os 120 novos partem de Rookie, sem partida escalonada. Forma só é gerada quando o simulado evolui. As formas já geradas ficam guardadas e são usadas sem nova geração quando chegar a vez.
 
-**Como fica.** `SIM_FORMA_MAX` limita estágio e level em `estadoDoDia`; `progressoDoDia` mantém a curva por baixo, para o teto poder subir depois. Isso revoga, por ora, o "ninguém regride" do §230 para os 10 antigos acima de Champion (sim_0006, 0007, 0008, 0011, 0017, 0019, 0030, 0038, 0045, 0050): aparecem em Champion, nível 13, com o sprite atual, e a fila não gera nada para eles.
+**Como fica.** `SIM_FORMA_MAX` limita estágio e level em `estadoDoDia`; `progressoDoDia` mantém a curva por baixo, para o teto poder subir depois. Isso revoga, por ora, o "ninguém regride" do §233 para os 10 antigos acima de Champion (sim_0006, 0007, 0008, 0011, 0017, 0019, 0030, 0038, 0045, 0050): aparecem em Champion, nível 13, com o sprite atual, e a fila não gera nada para eles.
 
 **Alternativa que perdeu.** Gerar agora a cadeia até a forma da curva (311 imagens nos novos). Dono: "Não vai gerar tudo agora de uma vez."
 

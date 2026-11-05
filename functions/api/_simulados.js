@@ -148,7 +148,7 @@ export function progressoDoDia(p, day) {
   return { level: Math.min(MAX_LEVEL, STAGE_FIRST_LEVEL.ultra + Math.floor(pontos + dias * taxa)), stage: 'ultra' };
 }
 
-/** Teto de forma dos simulados, até nova decisão do dono (REGISTRO §232). A curva segue andando por baixo em `progressoDoDia`. */
+/** Teto de forma dos simulados, até nova decisão do dono (REGISTRO §235). A curva segue andando por baixo em `progressoDoDia`. */
 export const SIM_FORMA_MAX = 'champion';
 const NIVEL_MAX_DO_TETO = STAGE_FIRST_LEVEL.ultimate - 1;
 

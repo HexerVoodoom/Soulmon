@@ -10,6 +10,8 @@ export const COUNTER_RING = [
 
 /** Par derivado -> 1o componente (a base dominante sem pesos). */
 export const BASE_DO_PAR = {
+  // os 50 curados (§232): 1o componente da receita
+  geiser: 'fogo', vulcao: 'fogo', deserto: 'fogo', relampago_seco: 'fogo', supernova: 'fogo', nevasca: 'agua', permafrost: 'agua', monsoes: 'agua', peste_negra: 'agua', coro_dos_afogados: 'agua', ossario_vivo: 'terra', jardim_eterno: 'terra', aurora_boreal: 'ar', duelista_temporal: 'ar', pulso_cosmico: 'eletricidade', sabbat: 'arcano', hipnose: 'arcano', materia_escura: 'gravidade', milagre: 'luz', memoria: 'tempo', coral_celeste: 'som', via_lactea: 'espaco', delirio: 'vileza', cacador_de_almas: 'marcial', presagio: 'tempo', horizonte_de_eventos: 'gravidade', lamina_do_juizo: 'marcial', bencao_marcial: 'luz', arauto: 'marcial', farol: 'luz', carniceiro: 'vileza', entropia_final: 'tempo', gladiador: 'marcial', punho_gravitico: 'marcial', avatar_elemental: 'fogo', titano_forjado: 'fogo', cataclismo: 'fogo', sopro_do_dragao: 'fogo', ragnarok: 'fogo', genesis: 'agua', tempestade_perfeita: 'agua', leviata: 'agua', senhor_da_praga: 'agua', sinfonia_do_caos: 'arcano', vontade_absoluta: 'arcano', arquiteto_da_realidade: 'arcano', ceifador_estelar: 'sombra', renascimento: 'luz', juizo_final: 'luz', cavaleiro_absoluto: 'luz',
   vapor: 'fogo', lava: 'fogo', incendio: 'fogo', plasma: 'fogo',
   fogo_feiticeiro: 'fogo', fogo_negro: 'fogo', chama_solar: 'fogo', fogo_infernal: 'fogo',
   chama_azul: 'fogo', fenix: 'fogo', fervor: 'fogo', pantano: 'agua',
@@ -87,8 +89,8 @@ export function vantagemElemental(atacante, defensor) {
  */
 export function aplicarElementosDuelo(me, opp, escala = 1) {
   // Hexsmith (01/11/2026): a Couraca troca o elemento que DEFENDE (`elDefesa`); sem ela vale o do basico.
-  const advMe = vantagemElemental(me.fx?.elBasica, opp.fx?.elDefesa ?? opp.fx?.elBasica);
-  const advOpp = vantagemElemental(opp.fx?.elBasica, me.fx?.elDefesa ?? me.fx?.elBasica);
+  const advMe = vantagemElemental(me.fx?.elVantagem ?? me.fx?.elBasica, opp.fx?.elDefesa ?? opp.fx?.elVantagem ?? opp.fx?.elBasica);
+  const advOpp = vantagemElemental(opp.fx?.elVantagem ?? opp.fx?.elBasica, me.fx?.elDefesa ?? me.fx?.elVantagem ?? me.fx?.elBasica);
   const com = (c, adv) => (adv === 0 ? c : { ...c, bonus: (1 + c.bonus) / (1 - (escala * adv) / 10) - 1 });
   return { meCombatant: com(me.combatant, advMe), oppCombatant: com(opp.combatant, advOpp) };
 }

@@ -1,5 +1,5 @@
 /**
- * PROMPTS DOS SIMULADOS, SAÍDOS DO ORÁCULO REAL (REGISTRO §231). Sem texto de estilo próprio.
+ * PROMPTS DOS SIMULADOS, SAÍDOS DO ORÁCULO REAL (REGISTRO §234). Sem texto de estilo próprio.
  *
  * O mesmo pipeline do onboarding (`buildSoulProfile` + `generateOracleComplete`), com entrada determinística por id:
  * elemento e alinhamento vão como override, o ajuste manual que o jogador também tem; o secundário fica automático (decisão do dono).

@@ -14,7 +14,7 @@
 //
 // EM PASSOS, sem esperar: `waitUntil` dá 30 s e o provedor pode levar mais. Cada chamada envia OU consulta, e a seguinte continua.
 // O provedor por API não entrega alfa (`generate-sprite.js`): aqui vale o mesmo recorte do pipeline do jogador.
-// O PROMPT é o do Oráculo real (REGISTRO §231), semeado por `scripts/simulados-prompts.ts`: as Functions não importam o Oráculo.
+// O PROMPT é o do Oráculo real (REGISTRO §234), semeado por `scripts/simulados-prompts.ts`: as Functions não importam o Oráculo.
 // ---------------------------------------------------------------------------
 import { kv, kvOrThrow } from './_kv.js';
 import { flagOn } from './_killSwitch.js';
@@ -30,7 +30,7 @@ const POR_PASSO = 3;
 const ENVIO_VENCE_MS = 30 * 60_000;
 const ORDEM = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'];
 const POR_ID = new Map(SIMULADOS.map((s) => [s.id, s]));
-/** Antigos cuja âncora passa do teto Champion: nada é gerado para eles sem decisão do dono (REGISTRO §232). */
+/** Antigos cuja âncora passa do teto Champion: nada é gerado para eles sem decisão do dono (REGISTRO §235). */
 const ACIMA_DO_TETO = new Set(SIMULADOS.filter((s) => !['rookie', 'champion'].includes(s.ancora.estagio)).map((s) => s.id));
 
 export const formasLigadas = (env) => flagOn(env?.SIMULADOS_FORMAS_ON) && !flagOn(env?.SPRITE_DISABLED);
