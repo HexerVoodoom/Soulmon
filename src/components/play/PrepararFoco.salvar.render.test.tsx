@@ -20,7 +20,7 @@ type T = { id: string; name: string; completed: boolean; kind?: 'habit' };
 function Area({ tasks }: { tasks: T[] }) {
   const [key, setKey] = useState(false);
   return key
-    ? createElement(OficinaSheet, { language: 'en-US' as const, todayKey: DIA, tasks, planInPrepare: true })
+    ? createElement(OficinaSheet, { language: 'en-US' as const, todayKey: DIA, tasks })
     : createElement(PrepararFocoSheet, { language: 'en-US' as const, todayKey: DIA, tasks, keyActive: false, onPrepared: () => setKey(true) });
 }
 const q = (c: HTMLElement, s: string) => c.querySelector(s) as HTMLElement | null;
@@ -28,7 +28,7 @@ const next = (c: HTMLElement) => fireEvent.click(q(c, '[data-oficina-next]')!);
 const goTo = (c: HTMLElement, step: string) => { for (let i = 0; i < 10 && !q(c, `[data-oficina-step="${step}"]`); i++) next(c); };
 
 describe('Save session (Preparar o foco)', () => {
-  it('o dono percorre tudo sem escolher o ambiente: o toque em Save session explica o que falta e leva até lá', () => {
+  it('o dono percorre tudo sem escolher o ambiente: o toque em Save session explica o que falta e pede o ambiente ali mesmo', () => {
     const { container } = render(createElement(Area, { tasks: [{ id: 't1', name: 'Write report', completed: false }] }));
     fireEvent.change(q(container, '[data-oficina-plano] input')!, { target: { value: 'Morning' } });
     goTo(container, 'revisar');
@@ -36,10 +36,9 @@ describe('Save session (Preparar o foco)', () => {
     expect(save.hasAttribute('disabled')).toBe(false);
     fireEvent.click(save);
     expect(localStorage.getItem(STORAGE_KEYS.FOCO_WORKSHOP_PLAN)).toBeNull();
-    expect(q(container, '[data-oficina-save-missing]')!.textContent).toMatch(/environment/i);
-    expect(q(container, '[data-oficina-step="ritmo"]')).not.toBeNull();
+    expect(q(container, '[data-oficina-save-missing]')!.textContent).toMatch(/where Soulmon goes/i);
+    expect(q(container, '[data-oficina-step="revisar"]')).not.toBeNull();
     fireEvent.click(q(container, '[data-focus-environment="forest"]')!);
-    goTo(container, 'revisar');
     fireEvent.click(q(container, '[data-oficina-save-session]')!);
     expect(localStorage.getItem(STORAGE_KEYS.FOCO_WORKSHOP_PLAN)).not.toBeNull();
     expect(q(container, '[data-oficina-sessao-salva]')!.textContent).toContain('Morning');

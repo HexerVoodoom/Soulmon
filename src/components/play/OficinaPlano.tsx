@@ -12,12 +12,14 @@ import { sheetCard, sheetCardList, sheetCardTitle } from '../nav/sheetKit';
 import type { Language } from '../../utils/i18n';
 import {
   FOCUS_ENVIRONMENTS, FOCUS_EXTRA_BASE_CHANCE, FOCUS_EXTRA_CHANCE_PER_CYCLE, FOCUS_EXTRA_MAX_CHANCE,
-  FOCUS_LOOT_DAILY_CAP,
+  FOCUS_LOOT_DAILY_CAP, isFocusEnvironmentId,
 } from '../../utils/focusExpedition';
 import { formatClock, type FocoModeId } from '../../utils/focoTimer';
+import { readJson, removeLocal, writeJson } from '../../utils/safeStorage';
+import { STORAGE_KEYS } from '../../utils/storageKeys';
 import {
   DUMP_MINUTE_OPTIONS, MAX_POOL, MAX_TWO_MIN, QUADRANTS, STEP_ORDER, buildPlan, canSave, dumpRemaining, lengthLabel,
-  matrixOrder, missingToSave, nextStep, prevStep, setFrog, setQuadrant, startDump, stepNumber, toggleTwoMin,
+  matrixOrder, missingToSave, nextStep, normalizeSession, toDraft, prevStep, setFrog, setQuadrant, startDump, stepNumber, toggleTwoMin,
   type PlanTask, type Quadrant, type SessionDraft, type StepId,
 } from '../../utils/focoSessao';
 
@@ -65,17 +67,30 @@ function PickRow({ role, checked, onClick, children, habit, ...rest }: { role: '
   </button>;
 }
 
-export function OficinaPlano({ language, tasks, initial, onSave, onCancel }: {
-  language: Language; tasks: PlanTask[]; initial: SessionDraft;
+/** O rascunho sobrevive a fechar a folha e a recarregar (só no aparelho): reaproveita a normalização da sessão salva. */
+const loadDraft = (): { draft: SessionDraft; step: StepId } | null => {
+  const raw = readJson<{ step?: unknown } | null>(STORAGE_KEYS.FOCO_PLAN_DRAFT, null);
+  const s = normalizeSession(raw);
+  if (!s) return null;
+  return { draft: toDraft(s), step: (STEP_ORDER as readonly unknown[]).includes(raw?.step) ? raw?.step as StepId : 'preparar' };
+};
+
+export function OficinaPlano({ language, tasks, initial, keepDraft = false, onSave, onCancel }: {
+  language: Language; tasks: PlanTask[]; initial: SessionDraft; keepDraft?: boolean;
   onSave: (draft: SessionDraft) => void; onCancel: () => void;
 }) {
   const isPt = language === 'pt-BR';
-  const [draft, setDraft] = useState<SessionDraft>(initial);
-  const [step, setStep] = useState<StepId>('preparar');
+  const [restored] = useState(() => (keepDraft ? loadDraft() : null));
+  const [draft, setDraft] = useState<SessionDraft>(restored?.draft ?? initial);
+  const [step, setStep] = useState<StepId>(restored?.step ?? 'preparar');
   const [dumpEnd, setDumpEnd] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [missing, setMissing] = useState<'name' | 'environment' | null>(null);
   const rootRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (keepDraft) writeJson(STORAGE_KEYS.FOCO_PLAN_DRAFT, { ...draft, id: 'draft', day: '', status: 'ready', step }, { silent: true });
+  }, [keepDraft, draft, step]);
+  const clearDraft = () => { if (keepDraft) removeLocal(STORAGE_KEYS.FOCO_PLAN_DRAFT, { silent: true }); };
   useEffect(() => {
     if (dumpEnd === null) return;
     const tick = () => setNow(Date.now());
@@ -97,18 +112,28 @@ export function OficinaPlano({ language, tasks, initial, onSave, onCancel }: {
   const trySave = () => {
     const why = missingToSave(draft);
     setMissing(why);
-    if (why === null) { if (canSave(draft)) onSave(draft); return; }
-    if (why === 'environment') setStep('ritmo');
-    else rootRef.current?.querySelector('input')?.focus();
+    if (why === null) { if (canSave(draft)) { onSave(draft); clearDraft(); } return; }
+    /* Nunca volta para o meio das etapas (dono, 05/11/2026: "preenche tudo duas vezes"): o ambiente que falta se escolhe aqui mesmo, na revisão. */
+    if (why === 'name') rootRef.current?.querySelector('input')?.focus();
   };
   const habitChip = (t: PlanTask) => (t.kind === 'habit' ? <TagChips tags={['habit']} isPt={isPt} /> : null);
   const empty = <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Você não tem tarefas nem hábitos abertos hoje. Pode pular esta etapa.' : 'You have no open tasks or habits today. You can skip this step.'}</p>;
+
+  const environmentPicker = <fieldset data-oficina-environment style={{ display: 'grid', gap: 8, margin: 0, padding: 0, border: 0 }}>
+            <legend style={{ ...sm2Text, marginBottom: 4 }}>{isPt ? 'Para onde enviar o Soulmon?' : 'Where should Soulmon go?'}</legend>
+            <div role="radiogroup" aria-label={isPt ? 'Ambiente da expedição' : 'Expedition environment'} style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
+              {FOCUS_ENVIRONMENTS.map(env => <button key={env.id} type="button" role="radio" aria-checked={draft.environment === env.id} data-focus-environment={env.id} onClick={() => set('environment', env.id)} style={{ ...sm2Button(draft.environment === env.id ? 'primary' : 'outline'), display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 8 }}>
+                <Icon name={env.icon} size={20} tone="inherit" />{isPt ? env.pt : env.en}
+              </button>)}
+            </div>
+            <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Cada ambiente tem quatro materiais possíveis. Uma comida aleatória também participa do sorteio.' : 'Each environment has four possible materials. A random food also joins the pool.'}</p>
+          </fieldset>;
 
   return (
     <section ref={rootRef} data-oficina-plano style={{ ...sheetCard, alignItems: 'stretch', gap: 12 }}>
       <header style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Planejar sessão' : 'Plan session'}</p>
-        <button type="button" data-oficina-cancel-session onClick={onCancel} style={softLink}>{isPt ? 'Cancelar' : 'Cancel'}</button>
+        <button type="button" data-oficina-cancel-session onClick={() => { clearDraft(); onCancel(); }} style={softLink}>{isPt ? 'Cancelar' : 'Cancel'}</button>
       </header>
       <label style={{ ...sm2Text, display: 'grid', gap: 4 }}>{isPt ? 'Nome da sessão' : 'Session name'}
         <Field value={draft.name} onChange={e => set('name', e.target.value)} placeholder={isPt ? 'Ex.: fechar apresentação' : 'e.g. finish presentation'} maxLength={60} />
@@ -138,15 +163,7 @@ export function OficinaPlano({ language, tasks, initial, onSave, onCancel }: {
           <div role="radiogroup" aria-label={isPt ? 'Ritmo da sessão' : 'Session rhythm'} style={{ display: 'flex', gap: 8 }}>
             {(['p25', 'p50'] as FocoModeId[]).map(m => <Segment key={m} selected={draft.mode === m} onSelect={() => set('mode', m)} label={lengthLabel(m).replace('/', ' / ')} />)}
           </div>
-          <fieldset data-oficina-environment style={{ display: 'grid', gap: 8, margin: 0, padding: 0, border: 0 }}>
-            <legend style={{ ...sm2Text, marginBottom: 4 }}>{isPt ? 'Para onde enviar o Soulmon?' : 'Where should Soulmon go?'}</legend>
-            <div role="radiogroup" aria-label={isPt ? 'Ambiente da expedição' : 'Expedition environment'} style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 8 }}>
-              {FOCUS_ENVIRONMENTS.map(env => <button key={env.id} type="button" role="radio" aria-checked={draft.environment === env.id} data-focus-environment={env.id} onClick={() => set('environment', env.id)} style={{ ...sm2Button(draft.environment === env.id ? 'primary' : 'outline'), display: 'flex', alignItems: 'center', justifyContent: 'flex-start', gap: 8 }}>
-                <Icon name={env.icon} size={20} tone="inherit" />{isPt ? env.pt : env.en}
-              </button>)}
-            </div>
-            <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Cada ambiente tem quatro materiais possíveis. Uma comida aleatória também participa do sorteio.' : 'Each environment has four possible materials. A random food also joins the pool.'}</p>
-          </fieldset>
+          {environmentPicker}
         </div>}
 
         {step === 'dois-minutos' && (pool.length === 0 ? empty : <div data-oficina-two-min role="group" aria-label={isPt ? 'Tarefas de dois minutos' : 'Two-minute tasks'} style={{ display: 'grid', gap: 6 }}>
@@ -193,6 +210,7 @@ export function OficinaPlano({ language, tasks, initial, onSave, onCancel }: {
         </div>}
 
         {step === 'revisar' && <div data-oficina-review style={{ display: 'grid', gap: 10 }}>
+          {!isFocusEnvironmentId(draft.environment) && environmentPicker}
           <p style={{ ...sm2Hint, margin: 0 }}>{`${draft.name.trim() || (isPt ? 'Sua sessão' : 'Your session')} · ${draft.mode === 'p25' ? 'Pomodoro 25/5' : (isPt ? 'Blocos 50/10' : 'Focus blocks 50/10')}`}</p>
           {plan.length === 0 ? <p data-oficina-review-tasks style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Nenhuma tarefa na lista. Dá para salvar assim e focar sem lista.' : 'No tasks on the list. You can still save and focus without one.'}</p>
             : <ol data-oficina-review-tasks style={{ ...sheetCardList, margin: 0, paddingInlineStart: 22 }}>{plan.map(p => <li key={p.id} data-oficina-review-item={p.id} style={{ ...sm2Text, display: 'grid', gap: 4 }}><strong style={{ overflowWrap: 'anywhere' }}>{p.name}</strong><span style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}><TagChips tags={p.tags} isPt={isPt} /></span></li>)}</ol>}
@@ -205,7 +223,7 @@ export function OficinaPlano({ language, tasks, initial, onSave, onCancel }: {
 
       {missing && <p role="alert" data-oficina-save-missing style={{ ...sm2Text, margin: 0, color: 'var(--sm2-gold-ink, var(--sm2-ink))' }}>{missing === 'name'
         ? (isPt ? 'Dê um nome à sessão, no topo. Depois toque em Salvar sessão de novo.' : 'Just add a session name at the top, then tap Save session again.')
-        : (isPt ? 'Escolha para onde o Soulmon vai: toque num ambiente e volte para salvar.' : 'Choose where Soulmon goes: pick an environment, then come back to save.')}</p>}
+        : (isPt ? 'Escolha aqui para onde o Soulmon vai e toque em Salvar sessão.' : 'Choose where Soulmon goes right here, then tap Save session.')}</p>}
       <footer style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {step !== 'preparar' && <button type="button" data-oficina-back onClick={() => setStep(prevStep(step))} style={softLink}>{isPt ? 'Voltar' : 'Back'}</button>}
         {step !== 'revisar' && <>

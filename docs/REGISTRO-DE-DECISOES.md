@@ -4175,3 +4175,18 @@ Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combin
 **Alternativas que perderam.** Só promover os 3 trios (toda Planta de 3 componentes viraria Pestilência e toda Fada, Maldição, ambas sombrias, sem escolha pelas afinidades); aceitar o limite do §232.
 
 **O que falsificaria.** k real por estágio de planta, industrial e fada ainda fora da tabela; balanço (§232) fora de ±3pp com as 3 bases entrando em `COM_CURADO`. **Rollback:** reverter o PR; o save só guarda ids, e id desconhecido cai no par.
+
+## §238 — Oficina do Foco: um planejamento só, e toda sessão conclui (05/11/2026, relato do dono)
+
+**Relato.** "Tô tendo que configurar duas vezes"; "preenche tudo duas vezes"; "completar sessão não faz nada"; ao excluir, não dá para criar outra.
+
+**Causas reproduzidas em teste (`OficinaCiclo.render.test.tsx`).**
+1. Sem ambiente, salvar devolvia à etapa 2 e obrigava a andar as 8 etapas de novo. Agora o ambiente que falta se escolhe na própria revisão.
+2. Com a chave do dia, "Planejar", "Editar" e "Nova sessão" só mostravam a dica de um prédio "Preparar o Foco", que deixou de existir como prédio no beta3 N8. Excluir ou concluir virava beco sem saída. Agora o planejamento abre ali mesmo; `planInPrepare` saiu.
+3. "Concluir sessão" ficava desabilitado sem lista ou com qualquer timer ativo, sem explicação. Agora: sem lista conclui; na pausa conclui, fecha o timer e conta o ciclo; com o foco no relógio explica o que falta.
+4. A sessão nova herdava id, dia e ciclos da sessão pronta de outro dia, o que também fazia a nova cair no dedupe de recompensa. Agora nasce limpa.
+5. Fechar a folha ou recarregar perdia o planejamento. O rascunho fica no aparelho (`FOCO_PLAN_DRAFT`), na mesma etapa.
+
+**Alternativa que perdeu.** Manter a exigência de lista para concluir: a revisão oferece explicitamente salvar sem lista, e o botão mudo foi o defeito relatado. O custo é a sessão vazia render o item de processo, limitado ao teto já existente de 2 por dia, dentro do de 8 (§22).
+
+**O que falsificaria.** Queixa de item grátis por concluir vazio, ou telemetria de sessões concluídas sem foco nenhum: aí exigir 1 ciclo de foco, com o botão explicando. **Rollback:** reverter o PR. A chave nova de rascunho fica órfã e é inofensiva; nada muda no save.

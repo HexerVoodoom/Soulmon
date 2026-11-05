@@ -49,6 +49,7 @@ const GAME_STATE = 'soulmon_state_v1';
  * aqui no mesmo PR (e daí em diante também não pode sumir).
  */
 const NOVAS_DESDE_20_10_2026: readonly string[] = [
+  'soulmon-foco-plan-draft',
   'soulmon-evo-seen-at',
   'soulmon-chama-pago',
   'soulmon-chama-aviso',

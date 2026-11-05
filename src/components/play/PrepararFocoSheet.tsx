@@ -3,8 +3,8 @@ import { sm2Hint, sm2Text } from '../form/FormKit';
 import { Icon } from '../ui/Icon';
 import { sheetCard, sheetCardTitle } from '../nav/sheetKit';
 import type { Language } from '../../utils/i18n';
-import { emptyDraft, normalizeSession, saveSession as buildSession, type SessionDraft } from '../../utils/focoSessao';
-import { readJson, writeJson } from '../../utils/safeStorage';
+import { emptyDraft, saveSession as buildSession, type SessionDraft } from '../../utils/focoSessao';
+import { writeJson } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { playerDayIso } from '../../utils/playerDay';
 import { OficinaPlano } from './OficinaPlano';
@@ -27,8 +27,8 @@ export function PrepararFocoSheet({ language, todayKey, tasks = [], keyActive = 
   /** Troca a chave para remontar o formulário vazio quando Cancelar é tocado sem uma chave ativa para voltar. */
   const [formKey, setFormKey] = useState(0);
   const saveDraft = (draft: SessionDraft) => {
-    const prev = normalizeSession(readJson<unknown>(STORAGE_KEYS.FOCO_WORKSHOP_PLAN, null));
-    const next = buildSession(draft, tasks, { id: `foco-${Date.now()}`, day, prev: prev?.status === 'ready' ? prev : null });
+    /* Aqui só se chega sem sessão de hoje: o que estiver guardado é de outro dia e não empresta id, dia nem ciclos à sessão nova. */
+    const next = buildSession(draft, tasks, { id: `foco-${Date.now()}`, day });
     if (!next) { setSaveError(isPt ? 'Falta o nome da sessão ou o ambiente do Soulmon.' : 'The session name or the Soulmon environment is missing.'); return; }
     if (!writeJson(STORAGE_KEYS.FOCO_WORKSHOP_PLAN, next)) { setSaveError(isPt ? 'Não deu para salvar a sessão neste aparelho. Tente de novo.' : "Couldn't save the session on this device. Try again."); return; }
     setSaveError(null);
@@ -43,7 +43,7 @@ export function PrepararFocoSheet({ language, todayKey, tasks = [], keyActive = 
         ? <>
           <p data-preparar-hint style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Planeje a sessão, passo a passo. Ao salvar, a segunda etapa (a Oficina do Foco) se abre.' : 'Plan the session, step by step. When you save it, the second step (the Focus Workshop) opens.'}</p>
           {saveError && <p role="alert" data-preparar-erro style={{ ...sm2Text, margin: 0, color: 'var(--sm2-gold-ink, var(--sm2-ink))' }}>{saveError}</p>}
-          <OficinaPlano key={formKey} language={language} tasks={tasks} initial={emptyDraft()} onSave={saveDraft} onCancel={cancel} />
+          <OficinaPlano key={formKey} language={language} tasks={tasks} initial={emptyDraft()} keepDraft onSave={saveDraft} onCancel={cancel} />
         </>
         : <article data-preparar-chave style={{ ...sheetCard, alignItems: 'stretch', gap: 8 }}>
           <header style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

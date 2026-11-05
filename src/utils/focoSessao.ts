@@ -10,7 +10,7 @@
  *    Home não muda; concluir é o handler real do App (injetado na folha), nunca uma cópia.
  *  · Cada etapa é pulável: pular não apaga o que já foi escolhido, só avança.
  *  · A recompensa de concluir o processo não olha contagem de tarefas (`canCompleteSession` só exige
- *    que exista um plano e um nome) — o teto diário mora em `focusExpedition.ts`.
+ *    a sessão pronta) — o teto diário mora em `focusExpedition.ts`.
  */
 import { FOCO_MODES, type FocoModeId } from './focoTimer';
 import { isFocusEnvironmentId, type FocusEnvironmentId } from './focusExpedition';
@@ -133,8 +133,8 @@ export const canSave = (d: SessionDraft): boolean => missingToSave(d) === null;
 export const missingToSave = (d: SessionDraft): 'name' | 'environment' | null =>
   d.name.trim().length === 0 ? 'name' : !isFocusEnvironmentId(d.environment) ? 'environment' : null;
 
-/** Concluir o PROCESSO exige um plano e a sessão pronta — nunca um número de tarefas. */
-export const canCompleteSession = (s: FocoSession): boolean => s.status === 'ready' && s.plan.length > 0;
+/** Concluir o PROCESSO só exige a sessão pronta: nunca um número de tarefas, e a sessão sem lista (que a revisão oferece) também conclui (REGISTRO §238). */
+export const canCompleteSession = (s: FocoSession): boolean => s.status === 'ready';
 
 export function saveSession(d: SessionDraft, tasks: readonly PlanTask[], meta: { id: string; day: string; prev?: FocoSession | null }): FocoSession | null {
   if (!canSave(d)) return null;
