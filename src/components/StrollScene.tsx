@@ -92,7 +92,7 @@ export function StrollScene({ regionId, bgId, playerSprite, adventure, adventure
     position: 'absolute', top: 0, left: 0, width: trackW, height: trackH,
     transform: `translateX(${offset}px)`, transition: reduced ? 'none' : `transform ${PAN_MS}ms cubic-bezier(.45,.05,.25,1)`,
     backgroundColor: '#071413',
-    ...(art ? { background: `#071413 url(${art}) center / 100% 100% no-repeat` } : null),
+    ...(art ? { background: `#071413 url(${art}) center / cover no-repeat` } : null),
   };
 
   const goOnFromIntro = () => (discovery ? setPhase('notice') : onFinish());
@@ -100,11 +100,16 @@ export function StrollScene({ regionId, bgId, playerSprite, adventure, adventure
     if (discovery && !discovered.current) { discovered.current = true; onDiscover(discovery.key); }
     setPhase('pan-back');
   };
+  /** "Pular" (padrão do `BuildingIntro`): encerra a cena inteira. O Soulmon do dia é garantido, então pular também grava a descoberta. */
+  const skip = () => {
+    if (discovery && !discovered.current) { discovered.current = true; onDiscover(discovery.key); }
+    onFinish();
+  };
   const title = isPt ? 'Da aventura de ontem' : "From Yesterday's Adventure";
 
   return (
     <div data-stroll-scene data-phase={phase} data-region={regionId} data-scene-art={art ? 'painted' : 'fallback'}
-      role="dialog" aria-label={title}
+      role="dialog" aria-modal="true" aria-label={title}
       style={{ position: 'fixed', inset: 0, zIndex: 200, overflow: 'hidden', backgroundColor: '#071413' }}>
       <div data-scene-track style={trackStyle}>
         {fallback && (
@@ -117,6 +122,13 @@ export function StrollScene({ regionId, bgId, playerSprite, adventure, adventure
         <ScenePet src={playerSprite} xPct={SCENE_PLAYER_X} size={petSize} trackH={trackH} label={isPt ? 'Seu Soulmon' : 'Your Soulmon'} data-scene-pet="player" />
         {discovery && <ScenePet src={discovery.sprite} xPct={SCENE_FOUND_X} size={petSize} trackH={trackH} label={discovery.name} data-scene-pet="found" />}
       </div>
+
+      {discovery && phase !== 'back' && (
+        <button type="button" data-scene-skip onClick={skip}
+          style={{ ...sm2Button('outline', false, 'sm'), backgroundColor: 'var(--sm2-surface)', position: 'absolute', zIndex: 4, right: 16, bottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}>
+          {isPt ? 'Pular' : 'Skip'}
+        </button>
+      )}
 
       {phase === 'intro' && (
         <div data-scene-card="intro" style={topCard}>

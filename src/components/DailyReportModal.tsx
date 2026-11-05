@@ -313,7 +313,7 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
   // A descoberta é sorteada UMA vez por abertura do resumo: gravar a chave no Drive muda `bestiary` e não pode trocar o Soulmon da cena.
   const descoberta = useRef<{ day: string; e: ReturnType<typeof strollDiscoveryOf> } | null>(null);
   if (strollScene && stroll && descoberta.current?.day !== report.date) {
-    descoberta.current = { day: report.date, e: strollDiscoveryOf(strollScene.bestiary, report.date) };
+    descoberta.current = { day: report.date, e: report.strollDiscovered ? null : strollDiscoveryOf(strollScene.bestiary, report.date) };
   }
   const step = steps[Math.min(stepIdx, steps.length - 1)];
   const isLast = stepIdx >= steps.length - 1;
