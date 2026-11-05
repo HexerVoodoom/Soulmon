@@ -23,6 +23,9 @@ interface Props {
   onConfirm: () => void;
 }
 
+/** Thassia (dono, 05/11/2026): maior e mais baixa, a folha corta embaixo; o espadão fica inteiro em cima e dos lados. */
+const THASSIA_FRAME = { zoom: 1.2, underSheet: 0.16, flushLeft: true };
+
 /** A folha do LÍDER de uma Ordem (dono, 05/11/2026): o NPC grande no alto, primeiro o que é a missão, depois aceitar ou pensar. */
 export function MercGuildSheet({ ordem, onClose, language = 'pt-BR', hoje, dayKey, bb = false, onAccept, onThink, onConfirm }: Props) {
   const isPt = language === 'pt-BR';
@@ -53,6 +56,7 @@ export function MercGuildSheet({ ordem, onClose, language = 'pt-BR', hoje, dayKe
       closeLabel={isPt ? 'Fechar' : 'Close'}
       npcArt={arteOnboarding(MERC_RETRATO[ordem])}
       npcVoice={{ name: t(lider), line: fala }}
+      npcFrame={ordem === 'rompente' ? THASSIA_FRAME : undefined}
     >
       <div data-merc-guild data-merc-lider={ordem} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {!bb && !outra && item && !minha?.done && (
