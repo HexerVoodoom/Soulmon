@@ -5311,6 +5311,17 @@ vindo do servidor).
 
 - **Soulsmith: equipamento por missão e aprimoramento (07/10/2026, REGISTRO §26).** Dono `src/utils/forge.ts` (tabelas, bônus por nível) + `forgeActions.ts` (conceder, aprimorar, refazer; updaters puros e idempotentes); espelho `functions/api/_forge.js`. A peça de nível 1 vem do 1º resgate da missão do prédio de origem; níveis 2–15 (eram 2–5 até 11/10/2026, REGISTRO §26.1) custam materiais por prédio (98 + 56 por peça no total) e Vínculo 2…10; cada nível escolhe entre duas opções IGUAIS de 0,1 % (o atributo do slot ou o vizinho; a tela diz "Mais dano" OU "Mais defesa", sem A/B); refazer = 150 Bits ganhos (ou 3 fragmentos). Registro `forge` com `v: 2` (sem ele, o esquema de 5 níveis é convertido na leitura); `BALANCO-SOULSMITH.md` traz a simulação (todo dia ≈ 100 dias, passa do Ultra). Uma peça no máximo = no máximo 1,5%; o teto único de 5% é o de sempre. A compra por Bits saiu da tela. Peça comprada antes vale o nível equivalente. **Lore e regra (07/10/2026, dono): as peças são partes da alma, aprimoradas — não se desequipam.** Peça possuída está sempre equipada; `sanitizeEquipment` (cliente e `_equipment.js`) devolve ao slot o tier mais alto possuído quando o save antigo o tinha "tirado" (idempotente, nada se perde, teto de 5% intacto); `applyUnequip` não existe mais. **Uma peça por TIPO (07/10/2026, pedido do dono):** `sanitizeEquipment` (cliente e `_equipment.js`) mantém só o tier mais alto de cada slot (migração idempotente de saves com dois tiers); `applyForgeGrant` de um tier maior substitui a peça anterior e herda nível e escolhas (o aprimoramento nunca se perde; tier menor não entra); `applyEquip` saiu e a mochila de peças (`backpackUsed`) fica sempre em 0. **Regra do ingrediente-recurso (Mochila):** o material aparece SEMPRE na aba Especiais, com ×0, e o toque no ícone diz onde conseguir mais.
 
+**Efeito pelo elemento do especial (REGISTRO §228, §236).** A família decide a mecânica; o elemento do especial dá o efeito, e `direct` é só dano. Regra real só em PvE (`EFEITOS_PVE_LIGADOS`), PvP só visual; queimadura e veneno são só visuais. Dono: `src/utils/combate/elementEffects.ts`. Régua: `efeitosPve.medicao.test.ts` (±3pp por modo).
+
+| Elemento | Família → efeito real | Selo |
+|---|---|---|
+| Gravidade, Tempo, Industrial, Espaço | `defDebuff` → lentidão | Peso, Retardo, Ferrugem, Distorção |
+| Luz, Eletricidade, Marcial, Arcano | `defDebuff` → silêncio | Ofuscado, Curto-circuito, Atordoado, Selado |
+| Planta, Fada, Vigor | `shield` → cura contínua | Seiva, Pó de fada, Fôlego |
+| Gravidade, Industrial | `shield` → o escudo da família | Escudo de peso, Blindagem |
+| Vigor, Marcial | `atkBuff` → o buff da família | Fúria, Postura |
+| Tempo, Eletricidade | `spdBuff` → o buff da família | Aceleração, Carga |
+
 **O que NÃO faz.** Nenhum caminho pago dá talento, ponto, portão ou equipamento; não há sorteio pago; a torcida não vale Crédito; nada disto cobra o jogador (`copy.semFomo`).
 
 **Dono.** `src/utils/combate/` (motor), `src/utils/talents.ts`, `src/utils/equipment.ts`, `src/utils/bitsOrigin.ts`, `src/utils/gates.ts`, `src/utils/arena.ts`, `functions/api/_combate.js`, `_duel.js`, `_talents.js`, `_equipment.js`, `_gates.js`. **Onde a UI mostra:** StatsPage (talentos, "Vínculo N"), Ferreiro do Mercado (`EquipmentCard`, desde 07/10/2026), Arena, Duelo, aba de Créditos.

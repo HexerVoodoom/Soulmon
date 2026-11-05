@@ -4132,3 +4132,27 @@ Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combin
 **Alternativa que perdeu.** Gerar agora a cadeia até a forma da curva (311 imagens nos novos). Dono: "Não vai gerar tudo agora de uma vez."
 
 **O que falsificaria.** Champion parecer pouco no topo do ranking. **Rollback:** subir `SIM_FORMA_MAX`.
+
+
+## §236 — Os 11 elementos sem efeito ganham efeito real (05/11/2026, decisão do dono; emenda §228)
+
+**Decisão do dono.** Sobre Gravidade, Tempo, Planta, Fada, Luz, Industrial, Vigor, Eletricidade, Marcial, Arcano e Espaço: "Tem que ter efeito, não pode ser só visual. Pode ser o mesmo efeito de outro e ter diferença visual."
+
+- **Lentidão** com `defDebuff`: Gravidade (Peso), Tempo (Retardo), Industrial (Ferrugem), Espaço (Distorção).
+- **Silêncio** com `defDebuff`: Luz (Ofuscado), Eletricidade (Curto-circuito), Marcial (Atordoado), Arcano (Selado).
+- **Cura contínua** com `shield`: Planta (Seiva), Fada (Pó de fada), Vigor (Fôlego).
+- **Buff da própria família, com selo próprio e sem regra nova:** Gravidade e Industrial com `shield` (Escudo de peso, Blindagem), Vigor e Marcial com `atkBuff` (Fúria, Postura), Tempo e Eletricidade com `spdBuff` (Aceleração, Carga). Esses selos também aparecem no PvP, porque o buff existe lá.
+- **Continua valendo:** `direct` é só dano, o efeito vem do elemento do especial, queimadura e veneno seguem só visuais, PvP não ganha regra nova. Outras famílias desses elementos ficam sem efeito próprio.
+- **Derivados:** o par antigo tem prioridade (`TABELA` antes de `TABELA_11`), então nenhum derivado que já tinha efeito muda. Derivados sem efeito passam a herdar da tabela nova.
+
+**Medida** (`EFEITOS_ELEMENTOS=1`, `efeitosPve.medicao.test.ts`, N = 1600, pareada contra a mesma família sem efeito). Os botões são os do §228, sem ajuste; os elementos de uma mecânica medem igual.
+
+| Mecânica | Arena | Masmorra | Pesadelo |
+|---|---|---|---|
+| Lentidão | +1,8 | −1,9 | +1,7 |
+| Silêncio | −0,4 | +0,2 | +0,7 |
+| Cura contínua | −0,7 | +1,8 | −0,6 |
+
+**Alternativa que perdeu:** a proposta de 05/11 (só selo em 8 elementos, nada em Marcial, Arcano e Espaço), recusada pelo dono.
+
+**O que falsificaria.** Medição de um par fora de ±3pp, ou lentidão e silêncio passarem a dominar a escolha de família em `defDebuff`. **Arte:** 17 glifos pendentes em `docs/ASSETS-A-GERAR.md`; até lá o selo mostra forma + texto. **Rollback:** esvaziar `TABELA_11`.

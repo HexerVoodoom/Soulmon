@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DERIVED_ELEMENT_PAIRS } from '../soulProfile/derivedElements';
 import { SPECIAL_FAMILIES } from './specials';
 import { efeitoDoEspecial, efeitoVisivel } from './elementEffects';
-import { STATUS_FX, emptyStatusBoard, withRealFx } from '../combatFx';
+import { STATUS_FX, emptyStatusBoard, statusGlyphId, statusLabel, withRealFx } from '../combatFx';
 
 describe('§228: efeito pelo elemento do especial', () => {
   it('especial direto nunca tem efeito, em nenhum elemento', () => {
@@ -41,6 +41,36 @@ describe('§228: efeito pelo elemento do especial', () => {
     expect(efeitoVisivel('defDebuff', 'som', true)).toBe('silencio');
     expect(efeitoVisivel('defDebuff', 'ar', true)).toBe('lentidao');
     expect(efeitoVisivel('dot', 'fogo')).toBe('queimadura');
+  });
+  it('§236: os 11 elementos têm efeito real, e o direto segue sem nada', () => {
+    const tabela = {
+      gravidade: ['defDebuff', 'peso'], tempo: ['defDebuff', 'retardo'], industrial: ['defDebuff', 'ferrugem'], espaco: ['defDebuff', 'distorcao'],
+      luz: ['defDebuff', 'ofuscado'], eletricidade: ['defDebuff', 'curtoCircuito'], marcial: ['defDebuff', 'atordoado'], arcano: ['defDebuff', 'selado'],
+      planta: ['shield', 'seiva'], fada: ['shield', 'poDeFada'], vigor: ['shield', 'folego'],
+    } as const;
+    for (const [el, [fam, efeito]] of Object.entries(tabela)) {
+      expect(efeitoDoEspecial(fam, el), el).toBe(efeito);
+      expect(efeitoDoEspecial('direct', el), el).toBeNull();
+      expect(efeitoVisivel(fam, el), el).toBeNull(); // PvP não mostra regra que não roda
+      expect(efeitoVisivel(fam, el, true), el).toBe(efeito);
+    }
+    expect(efeitoVisivel('atkBuff', 'vigor')).toBe('furia'); // buff real da família: vale no PvP também
+  });
+  it('§236: derivado que já tinha efeito não muda', () => {
+    expect(efeitoDoEspecial('defDebuff', 'silencio_cosmico')).toBe('silencio');
+    expect(efeitoDoEspecial('dot', 'lava')).toBe('queimadura');
+  });
+  it('§236: o selo veste o contador real sem trocar os turnos', () => {
+    const fx = [
+      { nAtk: 0, nVuln: 0, nSpd: 0, shield: 0, shieldHits: 0, dot: 0, hot: 2 },
+      { nAtk: 0, nVuln: 1, nSpd: 0, shield: 0, shieldHits: 0, dot: 0, nSil: 2, nSlow: 1 },
+    ];
+    const b = withRealFx(emptyStatusBoard(1), fx, [], () => false, (h, o) => (h === 0 && o === 'self' ? 'seiva' : h === 1 && o === 'foe' ? 'peso' : null));
+    expect(b[0].find((e) => e.kind === 'hot')).toMatchObject({ variant: 'seiva', turns: 2 });
+    expect(b[1].find((e) => e.kind === 'lento')).toMatchObject({ variant: 'peso', turns: 1 });
+    expect(b[1].find((e) => e.kind === 'silencio')?.variant).toBeUndefined(); // 'peso' é pele de lentidão
+    expect(statusLabel('hot', true, 'seiva')).toBe('Seiva');
+    expect(statusGlyphId('lento', 'peso')).toBe('st-peso');
   });
   it('withRealFx troca só a pele: mesmos turnos do contador real', () => {
     const fx = [
