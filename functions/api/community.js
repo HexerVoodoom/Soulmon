@@ -50,6 +50,7 @@ import {
   getProfile, putProfile, pidSoLeitura, nickKey, claimNick,
 } from './_profile.js';
 import { secretEquals } from './metrics.js';
+import { ackMail, enqueueMail, readMail } from './_mensageiro.js';
 import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado, petNameDoSimulado, formaVista } from './_simulados.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
@@ -1263,6 +1264,29 @@ async function handleCommunity(context) {
     // a única chave imortal por acidente, crescendo uma por mês.
     await kvOrThrow(env).put(closedKey, JSON.stringify({ at: Date.now(), awarded: top3.length }), { expirationTtl: CLOSED_SEASON_TTL });
     return json({ ok: true, season, awarded: top3.length });
+  }
+
+  // ── O Mensageiro (§241): cartas com prêmio. O dono lê e confirma as dele; só o admin envia. ──
+  if (action === 'mail' && method === 'GET') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    return json({ mail: await readMail(env, kvOrThrow(env), id) });
+  }
+  if (action === 'mailAck' && method === 'POST') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const mids = body.mids;
+    if (!Array.isArray(mids) || mids.length > 30 || !mids.every(x => typeof x === 'string' && x.length > 0 && x.length <= 80)) return json({ error: 'invalid mids' }, 400);
+    return json({ ok: true, removed: await ackMail(kvOrThrow(env), id, mids) });
+  }
+  // Notícia ou compensação: POST { adminKey, ids[], mail: { mid, bodyPt, bodyEn, bits?, emblems? } }. Mesmo `mid` repetido não paga duas vezes.
+  if (action === 'mailSend' && method === 'POST') {
+    if (!env.SEASON_ADMIN_KEY || !secretEquals(body.adminKey, env.SEASON_ADMIN_KEY)) return json({ error: 'unauthorized' }, 401);
+    const ids = body.ids;
+    if (!Array.isArray(ids) || ids.length === 0 || ids.length > 100 || !ids.every(x => typeof x === 'string' && x.length <= 80)) return json({ error: 'invalid ids' }, 400);
+    let sent = 0;
+    for (const alvo of ids) if (await enqueueMail(env, kvOrThrow(env), alvo, { ...body.mail, at: Date.now() })) sent++;
+    return json({ ok: true, sent });
   }
 
   if (action === 'trophies' && method === 'GET') {

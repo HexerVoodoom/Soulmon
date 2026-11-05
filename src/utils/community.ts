@@ -1,3 +1,4 @@
+import type { MailItem } from './mensageiro';
 import type { DuelSide } from './combate/duel';
 import type { FightEvent } from './combate/fight';
 // Cliente da API de comunidade (functions/api/community.js): perfil público,
@@ -290,6 +291,10 @@ export async function resgatarPresentes(id: string): Promise<{ gifts: GiftItem[]
     },
   };
 }
+
+/** O Mensageiro (§241): a fila de cartas e a confirmação do que já está no save. */
+export const getMail = (id: string) => call<{ mail: MailItem[] }>('mail', { params: { id } });
+export const ackMail = (id: string, mids: string[]) => call<{ ok: true }>('mailAck', { method: 'POST', body: { id, mids } });
 
 export const getPendingTrophies = (id: string, claim = false) =>
   call<{ trophies: Array<{ season: string; place: 1 | 2 | 3 }> }>('trophies', { params: { id, ...(claim ? { claim: '1' } : {}) } });

@@ -1,3 +1,4 @@
+import { sanitizeMailClaimed } from '../utils/mensageiro';
 import { sanitizeFunSession } from '../utils/funSession';
 import { normalizeGuildMission } from '../utils/guildMission';
 import { sanitizeCrystal } from '../utils/evolutionCrystal';
@@ -616,6 +617,8 @@ export interface GameState {
   guildDonatedItem?: string | null;
   /** beta3 F1: dia do jogador (AAAA-MM-DD) em que o "Prepare to Focus" deu a chave que libera a Focus Workshop (`utils/focusKey.ts`). */
   focusKeyDay?: string;
+  /** Cartas do Mensageiro já creditadas (§241). */
+  mailClaimed?: string[];
   /** Dia do jogador em que concluiu uma sessão da Oficina: abre o Calabouço naquele dia (§239). */
   dungeonKeyDay?: string;
   /** 02/11/2026: dia do jogador (AAAA-MM-DD) em que o Refúgio já devolveu a energia do dia (`utils/refugio/energia.ts`; 1×/dia). */
@@ -1529,6 +1532,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         claReceipts: sanitizeClaReceipts(loadedState.claReceipts),
         bosqueArvores: sanitizeBosqueArvores(loadedState.bosqueArvores),
         focusKeyDay: sanitizeFocusKeyDay(loadedState.focusKeyDay),
+        mailClaimed: sanitizeMailClaimed(loadedState.mailClaimed),
         dungeonKeyDay: sanitizeFocusKeyDay(loadedState.dungeonKeyDay),
         refugioEnergyDay: sanitizeRefugioEnergyDay(loadedState.refugioEnergyDay),
         rogueDungeon: sanitizeRogueRun(loadedState.rogueDungeon),

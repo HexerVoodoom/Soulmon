@@ -348,6 +348,11 @@ async function onRequestBruto({ request, env }) {
     // formato do cliente (`utils/cadernoSave.ts`: 120 x 2000 caracteres) e descarta o resto — nunca o
     // lê, interpreta ou envia a IA/métricas. 120 x 2000 (menos de ~1 MB em UTF-8) cabe nos 5 MB.
     if ('caderno' in state) state.caderno = clampCaderno(state.caderno);
+    // Cartas do Mensageiro já creditadas (§241): só a forma e o teto.
+    if ('mailClaimed' in state) {
+      const q = Array.isArray(state.mailClaimed) ? state.mailClaimed.filter(x => typeof x === 'string' && x.length > 0 && x.length <= 80).slice(-100) : [];
+      if (q.length) state.mailClaimed = q; else delete state.mailClaimed;
+    }
     // Chave do Calabouço (§239): só a forma; como `focusKeyDay` e `rogueDungeon`, nasce de sessão guardada no aparelho, o servidor não a prova.
     if ('dungeonKeyDay' in state && !(typeof state.dungeonKeyDay === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(state.dungeonKeyDay))) delete state.dungeonKeyDay;
     if ('equippedFrame' in state) state.equippedFrame = frameIdOrNull(state.equippedFrame);

@@ -78,6 +78,7 @@ export const PRESENTATION_ORDER = [
   'levelUp',
   'evolveTask',
   'groveMilestone',
+  'messenger',
   'catalogLevelInvite',
   'restSetup',
   'unlockToast',
@@ -102,7 +103,7 @@ export const START_OF_DAY_MODAL_CAP = 3;
 export const DAY_START_IDS: readonly PresentationId[] = ['nightmare', 'dream', 'dailyReport', 'evoRecap', 'dayGoals', 'checkIn'];
 
 /** Celebrações: vêm DEPOIS do início de dia, e só se sobrar vaga no teto; senão, próxima abertura. */
-export const CELEBRATION_IDS: readonly PresentationId[] = ['levelUp', 'evolveTask', 'groveMilestone'];
+export const CELEBRATION_IDS: readonly PresentationId[] = ['levelUp', 'evolveTask', 'groveMilestone', 'messenger'];
 
 /** Convites e configuração: SAEM do início de dia (próxima abertura ou ação). */
 export const INVITE_IDS: readonly PresentationId[] = ['catalogLevelInvite', 'restSetup'];

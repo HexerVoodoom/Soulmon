@@ -80,6 +80,8 @@ const ACOES_COM_ATOR = [
   { action: 'forms', method: 'GET', params: { id: VITIMA, friend: ATOR } },
   { action: 'strayStatus', method: 'GET', params: { id: VITIMA } },
   { action: 'giftsAck', method: 'POST', body: { id: VITIMA, gids: ['g1'] } },
+  { action: 'mail', method: 'GET', params: { id: VITIMA } },
+  { action: 'mailAck', method: 'POST', body: { id: VITIMA, mids: ['m1'] } },
   // Cooperativo (Fase 4.3). `coopLeave` entra aqui por ser DESTRUTIVO — sem
   // autorização, uma requisição expulsaria qualquer pessoa do grupo dela.
   { action: 'coop', method: 'GET', params: { id: VITIMA } },
@@ -186,7 +188,7 @@ describe('community — a lista de ações com ator está completa', () => {
     // Ações públicas de leitura: não agem em nome de ninguém.
     const publicas = new Set(['players', 'player', 'opponents', 'rank', 'seasonResult', 'names', 'strays', 'evoFeed']); // evoFeed (04/11/2026): feed global sem id; strays (§213): pool anônimo, não lê id
     // Protegida por chave de admin, não por dono.
-    const admin = new Set(['closeSeason', 'backfillNicks']);
+    const admin = new Set(['closeSeason', 'backfillNicks', 'mailSend']);
 
     const todas = [...src.matchAll(/action === '([a-zA-Z]+)'/g)].map(m => m[1]);
     for (const a of new Set(todas)) {
