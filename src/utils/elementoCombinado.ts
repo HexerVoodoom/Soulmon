@@ -6,7 +6,8 @@
  * Quem tem `u` baixo fica "puro" a vida toda (o Ultra de um elemento só). Sem reroll e sem venda.
  *
  * Regras: o elemento CONTÉM a base nº 1 (o elemento do oráculo, o mesmo da arte). 2 componentes = par; 3 e 4 = só os curados do app
- * (`elementosCurados.ts`). A base nº 1 sem curado possível (planta, industrial e fada não têm nenhum) fica no par: nunca se inventa elemento.
+ * (`elementosCurados.ts`). Emenda de 05/11/2026: planta, industrial e fada ganharam curados (3 promovidos + 6 do lote 4) e deixam de parar no par.
+ * Base nº 1 sem curado possível (hoje nenhuma das 17) ainda cairia no par: nunca se inventa elemento.
  * A camada é só de LEITURA: não muda ficha, pontos nem cascata. Puro e sem relógio.
  */
 import { hashString, mulberry32 } from './oracle/base';

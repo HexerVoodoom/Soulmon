@@ -27,6 +27,7 @@ import { nomeEspecialInimigo, nomeDeLexico } from './soulProfile/ficha/nomeEspec
 import { baseElementLabel } from './soulProfile/essenceLabels';
 import { AREA_FAMILIES, SPECIAL_BUDGET_HITS, type SpecialFamily } from './combate/specials';
 import type { FighterFx } from './combate/fight';
+import { curatedComponents } from './elementosCurados';
 import { efeitoVisivel, type EfeitoElemento } from './combate/elementEffects';
 
 export type StageActionKind = 'melee' | 'ranged' | 'special';
@@ -48,7 +49,10 @@ export function fxElementId(id: string | undefined | null): string {
   if (!id) return FX_FALLBACK_ELEMENT;
   if (id === NIGHTMARE_ELEMENT) return hasNightmareFx() ? id : FX_FALLBACK_ELEMENT; // exclusivo do Pesadelo; sem arte, o procedural
   const mapped = id;
-  return attackFx(mapped, 'orb') ? mapped : FX_FALLBACK_ELEMENT;
+  if (attackFx(mapped, 'orb')) return mapped;
+  // Curado sem FX próprio (os 6 do lote 4 até a arte chegar, 05/11/2026): usa o FX do 1º componente em vez do neutro.
+  const dominante = curatedComponents(mapped)?.[0];
+  return dominante && attackFx(dominante, 'orb') ? dominante : FX_FALLBACK_ELEMENT;
 }
 
 /** O id do elemento CUJA arte `fxFrame` de fato devolve para o estado (com o fallback para o `neutro`): é o id que vale para a direção da arte (`fxFacing.ts`). */

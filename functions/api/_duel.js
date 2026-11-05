@@ -142,6 +142,8 @@ const escolaOf = (skill) => (skill && typeof skill.escolaId === 'string' ? (own(
 export const ELEMENTOS_FICHA = new Set([
   // os 50 curados (§232)
   'geiser', 'vulcao', 'deserto', 'relampago_seco', 'supernova', 'nevasca', 'permafrost', 'monsoes', 'peste_negra', 'coro_dos_afogados', 'ossario_vivo', 'jardim_eterno', 'aurora_boreal', 'duelista_temporal', 'pulso_cosmico', 'sabbat', 'hipnose', 'materia_escura', 'milagre', 'memoria', 'coral_celeste', 'via_lactea', 'delirio', 'cacador_de_almas', 'presagio', 'horizonte_de_eventos', 'lamina_do_juizo', 'bencao_marcial', 'arauto', 'farol', 'carniceiro', 'entropia_final', 'gladiador', 'punho_gravitico', 'avatar_elemental', 'titano_forjado', 'cataclismo', 'sopro_do_dragao', 'ragnarok', 'genesis', 'tempestade_perfeita', 'leviata', 'senhor_da_praga', 'sinfonia_do_caos', 'vontade_absoluta', 'arquiteto_da_realidade', 'ceifador_estelar', 'renascimento', 'juizo_final', 'cavaleiro_absoluto',
+  // curados novos e promovidos (emenda ao §232, 05/11/2026)
+  'clareira', 'alto_forno', 'bencao_feerica', 'floresta_ancestral', 'colosso_blindado', 'corte_feerica', 'pestilencia', 'maldicao', 'cyber',
   'fogo', 'agua', 'terra', 'ar', 'eletricidade', 'arcano', 'sombra', 'luz', 'vileza', 'morte', 'vida', 'vigor',
   'marcial', 'tempo', 'som', 'gravidade', 'espaco', 'fada', 'industrial', 'planta', 'vapor', 'lava', 'incendio', 'plasma', 'fogo_feiticeiro',
   'fogo_negro', 'chama_solar', 'fogo_infernal', 'chama_azul', 'fenix', 'fervor', 'pantano', 'gelo',

@@ -68,13 +68,13 @@ describe('LibraryPage — abas do Hall', () => {
     expect(painel.querySelector('img')).toBeNull();
     expect(painel.textContent).not.toMatch(/Fire|Water/);
     expect(painel.innerHTML).not.toContain('fogo');
-    expect(document.querySelector('[data-element-count]')!.textContent).toBe('0 / 261');
+    expect(document.querySelector('[data-element-count]')!.textContent).toBe('0 / 270');
   });
 
   it('Elemento destrancado abre a ficha com forte/fraco contra, e os trancados ali são "?"', () => {
     render({ defeatedElements: ['fogo', 'lava'] });
     fireEvent.click(screen.getByRole('tab', { name: 'Element' }));
-    expect(document.querySelector('[data-element-count]')!.textContent).toBe('2 / 261');
+    expect(document.querySelector('[data-element-count]')!.textContent).toBe('2 / 270');
     fireEvent.click(document.querySelector('[data-element-cell="fogo"]')!);
     const dlg = screen.getByRole('dialog');
     expect(within(dlg).getByText('Strong against')).toBeTruthy();

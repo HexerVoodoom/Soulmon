@@ -6,6 +6,7 @@
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
 import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 import { COMBINADOS_LOTE3_DATA } from './elementosLote3.data';
+import { COMBINADOS_LOTE4_DATA } from './elementosLote4.data';
 
 const FILES = import.meta.glob('../assets/soulmon/novos-arquivo/combinados/*.png', { eager: true, import: 'default' }) as Record<string, string>;
 
@@ -29,6 +30,13 @@ for (const [num, slug, , dominante] of COMBINADOS_LOTE2_DATA) {
 }
 /** Lote 3 (4 componentes) sem PNG próprio: cai para o rookie da criatura base do elemento DOMINANTE (1º componente). PNG próprio vence. */
 for (const [num, slug, , dominante] of COMBINADOS_LOTE3_DATA) {
+  const key = `${num}-${slug}`;
+  const fallback = NOVOS_ROOKIE[`../assets/soulmon/novos/${dominante}-rookie.png`];
+  if (!COMBINADOS_PNG[key] && fallback) COMBINADOS_PNG[key] = fallback;
+}
+
+/** Lote 4 (planta/industrial/fada) sem PNG próprio: cai para o rookie da criatura base do elemento DOMINANTE (1º componente). PNG próprio vence. */
+for (const [num, slug, , dominante] of COMBINADOS_LOTE4_DATA) {
   const key = `${num}-${slug}`;
   const fallback = NOVOS_ROOKIE[`../assets/soulmon/novos/${dominante}-rookie.png`];
   if (!COMBINADOS_PNG[key] && fallback) COMBINADOS_PNG[key] = fallback;
