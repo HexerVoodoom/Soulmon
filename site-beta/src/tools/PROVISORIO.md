@@ -1,10 +1,11 @@
-# Peças provisórias: TROCAR
+# Peças trocáveis do site
 
-Desenhadas por script (`preparar-assets.mjs` (nesta pasta); as pecas ficam em `public/provisorio/`), sem peça existente no jogo. O dono deve trocar pela arte final mantendo nome e proporção.
+A fonte única é `src/content/assets.json`. Para trocar uma peça: colocar `<gerado>.png` em
+`E:\Soulmon-marketing\site-assets\` e rodar `node src/tools/preparar-site-assets.mjs`. O estado vira
+`aguarda-revisao`; só a revisão humana da squad-design marca `final`. O layout não muda.
 
-| Arquivo | O que é | Grade |
-|---|---|---|
-| `cristal-apagado.svg`, `cristal-acendendo.svg`, `cristal-aceso.svg` | Cristal com chama, 3 estados | 24x30, 4 px |
-| `chama.svg` | Chama que corre no cabo | 6x8, 4 px |
-| `visor.svg` | Anel de cobre #C68642 do visor | 72x72, 4 px |
-| `cabo.svg` | Trecho repetível do cabo, com nó e broto | 9x80, 4 px |
+Estados: `final`, `aguarda-revisao`, `provisorio` (SVG desenhado por script), `provisorio-css` (sem arquivo; a borda fina
+só segura o lugar e não é solução final).
+
+Fora do manifesto, ainda provisórios: `public/provisorio/chama.svg` e as capas de Combina 3, Soul Barrage e Corrida
+na aba Jogos (ícone e sprites reais, porque essas atividades não têm arte própria instalada).

@@ -1,4 +1,4 @@
-// JS inicial do site. GSAP só entra por import dinâmico, em ciclo.ts.
+// JS inicial do site. GSAP só entra por import dinâmico, em ciclo.ts e mundo.ts.
 import { limparUtm } from '../../functions/_lib/utm.js'; // mesma allowlist do servidor
 const $ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document) => r.querySelector<T>(s);
 const $$ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document) => [...r.querySelectorAll<T>(s)];
@@ -10,7 +10,7 @@ const reduzido = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const nav = navigator as Navigator & { deviceMemory?: number; connection?: { saveData?: boolean; effectiveType?: string } };
 const fraco = (nav.deviceMemory ?? 8) <= 2 || !!nav.connection?.saveData || /(^|-)2g$/.test(nav.connection?.effectiveType ?? '');
 
-// Tudo que não é LCP espera o load: peças do ciclo, fonte de pixel, GSAP.
+// Tudo que não é LCP espera o load: peças do ciclo, GSAP.
 function depoisDoLoad(fn: () => void) {
   if (document.readyState === 'complete') setTimeout(fn, 0); else addEventListener('load', () => setTimeout(fn, 0), { once: true });
 }
@@ -20,11 +20,11 @@ function depoisDoLoad(fn: () => void) {
 // vai para a margem), então nada ao redor se mexe. Se o espaço é menor que o sprite nativo, fica como está.
 function ajustarSprites() {
   const imgs = $$<HTMLImageElement>('img.sprite');
-  // em lote (zera tudo, mede tudo, grava tudo): uma única passagem de layout, não uma por imagem
   for (const img of imgs) { const st = img.style; st.width = st.height = st.marginTop = st.marginRight = st.marginBottom = st.marginLeft = ''; }
   const dpr = devicePixelRatio || 1;
   const plano = imgs.map((img) => {
-    const n = Number(img.getAttribute('width')); // o atributo width é o tamanho nativo: não espera a imagem carregar
+    if (img.closest('.disco-caixa, .cena')) return null; // posicionados em absoluto: a caixa manda
+    const n = Number(img.getAttribute('width'));
     const cs = getComputedStyle(img);
     const w = img.getBoundingClientRect().width || (cs.width.endsWith('px') ? parseFloat(cs.width) : 0);
     if (!n || !w || w * dpr < n) return null;
@@ -51,12 +51,28 @@ function quandoVisivel(el: Element | null, fn: () => void, margem = '0px') {
   io.observe(el);
 }
 
+// ---------- Barra lateral: progresso da página, só transform ----------
+function barra() {
+  const cheio = $('[data-barra-cheio]'); const nos = $$('[data-no]');
+  if (!cheio) return;
+  let pedido = 0;
+  const aplicar = () => {
+    pedido = 0;
+    const total = document.documentElement.scrollHeight - innerHeight;
+    const p = total > 0 ? Math.min(1, scrollY / total) : 0;
+    cheio.style.transform = `scaleY(${p})`;
+    nos.forEach((n, i) => n.classList.toggle('aceso', p >= i / (nos.length - 1) - 0.001));
+  };
+  addEventListener('scroll', () => { if (!pedido) pedido = requestAnimationFrame(aplicar); }, { passive: true });
+  addEventListener('resize', aplicar);
+  depoisDoLoad(aplicar);
+}
+
 // ---------- Botão fixo: depois do hero, some quando o formulário está visível ----------
 function botaoFixo() {
-  const fixo = $('[data-fixo]'); const hero = $('.hero'); const alvo = $('.form-coluna');
+  const fixo = $('[data-fixo]'); const hero = $('.hero'); const alvo = $('#inscrever');
   if (!fixo || !hero || !alvo) return;
   let passou = false; let formVisto = false; let naCena = false;
-  // Na cena do ciclo o botão cobriria as tarefas em tela de 570 px; ela tem CTA próprio ao fim.
   const aplicar = () => { fixo.hidden = !passou || formVisto || naCena; };
   const palco = document.documentElement.classList.contains('ciclo-js') ? $('#ciclo') : null;
   if (palco) new IntersectionObserver(([x]) => { naCena = x.isIntersecting; aplicar(); }, { rootMargin: '-40% 0px -40% 0px' }).observe(palco);
@@ -64,25 +80,26 @@ function botaoFixo() {
   new IntersectionObserver(([x]) => { formVisto = x.isIntersecting; aplicar(); }).observe(alvo);
 }
 
-// ---------- Estado da leva (PLANO §17): sem contador, só troca o texto ----------
+// ---------- Estado da rodada (LEVA_ESTADO): sem contador, só troca o texto ----------
+let estadoLeva: 'abertas' | 'espera' = 'abertas';
+async function lerEstado() {
+  const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 4000);
+  try {
+    const r = await fetch('/api/vagas', { signal: ctl.signal, cache: 'no-store', headers: { accept: 'application/json' } });
+    if (r.ok) estadoLeva = (await r.json()).estado === 'espera' ? 'espera' : 'abertas';
+  } catch { /* falhou: fica o último estado conhecido */ } finally { clearTimeout(to); }
+}
 function vagas() {
   const slot = $('[data-vagas]'); if (!slot || !form) return;
-  const buscar = async () => {
-    const ctl = new AbortController(); const to = setTimeout(() => ctl.abort(), 6000);
-    try {
-      const r = await fetch('/api/vagas', { signal: ctl.signal, cache: 'no-store', headers: { accept: 'application/json' } });
-      if (!r.ok) return;
-      const d = await r.json();
-      if (d.estado !== 'espera') return; // abertas: vale o texto fixo da regra
-      slot.textContent = S.espera; slot.hidden = false;
-      $('[data-enviar]')!.textContent = S.enviarEspera;
-      const micro = $('[data-micro]'); if (micro) micro.textContent = S.microCompleta;
-    } catch { /* falhou: fica o texto fixo e o CTA */ } finally { clearTimeout(to); }
-  };
-  depoisDoLoad(buscar); // no carregamento, sem bloquear o primeiro conteúdo
+  depoisDoLoad(async () => {
+    await lerEstado();
+    if (estadoLeva !== 'espera') return;
+    slot.hidden = false;
+    const micro = $('[data-micro]'); if (micro) micro.textContent = S.microCompleta;
+  });
 }
 
-// ---------- Turnstile, render explícito, só perto do formulário ----------
+// ---------- Turnstile discreto: só aparece se precisar de interação ----------
 type TS = { render: (el: Element, o: Record<string, unknown>) => string; reset: (id?: string) => void };
 let tsToken = ''; let tsId: string | undefined;
 function turnstile() {
@@ -98,7 +115,7 @@ function turnstile() {
     sc.onload = () => {
       const ts = (window as unknown as { turnstile: TS }).turnstile;
       tsId = ts.render(el, {
-        sitekey, action: 'inscrever', theme: 'dark', language: form.dataset.idioma === 'en' ? 'en' : 'pt-br', size: 'flexible',
+        sitekey, action: 'inscrever', theme: 'dark', language: form.dataset.idioma === 'en' ? 'en' : 'pt-br', size: 'flexible', appearance: 'interaction-only',
         callback: (tk: string) => { tsToken = tk; },
         'expired-callback': () => { tsToken = ''; },
         'error-callback': () => { tsToken = ''; contatoErro(); },
@@ -108,6 +125,12 @@ function turnstile() {
   }, '300px');
 }
 function resetTs() { tsToken = ''; (window as unknown as { turnstile?: TS }).turnstile?.reset(tsId); }
+// A verificação invisível pode ainda estar rodando quando a pessoa toca no botão: espera um pouco.
+async function esperarToken(ms = 8000) {
+  const fim = Date.now() + ms;
+  while (!tsToken && Date.now() < fim) await new Promise((r) => setTimeout(r, 150));
+  return tsToken;
+}
 
 // ---------- Formulário ----------
 function mostrarErro(msg: string, comContato = false) {
@@ -138,34 +161,44 @@ async function postar(corpo: unknown) {
   }
 }
 
+function abrirPopup(espera: boolean, foco: HTMLElement) {
+  const d = $<HTMLDialogElement>('[data-popup]')!;
+  $('[data-popup-h]')!.textContent = espera ? S.esperaH : S.okH;
+  $('[data-popup-p]')!.textContent = espera ? S.espera : S.ok;
+  d.addEventListener('close', () => foco.focus(), { once: true });
+  d.showModal(); // prende o foco, fecha com Esc
+  $<HTMLButtonElement>('[data-popup-fechar]')!.focus();
+}
+
 function formulario() {
   if (!form) return;
   const email = form.elements.namedItem('email') as HTMLInputElement;
-  const erro = $('[data-erro]')!; const btn = $<HTMLButtonElement>('[data-enviar]')!;
+  const erro = $('[data-erro]')!; const btn = $<HTMLButtonElement>('[data-enviar]')!; const feito = $('[data-feito]')!;
+  const d = $<HTMLDialogElement>('[data-popup]')!;
+  $('[data-popup-fechar]')!.addEventListener('click', () => d.close());
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     if (btn.getAttribute('aria-busy') === 'true') return;
     erro.hidden = true; email.removeAttribute('aria-invalid');
     const val = email.value.trim();
-    const ch = (n: string) => (form.elements.namedItem(n) as HTMLInputElement).checked;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) { email.setAttribute('aria-invalid', 'true'); mostrarErro(S.erros.email); email.focus(); return; }
-    if (!ch('aceitePrivacidade') || !ch('maior18')) { mostrarErro(S.erros.aceite); return; }
     if (!form.dataset.sitekey) { mostrarErro(S.erros.ts, true); return; }
-    if (!tsToken) { mostrarErro(S.erros.verificando); return; }
     const rotulo = btn.textContent; btn.textContent = S.enviando; btn.setAttribute('aria-busy', 'true');
     try {
+      if (!(await esperarToken())) { mostrarErro(S.erros.verificando); return; }
+      // Tocar no botão, com a linha legal à vista, é o aceite (PLANO §18).
       const r = await postar({
-        email: val, idioma: form.dataset.idioma, aceitePrivacidade: true, maior18: true, novidades: ch('novidades'),
+        email: val, idioma: form.dataset.idioma, aceitePrivacidade: true, maior18: true, novidades: false,
         turnstile: tsToken, site: (form.elements.namedItem('site') as HTMLInputElement).value, utm: utm(),
       });
-      const d = await r.json().catch(() => ({}));
-      if (r.ok && d.ok) {
-        form.hidden = true; $('.aviso-vaga')!.hidden = true;
-        const ok = $('[data-sucesso]')!; ok.hidden = false; ok.focus();
+      const j = await r.json().catch(() => ({}));
+      if (r.ok && j.ok) {
+        await lerEstado(); // o pop-up nunca promete 24 h com a rodada fechada
+        form.reset(); resetTs(); feito.textContent = S.feito; feito.hidden = false;
+        abrirPopup(estadoLeva === 'espera', btn);
         return;
       }
-      if (r.status === 400 && d.erro === 'email') { email.setAttribute('aria-invalid', 'true'); mostrarErro(S.erros.email); email.focus(); }
-      else if (r.status === 400 && d.erro === 'aceite') mostrarErro(S.erros.aceite);
+      if (r.status === 400 && j.erro === 'email') { email.setAttribute('aria-invalid', 'true'); mostrarErro(S.erros.email); email.focus(); }
       else if (r.status === 400) mostrarErro(S.erros.corpo);
       else if (r.status === 403) { resetTs(); mostrarErro(S.erros.turnstile); }
       else if (r.status === 429) mostrarErro(S.erros.limite);
@@ -179,37 +212,35 @@ function formulario() {
   });
 }
 
-// ---------- Compartilhar ----------
-function partilha() {
-  const sh = $('[data-share]'); const cp = $('[data-copiar]'); const msg = $('[data-partilha-msg]');
-  if (!cp || !msg) return;
-  const url = location.origin + location.pathname;
-  if (navigator.share && sh) {
-    sh.hidden = false;
-    sh.addEventListener('click', () => { navigator.share({ title: 'Soulmon', text: S.shareTxt, url }).catch(() => {}); });
-  }
-  cp.hidden = false;
-  cp.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(url); msg.textContent = S.copiado; }
-    catch { msg.textContent = `${S.falhaCopia} ${url}`; }
-  });
-}
-
-// ---------- Seletor de elementos: sem JS, os quatro visores ficam empilhados ----------
-function elementos() {
-  const raiz = $('[data-elementos]'); const sel = $('[data-seletor]');
-  if (!raiz || !sel) return;
-  raiz.classList.add('com-js'); sel.hidden = false;
-  const ver = (id: string) => {
-    $$('.elemento', raiz).forEach((f) => { f.hidden = f.dataset.el !== id; });
-    $$('button', sel).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.ver === id)));
+// ---------- Abas do universo: padrão ARIA tabs. Sem JS, os painéis ficam empilhados ----------
+function abas() {
+  const lista = $('[data-abas]'); if (!lista) return;
+  const bts = $$<HTMLButtonElement>('[data-aba]', lista); const pns = $$('[data-painel]');
+  lista.hidden = false;
+  lista.setAttribute('role', 'tablist'); lista.setAttribute('aria-label', lista.dataset.rotulo!);
+  pns.forEach((p, i) => { p.setAttribute('role', 'tabpanel'); p.setAttribute('aria-labelledby', `aba-${i}`); p.tabIndex = 0; p.querySelector('.painel-h')?.setAttribute('hidden', ''); });
+  const ver = (n: number, foco = false) => {
+    bts.forEach((b, i) => { const a = i === n; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', String(a)); b.setAttribute('aria-controls', `painel-${i}`); b.tabIndex = a ? 0 : -1; });
+    pns.forEach((p, i) => { p.hidden = i !== n; });
+    if (foco) bts[n].focus();
     ajustarSprites();
   };
-  ver($$('.elemento', raiz)[0].dataset.el!);
-  sel.addEventListener('click', (e) => { const b = (e.target as Element).closest<HTMLElement>('button'); if (b) ver(b.dataset.ver!); });
+  lista.addEventListener('click', (e) => { const b = (e.target as Element).closest<HTMLElement>('[data-aba]'); if (b) ver(Number(b.dataset.aba)); });
+  lista.addEventListener('keydown', (e) => {
+    const k = (e as KeyboardEvent).key; const atual = bts.findIndex((b) => b.tabIndex === 0); const n = bts.length;
+    const alvo = k === 'ArrowRight' ? (atual + 1) % n : k === 'ArrowLeft' ? (atual - 1 + n) % n : k === 'Home' ? 0 : k === 'End' ? n - 1 : -1;
+    if (alvo >= 0) { e.preventDefault(); ver(alvo, true); }
+  });
+  ver(0);
 }
 
-// ---------- Ciclo ----------
+// ---------- Vídeo da abertura: poster só perto da tela, sem som automático ----------
+function abertura() {
+  const v = $<HTMLVideoElement>('[data-abertura]'); if (!v) return;
+  quandoVisivel(v, () => { v.poster = v.dataset.poster!; }, '400px');
+}
+
+// ---------- Cenas com scroll ----------
 function ciclo() {
   if (reduzido || !S) return; // lista estática
   depoisDoLoad(() => quandoVisivel($('#ciclo'), () => {
@@ -221,12 +252,17 @@ if (!reduzido && $('#ciclo')) {
   document.documentElement.classList.add('ciclo-js');
   $('[data-cena]')!.hidden = false;
 }
+const comParallax = !reduzido && !fraco && innerHeight >= 560;
+if (comParallax && $('#mundo')) document.documentElement.classList.add('mundo-js');
+function mundo() {
+  if (!comParallax) return;
+  const voltar = () => document.documentElement.classList.remove('mundo-js');
+  depoisDoLoad(() => quandoVisivel($('#mundo'), () => {
+    import('./mundo').then((m) => m.iniciar()).catch(voltar);
+  }, '150% 0px'));
+}
 
-// utm_content: troca só a frase de apoio, por allowlist. O H1 é fixo.
-const angulo = new URLSearchParams(location.search).get('utm_content');
-if (S && angulo && Object.hasOwn(S.angulos, angulo)) { const ap = $('.apoio'); if (ap) ap.textContent = S.angulos[angulo]; }
-
-botaoFixo(); vagas(); formulario(); turnstile(); partilha(); elementos(); ciclo();
+barra(); botaoFixo(); vagas(); formulario(); turnstile(); abas(); abertura(); ciclo(); mundo();
 ajustarSprites();
 depoisDoLoad(() => {
   document.documentElement.classList.add('tarde');

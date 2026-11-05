@@ -1,0 +1,120 @@
+{
+  "_nota": "Manifesto único das peças de marca do site (ASSETS-CHATGPT.md). Rodar: node src/tools/preparar-site-assets.mjs. Peça em E:/Soulmon-marketing/site-assets/<gerado>.png entra sozinha como aguarda-revisao. Estados: final | aguarda-revisao | provisorio (SVG desenhado por script) | provisorio-css (sem arquivo; CSS só segura o lugar). Layout não muda na troca.",
+  "logo": {
+    "gerado": "logo-completo-alfa",
+    "estado": "aguarda-revisao",
+    "src": "/site/logo-completo-alfa.webp",
+    "largura": 480
+  },
+  "botao": {
+    "gerado": "botao-beta",
+    "nove": true,
+    "estado": "aguarda-revisao",
+    "src": "/site/botao-beta.webp",
+    "altura": 112,
+    "fatia": "28 48",
+    "borda": "14px 24px"
+  },
+  "disco": {
+    "gerado": "disco",
+    "estado": "aguarda-revisao",
+    "src": "/site/disco.webp",
+    "largura": 640
+  },
+  "barraCorpo": {
+    "gerado": "barra-corpo",
+    "estado": "aguarda-revisao",
+    "src": "/site/barra-corpo.webp",
+    "largura": 48
+  },
+  "barraCheio": {
+    "gerado": "barra-corpo-cheio",
+    "estado": "provisorio",
+    "src": "/provisorio/barra-cheio.svg",
+    "largura": 48
+  },
+  "barraCapa": {
+    "gerado": "barra-capa",
+    "estado": "provisorio",
+    "src": "/provisorio/barra-capa.svg",
+    "largura": 48
+  },
+  "passo1": {
+    "gerado": "passo-1",
+    "estado": "provisorio",
+    "src": "/provisorio/passo-1.svg",
+    "largura": 192
+  },
+  "passo2": {
+    "gerado": "passo-2",
+    "estado": "provisorio",
+    "src": "/provisorio/passo-2.svg",
+    "largura": 192
+  },
+  "passo3": {
+    "gerado": "passo-3",
+    "estado": "provisorio",
+    "src": "/provisorio/passo-3.svg",
+    "largura": 192
+  },
+  "cristalApagado": {
+    "gerado": "cristal-apagado",
+    "estado": "provisorio",
+    "src": "/provisorio/cristal-apagado.svg",
+    "largura": 96
+  },
+  "cristalAcendendo": {
+    "gerado": "cristal-acendendo",
+    "estado": "provisorio",
+    "src": "/provisorio/cristal-acendendo.svg",
+    "largura": 96
+  },
+  "cristalAceso": {
+    "gerado": "cristal-aceso",
+    "estado": "provisorio",
+    "src": "/provisorio/cristal-aceso.svg",
+    "largura": 96
+  },
+  "popup": {
+    "gerado": "popup-moldura",
+    "nove": true,
+    "estado": "provisorio-css",
+    "src": null,
+    "altura": 128,
+    "fatia": "32",
+    "borda": "16px"
+  },
+  "painel": {
+    "gerado": "painel-universo",
+    "nove": true,
+    "estado": "provisorio-css",
+    "src": null,
+    "altura": 128,
+    "fatia": "32",
+    "borda": "16px"
+  },
+  "aba": {
+    "gerado": "aba",
+    "nove": true,
+    "estado": "provisorio-css",
+    "src": null,
+    "altura": 64,
+    "fatia": "16",
+    "borda": "8px"
+  },
+  "celula": {
+    "gerado": "celula",
+    "nove": true,
+    "estado": "provisorio-css",
+    "src": null,
+    "altura": 64,
+    "fatia": "16",
+    "borda": "8px"
+  },
+  "seta": {
+    "gerado": "seta",
+    "estado": "provisorio",
+    "src": "/provisorio/seta.svg",
+    "largura": 48
+  }
+}
