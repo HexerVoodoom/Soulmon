@@ -24,8 +24,12 @@
 //   GET  seasonResult ?season=          → top 3 (para troféus)
 //   POST closeSeason {season, adminKey} → fecha a season: dá troféu (top 3)
 //   GET  trophies  ?id=&claim=1         → troféus pendentes do jogador (e zera)
-//   POST friends   {id, friendId, remove?} → até 5 amigos
-//   POST gift      {id, friendId}      → 20 bits (1x/dia por amigo; grátis)
+//   POST friends   {id, friendId, remove?} → ENVIA convite (a pessoa aceita); remove desfaz nos dois lados. Até 20 amigos (§242)
+//   POST friendAccept {id, friendId, decline?} → aceita/recusa convite recebido
+//   GET  friendsState ?id=   → amigos, convites, presentes de hoje e histórico (só o dono)
+//   POST friendsSeen  {id}   → marca o histórico de presentes como visto
+//   POST friendsMigrate {adminKey, cursor?} → espelha amizades antigas (idempotente)
+//   POST gift      {id, friendId}      → 20 bits (1x/dia por amigo; grátis; limite contado no servidor)
 //   GET  gifts     ?id=&claim=1        → lê (e zera) presentes pendentes (legado, destrutivo)
 //   GET  gifts     ?id=&claim=1&ack=1  → entrega SEM apagar; resposta `{ gifts, ack: true }` (L03-01)
 //   POST giftsAck  {id, gids[]}        → o cliente confirma o crédito; só aqui o servidor apaga (idempotente)
@@ -53,6 +57,10 @@ import { secretEquals } from './metrics.js';
 import { ackMail, enqueueMail, readMail } from './_mensageiro.js';
 import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado, petNameDoSimulado, formaVista } from './_simulados.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
+import {
+  MAX_FRIENDS, MAX_IN, MAX_OUT, GIFT_BITS, lerConvites, gravarConvites, ligarAmizade, desfazerAmizade, espelharAmizades,
+  presentesDeHoje, marcarPresenteDeHoje, lerNotas, anotarPresente, marcarNotasVistas,
+} from './_amigos.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_honra.js';
 import { sanitizarNomeDeGuilda } from './_coop.js';
@@ -1323,6 +1331,10 @@ async function handleCommunity(context) {
     return json({ forms: formsFromSaveState(state, p.element).map(({ stage, spriteUrl, element, date }) => ({ stage, spriteUrl, element, date })) });
   }
 
+  // ── Amizade por CONVITE (§242) ────────────────────────────────────────────
+  // `friends` {add} agora ENVIA convite (a pessoa aceita em `friendAccept`); `friends` {remove} desfaz nos dois lados.
+  // Resposta de convite é a mesma para alvo simulado (nada gravado), cheio ou com a caixa lotada: não confirma estado alheio.
+  const friendPids = async (saveIds) => (await Promise.all(saveIds.map(f => pidDeSaveId(env, f)))).filter(Boolean);
   if (action === 'friends' && method === 'POST') {
     const { friendId, remove } = body;
     if (!VALID_ID.test(id || '') || !VALID_ID.test(friendId || '')) return json({ error: 'invalid id' }, 400);
@@ -1335,24 +1347,128 @@ async function handleCommunity(context) {
     const friendSave = await saveIdForPublicId(env, friendId);
     if (!friendSave) return json({ error: 'friend not found' }, 404);
     if (id === friendSave) return json({ error: 'cannot befriend yourself' }, 400);
-    // Quem saiu da lista pública também não é adicionável: não confirma que a
-    // conta existe. (Remover um amigo que se escondeu continua possível.)
-    if (!remove && isHidden(await getProfile(env, friendSave))) return json({ error: 'friend not found' }, 404);
     const me = await getProfile(env, id);
     if (!me) return json({ error: 'profile not found' }, 404);
-    me.friends = me.friends || [];
     if (remove) {
-      me.friends = me.friends.filter(f => f !== friendSave);
-    } else if (!me.friends.includes(friendSave)) {
-      if (me.friends.length >= 5) return json({ error: 'friend limit (5)' }, 400);
-      me.friends.push(friendSave);
+      // Remover um amigo que se escondeu continua possível; desfaz os dois lados e cancela convite pendente.
+      await desfazerAmizade(env, id, friendSave);
+      const depois = await getProfile(env, id);
+      return json({ ok: true, friends: await friendPids(depois?.friends || []) });
     }
-    await putProfile(env, id, me);
-    // Devolve pids: a lista interna é de saveIds e não pode sair daqui.
-    return json({ ok: true, friends: (await Promise.all(me.friends.map(f => pidDeSaveId(env, f)))).filter(Boolean) });
+    // Quem saiu da lista pública também não é convidável: não confirma que a conta existe.
+    const alvo = await getProfile(env, friendSave);
+    if (!alvo || isHidden(alvo)) return json({ error: 'friend not found' }, 404);
+    me.friends = me.friends || [];
+    if (me.friends.includes(friendSave)) return json({ ok: true, status: 'friends', friends: await friendPids(me.friends) });
+    if (me.friends.length >= MAX_FRIENDS) return json({ error: `friend limit (${MAX_FRIENDS})` }, 400);
+    const gate = takeToken('friend-invite', id, { limit: 30, windowMs: 3_600_000 });
+    if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS);
+    const minha = await lerConvites(env, id);
+    // Ele já tinha me convidado: os dois querem, vira amizade na hora.
+    if (minha.in.some(r => r.from === friendSave)) {
+      const r = await ligarAmizade(env, id, friendSave);
+      if (r.erro === 'theirs-full') return json({ ok: true, status: 'pending', friends: await friendPids(me.friends) });
+      if (r.erro) return json({ error: 'friend not found' }, 404);
+      await gravarConvites(env, id, { in: minha.in.filter(x => x.from !== friendSave), out: minha.out.filter(f => f !== friendSave) });
+      const dele = await lerConvites(env, friendSave);
+      await gravarConvites(env, friendSave, { in: dele.in.filter(x => x.from !== id), out: dele.out.filter(f => f !== id) });
+      return json({ ok: true, status: 'friends', friends: await friendPids((await getProfile(env, id))?.friends || []) });
+    }
+    if (minha.out.includes(friendSave)) return json({ ok: true, status: 'pending', friends: await friendPids(me.friends) });
+    if (minha.out.length >= MAX_OUT) return json({ error: 'too many pending invites' }, 429);
+    // Simulado nunca recebe convite: resposta igual à de um convite real, nada gravado.
+    if (alvo.simulated === true) return json({ ok: true, status: 'pending', friends: await friendPids(me.friends) });
+    const dele = await lerConvites(env, friendSave);
+    if (!dele.in.some(r => r.from === id) && dele.in.length < MAX_IN) dele.in.push({ from: id, at: Date.now() });
+    await gravarConvites(env, friendSave, dele);
+    minha.out.push(friendSave);
+    await gravarConvites(env, id, minha);
+    return json({ ok: true, status: 'pending', friends: await friendPids(me.friends) });
   }
 
-  // ── Presente de bits (grátis; exige energia cheia no cliente; 1x/dia/amigo)
+  // Aceitar (ou recusar) um convite recebido. `friendId` = pid de quem convidou.
+  if (action === 'friendAccept' && method === 'POST') {
+    const { friendId, decline } = body;
+    if (!VALID_ID.test(id || '') || !VALID_ID.test(friendId || '')) return json({ error: 'invalid id' }, 400);
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const quem = await saveIdForPublicId(env, friendId);
+    if (!quem || quem === id) return json({ error: 'no invite' }, 404);
+    const meus = await lerConvites(env, id);
+    if (!meus.in.some(r => r.from === quem)) return json({ error: 'no invite' }, 404);
+    const limpar = async () => {
+      await gravarConvites(env, id, { in: meus.in.filter(r => r.from !== quem), out: meus.out });
+      const dele = await lerConvites(env, quem);
+      await gravarConvites(env, quem, { in: dele.in, out: dele.out.filter(f => f !== id) });
+    };
+    if (decline === true) { await limpar(); return json({ ok: true, friends: await friendPids((await getProfile(env, id))?.friends || []) }); }
+    const alvo = await getProfile(env, quem);
+    if (!alvo || isHidden(alvo)) { await limpar(); return json({ error: 'no invite' }, 404); }
+    const r = await ligarAmizade(env, id, quem);
+    if (r.erro === 'mine-full') return json({ error: `friend limit (${MAX_FRIENDS})` }, 400);
+    if (r.erro === 'theirs-full') { await limpar(); return json({ error: 'invite expired' }, 409); }
+    if (r.erro) { await limpar(); return json({ error: 'no invite' }, 404); }
+    await limpar();
+    return json({ ok: true, status: 'friends', friends: await friendPids((await getProfile(env, id))?.friends || []) });
+  }
+
+  // O estado social de QUEM PERGUNTA, numa leitura só: amigos, convites, presentes de hoje e o histórico de quem presenteou.
+  // Só o dono lê. Nunca devolve saveId; nome é o do perfil (já filtrado na gravação) e some se a pessoa se escondeu.
+  if (action === 'friendsState' && method === 'GET') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const me = await getProfile(env, id);
+    if (!me) return json({ friends: [], incoming: [], outgoing: [], sentToday: [], notes: [], unseen: 0, limit: MAX_FRIENDS });
+    // Migração preguiçosa e idempotente (a varredura do dono é `friendsMigrate`): uma vez por conta, o que ela já tinha vira mútuo.
+    const marca = `gmir:${id}`;
+    if (!(await kvOrThrow(env).get(marca))) {
+      await espelharAmizades(env, id);
+      await kvOrThrow(env).put(marca, '1', { expirationTtl: 86400 * 400 });
+    }
+    const fresco = (await getProfile(env, id)) || me;
+    const convites = await lerConvites(env, id);
+    const incoming = [];
+    for (const r of convites.in.slice(-MAX_IN).reverse()) {
+      const p = await getProfile(env, r.from);
+      if (!p || isHidden(p) || p.simulated === true) continue;
+      incoming.push({ id: await ensurePid(env, p), name: p.name, at: r.at });
+      if (incoming.length >= 20) break;
+    }
+    const outgoing = [];
+    for (const f of convites.out) { const pid = await pidDeSaveId(env, f, { semEscondidos: true }); if (pid) outgoing.push(pid); }
+    const sentToday = [];
+    for (const f of await presentesDeHoje(env, id)) { const pid = await pidDeSaveId(env, f); if (pid) sentToday.push(pid); }
+    const notas = await lerNotas(env, id);
+    const notes = notas.items.slice().reverse().map(n => ({ name: n.name, bits: n.bits, at: n.at, unseen: n.at > notas.seenAt }));
+    return json({
+      friends: await friendPids(fresco.friends || []),
+      incoming, outgoing, sentToday, notes,
+      unseen: notes.filter(n => n.unseen).length,
+      limit: MAX_FRIENDS,
+    });
+  }
+
+  // O jogador abriu o histórico: as notícias de presente deixam de ser novas (convites seguem até alguém decidir).
+  if (action === 'friendsSeen' && method === 'POST') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    await marcarNotasVistas(env, id);
+    return json({ ok: true });
+  }
+
+  // Varredura do dono: espelha as amizades antigas (lote por cursor, repetir até `done`). Idempotente, não apaga nada.
+  if (action === 'friendsMigrate' && method === 'POST') {
+    if (!env.SEASON_ADMIN_KEY || !secretEquals(body.adminKey, env.SEASON_ADMIN_KEY)) return json({ error: 'unauthorized' }, 401);
+    const page = await kvOrThrow(env).list({ prefix: 'profile:', cursor: typeof body.cursor === 'string' && body.cursor ? body.cursor : undefined, limit: 40 });
+    let espelhados = 0, pulados = 0;
+    for (const k of page.keys) {
+      const r = await espelharAmizades(env, k.name.slice('profile:'.length)).catch(() => ({ espelhados: 0, pulados: 0 }));
+      espelhados += r.espelhados; pulados += r.pulados;
+    }
+    return json({ ok: true, scanned: page.keys.length, espelhados, pulados, done: !!page.list_complete, ...(page.list_complete ? {} : { cursor: page.cursor }) });
+  }
+
+  // ── Presente de bits (grátis; 20 Bits, 1x/dia/amigo, contado AQUI no servidor) ──
   if (action === 'gift' && method === 'POST') {
     const { friendId } = body;
     if (!VALID_ID.test(id || '') || !VALID_ID.test(friendId || '')) return json({ error: 'invalid id' }, 400);
@@ -1365,22 +1481,29 @@ async function handleCommunity(context) {
     const me = await getProfile(env, id);
     if (!me) return json({ error: 'profile not found' }, 404);
     if (!(me.friends || []).includes(friendSave)) return json({ error: 'not a friend' }, 403);
-    me.giftLog = me.giftLog || {};
-    if (me.giftLog[friendSave] === today()) return json({ error: 'already gifted today' }, 429);
-    me.giftLog[friendSave] = today();
-    await putProfile(env, id, me);
+    // Fila por par: dois toques em paralelo não passam os dois pelo limite do dia (mesma ressalva honesta do duelo: por isolate).
+    return await withDuelLock(`gift:${id}:${friendSave}`, async () => {
+      // O registro do dia mora em `gsent:` (o `giftLog` do perfil se perdia a cada regravação do perfil); o legado ainda vale.
+      const hoje = await presentesDeHoje(env, id);
+      if (hoje.includes(friendSave) || (me.giftLog && me.giftLog[friendSave] === today())) return json({ error: 'already gifted today' }, 429);
+      await marcarPresenteDeHoje(env, id, friendSave);
 
-    // M11: presente para um simulado é aceito SEM efeito — nada é gravado e ninguém é debitado ou creditado (a resposta
-    // é a mesma de um presente real; o limite diário acima já valeu).
-    if ((await getProfile(env, friendSave))?.simulated === true) return json({ ok: true });
+      // M11: presente para um simulado é aceito SEM efeito — nada é gravado e ninguém é debitado ou creditado (a resposta
+      // é a mesma de um presente real; o limite diário acima já valeu).
+      const alvo = await getProfile(env, friendSave);
+      if (alvo?.simulated === true) return json({ ok: true });
 
-    const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
-    // Lista ilegível na KV não pode dar 500 DEPOIS do `giftLog` gravado (o presente do dia sumia): recomeça vazia.
-    let gifts = [];
-    try { const lido = raw ? JSON.parse(raw) : []; gifts = Array.isArray(lido) ? lido : []; } catch { gifts = []; }
-    gifts.push({ from: isHidden(me) ? '' : me.name, bits: 20, at: Date.now(), gid: crypto.randomUUID() });
-    await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
-    return json({ ok: true });
+      const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
+      // Lista ilegível na KV não pode dar 500 DEPOIS do registro do dia gravado (o presente do dia sumia): recomeça vazia.
+      let gifts = [];
+      try { const lido = raw ? JSON.parse(raw) : []; gifts = Array.isArray(lido) ? lido : []; } catch { gifts = []; }
+      const quem = isHidden(me) ? '' : me.name;
+      gifts.push({ from: quem, bits: GIFT_BITS, at: Date.now(), gid: crypto.randomUUID() });
+      await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
+      // O histórico de quem presenteou (a fila acima é apagada ao resgatar). Melhor esforço: o crédito já está na fila.
+      try { await anotarPresente(env, friendSave, { name: quem, bits: GIFT_BITS }); } catch { /* o histórico é cosmético */ }
+      return json({ ok: true });
+    });
   }
 
   if (action === 'gifts' && method === 'GET') {

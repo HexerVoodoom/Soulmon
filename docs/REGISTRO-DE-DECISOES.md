@@ -4223,3 +4223,16 @@ Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combin
 **Limite conhecido.** Quem ficar mais de um mês sem abrir recebe só a carta da última temporada. Prêmio em item de inventário ainda não existe: só Bits e Honra.
 
 **O que falsificaria.** Honra da carta desequilibrar a loja do Torneio. **Rollback:** reverter o PR; `mail:` fica órfã com TTL de 400 dias e `mailClaimed` é ignorado.
+
+## §242 — Amigos por convite, presente com histórico e treino com amigo (05/11/2026, pedido do dono)
+
+**Decisão.** (1) Amizade é **por convite**: `friends` (add) só envia; a pessoa aceita em `friendAccept` (ou recusa). Convite cruzado vira amizade na hora. A lista `friends` do perfil passa a ser **mútua**; o limite sobe de 5 para **20**, contado no servidor (`_amigos.js`, `MAX_FRIENDS`) em quem convida e em quem aceita. (2) **Migração** idempotente e sem apagar nada: quem já tinha alguém passa a constar na lista do outro; feita preguiçosamente na primeira leitura de `friendsState` de cada conta (marca `gmir:<saveId>`) e em lote pelo dono (`friendsMigrate`, `SEASON_ADMIN_KEY`, cursor). Quem está cheio ou é simulado fica como estava. (3) **Remover** desfaz nos dois lados e cancela convite pendente. (4) **Presente**: continua 20 Bits, 1× por dia (UTC) por amigo, grátis para quem manda (é o que valia); o crédito segue a fila `gifts:` já existente, sem criar Bits novos. O registro do dia saiu do `giftLog` do perfil (a regravação do perfil o zerava, o que deixava presentear de novo no mesmo dia) para `gsent:<saveId>`, com fila por par contra toques paralelos. (5) **Histórico** de quem presenteou em `gnote:<saveId>` (últimas 30; a fila `gifts:` é apagada ao resgatar). (6) Marcador "!" no prédio Amigos (`laboratorio.amigos`) quando há convite recebido ou presente novo, pelo sistema de marcas de prédio (§116/#554).
+
+**Segurança.** Todas as rotas novas são de dono (`denyUnlessOwner`); `friendsState` nunca devolve saveId e esconde quem se escondeu; convite a simulado ou escondido recebe resposta igual à de um real (nada gravado, não confirma a conta); teto de 20 convites enviados e 30 guardados por conta, e 30 convites/hora por conta (`takeToken`). Simulado não recebe convite nem presente real.
+
+**Treino com amigo.** Unilateral, 100% local, sem rede, sem aprovação do amigo e **sem valor**: nenhum prêmio, ranking, Bit, Honra, XP ou progresso. O oponente nasce só de dado público do amigo (estágio, elemento, sprite).
+
+**Alternativas que perderam.** Manter o add direto e só espelhar: o dono pediu convite. Guardar convites no perfil: a regravação do perfil descarta campos desconhecidos (foi o que quebrou o `giftLog`), então vivem em chaves próprias.
+
+**Limite conhecido.** KV sem compare-and-set: a fila por par é por isolate. O limite diário do presente é por dia UTC, não pelo dia do jogador. **O que falsificaria.** Convites virando spam apesar dos tetos; a lista de 20 estourando o custo de `friendsState` (até ~45 leituras por chamada). **Rollback:** reverter o PR; `freq:`, `gsent:`, `gnote:`, `gmir:` ficam órfãs (TTL 400 dias) e as listas mútuas continuam válidas.
+
