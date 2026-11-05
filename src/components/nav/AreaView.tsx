@@ -81,6 +81,7 @@ const SalaoSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.SalaoShee
 const MenteSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.MenteSheet })));
 const RefugioSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.RefugioSheet })));
 // 🧭 O Passeio (30/09/2026): a folha carrega o catálogo das regiões — por isso lazy.
+const RogueKeyGate = lazy(() => import('../play/RogueKeyGate').then(m => ({ default: m.RogueKeyGate })));
 const PrepararFocoSheet = lazy(() => import('../play/PrepararFocoSheet').then(m => ({ default: m.PrepararFocoSheet })));
 const OficinaSheet = lazy(() => import('../play/OficinaSheet').then(m => ({ default: m.OficinaSheet })));
 const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ default: m.PasseioSheet })));
@@ -596,6 +597,7 @@ export function AreaView(props: AreaViewProps) {
     const { play } = props;
     /** O Calabouço (exploracao.dungeon) com a incursão no save abre em TELA CHEIA, sem a folha (N7). */
     const rogueFull = area === 'exploracao' && open?.id === 'dungeon' && !!play.rogue && play.dungeonKeyActive !== false;
+    const rogueGate = area === 'exploracao' && open?.id === 'dungeon' && !!play.rogue && play.dungeonKeyActive === false;
     /** O mapa do Soulsmith (ferreiro) também abre em TELA CHEIA, de borda a borda (05/11/2026, pedido do dono); o Voltar fecha de volta à área. */
     const forgeFull = area === 'forja' && open?.id === 'ferreiro';
     const base = {
@@ -608,7 +610,7 @@ export function AreaView(props: AreaViewProps) {
     const mindTut = (id: MindGameId) => (mt ? { seen: mt.seen[id] === true, onShown: () => mt.onShown(id) } : undefined);
     return (
       <AreaScene areaId={area} language={language} background={area === 'forja' ? FORJA_BG : PLAY_AREA_BG[area]} lots={lots} notice={lockNote}>
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !forgeFull} onClose={close}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate && !forgeFull} onClose={close}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'passeio' && (
               <PasseioSheet
@@ -631,11 +633,11 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
             {open?.id === 'dungeon' && !play.rogue && <RogueDungeonPlaceholder language={language} />}
-            {open?.id === 'dungeon' && !!play.rogue && play.dungeonKeyActive === false && <p data-rogue-sem-chave style={{ margin: 0, color: 'var(--sm2-ink)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm, 14px)' }}>{language === 'pt-BR' ? 'O portão só abre para quem trouxe a chave. Vá à Oficina do Foco, na Forja, e conclua uma sessão: a chave vale o dia inteiro, e sair daqui não custa nada.' : 'The gate only opens for those who bring the key. Go to the Focus Workshop, in the Forge, and complete a session: the key lasts all day, and leaving costs nothing.'}</p>}
           </Suspense>
         </AreaSheet>
         {forgeFull && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}><ForgeCard language={language} view="map" onBack={close} /></Suspense>}
         {/* beta3 N7: o Calabouço é um MAPA em tela cheia (não uma folha); fecha de volta à área. */}
+        {rogueGate && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" />}><RogueKeyGate language={language} onClose={close} /></Suspense>}
         {rogueFull && play.rogue && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
             <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>

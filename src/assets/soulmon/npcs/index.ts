@@ -9,6 +9,7 @@
 import type { AreaId } from '../../../navigation';
 import type { FunctionNpcId, ExtraNpcId } from '../../../utils/areaNpcVoice';
 
+export { default as NPC_GUARDA_CHAVE_ART } from './npc-guarda-chave-bastiao.png';
 export { default as NPC_MENSAGEIRO_ART } from './npc-mensageiro-papus.png';
 import npcPerfilCorvo from './npc-perfil-corvo.png';
 import npcMercado from './npc-mercado.png';
