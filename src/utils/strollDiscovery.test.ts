@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { strollDiscoveryOf } from './strollDiscovery';
 import { ENEMY_ROSTER, RAVEN_ENTRY } from './enemyRoster';
+import { rosterSpriteOf } from './novosSoulmon';
 
 describe('a descoberta do Passeio (05/11/2026)', () => {
   it('sempre devolve um Soulmon que o jogador ainda não viu', () => {
@@ -31,6 +32,9 @@ describe('a descoberta do Passeio (05/11/2026)', () => {
   });
   it('Drive completo: null (a cena segue sem a descoberta)', () => {
     expect(strollDiscoveryOf(ENEMY_ROSTER.map(e => e.key), 'x')).toBeNull();
+  });
+  it('todo Soulmon sorteável tem arte: a metade da descoberta nunca fica vazia', () => {
+    expect(ENEMY_ROSTER.filter(e => !rosterSpriteOf(e)).map(e => e.key)).toEqual([]);
   });
   it('Corvinho já visto nunca volta', () => {
     for (let i = 0; i < 300; i++) expect(strollDiscoveryOf([RAVEN_ENTRY.key], `d${i}`)!.key).not.toBe(RAVEN_ENTRY.key);

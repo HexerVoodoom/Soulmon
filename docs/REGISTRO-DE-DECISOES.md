@@ -4223,3 +4223,15 @@ Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combin
 **Limite conhecido.** Quem ficar mais de um mês sem abrir recebe só a carta da última temporada. Prêmio em item de inventário ainda não existe: só Bits e Honra.
 
 **O que falsificaria.** Honra da carta desequilibrar a loja do Torneio. **Rollback:** reverter o PR; `mail:` fica órfã com TTL de 400 dias e `mailClaimed` é ignorado.
+
+## §242 — Passeio: uma descoberta por dia em tela cheia (05/11/2026, pedido do dono)
+
+**Decisão.** Com Passeio no dia anterior, o resumo abre a cena `StrollScene`: Soulmon do jogador, texto, "Espera… tem alguma coisa ali.", deslize, Soulmon inédito, OK, volta e sai. O sorteio é `strollDiscoveryOf`, determinístico por dia; o Corvinho entra a 1/1000 e vem garantido se for o único que falta. Grava em `bestiary` e em `lastDayReport.strollDiscovered`, na mesma escrita.
+
+**Por que o campo no relatório.** O sorteio depende do `bestiary`. Sem a marca, fechar o app depois do OK e reabrir o resumo sortearia um segundo Soulmon no mesmo dia. Pular grava a descoberta, porque ela é garantida. Drive completo: cena sem a metade da descoberta.
+
+**Alternativas que perderam.** Campo novo no topo do save: o relatório do dia já é o escopo certo, como `heartsAnimSeen`. Sortear só no servidor: o `bestiary` já é escrito pelo cliente nos outros encontros e a descoberta não paga nada. Esticar a arte (`100% 100%`): a ferramenta pode não entregar 2:1 exato, então a cena usa `cover`.
+
+**Arte.** 8 panoramas 2:1 na fila de `docs/ASSETS-A-GERAR.md` §25; até lá, o postal da região espelhado.
+
+**O que falsificaria.** O jogador pular a cena na maioria dos dias. **Rollback:** reverter; `strollDiscovered` é ignorado no save.
