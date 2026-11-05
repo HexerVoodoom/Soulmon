@@ -6,7 +6,7 @@
 // na caixa de revisão (`soulmon.revisor@gmail.com`).
 //
 // ENTREGA (nada se perde):
-//   1. a mensagem é gravada ANTES na KV (`feedback:<dia>:<id>`, TTL 90 dias, UM put só): é o
+//   1. a mensagem é gravada ANTES na KV (`feedback:<dia>:<id>`, TTL 30 dias, UM put só): é o
 //      fallback e o histórico. O dono lê com `GET /api/feedback?day=AAAA-MM-DD` +
 //      `X-Metrics-Key` (mesmo segredo de `/api/crash`);
 //   2. se houver `RESEND_API_KEY` (secret), manda o e-mail via Resend (fetch, sem
@@ -35,7 +35,7 @@ import { bearerToken, verifyIdToken } from './_auth.js';
 import { flagOn } from './_killSwitch.js';
 
 export const FEEDBACK_PREFIX = 'feedback:';
-export const FEEDBACK_TTL_SECONDS = 90 * 24 * 60 * 60;
+export const FEEDBACK_TTL_SECONDS = 30 * 24 * 60 * 60;
 export const FEEDBACK_TO_DEFAULT = 'soulmon.revisor@gmail.com';
 export const TYPES = ['feedback', 'suggestion', 'bug'];
 export const LANGS = ['pt-BR', 'en'];
