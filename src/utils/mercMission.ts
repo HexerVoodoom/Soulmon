@@ -30,7 +30,7 @@ export const MERC_TIPO: Record<MercOrdem, BranchType> = {
 
 export const MERC_NOME: Record<MercOrdem, { pt: string; en: string; ordemPt: string; ordemEn: string }> = {
   filtrador: { pt: 'Vithor', en: 'Vithor', ordemPt: 'Ordem dos Filtradores', ordemEn: 'Order of the Filterers' },
-  tecelao: { pt: 'Líder dos Tecelões', en: 'Weaver Leader', ordemPt: 'Ordem dos Tecelões', ordemEn: 'Order of the Weavers' },
+  tecelao: { pt: 'Pim', en: 'Pim', ordemPt: 'Ordem dos Tecelões', ordemEn: 'Order of the Weavers' },
   rompente: { pt: 'Thassia', en: 'Thassia', ordemPt: 'Ordem dos Rompentes', ordemEn: 'Order of the Breakers' },
 };
 
