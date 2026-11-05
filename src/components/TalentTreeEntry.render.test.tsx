@@ -49,6 +49,11 @@ describe('TalentTreeEntry', () => {
     expect(full.style.position).toBe('fixed');
     expect(full.style.inset).toMatch(/0/);
     await waitFor(() => expect(full.querySelector('[data-talent-tree]')).not.toBeNull(), { timeout: 25000 });
+    // só a árvore, o Fechar e o Resetar: sem título, descrição nem resumo
+    expect(full.querySelector('[data-talent-state]')).toBeNull();
+    expect(full.querySelector('[data-talent-now]')).toBeNull();
+    expect(full.querySelector('[data-talent-close]')!.getAttribute('aria-label')).toBe('Fechar');
+    expect(full.textContent).not.toMatch(/Talentos do Vínculo|O que a sua árvore/);
     act(() => { fireEvent.click(document.querySelector('[data-talent-close]')!); });
     expect(document.querySelector('[data-talent-fullscreen]')).toBeNull();
   });
