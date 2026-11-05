@@ -123,6 +123,8 @@ export interface RogueDungeonProps {
   demoCharacterId?: string;
   petName?: string;
   petElement?: string;
+  /** §232: a base nº 1 do Soulmon combinado; é ela que mede a vantagem no Combina 3. */
+  petBase?: string;
   playerLevel?: number;
   /** As skills da ficha (a identidade de golpe da luta). */
   skills?: FichaSkills;
@@ -148,7 +150,7 @@ const sheetStyle = {
 } as const;
 const hudText = { margin: 0, color: 'var(--sm2-viewport-ink)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm, 14px)', textShadow: '0 1px 2px rgba(0,0,0,.9)' } as const;
 
-export function RogueDungeon({ language, todayKey, saved, onChange, combatant, saveId, onEarnPoints, evolutionStage = 'rookie', demoCharacterId, petName, petElement, playerLevel, skills, onClose, onEnemySeen }: RogueDungeonProps) {
+export function RogueDungeon({ language, todayKey, saved, onChange, combatant, saveId, onEarnPoints, evolutionStage = 'rookie', demoCharacterId, petName, petElement, petBase, playerLevel, skills, onClose, onEnemySeen }: RogueDungeonProps) {
   // S18: o Calabouço toca o "Dungeon Theme" inteiro (mapa e escolhas; a luta troca para a música de combate).
   useEffect(() => entrarNaSuperficie('masmorra-mapa'), []);
   const isPt = language === 'pt-BR';
@@ -211,7 +213,7 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
   const gameProps = { language, evolutionStage, demoCharacterId, onEarnPoints: () => {}, onExit: () => gameResult(false), challenge: challengeProp } as const;
   const renderGame = (g: ChallengeGame) => {
     switch (g) {
-      case 'match3': return <Match3Game {...gameProps} petName={petName} petElement={petElement} playerLevel={playerLevel} />;
+      case 'match3': return <Match3Game {...gameProps} petName={petName} petElement={petElement} petBase={petBase} playerLevel={playerLevel} />;
       case 'dino': return <DinoGame {...gameProps} onScore={() => {}} petElement={petElement} />;
       case 'rps': return <RPSGame {...gameProps} />;
       case 'zip': return <ZipGame {...gameProps} />;

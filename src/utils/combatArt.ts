@@ -17,6 +17,7 @@
  * isto de nada que esteja no chunk de entrada (`entradaEnxuta.contract.test.ts`).
  */
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
+import { curatedComponents } from './elementosCurados';
 import { ELEMENT_VISUAL } from './elementVisual.data';
 import { ELEMENTO_BG_MEAN } from './combatArtElementoMedias.data';
 
@@ -64,7 +65,7 @@ const DERIVED_TO_BASE: Record<string, string> = Object.fromEntries(DERIVED_ELEME
 export function combatBaseElement(id: string | null | undefined): string | undefined {
   if (!id) return undefined;
   const mapped = id;
-  const base = DERIVED_TO_BASE[mapped] ?? mapped;
+  const base = DERIVED_TO_BASE[mapped] ?? curatedComponents(mapped)?.[0] ?? mapped;
   return BG[base] ? base : undefined;
 }
 
@@ -129,7 +130,7 @@ export function combatGlowColor(id: string | null | undefined): string | undefin
  * Cada uma passa por `combatGlowColor`.
  */
 export function combatGlowPair(id: string | null | undefined): [string | undefined, string | undefined] {
-  const comps = id ? DERIVED_ELEMENT_PAIRS.find(d => d.id === id)?.componentes : undefined;
+  const comps = id ? (DERIVED_ELEMENT_PAIRS.find(d => d.id === id)?.componentes ?? curatedComponents(id)) : undefined;
   if (!comps) { const c = combatGlowColor(id); return [c, c]; }
   return [combatGlowColor(comps[0]), combatGlowColor(comps[1])];
 }

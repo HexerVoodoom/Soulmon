@@ -1,5 +1,6 @@
 import type { ClassElementId } from './soulProfile/types';
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
+import { curatedComponents } from './elementosCurados';
 
 /**
  * COSMÉTICO EXCLUSIVO DE ELEMENTO (04/11/2026, pedido do dono): cenário, moldura ou decoração
@@ -22,7 +23,7 @@ const COMPONENTES = new Map<string, readonly string[]>(DERIVED_ELEMENT_PAIRS.map
 export function petHasElement(itemElement: CosmeticElement, petElement: string | null | undefined): boolean {
   if (!petElement) return false;
   if (petElement === itemElement) return true;
-  return (COMPONENTES.get(petElement) ?? []).includes(itemElement);
+  return (COMPONENTES.get(petElement) ?? curatedComponents(petElement) ?? []).includes(itemElement);
 }
 
 /** O item aparece na vitrine? Comum: sempre. Exclusivo: só do elemento certo — ou se já é seu. */

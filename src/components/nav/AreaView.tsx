@@ -240,6 +240,8 @@ export interface AreaViewProps {
   profissaoNome?: { pt: string; en: string } | null;
   /** Elemento dominante do Soulmon (`soulmonMeta.dominantElement`): a arte dos golpes da Masmorra. */
   petElement?: string;
+  /** §232: a base nº 1 do Soulmon combinado. */
+  petBase?: string;
   onEarnPoints: (points: number) => void;
   /** Evento real de uso de um recurso (minijogo, foco, duelo) para as missões diárias (`utils/dailyMissions.ts`, REGISTRO §52). */
   onDailyEvent?: (event: DailyEvent) => void;
@@ -554,6 +556,7 @@ export function AreaView(props: AreaViewProps) {
         {duelOpen && (
           <Suspense fallback={<SheetLoading language={language} />}>
             <ArenaGame
+              petBase={props.petBase}
               seed={duelSeed}
               evolutionStage={props.evolutionStage}
               demoCharacterId={props.demoCharacterId}
@@ -627,7 +630,7 @@ export function AreaView(props: AreaViewProps) {
         {rogueFull && play.rogue && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
             <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
-              <RogueDungeon language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} skills={props.skills} onClose={close} onEnemySeen={play.onBestiarySeen} />
+              <RogueDungeon petBase={props.petBase} language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} skills={props.skills} onClose={close} onEnemySeen={play.onBestiarySeen} />
             </Suspense>
           </div>
         )}
@@ -692,7 +695,7 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
-            {game === 'match3' && <Match3Game {...base} onReplayRound={replayRound} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} onBossShard={play.onBossShard} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
+            {game === 'match3' && <Match3Game {...base} petBase={props.petBase} onReplayRound={replayRound} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} onBossShard={play.onBossShard} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
             {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('eco'); }} />}
             {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('zip'); emitFeat('zipSolved'); }} />}

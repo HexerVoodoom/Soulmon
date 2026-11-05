@@ -731,3 +731,7 @@ Espelho de forma de dois campos do save da Biblioteca (01/11/2026): `libraryAck`
 **Dono de:** a regra do nome PÚBLICO do especial (REGISTRO §222), pura e sem KV, usada pelo servidor (`community.js`, perfil) e pela tela (`components/perfil/EspecialNomeEditor.tsx`): até 20 caracteres, letras/números/espaço, filtro de palavrão PT+EN (palavra inteira; raízes longas também no texto colado; normaliza acento, leet e repetição).
 **Exports:** `ESPECIAL_NOME_MAX` · `ESPECIAL_NOME_COOLDOWN_MS` (7 dias) · `temPalavrao(texto)` · `nomeEspecialValido(raw)` (nome limpo ou `null`). O `community.js` ainda passa o nome pela régua de contato do apelido (`sanitizarNomeDeGuilda`) e decide a troca semanal.
 **Chamado por:** `functions/api/community.js` (`profile` POST e `publicProfile`), `src/components/perfil/EspecialNomeEditor.tsx`.
+
+### `functions/api/_elementoJornada.js`
+
+Espelho de `src/utils/elementoJornada.ts` (§232): forma do registro no save e imutabilidade da sorte e dos estágios gravados.

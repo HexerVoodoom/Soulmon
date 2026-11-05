@@ -8,6 +8,7 @@
  * Dono único da tabela. Função pura: o núcleo não conhece elemento.
  */
 import { DERIVED_ELEMENT_PAIRS } from '../soulProfile/derivedElements';
+import { curatedComponents } from '../elementosCurados';
 import { EFFECT_TUNE_PESADELO, type Special, type SpecialEffect, type SpecialFamily } from './specials';
 
 export type EfeitoElemento =
@@ -38,7 +39,7 @@ export function efeitoDoEspecial(family: SpecialFamily | null | undefined, eleme
   if (!family || !elemento) return null;
   const direto = EXCECAO_DERIVADO[elemento]?.[family] ?? TABELA[family][elemento];
   if (direto) return direto;
-  for (const c of COMPONENTES.get(elemento) ?? []) {
+  for (const c of COMPONENTES.get(elemento) ?? curatedComponents(elemento) ?? []) { // §232: curado herda como o par
     const herdado = TABELA[family][c];
     if (herdado) return herdado;
   }
