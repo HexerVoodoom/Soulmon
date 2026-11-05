@@ -1890,6 +1890,14 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `oracle.test.ts`, `entradaEnxuta.contract.test.ts`
 **Regra de negócio:** código do caminho crítico importa DAQUI, nunca de `oracle.ts` — [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/oracle/nome.ts`
+**Dono de:** `normalizeName` sozinho (remove acentos e tudo que não for A-Z), para que o caminho de entrada (`soulProfile/identity.ts`) não arraste o `oracle.ts` inteiro para o chunk de entrada. Criado em 05/11/2026.
+**Exports:**
+- `normalizeName(name)` — nome só com A–Z maiúsculo; `oracle.ts` reexporta.
+**Chamado por:** `src/utils/soulProfile/identity.ts`, `src/utils/oracle.ts` (reexporta).
+**Régua:** `entradaEnxuta.contract.test.ts`, `oracle.test.ts`
+**Regra de negócio:** código do caminho crítico importa DAQUI, nunca de `oracle.ts` — [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
 ### `src/utils/oracle/gerar.ts`
 **Dono de:** a entrada de PRODUÇÃO da geração do Oráculo.
 **Exports:**

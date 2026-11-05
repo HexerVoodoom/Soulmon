@@ -4,7 +4,7 @@
 // precisa dela sem arrastar o pipeline inteiro (bestiário + máquina criativa).
 // ---------------------------------------------------------------------------
 
-import { normalizeName } from '../oracle';
+import { normalizeName } from '../oracle/nome';
 import type { OracleInput } from '../oracle';
 
 /** Identidade estável — NÃO inclui o salt, de propósito. As respostas do

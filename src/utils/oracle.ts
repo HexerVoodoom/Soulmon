@@ -339,14 +339,8 @@ const PYTHAGOREAN: Record<string, number> = {
 
 export const VOWELS = new Set(['A', 'E', 'I', 'O', 'U']);
 
-/** Remove acentos e tudo que não for A-Z. */
-export function normalizeName(name: string): string {
-  return name
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .toUpperCase()
-    .replace(/[^A-Z]/g, '');
-}
+import { normalizeName } from './oracle/nome';
+export { normalizeName };
 
 /** Reduz a um dígito, preservando números mestres 11/22/33. */
 /** Primeira letra maiúscula — para trechos concatenados DEPOIS de um ponto
