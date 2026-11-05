@@ -5812,7 +5812,7 @@ select:focus-visible {
 .sm2-vit-spot { position: absolute; width: 0; height: 0; }
 .sm2-vit-chakra {
   position: absolute; left: 0; top: 0; transform: translate(-50%, -50%);
-  display: grid; place-items: center; width: 56px; height: 56px; padding: 0; margin: 0; cursor: pointer;
+  display: grid; place-items: center; width: 42px; height: 42px; padding: 0; margin: 0; cursor: pointer;
   border-radius: 50%; border: 1px solid var(--sm2-line); background: color-mix(in srgb, #06171A 78%, transparent); color: var(--sm2-ink);
   transition: box-shadow var(--sm2-dur-tap) var(--sm2-ease), border-color var(--sm2-dur-tap) var(--sm2-ease);
   &[data-owned="true"] { border-color: color-mix(in srgb, var(--sm2-gold-ink) 70%, transparent); }
@@ -5825,7 +5825,7 @@ select:focus-visible {
 }
 @keyframes sm2-vit-glow { 50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--sm2-gold-ink) 55%, transparent), 0 0 22px 4px color-mix(in srgb, var(--sm2-gold-ink) 70%, transparent); } }
 .sm2-vit-pop { position: absolute; z-index: 5; width: min(210px, 62vw); }
-.sm2-vit-pop[data-side="below"] { left: 0; top: 40px; transform: translateX(-50%); width: min(250px, 80vw); }
+.sm2-vit-pop[data-side="below"] { left: 0; top: 28px; transform: translateX(-50%); width: min(250px, 80vw); }
 .sm2-vit-pop[data-side="right"] { left: 38px; top: 0; transform: translateY(-30%); }
 .sm2-vit-pop[data-side="left"] { right: 38px; top: 0; transform: translateY(-30%); }
 .sm2-vit-card {

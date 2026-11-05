@@ -36,10 +36,10 @@ beforeEach(() => { installDomGlobals(); localStorage.clear(); vi.stubGlobal('fet
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 describe('Soulsmith em mapa', () => {
-  it('três chakras (um por equipamento), figura de fallback e nenhum balão aberto', () => {
+  it('três chakras (um por equipamento), figura e nenhum balão aberto', () => {
     abrir({});
     expect(document.querySelectorAll('[data-vitra-chakra]')).toHaveLength(3);
-    expect(document.querySelector('[data-vitra-fallback]')).not.toBeNull();
+    expect(document.querySelector('[data-vitra-art]')).not.toBeNull();
     expect(document.querySelector('[data-forge-pop]')).toBeNull();
     expect(document.querySelectorAll('[data-vitra-chakra][data-ready]')).toHaveLength(0);
   });

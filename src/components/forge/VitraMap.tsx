@@ -1,6 +1,6 @@
 /**
  * O MAPA DO SOULSMITH (Vitra), no mesmo esquema da Hexsmith (04/11/2026, pedido do dono): no centro, uma figura HUMANOIDE de vidro quente
- * sendo soprada, ainda pastosa — preto no miolo, ganhando luz e cor para as bordas. Três pontos de chakra seguram os três equipamentos que a
+ * sendo soprada, ainda pastosa — preto no miolo, ganhando luz e cor para as bordas. Três pontos de chakra, em linha vertical, seguram os três equipamentos que a
  * Vitra aprimora; tocar um abre, ao lado dele, o balão com as duas opções de aprimoramento (`popover`, montado por `ForgeCard`).
  *
  * Arte: `assets/soulmon/vitra` (`vitra-mapa.png`, glob). Sem o arquivo, a figura é desenhada aqui em SVG (fallback). Componente só de
@@ -10,11 +10,11 @@ import type { ReactNode } from 'react';
 import type { EquipSlot } from '../../utils/equipment';
 import { VITRA_MAP_ART } from '../../assets/soulmon/vitra';
 
-/** Centro de cada chakra em % da placa quadrada: coração (núcleo) e as duas mãos (carapaça, rastro). */
+/** Centro de cada chakra em % da placa quadrada, na vertical do eixo da figura (05/11/2026, pedido do dono), medido nos anéis de `vitra-mapa.png`. */
 export const CHAKRA: Readonly<Record<EquipSlot, { x: number; y: number; side: 'below' | 'right' | 'left' }>> = {
-  nucleo: { x: 50, y: 33, side: 'below' },
-  carapaca: { x: 21, y: 57, side: 'right' },
-  rastro: { x: 79, y: 57, side: 'left' },
+  nucleo: { x: 50, y: 23.4, side: 'below' },
+  carapaca: { x: 50, y: 37.9, side: 'below' },
+  rastro: { x: 50, y: 50.1, side: 'below' },
 };
 
 export interface VitraChakra {
