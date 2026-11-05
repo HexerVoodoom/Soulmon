@@ -47,7 +47,7 @@ Precedência: código > teste > doc. Se o código mudar, atualize aqui antes de 
 | Contagem de passos (Health Connect) | planejada (fora da beta3) |
 | Steam, desktop | planejada |
 | Onboarding Velado | planejada (flag desligada) |
-| Mapas recriados 9:20 | conceitual até instalar: legendar como "arte do mundo", nunca como tela do jogo |
+| Mapas recriados 9:20 | **Implementado** (dono confirmou em 05/11: já estão na versão do testador; `main`, fafbbb5a4). Pode mostrar como jogo real. No site ficam fora: mapa-múndi, Mercado e Forja, por decisão do dono |
 | `brand/intro.mp4` | conceitual: cinemática, nunca gameplay |
 | Telas de wireframe e Figma | conceitual |
 

@@ -11,25 +11,27 @@ const c = t.ciclo; const s = t.soul; const u = t.universo; const e = t.entrar; c
 const loops = (midia.videos[lang] as { src: string; poster: string; gameplay: boolean; legenda: string }[]).filter((v) => v.gameplay === true && v.src);
 const prints = (midia.prints[lang] as { src: string; alt: string; gameplay: boolean }[]).filter((p) => p.gameplay === true && p.src);
 const sitekey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY ?? '';
-const strings = { erros: f.erros, enviando: f.enviando, microCompleta: t.microCompleta, forma: c.forma, de: c.de, alt: c.alt, formas: c.formas, contato: CONTATO, okH: f.okH, ok: f.ok, esperaH: f.esperaH, espera: f.espera, feito: f.feito };
+const strings = { share: f.shareTxt, copiado: f.copiado, falhaCopia: f.falhaCopia, erros: f.erros, enviando: f.enviando, microCompleta: t.microCompleta, forma: c.forma, de: c.de, alt: c.alt, formas: c.formas, contato: CONTATO, okH: f.okH, ok: f.ok, esperaH: f.esperaH, espera: f.espera, feito: f.feito };
 const logo = assets.logo.src;
 const passos = [assets.passo1.src, assets.passo2.src, assets.passo3.src];
 const NPCS = ['hall', 'jogos', 'oraculo', 'laboratorio-biblioteca-glifa', 'exploracao', 'cuidados', 'loja-itens', 'loja-decoracao', 'loja-background', 'onboarding', 'ranking-arauto', 'n-cozinheiro', 'n-broto', 'n-corvo', 'laboratorio-pet', 'n-musa'];
 const ELS = Object.keys(u.els);
 // Jogos sem arte própria instalada usam sprite/ícone real como provisório.
 const capaJogo: Record<string, string> = { combina: '/el/agua.webp', barrage: '/sprites/v-espaco.webp', corrida: '/sprites/planta-champion-128.webp' };
-const CENAS: { id: string; nome: string; npc: string; criatura: string }[] = [
-  { id: 'jogos', npc: 'jogos', criatura: 'v-luz' },
-  { id: 'arena', npc: 'arena', criatura: 'fogo-ultra' },
-  { id: 'forja', npc: 'f-forja', criatura: 'v-terra' },
-  { id: 'mercado', npc: 'mercado-cambista', criatura: 'v-som' },
-  { id: 'laboratorio', npc: 'laboratorio-biblioteca-glifa', criatura: 'agua-rookie' },
-].map((x) => ({ ...x, nome: (u.areas as string[][]).find(([id]) => id === x.id)![1] }));
+// x, y = onde os pés pisam, em % do mapa inteiro (medido em grade sobre cada arte).
+const CENAS = [
+  { id: 'jogos', npc: 'jogos', criatura: 'v-luz', nx: 62, ny: 74, cx: 38, cy: 62 },
+  { id: 'arena', npc: 'arena', criatura: 'fogo-ultra', nx: 56, ny: 76, cx: 36, cy: 72 },
+  { id: 'hall', npc: 'hall-amigos', criatura: 'v-som', nx: 68, ny: 80, cx: 32, cy: 79 },
+  { id: 'guilda', npc: 'hall-guilda', criatura: 'v-terra', nx: 66, ny: 50, cx: 36, cy: 49 },
+  { id: 'laboratorio', npc: 'laboratorio-stats', criatura: 'agua-rookie', nx: 72, ny: 80, cx: 28, cy: 80 },
+].map((x) => ({ ...x, nome: (u.areas as string[][]).find(([id]) => id === x.id)![1], frase: t.mundo.frases[x.id] }));
+const FRENTE = ['spark-g', 'el-vida', 'spark-m', 'el-planta', 'spark-p', 'spark-m', 'el-vida', 'spark-g'];
 const Formas = c.formas;
 ---
 <Base lang={lang} alternativa={t.outraHome} aqui={t.home} preload>
   <a class="pular" href="#inscrever">{t.pular}</a>
-  <div class="barra" aria-hidden="true" data-barra>
+  <div class="barra" aria-hidden="true" data-barra hidden>
     <span class="barra-capa"></span>
     <span class="barra-trilho"><i data-barra-cheio></i>
       {[0, 1, 2, 3, 4].map((n) => <b class="barra-no" style={`--n:${n}`} data-no></b>)}
@@ -38,19 +40,21 @@ const Formas = c.formas;
   </div>
 
   <header class="hero" id="topo">
-    <picture class="hero-mapa" aria-hidden="true">
-      <source media="(min-width: 900px)" type="image/avif" srcset="/mapa/laboratorio-620.avif" />
-      <source type="image/avif" srcset="/mapa/laboratorio-480.avif" />
-      <img src="/mapa/laboratorio-480.webp" alt="" width="760" height="1344" fetchpriority="high" decoding="async" />
-    </picture>
+    <div class="hero-cena">
+      <picture class="hero-mapa" aria-hidden="true">
+        <source media="(min-width: 900px)" type="image/avif" srcset="/mapa/exploracao-620.avif" />
+        <source type="image/avif" srcset="/mapa/exploracao-480.avif" />
+        <img src="/mapa/exploracao-480.webp" alt="" width="480" height="1067" fetchpriority="high" decoding="async" />
+      </picture>
+      <img class="sprite hero-criatura" data-tarde-src="/sprites/planta-ultra.webp" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" width="256" height="256" decoding="async" alt={t.heroAlt} />
+      <noscript><img class="sprite hero-criatura" src="/sprites/planta-ultra.webp" width="256" height="256" alt={t.heroAlt} /></noscript>
+    </div>
     <div class="hero-barra">
-      <a href={t.home} class="logo"><img src="/site/logo-240.webp" srcset={`/site/logo-240.webp 240w, ${logo} 480w`} sizes="(min-width: 900px) 240px, 120px" width="240" height="240" fetchpriority="low" alt={t.logoAlt} /></a>
+      <a href={t.home} class="logo"><img src="/site/logo-240.webp" srcset={`/site/logo-240.webp 240w, ${logo} 480w`} sizes="(min-width: 900px) 240px, 100px" width="240" height="252" fetchpriority="low" alt={t.logoAlt} /></a>
       <a class="idioma" href={t.outraHome} hreflang={t.outraCod} lang={t.outraCod}>{t.outraNome}</a>
     </div>
     <div class="hero-corpo">
       <h1>{t.h1}</h1>
-      <img class="sprite hero-criatura" data-tarde-src="/sprites/planta-ultra.webp" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" width="256" height="256" decoding="async" alt={t.heroAlt} />
-      <noscript><img class="sprite hero-criatura" src="/sprites/planta-ultra.webp" width="256" height="256" alt={t.heroAlt} /></noscript>
       <div class="hero-acao">
         <a class="botao" href="#inscrever">{t.cta}</a>
         <p class="micro" data-micro>{t.micro}</p>
@@ -72,13 +76,13 @@ const Formas = c.formas;
           <div class="cena-central">
             <p class="forma-titulo" data-placa aria-hidden="true">{c.forma} 1 {c.de} 5</p>
             <div class="disco-caixa">
-              <img class="disco" data-tarde-src={assets.disco.src ?? undefined} src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" width="640" height="251" alt="" />
+              <img class="disco" data-tarde-src={assets.disco.src ?? undefined} src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" width="240" height="109" alt="" />
               <img class="sprite" data-criatura data-tarde-src="/sprites/planta-rookie.webp" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" width="256" height="256" alt={`${c.alt} ${c.forma} 1 ${c.de} 5`} />
               <span class="clarao" data-clarao></span>
               <div class="cristal" aria-hidden="true">
-                <img data-c="apagado" src={assets.cristalApagado.src} width="96" height="120" alt="" loading="lazy" />
-                <img data-c="acendendo" src={assets.cristalAcendendo.src} width="96" height="120" alt="" loading="lazy" />
-                <img data-c="aceso" src={assets.cristalAceso.src} width="96" height="120" alt="" loading="lazy" />
+                <img data-c="apagado" src={assets.cristalApagado.src} width="48" height="96" alt="" loading="lazy" />
+                <img data-c="acendendo" src={assets.cristalAcendendo.src} width="48" height="96" alt="" loading="lazy" />
+                <img data-c="aceso" src={assets.cristalAceso.src} width="48" height="96" alt="" loading="lazy" />
               </div>
             </div>
           </div>
@@ -87,7 +91,6 @@ const Formas = c.formas;
             <ul aria-label={c.tarefasRotulo}>
               {c.tarefas.map((tx, i) => (
                 <li class="linha">
-                  <svg class="selo" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16Zm-1.2-5.4 5.7-5.7 1.4 1.4-7.1 7.1-3.5-3.5 1.4-1.4 2.1 2.1Z"/></svg>
                   <span class="linha-nome">{tx}</span>
                   <button type="button" class="check" role="checkbox" aria-checked="false" aria-label={tx} data-tarefa={i}>
                     <span class="caixa" aria-hidden="true"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="m9.5 16.2-4-4 1.6-1.6 2.4 2.4 7.4-7.4 1.6 1.6-9 9Z"/></svg></span>
@@ -175,7 +178,7 @@ const Formas = c.formas;
         <p>{t.video.legenda}</p>
       </div>
       <figure class="abertura-video">
-        <video data-abertura data-poster={midia.abertura.poster} src={midia.abertura.src} controls playsinline preload="none" width="720" height="1280" aria-labelledby="abertura-h"></video>
+        <video hidden data-abertura data-poster={midia.abertura.poster} src={midia.abertura.src} controls playsinline preload="none" width="720" height="1280" aria-labelledby="abertura-h"></video>
         <noscript><img src={midia.abertura.poster} width="720" height="1280" alt="" loading="lazy" /></noscript>
       </figure>
     </section>
@@ -188,13 +191,17 @@ const Formas = c.formas;
         </div>
         {CENAS.map((cn) => (
           <figure class="cena" data-cn>
-            <img class="c-longe" data-v="-40" loading="lazy" src={`/mapa/${cn.id}-480.webp`} width="480" height="849" alt="" />
-            <img class="c-meio" data-v="-110" loading="lazy" src={`/mapa/${cn.id}-480.webp`} width="480" height="849" alt="" />
-            <img class="c-npc" data-v="-240" loading="lazy" src={`/npc/${cn.npc}.webp`} width="256" height="256" alt="" />
-            <img class="c-cria sprite" data-v="-360" loading="lazy" src={`/sprites/${cn.criatura}.webp`} width={cn.criatura.startsWith('v-') ? 128 : 256} height={cn.criatura.startsWith('v-') ? 128 : 256} alt="" />
-            <figcaption><span class="sr">{t.mundo.rotulo}: </span>{cn.nome}</figcaption>
+            <div class="c-plano" data-v="-110">
+              <img class="c-meio" loading="lazy" src={`/mapa/${cn.id}-480.webp`} width="480" height="1067" alt="" />
+              <img class="c-npc" style={`--x:${cn.nx}%;--y:${cn.ny}%`} loading="lazy" src={`/npc/${cn.npc}.webp`} width="256" height="256" alt="" />
+              <img class="c-cria sprite" style={`--x:${cn.cx}%;--y:${cn.cy}%`} loading="lazy" src={`/sprites/${cn.criatura}.webp`} width={cn.criatura.startsWith('v-') ? 128 : 256} height={cn.criatura.startsWith('v-') ? 128 : 256} alt="" />
+            </div>
+            <figcaption><strong>{cn.nome}</strong> <span>{cn.frase}</span></figcaption>
           </figure>
         ))}
+        <div class="frente" aria-hidden="true" data-frente>
+          {FRENTE.map((n, i) => <img style={`--i:${i}`} data-v={String(-500 - i * 90)} loading="lazy" src={n.startsWith('el-') ? `/el/${n.slice(3)}.webp` : `/site/${n}.webp`} width="48" height="48" alt="" />)}
+        </div>
       </div>
     </section>
 
@@ -219,9 +226,9 @@ const Formas = c.formas;
 
     <section class="inscrever" id="inscrever" aria-labelledby="inscrever-h">
       <h2 id="inscrever-h">{f.h2}</h2>
-      <p class="vagas" data-vagas hidden>{f.esperaH} {f.espera}</p>
+      <p class="vagas" data-vagas hidden>{f.esperaPre}</p>
       <noscript><p class="ns">{f.noscript} <a href={`mailto:${CONTATO}`}>{CONTATO}</a></p></noscript>
-      <form id="inscricao" novalidate data-form data-sitekey={sitekey} data-idioma={t.idioma} data-strings={JSON.stringify(strings)}>
+      <form id="inscricao" hidden novalidate data-form data-sitekey={sitekey} data-idioma={t.idioma} data-strings={JSON.stringify(strings)}>
         <div class="campo">
           <label for="email">{f.email}</label>
           <input id="email" name="email" type="email" required autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="254" />
@@ -233,11 +240,16 @@ const Formas = c.formas;
         <p class="erro" role="alert" data-erro hidden></p>
         <p class="feito" role="status" data-feito hidden></p>
       </form>
+      <div class="partilha">
+        <button type="button" class="link" data-share hidden>{f.share}</button>
+        <button type="button" class="link" data-copiar hidden>{f.copiar}</button>
+        <p class="partilha-msg" aria-live="polite" data-partilha-msg></p>
+      </div>
     </section>
   </main>
 
   <dialog class="popup" data-popup aria-labelledby="popup-h" aria-describedby="popup-p">
-    <img src={assets.cristalAceso.src} width="64" height="80" alt="" loading="lazy" />
+    <img src={assets.cristalAceso.src} width="48" height="96" alt="" loading="lazy" />
     <h2 id="popup-h" data-popup-h>{f.okH}</h2>
     <p id="popup-p" data-popup-p>{f.ok}</p>
     <button type="button" class="botao" data-popup-fechar>{f.fechar}</button>

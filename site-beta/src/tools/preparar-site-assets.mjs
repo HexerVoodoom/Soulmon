@@ -3,7 +3,8 @@
 // Lê o manifesto src/content/assets.json: peça gerada presente em E:/Soulmon-marketing/site-assets
 // vira public/site/<nome>.webp e o estado passa a aguarda-revisao. Só o humano marca "final".
 import sharp from 'sharp';
-import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { mkdirSync, copyFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 
 const SOUL = '../src/assets/soulmon';
 const GERADOS = 'E:/Soulmon-marketing/site-assets';
@@ -24,27 +25,18 @@ writeFileSync(`${PUB}/provisorio/passo-2.svg`, medalhao(r(7, 6, 10, 12, C.cla) +
 writeFileSync(`${PUB}/provisorio/passo-3.svg`, medalhao(r(8, 5, 8, 14, '#071413') + r(9, 6, 6, 11, C.pri2) + r(11, 9, 2, 3, C.folha) + r(10, 10, 4, 1, C.folha)));
 writeFileSync(`${PUB}/provisorio/seta.svg`, svg(12, 12, 4, r(1, 5, 7, 2, C.anel) + r(8, 3, 1, 6, C.med) + r(9, 4, 1, 4, C.med) + r(10, 5, 1, 2, C.cla) + r(2, 5, 4, 1, C.pri2)));
 
-// ---------- Peças geradas, a partir do manifesto ----------
-const CAMINHO = 'src/content/assets.json';
-const manifesto = JSON.parse(readFileSync(CAMINHO, 'utf8'));
-for (const [slot, m] of Object.entries(manifesto)) {
-  if (slot.startsWith('_') || !m.gerado) continue;
-  const png = `${GERADOS}/${m.gerado}.png`;
-  if (!existsSync(png)) continue;
-  const base = sharp(await sharp(png).trim({ threshold: 1 }).toBuffer());
-  const opcoes = m.altura ? { height: m.altura } : { width: m.largura ?? 192 };
-  await base.clone().resize(opcoes).webp({ quality: 88, alphaQuality: 90, effort: 6 }).toFile(`${PUB}/site/${m.gerado}.webp`);
-  if (slot === 'logo') await base.clone().resize({ width: 240 }).webp({ quality: 82, effort: 6 }).toFile(`${PUB}/site/logo-240.webp`);
-  m.src = `/site/${m.gerado}.webp`;
-  if (m.estado !== 'final') m.estado = 'aguarda-revisao';
-}
-writeFileSync(CAMINHO, JSON.stringify(manifesto, null, 2) + '\n');
+// ---------- Peças geradas: nearest, WebP sem perda, montagem à mão (montar-pecas.py) ----------
+execFileSync('python', ['src/tools/montar-pecas.py'], { stdio: 'inherit' });
+const manifesto = JSON.parse(readFileSync('src/content/assets.json', 'utf8'));
 
 // ---------- Arte já instalada no jogo ----------
-const MAPAS = ['laboratorio', 'jogos', 'arena', 'forja', 'mercado', 'exploracao'];
-for (const m of MAPAS) await sharp(`${SOUL}/areas/bg-${m}.png`).resize({ width: 480 }).webp({ quality: 50, effort: 6 }).toFile(`${PUB}/mapa/${m}-480.webp`);
-// O herói disputa o LCP: AVIF agressivo; a arte é escura e fica sob véu.
-for (const [w, q] of [[480, 26], [620, 24], [760, 22]]) await sharp(`${SOUL}/areas/bg-laboratorio.png`).resize({ width: w }).avif({ quality: q, effort: 9 }).toFile(`${PUB}/mapa/laboratorio-${w}.avif`);
+// Mapas novos da main (fafbbb5a4). Mercado e Forja ficam de fora: roda e chaminés têm leitura steampunk. bg-mapa é vetado.
+const NOVOS_MAPAS = process.env.MAPAS_DIR || 'E:/tmp/claude/b5f03034d35be1a5/3e00f769-6e4b-4482-9866-bd58d75f44a7/scratchpad/mapas-main';
+const MAPAS = ['exploracao', 'jogos', 'arena', 'hall', 'guilda', 'laboratorio'];
+for (const m of MAPAS) await sharp(`${NOVOS_MAPAS}/bg-${m}.png`).resize(480, 1067, { fit: 'fill' }).webp({ quality: 50, effort: 6 }).toFile(`${PUB}/mapa/${m}-480.webp`);
+// O herói disputa o LCP: AVIF agressivo.
+for (const [w, h, q] of [[480, 1067, 19], [620, 1378, 22]]) await sharp(`${NOVOS_MAPAS}/bg-exploracao.png`).resize(w, h, { fit: 'fill' }).avif({ quality: q, effort: 9 }).toFile(`${PUB}/mapa/exploracao-${w}.avif`);
+for (const f of ['spark-g', 'spark-m', 'spark-p']) await sharp(`${SOUL}/fx/${f}.png`).webp({ lossless: true }).toFile(`${PUB}/site/${f}.webp`);
 
 for (const f of ['rookie', 'champion', 'ultimate', 'mega', 'ultra']) {
   await sharp(`${SOUL}/novos/planta-${f}.png`).webp({ lossless: true, effort: 6 }).toFile(`${PUB}/sprites/planta-${f}.webp`);
@@ -52,7 +44,7 @@ for (const f of ['rookie', 'champion', 'ultimate', 'mega', 'ultra']) {
 }
 
 // Sem árvore de NPC (npc-arvores) e sem nada com engrenagem aparente.
-export const NPCS = ['hall', 'jogos', 'laboratorio-biblioteca-glifa', 'oraculo', 'exploracao', 'cuidados', 'loja-itens', 'loja-decoracao', 'loja-background', 'onboarding', 'ranking-arauto', 'n-cozinheiro', 'n-broto', 'n-corvo', 'laboratorio-pet', 'n-musa', 'arena', 'f-forja', 'mercado-cambista'];
+export const NPCS = ['hall', 'jogos', 'laboratorio-biblioteca-glifa', 'oraculo', 'exploracao', 'cuidados', 'loja-itens', 'loja-decoracao', 'loja-background', 'onboarding', 'ranking-arauto', 'n-cozinheiro', 'n-broto', 'n-corvo', 'laboratorio-pet', 'n-musa', 'arena', 'hall-amigos', 'hall-guilda', 'laboratorio-stats'];
 for (const n of NPCS) await sharp(`${SOUL}/npcs/npc-${n}.png`).resize(256, 256).webp({ quality: 74, alphaQuality: 80, effort: 6 }).toFile(`${PUB}/npc/${n}.webp`);
 
 const ELS = 'agua ar arcano eletricidade espaco fada fogo gravidade industrial luz marcial morte planta som sombra tempo terra vida vigor vileza'.split(' ');

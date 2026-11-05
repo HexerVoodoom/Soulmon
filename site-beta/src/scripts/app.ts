@@ -262,7 +262,41 @@ function mundo() {
   }, '150% 0px'));
 }
 
-barra(); botaoFixo(); vagas(); formulario(); turnstile(); abas(); abertura(); ciclo(); mundo();
+// ---------- Compartilhar ----------
+function partilha() {
+  const sh = $('[data-share]'); const cp = $('[data-copiar]'); const msg = $('[data-partilha-msg]');
+  if (!cp || !msg) return;
+  const url = location.origin + location.pathname;
+  if (typeof navigator.share === 'function' && sh) {
+    sh.hidden = false;
+    sh.addEventListener('click', () => { navigator.share({ title: 'Soulmon', text: S.share, url }).catch(() => {}); });
+  }
+  cp.hidden = false;
+  cp.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(url); msg.textContent = S.copiado; }
+    catch { msg.textContent = `${S.falhaCopia} ${url}`; }
+  });
+}
+
+// ---------- Âncoras: salto direto e corrigido até a posição estabilizar (seções abaixo renderizam na hora) ----------
+function ancoras() {
+  document.addEventListener('click', (e) => {
+    const a = (e.target as Element).closest?.<HTMLAnchorElement>('a[href^="#"]');
+    const alvo = a && document.getElementById(a.hash.slice(1));
+    if (!alvo) return;
+    e.preventDefault();
+    let n = 0;
+    const passo = () => { alvo.scrollIntoView({ block: 'start', behavior: 'instant' as ScrollBehavior }); if (++n < 8) requestAnimationFrame(passo); else { alvo.setAttribute('tabindex', '-1'); alvo.focus({ preventScroll: true }); } };
+    passo();
+    history.replaceState(null, '', a.hash);
+  });
+}
+
+// Só com JS: sem ele, o form faria GET com o e-mail na URL.
+if (form) form.hidden = false;
+$('[data-barra]')?.removeAttribute('hidden');
+$('[data-abertura]')?.removeAttribute('hidden');
+ancoras(); partilha(); barra(); botaoFixo(); vagas(); formulario(); turnstile(); abas(); abertura(); ciclo(); mundo();
 ajustarSprites();
 depoisDoLoad(() => {
   document.documentElement.classList.add('tarde');

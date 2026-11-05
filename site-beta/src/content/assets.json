@@ -3,118 +3,198 @@
   "logo": {
     "gerado": "logo-completo-alfa",
     "estado": "aguarda-revisao",
-    "src": "/site/logo-completo-alfa.webp",
-    "largura": 480
+    "src": "/site/logo-480.webp",
+    "largura": 480,
+    "tamanho": [
+      480,
+      503
+    ]
   },
   "botao": {
     "gerado": "botao-beta",
     "nove": true,
     "estado": "aguarda-revisao",
-    "src": "/site/botao-beta.webp",
+    "src": "/site/botao.webp",
     "altura": 112,
-    "fatia": "28 48",
-    "borda": "14px 24px"
+    "fatia": "20 25",
+    "borda": "20px 25px",
+    "tamanho": [
+      192,
+      63
+    ],
+    "montadaAMao": "meio plano por coluna única; fatia maior que o ornamento medido"
   },
   "disco": {
     "gerado": "disco",
     "estado": "aguarda-revisao",
     "src": "/site/disco.webp",
-    "largura": 640
+    "largura": 640,
+    "tamanho": [
+      240,
+      109
+    ],
+    "montadaAMao": "alfa limpo, sem halo"
   },
   "barraCorpo": {
     "gerado": "barra-corpo",
     "estado": "aguarda-revisao",
     "src": "/site/barra-corpo.webp",
-    "largura": 48
+    "largura": 48,
+    "tamanho": [
+      12,
+      8
+    ],
+    "montadaAMao": "mediana por coluna; sem folhas, uniforme"
   },
   "barraCheio": {
     "gerado": "barra-corpo-cheio",
-    "estado": "provisorio",
-    "src": "/provisorio/barra-cheio.svg",
-    "largura": 48
+    "estado": "aguarda-revisao",
+    "src": "/site/barra-cheio.webp",
+    "largura": 48,
+    "tamanho": [
+      12,
+      8
+    ],
+    "montadaAMao": "barra-corpo com o canal preenchido, pixel a pixel"
   },
   "barraCapa": {
     "gerado": "barra-capa",
-    "estado": "provisorio",
-    "src": "/provisorio/barra-capa.svg",
-    "largura": 48
+    "estado": "aguarda-revisao",
+    "src": "/site/barra-capa.webp",
+    "largura": 48,
+    "tamanho": [
+      12,
+      12
+    ],
+    "montadaAMao": "ponta do botão girada"
   },
   "passo1": {
     "gerado": "passo-1",
-    "estado": "provisorio",
-    "src": "/provisorio/passo-1.svg",
-    "largura": 192
+    "estado": "aguarda-revisao",
+    "src": "/site/passo-1.webp",
+    "largura": 192,
+    "tamanho": [
+      192,
+      192
+    ]
   },
   "passo2": {
     "gerado": "passo-2",
-    "estado": "provisorio",
-    "src": "/provisorio/passo-2.svg",
-    "largura": 192
+    "estado": "aguarda-revisao",
+    "src": "/site/passo-2.webp",
+    "largura": 192,
+    "tamanho": [
+      192,
+      192
+    ]
   },
   "passo3": {
     "gerado": "passo-3",
-    "estado": "provisorio",
-    "src": "/provisorio/passo-3.svg",
-    "largura": 192
+    "estado": "aguarda-revisao",
+    "src": "/site/passo-3.webp",
+    "largura": 192,
+    "tamanho": [
+      192,
+      192
+    ]
   },
   "cristalApagado": {
     "gerado": "cristal-apagado",
-    "estado": "provisorio",
-    "src": "/provisorio/cristal-apagado.svg",
-    "largura": 96
+    "estado": "aguarda-revisao",
+    "src": "/site/cristal-apagado.webp",
+    "largura": 96,
+    "tamanho": [
+      48,
+      96
+    ],
+    "montadaAMao": "alfa trocado pela silhueta do aceso"
   },
   "cristalAcendendo": {
     "gerado": "cristal-acendendo",
-    "estado": "provisorio",
-    "src": "/provisorio/cristal-acendendo.svg",
-    "largura": 96
+    "estado": "aguarda-revisao",
+    "src": "/site/cristal-acendendo.webp",
+    "largura": 96,
+    "tamanho": [
+      48,
+      96
+    ],
+    "montadaAMao": "alfa trocado pela silhueta do aceso"
   },
   "cristalAceso": {
     "gerado": "cristal-aceso",
-    "estado": "provisorio",
-    "src": "/provisorio/cristal-aceso.svg",
-    "largura": 96
+    "estado": "aguarda-revisao",
+    "src": "/site/cristal-aceso.webp",
+    "largura": 96,
+    "tamanho": [
+      48,
+      96
+    ],
+    "montadaAMao": "ilhas de brilho removidas"
   },
   "popup": {
     "gerado": "popup-moldura",
     "nove": true,
-    "estado": "provisorio-css",
-    "src": null,
+    "estado": "aguarda-revisao",
+    "src": "/site/popup.webp",
     "altura": 128,
-    "fatia": "32",
-    "borda": "16px"
+    "fatia": "24",
+    "borda": "24px",
+    "tamanho": [
+      72,
+      72
+    ],
+    "montadaAMao": "perfil da borda do botão, placa plana, cantos do popup-moldura"
   },
   "painel": {
     "gerado": "painel-universo",
     "nove": true,
-    "estado": "provisorio-css",
-    "src": null,
+    "estado": "aguarda-revisao",
+    "src": "/site/painel.webp",
     "altura": 128,
-    "fatia": "32",
-    "borda": "16px"
+    "fatia": "16",
+    "borda": "16px",
+    "tamanho": [
+      48,
+      48
+    ],
+    "montadaAMao": "perfil da borda do botão, placa plana, cantos do popup-moldura"
   },
   "aba": {
     "gerado": "aba",
     "nove": true,
-    "estado": "provisorio-css",
-    "src": null,
+    "estado": "aguarda-revisao",
+    "src": "/site/aba.webp",
     "altura": 64,
-    "fatia": "16",
-    "borda": "8px"
+    "fatia": "8",
+    "borda": "8px",
+    "tamanho": [
+      24,
+      24
+    ],
+    "montadaAMao": "perfil da borda do botão, placa plana"
   },
   "celula": {
     "gerado": "celula",
     "nove": true,
-    "estado": "provisorio-css",
-    "src": null,
+    "estado": "aguarda-revisao",
+    "src": "/site/celula.webp",
     "altura": 64,
-    "fatia": "16",
-    "borda": "8px"
+    "fatia": "8",
+    "borda": "8px",
+    "tamanho": [
+      24,
+      24
+    ],
+    "montadaAMao": "perfil da borda do botão, placa plana"
   },
   "seta": {
     "gerado": "seta",
-    "estado": "provisorio",
-    "src": "/provisorio/seta.svg",
-    "largura": 48
+    "estado": "aguarda-revisao",
+    "src": "/site/seta.webp",
+    "largura": 48,
+    "tamanho": [
+      48,
+      31
+    ]
   }
 }

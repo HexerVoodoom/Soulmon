@@ -25,7 +25,7 @@ describe('copy do site', () => {
     expect(copia.toLowerCase()).not.toContain(t.toLowerCase());
   });
   it('landing não usa arte vetada', () => {
-    for (const t of ['starters/', 'mapas-recriados', 'bg-mapa', 'mapa-mundi', 'type="checkbox"']) expect(landing).not.toContain(t);
+    for (const t of ['starters/', 'mapas-recriados', 'bg-mapa', 'mapa/mercado', 'mapa/forja', 'mapa-mundi', 'type="checkbox"']) expect(landing).not.toContain(t);
   });
   it('textos exatos do dono', () => {
     expect(TEXTOS.pt.form.okH + ' ' + TEXTOS.pt.form.ok).toBe('Parabéns, você se inscreveu no beta! Seu e-mail foi cadastrado com sucesso. Em até 24 horas você receberá o link para fazer o download.');
@@ -33,6 +33,13 @@ describe('copy do site', () => {
     expect(TEXTOS.en.form.esperaH + ' ' + TEXTOS.en.form.espera).toBe('This round is full. Another round is coming and your email is already in line. Thanks for your interest in Soulmon!');
     expect(TEXTOS.pt.form.enviar).toBe('Entrar no beta');
     expect(TEXTOS.en.form.enviar).toBe('Join the beta');
+  });
+  it('antes de cadastrar, nunca diz que o e-mail já está na fila', () => {
+    expect(TEXTOS.pt.form.esperaPre).not.toContain('já está');
+    expect(TEXTOS.en.form.esperaPre).not.toContain('already');
+  });
+  it('chips com até 4 palavras', () => {
+    for (const l of [TEXTOS.pt, TEXTOS.en]) for (const f of l.soul.fatos) expect(f.split(' ').length).toBeLessThanOrEqual(4);
   });
   it('PT e EN têm a mesma estrutura', () => {
     expect(TEXTOS.en.universo.abas.length).toBe(TEXTOS.pt.universo.abas.length);

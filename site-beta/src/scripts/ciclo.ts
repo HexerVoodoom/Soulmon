@@ -77,7 +77,6 @@ export async function iniciar(S: Strs, fraco: boolean) {
     estagio = 0; aplicarForma(); anuncio.textContent = '';
     botoes.forEach((b) => { marcado(b, false); b.removeAttribute('aria-disabled'); });
     fim.hidden = true; blocoTarefas.hidden = false; setCristal('apagado'); botoes[0].focus();
-    if (ST) ST.refresh();
   });
   setCristal('apagado');
 

@@ -9,13 +9,12 @@
   --tx: #e9f5f2; --tx-2: #9dbcb4;
   --pri: #5ff3e0; --pri-2: #29c9b8;
   --cobre: #d9a05b; --cobre-cl: #ebbe84; --anel: #c68642;
-  --margem: 32px; /* espaço da barra lateral */
-  --barra-l: 14px;
+  --margem: 26px; /* espaço da barra lateral */
+  --barra-l: 12px;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html { background: var(--fundo); color: var(--tx); font: 400 1rem/1.5 Rubik, system-ui, sans-serif; scroll-behavior: smooth; scroll-padding: 24px 0 88px; -webkit-text-size-adjust: 100%; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+html { background: var(--fundo); color: var(--tx); font: 400 1rem/1.5 Rubik, system-ui, sans-serif; scroll-padding: 24px 0 88px; -webkit-text-size-adjust: 100%; }
 body { margin: 0; overflow-x: clip; }
 img { display: block; max-width: 100%; }
 h1, h2, h3 { font-family: Cinzel, Georgia, serif; font-weight: 700; line-height: 1.14; margin: 0; text-wrap: balance; }
@@ -32,12 +31,12 @@ main section { position: relative; }
 
 /* Botão: moldura em asset (9-slice), texto limpo em Rubik. Hover e foco são CSS sobre o mesmo asset. */
 .botao, .botao:visited {
-  display: inline-flex; align-items: center; justify-content: center; height: 56px; padding: 0 4px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center; height: 63px; padding: 0 4px; cursor: pointer;
   font: 600 1.0625rem/1 Rubik, sans-serif; color: var(--tx); text-decoration: none; text-align: center; white-space: nowrap;
-  background: var(--sup) padding-box; border: solid var(--anel); border-width: 14px 24px;
-  border-image-source: var(--a-botao, none); border-image-slice: var(--f-botao, 100%);
+  background: var(--sup) padding-box; border: solid var(--anel); border-width: var(--b-botao, 2px);
+  border-image-source: var(--a-botao, none); border-image-slice: var(--f-botao, 100%); image-rendering: pixelated;
 }
-.botao.grande { height: 72px; border-width: 18px 31px; font-size: 1.25rem; width: 100%; }
+.botao.grande { font-size: 1.25rem; width: 100%; }
 .botao:hover { filter: brightness(1.15); }
 .botao[aria-busy='true'] { opacity: .75; cursor: progress; }
 .link { background: none; border: 0; padding: 12px 8px; min-height: 44px; font: inherit; color: var(--pri); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
@@ -68,33 +67,37 @@ main section { position: relative; }
 
 /* ---------- Hero: o mapa inteiro, nunca cortado ---------- */
 .hero { position: relative; isolation: isolate; overflow: hidden; background: var(--fundo); min-height: 100svh; display: flex; flex-direction: column; }
-.hero-mapa { position: absolute; inset: 0; z-index: -2; display: block; }
-.hero-mapa img { width: 100%; height: 100%; object-fit: contain; }
+/* A cena tem a proporção do mapa: a criatura pisa num ponto medido da arte em qualquer tela. */
+.hero-cena { position: absolute; z-index: -2; top: 0; bottom: 0; left: 50%; aspect-ratio: 480 / 1067; transform: translateX(-50%); }
+.hero-mapa { display: block; width: 100%; height: 100%; }
+.hero-mapa img { width: 100%; height: 100%; max-width: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent), linear-gradient(transparent, #000 5%, #000 94%, transparent); -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent), linear-gradient(transparent, #000 5%, #000 94%, transparent); mask-composite: intersect; }
 .hero::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background: linear-gradient(rgba(7,20,19,.82) 0, rgba(7,20,19,.72) 36%, rgba(7,20,19,.12) 52%, rgba(7,20,19,.12) 66%, rgba(7,20,19,.9) 84%); }
 .hero-barra { display: flex; justify-content: space-between; align-items: flex-start; padding: 8px 12px 0 var(--margem); max-width: 1240px; width: 100%; margin: 0 auto; }
 .logo { display: block; }
-.hero .logo img { width: 120px; height: 120px; }
+.hero .logo img { width: clamp(150px, 44vw, 190px); height: auto; }
 .legal .logo img, .nada .logo img { width: 96px; height: auto; }
 .idioma { color: var(--tx); min-height: 44px; display: inline-flex; align-items: center; padding: 0 4px; font-size: .9375rem; }
-.hero-corpo { flex: 1; padding: 4px 16px 20px var(--margem); display: grid; grid-template-rows: auto 1fr auto; justify-items: center; max-width: 1240px; width: 100%; margin: 0 auto; }
+.hero-corpo { flex: 1; padding: 4px 16px 20px var(--margem); display: grid; grid-template-rows: auto 1fr; justify-items: center; max-width: 1240px; width: 100%; margin: 0 auto; }
 .hero h1 { font-size: clamp(1.625rem, 7.6vw, 2.125rem); justify-self: start; max-width: 20ch; }
-.hero-criatura { width: 128px; height: 128px; align-self: center; filter: drop-shadow(0 0 16px rgba(95,243,224,.3)); }
-.hero-acao { display: grid; justify-items: center; gap: 8px; width: 100%; }
+.hero-criatura { position: absolute; left: calc(38% - 48px); bottom: 26%; width: 96px; height: 96px; filter: drop-shadow(0 0 6px rgba(95,243,224,.55)); }
+.hero-acao { grid-row: 2; align-self: end; display: grid; justify-items: center; gap: 8px; width: 100%; }
 .hero-acao .botao { width: min(100%, 328px); }
 .micro { font-size: .8125rem; color: var(--tx); text-align: center; }
 
 @media (min-width: 900px) {
-  :root { --margem: 64px; --barra-l: 20px; }
+  :root { --margem: 64px; --barra-l: 24px; }
   .barra { left: 20px; }
   .hero { min-height: min(100svh, 900px); }
-  .hero-mapa { inset: 0 max(4vw, calc(50vw - 620px)) 0 auto; width: 510px; }
+  .hero-cena { left: auto; right: max(4vw, calc(50vw - 620px)); transform: none; }
   .hero::before { background: linear-gradient(90deg, #071413 40%, rgba(7,20,19,.05) 62%); }
-  .hero .logo img { width: 240px; height: 240px; }
-  .hero-corpo { grid-template-columns: 1fr 510px; grid-template-rows: auto auto; column-gap: 40px; justify-items: start; align-content: center; padding-top: 0; padding-bottom: 56px; }
+  .hero .logo img { width: 240px; }
+  .hero-corpo { grid-template-columns: 1fr 420px; grid-template-rows: auto auto; column-gap: 40px; justify-items: start; align-content: center; padding-top: 0; padding-bottom: 56px; }
   .hero h1 { font-size: clamp(2.75rem, 4.2vw, 3.875rem); grid-column: 1; align-self: end; max-width: 15ch; }
-  .hero-criatura { grid-column: 2; grid-row: 1 / span 2; width: 256px; height: 256px; justify-self: center; }
-  .hero-acao { grid-column: 1; justify-items: start; margin-top: 24px; }
+  .hero-criatura { width: 128px; height: 128px; left: calc(38% - 64px); }
+  .hero-acao { grid-row: auto; grid-column: 1; justify-items: start; margin-top: 24px; }
   .hero-acao .botao { width: 340px; }
   .micro { font-size: .9375rem; text-align: left; }
 }
@@ -119,11 +122,11 @@ main section { position: relative; }
 .cena-central { text-align: center; }
 .forma-titulo { font: 600 1.0625rem/1.2 Rubik, sans-serif; color: var(--pri); margin-bottom: 40px; }
 .disco-caixa { position: relative; }
-.disco { width: 100%; height: auto; }
+.disco { width: 100%; height: auto; image-rendering: pixelated; }
 .disco-caixa .sprite { position: absolute; left: 22.5%; bottom: 22%; width: 55%; height: auto; }
 .clarao { position: absolute; inset: -6% 14% 14%; border-radius: 50%; background: var(--pri); opacity: 0; pointer-events: none; mix-blend-mode: screen; }
 .cristal { position: absolute; left: 45%; bottom: 0; width: 10%; aspect-ratio: 4 / 5; }
-.cristal img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
+.cristal img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0; image-rendering: pixelated; }
 .cristal img.on { opacity: 1; }
 .chama { position: absolute; left: 0; top: 0; opacity: 0; z-index: 5; pointer-events: none; will-change: transform; }
 
@@ -131,10 +134,8 @@ main section { position: relative; }
 .lista-jogo { background: var(--sup); border: 1px solid var(--sup-2); border-radius: 4px; }
 .lista-titulo { font: 700 1rem/1 Cinzel, serif; padding: 10px 10px 6px; }
 .linha { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 2px 2px 2px 10px; border-top: 1px solid var(--sup-2); }
-.selo { display: none; flex: none; color: var(--tx-2); }
 .linha-nome { flex: 1; min-width: 0; font-size: .875rem; line-height: 1.2; }
 .linha.feita .linha-nome { color: var(--tx-2); }
-.linha.feita .selo { color: var(--pri); }
 .check { flex: none; width: 44px; height: 44px; display: grid; place-items: center; padding: 0; background: none; border: 0; cursor: pointer; color: var(--pri); }
 .check[aria-disabled='true'] { cursor: default; }
 .caixa { width: 24px; height: 24px; display: grid; place-items: center; border: 2px solid var(--cobre); border-radius: 4px; background: var(--fundo); }
@@ -143,7 +144,7 @@ main section { position: relative; }
 .ciclo-fim { display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .9375rem; }
 .ciclo-fim .botao { width: 100%; max-width: 340px; font-size: .9375rem; }
 
-@media (min-width: 480px) { .selo { display: block; } .linha-nome { font-size: 1rem; } }
+@media (min-width: 480px) { .linha-nome { font-size: 1rem; } }
 @media (min-width: 900px) {
   .ciclo { padding: 0 40px 0 var(--margem); }
   .ciclo-palco { max-width: 1040px; margin: 0 auto; }
@@ -161,8 +162,8 @@ main section { position: relative; }
 
 /* ---------- Seu Soulmon ---------- */
 .soul { padding: 40px 12px 48px var(--margem); }
-.fatos { margin-top: 14px; display: grid; gap: 8px; max-width: 46ch; }
-.fatos li { font-size: 1.0625rem; line-height: 1.3; border-left: 3px solid var(--pri-2); padding-left: 10px; }
+.fatos { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; max-width: 46ch; }
+.fatos li { font-size: 1rem; line-height: 1.2; padding: 8px 10px; background: var(--sup-2); color: var(--tx); }
 .arvore { margin-top: 24px; display: grid; gap: 28px; justify-content: center; }
 .arvore-linha { position: relative; display: flex; justify-content: center; gap: 8px; }
 .no { position: relative; display: grid; place-items: center; width: clamp(84px, 26vw, 112px); aspect-ratio: 1; }
@@ -173,12 +174,11 @@ main section { position: relative; }
 .seta { position: absolute; left: calc(50% - 12px); bottom: -27px; width: 24px; height: 24px; transform: rotate(90deg); image-rendering: pixelated; }
 @media (min-width: 900px) {
   .soul { display: grid; grid-template-columns: 1fr auto; column-gap: 64px; align-items: center; max-width: 1120px; margin: 0 auto; padding: 72px 40px 80px var(--margem); }
-  .fatos li { font-size: 1.25rem; }
   .arvore { margin-top: 0; }
 }
 
 /* ---------- Universo em abas ---------- */
-.universo { padding: 32px 10px 48px var(--margem); max-width: 1180px; margin: 0 auto; }
+.universo { padding: 32px 10px 96px var(--margem); max-width: 1180px; margin: 0 auto; }
 .abas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; margin-top: 16px; }
 @media (min-width: 480px) { .abas { grid-template-columns: repeat(4, 1fr); } }
 .aba { min-height: 48px; padding: 0 10px; color: var(--tx); font: 500 1rem Rubik, sans-serif; background: var(--sup); cursor: pointer; filter: brightness(.7); border-bottom: 0; }
@@ -218,30 +218,29 @@ main section { position: relative; }
 /* ---------- Parallax. Padrão = empilhado (sem JS, movimento reduzido, aparelho fraco) ---------- */
 .mundo { padding: 32px 10px 32px var(--margem); }
 .mundo-texto p { margin-top: 6px; color: var(--tx); }
-.cena { position: relative; margin: 16px auto 0; max-width: 480px; overflow: hidden; }
-.c-longe { display: none; }
+.cena { position: relative; margin: 16px auto 0; max-width: 480px; }
+.c-plano { position: relative; }
 .c-meio { width: 100%; height: auto; }
-.c-npc { position: absolute; right: 2%; bottom: 8%; width: 44%; height: auto; }
-.c-cria { position: absolute; left: 4%; bottom: 6%; width: 28%; height: auto; }
-.cena figcaption { position: absolute; left: 0; top: 0; padding: 8px 12px; background: rgba(7,20,19,.85); font: 700 1.25rem/1.1 Cinzel, serif; }
+/* Pés no ponto medido: --x, --y em % do mapa. */
+.c-npc, .c-cria { position: absolute; height: auto; top: var(--y); left: var(--x); transform: translate(-50%, -100%); }
+.c-npc { width: 34%; }
+.c-cria { width: 20%; }
+.cena figcaption { padding: 8px 0 0; display: grid; gap: 2px; }
+.cena figcaption strong { font: 700 1.5rem/1.1 Cinzel, serif; }
+.frente { display: none; }
 
 .mundo-js .mundo { height: 500svh; padding: 0; }
-.mundo-js .mundo-palco { position: sticky; top: 0; height: 100svh; overflow: hidden; }
-.mundo-js .mundo-texto { position: absolute; z-index: 6; inset: 0 0 auto; padding: 16px 12px 40px var(--margem); background: linear-gradient(rgba(7,20,19,.92) 60%, transparent); }
+.mundo-js .mundo-palco { position: sticky; top: 0; height: 100svh; overflow: hidden; background: radial-gradient(ellipse at 50% 45%, #123a3c 0, #0a2224 45%, var(--fundo) 80%); }
+.mundo-js .mundo-texto { position: absolute; z-index: 6; inset: 0 0 auto; padding: 14px 12px 36px var(--margem); background: linear-gradient(rgba(7,20,19,.92) 60%, transparent); }
 .mundo-js .cena { position: absolute; inset: 0; margin: 0; max-width: none; }
-.mundo-js .cena img { will-change: transform; }
-.mundo-js .c-longe { display: block; position: absolute; left: -15%; top: -15%; width: 130%; max-width: none; height: 130%; object-fit: cover; opacity: .28; }
-.mundo-js .c-meio { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-@media (min-width: 600px) { .mundo-js .c-meio { left: calc(50% - 310px); width: 620px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent); } }
-.mundo-js .c-npc { right: 2%; bottom: 20%; width: min(46vw, 340px); }
-.mundo-js .c-cria { left: calc(var(--margem) + 2%); bottom: 14%; width: min(30vw, 192px); }
-.mundo-js .cena figcaption { left: 50%; top: auto; bottom: 88px; transform: translateX(-50%); white-space: nowrap; font-size: 1.5rem; }
-@media (min-width: 900px) {
-  .mundo-js .mundo-texto { text-align: center; }
-  .mundo-js .c-npc { right: calc(50% - 480px); }
-  .mundo-js .c-cria { left: calc(50% - 460px); }
-  .mundo-js .cena figcaption { bottom: 32px; }
-}
+.mundo-js .c-plano { position: absolute; top: 0; left: 50%; height: 100%; width: 45svh; margin-left: -22.5svh; will-change: transform; }
+.mundo-js .c-meio { display: block; width: 100%; height: 100%;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent), linear-gradient(transparent, #000 5%, #000 94%, transparent); -webkit-mask-composite: source-in;
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent), linear-gradient(transparent, #000 5%, #000 94%, transparent); mask-composite: intersect; }
+.mundo-js .cena figcaption { position: absolute; z-index: 6; left: 50%; bottom: 84px; transform: translateX(-50%); width: max-content; max-width: calc(100vw - var(--margem) - 12px); padding: 8px 14px; text-align: center; background: rgba(7,20,19,.88); }
+.mundo-js .frente { display: block; position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+.frente img { position: absolute; left: calc(6% + var(--i) * 12.5%); top: calc(12% + var(--i) * 10%); width: 32px; height: 32px; image-rendering: pixelated; opacity: .9; will-change: transform; }
+@media (min-width: 900px) { .mundo-js .mundo-texto { text-align: center; } .mundo-js .cena figcaption { bottom: 24px; } }
 
 /* ---------- Como entrar ---------- */
 .entrar { padding: 40px 16px 40px var(--margem); background: var(--fundo-2); }
@@ -318,4 +317,8 @@ form { display: grid; gap: 14px; width: min(100%, 480px); }
 
 /* Abaixo da dobra: antes do JS as seções ficam curtas e os lazy cairiam no limiar, disputando o LCP.
    content-visibility tira a caixa do subtree, e a imagem só pede quando a seção se aproxima. */
-.estagios, .soul, .universo, .abertura, .mundo, .entrar { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+html:not(.tarde) :is(.estagios, .soul, .universo, .abertura, .mundo, .entrar) { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+
+.partilha { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 16px; }
+.partilha-msg { width: 100%; color: var(--tx-2); overflow-wrap: anywhere; }
+.partilha-msg:empty { display: none; }
