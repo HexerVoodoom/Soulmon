@@ -110,7 +110,12 @@ const CONTATO_SEM_ESQUEMA = [
   /\barroba\b/i,
   /\bponto\s+(?:com|br|net|org)\b/i,
   /\bdot\s+(?:com|net|org)\b/i,
+  // QA da 2ª onda (05/11/2026): `foo . com` e `foo(dot)com` passavam.
+  /\.\s+(?:com|me|gg|io|net|org|br|tv|ly|app|co|xyz|link|bio)\b/i,
+  /\(\s*(?:dot|ponto)\s*\)/i,
 ];
+/** Telefone sem formato: 8+ dígitos de QUALQUER alfabeto no nome (`1199999999`, `zap 999998888`, `①①⑨…`, dígitos arábicos); o redator só pega 11+. */
+const MAX_DIGITOS_NO_NOME = 7;
 
 export function sanitizarNomeDeGuilda(raw) {
   const limpo = String(raw ?? '').normalize('NFKC')
@@ -118,6 +123,7 @@ export function sanitizarNomeDeGuilda(raw) {
   if (!limpo) return null;
   if (limpo.includes('@')) return null;
   if (CONTATO_SEM_ESQUEMA.some(re => re.test(limpo))) return null;
+  if ((limpo.match(/\p{Nd}/gu) ?? []).length > MAX_DIGITOS_NO_NOME) return null;
   const { redactions } = minimizeForAi(limpo, 200);
   if (redactionCount(redactions) > 0) return null;
   // Corta por PONTO DE CÓDIGO, nunca por unidade UTF-16: `slice` podia deixar
