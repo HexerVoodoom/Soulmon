@@ -221,7 +221,7 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // sem split, então os estilos das frentes mergeadas desde 01/11 entram todos aqui). Re-medida com justificativa, NÃO é do corte do JS.
   'index.css': 208_770,
   // ⚰️ 'intro-parede.mp4' (4,3 MB) saiu em 04/11/2026: a intro virou 9 painéis ilustrados animados em CSS (~2,1 MB em webp).
-  'bg-forja.webp': 424_334, // 29/10/2026: fundo da Forja (pixel art denso) 14 KB acima do teto; borrar para caber estragaria o pixel
+  // ⚰️ 'bg-forja.webp' saiu em 05/11/2026: o fundo novo da Forja (main) mede 398 KB, dentro do teto.
   // ⚰️ 'evolution-bg.mp4' (3,7 MB) saiu em 31/10/2026: a cerimônia da evolução foi refeita em CSS (o cristal, REGISTRO §208) e o vídeo foi apagado.
 };
 
@@ -324,7 +324,7 @@ describe('orçamento de bytes (decisão #31) — lido do dist/', () => {
     expect(problema).toContain('gigante-Abcdefgh.webp');
     expect(problema).toMatch(/arquivo novo/);
     // Mídia em dívida que CRESCEU 1 byte (mídia não tem folga) → reprovada.
-    expect(avaliar('bg-forja-Abcdefgh.webp', DIVIDA_ATUAL['bg-forja.webp'] + 1, TETO_IMAGEM, 0)).toMatch(/cresceu/);
+    expect(avaliar('index-Abcdefgh.css', DIVIDA_ATUAL['index.css'] + 1, 0, 0)).toMatch(/cresceu/); // sem mídia em dívida desde 05/11/2026: folga 0 = regra da mídia
     // Dívida registrada para arquivo que não existe → linha morta (o guard cobra a remoção).
     const medidor = (n: string) => (n === 'index-Abcdefgh.js' ? DIVIDA_ATUAL['index.js'] : 0);
     expect(dividasMortas({ 'index.js': 1, 'fantasma.webp': 999_999 }, ['index-Abcdefgh.js'], medidor, tetoPorExtensao)).toEqual(['fantasma.webp']);
