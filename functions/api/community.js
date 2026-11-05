@@ -549,6 +549,16 @@ async function handleCommunity(context) {
     let nameTaken = false;
     let apelidoFinal = apelidoPedido;
     if (apelidoPedido && !(await claimNick(env, id, apelidoPedido))) { nameTaken = true; apelidoFinal = null; }
+    // Indexação preguiçosa (busca de jogadores): perfil anterior ao índice `nick:` entra sozinho ao salvar, sem backfill do dono.
+    // Marcador `nickIx` no próprio perfil = já indexado, custo zero. Sem ele, tenta o apelido GRAVADO uma vez (claimNick não rouba
+    // apelido alheio e ignora "Anônimo"); só marca em sucesso. Melhor esforço: falha do KV nunca derruba o save.
+    let nickIx = prev.nickIx === true || (!!apelidoPedido && !nameTaken);
+    if (!nickIx) {
+      const gravado = sanitizarNomeDeGuilda(prev.name);
+      if (gravado && !/^(an[ôo]nimo|anonymous)$/i.test(gravado)) {
+        try { if (await claimNick(env, id, gravado)) nickIx = true; } catch { /* tenta no próximo save */ }
+      }
+    }
     // Opt-out da lista pública. Cliente antigo (sem o campo) NÃO desfaz a
     // escolha feita em outro aparelho: ausência herda o valor gravado.
     // `petName`, `stage` e `unlockedStages` também saem na lista PÚBLICA e eram texto livre: a mesma régua
@@ -600,6 +610,7 @@ async function handleCommunity(context) {
         : (prev.unlockedStages || []),
       pvpEnabled,
       publicHidden,
+      ...(nickIx ? { nickIx: true } : {}),
       ...(especialNome ? { especialNome } : {}),
       ...(especialNomeAt ? { especialNomeAt } : {}),
       // Faixa de evoluções: atravessam a regravação; o bloco abaixo só os faz subir.
