@@ -36,6 +36,8 @@ export interface LotMarkInput {
   /** As Conquistas (`questMarks().conquistas`) moram no Mercado. */
   conquistas: QuestMark;
   dailyMissions: DailyMissionsState | undefined;
+  /** §242: há convite de amizade recebido ou presente novo (o servidor decide; `App` só repassa). Marca "!" no prédio Amigos. */
+  friendsAlert?: boolean;
   day: string;
   bondLevel: unknown;
 }
@@ -47,6 +49,7 @@ export function lotMissionMarks(i: LotMarkInput): Partial<Record<BuildingId, Que
   put('exploracao.passeio', i.passeio);
   put('arena.torneio', i.weekly);
   put('mercado.conquistas', i.conquistas);
+  if (i.friendsAlert) put('laboratorio.amigos', 'available');
   for (const m of dailyMissionsFor(i.day, i.bondLevel)) {
     const b = DAILY_EVENT_BUILDING[m.event];
     if (!b) continue;

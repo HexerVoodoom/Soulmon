@@ -34,12 +34,14 @@ vi.mock('../utils/community', async (orig) => {
   return {
     ...real,
     listPlayers: vi.fn(), getPlayer: vi.fn(),
-    addFriend: vi.fn(), removeFriend: vi.fn(), sendGift: vi.fn(),
+    addFriend: vi.fn(), removeFriend: vi.fn(), sendGift: vi.fn(), getFriendsState: vi.fn(), answerFriendInvite: vi.fn(), markFriendsSeen: vi.fn(async () => ({ ok: true })),
   };
 });
 
 import { LibraryPage } from './LibraryPage';
-import { listPlayers, getPlayer, addFriend, sendGift } from '../utils/community';
+import { listPlayers, getPlayer, addFriend, removeFriend, sendGift, getFriendsState, answerFriendInvite, type FriendsState } from '../utils/community';
+
+const estado = (over: Partial<FriendsState> = {}): FriendsState => ({ friends: [], incoming: [], outgoing: [], sentToday: [], notes: [], unseen: 0, limit: 20, ...over });
 
 const perfil = (over: Partial<PlayerDetail> = {}): PlayerDetail => ({
   id: 'pid-x', name: 'Fulano', petName: 'Bichinho', stage: 'rookie',
@@ -68,6 +70,8 @@ const abrirAmigos = () => {
 
 describe('LibraryPage — a aba Amigos nao deriva do diretorio publico', () => {
   beforeEach(() => {
+    vi.mocked(getFriendsState).mockReset();
+    vi.mocked(getFriendsState).mockResolvedValue(estado());
     vi.mocked(listPlayers).mockReset();
     vi.mocked(getPlayer).mockReset();
     vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -84,10 +88,12 @@ describe('LibraryPage — a aba Amigos nao deriva do diretorio publico', () => {
 
     await waitFor(() => expect(screen.getByText('Reservado')).toBeTruthy());
     // E a acao de remover amigo, que prova que a linha e de amigo (o presente saiu da Biblioteca, M4).
+    // §242: remover só existe no modo "Remover amigos".
+    fireEvent.click(screen.getByRole('button', { name: 'Remover amigos' }));
     expect(screen.getByRole('button', { name: 'Remover Reservado dos amigos' })).toBeTruthy();
   });
 
-  it('NAO deixa o contador Amigos N/5 divergir da lista renderizada', async () => {
+  it('NAO deixa o contador Amigos N/20 divergir da lista renderizada', async () => {
     vi.mocked(listPlayers).mockResolvedValue({ players: [] });
     vi.mocked(getPlayer).mockImplementation(async (id: string) =>
       ({ found: true, player: perfil({ id, name: `Amigo ${id.slice(-1)}`, pvpEnabled: false }) }));
@@ -97,7 +103,7 @@ describe('LibraryPage — a aba Amigos nao deriva do diretorio publico', () => {
     abrirAmigos();
 
     await waitFor(() => expect(linhas().length).toBe(2));
-    expect(screen.getByRole('tab', { name: /Amigos 2\/5/ })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /Amigos 2\/20/ })).toBeTruthy();
   });
 
   it('resolve os N amigos EM PARALELO — nao N requisicoes em serie', async () => {
@@ -133,7 +139,7 @@ describe('LibraryPage — a aba Amigos nao deriva do diretorio publico', () => {
     expect(screen.getByText('Amigo c')).toBeTruthy();
     // …e o terceiro continua ocupando uma linha, para o contador nao mentir.
     expect(linhas().length).toBe(3);
-    expect(screen.getByRole('tab', { name: /Amigos 3\/5/ })).toBeTruthy();
+    expect(screen.getByRole('tab', { name: /Amigos 3\/20/ })).toBeTruthy();
   });
 
   it('a aba TODOS continua respeitando o filtro do diretorio (N-4 intacto)', async () => {
@@ -161,6 +167,8 @@ describe('LibraryPage — a aba Amigos nao deriva do diretorio publico', () => {
 
 describe('H17 (01/10/2026) — a Biblioteca do Hall mostra só os Soulmons já vistos', () => {
   beforeEach(() => {
+    vi.mocked(getFriendsState).mockReset();
+    vi.mocked(getFriendsState).mockResolvedValue(estado());
     vi.mocked(listPlayers).mockReset();
     vi.mocked(getPlayer).mockReset();
     localStorage.clear();
@@ -202,6 +210,8 @@ describe('H17 (01/10/2026) — a Biblioteca do Hall mostra só os Soulmons já v
 
 describe('C7 — Amigos: adicionar pelo nome', () => {
   beforeEach(() => {
+    vi.mocked(getFriendsState).mockReset();
+    vi.mocked(getFriendsState).mockResolvedValue(estado());
     vi.mocked(listPlayers).mockReset();
     vi.mocked(getPlayer).mockReset();
     vi.mocked(addFriend).mockReset();
@@ -210,21 +220,21 @@ describe('C7 — Amigos: adicionar pelo nome', () => {
   });
 
   const digitar = (v: string) => {
-    fireEvent.change(screen.getByRole('textbox', { name: /Nome do amigo/ }), { target: { value: v } });
-    fireEvent.click(screen.getByRole('button', { name: 'Adicionar' }));
+    fireEvent.change(screen.getByRole('textbox', { name: /Nome da pessoa/ }), { target: { value: v } });
+    fireEvent.click(screen.getByRole('button', { name: 'Convidar' }));
   };
 
-  it('digitar o nome e tocar Adicionar chama addFriend com o id achado e avisa a tela', async () => {
+  it('digitar o nome e tocar Convidar chama addFriend com o id achado e avisa a tela', async () => {
     vi.mocked(getPlayer).mockResolvedValue({ found: true, player: perfil({ id: 'pid-lia', name: 'Lia' }) });
     vi.mocked(listPlayers).mockResolvedValue({ players: [perfil({ id: 'pid-lia', name: 'Lia' }) as DirectoryPlayer] });
-    vi.mocked(addFriend).mockResolvedValue({ ok: true, friends: ['pid-lia'] });
+    vi.mocked(addFriend).mockResolvedValue({ ok: true, status: 'friends', friends: ['pid-lia'] });
     const onFriendsChange = vi.fn();
     renderWithCss(<LibraryPage {...props([])} onFriendsChange={onFriendsChange} embedded view="friends" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
     digitar('lia');
     await waitFor(() => expect(addFriend).toHaveBeenCalledWith('save-1', 'pid-lia'));
     await waitFor(() => expect(onFriendsChange).toHaveBeenCalledWith(['pid-lia']));
-    expect(document.querySelector('[data-friend-add-msg]')!.textContent).toMatch(/Lia entrou/);
+    expect(document.querySelector('[data-friend-add-msg]')!.textContent).toMatch(/Lia agora é seu amigo/);
   });
 
   it('nome que ninguém tem: avisa, sem addFriend', async () => {
@@ -246,8 +256,9 @@ describe('C7 — Amigos: adicionar pelo nome', () => {
     unmount();
     renderWithCss(<LibraryPage {...props(['pid-lia'])} canGiftToday embedded view="friends" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
-    await screen.findByRole('button', { name: /Remover Lia/ });
-    expect(screen.getByRole('button', { name: 'Enviar 20 Bits para Lia' })).toBeTruthy();
+    await screen.findByRole('button', { name: 'Enviar 20 Bits para Lia' });
+    // sem o remover na linha: ele só aparece no modo "Remover amigos"
+    expect(screen.queryByRole('button', { name: /Remover Lia/ })).toBeNull();
   });
 
   it('presente no Círculo: sem a meta do dia fica inerte (aria-disabled) com o motivo; com a meta do dia chama sendGift e marca como já presenteado', async () => {
@@ -265,8 +276,82 @@ describe('C7 — Amigos: adicionar pelo nome', () => {
     renderWithCss(<LibraryPage {...props(['pid-lia'])} canGiftToday onGiftSent={onGiftSent} embedded view="friends" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
     fireEvent.click(await screen.findByRole('button', { name: 'Enviar 20 Bits para Lia' }));
-    await waitFor(() => expect(sendGift).toHaveBeenCalledWith('save-1', 'pid-lia'));
+    await waitFor(() => expect(sendGift).toHaveBeenCalledWith('save-1', 'pid-lia', undefined));
     await waitFor(() => expect(onGiftSent).toHaveBeenCalledWith('pid-lia'));
-    expect(await screen.findByRole('button', { name: 'Já presenteado hoje' })).toBeTruthy();
+    // depois de enviar, o ícone some pelo resto do dia
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Enviar 20 Bits para Lia' })).toBeNull());
+  });
+
+  it('o servidor diz que já presenteou hoje: o ícone nem aparece', async () => {
+    vi.mocked(getPlayer).mockResolvedValue({ found: true, player: perfil({ id: 'pid-lia', name: 'Lia' }) });
+    vi.mocked(listPlayers).mockResolvedValue({ players: [] });
+    vi.mocked(getFriendsState).mockResolvedValue(estado({ friends: ['pid-lia'], sentToday: ['pid-lia'] }));
+    renderWithCss(<LibraryPage {...props(['pid-lia'])} canGiftToday embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    await screen.findByText('Lia');
+    await waitFor(() => expect(screen.queryByRole('button', { name: /Enviar 20 Bits/ })).toBeNull());
+  });
+
+  it('a linha do amigo tem só presente e combate; o combate exige o `trainer`', async () => {
+    vi.mocked(getPlayer).mockResolvedValue({ found: true, player: perfil({ id: 'pid-lia', name: 'Lia' }) });
+    vi.mocked(listPlayers).mockResolvedValue({ players: [] });
+    const { unmount } = renderWithCss(<LibraryPage {...props(['pid-lia'])} canGiftToday embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    await screen.findByRole('button', { name: 'Enviar 20 Bits para Lia' });
+    expect(screen.queryByRole('button', { name: 'Treinar com Lia' })).toBeNull();
+    unmount();
+    renderWithCss(<LibraryPage {...props(['pid-lia'])} canGiftToday trainer={{ petStage: 'rookie' }} embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    await screen.findByRole('button', { name: 'Treinar com Lia' });
+    const acoes = Array.from(document.querySelectorAll('.sm2-lib-row button')).filter(b => b.classList.contains('sm2-lib-act'));
+    expect(acoes.length).toBe(2);
+  });
+
+  it('Remover amigos: modo discreto, DUAS confirmações e só então removeFriend', async () => {
+    vi.mocked(getPlayer).mockResolvedValue({ found: true, player: perfil({ id: 'pid-lia', name: 'Lia' }) });
+    vi.mocked(listPlayers).mockResolvedValue({ players: [] });
+    vi.mocked(removeFriend).mockResolvedValue({ ok: true, friends: [] });
+    renderWithCss(<LibraryPage {...props(['pid-lia'])} embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    await screen.findByText('Lia');
+    fireEvent.click(screen.getByRole('button', { name: 'Remover amigos' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Remover Lia dos amigos' }));
+    expect(document.querySelector('[data-remove-step="1"]')).toBeTruthy();
+    fireEvent.click(document.querySelector('[data-remove-confirm]')!);
+    expect(document.querySelector('[data-remove-step="2"]')).toBeTruthy();
+    expect(removeFriend).not.toHaveBeenCalled();
+    fireEvent.click(document.querySelector('[data-remove-confirm]')!);
+    await waitFor(() => expect(removeFriend).toHaveBeenCalledWith('save-1', 'pid-lia'));
+  });
+
+  it('convite recebido: aceitar chama answerFriendInvite; presente novo aparece com "te deu 20 Bits"', async () => {
+    vi.mocked(getPlayer).mockResolvedValue({ found: true, player: perfil({ id: 'pid-lia', name: 'Lia' }) });
+    vi.mocked(listPlayers).mockResolvedValue({ players: [] });
+    vi.mocked(getFriendsState).mockResolvedValue(estado({
+      incoming: [{ id: 'pid-zed', name: 'Zed', at: 1 }],
+      notes: [{ name: 'Bia', bits: 20, at: Date.now(), unseen: true }], unseen: 1,
+    }));
+    vi.mocked(answerFriendInvite).mockResolvedValue({ ok: true, status: 'friends', friends: ['pid-zed'] });
+    const onSocialAlert = vi.fn();
+    renderWithCss(<LibraryPage {...props([])} onSocialAlert={onSocialAlert} embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    await screen.findByText('Zed');
+    expect(onSocialAlert).toHaveBeenCalledWith(true);
+    expect(document.querySelector('[data-friend-gifts]')!.textContent).toMatch(/Bia te deu 20 Bits/);
+    fireEvent.click(screen.getByRole('button', { name: 'Aceitar' }));
+    await waitFor(() => expect(answerFriendInvite).toHaveBeenCalledWith('save-1', 'pid-zed', false));
+  });
+
+  it('teto de recebimento: a tela do envio e o histórico dizem o valor real', async () => {
+    vi.mocked(getPlayer).mockResolvedValue({ found: true, player: perfil({ id: 'pid-lia', name: 'Lia' }) });
+    vi.mocked(listPlayers).mockResolvedValue({ players: [] });
+    vi.mocked(sendGift).mockResolvedValue({ ok: true, credited: 0 });
+    vi.mocked(getFriendsState).mockResolvedValue(estado({ dailyCap: 100, notes: [{ name: 'Bia', bits: 0, at: Date.now(), unseen: false }] }));
+    renderWithCss(<LibraryPage {...props(['pid-lia'])} canGiftToday playerDayTz={{ offsetMs: -3 * 3_600_000 }} embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    expect(document.querySelector('[data-friend-gifts]')!.textContent).toMatch(/teto de 100 Bits.*\(0 Bits\)/);
+    fireEvent.click(await screen.findByRole('button', { name: 'Enviar 20 Bits para Lia' }));
+    await waitFor(() => expect(sendGift).toHaveBeenCalledWith('save-1', 'pid-lia', { offsetMs: -3 * 3_600_000 }));
+    await waitFor(() => expect(document.querySelector('[data-friend-add-msg]')!.textContent).toMatch(/0 Bits valeram/));
   });
 });

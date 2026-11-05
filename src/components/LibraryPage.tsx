@@ -21,10 +21,11 @@
  * do Tab — nunca opacidade); `add` ciano, `paid` tinta, remover `muted`; o
  * `role=alert` é âmbar (`danger-ink` saiu); "Try again" em `outline`.
  */
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { opponentSprite } from '../utils/opponentArt';
 import { isSafeSpriteSrc } from '../utils/spriteLibrary';
-import { listPlayers, getPlayer, getFriendForms, addFriend, removeFriend, sendGift, suggestNames, type DirectoryPlayer } from '../utils/community';
+import { listPlayers, getPlayer, getFriendForms, addFriend, removeFriend, sendGift, suggestNames, answerFriendInvite, getFriendsState, markFriendsSeen, type DirectoryPlayer, type FriendsState } from '../utils/community';
+import type { FriendTrainerProps } from './FriendTraining';
 import { LIBRARY_NPCS } from '../utils/libraryNpcs';
 import { PlayerDetailModal } from './PlayerDetailModal';
 import { RitualDialog } from './ritual/RitualKit';
@@ -48,6 +49,8 @@ import type { PlayerDayAnchor } from '../utils/playerDay';
 import { readSeenIds, addSeenId } from '../utils/librarySeen';
 import { writeJson } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
+
+const FriendTraining = lazy(() => import('./FriendTraining').then(m => ({ default: m.FriendTraining })));
 
 
 interface LibraryPageProps {
@@ -86,13 +89,17 @@ interface LibraryPageProps {
   libraryAck?: LibraryAck;
   /** A Biblioteca (visão `directory`) abriu: grava o "visto" (`ackLibrary`). O selo desta visita já foi congelado. */
   onLibraryOpened?: () => void;
+  /** §242: o que o treino com amigo precisa do SEU Soulmon (estágio, arte, elemento, skills). Sem isto o ícone de combate não aparece. */
+  trainer?: FriendTrainerProps;
+  /** §242: há convite recebido ou presente novo (o "!" do prédio Amigos). Chamado a cada leitura do estado social. */
+  onSocialAlert?: (alert: boolean) => void;
 }
 
 // Entrada unificada da lista — jogador real ou NPC de teste (ver
 // utils/libraryNpcs.ts); isNpc/spriteUrl ficam undefined pros reais.
 type LibraryEntry = DirectoryPlayer & { isNpc?: boolean; spriteUrl?: string | null; unresolved?: boolean };
 
-const MAX_FRIENDS = 5;
+const MAX_FRIENDS = 20;
 
 /**
  * Linha de amigo que NAO resolveu (rede caiu, 502, perfil apagado no servidor).
@@ -155,7 +162,7 @@ function RowAction({
   );
 }
 
-export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, playerDayTz, mySprite, language, embedded = false, view, bestiary, defeatedElements, strayPlayersSeen, libraryAck, onLibraryOpened }: LibraryPageProps) {
+export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsChange, onGiftSent, onVisitPlayer, metaDoDiaCumprida = false, playerDayTz, mySprite, language, embedded = false, view, bestiary, defeatedElements, strayPlayersSeen, libraryAck, onLibraryOpened, trainer, onSocialAlert }: LibraryPageProps) {
   // Selo NEW (01/11/2026): o que estava novo AO ABRIR fica marcado durante esta visita; a abertura grava o "visto".
   const [novos] = useState(() => libraryNewKeys({ bestiary, defeatedElements, strayPlayersSeen, libraryAck }));
   useEffect(() => { if (view === 'directory') onLibraryOpened?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -179,6 +186,12 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   /** Aba que NÃO é a lista de jogadores: some busca, carregamento, vazio e a grade de encontrados. */
   const outroPainel = hallTabs && libTab !== 'found';
   const [giftedToday, setGiftedToday] = useState<Set<string>>(new Set());
+  /** §242: estado social vindo do SERVIDOR (convites, presentes de hoje, histórico). `null` = ainda não chegou. */
+  const [social, setSocial] = useState<FriendsState | null>(null);
+  /** Modo "Remover amigos": só então a exclusão aparece nas linhas, e ainda pede DUAS confirmações. */
+  const [removeMode, setRemoveMode] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState<{ p: LibraryEntry; step: 1 | 2 } | null>(null);
+  const [trainingWith, setTrainingWith] = useState<LibraryEntry | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<LibraryEntry | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   /** Amigos resolvidos por pid. `null` = ainda carregando (nao "sem amigos"). */
@@ -295,13 +308,54 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
     return () => { vivo = false; };
   }, [friendsKey, saveId, reloadKey]);
 
+  /** Lê o estado social (só o dono). Falha de rede deixa o que já havia. */
+  useEffect(() => {
+    let vivo = true;
+    getFriendsState(saveId, playerDayTz)
+      .then(r => { if (vivo) { setSocial(r); onSocialAlert?.(r.incoming.length > 0 || r.unseen > 0); } })
+      .catch(() => { /* sem rede: segue sem convites */ });
+    return () => { vivo = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saveId, reloadKey, friendsKey]);
+  /** Abriu a aba Amigos: o histórico de presentes passa a "visto" (os convites ficam até alguém decidir). */
+  useEffect(() => {
+    if (tab !== 'friends' || !social || social.unseen === 0) return;
+    const t = setTimeout(() => {
+      markFriendsSeen(saveId).catch(() => {});
+      onSocialAlert?.(social.incoming.length > 0);
+    }, 1500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tab, social]);
+
+  const answerInvite = async (inv: { id: string; name: string }, decline: boolean) => {
+    setBusyId(inv.id);
+    setActionError(null);
+    try {
+      const r = await answerFriendInvite(saveId, inv.id, decline);
+      onFriendsChange(r.friends);
+      setSocial(prev => {
+        if (!prev) return prev;
+        const incoming = prev.incoming.filter(i => i.id !== inv.id);
+        onSocialAlert?.(incoming.length > 0 || prev.unseen > 0);
+        return { ...prev, incoming, friends: r.friends };
+      });
+      setAddMsg(decline ? null : (isPt ? `${inv.name} agora é seu amigo.` : `${inv.name} is now your friend.`));
+    } catch {
+      setActionError(isPt ? 'Não deu para responder ao convite agora. Tente de novo.' : "Couldn't answer that invite right now. Try again.");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   const toggleFriend = async (p: DirectoryPlayer) => {
     setBusyId(p.id);
     setActionError(null);
     try {
       const isFriend = friends.includes(p.id);
-      const r = isFriend ? await removeFriend(saveId, p.id) : await addFriend(saveId, p.id);
+      const r: { friends: string[]; status?: 'pending' | 'friends' } = isFriend ? await removeFriend(saveId, p.id) : await addFriend(saveId, p.id);
       onFriendsChange(r.friends);
+      if (!isFriend) setSocial(prev => (prev && r.status === 'pending' ? { ...prev, outgoing: [...prev.outgoing, p.id] } : prev));
     } catch {
       setActionError(isPt ? 'Não deu para mudar a amizade agora. Tente de novo.' : "Couldn't change that friendship right now. Try again.");
     } finally {
@@ -314,10 +368,17 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
     setBusyId(friendId);
     setActionError(null);
     try {
-      await sendGift(saveId, friendId);
+      const r = await sendGift(saveId, friendId, playerDayTz);
+      const valeu = typeof r?.credited === 'number' ? r.credited : 20;
       setGiftedToday(prev => new Set(prev).add(friendId));
       onGiftSent?.(friendId);
-      setAddMsg(isPt ? '20 Bits enviados!' : 'Sent 20 Bits!');
+      setSocial(prev => (prev ? { ...prev, sentToday: [...prev.sentToday, friendId] } : prev));
+      // A tela diz o valor REAL: o teto de 100 Bits/dia de quem recebe pode cortar o presente.
+      setAddMsg(valeu >= 20
+        ? (isPt ? '20 Bits enviados!' : 'Sent 20 Bits!')
+        : valeu > 0
+          ? (isPt ? `Presente enviado: ${valeu} de 20 Bits valeram (teto de 100 por dia).` : `Gift sent: ${valeu} of 20 Bits counted (100 a day cap).`)
+          : (isPt ? 'Presente enviado, mas essa pessoa já atingiu o teto de 100 Bits de hoje: 0 Bits valeram.' : 'Gift sent, but this person already hit today’s 100 Bits cap: 0 Bits counted.'));
     } catch {
       setActionError(isPt ? 'O presente não chegou. Tente de novo daqui a pouco.' : "The gift didn't go through. Try again in a bit.");
     } finally {
@@ -360,10 +421,15 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       if (cand.length > 1) { setAddMsg(isPt ? 'Há mais de uma pessoa assim. Digite o nome completo.' : 'More than one person matches. Type the full name.'); return; }
       const alvo = cand[0];
       if (friends.includes(alvo.id)) { setAddMsg(isPt ? `${alvo.name} já é seu amigo.` : `${alvo.name} is already your friend.`); return; }
+      if (social?.outgoing.includes(alvo.id)) { setAddMsg(isPt ? `Você já convidou ${alvo.name}.` : `You already invited ${alvo.name}.`); return; }
       const res = await addFriend(saveId, alvo.id);
       onFriendsChange(res.friends);
       setAddName('');
-      setAddMsg(isPt ? `${alvo.name} entrou nos seus amigos.` : `${alvo.name} is now your friend.`);
+      if (res.status === 'friends') setAddMsg(isPt ? `${alvo.name} agora é seu amigo.` : `${alvo.name} is now your friend.`);
+      else {
+        setSocial(prev => (prev ? { ...prev, outgoing: [...prev.outgoing, alvo.id] } : prev));
+        setAddMsg(isPt ? `Convite enviado para ${alvo.name}.` : `Invite sent to ${alvo.name}.`);
+      }
     } catch {
       setActionError(isPt ? 'Não deu para adicionar agora. Tente de novo.' : "Couldn't add that friend right now. Try again.");
     } finally {
@@ -421,13 +487,13 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
               value={addName}
               onChange={e => { setAddName(e.target.value); setAddMsg(null); }}
               placeholder={isPt ? 'Nome do amigo…' : "Friend's name…"}
-              aria-label={isPt ? 'Nome do amigo para adicionar' : 'Name of the friend to add'}
+              aria-label={isPt ? 'Nome da pessoa para convidar' : 'Name of the person to invite'}
               maxLength={40}
               style={{ paddingLeft: 44 }}
             />
           </div>
           <button type="submit" disabled={addBusy || !addName.trim()} style={{ ...sm2Button('primary', addBusy || !addName.trim(), 'sm'), flexShrink: 0 }}>
-            {isPt ? 'Adicionar' : 'Add'}
+            {isPt ? 'Convidar' : 'Invite'}
           </button>
         </form>
       )}
@@ -441,6 +507,39 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
         </ul>
       )}
       {tab === 'friends' && addMsg && <p role="status" className="sm2-lib-s" data-friend-add-msg style={{ margin: 0 }}>{addMsg}</p>}
+
+      {/* ── Convites recebidos (§242): a amizade só nasce quando a pessoa aceita ── */}
+      {tab === 'friends' && social && social.incoming.length > 0 && (
+        <section data-friend-invites aria-label={isPt ? 'Convites de amizade' : 'Friend invites'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <h3 className="sm2-lib-s" style={{ margin: 0, fontWeight: 600 }}>{isPt ? 'Convites' : 'Invites'}</h3>
+          {social.incoming.map(inv => (
+            <div key={inv.id} data-friend-invite={inv.id} style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 44 }}>
+              <span className="sm2-lib-s" style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--sm2-ink)' }}>{inv.name}</span>
+              <button type="button" disabled={busyId === inv.id || friends.length >= MAX_FRIENDS} onClick={() => answerInvite(inv, false)} style={sm2Button('primary', busyId === inv.id || friends.length >= MAX_FRIENDS, 'sm')}>
+                {friends.length >= MAX_FRIENDS ? (isPt ? `Limite de ${MAX_FRIENDS}` : `Limit of ${MAX_FRIENDS}`) : (isPt ? 'Aceitar' : 'Accept')}
+              </button>
+              <button type="button" disabled={busyId === inv.id} onClick={() => answerInvite(inv, true)} style={sm2Button('outline', busyId === inv.id, 'sm')}>{isPt ? 'Recusar' : 'Decline'}</button>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {/* ── Presentes recebidos: a notícia e o histórico de quem deu (§242) ── */}
+      {tab === 'friends' && social && social.notes.length > 0 && (
+        <section data-friend-gifts aria-label={isPt ? 'Presentes recebidos' : 'Gifts received'} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          <h3 className="sm2-lib-s" style={{ margin: 0, fontWeight: 600 }}>{isPt ? 'Presentes' : 'Gifts'}</h3>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 132, overflowY: 'auto' }}>
+            {social.notes.slice(0, 10).map(n => (
+              <li key={n.at + ':' + n.name} data-gift-note={n.unseen ? 'new' : 'seen'} className="sm2-lib-s" style={{ color: n.unseen ? 'var(--sm2-primary-ink)' : undefined, fontWeight: n.unseen ? 600 : undefined }}>
+                {n.bits > 0
+                  ? (isPt ? `${n.name || 'Um amigo'} te deu ${n.bits} Bits` : `${n.name || 'A friend'} gave you ${n.bits} Bits`)
+                  : (isPt ? `${n.name || 'Um amigo'} te enviou um presente, mas o teto de ${social.dailyCap ?? 100} Bits do dia já tinha sido atingido (0 Bits)` : `${n.name || 'A friend'} sent you a gift, but the daily ${social.dailyCap ?? 100} Bits cap was already reached (0 Bits)`)}
+                {' · '}{new Date(n.at).toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { day: '2-digit', month: '2-digit' })}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {tab === 'directory' && !outroPainel && (
       <div style={{ position: 'relative' }}>
@@ -582,7 +681,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
       {list && list.length === 0 && tab !== 'coop' && !outroPainel && !(loadError && tab === 'directory') && (
         <p className="sm2-lib-s" style={{ textAlign: 'center', padding: '24px 0', margin: 0 }}>
           {tab === 'friends'
-            ? (isPt ? 'Você ainda não tem amigos. Digite o nome de alguém acima.' : 'You have no friends yet. Type someone’s name above.')
+            ? (isPt ? 'Você ainda não tem amigos. Convide alguém pelo nome acima.' : 'You have no friends yet. Invite someone by name above.')
             : onlySeen
               ? (filteringPets
                 ? (isPt ? 'Nenhum Soulmon com essas bases.' : 'No Soulmon with these bases.')
@@ -707,35 +806,51 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
                 </span>
               </button>
 
-              {!isNpc && isFriend && tab === 'friends' && (
+              {!isNpc && isFriend && tab === 'friends' && !p.unresolved && !removeMode && trainer && (
+                <RowAction
+                  icon="swords"
+                  tone="ink"
+                  label={isPt ? `Treinar com ${p.name}` : `Train with ${p.name}`}
+                  onClick={() => setTrainingWith(p)}
+                />
+              )}
+              {/* Presente: some pelo resto do dia depois de enviado (o servidor é quem sabe, `sentToday`). */}
+              {!isNpc && isFriend && tab === 'friends' && !removeMode && !gifted && !(social?.sentToday ?? []).includes(p.id) && (
                 <RowAction
                   icon="volunteer_activism"
                   tone="ink"
                   busy={busyId === p.id}
-                  disabled={!canGiftToday || gifted}
+                  disabled={!canGiftToday}
                   label={!canGiftToday
                     ? (isPt ? 'Termine as tarefas de hoje para presentear' : "Finish today's tasks to send a gift")
-                    : gifted
-                      ? (isPt ? 'Já presenteado hoje' : 'Already gifted today')
-                      : (isPt ? `Enviar 20 Bits para ${p.name}` : `Send 20 Bits to ${p.name}`)}
+                    : (isPt ? `Enviar 20 Bits para ${p.name}` : `Send 20 Bits to ${p.name}`)}
                   onClick={() => gift(p.id)}
-                  onInert={() => setAddMsg(!canGiftToday
-                    ? (isPt ? 'Para presentear, termine as tarefas de hoje (a mesma meta que libera o Bosque).' : "To send a gift, finish today's tasks (the same goal that unlocks the Grove).")
-                    : (isPt ? 'Você já presenteou essa pessoa hoje.' : 'You already gifted this person today.'))}
+                  onInert={() => setAddMsg(isPt ? 'Para presentear, termine as tarefas de hoje (a mesma meta que libera o Bosque).' : "To send a gift, finish today's tasks (the same goal that unlocks the Grove).")}
                 />
               )}
-              {!isNpc && (
+              {/* Remover só existe no modo "Remover amigos", com dupla confirmação. */}
+              {!isNpc && isFriend && removeMode && (
                 <RowAction
-                  icon={isFriend ? 'do_not_disturb_on' : 'add'}
-                  tone={isFriend ? 'muted' : 'primary'}
-                  fill={isFriend ? 0 : 1}
+                  icon="do_not_disturb_on"
+                  tone="muted"
+                  fill={0}
                   busy={busyId === p.id}
-                  disabled={!isFriend && friends.length >= MAX_FRIENDS}
-                  label={isFriend
-                    ? (isPt ? `Remover ${p.name} dos amigos` : `Remove ${p.name} from friends`)
+                  label={isPt ? `Remover ${p.name} dos amigos` : `Remove ${p.name} from friends`}
+                  onClick={() => setConfirmRemove({ p, step: 1 })}
+                />
+              )}
+              {!isNpc && !isFriend && (
+                <RowAction
+                  icon="add"
+                  tone="primary"
+                  fill={1}
+                  busy={busyId === p.id}
+                  disabled={friends.length >= MAX_FRIENDS || (social?.outgoing ?? []).includes(p.id)}
+                  label={(social?.outgoing ?? []).includes(p.id)
+                    ? (isPt ? `Convite enviado para ${p.name}` : `Invite sent to ${p.name}`)
                     : friends.length >= MAX_FRIENDS
                       ? (isPt ? `Limite de ${MAX_FRIENDS} amigos` : `Limit of ${MAX_FRIENDS} friends`)
-                      : (isPt ? `Adicionar ${p.name} como amigo` : `Add ${p.name} as a friend`)}
+                      : (isPt ? `Convidar ${p.name} para ser amigo` : `Invite ${p.name} to be a friend`)}
                   onClick={() => toggleFriend(p)}
                 />
               )}
@@ -743,6 +858,57 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
           );
         })}
       </div>
+
+      {/* Cantinho discreto: liga/desliga o modo de excluir. Texto pequeno, sem cor de alerta. */}
+      {tab === 'friends' && friends.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            type="button"
+            data-remove-friends-toggle
+            aria-pressed={removeMode}
+            onClick={() => setRemoveMode(v => !v)}
+            className="sm2-lib-s"
+            style={{ background: 'none', border: 0, cursor: 'pointer', minHeight: 44, padding: '0 4px', textDecoration: 'underline' }}
+          >
+            {removeMode ? (isPt ? 'Concluir' : 'Done') : (isPt ? 'Remover amigos' : 'Remove friends')}
+          </button>
+        </div>
+      )}
+
+      {confirmRemove && (
+        <RitualDialog onClose={() => setConfirmRemove(null)} labelledBy="sm2-rm-title" closeLabel={isPt ? 'Fechar' : 'Close'} maxWidth={320} closeOnBackdrop>
+          <h2 id="sm2-rm-title" className="sm2-lib-h2" style={{ minHeight: 44, display: 'flex', alignItems: 'center', paddingRight: 48 }}>
+            {confirmRemove.step === 1 ? (isPt ? `Remover ${confirmRemove.p.name}?` : `Remove ${confirmRemove.p.name}?`) : (isPt ? 'Tem certeza?' : 'Are you sure?')}
+          </h2>
+          <p className="sm2-lib-s" data-remove-step={confirmRemove.step} style={{ margin: '0 0 12px' }}>
+            {confirmRemove.step === 1
+              ? (isPt ? 'A amizade acaba para vocês dois.' : 'The friendship ends for both of you.')
+              : (isPt ? 'Para voltar, vocês precisam de um novo convite.' : 'To be friends again you need a new invite.')}
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={() => setConfirmRemove(null)} style={{ ...sm2Button('outline', false, 'sm'), flex: 1 }}>{isPt ? 'Cancelar' : 'Cancel'}</button>
+            <button
+              type="button"
+              data-remove-confirm
+              onClick={async () => {
+                if (confirmRemove.step === 1) { setConfirmRemove({ p: confirmRemove.p, step: 2 }); return; }
+                const alvo = confirmRemove.p;
+                setConfirmRemove(null);
+                await toggleFriend(alvo);
+              }}
+              style={{ ...sm2Button('primary', false, 'sm'), flex: 1 }}
+            >
+              {confirmRemove.step === 1 ? (isPt ? 'Continuar' : 'Continue') : (isPt ? 'Remover' : 'Remove')}
+            </button>
+          </div>
+        </RitualDialog>
+      )}
+
+      {trainingWith && trainer && (
+        <Suspense fallback={null}>
+          <FriendTraining friend={trainingWith} trainer={trainer} isPt={isPt} onClose={() => setTrainingWith(null)} />
+        </Suspense>
+      )}
 
       {selectedPlayer && (
         <PlayerDetailModal
