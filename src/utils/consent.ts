@@ -50,13 +50,21 @@ export function buildConsentRecord(now: Date = new Date()): ConsentRecord {
   };
 }
 
+const VERSION_DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** A versão aceita cobre a publicada? Datas AAAA-MM-DD comparam por ordem (aceite de versão IGUAL OU MAIS NOVA vale); formato
+ *  desconhecido (`'desconhecida'`, vazio) nunca cobre. A igualdade `===` tratava aceite mais novo (app/servidor revertido) como vencido. */
+function versionCovers(accepted: string, current: string): boolean {
+  if (!VERSION_DATE.test(accepted) || !VERSION_DATE.test(current)) return accepted === current;
+  return accepted >= current;
+}
+
 /**
- * O registro guardado ainda vale para os documentos PUBLICADOS agora? Só o
- * aceite das duas versões atuais dispensa a tela de termos (A3, 02/10/2026):
- * quem aceitou uma versão antiga volta a ver o aceite.
+ * O registro guardado ainda vale para os documentos PUBLICADOS agora? Só o aceite das duas versões atuais (ou de uma mais nova)
+ * dispensa a tela de termos (A3, 02/10/2026): quem aceitou uma versão ANTIGA, ou de formato desconhecido, volta a ver o aceite.
  */
 export function isConsentCurrent(c: ConsentRecord | null | undefined): boolean {
-  return !!c && c.termsVersion === TERMS_VERSION && c.privacyVersion === PRIVACY_VERSION;
+  return !!c && versionCovers(c.termsVersion, TERMS_VERSION) && versionCovers(c.privacyVersion, PRIVACY_VERSION);
 }
 
 /**
