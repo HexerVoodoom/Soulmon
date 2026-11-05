@@ -445,6 +445,8 @@ async function collect(env, saveId) {
 
   let gifts = null;
   try { gifts = JSON.parse((await store.get(`gifts:${saveId}`)) || 'null'); } catch { gifts = null; }
+  let mail = null;
+  try { mail = JSON.parse((await store.get(`mail:${saveId}`)) || 'null'); } catch { mail = null; }
 
   // `readEntitlement` devolve um registro VAZIO quando não existe — o que é
   // certo para o jogo e errado para exportação. Exportar um entitlement que
@@ -584,6 +586,7 @@ async function handleExport(env, saveId) {
       [`profile:${saveId}`]: profile,
       [`pid:${c.pid}`]: c.pidIndexed ? saveId : null,
       [`gifts:${saveId}`]: c.gifts,
+      [`mail:${saveId}`]: c.mail,
       [`${ENT_PREFIX}${saveId}`]: c.entitlement
         ? { ...c.entitlement, orderDetails: maskOrderDetails(c.entitlement.orderDetails) }
         : null,
@@ -612,6 +615,7 @@ function plan(c, saveId) {
       c.profile ? `profile:${saveId}` : null,
       c.pidIndexed ? `pid:${c.pid}` : null,
       c.gifts ? `gifts:${saveId}` : null,
+      c.mail ? `mail:${saveId}` : null,
       ...c.rankKeys,
       ...c.rankingData.keys,
       ...c.sprites.imgs,
@@ -817,6 +821,7 @@ async function handleDeleteConfirm(env, saveId, body) {
   //    pendente de uma conta apagada não pode mais ser pago (`grantRankPrize` também recusa por lápide).
   for (const k of c.rankingData.keys) await tentar(k, () => store.delete(k));
   if (c.gifts) await tentar(`gifts:${saveId}`, () => store.delete(`gifts:${saveId}`));
+  if (c.mail) await tentar(`mail:${saveId}`, () => store.delete(`mail:${saveId}`));
   if (c.pidIndexed) await tentar(`pid:${c.pid}`, () => store.delete(`pid:${c.pid}`));
   if (c.profile) await tentar(`profile:${saveId}`, () => store.delete(`profile:${saveId}`));
 

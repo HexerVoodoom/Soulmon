@@ -4297,3 +4297,7 @@ Forma leve do registro `GameState.elementoJornada`, lida por `petElementOf`. Esp
 
 ### `src/utils/restaurantCopy.ts`
 **Dono de:** os textos do Restaurante (EN + PT): `CHEF_VOICE`, `SUNDAY_LINE`, `effectText`, `refusalText`, `COMBAT_NOTE`. Só texto.
+
+### `src/utils/mensageiro.ts`
+
+Crédito idempotente das cartas do Mensageiro no save (`mailClaimed`), separação entre carta nova e carta só a confirmar, e a fala do Papus. Decisão: REGISTRO §241. **Régua:** `src/utils/mensageiro.test.ts`.

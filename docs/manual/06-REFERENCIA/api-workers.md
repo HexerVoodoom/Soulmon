@@ -738,3 +738,7 @@ Espelho de forma de dois campos do save da Biblioteca (01/11/2026): `libraryAck`
 ### `functions/api/_elementoJornada.js`
 
 Espelho de `src/utils/elementoJornada.ts` (§232): forma do registro no save e imutabilidade da sorte e dos estágios gravados.
+
+### `functions/api/_mensageiro.js`
+
+Fila `mail:<saveId>`, carta e prêmio da temporada na 1ª leitura do mês, confirmação idempotente; simulado nunca recebe. Ações `mail`, `mailAck`, `mailSend` em `community.js`. Decisão: REGISTRO §241. **Régua:** `functions/api/mensageiro.test.js`.

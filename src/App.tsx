@@ -35,6 +35,7 @@ import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, hungryFrom, HU
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
+import { applyMail, splitMail, type MailItem } from './utils/mensageiro';
 import { hasFocusKeyOrLegacy, grantFocusKey, focusSessionStamp, hasDungeonKey, grantDungeonKey } from './utils/focusKey';
 import { grantRefugioEnergy } from './utils/refugio/energia';
 import { focusDescentRefusal, isFocusDescent, pauseFocusDescent, resumeFocusDescent, startFocusDescent } from './utils/focusDescent';
@@ -156,6 +157,8 @@ import { evolutionPaywalled } from './utils/evolutionPaywall';
 import { getMissionProgress, isShopItemUnlocked, completedMissionIds, isMissionComplete } from './utils/missions';
 // Fora do chunk de entrada: só rodam num efeito, depois do primeiro paint.
 const resgatarPresentes = (...a: Parameters<typeof import('./utils/community').resgatarPresentes>) => import('./utils/community').then(m => m.resgatarPresentes(...a));
+const getMail = (...a: Parameters<typeof import('./utils/community').getMail>) => import('./utils/community').then(m => m.getMail(...a));
+const ackMail = (...a: Parameters<typeof import('./utils/community').ackMail>) => import('./utils/community').then(m => m.ackMail(...a));
 const getPendingTrophies = (...a: Parameters<typeof import('./utils/community').getPendingTrophies>) => import('./utils/community').then(m => m.getPendingTrophies(...a));
 import {
   PREMADE_CHARACTERS, getDemoCreatureStages, canCreateActivity, activityCapFor,
@@ -646,6 +649,7 @@ function PostponeNudgeSheet({
 // Aviso "ele está na masmorra": só carrega quando aparece (orçamento de bytes, release/beta-1).
 const DungeonReturnModal = lazy(() => import('./components/DungeonReturnModal').then(m => ({ default: m.DungeonReturnModal })));
 const DungeonBusyModal = lazy(() => import('./components/DungeonBusyModal').then(m => ({ default: m.DungeonBusyModal })));
+const MessengerSequence = lazy(() => import('./components/MessengerSequence').then(m => ({ default: m.MessengerSequence })));
 const MapPage = lazy(() => import('./components/nav/MapPage').then(m => ({ default: m.MapPage })));
 const WeeklyReportCard = lazy(() => import('./components/WeeklyReportCard').then(m => ({ default: m.WeeklyReportCard })));
 const UnlockAccountModal = lazy(() => import('./components/UnlockAccountModal').then(m => ({ default: m.UnlockAccountModal })));
@@ -1551,6 +1555,24 @@ export default function App() {
    *  segunda abertura. */
   const notifTouchedRef = useRef(false);
 
+  // O Mensageiro (§241): cartas do servidor. O que já está no save só é confirmado; o resto vira a fala do Papus, e o crédito sai ao fechar.
+  const [mailPending, setMailPending] = useState<MailItem[]>([]);
+  const closeMessenger = useCallback(() => {
+    setMailPending(cartas => {
+      if (cartas.length) setGameState(prev => cartas.reduce((s, m) => applyMail(s, m), prev));
+      return [];
+    });
+  }, [setGameState]);
+  useEffect(() => {
+    if (isDemoMode(gameStateRef.current)) return;
+    getMail(saveId).then(({ mail }) => {
+      const { fresh, toAck } = splitMail(Array.isArray(mail) ? mail : [], gameStateRef.current.mailClaimed);
+      if (toAck.length) ackMail(saveId, toAck).catch(() => {});
+      if (fresh.length) setMailPending(fresh);
+    }).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [saveId]);
+
   // Presentes de amigos (Biblioteca): reivindica bits pendentes ao abrir o app.
   useEffect(() => {
     resgatarPresentes(saveId).then(({ gifts, confirmar }) => {
@@ -2414,6 +2436,7 @@ export default function App() {
       evolveTask: evolveModalStage !== null && evolutionCeremony === null,
       evoStats: evoStatsShown !== null && evolutionCeremony === null,
       groveMilestone: Boolean(grovePendente),
+      messenger: mailPending.length > 0,
       dream: Boolean(morningDream),
       nightmare: nightmareOpen,
       catalogLevelInvite: Boolean(catalogLevelInviteCandidate),
@@ -2485,6 +2508,7 @@ export default function App() {
         case 'evolveTask': setEvolveModalStage(null); break;
         case 'evoStats': setEvoStatsShown(null); break;
         case 'groveMilestone': acknowledgeGroveMilestone(); break;
+        case 'messenger': closeMessenger(); break;
         case 'dream': setMorningDream(null); break;
         case 'nightmare': closeNightmare(); break;
         case 'catalogLevelInvite': declineCatalogLevelInvite(); break;
@@ -9750,6 +9774,11 @@ export default function App() {
       {/* MARCO DO BOSQUE — a irmã da cerimônia de hábito: espera o gesto, z 300,
           movimento reduzido reduz o movimento e NUNCA a pausa. Posição na fila:
           depois de relatório e check-in, antes do sonho. Uma vez por estágio novo. */}
+      {interstitial === 'messenger' && mailPending.length > 0 && (
+        <PresentationSlot id="messenger" onFail={() => presentation.fail('messenger')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <MessengerSequence mail={mailPending} language={language} onDone={closeMessenger} />
+        </PresentationSlot>
+      )}
       {interstitial === 'groveMilestone' && grovePendente && grove?.pending && (
         <PresentationSlot id="groveMilestone" onFail={() => presentation.fail('groveMilestone')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <GroveMilestoneCeremony

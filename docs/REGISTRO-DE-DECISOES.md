@@ -4211,3 +4211,15 @@ Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combin
 **O que mudou desde o §222.** O "multiplicador fixo por forma" perdeu ali (×1,3, salto grande) para o "um pouco mais forte". O dono relatou que ficou fraco demais; aqui é um piso de 7–8%, sem salto de ×1,3, e a escada continua segurando na derrota.
 
 **O que falsifica.** Jogador preso na escada 8–14 com derrotas seguidas: reduzir o piso de Champion ou deixar a derrota baixar a força. Rollback: reverter; nada no save.
+
+## §241 — O Mensageiro: cartas com prêmio em fila no servidor (05/11/2026, pedido do dono)
+
+**Decisão.** Papus (NPC 440, banco #440) traz cartas no modal padrão de NPC (`NpcSequence`), pela fila de apresentação, como celebração. Fila em `mail:<saveId>` (`functions/api/_mensageiro.js`): `mid` estável, sem repetir mesmo depois de confirmado. Crédito idempotente no cliente (`mailClaimed`, `utils/mensageiro.ts`), e o `mailAck` só sai quando a carta reaparece já gravada no save, na abertura seguinte. Simulado nunca recebe. Notícia e compensação: `POST mailSend` com `SEASON_ADMIN_KEY`.
+
+**Fim da temporada.** A temporada é o mês em UTC. A carta nasce na primeira leitura depois da virada, sem depender de cron. Prêmio em Honra, que só compra prêmios do Torneio e não mexe na economia de Bits: 6 por participar; top 100 15; top 20 30; 3º 60; 2º 90; 1º 120 **[valores são recomendação, pendentes do dono]**. Colocação pelo índice da temporada, sem simulados. O troféu do pódio segue pelo `closeSeason`.
+
+**Alternativas que perderam.** Enviar tudo no `closeSeason`: o fechamento depende de cron e já gasta o orçamento de subrequests; o limite atual lê só 40 linhas. Só avisar por toast: o dono pediu NPC e itens.
+
+**Limite conhecido.** Quem ficar mais de um mês sem abrir recebe só a carta da última temporada. Prêmio em item de inventário ainda não existe: só Bits e Honra.
+
+**O que falsificaria.** Honra da carta desequilibrar a loja do Torneio. **Rollback:** reverter o PR; `mail:` fica órfã com TTL de 400 dias e `mailClaimed` é ignorado.
