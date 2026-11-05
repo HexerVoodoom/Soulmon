@@ -57,6 +57,7 @@ import type { GroupResult } from '../utils/combate/group';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { fighterIdentity } from '../utils/fighterIdentity';
 import { fxElementId, dungeonEnemyElement, dungeonFoeSpecialLabel, prefersReducedMotion, elementStrikeForm, specialLabel } from '../utils/combatFx';
+import { meleeImpactOf, chaveDaIdentidade } from '../utils/combate/golpeImpacto';
 import { TorcidaLayer } from './games/TorcidaKit';
 import { useBattleSpeed, BattleSpeedButton } from './games/BattleSpeed';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
@@ -561,6 +562,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       playerElement: sp => fxElementId(sp ? ident.especial.elemento : ident.basico.elemento),
       foeElement: () => foeEl,
       playerKind: sp => (sp ? ident.especial.forma : ident.basico.forma),
+      playerImpact: sp => meleeImpactOf({ element: sp ? ident.especial.elemento : ident.basico.elemento, key: chaveDaIdentidade(ident) }),
+      foeImpact: () => meleeImpactOf({ element: foeEl, key: e?.name ?? foeEl, name: e?.name }),
       foeKind: (_f, sp) => elementStrikeForm(foeEl, sp ? 'especial' : 'basica'),
       labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
