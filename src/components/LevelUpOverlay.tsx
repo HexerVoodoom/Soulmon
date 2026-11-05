@@ -165,6 +165,19 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
           <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
             {/* O EMBLEMA BOND UP (dono, 05/11/2026): quase toda a largura da tela, maior que a coluna de 340 de propósito.
                 A entrada toca uma vez e o fim fica em laço; movimento reduzido mostra o último quadro. Sem a imagem, a palavra na voz do aparelho. */}
+            {/* O GLOW TIFFANY (dono, 05/11/2026): CSS atrás do emblema, some em gradiente até o fundo escuro, sem borda dura. Parado em movimento reduzido. */}
+            <div style={{ position: 'relative', flex: 'none', display: 'flex', justifyContent: 'center' }}>
+              <div
+                aria-hidden="true"
+                data-lvup-emblem-glow
+                className={reduced ? undefined : 'sm-lvup-glow'}
+                style={{
+                  position: 'absolute', left: '-14%', right: '-14%', top: '-14%', bottom: '-14%', pointerEvents: 'none',
+                  background: 'radial-gradient(closest-side, rgba(10,186,181,.5) 0%, rgba(10,186,181,.3) 45%, rgba(10,186,181,.1) 75%, rgba(10,186,181,0) 100%)',
+                  filter: 'blur(14px)',
+                }}
+              />
+              <div style={{ position: 'relative' }}>
             {bannerOk ? (
               <img
                 src={bondUpArt(reduced ? 'fixo' : fase, isPt)}
@@ -184,6 +197,8 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
                 {isPt ? 'VÍNCULO UP' : 'BOND UP'}
               </p>
             )}
+              </div>
+            </div>
 
             {/* O pet em destaque (256² a 128 = 0,5×). */}
             {spriteUrl && (

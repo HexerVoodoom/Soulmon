@@ -180,6 +180,17 @@ describe('LevelUpOverlay — o que ganhou', () => {
     expect(pt.container.querySelector('[data-lvup-banner]')?.getAttribute('src')).toMatch(/bond-up-pt-fixo/);
   });
 
+  it('05/11/2026: glow Tiffany em CSS atrás do emblema, que respira e fica parado com movimento reduzido', () => {
+    const a = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
+    const g = a.container.querySelector('[data-lvup-emblem-glow]') as HTMLElement;
+    expect(g.style.background).toMatch(/radial-gradient/);
+    expect(g.className).toBe('sm-lvup-glow');
+    cleanup();
+    reducao(true);
+    const r = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
+    expect((r.container.querySelector('[data-lvup-emblem-glow]') as HTMLElement).className).toBe('');
+  });
+
   it('nunca cobra: sem "faltam", sem urgência', () => {
     const { container } = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
     expect(container.textContent).not.toMatch(/faltam|only \d|hurry|streak|missing/i);
