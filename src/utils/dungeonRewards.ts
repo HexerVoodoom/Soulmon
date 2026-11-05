@@ -8,7 +8,6 @@ import { addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './equipment';
 import { sanitizeTalentPicks } from './talents';
 import { isoWeekKey } from './offerMoment';
 import { bumpWeekly, forWeek, type WeeklyMissionId } from './weeklyMissions';
-import { GLITCHTAMA_EMOJI } from './shop';
 import { rosterEntryOfKey } from './enemyRoster';
 import { applyElementsDefeated, dexIdsOfFoe } from './elementDex';
 import { applyEssences, applyEssencesAway, essenceDropOfFoe } from './essences';
@@ -46,11 +45,10 @@ export function applyFloorCleared<T extends GameState>(prev: T, now: Date): T {
   return awardBondXP(prev, { kind: 'dungeonFloor' }, playerDayKey(now, prev.playerDayTz));
 }
 
-/** O item do marco (o 🌀): item, Vínculo e fragmentos da run (a mesma do handler do marco no App). A missão semanal "dungeon-runs" é contada à parte (`contarMissao` no App; `countWeeklyMission` na descida fora do app). */
+/** A recompensa da RUN no marco (1× por descida): Vínculo, `dungeonRunsCompleted` e fragmentos. O 🌀 NÃO vem mais daqui: é raro e mora em `glitchtamaDrop.ts` (05/11/2026). Antes: item, Vínculo e fragmentos da run (a mesma do handler do marco no App). A missão semanal "dungeon-runs" é contada à parte (`contarMissao` no App; `countWeeklyMission` na descida fora do app). */
 export function applyMilestoneItem<T extends GameState>(prev: T, now: Date): T {
   const base: T = {
     ...awardBondXP(prev, { kind: 'dungeonRun' }, playerDayKey(now, prev.playerDayTz)),
-    foodInventory: { ...prev.foodInventory, [GLITCHTAMA_EMOJI]: (prev.foodInventory[GLITCHTAMA_EMOJI] ?? 0) + 1 },
     dungeonRunsCompleted: (prev.dungeonRunsCompleted ?? 0) + 1,
   };
   // PR8b: a run COMPLETA rende fragmentos de equipamento (moeda ganha jogando; o Comércio soma até +25%).

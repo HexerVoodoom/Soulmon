@@ -4010,7 +4010,29 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 
 **O que falsificaria.** Jogadores alternando para fugir de custo de cuidado de forma que o jogo não previu. **Rollback:** reverter o PR.
 
-## §226 — Simulados: 170 perfis, evolução por faixa e formas sob demanda (05/11/2026, decisão do dono)
+## §226 — Glitchtama raro: 1% por marco, no máximo 1 por semana (05/11/2026, decisão do dono)
+
+**Decisão.** O dono achou que o Soulmon evoluía rápido demais e que o Glitchtama caía demais (era garantido 1 por descida, no primeiro marco). Agora cada marco (camada múltipla de 5) sorteia **1%**, com **teto de 1 drop por semana** do jogador (segunda a domingo, dia do jogador), gravado no save (`glitchtamaDrop {week, dropped}`). O limite de 1 uso por dia e o estoque já guardado NÃO mudam. A regra é uma função só (`utils/glitchtamaDrop.ts`), usada pela tela (`DungeonGame`) e pela descida fora do app (`dungeonAway.ts`).
+
+**Como fica.** Marco sem drop é silencioso (sem aviso, sem item); a recompensa da run (Vínculo, fragmentos, `dungeonRunsCompleted`) continua 1× por descida, no primeiro marco. O sorteio da descida fora do app é semeado por (seed, camada): reabrir o app ou reprocessar não re-sorteia nem dá o item duas vezes. Save antigo sem o campo entra como "nenhum drop na semana".
+
+**Alternativa que perdeu.** Manter o garantido e baixar só o uso (já era 1/dia); ou teto diário em vez de semanal.
+
+**O que falsificaria.** Jogadores relatando que nunca viram um Glitchtama em meses (1% x ~1 marco/dia pode ser baixo demais: subir a chance) ou a evolução ainda rápida demais mesmo assim (o gauge de evolução, não o item, é o gargalo). Rollback: `GLITCHTAMA_DROP_CHANCE` e `GLITCHTAMA_DROPS_PER_WEEK` em `utils/glitchtamaDrop.ts`.
+
+## §227 — Corte × concussão: o acabamento visual do golpe corpo a corpo (05/11/2026, pedido do dono)
+
+**Decisão.** Todo golpe corpo a corpo mostrava o corte. Agora cada Soulmon (jogador ou inimigo) é CORTANTE ou de CONCUSSÃO, só visual: na concussão a investida é a mesma, mas o efeito no alvo é o splash do impacto que o golpe à distância usa, sem projétil. Dano, sementes, RNG, tempo e som não mudam.
+
+**Regra.** Função pura e determinística por lutador (`utils/combate/golpeImpacto.ts`): palavra-chave do nome quando há dado confiável (inimigo do bestiário); senão sorteio estável (hash da chave do lutador) com peso por elemento. Ar 75/25 corte e Terra 25/75 (dono); tabela dos 20 base e derivados que herdam a média: `docs/REGRA-CORTE-CONCUSSAO.md`. No PvP a chave é a identidade de combate (ids fechados que o servidor publica), igual nos dois aparelhos.
+
+**Alternativa que perdeu.** Palavra-chave na descrição ou no nome do Soulmon do JOGADOR: o nome é texto livre, o perfil público não publica descrição nem id de Soulmon, e o nome difere entre os aparelhos do PvP. Sorteio por golpe: faria o Soulmon trocar a cada ataque.
+
+**Limite declarado.** Sem id estável de Soulmon no perfil público, a variação do jogador é por identidade de combate (elementos + escolas + família), não por indivíduo.
+
+**O que falsificaria.** Proporção de algum elemento reprovada pelo dono (trocar o número em `PESO_CORTE`); ou o servidor passar a publicar um id de Soulmon (trocar a chave). **Rollback:** tirar `impacto` das ações (ausente = corte, comportamento anterior).
+
+## §228 — Simulados: 170 perfis, evolução por faixa e formas sob demanda (05/11/2026, decisão do dono)
 
 **Decisão do dono:** 120 simulados novos, nomes aprovados por ele. Evoluem como quem faz 100% das tarefas (top 50), 70% (top 100) e 33% (demais). Faixa fixa pela skill, não rank ao vivo. Partida escalonada. Média de tarefas sobre a meta diária: 74, 107 e 225 dias até o Ultra. Simulado não cai por HP. Placares com menos simulados, deixando espaço a reais (`PLACAR_SIMS_MAX` = 15 por jogo), e o Torneio segue com todos para manter o top 50 populado. Sprites no padrão de jogador com alfa real: exceção à `REGRA-IDENTIDADE-SOULMON.md`, com decisão final depois de 3 prévias. Formas sob demanda atrás de `SIMULADOS_FORMAS_ON`, desligada. O dono afirma que o Workers Paid está ativo; o painel de cobrança não foi conferido.
 
@@ -4019,3 +4041,13 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 **Conflito aberto:** a API Higgsfield do servidor não entrega alfa (`generate-sprite.js`), então `_simFormas.js` usa o recorte do pipeline do jogador; o alfa real só existe na geração local. Decidir antes de ligar a flag.
 
 **O que falsificaria:** jogador real sem aparecer nos placares, simulado recebendo prêmio, ou elemento do simulado diferente do sprite. **Rollback:** reverter o commit; as âncoras não apagam dado do KV.
+
+## §229 — Criatura do Oráculo fora da régua de identidade; simulado gerado pelo Oráculo (05/11/2026, decisão do dono; emenda §228)
+
+**Decisão do dono.** A regra máxima de identidade continua valendo para cards, cenários, UI, NPC e demais assets, mas NÃO vale para criaturas geradas pelo Oráculo, de jogador ou simulado. Isso inclui o roxo que o próprio prompt do Oráculo pede e a dimensão de recorte. O sprite de simulado sai do mesmo Oráculo do jogador, com o elemento secundário automático. A prévia com prompt próprio foi reprovada ("bem fora do estilo dos soulmon"); a prévia 2 pelo Oráculo foi aprovada.
+
+**Como fica.** `scripts/simulados-prompts.ts` roda `buildSoulProfile` + `generateOracleComplete` com entrada determinística por id, com elemento e alinhamento por override. O servidor lê o prompt pronto em `sim:prompt:<id>:<forma>`, porque as Functions não importam o Oráculo. Fundo verde (ou magenta, quando o prompt pedir) e recorte `chromaKeyPng`, como no jogador: fecha o conflito aberto no §228, sem alfa real. A forma nova usa a anterior como referência.
+
+**Alternativas que perderam.** Texto de estilo próprio em `_simFormas.js` (reprovado pelo dono). Forçar `secondaryElement: null` para o elemento ficar mais puro (dono manteve o automático). Prompts como módulo de dados no Worker (cerca de 850 prompts dentro do bundle das Functions).
+
+**O que falsificaria.** Dono reprovar o lote por estilo; simulado com elemento visual incoerente em volume. **Rollback:** reverter o PR; sem chave `sim:prompt:` nada é gerado.

@@ -32,6 +32,7 @@ import { buildDungeonWave, clearBonus, dungeonHeartsLeftToday, noteDungeonHeartD
 import { autoDodgeGrade, autoRingGrade, dungeonFight, dungeonFightSeed, type DungeonPlayerCfg } from './dungeonFight';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
 import { mulberry32 } from './combate/rng';
+import { glitchtamaDraw, glitchtamaDropFor, aplicarDropDoMarco } from './glitchtamaDrop';
 import { applyRiftLayer, riftTierTotals, type RiftMonthState } from './endlessRift';
 import { SPECIAL_FAMILIES, type SpecialFamily } from './combate/specials';
 import { jeitoDaProfissao, jeitoParaPve } from './profissaoMasmorra';
@@ -244,10 +245,14 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
     const rift = applyRiftLayerPaid(s, layer, t, dayKey);
     s = rift.next;
     report.fragments += rift.fragments;
-    if (isMilestoneLayer(layer) && !ms) {
-      ms = true;
-      report.glitchtama += 1;
-      s = applyMilestoneItem(s, now);
+    if (isMilestoneLayer(layer)) {
+      // 05/11/2026: o 🌀 é RARO (1%/marco, 1/semana) e vale em TODO marco; a recompensa da run (Vínculo, fragmentos) segue 1× por descida.
+      // O sorteio é semeado por (seed, camada): reprocessar o mesmo marco dá a mesma resposta — reabrir o app não re-sorteia.
+      if (!ms) { ms = true; s = applyMilestoneItem(s, now); }
+      if (glitchtamaDropFor(s, layer, new Date(t), glitchtamaDraw(away.seed, layer))) {
+        report.glitchtama += 1;
+        s = aplicarDropDoMarco(s, new Date(t));
+      }
     }
     hp = Math.min(1, hp + cura);
   }

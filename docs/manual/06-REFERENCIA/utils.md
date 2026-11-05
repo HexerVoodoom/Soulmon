@@ -857,6 +857,16 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/combate/combate.test.ts` (gates 2, 3, 4, 7 e 8) e `combate.v11.test.ts` (regressão 300/300, fightSteps ≡ fight, golpe normalizado, sorte por estágio, ganchos).
 **HP INTEIRO (30/10/2026, REGISTRO §192, espelhado em `functions/api/_combate.js`):** o núcleo ainda raciocina em frações 0..1, mas todo lutador tem `hpPoints(hp)` pontos inteiros e TODA mudança de vida é arredondada a eles: `HP_POINTS_PER_HP` (30) · `hpPoints(hp)` (= max(1, round(hp·30)); o máximo que as telas mostram) · `damagePoints(frac, pts)` (golpe que causa dano tira no mínimo 1 ponto; 0 se não causa) · `startPoints(frac, pts)` (início em pontos inteiros, ≥ 1; acima de 1 é permitido — o chefe da Feira). `FightEvent` carrega os pontos que saíram da BARRA; cura e escudo também são pontos inteiros; 0 ponto = nocaute na hora.
 
+### `src/utils/combate/golpeImpacto.ts`
+**Dono de:** CORTE × CONCUSSÃO do golpe corpo a corpo (dono, 05/11/2026), só visual. Função pura por lutador: palavra-chave do nome de inimigo do bestiário, senão sorteio estável (FNV-1a de `elemento|chave`) com o peso de corte por elemento; derivado herda a média dos componentes. Não toca dano, sementes nem RNG do combate. Regra e tabela: `docs/REGRA-CORTE-CONCUSSAO.md`; decisão: REGISTRO §227.
+**Exports:**
+- `ImpactoMelee` — `'corte' | 'concussao'`.
+- `PESO_CORTE`, `PESO_CORTE_NEUTRO`, `pesoCorte(element)` — % de corte por elemento base (Ar 75, Terra 25); derivado = média; desconhecido = 50.
+- `PALAVRAS_CONCUSSAO`, `PALAVRAS_CORTE`, `impactoPorNome(name)` — palavra inteira, sem acento; as duas famílias ou nenhuma = `null`.
+- `hashEstavel(s)`, `meleeImpactOf({ element, key, name? })` — a decisão; `chaveDaIdentidade(identidade)` — a chave do PvP (ids fechados).
+**Chamado por:** `components/games/useGroupBattle.ts` (via `GroupScene.playerImpact`/`foeImpact`), `ArenaGame`, `DungeonGame`, `NightmareBattle`, `RogueFight`, `guild/GroveRaidFight`, `DuelScreen`, `guild/BossFightScreen`; vira `StageAction.impacto` em `games/BattleStage`.
+**Régua:** `src/utils/combate/golpeImpacto.test.ts` e o bloco (6) de `src/components/games/BattleStage.golpeTipo.test.tsx`.
+
 ### `src/utils/combate/group.ts`
 **Dono de:** A luta N×1 do combate v3 (PR3a, §2.15 P2): o jogador mira o 1º inimigo vivo, cada inimigo tem stream (`foeSeed`: o 0 usa `sideSeed(seed, 2)`) e fase próprios; com N = 1 dá o mesmo 1º KO e o mesmo vencedor que `fight()`. Área × único com o MESMO orçamento E: a área dá E/k a cada vivo, o único dá E ao alvo, e o DoT único repassa os ticks ao próximo vivo.
 **Exports:**
@@ -1072,7 +1082,11 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/dungeonRewards.ts`
 
-**Dono de:** as recompensas PURAS da masmorra que o `App` e a descida fora do app compartilham: `applyEnemyDefeated` (abate + bestiário), `applyFloorCleared` (Vínculo), `applyMilestoneItem` (o item do marco, Vínculo, `dungeonRunsCompleted`, fragmentos da run), `countWeeklyMission`. Módulo leve (o `App` o importa de forma estática). **Chamado por:** `App.tsx` (`handleDungeonEnemyDefeated`, `handleDungeonFloorCleared`, `handleGlitchtama`) e `utils/dungeonAway.ts`.
+**Dono de:** as recompensas PURAS da masmorra que o `App` e a descida fora do app compartilham: `applyEnemyDefeated` (abate + bestiário), `applyFloorCleared` (Vínculo), `applyMilestoneItem` (a recompensa da run no marco: Vínculo, `dungeonRunsCompleted`, fragmentos da run; o 🌀 saiu daqui em 05/11/2026 e mora em `utils/glitchtamaDrop.ts`: 1%/marco, 1/semana), `countWeeklyMission`. Módulo leve (o `App` o importa de forma estática). **Chamado por:** `App.tsx` (`handleDungeonEnemyDefeated`, `handleDungeonFloorCleared`, `handleGlitchtama`) e `utils/dungeonAway.ts`.
+
+### `src/utils/glitchtamaDrop.ts`
+
+**Dono de:** o drop RARO do 🌀 Glitchtama no marco da masmorra (05/11/2026, REGISTRO §227): `GLITCHTAMA_DROP_CHANCE` (1%), `GLITCHTAMA_DROPS_PER_WEEK` (1), `glitchtamaDropFor` (marco + teto semanal + sorteio injetável), `aplicarDropDoMarco` (aplica +1 e grava o registro, reconferindo o teto), `glitchtamaDroppedThisWeek` e `sanitizeGlitchtamaDrop` (leitura segura do campo `glitchtamaDrop` do save). A semana é a do dia do jogador (`weekMondayOf` de `premiumFood.ts`). **Chamado por:** `DungeonGame.tsx` (sorteio com `Math.random`), `App.tsx` (`handleGlitchtama`), `dungeonAway.ts` (sorteio semeado por seed e camada) e `GameStateContext.tsx` (sanitização). **Régua:** `glitchtamaDrop.test.ts`, `DungeonGame.marco.render.test.tsx`, `dungeonAway.test.ts`.
 
 ### `src/utils/dungeonRevive.ts`
 
@@ -1167,6 +1181,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:** `dailyGaugeCap`, `gaugeGoalFor`, `gaugeContribution`, `creditGauge`, `gaugeFull`, `gaugePointsLeft`, `migrateEvolutionPoints`, `hydrateEvolutionPoints`, `dayItemGaugeGain`, `gaugeView`, `GaugeView`.
 **Chamado por:** `src/App.tsx`, `src/utils/dailyReset.ts`, `src/utils/spriteTrigger.ts`, `src/utils/specialItemUse.ts`, `src/utils/gmTools.ts`, `src/contexts/GameStateContext.tsx`, `src/components/EvolutionPath.tsx`, `src/components/EvolutionGaugeMini.tsx`.
 **Régua:** `src/utils/evolutionGauge.test.ts` (regra, migração, simulação leve/médio/intenso).
+
+### `src/utils/evolutionStatsDelta.ts`
+**Dono de:** o antes → depois dos atributos de combate do Soulmon numa evolução (05/11/2026). Puro e sem fórmula própria: lê `soulCombatant` (ATK/DEF/SPD, o mesmo da luta) e `hpPoints(combatant.hp)` (a Vida que a Arena mostra) para o save de antes e o de depois; o bônus de talento/equipamento fica de fora (igual nos dois lados). O delta pode ser negativo, porque ao evoluir os pontos de alinhamento zeram (§209) e a distribuição de ATK/DEF/SPD volta ao equilíbrio.
+**Exports:** `EvoStatId` · `EVO_STAT_ORDER` · `EvoStatRow` · `EvoStatsDelta` · `evolutionStatsDelta` · `formatDelta`.
+**Chamado por:** `src/App.tsx` (updater do `handleEvolve`), `src/components/EvolutionStatsModal.tsx`.
+**Régua:** `src/utils/evolutionStatsDelta.test.ts`.
 
 ### `src/utils/evolutionCrystal.ts`
 **Dono de:** o CRISTAL da evolução (31/10/2026, REGISTRO §208) — puro. Barra a 100% → botão Evoluir → o toque grava `evolutionCrystal {v,from,to,branch,since}` no save (o destino é decidido NO toque) e só então o lote de sprite da forma-destino parte (`SpriteTriggerInput.crystalFormId`). Fases `gerando`/`falhou`/`pronto` (`crystalPhase`): pronto com a arte nova, sem geração possível ou no teto; falhou com falha gravada ou sem arte em `CRYSTAL_STUCK_MS` (10 min) → "Tentar de novo"/"Evoluir assim" (nunca prende). Bloqueia SÓ Masmorra (`exploracao.dungeon`), Fenda Sem Fim, Feira, Grove e Arena (`CRYSTAL_BLOCKED_LOTS`, aplicado no `AreaView`).

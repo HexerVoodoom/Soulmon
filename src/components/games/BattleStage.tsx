@@ -49,6 +49,7 @@ import { SpecialRing, DodgeButtons } from './PveMechanics';
 import { combatSceneBg, combatDomainSceneBg, combatShield, combatGlowPair } from '../../utils/combatArt';
 import { playAttack, playAttackRanged, playCharge, playDefend, playSpecial } from '../../utils/sounds';
 import { prepararSfxCombate } from '../../utils/sfxCombateCarga';
+import type { ImpactoMelee } from '../../utils/combate/golpeImpacto';
 
 /** O estilo da `TorcidaLayer` que envolve a cena: a tela inteira, acima das páginas. */
 export const BATTLE_LAYER_STYLE: CSSProperties = {
@@ -93,6 +94,8 @@ export interface StageAction {
   kind: StageActionKind;
   /** Só no `special`: a FORMA da skill especial (investida ou projétil). Ausente = à distância. */
   strike?: StrikeForm;
+  /** Só no golpe CORPO A CORPO (05/11/2026): `concussao` troca o corte pelo splash do impacto, sem projétil. Só visual; ausente = corte. */
+  impacto?: ImpactoMelee;
   /** Elemento de quem ataca. */
   element: string;
   /** Elemento do DEFENSOR quando a defesa automática bloqueou: mostra a barreira dele no lugar do impacto. */
@@ -687,7 +690,7 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
           extra={{ ['--dx' as string]: `${Math.round(dx)}px`, ['--dy' as string]: `${Math.round(dy)}px` } as CSSProperties}
         />,
       );
-    } else {
+    } else if (action.impacto !== 'concussao') {
       layers.push(
         <Fx key="slash" src={fxFrame(el, 'slash')} x={to.x} y={to.y} size={Math.round(toSpot.size * (big ? SLASH_SCALE_SPECIAL : SLASH_SCALE))} anim="sm-bs-pop" big={big} delay={intro + Math.max(0, impact - 240)} dur={big ? 520 : 400} flipX={slashFlip} />,
       );
@@ -695,7 +698,8 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
   }
   // A5 (rodada 7): o golpe FÍSICO (investida) é só o CORTE — sem o splash/"crash" do impacto. O splash é do dano à
   // distância/mágico (projétil, especial à distância). O escudo (bloqueio) e o movimento reduzido (sem corte, só o flash) mantêm o frame.
-  if (reduced || blocked || form !== 'melee') layers.push(
+  // Concussão (05/11/2026): a investida é a mesma, mas o acabamento é o splash do impacto no lugar do corte (`utils/combate/golpeImpacto.ts`).
+  if (reduced || blocked || form !== 'melee' || action.impacto === 'concussao') layers.push(
     <Fx key="land" src={landing} x={to.x} y={to.y} size={landSize} anim="sm-bs-pop" delay={intro + Math.max(0, impact - 60)} dur={reduced ? total - impact : Math.min(700, total - impact + 60)} flipX={blocked && !combatShield(action.shield) && fxMirror(action.shield, 'defended', travel)} />,
   );
   return <>{layers}</>;

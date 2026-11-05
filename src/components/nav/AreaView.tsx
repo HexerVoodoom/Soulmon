@@ -104,7 +104,7 @@ export interface PlayHandlers {
   onDungeonEnter: () => { ok: true; level?: number; best: number };
   onDungeonLose: () => void;
   onDungeonHeartDrop: () => boolean;
-  onGlitchtama: () => void;
+  onGlitchtama: (m: { runReward: boolean; drop: boolean }) => void;
   onFloorCleared?: () => void;
   /** beta3 A4: a descida terminou com ao menos 1 camada limpa (conta a missão "runs da masmorra"). */
   onRunEnd?: () => void;

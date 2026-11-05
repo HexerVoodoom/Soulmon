@@ -41,6 +41,7 @@ import { groupFightSteps, type GroupEvent, type GroupOptions, type GroupResult }
 import { escolherAlvo, tocarAlvo } from '../../utils/combate/alvo';
 import type { FightSide } from '../../utils/combate/fight';
 import { CHEER, ENERGY, ENERGY_TRIGGER } from '../../utils/combate/specials';
+import type { ImpactoMelee } from '../../utils/combate/golpeImpacto';
 
 /** Pausa entre o último golpe de uma luta e o aviso de fim (o inimigo cai, o pet respira). */
 const END_BEAT_MS = 900;
@@ -75,6 +76,9 @@ export interface GroupScene {
   /** A FORMA do golpe do pet — da SKILL dele (básica ou especial). Nunca de índice/sorteio. */
   playerKind(special: boolean): StrikeForm;
   foeKind(foe: number, special: boolean): StrikeForm;
+  /** Corte × concussão do golpe CORPO A CORPO (05/11/2026; `utils/combate/golpeImpacto.ts`). Só visual; ausente = corte. */
+  playerImpact?(special: boolean): ImpactoMelee;
+  foeImpact?(foe: number, special: boolean): ImpactoMelee;
   /** PR16: a ESCOLA do especial do pet (só decide o SELO: `maldicao` + família `defDebuff` mostra MALDIÇÃO, mecânica e balanço iguais). Inimigos não têm escola. */
   playerSpecialEscola?: string | null;
   /** Selos curtos (já traduzidos). */
@@ -407,7 +411,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
             }
             ringTagRef.current = ringG;
             const pForm = scene.playerKind(true);
-            setAction({ id: ++seq.current, actor: 'me', foe: target, kind: 'special', strike: pForm, element: scene.playerElement(true), selfOnly: isSelfOnlySpecial(player.special?.family) });
+            setAction({ id: ++seq.current, actor: 'me', foe: target, kind: 'special', strike: pForm, impacto: scene.playerImpact?.(true), element: scene.playerElement(true), selfOnly: isSelfOnlySpecial(player.special?.family) });
             const scale = round.castScale({ who: 0, ring: ringG, dodge: null, foesHp: ev.foesHp });
             const first = pull(scale); // o núcleo devolve os eventos do especial no mesmo instante
             const batch: GroupEvent[] = [];
@@ -433,7 +437,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           // PR18: a cena do especial (nome grande + fundo escuro) abre ANTES de a janela da esquiva: a ação entra agora,
           // o relógio da esquiva só começa quando a cena acaba (e a arte do golpe sai depois dela, no `BattleStage`).
           setAction({
-            id: ++seq.current, actor: 'foe', foe: casterFoe, kind: 'special', strike: scene.foeKind(casterFoe, true), element: scene.foeElement(casterFoe),
+            id: ++seq.current, actor: 'foe', foe: casterFoe, kind: 'special', strike: scene.foeKind(casterFoe, true), impacto: scene.foeImpact?.(casterFoe, true), element: scene.foeElement(casterFoe),
             castMs: spec.castMs, impactMs: spec.impactMs, totalMs: spec.impactMs + 500,
             selfOnly: isSelfOnlySpecial(foes[casterFoe]?.special?.family), // §198
           });
@@ -488,6 +492,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
           setAction({
             id: ++seq.current, actor: first.who === 0 ? 'me' : 'foe',
             foe: first.who === 0 ? hitFoe(first, foesNow) : foeIdx, kind,
+            impacto: first.who === 0 ? scene.playerImpact?.(false) : scene.foeImpact?.(foeIdx, false),
             element: first.who === 0 ? scene.playerElement(false) : scene.foeElement(foeIdx),
             shield: blocked ? scene.playerElement(false) : null,
           });

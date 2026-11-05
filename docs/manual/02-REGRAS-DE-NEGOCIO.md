@@ -4329,7 +4329,7 @@ decremento:
 **O teto do Glitchtama é a espinha da progressão, não economia.** A conta que o
 justifica: rookie→mega custa 14 dias perfeitos e o Ultra custa mais
 `ULTRA_PATIENCE_DAYS` (45) = **59**; a masmorra não tem limite diário nem gate de
-entrada e concluir os 5 andares sempre dropa um Glitchtama — então 59 runs
+entrada e (até 05/11/2026) concluir os 5 andares sempre dropava um Glitchtama — então 59 runs
 seguidas compravam a escada inteira, e elas cabem num fim de semana. Um por dia
 converte o atalho de volta em dias de calendário, que é o recurso que a
 justificativa do Ultra protege. O registro é `glitchtamaUse {day, used}` **no
@@ -4656,7 +4656,7 @@ o jogador é o `soulCombatant` do level, e a Arena e o Pesadelo leem o mesmo nú
 `clearBonus(floor) = round((10 + 5 × (floor − 1)) × DUNGEON_BITS_FACTOR)` = 4/6/8/10/12 (⚰️ era 10/15/20/25/30 até 30/09/2026, quando o dono trouxe a run completa para perto do teto diário — `BALANCO-MINIJOGOS.md` §4). Limpar um andar cura
 uma fração do HP máximo (`pve.cura`, o `curaAndar` do ofício + o talento `healBoost`) — cura DENTRO da descida, mantida de
 propósito: a parede calibrada do combate v3 a pressupõe e o ofício/talento dependem dela; o HP do jogador **carrega** entre
-andares. O marco do andar 5 dá **🌀 Glitchtama** (`onGlitchtama`) e sobe a base (`setDungeonDifficultyAtLeast(base + 1)`).
+andares. Todo marco (camada múltipla de 5) sorteia **🌀 Glitchtama** com **1%** de chance, **no máximo 1 por semana** do jogador (`utils/glitchtamaDrop.ts`, registro `glitchtamaDrop {week, dropped}` no save; a tela e a descida fora do app usam a mesma regra; REGISTRO §227); a recompensa da run (Vínculo, fragmentos, `dungeonRunsCompleted`) segue 1× por descida, no primeiro marco; o limite de 1 uso por dia e o estoque guardado não mudam (`onGlitchtama({ runReward, drop })`). O marco sobe a base (`setDungeonDifficultyAtLeast(base + 1)`).
 **Teto diário de Bits:** inalterado — o funil único `handleEarnGamePoints` → `creditMinigameBits` (`MINIGAME_BITS_PER_DAY` =
 150, `minigameBits` no save) limita a descida infinita; ao bater, a tela diz "Teto diário de Bits atingido — a descida segue,
 só sem Bits." e nada pára. Simulação (`dungeonIdle.test.ts`, 200 descidas, ruler de 15 levels): a dificuldade derruba o
@@ -5275,6 +5275,8 @@ nome do pet — `CompanionHUD.vinculo.render.test.tsx`),
 vindo do servidor).
 
 ---
+
+**Corte × concussão (05/11/2026, REGISTRO §227).** O golpe corpo a corpo acaba em corte ou em concussão (splash de impacto, sem projétil): só visual, decidido por função pura por lutador (palavra-chave do nome de inimigo, senão sorteio estável com peso por elemento; Ar 75/25, Terra 25/75). Não altera dano, sementes nem RNG. Tabela e garantias: [REGRA-CORTE-CONCUSSAO.md](../REGRA-CORTE-CONCUSSAO.md).
 
 <a id="combate-v3"></a>
 ## 55-B. ⚔️ Combate v3: level, talentos, equipamento e o teto de 5%

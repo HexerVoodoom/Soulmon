@@ -11,7 +11,7 @@ import { duelSide } from './_duel.js';
 import { onRequest as community } from './community.js';
 import { onRequest as rankings } from './rankings.js';
 import { resetRateLimits } from './_rateLimit.js';
-import { planejar, promptDe, parseArgs, pendentes, hashRepetido, pngTemAlfa, chaveDoCache, PREVIA } from '../../scripts/simulados-sprites-fila.mjs';
+import { planejar, cadeiaAte, formasDaLinha, parseArgs, pendentes, hashRepetido, pngTemAlfa, chaveDoCache, PREVIA } from '../../scripts/simulados-sprites-fila.mjs';
 import { FORM_REQUIREMENTS, ULTRA_PATIENCE_POINTS } from '../../src/types/progression';
 
 /** KV falso com `list` ordenado, `metadata` e `getWithMetadata`; conta as escritas. */
@@ -175,7 +175,7 @@ describe('ordem do dia e cota por placar', () => {
 });
 
 describe('fila de sprites: cache correto', () => {
-  const plano = planejar(['sim_0051', 'sim_0052'], '2026-11-05');
+  const plano = planejar(['sim_0051', 'sim_0052'], '2026-11-05').filter((i) => i.formId === 'rookie').map((i) => ({ ...i, sha: `sha-${i.id}` }));
   it('cada simulado tem chave própria; gerado não paga de novo, prompt mudado gera', () => {
     expect(chaveDoCache(plano[0])).not.toBe(chaveDoCache(plano[1]));
     const man = { [chaveDoCache(plano[0])]: { hash: 'a' } };
@@ -470,13 +470,19 @@ describe('o cliente nunca vê `simulated`', () => {
 });
 
 describe('fila de sprites (script manual)', () => {
-  it('dry-run por padrão e plano de 170 itens, com alfa real no prompt', () => {
-    expect(parseArgs([]).run).toBe(false);
-    expect(parseArgs(['--run', '--only', 'sim_0001,sim_0002'])).toMatchObject({ run: true, only: ['sim_0001', 'sim_0002'] });
-    const plano = planejar();
-    expect(plano).toHaveLength(170);
-    expect(promptDe(SIMULADOS[0], 'rookie')).toContain('transparent');
-    expect(promptDe(SIMULADOS[0], 'rookie')).not.toContain('#00FF00');
-    expect(planejar(['sim_0003'])).toHaveLength(1);
+  it('não gera por padrão; o plano é a cadeia do rookie à forma atual', () => {
+    expect(parseArgs(['--only', 'sim_0001,sim_0002'])).toMatchObject({ only: ['sim_0001', 'sim_0002'], lote: null, instalar: null });
+    expect(new Set(planejar().map((i) => i.id)).size).toBe(170);
+    expect(cadeiaAte('poder', 'ultimate-power')).toEqual(['rookie', 'champion-power', 'ultimate-power']);
+    expect(cadeiaAte('harmonia', 'rookie')).toEqual(['rookie']);
+    expect(formasDaLinha('benevolencia')[4]).toBe('ultra');
+    const um = planejar(['sim_0006'], '2026-11-05');
+    expect(um[0]).toMatchObject({ formId: 'rookie', refDe: null });
+    expect(um.at(-1).refDe).toBe(`sim_0006--${um.at(-2).formId}`);
+  });
+  it('prompt vem do mapa do Oráculo; falta de prompt é erro, nunca texto inventado', () => {
+    expect(() => planejar(['sim_0001'], '2026-11-05', {})).toThrow(/sem prompt/);
+    const prompts = { sim_0001: Object.fromEntries(formasDaLinha('poder').map((f) => [f, { prompt: `P ${f}`, fallback: 'F' }])) };
+    expect(planejar(['sim_0001'], '2026-11-05', prompts)[0].prompt).toBe('P rookie');
   });
 });

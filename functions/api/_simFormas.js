@@ -8,16 +8,17 @@
 //   `sim:sprite:<id>`          ponteiro: a arte mais recente pronta. É o FALLBACK: só muda quando a forma nova fica pronta,
 //                              então as rotas não ganham leitura nova;
 //   `sim:sprite:<id>:<forma>`  arquivo da forma (metadata { el, line, form, sha }): existir = não gerar de novo;
+//   `sim:prompt:<id>:<forma>`  { prompt, fallback } do Oráculo; sem ela, a forma não é gerada;
 //   `sim:form:<id>:<forma>`    fila { estado, requestId, tentativas, em };
 //   `sim:gen:<AAAA-MM>` e `sim:gen:<AAAA-MM-DD>`  tetos próprios.
 //
 // EM PASSOS, sem esperar: `waitUntil` dá 30 s e o provedor pode levar mais. Cada chamada envia OU consulta, e a seguinte continua.
 // O provedor por API não entrega alfa (`generate-sprite.js`): aqui vale o mesmo recorte do pipeline do jogador.
-// `element` e `line` vêm de `_simulados.data.js`, gravados antes de gerar: o prompt deriva deles.
+// O PROMPT é o do Oráculo real (REGISTRO §229), semeado por `scripts/simulados-prompts.ts`: as Functions não importam o Oráculo.
 // ---------------------------------------------------------------------------
 import { kv, kvOrThrow } from './_kv.js';
 import { flagOn } from './_killSwitch.js';
-import { chromaKeyPng } from './_chroma.js';
+import { chromaKeyPng, chromaKeyOfPrompt } from './_chroma.js';
 import { spriteUrlOrNull } from './_artLine.js';
 import { HF_API, HF_ROUTES, hfRequestBody, spriteModel } from './generate-sprite.js';
 import { SIMULADOS } from './_simulados.data.js';
@@ -28,32 +29,23 @@ export const FORMA_TENTATIVAS_MAX = 3;
 const POR_PASSO = 3;
 const ENVIO_VENCE_MS = 30 * 60_000;
 const ORDEM = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'];
-const PORTE_ELEMENTO = {
-  agua: 'water', fogo: 'fire', terra: 'stone and earth', ar: 'wind', sombra: 'shadow', luz: 'light', planta: 'plants and leaves', industrial: 'copper and circuitry',
-};
-const PERSONALIDADE = { poder: 'bold and sturdy', harmonia: 'curious and elegant', benevolencia: 'gentle and friendly' };
 const POR_ID = new Map(SIMULADOS.map((s) => [s.id, s]));
 
 export const formasLigadas = (env) => flagOn(env?.SIMULADOS_FORMAS_ON) && !flagOn(env?.SPRITE_DISABLED);
 export const chaveDaForma = (id, forma) => `sim:sprite:${id}:${forma}`;
+export const chaveDoPrompt = (id, forma) => `sim:prompt:${id}:${forma}`;
 export const chaveDaFila = (id, forma) => `sim:form:${id}:${forma}`;
 const FORMA_RE = /^(?:rookie|ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))$/;
 const posicao = (forma) => ORDEM.indexOf(String(forma).split('-')[0]);
 
-/**
- * O prompt de uma forma, derivado SÓ de `element`, `line` e `petName`.
- * `fundo`: 'verde' (API do servidor, recortado aqui) ou 'alfa' (geração local com transparência real).
- */
-export function promptDaForma(p, forma, fundo = 'verde') {
-  const el = PORTE_ELEMENTO[p.element];
-  if (!el) throw new Error(`elemento sem prompt: ${p.element}`);
-  const fim = fundo === 'alfa'
-    ? 'isolated subject on a fully transparent background.'
-    : 'on a flat solid #00FF00 green background; the creature must contain no green and have no green fringe.';
-  return `Generate this RPG creature inspired by Digimon, Pokemon, Monster Rancher, Yu-Gi-Oh, Palworld, Tamagotchi and Ragnarok Online. Do not copy any existing franchise character. `
-    + `Tamagotchi-style v-pet sprite, 16x16 pixel art, single original creature named "${p.petName}", ${String(forma).split('-')[0]} evolution stage, `
-    + `element: ${el}, ${PERSONALIDADE[p.line]} design language, full body, three-quarter view facing right, calm expression, no text, `
-    + `no gears, no steampunk, ${fim}`;
+/** O prompt gravado da forma, ou `null` se faltar ou estiver ilegível. */
+async function promptGravado(store, id, forma) {
+  try {
+    const p = JSON.parse((await store.get(chaveDoPrompt(id, forma))) || 'null');
+    return typeof p?.prompt === 'string' && p.prompt ? p : null;
+  } catch {
+    return null;
+  }
 }
 
 async function sha256Hex(texto) {
@@ -85,14 +77,14 @@ async function reservarOrcamento(store, now) {
   return true;
 }
 
-async function enviar(env, store, p, forma, origin) {
+async function enviar(env, store, p, prompt, origin) {
   const model = spriteModel(env) === 'flare' ? 'flare' : 'alpha';
   const ponteiro = spriteUrlOrNull(await store.get(`sim:sprite:${p.id}`));
   const refs = ponteiro && origin && ponteiro.startsWith('/api/sprite-image') ? [`${origin}${ponteiro}`] : [];
   const r = await fetch(`${HF_API}${HF_ROUTES[model]}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Key ${env.HF_CREDENTIALS}`, 'Idempotency-Key': crypto.randomUUID() },
-    body: JSON.stringify(hfRequestBody(env, model, promptDaForma(p, forma), refs)),
+    body: JSON.stringify(hfRequestBody(env, model, prompt, refs)),
   });
   if (!r.ok) throw new Error(`envio ${r.status}`);
   const j = await r.json();
@@ -101,14 +93,14 @@ async function enviar(env, store, p, forma, origin) {
   return requestId;
 }
 
-async function instalar(env, store, p, forma, urlImagem) {
+async function instalar(env, store, p, forma, urlImagem, { chroma, sha }) {
   const res = await fetch(urlImagem);
   if (!res.ok) throw new Error(`download ${res.status}`);
-  const png = chromaKeyPng(new Uint8Array(await res.arrayBuffer()), 'green');
+  const png = chromaKeyPng(new Uint8Array(await res.arrayBuffer()), chroma);
   const token = crypto.randomUUID().replace(/-/g, '');
   await store.put(`sprite:blob:${token}`, png.buffer, { metadata: { contentType: 'image/png' } });
   const url = `/api/sprite-image?k=${token}`;
-  const metadata = { el: p.element, line: p.line, form: forma, sha: await sha256Hex(promptDaForma(p, forma)) };
+  const metadata = { el: p.element, line: p.line, form: forma, sha };
   await store.put(chaveDaForma(p.id, forma), url, { metadata });
   const atual = await store.getWithMetadata(`sim:sprite:${p.id}`);
   // O ponteiro nunca volta para uma forma anterior (geração fora de ordem).
@@ -133,9 +125,14 @@ export async function passoFormas(env, { now = new Date(), origin = '' } = {}) {
       feitos++;
       try {
         if (f.estado === 'fila') {
+          const gravado = await promptGravado(store, id, forma);
+          // Sem prompt do Oráculo não há o que gerar: para sem gastar orçamento nem crédito.
+          if (!gravado) { await store.put(name, JSON.stringify({ ...f, estado: 'falhou', motivo: 'sem-prompt', em: now.getTime() })); continue; }
+          // Recusa do provedor: a tentativa seguinte vai com o fallback, como no jogador.
+          const prompt = f.usarFallback && gravado.fallback ? gravado.fallback : gravado.prompt;
           if (!(await reservarOrcamento(store, now))) return { status: 'teto' };
-          const requestId = await enviar(env, store, p, forma, origin);
-          await store.put(name, JSON.stringify({ ...f, estado: 'enviado', requestId, em: now.getTime() }));
+          const requestId = await enviar(env, store, p, prompt, origin);
+          await store.put(name, JSON.stringify({ ...f, estado: 'enviado', requestId, chroma: chromaKeyOfPrompt(prompt), sha: await sha256Hex(prompt), em: now.getTime() }));
           continue;
         }
         const st = await fetch(`${HF_API}/requests/${f.requestId}/status`, { headers: { Authorization: `Key ${env.HF_CREDENTIALS}` } });
@@ -143,7 +140,7 @@ export async function passoFormas(env, { now = new Date(), origin = '' } = {}) {
         if (data?.status === 'completed') {
           const img = data.images?.[0]?.url;
           if (typeof img !== 'string' || !img.startsWith('https://')) throw new Error('sem imagem');
-          await instalar(env, store, p, forma, img);
+          await instalar(env, store, p, forma, img, { chroma: f.chroma === 'magenta' ? 'magenta' : 'green', sha: f.sha });
           await store.delete(name);
         } else if (data?.status === 'failed' || data?.status === 'canceled' || data?.status === 'nsfw' || now.getTime() - Number(f.em) > ENVIO_VENCE_MS) {
           throw new Error(`provedor ${data?.status ?? 'vencido'}`);
@@ -151,7 +148,7 @@ export async function passoFormas(env, { now = new Date(), origin = '' } = {}) {
       } catch (err) {
         const tentativas = (Number(f.tentativas) || 0) + 1;
         console.error('simFormas:', id, forma, err?.message);
-        await store.put(name, JSON.stringify({ estado: tentativas >= FORMA_TENTATIVAS_MAX ? 'falhou' : 'fila', tentativas, em: now.getTime() }));
+        await store.put(name, JSON.stringify({ estado: tentativas >= FORMA_TENTATIVAS_MAX ? 'falhou' : 'fila', tentativas, usarFallback: Boolean(f.usarFallback) || /nsfw/.test(String(err?.message)), em: now.getTime() }));
       }
     }
     return { status: 'ok', feitos };

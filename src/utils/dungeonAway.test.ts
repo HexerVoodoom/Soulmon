@@ -183,12 +183,13 @@ describe('applyDungeonAway — o avanço de quem ficou fora', () => {
     expect(Object.values(com.next.foodInventory).reduce((a, b) => a + b, 0)).toBeGreaterThanOrEqual(com.report!.hearts);
   });
 
-  it('o marco da camada 5 rende UM Glitchtama por descida (e o registro lembra, para não pagar de novo)', () => {
+  it('o marco da camada 5 paga a recompensa da run UMA vez por descida (e o registro lembra); o Glitchtama é raro', () => {
     const s = estado({ energyPoints: 5000 }, away({ layer: 4, slot: 0 }));
     const { next, report } = applyDungeonAway(s, T0 + 8 * HORA);
     if (report!.toLayer >= 5 || report!.recordTo >= 5) {
-      expect(report!.glitchtama).toBe(1);
-      expect(next.foodInventory['🌀']).toBe(1);
+      // 05/11/2026: o 🌀 é raro (1%/marco, 1/semana); a recompensa da run segue 1× por descida. O relatório e o estoque concordam.
+      expect(report!.glitchtama).toBeLessThanOrEqual(1);
+      expect(next.foodInventory['🌀'] ?? 0).toBe(report!.glitchtama);
       expect(next.dungeonRunsCompleted).toBe(1);
       if (next.dungeonAway) expect(next.dungeonAway.ms).toBe(true);
     }

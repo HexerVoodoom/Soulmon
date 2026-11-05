@@ -29,6 +29,14 @@ describe('nada monta por cima da fila de intersticiais', () => {
     expect(app).toContain("{protectPrompt && interstitial === 'welcome' && (");
   });
 
+  it('o modal de atributos da evolução espera a cerimônia e só nasce da evolução para cima (handleEvolve)', () => {
+    expect(app).toContain('evoStats: evoStatsShown !== null && evolutionCeremony === null,');
+    expect(app).toContain("interstitial === 'evoStats' && evoStatsShown");
+    expect(app).toContain('pendingEvoStatsRef.current = { delta: evolutionStatsDelta(prev, evolved)');
+    // degeneração e "Trocar forma" não escrevem o ref
+    expect(app.split('pendingEvoStatsRef.current = {').length - 1).toBe(1);
+  });
+
   it('o modal de evolução espera a cerimônia terminar', () => {
     // 14/10/2026: o modal entra na fila central; "pronto" = evolução pendente E cerimônia fechada, "na tela" = a vez dele.
     expect(app).toContain('evolveTask: evolveModalStage !== null && evolutionCeremony === null,');
@@ -174,7 +182,7 @@ describe('o marco do Bosque tem POSIÇÃO na fila (L3 A2)', () => {
   const ordem = PRESENTATION_ORDER as readonly string[];
 
   it('a ordem declarada é (19/10/2026, D-64): TOUR → triagem → PESADELO → sonho → resumo do dia → PRÉDIO NOVO → metas → "HOJE" (reafirmar + check-in) → LEVEL UP → modal de evolução → MARCO → convite de nível → sono → ocioso', () => {
-    expect(ordem).toEqual(['welcomeTour', 'triage', 'dungeonReturn', 'feiraEvento', 'nightmare', 'dream', 'dailyReport', 'evoRecap', 'buildingIntro', 'mapTutorial', 'catalogOnboarding', 'dayGoals', 'checkIn', 'levelUp', 'evolveTask', 'groveMilestone', 'catalogLevelInvite', 'restSetup', 'unlockToast', 'noticeToast', 'welcome']);
+    expect(ordem).toEqual(['welcomeTour', 'triage', 'dungeonReturn', 'feiraEvento', 'evoStats', 'nightmare', 'dream', 'dailyReport', 'evoRecap', 'buildingIntro', 'mapTutorial', 'catalogOnboarding', 'dayGoals', 'checkIn', 'levelUp', 'evolveTask', 'groveMilestone', 'catalogLevelInvite', 'restSetup', 'unlockToast', 'noticeToast', 'welcome']);
   });
 
   it('o marco vem DEPOIS do relatório e do check-in (celebração depois do início de dia) e ANTES dos convites (posições, não só presença)', () => {

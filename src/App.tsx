@@ -44,6 +44,7 @@ import type { BuildingId } from './utils/gates';
 import { AreaTopBar } from './components/nav/AreaTopBar';
 import { ProfileAvatarButton } from './components/perfil/ProfileAvatarButton';
 import { readyFor } from './utils/presentationQueue';
+import { evolutionStatsDelta, type EvoStatsDelta } from './utils/evolutionStatsDelta';
 import {
   type ViewType, type AreaId, buildingDestination, buildingLot, areaOf, menuPageOf, viewBack, areaView, areaLabel, menuPageLabel,
 } from './navigation';
@@ -218,6 +219,7 @@ import { StrayRecoveryNotice } from './components/home/StrayRecoveryNotice';
 import { useLibraryNewNotice } from './components/LibraryNewBadge';
 import { applyEssences, type EssenceDrop } from './utils/essences';
 import { NIGHTMARE_ELEMENT } from './utils/nightmareElement';
+import { aplicarDropDoMarco } from './utils/glitchtamaDrop';
 import { applyBestiarySeen, applyEnemyDefeated, applyFloorCleared, applyMilestoneItem } from './utils/dungeonRewards';
 import type { BosqueArvores } from './utils/bosqueArvores';
 import type { OcupadoAcao } from './components/DungeonBusyModal';
@@ -794,6 +796,7 @@ const RebirthModal = lazy(() => import('./components/RebirthModal').then(m => ({
 const NightmareBattleHost = lazy(() => import('./components/NightmareBattleHost').then(m => ({ default: m.NightmareBattleHost })));
 const GoodDream = lazy(() => import('./components/GoodDream').then(m => ({ default: m.GoodDream })));
 // Modais/interstícios que só montam sob condição (rodada 6, perf): saem do chunk de entrada.
+const EvolutionStatsModal = lazy(() => import('./components/EvolutionStatsModal').then(m => ({ default: m.EvolutionStatsModal })));
 const EvolveTaskModal = lazy(() => import('./components/EvolveTaskModal').then(m => ({ default: m.EvolveTaskModal })));
 const EvolutionCeremony = lazy(() => import('./components/EvolutionCeremony').then(m => ({ default: m.EvolutionCeremony })));
 const EvoRecapModal = lazy(() => import('./components/EvoRecapModal').then(m => ({ default: m.EvoRecapModal })));
@@ -970,6 +973,11 @@ export default function App() {
   // legado (inalterado) para criar do zero/tarefa avulsa.
   const [catalogBrowserOpen, setCatalogBrowserOpen] = useState(false);
   const [evolveModalStage, setEvolveModalStage] = useState<string | null>(null);
+  /* O modalzinho "quanto subiu cada atributo" (05/11/2026, dono). `pendingEvoStatsRef` é escrito pelo updater do `handleEvolve`
+     (idempotente: mesmo valor se o updater rodar 2×) só quando a evolução de fato commita; o efeito logo abaixo do `evolveModalStage`
+     o converte em `evoStatsShown` (a cerimônia já fechou ou fecha antes dele entrar na fila). Efêmero: não vai para o save. */
+  const pendingEvoStatsRef = useRef<{ delta: EvoStatsDelta; stage: string } | null>(null);
+  const [evoStatsShown, setEvoStatsShown] = useState<{ delta: EvoStatsDelta; stage: string } | null>(null);
   // Cerimônia de evolução manual (botão sobre o pet) — {from,to} enquanto aberta
   const [evolutionCeremony, setEvolutionCeremony] = useState<{ from: string; to: string; spent?: number } | null>(null);
   // Leitura do ritmo de cuidado (utils/carePattern.ts): alimenta a vitrine em
@@ -2380,6 +2388,7 @@ export default function App() {
       dayGoals: dayGoalsOpen && (dayPlanCandidatesNow.length > 0 || dayGoalsSuggestions.length > 0),
       checkIn: Boolean(checkInPlanData),
       evolveTask: evolveModalStage !== null && evolutionCeremony === null,
+      evoStats: evoStatsShown !== null && evolutionCeremony === null,
       groveMilestone: Boolean(grovePendente),
       dream: Boolean(morningDream),
       nightmare: nightmareOpen,
@@ -2450,6 +2459,7 @@ export default function App() {
         case 'dayGoals': setDayGoalsOpen(false); break;
         case 'checkIn': handleCheckInSkip(); break;
         case 'evolveTask': setEvolveModalStage(null); break;
+        case 'evoStats': setEvoStatsShown(null); break;
         case 'groveMilestone': acknowledgeGroveMilestone(); break;
         case 'dream': setMorningDream(null); break;
         case 'nightmare': closeNightmare(); break;
@@ -2549,6 +2559,14 @@ export default function App() {
       prevStageLevelRef.current = currentLevel;
       if (leveledUp) setEvolveModalStage(gameState.evolutionStage);
     }
+  }, [gameState.evolutionStage]);
+
+  // A evolução commitou (o `handleEvolve` deixou o antes/depois no ref): o modalzinho de atributos entra na fila. 1× por evolução.
+  useEffect(() => {
+    const p = pendingEvoStatsRef.current;
+    if (!p || p.stage !== gameState.evolutionStage) return;
+    pendingEvoStatsRef.current = null;
+    setEvoStatsShown(p);
   }, [gameState.evolutionStage]);
 
   // Sync game state to Android home screen widget
@@ -3871,7 +3889,7 @@ export default function App() {
       // daqui: `App.tsx` só delega. Cosmética, opt-in, e nunca marca de queda.
       // Poção de Elemento: o elemento pendente vira o do Soulmon e o campo é limpo (`utils/elementPotion.ts`).
       const base = applyPotionOnEvolve(applyRedemption(prev, newEvolutionStage !== prev.evolutionStage));
-      return {
+      const evolved = {
         ...base,
         evolutionCrystal: undefined,
         evolutionStage: newEvolutionStage,
@@ -3902,6 +3920,9 @@ export default function App() {
           playerDayKey(new Date(), prev.playerDayTz),
         ),
       };
+      // Antes → depois dos atributos de combate, da mesma derivação da luta (`utils/evolutionStatsDelta.ts`). Escrita idempotente.
+      pendingEvoStatsRef.current = { delta: evolutionStatsDelta(prev, evolved), stage: newEvolutionStage };
+      return evolved;
     });
     playEvolve();
     setEvolutionFlash(true);
@@ -4467,10 +4488,15 @@ export default function App() {
 
   // 🌀 Glitchtama — guaranteed reward for clearing all 5 dungeon floors.
   // Also counts a completed run for the missions.
-  const handleGlitchtama = useCallback(() => {
-    // A conta (Vínculo pelo teto diário suave de `bond.ts`, o Glitchtama, `dungeonRunsCompleted` e os fragmentos da run com o
-    // Comércio) é de `utils/dungeonRewards.ts` — a MESMA que a descida que continua sozinha usa.
-    setGameState(prev => applyMilestoneItem(prev, new Date()));
+  const handleGlitchtama = useCallback(({ runReward, drop }: { runReward: boolean; drop: boolean }) => {
+    // A conta (Vínculo pelo teto diário suave de `bond.ts`, `dungeonRunsCompleted` e os fragmentos da run com o Comércio) é de
+    // `utils/dungeonRewards.ts`; o 🌀 raro (1%/marco, 1/semana no save) é de `utils/glitchtamaDrop.ts` — as MESMAS que a descida
+    // que continua sozinha usa. O teto semanal é reconferido DENTRO do updater (`aplicarDropDoMarco`).
+    setGameState(prev => {
+      const agora = new Date();
+      const comRun = runReward ? applyMilestoneItem(prev, agora) : prev;
+      return drop ? aplicarDropDoMarco(comRun, agora) : comRun;
+    });
   }, []);
 
   // beta3 A4: a missão "completar 2 runs" conta a DESCIDA que terminou com ≥1 camada limpa (antes só contava ao bater o marco da camada 5,
@@ -9503,6 +9529,17 @@ export default function App() {
         language={language}
       />
       </Suspense>
+
+      {interstitial === 'evoStats' && evoStatsShown && (
+        <Suspense fallback={null}>
+          <EvolutionStatsModal
+            delta={evoStatsShown.delta}
+            stageName={getStageNameById(evoStatsShown.stage)}
+            language={language}
+            onClose={() => setEvoStatsShown(null)}
+          />
+        </Suspense>
+      )}
 
       {/* Notification Manager */}
       <NotificationManager
