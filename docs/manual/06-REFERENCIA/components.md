@@ -962,6 +962,14 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** nenhuma (`find src/components -maxdepth 1 -name 'ItemsWindow.*test.ts*'` vazio, 09/09/2026).
 **Avisos do arquivo:** o emoji É a chave de inventário (`utils/shop.ts`) — nenhum PNG paralelo, para não repetir o bug de moeda que a loja teve com duas representações do mesmo item.
 
+### `src/components/FriendTraining.tsx`
+**Dono de:** o treino com amigo (§242) — luta local e unilateral na `DuelScreen`, sem prêmio, ranking, Bits, Honra, XP nem progresso.
+**Props principais:** `friend` (só dado público: estágio, elemento, arte), `trainer` (`FriendTrainerProps`: estágio, linha, elemento e skills do SEU Soulmon), `isPt`, `onClose`.
+**Exports:** `FriendTraining`, `friendTrainingSide`.
+**Estado/efeitos relevantes:** semente sorteada no cliente; nenhuma chamada de rede; não grava no save.
+**Chamado por:** `src/components/LibraryPage.tsx` (lazy), na aba Amigos.
+**Régua:** `src/components/LibraryPage.amigos.render.test.tsx`.
+
 ### `src/components/LibraryPage.tsx`
 **Dono de:** a Biblioteca — diretório de jogadores, amigos e o painel cooperativo, com quatro estados explícitos (carregando/vazio/erro/sem rede).
 **Props principais:** `LibraryPageProps` — `saveId`, `friends: string[]`, `canGiftToday` (meta do dia cumprida), `onFriendsChange`, `onGiftSent`, `onVisitPlayer?` (WP4.7, dispara na abertura do detalhe), `metaDoDiaCumprida?` (repassado ao `CoopPanel`, decidido pelo motor de progresso e não duplicado no painel), `playerDayTz?` (a âncora do dia do jogador que a Guilda envia ao servidor), `embedded?` (minimal-ui F5 — dentro da folha do Hall o `<h1>` "Biblioteca" não renderiza; o `<h1>` da tela é o do `AreaTopBar`).

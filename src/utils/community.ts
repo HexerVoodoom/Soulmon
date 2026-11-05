@@ -249,8 +249,25 @@ export const getRank = (season?: string, id?: string) =>
 export const getSeasonResult = (season: string) =>
   call<{ season: string; top3: RankRow[] }>('seasonResult', { params: { season } });
 
+/** §242: ENVIA um convite (a pessoa aceita). `status`: `pending` (aguardando) ou `friends` (convite cruzado, já são amigos). */
 export const addFriend = (id: string, friendId: string) =>
-  call<{ ok: true; friends: string[] }>('friends', { method: 'POST', body: { id, friendId } });
+  call<{ ok: true; status?: 'pending' | 'friends'; friends: string[] }>('friends', { method: 'POST', body: { id, friendId } });
+/** Aceita (ou, com `decline`, recusa) um convite RECEBIDO; `friendId` é o pid de quem convidou. */
+export const answerFriendInvite = (id: string, friendId: string, decline = false) =>
+  call<{ ok: true; status?: 'friends'; friends: string[] }>('friendAccept', { method: 'POST', body: { id, friendId, ...(decline ? { decline: true } : {}) } });
+export interface FriendsState {
+  friends: string[];
+  incoming: { id: string; name: string; at: number }[];
+  outgoing: string[];
+  /** Pids de quem já recebeu presente DESTA conta hoje (o servidor é a autoridade). */
+  sentToday: string[];
+  notes: { name: string; bits: number; at: number; unseen: boolean }[];
+  unseen: number;
+  limit: number;
+}
+/** O estado social de quem pergunta (só o dono lê): amigos, convites, presentes de hoje e o histórico de quem presenteou. */
+export const getFriendsState = (id: string) => call<FriendsState>('friendsState', { params: { id } });
+export const markFriendsSeen = (id: string) => call<{ ok: true }>('friendsSeen', { method: 'POST', body: { id } });
 export const removeFriend = (id: string, friendId: string) =>
   call<{ ok: true; friends: string[] }>('friends', { method: 'POST', body: { id, friendId, remove: true } });
 

@@ -1573,6 +1573,23 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [saveId]);
 
+  // §242: o "!" do prédio Amigos (convite recebido ou presente novo). O servidor é quem sabe; relê ao abrir, ao voltar à aba e a cada 5 min.
+  const [amigosAlerta, setAmigosAlerta] = useState(false);
+  useEffect(() => {
+    if (isDemoMode(gameStateRef.current)) return;
+    let vivo = true;
+    const ler = () => {
+      if (document.visibilityState === 'hidden') return;
+      import('./utils/community').then(m => m.getFriendsState(saveId))
+        .then(r => { if (vivo) setAmigosAlerta(r.incoming.length > 0 || r.unseen > 0); })
+        .catch(() => {});
+    };
+    ler();
+    const t = setInterval(ler, 5 * 60 * 1000);
+    document.addEventListener('visibilitychange', ler);
+    return () => { vivo = false; clearInterval(t); document.removeEventListener('visibilitychange', ler); };
+  }, [saveId]);
+
   // Presentes de amigos (Biblioteca): reivindica bits pendentes ao abrir o app.
   useEffect(() => {
     resgatarPresentes(saveId).then(({ gifts, confirmar }) => {
@@ -7821,6 +7838,8 @@ export default function App() {
                 strayPlayersSeen={gameState.strayPlayersSeen}
                 libraryAck={gameState.libraryAck}
                 onLibraryOpened={handleLibraryOpened}
+                onSocialAlert={setAmigosAlerta}
+                trainer={{ petStage: gameState.evolutionStage, petLine, petElement: petElementOf(gameState), skills: skillsDoJogador }}
                 language={language}
                 embedded
               />
@@ -8190,6 +8209,7 @@ export default function App() {
                   buildings: buildingMarks(gameState.buildingQuests, playerDayKey(new Date(), gameState.playerDayTz), bondLevelFor(gameState.totalXP ?? 0)),
                   passeio: marcasDeMissao.passeio, weekly: marcasDeMissao.torneio, conquistas: marcasDeMissao.conquistas,
                   dailyMissions: gameState.dailyMissions, day: playerDayKey(new Date(), gameState.playerDayTz), bondLevel: bondLevelFor(gameState.totalXP ?? 0),
+                  friendsAlert: amigosAlerta,
                 })}
                 buildingCoins={lotCoins(gameState, Date.now())}
                 onLayerChange={setAreaLayerOpen}
