@@ -29,14 +29,14 @@ export const MERC_TIPO: Record<MercOrdem, BranchType> = {
 };
 
 export const MERC_NOME: Record<MercOrdem, { pt: string; en: string; ordemPt: string; ordemEn: string }> = {
-  filtrador: { pt: 'Aldric, Desbravador dos Filtradores', en: 'Aldric, Filterer Pathfinder', ordemPt: 'Ordem dos Filtradores', ordemEn: 'Order of the Filterers' },
-  tecelao: { pt: 'Liane, Desbravadora dos Tecelões', en: 'Liane, Weaver Pathfinder', ordemPt: 'Ordem dos Tecelões', ordemEn: 'Order of the Weavers' },
-  rompente: { pt: 'Ragan, Desbravador dos Rompentes', en: 'Ragan, Breaker Pathfinder', ordemPt: 'Ordem dos Rompentes', ordemEn: 'Order of the Breakers' },
+  filtrador: { pt: 'Vithor', en: 'Vithor', ordemPt: 'Ordem dos Filtradores', ordemEn: 'Order of the Filterers' },
+  tecelao: { pt: 'Pim', en: 'Pim', ordemPt: 'Ordem dos Tecelões', ordemEn: 'Order of the Weavers' },
+  rompente: { pt: 'Thassia', en: 'Thassia', ordemPt: 'Ordem dos Rompentes', ordemEn: 'Order of the Breakers' },
 };
 
 /** Retratos placeholder esperados (a arte final vem da `/squad-arte`; ausente = silhueta nomeada). */
 export const MERC_RETRATO: Record<MercOrdem, string> = {
-  filtrador: 'merc-filtrador.png', tecelao: 'merc-tecelao.png', rompente: 'merc-rompente.png',
+  filtrador: 'lider-filtradores.png', tecelao: 'lider-teceloes.png', rompente: 'lider-rompentes.png',
 };
 
 /** A Ordem de uma categoria: a do maior valor em `CATEGORY_ATTRIBUTES` (dono único da tabela, sem segunda cópia). */

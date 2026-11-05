@@ -49,11 +49,13 @@ describe('entrada secreta', () => {
 
 describe('mapa da Guilda', () => {
   it('as três Ordens abrem o NPC delas; Remendados e Desfeitos abrem o próprio NPC', () => {
-    const ordem = vi.fn();
-    const { container } = render(<GuildaMapPage language="en-US" onClose={() => {}} onOpenOrdem={ordem} />);
+    const { container } = render(<GuildaMapPage language="en-US" onClose={() => {}} hoje={null} dayKey="2026-11-05" onAccept={() => {}} onConfirm={() => {}} />);
     expect(Object.keys(GUILDA_PREDIOS).length).toBe(5);
-    for (const o of ['filtrador', 'tecelao', 'rompente']) fireEvent.click(container.querySelector(`[data-guilda-predio="${o}"]`)!);
-    expect(ordem.mock.calls.map(c => c[0])).toEqual(['filtrador', 'tecelao', 'rompente']);
+    fireEvent.click(container.querySelector('[data-guilda-predio="rompente"]')!);
+    expect(document.querySelector('[data-merc-lider="rompente"]')).toBeTruthy();
+    fireEvent.click(document.querySelector('[data-merc-pensar]')!);
+    expect(document.querySelector('[data-merc-lider]')).toBeNull();
+    expect(container.textContent).toMatch(/one mission a day/);
     fireEvent.click(container.querySelector('[data-guilda-predio="remendados"]')!);
     expect(document.querySelector('[data-guilda-npc="remendados"]')).toBeTruthy();
   });

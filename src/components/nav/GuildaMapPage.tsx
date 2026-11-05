@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Language } from '../../utils/i18n';
 import { MAPA_PALCO_STYLE, type LotBounds } from '../../utils/areaLotGeometry';
 import { useBackLayer } from '../../utils/backStack';
-import type { MercOrdem } from '../../utils/mercMissionSave';
+import type { MercMissionState, MercOrdem } from '../../utils/mercMissionSave';
+import { MercGuildSheet } from '../MercGuildSheet';
+import { LockNotice } from '../ui/LockBadge';
 import { ModalSheet, sm2Text } from '../form/FormKit';
 import { arteOnboarding } from '../onboarding/sequencia/assets';
 import { Icon } from '../ui/Icon';
@@ -12,11 +14,11 @@ export type GuildaPredio = MercOrdem | 'remendados' | 'desfeitos';
 
 /** Os cinco prédios pintados no mapa da Guilda (05/11/2026, dono), em % da imagem, com a medida de `LOT_PINTADO`. */
 export const GUILDA_PREDIOS: Record<GuildaPredio, { rect: LotBounds; pt: string; en: string }> = {
-  filtrador: { rect: [0, 10, 31, 33], pt: 'Filtradores', en: 'Filterers' },
-  tecelao: { rect: [32, 5, 68, 26], pt: 'Tecelões', en: 'Weavers' },
-  rompente: { rect: [69, 11, 100, 32], pt: 'Rompentes', en: 'Breakers' },
-  remendados: { rect: [1, 44, 53, 64], pt: 'Remendados', en: 'Patched Ones' },
-  desfeitos: { rect: [60, 49, 100, 74], pt: 'Desfeitos', en: 'Undone' },
+  filtrador: { rect: [0, 17, 31, 40], pt: 'Filtradores', en: 'Filterers' },
+  tecelao: { rect: [32, 12, 68, 33], pt: 'Tecelões', en: 'Weavers' },
+  rompente: { rect: [69, 18, 100, 39], pt: 'Rompentes', en: 'Breakers' },
+  remendados: { rect: [1, 51, 53, 71], pt: 'Remendados', en: 'Patched Ones' },
+  desfeitos: { rect: [60, 56, 100, 81], pt: 'Desfeitos', en: 'Undone' },
 };
 
 /** As duas Ordens sem missão ainda: o toque abre só o NPC. */
@@ -26,9 +28,25 @@ const SO_NPC = {
 } as const;
 
 /** A GUILDA DOS MERCENÁRIOS: mapa de um nível só, sem área interna; cada prédio abre direto o NPC. Fica por cima do Mapa até o jogador voltar. */
-export function GuildaMapPage({ language, onClose, onOpenOrdem }: { language: Language; onClose: () => void; onOpenOrdem: (ordem: MercOrdem) => void }) {
+export function GuildaMapPage({ language, onClose, hoje, dayKey, bb = false, onAccept, onConfirm }: {
+  language: Language;
+  onClose: () => void;
+  /** A missão de hoje (dia do jogador), ou `null`. */
+  hoje: MercMissionState | null;
+  dayKey: string;
+  bb?: boolean;
+  onAccept: (ordem: MercOrdem) => void;
+  onConfirm: () => void;
+}) {
   const isPt = language === 'pt-BR';
   const [npc, setNpc] = useState<keyof typeof SO_NPC | null>(null);
+  const [lider, setLider] = useState<MercOrdem | null>(null);
+  const [aviso, setAviso] = useState(false);
+  useEffect(() => {
+    if (!aviso) return;
+    const t = setTimeout(() => setAviso(false), 5000);
+    return () => clearTimeout(t);
+  }, [aviso]);
   useBackLayer(true, onClose);
   const aberto = npc ? SO_NPC[npc] : null;
   return (
@@ -45,7 +63,7 @@ export function GuildaMapPage({ language, onClose, onOpenOrdem }: { language: La
               key={id}
               type="button"
               data-guilda-predio={id}
-              onClick={() => (id === 'remendados' || id === 'desfeitos' ? setNpc(id) : onOpenOrdem(id))}
+              onClick={() => (id === 'remendados' || id === 'desfeitos' ? setNpc(id) : setLider(id))}
               aria-label={isPt ? pt : en}
               style={{
                 position: 'absolute', left: `${b[0]}%`, top: `${b[1]}%`, width: `${b[2] - b[0]}%`, height: `${b[3] - b[1]}%`,
@@ -75,6 +93,16 @@ export function GuildaMapPage({ language, onClose, onOpenOrdem }: { language: La
       >
         <Icon name="arrow_back" size={32} tone="gold" />
       </button>
+      {lider && (
+        <MercGuildSheet
+          ordem={lider} language={language} hoje={hoje} dayKey={dayKey} bb={bb}
+          onClose={() => setLider(null)}
+          onAccept={onAccept}
+          onThink={() => { setLider(null); setAviso(true); }}
+          onConfirm={onConfirm}
+        />
+      )}
+      {aviso && <LockNotice text={isPt ? 'Só dá para pegar uma missão por dia, de um dos três.' : 'You can take only one mission a day, from one of the three.'} />}
       {npc && aberto && (
         <ModalSheet open onClose={() => setNpc(null)} language={language} maxWidth={440} title={isPt ? aberto.pt : aberto.en}>
           <div data-guilda-npc={npc} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>

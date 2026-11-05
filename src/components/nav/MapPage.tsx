@@ -44,7 +44,7 @@ const CHIP: import('react').CSSProperties = {
  * (dono único: nenhuma moeda pode ser confundida com outra).
  */
 /** O cristal central pintado no mapa-mundo, em % da imagem. */
-const CRISTAL = [48, 24, 64, 37] as const;
+const CRISTAL = [46, 30, 62, 43] as const;
 
 export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, credits, bondLevel }: {
   language: Language;
