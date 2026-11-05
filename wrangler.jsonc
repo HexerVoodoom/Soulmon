@@ -49,7 +49,8 @@
     // Config WEB do Firebase (pública por desenho; igual à de .env.production). Usada só pela página /gm/soulmons para o login do GM.
     "FIREBASE_API_KEY": "AIzaSyAnDdCxoxdwENfg1tzoXkhRHaqO_NnJ0dU",
     "FIREBASE_AUTH_DOMAIN": "soulmon-app.firebaseapp.com",
-    "SIMULADOS_ON": "1"
+    "SIMULADOS_ON": "1",
+    "SIMULADOS_FORMAS_ON": "1"
   },
   "d1_databases": [
     { "binding": "DB", "database_name": "soulmon-billing", "database_id": "43546903-7f12-4541-9a67-4b0e8ac736da" }

@@ -9231,14 +9231,14 @@ export default function App() {
       {currentView === 'map' && (
         <CornerLink
           icon="home"
-          side="left"
+          side={guildaOpen ? 'right' : 'left'}
           label={language === 'pt-BR' ? 'Início' : 'Home'}
-          onClick={goBack}
+          onClick={() => { setGuildaOpen(false); goBack(); }}
         />
       )}
       {/* Missões também no MAPA (dono, 04/11/2026): o mesmo ícone "!"/"?" da Home, no canto superior DIREITO
           (espelho da casinha; as moedas moram embaixo), abrindo a mesma folha de Missões. */}
-      {currentView === 'map' && (
+      {currentView === 'map' && !guildaOpen && (
         <MissionsLink
           mark={marcasDeMissao.corner}
           tone="gold"

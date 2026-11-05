@@ -6,7 +6,7 @@ import { lotNpcVoice } from '../../utils/areaNpcVoice';
 import { NpcSpeech } from './NpcSpeech';
 import { useBackLayer } from '../../utils/backStack';
 import { useDialogA11y } from '../../hooks/useDialogA11y';
-import { NPC_MAX_WIDTH_PCT, NPC_BASE_UNDER_SHEET, NPC_TOP_PAD_PX, npcFrameFor } from './npcScale';
+import { NPC_MAX_WIDTH_PCT, NPC_BASE_UNDER_SHEET, NPC_TOP_PAD_PX, npcFrameFor, type NpcFrame } from './npcScale';
 import { BackCircleButton } from '../ui/BackCircleButton';
 import { ModalInfoSlotProvider, useModalInfoSlot } from '../ui/InfoTip';
 import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
@@ -25,7 +25,7 @@ import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
  * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
  * abrir/fechar, o NPC certo, a fala e a proporção.
  */
-export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcVoice, headSlotRef, closeInSheet = false, hideClose = false, children }: {
+export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcVoice, headSlotRef, closeInSheet = false, hideClose = false, npcFrame, children }: {
   /** Ausente só quando `npcArt` + `npcVoice` vêm de fora (NPC de FUNÇÃO, ex.: Ambra nas Missões). */
   areaId?: AreaId;
   /** Id do lote aberto (ex.: `'itens'`, `'torneio'`) — resolve o NPC certo
@@ -52,6 +52,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   closeInSheet?: boolean;
   /** Esconde o voltar da folha: o conteúdo (o duelo do Torneio, com o `BattleStage`) traz o PRÓPRIO voltar padrão — duas setas era o bug de 27/10/2026. O voltar do sistema e o Escape seguem fechando. */
   hideClose?: boolean;
+  /** Enquadramento do NPC de função (sem lote), no lugar de `npcFrameFor`. */
+  npcFrame?: NpcFrame;
   children?: ReactNode;
 }) {
   // O voltar do sistema (botão do Android/navegador) fecha a folha antes de mudar de tela.
@@ -63,7 +65,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   const { slot, slotRef } = useModalInfoSlot();
   const npcKey = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
   if (!open) return null;
-  const frame = npcFrameFor(areaId, lotId);
+  const frame = npcFrame ?? npcFrameFor(areaId, lotId);
 
   const npcSrc = npcArt ?? (areaId ? lotNpcArt(areaId, lotId) : '');
   const npc = npcVoice ?? (areaId ? lotNpcVoice(areaId, lotId, language) : { name: '', line: '' });

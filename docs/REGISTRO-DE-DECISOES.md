@@ -4133,7 +4133,31 @@ Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combin
 
 **O que falsificaria.** Champion parecer pouco no topo do ranking. **Rollback:** subir `SIM_FORMA_MAX`.
 
-## §236 — Curados novos: Planta, Industrial e Fada deixam de parar em 2 componentes (05/11/2026, emenda ao §232)
+
+## §236 — Os 11 elementos sem efeito ganham efeito real (05/11/2026, decisão do dono; emenda §228)
+
+**Decisão do dono.** Sobre Gravidade, Tempo, Planta, Fada, Luz, Industrial, Vigor, Eletricidade, Marcial, Arcano e Espaço: "Tem que ter efeito, não pode ser só visual. Pode ser o mesmo efeito de outro e ter diferença visual."
+
+- **Lentidão** com `defDebuff`: Gravidade (Peso), Tempo (Retardo), Industrial (Ferrugem), Espaço (Distorção).
+- **Silêncio** com `defDebuff`: Luz (Ofuscado), Eletricidade (Curto-circuito), Marcial (Atordoado), Arcano (Selado).
+- **Cura contínua** com `shield`: Planta (Seiva), Fada (Pó de fada), Vigor (Fôlego).
+- **Buff da própria família, com selo próprio e sem regra nova:** Gravidade e Industrial com `shield` (Escudo de peso, Blindagem), Vigor e Marcial com `atkBuff` (Fúria, Postura), Tempo e Eletricidade com `spdBuff` (Aceleração, Carga). Esses selos também aparecem no PvP, porque o buff existe lá.
+- **Continua valendo:** `direct` é só dano, o efeito vem do elemento do especial, queimadura e veneno seguem só visuais, PvP não ganha regra nova. Outras famílias desses elementos ficam sem efeito próprio.
+- **Derivados:** o par antigo tem prioridade (`TABELA` antes de `TABELA_11`), então nenhum derivado que já tinha efeito muda. Derivados sem efeito passam a herdar da tabela nova.
+
+**Medida** (`EFEITOS_ELEMENTOS=1`, `efeitosPve.medicao.test.ts`, N = 1600, pareada contra a mesma família sem efeito). Os botões são os do §228, sem ajuste; os elementos de uma mecânica medem igual.
+
+| Mecânica | Arena | Masmorra | Pesadelo |
+|---|---|---|---|
+| Lentidão | +1,8 | −1,9 | +1,7 |
+| Silêncio | −0,4 | +0,2 | +0,7 |
+| Cura contínua | −0,7 | +1,8 | −0,6 |
+
+**Alternativa que perdeu:** a proposta de 05/11 (só selo em 8 elementos, nada em Marcial, Arcano e Espaço), recusada pelo dono.
+
+**O que falsificaria.** Medição de um par fora de ±3pp, ou lentidão e silêncio passarem a dominar a escolha de família em `defDebuff`. **Arte:** 17 glifos pendentes em `docs/ASSETS-A-GERAR.md`; até lá o selo mostra forma + texto. **Rollback:** esvaziar `TABELA_11`.
+
+## §237 — Curados novos: Planta, Industrial e Fada deixam de parar em 2 componentes (05/11/2026, emenda ao §232)
 
 **Decisão do dono.** Resolver o "Limite real" do §232 com curados novos: 3 trios que já existiam no jogo mais 6 elementos novos, para que cada uma das três bases tenha 2 trios e 1 quádruplo. Plano e prompts em `D:/Soulmon/planos/curados-novos.md`.
 
@@ -4142,7 +4166,9 @@ Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combin
 - **Novos (nº 262-267, `elementosLote4.data.ts`):** Clareira Sagrada (planta, luz, vida), Alto-Forno (industrial, fogo, terra), Bênção Feérica (fada, luz, vida), Floresta Ancestral (planta, terra, tempo, arcano), Colosso Blindado (industrial, eletricidade, vigor, marcial) e Corte Feérica (fada, arcano, luz, som). Roster, arte, elemento do sprite, nome PT/EN e listas fechadas (`_duel.js`, `_elementoBase.js`, `elementoIds.ts`) cobertos.
 - **Catálogo:** 50 vira 59 curados; Biblioteca e `ELEMENT_DEX_MAX` passam de 261 para 270 (cliente e `_elementDex.js`). `ALL_ELEMENT_IDS` (Loja/Poção) não muda.
 - **Regra do §232 mantida:** nenhuma outra linha mudou. O que mudou é que `escolherElemento` agora acha curado de 3 e 4 componentes com planta, industrial e fada, então esses Soulmons chegam a k=3 e k=4. A escolha entre os 2 trios da mesma base segue as afinidades (sombrio x luminoso).
-- **Arte:** ícone e FX por glob, sem arte o ícone some e o combate usa o FX genérico; sprite cai no rookie da criatura base. Falta listada em `docs/ASSETS-A-GERAR.md` §24.
+- **Arte:** ícone e FX por glob; sem arte, ícone e FX caem nos do 1º componente; sprite cai no rookie da criatura base. Falta listada em `docs/ASSETS-A-GERAR.md` §24.
+
+**Decisão do dono (05/11/2026):** refazer ícone e FX de Pestilência, Maldição e Cyber (reprovações em `manifesto.csv` e regra de identidade de 04/11), pendente de geração.
 
 **Colisão de nome.** `maldicao` já é id de escola e de status (`st-maldicao`, `arena.ts`). São espaços de id diferentes; a UI pode confundir "Maldição" elemento com "Maldição" efeito. Risco aceito, a revisar com o dono.
 

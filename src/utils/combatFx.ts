@@ -271,7 +271,9 @@ export function prefersReducedMotion(): boolean {
 export type StatusFxKind = 'buff' | 'debuff' | 'maldicao' | 'dot' | 'queimadura' | 'veneno' | 'silencio' | 'lento' | 'cura' | 'hot' | 'escudo';
 export const STATUS_FX_KINDS: readonly StatusFxKind[] = ['buff', 'debuff', 'maldicao', 'dot', 'queimadura', 'veneno', 'silencio', 'lento', 'cura', 'hot', 'escudo'];
 /** Qual atributo o buff/debuff mexe (escolhe o glifo e o texto). */
-export type StatusVariant = 'atk' | 'spd' | 'def' | 'fisico' | 'magico' | 'terra' | 'agua';
+export type StatusVariant = 'atk' | 'spd' | 'def' | 'fisico' | 'magico' | 'terra' | 'agua'
+  | 'peso' | 'retardo' | 'ferrugem' | 'distorcao' | 'ofuscado' | 'curtoCircuito' | 'atordoado' | 'selado'
+  | 'seiva' | 'poDeFada' | 'folego' | 'escudoPeso' | 'blindagem' | 'furia' | 'postura' | 'aceleracao' | 'carga';
 
 interface Bilingual { readonly en: string; readonly pt: string }
 
@@ -292,15 +294,20 @@ export interface StatusFxDef {
 const L = (en: string, pt: string): Bilingual => ({ en, pt });
 
 /** Glifos citados que ainda não têm arte (fila em docs/ASSETS-A-GERAR.md): o selo mostra forma + texto. */
-export const GLIFOS_PENDENTES: readonly string[] = ['st-queimadura', 'st-veneno', 'st-silencio', 'st-lentidao'];
+export const GLIFOS_PENDENTES: readonly string[] = [
+  'st-queimadura', 'st-veneno', 'st-silencio', 'st-lentidao',
+  // §236: selo próprio dos 11 elementos; até a arte chegar, forma + texto
+  'st-peso', 'st-retardo', 'st-ferrugem', 'st-distorcao', 'st-ofuscado', 'st-curto-circuito', 'st-atordoado', 'st-selado',
+  'st-seiva', 'st-po-de-fada', 'st-folego', 'st-escudo-peso', 'st-blindagem', 'st-furia', 'st-postura', 'st-aceleracao', 'st-carga',
+];
 
 export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
   buff: {
     // `fisico`/`magico`: mesma mecânica de `atk`; glifo próprio pendente (docs/ASSETS-A-GERAR.md), usa o de ataque até lá.
-    glyph: { _: 'st-buff-atk', atk: 'st-buff-atk', spd: 'st-buff-spd' },
+    glyph: { _: 'st-buff-atk', atk: 'st-buff-atk', spd: 'st-buff-spd', furia: 'st-furia', postura: 'st-postura', aceleracao: 'st-aceleracao', carga: 'st-carga' },
     loop: 'fx-buff-loop-sheet', still: null, mark: '▲',
-    label: { _: L('Boost', 'Reforço'), atk: L('Attack up', 'Ataque em alta'), spd: L('Speed up', 'Velocidade em alta'), fisico: L('Physical attack up', 'Ataque físico em alta'), magico: L('Magic attack up', 'Ataque mágico em alta') },
-    short: { _: L('UP', 'UP'), atk: L('ATK', 'ATQ'), spd: L('SPD', 'VEL'), fisico: L('PHYS', 'FÍS.'), magico: L('MAG', 'MÁG.') },
+    label: { _: L('Boost', 'Reforço'), atk: L('Attack up', 'Ataque em alta'), spd: L('Speed up', 'Velocidade em alta'), fisico: L('Physical attack up', 'Ataque físico em alta'), magico: L('Magic attack up', 'Ataque mágico em alta'), furia: L('Fury', 'Fúria'), postura: L('Stance', 'Postura'), aceleracao: L('Acceleration', 'Aceleração'), carga: L('Charge', 'Carga') },
+    short: { _: L('UP', 'UP'), atk: L('ATK', 'ATQ'), spd: L('SPD', 'VEL'), fisico: L('PHYS', 'FÍS.'), magico: L('MAG', 'MÁG.'), furia: L('FURY', 'FÚRIA'), postura: L('STNC', 'POST.'), aceleracao: L('ACCEL', 'ACEL.'), carga: L('CHRG', 'CARGA') },
   },
   debuff: {
     glyph: { _: 'st-debuff-def', def: 'st-debuff-def' },
@@ -334,16 +341,16 @@ export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
     short: { _: L('PSN', 'VEN.') },
   },
   silencio: {
-    glyph: { _: 'st-silencio' },
+    glyph: { _: 'st-silencio', ofuscado: 'st-ofuscado', curtoCircuito: 'st-curto-circuito', atordoado: 'st-atordoado', selado: 'st-selado' },
     loop: null, still: null, mark: '∅',
-    label: { _: L('Silenced', 'Silêncio') },
-    short: { _: L('MUTE', 'MUDO') },
+    label: { _: L('Silenced', 'Silêncio'), ofuscado: L('Dazzled', 'Ofuscado'), curtoCircuito: L('Short circuit', 'Curto-circuito'), atordoado: L('Stunned', 'Atordoado'), selado: L('Sealed', 'Selado') },
+    short: { _: L('MUTE', 'MUDO'), ofuscado: L('DAZE', 'OFUSC.'), curtoCircuito: L('SHORT', 'CURTO'), atordoado: L('STUN', 'ATORD.'), selado: L('SEAL', 'SELO') },
   },
   lento: {
-    glyph: { _: 'st-lentidao' },
+    glyph: { _: 'st-lentidao', peso: 'st-peso', retardo: 'st-retardo', ferrugem: 'st-ferrugem', distorcao: 'st-distorcao' },
     loop: 'fx-debuff-loop-sheet', still: null, mark: '▽',
-    label: { _: L('Speed down', 'Velocidade em baixa') },
-    short: { _: L('SLOW', 'LENTO') },
+    label: { _: L('Speed down', 'Velocidade em baixa'), peso: L('Weighed down', 'Peso'), retardo: L('Time lag', 'Retardo'), ferrugem: L('Rust', 'Ferrugem'), distorcao: L('Warped', 'Distorção') },
+    short: { _: L('SLOW', 'LENTO'), peso: L('HEAVY', 'PESO'), retardo: L('LAG', 'RETARD.'), ferrugem: L('RUST', 'FERR.'), distorcao: L('WARP', 'DIST.') },
   },
   cura: {
     glyph: { _: 'st-cura' },
@@ -352,16 +359,16 @@ export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
     short: { _: L('HEAL', 'CURA') },
   },
   hot: {
-    glyph: { _: 'st-hot' },
+    glyph: { _: 'st-hot', seiva: 'st-seiva', poDeFada: 'st-po-de-fada', folego: 'st-folego' },
     loop: null, still: 'fx-heal', mark: '+↑',
-    label: { _: L('Healing over time', 'Cura contínua') },
-    short: { _: L('HoT', 'HoT') },
+    label: { _: L('Healing over time', 'Cura contínua'), seiva: L('Sap', 'Seiva'), poDeFada: L('Fairy dust', 'Pó de fada'), folego: L('Second wind', 'Fôlego') },
+    short: { _: L('HoT', 'HoT'), seiva: L('SAP', 'SEIVA'), poDeFada: L('DUST', 'PÓ'), folego: L('WIND', 'FÔL.') },
   },
   escudo: {
-    glyph: { _: 'st-escudo' },
+    glyph: { _: 'st-escudo', escudoPeso: 'st-escudo-peso', blindagem: 'st-blindagem' },
     loop: null, still: 'fx-shield', mark: '▣',
-    label: { _: L('Shield', 'Escudo'), terra: L('Earth defense up', 'Defesa de terra em alta'), agua: L('Water defense up', 'Defesa de água em alta') },
-    short: { _: L('SHLD', 'ESCU'), terra: L('DEF', 'DEF'), agua: L('DEF', 'DEF') },
+    label: { _: L('Shield', 'Escudo'), terra: L('Earth defense up', 'Defesa de terra em alta'), agua: L('Water defense up', 'Defesa de água em alta'), escudoPeso: L('Heavy shield', 'Escudo de peso'), blindagem: L('Plating', 'Blindagem') },
+    short: { _: L('SHLD', 'ESCU'), terra: L('DEF', 'DEF'), agua: L('DEF', 'DEF'), escudoPeso: L('HEAVY', 'PESO'), blindagem: L('PLATE', 'BLIND.') },
   },
 };
 
@@ -501,6 +508,19 @@ export function tickStatus(board: StatusBoard, ev: { kind: 'attack' | 'tick'; wh
 /** Os efeitos cujos turnos o NÚCLEO conta de verdade (PR16). `cura` não tem contador (é instantânea): segue na aproximação. */
 const REAL_KINDS: readonly StatusFxKind[] = ['buff', 'debuff', 'maldicao', 'dot', 'queimadura', 'veneno', 'silencio', 'lento', 'hot', 'escudo'];
 const FX_EPS = 1e-9;
+/** §228/§236: qual contador do núcleo cada efeito do elemento veste, e com que variante. A mecânica não muda. */
+const PELE: Partial<Record<EfeitoElemento, readonly [StatusFxKind | 'spd', StatusVariant]>> = {
+  ataqueFisico: ['buff', 'fisico'], ataqueMagico: ['buff', 'magico'], furia: ['buff', 'furia'], postura: ['buff', 'postura'],
+  aceleracao: ['spd', 'aceleracao'], carga: ['spd', 'carga'],
+  defesaTerra: ['escudo', 'terra'], defesaAgua: ['escudo', 'agua'], escudoPeso: ['escudo', 'escudoPeso'], blindagem: ['escudo', 'blindagem'],
+  seiva: ['hot', 'seiva'], poDeFada: ['hot', 'poDeFada'], folego: ['hot', 'folego'],
+  peso: ['lento', 'peso'], retardo: ['lento', 'retardo'], ferrugem: ['lento', 'ferrugem'], distorcao: ['lento', 'distorcao'],
+  ofuscado: ['silencio', 'ofuscado'], curtoCircuito: ['silencio', 'curtoCircuito'], atordoado: ['silencio', 'atordoado'], selado: ['silencio', 'selado'],
+};
+const peleDe = (e: EfeitoElemento | null, k: StatusFxKind | 'spd'): StatusVariant | undefined => {
+  const p = e ? PELE[e] : undefined;
+  return p && p[0] === k ? p[1] : undefined;
+};
 /** Turnos que faltam de um contador do núcleo: o que sobra (mesmo fracionado) ainda vale um golpe. */
 const left = (x: number): number => (x > FX_EPS ? Math.max(1, Math.ceil(x - FX_EPS)) : 0);
 
@@ -527,15 +547,19 @@ export function withRealFx(
     const real: BoardEntry[] = [];
     const proprio = efeitoOn(h, 'self');
     const recebido = efeitoOn(h, 'foe');
-    const atkVar: StatusVariant = proprio === 'ataqueFisico' ? 'fisico' : proprio === 'ataqueMagico' ? 'magico' : 'atk';
+    const atkVar: StatusVariant = peleDe(proprio, 'buff') ?? 'atk';
+    const spdVar: StatusVariant = peleDe(proprio, 'spd') ?? 'spd';
+    const silVar = peleDe(recebido, 'silencio');
+    const lentoVar = peleDe(recebido, 'lento');
+    const hotVar = peleDe(proprio, 'hot');
     const dotKind: StatusFxKind = recebido === 'queimadura' || recebido === 'veneno' ? recebido : 'dot';
-    const escudoVar: StatusVariant | undefined = proprio === 'defesaTerra' ? 'terra' : proprio === 'defesaAgua' ? 'agua' : undefined;
+    const escudoVar = peleDe(proprio, 'escudo');
     if (f.nAtk > FX_EPS) real.push({ kind: 'buff', variant: atkVar, turns: left(f.nAtk), source: h });
-    if (f.nSpd > FX_EPS) real.push({ kind: 'buff', variant: 'spd', turns: left(f.nSpd), source: h });
+    if (f.nSpd > FX_EPS) real.push({ kind: 'buff', variant: spdVar, turns: left(f.nSpd), source: h });
     if (f.nVuln > FX_EPS) real.push(curseOn(h) || recebido === 'maldicao' ? { kind: 'maldicao', turns: left(f.nVuln), source: -1 } : { kind: 'debuff', variant: 'def', turns: left(f.nVuln), source: -1 });
-    if ((f.nSil ?? 0) > FX_EPS) real.push({ kind: 'silencio', turns: left(f.nSil ?? 0), source: -1 });
-    if ((f.nSlow ?? 0) > FX_EPS) real.push({ kind: 'lento', turns: left(f.nSlow ?? 0), source: -1 });
-    if ((f.hot ?? 0) > 0) real.push({ kind: 'hot', turns: f.hot ?? 0, source: h });
+    if ((f.nSil ?? 0) > FX_EPS) real.push({ kind: 'silencio', ...(silVar ? { variant: silVar } : {}), turns: left(f.nSil ?? 0), source: -1 });
+    if ((f.nSlow ?? 0) > FX_EPS) real.push({ kind: 'lento', ...(lentoVar ? { variant: lentoVar } : {}), turns: left(f.nSlow ?? 0), source: -1 });
+    if ((f.hot ?? 0) > 0) real.push({ kind: 'hot', ...(hotVar ? { variant: hotVar } : {}), turns: f.hot ?? 0, source: h });
     if (f.dot > 0) real.push({ kind: dotKind, turns: f.dot, source: -1 });
     if (f.shieldHits > FX_EPS && f.shield > FX_EPS) real.push({ kind: 'escudo', ...(escudoVar ? { variant: escudoVar } : {}), turns: left(f.shieldHits), source: h });
     return [...keep, ...real];

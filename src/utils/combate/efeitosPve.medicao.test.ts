@@ -6,7 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { simulateArenaRunV3 } from '../arena';
 import { simulateDungeonRunV3, simulateNightmareV3 } from '../dungeonFight';
 import { REFERENCE_BUILD_NAMES, REFERENCE_BUILDS, RULER_LEVELS, combatantAt } from './level';
-import { EFEITOS_PVE_LIGADOS, comEfeitoDoElemento } from './elementEffects';
+import { EFEITOS_PVE_LIGADOS, comEfeitoDoElemento, efeitoDoEspecial } from './elementEffects';
 import { groupFightSteps } from './group';
 import { EFFECT_TUNE, EFFECT_TUNE_PESADELO, specialOf, type SpecialFamily } from './specials';
 
@@ -64,6 +64,42 @@ describe('§228: efeitos em PvE', () => {
       expect(EFEITOS_PVE_LIGADOS).toContain(nome);
       const d = deltas(fam, el);
       console.log(`[gate] ${nome} | ${fmt(d)}`);
+      for (const x of d) expect(Math.abs(x)).toBeLessThanOrEqual(3);
+    }
+  });
+
+  // §236: os 11 elementos reusam as 3 mecânicas com o mesmo botão, então a régua de cima vale para eles.
+  const ONZE = [
+    ['gravidade', 'defDebuff', 'slow'], ['tempo', 'defDebuff', 'slow'], ['industrial', 'defDebuff', 'slow'], ['espaco', 'defDebuff', 'slow'],
+    ['luz', 'defDebuff', 'silence'], ['eletricidade', 'defDebuff', 'silence'], ['marcial', 'defDebuff', 'silence'], ['arcano', 'defDebuff', 'silence'],
+    ['planta', 'shield', 'hot'], ['fada', 'shield', 'hot'], ['vigor', 'shield', 'hot'],
+  ] as const;
+
+  it('§236: cada um dos 11 liga a mecânica real, com o mesmo especial do elemento já medido', () => {
+    const ref = { slow: 'ar', silence: 'som', hot: 'vida' } as const;
+    for (const [el, fam, effect] of ONZE) {
+      const sp = comEfeitoDoElemento(specialOf(fam), el);
+      expect(sp.effect, el).toBe(effect);
+      expect(sp).toEqual(comEfeitoDoElemento(specialOf(fam), ref[effect]));
+      expect(comEfeitoDoElemento(specialOf(fam), el, true)).toEqual(comEfeitoDoElemento(specialOf(fam), ref[effect], true));
+      expect(EFEITOS_PVE_LIGADOS).toContain(efeitoDoEspecial(fam, el));
+    }
+  });
+
+  it('§236: buff da própria família continua sendo o especial da família (delta 0 por construção)', () => {
+    for (const [el, fam] of [['gravidade', 'shield'], ['industrial', 'shield'], ['vigor', 'atkBuff'], ['marcial', 'atkBuff'], ['tempo', 'spdBuff'], ['eletricidade', 'spdBuff']] as const) {
+      const sp = specialOf(fam);
+      expect(efeitoDoEspecial(fam, el), el).not.toBeNull();
+      expect(comEfeitoDoElemento(sp, el), el).toBe(sp);
+    }
+  });
+
+  it.skipIf(process.env.EFEITOS_ELEMENTOS !== '1')('GATE ±3pp elemento a elemento (só com EFEITOS_ELEMENTOS=1)', () => {
+    const base = new Map<string, number[]>();
+    for (const [el, fam] of ONZE) {
+      if (!base.has(fam)) base.set(fam, medir(fam));
+      const d = medir(fam, el).map((x, i) => (x - base.get(fam)![i]) * 100);
+      console.log('[gate11] ' + el + ' | ' + fmt(d));
       for (const x of d) expect(Math.abs(x)).toBeLessThanOrEqual(3);
     }
   });
