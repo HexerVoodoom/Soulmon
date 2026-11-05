@@ -186,7 +186,7 @@ describe('community — a lista de ações com ator está completa', () => {
     // Ações públicas de leitura: não agem em nome de ninguém.
     const publicas = new Set(['players', 'player', 'opponents', 'rank', 'seasonResult', 'names', 'strays', 'evoFeed']); // evoFeed (04/11/2026): feed global sem id; strays (§213): pool anônimo, não lê id
     // Protegida por chave de admin, não por dono.
-    const admin = new Set(['closeSeason']);
+    const admin = new Set(['closeSeason', 'backfillNicks']);
 
     const todas = [...src.matchAll(/action === '([a-zA-Z]+)'/g)].map(m => m[1]);
     for (const a of new Set(todas)) {
