@@ -18,6 +18,7 @@ import { BattleStage, BATTLE_LAYER_STYLE, type StageAction, type StageFighter, t
 import { ResultScreen, type ResultLedgerRow } from '../games/ResultScreen';
 import type { FightEvent } from '../../utils/combate/fight';
 import { impactMs, introMs, prefersReducedMotion, specialLeadMs, specialTailMs, type StageActionKind } from '../../utils/combatFx';
+import { meleeImpactOf } from '../../utils/combate/golpeImpacto';
 import { avancar as avancarPortao, bloqueiaAplicar, bloqueiaComecar, fechar as fecharPortao, type ConfigDoPortao, type Portao } from '../../utils/specialGate';
 import { FEIRA_SCENE } from '../../utils/dungeonScenes';
 import { ENERGY_TRIGGER } from '../../utils/combate/specials';
@@ -126,7 +127,7 @@ export function BossFightScreen(p: BossFightScreenProps) {
     let last = performance.now();
     const fire = (e: FightEvent, k: StageActionKind) => {
       const mineSide = e.side === 0;
-      setAction({ id: ++seq.current, actor: mineSide ? 'me' : 'foe', foe: 0, kind: k, strike: k === 'special' ? 'ranged' : undefined, element: mineSide ? p.me.element : bossElement });
+      setAction({ id: ++seq.current, actor: mineSide ? 'me' : 'foe', foe: 0, kind: k, strike: k === 'special' ? 'ranged' : undefined, impacto: meleeImpactOf({ element: mineSide ? p.me.element : bossElement, key: mineSide ? `me|${p.me.element}` : `boss|${bossElement}` }), element: mineSide ? p.me.element : bossElement });
     };
     const id = window.setInterval(() => {
       if (finished) return;

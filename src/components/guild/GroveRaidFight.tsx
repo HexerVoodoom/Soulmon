@@ -14,6 +14,7 @@ import { useBattleSpeed, BattleSpeedButton } from '../games/BattleSpeed';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from '../games/pveTags';
 import { sm2Button } from '../form/FormKit';
 import { fxElementId, prefersReducedMotion, elementStrikeForm, specialLabel } from '../../utils/combatFx';
+import { meleeImpactOf, chaveDaIdentidade } from '../../utils/combate/golpeImpacto';
 import { fighterIdentity } from '../../utils/fighterIdentity';
 import { dungeonFamily, dungeonPlayerSide } from '../../utils/dungeonFight';
 import { stageSkillsFor, type FichaSkills } from '../../utils/soulProfile/ficha/stageSkillsFor';
@@ -86,6 +87,8 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
     playerElement: sp => fxElementId(sp ? ident.especial.elemento : ident.basico.elemento),
     foeElement: f => foeEl[f] ?? foeEl[0],
     playerKind: sp => (sp ? ident.especial.forma : ident.basico.forma),
+    playerImpact: sp => meleeImpactOf({ element: sp ? ident.especial.elemento : ident.basico.elemento, key: chaveDaIdentidade(ident) }),
+    foeImpact: f => meleeImpactOf({ element: foeEl[f] ?? foeEl[0], key: `${f}|${foeEl[f] ?? foeEl[0]}` }),
     foeKind: (f, sp) => elementStrikeForm(foeEl[f] ?? foeEl[0], sp ? 'especial' : 'basica'),
     labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
     personalTag: PERSONAL_TAG[lang][family],

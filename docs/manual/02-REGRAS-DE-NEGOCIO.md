@@ -5258,6 +5258,8 @@ vindo do servidor).
 
 ---
 
+**Corte × concussão (05/11/2026, REGISTRO §226).** O golpe corpo a corpo acaba em corte ou em concussão (splash de impacto, sem projétil): só visual, decidido por função pura por lutador (palavra-chave do nome de inimigo, senão sorteio estável com peso por elemento; Ar 75/25, Terra 25/75). Não altera dano, sementes nem RNG. Tabela e garantias: [REGRA-CORTE-CONCUSSAO.md](../REGRA-CORTE-CONCUSSAO.md).
+
 <a id="combate-v3"></a>
 ## 55-B. ⚔️ Combate v3: level, talentos, equipamento e o teto de 5%
 
