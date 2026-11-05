@@ -953,7 +953,14 @@ export const CompanionHUD = memo(function CompanionHUD({
   /* 01/11/2026 (dono): na Home o bicho fica 30% menor para ocupar menos do visor; sombra e âncora do pé seguem o mesmo fator. */
   const petScale = usePetScale(evolutionStage, sprite) * HOME_PET_SIZE;
   /* O PNG tem linhas transparentes embaixo (0–25%): alinhar pela caixa deixava o pé PAIRANDO acima da sombra. Desce o sprite até o último pixel opaco tocar a linha de chão. */
-  const petGroundDrop = useGroundDrop(sprite, petScale, PET_RENDER);
+  /* ⚠️ 05/11/2026 (dono: "a maioria dos Soulmons flutua em cima da sombra"). A causa: o `scale: petScale` do <img> NÃO APLICA — o React 18
+     escreve número em `style` com "px" ("0.25px"), `scale` não é unitless e o navegador joga o valor fora (conferido no DOM: o atributo
+     `style` do <img> não tem `scale`). O bicho sempre foi desenhado em 100%, mas a descida do pé era calculada para o bicho ENCOLHIDO
+     (`petScale` ~0,25: descia 3 px em vez de ~12) e a sombra era dimensionada pelo mesmo número. Aqui o pé e a sombra seguem o que está
+     de fato na tela (escala 1). Ligar o `scale` de verdade muda o tamanho de todos os bichos (alvos do dono em `spriteScale.ts`): é decisão
+     à parte — quando ligar, troque `PET_DRAWN_SCALE` pelo `petScale`. */
+  const PET_DRAWN_SCALE = 1;
+  const petGroundDrop = useGroundDrop(sprite, PET_DRAWN_SCALE, PET_RENDER);
 
   /* ── A SINTONIA, vista de dentro do visor (`spec` §2.1 e §2.3.1) ──────────
      A tabela do §2.1 é a tabela DESTA tela, e cobra a varredura de 400 ms nas
@@ -1569,10 +1576,12 @@ export const CompanionHUD = memo(function CompanionHUD({
                 style={{
                   position: 'absolute',
                   left: '50%',
-                  bottom: PET_GROUND_KEEP + PET_LIFT,
+                  /* Âncora nos PÉS: a borda de baixo da caixa do sprite é a linha do chão (a descida do pé a leva até lá); a elipse fica
+                     centrada logo abaixo dela. Era `PET_GROUND_KEEP + PET_LIFT` (68 px ACIMA da caixa: a sombra ficava escondida atrás do corpo). */
+                  bottom: -Math.round(PET_RENDER * 0.12 * 0.4),
                   transform: 'translateX(-50%)',
-                  width: Math.round(PET_RENDER * 0.52 * Math.min(1, petScale + 0.15)),
-                  height: Math.round(PET_RENDER * 0.12 * Math.min(1, petScale + 0.15)),
+                  width: Math.round(PET_RENDER * 0.6 * Math.min(1, PET_DRAWN_SCALE + 0.15)),
+                  height: Math.round(PET_RENDER * 0.12 * Math.min(1, PET_DRAWN_SCALE + 0.15)),
                   pointerEvents: 'none',
                   /* No ar a sombra fica NO CHÃO, menor e mais fraca: é ela que diz "voando". */
                   ...(noAr ? { transform: 'translateX(-50%) scale(.7)', opacity: 0.6 } : null),

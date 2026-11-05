@@ -322,11 +322,11 @@ export function strollOfDay(s: CrossingsState, crossDay: string): { challenge: s
 }
 
 /** O que o resumo mostra da missão da noite: o título dela e o nome do destino (a região), na língua pedida. */
-export function strollSummary(s: CrossingsState, crossDay: string, isPt: boolean): { missionTitle: string; destination: string } | null {
+export function strollSummary(s: CrossingsState, crossDay: string, isPt: boolean): { missionTitle: string; destination: string; regionId: RegionId } | null {
   const st = strollOfDay(s, crossDay);
   if (!st) return null;
   const region = regionById(st.region);
   const missionTitle = travessiaTitle(st.challenge, isPt);
   if (!region || !missionTitle) return null;
-  return { missionTitle, destination: isPt ? region.namePt : region.nameEn };
+  return { missionTitle, destination: isPt ? region.namePt : region.nameEn, regionId: region.id };
 }

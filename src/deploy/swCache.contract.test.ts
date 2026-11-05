@@ -159,3 +159,23 @@ describe('7. o que o CACHE_VERSION ainda protege — e o que continua sem cobert
     expect(sw.match(/const CACHE_VERSION = '(v\d+)'/)?.[1]).toMatch(/^v\d+$/);
   });
 });
+
+describe('8. o acervo de assets sobrevive ao bump de CACHE_VERSION (05/11/2026)', () => {
+  it('existe um cache de assets SEM a versão no nome, e o activate não o apaga', () => {
+    const nome = sw.match(/const ASSET_CACHE = '([^']+)'/)?.[1];
+    expect(nome, 'ASSET_CACHE declarado').toBeTruthy();
+    expect(nome).not.toMatch(/CACHE_VERSION|\$\{/);
+    expect(sw).toMatch(/k !== ASSET_CACHE/);
+  });
+  it('só nome com hash de conteúdo vai para o acervo (o resto segue no cache de versão)', () => {
+    expect(sw).toMatch(/const cacheDoAsset = \(pathname\) => \(temHash\(pathname\) \? ASSET_CACHE : STATIC_CACHE\)/);
+    const temHash = (p: string) => /-[A-Za-z0-9_-]{8,}\.[a-z0-9]+$/.test(p);
+    expect(temHash('/assets/index-DKHQ7iRe.js')).toBe(true);
+    expect(temHash('/assets/index.js')).toBe(false);
+  });
+  it('tem teto (poda) e migra o que já estava guardado nos caches de versão', () => {
+    expect(sw).toMatch(/const ASSET_CACHE_MAX = \d+/);
+    expect(sw).toMatch(/podarAcervo\(\)/);
+    expect(sw).toMatch(/migrarParaAcervo\(todas\.filter/);
+  });
+});

@@ -991,3 +991,43 @@ Código pronto (nº 262-267, `elementosLote4.data.ts`), **sem arte**. Ícone e F
 Total pedido agora: 6 ícones + 6 folhas de FX. Fora deste pedido: 6 sprites rookie, 6 cenários e 18 formas dos novos, e formas e cenário dos 3 promovidos (Pestilência, Maldição, Cyber).
 
 **Promovidos (nº 205-207):** entram no catálogo curado, com arte já existente. **Refazer ícone e FX deles: decisão do dono, aprovada (05/11/2026)** (reprovações em `manifesto.csv` e regra de identidade de 04/11); paletas de Cyber e Maldição precisam mudar. Pendente de geração. Correção do §18: o EL5 acima saiu como `205-pestilencia.png`, `206-maldicao.png`, `207-cyber.png` (não 193 a 195).
+
+## 25. Cenas do Passeio — 8 panoramas horizontais (pedido do dono, 05/11/2026)
+
+**Contexto:** quando o jogador fez um Passeio, o resumo do dia abre uma CENA EM TELA CHEIA (`components/StrollScene.tsx`): o Soulmon dele no cenário da região visitada, um cartãozinho no topo com o que foi, "Espera… tem alguma coisa ali." → a câmera DESLIZA para o lado e mostra o Soulmon descoberto (um que ele nunca viu; entra no Drive) → OK → volta. Para deslizar, o cenário é um **PANORAMA horizontal**: o Soulmon do jogador na ESQUERDA, o descoberto na DIREITA, os dois pisando na mesma linha de chão. **Código pronto** (`utils/strollScene.ts`, `utils/strollDiscovery.ts`); **sem arte** — hoje a cena usa o postal da região espelhado lado a lado (piso, nunca quebra). Quando o arquivo cai com o nome-alvo, ele assume sozinho (glob).
+
+| Arquivo-alvo (`src/assets/soulmon/passeio-cenas/`) | Região | Postal de reserva hoje | Estado |
+|---|---|---|---|
+| `cena-campina.webp` | Campina (casa) | `bg-campina` | falta |
+| `cena-floresta.webp` | Floresta | `bg-forest` | falta |
+| `cena-oceano.webp` | Oceano | `bg-ocean` | falta |
+| `cena-deserto.webp` | Deserto | `bg-desert` | falta |
+| `cena-picos.webp` | Picos | `bg-cloudsea` | falta |
+| `cena-pantano.webp` | Pântano | `bg-swamp` | falta |
+| `cena-cavernas.webp` | Cavernas | `bg-cavernas` | falta |
+| `cena-gelo.webp` | Gelo | `bg-snow` | falta |
+
+- **Formato:** HORIZONTAL, proporção **2:1** (largura ÷ altura = `SCENE_RATIO` em `utils/strollScene.ts`). Gerar a **1792×896** (ou o maior 2:1 que a ferramenta der); instalar em **WebP**, ≤ 400 KB cada (o orçamento de bytes olha o `dist/`). Pode ser `.png` (o glob aceita os dois); sem alfa (é fundo cheio).
+- **Composição (o que a cena precisa, em % do panorama):** **linha de chão em 80% da altura** (`SCENE_GROUND_Y`) — os pés dos dois Soulmons caem ali; **espaço livre e plano** ao redor de **x = 25%** (jogador) e **x = 75%** (descoberto), ~30% de largura cada, sem rocha/árvore/objeto grande na frente deles; o **meio (45–55%)** é só passagem (pode ter o detalhe mais marcante da região). Céu/topo mais calmo: o cartãozinho de texto cobre os ~35% de cima à esquerda/direita na tela cheia. Sem texto, sem moldura, sem personagem.
+- **Pano de fundo contínuo:** a arte é uma cena só (não duas metades coladas); as bordas esquerda e direita não precisam emendar.
+- **Identidade (`docs/REGRA-IDENTIDADE-SOULMON.md`, bloqueante):** turquesa ESCURO fechado como tom dominante, **cristais da alma com chama dentro** (quase sempre o elemento principal da região, 1 ou 2 grandes), e — em pouca quantidade — canos de cobre, circuitos digitais e ramos de folhinhas, tudo ligado por cabo, planta integrada à máquina. **Cada região é um ecossistema diferente, o core fica.** Sem engrenagem/steampunk. "Arcano, natureza + magia" sozinho não basta no prompt.
+- **Estilo:** pixel art 16-bit retrô, pixels grossos visíveis, sombreado em 3 tons, contorno escuro limpo — o mesmo traço dos postais atuais (`src/assets/backgrounds/bg-*.png`); **anexar o postal da própria região como referência** para casar paleta e linguagem, pedindo "a wide panoramic continuation of this place".
+- **Bloco de estilo (colar no início de cada prompt):**
+```
+Wide horizontal 2:1 panoramic pixel-art game background, 16-bit era, chunky visible pixels, flat colors with 3-step shading, clean dark outline. Palette: deep petrol turquoise as the dominant tone. A flat open ground line sits at exactly 80% of the image height with clear empty walkable space around 25% and 75% of the width (no large objects there). One or two large glowing soul crystals with a flame inside as the focal landmark, a little copper piping, faint digital circuit traces and small leaf sprigs, everything connected by cables, plant integrated with machine. No characters, no text, no frame, no gears, no steampunk.
+```
+- **Prompt de cada região** = bloco de estilo + `The place: <descrição>.`
+
+| Região | Descrição para o prompt |
+|---|---|
+| Campina | a low-grass open meadow under a wide sky, scattered wildflowers growing along copper cables, a soul crystal with flame half-grown from the soil in the middle distance, distant soft hills |
+| Floresta | a dense dark forest clearing, huge trunks wrapped in cables with leaf sprigs, glowing turquoise crystals with flame among the roots, a copper pipe snaking between trees, hanging vines |
+| Oceano | a calm shoreline at dusk, wet sand ground line, a crystal with flame rising from tide pools, copper pipes half-buried in the sand, soft turquoise waves and a far horizon |
+| Deserto | wide dunes under a big pale sky, crystals with flame jutting from the sand, buried copper pipes and cables crossing the ground, sparse leaf sprigs on a single hardy plant |
+| Picos | high rocky peaks above a sea of cloud, crystals with flame embedded in the cliff faces, copper cable bridges and pipes along the ledges, thin alpine leaf sprigs |
+| Pântano | a misty swamp of dark water and roots, crystals with flame glowing in the mud, copper pipes bubbling softly, cables draped over twisted trees, floating leaf sprigs |
+| Cavernas | a wide cave hall with a ceiling of crystals with flame, copper pipes along the walls, circuit traces glowing in the stone, small ferns near the floor |
+| Gelo | a frozen plain of ice and snow, huge ice-blue crystals with flame inside, frosted copper pipes and cables, tiny hardy leaf sprigs poking through the snow |
+
+- **Conferência (`arte-conferente`):** proporção 2:1 exata; chão em 80% (±2%) com espaço livre em 25% e 75%; sem alfa/xadrez assado; sem personagem nem texto; cristal com chama visível; turquesa escuro dominante; legível com o cartão de texto por cima.
+- **Depois de instalar:** nenhuma linha de código muda (o glob `passeio-cenas/cena-*` assume). Conferir a cena numa tela de 390×844 e num celular deitado, subir `CACHE_VERSION` em `public/sw.js` e rodar `strollScene.test.ts`.

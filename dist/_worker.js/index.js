@@ -6047,7 +6047,7 @@ function lifetimeUsed(ent, bucket) {
   return n;
 }
 __name(lifetimeUsed, "lifetimeUsed");
-var VALID_FORM_ID = /^(?:bb|rookie|ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))$/;
+var VALID_FORM_ID = /^(?:bb|rookie|(?:ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))(?:@[a-z_]{2,24})?)$/;
 function foldLegacyForm(aiForms, formId) {
   const out = { ...aiForms || {} };
   const antigo = legacyFormIdOf(formId);
@@ -8049,7 +8049,7 @@ var SIMULADOS = Object.freeze([
   { id: "sim_0170", nick: "Enzo_SP", petName: "Circuitel", line: "harmonia", element: "industrial", artLine: "", faixa: "C", ancora: { estagio: "rookie", pontos: 0 }, bond0: 10, skill: 0.27, frequency: "casual", prefs: { "endless-rift": 0.33, dino: 0.26 }, daysPlaying: 1 }
 ]);
 
-// D:/Soulmon/repo/node_modules/fflate/esm/browser.js
+// ../node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -16898,7 +16898,7 @@ async function onRequest9(ctx, fetchImpl = fetch) {
 }
 __name(onRequest9, "onRequest");
 
-// ../.wrangler/tmp/pages-MQojUK/functionsRoutes-0.8919798471470584.mjs
+// ../.wrangler/tmp/pages-VqIYye/functionsRoutes-0.8365904322983615.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -17245,7 +17245,7 @@ var routes = [
   }
 ];
 
-// D:/Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
+// ../node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
   var tokens2 = [];
   var i2 = 0;
@@ -17571,7 +17571,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// D:/Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
+// ../node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;

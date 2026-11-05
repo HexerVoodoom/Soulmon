@@ -2,6 +2,7 @@ import { sanitizeMailClaimed } from '../utils/mensageiro';
 import { sanitizeFunSession } from '../utils/funSession';
 import { normalizeGuildMission } from '../utils/guildMission';
 import { sanitizeCrystal } from '../utils/evolutionCrystal';
+import { sanitizeFormasAlt, sanitizeFormaAltEquipada, spriteVisorOf } from '../utils/formasAlternativas';
 import { sanitizeRogueRun, type RogueRun } from '../utils/rogueDungeonSave';
 import { sanitizeDungeonReturnSummary, type DungeonReturnSummary } from '../utils/dungeonReturnSummary';
 import { sanitizeFocusKeyDay } from '../utils/focusKey';
@@ -373,6 +374,10 @@ export interface GameState {
   incubation?: import('../utils/spriteTrigger').Incubation;
   /** O CRISTAL da evolução (31/10/2026, `utils/evolutionCrystal.ts`): o jogador tocou Evoluir e a forma nova está sendo desenhada. */
   evolutionCrystal?: import('../utils/evolutionCrystal').EvolutionCrystal;
+  /** FORMAS ALTERNATIVAS (05/11/2026, `utils/formasAlternativas.ts`): por forma, os elementos já desbloqueados (o 1º é a original). */
+  formasAlt?: import('../utils/formasAlternativas').FormasAlt;
+  /** Qual forma alternativa está equipada em cada forma (ausente = a original). Cosmético. */
+  formaAltEquipada?: import('../utils/formasAlternativas').FormaAltEquipada;
   /** WP1.3 — os três gestos do primeiro dia (`utils/firstDay.ts`). Some
    *  sozinho na virada; nunca vira lista de pendências. */
   firstDay?: import('../utils/firstDay').FirstDayProgress | null;
@@ -1583,6 +1588,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         especialNomeAt: typeof loadedState.especialNomeAt === 'number' && Number.isFinite(loadedState.especialNomeAt) ? loadedState.especialNomeAt : undefined,
         evolutionLocked: loadedState.evolutionLocked === true,
         evolutionCrystal: sanitizeCrystal(loadedState.evolutionCrystal),
+        formasAlt: sanitizeFormasAlt(loadedState.formasAlt),
+        formaAltEquipada: sanitizeFormaAltEquipada(loadedState.formaAltEquipada),
         incubation: (() => {
           const v = loadedState.incubation as { v?: unknown; since?: unknown } | undefined;
           if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined;
@@ -2240,7 +2247,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
         // Sprite próprio gerado (quando existe): permite mostrar o Soulmon real do jogador no Torneio, Biblioteca e Bosque.
         spriteUrl: (() => {
           if (isCorvo(gameState)) return null;
-          const lib = normalizeSpriteLibrary(gameState.spriteLibrary);
+          const lib = spriteVisorOf(normalizeSpriteLibrary(gameState.spriteLibrary), gameState.formasAlt, gameState.formaAltEquipada);
           const rawUrl = displaySprite(lib, gameState.evolutionStage)?.url ?? Object.values(lib.sprites)[0]?.url ?? null;
           if (!rawUrl) return null;
           const m = /(?:^https?:\/\/[^/]+)?(\/api\/sprite-image\?k=[0-9a-f]{32})$/i.exec(rawUrl.trim());
