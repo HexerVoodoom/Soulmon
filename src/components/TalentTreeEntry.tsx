@@ -48,8 +48,8 @@ export default function TalentTreeEntry({ language = 'pt-BR' }: { language?: str
       </button>
       {open && createPortal(
         <div role="dialog" aria-modal="true" aria-label={title} data-talent-fullscreen
-          style={{ position: 'fixed', inset: 0, zIndex: 7000, display: 'flex', flexDirection: 'column', background: 'var(--sm2-bg)', color: 'var(--sm2-ink)' }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-start', padding: 'calc(env(safe-area-inset-top, 0px) + 8px) 12px 8px', flex: 'none' }}>
+          style={{ position: 'fixed', inset: 0, zIndex: 7000, display: 'flex', flexDirection: 'column', background: 'var(--sm2-bg)', color: 'var(--sm2-ink)', overscrollBehavior: 'contain' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-start', padding: 'calc(env(safe-area-inset-top, 0px) + 8px) calc(env(safe-area-inset-right, 0px) + 12px) 8px calc(env(safe-area-inset-left, 0px) + 12px)', flex: 'none' }}>
             <button type="button" data-talent-close className="sm2-ora-back" onClick={close}
               aria-label={isPt ? 'Fechar' : 'Close'} autoFocus>
               <Icon name="close" size={24} tone="inherit" />
