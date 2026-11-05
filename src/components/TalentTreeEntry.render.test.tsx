@@ -65,4 +65,23 @@ describe('TalentTreeEntry', () => {
     act(() => { fireEvent.keyDown(document, { key: 'Escape' }); });
     expect(document.querySelector('[data-talent-fullscreen]')).toBeNull();
   });
+
+  it('pan: arrastar desloca o tabuleiro nos dois eixos e NÃO abre o detalhe; um toque abre', { timeout: 30000 }, async () => {
+    abrir({ totalXP: xpForLevel(6) });
+    act(() => { fireEvent.click(document.querySelector('[data-talent-open]')!); });
+    const full = document.querySelector<HTMLElement>('[data-talent-fullscreen]')!;
+    await waitFor(() => expect(full.querySelector('[data-talent-scroll]')).not.toBeNull(), { timeout: 25000 });
+    const sc = full.querySelector<HTMLElement>('[data-talent-scroll]')!;
+    expect(sc.style.touchAction).toBe('none');
+    const node = full.querySelector<HTMLElement>('[data-talent]')!;
+    sc.scrollLeft = 300; sc.scrollTop = 300;
+    const ev = (type: string, x: number, y: number) => act(() => { fireEvent(sc, Object.assign(new Event(type, { bubbles: true }), { pointerId: 1, pointerType: 'touch', button: 0, clientX: x, clientY: y })); });
+    ev('pointerdown', 200, 200); ev('pointermove', 180, 150); ev('pointerup', 180, 150);
+    expect(sc.scrollLeft).toBe(320);
+    expect(sc.scrollTop).toBe(350);
+    act(() => { fireEvent.click(node); });
+    expect(document.querySelector('[data-talent-panel]')).toBeNull(); // o clique pós-arraste é engolido
+    act(() => { fireEvent.click(node); });
+    expect(document.querySelector('[data-talent-panel]')).not.toBeNull(); // toque simples abre
+  });
 });
