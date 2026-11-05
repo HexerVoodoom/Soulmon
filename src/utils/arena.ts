@@ -423,6 +423,12 @@ export function arenaLadderStrength(ladder: number): number {
 }
 
 /**
+ * Piso de força da forma (dono, 05/11/2026: "evoluíram, mas não aumentaram de poder"; §240): a escada só somava +0,25% por vitória, então o
+ * primeiro Champion entrava a ×1,0125 e o último Ultimate a ×1,08. A rodada evoluída vale o maior entre a escada e este piso. Rookie = sem piso.
+ */
+export const ARENA_STAGE_FLOOR: Record<ArenaLadderStage, number> = { rookie: 1, champion: 1.07, ultimate: 1.08 };
+
+/**
  * The foe of class `cls` at round `r` (0..4) for a player of level `L`:
  * `{ ...combatantAt(L, balanced), hp: hp × cls.hp × (1 + 0.04·r), bonus: cls.power × (1 + 0.142·r) − 1 }`.
  * The boss casts a `direct` special aimed at ONE target.
@@ -430,7 +436,7 @@ export function arenaLadderStrength(ladder: number): number {
 export function arenaFoe(L: number, cls: ArenaEnemyClass, r: number, ladder = 0, playerBonus = 0): FightSide {
   const s = ARENA_FOES[cls];
   const b = combatantAt(L, REFERENCE_BUILDS.balanced);
-  const k = arenaLadderStrength(ladder) * (1 + Math.max(0, playerBonus));
+  const k = Math.max(arenaLadderStrength(ladder), ARENA_STAGE_FLOOR[arenaLadderStage(ladder, r + 1)]) * (1 + Math.max(0, playerBonus));
   return {
     combatant: { ...b, hp: b.hp * s.hp * (1 + ARENA_ROUND_GROWTH.hp * r) * k, bonus: s.power * (1 + ARENA_ROUND_GROWTH.power * r) * k - 1 },
     special: 'special' in s || arenaLadderStage(ladder, r + 1) !== 'rookie' ? specialOf('direct') : null,

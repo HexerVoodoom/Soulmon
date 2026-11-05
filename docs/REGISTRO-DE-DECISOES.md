@@ -4200,3 +4200,14 @@ Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combin
 **Alternativas que perderam.** Exigir ciclo de foco completo para a chave: o dono pediu "concluir uma sessão". Usar o NPC 412: o pedido era condicional a não haver NPC.
 
 **O que falsificaria.** A meta de 60–70% de incursões completas (`winrateModos.sim.test.ts`) passa a medir incursões sem nenhuma derrota; a completude real sobe, o que é o pedido. Se Bits do Calabouço saírem de ±3pp no balanço, rever o tempo de recuperação. **Rollback:** reverter o PR; `dungeonKeyDay`, `hpAt` e `paidWon` são opcionais e ignorados. Um `hp` baixo gravado sem `hpAt` vale até a virada do dia.
+## §240 — Arena: a forma evoluída tem piso de força (05/11/2026, pedido do dono; emenda §222)
+
+**Pedido.** Inimigos "evoluíram, mas não aumentaram de poder, então estão super fracos". **Diagnóstico confirmado:** a força só somava +0,25% por vitória, então o 1º Champion entrava a ×1,0125 e o 1º Ultimate a ×1,05.
+
+**Decisão.** `ARENA_STAGE_FLOOR`: a rodada Champion vale ao menos ×1,07 e a Ultimate ×1,08, em HP e dano; Rookie sem piso. O teto da escada segue ×1,08, porque ×1,10 Ultimate derrubou o perfeito neutro para 45%, abaixo do gate de 50%.
+
+**Medido (`arena.escada.test.ts`, 700 runs por célula, % de vitória, escadas 0/5/8/14/20/32, antes → depois).** Perfeito neutro: 94→94, 92→78, 86→64, 76→58, 68→54, 54→54. Média neutro: 87→87, 82→62, 71→46, 58→38, 48→34, 34→34. Perfeito com vantagem: 99→99, 99→98, 99→96, 98→96, 97→96, 94→94.
+
+**O que mudou desde o §222.** O "multiplicador fixo por forma" perdeu ali (×1,3, salto grande) para o "um pouco mais forte". O dono relatou que ficou fraco demais; aqui é um piso de 7–8%, sem salto de ×1,3, e a escada continua segurando na derrota.
+
+**O que falsifica.** Jogador preso na escada 8–14 com derrotas seguidas: reduzir o piso de Champion ou deixar a derrota baixar a força. Rollback: reverter; nada no save.
