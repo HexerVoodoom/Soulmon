@@ -2025,7 +2025,10 @@ Folha da Poção de Elemento (Laboratório › Centro de Evolução): 3 espaços
 **Dono de:** o contrato dos slots do player: toda etapa recebe `onDone`.
 
 ### `src/components/onboarding/intro/IntroCinematica.tsx`
-**Dono de:** a cinemática "A Parede" (flag ligado, primeira abertura, antes do login); vídeo ausente = tela preta com legendas.
+**Dono de:** o opening "A Parede" (primeira abertura de quem é novo, antes do login, independe do ONBOARDING_VELADO); vídeo ausente = tela preta com legendas.
+
+### `src/components/onboarding/intro/SeletorIdiomaAbertura.tsx`
+**Dono de:** o seletor English/Português que vem antes do opening, só para quem ainda não escolheu o idioma.
 
 ### `src/components/onboarding/intro/introGate.ts`
 **Dono de:** as regras de entrada da cinemática (`deveTocarIntro`, `introVista`, `marcarIntroVista`), separadas do componente para o App decidir sem carregá-lo.

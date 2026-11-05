@@ -41,9 +41,7 @@ describe('trilha da intro (nasce ligada por decisão do dono)', () => {
 });
 
 describe('intro pré-login', () => {
-  it('flag desligado: não toca; ligado: toca na 1ª abertura sem onboarding e só uma vez', () => {
-    expect(deveTocarIntro(false)).toBe(false);
-    localStorage.setItem('soulmon-onboarding-velado', '1');
+  it('toca sozinho na 1ª abertura de quem é novo, sem depender do flag do Velado, e só uma vez', () => {
     expect(deveTocarIntro(false)).toBe(true);
     expect(deveTocarIntro(true)).toBe(false);
     render(<IntroCinematica language="pt-BR" onDone={() => {}} />);

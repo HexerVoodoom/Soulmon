@@ -74,6 +74,13 @@ export function IntroCinematica({ language, onDone, paineis = PAINEIS }: Props) 
     return () => { sairDoSom.current?.(); sairDoSom.current = null; };
   }, [globalLigado]);
   const fim = () => { marcarIntroVista(); onDone(); };
+  /** Autoplay/WebView do Android: sem gesto o áudio nasce suspenso. O 1º toque na tela refaz a entrada na superfície (já dentro do gesto) e destrava. */
+  const gestoFeito = useRef(false);
+  const aoPrimeiroToque = () => {
+    if (gestoFeito.current || !globalLigado || !sairDoSom.current) return;
+    gestoFeito.current = true;
+    sairDoSom.current(); sairDoSom.current = entrarNaSuperficie('intro');
+  };
 
   /** Depois do último plano entra o logo animado; a intro termina quando ele acaba (ou no teto, se o vídeo não tocar). */
   const [logo, setLogo] = useState(false);
@@ -98,7 +105,7 @@ export function IntroCinematica({ language, onDone, paineis = PAINEIS }: Props) 
 
   const plano = PLANOS_INTRO[i];
   return (
-    <div data-testid="intro-cinematica" style={{ position: 'fixed', inset: 0, zIndex: 600, background: '#000', color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center' }}>
+    <div data-testid="intro-cinematica" onPointerDown={aoPrimeiroToque} style={{ position: 'fixed', inset: 0, zIndex: 600, background: '#000', color: '#fff', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center' }}>
       <style>{CSS_INTRO}</style>
       {!logo && paineis[i] && (() => {
         const [z0, x0, y0, z1, x1, y1] = CAMERA[i % CAMERA.length];

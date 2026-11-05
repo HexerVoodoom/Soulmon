@@ -287,6 +287,7 @@ import type { MercOrdem } from './utils/mercMissionSave';
 const SequenciaRevisao = lazy(() => import('./components/onboarding/sequencia/SequenciaReal').then(m => ({ default: m.SequenciaRevisao })));
 const SequenciaReal = lazy(() => import('./components/onboarding/sequencia/SequenciaReal').then(m => ({ default: m.SequenciaReal })));
 import { deveTocarIntro } from './components/onboarding/intro/introGate';
+const SeletorIdiomaAbertura = lazy(() => import('./components/onboarding/intro/SeletorIdiomaAbertura').then(m => ({ default: m.SeletorIdiomaAbertura })));
 const IntroCinematica = lazy(() => import('./components/onboarding/intro/IntroCinematica').then(m => ({ default: m.IntroCinematica })));
 import { initialStageForNewSave } from './utils/bbStage';
 import { addBossShards } from './utils/bossShards';
@@ -934,7 +935,7 @@ export default function App() {
   const [freeRookie, setFreeRookie] = useState<'idle' | 'loading' | 'done'>('idle');
   const escolherMercenario = useCallback((o: MercOrdem) => { void import('./utils/mercMission').then(m => setGameState(prev => m.escolherMerc(prev, o, playerDayKey(new Date(), prev.playerDayTz)).state)); }, []);
   const confirmarMercenario = useCallback(() => { void import('./utils/mercMission').then(m => setGameState(prev => m.concluirMerc(prev, playerDayKey(new Date(), prev.playerDayTz)))); }, []);
-  /* ONBOARDING_VELADO: introdução pré-login (1ª abertura) e "Rever a introdução". */
+  /* Opening pré-login (1ª abertura de quem é novo, com Pular; independe do ONBOARDING_VELADO) e "Ver abertura" das Configurações. */
   const [introCinePendente, setIntroCinePendente] = useState(() => deveTocarIntro(readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE)));
   const [reverIntro, setReverIntro] = useState(false);
   /* ONBOARDING_VELADO: a sequência narrativa roda uma vez, depois do nascimento. Quem já tinha onboarding ao abrir é jogador estabelecido: nunca interrompe. */
@@ -7315,8 +7316,12 @@ export default function App() {
   // sabiam dizer que estavam offline. O mesmo selo, acima dos três `return`.
   const selo = <OfflineSeal language={language} topOffset={8} />;
 
-  // ONBOARDING_VELADO: a cinemática antes do login, só na 1ª abertura (com Pular).
-  if (veladoOn && !hasCompletedOnboarding && introCinePendente) {
+  // Opening antes do login, só na 1ª abertura de quem é novo (com Pular). Retorno cedo: nada da fila de apresentação monta por cima.
+  if (!hasCompletedOnboarding && introCinePendente) {
+    // Ordem do dono: idioma (só se ainda não escolheu) -> opening no idioma escolhido -> resto.
+    if (!isEmbedMode() && readLocal(STORAGE_KEYS.LANGUAGE) === null) {
+      return <Suspense fallback={null}><SeletorIdiomaAbertura onEscolher={l => { writeLocal(STORAGE_KEYS.LANGUAGE, l, { silent: true }); setLanguage(l); }} /></Suspense>;
+    }
     return <Suspense fallback={null}><IntroCinematica language={language} onDone={() => setIntroCinePendente(false)} /></Suspense>;
   }
 
