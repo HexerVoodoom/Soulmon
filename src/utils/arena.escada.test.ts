@@ -124,6 +124,15 @@ describe('calibração medida', () => {
     expect(taxa(l, 'nenhuma', DESVANTAGEM, 'teto')).toBeLessThanOrEqual(0.25); // mesmo torcendo no teto
     expect(taxa(l, 'perfeita', NEUTRO, 'teto')).toBeGreaterThan(taxa(l, 'media', NEUTRO, 'teto'));
   });
+  it('§240: a rodada evoluída é mais forte que a Rookie da mesma escada', () => {
+    const hp = (l: number, r: number) => arenaFoe(21, 'medium', r, l).combatant.hp / arenaFoe(21, 'medium', r, 0).combatant.hp;
+    expect(hp(5, 4)).toBeCloseTo(1.07, 9); // o 1º Champion
+    expect(hp(5, 0)).toBeCloseTo(arenaLadderStrength(5), 9);
+    expect(hp(20, 4)).toBeCloseTo(1.08, 9); // o 1º Ultimate
+  });
+  it.skipIf(!process.env.ARENA_MEDIR)('tabela do §240', () => {
+    for (const l of [0, 5, 8, 14, 20, 32]) console.log(`MED ${l} perfeita-neutro ${taxa(l, 'perfeita', NEUTRO, 'teto')} perfeita-vant ${taxa(l, 'perfeita', VANTAGEM, 'teto')} media-neutro ${taxa(l, 'media', NEUTRO, 'teto')}`);
+  });
   it('subir a escada endurece a run média', () => {
     expect(taxa(32, 'media', NEUTRO, 'teto')).toBeLessThan(taxa(0, 'media', NEUTRO, 'teto') - 0.3);
   });
