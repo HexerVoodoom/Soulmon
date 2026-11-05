@@ -49,6 +49,8 @@ function Art({ nome, size, style }: { nome: string; size: number; style?: React.
   return <img src={url} alt="" aria-hidden="true" draggable={false} width={size} height={size} style={{ width: size, height: size, objectFit: 'contain', imageRendering: 'pixelated', ...style }} />;
 }
 
+const PAN_SLOP = 8;
+
 type NodeState = 'bought' | 'available' | 'locked' | 'soon';
 
 export default function TalentTree({ language = 'pt-BR', bare = false }: { language?: string; bare?: boolean }) {
@@ -60,13 +62,60 @@ export default function TalentTree({ language = 'pt-BR', bare = false }: { langu
   const [qtd, setQtd] = useState(0); // pontos a atribuir no modal
   const boardRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  // Sempre a 100%: o tabuleiro é maior que a tela e rola nativamente; o hub fica no meio ao abrir.
+  // Sempre a 100%: o tabuleiro é maior que a tela. Ao abrir, centra no último nó comprado (o "atual") ou, sem compras, no hub.
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
-    el.scrollLeft = HUB_POINT.x - el.clientWidth / 2;
-    el.scrollTop = HUB_POINT.y - el.clientHeight / 2;
+    const picksNow = sanitizeTalentPicks(ctx?.gameState.talentPicks, bondLevelFor(ctx?.gameState.totalXP ?? 0));
+    const atual = [...picksNow].reverse().find((id) => LAYOUT_NODES.some((n) => n.id === id));
+    const alvo = atual ? pointOf(atual) : HUB_POINT;
+    el.scrollLeft = alvo.x - el.clientWidth / 2;
+    el.scrollTop = alvo.y - el.clientHeight / 2;
   }, [!!ctx]);
+  /* PAN por arraste (toque e mouse), nos dois eixos. `touch-action: none` no tabuleiro + Pointer Events: não depende da rolagem
+     nativa de toque, que o `scrollGuard` do `useDialogA11y` cancela quando há trava de fundo ativa. Só vira arraste depois de
+     PAN_SLOP px; antes disso o toque é um toque e o nó abre o detalhe. Depois de um arraste o clique que sobra é engolido. */
+  const pan = useRef<{ id: number; x: number; y: number; sl: number; st: number; moved: boolean } | null>(null);
+  const engoleClique = useRef(false);
+  const onPanDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    pan.current = { id: e.pointerId, x: e.clientX, y: e.clientY, sl: el.scrollLeft, st: el.scrollTop, moved: false };
+    engoleClique.current = false;
+  };
+  const onPanMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const p = pan.current, el = scrollRef.current;
+    if (!p || !el || p.id !== e.pointerId) return;
+    const dx = e.clientX - p.x, dy = e.clientY - p.y;
+    if (!p.moved) {
+      if (Math.hypot(dx, dy) < PAN_SLOP) return;
+      p.moved = true;
+      engoleClique.current = true;
+      try { el.setPointerCapture(e.pointerId); } catch { /* jsdom */ }
+    }
+    el.scrollLeft = p.sl - dx;
+    el.scrollTop = p.st - dy;
+  };
+  const onPanEnd = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (pan.current && pan.current.id === e.pointerId) {
+      const el = scrollRef.current;
+      try { el?.releasePointerCapture(e.pointerId); } catch { /* sem captura */ }
+      pan.current = null;
+      // o click (se houver) chega logo depois do pointerup; passada a rodada, a guarda cai sozinha
+      if (engoleClique.current) setTimeout(() => { engoleClique.current = false; }, 0);
+    }
+  };
+  const onPanClickCapture = (e: React.MouseEvent) => {
+    if (engoleClique.current) { e.stopPropagation(); e.preventDefault(); engoleClique.current = false; }
+  };
+  // Roda do mouse/trackpad: se a rolagem nativa foi cancelada por uma trava de fundo, anda à mão.
+  const onWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const el = scrollRef.current;
+    if (!el || !e.nativeEvent.defaultPrevented) return;
+    el.scrollLeft += e.deltaX;
+    el.scrollTop += e.deltaY;
+  };
   if (!ctx) return null; // sem save (demo, testes): não há o que gastar
   const isPt = language === 'pt-BR';
   const { gameState, setGameState } = ctx;
@@ -266,8 +315,10 @@ export default function TalentTree({ language = 'pt-BR', bare = false }: { langu
       </ul>
       </>}
 
-      <div className="sm-talent-scroll" ref={scrollRef} tabIndex={-1} style={bare
-        ? { overflow: 'auto', flex: 1, minHeight: 0, borderTop: '1px solid var(--sm2-line)', borderBottom: '1px solid var(--sm2-line)' }
+      <div className="sm-talent-scroll" ref={scrollRef} tabIndex={-1} data-talent-scroll
+        {...(bare ? { onPointerDown: onPanDown, onPointerMove: onPanMove, onPointerUp: onPanEnd, onPointerCancel: onPanEnd, onClickCapture: onPanClickCapture, onWheel } : {})}
+        style={bare
+        ? { overflow: 'auto', touchAction: 'none', overscrollBehavior: 'contain', userSelect: 'none', WebkitUserSelect: 'none', flex: 1, minHeight: 0, borderTop: '1px solid var(--sm2-line)', borderBottom: '1px solid var(--sm2-line)' }
         : { overflow: 'auto', maxHeight: '62vh', marginTop: 8, borderRadius: 12, border: '1px solid var(--sm2-outline-variant, rgba(128,128,128,.3))' }}>
         <div style={{ width: BOARD.width, height: BOARD.height, position: 'relative' }}>
           <div ref={boardRef} role="group" aria-label={isPt ? 'Árvore de talentos' : 'Talent tree'}

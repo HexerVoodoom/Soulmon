@@ -11,7 +11,7 @@ import { ElementBaseSlots, emptySlots } from './ElementBaseSlots';
 import { compositionHasBases, selectedBases } from '../utils/elementPotion';
 
 /**
- * DEX DE ELEMENTOS (aba "Elemento" da Biblioteca, 27/10/2026): os 20 base + 190 derivados + 50 curados (212–261) + neutro (01/11/2026). Trancado = "?" SEM nome e SEM ícone (nem
+ * DEX DE ELEMENTOS (aba "Elemento" da Biblioteca, 27/10/2026): os 20 base + 190 derivados + 59 curados (205–207, 212–267) + neutro (01/11/2026). Trancado = "?" SEM nome e SEM ícone (nem
  * no aria: o id não vai para o DOM da célula trancada). Destranca ao vencer um inimigo identificado (`utils/elementDex.ts`). Tocar
  * num destrancado abre a ficha: ícone grande, nome, composição (derivado) e forte/fraco contra — o que ainda está trancado ali
  * também aparece como "?". Ícone pelado (nunca dentro de box).

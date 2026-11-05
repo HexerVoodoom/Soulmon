@@ -975,3 +975,19 @@ Retro pixel art game item icon, 16-bit era, single dish centered, three-quarter 
 
 **Depois de instalar:** `dishArt.ts` assume sozinho; rodar `restaurant.test.ts` e conferir a tela a 360 px.
 
+## 24. Curados novos: Planta, Industrial e Fada (05/11/2026, `D:/Soulmon/planos/curados-novos.md`, emenda ao REGISTRO §232)
+
+Código pronto (nº 262-267, `elementosLote4.data.ts`), **sem arte**. Ícone e FX entram sozinhos por glob (`elementos/el-<id>.png`, `fx-ataque/fx-<id>-{orb,slash,impact,cast,aura,aura-96,defended}.png`); enquanto não existem, ícone e FX caem nos do 1º componente (`elementIcon`, `fxElementId`). O sprite do Soulmon cai no rookie da criatura base do elemento dominante (regra de criatura dos lotes 1-3). Prompts prontos no plano; a outra frente gera em `E:/Soulmon-assets/curados-novos/` (`el-<id>.png`, `fx-<id>-folha.png`, recorte da folha em 7 peças). Transparência com alfa real, nunca chroma. Depois de instalar: `node scripts/element-visual.py`, `node scripts/fx-facing.mjs` e `tools/instalar-cenarios-elemento.py` regeneram as tabelas `elementVisual.data.ts`, `fxFacingTable.ts` e `combatArtElementoMedias.data.ts`.
+
+| Id | Elemento | Soulmon | Ícone (96x96, 1:1) | FX (folha 3x2 → 7 peças) | Sprite rookie `novos-arquivo/combinados/` | Cenário `combate/elemento/<id>.png` | Formas `combinados-formas/` |
+|---|---|---|---|---|---|---|---|
+| `clareira` | Clareira Sagrada (planta, luz, vida) | Glaedryn | falta | falta | `262-clareira.png` falta | falta | falta (champion, ultimate, mega) |
+| `alto_forno` | Alto-Forno (industrial, fogo, terra) | Furnarok | falta | falta | `263-alto_forno.png` falta | falta | falta |
+| `bencao_feerica` | Bênção Feérica (fada, luz, vida) | Blessylle | falta | falta | `264-bencao_feerica.png` falta | falta | falta |
+| `floresta_ancestral` | Floresta Ancestral (planta, terra, tempo, arcano) | Eldrowan | falta | falta | `265-floresta_ancestral.png` falta | falta | falta |
+| `colosso_blindado` | Colosso Blindado (industrial, eletricidade, vigor, marcial) | Colossarm | falta | falta | `266-colosso_blindado.png` falta | falta | falta |
+| `corte_feerica` | Corte Feérica (fada, arcano, luz, som) | Faecourt | falta | falta | `267-corte_feerica.png` falta | falta | falta |
+
+Total pedido agora: 6 ícones + 6 folhas de FX. Fora deste pedido: 6 sprites rookie, 6 cenários e 18 formas dos novos, e formas e cenário dos 3 promovidos (Pestilência, Maldição, Cyber).
+
+**Promovidos (nº 205-207):** entram no catálogo curado, com arte já existente. **Refazer ícone e FX deles: decisão do dono, aprovada (05/11/2026)** (reprovações em `manifesto.csv` e regra de identidade de 04/11); paletas de Cyber e Maldição precisam mudar. Pendente de geração. Correção do §18: o EL5 acima saiu como `205-pestilencia.png`, `206-maldicao.png`, `207-cyber.png` (não 193 a 195).
