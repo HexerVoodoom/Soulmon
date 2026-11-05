@@ -1392,6 +1392,24 @@ quem tinha muito não é rebaixado até o chão.
 `attributesSinceLastEvolution` e marca `degeneratedByHP: false` (quem desceu de
 propósito não caiu).
 
+**A troca lateral de forma (05/11/2026).** Quem já desbloqueou outra forma do
+**mesmo nível** (qualquer galho, não só o dominante) vê "Trocar forma" no lugar
+de "Degenerar": confirmação simples, **grátis e sem limite**. É a regra pura
+`canSwitchLaterally`/`applyLateralSwitch` (`src/utils/trocaLateral.ts`) e muda
+**só** `evolutionStage`: HP, `perfectDays`, `evolutionPoints`,
+`attributesSinceLastEvolution`, `chipsStage`, `degeneratedByHP` e
+`currentBranch` ficam como estão; sem som nem mensagem de queda. Rookie e ultra
+são forma única (sem lateral). `canReachUltra`/`hasMegaCollection` leem
+`unlockedEvolutions`, que a troca não altera. A degeneração para nível abaixo
+segue como descrita acima. Teste: `src/utils/trocaLateral.test.ts`.
+
+**Quem aparece onde, na página de Evolução (05/11/2026).** No card de uma forma
+já liberada: nível **abaixo** do atual, de **qualquer galho** → "Degenerar"
+(rookie fica de fora, como antes); mesmo nível → "Trocar forma". O nó
+**previsto** é sempre o do nível seguinte ao atual no galho previsto
+(`forecastNodeId`, `src/utils/evolutionForecast.ts`); antes era o primeiro nó
+não liberado do galho e, com galhos trocados, caía num nível igual ou abaixo.
+
 **A rota de redenção (WP4.19).** `applyRedemption(prev, evoluiu)`: evoluir
 enquanto `degeneratedByHP` está de pé **apaga a marca da queda e acende a da
 volta** (`redeemed: true`). Três limites: `redeemed` nunca é marca de queda;
@@ -4638,7 +4656,7 @@ o jogador é o `soulCombatant` do level, e a Arena e o Pesadelo leem o mesmo nú
 `clearBonus(floor) = round((10 + 5 × (floor − 1)) × DUNGEON_BITS_FACTOR)` = 4/6/8/10/12 (⚰️ era 10/15/20/25/30 até 30/09/2026, quando o dono trouxe a run completa para perto do teto diário — `BALANCO-MINIJOGOS.md` §4). Limpar um andar cura
 uma fração do HP máximo (`pve.cura`, o `curaAndar` do ofício + o talento `healBoost`) — cura DENTRO da descida, mantida de
 propósito: a parede calibrada do combate v3 a pressupõe e o ofício/talento dependem dela; o HP do jogador **carrega** entre
-andares. Todo marco (camada múltipla de 5) sorteia **🌀 Glitchtama** com **1%** de chance, **no máximo 1 por semana** do jogador (`utils/glitchtamaDrop.ts`, registro `glitchtamaDrop {week, dropped}` no save; a tela e a descida fora do app usam a mesma regra; REGISTRO §225); a recompensa da run (Vínculo, fragmentos, `dungeonRunsCompleted`) segue 1× por descida, no primeiro marco; o limite de 1 uso por dia e o estoque guardado não mudam (`onGlitchtama({ runReward, drop })`). O marco sobe a base (`setDungeonDifficultyAtLeast(base + 1)`).
+andares. Todo marco (camada múltipla de 5) sorteia **🌀 Glitchtama** com **1%** de chance, **no máximo 1 por semana** do jogador (`utils/glitchtamaDrop.ts`, registro `glitchtamaDrop {week, dropped}` no save; a tela e a descida fora do app usam a mesma regra; REGISTRO §226); a recompensa da run (Vínculo, fragmentos, `dungeonRunsCompleted`) segue 1× por descida, no primeiro marco; o limite de 1 uso por dia e o estoque guardado não mudam (`onGlitchtama({ runReward, drop })`). O marco sobe a base (`setDungeonDifficultyAtLeast(base + 1)`).
 **Teto diário de Bits:** inalterado — o funil único `handleEarnGamePoints` → `creditMinigameBits` (`MINIGAME_BITS_PER_DAY` =
 150, `minigameBits` no save) limita a descida infinita; ao bater, a tela diz "Teto diário de Bits atingido — a descida segue,
 só sem Bits." e nada pára. Simulação (`dungeonIdle.test.ts`, 200 descidas, ruler de 15 levels): a dificuldade derruba o

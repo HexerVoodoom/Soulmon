@@ -22,7 +22,7 @@ import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
  * Moldura de avatar é PEÇA PRÓPRIA, não "ícone dentro de box": ela envolve a CRIATURA. Os glifos de UI
  * continuam pelados (regra do dono). É cosmética — não toca em luta, ganho nem economia.
  */
-export function AvatarFrame({ frame, children, style, size = 32, plaque }: {
+export function AvatarFrame({ frame, children, style, size = 32, plaque, round = false }: {
   frame: FrameDef | null;
   children: ReactNode;
   style?: CSSProperties;
@@ -30,6 +30,8 @@ export function AvatarFrame({ frame, children, style, size = 32, plaque }: {
   size?: number;
   /** Mestre/Grão-Mestre: o "#N" escrito na plaquinha da arte. Ignorado nas outras molduras. */
   plaque?: number | null;
+  /** O conteúdo é redondo (foto de perfil): o anel do frame básico acompanha o círculo. */
+  round?: boolean;
 }) {
   if (!frame) return <>{children}</>;
   const art = frameArt(frame.id);
@@ -70,6 +72,24 @@ export function AvatarFrame({ frame, children, style, size = 32, plaque }: {
     );
   }
   const { ring, accent, line, width } = frame.look;
+  if (frame.origin === 'basic') {
+    // Frame básico (padrão de todos): só um anel preto de CSS, por fora do conteúdo. `outline` não ocupa espaço
+    // (sem margem, sem deslocar o layout) e o contorno claro de 1px o mantém visível sobre o tema escuro.
+    return (
+      <span
+        data-avatar-frame={frame.id}
+        style={{
+          display: 'inline-flex', flex: 'none',
+          borderRadius: round ? '50%' : 'var(--sm2-radius-sm)',
+          outline: `${width}px solid ${ring}`, outlineOffset: 0,
+          boxShadow: '0 0 0 3px var(--sm2-line)',
+          ...style,
+        }}
+      >
+        {children}
+      </span>
+    );
+  }
   return (
     <span
       data-avatar-frame={frame.id}
@@ -90,6 +110,7 @@ export function AvatarFrame({ frame, children, style, size = 32, plaque }: {
 
 /** O que a linha mostra sobre COMO se consegue a moldura (quando está trancada). */
 function howText(f: FrameDef, isPt: boolean): ReactNode {
+  if (f.origin === 'basic') return isPt ? 'De todos' : 'For everyone';
   if (f.origin === 'rank') return isPt ? 'Pela faixa do Torneio' : 'From your Tournament tier';
   // D-62/D-80: o valor em Bits é SEMPRE o `BitsAmount` (moeda + número; "Bits" só para leitor de tela).
   if (f.origin === 'shop') return <>{isPt ? 'Loja' : 'Shop'} · <BitsAmount value={f.price ?? 0} size={12} /></>;
@@ -97,7 +118,7 @@ function howText(f: FrameDef, isPt: boolean): ReactNode {
 }
 
 /**
- * O seletor: "Sem moldura" + o catálogo inteiro. As que o jogador pode usar são botões; as trancadas
+ * O seletor: o catálogo inteiro (a básica, grátis, vem primeiro; não existe "sem moldura"). As que o jogador pode usar são botões; as trancadas
  * aparecem com o jeito de conseguir (tracejado, `aria-disabled`, fora do Tab — nunca opacidade, D-J14).
  * `previewSrc` é a criatura do jogador (a mesma que aparece no ranking).
  */
@@ -107,7 +128,7 @@ export function FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt, bits =
   ctx: FrameContext;
   /** Id da moldura em uso (já resolvido: `null` = sem moldura). */
   equipped: string | null;
-  onEquip: (id: string | null) => void;
+  onEquip: (id: string) => void;
   previewSrc: string;
   isPt: boolean;
   /** Saldo de Bits do jogador (só para habilitar o "Comprar"). */
@@ -134,13 +155,6 @@ export function FrameSelector({ ctx, equipped, onEquip, previewSrc, isPt, bits =
   });
   return (
     <ul data-frame-selector style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <li>
-        <button type="button" data-frame-option="none" aria-pressed={equipped === null} onClick={() => onEquip(null)} style={rowStyle(equipped === null, false)}>
-          {preview(null)}
-          <span style={{ ...sm2Text, flex: 1, minWidth: 0 }}>{isPt ? 'Sem moldura' : 'No frame'}</span>
-          {equipped === null && <Icon name="check" size={20} tone="primary" />}
-        </button>
-      </li>
       {FRAMES.filter(f => elementShopVisible(f, petElement, ctx.owned)).map(f => {
         const ok = frameAvailable(f, ctx);
         const on = ok && equipped === f.id;
