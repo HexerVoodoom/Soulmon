@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { SIMULADOS } from './_simulados.data.js';
 import {
   CHUNK, OPS_BUDGET, custoEstimado, petNameDoSimulado, agendarSimuladosDia, ensureSimuladosDia, estadoDoDia, saveDoSimulado, scoresDoDia, stripSimulated, lockKeyDia, isSimuladoId, inicioDoDia, eleitosDoJogo, PLACAR_SIMS_MAX, GAUGE_SIM, FAIXA_P,
+  progressoDoDia,
 } from './_simulados.js';
 import { submitScore, readBoard, payablePlacements, RANKED_GAMES, isoWeekKey } from './_rankings.js';
 import { closePreviousMonth, pendingKey, approveRiftPrize, _resetClosedCache } from './_riftPayout.js';
@@ -127,8 +128,9 @@ describe('evolução por faixa fixa', () => {
     expect(FAIXA_P).toEqual({ A: 1, B: 0.7, C: 0.33 });
   });
   it.each([['A', 73, 74], ['B', 106, 107], ['C', 224, 225]])('faixa %s: Mega no dia %i, Ultra no dia %i', (f, antes, ultra) => {
-    expect(estadoDoDia(novo(f), diaMais(antes)).stage).toBe('mega');
-    expect(estadoDoDia(novo(f), diaMais(ultra)).stage).toBe('ultra');
+    expect(progressoDoDia(novo(f), diaMais(antes)).stage).toBe('mega');
+    expect(progressoDoDia(novo(f), diaMais(ultra)).stage).toBe('ultra');
+    expect(estadoDoDia(novo(f), diaMais(ultra))).toMatchObject({ stage: 'champion', level: 13 });
   });
   it('faixas fixas: 50 / 50 / 70, pela skill', () => {
     const n = (f) => SIMULADOS.filter(p => p.faixa === f);
@@ -136,8 +138,9 @@ describe('evolução por faixa fixa', () => {
     expect(Math.min(...n('A').map(p => p.skill))).toBeGreaterThanOrEqual(Math.max(...n('B').map(p => p.skill)));
     expect(Math.min(...n('B').map(p => p.skill))).toBeGreaterThanOrEqual(Math.max(...n('C').map(p => p.skill)));
   });
-  it('partida escalonada: os novos não começam todos na mesma forma', () => {
-    expect(new Set(SIMULADOS.slice(50).map(p => p.ancora.estagio)).size).toBeGreaterThanOrEqual(4);
+  it('os 120 novos partem de Rookie, sem pontos; ninguém passa de Champion', () => {
+    for (const p of SIMULADOS.slice(50)) expect(p.ancora).toEqual({ estagio: 'rookie', pontos: 0 });
+    for (const p of SIMULADOS) expect(['rookie', 'champion']).toContain(estadoDoDia(p, diaMais(400)).stage);
   });
   it('todo level cabe no teto do duelo por dia de conta', () => {
     for (const p of SIMULADOS) expect(estadoDoDia(p, '2026-11-05').level, p.id).toBeLessThanOrEqual(1 + p.daysPlaying);

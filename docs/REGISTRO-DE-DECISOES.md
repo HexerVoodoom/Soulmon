@@ -4090,3 +4090,13 @@ Todas as outras células (Ataque, levels 24+ e 33+, Velocidade em 23 e 32) deram
 **Alternativas que perderam.** Texto de estilo próprio em `_simFormas.js` (reprovado pelo dono). Forçar `secondaryElement: null` para o elemento ficar mais puro (dono manteve o automático). Prompts como módulo de dados no Worker (cerca de 850 prompts dentro do bundle das Functions).
 
 **O que falsificaria.** Dono reprovar o lote por estilo; simulado com elemento visual incoerente em volume. **Rollback:** reverter o PR; sem chave `sim:prompt:` nada é gerado.
+
+## §232 — Simulados: novos em Rookie, teto Champion, forma só sob demanda (05/11/2026, decisão do dono; emenda §230)
+
+**Decisão do dono.** "Por enquanto jogador real-fake está no máximo em champion. Nenhum nasce champion, os novos todos são rookie." Os 120 novos partem de Rookie, sem partida escalonada. Forma só é gerada quando o simulado evolui. As formas já geradas ficam guardadas e são usadas sem nova geração quando chegar a vez.
+
+**Como fica.** `SIM_FORMA_MAX` limita estágio e level em `estadoDoDia`; `progressoDoDia` mantém a curva por baixo, para o teto poder subir depois. Isso revoga, por ora, o "ninguém regride" do §230 para os 10 antigos acima de Champion (sim_0006, 0007, 0008, 0011, 0017, 0019, 0030, 0038, 0045, 0050): aparecem em Champion, nível 13, com o sprite atual, e a fila não gera nada para eles.
+
+**Alternativa que perdeu.** Gerar agora a cadeia até a forma da curva (311 imagens nos novos). Dono: "Não vai gerar tudo agora de uma vez."
+
+**O que falsificaria.** Queda visível desses 10 incomodar, ou Champion parecer pouco no topo do ranking. **Rollback:** subir `SIM_FORMA_MAX`.

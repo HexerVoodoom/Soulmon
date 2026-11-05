@@ -30,6 +30,8 @@ const POR_PASSO = 3;
 const ENVIO_VENCE_MS = 30 * 60_000;
 const ORDEM = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'];
 const POR_ID = new Map(SIMULADOS.map((s) => [s.id, s]));
+/** Antigos cuja âncora passa do teto Champion: nada é gerado para eles sem decisão do dono (REGISTRO §232). */
+const ACIMA_DO_TETO = new Set(SIMULADOS.filter((s) => !['rookie', 'champion'].includes(s.ancora.estagio)).map((s) => s.id));
 
 export const formasLigadas = (env) => flagOn(env?.SIMULADOS_FORMAS_ON) && !flagOn(env?.SPRITE_DISABLED);
 export const chaveDaForma = (id, forma) => `sim:sprite:${id}:${forma}`;
@@ -56,7 +58,7 @@ async function sha256Hex(texto) {
 /** Um jogador viu o simulado nesta forma: entra na fila se a arte ainda não existe. No-op desligado. Nunca lança. */
 export async function enfileirarForma(env, id, forma, now = new Date()) {
   try {
-    if (!formasLigadas(env) || !kv(env) || !POR_ID.has(id) || !FORMA_RE.test(forma)) return false;
+    if (!formasLigadas(env) || !kv(env) || !POR_ID.has(id) || ACIMA_DO_TETO.has(id) || !FORMA_RE.test(forma)) return false;
     const store = kvOrThrow(env);
     if (await store.get(chaveDaForma(id, forma))) return false;
     if (await store.get(chaveDaFila(id, forma))) return false;

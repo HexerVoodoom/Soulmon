@@ -148,9 +148,16 @@ export function progressoDoDia(p, day) {
   return { level: Math.min(MAX_LEVEL, STAGE_FIRST_LEVEL.ultra + Math.floor(pontos + dias * taxa)), stage: 'ultra' };
 }
 
+/** Teto de forma dos simulados, até nova decisão do dono (REGISTRO §232). A curva segue andando por baixo em `progressoDoDia`. */
+export const SIM_FORMA_MAX = 'champion';
+const NIVEL_MAX_DO_TETO = STAGE_FIRST_LEVEL.ultimate - 1;
+
 /** Level, estágio e Vínculo do simulado no dia. */
 export function estadoDoDia(p, day) {
-  const { level, stage } = progressoDoDia(p, day);
+  const curva = progressoDoDia(p, day);
+  const acima = ESTAGIOS.indexOf(curva.stage) > ESTAGIOS.indexOf(SIM_FORMA_MAX);
+  const stage = acima ? SIM_FORMA_MAX : curva.stage;
+  const level = acima ? NIVEL_MAX_DO_TETO : curva.level;
   const bond = Math.max(5, p.bond0 + Math.floor((level - 1) * 0.8));
   const evolutionStage = stage === 'rookie' || stage === 'ultra' ? stage : `${stage}-${PATH_SUFFIX[p.line]}`;
   return { level, stage, bond, evolutionStage };

@@ -44,6 +44,10 @@ describe('fila', () => {
     env.SOULMON_SAVES.s.set(chaveDaForma(P.id, 'mega-power'), { v: '/x' });
     expect(await enfileirarForma(env, P.id, 'mega-power')).toBe(false);
   });
+  it('antigo acima do teto Champion não entra na fila', async () => {
+    const env = ligado();
+    expect(await enfileirarForma(env, 'sim_0006', 'champion-harmony')).toBe(false);
+  });
   it('sem prompt do Oráculo gravado: não gasta orçamento nem chama o provedor', async () => {
     const env = ligado(); const f = vi.fn(); vi.stubGlobal('fetch', f);
     await enfileirarForma(env, P.id, FORMA);
