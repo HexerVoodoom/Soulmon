@@ -48,7 +48,7 @@ export function cadeiaAte(line, forma) {
 
 /** O plano (puro): a cadeia de cada simulado no dia. Sem `prompts`, serve só para contar. */
 export function planejar(only = null, dia = dayKeyOf(), prompts = null) {
-  return SIMULADOS.filter((p) => !only || only.includes(p.id)).flatMap((p) => {
+  return SIMULADOS.filter((p) => (!only || only.includes(p.id)) && ['rookie', 'champion'].includes(p.ancora.estagio)).flatMap((p) => {
     const cadeia = cadeiaAte(p.line, estadoDoDia(p, dia).evolutionStage);
     return cadeia.map((formId, i) => {
       const prompt = prompts ? prompts[p.id]?.[formId]?.prompt : null;

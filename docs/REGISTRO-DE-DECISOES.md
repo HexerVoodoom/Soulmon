@@ -4127,8 +4127,8 @@ Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combin
 
 **Decisão do dono.** "Por enquanto jogador real-fake está no máximo em champion. Nenhum nasce champion, os novos todos são rookie." Os 120 novos partem de Rookie, sem partida escalonada. Forma só é gerada quando o simulado evolui. As formas já geradas ficam guardadas e são usadas sem nova geração quando chegar a vez.
 
-**Como fica.** `SIM_FORMA_MAX` limita estágio e level em `estadoDoDia`; `progressoDoDia` mantém a curva por baixo, para o teto poder subir depois. Isso revoga, por ora, o "ninguém regride" do §233 para os 10 antigos acima de Champion (sim_0006, 0007, 0008, 0011, 0017, 0019, 0030, 0038, 0045, 0050): aparecem em Champion, nível 13, com o sprite atual, e a fila não gera nada para eles.
+**Como fica.** `SIM_FORMA_MAX` limita a subida em `estadoDoDia`; `progressoDoDia` mantém a curva por baixo, para o teto poder subir depois. Os 10 antigos acima de Champion (sim_0006, 0007, 0008, 0011, 0017, 0019, 0030, 0038, 0045, 0050) mantêm a forma e o sprite atuais, sem cair nem subir, e a fila não gera nada para eles: o teto impede só subir acima de Champion. O "ninguém regride" do §233 segue valendo.
 
 **Alternativa que perdeu.** Gerar agora a cadeia até a forma da curva (311 imagens nos novos). Dono: "Não vai gerar tudo agora de uma vez."
 
-**O que falsificaria.** Queda visível desses 10 incomodar, ou Champion parecer pouco no topo do ranking. **Rollback:** subir `SIM_FORMA_MAX`.
+**O que falsificaria.** Champion parecer pouco no topo do ranking. **Rollback:** subir `SIM_FORMA_MAX`.

@@ -30,7 +30,7 @@ const POR_PASSO = 3;
 const ENVIO_VENCE_MS = 30 * 60_000;
 const ORDEM = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'];
 const POR_ID = new Map(SIMULADOS.map((s) => [s.id, s]));
-/** Antigos cuja âncora passa do teto Champion: nada é gerado para eles sem decisão do dono (REGISTRO §235). */
+/** Antigos acima do teto Champion mantêm a forma e o sprite atuais: nada é gerado para eles (REGISTRO §235). */
 const ACIMA_DO_TETO = new Set(SIMULADOS.filter((s) => !['rookie', 'champion'].includes(s.ancora.estagio)).map((s) => s.id));
 
 export const formasLigadas = (env) => flagOn(env?.SIMULADOS_FORMAS_ON) && !flagOn(env?.SPRITE_DISABLED);

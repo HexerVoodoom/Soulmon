@@ -4,6 +4,7 @@ import {
   CHUNK, OPS_BUDGET, custoEstimado, petNameDoSimulado, agendarSimuladosDia, ensureSimuladosDia, estadoDoDia, saveDoSimulado, scoresDoDia, stripSimulated, lockKeyDia, isSimuladoId, inicioDoDia, eleitosDoJogo, PLACAR_SIMS_MAX, GAUGE_SIM, FAIXA_P,
   progressoDoDia,
 } from './_simulados.js';
+import { entradasDoSimulado, emLotes, novos, rookiesDoManifesto, ESCRITAS_POR_SIMULADO } from '../../scripts/simulados-sprites-publicar.mjs';
 import { submitScore, readBoard, payablePlacements, RANKED_GAMES, isoWeekKey } from './_rankings.js';
 import { closePreviousMonth, pendingKey, approveRiftPrize, _resetClosedCache } from './_riftPayout.js';
 import { readEntitlement } from './_entitlements.js';
@@ -140,7 +141,16 @@ describe('evolução por faixa fixa', () => {
   });
   it('os 120 novos partem de Rookie, sem pontos; ninguém passa de Champion', () => {
     for (const p of SIMULADOS.slice(50)) expect(p.ancora).toEqual({ estagio: 'rookie', pontos: 0 });
-    for (const p of SIMULADOS) expect(['rookie', 'champion']).toContain(estadoDoDia(p, diaMais(400)).stage);
+    for (const p of SIMULADOS) {
+      const final = estadoDoDia(p, diaMais(400)).stage;
+      if (['ultimate', 'mega'].includes(p.ancora.estagio)) expect(final).toBe(p.ancora.estagio);
+      else expect(['rookie', 'champion']).toContain(final);
+    }
+  });
+  it('antigo acima do teto não cai nem sobe', () => {
+    const mega = SIMULADOS.find((s) => s.id === 'sim_0006');
+    expect(estadoDoDia(mega, '2026-11-05').stage).toBe('mega');
+    expect(estadoDoDia(mega, diaMais(400))).toMatchObject({ stage: 'mega', level: 30 });
   });
   it('todo level cabe no teto do duelo por dia de conta', () => {
     for (const p of SIMULADOS) expect(estadoDoDia(p, '2026-11-05').level, p.id).toBeLessThanOrEqual(1 + p.daysPlaying);
@@ -472,16 +482,34 @@ describe('o cliente nunca vê `simulated`', () => {
   });
 });
 
+describe('publicação dos rookies (script manual)', () => {
+  it('3 chaves por simulado, no formato que as rotas leem, sem separar o simulado entre lotes', () => {
+    const p = SIMULADOS[50];
+    const e = entradasDoSimulado(p, 'a'.repeat(32), 'QQ==', 'sha1');
+    expect(e.map((x) => x.key)).toEqual([`sprite:blob:${'a'.repeat(32)}`, `sim:sprite:${p.id}:rookie`, `sim:sprite:${p.id}`]);
+    expect(e[0]).toMatchObject({ base64: true, metadata: { contentType: 'image/png' } });
+    expect(e[2].value).toBe(`/api/sprite-image?k=${'a'.repeat(32)}`);
+    expect(e[2].metadata).toEqual({ el: p.element, line: p.line, form: 'rookie', sha: 'sha1' });
+    expect(novos()).toHaveLength(120);
+    expect(ESCRITAS_POR_SIMULADO * novos().length).toBe(360);
+    const lotes = emLotes([e, e, e], 600);
+    expect(lotes.flat()).toHaveLength(9);
+    for (const l of lotes) expect(l.length % 3).toBe(0);
+    expect(rookiesDoManifesto({ 'sim_0051|rookie|x': { arquivo: 'raw/a.png' }, 'sim_0051|champion-power|y': { arquivo: 'raw/b.png' } }).get('sim_0051')).toEqual({ arquivo: 'raw/a.png', sha: 'x' });
+  });
+});
+
 describe('fila de sprites (script manual)', () => {
   it('não gera por padrão; o plano é a cadeia do rookie à forma atual', () => {
     expect(parseArgs(['--only', 'sim_0001,sim_0002'])).toMatchObject({ only: ['sim_0001', 'sim_0002'], lote: null, instalar: null });
-    expect(new Set(planejar().map((i) => i.id)).size).toBe(170);
+    expect(new Set(planejar().map((i) => i.id)).size).toBe(160); // os 10 acima do teto ficam de fora
     expect(cadeiaAte('poder', 'ultimate-power')).toEqual(['rookie', 'champion-power', 'ultimate-power']);
     expect(cadeiaAte('harmonia', 'rookie')).toEqual(['rookie']);
     expect(formasDaLinha('benevolencia')[4]).toBe('ultra');
-    const um = planejar(['sim_0006'], '2026-11-05');
+    const um = planejar([SIMULADOS.find((s) => s.ancora.estagio === 'champion').id], '2026-11-05');
+    expect(planejar(['sim_0006'], '2026-11-05')).toEqual([]);
     expect(um[0]).toMatchObject({ formId: 'rookie', refDe: null });
-    expect(um.at(-1).refDe).toBe(`sim_0006--${um.at(-2).formId}`);
+    expect(um.at(-1).refDe).toBe(`${um[0].id}--${um.at(-2).formId}`);
   });
   it('prompt vem do mapa do Oráculo; falta de prompt é erro, nunca texto inventado', () => {
     expect(() => planejar(['sim_0001'], '2026-11-05', {})).toThrow(/sem prompt/);
