@@ -150,8 +150,8 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
                 value={`${Math.round(HEART_DROP_CHANCE * 100)}%`}
               />
               <DropItem
-                label={isPt ? `Glitchtama no primeiro marco (a cada ${DUNGEON_MILESTONE_FLOOR} camadas) da descida` : `Glitchtama at the descent's first milestone (every ${DUNGEON_MILESTONE_FLOOR} layers)`}
-                value="1"
+                label={isPt ? `Glitchtama (raro: a cada marco de ${DUNGEON_MILESTONE_FLOOR} camadas, no máximo 1 por semana)` : `Glitchtama (rare: at each ${DUNGEON_MILESTONE_FLOOR}-layer milestone, at most 1 a week)`}
+                value="1%"
               />
               <DropItem
                 label={isPt ? 'Fragmentos do Soulsmith nos marcos de profundidade (5, 10, 25, 50…)' : 'Soulsmith fragments at depth milestones (5, 10, 25, 50…)'}

@@ -1072,7 +1072,11 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/dungeonRewards.ts`
 
-**Dono de:** as recompensas PURAS da masmorra que o `App` e a descida fora do app compartilham: `applyEnemyDefeated` (abate + bestiário), `applyFloorCleared` (Vínculo), `applyMilestoneItem` (o item do marco, Vínculo, `dungeonRunsCompleted`, fragmentos da run), `countWeeklyMission`. Módulo leve (o `App` o importa de forma estática). **Chamado por:** `App.tsx` (`handleDungeonEnemyDefeated`, `handleDungeonFloorCleared`, `handleGlitchtama`) e `utils/dungeonAway.ts`.
+**Dono de:** as recompensas PURAS da masmorra que o `App` e a descida fora do app compartilham: `applyEnemyDefeated` (abate + bestiário), `applyFloorCleared` (Vínculo), `applyMilestoneItem` (a recompensa da run no marco: Vínculo, `dungeonRunsCompleted`, fragmentos da run; o 🌀 saiu daqui em 05/11/2026 e mora em `utils/glitchtamaDrop.ts`: 1%/marco, 1/semana), `countWeeklyMission`. Módulo leve (o `App` o importa de forma estática). **Chamado por:** `App.tsx` (`handleDungeonEnemyDefeated`, `handleDungeonFloorCleared`, `handleGlitchtama`) e `utils/dungeonAway.ts`.
+
+### `src/utils/glitchtamaDrop.ts`
+
+**Dono de:** o drop RARO do 🌀 Glitchtama no marco da masmorra (05/11/2026, REGISTRO §225): `GLITCHTAMA_DROP_CHANCE` (1%), `GLITCHTAMA_DROPS_PER_WEEK` (1), `glitchtamaDropFor` (marco + teto semanal + sorteio injetável), `withGlitchtamaDrop` (aplica +1 e grava o registro, reconferindo o teto), `glitchtamaDroppedThisWeek` e `sanitizeGlitchtamaDrop` (leitura segura do campo `glitchtamaDrop` do save). A semana é a do dia do jogador (`weekMondayOf` de `premiumFood.ts`). **Chamado por:** `DungeonGame.tsx` (sorteio com `Math.random`), `App.tsx` (`handleGlitchtama`), `dungeonAway.ts` (sorteio semeado por seed e camada) e `GameStateContext.tsx` (sanitização). **Régua:** `glitchtamaDrop.test.ts`, `DungeonGame.marco.render.test.tsx`, `dungeonAway.test.ts`.
 
 ### `src/utils/dungeonRevive.ts`
 
