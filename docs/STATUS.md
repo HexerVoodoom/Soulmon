@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 05/11/2026 — O Soulmon flutuava sobre a sombra (Home)
+>
+> - **Causa:** o `scale: petScale` do `<img>` do bicho NÃO APLICA: o React 18 escreve número em `style` com "px" ("0.25px"), `scale` não é unitless e o navegador descarta (conferido no DOM: o `style` do `<img>` não tem `scale`). O bicho sempre foi desenhado em 100%, mas a descida do pé (`useGroundDrop`) era calculada para o bicho ENCOLHIDO (3 px em vez de ~12) e a sombra ficava a 68 px ACIMA da caixa, escondida atrás do corpo. **Correção:** `PET_DRAWN_SCALE = 1` para pé e sombra; sombra ancorada nos pés. Guarda: `spriteScale.test.ts` ("o pé não flutua").
+> - **⚠️ Decisão do dono pendente:** como o `scale` nunca aplicou, os alvos de porte (`STAGE_TARGET`, rookie a 50%, `HOME_PET_SIZE` 0,7) NÃO estão valendo em lugar nenhum que use `petScaleStyle`/`scale:` numérico (Home, Pet, Respiração, Pesadelo, Zip, Torneio). Ligar (passar o valor como string) encolhe todos os bichos de uma vez — o rookie ficaria ~35 px. Não foi ligado.
+
 > ## 05/11/2026 — Acervo de assets que sobrevive ao bump do cache (`public/sw.js`)
 >
 > - Antes: todo bump de `CACHE_VERSION` apagava os ~100 MB de `/assets/` (cenários, sprites, chunks), e o jogador baixava tudo de novo — sentido como lentidão com internet ruim. Agora `/assets/*` com hash no nome mora em `soulmon-assets-v1` (sem versão no nome), que o `activate` não apaga; teto `ASSET_CACHE_MAX` (poda dos mais antigos); na 1ª versão nova, os assets já guardados nos caches de versão são migrados. Testado no Chromium (bump simulado: acervo intacto; migração com a rede bloqueada para o arquivo). Guard: `swCache.contract.test.ts` §8. **Bump de `CACHE_VERSION` continua necessário** para HTML/ícones; para assets já não custa download.
