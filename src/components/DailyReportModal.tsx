@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { Icon } from './ui/Icon';
 import { REPORT_HEAD_ART } from '../assets/soulmon/icones-ui/interacao';
 import { InfoTip } from './ui/InfoTip';
@@ -18,6 +18,9 @@ import type { GameState } from '../contexts/GameStateContext';
 import type { Language } from '../utils/i18n';
 import { RitualRow, SpriteGlass, type RitualRowTone } from './ritual/RitualKit';
 import { StrollFind } from './play/StrollFind';
+import { StrollScene } from './StrollScene';
+import { strollDiscoveryOf } from '../utils/strollDiscovery';
+import { rosterSpriteOf } from '../utils/novosSoulmon';
 
 interface DailyReportModalProps {
   report: NonNullable<GameState['lastDayReport']>;
@@ -41,6 +44,12 @@ interface DailyReportModalProps {
    * do destino. Sem missão cumprida naquele dia, `null` — e a seção mostra só o achado.
    */
   stroll?: { missionTitle: string; destination: string } | null;
+  /**
+   * A CENA DO PASSEIO em tela cheia (05/11/2026, `components/StrollScene.tsx`): com Passeio no dia anterior, o passo da aventura vira o
+   * cenário da região + a descoberta de um Soulmon que o jogador ainda não viu. `bestiary` é o que ele já viu (o sorteio sai daqui);
+   * `onDiscover(key)` grava a chave no Drive quando ele confirma. Ausente = a folha de sempre.
+   */
+  strollScene?: { regionId: string; bgId: string | null; bestiary?: readonly string[]; onDiscover: (key: string) => void } | null;
   /** HP máximo do estágio: o tamanho da fileira de corações (3 quando a tela não sabe). */
   maxHearts?: number;
   /** A animação de quebra deste relatório já foi vista (persistido em `lastDayReport.heartsAnimSeen`). */
@@ -166,7 +175,7 @@ function pickFor(date: string): number {
  *  · **humor = 5 alvos 44 iguais** com o emoji de `mood.ts` (D-R6);
  *  · **convite** = card irmão com × 44 e `outline` de duas linhas em 260 (D-R9).
  */
-export function DailyReportModal({ report, adventure, adventureIsNew = false, stroll = null, maxHearts = DEFAULT_HEARTS, heartsAnimSeen, onHeartsAnimSeen, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote, showOffer = false, onOpenOffer, onDismissOffer, spriteUrl, memories }: DailyReportModalProps) {
+export function DailyReportModal({ report, adventure, adventureIsNew = false, stroll = null, strollScene = null, maxHearts = DEFAULT_HEARTS, heartsAnimSeen, onHeartsAnimSeen, onClose, language, soulGoal, onRecoverHearts, moodToday, onPickMood, moodNote, showOffer = false, onOpenOffer, onDismissOffer, spriteUrl, memories }: DailyReportModalProps) {
   const isPt = language === 'pt-BR';
   // Modo acolhida: quem passou dias fora não recebe cobrança nenhuma. O
   // relatório vira "que bom que você voltou", e os números de falha somem — o
@@ -301,6 +310,11 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
   if (adventure) steps.push('adventure');
   if (hasToday) steps.push('today');
   const [stepIdx, setStepIdx] = useState(0);
+  // A descoberta é sorteada UMA vez por abertura do resumo: gravar a chave no Drive muda `bestiary` e não pode trocar o Soulmon da cena.
+  const descoberta = useRef<{ day: string; e: ReturnType<typeof strollDiscoveryOf> } | null>(null);
+  if (strollScene && stroll && descoberta.current?.day !== report.date) {
+    descoberta.current = { day: report.date, e: strollDiscoveryOf(strollScene.bestiary, report.date) };
+  }
   const step = steps[Math.min(stepIdx, steps.length - 1)];
   const isLast = stepIdx >= steps.length - 1;
   const goNext = () => (isLast ? onClose() : setStepIdx(i => i + 1));
@@ -416,6 +430,25 @@ export function DailyReportModal({ report, adventure, adventureIsNew = false, st
       )}
       </>
     ));
+  }
+
+  if (step === 'adventure' && adventure && stroll && strollScene) {
+    const e = descoberta.current?.e ?? null;
+    return (
+      <StrollScene
+        regionId={strollScene.regionId}
+        bgId={strollScene.bgId}
+        playerSprite={spriteUrl}
+        adventure={adventure}
+        adventureIsNew={adventureIsNew}
+        stroll={stroll}
+        discovery={e ? { key: e.key, name: e.name, element: e.element, sprite: rosterSpriteOf(e) } : null}
+        onDiscover={strollScene.onDiscover}
+        onFinish={goNext}
+        finishLabel={nextLabel}
+        language={language}
+      />
+    );
   }
 
   if (step === 'adventure' && adventure) {

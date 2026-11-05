@@ -173,13 +173,15 @@ function montar(
 const VERSAO = fonteSw.match(/const CACHE_VERSION = '([^']+)'/)?.[1] ?? '';
 const STATIC = `soulmon-static-${VERSAO}`;
 const RUNTIME = `soulmon-runtime-${VERSAO}`;
+/** Acervo sem versao (aafcc2e7c): assets com hash vao para ca, o bump nao o apaga. */
+const ASSETS = 'soulmon-assets-v1';
 
 describe('0. AUTOVERIFICACAO do ambiente falso', () => {
   it('a versao foi lida e o caminho feliz grava no cache', async () => {
     expect(VERSAO).toMatch(/^v\d+$/);
     const amb = montar({ [`${ORIGEM}/assets/app-abc12345.js`]: resposta() });
     await amb.disparar({ url: `${ORIGEM}/assets/app-abc12345.js` });
-    expect(amb.cacheDe(STATIC).has(`${ORIGEM}/assets/app-abc12345.js`)).toBe(true);
+    expect(amb.cacheDe(ASSETS).has(`${ORIGEM}/assets/app-abc12345.js`)).toBe(true);
   });
 });
 
@@ -267,7 +269,7 @@ describe('5. a limpeza de cache velho e melhor-esforco — o claim nao e', () =>
     // limpeza os alcança. `outro-app-cache` é de outra origem e fica.
     const amb = montar({}, ['digiapp-static-v1', 'soulmon-runtime-v1', STATIC, 'outro-app-cache']);
     await amb.ativar();
-    expect([...amb.todosOsCaches().keys()]).toEqual([STATIC, 'outro-app-cache']);
+    expect([...amb.todosOsCaches().keys()]).toEqual([STATIC, 'outro-app-cache', ASSETS]);
     expect(amb.claims).toBe(1);
   });
 

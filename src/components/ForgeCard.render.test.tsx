@@ -85,6 +85,9 @@ describe('ForgeCard', () => {
     // Mesmo peso visual: as duas ocupam a mesma caixa; só a ESCOLHIDA ganha contorno.
     expect(opcoes[0].style.padding).toBe(opcoes[1].style.padding);
     expect(dlg.textContent).toMatch(/param em 5%/);
+    // O modal diz quanto a peça dá AGORA por atributo (05/11/2026) — e só isso, sem o comparativo "depois".
+    expect(dlg.querySelector('[data-forge-bonus-total]')!.textContent).toBe('Esta peça dá agora: +0,1% Ataque');
+    expect(dlg.textContent).not.toMatch(/Depois|After/);
     click(dlg.querySelector('[data-forge-option="b"] input')!);
     click(q('[data-forge-confirm]'));
     expect(document.querySelector('[data-forge-dialog]')).toBeNull();

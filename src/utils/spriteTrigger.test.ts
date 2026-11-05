@@ -127,7 +127,7 @@ describe('a forma-destino vem SÓ de `evolutionTarget()`', () => {
 
 describe('o gatilho chaveia por `sprites[formId]` AUSENTE', () => {
   it('forma já desenhada não é regerada por gatilho automático', () => {
-    const lib = sprite(emptySpriteLibrary(), 'champion-power');
+    const lib = sprite(sprite(emptySpriteLibrary(), 'rookie'), 'champion-power'); // com a forma atual desenhada (senão vira recuperação 'R')
     expect(spriteBatch(input({ evolutionPoints: 29, library: lib }))).toBeNull();
     expect(spriteBatch(input({ evolutionPoints: 30, library: lib }))).toBeNull();
   });
@@ -233,5 +233,20 @@ describe('o lote de nascimento (ocasião A)', () => {
     // só, então rookie pronto = lote vazio = `null`.
     const lib = sprite(emptySpriteLibrary(), 'rookie');
     expect(birthBatch(input({ library: lib }))).toBeNull();
+  });
+});
+
+describe('recuperação da forma atual sem arte (05/11/2026)', () => {
+  it('pede a forma atual quando ela ficou sem sprite e o acervo tem outra', async () => {
+    const { currentFormRecovery, spriteBatch } = await import('./spriteTrigger');
+    const { emptySpriteLibrary } = await import('./spriteLibrary');
+    const lib = { ...emptySpriteLibrary(), sprites: { rookie: { url: 'https://x.example/r.png', formId: 'rookie', at: 1 } } };
+    const input = { evolutionStage: 'champion-benevolence', currentBranch: 'benevolence', unlockedEvolutions: [], evolutionPoints: 0,
+      points: { power: 0, harmony: 0, benevolence: 0 }, library: lib, crystalFormId: null } as never;
+    expect(currentFormRecovery(input)).toEqual({ occasion: 'R', formIds: ['champion-benevolence'] });
+    expect(spriteBatch(input)).toEqual({ occasion: 'R', formIds: ['champion-benevolence'] });
+    const capped = { ...lib, failures: { 'champion-benevolence': { terminal: 'form-cap' } } };
+    expect(currentFormRecovery({ ...(input as object), library: capped } as never)).toBeNull();
+    expect(currentFormRecovery({ ...(input as object), library: emptySpriteLibrary() } as never)).toBeNull();
   });
 });
