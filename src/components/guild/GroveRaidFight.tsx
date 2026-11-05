@@ -90,6 +90,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
     labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
     personalTag: PERSONAL_TAG[lang][family],
     playerSpecialEscola: ident.especial.escola,
+    playerSpecialElemento: ident.especial.elemento,
   }), [hpMax, foeMax, ident, foeEl, isPt, lang, family]);
 
   const { speed, cycle: cycleSpeed } = useBattleSpeed();

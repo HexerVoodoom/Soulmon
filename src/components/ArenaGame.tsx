@@ -302,6 +302,7 @@ export function ArenaGame({
       labels: { blocked: isPt ? 'Defendeu!' : 'Blocked!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
       playerSpecialEscola: ident.especial.escola,
+      playerSpecialElemento: ident.especial.elemento,
       // Vantagem elemental (30/10/2026, dono): sai JUNTO DO DANO no inimigo atingido — a mesma conta do combate (`elementAdvantage`).
       advantageTag: (foe: number, sp: boolean) => {
         const alvo = inimigosRef.current[foe];

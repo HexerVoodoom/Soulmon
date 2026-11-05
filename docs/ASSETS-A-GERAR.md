@@ -914,3 +914,25 @@ Os ícones dos equipamentos já existem (`equipArt`); o chakra só os emoldura e
 `Square 1:1 full-bleed illustration, 1024x1024, opaque background, painterly pixel-friendly fantasy game art in the Soulmon style. A humanoid figure made of HOT MOLTEN GLASS being blown, still pasty and soft, standing centered, arms slightly out from the body and legs apart, a thin copper blowpipe leaving its mouth and going up out of frame. The figure is BLACK at its centre (heart and torso almost pure black) and gains light and colour toward its edges: deep teal glow, then amber and ember orange rims, with a few tiny cyan bubbles trapped in the glass. The background is a dark closed turquoise-teal (the same tone as the app Home), fading from black behind the figure to a faint warm ember rim at the corners. Soul crystals with a small flame inside float in small quantity around the figure. Always present but sparse: copper pipes and tubing, thin digital circuit traces glowing faintly, and small branches of tiny leaves, everything connected by cables as if the plant were integrated with the machine. Leave three small clear empty spots (heart, left hand, right hand) with no objects on them. No gears, no steampunk, no text, no letters, no watermark, no frame, no extra characters.`
 
 **Checklist de identidade (`docs/REGRA-IDENTIDADE-SOULMON.md`) antes de instalar:** base turquesa escuro como a Home; cristais da alma com chama; canos de cobre, circuitos e folhinhas em pouca quantidade, tudo ligado por cabo; SEM engrenagem/steampunk; figura preta no centro e colorida nas bordas; três pontos livres nas posições acima. Sem esses elementos, REJEITAR e voltar ao gerador. Instalar: salvar como `vitra-mapa.png` e conferir os 3 chakras sobre os pontos livres (a tela usa o arquivo sozinha).
+
+---
+
+## Efeitos de combate por elemento (04/11/2026, REGISTRO §224)
+
+Hoje o selo usa marcador provisório (forma + texto, loop emprestado de `fx-dot-loop-sheet`). Destino: `src/assets/soulmon/combate-v3/status/` (glifo 64×64, exibido a 22 px) e `fx/` (folha 3×2, 128 px por quadro, 384×256). Identidade obrigatória: `docs/REGRA-IDENTIDADE-SOULMON.md`. Prompts prontos: `D:\Soulmon\planos\efeitos-combate.md` §4.3. Transparência real, nunca chroma.
+
+| Arquivo | O que mostra | Uso | Situação |
+|---|---|---|---|
+| `st-queimadura.png` | chama no medalhão de cristal | DoT de fogo | falta (provisório: `♨`) |
+| `st-veneno.png` | gota tóxica | DoT de vileza | falta (provisório: `☣`) |
+| `st-maldicao.png` | caveira sombria, refazer no molde | maldição | existe, anterior à regra de identidade |
+| `st-velocidade.png` | botinha com asa | `spdBuff` de ar e lentidão | falta |
+| `st-silencio.png` | nota musical riscada | silêncio | falta |
+| `st-def-terra.png`, `st-def-agua.png` | escudo de pedra, escudo de água | defesa | falta (provisório: `st-escudo`) |
+| `st-atk-fisico.png`, `st-atk-magico.png` | punho de pedra, orbe de água | ataque | falta (provisório: `st-buff-atk`) |
+| `st-seta-sobe.png`, `st-seta-desce.png` | setas, camada animada em CSS | buff e debuff | falta |
+| `fx-queimadura-loop-sheet.png` | chama que sobe e queima, toca a cada golpe de quem queima | queimadura | falta |
+| `fx-veneno-loop-sheet.png` | gotas pingando | veneno | falta |
+| `fx-maldicao-loop-sheet.png` | caveira e névoa, refazer | maldição | existe, anterior à regra |
+| `fx-silencio-loop-sheet.png` | anéis de som se desfazendo | silêncio | falta |
+| `fx-regen-loop-sheet.png` | folhas e faíscas subindo | cura contínua | falta |

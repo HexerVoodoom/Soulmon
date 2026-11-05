@@ -524,7 +524,7 @@ function CastCircle({ x, y, size, dur, reduced }: { x: number; y: number; size: 
  * depende só da cor nem só da imagem: sem arte, a forma e o texto continuam. Movimento reduzido: sem o loop,
  * o selo fica parado — a mesma informação.
  */
-const LOOP_PRIORITY = ['maldicao', 'debuff', 'dot', 'buff'] as const;
+const LOOP_PRIORITY = ['maldicao', 'debuff', 'queimadura', 'veneno', 'dot', 'buff'] as const;
 
 function StatusLayer({ status, spot, barsH, isPt, reduced }: { status: StageStatus[]; spot: Spot; barsH: number; isPt: boolean; reduced: boolean }) {
   const loopOf = LOOP_PRIORITY.map((k) => status.find((st) => st.kind === k)).find(Boolean);

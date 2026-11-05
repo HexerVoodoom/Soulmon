@@ -260,6 +260,7 @@ export function NightmareBattle({
       labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
       playerSpecialEscola: ident.especial.escola,
+      playerSpecialElemento: ident.especial.elemento,
     };
   }, [ident, par, isPt, lang]);
 

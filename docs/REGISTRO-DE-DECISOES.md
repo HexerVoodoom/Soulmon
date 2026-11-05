@@ -3985,3 +3985,13 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 **O que falsificaria.** Spam pelo endpoint anônimo (balde por IP/conta é amortecedor; subir para Turnstile ou exigir login) ou mensagens só na KV porque o envio nunca foi configurado.
 
 **Auditoria de segurança (04/11/2026).** Um único `put` por mensagem (sem segundo `put` com `emailed: true`); `MAX_WRITES_PER_DAY` = 50 e teto próprio de e-mail por dia (no máximo o mesmo); chave do limitador IPv6 normalizada para /64; recusa por `Content-Length` antes de ler o corpo. `PRIVACY_VERSION` = 2026-11-04 é UMA alta que cobre feedback (§6, §6e: Resend/Gmail, retenção, fora da cópia e da exclusão da conta) e a faixa de evoluções do PR #562 (§5, §8). O banner de termos informa e quem aceitou versão antiga volta a ver o aceite (A3).
+
+## §224 — Efeito de combate pelo elemento do especial (04/11/2026, decisão do dono)
+
+- **Regra:** o efeito depende do ELEMENTO DO ESPECIAL, não do Soulmon (água com especial de fogo pode queimar), e nem todo especial tem efeito: a família continua decidindo a mecânica, `direct` é só dano. O elemento só dá o sabor de uma família que já deixa estado. Tabela única em `src/utils/combate/elementEffects.ts`; derivado herda do primeiro componente com par na família.
+- **PvP (Torneio/Duelo) só visual.** `fight.ts` e `_combate.js` não mudam; silêncio, lentidão e cura contínua não aparecem no PvP porque o selo mentiria. Reafirma o §177.
+- **Físico e mágico só visuais:** mesmo `atkBuff`, selo diferente.
+- **Silêncio não cancela:** a barra segue cheia e o especial sai quando acabar.
+- **Inimigos causam efeitos em PvE**, só depois de medir; desligado até lá.
+- **Alternativa que perdeu:** 25% do orçamento de todo especial vira o efeito do elemento (mediu dentro da régua no protótipo, mas o dono quer especial de dano direto puro).
+- **O que falsifica:** se a medição de Arena/Masmorra sair de ±3pp em vitória contra a mesma família sem efeito, a mecânica nova não liga; se poucos jogadores chegarem a um efeito (família com peso baixo no elemento), rever `AFINIDADE_ELEMENTO`.

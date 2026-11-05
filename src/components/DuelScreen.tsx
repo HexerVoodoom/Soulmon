@@ -214,7 +214,7 @@ export function DuelScreen({
       setEnergia({ me: Math.max(0, e.energy[0]), opp: Math.max(0, e.energy[1]) });
       const quadro = duelStatusBoard(
         sim.current.events, applied.current,
-        [{ ...me.special, escola: meId.especial.escola }, { ...opp.special, escola: oppId.especial.escola }],
+        [{ ...me.special, escola: meId.especial.escola, elemento: meId.especial.elemento }, { ...opp.special, escola: oppId.especial.escola, elemento: oppId.especial.elemento }],
         sim.current.fx,
       );
       setStatus({ me: stageStatusOf(quadro[0]), opp: stageStatusOf(quadro[1]) });
