@@ -72,6 +72,7 @@ export function medirCalabouco(n = RUNS, pNaoCombate = 0.75) {
       else victory = rng() < pNaoCombate;
       void isForcedCombat;
       run = resolveStep(run, kind, victory, hpLeft);
+      if (run.hpAt !== undefined) run = { ...run, step: run.step + 1, over: true }; // §239: mede a incursão sem nenhuma derrota (a derrota agora espera e continua)
       if (run.bonusPending) run = applyBonus(run, BONUS_KINDS[Math.floor(rng() * BONUS_KINDS.length)]);
     }
     passos += run.step;

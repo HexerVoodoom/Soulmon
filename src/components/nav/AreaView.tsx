@@ -138,6 +138,9 @@ export interface PlayHandlers {
   /** beta3 F1: a chave do dia ("Prepare to Focus" concluído) libera a Focus Workshop. Ausente = sem trava (testes antigos). */
   focusKeyActive?: boolean;
   onFocusPrepared?: () => void;
+  /** §239: a chave do Calabouço: concluir uma sessão da Oficina abre a dungeon naquele dia. Ausente = sem trava (testes antigos). */
+  dungeonKeyActive?: boolean;
+  onFocusSessionComplete?: () => void;
   /** beta3 F1: o timer de foco começou — a masmorra desce em background. */
   onFocusStart?: (focusEndsAt?: number) => 'started' | 'busy' | 'no-hp' | 'no-energy';
   /** O timer de foco foi pausado / continuou (novo fim) / cancelado: a descida do foco acompanha. */
@@ -591,7 +594,7 @@ export function AreaView(props: AreaViewProps) {
     const open = lots.find(l => l.id === sheet) ?? null;
     const { play } = props;
     /** O Calabouço (exploracao.dungeon) com a incursão no save abre em TELA CHEIA, sem a folha (N7). */
-    const rogueFull = area === 'exploracao' && open?.id === 'dungeon' && !!play.rogue;
+    const rogueFull = area === 'exploracao' && open?.id === 'dungeon' && !!play.rogue && play.dungeonKeyActive !== false;
     /** O mapa do Soulsmith (ferreiro) também abre em TELA CHEIA, de borda a borda (05/11/2026, pedido do dono); o Voltar fecha de volta à área. */
     const forgeFull = area === 'forja' && open?.id === 'ferreiro';
     const base = {
@@ -618,7 +621,7 @@ export function AreaView(props: AreaViewProps) {
             )}
             {/* beta3 N8 (26/10/2026): a Oficina abre primeiro a etapa 1 (Prepare to Focus); concluída, libera a etapa 2 (workshop/timer). */}
             {open?.id === 'oficina' && play.focusKeyActive === false && <div data-oficina-etapa="1"><PrepararFocoSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} keyActive={false} onPrepared={play.onFocusPrepared} /></div>}
-            {open?.id === 'oficina' && play.focusKeyActive !== false && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} onFocusCycle={() => props.onDailyEvent?.('foco')} onFocusStart={play.onFocusStart} onFocusPause={play.onFocusPause} onFocusResume={play.onFocusResume} onFocusCancel={play.onFocusCancel} />}
+            {open?.id === 'oficina' && play.focusKeyActive !== false && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} onSessionComplete={play.onFocusSessionComplete} onFocusCycle={() => props.onDailyEvent?.('foco')} onFocusStart={play.onFocusStart} onFocusPause={play.onFocusPause} onFocusResume={play.onFocusResume} onFocusCancel={play.onFocusCancel} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
@@ -627,6 +630,7 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
             {open?.id === 'dungeon' && !play.rogue && <RogueDungeonPlaceholder language={language} />}
+            {open?.id === 'dungeon' && !!play.rogue && play.dungeonKeyActive === false && <p data-rogue-sem-chave style={{ margin: 0, color: 'var(--sm2-ink)', fontFamily: 'var(--sm2-font-text)', fontSize: 'var(--sm2-text-sm, 14px)' }}>{language === 'pt-BR' ? 'O portão só abre para quem trouxe a chave. Vá à Oficina do Foco, na Forja, e conclua uma sessão: a chave vale o dia inteiro, e sair daqui não custa nada.' : 'The gate only opens for those who bring the key. Go to the Focus Workshop, in the Forge, and complete a session: the key lasts all day, and leaving costs nothing.'}</p>}
           </Suspense>
         </AreaSheet>
         {forgeFull && <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}><ForgeCard language={language} view="map" onBack={close} /></Suspense>}

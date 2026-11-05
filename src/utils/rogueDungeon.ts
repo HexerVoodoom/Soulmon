@@ -17,6 +17,7 @@ import { mulberry32 } from './combate/rng';
 import type { Combatant } from './combate/curve';
 
 export * from './rogueDungeonSave';
+import { hpAgora, msAteDescer } from './dungeonIdle';
 import { ROGUE_FOE_RAMP, ROGUE_FLOORS, ROGUE_PER_FLOOR, ROGUE_MAX_STEPS, ROGUE_COMBAT_EVERY, ROGUE_FLOOR_BONUS, ROGUE_MAX_SCORE, PATH_KINDS, BONUS_KINDS, emptyRun, type PathKind, type BonusKind, type RogueRun } from './rogueDungeonSave';
 
 /** A incursão de HOJE: a guardada se for do mesmo dia, senão uma nova (sem bônus). */
@@ -61,8 +62,24 @@ export function applyBonus(r: RogueRun, kind: BonusKind): RogueRun {
   return next;
 }
 
-/** Resolve o passo: vitória abre a escolha de bônus; derrota de combate encerra o dia; erro fora de combate só gasta o passo. */
-export function resolveStep(r0: RogueRun, kind: PathKind, victory: boolean, hpLeft?: number): RogueRun {
+/** Vida da incursão agora, com a recuperação depois de uma derrota (mesmo ritmo da Fenda). */
+export const rogueHpNow = (r: RogueRun, now: number): number =>
+  (r.hpAt === undefined ? hpOf(r) : hpAgora({ dungeonHp: { frac: hpOf(r), at: r.hpAt } }, now));
+/** Milissegundos até poder lutar de novo (0 = pode). */
+export const rogueRestMs = (r: RogueRun, now: number): number =>
+  (r.hpAt === undefined ? 0 : msAteDescer({ dungeonHp: { frac: hpOf(r), at: r.hpAt } }, now));
+/** Grava a vida recuperada ao voltar à luta. Sem recuperação em curso → a mesma referência. */
+export function settleRest(r: RogueRun, now: number): RogueRun {
+  if (r.hpAt === undefined) return r;
+  const { hpAt: _a, ...rest } = r; void _a;
+  return { ...rest, hp: rogueHpNow(r, now) };
+}
+
+/**
+ * Resolve o passo: vitória abre a escolha de bônus; erro fora de combate só gasta o passo. Derrota de combate (dono, 05/11/2026, §239) NÃO encerra o
+ * dia nem gasta o passo: a vida cai ao piso e recupera com o tempo; recuperada, o mesmo combate volta, até o fim dos andares.
+ */
+export function resolveStep(r0: RogueRun, kind: PathKind, victory: boolean, hpLeft?: number, now: number = Date.now()): RogueRun {
   if (isFinished(r0) || r0.bonusPending) return r0;
   const { pending: _pendente, ...r } = r0; // resolver o passo encerra o desafio em curso
   void _pendente;
@@ -74,7 +91,7 @@ export function resolveStep(r0: RogueRun, kind: PathKind, victory: boolean, hpLe
     const hp = Math.max(0.01, Math.min(1, hpLeft));
     base = hp < 1 ? { ...rest, hp } : rest;
   }
-  if (!victory && kind === 'combat') return { ...base, step, over: true };
+  if (!victory && kind === 'combat') return { ...base, hp: 0.01, hpAt: now };
   if (!victory) return { ...base, step };
   return { ...base, step, won: r.won + 1, bonusPending: step < ROGUE_MAX_STEPS };
 }

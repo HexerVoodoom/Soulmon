@@ -5,6 +5,7 @@
  * VISÍVEL (`RogueFight`, a `BattleStage` da Masmorra); os desafios que não são combate seguem sendo os jogos reais em modo desafio.
  * A masmorra/Endless Rift (`DungeonGame.tsx`) é outra coisa e não é tocada. A superfície NASCE MUDA (nenhum som novo).
  */
+import { formatarEspera } from '../utils/dungeonIdle';
 import { BackCircleButton } from './ui/BackCircleButton';
 import { lotIconName } from '../utils/lotIcons';
 import { Component, lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -27,7 +28,7 @@ import floorDoor from '../assets/soulmon/icones-ui/masmorra-porta.png';
 import floorStairs from '../assets/soulmon/icones-ui/masmorra-escada.png';
 import floorChest from '../assets/soulmon/icones-ui/masmorra-bau-fechado.png';
 import {
-  ROGUE_FLOORS, ROGUE_MAX_STEPS, ROGUE_PER_FLOOR, VIGOR_STEP, applyBonus, hpOf, bonusChoices, cancelChallenge, challengeFor, consumePending, floorOf, isFinished, markPaid, pathsFor,
+  ROGUE_FLOORS, ROGUE_MAX_STEPS, ROGUE_PER_FLOOR, VIGOR_STEP, applyBonus, hpOf, bonusChoices, rogueRestMs, settleRest, cancelChallenge, challengeFor, consumePending, floorOf, isFinished, markPaid, pathsFor,
   resolveStep, startChallenge, rogueBits, rogueScore, runForDay, stepInFloor,
   type BonusKind, type ChallengeGame, type LightKind, type PathKind, type RogueRun,
 } from '../utils/rogueDungeon';
@@ -164,15 +165,19 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
 
   // Fim da incursão: paga os Bits UMA vez (o teto diário do app limita). `paidRef` trava remontagem/re-render antes de o save voltar com
   // `paid`; `onEarnPoints` (instável, vem inline do pai) fica fora das deps, lido pelo ref.
-  const paidRef = useRef(false);
+  const paidRef = useRef(-1);
   const [bitsPagos, setBitsPagos] = useState<number | null>(null); // o creditado (teto diário); null = pago em outra sessão, mostra o cheio
   const earnRef = useRef(onEarnPoints);
   earnRef.current = onEarnPoints;
   useEffect(() => {
-    if (!finished || run.paid || paidRef.current) return;
-    paidRef.current = true;
-    if (run.won > 0) setBitsPagos(earnRef.current?.(rogueBits(run)) ?? rogueBits(run));
-    onChange(markPaid(run));
+    /* §239: a derrota também paga o que a incursão rendeu até ali (a pessoa pode não voltar hoje); `paidWon` evita pagar de novo. */
+    const resting = run.hpAt !== undefined;
+    if ((!finished && !resting) || run.paid || paidRef.current === run.won) return;
+    const owed = rogueBits(run) - (run.paidWon ?? 0);
+    if (!finished && owed <= 0) return;
+    paidRef.current = run.won;
+    if (owed > 0) setBitsPagos(earnRef.current?.(owed) ?? owed);
+    onChange(finished ? markPaid({ ...run, paidWon: run.won }) : { ...run, paidWon: run.won });
   }, [finished, run, onChange]);
 
   // Voltou com um desafio em curso (saiu/desmontou/fechou o app sem terminar): o passo é CONSUMIDO — sem re-tentar de graça nem espiar.
@@ -195,12 +200,15 @@ export function RogueDungeon({ language, todayKey, saved, onChange, combatant, s
 
   const choose = (kind: PathKind) => {
     if (kind !== 'combat') { settled.current = false; setChallenge(kind); onChange(startChallenge(run, kind)); return; }
+    const rest = rogueRestMs(run, Date.now());
+    if (rest > 0) { setNote(isPt ? `O Soulmon ainda se recupera. Volte em ${formatarEspera(rest, true)}; a incursão espera.` : `Your Soulmon is still recovering. Come back in ${formatarEspera(rest, false)}; the run will wait.`); return; }
+    if (run.hpAt !== undefined) onChange(settleRest(run, Date.now()));
     setNote(null);
     setFighting(true); // o combate é uma luta visível (`RogueFight`); o passo só resolve quando ela termina
   };
   const fightResult = (won: boolean, foeName: string, hpLeft: number) => finish('combat', won, won
     ? (isPt ? `Você venceu ${foeName}!` : `You defeated ${foeName}!`)
-    : (isPt ? `${foeName} venceu. O dia na masmorra acabou — volte amanhã.` : `${foeName} won. The dungeon day is over — come back tomorrow.`), hpLeft);
+    : (isPt ? `${foeName} venceu. Sair não custa nada: recupere a vida e continue daqui, hoje mesmo.` : `${foeName} won. Leaving costs nothing: recover and pick up right here, today.`), hpLeft);
 
   // Resultado do jogo real em modo desafio (vitória/derrota voltam ao mapa). Ignora chamada repetida.
   const settled = useRef(false);
