@@ -1,10 +1,21 @@
 import { describe, it, expect } from 'vitest';
 import {
-  getTournamentWindow, tournamentWindowLabel, ROUND_START_DAY, ROUND_LENGTH_DAYS,
+  getTournamentWindow, seasonDaysLabel, seasonDaysLeft, tournamentWindowLabel, ROUND_START_DAY, ROUND_LENGTH_DAYS,
 } from './tournamentSeason';
 
 // Agosto/2026: 7 = sexta, 8 = sábado, 9 = domingo, 10 = segunda.
 const at = (day: number, hour = 12) => new Date(2026, 7, day, hour, 0, 0);
+
+describe('seasonDaysLabel', () => {
+  it('conta até o fim do mês em UTC, por extenso, com singular', () => {
+    expect(seasonDaysLeft(new Date(Date.UTC(2026, 10, 24, 12)))).toBe(7);
+    expect(seasonDaysLabel(new Date(Date.UTC(2026, 10, 24, 12)), 'en-US')).toBe('Seven Days Remaining');
+    expect(seasonDaysLabel(new Date(Date.UTC(2026, 10, 30, 12)), 'en-US')).toBe('One Day Remaining');
+    expect(seasonDaysLabel(new Date(Date.UTC(2026, 10, 24, 12)), 'pt-BR')).toBe('Sete dias restantes');
+    expect(seasonDaysLabel(new Date(Date.UTC(2026, 10, 30, 12)), 'pt-BR')).toBe('Um dia restante');
+    expect(seasonDaysLeft(new Date(Date.UTC(2026, 11, 1, 0)))).toBe(31);
+  });
+});
 
 describe('rodada do torneio', () => {
   it('abre na sexta e vai até domingo', () => {

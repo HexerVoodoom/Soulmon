@@ -91,7 +91,7 @@ import { getOpponents, playMatchComRetry, playMatch, isFalhaDeRede, startDuel, g
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
 import { RewardPreview } from './ui/RewardPreview';
 import { TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
-import { getTournamentWindow, tournamentWindowLabel } from '../utils/tournamentSeason';
+import { seasonDaysLabel } from '../utils/tournamentSeason';
 import { Icon } from './ui/Icon';
 import { InfoTip, InfoTipSection } from './ui/InfoTip';
 import { AvatarFrame, FrameSelector } from './ui/AvatarFrame';
@@ -298,7 +298,6 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   };
   const myFrame = resolveEquippedFrame(equippedFrame, frameCtx);
   const [framesOpen, setFramesOpen] = useState(false);
-  const round = getTournamentWindow();
   /** Quantas posições aparecem ACIMA e ABAIXO do jogador na lista da season.
    *  A season inteira transformava a tela num placar absoluto: dois dedos de
    *  scroll e a pessoa se lê como "47º", que é justamente a leitura de
@@ -662,7 +661,10 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       )}
       {headSlot && createPortal(headRight, headSlot)}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <p style={{ ...sm2Hint, flex: 1, minWidth: 0, margin: 0 }}>{tournamentWindowLabel(round, isPt ? 'pt-BR' : 'en-US')}</p>
+        <p data-torneio-rank style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 0, margin: 0, fontWeight: 500 }}>
+          {standing && <TierMark id={standing.tier.id} size={24} state="current" place={standing.place} />}
+          Rank
+        </p>
         <span
           title={isPt ? 'Honra — só compra os prêmios do Torneio' : 'Honor — only buys Tournament rewards'}
           aria-label={`${isPt ? 'Honra' : 'Honor'}: ${emblems}`}
@@ -672,6 +674,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           <span className="sm2-num" style={{ ...emblemNum, fontSize: 'var(--sm2-text-md)' }}>{emblems}</span>
         </span>
       </div>
+
+      <p data-torneio-temporada style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Temporada' : 'Season'}: {seasonDaysLabel(new Date(), isPt ? 'pt-BR' : 'en-US')}</p>
 
       {/* Troféus de season — só existem se foram ganhos. Um selo por season,
           com o lugar dito em PALAVRA no `title`/`aria`, em vez de três hexes
@@ -724,9 +728,6 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           continua na lista vazia de oponentes. */}
       {pvpAberto && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <p data-torneio-ranqueado style={{ ...sm2Hint, margin: 0 }}>
-            {isPt ? 'Ranqueado: os oponentes são sorteados perto da sua faixa.' : 'Ranked: opponents are drawn near your tier.'}
-          </p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '-8px 0' }}>
             <p className="sm2-num" style={{ ...sm2Hint, flex: 1, minWidth: 0 }}>
               {matchesLeft === null
