@@ -1,104 +1,97 @@
-import { useState } from 'react';
-import { ModalSheet, sm2Button, sm2Text } from './form/FormKit';
+import { sm2Button, sm2Text } from './form/FormKit';
+import { AreaSheet } from './nav/AreaSheet';
 import type { Language } from '../utils/i18n';
 import { ACTIVITY_CATALOG_BY_ID } from '../data/activityCatalog';
-import { MERC_ORDENS, MERC_NOME, MERC_RETRATO, MERC_TIPO, pontosMerc, type MercMissionState, type MercOrdem } from '../utils/mercMission';
+import { MERC_NOME, MERC_RETRATO, MERC_TIPO, pontosMerc, sortearMerc, type MercMissionState, type MercOrdem } from '../utils/mercMission';
 import { ATTR_LABEL } from '../types/attributes';
 import { arteOnboarding } from './onboarding/sequencia/assets';
 
 interface Props {
-  open: boolean;
+  ordem: MercOrdem;
   onClose: () => void;
   language?: Language;
-  /** A missão de HOJE (já filtrada pelo dia do jogador), ou `null` se ainda não escolheu. */
+  /** A missão de HOJE (já filtrada pelo dia do jogador), ou `null` se ainda não aceitou nenhuma. */
   hoje: MercMissionState | null;
-  /** O BB fica de fora (M5): o painel só mostra o convite para voltar depois. */
+  /** Dia do jogador: o convite mostrado é o MESMO que `escolherMerc` vai gravar ao aceitar. */
+  dayKey: string;
+  /** O BB fica de fora (M5). */
   bb?: boolean;
-  onChoose: (ordem: MercOrdem) => void;
+  onAccept: (ordem: MercOrdem) => void;
+  /** "Vou pensar": fecha a folha; quem chama deixa o aviso de uma missão por dia. */
+  onThink: () => void;
   /** "Sim, fiz" (a pergunta de honestidade do onboarding, D11). */
   onConfirm: () => void;
-  /** O prédio tocado no mapa da Guilda: mostra só o Desbravador daquela Ordem. */
-  ordem?: MercOrdem;
 }
 
-/** Guilda dos Mercenários (§11): um Desbravador de cada Ordem principal; 1 convite por dia. Retratos = placeholder até a arte. */
-export function MercGuildSheet({ open, onClose, language = 'pt-BR', hoje, bb = false, onChoose, onConfirm, ordem }: Props) {
+/** A folha do LÍDER de uma Ordem (dono, 05/11/2026): o NPC grande no alto, primeiro o que é a missão, depois aceitar ou pensar. */
+export function MercGuildSheet({ ordem, onClose, language = 'pt-BR', hoje, dayKey, bb = false, onAccept, onThink, onConfirm }: Props) {
   const isPt = language === 'pt-BR';
-  const [adiado, setAdiado] = useState(false);
-  const item = hoje ? ACTIVITY_CATALOG_BY_ID[hoje.activityId] : undefined;
   const t = (p: { pt: string; en: string }) => (isPt ? p.pt : p.en);
+  const lider = MERC_NOME[ordem];
+  const minha = hoje?.ordem === ordem ? hoje : null;
+  const outra = hoje && hoje.ordem !== ordem ? hoje : null;
+  const item = minha ? ACTIVITY_CATALOG_BY_ID[minha.activityId] : !hoje ? sortearMerc(dayKey, ordem) : undefined;
+  const tipo = ATTR_LABEL[MERC_TIPO[ordem]];
+  const premio = item && (isPt ? `Vale ${pontosMerc(item)} pontos de ${tipo.pt}.` : `Worth ${pontosMerc(item)} ${tipo.en} points.`);
+
+  const fala = bb
+    ? t({ pt: 'Volte quando o seu Soulmon deixar de ser bebê.', en: 'Come back once your Soulmon is no longer a baby.' })
+    : outra
+      ? t({ pt: `Hoje você está com ${MERC_NOME[outra.ordem].pt}. Volte amanhã.`, en: `Today you are with ${MERC_NOME[outra.ordem].en}. Come back tomorrow.` })
+      : minha?.done
+        ? t({ pt: 'Feito. Volte amanhã, se quiser.', en: 'Done. Come back tomorrow if you like.' })
+        : minha
+          ? t({ pt: 'Você fez de verdade?', en: 'Did you really do it?' })
+          : t({ pt: 'Tenho uma missão para você.', en: 'I have a mission for you.' });
 
   return (
-    <ModalSheet open={open} onClose={onClose} language={language} maxWidth={440}
-      title={isPt ? 'Guilda dos Mercenários' : 'Mercenary Guild'}>
-      <div data-merc-guild style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {bb && (
-          <p data-merc-bb style={{ ...sm2Text, margin: 0 }}>
-            {isPt ? 'Os Desbravadores esperam o seu Soulmon crescer. Volte quando ele deixar de ser bebê.'
-                  : 'The Pathfinders wait for your Soulmon to grow. Come back once it is no longer a baby.'}
+    <AreaSheet
+      open
+      language={language}
+      onClose={onClose}
+      title={t({ pt: lider.ordemPt, en: lider.ordemEn })}
+      closeLabel={isPt ? 'Fechar' : 'Close'}
+      npcArt={arteOnboarding(MERC_RETRATO[ordem])}
+      npcVoice={{ name: t(lider), line: fala }}
+    >
+      <div data-merc-guild data-merc-lider={ordem} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {!bb && !outra && item && !minha?.done && (
+          <>
+            <p data-merc-atividade style={{ ...sm2Text, margin: 0 }}>
+              {item.emoji} <strong>{t(item.name)}</strong>{' — '}{t(item.levels[0].target)}
+            </p>
+            <p data-merc-premio style={{ ...sm2Text, margin: 0 }}>{premio}</p>
+          </>
+        )}
+
+        {!bb && !hoje && item && (
+          <>
+            <button type="button" data-merc-aceito onClick={() => onAccept(ordem)} style={{ ...sm2Button('primary'), width: '100%' }}>
+              {isPt ? 'Aceito' : 'I accept'}
+            </button>
+            <button type="button" data-merc-pensar onClick={onThink} style={{ ...sm2Button('outline'), width: '100%' }}>
+              {isPt ? 'Vou pensar' : "I'll think about it"}
+            </button>
+          </>
+        )}
+
+        {!bb && minha && !minha.done && (
+          <>
+            <button type="button" data-merc-resp="sim" onClick={onConfirm} style={{ ...sm2Button('primary'), width: '100%' }}>
+              {isPt ? 'Sim, fiz' : 'Yes, I did'}
+            </button>
+            <button type="button" data-merc-resp="nao" onClick={onClose} style={{ ...sm2Button('outline'), width: '100%' }}>
+              {isPt ? 'Ainda não' : 'Not yet'}
+            </button>
+          </>
+        )}
+
+        {!bb && outra && (
+          <p data-merc-uma-por-dia style={{ ...sm2Text, margin: 0 }}>
+            {isPt ? 'Só dá para pegar uma missão por dia, de um dos três.' : 'You can take only one mission a day, from one of the three.'}
           </p>
         )}
-
-        {!bb && !hoje && (
-          <>
-            <p style={{ ...sm2Text, margin: 0 }}>
-              {isPt ? 'Cada Desbravador tem um convite para hoje. Escolha um, se quiser; os outros esperam amanhã.'
-                    : 'Each Pathfinder has an invitation for today. Pick one if you like; the others wait until tomorrow.'}
-            </p>
-            {MERC_ORDENS.filter(o => !ordem || o === ordem).map(o => (
-              <button key={o} type="button" data-merc-ordem={o} onClick={() => onChoose(o)}
-                style={{ ...sm2Button('outline'), width: '100%', justifyContent: 'flex-start', gap: 12 }}>
-                {arteOnboarding(MERC_RETRATO[o])
-                  ? <img data-merc-retrato={MERC_RETRATO[o]} src={arteOnboarding(MERC_RETRATO[o])} alt="" aria-hidden style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover', flexShrink: 0 }} />
-                  : <span data-merc-retrato={MERC_RETRATO[o]} aria-hidden style={{ width: 40, height: 40, borderRadius: 8, background: 'var(--sm2-surface-2, #2a2a2a)', flexShrink: 0 }} />}
-                <span style={{ textAlign: 'left' }}>
-                  <strong>{t({ pt: MERC_NOME[o].pt, en: MERC_NOME[o].en })}</strong>
-                  <br />
-                  <small>{isPt ? MERC_NOME[o].ordemPt : MERC_NOME[o].ordemEn} · {t(ATTR_LABEL[MERC_TIPO[o]])}</small>
-                </span>
-              </button>
-            ))}
-          </>
-        )}
-
-        {!bb && hoje && (
-          <>
-            <p style={{ ...sm2Text, margin: 0 }}>
-              <strong>{isPt ? MERC_NOME[hoje.ordem].pt : MERC_NOME[hoje.ordem].en}</strong>
-              {': '}{isPt ? 'o convite de hoje.' : "today's invitation."}
-            </p>
-            {item && (
-              <p data-merc-atividade style={{ ...sm2Text, margin: 0 }}>
-                {item.emoji} {t(item.name)}{' — '}{t(item.levels[0].target)}
-              </p>
-            )}
-            {hoje.done ? (
-              <p role="status" data-merc-feita style={{ ...sm2Text, margin: 0 }}>
-                {isPt ? 'Feito. O Desbravador agradece. Volte amanhã, se quiser.' : 'Done. The Pathfinder thanks you. Come back tomorrow if you like.'}
-              </p>
-            ) : (
-              <>
-                <p style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>{isPt ? 'Você fez de verdade?' : 'Did you really do it?'}</p>
-                <p data-merc-premio style={{ ...sm2Text, margin: 0 }}>
-                  {isPt ? `Vale ${item ? pontosMerc(item) : 3} pontos de ${ATTR_LABEL[MERC_TIPO[hoje.ordem]].pt}.`
-                        : `Worth ${item ? pontosMerc(item) : 3} ${ATTR_LABEL[MERC_TIPO[hoje.ordem]].en} points.`}
-                </p>
-                <button type="button" data-merc-resp="sim" onClick={onConfirm} style={{ ...sm2Button('primary'), width: '100%' }}>
-                  {isPt ? 'Sim, fiz' : 'Yes, I did'}
-                </button>
-                <button type="button" data-merc-resp="nao" onClick={() => setAdiado(true)} style={{ ...sm2Button('outline'), width: '100%' }}>
-                  {isPt ? 'Ainda não' : 'Not yet'}
-                </button>
-                {adiado && (
-                  <p role="status" data-merc-espera style={{ ...sm2Text, margin: 0 }}>
-                    {isPt ? 'Sem pressa. O convite fica aberto até o fim do dia.' : 'No rush. The invitation stays open until the end of the day.'}
-                  </p>
-                )}
-              </>
-            )}
-          </>
-        )}
       </div>
-    </ModalSheet>
+    </AreaSheet>
   );
 }

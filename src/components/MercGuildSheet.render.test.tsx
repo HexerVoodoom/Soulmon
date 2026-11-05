@@ -1,35 +1,50 @@
 // @vitest-environment jsdom
+/** A folha do líder (dono, 05/11/2026): primeiro o que é a missão; aceitar ou pensar; uma por dia, de um dos três. */
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, cleanup } from '@testing-library/react';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 import { MercGuildSheet } from './MercGuildSheet';
+import { sortearMerc } from '../utils/mercMission';
 
-const hoje = { day: 'x', ordem: 'tecelao' as const, activityId: 'sono-horario-fixo', done: false };
-
-afterEach(cleanup);
+const DIA = '2026-11-05';
+const base = { onClose: () => {}, dayKey: DIA, language: 'en-US' as const, onAccept: () => {}, onThink: () => {}, onConfirm: () => {} };
 
 describe('MercGuildSheet', () => {
-  it('sem missão: mostra os 3 Desbravadores e escolhe um', () => {
-    const onChoose = vi.fn();
-    const { container } = render(<MercGuildSheet open onClose={() => {}} hoje={null} onChoose={onChoose} onConfirm={() => {}} />);
-    expect(container.ownerDocument.querySelectorAll('[data-merc-ordem]').length).toBe(3);
-    fireEvent.click(container.ownerDocument.querySelector('[data-merc-ordem="rompente"]')!);
-    expect(onChoose).toHaveBeenCalledWith('rompente');
+  afterEach(cleanup);
+
+  it('mostra a missão ANTES de aceitar, com o NPC em cima, e aceitar grava a Ordem do líder', () => {
+    const onAccept = vi.fn();
+    render(<MercGuildSheet {...base} ordem="rompente" hoje={null} onAccept={onAccept} />);
+    expect(document.querySelector('[data-area-sheet-npc]')).toBeTruthy();
+    expect(document.querySelector('[data-merc-atividade]')!.textContent).toContain(sortearMerc(DIA, 'rompente')!.name.en);
+    fireEvent.click(document.querySelector('[data-merc-aceito]')!);
+    expect(onAccept).toHaveBeenCalledWith('rompente');
   });
-  it('com missão: pergunta de honestidade; "Ainda não" não custa nada e "Sim" confirma', () => {
+
+  it('"Vou pensar" chama onThink e não aceita', () => {
+    const onAccept = vi.fn(); const onThink = vi.fn();
+    render(<MercGuildSheet {...base} ordem="tecelao" hoje={null} onAccept={onAccept} onThink={onThink} />);
+    fireEvent.click(document.querySelector('[data-merc-pensar]')!);
+    expect(onThink).toHaveBeenCalledTimes(1);
+    expect(onAccept).not.toHaveBeenCalled();
+  });
+
+  it('com a missão aceita, pergunta se fez; "sim" confirma', () => {
+    const item = sortearMerc(DIA, 'filtrador')!;
     const onConfirm = vi.fn();
-    const { container } = render(<MercGuildSheet open language="en-US" onClose={() => {}} hoje={hoje} onChoose={() => {}} onConfirm={onConfirm} />);
-    const d = container.ownerDocument;
-    expect(screen.getByText('Did you really do it?')).toBeTruthy();
-    fireEvent.click(d.querySelector('[data-merc-resp="nao"]')!);
-    expect(d.querySelector('[data-merc-espera]')).toBeTruthy();
-    expect(onConfirm).not.toHaveBeenCalled();
-    fireEvent.click(d.querySelector('[data-merc-resp="sim"]')!);
+    render(<MercGuildSheet {...base} ordem="filtrador" onConfirm={onConfirm} hoje={{ day: DIA, ordem: 'filtrador', activityId: item.id, done: false }} />);
+    fireEvent.click(document.querySelector('[data-merc-resp="sim"]')!);
     expect(onConfirm).toHaveBeenCalledTimes(1);
   });
-  it('BB: só o convite para voltar, sem escolha', () => {
-    const { container } = render(<MercGuildSheet open bb onClose={() => {}} hoje={null} onChoose={() => {}} onConfirm={() => {}} />);
-    const d = container.ownerDocument;
-    expect(d.querySelector('[data-merc-bb]')).toBeTruthy();
-    expect(d.querySelector('[data-merc-ordem]')).toBeNull();
+
+  it('os outros dois líderes não oferecem nada: uma por dia', () => {
+    const item = sortearMerc(DIA, 'filtrador')!;
+    render(<MercGuildSheet {...base} ordem="rompente" hoje={{ day: DIA, ordem: 'filtrador', activityId: item.id, done: false }} />);
+    expect(document.querySelector('[data-merc-aceito]')).toBeNull();
+    expect(document.querySelector('[data-merc-uma-por-dia]')).toBeTruthy();
+  });
+
+  it('o BB fica de fora', () => {
+    render(<MercGuildSheet {...base} ordem="rompente" bb hoje={null} />);
+    expect(document.querySelector('[data-merc-aceito]')).toBeNull();
   });
 });

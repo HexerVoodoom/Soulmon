@@ -282,7 +282,6 @@ import type { AISettings } from './components/AISettingsModal';
 import { ONBOARDING_VELADO } from './components/onboarding/sequencia/flag';
 // Mercenário (velado): leva o catálogo de atividades (~dezenas de KB) — fora da entrada.
 const GuildaMapPage = lazy(() => import('./components/nav/GuildaMapPage').then(m => ({ default: m.GuildaMapPage })));
-const MercGuildSheet = lazy(() => import('./components/MercGuildSheet').then(m => ({ default: m.MercGuildSheet })));
 import type { MercOrdem } from './utils/mercMissionSave';
 // Sequência do onboarding velado com etapas reais: leva Match3Game/BattleStage junto, só monta no 1º uso (fora da entrada).
 const SequenciaRevisao = lazy(() => import('./components/onboarding/sequencia/SequenciaReal').then(m => ({ default: m.SequenciaRevisao })));
@@ -922,7 +921,6 @@ export default function App() {
   const [reverHistoria, setReverHistoria] = useState(false);
   /* ONBOARDING_VELADO: Guilda dos Mercenarios (plano §11). Mapa próprio, aberto SÓ segurando o cristal do Mapa por 3 s (dono, 05/11/2026, secreto); cada prédio abre o NPC; escolha e confirmacao rodam em `utils/mercMission.ts`. */
   const [guildaOpen, setGuildaOpen] = useState(false);
-  const [mercOrdem, setMercOrdem] = useState<MercOrdem | null>(null);
   /* ONBOARDING_VELADO por pessoa: o interruptor de build OU o teste do servidor (`/api/velado-teste`, só chega depois do login).
      Os pontos abaixo leem `veladoOn` (estado) e não a constante de módulo, para ligarem sem recarregar. Desligado = idêntico. */
   const [veladoTesterOn, setVeladoTesterOn] = useState(false);
@@ -8983,15 +8981,11 @@ export default function App() {
 
           {guildaOpen && pane === 'map' && (
             <Suspense fallback={null}>
-              <GuildaMapPage language={language} onClose={() => setGuildaOpen(false)} onOpenOrdem={setMercOrdem} />
-            </Suspense>
-          )}
-          {guildaOpen && mercOrdem && (
-            <Suspense fallback={null}>
-            <MercGuildSheet open onClose={() => setMercOrdem(null)} language={language} ordem={mercOrdem}
-              hoje={gameState.mercMission && gameState.mercMission.day === playerDayKey(new Date(), gameState.playerDayTz) ? gameState.mercMission : null}
-              bb={gameState.evolutionStage === 'bb'}
-              onChoose={escolherMercenario} onConfirm={confirmarMercenario} />
+              <GuildaMapPage language={language} onClose={() => setGuildaOpen(false)}
+                dayKey={playerDayKey(new Date(), gameState.playerDayTz)}
+                hoje={gameState.mercMission && gameState.mercMission.day === playerDayKey(new Date(), gameState.playerDayTz) ? gameState.mercMission : null}
+                bb={gameState.evolutionStage === 'bb'}
+                onAccept={escolherMercenario} onConfirm={confirmarMercenario} />
             </Suspense>
           )}
           {reverHistoria && <Suspense fallback={null}><SequenciaRevisao language={language} onDone={() => setReverHistoria(false)} ligacoes={{
