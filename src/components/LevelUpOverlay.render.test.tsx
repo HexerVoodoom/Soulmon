@@ -156,14 +156,28 @@ describe('LevelUpOverlay — o que ganhou', () => {
     expect(container.querySelector('[data-lvup-glow]')).not.toBeNull();
   });
 
-  it('7.2: o ícone das três setas não é cortado — caixa visível, escala 0,5× exata, pixel nítido', () => {
+  it('05/11/2026: a seta fica por cima e ultrapassa a barrinha — sem corte, 96 px, pixel nítido', () => {
     const { container } = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
     const box = container.querySelector('[data-lvup-chevron-box]') as HTMLElement;
     const img = container.querySelector('[data-lvup-chevron]') as HTMLElement;
     expect(box.style.overflow).toBe('visible');
-    expect(parseInt(box.style.height)).toBeGreaterThan(parseInt(img.style.height)); // respiro: a arte vai de borda a borda
-    expect(img.style.width).toBe('48px');
+    expect(parseInt(img.style.height)).toBeGreaterThan(parseInt(box.style.height)); // sai da caixa de propósito
+    expect(img.style.width).toBe('96px');
+    expect(img.style.position).toBe('absolute');
+    expect(box.style.zIndex).toBe('2'); // acima da moldura
     expect(img.style.imageRendering).toBe('pixelated');
+  });
+
+  it('05/11/2026: o emblema toca a entrada, fica em laço e, com movimento reduzido, mostra o quadro fixo', () => {
+    const anim = renderWithCss(<LevelUpOverlay {...base} onDone={() => {}} />);
+    const src = () => anim.container.querySelector('[data-lvup-banner]')?.getAttribute('src');
+    expect(src()).toMatch(/bond-up-en-entrada/);
+    act(() => { vi.advanceTimersByTime(1600); });
+    expect(src()).toMatch(/bond-up-en-laco/);
+    cleanup();
+    reducao(true);
+    const pt = renderWithCss(<LevelUpOverlay {...base} language="pt-BR" onDone={() => {}} />);
+    expect(pt.container.querySelector('[data-lvup-banner]')?.getAttribute('src')).toMatch(/bond-up-pt-fixo/);
   });
 
   it('nunca cobra: sem "faltam", sem urgência', () => {
