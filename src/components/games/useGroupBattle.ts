@@ -36,6 +36,7 @@ import {
   impactMs, introMs, specialTailMs, isSelfOnlySpecial, castStatus, clearHolders, emptyStatusBoard, isCurseSpecial, stageStatusOf, tickStatus, withRealFx,
   type StageActionKind, type StageStatus, type StatusBoard, type StrikeForm,
 } from '../../utils/combatFx';
+import { efeitoVisivel } from '../../utils/combate/elementEffects';
 import { cheerTap, dodgeGrade, dodgeSpec, ringSpec, type DodgeGrade, type DodgeSpec, type RingGrade, type RingSpec } from '../../utils/energia';
 import { groupFightSteps, type GroupEvent, type GroupOptions, type GroupResult } from '../../utils/combate/group';
 import { escolherAlvo, tocarAlvo } from '../../utils/combate/alvo';
@@ -81,6 +82,8 @@ export interface GroupScene {
   foeImpact?(foe: number, special: boolean): ImpactoMelee;
   /** PR16: a ESCOLA do especial do pet (só decide o SELO: `maldicao` + família `defDebuff` mostra MALDIÇÃO, mecânica e balanço iguais). Inimigos não têm escola. */
   playerSpecialEscola?: string | null;
+  /** §228: o ELEMENTO do especial do pet (o original, derivado incluso): decide o selo do efeito. */
+  playerSpecialElemento?: string | null;
   /** Selos curtos (já traduzidos). */
   labels: { blocked: string; ring: Record<RingGrade, string>; dodge: Partial<Record<DodgeGrade, string>> };
   /** Selo no pet quando o especial dele é pessoal (cura, escudo, buff): sem dano para mostrar. */
@@ -299,10 +302,13 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
       /** Gasta os efeitos que os golpes/ticks deste grupo de eventos gastam; quem caiu leva os seus embora. */
       // PR16: o debuff de DEFESA que o pet deixa nos inimigos mostra o selo de MALDIÇÃO quando o especial dele é da escola maldicao
       const curseOn = (holder: number) => holder > 0 && isCurseSpecial(player.special?.family, scene.playerSpecialEscola);
+      // §228: hoje só o pet tem especial de família com estado (inimigo = `direct`), então o sabor vem sempre do elemento do especial dele.
+      const efeitoDoPet = efeitoVisivel(player.special?.family, scene.playerSpecialElemento);
+      const efeitoOn = (holder: number, origem: 'self' | 'foe') => ((origem === 'self') === (holder === 0) ? efeitoDoPet : null);
       /** Os turnos REAIS: os contadores que o núcleo expôs no evento (PR16); cura (instantânea) segue na aproximação. */
       const realFx = (fx: GroupEvent['fx']) => {
         const down = [...(hpNow <= EPS ? [0] : []), ...foesNow.flatMap((h, i) => (h <= EPS ? [i + 1] : []))];
-        board = withRealFx(board, fx, down, curseOn);
+        board = withRealFx(board, fx, down, curseOn, efeitoOn);
       };
       const spendStatus = (batch: GroupEvent[], hpPet: number, foesHpNow: readonly number[]) => {
         for (const e of batch) if (e.kind === 'attack' || e.kind === 'tick') board = tickStatus(board, { kind: e.kind, who: e.who });

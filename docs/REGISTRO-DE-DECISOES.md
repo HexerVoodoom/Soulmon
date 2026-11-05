@@ -4031,3 +4031,13 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 **Limite declarado.** Sem id estável de Soulmon no perfil público, a variação do jogador é por identidade de combate (elementos + escolas + família), não por indivíduo.
 
 **O que falsificaria.** Proporção de algum elemento reprovada pelo dono (trocar o número em `PESO_CORTE`); ou o servidor passar a publicar um id de Soulmon (trocar a chave). **Rollback:** tirar `impacto` das ações (ausente = corte, comportamento anterior).
+
+## §228 — Efeito de combate pelo elemento do especial (04/11/2026, decisão do dono)
+
+- **Regra:** o efeito depende do ELEMENTO DO ESPECIAL, não do Soulmon (água com especial de fogo pode queimar), e nem todo especial tem efeito: a família continua decidindo a mecânica, `direct` é só dano. O elemento só dá o sabor de uma família que já deixa estado. Tabela única em `src/utils/combate/elementEffects.ts`; derivado herda do primeiro componente com par na família.
+- **PvP (Torneio/Duelo) só visual.** `fight.ts` e `_combate.js` não mudam; silêncio, lentidão e cura contínua não aparecem no PvP porque o selo mentiria. Reafirma o §177.
+- **Físico e mágico só visuais:** mesmo `atkBuff`, selo diferente.
+- **Silêncio não cancela:** a barra segue cheia e o especial sai quando acabar.
+- **Inimigos causam efeitos em PvE**, só depois de medir; desligado até lá.
+- **Alternativa que perdeu:** 25% do orçamento de todo especial vira o efeito do elemento (mediu dentro da régua no protótipo, mas o dono quer especial de dano direto puro).
+- **O que falsifica:** se a medição de Arena/Masmorra sair de ±3pp em vitória contra a mesma família sem efeito, a mecânica nova não liga; se poucos jogadores chegarem a um efeito (família com peso baixo no elemento), rever `AFINIDADE_ELEMENTO`.

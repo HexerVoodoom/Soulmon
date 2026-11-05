@@ -27,6 +27,7 @@ import { nomeEspecialInimigo, nomeDeLexico } from './soulProfile/ficha/nomeEspec
 import { baseElementLabel } from './soulProfile/essenceLabels';
 import { AREA_FAMILIES, SPECIAL_BUDGET_HITS, type SpecialFamily } from './combate/specials';
 import type { FighterFx } from './combate/fight';
+import { efeitoVisivel, type EfeitoElemento } from './combate/elementEffects';
 
 export type StageActionKind = 'melee' | 'ranged' | 'special';
 
@@ -263,10 +264,10 @@ export function prefersReducedMotion(): boolean {
  * ─────────────────────────────────────────────────────────────────────────────────────────────── */
 
 /** Os efeitos visíveis num lutador. `maldicao` e `hot` ficam prontos, mas nenhuma família chega neles (Q-FX1, §2.13). */
-export type StatusFxKind = 'buff' | 'debuff' | 'maldicao' | 'dot' | 'cura' | 'hot' | 'escudo';
-export const STATUS_FX_KINDS: readonly StatusFxKind[] = ['buff', 'debuff', 'maldicao', 'dot', 'cura', 'hot', 'escudo'];
+export type StatusFxKind = 'buff' | 'debuff' | 'maldicao' | 'dot' | 'queimadura' | 'veneno' | 'cura' | 'hot' | 'escudo';
+export const STATUS_FX_KINDS: readonly StatusFxKind[] = ['buff', 'debuff', 'maldicao', 'dot', 'queimadura', 'veneno', 'cura', 'hot', 'escudo'];
 /** Qual atributo o buff/debuff mexe (escolhe o glifo e o texto). */
-export type StatusVariant = 'atk' | 'spd' | 'def';
+export type StatusVariant = 'atk' | 'spd' | 'def' | 'fisico' | 'magico' | 'terra' | 'agua';
 
 interface Bilingual { readonly en: string; readonly pt: string }
 
@@ -286,12 +287,16 @@ export interface StatusFxDef {
 
 const L = (en: string, pt: string): Bilingual => ({ en, pt });
 
+/** Glifos citados que ainda não têm arte (fila em docs/ASSETS-A-GERAR.md): o selo mostra forma + texto. */
+export const GLIFOS_PENDENTES: readonly string[] = ['st-queimadura', 'st-veneno'];
+
 export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
   buff: {
+    // `fisico`/`magico`: mesma mecânica de `atk`; glifo próprio pendente (docs/ASSETS-A-GERAR.md), usa o de ataque até lá.
     glyph: { _: 'st-buff-atk', atk: 'st-buff-atk', spd: 'st-buff-spd' },
     loop: 'fx-buff-loop-sheet', still: null, mark: '▲',
-    label: { _: L('Boost', 'Reforço'), atk: L('Attack up', 'Ataque em alta'), spd: L('Speed up', 'Velocidade em alta') },
-    short: { _: L('UP', 'UP'), atk: L('ATK', 'ATQ'), spd: L('SPD', 'VEL') },
+    label: { _: L('Boost', 'Reforço'), atk: L('Attack up', 'Ataque em alta'), spd: L('Speed up', 'Velocidade em alta'), fisico: L('Physical attack up', 'Ataque físico em alta'), magico: L('Magic attack up', 'Ataque mágico em alta') },
+    short: { _: L('UP', 'UP'), atk: L('ATK', 'ATQ'), spd: L('SPD', 'VEL'), fisico: L('PHYS', 'FÍS.'), magico: L('MAG', 'MÁG.') },
   },
   debuff: {
     glyph: { _: 'st-debuff-def', def: 'st-debuff-def' },
@@ -311,6 +316,19 @@ export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
     label: { _: L('Damage over time', 'Dano contínuo') },
     short: { _: L('DoT', 'DoT') },
   },
+  // Marcadores PROVISÓRIOS: o glifo `st-*` ainda não existe, então o selo cai na forma + texto; o loop empresta o do DoT.
+  queimadura: {
+    glyph: { _: 'st-queimadura' },
+    loop: 'fx-dot-loop-sheet', still: null, mark: '♨',
+    label: { _: L('Burn', 'Queimadura') },
+    short: { _: L('BURN', 'QUEIM.') },
+  },
+  veneno: {
+    glyph: { _: 'st-veneno' },
+    loop: 'fx-dot-loop-sheet', still: null, mark: '☣',
+    label: { _: L('Poison', 'Veneno') },
+    short: { _: L('PSN', 'VEN.') },
+  },
   cura: {
     glyph: { _: 'st-cura' },
     loop: null, still: 'fx-heal', mark: '+',
@@ -326,8 +344,8 @@ export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
   escudo: {
     glyph: { _: 'st-escudo' },
     loop: null, still: 'fx-shield', mark: '▣',
-    label: { _: L('Shield', 'Escudo') },
-    short: { _: L('SHLD', 'ESCU') },
+    label: { _: L('Shield', 'Escudo'), terra: L('Earth defense up', 'Defesa de terra em alta'), agua: L('Water defense up', 'Defesa de água em alta') },
+    short: { _: L('SHLD', 'ESCU'), terra: L('DEF', 'DEF'), agua: L('DEF', 'DEF') },
   },
 };
 
@@ -394,7 +412,7 @@ const CURSE_STATUS: FamilyStatus = { kind: 'maldicao', target: 'foe' };
 
 /** Os efeitos que NENHUMA família/escola alcança hoje (Q-FX1: `hot` pronto, inalcançável até a mecânica existir). */
 export const UNREACHABLE_STATUS_FX: readonly StatusFxKind[] = STATUS_FX_KINDS.filter(
-  (k) => k !== CURSE_STATUS.kind && !Object.values(FAMILY_STATUS).some((f) => f?.kind === k),
+  (k) => k !== CURSE_STATUS.kind && k !== 'queimadura' && k !== 'veneno' && !Object.values(FAMILY_STATUS).some((f) => f?.kind === k),
 );
 
 /** O efeito que uma família deixa (ou `null`); com a `escola` do especial, o debuff da maldição vira o selo de MALDIÇÃO. */
@@ -465,7 +483,7 @@ export function tickStatus(board: StatusBoard, ev: { kind: 'attack' | 'tick'; wh
 }
 
 /** Os efeitos cujos turnos o NÚCLEO conta de verdade (PR16). `cura` não tem contador (é instantânea): segue na aproximação. */
-const REAL_KINDS: readonly StatusFxKind[] = ['buff', 'debuff', 'maldicao', 'dot', 'escudo'];
+const REAL_KINDS: readonly StatusFxKind[] = ['buff', 'debuff', 'maldicao', 'dot', 'queimadura', 'veneno', 'escudo'];
 const FX_EPS = 1e-9;
 /** Turnos que faltam de um contador do núcleo: o que sobra (mesmo fracionado) ainda vale um golpe. */
 const left = (x: number): number => (x > FX_EPS ? Math.max(1, Math.ceil(x - FX_EPS)) : 0);
@@ -481,6 +499,8 @@ export function withRealFx(
   fx: readonly FighterFx[] | null | undefined,
   down: readonly number[] = [],
   curseOn: (holder: number) => boolean = () => false,
+  /** §228: o efeito do elemento do especial que deixou o estado. `self` = o do próprio lutador (buff, escudo); `foe` = o de quem o atingiu (DoT, debuff). */
+  efeitoOn: (holder: number, origem: 'self' | 'foe') => EfeitoElemento | null = () => null,
 ): StatusBoard {
   if (!fx) return board;
   return board.map((list, h) => {
@@ -489,11 +509,16 @@ export function withRealFx(
     const f = fx[h];
     if (!f) return keep;
     const real: BoardEntry[] = [];
-    if (f.nAtk > FX_EPS) real.push({ kind: 'buff', variant: 'atk', turns: left(f.nAtk), source: h });
+    const proprio = efeitoOn(h, 'self');
+    const recebido = efeitoOn(h, 'foe');
+    const atkVar: StatusVariant = proprio === 'ataqueFisico' ? 'fisico' : proprio === 'ataqueMagico' ? 'magico' : 'atk';
+    const dotKind: StatusFxKind = recebido === 'queimadura' || recebido === 'veneno' ? recebido : 'dot';
+    const escudoVar: StatusVariant | undefined = proprio === 'defesaTerra' ? 'terra' : proprio === 'defesaAgua' ? 'agua' : undefined;
+    if (f.nAtk > FX_EPS) real.push({ kind: 'buff', variant: atkVar, turns: left(f.nAtk), source: h });
     if (f.nSpd > FX_EPS) real.push({ kind: 'buff', variant: 'spd', turns: left(f.nSpd), source: h });
-    if (f.nVuln > FX_EPS) real.push(curseOn(h) ? { kind: 'maldicao', turns: left(f.nVuln), source: -1 } : { kind: 'debuff', variant: 'def', turns: left(f.nVuln), source: -1 });
-    if (f.dot > 0) real.push({ kind: 'dot', turns: f.dot, source: -1 });
-    if (f.shieldHits > FX_EPS && f.shield > FX_EPS) real.push({ kind: 'escudo', turns: left(f.shieldHits), source: h });
+    if (f.nVuln > FX_EPS) real.push(curseOn(h) || recebido === 'maldicao' ? { kind: 'maldicao', turns: left(f.nVuln), source: -1 } : { kind: 'debuff', variant: 'def', turns: left(f.nVuln), source: -1 });
+    if (f.dot > 0) real.push({ kind: dotKind, turns: f.dot, source: -1 });
+    if (f.shieldHits > FX_EPS && f.shield > FX_EPS) real.push({ kind: 'escudo', ...(escudoVar ? { variant: escudoVar } : {}), turns: left(f.shieldHits), source: h });
     return [...keep, ...real];
   });
 }
@@ -537,9 +562,14 @@ export function duelStatusBoard(
   const n = Math.min(upTo, events.length);
   // o quadro real vale no último evento aplicado; o efeito que veio de uma maldição mostra o selo de maldição
   if (fxTrace && n > 0 && fxTrace[n - 1]) {
-    return withRealFx(board, fxTrace[n - 1], down, (h) => isCurseSpecial(specials[1 - h]?.family, specials[1 - h]?.escola));
+    return withRealFx(
+      board, fxTrace[n - 1], down,
+      (h) => isCurseSpecial(specials[1 - h]?.family, specials[1 - h]?.escola),
+      // PvP é só visual (§228): a regra nova nunca liga aqui
+      (h, origem) => { const sp = specials[origem === 'self' ? h : 1 - h]; return efeitoVisivel(sp?.family, sp?.elemento); },
+    );
   }
   return board;
 }
 /** O especial de um lado do Duelo: família + poder do núcleo e a escola (lista fechada) que decide o selo. */
-export interface DuelSpecial { family: SpecialFamily; power: number; escola?: string | null }
+export interface DuelSpecial { family: SpecialFamily; power: number; escola?: string | null; elemento?: string | null }
