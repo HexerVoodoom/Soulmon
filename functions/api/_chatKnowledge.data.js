@@ -1,7 +1,7 @@
 // GERADO por scripts/gen-chat-knowledge.mjs — NÃO EDITE À MÃO.
 // Fontes: docs/manual/02-REGRAS-DE-NEGOCIO.md, docs/manual/11-GLOSSARIO.md
 // Regerar: npm run gen:chat-kb  (o teste chatKnowledge.stale reprova se ficar velho)
-export const KNOWLEDGE_HASH = 'aedac4c67fe1ccc6';
+export const KNOWLEDGE_HASH = '4a1965a49a63a4f4';
 export const KNOWLEDGE = [{"id":"regra-1","t":"Corações (HP) e a virada do dia","x":"Uma vez por dia o jogo compara o que a pessoa fez com a meta dela e, se faltou muito, tira no máximo um coração — e há cinco mecanismos que podem impedir até isso."},
 {"id":"regra-2","t":"Carinho","x":"Esfregar o pet cura HP — meio coração por gesto, no máximo um por dia — e é a cura principal do jogo. O gesto é um pointer drag sobre o pet; a animação de explosão de corações toca sempre, inclusive quando a cura é recusada — quem decide isso é o App.tsx, não a regra."},
 {"id":"regra-3","t":"Comida","x":"Comer enche a fome e dá pontos de atributo — nunca cura HP e nunca dá energia — e há um teto por hora, não por dia. Por que o teto é derivado. Era o literal 5 enquanto mega/ultra pedem 6 tarefas. Quem fechava as 6 numa sessão só dava 5 comidas e perdia o dia completo tendo feito 100% da própria meta — punido por ritmo, não por esforço."},
@@ -83,7 +83,7 @@ export const KNOWLEDGE = [{"id":"regra-1","t":"Corações (HP) e a virada do dia
 {"id":"termo-bestiario","t":"Bestiário","x":"A coleção das artes de inimigo já vistas na masmorra, exibida em Estatísticas com silhueta para o que ainda não apareceu. Contagem de coleção, nunca percentual."},
 {"id":"termo-bits","t":"Bits","x":"A moeda dos minijogos e da loja comum. Exibida sem ícone, só o número, em fonte de calculadora."},
 {"id":"termo-brincar","t":"Brincar","x":"Oferta diária que gasta energia e devolve um buff temporário de Bits para o próximo minijogo, mais um ponto de atributo. Oferta, nunca dever."},
-{"id":"termo-banner-de-termos","t":"Banner de termos","x":"O aviso informativo que aparece no slot de avisos da Home (último da fila) quando TERMS_VERSION/PRIVACY_VERSION subiram depois do consentimento gravado no save. Informa e oferece os dois links; não há re-aceite (decisão #24, 21/09/2026). Conta nova nunca o vê — a versão consentida já é a atual."},
+{"id":"termo-banner-de-termos","t":"Banner de termos","x":"O aviso informativo que aparece no slot de avisos da Home (último da fila) quando TERMS_VERSION/PRIVACY_VERSION subiram depois do consentimento gravado no save. Informa e oferece os dois links; o banner em si não pede aceite."},
 {"id":"termo-cadeado-de-evolucao","t":"Cadeado de evolução","x":"O gesto de tocar na criatura atual na página de Evolução, que trava/destrava a cerimônia. Travado, a cerimônia não abre e os dias completos continuam acumulando."},
 {"id":"termo-capacitor","t":"Capacitor","x":"O empacotador que transforma o app web no APK Android. O APK carrega a URL de produção, então mudança web não pede APK novo."},
 {"id":"termo-carga-do-dia","t":"Carga do dia","x":"O peso de esforço planejado para hoje comparado ao limite de sobrecarga. É aviso, nunca bloqueio."},
