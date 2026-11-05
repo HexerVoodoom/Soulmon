@@ -15,6 +15,7 @@
 //
 // Pure and deterministic given a seed: the draws come from `defenseRoll` and `mulberry32`, never `Math.random`.
 import { autoDefense, defenseRoll } from './autoDefesa';
+import { comEfeitoDoElemento } from './combate/elementEffects';
 import { ARENA_SKILL_ODDS, autoDefenseHitScale, familyOfSkill, type ArenaSkill } from './arena';
 import { dungeonFoe, type DungeonFoeKnobs } from './dungeonBase';
 import { DODGE_REDUCE, RING_MULT, type DodgeGrade, type RingGrade } from './energia';
@@ -43,6 +44,10 @@ export interface DungeonPlayerCfg {
   dodge?: Readonly<Record<DodgeGrade, number>>;
   /** `tal-pve-07` (Tarefa B): opening shield, fraction of the player's HP. Absent = 0 (the gates' simulations never set it). */
   startShield?: number;
+  /** §228: elemento do especial para a regra nova. Só a medição passa enquanto `EFEITOS_PVE_LIGADOS` for `false`. */
+  efeitoElemento?: string;
+  /** §228: usa os botões próprios do Pesadelo. */
+  pesadelo?: boolean;
 }
 
 /** The family of the special: the SPECIAL skill's own `familia` (PR9); without it, the default of its school. */
@@ -54,7 +59,7 @@ const jeitoOf = (p: DungeonPlayerCfg): JeitoPve => jeitoParaPve(p.jeito ?? JEITO
 export function dungeonPlayerSide(p: DungeonPlayerCfg, opening = true): FightSide {
   return {
     combatant: { ...p.combatant, hp: p.combatant.hp * jeitoOf(p).hp },
-    special: specialOf(p.family),
+    special: comEfeitoDoElemento(specialOf(p.family), p.efeitoElemento, p.pesadelo),
     area: 'single',
     startShield: opening ? p.startShield : 0,
   };
@@ -156,6 +161,8 @@ export interface SequenceConfig {
   /** Tarefa B: `tal-pve-07` (opening shield) and `tal-pve-03` (extra heal between floors). The gates never set them. */
   startShield?: number;
   healBoost?: number;
+  /** §228: ver `DungeonPlayerCfg.efeitoElemento`. */
+  efeitoElemento?: string;
   /** Knobs of the gates only. */
   knobs?: { foe?: DungeonFoeKnobs; contraTeto?: number; ring?: Readonly<Record<RingGrade, number>>; dodge?: Readonly<Record<DodgeGrade, number>> };
 }
@@ -180,7 +187,7 @@ export function playSequence(
 ): SequenceResult {
   const p: DungeonPlayerCfg = {
     combatant: combatantAt(cfg.level, cfg.build, cfg.bonus), family: cfg.family, jeito: cfg.jeito,
-    contraTeto: cfg.knobs?.contraTeto, ring: cfg.knobs?.ring, dodge: cfg.knobs?.dodge, startShield: cfg.startShield,
+    contraTeto: cfg.knobs?.contraTeto, ring: cfg.knobs?.ring, dodge: cfg.knobs?.dodge, startShield: cfg.startShield, efeitoElemento: cfg.efeitoElemento,
   };
   const odds = ARENA_SKILL_ODDS[skill];
   let hp = 1;
@@ -189,7 +196,7 @@ export function playSequence(
   for (let i = 0; i < refs.length; i++) {
     const ref = refs[i];
     const fseed = dungeonFightSeed(seed, ref.floor, ref.slot);
-    const f = dungeonFight(p, ref.nightmare ? nightmareFoe(cfg.level, ref.slot, cfg.knobs?.foe) : dungeonFoe(cfg.level, ref.slot, ref.floor, cfg.knobs?.foe), fseed, ref.slot === 0);
+    const f = dungeonFight(ref.nightmare ? { ...p, pesadelo: true } : p, ref.nightmare ? nightmareFoe(cfg.level, ref.slot, cfg.knobs?.foe) : dungeonFoe(cfg.level, ref.slot, ref.floor, cfg.knobs?.foe), fseed, ref.slot === 0);
     const rng = mulberry32((seed * 7919 + i) | 0);
     const g = groupFightSteps(f.player, f.foes, { seed: f.seed, startHp: hp, startEnergy: en, hitScale: f.hitScale });
     let step = g.next();
