@@ -10,7 +10,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ## Índice por família
 
-**Cuidado (corações, comida, ritmo, sono, renascimento)** — [`adventure.ts`](#srcutilsadventurets), [`anniversary.ts`](#srcutilsanniversaryts), [`bond.ts`](#srcutilsbondts), [`branchMigration.ts`](#srcutilsbranchmigrationts), [`careCaps.ts`](#srcutilscarecapsts), [`carePattern.ts`](#srcutilscarepatternts), [`careRules.ts`](#srcutilscarerulests), [`careUpdaters.ts`](#srcutilscareupdatersts), [`collectionDates.ts`](#srcutilscollectiondatests), [`completionUndo.ts`](#srcutilscompletionundots), [`taskUncomplete.ts`](#srcutilstaskuncompletets), [`dayKeyLabel.ts`](#srcutilsdaykeylabelts), [`demoMode.ts`](#srcutilsdemomodets), [`demoStart.ts`](#srcutilsdemostartts), [`embedMode.ts`](#srcutilsembedmodets), [`dailyReset.ts`](#srcutilsdailyresetts), [`evolutionTarget.ts`](#srcutilsevolutiontargetts), [`firstDay.ts`](#srcutilsfirstdayts), [`memories.ts`](#srcutilsmemoriests), [`mood.ts`](#srcutilsmoodts), [`nightmares.ts`](#srcutilsnightmarests), [`passives.ts`](#srcutilspassivests), [`petBounce.ts`](#srcutilspetbouncets), [`petName.ts`](#srcutilspetnamets), [`petNeeds.ts`](#srcutilspetneedsts), [`petStage.ts`](#srcutilspetstagets), [`petVoice.ts`](#srcutilspetvoicets), [`talentoVoice.ts`](#srcutilstalentovoicets), [`poopDrain.ts`](#srcutilspoopdraints), [`rebirth.ts`](#srcutilsrebirthts), [`restWindow.ts`](#srcutilsrestwindowts), [`premiumFood.ts`](#srcutilspremiumfoodts), [`specialItemUse.ts`](#srcutilsspecialitemusets), [`steps.ts`](#srcutilsstepsts), [`welcomeBack.ts`](#srcutilswelcomebackts)
+**Cuidado (corações, comida, ritmo, sono, renascimento)** — [`adventure.ts`](#srcutilsadventurets), [`anniversary.ts`](#srcutilsanniversaryts), [`bond.ts`](#srcutilsbondts), [`branchMigration.ts`](#srcutilsbranchmigrationts), [`careCaps.ts`](#srcutilscarecapsts), [`carePattern.ts`](#srcutilscarepatternts), [`careRules.ts`](#srcutilscarerulests), [`careUpdaters.ts`](#srcutilscareupdatersts), [`collectionDates.ts`](#srcutilscollectiondatests), [`completionUndo.ts`](#srcutilscompletionundots), [`taskUncomplete.ts`](#srcutilstaskuncompletets), [`dayKeyLabel.ts`](#srcutilsdaykeylabelts), [`demoMode.ts`](#srcutilsdemomodets), [`demoStart.ts`](#srcutilsdemostartts), [`embedMode.ts`](#srcutilsembedmodets), [`dailyReset.ts`](#srcutilsdailyresetts), [`trocaLateral.ts`](#srcutilstrocalateralts), [`evolutionForecast.ts`](#srcutilsevolutionforecastts), [`evolutionTarget.ts`](#srcutilsevolutiontargetts), [`firstDay.ts`](#srcutilsfirstdayts), [`memories.ts`](#srcutilsmemoriests), [`mood.ts`](#srcutilsmoodts), [`nightmares.ts`](#srcutilsnightmarests), [`passives.ts`](#srcutilspassivests), [`petBounce.ts`](#srcutilspetbouncets), [`petName.ts`](#srcutilspetnamets), [`petNeeds.ts`](#srcutilspetneedsts), [`petStage.ts`](#srcutilspetstagets), [`petVoice.ts`](#srcutilspetvoicets), [`talentoVoice.ts`](#srcutilstalentovoicets), [`poopDrain.ts`](#srcutilspoopdraints), [`rebirth.ts`](#srcutilsrebirthts), [`restWindow.ts`](#srcutilsrestwindowts), [`premiumFood.ts`](#srcutilspremiumfoodts), [`specialItemUse.ts`](#srcutilsspecialitemusets), [`steps.ts`](#srcutilsstepsts), [`welcomeBack.ts`](#srcutilswelcomebackts)
 **Tarefas e hábitos** — [`goalToCategory.ts`](#srcutilsgoaltocategoryts), [`habitCreate.ts`](#srcutilshabitcreatets), [`habitRhythm.ts`](#srcutilshabitrhythmts), [`quickAdd.ts`](#srcutilsquickaddts), [`rituals.ts`](#srcutilsritualsts), [`taskSuggestions.ts`](#srcutilstasksuggestionsts), [`taskTriage.ts`](#srcutilstasktriagets), [`tinyOffer.ts`](#srcutilstinyofferts), [`weekBalance.ts`](#srcutilsweekbalancets)
 **Economia (moedas, loja, monetização)** — [`backgrounds.ts`](#srcutilsbackgroundsts), [`currencies.ts`](#srcutilscurrenciests), [`entitlements.ts`](#srcutilsentitlementsts), [`mercadoCatalog.ts`](#srcutilsmercadocatalogts), [`missions.ts`](#srcutilsmissionsts), [`monetization.ts`](#srcutilsmonetizationts), [`offerMoment.ts`](#srcutilsoffermomentts), [`playBilling.ts`](#srcutilsplaybillingts), [`priceLabel.ts`](#srcutilspricelabelts), [`seasons.ts`](#srcutilsseasonsts), [`shop.ts`](#srcutilsshopts), [`shopBuy.ts`](#srcutilsshopbuyts), [`weeklyMissions.ts`](#srcutilsweeklymissionsts)
 **Jogos (arena, masmorra, torneio)** — [`arena.ts`](#srcutilsarenats), [`arenaSorteio.ts`](#srcutilsarenasorteiots), [`arenaTema.ts`](#srcutilsarenatemats), [`dungeon.ts`](#srcutilsdungeonts), [`profissaoMasmorra.ts`](#srcutilsprofissaomasmorrats), [`dungeonScenes.ts`](#srcutilsdungeonscenests), [`visorScenes.ts`](#srcutilsvisorscenests), [`fxArt.ts`](#srcutilsfxartts), [`tournamentSeason.ts`](#srcutilstournamentseasonts), [`tournamentTiers.ts`](#srcutilstournamenttiersts)
@@ -1204,6 +1204,24 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`, `src/utils/spriteTrigger.ts`
 **Régua:** `evolutionTarget.regression.test.ts`
 **Regra de negócio:** Fonte única do galho + forma-destino da evolução manual. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/trocaLateral.ts`
+**Dono de:** A troca lateral de forma (mesmo nível, outra forma já desbloqueada): grátis, só troca `evolutionStage` — sem encher HP nem mexer em pontos (05/11/2026).
+**Exports:**
+- `function canSwitchLaterally(input: { currentStageId; targetStageId; unlockedEvolutions? }): boolean` — alvo diferente, do mesmo nível, desbloqueado; rookie e ultra nunca.
+- `function applyLateralSwitch(prev, targetStageId)` — devolve `prev` com só `evolutionStage` trocado (ou o mesmo objeto se o alvo não vale).
+**Chamado por:** `src/App.tsx` (`handleSwitchForm`), `src/components/EvolutionPath.tsx`
+**Régua:** `trocaLateral.test.ts`
+**Regra de negócio:** [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) §18.
+
+### `src/utils/evolutionForecast.ts`
+**Dono de:** O nó "previsto" do grafo de evolução: sempre o nível seguinte ao atual (05/11/2026).
+**Exports:**
+- `function stageLevelIndex(stageId: string): number` — posição do nível (rookie 0 … ultra 4).
+- `function forecastNodeId(currentStageId: string, branchNodeIds: readonly string[]): string | null` — o nó do galho com nível = atual + 1.
+**Chamado por:** `src/components/EvolutionPath.tsx`
+**Régua:** `trocaLateral.test.ts`
+**Regra de negócio:** [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) §18.
 
 ### `src/utils/firstDay.ts`
 **Dono de:** Progresso dos três gestos do primeiro dia (esfregar, alimentar, concluir tarefa) do onboarding.

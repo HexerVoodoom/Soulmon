@@ -3997,3 +3997,16 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 **Alternativa que perdeu.** Tirar a faixa para manter a regra intacta.
 
 **O que falsificaria.** Churn ou queixa de comparação depois de ver a faixa (mesma aposta 8 do §5: a comparação social ramificada não vira placar). **Rollback:** `EVO_FEED_DISABLED=1` (docs/BETA-CONTINGENCIA.md).
+
+## §225 — Troca lateral de forma: grátis, sem HP cheio nem ganho de pontos (05/11/2026, decisão do dono)
+
+**Decisão.** Quem já desbloqueou uma forma paralela (mesmo nível, outro galho) pode alternar entre elas sem custo, como recurso oficial: botão "Trocar forma" / "Switch form", confirmação simples. A troca muda só a forma: HP atual, `perfectDays` e `evolutionPoints` iguais, sem som/mensagem de queda. Aparece em toda forma desbloqueada do mesmo nível, mesmo fora do galho dominante. Degenerar para nível abaixo fica igual.
+
+**Por quê.** O "Degenerar" aparecia nessa situação e `handleDegenerate` enchia o HP e aplicava o piso de `degeneratedPerfectDays`/`degeneratedEvolutionPoints`, que pode AUMENTAR pontos: virava cura e ganho grátis.
+
+**Detalhes.** `attributesSinceLastEvolution` e `chipsStage` não zeram: a contagem é "por estágio" (nível) e o nível não muda; zerar daria chips novos a cada troca. `currentBranch`, `unlockedEvolutions` (logo `canReachUltra`/`hasMegaCollection`) intactos. Não há telemetria nem conquista ligada à degeneração manual; só a queda por HP na virada é contada.
+
+**Alternativa que perdeu.** Tratar a lateral como queda (cobrar) ou proibi-la.
+
+**O que falsificaria.** Jogadores alternando para fugir de custo de cuidado de forma que o jogo não previu. **Rollback:** reverter o PR.
+
