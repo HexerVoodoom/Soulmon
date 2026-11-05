@@ -1353,6 +1353,10 @@ export default function App() {
     setOwnSprites(map, petChocando || petOraculo ? PLACEHOLDER_ART.forming : undefined);
   }, [spriteVisor, petChocando, petOraculo]);
   /** FORMAS ALTERNATIVAS (05/11/2026): equipar uma forma já desbloqueada (cosmético; a regra é de `utils/formasAlternativas.ts`). */
+  /** A DESCOBERTA do Passeio (05/11/2026): o Soulmon novo entra no Drive (`bestiary`, abas Selvagem/Desgarrado). Idempotente. */
+  const handleStrollDiscover = useCallback((key: string) => {
+    setGameState(prev => ((prev.bestiary ?? []).includes(key) ? prev : { ...prev, bestiary: [...(prev.bestiary ?? []), key] }));
+  }, [setGameState]);
   const handleEquipFormaAlt = useCallback((formId: string, elemento: string) => {
     setGameState(prev => {
       const formaAltEquipada = equiparFormaAlt(prev.formasAlt, prev.formaAltEquipada, formId, elemento);
@@ -9712,6 +9716,12 @@ export default function App() {
           adventure={aventuraDaNoite}
           adventureIsNew={aventuraInedita}
           stroll={strollDaNoite}
+          strollScene={strollDaNoite && trv ? {
+            regionId: strollDaNoite.regionId,
+            bgId: trv.regionById(strollDaNoite.regionId)?.bgId ?? null,
+            bestiary: gameState.bestiary,
+            onDiscover: handleStrollDiscover,
+          } : null}
           maxHearts={gameState.maxHealthPoints}
           heartsAnimSeen={gameState.lastDayReport.heartsAnimSeen}
           onHeartsAnimSeen={handleHeartsAnimSeen}

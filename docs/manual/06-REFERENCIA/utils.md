@@ -1213,6 +1213,18 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`, `src/hooks/useSpriteGeneration.ts`, `src/components/EvolutionPath.tsx`, `src/components/evolution/FormasAlternativasSheet.tsx`.
 **Régua:** `src/utils/formasAlternativas.test.ts`.
 
+### `src/utils/strollDiscovery.ts`
+**Dono de:** a DESCOBERTA do Passeio (05/11/2026, dono) — pura. Todo dia com Passeio o Soulmon topa com UM Soulmon do `ENEMY_ROSTER` que o jogador ainda não viu (`bestiary`); aleatório e determinístico por (`dayKey`, Drive atual), garantido enquanto restar algum. O Corvinho segue `RAVEN_SPAWN_CHANCE` (1/1000) e só vem fora disso se for o último que falta. Não grava nada: quem chama grava a chave em `bestiary` no OK.
+**Exports:** `strollDiscoveryOf`.
+**Chamado por:** `src/components/DailyReportModal.tsx`.
+**Régua:** `src/utils/strollDiscovery.test.ts`.
+
+### `src/utils/strollScene.ts`
+**Dono de:** a arte e a geometria da CENA do Passeio (05/11/2026) — panorama horizontal 2:1 por região (`passeio-cenas/cena-<região>.(webp|png)`, glob), linha de chão em 80%, jogador em 25% e descoberto em 75%; sem a arte, o postal da região espelhado. `panOffsetPx` calcula o deslize preso às bordas. Fila de arte: `docs/ASSETS-A-GERAR.md` §25.
+**Exports:** `SCENE_RATIO` · `SCENE_GROUND_Y` · `SCENE_PLAYER_X` · `SCENE_FOUND_X` · `sceneArtOf` · `sceneFallbackCss` · `panOffsetPx`.
+**Chamado por:** `src/components/StrollScene.tsx`.
+**Régua:** `src/utils/strollScene.test.ts`.
+
 ### `src/utils/evoRecap.ts`
 **Dono de:** o recap da evolução (REGISTRO §190, 29/10/2026) — puro, sem React/storage/`Date`. O "ontem" sai do relatório da virada (`antes = evolutionPoints - gaugeGain`); o snapshot persistido (`STORAGE_KEYS.EVO_RECAP_SNAPSHOT`) só marca o que já foi mostrado. Devolve `null` se já visto, sem ganho, estágio final (meta ≤ 0) ou dado incoerente.
 **Exports:** `EvoRecapSnapshot` · `EvoRecap` · `EvoRecapReport` · `parseEvoRecapSnapshot` · `serializeEvoRecapSnapshot` · `buildEvoRecap`.

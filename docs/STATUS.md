@@ -1,5 +1,11 @@
 # Status do Soulmon — registro vivo
 
+> ## 05/11/2026 — Cena do Passeio em tela cheia + descoberta garantida (pedido do dono)
+>
+> - **Feito (código):** com Passeio no dia anterior (`strollSummary`, agora com `regionId`), o passo "Da aventura de ontem" do resumo vira `StrollScene` (tela cheia): cenário da região, cartãozinho de texto no topo, "Espera… tem alguma coisa ali." → o cenário desliza → **descoberta de 1 Soulmon que o jogador nunca viu** (`utils/strollDiscovery.ts`, determinística por dia, aleatória, garantida enquanto restar algum; Corvinho com a mesma chance rara de sempre, 1/1000, e vem se for o último) → OK grava a chave em `bestiary` (aba Selvagem/Desgarrado do Drive, com o aviso NEW de sempre) → desliza de volta → "Começar o dia". Sem som novo (R-NOVA). Sem campo novo no save (usa `bestiary`).
+> - **Pendente (arte):** os 8 panoramas horizontais 2:1 (`passeio-cenas/cena-<região>.webp`), pedidos em `docs/ASSETS-A-GERAR.md` §25 com composição (chão em 80%, Soulmons em 25%/75%), bloco de estilo e um prompt por região, para uma sessão local gerar no ChatGPT. Enquanto não chegam, a cena usa o postal da região espelhado (sem costura). Quando o arquivo cai, assume sozinho.
+> - **Rollback:** reverter só remove a cena (volta a folha); as chaves já gravadas em `bestiary` continuam válidas.
+
 > ## 05/11/2026 — O Soulmon flutuava sobre a sombra (Home)
 >
 > - **Causa:** o `scale: petScale` do `<img>` do bicho NÃO APLICA: o React 18 escreve número em `style` com "px" ("0.25px"), `scale` não é unitless e o navegador descarta (conferido no DOM: o `style` do `<img>` não tem `scale`). O bicho sempre foi desenhado em 100%, mas a descida do pé (`useGroundDrop`) era calculada para o bicho ENCOLHIDO (3 px em vez de ~12) e a sombra ficava a 68 px ACIMA da caixa, escondida atrás do corpo. **Correção:** `PET_DRAWN_SCALE = 1` para pé e sombra; sombra ancorada nos pés. Guarda: `spriteScale.test.ts` ("o pé não flutua").
