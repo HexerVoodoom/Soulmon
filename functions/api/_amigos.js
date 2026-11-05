@@ -1,4 +1,4 @@
-// Amizade por convite (§242). O servidor é a única autoridade: a lista `friends` do PERFIL (saveIds) é a verdade
+// Amizade por convite (§243). O servidor é a única autoridade: a lista `friends` do PERFIL (saveIds) é a verdade
 // e agora é MÚTUA. Ninguém entra na lista de outro sem ele aceitar.
 //
 // Chaves (todas por saveId, nunca saem em resposta pública):
@@ -8,6 +8,7 @@
 
 import { kvOrThrow } from './_kv.js';
 import { getProfile, putProfile } from './_profile.js';
+import { playerDayOf } from './_strays.js';
 
 export const MAX_FRIENDS = 20;
 /** Convites pendentes: enviados por uma conta e guardados para uma conta (spam e custo). */
@@ -15,13 +16,23 @@ export const MAX_OUT = 20;
 export const MAX_IN = 30;
 export const MAX_NOTES = 30;
 export const GIFT_BITS = 20;
+/** Teto de Bits que UMA conta recebe de presentes por dia do jogador dela; o excedente não credita. */
+export const GIFT_DAILY_CAP = 100;
 const TTL = 86400 * 400;
 
 export const reqKey = id => `freq:${id}`;
 export const sentKey = id => `gsent:${id}`;
 export const noteKey = id => `gnote:${id}`;
 
-const dia = () => new Date().toISOString().slice(0, 10);
+/** Âncora do dia do jogador vinda do cliente (`zone` IANA ou `off` em ms); inválida = UTC. */
+export function tzDe(zone, off) {
+  const z = typeof zone === 'string' && zone.length <= 64 ? zone : undefined;
+  const o = off === null || off === undefined || off === '' ? NaN : Number(off);
+  return { ...(z ? { zone: z } : {}), ...(Number.isFinite(o) ? { offsetMs: o } : {}) };
+}
+export const diaDe = tz => playerDayOf(Date.now(), tz);
+export const tzKey = id => `gtz:${id}`;
+export const recvKey = id => `grecv:${id}`;
 const lerJson = async (env, key, vazio) => {
   try {
     const raw = await kvOrThrow(env).get(key);
@@ -42,21 +53,45 @@ export async function lerConvites(env, id) {
 export const gravarConvites = (env, id, v) => gravar(env, reqKey(id), { in: v.in.slice(-MAX_IN), out: v.out.slice(-MAX_OUT) });
 
 /** Presentes mandados hoje por `id` (vazio na virada do dia). */
-export async function presentesDeHoje(env, id) {
+export async function presentesDeHoje(env, id, dia) {
   const v = await lerJson(env, sentKey(id), { day: '', to: [] });
-  return v.day === dia() ? ids(v.to) : [];
+  return v.day === dia ? ids(v.to) : [];
 }
-export async function marcarPresenteDeHoje(env, id, friendSave) {
-  const to = await presentesDeHoje(env, id);
+export async function marcarPresenteDeHoje(env, id, friendSave, dia) {
+  const to = await presentesDeHoje(env, id, dia);
   if (!to.includes(friendSave)) to.push(friendSave);
-  await gravar(env, sentKey(id), { day: dia(), to });
+  await gravar(env, sentKey(id), { day: dia, to });
+}
+
+/** Guarda a âncora de dia de uma conta (o teto de recebimento é medido no dia de QUEM recebe). */
+export async function lembrarTz(env, id, tz) {
+  if (!tz || (!tz.zone && tz.offsetMs === undefined)) return;
+  const atual = await lerJson(env, tzKey(id), {});
+  if (atual.zone === tz.zone && atual.offsetMs === tz.offsetMs) return;
+  await gravar(env, tzKey(id), tz);
+}
+export async function lerTz(env, id) {
+  const v = await lerJson(env, tzKey(id), {});
+  return tzDe(v.zone, v.offsetMs);
+}
+/**
+ * Reserva no teto diário de quem recebe: devolve quantos Bits valem de fato (0..bits). O excedente NÃO credita.
+ * O contador é do dia do destinatário; chamar sob o lock do destinatário.
+ */
+export async function reservarRecebimento(env, id, bits) {
+  const dia = diaDe(await lerTz(env, id));
+  const v = await lerJson(env, recvKey(id), { day: '', bits: 0 });
+  const ja = v.day === dia ? Math.max(0, Math.floor(Number(v.bits) || 0)) : 0;
+  const credita = Math.max(0, Math.min(bits, GIFT_DAILY_CAP - ja));
+  await gravar(env, recvKey(id), { day: dia, bits: ja + credita });
+  return credita;
 }
 
 export async function lerNotas(env, id) {
   const v = await lerJson(env, noteKey(id), { items: [], seenAt: 0 });
   const items = (Array.isArray(v.items) ? v.items : [])
     .filter(n => n && Number.isFinite(+n.at))
-    .map(n => ({ name: typeof n.name === 'string' ? n.name.slice(0, 40) : '', bits: Number(n.bits) > 0 ? Math.floor(Number(n.bits)) : GIFT_BITS, at: +n.at }));
+    .map(n => ({ name: typeof n.name === 'string' ? n.name.slice(0, 40) : '', bits: Number.isFinite(Number(n.bits)) && Number(n.bits) >= 0 ? Math.floor(Number(n.bits)) : GIFT_BITS, at: +n.at }));
   return { items, seenAt: Number(v.seenAt) > 0 ? Number(v.seenAt) : 0 };
 }
 export async function anotarPresente(env, id, { name, bits = GIFT_BITS, at = Date.now() }) {

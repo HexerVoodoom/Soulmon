@@ -770,6 +770,8 @@ export interface GameState {
      *  reabrir o resumo do MESMO dia não a repete. Mora DENTRO do relatório de propósito — a virada do dia
      *  grava um relatório novo e a marca some sozinha ("uma vez por dia"), e o save não ganha campo de topo. */
     heartsAnimSeen?: boolean;
+    /** A chave do Soulmon descoberto no Passeio deste relatório (`utils/strollDiscovery.ts`): presente = o dia já descobriu. */
+    strollDiscovered?: string;
     /** P2 — a folga da semana absorveu a perda desta virada. A UI CONTA isso:
      *  perdão que a pessoa não soube que recebeu não acalma, e faz a cobrança
      *  da semana seguinte parecer arbitrária. */

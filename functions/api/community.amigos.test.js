@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { onRequest } from './community.js';
 import { MAX_FRIENDS } from './_amigos.js';
 
-// §242 — amizade por convite. O servidor decide: convite pendente não é amizade, aceitar liga os DOIS lados,
+// §243 — amizade por convite. O servidor decide: convite pendente não é amizade, aceitar liga os DOIS lados,
 // remover desfaz os dois, o limite é 20 contado aqui, e o presente (20 Bits, 1×/dia/amigo) não se repete nem ao regravar o perfil.
 
 const A = 'a'.repeat(32);
@@ -218,5 +218,63 @@ describe('presente: 20 Bits, 1×/dia/amigo, no servidor', () => {
     expect((await post(env, 'gift', { id: A, friendId: PB })).status).toBe(200);
     expect(env.DIGIAPP_SAVES.store.has(`gifts:${B}`)).toBe(false);
     expect(env.DIGIAPP_SAVES.store.has(`gnote:${B}`)).toBe(false);
+  });
+});
+
+describe('presente: teto de recebimento (100 Bits/dia) e dia do jogador', () => {
+  const rec = () => {
+    const env = mundo({ [`profile:${B}`]: perfil(B, PB, { friends: [A, C] }), [`profile:${C}`]: perfil(C, PC, { friends: [B] }), [`gmir:${B}`]: '1' });
+    const cs = ['d', 'e', 'f', 'g', 'h', 'i'].map((l, i) => ({ id: l.repeat(32), pid: `pid${l}00000000000000000${i}` }));
+    for (const c of cs) {
+      env.DIGIAPP_SAVES.store.set(`profile:${c.id}`, perfil(c.id, c.pid, { friends: [B] }));
+      env.DIGIAPP_SAVES.store.set(`pid:${c.pid}`, c.id);
+      env.DIGIAPP_SAVES.store.set(`gmir:${c.id}`, '1');
+    }
+    const pb = JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${B}`));
+    pb.friends = [A, C, ...cs.map(c => c.id)];
+    env.DIGIAPP_SAVES.store.set(`profile:${B}`, JSON.stringify(pb));
+    env.DIGIAPP_SAVES.store.set(`profile:${A}`, perfil(A, PA, { friends: [B] }));
+    env.DIGIAPP_SAVES.store.set(`profile:${C}`, perfil(C, PC, { friends: [B] }));
+    return { env, remetentes: [{ id: A, pid: PA }, { id: C, pid: PC }, ...cs] };
+  };
+  const fila = (env, id) => JSON.parse(env.DIGIAPP_SAVES.store.get(`gifts:${id}`) || '[]');
+
+  it('o excedente além de 100 não credita; a resposta e o histórico dizem o valor real', async () => {
+    const { env, remetentes } = rec();
+    const rs = [];
+    for (const r of remetentes) rs.push((await post(env, 'gift', { id: r.id, friendId: PB })).body.credited);
+    // 8 amigos × 20 = 160 pedidos; só 100 valem
+    expect(rs.slice(0, 5)).toEqual([20, 20, 20, 20, 20]);
+    expect(rs.slice(5)).toEqual([0, 0, 0]);
+    expect(fila(env, B).reduce((s, g) => s + g.bits, 0)).toBe(100);
+    const est = await get(env, 'friendsState', { id: B });
+    expect(est.body.dailyCap).toBe(100);
+    expect(est.body.notes.filter(n => n.bits === 0)).toHaveLength(3);
+  });
+
+  it('o teto é do dia de QUEM RECEBE: com outro fuso o contador recomeça', async () => {
+    const { env, remetentes } = rec();
+    // o destinatário mora num fuso em que "hoje" já é outro dia que o UTC
+    await get(env, 'friendsState', { id: B, off: String(-12 * 3_600_000) });
+    for (const r of remetentes.slice(0, 5)) await post(env, 'gift', { id: r.id, friendId: PB });
+    expect((await post(env, 'gift', { id: remetentes[5].id, friendId: PB })).body.credited).toBe(0);
+    // simula a virada do dia dele: o contador gravado é de outro dia
+    const k = `grecv:${B}`;
+    env.DIGIAPP_SAVES.store.set(k, JSON.stringify({ day: '2000-01-01', bits: 100 }));
+    expect((await post(env, 'gift', { id: remetentes[6].id, friendId: PB })).body.credited).toBe(20);
+  });
+
+  it('o "1 por dia" segue o dia do REMETENTE (fuso), não o UTC', async () => {
+    const env = mundo({ [`profile:${A}`]: perfil(A, PA, { friends: [B] }), [`profile:${B}`]: perfil(B, PB, { friends: [A] }), [`gmir:${A}`]: '1' });
+    const off = 5 * 3_600_000;
+    expect((await post(env, 'gift', { id: A, friendId: PB, off })).status).toBe(200);
+    expect((await post(env, 'gift', { id: A, friendId: PB, off })).status).toBe(429);
+    const est = await get(env, 'friendsState', { id: A, off: String(off) });
+    expect(est.body.sentToday).toEqual([PB]);
+    const gravado = JSON.parse(env.DIGIAPP_SAVES.store.get(`gsent:${A}`));
+    expect(gravado.day).toBe(new Date(Date.now() + off).toISOString().slice(0, 10));
+    // outro dia do jogador: libera
+    env.DIGIAPP_SAVES.store.set(`gsent:${A}`, JSON.stringify({ day: '2000-01-01', to: [B] }));
+    expect((await post(env, 'gift', { id: A, friendId: PB, off })).status).toBe(200);
   });
 });
