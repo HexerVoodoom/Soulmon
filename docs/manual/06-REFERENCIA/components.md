@@ -1536,6 +1536,14 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Chamado por:** `src/App.tsx`.
 **Régua:** `src/components/EvoRecapModal.render.test.tsx`.
 
+### `src/components/EvolutionStatsModal.tsx`
+**Dono de:** o modalzinho de DEPOIS da evolução (05/11/2026, pedido do dono): Vida, Ataque, Defesa e Velocidade do Soulmon em "antes → depois (+N)". Só desenha; os números vêm de `utils/evolutionStatsDelta.ts`. Delta 0 = "+0", negativo = "−N" (peso 400, sem vermelho). Sem animação própria (o fade do `ModalSheet` já respeita movimento reduzido). Glifos existentes: `favorite`, `swords`, `military_tech`, `bolt`.
+**Props principais:** `delta` (`EvoStatsDelta`), `stageName`, `language`, `onClose()`.
+**Exports:** `EvolutionStatsModal(props)`.
+**Depende de:** `form/FormKit` (`ModalSheet`, centralizado), `ui/Icon`, `utils/evolutionStatsDelta`, `utils/soulXP` (`soulLevelLabel`).
+**Chamado por:** `src/App.tsx` (id `evoStats` da fila de apresentação).
+**Régua:** `src/components/EvolutionStatsModal.render.test.tsx`.
+
 ### `src/components/ui/RewardPreview.tsx`
 **Dono de:** a linha ÚNICA de recompensas antes e depois de uma ação (`docs/RECOMPENSAS-VISIVEIS.md`, 29/10/2026). `mode="before"`: valor fixo `+N`, faixa `até N`/`up to N`, ou só o ícone; `mode="after"`: o valor realmente concedido (some se 0). Nenhuma regra mora aqui: quem chama deriva os números das funções que concedem.
 **Props principais:** `items`, `mode` (`'before' | 'after'`), `language`, `size` (padrão 20).

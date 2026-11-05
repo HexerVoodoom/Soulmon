@@ -601,14 +601,14 @@ Desde 14/10/2026 (REGISTRO §42) a prioridade é **uma fila central só**: `src/
 O inventário de quem dispara o quê é `docs/FILA-DE-MODAIS.md`.
 
 ```ts
-PRESENTATION_ORDER = ['welcomeTour', 'triage', 'dungeonReturn', 'feiraEvento', 'nightmare', 'dream', 'dailyReport', 'evoRecap', 'buildingIntro',
+PRESENTATION_ORDER = ['welcomeTour', 'triage', 'dungeonReturn', 'feiraEvento', 'evoStats', 'nightmare', 'dream', 'dailyReport', 'evoRecap', 'buildingIntro',
   'mapTutorial', 'catalogOnboarding', 'dayGoals', 'checkIn', 'levelUp', 'evolveTask', 'groveMilestone', 'catalogLevelInvite', 'restSetup',
   'unlockToast', 'noticeToast', PRESENTATION_IDLE]   // PRESENTATION_IDLE = 'welcome'
 ```
 
 **Início de dia (19/10/2026, REGISTRO §110–§112):** o Soulmon aparece DORMINDO na 1ª abertura de cada dia e um toque no "Acordar" o acorda (gesto, não modal; `utils/dayWake.ts`; só o pet e os jogos param até lá). Acordou → **pesadelo OU sonho → resumo de ontem (com o humor, numa tela) → "Hoje" (`dayGoals` + `checkIn` fundidos)**, TETO de 3 modais; celebrações (level-up, "crie mais atividades", marco do Bosque) só se sobrar vaga, convites e configuração (convite de nível, sono, priming de push) ficam para outra abertura.
 
-Ordem: **tour do corvo (§4.27) → triagem (a única aberta por TOQUE) → "enquanto você esteve fora" da masmorra (`dungeonReturn`, `DungeonReturnModal`) → evento da Feira na volta da Missão (`feiraEvento`, §4.26: aviso de gesto, fora do teto de início de dia) → pesadelo → sonho → resumo do dia (modal centralizado
+Ordem: **tour do corvo (§4.27) → triagem (a única aberta por TOQUE) → "enquanto você esteve fora" da masmorra (`dungeonReturn`, `DungeonReturnModal`) → evento da Feira na volta da Missão (`feiraEvento`, §4.26: aviso de gesto, fora do teto de início de dia) → **atributos da evolução** (`evoStats`, `EvolutionStatsModal`: depois da cerimônia, "antes → depois (+N)" de Vida, Ataque, Defesa e Velocidade, vindos de `utils/evolutionStatsDelta.ts`; aviso de gesto, fora do teto, 1× por evolução, não vai para o save) → pesadelo → sonho → resumo do dia (modal centralizado
 "ontem + corações + humor", depois a aventura, depois convite/memórias) → **recap da evolução** (`evoRecap`, `EvoRecapModal`, §4.19-A: a 2ª página do resumo, MESMA vaga do teto de 3; só abre com progresso) → NPC apresenta o prédio (§4.28, tela cheia, só na PRIMEIRA entrada nele) → escolha das metas
 (catálogo) → **"Hoje"** (`dayGoals`, §4.17a, com o compromisso do check-in dentro) → level-up → "crie mais atividades" (`EvolveTaskModal`) → marco do Bosque →
 convite de nível do catálogo → convite do sono → balão "prédio desbloqueado" (`unlockToast`, não bloqueante) → balão de aviso acionável (`noticeToast`, não bloqueante, 1× por dia por chave) → welcome prompt (ocioso)**. Regras: **um por vez**; **quem está

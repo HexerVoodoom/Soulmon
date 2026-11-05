@@ -1168,6 +1168,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`, `src/utils/dailyReset.ts`, `src/utils/spriteTrigger.ts`, `src/utils/specialItemUse.ts`, `src/utils/gmTools.ts`, `src/contexts/GameStateContext.tsx`, `src/components/EvolutionPath.tsx`, `src/components/EvolutionGaugeMini.tsx`.
 **Régua:** `src/utils/evolutionGauge.test.ts` (regra, migração, simulação leve/médio/intenso).
 
+### `src/utils/evolutionStatsDelta.ts`
+**Dono de:** o antes → depois dos atributos de combate do Soulmon numa evolução (05/11/2026). Puro e sem fórmula própria: lê `soulCombatant` (ATK/DEF/SPD, o mesmo da luta) e `hpPoints(combatant.hp)` (a Vida que a Arena mostra) para o save de antes e o de depois; o bônus de talento/equipamento fica de fora (igual nos dois lados). O delta pode ser negativo, porque ao evoluir os pontos de alinhamento zeram (§209) e a distribuição de ATK/DEF/SPD volta ao equilíbrio.
+**Exports:** `EvoStatId` · `EVO_STAT_ORDER` · `EvoStatRow` · `EvoStatsDelta` · `evolutionStatsDelta` · `formatDelta`.
+**Chamado por:** `src/App.tsx` (updater do `handleEvolve`), `src/components/EvolutionStatsModal.tsx`.
+**Régua:** `src/utils/evolutionStatsDelta.test.ts`.
+
 ### `src/utils/evolutionCrystal.ts`
 **Dono de:** o CRISTAL da evolução (31/10/2026, REGISTRO §208) — puro. Barra a 100% → botão Evoluir → o toque grava `evolutionCrystal {v,from,to,branch,since}` no save (o destino é decidido NO toque) e só então o lote de sprite da forma-destino parte (`SpriteTriggerInput.crystalFormId`). Fases `gerando`/`falhou`/`pronto` (`crystalPhase`): pronto com a arte nova, sem geração possível ou no teto; falhou com falha gravada ou sem arte em `CRYSTAL_STUCK_MS` (10 min) → "Tentar de novo"/"Evoluir assim" (nunca prende). Bloqueia SÓ Masmorra (`exploracao.dungeon`), Fenda Sem Fim, Feira, Grove e Arena (`CRYSTAL_BLOCKED_LOTS`, aplicado no `AreaView`).
 **Exports:** `EvolutionCrystal` · `CrystalPhase` · `CRYSTAL_STUCK_MS` · `CRYSTAL_BLOCKED_LOTS` · `crystalBlocksLot` · `crystalRefusalText` · `sanitizeCrystal` · `activeCrystal` · `startCrystal` · `crystalPhase`.
