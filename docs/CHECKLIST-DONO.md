@@ -36,8 +36,9 @@ Só o dono:
 5. **Aparelho:** widget, double tap, escada da Arena, vitrine 1,75×, feira com servidor, som, tela de aceite.
 6. **Feedback, retenção 90 dias (decidido 04/11):** a KV já expira em 90 dias e a política diz isso (teste trava). MANUAL: o e-mail já entregue na caixa `soulmon.revisor@gmail.com` não se apaga por código; criar filtro/rotina na caixa para apagar mensagens `[Soulmon ...]` com mais de 90 dias (e conferir o prazo de logs do Resend).
 6b. **Busca de jogadores:** depois do deploy, rodar o backfill do índice de apelidos até `done: true`: `POST /api/community?action=backfillNicks` com `{"adminKey":"<SEASON_ADMIN_KEY>","cursor":"<cursor da resposta anterior>"}` (40 perfis por chamada; idempotente, não rouba apelido de ninguém).
-6c. **Decisões:** risco de moldura grátis pelo save; §21 (métrica de outro jogador) contra a faixa de evoluções; revisão jurídica de transferência internacional.
+6c. **Decisões:** prazo de limpeza da caixa de feedback (a política não dá prazo); ~~risco de moldura grátis pelo save~~ (decidido: servidor é a autoridade, PR fix/molduras-servidor); ~~§21 contra a faixa de evoluções~~ (decidido: a faixa fica, REGISTRO §224); revisão jurídica de transferência internacional (ver item 8).
 7. **Limpeza:** apagar `D:/soulmon-bytes-dist` (5.012 arquivos, D: em 97%, E: cheio).
+8. **Revisão jurídica da transferência internacional de dados** (Groq, Gemini, Resend/Gmail, Cloudflare etc.): o dono decidiu fazer **antes da abertura ao público**; a onda de testers NÃO espera por ela (04/11/2026). Responsável: **Dono** (contratar/consultar advogado de LGPD). Entregável: parecer sobre base legal para enviar dados a operadores fora do Brasil e sobre o que `public/privacidade.html` diz disso; se mudar o texto, subir `PRIVACY_VERSION`.
 
 ## 1. O que importa agora
 

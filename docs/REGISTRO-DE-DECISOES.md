@@ -378,7 +378,7 @@ dado existir):
 | Decisão | Evidência | Alternativa rejeitada | Onde | Estado |
 |---|---|---|---|---|
 | **Faixas ANTES do ranking global; acumular nunca rebaixa** | Tim Gabe 🎥 📰: placar global "parece impossível de vencer e desmotiva"; **31,3%** relataram efeito psicológico negativo de comparação em ambiente só-leaderboard 📊 | Ranking global cru | `tournamentTiers.ts` | ✅ |
-| **Nenhum componente de métrica reusado do próprio perfil na tela do amigo** | Mobbin 🖼️ (Mimo): não desenhou leaderboard — só reusou o card do perfil, **e a comparação emergiu da simetria de componente** | Reusar componentes | Regra 1 do §16.4 — **a única não negociável depois**, porque é decisão de design system, não de tela | ✅ |
+| **Nenhum componente de métrica reusado do próprio perfil na tela do amigo** | Mobbin 🖼️ (Mimo): não desenhou leaderboard — só reusou o card do perfil, **e a comparação emergiu da simetria de componente** | Reusar componentes | Regra 1 do §16.4 — **a única não negociável depois**, porque é decisão de design system, não de tela | ✅✅ *(exceção registrada em 04/11/2026: ver §224; o texto acima fica como histórico)* |
 | **Exibir GALHO, não altura** | Mobbin 🖼️: Opal `Owned by 23%` (fato) vs Mimo `Wooden LEAGUE` (escada). **Ramificação converte comparação vertical em variedade horizontal** — mas só se a UI exibir o galho | "estágio 4 de 5" | Regra 3 | ✅ |
 | **Só verbos de DAR** | Finch 🖼️: `Share Goal` · `Send Good Vibes` · `Send Gift` — **e a ausência de uma quarta** | "Ver progresso do amigo" | `tasksDone` não trafega | ✅ |
 | **Nunca streak social recíproco nem accountability com prazo** | Snapchat 📰: ansiedade documentada, senha entregue a amigos | Streak entre amigos | — | ✅ |
@@ -3985,3 +3985,15 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 **O que falsificaria.** Spam pelo endpoint anônimo (balde por IP/conta é amortecedor; subir para Turnstile ou exigir login) ou mensagens só na KV porque o envio nunca foi configurado.
 
 **Auditoria de segurança (04/11/2026).** Um único `put` por mensagem (sem segundo `put` com `emailed: true`); `MAX_WRITES_PER_DAY` = 50 e teto próprio de e-mail por dia (no máximo o mesmo); chave do limitador IPv6 normalizada para /64; recusa por `Content-Length` antes de ler o corpo. `PRIVACY_VERSION` = 2026-11-04 é UMA alta que cobre feedback (§6, §6e: Resend/Gmail, retenção, fora da cópia e da exclusão da conta) e a faixa de evoluções do PR #562 (§5, §8). O banner de termos informa e quem aceitou versão antiga volta a ver o aceite (A3).
+
+## §224 — Faixa de evoluções: exceção à regra de "nenhuma métrica de outro jogador" (04/11/2026, decisão do dono)
+
+**Decisão.** A faixa de evoluções (PR #562: "<jogador> acabou de evoluir <criatura> para <forma>", 24 h, visível a qualquer pessoa) **fica**. O dono revisou o texto antigo e abre a exceção.
+
+**Texto antigo, mantido como histórico (04/11/2026).** Registro de 13/09–18/09/2026 (tabela do §5, linha "Nenhum componente de métrica reusado do próprio perfil na tela do amigo"; Regra 1 do §16.4; PRINCÍPIOS §10 "nenhum número por pessoa"; §21/§22 do manual: o produto não compara jogadores nem expõe métrica de outra pessoa). A linha do §5 continua escrita como estava, apenas com a remissão a esta exceção. *Nota de rastreio: o checklist do dono chamou isso de "§21"; o §21 numerado deste arquivo é o das Travessias e não contém essa regra, a que conflita é a do §5 acima.*
+
+**A exceção, e só ela.** A faixa mostra **um fato de evolução de outro jogador** (apelido, criatura, forma, alinhamento, hora). Não é comparação de métrica: não traz pontos, nível, tempo, posição nem contagem, não ordena ninguém, não tem placar e não é consultável por pessoa. A regra geral segue valendo para tudo o mais.
+
+**Alternativa que perdeu.** Tirar a faixa para manter a regra intacta.
+
+**O que falsificaria.** Churn ou queixa de comparação depois de ver a faixa (mesma aposta 8 do §5: a comparação social ramificada não vira placar). **Rollback:** `EVO_FEED_DISABLED=1` (docs/BETA-CONTINGENCIA.md).

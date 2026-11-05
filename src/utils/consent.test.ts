@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import {
-  ageOn, isAdult, isAgeBlocked, buildConsentRecord, normalizeConsent,
+  ageOn, isAdult, isAgeBlocked, buildConsentRecord, normalizeConsent, isConsentCurrent,
   MIN_AGE_YEARS, TERMS_VERSION, PRIVACY_VERSION,
 } from './consent';
 
@@ -177,5 +177,25 @@ describe('gate de idade — a declaração por CAIXA (07/09/2026)', () => {
     // estrita que uma declaração — não faz sentido abrir mão dela.
     const onboarding = ler('src/components/SoulmonOnboarding.tsx');
     expect(onboarding).toMatch(/isAgeBlocked\(birthDate\)/);
+  });
+});
+
+describe('isConsentCurrent — a intenção: versão igual ou mais nova vale, antiga ou desconhecida não', () => {
+  const rec = (termsVersion: string, privacyVersion: string) => ({ acceptedAt: AGORA.toISOString(), termsVersion, privacyVersion });
+  it('as duas versões atuais valem; sem registro não', () => {
+    expect(isConsentCurrent(buildConsentRecord(AGORA))).toBe(true);
+    expect(isConsentCurrent(undefined)).toBe(false);
+    expect(isConsentCurrent(null)).toBe(false);
+  });
+  it('versão antiga em qualquer um dos dois documentos volta a pedir aceite', () => {
+    expect(isConsentCurrent(rec('2020-01-01', PRIVACY_VERSION))).toBe(false);
+    expect(isConsentCurrent(rec(TERMS_VERSION, '2020-01-01'))).toBe(false);
+  });
+  it('aceite de versão MAIS NOVA que a do app (rollback/cliente defasado) não é vencido', () => {
+    expect(isConsentCurrent(rec('2099-12-31', '2099-12-31'))).toBe(true);
+  });
+  it('formato desconhecido ("desconhecida", vazio) nunca vale', () => {
+    expect(isConsentCurrent(rec('desconhecida', 'desconhecida'))).toBe(false);
+    expect(isConsentCurrent(rec('', ''))).toBe(false);
   });
 });

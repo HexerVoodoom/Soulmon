@@ -8,6 +8,8 @@ vi.mock('./_auth.js', () => ({
 }));
 const { onRequest: save } = await import('./save.js');
 
+import { COUNTER_RING as COUNTER_ALL } from './_elementoBase.js';
+
 const ID = 'b'.repeat(32);
 function fakeKV() {
   const store = new Map();
@@ -57,14 +59,50 @@ describe('save.js — molduras', () => {
   });
 });
 
-describe('save.js — molduras do WIDGET V-Pet (widgetFramesOwned / widgetFrame)', () => {
-  it('só os 20 elementos base, sem repetição; a escolhida fora do catálogo vira null', async () => {
+describe('save.js — molduras do WIDGET V-Pet (o SERVIDOR decide a posse)', () => {
+  const evoluido = { unlockedEvolutions: ['rookie', 'champion-power'], demoCharacterId: 'meteoro' }; // inicial 'meteoro' -> fogo
+
+  it('save forjado NÃO libera moldura: a lista do cliente é descartada', async () => {
     const e = mk();
-    await post(e, { widgetFramesOwned: ['fogo', 'vapor', 'fogo', 5, 'sombra'], widgetFrame: 'vapor' });
-    expect(lido(e).widgetFramesOwned).toEqual(['fogo', 'sombra']);
+    await post(e, { widgetFramesOwned: COUNTER_ALL, widgetFrame: 'luz' });
+    expect(lido(e).widgetFramesOwned).toEqual([]);
+  });
+
+  it('quem evoluiu ganha SÓ a moldura do elemento do próprio pet, mesmo pedindo todas', async () => {
+    const e = mk();
+    await post(e, { ...evoluido, widgetFramesOwned: COUNTER_ALL });
+    expect(lido(e).widgetFramesOwned).toEqual(['fogo']);
+  });
+
+  it('quem não evoluiu (só o rookie) não ganha nada', async () => {
+    const e = mk();
+    await post(e, { unlockedEvolutions: ['rookie'], demoCharacterId: 'meteoro', widgetFramesOwned: ['fogo'] });
+    expect(lido(e).widgetFramesOwned).toEqual([]);
+  });
+
+  it('moldura JÁ gravada (legítima) não some, e o cliente não consegue somar nada a ela', async () => {
+    const e = mk();
+    await post(e, { ...evoluido, widgetFramesOwned: [] });
+    // pet trocou de elemento depois (potion): a antiga fica, a nova entra, o resto do pedido é ignorado
+    await post(e, { unlockedEvolutions: ['rookie', 'champion-power'], demoCharacterId: 'vida', widgetFramesOwned: ['luz', 'sombra'] });
+    expect(lido(e).widgetFramesOwned.sort()).toEqual(['fogo', 'vida']);
+    // reenviar lista vazia não apaga
+    await post(e, { ...evoluido, widgetFramesOwned: [] });
+    expect(lido(e).widgetFramesOwned).toContain('fogo');
+  });
+
+  it('moldura comprada vive só no entitlement: ids de pagas no save não viram posse', async () => {
+    const e = mk();
+    await post(e, { widgetFramesOwned: ['agua'], ownedFrames: ['loja-cristal'] });
+    expect(lido(e).widgetFramesOwned).toEqual([]);
+  });
+
+  it('a escolhida fora do catálogo vira null; no catálogo passa (a posse é resolvida no cliente)', async () => {
+    const e = mk();
+    await post(e, { widgetFramesOwned: [], widgetFrame: 'vapor' });
     expect(lido(e).widgetFrame).toBeNull();
-    await post(e, { widgetFramesOwned: ['luz'], widgetFrame: 'luz' });
-    expect(lido(e)).toMatchObject({ widgetFramesOwned: ['luz'], widgetFrame: 'luz' });
+    await post(e, { widgetFramesOwned: [], widgetFrame: 'luz' });
+    expect(lido(e).widgetFrame).toBe('luz');
   });
 
   it('lista que não é lista vira vazia; save antigo não ganha campo', async () => {
