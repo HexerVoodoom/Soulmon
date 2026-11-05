@@ -1,0 +1,1 @@
+import{aH as t,aI as e,aJ as a}from"./index-JkxhJsoW.js";function s(){const r=t(e.LIBRARY_SEEN,[]);return Array.isArray(r)?r.filter(n=>typeof n=="string"):[]}function u(r,n){return r.includes(n)?r:[...r,n]}function f(r){if(!r||typeof r!="string")return;const n=s();n.includes(r)||a(e.LIBRARY_SEEN,[...n,r])}export{u as a,f as m,s as r};

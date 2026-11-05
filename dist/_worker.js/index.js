@@ -16399,7 +16399,7 @@ async function onRequest9(ctx, fetchImpl = fetch) {
 }
 __name(onRequest9, "onRequest");
 
-// ../.wrangler/tmp/pages-syTs0a/functionsRoutes-0.6141725254069839.mjs
+// ../.wrangler/tmp/pages-cRHxh4/functionsRoutes-0.13502510699733494.mjs
 var routes = [
   {
     routePath: "/api/account",
