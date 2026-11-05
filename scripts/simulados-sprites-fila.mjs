@@ -1,120 +1,106 @@
-#!/usr/bin/env node
 /**
- * FILA DE SPRITES DOS 50 SIMULADOS (BACKLOG-BETA3 M11) — manual, DRY-RUN por padrão.
+ * FILA LOCAL DE SPRITES DOS SIMULADOS — manual, DRY-RUN por padrão. NUNCA grava no KV e nunca roda em CI.
  *
- * Por ora os simulados usam arte que já existe (`artLine` de `_artLine.js` + o roster de `src/utils/enemyRoster.ts`).
- * Quando houver crédito de imagem, este script gera UM sprite por simulado pelo MESMO endpoint do jogador
- * (`POST /api/generate-sprite`, mesmo pipeline Higgsfield → Gemini, fundo verde #00FF00 + recorte no servidor) e
- * grava a URL resultante em `sim:sprite:<id>` no KV; o motor (`_simulados.js › upsertSimulado`) lê essa chave e
- * passa a servir `spriteUrl` no perfil público — sem mudar mais nada.
+ * Gera com alfa real pela CLI Higgsfield (`scripts-arte/hf-gen.mjs`, `gpt_image_2_5 --variant flare --background transparent`)
+ * e salva em E:/Soulmon-assets/simulados-170/raw/<id>--<forma>.png.
  *
- *   node scripts/simulados-sprites-fila.mjs                 # dry-run: lista o que seria gerado (custo estimado)
- *   node scripts/simulados-sprites-fila.mjs --run [--only sim_0003,sim_0007] [--url https://...]
+ * CACHE CORRETO: a identidade de cada imagem é (simulado, forma, sha do prompt), no `manifesto.json`. A versão anterior passava
+ * pelo `/api/generate-sprite` com o save do admin, cujo cache é (save, forma): todo simulado receberia a imagem do primeiro.
+ * Por isso duas imagens iguais para simulados diferentes também param o lote.
  *
- * `--run` exige (nada vai em argumento de linha de comando):
- *   SIMULADOS_ID_TOKEN       ID token Firebase de uma conta ADMIN/beta-full (o endpoint cobra a cota dessa conta);
- *   SIMULADOS_ADMIN_SAVE_ID  o saveId dessa mesma conta (o `id` do corpo tem de bater com o token);
- *   SIMULADOS_KV_NAMESPACE_ID  namespace KV de produção (`wrangler kv key put --namespace-id`).
- * Saídas: 0 ok · 2 faltou variável · 1 erro. NUNCA rode em CI.
+ *   node scripts/simulados-sprites-fila.mjs                      # lista o plano e o custo
+ *   node scripts/simulados-sprites-fila.mjs --previa             # lista só as 3 prévias
+ *   node scripts/simulados-sprites-fila.mjs --previa --run       # gera as 3 prévias (gasta crédito)
+ *   opções: --only sim_0051,sim_0052  --dia AAAA-MM-DD  --out <pasta>  --gen <caminho do hf-gen.mjs>
+ * Saídas: 0 ok · 1 erro · 2 uso errado.
  */
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { SIMULADOS } from '../functions/api/_simulados.data.js';
+import { estadoDoDia, dayKeyOf } from '../functions/api/_simulados.js';
+import { promptDaForma } from '../functions/api/_simFormas.js';
 
-export const APP_URL_PADRAO = 'https://soulmon.mateus-sprnd.workers.dev';
-/** Hosts que podem receber o token admin (o do projeto, em wrangler.jsonc/docs). Qualquer outro é recusado. */
-export const HOSTS_PERMITIDOS = Object.freeze(['soulmon.mateus-sprnd.workers.dev']);
+export const SAIDA_PADRAO = 'E:/Soulmon-assets/simulados-170';
+export const GEN_PADRAO = 'D:/Soulmon/scripts-arte/hf-gen.mjs';
+export const PREVIA = Object.freeze(['sim_0051', 'sim_0065', 'sim_0119']);
+export const CUSTO_POR_IMAGEM = 0.024;
 
-/** `--url`: só https, sem credencial embutida, e só host da allowlist. Devolve a origem normalizada ou lança. */
-export function validarUrlBase(raw) {
-  let u;
-  try { u = new URL(String(raw)); } catch { throw new Error('--url inválida'); }
-  if (u.protocol !== 'https:') throw new Error('--url precisa ser https');
-  if (u.username || u.password) throw new Error('--url não pode ter credenciais');
-  if (!HOSTS_PERMITIDOS.includes(u.hostname)) throw new Error(`--url: host fora da allowlist (${HOSTS_PERMITIDOS.join(', ')})`);
-  return u.origin;
-}
+export const shaDe = (texto) => createHash('sha256').update(texto).digest('hex');
+export const promptDe = (p, forma) => promptDaForma(p, forma, 'alfa');
+export const chaveDoCache = (item) => `${item.id}|${item.formId}|${item.sha}`;
 
-const WRANGLER_BIN = fileURLToPath(new URL('../node_modules/wrangler/bin/wrangler.js', import.meta.url));
-/** O id de sprite devolvido pelo servidor: `/api/sprite-image?k=<32 hex>` e nada mais (vai para o argv do wrangler). */
-export const SPRITE_URL_RE = /^\/api\/sprite-image\?k=[0-9a-f]{32}$/;
-const ELEMENTO_EN = {
-  fogo: 'fire', vileza: 'venom and thorns', morte: 'bone and grave mist', sombra: 'shadow', vigor: 'raw vigor',
-  marcial: 'martial arts', arcano: 'arcane runes', tempo: 'time and clockwork', espaco: 'warped space', gravidade: 'gravity',
-  som: 'sound waves', eletricidade: 'electricity', vida: 'plants and life', luz: 'light', agua: 'water', terra: 'stone and earth', ar: 'wind',
-};
-
-/** O estágio de arte pedido: a forma rookie (a arte de todo simulado nasce rookie; as altas vêm com a evolução). */
-export const FORM_ID = 'rookie';
-
-/** Prompt de UM simulado (mesma convenção do app: criatura original, fundo #00FF00 liso, sem verde na peça). */
-export function promptDe(p) {
-  const el = ELEMENTO_EN[p.element] ?? p.element;
-  return `Original cute creature character named "${p.petName}", element: ${el}, ${p.line === 'poder' ? 'bold and sturdy' : p.line === 'harmonia' ? 'curious and elegant' : 'gentle and friendly'} personality, `
-    + 'hand-painted watercolour game sprite, single creature, full body, calm expression, no text, '
-    + 'on a flat solid #00FF00 green background; the creature must contain no green and have no green fringe.';
-}
-
-/** Id de simulado (`sim_NNNN`) — vai para chave de KV e argv. */
-export const assertSimId = (id) => { if (!/^sim_\d{4}$/.test(id)) throw new Error(`id de simulado inválido: ${id}`); return id; };
-
-/** O plano da fila (puro, testável). `only` = lista de ids para restringir. */
-export function planejar(only = null) {
-  return SIMULADOS.filter(p => !only || only.includes(p.id)).map(p => ({
-    id: assertSimId(p.id), formId: FORM_ID, prompt: promptDe(p), kvKey: `sim:sprite:${p.id}`,
-  }));
+/** O plano (puro): a forma ATUAL de cada simulado no dia. `only` restringe. */
+export function planejar(only = null, dia = dayKeyOf()) {
+  return SIMULADOS.filter((p) => !only || only.includes(p.id)).map((p) => {
+    const formId = estadoDoDia(p, dia).evolutionStage;
+    const prompt = promptDe(p, formId);
+    return { id: p.id, formId, element: p.element, line: p.line, prompt, sha: shaDe(prompt), arquivo: `${p.id}--${formId}` };
+  });
 }
 
 export function parseArgs(argv) {
-  const o = { run: false, only: null, url: APP_URL_PADRAO };
+  const o = { run: false, only: null, previa: false, dia: dayKeyOf(), out: SAIDA_PADRAO, gen: GEN_PADRAO };
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === '--run') o.run = true;
-    else if (argv[i] === '--only') o.only = String(argv[++i] ?? '').split(',').map(s => s.trim()).filter(Boolean);
-    else if (argv[i] === '--url') o.url = String(argv[++i] ?? '');
+    else if (argv[i] === '--previa') o.previa = true;
+    else if (argv[i] === '--only') o.only = String(argv[++i] ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+    else if (argv[i] === '--dia') o.dia = String(argv[++i] ?? '');
+    else if (argv[i] === '--out') o.out = String(argv[++i] ?? '');
+    else if (argv[i] === '--gen') o.gen = String(argv[++i] ?? '');
   }
   return o;
 }
 
-async function gerar(o, item, env) {
-  const r = await fetch(`${o.url}/api/generate-sprite`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${env.SIMULADOS_ID_TOKEN}` },
-    body: JSON.stringify({ id: env.SIMULADOS_ADMIN_SAVE_ID, formId: item.formId, prompt: item.prompt }),
-  });
-  if (r.status === 202) throw new Error('202 pending (tente de novo daqui a pouco)');
-  if (!r.ok) throw new Error(`HTTP ${r.status}: ${await r.text()}`);
-  const j = await r.json();
-  if (typeof j.image !== 'string' || !SPRITE_URL_RE.test(j.image)) throw new Error('resposta sem URL de sprite válida (esperado /api/sprite-image?k=<32 hex>)');
-  return j.image;
+/** O que falta gerar: item já no manifesto com o MESMO prompt e arquivo presente não paga de novo; prompt mudado gera. */
+export function pendentes(plano, manifesto, existe = () => true) {
+  return plano.filter((it) => !(manifesto[chaveDoCache(it)] && existe(it)));
 }
 
-async function main() {
+/** Imagem igual em simulados diferentes é o defeito de cache antigo: devolve o par em conflito, ou `null`. */
+export function hashRepetido(manifesto) {
+  const visto = new Map();
+  for (const [chave, v] of Object.entries(manifesto)) {
+    const id = chave.split('|')[0];
+    if (visto.has(v.hash) && visto.get(v.hash) !== id) return [visto.get(v.hash), id];
+    visto.set(v.hash, id);
+  }
+  return null;
+}
+
+/** PNG com canal alfa? (tipo de cor 6 ou 4 no IHDR) */
+export const pngTemAlfa = (b) => b.length > 26 && b[0] === 0x89 && (b[25] === 6 || b[25] === 4);
+
+function main() {
   const o = parseArgs(process.argv.slice(2));
-  const fila = planejar(o.only);
-  if (o.run) o.url = validarUrlBase(o.url); // ANTES de qualquer fetch: o token admin só vai para host conhecido
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(o.dia)) { console.error('--dia inválido'); process.exit(2); }
+  const plano = planejar(o.previa ? [...PREVIA] : o.only, o.dia);
+  const manPath = join(o.out, 'manifesto.json');
+  const manifesto = existsSync(manPath) ? JSON.parse(readFileSync(manPath, 'utf8')) : {};
+  const png = (it) => join(o.out, 'raw', `${it.arquivo}.png`);
+  const fila = pendentes(plano, manifesto, (it) => existsSync(png(it)));
+  console.log(`${fila.length}/${plano.length} a gerar, cerca de US$ ${(fila.length * CUSTO_POR_IMAGEM).toFixed(2)}.`);
   if (!o.run) {
-    console.log(`DRY-RUN: ${fila.length} sprites seriam gerados (forma ${FORM_ID}) via ${o.url}/api/generate-sprite. Use --run para executar.`);
-    for (const it of fila) console.log(`${it.id}  ->  ${it.kvKey}\n    ${it.prompt}`);
+    for (const it of fila) console.log(`${it.id}  ${it.formId}  ${it.element}/${it.line}\n    ${it.prompt}`);
+    console.log('Dry-run. Use --run para gerar.');
     return;
   }
-  const falta = ['SIMULADOS_ID_TOKEN', 'SIMULADOS_ADMIN_SAVE_ID', 'SIMULADOS_KV_NAMESPACE_ID'].filter(k => !process.env[k]);
-  if (falta.length) { console.error(`Defina: ${falta.join(', ')}`); process.exit(2); }
-  const ns = process.env.SIMULADOS_KV_NAMESPACE_ID;
-  if (!/^[0-9a-f]{32}$/.test(ns)) { console.error('SIMULADOS_KV_NAMESPACE_ID inválido (esperado 32 hex)'); process.exit(2); }
-  let ok = 0;
+  mkdirSync(o.out, { recursive: true });
+  let falhas = 0;
   for (const it of fila) {
-    try {
-      const url = await gerar(o, it, process.env);
-      // sem shell, argv em array; wrangler via `node <bin>` (npx.cmd exigiria shell no Windows)
-      const put = spawnSync(process.execPath, [WRANGLER_BIN, 'kv', 'key', 'put', it.kvKey, url, '--namespace-id', ns, '--remote'], { stdio: 'inherit', shell: false });
-      if (put.status !== 0) throw new Error('wrangler kv put falhou');
-      ok++;
-      console.log(`${it.id}: ok (${url})`);
-    } catch (e) {
-      console.error(`${it.id}: ${e.message}`);
-    }
+    const r = spawnSync(process.execPath, [o.gen, '--id', it.arquivo, '--model', 'gpt_image_2_5', '--res', '1k', '--out', o.out, '--prompt', it.prompt, '--extra', '--variant flare --background transparent --quality high'], { stdio: 'inherit', shell: false });
+    if (r.status !== 0 || !existsSync(png(it))) { console.error(`${it.id}: falhou`); falhas++; continue; }
+    const bytes = readFileSync(png(it));
+    if (!pngTemAlfa(bytes)) { console.error(`${it.id}: PNG sem alfa, rejeitado`); falhas++; continue; }
+    manifesto[chaveDoCache(it)] = { hash: shaDe(bytes), arquivo: `raw/${it.arquivo}.png`, element: it.element, line: it.line, formId: it.formId };
+    writeFileSync(manPath, JSON.stringify(manifesto, null, 2));
+    const par = hashRepetido(manifesto);
+    if (par) { console.error(`Imagem repetida em ${par[0]} e ${par[1]}: parando.`); process.exit(1); }
   }
-  console.log(`${ok}/${fila.length} sprites gravados.`);
+  console.log(`Fim: ${falhas} falha(s). Nada foi gravado no KV.`);
+  if (falhas) process.exit(1);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) main().catch(e => { console.error(e); process.exit(1); });
+if (process.argv[1] === fileURLToPath(import.meta.url)) main();

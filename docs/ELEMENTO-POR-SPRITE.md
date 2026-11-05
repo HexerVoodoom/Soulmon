@@ -16,7 +16,7 @@ Decisão do dono (30/10/2026): **um sprite tem UM elemento e ele vale em todo lu
 - `GameStateContext.tsx`: o perfil público publica `petElementOf(gameState)` (antes só o dominante cru: iniciais e corvo ficavam sem elemento).
 - `match3Combat.ts`/`match3Pvp.ts`/`Match3Game.tsx`: inimigo do Elemental Fusion tem o elemento do sprite (roster, linha própria, oponente PvP).
 - `soulBarrage.ts`: filtro espaço por `elements[0]` (mesmo conjunto de antes).
-- Simulados: `element` = elemento do prompt (33/50 mudaram), `artLine` só quando existe linha/inicial do MESMO elemento (senão vazio); save do simulado ganha `soulmonMeta.dominantElement`.
+- Simulados (170 desde 05/11/2026; nos 120 novos o `element` é gravado antes de gerar a arte): `element` = elemento do prompt (33/50 mudaram), `artLine` só quando existe linha/inicial do MESMO elemento (senão vazio); save do simulado ganha `soulmonMeta.dominantElement`.
 
 ## Tabelas
 ### Corvo neutro (1): `mascote:corvo` = `neutro` — a ÚNICA criatura neutra (31/10/2026, REGISTRO §211; `RAVEN_ENTRY`, sai só pelo `withRaven`, 1/1000).

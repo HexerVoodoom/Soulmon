@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { SIMULADOS } from './_simulados.data.js';
 import {
-  CHUNK, OPS_BUDGET, custoEstimado, petNameDoSimulado, agendarSimuladosDia, ensureSimuladosDia, estadoDoDia, saveDoSimulado, scoresDoDia, stripSimulated, lockKeyDia, isSimuladoId,
+  CHUNK, OPS_BUDGET, custoEstimado, petNameDoSimulado, agendarSimuladosDia, ensureSimuladosDia, estadoDoDia, saveDoSimulado, scoresDoDia, stripSimulated, lockKeyDia, isSimuladoId, inicioDoDia, eleitosDoJogo, PLACAR_SIMS_MAX, GAUGE_SIM, FAIXA_P,
 } from './_simulados.js';
 import { submitScore, readBoard, payablePlacements, RANKED_GAMES, isoWeekKey } from './_rankings.js';
 import { closePreviousMonth, pendingKey, approveRiftPrize, _resetClosedCache } from './_riftPayout.js';
@@ -11,7 +11,8 @@ import { duelSide } from './_duel.js';
 import { onRequest as community } from './community.js';
 import { onRequest as rankings } from './rankings.js';
 import { resetRateLimits } from './_rateLimit.js';
-import { planejar, promptDe, parseArgs, validarUrlBase, SPRITE_URL_RE, APP_URL_PADRAO } from '../../scripts/simulados-sprites-fila.mjs';
+import { planejar, promptDe, parseArgs, pendentes, hashRepetido, pngTemAlfa, chaveDoCache, PREVIA } from '../../scripts/simulados-sprites-fila.mjs';
+import { FORM_REQUIREMENTS, ULTRA_PATIENCE_POINTS } from '../../src/types/progression';
 
 /** KV falso com `list` ordenado, `metadata` e `getWithMetadata`; conta as escritas. */
 function fakeKV() {
@@ -34,16 +35,16 @@ const DIA = new Date('2026-10-26T10:00:00Z');
 /** Roda `ensureSimuladosDia` até o dia fechar. */
 async function fecharDia(env, now = DIA) {
   let r;
-  for (let i = 0; i < 150; i++) { r = await ensureSimuladosDia(env, now); if (r.status === 'done' || r.status === 'already') return r; }
+  for (let i = 0; i < 400; i++) { r = await ensureSimuladosDia(env, now); if (r.status === 'done' || r.status === 'already') return r; }
   throw new Error(`dia não fechou: ${JSON.stringify(r)}`);
 }
 const snap = (env) => JSON.stringify([...env.SOULMON_SAVES.store.entries()].sort(([a], [b]) => (a < b ? -1 : 1)));
 const pidOf = (env, i) => JSON.parse(env.SOULMON_SAVES.store.get(`profile:${SIMULADOS[i].id}`).v).pid;
 
 describe('perfis versionados', () => {
-  it('50 ids estáveis e válidos, sem colisão com saveId real (hex de 64)', () => {
-    expect(SIMULADOS).toHaveLength(50);
-    expect(new Set(SIMULADOS.map(p => p.id)).size).toBe(50);
+  it('170 ids estáveis e válidos, sem colisão com saveId real (hex de 64)', () => {
+    expect(SIMULADOS).toHaveLength(170);
+    expect(new Set(SIMULADOS.map(p => p.id)).size).toBe(170);
     for (const p of SIMULADOS) {
       expect(p.id).toMatch(/^[a-zA-Z0-9_-]{8,64}$/);
       expect(isSimuladoId(p.id)).toBe(true);
@@ -52,7 +53,7 @@ describe('perfis versionados', () => {
 
   it('apelidos únicos (sem diferenciar caixa) e no formato aceito pelo jogo', () => {
     const baixos = SIMULADOS.map(p => p.nick.normalize('NFKC').trim().toLowerCase());
-    expect(new Set(baixos).size).toBe(50);
+    expect(new Set(baixos).size).toBe(170);
     for (const p of SIMULADOS) {
       expect(sanitizarNomeDeGuilda(p.nick)).toBe(p.nick);
       expect(p.nick.length).toBeLessThanOrEqual(NOME_MAX);
@@ -62,7 +63,7 @@ describe('perfis versionados', () => {
 
   it('nomes de Soulmon únicos, sem sufixo -mon e sem nome de franquia (aprovados pelo dono, 27/10)', () => {
     const nomes = SIMULADOS.map(p => p.petName.normalize('NFKC').trim().toLowerCase());
-    expect(new Set(nomes).size).toBe(50);
+    expect(new Set(nomes).size).toBe(170);
     for (const p of SIMULADOS) {
       expect(p.petName.length).toBeGreaterThanOrEqual(3);
       expect(p.petName.length).toBeLessThanOrEqual(NOME_MAX);
@@ -94,9 +95,9 @@ describe('perfis versionados', () => {
   it('distribuição realista: poucos no topo, maioria no meio/baixo; jogos e frequências válidos', () => {
     const topo = SIMULADOS.filter(p => p.skill >= 0.7).length;
     const baixo = SIMULADOS.filter(p => p.skill < 0.45).length;
-    expect(topo).toBeGreaterThanOrEqual(3);
-    expect(topo).toBeLessThanOrEqual(8);
-    expect(baixo).toBeGreaterThan(topo * 3);
+    expect(topo).toBeGreaterThanOrEqual(5);
+    expect(topo).toBeLessThanOrEqual(30);
+    expect(baixo).toBeGreaterThan(topo * 2);
     for (const p of SIMULADOS) {
       expect(['casual', 'regular', 'assiduo']).toContain(p.frequency);
       const jogos = Object.keys(p.prefs);
@@ -117,16 +118,83 @@ describe('perfis versionados', () => {
   });
 });
 
-describe('fila de sprites: segurança do script', () => {
-  it('--url só https e host da allowlist; credencial embutida e host parecido são recusados', () => {
-    expect(validarUrlBase(APP_URL_PADRAO)).toBe(APP_URL_PADRAO);
-    for (const u of ['http://soulmon.mateus-sprnd.workers.dev', 'https://evil.example', 'https://soulmon.mateus-sprnd.workers.dev@evil.example', 'https://soulmon.mateus-sprnd.workers.dev.evil.example', 'nao-e-url']) {
-      expect(() => validarUrlBase(u), u).toThrow();
+describe('evolução por faixa fixa', () => {
+  const novo = (faixa, estagio = 'rookie', pontos = 0) => ({ ...SIMULADOS[0], faixa, ancora: { estagio, pontos } });
+  const diaMais = (n) => new Date(Date.parse('2026-11-05T00:00:00Z') + n * 86400000).toISOString().slice(0, 10);
+  it('a régua espelha FORM_REQUIREMENTS, com o Mega no caminho da permanência', () => {
+    for (const s of ['rookie', 'champion', 'ultimate']) expect(GAUGE_SIM[s]).toEqual({ teto: FORM_REQUIREMENTS[s].required, meta: FORM_REQUIREMENTS[s].gauge });
+    expect(GAUGE_SIM.mega).toEqual({ teto: FORM_REQUIREMENTS.mega.required, meta: ULTRA_PATIENCE_POINTS });
+    expect(FAIXA_P).toEqual({ A: 1, B: 0.7, C: 0.33 });
+  });
+  it.each([['A', 73, 74], ['B', 106, 107], ['C', 224, 225]])('faixa %s: Mega no dia %i, Ultra no dia %i', (f, antes, ultra) => {
+    expect(estadoDoDia(novo(f), diaMais(antes)).stage).toBe('mega');
+    expect(estadoDoDia(novo(f), diaMais(ultra)).stage).toBe('ultra');
+  });
+  it('faixas fixas: 50 / 50 / 70, pela skill', () => {
+    const n = (f) => SIMULADOS.filter(p => p.faixa === f);
+    expect([n('A').length, n('B').length, n('C').length]).toEqual([50, 50, 70]);
+    expect(Math.min(...n('A').map(p => p.skill))).toBeGreaterThanOrEqual(Math.max(...n('B').map(p => p.skill)));
+    expect(Math.min(...n('B').map(p => p.skill))).toBeGreaterThanOrEqual(Math.max(...n('C').map(p => p.skill)));
+  });
+  it('partida escalonada: os novos não começam todos na mesma forma', () => {
+    expect(new Set(SIMULADOS.slice(50).map(p => p.ancora.estagio)).size).toBeGreaterThanOrEqual(4);
+  });
+  it('todo level cabe no teto do duelo por dia de conta', () => {
+    for (const p of SIMULADOS) expect(estadoDoDia(p, '2026-11-05').level, p.id).toBeLessThanOrEqual(1 + p.daysPlaying);
+  });
+  it('nunca regride, dia a dia, e o duelo enxerga o mesmo level', () => {
+    for (const p of SIMULADOS) {
+      let prev = 0;
+      for (let d = -5; d < 240; d += 3) { const e = estadoDoDia(p, diaMais(d)); expect(e.level).toBeGreaterThanOrEqual(prev); prev = e.level; }
     }
   });
-  it('a URL de sprite vinda do servidor é só /api/sprite-image?k=<32 hex>', () => {
-    expect(SPRITE_URL_RE.test('/api/sprite-image?k=' + 'a1'.repeat(16))).toBe(true);
-    for (const x of ['/api/sprite-image?k=abc', '/api/sprite-image?k=' + 'a'.repeat(32) + '; calc', 'x' + '/api/sprite-image?k=' + 'a'.repeat(32), '/api/sprite-image?k=' + 'A'.repeat(32)]) expect(SPRITE_URL_RE.test(x), x).toBe(false);
+});
+
+describe('ordem do dia e cota por placar', () => {
+  it('o início varia com a data, então nenhum perfil fica sempre no fim', () => {
+    const dias = Array.from({ length: 30 }, (_, i) => inicioDoDia(`2026-11-${String(i + 1).padStart(2, '0')}`));
+    expect(new Set(dias).size).toBeGreaterThan(20);
+    for (const d of dias) expect(d).toBeLessThan(SIMULADOS.length);
+  });
+  it('por jogo, no máximo PLACAR_SIMS_MAX pontuam; sobra lugar no top 50', async () => {
+    expect(PLACAR_SIMS_MAX).toBeLessThanOrEqual(25);
+    for (const g of RANKED_GAMES) expect(eleitosDoJogo(g).size).toBeLessThanOrEqual(PLACAR_SIMS_MAX);
+    const env = mkEnv();
+    for (let d = 20; d <= 26; d++) await fecharDia(env, new Date(Date.UTC(2026, 9, d, 10)));
+    for (const game of RANKED_GAMES) {
+      const b = await readBoard(env, { game, period: 'weekly', saveId: null, top: 50, now: DIA });
+      expect(b.top.length, game).toBeLessThanOrEqual(PLACAR_SIMS_MAX);
+    }
+  });
+  it('o Torneio continua com todos: o top 50 fica populado', async () => {
+    const env = mkEnv();
+    await fecharDia(env, new Date());
+    const r = await community({ request: new Request('https://x.dev/api/community?action=rank'), env });
+    expect((await r.json()).rank).toHaveLength(50);
+  });
+});
+
+describe('fila de sprites: cache correto', () => {
+  const plano = planejar(['sim_0051', 'sim_0052'], '2026-11-05');
+  it('cada simulado tem chave própria; gerado não paga de novo, prompt mudado gera', () => {
+    expect(chaveDoCache(plano[0])).not.toBe(chaveDoCache(plano[1]));
+    const man = { [chaveDoCache(plano[0])]: { hash: 'a' } };
+    expect(pendentes(plano, man).map(i => i.id)).toEqual(['sim_0052']);
+    expect(pendentes([{ ...plano[0], sha: 'outro' }], man)).toHaveLength(1);
+    expect(pendentes(plano, man, () => false)).toHaveLength(2); // arquivo apagado
+  });
+  it('imagem igual em simulados diferentes é detectada (o defeito do cache antigo)', () => {
+    expect(hashRepetido({ 'sim_0051|rookie|x': { hash: 'h' }, 'sim_0052|rookie|y': { hash: 'h' } })).toEqual(['sim_0051', 'sim_0052']);
+    expect(hashRepetido({ 'sim_0051|rookie|x': { hash: 'h' }, 'sim_0051|mega-power|y': { hash: 'h2' } })).toBeNull();
+  });
+  it('PNG sem canal alfa é rejeitado', () => {
+    const png = (cor) => { const b = new Uint8Array(30); b[0] = 0x89; b[25] = cor; return b; };
+    expect(pngTemAlfa(png(6))).toBe(true);
+    expect(pngTemAlfa(png(2))).toBe(false);
+  });
+  it('as 3 prévias cobrem as 3 linhas', () => {
+    const lines = planejar([...PREVIA], '2026-11-05').map(i => i.line);
+    expect(new Set(lines).size).toBe(3);
   });
 });
 
@@ -158,7 +226,7 @@ describe('ativação e idempotência', () => {
   it('falha num simulado NÃO marca o lote como feito: o mesmo simulado é tentado de novo', async () => {
     const env = mkEnv();
     const put0 = env.SOULMON_SAVES.put;
-    const alvo = SIMULADOS[1].id;
+    const alvo = SIMULADOS[(inicioDoDia('2026-10-26') + 1) % SIMULADOS.length].id;
     env.SOULMON_SAVES.put = async (key, v, o) => { if (key === alvo) throw new Error('kv fora'); return put0(key, v, o); };
     const r1 = await ensureSimuladosDia(env, DIA);
     expect(r1).toMatchObject({ status: 'progress', next: 1 }); // parou NO simulado que falhou
@@ -187,7 +255,7 @@ describe('ativação e idempotência', () => {
     };
     const r = await ensureSimuladosDia(env2, DIA);
     expect(r.status).toBe('progress');
-    expect(env2.SOULMON_SAVES.store.has(SIMULADOS[0].id)).toBe(false);
+    expect([...env2.SOULMON_SAVES.store.keys()].some(k => k.startsWith('profile:'))).toBe(false);
   });
 
   it('o lote cabe no orçamento: nunca passa de CHUNK simulados nem de OPS_BUDGET (exceto o 1º)', () => {
@@ -402,13 +470,13 @@ describe('o cliente nunca vê `simulated`', () => {
 });
 
 describe('fila de sprites (script manual)', () => {
-  it('dry-run por padrão e plano de 50 itens', () => {
+  it('dry-run por padrão e plano de 170 itens, com alfa real no prompt', () => {
     expect(parseArgs([]).run).toBe(false);
     expect(parseArgs(['--run', '--only', 'sim_0001,sim_0002'])).toMatchObject({ run: true, only: ['sim_0001', 'sim_0002'] });
     const plano = planejar();
-    expect(plano).toHaveLength(50);
-    expect(plano[0].kvKey).toBe('sim:sprite:sim_0001');
-    expect(promptDe(SIMULADOS[0])).toContain('#00FF00');
+    expect(plano).toHaveLength(170);
+    expect(promptDe(SIMULADOS[0], 'rookie')).toContain('transparent');
+    expect(promptDe(SIMULADOS[0], 'rookie')).not.toContain('#00FF00');
     expect(planejar(['sim_0003'])).toHaveLength(1);
   });
 });

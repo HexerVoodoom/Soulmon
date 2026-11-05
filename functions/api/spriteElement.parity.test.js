@@ -25,7 +25,7 @@ describe('elemento do sprite no servidor', () => {
     const fx = duelSide({ evolutionStage: 'rookie', soulmonSkills: fichaDeOutroElemento }).fx;
     expect(fx.elBasica).toBe('morte');
   });
-  it('simulados: o fx do duelo = o elemento do sprite (p.element) nos 50', () => {
+  it('simulados: o fx do duelo = o elemento do sprite (p.element) nos 170', () => {
     for (const p of SIMULADOS) {
       const fx = duelSide(saveDoSimulado(p, '2026-10-25')).fx;
       expect([p.id, fx.elBasica, fx.elEspecial]).toEqual([p.id, p.element, p.element]);

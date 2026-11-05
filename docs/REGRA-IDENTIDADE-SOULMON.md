@@ -18,6 +18,10 @@ Tudo o que for gerado ou desenhado para o Soulmon carrega a identidade do jogo:
 - **Proibido:** engrenagem e clima steampunk (o cobre e os canos entram como identidade, não como
   máquina a vapor). "Arcano, natureza + magia" sozinho no prompt NÃO basta.
 
+## Exceção: sprites de jogadores simulados (dono, 05/11/2026)
+
+Seguem o padrão de sprite de jogador, para parecerem jogadores reais, com alfa real. Provisória: a decisão final vem depois dos 3 sprites de prévia (REGISTRO §226).
+
 ## Como aplicar
 
 1. Descrever esses elementos explicitamente em TODO prompt de arte e anexar referência real (arte da Home).

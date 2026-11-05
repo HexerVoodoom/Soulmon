@@ -52,6 +52,7 @@ O runbook de operação é [`BETA-CONTINGENCIA.md`](../BETA-CONTINGENCIA.md) §0
 | `FEIRA_CHEFE_DESDE` | Data `AAAA-MM-DD` (UTC) em que o Chefe e o Desafio da Feira existem. **Se for uma data válida, manda sobre a constante** `FEIRA_CHEFE_DESDE` de `_feira.js` (hoje `2026-10-29`, ligada); uma data no futuro desliga sem deploy de código (`feiraLigada`). | `_feira.js`, `guild.js` |
 | `ONBOARDING_VELADO` · `ONBOARDING_VELADO_TESTERS` (01/11/2026) | Interruptor do Onboarding Velado (forma BB), **desligado por padrão**: ligado, `bbRefusal` recusa o BB no Duelo PvP e na Guilda (**`bb-locked`**) e `GET /api/config` expõe `onboardingVelado`. A lista é de **HASHES** (sha256 de `velado-tester:<e-mail normalizado>`), nunca e-mail; o cliente soma global OU tester. | `_velado.js`, `config.js`, `velado-teste.js` |
 | `SIMULADOS_ON` | Liga os usuários simulados (no `vars` do `wrangler.jsonc`, valor `"1"`). | `_simulados.js` |
+| `SIMULADOS_FORMAS_ON` | Liga a geração das formas evoluídas dos simulados sob demanda. Desligada por padrão; gasta crédito Higgsfield. | `_simFormas.js` |
 
 ---
 

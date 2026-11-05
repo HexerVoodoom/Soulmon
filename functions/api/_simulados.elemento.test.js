@@ -23,8 +23,8 @@ describe('simulados: elemento coerente com a criatura (determinístico, nunca so
       for (const s of SIMULADOS.filter(x => x.artLine === linha)) expect(s.element, s.id).toBe(el);
     }
   });
-  it('ids únicos e estáveis (sim_0001..sim_0050)', () => {
-    expect(SIMULADOS.map(s => s.id)).toEqual(Array.from({ length: 50 }, (_, i) => `sim_${String(i + 1).padStart(4, '0')}`));
+  it('ids únicos e estáveis (sim_0001..sim_0170)', () => {
+    expect(SIMULADOS.map(s => s.id)).toEqual(Array.from({ length: 170 }, (_, i) => `sim_${String(i + 1).padStart(4, '0')}`));
     expect(duelSide).toBeTypeOf('function');
   });
   it('duelo: fx.elBasica do simulado é o elemento dele, em todo dia, sem mexer nos stats', () => {

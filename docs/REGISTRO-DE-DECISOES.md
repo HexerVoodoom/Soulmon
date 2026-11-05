@@ -4010,3 +4010,12 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 
 **O que falsificaria.** Jogadores alternando para fugir de custo de cuidado de forma que o jogo não previu. **Rollback:** reverter o PR.
 
+## §226 — Simulados: 170 perfis, evolução por faixa e formas sob demanda (05/11/2026, decisão do dono)
+
+**Decisão do dono:** 120 simulados novos, nomes aprovados por ele. Evoluem como quem faz 100% das tarefas (top 50), 70% (top 100) e 33% (demais). Faixa fixa pela skill, não rank ao vivo. Partida escalonada. Média de tarefas sobre a meta diária: 74, 107 e 225 dias até o Ultra. Simulado não cai por HP. Placares com menos simulados, deixando espaço a reais (`PLACAR_SIMS_MAX` = 15 por jogo), e o Torneio segue com todos para manter o top 50 populado. Sprites no padrão de jogador com alfa real: exceção à `REGRA-IDENTIDADE-SOULMON.md`, com decisão final depois de 3 prévias. Formas sob demanda atrás de `SIMULADOS_FORMAS_ON`, desligada. O dono afirma que o Workers Paid está ativo; o painel de cobrança não foi conferido.
+
+**Alternativas que perderam:** rank ao vivo como faixa (quebra a função pura e não existe um rank único); `floor` diário (118 e 405 dias, puniria por arredondamento).
+
+**Conflito aberto:** a API Higgsfield do servidor não entrega alfa (`generate-sprite.js`), então `_simFormas.js` usa o recorte do pipeline do jogador; o alfa real só existe na geração local. Decidir antes de ligar a flag.
+
+**O que falsificaria:** jogador real sem aparecer nos placares, simulado recebendo prêmio, ou elemento do simulado diferente do sprite. **Rollback:** reverter o commit; as âncoras não apagam dado do KV.
