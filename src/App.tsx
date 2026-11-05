@@ -236,8 +236,10 @@ import { createEntitlementSync } from './utils/entitlementSync';
 import { subscribeAuthState, getIdToken } from './utils/auth';
 import { refreshVeladoTester } from './utils/veladoTester';
 import { isOnboardingVelado, sanitizeStageId } from './utils/bbStage';
-import { sortearBB } from './data/bbPool';
-import { BB_POOL_ART } from './data/bbPoolArt';
+// bbPool (sorteio) + bbPoolArt (URLs dos 280 BBs) pesavam ~33 KB na entrada e só servem ao nascimento: viram
+// um chunk pré-carregado (ver `bbPoolRef`), com o mesmo retorno `null` de "pool indisponível" se não chegar.
+type BBPoolMod = { sortearBB: typeof import('./data/bbPool').sortearBB; BB_POOL_ART: typeof import('./data/bbPoolArt').BB_POOL_ART };
+const carregarBBPool = (): Promise<BBPoolMod> => Promise.all([import('./data/bbPool'), import('./data/bbPoolArt')]).then(([a, b]) => ({ sortearBB: a.sortearBB, BB_POOL_ART: b.BB_POOL_ART }));
 import { gerarBBExclusivo, gerarBBPeloPipeline } from './utils/bbNascimento';
 import { pedirFreeRookie } from './utils/freeRookie';
 import { fetchEntitlement, spendCredits, buyEssence, claimAdReward, resetSpriteLifetimeAfterRebirth, type Entitlement } from './utils/entitlements';
@@ -279,7 +281,8 @@ import type { MercOrdem } from './utils/mercMissionSave';
 // Sequência do onboarding velado com etapas reais: leva Match3Game/BattleStage junto, só monta no 1º uso (fora da entrada).
 const SequenciaRevisao = lazy(() => import('./components/onboarding/sequencia/SequenciaReal').then(m => ({ default: m.SequenciaRevisao })));
 const SequenciaReal = lazy(() => import('./components/onboarding/sequencia/SequenciaReal').then(m => ({ default: m.SequenciaReal })));
-import { IntroCinematica, deveTocarIntro } from './components/onboarding/intro/IntroCinematica';
+import { deveTocarIntro } from './components/onboarding/intro/introGate';
+const IntroCinematica = lazy(() => import('./components/onboarding/intro/IntroCinematica').then(m => ({ default: m.IntroCinematica })));
 import { initialStageForNewSave } from './utils/bbStage';
 import { addBossShards } from './utils/bossShards';
 import type { OnboardingCompleteData } from './components/SoulmonOnboarding';
@@ -925,10 +928,19 @@ export default function App() {
     return id;
   });
   /* Nascimento: sorteia o BB do pool pela leitura do oráculo (D19). Pool vazio/sem sprite = null = fluxo atual. */
+  const bbPoolRef = useRef<BBPoolMod | null>(null);
+  useEffect(() => {
+    if (initialStageForNewSave() !== 'bb' || bbPoolRef.current) return;
+    let vivo = true;
+    carregarBBPool().then(m => { if (vivo) bbPoolRef.current = m; }).catch(() => { /* sem chunk: obterBBDoSorteio devolve null = fluxo sem pool */ });
+    return () => { vivo = false; };
+  }, []);
   const obterBBDoSorteio = useCallback((leitura?: { elemento?: string | null; reino?: string | null }) => {
     if (initialStageForNewSave() !== 'bb') return null;
-    const bb = sortearBB(saveId, leitura);
-    const url = bb ? BB_POOL_ART[bb.sprite] : undefined;
+    const pool = bbPoolRef.current;
+    if (!pool) return null;
+    const bb = pool.sortearBB(saveId, leitura);
+    const url = bb ? pool.BB_POOL_ART[bb.sprite] : undefined;
     return bb && url ? { url, formId: 'bb' } : null;
   }, [saveId]);
   /* D31: quem JÁ ENTRA pagante (entitlement `paid` agora) ganha o BB exclusivo gerado; free/falha/estouro = null (cai no pool, D30). */
@@ -7240,7 +7252,7 @@ export default function App() {
 
   // ONBOARDING_VELADO: a cinemática antes do login, só na 1ª abertura (com Pular).
   if (veladoOn && !hasCompletedOnboarding && introCinePendente) {
-    return <IntroCinematica language={language} onDone={() => setIntroCinePendente(false)} />;
+    return <Suspense fallback={null}><IntroCinematica language={language} onDone={() => setIntroCinePendente(false)} /></Suspense>;
   }
 
   // Show onboarding if not completed — Soulmon: quiz da alma no lugar do ovo
@@ -8919,7 +8931,7 @@ export default function App() {
             evolutionStage: gameState.evolutionStage,
             demoCharacterId: gameState.demoCharacterId,
           }} /></Suspense>}
-          {reverIntro && <IntroCinematica language={language} onDone={() => setReverIntro(false)} />}
+          {reverIntro && <Suspense fallback={null}><IntroCinematica language={language} onDone={() => setReverIntro(false)} /></Suspense>}
           {pane === 'settings' && (
             <Suspense fallback={<ScreenSkeleton language={language} />}><SettingsPage
               soundMuted={soundMuted}

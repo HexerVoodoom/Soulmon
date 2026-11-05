@@ -250,6 +250,32 @@ async function listPrefix(env, prefix, limit = 100) {
   return out;
 }
 
+/** Páginas de 1000 nomes de chave lidas por busca (custo de LISTA, sem `get`) e teto de candidatos que viram `get`. */
+const NICK_SCAN_PAGES = 10;
+const NICK_CANDIDATOS = 120;
+const BACKFILL_LOTE = 40;
+/** Chaves `nick:` cujo apelido contém o termo (prefixo primeiro). `truncated` = o índice é maior que a varredura permitida. */
+async function buscarNicks(env, termo) {
+  const inicio = [];
+  const meio = [];
+  let cursor;
+  let paginas = 0;
+  let truncated = false;
+  do {
+    const page = await kvOrThrow(env).list({ prefix: 'nick:', cursor, limit: 1000 });
+    paginas++;
+    for (const k of page.keys ?? []) {
+      let n;
+      try { n = decodeURIComponent(String(k.name).slice(5)); } catch { continue; }
+      if (!n.includes(termo)) continue;
+      (n.startsWith(termo) ? inicio : meio).push(k.name);
+    }
+    cursor = page.list_complete ? undefined : page.cursor;
+    if (cursor && (paginas >= NICK_SCAN_PAGES || inicio.length >= NICK_CANDIDATOS)) { truncated = paginas >= NICK_SCAN_PAGES && inicio.length < NICK_CANDIDATOS; break; }
+  } while (cursor);
+  return { nickKeys: [...inicio, ...meio].slice(0, NICK_CANDIDATOS), truncated };
+}
+
 // (`nickKey` e `claimNick` — apelido único — moram em `_profile.js` desde o M11, para o motor dos simulados reservar nicks pela MESMA régua.)
 
 export async function onRequestOptions() {
@@ -685,15 +711,37 @@ async function handleCommunity(context) {
 
   // ── Diretório / busca ─────────────────────────────────────────────────────
   if (action === 'players' && method === 'GET') {
-    const search = (url.searchParams.get('search') || '').toLowerCase();
-    const keys = await listPrefix(env, 'profile:', 300);
+    const search = (url.searchParams.get('search') || '').normalize('NFKC').trim().toLowerCase().slice(0, 40);
     const season = currentSeason();
     /** @type {Array<{ name?: string }>} */
     const players = [];
+    // SEM busca: os primeiros 300 perfis (a lista de apresentação, como sempre). COM busca: o índice de apelidos
+    // (`nick:<minúsculas>`, todo jogador com apelido entra), lido em PÁGINAS só pelos NOMES das chaves, sem ler valor;
+    // só quem casa custa `get`. Antes a busca olhava os 300 primeiros perfis e quem vinha depois nunca aparecia.
+    // Perfil sem entrada no índice (anterior a ele): `action=backfillNicks`, manual do dono.
+    let keys;
+    let searchTruncated = false;
+    if (search) {
+      const achado = await buscarNicks(env, search);
+      searchTruncated = achado.truncated;
+      keys = achado.nickKeys;
+    } else {
+      keys = await listPrefix(env, 'profile:', 300);
+    }
+    const vistos = new Set();
     for (const k of keys) {
-      const raw = await kvOrThrow(env).get(k);
+      let profileKey = k;
+      if (search) {
+        const dono = await kvOrThrow(env).get(k);
+        if (!dono) continue;
+        profileKey = `profile:${dono}`;
+      }
+      if (vistos.has(profileKey)) continue;
+      vistos.add(profileKey);
+      const raw = await kvOrThrow(env).get(profileKey);
       if (!raw) continue;
-      const p = JSON.parse(raw);
+      let p;
+      try { p = JSON.parse(raw); } catch { continue; }
       // N-4: o diretório respeita o MESMO gate que `opponents` — só entra
       // quem ligou o PvP. Antes daqui, o perfil era gravado junto do cloud
       // save e a pessoa entrava no diretório por consequência de salvar, não
@@ -723,7 +771,25 @@ async function handleCommunity(context) {
        para saber quem ganhou. `getRank` sai daqui junto — o dado não é só
        escondido, ele não é buscado. */
     players.sort((a, b) => String(a.name ?? '').localeCompare(String(b.name ?? '')));
-    return json({ players });
+    return json({ players, ...(searchTruncated ? { searchTruncated: true } : {}) });
+  }
+
+  // ── Backfill do índice de apelidos (manual, do dono): perfis anteriores ao índice `nick:` ainda não são achados pela busca. ──
+  // POST { adminKey, cursor? } com SEASON_ADMIN_KEY. Lê um lote de perfis, reivindica o apelido de cada um SEM roubar (claimNick recusa se
+  // outra conta já o tem) e devolve o próximo cursor; repetir até `done: true`. Idempotente.
+  if (action === 'backfillNicks' && method === 'POST') {
+    if (!env.SEASON_ADMIN_KEY || !secretEquals(body.adminKey, env.SEASON_ADMIN_KEY)) return json({ error: 'unauthorized' }, 401);
+    const page = await kvOrThrow(env).list({ prefix: 'profile:', cursor: typeof body.cursor === 'string' && body.cursor ? body.cursor : undefined, limit: BACKFILL_LOTE });
+    let indexed = 0, taken = 0, skipped = 0;
+    for (const k of page.keys) {
+      const saveId = k.name.slice('profile:'.length);
+      let p = null;
+      try { p = await getProfile(env, saveId); } catch { /* ilegível */ }
+      const nome = p && typeof p.name === 'string' ? sanitizarNomeDeGuilda(p.name) : null;
+      if (!nome || /^(an[ôo]nimo|anonymous)$/i.test(nome)) { skipped++; continue; }
+      if (await claimNick(env, saveId, nome)) indexed++; else taken++;
+    }
+    return json({ ok: true, scanned: page.keys.length, indexed, taken, skipped, done: !!page.list_complete, ...(page.list_complete ? {} : { cursor: page.cursor }) });
   }
 
   // ── Desgarrados de jogadores (§213): Soulmon de quem está há 90+ dias sem entrar. Anônimo, público, cache de borda. ──

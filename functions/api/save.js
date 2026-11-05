@@ -9,6 +9,7 @@
 
 import { VALID_ID, readEntitlement, publicView, comEntitlementLegivel } from './_entitlements.js';
 import { COUNTER_RING } from './_elementoBase.js';
+import { enforceWidgetFramesOwned } from './_widgetFrames.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { betaGate, BETA_CLOSED_MESSAGE } from './_betaAccess.js';
 import { takeIpQuota } from './_ipHash.js';
@@ -349,9 +350,6 @@ async function onRequestBruto({ request, env }) {
     if ('equippedFrame' in state) state.equippedFrame = frameIdOrNull(state.equippedFrame);
     if ('avatarId' in state) state.avatarId = avatarIdOrNull(state.avatarId);
     if ('ownedFrames' in state) state.ownedFrames = clampOwnedFrames(state.ownedFrames);
-    // Molduras do WIDGET V-Pet (cosmético, 04/11/2026): só ids dos 20 elementos base, sem repetição. A posse COMPRADA vive no
-    // entitlement (`ent.frames`), nunca aqui; esta lista é só a que a evolução libera.
-    if ('widgetFramesOwned' in state) state.widgetFramesOwned = Array.isArray(state.widgetFramesOwned) ? [...new Set(state.widgetFramesOwned.filter(v => COUNTER_RING.includes(v)))] : [];
     if ('widgetFrame' in state && !COUNTER_RING.includes(state.widgetFrame)) state.widgetFrame = null;
     // Talentos (Combate v3 / PR7): o vetor e VALIDADO contra o Vinculo do proprio save (`totalXP` -> `bondLevelFor`,
     // o teto de pontos = level). Invalido (id desconhecido, grau a mais, pontos a mais) e DESCARTADO, nunca
@@ -439,6 +437,15 @@ async function onRequestBruto({ request, env }) {
     }
     // `prev` e lido ANTES de serializar: a imutabilidade da ficha da jornada compara com o que ja esta gravado.
     const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    // Molduras do WIDGET V-Pet (04/11/2026): o SERVIDOR decide a posse (`_widgetFrames.js`). O `widgetFramesOwned` do cliente NUNCA entra: vale o
+    // que já estava gravado (moldura legítima de quem já tem não some) mais a do elemento do pet, para quem evoluiu. A comprada vive só em `ent.frames`.
+    if ('widgetFramesOwned' in state) {
+      let gravado;
+      if (typeof prev?.value === 'string' && prev.value.includes('"widgetFramesOwned"')) {
+        try { gravado = JSON.parse(prev.value).widgetFramesOwned; } catch { gravado = undefined; }
+      }
+      state.widgetFramesOwned = enforceWidgetFramesOwned(state, gravado);
+    }
     // Ficha da jornada (Combate v3 / PR15c): a FORMA e saneada (estagio valido, galhos finitos e com teto, `at` plausivel,
     // `familia` na lista fechada, `plano` recalculado dos galhos) e um estagio JA gravado no servidor nao e sobrescrito.
     // So parseia o gravado quando o campo existe nele (save de 5 MB nao e relido a toa). NUNCA recusa o save: o que nao

@@ -2015,6 +2015,9 @@ Folha da Poção de Elemento (Laboratório › Centro de Evolução): 3 espaços
 ### `src/components/onboarding/intro/IntroCinematica.tsx`
 **Dono de:** a cinemática "A Parede" (flag ligado, primeira abertura, antes do login); vídeo ausente = tela preta com legendas.
 
+### `src/components/onboarding/intro/introGate.ts`
+**Dono de:** as regras de entrada da cinemática (`deveTocarIntro`, `introVista`, `marcarIntroVista`), separadas do componente para o App decidir sem carregá-lo.
+
 ### `src/components/onboarding/intro/copy.ts`
 **Dono de:** as legendas EN/PT da cinemática, 9 planos.
 

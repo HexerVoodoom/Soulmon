@@ -894,6 +894,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** ninguém ainda (só a régua).
 **Régua:** `src/utils/combate/combate.test.ts` (gate 5 + prova de vermelho com dot ×1,5) e `group.test.ts` (AC7).
 
+### `src/utils/combate/elementEffects.ts`
+**Dono de:** a tabela `(família, elemento do especial) -> efeito` (REGISTRO §225). `direct` nunca tem efeito; derivado herda do primeiro componente com par na família.
+**Exports:**
+- `efeitoDoEspecial(family, elemento)`, `efeitoVisivel(family, elemento, mecanicaLigada?)`, `EFEITOS_COM_MECANICA` (const), tipo `EfeitoElemento`.
+**Régua:** `src/utils/combate/elementEffects.test.ts`.
+
 ### `src/utils/combate/specials.ts`
 **Dono de:** As 7 famílias de especial do combate v3 (orçamento E = 3 golpes, potência `p` calibrada no spike) e a energia (60 por fração causada, 60 por fração recebida, +2/s, dispara a 100).
 **Exports:**
