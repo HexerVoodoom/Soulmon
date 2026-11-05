@@ -8,15 +8,21 @@ import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { BitsAmount } from '../ui/BitsAmount';
 import { ElementIcon } from '../ElementBaseSlots';
 import { PurchaseConfirmSheet, ShopStatus, useShopFlash } from './ShopShelf';
-import { RESTAURANT_CHEF_ART } from '../../assets/soulmon/npcs';
+import { MaterialIcon } from '../MaterialIcon';
+import { ITEM_ART } from '../../utils/itemArt';
+import { dishArt } from '../../utils/dishArt';
 import { MATERIALS } from '../../utils/buildingQuestsCopy';
 import { essenceName } from '../../utils/essences';
 import {
-  applyCook, chefsOn, cookRefusal, dishesToday, extraOwned, menuOn, playerWeekday, DISHES_PER_DAY, activeMealBuff, dishById, isCombatEffect,
+  applyCook, cookRefusal, dishesToday, extraOwned, menuOn, playerWeekday, DISHES_PER_DAY, activeMealBuff, dishById, isCombatEffect,
   type Dish,
 } from '../../utils/restaurant';
-import { CHEF_VOICE, COMBAT_NOTE, SUNDAY_LINE, effectText, refusalText } from '../../utils/restaurantCopy';
+import { COMBAT_NOTE, effectText, refusalText } from '../../utils/restaurantCopy';
 import type { Language } from '../../utils/i18n';
+
+/** Lado do ícone de ingrediente (px) e do desenho do prato. */
+const ING = 20;
+const DISH = 52;
 
 export function RestauranteSheet({ language }: { language: Language }) {
   const isPt = language === 'pt-BR';
@@ -27,7 +33,6 @@ export function RestauranteSheet({ language }: { language: Language }) {
   const { gameState, setGameState } = ctx;
   const now = Date.now();
   const weekday = playerWeekday(new Date(now), gameState.playerDayTz);
-  const chefs = chefsOn(weekday);
   const menu = menuOn(weekday);
   const used = dishesToday(gameState, now);
   const buff = activeMealBuff(gameState, now);
@@ -41,31 +46,17 @@ export function RestauranteSheet({ language }: { language: Language }) {
     say(d.id, true, isPt ? `${d.namePt} servido! Fome cheia.` : `${d.nameEn} served! Fully fed.`);
   };
 
-  const extraLabel = (d: Dish) => d.extra.type === 'essence'
+  const extraName = (d: Dish) => d.extra.type === 'essence'
     ? essenceName(d.extra.id, isPt)
-    : (() => { const m = MATERIALS.find(x => x.id === d.extra.id); return m ? `${m.icon} ${isPt ? m.namePt : m.nameEn}` : d.extra.id; })();
+    : (() => { const m = MATERIALS.find(x => x.id === d.extra.id); return m ? (isPt ? m.namePt : m.nameEn) : d.extra.id; })();
+  const extraIcon = (d: Dish) => {
+    if (d.extra.type === 'essence') return <ElementIcon id={d.extra.id} size={ING} />;
+    const m = MATERIALS.find(x => x.id === d.extra.id);
+    return m ? <MaterialIcon id={m.id} emoji={m.icon} size={ING} /> : null;
+  };
 
   return (
     <div data-restaurante data-restaurante-weekday={weekday} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      <section aria-label={isPt ? 'Quem cozinha hoje' : 'Cooking today'} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        {chefs.map(c => (
-          <div key={c} data-chef={c} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src={RESTAURANT_CHEF_ART[c]} alt="" width={64} height={64} style={{ objectFit: 'contain', flexShrink: 0 }} />
-            <div style={{ minWidth: 0 }}>
-              <p style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>{isPt ? CHEF_VOICE[c].namePt : CHEF_VOICE[c].nameEn}</p>
-              <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? CHEF_VOICE[c].linePt : CHEF_VOICE[c].lineEn}</p>
-            </div>
-          </div>
-        ))}
-        <p style={{ ...sm2Hint, margin: 0 }}>
-          {weekday === 0
-            ? (isPt ? SUNDAY_LINE.pt : SUNDAY_LINE.en)
-            : (isPt
-              ? `Snapjaw: ${CHEF_VOICE.snapjaw.daysPt} · Caldo: ${CHEF_VOICE.caldo.daysPt} · domingo os dois.`
-              : `Snapjaw: ${CHEF_VOICE.snapjaw.daysEn} · Broth: ${CHEF_VOICE.caldo.daysEn} · Sunday both.`)}
-        </p>
-      </section>
-
       <ShopStatus
         flash={flash}
         language={language}
@@ -80,24 +71,35 @@ export function RestauranteSheet({ language }: { language: Language }) {
           : ` · active: ${buffDish.nameEn} (${effectText({ kind: buff.kind, value: buff.value }, false)}, until ${new Date(buff.until).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })})`) : null}
       </p>
 
-      <ul data-restaurante-menu style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <ul data-restaurante-menu style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 24 }}>
         {menu.map(d => {
           const refused = cookRefusal(gameState, d.id, now);
           const has = extraOwned(gameState, d.extra);
           return (
             <li key={d.id} data-dish={d.id} data-dish-chef={d.chef} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', ...sm2Text }}>
-              <span aria-hidden="true" style={{ lineHeight: '40px', width: 40, textAlign: 'center', flexShrink: 0 }}>{d.icon}</span>
+              <span aria-hidden="true" data-dish-art={dishArt(d.id) ? 'img' : 'emoji'} style={{ width: DISH, height: DISH, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: DISH * 0.8, lineHeight: 1, flexShrink: 0 }}>
+                {dishArt(d.id)
+                  ? <img src={dishArt(d.id)} alt="" width={DISH} height={DISH} draggable={false} style={{ width: DISH, height: DISH, objectFit: 'contain', imageRendering: 'pixelated' }} />
+                  : d.icon}
+              </span>
               <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <span style={{ fontWeight: 600 }}>{isPt ? d.namePt : d.nameEn}</span>
                 <span data-dish-effect style={{ ...sm2Hint }}>{effectText(d.effect, isPt)}</span>
                 <span data-dish-cost style={{ ...sm2Hint, display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
                   {Object.entries(d.foods).map(([emoji, n]) => {
                     const own = gameState.foodInventory?.[emoji] ?? 0;
-                    return <span key={emoji} style={{ opacity: own >= n ? 1 : 0.55 }}>{emoji}<span className="sm2-num">{own}/{n}</span></span>;
+                    return (
+                      <span key={emoji} data-dish-food={emoji} style={{ display: 'inline-flex', alignItems: 'center', gap: 3, opacity: own >= n ? 1 : 0.55 }}>
+                        {ITEM_ART[emoji]
+                          ? <img src={ITEM_ART[emoji]} alt="" aria-hidden="true" width={ING} height={ING} draggable={false} style={{ width: ING, height: ING, imageRendering: 'pixelated' }} />
+                          : <span aria-hidden="true">{emoji}</span>}
+                        <span className="sm2-num">{own}/{n}</span>
+                      </span>
+                    );
                   })}
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, opacity: has >= d.extra.qty ? 1 : 0.55 }}>
-                    {d.extra.type === 'essence' && <ElementIcon id={d.extra.id} size={16} />}
-                    {extraLabel(d)} <span className="sm2-num">{has}/{d.extra.qty}</span>
+                    {extraIcon(d)}
+                    {extraName(d)} <span className="sm2-num">{has}/{d.extra.qty}</span>
                   </span>
                   {isCombatEffect(d.effect) && <span>{isPt ? '· só Bits ganhos' : '· earned Bits only'}</span>}
                 </span>

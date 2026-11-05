@@ -732,6 +732,13 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/PetStageDecor.tsx`, `src/components/mercado/ShopShelf.tsx` (24/09/2026; ⚰️ `ShopModal.tsx` apagado em `ac631987`)
 **Régua:** nenhuma (`ls src/utils/decorArt*.test.ts` vazio).
 
+
+### `src/utils/dishArt.ts`
+**Dono de:** Mapa id de prato do Restaurante → URL da arte (`assets/soulmon/pratos/prato-<dishId>.png`, descoberta por glob; sem PNG a tela cai no emoji de `Dish.icon`).
+**Exports:**
+- `DISH_ART` — dishId → URL, só dos pratos com arte instalada.
+- `dishArt` — resolve um dishId.
+
 ### `src/utils/attackFxArt.ts`
 **Dono de:** URL do sprite de FX de ataque por elemento (18 base + 136 derivados) + estado — 924 peças em `assets/soulmon/fx-ataque/`. Era `derivedAttackFxArt.ts` até 15/09/2026 (só derivados).
 **Exports:**

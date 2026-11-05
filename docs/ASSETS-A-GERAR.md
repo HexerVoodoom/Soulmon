@@ -936,3 +936,38 @@ Hoje o selo usa marcador provisório (forma + texto, loop emprestado de `fx-dot-
 | `fx-maldicao-loop-sheet.png` | caveira e névoa, refazer | maldição | existe, anterior à regra |
 | `fx-silencio-loop-sheet.png` | anéis de som se desfazendo | silêncio | falta |
 | `fx-regen-loop-sheet.png` | folhas e faíscas subindo | cura contínua | falta |
+
+## 23. Pratos do Restaurante — 12 desenhos (pedido do dono, 06/11/2026)
+
+Hoje os 12 pratos (`DISHES` em `src/utils/restaurant.ts`) aparecem como **emoji** (`Dish.icon`). A tela (`RestauranteSheet`) já lê `src/utils/dishArt.ts`, que descobre sozinho os PNG em `src/assets/soulmon/pratos/prato-<dishId>.png`: o arquivo caiu na pasta com o nome certo, assume sem editar código; sem arquivo, segue o emoji. Cardápio e regra: `docs/RESTAURANTE.md`.
+
+- **Destino:** `src/assets/soulmon/pratos/prato-<dishId>.png` (o `dishId` é o de `restaurant.ts`, sem acento).
+- **Tamanho:** gerar 1024×1024 com **alfa real** (ChatGPT desktop, molde NPC/item; `gpt_image_2_5 --variant flare --background transparent` se falhar; nunca chroma verde), instalar em **128×128** (exibido a 52 px no celular; pixel art, `imageRendering: pixelated`).
+- **Referência a anexar (obrigatória):** `src/assets/soulmon/items/food-salad.png` + `item-heart.png` (traço de item), e `src/assets/soulmon/npcs/npc-mercado-restaurante.png` (a Snapjaw). Sem referência o gerador inventa estilo.
+- **Identidade (`docs/REGRA-IDENTIDADE-SOULMON.md`, bloqueante):** turquesa escuro fechado, cristal da alma com chama dentro, cobre/circuito/folhinhas em pouca quantidade, tudo por cabo; sem engrenagem/steampunk. Prato de Snapjaw puxa para o bosque (vinhas, folhas); prato do Caldo puxa para a panela de cobre e circuito.
+- **Conferência (`arte-conferente`):** alfa real (sem xadrez), prato legível a 52 px, centrado, sem texto, sem moldura/botão, cristal com chama visível.
+
+**Bloco de estilo (colar no início de cada prompt):**
+```
+Retro pixel art game item icon, 16-bit era, single dish centered, three-quarter top-down view, chunky visible pixels, flat colors with 3-step shading, clean dark outline. Palette: deep petrol turquoise base, aged copper accents, warm food colors only on the food itself. Soulmon identity: one small glowing soul-crystal with a flame inside, a few copper pipes or thin circuit traces, tiny leaf sprigs, everything connected by a thin cable, plant integrated with machine. No gears, no steampunk, no text, no frame, no border, no UI, no shadow plate. TRANSPARENT background with real alpha, square 1:1 composition, subject fills 80 percent of the canvas.
+```
+
+**Prompt de cada prato** = bloco de estilo + `The dish: <descrição>.`
+
+| Arquivo | Prato (chef) | Descrição para o prompt |
+|---|---|---|
+| `prato-salada-viva.png` | Salada Viva (Snapjaw) | a shallow turquoise-glazed bowl of crisp living leaves and curled vine tendrils, a tiny teal crystal with a soft flame inside nestled among the greens |
+| `prato-cha-de-orvalho.png` | Chá de Orvalho (Snapjaw) | a small round teapot-cup of dark teal ceramic with a dewdrop-shaped lid, a thin copper pipe curling off the spout, one glowing droplet crystal floating above the steam |
+| `prato-tigela-do-bosque.png` | Tigela do Bosque (Snapjaw) | a deep wooden-and-teal bowl of steaming rice and a red apple slice, a green sprout growing from the rim, a crystal with flame glowing at the bottom of the bowl |
+| `prato-espetinho-de-vinha.png` | Espetinho de Vinha (Snapjaw) | a skewer made of a twisted green vine threaded with seared meat chunks and leaves, a small turquoise crystal with flame as the top bead, a copper band at the handle |
+| `prato-sopa-de-raiz.png` | Sopa de Raiz (Snapjaw) | a rounded dark-teal bowl of root stew with visible roots, rice and meat, a thin copper pipe along the rim, one crystal with flame floating above the steam |
+| `prato-mordida-da-flor.png` | Mordida da Flor (Snapjaw) | a candy-and-fruit pastry shaped like a half-bitten blooming flower, petals in warm coral, leaf sprigs on the side, a tiny crystal with flame at the center of the bloom |
+| `prato-pao-de-faisca.png` | Pão de Faísca (Caldo) | a round golden loaf with a scored top on a small teal board, faint circuit traces glowing on the crust, a bright cyan spark and a small crystal with flame resting beside it |
+| `prato-ensopado-do-caldeirao.png` | Ensopado do Caldeirão (Caldo) | a small squat copper-rimmed cauldron of bubbling stew in dark teal, a coiled cable feeding it, a crystal with flame glowing under the surface, a leaf sprig on the lid |
+| `prato-torta-de-mel-lunar.png` | Torta de Mel Lunar (Caldo) | a round pie with a lattice crust and golden honey glaze shaped like a crescent moon, one slice cut out, a pale crystal with flame glowing in the cut, a leaf sprig on top |
+| `prato-caldo-de-brasa.png` | Caldo de Brasa (Caldo) | a ramen-style bowl of dark teal ceramic with glowing ember-orange broth, meat slices and rice, a copper chopstick rest with circuit etching, a crystal with flame beside the bowl |
+| `prato-pizza-de-ferro.png` | Pizza Casca de Ferro (Caldo) | a round pizza with a thick dark metallic-teal crust studded with ore flecks, melted toppings, one slice lifted with a copper-wire cheese string, a small crystal with flame set in the center |
+| `prato-pudim-de-nevoa.png` | Pudim de Névoa (Caldo) | a pale wobbling pudding with caramel drizzle on a teal plate, soft white mist curling around it like down feathers, a tiny crystal with flame inside the pudding glowing through |
+
+**Depois de instalar:** `dishArt.ts` assume sozinho; rodar `restaurant.test.ts` e conferir a tela a 360 px.
+
