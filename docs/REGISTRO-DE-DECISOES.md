@@ -3976,7 +3976,7 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 
 ## §223 — Feedback da Home: modal do Soulmon que envia direto, sem abrir o e-mail (04/11/2026, pedido do dono)
 
-**Decisão.** O besourinho da Home abre `FeedbackModal` (Feedback, Sugestão ou Bug + texto de 1 a 2000 caracteres + Enviar) e o texto vai a `POST /api/feedback`, que o grava na KV (`feedback:<dia>:<id>`, TTL 90 dias) ANTES de tentar o e-mail e o encaminha a `soulmon.revisor@gmail.com` por Resend (`RESEND_API_KEY`, secret do dono). Falha de envio mantém o rascunho e oferece "Tentar de novo".
+**Decisão.** O besourinho da Home abre `FeedbackModal` (Feedback, Sugestão ou Bug + texto de 1 a 2000 caracteres + Enviar) e o texto vai a `POST /api/feedback`, que o grava na KV (`feedback:<dia>:<id>`, TTL 30 dias) ANTES de tentar o e-mail e o encaminha a `soulmon.revisor@gmail.com` por Resend (`RESEND_API_KEY`, secret do dono). Falha de envio mantém o rascunho e oferece "Tentar de novo".
 
 **Alternativa que perdeu.** `mailto:` (era o botão): depende de app de e-mail configurado, não entrega nada se a pessoa desiste no meio. O `mailto` das Configurações (`feedbackMailto`, `bugMailto`) segue como estava.
 
