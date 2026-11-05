@@ -32,6 +32,8 @@
 import { EvolveButton } from './pixel/EvolveButton';
 import { useState, useMemo, useEffect, useRef, type CSSProperties } from 'react';
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
+import { FormasAlternativasSheet } from './evolution/FormasAlternativasSheet';
+import { altSpriteKey, formaTemAlternativas, type FormaAltEquipada, type FormasAlt } from '../utils/formasAlternativas';
 import { getSpriteForStage, isStarterId, type StarterId } from '../utils/sprites';
 import { useAdmin } from '../utils/adminFlag';
 import { canManualRetry, cardState, displaySprite, emptySpriteLibrary, type SpriteCardState, type SpriteLibrary } from '../utils/spriteLibrary';
@@ -125,6 +127,11 @@ interface EvolutionPathProps {
   /** Acervo de sprites gerados (`utils/spriteLibrary.ts`). Ausente = tudo na
    *  arte de reserva, que é o piso e nunca é erro. */
   spriteLibrary?: SpriteLibrary;
+  /** FORMAS ALTERNATIVAS (05/11/2026): o acervo REAL (com as chaves `forma@elemento`); `spriteLibrary` é o do visor. */
+  spriteLibraryReal?: SpriteLibrary;
+  formasAlt?: FormasAlt;
+  formaAltEquipada?: FormaAltEquipada;
+  onEquipFormaAlt?: (formId: string, elemento: string) => void;
   /** Elemento dominante do oráculo (`soulmonMeta.dominantElement`): desenha a
    *  aura elemental atrás da criatura, dentro do visor (D9, 15/09/2026 — a
    *  primeira e única chamada da arte de `fx-ataque/`). Ausente = sem aura. */
@@ -210,6 +217,10 @@ export function EvolutionPath({
   carePattern,
   forecastBranch,
   spriteLibrary,
+  spriteLibraryReal,
+  formasAlt,
+  formaAltEquipada,
+  onEquipFormaAlt,
   dominantElement,
   onTuneVisor,
   onRevertVisor,
@@ -252,6 +263,8 @@ export function EvolutionPath({
     return () => document.removeEventListener('pointerdown', fora);
   }, [formaSel]);
   useEffect(() => { setFormaSel(null); }, [selectedBranch]);
+  /** A forma cuja lista de formas alternativas está aberta. */
+  const [altAberta, setAltAberta] = useState<CreatureStage | null>(null);
 
   const handleRevealConfirm = () => {
     if (confirmReveal) setRevealed(prev => new Set(prev).add(creatureFormId(confirmReveal)));
@@ -732,6 +745,13 @@ export function EvolutionPath({
       : isForecast ? 'forecast'
       : 'locked';
     const estado = estadoDoNo(stageId, isCurrent, isForecast);
+    // FORMAS ALTERNATIVAS (05/11/2026): toda forma alcançada, menos o rookie, ganha a setinha → e o cartão vira toque.
+    // Na forma atual (ou numa sem outra ação) o toque abre direto as formas alternativas; na anterior/lateral, as opções.
+    const temSetinha = !hidden && isReached && formaTemAlternativas(stageId) && Boolean(onEquipFormaAlt);
+    const temOpcoes = isLateralSwitch || isPreviousStage;
+    const tocarCartao = temSetinha
+      ? () => (temOpcoes ? setFormaSel((cur) => (cur === stageId ? null : stageId)) : setAltAberta(evolution))
+      : undefined;
 
     // Situação em PALAVRAS: a cor e a posição do nó não podem ser o único
     // portador da informação (WCAG 1.4.1).
@@ -800,6 +820,12 @@ export function EvolutionPath({
           // círculo em volta da arte (`ringColor` do `SoulNode`).
         }}
         data-testid={`sm-no-${stageId}`}
+        {...(tocarCartao ? {
+          role: 'button', tabIndex: 0, 'aria-label': `${nodeLabel}. ${isPt ? 'Ver opções da forma' : 'See form options'}`,
+          'aria-expanded': temOpcoes ? formaSel === stageId : undefined,
+          onClick: tocarCartao,
+          onKeyDown: (e: React.KeyboardEvent) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tocarCartao(); } },
+        } : null)}
       >
         <SoulNode
           visual={visual}
@@ -811,10 +837,10 @@ export function EvolutionPath({
           title={hidden && isAdmin ? (isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)') : nome}
           onClick={hidden && isAdmin
             ? () => setConfirmReveal(evolution)
-            : (isLateralSwitch || isPreviousStage)
+            : (isLateralSwitch || isPreviousStage) && !tocarCartao
               ? () => setFormaSel((cur) => (cur === stageId ? null : stageId))
               : undefined}
-          pressed={!hidden && (isLateralSwitch || isPreviousStage) ? formaSel === stageId : undefined}
+          pressed={!hidden && !tocarCartao && (isLateralSwitch || isPreviousStage) ? formaSel === stageId : undefined}
         />
 
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -860,7 +886,7 @@ export function EvolutionPath({
           {isLateralSwitch && formaSel === stageId && (
             <button
               type="button"
-              onClick={() => handleSwitchClick(evolution)}
+              onClick={(e) => { e.stopPropagation(); handleSwitchClick(evolution); }}
               style={{ ...sm2Button('outline', false, 'sm'), alignSelf: 'flex-start', marginTop: 4 }}
             >
               {isPt ? 'Trocar forma' : 'Switch form'}
@@ -869,19 +895,56 @@ export function EvolutionPath({
           {isPreviousStage && formaSel === stageId && (
             <button
               type="button"
-              onClick={() => handleDegenerateClick(evolution)}
+              onClick={(e) => { e.stopPropagation(); handleDegenerateClick(evolution); }}
               style={{ ...sm2Button('outline', false, 'sm'), alignSelf: 'flex-start', marginTop: 4 }}
             >
               {isPt ? 'Degenerar' : 'Degenerate'}
             </button>
           )}
+          {temSetinha && temOpcoes && formaSel === stageId && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setFormaSel(null); setAltAberta(evolution); }}
+              style={{ ...sm2Button('outline', false, 'sm'), alignSelf: 'flex-start', marginTop: 4 }}
+            >
+              {isPt ? 'Formas alternativas' : 'Alternate forms'}
+            </button>
+          )}
         </div>
+        {temSetinha && (
+          <span aria-hidden="true" style={{ alignSelf: 'center', display: 'inline-flex' }}>
+            <Icon name="chevron_right" size={24} tone="muted" />
+          </span>
+        )}
       </article>
     );
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 24 }}>
+      {altAberta && onEquipFormaAlt && (() => {
+        const fid = creatureFormId(altAberta);
+        const real = spriteLibraryReal ?? acervo;
+        const lista = formasAlt?.[fid]?.length ? formasAlt[fid] : ['__atual'];
+        const itens = lista.map(el => ({
+          elemento: el,
+          sprite: el === '__atual'
+            ? (displaySprite(real, fid)?.url ?? getSpriteForStage(fid, fid === currentStageId ? demoCharacterId : undefined))
+            : (real.sprites[altSpriteKey(fid, el, formasAlt)]?.url),
+        }));
+        return (
+          <FormasAlternativasSheet
+            isPt={isPt}
+            formId={fid}
+            nomeDaForma={altAberta.name}
+            itens={itens}
+            formasAlt={formasAlt}
+            equipada={formasAlt?.[fid]?.length ? formaAltEquipada?.[fid] : '__atual'}
+            onEquip={(el) => { if (el !== '__atual') onEquipFormaAlt(fid, el); }}
+            onClose={() => setAltAberta(null)}
+          />
+        );
+      })()}
 
       {/* Degeneração — dupla confirmação preservada, com foco preso e Escape
           (`RitualDialog`, o `.dlg` SIS-06 centrado do canvas `EvoEstados`).
