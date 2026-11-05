@@ -5815,7 +5815,8 @@ select:focus-visible {
 /* Título e voltar por cima da arte, com véu escuro para ler em qualquer trecho; respeitam a área segura. */
 .sm2-vit-bar { position: absolute; z-index: 6; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: var(--sm2-space-2); padding: calc(env(safe-area-inset-top, 0px) + 8px) calc(env(safe-area-inset-right, 0px) + 12px) 24px calc(env(safe-area-inset-left, 0px) + 12px); background: linear-gradient(to bottom, rgba(6, 23, 26, .92), rgba(6, 23, 26, 0)); }
 .sm2-vit-back { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; padding: 0 var(--sm2-space-3); cursor: pointer; border-radius: 22px; border: 1px solid var(--sm2-line); background: color-mix(in srgb, #06171A 82%, transparent); color: var(--sm2-ink); font: inherit; font-size: var(--sm2-text-sm); &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; } }
-.sm2-vit-title, .sm2-stats-lab.sm2-vit-title { margin: 0; color: var(--sm2-ink); text-shadow: 0 1px 6px rgba(0, 0, 0, .8); }
+.sm2-vit-title { margin: 0; color: var(--sm2-ink); text-shadow: 0 1px 6px rgba(0, 0, 0, .8); }
+.sm2-stats-lab.sm2-vit-title { color: var(--sm2-ink); }
 .sm2-vit-foot { position: absolute; z-index: 6; left: 0; right: 0; bottom: 0; display: grid; gap: 6px; text-align: center; padding: 24px calc(env(safe-area-inset-right, 0px) + 12px) calc(env(safe-area-inset-bottom, 0px) + 12px) calc(env(safe-area-inset-left, 0px) + 12px); background: linear-gradient(to top, rgba(6, 23, 26, .92), rgba(6, 23, 26, 0)); pointer-events: none; }
 .sm2-vit-foot > * { margin: 0; pointer-events: auto; text-shadow: 0 1px 6px rgba(0, 0, 0, .8); }
 .sm2-vit-chakra {
