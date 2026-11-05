@@ -4190,3 +4190,13 @@ Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combin
 **Alternativa que perdeu.** Manter a exigência de lista para concluir: a revisão oferece explicitamente salvar sem lista, e o botão mudo foi o defeito relatado. O custo é a sessão vazia render o item de processo, limitado ao teto já existente de 2 por dia, dentro do de 8 (§22).
 
 **O que falsificaria.** Queixa de item grátis por concluir vazio, ou telemetria de sessões concluídas sem foco nenhum: aí exigir 1 ciclo de foco, com o botão explicando. **Rollback:** reverter o PR. A chave nova de rascunho fica órfã e é inofensiva; nada muda no save.
+
+## §239 — Chave da dungeon: o Calabouço abre com uma sessão concluída, e perder não encerra o dia (05/11/2026, decisão do dono)
+
+**Decisão.** Concluir uma sessão na Oficina do Foco dá a chave do Calabouço daquele dia do jogador (`dungeonKeyDay`, `utils/focusKey.ts`); sem ela, o prédio mostra a Corva mandando ir à Oficina. A exploração já tinha NPC próprio (Corva), então o NPC 412 não entrou. Palavras do dono: "se ele sair da dungeon, ele não perde e fica impossibilitado de continuar naquele dia não. Ele pode ir na dungeon até o fim ali, desde que ele recupere vida". Derrota em combate não gasta o passo nem encerra: a vida vai ao piso e recupera no ritmo da Fenda (4 h para encher, volta a lutar com 25%). Os Bits ganhos até a derrota são pagos nela (`paidWon`), porque a pessoa pode não voltar hoje. Sair de um desafio em curso segue gastando aquele passo (anti-espiada), sem trancar nada.
+
+**Limite conhecido.** A sessão de foco mora no aparelho, então o servidor valida só a forma da chave, não a prova. O Calabouço paga Bits com o teto diário do app e o `rogueDungeon` já não tinha espelho no servidor; a chave não abre superfície nova de prêmio.
+
+**Alternativas que perderam.** Exigir ciclo de foco completo para a chave: o dono pediu "concluir uma sessão". Usar o NPC 412: o pedido era condicional a não haver NPC.
+
+**O que falsificaria.** A meta de 60–70% de incursões completas (`winrateModos.sim.test.ts`) passa a medir incursões sem nenhuma derrota; a completude real sobe, o que é o pedido. Se Bits do Calabouço saírem de ±3pp no balanço, rever o tempo de recuperação. **Rollback:** reverter o PR; `dungeonKeyDay`, `hpAt` e `paidWon` são opcionais e ignorados. Um `hp` baixo gravado sem `hpAt` vale até a virada do dia.

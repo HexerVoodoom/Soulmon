@@ -32,7 +32,7 @@ export interface RogueRun {
   step: number;
   /** Desafios vencidos. */
   won: number;
-  /** Combate perdido = dia encerrado. */
+  /** ⚰️ §239: combate perdido não encerra mais o dia; só lê save antigo. */
   over: boolean;
   power: number;
   vigor: number;
@@ -52,6 +52,10 @@ export interface RogueRun {
    * Opcional: save antigo não tem = vida cheia. Campo novo SEM espelho no servidor (como todo o `rogueDungeon`).
    */
   hp?: number;
+  /** §239: derrota em combate. Quando a vida ficou no piso; ela recupera com o relógio a partir daqui. Sem o campo = não está recuperando. */
+  hpAt?: number;
+  /** §239: Bits já pagos desta incursão, para a derrota pagar o que rendeu sem pagar duas vezes no fim. */
+  paidWon?: number;
 }
 
 /** Vida atual da incursão (fração 0..1); sem o campo = cheia. */
@@ -73,6 +77,8 @@ export function sanitizeRogueRun(raw: unknown): RogueRun | undefined {
     power: int(r.power, ROGUE_MAX_STEPS), vigor: int(r.vigor, ROGUE_MAX_STEPS), shield: int(r.shield, ROGUE_MAX_STEPS),
     bonusPending: r.bonusPending === true, paid: r.paid === true,
     ...(typeof r.hp === 'number' && Number.isFinite(r.hp) && r.hp < 1 ? { hp: Math.max(0.01, Math.max(0, r.hp)) } : {}),
+    ...(typeof r.hpAt === 'number' && Number.isFinite(r.hpAt) && r.hpAt > 0 ? { hpAt: r.hpAt } : {}),
+    ...(int(r.paidWon, ROGUE_MAX_STEPS) > 0 ? { paidWon: int(r.paidWon, ROGUE_MAX_STEPS) } : {}),
     ...(typeof r.pending === 'string' && (PATH_KINDS as readonly string[]).includes(r.pending) && r.pending !== 'combat' ? { pending: r.pending as PathKind } : {}),
   };
 }

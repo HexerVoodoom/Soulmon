@@ -1,3 +1,4 @@
+import { rogueRestMs, settleRest } from './rogueDungeon';
 import { describe, expect, it } from 'vitest';
 import { combatantAt, REFERENCE_BUILDS } from './combate/level';
 import {
@@ -36,7 +37,13 @@ describe('rogueDungeon', () => {
     expect(r.bonusPending).toBe(false);
   });
   it('perder combate encerra o dia; errar puzzle só gasta o passo', () => {
-    expect(resolveStep(emptyRun(D), 'combat', false).over).toBe(true);
+    const lost = resolveStep(emptyRun(D), 'combat', false, undefined, 1000);
+    expect(lost).toMatchObject({ over: false, step: 0, hp: 0.01, hpAt: 1000 });
+    expect(rogueRestMs(lost, 1000)).toBeGreaterThan(0);
+    expect(rogueRestMs(lost, 1000 + 2 * 3_600_000)).toBe(0);
+    const back = settleRest(lost, 1000 + 2 * 3_600_000);
+    expect(back.hpAt).toBeUndefined();
+    expect(back.hp).toBeCloseTo(0.51, 2);
     const r = resolveStep(emptyRun(D), 'puzzle', false);
     expect(r).toMatchObject({ step: 1, won: 0, over: false });
   });

@@ -27,6 +27,21 @@ export function grantFocusKey<T extends FocusKeyState>(prev: T, nowMs: number): 
 }
 
 /**
+ * A CHAVE DA DUNGEON (dono, 05/11/2026, §239): concluir uma sessão na Oficina abre o Calabouço naquele dia do jogador. Não acumula.
+ * Quem já tinha incursão andando hoje quando a regra chegou (`step > 0`) não é trancado no meio.
+ */
+export interface DungeonKeyState { dungeonKeyDay?: string; playerDayTz?: PlayerDayAnchor; rogueDungeon?: { day: string; step: number } }
+export function hasDungeonKey(state: DungeonKeyState, nowMs: number): boolean {
+  const hoje = playerDayIso(new Date(nowMs), state.playerDayTz);
+  return sanitizeFocusKeyDay(state.dungeonKeyDay) === hoje || (state.rogueDungeon?.day === hoje && state.rogueDungeon.step > 0);
+}
+/** Idempotente: já tendo a de hoje, devolve a MESMA referência. */
+export function grantDungeonKey<T extends DungeonKeyState>(prev: T, nowMs: number): T {
+  const hoje = playerDayIso(new Date(nowMs), prev.playerDayTz);
+  return prev.dungeonKeyDay === hoje ? prev : { ...prev, dungeonKeyDay: hoje };
+}
+
+/**
  * COMPAT pré-beta3: quem já tinha uma sessão de foco PRONTA hoje (planejada na Oficina, antes de existir o "Prepare to Focus") não tem
  * `focusKeyDay` no save e ficaria trancado. Uma sessão `ready` do dia do jogador vale como a chave de hoje.
  * `session` = a sessão guardada no aparelho (`normalizeSession`); sem ela, só vale a chave do save.

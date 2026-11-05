@@ -35,7 +35,7 @@ import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, hungryFrom, HU
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
-import { hasFocusKeyOrLegacy, grantFocusKey, focusSessionStamp } from './utils/focusKey';
+import { hasFocusKeyOrLegacy, grantFocusKey, focusSessionStamp, hasDungeonKey, grantDungeonKey } from './utils/focusKey';
 import { grantRefugioEnergy } from './utils/refugio/energia';
 import { focusDescentRefusal, isFocusDescent, pauseFocusDescent, resumeFocusDescent, startFocusDescent } from './utils/focusDescent';
 import { assinarTelaMasmorra, telaMasmorraAberta } from './utils/dungeonScreenOpen';
@@ -8270,6 +8270,8 @@ export default function App() {
                     const dia = playerDayKey(new Date(), prev.playerDayTz);
                     return { ...prev, rogueDungeon: run, feats: applyFeat(prev.feats, 'rogueFloors', ganhos), dailyMissions: bumpDaily(prev.dailyMissions, dia, 'calabouco') };
                   }), combatant: soulCombatant(gameState) },
+                  dungeonKeyActive: hasDungeonKey(gameState, Date.now()),
+                  onFocusSessionComplete: () => setGameState(prev => grantDungeonKey(prev, Date.now())),
                   onFocusPrepared: () => { emitFeat('focusPrepared'); setGameState(prev => grantFocusKey(prev, Date.now())); },
                   onFocusStart: (focusEndsAt?: number) => {
                     const now = Date.now();

@@ -58,11 +58,13 @@ function useNow(active: boolean): number {
   return now;
 }
 
-export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = () => {}, onFocusReward, onPlanReward, onFocusCycle, onFocusStart, onFocusPause, onFocusResume, onFocusCancel }: {
+export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = () => {}, onFocusReward, onPlanReward, onSessionComplete, onFocusCycle, onFocusStart, onFocusPause, onFocusResume, onFocusCancel }: {
   language: Language; todayKey?: string; tasks?: WorkshopTask[]; onCompleteTask?: (taskId: string) => void;
   onFocusReward?: (request: FocusLootRequest, completedCycles: number) => FocusRewardResult;
   /** Recompensa por concluir o processo (1 item, teto diário no ledger). Sem ela, concluir não paga. */
   onPlanReward?: (request: FocusLootRequest) => FocusRewardResult;
+  /** A sessão foi concluída: dá a chave do Calabouço do dia (§239). */
+  onSessionComplete?: () => void;
   /** Um ciclo de foco (Pomodoro) terminou de verdade — a missão do dia conta o evento (REGISTRO §52). */
   onFocusCycle?: () => void;
   /** beta3 F1: o timer de foco começou — abre a descida da masmorra em background e devolve o que aconteceu (para o aviso). */
@@ -160,6 +162,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
     writeSession(next);
     const h = recordDone(history, next);
     setHistory(h); writeJson(STORAGE_KEYS.FOCO_WORKSHOPS, h, { silent: true });
+    onSessionComplete?.();
     if (onPlanReward && isFocusEnvironmentId(next.environment)) {
       setPlanNotice(onPlanReward({ day, environment: next.environment, sessionId: next.id, eventId: `${FOCUS_PLAN_EVENT_PREFIX}${next.id}` }));
     }
@@ -268,6 +271,7 @@ export function OficinaSheet({ language, todayKey, tasks = [], onCompleteTask = 
             ? `${isPt ? 'Sessão concluída. O Soulmon trouxe' : 'Session complete. Soulmon brought'}: ${planNotice.items.map(item => `${item.icon} ${isPt ? item.namePt : item.nameEn}`).join(' · ')}`
             : (isPt ? 'Sessão concluída. O limite de itens de hoje já foi alcançado.' : 'Session complete. Today’s item limit has been reached.')}
         </p>}
+        {session.status === 'completed' && onSessionComplete && <p role="status" data-oficina-chave-dungeon style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'A chave do Calabouço é sua hoje.' : 'The Dungeon key is yours today.'}</p>}
         {completeBlocked && timer?.phase === 'focus' && <p role="alert" data-oficina-complete-blocked style={{ ...sm2Text, margin: 0 }}>{isPt ? 'O foco ainda está no relógio. Termine ou cancele o timer, lá em cima, e conclua a sessão.' : 'The focus timer is still on. Finish or cancel it, up top, then complete the session.'}</p>}
         {confirmDelete && <p role="alert" style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Excluir esta sessão?' : 'Delete this session?'}</p>}
         <footer style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
