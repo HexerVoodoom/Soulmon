@@ -1,0 +1,24 @@
+{
+  "_nota": "Prova da fatia 1 (PLANO §17): loop real de 8 a 15 s em videos, ou capturas reais em prints. Sem item aqui, a seção não aparece e a fatia não publica. Só captura real com gameplay: true; origem E:/Soulmon-marketing/.",
+  "videos": {
+    "pt": [],
+    "en": []
+  },
+  "prints": {
+    "pt": [],
+    "en": []
+  },
+  "formato": {
+    "video": {
+      "src": "",
+      "poster": "",
+      "gameplay": true,
+      "legenda": ""
+    },
+    "print": {
+      "src": "",
+      "alt": "",
+      "gameplay": true
+    }
+  }
+}

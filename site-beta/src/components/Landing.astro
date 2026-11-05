@@ -1,0 +1,192 @@
+---
+import Base from '../layouts/Base.astro';
+import midia from '../content/midia.json';
+import { TEXTOS, CONTATO, TERMOS, type Lang } from '../i18n/textos';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = TEXTOS[lang];
+// FAQ 3 (opt-in de 14 dias): PROVISÓRIO, sem prazo até o dono definir (PLANO §13.5).
+const c = t.ciclo; const s = t.soul; const e = t.entrar;
+// Prova: só captura real (gameplay: true). Sem captura, a seção não existe no HTML.
+const loops = (midia.videos[lang] as { src: string; poster: string; gameplay: boolean; legenda: string }[]).filter((v) => v.gameplay === true && v.src);
+const prints = (midia.prints[lang] as { src: string; alt: string; gameplay: boolean }[]).filter((p) => p.gameplay === true && p.src);
+const sitekey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY ?? '';
+const strings = { erros: e.erros, espera: e.espera, angulos: t.angulos, enviar: e.enviar, enviarEspera: e.enviarEspera, enviando: e.enviando, microCompleta: t.microCompleta, copiado: t.fim.copiado, falhaCopia: t.fim.falhaCopia, shareTxt: t.fim.shareTxt, forma: c.forma, de: c.de, alt: c.alt, formas: c.formas, contato: CONTATO };
+---
+<Base lang={lang} alternativa={t.outraHome} aqui={t.home} preload>
+  <a class="pular" href="#entrar">{t.pular}</a>
+  <header class="hero" id="topo">
+    <picture class="hero-mapa" aria-hidden="true">
+      <source type="image/avif" srcset="/mapa/laboratorio-480.avif 480w, /mapa/laboratorio-760.avif 760w" sizes="(min-width: 900px) 760px, 100vw" />
+      <source type="image/webp" srcset="/mapa/laboratorio-480.webp 480w, /mapa/laboratorio-760.webp 760w" sizes="(min-width: 900px) 760px, 100vw" />
+      <img src="/mapa/laboratorio-480.webp" alt="" width="760" height="1344" fetchpriority="high" decoding="async" />
+    </picture>
+    <div class="hero-barra">
+      <a href={t.home} class="logo"><img src="/marca/logo-160.webp" srcset="/marca/logo-160.webp 2x, /marca/logo-320.webp 4x" width="80" height="60" fetchpriority="low" alt={t.logoAlt} /></a>
+      <a class="idioma" href={t.outraHome} hreflang={t.outraCod} lang={t.outraCod}>{t.outraNome}</a>
+    </div>
+    <div class="hero-corpo">
+      <h1>{t.h1}</h1>
+      {/* A criatura entra depois do load (app.ts), fora da disputa do LCP. A caixa já tem tamanho: sem CLS. */}
+      <img class="sprite hero-criatura" data-tarde-src="/sprites/fogo-ultra.webp" src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" width="256" height="256" decoding="async" alt={t.heroAlt} />
+      <noscript><img class="sprite hero-criatura" src="/sprites/fogo-ultra.webp" width="256" height="256" alt={t.heroAlt} /></noscript>
+      <div class="hero-acao">
+        <a class="botao" href="#entrar">{t.cta}</a>
+        <p class="micro" data-micro>{t.micro}</p>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="apoio-faixa"><div class="cabo" aria-hidden="true"><i></i></div><p class="apoio">{t.apoio}</p></div>
+
+    {(loops.length > 0 || prints.length > 0) && (
+      <section class="prova" id="prova" aria-labelledby="prova-h">
+        <div class="cabo" aria-hidden="true"><i></i></div>
+        <h2 id="prova-h">{t.prova.h2}</h2>
+        <div class="prova-midia">
+          {loops.map((v) => <figure><video src={v.src} poster={v.poster} muted loop playsinline controls preload="none" width="360" height="800"></video>{v.legenda && <figcaption>{v.legenda}</figcaption>}</figure>)}
+          {prints.map((p) => <img src={p.src} alt={p.alt} loading="lazy" />)}
+        </div>
+      </section>
+    )}
+
+    <section class="ciclo" id="ciclo" aria-labelledby="ciclo-h">
+      <div class="cabo" aria-hidden="true"><i></i></div>
+      <div class="ciclo-palco" data-palco>
+        <div class="ciclo-texto">
+          <h2 id="ciclo-h">{c.h2}</h2>
+          <p class="demo">{c.demo}</p>
+        </div>
+        <ol class="estagios" data-estatico aria-label={c.listaRotulo}>
+          {c.formas.map((f, i) => <li><img class="sprite" loading="lazy" src={`/sprites/fogo-${f}.webp`} width="256" height="256" alt={`${c.alt} ${c.forma} ${i + 1} ${c.de} 5`} /><span>{c.forma} {i + 1} {c.de} 5</span></li>)}
+        </ol>
+        <div class="demo-cena" data-cena hidden>
+          <div class="visor grande" data-visor>
+            <img class="sprite" data-criatura src="/sprites/fogo-rookie.webp" width="256" height="256" alt={`${c.alt} ${c.forma} 1 ${c.de} 5`} />
+            <span class="clarao" data-clarao></span>
+            <span class="placa" data-placa aria-hidden="true">{c.forma} 1 {c.de} 5</span>
+          </div>
+          <div class="cristal" aria-hidden="true">
+            <img data-c="apagado" src="/provisorio/cristal-apagado.svg" width="96" height="120" alt="" loading="lazy" fetchpriority="low" />
+            <img data-c="acendendo" src="/provisorio/cristal-acendendo.svg" width="96" height="120" alt="" loading="lazy" fetchpriority="low" />
+            <img data-c="aceso" src="/provisorio/cristal-aceso.svg" width="96" height="120" alt="" loading="lazy" fetchpriority="low" />
+          </div>
+          <div class="placa-tarefas" data-tarefas>
+            <span class="trilho" aria-hidden="true"><i data-carga></i></span>
+            <ul aria-label={c.tarefasRotulo} class="tarefas">
+              {c.tarefas.map((tx, i) => <li><button type="button" class:list={['tarefa', i % 2 ? 'dir' : 'esq']} aria-pressed="false" data-tarefa={i}><span class="caixa" aria-hidden="true"></span><span>{tx}</span></button></li>)}
+            </ul>
+          </div>
+          <div class="ciclo-fim" data-fim hidden>
+            <p>{c.fim}</p>
+            <a class="botao" href="#entrar">{t.cta}</a>
+            <button type="button" class="link" data-recomecar>{c.recomecar}</button>
+          </div>
+          <img class="chama" data-chama src="/provisorio/chama.svg" width="24" height="32" alt="" aria-hidden="true" loading="lazy" fetchpriority="low" />
+          <p class="sr" aria-live="polite" data-anuncio></p>
+        </div>
+        <a class="botao ciclo-cta" href="#entrar" data-cta-estatico>{t.cta}</a>
+      </div>
+    </section>
+
+    <section class="soul" id="seu-soulmon" aria-labelledby="soul-h">
+      <div class="cabo" aria-hidden="true"><i></i></div>
+      <div class="soul-texto">
+        <h2 id="soul-h">{s.h2}</h2>
+        <p>{s.texto}</p>
+      </div>
+      <div class="soul-visores" data-elementos>
+        {s.els.map(([id, nome, frase], i) => (
+          <figure class="elemento" data-el={id} data-primeiro={i === 0 ? '' : undefined}>
+            <div class="visor grande">
+              <img class="sprite" loading="lazy" src={`/sprites/${id}-rookie.webp`} width="256" height="256" alt={`${s.altEl} ${nome}`} />
+              <span class="placa">{nome}</span>
+            </div>
+            <figcaption>{frase}</figcaption>
+          </figure>
+        ))}
+        <div class="seletor" role="group" aria-label={s.escolhaRotulo} data-seletor hidden>
+          {s.els.map(([id, nome], i) => <button type="button" aria-pressed={i === 0 ? 'true' : 'false'} data-ver={id}>{nome}</button>)}
+        </div>
+      </div>
+      <div class="vitrine-bloco">
+        <h3 id="vit-h">{s.vitrine}</h3>
+        <ul class="vitrine" tabindex="0" aria-labelledby="vit-h">
+          {s.vit.map(([id, nome]) => <li><img class="sprite" loading="lazy" src={`/sprites/v-${id}.webp`} width="128" height="128" alt={`${s.altEl} ${nome}`} /><span>{nome}</span></li>)}
+        </ul>
+      </div>
+    </section>
+
+    <section class="entrar" id="entrar" aria-labelledby="entrar-h">
+      <div class="cabo" aria-hidden="true"><i></i></div>
+      <div class="entrar-passos">
+        <h2 id="entrar-h">{e.h2}</h2>
+        <ol class="passos">
+          {e.passos.map(([a, b]) => <li><strong>{a}</strong><span>{b}</span></li>)}
+        </ol>
+      </div>
+      <div class="form-coluna">
+        <p class="vagas" data-vagas hidden></p>
+        <p class="aviso-vaga">{e.aviso}</p>
+        <noscript><p class="ns">{e.noscript} <a href={`mailto:${CONTATO}`}>{CONTATO}</a></p></noscript>
+        <form id="inscricao" novalidate data-form data-sitekey={sitekey} data-idioma={t.idioma} data-strings={JSON.stringify(strings)}>
+          <div class="campo">
+            <label for="email">{e.email}</label>
+            <input id="email" name="email" type="email" required autocomplete="email" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="254" aria-describedby="email-dica" />
+            <p id="email-dica" class="dica">{e.emailDica}</p>
+          </div>
+          <div class="hp" aria-hidden="true"><label>Site<input type="text" name="site" tabindex="-1" autocomplete="off" /></label></div>
+          <label class="aceite"><input type="checkbox" name="aceitePrivacidade" required /><span>{e.privA} <a href={t.priv}>{e.privLink}</a> {e.privB}</span></label>
+          <label class="aceite"><input type="checkbox" name="maior18" required /><span>{e.maior}</span></label>
+          <label class="aceite"><input type="checkbox" name="novidades" /><span>{e.nov}</span></label>
+          <div id="turnstile" class="turnstile"></div>
+          <button class="botao" type="submit" data-enviar>{e.enviar}</button>
+          <p class="erro" role="alert" aria-live="assertive" data-erro hidden></p>
+        </form>
+        <div class="sucesso" data-sucesso tabindex="-1" aria-live="polite" hidden>
+          <img src="/provisorio/cristal-aceso.svg" width="96" height="120" alt="" />
+          <h3>{e.okH}</h3>
+          <p>{e.ok}</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="faq" id="perguntas" aria-labelledby="faq-h">
+      <div class="cabo" aria-hidden="true"><i></i></div>
+      <h2 id="faq-h">{t.faq.h2}</h2>
+      {t.faq.itens.map(([q, a], i) => (
+        <details>
+          <summary>{q}</summary>
+          <p>{a}</p>
+        </details>
+      ))}
+      <p class="faq-priv"><a href={t.priv}>{t.faq.privLink}</a></p>
+    </section>
+
+    <section class="fim" aria-labelledby="fim-h">
+      <div class="cabo fim-cabo" aria-hidden="true"><i></i></div>
+      <img class="fim-cristal" src="/provisorio/cristal-aceso.svg" width="96" height="120" alt="" loading="lazy" />
+      <h2 id="fim-h">{t.fim.h2}</h2>
+      <a class="botao" href="#entrar">{t.fim.cta}</a>
+      <div class="partilha">
+        <button type="button" class="link" data-share hidden>{t.fim.share}</button>
+        <button type="button" class="link" data-copiar hidden>{t.fim.copiar}</button>
+        <p class="partilha-msg" aria-live="polite" data-partilha-msg></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="rodape">
+    <p>{t.rodape.nota}</p>
+    <ul>
+      <li><a href={t.priv}>{t.rodape.priv}</a></li>
+      <li><a href={TERMOS} rel="noopener">{t.rodape.termos}</a></li>
+      <li><a href={`mailto:${CONTATO}`}>{t.rodape.contato}</a></li>
+      <li><a href={t.outraHome} hreflang={t.outraCod} lang={t.outraCod}>{t.outraNome}</a></li>
+    </ul>
+  </footer>
+
+  <div class="fixo" data-fixo hidden><a class="botao" href="#entrar">{t.cta}</a></div>
+  <script src="../scripts/app.ts"></script>
+</Base>

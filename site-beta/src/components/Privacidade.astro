@@ -1,0 +1,45 @@
+---
+import Base from '../layouts/Base.astro';
+import { TEXTOS, CONTATO, TERMOS, type Lang } from '../i18n/textos';
+interface Props { lang: Lang }
+const { lang } = Astro.props;
+const t = TEXTOS[lang];
+const pt = lang === 'pt';
+// PENDENTE DE REVISÃO DO DONO: texto e retenção são proposta (PLANO §8, §15); não é parecer jurídico.
+const blocos: [string, string[]][] = pt ? [
+  ['Quem cuida dos dados', [`Mateus Sperandio, responsável pelo projeto Soulmon. Contato: ${CONTATO}.`]],
+  ['O que guardamos', ['E-mail da conta Google; idioma; origem da visita (UTM) quando houver; versão desta política e data do aceite; aceite de novidades, se marcado; leva, data do convite, data de instalação, data de entrada no teste fechado (opt-in), último dia de uso do jogo (ambas marcadas à mão pelo responsável) e data de remoção.', 'O cadastro exige a declaração de 18 anos ou mais: sem ela o formulário não é aceito. Guardamos a data do aceite, e não um campo separado para a declaração.', 'Não guardamos IP puro nem user-agent.']],
+  ['Para quê', ['Enviar o convite do beta, por ordem de inscrição, e administrar as levas e a lista de espera. Novidades só se você marcar essa opção.', 'Base: seu consentimento, que você pode retirar a qualquer momento.']],
+  ['Proteção contra abuso', ['Para limitar tentativas, calculamos um hash do IP com chave secreta e data (HMAC). Esse hash é apagado na primeira tentativa de cadastro do dia seguinte, mesmo que essa tentativa seja inválida, e não fica junto da inscrição.', 'Também contamos, por dia, quantos cadastros deram certo e quantos falharam. É um número agregado, sem e-mail, IP ou qualquer dado pessoal.', 'O formulário usa o Cloudflare Turnstile, verificação anti-robô que processa dados técnicos do seu navegador sob as regras da Cloudflare.', 'Duplicatas são detectadas por um hash do e-mail normalizado.']],
+  ['Quem processa', ['Cloudflare: hospedagem, banco de dados (D1), Turnstile e estatística de visitas sem cookies.', 'Resend: envia ao responsável um aviso de que houve inscrição. O aviso não contém o seu e-mail.']],
+  ['Por quanto tempo', ['Até o fim do beta, ou 12 meses se nenhum convite for enviado a você; o que vier primeiro.', 'Depois de apagados, os dados ainda podem existir por até 7 dias no backup automático do D1, até expirarem sozinhos.']],
+  ['Seus direitos', [`Você pode pedir acesso, correção ou remoção escrevendo do próprio endereço inscrito para ${CONTATO}. A remoção apaga o registro de verdade, ressalvado o backup de 7 dias acima.`, 'Quem recebeu um convite sem ter se inscrito pode pedir remoção da mesma forma.']],
+  ['Cookies', ['Este site não grava cookies próprios e não tem banner porque não há o que aceitar. A estatística de visitas funciona sem cookies.']],
+  ['O jogo', ['Esta política cobre só o cadastro do beta. O uso do app segue os termos e a política do app.']],
+] : [
+  ['Who looks after the data', [`Mateus Sperandio, who runs the Soulmon project. Contact: ${CONTATO}.`]],
+  ['What we keep', ['Your Google account email; language; visit source (UTM) when present; version of this policy and date you accepted it; news consent, if checked; wave, invite date, install date, closed-test opt-in date, last day the game was used (both set by hand by the project owner) and removal date.', 'Signing up requires the statement that you are 18 or older: the form is not accepted without it. We keep the date you accepted, not a separate field for the statement.', 'We do not keep raw IP addresses or user agents.']],
+  ['What for', ['To send the beta invite, in sign-up order, and to run the waves and waiting list. News only if you check that option.', 'Legal basis: your consent, which you can withdraw at any time.']],
+  ['Abuse protection', ['To limit attempts we compute a keyed, dated hash of your IP (HMAC). It is deleted on the first sign-up attempt of the following day, even if that attempt is invalid, and is not stored with your sign-up.', 'We also count, per day, how many sign-ups worked and how many failed. It is an aggregate number, with no email, IP or any personal data.', 'The form uses Cloudflare Turnstile, an anti-bot check that processes technical data from your browser under Cloudflare rules.', 'Duplicates are detected through a hash of the normalized email.']],
+  ['Who processes it', ['Cloudflare: hosting, database (D1), Turnstile and cookieless visit statistics.', 'Resend: sends the project owner a notice that a sign-up happened. The notice does not contain your email.']],
+  ['How long', ['Until the end of the beta, or 12 months if no invite is sent to you, whichever comes first.', 'After deletion, data may still exist for up to 7 days in the automatic D1 backup, until it expires.']],
+  ['Your rights', [`You can request access, correction or removal by writing from the signed-up address to ${CONTATO}. Removal truly deletes the record, apart from the 7-day backup above.`, 'Anyone who got an invite without signing up can request removal the same way.']],
+  ['Cookies', ['This site sets no cookies of its own and has no banner because there is nothing to accept. Visit statistics work without cookies.']],
+  ['The game', ['This policy covers only the beta sign-up. Using the app follows the app terms and policy.']],
+];
+---
+<Base lang={lang} alternativa={t.outraPriv} aqui={t.priv} titulo={pt ? 'Privacidade do cadastro do beta | Soulmon' : 'Beta sign-up privacy | Soulmon'} desc={pt ? 'Como o cadastro do beta do Soulmon trata seus dados.' : 'How the Soulmon beta sign-up handles your data.'}>
+  <div class="legal">
+    <div class="hero-barra">
+      <a href={t.home} class="logo"><img src="/marca/logo-160.webp" srcset="/marca/logo-160.webp 2x, /marca/logo-320.webp 4x" width="80" height="60" alt={t.logoAlt} /></a>
+      <a class="idioma" href={t.outraPriv} hreflang={t.outraCod} lang={t.outraCod}>{t.outraNome}</a>
+    </div>
+    <main>
+      <h1>{pt ? 'Privacidade do cadastro do beta' : 'Beta sign-up privacy'}</h1>
+      <p class="versao">{pt ? 'Versão 1, novembro de 2026.' : 'Version 1, November 2026.'}</p>
+      {blocos.map(([h, ps]) => <section><h2>{h}</h2>{ps.map((p) => <p>{p}</p>)}</section>)}
+      <p><a href={TERMOS} rel="noopener">{t.rodape.termos}</a></p>
+      <p><a class="botao" href={`${t.home}#entrar`}>{t.cta}</a></p>
+    </main>
+  </div>
+</Base>

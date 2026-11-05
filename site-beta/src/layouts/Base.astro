@@ -1,0 +1,36 @@
+---
+import '../styles/site.css';
+import { TEXTOS, type Lang } from '../i18n/textos';
+interface Props { lang: Lang; titulo?: string; desc?: string; alternativa: string; aqui: string; preload?: boolean; noindex?: boolean }
+const { lang, titulo, desc, alternativa, aqui, preload = false, noindex = false } = Astro.props;
+const t = TEXTOS[lang];
+const base = Astro.site!.origin;
+const hrefPt = lang === 'pt' ? aqui : alternativa;
+const hrefEn = lang === 'en' ? aqui : alternativa;
+---
+<!doctype html>
+<html lang={t.html}>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>{titulo ?? t.titulo}</title>
+  <meta name="description" content={desc ?? t.desc} />
+  <meta name="theme-color" content="#071413" />
+  {noindex ? <meta name="robots" content="noindex" /> : <>
+    <link rel="canonical" href={base + aqui} />
+    <link rel="alternate" hreflang="pt-BR" href={base + hrefPt} />
+    <link rel="alternate" hreflang="en" href={base + hrefEn} />
+    <link rel="alternate" hreflang="x-default" href={base + hrefEn} />
+  </>}
+  <link rel="icon" href="/favicon-192.png" />
+  <meta property="og:title" content={titulo ?? t.titulo} />
+  <meta property="og:description" content={desc ?? t.desc} />
+  <meta property="og:image" content={base + '/og.png'} />
+  <meta property="og:type" content="website" />
+  <link rel="preload" href="/fonts/cinzel-latin.woff2" as="font" type="font/woff2" crossorigin />
+  {preload && <link rel="preload" as="image" type="image/avif" fetchpriority="high" imagesrcset="/mapa/laboratorio-480.avif 480w, /mapa/laboratorio-760.avif 760w" imagesizes="(min-width: 900px) 760px, 100vw" />}
+</head>
+<body>
+  <slot />
+</body>
+</html>
