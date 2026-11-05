@@ -1569,7 +1569,7 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Dono de:** a entrada da árvore de talentos na `StatsPage` (04/11/2026, dono): cartão com os pontos livres e botão que abre a árvore em TELA CHEIA. **Usado em:** `StatsPage.tsx`. **Régua:** `TalentTreeEntry.render.test.tsx`.
 
 ### `src/components/forge/VitraMap.tsx`
-**Dono de:** o layout do Soulsmith em mapa de chakras (04/11/2026, dono): figura de vidro soprado (SVG de fallback ou `vitra-mapa.png`) e os três chakras com o balão ao lado. Só layout; as regras ficam em `ForgeCard.tsx`. **Usado em:** `ForgeCard.tsx` (`view="map"`). **Régua:** `ForgeCard.mapa.render.test.tsx`.
+**Dono de:** o layout do Soulsmith em mapa de chakras (04/11/2026, dono): figura de vidro soprado (`vitra-mapa.png`, 852x1846, em TELA CHEIA; sem fallback em SVG) e os três chakras com o balão abaixo do anel. Só layout; as regras ficam em `ForgeCard.tsx`. **Usado em:** `ForgeCard.tsx` (`view="map"`). **Régua:** `ForgeCard.mapa.render.test.tsx`.
 
 ### `src/components/nav/LotIndicator.tsx`
 **Dono de:** o disco com ícone dourado "há o que gastar" sobre o prédio (04/11/2026, dono). **Usado em:** `nav/AreaScene.tsx` (camada de marcas), `TalentTreeEntry.tsx`. Regra de quando acende: `src/utils/lotIndicators.ts`.

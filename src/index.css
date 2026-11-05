@@ -5806,13 +5806,21 @@ select:focus-visible {
 /* Vitra e faixa ficam ANTES do bloco canônico de movimento reduzido: mesma especificidade, quem vem depois vence. */
 /* ── Soulsmith (Vitra) em mapa de chakras (04/11/2026) ─────────────────────
    Mesmo esquema da Hexsmith: placa quadrada, três pontos, balão ao lado. Tudo por token (cores de brasa só na figura de vidro, que é arte). */
-.sm2-vit-map { position: relative; width: 100%; max-width: 360px; aspect-ratio: 1 / 1; margin: 0 auto; border-radius: var(--sm2-radius-md); overflow: visible; background: #000; }
-.sm2-vit-figure { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: var(--sm2-radius-md); pointer-events: none; }
-.sm2-vit-backdrop { position: absolute; inset: 0; border-radius: var(--sm2-radius-md); }
-.sm2-vit-spot { position: absolute; width: 0; height: 0; }
+.sm2-vit-map { position: fixed; inset: 0; z-index: 300; overflow: hidden; background: #06171A; container-type: size; }
+/* O PALCO tem a proporção da arte (852/1846) e COBRE a tela, centrado (cover manual): chakras em % do palco = sempre sobre os anéis, qualquer tela. */
+.sm2-vit-stage { position: absolute; left: 50%; top: 50%; width: max(100cqw, calc(100cqh * 852 / 1846)); aspect-ratio: 852 / 1846; transform: translate(-50%, -50%); container-type: inline-size; }
+.sm2-vit-figure { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; user-select: none; }
+.sm2-vit-backdrop { position: absolute; inset: 0; }
+.sm2-vit-spot { position: absolute; width: 0; height: 0; --r: max(22px, 9cqw); }
+/* Título e voltar por cima da arte, com véu escuro para ler em qualquer trecho; respeitam a área segura. */
+.sm2-vit-bar { position: absolute; z-index: 6; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: var(--sm2-space-2); padding: calc(env(safe-area-inset-top, 0px) + 8px) calc(env(safe-area-inset-right, 0px) + 12px) 24px calc(env(safe-area-inset-left, 0px) + 12px); background: linear-gradient(to bottom, rgba(6, 23, 26, .92), rgba(6, 23, 26, 0)); }
+.sm2-vit-back { display: inline-grid; place-items: center; min-width: 44px; min-height: 44px; padding: 0 var(--sm2-space-3); cursor: pointer; border-radius: 22px; border: 1px solid var(--sm2-line); background: color-mix(in srgb, #06171A 82%, transparent); color: var(--sm2-ink); font: inherit; font-size: var(--sm2-text-sm); &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; } }
+.sm2-vit-title, .sm2-stats-lab.sm2-vit-title { margin: 0; color: var(--sm2-ink); text-shadow: 0 1px 6px rgba(0, 0, 0, .8); }
+.sm2-vit-foot { position: absolute; z-index: 6; left: 0; right: 0; bottom: 0; display: grid; gap: 6px; text-align: center; padding: 24px calc(env(safe-area-inset-right, 0px) + 12px) calc(env(safe-area-inset-bottom, 0px) + 12px) calc(env(safe-area-inset-left, 0px) + 12px); background: linear-gradient(to top, rgba(6, 23, 26, .92), rgba(6, 23, 26, 0)); pointer-events: none; }
+.sm2-vit-foot > * { margin: 0; pointer-events: auto; text-shadow: 0 1px 6px rgba(0, 0, 0, .8); }
 .sm2-vit-chakra {
   position: absolute; left: 0; top: 0; transform: translate(-50%, -50%);
-  display: grid; place-items: center; width: 42px; height: 42px; padding: 0; margin: 0; cursor: pointer;
+  display: grid; place-items: center; width: max(44px, 18cqw); height: max(44px, 18cqw); padding: 0; margin: 0; cursor: pointer;
   border-radius: 50%; border: 1px solid var(--sm2-line); background: color-mix(in srgb, #06171A 78%, transparent); color: var(--sm2-ink);
   transition: box-shadow var(--sm2-dur-tap) var(--sm2-ease), border-color var(--sm2-dur-tap) var(--sm2-ease);
   &[data-owned="true"] { border-color: color-mix(in srgb, var(--sm2-gold-ink) 70%, transparent); }
@@ -5824,10 +5832,8 @@ select:focus-visible {
   &[data-ready="true"] { border-color: var(--sm2-gold-ink); box-shadow: 0 0 0 2px color-mix(in srgb, var(--sm2-gold-ink) 40%, transparent), 0 0 14px 2px color-mix(in srgb, var(--sm2-gold-ink) 55%, transparent); animation: sm2-vit-glow 2.4s ease-in-out infinite; }
 }
 @keyframes sm2-vit-glow { 50% { box-shadow: 0 0 0 3px color-mix(in srgb, var(--sm2-gold-ink) 55%, transparent), 0 0 22px 4px color-mix(in srgb, var(--sm2-gold-ink) 70%, transparent); } }
-.sm2-vit-pop { position: absolute; z-index: 5; width: min(210px, 62vw); }
-.sm2-vit-pop[data-side="below"] { left: 0; top: 28px; transform: translateX(-50%); width: min(250px, 80vw); }
-.sm2-vit-pop[data-side="right"] { left: 38px; top: 0; transform: translateY(-30%); }
-.sm2-vit-pop[data-side="left"] { right: 38px; top: 0; transform: translateY(-30%); }
+.sm2-vit-pop { position: absolute; z-index: 5; width: min(250px, calc(100vw - 16px)); }
+.sm2-vit-pop[data-side="below"] { left: 0; top: calc(var(--r) + 6px); transform: translate(calc(-50% + var(--dx, 0px)), var(--dy, 0px)); }
 .sm2-vit-card {
   display: grid; gap: var(--sm2-space-2); padding: var(--sm2-space-3); box-sizing: border-box;
   background: color-mix(in srgb, #06171A 94%, transparent); border: 1px solid color-mix(in srgb, var(--sm2-gold-ink) 65%, transparent);

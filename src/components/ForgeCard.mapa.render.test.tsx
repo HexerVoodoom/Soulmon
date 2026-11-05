@@ -44,6 +44,24 @@ describe('Soulsmith em mapa', () => {
     expect(document.querySelectorAll('[data-vitra-chakra][data-ready]')).toHaveLength(0);
   });
 
+  it('tela cheia: palco com a proporção da arte, chakras no eixo central sobre os anéis medidos e Voltar quando há onBack', async () => {
+    abrir({});
+    expect(document.querySelector('[data-vitra-stage]')).not.toBeNull();
+    const { CHAKRA } = await import('./forge/VitraMap');
+    expect(CHAKRA.nucleo).toMatchObject({ x: 50, y: 29.25 });
+    expect(CHAKRA.carapaca).toMatchObject({ x: 50, y: 41.5 });
+    expect(CHAKRA.rastro).toMatchObject({ x: 50, y: 53.5 });
+    const spot = chakra('nucleo').parentElement as HTMLElement;
+    expect(spot.style.left).toBe('50%'); expect(spot.style.top).toBe('29.25%');
+    expect(document.querySelector('[data-vitra-back]')).toBeNull();
+    cleanup();
+    const onBack = vi.fn();
+    localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify({ activities: [], tasks: [], soulmonMeta: { baseName: 'Fagulha' } }));
+    render(<GameStateProvider><ForgeCard language="pt-BR" view="map" onBack={onBack} /></GameStateProvider>);
+    click(document.querySelector('[data-vitra-back]')!);
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
   it('com material o chakra da peça brilha; sem material, não', () => {
     abrir(nivel1({ buildingQuests: bq({ ore: 3 }) }));
     expect(chakra('nucleo').hasAttribute('data-ready')).toBe(true);

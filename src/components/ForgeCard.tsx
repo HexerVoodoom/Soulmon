@@ -78,7 +78,7 @@ function ForgeDialogShell({ mode, onClose, children }: { mode: string; onClose: 
  * soprado no centro, um equipamento por chakra e, ao tocar, o balão com as duas opções de aprimoramento. `view="list"` (padrão) é a lista de
  * cartões anterior, mantida como reserva e para os testes antigos; as regras e os motivos de recusa são os MESMOS nos dois.
  */
-export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list' }: { language?: string; view?: 'list' | 'map' }) {
+export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list', onBack }: { language?: string; view?: 'list' | 'map'; onBack?: () => void }) {
   const ctx = useGameStateOptional();
   const [pop, setPop] = useState<string | null>(null);
   const [popChoice, setPopChoice] = useState<ForgeChoice>('a');
@@ -414,14 +414,22 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list' 
     });
     return (
       <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card data-forge-view="map">
-        <p id="sm2-equip-title" className="sm2-stats-lab" style={{ margin: '0 0 8px' }}>Soulsmith</p>
-        <VitraMap chakras={chakras} label={isPt ? 'Equipamentos do Soulsmith' : 'Soulsmith equipment'} onBackdrop={() => setPop(null)} />
-        {celebra && (
-          <span role="status" className="sm-forge-seal sm2-num" data-forge-seal data-motion={prefersReducedMotion() ? 'reduced' : 'full'} style={{ display: 'block', textAlign: 'center', marginTop: 8, fontWeight: 500, color: 'var(--sm2-primary-ink)' }}>
-            <Icon name="auto_awesome" size={20} tone="primary" /> {isPt ? 'Aprimorado!' : 'Upgraded!'} <span key={celebra.key} className="sm-forge-pulse" data-forge-level-pulse>{isPt ? `Nv ${celebra.to}` : `Lv ${celebra.to}`}</span>
-          </span>
-        )}
-        {aviso && <p className="sm2-stats-s" role="status" data-equip-aviso style={{ marginTop: 10 }}>{aviso}</p>}
+        <VitraMap chakras={chakras} label={isPt ? 'Equipamentos do Soulsmith' : 'Soulsmith equipment'} onBackdrop={() => setPop(null)}>
+          <div className="sm2-vit-bar" data-vitra-bar>
+            {onBack && <button type="button" className="sm2-vit-back" data-vitra-back onClick={onBack}>{isPt ? 'Voltar' : 'Back'}</button>}
+            <p id="sm2-equip-title" className="sm2-stats-lab sm2-vit-title">Soulsmith</p>
+          </div>
+          {(celebra || aviso) && (
+            <div className="sm2-vit-foot" data-vitra-foot>
+              {celebra && (
+                <span role="status" className="sm-forge-seal sm2-num" data-forge-seal data-motion={prefersReducedMotion() ? 'reduced' : 'full'} style={{ display: 'block', fontWeight: 500, color: 'var(--sm2-primary-ink)' }}>
+                  <Icon name="auto_awesome" size={20} tone="primary" /> {isPt ? 'Aprimorado!' : 'Upgraded!'} <span key={celebra.key} className="sm-forge-pulse" data-forge-level-pulse>{isPt ? `Nv ${celebra.to}` : `Lv ${celebra.to}`}</span>
+                </span>
+              )}
+              {aviso && <p className="sm2-stats-s" role="status" data-equip-aviso>{aviso}</p>}
+            </div>
+          )}
+        </VitraMap>
         {modal()}
       </section>
     );
