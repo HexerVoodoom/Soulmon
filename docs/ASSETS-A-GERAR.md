@@ -936,6 +936,10 @@ Hoje o selo usa marcador provisório (forma + texto, loop emprestado de `fx-dot-
 | `fx-maldicao-loop-sheet.png` | caveira e névoa, refazer | maldição | existe, anterior à regra |
 | `fx-silencio-loop-sheet.png` | anéis de som se desfazendo | silêncio | falta |
 | `fx-regen-loop-sheet.png` | folhas e faíscas subindo | cura contínua | falta |
+| `st-peso`, `st-retardo`, `st-ferrugem`, `st-distorcao` (.png) | glifos de lentidão de Gravidade, Tempo, Industrial, Espaço | §236 | falta (provisório: `▽` + texto) |
+| `st-ofuscado`, `st-curto-circuito`, `st-atordoado`, `st-selado` (.png) | glifos de silêncio de Luz, Eletricidade, Marcial, Arcano | §236 | falta (provisório: `∅` + texto) |
+| `st-seiva`, `st-po-de-fada`, `st-folego` (.png) | glifos de cura contínua de Planta, Fada, Vigor | §236 | falta (provisório: `+↑` + texto) |
+| `st-escudo-peso`, `st-blindagem`, `st-furia`, `st-postura`, `st-aceleracao`, `st-carga` (.png) | glifos de buff de família | §236 | falta (provisório: forma + texto) |
 
 ## 23. Pratos do Restaurante — 12 desenhos (pedido do dono, 06/11/2026)
 
