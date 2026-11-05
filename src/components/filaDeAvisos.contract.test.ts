@@ -37,6 +37,13 @@ describe('nada monta por cima da fila de intersticiais', () => {
     expect(app.split('pendingEvoStatsRef.current = {').length - 1).toBe(1);
   });
 
+  it('o piso "evoluir nunca reduz" (REGISTRO §229) é gravado só pelo handleEvolve e lido por todo combatente do app', () => {
+    expect(app.split('evoStatFloor: nextStatFloor(prev, newEvolutionStage)').length - 1).toBe(1);
+    for (const f of ['components/ArenaGame.tsx', 'components/DungeonGame.tsx', 'components/guild/PlantioVisor.tsx', 'components/TournamentPage.tsx', 'utils/focusDescent.ts']) {
+      expect(readFileSync('src/' + f, 'utf8'), f).toContain('evoStatFloor');
+    }
+  });
+
   it('o modal de evolução espera a cerimônia terminar', () => {
     // 14/10/2026: o modal entra na fila central; "pronto" = evolução pendente E cerimônia fechada, "na tela" = a vez dele.
     expect(app).toContain('evolveTask: evolveModalStage !== null && evolutionCeremony === null,');

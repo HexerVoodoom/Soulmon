@@ -132,7 +132,7 @@ import type { MealInviteKind } from './utils/mealRhythm';
 import { awardBondXP, awardStepXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
 import { levelUpPending, levelUpBaseline, applyLevelUpCelebrated } from './utils/levelUp';
 import { sanitizeTalentPicks } from './utils/talents';
-import { soulLevel, soulLevelLine, soulCombatant } from './utils/soulXP';
+import { soulLevel, soulLevelLine, soulCombatant, nextStatFloor } from './utils/soulXP';
 import { ROGUE_PER_FLOOR, type RogueRun } from './utils/rogueDungeonSave';
 import { applyPoopDrain, cleanPoop, pendingPoopEvent, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playEvolve, playDegenerate, playSleep } from './utils/sounds';
@@ -3892,6 +3892,8 @@ export default function App() {
       const evolved = {
         ...base,
         evolutionCrystal: undefined,
+        // REGISTRO §229 "Evoluir nunca reduz": o maior de cada atributo de antes vira o piso do estágio novo (`utils/soulXP.ts › nextStatFloor`).
+        evoStatFloor: nextStatFloor(prev, newEvolutionStage),
         evolutionStage: newEvolutionStage,
         currentBranch: newCurrentBranch,
         healthPoints: newHP,
@@ -5136,6 +5138,7 @@ export default function App() {
       attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
         chipsStage: undefined, // D-97: a contagem de chips é por estágio
         chipsReduceStage: undefined, // idem, chips de redução (limite próprio)
+      evoStatFloor: undefined,
       currentBranch: 'harmony',
       degeneratedByHP: false,
       soulmonStages: result.creature.stages,
@@ -5227,6 +5230,7 @@ export default function App() {
         attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
         chipsStage: undefined, // D-97: a contagem de chips é por estágio
         chipsReduceStage: undefined, // idem, chips de redução (limite próprio)
+        evoStatFloor: undefined,
         currentBranch: 'harmony',
         degeneratedByHP: false,
         soulmonStages: result.creature.stages,
@@ -7726,6 +7730,7 @@ export default function App() {
                   harmonyPoints: gameState.harmonyPoints,
                   benevolencePoints: gameState.benevolencePoints,
                   degeneratedByHP: gameState.degeneratedByHP,
+                  evoStatFloor: gameState.evoStatFloor,
                   petPassive: gameState.petPassive,
                   skills: skillsDoJogador,
                   petElement: petElementOf(gameState),

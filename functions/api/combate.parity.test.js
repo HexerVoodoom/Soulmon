@@ -221,6 +221,29 @@ describe('o duelo (`_duel.js`) é o do cliente (`combate/duel.ts`)', () => {
   });
 });
 
+describe('piso da evolução (REGISTRO §229): o servidor deriva o que o app deriva', () => {
+  it('com piso válido, inválido, de outro estágio e lixo', () => {
+    const pisos = [undefined, null, 'x', { s: 3, atk: 12, def: 12, spd: 12 }, { s: 3, atk: 999, def: -4, spd: 11.7 }, { s: 4, atk: 17, def: 13, spd: 12 }, { s: 9, atk: 5, def: 5, spd: 5 }, { s: 0, atk: 5, def: 5, spd: 5 }, { s: 3.5, atk: 5, def: 5, spd: 5 }];
+    for (const evolutionStage of ['rookie', 'champion-power', 'ultimate-harmony', 'mega-benevolence', 'ultra']) {
+      for (const perfectDays of [0, 3, 8, 30]) {
+        for (const evoStatFloor of pisos) {
+          for (const galho of [{}, { powerPoints: 9 }, { benevolencePoints: 5, harmonyPoints: 1 }]) {
+            const st = { evolutionStage, perfectDays, evoStatFloor, ...galho };
+            expect(srv.soulCombatant(st), JSON.stringify(st)).toEqual(soulCombatantApp(st));
+            expect(srv.soulCombatant(st, { bonus: { atk: 0.02, def: 0.03, spd: 0.04 } }), JSON.stringify(st)).toEqual(soulCombatantApp(st, { atk: 0.02, def: 0.03, spd: 0.04 }));
+          }
+        }
+      }
+    }
+  });
+  it('sanitize e teto do estágio batem nos dois lados', () => {
+    for (let s = 0; s < 5; s++) expect(srv.statMaxOfStage(s)).toBe(levelApp.statMaxOfStage(s));
+    for (const v of [{ s: 3, atk: 999, def: 5, spd: 5 }, { s: 1, atk: 2, def: 2, spd: 2 }, { s: 5, atk: 1, def: 1, spd: 1 }, 7]) {
+      expect(srv.sanitizeStatFloor(v)).toEqual(levelApp.sanitizeStatFloor(v));
+    }
+  });
+});
+
 describe('RED: a divergência de uma constante SÓ no espelho derruba o encontro (o teste pode falhar)', () => {
   it('VARIANCE.sigma 0,08 → 0,15 só no servidor muda o log de eventos', () => {
     const L = 21;
