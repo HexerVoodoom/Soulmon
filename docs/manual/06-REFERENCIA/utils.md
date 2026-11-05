@@ -4270,3 +4270,12 @@ Dono da regra do elemento combinado por estágio (§232): tabela de chances, sor
 ### `src/utils/elementoJornada.ts`
 
 Forma leve do registro `GameState.elementoJornada`, lida por `petElementOf`. Espelho: `functions/api/_elementoJornada.js`.
+
+### `src/utils/restaurant.ts`
+**Dono de:** a regra do Restaurante do Mercado (05/11/2026, `docs/RESTAURANTE.md`) — `DISHES` (12 pratos), `chefsOn`/`menuOn`/`playerWeekday` (seg/qua/sex Snapjaw, ter/qui/sáb Caldo, domingo os dois), `cookRefusal`/`applyCook` (debita comidas, extra e Bits, enche a fome por `eat`, energia por `setEnergy` ou buff de 24 h), `DISHES_PER_DAY`. Régua: `restaurant.test.ts`.
+
+### `src/utils/restaurantState.ts`
+**Dono de:** o estado leve do Restaurante no save (`RestaurantState`, `sanitizeRestaurant`, `MEAL_BUFF_VALUE_CAP`, `activeMealBuff`, `mealAttrBonus` — o buff de combate entra pelo `combinedAttrBonus`). Lido pelo `GameStateContext` e pelo `useTalentBonus`.
+
+### `src/utils/restaurantCopy.ts`
+**Dono de:** os textos do Restaurante (EN + PT): `CHEF_VOICE`, `SUNDAY_LINE`, `effectText`, `refusalText`, `COMBAT_NOTE`. Só texto.

@@ -2090,3 +2090,6 @@ Aviso curto na Home (REGISTRO §213 emenda 2): o Soulmon do jogador está desgar
 **Dono de:** a escolha da moldura do widget V-Pet, em Configurações, usando `src/utils/widgetFrames.ts`.
 
 **Chamado por:** `src/components/SettingsPage.tsx`.
+
+### `src/components/mercado/RestauranteSheet.tsx`
+**Dono de:** a folha do Restaurante no Mercado (`RestauranteSheet`): chefs do dia, cardápio, custo com o que se tem, confirmação e `applyCook` no updater. Aberta pelo lote `restaurante` em `nav/AreaView.tsx`.

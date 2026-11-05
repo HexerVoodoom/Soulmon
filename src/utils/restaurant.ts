@@ -64,7 +64,7 @@ export const DISHES: readonly Dish[] = [
   { id: 'mordida-da-flor', chef: 'snapjaw', icon: '🌸', nameEn: 'Bloom Bite', namePt: 'Mordida da Flor', foods: { '🍭': 1, '🍎': 1, '🥗': 1 }, extra: { type: 'material', id: 'laurel', qty: 1 }, bits: 35, effect: { kind: 'spd', value: 2 } },
   // 🍲 Caldo — ter/qui/sáb
   { id: 'pao-de-faisca', chef: 'caldo', icon: '🍞', nameEn: 'Spark Bread', namePt: 'Pão de Faísca', foods: { '🍚': 1, '☕': 1 }, extra: { type: 'essence', id: 'eletricidade', qty: 2 }, bits: 15, effect: { kind: 'energy', value: 2 } },
-  { id: 'ensopado-do-caldeirao', chef: 'caldo', icon: '🫕', nameEn: 'Cauldron Stew', namePt: 'Ensopado do Caldeirão', foods: { '🥩': 1, '🥗': 1, '🍚': 1 }, extra: { type: 'essence', id: 'arcano', qty: 3 }, bits: 40, effect: { kind: 'energy', value: 3 } },
+  { id: 'ensopado-do-caldeirao', chef: 'caldo', icon: '🥘', nameEn: 'Cauldron Stew', namePt: 'Ensopado do Caldeirão', foods: { '🥩': 1, '🥗': 1, '🍚': 1 }, extra: { type: 'essence', id: 'arcano', qty: 3 }, bits: 40, effect: { kind: 'energy', value: 3 } },
   { id: 'torta-de-mel-lunar', chef: 'caldo', icon: '🥧', nameEn: 'Moon Honey Pie', namePt: 'Torta de Mel Lunar', foods: { '🍭': 2, '🍎': 1 }, extra: { type: 'essence', id: 'luz', qty: 2 }, bits: 20, effect: { kind: 'regen', value: 25 } },
   { id: 'caldo-de-brasa', chef: 'caldo', icon: '🍜', nameEn: 'Ember Broth', namePt: 'Caldo de Brasa', foods: { '🥩': 2, '🍚': 1 }, extra: { type: 'material', id: 'spark', qty: 1 }, bits: 30, effect: { kind: 'atk', value: 2 } },
   { id: 'pizza-de-ferro', chef: 'caldo', icon: '🍕', nameEn: 'Ironcrust Pizza', namePt: 'Pizza Casca de Ferro', foods: { '🍕': 2, '🥩': 1 }, extra: { type: 'material', id: 'ore', qty: 1 }, bits: 30, effect: { kind: 'def', value: 2 } },

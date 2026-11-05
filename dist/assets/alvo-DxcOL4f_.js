@@ -1,0 +1,1 @@
+function u(t,n){return n!=null&&Number.isInteger(n)&&n>=0&&n<t.length&&t[n]>1e-9?n:Math.max(0,t.findIndex(e=>e>1e-9))}function V(t,n,e){return t.length<2||!Number.isInteger(e)||e<0||e>=t.length||!(t[e]>1e-9)?n:e}export{u as e,V as t};

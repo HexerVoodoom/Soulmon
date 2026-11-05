@@ -138,6 +138,11 @@ function emptyEntitlement() {
      * pode tocar nela, e ela não concede tier nem Créditos.
      */
     sub: null,
+    /**
+     * MOLDURAS DO WIDGET V-PET compradas (ids de elemento base). Só `applyVerifiedPurchase` escreve (a partir de uma compra
+     * verificada na Play); `auditRefunds` tira a do pedido reembolsado. COSMÉTICO: nada de regra de jogo lê isto.
+     */
+    frames: [],
     adDate: today(),
     adCount: 0,
     updatedAt: Date.now()
@@ -232,6 +237,8 @@ function publicView(ent) {
     // forma `{ tier, credits, adsLeft }` não veem campo novo em conta demo.
     ...provider ? { provider } : {},
     // Só quando a conta já teve assinatura: contas sem ela mantêm o formato de sempre.
+    // Só quando há alguma: contas sem moldura mantêm o formato de sempre.
+    ...Array.isArray(ent.frames) && ent.frames.length ? { frames: [...ent.frames] } : {},
     ...ent.sub ? { subActive: isSubscriptionActive(ent), subUntil: Number(ent.sub.until) || 0 } : {}
   };
 }
@@ -388,6 +395,7 @@ async function applyVerifiedPurchase(env, saveId, {
   orderId,
   grantTier,
   grantCredits,
+  grantFrame,
   provider,
   productId,
   purchaseToken
@@ -409,6 +417,10 @@ async function applyVerifiedPurchase(env, saveId, {
   }
   if (grantTier === "paid") ent.tier = "paid";
   if (grantCredits > 0) ent.credits += grantCredits;
+  if (typeof grantFrame === "string") {
+    if (!Array.isArray(ent.frames)) ent.frames = [];
+    if (!ent.frames.includes(grantFrame)) ent.frames.push(grantFrame);
+  }
   if (orderId) {
     ent.consumedOrders.push(orderId);
     ent.orderDetails.push({
@@ -417,7 +429,8 @@ async function applyVerifiedPurchase(env, saveId, {
       productId,
       purchaseToken,
       grantTier: grantTier ?? null,
-      grantCredits: grantCredits ?? 0
+      grantCredits: grantCredits ?? 0,
+      ...typeof grantFrame === "string" ? { grantFrame } : {}
     });
     if (ent.consumedOrders.length > ORDER_HISTORY_MAX) ent.consumedOrders = ent.consumedOrders.slice(-ORDER_HISTORY_MAX);
     ent.orderDetails = podarOrderDetails(ent.orderDetails);
@@ -463,6 +476,7 @@ async function grantCourtesy(env, saveId, max2 = courtesyMaxFrom(env)) {
     orderId,
     grantTier: "paid",
     grantCredits: 0,
+    grantFrame: null,
     provider: COURTESY_PROVIDER,
     productId: COURTESY_PROVIDER,
     purchaseToken: null
@@ -496,6 +510,9 @@ async function auditRefunds(env, saveId, isVoided, now = Date.now()) {
     order.voided = true;
     revoked.push(order.orderId);
     if (order.grantCredits > 0) fresh.credits = Math.max(0, fresh.credits - order.grantCredits);
+    if (typeof order.grantFrame === "string" && Array.isArray(fresh.frames) && !fresh.orderDetails.some((o) => o !== order && !o.voided && o.grantFrame === order.grantFrame)) {
+      fresh.frames = fresh.frames.filter((f) => f !== order.grantFrame);
+    }
   }
   fresh.tier = paidProviderOf(fresh) ? "paid" : "demo";
   fresh.auditedAt = now;
@@ -642,13 +659,13 @@ async function verifyIdToken(idToken, projectId) {
       false,
       ["verify"]
     );
-    const ok2 = await crypto.subtle.verify(
+    const ok3 = await crypto.subtle.verify(
       "RSASSA-PKCS1-v1_5",
       key,
       b64urlToBytes(parts[2]),
       new TextEncoder().encode(`${parts[0]}.${parts[1]}`)
     );
-    if (!ok2) return null;
+    if (!ok3) return null;
     return {
       email: normalizeEmail2(payload.email),
       authTime: typeof payload.auth_time === "number" && Number.isFinite(payload.auth_time) ? payload.auth_time : 0
@@ -1014,7 +1031,7 @@ async function claimNick(env, saveId, name) {
 __name(claimNick, "claimNick");
 
 // api/_rankings.js
-var RANKED_GAMES = Object.freeze(["dino", "dino-1", "dino-2", "ppt", "match3", "eco", "endless-rift", "rogue-dungeon", "soul-barrage", "zip", "patches"]);
+var RANKED_GAMES = Object.freeze(["dino", "dino-1", "dino-2", "ppt", "match3", "eco", "endless-rift", "rogue-dungeon", "soul-barrage", "soul-barrage-2", "zip", "patches"]);
 var LOWER_IS_BETTER = Object.freeze(["zip", "patches"]);
 var isLowerBetter = /* @__PURE__ */ __name((game) => LOWER_IS_BETTER.includes(game), "isLowerBetter");
 var PERIODS = Object.freeze(["weekly", "monthly"]);
@@ -1036,7 +1053,8 @@ var TIER_CUTS = Object.freeze({
   // (25 / 100 / 250) mais 500 e 999 (o teto da descida).
   "endless-rift": [0, 25, 100, 250, 500, 999],
   "rogue-dungeon": [0, 6, 12, 18, 24, 30],
-  "soul-barrage": [0, 150, 400, 800, 1400, 2200]
+  "soul-barrage": [0, 150, 400, 800, 1400, 2200],
+  "soul-barrage-2": [0, 150, 400, 800, 1400, 2200]
 });
 var MAX_SCORE_BY_GAME = Object.freeze({
   "endless-rift": 999,
@@ -1047,7 +1065,8 @@ var MAX_SCORE_BY_GAME = Object.freeze({
   ppt: 200,
   match3: 1e5,
   eco: 100,
-  "soul-barrage": 5e4
+  "soul-barrage": 5e4,
+  "soul-barrage-2": 5e4
 });
 var TIME_BOUNDS_MS = Object.freeze({ zip: [2e3, 18e5], patches: [2e3, 18e5] });
 function scoreIsPlausible(game, score) {
@@ -1556,16 +1575,32 @@ function distributePoints(level, weights) {
   return p;
 }
 __name(distributePoints, "distributePoints");
-function combatantAt(level, weights, bonus = 0) {
+function combatantAt(level, weights, bonus = 0, floor) {
   const L = clampLevel(level);
   const b = stageBase(stageOfLevel(L));
   const p = distributePoints(L, weights);
-  if (typeof bonus === "number") return { level: L, atk: b + p.atk, def: b + p.def, spd: b + p.spd, hp: autoHp(L), bonus };
+  const f = floor && floor.s === stageOfLevel(L) ? floor : void 0;
+  const atk = Math.max(b + p.atk, f?.atk ?? 0), def0 = Math.max(b + p.def, f?.def ?? 0), spd0 = Math.max(b + p.spd, f?.spd ?? 0);
+  if (typeof bonus === "number") return { level: L, atk, def: def0, spd: spd0, hp: autoHp(L), bonus };
   const ab = toAttrBonus(bonus);
   const fold = /* @__PURE__ */ __name((v, x2) => x2 > 0 ? CURVE_K * ((1 + v / CURVE_K) * (1 + x2) - 1) : v, "fold");
-  return { level: L, atk: b + p.atk, def: fold(b + p.def, ab.def), spd: fold(b + p.spd, ab.spd), hp: autoHp(L), bonus: ab.atk };
+  return { level: L, atk, def: fold(def0, ab.def), spd: fold(spd0, ab.spd), hp: autoHp(L), bonus: ab.atk };
 }
 __name(combatantAt, "combatantAt");
+function statMaxOfStage(s) {
+  const L = STAGE_LEVEL_CAPS[s];
+  return stageBase(s) + Math.max(Math.ceil(L / 3), Math.floor(MAX_SHARE * L));
+}
+__name(statMaxOfStage, "statMaxOfStage");
+function sanitizeStatFloor(v) {
+  if (!v || typeof v !== "object") return void 0;
+  const s = v.s;
+  if (typeof s !== "number" || !Number.isInteger(s) || s < 1 || s >= STAGE_LEVEL_CAPS.length) return void 0;
+  const max2 = statMaxOfStage(s - 1);
+  const c = /* @__PURE__ */ __name((x2) => typeof x2 === "number" && Number.isFinite(x2) ? Math.min(max2, Math.max(0, Math.floor(x2))) : 0, "c");
+  return { s, atk: c(v.atk), def: c(v.def), spd: c(v.spd) };
+}
+__name(sanitizeStatFloor, "sanitizeStatFloor");
 var COMBAT_BONUS_CAP = 0.05;
 var cleanN = /* @__PURE__ */ __name((v) => typeof v === "number" && Number.isFinite(v) && v > 0 ? v : 0, "cleanN");
 function combinedAttrBonus(sources) {
@@ -1872,9 +1907,11 @@ function soulWeights(state) {
 }
 __name(soulWeights, "soulWeights");
 function soulCombatant(state, opts = {}) {
-  let level = soulLevel(state);
+  const real = soulLevel(state);
+  let level = real;
   if (typeof opts.maxLevel === "number" && Number.isFinite(opts.maxLevel)) level = Math.min(level, Math.max(1, Math.floor(opts.maxLevel)));
-  return combatantAt(level, soulWeights(state), opts.bonus ?? 0);
+  const floor = level === real ? sanitizeStatFloor(state?.evoStatFloor) : void 0;
+  return combatantAt(level, soulWeights(state), opts.bonus ?? 0, floor);
 }
 __name(soulCombatant, "soulCombatant");
 
@@ -2428,6 +2465,57 @@ var COUNTER_RING = [
   "vigor"
 ];
 var BASE_DO_PAR = {
+  // os 50 curados (§232): 1o componente da receita
+  geiser: "fogo",
+  vulcao: "fogo",
+  deserto: "fogo",
+  relampago_seco: "fogo",
+  supernova: "fogo",
+  nevasca: "agua",
+  permafrost: "agua",
+  monsoes: "agua",
+  peste_negra: "agua",
+  coro_dos_afogados: "agua",
+  ossario_vivo: "terra",
+  jardim_eterno: "terra",
+  aurora_boreal: "ar",
+  duelista_temporal: "ar",
+  pulso_cosmico: "eletricidade",
+  sabbat: "arcano",
+  hipnose: "arcano",
+  materia_escura: "gravidade",
+  milagre: "luz",
+  memoria: "tempo",
+  coral_celeste: "som",
+  via_lactea: "espaco",
+  delirio: "vileza",
+  cacador_de_almas: "marcial",
+  presagio: "tempo",
+  horizonte_de_eventos: "gravidade",
+  lamina_do_juizo: "marcial",
+  bencao_marcial: "luz",
+  arauto: "marcial",
+  farol: "luz",
+  carniceiro: "vileza",
+  entropia_final: "tempo",
+  gladiador: "marcial",
+  punho_gravitico: "marcial",
+  avatar_elemental: "fogo",
+  titano_forjado: "fogo",
+  cataclismo: "fogo",
+  sopro_do_dragao: "fogo",
+  ragnarok: "fogo",
+  genesis: "agua",
+  tempestade_perfeita: "agua",
+  leviata: "agua",
+  senhor_da_praga: "agua",
+  sinfonia_do_caos: "arcano",
+  vontade_absoluta: "arcano",
+  arquiteto_da_realidade: "arcano",
+  ceifador_estelar: "sombra",
+  renascimento: "luz",
+  juizo_final: "luz",
+  cavaleiro_absoluto: "luz",
   vapor: "fogo",
   lava: "fogo",
   incendio: "fogo",
@@ -2638,8 +2726,8 @@ function vantagemElemental(atacante, defensor) {
 }
 __name(vantagemElemental, "vantagemElemental");
 function aplicarElementosDuelo(me, opp, escala = 1) {
-  const advMe = vantagemElemental(me.fx?.elBasica, opp.fx?.elDefesa ?? opp.fx?.elBasica);
-  const advOpp = vantagemElemental(opp.fx?.elBasica, me.fx?.elDefesa ?? me.fx?.elBasica);
+  const advMe = vantagemElemental(me.fx?.elVantagem ?? me.fx?.elBasica, opp.fx?.elDefesa ?? opp.fx?.elVantagem ?? opp.fx?.elBasica);
+  const advOpp = vantagemElemental(opp.fx?.elVantagem ?? opp.fx?.elBasica, me.fx?.elDefesa ?? me.fx?.elVantagem ?? me.fx?.elBasica);
   const com = /* @__PURE__ */ __name((c, adv) => adv === 0 ? c : { ...c, bonus: (1 + c.bonus) / (1 - escala * adv / 10) - 1 }, "com");
   return { meCombatant: com(me.combatant, advMe), oppCombatant: com(opp.combatant, advOpp) };
 }
@@ -2829,6 +2917,57 @@ function lexOf(especial, basica, familia) {
 __name(lexOf, "lexOf");
 var escolaOf = /* @__PURE__ */ __name((skill) => skill && typeof skill.escolaId === "string" ? own2(ESCOLA_FAMILY, skill.escolaId) ? skill.escolaId : "conjuracao" : null, "escolaOf");
 var ELEMENTOS_FICHA = /* @__PURE__ */ new Set([
+  // os 50 curados (§232)
+  "geiser",
+  "vulcao",
+  "deserto",
+  "relampago_seco",
+  "supernova",
+  "nevasca",
+  "permafrost",
+  "monsoes",
+  "peste_negra",
+  "coro_dos_afogados",
+  "ossario_vivo",
+  "jardim_eterno",
+  "aurora_boreal",
+  "duelista_temporal",
+  "pulso_cosmico",
+  "sabbat",
+  "hipnose",
+  "materia_escura",
+  "milagre",
+  "memoria",
+  "coral_celeste",
+  "via_lactea",
+  "delirio",
+  "cacador_de_almas",
+  "presagio",
+  "horizonte_de_eventos",
+  "lamina_do_juizo",
+  "bencao_marcial",
+  "arauto",
+  "farol",
+  "carniceiro",
+  "entropia_final",
+  "gladiador",
+  "punho_gravitico",
+  "avatar_elemental",
+  "titano_forjado",
+  "cataclismo",
+  "sopro_do_dragao",
+  "ragnarok",
+  "genesis",
+  "tempestade_perfeita",
+  "leviata",
+  "senhor_da_praga",
+  "sinfonia_do_caos",
+  "vontade_absoluta",
+  "arquiteto_da_realidade",
+  "ceifador_estelar",
+  "renascimento",
+  "juizo_final",
+  "cavaleiro_absoluto",
   "fogo",
   "agua",
   "terra",
@@ -3052,7 +3191,13 @@ function petElementDeSave(state) {
   const meta = state && typeof state === "object" ? state.soulmonMeta : null;
   if (meta && typeof meta === "object" && meta.creature === "corvo") return { el: null, neutro: true };
   const ini = typeof state?.demoCharacterId === "string" && Object.hasOwn(STARTER_ELEMENT, state.demoCharacterId) ? STARTER_ELEMENT[state.demoCharacterId] : null;
-  return { el: ini ?? idElemento(meta && typeof meta === "object" ? meta.dominantElement : null), neutro: false };
+  const pocao = idElemento(state?.potionElement);
+  if (pocao) return { el: pocao, neutro: false };
+  if (ini) return { el: ini, neutro: false };
+  const st = state?.elementoJornada?.estagios?.[fichaStageOf(state?.evolutionStage)];
+  const elReg = idElemento(st?.id), baseReg = idElemento(st?.base);
+  if (elReg && baseReg) return { el: elReg, neutro: false, base: baseReg };
+  return { el: idElemento(meta && typeof meta === "object" ? meta.dominantElement : null), neutro: false };
 }
 __name(petElementDeSave, "petElementDeSave");
 function duelSide(save, opts = {}) {
@@ -3074,7 +3219,7 @@ function duelSide(save, opts = {}) {
   const hx = hexOverrides(state.hexsmith);
   const family = hx.specialFamily ?? familyFicha;
   const lex = especial && typeof familiaSalva === "string" && familiaSalva === family ? lexOf(skills?.especial, skills?.basica, family) : null;
-  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: hx.basicElement ?? (pet.neutro ? null : pet.el ?? elementoDoBasico(skills)), elEspecial: hx.specialElement ?? (pet.neutro ? null : pet.el ?? idElemento(skills?.especial?.elementoId)), ...hx.defenseElement ? { elDefesa: hx.defenseElement } : {} } };
+  return { combatant, special: specialOf(family), cheerScale: talentCheerScale(state.talentPicks, bondLvl), startEnergy: talentStartEnergy(state.talentPicks, bondLvl), dotResist: talentDotResist(state.talentPicks, bondLvl), fx: { basica, especial, familia: especial ? family : null, lex, elBasica: hx.basicElement ?? (pet.neutro ? null : pet.el ?? elementoDoBasico(skills)), elEspecial: hx.specialElement ?? (pet.neutro ? null : pet.el ?? idElemento(skills?.especial?.elementoId)), ...hx.defenseElement ? { elDefesa: hx.defenseElement } : {}, ...!hx.basicElement && pet.base ? { elVantagem: pet.base } : {} } };
 }
 __name(duelSide, "duelSide");
 function duelSeed(...parts) {
@@ -3303,8 +3448,8 @@ var coopOfKey = /* @__PURE__ */ __name((save) => `coopOf:${save}`, "coopOfKey");
 var coopCodeKey = /* @__PURE__ */ __name((code) => `coopCode:${code}`, "coopCodeKey");
 var coopCkKey = /* @__PURE__ */ __name((gid, save) => `coopCk:${gid}:${save}`, "coopCkKey");
 function novoCodigo() {
-  const alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  return Array.from(crypto.getRandomValues(new Uint8Array(8))).map((x2) => alfabeto[x2 % alfabeto.length]).join("");
+  const alfabeto2 = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from(crypto.getRandomValues(new Uint8Array(8))).map((x2) => alfabeto2[x2 % alfabeto2.length]).join("");
 }
 __name(novoCodigo, "novoCodigo");
 async function sortearCodigoLivre(env) {
@@ -3977,6 +4122,350 @@ async function exportarFeiraDaPessoa(env, gid, save) {
 }
 __name(exportarFeiraDaPessoa, "exportarFeiraDaPessoa");
 
+// api/_especialNomeRegra.js
+var ESPECIAL_NOME_MAX = 20;
+var ESPECIAL_NOME_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1e3;
+var LEET = { 0: "o", 1: "i", 3: "e", 4: "a", 5: "s", 7: "t", 8: "b", "@": "a", $: "s", "!": "i", "|": "i", "\u20AC": "e", "\xA3": "l" };
+var HOMOGLIFOS = {
+  \u0430: "a",
+  \u0432: "b",
+  \u0435: "e",
+  \u0451: "e",
+  \u043A: "k",
+  \u043C: "m",
+  \u043D: "h",
+  \u043E: "o",
+  \u0440: "p",
+  \u0441: "c",
+  \u0442: "t",
+  \u0443: "y",
+  \u0445: "x",
+  \u0456: "i",
+  \u0457: "i",
+  \u0458: "j",
+  \u0455: "s",
+  "\u0501": "d",
+  "\u051B": "q",
+  "\u051D": "w",
+  "\u04CF": "i",
+  \u044C: "b",
+  \u0447: "y",
+  \u0448: "w",
+  \u03B1: "a",
+  \u03B2: "b",
+  \u03B3: "y",
+  \u03B5: "e",
+  \u03B6: "z",
+  \u03B7: "n",
+  \u03B9: "i",
+  \u03BA: "k",
+  \u03BC: "u",
+  \u03BD: "v",
+  \u03BF: "o",
+  \u03C1: "p",
+  \u03C3: "o",
+  \u03C4: "t",
+  \u03C5: "u",
+  \u03C7: "x",
+  \u03C9: "w",
+  \u0131: "i",
+  \u0142: "l",
+  \u00F8: "o",
+  \u0111: "d",
+  \u00F0: "d",
+  \u00FE: "p",
+  \u0192: "f",
+  \u0261: "g",
+  \u0251: "a",
+  \u00DF: "ss",
+  \u00E6: "ae",
+  \u0153: "oe"
+};
+var HOMOGLIFOS_ALT = { ...HOMOGLIFOS, \u0443: "u", \u0432: "v", \u043D: "n", \u0440: "r", \u0447: "c", \u044C: "", \u03B3: "g", \u03B7: "h", \u03BD: "n", \u03C5: "y", \u03BC: "m", \u03C3: "s" };
+var colapsa = /* @__PURE__ */ __name((s) => s.replace(/(.)\1+/g, "$1"), "colapsa");
+function dobra(s, mapa) {
+  return String(s ?? "").normalize("NFKC").replace(/[\p{Cf}\p{Cc}]/gu, "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/[\s\S]/gu, (c) => mapa[c] ?? LEET[c] ?? c);
+}
+__name(dobra, "dobra");
+var dobras = /* @__PURE__ */ __name((s) => [dobra(s, HOMOGLIFOS), dobra(s, HOMOGLIFOS_ALT)], "dobras");
+var PALAVRAS = [
+  // PT
+  "porra",
+  "puta",
+  "puto",
+  "foda",
+  "fodase",
+  "foder",
+  "fodido",
+  "fodida",
+  "cu",
+  "cuzao",
+  "bosta",
+  "babaca",
+  "otario",
+  "otaria",
+  "retardado",
+  "mongol",
+  "cacete",
+  "piroca",
+  "rola",
+  "pica",
+  "vadia",
+  "piranha",
+  "corno",
+  "estupro",
+  "estuprador",
+  "nazista",
+  "pedofilo",
+  // EN
+  "fuck",
+  "fucker",
+  "fucking",
+  "shit",
+  "bitch",
+  "cunt",
+  "dick",
+  "cock",
+  "pussy",
+  "asshole",
+  "ass",
+  "whore",
+  "slut",
+  "bastard",
+  "nazi",
+  "rape",
+  "rapist",
+  "cum",
+  "sex",
+  "porn",
+  "anal",
+  "tits",
+  "boobs",
+  "retard",
+  "fag",
+  "dyke",
+  "tranny",
+  "chink",
+  "spic",
+  "kike",
+  "coon",
+  "paki",
+  "nigger",
+  "nigga",
+  "hitler",
+  "molester",
+  "pedo"
+];
+var RAIZES = [
+  "caralho",
+  "buceta",
+  "boceta",
+  "xoxota",
+  "xereca",
+  "punheta",
+  "arrombad",
+  "vagabund",
+  "viado",
+  "merda",
+  "pedofil",
+  "estupr",
+  "cuzao",
+  "fuck",
+  "shit",
+  "bitch",
+  "cunt",
+  "nigger",
+  "nigga",
+  "faggot",
+  "whore",
+  "pussy",
+  "asshole",
+  "hitler",
+  "motherfuck",
+  "cocksuck"
+];
+var SET_PALAVRAS = new Set(PALAVRAS.map((w) => colapsa(w)));
+var LISTA_RAIZES = RAIZES.map((w) => colapsa(w));
+function tokens(n, colapsar = true) {
+  const out = [];
+  let solta = "";
+  for (const t of n.split(/[^a-z]+/).filter(Boolean)) {
+    if (t.length === 1) {
+      solta += t;
+      continue;
+    }
+    if (solta) {
+      out.push(solta);
+      solta = "";
+    }
+    out.push(t);
+  }
+  if (solta) out.push(solta);
+  return colapsar ? out.map(colapsa) : out;
+}
+__name(tokens, "tokens");
+function temPalavrao(texto) {
+  return dobras(texto).some((n) => {
+    if (tokens(n).some((t) => SET_PALAVRAS.has(t))) return true;
+    const colado = colapsa(n.replace(/[^a-z]/g, ""));
+    return LISTA_RAIZES.some((r) => colado.includes(r));
+  });
+}
+__name(temPalavrao, "temPalavrao");
+var CONTATO_PALAVRAS = new Set([
+  "http",
+  "https",
+  "dot",
+  "ponto",
+  "arroba",
+  "gmail",
+  "hotmail",
+  "outlook",
+  "yahoo",
+  "icloud",
+  "protonmail",
+  "discord",
+  "telegram",
+  "whatsapp",
+  "whats",
+  "wpp",
+  "zap",
+  "insta",
+  "instagram",
+  "tiktok",
+  "twitter",
+  "twitch",
+  "youtube",
+  "snapchat",
+  "facebook",
+  "kwai",
+  "onlyfans",
+  "paypal",
+  "pix",
+  "linktree",
+  "tme",
+  "wame",
+  "fone",
+  "celular",
+  "telefone",
+  "phone",
+  "email",
+  "mail"
+].map(colapsa));
+var CONTATO_RAIZES = ["gmail", "hotmail", "outlook", "whatsapp", "telegram", "instagram", "discord", "tiktok", "onlyfans", "youtube", "facebook", "snapchat", "linktree", "protonmail", "arroba", "http"].map(colapsa);
+var DIGITOS_CONTATO = 6;
+function temContato(texto) {
+  const bruto = String(texto ?? "").normalize("NFKC").replace(/[\p{Cf}\p{Cc}]/gu, "");
+  if (/[@#]/.test(bruto) || /:\/\//.test(bruto)) return true;
+  if (/[\p{L}\p{N}-]+\.(?:com|me|gg|io|net|org|br|tv|ly|app|co|xyz|link|bio)(?![\p{L}\p{N}])/iu.test(bruto)) return true;
+  if ((bruto.match(/\p{Nd}/gu) ?? []).length >= DIGITOS_CONTATO) return true;
+  return dobras(bruto).some((n) => {
+    if (tokens(n).some((t) => CONTATO_PALAVRAS.has(t))) return true;
+    if (tokens(n, false).some((t) => t.includes("www"))) return true;
+    const colado = colapsa(n.replace(/[^a-z]/g, ""));
+    return CONTATO_RAIZES.some((r) => colado.includes(r));
+  });
+}
+__name(temContato, "temContato");
+var alfabeto = /* @__PURE__ */ __name((c) => /\p{Script=Latin}/u.test(c) ? "lat" : /\p{L}/u.test(c) ? "outro" : "", "alfabeto");
+function misturaAlfabetos(texto) {
+  return texto.split(" ").some((w) => new Set(Array.from(w).map(alfabeto).filter(Boolean)).size > 1);
+}
+__name(misturaAlfabetos, "misturaAlfabetos");
+function nomeEspecialValido(raw) {
+  if (typeof raw !== "string") return null;
+  const limpo = raw.normalize("NFKC").replace(/\s+/g, " ").trim();
+  if (!limpo || Array.from(limpo).length > ESPECIAL_NOME_MAX) return null;
+  if (!/^[\p{L}\p{N} ]+$/u.test(limpo)) return null;
+  if (misturaAlfabetos(limpo)) return null;
+  if (temPalavrao(limpo) || temContato(limpo)) return null;
+  return limpo;
+}
+__name(nomeEspecialValido, "nomeEspecialValido");
+
+// api/_evoFeed.js
+var EVO_FEED_KEY = "evofeed:v1";
+var EVO_FEED_MAX = 20;
+var EVO_FEED_TTL_MS = 24 * 60 * 60 * 1e3;
+var EVO_FEED_BLOB_TTL_S = 2 * 24 * 60 * 60;
+var EVO_FEED_VIEW = 10;
+var EVO_FEED_COOLDOWN_MS = 6 * 60 * 60 * 1e3;
+var FEED_TEXT_MAX = 32;
+var TIERS = ["bb", "rookie", "champion", "ultimate", "mega", "ultra"];
+var BRANCHES = ["power", "harmony", "benevolence"];
+function parseStage(id) {
+  if (typeof id !== "string") return null;
+  const [tier, branch, ...resto] = id.split("-");
+  const rank = TIERS.indexOf(tier);
+  if (rank < 0 || resto.length) return null;
+  if (branch !== void 0 && !BRANCHES.includes(branch)) return null;
+  return { tier, branch: branch ?? null, rank };
+}
+__name(parseStage, "parseStage");
+function peakOf(prev) {
+  if (Number.isInteger(prev?.evoPeakRank)) return prev.evoPeakRank;
+  return parseStage(prev?.stage)?.rank ?? null;
+}
+__name(peakOf, "peakOf");
+function decideEvo({ peak, stage, savedStage, lastAt, now }) {
+  const salvo = parseStage(savedStage);
+  if (!salvo) return { peak, announce: false };
+  const novoPico = peak === null ? salvo.rank : Math.max(peak, salvo.rank);
+  const announce = peak !== null && stage === savedStage && salvo.rank >= TIERS.indexOf("champion") && salvo.rank > peak && !(Number(lastAt) > 0 && now - Number(lastAt) < EVO_FEED_COOLDOWN_MS);
+  return { peak: novoPico, announce };
+}
+__name(decideEvo, "decideEvo");
+function feedText(v) {
+  if (typeof v !== "string") return null;
+  const semControle = v.normalize("NFKC").replace(/\p{C}/gu, "").replace(/\s+/g, " ").trim();
+  const limpo = sanitizarNomeDeGuilda(semControle);
+  if (!limpo || temPalavrao(limpo)) return null;
+  return Array.from(limpo).slice(0, FEED_TEXT_MAX).join("").trim() || null;
+}
+__name(feedText, "feedText");
+function buildEvent({ by, name, petName, stage, now }) {
+  const s = parseStage(stage);
+  const nome = feedText(name);
+  const pet = feedText(petName);
+  if (!s || !nome || !pet) return null;
+  return { by, name: nome, pet, tier: s.tier, branch: s.branch, at: now };
+}
+__name(buildEvent, "buildEvent");
+function readFeed(raw) {
+  try {
+    const arr = JSON.parse(raw ?? "[]");
+    return Array.isArray(arr) ? arr.filter((e) => e && typeof e === "object" && typeof e.at === "number" && typeof e.by === "string") : [];
+  } catch {
+    return [];
+  }
+}
+__name(readFeed, "readFeed");
+function pushEvent(feed, ev, now) {
+  const vivo = feed.filter((e) => now - e.at < EVO_FEED_TTL_MS && e.by !== ev.by);
+  return [ev, ...vivo].slice(0, EVO_FEED_MAX);
+}
+__name(pushEvent, "pushEvent");
+function purgeFeedOf(feed, by) {
+  return feed.filter((e) => e.by !== by);
+}
+__name(purgeFeedOf, "purgeFeedOf");
+function liveFeed(feed, now) {
+  const contas = /* @__PURE__ */ new Set();
+  return feed.filter((e) => {
+    if (now - e.at >= EVO_FEED_TTL_MS || contas.has(e.by)) return false;
+    contas.add(e.by);
+    return true;
+  });
+}
+__name(liveFeed, "liveFeed");
+function publicEvent(ev, profile) {
+  const name = feedText(profile?.name);
+  const pet = feedText(profile?.petName);
+  if (!name || !pet) return null;
+  return { name, pet, tier: ev.tier, branch: ev.branch ?? null, at: ev.at };
+}
+__name(publicEvent, "publicEvent");
+
 // api/account.js
 var CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -4470,6 +4959,11 @@ async function handleDeleteConfirm(env, saveId, body) {
   });
   await tentar("coopClaim (resgates da Guilda)", () => apagarClaims(env, saveId));
   await tentar("coopReq (pedido de entrada em cl\xE3, \xA7203)", () => apagarPedido(env, saveId));
+  await tentar(EVO_FEED_KEY, async () => {
+    const feed = readFeed(await store.get(EVO_FEED_KEY));
+    const sem = purgeFeedOf(feed, saveId);
+    if (sem.length !== feed.length) await store.put(EVO_FEED_KEY, JSON.stringify(sem), { expirationTtl: EVO_FEED_BLOB_TTL_S });
+  });
   const push = await deletePushSubscriptions(env, saveId);
   for (const k of c.sprites.blobs) await tentar(k, () => store.delete(k));
   for (const k of c.sprites.imgs) await tentar(k, () => store.delete(k));
@@ -4614,7 +5108,11 @@ var PRODUCTS = {
   "soulmon.unlock.full": { grantTier: "paid", grantCredits: 0, consumable: false },
   "soulmon.credits.60": { grantTier: null, grantCredits: 60, consumable: true },
   "soulmon.credits.150": { grantTier: null, grantCredits: 150, consumable: true },
-  "soulmon.credits.400": { grantTier: null, grantCredits: 400, consumable: true }
+  "soulmon.credits.400": { grantTier: null, grantCredits: 400, consumable: true },
+  // MOLDURAS DO WIDGET V-PET (dono, 04/11/2026): uma por elemento BASE, produto PERMANENTE (não consumível) da Play.
+  // Concede só `grantFrame` (cosmético): nada de tier, Créditos ou vantagem. Espelho: src/utils/widgetFrames.ts
+  // (`elementDex.parity`-style: widgetFrames.parity.test.js trava os ids).
+  ...Object.fromEntries(COUNTER_RING.map((el) => [`moldura_${el}`, { grantTier: null, grantCredits: 0, consumable: false, grantFrame: el }]))
 };
 var STEAM_ITEMS = {
   101: "soulmon.credits.60",
@@ -4839,16 +5337,16 @@ __name(interpretSubscription, "interpretSubscription");
 async function verifyPlaySubscription(env, { purchaseToken, saveId }) {
   const got = await fetchSubscriptionV2(env, purchaseToken);
   if (!got.ok) return got;
-  const read = interpretSubscription(got.sub, { saveId });
-  if (!read.ok) return read;
-  if (!read.entitled) return { ok: false, reason: "not-active" };
+  const read2 = interpretSubscription(got.sub, { saveId });
+  if (!read2.ok) return read2;
+  if (!read2.entitled) return { ok: false, reason: "not-active" };
   const root = await resolveSubscriptionRoot(env, purchaseToken, got.sub);
   if (!root.ok) return root;
   return {
     ok: true,
     orderId: await subscriptionOrderId(root.rootToken),
     product: PRODUCTS[SUBSCRIPTION_SKU],
-    subscription: { ...read, rootToken: root.rootToken }
+    subscription: { ...read2, rootToken: root.rootToken }
   };
 }
 __name(verifyPlaySubscription, "verifyPlaySubscription");
@@ -5097,6 +5595,8 @@ async function onRequestPostBruto({ request, env }) {
     orderId: result.orderId,
     grantTier: result.product.grantTier,
     grantCredits: result.product.grantCredits,
+    // Moldura do widget (cosmético permanente): só o catálogo do servidor decide qual elemento.
+    grantFrame: result.product.grantFrame,
     // Guardado para o reembolso saber o que desfazer depois (ver auditRefunds).
     provider,
     // Só o caminho da Steam devolve `productId` (verifySteamTxn); na Play quem
@@ -6160,7 +6660,7 @@ var KNOWLEDGE = [
   { "id": "termo-bestiario", "t": "Besti\xE1rio", "x": "A cole\xE7\xE3o das artes de inimigo j\xE1 vistas na masmorra, exibida em Estat\xEDsticas com silhueta para o que ainda n\xE3o apareceu. Contagem de cole\xE7\xE3o, nunca percentual." },
   { "id": "termo-bits", "t": "Bits", "x": "A moeda dos minijogos e da loja comum. Exibida sem \xEDcone, s\xF3 o n\xFAmero, em fonte de calculadora." },
   { "id": "termo-brincar", "t": "Brincar", "x": "Oferta di\xE1ria que gasta energia e devolve um buff tempor\xE1rio de Bits para o pr\xF3ximo minijogo, mais um ponto de atributo. Oferta, nunca dever." },
-  { "id": "termo-banner-de-termos", "t": "Banner de termos", "x": "O aviso informativo que aparece no slot de avisos da Home (\xFAltimo da fila) quando TERMS_VERSION/PRIVACY_VERSION subiram depois do consentimento gravado no save. Informa e oferece os dois links; n\xE3o h\xE1 re-aceite (decis\xE3o #24, 21/09/2026). Conta nova nunca o v\xEA \u2014 a vers\xE3o consentida j\xE1 \xE9 a atual." },
+  { "id": "termo-banner-de-termos", "t": "Banner de termos", "x": "O aviso informativo que aparece no slot de avisos da Home (\xFAltimo da fila) quando TERMS_VERSION/PRIVACY_VERSION subiram depois do consentimento gravado no save. Informa e oferece os dois links; o banner em si n\xE3o pede aceite." },
   { "id": "termo-cadeado-de-evolucao", "t": "Cadeado de evolu\xE7\xE3o", "x": "O gesto de tocar na criatura atual na p\xE1gina de Evolu\xE7\xE3o, que trava/destrava a cerim\xF4nia. Travado, a cerim\xF4nia n\xE3o abre e os dias completos continuam acumulando." },
   { "id": "termo-capacitor", "t": "Capacitor", "x": "O empacotador que transforma o app web no APK Android. O APK carrega a URL de produ\xE7\xE3o, ent\xE3o mudan\xE7a web n\xE3o pede APK novo." },
   { "id": "termo-carga-do-dia", "t": "Carga do dia", "x": "O peso de esfor\xE7o planejado para hoje comparado ao limite de sobrecarga. \xC9 aviso, nunca bloqueio." },
@@ -7183,15 +7683,15 @@ __name(applyAggregate, "applyAggregate");
 function summarizeNorthStar(totals) {
   const t = totals && typeof totals === "object" ? totals : {};
   const num3 = /* @__PURE__ */ __name((k) => typeof t[k] === "number" && Number.isFinite(t[k]) ? t[k] : 0, "num");
-  const read = /* @__PURE__ */ __name((prefix) => {
+  const read2 = /* @__PURE__ */ __name((prefix) => {
     const active = num3(prefix);
     let onTarget = 0;
     for (let n = NORTH_STAR_GOAL_DAYS; n <= 7; n++) onTarget += num3(`${prefix}.goal_days.${n}`);
     return { weekly_active: active, on_target: onTarget, rate: active > 0 ? onTarget / active : null };
   }, "read");
   const by_tier = {};
-  for (const label of TIER_LABEL) by_tier[label] = read(`${WEEK_GOAL_PREFIX}.${label}`);
-  return { ...read(WEEK_GOAL_PREFIX), goal_days_threshold: NORTH_STAR_GOAL_DAYS, by_tier };
+  for (const label of TIER_LABEL) by_tier[label] = read2(`${WEEK_GOAL_PREFIX}.${label}`);
+  return { ...read2(WEEK_GOAL_PREFIX), goal_days_threshold: NORTH_STAR_GOAL_DAYS, by_tier };
 }
 __name(summarizeNorthStar, "summarizeNorthStar");
 function groupByDay(events) {
@@ -8076,15 +8576,15 @@ function avaliarCrescimento({ plantedDay, today: today3, membros, membro }) {
     const base = eleg.length || 1;
     const regou = eleg.filter((m) => membro[m.save]?.water?.includes(d)).length;
     const prot = membros.some((m) => membro[m.save]?.prot?.includes(d));
-    const ok2 = regou >= Math.ceil(base / 2) && prot;
+    const ok3 = regou >= Math.ceil(base / 2) && prot;
     if (d === today3) {
       todayWatered = regou >= Math.ceil(base / 2);
       todayProtected = prot;
     }
-    if (ok2 && !maturedOn) {
+    if (ok3 && !maturedOn) {
       cared++;
       if (cared >= PLANTIO_DIAS) maturedOn = d;
-    } else if (!ok2 && d !== today3 && !maturedOn) delays++;
+    } else if (!ok3 && d !== today3 && !maturedOn) delays++;
   }
   return { cared: Math.min(cared, PLANTIO_DIAS), delays, mature: !!maturedOn, maturedOn, todayWatered, todayProtected };
 }
@@ -8861,8 +9361,10 @@ async function resgatarChefe(env, g, save, pedidoK) {
   return jaResgatado ? { ok: false, reason: "claimed", claimed: jaResgatado } : { ok: false, reason: "nothing" };
 }
 __name(resgatarChefe, "resgatarChefe");
-var TRAIL_GAMES = Object.freeze(["picross", "zip", "patches", "troca", "eco"]);
-var TRAIL_MIN_MS = Object.freeze({ picross: 8e3, zip: 4e3, patches: 4e3, troca: 1e4, eco: 6e3 });
+var TRAIL_GAMES = Object.freeze(["picross", "zip", "selo", "troca", "eco"]);
+var TRAIL_GAMES_ACEITOS = Object.freeze([...TRAIL_GAMES, "patches"]);
+var TRAIL_SELO_LEVEL = 3;
+var TRAIL_MIN_MS = Object.freeze({ picross: 8e3, zip: 4e3, patches: 4e3, selo: 6e3, troca: 1e4, eco: 6e3 });
 var TRAIL_PUZZLE_SIZE = 5;
 var TROCA_CARTAS = 30;
 var TROCA_PAR = 24;
@@ -9026,6 +9528,124 @@ function validarColcha(p, rects) {
   return porRect.every((n) => n === 1);
 }
 __name(validarColcha, "validarColcha");
+var SELO_ATTRS = ["shape", "count", "dir", "fill", "marks"];
+var SELO_DOMAIN = { shape: [0, 4], count: [1, 6], dir: [0, 7], fill: [0, 2], marks: [1, 15] };
+var seloInt = /* @__PURE__ */ __name((rng, min, max2) => min + Math.floor(rng() * (max2 - min + 1)), "seloInt");
+function seloShuffle(arr, rng) {
+  const a = [...arr];
+  for (let i2 = a.length - 1; i2 > 0; i2 -= 1) {
+    const j = Math.floor(rng() * (i2 + 1));
+    [a[i2], a[j]] = [a[j], a[i2]];
+  }
+  return a;
+}
+__name(seloShuffle, "seloShuffle");
+var seloRuleCount = /* @__PURE__ */ __name((level) => [1, 2, 2, 3, 3, 4, 4][level - 1], "seloRuleCount");
+function seloRules(level, rng) {
+  const n = seloRuleCount(level);
+  const rules = { shape: "const", count: "const", dir: "const", fill: "const", marks: "const" };
+  const chosen = [];
+  if (level >= 6) {
+    rules.marks = "xor";
+    chosen.push("marks");
+  }
+  if (level >= 4) {
+    rules.count = "arith";
+    chosen.push("count");
+  }
+  for (const a of seloShuffle(["shape", "count", "dir", "fill"].filter((x2) => !chosen.includes(x2)), rng)) {
+    if (chosen.length >= n) break;
+    chosen.push(a);
+    if (a === "shape" || a === "fill") rules[a] = "distribution";
+    else if (a === "dir") rules[a] = rng() < 0.5 ? "progression" : "distribution";
+    else rules[a] = rng() < 0.5 || level < 3 ? "progression" : "distribution";
+  }
+  return rules;
+}
+__name(seloRules, "seloRules");
+function seloFill(attr, rule, rng) {
+  const [min, max2] = SELO_DOMAIN[attr];
+  const out = [];
+  if (rule === "const") return Array(9).fill(seloInt(rng, min, max2));
+  if (rule === "distribution") {
+    const vals = seloShuffle(Array.from({ length: max2 - min + 1 }, (_, i2) => min + i2), rng).slice(0, 3);
+    const k = rng() < 0.5 ? 1 : 2;
+    for (let r = 0; r < 3; r += 1) for (let c = 0; c < 3; c += 1) out.push(vals[(c + r * k) % 3]);
+    return out;
+  }
+  if (rule === "progression") {
+    if (attr === "dir") {
+      const d2 = rng() < 0.5 ? 1 : 2;
+      const sign = rng() < 0.5 ? 1 : -1;
+      for (let r = 0; r < 3; r += 1) {
+        const s = seloInt(rng, 0, 7);
+        for (let c = 0; c < 3; c += 1) out.push(((s + sign * c * d2) % 8 + 8) % 8);
+      }
+      return out;
+    }
+    const d = rng() < 0.6 ? 1 : 2;
+    const down = rng() < 0.4;
+    for (let r = 0; r < 3; r += 1) {
+      const s = seloInt(rng, min, max2 - 2 * d);
+      for (let c = 0; c < 3; c += 1) out.push(down ? s + (2 - c) * d : s + c * d);
+    }
+    return out;
+  }
+  if (rule === "arith") {
+    const plus = rng() < 0.5;
+    for (let r = 0; r < 3; r += 1) {
+      if (plus) {
+        const a = seloInt(rng, 1, max2 - 1);
+        const b = seloInt(rng, 1, max2 - a);
+        out.push(a, b, a + b);
+      } else {
+        const a = seloInt(rng, 2, max2);
+        const b = seloInt(rng, 1, a - 1);
+        out.push(a, b, a - b);
+      }
+    }
+    return out;
+  }
+  for (let r = 0; r < 3; r += 1) {
+    let a = 0;
+    let b = 0;
+    do {
+      a = seloInt(rng, 1, 15);
+      b = seloInt(rng, 1, 15);
+    } while (a === b);
+    out.push(a, b, a ^ b);
+  }
+  return out;
+}
+__name(seloFill, "seloFill");
+function seloErrados(attr, right, n, grid, rng) {
+  const [min, max2] = SELO_DOMAIN[attr];
+  const seen = [...new Set(grid.slice(0, 8).map((p) => p[attr]))].filter((v) => v !== right);
+  const rest = Array.from({ length: max2 - min + 1 }, (_, i2) => min + i2).filter((v) => v !== right && !seen.includes(v));
+  return [...seloShuffle(seen, rng), ...seloShuffle(rest, rng)].slice(0, n);
+}
+__name(seloErrados, "seloErrados");
+var seloIgual = /* @__PURE__ */ __name((a, b) => SELO_ATTRS.every((k) => a[k] === b[k]), "seloIgual");
+function gerarSelo(level, rng) {
+  const rules = seloRules(level, rng);
+  const cols = Object.fromEntries(SELO_ATTRS.map((a) => [a, seloFill(a, rules[a], rng)]));
+  const grid = Array.from({ length: 9 }, (_, i2) => ({ shape: cols.shape[i2], count: cols.count[i2], dir: cols.dir[i2], fill: cols.fill[i2], marks: cols.marks[i2] }));
+  const right = grid[8];
+  const order = [...seloShuffle(SELO_ATTRS.filter((a) => rules[a] !== "const"), rng), ...seloShuffle(SELO_ATTRS.filter((a) => rules[a] === "const"), rng)];
+  const A = order[0];
+  const B2 = order[1];
+  const aVals = [right[A], ...seloErrados(A, right[A], 2, grid, rng)];
+  const bVals = [right[B2], ...seloErrados(B2, right[B2], 1, grid, rng)];
+  const opts = [];
+  for (const av of aVals) for (const bv of bVals) opts.push({ ...right, [A]: av, [B2]: bv });
+  const options = seloShuffle(opts, rng);
+  return { grid: grid.slice(0, 8), options, solution: options.findIndex((o) => seloIgual(o, right)) };
+}
+__name(gerarSelo, "gerarSelo");
+function validarSelo(p, escolha) {
+  return Number.isInteger(escolha) && escolha === p.solution;
+}
+__name(validarSelo, "validarSelo");
 var pistaDaLinha = /* @__PURE__ */ __name((linha) => {
   const out = [];
   let run = 0;
@@ -9080,6 +9700,7 @@ function gerarInstancia(game, seed) {
   const rng = seededRng(seed);
   if (game === "zip") return gerarZip(TRAIL_PUZZLE_SIZE, rng);
   if (game === "patches") return gerarColcha(TRAIL_PUZZLE_SIZE, rng);
+  if (game === "selo") return gerarSelo(TRAIL_SELO_LEVEL, rng);
   if (game === "picross") return gerarPicross(TRAIL_PUZZLE_SIZE, rng);
   if (game === "troca") return gerarTroca(rng);
   return { par: REFLEXO_PAR.eco };
@@ -9091,6 +9712,7 @@ function instanciaDaTrilha(game, seed) {
 }
 __name(instanciaDaTrilha, "instanciaDaTrilha");
 function conferirTrilha(game, seed, corpo) {
+  if (game === "selo") return validarSelo(gerarInstancia(game, seed), corpo?.choice);
   const p = instanciaDaTrilha(game, seed);
   if (game === "zip") return validarZip(p, corpo?.path);
   if (game === "patches") return validarColcha(p, corpo?.rects);
@@ -9104,7 +9726,7 @@ async function iniciarTrilha(env, g, save, hoje, estado2) {
   if (estado2.phase !== "trail") return { ok: false, reason: "no-trail" };
   const atual = await lerJson(env, feiraTrailKey(g.id, estado2.k, save));
   if (diaValido(atual?.clearedDay)) return { ok: false, reason: "already-cleared" };
-  const mesmoDia = atual && atual.day === hoje && TRAIL_GAMES.includes(atual.game) && Number.isInteger(atual.seed);
+  const mesmoDia = atual && atual.day === hoje && TRAIL_GAMES_ACEITOS.includes(atual.game) && Number.isInteger(atual.seed);
   const reg = mesmoDia ? atual : { k: estado2.k, day: hoje, game: jogoDaTrilha(save, hoje, estado2.k), seed: sementeDoServidor(), startedAt: Date.now(), attempts: 0, clearedDay: null };
   if (!mesmoDia) await kvOrThrow(env).put(feiraTrailKey(g.id, estado2.k, save), JSON.stringify(reg), { expirationTtl: FEIRA_TRILHA_TTL });
   return { ok: true, trail: { k: estado2.k, game: reg.game, seed: reg.seed >>> 0, puzzle: instanciaDaTrilha(reg.game, reg.seed) } };
@@ -9116,7 +9738,7 @@ async function entregarTrilha(env, g, save, hoje, estado2, corpo) {
   const reg = await lerJson(env, feiraTrailKey(g.id, estado2.k, save));
   const receipt = await reciboDaFeira("trilha", save, g.id, estado2.k);
   if (diaValido(reg?.clearedDay)) return { ok: false, reason: "already-cleared", receipt };
-  if (!reg || reg.day !== hoje || !TRAIL_GAMES.includes(reg.game) || !Number.isInteger(reg.seed)) return { ok: false, reason: "no-start" };
+  if (!reg || reg.day !== hoje || !TRAIL_GAMES_ACEITOS.includes(reg.game) || !Number.isInteger(reg.seed)) return { ok: false, reason: "no-start" };
   if ((reg.attempts ?? 0) >= TRILHA_TENTATIVAS_DIA) return { ok: false, reason: "limit" };
   const tentativas = (Number.isInteger(reg.attempts) ? reg.attempts : 0) + 1;
   if (Date.now() - (Number(reg.startedAt) || 0) < TRAIL_MIN_MS[reg.game]) {
@@ -9335,30 +9957,30 @@ async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date())
 }
 __name(vistaDaGuilda, "vistaDaGuilda");
 async function handleGuild({ request, env }) {
-  const json12 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS5 }), "json");
-  if (!kv(env)) return json12({ error: "Storage not bound" }, 500);
+  const json13 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS5 }), "json");
+  if (!kv(env)) return json13({ error: "Storage not bound" }, 500);
   const url = new URL(request.url);
   const pedida = url.searchParams.get("action") ?? "";
   const alias = Object.prototype.hasOwnProperty.call(COOP_ALIASES, pedida);
   const action = alias ? COOP_ALIASES[pedida] : pedida;
   const method = request.method;
-  if (!(action in GUILD_ACTIONS) || GUILD_ACTIONS[action] !== method) return json12({ error: "unknown action" }, 400);
+  if (!(action in GUILD_ACTIONS) || GUILD_ACTIONS[action] !== method) return json13({ error: "unknown action" }, 400);
   const parsed = method === "POST" ? await request.json().catch(() => null) : null;
   const body = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
   const id = body.id || url.searchParams.get("id");
   const chave = alias ? "group" : "guild";
-  const erro = /* @__PURE__ */ __name((texto, status, extra = {}) => json12({ error: texto.replace("{g}", chave), ...extra }, status), "erro");
-  const vista = /* @__PURE__ */ __name((v) => json12({ [chave]: v }), "vista");
+  const erro = /* @__PURE__ */ __name((texto, status, extra = {}) => json13({ error: texto.replace("{g}", chave), ...extra }, status), "erro");
+  const vista = /* @__PURE__ */ __name((v) => json13({ [chave]: v }), "vista");
   const montar = /* @__PURE__ */ __name(async (g, eu, dia2) => {
     const cartoes = await lerCartoes(env, g);
     const fechado = await atualizarBosque(env, g, dia2, /* @__PURE__ */ new Date(), fiosDosCartoes(g, cartoes));
     return vistaDaGuilda(env, fechado, eu, dia2, cartoes);
   }, "montar");
   const cartao = /* @__PURE__ */ __name((g) => renovarCartao(env, g.id, id), "cartao");
-  if (!VALID_ID3.test(id || "")) return json12({ error: "invalid id" }, 400);
+  if (!VALID_ID3.test(id || "")) return json13({ error: "invalid id" }, 400);
   const auth = await authorizeSaveAccess(request, env, id);
   if (!auth.ok) {
-    return json12(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
+    return json13(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
   }
   const dia = diaDoJogador(method === "GET" ? url.searchParams.get("dayKey") : body.dayKey);
   if (!dia.ok) return erro("invalid day", 400);
@@ -9401,15 +10023,15 @@ async function handleGuild({ request, env }) {
   }
   __name(entrarNoGrupo, "entrarNoGrupo");
   if (action === "guildDirectory") {
-    if (await grupoDe(env, id, semana)) return json12({ clans: [], pending: null });
+    if (await grupoDe(env, id, semana)) return json13({ clans: [], pending: null });
     const pend = await lerPedido(env, id);
     const pending = pend ? { dirId: pend.dirId, name: (await lerEntrada(env, pend.dirId))?.n ?? null } : null;
     const clans = (await listarDiretorio(env, COOP_MAX_MEMBERS)).sort((a, b) => b.size - a.size || a.name.localeCompare(b.name));
-    return json12({ clans, pending });
+    return json13({ clans, pending });
   }
   if (action === "guildRequestCancel") {
     await apagarPedido(env, id);
-    return json12({ ok: true });
+    return json13({ ok: true });
   }
   if (action === "guildRequest") {
     if (await grupoDe(env, id, semana)) return erro("already in a {g}", 409);
@@ -9421,7 +10043,7 @@ async function handleGuild({ request, env }) {
       return erro("invalid clan", 404);
     }
     const atual = await lerPedido(env, id);
-    if (atual && atual.gid === g.id) return json12({ pending: { dirId, name: g.name } });
+    if (atual && atual.gid === g.id) return json13({ pending: { dirId, name: g.name } });
     if (atual) return erro("request pending", 409, { pending: { dirId: atual.dirId, name: (await lerEntrada(env, atual.dirId))?.n ?? null } });
     if (g.dirClosed === true) return erro("requests closed", 409);
     if (g.members.length >= COOP_MAX_MEMBERS) return erro("{g} full", 409);
@@ -9430,7 +10052,7 @@ async function handleGuild({ request, env }) {
     const rid = await idOpacoDoMembro(env, g.id, id);
     const nome = (await getProfile(env, id).catch(() => null))?.name;
     await gravarPedido(env, id, g.id, dirId, rid, typeof nome === "string" ? nome.slice(0, 40) : null);
-    return json12({ pending: { dirId, name: g.name } });
+    return json13({ pending: { dirId, name: g.name } });
   }
   if (action === "guildRequests" || action === "guildRequestDecide" || action === "guildRequestsOpen") {
     const g = await grupoDe(env, id, semana);
@@ -9443,26 +10065,26 @@ async function handleGuild({ request, env }) {
       await gravarGrupo(env, fresco);
       return vista(await montar(rolarSemana(fresco, semana), id, hoje));
     }
-    if (action === "guildRequests") return json12({ requests: await listarPedidos(env, g.id) });
+    if (action === "guildRequests") return json13({ requests: await listarPedidos(env, g.id) });
     const rid = String(body.requestId ?? "");
     const pedido = await lerPedidoNoCla(env, g.id, rid);
     const dele = pedido ? await lerPedido(env, pedido.save) : null;
     if (!pedido || !dele || dele.gid !== g.id) {
       if (idOpacoValido(rid)) await kvOrThrow(env).delete(coopReqInKey(g.id, rid));
-      return json12({ result: "gone", guild: await montar(g, id, hoje) });
+      return json13({ result: "gone", guild: await montar(g, id, hoje) });
     }
     if (body.approve !== true) {
       await apagarPedido(env, pedido.save);
-      return json12({ result: "declined", guild: await montar(g, id, hoje) });
+      return json13({ result: "declined", guild: await montar(g, id, hoje) });
     }
     const ja = await grupoDe(env, pedido.save, semana);
     if (ja) {
       await apagarPedido(env, pedido.save);
-      return json12({ result: ja.id === g.id ? "approved" : "gone", guild: await montar(g, id, hoje) });
+      return json13({ result: ja.id === g.id ? "approved" : "gone", guild: await montar(g, id, hoje) });
     }
     const r = await entrarNoGrupo(g.id, pedido.save);
     if (r.erro) return erro(r.erro, 409);
-    return json12({ result: "approved", guild: await montar(r.g, id, hoje) });
+    return json13({ result: "approved", guild: await montar(r.g, id, hoje) });
   }
   if ((action === "guildCreate" || action === "guildJoin") && (await loadDuelSideWithSprite(env, id)).bbLocked) {
     return erro("bb-locked", 403, { reason: "bb-locked", ...BB_LOCKED_MESSAGE });
@@ -9555,13 +10177,13 @@ async function handleGuild({ request, env }) {
   if (action === "guildWar") {
     const g = await grupoDe(env, id, semana);
     if (!g) return erro("no {g}", 404);
-    return json12({ war: await estadoDaGuerra(env, g.id) });
+    return json13({ war: await estadoDaGuerra(env, g.id) });
   }
   if (action === "guildWarSeek") {
     const g = await grupoDe(env, id, semana);
     if (!g) return erro("no {g}", 404);
     const r = await buscarGuerra(env, g, id, hoje, (gid) => lerGrupo(env, gid));
-    return json12({ state: r.state, war: { waiting: r.waiting, last: r.last } });
+    return json13({ state: r.state, war: { waiting: r.waiting, last: r.last } });
   }
   if (action === "guildDonate") {
     const g = await grupoDe(env, id, semana);
@@ -9570,7 +10192,7 @@ async function handleGuild({ request, env }) {
     if (r.invalid) return erro("invalid bits", 400);
     if (r.accepted === 0) return erro("daily limit", 429);
     await cartao(g);
-    return json12({ accepted: r.accepted, guild: await montar(g, id, hoje) });
+    return json13({ accepted: r.accepted, guild: await montar(g, id, hoje) });
   }
   if (action === "guildShopBuy") {
     const g = await grupoDe(env, id, semana);
@@ -9582,7 +10204,7 @@ async function handleGuild({ request, env }) {
       if (r.reason === "invalid-op") return erro("invalid op", 400);
       return erro(r.reason === "insufficient" ? "not enough bits" : r.reason === "already-owned" ? "already owned" : "op reuse", 409);
     }
-    return json12({ repeated: r.repeated, guild: await montar(g, id, hoje) });
+    return json13({ repeated: r.repeated, guild: await montar(g, id, hoje) });
   }
   if (action === "guildSlot") {
     const g = await grupoDe(env, id, semana);
@@ -9604,19 +10226,19 @@ async function handleGuild({ request, env }) {
     const plantio = /* @__PURE__ */ __name(async () => vistaDoPlantio(env, g, id, hoje2), "plantio");
     const misterio = /* @__PURE__ */ __name(async () => vistaDoMisterio(env, g, id, hoje2), "misterio");
     const conflito = /* @__PURE__ */ __name((r) => erro(r.reason.replace(/-/g, " "), r.reason === "no-plant" ? 404 : 409), "conflito");
-    if (action === "claPraca") return json12({ praca: await praca() });
+    if (action === "claPraca") return json13({ praca: await praca() });
     if (action === "claPracaSlot") {
       if (body.item !== null && typeof body.item !== "string") return erro("invalid item", 400);
       const r = await definirSlotPraca(env, g.id, id, hoje2, body.slot, body.item);
       if (r === void 0) return erro(Number.isInteger(body.slot) && body.slot >= 0 && body.slot < 4 ? "invalid item" : "invalid slot", 400);
-      return json12({ praca: await praca() });
+      return json13({ praca: await praca() });
     }
     if (action === "claPresente") {
       const alvo = typeof body.to === "string" ? salvoDe(body.to) : void 0;
       if (!alvo || alvo === id) return erro("invalid target", 400);
       const r = await enviarPresente(env, g.id, id, alvo, hoje2, void 0, g.members);
       if (!r.ok) return erro("already sent today", 409);
-      return json12({ sent: true, praca: await praca() });
+      return json13({ sent: true, praca: await praca() });
     }
     if (action === "claPresenteClaim") {
       const [de, dia2] = String(body.giftId ?? "").split("|");
@@ -9624,39 +10246,39 @@ async function handleGuild({ request, env }) {
       if (!origem || !dia2) return erro("nothing to claim", 404);
       const r = await resgatarPresente(env, g.id, id, g.members, origem, dia2, hoje2, ids2);
       if (!r.ok) return erro("nothing to claim", 404);
-      return json12({ claimed: { item: r.item, receipt: r.receipt }, praca: await praca() });
+      return json13({ claimed: { item: r.item, receipt: r.receipt }, praca: await praca() });
     }
-    if (action === "claPlantio") return json12({ plantio: await plantio() });
+    if (action === "claPlantio") return json13({ plantio: await plantio() });
     if (action === "claPlantar") {
       const r = await plantar(env, g.id, id, hoje2);
       if (!r.ok) return erro("already planted", 409);
-      return json12({ plantio: await plantio() });
+      return json13({ plantio: await plantio() });
     }
     if (action === "claSortear") {
       const r = await sortear(env, g, id, hoje2);
       if (!r.ok) return conflito(r);
-      return json12({ plantio: await plantio(), task: r.kind });
+      return json13({ plantio: await plantio(), task: r.kind });
     }
     if (action === "claRegar" || action === "claProteger" || action === "claColher") {
       const r = await (action === "claRegar" ? regar : action === "claProteger" ? proteger : colher)(env, g, id, hoje2);
       if (!r.ok) return conflito(r);
-      return json12({ plantio: await plantio(), ...r.fruit ? { fruit: r.fruit, receipt: r.receipt } : {} });
+      return json13({ plantio: await plantio(), ...r.fruit ? { fruit: r.fruit, receipt: r.receipt } : {} });
     }
-    if (action === "claMisterio") return json12({ misterio: await misterio() });
+    if (action === "claMisterio") return json13({ misterio: await misterio() });
     if (action === "claMisterioEnviar") {
       const r = await enviarMisterio(env, g, id);
       if (!r.ok) return conflito(r);
-      return json12({ misterio: await misterio() });
+      return json13({ misterio: await misterio() });
     }
     if (action === "claMisterioTarefa") {
       const r = await somarTarefa(env, g, id, hoje2, body.taskId);
       if (!r.ok) return erro("invalid task", 400);
-      return json12({ counted: r.counted, ...r.reason ? { reason: r.reason } : {}, misterio: await misterio() });
+      return json13({ counted: r.counted, ...r.reason ? { reason: r.reason } : {}, misterio: await misterio() });
     }
     if (action === "claMisterioClaim") {
       const r = await resgatarMisterio(env, g, id);
       if (!r.ok) return erro("nothing to claim", 404);
-      return json12({ claimed: { reward: r.reward, receipt: r.receipt }, misterio: await misterio() });
+      return json13({ claimed: { reward: r.reward, receipt: r.receipt }, misterio: await misterio() });
     }
   }
   if (action.startsWith("guildFeira")) {
@@ -9665,14 +10287,14 @@ async function handleGuild({ request, env }) {
     if (action === "guildFeiraClaim") {
       const pedido = Number.isInteger(body.k) && body.k >= 0 ? body.k : void 0;
       const r = await resgatarChefe(env, g, id, pedido);
-      if (r.ok) return json12({ claimed: r.claimed });
+      if (r.ok) return json13({ claimed: r.claimed });
       if (r.reason === "claimed") return erro("already claimed", 409, { receipt: r.claimed.receipt, claimed: r.claimed });
       return erro("nothing to claim", 404);
     }
     if (!g) return erro("no {g}", 404);
     const cartoes = await lerCartoes(env, g);
     const estado2 = await lerEstadoFeira(env, g, hoje, { cartoes });
-    if (action === "guildFeira") return json12({ evento: await eventoDaFeira(env, g, id, hoje, estado2) });
+    if (action === "guildFeira") return json13({ evento: await eventoDaFeira(env, g, id, hoje, estado2) });
     if (action === "guildFeiraAttack") {
       if (estado2.phase !== "boss") return erro(estado2.phase === "rest" && estado2.done.lastKind === "boss" ? "boss dead" : "no boss", 409);
       const antes = await lerFeiraHit(env, g.id, estado2.k, id);
@@ -9684,7 +10306,7 @@ async function handleGuild({ request, env }) {
       await cartao(g);
       const depois = await lerEstadoFeira(env, g, hoje, { cartoes });
       const morreu = depois.phase !== "boss";
-      return json12({
+      return json13({
         landed: true,
         attack: { dmg: r.dmg, seed: r.seed, seconds: FIGHT_SECONDS, log: r.log },
         boss: { bossId: estado2.bossId, level: estado2.level, bossHpPct: morreu ? 0 : depois.hpPct, max: estado2.hp0, dead: morreu },
@@ -9694,7 +10316,7 @@ async function handleGuild({ request, env }) {
     if (action === "guildFeiraTrailStart") {
       const r = await iniciarTrilha(env, g, id, hoje, estado2);
       if (!r.ok) return erro(r.reason === "already-cleared" ? "already cleared" : "no trail", 409);
-      return json12({ trail: r.trail, evento: await eventoDaFeira(env, g, id, hoje, estado2) });
+      return json13({ trail: r.trail, evento: await eventoDaFeira(env, g, id, hoje, estado2) });
     }
     if (action === "guildFeiraTrailDone") {
       const r = await entregarTrilha(env, g, id, hoje, estado2, body);
@@ -9706,7 +10328,7 @@ async function handleGuild({ request, env }) {
         return erro(r.reason === "no-start" ? "not started" : "no trail", 409);
       }
       await cartao(g);
-      return json12({ cleared: true, reward: r.reward, receipt: r.receipt, evento: await eventoDaFeira(env, g, id, hoje, await lerEstadoFeira(env, g, hoje, { cartoes })) });
+      return json13({ cleared: true, reward: r.reward, receipt: r.receipt, evento: await eventoDaFeira(env, g, id, hoje, await lerEstadoFeira(env, g, hoje, { cartoes })) });
     }
   }
   if (action === "guildRaidHit") {
@@ -9737,7 +10359,7 @@ async function handleGuild({ request, env }) {
         evento = void 0;
       }
     }
-    return json12({ landed: true, [chave]: await montar(g, id, hoje), ...evento ? { evento } : {} });
+    return json13({ landed: true, [chave]: await montar(g, id, hoje), ...evento ? { evento } : {} });
   }
   if (action === "guildRewards" || action === "guildClaim") {
     const g = await grupoDe(env, id, semana);
@@ -9782,7 +10404,7 @@ async function handleGuild({ request, env }) {
           misterio = void 0;
         }
       }
-      return json12({ rewards: { pending, scenes, trophyOwned: await conchas() >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID, ...misterio ? { misterio } : {} } });
+      return json13({ rewards: { pending, scenes, trophyOwned: await conchas() >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID, ...misterio ? { misterio } : {} } });
     }
     const w = String(body.week ?? "");
     if (!candidatas.includes(w)) return erro("invalid week", 400);
@@ -9810,11 +10432,11 @@ async function handleGuild({ request, env }) {
       trophy = depois > antes && depois % RAID_TROPHY_EVERY === 0;
     }
     if (trophy) await kvOrThrow(env).put(coopClaimKey(id, w), JSON.stringify({ ...gravado, trophy }), { expirationTtl: COOP_CLAIM_TTL });
-    return json12({ claimed: { week: w, outcome: d.outcome, emblems: d.emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null, receipt: recibo } });
+    return json13({ claimed: { week: w, outcome: d.outcome, emblems: d.emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null, receipt: recibo } });
   }
   if (action === "guildLeave") {
     await coopLeave(env, id);
-    return json12({ ok: true });
+    return json13({ ok: true });
   }
   if (action === "guildRename" || action === "guildNewCode") {
     const g = await grupoDe(env, id, semana);
@@ -9837,7 +10459,7 @@ async function handleGuild({ request, env }) {
     }
     return vista(await montar(rolarSemana(fresco, semana), id, hoje));
   }
-  return json12({ error: "unknown action" }, 400);
+  return json13({ error: "unknown action" }, 400);
 }
 __name(handleGuild, "handleGuild");
 
@@ -9866,16 +10488,20 @@ function ganhoDePontos(base, levelVencedor, levelPerdedor, vitoriasAntes) {
 __name(ganhoDePontos, "ganhoDePontos");
 
 // api/_rankedPick.js
-var RANKED_WINDOW = 6;
+var RANKED_WINDOW = 4;
 var RANKED_PICKS = 3;
-function pickRankedOpponents(pool, myPoints, rng, n = RANKED_PICKS, window = RANKED_WINDOW) {
-  const me = Number.isFinite(myPoints) ? myPoints : 0;
+function pickRankedOpponents(pool, me, rng, n = RANKED_PICKS, window = RANKED_WINDOW) {
+  const fin2 = /* @__PURE__ */ __name((v) => Number.isFinite(v) ? v : 0, "fin");
+  const legado = typeof me !== "object" || me === null;
+  const alvo = legado ? fin2(me) : fin2(me.score);
+  const alvoLife = legado ? 0 : fin2(me.lifetime);
   const tagged = pool.map((item) => ({
     item,
-    d: Math.abs((Number.isFinite(item.lifetime) ? item.lifetime : 0) - me),
+    d: Math.abs((legado ? fin2(item.lifetime) : fin2(item.score)) - alvo),
+    d2: legado ? 0 : Math.abs(fin2(item.lifetime) - alvoLife),
     tie: rng()
   }));
-  tagged.sort((a, b) => a.d - b.d || a.tie - b.tie);
+  tagged.sort((a, b) => a.d - b.d || a.d2 - b.d2 || a.tie - b.tie);
   const near = tagged.slice(0, Math.max(n, window)).map((t) => t.item);
   for (let i2 = near.length - 1; i2 > 0; i2--) {
     const j = Math.floor(rng() * (i2 + 1));
@@ -9922,6 +10548,7 @@ __name(formsFromSaveState, "formsFromSaveState");
 
 // api/_frames.js
 var FRAME_IDS = /* @__PURE__ */ new Set([
+  "basico",
   "rank-madeira",
   "rank-bronze",
   "rank-prata",
@@ -10116,10 +10743,10 @@ async function withDuelLock(key, fn) {
   }
 }
 __name(withDuelLock, "withDuelLock");
-var HEAVY_ACTIONS = /* @__PURE__ */ new Set(["players", "opponents", "rank", "seasonResult", "names", "strays"]);
+var HEAVY_ACTIONS = /* @__PURE__ */ new Set(["players", "opponents", "rank", "seasonResult", "names", "strays", "evoFeed"]);
 var HEAVY_LIMIT = { limit: 20, windowMs: 6e4 };
 var LIGHT_LIMIT = { limit: 120, windowMs: 6e4 };
-var CACHEABLE_ACTIONS = /* @__PURE__ */ new Set(["players", "rank", "seasonResult", "strays"]);
+var CACHEABLE_ACTIONS = /* @__PURE__ */ new Set(["players", "rank", "seasonResult", "strays", "evoFeed"]);
 var EDGE_TTL_SECONDS = 60;
 var today2 = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10), "today");
 var currentSeason = /* @__PURE__ */ __name(() => (/* @__PURE__ */ new Date()).toISOString().slice(0, 7), "currentSeason");
@@ -10151,6 +10778,8 @@ async function publicProfile(env, p, extra = {}) {
     artLine: artLineOrNull(p.artLine),
     .../^[a-z][a-z0-9_-]{0,31}$/.test(String(p.element ?? "")) ? { element: p.element } : {},
     ...sUrl ? { spriteUrl: sUrl } : {},
+    // Nome do especial escolhido pelo jogador: revalidado na SAÍDA (perfil antigo ou KV editado nunca vaza texto fora da regra).
+    ...nomeEspecialValido(p.especialNome) ? { especialNome: nomeEspecialValido(p.especialNome) } : {},
     unlockedStages: p.unlockedStages,
     pvpEnabled: p.pvpEnabled,
     // ⚰️ `tasksDone` NÃO sai daqui (WP4.11, exposição E3, proibição #21).
@@ -10195,6 +10824,37 @@ async function listPrefix2(env, prefix, limit = 100) {
   return out;
 }
 __name(listPrefix2, "listPrefix");
+var NICK_SCAN_PAGES = 10;
+var NICK_CANDIDATOS = 120;
+var BACKFILL_LOTE = 40;
+async function buscarNicks(env, termo) {
+  const inicio = [];
+  const meio = [];
+  let cursor;
+  let paginas = 0;
+  let truncated = false;
+  do {
+    const page = await kvOrThrow(env).list({ prefix: "nick:", cursor, limit: 1e3 });
+    paginas++;
+    for (const k of page.keys ?? []) {
+      let n;
+      try {
+        n = decodeURIComponent(String(k.name).slice(5));
+      } catch {
+        continue;
+      }
+      if (!n.includes(termo)) continue;
+      (n.startsWith(termo) ? inicio : meio).push(k.name);
+    }
+    cursor = page.list_complete ? void 0 : page.cursor;
+    if (cursor && (paginas >= NICK_SCAN_PAGES || inicio.length >= NICK_CANDIDATOS)) {
+      truncated = paginas >= NICK_SCAN_PAGES && inicio.length < NICK_CANDIDATOS;
+      break;
+    }
+  } while (cursor);
+  return { nickKeys: [...inicio, ...meio].slice(0, NICK_CANDIDATOS), truncated };
+}
+__name(buscarNicks, "buscarNicks");
 async function onRequestOptions6() {
   return new Response(null, { headers: CORS6 });
 }
@@ -10364,6 +11024,28 @@ async function handleCommunity(context) {
     const petNameOk = /* @__PURE__ */ __name((v) => typeof v === "string" && v.length > 0 && sanitizarNomeDeGuilda(v) !== null, "petNameOk");
     const prevPet = petNameOk(prev.petName) ? String(prev.petName).slice(0, 32) : "";
     const publicHidden = typeof body.publicHidden === "boolean" ? body.publicHidden : prev.publicHidden === true;
+    let especialNome = nomeEspecialValido(prev.especialNome) || "";
+    let especialNomeAt = Number(prev.especialNomeAt) > 0 ? Number(prev.especialNomeAt) : 0;
+    let especialNomeRejected = false;
+    let especialNomeLimit = false;
+    if ("especialNome" in body) {
+      const pedido = body.especialNome;
+      if (pedido === null || typeof pedido === "string" && pedido.trim() === "") {
+        especialNome = "";
+      } else {
+        const novo = typeof pedido === "string" ? nomeEspecialValido(pedido) : null;
+        const sobContato = novo ? sanitizarNomeDeGuilda(novo) : null;
+        if (!novo || sobContato !== novo) {
+          especialNomeRejected = true;
+        } else if (novo !== especialNome) {
+          if (especialNomeAt && Date.now() - especialNomeAt < ESPECIAL_NOME_COOLDOWN_MS) especialNomeLimit = true;
+          else {
+            especialNome = novo;
+            especialNomeAt = Date.now();
+          }
+        }
+      }
+    }
     const profile = {
       id,
       name: apelidoFinal || sanitizarNomeDeGuilda(prev.name) || "An\xF4nimo",
@@ -10382,6 +11064,11 @@ async function handleCommunity(context) {
       unlockedStages: Array.isArray(body.unlockedStages) ? body.unlockedStages.filter((s) => typeof s === "string" && ID_ESTAGIO.test(s)).slice(0, 16) : prev.unlockedStages || [],
       pvpEnabled,
       publicHidden,
+      ...especialNome ? { especialNome } : {},
+      ...especialNomeAt ? { especialNomeAt } : {},
+      // Faixa de evoluções: atravessam a regravação; o bloco abaixo só os faz subir.
+      evoPeakRank: peakOf(prev) ?? void 0,
+      evoFeedAt: Number(prev.evoFeedAt) > 0 ? Number(prev.evoFeedAt) : void 0,
       attrs: body.attrs && typeof body.attrs === "object" ? { power: attrFinito(body.attrs.power), harmony: attrFinito(body.attrs.harmony), benevolence: attrFinito(body.attrs.benevolence) } : prev.attrs || { power: 0, harmony: 0, benevolence: 0 },
       tasksDone: Number.isFinite(+body.tasksDone) ? Math.max(0, +body.tasksDone) : prev.tasksDone || 0,
       friends: prev.friends || [],
@@ -10395,13 +11082,40 @@ async function handleCommunity(context) {
       // mapa reverso conhece a correspondência.
       pid: pidAntigo && !pidLegado ? pidAntigo : newPid()
     };
+    const evoNow = Date.now();
+    const evoPicoAntes = peakOf(prev);
+    let evoEvento = null;
+    try {
+      if (evoPicoAntes === null || (parseStage(profile.stage)?.rank ?? -1) > evoPicoAntes) {
+        const bruto = await kvOrThrow(env).get(id);
+        const salvo = typeof bruto === "string" && bruto.length <= DUEL_SAVE_MAX_CHARS ? JSON.parse(bruto) : null;
+        const { peak, announce } = decideEvo({ peak: evoPicoAntes, stage: profile.stage, savedStage: salvo?.evolutionStage, lastAt: prev.evoFeedAt, now: evoNow });
+        if (peak !== null) profile.evoPeakRank = peak;
+        if (announce && !publicHidden && profile.pvpEnabled === true && !flagOn(env?.EVO_FEED_DISABLED)) {
+          evoEvento = buildEvent({ by: id, name: profile.name, petName: profile.petName, stage: profile.stage, now: evoNow });
+          if (evoEvento) profile.evoFeedAt = evoNow;
+        }
+      }
+    } catch {
+      evoEvento = null;
+    }
     await putProfile(env, id, profile);
     await indexPublicId(env, id, profile.pid);
-    if (publicHidden !== (prev.publicHidden === true) && typeof caches !== "undefined" && caches.default) {
+    const evoSaiu = publicHidden && prev.publicHidden !== true || !profile.pvpEnabled && prev.pvpEnabled === true;
+    try {
+      if (evoEvento || evoSaiu) {
+        const atual = readFeed(await kvOrThrow(env).get(EVO_FEED_KEY));
+        const feed = evoEvento ? pushEvent(atual, evoEvento, evoNow) : purgeFeedOf(atual, id);
+        await kvOrThrow(env).put(EVO_FEED_KEY, JSON.stringify(feed), { expirationTtl: EVO_FEED_BLOB_TTL_S });
+      }
+    } catch {
+    }
+    if ((publicHidden !== (prev.publicHidden === true) || evoSaiu) && typeof caches !== "undefined" && caches.default) {
       const base = `${url.origin}${url.pathname}?action=`;
       const season = currentSeason();
       await Promise.all([
         `${base}players`,
+        `${base}evoFeed`,
         `${base}rank`,
         `${base}rank&season=${season}`,
         `${base}seasonResult&season=${season}`
@@ -10416,6 +11130,9 @@ async function handleCommunity(context) {
       publicHidden,
       ...nameRejected ? { nameRejected: true } : {},
       ...nameTaken ? { nameTaken: true } : {},
+      ..."especialNome" in body || especialNome ? { especialNome, especialNomeAt } : {},
+      ...especialNomeRejected ? { especialNomeRejected: true } : {},
+      ...especialNomeLimit ? { especialNomeLimit: true } : {},
       ...pvpBlocked ? { pvpBlocked: true, bondLevel, minBondLevel: gateFor("pvp", bondLevel).minBond } : {}
     });
   }
@@ -10453,21 +11170,64 @@ async function handleCommunity(context) {
     return json3({ names: nomes.slice(0, 8) });
   }
   if (action === "players" && method === "GET") {
-    const search = (url.searchParams.get("search") || "").toLowerCase();
-    const keys = await listPrefix2(env, "profile:", 300);
+    const search = (url.searchParams.get("search") || "").normalize("NFKC").trim().toLowerCase().slice(0, 40);
     const season = currentSeason();
     const players = [];
+    let keys;
+    let searchTruncated = false;
+    if (search) {
+      const achado = await buscarNicks(env, search);
+      searchTruncated = achado.truncated;
+      keys = achado.nickKeys;
+    } else {
+      keys = await listPrefix2(env, "profile:", 300);
+    }
+    const vistos = /* @__PURE__ */ new Set();
     for (const k of keys) {
-      const raw = await kvOrThrow(env).get(k);
+      let profileKey = k;
+      if (search) {
+        const dono = await kvOrThrow(env).get(k);
+        if (!dono) continue;
+        profileKey = `profile:${dono}`;
+      }
+      if (vistos.has(profileKey)) continue;
+      vistos.add(profileKey);
+      const raw = await kvOrThrow(env).get(profileKey);
       if (!raw) continue;
-      const p = JSON.parse(raw);
+      let p;
+      try {
+        p = JSON.parse(raw);
+      } catch {
+        continue;
+      }
       if (!p.pvpEnabled || isHidden(p)) continue;
       if (search && !String(p.name).toLowerCase().includes(search)) continue;
       players.push(await publicProfile(env, p));
       if (players.length >= 50) break;
     }
     players.sort((a, b) => String(a.name ?? "").localeCompare(String(b.name ?? "")));
-    return json3({ players });
+    return json3({ players, ...searchTruncated ? { searchTruncated: true } : {} });
+  }
+  if (action === "backfillNicks" && method === "POST") {
+    if (!env.SEASON_ADMIN_KEY || !secretEquals(body.adminKey, env.SEASON_ADMIN_KEY)) return json3({ error: "unauthorized" }, 401);
+    const page = await kvOrThrow(env).list({ prefix: "profile:", cursor: typeof body.cursor === "string" && body.cursor ? body.cursor : void 0, limit: BACKFILL_LOTE });
+    let indexed = 0, taken = 0, skipped = 0;
+    for (const k of page.keys) {
+      const saveId = k.name.slice("profile:".length);
+      let p = null;
+      try {
+        p = await getProfile(env, saveId);
+      } catch {
+      }
+      const nome = p && typeof p.name === "string" ? sanitizarNomeDeGuilda(p.name) : null;
+      if (!nome || /^(an[ôo]nimo|anonymous)$/i.test(nome)) {
+        skipped++;
+        continue;
+      }
+      if (await claimNick(env, saveId, nome)) indexed++;
+      else taken++;
+    }
+    return json3({ ok: true, scanned: page.keys.length, indexed, taken, skipped, done: !!page.list_complete, ...page.list_complete ? {} : { cursor: page.cursor } });
   }
   if (action === "strayStatus" && method === "GET") {
     const denied = await denyUnlessOwner(id);
@@ -10496,6 +11256,23 @@ async function handleCommunity(context) {
       if (strays.length >= STRAY_POOL_MAX) break;
     }
     return json3({ strays });
+  }
+  if (action === "evoFeed" && method === "GET") {
+    if (flagOn(env?.EVO_FEED_DISABLED)) return json3({ events: [] });
+    const events = [];
+    for (const ev of liveFeed(readFeed(await kvOrThrow(env).get(EVO_FEED_KEY)), Date.now())) {
+      if (events.length >= EVO_FEED_VIEW) break;
+      let p = null;
+      try {
+        p = await getProfile(env, ev.by);
+      } catch {
+        continue;
+      }
+      if (!p || !p.pvpEnabled || isHidden(p)) continue;
+      const vista = publicEvent(ev, p);
+      if (vista) events.push(vista);
+    }
+    return json3({ events });
   }
   if (action === "player" && method === "GET") {
     const targetSave = await saveIdForPublicId(env, id);
@@ -10533,11 +11310,21 @@ async function handleCommunity(context) {
       if (!p.pvpEnabled || p.id === me || isHidden(p)) continue;
       pool.push({ profile: p, pub: await publicProfile(env, p), saveId: k.slice("profile:".length) });
     }
+    const season = currentSeason();
+    const myRank = id ? await getRank(env, season, id) : null;
+    const indice = await lerIndice2(env, season);
+    const pontosDaSeason = /* @__PURE__ */ __name(async (saveId) => typeof indice.p[saveId] === "number" ? indice.p[saveId] : (await getRank(env, season, saveId)).points ?? 0, "pontosDaSeason");
+    const myPoints = myRank ? Number(myRank.points) || 0 : 0;
     const meProfileRaw = me ? await kvOrThrow(env).get(`profile:${me}`) : null;
-    const myPoints = meProfileRaw ? JSON.parse(meProfileRaw).lifetimePoints ?? 0 : 0;
+    const myLifetime = meProfileRaw ? JSON.parse(meProfileRaw).lifetimePoints ?? 0 : 0;
+    const comPontos = await Promise.all(pool.map(async (e) => ({
+      ...e,
+      score: await pontosDaSeason(e.saveId),
+      lifetime: e.profile.lifetimePoints ?? 0
+    })));
     const sorted = pickRankedOpponents(
-      pool.map((e) => ({ ...e, lifetime: e.profile.lifetimePoints ?? 0 })),
-      myPoints,
+      comPontos,
+      { score: myPoints, lifetime: myLifetime },
       () => {
         const b = new Uint32Array(1);
         crypto.getRandomValues(b);
@@ -10546,8 +11333,6 @@ async function handleCommunity(context) {
     );
     pool.length = 0;
     pool.push(...sorted);
-    const season = currentSeason();
-    const myRank = id ? await getRank(env, season, id) : null;
     const matchesLeft = myRank ? MATCHES_PER_DAY - (myRank.day === today2() ? myRank.matchesToday : 0) : MATCHES_PER_DAY;
     const publicDuel = /* @__PURE__ */ __name((side) => side ? { level: side.combatant.level } : null, "publicDuel");
     const meSide = id ? await loadDuelSide2(id) : null;
@@ -11528,7 +12313,7 @@ async function freeRookie(store, saveId, generate) {
 }
 __name(freeRookie, "freeRookie");
 
-// D:/Soulmon/repo/node_modules/fflate/esm/browser.js
+// ../node_modules/fflate/esm/browser.js
 var u8 = Uint8Array;
 var u16 = Uint16Array;
 var i32 = Int32Array;
@@ -12775,8 +13560,8 @@ function spriteModel(env) {
 __name(spriteModel, "spriteModel");
 function spriteQuality(env, model = "alpha") {
   const q = String(env.SPRITE_QUALITY || "").trim().toLowerCase();
-  const ok2 = model === "flare" ? ["low", "medium", "high", "xhigh", "max"] : ["low", "medium", "high"];
-  return ok2.includes(q) ? q : "low";
+  const ok3 = model === "flare" ? ["low", "medium", "high", "xhigh", "max"] : ["low", "medium", "high"];
+  return ok3.includes(q) ? q : "low";
 }
 __name(spriteQuality, "spriteQuality");
 function hfRequestBody(env, model, prompt, referenceImageUrls) {
@@ -12997,7 +13782,7 @@ var SPRITE_TOKEN2 = /^[0-9a-f]{32}$/;
 function referenciasSeguras(request, referenceImageUrls) {
   if (!Array.isArray(referenceImageUrls)) return void 0;
   const origem = new URL(request.url).origin;
-  const ok2 = [];
+  const ok3 = [];
   for (const raw of referenceImageUrls.slice(0, MAX_REFERENCE_URLS)) {
     if (typeof raw !== "string" || raw.length > 512) continue;
     let u;
@@ -13009,9 +13794,9 @@ function referenciasSeguras(request, referenceImageUrls) {
     if (u.protocol !== "https:" || u.origin !== origem) continue;
     if (u.pathname !== "/api/sprite-image") continue;
     if (!SPRITE_TOKEN2.test(u.searchParams.get("k") || "")) continue;
-    ok2.push(u.toString());
+    ok3.push(u.toString());
   }
-  return ok2.length ? ok2 : void 0;
+  return ok3.length ? ok3 : void 0;
 }
 __name(referenciasSeguras, "referenciasSeguras");
 async function respostaDeRegenRepetida(env, id, formId, opId, op) {
@@ -13328,6 +14113,16 @@ function enforceArenaReroll(incoming, stored, nowMs = Date.now()) {
   return monotonic(sanitizeArenaReroll(incoming), sanitizeArenaReroll(stored), (a, b) => ({ day: a.day, count: Math.max(a.count, b.count) }), nowMs);
 }
 __name(enforceArenaReroll, "enforceArenaReroll");
+var ARENA_LADDER_MAX = 999;
+function sanitizeArenaLadder(raw) {
+  if (typeof raw !== "number" || !Number.isFinite(raw)) return 0;
+  return Math.min(ARENA_LADDER_MAX, Math.max(0, Math.floor(raw)));
+}
+__name(sanitizeArenaLadder, "sanitizeArenaLadder");
+function enforceArenaLadder(incoming, stored) {
+  return Math.max(sanitizeArenaLadder(incoming), sanitizeArenaLadder(stored));
+}
+__name(enforceArenaLadder, "enforceArenaLadder");
 var riftLayersKey = /* @__PURE__ */ __name((month2, saveId) => `riftlayers:${month2}:${saveId}`, "riftLayersKey");
 var monthOf = /* @__PURE__ */ __name((nowMs) => new Date(nowMs).toISOString().slice(0, 7), "monthOf");
 var prevMonthOf = /* @__PURE__ */ __name((nowMs) => {
@@ -13834,25 +14629,25 @@ async function reconcileToken(env, purchaseToken, kind) {
     if (peek.ok && peek.entitled) await acknowledgePlaySubscription(env, { purchaseToken, ackPending: peek.ackPending });
     return { status: 200, outcome: "unclaimed" };
   }
-  const read = interpretSubscription(got.sub, { saveId: owner });
-  if (!read.ok) return { status: 200, outcome: `ignored-${read.reason}` };
+  const read2 = interpretSubscription(got.sub, { saveId: owner });
+  if (!read2.ok) return { status: 200, outcome: `ignored-${read2.reason}` };
   const { changed } = await applySubscriptionState(env, owner, {
     rootHash: await sha256Hex(root.rootToken),
-    until: read.until,
-    state: read.state,
-    entitled: read.entitled,
-    test: read.test
+    until: read2.until,
+    state: read2.state,
+    entitled: read2.entitled,
+    test: read2.test
   });
-  if (read.entitled) await acknowledgePlaySubscription(env, { purchaseToken, ackPending: read.ackPending });
+  if (read2.entitled) await acknowledgePlaySubscription(env, { purchaseToken, ackPending: read2.ackPending });
   log3("rtdn.sub.reconciled", {
     kind,
     saveIdPrefix: String(owner).slice(0, 8),
     token: maskToken(purchaseToken),
-    state: read.state,
-    entitled: read.entitled,
+    state: read2.state,
+    entitled: read2.entitled,
     changed
   });
-  return { status: 200, outcome: read.entitled ? "active" : "closed" };
+  return { status: 200, outcome: read2.entitled ? "active" : "closed" };
 }
 __name(reconcileToken, "reconcileToken");
 async function onRequestPost8({ request, env }) {
@@ -13908,6 +14703,30 @@ async function onRequestPost8({ request, env }) {
   return json8({ ok: true, outcome: result.outcome });
 }
 __name(onRequestPost8, "onRequestPost");
+
+// api/_widgetFrames.js
+function onlyCatalogFrames(raw) {
+  return Array.isArray(raw) ? [...new Set(raw.filter((v) => typeof v === "string" && COUNTER_RING.includes(v)))] : [];
+}
+__name(onlyCatalogFrames, "onlyCatalogFrames");
+function evolutionFrameOf(state) {
+  if (!state || typeof state !== "object") return null;
+  const evo = state.unlockedEvolutions;
+  if (!Array.isArray(evo) || evo.length <= 1) return null;
+  const { el, neutro, base: baseReg } = petElementDeSave(state);
+  if (neutro) return null;
+  const potion = typeof state.potionElement === "string" && COUNTER_RING.includes(baseDominante(state.potionElement)) ? state.potionElement : null;
+  const base = !potion && baseReg ? baseReg : baseDominante(potion ?? el ?? "");
+  return COUNTER_RING.includes(base) ? base : null;
+}
+__name(evolutionFrameOf, "evolutionFrameOf");
+function enforceWidgetFramesOwned(state, gravado) {
+  const out = onlyCatalogFrames(gravado);
+  const ev = evolutionFrameOf(state);
+  if (ev && !out.includes(ev)) out.push(ev);
+  return out;
+}
+__name(enforceWidgetFramesOwned, "enforceWidgetFramesOwned");
 
 // api/_buildingQuests.js
 var MATERIAL_CAP = 99;
@@ -13988,7 +14807,8 @@ var DAILY_EVENTS = [
   "eco",
   "zip",
   "patches",
-  "calabouco"
+  "calabouco",
+  "selo"
 ];
 var DAILY_MISSION_IDS = [
   "d-dino",
@@ -14009,7 +14829,8 @@ var DAILY_MISSION_IDS = [
   "d-eco",
   "d-zip",
   "d-patches",
-  "d-calabouco"
+  "d-calabouco",
+  "d-selo"
 ];
 var FIRST_TIME_IDS = [
   "first-minigame",
@@ -14071,6 +14892,7 @@ var FEAT_KEYS = [
   "clanShopBuys",
   "regens",
   "focusPrepared",
+  "seloSolved",
   "barrageBest",
   "dinoNormalBest",
   "rankTier"
@@ -14229,6 +15051,14 @@ function sanitizeMercMission(raw) {
 }
 __name(sanitizeMercMission, "sanitizeMercMission");
 
+// api/_bossShards.js
+var BOSS_SHARDS_MAX = 1e6;
+function sanitizeBossShards(raw) {
+  if (typeof raw !== "number" || !Number.isFinite(raw)) return void 0;
+  return Math.min(BOSS_SHARDS_MAX, Math.max(0, Math.floor(raw)));
+}
+__name(sanitizeBossShards, "sanitizeBossShards");
+
 // api/_dayPlan.js
 var DAY_PLAN_MAX_IDS = 200;
 var ID_RE2 = /^[\w:.-]{1,120}$/;
@@ -14271,6 +15101,33 @@ function sanitizeNightmares(raw) {
   return out;
 }
 __name(sanitizeNightmares, "sanitizeNightmares");
+
+// api/_elementoJornada.js
+var ESTAGIOS = ["rookie", "champion", "ultimate", "mega", "ultra"];
+var ok2 = /* @__PURE__ */ __name((id) => typeof id === "string" && ELEMENTOS_FICHA.has(id), "ok");
+function sanitizeElementoJornada(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
+  const r = (
+    /** @type {any} */
+    raw
+  );
+  if (typeof r.u !== "number" || !Number.isFinite(r.u) || r.u < 0 || r.u >= 1) return void 0;
+  if (!r.estagios || typeof r.estagios !== "object" || Array.isArray(r.estagios)) return void 0;
+  const estagios = {};
+  for (const st of ESTAGIOS) {
+    const e = r.estagios[st];
+    if (e && ok2(e.id) && ok2(e.base)) estagios[st] = { id: e.id, base: e.base };
+  }
+  return { v: 1, u: r.u, estagios };
+}
+__name(sanitizeElementoJornada, "sanitizeElementoJornada");
+function enforceImmutableElementoJornada(incoming, stored) {
+  const novo = sanitizeElementoJornada(incoming);
+  const antigo = sanitizeElementoJornada(stored);
+  if (!novo || !antigo) return novo;
+  return { v: 1, u: antigo.u, estagios: { ...novo.estagios, ...antigo.estagios } };
+}
+__name(enforceImmutableElementoJornada, "enforceImmutableElementoJornada");
 
 // api/_essences.js
 var ESSENCE_MAX_PER_ELEMENT2 = 1e6;
@@ -14542,6 +15399,7 @@ async function onRequestBruto2({ request, env }) {
     if ("equippedFrame" in state) state.equippedFrame = frameIdOrNull(state.equippedFrame);
     if ("avatarId" in state) state.avatarId = avatarIdOrNull(state.avatarId);
     if ("ownedFrames" in state) state.ownedFrames = clampOwnedFrames(state.ownedFrames);
+    if ("widgetFrame" in state && !COUNTER_RING.includes(state.widgetFrame)) state.widgetFrame = null;
     if ("talentPicks" in state) state.talentPicks = sanitizeTalentPicks(state.talentPicks, bondLevelFor(state.totalXP));
     if ("equipment" in state) state.equipment = sanitizeEquipment(state.equipment);
     if ("forge" in state) state.forge = sanitizeForge(state.forge);
@@ -14600,6 +15458,11 @@ async function onRequestBruto2({ request, env }) {
       if (q) state.conquistasPagas = q;
       else delete state.conquistasPagas;
     }
+    if ("bossShards" in state) {
+      const q = sanitizeBossShards(state.bossShards);
+      if (q !== void 0) state.bossShards = q;
+      else delete state.bossShards;
+    }
     if ("mercMission" in state) {
       const q = sanitizeMercMission(state.mercMission);
       if (q) state.mercMission = q;
@@ -14618,6 +15481,17 @@ async function onRequestBruto2({ request, env }) {
       else delete acervoSprites.regenUsed;
     }
     const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    if ("widgetFramesOwned" in state) {
+      let gravado;
+      if (typeof prev?.value === "string" && prev.value.includes('"widgetFramesOwned"')) {
+        try {
+          gravado = JSON.parse(prev.value).widgetFramesOwned;
+        } catch {
+          gravado = void 0;
+        }
+      }
+      state.widgetFramesOwned = enforceWidgetFramesOwned(state, gravado);
+    }
     if ("fichaJornada" in state) {
       let guardado;
       if (typeof prev?.value === "string" && prev.value.includes('"fichaJornada"')) {
@@ -14631,6 +15505,19 @@ async function onRequestBruto2({ request, env }) {
       if (mexeu.length) console.warn("save: estagio da fichaJornada ja gravado, mantido o do servidor", { saveIdPrefix: saveId.slice(0, 8), estagios: mexeu });
       if (ficha) state.fichaJornada = ficha;
       else delete state.fichaJornada;
+    }
+    if ("elementoJornada" in state) {
+      let guardado;
+      if (typeof prev?.value === "string" && prev.value.includes('"elementoJornada"')) {
+        try {
+          guardado = JSON.parse(prev.value).elementoJornada;
+        } catch {
+          guardado = void 0;
+        }
+      }
+      const el = enforceImmutableElementoJornada(state.elementoJornada, guardado);
+      if (el) state.elementoJornada = el;
+      else delete state.elementoJornada;
     }
     {
       const gravadoTemHex = typeof prev?.value === "string" && prev.value.includes('"hexsmith"');
@@ -14655,8 +15542,8 @@ async function onRequestBruto2({ request, env }) {
     let recAntes;
     let recDepois;
     {
-      const temGravado = typeof prev?.value === "string" && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"') || prev.value.includes('"arenaReroll"') || prev.value.includes('"essences"') || prev.value.includes('"essenceAway"') || prev.value.includes('"essenceSpent"'));
-      if (temGravado || "dungeonDaily" in state || "checkIns" in state || "arenaReroll" in state || "essences" in state || "essenceAway" in state || "essenceSpent" in state) {
+      const temGravado = typeof prev?.value === "string" && (prev.value.includes('"dungeonDaily"') || prev.value.includes('"checkIns"') || prev.value.includes('"arenaReroll"') || prev.value.includes('"arenaLadder"') || prev.value.includes('"essences"') || prev.value.includes('"essenceAway"') || prev.value.includes('"essenceSpent"'));
+      if (temGravado || "dungeonDaily" in state || "checkIns" in state || "arenaReroll" in state || "arenaLadder" in state || "essences" in state || "essenceAway" in state || "essenceSpent" in state) {
         let gravado = {};
         if (temGravado) {
           try {
@@ -14678,6 +15565,9 @@ async function onRequestBruto2({ request, env }) {
         const ar = enforceArenaReroll(state.arenaReroll, gravado.arenaReroll);
         if (ar) state.arenaReroll = ar;
         else delete state.arenaReroll;
+        const al = enforceArenaLadder(state.arenaLadder, gravado.arenaLadder);
+        if (al > 0) state.arenaLadder = al;
+        else delete state.arenaLadder;
         const es = enforceEssences(state.essences, gravado.essences, state.essenceSpent, gravado.essenceSpent);
         if (es && Object.keys(es).length) state.essences = es;
         else delete state.essences;
@@ -15334,7 +16224,182 @@ async function onRequest8({ env }) {
 }
 __name(onRequest8, "onRequest");
 
-// ../.wrangler/tmp/pages-vCyfNG/functionsRoutes-0.7437695038777731.mjs
+// api/feedback.js
+var FEEDBACK_PREFIX = "feedback:";
+var FEEDBACK_TTL_SECONDS = 30 * 24 * 60 * 60;
+var FEEDBACK_TO_DEFAULT = "soulmon.revisor@gmail.com";
+var TYPES = ["feedback", "suggestion", "bug"];
+var LANGS = ["pt-BR", "en"];
+var PLATS2 = ["apk", "web"];
+var MAX_MESSAGE = 2e3;
+var MAX_BODY_BYTES4 = 8 * 1024;
+var MAX_WRITES_PER_DAY = 50;
+var MAX_EMAILS_PER_DAY = 50;
+var VER_RE2 = /^[0-9A-Za-z.+-]{1,32}$/;
+var RATE_IP = { limit: 5, windowMs: 10 * 6e4 };
+var RATE_ACCOUNT = { limit: 5, windowMs: 10 * 6e4 };
+var READ_RATE2 = { limit: 30, windowMs: 6e4 };
+var ALLOWED_KEYS = ["type", "message", "ver", "build", "plat", "lang"];
+var CORS16 = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": `Content-Type, Authorization, ${METRICS_KEY_HEADER}`
+};
+var json12 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: { "Cache-Control": "no-store", ...CORS16 } }), "json");
+var escritas2 = { day: "", n: 0, emails: 0 };
+function rateKey(ip) {
+  if (!ip || !ip.includes(":")) return ip;
+  let h = ip.split("%")[0].toLowerCase();
+  const v4 = h.match(/^(.*:)(\d+\.\d+\.\d+\.\d+)$/);
+  if (v4) return /^(::ffff:|0:0:0:0:0:ffff:)$/.test(v4[1]) ? v4[2] : ip;
+  const parts = h.split("::");
+  if (parts.length > 2) return ip;
+  const head = parts[0] ? parts[0].split(":") : [];
+  const tail = parts.length === 2 && parts[1] ? parts[1].split(":") : [];
+  const fill = parts.length === 2 ? 8 - head.length - tail.length : 0;
+  const groups = [...head, ...Array(Math.max(fill, 0)).fill("0"), ...tail];
+  if (groups.length !== 8) return ip;
+  return `${groups.slice(0, 4).map((g) => g.replace(/^0+(?=.)/, "")).join(":")}::/64`;
+}
+__name(rateKey, "rateKey");
+function cleanMessage(text) {
+  return String(text).replace(/\r\n?/g, "\n").replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F​-‏‪-‮⁦-⁩]/g, "").trim();
+}
+__name(cleanMessage, "cleanMessage");
+function sanitizeFeedback(body) {
+  if (!body || typeof body !== "object" || Array.isArray(body)) return { error: "invalid-body" };
+  for (const k of Object.keys(body)) if (!ALLOWED_KEYS.includes(k)) return { error: "invalid-body" };
+  if (!TYPES.includes(body.type)) return { error: "invalid-type" };
+  if (typeof body.message !== "string") return { error: "invalid-message" };
+  const message = cleanMessage(body.message);
+  if (message.length < 1) return { error: "invalid-message" };
+  if (message.length > MAX_MESSAGE) return { error: "message-too-long" };
+  if (typeof body.ver !== "string" || !VER_RE2.test(body.ver)) return { error: "invalid-body" };
+  if (typeof body.build !== "string" || !VER_RE2.test(body.build)) return { error: "invalid-body" };
+  if (!PLATS2.includes(body.plat)) return { error: "invalid-body" };
+  if (!LANGS.includes(body.lang)) return { error: "invalid-body" };
+  return { type: body.type, message, ver: body.ver, build: body.build, plat: body.plat, lang: body.lang };
+}
+__name(sanitizeFeedback, "sanitizeFeedback");
+var TYPE_LABEL = { feedback: "Feedback", suggestion: "Sugest\xE3o", bug: "Bug" };
+function emailSubject(r) {
+  return `[Soulmon ${TYPE_LABEL[r.type]}] v${r.ver}`.replace(/[\r\n]+/g, " ");
+}
+__name(emailSubject, "emailSubject");
+function emailText(r, receivedAt) {
+  return [
+    r.message,
+    "",
+    "---",
+    `Tipo: ${TYPE_LABEL[r.type]}`,
+    `Vers\xE3o: ${r.ver}`,
+    `Build: ${r.build}`,
+    `Plataforma: ${r.plat}`,
+    `Idioma: ${r.lang}`,
+    `Recebido: ${receivedAt}`
+  ].join("\n");
+}
+__name(emailText, "emailText");
+async function sha(text) {
+  const d = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(d)].slice(0, 8).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+__name(sha, "sha");
+async function sendEmail(env, r, receivedAt, fetchImpl = fetch) {
+  if (!env?.RESEND_API_KEY) return false;
+  try {
+    const res = await fetchImpl("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${String(env.RESEND_API_KEY).trim()}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: env.FEEDBACK_FROM || "Soulmon <onboarding@resend.dev>",
+        to: [env.FEEDBACK_TO || FEEDBACK_TO_DEFAULT],
+        subject: emailSubject(r),
+        text: emailText(r, receivedAt)
+      }),
+      signal: AbortSignal.timeout(8e3)
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+__name(sendEmail, "sendEmail");
+async function receive2({ request, env }, fetchImpl) {
+  if (flagOn(env?.FEEDBACK_DISABLED)) return json12({ error: "feedback-disabled" }, 503);
+  const gate2 = takeToken("feedback", rateKey(clientKey(request)), RATE_IP);
+  if (!gate2.ok) return tooManyRequests(gate2.retryAfter, CORS16);
+  const declared = Number(request.headers.get("Content-Length"));
+  if (Number.isFinite(declared) && declared > MAX_BODY_BYTES4) return json12({ error: "invalid-body" }, 413);
+  const raw = await request.text().catch(() => null);
+  if (raw === null || raw.length > MAX_BODY_BYTES4) return json12({ error: "invalid-body" }, 400);
+  let body = null;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return json12({ error: "invalid-body" }, 400);
+  }
+  const r = sanitizeFeedback(body);
+  if (r.error) return json12({ error: r.error }, 400);
+  if (env?.FIREBASE_PROJECT_ID && bearerToken(request)) {
+    try {
+      const claims = await verifyIdToken(bearerToken(request), env.FIREBASE_PROJECT_ID);
+      if (claims?.sub) {
+        const g = takeToken("feedback-acct", await sha(String(claims.sub)), RATE_ACCOUNT);
+        if (!g.ok) return tooManyRequests(g.retryAfter, CORS16);
+      }
+    } catch {
+    }
+  }
+  if (!kv(env)) return json12({ error: "unavailable" }, 503);
+  const day2 = serverDay();
+  if (escritas2.day !== day2) escritas2 = { day: day2, n: 0, emails: 0 };
+  if (escritas2.n >= MAX_WRITES_PER_DAY) return tooManyRequests(3600, CORS16);
+  escritas2.n++;
+  const receivedAt = (/* @__PURE__ */ new Date()).toISOString();
+  const id = `${Date.now().toString(36)}${crypto.randomUUID().slice(0, 8)}`;
+  const key = `${FEEDBACK_PREFIX}${day2}:${id}`;
+  try {
+    await kvOrThrow(env).put(key, JSON.stringify({ ...r, at: receivedAt }), { expirationTtl: FEEDBACK_TTL_SECONDS });
+  } catch {
+    return json12({ error: "unavailable" }, 503);
+  }
+  let emailed = false;
+  if (escritas2.emails < MAX_EMAILS_PER_DAY) {
+    escritas2.emails++;
+    emailed = await sendEmail(env, r, receivedAt, fetchImpl);
+  }
+  return json12({ ok: true, delivered: emailed ? "email" : "stored" });
+}
+__name(receive2, "receive");
+async function read({ request, env }) {
+  if (!env?.METRICS_ADMIN_KEY) return json12({ error: "not-found" }, 404);
+  const gate2 = takeToken("feedback-read", clientKey(request), READ_RATE2);
+  if (!gate2.ok) return tooManyRequests(gate2.retryAfter, CORS16);
+  if (!secretEquals(request.headers.get(METRICS_KEY_HEADER) ?? "", env.METRICS_ADMIN_KEY)) return json12({ error: "unauthorized" }, 401);
+  if (!kv(env)) return json12({ error: "unavailable" }, 503);
+  const day2 = new URL(request.url).searchParams.get("day") ?? serverDay();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day2)) return json12({ error: "invalid-day" }, 400);
+  const store = kvOrThrow(env);
+  const listed = await store.list({ prefix: `${FEEDBACK_PREFIX}${day2}:`, limit: 200 });
+  const items = [];
+  for (const k of listed.keys) {
+    const v = await store.get(k.name, { type: "json" }).catch(() => null);
+    if (v && typeof v === "object") items.push(v);
+  }
+  return json12({ ok: true, day: day2, count: items.length, items });
+}
+__name(read, "read");
+async function onRequest9(ctx, fetchImpl = fetch) {
+  const m = ctx.request.method;
+  if (m === "OPTIONS") return new Response(null, { headers: CORS16 });
+  if (m === "POST") return receive2(ctx, fetchImpl);
+  if (m === "GET") return read(ctx);
+  return json12({ error: "method-not-allowed" }, 405);
+}
+__name(onRequest9, "onRequest");
+
+// ../.wrangler/tmp/pages-CWwMgR/functionsRoutes-0.08879459923255806.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -15645,6 +16710,13 @@ var routes = [
     modules: [onRequest5]
   },
   {
+    routePath: "/api/feedback",
+    mountPath: "/api",
+    method: "",
+    middlewares: [],
+    modules: [onRequest9]
+  },
+  {
     routePath: "/api/guild",
     mountPath: "/api",
     method: "",
@@ -15674,26 +16746,26 @@ var routes = [
   }
 ];
 
-// D:/Soulmon/repo/node_modules/path-to-regexp/dist.es2015/index.js
+// ../node_modules/path-to-regexp/dist.es2015/index.js
 function lexer(str) {
-  var tokens = [];
+  var tokens2 = [];
   var i2 = 0;
   while (i2 < str.length) {
     var char = str[i2];
     if (char === "*" || char === "+" || char === "?") {
-      tokens.push({ type: "MODIFIER", index: i2, value: str[i2++] });
+      tokens2.push({ type: "MODIFIER", index: i2, value: str[i2++] });
       continue;
     }
     if (char === "\\") {
-      tokens.push({ type: "ESCAPED_CHAR", index: i2++, value: str[i2++] });
+      tokens2.push({ type: "ESCAPED_CHAR", index: i2++, value: str[i2++] });
       continue;
     }
     if (char === "{") {
-      tokens.push({ type: "OPEN", index: i2, value: str[i2++] });
+      tokens2.push({ type: "OPEN", index: i2, value: str[i2++] });
       continue;
     }
     if (char === "}") {
-      tokens.push({ type: "CLOSE", index: i2, value: str[i2++] });
+      tokens2.push({ type: "CLOSE", index: i2, value: str[i2++] });
       continue;
     }
     if (char === ":") {
@@ -15715,7 +16787,7 @@ function lexer(str) {
       }
       if (!name)
         throw new TypeError("Missing parameter name at ".concat(i2));
-      tokens.push({ type: "NAME", index: i2, value: name });
+      tokens2.push({ type: "NAME", index: i2, value: name });
       i2 = j;
       continue;
     }
@@ -15749,35 +16821,35 @@ function lexer(str) {
         throw new TypeError("Unbalanced pattern at ".concat(i2));
       if (!pattern)
         throw new TypeError("Missing pattern at ".concat(i2));
-      tokens.push({ type: "PATTERN", index: i2, value: pattern });
+      tokens2.push({ type: "PATTERN", index: i2, value: pattern });
       i2 = j;
       continue;
     }
-    tokens.push({ type: "CHAR", index: i2, value: str[i2++] });
+    tokens2.push({ type: "CHAR", index: i2, value: str[i2++] });
   }
-  tokens.push({ type: "END", index: i2, value: "" });
-  return tokens;
+  tokens2.push({ type: "END", index: i2, value: "" });
+  return tokens2;
 }
 __name(lexer, "lexer");
 function parse6(str, options) {
   if (options === void 0) {
     options = {};
   }
-  var tokens = lexer(str);
+  var tokens2 = lexer(str);
   var _a2 = options.prefixes, prefixes = _a2 === void 0 ? "./" : _a2, _b2 = options.delimiter, delimiter = _b2 === void 0 ? "/#?" : _b2;
   var result = [];
   var key = 0;
   var i2 = 0;
   var path = "";
   var tryConsume = /* @__PURE__ */ __name(function(type) {
-    if (i2 < tokens.length && tokens[i2].type === type)
-      return tokens[i2++].value;
+    if (i2 < tokens2.length && tokens2[i2].type === type)
+      return tokens2[i2++].value;
   }, "tryConsume");
   var mustConsume = /* @__PURE__ */ __name(function(type) {
     var value2 = tryConsume(type);
     if (value2 !== void 0)
       return value2;
-    var _a3 = tokens[i2], nextType = _a3.type, index2 = _a3.index;
+    var _a3 = tokens2[i2], nextType = _a3.type, index2 = _a3.index;
     throw new TypeError("Unexpected ".concat(nextType, " at ").concat(index2, ", expected ").concat(type));
   }, "mustConsume");
   var consumeText = /* @__PURE__ */ __name(function() {
@@ -15806,7 +16878,7 @@ function parse6(str, options) {
       return "[^".concat(escapeString(delimiter), "]+?");
     return "(?:(?!".concat(escapeString(prevText), ")[^").concat(escapeString(delimiter), "])+?");
   }, "safePattern");
-  while (i2 < tokens.length) {
+  while (i2 < tokens2.length) {
     var char = tryConsume("CHAR");
     var name = tryConsume("NAME");
     var pattern = tryConsume("PATTERN");
@@ -15936,7 +17008,7 @@ function stringToRegexp(path, keys, options) {
   return tokensToRegexp(parse6(path, options), keys, options);
 }
 __name(stringToRegexp, "stringToRegexp");
-function tokensToRegexp(tokens, keys, options) {
+function tokensToRegexp(tokens2, keys, options) {
   if (options === void 0) {
     options = {};
   }
@@ -15946,7 +17018,7 @@ function tokensToRegexp(tokens, keys, options) {
   var endsWithRe = "[".concat(escapeString(endsWith), "]|$");
   var delimiterRe = "[".concat(escapeString(delimiter), "]");
   var route = start ? "^" : "";
-  for (var _i = 0, tokens_1 = tokens; _i < tokens_1.length; _i++) {
+  for (var _i = 0, tokens_1 = tokens2; _i < tokens_1.length; _i++) {
     var token = tokens_1[_i];
     if (typeof token === "string") {
       route += escapeString(encode(token));
@@ -15979,7 +17051,7 @@ function tokensToRegexp(tokens, keys, options) {
       route += "".concat(delimiterRe, "?");
     route += !options.endsWith ? "$" : "(?=".concat(endsWithRe, ")");
   } else {
-    var endToken = tokens[tokens.length - 1];
+    var endToken = tokens2[tokens2.length - 1];
     var isEndDelimited = typeof endToken === "string" ? delimiterRe.indexOf(endToken[endToken.length - 1]) > -1 : endToken === void 0;
     if (!strict) {
       route += "(?:".concat(delimiterRe, "(?=").concat(endsWithRe, "))?");
@@ -16000,7 +17072,7 @@ function pathToRegexp(path, keys, options) {
 }
 __name(pathToRegexp, "pathToRegexp");
 
-// D:/Soulmon/repo/node_modules/wrangler/templates/pages-template-worker.ts
+// ../node_modules/wrangler/templates/pages-template-worker.ts
 var escapeRegex = /[.+?^${}()|[\]\\]/g;
 function* executeRequest(request) {
   const requestPath = new URL(request.url).pathname;

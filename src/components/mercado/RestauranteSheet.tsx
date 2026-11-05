@@ -86,7 +86,7 @@ export function RestauranteSheet({ language }: { language: Language }) {
           const has = extraOwned(gameState, d.extra);
           return (
             <li key={d.id} data-dish={d.id} data-dish-chef={d.chef} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', ...sm2Text }}>
-              <span aria-hidden="true" style={{ fontSize: 32, lineHeight: '40px', width: 40, textAlign: 'center', flexShrink: 0 }}>{d.icon}</span>
+              <span aria-hidden="true" style={{ lineHeight: '40px', width: 40, textAlign: 'center', flexShrink: 0 }}>{d.icon}</span>
               <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <span style={{ fontWeight: 600 }}>{isPt ? d.namePt : d.nameEn}</span>
                 <span data-dish-effect style={{ ...sm2Hint }}>{effectText(d.effect, isPt)}</span>
