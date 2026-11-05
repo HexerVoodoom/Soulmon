@@ -8,7 +8,7 @@ import { playerDayIso } from './playerDay';
 import { soulCombatant } from './soulXP';
 import { weekMondayOf } from './premiumFood';
 import {
-  GLITCHTAMA_DROP_CHANCE, GLITCHTAMA_DROPS_PER_WEEK, glitchtamaDraw, glitchtamaDropFor, glitchtamaDroppedThisWeek, sanitizeGlitchtamaDrop, withGlitchtamaDrop,
+  GLITCHTAMA_DROP_CHANCE, GLITCHTAMA_DROPS_PER_WEEK, glitchtamaDraw, glitchtamaDropFor, glitchtamaDroppedThisWeek, sanitizeGlitchtamaDrop, aplicarDropDoMarco,
 } from './glitchtamaDrop';
 
 const NOW = new Date(Date.UTC(2026, 10, 5, 15, 0, 0)); // quinta
@@ -41,22 +41,22 @@ describe('teto semanal no save', () => {
   it('o primeiro drop da semana grava o registro; o segundo é barrado, mesmo com sorteio de 0', () => {
     const s0 = inv();
     expect(glitchtamaDropFor(s0, 5, NOW, () => 0)).toBe(true);
-    const s1 = withGlitchtamaDrop(s0, NOW);
+    const s1 = aplicarDropDoMarco(s0, NOW);
     expect(s1.foodInventory['🌀']).toBe(1);
     expect(s1.glitchtamaDrop).toEqual({ week: semanaDe(NOW), dropped: 1 });
     expect(glitchtamaDropFor(s1, 10, NOW, () => 0)).toBe(false);
-    expect(withGlitchtamaDrop(s1, NOW)).toBe(s1); // o updater reconfere o teto: não soma de novo
+    expect(aplicarDropDoMarco(s1, NOW)).toBe(s1); // o updater reconfere o teto: não soma de novo
   });
   it('a semana seguinte (segunda-feira) libera de novo; o resto da mesma semana não', () => {
-    const s1 = withGlitchtamaDrop(inv(), NOW);
+    const s1 = aplicarDropDoMarco(inv(), NOW);
     const domingo = new Date(Date.UTC(2026, 10, 8, 15, 0, 0));
     const segunda = new Date(Date.UTC(2026, 10, 9, 15, 0, 0));
     expect(glitchtamaDropFor(s1, 5, domingo, () => 0)).toBe(false);
     expect(glitchtamaDropFor(s1, 5, segunda, () => 0)).toBe(true);
-    expect(withGlitchtamaDrop(s1, segunda).foodInventory['🌀']).toBe(2);
+    expect(aplicarDropDoMarco(s1, segunda).foodInventory['🌀']).toBe(2);
   });
   it('o estoque já guardado é preservado', () => {
-    expect(withGlitchtamaDrop(inv(3), NOW).foodInventory['🌀']).toBe(4);
+    expect(aplicarDropDoMarco(inv(3), NOW).foodInventory['🌀']).toBe(4);
   });
 });
 
@@ -139,8 +139,8 @@ describe('paridade tela × ausente', () => {
     const tela = fs.readFileSync(`${process.cwd()}/src/components/DungeonGame.tsx`, 'utf8');
     const ausente = fs.readFileSync(`${process.cwd()}/src/utils/dungeonAway.ts`, 'utf8');
     for (const src of [tela, ausente]) expect(src).toMatch(/glitchtamaDropFor\(/);
-    expect(ausente).toMatch(/withGlitchtamaDrop\(/);
-    expect(fs.readFileSync(`${process.cwd()}/src/App.tsx`, 'utf8')).toMatch(/withGlitchtamaDrop\(/);
+    expect(ausente).toMatch(/aplicarDropDoMarco\(/);
+    expect(fs.readFileSync(`${process.cwd()}/src/App.tsx`, 'utf8')).toMatch(/aplicarDropDoMarco\(/);
   });
   it('com a mesma entrada (estado, camada, relógio, sorteio) o veredito é o mesmo que a descida fora do app usa', () => {
     // a tela passa `Math.random`; a descida passa o sorteio semeado: ambos entram no mesmo `glitchtamaDropFor`

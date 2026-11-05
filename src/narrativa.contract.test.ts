@@ -194,6 +194,7 @@ const EXCECOES: Record<string, { arquivos: string[]; proposta: string }> = {
       'src/components/NightmareBattle.tsx',
       'src/contexts/GameStateContext.tsx',
       'src/utils/dungeonBase.ts', // movido de dungeon.ts em 26/10/2026 (perf do bundle), mesmo uso — não é espalhamento
+      'src/utils/glitchtamaDrop.ts', // dono único do drop raro do item (pedido do dono, 05/11/2026, REGISTRO §226); módulo novo por pedido, não espalhamento
       'src/utils/gainArt.ts',
       'src/utils/itemArt.ts',
       'src/utils/shop.ts',

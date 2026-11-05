@@ -52,7 +52,7 @@ export function glitchtamaDropFor(state: GlitchtamaDropClock, layer: number, now
 }
 
 /** Aplica o drop (PURA): +1 no inventário e o registro da semana. Reconfere o teto: se já estourou, devolve o MESMO estado. */
-export function withGlitchtamaDrop<T extends GlitchtamaDropClock & { foodInventory: Record<string, number> }>(state: T, now: Date): T {
+export function aplicarDropDoMarco<T extends GlitchtamaDropClock & { foodInventory: Record<string, number> }>(state: T, now: Date): T {
   if (glitchtamaDroppedThisWeek(state, now) >= GLITCHTAMA_DROPS_PER_WEEK) return state;
   const week = weekMondayOf(playerDayIso(now, state.playerDayTz));
   return {

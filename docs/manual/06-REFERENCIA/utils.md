@@ -1076,7 +1076,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/glitchtamaDrop.ts`
 
-**Dono de:** o drop RARO do 🌀 Glitchtama no marco da masmorra (05/11/2026, REGISTRO §226): `GLITCHTAMA_DROP_CHANCE` (1%), `GLITCHTAMA_DROPS_PER_WEEK` (1), `glitchtamaDropFor` (marco + teto semanal + sorteio injetável), `withGlitchtamaDrop` (aplica +1 e grava o registro, reconferindo o teto), `glitchtamaDroppedThisWeek` e `sanitizeGlitchtamaDrop` (leitura segura do campo `glitchtamaDrop` do save). A semana é a do dia do jogador (`weekMondayOf` de `premiumFood.ts`). **Chamado por:** `DungeonGame.tsx` (sorteio com `Math.random`), `App.tsx` (`handleGlitchtama`), `dungeonAway.ts` (sorteio semeado por seed e camada) e `GameStateContext.tsx` (sanitização). **Régua:** `glitchtamaDrop.test.ts`, `DungeonGame.marco.render.test.tsx`, `dungeonAway.test.ts`.
+**Dono de:** o drop RARO do 🌀 Glitchtama no marco da masmorra (05/11/2026, REGISTRO §226): `GLITCHTAMA_DROP_CHANCE` (1%), `GLITCHTAMA_DROPS_PER_WEEK` (1), `glitchtamaDropFor` (marco + teto semanal + sorteio injetável), `aplicarDropDoMarco` (aplica +1 e grava o registro, reconferindo o teto), `glitchtamaDroppedThisWeek` e `sanitizeGlitchtamaDrop` (leitura segura do campo `glitchtamaDrop` do save). A semana é a do dia do jogador (`weekMondayOf` de `premiumFood.ts`). **Chamado por:** `DungeonGame.tsx` (sorteio com `Math.random`), `App.tsx` (`handleGlitchtama`), `dungeonAway.ts` (sorteio semeado por seed e camada) e `GameStateContext.tsx` (sanitização). **Régua:** `glitchtamaDrop.test.ts`, `DungeonGame.marco.render.test.tsx`, `dungeonAway.test.ts`.
 
 ### `src/utils/dungeonRevive.ts`
 

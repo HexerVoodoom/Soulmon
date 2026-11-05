@@ -32,7 +32,7 @@ import { buildDungeonWave, clearBonus, dungeonHeartsLeftToday, noteDungeonHeartD
 import { autoDodgeGrade, autoRingGrade, dungeonFight, dungeonFightSeed, type DungeonPlayerCfg } from './dungeonFight';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
 import { mulberry32 } from './combate/rng';
-import { glitchtamaDraw, glitchtamaDropFor, withGlitchtamaDrop } from './glitchtamaDrop';
+import { glitchtamaDraw, glitchtamaDropFor, aplicarDropDoMarco } from './glitchtamaDrop';
 import { applyRiftLayer, riftTierTotals, type RiftMonthState } from './endlessRift';
 import { SPECIAL_FAMILIES, type SpecialFamily } from './combate/specials';
 import { jeitoDaProfissao, jeitoParaPve } from './profissaoMasmorra';
@@ -251,7 +251,7 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
       if (!ms) { ms = true; s = applyMilestoneItem(s, now); }
       if (glitchtamaDropFor(s, layer, new Date(t), glitchtamaDraw(away.seed, layer))) {
         report.glitchtama += 1;
-        s = withGlitchtamaDrop(s, new Date(t));
+        s = aplicarDropDoMarco(s, new Date(t));
       }
     }
     hp = Math.min(1, hp + cura);
