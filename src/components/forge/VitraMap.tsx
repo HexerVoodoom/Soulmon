@@ -13,9 +13,9 @@ import { VITRA_MAP_ART } from '../../assets/soulmon/vitra';
 
 /** Centro de cada chakra em % do PALCO (a arte inteira, 852x1846), medido nos anéis de `vitra-mapa.png`; o diâmetro do anel é 18% da largura. */
 export const CHAKRA: Readonly<Record<EquipSlot, { x: number; y: number; side: 'below' }>> = {
-  nucleo: { x: 50, y: 29.25, side: 'below' },
-  carapaca: { x: 50, y: 41.5, side: 'below' },
-  rastro: { x: 50, y: 53.5, side: 'below' },
+  nucleo: { x: 50, y: 29.9, side: 'below' },
+  carapaca: { x: 50, y: 41.6, side: 'below' },
+  rastro: { x: 50, y: 53, side: 'below' },
 };
 
 export interface VitraChakra {
