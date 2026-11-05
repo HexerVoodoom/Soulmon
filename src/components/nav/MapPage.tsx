@@ -179,7 +179,7 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
                 <span
                   data-map-label
                   style={{
-                    position: 'absolute', left: '50%', bottom: 0, transform: 'translateX(-50%)', whiteSpace: 'nowrap',
+                    position: 'absolute', left: '50%', bottom: 0, transform: 'translateX(-50%)', width: 'max-content',
                     padding: '2px 9px',
                     borderRadius: 999,
                     background: 'rgba(8,25,26,.82)',
