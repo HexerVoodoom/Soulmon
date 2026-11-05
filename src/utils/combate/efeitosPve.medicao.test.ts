@@ -1,5 +1,5 @@
 /**
- * §226: GATE da regra nova em PvE. Pareado: mesma semente e célula, com e sem o efeito do elemento.
+ * §228: GATE da regra nova em PvE. Pareado: mesma semente e célula, com e sem o efeito do elemento.
  * Critério: vitória dentro de ±3pp em Arena, Masmorra e Pesadelo. Só efeito que passa entra em `EFEITOS_PVE_LIGADOS`.
  */
 import { describe, expect, it, vi } from 'vitest';
@@ -33,7 +33,7 @@ const fmt = (d: number[]) => `arena ${d[0].toFixed(1)} masmorra ${d[1].toFixed(1
 
 const GRADE = process.env.EFEITOS_GRADE === '1';
 
-describe('§226: efeitos em PvE', () => {
+describe('§228: efeitos em PvE', () => {
   it('sem par no elemento, o especial é o mesmo objeto', () => {
     const sp = specialOf('direct');
     expect(comEfeitoDoElemento(sp, 'fogo')).toBe(sp);

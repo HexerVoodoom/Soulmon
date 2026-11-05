@@ -219,6 +219,7 @@ import { StrayRecoveryNotice } from './components/home/StrayRecoveryNotice';
 import { useLibraryNewNotice } from './components/LibraryNewBadge';
 import { applyEssences, type EssenceDrop } from './utils/essences';
 import { NIGHTMARE_ELEMENT } from './utils/nightmareElement';
+import { aplicarDropDoMarco } from './utils/glitchtamaDrop';
 import { applyBestiarySeen, applyEnemyDefeated, applyFloorCleared, applyMilestoneItem } from './utils/dungeonRewards';
 import type { BosqueArvores } from './utils/bosqueArvores';
 import type { OcupadoAcao } from './components/DungeonBusyModal';
@@ -4487,10 +4488,15 @@ export default function App() {
 
   // 🌀 Glitchtama — guaranteed reward for clearing all 5 dungeon floors.
   // Also counts a completed run for the missions.
-  const handleGlitchtama = useCallback(() => {
-    // A conta (Vínculo pelo teto diário suave de `bond.ts`, o Glitchtama, `dungeonRunsCompleted` e os fragmentos da run com o
-    // Comércio) é de `utils/dungeonRewards.ts` — a MESMA que a descida que continua sozinha usa.
-    setGameState(prev => applyMilestoneItem(prev, new Date()));
+  const handleGlitchtama = useCallback(({ runReward, drop }: { runReward: boolean; drop: boolean }) => {
+    // A conta (Vínculo pelo teto diário suave de `bond.ts`, `dungeonRunsCompleted` e os fragmentos da run com o Comércio) é de
+    // `utils/dungeonRewards.ts`; o 🌀 raro (1%/marco, 1/semana no save) é de `utils/glitchtamaDrop.ts` — as MESMAS que a descida
+    // que continua sozinha usa. O teto semanal é reconferido DENTRO do updater (`aplicarDropDoMarco`).
+    setGameState(prev => {
+      const agora = new Date();
+      const comRun = runReward ? applyMilestoneItem(prev, agora) : prev;
+      return drop ? aplicarDropDoMarco(comRun, agora) : comRun;
+    });
   }, []);
 
   // beta3 A4: a missão "completar 2 runs" conta a DESCIDA que terminou com ≥1 camada limpa (antes só contava ao bater o marco da camada 5,

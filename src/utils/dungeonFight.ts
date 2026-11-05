@@ -44,9 +44,9 @@ export interface DungeonPlayerCfg {
   dodge?: Readonly<Record<DodgeGrade, number>>;
   /** `tal-pve-07` (Tarefa B): opening shield, fraction of the player's HP. Absent = 0 (the gates' simulations never set it). */
   startShield?: number;
-  /** §226: elemento do especial para a regra nova. Só a medição passa enquanto `EFEITOS_PVE_LIGADOS` for `false`. */
+  /** §228: elemento do especial para a regra nova. Só a medição passa enquanto `EFEITOS_PVE_LIGADOS` for `false`. */
   efeitoElemento?: string;
-  /** §226: usa os botões próprios do Pesadelo. */
+  /** §228: usa os botões próprios do Pesadelo. */
   pesadelo?: boolean;
 }
 
@@ -161,7 +161,7 @@ export interface SequenceConfig {
   /** Tarefa B: `tal-pve-07` (opening shield) and `tal-pve-03` (extra heal between floors). The gates never set them. */
   startShield?: number;
   healBoost?: number;
-  /** §226: ver `DungeonPlayerCfg.efeitoElemento`. */
+  /** §228: ver `DungeonPlayerCfg.efeitoElemento`. */
   efeitoElemento?: string;
   /** Knobs of the gates only. */
   knobs?: { foe?: DungeonFoeKnobs; contraTeto?: number; ring?: Readonly<Record<RingGrade, number>>; dodge?: Readonly<Record<DodgeGrade, number>> };

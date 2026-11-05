@@ -1,5 +1,5 @@
 /**
- * EFEITO DE COMBATE PELO ELEMENTO DO ESPECIAL (dono, 04/11/2026; REGISTRO §226).
+ * EFEITO DE COMBATE PELO ELEMENTO DO ESPECIAL (dono, 04/11/2026; REGISTRO §228).
  *
  * O efeito depende do elemento do ESPECIAL, não do Soulmon: água com especial de fogo pode queimar. E nem todo especial
  * tem efeito: a FAMÍLIA continua decidindo a mecânica e `direct` é só dano. O elemento apenas diz qual é o "sabor" de
@@ -58,7 +58,7 @@ export function efeitoVisivel(
 }
 
 /**
- * §226: as regras novas LIGADAS em PvE. Só entra o que passa em ±3pp no gate `efeitosPve.medicao.test.ts`.
+ * §228: as regras novas LIGADAS em PvE. Só entra o que passa em ±3pp no gate `efeitosPve.medicao.test.ts`.
  * Arena e Masmorra usam a mesma regra; o Pesadelo tem botões próprios (`EFFECT_TUNE_PESADELO`).
  */
 export const EFEITOS_PVE_LIGADOS: readonly EfeitoElemento[] = ['silencio', 'curaContinua', 'lentidao'];

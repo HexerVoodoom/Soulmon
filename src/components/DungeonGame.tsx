@@ -31,6 +31,7 @@ import {
   layersAffordable, spendLayer, layerRefusal, recordLayerCleared, sanitizeDepthRecord,
   DUNGEON_AWAY_MAX_HOURS, type DungeonAway, type DungeonAwayPlayer,
 } from '../utils/dungeonIdle';
+import { glitchtamaDraw, glitchtamaDropFor } from '../utils/glitchtamaDrop';
 import { applyRiftLayerPaid, dungeonWaveOf, settleDungeonAwayNow, type AwayReport } from '../utils/dungeonAway';
 import { marcarTelaMasmorra } from '../utils/dungeonScreenOpen';
 import { pushDrop, popDrop, type DropGroup, type DropKind } from '../utils/dungeonDrops';
@@ -159,8 +160,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   onLose: () => void;
   /** Rolls for a heart drop (added to Items); returns whether one dropped. */
   onHeartDrop: () => boolean;
-  /** Completing all 5 floors grants a Glitchtama (added to Items). */
-  onGlitchtama: () => void;
+  /** Todo MARCO (camada 5, 10, …): `runReward` = a recompensa da run (1× por descida, no primeiro marco); `drop` = o 🌀 raro
+   *  (1%/marco, 1/semana — `utils/glitchtamaDrop.ts`) caiu. Só é chamado se uma das duas for verdadeira. */
+  onGlitchtama: (m: { runReward: boolean; drop: boolean }) => void;
   /** 🔗 #59b — um ANDAR limpo (os 6 inimigos da escada). O componente não
    *  expunha este momento: só `onEnemyDefeated`, `onEarnPoints` e
    *  `onGlitchtama` (a run inteira). Era por isso que o `BondEvent`
@@ -484,15 +486,18 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     setRunScore(runScoreRef.current);
     resumoRef.current.layers += 1;
     registrarCamada(floor); // recorde + marcos de profundidade (fragmentos, 1× na vida)
-    if (isMilestoneLayer(floor) && !milestoneRef.current) {
-      milestoneRef.current = true; // idempotente: um Glitchtama por descida, no primeiro marco limpo
-      setMilestoneNow(true);
+    // 05/11/2026: o 🌀 é RARO (1% por marco, 1 por semana, sorteio semeado por descida e camada — a MESMA regra da descida fora do app, `glitchtamaDrop.ts`); a recompensa da
+    // run (Vínculo, fragmentos) segue 1× por descida, no primeiro marco. Marco sem drop é silencioso: nem aviso nem item.
+    const marco = isMilestoneLayer(floor);
+    const drop = marco && glitchtamaDropFor(gsRef.current ?? {}, floor, new Date(), glitchtamaDraw(runSeedRef.current, floor));
+    const runReward = marco && !milestoneRef.current;
+    if (runReward) milestoneRef.current = true; // idempotente: a recompensa da run sai uma vez por descida
+    if (drop) {
       resumoRef.current.glitchtama += 1;
       noteDrop('glitchtama', 1);
-      onGlitchtama();                             // marco → 🌀 Glitchtama (1 uso/dia: `specialItemUse.ts`)
-    } else {
-      setMilestoneNow(false);
     }
+    setMilestoneNow(drop);
+    if (runReward || drop) onGlitchtama({ runReward, drop }); // 🌀 (1 uso/dia: `specialItemUse.ts`)
     // A cura entre andares (`curaAndar` do ofício) é fração do HP máximo; fica fora da régua do TTK.
     const cura = pve.cura + rift.healBoost; // Tarefa B (`tal-pve-03`): a cura entre andares sobe poucos pontos do HP máximo
     // VIDA INTEIRA (30/10/2026): a cura é em pontos inteiros e o texto mostra exatamente o que a barra subiu
@@ -858,15 +863,15 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
               <p className="sm2-num" style={phaseLine}>{scoreLine}</p>
               {/* A cura é FATO em `muted`, não prêmio (D-J8). */}
               <p style={phaseLine}>{rewardMsg}{rewardMsg ? ' · ' : ''}<BitsAmount value={clearBonus(floor)} sign="+" /></p>
-              {/* O MARCO do andar 5 (uma vez por descida). Copy §4, o nó (§7, L4): o nome `Glitchtama` FICA
+              {/* O MARCO (cada 5 camadas) SÓ aparece quando o 🌀 raro caiu (1%, 1/semana). Marco sem drop é silencioso. Copy §4, o nó (§7, L4): o nome `Glitchtama` FICA
                   (`EXCECOES` da régua). "Usar" é o verbo da mochila. Fato, nunca "você dominou a masmorra" (L12). */}
               {milestoneNow && (
                 <div data-dungeon-milestone>
-                  <p style={phaseLine}>{isPt ? `Marco: a camada ${DUNGEON_MILESTONE_FLOOR} ficou para trás. Da fenda ele trouxe fragmentos que ainda não assentaram.` : `Milestone: layer ${DUNGEON_MILESTONE_FLOOR} is behind you. From the rift he brought fragments that haven't settled yet.`}</p>
+                  <p style={phaseLine}>{isPt ? `Marco: a camada ${DUNGEON_MILESTONE_FLOOR} ficou para trás. Da fenda ele trouxe algo raro.` : `Milestone: layer ${DUNGEON_MILESTONE_FLOOR} is behind you. From the rift he brought something rare.`}</p>
                   <p style={phaseLine}>
                     {isPt
-                      ? 'Um Glitchtama, com um dia inteiro preso dentro. Usar dá àquele dia o fechamento que ele não teve. (Arquivos)'
-                      : 'A Glitchtama, with a whole day caught inside. Using it gives that day the closing it never had. (Files)'}
+                      ? 'Um Glitchtama, com um dia inteiro preso dentro. Usar dá àquele dia o fechamento que ele não teve. Cai raramente, no máximo um por semana. (Arquivos)'
+                      : 'A Glitchtama, with a whole day caught inside. Using it gives that day the closing it never had. It drops rarely, at most one a week. (Files)'}
                   </p>
                   <p style={phaseLine}>{isPt ? 'A próxima descida ficou mais difícil.' : 'The next descent got harder.'}</p>
                 </div>

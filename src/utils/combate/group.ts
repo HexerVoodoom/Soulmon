@@ -124,7 +124,7 @@ interface G {
   nVuln: number;
   nSpd: number;
   nHit: number;
-  /** §226: golpes próprios que faltam de silêncio e de lentidão; pulsos de cura contínua. */
+  /** §228: golpes próprios que faltam de silêncio e de lentidão; pulsos de cura contínua. */
   nSil: number;
   nSlow: number;
   nHot: number;
@@ -275,7 +275,7 @@ export function* groupFightSteps(
         break;
       case 'shield':
         if (sp.effect === 'hot') {
-          // §226: 3 pulsos de E/3 em pontos inteiros; param na morte de quem cura.
+          // §228: 3 pulsos de E/3 em pontos inteiros; param na morte de quem cura.
           const pulse = Math.round((Eb * (sp.tune ?? EFFECT_TUNE).hotScale / 3 / hitsOn(tgt, me)) * me.pts);
           me.nHot += 3;
           for (let k = 1; k <= 3; k++) {
@@ -325,7 +325,7 @@ export function* groupFightSteps(
     }
     let tEn = Infinity;
     for (const f of all) {
-      // §226: silenciado não acorda o relógio (com a barra cheia o tempo pararia); a energia segue guardada e sai no primeiro instante livre
+      // §228: silenciado não acorda o relógio (com a barra cheia o tempo pararia); a energia segue guardada e sai no primeiro instante livre
       if (f.sp && f.dead === Infinity && f.nSil <= EPS) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
     }
     let tN = Infinity;
