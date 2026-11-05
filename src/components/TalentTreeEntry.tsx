@@ -49,11 +49,10 @@ export default function TalentTreeEntry({ language = 'pt-BR' }: { language?: str
       {open && createPortal(
         <div role="dialog" aria-modal="true" aria-label={title} data-talent-fullscreen
           style={{ position: 'fixed', inset: 0, zIndex: 7000, display: 'flex', flexDirection: 'column', background: 'var(--sm2-bg)', color: 'var(--sm2-ink)' }}>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', padding: 'calc(env(safe-area-inset-top, 0px) + 8px) 12px 8px', flex: 'none' }}>
-            <button type="button" data-talent-close className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" onClick={close}
-              aria-label={isPt ? 'Fechar' : 'Close'} style={{ minWidth: 44 }} autoFocus>
-              <Icon name="close" size={20} />
-              {isPt ? 'Fechar' : 'Close'}
+          <div style={{ display: 'flex', justifyContent: 'flex-start', padding: 'calc(env(safe-area-inset-top, 0px) + 8px) 12px 8px', flex: 'none' }}>
+            <button type="button" data-talent-close className="sm2-ora-back" onClick={close}
+              aria-label={isPt ? 'Fechar' : 'Close'} autoFocus>
+              <Icon name="close" size={24} tone="inherit" />
             </button>
           </div>
           <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
