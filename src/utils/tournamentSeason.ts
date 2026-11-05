@@ -58,6 +58,22 @@ export function getTournamentWindow(now: Date = new Date()): TournamentWindow {
   return { isOpen: false, daysUntilNext: (ROUND_START_DAY - day + 7) % 7, daysLeft: 0 };
 }
 
+const WORDS_EN = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', 'Twenty', 'Twenty-one', 'Twenty-two', 'Twenty-three', 'Twenty-four', 'Twenty-five', 'Twenty-six', 'Twenty-seven', 'Twenty-eight', 'Twenty-nine', 'Thirty', 'Thirty-one'];
+const WORDS_PT = ['Zero', 'Um', 'Dois', 'Três', 'Quatro', 'Cinco', 'Seis', 'Sete', 'Oito', 'Nove', 'Dez', 'Onze', 'Doze', 'Treze', 'Catorze', 'Quinze', 'Dezesseis', 'Dezessete', 'Dezoito', 'Dezenove', 'Vinte', 'Vinte e um', 'Vinte e dois', 'Vinte e três', 'Vinte e quatro', 'Vinte e cinco', 'Vinte e seis', 'Vinte e sete', 'Vinte e oito', 'Vinte e nove', 'Trinta', 'Trinta e um'];
+
+/** Dias até a temporada do Torneio virar, contando hoje. A temporada é o mês em UTC (`currentSeason`, `functions/api/community.js`). */
+export function seasonDaysLeft(now: Date = new Date()): number {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)).getUTCDate() - now.getUTCDate() + 1;
+}
+
+/** "Seven Days Remaining" / "One Day Remaining" (dono, 05/11/2026). */
+export function seasonDaysLabel(now: Date, language: 'pt-BR' | 'en-US'): string {
+  const n = seasonDaysLeft(now);
+  return language === 'pt-BR'
+    ? `${WORDS_PT[n]} ${n === 1 ? 'dia restante' : 'dias restantes'}`
+    : `${WORDS_EN[n]} ${n === 1 ? 'Day' : 'Days'} Remaining`;
+}
+
 /**
  * Texto MÍNIMO para a UI, nos dois idiomas (02/10/2026, pedido do dono: sem
  * frases). Rodada aberta: "Dias restantes: N". Fora da janela: "Próxima
