@@ -280,15 +280,20 @@ export async function upsertSimulado(env, p, day, now = new Date()) {
   const spriteUrl = spriteUrlOrNull(spriteRaw);
   const e = estadoDoDia(p, day);
   const sig = `${e.level}|${e.bond}|${spriteUrl ?? ''}|${p.petName}`;
-  if (prev?.simulated === true && prev.simSig === sig && now.getTime() - Number(prev.simAt || 0) < PROFILE_REFRESH_MS) {
+  const criadoEm = dayStart(SIM_EPOCH) - p.daysPlaying * DAY_MS;
+  // `createdAt` do simulado segue o dado (`daysPlaying`): perfil gravado com conta mais velha que o dado diz é corrigido uma vez.
+  const idadeCoerente = prev?.simulated !== true || prev.createdAt === criadoEm;
+  if (idadeCoerente && prev?.simulated === true && prev.simSig === sig && now.getTime() - Number(prev.simAt || 0) < PROFILE_REFRESH_MS) {
     return { wrote: false, name: prev.name };
   }
   const name = prev?.simulated === true && prev.name ? prev.name : (await reservarApelido(env, p)) ?? p.nick;
   const pid = prev?.pid || pidDeterministico(p.id);
-  const criadoEm = dayStart(SIM_EPOCH) - p.daysPlaying * DAY_MS;
   const lifetimeBase = Math.round(p.skill * p.skill * 1300 + e.level * 6);
   const peso = (alvo) => (p.line === alvo ? 40 + e.level * 6 : 10 + e.level * 2);
-  const unlocked = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'].filter((s) => STAGE_FIRST_LEVEL[s] <= e.level);
+  // ids reais com linha de arte (`champion-harmony`), não o estágio cru; ultra não tem ramo.
+  const unlocked = ['rookie', 'champion', 'ultimate', 'mega', 'ultra']
+    .filter((s) => STAGE_FIRST_LEVEL[s] <= e.level)
+    .map((s) => (s === 'rookie' || s === 'ultra' ? s : `${s}-${PATH_SUFFIX[p.line]}`));
   const perfil = {
     ...(prev || {}),
     id: p.id,
@@ -307,7 +312,7 @@ export async function upsertSimulado(env, p, day, now = new Date()) {
     attrs: { power: peso('poder'), harmony: peso('harmonia'), benevolence: peso('benevolencia') },
     tasksDone: Math.round(e.level * 9 + p.daysPlaying * 0.4),
     friends: prev?.friends || [],
-    createdAt: prev?.createdAt || criadoEm,
+    createdAt: prev?.simulated === true ? criadoEm : prev?.createdAt || criadoEm,
     updatedAt: now.getTime(),
     // O duelo só soma (`settleMatch`): nunca recuar o que o Torneio já creditou.
     lifetimePoints: Math.max(Number(prev?.lifetimePoints) || 0, lifetimeBase),

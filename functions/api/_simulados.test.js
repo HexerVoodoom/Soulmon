@@ -155,6 +155,12 @@ describe('evolução por faixa fixa', () => {
   it('todo level cabe no teto do duelo por dia de conta', () => {
     for (const p of SIMULADOS) expect(estadoDoDia(p, '2026-11-05').level, p.id).toBeLessThanOrEqual(1 + p.daysPlaying);
   });
+  it('Rookies novos: poucos dias de conta, coerentes com o level 1 da âncora', () => {
+    for (const p of SIMULADOS.filter((x) => x.id >= 'sim_0051')) {
+      expect(estadoDoDia(p, '2026-11-05').level, p.id).toBe(1);
+      expect(p.daysPlaying, p.id).toBeLessThanOrEqual(5);
+    }
+  });
   it('nunca regride, dia a dia, e o duelo enxerga o mesmo level', () => {
     for (const p of SIMULADOS) {
       let prev = 0;

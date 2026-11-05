@@ -240,6 +240,18 @@ export function EvolutionPath({
   // they leave the screen (the component unmounts on navigation).
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [confirmReveal, setConfirmReveal] = useState<CreatureStage | null>(null);
+  // A forma tocada: só ela mostra "Trocar forma" / "Degenerar". Tocar fora (ou trocar de galho) limpa.
+  const [formaSel, setFormaSel] = useState<string | null>(null);
+  useEffect(() => {
+    if (!formaSel) return undefined;
+    const fora = (ev: Event) => {
+      const alvo = ev.target as Element | null;
+      if (!alvo?.closest?.('[data-testid^="sm-no-"]')) setFormaSel(null);
+    };
+    document.addEventListener('pointerdown', fora);
+    return () => document.removeEventListener('pointerdown', fora);
+  }, [formaSel]);
+  useEffect(() => { setFormaSel(null); }, [selectedBranch]);
 
   const handleRevealConfirm = () => {
     if (confirmReveal) setRevealed(prev => new Set(prev).add(creatureFormId(confirmReveal)));
@@ -797,7 +809,12 @@ export function EvolutionPath({
           ringColor={isUltra ? ULTRA_COLOR : ramoAttr ? ATTR_COLOR[ramoAttr] : undefined}
           label={nodeLabel}
           title={hidden && isAdmin ? (isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)') : nome}
-          onClick={hidden && isAdmin ? () => setConfirmReveal(evolution) : undefined}
+          onClick={hidden && isAdmin
+            ? () => setConfirmReveal(evolution)
+            : (isLateralSwitch || isPreviousStage)
+              ? () => setFormaSel((cur) => (cur === stageId ? null : stageId))
+              : undefined}
+          pressed={!hidden && (isLateralSwitch || isPreviousStage) ? formaSel === stageId : undefined}
         />
 
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -840,7 +857,7 @@ export function EvolutionPath({
             </InfoTip>
           )}
 
-          {isLateralSwitch && (
+          {isLateralSwitch && formaSel === stageId && (
             <button
               type="button"
               onClick={() => handleSwitchClick(evolution)}
@@ -849,7 +866,7 @@ export function EvolutionPath({
               {isPt ? 'Trocar forma' : 'Switch form'}
             </button>
           )}
-          {isPreviousStage && (
+          {isPreviousStage && formaSel === stageId && (
             <button
               type="button"
               onClick={() => handleDegenerateClick(evolution)}
