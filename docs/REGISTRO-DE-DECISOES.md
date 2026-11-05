@@ -3998,17 +3998,6 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 
 **O que falsificaria.** Churn ou queixa de comparação depois de ver a faixa (mesma aposta 8 do §5: a comparação social ramificada não vira placar). **Rollback:** `EVO_FEED_DISABLED=1` (docs/BETA-CONTINGENCIA.md).
 
-## §226 — Corte × concussão: o acabamento visual do golpe corpo a corpo (05/11/2026, pedido do dono)
-
-**Decisão.** Todo golpe corpo a corpo mostrava o corte. Agora cada Soulmon (jogador ou inimigo) é CORTANTE ou de CONCUSSÃO, só visual: na concussão a investida é a mesma, mas o efeito no alvo é o splash do impacto que o golpe à distância usa, sem projétil. Dano, sementes, RNG, tempo e som não mudam.
-
-**Regra.** Função pura e determinística por lutador (`utils/combate/golpeImpacto.ts`): palavra-chave do nome quando há dado confiável (inimigo do bestiário); senão sorteio estável (hash da chave do lutador) com peso por elemento. Ar 75/25 corte e Terra 25/75 (dono); tabela dos 20 base e derivados que herdam a média: `docs/REGRA-CORTE-CONCUSSAO.md`. No PvP a chave é a identidade de combate (ids fechados que o servidor publica), igual nos dois aparelhos.
-
-**Alternativa que perdeu.** Palavra-chave na descrição ou no nome do Soulmon do JOGADOR: o nome é texto livre, o perfil público não publica descrição nem id de Soulmon, e o nome difere entre os aparelhos do PvP. Sorteio por golpe: faria o Soulmon trocar a cada ataque.
-
-**Limite declarado.** Sem id estável de Soulmon no perfil público, a variação do jogador é por identidade de combate (elementos + escolas + família), não por indivíduo.
-
-**O que falsificaria.** Proporção de algum elemento reprovada pelo dono (trocar o número em `PESO_CORTE`); ou o servidor passar a publicar um id de Soulmon (trocar a chave). **Rollback:** tirar `impacto` das ações (ausente = corte, comportamento anterior).
 ## §225 — Troca lateral de forma: grátis, sem HP cheio nem ganho de pontos (05/11/2026, decisão do dono)
 
 **Decisão.** Quem já desbloqueou uma forma paralela (mesmo nível, outro galho) pode alternar entre elas sem custo, como recurso oficial: botão "Trocar forma" / "Switch form", confirmação simples. A troca muda só a forma: HP atual, `perfectDays` e `evolutionPoints` iguais, sem som/mensagem de queda. Aparece em toda forma desbloqueada do mesmo nível, mesmo fora do galho dominante. Degenerar para nível abaixo fica igual.
@@ -4021,3 +4010,14 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 
 **O que falsificaria.** Jogadores alternando para fugir de custo de cuidado de forma que o jogo não previu. **Rollback:** reverter o PR.
 
+## §226 — Corte × concussão: o acabamento visual do golpe corpo a corpo (05/11/2026, pedido do dono)
+
+**Decisão.** Todo golpe corpo a corpo mostrava o corte. Agora cada Soulmon (jogador ou inimigo) é CORTANTE ou de CONCUSSÃO, só visual: na concussão a investida é a mesma, mas o efeito no alvo é o splash do impacto que o golpe à distância usa, sem projétil. Dano, sementes, RNG, tempo e som não mudam.
+
+**Regra.** Função pura e determinística por lutador (`utils/combate/golpeImpacto.ts`): palavra-chave do nome quando há dado confiável (inimigo do bestiário); senão sorteio estável (hash da chave do lutador) com peso por elemento. Ar 75/25 corte e Terra 25/75 (dono); tabela dos 20 base e derivados que herdam a média: `docs/REGRA-CORTE-CONCUSSAO.md`. No PvP a chave é a identidade de combate (ids fechados que o servidor publica), igual nos dois aparelhos.
+
+**Alternativa que perdeu.** Palavra-chave na descrição ou no nome do Soulmon do JOGADOR: o nome é texto livre, o perfil público não publica descrição nem id de Soulmon, e o nome difere entre os aparelhos do PvP. Sorteio por golpe: faria o Soulmon trocar a cada ataque.
+
+**Limite declarado.** Sem id estável de Soulmon no perfil público, a variação do jogador é por identidade de combate (elementos + escolas + família), não por indivíduo.
+
+**O que falsificaria.** Proporção de algum elemento reprovada pelo dono (trocar o número em `PESO_CORTE`); ou o servidor passar a publicar um id de Soulmon (trocar a chave). **Rollback:** tirar `impacto` das ações (ausente = corte, comportamento anterior).
