@@ -29,7 +29,7 @@ Corrigir logo, sem bloquear a onda:
 - Glossário e `_chatKnowledge` ainda dizem que não há novo aceite, o que está errado.
 
 Só o dono:
-1. **Cloudflare:** criar regra de Rate Limiting em `/api/feedback`, sem ela o teto é por isolate.
+1. ~~**Cloudflare:** regra de Rate Limiting em `/api/feedback`~~ (feito no código: binding `FEEDBACK_RL`, 5/min por hash de IP; entra no próximo deploy, nada no painel).
 2. **Secrets:** `RESEND_API_KEY` e `FEEDBACK_FROM`; testar um envio real (o remetente padrão de sandbox pode só entregar ao dono da conta).
 3. **Play Console:** deixar os SKUs `moldura_*` inativos até a arte estar no APK (0 de 20 em `drawable-nodpi`); atualizar Data Safety com feedback e feed.
 4. **Build na Play:** AAB novo, depois do corte de bytes ou de aceitar a dívida. Widget adaptativo e microfone (#505) só chegam assim; o resto vai pelo Worker (`server.url`).
