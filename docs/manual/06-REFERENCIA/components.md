@@ -2096,3 +2096,7 @@ Aviso curto na Home (REGISTRO §213 emenda 2): o Soulmon do jogador está desgar
 
 ### `src/components/mercado/RestauranteSheet.tsx`
 **Dono de:** a folha do Restaurante no Mercado (`RestauranteSheet`): cardápio (sem bloco de chef; ingredientes e pratos com a arte do app), custo com o que se tem, confirmação e `applyCook` no updater. Aberta pelo lote `restaurante` em `nav/AreaView.tsx`.
+
+### `src/components/MessengerSequence.tsx`
+
+Cartas do Papus (NPC 440) no modal padrão `NpcSequence`, item `messenger` da fila de apresentação. Decisão: REGISTRO §241.
