@@ -26,7 +26,6 @@ describe('marcas acima do prédio', () => {
   it('o "!" do Passeio mora numa fileira ACIMA da arte (sobe a própria altura + folga), sem tocar', () => {
     const { container } = renderWithCss(<AreaView {...base({ buildingMarks: { 'exploracao.passeio': 'available' } })} />);
     const fileira = lote(container, 'passeio');
-    expect((container.querySelector('[data-lot-marks-layer]') as HTMLElement).style.zIndex).toBe('100'); // por cima de TODOS os lotes (o vizinho de cima não tapa a marca)
     expect(fileira.querySelector('[data-mission-mark="available"]')).toBeTruthy();
     expect(fileira.style.pointerEvents).toBe('none');
   });

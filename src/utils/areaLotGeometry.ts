@@ -135,6 +135,64 @@ export function lotHitRects(
   return [art, label];
 }
 
+/** Proporção dos mapas recriados (05/11/2026, dono): os prédios vêm pintados NO fundo, em 9:20. */
+export const MAPA_ASPECT = 841 / 1870;
+
+/**
+ * Prédios PINTADOS no fundo (05/11/2026): caixa de toque em % da IMAGEM (esquerda, topo, direita, base), medida nos mapas aprovados.
+ * O lote que está aqui não desenha sprite; o rótulo pousa na base da caixa. Lote novo fora da tabela continua com o sprite por cima.
+ */
+export const LOT_PINTADO: Record<string, LotBounds> = {
+  'mercado:itens': [3, 11, 52, 30],
+  'mercado:conquistas': [55, 6, 98, 31],
+  'mercado:background': [3, 36, 40, 52],
+  'mercado:decoracao': [56, 37, 99, 54],
+  'mercado:cambista': [4, 57, 42, 73],
+  'mercado:restaurante': [55, 60, 96, 75],
+  'jogos:salao': [13, 8, 89, 36],
+  'jogos:mente': [10, 44, 50, 64],
+  'exploracao:passeio': [7, 3, 48, 20],
+  'exploracao:fenda': [57, 11, 95, 40],
+  'exploracao:dungeon': [2, 43, 45, 66],
+  'arena:guerra': [12, 2, 93, 27],
+  'arena:torneio': [0, 33, 50, 58],
+  'arena:duelo': [52, 36, 100, 62],
+  'forja:caderno': [2, 8, 50, 30],
+  'forja:hexsmith': [55, 8, 98, 25],
+  'forja:ferreiro': [7, 36, 40, 56],
+  'forja:refugio': [62, 40, 98, 57],
+  'forja:oficina': [26, 57, 76, 81],
+  'laboratorio:stats': [26, 12, 79, 32],
+  'laboratorio:biblioteca': [2, 35, 34, 59],
+  'laboratorio:evolucao': [50, 33, 99, 60],
+  'laboratorio:perfil': [17, 73, 83, 85],
+  'hall:feira': [1, 6, 48, 27],
+  'hall:grove': [51, 8, 99, 30],
+  'hall:guilda': [6, 42, 94, 70],
+};
+
+/** Os distritos pintados no mapa-mundo, com a mesma medida de `LOT_PINTADO`. */
+export const MAPA_MUNDO_PINTADO: Record<AreaId, LotBounds> = {
+  mercado: [3, 4, 52, 20],
+  jogos: [60, 6, 100, 21],
+  exploracao: [2, 24, 36, 40],
+  arena: [75, 24, 100, 38],
+  forja: [5, 40, 40, 52],
+  laboratorio: [31, 52, 65, 65],
+  hall: [64, 41, 99, 52],
+};
+
+export function lotPintado(areaId: AreaId, lotId: string): LotBounds | undefined {
+  return LOT_PINTADO[`${areaId}:${lotId}`];
+}
+
+/** Palco do mapa: a mesma caixa do `cover` centrado do fundo, para a % da imagem cair no pixel certo em qualquer tela. Pede contêiner `size` no pai. */
+export const MAPA_PALCO_STYLE = {
+  position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)',
+  width: `max(100cqw, calc(100cqh * ${MAPA_ASPECT}))`, aspectRatio: `${MAPA_ASPECT}`,
+  pointerEvents: 'none',
+} as const;
+
 /** Lado de uma marca sobre o prédio ("!", "?" ou a moeda de recurso), em px. */
 export const LOT_MARK_SIZE = 32;
 /** Folga entre a base das marcas e o TOPO desenhado do prédio, e entre duas marcas lado a lado, em px. */

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Language } from '../../utils/i18n';
 import type { AreaId } from '../../navigation';
-import { LOT_MARK_GAP, LOT_MARK_MIN_TOP, LOT_MARK_SIZE, lotArtBounds, lotHitBounds, lotLabelLift, lotLabelOffset, lotMarkDrop } from '../../utils/areaLotGeometry';
+import { LOT_MARK_GAP, LOT_MARK_MIN_TOP, LOT_MARK_SIZE, MAPA_PALCO_STYLE, lotArtBounds, lotPintado, lotHitBounds, lotLabelLift, lotLabelOffset, lotMarkDrop } from '../../utils/areaLotGeometry';
 import { lotArtFilter } from './lotHalo';
 import { MissionMark } from '../play/MissionMark';
 import { LotCoin } from './LotCoin';
@@ -118,7 +118,7 @@ export function AreaScene({ areaId, language, lots, background, notice, children
     >
       {/* Os "lotes" — construções clicáveis, uma delas prova o molde (F4); o
           conteúdo completo por área é F5. */}
-      {lots.map(lot => (
+      {lots.filter(lot => !lotPintado(areaId, lot.id)).map(lot => (
         <button
           key={lot.id}
           type="button"
@@ -227,13 +227,70 @@ export function AreaScene({ areaId, language, lots, background, notice, children
         </button>
       ))}
 
+      {/* Prédios pintados no fundo (05/11/2026): sem sprite; só o alvo de toque, o rótulo, o cadeado e as marcas, no palco da imagem. */}
+      {lots.some(lot => lotPintado(areaId, lot.id)) && (
+        <div data-area-palco style={{ position: 'absolute', inset: 0, containerType: 'size', pointerEvents: 'none' }}>
+          <div style={MAPA_PALCO_STYLE}>
+            {lots.map(lot => {
+              const b = lotPintado(areaId, lot.id);
+              if (!b) return null;
+              const sinal = !lot.locked && (lot.mark || lot.coin || lot.indicator);
+              return (
+                <button
+                  key={lot.id}
+                  type="button"
+                  data-area-lot={lot.id}
+                  onClick={lot.onOpen}
+                  aria-label={lot.locked ? `${lot.label}. ${lockLabel(lot.locked.minBond, language)}` : lot.ariaLabel}
+                  data-lot-locked={lot.locked ? lot.locked.minBond : undefined}
+                  style={{
+                    position: 'absolute', left: `${b[0]}%`, top: `${b[1]}%`, width: `${b[2] - b[0]}%`, height: `${b[3] - b[1]}%`,
+                    background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', pointerEvents: 'auto',
+                    zIndex: lotZIndex(`${b[1]}%`),
+                  }}
+                >
+                  {lot.locked && (
+                    <span style={{ position: 'absolute', top: '45%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }}>
+                      <LockBadge minBond={lot.locked.minBond} language={language} />
+                    </span>
+                  )}
+                  {sinal && (
+                    <span data-lot-marks-box={lot.id} data-lot-marks style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: LOT_MARK_GAP, pointerEvents: 'none' }}>
+                      {lot.mark && <MissionMark kind={lot.mark} isPt={isPt} size={LOT_MARK_SIZE} />}
+                      {lot.coin && <LotCoin isPt={isPt} />}
+                      {lot.indicator && <LotIndicator kind={lot.indicator} isPt={isPt} />}
+                    </span>
+                  )}
+                  <span
+                    data-area-lot-label
+                    style={{
+                      position: 'absolute', left: '50%', bottom: 0, transform: 'translateX(-50%)',
+                      display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px 3px 7px', whiteSpace: 'nowrap',
+                      borderRadius: 999, background: 'color-mix(in srgb, #06171A 82%, transparent)', border: '1px solid rgba(200, 150, 80, .75)',
+                      boxShadow: '0 1px 4px rgba(0,0,0,.55)',
+                      fontFamily: 'var(--sm2-font-display)', fontSize: 'var(--sm2-text-xs)', fontWeight: 800, letterSpacing: '0.06em',
+                      color: '#E9F5F2', textAlign: 'center',
+                    }}
+                  >
+                    {lotIconArt(areaId, lot.id)
+                      ? <img src={lotIconArt(areaId, lot.id)} alt="" aria-hidden="true" draggable={false} width={20} height={20} data-lot-icon-art style={{ width: 20, height: 20, display: 'block', flex: 'none' }} />
+                      : <Icon name={lotIconName(areaId, lot.id)} size={20} tone="gold" />}
+                    {lot.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* CAMADA DAS MARCAS (dono, 04/11/2026): "!"/"?" e a moeda de recurso ficam ACIMA do prédio, numa camada própria por cima de TODOS os lotes
           (dentro do lote o vizinho de cima, de z maior, tapava a marca). A camada é um contêiner de tamanho = a cena (cqw/cqh); cada fileira
           repete a conta de `lotMarkRects` em CSS: base `LOT_MARK_GAP` px acima do TOPO DESENHADO da arte, centrada na arte, nunca acima do
           piso `LOT_MARK_MIN_TOP`; "!" e moeda lado a lado. Não intercepta toque (o sinal é só visual, H11). Z 100: empata com o lote mais alto e ganha pela ordem no DOM, e os jogos (z 100, depois no DOM) a cobrem. */}
-      {lots.some(l => (l.mark || l.coin || l.indicator) && !l.locked) && (
+      {lots.some(l => (l.mark || l.coin || l.indicator) && !l.locked && !lotPintado(areaId, l.id)) && (
         <div data-lot-marks-layer aria-hidden={lots.some(l => l.mark && !l.locked) ? undefined : true} style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 100, containerType: 'size' }}>
-          {lots.filter(l => (l.mark || l.coin || l.indicator) && !l.locked).map(l => {
+          {lots.filter(l => (l.mark || l.coin || l.indicator) && !l.locked && !lotPintado(areaId, l.id)).map(l => {
             const b = lotArtBounds(areaId, l.id) ?? [0, 0, 1, 1];
             const w = parseFloat(l.width ?? LOT_WIDTH_DEFAULT);
             const bw = `max(${w}cqw, 120px)`;
