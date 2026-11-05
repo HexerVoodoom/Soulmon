@@ -246,7 +246,8 @@ export interface AreaViewProps {
   petElement?: string;
   /** §232: a base nº 1 do Soulmon combinado. */
   petBase?: string;
-  onEarnPoints: (points: number) => void;
+  /** Devolve os Bits REALMENTE creditados (teto diario aplicado); as telas de resultado mostram esse valor. */
+  onEarnPoints: (points: number) => number | void;
   /** Evento real de uso de um recurso (minijogo, foco, duelo) para as missões diárias (`utils/dailyMissions.ts`, REGISTRO §52). */
   onDailyEvent?: (event: DailyEvent) => void;
   /** Exploração + Jogos (F5). */
@@ -570,7 +571,7 @@ export function AreaView(props: AreaViewProps) {
               petElement={props.petElement}
               onElementsDefeated={props.play.onElementsDefeated}
               onEnemySeen={props.play.onBestiarySeen}
-              onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('arena'); }}
+              onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('arena'); return creditado; }}
               onRunEnd={props.play.arena?.onRunEnd}
               ladder={props.play.arena?.ladder}
               onExit={() => setDuelOpen(false)}
@@ -666,7 +667,7 @@ export function AreaView(props: AreaViewProps) {
                 demoCharacterId={props.demoCharacterId}
                 language={language}
                 initialLevel={modeChosen?.level}
-                onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('dino'); }}
+                onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('dino'); return creditado; }}
                 onScore={play.onDinoScore}
                 onReplayRound={replayRound}
                 petElement={props.petElement}
@@ -684,7 +685,7 @@ export function AreaView(props: AreaViewProps) {
                 onReplayRound={replayRound}
                 specialFamily={props.skills?.[props.evolutionStage as FichaStage]?.especial.familia}
                 language={language}
-                onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('barrage'); }}
+                onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('barrage'); return creditado; }}
                 rankSaveId={props.guild.saveId}
                 onExit={exitGame}
               />
@@ -703,12 +704,12 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {/* Combina 3 (Salão, 11/10/2026): paga pelo MESMO funil (teto diário de minijogo). */}
-            {game === 'match3' && <Match3Game {...base} petBase={props.petBase} onReplayRound={replayRound} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} onBossShard={play.onBossShard} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('match3'); }} />}
+            {game === 'match3' && <Match3Game {...base} petBase={props.petBase} onReplayRound={replayRound} initialMode={modeChosen?.level === 2 ? 'pvp' : 'pve'} rankSaveId={props.guild.saveId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} onEnemySeen={play.onBestiarySeen} onElementsDefeated={play.onElementsDefeated} onBossShard={play.onBossShard} bits={props.points} onSpendBits={play.onSpendBits} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('match3'); return creditado; }} />}
             {/* Ateliê da Mente — pagam Bits pelo MESMO funil (teto diário). */}
-            {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('eco'); }} />}
-            {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { props.onEarnPoints(pts); props.onDailyEvent?.('zip'); emitFeat('zipSolved'); }} />}
+            {game === 'eco' && <EcoGame {...base} tutorial={mindTut('eco')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('eco'); return creditado; }} />}
+            {game === 'zip' && <ZipGame {...base} tutorial={mindTut('zip')} rankSaveId={props.guild.saveId} onEarnPoints={(pts) => { const creditado = props.onEarnPoints(pts); props.onDailyEvent?.('zip'); emitFeat('zipSolved'); return creditado; }} />}
             {/* Selo Faltante (04/11/2026, substitui a Colcha): sem ranking; a rodada fechada conta a missão do dia e o feito, mesmo com 0 Bits. */}
-            {game === 'selo' && <SeloGame {...base} tutorial={mindTut('selo')} onEarnPoints={(pts) => { if (pts > 0) props.onEarnPoints(pts); props.onDailyEvent?.('selo'); emitFeat('seloSolved'); }} />}
+            {game === 'selo' && <SeloGame {...base} tutorial={mindTut('selo')} onEarnPoints={(pts) => { const creditado = pts > 0 ? props.onEarnPoints(pts) : 0; props.onDailyEvent?.('selo'); emitFeat('seloSolved'); return creditado; }} />}
             {/* Refúgio — NÃO recebem `onEarnPoints`: não pagam Bits nem pontuam. Concluir devolve a energia do dia (`onComplete`, 1×/dia). */}
             {game === 'respiracao' && <RespiracaoGame {...base} onComplete={play.onRefugioComplete} />}
             {game === 'bolhas-calmas' && <BolhasGame {...base} mode="calma" onComplete={play.onRefugioComplete} />}
