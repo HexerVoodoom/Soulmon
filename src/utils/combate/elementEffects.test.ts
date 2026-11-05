@@ -4,7 +4,7 @@ import { SPECIAL_FAMILIES } from './specials';
 import { efeitoDoEspecial, efeitoVisivel } from './elementEffects';
 import { STATUS_FX, emptyStatusBoard, withRealFx } from '../combatFx';
 
-describe('§226: efeito pelo elemento do especial', () => {
+describe('§228: efeito pelo elemento do especial', () => {
   it('especial direto nunca tem efeito, em nenhum elemento', () => {
     for (const d of DERIVED_ELEMENT_PAIRS) expect(efeitoDoEspecial('direct', d.id)).toBeNull();
     expect(efeitoDoEspecial('direct', 'fogo')).toBeNull();
