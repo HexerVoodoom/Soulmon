@@ -114,6 +114,7 @@ const ACTIVITY_LOG_CAP = 90;
 const EMPTY_ARVORES: BosqueArvores = {};
 const EMPTY_DECOR: Partial<Record<SlotId, string>> = {};
 const EMPTY_TROPHIES: Array<{ season: string; place: 1 | 2 | 3 }> = [];
+import { applyLateralSwitch } from './utils/trocaLateral';
 import { getNextEvolution, activitiesForWeekDay, dailyGoalFor, heartGoalFor, degeneratedPerfectDays, degeneratedEvolutionPoints, registeredForDay, tasksToAvoidHeartLoss, applyRedemption, podeEvoluirDepoisDaQueda, completeDayReached, deveCelebrarDiaCompleto, settlePendingRollover } from './utils/dailyReset';
 import {
   feedFood, rubHeal, rubRefusal, completeTask,
@@ -6600,6 +6601,12 @@ export default function App() {
     setMessageTrigger(prev => prev + 1);
   }, []);
 
+  // Troca lateral (mesmo nível, outra forma já desbloqueada): grátis, só troca a
+  // forma. Sem som nem mensagem de queda; a regra é de `utils/trocaLateral.ts`.
+  const handleSwitchForm = useCallback((targetStage: string) => {
+    setGameState(prev => applyLateralSwitch(prev, targetStage));
+  }, []);
+
   const handleEvolveToUnlocked = useCallback((targetStage: string) => {
     setGameState(prev => {
       if (!prev.unlockedEvolutions.includes(targetStage)) return prev;
@@ -7478,6 +7485,7 @@ export default function App() {
               incubating={incubandoAgora}
               gaugeGoal={gaugeGoalFor(gameState.evolutionStage, gameState.unlockedEvolutions)}
               onDegenerate={handleDegenerate}
+              onSwitchForm={handleSwitchForm}
               stages={gameState.soulmonStages ?? []}
               eggType={gameState.eggType}
               demoCharacterId={petLine}

@@ -39,6 +39,8 @@ import { spriteFailText, spriteText } from '../utils/spriteCopy';
 import { pointsToEvolve } from '../utils/spriteTrigger';
 import { creatureFormId, type CreatureStage, type LText } from '../utils/oracle';
 import { AVAILABLE_BRANCHES, clampBranch, canReachUltra, ULTRA_PATIENCE_POINTS } from '../types/progression';
+import { canSwitchLaterally } from '../utils/trocaLateral';
+import { forecastNodeId, stageLevelIndex } from '../utils/evolutionForecast';
 import { dailyGaugeCap } from '../utils/evolutionGauge';
 import { fragmentBarLabel, fragmentTodayHint, fragmentHowText, fragmentsGatheredLine } from '../utils/soulFragment';
 import { SoulFragmentIcon } from './ui/SoulFragmentIcon';
@@ -96,6 +98,8 @@ interface EvolutionPathProps {
   /** Pontos para encher o gauge do estágio (`gaugeGoalFor`). 0 no topo. */
   gaugeGoal: number;
   onDegenerate?: (targetStageId: string) => void;
+  /** Troca lateral (mesmo nível, outra forma já desbloqueada): grátis, sem queda. */
+  onSwitchForm?: (targetStageId: string) => void;
   /** As 11 formas ÚNICAS do jogador (utils/oracle.ts). */
   stages: CreatureStage[];
   /** Linha de sprite genérica (fallback visual — ver utils/sprites.ts). */
@@ -195,6 +199,7 @@ export function EvolutionPath({
   incubating = false,
   gaugeGoal,
   onDegenerate,
+  onSwitchForm,
   stages,
   demoCharacterId,
   unlockedEvolutions = [],
@@ -229,7 +234,7 @@ export function EvolutionPath({
   const [selectedBranch, setSelectedBranch] = useState<Attr>(clampBranch(currentBranch));
   /** 10.3: o gesto de deslizar para trocar de aba do galho (origem do toque). */
   const swipeRef = useRef<{ x: number; y: number } | null>(null);
-  const [confirmDegenerate, setConfirmDegenerate] = useState<{ id: string; name: string; isSecondConfirm: boolean } | null>(null);
+  const [confirmDegenerate, setConfirmDegenerate] = useState<{ id: string; name: string; isSecondConfirm: boolean; lateral?: boolean } | null>(null);
   // Locked evolutions are hidden behind a "?" (spoiler guard). The user can
   // reveal one (shown darkened) after confirming; this local set resets when
   // they leave the screen (the component unmounts on navigation).
@@ -413,17 +418,22 @@ export function EvolutionPath({
    * previsto — e só quando o galho exibido É o previsto.
    */
   const forecastStageId = forecastBranch && selectedBranch === forecastBranch
-    ? (branchPath
-        .map(s => creatureFormId(s))
-        .find(id => id !== currentStageId && !unlockedSet.has(id)) ?? null)
+    ? forecastNodeId(currentStageId, branchPath.map(s => creatureFormId(s)))
     : null;
 
   const handleDegenerateClick = (evolution: CreatureStage) => {
     setConfirmDegenerate({ id: creatureFormId(evolution), name: evolution.name, isSecondConfirm: false });
   };
 
+  const handleSwitchClick = (evolution: CreatureStage) => {
+    setConfirmDegenerate({ id: creatureFormId(evolution), name: evolution.name, isSecondConfirm: false, lateral: true });
+  };
+
   const handleDegenerateConfirm = () => {
-    if (confirmDegenerate?.isSecondConfirm) {
+    if (confirmDegenerate?.lateral) {
+      onSwitchForm?.(confirmDegenerate.id);
+      setConfirmDegenerate(null);
+    } else if (confirmDegenerate?.isSecondConfirm) {
       onDegenerate?.(confirmDegenerate.id);
       setConfirmDegenerate(null);
     } else {
@@ -696,9 +706,12 @@ export function EvolutionPath({
     const hidden = !isReached && !isRevealed;
     // A stage the pet already passed through, on the branch it's CURRENTLY
     // on — offer to degenerate back to it.
-    const isPreviousStage = isReached && !isCurrent && evolution.stage !== 'rookie' && evolution.branch
-      ? ALIGN_TO_ATTR[evolution.branch] === currentBranch
-      : false;
+    // Qualquer forma JÁ liberada de nível ABAIXO, de qualquer galho (rookie segue
+    // como antes: fora). O botão vive no card da forma, na aba do galho dela.
+    const isPreviousStage = isReached && !isCurrent && evolution.stage !== 'rookie' && Boolean(evolution.branch)
+      && stageLevelIndex(stageId) < stageLevelIndex(currentStageId);
+    // Mesmo nível, outra forma JÁ desbloqueada (qualquer galho): troca grátis.
+    const isLateralSwitch = canSwitchLaterally({ currentStageId, targetStageId: stageId, unlockedEvolutions });
 
     const isForecast = !isReached && stageId === forecastStageId;
     const visual: SoulNodeVisual = isCurrent
@@ -827,6 +840,15 @@ export function EvolutionPath({
             </InfoTip>
           )}
 
+          {isLateralSwitch && (
+            <button
+              type="button"
+              onClick={() => handleSwitchClick(evolution)}
+              style={{ ...sm2Button('outline', false, 'sm'), alignSelf: 'flex-start', marginTop: 4 }}
+            >
+              {isPt ? 'Trocar forma' : 'Switch form'}
+            </button>
+          )}
           {isPreviousStage && (
             <button
               type="button"
@@ -848,7 +870,29 @@ export function EvolutionPath({
           (`RitualDialog`, o `.dlg` SIS-06 centrado do canvas `EvoEstados`).
           SEM primário e SEM vermelho (X8, D-E8): Cancel e Confirm `outline` —
           a ação é do jogador, pedida duas vezes; o app nunca cobra. */}
-      {confirmDegenerate && (
+      {confirmDegenerate?.lateral && (
+        <RitualDialog
+          label={isPt ? 'Trocar forma' : 'Switch form'}
+          onClose={() => setConfirmDegenerate(null)}
+          zIndex={120}
+        >
+          <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{isPt ? 'Trocar forma' : 'Switch form'}</p>
+          <p style={{ ...sm2Text, margin: 0 }}>
+            {isPt
+              ? `Trocar para ${confirmDegenerate.name}? Sem custo: você pode voltar quando quiser.`
+              : `Switch to ${confirmDegenerate.name}? No cost: you can switch back any time.`}
+          </p>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button type="button" onClick={() => setConfirmDegenerate(null)} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 12px' }}>
+              {isPt ? 'Cancelar' : 'Cancel'}
+            </button>
+            <button type="button" onClick={handleDegenerateConfirm} style={{ ...sm2Button('outline'), flex: 1, minWidth: 0, padding: '0 12px' }}>
+              {isPt ? 'Trocar' : 'Switch'}
+            </button>
+          </div>
+        </RitualDialog>
+      )}
+      {confirmDegenerate && !confirmDegenerate.lateral && (
         <RitualDialog
           label={confirmDegenerate.isSecondConfirm
             ? (isPt ? 'Aviso final' : 'Final warning')
