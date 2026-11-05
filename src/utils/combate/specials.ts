@@ -31,8 +31,8 @@ export const SPECIAL_POWER: Readonly<Record<SpecialFamily, number>> = {
   spdBuff: 1.82,
 };
 
-/** §224: regra nova do núcleo de grupo (só PvE; `fight.ts` ignora). Ausente = a família pura, byte a byte. */
-export type SpecialEffect = 'burn' | 'poison' | 'hot' | 'slow' | 'silence';
+/** §225: regra nova do núcleo de grupo (só PvE; `fight.ts` ignora). Ausente = a família pura, byte a byte. */
+export type SpecialEffect = 'hot' | 'slow' | 'silence';
 
 export interface Special {
   readonly family: SpecialFamily;
@@ -40,9 +40,13 @@ export interface Special {
   readonly effect?: SpecialEffect;
 }
 
-/** §224: golpes do alvo que o silêncio dura, e a fração do orçamento que sobra no `defDebuff` quando o alvo tem especial. */
-export const SILENCE_HITS = 3;
-export const SILENCE_BUDGET_KEPT = 0.85;
+/**
+ * §225: os botões das mecânicas novas. Só o gate `efeitosPve.medicao.test.ts` autoriza mudar.
+ * - `silenceHits`: golpes do alvo sem poder soltar o especial, qualquer que seja ele. `silenceKeep`: fração do orçamento que segue como `defDebuff`.
+ * - `slowScale`: multiplica os golpes de lentidão. `slowKeep`: fração do orçamento que segue como `defDebuff`.
+ * - `hotScale`: multiplica o total curado pelos 3 pulsos.
+ */
+export const EFFECT_TUNE = { silenceHits: 2, silenceKeep: 1, slowScale: 0.25, slowKeep: 0.6, hotScale: 1.05 };
 
 export function specialOf(family: SpecialFamily): Special {
   return { family, power: SPECIAL_POWER[family] };

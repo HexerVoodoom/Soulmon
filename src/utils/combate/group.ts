@@ -22,7 +22,7 @@ import { damagePoints, EPS, HIT_UNIT_H0, hitUnit, hpPoints, startPoints, windowS
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
 import { escolherAlvo } from './alvo';
 import {
-  AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, ENERGY_TRIGGER, SILENCE_BUDGET_KEPT, SILENCE_HITS, SPECIAL_BUDGET_HITS, type Special,
+  AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, EFFECT_TUNE, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special,
 } from './specials';
 
 const MAX_EVENTS = 400_000;
@@ -124,11 +124,10 @@ interface G {
   nVuln: number;
   nSpd: number;
   nHit: number;
-  /** §224: golpes próprios que faltam de silêncio e de lentidão; a queimadura dispara um tick a cada golpe de quem carrega. */
+  /** §225: golpes próprios que faltam de silêncio e de lentidão; pulsos de cura contínua. */
   nSil: number;
   nSlow: number;
   nHot: number;
-  burn: { owner: G; left: number; dmg: number; cap: number } | null;
 }
 
 /** Seed of the stream of foe i (foe 0 is the 1v1 stream, so N = 1 ≡ fight()). */
@@ -163,7 +162,7 @@ export function* groupFightSteps(
     return {
       who, c, sp: s.special, area: s.area ?? 'single', mult: variance ? ar1Multiplier(r, variance) : () => 1,
       pts, hp: startPoints(hp0, pts) / pts, en: en0, shield: Math.round(cleanStartShield(s.startShield) * pts) / pts, next: interval(c.spd) * phases[who], casts: 0, dead: Infinity,
-      nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nHot: 0, burn: null,
+      nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nHot: 0,
     };
   };
   const pl = mk(player, 0, sideSeed(seed, 1), opts.startHp ?? 1, opts.startEnergy ?? 0);
@@ -196,7 +195,7 @@ export function* groupFightSteps(
       const atk = f === pl ? target() : pl;
       return {
         nAtk: f.nAtk, nVuln: f.nVuln, nSpd: f.nSpd, shield: f.shield,
-        shieldHits: atk ? f.shield * hitsOn(atk, f) : 0, dot: left[i] + (f.burn?.left ?? 0),
+        shieldHits: atk ? f.shield * hitsOn(atk, f) : 0, dot: left[i],
         ...(f.nSil > EPS ? { nSil: f.nSil } : {}), ...(f.nSlow > EPS ? { nSlow: f.nSlow } : {}), ...(f.nHot > 0 ? { hot: f.nHot } : {}),
       };
     });
@@ -245,14 +244,6 @@ export function* groupFightSteps(
         for (const v of spread) hit(me, v, (share * me.mult()) / hitsOn(me, v), 'attack');
         break;
       case 'dot':
-        if (sp.effect === 'burn') {
-          // §224: cada golpe de quem queima dispara um tick; reaplicar renova e fica com o maior dano; tick perdido por KO é perda.
-          for (const v of spread) {
-            const dmg = (share / 3) * me.mult() / hitsOn(me, v);
-            v.burn = { owner: me, left: 3, dmg: Math.max(dmg, v.burn?.dmg ?? 0), cap: v.shield };
-          }
-          break;
-        }
         for (let k = 1; k <= 3; k++) {
           const vs = [...spread];
           const single = spread.length === 1 && me === pl;
@@ -260,7 +251,7 @@ export function* groupFightSteps(
           const rec = { owner: me, vs, single };
           dots.push(rec);
           timed.push({
-            t: t0 + (sp.effect === 'poison' ? 1 : 0.25) * iv * k,
+            t: t0 + 0.25 * iv * k,
             // single: the remaining ticks pass to the next living foe (nothing is lost);
             // area: only whoever was inside the radius at the cast
             fn: () => {
@@ -273,8 +264,8 @@ export function* groupFightSteps(
         break;
       case 'defDebuff':
         for (const v of spread) {
-          if (sp.effect === 'slow') v.nSlow += share;
-          else if (sp.effect === 'silence' && v.sp) { v.nSil = Math.max(v.nSil, SILENCE_HITS); v.nVuln += share * SILENCE_BUDGET_KEPT; } // alvo sem especial: `defDebuff` inteiro
+          if (sp.effect === 'slow') { v.nSlow += share * EFFECT_TUNE.slowScale; v.nVuln += share * EFFECT_TUNE.slowKeep; }
+          else if (sp.effect === 'silence' && v.sp) { v.nSil = Math.max(v.nSil, EFFECT_TUNE.silenceHits); v.nVuln += share * EFFECT_TUNE.silenceKeep; } // alvo sem especial: `defDebuff` inteiro
           else v.nVuln += share;
         }
         break;
@@ -283,8 +274,8 @@ export function* groupFightSteps(
         break;
       case 'shield':
         if (sp.effect === 'hot') {
-          // §224: 3 pulsos de E/3 em pontos inteiros; param na morte de quem cura.
-          const pulse = Math.round((Eb / 3 / hitsOn(tgt, me)) * me.pts);
+          // §225: 3 pulsos de E/3 em pontos inteiros; param na morte de quem cura.
+          const pulse = Math.round((Eb * EFFECT_TUNE.hotScale / 3 / hitsOn(tgt, me)) * me.pts);
           me.nHot += 3;
           for (let k = 1; k <= 3; k++) {
             timed.push({ t: t0 + iv * k, fn: () => { me.nHot--; if (me.dead === Infinity) me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + pulse) / me.pts; } });
@@ -333,7 +324,7 @@ export function* groupFightSteps(
     }
     let tEn = Infinity;
     for (const f of all) {
-      // §224: silenciado não acorda o relógio (com a barra cheia o tempo pararia); a energia segue guardada e sai no primeiro instante livre
+      // §225: silenciado não acorda o relógio (com a barra cheia o tempo pararia); a energia segue guardada e sai no primeiro instante livre
       if (f.sp && f.dead === Infinity && f.nSil <= EPS) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
     }
     let tN = Infinity;
@@ -361,11 +352,6 @@ export function* groupFightSteps(
       }
       if (me.nSlow > EPS) { const x = Math.min(1, me.nSlow); me.nSlow -= x; me.next += interval(me.c.spd) * x; }
       if (me.nSil > EPS) me.nSil = Math.max(0, me.nSil - 1);
-      if (me.burn) {
-        const b = me.burn;
-        hit(b.owner, me, b.dmg, 'tick', b.cap);
-        if (--b.left <= 0) me.burn = null;
-      }
     }
     yield* flush();
     yield* markDead();

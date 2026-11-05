@@ -1,3 +1,4 @@
+import { efeitoElementoPve } from '../utils/combate/elementEffects';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHexOverrides } from '../hooks/useHexOverrides';
 import { lotIconName } from '../utils/lotIcons';
@@ -211,13 +212,15 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   /** O jogador do núcleo: `soulCombatant(estado)` com o jeito do ofício (`jeitoParaPve`). */
   const bonusTalento = useDungeonBonus(); // canal único de bônus (teto 5%): ATK/DEF/SPD (PR7 + PR12a)
   const rift = useRiftTalents(); // Tarefa B: cura entre andares, Bits e escudo de largada (fora do canal de 5%: não são % de combate)
+  const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const jogador = useMemo<DungeonPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
     family: hexFamily(dungeonFamily(par?.especial), hx),
+    efeitoElemento: efeitoElementoPve(hexFamily(dungeonFamily(par?.especial), hx), ident.especial.elemento),
     jeito,
     startShield: rift.startShield,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [hx, estado, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao]);
+  }), [hx, estado, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao, ident.especial.elemento]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const nivelJogador = jogador.combatant.level;
@@ -291,7 +294,6 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const ladderLen = LADDER_TIERS.length;
   const scene = runScenes[(floor - 1) % Math.max(1, runScenes.length)] ?? DUNGEON_SCENES[0];
   // A identidade de combate (dono único): o mesmo golpe básico/especial da Arena, do Torneio e do PvP.
-  const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const petEl = fxElementId(ident.basico.elemento);
   const enemyEl = fxElementId(dungeonEnemyElement(enemy));
   const foeMax = enemy ? hpPoints(enemy.foe.combatant.hp) : 1;

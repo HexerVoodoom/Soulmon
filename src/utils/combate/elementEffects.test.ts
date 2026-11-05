@@ -39,6 +39,7 @@ describe('§225: efeito pelo elemento do especial', () => {
     expect(efeitoVisivel('defDebuff', 'ar')).toBeNull();
     expect(efeitoVisivel('shield', 'vida')).toBeNull();
     expect(efeitoVisivel('defDebuff', 'som', true)).toBe('silencio');
+    expect(efeitoVisivel('defDebuff', 'ar', true)).toBeNull(); // lentidão não ligou
     expect(efeitoVisivel('dot', 'fogo')).toBe('queimadura');
   });
   it('withRealFx troca só a pele: mesmos turnos do contador real', () => {

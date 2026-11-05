@@ -4005,5 +4005,6 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 - **Físico e mágico só visuais:** mesmo `atkBuff`, selo diferente.
 - **Silêncio não cancela:** a barra segue cheia e o especial sai quando acabar.
 - **Inimigos causam efeitos em PvE**, só depois de medir; desligado até lá.
+- **Calibração (05/11/2026, dono):** queimadura e veneno ficam só visuais. Silêncio impede o especial do alvo por X golpes dele, qualquer que seja o especial (X = 2; `defDebuff` inteiro). Cura contínua: Vida + `shield`, 3 pulsos, total × 1,05. Lentidão não liga: nenhum ajuste passou em ±3pp nos três motores. Gate: `efeitosPve.medicao.test.ts`.
 - **Alternativa que perdeu:** 25% do orçamento de todo especial vira o efeito do elemento (mediu dentro da régua no protótipo, mas o dono quer especial de dano direto puro).
 - **O que falsifica:** se a medição de Arena/Masmorra sair de ±3pp em vitória contra a mesma família sem efeito, a mecânica nova não liga; se poucos jogadores chegarem a um efeito (família com peso baixo no elemento), rever `AFINIDADE_ELEMENTO`.

@@ -1,76 +1,98 @@
 /**
- * §224: medição da regra nova em PvE. Pareado: mesma semente, mesma célula, com e sem o efeito do elemento.
- * Critério: vitória dentro de ±3pp e duração dentro de ±5%. Enquanto a mecânica não passar, `EFEITOS_PVE_LIGADOS` fica `false`.
+ * §225: GATE da regra nova em PvE. Pareado: mesma semente e célula, com e sem o efeito do elemento.
+ * Critério: vitória dentro de ±3pp em Arena, Masmorra e Pesadelo. Só efeito que passa entra em `EFEITOS_PVE_LIGADOS`.
  */
 import { describe, expect, it, vi } from 'vitest';
 import { simulateArenaRunV3 } from '../arena';
-import { simulateDungeonRunV3 } from '../dungeonFight';
-import { REFERENCE_BUILD_NAMES, REFERENCE_BUILDS, RULER_LEVELS } from './level';
+import { simulateDungeonRunV3, simulateNightmareV3 } from '../dungeonFight';
+import { REFERENCE_BUILD_NAMES, REFERENCE_BUILDS, RULER_LEVELS, combatantAt } from './level';
 import { EFEITOS_PVE_LIGADOS, comEfeitoDoElemento } from './elementEffects';
-import { groupFight } from './group';
-import { combatantAt } from './level';
-import { specialOf, type SpecialFamily } from './specials';
+import { groupFightSteps } from './group';
+import { EFFECT_TUNE, specialOf, type SpecialFamily } from './specials';
 
 vi.setConfig({ testTimeout: 600_000 });
 
-const N = 3200;
-const CASOS: readonly [string, SpecialFamily, string][] = [
-  ['queimadura', 'dot', 'fogo'], ['veneno', 'dot', 'vileza'], ['curaContinua', 'shield', 'vida'],
-  ['lentidao', 'defDebuff', 'ar'], ['silencio', 'defDebuff', 'som'],
-];
+const N = Number(process.env.EFEITOS_N ?? 1600);
 const mean = (a: number[]) => a.reduce((x, y) => x + y, 0) / Math.max(1, a.length);
+const cell = (s: number) => ({ level: RULER_LEVELS[s % RULER_LEVELS.length], build: REFERENCE_BUILDS[REFERENCE_BUILD_NAMES[(s >> 2) % 4]] });
 
-function arena(family: SpecialFamily, el?: string) {
-  const w: number[] = []; const t: number[] = [];
+function medir(family: SpecialFamily, el?: string) {
+  const a: number[] = []; const m: number[] = []; const p: number[] = [];
   for (let s = 0; s < N; s++) {
-    const r = simulateArenaRunV3({
-      level: RULER_LEVELS[s % RULER_LEVELS.length], build: REFERENCE_BUILDS[REFERENCE_BUILD_NAMES[(s >> 2) % 4]],
-      family, area: s % 2 ? 'area' : 'single', efeitoElemento: el,
-    }, s + 1);
-    w.push(r.won ? 1 : 0); if (r.won) t.push(r.total);
+    a.push(simulateArenaRunV3({ ...cell(s), family, area: s % 2 ? 'area' : 'single', efeitoElemento: el }, s + 1).won ? 1 : 0);
+    m.push(simulateDungeonRunV3({ ...cell(s), family, efeitoElemento: el }, s + 1).floorsCleared / 5);
+    p.push(simulateNightmareV3({ ...cell(s), family, efeitoElemento: el }, s % 6, s + 1).won ? 1 : 0);
   }
-  return { win: mean(w), t: mean(t) };
+  return [mean(a), mean(m), mean(p)];
 }
-function masmorra(family: SpecialFamily, el?: string) {
-  const w: number[] = []; const t: number[] = [];
-  for (let s = 0; s < N; s++) {
-    const r = simulateDungeonRunV3({
-      level: RULER_LEVELS[s % RULER_LEVELS.length], build: REFERENCE_BUILDS[REFERENCE_BUILD_NAMES[(s >> 2) % 4]],
-      family, efeitoElemento: el,
-    }, s + 1);
-    w.push(r.floorsCleared / 5); t.push(mean(r.timesByFloor.flat()));
-  }
-  return { win: mean(w), t: mean(t) };
+function deltas(family: SpecialFamily, el: string) {
+  const b = medir(family); const c = medir(family, el);
+  return c.map((x, i) => (x - b[i]) * 100);
 }
+const fmt = (d: number[]) => `arena ${d[0].toFixed(1)} masmorra ${d[1].toFixed(1)} pesadelo ${d[2].toFixed(1)}`;
 
-describe('§224: medição', () => {
-  it('a chave segue desligada', () => expect(EFEITOS_PVE_LIGADOS).toBe(false));
+const GRADE = process.env.EFEITOS_GRADE === '1';
 
-  it('sem efeito no par, o especial é o mesmo objeto', () => {
+describe('§225: efeitos em PvE', () => {
+  it('sem par no elemento, o especial é o mesmo objeto', () => {
     const sp = specialOf('direct');
     expect(comEfeitoDoElemento(sp, 'fogo')).toBe(sp);
-    const sh = specialOf('shield');
-    expect(comEfeitoDoElemento(sh, 'terra')).toBe(sh);
+    const dot = specialOf('dot');
+    expect(comEfeitoDoElemento(dot, 'fogo')).toBe(dot); // queimadura e veneno são só visuais
   });
 
-  it('silêncio com barra cheia: a luta termina e o especial do alvo atrasa, não some', () => {
+  it('silêncio segura o especial do alvo, qualquer família', () => {
     const c = combatantAt(20, REFERENCE_BUILDS[REFERENCE_BUILD_NAMES[0]]);
     const som = { combatant: c, special: comEfeitoDoElemento(specialOf('defDebuff'), 'som') };
-    const alvo = { combatant: c, special: specialOf('direct') };
-    for (let seed = 1; seed < 40; seed++) {
-      const r = groupFight(som, [alvo], { seed, hpScale: 3 });
-      expect(r.t).toBeGreaterThan(0);
+    for (const fam of ['direct', 'heal', 'shield', 'dot'] as const) {
+      const g = groupFightSteps(som, [{ combatant: c, special: specialOf(fam) }], { seed: 7, hpScale: 6, withFx: true, startEnergy: 99 });
+      let r = g.next(); let ativo = false; let golpes = 0; let silencios = 0;
+      while (!r.done) {
+        const e = r.value;
+        if (e.kind === 'cast' && e.who === 1 && ativo) { expect(golpes).toBeGreaterThanOrEqual(EFFECT_TUNE.silenceHits); ativo = false; }
+        if (e.kind === 'attack' && e.who === 1 && ativo) golpes++;
+        r = g.next(undefined);
+        if (e.kind === 'cast' && e.who === 0 && (e.fx?.[1]?.nSil ?? 0) > 0) { ativo = true; golpes = 0; silencios++; }
+      }
+      expect(silencios).toBeGreaterThan(0);
     }
   });
 
-  for (const [nome, fam, el] of CASOS) {
-    it(`${nome} (${fam} + ${el}) contra ${fam} puro`, () => {
-      const a0 = arena(fam); const a1 = arena(fam, el);
-      const m0 = masmorra(fam); const m1 = masmorra(fam, el);
-      const dW = (a1.win - a0.win) * 100; const dT = (a1.t / a0.t - 1) * 100;
-      const mW = (m1.win - m0.win) * 100; const mT = (m1.t / m0.t - 1) * 100;
-      console.log(`[medicao] ${nome} | arena ${(a0.win * 100).toFixed(1)}->${(a1.win * 100).toFixed(1)} (${dW.toFixed(1)}pp) t ${dT.toFixed(1)}% | masmorra ${(m0.win * 100).toFixed(1)}->${(m1.win * 100).toFixed(1)} (${mW.toFixed(1)}pp) t ${mT.toFixed(1)}%`);
-      expect(a1.win).toBeGreaterThanOrEqual(0);
-    });
-  }
+  it('GATE ±3pp: silêncio e cura contínua nos três motores', () => {
+    const casos = [['silencio', 'defDebuff', 'som'], ['curaContinua', 'shield', 'vida']] as const;
+    for (const [nome, fam, el] of casos) {
+      expect(EFEITOS_PVE_LIGADOS).toContain(nome);
+      const d = deltas(fam, el);
+      console.log(`[gate] ${nome} | ${fmt(d)}`);
+      for (const x of d) expect(Math.abs(x)).toBeLessThanOrEqual(3);
+    }
+  });
+
+  it('RED: o gate reprova o que saiu da régua (silêncio X = 6)', () => {
+    const t0 = EFFECT_TUNE.silenceHits;
+    EFFECT_TUNE.silenceHits = 6;
+    const d = deltas('defDebuff', 'som');
+    EFFECT_TUNE.silenceHits = t0;
+    console.log(`[gate] vermelho X=6 | ${fmt(d)}`);
+    expect(Math.max(...d.map(Math.abs))).toBeGreaterThan(3);
+  });
+
+  it('lentidão segue desligada: reprovou', () => expect(EFEITOS_PVE_LIGADOS).not.toContain('lentidao'));
+
+  it.skipIf(!GRADE)('grade de calibração (só com EFEITOS_GRADE=1)', () => {
+    const t0 = { ...EFFECT_TUNE };
+    for (const x of [1, 2, 3, 4]) {
+      Object.assign(EFFECT_TUNE, { silenceHits: x, silenceKeep: 1 });
+      console.log(`[grade] silencio X=${x} keep=1 | ${fmt(deltas('defDebuff', 'som'))}`);
+    }
+    for (const sc of [0.05, 0.1, 0.15, 0.25]) for (const k of [0.3, 0.4, 0.5, 0.6]) {
+      Object.assign(EFFECT_TUNE, { slowScale: sc, slowKeep: k });
+      console.log(`[grade] lentidao scale=${sc} keep=${k} | ${fmt(deltas('defDebuff', 'ar'))}`);
+    }
+    for (const h of [1.02, 1.04, 1.06, 1.08, 1.1]) {
+      Object.assign(EFFECT_TUNE, { hotScale: h });
+      console.log(`[grade] cura hot=${h} | ${fmt(deltas('shield', 'vida'))}`);
+    }
+    Object.assign(EFFECT_TUNE, t0);
+  });
 });

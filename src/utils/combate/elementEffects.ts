@@ -53,17 +53,24 @@ export function efeitoVisivel(
   family: SpecialFamily | null | undefined, elemento: string | null | undefined, mecanicaLigada = false,
 ): EfeitoElemento | null {
   const e = efeitoDoEspecial(family, elemento);
-  return e && !mecanicaLigada && EFEITOS_COM_MECANICA.includes(e) ? null : e;
+  if (!e || !EFEITOS_COM_MECANICA.includes(e)) return e;
+  return mecanicaLigada && EFEITOS_PVE_LIGADOS.includes(e) ? e : null;
 }
 
 /**
- * §224: a chave da regra nova em PvE. DESLIGADA: só liga depois de a medição passar e o dono aprovar.
- * Fora de produção, `efeitosPve.medicao.test.ts` mede passando o elemento direto para os simuladores.
+ * §225: as regras novas LIGADAS em PvE. Só entra o que passa em ±3pp no gate `efeitosPve.medicao.test.ts`.
+ * Lentidão reprovou: nenhum ajuste passou nos três motores ao mesmo tempo.
  */
-export const EFEITOS_PVE_LIGADOS = false;
+export const EFEITOS_PVE_LIGADOS: readonly EfeitoElemento[] = ['silencio', 'curaContinua'];
+
+/** O elemento que a tela passa ao simulador: só quando a regra daquele par está ligada. PvP nunca chama. */
+export function efeitoElementoPve(family: SpecialFamily, elemento: string | null | undefined): string | undefined {
+  const e = efeitoDoEspecial(family, elemento);
+  return e && EFEITOS_PVE_LIGADOS.includes(e) ? (elemento as string) : undefined;
+}
 
 const MECANICA: Partial<Record<EfeitoElemento, SpecialEffect>> = {
-  queimadura: 'burn', veneno: 'poison', curaContinua: 'hot', lentidao: 'slow', silencio: 'silence',
+  curaContinua: 'hot', lentidao: 'slow', silencio: 'silence',
 };
 
 /** O especial com a regra do elemento. Sem elemento ou sem mecânica: o mesmo objeto, sem `effect`. PvP nunca chama. */

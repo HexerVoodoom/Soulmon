@@ -29,6 +29,7 @@
  * VISOR 348×160 (`games/GameKit.tsx`). O erro `sem-motor` é `cloud_off` num `role=status` (é rede,
  * não medalha).
  */
+import { efeitoElementoPve } from '../utils/combate/elementEffects';
 import { useHexOverrides } from '../hooks/useHexOverrides';
 import { lotIconName } from '../utils/lotIcons';
 import { hexArenaElements, hexFamily, hexIdentity } from '../utils/hexsmith';
@@ -202,6 +203,7 @@ export function ArenaGame({
   const jogador = useMemo<ArenaPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
     family: hexFamily(familyOfSkill(especial), hx),
+    efeitoElemento: efeitoElementoPve(hexFamily(familyOfSkill(especial), hx), ident.especial.elemento),
     area: especial?.area?.tipo === 'circulo' ? 'area' : 'single',
     escolaBasica: basica?.escolaId ?? 'combate_fisico',
     // MECÂNICA da vantagem elemental (arena.ts, tabela só das 17 bases): o elemento do SPRITE manda (a identidade, que já é o `petElement`); só sem ele a base da ficha decide.

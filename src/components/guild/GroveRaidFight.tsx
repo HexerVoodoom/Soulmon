@@ -1,3 +1,4 @@
+import { efeitoElementoPve } from '../../utils/combate/elementEffects';
 /**
  * A LUTA DO BOSQUE (30/10/2026, REGISTRO §204): o ataque ao Plantio virou combate em grupo na `BattleStage`, com torcida,
  * anel do especial e esquiva — o mesmo kit do Calabouço (`RogueFight`). O núcleo decide tudo pela semente (`groveRaidRound`);
@@ -57,7 +58,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
   const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const family = hexFamily(dungeonFamily(par?.especial), hx);
   const lineup = useMemo(() => groveRaidLineup(seed), [seed]);
-  const cfg = useMemo(() => ({ combatant, family }), [combatant, family]);
+  const cfg = useMemo(() => ({ combatant, family, efeitoElemento: efeitoElementoPve(family, par?.especial?.elementoId) }), [combatant, family, par?.especial?.elementoId]);
   const proto = useMemo(() => groveRaidRound(cfg, seed), [cfg, seed]);
   const petSprite = mySprite || getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const petScale = usePetScale(evolutionStage, petSprite);
