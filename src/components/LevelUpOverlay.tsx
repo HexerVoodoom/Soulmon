@@ -1,5 +1,5 @@
 /**
- * LEVEL UP — o display de subir de Vínculo (pedido do dono, 11/10/2026).
+ * BOND UP (o componente guarda o nome antigo) — o display de subir de Vínculo (pedido do dono, 11/10/2026).
  *
  * Sobrepõe a tela, ESCURECE o fundo e só sai quando a pessoa TOCA: sem auto-dismiss, sem timer de
  * saída. É um intersticial — entra na fila do `App` (`const interstitial`, depois do marco do Bosque e
@@ -28,7 +28,7 @@ import { usePrefersReducedMotion } from './ui/Viewport';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { levelUpGains, type LevelUpEvent } from '../utils/levelUp';
 import { gateName } from '../utils/gates';
-import { levelUpArt, LEVELUP_CHEVRON } from '../utils/levelUpArt';
+import { bondUpArt, BOND_UP_ENTRADA_MS, BOND_UP_H, BOND_UP_W, levelUpArt, LEVELUP_CHEVRON } from '../utils/levelUpArt';
 import { barramentoAtual } from '../utils/audioBus';
 import { playLevelUp } from '../utils/sounds';
 import { bitsStyle } from '../utils/currencies';
@@ -63,8 +63,8 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
   const done = useRef(false);
   const [shown, setShown] = useState(reduced ? event.to : event.from);
   const [bannerOk, setBannerOk] = useState(true);
+  const [fase, setFase] = useState<'entrada' | 'laco'>('entrada');
   const gains = levelUpGains(event.from, event.to);
-  const bannerArt = levelUpArt('banner', language);
   const frameArt = levelUpArt('frame');
   const many = event.to - event.from > 1;
 
@@ -79,6 +79,14 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
     const t = setTimeout(() => { armed.current = true; }, ARM_MS);
     return () => clearTimeout(t);
   }, []);
+
+  // A entrada do emblema toca uma vez; o laço já vem carregado para a troca não piscar.
+  useEffect(() => {
+    if (reduced) return;
+    new Image().src = bondUpArt('laco', isPt);
+    const t = setTimeout(() => setFase('laco'), BOND_UP_ENTRADA_MS);
+    return () => clearTimeout(t);
+  }, [reduced, isPt]);
 
   // O SOM (D11 no chamador): aba visível + áudio já liberado por um gesto desta sessão.
   useEffect(() => {
@@ -155,15 +163,17 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
           />
 
           <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
-            {/* O BANNER: arte opcional; sem ela, a palavra na voz do aparelho. */}
-            {bannerArt && bannerOk ? (
+            {/* O EMBLEMA BOND UP (dono, 05/11/2026): quase toda a largura da tela, maior que a coluna de 340 de propósito.
+                A entrada toca uma vez e o fim fica em laço; movimento reduzido mostra o último quadro. Sem a imagem, a palavra na voz do aparelho. */}
+            {bannerOk ? (
               <img
-                src={bannerArt}
+                src={bondUpArt(reduced ? 'fixo' : fase, isPt)}
                 alt=""
+                width={BOND_UP_W}
+                height={BOND_UP_H}
                 data-lvup-banner
                 onError={() => setBannerOk(false)}
-                className={reduced ? undefined : 'sm-lvup-banner'}
-                style={{ width: 256, height: 'auto', display: 'block' }}
+                style={{ width: 'min(96vw, 460px, 52vh)', maxWidth: 'none', height: 'auto', display: 'block', flex: 'none', imageRendering: 'pixelated' }}
               />
             ) : (
               <p
@@ -171,7 +181,7 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
                 className={reduced ? undefined : 'sm-lvup-banner'}
                 style={{ ...pixel, margin: 0, fontSize: 28, letterSpacing: '0.14em', color: GOLD, textShadow: '0 2px 0 #3a2410' }}
               >
-                LEVEL UP
+                {isPt ? 'VÍNCULO UP' : 'BOND UP'}
               </p>
             )}
 
@@ -189,20 +199,20 @@ export function LevelUpOverlay({ event, language, spriteUrl, onDone }: Props) {
             )}
 
             {/* O NÚMERO, grande, com a moldura opcional. */}
-            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minWidth: 150, padding: '2px 18px' }}>
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, minWidth: 150, minHeight: 68, padding: '2px 18px' }}>
               {frameArt && (
                 <img src={frameArt} alt="" data-lvup-frame style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill', pointerEvents: 'none' }} />
               )}
-              {/* O chevron triplo: a arte (96²) vai de borda a borda na vertical, então a caixa NÃO pode cortar — `overflow: visible`,
-                  respiro de 2 px em cima e embaixo e escala 0,5× exata (48), pixel a pixel. */}
-              <span data-lvup-chevron-box style={{ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', width: 48, height: 52, overflow: 'visible' }}>
-                <img src={LEVELUP_CHEVRON} alt="" width={48} height={48} data-lvup-chevron style={{ width: 48, height: 48, display: 'block', imageRendering: 'pixelated' }} />
+              {/* A seta (dono, 05/11/2026): maior e POR CIMA, na mesma posição, ultrapassando os limites da barrinha. A caixa reserva
+                  o lugar no fluxo e a arte de 96² sai dela sem cortar (`overflow: visible`), em escala 1× exata. */}
+              <span data-lvup-chevron-box style={{ position: 'relative', zIndex: 2, flex: 'none', width: 64, height: 52, overflow: 'visible' }}>
+                <img src={LEVELUP_CHEVRON} alt="" width={96} height={96} data-lvup-chevron style={{ position: 'absolute', left: -26, top: -22, width: 96, height: 96, maxWidth: 'none', display: 'block', imageRendering: 'pixelated' }} />
               </span>
               <span style={{ ...pixel, fontSize: 16, letterSpacing: '0.16em', color: CYAN, alignSelf: 'center' }}>LV</span>
               <span
                 data-lvup-number
                 className={reduced ? undefined : 'sm-lvup-num'}
-                style={{ ...pixel, fontSize: 64, lineHeight: 1, color: INK, textShadow: '0 0 12px rgba(110,255,251,.55), 0 3px 0 #061414' }}
+                style={{ ...pixel, fontSize: 48, lineHeight: 1, color: INK, textShadow: '0 0 12px rgba(110,255,251,.55), 0 3px 0 #061414' }}
               >
                 {shown}
               </span>
