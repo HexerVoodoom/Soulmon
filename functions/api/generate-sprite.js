@@ -250,8 +250,8 @@ function refusalError(message) {
 // M14 (25/10/2026): criatura com verde (ou elemento planta) pede fundo MAGENTA #FF00FF no
 // prompt; `chromaKeyOfPrompt` lê a cor do próprio prompt e o recorte usa a certa. Por isso o corpo NÃO leva
 // `background`. `SPRITE_MODEL`: 'alpha' (padrão) | 'flare' | 'soul'.
-const HF_API = 'https://api.higgsfield.ai';
-const HF_ROUTES = { alpha: '/marketing-studio/image', flare: '/marketing-studio/image/flare' };
+export const HF_API = 'https://api.higgsfield.ai';
+export const HF_ROUTES = { alpha: '/marketing-studio/image', flare: '/marketing-studio/image/flare' };
 const MAX_IMAGE_BYTES = 12 * 1024 * 1024;
 
 function hfCredentials(env) {

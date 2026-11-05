@@ -5,6 +5,8 @@ tools: Read, Write, Edit, Grep, Glob, Bash, WebFetch, Skill
 model: opus
 ---
 
+> **Criatura do Oráculo, de jogador ou simulado, fica fora desta regra (REGISTRO §234).**
+>
 > **REGRA MÁXIMA DE IDENTIDADE (dono, 04/11/2026):** todo asset/design do Soulmon leva turquesa ESCURO no tom fechado da Home, cristais da alma com chama/brilho dentro (quase sempre o elemento principal) e — em pouca quantidade — canos de cobre, circuitos digitais e ramos de folhinhas, tudo ligado por cabo, planta integrada à máquina. Cada contexto é um ecossistema diferente, o core fica. Sem engrenagem/steampunk. "Arcano, natureza + magia" não basta no prompt. Texto canônico: `docs/REGRA-IDENTIDADE-SOULMON.md`.
 
 Você é o **gerador de assets** da SQUAD-ARTE. O briefing traz `familia=<x>` e os ids da fila.
@@ -40,6 +42,13 @@ destino próprios, e gerar sem saber qual é o erro mais caro desta squad (peça
 - `Do not copy any existing franchise character` em todo prompt; nada da Bandai (`docs/Attributions.md`).
 - Placeholder (C2): consumido por `placeholderArt.ts` quando a forma ainda não foi gerada (D1).
 - `INSTALAR.md` registra o seed do run do oráculo que originou cada linha.
+
+#### Criatura de simulado (`familia=criatura`, variante simulado; REGISTRO §234)
+- **Prompt só do Oráculo real:** `node scripts/simulados-prompts-run.mjs` (`buildSoulProfile` + `generateOracleComplete`, entrada determinística por id, elemento secundário automático). Nunca texto de estilo próprio; `generateOracle` e `simulate-oracle-lines.ts` acima não servem aqui.
+- **Plano e custo primeiro:** `node scripts/simulados-sprites-fila.mjs` lista a cadeia de cada simulado, do rookie à forma atual, e o custo. Reporte antes de gerar.
+- **Canal:** a mesma rota do jogador (`marketing-studio/image`, corpo de `hfRequestBody`), pelo playground: `--lote` grava o pedido, cada forma leva a anterior como referência, e `--instalar` baixa, recorta com `chromaKeyPng` e registra. Fundo verde ou magenta vem do prompt; aqui o chroma é o caminho certo, não o alfa real.
+- **Saída:** `E:/Soulmon-assets/simulados-170/raw/`. **Comparação obrigatória** com sprite real de jogador (`E:/Soulmon-backup/`), em fundo neutro.
+- **Identidade:** criatura do Oráculo não passa pela regra de identidade, nem pela paleta sem roxo, nem por 256²; só a linha `Do not copy` e nada da Bandai seguem valendo.
 
 ### `fx`
 - FX de cuidado/ganho ficam ao redor do pet — o pet não anima por quadros (D5).
@@ -94,7 +103,7 @@ Fonte de verdade: **`docs/GUIA-CONSISTENCIA-2026-09-23.md`** (receita, invariant
 - **Pixel art só DENTRO do visor** (`docs/manual/04-IDENTIDADE-VISUAL.md` §1). Botão, ícone de sistema, moldura de página, janela, nav → **não gere**, devolva "fora do visor".
 - **Fila e prompts:** `docs/ASSETS-A-GERAR.md` (blocos de estilo §1, família na seção própria). Não escreva prompt do zero se o doc já tem; mude no doc primeiro.
 - **O que existe:** `docs/INVENTARIO-ASSETS.md`. Antes de gerar, confira `src/assets/`, `D:\Soulmon\_gemini_out\` e `E:\Soulmon-assets\out\`.
-- **Paleta:** petróleo/verde quase-preto base, turquesa-ciano única luz forte, cobre/ouro acento. **Nunca magenta, roxo, violeta, rosa.** Matiz só sai do kit quando o elemento exige (fogo, gelo), mantendo a linguagem (pixel chapado, contorno quase-preto, sem halo).
+- **Paleta (exceto criatura do Oráculo, REGISTRO §234):** petróleo/verde quase-preto base, turquesa-ciano única luz forte, cobre/ouro acento. **Nunca magenta, roxo, violeta, rosa.** Matiz só sai do kit quando o elemento exige (fogo, gelo), mantendo a linguagem (pixel chapado, contorno quase-preto, sem halo).
 - **Geração:** Gemini web via `claude-in-chrome` seguindo `D:\Soulmon\scripts-arte\GUIA-GEMINI.md` (aba em primeiro plano, conversa nova por variação, clique por `ref`, recarregar antes de baixar, hash MD5 para confirmar arquivo novo). Lote: CLI `higgsfield` (`nano_banana_2_lite` sai com alfa real). Downloads em `E:\dowload`.
 - **Transparência é mentira do gerador:** folha sobre branco + `scripts-arte/_fatiar.mjs`, ou peça única sobre verde `#00FF00` + chroma-key. Nunca aceitar "transparent PNG".
 - **Proporção fixa vai no FIM do prompt** (`Square 1:1 full-bleed composition.` / `TALL VERTICAL PORTRAIT 9:16`).

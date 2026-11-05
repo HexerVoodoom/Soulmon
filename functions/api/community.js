@@ -50,7 +50,7 @@ import {
   getProfile, putProfile, pidSoLeitura, nickKey, claimNick,
 } from './_profile.js';
 import { secretEquals } from './metrics.js';
-import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado, petNameDoSimulado } from './_simulados.js';
+import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado, petNameDoSimulado, formaVista } from './_simulados.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_honra.js';
@@ -926,6 +926,7 @@ async function handleCommunity(context) {
       const { side, spriteUrl, artLine } = await loadDuelSideWithSprite(env, saveId);
       // Simulado: o sprite publicado em `sim:sprite:<id>` vence (o perfil pode estar defasado até o motor rodar).
       const effectiveSprite = (await spriteVivoDoSimulado(env, saveId)) ?? pub.spriteUrl ?? spriteUrl;
+      await formaVista(env, saveId);
       return {
         ...pub,
         artLine: pub.artLine ?? artLine,

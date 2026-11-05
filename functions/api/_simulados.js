@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// MOTOR DOS 50 USUÁRIOS SIMULADOS (BACKLOG-BETA3 M11) — densidade populacional, sem custo de API.
+// MOTOR DOS 170 USUÁRIOS SIMULADOS (BACKLOG-BETA3 M11) — densidade populacional, sem custo de API.
 //
 // REGRAS DO DONO (não reverter):
 //   • parecem jogadores reais para quem joga. A flag `simulated: true` existe SÓ no servidor — no perfil KV
@@ -23,6 +23,14 @@
 // DETERMINISMO — PRNG semeado com hash(id do simulado + dia): o mesmo dia produz sempre o mesmo resultado.
 // O estado do simulado (level, estágio, Vínculo, scores) é função PURA de (perfil, dia).
 //
+// EVOLUÇÃO (dono, 05/11/2026): a régua é o gauge real (`FORM_REQUIREMENTS`, travado em teste), no caminho da permanência
+// para o Ultra, com pontos/dia = % da faixa × teto do estágio. Faixa FIXA no perfil: A 100%, B 70%, C 33%. Até o Ultra: 74/107/225 dias.
+// O simulado nunca cai de estágio (decisão do dono), e a ordem do dia começa num ponto derivado da data (sem isso,
+// em dia de pouco tráfego, o fim da lista nunca rodaria).
+//
+// PLACARES (dono, 05/11/2026): por jogo, só uma parte fixa dos simulados pontua (`PLACAR_SIMS_MAX`), deixando espaço a
+// jogadores reais. O Torneio (`rank:`) continua com todos, para manter o top 50 populado.
+//
 // O QUE O MOTOR ESCREVE (todo o resto do jogo lê pelos caminhos normais — não há `if (simulado)` espalhado):
 //   • `<id>` (o SAVE: só o que o duelo/Vínculo derivam — `evolutionStage`, `perfectDays`, `totalXP`, pontos), com
 //     `metadata.f` = 1ª gravação (o teto S1 do duelo: 1 level por dia de "conta");
@@ -40,7 +48,8 @@ import { xpForLevel } from './_bond.js';
 import { fichaStageOf } from './_duel.js';
 import { artLineOrNull, spriteUrlOrNull } from './_artLine.js';
 import { RANKED_GAMES, TIER_CUTS, MAX_SCORE_BY_GAME, submitScore } from './_rankings.js';
-import { SIMULADOS, SIM_EPOCH } from './_simulados.data.js';
+import { SIMULADOS, SIM_EPOCH, SIM_ANCORA_DIA } from './_simulados.data.js';
+import { enfileirarForma, passoFormas } from './_simFormas.js';
 
 const DAY_MS = 86_400_000;
 /**
@@ -111,12 +120,45 @@ export function stageForLevel(level) {
   return 'ultra';
 }
 
-/** Level, estágio e Vínculo do simulado no dia (curva de progresso: `lv0 + floor(rate * dias)`). */
+/** Fração de tarefas por faixa fixa do perfil. */
+export const FAIXA_P = Object.freeze({ A: 1, B: 0.7, C: 0.33 });
+const ESTAGIOS = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'];
+/** Espelho de `FORM_REQUIREMENTS` (`src/types/progression.ts`; o servidor não importa de `src/`): meta diária e gauge. Mega = caminho da permanência. */
+export const GAUGE_SIM = Object.freeze({
+  rookie: { teto: 4, meta: 30 }, champion: { teto: 5, meta: 45 }, ultimate: { teto: 5, meta: 60 }, mega: { teto: 6, meta: 270 },
+});
+
+/** Level e estágio pela faixa: parte da âncora e avança, sem nunca regredir. Função pura. */
+export function progressoDoDia(p, day) {
+  const taxa = FAIXA_P[p.faixa];
+  let dias = Math.max(0, Math.floor((dayStart(day) - dayStart(SIM_ANCORA_DIA)) / DAY_MS));
+  let i = ESTAGIOS.indexOf(p.ancora.estagio);
+  let pontos = p.ancora.pontos;
+  while (i < 4) {
+    const { teto, meta } = GAUGE_SIM[ESTAGIOS[i]];
+    const faltam = Math.ceil(Math.max(0, meta - pontos) / (taxa * teto));
+    if (dias < faltam) {
+      const estagio = ESTAGIOS[i];
+      const atual = Math.min(meta, pontos + dias * taxa * teto);
+      const span = STAGE_FIRST_LEVEL[ESTAGIOS[i + 1]] - STAGE_FIRST_LEVEL[estagio];
+      return { level: Math.min(STAGE_FIRST_LEVEL[estagio] + span - 1, STAGE_FIRST_LEVEL[estagio] + Math.floor((atual / meta) * span)), stage: estagio };
+    }
+    dias -= faltam; pontos = 0; i++;
+  }
+  return { level: Math.min(MAX_LEVEL, STAGE_FIRST_LEVEL.ultra + Math.floor(pontos + dias * taxa)), stage: 'ultra' };
+}
+
+/** Teto de SUBIDA dos simulados, até nova decisão do dono: ninguém sobe acima de Champion, e quem já está acima fica onde está, sem cair (REGISTRO §235). A curva segue por baixo em `progressoDoDia`. */
+export const SIM_FORMA_MAX = 'champion';
+
+/** Level, estágio e Vínculo do simulado no dia. */
 export function estadoDoDia(p, day) {
-  const d = dayIndexOf(day);
-  const level = Math.min(MAX_LEVEL, p.lv0 + Math.floor(p.rate * d));
-  const stage = stageForLevel(level);
-  const bond = Math.max(5, p.bond0 + Math.floor(p.rate * d * 0.8));
+  const curva = progressoDoDia(p, day);
+  const teto = Math.max(ESTAGIOS.indexOf(SIM_FORMA_MAX), ESTAGIOS.indexOf(p.ancora.estagio));
+  const acima = ESTAGIOS.indexOf(curva.stage) > teto;
+  const stage = acima ? ESTAGIOS[teto] : curva.stage;
+  const level = acima ? STAGE_FIRST_LEVEL[ESTAGIOS[teto + 1]] - 1 : curva.level;
+  const bond = Math.max(5, p.bond0 + Math.floor((level - 1) * 0.8));
   const evolutionStage = stage === 'rookie' || stage === 'ultra' ? stage : `${stage}-${PATH_SUFFIX[p.line]}`;
   return { level, stage, bond, evolutionStage };
 }
@@ -141,6 +183,18 @@ export function saveDoSimulado(p, day) {
   };
 }
 
+/** Por jogo, quantos simulados pontuam: sobra lugar a jogadores reais no top 50 (`TOP_MAX`). */
+export const PLACAR_SIMS_MAX = 15;
+const eleitos = new Map();
+/** Os simulados que pontuam neste jogo: sorteio fixo por hash(jogo + id), independente da skill, para não ocupar só o topo. */
+export function eleitosDoJogo(game) {
+  if (!eleitos.has(game)) {
+    const ordem = SIMULADOS.filter((s) => s.prefs[game]).map((s) => ({ h: hash32(`placar|${game}|${s.id}`), id: s.id })).sort((a, b) => a.h - b.h);
+    eleitos.set(game, new Set(ordem.slice(0, PLACAR_SIMS_MAX).map((x) => x.id)));
+  }
+  return eleitos.get(game);
+}
+
 /** Hoje o simulado joga? (frequência) */
 export function jogaHoje(p, day) {
   return prngOf(`${p.id}|${day}|joga`)() < FREQ_P[p.frequency];
@@ -156,7 +210,7 @@ export function scoresDoDia(p, day) {
   const out = [];
   for (const [game, compRaw] of Object.entries(p.prefs)) {
     const comp = compRaw ?? 0;
-    if (!RANKED_GAMES.includes(game)) continue;
+    if (!RANKED_GAMES.includes(game) || !eleitosDoJogo(game).has(p.id)) continue;
     const rng = prngOf(`${p.id}|${day}|${game}`);
     if (rng() > 0.35 + comp * 0.6) continue; // nem todo dia ele joga todo jogo que gosta
     const cuts = TIER_CUTS[game];
@@ -198,6 +252,13 @@ export async function spriteVivoDoSimulado(env, saveId) {
   } catch {
     return null;
   }
+}
+
+/** Um jogador viu este simulado: pede a arte da forma atual se faltar. No-op com `SIMULADOS_FORMAS_ON` desligada; nunca lança. */
+export async function formaVista(env, saveId, now = new Date()) {
+  if (!isSimuladoId(saveId)) return;
+  const p = SIMULADOS.find((s) => s.id === saveId);
+  if (p) await enfileirarForma(env, p.id, estadoDoDia(p, dayKeyOf(now)).evolutionStage, now);
 }
 
 /**
@@ -306,12 +367,17 @@ const randomToken = () => {
  * Sem `waitUntil` (testes, dev) cai no `await` para o comportamento continuar determinístico. Nunca lança.
  */
 export async function agendarSimuladosDia(context, now) {
-  const p = ensureSimuladosDia(context?.env, now);
+  let origin = '';
+  try { origin = new URL(context?.request?.url).origin; } catch { /* sem request (testes): segue sem referência de imagem */ }
+  const p = ensureSimuladosDia(context?.env, now).then((r) => passoFormas(context?.env, { now, origin }).then(() => r));
   if (typeof context?.waitUntil === 'function') { context.waitUntil(p); return; }
   await p;
 }
 
 // ── Orquestração preguiçosa ──────────────────────────────────────────────────
+/** Onde a lista começa neste dia. Sem rotação, dia de pouco tráfego nunca alcançaria os últimos perfis. */
+export const inicioDoDia = (day) => hash32(`inicio|${day}`) % SIMULADOS.length;
+
 /** WeakMap por store: o cache em memória não vaza entre ambientes (testes) nem entre namespaces. */
 const concluidos = new WeakMap();
 
@@ -346,7 +412,7 @@ export async function ensureSimuladosDia(env, now = new Date()) {
     let ops = 0;
     let feitos = 0;
     while (next < SIMULADOS.length && feitos < CHUNK) {
-      const p = SIMULADOS[next];
+      const p = SIMULADOS[(inicioDoDia(day) + next) % SIMULADOS.length];
       const custo = custoEstimado(p, day);
       if (feitos > 0 && ops + custo > OPS_BUDGET) break;
       try {

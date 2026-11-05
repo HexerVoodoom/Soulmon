@@ -1,6 +1,6 @@
 # Regra máxima de identidade — TEXTO CANÔNICO
 
-> **Decisão do dono, 04/11/2026.** Vale para TODO asset gerado e TODO design do Soulmon, sem exceção.
+> **Decisão do dono, 04/11/2026.** Vale para TODO asset gerado e TODO design do Soulmon. Única exceção: criatura do Oráculo (abaixo).
 > O dono reclamou que a regra vinha sendo ignorada. Este é o único texto canônico; os demais
 > lugares (CLAUDE.md, squads, agentes, fila de assets, manual) só copiam o resumo e apontam para cá.
 
@@ -17,6 +17,10 @@ Tudo o que for gerado ou desenhado para o Soulmon carrega a identidade do jogo:
   acima continua lá.
 - **Proibido:** engrenagem e clima steampunk (o cobre e os canos entram como identidade, não como
   máquina a vapor). "Arcano, natureza + magia" sozinho no prompt NÃO basta.
+
+## Exceção: criaturas geradas pelo Oráculo (dono, 05/11/2026)
+
+Esta regra NÃO vale para criaturas geradas pelo Oráculo, de jogador ou simulado. Isso inclui o roxo que o prompt do Oráculo pede e a dimensão de recorte: nada disso reprova a peça. Cards, cenários, UI, NPC e os demais assets continuam na regra (REGISTRO §234).
 
 ## Como aplicar
 

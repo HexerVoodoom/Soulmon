@@ -33,6 +33,7 @@ Um só agente gera, `arte-gerador`, sempre com `familia=<x>` no briefing (a tabe
 ## Comandos
 - **`status`** — para cada família: tem / gerado-não-instalado / a gerar / bloqueado por decisão. Lê os dois docs; não varre disco (o inventário já varreu — se suspeitar que apodreceu, rode `inventario`).
 - **`fila`** — a lista C/B/F/M/H com prompt pronto, na ordem de valor (§10 do `ASSETS-A-GERAR`).
+- **`gerar criatura simulado <ids>`** — variante da família `criatura`: prompt do Oráculo real, cadeia até a forma atual, custo reportado antes de gerar, saída em `E:/Soulmon-assets/simulados-170/raw/` (`arte-gerador`, seção "Criatura de simulado"; REGISTRO §234). Sem régua de identidade.
 - **`gerar <familia> [ids]`** — despacha `arte-gerador` com `familia=<familia>`, os ids, a seção do doc, o bloco de estilo, a pasta de entrega `_gemini_out/<familia>-<AAAAMMDD>/`, e a regra "não toca em `src/`". Um agente por vez por família; gerações em folha quando as peças forem pequenas. Ao voltar, dispara `conferir` automaticamente.
 - **`conferir <leva>`** — `arte-conferente` roda o checklist mecânico e escreve `CONFERENCIA.md`. Reprovado volta ao `arte-gerador` (mesma família) com a referência anexada. Aprovado → checkpoint do dono com o recorte 200×200 (modal: "dá para dizer que é o Soulmon?").
 - **`instalar <leva>`** — só com `CONFERENCIA.md` aprovada e "sim" do dono. `arte-instalador` copia, mapeia, ajusta guard, sobe `CACHE_VERSION`, testa, commita por caminho, atualiza os 3 docs (`INVENTARIO`, `ASSETS-A-GERAR`, `BACKLOG-ARTE-GERAR`) e chama `/manter-docs auto`.
