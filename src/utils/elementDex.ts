@@ -10,8 +10,8 @@ import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { CURATED_ELEMENT_IDS, isCuratedElement } from './elementosCurados';
 
-/** Teto da lista no save (20 base + 190 derivados + 50 curados + neutro = 261; 01/11/2026). */
-export const ELEMENT_DEX_MAX = 261;
+/** Teto da lista no save (20 base + 190 derivados + 50 curados + neutro = 261; 01/11/2026; + 6 do lote 4 + 3 promovidos = 270, 05/11/2026). */
+export const ELEMENT_DEX_MAX = 270;
 
 export const BASE_ELEMENT_IDS: readonly string[] = CLASS_ELEMENT_ORDER;
 export const DERIVED_ELEMENT_IDS: readonly string[] = DERIVED_ELEMENT_PAIRS.map(d => d.id);
@@ -59,7 +59,7 @@ export function elementIdOfFoe(elements: readonly (string | undefined | null)[] 
   return PAIR_ID.get([a, b].sort().join('+'));
 }
 
-/** Forma segura da lista (sem a regra do catálogo, para o servidor espelhar igual): strings `[a-z_]{2,24}`, sem repetir, teto 261. */
+/** Forma segura da lista (sem a regra do catálogo, para o servidor espelhar igual): strings `[a-z_]{2,24}`, sem repetir, teto 270. */
 export function sanitizeDefeatedElements(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
   const out: string[] = [];

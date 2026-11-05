@@ -22,6 +22,8 @@
  * estaticamente (mesma garantia de bundle que imports nomeados dariam), sem
  * exigir uma linha de import por arquivo — inviável à mão para 154 ícones.
  */
+import { curatedComponents } from './elementosCurados';
+
 const modules = import.meta.glob('../assets/soulmon/elementos/*.png', {
   eager: true,
   import: 'default',
@@ -47,7 +49,8 @@ for (const [path, url] of Object.entries(modules)) {
  * tem ícone próprio: o base de planta é `vida`.
  */
 export const elementIcon = (elementoId: string): string | undefined =>
-  ELEMENT_ICONS[elementoId];
+  ELEMENT_ICONS[elementoId] ?? ELEMENT_ICONS[curatedComponents(elementoId)?.[0] ?? '']; // curado sem ícone próprio (lote 4, até a arte): o do 1º componente
+
 
 /** Todos os ids que têm ícone. Útil para testes de cobertura. */
 export const elementIconIds = (): string[] => Object.keys(ELEMENT_ICONS);

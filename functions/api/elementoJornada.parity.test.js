@@ -12,7 +12,7 @@ describe('§232 paridade do elemento por estágio', () => {
   it('a mesma forma nos dois lados', () => {
     for (const raw of [J, null, { u: 2, estagios: {} }, { u: 0.1 }, { u: 0.1, estagios: [] }]) expect(sanitizeElementoJornada(raw)).toEqual(cliente(raw));
   });
-  it('os 50 curados estão na lista fechada, com o 1º componente', () => {
+  it('os 59 curados estão na lista fechada, com o 1º componente', () => {
     for (const e of ELEMENTOS_CURADOS) {
       expect(ELEMENTOS_FICHA.has(e.id)).toBe(true);
       expect(BASE_DO_PAR[e.id]).toBe(e.componentes[0]);

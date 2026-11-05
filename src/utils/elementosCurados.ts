@@ -9,14 +9,21 @@
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
 import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 import { COMBINADOS_LOTE3_DATA } from './elementosLote3.data';
+import { COMBINADOS_LOTE4_DATA, CURADOS_PROMOVIDOS_DATA } from './elementosLote4.data';
 
 export interface ElementoCurado { num: string; id: string; componentes: readonly string[] }
 
-export const ELEMENTOS_CURADOS: readonly ElementoCurado[] = [...COMBINADOS_LOTE1_DATA, ...COMBINADOS_LOTE2_DATA, ...COMBINADOS_LOTE3_DATA]
-  .map(([num, id, , ...componentes]) => ({ num, id, componentes }))
-  .sort((a, b) => Number(a.num) - Number(b.num));
+/**
+ * 59 elementos: os 50 dos lotes 1–3 (212–261), os 6 do lote 4 (262–267, planta/industrial/fada) e os 3 trios promovidos
+ * (205–207: Pestilência, Maldição, Cyber; 05/11/2026, emenda ao §232). Os promovidos não geram roster (já existem).
+ */
+export const ELEMENTOS_CURADOS: readonly ElementoCurado[] = [
+  ...[...COMBINADOS_LOTE1_DATA, ...COMBINADOS_LOTE2_DATA, ...COMBINADOS_LOTE3_DATA, ...COMBINADOS_LOTE4_DATA]
+    .map(([num, id, , ...componentes]) => ({ num, id, componentes: componentes as readonly string[] })),
+  ...CURADOS_PROMOVIDOS_DATA.map(([num, id, ...componentes]) => ({ num, id, componentes: componentes as readonly string[] })),
+].sort((a, b) => Number(a.num) - Number(b.num));
 
-/** Os 50 curados (212–261) e, por último, o neutro do corvo. */
+/** Os 59 curados (205–207 e 212–267) e, por último, o neutro do corvo. */
 export const CURATED_ELEMENT_IDS: readonly string[] = [...ELEMENTOS_CURADOS.map(e => e.id), 'neutro'];
 
 const CURADO = new Map(ELEMENTOS_CURADOS.map(e => [e.id, e]));
@@ -75,6 +82,15 @@ export const CURATED_ELEMENT_NAMES: Readonly<Record<string, { pt: string; en: st
   renascimento: { pt: 'Renascimento', en: 'Rebirth' },
   juizo_final: { pt: 'Juízo Final', en: 'Last Judgment' },
   cavaleiro_absoluto: { pt: 'Cavaleiro Absoluto', en: 'Absolute Knight' },
+  clareira: { pt: 'Clareira Sagrada', en: 'Sacred Glade' },
+  alto_forno: { pt: 'Alto-Forno', en: 'Blast Furnace' },
+  bencao_feerica: { pt: 'Bênção Feérica', en: 'Fairy Blessing' },
+  floresta_ancestral: { pt: 'Floresta Ancestral', en: 'Ancestral Forest' },
+  colosso_blindado: { pt: 'Colosso Blindado', en: 'Armored Colossus' },
+  corte_feerica: { pt: 'Corte Feérica', en: 'Fae Court' },
+  pestilencia: { pt: 'Pestilência', en: 'Pestilence' },
+  maldicao: { pt: 'Maldição', en: 'Curse' },
+  cyber: { pt: 'Cyber', en: 'Cyber' },
   neutro: { pt: 'Neutro', en: 'Neutral' },
 };
 

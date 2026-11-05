@@ -4240,12 +4240,15 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 ### `src/utils/elementosLote3.data.ts`
 **Dono de:** o lote 3 dos 50 elementos curados, no mesmo formato do lote 1.
 
+### `src/utils/elementosLote4.data.ts`
+**Dono de:** o lote 4 dos elementos curados (nº 262-267: Clareira Sagrada, Alto-Forno, Bênção Feérica, Floresta Ancestral, Colosso Blindado, Corte Feérica) e `CURADOS_PROMOVIDOS_DATA` (Pestilência, Maldição, Cyber, nº 205-207). **Chamado por:** `elementosCurados.ts`, `enemyRoster.ts`, `enemyRosterArt.ts`, `spriteElement.ts`.
+
 ### `src/utils/veladoTester.ts`
 **Dono de:** `refreshVeladoTester`: pergunta ao servidor se o usuário logado está no teste do Velado e aplica o resultado; nunca lança, falha = desligado.
 
 
 ### `src/utils/elementosCurados.ts`
-**Dono de:** os 50 elementos curados (212–261, lotes 1–3) + `neutro` no dex da BIBLIOTECA (01/11/2026): ids, componentes e nome exibido. Fora de `ALL_ELEMENT_IDS` (Loja/Poção não mudam). **Chamado por:** `elementDex.ts` (`LIBRARY_ELEMENT_IDS`, `dexIdsOfFoe`), `ElementDex.tsx`. **Régua:** `elementosCurados.test.ts`.
+**Dono de:** os 59 elementos curados (205–207 promovidos, 212–267, lotes 1–4) + `neutro` no dex da BIBLIOTECA (01/11/2026): ids, componentes e nome exibido. Fora de `ALL_ELEMENT_IDS` (Loja/Poção não mudam). **Chamado por:** `elementDex.ts` (`LIBRARY_ELEMENT_IDS`, `dexIdsOfFoe`), `ElementDex.tsx`. **Régua:** `elementosCurados.test.ts`.
 
 ### `src/utils/libraryNew.ts`
 **Dono de:** o aviso de entrada nova na Biblioteca (01/11/2026): `GameState.libraryAck = {b,e,s}` (tamanhos de bestiary/defeatedElements/strayPlayersSeen na última abertura), o que é NEW (`libraryNewKeys`/`libraryNewCount`), a abertura que grava o visto (`ackLibrary`) e o texto exato do aviso. Save antigo nasce sem NEW retroativo. **Chamado por:** `App.tsx`, `LibraryPage.tsx`, `GameStateContext.tsx`. **Régua:** `libraryNew.test.ts`, `LibraryNewBadge.render.test.tsx`.

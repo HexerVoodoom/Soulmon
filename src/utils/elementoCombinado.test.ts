@@ -54,13 +54,26 @@ describe('§232 a escolha', () => {
     }
   });
 
-  it('planta, industrial e fada não têm curado: ficam no par, nunca inventam elemento', () => {
-    expect(ELEMENTOS_CURADOS.some(e => ['planta', 'industrial', 'fada'].some(b => e.componentes.includes(b)))).toBe(false);
-    for (const base of ['planta', 'industrial', 'fada']) for (const k of [3, 4]) {
-      const e = escolherElemento(base, k, 0.9);
-      expect(e.k).toBe(2);
-      expect(componentes(e.id)).toContain(base);
+  it('planta, industrial e fada têm 2 trios e 1 quádruplo curados e deixam de parar em 2 (emenda ao §232, 05/11/2026)', () => {
+    for (const base of ['planta', 'industrial', 'fada']) {
+      const comBase = ELEMENTOS_CURADOS.filter(e => e.componentes.includes(base));
+      expect(comBase.filter(e => e.componentes.length === 3), base).toHaveLength(2);
+      expect(comBase.filter(e => e.componentes.length === 4), base).toHaveLength(1);
+      for (const k of [3, 4]) {
+        const e = escolherElemento(base, k, 0.9);
+        expect(e.k, `${base} k${k}`).toBe(k);
+        expect(componentes(e.id)).toContain(base);
+        expect(componentes(e.id)).toHaveLength(k);
+      }
     }
+  });
+  it('as afinidades escolhem entre os 2 trios da mesma base (sombrio x luminoso)', () => {
+    expect(escolherElemento('planta', 3, 0.5, { morte: 9, vileza: 9 }).id).toBe('pestilencia');
+    expect(escolherElemento('planta', 3, 0.5, { luz: 9, vida: 9 }).id).toBe('clareira');
+    expect(escolherElemento('fada', 3, 0.5, { sombra: 9, vileza: 9 }).id).toBe('maldicao');
+    expect(escolherElemento('fada', 3, 0.5, { luz: 9, vida: 9 }).id).toBe('bencao_feerica');
+    expect(escolherElemento('industrial', 3, 0.5, { eletricidade: 9, arcano: 9 }).id).toBe('cyber');
+    expect(escolherElemento('industrial', 3, 0.5, { fogo: 9, terra: 9 }).id).toBe('alto_forno');
   });
 
   it('as afinidades decidem; sem elas o resultado é estável', () => {
@@ -124,7 +137,7 @@ describe('§232 caminhos da vantagem', () => {
   });
 });
 
-describe('§232 os 50 curados passam por todos os leitores', () => {
+describe('§232 os 59 curados passam por todos os leitores', () => {
   it('lista fechada, nome, cor, cenário e filtro', () => {
     expect([...IDS_DOS_CURADOS].sort()).toEqual(ELEMENTOS_CURADOS.map(e => e.id).sort());
     for (const { id, componentes: c } of ELEMENTOS_CURADOS) {
