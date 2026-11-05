@@ -62,6 +62,7 @@ import { GamePopups } from './components/GamePopups';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
 import { emptyIncubation, incubationFor, incubationReady } from './utils/spriteTrigger';
 import { activeCrystal, crystalPhase, startCrystal, type CrystalPhase } from './utils/evolutionCrystal';
+import { altSpriteKey, elementoDaForma, equiparFormaAlt, registrarFormaAoEvoluir, spriteVisorOf } from './utils/formasAlternativas';
 import { spriteText } from './utils/spriteCopy';
 import { UNLOCK_NEEDED_EVENT } from './utils/unlockEvent';
 import { MAX_GENERATE_CHARACTER_USES, generateCharacterUsesLeft, spendGenerateCharacterUse } from './utils/generateCharacterUses';
@@ -1249,6 +1250,13 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [petIsCorvo, gameState.spriteLibrary],
   );
+  /** O acervo como o VISOR o vê: a forma alternativa equipada ocupa a chave da forma (`utils/formasAlternativas.ts`). Só exibição. */
+  const spriteVisor = useMemo(() => spriteVisorOf(spriteAcervo, gameState.formasAlt, gameState.formaAltEquipada), [spriteAcervo, gameState.formasAlt, gameState.formaAltEquipada]);
+  /** A chave de acervo da forma ATUAL (a alternativa equipada, se houver). */
+  const chaveAtual = altSpriteKey(gameState.evolutionStage, gameState.formaAltEquipada?.[gameState.evolutionStage], gameState.formasAlt);
+  /** A chave da forma-destino do cristal: com outro elemento num estágio já visitado, é a forma alternativa (arte NOVA). */
+  const cristalAlvo = activeCrystal(gameState);
+  const cristalKey = cristalAlvo ? altSpriteKey(cristalAlvo.to, elementoDaForma(gameState.elementoJornada, cristalAlvo.to), gameState.formasAlt, spriteAcervo) : null;
   const updateSpriteLibrary = useCallback(
     (fn: (prev: SpriteLibrary) => SpriteLibrary) =>
       setGameState(prev => ({ ...prev, spriteLibrary: fn(prev.spriteLibrary ?? emptySpriteLibrary()) })),
@@ -1266,7 +1274,8 @@ export default function App() {
       points: { power: gameState.powerPoints, harmony: gameState.harmonyPoints, benevolence: gameState.benevolencePoints },
       reading: carePatternReading,
       // 💎 O lote da próxima forma só parte com o Soulmon NO CRISTAL (31/10/2026).
-      crystalFormId: activeCrystal(gameState)?.to ?? null,
+      crystalFormId: cristalKey,
+      currentKey: chaveAtual,
     },
     library: spriteAcervo,
     updateLibrary: updateSpriteLibrary,
@@ -1306,7 +1315,7 @@ export default function App() {
   const cristalFase: CrystalPhase | null = !cristal ? null
     : freeRookie === 'loading' ? 'gerando'
     : crystalPhase({
-      crystal: cristal,
+      crystal: cristalKey ? { ...cristal, to: cristalKey } : cristal,
       library: spriteAcervo,
       canGenerate: spriteGenOn && (gameState.soulmonStages ?? []).some(st => creatureFormId(st) === cristal.to),
       generating: spriteGen.generating,
@@ -1321,7 +1330,7 @@ export default function App() {
     if (!cristal || cristalFase !== 'pronto' || evolutionCeremony || !cristalNaTela) return;
     setEvolutionCeremony({ from: cristal.from, to: cristal.to, spent: gaugeGoalFor(cristal.from, gameState.unlockedEvolutions) });
   }, [cristal, cristalFase, evolutionCeremony, cristalNaTela, gameState.unlockedEvolutions]);
-  const handleCristalRetry = useCallback(() => { if (cristal) spriteGen.retry(cristal.to); }, [cristal, spriteGen]);
+  const handleCristalRetry = useCallback(() => { if (cristal) spriteGen.retry(cristalKey ?? cristal.to); }, [cristal, cristalKey, spriteGen]);
   const handleCristalSeguir = useCallback(() => { if (cristal) setCristalPulado(cristal.since); }, [cristal]);
   /* "CHOCANDO" (20/10/2026, dono): quem tem criatura do oráculo mas ainda não recebeu NENHUM sprite próprio (a geração leva um tempo) vê o cristal com
      o ser dentro e "seu Soulmon está chocando", em vez do inicial de reserva. Entra no jogo e no tutorial normalmente; quando o sprite chega o visor
@@ -1336,12 +1345,24 @@ export default function App() {
   // Render-time de propósito: telas abertas depois já leem o valor certo; `setOwnSprites` é idempotente (ver utils/sprites.ts).
   useMemo(() => {
     const map: Record<string, string> = {};
-    for (const formId of Object.keys(spriteAcervo.sprites)) {
-      const url = displaySprite(spriteAcervo, formId)?.url;
+    for (const formId of Object.keys(spriteVisor.sprites)) {
+      if (formId.includes('@')) continue; // forma alternativa: entra pela chave da forma quando equipada
+      const url = displaySprite(spriteVisor, formId)?.url;
       if (url) map[formId.toLowerCase()] = url;
     }
     setOwnSprites(map, petChocando || petOraculo ? PLACEHOLDER_ART.forming : undefined);
-  }, [spriteAcervo, petChocando, petOraculo]);
+  }, [spriteVisor, petChocando, petOraculo]);
+  /** FORMAS ALTERNATIVAS (05/11/2026): equipar uma forma já desbloqueada (cosmético; a regra é de `utils/formasAlternativas.ts`). */
+  /** A DESCOBERTA do Passeio (05/11/2026): o Soulmon novo entra no Drive (`bestiary`, abas Selvagem/Desgarrado). Idempotente. */
+  const handleStrollDiscover = useCallback((key: string) => {
+    setGameState(prev => ((prev.bestiary ?? []).includes(key) ? prev : { ...prev, bestiary: [...(prev.bestiary ?? []), key] }));
+  }, [setGameState]);
+  const handleEquipFormaAlt = useCallback((formId: string, elemento: string) => {
+    setGameState(prev => {
+      const formaAltEquipada = equiparFormaAlt(prev.formasAlt, prev.formaAltEquipada, formId, elemento);
+      return formaAltEquipada === prev.formaAltEquipada ? prev : { ...prev, formaAltEquipada };
+    });
+  }, [setGameState]);
   const handleTuneVisor = useCallback((formId: string) => spriteGen.tune(formId), [spriteGen]);
   /* O botao "Tentar de novo" do card de falha de credencial. Nasceu INERTE no
      commit 60b0c89b: `onRetrySprite` e opcional, entao a prop faltando nao
@@ -2560,7 +2581,7 @@ export default function App() {
   })();
   const fioMetaCumprida = dailyTotal > 0 && dailyDone >= heartGoalHoje;
   const minhaCriaturaUrl = (!petIsCorvo
-    ? (displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? Object.values(spriteAcervo.sprites)[0]?.url)
+    ? (displaySprite(spriteVisor, gameState.evolutionStage)?.url ?? Object.values(spriteAcervo.sprites)[0]?.url)
     : undefined)
     ?? getSpriteForStage(gameState.evolutionStage, petLine);
   /** FEIRA DO CHEFE: o SEU bicho na luta (elemento = o do Soulmon (`petElementOf`, a mesma fonte do resto do combate)). */
@@ -3973,7 +3994,8 @@ export default function App() {
       };
       // Antes → depois dos atributos de combate, da mesma derivação da luta (`utils/evolutionStatsDelta.ts`). Escrita idempotente.
       pendingEvoStatsRef.current = { delta: evolutionStatsDelta(prev, evolved), stage: newEvolutionStage };
-      return evolved;
+      // FORMAS ALTERNATIVAS (05/11/2026): voltar a este estágio com outro elemento desbloqueia (e equipa) uma forma nova dele.
+      return { ...evolved, ...registrarFormaAoEvoluir(prev.formasAlt, prev.formaAltEquipada, newEvolutionStage, elementoDaForma(evolved.elementoJornada, newEvolutionStage), libraryOf(prev)) };
     });
     playEvolve();
     setEvolutionFlash(true);
@@ -7377,7 +7399,7 @@ export default function App() {
           onCompleteTask: handleToggleTask,
           foodInventory: gameState.foodInventory,
           onFeed: handleFeed,
-          spriteUrl: displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? (petChocando ? PLACEHOLDER_ART.forming : getSpriteForStage(gameState.evolutionStage, petLine)),
+          spriteUrl: displaySprite(spriteVisor, gameState.evolutionStage)?.url ?? (petChocando ? PLACEHOLDER_ART.forming : getSpriteForStage(gameState.evolutionStage, petLine)),
           petName: soulmonDisplayName(gameState.soulmonMeta) || undefined,
           evolutionStage: gameState.evolutionStage,
           demoCharacterId: gameState.demoCharacterId,
@@ -7403,7 +7425,7 @@ export default function App() {
           soulStruggle={gameState.soulStruggle}
           /* A criatura que acabou de nascer, no vidro do tutorial (canvas
              Onboarding-funil D-O13): o mesmo sprite/tonalidade da Home. */
-          spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? (petChocando ? PLACEHOLDER_ART.forming : getSpriteForStage(gameState.evolutionStage, petLine))}
+          spriteUrl={displaySprite(spriteVisor, gameState.evolutionStage)?.url ?? (petChocando ? PLACEHOLDER_ART.forming : getSpriteForStage(gameState.evolutionStage, petLine))}
           petName={soulmonDisplayName(gameState.soulmonMeta) || undefined}
           demoTint={gameState.demoCharacterId ? gameState.demoTint : undefined}
           onComplete={handleCompleteTutorial}
@@ -7463,7 +7485,7 @@ export default function App() {
                    demo o pré-pronto É a criatura da pessoa, então a regra
                    estava bloqueando justamente o caso em que ela não se
                    aplica — e a faixa grátis é a que menos posse recebe. */
-                spriteUrl: displaySprite(spriteAcervo, 'rookie')?.url
+                spriteUrl: displaySprite(spriteVisor, 'rookie')?.url
                   ?? (petLine
                     ? getSpriteForStage('rookie', petLine)
                     : null),
@@ -7586,7 +7608,11 @@ export default function App() {
               onEvolveRequest={handleEvolveRequest}
               language={language}
               carePattern={carePatternReading.confident ? carePatternReading.pattern : null}
-              spriteLibrary={spriteAcervo}
+              spriteLibrary={spriteVisor}
+              spriteLibraryReal={spriteAcervo}
+              formasAlt={gameState.formasAlt}
+              formaAltEquipada={gameState.formaAltEquipada}
+              onEquipFormaAlt={handleEquipFormaAlt}
               dominantElement={petElementOf(gameState)}
               onTuneVisor={handleTuneVisor}
               onRetrySprite={handleRetrySprite}
@@ -7994,7 +8020,7 @@ export default function App() {
             text={milestoneCeremony.text}
             dateLabel={milestoneCeremony.dateLabel}
             reducedMotion={milestoneCeremony.reducedMotion}
-            spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
+            spriteUrl={displaySprite(spriteVisor, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
             language={language}
             onDone={() => setMilestoneCeremony(null)}
           />
@@ -8446,7 +8472,7 @@ export default function App() {
                 spritePose={gameState.spritePose}
                 /* Sprite próprio SÓ depois de adotado (§2.3.1) — senão o visor
                    segue na arte de reserva, que nunca é erro. */
-                ownSpriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url}
+                ownSpriteUrl={displaySprite(spriteVisor, gameState.evolutionStage)?.url}
                 chocando={petChocando}
                 emCristal={cristalFase}
                 onCristalRetry={cristal && canManualRetry(spriteAcervo, cristal.to) ? handleCristalRetry : undefined}
@@ -9023,7 +9049,7 @@ export default function App() {
           )}
           {reverHistoria && <Suspense fallback={null}><SequenciaRevisao language={language} onDone={() => setReverHistoria(false)} ligacoes={{
             maxActivities: activityCap,
-            spriteUrl: displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine),
+            spriteUrl: displaySprite(spriteVisor, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine),
             petName: soulmonDisplayName(gameState.soulmonMeta) || undefined,
             evolutionStage: gameState.evolutionStage,
             demoCharacterId: gameState.demoCharacterId,
@@ -9535,7 +9561,7 @@ export default function App() {
         showFirstTaskPopup={showFirstTaskPopup}
         onCloseFirstTaskPopup={() => setShowFirstTaskPopup(false)}
         language={language}
-        spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
+        spriteUrl={displaySprite(spriteVisor, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
       />
 
       {evolutionCeremony && freeRookie === 'loading' && <p data-free-rookie-loading role="status" style={{ position: 'fixed', bottom: 12, left: 0, right: 0, textAlign: 'center', zIndex: 1000, pointerEvents: 'none', fontSize: 12, opacity: 0.8 }}>{language === 'pt-BR' ? 'Desenhando sua nova forma…' : 'Drawing your new form…'}</p>}
@@ -9547,8 +9573,8 @@ export default function App() {
           toName={getStageNameById(evolutionCeremony.to)}
           language={language}
           demoCharacterId={petLine}
-          fromSpriteUrl={displaySprite(spriteAcervo, evolutionCeremony.from)?.url}
-          toSpriteUrl={displaySprite(spriteAcervo, evolutionCeremony.to)?.url}
+          fromSpriteUrl={displaySprite(spriteVisor, evolutionCeremony.from)?.url}
+          toSpriteUrl={(cristalKey && cristal?.to === evolutionCeremony.to ? spriteAcervo.sprites[cristalKey]?.url : undefined) ?? displaySprite(spriteVisor, evolutionCeremony.to)?.url}
           reachedAt={gameState.formReachedAt?.[evolutionCeremony.to]}
           fragmentsSpent={evolutionCeremony.spent}
           onEvolved={handleEvolve}
@@ -9690,6 +9716,12 @@ export default function App() {
           adventure={aventuraDaNoite}
           adventureIsNew={aventuraInedita}
           stroll={strollDaNoite}
+          strollScene={strollDaNoite && trv ? {
+            regionId: strollDaNoite.regionId,
+            bgId: trv.regionById(strollDaNoite.regionId)?.bgId ?? null,
+            bestiary: gameState.bestiary,
+            onDiscover: handleStrollDiscover,
+          } : null}
           maxHearts={gameState.maxHealthPoints}
           heartsAnimSeen={gameState.lastDayReport.heartsAnimSeen}
           onHeartsAnimSeen={handleHeartsAnimSeen}
@@ -9717,7 +9749,7 @@ export default function App() {
             return {
               mark: marco,
               petName: soulmonDisplayName(gameState.soulmonMeta) || '—',
-              spriteUrl: displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine),
+              spriteUrl: displaySprite(spriteVisor, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine),
               formNames: (gameState.unlockedEvolutions ?? []).map(id => {
                 const st = (gameState.soulmonStages ?? []).find(
                   x => (x.branch ? `${x.stage}-${x.branch}` : x.stage) === id,
@@ -9732,7 +9764,7 @@ export default function App() {
           /* A semana já foi carimbada ao MOSTRAR (13.11) — aqui só abre. */
           onOpenOffer={() => setUnlockReason('report')}
           /* R4 / D-H7 — a criatura na peça do retorno. */
-          spriteUrl={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
+          spriteUrl={displaySprite(spriteVisor, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
           onDismissOffer={() => setGameState(prev => ({ ...prev, offerDismissed: true }))}
         />
         </PresentationSlot>
@@ -9823,7 +9855,7 @@ export default function App() {
           tasks={triageTasks}
           language={language}
           /* A reação do pet no fim: o MESMO sprite do visor. */
-          petSprite={displaySprite(spriteAcervo, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
+          petSprite={displaySprite(spriteVisor, gameState.evolutionStage)?.url ?? getSpriteForStage(gameState.evolutionStage, petLine)}
           onResolve={handleTriageResolve}
           onClose={() => setTriageTasks(null)}
         />

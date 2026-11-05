@@ -227,7 +227,7 @@ function lifetimeUsed(ent, bucket) {
  * registro que só o servidor escreve, uma chave por requisição. Conjunto
  * fechado: o pior caso do dicionário são 11 entradas, para sempre.
  */
-export const VALID_FORM_ID = /^(?:bb|rookie|ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))$/;
+export const VALID_FORM_ID = /^(?:bb|rookie|(?:ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))(?:@[a-z_]{2,24})?)$/; // `@<elemento>` = forma alternativa (05/11/2026, utils/formasAlternativas.ts)
 
 /** Tira a chave ANTIGA da forma: `formUsed` já somou o valor dela na nova. */
 function foldLegacyForm(aiForms, formId) {

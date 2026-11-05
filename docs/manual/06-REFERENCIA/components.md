@@ -1359,6 +1359,19 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** nenhuma direta (`find src/components/evolution -maxdepth 1 -name 'SoulNode.*test.ts*'` vazio, 09/09/2026); exercitado pelos testes de `EvolutionPath.tsx`.
 **Avisos do arquivo:** divisão de responsabilidade de propósito — `nodeArt.tsx` desenha, `SoulNode` interage, `EvolutionPath` monta o grafo; alvo sempre ≥44px mesmo quando o cristal desenhado é menor.
 
+### `src/components/evolution/FormasAlternativasSheet.tsx`
+**Dono de:** a tela das formas alternativas de UMA forma (05/11/2026): as desbloqueadas (equipáveis), sempre até 3 `???` abaixo, e a dica "degenerar e evoluir com poção elemental" enquanto não houver nenhuma.
+**Exports:** `FormaAltItem` · `FormasAlternativasSheet(props)`.
+**Chamado por:** `src/components/EvolutionPath.tsx` (setinha → do cartão da forma).
+**Régua:** `src/utils/formasAlternativas.test.ts` (a regra); exercitado pelos testes de `EvolutionPath.tsx`.
+
+### `src/components/StrollScene.tsx`
+**Dono de:** a CENA do Passeio em tela cheia (05/11/2026): cenário da região, cartão de texto no topo, "Espera… tem alguma coisa ali." → deslize → descoberta de um Soulmon novo (OK grava no Drive) → deslize de volta → fecha. Nasce muda; movimento reduzido corta o deslize.
+**Props principais:** `StrollSceneProps` — `regionId`, `bgId`, `playerSprite?`, `adventure`, `stroll`, `discovery` (`null` = Drive completo), `onDiscover(key)`, `onFinish`, `finishLabel`, `language`.
+**Exports:** `StrollSceneProps` · `StrollScene(props)`.
+**Chamado por:** `src/components/DailyReportModal.tsx` (passo "aventura", quando há Passeio).
+**Régua:** `src/components/StrollScene.render.test.tsx`.
+
 ### `src/components/evolution/nodeArt.tsx`
 **Dono de:** a fronteira única de arte do nó da árvore — hoje quatro PNGs 128×128 (um por `SoulNodeVisual`), não SVG.
 **Props principais:** `NodeArtProps` (exportado) — `visual: SoulNodeVisual`, `size` → devolve um quadrado `size`×`size`px, decorativo (`aria-hidden`).

@@ -48,6 +48,11 @@ function Art({ nome, size }: { nome: string; size: number }) {
   return <img src={url} alt="" aria-hidden="true" draggable={false} width={size} height={size} style={{ width: size, height: size, objectFit: 'contain', imageRendering: 'pixelated' }} />;
 }
 
+/** "+3% Ataque · +1,5% Velocidade" — o bônus da peça por atributo (só os que valem); vazio vira um traço. */
+const bonusTexto = (b: { atk: number; def: number; spd: number }, nomeAttr: (a: 'atk' | 'def' | 'spd') => string, isPt: boolean): string => {
+  const t = (['atk', 'def', 'spd'] as const).filter((a) => b[a] > 0).map((a) => `+${pct(b[a], isPt)} ${nomeAttr(a).replace(/^./, (c) => c.toUpperCase())}`).join(' · ');
+  return t || '—';
+};
 const pct = (f: number, isPt: boolean) => `${(f * 100).toFixed(1).replace(/\.0$/, '').replace('.', isPt ? ',' : '.')}%`;
 const matOf = (id: string) => MATERIALS.find((m) => m.id === id)!;
 
@@ -166,7 +171,7 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
     const recusa = possui ? upgradeRefusal(view, piece.id) : undefined;
     const to = level + 1;
     const max = possui && level >= FORGE_MAX_LEVEL;
-        const bonusAgora = (['atk', 'def', 'spd'] as const).filter((a) => b[a] > 0).map((a) => `+${pct(b[a], isPt)} ${attrName(a).replace(/^./, (c) => c.toUpperCase())}`).join(' · ');
+    const bonusAgora = (['atk', 'def', 'spd'] as const).filter((a) => b[a] > 0).map((a) => `+${pct(b[a], isPt)} ${attrName(a).replace(/^./, (c) => c.toUpperCase())}`).join(' · ');
     const custos = possui && !max ? custoTexto(piece, to) : [];
     const festa = celebra && celebra.id === piece.id ? celebra : null;
     const reduzido = festa ? prefersReducedMotion() : false;
@@ -240,6 +245,9 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
         <ForgeDialogShell mode="reforge" onClose={() => setDialog(null)}>
           <div className="sm2-stats-card" style={{ width: '100%', maxWidth: 420, maxHeight: '88vh', overflowY: 'auto', margin: 0, padding: 16, display: 'grid', gap: 10 }}>
             <h3 id="sm2-forge-dlg" style={{ margin: 0, fontWeight: 500 }}>{isPt ? `Reforjar ${nome}` : `Reforge ${nome}`}</h3>
+            <p className="sm2-stats-s sm2-num" style={{ margin: 0 }} data-forge-bonus-total>
+              {isPt ? 'Esta peça dá agora: ' : 'This piece gives now: '}<b style={{ fontWeight: 600 }}>{bonusTexto(pieceBonus(piece.id, lvNow, esc), attrName, isPt)}</b>
+            </p>
             <p className="sm2-stats-s" style={{ margin: 0 }}>{isPt ? 'Escolha o nível cuja escolha você quer refazer.' : 'Pick the level whose choice you want to redo.'}</p>
             <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 6 }}>
               {esc.map((c, i) => {
@@ -271,6 +279,8 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
     const refBits = dialog.mode === 'redo' ? redoRefusal(view, piece.id, dialog.level, escolha, 'bits') : undefined;
     const refFrag = dialog.mode === 'redo' ? redoRefusal(view, piece.id, dialog.level, escolha, 'fragments') : undefined;
     const precoBits = redoBitsPrice(piece.id, picks);
+    // O que a peça DÁ agora, por atributo (antes do teto de luta). Sem comparação "depois": o dono tirou o Agora/Próximo em 14/10/2026.
+    const bonusAntes = pieceBonus(piece.id, levelNow(view, piece.id), pieceChoices(piece.id, levelNow(view, piece.id), gameState.forge));
     return (
       <ForgeDialogShell mode={dialog.mode} onClose={() => setDialog(null)}>
         <div className="sm2-stats-card" style={{ width: '100%', maxWidth: 420, maxHeight: '88vh', overflowY: 'auto', margin: 0, padding: 16, display: 'grid', gap: 10 }}>
@@ -300,6 +310,9 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
               );
             })}
           </div>
+          <p className="sm2-stats-s sm2-num" style={{ margin: 0 }} data-forge-bonus-total>
+            {isPt ? 'Esta peça dá agora: ' : 'This piece gives now: '}<b style={{ fontWeight: 600 }}>{bonusTexto(bonusAntes, attrName, isPt)}</b>
+          </p>
           <p className="sm2-stats-s" style={{ margin: 0 }}>
             {isPt ? `Em luta, talento e equipamento juntos param em ${Math.round(COMBAT_BONUS_CAP * 100)}%.` : `In a fight, talent and equipment together stop at ${Math.round(COMBAT_BONUS_CAP * 100)}%.`}
           </p>

@@ -189,3 +189,21 @@ describe('ancoragem pelo pé', () => {
     expect(m.feetShiftPx(0.7, 1, 0)).toBe(0);
   });
 });
+
+describe('o pé não flutua (05/11/2026)', () => {
+  const hud = readFileSync(join(__dirname, '../components/CompanionHUD.tsx'), 'utf8');
+  it('a descida do pé e a sombra seguem a escala que está DE FATO na tela (o `scale` numérico do React 18 é descartado como "0.25px")', () => {
+    // Enquanto o `scale: petScale` do <img> não aplicar, o pé não pode ser calculado para o bicho encolhido (descia 3 px em vez de ~12).
+    expect(hud).toMatch(/const PET_DRAWN_SCALE = 1;/);
+    expect(hud).toMatch(/useGroundDrop\(sprite, PET_DRAWN_SCALE, PET_RENDER\)/);
+    expect(hud).not.toMatch(/useGroundDrop\(sprite, petScale,/);
+  });
+  it('a sombra ancora nos pés (borda de baixo da caixa), não 68 px acima dela', () => {
+    expect(hud).toMatch(/bottom: -Math\.round\(PET_RENDER \* 0\.12 \* 0\.4\)/);
+    expect(hud).not.toMatch(/bottom: PET_GROUND_KEEP \+ PET_LIFT,\s*\n\s*transform: 'translateX\(-50%\)',\s*\n\s*width/);
+  });
+  it('a conta: com a folga de 9,4% numa caixa de 128, escala 1 desce 12 px e escala 0,25 só 3', () => {
+    const drop = (s: number) => Math.round((1 - 0.906) * s * 128);
+    expect([drop(1), drop(0.25)]).toEqual([12, 3]);
+  });
+});
