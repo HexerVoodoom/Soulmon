@@ -365,6 +365,32 @@ describe('Arena em grupo — derrota, empate e vitória (sem custo, texto neutro
     expect(screen.queryByRole('button', { name: /Tentar de novo/ })).toBeNull();
   });
 
+  describe('Bits mostrados = Bits creditados (teto diário de 150)', () => {
+    // O funil do App devolve o creditado; o ArenaGame mostra isso, não o pedido de 50.
+    const vencerCom = async (creditado: number) => {
+      H.foeHp = 0.01;
+      const onEarn = vi.fn(() => creditado);
+      await entrar({ onEarnPoints: onEarn });
+      for (let r = 1; r <= 4; r++) await proximaRodada();
+      expect(await ate(() => document.querySelector('[data-result-title]') !== null)).toBe(true);
+      expect(onEarn).toHaveBeenCalledWith(50);
+      return document.querySelector('[data-result-ledger]')?.textContent ?? '';
+    };
+    it('teto gasto: pediu 50, creditou 0 -> nenhum Bit na tela', async () => {
+      const ledger = await vencerCom(0);
+      expect(ledger).not.toMatch(/50/);
+      expect(document.querySelector('[data-result-bits-pop]')).toBeNull();
+    });
+    it('teto parcial: pediu 50, creditou 20 -> mostra 20', async () => {
+      const ledger = await vencerCom(20);
+      expect(ledger).toMatch(/20/);
+      expect(ledger).not.toMatch(/50/);
+    });
+    it('sem teto: pediu 50, creditou 50 -> mostra 50', async () => {
+      expect(await vencerCom(50)).toMatch(/50/);
+    });
+  });
+
   it('entre rodadas: MODAL com "+X HP recuperado" e o botão leva direto ao próximo round', async () => {
     H.foeHp = 0.3;
     await entrar();
