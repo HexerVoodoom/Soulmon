@@ -822,6 +822,8 @@ async function handleDeleteConfirm(env, saveId, body) {
   for (const k of c.rankingData.keys) await tentar(k, () => store.delete(k));
   if (c.gifts) await tentar(`gifts:${saveId}`, () => store.delete(`gifts:${saveId}`));
   if (c.mail) await tentar(`mail:${saveId}`, () => store.delete(`mail:${saveId}`));
+  // §243: convites, presentes do dia, histórico de presentes e marca da migração de amizades (convite alheio que cite esta conta some na leitura: o perfil não existe mais).
+  for (const k of [`freq:${saveId}`, `gsent:${saveId}`, `gnote:${saveId}`, `gmir:${saveId}`]) await tentar(k, () => store.delete(k));
   if (c.pidIndexed) await tentar(`pid:${c.pid}`, () => store.delete(`pid:${c.pid}`));
   if (c.profile) await tentar(`profile:${saveId}`, () => store.delete(`profile:${saveId}`));
 

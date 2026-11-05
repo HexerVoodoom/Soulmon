@@ -75,6 +75,9 @@ const ACOES_COM_ATOR = [
   { action: 'duelStart', method: 'POST', body: { id: VITIMA, opponentId: ATOR } },
   { action: 'friends', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
   { action: 'gift', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
+  { action: 'friendAccept', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
+  { action: 'friendsState', method: 'GET', params: { id: VITIMA } },
+  { action: 'friendsSeen', method: 'POST', body: { id: VITIMA } },
   { action: 'trophies', method: 'GET', params: { id: VITIMA, claim: '1' } },
   { action: 'gifts', method: 'GET', params: { id: VITIMA, claim: '1' } },
   { action: 'forms', method: 'GET', params: { id: VITIMA, friend: ATOR } },
@@ -188,7 +191,7 @@ describe('community — a lista de ações com ator está completa', () => {
     // Ações públicas de leitura: não agem em nome de ninguém.
     const publicas = new Set(['players', 'player', 'opponents', 'rank', 'seasonResult', 'names', 'strays', 'evoFeed']); // evoFeed (04/11/2026): feed global sem id; strays (§213): pool anônimo, não lê id
     // Protegida por chave de admin, não por dono.
-    const admin = new Set(['closeSeason', 'backfillNicks', 'mailSend']);
+    const admin = new Set(['closeSeason', 'backfillNicks', 'mailSend', 'friendsMigrate']);
 
     const todas = [...src.matchAll(/action === '([a-zA-Z]+)'/g)].map(m => m[1]);
     for (const a of new Set(todas)) {
@@ -283,12 +286,13 @@ describe('community — alvos são endereçados por pid, não por saveId', () =>
     expect(depois.friends).toEqual([]);
   });
 
-  it('com o pid indexado, a amizade funciona — e a resposta volta em pid', async () => {
+  it('com o pid indexado, o convite fica pendente (não vira amizade) — e a aceitação liga os dois lados, em pid', async () => {
     const pidVitima = PID_VITIMA;
     const env = { DIGIAPP_SAVES: fakeKV({
-      [`profile:${ATOR}`]: perfil(ATOR),
+      [`profile:${ATOR}`]: perfil(ATOR, { pid: PID_ATOR }),
       [`profile:${VITIMA}`]: perfil(VITIMA, { pid: pidVitima }),
       [`pid:${pidVitima}`]: VITIMA,
+      [`pid:${PID_ATOR}`]: ATOR,
     }) };
     const res = await onRequest({
       request: req('friends', { method: 'POST', body: { id: ATOR, friendId: pidVitima } }),
@@ -296,10 +300,20 @@ describe('community — alvos são endereçados por pid, não por saveId', () =>
     });
     const body = await res.json();
     expect(res.status).toBe(200);
-    expect(body.friends).toEqual([pidVitima]);
-    // internamente continua saveId — é o que permite escrever gifts:<saveId>
-    const depois = JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${ATOR}`));
-    expect(depois.friends).toEqual([VITIMA]);
+    expect(body.status).toBe('pending');
+    expect(body.friends).toEqual([]);
+    expect(JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${ATOR}`)).friends).toEqual([]);
+    expect(JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${VITIMA}`)).friends).toEqual([]);
+    const ok = await onRequest({
+      request: req('friendAccept', { method: 'POST', body: { id: VITIMA, friendId: PID_ATOR } }),
+      env,
+    });
+    const r = await ok.json();
+    expect(ok.status).toBe(200);
+    expect(r.friends).toEqual([PID_ATOR]);
+    // internamente continua saveId — é o que permite escrever gifts:<saveId> — e agora é mútuo
+    expect(JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${ATOR}`)).friends).toEqual([VITIMA]);
+    expect(JSON.parse(env.DIGIAPP_SAVES.store.get(`profile:${VITIMA}`)).friends).toEqual([ATOR]);
   });
 });
 

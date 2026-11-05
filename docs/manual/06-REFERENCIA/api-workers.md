@@ -742,3 +742,7 @@ Espelho de `src/utils/elementoJornada.ts` (§232): forma do registro no save e i
 ### `functions/api/_mensageiro.js`
 
 Fila `mail:<saveId>`, carta e prêmio da temporada na 1ª leitura do mês, confirmação idempotente; simulado nunca recebe. Ações `mail`, `mailAck`, `mailSend` em `community.js`. Decisão: REGISTRO §241. **Régua:** `functions/api/mensageiro.test.js`.
+
+### `functions/api/_amigos.js`
+
+Amizade por convite (§243): convites `freq:`, presentes do dia `gsent:`, histórico `gnote:`, lista mútua até 20, migração idempotente (`gmir:`). Ações `friends`, `friendAccept`, `friendsState`, `friendsSeen`, `friendsMigrate`, `gift` em `community.js`. **Régua:** `functions/api/community.amigos.test.js`.
