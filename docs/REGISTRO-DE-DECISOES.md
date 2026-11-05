@@ -4193,11 +4193,11 @@ Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combin
 
 ## §239 — Chave da dungeon: o Calabouço abre com uma sessão concluída, e perder não encerra o dia (05/11/2026, decisão do dono)
 
-**Decisão.** Concluir uma sessão na Oficina do Foco dá a chave do Calabouço daquele dia do jogador (`dungeonKeyDay`, `utils/focusKey.ts`); sem ela, o prédio mostra a Corva mandando ir à Oficina. A exploração já tinha NPC próprio (Corva), então o NPC 412 não entrou. Palavras do dono: "se ele sair da dungeon, ele não perde e fica impossibilitado de continuar naquele dia não. Ele pode ir na dungeon até o fim ali, desde que ele recupere vida". Derrota em combate não gasta o passo nem encerra: a vida vai ao piso e recupera no ritmo da Fenda (4 h para encher, volta a lutar com 25%). Os Bits ganhos até a derrota são pagos nela (`paidWon`), porque a pessoa pode não voltar hoje. Sair de um desafio em curso segue gastando aquele passo (anti-espiada), sem trancar nada.
+**Decisão.** Concluir uma sessão na Oficina do Foco dá a chave do Calabouço daquele dia do jogador (`dungeonKeyDay`, `utils/focusKey.ts`); sem ela, o prédio mostra a Corva mandando ir à Oficina. A dungeon já tinha a Corva, que segue nela; o portão sem chave é do NPC 412, Bastião (dono, 05/11/2026, em modal). Palavras do dono: "se ele sair da dungeon, ele não perde e fica impossibilitado de continuar naquele dia não. Ele pode ir na dungeon até o fim ali, desde que ele recupere vida". Derrota em combate não gasta o passo nem encerra: a vida vai ao piso e recupera no ritmo da Fenda (4 h para encher, volta a lutar com 25%). Os Bits ganhos até a derrota são pagos nela (`paidWon`), porque a pessoa pode não voltar hoje. Sair de um desafio em curso segue gastando aquele passo (anti-espiada), sem trancar nada.
 
 **Limite conhecido.** A sessão de foco mora no aparelho, então o servidor valida só a forma da chave, não a prova. O Calabouço paga Bits com o teto diário do app e o `rogueDungeon` já não tinha espelho no servidor; a chave não abre superfície nova de prêmio.
 
-**Alternativas que perderam.** Exigir ciclo de foco completo para a chave: o dono pediu "concluir uma sessão". Usar o NPC 412: o pedido era condicional a não haver NPC.
+**Alternativas que perderam.** Exigir ciclo de foco completo para a chave: o dono pediu "concluir uma sessão". Só a Corva no portão: o dono preferiu o 412 ali.
 
 **O que falsificaria.** A meta de 60–70% de incursões completas (`winrateModos.sim.test.ts`) passa a medir incursões sem nenhuma derrota; a completude real sobe, o que é o pedido. Se Bits do Calabouço saírem de ±3pp no balanço, rever o tempo de recuperação. **Rollback:** reverter o PR; `dungeonKeyDay`, `hpAt` e `paidWon` são opcionais e ignorados. Um `hp` baixo gravado sem `hpAt` vale até a virada do dia.
 ## §240 — Arena: a forma evoluída tem piso de força (05/11/2026, pedido do dono; emenda §222)
@@ -4216,7 +4216,7 @@ Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combin
 
 **Decisão.** Papus (NPC 440, banco #440) traz cartas no modal padrão de NPC (`NpcSequence`), pela fila de apresentação, como celebração. Fila em `mail:<saveId>` (`functions/api/_mensageiro.js`): `mid` estável, sem repetir mesmo depois de confirmado. Crédito idempotente no cliente (`mailClaimed`, `utils/mensageiro.ts`), e o `mailAck` só sai quando a carta reaparece já gravada no save, na abertura seguinte. Simulado nunca recebe. Notícia e compensação: `POST mailSend` com `SEASON_ADMIN_KEY`.
 
-**Fim da temporada.** A temporada é o mês em UTC. A carta nasce na primeira leitura depois da virada, sem depender de cron. Prêmio em Honra, que só compra prêmios do Torneio e não mexe na economia de Bits: 6 por participar; top 100 15; top 20 30; 3º 60; 2º 90; 1º 120 **[valores são recomendação, pendentes do dono]**. Colocação pelo índice da temporada, sem simulados. O troféu do pódio segue pelo `closeSeason`.
+**Fim da temporada.** A temporada é o mês em UTC. A carta nasce na primeira leitura depois da virada, sem depender de cron. Prêmio em Honra, que só compra prêmios do Torneio e não mexe na economia de Bits: 6 por participar; top 100 15; top 20 30; 3º 60; 2º 90; 1º 120 (valores aprovados pelo dono em 05/11/2026). Colocação pelo índice da temporada, sem simulados. O troféu do pódio segue pelo `closeSeason`.
 
 **Alternativas que perderam.** Enviar tudo no `closeSeason`: o fechamento depende de cron e já gasta o orçamento de subrequests; o limite atual lê só 40 linhas. Só avisar por toast: o dono pediu NPC e itens.
 
@@ -4247,3 +4247,7 @@ Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combin
 **Alternativas que perderam.** Manter o add direto e só espelhar: o dono pediu convite. Guardar convites no perfil: a regravação do perfil descarta campos desconhecidos (foi o que quebrou o `giftLog`), então vivem em chaves próprias.
 
 **Limite conhecido.** KV sem compare-and-set: a fila por par é por isolate. **O que falsificaria.** Convites virando spam apesar dos tetos; a lista de 20 estourando o custo de `friendsState` (até ~45 leituras por chamada). **Rollback:** reverter o PR; `freq:`, `gsent:`, `gnote:`, `gmir:` ficam órfãs (TTL 400 dias) e as listas mútuas continuam válidas.
+
+## §242 — Respostas do dono sobre Oficina e dungeon (05/11/2026, em modal)
+
+Sessão sem lista e sem foco segue dando chave e item (§238: mantém). Sair no meio de um desafio segue gastando o passo (§239: mantém). Os prêmios da carta da temporada ficam como estão (§241). O NPC 412 entra no portão sem chave. **Rollback:** reverter o PR do 412; a Corva não mudou.
