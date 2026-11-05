@@ -51,7 +51,7 @@ function Art({ nome, size, style }: { nome: string; size: number; style?: React.
 
 type NodeState = 'bought' | 'available' | 'locked' | 'soon';
 
-export default function TalentTree({ language = 'pt-BR' }: { language?: string }) {
+export default function TalentTree({ language = 'pt-BR', bare = false }: { language?: string; bare?: boolean }) {
   const ctx = useGameStateOptional();
   const [confirmando, setConfirmando] = useState(false);
   const [aviso, setAviso] = useState<string | null>(null);
@@ -231,7 +231,9 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
   const boughtOf = (id: string) => id === HUB || (graus.get(id) ?? 0) > 0;
 
   return (
-    <section className="sm2-stats-card" aria-labelledby="sm2-talent-title" data-talent-tree>
+    <section className={bare ? undefined : 'sm2-stats-card'} aria-label={bare ? (isPt ? 'Árvore de talentos' : 'Talent tree') : undefined} aria-labelledby={bare ? undefined : 'sm2-talent-title'} data-talent-tree data-talent-bare={bare ? '' : undefined}
+      style={bare ? { display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 } : undefined}>
+      {!bare && <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Art nome="talent-point-chip" size={24} />
         <p id="sm2-talent-title" className="sm2-stats-lab" style={{ margin: 0, flex: 1 }}>{isPt ? 'Talentos do Vínculo' : 'Bond talents'}</p>
@@ -262,8 +264,11 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
           );
         })}
       </ul>
+      </>}
 
-      <div className="sm-talent-scroll" ref={scrollRef} tabIndex={-1} style={{ overflow: 'auto', maxHeight: '62vh', marginTop: 8, borderRadius: 12, border: '1px solid var(--sm2-outline-variant, rgba(128,128,128,.3))' }}>
+      <div className="sm-talent-scroll" ref={scrollRef} tabIndex={-1} style={bare
+        ? { overflow: 'auto', flex: 1, minHeight: 0, borderTop: '1px solid var(--sm2-line)', borderBottom: '1px solid var(--sm2-line)' }
+        : { overflow: 'auto', maxHeight: '62vh', marginTop: 8, borderRadius: 12, border: '1px solid var(--sm2-outline-variant, rgba(128,128,128,.3))' }}>
         <div style={{ width: BOARD.width, height: BOARD.height, position: 'relative' }}>
           <div ref={boardRef} role="group" aria-label={isPt ? 'Árvore de talentos' : 'Talent tree'}
             style={{ position: 'absolute', left: 0, top: 0, width: BOARD.width, height: BOARD.height }}>
@@ -338,7 +343,7 @@ export default function TalentTree({ language = 'pt-BR' }: { language?: string }
         />
       )}
 
-      <div style={{ marginTop: 14, display: 'grid', gap: 8 }}>
+      <div style={bare ? { flex: 'none', display: 'grid', gap: 8, padding: '10px 12px calc(10px + env(safe-area-inset-bottom, 0px))' } : { marginTop: 14, display: 'grid', gap: 8 }}>
         {!confirmando ? (
           <button
             type="button"

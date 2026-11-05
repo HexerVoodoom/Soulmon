@@ -7515,7 +7515,9 @@ export default function App() {
 
           {labTab === 'evolution' && (
             <div style={{ padding: '0 4px 10px' }}>
-              <button type="button" data-open-element-potion style={sm2Button('outline')} onClick={() => setPotionOpen(true)}>
+              <button type="button" data-open-element-potion className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-primary" style={{ width: '100%' }}
+                aria-haspopup="dialog" onClick={() => setPotionOpen(true)}>
+                <Icon name="auto_awesome" size={22} />
                 {language === 'pt-BR' ? 'Criar poção de elemento' : 'Create element potion'}
               </button>
             </div>
