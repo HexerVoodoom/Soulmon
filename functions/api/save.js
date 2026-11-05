@@ -34,6 +34,7 @@ import { sanitizeBossShards } from './_bossShards.js';
 import { sanitizeDayPlan } from './_dayPlan.js';
 import { sanitizeNightmares } from './_nightmares.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
+import { enforceImmutableElementoJornada } from './_elementoJornada.js';
 import { enforceDungeonDaily, enforceCheckIns, enforceArenaReroll, enforceArenaLadder, enforceEssenceAway, bumpRiftLayers } from './_dayCounters.js';
 import { enforceEssences, enforceEssenceSpent } from './_essences.js';
 import { sanitizeRegenUsed } from './_spriteRegen.js';
@@ -458,6 +459,15 @@ async function onRequestBruto({ request, env }) {
       const { ficha, mexeu } = enforceImmutableFicha(state.fichaJornada, guardado);
       if (mexeu.length) console.warn('save: estagio da fichaJornada ja gravado, mantido o do servidor', { saveIdPrefix: saveId.slice(0, 8), estagios: mexeu });
       if (ficha) state.fichaJornada = ficha; else delete state.fichaJornada;
+    }
+    // §230: sorte e estágio já gravados não mudam. Sem o campo no que chegou, nada muda (reset/renascimento o apagam).
+    if ('elementoJornada' in state) {
+      let guardado;
+      if (typeof prev?.value === 'string' && prev.value.includes('"elementoJornada"')) {
+        try { guardado = JSON.parse(prev.value).elementoJornada; } catch { guardado = undefined; }
+      }
+      const el = enforceImmutableElementoJornada(state.elementoJornada, guardado);
+      if (el) state.elementoJornada = el; else delete state.elementoJornada;
     }
     // Pagamento da Hexsmith (REGISTRO §216, `_hexsmith.js` › `enforceHexPayment`): HEX novo na posse sem a queda correspondente de
     // poções/fragmentos/Bits em relação ao gravado é REVERTIDO (o resto do save segue). Só parseia o gravado quando há item da posse ausente do texto gravado.

@@ -8,6 +8,7 @@ import { sanitizeRefugioEnergyDay } from '../utils/refugio/energia';
 import { sanitizeClaReceipts } from '../utils/claCredit';
 import { sanitizeBosqueArvores, type BosqueArvores } from '../utils/bosqueArvoresSave';
 import { sanitizeFichaJornada, type FichaJornada } from '../utils/fichaJornada';
+import { sanitizeElementoJornada } from '../utils/elementoJornada';
 import { sanitizeSpritePose, mergeSpritePose, registerSpritePoseWriter, registerSpritePoseReader, type SpritePose } from '../utils/spritePose';
 import { sanitizeChipsStage } from '../utils/specialItemUse';
 import { sanitizeGlitchtamaDrop } from '../utils/glitchtamaDrop';
@@ -347,6 +348,8 @@ export interface GameState {
   evolutionPotion?: string;
   /** 🧪 Elemento que o Soulmon passou a carregar pela última poção consumida numa evolução (lido por `petElementOf`). */
   potionElement?: string;
+  /** §230: o elemento de cada estágio e a sorte fixa do Soulmon (`utils/elementoJornada.ts`). Ausente = save antigo, até a próxima evolução. */
+  elementoJornada?: import('../utils/elementoJornada').ElementoJornada;
   /** Quanto a descida AUTOMÁTICA da Fenda já rendeu de essência no dia do jogador (teto diário `ESSENCE_AWAY_DAILY_CAP`). Servidor: monotônico no dia (`_dayCounters.js`). */
   essenceAway?: EssenceAway;
   /**
@@ -1548,6 +1551,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           return v && typeof v === 'object' && !Array.isArray(v) ? v as GameState['soulmonSkills'] : undefined;
         })(),
         fichaJornada: sanitizeFichaJornada(loadedState.fichaJornada),
+        elementoJornada: sanitizeElementoJornada(loadedState.elementoJornada),
         soulmonClassTitles: (() => {
           const v = loadedState.soulmonClassTitles;
           return v && typeof v === 'object' && !Array.isArray(v) ? v as GameState['soulmonClassTitles'] : undefined;

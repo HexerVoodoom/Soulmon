@@ -397,3 +397,7 @@ Arte de reserva = rookie da criatura base do 1º componente (`enemyRosterArt.ts`
 | 243 | combinados/243-entropia_final.png | entropia_final | tempo+morte+gravidade |
 | 244 | combinados/244-gladiador.png | gladiador | marcial+vigor+som |
 | 245 | combinados/245-punho_gravitico.png | punho_gravitico | marcial+gravidade+vigor |
+
+## Elemento por estágio (§230, 05/11/2026)
+
+O pet do oráculo pode mudar de elemento a cada evolução (`elementoJornada`, dono `utils/elementoCombinado.ts`). Forma nova nasce com o elemento no prompt; forma já desenhada mantém a arte. Trocar forma entre formas do mesmo nível mantém o elemento, então uma forma antiga pode não refletir o combinado.

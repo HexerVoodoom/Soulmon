@@ -116,6 +116,8 @@ export interface ArenaGameProps {
   skills?: Partial<Record<FichaStage, StageSkills>>;
   /** Elemento dominante do oráculo: só o FALLBACK da identidade quando o save não tem ficha (igual nas outras telas). */
   petElement?: string;
+  /** §230: a base nº 1 do Soulmon combinado; é ela que mede a vantagem. */
+  petBase?: string;
   /** Atributos de arena (`getArenaAttributes(ficha)`), quando conhecidos. */
   attrs?: { principal: string; secundario: string };
   /** A SEMENTE da primeira run, escolhida na folha da Arena (`DueloSheet`): o jogador SELECIONA os adversários
@@ -134,7 +136,7 @@ export interface ArenaGameProps {
 }
 
 export function ArenaGame({
-  evolutionStage, demoCharacterId, language, skills, petElement, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onEnemySeen, onRunEnd, ladder = 0, onExit,
+  evolutionStage, demoCharacterId, language, skills, petElement, petBase, attrs, seed: chosenSeed, onEarnPoints, onElementsDefeated, onEnemySeen, onRunEnd, ladder = 0, onExit,
 }: ArenaGameProps) {
   const elementsDefeatedRef = useRef(onElementsDefeated);
   const enemySeenRef = useRef(onEnemySeen);
@@ -206,8 +208,8 @@ export function ArenaGame({
     area: especial?.area?.tipo === 'circulo' ? 'area' : 'single',
     escolaBasica: basica?.escolaId ?? 'combate_fisico',
     // MECÂNICA da vantagem elemental (arena.ts, tabela só das 17 bases): o elemento do SPRITE manda (a identidade, que já é o `petElement`); só sem ele a base da ficha decide.
-    elements: hexArenaElements(arenaElementsFor(petElement && petElement !== 'neutro' ? {} : { basica: basica?.elementoId, especial: especial?.elementoId }, ident, atributos), hx),
-  }), [hx, petElement, estado, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, ident, atributos]);
+    elements: hexArenaElements(arenaElementsFor(petElement && petElement !== 'neutro' ? (petBase ? { basica: petBase, especial: petBase } : {}) : { basica: basica?.elementoId, especial: especial?.elementoId }, ident, atributos), hx),
+  }), [hx, petElement, petBase, estado, bonusTalento, especial?.familia, especial?.escolaId, especial?.area?.tipo, basica?.escolaId, basica?.elementoId, especial?.elementoId, ident, atributos]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const lado = useMemo(() => arenaPlayerSide(jogador), [jogador]);

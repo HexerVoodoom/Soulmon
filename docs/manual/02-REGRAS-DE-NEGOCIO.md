@@ -6302,3 +6302,7 @@ E-mail verificado presente em `BETA_EMAILS` é tratado como conta paga: o servid
 - Um elemento só (o da criatura) e os golpes da criatura. Um terço do sorteio de cada estágio alto (`RAMO_CHANCE`), cerca de 0,83% por ramo.
 - Fora do sorteio: chefe do Combina 3, Desgarrado do Torneio, Arena e qualquer chamada sem level do jogador.
 - Bestiário: +40 em Selvagem, +80 em Desgarrado, depois das entradas antigas.
+
+## Elemento combinado por estágio (§230)
+
+Sorte fixa por Soulmon decide quantos componentes o elemento tem em cada estágio (Rookie 95/5/0/0, Champion 35/60/5/0, Ultimate 15/30/50/5, Mega 10/20/40/30, Ultra 5/10/25/60). Contém sempre a base nº 1; 3 e 4 componentes só nos 50 curados (planta, industrial e fada ficam no par). Vale a partir da próxima evolução; degenerar volta ao elemento do nível. A vantagem usa a base nº 1. Dono: `src/utils/elementoCombinado.ts`. Decisão: REGISTRO §230.

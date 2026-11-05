@@ -119,6 +119,8 @@ export interface Match3Props extends EarningGameProps {
   petName?: string;
   /** Elemento do Soulmon do jogador (id do Oráculo); só é mostrado, não muda a regra. */
   petElement?: string;
+  /** §230: a base nº 1 do Soulmon combinado; é ela que mede a vantagem. */
+  petBase?: string;
   /** M10: level do jogador. Com ele, os inimigos vêm do roster (`enemyRoster.ts`, estágio limitado pelo level). Sem ele, linhas próprias. */
   playerLevel?: number;
   /** M10: inimigo do roster que entrou em cena (bestiário). */
@@ -158,12 +160,12 @@ function rosterOf(e: { roster?: string } | undefined): { src: string; name: stri
   return entry && src ? { src, name: entry.name } : undefined;
 }
 
-function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, petElement, playerLevel, onEnemySeen, onElementsDefeated, onMove, rankSaveId, challenge, onNewOpponent, onBossShard, bossAllowed = false }: Match3Props & { pvp?: PvpFoe; onNewOpponent?: () => void }) {
+function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, demoCharacterId, onEarnPoints, onExit, seed, bits = 0, onSpendBits, petName, petElement, petBase, playerLevel, onEnemySeen, onElementsDefeated, onMove, rankSaveId, challenge, onNewOpponent, onBossShard, bossAllowed = false }: Match3Props & { pvp?: PvpFoe; onNewOpponent?: () => void }) {
   const isPt = language === 'pt-BR';
   const first = useMemo(() => {
     const sd = seed ?? freshSeed();
     const boss = bossFor(sd, challenge, bossAllowed);
-    return { sd, boss, round: newRound(sd), battle: combatFor(sd, demoCharacterId, playerLevel, pvpProp, petElement, boss) };
+    return { sd, boss, round: newRound(sd), battle: combatFor(sd, demoCharacterId, playerLevel, pvpProp, petBase ?? petElement, boss) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seed, demoCharacterId, playerLevel, pvpProp]);
   const [boss, setBoss] = useState<BossRound | null>(first.boss);
@@ -662,7 +664,7 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
     setBossIntro(!!nb);
     setRuleTip(null);
     setClock(BOSS_CLOCK_MS);
-    const c = combatFor(sd, demoCharacterId, playerLevel, pvpProp, petElement, nb);
+    const c = combatFor(sd, demoCharacterId, playerLevel, pvpProp, petBase ?? petElement, nb);
     setElements(c.elements);
     boardRef.current = r.board;
     rngRef.current = r.rng;

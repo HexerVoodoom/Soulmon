@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { BASE_ELEMENT_IDS } from './elementDex';
 import { elementLabel } from './elementLabels';
 import { baseDominanteDoElemento } from './soulProfile/ficha/elementoNome';
-import { petElementOf } from './starterElements';
+import { petElementOf, petBaseOf } from './starterElements';
 import type { Language } from './i18n';
 
 /**
@@ -57,7 +57,7 @@ export function sanitizeSelectedWidgetFrame(raw: unknown): string | null {
 export function widgetFrameElementOfPet(state: Parameters<typeof petElementOf>[0]): string | undefined {
   const el = petElementOf(state);
   if (!el || el === 'neutro') return undefined;
-  const base = baseDominanteDoElemento(el);
+  const base = petBaseOf(state) ?? baseDominanteDoElemento(el);
   return isWidgetFrameId(base) ? base : undefined;
 }
 

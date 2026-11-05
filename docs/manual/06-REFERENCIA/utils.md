@@ -4262,3 +4262,11 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 **Dono de:** as molduras do widget V-Pet por elemento base: catálogo, posse (evolução ou compra real) e moldura equipada.
 
 **Chamado por:** `src/components/WidgetFramePicker.tsx`, `src/contexts/GameStateContext.tsx`.
+
+### `src/utils/elementoCombinado.ts`
+
+Dono da regra do elemento combinado por estágio (§230): tabela de chances, sorte fixa, escolha contendo a base nº 1, registro imutável e prompt das formas novas. **Régua:** `elementoCombinado.test.ts` e `elementoCombinado.balanco.test.ts` (±3pp por modo, com prova vermelha).
+
+### `src/utils/elementoJornada.ts`
+
+Forma leve do registro `GameState.elementoJornada`, lida por `petElementOf`. Espelho: `functions/api/_elementoJornada.js`.

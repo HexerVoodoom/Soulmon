@@ -4041,3 +4041,34 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 - **Inimigos causam efeitos em PvE**, só depois de medir; desligado até lá.
 - **Alternativa que perdeu:** 25% do orçamento de todo especial vira o efeito do elemento (mediu dentro da régua no protótipo, mas o dono quer especial de dano direto puro).
 - **O que falsifica:** se a medição de Arena/Masmorra sair de ±3pp em vitória contra a mesma família sem efeito, a mecânica nova não liga; se poucos jogadores chegarem a um efeito (família com peso baixo no elemento), rever `AFINIDADE_ELEMENTO`.
+## §230 — Elemento combinado por estágio: mais componentes a cada evolução, com sorte fixa por Soulmon (05/11/2026, decisão do dono)
+
+**Pedido.** "A cada evolução aumente muito as chances de terem elementos combinados." Rookie praticamente sempre básico, Champion já com dois, Ultimate com três, Mega e Ultra com quatro, e um Ultra de um elemento só continua possível.
+
+**Decisão.**
+- % de 1/2/3/4 componentes: Rookie 95/5/0/0, Champion 35/60/5/0, Ultimate 15/30/50/5, Mega 10/20/40/30, Ultra 5/10/25/60. Dono único: `utils/elementoCombinado.ts`.
+- Uma sorte `u` por Soulmon, fixa no save. As chances acumuladas só sobem, então nunca perde complexidade ao evoluir. Nova leitura herda a sorte; renascer dá sorte nova (vida nova). Sem reroll e sem venda.
+- O elemento de combate muda a cada evolução e vale a partir da próxima evolução de quem já existe (`elementoJornada` no save; `petElementOf`: poção > inicial > estágio > oráculo). Forma sem registro segue no elemento de nascimento.
+- Contém sempre a base nº 1 (o elemento do oráculo). Pares para 2 componentes; para 3 e 4, só os 50 curados do app.
+- Degenerar volta ao elemento daquele nível. Trocar forma (§225) é o mesmo nível, portanto o mesmo elemento. Registro imutável por estágio no cliente e no servidor (`_elementoJornada.js`).
+- Sprite novo só em formas novas: o prompt recebe o elemento (`stagesComElemento`). A arte de forma já desenhada não muda.
+- Vantagem pela base nº 1 (P0): `petBaseOf` no cliente, `fx.elVantagem` no servidor. Ficha, pontos, cascata, classe e profissão não mudam; revoga só a nota "gerações 1 e 2" para o elemento exibido.
+- Recomendadas seguidas por delegação do dono: Ultra puro sem mecânica própria e sem selo novo nesta entrega; iniciais e corvo de fora; percentuais nunca aparecem ao jogador; `petElementDeSave` passa a ler `potionElement`, como o cliente.
+
+**Limite real, para o dono rever.** Nenhum curado contém planta, industrial ou fada. Com "contém a base nº 1" + "só curados", quem nasce planta ou industrial (20,6% de 800 perfis sem quiz) fica no par. Efetivo no Ultra, somando todos: 5/27,5/19,8/47,6. Os demais seguem a tabela exata. Correção natural: curados novos com essas bases (arte nova), ou aceitar.
+
+**Medido** (`elementoCombinado.balanco.test.ts`, 3.000 runs por célula, SE ~0,8pp; régua ±3pp da sessão contra k=1):
+| Modo | k=1 | k=2 | k=3 | k=4 | Prova vermelha (melhor de k, P2) |
+|---|---|---|---|---|---|
+| Arena, nível 6 | 71,2 | 71,6 | 71,1 | 71,8 | 73,3 / 73,9 / 76,5 |
+| Arena, nível 40 | 71,7 | 71,8 | 71,1 | 72,2 | 73,4 / 73,9 / 76,6 |
+| Guerra (escala 0,5) | 49,1 | 49,3 | 49,5 | 48,7 | 52,9 / 56,3 / 59,0 |
+| Combina 3 (dano recebido, %) | 100,33 | 100,01 | 100,26 | 100,26 | 99,01 / 98,37 / 97,45 |
+
+Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combina 3 a medida é o multiplicador, não a taxa de vitória.
+
+**Corte × concussão (§227):** curado herda a média inteira dos componentes, como o par. Só visual.
+
+**Alternativas que perderam.** Sorteio independente por estágio (permitiria regressão); vantagem por todos os componentes no ataque (P2, estoura a régua); combinações sem nome; catálogo novo.
+
+**O que falsificaria.** k real por estágio fora da tabela em mais de 2pp nas bases com curado; taxa de vitória por k fora de ±3pp em produção; um curado concentrando demais a população. **Rollback:** reverter o PR. O campo no save é ignorado pelo código antigo.

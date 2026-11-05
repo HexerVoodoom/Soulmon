@@ -24,6 +24,7 @@
 // regra que diverge em silêncio (footgun 9) — e foi assim que esta réplica
 // ficou 8 dias divergindo do motor sem nenhum teste vermelho.
 //
+// §230: isto vale para os PONTOS; o elemento exibido de 3 e 4 componentes é camada de leitura (`utils/elementoCombinado.ts`).
 // O Soulmon modela DE PROPÓSITO só as gerações 1 e 2: a linguagem de essência
 // do pet são os 17 base + 136 pares (essenceLabels PT+EN); triplas/quádruplas
 // são capacidade do class-system e continuam alcançáveis por quem levar a

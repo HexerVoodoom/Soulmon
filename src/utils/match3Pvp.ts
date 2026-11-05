@@ -15,6 +15,7 @@ import { mulberry32 } from './combate/rng';
 import { elementIconIds } from './elementIconArt';
 import { ELEMENT_VISUAL } from './elementVisual.data';
 import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
+import { CURATED_ELEMENT_NAMES } from './elementosCurados';
 import { essenceEn } from './soulProfile/essenceLabels';
 import { M3_KINDS, type Rng } from './match3';
 import { pickEnemy, type RosterEntry } from './enemyRoster';
@@ -81,9 +82,9 @@ export const pvpElementsForSeed = (seed: number): string[] => pickDistinctPvpEle
 export function tileElementName(id: string, isPt: boolean): string {
   if (isPt) {
     const base = (BASE_ELEMENT_LABELS as Record<string, string>)[id];
-    return base ?? DERIVED_ELEMENT_PAIRS.find(d => d.id === id)?.nome ?? id;
+    return base ?? DERIVED_ELEMENT_PAIRS.find(d => d.id === id)?.nome ?? CURATED_ELEMENT_NAMES[id]?.pt ?? id;
   }
-  return essenceEn(id) ?? id;
+  return essenceEn(id) ?? CURATED_ELEMENT_NAMES[id]?.en ?? id;
 }
 
 /** Um candidato a oponente como a rota `opponents` devolve (só o que o pareamento lê). */
