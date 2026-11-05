@@ -21,7 +21,7 @@ const doServidor = (par: unknown, fallback?: string) =>
   fighterIdentityFromFx(duelSide({ evolutionStage: 'rookie', ...(fallback ? { soulmonMeta: { dominantElement: fallback } } : {}), soulmonSkills: { rookie: par } }).fx, fallback);
 
 describe('identidade do lutador: cliente == servidor', () => {
-  it('a lista fechada de elementos do servidor é a do app (20 base + 190 pares + 50 curados, §230)', () => {
+  it('a lista fechada de elementos do servidor é a do app (20 base + 190 pares + 50 curados, §232)', () => {
     expect([...ELEMENTOS_FICHA].sort()).toEqual([...CLASS_ELEMENT_ORDER, ...DERIVED_ELEMENT_PAIRS.map(d => d.id), ...IDS_DOS_CURADOS].sort());
   });
 

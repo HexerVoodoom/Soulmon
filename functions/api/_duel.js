@@ -140,7 +140,7 @@ const escolaOf = (skill) => (skill && typeof skill.escolaId === 'string' ? (own(
 
 /** A lista FECHADA de elementos do app (20 base + 190 pares: `CLASS_ELEMENT_ORDER` + `DERIVED_ELEMENT_PAIRS`; travada por `fighterIdentity.parity.test.ts`). O elemento publicado em `fx` só sai se estiver aqui. */
 export const ELEMENTOS_FICHA = new Set([
-  // os 50 curados (§230)
+  // os 50 curados (§232)
   'geiser', 'vulcao', 'deserto', 'relampago_seco', 'supernova', 'nevasca', 'permafrost', 'monsoes', 'peste_negra', 'coro_dos_afogados', 'ossario_vivo', 'jardim_eterno', 'aurora_boreal', 'duelista_temporal', 'pulso_cosmico', 'sabbat', 'hipnose', 'materia_escura', 'milagre', 'memoria', 'coral_celeste', 'via_lactea', 'delirio', 'cacador_de_almas', 'presagio', 'horizonte_de_eventos', 'lamina_do_juizo', 'bencao_marcial', 'arauto', 'farol', 'carniceiro', 'entropia_final', 'gladiador', 'punho_gravitico', 'avatar_elemental', 'titano_forjado', 'cataclismo', 'sopro_do_dragao', 'ragnarok', 'genesis', 'tempestade_perfeita', 'leviata', 'senhor_da_praga', 'sinfonia_do_caos', 'vontade_absoluta', 'arquiteto_da_realidade', 'ceifador_estelar', 'renascimento', 'juizo_final', 'cavaleiro_absoluto',
   'fogo', 'agua', 'terra', 'ar', 'eletricidade', 'arcano', 'sombra', 'luz', 'vileza', 'morte', 'vida', 'vigor',
   'marcial', 'tempo', 'som', 'gravidade', 'espaco', 'fada', 'industrial', 'planta', 'vapor', 'lava', 'incendio', 'plasma', 'fogo_feiticeiro',
@@ -192,7 +192,7 @@ export const STARTER_ELEMENT = Object.freeze({ industrial: 'terra', nascente: 's
  * (`demoCharacterId`) ou o dominante do oráculo (`soulmonMeta.dominantElement`), da lista fechada. O corvo do administrador é neutro
  * (`{ neutro: true }`). Golpe básico E especial usam este; a ficha decide só a forma/escola. Derivado do SAVE no servidor.
  * @param {any} state
- * §230: o elemento do ESTÁGIO gravado vem antes do de nascimento, e a poção (`potionElement`) entra antes dele, como no cliente.
+ * §232: o elemento do ESTÁGIO gravado vem antes do de nascimento, e a poção (`potionElement`) entra antes dele, como no cliente.
  * `base` = a base nº 1 do registro, só quando é o registro que decide: é ela que mede a vantagem.
  * @returns {{ el: string | null, neutro: boolean, base?: string | null }}
  */

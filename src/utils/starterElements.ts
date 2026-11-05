@@ -51,11 +51,11 @@ export function starterElementOf(id: unknown): StarterElement | undefined {
 export function petElementOf(state: PetElementState): string | undefined {
   if (isCorvo({ soulmonMeta: state.soulmonMeta ?? undefined })) return 'neutro';
   // Poção de Elemento (30/10/2026): o elemento dado numa evolução vence o do oráculo (os iniciais não evoluem, então não colidem).
-  // §230: o elemento do ESTÁGIO, gravado na evolução, vem antes do de nascimento; forma sem registro (save antigo) segue no do oráculo.
+  // §232: o elemento do ESTÁGIO, gravado na evolução, vem antes do de nascimento; forma sem registro (save antigo) segue no do oráculo.
   return elementoDoOraculo(state.potionElement) ?? starterElementOf(state.demoCharacterId) ?? elementoDoEstagioAtual(state.elementoJornada, state.evolutionStage)?.id ?? elementoDoOraculo(state.soulmonMeta?.dominantElement);
 }
 
-/** A base nº 1 gravada para o estágio, que decide a vantagem (§230). `undefined` quando o elemento não vem do registro: vale a base dominante de sempre. */
+/** A base nº 1 gravada para o estágio, que decide a vantagem (§232). `undefined` quando o elemento não vem do registro: vale a base dominante de sempre. */
 export function petBaseOf(state: PetElementState): string | undefined {
   if (isCorvo({ soulmonMeta: state.soulmonMeta ?? undefined }) || state.potionElement || starterElementOf(state.demoCharacterId)) return undefined;
   return elementoDoEstagioAtual(state.elementoJornada, state.evolutionStage)?.base;

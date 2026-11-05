@@ -29,6 +29,7 @@
  * VISOR 348×160 (`games/GameKit.tsx`). O erro `sem-motor` é `cloud_off` num `role=status` (é rede,
  * não medalha).
  */
+import { efeitoElementoPve } from '../utils/combate/elementEffects';
 import { useHexOverrides } from '../hooks/useHexOverrides';
 import { lotIconName } from '../utils/lotIcons';
 import { hexArenaElements, hexFamily, hexIdentity } from '../utils/hexsmith';
@@ -116,7 +117,7 @@ export interface ArenaGameProps {
   skills?: Partial<Record<FichaStage, StageSkills>>;
   /** Elemento dominante do oráculo: só o FALLBACK da identidade quando o save não tem ficha (igual nas outras telas). */
   petElement?: string;
-  /** §230: a base nº 1 do Soulmon combinado; é ela que mede a vantagem. */
+  /** §232: a base nº 1 do Soulmon combinado; é ela que mede a vantagem. */
   petBase?: string;
   /** Atributos de arena (`getArenaAttributes(ficha)`), quando conhecidos. */
   attrs?: { principal: string; secundario: string };
@@ -194,7 +195,7 @@ export function ArenaGame({
   const gs = ctx?.gameState;
   const estado = useMemo<SoulXPState>(
     () => (gs
-      ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP }
+      ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP, evoStatFloor: gs.evoStatFloor }
       : { evolutionStage }),
     [gs, evolutionStage],
   );
@@ -205,6 +206,7 @@ export function ArenaGame({
   const jogador = useMemo<ArenaPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
     family: hexFamily(familyOfSkill(especial), hx),
+    efeitoElemento: efeitoElementoPve(hexFamily(familyOfSkill(especial), hx), ident.especial.elemento),
     area: especial?.area?.tipo === 'circulo' ? 'area' : 'single',
     escolaBasica: basica?.escolaId ?? 'combate_fisico',
     // MECÂNICA da vantagem elemental (arena.ts, tabela só das 17 bases): o elemento do SPRITE manda (a identidade, que já é o `petElement`); só sem ele a base da ficha decide.

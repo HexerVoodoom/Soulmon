@@ -1,4 +1,4 @@
-// §230 — a régua de ±3pp do elemento combinado, modo a modo, com PROVA VERMELHA: a mesma medida, com a vantagem por "melhor de k"
+// §232 — a régua de ±3pp do elemento combinado, modo a modo, com PROVA VERMELHA: a mesma medida, com a vantagem por "melhor de k"
 // (a política reprovada, P2), tem de sair da régua. Sem isso a régua verde não prova nada. Duelo/Torneio é neutro por §177 e Masmorra
 // não tem vantagem elemental: o elemento lá só escolhe arte (`combatFx`), então não há taxa a mudar.
 import { appendFileSync } from 'node:fs';
@@ -83,7 +83,7 @@ function combina3(k: number, politica: 'p0' | 'p2'): number {
   return (100 * soma) / RUNS;
 }
 
-describe('§230 régua ±3pp por modo', () => {
+describe('§232 régua ±3pp por modo', () => {
   it('Arena: k=2,3,4 ficam a ±3pp de k=1, nos níveis de Rookie e de Ultra; P2 sai da régua', () => {
     for (const nivel of [6, 40]) {
       const controle = arena(1, nivel, 'p0');

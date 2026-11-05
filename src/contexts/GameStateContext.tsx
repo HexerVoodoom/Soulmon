@@ -12,6 +12,7 @@ import { sanitizeElementoJornada } from '../utils/elementoJornada';
 import { sanitizeSpritePose, mergeSpritePose, registerSpritePoseWriter, registerSpritePoseReader, type SpritePose } from '../utils/spritePose';
 import { sanitizeChipsStage } from '../utils/specialItemUse';
 import { sanitizeGlitchtamaDrop } from '../utils/glitchtamaDrop';
+import { sanitizeStatFloor } from '../utils/combate/level';
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS, BB_MAX_HP } from '../types/progression';
@@ -348,7 +349,7 @@ export interface GameState {
   evolutionPotion?: string;
   /** 🧪 Elemento que o Soulmon passou a carregar pela última poção consumida numa evolução (lido por `petElementOf`). */
   potionElement?: string;
-  /** §230: o elemento de cada estágio e a sorte fixa do Soulmon (`utils/elementoJornada.ts`). Ausente = save antigo, até a próxima evolução. */
+  /** §232: o elemento de cada estágio e a sorte fixa do Soulmon (`utils/elementoJornada.ts`). Ausente = save antigo, até a próxima evolução. */
   elementoJornada?: import('../utils/elementoJornada').ElementoJornada;
   /** Quanto a descida AUTOMÁTICA da Fenda já rendeu de essência no dia do jogador (teto diário `ESSENCE_AWAY_DAILY_CAP`). Servidor: monotônico no dia (`_dayCounters.js`). */
   essenceAway?: EssenceAway;
@@ -487,6 +488,8 @@ export interface GameState {
   chipsStage?: { stage: string; used: number };
   /** Chips de REDUÇÃO usados no estágio (limite próprio, `REDUCE_CHIPS_PER_STAGE`). */
   chipsReduceStage?: { stage: string; used: number };
+  /** Piso de atributo da evolução (REGISTRO §229, "Evoluir nunca reduz"): gravado pelo `handleEvolve`, vale só no estágio `s`. */
+  evoStatFloor?: { s: number; atk: number; def: number; spd: number };
   /** Bits de MINIJOGO já creditados no DIA DO JOGADOR — o teto que a decisão
    *  #61/#63 pede (`utils/currencies.ts` › `MINIGAME_BITS_PER_DAY`). Os Bits do
    *  dia completo NÃO passam por aqui. */
@@ -1385,6 +1388,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // bloqueado por dado que não existe. Presente e válido: mantém (idempotente).
         chipsStage: sanitizeChipsStage(loadedState.chipsStage),
         chipsReduceStage: sanitizeChipsStage(loadedState.chipsReduceStage),
+        evoStatFloor: sanitizeStatFloor(loadedState.evoStatFloor),
         // Tetos da comida premium. Save antigo entra `undefined` = tudo livre.
         premiumFood: (() => {
           const p = obj<unknown>(loadedState.premiumFood);

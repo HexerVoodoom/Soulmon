@@ -117,14 +117,31 @@ export function distributePoints(level, weights) {
   }
   return p;
 }
-export function combatantAt(level, weights, bonus = 0) {
+export function combatantAt(level, weights, bonus = 0, floor) {
   const L = clampLevel(level);
   const b = stageBase(stageOfLevel(L));
   const p = distributePoints(L, weights);
-  if (typeof bonus === 'number') return { level: L, atk: b + p.atk, def: b + p.def, spd: b + p.spd, hp: autoHp(L), bonus };
+  // "Evoluir nunca reduz" (REGISTRO §229): o piso (do estagio certo) entra ANTES do bonus de PvP. Espelho de `combate/level.ts`.
+  const f = floor && floor.s === stageOfLevel(L) ? floor : undefined;
+  const atk = Math.max(b + p.atk, f?.atk ?? 0), def0 = Math.max(b + p.def, f?.def ?? 0), spd0 = Math.max(b + p.spd, f?.spd ?? 0);
+  if (typeof bonus === 'number') return { level: L, atk, def: def0, spd: spd0, hp: autoHp(L), bonus };
   const ab = toAttrBonus(bonus);
   const fold = (v, x) => (x > 0 ? CURVE_K * ((1 + v / CURVE_K) * (1 + x) - 1) : v);
-  return { level: L, atk: b + p.atk, def: fold(b + p.def, ab.def), spd: fold(b + p.spd, ab.spd), hp: autoHp(L), bonus: ab.atk };
+  return { level: L, atk, def: fold(def0, ab.def), spd: fold(spd0, ab.spd), hp: autoHp(L), bonus: ab.atk };
+}
+/** Maior valor de UM atributo no estagio `s` (espelho de `statMaxOfStage`). */
+export function statMaxOfStage(s) {
+  const L = STAGE_LEVEL_CAPS[s];
+  return stageBase(s) + Math.max(Math.ceil(L / 3), Math.floor(MAX_SHARE * L));
+}
+/** Le o piso gravado no save (espelho de `sanitizeStatFloor`): lixo -> undefined; cada valor limitado ao teto legitimo. */
+export function sanitizeStatFloor(v) {
+  if (!v || typeof v !== 'object') return undefined;
+  const s = v.s;
+  if (typeof s !== 'number' || !Number.isInteger(s) || s < 1 || s >= STAGE_LEVEL_CAPS.length) return undefined;
+  const max = statMaxOfStage(s - 1);
+  const c = (x) => (typeof x === 'number' && Number.isFinite(x) ? Math.min(max, Math.max(0, Math.floor(x))) : 0);
+  return { s, atk: c(v.atk), def: c(v.def), spd: c(v.spd) };
 }
 
 // ── bonus.ts ─────────────────────────────────────────────────────────────────
@@ -442,7 +459,10 @@ export function soulWeights(state) {
  * @param {{ maxLevel?: number, bonus?: number }} [opts]
  */
 export function soulCombatant(state, opts = {}) {
-  let level = soulLevel(state);
+  const real = soulLevel(state);
+  let level = real;
   if (typeof opts.maxLevel === 'number' && Number.isFinite(opts.maxLevel)) level = Math.min(level, Math.max(1, Math.floor(opts.maxLevel)));
-  return combatantAt(level, soulWeights(state), opts.bonus ?? 0);
+  // o teto de level do duelo (S1) desliga o piso: o piso e do level real, nao de um level limitado
+  const floor = level === real ? sanitizeStatFloor(state?.evoStatFloor) : undefined;
+  return combatantAt(level, soulWeights(state), opts.bonus ?? 0, floor);
 }

@@ -1,5 +1,5 @@
 /**
- * Espelho de `src/utils/elementoJornada.ts` (REGISTRO §230): forma do registro no save e imutabilidade. A sorte e cada estágio já gravados no
+ * Espelho de `src/utils/elementoJornada.ts` (REGISTRO §232): forma do registro no save e imutabilidade. A sorte e cada estágio já gravados no
  * servidor não são reescritos pelo cliente (anti-reroll). NUNCA recusa o save: o que não tem forma vira ausente.
  */
 import { ELEMENTOS_FICHA } from './_duel.js';

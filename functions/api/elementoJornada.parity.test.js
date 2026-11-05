@@ -8,7 +8,7 @@ import { ELEMENTOS_CURADOS } from '../../src/utils/elementosCurados';
 
 const J = { v: 1, u: 0.97, estagios: { ultra: { id: 'geiser', base: 'agua' }, mega: { id: 'lixo', base: 'agua' } } };
 
-describe('§230 paridade do elemento por estágio', () => {
+describe('§232 paridade do elemento por estágio', () => {
   it('a mesma forma nos dois lados', () => {
     for (const raw of [J, null, { u: 2, estagios: {} }, { u: 0.1 }, { u: 0.1, estagios: [] }]) expect(sanitizeElementoJornada(raw)).toEqual(cliente(raw));
   });

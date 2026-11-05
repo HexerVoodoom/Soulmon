@@ -85,7 +85,7 @@ const withElement = (c: Combatant, adv: number, scale: number): Combatant => (ad
 /** The whole fight, pure and deterministic; the same function the server runs (`simulateDuel` of `_duel.js`). */
 export function simulatePvp(args: { me: Pick<DuelSide, 'combatant' | 'special' | 'cheerScale' | 'startEnergy' | 'dotResist' | 'fx'>; opp: Pick<DuelSide, 'combatant' | 'special' | 'startEnergy' | 'dotResist' | 'fx'>; seed: number; taps?: unknown; /** 0 = Torneio/Duelo ranqueado (sem elemento, padrão); 0.5 = Guerra de Guildas (±0,5 golpe). */ elementScale?: 0 | 0.5 }): DuelResult {
   // Hexsmith (01/11/2026): a Couraça troca o elemento que DEFENDE (`elDefesa`); sem ela vale o do básico. Espelho de `aplicarElementosDuelo`.
-  // §230: `elVantagem` = a base nº 1 do Soulmon combinado; o id cheio em `elBasica` é só visual.
+  // §232: `elVantagem` = a base nº 1 do Soulmon combinado; o id cheio em `elBasica` é só visual.
   const advMe = duelElementAdvantage(args.me.fx?.elVantagem ?? args.me.fx?.elBasica, args.opp.fx?.elDefesa ?? args.opp.fx?.elVantagem ?? args.opp.fx?.elBasica);
   const advOpp = duelElementAdvantage(args.opp.fx?.elVantagem ?? args.opp.fx?.elBasica, args.me.fx?.elDefesa ?? args.me.fx?.elVantagem ?? args.me.fx?.elBasica);
   const a: FightSide = { combatant: withElement(args.me.combatant, advMe, args.elementScale ?? 0), special: args.me.special, dotResist: args.me.dotResist };

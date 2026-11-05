@@ -240,7 +240,7 @@ export interface AreaViewProps {
   profissaoNome?: { pt: string; en: string } | null;
   /** Elemento dominante do Soulmon (`soulmonMeta.dominantElement`): a arte dos golpes da Masmorra. */
   petElement?: string;
-  /** §230: a base nº 1 do Soulmon combinado. */
+  /** §232: a base nº 1 do Soulmon combinado. */
   petBase?: string;
   onEarnPoints: (points: number) => void;
   /** Evento real de uso de um recurso (minijogo, foco, duelo) para as missões diárias (`utils/dailyMissions.ts`, REGISTRO §52). */
@@ -630,7 +630,7 @@ export function AreaView(props: AreaViewProps) {
         {rogueFull && play.rogue && (
           <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
             <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
-              <RogueDungeon language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} skills={props.skills} onClose={close} onEnemySeen={play.onBestiarySeen} />
+              <RogueDungeon petBase={props.petBase} language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saved={play.rogue.saved} onChange={play.rogue.onChange} combatant={play.rogue.combatant} saveId={props.guild.saveId} onEarnPoints={props.onEarnPoints} evolutionStage={props.evolutionStage} demoCharacterId={props.demoCharacterId} petName={props.petName} petElement={props.petElement} playerLevel={props.playerLevel} skills={props.skills} onClose={close} onEnemySeen={play.onBestiarySeen} />
             </Suspense>
           </div>
         )}

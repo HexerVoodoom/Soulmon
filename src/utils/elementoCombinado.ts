@@ -1,5 +1,5 @@
 /**
- * ELEMENTO COMBINADO POR ESTÁGIO (dono, 05/11/2026, REGISTRO §230) — dono único da regra.
+ * ELEMENTO COMBINADO POR ESTÁGIO (dono, 05/11/2026, REGISTRO §232) — dono único da regra.
  *
  * A cada evolução o Soulmon tende a carregar um elemento de mais componentes. Uma ÚNICA sorte `u` por Soulmon, fixa no save, decide
  * quantos: as chances acumuladas só sobem de estágio em estágio, então ele NUNCA perde complexidade ao evoluir, e reabrir não muda nada.

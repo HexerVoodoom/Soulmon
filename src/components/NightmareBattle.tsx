@@ -39,6 +39,7 @@
  * misturaria duas economias que a regra mantém separadas. O que não podia continuar duplicado era a
  * MECÂNICA, e essa agora tem dono: `utils/dungeonFight.ts` + `useGroupBattle` + `BattleStage`.
  */
+import { efeitoElementoPve } from '../utils/combate/elementEffects';
 import { useHexOverrides } from '../hooks/useHexOverrides';
 import { hexFamily, hexIdentity } from '../utils/hexsmith';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -147,13 +148,16 @@ export function NightmareBattle({
   const bonusTalento = useTalentBonus('nightmare'); // canal único de bônus (teto 5%), PR7; `tal-pve-05` soma só aqui (Tarefa B)
   const rift = useRiftTalents();
   const hx = useHexOverrides(); // 🔣 Hexsmith: o que os itens equipados reescrevem
+  const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const jogador = useMemo<DungeonPlayerCfg>(() => ({
     combatant: soulCombatant(estado, bonusTalento),
     family: hexFamily(dungeonFamily(par?.especial), hx),
+    efeitoElemento: efeitoElementoPve(hexFamily(dungeonFamily(par?.especial), hx), ident.especial.elemento),
+    pesadelo: true,
     jeito: jeitoDaProfissao(profissao),
     startShield: rift.startShield,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [hx, estado, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao]);
+  }), [hx, estado, bonusTalento, rift.startShield, par?.especial?.escolaId, par?.especial?.familia, profissao, ident.especial.elemento]);
   const jogadorRef = useRef(jogador);
   jogadorRef.current = jogador;
   const hpMax = hpPoints(dungeonPlayerSide(jogador).combatant.hp);
@@ -184,7 +188,6 @@ export function NightmareBattle({
 
   const enemy = wave[idx];
   // A identidade de combate (dono único): o mesmo golpe básico/especial da Arena, do Torneio e do PvP.
-  const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const petEl = fxElementId(ident.basico.elemento);
   // O elemento do pesadelo é o PRÓPRIO (`pesadelo`, exclusivo da mecânica); sem arte instalada cai no FX procedural.
   const enemyEl = fxElementId(NIGHTMARE_ELEMENT);

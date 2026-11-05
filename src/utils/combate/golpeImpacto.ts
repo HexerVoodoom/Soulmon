@@ -32,7 +32,7 @@ export function pesoCorte(element: string | null | undefined): number {
   if (base !== undefined) return base;
   const comp = DERIVADOS.get(element);
   if (comp) return Math.round(((PESO_CORTE[comp[0]] ?? PESO_CORTE_NEUTRO) + (PESO_CORTE[comp[1]] ?? PESO_CORTE_NEUTRO)) / 2);
-  // §230: curado (3 ou 4 componentes) herda a média do mesmo jeito.
+  // §232: curado (3 ou 4 componentes) herda a média do mesmo jeito.
   const cur = curatedComponents(element);
   if (cur) return Math.round(cur.reduce((s, c) => s + (PESO_CORTE[c] ?? PESO_CORTE_NEUTRO), 0) / cur.length);
   return PESO_CORTE_NEUTRO;

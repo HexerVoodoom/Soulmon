@@ -303,7 +303,7 @@ export function useGroupBattle(opts: GroupBattleOptions): GroupBattle {
       // PR16: o debuff de DEFESA que o pet deixa nos inimigos mostra o selo de MALDIÇÃO quando o especial dele é da escola maldicao
       const curseOn = (holder: number) => holder > 0 && isCurseSpecial(player.special?.family, scene.playerSpecialEscola);
       // §228: hoje só o pet tem especial de família com estado (inimigo = `direct`), então o sabor vem sempre do elemento do especial dele.
-      const efeitoDoPet = efeitoVisivel(player.special?.family, scene.playerSpecialElemento);
+      const efeitoDoPet = efeitoVisivel(player.special?.family, scene.playerSpecialElemento, true);
       const efeitoOn = (holder: number, origem: 'self' | 'foe') => ((origem === 'self') === (holder === 0) ? efeitoDoPet : null);
       /** Os turnos REAIS: os contadores que o núcleo expôs no evento (PR16); cura (instantânea) segue na aproximação. */
       const realFx = (fx: GroupEvent['fx']) => {

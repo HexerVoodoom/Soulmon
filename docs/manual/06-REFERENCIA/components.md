@@ -203,6 +203,10 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** os seis componentes de jogo que o importam (`BolhasGame`, `EcoGame`, `PicrossGame`, `RevisaoGame`, `TrocaGame` em `src/components/mente/` e `RespiracaoGame` em `src/components/refugio/`; `grep -rl "types'" src/components/mente src/components/refugio`, 30/09/2026).
 **Régua:** indireta (tsc); a fiação em `src/components/play/playArea.render.test.tsx`.
 
+### `src/components/nav/GuildaMapPage.tsx` (05/11/2026)
+
+**Dono de:** o mapa da Guilda dos Mercenários: cinco prédios pintados no fundo (`GUILDA_PREDIOS`); as três Ordens abrem o Desbravador em `MercGuildSheet`, Remendados e Desfeitos abrem só o NPC. A entrada é secreta: `MapPage` › `onSecretoGuilda`, segurar o cristal por 3 s.
+
 ### `src/components/nav/lotHalo.ts`
 **Dono de:** o HALO PRETO dos prédios (20/10/2026, REGISTRO §140): `lotArtFilter({ locked?, accent? })` devolve o `filter` único dos sprites de lote — contorno preto (`LOT_HALO_BLACK`) + sombra de chão; trancado = cinza (`LOT_LOCKED_FILTER`) com o mesmo halo; `LOT_HALO_ACCENT` é o acento claro do Caderno. **Chamado por:** `AreaScene` e `MapPage`. **Régua:** `lotHalo.contract.test.ts` (as 6 áreas, abertos e trancados; só o `AreaScene` desenha sprite de lote).
 
@@ -1537,7 +1541,7 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Régua:** `src/components/EvoRecapModal.render.test.tsx`.
 
 ### `src/components/EvolutionStatsModal.tsx`
-**Dono de:** o modalzinho de DEPOIS da evolução (05/11/2026, pedido do dono): Vida, Ataque, Defesa e Velocidade do Soulmon em "antes → depois (+N)". Só desenha; os números vêm de `utils/evolutionStatsDelta.ts`. Delta 0 = "+0", negativo = "−N" (peso 400, sem vermelho). Sem animação própria (o fade do `ModalSheet` já respeita movimento reduzido). Glifos existentes: `favorite`, `swords`, `military_tech`, `bolt`.
+**Dono de:** o modalzinho de DEPOIS da evolução (05/11/2026, pedido do dono): Vida, Ataque, Defesa e Velocidade do Soulmon em "antes → depois (+N)". Só desenha; os números vêm de `utils/evolutionStatsDelta.ts`. Delta 0 = "+0" (peso 400); nunca há "−N" (evoluir nunca reduz, REGISTRO §229). Sem animação própria (o fade do `ModalSheet` já respeita movimento reduzido). Glifos existentes: `favorite`, `swords`, `military_tech`, `bolt`.
 **Props principais:** `delta` (`EvoStatsDelta`), `stageName`, `language`, `onClose()`.
 **Exports:** `EvolutionStatsModal(props)`.
 **Depende de:** `form/FormKit` (`ModalSheet`, centralizado), `ui/Icon`, `utils/evolutionStatsDelta`, `utils/soulXP` (`soulLevelLabel`).

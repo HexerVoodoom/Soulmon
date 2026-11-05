@@ -1,5 +1,5 @@
 /**
- * O REGISTRO do elemento por estágio (`GameState.elementoJornada`, REGISTRO §230). Módulo LEVE: `petElementOf` lê daqui no caminho crítico da Home;
+ * O REGISTRO do elemento por estágio (`GameState.elementoJornada`, REGISTRO §232). Módulo LEVE: `petElementOf` lê daqui no caminho crítico da Home;
  * quem ESCREVE é `elementoCombinado.ts`. Save sem o campo = nada muda até a próxima evolução. Espelho: `functions/api/_elementoJornada.js`.
  */
 import { getStageLevel } from '../types/progression';

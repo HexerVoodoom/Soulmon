@@ -134,7 +134,7 @@ import type { MealInviteKind } from './utils/mealRhythm';
 import { awardBondXP, awardStepXP, bondLevelFor, unclaimedBondRewards, applyBondRewards } from './utils/bond';
 import { levelUpPending, levelUpBaseline, applyLevelUpCelebrated } from './utils/levelUp';
 import { sanitizeTalentPicks } from './utils/talents';
-import { soulLevel, soulLevelLine, soulCombatant } from './utils/soulXP';
+import { soulLevel, soulLevelLine, soulCombatant, nextStatFloor } from './utils/soulXP';
 import { ROGUE_PER_FLOOR, type RogueRun } from './utils/rogueDungeonSave';
 import { applyPoopDrain, cleanPoop, pendingPoopEvent, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playEvolve, playDegenerate, playSleep } from './utils/sounds';
@@ -281,6 +281,7 @@ import { CATEGORY_EMOJIS, AI_CATEGORY_MAP, FOOD_BY_CATEGORY } from './constants/
 import type { AISettings } from './components/AISettingsModal';
 import { ONBOARDING_VELADO } from './components/onboarding/sequencia/flag';
 // Mercenário (velado): leva o catálogo de atividades (~dezenas de KB) — fora da entrada.
+const GuildaMapPage = lazy(() => import('./components/nav/GuildaMapPage').then(m => ({ default: m.GuildaMapPage })));
 const MercGuildSheet = lazy(() => import('./components/MercGuildSheet').then(m => ({ default: m.MercGuildSheet })));
 import type { MercOrdem } from './utils/mercMissionSave';
 // Sequência do onboarding velado com etapas reais: leva Match3Game/BattleStage junto, só monta no 1º uso (fora da entrada).
@@ -674,7 +675,7 @@ const AdventureDiary = lazy(() => import('./components/AdventureDiary').then(m =
  *  prop cria objeto novo a cada render (mesmo motivo de `EMPTY_DECOR`). */
 const EMPTY_RHYTHM = emptyRhythm();
 
-/** §230: a chave da sorte e as afinidades da leitura. Sem perfil local, a semente da criatura; a sorte fica congelada no save de qualquer modo. */
+/** §232: a chave da sorte e as afinidades da leitura. Sem perfil local, a semente da criatura; a sorte fica congelada no save de qualquer modo. */
 function dadosDaSorte(seed: number | undefined, sufixo = ''): { chave: string; afinidades?: Record<string, number> } {
   const perfil = readJson<(OracleInput & { seed?: number }) | null>(STORAGE_KEYS.SOULMON_PROFILE, null);
   let chave = `seed:${seed ?? 0}`;
@@ -682,12 +683,12 @@ function dadosDaSorte(seed: number | undefined, sufixo = ''): { chave: string; a
   return { chave: chave + sufixo, afinidades: perfil?.soulProfile?.oracle?.classElements as Record<string, number> | undefined };
 }
 
-/** §230: o registro do Soulmon que nasce. `u` herdada = nova leitura não rola a sorte de novo; renascer passa sem ela e tem sorte nova. */
+/** §232: o registro do Soulmon que nasce. `u` herdada = nova leitura não rola a sorte de novo; renascer passa sem ela e tem sorte nova. */
 function nascerElementoJornada(dominante: string | undefined, seed: number | undefined, herdada?: { u: number } | null, sufixo = '') {
   return registrarElementoDoEstagio(herdada ? { v: 1, u: herdada.u, estagios: {} } : undefined, { stage: 'rookie', base: dominante, ...dadosDaSorte(seed, sufixo) });
 }
 
-/** §230: o estágio que nasce numa evolução. Oráculo só: inicial e corvo têm elemento próprio. Imutável. */
+/** §232: o estágio que nasce numa evolução. Oráculo só: inicial e corvo têm elemento próprio. Imutável. */
 function elementoAoEvoluir(prev: Pick<GameState, 'elementoJornada' | 'demoCharacterId' | 'soulmonMeta'>, destino: string): GameState['elementoJornada'] {
   if (prev.demoCharacterId || prev.soulmonMeta?.creature === 'corvo') return prev.elementoJornada;
   return registrarElementoDoEstagio(prev.elementoJornada, { stage: fichaStageOf(destino), base: prev.soulmonMeta?.dominantElement, ...dadosDaSorte(prev.soulmonMeta?.seed) });
@@ -919,8 +920,9 @@ export default function App() {
   const [celebrarMeta, setCelebrarMeta] = useState(false);
   /* ONBOARDING_VELADO: "Rever a história" das Configurações (desligado por padrão). */
   const [reverHistoria, setReverHistoria] = useState(false);
-  /* ONBOARDING_VELADO: Guilda dos Mercenarios (plano §11). Painel aberto pelo chip do mapa; escolha e confirmacao rodam em `utils/mercMission.ts`. */
-  const [mercOpen, setMercOpen] = useState(false);
+  /* ONBOARDING_VELADO: Guilda dos Mercenarios (plano §11). Mapa próprio, aberto SÓ segurando o cristal do Mapa por 3 s (dono, 05/11/2026, secreto); cada prédio abre o NPC; escolha e confirmacao rodam em `utils/mercMission.ts`. */
+  const [guildaOpen, setGuildaOpen] = useState(false);
+  const [mercOrdem, setMercOrdem] = useState<MercOrdem | null>(null);
   /* ONBOARDING_VELADO por pessoa: o interruptor de build OU o teste do servidor (`/api/velado-teste`, só chega depois do login).
      Os pontos abaixo leem `veladoOn` (estado) e não a constante de módulo, para ligarem sem recarregar. Desligado = idêntico. */
   const [veladoTesterOn, setVeladoTesterOn] = useState(false);
@@ -1249,7 +1251,7 @@ export default function App() {
       setGameState(prev => ({ ...prev, spriteLibrary: fn(prev.spriteLibrary ?? emptySpriteLibrary()) })),
     [setGameState],
   );
-  /** §230: as formas por desenhar pedem o elemento combinado do estágio. */
+  /** §232: as formas por desenhar pedem o elemento combinado do estágio. */
   const stagesDoSprite = useMemo(() => stagesComElemento(gameState.soulmonStages, gameState.elementoJornada), [gameState.soulmonStages, gameState.elementoJornada]);
   const spriteGenOn = (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0;
   const spriteGen = useSpriteGeneration({
@@ -3915,6 +3917,8 @@ export default function App() {
       const evolved = {
         ...base,
         evolutionCrystal: undefined,
+        // REGISTRO §229 "Evoluir nunca reduz": o maior de cada atributo de antes vira o piso do estágio novo (`utils/soulXP.ts › nextStatFloor`).
+        evoStatFloor: nextStatFloor(prev, newEvolutionStage),
         evolutionStage: newEvolutionStage,
         currentBranch: newCurrentBranch,
         healthPoints: newHP,
@@ -5160,6 +5164,7 @@ export default function App() {
       attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
         chipsStage: undefined, // D-97: a contagem de chips é por estágio
         chipsReduceStage: undefined, // idem, chips de redução (limite próprio)
+      evoStatFloor: undefined,
       currentBranch: 'harmony',
       degeneratedByHP: false,
       soulmonStages: result.creature.stages,
@@ -5252,6 +5257,7 @@ export default function App() {
         attributesSinceLastEvolution: { power: 0, harmony: 0, benevolence: 0 },
         chipsStage: undefined, // D-97: a contagem de chips é por estágio
         chipsReduceStage: undefined, // idem, chips de redução (limite próprio)
+        evoStatFloor: undefined,
         currentBranch: 'harmony',
         degeneratedByHP: false,
         soulmonStages: result.creature.stages,
@@ -7754,6 +7760,7 @@ export default function App() {
                   harmonyPoints: gameState.harmonyPoints,
                   benevolencePoints: gameState.benevolencePoints,
                   degeneratedByHP: gameState.degeneratedByHP,
+                  evoStatFloor: gameState.evoStatFloor,
                   petPassive: gameState.petPassive,
                   skills: skillsDoJogador,
                   petElement: petElementOf(gameState),
@@ -8111,6 +8118,7 @@ export default function App() {
             <MapPage
               language={language}
               onOpenArea={(id: AreaId) => goTo(areaView(id))}
+              onSecretoGuilda={() => setGuildaOpen(true)}
               bondLevel={bondLevelFor(gameState.totalXP ?? 0)}
               bits={gameState.gamePoints ?? 0}
               emblems={gameState.emblems ?? 0}
@@ -8973,15 +8981,14 @@ export default function App() {
             </div>
           )}
 
-          {veladoOn && pane === 'map' && (
-            <button type="button" data-merc-chip onClick={() => setMercOpen(true)}
-              style={{ position: 'fixed', right: 12, bottom: 'calc(var(--sm-nav-h, 72px) + 16px)', zIndex: 20, minHeight: 44, padding: '0 14px', borderRadius: 12, border: '1px solid var(--sm2-border, #555)', background: 'var(--sm2-surface, #1a1a1a)', color: 'inherit' }}>
-              {language === 'pt-BR' ? 'Guilda dos Mercenários' : 'Mercenary Guild'}
-            </button>
-          )}
-          {veladoOn && mercOpen && (
+          {guildaOpen && pane === 'map' && (
             <Suspense fallback={null}>
-            <MercGuildSheet open onClose={() => setMercOpen(false)} language={language}
+              <GuildaMapPage language={language} onClose={() => setGuildaOpen(false)} onOpenOrdem={setMercOrdem} />
+            </Suspense>
+          )}
+          {guildaOpen && mercOrdem && (
+            <Suspense fallback={null}>
+            <MercGuildSheet open onClose={() => setMercOrdem(null)} language={language} ordem={mercOrdem}
               hoje={gameState.mercMission && gameState.mercMission.day === playerDayKey(new Date(), gameState.playerDayTz) ? gameState.mercMission : null}
               bb={gameState.evolutionStage === 'bb'}
               onChoose={escolherMercenario} onConfirm={confirmarMercenario} />

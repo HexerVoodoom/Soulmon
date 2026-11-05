@@ -1189,7 +1189,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/evolutionGauge.test.ts` (regra, migração, simulação leve/médio/intenso).
 
 ### `src/utils/evolutionStatsDelta.ts`
-**Dono de:** o antes → depois dos atributos de combate do Soulmon numa evolução (05/11/2026). Puro e sem fórmula própria: lê `soulCombatant` (ATK/DEF/SPD, o mesmo da luta) e `hpPoints(combatant.hp)` (a Vida que a Arena mostra) para o save de antes e o de depois; o bônus de talento/equipamento fica de fora (igual nos dois lados). O delta pode ser negativo, porque ao evoluir os pontos de alinhamento zeram (§209) e a distribuição de ATK/DEF/SPD volta ao equilíbrio.
+**Dono de:** o antes → depois dos atributos de combate do Soulmon numa evolução (05/11/2026). Puro e sem fórmula própria: lê `soulCombatant` (ATK/DEF/SPD, o mesmo da luta) e `hpPoints(combatant.hp)` (a Vida que a Arena mostra) para o save de antes e o de depois; o bônus de talento/equipamento fica de fora (igual nos dois lados). O delta nunca é negativo: o piso do REGISTRO §229 (`evoStatFloor`) impede a queda de 1 ponto de Defesa/Velocidade que o reset de §209 causava em Ultimate→Mega e Mega→Ultra.
 **Exports:** `EvoStatId` · `EVO_STAT_ORDER` · `EvoStatRow` · `EvoStatsDelta` · `evolutionStatsDelta` · `formatDelta`.
 **Chamado por:** `src/App.tsx` (updater do `handleEvolve`), `src/components/EvolutionStatsModal.tsx`.
 **Régua:** `src/utils/evolutionStatsDelta.test.ts`.
@@ -2387,7 +2387,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Dono de:** XP e level do Soulmon no combate v3 (PR2), DERIVADOS de `evolutionStage` + `perfectDays` (nada persistido; `fuzz2` segue em 103). XP por dia completo (66) + esforço contra a meta (34), nunca contagem (regra #16); 1 level por 100 XP; `soulLevel = min(levelFor(soulXP), levelCapFor(stage))`; degenerar baixa o level e recuperar devolve o mesmo; o dia perfeito de bônus (o 🌀) soma em `perfectDays` e portanto dá ponto. O texto do level que desceu é neutro (`soulLevelLine`, "Lv N").
 **Exports:**
 - `XP_PER_LEVEL`, `XP_COMPLETE_DAY_SHARE`, `XP_COMPLETE_DAY`, `XP_EFFORT_MAX`, `XP_FULL_DAY` (const); `DayFacts`, `SoulXPState` (interface).
-- `dayXP(day)`, `soulXP(state)`, `levelFor(xp)`, `soulLevel(state)`, `statPoints(level)`, `soulWeights(state)`, `soulCombatant(state, bonus?)`.
+- `dayXP(day)`, `soulXP(state)`, `levelFor(xp)`, `soulLevel(state)`, `statPoints(level)`, `soulWeights(state)`, `soulCombatant(state, bonus?)` (aplica o piso `evoStatFloor`, REGISTRO §229), `nextStatFloor(prev, nextStage)` (o piso que o `handleEvolve` grava: maior de cada atributo de antes, para o estágio de destino; `undefined` se o destino não sobe). `SoulXPState.evoStatFloor` entra cru e passa por `sanitizeStatFloor` (`combate/level.ts`).
 - `soulLevelLabel(level)`, `soulLevelLine(level, dropped, language)`.
 **Chamado por:** `App.tsx` (texto do Lv na StatsPage). Os motores de luta (PR3+) leem `soulLevel`/`soulCombatant`.
 **Régua:** `src/utils/soulXP.test.ts`, `src/utils/soulXP.hydrate.test.tsx`, `functions/api/soulXP.parity.test.js`, bloco "combate v3" de `src/copy.semFomo.contract.test.ts`.
@@ -4265,7 +4265,7 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 
 ### `src/utils/elementoCombinado.ts`
 
-Dono da regra do elemento combinado por estágio (§230): tabela de chances, sorte fixa, escolha contendo a base nº 1, registro imutável e prompt das formas novas. **Régua:** `elementoCombinado.test.ts` e `elementoCombinado.balanco.test.ts` (±3pp por modo, com prova vermelha).
+Dono da regra do elemento combinado por estágio (§232): tabela de chances, sorte fixa, escolha contendo a base nº 1, registro imutável e prompt das formas novas. **Régua:** `elementoCombinado.test.ts` e `elementoCombinado.balanco.test.ts` (±3pp por modo, com prova vermelha).
 
 ### `src/utils/elementoJornada.ts`
 

@@ -1,4 +1,6 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { efeitoDoEspecial } from './combate/elementEffects';
 import { CHANCES_POR_ESTAGIO, componentesPorSorte, escolherElemento, registrarElementoDoEstagio, sorteDaChave, stagesComElemento } from './elementoCombinado';
 import { ELEMENTOS_CURADOS, curatedComponents } from './elementosCurados';
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
@@ -14,7 +16,7 @@ import type { FichaStage } from './soulProfile/ficha/types';
 const STAGES: FichaStage[] = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'];
 const componentes = (id: string): readonly string[] => curatedComponents(id) ?? DERIVED_ELEMENT_PAIRS.find(p => p.id === id)?.componentes ?? [id];
 
-describe('§230 a tabela e a sorte', () => {
+describe('§232 a tabela e a sorte', () => {
   it('cada linha soma 100 e as chances acumuladas só sobem', () => {
     for (const st of STAGES) expect(CHANCES_POR_ESTAGIO[st].reduce((a, b) => a + b, 0)).toBe(100);
     for (const min of [1, 2, 3]) {
@@ -42,7 +44,7 @@ describe('§230 a tabela e a sorte', () => {
   });
 });
 
-describe('§230 a escolha', () => {
+describe('§232 a escolha', () => {
   it('o elemento sempre contém a base nº 1 e tem o k pedido quando há curado', () => {
     for (const base of ['fogo', 'agua', 'terra', 'ar', 'sombra', 'luz']) for (const k of [1, 2, 3, 4]) {
       const e = escolherElemento(base, k, 0.5);
@@ -68,7 +70,7 @@ describe('§230 a escolha', () => {
   });
 });
 
-describe('§230 o registro', () => {
+describe('§232 o registro', () => {
   const r0 = registrarElementoDoEstagio(undefined, { stage: 'ultra', base: 'fogo', chave: 'x' })!;
 
   it('estágio gravado é imutável e a sorte não muda (degenerar e reevoluir)', () => {
@@ -109,7 +111,20 @@ describe('§230 o registro', () => {
   });
 });
 
-describe('§230 os 50 curados passam por todos os leitores', () => {
+describe('§232 caminhos da vantagem', () => {
+  it('todo Combina 3 de jogo com petElement recebe também a base nº 1', () => {
+    for (const f of ['src/components/RogueDungeon.tsx', 'src/components/nav/AreaView.tsx']) {
+      for (const linha of readFileSync(f, 'utf8').split(/\r?\n/).filter(l => l.includes('<Match3Game') && l.includes('petElement='))) expect(linha).toContain('petBase=');
+    }
+    expect(readFileSync('src/components/nav/AreaView.tsx', 'utf8')).toContain('<RogueDungeon petBase={props.petBase}');
+  });
+  it('curado herda o efeito do especial como o par', () => {
+    const c = ELEMENTOS_CURADOS.find(e => e.componentes.includes('fogo') && e.componentes[0] === 'fogo')!;
+    expect(efeitoDoEspecial('dot', c.id)).toBe(efeitoDoEspecial('dot', 'fogo'));
+  });
+});
+
+describe('§232 os 50 curados passam por todos os leitores', () => {
   it('lista fechada, nome, cor, cenário e filtro', () => {
     expect([...IDS_DOS_CURADOS].sort()).toEqual(ELEMENTOS_CURADOS.map(e => e.id).sort());
     for (const { id, componentes: c } of ELEMENTOS_CURADOS) {

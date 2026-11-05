@@ -8,7 +8,8 @@
  * Dono único da tabela. Função pura: o núcleo não conhece elemento.
  */
 import { DERIVED_ELEMENT_PAIRS } from '../soulProfile/derivedElements';
-import type { SpecialFamily } from './specials';
+import { curatedComponents } from '../elementosCurados';
+import { EFFECT_TUNE_PESADELO, type Special, type SpecialEffect, type SpecialFamily } from './specials';
 
 export type EfeitoElemento =
   | 'queimadura' | 'veneno' | 'maldicao' | 'silencio' | 'lentidao' | 'curaContinua'
@@ -38,7 +39,7 @@ export function efeitoDoEspecial(family: SpecialFamily | null | undefined, eleme
   if (!family || !elemento) return null;
   const direto = EXCECAO_DERIVADO[elemento]?.[family] ?? TABELA[family][elemento];
   if (direto) return direto;
-  for (const c of COMPONENTES.get(elemento) ?? []) {
+  for (const c of COMPONENTES.get(elemento) ?? curatedComponents(elemento) ?? []) { // §232: curado herda como o par
     const herdado = TABELA[family][c];
     if (herdado) return herdado;
   }
@@ -53,5 +54,29 @@ export function efeitoVisivel(
   family: SpecialFamily | null | undefined, elemento: string | null | undefined, mecanicaLigada = false,
 ): EfeitoElemento | null {
   const e = efeitoDoEspecial(family, elemento);
-  return e && !mecanicaLigada && EFEITOS_COM_MECANICA.includes(e) ? null : e;
+  if (!e || !EFEITOS_COM_MECANICA.includes(e)) return e;
+  return mecanicaLigada && EFEITOS_PVE_LIGADOS.includes(e) ? e : null;
+}
+
+/**
+ * §228: as regras novas LIGADAS em PvE. Só entra o que passa em ±3pp no gate `efeitosPve.medicao.test.ts`.
+ * Arena e Masmorra usam a mesma regra; o Pesadelo tem botões próprios (`EFFECT_TUNE_PESADELO`).
+ */
+export const EFEITOS_PVE_LIGADOS: readonly EfeitoElemento[] = ['silencio', 'curaContinua', 'lentidao'];
+
+/** O elemento que a tela passa ao simulador: só quando a regra daquele par está ligada. PvP nunca chama. */
+export function efeitoElementoPve(family: SpecialFamily, elemento: string | null | undefined): string | undefined {
+  const e = efeitoDoEspecial(family, elemento);
+  return e && EFEITOS_PVE_LIGADOS.includes(e) ? (elemento as string) : undefined;
+}
+
+const MECANICA: Partial<Record<EfeitoElemento, SpecialEffect>> = {
+  curaContinua: 'hot', lentidao: 'slow', silencio: 'silence',
+};
+
+/** O especial com a regra do elemento. Sem elemento ou sem mecânica: o mesmo objeto, sem `effect`. PvP nunca chama. */
+export function comEfeitoDoElemento(sp: Special, elemento: string | null | undefined, pesadelo = false): Special {
+  const e = efeitoDoEspecial(sp.family, elemento);
+  const effect = e ? MECANICA[e] : undefined;
+  return effect ? { ...sp, effect, ...(pesadelo ? { tune: EFFECT_TUNE_PESADELO } : {}) } : sp;
 }

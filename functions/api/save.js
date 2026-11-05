@@ -460,7 +460,7 @@ async function onRequestBruto({ request, env }) {
       if (mexeu.length) console.warn('save: estagio da fichaJornada ja gravado, mantido o do servidor', { saveIdPrefix: saveId.slice(0, 8), estagios: mexeu });
       if (ficha) state.fichaJornada = ficha; else delete state.fichaJornada;
     }
-    // §230: sorte e estágio já gravados não mudam. Sem o campo no que chegou, nada muda (reset/renascimento o apagam).
+    // §232: sorte e estágio já gravados não mudam. Sem o campo no que chegou, nada muda (reset/renascimento o apagam).
     if ('elementoJornada' in state) {
       let guardado;
       if (typeof prev?.value === 'string' && prev.value.includes('"elementoJornada"')) {

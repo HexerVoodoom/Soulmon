@@ -734,4 +734,4 @@ Espelho de forma de dois campos do save da Biblioteca (01/11/2026): `libraryAck`
 
 ### `functions/api/_elementoJornada.js`
 
-Espelho de `src/utils/elementoJornada.ts` (§230): forma do registro no save e imutabilidade da sorte e dos estágios gravados.
+Espelho de `src/utils/elementoJornada.ts` (§232): forma do registro no save e imutabilidade da sorte e dos estágios gravados.

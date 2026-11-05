@@ -119,7 +119,7 @@ export interface Match3Props extends EarningGameProps {
   petName?: string;
   /** Elemento do Soulmon do jogador (id do Oráculo); só é mostrado, não muda a regra. */
   petElement?: string;
-  /** §230: a base nº 1 do Soulmon combinado; é ela que mede a vantagem. */
+  /** §232: a base nº 1 do Soulmon combinado; é ela que mede a vantagem. */
   petBase?: string;
   /** M10: level do jogador. Com ele, os inimigos vêm do roster (`enemyRoster.ts`, estágio limitado pelo level). Sem ele, linhas próprias. */
   playerLevel?: number;
