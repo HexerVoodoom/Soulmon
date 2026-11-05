@@ -5821,7 +5821,7 @@ select:focus-visible {
 .sm2-vit-foot > * { margin: 0; pointer-events: auto; text-shadow: 0 1px 6px rgba(0, 0, 0, .8); }
 .sm2-vit-chakra {
   position: absolute; left: 0; top: 0; transform: translate(-50%, -50%);
-  display: grid; place-items: center; width: max(44px, 18cqw); height: max(44px, 18cqw); padding: 0; margin: 0; cursor: pointer;
+  display: grid; place-items: center; width: max(44px, 15.3cqw); height: max(44px, 15.3cqw); padding: 0; margin: 0; cursor: pointer;
   border-radius: 50%; border: 1px solid var(--sm2-line); background: color-mix(in srgb, #06171A 78%, transparent); color: var(--sm2-ink);
   transition: box-shadow var(--sm2-dur-tap) var(--sm2-ease), border-color var(--sm2-dur-tap) var(--sm2-ease);
   &[data-owned="true"] { border-color: color-mix(in srgb, var(--sm2-gold-ink) 70%, transparent); }
