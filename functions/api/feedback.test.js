@@ -133,6 +133,30 @@ describe('limite de taxa', () => {
   });
 });
 
+describe('limite nativo (binding FEEDBACK_RL)', () => {
+  const rl = (ok) => { const calls = []; return { calls, limit: async (a) => { calls.push(a.key); return { success: ok(calls.length) }; } }; };
+  it('success:false = 429 amigável, sem gravar', async () => {
+    const env = envCom({ FEEDBACK_RL: rl(() => false) });
+    const r = await call(post(valido()), env);
+    expect(r.status).toBe(429);
+    const b = await r.json();
+    expect(b.message).toMatch(/minutinho/);
+    expect(r.headers.get('Retry-After')).toBe('60');
+    expect(env.SOULMON_SAVES.puts).toBe(0);
+  });
+  it('chave é hash do IP quando há sal (nunca o IP)', async () => {
+    const f = rl(() => true);
+    const env = envCom({ FEEDBACK_RL: f, IP_HASH_SALT: 'sal' });
+    expect((await call(post(valido(), '7.7.7.7'), env)).status).toBe(200);
+    expect(f.calls[0]).toMatch(/^feedback:[0-9a-f]{16}$/);
+  });
+  it('binding que lança ou ausente = comportamento atual', async () => {
+    const quebrado = { limit: async () => { throw new Error('x'); } };
+    expect((await call(post(valido()), envCom({ FEEDBACK_RL: quebrado }))).status).toBe(200);
+    expect((await call(post(valido()), envCom())).status).toBe(200);
+  });
+});
+
 describe('endurecimento (auditoria 04/11)', () => {
   it('tetos: 50 gravações por dia e e-mail no máximo igual', () => {
     expect(MAX_WRITES_PER_DAY).toBe(50);

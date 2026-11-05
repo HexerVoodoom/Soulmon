@@ -52,6 +52,12 @@
     "SIMULADOS_ON": "1",
     "SIMULADOS_FORMAS_ON": "1"
   },
+  // Workers Rate Limiting (binding nativo; a regra WAF do painel não vale em workers.dev).
+  // `/api/feedback`: 5 por minuto por hash de IP (`period` só aceita 10 ou 60). `namespace_id` é um
+  // inteiro à escolha, único na conta.
+  "ratelimits": [
+    { "name": "FEEDBACK_RL", "namespace_id": "1001", "simple": { "limit": 5, "period": 60 } }
+  ],
   "d1_databases": [
     { "binding": "DB", "database_name": "soulmon-billing", "database_id": "43546903-7f12-4541-9a67-4b0e8ac736da" }
   ]

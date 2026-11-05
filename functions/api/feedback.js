@@ -23,9 +23,10 @@
 //
 // SEGURANÇA: o e-mail é TEXTO PURO (sem HTML, nada a injetar), assunto sem quebra
 // de linha (anti header-injection), mensagem sem caracteres de controle.
-// ABUSO: balde por IP e por conta + teto diário de gravações do isolate
-// (amortecedor, ver `_rateLimit.js`; o teto global de verdade é a regra de Rate
-// Limiting do painel da Cloudflare em `/api/feedback`).
+// ABUSO: binding nativo Workers Rate Limiting (`FEEDBACK_RL` em wrangler.jsonc, 5/min
+// por hash de IP; vale entre isolates, e o app roda em workers.dev, sem zona para
+// regra WAF) + balde por IP e por conta + teto diário de gravações do isolate
+// (amortecedores, ver `_rateLimit.js`). Sem o binding (dev/teste) só valem os amortecedores.
 // ---------------------------------------------------------------------------
 
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
@@ -33,6 +34,7 @@ import { kv, kvOrThrow } from './_kv.js';
 import { METRICS_KEY_HEADER, secretEquals, serverDay } from './metrics.js';
 import { bearerToken, verifyIdToken } from './_auth.js';
 import { flagOn } from './_killSwitch.js';
+import { ipHash } from './_ipHash.js';
 
 export const FEEDBACK_PREFIX = 'feedback:';
 export const FEEDBACK_TTL_SECONDS = 30 * 24 * 60 * 60;
@@ -45,6 +47,7 @@ export const MAX_BODY_BYTES = 8 * 1024;
 export const MAX_WRITES_PER_DAY = 50;
 export const MAX_EMAILS_PER_DAY = 50;
 const VER_RE = /^[0-9A-Za-z.+-]{1,32}$/;
+export const RATE_LIMIT_MESSAGE = 'Você já enviou várias mensagens em pouco tempo. Espere um minutinho e tente de novo.';
 const RATE_IP = { limit: 5, windowMs: 10 * 60_000 };
 const RATE_ACCOUNT = { limit: 5, windowMs: 10 * 60_000 };
 const READ_RATE = { limit: 30, windowMs: 60_000 };
@@ -150,8 +153,23 @@ export async function sendEmail(env, r, receivedAt, fetchImpl = fetch) {
   }
 }
 
+/** Limite nativo (binding `FEEDBACK_RL`). Chave = HMAC do IP (`IP_HASH_SALT`) ou, sem sal, o balde do IP; nada é gravado. Falha do binding = deixa passar. */
+async function nativeLimited(env, request) {
+  if (typeof env?.FEEDBACK_RL?.limit !== 'function') return false;
+  try {
+    const key = (await ipHash(env, request)) || rateKey(clientKey(request)) || 'anon';
+    const { success } = await env.FEEDBACK_RL.limit({ key: `feedback:${key}` });
+    return success === false;
+  } catch { return false; }
+}
+
 async function receive({ request, env }, fetchImpl) {
   if (flagOn(env?.FEEDBACK_DISABLED)) return json({ error: 'feedback-disabled' }, 503);
+  if (await nativeLimited(env, request)) {
+    return Response.json({ error: 'rate limited', retryAfter: 60, message: RATE_LIMIT_MESSAGE }, {
+      status: 429, headers: { 'Cache-Control': 'no-store', 'Retry-After': '60', ...CORS },
+    });
+  }
   const gate = takeToken('feedback', rateKey(clientKey(request)), RATE_IP);
   if (!gate.ok) return tooManyRequests(gate.retryAfter, CORS);
 
