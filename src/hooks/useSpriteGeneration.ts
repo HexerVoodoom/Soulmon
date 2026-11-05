@@ -29,6 +29,8 @@ import {
   autoTuneDue, canManualRetry, displaySprite, recordFailure, recordSprite, tuneVisor,
   emptySpriteLibrary, type SpriteLibrary,
 } from '../utils/spriteLibrary';
+import { baseFormOfKey } from '../utils/formasAlternativas';
+import { elementoNomeDe } from '../utils/soulProfile/ficha/elementoNome';
 import { spriteBatch, birthBatch, type SpriteTriggerInput } from '../utils/spriteTrigger';
 
 /** Depois de um lote com falha, quanto esperar antes de reavaliar o próximo (5 min). */
@@ -144,7 +146,15 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
       // Forma sem prompt na árvore não vira requisição: `generate` lançaria, e
       // uma falha inventada aqui gastaria o teto manual do jogador por um erro
       // que é nosso. Melhor não partir.
-      const alvos = formIds.filter(id => byForm.has(id));
+      // Forma alternativa (`forma@elemento`, utils/formasAlternativas.ts): o prompt é o da forma, com o elemento da variante.
+      const promptDe = (id: string): CreatureStage | undefined => {
+        const base = byForm.get(baseFormOfKey(id));
+        const el = id.includes('@') ? id.split('@')[1] : null;
+        if (!base || !el || base.imagePrompt.includes('Elemental theme of this form')) return base;
+        const frase = ` Elemental theme of this form: ${elementoNomeDe(el).en}.`;
+        return { ...base, imagePrompt: base.imagePrompt + frase, imagePromptFallback: base.imagePromptFallback + frase };
+      };
+      const alvos = formIds.filter(id => promptDe(id));
       if (alvos.length === 0) return;
 
       running.current = true;
@@ -152,7 +162,7 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
 
       void runSpriteBatch(alvos, {
         generate: async formId => {
-          const stage = byForm.get(formId);
+          const stage = promptDe(formId);
           if (!stage) throw new Error(`forma sem prompt: ${formId}`);
           // Cadeia image2image: a forma anterior já existe quando a próxima é
           // pedida — é o que a geração incremental compra de graça (§8.6).
@@ -281,13 +291,13 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
       if (!batch) return;
       // Ocasião A é o NASCIMENTO: não há história a proteger, então a forma
       // atual adota na hora em vez de perguntar.
-      executarLote(batch.formIds, { adoptCurrentNow: batch.occasion === 'A' });
+      executarLote(batch.formIds, { adoptCurrentNow: batch.occasion === 'A' || batch.occasion === 'R' });
     });
     // `library` entra de propósito: quando um lote grava um sprite, a
     // reconciliação roda de novo e pega o PRÓXIMO lote devendo — que é como
     // "duas vésperas acumuladas viram dois lotes em sequência".
     // `reavaliar` entra pelo mesmo motivo: o FIM do lote não muda mais nada.
-  }, [enabled, busy, stages, library, trigger.evolutionStage, trigger.evolutionPoints, trigger.crystalFormId, newborn, executarLote, reavaliar]);
+  }, [enabled, busy, stages, library, trigger.evolutionStage, trigger.evolutionPoints, trigger.crystalFormId, trigger.currentKey, newborn, executarLote, reavaliar]);
 
   return { generating, tunedAnnouncement, clearAnnouncement, tune, retry, force };
 }

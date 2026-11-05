@@ -1207,6 +1207,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`, `src/components/nav/AreaView.tsx`.
 **Régua:** `src/utils/evolutionCrystal.test.ts`, `src/components/evolucaoCristal.render.test.tsx`.
 
+### `src/utils/formasAlternativas.ts`
+**Dono de:** as FORMAS ALTERNATIVAS (05/11/2026, dono) — puro. Cada forma (menos rookie/bb) guarda os elementos já desbloqueados (`formasAlt`, o 1º é a original) e qual está equipado (`formaAltEquipada`). A arte da alternativa mora no acervo na chave `forma@elemento` (aceita pelo servidor em `VALID_FORM_ID`); a forma desenhada antes desta lista existir pede arte nova na volta e fica como `original`. `spriteVisorOf` é a visão de EXIBIÇÃO do acervo (a alternativa equipada ocupa a chave da forma). Cosmético: não muda regra nenhuma.
+**Exports:** `FormasAlt` · `FormaAltEquipada` · `ALT_OCULTAS` · `ALT_ORIGINAL` · `formaTemAlternativas` · `sanitizeFormasAlt` · `sanitizeFormaAltEquipada` · `elementoDaForma` · `altSpriteKey` · `baseFormOfKey` · `registrarFormaAoEvoluir` · `equiparFormaAlt` · `spriteVisorOf` · `ocultasDaForma`.
+**Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`, `src/hooks/useSpriteGeneration.ts`, `src/components/EvolutionPath.tsx`, `src/components/evolution/FormasAlternativasSheet.tsx`.
+**Régua:** `src/utils/formasAlternativas.test.ts`.
+
 ### `src/utils/evoRecap.ts`
 **Dono de:** o recap da evolução (REGISTRO §190, 29/10/2026) — puro, sem React/storage/`Date`. O "ontem" sai do relatório da virada (`antes = evolutionPoints - gaugeGain`); o snapshot persistido (`STORAGE_KEYS.EVO_RECAP_SNAPSHOT`) só marca o que já foi mostrado. Devolve `null` se já visto, sem ganho, estágio final (meta ≤ 0) ou dado incoerente.
 **Exports:** `EvoRecapSnapshot` · `EvoRecap` · `EvoRecapReport` · `parseEvoRecapSnapshot` · `serializeEvoRecapSnapshot` · `buildEvoRecap`.

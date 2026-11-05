@@ -1,5 +1,10 @@
 # Status do Soulmon — registro vivo
 
+> ## 05/11/2026 — "Evoluiu para a mesma forma" + Formas alternativas
+>
+> - **Causa:** quando o cristal fechava SEM a arte nova (falha, 10 min sem arte, ou "Evoluir assim"), a evolução commitava e a barra zerava — e nenhuma ocasião voltava a pedir a forma ATUAL. O visor caía em `Object.values(ownSprites)[0]` (o sprite da forma anterior) para sempre. **Correção:** ocasião `R` (`currentFormRecovery`, `utils/spriteTrigger.ts`): forma atual sem sprite é pedida de novo (teto da forma/conta continua fechando a porta; falha espera o intervalo de sempre). Quem já está nessa situação recebe a arte sozinho ao abrir o app.
+> - **Formas alternativas (pedido do dono):** `utils/formasAlternativas.ts` + `FormasAlternativasSheet`. Cartões alcançados (menos rookie) com setinha →; atual abre a lista direto, anterior/lateral oferece Degenerar/Trocar + "Formas alternativas". Voltar a um estágio com outro elemento (poção) desbloqueia e equipa uma forma nova, com arte própria na chave `forma@elemento` (servidor: `VALID_FORM_ID` aceita o sufixo). Save: `formasAlt`, `formaAltEquipada` (leitura tolerante; cosmético, sem espelho de regra no servidor). Rollback: reverter deixa os campos ignorados e as chaves `@` órfãs no acervo, sem corromper nada.
+
 > ## 29/10/2026 — Sincronização parcial do manual (`f3acead1..15624b69b`, 1089 commits)
 >
 > - Feito: entradas de 06-REFERENCIA para `evoRecap.ts`, `CompletionTag`, `EvoRecapModal`, `ui/RewardPreview`; lápides de `GuerraClaSheet`, `RestWindowCard`, `UndoToast`; `RECOMPENSAS-VISIVEIS.md` no 00-MAPA. Guard verde (2 arquivos, 10 testes).
