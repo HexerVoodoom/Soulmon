@@ -18,7 +18,7 @@
 // Quem prova que fechou: `src/deploy/orcamentoDeBytes.contract.test.ts` exige
 // zero `.png` em `dist/assets` e zero referência a `.png` de assets no bundle.
 import { readdir, stat, readFile, writeFile, unlink } from 'fs/promises';
-import { join } from 'path';
+import { join, basename } from 'path';
 import { pathToFileURL } from 'url';
 import sharp from 'sharp';
 
@@ -36,11 +36,21 @@ async function arquivosDeTexto(dir, saida = []) {
 }
 
 /**
+ * Qualidade por arquivo (prefixo do nome, sem hash) quando o padrão 85 estoura o teto de imagem do
+ * orcamentoDeBytes.contract.test.ts (400 KB). bg-mapa é uma tela 821x1826 de pintura cheia:
+ * q85 = 411 KB, q82 = 373 KB, sem diferença visível a olho nu no celular.
+ */
+const QUALIDADE_POR_ARQUIVO = { 'bg-mapa': 82 };
+
+/**
  * Conversor padrão: PNG → WebP via sharp. Injetável (`opts.converterUm`) para
  * o teste simular uma conversão que falha sem depender de um PNG corrompido.
  */
 async function converterUm(inputPath, outputPath) {
-  await sharp(inputPath).webp({ quality: 85, effort: 4 }).toFile(outputPath);
+  const nome = basename(inputPath);
+  const chave = Object.keys(QUALIDADE_POR_ARQUIVO).find(k => nome.startsWith(k + '-') || nome.startsWith(k + '.'));
+  const quality = chave ? QUALIDADE_POR_ARQUIVO[chave] : 85;
+  await sharp(inputPath).webp({ quality, effort: 4 }).toFile(outputPath);
 }
 
 /**
