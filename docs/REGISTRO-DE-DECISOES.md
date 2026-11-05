@@ -4019,3 +4019,15 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 **Alternativa que perdeu.** Manter o garantido e baixar só o uso (já era 1/dia); ou teto diário em vez de semanal.
 
 **O que falsificaria.** Jogadores relatando que nunca viram um Glitchtama em meses (1% x ~1 marco/dia pode ser baixo demais: subir a chance) ou a evolução ainda rápida demais mesmo assim (o gauge de evolução, não o item, é o gargalo). Rollback: `GLITCHTAMA_DROP_CHANCE` e `GLITCHTAMA_DROPS_PER_WEEK` em `utils/glitchtamaDrop.ts`.
+
+## §227 — Corte × concussão: o acabamento visual do golpe corpo a corpo (05/11/2026, pedido do dono)
+
+**Decisão.** Todo golpe corpo a corpo mostrava o corte. Agora cada Soulmon (jogador ou inimigo) é CORTANTE ou de CONCUSSÃO, só visual: na concussão a investida é a mesma, mas o efeito no alvo é o splash do impacto que o golpe à distância usa, sem projétil. Dano, sementes, RNG, tempo e som não mudam.
+
+**Regra.** Função pura e determinística por lutador (`utils/combate/golpeImpacto.ts`): palavra-chave do nome quando há dado confiável (inimigo do bestiário); senão sorteio estável (hash da chave do lutador) com peso por elemento. Ar 75/25 corte e Terra 25/75 (dono); tabela dos 20 base e derivados que herdam a média: `docs/REGRA-CORTE-CONCUSSAO.md`. No PvP a chave é a identidade de combate (ids fechados que o servidor publica), igual nos dois aparelhos.
+
+**Alternativa que perdeu.** Palavra-chave na descrição ou no nome do Soulmon do JOGADOR: o nome é texto livre, o perfil público não publica descrição nem id de Soulmon, e o nome difere entre os aparelhos do PvP. Sorteio por golpe: faria o Soulmon trocar a cada ataque.
+
+**Limite declarado.** Sem id estável de Soulmon no perfil público, a variação do jogador é por identidade de combate (elementos + escolas + família), não por indivíduo.
+
+**O que falsificaria.** Proporção de algum elemento reprovada pelo dono (trocar o número em `PESO_CORTE`); ou o servidor passar a publicar um id de Soulmon (trocar a chave). **Rollback:** tirar `impacto` das ações (ausente = corte, comportamento anterior).
