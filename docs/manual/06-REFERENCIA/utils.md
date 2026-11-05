@@ -10,7 +10,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ## Índice por família
 
-**Cuidado (corações, comida, ritmo, sono, renascimento)** — [`adventure.ts`](#srcutilsadventurets), [`anniversary.ts`](#srcutilsanniversaryts), [`bond.ts`](#srcutilsbondts), [`branchMigration.ts`](#srcutilsbranchmigrationts), [`careCaps.ts`](#srcutilscarecapsts), [`carePattern.ts`](#srcutilscarepatternts), [`careRules.ts`](#srcutilscarerulests), [`careUpdaters.ts`](#srcutilscareupdatersts), [`collectionDates.ts`](#srcutilscollectiondatests), [`completionUndo.ts`](#srcutilscompletionundots), [`taskUncomplete.ts`](#srcutilstaskuncompletets), [`dayKeyLabel.ts`](#srcutilsdaykeylabelts), [`demoMode.ts`](#srcutilsdemomodets), [`demoStart.ts`](#srcutilsdemostartts), [`embedMode.ts`](#srcutilsembedmodets), [`dailyReset.ts`](#srcutilsdailyresetts), [`evolutionTarget.ts`](#srcutilsevolutiontargetts), [`firstDay.ts`](#srcutilsfirstdayts), [`memories.ts`](#srcutilsmemoriests), [`mood.ts`](#srcutilsmoodts), [`nightmares.ts`](#srcutilsnightmarests), [`passives.ts`](#srcutilspassivests), [`petBounce.ts`](#srcutilspetbouncets), [`petName.ts`](#srcutilspetnamets), [`petNeeds.ts`](#srcutilspetneedsts), [`petStage.ts`](#srcutilspetstagets), [`petVoice.ts`](#srcutilspetvoicets), [`talentoVoice.ts`](#srcutilstalentovoicets), [`poopDrain.ts`](#srcutilspoopdraints), [`rebirth.ts`](#srcutilsrebirthts), [`restWindow.ts`](#srcutilsrestwindowts), [`premiumFood.ts`](#srcutilspremiumfoodts), [`specialItemUse.ts`](#srcutilsspecialitemusets), [`steps.ts`](#srcutilsstepsts), [`welcomeBack.ts`](#srcutilswelcomebackts)
+**Cuidado (corações, comida, ritmo, sono, renascimento)** — [`adventure.ts`](#srcutilsadventurets), [`anniversary.ts`](#srcutilsanniversaryts), [`bond.ts`](#srcutilsbondts), [`branchMigration.ts`](#srcutilsbranchmigrationts), [`careCaps.ts`](#srcutilscarecapsts), [`carePattern.ts`](#srcutilscarepatternts), [`careRules.ts`](#srcutilscarerulests), [`careUpdaters.ts`](#srcutilscareupdatersts), [`collectionDates.ts`](#srcutilscollectiondatests), [`completionUndo.ts`](#srcutilscompletionundots), [`taskUncomplete.ts`](#srcutilstaskuncompletets), [`dayKeyLabel.ts`](#srcutilsdaykeylabelts), [`demoMode.ts`](#srcutilsdemomodets), [`demoStart.ts`](#srcutilsdemostartts), [`embedMode.ts`](#srcutilsembedmodets), [`dailyReset.ts`](#srcutilsdailyresetts), [`trocaLateral.ts`](#srcutilstrocalateralts), [`evolutionForecast.ts`](#srcutilsevolutionforecastts), [`evolutionTarget.ts`](#srcutilsevolutiontargetts), [`firstDay.ts`](#srcutilsfirstdayts), [`memories.ts`](#srcutilsmemoriests), [`mood.ts`](#srcutilsmoodts), [`nightmares.ts`](#srcutilsnightmarests), [`passives.ts`](#srcutilspassivests), [`petBounce.ts`](#srcutilspetbouncets), [`petName.ts`](#srcutilspetnamets), [`petNeeds.ts`](#srcutilspetneedsts), [`petStage.ts`](#srcutilspetstagets), [`petVoice.ts`](#srcutilspetvoicets), [`talentoVoice.ts`](#srcutilstalentovoicets), [`poopDrain.ts`](#srcutilspoopdraints), [`rebirth.ts`](#srcutilsrebirthts), [`restWindow.ts`](#srcutilsrestwindowts), [`premiumFood.ts`](#srcutilspremiumfoodts), [`specialItemUse.ts`](#srcutilsspecialitemusets), [`steps.ts`](#srcutilsstepsts), [`welcomeBack.ts`](#srcutilswelcomebackts)
 **Tarefas e hábitos** — [`goalToCategory.ts`](#srcutilsgoaltocategoryts), [`habitCreate.ts`](#srcutilshabitcreatets), [`habitRhythm.ts`](#srcutilshabitrhythmts), [`quickAdd.ts`](#srcutilsquickaddts), [`rituals.ts`](#srcutilsritualsts), [`taskSuggestions.ts`](#srcutilstasksuggestionsts), [`taskTriage.ts`](#srcutilstasktriagets), [`tinyOffer.ts`](#srcutilstinyofferts), [`weekBalance.ts`](#srcutilsweekbalancets)
 **Economia (moedas, loja, monetização)** — [`backgrounds.ts`](#srcutilsbackgroundsts), [`currencies.ts`](#srcutilscurrenciests), [`entitlements.ts`](#srcutilsentitlementsts), [`mercadoCatalog.ts`](#srcutilsmercadocatalogts), [`missions.ts`](#srcutilsmissionsts), [`monetization.ts`](#srcutilsmonetizationts), [`offerMoment.ts`](#srcutilsoffermomentts), [`playBilling.ts`](#srcutilsplaybillingts), [`priceLabel.ts`](#srcutilspricelabelts), [`seasons.ts`](#srcutilsseasonsts), [`shop.ts`](#srcutilsshopts), [`shopBuy.ts`](#srcutilsshopbuyts), [`weeklyMissions.ts`](#srcutilsweeklymissionsts)
 **Jogos (arena, masmorra, torneio)** — [`arena.ts`](#srcutilsarenats), [`arenaSorteio.ts`](#srcutilsarenasorteiots), [`arenaTema.ts`](#srcutilsarenatemats), [`dungeon.ts`](#srcutilsdungeonts), [`profissaoMasmorra.ts`](#srcutilsprofissaomasmorrats), [`dungeonScenes.ts`](#srcutilsdungeonscenests), [`visorScenes.ts`](#srcutilsvisorscenests), [`fxArt.ts`](#srcutilsfxartts), [`tournamentSeason.ts`](#srcutilstournamentseasonts), [`tournamentTiers.ts`](#srcutilstournamenttiersts)
@@ -1178,6 +1178,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`, `src/utils/dailyReset.ts`, `src/utils/spriteTrigger.ts`, `src/utils/specialItemUse.ts`, `src/utils/gmTools.ts`, `src/contexts/GameStateContext.tsx`, `src/components/EvolutionPath.tsx`, `src/components/EvolutionGaugeMini.tsx`.
 **Régua:** `src/utils/evolutionGauge.test.ts` (regra, migração, simulação leve/médio/intenso).
 
+### `src/utils/evolutionStatsDelta.ts`
+**Dono de:** o antes → depois dos atributos de combate do Soulmon numa evolução (05/11/2026). Puro e sem fórmula própria: lê `soulCombatant` (ATK/DEF/SPD, o mesmo da luta) e `hpPoints(combatant.hp)` (a Vida que a Arena mostra) para o save de antes e o de depois; o bônus de talento/equipamento fica de fora (igual nos dois lados). O delta pode ser negativo, porque ao evoluir os pontos de alinhamento zeram (§209) e a distribuição de ATK/DEF/SPD volta ao equilíbrio.
+**Exports:** `EvoStatId` · `EVO_STAT_ORDER` · `EvoStatRow` · `EvoStatsDelta` · `evolutionStatsDelta` · `formatDelta`.
+**Chamado por:** `src/App.tsx` (updater do `handleEvolve`), `src/components/EvolutionStatsModal.tsx`.
+**Régua:** `src/utils/evolutionStatsDelta.test.ts`.
+
 ### `src/utils/evolutionCrystal.ts`
 **Dono de:** o CRISTAL da evolução (31/10/2026, REGISTRO §208) — puro. Barra a 100% → botão Evoluir → o toque grava `evolutionCrystal {v,from,to,branch,since}` no save (o destino é decidido NO toque) e só então o lote de sprite da forma-destino parte (`SpriteTriggerInput.crystalFormId`). Fases `gerando`/`falhou`/`pronto` (`crystalPhase`): pronto com a arte nova, sem geração possível ou no teto; falhou com falha gravada ou sem arte em `CRYSTAL_STUCK_MS` (10 min) → "Tentar de novo"/"Evoluir assim" (nunca prende). Bloqueia SÓ Masmorra (`exploracao.dungeon`), Fenda Sem Fim, Feira, Grove e Arena (`CRYSTAL_BLOCKED_LOTS`, aplicado no `AreaView`).
 **Exports:** `EvolutionCrystal` · `CrystalPhase` · `CRYSTAL_STUCK_MS` · `CRYSTAL_BLOCKED_LOTS` · `crystalBlocksLot` · `crystalRefusalText` · `sanitizeCrystal` · `activeCrystal` · `startCrystal` · `crystalPhase`.
@@ -1214,6 +1220,24 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`, `src/utils/spriteTrigger.ts`
 **Régua:** `evolutionTarget.regression.test.ts`
 **Regra de negócio:** Fonte única do galho + forma-destino da evolução manual. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
+
+### `src/utils/trocaLateral.ts`
+**Dono de:** A troca lateral de forma (mesmo nível, outra forma já desbloqueada): grátis, só troca `evolutionStage` — sem encher HP nem mexer em pontos (05/11/2026).
+**Exports:**
+- `function canSwitchLaterally(input: { currentStageId; targetStageId; unlockedEvolutions? }): boolean` — alvo diferente, do mesmo nível, desbloqueado; rookie e ultra nunca.
+- `function applyLateralSwitch(prev, targetStageId)` — devolve `prev` com só `evolutionStage` trocado (ou o mesmo objeto se o alvo não vale).
+**Chamado por:** `src/App.tsx` (`handleSwitchForm`), `src/components/EvolutionPath.tsx`
+**Régua:** `trocaLateral.test.ts`
+**Regra de negócio:** [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) §18.
+
+### `src/utils/evolutionForecast.ts`
+**Dono de:** O nó "previsto" do grafo de evolução: sempre o nível seguinte ao atual (05/11/2026).
+**Exports:**
+- `function stageLevelIndex(stageId: string): number` — posição do nível (rookie 0 … ultra 4).
+- `function forecastNodeId(currentStageId: string, branchNodeIds: readonly string[]): string | null` — o nó do galho com nível = atual + 1.
+**Chamado por:** `src/components/EvolutionPath.tsx`
+**Régua:** `trocaLateral.test.ts`
+**Regra de negócio:** [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md) §18.
 
 ### `src/utils/firstDay.ts`
 **Dono de:** Progresso dos três gestos do primeiro dia (esfregar, alimentar, concluir tarefa) do onboarding.
@@ -3521,7 +3545,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 
 ### `src/utils/frames.ts`
 **Dono de:** o catálogo de MOLDURAS de avatar (R8, 04/10/2026) — COSMÉTICA pura, nunca vantagem. Origens: `rank` (uma por degrau da escada; Madeira…Diamante pela faixa lifetime, Mestre/Grão-Mestre só com o lugar ocupado), `shop` (Bits, `price`), `achievement`, `event`. Arte (04/10/2026): `FRAME_ART` (glob de `assets/soulmon/molduras/*.png`, o nome do arquivo é o id; as 14 têm arte), normalizada em `FRAME_ART_CANVAS` = 192 com abertura `FRAME_ART_OPENING` = 96; o `look` (anel CSS) fica de fallback.
-**Exports:** `FrameOrigin`, `FrameLook`, `AvatarFrame`, `FrameContext` (tipos) · `FRAMES` · `FRAME_IDS` · `FRAME_ID_RE` · `FRAMES_MAX_OWNED` · `frameById` · `sanitizeOwnedFrames` · `sanitizeEquippedFrame` · `frameAvailable` · `resolveEquippedFrame` (equipada que deixou de valer → `null`, sem moldura) · `availableFrames` · `FRAME_ART` · `FRAME_ART_CANVAS` · `FRAME_ART_OPENING` · `frameArt`.
+**Exports:** `FrameOrigin`, `FrameLook`, `AvatarFrame`, `FrameContext` (tipos) · `FRAMES` · `FRAME_IDS` · `FRAME_ID_RE` · `FRAMES_MAX_OWNED` · `frameById` · `sanitizeOwnedFrames` · `sanitizeEquippedFrame` · `frameAvailable` · `BASIC_FRAME_ID` · `frameOrBasic` · `resolveEquippedFrame` (equipada que deixou de valer, `null` ou "none" → o frame básico `basico`, nunca `null`) · `availableFrames` · `FRAME_ART` · `FRAME_ART_CANVAS` · `FRAME_ART_OPENING` · `frameArt`.
 **Chamado por:** `src/contexts/GameStateContext.tsx` (sanitiza `ownedFrames`/`equippedFrame` no load), `src/App.tsx` (`handleEquipFrame`), `src/components/TournamentPage.tsx`, `src/components/ui/AvatarFrame.tsx`.
 **Régua:** `src/assets/arteDono20261004.contract.test.ts` (arte 1:1, canvas, abertura vazia), `src/utils/frames.test.ts` (catálogo, cosmética, sanitização, paridade de formato/teto com `functions/api/save.js`), `functions/api/save.frames.test.js`.
 **Save:** `GameState.ownedFrames?: string[]` (`?? []`) e `GameState.equippedFrame?: string | null` (`?? null`) — ver 07-DADOS-E-SAVE.

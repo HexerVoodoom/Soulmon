@@ -41,6 +41,7 @@ export const PRESENTATION_IDLE = 'welcome' as const;
  *  1. `welcomeTour` — a boas-vindas do primeiro uso (nada mais faz sentido antes dela);
  *  2. `triage` — a única aberta por TOQUE do usuário: ele acabou de pedir;
  *  2b. `feiraEvento` — o chefe/desafio/dia calmo da Feira que a VOLTA da Missão encontra (aviso de gesto, fora do teto; 28/10/2026, `docs/PLANO-FEIRA-CHEFE.md`);
+ *  2d. `evoStats` — o modalzinho "quanto subiu cada atributo" depois da cerimônia de evolução (05/11/2026): aviso de gesto, fora do teto, antes de `evolveTask`;
  *  ── INÍCIO DE DIA (D-64, REGISTRO §111), depois de acordar o Soulmon ──
  *  3. `nightmare` — o pesadelo da manhã (jogável) logo depois do despertar; NUNCA junto do sonho;
  *  4. `dream` — o sonho da manhã, no lugar do pesadelo quando não há luta;
@@ -64,6 +65,7 @@ export const PRESENTATION_ORDER = [
   'triage',
   'dungeonReturn',
   'feiraEvento',
+  'evoStats',
   'nightmare',
   'dream',
   'dailyReport',

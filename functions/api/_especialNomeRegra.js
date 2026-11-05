@@ -55,7 +55,7 @@ const SET_PALAVRAS = new Set(PALAVRAS.map((w) => colapsa(w)));
 const LISTA_RAIZES = RAIZES.map((w) => colapsa(w));
 
 /** Tokens de letras; uma sequência de letras soltas ("f u c k") vira uma palavra só. */
-function tokens(n) {
+function tokens(n, colapsar = true) {
   const out = [];
   let solta = '';
   for (const t of n.split(/[^a-z]+/).filter(Boolean)) {
@@ -64,7 +64,7 @@ function tokens(n) {
     out.push(t);
   }
   if (solta) out.push(solta);
-  return out.map(colapsa);
+  return colapsar ? out.map(colapsa) : out;
 }
 
 /** `true` se o texto carrega palavrão PT/EN. */
@@ -78,12 +78,12 @@ export function temPalavrao(texto) {
 
 /** Palavras de contato que valem INTEIRAS (serviços e verbos de endereço). */
 const CONTATO_PALAVRAS = new Set([
-  'http', 'https', 'www', 'dot', 'ponto', 'arroba', 'gmail', 'hotmail', 'outlook', 'yahoo', 'icloud', 'protonmail', 'discord', 'telegram',
+  'http', 'https', 'dot', 'ponto', 'arroba', 'gmail', 'hotmail', 'outlook', 'yahoo', 'icloud', 'protonmail', 'discord', 'telegram',
   'whatsapp', 'whats', 'wpp', 'zap', 'insta', 'instagram', 'tiktok', 'twitter', 'twitch', 'youtube', 'snapchat', 'facebook', 'kwai',
   'onlyfans', 'paypal', 'pix', 'linktree', 'tme', 'wame', 'fone', 'celular', 'telefone', 'phone', 'email', 'mail',
 ].map(colapsa));
 /** Marcas longas que não aparecem dentro de palavra legítima: valem também coladas. */
-const CONTATO_RAIZES = ['gmail', 'hotmail', 'outlook', 'whatsapp', 'telegram', 'instagram', 'discord', 'tiktok', 'onlyfans', 'youtube', 'facebook', 'snapchat', 'linktree', 'protonmail', 'arroba', 'http', 'www'].map(colapsa);
+const CONTATO_RAIZES = ['gmail', 'hotmail', 'outlook', 'whatsapp', 'telegram', 'instagram', 'discord', 'tiktok', 'onlyfans', 'youtube', 'facebook', 'snapchat', 'linktree', 'protonmail', 'arroba', 'http'].map(colapsa);
 /** Menos dígitos que isto passa (ano, nível, "Mk 2"); a partir daqui é telefone/documento. */
 const DIGITOS_CONTATO = 6;
 
@@ -99,6 +99,9 @@ export function temContato(texto) {
   if ((bruto.match(/\p{Nd}/gu) ?? []).length >= DIGITOS_CONTATO) return true;
   return dobras(bruto).some((n) => {
     if (tokens(n).some((t) => CONTATO_PALAVRAS.has(t))) return true;
+    // "www" NÃO passa pelo colapso de letras repetidas (viraria "w" e barraria Wolf/Owen): confere cru, dentro do token
+    // ("www", "wwwgmail", "w w w" -> letras soltas viram um token).
+    if (tokens(n, false).some((t) => t.includes('www'))) return true;
     const colado = colapsa(n.replace(/[^a-z]/g, ''));
     return CONTATO_RAIZES.some((r) => colado.includes(r));
   });
