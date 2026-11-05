@@ -201,6 +201,12 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // nos encontros, recuperação em 2 dias e nomes dos 50 curados (REGISTRO §213). Corte real segue = partir o `App.tsx`.
   // 01/11/2026: 885_104 -> 895_367 (+10 KB), build limpo da v244. Oficina do Foco (salvar, hábitos, ✓ sincronizado com a origem),
   // âncora do pé na sombra (spriteFeetTable) e nome nas notificações. Corte real segue = partir o `App.tsx`.
+  // 04/11/2026 (PAGO, branch fix/orcamento-index): build limpo da main medido em 943_826 (Vitra, Bond, chefões, Selo, Edit Home etc. mergeados
+  // sem re-medir; 48 KB acima da linha anterior). Saíram da entrada por import()/React.lazy: o pool de 280 BBs (`data/bbPool.ts` + `bbPoolArt.ts`,
+  // ~33 KB; o App pré-carrega o chunk só em save novo e `obterBBDoSorteio` devolve null — o fluxo sem pool — se ele não chegar) e a cinemática
+  // de abertura (`IntroCinematica`, ~10 KB; as regras `deveTocarIntro` foram para `introGate.ts`, que fica na entrada). 943_826 -> 888_945 (−54,9 KB).
+  // Quem impede a volta: 2 sentinelas novas em `entradaEnxuta.contract.test.ts`. Corte real segue = partir o `App.tsx`.
+  // (CI lê o dist/ COMMITADO, defasado até o próximo release; a dívida fica em 895_367 para ele passar. Build limpo desta branch: 888_945.)
   'index.js': 895_367,
   // 04/10/2026: 153_795 → 164_043 (+10 KB) — keyframes da cena de combate, sheets animados, mascote.
   // 11/10/2026 (onda de lançamento): 164_043 → 172_242 (+8 KB) — CSS das telas novas (Level Up, sessão de foco, premium,
@@ -211,7 +217,9 @@ const DIVIDA_ATUAL: Record<string, number> = {
   // PR soma +1,2 KB: o texto/barra de carregamento da intro em DOM). O vídeo da intro caiu de 2,5 MB para 0,7 MB.
   // 01/11/2026: 190_071 -> 199_237 (+9 KB), build limpo da v244: selo NEW em imagem, aviso de recuperação do desgarrado e
   // estilos que entraram na main pelas outras frentes do dia.
-  'index.css': 199_237,
+  // 04/11/2026: 199_237 -> 208_770 (+9,5 KB), build limpo da main (estava 1,3 KB acima da folga, vermelho antes desta branch; o CSS é único e
+  // sem split, então os estilos das frentes mergeadas desde 01/11 entram todos aqui). Re-medida com justificativa, NÃO é do corte do JS.
+  'index.css': 208_770,
   // ⚰️ 'intro-parede.mp4' (4,3 MB) saiu em 04/11/2026: a intro virou 9 painéis ilustrados animados em CSS (~2,1 MB em webp).
   'bg-forja.webp': 424_334, // 29/10/2026: fundo da Forja (pixel art denso) 14 KB acima do teto; borrar para caber estragaria o pixel
   // ⚰️ 'evolution-bg.mp4' (3,7 MB) saiu em 31/10/2026: a cerimônia da evolução foi refeita em CSS (o cristal, REGISTRO §208) e o vídeo foi apagado.

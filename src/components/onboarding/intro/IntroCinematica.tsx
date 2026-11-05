@@ -2,9 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { entrarNaSuperficie } from '../../../utils/musica';
 import { musicaLigada } from '../../../utils/audioBus';
 import type { Language } from '../../../utils/i18n';
-import { readFlag, writeFlag } from '../../../utils/safeStorage';
-import { STORAGE_KEYS } from '../../../utils/storageKeys';
-import { onboardingVeladoLigado } from '../sequencia/flag';
 import { PLANOS_INTRO } from './copy';
 
 /**
@@ -55,11 +52,8 @@ const CSS_INTRO = `
 @media (prefers-reduced-motion: reduce){[data-intro-cam],[data-intro-scan],[data-intro-fx],[data-intro-sintonia]{animation:none!important}[data-intro-sintonia],[data-intro-fx]{display:none}}
 `;
 
-/** Já viu a introdução (só a primeira abertura, antes do login, a toca sozinha). */
-export const introVista = (): boolean => readFlag(STORAGE_KEYS.INTRO_CINEMATICA_VISTA);
-export const marcarIntroVista = (): void => { writeFlag(STORAGE_KEYS.INTRO_CINEMATICA_VISTA, true, { silent: true }); };
-/** Toca sozinha? Flag ligado, primeira abertura e save ainda sem onboarding. */
-export const deveTocarIntro = (onboardingCompleto: boolean): boolean => onboardingVeladoLigado() && !onboardingCompleto && !introVista();
+export { introVista, marcarIntroVista, deveTocarIntro } from './introGate';
+import { marcarIntroVista } from './introGate';
 
 interface Props { language: Language; onDone: () => void; paineis?: readonly (string | undefined)[] }
 
