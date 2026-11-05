@@ -34,11 +34,6 @@ const SENTINELAS: ReadonlyArray<readonly [string, string]> = [
   // `sonner` mora no chunk `vendor-sonner` (cache de longo prazo, fora do chunk de entrada).
   ['src/utils/guildCopy.ts', 'Some creatures keep a grove together. It only grows.'],
   ['node_modules/sonner/dist/index.mjs', 'data-sonner-toaster'],
-  // 04/11/2026 (orçamento do index.js): o pool de 280 BBs (sorteio + URLs) e a cinemática de abertura saíram da
-  // entrada (−55 KB). O App pré-carrega o pool só para save novo e toca a intro por `React.lazy`; as regras de
-  // entrada da intro ficam em `introGate.ts` (pequeno, na entrada).
-  ['src/data/bbPool.ts', 'bb-sombra-01'],
-  ['src/components/onboarding/intro/copy.ts', 'Long ago, every person could see their own soul.'],
 ];
 
 describe('bundle — chunk de entrada enxuto', () => {
