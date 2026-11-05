@@ -77,6 +77,18 @@ export interface HungerState {
   energyClock?: EnergyClock;
   /** A descida idle em andamento (`utils/dungeonIdle.ts`): só o `since` importa aqui — ver `tickTime`. */
   dungeonAway?: { since: number } | null;
+  /** 🍲 O prato do Restaurante (`utils/restaurant.ts`): só o buff `regen` importa aqui — ver `regenBoostOf`. */
+  restaurant?: { buff?: { kind: string; value: number; from: number; until: number } };
+}
+
+/** Buff de regeneração (prato do Restaurante): `pct` a MAIS de velocidade entre `from` e `until`. */
+export interface RegenBoost { from: number; until: number; pct: number }
+
+/** O buff de regeneração gravado no estado (ou `undefined`). Só a FORMA; a validade é a janela `from..until`. */
+export function regenBoostOf(s: Pick<HungerState, 'restaurant'> | undefined): RegenBoost | undefined {
+  const b = s?.restaurant?.buff;
+  if (!b || b.kind !== 'regen' || !(b.value > 0) || !Number.isFinite(b.from) || !(b.until > b.from)) return undefined;
+  return { from: b.from, until: b.until, pct: b.value };
 }
 
 const fin = (n: unknown, d = 0): number => (typeof n === 'number' && Number.isFinite(n) ? n : d);
@@ -166,8 +178,18 @@ function crossing(rec: HungerRecord | undefined, level: number): number {
  * Ponto-ms de regeneração entre `a` e `b` (a < b) com a fome do registro `rec`. As duas fronteiras (fome = FED_MIN e = FAIR_MIN)
  * saem do REGISTRO; o resultado é aditivo em intervalos adjacentes (fatiar não muda a soma).
  */
-export function regenPoints(rec: HungerRecord | undefined, a: number, b: number): number {
+export function regenPoints(rec: HungerRecord | undefined, a: number, b: number, boost?: RegenBoost): number {
   if (!(b > a)) return 0;
+  let extra = 0;
+  if (boost && boost.pct > 0) {
+    // o prato acelera a velocidade da faixa (100% → 125%…), só dentro da janela dele: aditivo como o resto (fatiar não muda a soma)
+    const x = Math.max(a, boost.from), y = Math.min(b, boost.until);
+    if (y > x) extra = Math.floor((regenPoints(rec, x, y) * boost.pct) / 100);
+  }
+  return extra + baseRegenPoints(rec, a, b);
+}
+
+function baseRegenPoints(rec: HungerRecord | undefined, a: number, b: number): number {
   const tFed = crossing(rec, HUNGER_FED_MIN);   // até aqui: bem alimentado (fome ≥ 60)
   const tFair = crossing(rec, HUNGER_FAIR_MIN); // até aqui: pelo menos mediano
   let pts = 0;
@@ -198,7 +220,7 @@ export function settleEnergy<T extends HungerState>(prev: T, now: number, materi
   // (`setEnergy`) recomeça o relógio na hora.
   if (energy >= max) return now - clock.at >= FULL_REANCHOR_MS ? { ...prev, energyClock: { at: now, carry: 0 } } : prev;
   if (!(now > clock.at)) return prev; // relógio que voltou não regenera nem tira
-  const total = clock.carry + regenPoints(prev.hunger, clock.at, now);
+  const total = clock.carry + regenPoints(prev.hunger, clock.at, now, regenBoostOf(prev));
   const gained = Math.floor(total / UNIT_POINTS);
   // `materialize`: antes de a FOME mudar (comer) o progresso pendente tem de ser gravado com a fome de ANTES — senão o intervalo
   // passado seria reavaliado com a fome nova. Sem ele (tick) o estado fica estável e o total é o mesmo na leitura seguinte.
@@ -290,19 +312,22 @@ export const hungerDisplayLevel = (tier: HungerTier, value?: number): 0 | 1 | 2 
  * Ms (a partir de `now`) até a regeneração acumular `needPoints`, projetando a fome descendo SEM nova refeição. `null` se nunca.
  * Segmentos: [agora, tFed) a 100%, [tFed, tFair) a 50%, depois 0.
  */
-function msUntilPoints(rec: HungerRecord | undefined, now: number, needPoints: number): number | null {
+function msUntilPoints(rec: HungerRecord | undefined, now: number, needPoints: number, boost?: RegenBoost): number | null {
   if (needPoints <= 0) return 0;
   const tFed = crossing(rec, HUNGER_FED_MIN);
   const tFair = crossing(rec, HUNGER_FAIR_MIN);
-  const segs: Array<[number, number, number]> = [
-    [now, Math.max(now, tFed), REGEN_FED_PCT],
-    [Math.max(now, tFed), Math.max(now, tFair), REGEN_FAIR_PCT],
-  ];
+  const cuts = [tFed, tFair, ...(boost ? [boost.from, boost.until] : [])].filter(t => Number.isFinite(t) && t > now);
+  const points = [now, ...Array.from(new Set(cuts)).sort((x, y) => x - y), Infinity];
+  const pctAt = (t: number): number => {
+    const base = t < tFed ? REGEN_FED_PCT : t < tFair ? REGEN_FAIR_PCT : REGEN_STARVING_PCT;
+    return boost && t >= boost.from && t < boost.until ? base * (1 + boost.pct / 100) : base;
+  };
   let left = needPoints;
-  for (const [a, b, pct] of segs) {
-    const len = b - a;
-    if (len <= 0 || pct <= 0) continue;
-    const cap = len * pct;
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i], b = points[i + 1];
+    const pct = pctAt(a);
+    if (pct <= 0) continue;
+    const cap = (b - a) * pct;
     if (left <= cap) return Math.max(1, Math.ceil((a - now) + left / pct));
     left -= cap;
   }
@@ -328,8 +353,9 @@ export function energyStatus(state: HungerState, nowMs: number): EnergyStatus {
   if (speed <= 0) return { ...base, mode: 'paused', msToNext: null };
   // `settleEnergy` só grava quando uma unidade fecha: o que andou desde `clock.at` ainda é progresso pendente.
   const c = s.energyClock;
-  const pending = c ? c.carry + (now > c.at ? regenPoints(s.hunger, c.at, now) : 0) : 0;
-  return { ...base, mode: speed >= 100 ? 'regen' : 'slow', msToNext: msUntilPoints(s.hunger, now, UNIT_POINTS - pending) };
+  const boost = regenBoostOf(s);
+  const pending = c ? c.carry + (now > c.at ? regenPoints(s.hunger, c.at, now, boost) : 0) : 0;
+  return { ...base, mode: speed >= 100 ? 'regen' : 'slow', msToNext: msUntilPoints(s.hunger, now, UNIT_POINTS - pending, boost) };
 }
 
 /**
@@ -343,8 +369,9 @@ export function msToFullEnergy(state: HungerState, nowMs: number): number | null
   const energy = Math.max(0, Math.floor(fin(s.energyPoints, 0)));
   if (energy >= max) return 0;
   const c = s.energyClock;
-  const pending = c ? c.carry + (now > c.at ? regenPoints(s.hunger, c.at, now) : 0) : 0;
-  return msUntilPoints(s.hunger, now, (max - energy) * UNIT_POINTS - pending);
+  const boost = regenBoostOf(s);
+  const pending = c ? c.carry + (now > c.at ? regenPoints(s.hunger, c.at, now, boost) : 0) : 0;
+  return msUntilPoints(s.hunger, now, (max - energy) * UNIT_POINTS - pending, boost);
 }
 
 /** Texto curto do timer ("1 h 05 min" / "1h 05m", "42 min"), arredondado PARA CIMA em minutos. */

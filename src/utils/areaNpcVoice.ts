@@ -151,11 +151,11 @@ export const LOT_NPC_VOICE: Record<string, AreaNpcVoice> = {
     linePt: 'Minha balança pesa cada moeda com o mesmo cuidado. Os Créditos entram, os Bits saem; a taxa é a mesma para todos, sem pressa.',
     lineEn: 'My scale weighs every coin with the same care. Credits go in, Bits come out; the rate is the same for everyone, no rush.',
   },
-  // 🏗️ Restaurante em obra (14/10/2026, dono): caranguejo pedreiro de tijolo. Só fala; sem ação, sem preço, sem cobrança.
+  // 🍲 Restaurante (05/11/2026, dono): abriu. A voz do LOTE é a da Snapjaw; o chef do dia (e a fala dele) vem de `restaurantCopy.ts`.
   'mercado:restaurante': {
-    namePt: 'Brickle, o pedreiro', nameEn: 'Brickle, the bricklayer',
-    linePt: 'Estamos em obra! Em breve o restaurante abre as portas e eu vou poder cozinhar comidas especiais por aqui. Volte logo!',
-    lineEn: "We're under construction! Soon the restaurant will open its doors and I'll be able to cook special meals here. Come back soon!",
+    namePt: 'Snapjaw, a chef carnívora', nameEn: 'Snapjaw, the carnivorous chef',
+    linePt: 'Mesa posta! Traga o que você colheu e eu transformo em prato.',
+    lineEn: 'Table is set! Bring what you gathered and I will turn it into a dish.',
   },
   'arena:duelo': {
     namePt: 'Tessaria, a gladiadora', nameEn: 'Tessaria, the gladiator', // 30/10/2026 (dono): era Naia. 07/10/2026: busto trocado a pedido do dono (era Tuska, o rinoceronte). 29/10/2026 (dono): gladiadora de tridente e rede, nada de pescaria

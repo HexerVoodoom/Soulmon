@@ -114,6 +114,7 @@ import { migrateBestiary } from '../utils/bestiaryMigrate';
 import { sanitizeDefeatedElements } from '../utils/elementDex';
 import { sanitizeLibraryAck, type LibraryAck } from '../utils/libraryNew';
 import { sanitizeStrayPlayersSeen, type StrayPlayerSeen } from '../utils/strayPlayers';
+import { sanitizeRestaurant, type RestaurantState } from '../utils/restaurantState';
 import { sanitizeEssences, sanitizeEssenceSpent, sanitizeEssenceAway, type EssenceAway } from '../utils/essences';
 import { sanitizeElementId } from '../utils/elementPotion';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
@@ -484,6 +485,8 @@ export interface GameState {
   glitchtamaDrop?: { week: string; dropped: number };
   /** Tetos da comida premium (drop por dia/semana, uso por dia) — `utils/premiumFood.ts`. */
   premiumFood?: { day: string; dropped: number; used: number; week: string; weekDropped: number };
+  /** 🍲 Restaurante do Mercado (05/11/2026, `utils/restaurant.ts`): o buff do prato (um por vez, 24 h) e os pratos do dia do jogador. */
+  restaurant?: RestaurantState;
   /** Chips usados no ESTÁGIO atual, todos os tipos (D-97, limite 3 — `utils/specialItemUse.ts`). */
   chipsStage?: { stage: string; used: number };
   /** Chips de REDUÇÃO usados no estágio (limite próprio, `REDUCE_CHIPS_PER_STAGE`). */
@@ -1396,6 +1399,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
             ? { day: p.day, dropped: num(p.dropped, 0), used: num(p.used, 0), week: p.week, weekDropped: num(p.weekDropped, 0) }
             : undefined;
         })(),
+        // 🍲 Restaurante: ausente/lixo → `undefined` (sem buff, nenhum prato hoje). Idempotente.
+        restaurant: sanitizeRestaurant(loadedState.restaurant),
         // Teto diário de Bits de minijogo (#61/#63). Mesmo argumento do
         // Glitchtama: save antigo entra `undefined` e ganha o dia inteiro.
         minigameBits: (() => {

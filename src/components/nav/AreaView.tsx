@@ -63,6 +63,7 @@ import {
  * numa área diferente).
  */
 const MercadoStallSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.MercadoStallSheet })));
+const RestauranteSheet = lazy(() => import('../mercado/RestauranteSheet').then(m => ({ default: m.RestauranteSheet })));
 const CambistaSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.CambistaSheet })));
 const ConquistasSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.ConquistasSheet })));
 // ⚒️ O Soulsmith (07/10/2026): abre a tela de equipamento do Combate v3 (PR8b), que saiu das Estatísticas. Lazy — a arte dos itens é sob demanda.
@@ -439,7 +440,7 @@ export function AreaView(props: AreaViewProps) {
         areaId={area}
         language={language}
         background={AREA_BG.mercado}
-        // O Restaurante em obra (14/10/2026) e o Cambista (30/10/2026) ficam FORA do `gated`: sempre aberto, sem Vínculo mínimo, sem missão (não é `BuildingId`).
+        // O Restaurante (aberto em 05/11/2026) e o Cambista (30/10/2026) ficam FORA do `gated`: sempre aberto, sem Vínculo mínimo, sem missão (não é `BuildingId`).
         lots={lots.map(l => l.id === 'restaurante' || l.id === 'cambista'
           ? ({ ...l, art: MERCADO_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot)
           : gated([{ ...l, art: MERCADO_LOT_ART[l.id], onOpen: () => setSheet(l.id) } satisfies AreaLot])[0])}
@@ -470,6 +471,7 @@ export function AreaView(props: AreaViewProps) {
                 {...actions}
               />
             )}
+            {open?.id === 'restaurante' && <RestauranteSheet language={language} />}
             {open?.id === 'cambista' && (
               <CambistaSheet language={language} credits={props.credits} onExchangeCredits={props.onExchangeCredits} accountTier={props.accountTier} onUnlock={props.onUnlock} unlockedElements={props.unlockedElements} essences={props.essences} onBuyEssence={props.onBuyEssence} />
             )}

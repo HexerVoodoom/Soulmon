@@ -4,6 +4,7 @@ import { bondLevelFor } from '../utils/bond';
 import { talentBonus, talentPveAttrBonus, talentAttrBonus, talentCheerScale, talentStartEnergy, talentDotResist, talentHealBoost, talentRiftBits, talentStartShield } from '../utils/talents';
 import { dungeonAttrBonus, equipAttrBonus, equipScalar } from '../utils/equipment';
 import { combinedBonus, combinedAttrBonus, NO_ATTR_BONUS, type AttrBonus } from '../utils/combate/bonus';
+import { mealAttrBonus } from '../utils/restaurantState';
 
 /**
  * Combate v3 / PR7 — o bônus de talento do jogador na FENDA (PvE: Arena, Masmorra, Pesadelo), JÁ PELO CANAL ÚNICO
@@ -16,8 +17,10 @@ export function useTalentBonus(scope: 'pve' | 'nightmare'): number {
   const picks = ctx?.gameState.talentPicks;
   const equipment = ctx?.gameState.equipment;
   const forge = ctx?.gameState.forge;
+  const restaurant = ctx?.gameState.restaurant;
   // PR8: o equipamento entra aqui (a soma dos três slots), pelo MESMO canal e no MESMO teto de 5% do talento.
-  return useMemo(() => combinedBonus({ talent: talentBonus(picks, bondLevelFor(xp ?? 0), scope), equipment: equipScalar(equipment, forge) }), [picks, xp, scope, equipment, forge]);
+  // 🍲 O prato do Restaurante (canal escalar = só o ATK) também, no mesmo teto. Lido na montagem da luta.
+  return useMemo(() => combinedBonus({ talent: talentBonus(picks, bondLevelFor(xp ?? 0), scope), equipment: equipScalar(equipment, forge), meal: mealAttrBonus({ restaurant }, Date.now())?.atk }), [picks, xp, scope, equipment, forge, restaurant]);
 }
 
 /** PR12a (§2.28 B) — o bônus do jogador na MASMORRA: talento de PvE por atributo (ATK/DEF/SPD, 11/10/2026) + equipamento em ATK/DEF/SPD, um teto de 5% na soma. */
@@ -27,7 +30,9 @@ export function useDungeonBonus(): AttrBonus {
   const picks = ctx?.gameState.talentPicks;
   const equipment = ctx?.gameState.equipment;
   const forge = ctx?.gameState.forge;
-  return useMemo(() => dungeonAttrBonus(talentPveAttrBonus(picks, bondLevelFor(xp ?? 0)), equipment, forge), [picks, xp, equipment, forge]);
+  const restaurant = ctx?.gameState.restaurant;
+  // 🍲 o prato entra DEPOIS do talento+equipamento e o teto de 5% vale de novo sobre a soma (re-cortar o que já está cortado não muda nada).
+  return useMemo(() => combinedAttrBonus({ talent: dungeonAttrBonus(talentPveAttrBonus(picks, bondLevelFor(xp ?? 0)), equipment, forge), meal: mealAttrBonus({ restaurant }, Date.now()) }), [picks, xp, equipment, forge, restaurant]);
 }
 
 export interface PvpTalents {

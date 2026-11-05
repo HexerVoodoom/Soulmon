@@ -61,7 +61,7 @@ const MERCADO_LOTS: AreaLotSpec<MercadoLotId>[] = [
   // ⚒️ #187 (28/10/2026): o Soulsmith (equipamentos) saiu do Mercado e foi para a Forja; o chão livre de baixo à ESQUERDA (26/81) ficou vago até 30/10/2026, quando recebeu o Cambista (troca de Créditos por Bits + essências; arte do bazar do deserto, sem Vínculo mínimo, fora de BUILDING_GATES como o Restaurante).
   { id: 'cambista', labelPt: 'Cambista', labelEn: 'Exchanger', ariaPt: 'Entrar no Cambista', ariaEn: 'Enter the Exchanger', left: '26%', top: '81%', width: '44%' },
   // 🏗️ 14/10/2026 (dono): o Restaurante em obra ocupa a direita de baixo que ficava livre. Só vitrine: NPC e fala, sem ação, sem Vínculo mínimo.
-  { id: 'restaurante', labelPt: 'Restaurante', labelEn: 'Restaurant', ariaPt: 'Falar com o pedreiro do Restaurante em obra', ariaEn: 'Talk to the builder of the Restaurant under construction', left: '73%', top: '81%', width: '40%' },
+  { id: 'restaurante', labelPt: 'Restaurante', labelEn: 'Restaurant', ariaPt: 'Abrir o Restaurante', ariaEn: 'Open the Restaurant', left: '73%', top: '81%', width: '40%' },
 ];
 
 // ⚔️ 11/10/2026 (guilda-lancamento PR1): TORNEIO = ranqueado (o servidor sorteia o oponente pela sua
