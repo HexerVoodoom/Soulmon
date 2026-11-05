@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import {
-  FRAMES, FRAME_ID_RE, FRAMES_MAX_OWNED, frameById, sanitizeOwnedFrames, sanitizeEquippedFrame,
+  FRAMES, BASIC_FRAME_ID, frameOrBasic, FRAME_ID_RE, FRAMES_MAX_OWNED, frameById, sanitizeOwnedFrames, sanitizeEquippedFrame,
   frameAvailable, resolveEquippedFrame, availableFrames, type FrameContext,
 } from './frames';
 import { TOURNAMENT_LADDER, TOURNAMENT_TIERS } from './tournamentTiers';
@@ -20,8 +20,8 @@ describe('molduras — catálogo', () => {
     expect(rank).toEqual(TOURNAMENT_LADDER.map(t => t.id));
   });
 
-  it('as quatro origens existem, cada uma com o dado que a descreve', () => {
-    expect(new Set(FRAMES.map(f => f.origin))).toEqual(new Set(['rank', 'shop', 'achievement', 'event']));
+  it('as cinco origens (básica + quatro) existem, cada uma com o dado que a descreve', () => {
+    expect(new Set(FRAMES.map(f => f.origin))).toEqual(new Set(['basic', 'rank', 'shop', 'achievement', 'event']));
     for (const f of FRAMES) {
       expect(f.namePt && f.nameEn).toBeTruthy();
       if (f.origin === 'shop') expect(f.price).toBeGreaterThan(0);
@@ -52,12 +52,24 @@ describe('molduras — disponibilidade', () => {
     expect(frameAvailable(f, ctx({ owned: ['loja-folhagem'] }))).toBe(true);
   });
 
-  it('equipada que deixou de valer (lugar perdido, id velho, lixo) vira SEM moldura — nunca lança', () => {
-    expect(resolveEquippedFrame('rank-mestre', ctx({ lifetimeTierId: 'diamante' }))).toBeNull();
-    expect(resolveEquippedFrame('nao-existe', ctx())).toBeNull();
-    expect(resolveEquippedFrame(42, ctx())).toBeNull();
-    expect(resolveEquippedFrame(null, ctx())).toBeNull();
-    expect(resolveEquippedFrame('rank-madeira', ctx())?.id).toBe('rank-madeira');
+  it('equipada que deixou de valer (lugar perdido, id velho, lixo) vira a BÁSICA — nunca lança', () => {
+    expect(resolveEquippedFrame('rank-mestre', ctx({ lifetimeTierId: 'diamante' })).id).toBe('basico');
+    expect(resolveEquippedFrame('nao-existe', ctx()).id).toBe('basico');
+    expect(resolveEquippedFrame('none', ctx()).id).toBe('basico');
+    expect(resolveEquippedFrame(42, ctx()).id).toBe('basico');
+    expect(resolveEquippedFrame(null, ctx()).id).toBe('basico');
+    expect(resolveEquippedFrame('rank-madeira', ctx()).id).toBe('rank-madeira');
+  });
+
+  it('frame básico: grátis, de todos (sem posse nem faixa), preto e sem preço; frameOrBasic cobre perfis públicos', () => {
+    const b = frameById(BASIC_FRAME_ID)!;
+    expect(b.origin).toBe('basic');
+    expect(b.look.ring).toBe('#000000');
+    expect(b.price).toBeUndefined();
+    expect(frameAvailable(b, ctx())).toBe(true);
+    expect(availableFrames(ctx())[0].id).toBe('basico');
+    for (const raw of [null, undefined, 'none', '', 'lixo', 7]) expect(frameOrBasic(raw).id).toBe('basico');
+    expect(frameOrBasic('rank-ouro').id).toBe('rank-ouro');
   });
 });
 

@@ -499,7 +499,7 @@ export function withRealFx(
   fx: readonly FighterFx[] | null | undefined,
   down: readonly number[] = [],
   curseOn: (holder: number) => boolean = () => false,
-  /** §225: o efeito do elemento do especial que deixou o estado. `self` = o do próprio lutador (buff, escudo); `foe` = o de quem o atingiu (DoT, debuff). */
+  /** §226: o efeito do elemento do especial que deixou o estado. `self` = o do próprio lutador (buff, escudo); `foe` = o de quem o atingiu (DoT, debuff). */
   efeitoOn: (holder: number, origem: 'self' | 'foe') => EfeitoElemento | null = () => null,
 ): StatusBoard {
   if (!fx) return board;
@@ -565,7 +565,7 @@ export function duelStatusBoard(
     return withRealFx(
       board, fxTrace[n - 1], down,
       (h) => isCurseSpecial(specials[1 - h]?.family, specials[1 - h]?.escola),
-      // PvP é só visual (§225): a regra nova nunca liga aqui
+      // PvP é só visual (§226): a regra nova nunca liga aqui
       (h, origem) => { const sp = specials[origem === 'self' ? h : 1 - h]; return efeitoVisivel(sp?.family, sp?.elemento); },
     );
   }

@@ -1392,6 +1392,24 @@ quem tinha muito não é rebaixado até o chão.
 `attributesSinceLastEvolution` e marca `degeneratedByHP: false` (quem desceu de
 propósito não caiu).
 
+**A troca lateral de forma (05/11/2026).** Quem já desbloqueou outra forma do
+**mesmo nível** (qualquer galho, não só o dominante) vê "Trocar forma" no lugar
+de "Degenerar": confirmação simples, **grátis e sem limite**. É a regra pura
+`canSwitchLaterally`/`applyLateralSwitch` (`src/utils/trocaLateral.ts`) e muda
+**só** `evolutionStage`: HP, `perfectDays`, `evolutionPoints`,
+`attributesSinceLastEvolution`, `chipsStage`, `degeneratedByHP` e
+`currentBranch` ficam como estão; sem som nem mensagem de queda. Rookie e ultra
+são forma única (sem lateral). `canReachUltra`/`hasMegaCollection` leem
+`unlockedEvolutions`, que a troca não altera. A degeneração para nível abaixo
+segue como descrita acima. Teste: `src/utils/trocaLateral.test.ts`.
+
+**Quem aparece onde, na página de Evolução (05/11/2026).** No card de uma forma
+já liberada: nível **abaixo** do atual, de **qualquer galho** → "Degenerar"
+(rookie fica de fora, como antes); mesmo nível → "Trocar forma". O nó
+**previsto** é sempre o do nível seguinte ao atual no galho previsto
+(`forecastNodeId`, `src/utils/evolutionForecast.ts`); antes era o primeiro nó
+não liberado do galho e, com galhos trocados, caía num nível igual ou abaixo.
+
 **A rota de redenção (WP4.19).** `applyRedemption(prev, evoluiu)`: evoluir
 enquanto `degeneratedByHP` está de pé **apaga a marca da queda e acende a da
 volta** (`redeemed: true`). Três limites: `redeemed` nunca é marca de queda;

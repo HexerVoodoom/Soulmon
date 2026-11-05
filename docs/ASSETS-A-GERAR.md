@@ -917,7 +917,7 @@ Os ícones dos equipamentos já existem (`equipArt`); o chakra só os emoldura e
 
 ---
 
-## Efeitos de combate por elemento (04/11/2026, REGISTRO §225)
+## Efeitos de combate por elemento (04/11/2026, REGISTRO §226)
 
 Hoje o selo usa marcador provisório (forma + texto, loop emprestado de `fx-dot-loop-sheet`). Destino: `src/assets/soulmon/combate-v3/status/` (glifo 64×64, exibido a 22 px) e `fx/` (folha 3×2, 128 px por quadro, 384×256). Identidade obrigatória: `docs/REGRA-IDENTIDADE-SOULMON.md`. Prompts prontos: `D:\Soulmon\planos\efeitos-combate.md` §4.3. Transparência real, nunca chroma.
 
