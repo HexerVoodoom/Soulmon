@@ -14,7 +14,7 @@
 //
 // EM PASSOS, sem esperar: `waitUntil` dá 30 s e o provedor pode levar mais. Cada chamada envia OU consulta, e a seguinte continua.
 // O provedor por API não entrega alfa (`generate-sprite.js`): aqui vale o mesmo recorte do pipeline do jogador.
-// O PROMPT é o do Oráculo real (REGISTRO §229), semeado por `scripts/simulados-prompts.ts`: as Functions não importam o Oráculo.
+// O PROMPT é o do Oráculo real (REGISTRO §231), semeado por `scripts/simulados-prompts.ts`: as Functions não importam o Oráculo.
 // ---------------------------------------------------------------------------
 import { kv, kvOrThrow } from './_kv.js';
 import { flagOn } from './_killSwitch.js';

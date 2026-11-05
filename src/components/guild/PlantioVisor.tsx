@@ -130,7 +130,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
   };
 
   const gs = useGameStateOptional()?.gameState;
-  const estado = useMemo<SoulXPState>(() => (gs ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP } : { evolutionStage: 'rookie' }), [gs]);
+  const estado = useMemo<SoulXPState>(() => (gs ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP, evoStatFloor: gs.evoStatFloor } : { evolutionStage: 'rookie' }), [gs]);
   const [defendendo, setDefendendo] = useState(false);
   /** O nível de cada planta do Bosque (a mesma conta do `GroveFolha`); só visual na luta. */
   const niveis = useMemo(() => {

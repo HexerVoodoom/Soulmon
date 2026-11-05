@@ -89,9 +89,9 @@ describe('MapPage', () => {
     const { container } = renderWithCss(<MapPage language="en-US" onOpenArea={() => {}} {...mapProps} />);
     const bg = container.querySelector('[data-map-page] > img')!;
     expect(bg.getAttribute('aria-hidden')).toBe('true');
-    // cada área carrega arte própria (não é mais só um glifo do Material)
-    const arts = Array.from(container.querySelectorAll('[data-map-area] img'));
-    expect(arts.length).toBe(7);
+    // os distritos vêm pintados no fundo: cada um é só alvo de toque + rótulo, sem sprite por cima
+    expect(container.querySelectorAll('[data-map-area]').length).toBe(7);
+    expect(container.querySelectorAll('[data-map-area] img').length).toBe(0);
   });
 });
 

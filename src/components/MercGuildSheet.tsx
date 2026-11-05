@@ -17,10 +17,12 @@ interface Props {
   onChoose: (ordem: MercOrdem) => void;
   /** "Sim, fiz" (a pergunta de honestidade do onboarding, D11). */
   onConfirm: () => void;
+  /** O prédio tocado no mapa da Guilda: mostra só o Desbravador daquela Ordem. */
+  ordem?: MercOrdem;
 }
 
 /** Guilda dos Mercenários (§11): um Desbravador de cada Ordem principal; 1 convite por dia. Retratos = placeholder até a arte. */
-export function MercGuildSheet({ open, onClose, language = 'pt-BR', hoje, bb = false, onChoose, onConfirm }: Props) {
+export function MercGuildSheet({ open, onClose, language = 'pt-BR', hoje, bb = false, onChoose, onConfirm, ordem }: Props) {
   const isPt = language === 'pt-BR';
   const [adiado, setAdiado] = useState(false);
   const item = hoje ? ACTIVITY_CATALOG_BY_ID[hoje.activityId] : undefined;
@@ -43,7 +45,7 @@ export function MercGuildSheet({ open, onClose, language = 'pt-BR', hoje, bb = f
               {isPt ? 'Cada Desbravador tem um convite para hoje. Escolha um, se quiser; os outros esperam amanhã.'
                     : 'Each Pathfinder has an invitation for today. Pick one if you like; the others wait until tomorrow.'}
             </p>
-            {MERC_ORDENS.map(o => (
+            {MERC_ORDENS.filter(o => !ordem || o === ordem).map(o => (
               <button key={o} type="button" data-merc-ordem={o} onClick={() => onChoose(o)}
                 style={{ ...sm2Button('outline'), width: '100%', justifyContent: 'flex-start', gap: 12 }}>
                 {arteOnboarding(MERC_RETRATO[o])

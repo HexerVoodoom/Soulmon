@@ -904,6 +904,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** ninguém ainda (só a régua).
 **Régua:** `src/utils/combate/combate.test.ts` (gate 5 + prova de vermelho com dot ×1,5) e `group.test.ts` (AC7).
 
+### `src/utils/combate/elementEffects.ts`
+**Dono de:** a tabela `(família, elemento do especial) -> efeito` (REGISTRO §228). `direct` nunca tem efeito; derivado herda do primeiro componente com par na família.
+**Exports:**
+- `efeitoDoEspecial(family, elemento)`, `efeitoVisivel(family, elemento, mecanicaLigada?)`, `EFEITOS_COM_MECANICA` (const), tipo `EfeitoElemento`.
+**Régua:** `src/utils/combate/elementEffects.test.ts`.
+
 ### `src/utils/combate/specials.ts`
 **Dono de:** As 7 famílias de especial do combate v3 (orçamento E = 3 golpes, potência `p` calibrada no spike) e a energia (60 por fração causada, 60 por fração recebida, +2/s, dispara a 100).
 **Exports:**
@@ -1183,7 +1189,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/evolutionGauge.test.ts` (regra, migração, simulação leve/médio/intenso).
 
 ### `src/utils/evolutionStatsDelta.ts`
-**Dono de:** o antes → depois dos atributos de combate do Soulmon numa evolução (05/11/2026). Puro e sem fórmula própria: lê `soulCombatant` (ATK/DEF/SPD, o mesmo da luta) e `hpPoints(combatant.hp)` (a Vida que a Arena mostra) para o save de antes e o de depois; o bônus de talento/equipamento fica de fora (igual nos dois lados). O delta pode ser negativo, porque ao evoluir os pontos de alinhamento zeram (§209) e a distribuição de ATK/DEF/SPD volta ao equilíbrio.
+**Dono de:** o antes → depois dos atributos de combate do Soulmon numa evolução (05/11/2026). Puro e sem fórmula própria: lê `soulCombatant` (ATK/DEF/SPD, o mesmo da luta) e `hpPoints(combatant.hp)` (a Vida que a Arena mostra) para o save de antes e o de depois; o bônus de talento/equipamento fica de fora (igual nos dois lados). O delta nunca é negativo: o piso do REGISTRO §229 (`evoStatFloor`) impede a queda de 1 ponto de Defesa/Velocidade que o reset de §209 causava em Ultimate→Mega e Mega→Ultra.
 **Exports:** `EvoStatId` · `EVO_STAT_ORDER` · `EvoStatRow` · `EvoStatsDelta` · `evolutionStatsDelta` · `formatDelta`.
 **Chamado por:** `src/App.tsx` (updater do `handleEvolve`), `src/components/EvolutionStatsModal.tsx`.
 **Régua:** `src/utils/evolutionStatsDelta.test.ts`.
@@ -2381,7 +2387,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Dono de:** XP e level do Soulmon no combate v3 (PR2), DERIVADOS de `evolutionStage` + `perfectDays` (nada persistido; `fuzz2` segue em 103). XP por dia completo (66) + esforço contra a meta (34), nunca contagem (regra #16); 1 level por 100 XP; `soulLevel = min(levelFor(soulXP), levelCapFor(stage))`; degenerar baixa o level e recuperar devolve o mesmo; o dia perfeito de bônus (o 🌀) soma em `perfectDays` e portanto dá ponto. O texto do level que desceu é neutro (`soulLevelLine`, "Lv N").
 **Exports:**
 - `XP_PER_LEVEL`, `XP_COMPLETE_DAY_SHARE`, `XP_COMPLETE_DAY`, `XP_EFFORT_MAX`, `XP_FULL_DAY` (const); `DayFacts`, `SoulXPState` (interface).
-- `dayXP(day)`, `soulXP(state)`, `levelFor(xp)`, `soulLevel(state)`, `statPoints(level)`, `soulWeights(state)`, `soulCombatant(state, bonus?)`.
+- `dayXP(day)`, `soulXP(state)`, `levelFor(xp)`, `soulLevel(state)`, `statPoints(level)`, `soulWeights(state)`, `soulCombatant(state, bonus?)` (aplica o piso `evoStatFloor`, REGISTRO §229), `nextStatFloor(prev, nextStage)` (o piso que o `handleEvolve` grava: maior de cada atributo de antes, para o estágio de destino; `undefined` se o destino não sobe). `SoulXPState.evoStatFloor` entra cru e passa por `sanitizeStatFloor` (`combate/level.ts`).
 - `soulLevelLabel(level)`, `soulLevelLine(level, dropped, language)`.
 **Chamado por:** `App.tsx` (texto do Lv na StatsPage). Os motores de luta (PR3+) leem `soulLevel`/`soulCombatant`.
 **Régua:** `src/utils/soulXP.test.ts`, `src/utils/soulXP.hydrate.test.tsx`, `functions/api/soulXP.parity.test.js`, bloco "combate v3" de `src/copy.semFomo.contract.test.ts`.

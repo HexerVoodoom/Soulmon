@@ -1,5 +1,4 @@
-import { lotArtFilter } from './lotHalo';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Language } from '../../utils/i18n';
 import { AREAS, areaLabel, type AreaId } from '../../navigation';
 import { bitsStyle, emblemStyle, CREDIT_COLOR } from '../../utils/currencies';
@@ -8,14 +7,8 @@ import { LockBadge, LockNotice, lockLabel } from '../ui/LockBadge';
 import { areaLockedAt, buildingLockLine } from '../../utils/gates';
 
 import bgMapa from '../../assets/soulmon/mapa/bg-mapa.png';
-import zonaMercado from '../../assets/soulmon/mapa/zona-mercado.png';
-import zonaJogos from '../../assets/soulmon/mapa/zona-jogos.png';
-import zonaArena from '../../assets/soulmon/mapa/zona-arena.png';
-import zonaExploracao from '../../assets/soulmon/mapa/zona-exploracao.png';
-import zonaLaboratorio from '../../assets/soulmon/mapa/zona-laboratorio.png';
-import zonaHall from '../../assets/soulmon/mapa/zona-hall.png';
 import { CHIP_MOEDA_ART, CHIP_MOEDA_SLICE } from '../../assets/soulmon/icones-ui';
-import { resolveMapaZona } from '../../assets/soulmon/mapa/zonas';
+import { MAPA_MUNDO_PINTADO, MAPA_PALCO_STYLE } from '../../utils/areaLotGeometry';
 
 /** A pílula de moeda: moldura `chip-moeda` em 9-slice. A arte tem 256×92 e é
  *  desenhada a 1/3 (tampas de 16px, bordas de 6px) — a altura final fica
@@ -50,43 +43,25 @@ const CHIP: import('react').CSSProperties = {
  * não uma lista separada. Formatação e cor vêm de `utils/currencies.ts`
  * (dono único: nenhuma moeda pode ser confundida com outra).
  */
-const AREA_ART: Record<AreaId, string> = {
-  mercado: zonaMercado,
-  jogos: zonaJogos,
-  arena: zonaArena,
-  exploracao: zonaExploracao,
-  // #187 (28/10/2026): a Forja ainda não tem a construção própria no Mapa — vale a da Exploração (PROVISÓRIA). Nome-alvo da arte final: `zona-forja.png` (assume sozinho).
-  forja: resolveMapaZona('zona-forja', zonaExploracao),
-  laboratorio: zonaLaboratorio,
-  hall: zonaHall,
-};
+/** O cristal central pintado no mapa-mundo, em % da imagem. */
+const CRISTAL = [48, 24, 64, 37] as const;
 
-/** Posição do CENTRO da base de cada construção, em % do fundo (do mock aprovado).
- *  01/10/2026 (H1, navegação do dono): ajuste fino — Exploração, Hall, Jogos e
- *  Laboratório descem ~3%, a Arena vai ~3% para a direita; o Mercado fica. */
-// 29/10/2026 (dono): cada construção ocupa a ilha dela no fundo — largura própria por zona (padrão 34%).
-const AREA_POS: Record<AreaId, { left: string; top: string; width?: string }> = {
-  mercado: { left: '30%', top: '17%' },
-  jogos: { left: '74%', top: '19.8%' },
-  exploracao: { left: '16.8%', top: '47.1%', width: '30.3%' },
-  // #187 (28/10/2026): ABAIXO da Exploração, simétrica ao Hall — a plataforma do portal de baixo à esquerda do `bg-mapa` (centro ~19/73 do fundo) está livre.
-  forja: { left: '15.1%', top: '78.7%', width: '30.7%' },
-  arena: { left: '84.1%', top: '47.3%', width: '29.4%' },
-  laboratorio: { left: '49%', top: '77.9%' },
-  hall: { left: '84.7%', top: '71.5%', width: '30.8%' },
-};
-
-export function MapPage({ language, onOpenArea, bits, emblems, credits, bondLevel }: {
+export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, credits, bondLevel }: {
   language: Language;
   /** O Vínculo do usuário: a área só trava se TODOS os prédios dela travam (`areaMinBond`). Sem ele, nada trava. */
   bondLevel?: number;
   onOpenArea: (id: AreaId) => void;
+  /** Segurar o cristal central por 3 s (a entrada SECRETA da Guilda dos Mercenários): nenhum feedback, nenhuma pista. */
+  onSecretoGuilda?: () => void;
   bits: number;
   emblems: number;
   credits: number;
 }) {
   const isPt = language === 'pt-BR';
   const [lockNote, setLockNote] = useState<string | null>(null);
+  const segurando = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const soltar = () => { if (segurando.current) clearTimeout(segurando.current); segurando.current = null; };
+  useEffect(() => soltar, []);
   useEffect(() => {
     if (!lockNote) return;
     const t = setTimeout(() => setLockNote(null), 5000);
@@ -166,63 +141,65 @@ export function MapPage({ language, onOpenArea, bits, emblems, credits, bondLeve
         </span>
       </div>
 
-      {/* As 6 construções, posicionadas em % sobre o fundo. */}
-      {AREAS.map(id => {
-        const pos = AREA_POS[id];
-        const locked = areaLockedAt(id, bondLevel);
-        return (
-          <button
-            key={id}
-            type="button"
-            data-map-area={id}
-            onClick={() => (locked ? setLockNote(buildingLockLine(locked, language)) : onOpenArea(id))}
-            aria-label={locked ? `${areaLabel(id, isPt)}. ${lockLabel(locked, language)}` : areaLabel(id, isPt)}
-            data-map-locked={locked ?? undefined}
-            style={{
-              position: 'absolute',
-              left: pos.left, top: pos.top,
-              transform: 'translate(-50%, -78%)',
-              width: pos.width ?? '34%',
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              background: 'transparent', border: 'none', padding: 0, cursor: 'pointer',
-            }}
-          >
-            <img
-              src={AREA_ART[id]}
-              alt=""
-              aria-hidden="true"
-              style={{ width: '100%', filter: lotArtFilter({ locked: !!locked }) }}
-            />
-            {locked && (
-              <span style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }}>
-                <LockBadge minBond={locked} language={language} />
-              </span>
-            )}
-            <span
-              data-map-label
-              style={{
-                marginTop: -4,
-                padding: '2px 9px',
-                borderRadius: 999,
-                background: 'rgba(8,25,26,.82)',
-                border: '1px solid rgba(95,243,224,.35)',
-                fontFamily: 'var(--sm2-font-display)',
-                fontSize: 'var(--sm2-text-xs)',
-                fontWeight: 800,
-                letterSpacing: '0.06em',
-                // Fixo, não o token de tema: o fundo do rótulo é sempre
-                // escuro translúcido (sobre a arte da cena), nos dois temas —
-                // usar `--sm2-ink` faria o texto ficar escuro-sobre-escuro
-                // no tema claro (achado nos screenshots do F3).
-                color: '#E9F5F2',
-                textAlign: 'center',
-              }}
-            >
-              {areaLabel(id, isPt)}
-            </span>
-          </button>
-        );
-      })}
+      {/* Os distritos vêm pintados no fundo (05/11/2026): cada botão é só o alvo de toque e o rótulo, no palco da imagem. */}
+      <div style={{ position: 'absolute', inset: 0, containerType: 'size', pointerEvents: 'none' }}>
+        <div style={MAPA_PALCO_STYLE}>
+          {/* Secreto de propósito (dono, 05/11/2026): sem botão, rótulo, cursor ou resposta visual. */}
+          <div
+            data-map-cristal
+            aria-hidden="true"
+            onPointerDown={() => { soltar(); segurando.current = setTimeout(() => onSecretoGuilda?.(), 3000); }}
+            onPointerUp={soltar}
+            onPointerLeave={soltar}
+            onPointerCancel={soltar}
+            onContextMenu={e => e.preventDefault()}
+            style={{ position: 'absolute', left: `${CRISTAL[0]}%`, top: `${CRISTAL[1]}%`, width: `${CRISTAL[2] - CRISTAL[0]}%`, height: `${CRISTAL[3] - CRISTAL[1]}%`, pointerEvents: 'auto', WebkitTouchCallout: 'none', userSelect: 'none' }}
+          />
+          {AREAS.map(id => {
+            const b = MAPA_MUNDO_PINTADO[id];
+            const locked = areaLockedAt(id, bondLevel);
+            return (
+              <button
+                key={id}
+                type="button"
+                data-map-area={id}
+                onClick={() => (locked ? setLockNote(buildingLockLine(locked, language)) : onOpenArea(id))}
+                aria-label={locked ? `${areaLabel(id, isPt)}. ${lockLabel(locked, language)}` : areaLabel(id, isPt)}
+                data-map-locked={locked ?? undefined}
+                style={{
+                  position: 'absolute', left: `${b[0]}%`, top: `${b[1]}%`, width: `${b[2] - b[0]}%`, height: `${b[3] - b[1]}%`,
+                  background: 'transparent', border: 'none', padding: 0, cursor: 'pointer', pointerEvents: 'auto',
+                }}
+              >
+                {locked && (
+                  <span style={{ position: 'absolute', top: '40%', left: '50%', transform: 'translate(-50%, -50%)', pointerEvents: 'none' }}>
+                    <LockBadge minBond={locked} language={language} />
+                  </span>
+                )}
+                <span
+                  data-map-label
+                  style={{
+                    position: 'absolute', left: '50%', bottom: 0, transform: 'translateX(-50%)', width: 'max-content',
+                    padding: '2px 9px',
+                    borderRadius: 999,
+                    background: 'rgba(8,25,26,.82)',
+                    border: '1px solid rgba(95,243,224,.35)',
+                    fontFamily: 'var(--sm2-font-display)',
+                    fontSize: 'var(--sm2-text-xs)',
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                    // Fixo, não o token de tema: o fundo do rótulo é sempre escuro translúcido, nos dois temas.
+                    color: '#E9F5F2',
+                    textAlign: 'center',
+                  }}
+                >
+                  {areaLabel(id, isPt)}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
       {lockNote && <LockNotice text={lockNote} />}
     </section>
   );

@@ -207,7 +207,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const gs = ctx?.gameState;
   const estado = useMemo<SoulXPState>(
     () => (gs
-      ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP }
+      ? { evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP, evoStatFloor: gs.evoStatFloor }
       : { evolutionStage }),
     [gs, evolutionStage],
   );
@@ -566,6 +566,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
       playerSpecialEscola: ident.especial.escola,
+      playerSpecialElemento: ident.especial.elemento,
     };
   }, [ident, par, isPt, lang]);
 

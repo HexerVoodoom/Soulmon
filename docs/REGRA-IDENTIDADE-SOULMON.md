@@ -20,7 +20,7 @@ Tudo o que for gerado ou desenhado para o Soulmon carrega a identidade do jogo:
 
 ## Exceção: criaturas geradas pelo Oráculo (dono, 05/11/2026)
 
-Esta regra NÃO vale para criaturas geradas pelo Oráculo, de jogador ou simulado. Isso inclui o roxo que o prompt do Oráculo pede e a dimensão de recorte: nada disso reprova a peça. Cards, cenários, UI, NPC e os demais assets continuam na regra (REGISTRO §229).
+Esta regra NÃO vale para criaturas geradas pelo Oráculo, de jogador ou simulado. Isso inclui o roxo que o prompt do Oráculo pede e a dimensão de recorte: nada disso reprova a peça. Cards, cenários, UI, NPC e os demais assets continuam na regra (REGISTRO §231).
 
 ## Como aplicar
 

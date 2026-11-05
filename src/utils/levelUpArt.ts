@@ -1,5 +1,5 @@
-// Arte OPCIONAL do display de level up (pedido do dono, 11/10/2026). Três slots em
-// `src/assets/soulmon/levelup/`: `levelup-banner.png` (a palavra LEVEL UP), `levelup-burst.png` (os raios
+// Arte OPCIONAL do display de level up (pedido do dono, 11/10/2026). Dois slots em
+// `src/assets/soulmon/levelup/`: `levelup-burst.png` (os raios
 // atrás do número) e `levelup-frame.png` (a moldura do número). O pacote de geração (prompts, formato,
 // destino e mapa) está em `docs/ASSETS-A-GERAR.md` §16 e em `INSTALAR.md` ao lado da pasta.
 //
@@ -14,20 +14,37 @@ import chevron from '../assets/soulmon/fx/gain-levelup.png';
 /** O chevron do level up (96², exibido a 48 = 0,5×). */
 export const LEVELUP_CHEVRON: string = chevron;
 
-import bannerPt from '../assets/soulmon/levelup/levelup-banner-pt.png';
+// O emblema (folhas do dono, 05/11/2026): Bond Up em inglês, Vínculo Up em português. `entrada` toca uma vez (asas abrem, texto
+// acende), `laco` repete o fim e `fixo` é o último quadro, para movimento reduzido. Recorte em E:/Soulmon-assets/bond-up/recorte.py.
+import enEntrada from '../assets/soulmon/levelup/bond-up-en-entrada.webp';
+import enLaco from '../assets/soulmon/levelup/bond-up-en-laco.webp';
+import enFixo from '../assets/soulmon/levelup/bond-up-en-fixo.webp';
+import ptEntrada from '../assets/soulmon/levelup/bond-up-pt-entrada.webp';
+import ptLaco from '../assets/soulmon/levelup/bond-up-pt-laco.webp';
+import ptFixo from '../assets/soulmon/levelup/bond-up-pt-fixo.webp';
+
+/** Largura e altura nativas (a proporção reserva o espaço antes de carregar). */
+export const BOND_UP_W = 342;
+export const BOND_UP_H = 256;
+/** Duração da `entrada`: soma dos 15 quadros; depois dela entra o `laco`. */
+export const BOND_UP_ENTRADA_MS = 1500;
+export const bondUpArt = (fase: 'entrada' | 'laco' | 'fixo', isPt: boolean): string => {
+  const c = isPt ? { entrada: ptEntrada, laco: ptLaco, fixo: ptFixo } : { entrada: enEntrada, laco: enLaco, fixo: enFixo };
+  return c[fase];
+};
 
 const modules = import.meta.glob('../assets/soulmon/levelup/*.png', {
   eager: true,
   import: 'default',
 }) as Record<string, string>;
 
-export type LevelUpSlot = 'banner' | 'burst' | 'frame';
+export type LevelUpSlot = 'burst' | 'frame';
 
 const ART: Partial<Record<LevelUpSlot, string>> = {};
 for (const [path, url] of Object.entries(modules)) {
-  const m = /\/levelup-(banner|burst|frame)\.png$/.exec(path);
+  const m = /\/levelup-(burst|frame)\.png$/.exec(path);
   if (m) ART[m[1] as LevelUpSlot] = url;
 }
 
 /** URL do slot, ou `undefined` (sem arte instalada → o overlay usa o fallback procedural). */
-export const levelUpArt = (slot: LevelUpSlot, language?: string): string | undefined => (slot === 'banner' && language === 'pt' ? bannerPt : ART[slot]);
+export const levelUpArt = (slot: LevelUpSlot): string | undefined => ART[slot];

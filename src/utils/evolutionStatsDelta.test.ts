@@ -37,9 +37,9 @@ describe('evolutionStatsDelta', () => {
 });
 
 describe('formatDelta', () => {
-  it('+N, +0 e −N (menos tipográfico)', () => {
+  it('+N e +0 (evoluir nunca reduz, REGISTRO §229)', () => {
     expect(formatDelta(3)).toBe('+3');
     expect(formatDelta(0)).toBe('+0');
-    expect(formatDelta(-2)).toBe('\u22122');
+    expect(formatDelta(-2)).toBe('+0');
   });
 });

@@ -138,7 +138,7 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(container.querySelector('[data-area-lot="masmorra"]')).toBeNull();
     expect(container.querySelector('[data-area-lot="preparar"]')).toBeNull();
     for (const id of ['passeio', 'fenda', 'dungeon']) {
-      expect(container.querySelector(`[data-area-lot="${id}"] [data-area-lot-art]`), id).toBeTruthy();
+      expect(container.querySelector(`[data-area-lot="${id}"] [data-area-lot-label]`), id).toBeTruthy();
     }
     expect(container.querySelector('[data-area-lot="dino"]')).toBeNull();
   });
@@ -148,13 +148,13 @@ describe('Exploração — Zeph e a Masmorra', () => {
     const ids = [...container.querySelectorAll('[data-area-lot]')].map(e => e.getAttribute('data-area-lot'));
     for (const id of ['oficina', 'caderno', 'refugio']) {
       expect(ids, id).toContain(id);
-      expect(container.querySelector(`[data-area-lot="${id}"] [data-area-lot-art]`), id).toBeTruthy();
+      expect(container.querySelector(`[data-area-lot="${id}"] [data-area-lot-label]`), id).toBeTruthy();
     }
   });
 
   it('Exploração: a Fenda Sem Fim é um prédio da Exploração (veio da Arena, #187), com arte; Zeph fala dentro da folha (N10)', () => {
     const { container } = renderWithCss(<PlayAreaView {...props({ area: 'exploracao' })} />);
-    expect(container.querySelector('[data-area-lot="fenda"] [data-area-lot-art]')).toBeTruthy();
+    expect(container.querySelector('[data-area-lot="fenda"] [data-area-lot-label]')).toBeTruthy();
     fireEvent.click(container.querySelector('[data-area-lot="fenda"]')!);
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Zeph');
   });
@@ -293,7 +293,7 @@ describe('Jogos — os três prédios', () => {
     expect([...container.querySelectorAll('[data-area-lot]')].map(e => e.getAttribute('data-area-lot')))
       .toEqual(['salao', 'mente']);
     for (const id of ['salao', 'mente']) {
-      expect(container.querySelector(`[data-area-lot="${id}"] [data-area-lot-art]`), id).toBeTruthy();
+      expect(container.querySelector(`[data-area-lot="${id}"] [data-area-lot-label]`), id).toBeTruthy();
     }
     fireEvent.click(container.querySelector('[data-area-lot="salao"]')!);
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Pipo');

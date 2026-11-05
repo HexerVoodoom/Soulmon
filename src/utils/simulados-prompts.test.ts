@@ -1,4 +1,4 @@
-// Prompts dos simulados saem do Oráculo real (REGISTRO §229): determinísticos por id e com o elemento e a linha pedidos.
+// Prompts dos simulados saem do Oráculo real (REGISTRO §231): determinísticos por id e com o elemento e a linha pedidos.
 import { describe, it, expect } from 'vitest';
 import { promptsDoSimulado } from '../../scripts/simulados-prompts';
 import { SIMULADOS } from '../../functions/api/_simulados.data.js';

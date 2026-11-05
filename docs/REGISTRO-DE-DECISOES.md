@@ -3976,7 +3976,7 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 
 ## §223 — Feedback da Home: modal do Soulmon que envia direto, sem abrir o e-mail (04/11/2026, pedido do dono)
 
-**Decisão.** O besourinho da Home abre `FeedbackModal` (Feedback, Sugestão ou Bug + texto de 1 a 2000 caracteres + Enviar) e o texto vai a `POST /api/feedback`, que o grava na KV (`feedback:<dia>:<id>`, TTL 90 dias) ANTES de tentar o e-mail e o encaminha a `soulmon.revisor@gmail.com` por Resend (`RESEND_API_KEY`, secret do dono). Falha de envio mantém o rascunho e oferece "Tentar de novo".
+**Decisão.** O besourinho da Home abre `FeedbackModal` (Feedback, Sugestão ou Bug + texto de 1 a 2000 caracteres + Enviar) e o texto vai a `POST /api/feedback`, que o grava na KV (`feedback:<dia>:<id>`, TTL 30 dias) ANTES de tentar o e-mail e o encaminha a `soulmon.revisor@gmail.com` por Resend (`RESEND_API_KEY`, secret do dono). Falha de envio mantém o rascunho e oferece "Tentar de novo".
 
 **Alternativa que perdeu.** `mailto:` (era o botão): depende de app de e-mail configurado, não entrega nada se a pessoa desiste no meio. O `mailto` das Configurações (`feedbackMailto`, `bugMailto`) segue como estava.
 
@@ -4032,7 +4032,45 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 
 **O que falsificaria.** Proporção de algum elemento reprovada pelo dono (trocar o número em `PESO_CORTE`); ou o servidor passar a publicar um id de Soulmon (trocar a chave). **Rollback:** tirar `impacto` das ações (ausente = corte, comportamento anterior).
 
-## §228 — Simulados: 170 perfis, evolução por faixa e formas sob demanda (05/11/2026, decisão do dono)
+
+## §229 — Evoluir nunca reduz um atributo: piso de combate gravado na evolução (05/11/2026, decisão do dono)
+
+**Decisão.** "Evoluir nunca reduz": nenhum atributo de combate do Soulmon (Vida, Ataque, Defesa, Velocidade) fica abaixo do que era antes de evoluir por causa do reset de §209. O dono aceitou o efeito de balanço medido abaixo ("Aceitar e seguir").
+
+**Causa.** Ao evoluir, `powerPoints`/`harmonyPoints`/`benevolencePoints` voltam a zero (§209) e a distribuição de ATK/DEF/SPD volta ao equilíbrio. Varredura exaustiva (todo level, 66 distribuições de pontos, antes → depois): só há queda de 1 ponto, só em Defesa ou Velocidade, só em Ultimate→Mega (antes nos levels 20–21, depois no 22) e Mega→Ultra (antes nos 29–30, depois no 31). Ataque e Vida nunca caem.
+
+**Regra.** O `handleEvolve` grava `evoStatFloor { s, atk, def, spd }` no save: o maior de cada atributo de ANTES (já com o piso anterior dentro), marcado com o índice do estágio de DESTINO (`nextStatFloor`, `utils/soulXP.ts`). `combatantAt` aplica o piso só quando o estágio do level bate com `s`, ANTES do bônus de PvP. Espelho no servidor: `_combate.js` (`combatantAt`, `soulCombatant`, `sanitizeStatFloor`, `statMaxOfStage`), travado por `combate.parity.test.js` (inclui piso inválido, de outro estágio e lixo). No servidor, o teto de level do duelo (S1) desliga o piso.
+
+**Contra ganho acumulável.** (1) O piso é inerte fora do estágio `s`: degenerar o desliga e uma nova evolução o REESCREVE a partir do derivado do estágio de baixo, nunca o soma. (2) "Trocar forma" não muda de estágio e não grava nada. (3) `sanitizeStatFloor` limita cada valor ao teto legítimo do estágio anterior (`statMaxOfStage(s − 1)`), no hidrate e no servidor, então um save adulterado nunca passa do que um jogador legítimo teria. (4) O piso morre no Renascimento e nos resets de Soulmon novo.
+
+**Medição (1500 sementes por célula, skill média, família direta, build equilibrada depois de evoluir; "antes" = comportamento anterior, sem piso).** Só mudam os levels 22–23 (Mega) e 31–32 (Ultra), e só para quem tinha Defesa ou Velocidade especializada:
+
+| level depois | especializado em | Arena | Masmorra (andares, 6) | Pesadelo |
+|---|---|---|---|---|
+| 22 | Defesa | 70,9% → 82,0% (+11,1pp) | 3,47 → 3,80 | 87,2% → 92,0% (+4,8pp) |
+| 22 | Velocidade | 70,9% → 73,3% (+2,4pp) | 3,47 → 3,75 | 87,2% → 90,9% (+3,7pp) |
+| 23 | Defesa | 71,3% → 81,5% (+10,3pp) | 3,48 → 3,81 | 87,2% → 92,0% (+4,8pp) |
+| 31 | Defesa | 71,1% → 79,7% (+8,6pp) | 3,47 → 3,74 | 87,2% → 90,7% (+3,5pp) |
+| 31 | Velocidade | 71,1% → 73,5% (+2,4pp) | 3,47 → 3,71 | 87,2% → 90,1% (+2,9pp) |
+| 32 | Defesa | 71,2% → 79,8% (+8,6pp) | 3,47 → 3,74 | 87,2% → 90,7% (+3,5pp) |
+
+Todas as outras células (Ataque, levels 24+ e 33+, Velocidade em 23 e 32) deram +0,0pp. A régua era ±3pp: essas células saem dela (até +11,1pp na Arena e +4,8pp no Pesadelo) e a decisão do dono foi aceitar, porque o valor só devolve o poder que o jogador já tinha no level anterior. Um ponto de Defesa pesa muito em Mega/Ultra (a curva já está na parte íngreme: 12 contra 11).
+
+**Alternativa que perdeu.** Piso sem estado (o máximo do estágio anterior para todos): sobe também as builds equilibradas, ganho que ninguém perdeu. Manter a queda e só documentar. Compensar no botão de dificuldade da Arena (`ARENA_ROUND_GROWTH`): global e sensível, para uma região de 2 levels.
+
+**O que falsificaria.** Queixa de Arena/Pesadelo fáceis demais para Mega/Ultra recém-evoluídos especializados, ou o piso aparecendo em level fora de 22–23/31–32 (o teste `evolucaoNuncaReduz.test.ts` varre tudo). **Rollback:** reverter o PR (o campo `evoStatFloor` solto no save é ignorado).
+
+## §228 — Efeito de combate pelo elemento do especial (04/11/2026, decisão do dono)
+
+- **Regra:** o efeito depende do ELEMENTO DO ESPECIAL, não do Soulmon (água com especial de fogo pode queimar), e nem todo especial tem efeito: a família continua decidindo a mecânica, `direct` é só dano. O elemento só dá o sabor de uma família que já deixa estado. Tabela única em `src/utils/combate/elementEffects.ts`; derivado herda do primeiro componente com par na família.
+- **PvP (Torneio/Duelo) só visual.** `fight.ts` e `_combate.js` não mudam; silêncio, lentidão e cura contínua não aparecem no PvP porque o selo mentiria. Reafirma o §177.
+- **Físico e mágico só visuais:** mesmo `atkBuff`, selo diferente.
+- **Silêncio não cancela:** a barra segue cheia e o especial sai quando acabar.
+- **Inimigos causam efeitos em PvE**, só depois de medir; desligado até lá.
+- **Alternativa que perdeu:** 25% do orçamento de todo especial vira o efeito do elemento (mediu dentro da régua no protótipo, mas o dono quer especial de dano direto puro).
+- **O que falsifica:** se a medição de Arena/Masmorra sair de ±3pp em vitória contra a mesma família sem efeito, a mecânica nova não liga; se poucos jogadores chegarem a um efeito (família com peso baixo no elemento), rever `AFINIDADE_ELEMENTO`.
+
+## §230 — Simulados: 170 perfis, evolução por faixa e formas sob demanda (05/11/2026, decisão do dono)
 
 **Decisão do dono:** 120 simulados novos, nomes aprovados por ele. Evoluem como quem faz 100% das tarefas (top 50), 70% (top 100) e 33% (demais). Faixa fixa pela skill, não rank ao vivo. Partida escalonada. Média de tarefas sobre a meta diária: 74, 107 e 225 dias até o Ultra. Simulado não cai por HP. Placares com menos simulados, deixando espaço a reais (`PLACAR_SIMS_MAX` = 15 por jogo), e o Torneio segue com todos para manter o top 50 populado. Sprites no padrão de jogador com alfa real: exceção à `REGRA-IDENTIDADE-SOULMON.md`, com decisão final depois de 3 prévias. Formas sob demanda atrás de `SIMULADOS_FORMAS_ON`, desligada. O dono afirma que o Workers Paid está ativo; o painel de cobrança não foi conferido.
 
@@ -4042,11 +4080,11 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 
 **O que falsificaria:** jogador real sem aparecer nos placares, simulado recebendo prêmio, ou elemento do simulado diferente do sprite. **Rollback:** reverter o commit; as âncoras não apagam dado do KV.
 
-## §229 — Criatura do Oráculo fora da régua de identidade; simulado gerado pelo Oráculo (05/11/2026, decisão do dono; emenda §228)
+## §231 — Criatura do Oráculo fora da régua de identidade; simulado gerado pelo Oráculo (05/11/2026, decisão do dono; emenda §230)
 
 **Decisão do dono.** A regra máxima de identidade continua valendo para cards, cenários, UI, NPC e demais assets, mas NÃO vale para criaturas geradas pelo Oráculo, de jogador ou simulado. Isso inclui o roxo que o próprio prompt do Oráculo pede e a dimensão de recorte. O sprite de simulado sai do mesmo Oráculo do jogador, com o elemento secundário automático. A prévia com prompt próprio foi reprovada ("bem fora do estilo dos soulmon"); a prévia 2 pelo Oráculo foi aprovada.
 
-**Como fica.** `scripts/simulados-prompts.ts` roda `buildSoulProfile` + `generateOracleComplete` com entrada determinística por id, com elemento e alinhamento por override. O servidor lê o prompt pronto em `sim:prompt:<id>:<forma>`, porque as Functions não importam o Oráculo. Fundo verde (ou magenta, quando o prompt pedir) e recorte `chromaKeyPng`, como no jogador: fecha o conflito aberto no §228, sem alfa real. A forma nova usa a anterior como referência.
+**Como fica.** `scripts/simulados-prompts.ts` roda `buildSoulProfile` + `generateOracleComplete` com entrada determinística por id, com elemento e alinhamento por override. O servidor lê o prompt pronto em `sim:prompt:<id>:<forma>`, porque as Functions não importam o Oráculo. Fundo verde (ou magenta, quando o prompt pedir) e recorte `chromaKeyPng`, como no jogador: fecha o conflito aberto no §230, sem alfa real. A forma nova usa a anterior como referência.
 
 **Alternativas que perderam.** Texto de estilo próprio em `_simFormas.js` (reprovado pelo dono). Forçar `secondaryElement: null` para o elemento ficar mais puro (dono manteve o automático). Prompts como módulo de dados no Worker (cerca de 850 prompts dentro do bundle das Functions).
 
