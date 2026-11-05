@@ -48,10 +48,10 @@ export interface Special {
  * - `slowScale`: multiplica os golpes de lentidão. `slowKeep`: fração do orçamento que segue como `defDebuff`.
  * - `hotScale`: multiplica o total curado pelos 3 pulsos.
  */
-export const EFFECT_TUNE = { silenceHits: 2, silenceKeep: 1, slowScale: 0.25, slowKeep: 0.6, hotScale: 1.05 };
+export const EFFECT_TUNE = { silenceHits: 2, silenceKeep: 1, slowScale: 0.3, slowKeep: 0.58, hotScale: 1.05 };
 export type EffectTune = typeof EFFECT_TUNE;
 /** §226 (dono, 05/11): o Pesadelo pode ter balanço próprio para qualquer mecânica. */
-export const EFFECT_TUNE_PESADELO: EffectTune = { ...EFFECT_TUNE };
+export const EFFECT_TUNE_PESADELO: EffectTune = { ...EFFECT_TUNE, slowScale: 0.15, slowKeep: 0.4 };
 
 export function specialOf(family: SpecialFamily): Special {
   return { family, power: SPECIAL_POWER[family] };

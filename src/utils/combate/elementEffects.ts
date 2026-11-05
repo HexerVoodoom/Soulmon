@@ -59,9 +59,9 @@ export function efeitoVisivel(
 
 /**
  * §226: as regras novas LIGADAS em PvE. Só entra o que passa em ±3pp no gate `efeitosPve.medicao.test.ts`.
- * Lentidão reprovou: nenhum ajuste passou nos três motores ao mesmo tempo.
+ * Arena e Masmorra usam a mesma regra; o Pesadelo tem botões próprios (`EFFECT_TUNE_PESADELO`).
  */
-export const EFEITOS_PVE_LIGADOS: readonly EfeitoElemento[] = ['silencio', 'curaContinua'];
+export const EFEITOS_PVE_LIGADOS: readonly EfeitoElemento[] = ['silencio', 'curaContinua', 'lentidao'];
 
 /** O elemento que a tela passa ao simulador: só quando a regra daquele par está ligada. PvP nunca chama. */
 export function efeitoElementoPve(family: SpecialFamily, elemento: string | null | undefined): string | undefined {

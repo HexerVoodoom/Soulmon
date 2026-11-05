@@ -58,8 +58,8 @@ describe('§226: efeitos em PvE', () => {
     }
   });
 
-  it('GATE ±3pp: silêncio e cura contínua nos três motores', () => {
-    const casos = [['silencio', 'defDebuff', 'som'], ['curaContinua', 'shield', 'vida']] as const;
+  it('GATE ±3pp: silêncio, cura contínua e lentidão, por modo', () => {
+    const casos = [['silencio', 'defDebuff', 'som'], ['curaContinua', 'shield', 'vida'], ['lentidao', 'defDebuff', 'ar']] as const;
     for (const [nome, fam, el] of casos) {
       expect(EFEITOS_PVE_LIGADOS).toContain(nome);
       const d = deltas(fam, el);
@@ -76,8 +76,6 @@ describe('§226: efeitos em PvE', () => {
     console.log(`[gate] vermelho X=6 | ${fmt(d)}`);
     expect(Math.max(...d.map(Math.abs))).toBeGreaterThan(3);
   });
-
-  it('lentidão segue desligada: reprovou', () => expect(EFEITOS_PVE_LIGADOS).not.toContain('lentidao'));
 
   it.skipIf(!GRADE)('grade de calibração (só com EFEITOS_GRADE=1)', () => {
     const t0 = { ...EFFECT_TUNE };
