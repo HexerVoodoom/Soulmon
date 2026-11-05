@@ -276,7 +276,7 @@ describe('C7 — Amigos: adicionar pelo nome', () => {
     renderWithCss(<LibraryPage {...props(['pid-lia'])} canGiftToday onGiftSent={onGiftSent} embedded view="friends" />);
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
     fireEvent.click(await screen.findByRole('button', { name: 'Enviar 20 Bits para Lia' }));
-    await waitFor(() => expect(sendGift).toHaveBeenCalledWith('save-1', 'pid-lia'));
+    await waitFor(() => expect(sendGift).toHaveBeenCalledWith('save-1', 'pid-lia', undefined));
     await waitFor(() => expect(onGiftSent).toHaveBeenCalledWith('pid-lia'));
     // depois de enviar, o ícone some pelo resto do dia
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Enviar 20 Bits para Lia' })).toBeNull());
@@ -340,5 +340,18 @@ describe('C7 — Amigos: adicionar pelo nome', () => {
     expect(document.querySelector('[data-friend-gifts]')!.textContent).toMatch(/Bia te deu 20 Bits/);
     fireEvent.click(screen.getByRole('button', { name: 'Aceitar' }));
     await waitFor(() => expect(answerFriendInvite).toHaveBeenCalledWith('save-1', 'pid-zed', false));
+  });
+
+  it('teto de recebimento: a tela do envio e o histórico dizem o valor real', async () => {
+    vi.mocked(getPlayer).mockResolvedValue({ found: true, player: perfil({ id: 'pid-lia', name: 'Lia' }) });
+    vi.mocked(listPlayers).mockResolvedValue({ players: [] });
+    vi.mocked(sendGift).mockResolvedValue({ ok: true, credited: 0 });
+    vi.mocked(getFriendsState).mockResolvedValue(estado({ dailyCap: 100, notes: [{ name: 'Bia', bits: 0, at: Date.now(), unseen: false }] }));
+    renderWithCss(<LibraryPage {...props(['pid-lia'])} canGiftToday playerDayTz={{ offsetMs: -3 * 3_600_000 }} embedded view="friends" />);
+    await act(async () => { await vi.advanceTimersByTimeAsync(400); });
+    expect(document.querySelector('[data-friend-gifts]')!.textContent).toMatch(/teto de 100 Bits.*\(0 Bits\)/);
+    fireEvent.click(await screen.findByRole('button', { name: 'Enviar 20 Bits para Lia' }));
+    await waitFor(() => expect(sendGift).toHaveBeenCalledWith('save-1', 'pid-lia', { offsetMs: -3 * 3_600_000 }));
+    await waitFor(() => expect(document.querySelector('[data-friend-add-msg]')!.textContent).toMatch(/0 Bits valeram/));
   });
 });

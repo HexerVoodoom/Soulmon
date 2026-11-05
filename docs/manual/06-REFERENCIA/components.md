@@ -963,7 +963,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Avisos do arquivo:** o emoji É a chave de inventário (`utils/shop.ts`) — nenhum PNG paralelo, para não repetir o bug de moeda que a loja teve com duas representações do mesmo item.
 
 ### `src/components/FriendTraining.tsx`
-**Dono de:** o treino com amigo (§242) — luta local e unilateral na `DuelScreen`, sem prêmio, ranking, Bits, Honra, XP nem progresso.
+**Dono de:** o treino com amigo (§243) — luta local e unilateral na `DuelScreen`, sem prêmio, ranking, Bits, Honra, XP nem progresso.
 **Props principais:** `friend` (só dado público: estágio, elemento, arte), `trainer` (`FriendTrainerProps`: estágio, linha, elemento e skills do SEU Soulmon), `isPt`, `onClose`.
 **Exports:** `FriendTraining`, `friendTrainingSide`.
 **Estado/efeitos relevantes:** semente sorteada no cliente; nenhuma chamada de rede; não grava no save.

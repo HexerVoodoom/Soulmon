@@ -311,7 +311,7 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   /** Lê o estado social (só o dono). Falha de rede deixa o que já havia. */
   useEffect(() => {
     let vivo = true;
-    getFriendsState(saveId)
+    getFriendsState(saveId, playerDayTz)
       .then(r => { if (vivo) { setSocial(r); onSocialAlert?.(r.incoming.length > 0 || r.unseen > 0); } })
       .catch(() => { /* sem rede: segue sem convites */ });
     return () => { vivo = false; };
@@ -368,11 +368,17 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
     setBusyId(friendId);
     setActionError(null);
     try {
-      await sendGift(saveId, friendId);
+      const r = await sendGift(saveId, friendId, playerDayTz);
+      const valeu = typeof r?.credited === 'number' ? r.credited : 20;
       setGiftedToday(prev => new Set(prev).add(friendId));
       onGiftSent?.(friendId);
       setSocial(prev => (prev ? { ...prev, sentToday: [...prev.sentToday, friendId] } : prev));
-      setAddMsg(isPt ? '20 Bits enviados!' : 'Sent 20 Bits!');
+      // A tela diz o valor REAL: o teto de 100 Bits/dia de quem recebe pode cortar o presente.
+      setAddMsg(valeu >= 20
+        ? (isPt ? '20 Bits enviados!' : 'Sent 20 Bits!')
+        : valeu > 0
+          ? (isPt ? `Presente enviado: ${valeu} de 20 Bits valeram (teto de 100 por dia).` : `Gift sent: ${valeu} of 20 Bits counted (100 a day cap).`)
+          : (isPt ? 'Presente enviado, mas essa pessoa já atingiu o teto de 100 Bits de hoje: 0 Bits valeram.' : 'Gift sent, but this person already hit today’s 100 Bits cap: 0 Bits counted.'));
     } catch {
       setActionError(isPt ? 'O presente não chegou. Tente de novo daqui a pouco.' : "The gift didn't go through. Try again in a bit.");
     } finally {
@@ -525,7 +531,9 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
           <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 132, overflowY: 'auto' }}>
             {social.notes.slice(0, 10).map(n => (
               <li key={n.at + ':' + n.name} data-gift-note={n.unseen ? 'new' : 'seen'} className="sm2-lib-s" style={{ color: n.unseen ? 'var(--sm2-primary-ink)' : undefined, fontWeight: n.unseen ? 600 : undefined }}>
-                {isPt ? `${n.name || 'Um amigo'} te deu ${n.bits} Bits` : `${n.name || 'A friend'} gave you ${n.bits} Bits`}
+                {n.bits > 0
+                  ? (isPt ? `${n.name || 'Um amigo'} te deu ${n.bits} Bits` : `${n.name || 'A friend'} gave you ${n.bits} Bits`)
+                  : (isPt ? `${n.name || 'Um amigo'} te enviou um presente, mas o teto de ${social.dailyCap ?? 100} Bits do dia já tinha sido atingido (0 Bits)` : `${n.name || 'A friend'} sent you a gift, but the daily ${social.dailyCap ?? 100} Bits cap was already reached (0 Bits)`)}
                 {' · '}{new Date(n.at).toLocaleDateString(isPt ? 'pt-BR' : 'en-US', { day: '2-digit', month: '2-digit' })}
               </li>
             ))}

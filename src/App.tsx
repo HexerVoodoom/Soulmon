@@ -1608,7 +1608,7 @@ export default function App() {
     let vivo = true;
     const ler = () => {
       if (document.visibilityState === 'hidden') return;
-      import('./utils/community').then(m => m.getFriendsState(saveId))
+      import('./utils/community').then(m => m.getFriendsState(saveId, gameStateRef.current.playerDayTz))
         .then(r => { if (vivo) setAmigosAlerta(r.incoming.length > 0 || r.unseen > 0); })
         .catch(() => {});
     };

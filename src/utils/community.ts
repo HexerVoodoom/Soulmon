@@ -264,15 +264,24 @@ export interface FriendsState {
   notes: { name: string; bits: number; at: number; unseen: boolean }[];
   unseen: number;
   limit: number;
+  /** Teto de Bits que uma conta recebe de presentes por dia do jogador (o excedente não credita). */
+  dailyCap?: number;
 }
 /** O estado social de quem pergunta (só o dono lê): amigos, convites, presentes de hoje e o histórico de quem presenteou. */
-export const getFriendsState = (id: string) => call<FriendsState>('friendsState', { params: { id } });
+/** A âncora do dia do jogador vai ao servidor: o "1 presente por dia" e o teto de recebimento seguem o dia do JOGADOR, não o UTC. */
+const tzParams = (tz?: { zone?: string; offsetMs?: number }): Record<string, string> => ({
+  ...(tz?.zone ? { zone: tz.zone } : {}),
+  ...(typeof tz?.offsetMs === 'number' && Number.isFinite(tz.offsetMs) ? { off: String(tz.offsetMs) } : {}),
+});
+export const getFriendsState = (id: string, tz?: { zone?: string; offsetMs?: number }) =>
+  call<FriendsState>('friendsState', { params: { id, ...tzParams(tz) } });
 export const markFriendsSeen = (id: string) => call<{ ok: true }>('friendsSeen', { method: 'POST', body: { id } });
 export const removeFriend = (id: string, friendId: string) =>
   call<{ ok: true; friends: string[] }>('friends', { method: 'POST', body: { id, friendId, remove: true } });
 
-export const sendGift = (id: string, friendId: string) =>
-  call<{ ok: true }>('gift', { method: 'POST', body: { id, friendId } });
+/** `credited` = quantos Bits valeram de fato para quem recebeu (teto diário de recebimento); ausente em servidor antigo. */
+export const sendGift = (id: string, friendId: string, tz?: { zone?: string; offsetMs?: number }) =>
+  call<{ ok: true; credited?: number }>('gift', { method: 'POST', body: { id, friendId, ...(tz?.zone ? { zone: tz.zone } : {}), ...(typeof tz?.offsetMs === 'number' ? { off: tz.offsetMs } : {}) } });
 export interface GiftItem { from: string; bits: number; at: number; gid?: string }
 export const getGifts = (id: string, claim = false) =>
   call<{ gifts: GiftItem[]; ack?: boolean }>('gifts', { params: { id, ...(claim ? { claim: '1' } : {}) } });

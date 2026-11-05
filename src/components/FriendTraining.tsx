@@ -1,5 +1,5 @@
 /**
- * TREINO COM AMIGO (§242). Luta de treino contra a criatura de um amigo, 100% LOCAL e unilateral: sem rede, sem aprovação dele,
+ * TREINO COM AMIGO (§243). Luta de treino contra a criatura de um amigo, 100% LOCAL e unilateral: sem rede, sem aprovação dele,
  * e SEM VALOR. Não paga Bits, Honra, pontos, XP de Vínculo, missão nem ranking, não gasta a partida do dia e não grava nada no
  * save. O oponente nasce só de dado PÚBLICO do amigo (estágio, elemento, arte): nunca da ficha nem do save dele.
  *
