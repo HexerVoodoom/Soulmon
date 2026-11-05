@@ -745,4 +745,4 @@ Fila `mail:<saveId>`, carta e prêmio da temporada na 1ª leitura do mês, confi
 
 ### `functions/api/_amigos.js`
 
-Amizade por convite (§242): convites `freq:`, presentes do dia `gsent:`, histórico `gnote:`, lista mútua até 20, migração idempotente (`gmir:`). Ações `friends`, `friendAccept`, `friendsState`, `friendsSeen`, `friendsMigrate`, `gift` em `community.js`. **Régua:** `functions/api/community.amigos.test.js`.
+Amizade por convite (§243): convites `freq:`, presentes do dia `gsent:`, histórico `gnote:`, lista mútua até 20, migração idempotente (`gmir:`). Ações `friends`, `friendAccept`, `friendsState`, `friendsSeen`, `friendsMigrate`, `gift` em `community.js`. **Régua:** `functions/api/community.amigos.test.js`.

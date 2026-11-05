@@ -24,7 +24,7 @@
 //   GET  seasonResult ?season=          → top 3 (para troféus)
 //   POST closeSeason {season, adminKey} → fecha a season: dá troféu (top 3)
 //   GET  trophies  ?id=&claim=1         → troféus pendentes do jogador (e zera)
-//   POST friends   {id, friendId, remove?} → ENVIA convite (a pessoa aceita); remove desfaz nos dois lados. Até 20 amigos (§242)
+//   POST friends   {id, friendId, remove?} → ENVIA convite (a pessoa aceita); remove desfaz nos dois lados. Até 20 amigos (§243)
 //   POST friendAccept {id, friendId, decline?} → aceita/recusa convite recebido
 //   GET  friendsState ?id=   → amigos, convites, presentes de hoje e histórico (só o dono)
 //   POST friendsSeen  {id}   → marca o histórico de presentes como visto
@@ -59,7 +59,7 @@ import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado
 import { COOP_ALIASES, handleGuild } from './guild.js';
 import {
   MAX_FRIENDS, MAX_IN, MAX_OUT, GIFT_BITS, lerConvites, gravarConvites, ligarAmizade, desfazerAmizade, espelharAmizades,
-  presentesDeHoje, marcarPresenteDeHoje, lerNotas, anotarPresente, marcarNotasVistas,
+  presentesDeHoje, marcarPresenteDeHoje, lerNotas, anotarPresente, marcarNotasVistas, tzDe, diaDe, lembrarTz, reservarRecebimento, GIFT_DAILY_CAP,
 } from './_amigos.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
 import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_honra.js';
@@ -1331,7 +1331,7 @@ async function handleCommunity(context) {
     return json({ forms: formsFromSaveState(state, p.element).map(({ stage, spriteUrl, element, date }) => ({ stage, spriteUrl, element, date })) });
   }
 
-  // ── Amizade por CONVITE (§242) ────────────────────────────────────────────
+  // ── Amizade por CONVITE (§243) ────────────────────────────────────────────
   // `friends` {add} agora ENVIA convite (a pessoa aceita em `friendAccept`); `friends` {remove} desfaz nos dois lados.
   // Resposta de convite é a mesma para alvo simulado (nada gravado), cheio ou com a caixa lotada: não confirma estado alheio.
   const friendPids = async (saveIds) => (await Promise.all(saveIds.map(f => pidDeSaveId(env, f)))).filter(Boolean);
@@ -1418,7 +1418,9 @@ async function handleCommunity(context) {
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
     const me = await getProfile(env, id);
-    if (!me) return json({ friends: [], incoming: [], outgoing: [], sentToday: [], notes: [], unseen: 0, limit: MAX_FRIENDS });
+    const tz = tzDe(url.searchParams.get('zone'), url.searchParams.get('off'));
+    await lembrarTz(env, id, tz).catch(() => {});
+    if (!me) return json({ friends: [], incoming: [], outgoing: [], sentToday: [], notes: [], unseen: 0, limit: MAX_FRIENDS, dailyCap: GIFT_DAILY_CAP });
     // Migração preguiçosa e idempotente (a varredura do dono é `friendsMigrate`): uma vez por conta, o que ela já tinha vira mútuo.
     const marca = `gmir:${id}`;
     if (!(await kvOrThrow(env).get(marca))) {
@@ -1437,7 +1439,7 @@ async function handleCommunity(context) {
     const outgoing = [];
     for (const f of convites.out) { const pid = await pidDeSaveId(env, f, { semEscondidos: true }); if (pid) outgoing.push(pid); }
     const sentToday = [];
-    for (const f of await presentesDeHoje(env, id)) { const pid = await pidDeSaveId(env, f); if (pid) sentToday.push(pid); }
+    for (const f of await presentesDeHoje(env, id, diaDe(tz))) { const pid = await pidDeSaveId(env, f); if (pid) sentToday.push(pid); }
     const notas = await lerNotas(env, id);
     const notes = notas.items.slice().reverse().map(n => ({ name: n.name, bits: n.bits, at: n.at, unseen: n.at > notas.seenAt }));
     return json({
@@ -1445,6 +1447,7 @@ async function handleCommunity(context) {
       incoming, outgoing, sentToday, notes,
       unseen: notes.filter(n => n.unseen).length,
       limit: MAX_FRIENDS,
+      dailyCap: GIFT_DAILY_CAP,
     });
   }
 
@@ -1481,28 +1484,38 @@ async function handleCommunity(context) {
     const me = await getProfile(env, id);
     if (!me) return json({ error: 'profile not found' }, 404);
     if (!(me.friends || []).includes(friendSave)) return json({ error: 'not a friend' }, 403);
+    // O "1 por dia" é do dia do REMETENTE (âncora que o cliente manda; sem ela, UTC) e o teto, do dia de QUEM RECEBE.
+    const tzMeu = tzDe(body.zone, body.off);
+    const diaMeu = diaDe(tzMeu);
+    await lembrarTz(env, id, tzMeu).catch(() => {});
     // Fila por par: dois toques em paralelo não passam os dois pelo limite do dia (mesma ressalva honesta do duelo: por isolate).
     return await withDuelLock(`gift:${id}:${friendSave}`, async () => {
       // O registro do dia mora em `gsent:` (o `giftLog` do perfil se perdia a cada regravação do perfil); o legado ainda vale.
-      const hoje = await presentesDeHoje(env, id);
-      if (hoje.includes(friendSave) || (me.giftLog && me.giftLog[friendSave] === today())) return json({ error: 'already gifted today' }, 429);
-      await marcarPresenteDeHoje(env, id, friendSave);
+      const hoje = await presentesDeHoje(env, id, diaMeu);
+      if (hoje.includes(friendSave) || (me.giftLog && me.giftLog[friendSave] === diaMeu)) return json({ error: 'already gifted today' }, 429);
+      await marcarPresenteDeHoje(env, id, friendSave, diaMeu);
 
       // M11: presente para um simulado é aceito SEM efeito — nada é gravado e ninguém é debitado ou creditado (a resposta
       // é a mesma de um presente real; o limite diário acima já valeu).
       const alvo = await getProfile(env, friendSave);
-      if (alvo?.simulated === true) return json({ ok: true });
+      if (alvo?.simulated === true) return json({ ok: true, credited: GIFT_BITS });
 
-      const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
-      // Lista ilegível na KV não pode dar 500 DEPOIS do registro do dia gravado (o presente do dia sumia): recomeça vazia.
-      let gifts = [];
-      try { const lido = raw ? JSON.parse(raw) : []; gifts = Array.isArray(lido) ? lido : []; } catch { gifts = []; }
-      const quem = isHidden(me) ? '' : me.name;
-      gifts.push({ from: quem, bits: GIFT_BITS, at: Date.now(), gid: crypto.randomUUID() });
-      await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
-      // O histórico de quem presenteou (a fila acima é apagada ao resgatar). Melhor esforço: o crédito já está na fila.
-      try { await anotarPresente(env, friendSave, { name: quem, bits: GIFT_BITS }); } catch { /* o histórico é cosmético */ }
-      return json({ ok: true });
+      // Teto de recebimento por dia do destinatário: o excedente não credita (a fila só leva o que vale de verdade).
+      return await withDuelLock(`gcap:${friendSave}`, async () => {
+        const credited = await reservarRecebimento(env, friendSave, GIFT_BITS);
+        const quem = isHidden(me) ? '' : me.name;
+        if (credited > 0) {
+          const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
+          // Lista ilegível na KV não pode dar 500 DEPOIS do registro do dia gravado (o presente do dia sumia): recomeça vazia.
+          let gifts = [];
+          try { const lido = raw ? JSON.parse(raw) : []; gifts = Array.isArray(lido) ? lido : []; } catch { gifts = []; }
+          gifts.push({ from: quem, bits: credited, at: Date.now(), gid: crypto.randomUUID() });
+          await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
+        }
+        // O histórico mostra o valor REAL (0 = o teto do dia já tinha sido atingido). Melhor esforço: o crédito já está na fila.
+        try { await anotarPresente(env, friendSave, { name: quem, bits: credited }); } catch { /* o histórico é cosmético */ }
+        return json({ ok: true, credited });
+      });
     });
   }
 

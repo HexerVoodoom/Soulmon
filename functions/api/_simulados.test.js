@@ -428,7 +428,7 @@ describe('nunca levam prêmio', () => {
       request: new Request(`https://x.dev/api/community?action=gift&id=${eu}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: eu, friendId: pidSim }) }), env,
     });
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ ok: true });
+    expect(await res.json()).toEqual({ ok: true, credited: 20 });
     expect(env.SOULMON_SAVES.store.has(`gifts:${sim.id}`)).toBe(false);
   });
 });

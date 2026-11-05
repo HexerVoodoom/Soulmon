@@ -1352,11 +1352,18 @@ export default function App() {
     }
     setOwnSprites(map, petChocando || petOraculo ? PLACEHOLDER_ART.forming : undefined);
   }, [spriteVisor, petChocando, petOraculo]);
-  /** FORMAS ALTERNATIVAS (05/11/2026): equipar uma forma já desbloqueada (cosmético; a regra é de `utils/formasAlternativas.ts`). */
-  /** A DESCOBERTA do Passeio (05/11/2026): o Soulmon novo entra no Drive (`bestiary`, abas Selvagem/Desgarrado). Idempotente. */
+  /**
+   * A DESCOBERTA do Passeio (05/11/2026): o Soulmon novo entra no Drive (`bestiary`) e o relatório do dia guarda a chave NA MESMA
+   * escrita: fechar o app antes de sair do resumo e reabrir não pode sortear um segundo Soulmon no mesmo dia. Idempotente.
+   */
   const handleStrollDiscover = useCallback((key: string) => {
-    setGameState(prev => ((prev.bestiary ?? []).includes(key) ? prev : { ...prev, bestiary: [...(prev.bestiary ?? []), key] }));
+    setGameState(prev => {
+      const seen = applyBestiarySeen(prev, key);
+      const rep = seen.lastDayReport;
+      return rep && !rep.strollDiscovered ? { ...seen, lastDayReport: { ...rep, strollDiscovered: key } } : seen;
+    });
   }, [setGameState]);
+  /** FORMAS ALTERNATIVAS (05/11/2026): equipar uma forma já desbloqueada (cosmético; a regra é de `utils/formasAlternativas.ts`). */
   const handleEquipFormaAlt = useCallback((formId: string, elemento: string) => {
     setGameState(prev => {
       const formaAltEquipada = equiparFormaAlt(prev.formasAlt, prev.formaAltEquipada, formId, elemento);

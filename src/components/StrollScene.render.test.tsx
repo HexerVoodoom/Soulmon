@@ -54,6 +54,34 @@ describe('cena do Passeio', () => {
     fireEvent.click(q('[data-scene-next="back"]'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+  it('reabrir o resumo depois da descoberta não sorteia outro Soulmon no mesmo dia', () => {
+    const onDiscover = vi.fn();
+    const { onClose } = abrir(onDiscover, { report: { ...(rel as object), strollDiscovered: ENEMY_ROSTER[0].key } });
+    expect(document.querySelector('[data-scene-pet="found"]')).toBeNull();
+    fireEvent.click(q('[data-scene-next="intro"]'));
+    expect(onDiscover).not.toHaveBeenCalled();
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+  it('Pular encerra a cena e ainda grava a descoberta garantida, uma vez', () => {
+    const { onDiscover, onClose } = abrir();
+    fireEvent.click(q('[data-scene-next="intro"]'));
+    fireEvent.click(q('[data-scene-skip]'));
+    expect(onDiscover).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+  it('movimento reduzido: corte sem transição, e o aviso segue esperando o gesto', () => {
+    vi.useFakeTimers();
+    const mm = window.matchMedia;
+    window.matchMedia = ((m: string) => ({ matches: /reduce/.test(m), media: m, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {} })) as never;
+    try {
+      abrir();
+      expect(q('[data-scene-track]').style.transition).toBe('none');
+      fireEvent.click(q('[data-scene-next="intro"]'));
+      fireEvent.click(q('[data-scene-next="notice"]'));
+      act(() => { vi.advanceTimersByTime(0); });
+      expect(q('[data-stroll-scene]').getAttribute('data-phase')).toBe('found');
+    } finally { window.matchMedia = mm; }
+  });
   it('sem Passeio no dia, é a folha de sempre (nada de cena)', () => {
     abrir(vi.fn(), { stroll: null });
     expect(document.querySelector('[data-stroll-scene]')).toBeNull();
