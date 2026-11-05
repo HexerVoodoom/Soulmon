@@ -31,10 +31,18 @@ export const SPECIAL_POWER: Readonly<Record<SpecialFamily, number>> = {
   spdBuff: 1.82,
 };
 
+/** §224: regra nova do núcleo de grupo (só PvE; `fight.ts` ignora). Ausente = a família pura, byte a byte. */
+export type SpecialEffect = 'burn' | 'poison' | 'hot' | 'slow' | 'silence';
+
 export interface Special {
   readonly family: SpecialFamily;
   readonly power: number;
+  readonly effect?: SpecialEffect;
 }
+
+/** §224: golpes do alvo que o silêncio dura, e a fração do orçamento que sobra no `defDebuff` quando o alvo tem especial. */
+export const SILENCE_HITS = 3;
+export const SILENCE_BUDGET_KEPT = 0.85;
 
 export function specialOf(family: SpecialFamily): Special {
   return { family, power: SPECIAL_POWER[family] };

@@ -8,7 +8,7 @@
  * Dono único da tabela. Função pura: o núcleo não conhece elemento.
  */
 import { DERIVED_ELEMENT_PAIRS } from '../soulProfile/derivedElements';
-import type { SpecialFamily } from './specials';
+import type { Special, SpecialEffect, SpecialFamily } from './specials';
 
 export type EfeitoElemento =
   | 'queimadura' | 'veneno' | 'maldicao' | 'silencio' | 'lentidao' | 'curaContinua'
@@ -54,4 +54,21 @@ export function efeitoVisivel(
 ): EfeitoElemento | null {
   const e = efeitoDoEspecial(family, elemento);
   return e && !mecanicaLigada && EFEITOS_COM_MECANICA.includes(e) ? null : e;
+}
+
+/**
+ * §224: a chave da regra nova em PvE. DESLIGADA: só liga depois de a medição passar e o dono aprovar.
+ * Fora de produção, `efeitosPve.medicao.test.ts` mede passando o elemento direto para os simuladores.
+ */
+export const EFEITOS_PVE_LIGADOS = false;
+
+const MECANICA: Partial<Record<EfeitoElemento, SpecialEffect>> = {
+  queimadura: 'burn', veneno: 'poison', curaContinua: 'hot', lentidao: 'slow', silencio: 'silence',
+};
+
+/** O especial com a regra do elemento. Sem elemento ou sem mecânica: o mesmo objeto, sem `effect`. PvP nunca chama. */
+export function comEfeitoDoElemento(sp: Special, elemento: string | null | undefined): Special {
+  const e = efeitoDoEspecial(sp.family, elemento);
+  const effect = e ? MECANICA[e] : undefined;
+  return effect ? { ...sp, effect } : sp;
 }
