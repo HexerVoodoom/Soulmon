@@ -24,7 +24,7 @@ interface Props {
 }
 
 /** Thassia (dono, 05/11/2026): maior e mais baixa, a folha corta embaixo; o espadão fica inteiro em cima e dos lados. */
-const THASSIA_FRAME = { zoom: 1.2, underSheet: 0.16, flushLeft: true };
+const THASSIA_FRAME = { zoom: 1.35, underSheet: 0, flushLeft: true };
 
 /** A folha do LÍDER de uma Ordem (dono, 05/11/2026): o NPC grande no alto, primeiro o que é a missão, depois aceitar ou pensar. */
 export function MercGuildSheet({ ordem, onClose, language = 'pt-BR', hoje, dayKey, bb = false, onAccept, onThink, onConfirm }: Props) {
