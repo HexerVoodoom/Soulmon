@@ -23,6 +23,7 @@ import type { StageSkills } from './soulProfile/ficha/skills';
 import type { Combatant } from './combate/curve';
 import { elementHits } from './combate/curve';
 import type { FightSide } from './combate/fight';
+import { comEfeitoDoElemento } from './combate/elementEffects';
 import { cheerEvents, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf, type SpecialFamily } from './combate/specials';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
 import { REFERENCE_BUILDS, combatantAt, type StatWeights } from './combate/level';
@@ -472,6 +473,8 @@ export interface ArenaPlayerCfg {
   escolaBasica?: EscolaSkillId;
   /** Absent = neutral element (what the balance sample measures). */
   elements?: ArenaElements;
+  /** §228: elemento do especial para a regra nova. Só a medição passa enquanto `EFEITOS_PVE_LIGADOS` for `false`. */
+  efeitoElemento?: string;
 }
 
 const roleOf = (p: ArenaPlayerCfg) => (p.escolaBasica ? ROLE_SHAPE[escolaSkillSegura(p.escolaBasica)] : null);
@@ -481,7 +484,7 @@ export function arenaPlayerSide(p: ArenaPlayerCfg): FightSide {
   const role = roleOf(p);
   return {
     combatant: role ? { ...p.combatant, hp: p.combatant.hp * role.hp } : p.combatant,
-    special: specialOf(p.family),
+    special: comEfeitoDoElemento(specialOf(p.family), p.efeitoElemento),
     area: p.area,
   };
 }
@@ -600,6 +603,8 @@ export interface ArenaRunConfig {
   ladder?: number;
   /** §222: todos os inimigos deste elemento (mede o pior e o melhor confronto). */
   foeElement?: string;
+  /** §228: ver `ArenaPlayerCfg.efeitoElemento`. */
+  efeitoElemento?: string;
 }
 
 export interface ArenaRunResult {
@@ -623,7 +628,7 @@ const CHEER_CEILING_TAPS: readonly number[] = Array.from({ length: 30 * 16 }, (_
 export function simulateArenaRunV3(cfg: ArenaRunConfig, seed: number, skill: ArenaSkill = 'media', areaEfficiency?: number): ArenaRunResult {
   const p: ArenaPlayerCfg = {
     combatant: combatantAt(cfg.level, cfg.build), family: cfg.family, area: cfg.area,
-    escolaBasica: cfg.escolaBasica, elements: cfg.elements,
+    escolaBasica: cfg.escolaBasica, elements: cfg.elements, efeitoElemento: cfg.efeitoElemento,
   };
   const player0 = arenaPlayerSide(p);
   const role = cfg.knobs?.role;

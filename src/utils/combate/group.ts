@@ -22,7 +22,7 @@ import { damagePoints, EPS, HIT_UNIT_H0, hitUnit, hpPoints, startPoints, windowS
 import { PHASE_SALT, VARIANCE, ar1Multiplier, mulberry32, sideSeed, type VarianceConfig } from './rng';
 import { escolherAlvo } from './alvo';
 import {
-  AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special,
+  AREA_EFFICIENCY, AREA_FAMILIES, CHEER, cleanStartShield, ENERGY, EFFECT_TUNE, ENERGY_TRIGGER, SPECIAL_BUDGET_HITS, type Special,
 } from './specials';
 
 const MAX_EVENTS = 400_000;
@@ -124,6 +124,10 @@ interface G {
   nVuln: number;
   nSpd: number;
   nHit: number;
+  /** §228: golpes próprios que faltam de silêncio e de lentidão; pulsos de cura contínua. */
+  nSil: number;
+  nSlow: number;
+  nHot: number;
 }
 
 /** Seed of the stream of foe i (foe 0 is the 1v1 stream, so N = 1 ≡ fight()). */
@@ -158,7 +162,7 @@ export function* groupFightSteps(
     return {
       who, c, sp: s.special, area: s.area ?? 'single', mult: variance ? ar1Multiplier(r, variance) : () => 1,
       pts, hp: startPoints(hp0, pts) / pts, en: en0, shield: Math.round(cleanStartShield(s.startShield) * pts) / pts, next: interval(c.spd) * phases[who], casts: 0, dead: Infinity,
-      nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0,
+      nAtk: 0, nVuln: 0, nSpd: 0, nHit: 0, nSil: 0, nSlow: 0, nHot: 0,
     };
   };
   const pl = mk(player, 0, sideSeed(seed, 1), opts.startHp ?? 1, opts.startEnergy ?? 0);
@@ -192,6 +196,7 @@ export function* groupFightSteps(
       return {
         nAtk: f.nAtk, nVuln: f.nVuln, nSpd: f.nSpd, shield: f.shield,
         shieldHits: atk ? f.shield * hitsOn(atk, f) : 0, dot: left[i],
+        ...(f.nSil > EPS ? { nSil: f.nSil } : {}), ...(f.nSlow > EPS ? { nSlow: f.nSlow } : {}), ...(f.nHot > 0 ? { hot: f.nHot } : {}),
       };
     });
   };
@@ -258,12 +263,26 @@ export function* groupFightSteps(
         }
         break;
       case 'defDebuff':
-        for (const v of spread) v.nVuln += share;
+        const tune = sp.tune ?? EFFECT_TUNE;
+        for (const v of spread) {
+          if (sp.effect === 'slow') { v.nSlow += share * tune.slowScale; v.nVuln += share * tune.slowKeep; }
+          else if (sp.effect === 'silence' && v.sp) { v.nSil = Math.max(v.nSil, tune.silenceHits); v.nVuln += share * tune.silenceKeep; } // alvo sem especial: `defDebuff` inteiro
+          else v.nVuln += share;
+        }
         break;
       case 'heal':
         me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + Math.round((Eb / hitsOn(tgt, me)) * me.pts)) / me.pts;
         break;
       case 'shield':
+        if (sp.effect === 'hot') {
+          // §228: 3 pulsos de E/3 em pontos inteiros; param na morte de quem cura.
+          const pulse = Math.round((Eb * (sp.tune ?? EFFECT_TUNE).hotScale / 3 / hitsOn(tgt, me)) * me.pts);
+          me.nHot += 3;
+          for (let k = 1; k <= 3; k++) {
+            timed.push({ t: t0 + iv * k, fn: () => { me.nHot--; if (me.dead === Infinity) me.hp = Math.min(me.pts, Math.round(me.hp * me.pts) + pulse) / me.pts; } });
+          }
+          break;
+        }
         me.shield = (Math.round(me.shield * me.pts) + Math.round((Eb / hitsOn(tgt, me)) * me.pts)) / me.pts;
         break;
       case 'atkBuff':
@@ -287,7 +306,7 @@ export function* groupFightSteps(
     }
   }
   function* tryCast(me: G, tt: number): Generator<GroupEvent, void, number | undefined> {
-    if (me.sp && me.dead === Infinity && me.en >= ENERGY_TRIGGER - 1e-6) {
+    if (me.sp && me.dead === Infinity && me.nSil <= EPS && me.en >= ENERGY_TRIGGER - 1e-6) {
       me.en = Math.max(0, me.en - ENERGY_TRIGGER);
       me.casts++;
       const e = ev('cast', me.who, 0, me.casts - 1);
@@ -306,7 +325,8 @@ export function* groupFightSteps(
     }
     let tEn = Infinity;
     for (const f of all) {
-      if (f.sp && f.dead === Infinity) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
+      // §228: silenciado não acorda o relógio (com a barra cheia o tempo pararia); a energia segue guardada e sai no primeiro instante livre
+      if (f.sp && f.dead === Infinity && f.nSil <= EPS) tEn = Math.min(tEn, t + Math.max(0, ENERGY_TRIGGER - f.en) / ENERGY.perSecond);
     }
     let tN = Infinity;
     for (const f of all) if (f.dead === Infinity) tN = Math.min(tN, f.next);
@@ -331,6 +351,8 @@ export function* groupFightSteps(
       } else {
         me.next = t + interval(me.c.spd);
       }
+      if (me.nSlow > EPS) { const x = Math.min(1, me.nSlow); me.nSlow -= x; me.next += interval(me.c.spd) * x; }
+      if (me.nSil > EPS) me.nSil = Math.max(0, me.nSil - 1);
     }
     yield* flush();
     yield* markDead();

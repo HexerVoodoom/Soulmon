@@ -264,8 +264,8 @@ export function prefersReducedMotion(): boolean {
  * ─────────────────────────────────────────────────────────────────────────────────────────────── */
 
 /** Os efeitos visíveis num lutador. `maldicao` e `hot` ficam prontos, mas nenhuma família chega neles (Q-FX1, §2.13). */
-export type StatusFxKind = 'buff' | 'debuff' | 'maldicao' | 'dot' | 'queimadura' | 'veneno' | 'cura' | 'hot' | 'escudo';
-export const STATUS_FX_KINDS: readonly StatusFxKind[] = ['buff', 'debuff', 'maldicao', 'dot', 'queimadura', 'veneno', 'cura', 'hot', 'escudo'];
+export type StatusFxKind = 'buff' | 'debuff' | 'maldicao' | 'dot' | 'queimadura' | 'veneno' | 'silencio' | 'lento' | 'cura' | 'hot' | 'escudo';
+export const STATUS_FX_KINDS: readonly StatusFxKind[] = ['buff', 'debuff', 'maldicao', 'dot', 'queimadura', 'veneno', 'silencio', 'lento', 'cura', 'hot', 'escudo'];
 /** Qual atributo o buff/debuff mexe (escolhe o glifo e o texto). */
 export type StatusVariant = 'atk' | 'spd' | 'def' | 'fisico' | 'magico' | 'terra' | 'agua';
 
@@ -288,7 +288,7 @@ export interface StatusFxDef {
 const L = (en: string, pt: string): Bilingual => ({ en, pt });
 
 /** Glifos citados que ainda não têm arte (fila em docs/ASSETS-A-GERAR.md): o selo mostra forma + texto. */
-export const GLIFOS_PENDENTES: readonly string[] = ['st-queimadura', 'st-veneno'];
+export const GLIFOS_PENDENTES: readonly string[] = ['st-queimadura', 'st-veneno', 'st-silencio', 'st-lentidao'];
 
 export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
   buff: {
@@ -328,6 +328,18 @@ export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
     loop: 'fx-dot-loop-sheet', still: null, mark: '☣',
     label: { _: L('Poison', 'Veneno') },
     short: { _: L('PSN', 'VEN.') },
+  },
+  silencio: {
+    glyph: { _: 'st-silencio' },
+    loop: null, still: null, mark: '∅',
+    label: { _: L('Silenced', 'Silêncio') },
+    short: { _: L('MUTE', 'MUDO') },
+  },
+  lento: {
+    glyph: { _: 'st-lentidao' },
+    loop: 'fx-debuff-loop-sheet', still: null, mark: '▽',
+    label: { _: L('Speed down', 'Velocidade em baixa') },
+    short: { _: L('SLOW', 'LENTO') },
   },
   cura: {
     glyph: { _: 'st-cura' },
@@ -412,7 +424,7 @@ const CURSE_STATUS: FamilyStatus = { kind: 'maldicao', target: 'foe' };
 
 /** Os efeitos que NENHUMA família/escola alcança hoje (Q-FX1: `hot` pronto, inalcançável até a mecânica existir). */
 export const UNREACHABLE_STATUS_FX: readonly StatusFxKind[] = STATUS_FX_KINDS.filter(
-  (k) => k !== CURSE_STATUS.kind && k !== 'queimadura' && k !== 'veneno' && !Object.values(FAMILY_STATUS).some((f) => f?.kind === k),
+  (k) => k !== CURSE_STATUS.kind && !(['queimadura', 'veneno', 'silencio', 'lento', 'hot'] as StatusFxKind[]).includes(k) && !Object.values(FAMILY_STATUS).some((f) => f?.kind === k),
 );
 
 /** O efeito que uma família deixa (ou `null`); com a `escola` do especial, o debuff da maldição vira o selo de MALDIÇÃO. */
@@ -483,7 +495,7 @@ export function tickStatus(board: StatusBoard, ev: { kind: 'attack' | 'tick'; wh
 }
 
 /** Os efeitos cujos turnos o NÚCLEO conta de verdade (PR16). `cura` não tem contador (é instantânea): segue na aproximação. */
-const REAL_KINDS: readonly StatusFxKind[] = ['buff', 'debuff', 'maldicao', 'dot', 'queimadura', 'veneno', 'escudo'];
+const REAL_KINDS: readonly StatusFxKind[] = ['buff', 'debuff', 'maldicao', 'dot', 'queimadura', 'veneno', 'silencio', 'lento', 'hot', 'escudo'];
 const FX_EPS = 1e-9;
 /** Turnos que faltam de um contador do núcleo: o que sobra (mesmo fracionado) ainda vale um golpe. */
 const left = (x: number): number => (x > FX_EPS ? Math.max(1, Math.ceil(x - FX_EPS)) : 0);
@@ -517,6 +529,9 @@ export function withRealFx(
     if (f.nAtk > FX_EPS) real.push({ kind: 'buff', variant: atkVar, turns: left(f.nAtk), source: h });
     if (f.nSpd > FX_EPS) real.push({ kind: 'buff', variant: 'spd', turns: left(f.nSpd), source: h });
     if (f.nVuln > FX_EPS) real.push(curseOn(h) || recebido === 'maldicao' ? { kind: 'maldicao', turns: left(f.nVuln), source: -1 } : { kind: 'debuff', variant: 'def', turns: left(f.nVuln), source: -1 });
+    if ((f.nSil ?? 0) > FX_EPS) real.push({ kind: 'silencio', turns: left(f.nSil ?? 0), source: -1 });
+    if ((f.nSlow ?? 0) > FX_EPS) real.push({ kind: 'lento', turns: left(f.nSlow ?? 0), source: -1 });
+    if ((f.hot ?? 0) > 0) real.push({ kind: 'hot', turns: f.hot ?? 0, source: h });
     if (f.dot > 0) real.push({ kind: dotKind, turns: f.dot, source: -1 });
     if (f.shieldHits > FX_EPS && f.shield > FX_EPS) real.push({ kind: 'escudo', ...(escudoVar ? { variant: escudoVar } : {}), turns: left(f.shieldHits), source: h });
     return [...keep, ...real];

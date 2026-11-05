@@ -91,7 +91,7 @@ describe('FAMILY_STATUS — toda família do núcleo (PR1) mapeia, lida do módu
   });
 
   it('Q-FX1 (decisão §2.13, PR16): HoT segue PRONTO e INALCANÇÁVEL; a maldição só chega pela ESCOLA (nenhuma família sozinha)', () => {
-    expect([...UNREACHABLE_STATUS_FX]).toEqual(['hot']);
+    expect([...UNREACHABLE_STATUS_FX]).toEqual([]); // §225: cura contínua ligada em PvE
     expect(STATUS_FX.maldicao.loop).toBeTruthy(); // prontos de verdade (a arte existe)
     expect(STATUS_FX.hot.glyph._).toBeTruthy();
     for (const f of SPECIAL_FAMILIES) expect(['hot', 'maldicao']).not.toContain(FAMILY_STATUS[f]?.kind);

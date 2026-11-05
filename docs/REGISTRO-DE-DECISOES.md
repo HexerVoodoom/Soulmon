@@ -4067,6 +4067,7 @@ Todas as outras células (Ataque, levels 24+ e 33+, Velocidade em 23 e 32) deram
 - **Físico e mágico só visuais:** mesmo `atkBuff`, selo diferente.
 - **Silêncio não cancela:** a barra segue cheia e o especial sai quando acabar.
 - **Inimigos causam efeitos em PvE**, só depois de medir; desligado até lá.
+- **Calibração (05/11/2026, dono):** queimadura e veneno ficam só visuais. Silêncio impede o especial do alvo por X golpes dele, qualquer que seja o especial (X = 2; `defDebuff` inteiro). Cura contínua: Vida + `shield`, 3 pulsos, total × 1,05. Lentidão: Ar + `defDebuff`, mesma regra em Arena e Masmorra (golpes × 0,3, `defDebuff` × 0,58); o Pesadelo tem balanço próprio para qualquer mecânica (`EFFECT_TUNE_PESADELO`; lentidão × 0,15 e × 0,4). Gate: `efeitosPve.medicao.test.ts`.
 - **Alternativa que perdeu:** 25% do orçamento de todo especial vira o efeito do elemento (mediu dentro da régua no protótipo, mas o dono quer especial de dano direto puro).
 - **O que falsifica:** se a medição de Arena/Masmorra sair de ±3pp em vitória contra a mesma família sem efeito, a mecânica nova não liga; se poucos jogadores chegarem a um efeito (família com peso baixo no elemento), rever `AFINIDADE_ELEMENTO`.
 
