@@ -102,7 +102,7 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
     <ModalSheet open={open} onClose={onClose} language={language} title={isPt ? 'Editar perfil' : 'Edit profile'}>
       <div data-profile-editor style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
         <div style={{ display: 'flex', justifyContent: 'center', padding: 16 }}>
-          <UserAvatar avatarId={avatarId} frameId={frame?.id ?? null} seed={saveId} size={72} alt={isPt ? 'Sua foto de perfil' : 'Your profile picture'} />
+          <UserAvatar avatarId={avatarId} frameId={frame.id} seed={saveId} size={72} alt={isPt ? 'Sua foto de perfil' : 'Your profile picture'} />
         </div>
         {onChangeName && (
           <>
@@ -157,7 +157,7 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
         <p style={sm2Hint}>{isPt ? 'Trocar o e-mail: em breve.' : 'Changing your email: coming soon.'}</p>
 
         <h3 style={sec}>{isPt ? 'Moldura' : 'Frame'}</h3>
-        <FrameSelector ctx={ctx} equipped={frame?.id ?? null} onEquip={onChangeFrame} previewSrc={lineIconForStage(petStage, 32) ?? getSpriteForStage(petStage)} isPt={isPt} petElement={petElement} onOpenShop={onOpenFrameShop ?? requestOpenFrameShop} />
+        <FrameSelector ctx={ctx} equipped={frame.id} onEquip={onChangeFrame} previewSrc={lineIconForStage(petStage, 32) ?? getSpriteForStage(petStage)} isPt={isPt} petElement={petElement} onOpenShop={onOpenFrameShop ?? requestOpenFrameShop} />
 
         <h3 style={sec}>{isPt ? 'Foto' : 'Picture'}</h3>
         <Field type="search" value={q} onChange={e => setQ(e.target.value)} aria-label={isPt ? 'Buscar foto' : 'Search pictures'} placeholder={isPt ? 'Buscar' : 'Search'} />
