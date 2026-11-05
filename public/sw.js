@@ -1,8 +1,47 @@
 // Soulmon Service Worker — cache-first for static assets
 
-const CACHE_VERSION = 'v256';
+const CACHE_VERSION = 'v257';
 const STATIC_CACHE = `soulmon-static-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `soulmon-runtime-${CACHE_VERSION}`;
+/**
+ * O ACERVO DE ASSETS (05/11/2026, pedido do dono: "com internet ruim demora a carregar o cenário").
+ * Até aqui todo `/assets/*` morava no STATIC_CACHE, que tem a versão no nome — e o `activate` apaga
+ * tudo que não é da versão atual. Cada bump de CACHE_VERSION (centenas, ~100 MB de assets) jogava
+ * fora os cenários, sprites e chunks que NÃO mudaram, e o jogador baixava tudo de novo.
+ * Os arquivos de `/assets/` têm HASH DE CONTEÚDO no nome (arquivo mudou = nome mudou; guard em
+ * `src/deploy/swCache.contract.test.ts`), então são imutáveis: moram aqui, num cache SEM versão no
+ * nome que o bump não apaga. Só o que mudou é baixado. Teto `ASSET_CACHE_MAX` entradas (as mais
+ * antigas saem primeiro, no `activate`) para os nomes velhos não encherem o aparelho.
+ * Trocar o NOME deste cache (v1 → v2) é o único jeito de esvaziá-lo de propósito.
+ */
+const ASSET_CACHE = 'soulmon-assets-v1';
+const ASSET_CACHE_MAX = 6000;
+/** Nome com hash de conteúdo (`cenario-AbC123xY.webp`): imutável, pode ir para o ASSET_CACHE. */
+const temHash = (pathname) => /-[A-Za-z0-9_-]{8,}\.[a-z0-9]+$/.test(pathname);
+const cacheDoAsset = (pathname) => (temHash(pathname) ? ASSET_CACHE : STATIC_CACHE);
+
+/**
+ * Melhor-esforço: antes de apagar os caches de versão, os `/assets/` com hash que já estão neles passam
+ * para o ASSET_CACHE — quem já tem tudo guardado não baixa de novo na primeira versão com o acervo.
+ */
+function migrarParaAcervo(nomes) {
+  return caches.open(ASSET_CACHE).then((acervo) => Promise.all(nomes.map((nome) =>
+    caches.open(nome).then((c) => c.keys().then((reqs) => Promise.all(reqs.map((req) => {
+      const p = new URL(req.url).pathname;
+      if (!p.startsWith('/assets/') || !temHash(p)) return undefined;
+      return c.match(req).then((res) => (res ? acervo.put(req, res) : undefined)).catch(() => undefined);
+    })))).catch(() => undefined),
+  ))).catch(() => undefined);
+}
+
+/** Melhor-esforço: mantém o ASSET_CACHE abaixo do teto apagando os mais antigos (ordem de inserção). */
+function podarAcervo() {
+  return caches.open(ASSET_CACHE).then((c) => c.keys().then((keys) => {
+    const sobra = keys.length - ASSET_CACHE_MAX;
+    if (sobra <= 0) return undefined;
+    return Promise.all(keys.slice(0, sobra).map((k) => c.delete(k).catch(() => false)));
+  })).catch(() => undefined);
+}
 
 // Core shell — always cache on install
 const PRECACHE_URLS = [
@@ -49,7 +88,7 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
+    caches.keys().then((todas) => migrarParaAcervo(todas.filter((k) => k.startsWith('soulmon-static-'))).then(() => todas)).then((keys) =>
       Promise.all(
         keys
           // O prefixo antigo (`digiapp-`) continua na varredura DE PROPÓSITO:
@@ -57,7 +96,7 @@ self.addEventListener('activate', (event) => {
           // versão anterior, e só esta limpeza os alcança. Tirá-lo da lista
           // deixaria lixo permanente na origem — a única coisa que o rename de
           // 07/09/2026 poderia quebrar, e ela fica coberta.
-          .filter((k) => (k.startsWith('soulmon-') || k.startsWith('digiapp-')) && k !== STATIC_CACHE && k !== RUNTIME_CACHE)
+          .filter((k) => (k.startsWith('soulmon-') || k.startsWith('digiapp-')) && k !== STATIC_CACHE && k !== RUNTIME_CACHE && k !== ASSET_CACHE)
           // `.catch` por chave: se UMA delecao falhar (cache em uso, quota,
           // storage em modo estrito), o `Promise.all` rejeitaria e o
           // `self.clients.claim()` abaixo — que esta no `.then` — nunca
@@ -66,7 +105,7 @@ self.addEventListener('activate', (event) => {
           // fazer. Limpeza e melhor-esforco; assumir o controle nao e.
           .map((k) => caches.delete(k).catch(() => false))
       )
-    ).then(() => self.clients.claim(), () => self.clients.claim())
+    ).then(() => self.clients.claim(), () => self.clients.claim()).then(() => { podarAcervo(); })
   );
 });
 
@@ -127,7 +166,7 @@ self.addEventListener('fetch', (event) => {
             .then((res) => {
               if (!cacheavel(res)) throw new Error('WebP not found');
               const clone = res.clone();
-              caches.open(STATIC_CACHE).then((c) => c.put(webpRequest, clone));
+              caches.open(cacheDoAsset(new URL(webpUrl).pathname)).then((c) => c.put(webpRequest, clone));
               return res;
             })
             .catch(() =>
@@ -137,7 +176,7 @@ self.addEventListener('fetch', (event) => {
                   fetch(request).then((res) => {
                     if (cacheavel(res)) {
                       const clone = res.clone();
-                      caches.open(STATIC_CACHE).then((cache) => cache.put(request, clone));
+                      caches.open(cacheDoAsset(url.pathname)).then((cache) => cache.put(request, clone));
                     }
                     return res;
                   })
@@ -155,7 +194,7 @@ self.addEventListener('fetch', (event) => {
           fetch(request).then((res) => {
             if (cacheavel(res)) {
               const clone = res.clone();
-              caches.open(STATIC_CACHE).then((c) => c.put(request, clone));
+              caches.open(cacheDoAsset(url.pathname)).then((c) => c.put(request, clone));
             }
             return res;
           })

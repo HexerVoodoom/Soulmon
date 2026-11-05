@@ -1,5 +1,9 @@
 # Status do Soulmon — registro vivo
 
+> ## 05/11/2026 — Acervo de assets que sobrevive ao bump do cache (`public/sw.js`)
+>
+> - Antes: todo bump de `CACHE_VERSION` apagava os ~100 MB de `/assets/` (cenários, sprites, chunks), e o jogador baixava tudo de novo — sentido como lentidão com internet ruim. Agora `/assets/*` com hash no nome mora em `soulmon-assets-v1` (sem versão no nome), que o `activate` não apaga; teto `ASSET_CACHE_MAX` (poda dos mais antigos); na 1ª versão nova, os assets já guardados nos caches de versão são migrados. Testado no Chromium (bump simulado: acervo intacto; migração com a rede bloqueada para o arquivo). Guard: `swCache.contract.test.ts` §8. **Bump de `CACHE_VERSION` continua necessário** para HTML/ícones; para assets já não custa download.
+
 > ## 05/11/2026 — "Evoluiu para a mesma forma" + Formas alternativas
 >
 > - **Causa:** quando o cristal fechava SEM a arte nova (falha, 10 min sem arte, ou "Evoluir assim"), a evolução commitava e a barra zerava — e nenhuma ocasião voltava a pedir a forma ATUAL. O visor caía em `Object.values(ownSprites)[0]` (o sprite da forma anterior) para sempre. **Correção:** ocasião `R` (`currentFormRecovery`, `utils/spriteTrigger.ts`): forma atual sem sprite é pedida de novo (teto da forma/conta continua fechando a porta; falha espera o intervalo de sempre). Quem já está nessa situação recebe a arte sozinho ao abrir o app.
