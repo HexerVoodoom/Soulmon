@@ -1,0 +1,226 @@
+/* =============================================================================
+   Soulmon · site do beta · TOKENS (v1, 05/11/2026)
+   Fonte de verdade: docs/site-beta/DESIGN-SYSTEM.md. Mudou valor aqui, mude lá.
+   Origem das cores e da tipografia: app Soulmon, D:\Soulmon\repo\src\index.css,
+   blocos `[data-theme="dark"]` (canônico) e `:root, [data-theme="light"]`.
+   Prefixo `--sb-` (site beta). Nomes são estáveis: renomear exige alias.
+   Contraste: razão WCAG 2.x calculada sobre a luminância relativa sRGB
+   (valores na tabela §2.3 do DESIGN-SYSTEM.md). Nunca escolha par fora dela.
+   ============================================================================= */
+
+:root {
+  /* ---------------------------------------------------------------------------
+     1. COR · superfícies escuras (o Soulmon é noturno)
+     --------------------------------------------------------------------------- */
+  --sb-fundo:        #071413; /* página e véu; = --sm2-viewport-bg (escuro). L=0,0059 */
+  --sb-fundo-2:      #08191A; /* painel calmo (seções sem mapa); = --sm2-bg escuro */
+  --sb-sup:          #0F2A29; /* placa de painel, campo, miolo do 9-slice; = --sm2-surface */
+  --sb-sup-2:        #163735; /* linha ativa, aba selecionada; = --sm2-surface-2 */
+  --sb-linha:        #1E3F3C; /* divisória de 1px entre linhas da lista; = --sm2-line */
+
+  /* tinta sobre escuro */
+  --sb-tx:           #E9F5F2; /* texto principal. 16,8:1 sobre --sb-fundo; 13,6:1 sobre --sb-sup */
+  --sb-tx-2:         #9DBCB4; /* texto de apoio. 9,2:1 sobre --sb-fundo; 7,4:1 sobre --sb-sup */
+  --sb-pri:          #5FF3E0; /* turquesa da alma: link, foco, número vivo. 13,8:1 sobre --sb-fundo */
+  --sb-pri-2:        #29C9B8; /* turquesa fundo: borda de nó revelado, energia. 9,1:1 (não-texto) */
+  --sb-sobre-pri:    #04211F; /* texto sobre preenchimento turquesa. 12,4:1 sobre --sb-pri */
+
+  /* cobre (anel, moldura, ouro de número) */
+  --sb-ouro:         #EBBE84; /* texto dourado: "MISSÃO 0/3", número grande. 10,9:1 sobre --sb-fundo */
+  --sb-cobre:        #D9A05B; /* contorno da caixinha de tarefa; = --sm2-gold-fill. 8,2:1 */
+  --sb-anel:         #C68642; /* anel de cobre (aparelho, campo). 6,2:1 sobre --sb-fundo; 5,0:1 sobre --sb-sup */
+  --sb-anel-fundo:   #241507; /* aro interno escuro do anel; = --sm2-viewport-ring-deep escuro */
+  --sb-sobre-ouro:   #1C1006; /* número dentro do medalhão dourado. 10,9:1 sobre --sb-ouro */
+
+  /* estados */
+  --sb-erro:         #FF8B8B; /* borda de erro; = --sm2-danger-ink escuro. 8,3:1 sobre --sb-fundo */
+  --sb-erro-tx:      #FFC2B8; /* texto da mensagem de erro. 11,1:1 sobre --sb-erro-fundo */
+  --sb-erro-fundo:   #2D1512; /* placa da mensagem de erro */
+
+  /* rótulos de mídia (texto, nunca ícone em caixa) */
+  --sb-rot-gameplay: var(--sb-pri);  /* "Gameplay real" */
+  --sb-rot-demo:     var(--sb-ouro); /* "Demonstração" */
+  --sb-rot-cine:     var(--sb-tx-2); /* "Cinemática" */
+  --sb-rot-fundo:    rgba(7, 20, 19, .88);
+
+  /* véus sobre arte (calculados contra pixel BRANCO por baixo, o pior caso) */
+  --sb-veu-titulo:   rgba(7, 20, 19, .72); /* só --sb-tx (6,8:1) e --sb-pri (5,5:1) por cima */
+  --sb-veu-texto:    rgba(7, 20, 19, .82); /* qualquer tinta clara, inclusive --sb-tx-2 (5,4:1) */
+  --sb-veu-barra:    rgba(7, 20, 19, .94); /* barra superior rolada e CTA fixo */
+  --sb-veu-dialogo:  rgba(3, 10, 10, .80); /* ::backdrop do pop-up */
+
+  /* ---------------------------------------------------------------------------
+     1b. COR · superfície CLARA (só a seção "Como entrar")
+     Derivada do tema claro do app (`:root, [data-theme="light"]`).
+     --------------------------------------------------------------------------- */
+  --sb-claro-fundo:  #F1F7F5; /* = --sm2-bg claro */
+  --sb-claro-sup:    #FFFFFF; /* = --sm2-surface claro (cartão do passo) */
+  --sb-claro-sup-2:  #E9F2EF; /* = --sm2-surface-2 claro (faixa da regra das 50) */
+  --sb-claro-linha:  #DCE9E6; /* = --sm2-line claro (decorativa; não carrega informação) */
+  --sb-claro-tx:     #0E2422; /* 15,0:1 sobre --sb-claro-fundo; 16,2:1 sobre branco */
+  --sb-claro-tx-2:   #4E6B66; /* 5,4:1 sobre --sb-claro-fundo; 5,1:1 sobre --sb-claro-sup-2 */
+  --sb-claro-pri:    #0B6F68; /* link e FOCO no claro. 5,6:1 sobre --sb-claro-fundo */
+  --sb-claro-ouro:   #8A5A2B; /* número/realce dourado no claro. 5,4:1 */
+  --sb-claro-anel:   #B0722F; /* cobre que ainda passa 3:1 no claro (3,7:1). --sb-anel daria 2,8:1 */
+
+  /* ---------------------------------------------------------------------------
+     2. TIPOGRAFIA
+     Cinzel = título (caixa alta + versalete, nunca corpo). Rubik = todo o resto,
+     inclusive botão. Silkscreen NÃO entra no site (só existe dentro do visor do app).
+     --------------------------------------------------------------------------- */
+  --sb-fonte-titulo: 'Cinzel', Georgia, 'Times New Roman', serif;   /* = --sm2-font-display */
+  --sb-fonte-texto:  'Rubik', 'Segoe UI', system-ui, sans-serif;    /* = --sm2-font-text */
+
+  /* escala fluida: clamp(mínimo em 360-390, fluido, máximo em 1440). Valores medidos
+     nos breakpoints estão em DESIGN-SYSTEM.md §3.2 */
+  --sb-t-display:  clamp(2rem, 1.2rem + 3.4vw, 4rem);       /* H1 do hero: 32 → 64px */
+  --sb-t-numero:   clamp(3rem, 2rem + 5vw, 6rem);           /* número grande: 51 → 96px */
+  --sb-t-h2:       clamp(1.75rem, 1.25rem + 2.2vw, 3rem);   /* título de seção: 28 → 48px */
+  --sb-t-h3:       clamp(1.25rem, 1.1rem + .6vw, 1.5rem);   /* nome de criatura, passo: 20 → 24px */
+  --sb-t-lead:     clamp(1.0625rem, 1rem + .3vw, 1.25rem);  /* a frase única da seção: 17 → 20px */
+  --sb-t-corpo:    1rem;       /* 16px, piso de leitura corrida */
+  --sb-t-tarefa:   1.0625rem;  /* 17px, nome de tarefa (medido no print da Home) */
+  --sb-t-botao:    1.125rem;   /* 18px, botão 2x e 3x */
+  --sb-t-botao-p:  1rem;       /* 16px, botão compacto */
+  --sb-t-rotulo:   .875rem;    /* 14px, rótulo espaçado e caixa alta ("HOJE", "GAMEPLAY REAL") */
+  --sb-t-legal:    .875rem;    /* 14px, PISO ABSOLUTO do site. Nada menor. */
+
+  --sb-peso-texto:  400;
+  --sb-peso-medio:  500;
+  --sb-peso-forte:  600;  /* botão, rótulo */
+  --sb-peso-titulo: 700;  /* Cinzel */
+
+  --sb-lh-corpo:   1.5;
+  --sb-lh-titulo:  1.14;
+  --sb-lh-botao:   1;
+  --sb-ls-titulo:  .02em;  /* Cinzel respira um pouco */
+  --sb-ls-rotulo:  .12em;  /* rótulo em caixa alta, igual ao "HOJE" do app */
+
+  --sb-medida-frase: 34ch; /* largura máxima da frase única (cabe em 2 linhas a 390) */
+  --sb-medida-texto: 60ch; /* FAQ e privacidade */
+
+  /* ---------------------------------------------------------------------------
+     3. ESPAÇO (base 4; só estes degraus)
+     --------------------------------------------------------------------------- */
+  --sb-e-1: 4px;
+  --sb-e-2: 8px;
+  --sb-e-3: 12px;
+  --sb-e-4: 16px;
+  --sb-e-5: 24px;
+  --sb-e-6: 32px;
+  --sb-e-7: 48px;
+  --sb-e-8: 64px;
+  --sb-e-9: 96px;
+  --sb-e-10: 128px;
+  --sb-secao-y: clamp(64px, 4rem + 4vw, 128px); /* respiro vertical de painel calmo */
+
+  /* grade (valores para <768; os blocos @media abaixo sobrescrevem) */
+  --sb-colunas: 4;
+  --sb-calha: 16px;              /* gutter */
+  --sb-margem-esq: 24px;         /* inclui a barra lateral de 12px em left:4px */
+  --sb-margem-dir: 16px;
+  --sb-conteudo-max: 1200px;
+
+  /* ---------------------------------------------------------------------------
+     4. RAIO (três degraus do app + forma)
+     Moldura em asset 9-slice tem raio 0: o canto é desenhado na arte.
+     --------------------------------------------------------------------------- */
+  --sb-raio-0:  0;     /* 9-slice, campo de e-mail, rótulo */
+  --sb-raio-sm: 4px;   /* caixinha de tarefa (= --sm2-radius-sm) */
+  --sb-raio-md: 12px;  /* tela de print pequena (= --sm2-radius-md) */
+  --sb-raio-lg: 20px;  /* casca (= --sm2-radius-lg) */
+  --sb-raio-aparelho: 40px;      /* moldura de aparelho, borda externa */
+  --sb-raio-aparelho-tela: 28px; /* tela dentro da moldura */
+
+  /* ---------------------------------------------------------------------------
+     5. ELEVAÇÃO E BRILHO
+     Sombra é DURA (sem desfoque), como em pixel art. Desfoque só no brilho do cristal.
+     --------------------------------------------------------------------------- */
+  --sb-sombra-1: 0 4px 0 rgba(0, 0, 0, .40);   /* painel/ficha sobre cena */
+  --sb-sombra-2: 0 8px 0 rgba(0, 0, 0, .45);   /* pop-up, moldura de aparelho */
+  --sb-sombra-pe: rgba(0, 0, 0, .35);          /* elipse dura sob a criatura */
+  --sb-brilho-cristal: drop-shadow(0 0 4px rgba(95, 243, 224, .32)); /* = --sm2-check-glow */
+  --sb-brilho-criatura: drop-shadow(0 0 4px rgba(95, 243, 224, .32)); /* só a criatura-protagonista */
+
+  /* foco (WCAG 2.4.7 / 2.4.13): anel de 3px, nunca removido */
+  --sb-foco-cor: var(--sb-pri);
+  --sb-foco-cor-claro: var(--sb-claro-pri);
+  --sb-foco-largura: 3px;
+  --sb-foco-recuo: 3px;
+
+  /* ---------------------------------------------------------------------------
+     6. CAMADAS (z-index)
+     --------------------------------------------------------------------------- */
+  --sb-z-cena: -1;       /* mapa de fundo, dentro de seção com isolation:isolate */
+  --sb-z-conteudo: 1;
+  --sb-z-criatura: 2;    /* elenco pisando no cenário, à frente do mapa */
+  --sb-z-progresso: 10;  /* barra lateral de cobre */
+  --sb-z-topo: 30;       /* barra superior fixa */
+  --sb-z-cta: 40;        /* CTA fixo móvel */
+  --sb-z-pular: 50;      /* link "Pular para o conteúdo" */
+  --sb-z-dialogo: 100;   /* só fallback: <dialog> real vive na top layer */
+
+  /* ---------------------------------------------------------------------------
+     7. BREAKPOINTS (custom property NÃO funciona dentro de @media: estes valores
+     existem para JS ler via getComputedStyle e para documentar. No CSS, escreva
+     o número: 390px, 768px, 1024px, 1440px. Base = 360px.)
+     --------------------------------------------------------------------------- */
+  --sb-bp-min: 360px;   /* menor Android suportado; base do CSS */
+  --sb-bp-ref: 390px;   /* celular de referência (capturas do benchmark) */
+  --sb-bp-tab: 768px;   /* tablet / celular deitado */
+  --sb-bp-desk: 1024px; /* desktop: barra superior ganha CTA, some o CTA fixo */
+  --sb-bp-wide: 1440px; /* desktop de referência; escala tipográfica para de crescer */
+
+  /* ---------------------------------------------------------------------------
+     8. MOVIMENTO (vocabulário do app + 3 do site)
+     --------------------------------------------------------------------------- */
+  --sb-dur-toque:   120ms;  /* hover, pressionado (= --sm2-dur-tap) */
+  --sb-dur-entrada: 200ms;  /* CTA fixo entrando, pop-up abrindo (= --sm2-dur-enter) */
+  --sb-dur-pagina:  320ms;  /* troca de aba, troca de ficha (= --sm2-dur-page) */
+  --sb-dur-cena:    480ms;  /* troca de cenário de fundo entre seções (só do site) */
+  --sb-dur-flutua:  1600ms; /* ciclo da flutuação do elenco, em steps(2) (só do site) */
+  --sb-dur-carrega: 900ms;  /* ciclo dos 3 cristais no botão carregando, steps(3) (só do site) */
+  --sb-ease: cubic-bezier(.2, 0, 0, 1);   /* UMA curva (= --sm2-ease) */
+  --sb-ease-linear: linear;                /* só para o que segue a rolagem (barra enchendo) */
+  --sb-passo-flutua: 4px;  /* deslocamento da flutuação = 1 pixel de arte numa escala 4x; ver §8 */
+}
+
+/* --- grade por breakpoint ------------------------------------------------- */
+@media (min-width: 768px) {
+  :root { --sb-colunas: 8; --sb-calha: 24px; --sb-margem-esq: 48px; --sb-margem-dir: 32px; }
+}
+@media (min-width: 1024px) {
+  :root { --sb-colunas: 12; --sb-calha: 24px; --sb-margem-esq: 64px; --sb-margem-dir: 40px; }
+}
+@media (min-width: 1440px) {
+  :root { --sb-calha: 32px; }
+}
+
+/* --- movimento reduzido: reduz MOVIMENTO, nunca a pausa nem a informação ---- */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --sb-dur-toque: 0ms;
+    --sb-dur-entrada: 0ms;
+    --sb-dur-pagina: 0ms;
+    --sb-dur-cena: 0ms;       /* cenário troca por corte */
+    --sb-dur-flutua: 0ms;     /* elenco parado */
+    --sb-dur-carrega: 0ms;    /* "Enviando..." em texto, sem cristal piscando */
+    --sb-passo-flutua: 0px;
+  }
+}
+
+/* --- seção clara: troca os papéis, não os nomes ----------------------------- */
+.sb-claro {
+  --sb-foco-cor: var(--sb-claro-pri);
+  color: var(--sb-claro-tx);
+  background: var(--sb-claro-fundo);
+}
+
+/* --- ponte com o site.css atual (mesmos valores; apagar quando o site migrar) -- */
+:root {
+  --fundo: var(--sb-fundo);   --fundo-2: var(--sb-fundo-2);
+  --sup: var(--sb-sup);       --sup-2: var(--sb-sup-2);
+  --tx: var(--sb-tx);         --tx-2: var(--sb-tx-2);
+  --pri: var(--sb-pri);       --pri-2: var(--sb-pri-2);
+  --cobre: var(--sb-cobre);   --cobre-cl: var(--sb-ouro); --anel: var(--sb-anel);
+}
