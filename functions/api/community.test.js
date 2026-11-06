@@ -85,6 +85,9 @@ const ACOES_COM_ATOR = [
   { action: 'giftsAck', method: 'POST', body: { id: VITIMA, gids: ['g1'] } },
   { action: 'mail', method: 'GET', params: { id: VITIMA } },
   { action: 'mailAck', method: 'POST', body: { id: VITIMA, mids: ['m1'] } },
+  { action: 'mailRead', method: 'POST', body: { id: VITIMA, mids: ['m1'] } },
+  { action: 'mailClaim', method: 'POST', body: { id: VITIMA, all: true } },
+  { action: 'mailDelete', method: 'POST', body: { id: VITIMA, mids: ['m1'], force: true } },
   // Cooperativo (Fase 4.3). `coopLeave` entra aqui por ser DESTRUTIVO — sem
   // autorização, uma requisição expulsaria qualquer pessoa do grupo dela.
   { action: 'coop', method: 'GET', params: { id: VITIMA } },

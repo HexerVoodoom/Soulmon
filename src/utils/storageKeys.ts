@@ -217,6 +217,8 @@ export const STORAGE_KEYS = {
    *  respostas 200 são possíveis, e é esta lista que impede o segundo crédito de Emblemas.
    *  Só recibos (nada de nome, guilda ou quantia). Dono: `utils/guildClaimLocal.ts`. */
   GUILD_CLAIMED: 'soulmon-guild-claimed',
+  /** Caixa de cartas (§245): os `mid` das cartas novas que o Papus JÁ anunciou neste aparelho (CSV, até 50). Só o aviso da fila; o resto mora no servidor. */
+  MAIL_ANNOUNCED: 'soulmon-mail-announced',
   /** Feira do Chefe: o último evento da volta que a fila JÁ mostrou (`<k>:<kind>:<dia>`), gravado ao MOSTRAR. */
   FEIRA_EVENTO_VISTO: 'soulmon-feira-evento-visto',
   /** Feira (04/11/2026): o desafio que a volta da Missão trouxe HOJE (`{ day, k, done }`). Só do aparelho, nunca no
