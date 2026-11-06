@@ -42,3 +42,38 @@
 **Fora desta lista (não é ChatGPT):** loop real de 8 a 15 s ou sequência de capturas (Fatia 1, §17), poster do vídeo, animação do cabo (só efeito, sem copy), silhuetas da árvore (sprites com `brightness(0)`), mapas.
 
 **Prontos, não gerar:** 20 ícones `src/assets/soulmon/elementos/el-<base>.png`, sprites de `novos/` (usar linha **planta**), mapas de `areas/` e `mapa/`.
+
+## Arte-chave do hero (aprovada pelo dono em 06/11/2026: gerar)
+
+Objetivo: uma ilustração única em que as criaturas parecem parte da cena, no lugar de sprites soltos sobre o mapa. Referência de nível: Sea of Stars e Ori (`_pesquisa/benchmark-sites/seaofstars/d1.png`, `ori/d1.png`): personagens grandes, no chão, iluminados pela cena, uma silhueta dominante.
+
+**Decisão de método (squad-design): o gerador NÃO desenha as criaturas.** O gerador tem teto ao reproduzir sprite fielmente dentro de cena nova, e combinar duas referências faz uma vazar na outra. Por isso: (1) o gerador faz **só o cenário, com plataformas vazias**, com UM anexo (o mapa); (2) os **sprites reais** entram depois, por composição em pixel. Criatura 100% fiel por construção; o encaixe de luz e chão passa a ser nosso.
+
+**Anexar (só um):** o mapa `bg-exploracao.png` da `main` (cópia em `E:\Soulmon-marketing\site-assetsef-bg-exploracao.png`). Não anexar logo nem sprites.
+
+**Duas imagens, uma conversa cada** (a linha de proporção vai no fim do prompt):
+
+| Nome | Proporção | Área calma para texto | Plataformas vazias |
+|---|---|---|---|
+| `hero-cena-desktop` | 16:9 | terço esquerdo escuro e simples | 6, no centro e na direita |
+| `hero-cena-celular` | 9:16 | terço superior escuro e simples | 6, nos dois terços de baixo |
+
+**Prompt do cenário** (trocar o trecho entre colchetes por formato):
+
+> Environment key art for a creature-collecting mobile game, pixel art in the exact style, palette and pixel density of the attached map. One single cohesive scene: a floating island of mossy stone ruins, arches, stairs, vines, waterfalls and glowing turquoise soul crystals with flames inside, at night, over dark clouds. Dark turquoise base tone like the map, not purple. Include six clearly empty flat stone platforms and ledges at different heights and depths, each one a wide flat area with nothing on it, lit by nearby crystals; the largest one is in the foreground [right of center / lower center]. THE SCENE CONTAINS NO CREATURES, NO ANIMALS, NO CHARACTERS, NO STATUES OF CREATURES: the platforms are empty. A few thin copper conduits with glowing circuit traces and small leaf sprigs connect the crystals, in small quantity. Calm arcane mood, nature and magic. Keep the [left third / top third] dark, simple and low-detail for text. No text, no logo, no UI, no frame, no gears, no cogs, no rivets, no valves, no chimneys, no steampunk, no humans. [16:9 landscape / 9:16 portrait] full-bleed composition.
+
+**Elenco (sprites reais de `src/assets/soulmon/novos/`):** `fogo-ultimate` (herói, maior), `luz-mega`, `agua-mega`, `planta-ultimate`, `terra-ultimate`, `sombra-ultra` (reserva: `morte-ultimate`). Nenhuma criatura de `starters/`. `ar-champion` saiu: o pégaso branco lembra personagem de franquia famosa.
+
+**Composição dos sprites (por pixel, depois da aprovação do cenário):**
+1. Marcar à mão os planos reais que saíram.
+2. Escalar cada sprite por nearest, sem suavizar; dragão cerca de 1,6x os demais; plano ao fundo = sprite menor.
+3. Espelhar o dragão se precisar, para olhar o centro.
+4. Pés sobre o plano; sombra de contato elíptica, 35 a 45% de opacidade.
+5. Leve borda turquesa do lado do cristal mais próximo, sem mexer na paleta do sprite.
+6. Nenhum sprite sobre a área de texto nem cortado pela borda.
+
+Arquivos finais compostos: `hero-arte-desktop` e `hero-arte-celular`.
+
+**Conferir antes de aprovar:** (cenário) zero criaturas; seis planos utilizáveis; área calma utilizável; sem engrenagem ou steampunk; densidade de pixel coerente com o mapa; base turquesa, não roxa. (composição) criaturas idênticas aos sprites; todas com chão e sombra; dragão domina; texto legível. Destino: `E:\Soulmon-marketing\site-assets\`.
+
+Revisado pela squad-design, 06/11/2026.

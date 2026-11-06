@@ -73,7 +73,10 @@ Calculado contra o **pior caso: um pixel branco** sob o véu (o Hall tem nuvens 
 
 O véu cobre **só** a área do texto mais 24px de folga (gradiente que chega a 0 em 64px), nunca a cena inteira. Medição obrigatória: amostrar o pixel renderizado (Playwright + Pillow) atrás de cada bloco de texto em 390 e 1440; o footgun 10 do app mostra que screenshot pequeno engana.
 
-### 2.5 Superfície clara (seção "Como entrar")
+### 2.5 Superfície clara (APOSENTADA na v3.1, 06/11/2026)
+
+**Não usar.** Como entrar voltou ao escuro (painel calmo `--sb-fundo-2` com os passos na moldura 9-slice `painel`, a mesma da ficha). O ritmo da página vem de **cena cheia x painel calmo**, sem superfície clara. Os tokens `--sb-claro-*` ficam no `tokens.css` só por compatibilidade; a tabela abaixo é histórica.
+
 
 Derivada do tema claro do app. É a única seção clara (ritmo claro e escuro de Sea of Stars `d3`/`d4` e Stardew `d2`).
 
@@ -184,7 +187,8 @@ A margem esquerda é maior porque a barra lateral de cobre (§6.9) ocupa 12px em
 | 5 O universo | Hall | `mapa/hall-*` | palácio do céu (nuvens claras: véu 0,82 obrigatório) |
 | 6 O que você faz | Arena | `mapa/arena-*` | arena central |
 | 7 Abertura | painel calmo | | |
-| 8 Como entrar | Guilda (faixa de 40svh sem texto) + superfície clara | `mapa/guilda-*` | praça |
+| 8 Como entrar | painel calmo escuro (v3.1) | | |
+| 10 Entre no beta (v3.1) | Guilda inteira | `mapa/guilda-*`, `guilda-fecho-d` | praça do cristal |
 | 9 Perguntas | painel calmo | | |
 | 10 Entre no beta | Exploração (fecha o ciclo do hero) | `mapa/exploracao-*` | outro recorte: base com cachoeiras |
 
@@ -547,4 +551,5 @@ LCP mobile < 2,5s (imagem LCP = mapa do hero, AVIF 480/620, `fetchpriority="high
 
 ## 10. Changelog
 
+- **v3.1, 06/11/2026:** superfície clara aposentada (§2.5); escala de pixel única por cena (hero 3x no celular, 4x no desktop); véu em degradê mascarado (sem borda dura); moldura `painel` em lista de tarefas, cartões e passos; setas do carrossel com placa escura; número grande com um padrão só ("20 elementos", "+200 combinações").
 - **v1, 05/11/2026:** primeira versão. Tokens `--sb-*` com ponte para os nomes do `site.css`; breakpoint de desktop sai de 900 para 1024; título da lista de tarefas sai de Cinzel para rótulo Rubik (como no jogo); brilho da criatura cai de 6px/55% para 4px/32%; piso de texto 14px; superfície clara criada para "Como entrar".

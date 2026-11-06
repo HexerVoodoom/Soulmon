@@ -8,10 +8,10 @@ const pt = {
   html: 'pt-BR', idioma: 'pt-BR', home: '/', priv: '/privacidade/', outraHome: '/en/', outraPriv: '/en/privacy/', outraNome: 'English', outraCod: 'en',
   titulo: 'Soulmon: criaturas que evoluem com suas tarefas', desc: 'Jogo de criaturas para Android. Conclua tarefas do seu dia e veja seu Soulmon ganhar novas formas. Entre no beta.',
   pular: 'Pular para o conteúdo', logoAlt: 'Soulmon', logoTopo: 'Soulmon, voltar ao topo',
-  h1: 'Criaturas que evoluem com suas tarefas.', cta: 'Entrar no beta', ctaEspera: 'Entrar na lista',
+  h1: 'Criaturas que evoluem com suas tarefas.', cta: 'Entrar no beta', ctaEspera: 'Entrar na fila',
   hero: {
     vagasNum: '50', vagasTx: 'vagas no beta para Android.',
-    vagasEspera: 'Vagas desta rodada preenchidas. Entre na lista.',
+    vagasEspera: 'Vagas desta rodada preenchidas. Entre na fila.',
     ver: 'Ver o jogo', loja: 'Android, pela Google Play.',
   },
   n404: { h1: 'Página não encontrada', p: 'Esse endereço não existe, ou mudou de lugar.', volta: 'Voltar ao início' },
@@ -29,7 +29,7 @@ const pt = {
   },
   ciclo: {
     h2: 'Faz a tarefa, seu Soulmon evolui.',
-    frase: 'Marque as tarefas e veja a forma mudar.',
+    frase: 'A tela de verdade, e uma demonstração para você tocar.',
     demo: 'No jogo, evoluir leva dias.',
     hoje: 'Hoje', missao: 'Missão', habitos: 'Hábitos',
     tarefasRotulo: 'Tarefas de exemplo',
@@ -43,7 +43,7 @@ const pt = {
   soul: {
     h2: 'Seu Soulmon é só seu',
     frase: 'Nasce de um teste de personalidade; o elemento muda o corpo e o combate.',
-    num: '20', numTx: 'elementos', num2: 'mais de 200', num2Tx: 'combinações',
+    num: '20', numTx: 'elementos', num2: '+200', num2Tx: 'combinações',
     arvoreH: 'Cinco formas, três caminhos',
     caminhos: ['Poder', 'Harmonia', 'Benevolência'],
     arvoreRotulo: 'Árvore de evolução: um caminho revelado, os outros em sombra',
@@ -59,13 +59,15 @@ const pt = {
     habitanteAlt: 'Habitante do Soulmon',
     jogos: [['ppt', 'Pedra-papel-tesoura'], ['mente', 'Mind Workshop'], ['rift', 'Endless Rift'], ['duelo', 'Duelo na Arena'], ['torneio', 'Torneio'], ['guilda', 'Guilda'], ['combina', 'Combina 3'], ['barrage', 'Soul Barrage'], ['corrida', 'Corrida']],
     els: { agua: 'Água', ar: 'Ar', arcano: 'Arcano', eletricidade: 'Eletricidade', espaco: 'Espaço', fada: 'Fada', fogo: 'Fogo', gravidade: 'Gravidade', industrial: 'Industrial', luz: 'Luz', marcial: 'Marcial', morte: 'Morte', planta: 'Planta', som: 'Som', sombra: 'Sombra', tempo: 'Tempo', terra: 'Terra', vida: 'Vida', vigor: 'Vigor', vileza: 'Vileza' } as Record<string, string>,
-    ocultoRotulo: 'Elemento ainda não revelado',
+    ocultoRotulo: 'Elemento ainda não revelado', combinacoes: '+190 combinações', combinacoesTx: 'Os 20 elementos se combinam em pares.',
+    lugares: { exploracao: 'Passeio e Endless Rift.', jogos: 'Minijogos e Mind Workshop.', arena: 'Torneio e duelos.', hall: 'Feira, amigos e Grove.', guilda: 'Casa e Missão do clã.', laboratorio: 'Evolução e perfil do Soulmon.' } as Record<string, string>,
     anterior: 'Anterior', proximo: 'Próximo',
   },
   recursos: {
     h2: 'O que você faz', frase: 'Cuide, explore e jogue, um pouco por dia.',
     cartoes: [
-      ['home', 'Sua lista do dia', 'Hábitos feitos viram energia.', 'Tela inicial do Soulmon: a criatura e a lista de hábitos de hoje.'],
+      ['combate', 'Combate por elemento', 'O elemento conta na batalha.', 'Combate na Arena do Soulmon: seu Soulmon contra um adversário, com as barras de vida.'],
+      ['rift', 'Endless Rift', 'Uma descida sem teto de camadas.', 'Endless Rift no Soulmon: camada 1, luta contra um Soulmon selvagem.'],
       ['hall', 'Amigos e guilda', 'Presentes, Feira e Salão do Clã.', 'Mapa do Hall no Soulmon, com Feira, Grove e Salão do Clã.'],
       ['jogos', 'Jogos rápidos', 'Minijogos que rendem Bits.', 'Mapa dos Jogos no Soulmon, com Salão de Jogos e Ateliê da Mente.'],
     ] as [string, string, string, string][],
@@ -83,7 +85,7 @@ const pt = {
   form: {
     h2: 'Seu Soulmon está esperando.',
     email: 'E-mail', dica: 'E-mail da conta Google usada na Play Store.',
-    enviar: 'Entrar no beta', enviando: 'Enviando…',
+    enviar: 'Entrar no beta', enviarEspera: 'Entrar na fila', enviando: 'Enviando…',
     legalA: 'Ao entrar, você aceita a', legalLink: 'política de privacidade', legalB: 'e declara ter 18 anos ou mais.',
     okH: 'Parabéns, você se inscreveu no beta!',
     ok: 'Seu e-mail foi cadastrado com sucesso. Em até 24 horas você receberá o link para fazer o download.',
@@ -111,7 +113,7 @@ const pt = {
     h2: 'Perguntas',
     itens: [
       ['Quanto custa?', 'Entrar no beta não custa nada. O jogo tem loja, e compras dentro do beta são de teste.'],
-      ['Funciona no iPhone?', 'Por ora, só Android.'],
+      ['Funciona no iPhone?', 'Não. O beta é só para Android.'],
       ['O que preciso fazer depois de entrar?', 'O teste fechado da Play exige que você continue participando por 14 dias.'],
       ['Quanto tempo tenho para aceitar o convite?', 'Após receber o convite, você terá 7 dias para aceitá-lo. Depois disso, a vaga passa para o próximo da fila.'],
       ['E se as vagas esgotarem?', 'A primeira leva terá 50 vagas, oferecidas aos primeiros 50 cadastros válidos, por ordem de inscrição. Os convites serão enviados em levas. Após o preenchimento das vagas, novas inscrições entrarão na lista de espera. A inscrição não libera acesso imediato ao jogo.'],
@@ -127,10 +129,10 @@ const en: typeof pt = {
   html: 'en', idioma: 'en', home: '/en/', priv: '/en/privacy/', outraHome: '/', outraPriv: '/privacidade/', outraNome: 'Português', outraCod: 'pt-BR',
   titulo: 'Soulmon: creatures that evolve with your tasks', desc: 'A creature game for Android. Finish tasks from your day and watch your Soulmon take on new forms. Join the beta.',
   pular: 'Skip to content', logoAlt: 'Soulmon', logoTopo: 'Soulmon, back to top',
-  h1: 'Creatures that evolve with your tasks.', cta: 'Join the beta', ctaEspera: 'Join the waitlist',
+  h1: 'Creatures that evolve with your tasks.', cta: 'Join the beta', ctaEspera: 'Join the line',
   hero: {
     vagasNum: '50', vagasTx: 'spots in the Android beta.',
-    vagasEspera: 'This round is full. Join the waitlist.',
+    vagasEspera: 'This round is full. Join the line.',
     ver: 'See the game', loja: 'Android, via Google Play.',
   },
   n404: { h1: 'Page not found', p: 'That address does not exist, or it moved.', volta: 'Back to home' },
@@ -148,7 +150,7 @@ const en: typeof pt = {
   },
   ciclo: {
     h2: 'Do the task, your Soulmon evolves.',
-    frase: 'Check off tasks and watch it change.',
+    frase: 'The real screen, and a demo you can tap.',
     demo: 'In the game, evolving takes days.',
     hoje: 'Today', missao: 'Mission', habitos: 'Habits',
     tarefasRotulo: 'Sample tasks',
@@ -162,7 +164,7 @@ const en: typeof pt = {
   soul: {
     h2: 'Your Soulmon is yours alone',
     frase: 'Born from a personality test; its element shapes its body and its fights.',
-    num: '20', numTx: 'elements', num2: '200+', num2Tx: 'combinations',
+    num: '20', numTx: 'elements', num2: '+200', num2Tx: 'combinations',
     arvoreH: 'Five forms, three paths',
     caminhos: ['Power', 'Harmony', 'Benevolence'],
     arvoreRotulo: 'Evolution tree: one path revealed, the others in shadow',
@@ -178,13 +180,15 @@ const en: typeof pt = {
     habitanteAlt: 'Soulmon inhabitant',
     jogos: [['ppt', 'Rock-paper-scissors'], ['mente', 'Mind Workshop'], ['rift', 'Endless Rift'], ['duelo', 'Arena duel'], ['torneio', 'Tournament'], ['guilda', 'Guild'], ['combina', 'Match 3'], ['barrage', 'Soul Barrage'], ['corrida', 'Runner']],
     els: { agua: 'Water', ar: 'Air', arcano: 'Arcane', eletricidade: 'Electricity', espaco: 'Space', fada: 'Fairy', fogo: 'Fire', gravidade: 'Gravity', industrial: 'Industrial', luz: 'Light', marcial: 'Martial', morte: 'Death', planta: 'Plant', som: 'Sound', sombra: 'Shadow', tempo: 'Time', terra: 'Earth', vida: 'Life', vigor: 'Vigor', vileza: 'Vileness' },
-    ocultoRotulo: 'Element not revealed yet',
+    ocultoRotulo: 'Element not revealed yet', combinacoes: '+190 combinations', combinacoesTx: 'The 20 elements combine in pairs.',
+    lugares: { exploracao: 'Strolls and the Endless Rift.', jogos: 'Minigames and Mind Workshop.', arena: 'Tournament and duels.', hall: 'The Fair, friends and the Grove.', guilda: "Your clan's House and Mission.", laboratorio: "Evolution and your Soulmon's profile." },
     anterior: 'Previous', proximo: 'Next',
   },
   recursos: {
     h2: 'What you do', frase: 'Care, explore and play, a little each day.',
     cartoes: [
-      ['home', 'Your list for today', 'Finished habits become energy.', 'Soulmon home screen: the creature and today\'s habit list.'],
+      ['combate', 'Elemental combat', 'Your element counts in battle.', 'Soulmon Arena combat: your Soulmon against an opponent, with health bars.'],
+      ['rift', 'Endless Rift', 'A descent with no floor limit.', 'Soulmon Endless Rift: layer 1, a fight against a wild Soulmon.'],
       ['hall', 'Friends and guild', 'Gifts, the Fair and the Clan Hall.', 'Soulmon Hall map, with the Fair, the Grove and the Clan Hall.'],
       ['jogos', 'Quick games', 'Minigames that earn Bits.', 'Soulmon Games map, with the Game Hall and the Mind Workshop.'],
     ],
@@ -202,7 +206,7 @@ const en: typeof pt = {
   form: {
     h2: 'Your Soulmon is waiting.',
     email: 'Email', dica: 'Google Account email used for the Play Store.',
-    enviar: 'Join the beta', enviando: 'Sending…',
+    enviar: 'Join the beta', enviarEspera: 'Join the line', enviando: 'Sending…',
     legalA: 'By joining, you accept the', legalLink: 'privacy policy', legalB: 'and declare you are 18 or older.',
     okH: 'Congratulations, you joined the beta!',
     ok: 'Your email was registered successfully. Within 24 hours you will receive the download link.',
@@ -230,7 +234,7 @@ const en: typeof pt = {
     h2: 'Questions',
     itens: [
       ['What does it cost?', 'Joining the beta costs nothing. The game has a shop, and purchases during the beta are test purchases.'],
-      ['Does it work on iPhone?', 'For now, Android only.'],
+      ['Does it work on iPhone?', 'No. The beta is Android only.'],
       ['What do I need to do after joining?', 'The Play closed test requires you to stay in for 14 days.'],
       ['How long do I have to accept the invitation?', "Once you receive your invitation, you'll have 7 days to accept it. After that, the spot goes to the next person in line."],
       ['What if the spots run out?', 'The first wave has 50 spots, offered to the first 50 valid sign-ups in registration order. Invitations will be sent in batches. Once all spots are filled, new sign-ups will join the waitlist. Signing up does not grant immediate access to the game.'],

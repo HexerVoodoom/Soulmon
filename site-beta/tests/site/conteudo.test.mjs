@@ -32,10 +32,14 @@ describe('copy do site', () => {
   it('prova real: loop e prints de gameplay nos dois idiomas', () => {
     for (const l of ['pt', 'en']) {
       expect(midia.videos[l].filter((v) => v.gameplay === true && existsSync(`public${v.src}`) && existsSync(`public${v.poster}`))).toHaveLength(1);
-      expect(midia.prints[l].filter((p) => p.gameplay === true && existsSync(`public${p.src}`))).toHaveLength(3);
+      expect(midia.prints[l].filter((p) => p.gameplay === true && existsSync(`public${p.src}`))).toHaveLength(4); // Combate, Endless Rift, Hall, Jogos
     }
     expect(midia.abertura.gameplay).toBe(false);
-    for (const l of ['pt', 'en']) { expect(midia.trailer[l].gameplay).toBe(false); expect(existsSync(`public${midia.trailer[l].src}`)).toBe(true); }
+    // trailer de 06/11 vetado (rótulos internos e "ciência do comportamento"): slot desligado e fora de public/
+    for (const l of ['pt', 'en']) { expect(midia.trailer[l].gameplay).toBe(false); if (!midia.trailer[l].ativo) expect(existsSync(`public${midia.trailer[l].src}`)).toBe(false); }
+  });
+  it('nada de rótulo interno de estágio na copy pública', () => {
+    expect(JSON.stringify({ ...TEXTOS.pt, ciclo: { ...TEXTOS.pt.ciclo, formas: [] } }) + JSON.stringify({ ...TEXTOS.en, ciclo: { ...TEXTOS.en.ciclo, formas: [] } })).not.toMatch(/rookie|champion|ultimate|mega|ultra/i);
   });
   it('landing não usa arte vetada', () => {
     for (const t of ['starters/', 'mapas-recriados', 'bg-mapa', 'mapa/mercado', 'mapa/forja', 'mapa-mundi', 'type="checkbox"']) expect(landing).not.toContain(t);
@@ -46,6 +50,13 @@ describe('copy do site', () => {
     expect(TEXTOS.en.form.esperaH + ' ' + TEXTOS.en.form.espera).toBe('This round is full. Another round is coming and your email is already in line. Thanks for your interest in Soulmon!');
     expect(TEXTOS.pt.form.enviar).toBe('Entrar no beta');
     expect(TEXTOS.en.form.enviar).toBe('Join the beta');
+    // estado de espera (decisão do dono, 06/11): botão do formulário e CTAs
+    expect(TEXTOS.pt.form.enviarEspera).toBe('Entrar na fila');
+    expect(TEXTOS.en.form.enviarEspera).toBe('Join the line');
+    expect(TEXTOS.pt.ctaEspera).toBe('Entrar na fila');
+    expect(TEXTOS.en.ctaEspera).toBe('Join the line');
+    // plataforma: só Android, sem "por ora" (FEATURE_TRUTH)
+    expect(JSON.stringify(TEXTOS).toLowerCase()).not.toMatch(/por ora|for now|em breve|coming soon/);
   });
   it('antes de cadastrar, nunca diz que o e-mail já está na fila', () => {
     expect(TEXTOS.pt.form.esperaPre).not.toContain('já está');

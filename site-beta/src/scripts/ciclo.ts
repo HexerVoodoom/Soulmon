@@ -36,7 +36,12 @@ export async function iniciar(S: Strs, fraco: boolean) {
   };
   const concluir = () => {
     aplicarForma();
-    if (estagio === S.formas.length - 1) { blocoTarefas.hidden = true; fim.hidden = false; }
+    if (estagio === S.formas.length - 1) {
+      // a lista some: o foco não pode se perder junto com ela; vai para o CTA do fim da demo
+      const tinhaFoco = blocoTarefas.contains(document.activeElement);
+      blocoTarefas.hidden = true; fim.hidden = false;
+      if (tinhaFoco) fim.querySelector<HTMLElement>('a, button')?.focus();
+    }
   };
   const missao = document.querySelector<HTMLElement>('[data-missao]');
   const contar = () => { if (missao) missao.textContent = `${botoes.filter((x) => x.getAttribute('aria-checked') === 'true').length}/${botoes.length}`; };
@@ -57,6 +62,7 @@ export async function iniciar(S: Strs, fraco: boolean) {
     const x1 = px(cr.left + cr.width / 2 - base.left - 12);
     const y1 = px(cr.top + cr.height / 2 - base.top - 16);
     const tl = gsap.timeline({ onComplete: () => { correndo = false; const p = fila.shift(); if (p !== undefined) correr(p); } });
+    if (fila.length) tl.timeScale(2.5); // toques em sequência: a animação acelera em vez de fazer esperar
     tl.set(chama, { x: x0, y: y0, opacity: 1 })
       .to(chama, { x: x1, y: y1, duration: 0.5, ease: 'power1.in', snap: { x: 4, y: 4 } })
       .call(() => setCristal('acendendo'))
@@ -71,7 +77,8 @@ export async function iniciar(S: Strs, fraco: boolean) {
 
   function marcar(i: number) {
     if (botoes[i].getAttribute('aria-checked') === 'true' || fila.includes(i)) return;
-    if (correndo) fila.push(i); else correr(i);
+    // toque rápido nunca é ignorado: marca na hora (feedback) e entra na fila da animação, que acelera
+    if (correndo) { marcado(botoes[i], true); fila.push(i); gsap?.globalTimeline.getChildren(false, false, true).forEach((t) => t.timeScale(2.5)); } else correr(i);
   }
 
   botoes.forEach((b, i) => b.addEventListener('click', () => marcar(i)));

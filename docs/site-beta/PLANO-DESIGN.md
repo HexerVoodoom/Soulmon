@@ -26,13 +26,13 @@ Mensagem que domina: **faz tarefa, seu Soulmon evolui.** Texto mínimo: título 
 |---|---|---|---|---|
 | 0 | Barra superior fixa | | Logo pequeno, idioma, botão "Entrar no beta" compacto | CTA persistente (Eastward, Duolingo) |
 | 1 | Hero | Exploração, em tela cheia | Logo grande, H1, elenco de 5 a 7 criaturas (uma grande), CTA + "Ver o jogo", "50 vagas" em tamanho de título, linha "Android, pela Google Play" | Palworld, Cult of the Lamb, Forest |
-| 2 | O jogo na sua mão | Fundo calmo | Aparelho com o loop real da Home, rotulado "Gameplay real"; 3 passos com a mesma criatura mudando de estado | Neko Atsume, Forest |
+| 2 | O jogo na sua mão (v3.1: fundida com a 3) | Laboratório | Aparelho com o loop real ("Gameplay real") ao lado da demo interativa; um título só, sem os 3 passos | Neko Atsume, Habitica |
 | 3 | Faça a tarefa | Laboratório | Demo interativa: lista de tarefas no estilo real da Home ao lado da criatura no disco; scroll e toque | Habitica |
 | 4 | Seu Soulmon | Jogos | Fichas de criatura, uma por vez, com setas e chips de elemento; número grande "20 elementos, mais de 200 combinações"; árvore de 5 formas com "?" | Cookie Run, Palworld |
 | 5 | O universo | Hall | Abas pedidas pelo dono: Universo, Habitantes, Jogos, Elementos; no celular viram chips com cartões deslizáveis | Decisão do dono (0 de 18 usam abas; ver §6) |
 | 6 | O que você faz | Arena | 3 cartões com tela real do app (Home, Hall, Jogos) + título + 1 linha | Sea of Stars |
 | 7 | Abertura | Fundo calmo | Vídeo de abertura, rotulado cinemática | |
-| 8 | Como entrar | Guilda, superfície clara | 3 medalhões; regra das 50 vagas em 1 linha | Stardew (ritmo claro e escuro) |
+| 8 | Como entrar | Painel calmo escuro | 3 medalhões na moldura de cobre da ficha; regra das 50 vagas em 1 linha | (v3.1: sem superfície clara) |
 | 9 | Perguntas | Fundo calmo | FAQ | |
 | 10 | Entre no beta | Cena final com criaturas | E-mail + botão grande + linha legal; compartilhar | Eastward (fechar com cena e convite) |
 
@@ -43,7 +43,7 @@ No celular, o botão fixo inferior continua, e some quando um formulário está 
 - **Cena cheia:** mapa em tela cheia como fundo, com véu escuro só onde há texto; nunca mapa dentro de cartão pequeno.
 - **Elenco:** criaturas de `novos/` em tamanhos inteiros, pisando no cenário; nenhuma da DEMO; sem lagarto com chama na cauda.
 - **Tela real:** todo print ou vídeo de gameplay aparece dentro de moldura de aparelho e com rótulo. A demo interativa continua rotulada como demonstração.
-- **Ritmo:** cena cheia alterna com painel calmo; uma seção clara (Como entrar) para respiro.
+- **Ritmo:** cena cheia alterna com painel calmo, tudo escuro. **v3.1 (06/11):** a seção clara saiu (quebrava a atmosfera e os cartões brancos pareciam template); o respiro vem do painel calmo. Fecho na Guilda inteira (não repete a Exploração); a faixa da Guilda antes de Como entrar saiu para a Guilda não aparecer duas vezes.
 - **Ornamento:** só da identidade: cobre, cristal com chama, folhas, circuito. Divisor entre seções com cristal e folhas.
 - **Número grande:** só real. "50 vagas", "20 elementos", "mais de 200 combinações", "5 formas".
 - **Pop-up de sucesso:** termina em "Compartilhar", com "Fechar" secundário.
@@ -72,3 +72,7 @@ LCP mobile abaixo de 2,5 s, JS inicial abaixo de 90 KB, CLS abaixo de 0,1, acess
 2. Site reconstruído sobre o sistema, PT e EN, com o loop e os prints reais de `E:\Soulmon-marketing\site\`.
 3. Crítica de design, QA e medição.
 4. Prints por seção para o dono. Publicação continua bloqueada pelos itens do `DEPLOY.md`.
+
+## 9. Changelog
+
+- **v3.1, 06/11/2026:** seções 2 e 3 fundidas (aparelho real + demo); Como entrar volta ao escuro com moldura de cobre; fecho na Guilda; trailer de 60 s desligado (slot em `midia.json`, rótulos internos e frase vetada no arquivo atual); uma escala de pixel por cena.

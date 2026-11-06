@@ -36,42 +36,54 @@
   "prints": {
     "pt": [
       {
-        "id": "home",
-        "src": "/print/home-pt-480.webp",
+        "id": "combate",
+        "src": "/print/combate-pt-480.webp",
         "gameplay": true,
-        "origem": "print-home-pt.png 1170x2532"
+        "origem": "E:/Soulmon-marketing/site/print-combate-pt.png 1170x2532"
+      },
+      {
+        "id": "rift",
+        "src": "/print/rift-pt-480.webp",
+        "gameplay": true,
+        "origem": "E:/Soulmon-marketing/site/print-rift-pt.png 1170x2532"
       },
       {
         "id": "hall",
         "src": "/print/hall-pt-480.webp",
         "gameplay": true,
-        "origem": "print-hall-pt.png 1170x2532"
+        "origem": "E:/Soulmon-marketing/site/print-hall-pt.png 1170x2532"
       },
       {
         "id": "jogos",
         "src": "/print/jogos-pt-480.webp",
         "gameplay": true,
-        "origem": "print-jogos-pt.png 1170x2532"
+        "origem": "E:/Soulmon-marketing/site/print-jogos-pt.png 1170x2532"
       }
     ],
     "en": [
       {
-        "id": "home",
-        "src": "/print/home-en-480.webp",
+        "id": "combate",
+        "src": "/print/combate-en-480.webp",
         "gameplay": true,
-        "origem": "print-home-en.png 1170x2532"
+        "origem": "E:/Soulmon-marketing/site/print-combate-en.png 1170x2532"
+      },
+      {
+        "id": "rift",
+        "src": "/print/rift-en-480.webp",
+        "gameplay": true,
+        "origem": "E:/Soulmon-marketing/site/print-rift-en.png 1170x2532"
       },
       {
         "id": "hall",
         "src": "/print/hall-en-480.webp",
         "gameplay": true,
-        "origem": "print-hall-en.png 1170x2532"
+        "origem": "E:/Soulmon-marketing/site/print-hall-en.png 1170x2532"
       },
       {
         "id": "jogos",
         "src": "/print/jogos-en-480.webp",
         "gameplay": true,
-        "origem": "print-jogos-en.png 1170x2532"
+        "origem": "E:/Soulmon-marketing/site/print-jogos-en.png 1170x2532"
       }
     ]
   },
@@ -100,7 +112,8 @@
       "rotulo": "trailer",
       "largura": 1280,
       "altura": 720,
-      "origem": "E:/Soulmon-marketing/site/trailer-60s-pt.mp4 (60 s, 16:9, música do app, sem voz), reencodado 1280x720. Mistura telas reais do app com cartelas e a árvore do Noturno (formas evoluídas = arte aprovada ainda não publicada no jogo, INDICE.md ressalva 1): por isso o rótulo é Trailer, nunca Gameplay real."
+      "origem": "E:/Soulmon-marketing/site/trailer-60s-pt.mp4 (60 s, 16:9, música do app, sem voz), reencodado 1280x720. Mistura telas reais do app com cartelas e a árvore do Noturno (formas evoluídas = arte aprovada ainda não publicada no jogo, INDICE.md ressalva 1): por isso o rótulo é Trailer, nunca Gameplay real.",
+      "ativo": false
     },
     "en": {
       "src": "/video/trailer-en.mp4",
@@ -110,7 +123,9 @@
       "rotulo": "trailer",
       "largura": 1280,
       "altura": 720,
-      "origem": "E:/Soulmon-marketing/site/trailer-60s-en.mp4, idem"
-    }
+      "origem": "E:/Soulmon-marketing/site/trailer-60s-en.mp4, idem",
+      "ativo": false
+    },
+    "_nota": "Slot pronto, DESLIGADO (ativo:false). O trailer-60s de 06/11 mostra os rótulos ROOKIE..ULTRA (0:20-0:24) e \"Baseado em ciência do comportamento\" / \"66 marcos\" (0:42-0:50): vetado. Arquivos fora de public/. Para ligar: trailer refeito em E:/Soulmon-marketing/site/, TRAILER=1 node src/tools/preparar-v3.mjs e ativo:true."
   }
 }

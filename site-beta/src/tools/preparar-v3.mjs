@@ -22,7 +22,7 @@ const RECORTES = {
   jogos: [{ nome: 'jogos-d', y0: 0.08, h: 600 }],
   hall: [{ nome: 'hall-d', y0: 0.40, h: 600 }],
   arena: [{ nome: 'arena-d', y0: 0.30, h: 560 }],
-  guilda: [{ nome: 'guilda-d', y0: 0.36, h: 300 }],
+  guilda: [{ nome: 'guilda-fecho-d', y0: 0.30, h: 640 }], // fecho (seção 10): praça do cristal
 };
 for (const [id, cortes] of Object.entries(RECORTES)) {
   const src = `${MAPAS}/bg-${id}.png`;
@@ -69,6 +69,9 @@ for (const l of ['pt', 'en']) {
   unlinkSync(png);
 }
 
+// Trailer: DESLIGADO (midia.json trailer.ativo=false). O arquivo de 06/11 mostra ROOKIE..ULTRA e "ciência do comportamento".
+// Só reencode quando o trailer novo chegar: TRAILER=1 node src/tools/preparar-v3.mjs
+if (process.env.TRAILER === '1') {
 // ---------- Trailer de 60 s (16:9, com música, sem voz): web 1280x720, poster de um quadro de tela real (10 s) ----------
 for (const l of ['pt', 'en']) {
   const mp4 = `${PUB}/video/trailer-${l}.mp4`;
@@ -79,9 +82,10 @@ for (const l of ['pt', 'en']) {
   for (const w of [640, 1280]) await sharp(png).resize({ width: w }).webp({ quality: 72 }).toFile(`${PUB}/video/trailer-${l}-poster-${w}.webp`);
   unlinkSync(png);
 }
+}
 
 // ---------- Prints reais (1170x2532) por largura de tela ----------
-for (const n of ['home', 'hall', 'jogos']) for (const l of ['pt', 'en']) {
+for (const n of ['combate', 'rift', 'hall', 'jogos']) for (const l of ['pt', 'en']) {
   const src = `${SITE}/print-${n}-${l}.png`;
   if (!existsSync(src)) throw new Error(src);
   for (const w of [240, 480, 720]) {

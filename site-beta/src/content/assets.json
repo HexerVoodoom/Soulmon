@@ -212,5 +212,16 @@
   "_furos": {
     "divisor": "sem peça: nenhum divisor desenhado (proibido imitar em CSS); entra quando existir divisor 96x12 3-slice",
     "cristalNo": "sem peça: nó usa barraNo (provisório)"
+  },
+  "heroArte": {
+    "estado": "provisorio-css",
+    "src": null,
+    "desktop": null,
+    "celular": null,
+    "proporcao": {
+      "desktop": "16:9",
+      "celular": "9:16"
+    },
+    "nota": "Arte-chave do hero (decisão do dono, 06/11). Quando desktop e celular existirem (ex.: /site/hero-16x9.avif e /site/hero-9x16.avif), substituem mapa + elenco do hero sem mudar layout. Até lá: mapa da Exploração + criaturas."
   }
 }

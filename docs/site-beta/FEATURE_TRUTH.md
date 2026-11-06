@@ -28,6 +28,22 @@ Precedência: código > teste > doc. Se o código mudar, atualize aqui antes de 
 | Feira (Chefe e Desafio) | implementada | Chefe do clã | Mínimo de 3 membros. Docs antigos dizem desligada; o código diz ligada desde 29/10 | `functions/api/_feira.js:40` |
 | PT-BR e inglês | implementada | Jogo nos dois idiomas | | `CLAUDE.md` |
 
+## Números e processo que podem ser ditos
+
+| Afirmação | Base |
+|---|---|
+| "20 elementos base" e "mais de 200 combinações" | `src/utils/elementDex.ts`: 20 bases + 190 pares = 210. Não usar 260 nem "30": os 50 curados ainda não são aceitos pela lista fechada do jogo |
+| "5 formas, 3 caminhos no meio" | `src/types/progression.ts`: 1 + 3 + 3 + 3 + 1; caminhos Poder, Harmonia, Benevolência |
+| "Nasce de um teste de personalidade" | Oráculo; no beta, 3 gerações por testador |
+| "O elemento muda o corpo e o combate" | `ELEMENTO-POR-SPRITE.md`. **Não dizer** que muda comida ou banho: não confirmado no código |
+| "Em até 24 horas você receberá o link" | Promessa de processo do dono (05/11), só com vagas abertas; depende de ele enviar convites todo dia |
+| "7 dias para aceitar o convite" | Decisão do dono (05/11) |
+| "Ficar 14 dias no teste" | Exigência do teste fechado da Play, informada pelo dono |
+| "50 vagas na 1ª leva, por ordem de inscrição" | Decisão do dono; real só com `BETA_CLOSED` ligado |
+| Plataforma | Dizer "só Android". Não sugerir iPhone "por ora" nem "em breve" |
+
+Rótulos internos de estágio (rookie, champion, ultimate, mega, ultra) não aparecem em material público: usar "Forma N de 5".
+
 ## Só com o limite dito
 
 | Feature | Estado | Regra |

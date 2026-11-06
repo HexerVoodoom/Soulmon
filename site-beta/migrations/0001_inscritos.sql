@@ -1,4 +1,4 @@
--- Cadastro do beta. Reversivel: ver migrations/0001_inscritos.down.sql (fora do runner do wrangler).
+-- Cadastro do beta. Reversivel: ver scripts/sql/0001_inscritos.down.sql (fora de migrations/, o wrangler nunca aplica).
 CREATE TABLE IF NOT EXISTS inscritos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT NOT NULL,

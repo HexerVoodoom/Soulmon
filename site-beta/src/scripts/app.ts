@@ -84,7 +84,7 @@ function barra() {
 // ---------- Barra superior, CTA compacto e CTA fixo ----------
 function topoECta() {
   const topo = $('[data-topo]'); const hero = $('.hero'); const heroCta = $('[data-hero-cta]');
-  const compacto = $('[data-topo-cta]'); const fixo = $('[data-fixo]'); const alvo = $('#inscrever');
+  const compacto = $('[data-topo-cta]'); const fixo = $('[data-fixo]'); const alvo = $('#inscricao') ?? $('#inscrever'); // o formulário em si, não a seção
   if (!topo || !hero || !heroCta || !alvo) return;
   let heroFora = false; let ctaFora = false; let formVisto = false; let teclado = false; let popup = false; let naDemo = false;
   const aplicar = () => {
@@ -94,7 +94,7 @@ function topoECta() {
   };
   new IntersectionObserver(([x]) => { heroFora = x.intersectionRatio < 0.2; aplicar(); }, { threshold: [0, 0.2, 1] }).observe(hero);
   new IntersectionObserver(([x]) => { ctaFora = !x.isIntersecting; aplicar(); }).observe(heroCta);
-  new IntersectionObserver(([x]) => { formVisto = x.isIntersecting; aplicar(); }, { rootMargin: '0px 0px -15% 0px' }).observe(alvo);
+  new IntersectionObserver(([x]) => { formVisto = x.isIntersecting; aplicar(); }, { rootMargin: '0px 0px -10% 0px' }).observe(alvo);
   // A lista da demo fica no meio da tela durante o pin: o CTA fixo não pode cobrir as caixinhas.
   if (document.documentElement.classList.contains('ciclo-js')) new IntersectionObserver(([x]) => { naDemo = x.isIntersecting; aplicar(); }, { rootMargin: '-45% 0px -45% 0px' }).observe($('#ciclo')!);
   const vv = window.visualViewport;
@@ -120,6 +120,7 @@ function vagas() {
     slot.hidden = false;
     const linha = $('[data-vagas-linha]'); if (linha) { linha.textContent = S.vagasEspera; linha.classList.add('espera'); }
     $$('[data-cta]').forEach((a) => { a.textContent = S.ctaEspera; });
+    const tx = $('[data-enviar-tx]'); if (tx) tx.textContent = S.enviarEspera;
   });
 }
 
@@ -243,6 +244,7 @@ function formulario() {
       if (r.ok && j.ok) {
         await lerEstado(); // o pop-up nunca promete 24 h com a rodada fechada
         form.reset(); resetTs(); form.hidden = true; feito.hidden = false;
+        const sh = $('[data-share]'); if (sh) sh.hidden = false; // compartilhar no fecho só depois da inscrição
         abrirPopup(estadoLeva === 'espera', feito);
         return;
       }
@@ -392,11 +394,11 @@ if (!reduzido && $('#ciclo')) {
   $('[data-cena]')!.hidden = false;
 }
 
-// ---------- Compartilhar na seção final ----------
+// ---------- Compartilhar na seção final (depois da inscrição) ----------
 function partilha() {
   const sh = $('[data-share]'); const msg = $('[data-partilha-msg]');
   if (!sh || !msg) return;
-  sh.hidden = false;
+  // só aparece depois da inscrição (formulario())
   sh.addEventListener('click', () => compartilhar(msg));
 }
 
