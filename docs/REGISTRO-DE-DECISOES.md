@@ -4193,7 +4193,7 @@ Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combin
 
 ## §239 — Chave da dungeon: o Calabouço abre com uma sessão concluída, e perder não encerra o dia (05/11/2026, decisão do dono)
 
-**Decisão.** Concluir uma sessão na Oficina do Foco dá a chave do Calabouço daquele dia do jogador (`dungeonKeyDay`, `utils/focusKey.ts`); sem ela, o prédio mostra a Corva mandando ir à Oficina. A dungeon já tinha a Corva, que segue nela; o portão sem chave é do NPC 412, Bastião (dono, 05/11/2026, em modal). Palavras do dono: "se ele sair da dungeon, ele não perde e fica impossibilitado de continuar naquele dia não. Ele pode ir na dungeon até o fim ali, desde que ele recupere vida". Derrota em combate não gasta o passo nem encerra: a vida vai ao piso e recupera no ritmo da Fenda (4 h para encher, volta a lutar com 25%). Os Bits ganhos até a derrota são pagos nela (`paidWon`), porque a pessoa pode não voltar hoje. Sair de um desafio em curso segue gastando aquele passo (anti-espiada), sem trancar nada.
+**Decisão.** Concluir uma sessão na Oficina do Foco dá a chave do Calabouço daquele dia do jogador (`dungeonKeyDay`, `utils/focusKey.ts`); sem ela, o prédio mostra a Corva mandando ir à Oficina. A dungeon já tinha a Corva, que segue nela; o portão sem chave é do NPC 412, Bastion (dono, 05/11/2026, em modal). Palavras do dono: "se ele sair da dungeon, ele não perde e fica impossibilitado de continuar naquele dia não. Ele pode ir na dungeon até o fim ali, desde que ele recupere vida". Derrota em combate não gasta o passo nem encerra: a vida vai ao piso e recupera no ritmo da Fenda (4 h para encher, volta a lutar com 25%). Os Bits ganhos até a derrota são pagos nela (`paidWon`), porque a pessoa pode não voltar hoje. Sair de um desafio em curso segue gastando aquele passo (anti-espiada), sem trancar nada.
 
 **Limite conhecido.** A sessão de foco mora no aparelho, então o servidor valida só a forma da chave, não a prova. O Calabouço paga Bits com o teto diário do app e o `rogueDungeon` já não tinha espelho no servidor; a chave não abre superfície nova de prêmio.
 
@@ -4251,3 +4251,7 @@ Torneio/Duelo é neutro (§177). Masmorra não tem vantagem elemental. Em Combin
 ## §242 — Respostas do dono sobre Oficina e dungeon (05/11/2026, em modal)
 
 Sessão sem lista e sem foco segue dando chave e item (§238: mantém). Sair no meio de um desafio segue gastando o passo (§239: mantém). Os prêmios da carta da temporada ficam como estão (§241). O NPC 412 entra no portão sem chave. **Rollback:** reverter o PR do 412; a Corva não mudou.
+
+## §243 — Mais respostas do dono (06/11/2026, em modal)
+
+O NPC 412 se chama Bastion, sempre em inglês. As artes do 412 e do 440 ficam como estão, sem revisão da squad de design. A Sépia fica no balão da Oficina do Foco. **Rollback:** reverter o PR do nome.
