@@ -494,6 +494,7 @@ de forma é `GAME_STATE`, que usa `_` e versão: `soulmon_state_v1` (era
 | `SLEEP_REMINDER_ENABLED` | `soulmon-sleep-reminder-enabled` | Lembrete de deitar (30 min antes da janela). Padrão LIGADO: só `'false'` gravado desliga (`readFlagOr`). | `NotificationManager.tsx`, `SettingsPage.tsx` |
 | `NIGHT_ARMED_AT` | `soulmon-night-armed-at` | ISO de quando o app foi aberto no período do lembrete de deitar (a noite "armada"); de manhã `decideArmedNight` grava a noite e a limpa. | `App.tsx`, `utils/restWindow.ts` |
 | `NOTICE_TOAST_SEEN` / `NOTICE_TOAST_ONCE` | `soulmon-notice-toast-seen` / `soulmon-notice-toast-once` | Balões de aviso acionável já mostrados: `<dia>|<chave>,<chave>` (hoje) e `<chave>,<chave>` (uma vez na vida, `termos`) (REGISTRO §56). | `App.tsx` |
+| `MAIL_ANNOUNCED` | `soulmon-mail-announced` | `mid` das cartas novas que o Papus já anunciou neste aparelho (CSV, até 50); só o aviso da fila (REGISTRO §245). | `App.tsx` |
 | `DUNGEON_SPEED` | `soulmon-dungeon-speed` | Velocidade da cena de combate da masmorra (1/2/3), preferência do aparelho (REGISTRO §36). Sobrevive ao logout. | `DungeonGame.tsx`, `utils/dungeonIdle.ts` |
 | `MATCH3_BEST` / `BARRAGE_BEST` | `soulmon-match3-best` / `soulmon-barrage-best` | Melhor pontuação do Elemental Fusion e do Soul Barrage, no aparelho (como o recorde da Corrida). | `Match3Game.tsx`, `SoulBarrage.tsx` |
 | `PICROSS_BASE_PAID` | `soulmon-picross-base-paid` | `{day, ids}` — desenhos do Picross cuja BASE já foi paga hoje (QA L04-02; repetir o mesmo desenho no mesmo dia não paga de novo). | `PicrossGame.tsx` |

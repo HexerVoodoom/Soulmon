@@ -20,6 +20,7 @@ import { CornerLink } from './components/nav/CornerLink';
 import { HomeFeedbackButton } from './components/nav/HomeFeedbackButton';
 import { MissionsLink } from './components/nav/MissionsLink';
 import { AvisosLink } from './components/nav/AvisosLink';
+import { MailLink } from './components/nav/MailLink';
 import { visibleBackground } from './utils/backgrounds';
 import { needsWelcomeTour, needsMapTutorial } from './utils/welcomeTourGate';
 import { buildingsUnlockedBetween, isBuildingId, markBuildingIntroSeen } from './utils/buildingIntro';
@@ -35,7 +36,8 @@ import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, hungryFrom, HU
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
-import { applyMail, splitMail, type MailItem } from './utils/mensageiro';
+import { parseAnnounced, serializeAnnounced, toAnnounce } from './utils/mensageiro';
+import { useMailbox } from './hooks/useMailbox';
 import { hasFocusKeyOrLegacy, grantFocusKey, focusSessionStamp, hasDungeonKey, grantDungeonKey } from './utils/focusKey';
 import { grantRefugioEnergy } from './utils/refugio/energia';
 import { focusDescentRefusal, isFocusDescent, pauseFocusDescent, resumeFocusDescent, startFocusDescent } from './utils/focusDescent';
@@ -158,8 +160,6 @@ import { evolutionPaywalled } from './utils/evolutionPaywall';
 import { getMissionProgress, isShopItemUnlocked, completedMissionIds, isMissionComplete } from './utils/missions';
 // Fora do chunk de entrada: só rodam num efeito, depois do primeiro paint.
 const resgatarPresentes = (...a: Parameters<typeof import('./utils/community').resgatarPresentes>) => import('./utils/community').then(m => m.resgatarPresentes(...a));
-const getMail = (...a: Parameters<typeof import('./utils/community').getMail>) => import('./utils/community').then(m => m.getMail(...a));
-const ackMail = (...a: Parameters<typeof import('./utils/community').ackMail>) => import('./utils/community').then(m => m.ackMail(...a));
 const getPendingTrophies = (...a: Parameters<typeof import('./utils/community').getPendingTrophies>) => import('./utils/community').then(m => m.getPendingTrophies(...a));
 import {
   PREMADE_CHARACTERS, getDemoCreatureStages, canCreateActivity, activityCapFor,
@@ -661,6 +661,7 @@ const RefugeInviteCard = lazyOverlay(() => import('./components/refugio/RefugeIn
 const DemoExitButton = lazyOverlay(() => import('./components/home/DemoExitButton').then(m => ({ default: m.DemoExitButton })));
 const UnlockNudge = lazyOverlay(() => import('./components/UnlockNudge').then(m => ({ default: m.UnlockNudge })));
 const Celebration = lazyOverlay(() => import('./components/ui/Celebration').then(m => ({ default: m.Celebration })));
+const MailboxSheet = lazyOverlay(() => import('./components/MailboxSheet').then(m => ({ default: m.MailboxSheet })));
 const AvisosSheet = lazyOverlay(() => import('./components/nav/AvisosSheet').then(m => ({ default: m.AvisosSheet })));
 const CompletionTag = lazyOverlay(() => import('./components/CompletionTag').then(m => ({ default: m.CompletionTag })));
 const DemoSoundButton = lazyOverlay(() => import('./components/perfil/DemoSoundButton').then(m => ({ default: m.DemoSoundButton })));
@@ -1583,23 +1584,23 @@ export default function App() {
    *  segunda abertura. */
   const notifTouchedRef = useRef(false);
 
-  // O Mensageiro (§241): cartas do servidor. O que já está no save só é confirmado; o resto vira a fala do Papus, e o crédito sai ao fechar.
-  const [mailPending, setMailPending] = useState<MailItem[]>([]);
-  const closeMessenger = useCallback(() => {
-    setMailPending(cartas => {
-      if (cartas.length) setGameState(prev => cartas.reduce((s, m) => applyMail(s, m), prev));
-      return [];
-    });
-  }, [setGameState]);
-  useEffect(() => {
-    if (isDemoMode(gameStateRef.current)) return;
-    getMail(saveId).then(({ mail }) => {
-      const { fresh, toAck } = splitMail(Array.isArray(mail) ? mail : [], gameStateRef.current.mailClaimed);
-      if (toAck.length) ackMail(saveId, toAck).catch(() => {});
-      if (fresh.length) setMailPending(fresh);
-    }).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [saveId]);
+  // A caixa de cartas do Papus (§245): a lista e o resgate moram no servidor (`useMailbox`). O modal da fila (§241) virou só o AVISO de carta nova, uma vez por carta.
+  const mailbox = useMailbox({ saveId, demo: isDemoMode(gameState), getState: () => gameStateRef.current, setState: setGameState });
+  const [mailOpen, setMailOpen] = useState(false);
+  const [mailAnnounced, setMailAnnounced] = useState<string[]>(() => parseAnnounced(readLocal(STORAGE_KEYS.MAIL_ANNOUNCED)));
+  const mailToAnnounce = useMemo(() => toAnnounce(mailbox.mail, mailAnnounced), [mailbox.mail, mailAnnounced]);
+  const rememberAnnounced = useCallback((mids: string[]) => {
+    if (!mids.length) return;
+    const next = parseAnnounced(serializeAnnounced([...mailAnnounced, ...mids]));
+    writeLocal(STORAGE_KEYS.MAIL_ANNOUNCED, serializeAnnounced(next), { silent: true });
+    setMailAnnounced(next);
+  }, [mailAnnounced]);
+  const closeMessenger = useCallback(() => rememberAnnounced(mailToAnnounce.map(m => m.mid)), [rememberAnnounced, mailToAnnounce]);
+  const openMailbox = useCallback(() => {
+    rememberAnnounced(mailToAnnounce.map(m => m.mid));
+    setMailOpen(true);
+    void mailbox.refresh();
+  }, [rememberAnnounced, mailToAnnounce, mailbox]);
 
   // §242: o "!" do prédio Amigos (convite recebido ou presente novo). O servidor é quem sabe; relê ao abrir, ao voltar à aba e a cada 5 min.
   const [amigosAlerta, setAmigosAlerta] = useState(false);
@@ -2481,7 +2482,7 @@ export default function App() {
       evolveTask: evolveModalStage !== null && evolutionCeremony === null,
       evoStats: evoStatsShown !== null && evolutionCeremony === null,
       groveMilestone: Boolean(grovePendente),
-      messenger: mailPending.length > 0,
+      messenger: mailToAnnounce.length > 0 && !mailOpen,
       dream: Boolean(morningDream),
       nightmare: nightmareOpen,
       catalogLevelInvite: Boolean(catalogLevelInviteCandidate),
@@ -9241,12 +9242,34 @@ export default function App() {
         />
       )}
       {currentView === 'home' && (
+        <MailLink
+          unread={mailbox.unread}
+          label={language === 'pt-BR' ? 'Caixa de cartas' : 'Mailbox'}
+          unreadLabel={language === 'pt-BR' ? 'carta nova' : 'new letter'}
+          onClick={openMailbox}
+        />
+      )}
+      {currentView === 'home' && (
         <MissionsLink
+          row={2}
           mark={marcasDeMissao.corner}
           tone="gold"
           markLabel={questMarkLabel(marcasDeMissao.corner, language === 'pt-BR')}
           label={language === 'pt-BR' ? 'Missões' : 'Missions'}
           onClick={abrirMissoes}
+        />
+      )}
+      {currentView === 'home' && mailOpen && (
+        <MailboxSheet
+          open
+          language={language}
+          mail={mailbox.mail}
+          onClose={() => setMailOpen(false)}
+          onOpenLetter={mailbox.openLetter}
+          onClaim={mailbox.claim}
+          onClaimAll={mailbox.claimAll}
+          onDelete={mailbox.remove}
+          onDeleteRead={mailbox.removeRead}
         />
       )}
       {currentView === 'home' && (
@@ -9833,9 +9856,9 @@ export default function App() {
       {/* MARCO DO BOSQUE — a irmã da cerimônia de hábito: espera o gesto, z 300,
           movimento reduzido reduz o movimento e NUNCA a pausa. Posição na fila:
           depois de relatório e check-in, antes do sonho. Uma vez por estágio novo. */}
-      {interstitial === 'messenger' && mailPending.length > 0 && (
+      {interstitial === 'messenger' && mailToAnnounce.length > 0 && (
         <PresentationSlot id="messenger" onFail={() => presentation.fail('messenger')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
-          <MessengerSequence mail={mailPending} language={language} onDone={closeMessenger} />
+          <MessengerSequence count={mailToAnnounce.length} language={language} onDone={closeMessenger} />
         </PresentationSlot>
       )}
       {interstitial === 'groveMilestone' && grovePendente && grove?.pending && (

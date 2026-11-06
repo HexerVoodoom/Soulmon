@@ -54,7 +54,7 @@ import {
   getProfile, putProfile, pidSoLeitura, nickKey, claimNick,
 } from './_profile.js';
 import { secretEquals } from './metrics.js';
-import { ackMail, enqueueMail, readMail } from './_mensageiro.js';
+import { ackMail, claimMail, deleteMail, enqueueMail, markRead, readMail } from './_mensageiro.js';
 import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado, petNameDoSimulado, formaVista } from './_simulados.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
 import {
@@ -1287,7 +1287,30 @@ async function handleCommunity(context) {
     if (!Array.isArray(mids) || mids.length > 30 || !mids.every(x => typeof x === 'string' && x.length > 0 && x.length <= 80)) return json({ error: 'invalid mids' }, 400);
     return json({ ok: true, removed: await ackMail(kvOrThrow(env), id, mids) });
   }
-  // Notícia ou compensação: POST { adminKey, ids[], mail: { mid, bodyPt, bodyEn, bits?, emblems? } }. Mesmo `mid` repetido não paga duas vezes.
+  // Caixa de cartas (§245). Todas só do dono (`denyUnlessOwner`); o prêmio vem do registro do servidor, nunca do corpo.
+  const midsValidos = (m) => Array.isArray(m) && m.length > 0 && m.length <= 30 && m.every(x => typeof x === 'string' && x.length > 0 && x.length <= 80);
+  if (action === 'mailRead' && method === 'POST') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    if (!midsValidos(body.mids)) return json({ error: 'invalid mids' }, 400);
+    return json({ ok: true, marked: await markRead(kvOrThrow(env), id, body.mids) });
+  }
+  // { id, mids[] } ou { id, all: true }. Devolve só o que foi resgatado AGORA; repetir devolve [].
+  if (action === 'mailClaim' && method === 'POST') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    if (body.all !== true && !midsValidos(body.mids)) return json({ error: 'invalid mids' }, 400);
+    return json({ ok: true, granted: await claimMail(kvOrThrow(env), id, body.all === true ? null : body.mids) });
+  }
+  // { id, mids[], force? } ou { id, scope: 'read' }. Carta com prêmio pendente só sai com `force: true`.
+  if (action === 'mailDelete' && method === 'POST') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    if (body.scope === 'read') return json({ ok: true, ...(await deleteMail(kvOrThrow(env), id, 'read')) });
+    if (!midsValidos(body.mids)) return json({ error: 'invalid mids' }, 400);
+    return json({ ok: true, ...(await deleteMail(kvOrThrow(env), id, body.mids, body.force === true)) });
+  }
+  // Notícia ou compensação: POST { adminKey, ids[], mail: { mid, bodyPt, bodyEn, titlePt?, titleEn?, bits?, emblems? } }. Mesmo `mid` repetido não paga duas vezes.
   if (action === 'mailSend' && method === 'POST') {
     if (!env.SEASON_ADMIN_KEY || !secretEquals(body.adminKey, env.SEASON_ADMIN_KEY)) return json({ error: 'unauthorized' }, 401);
     const ids = body.ids;

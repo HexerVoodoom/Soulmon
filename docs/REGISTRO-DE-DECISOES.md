@@ -4259,3 +4259,17 @@ O NPC 412 se chama Bastion, sempre em inglês. As artes do 412 e do 440 ficam co
 ## §244 — Carta de teste do Mensageiro pelo painel GM (06/11/2026)
 
 O dono não tem a `SEASON_ADMIN_KEY` à mão. `/gm/carta` (login Google, e-mail em `ADMIN_EMAILS`) envia a carta de teste só para a conta do próprio token, sem prêmio, uma por dia. O corpo da requisição nunca escolhe o destino. **Alternativa que perdeu:** ler ou rotacionar o segredo. **Rollback:** reverter o PR.
+
+## §245 — Caixa de cartas na Home (06/11/2026, pedido do dono)
+
+**Decisão.** Ícone de carta na Home, entre o Mapa e o "!" das Missões, abre a caixa do Papus (`MailboxSheet`): cartas em accordion (título; tocar expande; UMA aberta por vez), "Resgatar" nas que têm item, "Deletar" em todas, e no rodapé "Excluir todas lidas" e "Resgatar tudo" (marca como lidas as que tinham item, resgata e sobe um pop-up com a lista e o total). Bolinha vermelha sobre o ícone enquanto houver carta não aberta nem resgatada.
+
+**Servidor é a autoridade** (`functions/api/_mensageiro.js`). A carta fica na caixa depois de lida ou resgatada. `mailClaim` tira o prêmio do registro do servidor, nunca do pedido, e a transição pendente para resgatada acontece uma vez por carta: repetir devolve lista vazia. O cliente credita no save por `mid` (`mailClaimed`), então reentrega não paga duas vezes; se o app fecha entre o resgate e o crédito, a próxima leitura credita o que o servidor já entregou. Todas as ações (`mailRead`, `mailClaim`, `mailDelete`) passam por `denyUnlessOwner`.
+
+**Expiração: 3 dias** (o dono corrigiu de 5), contados do envio (ou do resgate, se for depois), só para carta SEM item pendente. Carta com item pendente nunca expira e a fila cheia (30) nunca a descarta. A varredura roda na leitura; carta expirada ou apagada vai para `done` e não renasce.
+
+**Apagar carta com item não resgatado (escolha minha, não pedida).** Por padrão não deixa: o servidor recusa (`blocked`) sem `force`, e o app abre uma confirmação com "Resgatar" em primeiro e "Apagar mesmo assim" em segundo; o fundo não fecha a confirmação. "Excluir todas lidas" nunca apaga carta com item pendente, mesmo lida. **Alternativa que perdeu:** apagar direto com o item (perda silenciosa) ou resgatar sozinho ao apagar (o jogador não decide).
+
+**Fila de apresentação.** O modal do Papus (`messenger`) deixou de ser o único caminho e de creditar: agora só avisa "chegou carta" uma vez por carta (`MAIL_ANNOUNCED`, no aparelho) e fechar não paga nada. O crédito é só pela caixa. Ordem e teto da fila não mudaram. O `mailAck` continua no servidor só para app antigo.
+
+**Limite conhecido.** KV é eventualmente consistente: dois aparelhos resgatando a mesma carta no mesmo instante podem ambos receber, e é o `mailClaimed` do save que impede o segundo crédito. **O que falsificaria:** carta com item expirando por engano, ou resgate pago duas vezes. **Rollback:** reverter o PR; cartas gravadas sem os campos novos são lidas como novas, sem resgate.

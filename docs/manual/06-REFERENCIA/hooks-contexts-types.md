@@ -15,6 +15,9 @@
 
 ## src/hooks
 
+### `src/hooks/useMailbox.ts`
+**Dono de:** o espelho local da caixa de cartas (`mail`, `unread`) e as ações `openLetter`, `claim`, `claimAll`, `remove`, `removeRead`; relê ao abrir, ao voltar à aba e a cada 5 min; credita no save só o que o servidor entregou. **Chamado por:** `src/App.tsx`. Decisão: REGISTRO §245.
+
 ### `src/hooks/useCareSystem.ts`
 **Dono de:** o agendamento do cocô — quando o primeiro e o segundo evento do dia aparecem na tela, nunca a regra de quanto custa não limpar (isso é `src/utils/poopDrain.ts`).
 **Sincronização 01/11/2026:** forma BB (`isBBStage`) não agenda cocô (Onboarding Velado D3); o agendamento só roda se o estado AINDA está sem `poopEventsScheduled` (o sorteio é aleatório; um segundo disparo — StrictMode, adoção da nuvem — trocaria a hora de um cocô já agendado) e o mesmo índice nunca entra duas vezes em `poopEventsShown` (idempotente).
