@@ -746,3 +746,11 @@ Fila `mail:<saveId>`, carta e prêmio da temporada na 1ª leitura do mês, confi
 ### `functions/api/_amigos.js`
 
 Amizade por convite (§243): convites `freq:`, presentes do dia `gsent:`, histórico `gnote:`, lista mútua até 20, migração idempotente (`gmir:`). Ações `friends`, `friendAccept`, `friendsState`, `friendsSeen`, `friendsMigrate`, `gift` em `community.js`. **Régua:** `functions/api/community.amigos.test.js`.
+
+### `functions/api/gm-carta-teste.js`
+
+Carta de teste do Papus para a própria conta do GM; destino vem do token. Decisão: REGISTRO §244. **Régua:** `functions/api/gm-carta-teste.test.js`.
+
+### `functions/gm/carta.js`
+
+Página `/gm/carta`, casca do envio acima. Decisão: REGISTRO §244.
