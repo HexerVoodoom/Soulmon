@@ -3,9 +3,10 @@
  * ==========================================================================
  *
  * Por dia do jogador o jogo oferece UMA missão, de UMA Ordem principal (Filtradores = Benevolência,
- * Tecelões = Harmonia, Rompentes = Poder; D22: "Ordem", não "clã"). A atividade é sorteada DENTRO do
- * tipo, só entre itens do catálogo com evidência A ou B. Confirmação pela pergunta de honestidade.
- * Recompensa: só pontos do tipo (3 se `effort` 1, 5 se 2–3) pelo mesmo caminho do `feedFood`
+ * Tecelões = Harmonia, Rompentes = Poder; D22: "Ordem", não "clã"). A tarefa é sorteada DENTRO da Ordem,
+ * do catálogo PRÓPRIO da Guilda (`data/mercTarefas.ts`): tarefa pontual, de um dia, uma vez, sem frequência
+ * nem hábito (dono, 06/11/2026) e com o benefício em PT/EN. Confirmação pela pergunta de honestidade.
+ * Recompensa: só pontos do tipo (3 se `effort` 1, 5 se 2) pelo mesmo caminho do `feedFood`
  * (`powerPoints`… + `attributesSinceLastEvolution`). Sem XP, sem Bits, fora da meta diária.
  * Só a partir do rookie (BB recusa).
  *
@@ -15,9 +16,8 @@
  * Estado: `GameState.mercMission {day, ordem, activityId, done}` (leitura tolerante abaixo; espelho
  * em `functions/api/_mercMission.js`, paridade em `mercMission.parity.test.js`).
  */
-import { ACTIVITY_CATALOG } from '../data/activityCatalog';
-import { CATEGORY_ATTRIBUTES, type BranchType } from '../types/attributes';
-import type { CatalogItem } from '../types/activityCatalog';
+import { MERC_TAREFAS, MERC_TAREFAS_BY_ID, mercTarefaValida, type MercTarefa } from '../data/mercTarefas';
+import type { BranchType } from '../types/attributes';
 import { isBBStage } from './bbStage';
 
 import { MERC_ORDENS, sanitizeMercMission, type MercOrdem, type MercMissionState } from './mercMissionSave';
@@ -39,18 +39,10 @@ export const MERC_RETRATO: Record<MercOrdem, string> = {
   filtrador: 'lider-filtradores.png', tecelao: 'lider-teceloes.png', rompente: 'lider-rompentes.png',
 };
 
-/** A Ordem de uma categoria: a do maior valor em `CATEGORY_ATTRIBUTES` (dono único da tabela, sem segunda cópia). */
-export function ordemDaCategoria(c: CatalogItem['category']): MercOrdem {
-  const a = CATEGORY_ATTRIBUTES[c];
-  if (a.benevolence > a.power && a.benevolence > a.harmony) return 'filtrador';
-  if (a.harmony > a.power && a.harmony > a.benevolence) return 'tecelao';
-  return 'rompente';
-}
-
-/** Itens elegíveis: evidência A/B (M2). Itens `optInOnly` (aviso de crise) nunca viram convite. */
-export function mercPool(ordem: MercOrdem): CatalogItem[] {
-  return ACTIVITY_CATALOG
-    .filter(i => (i.evidence.level === 'A' || i.evidence.level === 'B') && !i.optInOnly && ordemDaCategoria(i.category) === ordem)
+/** Tarefas elegíveis da Ordem: só as que passam no porteiro (um dia, sem frequência, sem promessa de saúde, com benefício PT/EN). */
+export function mercPool(ordem: MercOrdem): MercTarefa[] {
+  return MERC_TAREFAS
+    .filter(t => t.ordem === ordem && mercTarefaValida(t))
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
 
@@ -61,14 +53,34 @@ function fnv1a(s: string): number {
 }
 
 /** Sorteio determinístico: semente = dia do jogador + Ordem. Reabrir o app não troca a missão. */
-export function sortearMerc(dayKey: string, ordem: MercOrdem): CatalogItem | undefined {
+export function sortearMerc(dayKey: string, ordem: MercOrdem): MercTarefa | undefined {
   const pool = mercPool(ordem);
   return pool.length ? pool[fnv1a(`${dayKey}|${ordem}`) % pool.length] : undefined;
 }
 
-/** Pontos de tipo (M4): 3 se o `effort` é 1, 5 se 2–3. O esforço é o do nível 1, o que a missão pede. */
-export function pontosMerc(item: Pick<CatalogItem, 'levels'>): 3 | 5 {
-  return item.levels[0].effort === 1 ? 3 : 5;
+/** Pontos de tipo (M4): 3 se o `effort` é 1, 5 se 2. */
+export function pontosMerc(item: Pick<MercTarefa, 'effort'>): 3 | 5 {
+  return item.effort === 1 ? 3 : 5;
+}
+
+/**
+ * A tarefa que a missão guardada mostra. Proposta que não é do catálogo da Guilda (save antigo, que
+ * guardava o id de um hábito do catálogo geral, ou id adulterado) e ainda NÃO foi cumprida é DESCARTADA
+ * e sorteada de novo para o mesmo dia e Ordem (determinístico). Já cumprida fica como está: foi paga.
+ */
+export function tarefaDaMissao(m: MercMissionState): MercTarefa | undefined {
+  const t = MERC_TAREFAS_BY_ID[m.activityId];
+  if (t && t.ordem === m.ordem && mercTarefaValida(t)) return t;
+  return m.done ? undefined : sortearMerc(m.day, m.ordem);
+}
+
+/** Troca a proposta pendente fora da regra pela sorteada; devolve o MESMO objeto se nada mudou. */
+export function renovarMercPendente<T extends { mercMission?: MercMissionState }>(s: T): T {
+  const m = s.mercMission;
+  if (!m || m.done) return s;
+  const t = tarefaDaMissao(m);
+  if (!t) return { ...s, mercMission: undefined };
+  return t.id === m.activityId ? s : { ...s, mercMission: { ...m, activityId: t.id } };
 }
 
 export type MercRecusa = 'bb' | 'ja-escolheu' | 'sem-atividade';
@@ -115,7 +127,7 @@ export function darPontosDeTipo<T extends MercState>(s: T, tipo: BranchType, pts
 export function concluirMerc<T extends MercState>(s: T, dayKey: string): T {
   const m = mercDeHoje(s, dayKey);
   if (!m || m.done || isBBStage(s.evolutionStage)) return s;
-  const item = ACTIVITY_CATALOG.find(i => i.id === m.activityId);
+  const item = tarefaDaMissao(m);
   const pago = item ? darPontosDeTipo(s, MERC_TIPO[m.ordem], pontosMerc(item)) : s;
-  return { ...pago, mercMission: { ...m, done: true } };
+  return { ...pago, mercMission: { ...m, activityId: item?.id ?? m.activityId, done: true } };
 }

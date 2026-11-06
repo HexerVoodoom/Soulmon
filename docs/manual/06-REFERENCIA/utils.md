@@ -4244,7 +4244,7 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 **Dono de:** `pedirFreeRookie`: POST `/api/free-rookie`, devolve a imagem do rookie grátis por e-mail ou `null` (o chamador usa o inicial pronto).
 
 ### `src/utils/mercMission.ts`
-**Dono de:** a Guilda dos Mercenários do onboarding velado (plano §11): missão do dia, `sanitizeMercMission` e a pergunta de honestidade; campo de save `mercMission`.
+**Dono de:** a Guilda dos Mercenários do onboarding velado (plano §11): missão do dia (tarefa de UM dia do catálogo próprio `src/data/mercTarefas.ts`, com benefício PT/EN; `tarefaDaMissao` e `renovarMercPendente` trocam a proposta pendente fora da regra, §245), `sanitizeMercMission` e a pergunta de honestidade; campo de save `mercMission`.
 
 ### `src/utils/mercMissionSave.ts`
 **Dono de:** os tipos de `mercMission` e o `sanitizeMercMission` sem o catálogo de atividades, para a entrada (`GameStateContext`) não puxar o `mercMission.ts` inteiro. Espelho: `functions/api/_mercMission.js`.

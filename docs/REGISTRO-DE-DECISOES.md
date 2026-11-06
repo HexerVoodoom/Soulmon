@@ -4259,3 +4259,7 @@ O NPC 412 se chama Bastion, sempre em inglês. As artes do 412 e do 440 ficam co
 ## §244 — Carta de teste do Mensageiro pelo painel GM (06/11/2026)
 
 O dono não tem a `SEASON_ADMIN_KEY` à mão. `/gm/carta` (login Google, e-mail em `ADMIN_EMAILS`) envia a carta de teste só para a conta do próprio token, sem prêmio, uma por dia. O corpo da requisição nunca escolhe o destino. **Alternativa que perdeu:** ler ou rotacionar o segredo. **Rollback:** reverter o PR.
+
+## §245 — Guilda dos Mercenários: só tarefa de um dia, com o benefício à vista (06/11/2026, pedido do dono)
+
+A Guilda sorteava do catálogo de hábitos, cujos alvos do nível 1 falam em vezes por semana (medido: 22 de 24 alvos PT eram "3x/semana" e afins). Agora tem catálogo próprio (`src/data/mercTarefas.ts`, 36 tarefas, 12 por Ordem): pontual, de um dia, uma vez, sem frequência nem hábito. Cada tarefa traz o benefício em PT/EN, frase discreta sem promessa de saúde ou clínica. A proposta é uma só: tarefa, recompensa, benefício embaixo, e os botões "Pegar missão" e "Decidir depois". Um porteiro (`mercTarefaValida`) recusa texto de frequência ou de saúde e tarefa sem benefício nos dois idiomas. O servidor descarta a proposta pendente que não é do catálogo da Guilda; o cliente sorteia outra para o mesmo dia e Ordem. A já cumprida fica (foi paga). **Alternativa que perdeu:** filtrar o catálogo de hábitos por palavra, que deixaria a Guilda dependente de copy escrita para outro fim. **Rollback:** reverter o PR (o save antigo volta a ler os ids de hábito).

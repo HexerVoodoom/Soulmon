@@ -1,8 +1,7 @@
 import { sm2Button, sm2Text } from './form/FormKit';
 import { AreaSheet } from './nav/AreaSheet';
 import type { Language } from '../utils/i18n';
-import { ACTIVITY_CATALOG_BY_ID } from '../data/activityCatalog';
-import { MERC_NOME, MERC_RETRATO, MERC_TIPO, pontosMerc, sortearMerc, type MercMissionState, type MercOrdem } from '../utils/mercMission';
+import { MERC_NOME, MERC_RETRATO, MERC_TIPO, pontosMerc, sortearMerc, tarefaDaMissao, type MercMissionState, type MercOrdem } from '../utils/mercMission';
 import { ATTR_LABEL } from '../types/attributes';
 import { arteOnboarding } from './onboarding/sequencia/assets';
 
@@ -33,7 +32,7 @@ export function MercGuildSheet({ ordem, onClose, language = 'pt-BR', hoje, dayKe
   const lider = MERC_NOME[ordem];
   const minha = hoje?.ordem === ordem ? hoje : null;
   const outra = hoje && hoje.ordem !== ordem ? hoje : null;
-  const item = minha ? ACTIVITY_CATALOG_BY_ID[minha.activityId] : !hoje ? sortearMerc(dayKey, ordem) : undefined;
+  const item = minha ? tarefaDaMissao(minha) : !hoje ? sortearMerc(dayKey, ordem) : undefined;
   const tipo = ATTR_LABEL[MERC_TIPO[ordem]];
   const premio = item && (isPt ? `Vale ${pontosMerc(item)} pontos de ${tipo.pt}.` : `Worth ${pontosMerc(item)} ${tipo.en} points.`);
 
@@ -62,19 +61,20 @@ export function MercGuildSheet({ ordem, onClose, language = 'pt-BR', hoje, dayKe
         {!bb && !outra && item && !minha?.done && (
           <>
             <p data-merc-atividade style={{ ...sm2Text, margin: 0 }}>
-              {item.emoji} <strong>{t(item.name)}</strong>{' — '}{t(item.levels[0].target)}
+              {item.emoji} <strong>{t(item.name)}</strong>{' — '}{t(item.target)}
             </p>
             <p data-merc-premio style={{ ...sm2Text, margin: 0 }}>{premio}</p>
+            <p data-merc-beneficio style={{ ...sm2Text, margin: 0, fontSize: 12, opacity: 0.75, fontStyle: 'italic' }}>{t(item.benefit)}</p>
           </>
         )}
 
         {!bb && !hoje && item && (
           <>
             <button type="button" data-merc-aceito onClick={() => onAccept(ordem)} style={{ ...sm2Button('primary'), width: '100%' }}>
-              {isPt ? 'Aceito' : 'I accept'}
+              {isPt ? 'Pegar missão' : 'Take the mission'}
             </button>
             <button type="button" data-merc-pensar onClick={onThink} style={{ ...sm2Button('outline'), width: '100%' }}>
-              {isPt ? 'Vou pensar' : "I'll think about it"}
+              {isPt ? 'Decidir depois' : 'Decide later'}
             </button>
           </>
         )}
