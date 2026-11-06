@@ -5,7 +5,7 @@ import assets from '../../src/content/assets.json';
 import midia from '../../src/content/midia.json';
 import { TEXTOS } from '../../src/i18n/textos';
 
-const ESTADOS = ['final', 'aguarda-revisao', 'provisorio', 'provisorio-css'];
+const ESTADOS = ['final', 'aguarda-revisao', 'aguarda-aprovacao-do-dono', 'provisorio', 'provisorio-css'];
 const pecas = Object.entries(assets).filter(([k]) => !k.startsWith('_'));
 const landing = readFileSync('src/components/Landing.astro', 'utf8');
 
@@ -16,7 +16,7 @@ describe('manifesto de assets', () => {
     else expect(existsSync(`public${p.src}`)).toBe(true);
   });
   it('peça gerada sem revisão humana nunca é final por script', () => {
-    for (const [, p] of pecas) if (p.src?.startsWith('/site/')) expect(['aguarda-revisao', 'final']).toContain(p.estado);
+    for (const [, p] of pecas) if (p.src?.startsWith('/site/')) expect(['aguarda-revisao', 'aguarda-aprovacao-do-dono', 'final']).toContain(p.estado);
   });
 });
 
@@ -36,7 +36,7 @@ describe('copy do site', () => {
     }
     expect(midia.abertura.gameplay).toBe(false);
     // trailer de 06/11 vetado (rótulos internos e "ciência do comportamento"): slot desligado e fora de public/
-    for (const l of ['pt', 'en']) { expect(midia.trailer[l].gameplay).toBe(false); if (!midia.trailer[l].ativo) expect(existsSync(`public${midia.trailer[l].src}`)).toBe(false); }
+    for (const l of ['pt', 'en']) { expect(midia.trailer[l].gameplay).toBe(false); expect(existsSync(`public${midia.trailer[l].src}`)).toBe(!!midia.trailer[l].ativo); }
   });
   it('nada de rótulo interno de estágio na copy pública', () => {
     expect(JSON.stringify({ ...TEXTOS.pt, ciclo: { ...TEXTOS.pt.ciclo, formas: [] } }) + JSON.stringify({ ...TEXTOS.en, ciclo: { ...TEXTOS.en.ciclo, formas: [] } })).not.toMatch(/rookie|champion|ultimate|mega|ultra/i);

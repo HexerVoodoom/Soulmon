@@ -340,8 +340,12 @@ function loopReal() {
 
 // ---------- Trailer: poster só depois do load e perto da tela (celular pega o de 640); nunca toca sozinho ----------
 function trailer() {
-  const v = $<HTMLVideoElement>('[data-trailer]'); if (!v) return;
-  depoisDoLoad(() => quandoVisivel(v, () => { v.poster = innerWidth < 700 ? v.dataset.posterP! : v.dataset.poster!; }, '600px'));
+  const v = $<HTMLVideoElement>('[data-trailer]'); const capa = $<HTMLButtonElement>('[data-trailer-capa]'); if (!v || !capa) return;
+  capa.hidden = false;
+  capa.addEventListener('click', () => {
+    v.hidden = false; capa.hidden = true;
+    v.play().catch(() => {}); v.focus();
+  });
 }
 
 // ---------- Profundidade: o mapa (com o elenco) anda mais devagar que o texto. Só >= 768, sem redução, sem Save-Data ----------

@@ -388,7 +388,7 @@ main:focus { outline: none; }
 .trailer-fig .rotulo { margin: 0 0 7px 0; }
 .trailer-moldura { position: relative; aspect-ratio: 16 / 9; background: #000; border-radius: var(--sb-raio-md); overflow: hidden; box-shadow: 0 0 0 3px var(--sb-anel), 0 0 0 5px var(--sb-anel-fundo), var(--sb-sombra-2); }
 .trailer-moldura video { display: block; width: 100%; height: 100%; object-fit: cover; }
-@media (scripting: none) { [data-trailer] { display: none; } }
+@media (scripting: none) { [data-trailer], [data-trailer-capa] { display: none !important; } }
 
 /* ---------- 8 · Faixa da Guilda + Como entrar (superfície clara) ---------- */
 .entrar { padding: var(--sb-secao-y) var(--pad-d) var(--sb-secao-y) var(--pad-e); }
@@ -489,3 +489,120 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
   html:not(.tarde) :is(.jogo, .ciclo, .soul, .universo, .recursos, .trailer, .entrar, .faq) { content-visibility: auto; contain-intrinsic-size: auto 900px; }
 }
 @media (scripting: none) { [data-video] { display: none; } }
+
+/* ======================= v3.2 (segunda crítica, 06/11) ======================= */
+/* 3 · ritmo: cenas do meio com a arte escurecida; hero e fecho na saturação cheia */
+.cena:not(.hero):not(.inscrever) .cena-mapa img { filter: brightness(.6); }
+.ciclo .cena-mapa img, .soul .cena-mapa img { filter: brightness(.5); }
+
+/* 4 · ciclo: placa colada ao disco (abaixo do cristal), rótulo DEMONSTRAÇÃO sobre a lista */
+.cena-central { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.cena-central .forma-titulo { order: 2; margin-top: 48px; }
+.disco-caixa { margin-top: 112px; }
+.lista-bloco { display: grid; justify-items: start; gap: var(--sb-e-2); }
+.lista-bloco .demo-linha { margin: 0; justify-content: flex-start; color: var(--sb-tx); background: var(--sb-rot-fundo); padding: 4px 8px 4px 4px; }
+.lista-bloco .lista-jogo { margin-top: 0; }
+@media (max-width: 1023px) {
+  .ciclo-palco { align-content: center; gap: var(--sb-e-6); }
+  .ciclo-js .lista-bloco { margin-top: 32px; }
+}
+@media (min-width: 1024px) {
+  .disco-caixa { margin-top: 96px; }
+  .cena-central .forma-titulo { margin-top: 32px; }
+  .ciclo-aparelho { width: 320px; }
+  /* aparelho na coluna da esquerda, de cima a baixo; título e demo na direita */
+  .ciclo-palco { grid-template-columns: 320px minmax(0, 1fr); grid-template-areas: 'aparelho texto' 'aparelho demo'; column-gap: var(--sb-e-7); align-items: center; align-content: center; }
+  .ciclo-texto { align-self: end; }
+  .demo-cena { grid-template-columns: 240px 360px; column-gap: var(--sb-e-6); justify-content: center; }
+  .disco-caixa { width: 240px; }
+  .disco { width: 240px; height: 109px; }
+  .disco-caixa .sprite { width: 128px; height: 128px; }
+  .cristal { bottom: -40px; }
+  .cena-central .forma-titulo { margin-top: 48px; }
+  .lista-bloco { align-self: center; }
+}
+@media (min-width: 1360px) {
+  .demo-cena { grid-template-columns: 480px 360px; }
+  .disco-caixa { width: 480px; margin-top: 96px; }
+  .disco { width: 480px; height: 218px; }
+  .disco-caixa .sprite { width: 256px; height: 256px; }
+  .cristal { bottom: -24px; }
+  .cena-central .forma-titulo { margin-top: 32px; }
+}
+
+/* 5 · árvore: casa oculta só com "?"; caminhos como rótulo de coluna (celular) e de fileira (desktop) */
+.no.oculto { background: var(--sb-fundo); }
+.caminho { width: 96px; display: grid; place-items: end center; font: var(--sb-peso-forte) var(--sb-t-rotulo)/1.2 var(--sb-fonte-texto); color: var(--sb-tx-2); text-align: center; }
+.arvore-caminhos .arvore-rot { visibility: hidden; }
+.soul { padding-bottom: calc(var(--sb-secao-y) + 64px); }
+@media (min-width: 1024px) {
+  .soul { padding-bottom: var(--sb-secao-y); }
+  .caminho { width: auto; height: 144px; place-items: center end; padding-right: var(--sb-e-2); }
+}
+
+/* 6 · abas no celular: grupo colado ao painel, com fundo de superfície (sem vão mostrando o mapa) */
+@media (max-width: 767px) {
+  .abas { gap: 0; background: var(--sb-sup); }
+  .abas:not([hidden]) + .painel, .abas:not([hidden]) ~ .painel { margin-top: 0; }
+}
+
+/* 7 · fichas: setas + contador dentro da base da ficha, num bloco só; desabilitada com placa opaca */
+.fichas { position: relative; }
+.ficha { padding-bottom: 88px; }
+.fichas-ctl { position: absolute; left: 28px; right: 28px; bottom: 24px; padding: 0; }
+.contador { background: none; }
+.seta-bt { background: var(--sb-fundo); }
+.seta-bt[aria-disabled='true'] { opacity: 1; }
+.seta-bt[aria-disabled='true'] img { opacity: .25; }
+.fichas { scroll-margin-bottom: 140px; }
+
+/* 8 · cartões: título com altura de 2 linhas para alinhar as legendas */
+.cartao h3 { min-height: 2.4em; display: grid; align-items: center; }
+
+/* 9 · formulário do fecho: tudo na mesma coluna, à esquerda */
+.legal-linha { text-align: left; justify-self: stretch; }
+
+/* 2 · Como entrar -> Perguntas sem vão; passos centralizados a partir de 1024 */
+.entrar { padding-bottom: var(--sb-e-6); }
+.faq { padding-top: calc(var(--topo-h) + var(--sb-e-4)); }
+.divisor { display: grid; place-items: center; background: var(--sb-fundo-2); padding: var(--sb-e-2) 0; }
+.divisor img { width: 336px; height: 72px; image-rendering: pixelated; }
+@media (min-width: 768px) { .divisor img { width: 480px; } }
+@media (min-width: 1024px) {
+  .entrar-cab { justify-content: center; }
+  .passos { max-width: 1000px; margin-inline: auto; }
+  .passos li { justify-items: center; text-align: center; }
+  .aviso-vaga { max-width: 1000px; margin-inline: auto; text-align: center; border-left: 0; }
+}
+
+/* ---- arte-chave do hero (ilustração): cobre a cena, ilha preservada ---- */
+.hero-fundo { -webkit-mask-image: none; mask-image: none; }
+.hero-arte, .hero-arte img { display: block; width: 100%; height: 100%; }
+.hero-arte img { object-fit: cover; object-position: 50% 100%; }
+@media (min-width: 1024px) { .hero-arte img { object-position: 100% 50%; } }
+/* celular: véu cheio (0,72) atrás do texto; a ilha sobe por trás do H1 */
+.hero:has(.hero-arte) .veu-h::before { opacity: 1; }
+@media (min-width: 1024px) {
+  .hero:has(.hero-arte)::before { background: linear-gradient(90deg, rgba(7,20,19,.55) 0, rgba(7,20,19,.3) 34%, rgba(7,20,19,0) 46%); }
+}
+/* número grande com prefixo por extenso ("mais de 200") */
+.num-pre { font: var(--sb-peso-titulo) var(--sb-t-h3)/1 var(--sb-fonte-titulo); color: var(--sb-ouro); }
+/* trailer: capa própria + play grande no estilo do site */
+.trailer-capa { position: absolute; inset: 0; padding: 0; border: 0; background: #000; cursor: pointer; display: block; }
+.trailer-capa picture, .trailer-capa img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.trailer-play { position: absolute; left: 50%; top: 50%; width: 96px; height: 96px; margin: -48px 0 0 -48px; display: grid; place-items: center; border-radius: 50%; color: var(--sb-pri);
+  background: var(--sb-rot-fundo); box-shadow: 0 0 0 3px var(--sb-anel), 0 0 0 5px var(--sb-anel-fundo), var(--sb-sombra-2); transition: filter var(--sb-dur-toque) var(--sb-ease); }
+.trailer-capa:hover .trailer-play { filter: brightness(1.2); }
+.trailer-capa:focus-visible { outline-offset: -6px; }
+/* desktop: a arte ocupa ~80% da largura ancorada à direita e embaixo; o céu dela (#01151F) continua no fundo,
+   então o terço esquerdo fica calmo e o texto não cai sobre a ilha (em 16:10 e em 16:9). */
+@media (min-width: 1024px) {
+  .hero:has(.hero-arte) { background: #01151f; }
+  .hero-fundo .hero-arte { position: absolute; right: 0; bottom: 0; width: max(80vw, calc(100% - 640px)); height: auto; aspect-ratio: 1672 / 941; }
+  .hero-fundo .hero-arte img { object-fit: cover; object-position: 100% 100%;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 14%), linear-gradient(transparent, #000 10%); -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(90deg, transparent, #000 14%), linear-gradient(transparent, #000 10%); mask-composite: intersect; }
+  .hero:has(.hero-arte)::before { background: none; }
+}
+@media (min-width: 1024px) { .hero:has(.hero-arte) .hero-texto { max-width: 560px; } .hero:has(.hero-arte) h1 { max-width: none; } }
+.vagas-linha { width: fit-content; max-width: 100%; }

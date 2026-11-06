@@ -72,14 +72,14 @@ for (const l of ['pt', 'en']) {
 // Trailer: DESLIGADO (midia.json trailer.ativo=false). O arquivo de 06/11 mostra ROOKIE..ULTRA e "ciência do comportamento".
 // Só reencode quando o trailer novo chegar: TRAILER=1 node src/tools/preparar-v3.mjs
 if (process.env.TRAILER === '1') {
-// ---------- Trailer de 60 s (16:9, com música, sem voz): web 1280x720, poster de um quadro de tela real (10 s) ----------
+// ---------- Trailer de 60 s (16:9, com música, sem voz): web 1280x720, capa = quadro dos distritos (31 s), WebP + AVIF ----------
 for (const l of ['pt', 'en']) {
   const mp4 = `${PUB}/video/trailer-${l}.mp4`;
   execFileSync(FFMPEG, ['-y', '-v', 'error', '-i', `${SITE}/trailer-60s-${l}.mp4`, '-vf', 'scale=1280:720:flags=lanczos,setsar=1', '-c:v', 'libx264', '-profile:v', 'high', '-level', '4.0',
     '-pix_fmt', 'yuv420p', '-crf', '26', '-preset', 'slow', '-c:a', 'aac', '-b:a', '128k', '-ar', '48000', '-movflags', '+faststart', mp4]);
   const png = `${PUB}/video/_t-${l}.png`;
-  execFileSync(FFMPEG, ['-y', '-v', 'error', '-ss', '10', '-i', `${SITE}/trailer-60s-${l}.mp4`, '-frames:v', '1', '-update', '1', png]);
-  for (const w of [640, 1280]) await sharp(png).resize({ width: w }).webp({ quality: 72 }).toFile(`${PUB}/video/trailer-${l}-poster-${w}.webp`);
+  execFileSync(FFMPEG, ['-y', '-v', 'error', '-ss', '31', '-i', `${SITE}/trailer-60s-${l}.mp4`, '-frames:v', '1', '-update', '1', png]);
+  for (const w of [640, 1280]) { await sharp(png).resize({ width: w }).webp({ quality: 72 }).toFile(`${PUB}/video/trailer-${l}-poster-${w}.webp`); await sharp(png).resize({ width: w }).avif({ quality: 40 }).toFile(`${PUB}/video/trailer-${l}-poster-${w}.avif`); }
   unlinkSync(png);
 }
 }

@@ -20,9 +20,10 @@ const loop = (midia.videos[lang] as Video[]).find((v) => v.gameplay === true && 
 const prints = (midia.prints[lang] as Print[]).filter((p) => p.gameplay === true && p.src);
 // Trailer: edição com telas reais, cartelas e arte aprovada ainda fora do jogo. Rótulo próprio, nunca gameplay.
 const trailerSlot = (midia as unknown as { trailer?: Record<string, { ativo?: boolean; src: string; poster: string; posterP: string; largura: number; altura: number }> }).trailer?.[lang];
-const trailer = trailerSlot?.ativo ? trailerSlot : undefined; // desligado: o arquivo atual tem rótulos internos e frase vetada
+const trailer = trailerSlot?.ativo ? trailerSlot : undefined; // só com ativo:true (trailer conferido quadro a quadro em 06/11)
 // Arte-chave do hero (decisão do dono, 06/11): quando existir, substitui mapa + elenco sem mudar layout.
-const heroArte = assets.heroArte as { desktop: string | null; celular: string | null };
+const heroArte = assets.heroArte as { desktop: string | null; celular: string | null; larguras?: { desktop: number[]; celular: number[] } };
+const hset = (base: string, ws: number[], ext: string) => ws.map((w) => `${base}-${w}.${ext} ${w}w`).join(', ');
 const sitekey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY ?? '';
 const strings = {
   share: f.shareTxt, copiado: f.copiado, falhaCopia: f.falhaCopia, erros: f.erros, enviando: f.enviando,
@@ -66,10 +67,13 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
   <!-- 1 · Hero: Exploração em tela cheia, elenco pisando no mapa -->
   <section class="cena hero" id="topo" aria-labelledby="hero-h">
     {heroArte.desktop && heroArte.celular ? (
-      <div class="cena-fundo" aria-hidden="true">
-        <picture class="cena-mapa hero-arte">
-          <source media="(min-width: 1024px)" srcset={heroArte.desktop} />
-          <img src={heroArte.celular} alt="" width="1080" height="1920" fetchpriority="high" />
+      <div class="cena-fundo hero-fundo" aria-hidden="true">
+        {/* Arte-chave (ilustração composta): redução suave, nunca pixelated. Só a variante da tela é pedida. */}
+        <picture class="hero-arte">
+          <source media="(min-width: 1024px)" type="image/avif" srcset={hset(heroArte.desktop, heroArte.larguras!.desktop, 'avif')} sizes="100vw" />
+          <source media="(min-width: 1024px)" type="image/webp" srcset={hset(heroArte.desktop, heroArte.larguras!.desktop, 'webp')} sizes="100vw" />
+          <source type="image/avif" srcset={hset(heroArte.celular, heroArte.larguras!.celular, 'avif')} sizes="100vw" />
+          <img src={`${heroArte.celular}-780.webp`} srcset={hset(heroArte.celular, heroArte.larguras!.celular, 'webp')} sizes="100vw" width="941" height="1672" alt="" fetchpriority="low" decoding="async" />
         </picture>
       </div>
     ) : (
@@ -82,7 +86,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
     )}
     <div class="hero-corpo">
       <div class="hero-texto veu-h">
-        <img class="hero-logo" src={logo} srcset={`/site/logo-240.webp 240w, /site/logo-320.webp 320w, ${logo} 480w`} sizes="(min-width: 1024px) 300px, 176px" width="480" height="503" fetchpriority="low" alt={t.logoAlt} />
+        <img class="hero-logo" src={logo} srcset={`/site/logo-240.webp 240w, /site/logo-320.webp 320w, ${logo} 480w`} sizes="(min-width: 1024px) 300px, 176px" width="480" height="503" fetchpriority="high" alt={t.logoAlt} />
         <h1 id="hero-h">{t.h1}</h1>
         <p class="vagas-linha" data-vagas-linha><span class="num-g">{t.hero.vagasNum}</span> <span>{t.hero.vagasTx}</span></p>
       </div>
@@ -103,7 +107,6 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         <div class="ciclo-texto veu">
           <h2 id="ciclo-h">{c.h2}</h2>
           <p class="frase">{c.frase}</p>
-          <p class="demo-linha"><span class="rotulo rot-demo">{t.rotulos.demo}</span> <span>{c.demo}</span></p>
         </div>
         {loop && (
           <figure class="aparelho ciclo-aparelho" data-loop>
@@ -140,7 +143,9 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
               </div>
             </div>
           </div>
-          <div class="lista-jogo moldura" data-tarefas>
+          <div class="lista-bloco" data-tarefas>
+          <p class="demo-linha"><span class="rotulo rot-demo">{t.rotulos.demo}</span> <span>{c.demo}</span></p>
+          <div class="lista-jogo moldura">
             <p class="lista-cab"><span class="rot-hoje">{c.hoje}</span> <span class="rot-missao">{c.missao} <span data-missao aria-live="polite">0/{c.tarefas.length}</span></span></p>
             <p class="lista-sub" aria-hidden="true">{c.habitos}</p>
             <ul aria-label={c.tarefasRotulo}>
@@ -153,6 +158,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
                 </li>
               ))}
             </ul>
+          </div>
           </div>
           <div class="ciclo-fim" data-fim hidden>
             <p>{c.fim}</p>
@@ -173,7 +179,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           <h2 id="soul-h">{s.h2}</h2>
           <p class="frase">{s.frase}</p>
           <p class="numero"><span class="num-g">{s.num}</span> <span class="num-tx">{s.numTx}</span></p>
-          <p class="numero"><span class="num-g">{s.num2}</span> <span class="num-tx">{s.num2Tx}</span></p>
+          <p class="numero"><span class="num-pre">{s.num2Pre}</span> <span class="num-g">{s.num2}</span> <span class="num-tx">{s.num2Tx}</span></p>
         </div>
         <div class="fichas" role="region" aria-roledescription={s.carrossel} aria-label={s.fichasRotulo} data-fichas>
           <div class="fichas-faixa" data-faixa tabindex="0">
@@ -194,21 +200,22 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         <div class="arvore-bloco veu">
           <h3>{s.arvoreH}</h3>
           <ol class="arvore" aria-label={s.arvoreRotulo}>
+            <li class="arvore-linha arvore-caminhos" aria-hidden="true"><span class="arvore-rot">&nbsp;</span><span class="arvore-nos">{s.caminhos.map((cm) => <span class="caminho">{cm}</span>)}</span></li>
             {Formas.map((fm, i) => {
               const tres = i > 0 && i < 4;
               return (
                 <li class:list={['arvore-linha', { tres }]}>
                   <span class="arvore-rot">{c.forma} {i + 1}</span>
                   <span class="arvore-nos">
-                    {tres && <span class="no oculto"><img class="sprite" loading="lazy" src={`/sprites/planta-${fm}-128.webp`} width="128" height="128" alt="" /><span class="q" aria-hidden="true">?</span><span class="sr">{s.oculta}</span></span>}
+                    {tres && <span class="no oculto"><span class="q" aria-hidden="true">?</span><span class="sr">{s.oculta}</span></span>}
                     <span class="no revelado"><img class="sprite" loading="lazy" src={`/sprites/planta-${fm}-128.webp`} width="128" height="128" alt={`${c.alt} ${c.forma} ${i + 1} ${c.de} 5`} /></span>
-                    {tres && <span class="no oculto"><img class="sprite" loading="lazy" src={`/sprites/planta-${fm}-128.webp`} width="128" height="128" alt="" /><span class="q" aria-hidden="true">?</span><span class="sr">{s.oculta}</span></span>}
+                    {tres && <span class="no oculto"><span class="q" aria-hidden="true">?</span><span class="sr">{s.oculta}</span></span>}
                   </span>
                 </li>
               );
             })}
           </ol>
-          <p class="caminhos">{s.caminhos.join(' · ')}</p>
+          <p class="sr">{s.caminhos.join(', ')}</p>
         </div>
       </div>
     </section>
@@ -260,10 +267,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
     <!-- 6 · O que você faz: Arena, 3 telas reais -->
     {prints.length > 0 && (
       <section class="cena recursos" id="recursos" aria-labelledby="recursos-h">
-        <Mapa id="arena" desk="arena-d" aD={721 / 560} fy={0.45} dfy={0.5}>
-          <Cria s="marcial-ultimate" t={192} td={192} x={30} y={60} dx={7} dy={95} so="d" />
-          <Cria s="vigor-mega" t={192} td={192} x={70} y={60} dx={94} dy={96} flip so="d" fase={700} />
-        </Mapa>
+        <Mapa id="arena" desk="arena-d" aD={721 / 560} fy={0.45} dfy={0.5} />
         <div class="recursos-cab veu">
           <h2 id="recursos-h">{r.h2}</h2>
           <p class="frase">{r.frase}</p>
@@ -298,8 +302,12 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         <figure class="trailer-fig">
           <figcaption class="rotulo rot-cine">{t.rotulos.trailer}</figcaption>
           <div class="trailer-moldura">
-            {/* Sem autoplay e com som: só toca no play. Poster entra depois do load, perto da tela. */}
-            <video data-trailer data-poster={trailer.poster} data-poster-p={trailer.posterP} controls playsinline preload="none" width={trailer.largura} height={trailer.altura} aria-label={t.video.alt}>
+            {/* Sem autoplay e com som: a capa é um botão; o vídeo (com controles) só aparece depois do play. */}
+            <button type="button" class="trailer-capa" data-trailer-capa hidden aria-label={`${j.tocar}: ${t.video.alt}`}>
+              <picture><source type="image/avif" srcset={`${trailer.posterP.replace('.webp', '.avif')} 640w, ${trailer.poster.replace('.webp', '.avif')} 1280w`} sizes="(min-width: 1024px) 960px, 100vw" /><img src={trailer.posterP} srcset={`${trailer.posterP} 640w, ${trailer.poster} 1280w`} sizes="(min-width: 1024px) 960px, 100vw" width="1280" height="720" alt="" loading="lazy" decoding="async" /></picture>
+              <span class="trailer-play" aria-hidden="true"><svg viewBox="0 0 16 16" width="40" height="40"><path fill="currentColor" d="M5 2v12l9-6z"/></svg></span>
+            </button>
+            <video data-trailer hidden controls playsinline preload="none" width={trailer.largura} height={trailer.altura} aria-label={t.video.alt}>
               <source src={trailer.src} type="video/mp4" />
             </video>
             <noscript><video controls playsinline preload="none" poster={trailer.poster} width={trailer.largura} height={trailer.altura} aria-label={t.video.alt}><source src={trailer.src} type="video/mp4" /></video></noscript>
@@ -320,6 +328,8 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
       <p class="aviso-vaga">{e.aviso}</p>
     </section>
 
+    <div class="divisor" role="presentation"><picture><source media="(min-width: 768px)" srcset="/site/divisor.webp" /><img src="/site/divisor-336.webp" width="336" height="72" alt="" loading="lazy" /></picture></div>
+
     <!-- 9 · Perguntas -->
     <section class="calmo faq" id="perguntas" aria-labelledby="faq-h">
       <h2 id="faq-h">{t.faq.h2}</h2>
@@ -337,10 +347,10 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
     <!-- 10 · Entre no beta: a Guilda inteira, praça do cristal -->
     <section class="cena inscrever" id="inscrever" aria-labelledby="inscrever-h">
       <Mapa id="guilda" desk="guilda-fecho-d" aD={841 / 640} fy={0.5} dfy={0.5}>
-        {/* 3x no desktop, 2x no celular; pés no piso da praça */}
-        <Cria s="planta-ultra" t={128} td={192} x={42} y={73} dx={22} dy={52} />
-        <Cria s="agua-rookie" t={128} td={192} x={62} y={76} dx={76} dy={50} flip fase={500} />
-        <Cria s="arcano-mega" t={128} td={192} x={74} y={40} dx={73} dy={30} flip so="d" fase={900} />
+        {/* 2x nos dois (pixel da criatura perto do pixel do mapa). Pés medidos com grade sobre a cena renderizada. */}
+        <Cria s="planta-ultra" t={128} td={128} x={50} y={89} dx={24} dy={47} />
+        <Cria s="agua-rookie" t={128} td={128} x={84} y={23} dx={73} dy={72} flip fase={500} />
+        <Cria s="arcano-mega" t={128} td={128} x={16} y={23} dx={79} dy={56} flip fase={900} />
       </Mapa>
       <div class="inscrever-caixa veu">
         <h2 id="inscrever-h">{f.h2}</h2>

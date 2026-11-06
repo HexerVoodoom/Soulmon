@@ -13,6 +13,7 @@ const vars = Object.entries(assets).flatMap(([k, v]) => {
   const m = v as { src: string; fatia?: string; borda?: string; borda3?: string };
   return [`--a-${k}:url(${m.src})`, ...(m.fatia ? [`--f-${k}:${m.fatia} fill`, `--b-${k}:${m.borda}`, ...(m.borda3 ? [`--b3-${k}:${m.borda3}`] : [])] : [])];
 }).join(';');
+const heroArte = (assets as unknown as { heroArte?: { celular: string | null; desktop: string | null; larguras: { celular: number[]; desktop: number[] } } }).heroArte;
 const hrefPt = lang === 'pt' ? aqui : alternativa;
 const hrefEn = lang === 'en' ? aqui : alternativa;
 ---
@@ -38,7 +39,11 @@ const hrefEn = lang === 'en' ? aqui : alternativa;
   <link rel="preload" href="/fonts/cinzel-latin.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="/fonts/rubik-latin.woff2" as="font" type="font/woff2" crossorigin />
   {/* LCP medido é a criatura protagonista (o mapa em tela cheia não entra como candidato): ela vem primeiro, o mapa logo atrás. */}
-  {preload && <link rel="preload" as="image" type="image/webp" fetchpriority="high" href="/sprites/fogo-ultimate.webp" />}
+  {/* Hero: arte-chave quando existir (só a variante da tela); senão a criatura protagonista. */}
+  {preload && heroArte?.celular ? <>
+    <link rel="preload" as="image" type="image/avif" fetchpriority="low" media="(max-width: 1023px)" imagesrcset={heroArte.larguras.celular.map((w: number) => `${heroArte.celular}-${w}.avif ${w}w`).join(', ')} imagesizes="100vw" />
+    <link rel="preload" as="image" type="image/avif" fetchpriority="high" media="(min-width: 1024px)" imagesrcset={heroArte.larguras.desktop.map((w: number) => `${heroArte.desktop}-${w}.avif ${w}w`).join(', ')} imagesizes="100vw" />
+  </> : preload && <link rel="preload" as="image" type="image/webp" fetchpriority="high" href="/sprites/fogo-ultimate.webp" />}
 </head>
 <body>
   <slot />

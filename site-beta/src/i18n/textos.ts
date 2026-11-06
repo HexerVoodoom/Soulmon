@@ -43,7 +43,7 @@ const pt = {
   soul: {
     h2: 'Seu Soulmon é só seu',
     frase: 'Nasce de um teste de personalidade; o elemento muda o corpo e o combate.',
-    num: '20', numTx: 'elementos', num2: '+200', num2Tx: 'combinações',
+    num: '20', numTx: 'elementos', num2Pre: 'mais de', num2: '200', num2Tx: 'combinações',
     arvoreH: 'Cinco formas, três caminhos',
     caminhos: ['Poder', 'Harmonia', 'Benevolência'],
     arvoreRotulo: 'Árvore de evolução: um caminho revelado, os outros em sombra',
@@ -72,7 +72,7 @@ const pt = {
       ['jogos', 'Jogos rápidos', 'Minijogos que rendem Bits.', 'Mapa dos Jogos no Soulmon, com Salão de Jogos e Ateliê da Mente.'],
     ] as [string, string, string, string][],
   },
-  video: { h2: 'Um minuto de Soulmon', legenda: 'Telas do app e a música do jogo. Com som.', alt: 'Trailer do Soulmon, 60 segundos, com música e sem narração.' },
+  video: { h2: 'Um minuto de Soulmon', legenda: 'Telas do app e a música do jogo. Com som.', alt: 'Trailer do Soulmon, 54 segundos, com música e sem narração.' },
   entrar: {
     h2: 'Como entrar', frase: 'Três passos, sem pressa.',
     passos: [
@@ -164,7 +164,7 @@ const en: typeof pt = {
   soul: {
     h2: 'Your Soulmon is yours alone',
     frase: 'Born from a personality test; its element shapes its body and its fights.',
-    num: '20', numTx: 'elements', num2: '+200', num2Tx: 'combinations',
+    num: '20', numTx: 'elements', num2Pre: 'more than', num2: '200', num2Tx: 'combinations',
     arvoreH: 'Five forms, three paths',
     caminhos: ['Power', 'Harmony', 'Benevolence'],
     arvoreRotulo: 'Evolution tree: one path revealed, the others in shadow',
@@ -193,7 +193,7 @@ const en: typeof pt = {
       ['jogos', 'Quick games', 'Minigames that earn Bits.', 'Soulmon Games map, with the Game Hall and the Mind Workshop.'],
     ],
   },
-  video: { h2: 'One minute of Soulmon', legenda: "App screens and the game's music. Sound on.", alt: 'Soulmon trailer, 60 seconds, with music and no narration.' },
+  video: { h2: 'One minute of Soulmon', legenda: "App screens and the game's music. Sound on.", alt: 'Soulmon trailer, 54 seconds, with music and no narration.' },
   entrar: {
     h2: 'How to join', frase: 'Three steps, no rush.',
     passos: [

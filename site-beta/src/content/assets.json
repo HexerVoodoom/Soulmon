@@ -210,18 +210,47 @@
     "provisorio": "PROVISÓRIO: reuso da barraCapa como nó da barra lateral até existir o asset cristal-no (12x16, ASSETS-CHATGPT). Escala inteira da barra (1x/2x)."
   },
   "_furos": {
-    "divisor": "sem peça: nenhum divisor desenhado (proibido imitar em CSS); entra quando existir divisor 96x12 3-slice",
+    "divisor": "montado à mão a partir de peças aprovadas (ver divisor); trocar quando o asset 96x12 3-slice existir",
     "cristalNo": "sem peça: nó usa barraNo (provisório)"
   },
   "heroArte": {
-    "estado": "provisorio-css",
-    "src": null,
-    "desktop": null,
-    "celular": null,
-    "proporcao": {
-      "desktop": "16:9",
-      "celular": "9:16"
+    "estado": "aguarda-aprovacao-do-dono",
+    "src": "/site/hero-desktop-1440.webp",
+    "desktop": "/site/hero-desktop",
+    "celular": "/site/hero-celular",
+    "larguras": {
+      "desktop": [
+        960,
+        1440,
+        1672
+      ],
+      "celular": [
+        480,
+        780,
+        941
+      ]
     },
-    "nota": "Arte-chave do hero (decisão do dono, 06/11). Quando desktop e celular existirem (ex.: /site/hero-16x9.avif e /site/hero-9x16.avif), substituem mapa + elenco do hero sem mudar layout. Até lá: mapa da Exploração + criaturas."
+    "tamanho": {
+      "desktop": [
+        1672,
+        941
+      ],
+      "celular": [
+        941,
+        1672
+      ]
+    },
+    "origem": "E:/Soulmon-marketing/site-assets/hero-arte-{desktop,celular}.png (composição: E:/tmp/heroarte/compor.py); ilustração, redução suave (não pixelated)",
+    "nota": "Arte-chave do hero: substitui mapa + elenco do hero sem mudar layout. Aguarda aprovação do dono."
+  },
+  "divisor": {
+    "estado": "aguarda-revisao",
+    "src": "/site/divisor.webp",
+    "srcCelular": "/site/divisor-336.webp",
+    "tamanho": [
+      480,
+      72
+    ],
+    "montadaAMao": "montada à mão, aguarda revisão: cristal-aceso (topo 48x72) + barra-corpo girada 90° como filete + barra-capa nas pontas, pixel a pixel, escala 1x"
   }
 }
