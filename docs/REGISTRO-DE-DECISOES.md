@@ -4255,3 +4255,7 @@ Sessão sem lista e sem foco segue dando chave e item (§238: mantém). Sair no 
 ## §243 — Mais respostas do dono (06/11/2026, em modal)
 
 O NPC 412 se chama Bastion, sempre em inglês. As artes do 412 e do 440 ficam como estão, sem revisão da squad de design. A Sépia fica no balão da Oficina do Foco. **Rollback:** reverter o PR do nome.
+
+## §244 — Carta de teste do Mensageiro pelo painel GM (06/11/2026)
+
+O dono não tem a `SEASON_ADMIN_KEY` à mão. `/gm/carta` (login Google, e-mail em `ADMIN_EMAILS`) envia a carta de teste só para a conta do próprio token, sem prêmio, uma por dia. O corpo da requisição nunca escolhe o destino. **Alternativa que perdeu:** ler ou rotacionar o segredo. **Rollback:** reverter o PR.
