@@ -87,7 +87,8 @@ import { useGameStateOptional } from '../contexts/GameStateContext';
 import { stageSkillsFor } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { FX_FALLBACK_ELEMENT, opponentElementFor } from '../utils/combatFx';
 import { DESAFIANTE_ELEMENT } from '../utils/spriteElement';
-import { getOpponents, playMatchComRetry, playMatch, isFalhaDeRede, startDuel, getRank, type Opponent, type MatchResult, type RankRow } from '../utils/community';
+import { getOpponents, playMatchComRetry, playMatch, isFalhaDeRede, startDuel, getRank, getSeasonHistory, type Opponent, type MatchResult, type RankRow, type SeasonHistory } from '../utils/community';
+import { buildSeasonHistoryView, placeLabel, prevSeasonKey, seasonMonthLabel } from '../utils/seasonHistoryView';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
 import { RewardPreview } from './ui/RewardPreview';
 import { TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
@@ -102,7 +103,7 @@ import { RitualDialog } from './ritual/RitualKit';
 import { BackCircleButton } from './ui/BackCircleButton';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { GameVisor, VisorSprite, DIALOG_VISOR_W } from './games/GameKit';
-import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
+import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD, ModalSheet } from './form/FormKit';
 import { sm2Tag } from './TaskMeta';
 import { bondXP, bondLevelFor, meetsPvpBond, xpToPvpBond, xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
 import tournamentFinal from '../assets/soulmon/bg/tournament-final.png';
@@ -298,6 +299,16 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   };
   const myFrame = resolveEquippedFrame(equippedFrame, frameCtx);
   const [framesOpen, setFramesOpen] = useState(false);
+  /* Histórico de temporadas (06/11/2026): a pílula "Última temporada" e o modal com todas. A colocação é do SERVIDOR
+     (`seasonHistory`, só o dono lê); offline/falha cai nos troféus que o save já carrega. */
+  const [seasonHist, setSeasonHist] = useState<SeasonHistory | null>(null);
+  const [histOpen, setHistOpen] = useState(false);
+  useEffect(() => {
+    let vivo = true;
+    getSeasonHistory(saveId).then(h => { if (vivo) setSeasonHist(h); }).catch(() => { /* sem rede: vale o que o save tem */ });
+    return () => { vivo = false; };
+  }, [saveId]);
+  const histView = buildSeasonHistoryView(seasonHist, trophies, prevSeasonKey());
   /** Quantas posições aparecem ACIMA e ABAIXO do jogador na lista da season.
    *  A season inteira transformava a tela num placar absoluto: dois dedos de
    *  scroll e a pessoa se lê como "47º", que é justamente a leitura de
@@ -677,25 +688,54 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
 
       <p data-torneio-temporada style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Temporada' : 'Season'}: {seasonDaysLabel(new Date(), isPt ? 'pt-BR' : 'en-US')}</p>
 
-      {/* Troféus de season — só existem se foram ganhos. Um selo por season,
-          com o lugar dito em PALAVRA no `title`/`aria`, em vez de três hexes
-          de pódio que ninguém decodifica sem legenda. */}
-      {trophies.length > 0 && (
-        <ul style={{ display: 'flex', gap: 8, flexWrap: 'wrap', listStyle: 'none', margin: 0, padding: 0 }}>
-          {trophies.map((t, i) => (
-            <li
-              key={`${t.season}-${i}`}
-              title={isPt ? `${t.season} — ${t.place}º lugar` : `${t.season} — place ${t.place}`}
-              /* `.chip.tag.season` (canvas): etiqueta 28 em `surface-2`, troféu
-                 `gold-ink` FILL, texto em `ink`. */
-              style={{ ...sm2Tag, minHeight: 28, color: 'var(--sm2-ink)' }}
-            >
-              <Icon name="emoji_events" size={20} tone="gold" fill={1} />
-              <span className="sm2-num">{t.season} · {t.place}º</span>
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* "Última temporada" (06/11/2026, dono): a pílula diz só a colocação do jogador no mês anterior ("—" se não jogou);
+          tocar abre o modal com TODAS as temporadas e a melhor colocação. Troféu em ouro quando foi pódio. */}
+      <button
+        type="button"
+        data-torneio-ultima-temporada
+        onClick={() => setHistOpen(true)}
+        aria-haspopup="dialog"
+        aria-label={isPt
+          ? `Última temporada: ${histView.lastPlace !== null ? `${histView.lastPlace}º lugar` : 'sem colocação'}. Abrir o histórico`
+          : `Last season: ${histView.lastPlace !== null ? `place ${histView.lastPlace}` : 'no placement'}. Open the history`}
+        style={{ ...sm2Tag, alignSelf: 'flex-start', minHeight: 44, padding: '0 12px', border: 0, cursor: 'pointer', color: 'var(--sm2-ink)' }}
+      >
+        <Icon name="emoji_events" size={20} tone={histView.lastPlace !== null && histView.lastPlace <= 3 ? 'gold' : 'muted'} fill={histView.lastPlace !== null && histView.lastPlace <= 3 ? 1 : 0} />
+        <span>{isPt ? 'Última temporada' : 'Last season'}</span>
+        <span className="sm2-num" style={{ fontWeight: 600 }}>{histView.lastPlace !== null ? placeLabel(histView.lastPlace, lang) : '—'}</span>
+        <Icon name="chevron_right" size={20} tone="muted" />
+      </button>
+
+      <ModalSheet open={histOpen} title={isPt ? 'Temporadas' : 'Seasons'} onClose={() => setHistOpen(false)} language={lang}>
+        <div data-torneio-historico style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {histView.best && (
+            <div data-torneio-melhor style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
+              <Icon name="emoji_events" size={32} tone="gold" fill={1} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Melhor colocação' : 'Best placement'}</p>
+                <p style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>
+                  <span className="sm2-num">{placeLabel(histView.best.place, lang)}</span> · {seasonMonthLabel(histView.best.season, lang)}
+                </p>
+              </div>
+            </div>
+          )}
+          {histView.seasons.length === 0 ? (
+            <p data-torneio-historico-vazio style={{ ...sm2Hint, margin: 0, textAlign: 'center', padding: '12px 0' }}>
+              {isPt ? 'Nenhuma temporada encerrada ainda. Quando o mês virar, sua colocação aparece aqui.' : 'No finished seasons yet. When the month turns, your placement shows up here.'}
+            </p>
+          ) : (
+            <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {histView.seasons.map(h => (
+                <li key={h.season} data-torneio-temporada-item={h.season} style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px', minHeight: 44 }}>
+                  <Icon name="emoji_events" size={20} tone={h.place <= 3 ? 'gold' : 'muted'} fill={h.place <= 3 ? 1 : 0} />
+                  <span style={{ ...sm2Text, flex: 1, minWidth: 0 }}>{seasonMonthLabel(h.season, lang)}</span>
+                  <span className="sm2-num" style={{ ...sm2Text, fontWeight: 600 }}>{placeLabel(h.place, lang)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </ModalSheet>
 
       {/* Requisito do Torneio (H13): sem interruptor. Abaixo do Vínculo
           mínimo a aba diz POR QUE não abre e O QUE falta — progresso, nunca
