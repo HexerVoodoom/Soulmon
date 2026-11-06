@@ -939,6 +939,11 @@ export default function App() {
   /* Cerimônia BB→rookie: o rookie grátis (`/api/free-rookie`) carrega sem travar a UI; falha = sprite inicial pronto. */
   const [freeRookie, setFreeRookie] = useState<'idle' | 'loading' | 'done'>('idle');
   const escolherMercenario = useCallback((o: MercOrdem) => { void import('./utils/mercMission').then(m => setGameState(prev => m.escolherMerc(prev, o, playerDayKey(new Date(), prev.playerDayTz)).state)); }, []);
+  /* Proposta pendente fora da regra "tarefa de um dia" (save antigo): descartada e sorteada de novo ao abrir a Guilda. */
+  useEffect(() => {
+    if (!guildaOpen || !gameState.mercMission || gameState.mercMission.done) return;
+    void import('./utils/mercMission').then(m => setGameState(prev => m.renovarMercPendente(prev)));
+  }, [guildaOpen, gameState.mercMission]);
   const confirmarMercenario = useCallback(() => { void import('./utils/mercMission').then(m => setGameState(prev => m.concluirMerc(prev, playerDayKey(new Date(), prev.playerDayTz)))); }, []);
   /* Opening pré-login (1ª abertura de quem é novo, com Pular; independe do ONBOARDING_VELADO) e "Ver abertura" das Configurações. */
   const [introCinePendente, setIntroCinePendente] = useState(() => deveTocarIntro(readFlag(STORAGE_KEYS.ONBOARDING_COMPLETE)));

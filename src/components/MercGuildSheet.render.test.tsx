@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/** A folha do líder (dono, 05/11/2026): primeiro o que é a missão; aceitar ou pensar; uma por dia, de um dos três. */
+/** A folha do líder (dono, 05/11/2026): primeiro o que é a missão; pegar a missão ou decidir depois; uma por dia, de um dos três. */
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { cleanup, fireEvent, render } from '@testing-library/react';
 import { MercGuildSheet } from './MercGuildSheet';
@@ -16,11 +16,16 @@ describe('MercGuildSheet', () => {
     render(<MercGuildSheet {...base} ordem="rompente" hoje={null} onAccept={onAccept} />);
     expect(document.querySelector('[data-area-sheet-npc]')).toBeTruthy();
     expect(document.querySelector('[data-merc-atividade]')!.textContent).toContain(sortearMerc(DIA, 'rompente')!.name.en);
+    const t = sortearMerc(DIA, 'rompente')!;
+    expect(document.querySelector('[data-merc-beneficio]')!.textContent).toBe(t.benefit.en);
+    const botoes = [...document.querySelectorAll('button')].map(b => b.textContent);
+    expect(botoes).toContain('Take the mission');
+    expect(botoes).toContain('Decide later');
     fireEvent.click(document.querySelector('[data-merc-aceito]')!);
     expect(onAccept).toHaveBeenCalledWith('rompente');
   });
 
-  it('"Vou pensar" chama onThink e não aceita', () => {
+  it('"Decidir depois" chama onThink e não aceita', () => {
     const onAccept = vi.fn(); const onThink = vi.fn();
     render(<MercGuildSheet {...base} ordem="tecelao" hoje={null} onAccept={onAccept} onThink={onThink} />);
     fireEvent.click(document.querySelector('[data-merc-pensar]')!);
@@ -46,5 +51,18 @@ describe('MercGuildSheet', () => {
   it('o BB fica de fora', () => {
     render(<MercGuildSheet {...base} ordem="rompente" bb hoje={null} />);
     expect(document.querySelector('[data-merc-aceito]')).toBeNull();
+  });
+  it('PT: botões "Pegar missão" e "Decidir depois" e o benefício em português', () => {
+    render(<MercGuildSheet {...base} language="pt-BR" ordem="filtrador" hoje={null} />);
+    const botoes = [...document.querySelectorAll('button')].map(b => b.textContent);
+    expect(botoes).toContain('Pegar missão');
+    expect(botoes).toContain('Decidir depois');
+    expect(document.querySelector('[data-merc-beneficio]')!.textContent).toBe(sortearMerc(DIA, 'filtrador')!.benefit.pt);
+  });
+  it('save antigo com hábito pendente: mostra a tarefa nova de um dia, nunca "por semana"', () => {
+    render(<MercGuildSheet {...base} ordem="rompente" hoje={{ day: DIA, ordem: 'rompente', activityId: 'hidratacao-agua', done: false }} />);
+    const t = sortearMerc(DIA, 'rompente')!;
+    expect(document.querySelector('[data-merc-atividade]')!.textContent).toContain(t.target.en);
+    expect(document.querySelector('[data-merc-atividade]')!.textContent).not.toMatch(/week/i);
   });
 });
