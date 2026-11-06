@@ -9241,7 +9241,7 @@ export default function App() {
           onClick={() => goTo('map')}
         />
       )}
-      {currentView === 'home' && (
+      {currentView === 'home' && !demo && (
         <MailLink
           unread={mailbox.unread}
           label={language === 'pt-BR' ? 'Caixa de cartas' : 'Mailbox'}
@@ -9259,7 +9259,7 @@ export default function App() {
           onClick={abrirMissoes}
         />
       )}
-      {currentView === 'home' && mailOpen && (
+      {currentView === 'home' && !demo && mailOpen && (
         <MailboxSheet
           open
           language={language}
