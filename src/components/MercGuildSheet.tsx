@@ -64,7 +64,7 @@ export function MercGuildSheet({ ordem, onClose, language = 'pt-BR', hoje, dayKe
               {item.emoji} <strong>{t(item.name)}</strong>{' — '}{t(item.target)}
             </p>
             <p data-merc-premio style={{ ...sm2Text, margin: 0 }}>{premio}</p>
-            <p data-merc-beneficio style={{ ...sm2Text, margin: 0, fontSize: 12, opacity: 0.75, fontStyle: 'italic' }}>{t(item.benefit)}</p>
+            <p data-merc-beneficio style={{ ...sm2Text, margin: 0, fontSize: 'var(--sm2-text-xs)', opacity: 0.75, fontStyle: 'italic' }}>{t(item.benefit)}</p>
           </>
         )}
 
