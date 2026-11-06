@@ -9,8 +9,8 @@ const base = Astro.site!.origin;
 // Peças trocáveis viram variáveis CSS: trocar o manifesto não muda layout (src/content/assets.json).
 const vars = Object.entries(assets).flatMap(([k, v]) => {
   if (k.startsWith('_') || typeof v === 'string' || !v.src) return [];
-  const m = v as { src: string; fatia?: string; borda?: string };
-  return [`--a-${k}:url(${m.src})`, ...(m.fatia ? [`--f-${k}:${m.fatia} fill`, `--b-${k}:${m.borda}`] : [])];
+  const m = v as { src: string; fatia?: string; borda?: string; borda3?: string };
+  return [`--a-${k}:url(${m.src})`, ...(m.fatia ? [`--f-${k}:${m.fatia} fill`, `--b-${k}:${m.borda}`, ...(m.borda3 ? [`--b3-${k}:${m.borda3}`] : [])] : [])];
 }).join(';');
 const hrefPt = lang === 'pt' ? aqui : alternativa;
 const hrefEn = lang === 'en' ? aqui : alternativa;

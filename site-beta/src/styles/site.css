@@ -14,7 +14,7 @@
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-html { background: var(--fundo); color: var(--tx); font: 400 1rem/1.5 Rubik, system-ui, sans-serif; scroll-padding: 24px 0 88px; -webkit-text-size-adjust: 100%; }
+html { background: var(--fundo); color: var(--tx); font: 400 1rem/1.5 Rubik, system-ui, sans-serif; scroll-padding: 24px 0 112px; -webkit-text-size-adjust: 100%; }
 body { margin: 0; overflow-x: clip; }
 img { display: block; max-width: 100%; }
 h1, h2, h3 { font-family: Cinzel, Georgia, serif; font-weight: 700; line-height: 1.14; margin: 0; text-wrap: balance; }
@@ -31,12 +31,12 @@ main section { position: relative; }
 
 /* Botão: moldura em asset (9-slice), texto limpo em Rubik. Hover e foco são CSS sobre o mesmo asset. */
 .botao, .botao:visited {
-  display: inline-flex; align-items: center; justify-content: center; height: 63px; padding: 0 4px; cursor: pointer;
-  font: 600 1.0625rem/1 Rubik, sans-serif; color: var(--tx); text-decoration: none; text-align: center; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center; height: 80px; padding: 0 4px; cursor: pointer;
+  font: 600 1.125rem/1 Rubik, sans-serif; color: var(--tx); text-decoration: none; text-align: center; white-space: nowrap;
   background: var(--sup) padding-box; border: solid var(--anel); border-width: var(--b-botao, 2px);
   border-image-source: var(--a-botao, none); border-image-slice: var(--f-botao, 100%); image-rendering: pixelated;
 }
-.botao.grande { font-size: 1.25rem; width: 100%; }
+.botao.grande { height: 120px; border-width: var(--b3-botao, 2px); font-size: 1.5rem; width: 100%; }
 .botao:hover { filter: brightness(1.15); }
 .botao[aria-busy='true'] { opacity: .75; cursor: progress; }
 .link { background: none; border: 0; padding: 12px 8px; min-height: 44px; font: inherit; color: var(--pri); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
@@ -49,7 +49,7 @@ main section { position: relative; }
 
 /* ---------- Barra lateral: segmentos do manifesto ---------- */
 .barra { position: fixed; z-index: 15; left: 6px; top: 0; bottom: 0; width: var(--barra-l); display: flex; flex-direction: column; pointer-events: none; }
-.barra-capa { flex: none; height: var(--barra-l); background: center / 100% 100% no-repeat; }
+.barra-capa { flex: none; height: var(--barra-l); image-rendering: pixelated; background: center / 100% 100% no-repeat; }
 .barra-capa.baixo { transform: scaleY(-1); }
 .barra-trilho { position: relative; flex: 1; }
 .barra-trilho > i { position: absolute; inset: 0; transform: scaleY(0); transform-origin: top; }
@@ -82,7 +82,7 @@ main section { position: relative; }
 .idioma { color: var(--tx); min-height: 44px; display: inline-flex; align-items: center; padding: 0 4px; font-size: .9375rem; }
 .hero-corpo { flex: 1; padding: 4px 16px 20px var(--margem); display: grid; grid-template-rows: auto 1fr; justify-items: center; max-width: 1240px; width: 100%; margin: 0 auto; }
 .hero h1 { font-size: clamp(1.625rem, 7.6vw, 2.125rem); justify-self: start; max-width: 20ch; }
-.hero-criatura { position: absolute; left: calc(38% - 48px); bottom: 26%; width: 96px; height: 96px; filter: drop-shadow(0 0 6px rgba(95,243,224,.55)); }
+.hero-criatura { position: absolute; left: calc(38% - 96px); bottom: 26%; width: 192px; height: 192px; filter: drop-shadow(0 0 6px rgba(95,243,224,.55)); }
 .hero-acao { grid-row: 2; align-self: end; display: grid; justify-items: center; gap: 8px; width: 100%; }
 .hero-acao .botao { width: min(100%, 328px); }
 .micro { font-size: .8125rem; color: var(--tx); text-align: center; }
@@ -96,9 +96,9 @@ main section { position: relative; }
   .hero .logo img { width: 240px; }
   .hero-corpo { grid-template-columns: 1fr 420px; grid-template-rows: auto auto; column-gap: 40px; justify-items: start; align-content: center; padding-top: 0; padding-bottom: 56px; }
   .hero h1 { font-size: clamp(2.75rem, 4.2vw, 3.875rem); grid-column: 1; align-self: end; max-width: 15ch; }
-  .hero-criatura { width: 128px; height: 128px; left: calc(38% - 64px); }
+  .hero-criatura { width: 160px; height: 160px; left: calc(38% - 80px); }
   .hero-acao { grid-row: auto; grid-column: 1; justify-items: start; margin-top: 24px; }
-  .hero-acao .botao { width: 340px; }
+  .hero-acao .botao { width: 360px; }
   .micro { font-size: .9375rem; text-align: left; }
 }
 
@@ -141,8 +141,8 @@ main section { position: relative; }
 .caixa { width: 24px; height: 24px; display: grid; place-items: center; border: 2px solid var(--cobre); border-radius: 4px; background: var(--fundo); }
 .caixa svg { visibility: hidden; filter: drop-shadow(0 0 3px rgba(95,243,224,.7)); }
 .check[aria-checked='true'] .caixa svg { visibility: visible; }
-.ciclo-fim { display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .9375rem; }
-.ciclo-fim .botao { width: 100%; max-width: 340px; font-size: .9375rem; }
+.ciclo-fim { grid-column: 1 / -1; margin-top: 16px; display: grid; justify-items: center; gap: 6px; text-align: center; font-size: .9375rem; }
+.ciclo-fim .botao { width: 100%; max-width: 340px; }
 
 @media (min-width: 480px) { .linha-nome { font-size: 1rem; } }
 @media (min-width: 900px) {
@@ -178,7 +178,7 @@ main section { position: relative; }
 }
 
 /* ---------- Universo em abas ---------- */
-.universo { padding: 32px 10px 96px var(--margem); max-width: 1180px; margin: 0 auto; }
+.universo { padding: 32px 10px 112px var(--margem); max-width: 1180px; margin: 0 auto; }
 .abas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; margin-top: 16px; }
 @media (min-width: 480px) { .abas { grid-template-columns: repeat(4, 1fr); } }
 .aba { min-height: 48px; padding: 0 10px; color: var(--tx); font: 500 1rem Rubik, sans-serif; background: var(--sup); cursor: pointer; filter: brightness(.7); border-bottom: 0; }
@@ -237,7 +237,7 @@ main section { position: relative; }
 .mundo-js .c-meio { display: block; width: 100%; height: 100%;
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent), linear-gradient(transparent, #000 5%, #000 94%, transparent); -webkit-mask-composite: source-in;
   mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent), linear-gradient(transparent, #000 5%, #000 94%, transparent); mask-composite: intersect; }
-.mundo-js .cena figcaption { position: absolute; z-index: 6; left: 50%; bottom: 84px; transform: translateX(-50%); width: max-content; max-width: calc(100vw - var(--margem) - 12px); padding: 8px 14px; text-align: center; background: rgba(7,20,19,.88); }
+.mundo-js .cena figcaption { position: absolute; z-index: 6; left: 50%; bottom: 104px; transform: translateX(-50%); width: max-content; max-width: calc(100vw - var(--margem) - 12px); padding: 8px 14px; text-align: center; background: rgba(7,20,19,.88); }
 .mundo-js .frente { display: block; position: absolute; inset: 0; z-index: 5; pointer-events: none; }
 .frente img { position: absolute; left: calc(6% + var(--i) * 12.5%); top: calc(12% + var(--i) * 10%); width: 32px; height: 32px; image-rendering: pixelated; opacity: .9; will-change: transform; }
 @media (min-width: 900px) { .mundo-js .mundo-texto { text-align: center; } .mundo-js .cena figcaption { bottom: 24px; } }

@@ -44,7 +44,7 @@ for w in (240, 480):
 marca('logo', '/site/logo-480.webp', (480, round(480 * lg.height / lg.width)))
 
 # Botão: 192 de largura; o meio vira uma coluna só, as pontas ficam.
-b = dura(nn(abrir('botao-beta'), 192, 63))
+b = dura(nn(abrir('botao-beta'), 120, 40))
 px = b.load(); W, H = b.size
 plate = px[W // 2, H // 2]; meio = [px[W // 2, y] for y in range(H)]
 def difere(c, r): return abs(c[0] - r[0]) + abs(c[1] - r[1]) + abs(c[2] - r[2]) + abs(c[3] - r[3]) > 40
@@ -54,7 +54,7 @@ for x in range(W // 2):
 FATIA = orn + 2
 for x in range(FATIA, W - FATIA):
     for y in range(H): px[x, y] = meio[y]
-marca('botao', salvar(b, 'botao'), b.size, 'meio plano por coluna única; fatia maior que o ornamento medido', fatia=f'20 {FATIA}', borda=f'20px {FATIA}px')
+marca('botao', salvar(b, 'botao'), b.size, 'meio plano por coluna única; fatia maior que o ornamento medido', fatia=f'14 {FATIA}', borda=f'{14*2}px {FATIA*2}px', borda3=f'{14*3}px {FATIA*3}px')
 print('botao ornamento', orn, 'fatia', FATIA)
 
 # Perfil da borda: do alto da coluna central do botão até a placa.
@@ -89,6 +89,20 @@ for slot, nome, lado, c, canto_on, aberta, fatia in (('popup', 'popup', 72, 24, 
     i = moldura(lado, c, canto_on, aberta)
     marca(slot, salvar(i, nome), i.size, 'perfil da borda do botão, placa plana' + (', cantos do popup-moldura' if canto_on else ''), fatia=str(fatia), borda=f'{fatia}px')
 
+# Popup e painel v2: placa opaca até o canto. Cantos da peça, bordas de uma fatia central, miolo plano.
+def nove(nome, lado, c):
+    o = abrir(nome); t = o.width // 8; W_, H_ = o.size
+    i = Image.new('RGBA', (lado, lado), (15, 42, 41, 255))
+    i.paste(nn(o.crop((0, 0, t, t)), c, c), (0, 0)); i.paste(nn(o.crop((W_ - t, 0, W_, t)), c, c), (lado - c, 0))
+    i.paste(nn(o.crop((0, H_ - t, t, H_)), c, c), (0, lado - c)); i.paste(nn(o.crop((W_ - t, H_ - t, W_, H_)), c, c), (lado - c, lado - c))
+    m = lado - 2 * c
+    i.paste(nn(o.crop((W_ // 2, 0, W_ // 2 + 1, t)), m, c), (c, 0)); i.paste(nn(o.crop((W_ // 2, H_ - t, W_ // 2 + 1, H_)), m, c), (c, lado - c))
+    i.paste(nn(o.crop((0, H_ // 2, t, H_ // 2 + 1)), c, m), (0, c)); i.paste(nn(o.crop((W_ - t, H_ // 2, W_, H_ // 2 + 1)), c, m), (lado - c, c))
+    return dura(i)
+for slot, nome, arq, lado, c in (('popup', 'popup-moldura-v2', 'popup', 72, 24), ('painel', 'painel-universo-v2', 'painel', 48, 16)):
+    i = nove(nome, lado, c)
+    marca(slot, salvar(i, arq), i.size, 'cantos e fatia central da peça v2, nearest, miolo plano #0F2A29', fatia=str(c), borda=f'{c}px')
+
 # Barra: linha mediana da peça gerada, sem folha, 12 de largura e altura uniforme: repete por construção.
 bc = abrir('barra-corpo-v2')
 colunas = []
@@ -104,9 +118,26 @@ for y in range(8):
         c = a[x, y]
         if c[3] and c[2] >= c[0]: a[x, y] = (95, 243, 224, 255)  # só o canal de vidro muda; silhueta idêntica
 marca('barraCheio', salvar(ch, 'barra-cheio'), ch.size, 'barra-corpo com o canal preenchido, pixel a pixel')
-cap = abrir('botao-beta').rotate(-90, expand=True)
-cap = dura(nn(cap, 12, round(12 * cap.height / cap.width)).crop((0, 0, 12, 12)))
-marca('barraCapa', salvar(cap, 'barra-capa'), cap.size, 'ponta do botão girada')
+# Capa desenhada pixel a pixel, na largura e na escala da barra: cristal, folhas, base de cobre.
+CAPA = [
+    '....cc......',
+    '...cCCc.....',
+    '...cCWc.gg..',
+    '...cCCc.gGg.',
+    '.gg.cc..gg..',
+    'gGg.ca..g...',
+    '.gg.ca.g....',
+    '..gaaaag....',
+    '.aLLLLLLa...',
+    'aLMMMMMMMDa.',
+    'aMMMMMMMMDa.',
+    'aMMMMMMMMDa.',
+]
+COR = {'c': (23, 138, 128, 255), 'C': (95, 243, 224, 255), 'W': (233, 255, 251, 255), 'g': (46, 110, 52, 255), 'G': (111, 190, 84, 255), 'a': (138, 90, 43, 255), 'L': (235, 190, 132, 255), 'M': (198, 134, 66, 255), 'D': (150, 98, 46, 255), '.': (0, 0, 0, 0)}
+cap = Image.new('RGBA', (12, 12))
+for y, l in enumerate(CAPA):
+    for x, ch_ in enumerate(l): cap.putpixel((x, y), COR[ch_])
+marca('barraCapa', salvar(cap, 'barra-capa'), cap.size, 'desenhada pixel a pixel na grade da barra')
 
 # Disco: sem halo.
 d = ilhas(dura(nn(abrir('disco-v2'), 240, round(240 * abrir('disco-v2').height / abrir('disco-v2').width))), 0.01)
@@ -122,6 +153,7 @@ for slot, n in (('cristalApagado', 'cristal-apagado'), ('cristalAcendendo', 'cri
 
 for slot, n in (('passo1', 'passo-1'), ('passo2', 'passo-2'), ('passo3', 'passo-3')):
     i = dura(nn(abrir(n), 192, 192)); marca(slot, salvar(i, n), i.size)
+i = dura(nn(abrir('passo-3-v2'), 192, 192)); marca('passo3', salvar(i, 'passo-3'), i.size)
 s = abrir('seta'); s = dura(nn(s, 48, round(48 * s.height / s.width)))
 marca('seta', salvar(s, 'seta'), s.size)
 
