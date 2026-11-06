@@ -96,7 +96,7 @@ main section { position: relative; }
   .hero .logo img { width: 240px; }
   .hero-corpo { grid-template-columns: 1fr 420px; grid-template-rows: auto auto; column-gap: 40px; justify-items: start; align-content: center; padding-top: 0; padding-bottom: 56px; }
   .hero h1 { font-size: clamp(2.75rem, 4.2vw, 3.875rem); grid-column: 1; align-self: end; max-width: 15ch; }
-  .hero-criatura { width: 160px; height: 160px; left: calc(38% - 80px); }
+  .hero-criatura { width: 192px; height: 192px; }
   .hero-acao { grid-row: auto; grid-column: 1; justify-items: start; margin-top: 24px; }
   .hero-acao .botao { width: 360px; }
   .micro { font-size: .9375rem; text-align: left; }

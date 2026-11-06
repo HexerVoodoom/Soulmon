@@ -9,7 +9,7 @@ const pt = {
   pular: 'Pular para a inscrição', logoAlt: 'Soulmon, página inicial',
   h1: 'Criaturas que evoluem com suas tarefas.', cta: 'Entrar no beta', micro: 'Android. 1ª leva: 50 vagas, por ordem de inscrição.',
   microCompleta: 'Android. Vagas desta rodada preenchidas.',
-  heroAlt: 'Soulmon da linha planta, Forma 5 de 5',
+  heroAlt: 'Soulmon da linha fogo, Forma 3 de 5',
   n404: { h1: 'Página não encontrada', p: 'Esse endereço não existe, ou mudou de lugar.', volta: 'Voltar ao início' },
   prova: { h2: 'Direto do jogo' },
   ciclo: {
@@ -98,7 +98,7 @@ const en: typeof pt = {
   pular: 'Skip to sign-up', logoAlt: 'Soulmon, home',
   h1: 'Creatures that evolve with your tasks.', cta: 'Join the beta', micro: 'Android. First wave: 50 spots, in sign-up order.',
   microCompleta: 'Android. This round is full.',
-  heroAlt: 'Plant line Soulmon, Form 5 of 5',
+  heroAlt: 'Fire line Soulmon, Form 3 of 5',
   n404: { h1: 'Page not found', p: 'That address does not exist, or it moved.', volta: 'Back to home' },
   prova: { h2: 'Straight from the game' },
   ciclo: {

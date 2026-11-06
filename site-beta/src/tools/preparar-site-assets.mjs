@@ -38,6 +38,7 @@ for (const m of MAPAS) await sharp(`${NOVOS_MAPAS}/bg-${m}.png`).resize(480, 106
 for (const [w, h, q] of [[480, 1067, 19], [620, 1378, 22]]) await sharp(`${NOVOS_MAPAS}/bg-exploracao.png`).resize(w, h, { fit: 'fill' }).avif({ quality: q, effort: 9 }).toFile(`${PUB}/mapa/exploracao-${w}.avif`);
 for (const f of ['spark-g', 'spark-m', 'spark-p']) await sharp(`${SOUL}/fx/${f}.png`).webp({ lossless: true }).toFile(`${PUB}/site/${f}.webp`);
 
+await sharp(`${SOUL}/novos/fogo-ultimate.png`).webp({ lossless: true, effort: 6 }).toFile(`${PUB}/sprites/fogo-ultimate.webp`);
 for (const f of ['rookie', 'champion', 'ultimate', 'mega', 'ultra']) {
   await sharp(`${SOUL}/novos/planta-${f}.png`).webp({ lossless: true, effort: 6 }).toFile(`${PUB}/sprites/planta-${f}.webp`);
   await sharp(`${SOUL}/novos/planta-${f}.png`).resize(128, 128, { kernel: 'nearest' }).webp({ lossless: true, effort: 6 }).toFile(`${PUB}/sprites/planta-${f}-128.webp`);
