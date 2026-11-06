@@ -5,6 +5,7 @@
 //  · o cliente só confirma (`ack`) um `mid` que já voltou gravado no save dele (`mailClaimed`), então crédito e fila não divergem;
 //  · simulado nunca recebe nada.
 import { isSimuladoId } from './_simulados.js';
+import { adminSaveIds } from './_rankAdmin.js';
 import { lerIndice, ordenar } from './_rankIndex.js';
 import { getProfile } from './_profile.js';
 
@@ -88,8 +89,10 @@ export async function readMail(env, kv, id, now = Date.now()) {
   const mid = `season:${season}`;
   if (jogou && !rec.done.includes(mid) && !rec.q.some(m => m.mid === mid)) {
     const p = await getProfile(env, id);
-    if (p?.simulated !== true) {
-      const reais = ordenar(await lerIndice(env, season)).filter(r => !isSimuladoId(r.owner));
+    // GM/admin não participa do ranking do Torneio: sem carta de colocação nem Honra (`_rankAdmin.js`).
+    const admins = await adminSaveIds(env);
+    if (p?.simulated !== true && !admins.has(id)) {
+      const reais = ordenar((await lerIndice(env, season)).p).filter(r => !isSimuladoId(r.owner) && !admins.has(r.owner));
       const i = reais.findIndex(r => r.owner === id);
       rec.q = [...rec.q, seasonLetter(season, i >= 0 ? i + 1 : null, now)].slice(-QUEUE_MAX);
     }

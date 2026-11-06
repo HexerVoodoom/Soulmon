@@ -3556,6 +3556,10 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 **Chamado por:** `src/components/MorningCheckIn.tsx`
 **Régua:** `tinyOffer.test.ts`
 
+### `src/utils/seasonHistoryView.ts`
+**Dono de:** a vista do histórico de temporadas do Torneio (pílula "Última temporada" e modal, §246). Puro: `placeLabel` (1º / 1st·2nd·3rd), `seasonMonthLabel` (mês em UTC), `prevSeasonKey`, `buildSeasonHistoryView` (vista do `seasonHistory` do servidor só da janela de 120 dias, `dentroDaJanela`; troféus do save não entram; `excluded` de GM/admin zera tudo).
+**Chamado por:** `src/components/TournamentPage.tsx`
+
 ### `src/utils/tournamentSeason.ts`
 **Dono de:** A janela sexta–domingo da rodada semanal do Torneio — ritual, nunca tranca.
 **Exports:**

@@ -409,6 +409,14 @@
 **Régua:** `functions/api/_pushTargets.test.js`.
 **Avisos do arquivo:** sem validar, o worker faria `fetch()` num endereço arbitrário 4×/dia por até um ano, com JWT VAPID de produção no cabeçalho.
 
+### `functions/api/_rankAdmin.js`
+**Dono de:** a exclusão de contas GM/admin de todo ranking do Torneio (§246, 06/11/2026). `adminSaveIds(env)` deriva do `ADMIN_EMAILS` (o saveId é o hash do e-mail) o conjunto de saveIds fora do ranking; `isAdminSaveId(env, id)`. Sem `ADMIN_EMAILS` o conjunto é vazio. O admin luta normalmente, mas não entra no índice, não aparece em `rank`/`seasonResult`/oponentes e não leva troféu nem Honra de colocação; nada é apagado do KV.
+**Chamado por:** `community.js`, `_mensageiro.js`, `_seasonHist.js`.
+
+### `functions/api/_seasonHist.js`
+**Dono de:** o histórico de temporadas do Torneio por jogador (§246): `seasonHist:<saveId>` = `{ s: {'YYYY-MM': {place, points}}, c: [temporadas já conferidas] }`. O `closeSeason` grava o pódio; `historicoDoJogador` (ação `seasonHistory`, só o dono) reconstrói das temporadas encerradas ainda no KV (`rankIndex:`/`rank:`, ~120 d) e grava. Posição = mesma régua do `myPlace` (simulados contam, GM/admin não). Admin recebe `excluded: true` e lista vazia. Janela de 120 dias (`dentroDaJanela`): o que sai dela é podado na leitura; TTL da chave 125 d.
+**Chamado por:** `community.js`.
+
 ### `functions/api/_rankIndex.js`
 **Dono de:** o índice ordenável da season do Torneio (`rankIndex:<season>`, REGISTRO §23, 31/10/2026): candidatos `{saveId: pontos}` regravados em todo `putRank`, preenchidos por lote a partir de cursor; a verdade continua na linha `rank:`. O `closeSeason` usa o índice e, incompleto, cai nas 300 chaves com log `season.close.fallback`.
 
