@@ -2124,4 +2124,4 @@ Cartas do Papus (NPC 440) no modal padrão `NpcSequence`, item `messenger` da fi
 
 ### `src/components/play/RogueKeyGate.tsx`
 
-Portão do Calabouço sem a chave do dia: Bastião (NPC 412) no modal padrão `NpcSequence` manda à Oficina do Foco. Decisão: REGISTRO §239. **Régua:** `RogueKeyGate.render.test.tsx`.
+Portão do Calabouço sem a chave do dia: Bastion (NPC 412) no modal padrão `NpcSequence` manda à Oficina do Foco. Decisão: REGISTRO §239. **Régua:** `RogueKeyGate.render.test.tsx`.
