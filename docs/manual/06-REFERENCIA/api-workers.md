@@ -741,7 +741,7 @@ Espelho de `src/utils/elementoJornada.ts` (§232): forma do registro no save e i
 
 ### `functions/api/_mensageiro.js`
 
-Fila `mail:<saveId>`, carta e prêmio da temporada na 1ª leitura do mês, confirmação idempotente; simulado nunca recebe. Ações `mail`, `mailAck`, `mailSend` em `community.js`. Decisão: REGISTRO §241. **Régua:** `functions/api/mensageiro.test.js`.
+Fila `mail:<saveId>`, carta e prêmio da temporada na 1ª leitura do mês; simulado nunca recebe. Caixa de cartas: leitura com varredura de expiração (3 dias, menos carta com item pendente), `markRead`, `claimMail` (resgate uma vez só, prêmio do registro do servidor), `deleteMail` (item pendente só com `force`). Ações `mail`, `mailRead`, `mailClaim`, `mailDelete`, `mailAck` (app antigo), `mailSend` em `community.js`. Decisão: REGISTRO §241 e §245. **Régua:** `functions/api/mensageiro.test.js`.
 
 ### `functions/api/_amigos.js`
 

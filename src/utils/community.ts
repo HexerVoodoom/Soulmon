@@ -1,4 +1,4 @@
-import type { MailItem } from './mensageiro';
+import type { MailGrant, MailItem } from './mensageiro';
 import type { DuelSide } from './combate/duel';
 import type { FightEvent } from './combate/fight';
 // Cliente da API de comunidade (functions/api/community.js): perfil público,
@@ -320,7 +320,13 @@ export async function resgatarPresentes(id: string): Promise<{ gifts: GiftItem[]
 
 /** O Mensageiro (§241): a fila de cartas e a confirmação do que já está no save. */
 export const getMail = (id: string) => call<{ mail: MailItem[] }>('mail', { params: { id } });
-export const ackMail = (id: string, mids: string[]) => call<{ ok: true }>('mailAck', { method: 'POST', body: { id, mids } });
+/** Caixa de cartas (§245). O servidor é quem decide o resgate: `granted` é só o que saiu AGORA (repetir devolve vazio). */
+export const markMailRead = (id: string, mids: string[]) => call<{ ok: true }>('mailRead', { method: 'POST', body: { id, mids } });
+export const claimMail = (id: string, target: string[] | 'all') =>
+  call<{ ok: true; granted: MailGrant[] }>('mailClaim', { method: 'POST', body: target === 'all' ? { id, all: true } : { id, mids: target } });
+/** `force` só com a confirmação do dono: carta com item pendente é recusada sem ele (`blocked`). */
+export const deleteMail = (id: string, target: string[] | 'read', force = false) =>
+  call<{ ok: true; removed: number; blocked: string[] }>('mailDelete', { method: 'POST', body: target === 'read' ? { id, scope: 'read' } : { id, mids: target, force } });
 
 export const getPendingTrophies = (id: string, claim = false) =>
   call<{ trophies: Array<{ season: string; place: 1 | 2 | 3 }> }>('trophies', { params: { id, ...(claim ? { claim: '1' } : {}) } });

@@ -1033,3 +1033,19 @@ Wide horizontal 2:1 panoramic game background, detailed crisp 16-bit pixel art, 
 - **Geração:** ChatGPT primeiro (Higgsfield `gpt_image_2` é a reserva), uma imagem por região. Se a ferramenta não entregar 2:1, gerar o mais largo possível e recortar o centro para 2:1 mantendo o chão em 80%; nunca esticar. A cena usa `cover`.
 - **Revisão pelo método da squad de design (05/11/2026):** identidade, guia de 23/09, composição e legibilidade conferidas pela sessão do §242, sem despachar agentes de crítica. O prompt trocou "pixels grossos" pelo termo do guia. A crítica de cada peça gerada continua com `arte-conferente` e `design-critic`.
 - **Depois de instalar:** nenhuma linha de código muda (o glob `passeio-cenas/cena-*` assume). Conferir a cena numa tela de 390×844 e num celular deitado, subir `CACHE_VERSION` em `public/sw.js` e rodar `strollScene.test.ts`.
+
+## 26. Ícone da caixa de cartas na Home (pedido do dono, 06/11/2026, REGISTRO §245)
+
+**Status:** a gerar. O app já está pronto e usa o glifo `chat_bubble` (sem arte) até o arquivo existir.
+
+| Peça | Qtd | Destino | Formato | Referência a anexar |
+|---|---|---|---|---|
+| Ícone "carta" (caixa de cartas do Papus) | 1 | `src/assets/soulmon/icones-ui/carta-correio.png` | PNG RGBA, gerar em 1024x1024 e reduzir para **96x96** com *nearest* (o mesmo tamanho de `quest.png` / `quest-exclamacao.png`, os vizinhos do canto; exibido a 32 CSS px), fundo transparente | `icones-ui/mapa.png`, `icones-ui/quest-exclamacao.png` (linha, contorno e escala) |
+
+**Como liga:** `src/assets/soulmon/icones-ui/carta.ts` lê `./carta-correio.{png,webp}` por glob; soltar o arquivo na pasta basta (nenhuma linha de código muda). A bolinha vermelha de "carta nova" é desenhada pelo código, NUNCA na arte.
+
+Prompt (EN): "Create a single pixel-art game UI icon: a small sealed letter, an envelope seen from the front, slightly tilted, with the flap closed. Warm cream envelope body with a thin copper edge trim, and a round wax seal at the flap point shaped as a tiny teal soul crystal with a small flame inside. One short thin cyan circuit trace runs along the flap line and ends at the seal, and one tiny two-leaf sprig is tucked at a corner, joined to the seal by a hair-thin cable. Very simple readable silhouette that still reads clearly when shown at 32 pixels. 16-bit pixel art, crisp hard pixel edges with no anti-aliased blur, 3-step shading per material, clean dark deep-teal 1px outline, same line weight and scale as a handheld creature-collector UI icon set. Soulmon identity: dark deep-teal petrol base tone of the Home, soul crystal with a flame inside, a little copper, circuit line and leaf sprig, all joined by cable, calm look, NOT steampunk, no gears. Centered, about 80% of the square canvas. TRANSPARENT background with real alpha (no drawn checkerboard, no shadow, no glow halo). No text, letters, numbers or red dot."
+
+- **Revisão pelo método da squad de design (06/11/2026):** conferido contra `docs/REGRA-IDENTIDADE-SOULMON.md` (turquesa escuro, cristal com chama, cobre, circuito, folhinha, tudo por cabo, sem engrenagem), contra o guia de 23/09 (pixel art nítida, 3 tons) e contra o ícone vizinho: silhueta única e simples para sobreviver a 32 px, sem ponto vermelho na arte (o selo de "nova" é código), mesma escala e contorno de `quest-exclamacao.png`. Sem texto na arte. A crítica da peça gerada continua com `arte-conferente` e `design-critic`.
+- **Geração:** ChatGPT primeiro (Higgsfield `gpt_image_2 --background transparent` é a reserva); alfa REAL, nunca chroma nem xadrez assado. Conferir com Pillow (`python -I`), prévia em #08191A (nunca magenta/verde), e olhar a 32 px sobre a cena da Home antes de instalar.
+- **Depois de instalar:** subir `CACHE_VERSION` em `public/sw.js` e rodar `src/assets/assets.contract.test.ts` e `src/components/nav/nav.render.test.tsx`.

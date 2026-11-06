@@ -475,7 +475,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Régua:** `src/components/nav/missaoMapaFeedback.render.test.tsx`.
 
 ### `src/components/nav/MissionsLink.tsx`
-**Dono de:** o ícone de Missões da Home (rodada 7, M8, 04/10/2026) — botão fixo no canto superior direito, logo abaixo do `CornerLink` do Mapa, no mesmo anel. Glifo de quest: "!" com missão disponível, "?" com missão pronta (vence o "!"), "?" esmaecido sem pendência. Parado, sem número e sem som.
+**Dono de:** o ícone de Missões da Home (rodada 7, M8, 04/10/2026) — botão fixo no canto superior direito, abaixo do `CornerLink` do Mapa e, desde o §245, abaixo do ícone de carta (linha 2), no mesmo anel. Glifo de quest: "!" com missão disponível, "?" com missão pronta (vence o "!"), "?" esmaecido sem pendência. Parado, sem número e sem som.
 **Props principais:** `kind` (`daily`|`weekly`, um ícone por acesso), `row` (linha da pilha), `mark: QuestMark` (de `questMarks().dailyCorner`/`weeklyCorner`), `tone?` (`weeklyTone`), `markLabel`, `label`, `onClick`.
 **Exports:** `MissionsLink(props)`.
 **Chamado por:** `src/App.tsx` (`currentView` `home` e `map`).
@@ -2120,7 +2120,15 @@ Aviso curto na Home (REGISTRO §213 emenda 2): o Soulmon do jogador está desgar
 
 ### `src/components/MessengerSequence.tsx`
 
-Cartas do Papus (NPC 440) no modal padrão `NpcSequence`, item `messenger` da fila de apresentação. Decisão: REGISTRO §241.
+O AVISO do Papus (NPC 440) no modal padrão `NpcSequence`, item `messenger` da fila de apresentação: só diz que chegou carta, uma vez por carta; fechar não credita nada (o resgate é da caixa). Decisão: REGISTRO §241 e §245.
+
+### `src/components/MailboxSheet.tsx`
+
+A caixa de cartas do Papus, folha aberta pelo ícone da Home: accordion de uma carta aberta por vez, "Resgatar" (só com item), "Deletar" (confirmação se houver item não resgatado), rodapé "Excluir todas lidas" e "Resgatar tudo" (pop-up com a lista e o total). Recebe a lista e as ações de `hooks/useMailbox.ts`. Decisão: REGISTRO §245.
+
+### `src/components/nav/MailLink.tsx`
+
+O ícone de carta da Home, linha 1 da pilha do canto direito (entre o Mapa e as Missões), com a bolinha vermelha de carta nova. Arte por glob em `assets/soulmon/icones-ui/carta.ts`; sem arquivo cai no glifo `chat_bubble`. Decisão: REGISTRO §245.
 
 ### `src/components/play/RogueKeyGate.tsx`
 
