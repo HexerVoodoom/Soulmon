@@ -2,10 +2,11 @@
 // Microcopy da v3: docs/site-beta/DESIGN-GUIDE.md §4 (título até 6 palavras + 1 frase por seção).
 export const CONTATO = 'mateus.sprnd@gmail.com';
 export const TERMOS = 'https://soulmon.mateus-sprnd.workers.dev/termos.html';
+const B = import.meta.env.BASE_URL.replace(/\/$/, ''); // /beta
 export type Lang = 'pt' | 'en';
 
 const pt = {
-  html: 'pt-BR', idioma: 'pt-BR', home: '/', priv: '/privacidade/', outraHome: '/en/', outraPriv: '/en/privacy/', outraNome: 'English', outraCod: 'en',
+  html: 'pt-BR', idioma: 'pt-BR', home: `${B}/`, priv: `${B}/privacidade/`, outraHome: `${B}/en/`, outraPriv: `${B}/en/privacy/`, outraNome: 'English', outraCod: 'en',
   titulo: 'Soulmon: criaturas que evoluem com suas tarefas', desc: 'Jogo de criaturas para Android. Conclua tarefas do seu dia e veja seu Soulmon ganhar novas formas. Entre no beta.',
   pular: 'Pular para o conteúdo', logoAlt: 'Soulmon', logoTopo: 'Soulmon, voltar ao topo',
   h1: 'Criaturas que evoluem com suas tarefas.', cta: 'Entrar no beta', ctaEspera: 'Entrar na fila',
@@ -126,7 +127,7 @@ const pt = {
 };
 
 const en: typeof pt = {
-  html: 'en', idioma: 'en', home: '/en/', priv: '/en/privacy/', outraHome: '/', outraPriv: '/privacidade/', outraNome: 'Português', outraCod: 'pt-BR',
+  html: 'en', idioma: 'en', home: `${B}/en/`, priv: `${B}/en/privacy/`, outraHome: `${B}/`, outraPriv: `${B}/privacidade/`, outraNome: 'Português', outraCod: 'pt-BR',
   titulo: 'Soulmon: creatures that evolve with your tasks', desc: 'A creature game for Android. Finish tasks from your day and watch your Soulmon take on new forms. Join the beta.',
   pular: 'Skip to content', logoAlt: 'Soulmon', logoTopo: 'Soulmon, back to top',
   h1: 'Creatures that evolve with your tasks.', cta: 'Join the beta', ctaEspera: 'Join the line',

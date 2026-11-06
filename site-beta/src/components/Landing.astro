@@ -4,6 +4,7 @@
 // 5 o universo (Hall) · 6 o que você faz (Arena) · 7 trailer (slot, só com midia.trailer.ativo) · 8 como entrar (painel calmo)
 // 9 perguntas · 10 entre no beta (Guilda inteira). Ritmo: cena cheia x painel calmo, sem superfície clara.
 import Base from '../layouts/Base.astro';
+import { b } from '../lib/base';
 import Mapa from './Mapa.astro';
 import Cria from './Cria.astro';
 import midia from '../content/midia.json';
@@ -16,42 +17,43 @@ const c = t.ciclo; const s = t.soul; const u = t.universo; const e = t.entrar; c
 type Video = { src: string; poster: string; posterAvif?: string; gameplay: boolean; legenda: string; largura: number; altura: number };
 type Print = { id: string; src: string; gameplay: boolean };
 // Gameplay: só captura real (gameplay: true). O trailer é edição (rótulo Trailer); a cinemática de abertura ficou fora da v3.
-const loop = (midia.videos[lang] as Video[]).find((v) => v.gameplay === true && v.src);
+const loopRaw = (midia.videos[lang] as Video[]).find((v) => v.gameplay === true && v.src);
+const loop = loopRaw && { ...loopRaw, src: b(loopRaw.src), poster: b(loopRaw.poster) };
 const prints = (midia.prints[lang] as Print[]).filter((p) => p.gameplay === true && p.src);
 // Trailer: edição com telas reais, cartelas e arte aprovada ainda fora do jogo. Rótulo próprio, nunca gameplay.
 const trailerSlot = (midia as unknown as { trailer?: Record<string, { ativo?: boolean; src: string; poster: string; posterP: string; largura: number; altura: number }> }).trailer?.[lang];
-const trailer = trailerSlot?.ativo ? trailerSlot : undefined; // só com ativo:true (trailer conferido quadro a quadro em 06/11)
+const trailer = trailerSlot?.ativo ? { ...trailerSlot, src: b(trailerSlot.src), poster: b(trailerSlot.poster), posterP: b(trailerSlot.posterP) } : undefined; // só com ativo:true (trailer conferido quadro a quadro em 06/11)
 // Arte-chave do hero (decisão do dono, 06/11): quando existir, substitui mapa + elenco sem mudar layout.
 const heroArte = assets.heroArte as { desktop: string | null; celular: string | null; larguras?: { desktop: number[]; celular: number[] } };
-const hset = (base: string, ws: number[], ext: string) => ws.map((w) => `${base}-${w}.${ext} ${w}w`).join(', ');
+const hset = (base: string, ws: number[], ext: string) => ws.map((w) => `${b(base)}-${w}.${ext} ${w}w`).join(', ');
 const sitekey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY ?? '';
 const strings = {
   share: f.shareTxt, copiado: f.copiado, falhaCopia: f.falhaCopia, erros: f.erros, enviando: f.enviando,
   forma: c.forma, de: c.de, alt: c.alt, formas: c.formas, contato: CONTATO, okH: f.okH, ok: f.ok, esperaH: f.esperaH, espera: f.espera, feito: f.feito,
   cta: t.cta, ctaEspera: t.ctaEspera, vagasEspera: t.hero.vagasEspera, enviarEspera: f.enviarEspera, pausar: j.pausar, tocar: j.tocar,
 };
-const logo = assets.logo.src;
-const passos = [assets.passo1.src, assets.passo2.src, assets.passo3.src];
+const logo = b(assets.logo.src);
+const passos = [assets.passo1.src, assets.passo2.src, assets.passo3.src].map(b);
 const NPCS = ['hall', 'jogos', 'oraculo', 'laboratorio-biblioteca-glifa', 'exploracao', 'cuidados', 'loja-itens', 'loja-decoracao', 'loja-background', 'onboarding', 'ranking-arauto', 'n-cozinheiro', 'n-broto', 'n-corvo', 'laboratorio-pet', 'n-musa'];
 const ELS = Object.keys(u.els);
 // Vinheta de cada lugar: recorte AMPLIADO num ponto diferente dos fundos de seção (x, y em % do mapa).
 const FOCO: Record<string, [number, number]> = { exploracao: [70, 34], jogos: [40, 62], arena: [72, 48], hall: [28, 20], guilda: [28, 30], laboratorio: [70, 50] };
 // Jogos sem arte própria instalada usam sprite/ícone real como provisório.
-const capaJogo: Record<string, string> = { combina: '/el/agua.webp', barrage: '/sprites/espaco-ultimate.webp', corrida: '/sprites/planta-champion-128.webp' };
+const capaJogo: Record<string, string> = { combina: b('/el/agua.webp'), barrage: b('/sprites/espaco-ultimate.webp'), corrida: b('/sprites/planta-champion-128.webp') };
 const Formas = c.formas;
 // Fichas: só soulmon/novos, nada da DEMO, nada de fogo com chama na cauda.
 const FICHAS: [string, string, number][] = [
   ['agua', 'mega', 4], ['luz', 'ultimate', 3], ['fada', 'ultra', 5], ['tempo', 'ultimate', 3],
   ['eletricidade', 'ultra', 5], ['espaco', 'ultimate', 3], ['ar', 'ultra', 5], ['vida', 'ultra', 5],
 ];
-const printSrc = (id: string, ext: string) => [240, 480, 720].map((w) => `/print/${id}-${lang}-${w}.${ext} ${w}w`).join(', ');
+const printSrc = (id: string, ext: string) => [240, 480, 720].map((w) => `${b(`/print/${id}-${lang}-${w}.${ext}`)} ${w}w`).join(', ');
 const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 ---
 <Base lang={lang} alternativa={t.outraHome} aqui={t.home} preload>
   <a class="pular" href="#conteudo">{t.pular}</a>
 
   <header class="topo" data-topo>
-    <a class="topo-logo" href="#topo" aria-label={t.logoTopo}><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-tarde-src="/marca/logo-160.webp" width="160" height="120" alt="" /></a>
+    <a class="topo-logo" href="#topo" aria-label={t.logoTopo}><img src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" data-tarde-src={b('/marca/logo-160.webp')} width="160" height="120" alt="" /></a>
     <a class="idioma" href={t.outraHome} hreflang={t.outraCod} lang={t.outraCod}>{t.outraNome}</a>
     <a class="botao compacto topo-cta" href="#inscrever" data-cta data-topo-cta hidden>{t.cta}</a>
   </header>
@@ -73,7 +75,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           <source media="(min-width: 1024px)" type="image/avif" srcset={hset(heroArte.desktop, heroArte.larguras!.desktop, 'avif')} sizes="100vw" />
           <source media="(min-width: 1024px)" type="image/webp" srcset={hset(heroArte.desktop, heroArte.larguras!.desktop, 'webp')} sizes="100vw" />
           <source type="image/avif" srcset={hset(heroArte.celular, heroArte.larguras!.celular, 'avif')} sizes="100vw" />
-          <img src={`${heroArte.celular}-780.webp`} srcset={hset(heroArte.celular, heroArte.larguras!.celular, 'webp')} sizes="100vw" width="941" height="1672" alt="" fetchpriority="low" decoding="async" />
+          <img src={b(`${heroArte.celular}-780.webp`)} srcset={hset(heroArte.celular, heroArte.larguras!.celular, 'webp')} sizes="100vw" width="941" height="1672" alt="" fetchpriority="low" decoding="async" />
         </picture>
       </div>
     ) : (
@@ -86,7 +88,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
     )}
     <div class="hero-corpo">
       <div class="hero-texto veu-h">
-        <img class="hero-logo" src={logo} srcset={`/site/logo-240.webp 240w, /site/logo-320.webp 320w, ${logo} 480w`} sizes="(min-width: 1024px) 300px, 176px" width="480" height="503" fetchpriority="high" alt={t.logoAlt} />
+        <img class="hero-logo" src={logo} srcset={`${b('/site/logo-240.webp')} 240w, ${b('/site/logo-320.webp')} 320w, ${logo} 480w`} sizes="(min-width: 1024px) 300px, 176px" width="480" height="503" fetchpriority="high" alt={t.logoAlt} />
         <h1 id="hero-h">{t.h1}</h1>
         <p class="vagas-linha" data-vagas-linha><span class="num-g">{t.hero.vagasNum}</span> <span>{t.hero.vagasTx}</span></p>
       </div>
@@ -127,19 +129,19 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           </figure>
         )}
         <ol class="estagios" data-estatico aria-label={c.listaRotulo}>
-          {Formas.map((fm, i) => <li><img class="sprite" loading="lazy" src={`/sprites/planta-${fm}-128.webp`} width="128" height="128" alt={`${c.alt} ${c.forma} ${i + 1} ${c.de} 5`} /><span>{c.forma} {i + 1} {c.de} 5</span></li>)}
+          {Formas.map((fm, i) => <li><img class="sprite" loading="lazy" src={b(`/sprites/planta-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.forma} ${i + 1} ${c.de} 5`} /><span>{c.forma} {i + 1} {c.de} 5</span></li>)}
         </ol>
         <div class="demo-cena" data-cena hidden>
           <div class="cena-central">
             <p class="forma-titulo" data-placa aria-hidden="true">{c.forma} 1 {c.de} 5</p>
             <div class="disco-caixa">
-              <img class="disco" data-tarde-src={assets.disco.src ?? undefined} src={vazio} width="240" height="109" alt="" />
-              <img class="sprite" data-criatura data-tarde-src="/sprites/planta-rookie.webp" src={vazio} width="256" height="256" alt={`${c.alt} ${c.forma} 1 ${c.de} 5`} />
+              <img class="disco" data-tarde-src={assets.disco.src ? b(assets.disco.src) : undefined} src={vazio} width="240" height="109" alt="" />
+              <img class="sprite" data-criatura data-tarde-src={b('/sprites/planta-rookie.webp')} src={vazio} width="256" height="256" alt={`${c.alt} ${c.forma} 1 ${c.de} 5`} />
               <span class="clarao" data-clarao></span>
               <div class="cristal" aria-hidden="true">
-                <img data-c="apagado" src={vazio} data-tarde-src={assets.cristalApagado.src} width="48" height="96" alt="" />
-                <img data-c="acendendo" src={vazio} data-tarde-src={assets.cristalAcendendo.src} width="48" height="96" alt="" />
-                <img data-c="aceso" src={vazio} data-tarde-src={assets.cristalAceso.src} width="48" height="96" alt="" />
+                <img data-c="apagado" src={vazio} data-tarde-src={b(assets.cristalApagado.src)} width="48" height="96" alt="" />
+                <img data-c="acendendo" src={vazio} data-tarde-src={b(assets.cristalAcendendo.src)} width="48" height="96" alt="" />
+                <img data-c="aceso" src={vazio} data-tarde-src={b(assets.cristalAceso.src)} width="48" height="96" alt="" />
               </div>
             </div>
           </div>
@@ -165,7 +167,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
             <a class="botao primario" href="#inscrever" data-cta>{t.cta}</a>
             <button type="button" class="link" data-recomecar>{c.recomecar}</button>
           </div>
-          <img class="chama" data-chama src="/provisorio/chama.svg" width="24" height="32" alt="" aria-hidden="true" loading="lazy" />
+          <img class="chama" data-chama src={b('/provisorio/chama.svg')} width="24" height="32" alt="" aria-hidden="true" loading="lazy" />
           <p class="sr" aria-live="polite" data-anuncio></p>
         </div>
       </div>
@@ -185,16 +187,16 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           <div class="fichas-faixa" data-faixa tabindex="0">
             {FICHAS.map(([el, fm, n], i) => (
               <div class="ficha" role="group" aria-roledescription={s.ficha} aria-label={`${i + 1} ${c.de} ${FICHAS.length}: ${s.linha} ${u.els[el]}`}>
-                <span class="ficha-palco"><img class="sprite" src={`/sprites/${el}-${fm}.webp`} width="256" height="256" alt="" loading="lazy" decoding="async" /></span>
+                <span class="ficha-palco"><img class="sprite" src={b(`/sprites/${el}-${fm}.webp`)} width="256" height="256" alt="" loading="lazy" decoding="async" /></span>
                 <span class="ficha-nome">{u.els[el]}</span>
-                <span class="chip"><img src={`/el/${el}.webp`} width="96" height="96" alt="" loading="lazy" />{c.forma} {n} {c.de} 5</span>
+                <span class="chip"><img src={b(`/el/${el}.webp`)} width="96" height="96" alt="" loading="lazy" />{c.forma} {n} {c.de} 5</span>
               </div>
             ))}
           </div>
           <div class="fichas-ctl" data-fichas-ctl hidden>
-            <button type="button" class="seta-bt" data-ant aria-label={s.anterior}><img src={assets.seta.src} width="48" height="31" alt="" class="esq" loading="lazy" /></button>
+            <button type="button" class="seta-bt" data-ant aria-label={s.anterior}><img src={b(assets.seta.src)} width="48" height="31" alt="" class="esq" loading="lazy" /></button>
             <p class="contador" aria-live="polite"><span data-pos>1</span> {c.de} {FICHAS.length}</p>
-            <button type="button" class="seta-bt" data-prox aria-label={s.proxima}><img src={assets.seta.src} width="48" height="31" alt="" loading="lazy" /></button>
+            <button type="button" class="seta-bt" data-prox aria-label={s.proxima}><img src={b(assets.seta.src)} width="48" height="31" alt="" loading="lazy" /></button>
           </div>
         </div>
         <div class="arvore-bloco veu">
@@ -208,7 +210,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
                   <span class="arvore-rot">{c.forma} {i + 1}</span>
                   <span class="arvore-nos">
                     {tres && <span class="no oculto"><span class="q" aria-hidden="true">?</span><span class="sr">{s.oculta}</span></span>}
-                    <span class="no revelado"><img class="sprite" loading="lazy" src={`/sprites/planta-${fm}-128.webp`} width="128" height="128" alt={`${c.alt} ${c.forma} ${i + 1} ${c.de} 5`} /></span>
+                    <span class="no revelado"><img class="sprite" loading="lazy" src={b(`/sprites/planta-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.forma} ${i + 1} ${c.de} 5`} /></span>
                     {tres && <span class="no oculto"><span class="q" aria-hidden="true">?</span><span class="sr">{s.oculta}</span></span>}
                   </span>
                 </li>
@@ -236,7 +238,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           <ul class="grade areas">
             {u.areas.map(([id, nome]) => (
               <li class="area" style={`--fx:${FOCO[id][0] / 100};--fy:${FOCO[id][1] / 100}`}>
-                <span class="area-arte"><picture><source type="image/avif" srcset={`/mapa/${id}-820.avif`} /><img loading="lazy" decoding="async" src={`/mapa/${id}-820.webp`} width="820" height="1823" alt="" /></picture></span>
+                <span class="area-arte"><picture><source type="image/avif" srcset={b(`/mapa/${id}-820.avif`)} /><img loading="lazy" decoding="async" src={b(`/mapa/${id}-820.webp`)} width="820" height="1823" alt="" /></picture></span>
                 <span class="area-tx"><strong>{nome}</strong><span>{u.lugares[id]}</span></span>
               </li>
             ))}
@@ -245,19 +247,19 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         <div class="painel" id="painel-1" data-painel>
           <h3 class="painel-h">{u.abas[1]}</h3>
           <ul class="grade npcs">
-            {NPCS.map((n) => <li class="celula"><img loading="lazy" src={`/npc/${n}.webp`} width="256" height="256" alt={u.habitanteAlt} /></li>)}
+            {NPCS.map((n) => <li class="celula"><img loading="lazy" src={b(`/npc/${n}.webp`)} width="256" height="256" alt={u.habitanteAlt} /></li>)}
           </ul>
         </div>
         <div class="painel" id="painel-2" data-painel>
           <h3 class="painel-h">{u.abas[2]}</h3>
           <ul class="grade jogos">
-            {u.jogos.map(([id, nome]) => <li class="celula"><img class:list={[{ sprite: capaJogo[id] }]} loading="lazy" src={capaJogo[id] ?? `/lote/${id}.webp`} width="256" height="256" alt="" /><span>{nome}</span></li>)}
+            {u.jogos.map(([id, nome]) => <li class="celula"><img class:list={[{ sprite: capaJogo[id] }]} loading="lazy" src={capaJogo[id] ?? b(`/lote/${id}.webp`)} width="256" height="256" alt="" /><span>{nome}</span></li>)}
           </ul>
         </div>
         <div class="painel" id="painel-3" data-painel>
           <h3 class="painel-h">{u.abas[3]}</h3>
           <ul class="grade els">
-            {ELS.map((id) => <li class="celula"><img class="sprite" loading="lazy" src={`/el/${id}.webp`} width="96" height="96" alt="" /><span>{u.els[id]}</span></li>)}
+            {ELS.map((id) => <li class="celula"><img class="sprite" loading="lazy" src={b(`/el/${id}.webp`)} width="96" height="96" alt="" /><span>{u.els[id]}</span></li>)}
             <li class="celula combos"><strong class="num-g">{u.combinacoes.split(' ')[0]}</strong><span>{u.combinacoes.split(' ').slice(1).join(' ')}</span><span class="combos-tx">{u.combinacoesTx}</span></li>
           </ul>
         </div>
@@ -280,7 +282,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
                 <div class="casca"><div class="tela">
                   <picture>
                     <source type="image/avif" srcset={printSrc(id, 'avif')} sizes="(min-width: 1024px) 220px, 200px" />
-                    <img src={`/print/${id}-${lang}-480.webp`} srcset={printSrc(id, 'webp')} sizes="(min-width: 1024px) 220px, 200px" width="1170" height="2532" alt={alt} loading="lazy" decoding="async" />
+                    <img src={b(`/print/${id}-${lang}-480.webp`)} srcset={printSrc(id, 'webp')} sizes="(min-width: 1024px) 220px, 200px" width="1170" height="2532" alt={alt} loading="lazy" decoding="async" />
                   </picture>
                 </div></div>
               </figure>
@@ -328,7 +330,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
       <p class="aviso-vaga">{e.aviso}</p>
     </section>
 
-    <div class="divisor" role="presentation"><picture><source media="(min-width: 768px)" srcset="/site/divisor.webp" /><img src="/site/divisor-336.webp" width="336" height="72" alt="" loading="lazy" /></picture></div>
+    <div class="divisor" role="presentation"><picture><source media="(min-width: 768px)" srcset={b('/site/divisor.webp')} /><img src={b('/site/divisor-336.webp')} width="336" height="72" alt="" loading="lazy" /></picture></div>
 
     <!-- 9 · Perguntas -->
     <section class="calmo faq" id="perguntas" aria-labelledby="faq-h">
@@ -336,7 +338,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
       <div class="faq-lista">
         {t.faq.itens.map(([q, a]) => (
           <details>
-            <summary><img class="faq-seta" src={assets.seta.src} width="48" height="31" alt="" loading="lazy" />{q}</summary>
+            <summary><img class="faq-seta" src={b(assets.seta.src)} width="48" height="31" alt="" loading="lazy" />{q}</summary>
             <p>{a}</p>
           </details>
         ))}
@@ -378,7 +380,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
   </main>
 
   <dialog class="popup" data-popup aria-labelledby="popup-h" aria-describedby="popup-p">
-    <img class="popup-cristal" src={assets.cristalAceso.src} width="48" height="96" alt="" loading="lazy" />
+    <img class="popup-cristal" src={b(assets.cristalAceso.src)} width="48" height="96" alt="" loading="lazy" />
     <h2 id="popup-h" data-popup-h>{f.okH}</h2>
     <p id="popup-p" data-popup-p>{f.ok}</p>
     <button type="button" class="botao primario" data-popup-share>{f.share}</button>
@@ -387,7 +389,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
   </dialog>
 
   <footer class="rodape">
-    <img class="rodape-logo" src="/marca/logo-160.webp" srcset="/marca/logo-160.webp 1x, /marca/logo-320.webp 2x" width="64" height="48" alt="" loading="lazy" />
+    <img class="rodape-logo" src={b('/marca/logo-160.webp')} srcset={`${b('/marca/logo-160.webp')} 1x, ${b('/marca/logo-320.webp')} 2x`} width="64" height="48" alt="" loading="lazy" />
     <p>{t.rodape.nota}</p>
     <ul>
       <li><a href={t.priv}>{t.rodape.priv}</a></li>

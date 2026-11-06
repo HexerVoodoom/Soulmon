@@ -9,7 +9,7 @@ import { proximaLeva, marcar } from '../../scripts/proxima-leva.mjs';
 import { chaveDuplicata } from '../../functions/_lib/email.js';
 
 const SAL = 'sal-de-teste';
-const ORIGEM = 'https://soulmon-beta.pages.dev';
+const ORIGEM = 'https://soulmon.pages.dev';
 
 function novoDb() {
   const sqlite = new DatabaseSync(':memory:');
@@ -30,7 +30,7 @@ function novoDb() {
 }
 
 let db, env, esperando, fetchFn, resendCorpos;
-const tsOk = { success: true, hostname: 'soulmon-beta.pages.dev', action: 'inscrever' };
+const tsOk = { success: true, hostname: 'soulmon.pages.dev', action: 'inscrever' };
 
 function stubFetch(ts = tsOk) {
   resendCorpos = [];
@@ -47,7 +47,7 @@ async function post(corpo = {}, { ip = '1.1.1.1', headers = {}, raw } = {}) {
     email: 'ana@example.com', idioma: 'pt-BR', aceitePrivacidade: true, maior18: true, novidades: false,
     turnstile: 'tok', site: '', utm: {}, ...corpo,
   });
-  const request = new Request('https://soulmon-beta.pages.dev/api/inscrever', {
+  const request = new Request('https://soulmon.pages.dev/api/inscrever', {
     method: 'POST', body,
     headers: { 'content-type': 'application/json', origin: ORIGEM, 'cf-connecting-ip': ip, ...headers },
   });
@@ -60,7 +60,7 @@ const count = (w = '1=1') => db.sqlite.prepare('SELECT COUNT(*) n FROM inscritos
 
 beforeEach(() => {
   db = novoDb();
-  env = { DB: db.d1, LEVA_VAGAS: '3', TETO_DIA: '100', ORIGENS: ORIGEM, TURNSTILE_HOST: 'soulmon-beta.pages.dev',
+  env = { DB: db.d1, LEVA_VAGAS: '3', TETO_DIA: '100', ORIGENS: ORIGEM, TURNSTILE_HOST: 'soulmon.pages.dev',
     TURNSTILE_SECRET: 's', HASH_SALT: SAL, RESEND_API_KEY: 'k', NOTIFICAR_PARA: 'rev@example.com' };
   stubFetch();
 });

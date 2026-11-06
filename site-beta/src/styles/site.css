@@ -606,3 +606,30 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 }
 @media (min-width: 1024px) { .hero:has(.hero-arte) .hero-texto { max-width: 560px; } .hero:has(.hero-arte) h1 { max-width: none; } }
 .vagas-linha { width: fit-content; max-width: 100%; }
+
+/* ---- hero no celular (<1024): texto no ceu calmo da arte 9:16, ilha e 6 criaturas entre o texto e o CTA ----
+   Geometria da arte 941x1672: ceu calmo ate y=400, primeira criatura em y=480, base das ultimas em y=1350.
+   --hT = altura do bloco de texto (logo+H1+vagas); --hG = altura do grupo do CTA. A arte e ancorada pelo centro e
+   dimensionada para que y=1350 caia no topo do CTA (1350/1672 = .807; 400/1672 = .239; 1/(.807-.239) = 1,76). */
+@media (max-width: 1023px) {
+  .hero:has(.hero-arte) { --hT: 292px; --hG: 212px; background: #01151f; }
+  .hero:has(.hero-arte) .hero-logo { width: 100px; }
+  .hero:has(.hero-arte) .hero-texto.veu-h::before { display: none; } /* o texto cai no ceu escuro da arte: veu nao precisa */
+  .hero:has(.hero-arte) .hero-fundo { --ah: min(calc((100svh - var(--hG) - var(--hT)) * 1.76), 190vw); }
+  .hero-fundo .hero-arte { position: absolute; left: 50%; top: calc(var(--hT) - var(--ah) * .239); width: auto; height: var(--ah); aspect-ratio: 941 / 1672; translate: -50% 0;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent), linear-gradient(transparent, #000 9%); -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(90deg, transparent, #000 7%, #000 93%, transparent), linear-gradient(transparent, #000 9%); mask-composite: intersect; }
+  .hero-fundo .hero-arte img { object-fit: cover; object-position: 50% 50%; }
+}
+@media (max-width: 1023px) and (max-height: 700px) {
+  .hero:has(.hero-arte) { --hT: 276px; --hG: 136px; }
+  .hero:has(.hero-arte) .hero-logo { width: 92px; }
+  .hero:has(.hero-arte) .hero-acao { grid-template-columns: auto auto; justify-content: center; column-gap: 12px; row-gap: 0; }
+  .hero:has(.hero-arte) .hero-acao .botao.primario { grid-column: 1 / -1; height: 72px; border-width: 26px 30px; }
+}
+
+/* fichas no celular: setas + contador no TOPO da ficha (acima do sprite), longe do CTA fixo de baixo em qualquer rolagem */
+@media (max-width: 1023px) {
+  .ficha { padding-top: 88px; padding-bottom: var(--sb-e-5); }
+  .fichas-ctl { top: 24px; bottom: auto; }
+}

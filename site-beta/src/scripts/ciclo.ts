@@ -1,6 +1,7 @@
 // Cena participativa do ciclo: tarefa -> chama -> cristal -> nova forma.
 // Sem GSAP (aparelho fraco ou falha de rede) a cena continua funcionando, só sem a corrida.
 type Strs = { forma: string; de: string; alt: string; formas: string[] };
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 export async function iniciar(S: Strs, fraco: boolean) {
   const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector<T>(s)!;
@@ -10,7 +11,7 @@ export async function iniciar(S: Strs, fraco: boolean) {
   const fim = $('[data-fim]'); const blocoTarefas = $('[data-tarefas]');
   const cristal = $('.cristal'); const botoes = [...document.querySelectorAll<HTMLButtonElement>('[data-tarefa]')];
 
-  S.formas.forEach((f) => { new Image().src = `/sprites/planta-${f}.webp`; });
+  S.formas.forEach((f) => { new Image().src = `${BASE}/sprites/planta-${f}.webp`; });
 
   let gsap: typeof import('gsap').gsap | null = null;
   let ST: typeof import('gsap/ScrollTrigger').ScrollTrigger | null = null;
@@ -28,7 +29,7 @@ export async function iniciar(S: Strs, fraco: boolean) {
   };
   const aplicarForma = () => {
     const f = S.formas[estagio];
-    criatura.src = `/sprites/planta-${f}.webp`;
+    criatura.src = `${BASE}/sprites/planta-${f}.webp`;
     const rotulo = `${S.forma} ${estagio + 1} ${S.de} 5`; // nomes internos das formas nunca saem na tela nem em aria
     criatura.alt = `${S.alt} ${rotulo}`;
     placa.textContent = rotulo;

@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import { b } from '../lib/base';
 import { TEXTOS, CONTATO, TERMOS, type Lang } from '../i18n/textos';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -31,7 +32,7 @@ const blocos: [string, string[]][] = pt ? [
 <Base lang={lang} alternativa={t.outraPriv} aqui={t.priv} titulo={pt ? 'Privacidade do cadastro do beta | Soulmon' : 'Beta sign-up privacy | Soulmon'} desc={pt ? 'Como o cadastro do beta do Soulmon trata seus dados.' : 'How the Soulmon beta sign-up handles your data.'}>
   <div class="legal">
     <div class="hero-barra">
-      <a href={t.home} class="logo"><img src="/site/logo-240.webp" width="240" height="252" alt={t.logoAlt} /></a>
+      <a href={t.home} class="logo"><img src={b('/site/logo-240.webp')} width="240" height="252" alt={t.logoAlt} /></a>
       <a class="idioma" href={t.outraPriv} hreflang={t.outraCod} lang={t.outraCod}>{t.outraNome}</a>
     </div>
     <main>

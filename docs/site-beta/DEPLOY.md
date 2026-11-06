@@ -11,7 +11,7 @@
 
 ## Primeira publicação
 
-1. **Turnstile (dono, painel Cloudflare):** criar widget com hostname `soulmon-beta.pages.dev` e anotar site key e secret.
+1. **Turnstile (dono, painel Cloudflare):** criar widget com hostname `soulmon.pages.dev` e anotar site key e secret.
 2. **Banco:**
    ```bash
    npx wrangler d1 create soulmon-beta
@@ -20,23 +20,23 @@
    ```bash
    npx wrangler d1 migrations apply DB --remote
    ```
-3. **Projeto:**
+3. **Projeto:** já criado, vazio, em 06/11 (`soulmon`, URL final https://soulmon.pages.dev/beta, EN em /beta/en/); só repetir se for recriar.
    ```bash
-   npx wrangler pages project create soulmon-beta --production-branch site-beta
+   npx wrangler pages project create soulmon --production-branch site-beta
    ```
    Se o nome estiver ocupado, ajuste `ORIGENS`, `TURNSTILE_HOST` e o widget.
 4. **Secrets:** cada comando pede o valor.
    ```bash
-   npx wrangler pages secret put TURNSTILE_SECRET --project-name soulmon-beta
+   npx wrangler pages secret put TURNSTILE_SECRET --project-name soulmon
    ```
    ```bash
-   npx wrangler pages secret put RESEND_API_KEY --project-name soulmon-beta
+   npx wrangler pages secret put RESEND_API_KEY --project-name soulmon
    ```
    ```bash
-   npx wrangler pages secret put HASH_SALT --project-name soulmon-beta
+   npx wrangler pages secret put HASH_SALT --project-name soulmon
    ```
    ```bash
-   npx wrangler pages secret put NOTIFICAR_PARA --project-name soulmon-beta
+   npx wrangler pages secret put NOTIFICAR_PARA --project-name soulmon
    ```
    `HASH_SALT`: valor aleatório longo; guarde em local seguro, porque os scripts `remover` e `proxima-leva` precisam dele. `NOTIFICAR_PARA`: `soulmon.revisor@gmail.com`. `RESEND_API_KEY`: o valor do app não é legível; cole a mesma chave ou gere outra na Resend.
 5. **Build e envio:** troque `<site key>`.
@@ -44,7 +44,7 @@
    PUBLIC_TURNSTILE_SITEKEY=<site key> npm run build
    ```
    ```bash
-   npx wrangler pages deploy dist --project-name soulmon-beta --branch site-beta
+   npx wrangler pages deploy dist --project-name soulmon --branch site-beta
    ```
 6. **Conferir:** cadastro real com e-mail do dono, chegada da notificação, `exportar --remote`, `remover --remote`.
 7. **Analytics:** ativar Web Analytics no projeto, pelo painel.
@@ -65,5 +65,5 @@ npm run db:local
 ```bash
 PUBLIC_TURNSTILE_SITEKEY=1x00000000000000000000AA npm run preview
 ```
-`.dev.vars` local (fora do git): `TURNSTILE_SECRET=1x0000000000000000000000000000000AA`, `TURNSTILE_HOST=example.com`, `ORIGENS=http://localhost:8799`, `HASH_SALT` qualquer.
+O preview local fica em http://localhost:8799/beta/ (a raiz redireciona; a API segue em /api/* na raiz). `.dev.vars` local (fora do git): `TURNSTILE_SECRET=1x0000000000000000000000000000000AA`, `TURNSTILE_HOST=example.com`, `ORIGENS=http://localhost:8799`, `HASH_SALT` qualquer.
 Se o localhost mostrar o app em vez do site, é service worker antigo nessa porta: remova-o no navegador.
