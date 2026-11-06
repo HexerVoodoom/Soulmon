@@ -34,7 +34,7 @@ copyFileSync(`${REPO}/src/assets/brand/final/icon-192.png`, `${PUB}/favicon-192.
 await sharp({ create: { width: 1200, height: 630, channels: 4, background: '#071413' } })
   .composite([
     { input: await sharp(LOGO).resize({ width: 480 }).toBuffer(), left: 90, top: 136 },
-    { input: await sharp(`${NOVOS}/fogo-ultra.png`).resize(512, 512, { kernel: 'nearest' }).toBuffer(), left: 640, top: 59 },
+    { input: await sharp(`${NOVOS}/fogo-ultimate.png`).resize(512, 512, { kernel: 'nearest' }).toBuffer(), left: 640, top: 59 },
   ]).png().toFile(`${PUB}/og.png`);
 
 // Fontes (OFL), as mesmas do app.

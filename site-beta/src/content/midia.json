@@ -1,30 +1,116 @@
 {
-  "_nota": "Prova da fatia 1 (PLANO §17): loop real de 8 a 15 s em videos, ou capturas reais em prints. Sem item aqui, a seção não aparece e a fatia não publica. Só captura real com gameplay: true; origem E:/Soulmon-marketing/.",
+  "_nota": "Prova da fatia 1 (PLANO §17): loop real de 8 a 15 s em videos, ou capturas reais em prints. Sem item aqui, a seção não aparece e a fatia não publica. Só captura real com gameplay: true; origem E:/Soulmon-marketing/site/ (lote de 05/11/2026, build origin/main app3, pet Noturno de jogador simulado). Gerado por src/tools/preparar-v3.mjs.",
   "abertura": {
     "src": "/video/intro.mp4",
     "poster": "/video/intro-poster.webp",
     "gameplay": false,
-    "origem": "src/assets/brand/intro.mp4, cinemática; nunca rotular como gameplay"
+    "origem": "src/assets/brand/intro.mp4, cinemática; nunca rotular como gameplay",
+    "uso": "fora da página na v3: a seção de vídeo usa o trailer (mais forte); a cinemática segue disponível aqui"
   },
   "videos": {
-    "pt": [],
-    "en": []
+    "pt": [
+      {
+        "src": "/video/loop-pt.mp4",
+        "poster": "/video/loop-pt-poster.webp",
+        "posterAvif": "/video/loop-pt-poster.avif",
+        "gameplay": true,
+        "legenda": "",
+        "largura": 768,
+        "altura": 1664,
+        "origem": "E:/Soulmon-marketing/site/loop-pt.mp4, 11 s, 30 fps, sem áudio, Home real; reencodado 768x1664"
+      }
+    ],
+    "en": [
+      {
+        "src": "/video/loop-en.mp4",
+        "poster": "/video/loop-en-poster.webp",
+        "posterAvif": "/video/loop-en-poster.avif",
+        "gameplay": true,
+        "legenda": "",
+        "largura": 768,
+        "altura": 1664,
+        "origem": "E:/Soulmon-marketing/site/loop-en.mp4, 11 s, 30 fps, sem áudio, Home real; reencodado 768x1664"
+      }
+    ]
   },
   "prints": {
-    "pt": [],
-    "en": []
+    "pt": [
+      {
+        "id": "home",
+        "src": "/print/home-pt-480.webp",
+        "gameplay": true,
+        "origem": "print-home-pt.png 1170x2532"
+      },
+      {
+        "id": "hall",
+        "src": "/print/hall-pt-480.webp",
+        "gameplay": true,
+        "origem": "print-hall-pt.png 1170x2532"
+      },
+      {
+        "id": "jogos",
+        "src": "/print/jogos-pt-480.webp",
+        "gameplay": true,
+        "origem": "print-jogos-pt.png 1170x2532"
+      }
+    ],
+    "en": [
+      {
+        "id": "home",
+        "src": "/print/home-en-480.webp",
+        "gameplay": true,
+        "origem": "print-home-en.png 1170x2532"
+      },
+      {
+        "id": "hall",
+        "src": "/print/hall-en-480.webp",
+        "gameplay": true,
+        "origem": "print-hall-en.png 1170x2532"
+      },
+      {
+        "id": "jogos",
+        "src": "/print/jogos-en-480.webp",
+        "gameplay": true,
+        "origem": "print-jogos-en.png 1170x2532"
+      }
+    ]
   },
   "formato": {
     "video": {
       "src": "",
       "poster": "",
+      "posterAvif": "",
       "gameplay": true,
-      "legenda": ""
+      "legenda": "",
+      "largura": 0,
+      "altura": 0
     },
     "print": {
+      "id": "home|hall|jogos",
       "src": "",
-      "alt": "",
       "gameplay": true
+    }
+  },
+  "trailer": {
+    "pt": {
+      "src": "/video/trailer-pt.mp4",
+      "poster": "/video/trailer-pt-poster-1280.webp",
+      "posterP": "/video/trailer-pt-poster-640.webp",
+      "gameplay": false,
+      "rotulo": "trailer",
+      "largura": 1280,
+      "altura": 720,
+      "origem": "E:/Soulmon-marketing/site/trailer-60s-pt.mp4 (60 s, 16:9, música do app, sem voz), reencodado 1280x720. Mistura telas reais do app com cartelas e a árvore do Noturno (formas evoluídas = arte aprovada ainda não publicada no jogo, INDICE.md ressalva 1): por isso o rótulo é Trailer, nunca Gameplay real."
+    },
+    "en": {
+      "src": "/video/trailer-en.mp4",
+      "poster": "/video/trailer-en-poster-1280.webp",
+      "posterP": "/video/trailer-en-poster-640.webp",
+      "gameplay": false,
+      "rotulo": "trailer",
+      "largura": 1280,
+      "altura": 720,
+      "origem": "E:/Soulmon-marketing/site/trailer-60s-en.mp4, idem"
     }
   }
 }

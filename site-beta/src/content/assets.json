@@ -197,5 +197,20 @@
       48,
       31
     ]
+  },
+  "barraNo": {
+    "gerado": "barra-capa",
+    "estado": "aguarda-revisao",
+    "src": "/site/barra-capa.webp",
+    "largura": 48,
+    "tamanho": [
+      12,
+      12
+    ],
+    "provisorio": "PROVISÓRIO: reuso da barraCapa como nó da barra lateral até existir o asset cristal-no (12x16, ASSETS-CHATGPT). Escala inteira da barra (1x/2x)."
+  },
+  "_furos": {
+    "divisor": "sem peça: nenhum divisor desenhado (proibido imitar em CSS); entra quando existir divisor 96x12 3-slice",
+    "cristalNo": "sem peça: nó usa barraNo (provisório)"
   }
 }

@@ -38,7 +38,9 @@ export async function iniciar(S: Strs, fraco: boolean) {
     aplicarForma();
     if (estagio === S.formas.length - 1) { blocoTarefas.hidden = true; fim.hidden = false; }
   };
-  const marcado = (b: HTMLButtonElement, v: boolean) => { b.setAttribute('aria-checked', String(v)); b.closest('.linha')!.classList.toggle('feita', v); };
+  const missao = document.querySelector<HTMLElement>('[data-missao]');
+  const contar = () => { if (missao) missao.textContent = `${botoes.filter((x) => x.getAttribute('aria-checked') === 'true').length}/${botoes.length}`; };
+  const marcado = (b: HTMLButtonElement, v: boolean) => { b.setAttribute('aria-checked', String(v)); b.closest('.linha')!.classList.toggle('feita', v); contar(); };
 
   function correr(i: number) {
     const b = botoes[i];

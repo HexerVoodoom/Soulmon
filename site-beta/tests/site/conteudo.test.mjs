@@ -2,6 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readFileSync } from 'node:fs';
 import assets from '../../src/content/assets.json';
+import midia from '../../src/content/midia.json';
 import { TEXTOS } from '../../src/i18n/textos';
 
 const ESTADOS = ['final', 'aguarda-revisao', 'provisorio', 'provisorio-css'];
@@ -24,6 +25,18 @@ describe('copy do site', () => {
   it.each(['cabo', 'cable', 'Crato', 'Brooka', 'Zefi', 'Oaken', 'Bolid', 'novidades', 'tamer', 'domador'])('não fala de %s', (t) => {
     expect(copia.toLowerCase()).not.toContain(t.toLowerCase());
   });
+  it('elenco: nada de fogo com chama na cauda; hero mantém fogo-ultimate', () => {
+    expect(landing).not.toMatch(/fogo-(rookie|champion|mega|ultra)\b/);
+    expect(landing).toMatch(/<Cria s="fogo-ultimate"[^>]*\bprot\b/);
+  });
+  it('prova real: loop e prints de gameplay nos dois idiomas', () => {
+    for (const l of ['pt', 'en']) {
+      expect(midia.videos[l].filter((v) => v.gameplay === true && existsSync(`public${v.src}`) && existsSync(`public${v.poster}`))).toHaveLength(1);
+      expect(midia.prints[l].filter((p) => p.gameplay === true && existsSync(`public${p.src}`))).toHaveLength(3);
+    }
+    expect(midia.abertura.gameplay).toBe(false);
+    for (const l of ['pt', 'en']) { expect(midia.trailer[l].gameplay).toBe(false); expect(existsSync(`public${midia.trailer[l].src}`)).toBe(true); }
+  });
   it('landing não usa arte vetada', () => {
     for (const t of ['starters/', 'mapas-recriados', 'bg-mapa', 'mapa/mercado', 'mapa/forja', 'mapa-mundi', 'type="checkbox"']) expect(landing).not.toContain(t);
   });
@@ -38,8 +51,13 @@ describe('copy do site', () => {
     expect(TEXTOS.pt.form.esperaPre).not.toContain('já está');
     expect(TEXTOS.en.form.esperaPre).not.toContain('already');
   });
-  it('chips com até 4 palavras', () => {
-    for (const l of [TEXTOS.pt, TEXTOS.en]) for (const f of l.soul.fatos) expect(f.split(' ').length).toBeLessThanOrEqual(4);
+  it('títulos de seção com até 6 palavras e 34 caracteres (DESIGN-SYSTEM §3.3)', () => {
+    for (const l of [TEXTOS.pt, TEXTOS.en]) {
+      for (const h of [l.jogo.h2, l.ciclo.h2, l.soul.h2, l.universo.h2, l.recursos.h2, l.video.h2, l.entrar.h2, l.faq.h2, l.form.h2]) {
+        expect(h.split(' ').length, h).toBeLessThanOrEqual(6);
+        expect(h.length, h).toBeLessThanOrEqual(34);
+      }
+    }
   });
   it('PT e EN têm a mesma estrutura', () => {
     expect(TEXTOS.en.universo.abas.length).toBe(TEXTOS.pt.universo.abas.length);

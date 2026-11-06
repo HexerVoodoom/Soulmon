@@ -1,4 +1,5 @@
 ---
+import '../styles/tokens.css';
 import '../styles/site.css';
 import { TEXTOS, type Lang } from '../i18n/textos';
 import assets from '../content/assets.json';
@@ -35,7 +36,9 @@ const hrefEn = lang === 'en' ? aqui : alternativa;
   <meta property="og:image" content={base + '/og.png'} />
   <meta property="og:type" content="website" />
   <link rel="preload" href="/fonts/cinzel-latin.woff2" as="font" type="font/woff2" crossorigin />
-  {preload && <link rel="preload" as="image" type="image/avif" fetchpriority="high" media="(max-width: 899px)" href="/mapa/exploracao-480.avif" />}
+  <link rel="preload" href="/fonts/rubik-latin.woff2" as="font" type="font/woff2" crossorigin />
+  {/* LCP medido é a criatura protagonista (o mapa em tela cheia não entra como candidato): ela vem primeiro, o mapa logo atrás. */}
+  {preload && <link rel="preload" as="image" type="image/webp" fetchpriority="high" href="/sprites/fogo-ultimate.webp" />}
 </head>
 <body>
   <slot />
