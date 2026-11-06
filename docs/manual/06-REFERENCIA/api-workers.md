@@ -414,7 +414,7 @@
 **Chamado por:** `community.js`, `_mensageiro.js`, `_seasonHist.js`.
 
 ### `functions/api/_seasonHist.js`
-**Dono de:** o histórico de temporadas do Torneio por jogador (§246): `seasonHist:<saveId>` = `{ s: {'YYYY-MM': {place, points}}, c: [temporadas já conferidas] }`. O `closeSeason` grava o pódio; `historicoDoJogador` (ação `seasonHistory`, só o dono) reconstrói das temporadas encerradas ainda no KV (`rankIndex:`/`rank:`, ~120 d) e grava. Posição = mesma régua do `myPlace` (simulados contam, GM/admin não). Admin recebe `excluded: true` e lista vazia. Limite: temporada mais velha que o TTL de 120 d de quem não abriu o Torneio antes disso não é recuperável.
+**Dono de:** o histórico de temporadas do Torneio por jogador (§246): `seasonHist:<saveId>` = `{ s: {'YYYY-MM': {place, points}}, c: [temporadas já conferidas] }`. O `closeSeason` grava o pódio; `historicoDoJogador` (ação `seasonHistory`, só o dono) reconstrói das temporadas encerradas ainda no KV (`rankIndex:`/`rank:`, ~120 d) e grava. Posição = mesma régua do `myPlace` (simulados contam, GM/admin não). Admin recebe `excluded: true` e lista vazia. Janela de 120 dias (`dentroDaJanela`): o que sai dela é podado na leitura; TTL da chave 125 d.
 **Chamado por:** `community.js`.
 
 ### `functions/api/_rankIndex.js`

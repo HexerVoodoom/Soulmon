@@ -125,6 +125,18 @@ describe('Histórico de temporadas (seasonHistory)', () => {
     expect(j2.seasons.map(s => s.place)).toEqual([3, 1]);
   });
 
+  it('janela de 120 dias: temporada antiga e entrada velha do histórico saem', async () => {
+    const velha = ctxSeason(7);
+    const { env } = await mkEnv({
+      [`rank:${velha}:${P('a')}`]: row(90),
+      [`seasonHist:${ids.a}`]: JSON.stringify({ v: 1, s: { [velha]: { place: 1, points: 90 }, [prev]: { place: 4, points: 5 } }, c: [velha, prev] }),
+    });
+    const j = await (await get(env, `action=seasonHistory&id=${ids.a}`)).json();
+    expect(j.seasons.map(s => s.season)).toEqual([prev]);
+    expect(j.best).toEqual({ season: prev, place: 4 });
+    expect(JSON.parse(env.DIGIAPP_SAVES.store.get(`seasonHist:${ids.a}`)).s[velha]).toBeUndefined();
+  });
+
   it('nunca jogou: lista vazia, sem melhor e sem última', async () => {
     const { env } = await mkEnv();
     const j = await (await get(env, `action=seasonHistory&id=${ids.d}`)).json();

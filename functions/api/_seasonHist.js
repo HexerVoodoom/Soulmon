@@ -13,6 +13,7 @@
  *     temporadas encerradas que ainda existem no KV e as grava. A posição sai da mesma régua do `myPlace`
  *     (simulados contam, GM/admin não — `_rankAdmin.js`).
  *
+ * JANELA (dono, 06/11/2026): o histórico e a melhor colocação valem só para os últimos 120 dias; o resto é podado.
  * LIMITE HONESTO: o KV só guarda a season por ~120 dias após a última partida dela. Temporada mais velha que isso,
  * de quem não abriu o Torneio antes de o dado vencer, NÃO dá para reconstruir (só o pódio, se foi premiado).
  * Daqui em diante, quem abrir o Torneio ao menos uma vez a cada ~4 meses não perde nenhuma.
@@ -21,11 +22,18 @@ import { kvOrThrow } from './_kv.js';
 import { lerIndice, completarIndice, ordenar } from './_rankIndex.js';
 import { adminSaveIds } from './_rankAdmin.js';
 
-const TTL = 86400 * 800;
+const TTL = 86400 * 125;
+/** Janela do histórico (decisão do dono, 06/11/2026): só as temporadas dos últimos 120 dias, o mesmo prazo do KV. */
+export const HIST_WINDOW_DAYS = 120;
+/** A temporada (mês UTC) ainda está na janela se terminou há no máximo 120 dias. */
+export function dentroDaJanela(season, now = Date.now()) {
+  const [y, m] = season.split('-').map(Number);
+  return Date.UTC(y, m, 1) >= now - HIST_WINDOW_DAYS * 86400000;
+}
 const histKey = (id) => `seasonHist:${id}`;
 const SEASON_RE = /^\d{4}-\d{2}$/;
 /** Até quantas temporadas passadas olhar por chamada (o KV guarda ~4 meses; sobra folga). */
-export const HIST_LOOKBACK = 6;
+export const HIST_LOOKBACK = 5;
 /** Orçamento de `get` para completar um índice antigo ainda não preenchido. */
 const HIST_FILL_BUDGET = 60;
 
@@ -87,8 +95,12 @@ export async function historicoDoJogador(env, id, currentSeason) {
   if (admins.has(id)) return { seasons: [], best: null, last: null, lastSeason: ultima, excluded: true };
   const h = await lerHist(env, id);
   let mudou = false;
+  // Poda: o que saiu da janela de 120 dias sai do histórico (e a chave regrava com TTL coerente).
+  for (const k of Object.keys(h.s)) if (!dentroDaJanela(k)) { delete h.s[k]; mudou = true; }
+  h.c = h.c.filter(k => dentroDaJanela(k));
   for (let n = 1; n <= HIST_LOOKBACK; n++) {
     const season = mesAnteriorA(currentSeason, n);
+    if (!dentroDaJanela(season)) continue;
     if (h.c.includes(season) || season in h.s) continue;
     let indice = await lerIndice(env, season);
     // Índice ausente ou ainda em preenchimento: avança um lote a partir das linhas `rank:` (sem linha nenhuma, fica vazio e `done`).

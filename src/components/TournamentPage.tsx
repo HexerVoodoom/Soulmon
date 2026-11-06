@@ -712,7 +712,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             <div data-torneio-melhor style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 12, padding: 12 }}>
               <Icon name="emoji_events" size={32} tone="gold" fill={1} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Melhor colocação' : 'Best placement'}</p>
+                <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Melhor colocação (últimos 120 dias)' : 'Best placement (last 120 days)'}</p>
                 <p style={{ ...sm2Text, margin: 0, fontWeight: 600 }}>
                   <span className="sm2-num">{placeLabel(histView.best.place, lang)}</span> · {seasonMonthLabel(histView.best.season, lang)}
                 </p>

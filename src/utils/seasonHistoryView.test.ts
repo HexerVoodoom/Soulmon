@@ -30,22 +30,24 @@ describe('seasonHistoryView', () => {
   it('ordena do mais recente, acha a melhor e a última', () => {
     const v = buildSeasonHistoryView(hist({ seasons: [
       { season: '2026-10', place: 12, points: 40 }, { season: '2026-08', place: 2, points: 90 }, { season: '2026-09', place: 7, points: 60 },
-    ] }), [], '2026-10');
+    ] }), [], '2026-10', Date.UTC(2026, 10, 6));
     expect(v.seasons.map(s => s.season)).toEqual(['2026-10', '2026-09', '2026-08']);
     expect(v.best).toEqual({ season: '2026-08', place: 2 });
     expect(v.lastPlace).toBe(12);
   });
 
-  it('o troféu do save completa o que o servidor já esqueceu; o servidor vence no conflito', () => {
-    const v = buildSeasonHistoryView(hist({ seasons: [{ season: '2026-10', place: 5, points: 10 }] }),
-      [{ season: '2026-05', place: 1 }, { season: '2026-10', place: 3 }], '2026-10');
-    expect(v.seasons.map(s => [s.season, s.place])).toEqual([['2026-10', 5], ['2026-05', 1]]);
-    expect(v.best).toEqual({ season: '2026-05', place: 1 });
+  it('só a janela de 120 dias: temporada antiga fica fora da lista e da melhor colocação; troféu do save não entra', () => {
+    const now = Date.UTC(2026, 10, 6);
+    const v = buildSeasonHistoryView(hist({ seasons: [
+      { season: '2026-10', place: 5, points: 10 }, { season: '2026-05', place: 1, points: 99 }, { season: '2026-08', place: 3, points: 50 },
+    ] }), [{ season: '2026-04', place: 1 }], '2026-10', now);
+    expect(v.seasons.map(s => [s.season, s.place])).toEqual([['2026-10', 5], ['2026-08', 3]]);
+    expect(v.best).toEqual({ season: '2026-08', place: 3 });
   });
 
-  it('offline (sem histórico do servidor): vale o troféu do save', () => {
+  it('offline (sem histórico do servidor): vazio, o troféu do save não vale', () => {
     const v = buildSeasonHistoryView(null, [{ season: '2026-10', place: 2 }], '2026-10');
-    expect(v.lastPlace).toBe(2);
+    expect(v).toEqual({ seasons: [], best: null, lastPlace: null });
   });
 
   it('GM/admin: nada aparece, nem troféu antigo', () => {

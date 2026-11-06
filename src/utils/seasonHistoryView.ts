@@ -27,6 +27,13 @@ export function prevSeasonKey(now: Date = new Date()): string {
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
 }
 
+/** Janela do histórico: temporadas que terminaram há no máximo 120 dias (mesma regra do servidor). */
+export const HIST_WINDOW_DAYS = 120;
+export function dentroDaJanela(season: string, now: number = Date.now()): boolean {
+  const m = /^(\d{4})-(\d{2})$/.exec(season);
+  return !!m && Date.UTC(Number(m[1]), Number(m[2]), 1) >= now - HIST_WINDOW_DAYS * 86400000;
+}
+
 export interface SeasonHistoryView {
   /** Mais recente primeiro. */
   seasons: SeasonHistoryEntry[];
@@ -36,18 +43,19 @@ export interface SeasonHistoryView {
 }
 
 /**
- * Junta o que o servidor reconstruiu com os troféus que o save já carrega (pódio de temporadas que o KV já esqueceu).
- * O servidor vence quando os dois falam da mesma temporada. `prevSeason` = mês anterior (`SeasonHistory.lastSeason`).
+ * Vista do histórico do servidor, só da janela de 120 dias (dono, 06/11/2026). Os troféus do save NÃO entram.
+ * `prevSeason` = mês anterior (`SeasonHistory.lastSeason`).
  */
 export function buildSeasonHistoryView(
   hist: SeasonHistory | null,
-  trophies: ReadonlyArray<{ season: string; place: number }>,
+  _trophies: ReadonlyArray<{ season: string; place: number }>,
   prevSeason: string,
+  now: number = Date.now(),
 ): SeasonHistoryView {
   const map = new Map<string, SeasonHistoryEntry>();
   if (hist?.excluded) return { seasons: [], best: null, lastPlace: null };
-  for (const t of trophies) if (/^\d{4}-\d{2}$/.test(t.season) && t.place >= 1) map.set(t.season, { season: t.season, place: t.place, points: 0 });
-  for (const s of hist?.seasons ?? []) map.set(s.season, s);
+  // Só o servidor conta, e só a janela de 120 dias (dono, 06/11/2026): troféu antigo do save não entra no cálculo.
+  for (const s of hist?.seasons ?? []) if (dentroDaJanela(s.season, now)) map.set(s.season, s);
   const seasons = [...map.values()].sort((a, b) => (a.season < b.season ? 1 : a.season > b.season ? -1 : 0));
   let best: SeasonHistoryView['best'] = null;
   for (const s of seasons) if (!best || s.place < best.place) best = { season: s.season, place: s.place };
