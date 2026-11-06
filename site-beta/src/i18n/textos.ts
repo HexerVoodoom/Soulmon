@@ -41,7 +41,7 @@ const pt = {
     ocultoRotulo: 'Elemento combinado, ainda oculto',
   },
   video: { h2: 'Abertura', legenda: 'Cinemática de abertura, não é tela de jogo.' },
-  mundo: { h2: 'Um lugar para cada coisa', frase: 'Role e atravesse as áreas do jogo.', rotulo: 'Área', frases: { jogos: 'Minijogos que rendem Bits.', arena: 'Lute e suba no Torneio.', hall: 'Amigos, presentes e guilda.', guilda: 'Casa e Missão do seu clã.', laboratorio: 'Veja a ficha do seu Soulmon.' } as Record<string, string> },
+  mundo: { h2: 'Um lugar para cada coisa', frase: 'Role e atravesse as áreas do jogo.', rotulo: 'Área', frases: { jogos: 'Minijogos que rendem Bits.', arena: 'Lute e suba no Torneio.', hall: 'Amigos, presentes e guilda.', guilda: 'Casa e Missão do seu clã.', laboratorio: 'Veja o perfil do seu Soulmon.' } as Record<string, string> },
   entrar: {
     h2: 'Como entrar',
     passos: [
