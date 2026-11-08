@@ -553,3 +553,9 @@ LCP mobile < 2,5s (imagem LCP = mapa do hero, AVIF 480/620, `fetchpriority="high
 
 - **v3.1, 06/11/2026:** superfície clara aposentada (§2.5); escala de pixel única por cena (hero 3x no celular, 4x no desktop); véu em degradê mascarado (sem borda dura); moldura `painel` em lista de tarefas, cartões e passos; setas do carrossel com placa escura; número grande com um padrão só ("20 elementos", "+200 combinações").
 - **v1, 05/11/2026:** primeira versão. Tokens `--sb-*` com ponte para os nomes do `site.css`; breakpoint de desktop sai de 900 para 1024; título da lista de tarefas sai de Cinzel para rótulo Rubik (como no jogo); brilho da criatura cai de 6px/55% para 4px/32%; piso de texto 14px; superfície clara criada para "Como entrar".
+
+
+## Selo "Gameplay real" e "Demonstração" (padrão único, v4)
+- **Um selo "Gameplay real" por seção.** Seção com um aparelho de tela real (Faz a tarefa): o selo fica colado à moldura desse aparelho. Seção com vários aparelhos (O que você faz): um selo só, no cabeçalho da seção; os cartões não repetem o selo nem têm moldura própria.
+- **Demonstração:** a lista tocável ao lado do aparelho usa o rótulo "Demonstração" colado à lista, com a frase "Toque para marcar". Nunca recebe o selo de gameplay real.
+- Trailer e cinemática usam seus próprios rótulos ("Trailer", "Cinemática"), nunca "Gameplay real".

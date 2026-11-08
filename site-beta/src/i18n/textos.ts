@@ -31,7 +31,7 @@ const pt = {
   ciclo: {
     h2: 'Faz a tarefa, seu Soulmon evolui.',
     frase: 'A tela de verdade, e uma demonstração para você tocar.',
-    demo: 'No jogo, evoluir leva dias.',
+    demo: 'Toque para marcar. No jogo, evoluir leva dias.',
     hoje: 'Hoje', missao: 'Missão', habitos: 'Hábitos',
     tarefasRotulo: 'Tarefas de exemplo',
     tarefas: ['Lavar a louça', 'Responder e-mail', 'Ler dez páginas', 'Regar as plantas'],
@@ -48,7 +48,7 @@ const pt = {
     arvoreH: 'Cinco formas, três caminhos',
     caminhos: ['Poder', 'Harmonia', 'Benevolência'],
     arvoreRotulo: 'Árvore de evolução: um caminho revelado, os outros em sombra',
-    oculta: 'Forma ainda não revelada',
+    oculta: 'Forma ainda não revelada', descobrir: 'A descobrir',
     linhas: ['Planta', 'Fada', 'Fogo'], linhaRotulo: 'Linha de evolução', linhaAnt: 'Linha anterior', linhaProx: 'Próxima linha', sortear: 'Sortear', sorteioRotulo: 'Sorteio de Soulmon', sombra: 'Quem será?', elemento: 'Elemento', altSorteio: 'Soulmon sorteado, elemento',
   },
   universo: {
@@ -84,7 +84,7 @@ const pt = {
   },
   form: {
     h2: 'Seu Soulmon está esperando.',
-    email: 'E-mail', dica: 'E-mail da conta Google usada na Play Store.',
+    email: 'E-mail', exemplo: 'voce@gmail.com', dica: 'E-mail da conta Google usada na Play Store.',
     enviar: 'Entrar no beta', enviarEspera: 'Entrar na fila', enviando: 'Enviando…',
     legalA: 'Ao entrar, você aceita a', legalLink: 'política de privacidade', legalB: 'e declara ter 18 anos ou mais.',
     okH: 'Parabéns, você se inscreveu no beta!',
@@ -151,7 +151,7 @@ const en: typeof pt = {
   ciclo: {
     h2: 'Do the task, your Soulmon evolves.',
     frase: 'The real screen, and a demo you can tap.',
-    demo: 'In the game, evolving takes days.',
+    demo: 'Tap to check. In the game, evolving takes days.',
     hoje: 'Today', missao: 'Mission', habitos: 'Habits',
     tarefasRotulo: 'Sample tasks',
     tarefas: ['Wash the dishes', 'Answer that email', 'Read ten pages', 'Water the plants'],
@@ -168,7 +168,7 @@ const en: typeof pt = {
     arvoreH: 'Five forms, three paths',
     caminhos: ['Power', 'Harmony', 'Benevolence'],
     arvoreRotulo: 'Evolution tree: one path revealed, the others in shadow',
-    oculta: 'Form not revealed yet',
+    oculta: 'Form not revealed yet', descobrir: 'To discover',
     linhas: ['Plant', 'Fairy', 'Fire'], linhaRotulo: 'Evolution line', linhaAnt: 'Previous line', linhaProx: 'Next line', sortear: 'Draw', sorteioRotulo: 'Soulmon draw', sombra: 'Who will it be?', elemento: 'Element', altSorteio: 'Drawn Soulmon, element',
   },
   universo: {
@@ -204,7 +204,7 @@ const en: typeof pt = {
   },
   form: {
     h2: 'Your Soulmon is waiting.',
-    email: 'Email', dica: 'Google Account email used for the Play Store.',
+    email: 'Email', exemplo: 'you@gmail.com', dica: 'Google Account email used for the Play Store.',
     enviar: 'Join the beta', enviarEspera: 'Join the line', enviando: 'Sending…',
     legalA: 'By joining, you accept the', legalLink: 'privacy policy', legalB: 'and declare you are 18 or older.',
     okH: 'Congratulations, you joined the beta!',

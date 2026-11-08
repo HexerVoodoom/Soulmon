@@ -294,29 +294,13 @@ main:focus { outline: none; }
 .seta-bt:hover img { filter: brightness(1.15); }
 .seta-bt:active img { translate: 0 1px; }
 .seta-bt[aria-disabled='true'] { opacity: .4; cursor: default; }
-.contador { font-variant-numeric: tabular-nums; color: var(--sb-tx); font-weight: var(--sb-peso-medio); background: var(--sb-rot-fundo); padding: 2px 10px; }
 .arvore-bloco { justify-self: center; display: grid; justify-items: center; gap: var(--sb-e-4); padding: var(--sb-e-4) 0; }
-.arvore { display: grid; gap: var(--sb-e-4); justify-items: center; }
-.arvore-linha { display: grid; justify-items: center; gap: 4px; }
-.arvore-rot { font: var(--sb-peso-forte) var(--sb-t-rotulo)/1.2 var(--sb-fonte-texto); text-transform: uppercase; letter-spacing: var(--sb-ls-rotulo); color: var(--sb-pri); }
-.arvore-nos { display: flex; gap: var(--sb-e-3); }
-.no { position: relative; display: grid; place-items: center; width: 96px; height: 96px; }
-.no img { width: 64px; height: 64px; }
-.no.revelado { outline: 2px solid var(--sb-pri-2); }
-.no.oculto img { filter: brightness(0) drop-shadow(0 0 1px var(--sb-pri-2)); }
-.q { position: absolute; inset: 0; display: grid; place-items: center; font: 700 1.75rem/1 var(--sb-fonte-texto); color: var(--sb-tx); }
-.caminhos { color: var(--sb-tx-2); font-weight: var(--sb-peso-medio); }
 @media (min-width: 1024px) {
   .soul-grade { grid-template-columns: 1fr 480px; column-gap: var(--sb-e-8); align-items: center; }
   .soul-texto { align-self: center; }
   .ficha-palco, .ficha-palco img { width: 256px; height: 256px; }
   .ficha-palco::after { height: 16px; }
   .arvore-bloco { grid-column: 1 / -1; }
-  .arvore { grid-auto-flow: column; align-items: center; column-gap: var(--sb-e-6); }
-  .arvore-linha { gap: var(--sb-e-2); }
-  .arvore-nos { flex-direction: column; }
-  .no { width: 144px; height: 144px; }
-  .no img { width: 128px; height: 128px; }
 }
 
 /* ---------- 5 · O universo (Hall: véu 0,82 atrás de todo texto) ---------- */
@@ -530,14 +514,9 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
   .cena-central .forma-titulo { margin-top: 32px; }
 }
 
-/* 5 · árvore: casa oculta só com "?"; caminhos como rótulo de coluna (celular) e de fileira (desktop) */
-.no.oculto { background: var(--sb-fundo); }
-.caminho { width: 96px; display: grid; place-items: end center; font: var(--sb-peso-forte) var(--sb-t-rotulo)/1.2 var(--sb-fonte-texto); color: var(--sb-tx-2); text-align: center; }
-.arvore-caminhos .arvore-rot { visibility: hidden; }
 .soul { padding-bottom: calc(var(--sb-secao-y) + 64px); }
 @media (min-width: 1024px) {
   .soul { padding-bottom: var(--sb-secao-y); }
-  .caminho { width: auto; height: 144px; place-items: center end; padding-right: var(--sb-e-2); }
 }
 
 /* 6 · abas no celular: grupo colado ao painel, com fundo de superfície (sem vão mostrando o mapa) */
@@ -550,7 +529,6 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .fichas { position: relative; }
 .ficha { padding-bottom: 88px; }
 .fichas-ctl { position: absolute; left: 28px; right: 28px; bottom: 24px; padding: 0; }
-.contador { background: none; }
 .seta-bt { background: var(--sb-fundo); }
 .seta-bt[aria-disabled='true'] { opacity: 1; }
 .seta-bt[aria-disabled='true'] img { opacity: .25; }
@@ -648,10 +626,6 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .sorteio-bt { min-width: 200px; }
 @media (prefers-reduced-motion: no-preference) { .sorteio-palco img.surge { animation: surge .28s var(--sb-ease, ease-out); } }
 @keyframes surge { from { opacity: 0; scale: .92; } to { opacity: 1; scale: 1; } }
-.linhas { display: flex; flex-wrap: wrap; gap: var(--sb-e-2); justify-content: center; }
-.linhas[hidden], .arvore[hidden] { display: none; }
-.chip-linha { min-height: 44px; padding: 0 var(--sb-e-4); background: var(--sb-sup); color: var(--sb-tx); border: 2px solid var(--sb-anel); font: var(--sb-peso-forte) var(--sb-t-corpo)/1 var(--sb-fonte-texto); cursor: pointer; }
-.chip-linha[aria-pressed='true'] { background: var(--sb-pri); color: #04201c; border-color: var(--sb-pri); }
 .area-bt { all: unset; box-sizing: border-box; display: grid; align-content: start; width: 100%; cursor: pointer; }
 .area-bt:focus-visible, .npc-bt:focus-visible { outline: 3px solid var(--sb-pri); outline-offset: 2px; }
 .area-bt:hover .area-tx strong { color: var(--sb-pri); }
@@ -697,33 +671,6 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .barra-capa { image-rendering: auto; }
 .barra-no { height: calc(var(--barra-l) * 2); margin-top: calc(var(--barra-l) * -1); image-rendering: auto; }
 .tarde .barra-no.aceso { background-image: var(--a-barraNoAceso); filter: none; }
-/* Árvore: nós de cobre e conexões 1-3-3-3-1 */
-.arvore { gap: 0; width: min(100%, 320px); --no: 96px; }
-.arvore-linha { width: 100%; }
-.arvore-nos { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; justify-items: center; }
-.arvore-linha:not(.tres) .arvore-nos { grid-template-columns: 1fr; }
-.arvore-caminhos .arvore-nos { text-align: center; font-size: var(--sb-t-legal); }
-.no { width: var(--no); height: var(--no); border: 0; background: var(--a-arvoreNo, none) center / 100% 100% no-repeat; image-rendering: auto; }
-.tarde .no { border-image: none; background: var(--a-arvoreNo, none) center / 100% 100% no-repeat; }
-.no.revelado { outline: 0; }
-.no img { width: 64px; height: 64px; margin-top: -6px; }
-.no.oculto { filter: brightness(.75); }
-.no.oculto .q { margin-top: -6px; }
-.arvore-lig { display: block; width: 100%; height: 36px; }
-.arvore-lig svg { display: block; width: 100%; height: 100%; overflow: visible; }
-.lg { fill: none; stroke-width: 5px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
-.lg.g { stroke: #6bd13a; } .lg.c { stroke: #3fe6d6; } .lg.y { stroke: #f2a81d; }
-.arvore-lig svg { filter: drop-shadow(0 0 4px rgba(95, 243, 224, .45)); }
-.arvore-rot { position: absolute; left: -2px; }
-.arvore-linha { position: relative; }
-.linhas { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--sb-e-2); width: 100%; max-width: 360px; }
-.linhas[hidden] { display: none; }
-.linhas-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sb-e-2); }
-.seta-linha { width: 56px; height: 44px; padding: 0; background: none; border: 0; cursor: pointer; display: grid; place-items: center; }
-.seta-linha img { width: 48px; height: 32px; }
-.seta-linha[aria-disabled='true'] { cursor: default; }
-.seta-linha:focus-visible { outline: 3px solid var(--sb-pri); outline-offset: 2px; }
-.linhas .contador { grid-column: 1 / -1; justify-self: center; }
 /* Cenários de seção */
 .calmo.entrar, .calmo.faq { position: relative; isolation: isolate; overflow: clip; }
 .cen-fundo { position: absolute; inset: -80px 0; z-index: -1; pointer-events: none; background: center / cover no-repeat; }
@@ -735,37 +682,12 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .ilhas { display: none; }
 @media (min-width: 1024px) { .ilhas { display: flex; justify-content: center; gap: var(--sb-e-4); margin-top: var(--sb-e-6); } .ilhas li { flex: 0 1 300px; } .ilhas img { width: 100%; height: auto; display: block; } }
 
-/* árvore: celular em linhas (1-3-3-3-1 de cima para baixo); desktop em colunas (esquerda para direita), como no desenho do dono */
-.arvore-rot { position: static; }
-.arvore-linha { position: relative; }
-.arvore-lig .lh { display: none; }
-.caminho { display: grid; align-items: center; }
-@media (max-width: 1023px) { .arvore-rot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } .arvore-caminhos .arvore-nos { font-size: .75rem; } }
-@media (min-width: 1024px) {
-  .arvore { grid-auto-flow: column; width: auto; max-width: none; align-items: stretch; column-gap: 0; padding-top: 28px; }
-  .arvore-linha { align-content: center; justify-items: center; }
-  .arvore-rot { position: absolute; top: -26px; left: 0; right: 0; text-align: center; }
-  .arvore-nos { display: flex; flex-direction: column; gap: 12px; width: auto; }
-  .arvore-caminhos .arvore-nos { align-items: flex-end; }
-  .caminho { height: var(--no); padding-right: 14px; }
-  .arvore-lig { width: 44px; height: auto; align-self: stretch; }
-  .arvore-lig .lv { display: none; }
-  .arvore-lig .lh { display: block; width: 100%; height: 100%; }
-  .arvore { --no: 104px; }
-}
-.arvore-lig .lv { display: block; width: 100%; height: 100%; }
-@media (min-width: 1024px) { .arvore-lig .lv { display: none; } }
-.linhas { max-width: 460px; }
-.chip-linha { padding: 0 var(--sb-e-3); }
 @media (max-width: 420px) { .linhas { grid-template-columns: 44px 1fr 44px; } .seta-linha { width: 44px; } .seta-linha img { width: 40px; height: 27px; } }
-@media (max-width: 1023px) { .arvore-caminhos .arvore-nos { grid-template-columns: repeat(3, 1fr) !important; } }
 
 /* peças pesadas só depois do load (fora da janela do LCP) */
 .tarde .soul-mosaico { background-image: var(--mosaico); }
 .ficha-moldura { border-image: none; border-color: var(--sb-anel); border-width: 2px; }
 .tarde .ficha-moldura { border-width: 36px; border-color: transparent; border-image: var(--a-ficha, none) 100 / 36px / 0 stretch; }
-.no { background-image: none; background-color: var(--sb-sup); }
-.tarde .no { background: var(--a-arvoreNo, none) center / 100% 100% no-repeat; }
 
 /* ---------- v4.3: crítica forte ---------- */
 .topo.rolada { background: rgba(7, 20, 19, .97); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
@@ -791,9 +713,6 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 @media (min-width: 768px) { .areas { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 1024px) { .areas { grid-template-columns: repeat(4, 1fr); } .areas > li:first-child { grid-column: span 2; } }
 /* Árvore: sem rótulos "Forma N" visíveis; nós menores no celular */
-.arvore-rot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); top: auto; left: auto; right: auto; }
-@media (max-width: 1023px) { .arvore { --no: 72px; width: 240px; } .arvore-lig { height: 28px; } }
-@media (min-width: 1024px) { .arvore { padding-top: 0; } }
 /* Como entrar: passo 1 é âncora; subtexto entre as barras do cartão; cabeçalho à esquerda */
 .passo-link { display: block; position: absolute; inset: 0; color: inherit; text-decoration: none; }
 .passo-link:focus-visible { outline: none; filter: drop-shadow(0 0 2px #5ff3e0) drop-shadow(0 0 5px #5ff3e0); }
@@ -802,5 +721,60 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .passos .passo-tx > span:not(.sr) { position: absolute; left: 15%; right: 15%; top: 80.6%; height: 6.6%; padding: 0; display: grid; align-items: center; font-size: clamp(.7rem, 2.9vw, .8125rem); line-height: 1; }
 .passos .passo-tx { inset: 0; }
 .entrar-cab { max-width: none !important; margin-inline: 0 !important; justify-content: flex-start !important; text-align: left; }
-.linhas { display: flex; justify-content: center; max-width: none; }
-@media (max-width: 1023px) { .arvore-caminhos .arvore-nos { font-size: .6875rem; } }
+
+/* ---------- Árvore (única fonte): celular em linhas 1-3-3-3-1, desktop em colunas ---------- */
+.arvore { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; width: 240px; max-width: 100%; margin-inline: auto; gap: 0; --no: 72px; }
+.arvore[hidden], .linhas[hidden] { display: none; }
+.arvore-linha { position: relative; display: grid; justify-items: center; width: 100%; }
+.arvore-rot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }  /* "Forma N" só para leitor de tela */
+.arvore-nos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; justify-items: center; }
+.arvore-linha:not(.tres) .arvore-nos { grid-template-columns: minmax(0, 1fr); }
+.arvore-caminhos .arvore-nos { font: var(--sb-peso-forte) .6875rem/1.2 var(--sb-fonte-texto); color: var(--sb-tx-2); text-align: center; }
+.caminho { min-width: 0; display: grid; align-items: end; overflow-wrap: anywhere; }
+.no { position: relative; display: grid; place-items: center; width: var(--no); height: var(--no); border: 0; background: var(--sb-sup); image-rendering: auto; }
+.tarde .no { border-image: none; background: var(--a-arvoreNo, none) center / 100% 100% no-repeat; }
+.no img { width: 64px; height: 64px; margin-top: -6px; }
+.no.oculto { opacity: .6; }
+.sombra-q { position: absolute; inset: 0; display: grid; place-items: center; }
+.sombra-q::before { content: ''; position: absolute; width: 40%; height: 42%; border-radius: 46% 46% 38% 38% / 52% 52% 40% 40%; background: #02080a; margin-top: -6px; }
+.sombra-q span { position: relative; font: 700 .875rem/1 var(--sb-fonte-titulo); color: var(--sb-tx); margin-top: -6px; }
+.arvore-lig { display: block; width: 100%; height: 28px; }
+.arvore-lig svg { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 0 4px rgba(95, 243, 224, .45)); }
+.arvore-lig .lh { display: none; }
+.lg { fill: none; stroke-width: 5px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.lg.g { stroke: #6bd13a; } .lg.c { stroke: #3fe6d6; } .lg.y { stroke: #f2a81d; }
+.linhas { display: flex; justify-content: center; }
+.linhas-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sb-e-2); }
+.chip-linha { min-height: 44px; padding: 0 var(--sb-e-3); background: var(--sb-sup); color: var(--sb-tx); border: 2px solid var(--sb-anel); font: var(--sb-peso-forte) var(--sb-t-corpo)/1 var(--sb-fonte-texto); cursor: pointer; }
+.chip-linha[aria-pressed='true'] { background: var(--sb-pri); color: #04201c; border-color: var(--sb-pri); }
+@media (min-width: 1024px) {
+  .arvore-bloco { grid-column: 1 / -1; }
+  .arvore { grid-auto-flow: column; grid-template-columns: none; width: auto; max-width: none; align-items: stretch; --no: 104px; }
+  .arvore-linha { align-content: center; }
+  .arvore-nos { display: flex; flex-direction: column; gap: 12px; width: auto; }
+  .arvore-caminhos .arvore-nos { align-items: flex-end; font-size: var(--sb-t-legal); }
+  .caminho { height: var(--no); padding-right: 14px; align-items: center; }
+  .arvore-lig { width: 44px; height: auto; align-self: stretch; }
+  .arvore-lig .lv { display: none; }
+  .arvore-lig .lh { display: block; width: 100%; height: 100%; }
+}
+
+/* ---------- v4.4 ---------- */
+/* Como entrar: nome dentro da pílula (0,651 a 0,728 do cartão) e legenda entre as duas barras (0,80 a 0,851), medidos no arquivo */
+.passos .passo-tx strong { top: 65.5%; height: 7%; display: flex; align-items: center; justify-content: center; line-height: 1; }
+.passos .passo-tx > span:not(.sr) { top: 80.6%; height: 4.4%; line-height: 1; font-size: clamp(.6875rem, 2.8vw, .8125rem); }
+/* Aba ativa do Universo: mais clara e com texto pleno; as demais recuadas (contraste entre estados >= 3:1) */
+.aba { filter: brightness(.7); }
+.aba[aria-selected='true'] { filter: brightness(1.35) saturate(1.15); color: #fff; box-shadow: none; }
+.aba:hover:not([aria-selected='true']) { filter: brightness(.95); }
+/* Fecho: mapa mais escuro para o formulário ser o foco */
+.inscrever .cena-mapa img { filter: brightness(.45); }
+/* Faz a tarefa: aparelho cabe inteiro acima da dobra no desktop; a demo é outra coisa e diz isso */
+@media (min-width: 1024px) {
+  .ciclo-aparelho { width: min(320px, calc((100svh - 230px) / 2.25)); }
+  .ciclo-palco { grid-template-columns: min(320px, calc((100svh - 230px) / 2.25)) minmax(0, 1fr); }
+}
+.lista-bloco .demo-linha { border: 1px dashed var(--sb-anel); }
+@media (max-width: 1023px) { .arvore { translate: -4px 0; } }
+.arvore-linha.arvore-caminhos .arvore-nos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+@media (min-width: 1024px) { .arvore-linha.arvore-caminhos .arvore-nos { grid-template-columns: none; } }

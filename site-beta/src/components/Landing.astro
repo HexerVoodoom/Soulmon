@@ -210,9 +210,9 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
                     <li class:list={['arvore-linha', { tres }]}>
                       <span class="arvore-rot">{c.forma} {i + 1}</span>
                       <span class="arvore-nos">
-                        {tres && <span class="no oculto"><span class="q" aria-hidden="true">?</span><span class="sr">{s.oculta}</span></span>}
+                        {tres && <span class="no oculto" role="img" aria-label={s.descobrir}><span class="sombra-q" aria-hidden="true"><span>?</span></span></span>}
                         <span class="no revelado"><img class="sprite" loading="lazy" src={b(`/sprites/${lin}-${fm}-128.webp`)} width="128" height="128" alt={`${s.linhas[li]}, ${c.forma} ${i + 1} ${c.de} 5`} /></span>
-                        {tres && <span class="no oculto"><span class="q" aria-hidden="true">?</span><span class="sr">{s.oculta}</span></span>}
+                        {tres && <span class="no oculto" role="img" aria-label={s.descobrir}><span class="sombra-q" aria-hidden="true"><span>?</span></span></span>}
                       </span>
                     </li>
                   </>
@@ -380,7 +380,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           <div class="campo">
             <label for="email">{f.email}</label>
             <p class="dica" id="email-dica">{f.dica}</p>
-            <input id="email" name="email" type="email" required autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" maxlength="254" aria-describedby="email-dica" />
+            <input id="email" name="email" type="email" required autocomplete="email" inputmode="email" placeholder={f.exemplo} autocapitalize="off" spellcheck="false" maxlength="254" aria-describedby="email-dica" />
             <p class="erro" id="email-erro" data-erro hidden></p>
           </div>
           <div class="hp" aria-hidden="true"><label>Site<input type="text" name="site" tabindex="-1" autocomplete="off" /></label></div>
