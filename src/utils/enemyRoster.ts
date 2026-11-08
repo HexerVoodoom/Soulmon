@@ -205,9 +205,37 @@ export function capEnemyStage(requested: EnemyStage, level: number): EnemyStage 
  * desconhecido (infinito) também não sorteia ramo. Determinístico dado `rng`; continua 1 só chamada de `rng` para escolher a entrada.
  */
 export function pickEnemy(
-  level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string>; semRamos?: boolean } = {},
+  level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string>; semRamos?: boolean; element?: string } = {},
 ): RosterEntry {
+  // Masmorra temática (08/11/2026): com `element`, só criaturas DAQUELE elemento — o corvo (neutro) não entra, é um elemento de fora.
+  if (opts.element) {
+    const r = pickEnemyDoElemento(level, rng, { ...opts, element: opts.element });
+    if (r) return r;
+  }
   return withRaven(rng, r => pickEnemyComum(level, r, opts), () => RAVEN_ENTRY);
+}
+
+/**
+ * O sorteio restrito a UM elemento (o id da criatura: o base, ou o fundido). O estágio pedido vale se o elemento tem criatura nele;
+ * senão desce para o estágio mais baixo que tenha (os fundidos só têm `rookie`). Elemento sem criatura no roster → `undefined`
+ * (quem chama cai no sorteio comum: nunca trava a escada). Uma só chamada de `rng`, como o sorteio comum.
+ */
+function pickEnemyDoElemento(
+  level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string>; semRamos?: boolean; element: string },
+): RosterEntry | undefined {
+  const pedido = capEnemyStage(opts.stage ?? maxEnemyStageForLevel(level), level);
+  const comRamos = Number.isFinite(level) && !opts.semRamos;
+  const doElemento = ENEMY_ROSTER.filter(e => e.element === opts.element && e.kind !== 'mascote' && (comRamos || e.kind !== 'ramo'));
+  if (doElemento.length === 0) return undefined;
+  let have: RosterEntry[] = [];
+  for (let i = ENEMY_STAGES.indexOf(pedido); i >= 0 && have.length === 0; i--) have = doElemento.filter(e => e.stage === ENEMY_STAGES[i]);
+  if (have.length === 0) {
+    const menor = ENEMY_STAGES.find(st => doElemento.some(e => e.stage === st));
+    have = doElemento.filter(e => e.stage === menor);
+  }
+  const fresh = opts.used ? have.filter(e => !opts.used!.has(e.id)) : have;
+  const pool = fresh.length > 0 ? fresh : have;
+  return pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))];
 }
 
 function pickEnemyComum(

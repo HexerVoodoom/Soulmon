@@ -65,6 +65,10 @@ import { entrarNaSuperficie } from '../utils/musica';
 import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGroupBattle';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG } from './games/pveTags';
 import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dungeonScenes';
+import { elementoDaCamada } from '../utils/dungeonElementos';
+import { DungeonPotionsModal } from './DungeonPotionsModal';
+import { deixarPocoes, devolverPocoes, pocoesDoJogador, potionsTotal, recolherPocoes, type PotionStock } from '../utils/dungeonPotions';
+import { combatSceneBg } from '../utils/combatArt';
 import { jeitoDaProfissao, fraseDaProfissao, jeitoParaPve } from '../utils/profissaoMasmorra';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
@@ -242,6 +246,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const [enemies, setEnemies] = useState<DungeonEnemy[]>([]);
   const [enemyIdx, setEnemyIdx] = useState(0);
   const [phase, setPhase] = useState<Phase>('intro');
+  const phaseRef = useRef<Phase>('intro');
+  phaseRef.current = phase;
   const [rewardMsg, setRewardMsg] = useState('');
   /** Bits do último inimigo (D-62: vão ao `BitsAmount`, não a uma string). */
   const [rewardBits, setRewardBits] = useState(0);
@@ -295,7 +301,9 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const petSprite = getSpriteForStage(evolutionStage, demoCharacterId, 256);
   const petScale = usePetScale(evolutionStage, petSprite);
   const ladderLen = LADDER_TIERS.length;
-  const scene = runScenes[(floor - 1) % Math.max(1, runScenes.length)] ?? DUNGEON_SCENES[0];
+  // 08/11/2026: o cenário da camada é o do ELEMENTO dela (2 camadas por elemento, `dungeonElementos.ts`); o sorteio antigo fica só de reserva.
+  const sceneReserva = runScenes[(floor - 1) % Math.max(1, runScenes.length)] ?? DUNGEON_SCENES[0];
+  const scene = { ...sceneReserva, bg: combatSceneBg(elementoDaCamada(floor)) ?? sceneReserva.bg };
   // A identidade de combate (dono único): o mesmo golpe básico/especial da Arena, do Torneio e do PvP.
   const petEl = fxElementId(ident.basico.elemento);
   const enemyEl = fxElementId(dungeonEnemyElement(enemy));
@@ -315,9 +323,22 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   };
   /** O ícone do mapa (e o voltar do Android): sai da TELA direto para o mapa, sem confirmação. Sair ≠ abandonar: o registro `dungeonAway`
       (posição persistida) NÃO é tocado — a descida segue; quem retira o Soulmon é o "Retirar da masmorra" da Home / do cartão de volta. */
-  const exitToMap = () => {
+  const sairParaMapa = () => {
     recordDungeonScore(runScoreRef.current);
     (onExitToMap ?? onExit)();
+  };
+  /** 🧪 Com a descida viva e poções de cura no inventário, antes de sair pergunta quantas deixar com o Soulmon (08/11/2026). */
+  const [pocoesModal, setPocoesModal] = useState(false);
+  const exitToMap = () => {
+    const g = gsRef.current;
+    const emCurso = phaseRef.current === 'fight' || phaseRef.current === 'enemy-down' || phaseRef.current === 'floor-clear';
+    if (ctx && g?.dungeonAway && emCurso && potionsTotal(pocoesDoJogador(g)) > 0) { setPocoesModal(true); return; }
+    sairParaMapa();
+  };
+  const confirmarPocoes = (wanted: PotionStock) => {
+    ctx?.setGameState(prev => deixarPocoes(prev, wanted));
+    setPocoesModal(false);
+    sairParaMapa();
   };
   useBackLayer(true, exitToMap);
 
@@ -419,7 +440,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     ctx.setGameState(prev => ({ ...prev, dungeonAway: reg }));
   };
   /** A descida acabou (ou o jogador retirou o Soulmon): ele volta para casa. */
-  const limparAway = () => { ctx?.setGameState(prev => (prev.dungeonAway ? { ...prev, dungeonAway: undefined } : prev)); };
+  const limparAway = () => { ctx?.setGameState(prev => (prev.dungeonAway ? devolverPocoes({ ...prev, dungeonAway: undefined }) : prev)); };
   /** O estado de onde sai o HP de agora (sem provider — demo, testes —: cheio). */
   const hpState = { dungeonHp: gs?.dungeonHp };
 
@@ -675,7 +696,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   /** O Soulmon sai da masmorra de vez (o botão "Retirar da masmorra"): o que rendeu até aqui já foi creditado; ele volta para casa. */
   const retirar = () => {
     recordDungeonScore(runScoreRef.current);
-    ctx?.setGameState(prev => ({ ...prev, dungeonAway: undefined, dungeonHp: gravarHp(hpCarryRef.current, Date.now()) }));
+    ctx?.setGameState(prev => devolverPocoes({ ...prev, dungeonAway: undefined, dungeonHp: gravarHp(hpCarryRef.current, Date.now()) }));
     onExit();
   };
   // 🏠 AO ENTRAR: se a descida seguiu sozinha enquanto o jogador estava fora, acerta a conta (UMA vez) e mostra o que rendeu.
@@ -686,6 +707,8 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     const r = settleDungeonAwayNow(gs, ctx.setGameState, Date.now(), false);
     if (!r) return;
     const { report, away, hp } = r;
+    // As poções deixadas já foram usadas pela conta de fora; o que sobrou volta ao inventário (o jogador está na tela e decide de novo ao sair).
+    ctx.setGameState(prev => recolherPocoes(prev));
     resumoRef.current = {
       layers: report.layers, enemies: report.enemies, bits: report.bits, hearts: report.hearts, glitchtama: report.glitchtama,
       fragments: report.fragments, energy: report.energy, recordFrom: report.recordFrom, recordTo: report.recordTo, essences: [],
@@ -960,6 +983,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
           )}
         </BattleStage>
         {/* O modalzinho de drop: a luta continua por trás (nada pausa), toque no véu/cartão fecha, a fila é de `dungeonDrops.ts`. */}
+        {pocoesModal && gs && <DungeonPotionsModal owned={pocoesDoJogador(gs)} initial={gs.dungeonPotions ?? {}} language={language} onConfirm={confirmarPocoes} />}
         {drops.length > 0 && <DropNotice group={drops[0]} isPt={isPt} speed={speed} onClose={closeDrop} />}
         {/* 💗 A queda: antes da derrota, "Usar Coraçãozinho". Esquerda = recusar (derrota normal), direita = confirmar (volta com 50% do HP). */}
         {reviveOffer && (

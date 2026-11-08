@@ -217,9 +217,11 @@ export function getDungeonEncounter(
   legacy: (tier: string, excludeLine: string | undefined, rng: () => number) => { sprite: string; name: string; line: string },
   /** Level do jogador: o teto de estágio de ARTE do inimigo (`enemyRoster.ts`). Sem ele, tudo liberado (comportamento antigo). */
   level: number = Number.POSITIVE_INFINITY,
+  /** Masmorra temática: só criaturas deste elemento (`dungeonElementos.ts`). */
+  element?: string,
 ): DungeonEncounter {
   const pref = novoPreferenceOfTier(tier)[0] as EnemyStage;
-  const e = pickEnemy(level, rng, { stage: pref, used });
+  const e = pickEnemy(level, rng, { stage: pref, used, ...(element ? { element } : {}) });
   const n = e.kind === 'base' ? BY_ID[e.id] : undefined;
   const sprite = n ? n.sprite(e.stage) : rosterSpriteOf(e);
   if (!sprite) return legacy(tier, undefined, rng);
