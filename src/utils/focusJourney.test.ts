@@ -60,3 +60,11 @@ describe('jornada do foco (§247)', () => {
     expect(trailAt(sp, 0.5).y).toBeGreaterThan(trailAt(sp, 0.25).y);
   });
 });
+
+describe('pausa longa (D-4)', () => {
+  it('parado além de 30 min volta a contar como foco', () => {
+    const c = { startAt: 0, pausedMs: 0, pausedAt: 60_000, mode: 'p25' as const };
+    expect(focusElapsed(c, 60_000 + 10 * 60_000)).toBe(60_000);
+    expect(focusElapsed(c, 60_000 + 40 * 60_000)).toBe(60_000 + 10 * 60_000);
+  });
+});
