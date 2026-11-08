@@ -639,10 +639,7 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .npc-fala { font-size: 1.0625rem; line-height: 1.5; text-align: left; }
 .passos li.passo { position: relative; display: block; width: 100%; max-width: 300px; margin-inline: auto; aspect-ratio: 420 / 525; padding: 0; }
 .passo-card { position: absolute; inset: 0; width: 100%; height: 100%; }
-.passos .passo-tx { position: absolute; left: 14%; right: 14%; top: 62.2%; bottom: 8%; display: grid; grid-template-rows: 9.5fr 10fr; gap: 0; text-align: center; }
-.passos .passo-tx strong { display: grid; align-items: center; font-size: clamp(.8rem, 3.8vw, 1rem); line-height: 1.1; }
-.passos .passo-tx > span:not(.sr) { align-self: start; padding-top: 4%; font-size: clamp(.75rem, 3.3vw, .875rem); line-height: 1.3; color: var(--sb-tx); }
-@media (min-width: 1024px) { .passos li.passo { max-width: 340px; } .passos .passo-tx strong { font-size: 1rem; } .passos .passo-tx > span:not(.sr) { font-size: .875rem; } }
+@media (min-width: 1024px) { .passos li.passo { max-width: 340px; } }
 
 /* ---------- v4.2: peças do dono (assets.json) ---------- */
 /* Botão: 4 estados do cipó. Ilustração, não grade de pixel: sem pixelated. */
@@ -716,10 +713,6 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 /* Como entrar: passo 1 é âncora; subtexto entre as barras do cartão; cabeçalho à esquerda */
 .passo-link { display: block; position: absolute; inset: 0; color: inherit; text-decoration: none; }
 .passo-link:focus-visible { outline: none; filter: drop-shadow(0 0 2px #5ff3e0) drop-shadow(0 0 5px #5ff3e0); }
-.passos .passo-tx { grid-template-rows: none; display: block; }
-.passos .passo-tx strong { position: absolute; left: 12%; right: 12%; top: 62.5%; height: 8.4%; }
-.passos .passo-tx > span:not(.sr) { position: absolute; left: 15%; right: 15%; top: 80.6%; height: 6.6%; padding: 0; display: grid; align-items: center; font-size: clamp(.7rem, 2.9vw, .8125rem); line-height: 1; }
-.passos .passo-tx { inset: 0; }
 .entrar-cab { max-width: none !important; margin-inline: 0 !important; justify-content: flex-start !important; text-align: left; }
 
 /* ---------- Árvore (única fonte): celular em linhas 1-3-3-3-1, desktop em colunas ---------- */
@@ -761,8 +754,6 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 
 /* ---------- v4.4 ---------- */
 /* Como entrar: nome dentro da pílula (0,651 a 0,728 do cartão) e legenda entre as duas barras (0,80 a 0,851), medidos no arquivo */
-.passos .passo-tx strong { top: 65.5%; height: 7%; display: flex; align-items: center; justify-content: center; line-height: 1; }
-.passos .passo-tx > span:not(.sr) { top: 80.6%; height: 4.4%; line-height: 1; font-size: clamp(.6875rem, 2.8vw, .8125rem); }
 /* Aba ativa do Universo: mais clara e com texto pleno; as demais recuadas (contraste entre estados >= 3:1) */
 .aba { filter: brightness(.7); }
 .aba[aria-selected='true'] { filter: brightness(1.35) saturate(1.15); color: #fff; box-shadow: none; }
@@ -778,3 +769,24 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 @media (max-width: 1023px) { .arvore { translate: -4px 0; } }
 .arvore-linha.arvore-caminhos .arvore-nos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (min-width: 1024px) { .arvore-linha.arvore-caminhos .arvore-nos { grid-template-columns: none; } }
+
+/* ---------- v4.5 ---------- */
+/* Texto dos passos: uma regra por breakpoint (medidas tiradas do PNG do cartão) */
+.passos .passo-tx { position: absolute; inset: 0; display: block; text-align: center; }
+.passos .passo-tx strong { position: absolute; left: 12%; right: 12%; top: 65.5%; height: 7%; display: flex; align-items: center; justify-content: center; font-size: 12px; line-height: 1; }
+.passos .passo-tx > span:not(.sr) { position: absolute; left: 12%; right: 12%; top: 80.6%; height: 4.4%; display: grid; align-items: center; padding: 0; font-size: 12px; line-height: 1; color: var(--sb-tx); }
+@media (min-width: 1024px) { .passos .passo-tx strong { font-size: 1rem; } .passos .passo-tx > span:not(.sr) { font-size: .8125rem; } }
+/* Placeholder: token de texto de apoio (9,2:1 sobre o fundo; >= 4,5:1 sobre o campo) */
+.campo input::placeholder { color: var(--sb-tx-2); opacity: 1; }
+/* Perguntas: 4 + 3 em colunas e degradê de saída para o fecho */
+@media (min-width: 1024px) { .faq-lista { grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, auto); grid-auto-flow: column; } }
+.faq { padding-bottom: calc(var(--sb-secao-y) + 48px); -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 72px), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 72px), transparent); }
+/* Cartões do Universo: mesma proporção de arte e mesma altura de legenda */
+.area-arte, .areas > li:first-child .area-arte { aspect-ratio: 4 / 3; }
+@media (min-width: 1024px) { .areas > li:first-child .area-arte { aspect-ratio: 8 / 3; } }
+.area-arte img { object-fit: cover; }
+.area-tx { min-height: 4.6em; align-content: start; }
+/* Faz a tarefa: escrim atrás do título e da frase, só no desktop */
+@media (min-width: 1024px) { .ciclo-texto::before { background: radial-gradient(ellipse at center, rgba(7, 20, 19, .88) 0, rgba(7, 20, 19, .8) 55%, rgba(7, 20, 19, 0) 100%) !important; inset: -48px -120px !important; } }
+/* Fecho: mapa bem escuro, ilha ainda reconhecível */
+.inscrever .cena-mapa img { filter: brightness(.35); }
