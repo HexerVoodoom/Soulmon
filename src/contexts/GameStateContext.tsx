@@ -20,6 +20,7 @@ import { createContext, useContext, useState, useEffect, useMemo, useRef, type R
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS, BB_MAX_HP } from '../types/progression';
 import { isBBStage, sanitizeStageId } from '../utils/bbStage';
+import { devolverPocoes, sanitizeDungeonPotions } from '../utils/dungeonPotions';
 import { sanitizeDungeonAway, sanitizeDungeonDaily, type DungeonAway } from '../utils/dungeonIdle';
 import { sanitizeHunger, sanitizeEnergyClock } from '../utils/hunger';
 import { sanitizeHungerPenalty } from '../utils/hungerPenalty';
@@ -519,6 +520,9 @@ export interface GameState {
    *  especial, semente, instantâneo do jogador). Presente = o Soulmon está NA MASMORRA (ocupado; a Home mostra a plaquinha) e o avanço
    *  fora do app é calculado por `utils/dungeonAway.ts` › `applyDungeonAway` ao voltar. Ausente = em casa. Tipo e higienização: `utils/dungeonIdle.ts`. */
   dungeonAway?: DungeonAway;
+  /** 🧪 As poções de cura que o jogador DEIXOU com o Soulmon na masmorra (08/11/2026): o Soulmon usa uma sozinho a cada queda da descida
+   *  fora do app; o que sobra volta ao inventário quando a descida acaba. Dono: `utils/dungeonPotions.ts`. Ausente = nada deixado. */
+  dungeonPotions?: Record<string, number>;
   /** 🍽️ A FOME (beta-2 3.5, REGISTRO §40): nível 0..100 + o instante da medida. NUNCA se lê direto — `hungerAt`/`energyStatus` (`utils/hunger.ts`)
    *  somam a queda por timestamp. Comer SOBE a fome (não a energia). Ausente = cheia (sem dívida retroativa). Fome não tira coração nem Bits. */
   hunger?: { v: number; at: number };
@@ -1445,6 +1449,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // A descida que continua sozinha: registro inteiro ou nada (campo ruim → `undefined`, o Soulmon volta para casa). Mesma regra de
         // `sanitizeDungeonAway` (`utils/dungeonIdle.ts`).
         dungeonAway: sanitizeDungeonAway(loadedState.dungeonAway),
+        dungeonPotions: sanitizeDungeonPotions(loadedState.dungeonPotions),
         // Fome, relógio da energia, camadas do dia e check-ins (beta-2): registro bom ou nada (lixo → ausente = cheia / relógio novo /
         // nenhuma camada / nenhuma janela). Mesmas regras de `utils/hunger.ts`, `dungeonIdle.ts` e `checkIns.ts`.
         hunger: sanitizeHunger(loadedState.hunger),
@@ -2079,6 +2084,13 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   reconciliarRef.current = reconciliarComNuvem;
 
   // D3 — pedido vindo do 409. Indeterminado/ilegível: tenta de novo com recuo (máx 4), POST suspenso.
+  // 🧪 Invariante das poções deixadas na masmorra (08/11/2026): estoque SEM descida viva volta para o inventário (save antigo, descida
+  // apagada por qualquer caminho, outro aparelho). Idempotente: sem estoque ou com descida viva o updater devolve o MESMO estado.
+  const pocoesSemDescida = !!gameState.dungeonPotions && !gameState.dungeonAway;
+  useEffect(() => {
+    if (pocoesSemDescida) setGameState(prev => devolverPocoes(prev));
+  }, [pocoesSemDescida]);
+
   useEffect(() => {
     if (pedidoReconciliar === 0) return;
     let cancelado = false;

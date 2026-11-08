@@ -65,7 +65,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const family = hexFamily(dungeonFamily(par?.especial), hx);
   const enemy = useMemo(() => {
-    const wave = dungeonWaveOf(setup.seed, setup.ref.floor, combatant.level, evolutionStage);
+    const wave = dungeonWaveOf(setup.seed, setup.ref.floor, combatant.level, evolutionStage, false);
     return wave[Math.min(wave.length - 1, setup.ref.slot)];
   }, [setup, combatant.level, evolutionStage]);
   const seenKey = enemy?.stage;

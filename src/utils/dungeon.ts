@@ -20,12 +20,14 @@ export function buildDungeonWave(
   petStage: string,
   rng: () => number = mulberry32(Math.imul(Math.max(1, Math.floor(level)), 0x9e3779b1) | 0),
   playerLevel: number = soulLevel({ evolutionStage: petStage }),
+  /** Masmorra temática (08/11/2026): só criaturas deste elemento. Ausente = sorteio comum. */
+  element?: string,
 ): DungeonEnemy[] {
   const floor = Math.max(1, Math.floor(level));
   const ptsMult = 1 + 0.12 * (floor - 1);
   const used = new Set<string>(); // sem criatura repetida dentro da onda (REGISTRO §68)
   return LADDER_TIERS.map((tier, slot) => {
-    const picked = getDungeonEncounter(tier, used, rng, getDungeonEnemySprite, playerLevel);
+    const picked = getDungeonEncounter(tier, used, rng, getDungeonEnemySprite, playerLevel, element);
     return {
       name: picked.name,
       stage: 'key' in picked && picked.key ? picked.key : enemyKey(tier, picked.line),
