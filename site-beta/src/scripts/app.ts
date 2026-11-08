@@ -1,4 +1,5 @@
 // JS inicial do site. GSAP só entra por import dinâmico, em ciclo.ts.
+import { proximoSorteio } from '../lib/sorteio';
 import { limparUtm } from '../../functions/_lib/utm.js'; // mesma allowlist do servidor
 const $ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document) => r.querySelector<T>(s);
 const $$ = <T extends Element = HTMLElement>(s: string, r: ParentNode = document) => [...r.querySelectorAll<T>(s)];
@@ -32,7 +33,7 @@ function depoisDoLoad(fn: () => void) {
 // ---------- Sprites em fluxo: cada pixel do arquivo ocupa um número inteiro de pixels de TELA ----------
 // A caixa de layout não muda (a diferença vai para a margem). Sprites posicionados (elenco, disco, ficha) ficam no tamanho do token.
 function ajustarSprites() {
-  const imgs = $$<HTMLImageElement>('img.sprite').filter((i) => !i.closest('.cria, .disco-caixa, .ficha-palco, .no, .passo-arte, .chip'));
+  const imgs = $$<HTMLImageElement>('img.sprite').filter((i) => !i.closest('.cria, .disco-caixa, .ficha-palco, .no, .passo-arte, .chip, .sorteio-palco, .npc-modal'));
   for (const img of imgs) { const st = img.style; st.width = st.height = st.marginTop = st.marginRight = st.marginBottom = st.marginLeft = ''; }
   const dpr = devicePixelRatio || 1;
   const plano = imgs.map((img) => {
@@ -284,32 +285,67 @@ function abas() {
   ver(0);
 }
 
-// ---------- Fichas de criatura: uma por vez, setas, ← → com foco dentro, arrastar no celular ----------
-function fichas() {
-  const raiz = $('[data-fichas]'); if (!raiz) return;
-  const faixa = $('[data-faixa]', raiz)!; const itens = $$('.ficha', faixa); const ctl = $('[data-fichas-ctl]', raiz)!;
-  const ant = $<HTMLButtonElement>('[data-ant]', raiz)!; const prox = $<HTMLButtonElement>('[data-prox]', raiz)!; const pos = $('[data-pos]', raiz)!;
-  ctl.hidden = false;
-  let atual = 0;
-  const marcar = (n: number) => {
-    atual = n; pos.textContent = String(n + 1);
-    ant.setAttribute('aria-disabled', String(n === 0)); prox.setAttribute('aria-disabled', String(n === itens.length - 1));
-    itens.forEach((it, i) => it.setAttribute('aria-hidden', String(i !== n)));
-  };
-  const ir = (n: number) => {
-    if (n < 0 || n >= itens.length) return;
-    faixa.scrollTo({ left: itens[n].offsetLeft - faixa.offsetLeft, behavior: reduzido ? 'auto' : 'smooth' });
-    marcar(n);
-  };
-  ant.addEventListener('click', () => ir(atual - 1));
-  prox.addEventListener('click', () => ir(atual + 1));
-  raiz.addEventListener('keydown', (e) => {
-    const k = (e as KeyboardEvent).key;
-    if (k === 'ArrowLeft') { e.preventDefault(); ir(atual - 1); } else if (k === 'ArrowRight') { e.preventDefault(); ir(atual + 1); }
+// ---------- Sorteio: um botão, um Soulmon aleatório do elenco elegível, nunca o mesmo duas vezes seguidas. Sem GSAP, sem giro ----------
+function sorteio() {
+  const raiz = $('[data-sorteio]'); if (!raiz) return;
+  const pool = JSON.parse(raiz.dataset.pool!) as [string, string, number][];
+  const els = JSON.parse(raiz.dataset.els!) as Record<string, string>;
+  const bt = $<HTMLButtonElement>('[data-sortear]', raiz)!; const img = $<HTMLImageElement>('[data-sort-img]', raiz)!;
+  const sombra = $('[data-sort-sombra]', raiz)!; const info = $('[data-sort-info]', raiz)!;
+  bt.hidden = false;
+  let ant = -1;
+  bt.addEventListener('click', () => {
+    const i = proximoSorteio(pool.length, ant); ant = i;
+    const [id, el, forma] = pool[i];
+    const nome = el.split(',').map((e) => els[e] ?? e).join(' + ');
+    const texto = `${raiz.dataset.elemento}: ${nome}.${forma ? ` ${raiz.dataset.forma} ${forma} ${raiz.dataset.de} 5.` : ''}`;
+    const pronto = () => {
+      img.alt = `${raiz.dataset.alt} ${nome}${forma ? `, ${raiz.dataset.forma} ${forma} ${raiz.dataset.de} 5` : ''}`;
+      img.hidden = false; sombra.hidden = true; info.textContent = texto;
+      if (!reduzido) { img.classList.remove('surge'); void img.offsetWidth; img.classList.add('surge'); } // só opacidade/escala, nunca giro
+    };
+    const novo = new Image(); novo.onload = () => { img.src = novo.src; pronto(); }; novo.onerror = pronto;
+    novo.src = `${raiz.dataset.base}${id}.webp`;
   });
-  let t = 0;
-  faixa.addEventListener('scroll', () => { clearTimeout(t); t = window.setTimeout(() => marcar(Math.round(faixa.scrollLeft / faixa.clientWidth)), 80); }, { passive: true });
-  marcar(0);
+}
+
+// ---------- Árvore: seletor de linha (Planta, Fada, Fogo). Sem JS, as três aparecem empilhadas ----------
+function linhasArvore() {
+  const caixa = $('[data-linhas]'); if (!caixa) return;
+  const bts = $$<HTMLButtonElement>('[data-linha-bt]', caixa); const arvores = $$('ol.arvore[data-linha]');
+  const ant = $<HTMLButtonElement>('[data-linha-ant]', caixa)!; const prox = $<HTMLButtonElement>('[data-linha-prox]', caixa)!; const pos = $('[data-linha-pos]', caixa)!;
+  caixa.hidden = false; caixa.setAttribute('role', 'group'); caixa.setAttribute('aria-label', caixa.dataset.rotulo!);
+  let atual = 0;
+  const seta = (bt: HTMLButtonElement, off: boolean) => { const im = bt.querySelector('img')!; im.dataset.base ??= im.src; bt.setAttribute('aria-disabled', String(off)); im.src = off ? im.dataset.off! : im.dataset.base; };
+  const ver = (n: number) => { atual = n; pos.textContent = String(n + 1); bts.forEach((x, i) => x.setAttribute('aria-pressed', String(i === n))); arvores.forEach((x, i) => { x.hidden = i !== n; }); seta(ant, n === 0); seta(prox, n === bts.length - 1); };
+  bts.forEach((x, i) => x.addEventListener('click', () => ver(i)));
+  ant.addEventListener('click', () => { if (atual > 0) ver(atual - 1); }); prox.addEventListener('click', () => { if (atual < bts.length - 1) ver(atual + 1); });
+  ver(0);
+}
+
+// ---------- Modal do NPC (Universo e Habitantes): <dialog> nativo prende o foco e fecha com Esc; o foco volta ao botão que abriu ----------
+function modalNpc() {
+  const d = $<HTMLDialogElement>('[data-npc-modal]'); if (!d) return;
+  const falas = JSON.parse(d.dataset.falas!) as Record<string, { fala: string; habita: string; npc: string }>;
+  const img = $<HTMLImageElement>('[data-npc-img]', d)!; const h = $('[data-npc-h]', d)!; const p = $('[data-npc-p]', d)!;
+  let origem: HTMLElement | null = null;
+  const abrir = (bt: HTMLElement, habita: boolean) => {
+    const f = falas[bt.dataset.lugar!]; if (!f) return;
+    origem = bt;
+    img.src = habita && bt.dataset.npc ? bt.dataset.npc : f.npc;
+    h.textContent = (bt.querySelector('strong')?.textContent ?? bt.getAttribute('aria-label')?.split(': ').pop() ?? '').trim();
+    p.textContent = habita ? f.habita : f.fala;
+    d.showModal();
+    $<HTMLButtonElement>('[data-npc-fechar]', d)!.focus();
+  };
+  document.addEventListener('click', (e) => {
+    const bt = (e.target as Element).closest<HTMLElement>('.area-bt, .npc-bt'); if (!bt) return;
+    abrir(bt, bt.classList.contains('npc-bt'));
+  });
+  $('[data-npc-fechar]', d)!.addEventListener('click', () => d.close());
+  d.addEventListener('click', (e) => { if (e.target === d) { const r = d.getBoundingClientRect(); const ev = e as MouseEvent; if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) d.close(); } });
+  d.addEventListener('keydown', (e) => { if ((e as KeyboardEvent).key === 'Tab') { e.preventDefault(); $<HTMLButtonElement>('[data-npc-fechar]', d)!.focus(); } }); // um só controle: o foco não sai
+  d.addEventListener('close', () => { origem?.focus(); origem = null; });
 }
 
 // ---------- Loop real: toca só visível, sem movimento reduzido e sem Save-Data; senão, play manual ----------
@@ -429,7 +465,7 @@ function ancoras() {
 // Só com JS: sem ele, o form faria GET com o e-mail na URL.
 if (form) form.hidden = false;
 $('[data-barra]')?.removeAttribute('hidden');
-ancoras(); partilha(); barra(); topoECta(); vagas(); formulario(); turnstile(); abas(); fichas(); loopReal(); trailer(); ciclo(); profundidade();
+ancoras(); partilha(); barra(); topoECta(); vagas(); formulario(); turnstile(); abas(); sorteio(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
 // ajustarSprites lê o layout da página inteira: só depois do load, nunca na janela do primeiro quadro.
 depoisDoLoad(() => {
   document.documentElement.classList.add('tarde');

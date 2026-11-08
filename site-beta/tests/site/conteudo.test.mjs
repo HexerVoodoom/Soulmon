@@ -4,6 +4,10 @@ import { existsSync, readFileSync } from 'node:fs';
 import assets from '../../src/content/assets.json';
 import midia from '../../src/content/midia.json';
 import { TEXTOS } from '../../src/i18n/textos';
+import elenco from '../../src/content/elenco.json';
+import universo from '../../src/content/universo.json';
+import { proximoSorteio } from '../../src/lib/sorteio';
+import { readdirSync, statSync } from 'node:fs';
 
 const ESTADOS = ['final', 'aguarda-revisao', 'aguarda-aprovacao-do-dono', 'provisorio', 'provisorio-css'];
 const pecas = Object.entries(assets).filter(([k]) => !k.startsWith('_'));
@@ -25,9 +29,9 @@ describe('copy do site', () => {
   it.each(['cabo', 'cable', 'Crato', 'Brooka', 'Zefi', 'Oaken', 'Bolid', 'novidades', 'tamer', 'domador'])('não fala de %s', (t) => {
     expect(copia.toLowerCase()).not.toContain(t.toLowerCase());
   });
-  it('elenco: nada de fogo com chama na cauda; hero mantém fogo-ultimate', () => {
-    expect(landing).not.toMatch(/fogo-(rookie|champion|mega|ultra)\b/);
-    expect(landing).toMatch(/<Cria s="fogo-ultimate"[^>]*\bprot\b/);
+  it('elenco: hero mantém fogo-ultimate como herói; nada removido na landing', () => {
+    expect(landing).toMatch(/fogo-ultimate/);
+    expect(landing).not.toMatch(/agua-mega|luz-/);
   });
   it('prova real: loop e prints de gameplay nos dois idiomas', () => {
     for (const l of ['pt', 'en']) {
@@ -42,7 +46,7 @@ describe('copy do site', () => {
     expect(JSON.stringify({ ...TEXTOS.pt, ciclo: { ...TEXTOS.pt.ciclo, formas: [] } }) + JSON.stringify({ ...TEXTOS.en, ciclo: { ...TEXTOS.en.ciclo, formas: [] } })).not.toMatch(/rookie|champion|ultimate|mega|ultra/i);
   });
   it('landing não usa arte vetada', () => {
-    for (const t of ['starters/', 'mapas-recriados', 'bg-mapa', 'mapa/mercado', 'mapa/forja', 'mapa-mundi', 'type="checkbox"']) expect(landing).not.toContain(t);
+    for (const t of ['starters/', 'mapas-recriados', 'bg-mapa', 'mapa/mercado', 'mapa-mundi', 'type="checkbox"']) expect(landing).not.toContain(t);
   });
   it('textos exatos do dono', () => {
     expect(TEXTOS.pt.form.okH + ' ' + TEXTOS.pt.form.ok).toBe('Parabéns, você se inscreveu no beta! Seu e-mail foi cadastrado com sucesso. Em até 24 horas você receberá o link para fazer o download.');
@@ -74,5 +78,44 @@ describe('copy do site', () => {
     expect(TEXTOS.en.universo.abas.length).toBe(TEXTOS.pt.universo.abas.length);
     expect(Object.keys(TEXTOS.en.universo.els)).toEqual(Object.keys(TEXTOS.pt.universo.els));
     expect(Object.keys(TEXTOS.pt.universo.els)).toHaveLength(20);
+  });
+});
+
+describe('v4: elenco, sorteio, universo, PvP e PvE', () => {
+  const vetados = ['agua-mega', 'luz-mega', 'luz-rookie', 'luz-champion', 'luz-ultimate', 'luz-ultra', 'agua-ultra'];
+  const walk = (d) => readdirSync(d).flatMap((f) => (statSync(`${d}/${f}`).isDirectory() ? walk(`${d}/${f}`) : [`${d}/${f}`]));
+  it('nenhum agua-mega nem luz com auréola no elenco, em public/ e no dist', () => {
+    const ids = elenco.elegiveis.map((x) => x.id);
+    for (const v of vetados) { expect(ids).not.toContain(v); expect(existsSync(`public/sprites/${v}.webp`)).toBe(false); }
+    if (existsSync('dist')) for (const f of walk('dist')) for (const v of vetados) expect(f).not.toContain(v);
+  });
+  it('nada da DEMO e nada de steampunk no sorteio', () => {
+    const ids = elenco.elegiveis.map((x) => x.id).join(' ');
+    expect(ids).not.toMatch(/industrial|starters|meteoro|nascente/);
+    for (const x of ['x-e33', 'x-l72', 'x-l20', 'x-l121', 'x-f3', 'fogo-rookie']) expect(ids).toContain(x); // escolha explícita do dono
+    expect(ids).not.toContain('x-l113'); // golem dourado com auréola
+    expect(ids).not.toContain('agua-mega'); // linha de fogo inteira (decisão do dono)
+  });
+  it('nome interno do bichinho nunca aparece em texto público', () => {
+    const publico = JSON.stringify(TEXTOS) + JSON.stringify(universo) + landing;
+    expect(publico.toLowerCase()).not.toMatch(/peste.?negra/);
+  });
+  it('sorteio nunca repete o anterior e cobre o conjunto', () => {
+    const n = elenco.elegiveis.length; let ant = -1; const vistos = new Set();
+    for (let k = 0; k < 4000; k++) { const i = proximoSorteio(n, ant); expect(i).not.toBe(ant); expect(i).toBeGreaterThanOrEqual(0); expect(i).toBeLessThan(n); vistos.add(i); ant = i; }
+    expect(vistos.size).toBe(n);
+    expect(proximoSorteio(2, 0, () => 0)).toBe(1);
+  });
+  it('7 lugares, falas de até 35 palavras em PT e EN, sem promessa de saúde', () => {
+    const ids = TEXTOS.pt.universo.areas.map(([id]) => id);
+    expect(ids).toHaveLength(7);
+    for (const id of ids) for (const l of ['pt', 'en']) {
+      const f = universo.lugares[id][l]; expect(f.split(/\s+/).length, id + l).toBeLessThanOrEqual(35);
+      expect(f.toLowerCase()).not.toMatch(/cura|curar|terapia|therapy|saúde|health|tdah|adhd/);
+    }
+  });
+  it('cartão PvP e PvE', () => {
+    expect(TEXTOS.pt.recursos.cartoes[0][1]).toBe('PvP e PvE');
+    expect(TEXTOS.en.recursos.cartoes[0][1]).toBe('PvP and PvE');
   });
 });

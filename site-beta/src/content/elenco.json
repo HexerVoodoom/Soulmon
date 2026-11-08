@@ -1,0 +1,517 @@
+{
+ "_nota": "Gerado por src/tools/elenco.mjs. forma 0 = estágio desconhecido (não mostra \"Forma N\"). el com vírgula = elemento combinado.",
+ "elegiveis": [
+  {
+   "id": "agua-rookie",
+   "el": "agua",
+   "forma": 1
+  },
+  {
+   "id": "agua-champion",
+   "el": "agua",
+   "forma": 2
+  },
+  {
+   "id": "agua-ultimate",
+   "el": "agua",
+   "forma": 3
+  },
+  {
+   "id": "ar-rookie",
+   "el": "ar",
+   "forma": 1
+  },
+  {
+   "id": "ar-champion",
+   "el": "ar",
+   "forma": 2
+  },
+  {
+   "id": "ar-ultimate",
+   "el": "ar",
+   "forma": 3
+  },
+  {
+   "id": "ar-ultra",
+   "el": "ar",
+   "forma": 5
+  },
+  {
+   "id": "arcano-rookie",
+   "el": "arcano",
+   "forma": 1
+  },
+  {
+   "id": "arcano-champion",
+   "el": "arcano",
+   "forma": 2
+  },
+  {
+   "id": "arcano-ultimate",
+   "el": "arcano",
+   "forma": 3
+  },
+  {
+   "id": "arcano-mega",
+   "el": "arcano",
+   "forma": 4
+  },
+  {
+   "id": "arcano-ultra",
+   "el": "arcano",
+   "forma": 5
+  },
+  {
+   "id": "eletricidade-champion",
+   "el": "eletricidade",
+   "forma": 2
+  },
+  {
+   "id": "espaco-rookie",
+   "el": "espaco",
+   "forma": 1
+  },
+  {
+   "id": "espaco-champion",
+   "el": "espaco",
+   "forma": 2
+  },
+  {
+   "id": "espaco-ultimate",
+   "el": "espaco",
+   "forma": 3
+  },
+  {
+   "id": "espaco-mega",
+   "el": "espaco",
+   "forma": 4
+  },
+  {
+   "id": "espaco-ultra",
+   "el": "espaco",
+   "forma": 5
+  },
+  {
+   "id": "fada-rookie",
+   "el": "fada",
+   "forma": 1
+  },
+  {
+   "id": "fada-champion",
+   "el": "fada",
+   "forma": 2
+  },
+  {
+   "id": "fada-ultimate",
+   "el": "fada",
+   "forma": 3
+  },
+  {
+   "id": "fada-mega",
+   "el": "fada",
+   "forma": 4
+  },
+  {
+   "id": "fada-ultra",
+   "el": "fada",
+   "forma": 5
+  },
+  {
+   "id": "fogo-rookie",
+   "el": "fogo",
+   "forma": 1
+  },
+  {
+   "id": "fogo-champion",
+   "el": "fogo",
+   "forma": 2
+  },
+  {
+   "id": "fogo-ultimate",
+   "el": "fogo",
+   "forma": 3
+  },
+  {
+   "id": "fogo-mega",
+   "el": "fogo",
+   "forma": 4
+  },
+  {
+   "id": "fogo-ultra",
+   "el": "fogo",
+   "forma": 5
+  },
+  {
+   "id": "gravidade-rookie",
+   "el": "gravidade",
+   "forma": 1
+  },
+  {
+   "id": "gravidade-champion",
+   "el": "gravidade",
+   "forma": 2
+  },
+  {
+   "id": "gravidade-mega",
+   "el": "gravidade",
+   "forma": 4
+  },
+  {
+   "id": "gravidade-ultra",
+   "el": "gravidade",
+   "forma": 5
+  },
+  {
+   "id": "marcial-rookie",
+   "el": "marcial",
+   "forma": 1
+  },
+  {
+   "id": "marcial-mega",
+   "el": "marcial",
+   "forma": 4
+  },
+  {
+   "id": "marcial-ultra",
+   "el": "marcial",
+   "forma": 5
+  },
+  {
+   "id": "morte-rookie",
+   "el": "morte",
+   "forma": 1
+  },
+  {
+   "id": "morte-champion",
+   "el": "morte",
+   "forma": 2
+  },
+  {
+   "id": "morte-ultimate",
+   "el": "morte",
+   "forma": 3
+  },
+  {
+   "id": "morte-mega",
+   "el": "morte",
+   "forma": 4
+  },
+  {
+   "id": "morte-ultra",
+   "el": "morte",
+   "forma": 5
+  },
+  {
+   "id": "planta-rookie",
+   "el": "planta",
+   "forma": 1
+  },
+  {
+   "id": "planta-champion",
+   "el": "planta",
+   "forma": 2
+  },
+  {
+   "id": "planta-ultimate",
+   "el": "planta",
+   "forma": 3
+  },
+  {
+   "id": "planta-mega",
+   "el": "planta",
+   "forma": 4
+  },
+  {
+   "id": "planta-ultra",
+   "el": "planta",
+   "forma": 5
+  },
+  {
+   "id": "som-rookie",
+   "el": "som",
+   "forma": 1
+  },
+  {
+   "id": "som-champion",
+   "el": "som",
+   "forma": 2
+  },
+  {
+   "id": "som-ultimate",
+   "el": "som",
+   "forma": 3
+  },
+  {
+   "id": "som-mega",
+   "el": "som",
+   "forma": 4
+  },
+  {
+   "id": "som-ultra",
+   "el": "som",
+   "forma": 5
+  },
+  {
+   "id": "sombra-rookie",
+   "el": "sombra",
+   "forma": 1
+  },
+  {
+   "id": "sombra-champion",
+   "el": "sombra",
+   "forma": 2
+  },
+  {
+   "id": "sombra-ultimate",
+   "el": "sombra",
+   "forma": 3
+  },
+  {
+   "id": "sombra-mega",
+   "el": "sombra",
+   "forma": 4
+  },
+  {
+   "id": "sombra-ultra",
+   "el": "sombra",
+   "forma": 5
+  },
+  {
+   "id": "tempo-rookie",
+   "el": "tempo",
+   "forma": 1
+  },
+  {
+   "id": "tempo-champion",
+   "el": "tempo",
+   "forma": 2
+  },
+  {
+   "id": "tempo-mega",
+   "el": "tempo",
+   "forma": 4
+  },
+  {
+   "id": "terra-rookie",
+   "el": "terra",
+   "forma": 1
+  },
+  {
+   "id": "terra-champion",
+   "el": "terra",
+   "forma": 2
+  },
+  {
+   "id": "terra-ultimate",
+   "el": "terra",
+   "forma": 3
+  },
+  {
+   "id": "terra-ultra",
+   "el": "terra",
+   "forma": 5
+  },
+  {
+   "id": "vida-rookie",
+   "el": "vida",
+   "forma": 1
+  },
+  {
+   "id": "vida-champion",
+   "el": "vida",
+   "forma": 2
+  },
+  {
+   "id": "vida-ultimate",
+   "el": "vida",
+   "forma": 3
+  },
+  {
+   "id": "vida-ultra",
+   "el": "vida",
+   "forma": 5
+  },
+  {
+   "id": "vigor-rookie",
+   "el": "vigor",
+   "forma": 1
+  },
+  {
+   "id": "vigor-champion",
+   "el": "vigor",
+   "forma": 2
+  },
+  {
+   "id": "vigor-ultimate",
+   "el": "vigor",
+   "forma": 3
+  },
+  {
+   "id": "vigor-mega",
+   "el": "vigor",
+   "forma": 4
+  },
+  {
+   "id": "vigor-ultra",
+   "el": "vigor",
+   "forma": 5
+  },
+  {
+   "id": "vileza-rookie",
+   "el": "vileza",
+   "forma": 1
+  },
+  {
+   "id": "vileza-champion",
+   "el": "vileza",
+   "forma": 2
+  },
+  {
+   "id": "vileza-ultimate",
+   "el": "vileza",
+   "forma": 3
+  },
+  {
+   "id": "vileza-mega",
+   "el": "vileza",
+   "forma": 4
+  },
+  {
+   "id": "vileza-ultra",
+   "el": "vileza",
+   "forma": 5
+  },
+  {
+   "id": "x-en166",
+   "el": "fogo,morte,tempo,gravidade",
+   "forma": 4
+  },
+  {
+   "id": "x-en63",
+   "el": "fogo,gravidade,espaco",
+   "forma": 2
+  },
+  {
+   "id": "x-bb45",
+   "el": "agua,vileza,morte",
+   "forma": 0
+  },
+  {
+   "id": "x-e33",
+   "el": "industrial,gravidade",
+   "forma": 0
+  },
+  {
+   "id": "x-e77",
+   "el": "fada",
+   "forma": 2
+  },
+  {
+   "id": "x-e9",
+   "el": "fada,vileza",
+   "forma": 0
+  },
+  {
+   "id": "x-v1",
+   "el": "agua",
+   "forma": 1
+  },
+  {
+   "id": "x-l180",
+   "el": "gravidade",
+   "forma": 3
+  },
+  {
+   "id": "x-l222",
+   "el": "terra",
+   "forma": 3
+  },
+  {
+   "id": "x-l137",
+   "el": "vida,terra",
+   "forma": 0
+  },
+  {
+   "id": "x-l170",
+   "el": "fogo",
+   "forma": 4
+  },
+  {
+   "id": "x-l117",
+   "el": "gravidade,vigor",
+   "forma": 0
+  },
+  {
+   "id": "x-l89",
+   "el": "tempo,vida",
+   "forma": 0
+  },
+  {
+   "id": "x-l77",
+   "el": "marcial,vida",
+   "forma": 0
+  },
+  {
+   "id": "x-l25",
+   "el": "terra,sombra",
+   "forma": 0
+  },
+  {
+   "id": "x-l20",
+   "el": "agua,vida",
+   "forma": 0
+  },
+  {
+   "id": "x-l72",
+   "el": "marcial,arcano",
+   "forma": 0
+  },
+  {
+   "id": "x-f3",
+   "el": "",
+   "forma": 0
+  },
+  {
+   "id": "x-l121",
+   "el": "espaco,fogo",
+   "forma": 0
+  },
+  {
+   "id": "x-en178",
+   "el": "agua,vileza,morte,vida",
+   "forma": 4
+  },
+  {
+   "id": "x-en176",
+   "el": "agua,sombra,morte,gravidade",
+   "forma": 3
+  }
+ ],
+ "excluidos": {
+  "agua-mega": "lontra com escudo (pedido do dono)",
+  "agua-ultra": "mesma lontra com escudo, outra forma",
+  "terra-mega": "auréola dourada",
+  "ar-mega": "anel de auréola na cabeça",
+  "eletricidade-mega": "anel de auréola",
+  "tempo-ultimate": "cara de máquina (robô)",
+  "tempo-ultra": "cara de máquina (robô)",
+  "eletricidade-ultimate": "cara de máquina (robô)",
+  "eletricidade-ultra": "cara de máquina (mecha)",
+  "gravidade-ultimate": "pernas mecânicas",
+  "vida-mega": "pernas mecânicas",
+  "eletricidade-rookie": "lembra personagem de franquia famosa",
+  "marcial-champion": "lembra personagem de franquia famosa",
+  "marcial-ultimate": "figura divina de vários braços (sensível)",
+  "luz-rookie": "criatura de luz dourada com auréola (pedido do dono)",
+  "industrial-rookie": "canos e vapor: leitura steampunk",
+  "luz-champion": "criatura de luz dourada com auréola (pedido do dono)",
+  "industrial-champion": "canos e vapor: leitura steampunk",
+  "luz-ultimate": "criatura de luz dourada com auréola (pedido do dono)",
+  "industrial-ultimate": "canos e vapor: leitura steampunk",
+  "luz-mega": "criatura de luz dourada com auréola (pedido do dono)",
+  "industrial-mega": "canos e vapor: leitura steampunk",
+  "luz-ultra": "criatura de luz dourada com auréola (pedido do dono)",
+  "industrial-ultra": "canos e vapor: leitura steampunk",
+  "L113": "golem dourado com auréola (o dono mandou remover)"
+ }
+}

@@ -9,6 +9,8 @@ import Mapa from './Mapa.astro';
 import Cria from './Cria.astro';
 import midia from '../content/midia.json';
 import assets from '../content/assets.json';
+import universoDados from '../content/universo.json';
+import elenco from '../content/elenco.json';
 import { TEXTOS, CONTATO, TERMOS, type Lang } from '../i18n/textos';
 interface Props { lang: Lang }
 const { lang } = Astro.props;
@@ -33,20 +35,21 @@ const strings = {
   cta: t.cta, ctaEspera: t.ctaEspera, vagasEspera: t.hero.vagasEspera, enviarEspera: f.enviarEspera, pausar: j.pausar, tocar: j.tocar,
 };
 const logo = b(assets.logo.src);
-const passos = [assets.passo1.src, assets.passo2.src, assets.passo3.src].map(b);
+const passos = [assets.passoCard1.src, assets.passoCard2.src, assets.passoCard3.src].map(b);
+const HABITA = universoDados.habitantes as Record<string, string>;
 const NPCS = ['hall', 'jogos', 'oraculo', 'laboratorio-biblioteca-glifa', 'exploracao', 'cuidados', 'loja-itens', 'loja-decoracao', 'loja-background', 'onboarding', 'ranking-arauto', 'n-cozinheiro', 'n-broto', 'n-corvo', 'laboratorio-pet', 'n-musa'];
 const ELS = Object.keys(u.els);
 // Vinheta de cada lugar: recorte AMPLIADO num ponto diferente dos fundos de seção (x, y em % do mapa).
-const FOCO: Record<string, [number, number]> = { exploracao: [70, 34], jogos: [40, 62], arena: [72, 48], hall: [28, 20], guilda: [28, 30], laboratorio: [70, 50] };
+const FOCO: Record<string, [number, number]> = { exploracao: [70, 34], jogos: [40, 62], arena: [72, 48], hall: [28, 20], guilda: [28, 30], laboratorio: [70, 50], forja: [50, 50] };
 // Jogos sem arte própria instalada usam sprite/ícone real como provisório.
 const capaJogo: Record<string, string> = { combina: b('/el/agua.webp'), barrage: b('/sprites/espaco-ultimate.webp'), corrida: b('/sprites/planta-champion-128.webp') };
 const Formas = c.formas;
-// Fichas: só soulmon/novos, nada da DEMO, nada de fogo com chama na cauda.
-const FICHAS: [string, string, number][] = [
-  ['agua', 'mega', 4], ['luz', 'ultimate', 3], ['fada', 'ultra', 5], ['tempo', 'ultimate', 3],
-  ['eletricidade', 'ultra', 5], ['espaco', 'ultimate', 3], ['ar', 'ultra', 5], ['vida', 'ultra', 5],
-];
+// Sorteio: todo o elenco elegível de soulmon/novos (src/tools/elenco.mjs). Compacto: [id, elemento, forma].
+const POOL = JSON.stringify(elenco.elegiveis.map((x) => [x.id, x.el, x.forma]));
+const lugarDados = universoDados.lugares as Record<string, { npc: string; pt: string; en: string; habita: { pt: string; en: string } }>;
+const falas = JSON.stringify(Object.fromEntries(Object.entries(lugarDados).map(([k, v]) => [k, { fala: v[lang], habita: v.habita[lang], npc: b(v.npc) }])));
 const printSrc = (id: string, ext: string) => [240, 480, 720].map((w) => `${b(`/print/${id}-${lang}-${w}.${ext}`)} ${w}w`).join(', ');
+const cen = (n: string) => `--cen-m:image-set(url(${b(`/dono/${n}-800.avif`)}) type("image/avif"), url(${b(`/dono/${n}-800.webp`)}) type("image/webp"));--cen-d:image-set(url(${b(`/dono/${n}-1400.avif`)}) type("image/avif"), url(${b(`/dono/${n}-1400.webp`)}) type("image/webp"))`;
 const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
 ---
 <Base lang={lang} alternativa={t.outraHome} aqui={t.home} preload>
@@ -175,7 +178,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
 
     <!-- 4 · Seu Soulmon: Jogos; número grande, árvore e fichas -->
     <section class="cena soul" id="seu-soulmon" aria-labelledby="soul-h">
-      <Mapa id="jogos" desk="jogos-d" aD={841 / 600} fy={0.3} dfy={0.4} />
+      <div class="soul-mosaico" aria-hidden="true" style={`--mosaico:image-set(url(${b('/site/mosaico-elementos.avif')}) type("image/avif"), url(${b('/site/mosaico-elementos.webp')}) type("image/webp"))`}></div>
       <div class="soul-grade">
         <div class="soul-texto veu">
           <h2 id="soul-h">{s.h2}</h2>
@@ -183,40 +186,43 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           <p class="numero"><span class="num-g">{s.num}</span> <span class="num-tx">{s.numTx}</span></p>
           <p class="numero"><span class="num-pre">{s.num2Pre}</span> <span class="num-g">{s.num2}</span> <span class="num-tx">{s.num2Tx}</span></p>
         </div>
-        <div class="fichas" role="region" aria-roledescription={s.carrossel} aria-label={s.fichasRotulo} data-fichas>
-          <div class="fichas-faixa" data-faixa tabindex="0">
-            {FICHAS.map(([el, fm, n], i) => (
-              <div class="ficha" role="group" aria-roledescription={s.ficha} aria-label={`${i + 1} ${c.de} ${FICHAS.length}: ${s.linha} ${u.els[el]}`}>
-                <span class="ficha-palco"><img class="sprite" src={b(`/sprites/${el}-${fm}.webp`)} width="256" height="256" alt="" loading="lazy" decoding="async" /></span>
-                <span class="ficha-nome">{u.els[el]}</span>
-                <span class="chip"><img src={b(`/el/${el}.webp`)} width="96" height="96" alt="" loading="lazy" />{c.forma} {n} {c.de} 5</span>
-              </div>
-            ))}
+        <div class="sorteio ficha-moldura" role="group" aria-label={s.sorteioRotulo} data-sorteio data-pool={POOL} data-base={b('/sprites/')} data-els={JSON.stringify(u.els)} data-forma={c.forma} data-de={c.de} data-alt={s.altSorteio} data-elemento={s.elemento}>
+          <div class="sorteio-palco">
+            <div class="sorteio-sombra" data-sort-sombra aria-hidden="true"><span>?</span></div>
+            <img class="sprite" data-sort-img hidden width="256" height="256" alt="" decoding="async" />
           </div>
-          <div class="fichas-ctl" data-fichas-ctl hidden>
-            <button type="button" class="seta-bt" data-ant aria-label={s.anterior}><img src={b(assets.seta.src)} width="48" height="31" alt="" class="esq" loading="lazy" /></button>
-            <p class="contador" aria-live="polite"><span data-pos>1</span> {c.de} {FICHAS.length}</p>
-            <button type="button" class="seta-bt" data-prox aria-label={s.proxima}><img src={b(assets.seta.src)} width="48" height="31" alt="" loading="lazy" /></button>
-          </div>
+          <p class="sorteio-info" data-sort-info aria-live="polite">{s.sombra}</p>
+          <button type="button" class="botao primario sorteio-bt" data-sortear hidden>{s.sortear}</button>
         </div>
         <div class="arvore-bloco veu">
           <h3>{s.arvoreH}</h3>
-          <ol class="arvore" aria-label={s.arvoreRotulo}>
-            <li class="arvore-linha arvore-caminhos" aria-hidden="true"><span class="arvore-rot">&nbsp;</span><span class="arvore-nos">{s.caminhos.map((cm) => <span class="caminho">{cm}</span>)}</span></li>
-            {Formas.map((fm, i) => {
-              const tres = i > 0 && i < 4;
-              return (
-                <li class:list={['arvore-linha', { tres }]}>
-                  <span class="arvore-rot">{c.forma} {i + 1}</span>
-                  <span class="arvore-nos">
-                    {tres && <span class="no oculto"><span class="q" aria-hidden="true">?</span><span class="sr">{s.oculta}</span></span>}
-                    <span class="no revelado"><img class="sprite" loading="lazy" src={b(`/sprites/planta-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.forma} ${i + 1} ${c.de} 5`} /></span>
-                    {tres && <span class="no oculto"><span class="q" aria-hidden="true">?</span><span class="sr">{s.oculta}</span></span>}
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
+          <div class="linhas" data-linhas data-rotulo={s.linhaRotulo} hidden>
+            <button type="button" class="seta-linha" data-linha-ant aria-label={s.linhaAnt}><img src={b('/dono/seta-esq.webp')} data-hover={b('/dono/seta-esq-hover.webp')} data-off={b('/dono/seta-esq-off.webp')} width="48" height="32" alt="" loading="lazy" decoding="async" /></button>
+            <div class="linhas-chips">{s.linhas.map((n, i) => <button type="button" class="chip-linha" data-linha-bt={i} aria-pressed={i === 0 ? 'true' : 'false'}>{n}</button>)}</div>
+            <button type="button" class="seta-linha" data-linha-prox aria-label={s.linhaProx}><img src={b('/dono/seta-dir.webp')} data-hover={b('/dono/seta-dir-hover.webp')} data-off={b('/dono/seta-dir-off.webp')} width="48" height="32" alt="" loading="lazy" decoding="async" /></button>
+            <p class="contador" aria-live="polite"><span data-linha-pos>1</span> {c.de} 3</p>
+          </div>
+          {['planta', 'fada', 'fogo'].map((lin, li) => (
+          <ol class="arvore" data-linha={lin} aria-label={`${s.arvoreRotulo}: ${s.linhas[li]}`}>
+              <li class="arvore-linha arvore-caminhos" aria-hidden="true"><span class="arvore-rot">&nbsp;</span><span class="arvore-nos">{s.caminhos.map((cm) => <span class="caminho">{cm}</span>)}</span></li>
+              {Formas.map((fm, i) => {
+                const tres = i > 0 && i < 4;
+                return (
+                  <>
+                    {i > 0 && <li class="arvore-lig" aria-hidden="true"><Fragment set:html={i === 1 ? '<svg class="lv" viewBox="0 0 300 40" preserveAspectRatio="none"><path class="lg g" d="M150 0C150 22 50 18 50 40"/><path class="lg c" d="M150 0V40"/><path class="lg y" d="M150 0C150 22 250 18 250 40"/></svg><svg class="lh" viewBox="0 0 40 300" preserveAspectRatio="none"><path class="lg g" d="M0 150C22 150 18 46 40 46"/><path class="lg c" d="M0 150H40"/><path class="lg y" d="M0 150C22 150 18 254 40 254"/></svg>' : i === 4 ? '<svg class="lv" viewBox="0 0 300 40" preserveAspectRatio="none"><path class="lg g" d="M50 0C50 22 150 18 150 40"/><path class="lg c" d="M150 0V40"/><path class="lg y" d="M250 0C250 22 150 18 150 40"/></svg><svg class="lh" viewBox="0 0 40 300" preserveAspectRatio="none"><path class="lg g" d="M0 46C22 46 18 150 40 150"/><path class="lg c" d="M0 150H40"/><path class="lg y" d="M0 254C22 254 18 150 40 150"/></svg>' : '<svg class="lv" viewBox="0 0 300 40" preserveAspectRatio="none"><path class="lg g" d="M50 0V40"/><path class="lg c" d="M150 0V40"/><path class="lg y" d="M250 0V40"/></svg><svg class="lh" viewBox="0 0 40 300" preserveAspectRatio="none"><path class="lg g" d="M0 46H40"/><path class="lg c" d="M0 150H40"/><path class="lg y" d="M0 254H40"/></svg>'} /></li>}
+                    <li class:list={['arvore-linha', { tres }]}>
+                      <span class="arvore-rot">{c.forma} {i + 1}</span>
+                      <span class="arvore-nos">
+                        {tres && <span class="no oculto"><span class="q" aria-hidden="true">?</span><span class="sr">{s.oculta}</span></span>}
+                        <span class="no revelado"><img class="sprite" loading="lazy" src={b(`/sprites/${lin}-${fm}-128.webp`)} width="128" height="128" alt={`${s.linhas[li]}, ${c.forma} ${i + 1} ${c.de} 5`} /></span>
+                        {tres && <span class="no oculto"><span class="q" aria-hidden="true">?</span><span class="sr">{s.oculta}</span></span>}
+                      </span>
+                    </li>
+                  </>
+                );
+              })}
+            </ol>
+          ))}
           <p class="sr">{s.caminhos.join(', ')}</p>
         </div>
       </div>
@@ -238,8 +244,12 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           <ul class="grade areas">
             {u.areas.map(([id, nome]) => (
               <li class="area" style={`--fx:${FOCO[id][0] / 100};--fy:${FOCO[id][1] / 100}`}>
-                <span class="area-arte"><picture><source type="image/avif" srcset={b(`/mapa/${id}-820.avif`)} /><img loading="lazy" decoding="async" src={b(`/mapa/${id}-820.webp`)} width="820" height="1823" alt="" /></picture></span>
+                <button type="button" class="area-bt" data-lugar={id} aria-haspopup="dialog">
+                {id === 'forja'
+                  ? <span class="area-arte pronta"><picture><source type="image/avif" srcset={b('/mapa/forja-760.avif')} /><img loading="lazy" decoding="async" src={b('/mapa/forja-760.webp')} width="760" height="570" alt="" /></picture></span>
+                  : <span class="area-arte"><picture><source type="image/avif" srcset={b(`/mapa/${id}-820.avif`)} /><img loading="lazy" decoding="async" src={b(`/mapa/${id}-820.webp`)} width="820" height="1823" alt="" /></picture></span>}
                 <span class="area-tx"><strong>{nome}</strong><span>{u.lugares[id]}</span></span>
+                </button>
               </li>
             ))}
           </ul>
@@ -247,7 +257,9 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         <div class="painel" id="painel-1" data-painel>
           <h3 class="painel-h">{u.abas[1]}</h3>
           <ul class="grade npcs">
-            {NPCS.map((n) => <li class="celula"><img loading="lazy" src={b(`/npc/${n}.webp`)} width="256" height="256" alt={u.habitanteAlt} /></li>)}
+            {NPCS.map((n) => <li class="celula">{HABITA[n]
+              ? <button type="button" class="npc-bt" data-lugar={HABITA[n]} data-npc={b(`/npc/${n}.webp`)} data-habita aria-haspopup="dialog" aria-label={`${u.habitanteAlt}: ${u.areas.find(([id]) => id === HABITA[n])?.[1]}`}><img loading="lazy" src={b(`/npc/${n}.webp`)} width="256" height="256" alt="" /></button>
+              : <img loading="lazy" src={b(`/npc/${n}.webp`)} width="256" height="256" alt={u.habitanteAlt} />}</li>)}
           </ul>
         </div>
         <div class="painel" id="painel-2" data-painel>
@@ -266,15 +278,22 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
       </div>
     </section>
 
+    <dialog class="popup npc-modal" role="dialog" data-npc-modal aria-labelledby="npc-h" aria-describedby="npc-p" data-falas={falas}>
+      <img class="npc-modal-img" data-npc-img src={vazio} width="256" height="256" alt="" />
+      <h2 id="npc-h" data-npc-h></h2>
+      <p id="npc-p" class="npc-fala" data-npc-p></p>
+      <button type="button" class="botao primario" data-npc-fechar>{u.fechar}</button>
+    </dialog>
+
     <!-- 6 · O que você faz: Arena, 3 telas reais -->
     {prints.length > 0 && (
       <section class="cena recursos" id="recursos" aria-labelledby="recursos-h">
-        <Mapa id="arena" desk="arena-d" aD={721 / 560} fy={0.45} dfy={0.5} />
+        <div class="cen-fundo" data-arte aria-hidden="true" style={cen('cen-circuito')}></div>
         <div class="recursos-cab veu">
           <h2 id="recursos-h">{r.h2}</h2>
           <p class="frase">{r.frase}</p>
         </div>
-        <ul class="cartoes">
+        <ul class="cartoes" tabindex="0" aria-label={r.h2}>
           {r.cartoes.filter(([id]) => prints.some((p) => p.id === id)).map(([id, h, p, alt]) => (
             <li class="cartao moldura">
               <figure class="aparelho mini">
@@ -320,20 +339,23 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
 
     <!-- 8 · Como entrar: painel calmo, passos na moldura de cobre da ficha -->
     <section class="calmo entrar" id="entrar" aria-labelledby="entrar-h">
+      <div class="cen-fundo" aria-hidden="true" style={cen('cen-atelier')}></div>
       <div class="entrar-cab">
         <h2 id="entrar-h">{e.h2}</h2>
         <p class="frase">{e.frase}</p>
       </div>
       <ol class="passos">
-        {e.passos.map(([a, b], i) => <li class="moldura"><span class="medalha"><img src={passos[i]} width="192" height="192" alt="" loading="lazy" /><span class="num" aria-hidden="true">{i + 1}</span></span><span class="passo-tx"><strong>{a}</strong><span>{b}</span></span></li>)}
+        {e.passos.map(([a, b], i) => <li class="passo"><img class="passo-card" src={passos[i]} width="420" height="525" alt="" loading="lazy" /><span class="passo-tx"><strong><span class="sr">{i + 1}. </span>{a}</strong><span>{b}</span></span></li>)}
       </ol>
       <p class="aviso-vaga">{e.aviso}</p>
+      <ul class="ilhas" aria-hidden="true">{['arena-bosque', 'arena-salao', 'arena-lab'].map((n) => <li><picture><source type="image/avif" srcset={b(`/dono/${n}.avif`)} /><img src={b(`/dono/${n}.webp`)} width="360" height="237" alt="" loading="lazy" decoding="async" /></picture></li>)}</ul>
     </section>
 
     <div class="divisor" role="presentation"><picture><source media="(min-width: 768px)" srcset={b('/site/divisor.webp')} /><img src={b('/site/divisor-336.webp')} width="336" height="72" alt="" loading="lazy" /></picture></div>
 
     <!-- 9 · Perguntas -->
     <section class="calmo faq" id="perguntas" aria-labelledby="faq-h">
+      <div class="cen-fundo" aria-hidden="true" style={cen('cen-ilhas')}></div>
       <h2 id="faq-h">{t.faq.h2}</h2>
       <div class="faq-lista">
         {t.faq.itens.map(([q, a]) => (
@@ -352,7 +374,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         {/* 2x nos dois (pixel da criatura perto do pixel do mapa). Pés medidos com grade sobre a cena renderizada. */}
         <Cria s="planta-ultra" t={128} td={128} x={50} y={89} dx={24} dy={47} />
         <Cria s="agua-rookie" t={128} td={128} x={84} y={23} dx={73} dy={72} flip fase={500} />
-        <Cria s="arcano-mega" t={128} td={128} x={16} y={23} dx={79} dy={56} flip fase={900} />
+        <Cria s="som-champion" t={128} td={128} x={16} y={23} dx={79} dy={56} flip fase={900} />
       </Mapa>
       <div class="inscrever-caixa veu">
         <h2 id="inscrever-h">{f.h2}</h2>

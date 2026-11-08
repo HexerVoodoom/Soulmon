@@ -633,3 +633,136 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
   .ficha { padding-top: 88px; padding-bottom: var(--sb-e-5); }
   .fichas-ctl { top: 24px; bottom: auto; }
 }
+
+/* ---------- v4: sorteio, mosaico, linhas da árvore, modal do NPC, passos em cartão ---------- */
+.soul-mosaico { position: absolute; inset: 0; z-index: var(--sb-z-cena); pointer-events: none; background: var(--sb-fundo) 0 0 / 1344px 576px repeat; image-rendering: pixelated; }
+.soul-mosaico::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7, 20, 19, .7), rgba(7, 20, 19, .5) 40%, rgba(7, 20, 19, .75)); }
+.soul-grade { position: relative; z-index: 1; }
+.sorteio { justify-self: center; display: grid; justify-items: center; gap: var(--sb-e-3); padding: var(--sb-e-4); width: 100%; max-width: 420px; }
+.sorteio-palco { position: relative; width: 256px; height: 256px; display: grid; place-items: center; }
+.sorteio-palco img { width: 256px; height: 256px; }
+.sorteio-sombra { width: 192px; height: 176px; display: grid; place-items: center; border-radius: 46% 46% 38% 38% / 52% 52% 40% 40%; background: #02080a; box-shadow: inset 0 0 0 2px var(--sb-sup), 0 0 24px rgba(0, 0, 0, .6); }
+.sorteio-sombra[hidden], .sorteio-palco img[hidden] { display: none; }
+.sorteio-sombra span { font: 700 4rem/1 var(--sb-fonte-titulo); color: var(--sb-tx); }
+.sorteio-info { min-height: 3.2em; text-align: center; color: var(--sb-tx); font-weight: var(--sb-peso-medio); max-width: 26ch; }
+.sorteio-bt { min-width: 200px; }
+@media (prefers-reduced-motion: no-preference) { .sorteio-palco img.surge { animation: surge .28s var(--sb-ease, ease-out); } }
+@keyframes surge { from { opacity: 0; scale: .92; } to { opacity: 1; scale: 1; } }
+.linhas { display: flex; flex-wrap: wrap; gap: var(--sb-e-2); justify-content: center; }
+.linhas[hidden], .arvore[hidden] { display: none; }
+.chip-linha { min-height: 44px; padding: 0 var(--sb-e-4); background: var(--sb-sup); color: var(--sb-tx); border: 2px solid var(--sb-anel); font: var(--sb-peso-forte) var(--sb-t-corpo)/1 var(--sb-fonte-texto); cursor: pointer; }
+.chip-linha[aria-pressed='true'] { background: var(--sb-pri); color: #04201c; border-color: var(--sb-pri); }
+.area-bt { all: unset; box-sizing: border-box; display: grid; align-content: start; width: 100%; cursor: pointer; }
+.area-bt:focus-visible, .npc-bt:focus-visible { outline: 3px solid var(--sb-pri); outline-offset: 2px; }
+.area-bt:hover .area-tx strong { color: var(--sb-pri); }
+.area-arte.pronta img { position: static; width: 100%; height: 100%; object-fit: cover; }
+.npc-bt { all: unset; box-sizing: border-box; display: block; cursor: pointer; }
+.npc-bt img { width: 100%; height: auto; display: block; }
+.npc-bt:hover img { filter: brightness(1.12); }
+@media (min-width: 1024px) { .areas { grid-template-columns: repeat(4, 1fr); } }
+.npc-modal { width: min(calc(100vw - 32px), 460px); }
+.npc-modal-img { width: 160px; height: 160px; object-fit: contain; }
+.npc-fala { font-size: 1.0625rem; line-height: 1.5; text-align: left; }
+.passos li.passo { position: relative; display: block; width: 100%; max-width: 300px; margin-inline: auto; aspect-ratio: 420 / 525; padding: 0; }
+.passo-card { position: absolute; inset: 0; width: 100%; height: 100%; }
+.passos .passo-tx { position: absolute; left: 14%; right: 14%; top: 62.2%; bottom: 8%; display: grid; grid-template-rows: 9.5fr 10fr; gap: 0; text-align: center; }
+.passos .passo-tx strong { display: grid; align-items: center; font-size: clamp(.8rem, 3.8vw, 1rem); line-height: 1.1; }
+.passos .passo-tx > span:not(.sr) { align-self: start; padding-top: 4%; font-size: clamp(.75rem, 3.3vw, .875rem); line-height: 1.3; color: var(--sb-tx); }
+@media (min-width: 1024px) { .passos li.passo { max-width: 340px; } .passos .passo-tx strong { font-size: 1rem; } .passos .passo-tx > span:not(.sr) { font-size: .875rem; } }
+
+/* ---------- v4.2: peças do dono (assets.json) ---------- */
+/* Botão: 4 estados do cipó. Ilustração, não grade de pixel: sem pixelated. */
+.botao { image-rendering: auto; }
+.botao:hover { filter: none; border-image-source: var(--a-botaoHover, var(--a-botao, none)); }
+.botao:active { filter: none; border-image-source: var(--a-botaoPress, var(--a-botao, none)); }
+.botao[aria-disabled='true'], .botao:disabled { border-image-source: var(--a-botaoOff, var(--a-botao, none)); cursor: not-allowed; }
+.botao.contorno:hover { filter: brightness(1.1); }
+/* Painéis, molduras e abas */
+.painel, .ficha, .moldura { image-rendering: auto; }
+.aba { filter: none; border-width: var(--b-aba, 14px 18px); }
+.tarde .aba[aria-selected='true'] { border-image-source: var(--a-abaSel, var(--a-aba, none)); box-shadow: none; background: transparent; }
+.tarde .aba:hover:not([aria-selected='true']) { border-image-source: var(--a-abaHover, var(--a-aba, none)); }
+.aba { background: transparent; }
+/* Pop-up e modal do Universo: moldura de cristal */
+.popup { padding: 8px 12px 4px; background: transparent; image-rendering: auto; }
+.popup-cristal { display: none; }
+.popup[open] { gap: var(--sb-e-2); }
+.popup h2 { margin-top: 4px; }
+.npc-modal { width: min(calc(100vw - 24px), 480px); }
+/* Moldura da ficha (sorteio): cantos da folha Água Profile, sem a lontra */
+.ficha-moldura { border: 36px solid transparent; border-image: var(--a-ficha, none) 100 / 36px / 0 stretch; background: var(--sb-sup); background-clip: padding-box; box-shadow: none; padding: var(--sb-e-3); }
+/* Barra lateral: trilho 3-slice vertical, polegares */
+.tarde .barra-trilho { background: none; border: solid transparent; border-width: 6px 0; border-image: var(--a-barraCorpo) 30 0 30 0 fill / 6px 0 / 0 stretch; }
+.tarde .barra-trilho > i { background: none; inset: -6px 0; border: solid transparent; border-width: 6px 0; border-image: var(--a-barraCheio) 30 0 30 0 fill / 6px 0 / 0 stretch; }
+.barra-capa { image-rendering: auto; }
+.barra-no { height: calc(var(--barra-l) * 2); margin-top: calc(var(--barra-l) * -1); image-rendering: auto; }
+.tarde .barra-no.aceso { background-image: var(--a-barraNoAceso); filter: none; }
+/* Árvore: nós de cobre e conexões 1-3-3-3-1 */
+.arvore { gap: 0; width: min(100%, 320px); --no: 96px; }
+.arvore-linha { width: 100%; }
+.arvore-nos { display: grid; grid-template-columns: repeat(3, 1fr); width: 100%; justify-items: center; }
+.arvore-linha:not(.tres) .arvore-nos { grid-template-columns: 1fr; }
+.arvore-caminhos .arvore-nos { text-align: center; font-size: var(--sb-t-legal); }
+.no { width: var(--no); height: var(--no); border: 0; background: var(--a-arvoreNo, none) center / 100% 100% no-repeat; image-rendering: auto; }
+.tarde .no { border-image: none; background: var(--a-arvoreNo, none) center / 100% 100% no-repeat; }
+.no.revelado { outline: 0; }
+.no img { width: 64px; height: 64px; margin-top: -6px; }
+.no.oculto { filter: brightness(.75); }
+.no.oculto .q { margin-top: -6px; }
+.arvore-lig { display: block; width: 100%; height: 36px; }
+.arvore-lig svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.lg { fill: none; stroke-width: 5px; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.lg.g { stroke: #6bd13a; } .lg.c { stroke: #3fe6d6; } .lg.y { stroke: #f2a81d; }
+.arvore-lig svg { filter: drop-shadow(0 0 4px rgba(95, 243, 224, .45)); }
+.arvore-rot { position: absolute; left: -2px; }
+.arvore-linha { position: relative; }
+.linhas { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--sb-e-2); width: 100%; max-width: 360px; }
+.linhas[hidden] { display: none; }
+.linhas-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sb-e-2); }
+.seta-linha { width: 56px; height: 44px; padding: 0; background: none; border: 0; cursor: pointer; display: grid; place-items: center; }
+.seta-linha img { width: 48px; height: 32px; }
+.seta-linha[aria-disabled='true'] { cursor: default; }
+.seta-linha:focus-visible { outline: 3px solid var(--sb-pri); outline-offset: 2px; }
+.linhas .contador { grid-column: 1 / -1; justify-self: center; }
+/* Cenários de seção */
+.calmo.entrar, .calmo.faq { position: relative; isolation: isolate; overflow: clip; }
+.cen-fundo { position: absolute; inset: -80px 0; z-index: -1; pointer-events: none; background: center / cover no-repeat; }
+.cen-fundo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7, 20, 19, .9), rgba(7, 20, 19, .84) 50%, rgba(7, 20, 19, .92)); }
+.recursos > .cen-fundo { z-index: var(--sb-z-cena); }
+.tarde .cen-fundo { background-image: var(--cen-m); }
+@media (min-width: 768px) { .tarde .cen-fundo { background-image: var(--cen-d); } }
+.px .cen-fundo { translate: 0 var(--py, 0px); }
+.ilhas { display: none; }
+@media (min-width: 1024px) { .ilhas { display: flex; justify-content: center; gap: var(--sb-e-4); margin-top: var(--sb-e-6); } .ilhas li { flex: 0 1 300px; } .ilhas img { width: 100%; height: auto; display: block; } }
+
+/* árvore: celular em linhas (1-3-3-3-1 de cima para baixo); desktop em colunas (esquerda para direita), como no desenho do dono */
+.arvore-rot { position: static; }
+.arvore-linha { position: relative; }
+.arvore-lig .lh { display: none; }
+.caminho { display: grid; align-items: center; }
+@media (max-width: 1023px) { .arvore-rot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); } .arvore-caminhos .arvore-nos { font-size: .75rem; } }
+@media (min-width: 1024px) {
+  .arvore { grid-auto-flow: column; width: auto; max-width: none; align-items: stretch; column-gap: 0; padding-top: 28px; }
+  .arvore-linha { align-content: center; justify-items: center; }
+  .arvore-rot { position: absolute; top: -26px; left: 0; right: 0; text-align: center; }
+  .arvore-nos { display: flex; flex-direction: column; gap: 12px; width: auto; }
+  .arvore-caminhos .arvore-nos { align-items: flex-end; }
+  .caminho { height: var(--no); padding-right: 14px; }
+  .arvore-lig { width: 44px; height: auto; align-self: stretch; }
+  .arvore-lig .lv { display: none; }
+  .arvore-lig .lh { display: block; width: 100%; height: 100%; }
+  .arvore { --no: 104px; }
+}
+.arvore-lig .lv { display: block; width: 100%; height: 100%; }
+@media (min-width: 1024px) { .arvore-lig .lv { display: none; } }
+.linhas { max-width: 460px; }
+.chip-linha { padding: 0 var(--sb-e-3); }
+@media (max-width: 420px) { .linhas { grid-template-columns: 44px 1fr 44px; } .seta-linha { width: 44px; } .seta-linha img { width: 40px; height: 27px; } }
+@media (max-width: 1023px) { .arvore-caminhos .arvore-nos { grid-template-columns: repeat(3, 1fr) !important; } }
+
+/* peças pesadas só depois do load (fora da janela do LCP) */
+.tarde .soul-mosaico { background-image: var(--mosaico); }
+.ficha-moldura { border-image: none; border-color: var(--sb-anel); border-width: 2px; }
+.tarde .ficha-moldura { border-width: 36px; border-color: transparent; border-image: var(--a-ficha, none) 100 / 36px / 0 stretch; }
+.no { background-image: none; background-color: var(--sb-sup); }
+.tarde .no { background: var(--a-arvoreNo, none) center / 100% 100% no-repeat; }
