@@ -3,8 +3,9 @@
  * elemento (base ou par). Dar a poção ao Soulmon (usar da pastinha) grava `evolutionPotion`; na PRÓXIMA evolução o elemento da poção
  * vira o elemento do Soulmon (`potionElement`) e o campo é limpo. Uma segunda poção SOBRESCREVE a primeira (a primeira some do mesmo jeito).
  *
- * Custos: SÓ aqui (nunca literal em outro arquivo). Base = 300 da própria essência. Par = 300 de cada base + 200 da essência do elemento
- * final. Trio (genérico; o dado só tem elementos de até 2 bases hoje) = 200 de cada base + 150 da final.
+ * Custos: SÓ aqui (nunca literal em outro arquivo). REGRA DO DONO (08/11/2026, mais barata): base = 100 da própria essência.
+ * Composto (2, 3 ou 4 componentes; o catálogo da poção só tem pares hoje) = 1 POÇÃO de cada elemento base componente + 50 essências do
+ * composto. Antes (30/10): base 300; par 300+300+200; trio 200+200+150. Nada some do save de ninguém: só muda o preço de agora em diante.
  *
  * Funções PURAS. O gasto passa por `spendEssences` (`essences.ts`), que também soma `essenceSpent`: o servidor só deixa o saldo baixar
  * pelo aumento desse acumulado (`functions/api/_essences.js`). Futuro (NÃO construído): essências compráveis com moeda real no Cambista.
@@ -16,16 +17,10 @@ import { essenceName, spendEssences, type EssenceDrop } from './essences';
 import type { SpecialItem } from './shop';
 
 export const POTION_COSTS = {
-  /** Elemento base: quantidade da PRÓPRIA essência. */
-  baseOwn: 300,
-  /** Par: de cada uma das 2 essências base. */
-  pairEachBase: 300,
-  /** Par: da essência do elemento final. */
-  pairFinal: 200,
-  /** Trio: de cada uma das 3 essências base. */
-  tripleEachBase: 200,
-  /** Trio: da essência do elemento final. */
-  tripleFinal: 150,
+  /** Elemento base: quantidade da PRÓPRIA essência. Ao atingir isto a Vesca oferece a poção (`essenceThresholdCrossings`). */
+  baseOwn: 100,
+  /** Composto: essências do próprio composto (além de 1 poção de cada base componente). */
+  compositeFinal: 50,
 } as const;
 
 /** Quantos slots de elemento base o jogador preenche. */
@@ -45,19 +40,10 @@ export function elementComposition(id: string): readonly string[] | undefined {
   return [id];
 }
 
-/** O custo em essências, agrupado por id (somado quando um id se repete). Genérico em 1, 2 ou 3 bases. `[]` se o elemento não existe. */
+/** O custo em essências, agrupado por id. Base: 100 da própria. Composto (2+ bases distintas): 50 do composto. `[]` se o elemento não existe. */
 export function potionCostFor(finalId: string, bases: readonly string[]): EssenceDrop[] {
   if (!isDexElement(finalId) || bases.length < 1 || bases.length > POTION_MAX_BASES) return [];
-  const acc = new Map<string, number>();
-  const add = (id: string, qty: number) => acc.set(id, (acc.get(id) ?? 0) + qty);
-  if (bases.length === 1) add(finalId, POTION_COSTS.baseOwn);
-  else {
-    const each = bases.length === 2 ? POTION_COSTS.pairEachBase : POTION_COSTS.tripleEachBase;
-    const fin = bases.length === 2 ? POTION_COSTS.pairFinal : POTION_COSTS.tripleFinal;
-    for (const b of bases) add(b, each);
-    add(finalId, fin);
-  }
-  return [...acc].map(([id, qty]) => ({ id, qty }));
+  return [{ id: finalId, qty: bases.length === 1 ? POTION_COSTS.baseOwn : POTION_COSTS.compositeFinal }];
 }
 
 export function potionCost(elementId: string): EssenceDrop[] {
@@ -65,9 +51,25 @@ export function potionCost(elementId: string): EssenceDrop[] {
   return comp ? potionCostFor(elementId, comp) : [];
 }
 
-export function canAffordPotion(essences: Record<string, number> | undefined, elementId: string): boolean {
+/** As poções que o composto consome: 1 de cada elemento base componente (ids únicos). Base = nada. */
+export function potionIngredients(elementId: string): EssenceDrop[] {
+  const comp = elementComposition(elementId);
+  if (!comp || comp.length < 2) return [];
+  return [...new Set(comp)].map(id => ({ id, qty: 1 }));
+}
+
+type Inventory = Record<string, number> | undefined;
+
+export function canAffordPotion(essences: Record<string, number> | undefined, elementId: string, inventory?: Inventory): boolean {
   const cost = potionCost(elementId);
-  return cost.length > 0 && cost.every(c => (essences?.[c.id] ?? 0) >= c.qty);
+  return cost.length > 0
+    && cost.every(c => (essences?.[c.id] ?? 0) >= c.qty)
+    && potionIngredients(elementId).every(i => (inventory?.[potionKey(i.id)] ?? 0) >= i.qty);
+}
+
+/** Elementos BASE cuja essência CRUZOU o limiar (`POTION_COSTS.baseOwn`) de `prev` para `next` (estava abaixo, agora tem). Dispara 1x por cruzamento. */
+export function essenceThresholdCrossings(prev: Record<string, number> | undefined, next: Record<string, number> | undefined): string[] {
+  return BASE_ELEMENT_IDS.filter(id => (prev?.[id] ?? 0) < POTION_COSTS.baseOwn && (next?.[id] ?? 0) >= POTION_COSTS.baseOwn);
 }
 
 /** Filtro E: elementos cuja composição contém TODAS as bases escolhidas (sem escolha = todos). Ordem do catálogo. */
@@ -94,8 +96,8 @@ export function elementMatchesBases(id: string | null | undefined, selected: rea
 }
 
 /** Os que cabem no filtro E o jogador consegue pagar. */
-export function affordablePotionElements(essences: Record<string, number> | undefined, selected: readonly (string | null | undefined)[]): string[] {
-  return elementsMatchingBases(selected).filter(id => canAffordPotion(essences, id));
+export function affordablePotionElements(essences: Record<string, number> | undefined, selected: readonly (string | null | undefined)[], inventory?: Inventory): string[] {
+  return elementsMatchingBases(selected).filter(id => canAffordPotion(essences, id, inventory));
 }
 
 type PotionState = {
@@ -112,11 +114,17 @@ export const isPotionUnlocked = (elementId: string, defeated: readonly string[] 
 
 /** Cria UMA poção: reconfere o saldo sobre o `prev` (toque duplo no mesmo lote) e consome exatamente o custo. Sem saldo = o MESMO objeto. */
 export function craftPotion<T extends PotionState>(prev: T, elementId: string): T {
-  if (!isPotionUnlocked(elementId, prev.defeatedElements) || !canAffordPotion(prev.essences, elementId)) return prev;
+  if (!isPotionUnlocked(elementId, prev.defeatedElements) || !canAffordPotion(prev.essences, elementId, prev.foodInventory)) return prev;
   const gasto = spendEssences(prev, potionCost(elementId));
   if (!gasto) return prev;
+  const inv = { ...prev.foodInventory };
+  for (const i of potionIngredients(elementId)) {
+    const pk = potionKey(i.id);
+    inv[pk] = (inv[pk] ?? 0) - i.qty;
+    if (inv[pk] <= 0) delete inv[pk];
+  }
   const k = potionKey(elementId);
-  return { ...gasto, foodInventory: { ...prev.foodInventory, [k]: (prev.foodInventory[k] ?? 0) + 1 } };
+  return { ...gasto, foodInventory: { ...inv, [k]: (inv[k] ?? 0) + 1 } };
 }
 
 /** Dá a poção ao Soulmon: tira UMA do inventário e grava o pendente (sobrescreve o anterior). Sem estoque = o MESMO objeto. */

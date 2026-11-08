@@ -674,7 +674,8 @@ const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m =
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
 const ElementPotionSheet = lazy(() => import('./components/ElementPotionSheet').then(m => ({ default: m.ElementPotionSheet })));
-import { applyPotionOnEvolve, craftPotion, canAffordPotion, isPotionUnlocked } from './utils/elementPotion';
+import { applyPotionOnEvolve, craftPotion, canAffordPotion, isPotionUnlocked, essenceThresholdCrossings } from './utils/elementPotion';
+import { VescaPotionOffer } from './components/VescaPotionOffer';
 import { EssencesSection } from './components/EssencesSection';
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
 const AdventureDiary = lazy(() => import('./components/AdventureDiary').then(m => ({ default: m.AdventureDiary })));
@@ -914,6 +915,16 @@ export default function App() {
   /** Sub-aba do Laboratório (Evolução / Soulmon / Estatísticas). */
   const [labTab, setLabTab] = useState<LabTab>('evolution');
   const [potionOpen, setPotionOpen] = useState(false); // Poção de Elemento (Centro de Evolução)
+  // Vesca oferece a poção quando a essência de um elemento BASE cruza o limiar (08/11/2026). Fila: um modal por vez; o 1º render só memoriza.
+  const [vescaQueue, setVescaQueue] = useState<string[]>([]);
+  const vescaPrevEssRef = useRef<Record<string, number> | undefined | null>(null);
+  useEffect(() => {
+    const prev = vescaPrevEssRef.current;
+    vescaPrevEssRef.current = gameState.essences;
+    if (prev === null) return;
+    const hit = essenceThresholdCrossings(prev, gameState.essences).filter(id => isPotionUnlocked(id, gameState.defeatedElements));
+    if (hit.length) setVescaQueue(q => [...q, ...hit.filter(id => !q.includes(id))]);
+  }, [gameState.essences, gameState.defeatedElements]);
   const pane = paneFor(currentView, labTab);
   /** A área do Mapa da view atual, ou `null` fora de uma área (minimal-ui F4). */
   const area = areaOf(currentView);
@@ -7607,12 +7618,13 @@ export default function App() {
             open={labTab === 'evolution' && potionOpen}
             language={language}
             essences={gameState.essences}
+            inventory={gameState.foodInventory}
             pending={gameState.evolutionPotion}
             unlocked={gameState.defeatedElements}
             onBack={() => setPotionOpen(false)}
             onCraft={(id) => {
               // A regra (e a reconferência do saldo sobre o `prev`) mora em `utils/elementPotion.ts`; o toast é efeito, fora do updater.
-              if (!isPotionUnlocked(id, gameState.defeatedElements) || !canAffordPotion(gameState.essences, id)) return;
+              if (!isPotionUnlocked(id, gameState.defeatedElements) || !canAffordPotion(gameState.essences, id, gameState.foodInventory)) return;
               setGameState(prev => craftPotion(prev, id));
             }}
           /></Suspense>}
@@ -9364,6 +9376,10 @@ export default function App() {
         />
       )}
 
+      {/* Vesca: oferta da poção ao juntar 100 essências de um elemento base (08/11/2026). */}
+      <VescaPotionOffer language={language} elementId={vescaQueue[0] ?? null} key={vescaQueue[0] ?? 'none'}
+            onMake={(id) => { if (canAffordPotion(gameState.essences, id, gameState.foodInventory)) setGameState(prev => craftPotion(prev, id)); }}
+            onDismiss={() => setVescaQueue(q => q.slice(1))} />
       {/* P4 — a tela de antes/depois. Nunca monta sozinha: só por gesto no
           convite acima, e aplicar exige confirmação dentro dela. */}
       {balanceOpen && (

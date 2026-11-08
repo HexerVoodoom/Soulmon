@@ -3172,7 +3172,7 @@ dominância populacional — por isso ±15%. Régua nova:
 
 ### `src/utils/elementPotion.ts`
 
-Dono único da Poção de Elemento (30/10/2026): custos (`POTION_COSTS`), filtro E por bases (`elementsMatchingBases`), saldo (`affordablePotionElements`), fabricar (`craftPotion`, via `spendEssences`), dar ao Soulmon (`givePotion`/`applySpecialItem`, sobrescreve `evolutionPotion`) e consumir na evolução (`applyPotionOnEvolve` → `potionElement`, lido por `petElementOf`). Regra do dono: vale SÓ para a próxima evolução — na seguinte `potionElement` é limpo e o elemento volta ao da pontuação (`soulmonMeta.dominantElement`). Chave de inventário `potion:<elementId>`.
+Dono único da Poção de Elemento (30/10/2026): custos (`POTION_COSTS`: base 100 da própria essência; composto = 1 poção de cada base + 50 do composto, §250), gatilho da Vesca (`essenceThresholdCrossings`), filtro E por bases (`elementsMatchingBases`), saldo (`affordablePotionElements`), fabricar (`craftPotion`, via `spendEssences`), dar ao Soulmon (`givePotion`/`applySpecialItem`, sobrescreve `evolutionPotion`) e consumir na evolução (`applyPotionOnEvolve` → `potionElement`, lido por `petElementOf`). Regra do dono: vale SÓ para a próxima evolução — na seguinte `potionElement` é limpo e o elemento volta ao da pontuação (`soulmonMeta.dominantElement`). Chave de inventário `potion:<elementId>`.
 
 ### `src/utils/betaResetGrant.ts`
 

@@ -4329,3 +4329,13 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Alternativa que perdeu.** Guardar o estoque dentro de `dungeonAway`: sumiria com o registro em qualquer limpeza. Também perdeu criar tipos novos de cura agora (escopo de itens/loja/arte) e incluir poção de elemento (não cura).
 
 **O que falsifica a aposta.** Se jogadores reclamarem de repetição (1 criatura por composto) ou da duração do ciclo; se aparecer item de cura novo e o modal não listá-lo (basta entrar em `HEAL_POTIONS`); se o servidor passar a validar `foodInventory` e recusar a mudança inventário→estoque.
+
+## §250 — Poção de elemento mais barata + oferta da Vesca (08/11/2026, decisão do dono)
+
+**Decisão.** A poção custava caro demais (base 300; par 300+300+200). Agora: **base = 100 essências da própria**; **composto = 1 poção de cada elemento base componente + 50 essências do composto** (ex.: pântano = poção de água + poção de terra + 50 de pântano; vale para 2, 3 e 4 componentes). Ao a essência de um elemento base **cruzar 100**, a Vesca abre um modal perguntando se o jogador quer fazer a poção ("Fazer a poção" / "Depois"); uma vez por cruzamento, sem repetir enquanto o saldo segue acima de 100; recusar não custa nada.
+
+**Alternativa que perdeu.** Só baratear os números e deixar o composto em essências puras (mantinha o composto como sorvedouro de essência de 3 elementos). Falsifica a aposta: se a taxa de poções de composto fabricadas por jogador ficar perto de zero, o gargalo passou a ser a poção das bases, não a essência.
+
+**Onde.** Regra única em `src/utils/elementPotion.ts` (`POTION_COSTS`, `potionCostFor`, `potionIngredients`, `essenceThresholdCrossings`, `craftPotion` consome essência e poções no mesmo updater). UI: `ElementPotionSheet` (linhas das poções de base), `VescaPotionOffer` + fila no `App.tsx`. O servidor não valida o preço da poção (só o `essenceSpent` monotônico em `_essences.js`), então nada mudou lá. Quem já tinha progresso não perde nada: saldos e poções ficam como estão; o gatilho não dispara na abertura (só em cruzamento novo).
+
+**Limites.** O catálogo da poção segue sendo os 20 base + 190 pares (`isDexElement`); os 3–4 componentes curados ainda não são fabricáveis, mas a regra de custo já os cobre. A oferta usa `ModalSheet` com o nome da Vesca; se o dono quiser o molde "NPC grande por cima" do §248, é troca de apresentação.

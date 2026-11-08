@@ -1,7 +1,7 @@
 import { ALL_ELEMENT_IDS } from "./elementDex";
 import { describe, it, expect } from 'vitest';
 import {
-  POTION_COSTS, potionCost, potionKey, canAffordPotion, elementsMatchingBases, affordablePotionElements, craftPotion, givePotion, isPotionUnlocked,
+  potionCost, potionIngredients, essenceThresholdCrossings, potionKey, canAffordPotion, elementsMatchingBases, affordablePotionElements, craftPotion, givePotion, isPotionUnlocked,
   applyPotionOnEvolve, isPotionKey, potionCostFor, elementComposition,
 } from './elementPotion';
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
@@ -15,12 +15,13 @@ const [a, b] = vapor.componentes;
 const base = (e: Record<string, number> = {}, defeated: string[] = [...ALL_ELEMENT_IDS]): { defeatedElements?: string[]; essences: Record<string, number>; essenceSpent?: Record<string, number>; foodInventory: Record<string, number> } => ({ defeatedElements: defeated, essences: e, foodInventory: {} });
 
 describe('poção de elemento', () => {
-  it('custos: base 300; par 300+300+200; trio genérico', () => {
-    expect(potionCost('fogo')).toEqual([{ id: 'fogo', qty: POTION_COSTS.baseOwn }]);
-    expect(potionCost('vapor')).toEqual([{ id: a, qty: 300 }, { id: b, qty: 300 }, { id: 'vapor', qty: 200 }]);
+  it('custos: base 100 da própria; composto = 50 do composto + 1 poção de cada base', () => {
+    expect(potionCost('fogo')).toEqual([{ id: 'fogo', qty: 100 }]);
+    expect(potionIngredients('fogo')).toEqual([]);
+    expect(potionCost('vapor')).toEqual([{ id: 'vapor', qty: 50 }]);
+    expect(potionIngredients('vapor')).toEqual([{ id: a, qty: 1 }, { id: b, qty: 1 }]);
     expect(potionCostFor('xx_yy', ['fogo', 'agua', 'terra'])).toEqual([]);
-    expect(potionCostFor('vapor', ['fogo', 'agua', 'terra'])).toEqual([
-      { id: 'fogo', qty: 200 }, { id: 'agua', qty: 200 }, { id: 'terra', qty: 200 }, { id: 'vapor', qty: 150 }]);
+    expect(potionCostFor('vapor', ['fogo', 'agua', 'terra'])).toEqual([{ id: 'vapor', qty: 50 }]); // 3 componentes: mesma regra
     expect(potionCost('nao_existe')).toEqual([]);
   });
   it('filtro E', () => {
@@ -32,27 +33,49 @@ describe('poção de elemento', () => {
     expect(elementsMatchingBases([]).length).toBe(210);
     expect(elementsMatchingBases([a, null, a])).toEqual(elementsMatchingBases([a]));
   });
-  it('só o que dá para pagar', () => {
+  it('só o que dá para pagar (composto exige as poções das bases)', () => {
+    const inv = { [potionKey(a)]: 1, [potionKey(b)]: 1 };
     expect(affordablePotionElements({}, ['agua'])).toEqual([]);
-    expect(affordablePotionElements({ agua: 300 }, ['agua'])).toEqual(['agua']);
-    expect(affordablePotionElements({ [a]: 300, [b]: 300, vapor: 199 }, [a])).toEqual([a]); // o par vapor falta 1 de essência final
-    expect(affordablePotionElements({ [a]: 300, [b]: 300, vapor: 200 }, [a, b])).toEqual(['vapor']);
+    expect(affordablePotionElements({ agua: 99 }, ['agua'])).toEqual([]);
+    expect(affordablePotionElements({ agua: 100 }, ['agua'])).toEqual(['agua']);
+    expect(affordablePotionElements({ vapor: 50 }, [a, b])).toEqual([]); // faltam as poções
+    expect(affordablePotionElements({ vapor: 50 }, [a, b], { [potionKey(a)]: 1 })).toEqual([]); // falta uma
+    expect(affordablePotionElements({ vapor: 49 }, [a, b], inv)).toEqual([]);
+    expect(affordablePotionElements({ vapor: 50 }, [a, b], inv)).toEqual(['vapor']);
+  });
+  it('gatilho da Vesca: só ao CRUZAR 100 em elemento base (uma vez por cruzamento)', () => {
+    expect(essenceThresholdCrossings({ fogo: 99 }, { fogo: 100 })).toEqual(['fogo']);
+    expect(essenceThresholdCrossings({ fogo: 100 }, { fogo: 101 })).toEqual([]); // já estava acima: não repete
+    expect(essenceThresholdCrossings({}, { fogo: 5 })).toEqual([]);
+    expect(essenceThresholdCrossings(undefined, { agua: 100, vapor: 100 })).toEqual(['agua']); // composto não dispara
+    expect(essenceThresholdCrossings({ fogo: 100 }, { fogo: 0 })).toEqual([]);
+    expect(essenceThresholdCrossings({ fogo: 0 }, { fogo: 100 })).toEqual(['fogo']); // gastou e atingiu de novo: oferece de novo
   });
   it('elemento não desbloqueado na Biblioteca não se fabrica (mesmo com saldo)', () => {
-    const s0 = base({ agua: 300 }, []);
+    const s0 = base({ agua: 100 }, []);
     expect(isPotionUnlocked('agua', s0.defeatedElements)).toBe(false);
     expect(craftPotion(s0, 'agua')).toBe(s0);
-    const s1 = base({ agua: 300 }, ['agua']);
+    const s1 = base({ agua: 100 }, ['agua']);
     expect(craftPotion(s1, 'agua').foodInventory[potionKey('agua')]).toBe(1);
   });
-  it('fabricar consome exatamente, soma gasto, e é idempotente sem saldo', () => {
-    const s0 = base({ [a]: 700, [b]: 300, vapor: 250 });
-    const s1 = craftPotion(s0, 'vapor');
-    expect(s1.essences).toEqual({ [a]: 400, vapor: 50 });
-    expect(s1.essenceSpent).toEqual({ [a]: 300, [b]: 300, vapor: 200 });
-    expect(s1.foodInventory[potionKey('vapor')]).toBe(1);
-    expect(craftPotion(s1, 'vapor')).toBe(s1); // segundo toque no mesmo lote: sem saldo
+  it('fabricar base consome 100 e soma gasto; idempotente sem saldo', () => {
+    const s0 = base({ fogo: 250 });
+    const s1 = craftPotion(s0, 'fogo');
+    expect(s1.essences).toEqual({ fogo: 150 });
+    expect(s1.essenceSpent).toEqual({ fogo: 100 });
+    expect(s1.foodInventory[potionKey('fogo')]).toBe(1);
+    expect(craftPotion(base({ fogo: 99 }), 'fogo').essences).toEqual({ fogo: 99 });
     expect(craftPotion(s0, 'nao_existe')).toBe(s0);
+  });
+  it('fabricar composto consome 1 poção de cada base + 50 do composto; sem poção = nada muda', () => {
+    const sem = base({ vapor: 80 });
+    expect(craftPotion(sem, 'vapor')).toBe(sem);
+    const s0 = { ...base({ vapor: 80 }), foodInventory: { [potionKey(a)]: 2, [potionKey(b)]: 1 } };
+    const s1 = craftPotion(s0, 'vapor');
+    expect(s1.essences).toEqual({ vapor: 30 });
+    expect(s1.essenceSpent).toEqual({ vapor: 50 });
+    expect(s1.foodInventory).toEqual({ [potionKey(a)]: 1, [potionKey('vapor')]: 1 });
+    expect(craftPotion(s1, 'vapor')).toBe(s1); // segundo toque: sem saldo de essência nem de poção
   });
   it('spendEssences é tudo-ou-nada', () => {
     expect(spendEssences({ essences: { fogo: 5 } }, [{ id: 'fogo', qty: 3 }, { id: 'agua', qty: 1 }])).toBeNull();
