@@ -461,6 +461,21 @@ async function onRequestBruto({ request, env }) {
       }
       state.widgetFramesOwned = enforceWidgetFramesOwned(state, gravado);
     }
+    // Chave do Calabouço (§247): dia NOVO só entra se a jornada do foco daquele dia foi concluída no razão do servidor (`fjd:`);
+    // o que já estava gravado fica. Fecha a brecha do §239 (a chave nascia só no aparelho).
+    if (typeof state.dungeonKeyDay === 'string') {
+      let gravado;
+      if (typeof prev?.value === 'string' && prev.value.includes('"dungeonKeyDay"')) {
+        try { gravado = JSON.parse(prev.value).dungeonKeyDay; } catch { gravado = undefined; }
+      }
+      if (state.dungeonKeyDay !== gravado) {
+        let razao = null;
+        try { razao = JSON.parse((await kvOrThrow(env).get(`fjd:${saveId}:${state.dungeonKeyDay}`)) || 'null'); } catch { razao = null; }
+        if (!(Number(razao?.done) >= 1)) {
+          if (typeof gravado === 'string') state.dungeonKeyDay = gravado; else delete state.dungeonKeyDay;
+        }
+      }
+    }
     // Ficha da jornada (Combate v3 / PR15c): a FORMA e saneada (estagio valido, galhos finitos e com teto, `at` plausivel,
     // `familia` na lista fechada, `plano` recalculado dos galhos) e um estagio JA gravado no servidor nao e sobrescrito.
     // So parseia o gravado quando o campo existe nele (save de 5 MB nao e relido a toa). NUNCA recusa o save: o que nao

@@ -4287,3 +4287,15 @@ A Guilda sorteava do catálogo de hábitos, cujos alvos do nível 1 falam em vez
 ## §247 — Focus Workshop: cards, chaves e jornada (08/11/2026, decisão do dono)
 
 Plano completo: `D:/Soulmon/planos/focus-jornada.md`. O dono aceitou D-1 a D-6: a jornada substitui a descida da masmorra no foco; baú especial sem a chave dá o comum; card de tarefa sem tarefas dá a chave; até 3 pausas e 30 min parados por foco; encerrar paga os baús alcançados, sem prêmio de conclusão; tetos de 16 itens, 8 essências e 4 sessões premiadas por dia, medidos antes do merge. Regra pura em `src/utils/focusJourney.ts`, espelho em `functions/api/_focusJourney.js`. Baú Ordenado dá 2 materiais diferentes (no plano era "à escolha entre 2": a escolha pediria uma tela a mais). **Rollback:** reverter os PRs da série; nada no save até a Fase 2.
+
+**§247, medição e fechamento (08/11/2026).** `focusJourney.balanco.test.ts`, 2000 seeds, 25 min na Floresta:
+
+| Dia | Itens | Essências |
+|---|---|---|
+| 1 sessão sem chave | 7,00 | 0 |
+| 1 sessão com as 6 chaves | 8,24 | 1,13 |
+| 2 sessões sem chave | 14,00 | 1,00 |
+| 2 sessões com chaves | 15,45 | 3,30 |
+| 4 sessões com chaves | 16 (teto) | 6,79 |
+
+A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra no teto, como o dono aprovou (D-6). Bits e Honra não mudam. A partir daqui, `save.js` só aceita um `dungeonKeyDay` novo quando o razão `fjd:` daquele dia tem uma jornada concluída; a chave já gravada fica. A descida da masmorra deixou de ser disparada pelo foco (D-1): a Oficina não chama mais `onFocusStart`.
