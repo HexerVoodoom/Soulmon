@@ -754,3 +754,7 @@ Carta de teste do Papus para a própria conta do GM; destino vem do token. Decis
 ### `functions/gm/carta.js`
 
 Página `/gm/carta`, casca do envio acima. Decisão: REGISTRO §244.
+
+### `functions/api/_focusJourney.js`
+
+Espelho no servidor da regra que paga a jornada do foco. Decisão: REGISTRO §245. **Régua:** `src/utils/focusJourney.parity.test.ts`.
