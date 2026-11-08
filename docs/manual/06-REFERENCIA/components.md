@@ -2024,6 +2024,9 @@ Dono único da UI do filtro de elementos base: 3 campos de dropdown lado a lado 
 
 Folha da Poção de Elemento (Laboratório › Centro de Evolução): 3 espaços de base, lista filtrada (E) só do que o jogador paga (elemento ainda não desbloqueado na Biblioteca aparece como "???" e não se cria — `isPotionUnlocked`), confirmação com custo e `onCraft`. Regras em `utils/elementPotion.ts`. Avisa (aviso da poção na espera e nota) que vale só para a próxima evolução; depois o Soulmon volta ao elemento da pontuação.
 
+### `src/components/VescaPotionOffer.tsx`
+**Dono de:** a pergunta da Vesca ("Fazer a poção" / "Depois") quando a essência de um elemento base cruza 100 (§249). Só apresenta; quem decide quando abrir é o `App.tsx` (`essenceThresholdCrossings`) e a regra/custo vivem em `utils/elementPotion.ts`.
+
 ### `src/components/MercGuildSheet.tsx`
 **Dono de:** a ficha da Guilda dos Mercenários (missão do dia, "Sim, fiz"); o BB fica de fora e só vê o convite para voltar depois.
 
