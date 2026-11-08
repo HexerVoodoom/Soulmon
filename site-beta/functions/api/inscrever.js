@@ -6,6 +6,7 @@ import { json, erro, dia } from '../_lib/resp.js';
 
 const MAX_CORPO = 2048;
 const LIMITE_IP_DIA = 30;
+let limpezaDia = ''; // por isolate: a limpeza de 12 meses roda no maximo 1 vez por dia
 const log = (o) => console.log(JSON.stringify(o)); // nunca incluir e-mail, IP ou token
 
 // Contagem agregada por dia e evento (PLANO §15). Sem identificador; nunca derruba a resposta.
@@ -31,6 +32,12 @@ export async function onRequestPost(ctx) {
     // Retencao do hash de IP: apagado na primeira tentativa do dia seguinte, valida ou nao
     // (antes do Turnstile, para valer mesmo com tentativas recusadas).
     await env.DB.prepare('DELETE FROM limite_ip WHERE dia < ?').bind(hoje).run();
+
+    // Retencao de 12 meses: DELETE real, oportunista (sem cron em Pages Functions), usa idx_inscritos_dia.
+    if (limpezaDia !== hoje) {
+      limpezaDia = hoje;
+      try { await env.DB.prepare("DELETE FROM inscritos WHERE criado_dia < date('now','-12 months')").run(); } catch { limpezaDia = ''; }
+    }
 
     const texto = await request.text();
     if (new TextEncoder().encode(texto).length > MAX_CORPO) return erro(400, 'corpo');
@@ -68,10 +75,10 @@ export async function onRequestPost(ctx) {
     const chave = await chaveDuplicata(env.HASH_SALT, email);
     const u = limparUtm(c.utm);
     const ins = await env.DB.prepare(
-      `INSERT INTO inscritos (email, chave, idioma, utm_source, utm_medium, utm_campaign, politica_versao, aceite_em, novidades, criado_dia)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(chave) DO NOTHING`,
+      `INSERT INTO inscritos (email, chave, idioma, utm_source, utm_medium, utm_campaign, politica_versao, aceite_em, criado_dia)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(chave) DO NOTHING`,
     ).bind(email, chave, c.idioma, u.source, u.medium, u.campaign, env.POLITICA_VERSAO || 'v1',
-      new Date().toISOString(), c.novidades === true ? 1 : 0, hoje).run();
+      new Date().toISOString(), hoje).run();
     const novo = ins.meta && ins.meta.changes > 0;
     log({ evento: 'form_success', novo });
     await contar(env, hoje, 'form_success');

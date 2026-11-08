@@ -49,7 +49,7 @@ describe('copy do site', () => {
     for (const t of ['starters/', 'mapas-recriados', 'bg-mapa', 'mapa/mercado', 'mapa-mundi', 'type="checkbox"']) expect(landing).not.toContain(t);
   });
   it('textos exatos do dono', () => {
-    expect(TEXTOS.pt.form.okH + ' ' + TEXTOS.pt.form.ok).toBe('Parabéns, você se inscreveu no beta! Seu e-mail foi cadastrado com sucesso. Em até 24 horas você receberá o link para fazer o download.');
+    expect(TEXTOS.pt.form.okH + ' ' + TEXTOS.pt.form.ok).toBe('Parabéns, você se inscreveu no beta! Seu e-mail foi cadastrado com sucesso. Você receberá o link para fazer o download nos próximos dias.');
     expect(TEXTOS.pt.form.esperaH + ' ' + TEXTOS.pt.form.espera).toBe('As vagas desta rodada foram preenchidas. Teremos uma nova rodada e seu e-mail já está na fila. Obrigado por se interessar no Soulmon!');
     expect(TEXTOS.en.form.esperaH + ' ' + TEXTOS.en.form.espera).toBe('This round is full. Another round is coming and your email is already in line. Thanks for your interest in Soulmon!');
     expect(TEXTOS.pt.form.enviar).toBe('Entrar no beta');
@@ -127,6 +127,8 @@ describe('v5: hero com loop real, gravidade-champion e capa do trailer sem texto
   it('hero usa gravidade-champion (pangolim) no lugar do camaleão som-champion', () => {
     expect(assets.heroArte.elenco).toContain('gravidade-champion');
     expect(assets.heroArte.elenco).not.toContain('som-champion');
+    expect(assets.heroArte.elenco).not.toContain('arcano-ultra');
+    expect(assets.heroArte.elenco).toContain('terra-ultra');
     if (existsSync('E:/tmp/heroarte/compor.py')) expect(readFileSync('E:/tmp/heroarte/compor.py', 'utf8')).not.toContain('som-champion');
   });
   it('nenhum sprite vetado no hero (iniciais da DEMO, lontra com escudo, aranha/golem dourado)', () => {

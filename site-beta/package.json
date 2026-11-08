@@ -10,8 +10,10 @@
     "db:local": "wrangler d1 migrations apply DB --local --persist-to .wrangler/state",
     "test": "vitest run",
     "exportar": "node scripts/exportar.mjs",
+    "limpar-antigos": "node scripts/limpar-antigos.mjs",
     "remover": "node scripts/remover.mjs",
-    "proxima-leva": "node scripts/proxima-leva.mjs"
+    "proxima-leva": "node scripts/proxima-leva.mjs",
+    "comparar-beta": "node scripts/comparar-beta-emails.mjs"
   },
   "dependencies": {
     "astro": "^5.0.0",

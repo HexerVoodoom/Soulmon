@@ -238,7 +238,7 @@ function formulario() {
       if (!(await esperarToken())) { mostrarErro(S.erros.verificando); return; }
       // Tocar no botão, com a linha legal à vista, é o aceite (PLANO §18).
       const r = await postar({
-        email: val, idioma: form.dataset.idioma, aceitePrivacidade: true, maior18: true, novidades: false,
+        email: val, idioma: form.dataset.idioma, aceitePrivacidade: true, maior18: true,
         turnstile: tsToken, site: (form.elements.namedItem('site') as HTMLInputElement).value, utm: utm(),
       });
       const j = await r.json().catch(() => ({}));

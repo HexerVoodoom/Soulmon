@@ -50,7 +50,7 @@ Sem promessa de saúde, descanso terapêutico ou "bem-estar" nas falas.
 | "5 formas, 3 caminhos no meio" | `src/types/progression.ts`: 1 + 3 + 3 + 3 + 1; caminhos Poder, Harmonia, Benevolência |
 | "Nasce de um teste de personalidade" | Oráculo; no beta, 3 gerações por testador |
 | "O elemento muda o corpo e o combate" | `ELEMENTO-POR-SPRITE.md`. **Não dizer** que muda comida ou banho: não confirmado no código |
-| "Em até 24 horas você receberá o link" | Promessa de processo do dono (05/11), só com vagas abertas; depende de ele enviar convites todo dia |
+| "Você receberá o link nos próximos dias" | Promessa de processo do dono (05/11), só com vagas abertas; depende de ele enviar convites todo dia |
 | "7 dias para aceitar o convite" | Decisão do dono (05/11) |
 | "Ficar 14 dias no teste" | Exigência do teste fechado da Play, informada pelo dono |
 | "50 vagas na 1ª leva, por ordem de inscrição" | Decisão do dono; real só com `BETA_CLOSED` ligado |

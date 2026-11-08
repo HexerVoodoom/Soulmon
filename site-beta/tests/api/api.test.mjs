@@ -5,6 +5,7 @@ import { onRequestPost, onRequest as onRequestInscrever } from '../../functions/
 import { onRequestGet, onRequest as onRequestVagas } from '../../functions/api/vagas.js';
 import { gerarCsv, resumoRelogio, resumoConversao } from '../../scripts/exportar.mjs';
 import { remover } from '../../scripts/remover.mjs';
+import { limparAntigos } from '../../scripts/limpar-antigos.mjs';
 import { proximaLeva, marcar } from '../../scripts/proxima-leva.mjs';
 import { chaveDuplicata } from '../../functions/_lib/email.js';
 
@@ -13,7 +14,7 @@ const ORIGEM = 'https://soulmon.pages.dev';
 
 function novoDb() {
   const sqlite = new DatabaseSync(':memory:');
-  for (const m of ['0001_inscritos.sql', '0002_conversao.sql']) sqlite.exec(readFileSync(new URL('../../migrations/' + m, import.meta.url), 'utf8'));
+  for (const m of ['0001_inscritos.sql', '0002_conversao.sql', '0003_limpeza.sql']) sqlite.exec(readFileSync(new URL('../../migrations/' + m, import.meta.url), 'utf8'));
   const d1 = {
     prepare(sql) {
       const mk = (args) => ({
@@ -44,7 +45,7 @@ function stubFetch(ts = tsOk) {
 async function post(corpo = {}, { ip = '1.1.1.1', headers = {}, raw } = {}) {
   esperando = [];
   const body = raw ?? JSON.stringify({
-    email: 'ana@example.com', idioma: 'pt-BR', aceitePrivacidade: true, maior18: true, novidades: false,
+    email: 'ana@example.com', idioma: 'pt-BR', aceitePrivacidade: true, maior18: true,
     turnstile: 'tok', site: '', utm: {}, ...corpo,
   });
   const request = new Request('https://soulmon.pages.dev/api/inscrever', {
@@ -285,5 +286,23 @@ describe('scripts', () => {
     const k = db.sqlite.prepare('SELECT chave FROM inscritos').get().chave;
     expect(k).toBe(await chaveDuplicata(SAL, 'ana@example.com'));
     expect(k).not.toContain('ana');
+  });
+});
+
+describe('retencao de 12 meses', () => {
+  const semear = () => {
+    db = novoDb();
+    const ins = db.sqlite.prepare("INSERT INTO inscritos (email, chave, idioma, politica_versao, aceite_em, criado_dia) VALUES (?, ?, 'pt-BR', 'v1', 'x', date('now', ?))");
+    ins.run('velho@example.com', 'k1', '-13 months'); ins.run('novo@example.com', 'k2', '-1 months');
+  };
+  it('script apaga so o de 13 meses', () => {
+    semear();
+    expect(limparAntigos(db.run)).toBe(1);
+    expect(db.sqlite.prepare('SELECT email FROM inscritos').all().map((r) => r.email)).toEqual(['novo@example.com']);
+  });
+  it('schema sem novidades nem removido_em', () => {
+    db = novoDb();
+    const cols = db.sqlite.prepare('PRAGMA table_info(inscritos)').all().map((c) => c.name);
+    expect(cols).not.toContain('novidades'); expect(cols).not.toContain('removido_em');
   });
 });

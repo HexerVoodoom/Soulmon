@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { criarExecutor } from './_db.mjs';
 
 const COLUNAS = ['id', 'email', 'idioma', 'utm_source', 'utm_medium', 'utm_campaign', 'politica_versao', 'aceite_em',
-  'novidades', 'leva', 'convidado_em', 'instalou_em', 'optin_em', 'ativo_ate', 'criado_dia'];
+  'leva', 'convidado_em', 'instalou_em', 'optin_em', 'ativo_ate', 'criado_dia'];
 const PERIGOSO = /^[=+\-@\t\r]/;
 
 export function gerarCsv(linhas) {

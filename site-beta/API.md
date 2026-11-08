@@ -1,7 +1,7 @@
 # Contrato do cadastro
 
 ## POST /api/inscrever
-Corpo JSON: `{ email, idioma: "pt-BR"|"en", aceitePrivacidade: true, maior18: true, novidades: boolean, turnstile: string, site: "" (honeypot), utm: { source?, medium?, campaign? } }`
+Corpo JSON: `{ email, idioma: "pt-BR"|"en", aceitePrivacidade: true, maior18: true, turnstile: string, site: "" (honeypot), utm: { source?, medium?, campaign? } }`
 
 | Status | Corpo | Front mostra |
 |---|---|---|

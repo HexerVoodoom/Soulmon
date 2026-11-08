@@ -86,14 +86,14 @@ Solução sem gerar arte nova, cinco camadas:
 - **Astro estático** com i18n nativo. HTML pronto, JS só onde precisa.
 - **GSAP + ScrollTrigger** (grátis pela licença padrão), carregado depois do hero. **Sem Lenis:** scroll nativo é mais seguro no celular.
 - **Imagens:** AVIF/WebP com `srcset`, nearest para sprites.
-- **Hospedagem:** projeto separado no Cloudflare Pages (`soulmon-beta.pages.dev`), porque o worker do app tem CSP travada por hash e está em produção.
+- **Hospedagem:** projeto separado no Cloudflare Pages (`soulmon.pages.dev/beta`), porque o worker do app tem CSP travada por hash e está em produção.
 - **Repo público:** nada de segredo nem de dado no git. A pasta `site-beta/` tem `package.json` próprio e fica fora dos testes e do build do app.
 
 **Orçamento:** LCP < 2,5 s em 4G lento emulado; JS inicial < 90 KB; peso até a 1ª dobra < 500 KB; CLS < 0,1; Lighthouse a11y ≥ 95. Sem autoplay com som. Vídeos lazy, com poster.
 
 ## 7. Cadastro
 
-**Campos:** e-mail da conta Google, idioma (automático), aceite da privacidade e declaração de 18+ (a ficha do jogo diz 18+). Aceite de novidades é opcional e separado.
+**Campos:** e-mail da conta Google, idioma (automático), aceite da privacidade e declaração de 18+ (a ficha do jogo diz 18+).
 Um e-mail só: a Play exige conta Google, então o texto pede "o e-mail da sua conta Google". Outro domínio é aceito com aviso.
 
 **`POST /api/inscrever` (Pages Function):**
@@ -105,7 +105,7 @@ Um e-mail só: a Play exige conta Google, então o texto pede "o e-mail da sua c
 6. Resposta igual para novo e repetido, para não revelar quem está na lista. Na tela: "Inscrição registrada. Se já havia uma, ela continua valendo."
 7. Notifica o revisor em `waitUntil`; falha de e-mail não derruba o cadastro e fica marcada para reenvio.
 
-**Dados (D1 `soulmon-beta`):** e-mail, chave de duplicata, idioma, UTM, versão da política, data do aceite, aceite de novidades, leva, `convidado_em`, `instalou_em`, `removido_em`. Sem IP puro, sem user-agent.
+**Dados (D1 `soulmon-beta`):** e-mail, chave de duplicata, idioma, UTM, versão da política, data do aceite, leva, `convidado_em`, `instalou_em`. Cadastros apagados automaticamente após 12 meses. Sem IP puro, sem user-agent.
 
 **Vagas:**
 - O status público `GET /api/vagas` devolve só `restantes`, com cache de 60 s.
@@ -181,9 +181,9 @@ Consultado em 05/11/2026; detalhe em `BENCHMARK.md`.
 - **Universo em abas:** Universo, Habitantes (NPCs), Jogos (atividades reais), Elementos (principais com nome e ícone grande, demais com "?"). Teclado. Pouco texto.
 - **Vídeo:** com destaque, lazy, poster, sem som automático. Abertura rotulada como cinemática; só gameplay real como gameplay.
 - **Parallax:** mais profundidade; cenários instalados trocando com o scroll; NPCs e criaturas em primeiro plano; fallbacks mantidos.
-- **Como entrar:** passos em asset. Seção final: e-mail + botão "Entrar no beta" + uma linha legal. Pop-up: "Parabéns, você se inscreveu no beta! Seu e-mail foi cadastrado com sucesso. Em até 24 horas você receberá o link para fazer o download." [24 h a confirmar], com versão de lista de espera.
+- **Como entrar:** passos em asset. Seção final: e-mail + botão "Entrar no beta" + uma linha legal. Pop-up: "Parabéns, você se inscreveu no beta! Seu e-mail foi cadastrado com sucesso. Você receberá o link para fazer o download nos próximos dias.", com versão de lista de espera.
 - **Passagem:** squad inteira deixa achados e correções.
-- **24 h:** só com vagas abertas. Com `LEVA_ESTADO=espera`, site e pop-up mostram: "As vagas desta rodada foram preenchidas. Teremos uma nova rodada e seu e-mail já está na fila. Obrigado por se interessar no Soulmon!" / "This round is full. Another round is coming and your email is already in line. Thanks for your interest in Soulmon!"
+- **Pop-up de sucesso ("nos próximos dias"):** só com vagas abertas. Com `LEVA_ESTADO=espera`, site e pop-up mostram: "As vagas desta rodada foram preenchidas. Teremos uma nova rodada e seu e-mail já está na fila. Obrigado por se interessar no Soulmon!" / "This round is full. Another round is coming and your email is already in line. Thanks for your interest in Soulmon!"
 - **Seguindo a recomendação, pendentes de confirmação do dono (reversíveis):** linha única de aceite; regra das 50 em Como entrar; logo completo por geração; árvore com sombras e "?"; linha **planta** no ciclo e no hero, em vez de fogo; texto só com corpo e combate, sem comida e banho.
 - **Assets:** a operacional gera; destino `E:\Soulmon-marketing\site-assets\`.
 
@@ -282,7 +282,7 @@ Tudo do pedido entra; a ordem protege a captação.
 - **Ordem no servidor:** corpo ≤ 2 KB → `Content-Type: application/json` → `Origin` exato → honeypot → `siteverify` (com `hostname` e `action`) → limite por `HMAC(ip, sal+dia)` → teto global, com 503 honesto.
 - **Banco:** `AUTOINCREMENT`; `INSERT ... ON CONFLICT DO NOTHING`; sem posição ao cliente; chave de duplicata como `HMAC`; limite por IP apagado em 24 h.
 - **Notificação:** Resend confirmado: sem domínio, só envia ao e-mail da própria conta. Texto puro, `onboarding@resend.dev`, sem o e-mail do inscrito no corpo, teto de 20 por dia. **Sem reenvio**: o `exportar` é a fonte da verdade.
-- **Convite ao inscrito:** enviado pelo dono. Novidades só depois de o titular agir.
+- **Convite ao inscrito:** enviado pelo dono. O cadastro é só para o beta; sem novidades.
 - **Analytics v1:** Web Analytics + `form_success` e `form_error` contados no servidor. **Sem tabela pública de eventos.** UTM por allowlist; fora dela, `outro`. CSP inclui o beacon.
 - **CSV:** recusar na entrada `local-part` iniciada por `= + - @`, tab, CR; a exportação aborta se achar um campo assim. `.gitignore` com `*.csv` e `.dev.vars`.
 - **Preview:** D1 próprio e chaves de teste, nunca o banco de produção.
