@@ -315,6 +315,9 @@ async function collectRankingKeys(env, saveId) {
   for (const prefix of ['rift-pending:', 'rift-paid:']) {
     for (const k of (await listPrefix(env, prefix)).filter(x => x.endsWith(`:${saveId}`))) keys.push(k);
   }
+  // Jornada do foco (§247): o registro ativo e os razões dos dias (TTL de 3 dias), por prefixo do próprio titular.
+  if ((await store.get(`fj:${saveId}`)) !== null) keys.push(`fj:${saveId}`);
+  for (const k of await listPrefix(env, `fjd:${saveId}:`)) keys.push(k);
   // Apelido: `nickof:<saveId>` aponta a chave `nick:`; ela só é apagada se AINDA for deste titular.
   const nickKey = await store.get(`nickof:${saveId}`);
   if (nickKey) {
