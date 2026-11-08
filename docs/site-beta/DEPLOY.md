@@ -134,12 +134,12 @@ npm run build
 
 Esperado: termina sem erro e a pasta `dist` fica criada. Use as duas linhas na mesma janela do PowerShell.
 
-**3.4. Branch de produção.** O deploy só vira o endereço oficial se a branch passada for a de produção do projeto. Veja no painel: Workers & Pages > `soulmon` > Settings > Builds > **Production branch**. (`pages project list` não mostra isso. O roteiro antigo criou o projeto com `--production-branch site-beta`; o roteiro novo pedia `main`: **divergência a confirmar no painel**.) Use no próximo comando o nome que o painel mostrar. Se usar outro nome, o deploy vira só uma prévia em `<branch>.soulmon.pages.dev` e a URL oficial continua vazia; não há dano, refaça com a branch certa.
+**3.4. Branch de produção.** O deploy só vira o endereço oficial se a branch passada for a de produção do projeto. Veja no painel: Workers & Pages > `soulmon` > Settings > Builds > **Production branch**. (`pages project list` não mostra isso. O projeto foi criado em 06/11 com `--production-branch main`: use `main` para a produção; confirme no painel.) Use no próximo comando o nome que o painel mostrar. Se usar outro nome, o deploy vira só uma prévia em `<branch>.soulmon.pages.dev` e a URL oficial continua vazia; não há dano, refaça com a branch certa.
 
 **3.5. Deploy** (troque `site-beta` pelo nome do painel, ex.: `main`):
 
 ```powershell
-npx wrangler pages deploy dist --project-name soulmon --branch site-beta
+npx wrangler pages deploy dist --project-name soulmon --branch main
 ```
 
 Esperado no fim: `Deployment complete! Take a peek over at https://<código>.soulmon.pages.dev`. Em 1 a 2 minutos o dono vê no navegador: **https://soulmon.pages.dev/beta/**. Aviso de "commit sujo" não é erro. "Project not found": confira o nome `soulmon` e o login.
@@ -282,3 +282,8 @@ $env:PUBLIC_TURNSTILE_SITEKEY = "1x00000000000000000000AA"; npm run preview
 ```
 
 Fica em http://localhost:8799/beta/. `.dev.vars` local (fora do git): `TURNSTILE_SECRET=1x0000000000000000000000000000000AA`, `TURNSTILE_HOST=example.com`, `ORIGENS=http://localhost:8799`, `HASH_SALT` qualquer. Se o localhost mostrar o app em vez do site, é service worker antigo nessa porta: remova-o no navegador.
+
+
+## Prévia já publicada (08/11/2026)
+
+A pedido do dono, foi publicada uma prévia (ramo `previa`, noindex, build sem sitekey, formulário sem cadastro): https://previa.soulmon.pages.dev/beta/ (EN em /beta/en/). Para atualizar a prévia: `npx wrangler pages deploy dist --project-name soulmon --branch previa`. A produção (`--branch main`) continua vazia até as chaves reais.
