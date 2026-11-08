@@ -6,7 +6,7 @@
  * compram nada hoje (só coleta), e quando ganharem uso este arquivo é onde entra o teto de ganho por dia.
  */
 export const ESSENCE_MAX_PER_ELEMENT = 1_000_000;
-export const ESSENCE_MAX_KEYS = 211;
+export const ESSENCE_MAX_KEYS = 271;
 
 /** @param {unknown} raw @returns {Record<string, number>|undefined} sem forma de objeto = undefined (campo descartado) */
 export function sanitizeEssences(raw) {

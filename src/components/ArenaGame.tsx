@@ -41,7 +41,7 @@ import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGro
 import { dexIdsOfFoe } from '../utils/elementDex';
 import { useStrayPlayerEncounters } from '../utils/strayPlayerEncounter';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
-import { essenceDropOfFoe, type EssenceDrop } from '../utils/essences';
+import { essenceDropsOfFoe, type EssenceDrop } from '../utils/essences';
 import { isStraySeed } from '../utils/strayFoes';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG, ELEMENT_ADVANTAGE_TAG } from './games/pveTags';
 import { CHEER_TAPS_FULL } from '../utils/energia';
@@ -331,7 +331,7 @@ export function ArenaGame({
       playVictory();
       const ids = inimigosRef.current.flatMap(e => dexIdsOfFoe(e));
       if (ids.length > 0) {
-        const drops = inimigosRef.current.map(e => essenceDropOfFoe(e.elements, e.dropTier)).filter((d): d is EssenceDrop => !!d);
+        const drops = inimigosRef.current.flatMap(e => essenceDropsOfFoe(e, e.dropTier));
         elementsDefeatedRef.current?.(ids, drops);
         if (elementsDefeatedRef.current && drops.length > 0) setEssenciasRun(prev => [...prev, ...drops]);
       }

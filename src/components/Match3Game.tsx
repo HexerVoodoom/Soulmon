@@ -39,7 +39,7 @@ import { fxMirror } from '../utils/fxFacing';
 import { OWN_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
 import { rosterEntryOfKey } from '../utils/enemyRoster';
 import { dexIdsOfFoe } from '../utils/elementDex';
-import { essenceDropOfFoe, type EssenceDrop } from '../utils/essences';
+import { essenceDropsOfFoe, type EssenceDrop } from '../utils/essences';
 import { ElementAdvantageBadge } from './games/ElementAdvantageBadge';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
@@ -283,7 +283,7 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
     if (combatRef.current.outcome === 'win' && elementsDefeatedRef.current) {
       const ids = combatRef.current.enemies.flatMap(e => dexIdsOfFoe(rosterEntryOfKey(e.roster)));
       if (ids.length > 0) {
-        const drops = combatRef.current.enemies.map(e => { const r = rosterEntryOfKey(e.roster); return r ? essenceDropOfFoe(r.elements, r.stage) : undefined; }).filter((d): d is EssenceDrop => !!d);
+        const drops = combatRef.current.enemies.flatMap(e => { const r = rosterEntryOfKey(e.roster); return essenceDropsOfFoe(r, r?.stage); });
         elementsDefeatedRef.current(ids, drops);
         setEssenciasRodada(drops);
       }

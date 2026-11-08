@@ -12,9 +12,10 @@
  *
  * Chave no inventário (`foodInventory`): `potion:<elementId>` (ids `[a-z_]{2,24}`) — uma entrada de `SPECIAL_ITEMS` por elemento.
  */
-import { ALL_ELEMENT_IDS, BASE_ELEMENT_IDS, elementComponents, isDexElement } from './elementDex';
+import { ALL_ELEMENT_IDS, ESSENCE_ELEMENT_IDS, BASE_ELEMENT_IDS, essenceComposition, isEssenceElement } from './elementDex';
 import { essenceName, spendEssences, type EssenceDrop } from './essences';
 import type { SpecialItem } from './shop';
+import { readLocal, writeLocal } from './safeStorage';
 
 export const POTION_COSTS = {
   /** Elemento base: quantidade da PRÓPRIA essência. Ao atingir isto a Vesca oferece a poção (`essenceThresholdCrossings`). */
@@ -25,24 +26,23 @@ export const POTION_COSTS = {
 
 /** Quantos slots de elemento base o jogador preenche. */
 export const POTION_MAX_BASES = 3;
+/** Máximo de bases na composição de um elemento (curados têm até 4). */
+export const POTION_MAX_COMPONENTS = 4;
 
 export const POTION_PREFIX = 'potion:';
 export const potionKey = (elementId: string): string => POTION_PREFIX + elementId;
 export const isPotionKey = (key: unknown): key is string =>
-  typeof key === 'string' && key.startsWith(POTION_PREFIX) && isDexElement(key.slice(POTION_PREFIX.length));
+  typeof key === 'string' && key.startsWith(POTION_PREFIX) && isEssenceElement(key.slice(POTION_PREFIX.length));
 export const potionElementOfKey = (key: string): string | undefined => (isPotionKey(key) ? key.slice(POTION_PREFIX.length) : undefined);
 
 /** Composição (ids dos elementos base) de um elemento do catálogo: base = ele mesmo; par = os 2 componentes. `undefined` se desconhecido. */
 export function elementComposition(id: string): readonly string[] | undefined {
-  if (!isDexElement(id)) return undefined;
-  const comp = elementComponents(id);
-  if (comp) return comp[0] === comp[1] ? [comp[0]] : comp;
-  return [id];
+  return essenceComposition(id);
 }
 
 /** O custo em essências, agrupado por id. Base: 100 da própria. Composto (2+ bases distintas): 50 do composto. `[]` se o elemento não existe. */
 export function potionCostFor(finalId: string, bases: readonly string[]): EssenceDrop[] {
-  if (!isDexElement(finalId) || bases.length < 1 || bases.length > POTION_MAX_BASES) return [];
+  if (!isEssenceElement(finalId) || bases.length < 1 || bases.length > POTION_MAX_COMPONENTS) return [];
   return [{ id: finalId, qty: bases.length === 1 ? POTION_COSTS.baseOwn : POTION_COSTS.compositeFinal }];
 }
 
@@ -72,9 +72,21 @@ export function essenceThresholdCrossings(prev: Record<string, number> | undefin
   return BASE_ELEMENT_IDS.filter(id => (prev?.[id] ?? 0) < POTION_COSTS.baseOwn && (next?.[id] ?? 0) >= POTION_COSTS.baseOwn);
 }
 
-/** Filtro E: elementos cuja composição contém TODAS as bases escolhidas (sem escolha = todos). Ordem do catálogo. */
-export function elementsMatchingBases(selected: readonly (string | null | undefined)[]): string[] {
-  return ALL_ELEMENT_IDS.filter(id => compositionHasBases(elementComposition(id), selected));
+const VESCA_OFFERED_KEY = 'soulmon:vescaOffered';
+/** Elementos que a Vesca já ofereceu (por aparelho; evita repetir o modal para veterano a cada abertura). Sem storage = vazio. */
+export function readVescaOffered(): Set<string> {
+  try {
+    const raw = JSON.parse(readLocal(VESCA_OFFERED_KEY) ?? '[]');
+    return new Set(Array.isArray(raw) ? raw.filter((x): x is string => typeof x === 'string') : []);
+  } catch { return new Set(); }
+}
+export function writeVescaOffered(ids: ReadonlySet<string>): void {
+  writeLocal(VESCA_OFFERED_KEY, JSON.stringify([...ids]));
+}
+
+/** Filtro E: elementos cuja composição contém TODAS as bases escolhidas (sem escolha = todos). Ordem do catálogo (padrão: os 210 do dex/Forja Hex; Cambista e Poção passam `ESSENCE_ELEMENT_IDS`, com os curados). */
+export function elementsMatchingBases(selected: readonly (string | null | undefined)[], catalog: readonly string[] = ALL_ELEMENT_IDS): string[] {
+  return catalog.filter(id => compositionHasBases(elementComposition(id), selected));
 }
 
 /** Bases válidas escolhidas no filtro (sem repetição, sem vazio). */
@@ -97,7 +109,7 @@ export function elementMatchesBases(id: string | null | undefined, selected: rea
 
 /** Os que cabem no filtro E o jogador consegue pagar. */
 export function affordablePotionElements(essences: Record<string, number> | undefined, selected: readonly (string | null | undefined)[], inventory?: Inventory): string[] {
-  return elementsMatchingBases(selected).filter(id => canAffordPotion(essences, id, inventory));
+  return elementsMatchingBases(selected, ESSENCE_ELEMENT_IDS).filter(id => canAffordPotion(essences, id, inventory));
 }
 
 type PotionState = {
@@ -138,7 +150,7 @@ export function givePotion<T extends PotionState>(prev: T, key: string): T {
 }
 
 /** Leitura tolerante do save: só ids do catálogo. */
-export const sanitizeElementId = (raw: unknown): string | undefined => (isDexElement(raw) ? raw : undefined);
+export const sanitizeElementId = (raw: unknown): string | undefined => (isEssenceElement(raw) ? raw : undefined);
 
 /**
  * Na evolução: o elemento pendente vira o elemento do Soulmon (`potionElement`) e `evolutionPotion` é limpo. REGRA DO DONO (30/10/2026):
@@ -158,7 +170,7 @@ export function applyPotionOnEvolve<T extends { evolutionPotion?: string; potion
 
 /** Entradas de `SPECIAL_ITEMS`, uma por elemento do catálogo. */
 export const POTION_SPECIAL_ITEMS: Record<string, SpecialItem> = Object.fromEntries(
-  ALL_ELEMENT_IDS.map(id => {
+  ESSENCE_ELEMENT_IDS.map(id => {
     const key = potionKey(id);
     const item: SpecialItem = {
       emoji: key, kind: 'potion',

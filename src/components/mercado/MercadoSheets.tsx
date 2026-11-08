@@ -20,6 +20,7 @@ import { STATUS_ICON_ART } from '../../assets/soulmon/icones-ui/interacao';
 import { CREDIT_COLOR, type CurrencyId } from '../../utils/currencies';
 import type { Language } from '../../utils/i18n';
 import { elementsMatchingBases, isPotionUnlocked } from '../../utils/elementPotion';
+import { ESSENCE_ELEMENT_IDS } from '../../utils/elementDex';
 import { essenceName, ESSENCE_MAX_PER_ELEMENT } from '../../utils/essences';
 import { essencePackPrice, ESSENCE_PACK_SIZES } from '../../utils/essenceShop';
 import { ElementBaseSlots, ElementIcon, emptySlots } from '../ElementBaseSlots';
@@ -515,7 +516,7 @@ export function CambistaSheet({ language, credits, onExchangeCredits, accountTie
           </p>
           <ElementBaseSlots slots={slots} isPt={isPt} onChange={(i, id) => setSlots(v => v.map((x, j) => (j === i ? id : x)))} />
           <ul data-cambista-essence-list style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2, maxHeight: 320, overflowY: 'auto' }}>
-            {elementsMatchingBases(slots).map(id => {
+            {elementsMatchingBases(slots, ESSENCE_ELEMENT_IDS).map(id => {
               const known = isPotionUnlocked(id, unlockedElements);
               const owned = essences?.[id] ?? 0;
               const name = known ? essenceName(id, isPt) : '???';

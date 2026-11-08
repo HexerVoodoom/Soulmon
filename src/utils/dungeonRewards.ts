@@ -10,7 +10,7 @@ import { isoWeekKey } from './offerMoment';
 import { bumpWeekly, forWeek, type WeeklyMissionId } from './weeklyMissions';
 import { rosterEntryOfKey } from './enemyRoster';
 import { applyElementsDefeated, dexIdsOfFoe } from './elementDex';
-import { applyEssences, applyEssencesAway, essenceDropOfFoe } from './essences';
+import { applyEssences, applyEssencesAway, essenceDropsOfFoe } from './essences';
 
 /** Conta uma missão semanal (a mesma conta de `contarMissao` do App, sem o setState). */
 export function countWeeklyMission<T extends Pick<GameState, 'weeklyMissions' | 'playerDayTz'>>(prev: T, id: WeeklyMissionId, now: Date): T {
@@ -30,8 +30,8 @@ export function applyEnemyDefeated<T extends Pick<GameState, 'dungeonKills' | 'b
   const comDex = applyElementsDefeated(abatido, dexIdsOfFoe(rosterEntryOfKey(enemyKey)));
   // Essências (28/10/2026, REGISTRO §183): a do PRÓPRIO elemento, pelo estágio. Luta ativa = sem teto; descida automática (`away`) = teto diário.
   const e = rosterEntryOfKey(enemyKey);
-  const drop = e ? essenceDropOfFoe(e.elements, e.stage) : undefined;
-  return away ? applyEssencesAway(comDex, drop, away.dayKey) : applyEssences(comDex, [drop]);
+  const drops = essenceDropsOfFoe(e, e?.stage);
+  return away ? applyEssencesAway(comDex, drops, away.dayKey) : applyEssences(comDex, drops);
 }
 
 /** Um inimigo VISTO sem abate (Elemental Fusion, M10): entra no bestiário (chave do roster `<id>-<estágio>`), IDEMPOTENTE, sem tocar `dungeonKills`. */
