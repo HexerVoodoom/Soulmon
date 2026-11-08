@@ -63,9 +63,9 @@ export function journeyChests(seed: number, mode: JourneyMode): JourneyChest[] {
 
 export interface JourneyClock { startAt: number; pausedMs: number; pausedAt: number | null; mode: JourneyMode }
 
-/** Tempo de foco decorrido (sem as pausas). */
+/** Tempo de foco decorrido (sem as pausas; parado além de 30 min volta a contar, D-4). */
 export function focusElapsed(c: JourneyClock, now: number): number {
-  const parado = c.pausedMs + (c.pausedAt !== null ? Math.max(0, now - c.pausedAt) : 0);
+  const parado = Math.min(JOURNEY_MAX_PAUSED_MS, c.pausedMs + (c.pausedAt !== null ? Math.max(0, now - c.pausedAt) : 0));
   return Math.max(0, now - c.startAt - parado);
 }
 /** Progresso 0..1 do foco. */
@@ -107,6 +107,9 @@ export function completionLoot(seed: number, nth: number, env: FocusEnvironmentI
 
 export interface JourneyLedger { day: string; items: number; ess: number; done: number; claims: string[] }
 export const emptyLedger = (day: string): JourneyLedger => ({ day, items: 0, ess: 0, done: 0, claims: [] });
+
+/** O que o servidor já pagou no dia, por recibo (o cliente credita o que ainda não está no save). */
+export type JourneyGrants = Record<string, JourneyItem[]>;
 
 /** Aplica os tetos do dia: corta o que passa e devolve o que entrou + o razão novo. Idempotente por `claimId`. */
 export function capLoot(ledger: JourneyLedger, claimId: string, items: readonly JourneyItem[]): { granted: JourneyItem[]; ledger: JourneyLedger } {

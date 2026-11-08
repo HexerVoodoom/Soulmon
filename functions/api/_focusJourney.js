@@ -43,7 +43,7 @@ export function journeyChests(seed, mode) {
 }
 
 export function focusElapsed(c, now) {
-  const parado = c.pausedMs + (c.pausedAt !== null ? Math.max(0, now - c.pausedAt) : 0);
+  const parado = Math.min(JOURNEY_MAX_PAUSED_MS, c.pausedMs + (c.pausedAt !== null ? Math.max(0, now - c.pausedAt) : 0));
   return Math.max(0, now - c.startAt - parado);
 }
 export function journeyProgress(c, now) {

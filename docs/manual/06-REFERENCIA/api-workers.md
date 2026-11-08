@@ -758,3 +758,7 @@ Página `/gm/carta`, casca do envio acima. Decisão: REGISTRO §244.
 ### `functions/api/_focusJourney.js`
 
 Espelho no servidor da regra que paga a jornada do foco. Decisão: REGISTRO §247. **Régua:** `src/utils/focusJourney.parity.test.ts`.
+
+### `functions/api/focus-journey.js`
+
+Rota da jornada do foco: começar, pausar, retomar, receber e encerrar, com o relógio do servidor e o razão do dia por recibo; a 1ª conclusão do dia devolve a chave da masmorra. Decisão: REGISTRO §247. **Régua:** `functions/api/focus-journey.test.js`.
