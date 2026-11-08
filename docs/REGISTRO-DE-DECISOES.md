@@ -4308,3 +4308,33 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Alternativa que perdeu.** Crescer o corte também vindo do inimigo: contradiz a perspectiva (o jogador é quem está perto).
 
 **Ficou de fora.** Nenhum chamador seta `cut` ainda (falta decidir qual skill/Soulmon usa corte à distância); o hook `elementStrikeForm` não expõe variante. Sem sprite de lâmina próprio: usa o do melee escalado (anotado em `ASSETS-A-GERAR.md`). Os testes de componente (jsdom) não rodaram nesta máquina: `jsdom` falha com MODULE_NOT_FOUND no node_modules compartilhado; rodou só o teste puro (4 verdes).
+
+## Cura do especial calibrada contra o dano (08/11/2026)
+
+**Pedido do dono.** "Tem que balancear melhor a cura, está curando menos do que o dano do especial."
+
+**Medido (E=3, mesmo orçamento; cura em % da vida de quem cura, dano em % da vida do alvo).** Espelho/PvP e régua: cura = dano (razão 1,00; 0,94–1,13 conforme build/nível). Arena: cura 1,25× o dano. **Masmorra/Pesadelo: `PVE_FAMILY_POWER.dungeon.heal` = 0,80 → cura 20% abaixo do dano** — é aí que o jogador sente.
+
+**Antes → depois (N=1600, 15 níveis × 4 builds, vitória/andares):** cura 0,80 = masmorra 65,9 / pesadelo 76,6 / arena 65,5 (dano direto: 68,1 / 86,3 / 66,8). Cura 0,85 = 68,4 / 79,1. **Cura 0,88 = 70,0 / 80,2 (adotado, masmorra +1,9pp sobre o dano direto, dentro de ±3pp).** 0,90 = 71,2 / 80,9 (+3,1pp, estoura a janela); 1,00 = 75,9 / 84,4 (+7,8pp).
+
+**Regra.** Cura do especial ≥ 0,85× o dano direto em todo motor (espelho = igual; Arena 1,25; Masmorra 0,88) e ≤ 0,92× na Masmorra. Travada em `combate/curaVsDano.test.ts`. Só muda `PVE_FAMILY_POWER.dungeon.heal` (0,8 → 0,88): a cura contínua (`shield` + `hot`) e o escudo não mudaram.
+
+**Alternativa que perdeu.** Cura = dano exato (1,0) na Masmorra: dá a leitura "cura igual ao dano", mas a cura vira a família mais forte (+7,8pp), contra a janela ±3pp já combinada.
+
+**O que falsifica.** O Pesadelo segue ~6pp abaixo do dano direto (era ~10pp): fora da janela, mas é do motor do Pesadelo, não da cura; se o dono ainda sentir pouca cura lá, o botão é `hotScale`/poder no Pesadelo, não a Masmorra. Cura de PvP e Arena não mexidas. Não medido em aparelho.
+
+## §249 — Masmorra temática por elemento + poções deixadas com o Soulmon (08/11/2026, pedido do dono)
+
+**Contexto.** A masmorra sorteava cenário e criatura sem tema. O dono pediu (1) que, ao sair com o mundo da masmorra vivo, o jogador escolha quantas poções de cura deixar com o Soulmon, e (2) que cada camada seja de um elemento.
+
+**Decisões (o que ganhou).**
+1. **2 camadas por elemento**, na ordem: os 20 elementos base (um a um), depois os 190 de 2 componentes, os 40 de 3 e os 19 de 4 (269 elementos, ciclo de 538 camadas); ao fim volta ao começo. Dono único: `utils/dungeonElementos.ts` › `elementoDaCamada` (puro). O neutro (corvo) não é elemento de camada.
+2. **Só criaturas do elemento da camada** (`pickEnemy({ element })`). Estágio pedido pela escada vale se o elemento tem aquela forma; senão desce até a mais baixa que existir (os compostos só têm `rookie`; cada um tem 1 criatura, então a escada repete a espécie: limite de pool conhecido). `dungeonWaveOf(…, tematica = true)` vale para a tela e para a descida de fora (mesma conta); o `RogueFight` passa `false` e fica como era.
+3. **Cenário da camada = `combatSceneBg(elemento)`** (cenário próprio; sem ele, o do elemento base dominante). 156 compostos ainda não têm arte própria: `docs/ASSETS-A-GERAR.md` §28. Nenhuma arte gerada.
+4. **Poções deixadas.** Ao sair (ícone do mapa / voltar) com descida viva e ao menos 1 poção de cura, abre o modal "Poções para o Soulmon" (por tipo, de 0 a todas, ex.: 20 de 20). Hoje só existe 1 tipo de cura, o Coraçãozinho 💗; a lista `HEAL_POTIONS` aceita tipos novos sem mexer no resto (dono respondeu: só o 💗, genérico).
+5. **Uso:** na descida de fora, quando o Soulmon cai e há estoque, usa uma sozinho — a mesma continuação da tela (volta com 50% do HP, inimigo mantém o HP da queda, `reviveSeed`). O estoque só é gasto se a luta inteira cabe no tempo. **Devolução:** estoque sem descida viva volta ao inventário (fim da descida, retirada, fim por HP/energia, registro apagado, save antigo); ao voltar à tela o que sobrou é recolhido (o jogador decide de novo ao sair).
+6. **Persistência:** campo `dungeonPotions` no save, FORA de `dungeonAway` (que é apagado em vários caminhos). Idempotente: `deixarPocoes` aplicado duas vezes não gasta a mais; o total (inventário + estoque) nunca sobe, só se move. **Servidor:** não é autoritativo hoje para `dungeonAway`/`foodInventory` (só o forjar da Hexsmith), então a trava é cliente, em funções puras testadas; não foi criada validação nova no servidor.
+
+**Alternativa que perdeu.** Guardar o estoque dentro de `dungeonAway`: sumiria com o registro em qualquer limpeza. Também perdeu criar tipos novos de cura agora (escopo de itens/loja/arte) e incluir poção de elemento (não cura).
+
+**O que falsifica a aposta.** Se jogadores reclamarem de repetição (1 criatura por composto) ou da duração do ciclo; se aparecer item de cura novo e o modal não listá-lo (basta entrar em `HEAL_POTIONS`); se o servidor passar a validar `foodInventory` e recusar a mudança inventário→estoque.
