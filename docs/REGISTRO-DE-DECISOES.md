@@ -4307,7 +4307,7 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Alternativa que perdeu.** Crescer o corte também vindo do inimigo: contradiz a perspectiva (o jogador é quem está perto).
 
-**Ficou de fora.** Nenhum chamador seta `cut` ainda (falta decidir qual skill/Soulmon usa corte à distância); o hook `elementStrikeForm` não expõe variante. Sem sprite de lâmina próprio: usa o do melee escalado (anotado em `ASSETS-A-GERAR.md`). Os testes de componente (jsdom) não rodaram nesta máquina: `jsdom` falha com MODULE_NOT_FOUND no node_modules compartilhado; rodou só o teste puro (4 verdes).
+**Ficou de fora.** Quem corta (dono, 08/11): POR ELEMENTO — o `impacto` do lutador (peso de corte por elemento, `golpeImpacto.ts`) decide; `StageAction.cut` explícito vence. Nenhum chamador precisa mudar. Sem sprite de lâmina próprio: usa o do melee escalado (anotado em `ASSETS-A-GERAR.md`). Os testes de componente (jsdom) não rodaram nesta máquina: `jsdom` falha com MODULE_NOT_FOUND no node_modules compartilhado; rodou só o teste puro (4 verdes).
 
 ## Cura do especial calibrada contra o dano (08/11/2026)
 

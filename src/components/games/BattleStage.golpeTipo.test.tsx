@@ -215,6 +215,13 @@ describe('ranged de CORTE (visual) e perspectiva do projétil', () => {
     expect(orb.style.getPropertyValue('--s0')).toBe('1');
     expect(orb.style.getPropertyValue('--s1')).toBe('1.1');
   });
+  it('por elemento: ranged com impacto corte vira lâmina; concussão (ou cut:false) segue esfera', () => {
+    const { container } = render(<BattleStage {...base} action={{ ...acao('ranged'), impacto: 'corte' }} />);
+    expect(Number((container.querySelector('[data-stage-fx="sm-bs-fly"]') as HTMLElement).style.getPropertyValue('--s0'))).toBeLessThan(0.5);
+    cleanup();
+    const c2 = render(<BattleStage {...base} action={{ ...acao('ranged'), impacto: 'corte', cut: false }} />);
+    expect((c2.container.querySelector('[data-stage-fx="sm-bs-fly"]') as HTMLElement).style.getPropertyValue('--s0')).toBe('1');
+  });
   it('inimigo → jogador: sai 1,1 e assenta em 1', () => {
     const { container } = render(<BattleStage {...base} action={{ ...acao('ranged'), actor: 'foe' }} />);
     const orb = container.querySelector('[data-stage-fx="sm-bs-fly"]') as HTMLElement;
