@@ -5098,6 +5098,13 @@ select:focus-visible {
   --sm2-bg: #F1F7F5;
   --sm2-surface: #FFFFFF;
   --sm2-surface-2: #E9F2EF;
+  /* Chaves da jornada do foco (§247): ícone/borda, ≥3:1 sobre bg, surface e surface-2. */
+  --sm2-key-bancada: #9A6B12;
+  --sm2-key-relampago: #0E7C8A;
+  --sm2-key-quadrantes: #5B6B76;
+  --sm2-key-brejo: #4E7330;
+  --sm2-key-elo: #A3532A;
+  --sm2-key-pena: #7A5BA8;
   --sm2-line: #DCE9E6;
   /* tinta */
   --sm2-ink: #0E2422;
@@ -5159,6 +5166,13 @@ select:focus-visible {
   --sm2-bg: #08191A;
   --sm2-surface: #0F2A29;
   --sm2-surface-2: #163735;
+  /* Chaves da jornada do foco (§247): ícone/borda, ≥3:1 sobre bg, surface e surface-2. */
+  --sm2-key-bancada: #D9A441;
+  --sm2-key-relampago: #4FD1E0;
+  --sm2-key-quadrantes: #B8C4CC;
+  --sm2-key-brejo: #8DB866;
+  --sm2-key-elo: #D98A5E;
+  --sm2-key-pena: #C9B6E8;
   --sm2-line: #1E3F3C;
   --sm2-ink: #E9F5F2;
   --sm2-muted: #9DBCB4;

@@ -1052,6 +1052,8 @@ Prompt (EN): "Create a single pixel-art game UI icon: a small sealed letter, an 
 
 ## 27. Jornada do foco: cenários, baús e chaves (pedido do dono, 08/11/2026, REGISTRO §247)
 
+> **Gate 08/11:** revisão formal em `docs/reviews/2026-11-08-arte-jornada.md` — 18 ajustar, 3 reprovar. Não gerar antes de aplicar.
+
 > **Não gerar antes da revisão formal da squad de design** (`.claude/skills/squad-design/`). Os prompts completos, com o prefixo de identidade, a regra de emenda vertical e o prefixo de objeto, estão em `D:/Soulmon/planos/focus-jornada.md` §6.3 e §6.4. Hoje o jogo usa arte provisória em SVG (`src/components/play/JourneyScreen.tsx`); trocar não muda regra.
 
 | # | Asset | Formato | Qtd | Destino | Estado |
