@@ -1066,3 +1066,4 @@ Prompt (EN): "Create a single pixel-art game UI icon: a small sealed letter, an 
 | 27.6 | Miniaturas de cenário | recorte dos blocos 27.1 | 6 | idem | sem geração |
 
 Antes de gerar 27.3 e 27.4: definir os tokens `--sm2-key-*` com contraste AA nos dois temas (hoje são cores provisórias no componente).
+- **Lâmina própria para o ranged de CORTE** (combate): hoje o corte à distância reaproveita o `slash` do melee, escalado (nasce a 0,2× e cresce até o tamanho do corte). Se o dono quiser, gerar uma lâmina de projétil dedicada por elemento (mesma identidade Soulmon).
