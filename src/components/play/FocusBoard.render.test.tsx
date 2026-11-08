@@ -72,3 +72,12 @@ describe('quadro da Oficina (§247)', () => {
     expect((q(container, '[data-focus-start]') as HTMLButtonElement).disabled).toBe(true);
   });
 });
+
+describe('aviso do baú', () => {
+  it('mostra o nome do material e da essência, não o id', async () => {
+    const { itemLabel } = await import('./JourneyScreen');
+    expect(itemLabel({ kind: 'material', id: 'moss', qty: 1 }, true)).toContain('Musgo');
+    expect(itemLabel({ kind: 'material', id: 'moss', qty: 1 }, false)).toContain('Moss');
+    expect(itemLabel({ kind: 'essence', id: 'planta', qty: 2 }, true)).not.toContain('planta ×');
+  });
+});

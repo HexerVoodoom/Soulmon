@@ -13,6 +13,8 @@ import {
 import type { ActiveJourney } from '../../utils/focusJourneyApi';
 import { formatClock } from '../../utils/focoTimer';
 import { useBackLayer } from '../../utils/backStack';
+import { MATERIALS } from '../../utils/buildingQuestsCopy';
+import { essenceName } from '../../utils/essences';
 
 export const KEY_COLOR: Record<JourneyKeyId, string> = {
   bancada: 'var(--sm2-key-bancada, #d9a441)', relampago: 'var(--sm2-key-relampago, #4fd1e0)', quadrantes: 'var(--sm2-key-quadrantes, #b8c4cc)',
@@ -25,7 +27,10 @@ const ENV_TONE: Record<string, [string, string]> = {
 const VIEW_BLOCKS = 1.2;
 
 export function itemLabel(it: JourneyItem, isPt: boolean): string {
-  return it.kind === 'food' ? `${it.id}×${it.qty}` : it.kind === 'essence' ? `${isPt ? 'Essência' : 'Essence'} ×${it.qty}` : `${it.id} ×${it.qty}`;
+  if (it.kind === 'food') return `${it.id} ×${it.qty}`;
+  if (it.kind === 'essence') return `${essenceName(it.id, isPt)} ×${it.qty}`;
+  const m = MATERIALS.find(x => x.id === it.id);
+  return m ? `${m.icon} ${isPt ? m.namePt : m.nameEn} ×${it.qty}` : `${it.id} ×${it.qty}`;
 }
 
 export function JourneyScreen({ language, active, delta, petSprite, lastItems, onPause, onResume, onClaim, onEnd, onClose }: {
