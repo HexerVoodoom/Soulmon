@@ -182,7 +182,7 @@ describe('moeda certa por aba', () => {
   });
 });
 
-import { ALL_ELEMENT_IDS, BASE_ELEMENT_IDS } from '../../utils/elementDex';
+import { ALL_ELEMENT_IDS, BASE_ELEMENT_IDS, ESSENCE_ELEMENT_IDS } from '../../utils/elementDex';
 import { elementsMatchingBases } from '../../utils/elementPotion';
 
 describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
@@ -202,7 +202,7 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
   it('Essências: lista todos os elementos com preço; sem onBuyEssence não há botão (só vitrine)', () => {
     const { container } = abrirC();
     fireEvent.click(screen.getByRole('tab', { name: 'Essences' }));
-    expect(container.querySelectorAll('[data-essence-row]').length).toBe(ALL_ELEMENT_IDS.length);
+    expect(container.querySelectorAll('[data-essence-row]').length).toBe(ESSENCE_ELEMENT_IDS.length);
     expect(container.querySelector('[data-credit-exchange]')).toBeNull();
     expect(container.querySelector('[data-essence-buy]')).toBeNull();
     expect(container.textContent).toMatch(/1 per base element, 2 per pair/);
@@ -261,12 +261,12 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
     const [a, b] = BASE_ELEMENT_IDS;
     fireEvent.click(container.querySelector('[data-slot="0"]')!);
     fireEvent.click(container.querySelector(`[data-base="${a}"]`)!);
-    expect(ids()).toEqual(elementsMatchingBases([a]));
+    expect(ids()).toEqual(elementsMatchingBases([a], ESSENCE_ELEMENT_IDS));
     expect(ids().length).toBeGreaterThan(1);
     fireEvent.click(container.querySelector('[data-slot="1"]')!);
     fireEvent.click(container.querySelector(`[data-base="${b}"]`)!);
-    expect(ids()).toEqual(elementsMatchingBases([a, b]));
-    expect(ids().length).toBeLessThan(elementsMatchingBases([a]).length);
+    expect(ids()).toEqual(elementsMatchingBases([a, b], ESSENCE_ELEMENT_IDS));
+    expect(ids().length).toBeLessThan(elementsMatchingBases([a], ESSENCE_ELEMENT_IDS).length);
     expect(container.querySelector('[data-cambista-essence-list]')).not.toBeNull();
   });
 

@@ -12,9 +12,10 @@
  *
  * Chave no inventário (`foodInventory`): `potion:<elementId>` (ids `[a-z_]{2,24}`) — uma entrada de `SPECIAL_ITEMS` por elemento.
  */
-import { ESSENCE_ELEMENT_IDS, BASE_ELEMENT_IDS, essenceComposition, isEssenceElement } from './elementDex';
+import { ALL_ELEMENT_IDS, ESSENCE_ELEMENT_IDS, BASE_ELEMENT_IDS, essenceComposition, isEssenceElement } from './elementDex';
 import { essenceName, spendEssences, type EssenceDrop } from './essences';
 import type { SpecialItem } from './shop';
+import { readLocal, writeLocal } from './safeStorage';
 
 export const POTION_COSTS = {
   /** Elemento base: quantidade da PRÓPRIA essência. Ao atingir isto a Vesca oferece a poção (`essenceThresholdCrossings`). */
@@ -75,17 +76,17 @@ const VESCA_OFFERED_KEY = 'soulmon:vescaOffered';
 /** Elementos que a Vesca já ofereceu (por aparelho; evita repetir o modal para veterano a cada abertura). Sem storage = vazio. */
 export function readVescaOffered(): Set<string> {
   try {
-    const raw = JSON.parse(localStorage.getItem(VESCA_OFFERED_KEY) ?? '[]');
+    const raw = JSON.parse(readLocal(VESCA_OFFERED_KEY) ?? '[]');
     return new Set(Array.isArray(raw) ? raw.filter((x): x is string => typeof x === 'string') : []);
   } catch { return new Set(); }
 }
 export function writeVescaOffered(ids: ReadonlySet<string>): void {
-  try { localStorage.setItem(VESCA_OFFERED_KEY, JSON.stringify([...ids])); } catch { /* storage indisponível */ }
+  writeLocal(VESCA_OFFERED_KEY, JSON.stringify([...ids]));
 }
 
-/** Filtro E: elementos cuja composição contém TODAS as bases escolhidas (sem escolha = todos). Ordem do catálogo. */
-export function elementsMatchingBases(selected: readonly (string | null | undefined)[]): string[] {
-  return ESSENCE_ELEMENT_IDS.filter(id => compositionHasBases(elementComposition(id), selected));
+/** Filtro E: elementos cuja composição contém TODAS as bases escolhidas (sem escolha = todos). Ordem do catálogo (padrão: os 210 do dex/Forja Hex; Cambista e Poção passam `ESSENCE_ELEMENT_IDS`, com os curados). */
+export function elementsMatchingBases(selected: readonly (string | null | undefined)[], catalog: readonly string[] = ALL_ELEMENT_IDS): string[] {
+  return catalog.filter(id => compositionHasBases(elementComposition(id), selected));
 }
 
 /** Bases válidas escolhidas no filtro (sem repetição, sem vazio). */
@@ -108,7 +109,7 @@ export function elementMatchesBases(id: string | null | undefined, selected: rea
 
 /** Os que cabem no filtro E o jogador consegue pagar. */
 export function affordablePotionElements(essences: Record<string, number> | undefined, selected: readonly (string | null | undefined)[], inventory?: Inventory): string[] {
-  return elementsMatchingBases(selected).filter(id => canAffordPotion(essences, id, inventory));
+  return elementsMatchingBases(selected, ESSENCE_ELEMENT_IDS).filter(id => canAffordPotion(essences, id, inventory));
 }
 
 type PotionState = {

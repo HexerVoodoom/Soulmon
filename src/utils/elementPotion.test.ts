@@ -29,9 +29,10 @@ describe('poção de elemento', () => {
     const w = elementsMatchingBases(['agua']);
     expect(w).toContain('agua'); expect(w).toContain('vapor');
     expect(w.every(id => elementComposition(id)!.includes('agua'))).toBe(true);
-    const both = elementsMatchingBases([a, b]);
+    const both = elementsMatchingBases([a, b], ESSENCE_ELEMENT_IDS);
     expect(both).toContain('vapor'); expect(both).toContain('geiser');
-    expect(elementsMatchingBases([]).length).toBe(ESSENCE_ELEMENT_IDS.length);
+    expect(elementsMatchingBases([]).length).toBe(210);
+    expect(elementsMatchingBases([], ESSENCE_ELEMENT_IDS).length).toBe(ESSENCE_ELEMENT_IDS.length);
     expect(ESSENCE_ELEMENT_IDS.length).toBe(269);
     expect(elementsMatchingBases([a, null, a])).toEqual(elementsMatchingBases([a]));
   });
