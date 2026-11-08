@@ -15,7 +15,7 @@ import { formatClock } from '../../utils/focoTimer';
 import { useBackLayer } from '../../utils/backStack';
 import { MATERIALS } from '../../utils/buildingQuestsCopy';
 import { essenceName } from '../../utils/essences';
-import { JOURNEY_ART, KEY_ART, CHEST_ART, ARRIVAL_ART, CHEST_OPEN_SHEET } from './journeyArt';
+import { JOURNEY_ART, KEY_ART, CHEST_ART, ARRIVAL_ART, CHEST_OPEN_SHEET, CHEST_GLOW_SHEET } from './journeyArt';
 
 export const KEY_COLOR: Record<JourneyKeyId, string> = {
   bancada: 'var(--sm2-key-bancada)', relampago: 'var(--sm2-key-relampago)', quadrantes: 'var(--sm2-key-quadrantes)',
@@ -96,6 +96,7 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
           const has = special && active.keys.includes(c.type as JourneyKeyId);
           return <g key={c.k} data-journey-chest={c.k} data-open={open} data-type={c.type}>
             <path d={`M${at.x * 100},${Y(at.y)} Q${(at.x + side * 0.1) * 100},${Y(at.y) - 8} ${bx},${Y(at.y) - 10}`} fill="none" stroke="#5c8f84" strokeWidth={1.6} strokeDasharray={open ? undefined : '1.5 1.5'} />
+            {has && !open && <svg data-journey-glow x={bx - 14} y={Y(at.y) - 27} width={28} height={28} viewBox="0 0 128 128"><image href={CHEST_GLOW_SHEET} width={384} height={128} /></svg>}
             {(() => {
               const img = c.type === 'common' ? CHEST_ART.common : CHEST_ART[c.type as JourneyKeyId];
               if (open && c.type === 'common') return <svg x={bx - 9} y={Y(at.y) - 22} width={18} height={18} viewBox="576 0 192 256" preserveAspectRatio="xMidYMid meet"><image href={CHEST_OPEN_SHEET} width={768} height={256} /></svg>;
