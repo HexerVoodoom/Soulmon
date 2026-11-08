@@ -106,7 +106,7 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
       <section data-journey-modal style={{ position: 'absolute', left: 12, right: 12, bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))', zIndex: 2, background: 'var(--sm2-surface)', color: 'var(--sm2-ink)', borderRadius: 14, padding: mini ? '6px 12px' : 12, boxShadow: '0 6px 18px rgba(0,0,0,.4)', display: 'grid', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <button type="button" data-journey-clock onClick={() => setMini(m => !m)} aria-expanded={!mini} aria-label={isPt ? 'Recolher ou abrir o relógio' : 'Collapse or expand the timer'} style={{ background: 'none', border: 0, color: 'inherit', padding: 0, minHeight: 44, display: 'flex', alignItems: 'baseline', gap: 8, cursor: 'pointer' }}>
-            <span className="sm2-num" style={{ fontFamily: 'var(--sm2-font-display)', fontWeight: 700, fontSize: 28 }}>{formatClock(left)}</span>
+            <span className="sm2-num" style={{ fontFamily: 'var(--sm2-font-display)', fontWeight: 700, fontSize: 'var(--sm2-text-2xl)' }}>{formatClock(left)}</span>
             <span style={{ ...sm2Hint, margin: 0 }}>{p >= 1 ? (isPt ? 'Chegou' : 'Arrived') : paused ? (isPt ? 'Pausa' : 'Paused') : (isPt ? 'Foco' : 'Focus')}</span>
           </button>
           {!mini && <span aria-label={isPt ? 'Chaves desta jornada' : 'Keys for this journey'} style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>

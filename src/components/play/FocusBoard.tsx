@@ -35,10 +35,12 @@ const loadPrefs = (): { mode: JourneyMode; env: FocusEnvironmentId } => {
   return { mode: r?.mode === 'p50' ? 'p50' : 'p25', env: isFocusEnvironmentId(r?.env) ? r!.env as FocusEnvironmentId : 'forest' };
 };
 
-export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, onCompleteTask = () => {}, onGrants }: {
+export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, onCompleteTask = () => {}, onGrants, onFocusCycle }: {
   language: Language; todayKey: string; saveId?: string; tasks?: BoardTask[]; petSprite?: string;
   onCompleteTask?: (id: string) => void;
   onGrants: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => void;
+  /** Um foco terminou de verdade: a missão do dia conta o evento (REGISTRO §52). */
+  onFocusCycle?: () => void;
 }) {
   const isPt = language === 'pt-BR';
   const [keys, setKeys] = useState<JourneyKeyId[]>(loadBoardKeys);
@@ -86,6 +88,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
         setKeys([]); saveBoardKeys([]);
         setDraft(emptyDraft()); saveDraft(emptyDraft());
         setShowJourney(false);
+        if (action === 'claim') onFocusCycle?.();
         setDoneNote(action === 'end'
           ? (isPt ? 'Jornada encerrada. O que o Soulmon achou pelo caminho já é seu.' : 'Journey ended. What your Soulmon found on the way is yours.')
           : r.dungeonKeyDay ? (isPt ? 'Jornada concluída. A chave do Calabouço é sua hoje.' : 'Journey complete. The Dungeon key is yours today.')
