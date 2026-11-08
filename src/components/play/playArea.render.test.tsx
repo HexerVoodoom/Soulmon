@@ -116,7 +116,7 @@ const ESPERA_LAZY_MS = 30_000;
 // Os doubles de `vi.mock` acima já valem; depois disso o `lazy()` do AreaView
 // resolve do cache de módulos e o `waitFor` só espera o React, não o disco.
 await Promise.all([
-  import('./PlaySheets'), import('../DungeonGame'), import('./OficinaSheet'),
+  import('./PlaySheets'), import('../DungeonGame'),
   import('./CadernoSheet'), import('./PasseioSheet'),
 ]);
 vi.setConfig({ testTimeout: 60_000 });
