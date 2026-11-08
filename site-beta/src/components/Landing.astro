@@ -197,10 +197,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         <div class="arvore-bloco veu">
           <h3>{s.arvoreH}</h3>
           <div class="linhas" data-linhas data-rotulo={s.linhaRotulo} hidden>
-            <button type="button" class="seta-linha" data-linha-ant aria-label={s.linhaAnt}><img src={b('/dono/seta-esq.webp')} data-hover={b('/dono/seta-esq-hover.webp')} data-off={b('/dono/seta-esq-off.webp')} width="48" height="32" alt="" loading="lazy" decoding="async" /></button>
             <div class="linhas-chips">{s.linhas.map((n, i) => <button type="button" class="chip-linha" data-linha-bt={i} aria-pressed={i === 0 ? 'true' : 'false'}>{n}</button>)}</div>
-            <button type="button" class="seta-linha" data-linha-prox aria-label={s.linhaProx}><img src={b('/dono/seta-dir.webp')} data-hover={b('/dono/seta-dir-hover.webp')} data-off={b('/dono/seta-dir-off.webp')} width="48" height="32" alt="" loading="lazy" decoding="async" /></button>
-            <p class="contador" aria-live="polite"><span data-linha-pos>1</span> {c.de} 3</p>
           </div>
           {['planta', 'fada', 'fogo'].map((lin, li) => (
           <ol class="arvore" data-linha={lin} aria-label={`${s.arvoreRotulo}: ${s.linhas[li]}`}>
@@ -278,7 +275,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
       </div>
     </section>
 
-    <dialog class="popup npc-modal" role="dialog" data-npc-modal aria-labelledby="npc-h" aria-describedby="npc-p" data-falas={falas}>
+    <dialog class="popup npc-modal" role="dialog" data-npc-modal aria-labelledby="npc-h" aria-describedby="npc-p" data-falas={falas} data-morador={u.morador}>
       <img class="npc-modal-img" data-npc-img src={vazio} width="256" height="256" alt="" />
       <h2 id="npc-h" data-npc-h></h2>
       <p id="npc-p" class="npc-fala" data-npc-p></p>
@@ -290,14 +287,14 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
       <section class="cena recursos" id="recursos" aria-labelledby="recursos-h">
         <div class="cen-fundo" data-arte aria-hidden="true" style={cen('cen-circuito')}></div>
         <div class="recursos-cab veu">
+          <p class="rotulo rot-gameplay">{t.rotulos.gameplay}</p>
           <h2 id="recursos-h">{r.h2}</h2>
           <p class="frase">{r.frase}</p>
         </div>
         <ul class="cartoes" tabindex="0" aria-label={r.h2}>
           {r.cartoes.filter(([id]) => prints.some((p) => p.id === id)).map(([id, h, p, alt]) => (
-            <li class="cartao moldura">
+            <li class="cartao">
               <figure class="aparelho mini">
-                <figcaption class="rotulo rot-gameplay">{t.rotulos.gameplay}</figcaption>
                 <div class="casca"><div class="tela">
                   <picture>
                     <source type="image/avif" srcset={printSrc(id, 'avif')} sizes="(min-width: 1024px) 220px, 200px" />
@@ -342,12 +339,11 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
       <div class="cen-fundo" aria-hidden="true" style={cen('cen-atelier')}></div>
       <div class="entrar-cab">
         <h2 id="entrar-h">{e.h2}</h2>
-        <p class="frase">{e.frase}</p>
+        <p class="frase">{e.aviso}</p>
       </div>
       <ol class="passos">
-        {e.passos.map(([a, b], i) => <li class="passo"><img class="passo-card" src={passos[i]} width="420" height="525" alt="" loading="lazy" /><span class="passo-tx"><strong><span class="sr">{i + 1}. </span>{a}</strong><span>{b}</span></span></li>)}
+        {e.passos.map(([a, b], i) => <li class="passo">{i === 0 ? <a class="passo-link" href="#inscrever"><img class="passo-card" src={passos[i]} width="420" height="525" alt="" loading="lazy" /><span class="passo-tx"><strong><span class="sr">{i + 1}. </span>{a}</strong><span>{b}</span></span></a> : <><img class="passo-card" src={passos[i]} width="420" height="525" alt="" loading="lazy" /><span class="passo-tx"><strong><span class="sr">{i + 1}. </span>{a}</strong><span>{b}</span></span></>}</li>)}
       </ol>
-      <p class="aviso-vaga">{e.aviso}</p>
       <ul class="ilhas" aria-hidden="true">{['arena-bosque', 'arena-salao', 'arena-lab'].map((n) => <li><picture><source type="image/avif" srcset={b(`/dono/${n}.avif`)} /><img src={b(`/dono/${n}.webp`)} width="360" height="237" alt="" loading="lazy" decoding="async" /></picture></li>)}</ul>
     </section>
 

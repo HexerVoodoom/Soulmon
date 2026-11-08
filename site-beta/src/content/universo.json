@@ -12,8 +12,8 @@
     },
     "jogos": {
       "npc": "/npc/jogos.webp",
-      "pt": "Aqui cuido dos jogos leves e divertidos: Combina 3, Soul Barrage, corrida, Pedra-papel-tesoura e o Mind Workshop. Um jeito gostoso de dar uma pausa e exercitar o raciocínio.",
-      "en": "I look after the light, fun games here: Match 3, Soul Barrage, the runner, Rock-paper-scissors and the Mind Workshop. A pleasant way to take a break and exercise your reasoning.",
+      "pt": "Aqui cuido dos jogos leves e divertidos: Combina 3, Soul Barrage, corrida, Pedra-papel-tesoura e o Mind Workshop. Dá para treinar o raciocínio brincando, e os minijogos rendem Bits.",
+      "en": "I look after the light, fun games here: Match 3, Soul Barrage, the runner, Rock-paper-scissors and the Mind Workshop. You can train your reasoning while playing, and minigames earn Bits.",
       "habita": {
         "pt": "Eu moro nos Jogos. Passe aqui para uma partida leve e divertida.",
         "en": "I live in Games. Stop by for a light, fun round."
@@ -48,20 +48,20 @@
     },
     "laboratorio": {
       "npc": "/npc/laboratorio-pet.webp",
-      "pt": "No Laboratório, acompanho a evolução do seu Soulmon. Aqui ficam o Vínculo, o Drive e o perfil dele. É onde você vê quanto ele mudou e decide quando evoluir.",
-      "en": "In the Laboratory, I follow your Soulmon's evolution. The Bond, the Drive and its profile live here. It's where you see how much it has changed and decide when to evolve.",
+      "pt": "No Laboratório, acompanho a evolução do seu Soulmon. Aqui ficam o Vínculo, o perfil dele e o Centro de Evolução. É onde você vê quanto ele mudou e decide quando evoluir.",
+      "en": "In the Laboratory, I follow your Soulmon's evolution. The Bond, its profile and the Evolution Center live here. It's where you see how much it has changed and decide when to evolve.",
       "habita": {
-        "pt": "Eu moro no Laboratório. Evolução e perfil ficam aqui.",
-        "en": "I live in the Laboratory. Evolution and profile are here."
+        "pt": "Eu moro no Laboratório. Vínculo, perfil e evolução ficam aqui.",
+        "en": "I live in the Laboratory. Bond, profile and evolution are here."
       }
     },
     "forja": {
       "npc": "/npc/forja.webp",
-      "pt": "Na Forja eu guardo ferramentas que ajudam a cumprir as tarefas mais difíceis: foco, caderno e um refúgio para respirar. Pegue o que precisar e siga no seu ritmo.",
-      "en": "In the Forge I keep tools that help you get the hardest tasks done: focus, a journal and a refuge to catch your breath. Take what you need, at your own pace.",
+      "pt": "Na Forja ficam ferramentas que ajudam a cumprir as tarefas mais difíceis. Pegue o que precisar e siga no seu ritmo.",
+      "en": "In the Forge you'll find tools that help you get the hardest tasks done. Take what you need and go at your own pace.",
       "habita": {
-        "pt": "Eu moro na Forja. Foco, caderno e refúgio ficam aqui.",
-        "en": "I live in the Forge. Focus, journal and refuge are here."
+        "pt": "Eu moro na Forja, onde ficam as ferramentas para as tarefas difíceis.",
+        "en": "I live in the Forge, where the tools for the hardest tasks are."
       }
     }
   },

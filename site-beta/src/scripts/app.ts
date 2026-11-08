@@ -313,13 +313,9 @@ function sorteio() {
 function linhasArvore() {
   const caixa = $('[data-linhas]'); if (!caixa) return;
   const bts = $$<HTMLButtonElement>('[data-linha-bt]', caixa); const arvores = $$('ol.arvore[data-linha]');
-  const ant = $<HTMLButtonElement>('[data-linha-ant]', caixa)!; const prox = $<HTMLButtonElement>('[data-linha-prox]', caixa)!; const pos = $('[data-linha-pos]', caixa)!;
   caixa.hidden = false; caixa.setAttribute('role', 'group'); caixa.setAttribute('aria-label', caixa.dataset.rotulo!);
-  let atual = 0;
-  const seta = (bt: HTMLButtonElement, off: boolean) => { const im = bt.querySelector('img')!; im.dataset.base ??= im.src; bt.setAttribute('aria-disabled', String(off)); im.src = off ? im.dataset.off! : im.dataset.base; };
-  const ver = (n: number) => { atual = n; pos.textContent = String(n + 1); bts.forEach((x, i) => x.setAttribute('aria-pressed', String(i === n))); arvores.forEach((x, i) => { x.hidden = i !== n; }); seta(ant, n === 0); seta(prox, n === bts.length - 1); };
+  const ver = (n: number) => { bts.forEach((x, i) => x.setAttribute('aria-pressed', String(i === n))); arvores.forEach((x, i) => { x.hidden = i !== n; }); };
   bts.forEach((x, i) => x.addEventListener('click', () => ver(i)));
-  ant.addEventListener('click', () => { if (atual > 0) ver(atual - 1); }); prox.addEventListener('click', () => { if (atual < bts.length - 1) ver(atual + 1); });
   ver(0);
 }
 
@@ -333,7 +329,8 @@ function modalNpc() {
     const f = falas[bt.dataset.lugar!]; if (!f) return;
     origem = bt;
     img.src = habita && bt.dataset.npc ? bt.dataset.npc : f.npc;
-    h.textContent = (bt.querySelector('strong')?.textContent ?? bt.getAttribute('aria-label')?.split(': ').pop() ?? '').trim();
+    const lugar = (bt.querySelector('strong')?.textContent ?? bt.getAttribute('aria-label')?.split(': ').pop() ?? '').trim();
+    h.textContent = habita ? `${d.dataset.morador} · ${lugar}` : lugar;
     p.textContent = habita ? f.habita : f.fala;
     d.showModal();
     $<HTMLButtonElement>('[data-npc-fechar]', d)!.focus();

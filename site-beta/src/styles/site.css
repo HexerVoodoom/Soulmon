@@ -766,3 +766,41 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .tarde .ficha-moldura { border-width: 36px; border-color: transparent; border-image: var(--a-ficha, none) 100 / 36px / 0 stretch; }
 .no { background-image: none; background-color: var(--sb-sup); }
 .tarde .no { background: var(--a-arvoreNo, none) center / 100% 100% no-repeat; }
+
+/* ---------- v4.3: crítica forte ---------- */
+.topo.rolada { background: rgba(7, 20, 19, .97); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+/* foco do botão de cipó: anel que segue a forma (drop-shadow), nunca retângulo */
+.botao:focus-visible { outline: none; border-image-source: var(--a-botaoHover, var(--a-botao, none)); filter: drop-shadow(0 0 2px #5ff3e0) drop-shadow(0 0 5px #5ff3e0); }
+.botao.contorno:focus-visible { filter: drop-shadow(0 0 2px #5ff3e0) drop-shadow(0 0 5px #5ff3e0); }
+/* CTA fixo do celular: 56-64 px */
+.fixo { padding: 4px var(--sb-margem-dir) calc(4px + env(safe-area-inset-bottom)) var(--sb-margem-esq); }
+.fixo .botao.primario { height: 56px; min-width: 0; border-width: 19px 23px; }
+/* mosaico: véu forte atrás do texto */
+.soul-mosaico::after { background: linear-gradient(180deg, rgba(7, 20, 19, .88), rgba(7, 20, 19, .84) 45%, rgba(7, 20, 19, .92)); }
+/* O que você faz: um selo, sem moldura dupla, títulos na dobra */
+.recursos-cab .rotulo { display: inline-block; margin-bottom: var(--sb-e-2); }
+.cartao { padding: 0; }
+@media (min-width: 1024px) { .cartao .aparelho.mini { width: 168px; margin-inline: auto; } .recursos { padding-top: calc(var(--sb-secao-y) - 24px); } }
+/* Universo: o 1º cartão ocupa mais de uma coluna; no celular, grade de 2 colunas sem corte */
+.areas { display: grid; grid-template-columns: 1fr 1fr; overflow: visible; scroll-snap-type: none; }
+.areas > li { width: auto; }
+.areas > li:first-child { grid-column: 1 / -1; }
+.areas > li:first-child .area-arte { aspect-ratio: 8 / 3; }
+.areas .area-tx { padding: var(--sb-e-2); }
+.areas .area-tx span { font-size: var(--sb-t-legal); }
+@media (min-width: 768px) { .areas { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 1024px) { .areas { grid-template-columns: repeat(4, 1fr); } .areas > li:first-child { grid-column: span 2; } }
+/* Árvore: sem rótulos "Forma N" visíveis; nós menores no celular */
+.arvore-rot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); top: auto; left: auto; right: auto; }
+@media (max-width: 1023px) { .arvore { --no: 72px; width: 240px; } .arvore-lig { height: 28px; } }
+@media (min-width: 1024px) { .arvore { padding-top: 0; } }
+/* Como entrar: passo 1 é âncora; subtexto entre as barras do cartão; cabeçalho à esquerda */
+.passo-link { display: block; position: absolute; inset: 0; color: inherit; text-decoration: none; }
+.passo-link:focus-visible { outline: none; filter: drop-shadow(0 0 2px #5ff3e0) drop-shadow(0 0 5px #5ff3e0); }
+.passos .passo-tx { grid-template-rows: none; display: block; }
+.passos .passo-tx strong { position: absolute; left: 12%; right: 12%; top: 62.5%; height: 8.4%; }
+.passos .passo-tx > span:not(.sr) { position: absolute; left: 15%; right: 15%; top: 80.6%; height: 6.6%; padding: 0; display: grid; align-items: center; font-size: clamp(.7rem, 2.9vw, .8125rem); line-height: 1; }
+.passos .passo-tx { inset: 0; }
+.entrar-cab { max-width: none !important; margin-inline: 0 !important; justify-content: flex-start !important; text-align: left; }
+.linhas { display: flex; justify-content: center; max-width: none; }
+@media (max-width: 1023px) { .arvore-caminhos .arvore-nos { font-size: .6875rem; } }

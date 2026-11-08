@@ -28,6 +28,20 @@ Precedência: código > teste > doc. Se o código mudar, atualize aqui antes de 
 | Feira (Chefe e Desafio) | implementada | Chefe do clã | Mínimo de 3 membros. Docs antigos dizem desligada; o código diz ligada desde 29/10 | `functions/api/_feira.js:40` |
 | PT-BR e inglês | implementada | Jogo nos dois idiomas | | `CLAUDE.md` |
 
+## O que cada lugar do mapa guarda (para falas de NPC e legendas)
+
+| Lugar | Pode dizer | Fonte |
+|---|---|---|
+| Exploração | Passeio e Endless Rift (descida sem teto de camadas) | REGISTRO §172 |
+| Jogos | Combina 3, Soul Barrage, corrida, Pedra-papel-tesoura, Mind Workshop; minijogos rendem Bits (teto diário) | `CLAUDE.md`, `BACKLOG-BETA3` |
+| Arena | Duelos e Torneio | REGISTRO §177 |
+| Hall | Feira, Salão do Clã, Grove; amigos e presentes | REGISTRO §173, §203 |
+| Guilda | Casa e Missão do clã, Guerra 4x4 | `CLAUDE.md` |
+| Laboratório | Vínculo, Perfil (a ficha do Soulmon) e Centro de Evolução | `AreaView.tsx` (QA 05/11). **Não citar "Drive"**: não confirmado |
+| Forja | Frase do dono (05/11): "ferramentas que ajudam a cumprir as tarefas mais difíceis". **Não detalhar** (foco, caderno, refúgio etc.): o conteúdo da Forja não está confirmado no código lido | Decisão do dono |
+
+Sem promessa de saúde, descanso terapêutico ou "bem-estar" nas falas.
+
 ## Números e processo que podem ser ditos
 
 | Afirmação | Base |

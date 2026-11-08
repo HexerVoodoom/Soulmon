@@ -67,12 +67,14 @@ wa = np.array(w); rr, gg, bb = [wa[..., i].astype(int) for i in range(3)]
 vinha = (gg > rr * 1.1) & (gg > 130) & (bb < 90) & (rr > 90)
 reg = np.zeros(wa.shape[:2], bool); reg[140:770, 160:1150] = True; reg[640:810, 130:340] = False
 apaga = reg & ~vinha
-cristal = (gg > 150) & (bb > 170) | ((rr > 175) & (rr > bb * 2))
-r2 = np.zeros(wa.shape[:2], bool); r2[640:810, 130:340] = True
-apaga |= r2 & ~vinha & ~cristal & (lum(wa) < 95)
+yy = np.arange(wa.shape[0])[:, None] * np.ones((1, wa.shape[1]), int)
+cristal = ((gg > 150) & (bb > 170)) | ((rr > 175) & (rr > bb * 2) & (yy >= 772))   # cristal do canto e a faixa de baixo; o cobre solto (resto do botão de seta, "(") sai
+r2 = np.zeros(wa.shape[:2], bool); r2[620:810, 130:340] = True
+apaga |= r2 & ~vinha & ~cristal
 wa[apaga] = (11, 43, 47, 255)
 w = Image.fromarray(wa)
 peca(w, (70, 20, 1235, 850), 'moldura-ficha', 'cobre', 6, 15)
+_m = np.array(Image.open(O + 'moldura-ficha.png')); _m[630:665, 250:280] = (11, 43, 47, 255); Image.fromarray(_m).save(O + 'moldura-ficha.png')   # grãos soltos do botão de seta da folha
 for nome, x0, y0, x1, y1, md in [('seta-esq', 1280, 70, 1460, 195, 'cobre'), ('seta-dir', 1500, 70, 1680, 195, 'cobre'), ('seta-esq-hover', 1275, 210, 1470, 335, 'cobre'), ('seta-dir-hover', 1495, 210, 1690, 335, 'cobre'), ('seta-esq-inativa', 1280, 485, 1460, 605, 'escuro'), ('seta-dir-inativa', 1500, 485, 1680, 605, 'escuro')]:
     peca(w, (x0, y0, x1, y1), nome, md, 3)
 
