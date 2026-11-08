@@ -8664,6 +8664,14 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
   100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.45); }
 }
 .sm-bs-fly.sm-bs-big { animation-name: sm-bs-fly-big; }
+/* Perspectiva (câmera baixa): --s0/--s1 vêm de `utils/combate/projetilEscala.ts` (orb 1→1,1 indo ao inimigo, 1,1→1 vindo; corte à distância nasce pequeno e cresce). */
+@keyframes sm-bs-fly-persp {
+  0% { opacity: 0; transform: translate(0, 0) scale(var(--s0, 1)); }
+  12% { opacity: 1; transform: translate(calc(var(--dx) * .08), calc(var(--dy) * .08)) scale(calc(var(--s0, 1) + (var(--s1, 1) - var(--s0, 1)) * .12)); }
+  96% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(var(--s1, 1)); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(var(--s1, 1)); }
+}
+.sm-bs-fly.sm-bs-persp { animation-name: sm-bs-fly-persp; }
 @keyframes sm-bs-pop-big {
   0% { opacity: 0; transform: scale(.4); }
   22% { opacity: 1; transform: scale(1.22); }

@@ -48,6 +48,7 @@ import { type RingGrade, type RingSpec } from '../../utils/energia';
 import { SpecialRing, DodgeButtons } from './PveMechanics';
 import { combatSceneBg, combatDomainSceneBg, combatShield, combatGlowPair } from '../../utils/combatArt';
 import { playAttack, playAttackRanged, playCharge, playDefend, playSpecial } from '../../utils/sounds';
+import { projectileScaleRange } from '../../utils/combate/projetilEscala';
 import { prepararSfxCombate } from '../../utils/sfxCombateCarga';
 
 /** O estilo da `TorcidaLayer` que envolve a cena: a tela inteira, acima das páginas. */
@@ -93,6 +94,8 @@ export interface StageAction {
   kind: StageActionKind;
   /** Só no `special`: a FORMA da skill especial (investida ou projétil). Ausente = à distância. */
   strike?: StrikeForm;
+  /** Só visual: à distância (`ranged`) como CORTE — a lâmina viaja até o alvo (nasce pequena e cresce). Ausente = projétil comum ('concussão'). */
+  cut?: boolean;
   /** Elemento de quem ataca. */
   element: string;
   /** Elemento do DEFENSOR quando a defesa automática bloqueou: mostra a barreira dele no lugar do impacto. */
@@ -403,9 +406,9 @@ function Fighter({ f, spot, flip, role, zIndex, lunge, hitKey, hitDelay, charged
 }
 
 /** Uma figura de FX centrada num ponto. `anim` = a classe; `delay`/`dur` em ms. */
-function Fx({ src, x, y, size, anim, delay, dur, rot = 0, flipX = false, extra, z = 4, big = false }: {
+function Fx({ src, x, y, size, anim, delay, dur, rot = 0, flipX = false, extra, z = 4, big = false, persp = false }: {
   src: string | undefined; x: number; y: number; size: number; anim: string; delay: number; dur: number;
-  rot?: number; flipX?: boolean; extra?: CSSProperties; z?: number; big?: boolean;
+  rot?: number; flipX?: boolean; extra?: CSSProperties; z?: number; big?: boolean; persp?: boolean;
 }) {
   if (!src) return null;
   return (
@@ -413,7 +416,7 @@ function Fx({ src, x, y, size, anim, delay, dur, rot = 0, flipX = false, extra, 
       aria-hidden="true"
       data-stage-fx={anim}
       data-stage-fx-big={big ? '1' : undefined}
-      className={big ? `${anim} sm-bs-big` : anim}
+      className={`${anim}${big ? ' sm-bs-big' : ''}${persp ? ' sm-bs-persp' : ''}`}
       style={{
         position: 'absolute', left: x - size / 2, top: y - size / 2, width: size, height: size, zIndex: z, pointerEvents: 'none',
         ['--bs-delay' as string]: `${delay}ms`, ['--bs-dur' as string]: `${dur}ms`,
@@ -653,6 +656,7 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
   const slashFlip = fxMirror(el, 'slash', travel);
   const orb = orbPose(el, travel, ang);
   const fxScale = Math.max(1, meSpot.size / 190);
+  const cutRanged = form === 'ranged' && !!action.cut;
 
   const layers: ReactNode[] = [];
   // PR11: o círculo de cast do ESPECIAL vale nas duas modalidades (movimento reduzido: flash único); o básico não tem.
@@ -680,13 +684,24 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
     if (form === 'ranged') {
       const baseFly = action.castMs ?? (big ? 320 : 180);
       const flyDelay = intro + baseFly;
-      layers.push(
+      // Perspectiva (câmera baixa): o jogador está mais perto. `projetilEscala.ts` é o dono dos extremos.
+      const dir = action.actor === 'me' ? 'toFoe' : 'toMe';
+      const sc = projectileScaleRange(cutRanged ? 'cut' : 'orb', dir);
+      const persp = { ['--s0' as string]: String(sc.from), ['--s1' as string]: String(sc.to) };
+      const vec = { ['--dx' as string]: `${Math.round(dx)}px`, ['--dy' as string]: `${Math.round(dy)}px` };
+      layers.push(cutRanged ? (
+        <Fx
+          key="slashfly" src={fxFrame(el, 'slash')} x={from.x} y={from.y} size={Math.round(toSpot.size * (big ? SLASH_SCALE_SPECIAL : SLASH_SCALE))}
+          anim="sm-bs-fly" persp delay={flyDelay} dur={Math.max(200, impact - baseFly)} flipX={slashFlip}
+          extra={{ ...vec, ...persp } as CSSProperties}
+        />
+      ) : (
         <Fx
           key="orb" src={fxFrame(el, 'orb')} x={from.x} y={from.y} size={Math.round((big ? ORB_PX_SPECIAL : ORB_PX) * fxScale)}
-          anim="sm-bs-fly" big={big} delay={flyDelay} dur={Math.max(200, impact - baseFly)} rot={orb.rot} flipX={orb.flip}
-          extra={{ ['--dx' as string]: `${Math.round(dx)}px`, ['--dy' as string]: `${Math.round(dy)}px` } as CSSProperties}
-        />,
-      );
+          anim="sm-bs-fly" big={big} persp={!big} delay={flyDelay} dur={Math.max(200, impact - baseFly)} rot={orb.rot} flipX={orb.flip}
+          extra={{ ...vec, ...persp } as CSSProperties}
+        />
+      ));
     } else {
       layers.push(
         <Fx key="slash" src={fxFrame(el, 'slash')} x={to.x} y={to.y} size={Math.round(toSpot.size * (big ? SLASH_SCALE_SPECIAL : SLASH_SCALE))} anim="sm-bs-pop" big={big} delay={intro + Math.max(0, impact - 240)} dur={big ? 520 : 400} flipX={slashFlip} />,
@@ -695,7 +710,7 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
   }
   // A5 (rodada 7): o golpe FÍSICO (investida) é só o CORTE — sem o splash/"crash" do impacto. O splash é do dano à
   // distância/mágico (projétil, especial à distância). O escudo (bloqueio) e o movimento reduzido (sem corte, só o flash) mantêm o frame.
-  if (reduced || blocked || form !== 'melee') layers.push(
+  if (reduced || blocked || (form !== 'melee' && !cutRanged)) layers.push(
     <Fx key="land" src={landing} x={to.x} y={to.y} size={landSize} anim="sm-bs-pop" delay={intro + Math.max(0, impact - 60)} dur={reduced ? total - impact : Math.min(700, total - impact + 60)} flipX={blocked && !combatShield(action.shield) && fxMirror(action.shield, 'defended', travel)} />,
   );
   return <>{layers}</>;

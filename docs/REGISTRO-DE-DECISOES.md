@@ -3950,3 +3950,13 @@ Pedido do dono: os minijogos de DIVERSÃO (Salão: Corrida, PPT, Elemental Fusio
 **O que provaria que está errado.** Widget F que mostra fome o dia quase inteiro, ou o dono preferir a tarefa à fome: gatear por estoque ou baixar a régua para `HUNGER_FAIR_MIN`. Falha de render por tamanho do mapa em aparelho real: mandar só o layout escolhido também no API 31+.
 
 **Evidência.** Compilou (`assembleDebug`) e os 5 JUnit passaram nesta máquina. Não testado em aparelho nem em launcher real. Precisa de AAB novo.
+
+## Combate: ataque à distância de CORTE e escala por perspectiva (08/11/2026)
+
+**Decisão.** `StageAction.cut` (só visual) faz o `ranged` lançar a lâmina (`slash`) do conjurador até o alvo, em vez da esfera. Sem `cut`, o projétil comum segue como "concussão". Dano e balanço intocados.
+
+**Escala (câmera baixa, jogador mais perto)** — `utils/combate/projetilEscala.ts`: esfera usuário→inimigo 1,00→1,10; inimigo→usuário 1,10→1,00. Corte usuário→inimigo 0,20→1,00 (tamanho do corte do melee); inimigo→usuário, simétrico à esfera (1,10→1,00), porque o alvo está perto e a lâmina já sai grande. A esfera do especial (`big`) mantém a animação própria. Movimento reduzido: o voo não renderiza (só o flash no alvo), como antes.
+
+**Alternativa que perdeu.** Crescer o corte também vindo do inimigo: contradiz a perspectiva (o jogador é quem está perto).
+
+**Ficou de fora.** Nenhum chamador seta `cut` ainda (falta decidir qual skill/Soulmon usa corte à distância); o hook `elementStrikeForm` não expõe variante. Sem sprite de lâmina próprio: usa o do melee escalado (anotado em `ASSETS-A-GERAR.md`). Os testes de componente (jsdom) não rodaram nesta máquina: `jsdom` falha com MODULE_NOT_FOUND no node_modules compartilhado; rodou só o teste puro (4 verdes).
