@@ -46,7 +46,7 @@ const FOCO: Record<string, [number, number]> = { exploracao: [70, 34], jogos: [4
 // Capas dos jogos: arte ilustrada 4:3 (public/jogos, src/tools/preparar-capas-jogos.mjs). Título e selo são HTML, nunca na arte.
 const capaJogo = (id: string, w: 400 | 800 = 400) => b(`/jogos/capa-${id}-${w}`);
 const capaSet = (id: string, ext: string) => `${capaJogo(id, 400)}.${ext} 400w, ${capaJogo(id, 800)}.${ext} 800w`;
-const MOSAICO = ['combina', 'barrage', 'corrida', 'ppt'];
+const MOSAICO = ['combina', 'arena', 'mente', 'ppt'];
 const Formas = c.formas;
 // Sorteio: todo o elenco elegível de soulmon/novos (src/tools/elenco.mjs). Compacto: [id, elemento, forma].
 const POOL = JSON.stringify(elenco.elegiveis.map((x) => [x.id, x.el, x.forma]));
@@ -95,7 +95,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
     )}
     <div class="hero-corpo">
       <div class="hero-texto veu-h">
-        <img class="hero-logo" src={logo} srcset={`${b('/site/logo-240.webp')} 240w, ${b('/site/logo-320.webp')} 320w, ${logo} 480w`} sizes="(min-width: 1024px) 300px, 176px" width="480" height="503" fetchpriority="high" alt={t.logoAlt} />
+        <img class="hero-logo" src={logo} srcset={`${b('/site/logo-240.webp')} 240w, ${b('/site/logo-320.webp')} 320w, ${logo} 480w`} sizes="(min-width: 1024px) 300px, 156px" width="480" height="503" fetchpriority="high" alt={t.logoAlt} />
         <h1 id="hero-h">{t.h1}</h1>
         <p class="vagas-linha" data-vagas-linha><span class="num-g">{t.hero.vagasNum}</span> <span>{t.hero.vagasTx}</span></p>
       </div>
@@ -120,7 +120,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         </div>
         {loop && <Aparelho loop={loop} classe="ciclo-aparelho" rotulo={t.rotulos.gameplay} alt={j.videoAlt} tocar={j.tocar} erro={j.erro} abrir={j.abrir} auto={false} />}
         <ol class="estagios" data-estatico aria-label={c.listaRotulo}>
-          {Formas.map((fm, i) => <li><img class="sprite" loading="lazy" src={b(`/sprites/planta-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.forma} ${i + 1} ${c.de} 5`} /><span>{c.forma} {i + 1} {c.de} 5</span></li>)}
+          {Formas.map((fm, i) => <li><img class="sprite" src={vazio} data-tarde-src={b(`/sprites/planta-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.forma} ${i + 1} ${c.de} 5`} /><noscript><img class="sprite" src={b(`/sprites/planta-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.forma} ${i + 1} ${c.de} 5`} /></noscript><span>{c.forma} {i + 1} {c.de} 5</span></li>)}
         </ol>
         <div class="demo-cena" data-cena hidden>
           <div class="cena-central">
@@ -139,8 +139,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           <div class="lista-bloco" data-tarefas>
           <p class="demo-linha"><span class="rotulo rot-demo">{t.rotulos.demo}</span> <span>{c.demo}</span></p>
           <div class="lista-jogo moldura">
-            <p class="lista-cab"><span class="rot-hoje">{c.hoje}</span> <span class="rot-missao">{c.missao} <span data-missao aria-live="polite">0/{c.tarefas.length}</span></span></p>
-            <p class="lista-sub" aria-hidden="true">{c.habitos}</p>
+            <p class="lista-cab"><span class="rot-hoje">{c.hoje}</span> <span class="rot-missao"><span data-missao aria-live="polite">0/{c.tarefas.length}</span></span></p>
             <ul aria-label={c.tarefasRotulo}>
               {c.tarefas.map((tx, i) => (
                 <li class="linha">
@@ -283,7 +282,6 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
       <section class="cena recursos" id="recursos" aria-labelledby="recursos-h">
         <div class="cen-fundo" data-arte aria-hidden="true" style={cen('cen-circuito')}></div>
         <div class="recursos-cab veu">
-          <p class="rotulo rot-gameplay">{t.rotulos.gameplay}</p>
           <h2 id="recursos-h">{r.h2}</h2>
           <p class="frase">{r.frase}</p>
         </div>
@@ -298,6 +296,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
                   </div>
                 </figure>
               ) : (
+              <p class="rotulo rot-gameplay cartao-selo">{t.rotulos.gameplay}</p>
               <figure class="aparelho mini">
                 <div class="casca"><div class="tela">
                   <picture>

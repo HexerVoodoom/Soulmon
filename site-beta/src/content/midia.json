@@ -121,7 +121,7 @@
       "largura": 1280,
       "altura": 720,
       "origem": "E:/Soulmon-marketing/site/trailer-60s-pt.mp4 de 08/11 14:3x (59 s), reencodado 1280x720; 8 quadros (a cada ~7 s, extraídos com o Edge) conferidos: sem ciência do comportamento, sem 66, sem rótulos de estágio; vagas sem número (Vagas limitadas)",
-      "ativo": false,
+      "ativo": true,
       "capa": {
         "desktop": "/video/trailer-capa-hall-d",
         "celular": "/video/trailer-capa-hall-m",
@@ -148,7 +148,7 @@
       "largura": 1280,
       "altura": 720,
       "origem": "E:/Soulmon-marketing/site/trailer-60s-en.mp4 de 08/11 14:3x (59 s), reencodado 1280x720; 8 quadros (a cada ~7 s, extraídos com o Edge) conferidos: sem ciência do comportamento, sem 66, sem rótulos de estágio; vagas sem número (Vagas limitadas)",
-      "ativo": false,
+      "ativo": true,
       "capa": {
         "desktop": "/video/trailer-capa-hall-d",
         "celular": "/video/trailer-capa-hall-m",

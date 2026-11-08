@@ -319,7 +319,7 @@ main:focus { outline: none; }
 .grade { display: flex; gap: var(--sb-e-2); overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 4px; scrollbar-color: var(--sb-anel) transparent; }
 .grade > li { scroll-snap-align: start; flex: 0 0 auto; }
 .areas > li { width: 72%; }
-.jogos > li { width: 44%; }
+.jogos > li { width: 62%; }
 .npcs > li { width: 40%; }
 .els > li { width: 30%; }
 .els > li.combos { width: 60%; }
@@ -486,6 +486,8 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .lista-bloco { display: grid; justify-items: start; gap: var(--sb-e-2); }
 .lista-bloco .demo-linha { margin: 0; justify-content: flex-start; color: var(--sb-tx); background: var(--sb-rot-fundo); padding: 4px 8px 4px 4px; }
 .lista-bloco .lista-jogo { margin-top: 0; }
+.lista-bloco { gap: 0; }
+.lista-bloco .demo-linha { border-bottom: 0; }
 @media (max-width: 1023px) {
   .ciclo-palco { align-content: center; gap: var(--sb-e-6); }
   .ciclo-js .lista-bloco { margin-top: 32px; }
@@ -833,10 +835,18 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .capa-jogo { gap: 6px; padding: 6px 6px 8px; align-content: start; }
 .capa-arte { position: relative; display: block; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; }
 .capa-arte img { width: 100%; height: 100%; display: block; object-fit: cover; }
-.capa-nome { font: 700 1rem/1.2 var(--sb-fonte-titulo); }
+.capa-nome { font: 700 .875rem/1.2 var(--sb-fonte-titulo); text-wrap: balance; }
+@media (min-width: 768px) { .capa-nome { font-size: 1rem; } }
+.cartao-selo { margin: 0 0 var(--sb-e-2); justify-self: start; }
 .selo-obras { position: absolute; top: 6px; left: 6px; padding: 3px 7px; font: var(--sb-peso-forte) var(--sb-t-rotulo)/1.2 var(--sb-fonte-texto); text-transform: uppercase; letter-spacing: var(--sb-ls-rotulo); border: 1px solid currentColor; background: var(--sb-rot-fundo); }
 @media (min-width: 768px) { .jogos { grid-template-columns: repeat(4, 1fr); } }
-.mosaico-jogos { display: grid; gap: 6px; width: 100%; margin: 0; padding: 0 var(--sb-e-2); justify-items: start; }
+.mosaico-jogos { --mw: 200px; height: calc(var(--mw) * 2.06 + 43px); display: grid; align-content: center; gap: 6px; width: 100%; margin: 0; padding: 0 var(--sb-e-2); justify-items: start; }
+@media (min-width: 768px) { .mosaico-jogos { --mw: 220px; } }
+@media (min-width: 1024px) { .mosaico-jogos { --mw: 168px; } }
 .mosaico-grade { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%; }
 .mosaico-grade img { width: 100%; height: auto; display: block; }
 .rot-arte { color: var(--sb-rot-demo, var(--sb-tx-2)); }
+/* celular: sem vão entre o painel do Universo e "O que você faz" */
+@media (max-width: 767px) { .universo { padding-bottom: var(--sb-e-4); } .recursos { padding-top: var(--sb-e-5); } }
+/* sem JS, o marcador vazio some: o <noscript> traz a imagem real */
+html:not(.ciclo-js) .estagios img[data-tarde-src] { display: none; }

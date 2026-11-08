@@ -12,7 +12,7 @@ const sizes = '(min-width: 1024px) 320px, 200px';
     <div class="tela">
       {capa
         ? <picture><source type="image/avif" srcset={capa.avif} sizes={sizes} /><img src={capa.src} srcset={capa.webp} sizes={sizes} width={loop.largura} height={loop.altura} alt="" decoding="async" loading="lazy" /></picture>
-        : lcp
+        : lcp || !auto
         ? <img src={vazio} data-tarde-src={loop.posterP} srcset={undefined} width={loop.largura} height={loop.altura} alt="" decoding="async" />
         : <picture>
             {loop.posterAvif && <source type="image/avif" srcset={`${loop.posterPAvif} 360w, ${loop.posterAvif} 640w`} sizes={sizes} />}
