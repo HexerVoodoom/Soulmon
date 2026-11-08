@@ -302,6 +302,7 @@ function sorteio() {
     const pronto = () => {
       img.alt = `${raiz.dataset.alt} ${nome}${forma ? `, ${raiz.dataset.forma} ${forma} ${raiz.dataset.de} 5` : ''}`;
       img.hidden = false; sombra.hidden = true; info.textContent = texto;
+      raiz.scrollIntoView({ block: 'nearest', behavior: reduzido ? 'auto' : 'smooth' }); // scroll-margin-bottom do CSS deixa a folga da barra fixa
       if (!reduzido) { img.classList.remove('surge'); void img.offsetWidth; img.classList.add('surge'); } // só opacidade/escala, nunca giro
     };
     const novo = new Image(); novo.onload = () => { img.src = novo.src; pronto(); }; novo.onerror = pronto;

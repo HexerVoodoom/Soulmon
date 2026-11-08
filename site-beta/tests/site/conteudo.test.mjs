@@ -192,3 +192,22 @@ describe('capas dos jogos (arte 4:3, 08/11)', () => {
     expect(landing).toContain('loading="lazy"');
   });
 });
+
+describe('fecho sem som-champion, sorteio com folga da barra fixa, pop-up opaco', () => {
+  const fecho = landing.slice(landing.indexOf('id="inscrever"'), landing.indexOf('class="inscrever-caixa'));
+  const css = readFileSync('src/styles/site.css', 'utf8');
+  it('fecho não usa som-champion nem os sprites do hero; usa vigor-rookie', () => {
+    expect(fecho).not.toContain('som-champion');
+    expect(fecho).not.toContain('terra-ultra');
+    expect(fecho).not.toContain('gravidade-champion');
+    expect(fecho).toContain('vigor-rookie');
+    expect(landing.replace(/<Cria s="som-champion"/g, '')).not.toMatch(/Cria s="som-champion"/);
+  });
+  it('sorteio: padding-bottom e scroll-margin >= barra fixa + 16px', () => {
+    expect(css).toMatch(/\.soul \{ --fixo-h: 72px; padding-bottom: calc\(var\(--sb-secao-y\) \+ var\(--fixo-h\) \+ 16px/);
+    expect(css).toMatch(/\.soul \.sorteio \{ scroll-margin-bottom: calc\(var\(--fixo-h\) \+ 16px/);
+  });
+  it('pop-up de espera: backdrop opaco', () => {
+    expect(css).toMatch(/\.popup\[data-popup\]::backdrop \{ background: #030a0a;/);
+  });
+});

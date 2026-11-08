@@ -434,6 +434,7 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .popup { width: min(calc(100vw - 32px), 440px); padding: 40px 24px 16px; background: var(--sb-sup); color: var(--sb-tx); text-align: center; overflow: visible; box-shadow: var(--sb-sombra-2); }
 .popup[open] { display: grid; justify-items: center; gap: var(--sb-e-3); animation: abre var(--sb-dur-entrada) var(--sb-ease); }
 .popup::backdrop { background: var(--sb-veu-dialogo); }
+.popup[data-popup]::backdrop { background: #030a0a; } /* espera: o resto da página some por inteiro, sem link solto atrás */
 .popup-cristal { position: absolute; left: calc(50% - 24px); top: -72px; width: 48px; height: 96px; image-rendering: pixelated; filter: var(--sb-brilho-cristal); }
 .popup h2 { font-size: 1.5rem; color: var(--sb-pri); }
 .popup .botao { margin-top: var(--sb-e-2); min-width: 240px; }
@@ -516,9 +517,10 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
   .cena-central .forma-titulo { margin-top: 32px; }
 }
 
-.soul { padding-bottom: calc(var(--sb-secao-y) + 64px); }
+.soul { --fixo-h: 72px; padding-bottom: calc(var(--sb-secao-y) + var(--fixo-h) + 16px + env(safe-area-inset-bottom)); scroll-padding-bottom: calc(var(--fixo-h) + 16px + env(safe-area-inset-bottom)); }
+.soul .sorteio { scroll-margin-bottom: calc(var(--fixo-h) + 16px + env(safe-area-inset-bottom)); }
 @media (min-width: 1024px) {
-  .soul { padding-bottom: var(--sb-secao-y); }
+  .soul { padding-bottom: var(--sb-secao-y); scroll-padding-bottom: 0; }
 }
 
 /* 6 · abas no celular: grupo colado ao painel, com fundo de superfície (sem vão mostrando o mapa) */
