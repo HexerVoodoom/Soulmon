@@ -2133,3 +2133,7 @@ O ícone de carta da Home, linha 1 da pilha do canto direito (entre o Mapa e as 
 ### `src/components/play/RogueKeyGate.tsx`
 
 Portão do Calabouço sem a chave do dia: Bastion (NPC 412) no modal padrão `NpcSequence` manda à Oficina do Foco. Decisão: REGISTRO §239. **Régua:** `RogueKeyGate.render.test.tsx`.
+
+### `src/components/play/FocusBoard.tsx` · `src/components/play/JourneyScreen.tsx`
+
+A Oficina do Foco desde §247: card Sessão + 6 cards de chave (as técnicas de `OficinaPlano.tsx` em modo `only`), e a jornada em tela cheia (SVG com arte provisória, modal pequeno do relógio, pausas e encerrar). Posição = tempo do servidor. **Régua:** `FocusBoard.render.test.tsx`, `playArea.render.test.tsx`.

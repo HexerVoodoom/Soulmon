@@ -348,6 +348,13 @@ async function onRequestBruto({ request, env }) {
     // formato do cliente (`utils/cadernoSave.ts`: 120 x 2000 caracteres) e descarta o resto — nunca o
     // lê, interpreta ou envia a IA/métricas. 120 x 2000 (menos de ~1 MB em UTF-8) cabe nos 5 MB.
     if ('caderno' in state) state.caderno = clampCaderno(state.caderno);
+    // Recibos da jornada do foco já creditados (§247): só a forma. Quem paga é `/api/focus-journey` (razão `fjd:`).
+    if ('journeyCredited' in state) {
+      const j = state.journeyCredited;
+      const ok = j && typeof j === 'object' && typeof j.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(j.day) && Array.isArray(j.ids);
+      if (ok) state.journeyCredited = { day: j.day, ids: [...new Set(j.ids.filter(x => typeof x === 'string' && x.length > 0 && x.length <= 60))].slice(-80) };
+      else delete state.journeyCredited;
+    }
     // Cartas do Mensageiro já creditadas (§241): só a forma e o teto.
     if ('mailClaimed' in state) {
       const q = Array.isArray(state.mailClaimed) ? state.mailClaimed.filter(x => typeof x === 'string' && x.length > 0 && x.length <= 80).slice(-100) : [];

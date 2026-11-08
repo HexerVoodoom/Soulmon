@@ -38,6 +38,8 @@ import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
 import { parseAnnounced, serializeAnnounced, toAnnounce } from './utils/mensageiro';
 import { useMailbox } from './hooks/useMailbox';
+import { applyJourneyGrants } from './utils/focusBoard';
+import type { JourneyGrants } from './utils/focusJourney';
 import { hasFocusKeyOrLegacy, grantFocusKey, focusSessionStamp, hasDungeonKey, grantDungeonKey } from './utils/focusKey';
 import { grantRefugioEnergy } from './utils/refugio/energia';
 import { focusDescentRefusal, isFocusDescent, pauseFocusDescent, resumeFocusDescent, startFocusDescent } from './utils/focusDescent';
@@ -8354,6 +8356,7 @@ export default function App() {
                     return { ...prev, rogueDungeon: run, feats: applyFeat(prev.feats, 'rogueFloors', ganhos), dailyMissions: bumpDaily(prev.dailyMissions, dia, 'calabouco') };
                   }), combatant: soulCombatant(gameState) },
                   dungeonKeyActive: hasDungeonKey(gameState, Date.now()),
+                  onJourneyGrants: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => setGameState(prev => applyJourneyGrants(prev, day, grants, dungeonKeyDay)),
                   onFocusSessionComplete: () => setGameState(prev => grantDungeonKey(prev, Date.now())),
                   onFocusPrepared: () => { emitFeat('focusPrepared'); setGameState(prev => grantFocusKey(prev, Date.now())); },
                   onFocusStart: (focusEndsAt?: number) => {
