@@ -219,7 +219,7 @@ import { scheduleFeiraVolta, cancelFeiraVolta } from './utils/feiraNotificacao';
 // entrar nele — entradaEnxuta.contract.test.ts).
 import type { ClaReward } from './utils/claApi';
 import { soulmonNaMasmorra } from './utils/dungeonIdle';
-import { applyElementsDefeated } from './utils/elementDex';
+import { applyElementsDefeated, BASE_ELEMENT_IDS } from './utils/elementDex';
 import { ackLibrary, libraryNewCount } from './utils/libraryNew';
 import { recordStrayPlayerSeen, type StrayPlayer } from './utils/strayPlayers';
 import { setStrayPlayerSeenHandler } from './utils/strayPlayerEncounter';
@@ -674,7 +674,7 @@ const LevelUpOverlay = lazy(() => import('./components/LevelUpOverlay').then(m =
 const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => ({ default: m.XpGainDisplay })));
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
 const ElementPotionSheet = lazy(() => import('./components/ElementPotionSheet').then(m => ({ default: m.ElementPotionSheet })));
-import { applyPotionOnEvolve, craftPotion, canAffordPotion, isPotionUnlocked, essenceThresholdCrossings } from './utils/elementPotion';
+import { applyPotionOnEvolve, craftPotion, canAffordPotion, isPotionUnlocked, essenceThresholdCrossings, readVescaOffered, writeVescaOffered, POTION_COSTS } from './utils/elementPotion';
 import { VescaPotionOffer } from './components/VescaPotionOffer';
 import { EssencesSection } from './components/EssencesSection';
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
@@ -921,9 +921,14 @@ export default function App() {
   useEffect(() => {
     const prev = vescaPrevEssRef.current;
     vescaPrevEssRef.current = gameState.essences;
-    if (prev === null) return;
-    const hit = essenceThresholdCrossings(prev, gameState.essences).filter(id => isPotionUnlocked(id, gameState.defeatedElements));
-    if (hit.length) setVescaQueue(q => [...q, ...hit.filter(id => !q.includes(id))]);
+    const offered = readVescaOffered();
+    // Cruzamento novo (sempre oferece) + veterano que já passa de 100 e nunca foi oferecido (1x por elemento, dono 08/11/2026).
+    const crossed = prev === null ? [] : essenceThresholdCrossings(prev, gameState.essences);
+    const veterans = BASE_ELEMENT_IDS.filter(id => (gameState.essences?.[id] ?? 0) >= POTION_COSTS.baseOwn && !offered.has(id));
+    const hit = [...new Set([...crossed, ...veterans])].filter(id => isPotionUnlocked(id, gameState.defeatedElements));
+    if (!hit.length) return;
+    writeVescaOffered(new Set([...offered, ...hit]));
+    setVescaQueue(q => [...q, ...hit.filter(id => !q.includes(id))]);
   }, [gameState.essences, gameState.defeatedElements]);
   const pane = paneFor(currentView, labTab);
   /** A área do Mapa da view atual, ou `null` fora de uma área (minimal-ui F4). */

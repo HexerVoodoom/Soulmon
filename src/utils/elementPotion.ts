@@ -72,6 +72,18 @@ export function essenceThresholdCrossings(prev: Record<string, number> | undefin
   return BASE_ELEMENT_IDS.filter(id => (prev?.[id] ?? 0) < POTION_COSTS.baseOwn && (next?.[id] ?? 0) >= POTION_COSTS.baseOwn);
 }
 
+const VESCA_OFFERED_KEY = 'soulmon:vescaOffered';
+/** Elementos que a Vesca já ofereceu (por aparelho; evita repetir o modal para veterano a cada abertura). Sem storage = vazio. */
+export function readVescaOffered(): Set<string> {
+  try {
+    const raw = JSON.parse(localStorage.getItem(VESCA_OFFERED_KEY) ?? '[]');
+    return new Set(Array.isArray(raw) ? raw.filter((x): x is string => typeof x === 'string') : []);
+  } catch { return new Set(); }
+}
+export function writeVescaOffered(ids: ReadonlySet<string>): void {
+  try { localStorage.setItem(VESCA_OFFERED_KEY, JSON.stringify([...ids])); } catch { /* storage indisponível */ }
+}
+
 /** Filtro E: elementos cuja composição contém TODAS as bases escolhidas (sem escolha = todos). Ordem do catálogo. */
 export function elementsMatchingBases(selected: readonly (string | null | undefined)[]): string[] {
   return ALL_ELEMENT_IDS.filter(id => compositionHasBases(elementComposition(id), selected));

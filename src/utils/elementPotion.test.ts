@@ -1,8 +1,8 @@
 import { ALL_ELEMENT_IDS } from "./elementDex";
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   potionCost, potionIngredients, essenceThresholdCrossings, potionKey, canAffordPotion, elementsMatchingBases, affordablePotionElements, craftPotion, givePotion, isPotionUnlocked,
-  applyPotionOnEvolve, isPotionKey, potionCostFor, elementComposition,
+  applyPotionOnEvolve, isPotionKey, potionCostFor, elementComposition, readVescaOffered, writeVescaOffered,
 } from './elementPotion';
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { SPECIAL_ITEMS } from './shop';
@@ -109,5 +109,17 @@ describe('poção de elemento', () => {
     expect(e2.potionElement).toBeUndefined();
     expect(petElementOf({ potionElement: e2.potionElement, soulmonMeta: meta })).toBe(petElementOf({ soulmonMeta: meta }));
     expect(applyPotionOnEvolve(e2)).toBe(e2);
+  });
+});
+
+describe('Vesca: memória de ofertas', () => {
+  it('grava e relê os elementos já oferecidos; lixo vira vazio', () => {
+    const store = new Map<string, string>();
+    vi.stubGlobal('localStorage', { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) });
+    writeVescaOffered(new Set(['agua', 'fogo']));
+    expect([...readVescaOffered()].sort()).toEqual(['agua', 'fogo']);
+    store.set('soulmon:vescaOffered', '{x');
+    expect(readVescaOffered().size).toBe(0);
+    vi.unstubAllGlobals();
   });
 });
