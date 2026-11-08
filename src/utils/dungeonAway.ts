@@ -28,6 +28,9 @@ import {
   dungeonLayerCap, effectiveFloor, gravarHp, isMilestoneLayer, layerRefusal, recordLayerCleared, sanitizeDungeonAway, spendLayer,
   type DungeonAway, type DungeonAwayPlayer,
 } from './dungeonIdle';
+import { elementoDaCamada } from './dungeonElementos';
+import { devolverPocoes, gastarUmaDoEstoque, type PotionStock } from './dungeonPotions';
+import { reviveStart, reviveSeed } from './dungeonRevive';
 import { buildDungeonWave, clearBonus, dungeonHeartsLeftToday, noteDungeonHeartDrops, HEART_DROP_CHANCE, type DungeonEnemy } from './dungeon';
 import { autoDodgeGrade, autoRingGrade, dungeonFight, dungeonFightSeed, type DungeonPlayerCfg } from './dungeonFight';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
@@ -76,6 +79,8 @@ export interface AwayReport {
   recordFrom: number;
   recordTo: number;
   ended: AwayEnd;
+  /** Poções deixadas que o Soulmon usou sozinho nas quedas (campo opcional: relatório antigo não o tem). */
+  potions?: number;
 }
 
 export const emptyAwayReport = (fromLayer: number, record: number): AwayReport => ({
@@ -84,8 +89,9 @@ export const emptyAwayReport = (fromLayer: number, record: number): AwayReport =
 });
 
 /** A onda de uma CAMADA — a MESMA da tela (`DungeonGame`): força do andar efetivo, sabor da semente da descida. */
-export function dungeonWaveOf(seed: number, layer: number, level: number, stage: string): DungeonEnemy[] {
-  return buildDungeonWave(effectiveFloor(layer, level), stage, mulberry32((seed ^ Math.imul(layer, 0x9e3779b1)) | 0), level)
+export function dungeonWaveOf(seed: number, layer: number, level: number, stage: string, tematica = true): DungeonEnemy[] {
+  // 08/11/2026: cada camada é de UM elemento (`dungeonElementos.ts`) e só tem criaturas dele. `tematica = false` = o sorteio comum (RogueFight).
+  return buildDungeonWave(effectiveFloor(layer, level), stage, mulberry32((seed ^ Math.imul(layer, 0x9e3779b1)) | 0), level, tematica ? elementoDaCamada(layer) : undefined)
     .map(e => ({ ...e, floor: layer }));
 }
 
@@ -101,15 +107,24 @@ export function awayPlayerCfg(p: DungeonAwayPlayer): DungeonPlayerCfg {
 }
 
 /** Uma luta da descida com o especial automático: devolve o resultado do núcleo e quantos especiais houve. */
-export function playAutoFight(cfg: DungeonPlayerCfg, enemy: DungeonEnemy, runSeed: number, hp: number, en: number): { res: GroupResult; casts: number } {
+export function playAutoFight(
+  cfg: DungeonPlayerCfg, enemy: DungeonEnemy, runSeed: number, hp: number, en: number,
+  /** Continuação depois de uma poção (a MESMA da tela: `reviveSeed` e o inimigo com o HP da queda). */
+  cont?: { n: number; foeFrac: number },
+): { res: GroupResult; casts: number; foeFrac: number } {
   const f = dungeonFight(cfg, enemy.foe, dungeonFightSeed(runSeed, enemy.floor, enemy.slot), enemy.slot === 0);
-  const g = groupFightSteps(f.player, f.foes, { seed: f.seed, startHp: hp, startEnergy: en, hitScale: f.hitScale });
+  const g = groupFightSteps(f.player, f.foes, {
+    seed: cont ? reviveSeed(f.seed, cont.n) : f.seed, startHp: hp, startEnergy: en, hitScale: f.hitScale,
+    ...(cont ? { options: { startFoesHp: reviveStart(cont.foeFrac).foesHp } } : {}),
+  });
+  let foeFrac = 1;
   let nRing = 0;
   let nDodge = 0;
   let casts = 0;
   let step = g.next();
   while (!step.done) {
     const e: GroupEvent = step.value;
+    foeFrac = e.foesHp[0] ?? foeFrac;
     let ans: number | undefined;
     if (e.kind === 'cast') {
       casts++;
@@ -119,7 +134,7 @@ export function playAutoFight(cfg: DungeonPlayerCfg, enemy: DungeonEnemy, runSee
     }
     step = g.next(ans);
   }
-  return { res: step.value, casts };
+  return { res: step.value, casts, foeFrac };
 }
 
 /** Duração (ms) que a cena gasta numa luta: núcleo + a pausa de cada especial + o respiro do fim. */
@@ -195,6 +210,7 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
     s = creditMinigameBits(s, ganho, dayKey);
   };
   let ended: AwayEnd = null;
+  let stock: PotionStock | undefined = prev.dungeonPotions;
 
   for (let guard = 0; guard < MAX_FIGHTS_PER_CALL && !ended; guard++) {
     if (slot >= DUNGEON_FIGHTS_PER_FLOOR) {
@@ -216,10 +232,25 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
       continue;
     }
     const enemy = waveOf(layer)[slot];
-    const { res, casts } = playAutoFight(cfg, enemy, away.seed, hp, en);
-    const dur = fightWallMs(res, casts);
+    let { res, casts, foeFrac } = playAutoFight(cfg, enemy, away.seed, hp, en);
+    let dur = fightWallMs(res, casts);
+    // 🧪 Caiu e há poção deixada: o Soulmon usa uma sozinho (volta com 50% do HP, o inimigo mantém o HP da queda) — a MESMA continuação
+    // da tela. O estoque só é gasto se a luta inteira CABE no tempo (senão fica parado aqui e nada se perde).
+    let estoque: PotionStock | undefined = stock;
+    let usadas = 0;
+    while (res.winner !== 'player') {
+      const g = gastarUmaDoEstoque(estoque);
+      if (!g) break;
+      estoque = g.stock;
+      usadas += 1;
+      const st = reviveStart(foeFrac);
+      const c = playAutoFight(cfg, enemy, away.seed, st.hp, st.energy, { n: usadas, foeFrac: st.foesHp[0] });
+      res = c.res; foeFrac = c.foeFrac; dur += fightWallMs(c.res, c.casts);
+    }
     if (t + DUNGEON_AUTO_FIGHT_MS + dur > limit) break; // não coube: fica parado aqui
     t += DUNGEON_AUTO_FIGHT_MS + dur;
+    stock = estoque;
+    report.potions = (report.potions ?? 0) + usadas;
     if (res.winner !== 'player') { hp = 0; en = 0; ended = 'hp'; break; }
     hp = res.hpLeft; en = res.energyLeft;
     // o inimigo parou de insistir: abate, bestiário, Bits e (raro, com teto) o coraçãozinho
@@ -269,7 +300,8 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
   report.bits = Math.max(0, (s.gamePoints ?? 0) - bits0);
   const emHp = ended === 'retired' ? Math.max(focusOver && away.until !== undefined ? away.until : nowMs, t) : t;
   const proximo: DungeonAway | undefined = ended ? undefined : { ...away, since: t, layer, slot, hp, en, ms };
-  return { next: { ...s, dungeonAway: proximo, dungeonHp: gravarHp(hp, emHp) }, report };
+  // O estoque deixado: o que sobrou fica com a descida que segue; descida que acabou devolve tudo ao inventário.
+  return { next: devolverPocoes({ ...s, dungeonAway: proximo, dungeonPotions: stock, dungeonHp: gravarHp(hp, emHp) }), report };
 }
 
 /**
@@ -290,7 +322,7 @@ export function settleDungeonAwayNow(
   } catch {
     // Um registro que passou na higienização mas o motor não consegue jogar (estágio/família que não existem mais): a descida é
     // dada por encerrada e o Soulmon volta para casa — nunca uma tela branca permanente por causa de um campo do save.
-    setGameState(prev => (prev.dungeonAway ? { ...prev, dungeonAway: undefined } : prev));
+    setGameState(prev => (prev.dungeonAway ? devolverPocoes({ ...prev, dungeonAway: undefined }) : prev));
     return null;
   }
 }

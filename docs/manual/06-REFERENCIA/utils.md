@@ -1101,6 +1101,14 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 **Dono de:** o drop RARO do 🌀 Glitchtama no marco da masmorra (05/11/2026, REGISTRO §227): `GLITCHTAMA_DROP_CHANCE` (1%), `GLITCHTAMA_DROPS_PER_WEEK` (1), `glitchtamaDropFor` (marco + teto semanal + sorteio injetável), `aplicarDropDoMarco` (aplica +1 e grava o registro, reconferindo o teto), `glitchtamaDroppedThisWeek` e `sanitizeGlitchtamaDrop` (leitura segura do campo `glitchtamaDrop` do save). A semana é a do dia do jogador (`weekMondayOf` de `premiumFood.ts`). **Chamado por:** `DungeonGame.tsx` (sorteio com `Math.random`), `App.tsx` (`handleGlitchtama`), `dungeonAway.ts` (sorteio semeado por seed e camada) e `GameStateContext.tsx` (sanitização). **Régua:** `glitchtamaDrop.test.ts`, `DungeonGame.marco.render.test.tsx`, `dungeonAway.test.ts`.
 
+### `src/utils/dungeonElementos.ts`
+
+**Dono de:** a masmorra temática (REGISTRO §249): cada elemento ocupa 2 camadas; ordem base → 2 → 3 → 4 componentes, com volta ao começo. **Exports:** `ELEMENTOS_DA_MASMORRA`, `elementoDaCamada`, `componentesDoElemento`, `CAMADAS_POR_ELEMENTO`, `CAMADAS_DO_CICLO`. **Chamado por:** `dungeonAway.ts` (`dungeonWaveOf`), `DungeonGame`. **Régua:** `dungeonElementos.test.ts`.
+
+### `src/utils/dungeonPotions.ts`
+
+**Dono de:** as poções de cura que o jogador deixa com o Soulmon ao sair da masmorra (REGISTRO §249): estoque `dungeonPotions` no save, idempotente, devolvido quando a descida acaba. **Exports:** `HEAL_POTIONS`, `deixarPocoes`, `devolverPocoes`, `recolherPocoes`, `gastarUmaDoEstoque`, `pocoesDoJogador`, `healPotionsOwned`, `potionsTotal`, `sanitizeDungeonPotions`. **Chamado por:** `dungeonAway.ts`, `DungeonGame`, `GameStateContext`. **Régua:** `dungeonPotions.test.ts`.
+
 ### `src/utils/dungeonRevive.ts`
 
 **Dono de:** o 2º uso do Coraçãozinho (revive na queda, 50% do HP, REGISTRO §191) e a Faísca de Alma (`✨`, que NÃO é de luta: usada nos Arquivos restaura a energia da Home — `SPARK_HOME_ENERGY` em `shop.ts`, aplicada por `specialItemUse.ts`). **Exports:** `canOfferRevive`, `consumeOne`/`addOne` (inventário imutável), `reviveSeed`, `reviveStart`, `heartsOwned`/`sparksOwned`, `rollSparkDrop`, `REVIVE_HP_FRAC`. **Chamado por:** `DungeonGame`. **Régua:** `dungeonRevive.test.ts`, `DungeonGame.revive.render.test.tsx`.
@@ -3164,7 +3172,7 @@ dominância populacional — por isso ±15%. Régua nova:
 
 ### `src/utils/elementPotion.ts`
 
-Dono único da Poção de Elemento (30/10/2026): custos (`POTION_COSTS`: base 100 da própria essência; composto = 1 poção de cada base + 50 do composto, §249), gatilho da Vesca (`essenceThresholdCrossings`), filtro E por bases (`elementsMatchingBases`), saldo (`affordablePotionElements`), fabricar (`craftPotion`, via `spendEssences`), dar ao Soulmon (`givePotion`/`applySpecialItem`, sobrescreve `evolutionPotion`) e consumir na evolução (`applyPotionOnEvolve` → `potionElement`, lido por `petElementOf`). Regra do dono: vale SÓ para a próxima evolução — na seguinte `potionElement` é limpo e o elemento volta ao da pontuação (`soulmonMeta.dominantElement`). Chave de inventário `potion:<elementId>`.
+Dono único da Poção de Elemento (30/10/2026): custos (`POTION_COSTS`: base 100 da própria essência; composto = 1 poção de cada base + 50 do composto, §250), gatilho da Vesca (`essenceThresholdCrossings`), filtro E por bases (`elementsMatchingBases`), saldo (`affordablePotionElements`), fabricar (`craftPotion`, via `spendEssences`), dar ao Soulmon (`givePotion`/`applySpecialItem`, sobrescreve `evolutionPotion`) e consumir na evolução (`applyPotionOnEvolve` → `potionElement`, lido por `petElementOf`). Regra do dono: vale SÓ para a próxima evolução — na seguinte `potionElement` é limpo e o elemento volta ao da pontuação (`soulmonMeta.dominantElement`). Chave de inventário `potion:<elementId>`.
 
 ### `src/utils/betaResetGrant.ts`
 

@@ -17,8 +17,8 @@ import { MATERIALS } from '../../utils/buildingQuestsCopy';
 import { essenceName } from '../../utils/essences';
 
 export const KEY_COLOR: Record<JourneyKeyId, string> = {
-  bancada: 'var(--sm2-key-bancada, #d9a441)', relampago: 'var(--sm2-key-relampago, #4fd1e0)', quadrantes: 'var(--sm2-key-quadrantes, #b8c4cc)',
-  brejo: 'var(--sm2-key-brejo, #7fa35a)', elo: 'var(--sm2-key-elo, #c9774a)', pena: 'var(--sm2-key-pena, #c9b6e8)',
+  bancada: 'var(--sm2-key-bancada)', relampago: 'var(--sm2-key-relampago)', quadrantes: 'var(--sm2-key-quadrantes)',
+  brejo: 'var(--sm2-key-brejo)', elo: 'var(--sm2-key-elo)', pena: 'var(--sm2-key-pena)',
 };
 const ENV_TONE: Record<string, [string, string]> = {
   forest: ['#0d2b27', '#15463a'], shore: ['#0b2a33', '#14495a'], cavern: ['#0a1f22', '#1a3438'],
