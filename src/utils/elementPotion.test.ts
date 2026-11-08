@@ -1,4 +1,5 @@
-import { ALL_ELEMENT_IDS } from "./elementDex";
+import { ALL_ELEMENT_IDS, ESSENCE_ELEMENT_IDS } from "./elementDex";
+import { essenceDropsOfFoe } from "./essences";
 import { describe, it, expect, vi } from 'vitest';
 import {
   potionCost, potionIngredients, essenceThresholdCrossings, potionKey, canAffordPotion, elementsMatchingBases, affordablePotionElements, craftPotion, givePotion, isPotionUnlocked,
@@ -29,8 +30,9 @@ describe('poção de elemento', () => {
     expect(w).toContain('agua'); expect(w).toContain('vapor');
     expect(w.every(id => elementComposition(id)!.includes('agua'))).toBe(true);
     const both = elementsMatchingBases([a, b]);
-    expect(both).toEqual(['vapor']);
-    expect(elementsMatchingBases([]).length).toBe(210);
+    expect(both).toContain('vapor'); expect(both).toContain('geiser');
+    expect(elementsMatchingBases([]).length).toBe(ESSENCE_ELEMENT_IDS.length);
+    expect(ESSENCE_ELEMENT_IDS.length).toBe(269);
     expect(elementsMatchingBases([a, null, a])).toEqual(elementsMatchingBases([a]));
   });
   it('só o que dá para pagar (composto exige as poções das bases)', () => {
@@ -121,5 +123,26 @@ describe('Vesca: memória de ofertas', () => {
     store.set('soulmon:vescaOffered', '{x');
     expect(readVescaOffered().size).toBe(0);
     vi.unstubAllGlobals();
+  });
+});
+
+describe('curados (3–4 bases) funcionam como os pares', () => {
+  it('composição, custo e receita', () => {
+    expect(elementComposition('geiser')).toEqual(['fogo', 'agua', 'terra']);
+    expect(potionCost('geiser')).toEqual([{ id: 'geiser', qty: 50 }]);
+    expect(potionIngredients('geiser').map(i => i.id)).toEqual(['fogo', 'agua', 'terra']);
+    expect(isPotionKey(potionKey('geiser'))).toBe(true);
+    expect(isPotionKey(potionKey('neutro'))).toBe(false);
+  });
+  it('fabrica com 50 essências + 1 poção de cada base', () => {
+    const st = { ...base({ geiser: 50 }, ['geiser']), foodInventory: { 'potion:fogo': 1, 'potion:agua': 1, 'potion:terra': 1 } as Record<string, number> };
+    const out = craftPotion(st, 'geiser');
+    expect(out.foodInventory['potion:geiser']).toBe(1);
+    expect(out.essences.geiser ?? 0).toBe(0);
+    expect(out.foodInventory['potion:fogo'] ?? 0).toBe(0);
+  });
+  it('inimigo de sprite curado dropa a essência do curado além da do par', () => {
+    const d = essenceDropsOfFoe({ elements: ['fogo', 'agua'], element: 'geiser' }, 'rookie');
+    expect(d.map(x => x.id).sort()).toEqual(['geiser', 'vapor']);
   });
 });

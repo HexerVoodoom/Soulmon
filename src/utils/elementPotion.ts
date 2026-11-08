@@ -12,7 +12,7 @@
  *
  * Chave no inventário (`foodInventory`): `potion:<elementId>` (ids `[a-z_]{2,24}`) — uma entrada de `SPECIAL_ITEMS` por elemento.
  */
-import { ALL_ELEMENT_IDS, BASE_ELEMENT_IDS, elementComponents, isDexElement } from './elementDex';
+import { ESSENCE_ELEMENT_IDS, BASE_ELEMENT_IDS, essenceComposition, isEssenceElement } from './elementDex';
 import { essenceName, spendEssences, type EssenceDrop } from './essences';
 import type { SpecialItem } from './shop';
 
@@ -25,24 +25,23 @@ export const POTION_COSTS = {
 
 /** Quantos slots de elemento base o jogador preenche. */
 export const POTION_MAX_BASES = 3;
+/** Máximo de bases na composição de um elemento (curados têm até 4). */
+export const POTION_MAX_COMPONENTS = 4;
 
 export const POTION_PREFIX = 'potion:';
 export const potionKey = (elementId: string): string => POTION_PREFIX + elementId;
 export const isPotionKey = (key: unknown): key is string =>
-  typeof key === 'string' && key.startsWith(POTION_PREFIX) && isDexElement(key.slice(POTION_PREFIX.length));
+  typeof key === 'string' && key.startsWith(POTION_PREFIX) && isEssenceElement(key.slice(POTION_PREFIX.length));
 export const potionElementOfKey = (key: string): string | undefined => (isPotionKey(key) ? key.slice(POTION_PREFIX.length) : undefined);
 
 /** Composição (ids dos elementos base) de um elemento do catálogo: base = ele mesmo; par = os 2 componentes. `undefined` se desconhecido. */
 export function elementComposition(id: string): readonly string[] | undefined {
-  if (!isDexElement(id)) return undefined;
-  const comp = elementComponents(id);
-  if (comp) return comp[0] === comp[1] ? [comp[0]] : comp;
-  return [id];
+  return essenceComposition(id);
 }
 
 /** O custo em essências, agrupado por id. Base: 100 da própria. Composto (2+ bases distintas): 50 do composto. `[]` se o elemento não existe. */
 export function potionCostFor(finalId: string, bases: readonly string[]): EssenceDrop[] {
-  if (!isDexElement(finalId) || bases.length < 1 || bases.length > POTION_MAX_BASES) return [];
+  if (!isEssenceElement(finalId) || bases.length < 1 || bases.length > POTION_MAX_COMPONENTS) return [];
   return [{ id: finalId, qty: bases.length === 1 ? POTION_COSTS.baseOwn : POTION_COSTS.compositeFinal }];
 }
 
@@ -86,7 +85,7 @@ export function writeVescaOffered(ids: ReadonlySet<string>): void {
 
 /** Filtro E: elementos cuja composição contém TODAS as bases escolhidas (sem escolha = todos). Ordem do catálogo. */
 export function elementsMatchingBases(selected: readonly (string | null | undefined)[]): string[] {
-  return ALL_ELEMENT_IDS.filter(id => compositionHasBases(elementComposition(id), selected));
+  return ESSENCE_ELEMENT_IDS.filter(id => compositionHasBases(elementComposition(id), selected));
 }
 
 /** Bases válidas escolhidas no filtro (sem repetição, sem vazio). */
@@ -150,7 +149,7 @@ export function givePotion<T extends PotionState>(prev: T, key: string): T {
 }
 
 /** Leitura tolerante do save: só ids do catálogo. */
-export const sanitizeElementId = (raw: unknown): string | undefined => (isDexElement(raw) ? raw : undefined);
+export const sanitizeElementId = (raw: unknown): string | undefined => (isEssenceElement(raw) ? raw : undefined);
 
 /**
  * Na evolução: o elemento pendente vira o elemento do Soulmon (`potionElement`) e `evolutionPotion` é limpo. REGRA DO DONO (30/10/2026):
@@ -170,7 +169,7 @@ export function applyPotionOnEvolve<T extends { evolutionPotion?: string; potion
 
 /** Entradas de `SPECIAL_ITEMS`, uma por elemento do catálogo. */
 export const POTION_SPECIAL_ITEMS: Record<string, SpecialItem> = Object.fromEntries(
-  ALL_ELEMENT_IDS.map(id => {
+  ESSENCE_ELEMENT_IDS.map(id => {
     const key = potionKey(id);
     const item: SpecialItem = {
       emoji: key, kind: 'potion',

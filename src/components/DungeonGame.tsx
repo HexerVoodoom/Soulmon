@@ -14,7 +14,7 @@ import { BitsAmount } from './ui/BitsAmount';
 import { ResultScreen } from './games/ResultScreen';
 import { EnergyCost } from './ui/EnergyCost';
 import { essenceLedgerRows } from '../utils/resultEssences';
-import { essenceDropOfFoe, type EssenceDrop } from '../utils/essences';
+import { essenceDropsOfFoe, type EssenceDrop } from '../utils/essences';
 import { rosterEntryOfKey } from '../utils/enemyRoster';
 import { RankingPanel } from './RankingPanel';
 import { applyRiftLayer, riftBestThisMonth, RIFT_RANKING_FROM, RIFT_GAME_ID, type RiftMonthState } from '../utils/endlessRift';
@@ -487,7 +487,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
     onEnemyDefeated(e.stage);
     addPoints(e.points);
     resumoRef.current.enemies += 1;
-    { const r = rosterEntryOfKey(e.stage); const d = r ? essenceDropOfFoe(r.elements, r.stage) : undefined; if (d) resumoRef.current.essences = [...resumoRef.current.essences, d]; }
+    { const r = rosterEntryOfKey(e.stage); const d = essenceDropsOfFoe(r, r?.stage); if (d.length) resumoRef.current.essences = [...resumoRef.current.essences, ...d]; }
     if (ctx && rollSparkDrop()) { ctx.setGameState(prev => ({ ...prev, foodInventory: addOne(prev.foodInventory, SPARK_ITEM_EMOJI) })); noteDrop('spark', 1); }
     const caiuCoracao = onHeartDrop();
     if (caiuCoracao) { resumoRef.current.hearts += 1; noteDrop('heart', 1); }
