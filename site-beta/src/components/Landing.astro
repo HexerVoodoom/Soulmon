@@ -116,7 +116,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           <h2 id="ciclo-h">{c.h2}</h2>
           <p class="frase">{c.frase}</p>
         </div>
-        {loop && <Aparelho loop={loop} classe="ciclo-aparelho" rotulo={t.rotulos.gameplay} alt={j.videoAlt} tocar={j.tocar} erro={j.erro} abrir={j.abrir} auto={false} />}
+        {loop && <Aparelho loop={loop} classe="ciclo-aparelho" capa={{ avif: printSrc("combate", "avif"), webp: printSrc("combate", "webp"), src: b(`/print/combate-${lang}-480.webp`) }} rotulo={t.rotulos.gameplay} alt={j.videoAlt} tocar={j.tocar} erro={j.erro} abrir={j.abrir} auto={false} />}
         <ol class="estagios" data-estatico aria-label={c.listaRotulo}>
           {Formas.map((fm, i) => <li><img class="sprite" loading="lazy" src={b(`/sprites/planta-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.forma} ${i + 1} ${c.de} 5`} /><span>{c.forma} {i + 1} {c.de} 5</span></li>)}
         </ol>
@@ -309,10 +309,10 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
             {/* Sem autoplay e com som: a capa é um botão; o vídeo (com controles) só aparece depois do play. */}
             <button type="button" class="trailer-capa" data-trailer-capa hidden>
               <picture>
-                <source media="(min-width: 768px)" type="image/avif" srcset={`${b(capa.desktop)}-640.avif 640w, ${b(capa.desktop)}-1280.avif 1280w`} sizes="(min-width: 1024px) 960px, 100vw" />
-                <source media="(min-width: 768px)" type="image/webp" srcset={`${b(capa.desktop)}-640.webp 640w, ${b(capa.desktop)}-1280.webp 1280w`} sizes="(min-width: 1024px) 960px, 100vw" />
+                <source media="(min-width: 768px)" type="image/avif" srcset={`${b(capa.desktop)}-640.avif 640w, ${b(capa.desktop)}-821.avif 821w`} sizes="(min-width: 1024px) 960px, 100vw" />
+                <source media="(min-width: 768px)" type="image/webp" srcset={`${b(capa.desktop)}-640.webp 640w, ${b(capa.desktop)}-821.webp 821w`} sizes="(min-width: 1024px) 960px, 100vw" />
                 <source type="image/avif" srcset={`${b(capa.celular)}-480.avif 480w, ${b(capa.celular)}-720.avif 720w`} sizes="100vw" />
-                <img src={`${b(capa.celular)}-480.webp`} srcset={`${b(capa.celular)}-480.webp 480w, ${b(capa.celular)}-720.webp 720w`} sizes="100vw" width="720" height="1280" alt="" loading="lazy" decoding="async" />
+                <img src={`${b(capa.celular)}-480.webp`} srcset={`${b(capa.celular)}-480.webp 480w, ${b(capa.celular)}-720.webp 720w`} sizes="100vw" width="720" height="900" alt="" loading="lazy" decoding="async" />
               </picture>
               <span class="capa-texto">
                 <span class="capa-h">{t.video.capaH}</span>
@@ -324,7 +324,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
             <video data-trailer hidden controls playsinline preload="none" width={trailer.largura} height={trailer.altura} aria-label={t.video.alt}>
               <source src={trailer.src} type="video/mp4" />
             </video>
-            <noscript><video controls playsinline preload="none" poster={`${b(capa.desktop)}-1280.webp`} width={trailer.largura} height={trailer.altura} aria-label={t.video.alt}><source src={trailer.src} type="video/mp4" /></video></noscript>
+            <noscript><video controls playsinline preload="none" poster={`${b(capa.desktop)}-821.webp`} width={trailer.largura} height={trailer.altura} aria-label={t.video.alt}><source src={trailer.src} type="video/mp4" /></video></noscript>
           </div>
         </figure>
       </section>

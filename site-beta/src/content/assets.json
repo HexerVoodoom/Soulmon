@@ -250,9 +250,9 @@
       ]
     },
     "origem": "E:/Soulmon-marketing/site-assets/hero-arte-{desktop,celular}.png (composição: E:/tmp/heroarte/compor.py); ilustração, redução suave (não pixelated)",
-    "nota": "Arte-chave do hero, agora fundo discreto atrás do aparelho com o loop (gameplay real). Aguarda aprovação do dono.",
+    "nota": "Arte-chave do hero em saturação cheia, à esquerda do aparelho com o loop (nenhuma criatura atrás dele). Aguarda aprovação do dono.",
     "elenco": "fogo-ultimate, gravidade-champion (pangolim; camaleão magenta e lima saiu), fada-ultra, arcano-ultra, planta-ultimate, sombra-ultra",
-    "capaTrailer": "/video/trailer-capa-{d,m}-*.avif|webp (mesma arte, sem texto)"
+    "capaTrailer": "/video/trailer-capa-hall-{d,m}-*.avif|webp (mapa Hall da main, sem texto)"
   },
   "divisor": {
     "estado": "aguarda-revisao",

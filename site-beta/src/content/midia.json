@@ -20,7 +20,9 @@
         "origem": "E:/Soulmon-marketing/site/loop-pt.mp4, 11 s, 30 fps, sem áudio, Home real; reencodado 768x1664",
         "posterP": "/video/loop-pt-poster-360.webp",
         "posterPAvif": "/video/loop-pt-poster-360.avif",
-        "uso": "hero (aparelho ao lado do texto) e seção Faz a tarefa (poster com play); nunca dois tocando juntos"
+        "uso": "hero (aparelho ao lado do texto) e seção Faz a tarefa (poster com play); nunca dois tocando juntos",
+        "posterCiclo": "/print/combate-pt-480.webp",
+        "_nota": "Sem quadro do loop com recompensa visível (11 s, Noturno 0/3 do início ao fim): poster do hero segue o primeiro quadro; em \"Faz a tarefa\" o poster é o print real de combate."
       }
     ],
     "en": [
@@ -35,7 +37,9 @@
         "origem": "E:/Soulmon-marketing/site/loop-en.mp4, 11 s, 30 fps, sem áudio, Home real; reencodado 768x1664",
         "posterP": "/video/loop-en-poster-360.webp",
         "posterPAvif": "/video/loop-en-poster-360.avif",
-        "uso": "hero (aparelho ao lado do texto) e seção Faz a tarefa (poster com play); nunca dois tocando juntos"
+        "uso": "hero (aparelho ao lado do texto) e seção Faz a tarefa (poster com play); nunca dois tocando juntos",
+        "posterCiclo": "/print/combate-en-480.webp",
+        "_nota": "Sem quadro do loop com recompensa visível (11 s, Noturno 0/3 do início ao fim): poster do hero segue o primeiro quadro; em \"Faz a tarefa\" o poster é o print real de combate."
       }
     ]
   },
@@ -121,12 +125,12 @@
       "origem": "E:/Soulmon-marketing/site/trailer-60s-pt.mp4 de 06/11 08:5x (54 s), reencodado 1280x720; quadros a cada 2 s conferidos: sem ciência do comportamento, sem 66, sem rótulos de estágio; vagas sem número (Vagas limitadas)",
       "ativo": true,
       "capa": {
-        "desktop": "/video/trailer-capa-d",
-        "celular": "/video/trailer-capa-m",
+        "desktop": "/video/trailer-capa-hall-d",
+        "celular": "/video/trailer-capa-hall-m",
         "larguras": {
           "desktop": [
             640,
-            1280
+            821
           ],
           "celular": [
             480,
@@ -134,8 +138,7 @@
           ]
         },
         "semTextoNaArte": true,
-        "origem": "E:/Soulmon-marketing/site-assets/hero-arte-{desktop,celular}.png (com gravidade-champion), reescalada; sem texto na arte; texto real em HTML com escrim",
-        "pendencia": "capa propria do video (E:/Soulmon-marketing/site/trailer-capa-limpa.png) tinha o camaleao antigo; usada a arte do hero ate o video entregar capa nova"
+        "origem": "E:/Soulmon-marketing/site-assets/ref-mapas-main/bg-hall.png (mapa da main), recorte 16:9 desktop e 4:5 celular; sem texto na arte; arte diferente do hero"
       }
     },
     "en": {
@@ -149,12 +152,12 @@
       "origem": "E:/Soulmon-marketing/site/trailer-60s-en.mp4 de 06/11 08:5x (54 s), reencodado 1280x720; quadros a cada 2 s conferidos: sem ciência do comportamento, sem 66, sem rótulos de estágio; vagas sem número (Vagas limitadas)",
       "ativo": true,
       "capa": {
-        "desktop": "/video/trailer-capa-d",
-        "celular": "/video/trailer-capa-m",
+        "desktop": "/video/trailer-capa-hall-d",
+        "celular": "/video/trailer-capa-hall-m",
         "larguras": {
           "desktop": [
             640,
-            1280
+            821
           ],
           "celular": [
             480,
@@ -162,10 +165,9 @@
           ]
         },
         "semTextoNaArte": true,
-        "origem": "E:/Soulmon-marketing/site-assets/hero-arte-{desktop,celular}.png (com gravidade-champion), reescalada; sem texto na arte; texto real em HTML com escrim",
-        "pendencia": "capa propria do video (E:/Soulmon-marketing/site/trailer-capa-limpa.png) tinha o camaleao antigo; usada a arte do hero ate o video entregar capa nova"
+        "origem": "E:/Soulmon-marketing/site-assets/ref-mapas-main/bg-hall.png (mapa da main), recorte 16:9 desktop e 4:5 celular; sem texto na arte; arte diferente do hero"
       }
     },
-    "_nota": "LIGADO (06/11): trailer refeito conferido quadro a quadro. Edição com telas reais + cartelas + árvore do Noturno: rótulo Trailer, nunca Gameplay real. Capa = quadro dos distritos (31 s). Capa v5: arte do hero (gravidade-champion) sem texto; \"Um mundo de distritos...\" e \"Cada lugar...\" viraram HTML real."
+    "_nota": "LIGADO (06/11): trailer refeito conferido quadro a quadro. Edição com telas reais + cartelas + árvore do Noturno: rótulo Trailer, nunca Gameplay real. Capa = quadro dos distritos (31 s). Capa v5b: mapa Hall da main sem texto; \"Um mundo de distritos...\" e \"Cada lugar...\" viraram HTML real."
   }
 }

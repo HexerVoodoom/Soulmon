@@ -146,11 +146,19 @@ describe('v5: hero com loop real, gravidade-champion e capa do trailer sem texto
   it('capa do trailer: arte sem texto; texto real em HTML com escrim (4,5:1)', () => {
     for (const l of ['pt', 'en']) {
       const c = midia.trailer[l].capa; expect(c.semTextoNaArte).toBe(true);
-      for (const f of [`${c.desktop}-1280.webp`, `${c.celular}-720.webp`]) expect(existsSync(`public${f}`)).toBe(true);
+      for (const f of [`${c.desktop}-821.webp`, `${c.celular}-720.webp`]) expect(existsSync(`public${f}`)).toBe(true);
     }
     expect(TEXTOS.pt.video.capaH).toBe('Um mundo de distritos para explorar');
     expect(TEXTOS.pt.video.capaP).toBe('Cada lugar tem seu guardião');
     expect(landing).toContain('{t.video.capaH}');
     expect(css).toMatch(/\.capa-texto[^}]*linear-gradient/);
+  });
+  it('v5b: capa é mapa da main (diferente do hero); arte do hero sem filtro; botão fora da tela; limiar de altura 619px', () => {
+    expect(midia.trailer.pt.capa.desktop).toContain('hall');
+    expect(css).not.toMatch(/\.hero-arte img \{ filter/);
+    const ap = readFileSync('src/components/Aparelho.astro', 'utf8');
+    expect(ap.indexOf('class="play"')).toBeGreaterThan(ap.indexOf('<p class="video-erro"'));
+    expect(css).toMatch(/max-height: 619px\) \{ \.hero-aparelho \{ display: none/);
+    expect(landing).toContain('capa={{');
   });
 });

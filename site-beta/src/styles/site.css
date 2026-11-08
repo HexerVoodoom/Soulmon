@@ -791,36 +791,40 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 /* Fecho: mapa bem escuro, ilha ainda reconhecível */
 .inscrever .cena-mapa img { filter: brightness(.35); }
 
-/* ---- v5: loop real no hero (aparelho com selo "Gameplay real"); a arte vira fundo discreto ---- */
+/* ---- v5: loop real no hero (aparelho com selo "Gameplay real"); arte em saturação cheia à esquerda do aparelho ---- */
 .hero-aparelho { z-index: 1; justify-self: center; }
 .hero-aparelho .rotulo { margin-left: 12px; }
-.hero:has(.hero-arte) .hero-fundo .hero-arte img { filter: brightness(.86) saturate(.92); }
+.aparelho .casca { position: relative; }
+.aparelho .play { right: -12px; bottom: -12px; z-index: 2; box-shadow: 0 0 0 3px var(--sb-fundo); }
 @media (min-width: 1024px) {
-  .hero { --ap-w: min(320px, calc((100svh - 160px) / 2.25)); }
-  .hero-aparelho { position: absolute; top: 50%; translate: 0 -46%; width: var(--ap-w); right: max(40px, calc(var(--pad-d) - 78px)); }
-  .hero:has(.hero-arte) .hero-fundo .hero-arte { right: calc(var(--ap-w) + max(40px, calc(var(--pad-d) - 78px)) - 222px); width: min(70vw, 1300px); }
-  .hero-fundo .hero-arte img { -webkit-mask-image: linear-gradient(90deg, transparent, #000 24%, #000 86%, transparent), linear-gradient(transparent, #000 10%); mask-image: linear-gradient(90deg, transparent, #000 24%, #000 86%, transparent), linear-gradient(transparent, #000 10%); }
-  .hero:has(.hero-arte)::before { background: linear-gradient(90deg, rgba(7,20,19,.84) 0, rgba(7,20,19,.7) 30%, rgba(7,20,19,0) 50%); }
+  .hero { --ap-w: min(280px, calc((100svh - 160px) / 2.25)); --ap-r: max(40px, calc(var(--pad-d) - 78px)); }
+  .hero-aparelho { position: absolute; top: 50%; translate: 0 -46%; width: var(--ap-w); right: var(--ap-r); }
+  /* a arte termina junto ao aparelho: as 6 criaturas ficam entre o texto (~500px) e o aparelho, nenhuma atrás dele */
+  .hero:has(.hero-arte) .hero-fundo .hero-arte { right: calc(var(--ap-w) + var(--ap-r) - 40px); width: min(56vw, 1000px, calc((100vw - var(--ap-r) - var(--ap-w) + 40px - var(--pad-e) - 500px) / .67)); }
+  .hero-fundo .hero-arte img { -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 90%, transparent), linear-gradient(transparent, #000 10%); mask-image: linear-gradient(90deg, transparent, #000 22%, #000 90%, transparent), linear-gradient(transparent, #000 10%); }
+  .hero:has(.hero-arte)::before { background: linear-gradient(90deg, rgba(7,20,19,.84) 0, rgba(7,20,19,.7) 22%, rgba(7,20,19,0) 36%); }
+  .hero:has(.hero-arte) h1 { font-size: clamp(2rem, 1.2rem + 2.6vw, 3.5rem); } /* 56px a 1440: "CREATURES THAT" não encosta na arte */
+  .hero:has(.hero-arte) .hero-logo { width: 260px; }
 }
 @media (max-width: 1023px) {
-  .hero-aparelho { width: clamp(0px, calc((100svh - var(--hT) - var(--hG) - 100px) / 2.16), 200px); min-width: 112px; margin: 0 4px 0 auto; justify-self: end; }
-  .hero-aparelho { grid-template-columns: minmax(0, 1fr); }
+  .hero-aparelho { width: clamp(112px, calc((100svh - var(--hT) - var(--hG) - 90px) / 2.16), 200px); margin: 0 4px 0 auto; grid-template-columns: minmax(0, 1fr); }
   .hero-aparelho .rotulo { width: max-content; white-space: nowrap; letter-spacing: .04em; margin-left: 0; padding: 2px 6px; justify-self: end; }
   .hero-aparelho .casca { padding: 5px; border-radius: 14px; }
   .hero-aparelho .tela { border-radius: 10px; }
-  .hero-aparelho .play { width: 44px; height: 44px; right: 6px; bottom: 6px; }
+  .hero-aparelho .play { width: 44px; height: 44px; right: -8px; bottom: -8px; }
 }
-@media (max-width: 1023px) and (max-height: 799px) { .hero-aparelho { display: none; } }
-/* capa do trailer: texto real sobre arte sem texto, com escrim */
-.capa-texto { position: absolute; inset: 0; display: grid; align-content: center; justify-items: start; gap: var(--sb-e-2); padding: var(--sb-e-5); text-align: left; pointer-events: none;
-  background: linear-gradient(90deg, rgba(7,20,19,.92) 0, rgba(7,20,19,.86) 42%, rgba(7,20,19,0) 68%); }
-.capa-h { max-width: 14ch; font: var(--sb-peso-titulo) var(--sb-t-h2)/1.14 var(--sb-fonte-titulo); color: var(--sb-tx); text-wrap: balance; }
-.capa-p { font: var(--sb-peso-medio) var(--sb-t-lead)/1.4 var(--sb-fonte-texto); color: var(--sb-tx-2); }
+@media (max-width: 1023px) { .hero:has(.hero-arte) .vagas-linha { background: rgba(7,20,19,.62); padding: 2px 8px; margin-left: -8px; border-radius: 6px; } }
+@media (max-width: 1023px) and (max-height: 700px) { .hero-aparelho { width: clamp(84px, calc((100svh - var(--hT) - var(--hG) - 90px) / 2.16), 200px); } }
+@media (max-width: 1023px) and (max-height: 619px) { .hero-aparelho { display: none; } }
+/* capa do trailer: mapa da main sem texto; texto real com escrim só atrás dele */
+.capa-texto { position: absolute; left: var(--sb-e-5); top: 50%; translate: 0 -50%; width: fit-content; max-width: 52%; display: grid; gap: var(--sb-e-2); padding: var(--sb-e-4) var(--sb-e-6) var(--sb-e-4) var(--sb-e-4); text-align: left; pointer-events: none; border-radius: var(--sb-raio-md);
+  background: linear-gradient(90deg, rgba(7,20,19,.78) 0, rgba(7,20,19,.74) 80%, rgba(7,20,19,0) 100%); }
+.capa-h { font: var(--sb-peso-titulo) var(--sb-t-h3)/1.14 var(--sb-fonte-titulo); color: var(--sb-tx); text-wrap: balance; }
+.capa-p { font: var(--sb-peso-medio) var(--sb-t-corpo)/1.4 var(--sb-fonte-texto); color: var(--sb-tx); }
 .trailer-moldura { aspect-ratio: 4 / 5; }
 .trailer-moldura.tocando { aspect-ratio: 16 / 9; }
-.trailer-capa img { object-position: 50% 65%; }
-.trailer-moldura .trailer-play { top: auto; bottom: 28px; margin-top: 0; left: auto; right: 24px; margin-left: 0; width: 72px; height: 72px; margin-right: 0; }
+.trailer-capa img { object-position: 50% 50%; }
+@media (max-width: 767px) { .capa-texto { top: var(--sb-e-4); translate: none; left: var(--sb-e-4); max-width: calc(100% - 32px); background: linear-gradient(90deg, rgba(7,20,19,.78) 0, rgba(7,20,19,.72) 85%, rgba(7,20,19,0) 100%); } }
+.trailer-moldura .trailer-play { top: auto; bottom: 28px; margin: 0; left: auto; right: 24px; width: 72px; height: 72px; }
 .trailer-moldura .trailer-play svg { width: 32px; height: 32px; }
-@media (max-width: 767px) { .capa-texto { align-content: start; padding-top: var(--sb-e-6); background: linear-gradient(180deg, rgba(7,20,19,.94) 0, rgba(7,20,19,.9) 46%, rgba(7,20,19,0) 74%); } .capa-h { font-size: var(--sb-t-h3); max-width: 18ch; } }
-@media (min-width: 768px) { .trailer-moldura { aspect-ratio: 16 / 9; } .trailer-capa img { object-position: 100% 50%; } .trailer-moldura .trailer-play { width: 96px; height: 96px; right: 40px; bottom: 40px; } .trailer-moldura .trailer-play svg { width: 40px; height: 40px; } .capa-texto { padding: var(--sb-e-7); } }
-@media (min-width: 768px) { .capa-h { font-size: var(--sb-t-h2); } }
+@media (min-width: 768px) { .trailer-moldura { aspect-ratio: 16 / 9; } .trailer-moldura .trailer-play { width: 96px; height: 96px; right: 40px; bottom: 40px; } .trailer-moldura .trailer-play svg { width: 40px; height: 40px; } .capa-h { font-size: var(--sb-t-h2); } .capa-texto { left: var(--sb-e-6); padding: var(--sb-e-5) var(--sb-e-7) var(--sb-e-5) var(--sb-e-5); } }
