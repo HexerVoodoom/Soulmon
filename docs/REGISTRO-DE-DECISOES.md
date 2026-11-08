@@ -4299,3 +4299,17 @@ Plano completo: `D:/Soulmon/planos/focus-jornada.md`. O dono aceitou D-1 a D-6: 
 | 4 sessões com chaves | 16 (teto) | 6,79 |
 
 A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra no teto, como o dono aprovou (D-6). Bits e Honra não mudam. A partir daqui, `save.js` só aceita um `dungeonKeyDay` novo quando o razão `fjd:` daquele dia tem uma jornada concluída; a chave já gravada fica. A descida da masmorra deixou de ser disparada pelo foco (D-1): a Oficina não chama mais `onFocusStart`.
+
+## Cura do especial calibrada contra o dano (08/11/2026)
+
+**Pedido do dono.** "Tem que balancear melhor a cura, está curando menos do que o dano do especial."
+
+**Medido (E=3, mesmo orçamento; cura em % da vida de quem cura, dano em % da vida do alvo).** Espelho/PvP e régua: cura = dano (razão 1,00; 0,94–1,13 conforme build/nível). Arena: cura 1,25× o dano. **Masmorra/Pesadelo: `PVE_FAMILY_POWER.dungeon.heal` = 0,80 → cura 20% abaixo do dano** — é aí que o jogador sente.
+
+**Antes → depois (N=1600, 15 níveis × 4 builds, vitória/andares):** cura 0,80 = masmorra 65,9 / pesadelo 76,6 / arena 65,5 (dano direto: 68,1 / 86,3 / 66,8). Cura 0,85 = 68,4 / 79,1. **Cura 0,88 = 70,0 / 80,2 (adotado, masmorra +1,9pp sobre o dano direto, dentro de ±3pp).** 0,90 = 71,2 / 80,9 (+3,1pp, estoura a janela); 1,00 = 75,9 / 84,4 (+7,8pp).
+
+**Regra.** Cura do especial ≥ 0,85× o dano direto em todo motor (espelho = igual; Arena 1,25; Masmorra 0,88) e ≤ 0,92× na Masmorra. Travada em `combate/curaVsDano.test.ts`. Só muda `PVE_FAMILY_POWER.dungeon.heal` (0,8 → 0,88): a cura contínua (`shield` + `hot`) e o escudo não mudaram.
+
+**Alternativa que perdeu.** Cura = dano exato (1,0) na Masmorra: dá a leitura "cura igual ao dano", mas a cura vira a família mais forte (+7,8pp), contra a janela ±3pp já combinada.
+
+**O que falsifica.** O Pesadelo segue ~6pp abaixo do dano direto (era ~10pp): fora da janela, mas é do motor do Pesadelo, não da cura; se o dono ainda sentir pouca cura lá, o botão é `hotScale`/poder no Pesadelo, não a Masmorra. Cura de PvP e Arena não mexidas. Não medido em aparelho.
