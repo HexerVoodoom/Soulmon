@@ -119,3 +119,38 @@ describe('v4: elenco, sorteio, universo, PvP e PvE', () => {
     expect(TEXTOS.en.recursos.cartoes[0][1]).toBe('PvP and PvE');
   });
 });
+
+describe('v5: hero com loop real, gravidade-champion e capa do trailer sem texto', () => {
+  const aparelho = readFileSync('src/components/Aparelho.astro', 'utf8');
+  const css = readFileSync('src/styles/site.css', 'utf8');
+  const app = readFileSync('src/scripts/app.ts', 'utf8');
+  it('hero usa gravidade-champion (pangolim) no lugar do camaleão som-champion', () => {
+    expect(assets.heroArte.elenco).toContain('gravidade-champion');
+    expect(assets.heroArte.elenco).not.toContain('som-champion');
+    if (existsSync('E:/tmp/heroarte/compor.py')) expect(readFileSync('E:/tmp/heroarte/compor.py', 'utf8')).not.toContain('som-champion');
+  });
+  it('nenhum sprite vetado no hero (iniciais da DEMO, lontra com escudo, aranha/golem dourado)', () => {
+    for (const v of ['starters/', 'x-l113', 'engrenagem', 'steampunk']) expect(assets.heroArte.elenco + landing).not.toContain(v);
+  });
+  it('o loop real (gameplay:true) está no hero e é o único tocando por vez', () => {
+    for (const l of ['pt', 'en']) { const v = midia.videos[l][0]; expect(v.gameplay).toBe(true); expect(existsSync(`public${v.posterP}`)).toBe(true); }
+    expect(landing).toMatch(/classe="hero-aparelho"[^>]*rotulo=\{t\.rotulos\.gameplay\}/);
+    expect(app).toMatch(/for \(const o of loops\) if \(o !== v && !o\.paused\) o\.pause\(\)/);
+  });
+  it('mp4 não baixa antes do load/visível; autoplay só com muted, sem reduced-motion/save-data e em 4g', () => {
+    expect(aparelho).toMatch(/<video data-video muted loop playsinline preload="none"/);
+    expect(aparelho).not.toMatch(/<video[^>]*\ssrc=/); // src só no play(), por data-src
+    expect(app).toMatch(/!reduzido && !poupar && rapida/);
+    expect(app).toMatch(/effectiveType === '4g'/);
+  });
+  it('capa do trailer: arte sem texto; texto real em HTML com escrim (4,5:1)', () => {
+    for (const l of ['pt', 'en']) {
+      const c = midia.trailer[l].capa; expect(c.semTextoNaArte).toBe(true);
+      for (const f of [`${c.desktop}-1280.webp`, `${c.celular}-720.webp`]) expect(existsSync(`public${f}`)).toBe(true);
+    }
+    expect(TEXTOS.pt.video.capaH).toBe('Um mundo de distritos para explorar');
+    expect(TEXTOS.pt.video.capaP).toBe('Cada lugar tem seu guardião');
+    expect(landing).toContain('{t.video.capaH}');
+    expect(css).toMatch(/\.capa-texto[^}]*linear-gradient/);
+  });
+});

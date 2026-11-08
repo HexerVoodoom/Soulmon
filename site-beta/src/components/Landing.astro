@@ -7,6 +7,7 @@ import Base from '../layouts/Base.astro';
 import { b } from '../lib/base';
 import Mapa from './Mapa.astro';
 import Cria from './Cria.astro';
+import Aparelho from './Aparelho.astro';
 import midia from '../content/midia.json';
 import assets from '../content/assets.json';
 import universoDados from '../content/universo.json';
@@ -16,14 +17,15 @@ interface Props { lang: Lang }
 const { lang } = Astro.props;
 const t = TEXTOS[lang];
 const c = t.ciclo; const s = t.soul; const u = t.universo; const e = t.entrar; const f = t.form; const j = t.jogo; const r = t.recursos;
-type Video = { src: string; poster: string; posterAvif?: string; gameplay: boolean; legenda: string; largura: number; altura: number };
+type Video = { src: string; poster: string; posterAvif?: string; posterP?: string; posterPAvif?: string; gameplay: boolean; legenda: string; largura: number; altura: number };
 type Print = { id: string; src: string; gameplay: boolean };
 // Gameplay: só captura real (gameplay: true). O trailer é edição (rótulo Trailer); a cinemática de abertura ficou fora da v3.
 const loopRaw = (midia.videos[lang] as Video[]).find((v) => v.gameplay === true && v.src);
-const loop = loopRaw && { ...loopRaw, src: b(loopRaw.src), poster: b(loopRaw.poster) };
+const loop = loopRaw && { ...loopRaw, src: b(loopRaw.src), poster: b(loopRaw.poster), posterAvif: loopRaw.posterAvif && b(loopRaw.posterAvif), posterP: b(loopRaw.posterP!), posterPAvif: loopRaw.posterPAvif && b(loopRaw.posterPAvif) };
 const prints = (midia.prints[lang] as Print[]).filter((p) => p.gameplay === true && p.src);
 // Trailer: edição com telas reais, cartelas e arte aprovada ainda fora do jogo. Rótulo próprio, nunca gameplay.
 const trailerSlot = (midia as unknown as { trailer?: Record<string, { ativo?: boolean; src: string; poster: string; posterP: string; largura: number; altura: number }> }).trailer?.[lang];
+const capa = (trailerSlot as unknown as { capa: { desktop: string; celular: string } }).capa;
 const trailer = trailerSlot?.ativo ? { ...trailerSlot, src: b(trailerSlot.src), poster: b(trailerSlot.poster), posterP: b(trailerSlot.posterP) } : undefined; // só com ativo:true (trailer conferido quadro a quadro em 06/11)
 // Arte-chave do hero (decisão do dono, 06/11): quando existir, substitui mapa + elenco sem mudar layout.
 const heroArte = assets.heroArte as { desktop: string | null; celular: string | null; larguras?: { desktop: number[]; celular: number[] } };
@@ -95,6 +97,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         <h1 id="hero-h">{t.h1}</h1>
         <p class="vagas-linha" data-vagas-linha><span class="num-g">{t.hero.vagasNum}</span> <span>{t.hero.vagasTx}</span></p>
       </div>
+      {loop && <Aparelho loop={loop} classe="hero-aparelho" rotulo={t.rotulos.gameplay} alt={j.videoAlt} tocar={j.tocar} erro={j.erro} abrir={j.abrir} auto lcp />}
       <div class="hero-acao veu-h">
         <a class="botao primario hero-cta" href="#inscrever" data-cta data-hero-cta>{t.cta}</a>
         <a class="botao contorno hero-ver" href="#ciclo">{t.hero.ver}</a>
@@ -113,24 +116,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           <h2 id="ciclo-h">{c.h2}</h2>
           <p class="frase">{c.frase}</p>
         </div>
-        {loop && (
-          <figure class="aparelho ciclo-aparelho" data-loop>
-            <figcaption class="rotulo rot-gameplay">{t.rotulos.gameplay}</figcaption>
-            <div class="casca">
-              <div class="tela">
-                {/* Com JS: poster e vídeo só depois do load. Sem JS: o <noscript> traz o mesmo vídeo com poster e controles. */}
-                <video data-video data-poster={loop.poster} muted loop playsinline preload="none" width={loop.largura} height={loop.altura} aria-label={j.videoAlt}>
-                  <source src={loop.src} type="video/mp4" />
-                </video>
-                <noscript><video muted loop playsinline controls preload="none" poster={loop.poster} width={loop.largura} height={loop.altura} aria-label={j.videoAlt}><source src={loop.src} type="video/mp4" /></video></noscript>
-                <button type="button" class="play" data-play hidden aria-label={j.tocar}>
-                  <svg viewBox="0 0 16 16" width="20" height="20" aria-hidden="true"><path data-ico-play fill="currentColor" d="M4 2v12l10-6z"/><path data-ico-pausa hidden fill="currentColor" d="M3 2h4v12H3zm6 0h4v12H9z"/></svg>
-                </button>
-                <p class="video-erro" data-video-erro hidden>{j.erro} <a href={loop.src}>{j.abrir}</a></p>
-              </div>
-            </div>
-          </figure>
-        )}
+        {loop && <Aparelho loop={loop} classe="ciclo-aparelho" rotulo={t.rotulos.gameplay} alt={j.videoAlt} tocar={j.tocar} erro={j.erro} abrir={j.abrir} auto={false} />}
         <ol class="estagios" data-estatico aria-label={c.listaRotulo}>
           {Formas.map((fm, i) => <li><img class="sprite" loading="lazy" src={b(`/sprites/planta-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.forma} ${i + 1} ${c.de} 5`} /><span>{c.forma} {i + 1} {c.de} 5</span></li>)}
         </ol>
@@ -321,14 +307,24 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           <figcaption class="rotulo rot-cine">{t.rotulos.trailer}</figcaption>
           <div class="trailer-moldura">
             {/* Sem autoplay e com som: a capa é um botão; o vídeo (com controles) só aparece depois do play. */}
-            <button type="button" class="trailer-capa" data-trailer-capa hidden aria-label={`${j.tocar}: ${t.video.alt}`}>
-              <picture><source type="image/avif" srcset={`${trailer.posterP.replace('.webp', '.avif')} 640w, ${trailer.poster.replace('.webp', '.avif')} 1280w`} sizes="(min-width: 1024px) 960px, 100vw" /><img src={trailer.posterP} srcset={`${trailer.posterP} 640w, ${trailer.poster} 1280w`} sizes="(min-width: 1024px) 960px, 100vw" width="1280" height="720" alt="" loading="lazy" decoding="async" /></picture>
+            <button type="button" class="trailer-capa" data-trailer-capa hidden>
+              <picture>
+                <source media="(min-width: 768px)" type="image/avif" srcset={`${b(capa.desktop)}-640.avif 640w, ${b(capa.desktop)}-1280.avif 1280w`} sizes="(min-width: 1024px) 960px, 100vw" />
+                <source media="(min-width: 768px)" type="image/webp" srcset={`${b(capa.desktop)}-640.webp 640w, ${b(capa.desktop)}-1280.webp 1280w`} sizes="(min-width: 1024px) 960px, 100vw" />
+                <source type="image/avif" srcset={`${b(capa.celular)}-480.avif 480w, ${b(capa.celular)}-720.avif 720w`} sizes="100vw" />
+                <img src={`${b(capa.celular)}-480.webp`} srcset={`${b(capa.celular)}-480.webp 480w, ${b(capa.celular)}-720.webp 720w`} sizes="100vw" width="720" height="1280" alt="" loading="lazy" decoding="async" />
+              </picture>
+              <span class="capa-texto">
+                <span class="capa-h">{t.video.capaH}</span>
+                <span class="capa-p">{t.video.capaP}</span>
+              </span>
+              <span class="sr">{j.tocar}: {t.video.alt}</span>
               <span class="trailer-play" aria-hidden="true"><svg viewBox="0 0 16 16" width="40" height="40"><path fill="currentColor" d="M5 2v12l9-6z"/></svg></span>
             </button>
             <video data-trailer hidden controls playsinline preload="none" width={trailer.largura} height={trailer.altura} aria-label={t.video.alt}>
               <source src={trailer.src} type="video/mp4" />
             </video>
-            <noscript><video controls playsinline preload="none" poster={trailer.poster} width={trailer.largura} height={trailer.altura} aria-label={t.video.alt}><source src={trailer.src} type="video/mp4" /></video></noscript>
+            <noscript><video controls playsinline preload="none" poster={`${b(capa.desktop)}-1280.webp`} width={trailer.largura} height={trailer.altura} aria-label={t.video.alt}><source src={trailer.src} type="video/mp4" /></video></noscript>
           </div>
         </figure>
       </section>

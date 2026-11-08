@@ -345,30 +345,39 @@ function modalNpc() {
   d.addEventListener('close', () => { origem?.focus(); origem = null; });
 }
 
-// ---------- Loop real: toca só visível, sem movimento reduzido e sem Save-Data; senão, play manual ----------
+// ---------- Loop real (hero e "Faz a tarefa"): o mp4 só é pedido no play(), depois do load e com o aparelho visível ----------
+// Autoplay só se: muted + playsinline (no HTML), sem movimento reduzido, sem Save-Data, conexão 4g (ou API ausente).
+// Senão: poster + botão de play. Nunca mais de um loop tocando: o que começa pausa os outros.
+const rapida = !nav.connection?.effectiveType || nav.connection.effectiveType === '4g';
+const loops: HTMLVideoElement[] = [];
 function loopReal() {
-  const fig = $('[data-loop]'); if (!fig) return;
-  const v = $<HTMLVideoElement>('[data-video]', fig)!; const bt = $<HTMLButtonElement>('[data-play]', fig)!;
-  const icoPlay = $('[data-ico-play]', bt)!; const icoPausa = $('[data-ico-pausa]', bt)!; const erro = $('[data-video-erro]', fig)!;
-  bt.hidden = false;
-  depoisDoLoad(() => quandoVisivel(fig, () => { v.poster = v.dataset.poster!; }, '600px'));
-  const auto = !reduzido && !poupar;
-  let querTocar = auto; let visivel = false;
-  const estado = () => {
-    const tocando = !v.paused;
-    bt.setAttribute('aria-label', tocando ? S.pausar : S.tocar);
-    icoPlay.toggleAttribute('hidden', tocando); icoPausa.toggleAttribute('hidden', !tocando);
-  };
-  const tocar = () => { v.play().catch(() => estado()); };
-  v.addEventListener('play', estado); v.addEventListener('pause', estado);
-  v.addEventListener('error', () => { erro.hidden = false; }, true);
-  v.querySelector('source')?.addEventListener('error', () => { erro.hidden = false; });
-  bt.addEventListener('click', () => { if (v.paused) { querTocar = true; tocar(); } else { querTocar = false; v.pause(); } });
-  new IntersectionObserver(([x]) => {
-    visivel = x.intersectionRatio >= 0.5;
-    if (visivel && querTocar) tocar(); else if (!visivel && !v.paused) v.pause();
-  }, { threshold: [0, 0.5] }).observe(v);
-  estado();
+  for (const fig of $$('[data-loop]')) {
+    const v = $<HTMLVideoElement>('[data-video]', fig)!; const bt = $<HTMLButtonElement>('[data-play]', fig)!;
+    const icoPlay = $('[data-ico-play]', bt)!; const icoPausa = $('[data-ico-pausa]', bt)!; const erro = $('[data-video-erro]', fig)!;
+    loops.push(v);
+    bt.hidden = false;
+    const auto = fig.dataset.auto === '1' && !reduzido && !poupar && rapida;
+    let querTocar = auto; let visivel = false; let liberado = false;
+    const estado = () => {
+      const tocando = !v.paused;
+      bt.setAttribute('aria-label', tocando ? S.pausar : S.tocar);
+      icoPlay.toggleAttribute('hidden', tocando); icoPausa.toggleAttribute('hidden', !tocando);
+    };
+    const tocar = () => {
+      if (!v.getAttribute('src')) v.src = v.dataset.src!; // primeiro pedido do mp4 acontece aqui
+      for (const o of loops) if (o !== v && !o.paused) o.pause();
+      v.play().catch(() => estado());
+    };
+    depoisDoLoad(() => { liberado = true; if (visivel && querTocar) tocar(); });
+    v.addEventListener('play', estado); v.addEventListener('pause', estado);
+    v.addEventListener('error', () => { erro.hidden = false; });
+    bt.addEventListener('click', () => { if (v.paused) { querTocar = true; tocar(); } else { querTocar = false; v.pause(); } });
+    new IntersectionObserver(([x]) => {
+      visivel = x.intersectionRatio >= 0.5;
+      if (visivel && querTocar && liberado) tocar(); else if (!visivel && !v.paused) v.pause();
+    }, { threshold: [0, 0.5] }).observe(fig);
+    estado();
+  }
 }
 
 // ---------- Trailer: poster só depois do load e perto da tela (celular pega o de 640); nunca toca sozinho ----------
@@ -376,7 +385,8 @@ function trailer() {
   const v = $<HTMLVideoElement>('[data-trailer]'); const capa = $<HTMLButtonElement>('[data-trailer-capa]'); if (!v || !capa) return;
   capa.hidden = false;
   capa.addEventListener('click', () => {
-    v.hidden = false; capa.hidden = true;
+    v.hidden = false; capa.hidden = true; capa.closest('.trailer-moldura')?.classList.add('tocando');
+    for (const o of loops) o.pause();
     v.play().catch(() => {}); v.focus();
   });
 }
