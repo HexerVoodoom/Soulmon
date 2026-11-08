@@ -16,7 +16,7 @@ import { readJson, writeJson } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { formatClock } from '../../utils/focoTimer';
 import { OficinaPlano } from './OficinaPlano';
-import { JourneyScreen, KEY_COLOR } from './JourneyScreen';
+import { JourneyScreen, KEY_COLOR, KeyGlyph } from './JourneyScreen';
 
 type BoardTask = { id: string; name: string; completed: boolean; kind?: 'habit' };
 const CARD: Record<JourneyKeyId, { pt: string; en: string; keyPt: string; keyEn: string }> = {
@@ -114,7 +114,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
   if (openCard) {
     const k = openCard;
     return <div data-focus-board-card={k} style={{ display: 'grid', gap: 10 }}>
-      <p style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}><Icon name="lock_open" size={20} tone="inherit" style={{ color: KEY_COLOR[k] }} />{isPt ? CARD[k].keyPt : CARD[k].keyEn}</p>
+      <p style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}><KeyGlyph k={k} size={20} />{isPt ? CARD[k].keyPt : CARD[k].keyEn}</p>
       <OficinaPlano language={language} tasks={tasks} initial={draft} onSave={() => {}} onCancel={() => setOpenCard(null)} only={{
         step: KEY_OF_STEP[k],
         onKey: (d, info) => {
@@ -145,7 +145,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
             <button type="button" data-focus-env-next aria-label={isPt ? 'Outro cenário' : 'Another scene'} onClick={() => setPref({ env: FOCUS_ENVIRONMENTS[(envIdx + 1) % FOCUS_ENVIRONMENTS.length].id })} style={{ ...sm2Button('quiet'), minWidth: 44, minHeight: 44 }}><Icon name="chevron_right" size={24} tone="inherit" /></button>
           </div>
           {keys.length > 0 && <div aria-label={isPt ? 'Chaves desta sessão' : 'Keys for this session'} style={{ display: 'flex', gap: 6 }}>
-            {keys.map(k => <Icon key={k} name="lock_open" size={24} tone="inherit" style={{ color: KEY_COLOR[k] }} />)}
+            {keys.map(k => <KeyGlyph key={k} k={k} size={24} />)}
           </div>}
           {online === false && <p role="status" data-focus-offline style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Precisa de conexão para começar.' : 'Needs a connection to start.'}</p>}
           <button type="button" data-focus-start disabled={online === false || busy || !saveId} onClick={start} style={{ ...sm2Button('primary', online === false || busy || !saveId), minHeight: 48 }}>{isPt ? 'Começar jornada' : 'Start journey'}</button>
@@ -157,7 +157,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
         {JOURNEY_KEYS.map(k => {
           const got = keys.includes(k);
           return <button key={k} type="button" data-focus-card={k} data-has-key={got} onClick={() => setOpenCard(k)} style={{ ...sheetCard, minHeight: 88, alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, cursor: 'pointer', textAlign: 'left', border: got ? `2px solid ${KEY_COLOR[k]}` : undefined }}>
-            <Icon name="lock_open" size={24} tone="inherit" style={{ color: got ? KEY_COLOR[k] : 'var(--sm2-muted)' }} />
+            <KeyGlyph k={k} size={24} muted={!got} />
             <span style={{ ...sm2Text, fontWeight: 600 }}>{isPt ? CARD[k].pt : CARD[k].en}</span>
             <span style={{ ...sm2Hint, margin: 0 }}>{got ? (isPt ? 'Refazer' : 'Redo') : (isPt ? 'Fazer' : 'Do it')}</span>
           </button>;
