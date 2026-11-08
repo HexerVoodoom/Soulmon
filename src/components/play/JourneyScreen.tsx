@@ -141,8 +141,9 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
 }
 
 /** Chave com arte quando existe; senão o ícone na cor do token. */
-export function KeyGlyph({ k, size, muted }: { k: JourneyKeyId; size: number; muted?: boolean }) {
+export function KeyGlyph({ k, size, muted }: { k: JourneyKeyId; size: 20 | 24; muted?: boolean }) {
   const src = KEY_ART[k];
   if (src && !muted) return <img src={src} alt="" width={size} height={size} style={{ display: 'block' }} />;
-  return <Icon name="lock_open" size={size} tone="inherit" style={{ color: muted ? 'var(--sm2-muted)' : KEY_COLOR[k] }} />;
+  const color = { color: muted ? 'var(--sm2-muted)' : KEY_COLOR[k] };
+  return size === 20 ? <Icon name="lock_open" size={20} tone="inherit" style={color} /> : <Icon name="lock_open" size={24} tone="inherit" style={color} />;
 }
