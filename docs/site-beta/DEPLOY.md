@@ -12,7 +12,7 @@
 ## Primeira publicação
 
 1. **Turnstile (dono, painel Cloudflare):** criar widget com hostname `soulmon.pages.dev` e anotar site key e secret.
-2. **Banco:**
+2. **Banco (já criado em 08/11/2026, `soulmon-beta`, id 72a4c774-489a-4ab1-9d2d-bfed9aeff66e, migrações 0001 e 0002 aplicadas, vazio; só repetir se recriar):**
    ```bash
    npx wrangler d1 create soulmon-beta
    ```

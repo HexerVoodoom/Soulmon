@@ -16,8 +16,8 @@
     {
       "binding": "DB",
       "database_name": "soulmon-beta",
-      // Placeholder: troque pelo id real ao criar o banco. O local não usa.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // Banco criado em 08/11/2026 (conta do dono). O id não é segredo.
+      "database_id": "72a4c774-489a-4ab1-9d2d-bfed9aeff66e",
       "migrations_dir": "migrations"
     }
   ]
