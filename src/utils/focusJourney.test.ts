@@ -5,7 +5,7 @@ import {
 } from './focusJourney';
 import { FOCUS_ENVIRONMENTS } from './focusExpedition';
 
-describe('jornada do foco (§245)', () => {
+describe('jornada do foco (§247)', () => {
   it('baús: 6 em 25 min e 10 em 50, em ordem dentro do foco, mesma seed = mesma lista', () => {
     const a = journeyChests(42, 'p25');
     expect(a).toHaveLength(6);

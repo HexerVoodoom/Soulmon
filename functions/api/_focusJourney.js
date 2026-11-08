@@ -1,4 +1,4 @@
-// A JORNADA DO FOCO no servidor (§245): espelho de `src/utils/focusJourney.ts` só no que paga (baús pela seed, relógio, loot, tetos).
+// A JORNADA DO FOCO no servidor (§247): espelho de `src/utils/focusJourney.ts` só no que paga (baús pela seed, relógio, loot, tetos).
 // Paridade em `src/utils/focusJourney.parity.test.ts`. O desenho da trilha é só do cliente.
 
 export const JOURNEY_KEYS = ['bancada', 'relampago', 'quadrantes', 'brejo', 'elo', 'pena'];

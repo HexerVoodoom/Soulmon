@@ -4,7 +4,7 @@ import { FOCUS_ENVIRONMENTS } from './focusExpedition';
 // @ts-expect-error módulo JS do servidor, sem tipos
 import * as S from '../../functions/api/_focusJourney.js';
 
-describe('jornada: cliente e servidor pagam igual (§245)', () => {
+describe('jornada: cliente e servidor pagam igual (§247)', () => {
   it('constantes e listas espelhadas', () => {
     expect(S.JOURNEY_KEYS).toEqual([...C.JOURNEY_KEYS]);
     expect(S.JOURNEY_MODES).toEqual(C.JOURNEY_MODES);

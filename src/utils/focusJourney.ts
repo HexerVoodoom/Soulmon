@@ -1,5 +1,5 @@
 /**
- * A JORNADA DO FOCO (§245, plano `D:/Soulmon/planos/focus-jornada.md`): dono único da regra pura da jornada.
+ * A JORNADA DO FOCO (§247, plano `D:/Soulmon/planos/focus-jornada.md`): dono único da regra pura da jornada.
  * Espelho no servidor: `functions/api/_focusJourney.js` (paridade em `focusJourney.parity.test.ts`). O servidor é a autoridade
  * do relógio e do pagamento; aqui mora o desenho (trilha), a mesma lista de baús pela seed e os tetos.
  * Puro: sem React, sem storage, `now` por parâmetro.
