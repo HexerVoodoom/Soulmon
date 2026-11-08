@@ -201,3 +201,24 @@ describe('(6) corte × concussão (05/11/2026): só o acabamento do golpe corpo 
     } finally { window.matchMedia = mm; }
   });
 });
+
+describe('ranged de CORTE (visual) e perspectiva do projétil', () => {
+  it('cut: a lâmina (slash) voa do conjurador com --s0 pequeno; sem splash; orb comum sobe ~10%', () => {
+    const { container, rerender } = render(<BattleStage {...base} action={{ ...acao('ranged'), cut: true }} />);
+    const fly = container.querySelector('[data-stage-fx="sm-bs-fly"]') as HTMLElement;
+    expect(fly.className).toContain('sm-bs-persp');
+    expect(Number(fly.style.getPropertyValue('--s0'))).toBeLessThan(0.5);
+    expect(fly.style.getPropertyValue('--s1')).toBe('1');
+    expect(container.querySelector('[data-stage-fx="sm-bs-pop"]')).toBeNull();
+    rerender(<BattleStage {...base} action={{ ...acao('ranged'), id: 2 }} />);
+    const orb = container.querySelector('[data-stage-fx="sm-bs-fly"]') as HTMLElement;
+    expect(orb.style.getPropertyValue('--s0')).toBe('1');
+    expect(orb.style.getPropertyValue('--s1')).toBe('1.1');
+  });
+  it('inimigo → jogador: sai 1,1 e assenta em 1', () => {
+    const { container } = render(<BattleStage {...base} action={{ ...acao('ranged'), actor: 'foe' }} />);
+    const orb = container.querySelector('[data-stage-fx="sm-bs-fly"]') as HTMLElement;
+    expect(orb.style.getPropertyValue('--s0')).toBe('1.1');
+    expect(orb.style.getPropertyValue('--s1')).toBe('1');
+  });
+});

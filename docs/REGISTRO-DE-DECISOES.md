@@ -4299,6 +4299,15 @@ Plano completo: `D:/Soulmon/planos/focus-jornada.md`. O dono aceitou D-1 a D-6: 
 | 4 sessões com chaves | 16 (teto) | 6,79 |
 
 A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra no teto, como o dono aprovou (D-6). Bits e Honra não mudam. A partir daqui, `save.js` só aceita um `dungeonKeyDay` novo quando o razão `fjd:` daquele dia tem uma jornada concluída; a chave já gravada fica. A descida da masmorra deixou de ser disparada pelo foco (D-1): a Oficina não chama mais `onFocusStart`.
+## Combate: ataque à distância de CORTE e escala por perspectiva (08/11/2026)
+
+**Decisão.** `StageAction.cut` (só visual) faz o `ranged` lançar a lâmina (`slash`) do conjurador até o alvo, em vez da esfera. Sem `cut`, o projétil comum segue como "concussão". Dano e balanço intocados.
+
+**Escala (câmera baixa, jogador mais perto)** — `utils/combate/projetilEscala.ts`: esfera usuário→inimigo 1,00→1,10; inimigo→usuário 1,10→1,00. Corte usuário→inimigo 0,20→1,00 (tamanho do corte do melee); inimigo→usuário, simétrico à esfera (1,10→1,00), porque o alvo está perto e a lâmina já sai grande. A esfera do especial (`big`) mantém a animação própria. Movimento reduzido: o voo não renderiza (só o flash no alvo), como antes.
+
+**Alternativa que perdeu.** Crescer o corte também vindo do inimigo: contradiz a perspectiva (o jogador é quem está perto).
+
+**Ficou de fora.** Nenhum chamador seta `cut` ainda (falta decidir qual skill/Soulmon usa corte à distância); o hook `elementStrikeForm` não expõe variante. Sem sprite de lâmina próprio: usa o do melee escalado (anotado em `ASSETS-A-GERAR.md`). Os testes de componente (jsdom) não rodaram nesta máquina: `jsdom` falha com MODULE_NOT_FOUND no node_modules compartilhado; rodou só o teste puro (4 verdes).
 
 ## Cura do especial calibrada contra o dano (08/11/2026)
 
