@@ -37,6 +37,7 @@ import type { CadernoEntry } from '../../utils/cadernoSave';
 import type { ArenaReroll } from '../../utils/arenaSorteio';
 import type { QuestMark } from '../../utils/questMarks';
 import type { FocusLootRequest } from '../../utils/focusExpedition';
+import type { JourneyGrants } from '../../utils/focusJourney';
 import type { FocusRewardResult } from '../play/OficinaSheet';
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
 import { isFunGame, type FunSessionStatus } from '../../utils/funSession';
@@ -82,8 +83,7 @@ const MenteSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.MenteShee
 const RefugioSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.RefugioSheet })));
 // 🧭 O Passeio (30/09/2026): a folha carrega o catálogo das regiões — por isso lazy.
 const RogueKeyGate = lazy(() => import('../play/RogueKeyGate').then(m => ({ default: m.RogueKeyGate })));
-const PrepararFocoSheet = lazy(() => import('../play/PrepararFocoSheet').then(m => ({ default: m.PrepararFocoSheet })));
-const OficinaSheet = lazy(() => import('../play/OficinaSheet').then(m => ({ default: m.OficinaSheet })));
+const FocusBoard = lazy(() => import('../play/FocusBoard').then(m => ({ default: m.FocusBoard })));
 const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ default: m.PasseioSheet })));
 const CadernoSheet = lazy(() => import('../play/CadernoSheet').then(m => ({ default: m.CadernoSheet })));
 const Match3Game = lazy(() => loadMatch3Game().then(m => ({ default: m.Match3Game })));
@@ -142,6 +142,8 @@ export interface PlayHandlers {
   /** §239: a chave do Calabouço: concluir uma sessão da Oficina abre a dungeon naquele dia. Ausente = sem trava (testes antigos). */
   dungeonKeyActive?: boolean;
   onFocusSessionComplete?: () => void;
+  /** §247: recibos pagos pela jornada do foco (o crédito no save é idempotente). */
+  onJourneyGrants?: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => void;
   /** beta3 F1: o timer de foco começou — a masmorra desce em background. */
   onFocusStart?: (focusEndsAt?: number) => 'started' | 'busy' | 'no-hp' | 'no-energy';
   /** O timer de foco foi pausado / continuou (novo fim) / cancelado: a descida do foco acompanha. */
@@ -623,8 +625,8 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {/* beta3 N8 (26/10/2026): a Oficina abre primeiro a etapa 1 (Prepare to Focus); concluída, libera a etapa 2 (workshop/timer). */}
-            {open?.id === 'oficina' && play.focusKeyActive === false && <div data-oficina-etapa="1"><PrepararFocoSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} keyActive={false} onPrepared={play.onFocusPrepared} /></div>}
-            {open?.id === 'oficina' && play.focusKeyActive !== false && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} onSessionComplete={play.onFocusSessionComplete} onFocusCycle={() => props.onDailyEvent?.('foco')} onFocusStart={play.onFocusStart} onFocusPause={play.onFocusPause} onFocusResume={play.onFocusResume} onFocusCancel={play.onFocusCancel} />}
+            {/* §247: a Oficina é o quadro de cards + a jornada (substitui o Preparar → chave → timer). */}
+            {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={() => props.onDailyEvent?.('foco')} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}

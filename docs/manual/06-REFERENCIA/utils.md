@@ -4324,3 +4324,7 @@ Crédito idempotente das cartas do Mensageiro no save (`mailClaimed`), separaç�
 ### `src/utils/focusJourney.ts`
 
 Regra pura da jornada do foco: baús pela seed, relógio sem pausas, loot por chave, tetos diários e a espinha da trilha. Decisão: REGISTRO §247. **Régua:** `focusJourney.test.ts`, `focusJourney.parity.test.ts`.
+
+### `src/utils/focusBoard.ts` · `src/utils/focusJourneyApi.ts`
+
+O quadro da Oficina: critério de cada chave (`keyEarned`), chaves da sessão no aparelho e o crédito idempotente dos recibos da jornada no save (`applyJourneyGrants`, campo `journeyCredited`); e o cliente de `/api/focus-journey`. Decisão: REGISTRO §247. **Régua:** `focusBoard.test.ts`.

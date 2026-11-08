@@ -1,3 +1,4 @@
+import { sanitizeJourneyCredited } from '../utils/focusBoard';
 import { sanitizeMailClaimed } from '../utils/mensageiro';
 import { sanitizeFunSession } from '../utils/funSession';
 import { normalizeGuildMission } from '../utils/guildMission';
@@ -626,6 +627,8 @@ export interface GameState {
   mailClaimed?: string[];
   /** Dia do jogador em que concluiu uma sessão da Oficina: abre o Calabouço naquele dia (§239). */
   dungeonKeyDay?: string;
+  /** Recibos da jornada do foco já creditados no dia (§247). */
+  journeyCredited?: { day: string; ids: string[] };
   /** 02/11/2026: dia do jogador (AAAA-MM-DD) em que o Refúgio já devolveu a energia do dia (`utils/refugio/energia.ts`; 1×/dia). */
   refugioEnergyDay?: string;
   /** beta3 M7: incursão do Calabouço roguelike do dia (`utils/rogueDungeon.ts`) (outro dia = incursão nova na leitura, via `runForDay`). */
@@ -1541,6 +1544,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         focusKeyDay: sanitizeFocusKeyDay(loadedState.focusKeyDay),
         mailClaimed: sanitizeMailClaimed(loadedState.mailClaimed),
         dungeonKeyDay: sanitizeFocusKeyDay(loadedState.dungeonKeyDay),
+        journeyCredited: sanitizeJourneyCredited(loadedState.journeyCredited),
         refugioEnergyDay: sanitizeRefugioEnergyDay(loadedState.refugioEnergyDay),
         rogueDungeon: sanitizeRogueRun(loadedState.rogueDungeon),
         dungeonReturnPending: sanitizeDungeonReturnSummary(loadedState.dungeonReturnPending),
