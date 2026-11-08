@@ -1049,3 +1049,18 @@ Prompt (EN): "Create a single pixel-art game UI icon: a small sealed letter, an 
 - **Revisão pelo método da squad de design (06/11/2026):** conferido contra `docs/REGRA-IDENTIDADE-SOULMON.md` (turquesa escuro, cristal com chama, cobre, circuito, folhinha, tudo por cabo, sem engrenagem), contra o guia de 23/09 (pixel art nítida, 3 tons) e contra o ícone vizinho: silhueta única e simples para sobreviver a 32 px, sem ponto vermelho na arte (o selo de "nova" é código), mesma escala e contorno de `quest-exclamacao.png`. Sem texto na arte. A crítica da peça gerada continua com `arte-conferente` e `design-critic`.
 - **Geração:** ChatGPT primeiro (Higgsfield `gpt_image_2 --background transparent` é a reserva); alfa REAL, nunca chroma nem xadrez assado. Conferir com Pillow (`python -I`), prévia em #08191A (nunca magenta/verde), e olhar a 32 px sobre a cena da Home antes de instalar.
 - **Depois de instalar:** subir `CACHE_VERSION` em `public/sw.js` e rodar `src/assets/assets.contract.test.ts` e `src/components/nav/nav.render.test.tsx`.
+
+## 27. Jornada do foco: cenários, baús e chaves (pedido do dono, 08/11/2026, REGISTRO §247)
+
+> **Não gerar antes da revisão formal da squad de design** (`.claude/skills/squad-design/`). Os prompts completos, com o prefixo de identidade, a regra de emenda vertical e o prefixo de objeto, estão em `D:/Soulmon/planos/focus-jornada.md` §6.3 e §6.4. Hoje o jogo usa arte provisória em SVG (`src/components/play/JourneyScreen.tsx`); trocar não muda regra.
+
+| # | Asset | Formato | Qtd | Destino | Estado |
+|---|---|---|---|---|---|
+| 27.1 | Bloco de cenário vertical (Floresta, Costa, Caverna, Jardim, Oficina, Observatório) | 1024×2048, opaco, emenda de 128 px em cima e embaixo | 6 | `src/assets/soulmon/jornada/bloco-<cena>.webp` | falta |
+| 27.2 | Baú comum + baú aberto (estado e 4 quadros de abertura) | 256×256, alfa real (`gpt_image_2 --background transparent`) | 2 | `src/assets/soulmon/jornada/` | falta |
+| 27.3 | Baú especial por chave (Bancada, Relâmpago, Quadrantes, Brejo, Elo, Pena) | 256×256, alfa real | 6 | idem | falta |
+| 27.4 | Chave por tipo | 128×128, alfa real | 6 | idem | falta |
+| 27.5 | Cena de chegada do fim do foco | 1024×1024 | 1 | idem | falta |
+| 27.6 | Miniaturas de cenário | recorte dos blocos 27.1 | 6 | idem | sem geração |
+
+Antes de gerar 27.3 e 27.4: definir os tokens `--sm2-key-*` com contraste AA nos dois temas (hoje são cores provisórias no componente).
