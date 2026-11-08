@@ -16,7 +16,7 @@ const pt = {
     ver: 'Ver o jogo', loja: 'Android, pela Google Play.',
   },
   n404: { h1: 'Página não encontrada', p: 'Esse endereço não existe, ou mudou de lugar.', volta: 'Voltar ao início' },
-  rotulos: { gameplay: 'Gameplay real', demo: 'Demonstração', cine: 'Cinemática', trailer: 'Trailer' },
+  rotulos: { arte: 'Arte', gameplay: 'Gameplay real', demo: 'Demonstração', cine: 'Cinemática', trailer: 'Trailer' },
   jogo: {
     h2: 'O jogo na sua mão', frase: 'A tela de verdade, gravada no celular.',
     videoAlt: 'Gravação da tela inicial do Soulmon: a criatura e a lista de hábitos do dia.',
@@ -57,7 +57,8 @@ const pt = {
     abas: ['Lugares', 'Habitantes', 'Jogos', 'Elementos'],
     areas: [['exploracao', 'Exploração'], ['jogos', 'Jogos'], ['arena', 'Arena'], ['hall', 'Hall'], ['guilda', 'Guilda'], ['laboratorio', 'Laboratório'], ['forja', 'Forja']],
     habitanteAlt: 'Habitante do Soulmon',
-    jogos: [['ppt', 'Pedra-papel-tesoura'], ['mente', 'Mind Workshop'], ['rift', 'Endless Rift'], ['duelo', 'Duelo na Arena'], ['torneio', 'Torneio'], ['guilda', 'Guilda'], ['combina', 'Combina 3'], ['barrage', 'Soul Barrage'], ['corrida', 'Corrida']],
+    jogos: [['ppt', 'Pedra-Papel-Tesoura'], ['combina', 'Combina 3'], ['mente', 'Ateliê da Mente'], ['barrage', 'Chuva de Almas'], ['corrida', 'Corrida'], ['arena', 'Arena'], ['rift', 'Endless Rift'], ['calabouco', 'Calabouço']],
+    emObras: 'Em construção', jogosArte: 'Capas ilustradas dos jogos',
     els: { agua: 'Água', ar: 'Ar', arcano: 'Arcano', eletricidade: 'Eletricidade', espaco: 'Espaço', fada: 'Fada', fogo: 'Fogo', gravidade: 'Gravidade', industrial: 'Industrial', luz: 'Luz', marcial: 'Marcial', morte: 'Morte', planta: 'Planta', som: 'Som', sombra: 'Sombra', tempo: 'Tempo', terra: 'Terra', vida: 'Vida', vigor: 'Vigor', vileza: 'Vileza' } as Record<string, string>,
     ocultoRotulo: 'Elemento ainda não revelado', combinacoes: '+190 combinações', combinacoesTx: 'Os 20 elementos se combinam em pares.',
     lugares: { exploracao: 'Passeio e Endless Rift.', jogos: 'Minijogos e Mind Workshop.', arena: 'Torneio e duelos.', hall: 'Feira, amigos e Grove.', guilda: 'Casa e Missão do clã.', laboratorio: 'Evolução e perfil do Soulmon.', forja: 'Ferramentas para as tarefas difíceis.' } as Record<string, string>,
@@ -72,7 +73,7 @@ const pt = {
       ['jogos', 'Jogos rápidos', 'Minijogos que rendem Bits.', 'Mapa dos Jogos no Soulmon, com Salão de Jogos e Ateliê da Mente.'],
     ] as [string, string, string, string][],
   },
-  video: { capaH: 'Um mundo de distritos para explorar', capaP: 'Cada lugar tem seu guardião', h2: 'Um minuto de Soulmon', legenda: 'Telas do app e a música do jogo. Com som.', alt: 'Trailer do Soulmon, 54 segundos, com música e sem narração.' },
+  video: { capaH: 'Um mundo de distritos para explorar', capaP: 'Cada lugar tem seu guardião', h2: 'Um minuto de Soulmon', legenda: 'Telas do app e a música do jogo. Com som.', alt: 'Trailer do Soulmon, 59 segundos, com música e sem narração.' },
   entrar: {
     h2: 'Como entrar', frase: 'Três passos, sem pressa.',
     passos: [
@@ -136,7 +137,7 @@ const en: typeof pt = {
     ver: 'See the game', loja: 'Android, via Google Play.',
   },
   n404: { h1: 'Page not found', p: 'That address does not exist, or it moved.', volta: 'Back to home' },
-  rotulos: { gameplay: 'Real gameplay', demo: 'Demo', cine: 'Cinematic', trailer: 'Trailer' },
+  rotulos: { arte: 'Art', gameplay: 'Real gameplay', demo: 'Demo', cine: 'Cinematic', trailer: 'Trailer' },
   jogo: {
     h2: 'The game in your hand', frase: 'The real screen, recorded on a phone.',
     videoAlt: 'Recording of the Soulmon home screen: the creature and today\'s habit list.',
@@ -177,7 +178,8 @@ const en: typeof pt = {
     abas: ['Places', 'Inhabitants', 'Games', 'Elements'],
     areas: [['exploracao', 'Exploration'], ['jogos', 'Games'], ['arena', 'Arena'], ['hall', 'Hall'], ['guilda', 'Guild'], ['laboratorio', 'Laboratory'], ['forja', 'Forge']],
     habitanteAlt: 'Soulmon inhabitant',
-    jogos: [['ppt', 'Rock-paper-scissors'], ['mente', 'Mind Workshop'], ['rift', 'Endless Rift'], ['duelo', 'Arena duel'], ['torneio', 'Tournament'], ['guilda', 'Guild'], ['combina', 'Match 3'], ['barrage', 'Soul Barrage'], ['corrida', 'Runner']],
+    jogos: [['ppt', 'Rock-Paper-Scissors'], ['combina', 'Match 3'], ['mente', 'Mind Workshop'], ['barrage', 'Soul Barrage'], ['corrida', 'Runner'], ['arena', 'Arena'], ['rift', 'Endless Rift'], ['calabouco', 'Dungeon']],
+    emObras: 'Under construction', jogosArte: 'Illustrated game covers',
     els: { agua: 'Water', ar: 'Air', arcano: 'Arcane', eletricidade: 'Electricity', espaco: 'Space', fada: 'Fairy', fogo: 'Fire', gravidade: 'Gravity', industrial: 'Industrial', luz: 'Light', marcial: 'Martial', morte: 'Death', planta: 'Plant', som: 'Sound', sombra: 'Shadow', tempo: 'Time', terra: 'Earth', vida: 'Life', vigor: 'Vigor', vileza: 'Vileness' },
     ocultoRotulo: 'Element not revealed yet', combinacoes: '+190 combinations', combinacoesTx: 'The 20 elements combine in pairs.',
     lugares: { exploracao: 'Strolls and the Endless Rift.', jogos: 'Minigames and Mind Workshop.', arena: 'Tournament and duels.', hall: 'The Fair, friends and the Grove.', guilda: "Your clan's House and Mission.", laboratorio: "Evolution and your Soulmon's profile.", forja: 'Tools for the hardest tasks.' },
@@ -192,7 +194,7 @@ const en: typeof pt = {
       ['jogos', 'Quick games', 'Minigames that earn Bits.', 'Soulmon Games map, with the Game Hall and the Mind Workshop.'],
     ],
   },
-  video: { capaH: 'A world of districts to explore', capaP: 'Every place has its guardian', h2: 'One minute of Soulmon', legenda: "App screens and the game's music. Sound on.", alt: 'Soulmon trailer, 54 seconds, with music and no narration.' },
+  video: { capaH: 'A world of districts to explore', capaP: 'Every place has its guardian', h2: 'One minute of Soulmon', legenda: "App screens and the game's music. Sound on.", alt: 'Soulmon trailer, 59 seconds, with music and no narration.' },
   entrar: {
     h2: 'How to join', frase: 'Three steps, no rush.',
     passos: [

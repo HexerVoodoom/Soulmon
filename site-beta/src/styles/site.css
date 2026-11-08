@@ -828,3 +828,15 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .trailer-moldura .trailer-play { top: auto; bottom: 28px; margin: 0; left: auto; right: 24px; width: 72px; height: 72px; }
 .trailer-moldura .trailer-play svg { width: 32px; height: 32px; }
 @media (min-width: 768px) { .trailer-moldura { aspect-ratio: 16 / 9; } .trailer-moldura .trailer-play { width: 96px; height: 96px; right: 40px; bottom: 40px; } .trailer-moldura .trailer-play svg { width: 40px; height: 40px; } .capa-h { font-size: var(--sb-t-h2); } .capa-texto { left: var(--sb-e-6); padding: var(--sb-e-5) var(--sb-e-7) var(--sb-e-5) var(--sb-e-5); } }
+
+/* ---- capas dos jogos (arte 4:3, ilustração: sem pixelated) ---- */
+.capa-jogo { gap: 6px; padding: 6px 6px 8px; align-content: start; }
+.capa-arte { position: relative; display: block; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; }
+.capa-arte img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.capa-nome { font: 700 1rem/1.2 var(--sb-fonte-titulo); }
+.selo-obras { position: absolute; top: 6px; left: 6px; padding: 3px 7px; font: var(--sb-peso-forte) var(--sb-t-rotulo)/1.2 var(--sb-fonte-texto); text-transform: uppercase; letter-spacing: var(--sb-ls-rotulo); border: 1px solid currentColor; background: var(--sb-rot-fundo); }
+@media (min-width: 768px) { .jogos { grid-template-columns: repeat(4, 1fr); } }
+.mosaico-jogos { display: grid; gap: 6px; width: 100%; margin: 0; padding: 0 var(--sb-e-2); justify-items: start; }
+.mosaico-grade { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%; }
+.mosaico-grade img { width: 100%; height: auto; display: block; }
+.rot-arte { color: var(--sb-rot-demo, var(--sb-tx-2)); }

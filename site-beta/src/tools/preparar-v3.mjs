@@ -56,18 +56,7 @@ for (const s of SPRITES) {
   await sharp(pal).webp({ lossless: true, effort: 6 }).toFile(`${PUB}/sprites/${s}.webp`);
 }
 
-// ---------- Loop real e poster do 1º quadro ----------
-// Reencoda em 768x1664 (múltiplos de 16): 780x1688 saía com meia imagem cinza no decodificador do Windows (Edge).
-for (const l of ['pt', 'en']) {
-  const mp4 = `${PUB}/video/loop-${l}.mp4`;
-  execFileSync(FFMPEG, ['-y', '-v', 'error', '-i', `${SITE}/loop-${l}.mp4`, '-an', '-vf', 'scale=768:1664:flags=lanczos,setsar=1',
-    '-c:v', 'libx264', '-profile:v', 'high', '-level', '4.0', '-pix_fmt', 'yuv420p', '-crf', '25', '-preset', 'slow', '-movflags', '+faststart', mp4]);
-  const png = `${PUB}/video/_q-${l}.png`;
-  execFileSync(FFMPEG, ['-y', '-v', 'error', '-ss', '0', '-i', mp4, '-frames:v', '1', '-update', '1', png]);
-  await sharp(png).resize({ width: 640 }).webp({ quality: 70 }).toFile(`${PUB}/video/loop-${l}-poster.webp`);
-  await sharp(png).resize({ width: 640 }).avif({ quality: 45 }).toFile(`${PUB}/video/loop-${l}-poster.avif`);
-  unlinkSync(png);
-}
+// ---------- Loop real e posters: movidos para src/tools/preparar-loop.mjs (regerar com ele; poster = quadro do contador 2/3) ----------
 
 // Trailer: DESLIGADO (midia.json trailer.ativo=false). O arquivo de 06/11 mostra ROOKIE..ULTRA e "ciência do comportamento".
 // Só reencode quando o trailer novo chegar: TRAILER=1 node src/tools/preparar-v3.mjs

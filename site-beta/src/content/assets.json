@@ -516,5 +516,56 @@
     ],
     "origem": "Soulmon Elemental Arenas Grid",
     "recorte": "ilha fatiada da grade, alfa por flood fill do branco; a arena de lava/forja (roda e bigorna) ficou de fora"
+  },
+  "capasJogos": {
+    "estado": "aguarda-revisao",
+    "ids": [
+      "ppt",
+      "combina",
+      "mente",
+      "barrage",
+      "corrida",
+      "arena",
+      "rift",
+      "calabouco"
+    ],
+    "src": "/jogos/capa-ppt-400.webp",
+    "tamanho": [
+      400,
+      300
+    ],
+    "origem": "E:/Soulmon-marketing/site-assets/capas-jogos/capa-{id}.png (1600x1200), cenário do ChatGPT + sprites reais de soulmon/novos compostos por E:/tmp/heroarte/compor_capas.py; src/tools/preparar-capas-jogos.mjs",
+    "gameplay": false,
+    "elenco": {
+      "ppt": [
+        "morte-rookie",
+        "espaco-rookie"
+      ],
+      "combina": [
+        "planta-champion",
+        "terra-rookie",
+        "espaco-rookie",
+        "morte-rookie"
+      ],
+      "mente": [
+        "arcano-rookie"
+      ],
+      "barrage": [
+        "ar-rookie"
+      ],
+      "corrida": [
+        "vida-ultimate"
+      ],
+      "arena": [
+        "vigor-champion",
+        "gravidade-champion"
+      ],
+      "rift": [
+        "vida-champion"
+      ],
+      "calabouco": []
+    },
+    "nota": "Arte, nunca gameplay: sem selo Gameplay real. Título e selo Em construção (Calabouço) são HTML. Calabouço = só a porta, nenhum sprite.",
+    "padrao": "/jogos/capa-{id}-{400,800}.{avif,webp}"
   }
 }

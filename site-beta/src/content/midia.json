@@ -17,12 +17,11 @@
         "legenda": "",
         "largura": 768,
         "altura": 1664,
-        "origem": "E:/Soulmon-marketing/site/loop-pt.mp4, 11 s, 30 fps, sem áudio, Home real; reencodado 768x1664",
+        "origem": "E:/Soulmon-marketing/site/loop-pt.mp4, 11 s, 30 fps, sem áudio, Home real, 3 tarefas marcadas; reencodado 768x1664",
         "posterP": "/video/loop-pt-poster-360.webp",
         "posterPAvif": "/video/loop-pt-poster-360.avif",
         "uso": "hero (aparelho ao lado do texto) e seção Faz a tarefa (poster com play); nunca dois tocando juntos",
-        "posterCiclo": "/print/combate-pt-480.webp",
-        "_nota": "Sem quadro do loop com recompensa visível (11 s, Noturno 0/3 do início ao fim): poster do hero segue o primeiro quadro; em \"Faz a tarefa\" o poster é o print real de combate."
+        "_nota": "Loop regravado em 08/11 (Noturno marca 3 tarefas, 1/3 a 3/3 Dia completo). Poster do hero e de \"Faz a tarefa\" = quadro t=6 s (contador 2/3, sem +10 EXP flutuante, sem toast NEW, sem selo DEMO). Gerado por src/tools/preparar-loop.mjs."
       }
     ],
     "en": [
@@ -34,12 +33,11 @@
         "legenda": "",
         "largura": 768,
         "altura": 1664,
-        "origem": "E:/Soulmon-marketing/site/loop-en.mp4, 11 s, 30 fps, sem áudio, Home real; reencodado 768x1664",
+        "origem": "E:/Soulmon-marketing/site/loop-en.mp4, 11 s, 30 fps, sem áudio, Home real, 3 tarefas marcadas; reencodado 768x1664",
         "posterP": "/video/loop-en-poster-360.webp",
         "posterPAvif": "/video/loop-en-poster-360.avif",
         "uso": "hero (aparelho ao lado do texto) e seção Faz a tarefa (poster com play); nunca dois tocando juntos",
-        "posterCiclo": "/print/combate-en-480.webp",
-        "_nota": "Sem quadro do loop com recompensa visível (11 s, Noturno 0/3 do início ao fim): poster do hero segue o primeiro quadro; em \"Faz a tarefa\" o poster é o print real de combate."
+        "_nota": "Loop regravado em 08/11 (Noturno marca 3 tarefas, 1/3 a 3/3 Dia completo). Poster do hero e de \"Faz a tarefa\" = quadro t=6 s (contador 2/3, sem +10 EXP flutuante, sem toast NEW, sem selo DEMO). Gerado por src/tools/preparar-loop.mjs."
       }
     ]
   },
@@ -122,8 +120,8 @@
       "rotulo": "trailer",
       "largura": 1280,
       "altura": 720,
-      "origem": "E:/Soulmon-marketing/site/trailer-60s-pt.mp4 de 06/11 08:5x (54 s), reencodado 1280x720; quadros a cada 2 s conferidos: sem ciência do comportamento, sem 66, sem rótulos de estágio; vagas sem número (Vagas limitadas)",
-      "ativo": true,
+      "origem": "E:/Soulmon-marketing/site/trailer-60s-pt.mp4 de 08/11 14:3x (59 s), reencodado 1280x720; 8 quadros (a cada ~7 s, extraídos com o Edge) conferidos: sem ciência do comportamento, sem 66, sem rótulos de estágio; vagas sem número (Vagas limitadas)",
+      "ativo": false,
       "capa": {
         "desktop": "/video/trailer-capa-hall-d",
         "celular": "/video/trailer-capa-hall-m",
@@ -149,8 +147,8 @@
       "rotulo": "trailer",
       "largura": 1280,
       "altura": 720,
-      "origem": "E:/Soulmon-marketing/site/trailer-60s-en.mp4 de 06/11 08:5x (54 s), reencodado 1280x720; quadros a cada 2 s conferidos: sem ciência do comportamento, sem 66, sem rótulos de estágio; vagas sem número (Vagas limitadas)",
-      "ativo": true,
+      "origem": "E:/Soulmon-marketing/site/trailer-60s-en.mp4 de 08/11 14:3x (59 s), reencodado 1280x720; 8 quadros (a cada ~7 s, extraídos com o Edge) conferidos: sem ciência do comportamento, sem 66, sem rótulos de estágio; vagas sem número (Vagas limitadas)",
+      "ativo": false,
       "capa": {
         "desktop": "/video/trailer-capa-hall-d",
         "celular": "/video/trailer-capa-hall-m",
@@ -168,6 +166,6 @@
         "origem": "E:/Soulmon-marketing/site-assets/ref-mapas-main/bg-hall.png (mapa da main), recorte 16:9 desktop e 4:5 celular; sem texto na arte; arte diferente do hero"
       }
     },
-    "_nota": "LIGADO (06/11): trailer refeito conferido quadro a quadro. Edição com telas reais + cartelas + árvore do Noturno: rótulo Trailer, nunca Gameplay real. Capa = quadro dos distritos (31 s). Capa v5b: mapa Hall da main sem texto; \"Um mundo de distritos...\" e \"Cada lugar...\" viraram HTML real."
+    "_nota": "DESLIGADO (08/11): trailer de 59 s tem a árvore de plantas com criatura de auréola dourada a 27 s (quadro 3ª linha, 4ª coluna). Religar só com o vídeo corrigido. [nota anterior: LIGADO (06/11): trailer refeito conferido quadro a quadro. Edição com telas reais + cartelas + árvore do Noturno: rótulo Trailer, nunca Gameplay real. Capa = quadro dos distritos (31 s). Capa v5b: mapa Hall da main sem texto; \"Um mundo de distritos...\" e \"Cada lugar...\" viraram HTML real."
   }
 }

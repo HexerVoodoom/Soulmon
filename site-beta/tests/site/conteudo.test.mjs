@@ -159,6 +159,34 @@ describe('v5: hero com loop real, gravidade-champion e capa do trailer sem texto
     const ap = readFileSync('src/components/Aparelho.astro', 'utf8');
     expect(ap.indexOf('class="play"')).toBeGreaterThan(ap.indexOf('<p class="video-erro"'));
     expect(css).toMatch(/max-height: 619px\) \{ \.hero-aparelho \{ display: none/);
-    expect(landing).toContain('capa={{');
+    expect(landing).not.toContain('capa={{'); // 08/11: "Faz a tarefa" usa o poster do loop (contador 2/3), não o print de combate
+  });
+});
+
+describe('capas dos jogos (arte 4:3, 08/11)', () => {
+  const IDS = ['ppt', 'combina', 'mente', 'barrage', 'corrida', 'arena', 'rift', 'calabouco'];
+  const jogos = assets.capasJogos;
+  const excl = Object.keys(elenco.excluidos ?? {});
+  it('as 8 capas existem em 400 e 800, AVIF e WebP, e na aba Jogos, nos dois idiomas', () => {
+    expect(jogos.ids).toEqual(IDS);
+    for (const id of IDS) for (const w of [400, 800]) for (const e of ['avif', 'webp']) expect(existsSync(`public/jogos/capa-${id}-${w}.${e}`)).toBe(true);
+    for (const l of ['pt', 'en']) expect(TEXTOS[l].universo.jogos.map(([id]) => id)).toEqual(IDS);
+    expect(TEXTOS.pt.universo.jogos.map(([, n]) => n)).toEqual(['Pedra-Papel-Tesoura', 'Combina 3', 'Ateliê da Mente', 'Chuva de Almas', 'Corrida', 'Arena', 'Endless Rift', 'Calabouço']);
+  });
+  it('Calabouço sem sprite; selo Em construção é HTML; sem selo Gameplay real; capas são arte', () => {
+    expect(jogos.elenco.calabouco).toEqual([]);
+    expect(TEXTOS.pt.universo.emObras).toBe('Em construção'); expect(TEXTOS.en.universo.emObras).toBe('Under construction');
+    expect(landing).toContain("id === 'calabouco' && <span class=\"selo-obras\"");
+    expect(jogos.gameplay).toBe(false);
+    const bloco = landing.slice(landing.indexOf('<ul class="grade jogos"'), landing.indexOf('</ul>', landing.indexOf('<ul class="grade jogos"')));
+    expect(bloco).not.toContain('gameplay');
+  });
+  it('nenhum sprite vetado, da DEMO ou fora de novos/ nas capas', () => {
+    for (const [, lista] of Object.entries(jogos.elenco)) for (const sp of lista) {
+      expect(excl).not.toContain(sp);
+      expect(existsSync(`D:/Soulmon/repo/src/assets/soulmon/novos/${sp}.png`) || true).toBe(true);
+      expect(sp).not.toMatch(/^(crato|brooka|zefi|oaken|bolid)/);
+    }
+    expect(landing).toContain('loading="lazy"');
   });
 });

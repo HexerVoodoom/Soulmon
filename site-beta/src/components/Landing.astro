@@ -43,8 +43,10 @@ const NPCS = ['hall', 'jogos', 'oraculo', 'laboratorio-biblioteca-glifa', 'explo
 const ELS = Object.keys(u.els);
 // Vinheta de cada lugar: recorte AMPLIADO num ponto diferente dos fundos de seção (x, y em % do mapa).
 const FOCO: Record<string, [number, number]> = { exploracao: [70, 34], jogos: [40, 62], arena: [72, 48], hall: [28, 20], guilda: [28, 30], laboratorio: [70, 50], forja: [50, 50] };
-// Jogos sem arte própria instalada usam sprite/ícone real como provisório.
-const capaJogo: Record<string, string> = { combina: b('/el/agua.webp'), barrage: b('/sprites/espaco-ultimate.webp'), corrida: b('/sprites/planta-champion-128.webp') };
+// Capas dos jogos: arte ilustrada 4:3 (public/jogos, src/tools/preparar-capas-jogos.mjs). Título e selo são HTML, nunca na arte.
+const capaJogo = (id: string, w: 400 | 800 = 400) => b(`/jogos/capa-${id}-${w}`);
+const capaSet = (id: string, ext: string) => `${capaJogo(id, 400)}.${ext} 400w, ${capaJogo(id, 800)}.${ext} 800w`;
+const MOSAICO = ['combina', 'barrage', 'corrida', 'ppt'];
 const Formas = c.formas;
 // Sorteio: todo o elenco elegível de soulmon/novos (src/tools/elenco.mjs). Compacto: [id, elemento, forma].
 const POOL = JSON.stringify(elenco.elegiveis.map((x) => [x.id, x.el, x.forma]));
@@ -116,7 +118,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           <h2 id="ciclo-h">{c.h2}</h2>
           <p class="frase">{c.frase}</p>
         </div>
-        {loop && <Aparelho loop={loop} classe="ciclo-aparelho" capa={{ avif: printSrc("combate", "avif"), webp: printSrc("combate", "webp"), src: b(`/print/combate-${lang}-480.webp`) }} rotulo={t.rotulos.gameplay} alt={j.videoAlt} tocar={j.tocar} erro={j.erro} abrir={j.abrir} auto={false} />}
+        {loop && <Aparelho loop={loop} classe="ciclo-aparelho" rotulo={t.rotulos.gameplay} alt={j.videoAlt} tocar={j.tocar} erro={j.erro} abrir={j.abrir} auto={false} />}
         <ol class="estagios" data-estatico aria-label={c.listaRotulo}>
           {Formas.map((fm, i) => <li><img class="sprite" loading="lazy" src={b(`/sprites/planta-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.forma} ${i + 1} ${c.de} 5`} /><span>{c.forma} {i + 1} {c.de} 5</span></li>)}
         </ol>
@@ -247,8 +249,16 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         </div>
         <div class="painel" id="painel-2" data-painel>
           <h3 class="painel-h">{u.abas[2]}</h3>
-          <ul class="grade jogos">
-            {u.jogos.map(([id, nome]) => <li class="celula"><img class:list={[{ sprite: capaJogo[id] }]} loading="lazy" src={capaJogo[id] ?? b(`/lote/${id}.webp`)} width="256" height="256" alt="" /><span>{nome}</span></li>)}
+          <ul class="grade jogos" tabindex="0" aria-label={u.jogosArte}>
+            {u.jogos.map(([id, nome]) => (
+              <li class="celula capa-jogo" aria-labelledby={`cj-${id}${id === 'calabouco' ? ` cj-${id}-s` : ''}`}>
+                <span class="capa-arte"><picture>
+                  <source type="image/avif" srcset={capaSet(id, 'avif')} sizes="(min-width: 768px) 22vw, 44vw" />
+                  <img loading="lazy" decoding="async" src={`${capaJogo(id)}.webp`} srcset={capaSet(id, 'webp')} sizes="(min-width: 768px) 22vw, 44vw" width="400" height="300" alt="" />
+                </picture>{id === 'calabouco' && <span class="selo-obras" id={`cj-${id}-s`}>{u.emObras}</span>}</span>
+                <span class="capa-nome" id={`cj-${id}`}>{nome}</span>
+              </li>
+            ))}
           </ul>
         </div>
         <div class="painel" id="painel-3" data-painel>
@@ -280,6 +290,14 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         <ul class="cartoes" tabindex="0" aria-label={r.h2}>
           {r.cartoes.filter(([id]) => prints.some((p) => p.id === id)).map(([id, h, p, alt]) => (
             <li class="cartao">
+              {id === 'jogos' ? (
+                <figure class="mosaico-jogos" role="img" aria-label={alt}>
+                  <p class="rotulo rot-arte">{t.rotulos.arte}</p>
+                  <div class="mosaico-grade" aria-hidden="true">
+                    {MOSAICO.map((m) => <picture><source type="image/avif" srcset={capaSet(m, 'avif')} sizes="120px" /><img loading="lazy" decoding="async" src={`${capaJogo(m)}.webp`} srcset={capaSet(m, 'webp')} sizes="120px" width="400" height="300" alt="" /></picture>)}
+                  </div>
+                </figure>
+              ) : (
               <figure class="aparelho mini">
                 <div class="casca"><div class="tela">
                   <picture>
@@ -288,6 +306,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
                   </picture>
                 </div></div>
               </figure>
+              )}
               <h3>{h}</h3>
               <p>{p}</p>
             </li>
@@ -296,7 +315,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
       </section>
     )}
 
-    <!-- 7 · Trailer de 60 s: telas reais + cartelas + arte aprovada; rotulado Trailer, nunca Gameplay real -->
+    <!-- 7 · Trailer de 59 s: telas reais + cartelas + arte aprovada; rotulado Trailer, nunca Gameplay real -->
     {trailer && (
       <section class="calmo trailer" id="trailer" aria-labelledby="trailer-h">
         <div class="trailer-texto">
