@@ -874,6 +874,14 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `components/games/useGroupBattle.ts` (via `GroupScene.playerImpact`/`foeImpact`), `ArenaGame`, `DungeonGame`, `NightmareBattle`, `RogueFight`, `guild/GroveRaidFight`, `DuelScreen`, `guild/BossFightScreen`; vira `StageAction.impacto` em `games/BattleStage`.
 **Régua:** `src/utils/combate/golpeImpacto.test.ts` e o bloco (6) de `src/components/games/BattleStage.golpeTipo.test.tsx`.
 
+### `src/utils/combate/projetilEscala.ts`
+**Dono de:** escala do projétil por PERSPECTIVA (câmera baixa, jogador mais perto), só visual. Esfera comum 1,00→1,10 indo ao inimigo e 1,10→1,00 vindo; corte à distância 0,20→1,00 indo ao inimigo e 1,10→1,00 vindo. Decisão: REGISTRO «Combate: ataque à distância de CORTE».
+**Exports:**
+- `ProjectileKind` (`'orb' | 'cut'`), `ProjectileDir` (`'toFoe' | 'toMe'`), `PERSP_GROW`, `CUT_START`.
+- `projectileScaleRange(kind, dir)` — `{ from, to }`; vira `--s0`/`--s1` do keyframe `sm-bs-fly-persp`. `projectileScale(kind, dir, t)` — a mesma interpolação linear em JS.
+**Chamado por:** `components/games/BattleStage` (`ActionFx`, quando `StageAction.cut` ou projétil comum).
+**Régua:** `src/utils/combate/projetilEscala.test.ts` e o bloco «ranged de CORTE» de `src/components/games/BattleStage.golpeTipo.test.tsx`.
+
 ### `src/utils/combate/group.ts`
 **Dono de:** A luta N×1 do combate v3 (PR3a, §2.15 P2): o jogador mira o 1º inimigo vivo, cada inimigo tem stream (`foeSeed`: o 0 usa `sideSeed(seed, 2)`) e fase próprios; com N = 1 dá o mesmo 1º KO e o mesmo vencedor que `fight()`. Área × único com o MESMO orçamento E: a área dá E/k a cada vivo, o único dá E ao alvo, e o DoT único repassa os ticks ao próximo vivo.
 **Exports:**

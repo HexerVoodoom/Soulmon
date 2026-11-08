@@ -659,7 +659,7 @@ function ActionFx({ action, layout, reduced }: { action: StageAction; layout: St
   const slashFlip = fxMirror(el, 'slash', travel);
   const orb = orbPose(el, travel, ang);
   const fxScale = Math.max(1, meSpot.size / 190);
-  const cutRanged = form === 'ranged' && (!!action.cut || action.impacto === 'corte'); // `impacto: 'corte'` (melee, 05/11) também vale no ranged
+  const cutRanged = form === 'ranged' && !!action.cut; // só a flag explícita: `impacto` vem preenchido em TODA ação (inclusive ranged) e ligaria o corte em todo projétil
 
   const layers: ReactNode[] = [];
   // PR11: o círculo de cast do ESPECIAL vale nas duas modalidades (movimento reduzido: flash único); o básico não tem.
