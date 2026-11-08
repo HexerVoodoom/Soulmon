@@ -15,6 +15,7 @@ import { formatClock } from '../../utils/focoTimer';
 import { useBackLayer } from '../../utils/backStack';
 import { MATERIALS } from '../../utils/buildingQuestsCopy';
 import { essenceName } from '../../utils/essences';
+import { JOURNEY_ART, KEY_ART, CHEST_ART, ARRIVAL_ART, CHEST_OPEN_SHEET } from './journeyArt';
 
 export const KEY_COLOR: Record<JourneyKeyId, string> = {
   bancada: 'var(--sm2-key-bancada)', relampago: 'var(--sm2-key-relampago)', quadrantes: 'var(--sm2-key-quadrantes)',
@@ -25,6 +26,7 @@ const ENV_TONE: Record<string, [string, string]> = {
   garden: ['#10302c', '#1d5246'], workshop: ['#0e2626', '#2a3b33'], observatory: ['#081c22', '#0f3640'],
 };
 const VIEW_BLOCKS = 1.2;
+const H = 200; // altura do bloco em unidades do SVG (arte 1:2)
 
 export function itemLabel(it: JourneyItem, isPt: boolean): string {
   if (it.kind === 'food') return `${it.id} ×${it.qty}`;
@@ -64,21 +66,25 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
   const pet = trailAt(spine, p);
   const camY = Math.min(blocks - VIEW_BLOCKS, Math.max(0, pet.y - VIEW_BLOCKS * 0.45));
   const tone = ENV_TONE[active.env] ?? ENV_TONE.forest;
-  const Y = (y: number) => (blocks - y) * 100;
+  const Y = (y: number) => (blocks - y) * H;
+  const art = JOURNEY_ART[active.env];
   const path = spine.map((pt, i) => `${i ? 'L' : 'M'}${(pt.x * 100).toFixed(2)},${Y(pt.y).toFixed(2)}`).join(' ');
   const paused = active.pausedAt !== null;
 
   const box: CSSProperties = { position: 'fixed', inset: 0, zIndex: 210, background: tone[0], overflow: 'hidden' };
   return createPortal(
     <div role="dialog" aria-modal="true" aria-label={isPt ? 'Jornada do foco' : 'Focus journey'} data-journey style={box}>
-      <svg data-journey-scene viewBox={`0 ${Y(camY + VIEW_BLOCKS)} 100 ${VIEW_BLOCKS * 100}`} preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: paused ? 0.6 : 1 }}>
+      <svg data-journey-scene viewBox={`0 ${Y(camY + VIEW_BLOCKS)} 100 ${VIEW_BLOCKS * H}`} preserveAspectRatio="xMidYMid slice" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: paused ? 0.6 : 1 }}>
         <defs><linearGradient id="jt" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={tone[1]} /><stop offset="1" stopColor={tone[0]} /></linearGradient></defs>
-        {Array.from({ length: blocks }, (_, b) => <g key={b}>
-          <rect x={0} y={Y(b + 1)} width={100} height={100} fill="url(#jt)" />
+        {Array.from({ length: blocks }, (_, b) => art
+          ? <image key={b} data-journey-block href={art} x={0} y={Y(b + 1)} width={100} height={H} preserveAspectRatio="none" />
+          : <g key={b}>
+          <rect x={0} y={Y(b + 1)} width={100} height={H} fill="url(#jt)" />
           <rect x={0} y={Y(b + 1)} width={100} height={6} fill="#0a1d1d" />
           <line x1={50} x2={50} y1={Y(b + 1)} y2={Y(b + 1) + 6} stroke="#b8733a" strokeWidth={0.8} />
           {[0.12, 0.88].map(x => <polygon key={x} points={`${x * 100},${Y(b + 0.5) - 6} ${x * 100 + 3},${Y(b + 0.5)} ${x * 100},${Y(b + 0.5) + 6} ${x * 100 - 3},${Y(b + 0.5)}`} fill="#4fe3d6" opacity={0.55} />)}
         </g>)}
+        <image data-journey-arrival href={ARRIVAL_ART} x={20} y={Y(blocks)} width={60} height={60} opacity={p >= 1 ? 1 : 0.85} />
         <path d={path} fill="none" stroke="#0a1d1d" strokeWidth={4.2} strokeLinejoin="round" strokeLinecap="round" />
         <path d={path} fill="none" stroke="#5c8f84" strokeWidth={2.6} strokeLinejoin="round" strokeLinecap="round" />
         {chests.map(c => {
@@ -90,8 +96,13 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
           const has = special && active.keys.includes(c.type as JourneyKeyId);
           return <g key={c.k} data-journey-chest={c.k} data-open={open} data-type={c.type}>
             <path d={`M${at.x * 100},${Y(at.y)} Q${(at.x + side * 0.1) * 100},${Y(at.y) - 8} ${bx},${Y(at.y) - 10}`} fill="none" stroke="#5c8f84" strokeWidth={1.6} strokeDasharray={open ? undefined : '1.5 1.5'} />
-            <rect x={bx - 3.5} y={Y(at.y) - 14} width={7} height={5.5} rx={1} fill={open ? '#3a2a1a' : '#6b4a2b'} stroke={special ? KEY_COLOR[c.type as JourneyKeyId] : '#b8733a'} strokeWidth={special ? 1.2 : 0.8} />
-            {special && !has && !open && <circle cx={bx} cy={Y(at.y) - 11} r={0.9} fill="#e9f5f2" />}
+            {(() => {
+              const img = c.type === 'common' ? CHEST_ART.common : CHEST_ART[c.type as JourneyKeyId];
+              if (open && c.type === 'common') return <svg x={bx - 9} y={Y(at.y) - 22} width={18} height={18} viewBox="576 0 192 256" preserveAspectRatio="xMidYMid meet"><image href={CHEST_OPEN_SHEET} width={768} height={256} /></svg>;
+              if (img) return <image href={img} x={bx - 9} y={Y(at.y) - 22} width={18} height={18} opacity={open ? 0.55 : 1} />;
+              return <rect x={bx - 3.5} y={Y(at.y) - 14} width={7} height={5.5} rx={1} fill={open ? '#3a2a1a' : '#6b4a2b'} stroke={special ? KEY_COLOR[c.type as JourneyKeyId] : '#b8733a'} strokeWidth={special ? 1.2 : 0.8} />;
+            })()}
+            {special && !has && !open && <circle cx={bx} cy={Y(at.y) - 4} r={1.2} fill="#e9f5f2" />}
           </g>;
         })}
         {petSprite
@@ -110,7 +121,7 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
             <span style={{ ...sm2Hint, margin: 0 }}>{p >= 1 ? (isPt ? 'Chegou' : 'Arrived') : paused ? (isPt ? 'Pausa' : 'Paused') : (isPt ? 'Foco' : 'Focus')}</span>
           </button>
           {!mini && <span aria-label={isPt ? 'Chaves desta jornada' : 'Keys for this journey'} style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-            {active.keys.map(k => <Icon key={k} name="lock_open" size={24} tone="inherit" style={{ color: KEY_COLOR[k] }} />)}
+            {active.keys.map(k => <KeyGlyph key={k} k={k} size={24} />)}
           </span>}
         </div>
         {!mini && p < 1 && <div style={{ display: 'flex', gap: 8 }}>
@@ -127,4 +138,11 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
     </div>,
     document.body,
   );
+}
+
+/** Chave com arte quando existe; senão o ícone na cor do token. */
+export function KeyGlyph({ k, size, muted }: { k: JourneyKeyId; size: number; muted?: boolean }) {
+  const src = KEY_ART[k];
+  if (src && !muted) return <img src={src} alt="" width={size} height={size} style={{ display: 'block' }} />;
+  return <Icon name="lock_open" size={size} tone="inherit" style={{ color: muted ? 'var(--sm2-muted)' : KEY_COLOR[k] }} />;
 }
