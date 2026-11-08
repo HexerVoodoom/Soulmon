@@ -4,7 +4,7 @@ import { CARTA_ART } from '../../assets/soulmon/icones-ui/carta';
 import { CORNER_BOX, CORNER_BOX_TOP, CORNER_SIDE } from './cornerAnchor';
 
 /**
- * O ÍCONE DA CAIXA DE CARTAS na Home (§245): na pilha do canto direito, ENTRE o Mapa (linha 0) e as Missões (linha 2). Pelado, 32 px,
+ * O ÍCONE DA CAIXA DE CARTAS na Home (§246): na pilha do canto direito, ENTRE o Mapa (linha 0) e as Missões (linha 2). Pelado, 32 px,
  * como os vizinhos. A bolinha vermelha (`data-mail-dot`) aparece só com carta NOVA (não aberta nem resgatada); é um ponto absoluto sobre o
  * canto do ícone, então ligar e desligar não move nada. Sem número, parado, sem som. Sem arte (`CARTA_ART` ausente) usa o glifo `chat_bubble`.
  */

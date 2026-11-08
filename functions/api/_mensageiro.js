@@ -4,7 +4,7 @@
 //  · a carta da temporada nasce AQUI, na primeira leitura depois da virada do mês, sem depender de cron;
 //  · o cliente só confirma (`ack`) um `mid` que já voltou gravado no save dele (`mailClaimed`), então crédito e fila não divergem;
 //  · simulado nunca recebe nada.
-// Caixa de cartas (§245): a carta fica na caixa depois de lida/resgatada. O RESGATE é decidido AQUI (`claimMail`): o prêmio sai do registro do
+// Caixa de cartas (§246): a carta fica na caixa depois de lida/resgatada. O RESGATE é decidido AQUI (`claimMail`): o prêmio sai do registro do
 // servidor, não do corpo do pedido, e a transição `não resgatada → resgatada` acontece uma única vez; o cliente ainda deduplica por `mailClaimed`.
 // Carta SEM prêmio pendente some sozinha 3 dias depois (`MAIL_TTL_MS`); com prêmio pendente nunca expira nem é apagada sem `force`.
 import { isSimuladoId } from './_simulados.js';

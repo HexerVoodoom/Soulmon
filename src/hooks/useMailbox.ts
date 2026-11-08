@@ -7,7 +7,7 @@ import {
 const api = () => import('../utils/community');
 
 /**
- * A CAIXA DE CARTAS (§245). A lista e as decisões moram no servidor (`functions/api/_mensageiro.js`); aqui só o espelho local, o crédito no save
+ * A CAIXA DE CARTAS (§246). A lista e as decisões moram no servidor (`functions/api/_mensageiro.js`); aqui só o espelho local, o crédito no save
  * (idempotente por `mailClaimed`) e a releitura (ao abrir, ao voltar à aba e a cada 5 min). Nada é creditado sem o servidor ter entregue o prêmio.
  */
 export function useMailbox<S extends MailState>({ saveId, demo, getState, setState }: {

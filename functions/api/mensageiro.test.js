@@ -66,7 +66,7 @@ async function caixa() {
   return { kv, env };
 }
 
-describe('caixa de cartas (§245)', () => {
+describe('caixa de cartas (§246)', () => {
   it('resgate é idempotente e o prêmio vem do servidor', async () => {
     const { kv } = await caixa();
     const a = await claimMail(kv, ID, ['item-1', 'aviso-1'], T0 + 1);

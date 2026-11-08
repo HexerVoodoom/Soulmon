@@ -320,7 +320,7 @@ export async function resgatarPresentes(id: string): Promise<{ gifts: GiftItem[]
 
 /** O Mensageiro (§241): a fila de cartas e a confirmação do que já está no save. */
 export const getMail = (id: string) => call<{ mail: MailItem[] }>('mail', { params: { id } });
-/** Caixa de cartas (§245). O servidor é quem decide o resgate: `granted` é só o que saiu AGORA (repetir devolve vazio). */
+/** Caixa de cartas (§246). O servidor é quem decide o resgate: `granted` é só o que saiu AGORA (repetir devolve vazio). */
 export const markMailRead = (id: string, mids: string[]) => call<{ ok: true }>('mailRead', { method: 'POST', body: { id, mids } });
 export const claimMail = (id: string, target: string[] | 'all') =>
   call<{ ok: true; granted: MailGrant[] }>('mailClaim', { method: 'POST', body: target === 'all' ? { id, all: true } : { id, mids: target } });

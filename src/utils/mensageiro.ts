@@ -4,7 +4,7 @@
  */
 export interface MailItem {
   mid: string; bodyPt: string; bodyEn: string; bits: number; emblems: number;
-  /** Caixa de cartas (§245). Cartas de servidor antigo chegam sem estes campos: lidos como carta nova e sem resgate. */
+  /** Caixa de cartas (§246). Cartas de servidor antigo chegam sem estes campos: lidos como carta nova e sem resgate. */
   titlePt?: string; titleEn?: string; at?: number;
   /** O dono já abriu (ou resgatou). Só o servidor grava. */
   read?: boolean;

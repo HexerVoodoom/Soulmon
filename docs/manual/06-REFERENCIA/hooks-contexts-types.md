@@ -16,7 +16,7 @@
 ## src/hooks
 
 ### `src/hooks/useMailbox.ts`
-**Dono de:** o espelho local da caixa de cartas (`mail`, `unread`) e as ações `openLetter`, `claim`, `claimAll`, `remove`, `removeRead`; relê ao abrir, ao voltar à aba e a cada 5 min; credita no save só o que o servidor entregou. **Chamado por:** `src/App.tsx`. Decisão: REGISTRO §245.
+**Dono de:** o espelho local da caixa de cartas (`mail`, `unread`) e as ações `openLetter`, `claim`, `claimAll`, `remove`, `removeRead`; relê ao abrir, ao voltar à aba e a cada 5 min; credita no save só o que o servidor entregou. **Chamado por:** `src/App.tsx`. Decisão: REGISTRO §246.
 
 ### `src/hooks/useCareSystem.ts`
 **Dono de:** o agendamento do cocô — quando o primeiro e o segundo evento do dia aparecem na tela, nunca a regra de quanto custa não limpar (isso é `src/utils/poopDrain.ts`).

@@ -19,7 +19,7 @@ describe('crédito das cartas (§241)', () => {
   });
 });
 
-describe('caixa de cartas (§245)', () => {
+describe('caixa de cartas (§246)', () => {
   it('o prêmio entregue pelo servidor credita uma vez, mesmo repetido', () => {
     const g = [{ mid: 'a', bits: 5, emblems: 1 }, { mid: 'b', bits: 0, emblems: 2 }];
     const s = applyGrants({ gamePoints: 0, emblems: 0 }, g);

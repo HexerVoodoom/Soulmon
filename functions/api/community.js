@@ -1287,7 +1287,7 @@ async function handleCommunity(context) {
     if (!Array.isArray(mids) || mids.length > 30 || !mids.every(x => typeof x === 'string' && x.length > 0 && x.length <= 80)) return json({ error: 'invalid mids' }, 400);
     return json({ ok: true, removed: await ackMail(kvOrThrow(env), id, mids) });
   }
-  // Caixa de cartas (§245). Todas só do dono (`denyUnlessOwner`); o prêmio vem do registro do servidor, nunca do corpo.
+  // Caixa de cartas (§246). Todas só do dono (`denyUnlessOwner`); o prêmio vem do registro do servidor, nunca do corpo.
   const midsValidos = (m) => Array.isArray(m) && m.length > 0 && m.length <= 30 && m.every(x => typeof x === 'string' && x.length > 0 && x.length <= 80);
   if (action === 'mailRead' && method === 'POST') {
     const denied = await denyUnlessOwner(id);

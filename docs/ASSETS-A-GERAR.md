@@ -1034,7 +1034,7 @@ Wide horizontal 2:1 panoramic game background, detailed crisp 16-bit pixel art, 
 - **Revisão pelo método da squad de design (05/11/2026):** identidade, guia de 23/09, composição e legibilidade conferidas pela sessão do §242, sem despachar agentes de crítica. O prompt trocou "pixels grossos" pelo termo do guia. A crítica de cada peça gerada continua com `arte-conferente` e `design-critic`.
 - **Depois de instalar:** nenhuma linha de código muda (o glob `passeio-cenas/cena-*` assume). Conferir a cena numa tela de 390×844 e num celular deitado, subir `CACHE_VERSION` em `public/sw.js` e rodar `strollScene.test.ts`.
 
-## 26. Ícone da caixa de cartas na Home (pedido do dono, 06/11/2026, REGISTRO §245)
+## 26. Ícone da caixa de cartas na Home (pedido do dono, 06/11/2026, REGISTRO §246)
 
 **Status:** a gerar. O app já está pronto e usa o glifo `chat_bubble` (sem arte) até o arquivo existir.
 

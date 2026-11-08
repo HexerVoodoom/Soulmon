@@ -10,7 +10,7 @@ import {
 import type { Language } from '../utils/i18n';
 
 /**
- * A CAIXA DE CARTAS do Papus (§245), aberta pelo ícone de carta da Home. Folha padrão (`ModalSheet`).
+ * A CAIXA DE CARTAS do Papus (§246), aberta pelo ícone de carta da Home. Folha padrão (`ModalSheet`).
  *
  *  · accordion: o título é um botão; tocar expande o conteúdo, e abrir outra fecha a anterior (UMA aberta por vez, `aberta` é um `mid` só);
  *  · carta com item: "Resgatar"; toda carta: "Deletar". Apagar carta com item NÃO resgatado pede confirmação (o servidor também recusa sem `force`);

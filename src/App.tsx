@@ -1589,7 +1589,7 @@ export default function App() {
    *  segunda abertura. */
   const notifTouchedRef = useRef(false);
 
-  // A caixa de cartas do Papus (§245): a lista e o resgate moram no servidor (`useMailbox`). O modal da fila (§241) virou só o AVISO de carta nova, uma vez por carta.
+  // A caixa de cartas do Papus (§246): a lista e o resgate moram no servidor (`useMailbox`). O modal da fila (§241) virou só o AVISO de carta nova, uma vez por carta.
   const mailbox = useMailbox({ saveId, demo: isDemoMode(gameState), getState: () => gameStateRef.current, setState: setGameState });
   const [mailOpen, setMailOpen] = useState(false);
   const [mailAnnounced, setMailAnnounced] = useState<string[]>(() => parseAnnounced(readLocal(STORAGE_KEYS.MAIL_ANNOUNCED)));
