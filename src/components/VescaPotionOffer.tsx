@@ -37,7 +37,7 @@ export function VescaPotionOffer({ language, elementId, onMake, onDismiss }: Ves
         </div>
       )}>
       <div data-vesca-offer style={{ display: 'grid', gap: 10, justifyItems: 'center', textAlign: 'center' }}>
-        <Icon id={elementId} size={48} />
+        <Icon id={elementId} size={32} />
         {made
           ? <p role="status" style={sm2Text}>{isPt ? `Poção de ${el} pronta! Está na pasta de itens.` : `${el} potion ready! It is in your item folder.`}</p>
           : <>
