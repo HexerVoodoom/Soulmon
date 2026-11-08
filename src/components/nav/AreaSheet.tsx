@@ -25,7 +25,7 @@ import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
  * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
  * abrir/fechar, o NPC certo, a fala e a proporção.
  */
-export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcVoice, headSlotRef, closeInSheet = false, hideClose = false, npcFrame, children }: {
+export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcVoice, headSlotRef, closeInSheet = false, hideClose = false, npcFrame, footer, children }: {
   /** Ausente só quando `npcArt` + `npcVoice` vêm de fora (NPC de FUNÇÃO, ex.: Ambra nas Missões). */
   areaId?: AreaId;
   /** Id do lote aberto (ex.: `'itens'`, `'torneio'`) — resolve o NPC certo
@@ -54,6 +54,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   hideClose?: boolean;
   /** Enquadramento do NPC de função (sem lote), no lugar de `npcFrameFor`. */
   npcFrame?: NpcFrame;
+  /** Rodapé FIXO da folha (ex.: as ações em lote da caixa de cartas): fica colado embaixo, fora do trecho rolável, com a safe-area. */
+  footer?: ReactNode;
   children?: ReactNode;
 }) {
   // O voltar do sistema (botão do Android/navegador) fecha a folha antes de mudar de tela.
@@ -191,10 +193,15 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
               top: 0`) encostar no título sem vão — o conteúdo não aparece mais
               passando por trás numa faixa entre os dois. O respiro de cima é um
               espaçador que rola junto. */}
-          <div data-area-sheet-body style={{ flex: 1, overflowY: 'auto', padding: '0 16px calc(16px + env(safe-area-inset-bottom, 0px))' }}>
+          <div data-area-sheet-body style={{ flex: 1, overflowY: 'auto', padding: footer ? '0 16px 16px' : '0 16px calc(16px + env(safe-area-inset-bottom, 0px))' }}>
             <div aria-hidden="true" style={{ height: 8 }} />
             <ModalInfoSlotProvider slot={slot}>{children}</ModalInfoSlotProvider>
           </div>
+          {footer && (
+            <div data-area-sheet-footer style={{ flexShrink: 0, padding: '10px 16px calc(12px + env(safe-area-inset-bottom, 0px))', borderTop: '1px solid var(--sm2-muted)', background: 'var(--sm2-surface)' }}>
+              {footer}
+            </div>
+          )}
         </div>
       </div>
     </div>

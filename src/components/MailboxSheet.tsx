@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { Icon } from './ui/Icon';
+import { AreaSheet } from './nav/AreaSheet';
 import { NPC_MENSAGEIRO_ART } from '../assets/soulmon/npcs';
 import {
   hasPendingReward, isUnread, mailBody, mailTitle, rewardText, sumGrants,
@@ -10,7 +11,7 @@ import {
 import type { Language } from '../utils/i18n';
 
 /**
- * A CAIXA DE CARTAS do Papus (§246), aberta pelo ícone de carta da Home. Folha padrão (`ModalSheet`).
+ * A CAIXA DE CARTAS do Papus (§246), aberta pelo ícone de carta da Home. Folha padrão de NPC (`AreaSheet`): o Papus aparece GRANDE, por cima da folha e por fora, com a fala (pedido do dono, 08/11/2026: "o NPC tem que aparecer grande, em cima, por fora"); as confirmações seguem `ModalSheet`.
  *
  *  · accordion: o título é um botão; tocar expande o conteúdo, e abrir outra fecha a anterior (UMA aberta por vez, `aberta` é um `mid` só);
  *  · carta com item: "Resgatar"; toda carta: "Deletar". Apagar carta com item NÃO resgatado pede confirmação (o servidor também recusa sem `force`);
@@ -80,11 +81,17 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
 
   return (
     <>
-      <ModalSheet
+      {/* O wrapper `fixed` é o das Missões (a folha de NPC mora numa cena; aqui não há). Abaixo do z 120 do `ModalSheet`, para a confirmação e o pop-up ficarem por cima. */}
+      {open && (
+      <div data-mailbox-frame style={{ position: 'fixed', inset: 0, zIndex: 110 }}>
+      <AreaSheet
         open={open}
         title={isPt ? 'Caixa de cartas' : 'Mailbox'}
+        closeLabel={isPt ? 'Fechar' : 'Close'}
         onClose={onClose}
         language={language}
+        npcArt={NPC_MENSAGEIRO_ART}
+        npcVoice={{ name: 'Papus', line: isPt ? 'As cartas dos últimos dias. As sem item somem em 3 dias.' : 'The last few days of letters. Ones without an item vanish in 3 days.' }}
         footer={(
           <div data-mail-footer style={{ display: 'flex', gap: 8 }}>
             <button type="button" data-mail-delete-read disabled={!temLida || ocupado} onClick={() => void excluirLidas()}
@@ -99,14 +106,6 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
         )}
       >
         <div data-mailbox style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, minHeight: 64 }}>
-            <img src={NPC_MENSAGEIRO_ART} alt="" aria-hidden="true" width={56} height={56} draggable={false}
-              style={{ width: 56, height: 56, objectFit: 'contain', flex: 'none' }} />
-            <p style={{ ...sm2Text, margin: 0 }}>
-              {isPt ? 'Papus: as cartas dos últimos dias. As sem item somem em 3 dias.' : 'Papus: the last few days of letters. Ones without an item vanish in 3 days.'}
-            </p>
-          </div>
-
           {mail.length === 0 && (
             <p data-mail-empty style={{ ...sm2Hint, textAlign: 'center', padding: '24px 0' }}>
               {isPt ? 'Nenhuma carta por enquanto.' : 'No letters for now.'}
@@ -160,7 +159,9 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
             );
           })}
         </div>
-      </ModalSheet>
+      </AreaSheet>
+      </div>
+      )}
 
       {/* Confirmação: carta com item NÃO resgatado. Escolha padrão = não apagar (o fundo não fecha). */}
       <ModalSheet open={confirmar !== null} placement="center" dismissOnBackdrop={false}
