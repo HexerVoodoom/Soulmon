@@ -4299,3 +4299,13 @@ Plano completo: `D:/Soulmon/planos/focus-jornada.md`. O dono aceitou D-1 a D-6: 
 | 4 sessões com chaves | 16 (teto) | 6,79 |
 
 A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra no teto, como o dono aprovou (D-6). Bits e Honra não mudam. A partir daqui, `save.js` só aceita um `dungeonKeyDay` novo quando o razão `fjd:` daquele dia tem uma jornada concluída; a chave já gravada fica. A descida da masmorra deixou de ser disparada pelo foco (D-1): a Oficina não chama mais `onFocusStart`.
+
+## §249 — Poção de elemento mais barata + oferta da Vesca (08/11/2026, decisão do dono)
+
+**Decisão.** A poção custava caro demais (base 300; par 300+300+200). Agora: **base = 100 essências da própria**; **composto = 1 poção de cada elemento base componente + 50 essências do composto** (ex.: pântano = poção de água + poção de terra + 50 de pântano; vale para 2, 3 e 4 componentes). Ao a essência de um elemento base **cruzar 100**, a Vesca abre um modal perguntando se o jogador quer fazer a poção ("Fazer a poção" / "Depois"); uma vez por cruzamento, sem repetir enquanto o saldo segue acima de 100; recusar não custa nada.
+
+**Alternativa que perdeu.** Só baratear os números e deixar o composto em essências puras (mantinha o composto como sorvedouro de essência de 3 elementos). Falsifica a aposta: se a taxa de poções de composto fabricadas por jogador ficar perto de zero, o gargalo passou a ser a poção das bases, não a essência.
+
+**Onde.** Regra única em `src/utils/elementPotion.ts` (`POTION_COSTS`, `potionCostFor`, `potionIngredients`, `essenceThresholdCrossings`, `craftPotion` consome essência e poções no mesmo updater). UI: `ElementPotionSheet` (linhas das poções de base), `VescaPotionOffer` + fila no `App.tsx`. O servidor não valida o preço da poção (só o `essenceSpent` monotônico em `_essences.js`), então nada mudou lá. Quem já tinha progresso não perde nada: saldos e poções ficam como estão; o gatilho não dispara na abertura (só em cruzamento novo).
+
+**Limites.** O catálogo da poção segue sendo os 20 base + 190 pares (`isDexElement`); os 3–4 componentes curados ainda não são fabricáveis, mas a regra de custo já os cobre. A oferta usa `ModalSheet` com o nome da Vesca; se o dono quiser o molde "NPC grande por cima" do §248, é troca de apresentação.
