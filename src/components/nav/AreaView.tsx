@@ -41,7 +41,9 @@ import type { JourneyGrants } from '../../utils/focusJourney';
 import type { FocusLootItem } from '../../utils/focusExpedition';
 export type FocusRewardResult = { accepted: boolean; items: FocusLootItem[]; chancePercent: number };
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
-import { isFunGame, type FunSessionStatus } from '../../utils/funSession';
+import { isFunGame } from '../../utils/funSession';
+import type { FunTicketStatus } from '../../utils/funTickets';
+import { FunTicketCostContext } from '../play/TicketFan';
 import type { PasseioAchado } from '../play/PasseioSheet';
 import {
   usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame, loadZipGame, loadSeloGame,
@@ -127,7 +129,7 @@ export interface PlayHandlers {
   onDinoScore: (score: number) => void;
   /** 🎟️ Sessão dos minijogos de diversão (04/11/2026, `utils/funSession.ts`): o estado AGORA e a porta que começa uma rodada
    *  (cobra 1 energia ao abrir sessão; `false` = sem energia). Ausente (testes antigos) = jogos do Salão sem custo. */
-  funSession?: { status: (nowMs: number) => FunSessionStatus; onStartRound: () => boolean };
+  funSession?: { status: (nowMs: number) => FunTicketStatus; onBuy?: () => boolean; onStartRound: () => boolean };
   onSpendBits?: (pts: number) => boolean;
   /** Arena livre (28/10/2026): contador de rerolls do save, dia do jogador e o pedido de reroll (o App desconta Bits e grava). */
   arena?: { dayIso: string; reroll?: ArenaReroll; onReroll: () => boolean; runs?: ArenaReroll; ladder?: number; onRunEnd?: (outcome: 'win' | 'loss' | 'draw') => void };
@@ -638,7 +640,7 @@ export function AreaView(props: AreaViewProps) {
             {open?.id === 'ferreiro' && !forgeFull && <SoulsmithSheet language={language} onGo={() => setForgeEntered(true)} />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
             {open?.id === 'hexsmith' && <HexsmithSheet language={language} sprite={props.guild.mySprite} demoCharacterId={props.demoCharacterId} evolutionStage={props.evolutionStage} skills={props.skills} petElement={props.petElement} />}
-            {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={startSalao} funStatus={play.funSession?.status} refused={funRefused} />}
+            {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={startSalao} funStatus={play.funSession?.status} onBuyTickets={play.funSession?.onBuy ? () => { play.funSession!.onBuy!(); } : undefined} refused={funRefused} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
             {open?.id === 'dungeon' && !play.rogue && <RogueDungeonPlaceholder language={language} />}
@@ -661,6 +663,7 @@ export function AreaView(props: AreaViewProps) {
               gameName={MINIGAME_GATE[game]!.name[language === 'pt-BR' ? 'pt' : 'en']}
               rankings={MINIGAME_GATE[game]!.rankings}
               saveId={props.guild.saveId}
+              tickets={isFunGame(game) ? funApi?.status(Date.now()).count : undefined}
               withDifficulty={!!MINIGAME_GATE[game]!.difficulty}
               pveVsPvp={!!MINIGAME_GATE[game]!.pveVsPvp}
               onPick={level => setModeChosen({ game, level })}
@@ -669,6 +672,7 @@ export function AreaView(props: AreaViewProps) {
           </div>
         )}
         {game && (!MINIGAME_GATE[game] || modeChosen?.game === game) && (
+          <FunTicketCostContext.Provider value={!!funApi && isFunGame(game)}>
           <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
           <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
             {game === 'masmorra' && renderMasmorra()}
@@ -728,6 +732,7 @@ export function AreaView(props: AreaViewProps) {
             {game === 'chama' && <ChamaGame {...base} onEarnPoints={props.onEarnPoints} onComplete={play.onRefugioComplete} />}
           </Suspense>
           </div>
+          </FunTicketCostContext.Provider>
         )}
       </AreaScene>
     );
