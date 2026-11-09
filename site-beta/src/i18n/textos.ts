@@ -1,6 +1,6 @@
 // Toda frase aqui passa por docs/site-beta/FEATURE_TRUTH.md. Nunca cobrança, nunca promessa de saúde.
 // Microcopy da v3: docs/site-beta/DESIGN-GUIDE.md §4 (título até 6 palavras + 1 frase por seção).
-export const CONTATO = 'mateus.sprnd@gmail.com';
+export const CONTATO = 'soulmon.revisor@gmail.com';
 export const TERMOS = 'https://soulmon.mateus-sprnd.workers.dev/termos.html';
 const B = import.meta.env.BASE_URL.replace(/\/$/, ''); // /beta
 export type Lang = 'pt' | 'en';

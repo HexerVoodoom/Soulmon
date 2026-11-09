@@ -10,7 +10,7 @@ const levarParaRaiz = {
   hooks: {
     'astro:build:done': () => {
       mkdirSync(raizDist, { recursive: true });
-      for (const f of ['_headers', '_routes.json', '_redirects']) copyFileSync(fileURLToPath(new URL(`./edge/${f}`, import.meta.url)), raizDist + f);
+      for (const f of ['_headers', '_routes.json', '_redirects', 'robots.txt', 'sitemap.xml']) copyFileSync(fileURLToPath(new URL(`./edge/${f}`, import.meta.url)), raizDist + f);
       if (existsSync(raizDist + 'beta/404.html')) copyFileSync(raizDist + 'beta/404.html', raizDist + '404.html');
     },
   },
