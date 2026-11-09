@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { evolutionStatsDelta, formatDelta, EVO_STAT_ORDER } from './evolutionStatsDelta';
 import { soulCombatant } from './soulXP';
-import { hpPoints } from './combate/fight';
+import { hpPoints, statExibido } from './combate/fight';
 
 const antes = { evolutionStage: 'rookie', perfectDays: 14, powerPoints: 30, harmonyPoints: 5, benevolencePoints: 5 };
 const depois = { evolutionStage: 'champion', perfectDays: 0, powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0 };
@@ -12,10 +12,10 @@ describe('evolutionStatsDelta', () => {
     const a = soulCombatant(antes), b = soulCombatant(depois);
     expect(d.rows.map(r => r.id)).toEqual([...EVO_STAT_ORDER]);
     const by = Object.fromEntries(d.rows.map(r => [r.id, r]));
-    expect(by.atk.before).toBe(Math.round(a.atk));
-    expect(by.atk.after).toBe(Math.round(b.atk));
-    expect(by.def.after).toBe(Math.round(b.def));
-    expect(by.spd.after).toBe(Math.round(b.spd));
+    expect(by.atk.before).toBe(statExibido(a.atk));
+    expect(by.atk.after).toBe(statExibido(b.atk));
+    expect(by.def.after).toBe(statExibido(b.def));
+    expect(by.spd.after).toBe(statExibido(b.spd));
     expect(by.hp.before).toBe(hpPoints(a.hp));
     expect(by.hp.after).toBe(hpPoints(b.hp));
     for (const r of d.rows) expect(r.delta).toBe(r.after - r.before);

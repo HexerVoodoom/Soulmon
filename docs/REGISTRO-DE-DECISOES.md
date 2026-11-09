@@ -4358,7 +4358,19 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Prêmios desacoplados:** o marco de prêmio (`DUNGEON_MILESTONE_FLOOR = 5`, `isMilestoneLayer`: Glitchtama 1%/semana, bônus de marco) **continua de 5 em 5**. O dono aceitou prêmios mais frequentes, mas separar as duas constantes foi trivial e mantém a economia igual; só o ponto de partida mudou.
 **Alternativa que perdeu:** trocar `DUNGEON_MILESTONE_FLOOR` para 2 (prêmio de marco 2,5× mais frequente). **Falsifica:** se o jogador ainda sente que "perde progresso" ao recomeçar, o problema não é o passo do retorno.
 
-## §252 — Política de privacidade publicada antes do recurso de passos (09/11/2026, ordem do dono)
+## §252 — Duelo mostra o HP base da Arena (09/11/2026, decisão do dono)
+
+**Decisão.** No PvP/Duelo a tela mostra o **HP base** (o mesmo número da Arena), não o HP inflado por `PVP_HP_SCALE = 1.7`. **Só apresentação:** motor, servidor (`_combate.js`, `_duel.js`, `_feira.js`) e balanço intocados; a luta dura o mesmo.
+
+**Onde.** Helper único `hpExibidoPvp` em `src/utils/combate/fight.ts`; `DuelScreen` usa-o como máximo da barra. HP atual e números de dano já saem de fração × máximo, então encolhem na mesma proporção; a barra (fração) não muda. Cobre ranqueada, torneio e treino com amigo (todos passam pelo `DuelScreen`).
+
+**Alternativa que perdeu.** Manter o número inflado (coerente com a duração da luta, mas o mesmo Soulmon "tinha" vidas diferentes na Arena e no Duelo). Falsifica a aposta: jogadores estranhando que golpes no Duelo tirem menos que na Arena sem a barra andar mais devagar.
+
+**Emenda (09/11/2026, dono): HP igual em todo lugar + atributos ×10 na tela.** (1) As telas de PvE (Arena, Rift/masmorra, Pesadelo, Bosque, Rogue) já mostravam o HP base (`hpPoints(combatant.hp)`); o único lugar com HP inflado era o Duelo, corrigido acima. Escalas de ritmo seguem só internas. (2) **Ataque, defesa e velocidade aparecem ×10** (`STAT_DISPLAY_SCALE`, helper único `statExibido` em `fight.ts`): modal "seus status" da evolução (`evolutionStatsDelta`) e o "Poder" da Arena. HP não multiplica. Forja e Árvore de talentos mostram bônus em %, que não muda. Mecânica, servidor e save intocados.
+
+**Ícones (09/11/2026, dono):** o modal "seus atributos" da evolução mostra `hp.png`, `stat-ataque.png`, `stat-defesa.png`, `stat-velocidade.png` (pixel art, `image-rendering: pixelated`) no lugar dos glifos. O Perfil (`SoulmonPerfil`) não lista números de atributo hoje, então não ganhou ícone.
+
+## §253 — Política de privacidade publicada antes do recurso de passos (09/11/2026, ordem do dono)
 
 **Decisão:** publicar já, sozinha, a parte de **política** da contagem de passos pelo Health Connect (`public/privacidade.html` §2 com as âncoras `#steps`/`#passos`, e §6 dizendo que o Health Connect faz parte do Android, não é terceiro nosso). O formulário de permissões do Health Connect do Google exige a URL da política já no ar, com a âncora; o código nativo, a `StepsCard` e o onboarding continuam só na branch `rodada5-passos` (commit `1c141a15d`), sem merge.
 **Texto verdadeiro enquanto o recurso não está no app:** a linha de passos abre com "vale a partir da versão do app que incluir a contagem de passos pelo Health Connect". Isso corrige o texto vigente, que dizia o contrário (sensor do aparelho, "não o Health Connect"): continua válido para o app atual, que ainda não pede passos pelo Health Connect.

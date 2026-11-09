@@ -161,17 +161,17 @@ var EntitlementIlegivelError = class extends Error {
     this.saveIdPrefix = String(saveId).slice(0, 8);
   }
 };
-function respostaEntitlementIlegivel(err2, headers3) {
+function respostaEntitlementIlegivel(err2, headers5) {
   if (!(err2 instanceof EntitlementIlegivelError)) return null;
-  return Response.json({ error: err2.code }, { status: err2.status, headers: headers3 });
+  return Response.json({ error: err2.code }, { status: err2.status, headers: headers5 });
 }
 __name(respostaEntitlementIlegivel, "respostaEntitlementIlegivel");
-function comEntitlementLegivel(handler, headers3) {
+function comEntitlementLegivel(handler, headers5) {
   return async (context) => {
     try {
       return await handler(context);
     } catch (err2) {
-      const r = respostaEntitlementIlegivel(err2, headers3);
+      const r = respostaEntitlementIlegivel(err2, headers5);
       if (r) return r;
       throw err2;
     }
@@ -4633,6 +4633,8 @@ async function collectRankingKeys(env, saveId) {
   for (const prefix of ["rift-pending:", "rift-paid:"]) {
     for (const k of (await listPrefix(env, prefix)).filter((x2) => x2.endsWith(`:${saveId}`))) keys.push(k);
   }
+  if (await store.get(`fj:${saveId}`) !== null) keys.push(`fj:${saveId}`);
+  for (const k of await listPrefix(env, `fjd:${saveId}:`)) keys.push(k);
   const nickKey2 = await store.get(`nickof:${saveId}`);
   if (nickKey2) {
     if (typeof nickKey2 === "string" && nickKey2.startsWith("nick:") && await store.get(nickKey2) === saveId) keys.push(nickKey2);
@@ -5004,9 +5006,9 @@ async function handleDeleteConfirm(env, saveId, body) {
   for (const k of c.steamLicenseKeys) await tentar(k, () => store.delete(k));
   let semAnonimizar = [];
   if (c.entitlement) {
-    const ids2 = (Array.isArray(c.entitlement.consumedOrders) ? c.entitlement.consumedOrders : []).filter((o) => typeof o === "string" && !o.startsWith("steam:own:") && !o.startsWith("courtesy:"));
-    if (c.entitlement.sub?.rootHash) ids2.push(`play:sub:${c.entitlement.sub.rootHash}`);
-    semAnonimizar = await anonimizarClaims(env, ids2);
+    const ids3 = (Array.isArray(c.entitlement.consumedOrders) ? c.entitlement.consumedOrders : []).filter((o) => typeof o === "string" && !o.startsWith("steam:own:") && !o.startsWith("courtesy:"));
+    if (c.entitlement.sub?.rootHash) ids3.push(`play:sub:${c.entitlement.sub.rootHash}`);
+    semAnonimizar = await anonimizarClaims(env, ids3);
     for (const o of semAnonimizar) falhou.push(`ord:${o}`);
   }
   if (c.entitlement) {
@@ -5043,6 +5045,7 @@ async function handleDeleteConfirm(env, saveId, body) {
   for (const k of c.rankingData.keys) await tentar(k, () => store.delete(k));
   if (c.gifts) await tentar(`gifts:${saveId}`, () => store.delete(`gifts:${saveId}`));
   if (c.mail) await tentar(`mail:${saveId}`, () => store.delete(`mail:${saveId}`));
+  for (const k of [`freq:${saveId}`, `gsent:${saveId}`, `gnote:${saveId}`, `gmir:${saveId}`]) await tentar(k, () => store.delete(k));
   if (c.pidIndexed) await tentar(`pid:${c.pid}`, () => store.delete(`pid:${c.pid}`));
   if (c.profile) await tentar(`profile:${saveId}`, () => store.delete(`profile:${saveId}`));
   if (c.state) await tentar(`${saveId} (save)`, () => store.delete(saveId));
@@ -7380,11 +7383,11 @@ async function indexarPontos(env, season, id, points) {
   }
 }
 __name(indexarPontos, "indexarPontos");
-async function podarIndice(env, season, ids2) {
-  if (!ids2.length) return;
+async function podarIndice(env, season, ids3) {
+  if (!ids3.length) return;
   const idx = await lerIndice2(env, season);
   let mudou = false;
-  for (const id of ids2) if (id in idx.p) {
+  for (const id of ids3) if (id in idx.p) {
     delete idx.p[id];
     mudou = true;
   }
@@ -9095,10 +9098,10 @@ function opsOf(ent) {
 }
 __name(opsOf, "opsOf");
 function podarOps(ops) {
-  const ids2 = Object.keys(ops);
-  if (ids2.length <= REGEN_OPS_KEEP) return ops;
-  ids2.sort((a, b) => (Number(ops[b]?.at) || 0) - (Number(ops[a]?.at) || 0));
-  return Object.fromEntries(ids2.slice(0, REGEN_OPS_KEEP).map((k) => [k, ops[k]]));
+  const ids3 = Object.keys(ops);
+  if (ids3.length <= REGEN_OPS_KEEP) return ops;
+  ids3.sort((a, b) => (Number(ops[b]?.at) || 0) - (Number(ops[a]?.at) || 0));
+  return Object.fromEntries(ids3.slice(0, REGEN_OPS_KEEP).map((k) => [k, ops[k]]));
 }
 __name(podarOps, "podarOps");
 function temPrimeiraGeracao(ent, formId) {
@@ -10262,6 +10265,7 @@ __name(stripSimulated, "stripSimulated");
 
 // api/_mensageiro.js
 var QUEUE_MAX = 30;
+var MAIL_TTL_MS = 3 * 864e5;
 var DONE_MAX = 100;
 var TTL_S = 86400 * 400;
 var MAIL_BITS_MAX = 5e3;
@@ -10274,9 +10278,35 @@ function sanitizeMail(m) {
   const bodyPt = texto(m.bodyPt, 400);
   const bodyEn = texto(m.bodyEn, 400);
   if (!mid || !bodyPt || !bodyEn) return null;
-  return { mid, bodyPt, bodyEn, bits: inteiro(m.bits, MAIL_BITS_MAX), emblems: inteiro(m.emblems, MAIL_EMBLEMS_MAX), at: inteiro(m.at, Number.MAX_SAFE_INTEGER) };
+  return {
+    mid,
+    bodyPt,
+    bodyEn,
+    titlePt: texto(m.titlePt, 60) || tituloDe(bodyPt),
+    titleEn: texto(m.titleEn, 60) || tituloDe(bodyEn),
+    bits: inteiro(m.bits, MAIL_BITS_MAX),
+    emblems: inteiro(m.emblems, MAIL_EMBLEMS_MAX),
+    at: inteiro(m.at, Number.MAX_SAFE_INTEGER),
+    read: m.read === true || inteiro(m.claimedAt, Number.MAX_SAFE_INTEGER) > 0,
+    claimedAt: inteiro(m.claimedAt, Number.MAX_SAFE_INTEGER)
+  };
 }
 __name(sanitizeMail, "sanitizeMail");
+var tituloDe = /* @__PURE__ */ __name((corpo) => {
+  const f = corpo.split(/(?<=[.!?])\s/)[0] || corpo;
+  return f.length > 60 ? `${f.slice(0, 57)}...` : f;
+}, "tituloDe");
+var pendingReward = /* @__PURE__ */ __name((m) => (m.bits > 0 || m.emblems > 0) && !m.claimedAt, "pendingReward");
+var expirada = /* @__PURE__ */ __name((m, now) => !pendingReward(m) && m.at > 0 && now - Math.max(m.at, m.claimedAt) > MAIL_TTL_MS, "expirada");
+function cortar(q) {
+  const out = [...q];
+  while (out.length > QUEUE_MAX) {
+    const i2 = out.findIndex((m) => !pendingReward(m));
+    out.splice(i2 >= 0 ? i2 : 0, 1);
+  }
+  return out;
+}
+__name(cortar, "cortar");
 async function ler(kv2, id) {
   let r = null;
   try {
@@ -10295,11 +10325,14 @@ var gravar2 = /* @__PURE__ */ __name((kv2, id, rec) => kv2.put(`mail:${id}`, JSO
 async function enqueueMail(env, kv2, id, raw) {
   const msg = sanitizeMail(raw);
   if (!msg || isSimuladoId(id)) return false;
+  msg.read = false;
+  msg.claimedAt = 0;
+  if (!msg.at) msg.at = Date.now();
   const p = await getProfile(env, id);
   if (p?.simulated === true) return false;
   const rec = await ler(kv2, id);
   if (rec.done.includes(msg.mid) || rec.q.some((m) => m.mid === msg.mid)) return false;
-  rec.q = [...rec.q, msg].slice(-QUEUE_MAX);
+  rec.q = cortar([...rec.q, msg]);
   await gravar2(kv2, id, rec);
   return true;
 }
@@ -10319,6 +10352,8 @@ function seasonLetter(season, place, now) {
   const lugarEn = place !== null && place <= 100 ? `You finished in place ${place}.` : "You fought it through.";
   return {
     mid: `season:${season}`,
+    titlePt: `Temporada ${season}`,
+    titleEn: `Season ${season}`,
     bodyPt: `A temporada ${season} do Torneio terminou. ${lugarPt} Trouxe isto para voc\xEAs.`,
     bodyEn: `Tournament season ${season} is over. ${lugarEn} I brought this for you two.`,
     bits: 0,
@@ -10331,25 +10366,75 @@ var mesAnterior = /* @__PURE__ */ __name((now) => {
   const d = new Date(now);
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
 }, "mesAnterior");
+function varrer(rec, now) {
+  const velhas = rec.q.filter((m) => expirada(m, now));
+  if (!velhas.length) return false;
+  rec.q = rec.q.filter((m) => !expirada(m, now));
+  rec.done = [...rec.done, ...velhas.map((m) => m.mid)].slice(-DONE_MAX);
+  return true;
+}
+__name(varrer, "varrer");
 async function readMail(env, kv2, id, now = Date.now()) {
   const rec = await ler(kv2, id);
+  let sujo = varrer(rec, now);
   const season = mesAnterior(now);
-  if (rec.season === season || isSimuladoId(id)) return rec.q;
-  rec.season = season;
-  const jogou = await kv2.get(`rank:${season}:${id}`);
-  const mid = `season:${season}`;
-  if (jogou && !rec.done.includes(mid) && !rec.q.some((m) => m.mid === mid)) {
-    const p = await getProfile(env, id);
-    if (p?.simulated !== true) {
-      const reais = ordenar(await lerIndice2(env, season)).filter((r) => !isSimuladoId(r.owner));
-      const i2 = reais.findIndex((r) => r.owner === id);
-      rec.q = [...rec.q, seasonLetter(season, i2 >= 0 ? i2 + 1 : null, now)].slice(-QUEUE_MAX);
+  if (rec.season !== season && !isSimuladoId(id)) {
+    sujo = true;
+    rec.season = season;
+    const jogou = await kv2.get(`rank:${season}:${id}`);
+    const mid = `season:${season}`;
+    if (jogou && !rec.done.includes(mid) && !rec.q.some((m) => m.mid === mid)) {
+      const p = await getProfile(env, id);
+      if (p?.simulated !== true) {
+        const reais = ordenar(await lerIndice2(env, season)).filter((r) => !isSimuladoId(r.owner));
+        const i2 = reais.findIndex((r) => r.owner === id);
+        rec.q = cortar([...rec.q, seasonLetter(season, i2 >= 0 ? i2 + 1 : null, now)]);
+      }
     }
   }
-  await gravar2(kv2, id, rec);
+  if (sujo) await gravar2(kv2, id, rec);
   return rec.q;
 }
 __name(readMail, "readMail");
+var alvoDe = /* @__PURE__ */ __name((mids) => new Set(Array.isArray(mids) ? mids : []), "alvoDe");
+async function markRead(kv2, id, mids) {
+  const rec = await ler(kv2, id);
+  const alvo = alvoDe(mids);
+  let n = 0;
+  rec.q = rec.q.map((m) => alvo.has(m.mid) && !m.read ? (n++, { ...m, read: true }) : m);
+  if (n) await gravar2(kv2, id, rec);
+  return n;
+}
+__name(markRead, "markRead");
+async function claimMail(kv2, id, mids, now = Date.now()) {
+  const rec = await ler(kv2, id);
+  const alvo = mids === null ? null : alvoDe(mids);
+  const granted = [];
+  rec.q = rec.q.map((m) => {
+    if (!pendingReward(m) || alvo && !alvo.has(m.mid)) return m;
+    granted.push({ mid: m.mid, titlePt: m.titlePt, titleEn: m.titleEn, bits: m.bits, emblems: m.emblems });
+    return { ...m, read: true, claimedAt: now };
+  });
+  if (granted.length) await gravar2(kv2, id, rec);
+  return granted;
+}
+__name(claimMail, "claimMail");
+async function deleteMail(kv2, id, mids, force = false) {
+  const rec = await ler(kv2, id);
+  const alvo = mids === "read" ? null : alvoDe(mids);
+  const candidatas = rec.q.filter((m) => alvo ? alvo.has(m.mid) : m.read);
+  const blocked = [];
+  const removidas = [];
+  for (const m of candidatas) (pendingReward(m) && !(force && alvo) ? blocked : removidas).push(m.mid);
+  if (removidas.length) {
+    const fora = new Set(removidas);
+    rec.q = rec.q.filter((m) => !fora.has(m.mid));
+    rec.done = [...rec.done, ...removidas].slice(-DONE_MAX);
+    await gravar2(kv2, id, rec);
+  }
+  return { removed: removidas.length, blocked };
+}
+__name(deleteMail, "deleteMail");
 async function ackMail(kv2, id, mids) {
   const rec = await ler(kv2, id);
   const alvo = new Set(mids);
@@ -10636,26 +10721,26 @@ async function presentesPendentes(env, gid, to, members, hoje) {
   return lista.sort((a, b) => a.day < b.day ? -1 : a.day > b.day ? 1 : 0);
 }
 __name(presentesPendentes, "presentesPendentes");
-async function resgatarPresente(env, gid, to, members, from, day2, hoje, ids2 = {}) {
+async function resgatarPresente(env, gid, to, members, from, day2, hoje, ids3 = {}) {
   const { claimed } = await lerResgatados(env, gid, to);
   const id = idDoPresente(from, day2);
   const ja = claimed.find((c) => c.id === id);
   if (ja) return { ok: true, item: ja.item, receipt: ja.receipt, repeat: true };
   const p = (await presentesPendentes(env, gid, to, members, hoje)).find((x2) => x2.from === from && x2.day === day2);
   if (!p) return { ok: false };
-  const receipt = `${gid}|${ids2[to] ?? "me"}|${ids2[from] ?? "x"}|${day2}`;
+  const receipt = `${gid}|${ids3[to] ?? "me"}|${ids3[from] ?? "x"}|${day2}`;
   await kvOrThrow(env).put(presInKey(gid, to), JSON.stringify({ v: 1, claimed: [...claimed, { id, item: p.item, receipt }].slice(-PRESENTE_RESGATADOS_MAX) }), { expirationTtl: PRACA_TTL });
   return { ok: true, item: p.item, receipt };
 }
 __name(resgatarPresente, "resgatarPresente");
-async function vistaDaPraca(env, gid, eu, members, ids2, hoje) {
+async function vistaDaPraca(env, gid, eu, members, ids3, hoje) {
   const praca = await lerPraca(env, gid);
   const pend = await presentesPendentes(env, gid, eu, members, hoje);
   const enviados = await enviadosHoje(env, gid, eu, members, hoje);
   return {
-    slots: praca.slots.map((s, i2) => s ? { slot: i2, item: s.item, by: s.by && ids2[s.by] ? ids2[s.by] : null, mine: s.by === eu } : { slot: i2, item: null, by: null, mine: false }),
-    gifts: pend.map((p) => ({ from: ids2[p.from], day: p.day, item: p.item, id: `${ids2[p.from]}|${p.day}` })),
-    mine: { sentToday: enviados.map((s) => ids2[s]) }
+    slots: praca.slots.map((s, i2) => s ? { slot: i2, item: s.item, by: s.by && ids3[s.by] ? ids3[s.by] : null, mine: s.by === eu } : { slot: i2, item: null, by: null, mine: false }),
+    gifts: pend.map((p) => ({ from: ids3[p.from], day: p.day, item: p.item, id: `${ids3[p.from]}|${p.day}` })),
+    mine: { sentToday: enviados.map((s) => ids3[s]) }
   };
 }
 __name(vistaDaPraca, "vistaDaPraca");
@@ -11095,11 +11180,11 @@ var lojaKey = /* @__PURE__ */ __name((gid) => `coopLoja:${gid}`, "lojaKey");
 var itemDaLoja = /* @__PURE__ */ __name((id) => LOJA_CATALOGO.find((i2) => i2.id === id) ?? null, "itemDaLoja");
 var int03 = /* @__PURE__ */ __name((n) => Number.isFinite(n) && n > 0 ? Math.floor(n) : 0, "int0");
 function normalizarLoja(r) {
-  const ids2 = new Set(LOJA_CATALOGO.map((i2) => i2.id));
-  const itens = [...new Set((Array.isArray(r?.itens) ? r.itens : []).filter((x2) => typeof x2 === "string" && ids2.has(x2)))];
+  const ids3 = new Set(LOJA_CATALOGO.map((i2) => i2.id));
+  const itens = [...new Set((Array.isArray(r?.itens) ? r.itens : []).filter((x2) => typeof x2 === "string" && ids3.has(x2)))];
   const ops = {};
   if (r?.ops && typeof r.ops === "object" && !Array.isArray(r.ops)) {
-    for (const [k, v] of Object.entries(r.ops)) if (LOJA_OP_RE.test(k) && typeof v === "string" && ids2.has(v)) ops[k] = v;
+    for (const [k, v] of Object.entries(r.ops)) if (LOJA_OP_RE.test(k) && typeof v === "string" && ids3.has(v)) ops[k] = v;
   }
   return { v: 1, gasto: int03(r?.gasto), itens, ops };
 }
@@ -12102,30 +12187,30 @@ async function vistaDaGuilda(env, g, euSave, hoje = (/* @__PURE__ */ new Date())
 }
 __name(vistaDaGuilda, "vistaDaGuilda");
 async function handleGuild({ request, env }) {
-  const json13 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS6 }), "json");
-  if (!kv(env)) return json13({ error: "Storage not bound" }, 500);
+  const json14 = /* @__PURE__ */ __name((obj, status = 200) => Response.json(obj, { status, headers: CORS6 }), "json");
+  if (!kv(env)) return json14({ error: "Storage not bound" }, 500);
   const url = new URL(request.url);
   const pedida = url.searchParams.get("action") ?? "";
   const alias = Object.prototype.hasOwnProperty.call(COOP_ALIASES, pedida);
   const action = alias ? COOP_ALIASES[pedida] : pedida;
   const method = request.method;
-  if (!(action in GUILD_ACTIONS) || GUILD_ACTIONS[action] !== method) return json13({ error: "unknown action" }, 400);
+  if (!(action in GUILD_ACTIONS) || GUILD_ACTIONS[action] !== method) return json14({ error: "unknown action" }, 400);
   const parsed = method === "POST" ? await request.json().catch(() => null) : null;
   const body = parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
   const id = body.id || url.searchParams.get("id");
   const chave = alias ? "group" : "guild";
-  const erro = /* @__PURE__ */ __name((texto2, status, extra = {}) => json13({ error: texto2.replace("{g}", chave), ...extra }, status), "erro");
-  const vista = /* @__PURE__ */ __name((v) => json13({ [chave]: v }), "vista");
+  const erro = /* @__PURE__ */ __name((texto2, status, extra = {}) => json14({ error: texto2.replace("{g}", chave), ...extra }, status), "erro");
+  const vista = /* @__PURE__ */ __name((v) => json14({ [chave]: v }), "vista");
   const montar = /* @__PURE__ */ __name(async (g, eu, dia2) => {
     const cartoes = await lerCartoes(env, g);
     const fechado = await atualizarBosque(env, g, dia2, /* @__PURE__ */ new Date(), fiosDosCartoes(g, cartoes));
     return vistaDaGuilda(env, fechado, eu, dia2, cartoes);
   }, "montar");
   const cartao = /* @__PURE__ */ __name((g) => renovarCartao(env, g.id, id), "cartao");
-  if (!VALID_ID3.test(id || "")) return json13({ error: "invalid id" }, 400);
+  if (!VALID_ID3.test(id || "")) return json14({ error: "invalid id" }, 400);
   const auth = await authorizeSaveAccess(request, env, id);
   if (!auth.ok) {
-    return json13(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
+    return json14(auth.reason === "account-deleted" ? { error: auth.reason, deletedAt: auth.deletedAt } : { error: auth.reason }, authStatus(auth));
   }
   const dia = diaDoJogador(method === "GET" ? url.searchParams.get("dayKey") : body.dayKey);
   if (!dia.ok) return erro("invalid day", 400);
@@ -12168,15 +12253,15 @@ async function handleGuild({ request, env }) {
   }
   __name(entrarNoGrupo, "entrarNoGrupo");
   if (action === "guildDirectory") {
-    if (await grupoDe(env, id, semana)) return json13({ clans: [], pending: null });
+    if (await grupoDe(env, id, semana)) return json14({ clans: [], pending: null });
     const pend = await lerPedido(env, id);
     const pending = pend ? { dirId: pend.dirId, name: (await lerEntrada(env, pend.dirId))?.n ?? null } : null;
     const clans = (await listarDiretorio(env, COOP_MAX_MEMBERS)).sort((a, b) => b.size - a.size || a.name.localeCompare(b.name));
-    return json13({ clans, pending });
+    return json14({ clans, pending });
   }
   if (action === "guildRequestCancel") {
     await apagarPedido(env, id);
-    return json13({ ok: true });
+    return json14({ ok: true });
   }
   if (action === "guildRequest") {
     if (await grupoDe(env, id, semana)) return erro("already in a {g}", 409);
@@ -12188,7 +12273,7 @@ async function handleGuild({ request, env }) {
       return erro("invalid clan", 404);
     }
     const atual = await lerPedido(env, id);
-    if (atual && atual.gid === g.id) return json13({ pending: { dirId, name: g.name } });
+    if (atual && atual.gid === g.id) return json14({ pending: { dirId, name: g.name } });
     if (atual) return erro("request pending", 409, { pending: { dirId: atual.dirId, name: (await lerEntrada(env, atual.dirId))?.n ?? null } });
     if (g.dirClosed === true) return erro("requests closed", 409);
     if (g.members.length >= COOP_MAX_MEMBERS) return erro("{g} full", 409);
@@ -12197,7 +12282,7 @@ async function handleGuild({ request, env }) {
     const rid = await idOpacoDoMembro(env, g.id, id);
     const nome = (await getProfile(env, id).catch(() => null))?.name;
     await gravarPedido(env, id, g.id, dirId, rid, typeof nome === "string" ? nome.slice(0, 40) : null);
-    return json13({ pending: { dirId, name: g.name } });
+    return json14({ pending: { dirId, name: g.name } });
   }
   if (action === "guildRequests" || action === "guildRequestDecide" || action === "guildRequestsOpen") {
     const g = await grupoDe(env, id, semana);
@@ -12210,26 +12295,26 @@ async function handleGuild({ request, env }) {
       await gravarGrupo(env, fresco);
       return vista(await montar(rolarSemana(fresco, semana), id, hoje));
     }
-    if (action === "guildRequests") return json13({ requests: await listarPedidos(env, g.id) });
+    if (action === "guildRequests") return json14({ requests: await listarPedidos(env, g.id) });
     const rid = String(body.requestId ?? "");
     const pedido = await lerPedidoNoCla(env, g.id, rid);
     const dele = pedido ? await lerPedido(env, pedido.save) : null;
     if (!pedido || !dele || dele.gid !== g.id) {
       if (idOpacoValido(rid)) await kvOrThrow(env).delete(coopReqInKey(g.id, rid));
-      return json13({ result: "gone", guild: await montar(g, id, hoje) });
+      return json14({ result: "gone", guild: await montar(g, id, hoje) });
     }
     if (body.approve !== true) {
       await apagarPedido(env, pedido.save);
-      return json13({ result: "declined", guild: await montar(g, id, hoje) });
+      return json14({ result: "declined", guild: await montar(g, id, hoje) });
     }
     const ja = await grupoDe(env, pedido.save, semana);
     if (ja) {
       await apagarPedido(env, pedido.save);
-      return json13({ result: ja.id === g.id ? "approved" : "gone", guild: await montar(g, id, hoje) });
+      return json14({ result: ja.id === g.id ? "approved" : "gone", guild: await montar(g, id, hoje) });
     }
     const r = await entrarNoGrupo(g.id, pedido.save);
     if (r.erro) return erro(r.erro, 409);
-    return json13({ result: "approved", guild: await montar(r.g, id, hoje) });
+    return json14({ result: "approved", guild: await montar(r.g, id, hoje) });
   }
   if ((action === "guildCreate" || action === "guildJoin") && (await loadDuelSideWithSprite(env, id)).bbLocked) {
     return erro("bb-locked", 403, { reason: "bb-locked", ...BB_LOCKED_MESSAGE });
@@ -12322,13 +12407,13 @@ async function handleGuild({ request, env }) {
   if (action === "guildWar") {
     const g = await grupoDe(env, id, semana);
     if (!g) return erro("no {g}", 404);
-    return json13({ war: await estadoDaGuerra(env, g.id) });
+    return json14({ war: await estadoDaGuerra(env, g.id) });
   }
   if (action === "guildWarSeek") {
     const g = await grupoDe(env, id, semana);
     if (!g) return erro("no {g}", 404);
     const r = await buscarGuerra(env, g, id, hoje, (gid) => lerGrupo(env, gid));
-    return json13({ state: r.state, war: { waiting: r.waiting, last: r.last } });
+    return json14({ state: r.state, war: { waiting: r.waiting, last: r.last } });
   }
   if (action === "guildDonate") {
     const g = await grupoDe(env, id, semana);
@@ -12337,7 +12422,7 @@ async function handleGuild({ request, env }) {
     if (r.invalid) return erro("invalid bits", 400);
     if (r.accepted === 0) return erro("daily limit", 429);
     await cartao(g);
-    return json13({ accepted: r.accepted, guild: await montar(g, id, hoje) });
+    return json14({ accepted: r.accepted, guild: await montar(g, id, hoje) });
   }
   if (action === "guildShopBuy") {
     const g = await grupoDe(env, id, semana);
@@ -12349,7 +12434,7 @@ async function handleGuild({ request, env }) {
       if (r.reason === "invalid-op") return erro("invalid op", 400);
       return erro(r.reason === "insufficient" ? "not enough bits" : r.reason === "already-owned" ? "already owned" : "op reuse", 409);
     }
-    return json13({ repeated: r.repeated, guild: await montar(g, id, hoje) });
+    return json14({ repeated: r.repeated, guild: await montar(g, id, hoje) });
   }
   if (action === "guildSlot") {
     const g = await grupoDe(env, id, semana);
@@ -12364,66 +12449,66 @@ async function handleGuild({ request, env }) {
     const g = await grupoDe(env, id, semana);
     if (!g) return erro("no {g}", 404);
     const hoje2 = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-    const ids2 = {};
-    for (const m of g.members) ids2[m] = await idOpacoDoMembro(env, g.id, m);
-    const salvoDe = /* @__PURE__ */ __name((opaco) => g.members.find((m) => ids2[m] === opaco), "salvoDe");
-    const praca = /* @__PURE__ */ __name(async () => vistaDaPraca(env, g.id, id, g.members, ids2, hoje2), "praca");
+    const ids3 = {};
+    for (const m of g.members) ids3[m] = await idOpacoDoMembro(env, g.id, m);
+    const salvoDe = /* @__PURE__ */ __name((opaco) => g.members.find((m) => ids3[m] === opaco), "salvoDe");
+    const praca = /* @__PURE__ */ __name(async () => vistaDaPraca(env, g.id, id, g.members, ids3, hoje2), "praca");
     const plantio = /* @__PURE__ */ __name(async () => vistaDoPlantio(env, g, id, hoje2), "plantio");
     const misterio = /* @__PURE__ */ __name(async () => vistaDoMisterio(env, g, id, hoje2), "misterio");
     const conflito = /* @__PURE__ */ __name((r) => erro(r.reason.replace(/-/g, " "), r.reason === "no-plant" ? 404 : 409), "conflito");
-    if (action === "claPraca") return json13({ praca: await praca() });
+    if (action === "claPraca") return json14({ praca: await praca() });
     if (action === "claPracaSlot") {
       if (body.item !== null && typeof body.item !== "string") return erro("invalid item", 400);
       const r = await definirSlotPraca(env, g.id, id, hoje2, body.slot, body.item);
       if (r === void 0) return erro(Number.isInteger(body.slot) && body.slot >= 0 && body.slot < 4 ? "invalid item" : "invalid slot", 400);
-      return json13({ praca: await praca() });
+      return json14({ praca: await praca() });
     }
     if (action === "claPresente") {
       const alvo = typeof body.to === "string" ? salvoDe(body.to) : void 0;
       if (!alvo || alvo === id) return erro("invalid target", 400);
       const r = await enviarPresente(env, g.id, id, alvo, hoje2, void 0, g.members);
       if (!r.ok) return erro("already sent today", 409);
-      return json13({ sent: true, praca: await praca() });
+      return json14({ sent: true, praca: await praca() });
     }
     if (action === "claPresenteClaim") {
       const [de, dia2] = String(body.giftId ?? "").split("|");
       const origem = salvoDe(de);
       if (!origem || !dia2) return erro("nothing to claim", 404);
-      const r = await resgatarPresente(env, g.id, id, g.members, origem, dia2, hoje2, ids2);
+      const r = await resgatarPresente(env, g.id, id, g.members, origem, dia2, hoje2, ids3);
       if (!r.ok) return erro("nothing to claim", 404);
-      return json13({ claimed: { item: r.item, receipt: r.receipt }, praca: await praca() });
+      return json14({ claimed: { item: r.item, receipt: r.receipt }, praca: await praca() });
     }
-    if (action === "claPlantio") return json13({ plantio: await plantio() });
+    if (action === "claPlantio") return json14({ plantio: await plantio() });
     if (action === "claPlantar") {
       const r = await plantar(env, g.id, id, hoje2);
       if (!r.ok) return erro("already planted", 409);
-      return json13({ plantio: await plantio() });
+      return json14({ plantio: await plantio() });
     }
     if (action === "claSortear") {
       const r = await sortear(env, g, id, hoje2);
       if (!r.ok) return conflito(r);
-      return json13({ plantio: await plantio(), task: r.kind });
+      return json14({ plantio: await plantio(), task: r.kind });
     }
     if (action === "claRegar" || action === "claProteger" || action === "claColher") {
       const r = await (action === "claRegar" ? regar : action === "claProteger" ? proteger : colher)(env, g, id, hoje2);
       if (!r.ok) return conflito(r);
-      return json13({ plantio: await plantio(), ...r.fruit ? { fruit: r.fruit, receipt: r.receipt } : {} });
+      return json14({ plantio: await plantio(), ...r.fruit ? { fruit: r.fruit, receipt: r.receipt } : {} });
     }
-    if (action === "claMisterio") return json13({ misterio: await misterio() });
+    if (action === "claMisterio") return json14({ misterio: await misterio() });
     if (action === "claMisterioEnviar") {
       const r = await enviarMisterio(env, g, id);
       if (!r.ok) return conflito(r);
-      return json13({ misterio: await misterio() });
+      return json14({ misterio: await misterio() });
     }
     if (action === "claMisterioTarefa") {
       const r = await somarTarefa(env, g, id, hoje2, body.taskId);
       if (!r.ok) return erro("invalid task", 400);
-      return json13({ counted: r.counted, ...r.reason ? { reason: r.reason } : {}, misterio: await misterio() });
+      return json14({ counted: r.counted, ...r.reason ? { reason: r.reason } : {}, misterio: await misterio() });
     }
     if (action === "claMisterioClaim") {
       const r = await resgatarMisterio(env, g, id);
       if (!r.ok) return erro("nothing to claim", 404);
-      return json13({ claimed: { reward: r.reward, receipt: r.receipt }, misterio: await misterio() });
+      return json14({ claimed: { reward: r.reward, receipt: r.receipt }, misterio: await misterio() });
     }
   }
   if (action.startsWith("guildFeira")) {
@@ -12432,14 +12517,14 @@ async function handleGuild({ request, env }) {
     if (action === "guildFeiraClaim") {
       const pedido = Number.isInteger(body.k) && body.k >= 0 ? body.k : void 0;
       const r = await resgatarChefe(env, g, id, pedido);
-      if (r.ok) return json13({ claimed: r.claimed });
+      if (r.ok) return json14({ claimed: r.claimed });
       if (r.reason === "claimed") return erro("already claimed", 409, { receipt: r.claimed.receipt, claimed: r.claimed });
       return erro("nothing to claim", 404);
     }
     if (!g) return erro("no {g}", 404);
     const cartoes = await lerCartoes(env, g);
     const estado2 = await lerEstadoFeira(env, g, hoje, { cartoes });
-    if (action === "guildFeira") return json13({ evento: await eventoDaFeira(env, g, id, hoje, estado2) });
+    if (action === "guildFeira") return json14({ evento: await eventoDaFeira(env, g, id, hoje, estado2) });
     if (action === "guildFeiraAttack") {
       if (estado2.phase !== "boss") return erro(estado2.phase === "rest" && estado2.done.lastKind === "boss" ? "boss dead" : "no boss", 409);
       const antes = await lerFeiraHit(env, g.id, estado2.k, id);
@@ -12451,7 +12536,7 @@ async function handleGuild({ request, env }) {
       await cartao(g);
       const depois = await lerEstadoFeira(env, g, hoje, { cartoes });
       const morreu = depois.phase !== "boss";
-      return json13({
+      return json14({
         landed: true,
         attack: { dmg: r.dmg, seed: r.seed, seconds: FIGHT_SECONDS, log: r.log },
         boss: { bossId: estado2.bossId, level: estado2.level, bossHpPct: morreu ? 0 : depois.hpPct, max: estado2.hp0, dead: morreu },
@@ -12461,7 +12546,7 @@ async function handleGuild({ request, env }) {
     if (action === "guildFeiraTrailStart") {
       const r = await iniciarTrilha(env, g, id, hoje, estado2);
       if (!r.ok) return erro(r.reason === "already-cleared" ? "already cleared" : "no trail", 409);
-      return json13({ trail: r.trail, evento: await eventoDaFeira(env, g, id, hoje, estado2) });
+      return json14({ trail: r.trail, evento: await eventoDaFeira(env, g, id, hoje, estado2) });
     }
     if (action === "guildFeiraTrailDone") {
       const r = await entregarTrilha(env, g, id, hoje, estado2, body);
@@ -12473,7 +12558,7 @@ async function handleGuild({ request, env }) {
         return erro(r.reason === "no-start" ? "not started" : "no trail", 409);
       }
       await cartao(g);
-      return json13({ cleared: true, reward: r.reward, receipt: r.receipt, evento: await eventoDaFeira(env, g, id, hoje, await lerEstadoFeira(env, g, hoje, { cartoes })) });
+      return json14({ cleared: true, reward: r.reward, receipt: r.receipt, evento: await eventoDaFeira(env, g, id, hoje, await lerEstadoFeira(env, g, hoje, { cartoes })) });
     }
   }
   if (action === "guildRaidHit") {
@@ -12504,7 +12589,7 @@ async function handleGuild({ request, env }) {
         evento = void 0;
       }
     }
-    return json13({ landed: true, [chave]: await montar(g, id, hoje), ...evento ? { evento } : {} });
+    return json14({ landed: true, [chave]: await montar(g, id, hoje), ...evento ? { evento } : {} });
   }
   if (action === "guildRewards" || action === "guildClaim") {
     const g = await grupoDe(env, id, semana);
@@ -12549,7 +12634,7 @@ async function handleGuild({ request, env }) {
           misterio = void 0;
         }
       }
-      return json13({ rewards: { pending, scenes, trophyOwned: await conchas() >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID, ...misterio ? { misterio } : {} } });
+      return json14({ rewards: { pending, scenes, trophyOwned: await conchas() >= RAID_TROPHY_EVERY, trophyId: RAID_TROPHY_ID, ...misterio ? { misterio } : {} } });
     }
     const w = String(body.week ?? "");
     if (!candidatas.includes(w)) return erro("invalid week", 400);
@@ -12577,11 +12662,11 @@ async function handleGuild({ request, env }) {
       trophy = depois > antes && depois % RAID_TROPHY_EVERY === 0;
     }
     if (trophy) await kvOrThrow(env).put(coopClaimKey(id, w), JSON.stringify({ ...gravado, trophy }), { expirationTtl: COOP_CLAIM_TTL });
-    return json13({ claimed: { week: w, outcome: d.outcome, emblems: d.emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null, receipt: recibo } });
+    return json14({ claimed: { week: w, outcome: d.outcome, emblems: d.emblems, trophy, trophyId: trophy ? RAID_TROPHY_ID : null, receipt: recibo } });
   }
   if (action === "guildLeave") {
     await coopLeave(env, id);
-    return json13({ ok: true });
+    return json14({ ok: true });
   }
   if (action === "guildRename" || action === "guildNewCode") {
     const g = await grupoDe(env, id, semana);
@@ -12604,115 +12689,9 @@ async function handleGuild({ request, env }) {
     }
     return vista(await montar(rolarSemana(fresco, semana), id, hoje));
   }
-  return json13({ error: "unknown action" }, 400);
+  return json14({ error: "unknown action" }, 400);
 }
 __name(handleGuild, "handleGuild");
-
-// api/_honra.js
-var HONRA_PONTOS_VITORIA = 20;
-var HONRA_PONTOS_DEFESA = 10;
-var HONRA_LEVEL_CARENCIA = 3;
-var HONRA_LEVEL_QUEDA = 6;
-var HONRA_FATOR_POR_REPETICAO = [1, 0.5, 0.25, 0];
-function fatorPorLevel(levelVencedor, levelPerdedor) {
-  if (!Number.isFinite(levelVencedor) || !Number.isFinite(levelPerdedor)) return 1;
-  const dif = levelVencedor - levelPerdedor;
-  if (dif <= HONRA_LEVEL_CARENCIA) return 1;
-  return Math.max(0, 1 - (dif - HONRA_LEVEL_CARENCIA) / HONRA_LEVEL_QUEDA);
-}
-__name(fatorPorLevel, "fatorPorLevel");
-function fatorPorRepeticao(vitoriasAntes) {
-  const n = Number.isInteger(vitoriasAntes) && vitoriasAntes > 0 ? vitoriasAntes : 0;
-  return HONRA_FATOR_POR_REPETICAO[Math.min(n, HONRA_FATOR_POR_REPETICAO.length - 1)];
-}
-__name(fatorPorRepeticao, "fatorPorRepeticao");
-function ganhoDePontos(base, levelVencedor, levelPerdedor, vitoriasAntes) {
-  const factor = fatorPorLevel(Number(levelVencedor), Number(levelPerdedor)) * fatorPorRepeticao(vitoriasAntes);
-  return { gain: Math.round(base * factor), factor };
-}
-__name(ganhoDePontos, "ganhoDePontos");
-
-// api/_rankedPick.js
-var RANKED_WINDOW = 4;
-var RANKED_PICKS = 3;
-function pickRankedOpponents(pool, me, rng, n = RANKED_PICKS, window = RANKED_WINDOW) {
-  const fin2 = /* @__PURE__ */ __name((v) => Number.isFinite(v) ? v : 0, "fin");
-  const legado = typeof me !== "object" || me === null;
-  const alvo = legado ? fin2(me) : fin2(me.score);
-  const alvoLife = legado ? 0 : fin2(me.lifetime);
-  const tagged = pool.map((item) => ({
-    item,
-    d: Math.abs((legado ? fin2(item.lifetime) : fin2(item.score)) - alvo),
-    d2: legado ? 0 : Math.abs(fin2(item.lifetime) - alvoLife),
-    tie: rng()
-  }));
-  tagged.sort((a, b) => a.d - b.d || a.d2 - b.d2 || a.tie - b.tie);
-  const near = tagged.slice(0, Math.max(n, window)).map((t) => t.item);
-  for (let i2 = near.length - 1; i2 > 0; i2--) {
-    const j = Math.floor(rng() * (i2 + 1));
-    [near[i2], near[j]] = [near[j], near[i2]];
-  }
-  return near.slice(0, n);
-}
-__name(pickRankedOpponents, "pickRankedOpponents");
-
-// api/_avatares.js
-var AVATAR_IDS = /* @__PURE__ */ new Set(["ativo-arena-duelo", "ativo-arena-feira", "ativo-arena", "ativo-config", "ativo-conta", "ativo-cuidados", "ativo-exploracao-caderno", "ativo-exploracao-oficina", "ativo-exploracao-trilha", "ativo-exploracao", "ativo-f-arqueira", "ativo-f-barda", "ativo-f-cacadora", "ativo-f-cura", "ativo-f-feras", "ativo-f-ferreira", "ativo-f-ferreiro", "ativo-f-forja", "ativo-f-guarda", "ativo-f-lua", "ativo-f-mercenaria", "ativo-f-navegadora", "ativo-f-sacerdotisa", "ativo-f-treino", "ativo-f-venenos", "ativo-hall-amigos", "ativo-hall-guilda", "ativo-hall", "ativo-jogos-mente", "ativo-jogos-refugio", "ativo-jogos", "ativo-laboratorio-pet", "ativo-laboratorio-stats", "ativo-laboratorio", "ativo-loja-background", "ativo-loja-decoracao", "ativo-loja-itens", "ativo-mercado-conquistas", "ativo-mercado", "ativo-onboarding", "ativo-oraculo", "ativo-sono", "ativo-desafiante-espina", "ativo-desafiante-mare", "ativo-desafiante-quartzo", "agua-enguia-escriba", "agua-geleia-barqueira", "agua-koi-dragao-sabio", "agua-ostra-mercadora", "akasha-baleia-estrela-arauto", "akasha-garca-veu-guia", "akasha-geleia-fantasma-arquivista", "akasha-mariposa-escriba-de-luz", "ar-arraia-nuvem-mercadora", "ar-cegonha-morcego-meteorologista", "ar-coruja-papagaio-mensageiro", "ar-sprite-vento-espirito", "campina-abelha-apicultora", "campina-coelho-bardo", "campina-espantalho-golem-vigia", "campina-ovelha-nuvem-tecela", "cavernas-aranha-cristal-guia", "cavernas-lesma-estalactite", "cavernas-morcego-sabio-eco", "cavernas-toupeira-lapidaria", "deserto-escaravelho-caravaneiro", "deserto-fenec-esfinge-vidente", "deserto-golem-cacto-guarda", "deserto-verme-areia-mercador", "floresta-cervo-espirito-guardiao", "floresta-esquilo-correio", "floresta-javali-casca", "floresta-raposa-druida", "fogo-fenix-filhote-curandeiro", "fogo-golem-obsidiana", "fogo-raposa-brasa-mensageira", "fogo-salamandra-cozinheira", "gelo-geleia-congelada-confeiteira", "gelo-lebre-neve-arquivista", "gelo-mamute-pequeno-carregador", "gelo-raposa-gelo-cacadora", "industrial-aranha-tecela", "industrial-caranguejo-argila-pedreiro", "industrial-castor-engenheiro", "industrial-espirito-forno-vidraceiro", "luz-cervo-lanterna", "luz-geleia-pomba", "luz-leoa-solar-sacerdotisa", "luz-vagalume-coro", "oceano-cavalo-marinho-mensageiro", "oceano-nautilo-estudioso", "oceano-peixe-pescador-lampiao", "oceano-tartaruga-marinha-anciao", "pantano-crocodilo-barqueiro", "pantano-garca-lanterna", "pantano-geleia-turfa-curandeira", "pantano-sapo-erbolario", "picos-aguia-lagarto-batedora", "picos-cabra-pedra-monge", "picos-carneiro-trovao-arauto", "picos-espirito-tempestade-aprendiz", "planta-geleia-musgo-enfermeira", "planta-louva-deus-florista", "planta-planta-carnivora-cozinheira", "planta-urso-arvore-jardineiro", "sombra-corvo-morcego-negociante", "sombra-espectro-tinta-gentil", "sombra-gato-sombra-cartografo", "sombra-mariposa-arquivista", "terra-besouro-rinoceronte-guarda", "terra-golem-argila-oleiro", "terra-tartaruga-pedra-anciao", "terra-texugo-toupeira-mineiro", "extra-aranha-fiandeira-a", "extra-aranha-fiandeira-b", "extra-dragao-cogumelo", "extra-ferreira-coelho-robo-a", "extra-ferreira-coelho-robo-b", "extra-ferreira-eletrica", "extra-filhote-de-mel", "extra-lanterna-fantasma", "extra-medusa-pescadora-a", "extra-medusa-pescadora-b"]);
-function avatarIdOrNull(raw) {
-  return typeof raw === "string" && AVATAR_IDS.has(raw) ? raw : null;
-}
-__name(avatarIdOrNull, "avatarIdOrNull");
-
-// api/_formHistory.js
-var MAX_FORMAS = 8;
-var ORDEM2 = { rookie: 0, champion: 1, ultimate: 2, mega: 3, ultra: 4 };
-var ID_FORMA = /^(rookie|ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))$/;
-var ELEMENTO = /^[a-z][a-z0-9_-]{0,31}$/;
-var estagioDaForma = /* @__PURE__ */ __name((formId) => String(formId).split("-")[0], "estagioDaForma");
-function formsFromSaveState(rawState, element) {
-  const state = (
-    /** @type {any} */
-    rawState
-  );
-  if (!state || typeof state !== "object" || Array.isArray(state)) return [];
-  const sprites = state.spriteLibrary && typeof state.spriteLibrary === "object" ? state.spriteLibrary.sprites : null;
-  if (!sprites || typeof sprites !== "object" || Array.isArray(sprites)) return [];
-  const el = typeof element === "string" && ELEMENTO.test(element) ? element : null;
-  const out = [];
-  for (const [formId, e] of Object.entries(sprites)) {
-    if (!ID_FORMA.test(formId) || !e || typeof e !== "object") continue;
-    const spriteUrl = spriteUrlOrNull(e.url);
-    if (!spriteUrl) continue;
-    const date = Number.isFinite(+e.at) && +e.at > 0 ? Math.floor(+e.at) : 0;
-    out.push({ stage: estagioDaForma(formId), formId, spriteUrl, element: el, date });
-  }
-  out.sort((a, b) => ORDEM2[a.stage] - ORDEM2[b.stage] || a.date - b.date || a.formId.localeCompare(b.formId));
-  return out.slice(0, MAX_FORMAS);
-}
-__name(formsFromSaveState, "formsFromSaveState");
-
-// api/_frames.js
-var FRAME_IDS = /* @__PURE__ */ new Set([
-  "basico",
-  "rank-madeira",
-  "rank-bronze",
-  "rank-prata",
-  "rank-ouro",
-  "rank-platina",
-  "rank-diamante",
-  "rank-mestre",
-  "rank-grao-mestre",
-  "loja-folhagem",
-  "loja-cristal",
-  "loja-brasa",
-  "conquista-constancia",
-  "evento-lua-colheita",
-  "evento-primeira-season"
-]);
-function frameIdOrNull(raw) {
-  return typeof raw === "string" && FRAME_IDS.has(raw) ? raw : null;
-}
-__name(frameIdOrNull, "frameIdOrNull");
 
 // api/_strays.js
 var STRAY_INACTIVE_DAYS = 90;
@@ -12851,6 +12830,262 @@ async function touchLastLogin(env, saveId, now = Date.now()) {
   }
 }
 __name(touchLastLogin, "touchLastLogin");
+
+// api/_amigos.js
+var MAX_FRIENDS = 20;
+var MAX_OUT = 20;
+var MAX_IN = 30;
+var MAX_NOTES = 30;
+var GIFT_BITS = 20;
+var GIFT_DAILY_CAP = 100;
+var TTL3 = 86400 * 400;
+var reqKey = /* @__PURE__ */ __name((id) => `freq:${id}`, "reqKey");
+var sentKey = /* @__PURE__ */ __name((id) => `gsent:${id}`, "sentKey");
+var noteKey = /* @__PURE__ */ __name((id) => `gnote:${id}`, "noteKey");
+function tzDe(zone, off) {
+  const z = typeof zone === "string" && zone.length <= 64 ? zone : void 0;
+  const o = off === null || off === void 0 || off === "" ? NaN : Number(off);
+  return { ...z ? { zone: z } : {}, ...Number.isFinite(o) ? { offsetMs: o } : {} };
+}
+__name(tzDe, "tzDe");
+var diaDe = /* @__PURE__ */ __name((tz) => playerDayOf(Date.now(), tz), "diaDe");
+var tzKey = /* @__PURE__ */ __name((id) => `gtz:${id}`, "tzKey");
+var recvKey = /* @__PURE__ */ __name((id) => `grecv:${id}`, "recvKey");
+var lerJson2 = /* @__PURE__ */ __name(async (env, key, vazio2) => {
+  try {
+    const raw = await kvOrThrow(env).get(key);
+    const v = raw ? JSON.parse(raw) : null;
+    return v && typeof v === "object" ? v : vazio2;
+  } catch {
+    return vazio2;
+  }
+}, "lerJson");
+var gravar3 = /* @__PURE__ */ __name((env, key, v) => kvOrThrow(env).put(key, JSON.stringify(v), { expirationTtl: TTL3 }), "gravar");
+var ids = /* @__PURE__ */ __name((a) => Array.isArray(a) ? a.filter((x2) => typeof x2 === "string") : [], "ids");
+async function lerConvites(env, id) {
+  const v = await lerJson2(env, reqKey(id), { in: [], out: [] });
+  return {
+    in: (Array.isArray(v.in) ? v.in : []).filter((r) => r && typeof r.from === "string"),
+    out: ids(v.out)
+  };
+}
+__name(lerConvites, "lerConvites");
+var gravarConvites = /* @__PURE__ */ __name((env, id, v) => gravar3(env, reqKey(id), { in: v.in.slice(-MAX_IN), out: v.out.slice(-MAX_OUT) }), "gravarConvites");
+async function presentesDeHoje(env, id, dia) {
+  const v = await lerJson2(env, sentKey(id), { day: "", to: [] });
+  return v.day === dia ? ids(v.to) : [];
+}
+__name(presentesDeHoje, "presentesDeHoje");
+async function marcarPresenteDeHoje(env, id, friendSave, dia) {
+  const to = await presentesDeHoje(env, id, dia);
+  if (!to.includes(friendSave)) to.push(friendSave);
+  await gravar3(env, sentKey(id), { day: dia, to });
+}
+__name(marcarPresenteDeHoje, "marcarPresenteDeHoje");
+async function lembrarTz(env, id, tz) {
+  if (!tz || !tz.zone && tz.offsetMs === void 0) return;
+  const atual = await lerJson2(env, tzKey(id), {});
+  if (atual.zone === tz.zone && atual.offsetMs === tz.offsetMs) return;
+  await gravar3(env, tzKey(id), tz);
+}
+__name(lembrarTz, "lembrarTz");
+async function lerTz(env, id) {
+  const v = await lerJson2(env, tzKey(id), {});
+  return tzDe(v.zone, v.offsetMs);
+}
+__name(lerTz, "lerTz");
+async function reservarRecebimento(env, id, bits2) {
+  const dia = diaDe(await lerTz(env, id));
+  const v = await lerJson2(env, recvKey(id), { day: "", bits: 0 });
+  const ja = v.day === dia ? Math.max(0, Math.floor(Number(v.bits) || 0)) : 0;
+  const credita = Math.max(0, Math.min(bits2, GIFT_DAILY_CAP - ja));
+  await gravar3(env, recvKey(id), { day: dia, bits: ja + credita });
+  return credita;
+}
+__name(reservarRecebimento, "reservarRecebimento");
+async function lerNotas(env, id) {
+  const v = await lerJson2(env, noteKey(id), { items: [], seenAt: 0 });
+  const items = (Array.isArray(v.items) ? v.items : []).filter((n) => n && Number.isFinite(+n.at)).map((n) => ({ name: typeof n.name === "string" ? n.name.slice(0, 40) : "", bits: Number.isFinite(Number(n.bits)) && Number(n.bits) >= 0 ? Math.floor(Number(n.bits)) : GIFT_BITS, at: +n.at }));
+  return { items, seenAt: Number(v.seenAt) > 0 ? Number(v.seenAt) : 0 };
+}
+__name(lerNotas, "lerNotas");
+async function anotarPresente(env, id, { name, bits: bits2 = GIFT_BITS, at = Date.now() }) {
+  const n = await lerNotas(env, id);
+  n.items.push({ name: String(name || "").slice(0, 40), bits: bits2, at });
+  await gravar3(env, noteKey(id), { items: n.items.slice(-MAX_NOTES), seenAt: n.seenAt });
+}
+__name(anotarPresente, "anotarPresente");
+async function marcarNotasVistas(env, id) {
+  const n = await lerNotas(env, id);
+  await gravar3(env, noteKey(id), { items: n.items, seenAt: Date.now() });
+}
+__name(marcarNotasVistas, "marcarNotasVistas");
+var simulado = /* @__PURE__ */ __name((p) => !!p && p.simulated === true, "simulado");
+async function ligarAmizade(env, a, b) {
+  const pa = await getProfile(env, a);
+  const pb = await getProfile(env, b);
+  if (!pa || !pb || simulado(pa) || simulado(pb)) return { erro: "not found" };
+  pa.friends = ids(pa.friends);
+  pb.friends = ids(pb.friends);
+  const temA = pa.friends.includes(b);
+  const temB = pb.friends.includes(a);
+  if (!temA && pa.friends.length >= MAX_FRIENDS) return { erro: "mine-full" };
+  if (!temB && pb.friends.length >= MAX_FRIENDS) return { erro: "theirs-full" };
+  if (!temA) {
+    pa.friends.push(b);
+    await putProfile(env, a, pa);
+  }
+  if (!temB) {
+    pb.friends.push(a);
+    await putProfile(env, b, pb);
+  }
+  return { ok: true };
+}
+__name(ligarAmizade, "ligarAmizade");
+async function desfazerAmizade(env, a, b) {
+  for (const [x2, y] of [[a, b], [b, a]]) {
+    const p = await getProfile(env, x2);
+    if (p && ids(p.friends).includes(y)) {
+      p.friends = ids(p.friends).filter((f) => f !== y);
+      await putProfile(env, x2, p);
+    }
+    const c = await lerConvites(env, x2);
+    if (c.in.some((r) => r.from === y) || c.out.includes(y)) {
+      await gravarConvites(env, x2, { in: c.in.filter((r) => r.from !== y), out: c.out.filter((f) => f !== y) });
+    }
+  }
+}
+__name(desfazerAmizade, "desfazerAmizade");
+async function espelharAmizades(env, saveId) {
+  const eu = await getProfile(env, saveId);
+  let espelhados = 0;
+  let pulados = 0;
+  if (!eu || simulado(eu)) return { espelhados, pulados };
+  for (const f of ids(eu.friends)) {
+    const outro = await getProfile(env, f);
+    if (!outro || simulado(outro)) {
+      pulados++;
+      continue;
+    }
+    const lista = ids(outro.friends);
+    if (lista.includes(saveId)) continue;
+    if (lista.length >= MAX_FRIENDS) {
+      pulados++;
+      continue;
+    }
+    outro.friends = [...lista, saveId];
+    await putProfile(env, f, outro);
+    espelhados++;
+  }
+  return { espelhados, pulados };
+}
+__name(espelharAmizades, "espelharAmizades");
+
+// api/_honra.js
+var HONRA_PONTOS_VITORIA = 20;
+var HONRA_PONTOS_DEFESA = 10;
+var HONRA_LEVEL_CARENCIA = 3;
+var HONRA_LEVEL_QUEDA = 6;
+var HONRA_FATOR_POR_REPETICAO = [1, 0.5, 0.25, 0];
+function fatorPorLevel(levelVencedor, levelPerdedor) {
+  if (!Number.isFinite(levelVencedor) || !Number.isFinite(levelPerdedor)) return 1;
+  const dif = levelVencedor - levelPerdedor;
+  if (dif <= HONRA_LEVEL_CARENCIA) return 1;
+  return Math.max(0, 1 - (dif - HONRA_LEVEL_CARENCIA) / HONRA_LEVEL_QUEDA);
+}
+__name(fatorPorLevel, "fatorPorLevel");
+function fatorPorRepeticao(vitoriasAntes) {
+  const n = Number.isInteger(vitoriasAntes) && vitoriasAntes > 0 ? vitoriasAntes : 0;
+  return HONRA_FATOR_POR_REPETICAO[Math.min(n, HONRA_FATOR_POR_REPETICAO.length - 1)];
+}
+__name(fatorPorRepeticao, "fatorPorRepeticao");
+function ganhoDePontos(base, levelVencedor, levelPerdedor, vitoriasAntes) {
+  const factor = fatorPorLevel(Number(levelVencedor), Number(levelPerdedor)) * fatorPorRepeticao(vitoriasAntes);
+  return { gain: Math.round(base * factor), factor };
+}
+__name(ganhoDePontos, "ganhoDePontos");
+
+// api/_rankedPick.js
+var RANKED_WINDOW = 4;
+var RANKED_PICKS = 3;
+function pickRankedOpponents(pool, me, rng, n = RANKED_PICKS, window = RANKED_WINDOW) {
+  const fin2 = /* @__PURE__ */ __name((v) => Number.isFinite(v) ? v : 0, "fin");
+  const legado = typeof me !== "object" || me === null;
+  const alvo = legado ? fin2(me) : fin2(me.score);
+  const alvoLife = legado ? 0 : fin2(me.lifetime);
+  const tagged = pool.map((item) => ({
+    item,
+    d: Math.abs((legado ? fin2(item.lifetime) : fin2(item.score)) - alvo),
+    d2: legado ? 0 : Math.abs(fin2(item.lifetime) - alvoLife),
+    tie: rng()
+  }));
+  tagged.sort((a, b) => a.d - b.d || a.d2 - b.d2 || a.tie - b.tie);
+  const near = tagged.slice(0, Math.max(n, window)).map((t) => t.item);
+  for (let i2 = near.length - 1; i2 > 0; i2--) {
+    const j = Math.floor(rng() * (i2 + 1));
+    [near[i2], near[j]] = [near[j], near[i2]];
+  }
+  return near.slice(0, n);
+}
+__name(pickRankedOpponents, "pickRankedOpponents");
+
+// api/_avatares.js
+var AVATAR_IDS = /* @__PURE__ */ new Set(["ativo-arena-duelo", "ativo-arena-feira", "ativo-arena", "ativo-config", "ativo-conta", "ativo-cuidados", "ativo-exploracao-caderno", "ativo-exploracao-oficina", "ativo-exploracao-trilha", "ativo-exploracao", "ativo-f-arqueira", "ativo-f-barda", "ativo-f-cacadora", "ativo-f-cura", "ativo-f-feras", "ativo-f-ferreira", "ativo-f-ferreiro", "ativo-f-forja", "ativo-f-guarda", "ativo-f-lua", "ativo-f-mercenaria", "ativo-f-navegadora", "ativo-f-sacerdotisa", "ativo-f-treino", "ativo-f-venenos", "ativo-hall-amigos", "ativo-hall-guilda", "ativo-hall", "ativo-jogos-mente", "ativo-jogos-refugio", "ativo-jogos", "ativo-laboratorio-pet", "ativo-laboratorio-stats", "ativo-laboratorio", "ativo-loja-background", "ativo-loja-decoracao", "ativo-loja-itens", "ativo-mercado-conquistas", "ativo-mercado", "ativo-onboarding", "ativo-oraculo", "ativo-sono", "ativo-desafiante-espina", "ativo-desafiante-mare", "ativo-desafiante-quartzo", "agua-enguia-escriba", "agua-geleia-barqueira", "agua-koi-dragao-sabio", "agua-ostra-mercadora", "akasha-baleia-estrela-arauto", "akasha-garca-veu-guia", "akasha-geleia-fantasma-arquivista", "akasha-mariposa-escriba-de-luz", "ar-arraia-nuvem-mercadora", "ar-cegonha-morcego-meteorologista", "ar-coruja-papagaio-mensageiro", "ar-sprite-vento-espirito", "campina-abelha-apicultora", "campina-coelho-bardo", "campina-espantalho-golem-vigia", "campina-ovelha-nuvem-tecela", "cavernas-aranha-cristal-guia", "cavernas-lesma-estalactite", "cavernas-morcego-sabio-eco", "cavernas-toupeira-lapidaria", "deserto-escaravelho-caravaneiro", "deserto-fenec-esfinge-vidente", "deserto-golem-cacto-guarda", "deserto-verme-areia-mercador", "floresta-cervo-espirito-guardiao", "floresta-esquilo-correio", "floresta-javali-casca", "floresta-raposa-druida", "fogo-fenix-filhote-curandeiro", "fogo-golem-obsidiana", "fogo-raposa-brasa-mensageira", "fogo-salamandra-cozinheira", "gelo-geleia-congelada-confeiteira", "gelo-lebre-neve-arquivista", "gelo-mamute-pequeno-carregador", "gelo-raposa-gelo-cacadora", "industrial-aranha-tecela", "industrial-caranguejo-argila-pedreiro", "industrial-castor-engenheiro", "industrial-espirito-forno-vidraceiro", "luz-cervo-lanterna", "luz-geleia-pomba", "luz-leoa-solar-sacerdotisa", "luz-vagalume-coro", "oceano-cavalo-marinho-mensageiro", "oceano-nautilo-estudioso", "oceano-peixe-pescador-lampiao", "oceano-tartaruga-marinha-anciao", "pantano-crocodilo-barqueiro", "pantano-garca-lanterna", "pantano-geleia-turfa-curandeira", "pantano-sapo-erbolario", "picos-aguia-lagarto-batedora", "picos-cabra-pedra-monge", "picos-carneiro-trovao-arauto", "picos-espirito-tempestade-aprendiz", "planta-geleia-musgo-enfermeira", "planta-louva-deus-florista", "planta-planta-carnivora-cozinheira", "planta-urso-arvore-jardineiro", "sombra-corvo-morcego-negociante", "sombra-espectro-tinta-gentil", "sombra-gato-sombra-cartografo", "sombra-mariposa-arquivista", "terra-besouro-rinoceronte-guarda", "terra-golem-argila-oleiro", "terra-tartaruga-pedra-anciao", "terra-texugo-toupeira-mineiro", "extra-aranha-fiandeira-a", "extra-aranha-fiandeira-b", "extra-dragao-cogumelo", "extra-ferreira-coelho-robo-a", "extra-ferreira-coelho-robo-b", "extra-ferreira-eletrica", "extra-filhote-de-mel", "extra-lanterna-fantasma", "extra-medusa-pescadora-a", "extra-medusa-pescadora-b"]);
+function avatarIdOrNull(raw) {
+  return typeof raw === "string" && AVATAR_IDS.has(raw) ? raw : null;
+}
+__name(avatarIdOrNull, "avatarIdOrNull");
+
+// api/_formHistory.js
+var MAX_FORMAS = 8;
+var ORDEM2 = { rookie: 0, champion: 1, ultimate: 2, mega: 3, ultra: 4 };
+var ID_FORMA = /^(rookie|ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))$/;
+var ELEMENTO = /^[a-z][a-z0-9_-]{0,31}$/;
+var estagioDaForma = /* @__PURE__ */ __name((formId) => String(formId).split("-")[0], "estagioDaForma");
+function formsFromSaveState(rawState, element) {
+  const state = (
+    /** @type {any} */
+    rawState
+  );
+  if (!state || typeof state !== "object" || Array.isArray(state)) return [];
+  const sprites = state.spriteLibrary && typeof state.spriteLibrary === "object" ? state.spriteLibrary.sprites : null;
+  if (!sprites || typeof sprites !== "object" || Array.isArray(sprites)) return [];
+  const el = typeof element === "string" && ELEMENTO.test(element) ? element : null;
+  const out = [];
+  for (const [formId, e] of Object.entries(sprites)) {
+    if (!ID_FORMA.test(formId) || !e || typeof e !== "object") continue;
+    const spriteUrl = spriteUrlOrNull(e.url);
+    if (!spriteUrl) continue;
+    const date = Number.isFinite(+e.at) && +e.at > 0 ? Math.floor(+e.at) : 0;
+    out.push({ stage: estagioDaForma(formId), formId, spriteUrl, element: el, date });
+  }
+  out.sort((a, b) => ORDEM2[a.stage] - ORDEM2[b.stage] || a.date - b.date || a.formId.localeCompare(b.formId));
+  return out.slice(0, MAX_FORMAS);
+}
+__name(formsFromSaveState, "formsFromSaveState");
+
+// api/_frames.js
+var FRAME_IDS = /* @__PURE__ */ new Set([
+  "basico",
+  "rank-madeira",
+  "rank-bronze",
+  "rank-prata",
+  "rank-ouro",
+  "rank-platina",
+  "rank-diamante",
+  "rank-mestre",
+  "rank-grao-mestre",
+  "loja-folhagem",
+  "loja-cristal",
+  "loja-brasa",
+  "conquista-constancia",
+  "evento-lua-colheita",
+  "evento-primeira-season"
+]);
+function frameIdOrNull(raw) {
+  return typeof raw === "string" && FRAME_IDS.has(raw) ? raw : null;
+}
+__name(frameIdOrNull, "frameIdOrNull");
 
 // api/community.js
 var CORS7 = {
@@ -13435,11 +13670,11 @@ async function handleCommunity(context) {
     const p = targetSave ? await getProfile(env, targetSave) : null;
     if (!p || isHidden(p)) return json3({ found: false });
     const rank = await getRank(env, currentSeason(), targetSave);
-    const friendPids = (await Promise.all((p.friends || []).map((f) => pidDeSaveId(env, f, { semEscondidos: true })))).filter(Boolean);
+    const friendPids2 = (await Promise.all((p.friends || []).map((f) => pidDeSaveId(env, f, { semEscondidos: true })))).filter(Boolean);
     return json3({
       found: true,
       player: await publicProfile(env, p, {
-        friends: friendPids,
+        friends: friendPids2,
         rankPoints: rank.points,
         wins: rank.wins,
         losses: rank.losses
@@ -13790,12 +14025,32 @@ async function handleCommunity(context) {
     if (!Array.isArray(mids) || mids.length > 30 || !mids.every((x2) => typeof x2 === "string" && x2.length > 0 && x2.length <= 80)) return json3({ error: "invalid mids" }, 400);
     return json3({ ok: true, removed: await ackMail(kvOrThrow(env), id, mids) });
   }
+  const midsValidos = /* @__PURE__ */ __name((m) => Array.isArray(m) && m.length > 0 && m.length <= 30 && m.every((x2) => typeof x2 === "string" && x2.length > 0 && x2.length <= 80), "midsValidos");
+  if (action === "mailRead" && method === "POST") {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    if (!midsValidos(body.mids)) return json3({ error: "invalid mids" }, 400);
+    return json3({ ok: true, marked: await markRead(kvOrThrow(env), id, body.mids) });
+  }
+  if (action === "mailClaim" && method === "POST") {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    if (body.all !== true && !midsValidos(body.mids)) return json3({ error: "invalid mids" }, 400);
+    return json3({ ok: true, granted: await claimMail(kvOrThrow(env), id, body.all === true ? null : body.mids) });
+  }
+  if (action === "mailDelete" && method === "POST") {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    if (body.scope === "read") return json3({ ok: true, ...await deleteMail(kvOrThrow(env), id, "read") });
+    if (!midsValidos(body.mids)) return json3({ error: "invalid mids" }, 400);
+    return json3({ ok: true, ...await deleteMail(kvOrThrow(env), id, body.mids, body.force === true) });
+  }
   if (action === "mailSend" && method === "POST") {
     if (!env.SEASON_ADMIN_KEY || !secretEquals(body.adminKey, env.SEASON_ADMIN_KEY)) return json3({ error: "unauthorized" }, 401);
-    const ids2 = body.ids;
-    if (!Array.isArray(ids2) || ids2.length === 0 || ids2.length > 100 || !ids2.every((x2) => typeof x2 === "string" && x2.length <= 80)) return json3({ error: "invalid ids" }, 400);
+    const ids3 = body.ids;
+    if (!Array.isArray(ids3) || ids3.length === 0 || ids3.length > 100 || !ids3.every((x2) => typeof x2 === "string" && x2.length <= 80)) return json3({ error: "invalid ids" }, 400);
     let sent = 0;
-    for (const alvo of ids2) if (await enqueueMail(env, kvOrThrow(env), alvo, { ...body.mail, at: Date.now() })) sent++;
+    for (const alvo of ids3) if (await enqueueMail(env, kvOrThrow(env), alvo, { ...body.mail, at: Date.now() })) sent++;
     return json3({ ok: true, sent });
   }
   if (action === "trophies" && method === "GET") {
@@ -13826,6 +14081,7 @@ async function handleCommunity(context) {
     }
     return json3({ forms: formsFromSaveState(state, p.element).map(({ stage, spriteUrl, element, date }) => ({ stage, spriteUrl, element, date })) });
   }
+  const friendPids = /* @__PURE__ */ __name(async (saveIds) => (await Promise.all(saveIds.map((f) => pidDeSaveId(env, f)))).filter(Boolean), "friendPids");
   if (action === "friends" && method === "POST") {
     const { friendId, remove } = body;
     if (!VALID_ID4.test(id || "") || !VALID_ID4.test(friendId || "")) return json3({ error: "invalid id" }, 400);
@@ -13834,18 +14090,137 @@ async function handleCommunity(context) {
     const friendSave = await saveIdForPublicId(env, friendId);
     if (!friendSave) return json3({ error: "friend not found" }, 404);
     if (id === friendSave) return json3({ error: "cannot befriend yourself" }, 400);
-    if (!remove && isHidden(await getProfile(env, friendSave))) return json3({ error: "friend not found" }, 404);
     const me = await getProfile(env, id);
     if (!me) return json3({ error: "profile not found" }, 404);
-    me.friends = me.friends || [];
     if (remove) {
-      me.friends = me.friends.filter((f) => f !== friendSave);
-    } else if (!me.friends.includes(friendSave)) {
-      if (me.friends.length >= 5) return json3({ error: "friend limit (5)" }, 400);
-      me.friends.push(friendSave);
+      await desfazerAmizade(env, id, friendSave);
+      const depois = await getProfile(env, id);
+      return json3({ ok: true, friends: await friendPids(depois?.friends || []) });
     }
-    await putProfile(env, id, me);
-    return json3({ ok: true, friends: (await Promise.all(me.friends.map((f) => pidDeSaveId(env, f)))).filter(Boolean) });
+    const alvo = await getProfile(env, friendSave);
+    if (!alvo || isHidden(alvo)) return json3({ error: "friend not found" }, 404);
+    me.friends = me.friends || [];
+    if (me.friends.includes(friendSave)) return json3({ ok: true, status: "friends", friends: await friendPids(me.friends) });
+    if (me.friends.length >= MAX_FRIENDS) return json3({ error: `friend limit (${MAX_FRIENDS})` }, 400);
+    const gate2 = takeToken("friend-invite", id, { limit: 30, windowMs: 36e5 });
+    if (!gate2.ok) return tooManyRequests(gate2.retryAfter, CORS7);
+    const minha = await lerConvites(env, id);
+    if (minha.in.some((r) => r.from === friendSave)) {
+      const r = await ligarAmizade(env, id, friendSave);
+      if (r.erro === "theirs-full") return json3({ ok: true, status: "pending", friends: await friendPids(me.friends) });
+      if (r.erro) return json3({ error: "friend not found" }, 404);
+      await gravarConvites(env, id, { in: minha.in.filter((x2) => x2.from !== friendSave), out: minha.out.filter((f) => f !== friendSave) });
+      const dele2 = await lerConvites(env, friendSave);
+      await gravarConvites(env, friendSave, { in: dele2.in.filter((x2) => x2.from !== id), out: dele2.out.filter((f) => f !== id) });
+      return json3({ ok: true, status: "friends", friends: await friendPids((await getProfile(env, id))?.friends || []) });
+    }
+    if (minha.out.includes(friendSave)) return json3({ ok: true, status: "pending", friends: await friendPids(me.friends) });
+    if (minha.out.length >= MAX_OUT) return json3({ error: "too many pending invites" }, 429);
+    if (alvo.simulated === true) return json3({ ok: true, status: "pending", friends: await friendPids(me.friends) });
+    const dele = await lerConvites(env, friendSave);
+    if (!dele.in.some((r) => r.from === id) && dele.in.length < MAX_IN) dele.in.push({ from: id, at: Date.now() });
+    await gravarConvites(env, friendSave, dele);
+    minha.out.push(friendSave);
+    await gravarConvites(env, id, minha);
+    return json3({ ok: true, status: "pending", friends: await friendPids(me.friends) });
+  }
+  if (action === "friendAccept" && method === "POST") {
+    const { friendId, decline } = body;
+    if (!VALID_ID4.test(id || "") || !VALID_ID4.test(friendId || "")) return json3({ error: "invalid id" }, 400);
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const quem = await saveIdForPublicId(env, friendId);
+    if (!quem || quem === id) return json3({ error: "no invite" }, 404);
+    const meus = await lerConvites(env, id);
+    if (!meus.in.some((r2) => r2.from === quem)) return json3({ error: "no invite" }, 404);
+    const limpar = /* @__PURE__ */ __name(async () => {
+      await gravarConvites(env, id, { in: meus.in.filter((r2) => r2.from !== quem), out: meus.out });
+      const dele = await lerConvites(env, quem);
+      await gravarConvites(env, quem, { in: dele.in, out: dele.out.filter((f) => f !== id) });
+    }, "limpar");
+    if (decline === true) {
+      await limpar();
+      return json3({ ok: true, friends: await friendPids((await getProfile(env, id))?.friends || []) });
+    }
+    const alvo = await getProfile(env, quem);
+    if (!alvo || isHidden(alvo)) {
+      await limpar();
+      return json3({ error: "no invite" }, 404);
+    }
+    const r = await ligarAmizade(env, id, quem);
+    if (r.erro === "mine-full") return json3({ error: `friend limit (${MAX_FRIENDS})` }, 400);
+    if (r.erro === "theirs-full") {
+      await limpar();
+      return json3({ error: "invite expired" }, 409);
+    }
+    if (r.erro) {
+      await limpar();
+      return json3({ error: "no invite" }, 404);
+    }
+    await limpar();
+    return json3({ ok: true, status: "friends", friends: await friendPids((await getProfile(env, id))?.friends || []) });
+  }
+  if (action === "friendsState" && method === "GET") {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const me = await getProfile(env, id);
+    const tz = tzDe(url.searchParams.get("zone"), url.searchParams.get("off"));
+    await lembrarTz(env, id, tz).catch(() => {
+    });
+    if (!me) return json3({ friends: [], incoming: [], outgoing: [], sentToday: [], notes: [], unseen: 0, limit: MAX_FRIENDS, dailyCap: GIFT_DAILY_CAP });
+    const marca = `gmir:${id}`;
+    if (!await kvOrThrow(env).get(marca)) {
+      await espelharAmizades(env, id);
+      await kvOrThrow(env).put(marca, "1", { expirationTtl: 86400 * 400 });
+    }
+    const fresco = await getProfile(env, id) || me;
+    const convites = await lerConvites(env, id);
+    const incoming = [];
+    for (const r of convites.in.slice(-MAX_IN).reverse()) {
+      const p = await getProfile(env, r.from);
+      if (!p || isHidden(p) || p.simulated === true) continue;
+      incoming.push({ id: await ensurePid(env, p), name: p.name, at: r.at });
+      if (incoming.length >= 20) break;
+    }
+    const outgoing = [];
+    for (const f of convites.out) {
+      const pid = await pidDeSaveId(env, f, { semEscondidos: true });
+      if (pid) outgoing.push(pid);
+    }
+    const sentToday = [];
+    for (const f of await presentesDeHoje(env, id, diaDe(tz))) {
+      const pid = await pidDeSaveId(env, f);
+      if (pid) sentToday.push(pid);
+    }
+    const notas = await lerNotas(env, id);
+    const notes = notas.items.slice().reverse().map((n) => ({ name: n.name, bits: n.bits, at: n.at, unseen: n.at > notas.seenAt }));
+    return json3({
+      friends: await friendPids(fresco.friends || []),
+      incoming,
+      outgoing,
+      sentToday,
+      notes,
+      unseen: notes.filter((n) => n.unseen).length,
+      limit: MAX_FRIENDS,
+      dailyCap: GIFT_DAILY_CAP
+    });
+  }
+  if (action === "friendsSeen" && method === "POST") {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    await marcarNotasVistas(env, id);
+    return json3({ ok: true });
+  }
+  if (action === "friendsMigrate" && method === "POST") {
+    if (!env.SEASON_ADMIN_KEY || !secretEquals(body.adminKey, env.SEASON_ADMIN_KEY)) return json3({ error: "unauthorized" }, 401);
+    const page = await kvOrThrow(env).list({ prefix: "profile:", cursor: typeof body.cursor === "string" && body.cursor ? body.cursor : void 0, limit: 40 });
+    let espelhados = 0, pulados = 0;
+    for (const k of page.keys) {
+      const r = await espelharAmizades(env, k.name.slice("profile:".length)).catch(() => ({ espelhados: 0, pulados: 0 }));
+      espelhados += r.espelhados;
+      pulados += r.pulados;
+    }
+    return json3({ ok: true, scanned: page.keys.length, espelhados, pulados, done: !!page.list_complete, ...page.list_complete ? {} : { cursor: page.cursor } });
   }
   if (action === "gift" && method === "POST") {
     const { friendId } = body;
@@ -13857,22 +14232,38 @@ async function handleCommunity(context) {
     const me = await getProfile(env, id);
     if (!me) return json3({ error: "profile not found" }, 404);
     if (!(me.friends || []).includes(friendSave)) return json3({ error: "not a friend" }, 403);
-    me.giftLog = me.giftLog || {};
-    if (me.giftLog[friendSave] === today2()) return json3({ error: "already gifted today" }, 429);
-    me.giftLog[friendSave] = today2();
-    await putProfile(env, id, me);
-    if ((await getProfile(env, friendSave))?.simulated === true) return json3({ ok: true });
-    const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
-    let gifts = [];
-    try {
-      const lido = raw ? JSON.parse(raw) : [];
-      gifts = Array.isArray(lido) ? lido : [];
-    } catch {
-      gifts = [];
-    }
-    gifts.push({ from: isHidden(me) ? "" : me.name, bits: 20, at: Date.now(), gid: crypto.randomUUID() });
-    await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
-    return json3({ ok: true });
+    const tzMeu = tzDe(body.zone, body.off);
+    const diaMeu = diaDe(tzMeu);
+    await lembrarTz(env, id, tzMeu).catch(() => {
+    });
+    return await withDuelLock(`gift:${id}:${friendSave}`, async () => {
+      const hoje = await presentesDeHoje(env, id, diaMeu);
+      if (hoje.includes(friendSave) || me.giftLog && me.giftLog[friendSave] === diaMeu) return json3({ error: "already gifted today" }, 429);
+      await marcarPresenteDeHoje(env, id, friendSave, diaMeu);
+      const alvo = await getProfile(env, friendSave);
+      if (alvo?.simulated === true) return json3({ ok: true, credited: GIFT_BITS });
+      return await withDuelLock(`gcap:${friendSave}`, async () => {
+        const credited = await reservarRecebimento(env, friendSave, GIFT_BITS);
+        const quem = isHidden(me) ? "" : me.name;
+        if (credited > 0) {
+          const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
+          let gifts = [];
+          try {
+            const lido = raw ? JSON.parse(raw) : [];
+            gifts = Array.isArray(lido) ? lido : [];
+          } catch {
+            gifts = [];
+          }
+          gifts.push({ from: quem, bits: credited, at: Date.now(), gid: crypto.randomUUID() });
+          await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
+        }
+        try {
+          await anotarPresente(env, friendSave, { name: quem, bits: credited });
+        } catch {
+        }
+        return json3({ ok: true, credited });
+      });
+    });
   }
   if (action === "gifts" && method === "GET") {
     const denied = await denyUnlessOwner(id);
@@ -14180,11 +14571,16 @@ var BASE_ELEMENTS = [
   "planta"
 ];
 var PAIRS_RAW = "vapor:fogo+agua lava:fogo+terra incendio:fogo+ar plasma:fogo+eletricidade fogo_feiticeiro:fogo+arcano fogo_negro:fogo+sombra chama_solar:fogo+luz fogo_infernal:fogo+vileza chama_azul:fogo+morte fenix:fogo+vida fervor:fogo+vigor pantano:agua+terra gelo:agua+ar agua_viva:agua+eletricidade mare:agua+arcano abismo:agua+sombra prisma:agua+luz acido:agua+vileza veneno:agua+morte nascente:agua+vida correnteza:agua+vigor areia:terra+ar magnetismo:terra+eletricidade cristal:terra+arcano obsidiana:terra+sombra ouro_vivo:terra+luz solo_profano:terra+vileza ossuario:terra+morte flora:terra+vida tita:terra+vigor tempestade:ar+eletricidade eter:ar+arcano murmurio:ar+sombra aurora:ar+luz enxofre:ar+vileza miasma:ar+morte alento:ar+vida impeto:ar+vigor fluxo:eletricidade+arcano trovao_negro:eletricidade+sombra fulgor:eletricidade+luz tormento:eletricidade+vileza galvanismo:eletricidade+morte sinapse:eletricidade+vida reflexo:eletricidade+vigor ocultismo:arcano+sombra runa:arcano+luz pacto:arcano+vileza alma:arcano+morte essencia:arcano+vida encantamento:arcano+vigor crepusculo:sombra+luz terror:sombra+vileza espectro:sombra+morte parasita:sombra+vida assassinio:sombra+vigor heresia:luz+vileza julgamento:luz+morte santidade:luz+vida bravura:luz+vigor praga:vileza+morte mutacao:vileza+vida carnificina:vileza+vigor equilibrio:morte+vida ceifa:morte+vigor vitalidade:vida+vigor forja:marcial+fogo tempera:marcial+agua aco:marcial+terra esgrima:marcial+ar aco_voltaico:marcial+eletricidade arsenal:marcial+arcano lamina_oculta:marcial+sombra lamina_radiante:marcial+luz serrilha:marcial+vileza fio_funebre:marcial+morte lamina_viva:marcial+vida maestria:marcial+vigor pira_eterna:tempo+fogo erosao:tempo+agua fossil:tempo+terra aceleracao:tempo+ar instante:tempo+eletricidade cronomancia:tempo+arcano entropia:tempo+sombra eon:tempo+luz ruina:tempo+vileza ocaso:tempo+morte florescer:tempo+vida frenesi:tempo+vigor contratempo:tempo+marcial estrondo:som+fogo sonar:som+agua terremoto:som+terra estampido:som+ar trovao:som+eletricidade cantico:som+arcano sussurro:som+sombra harmonia:som+luz dissonancia:som+vileza requiem:som+morte melodia:som+vida brado:som+vigor cadencia:som+marcial eco:som+tempo fornalha_estelar:gravidade+fogo voragem:gravidade+agua colapso:gravidade+terra vacuo:gravidade+ar magnetar:gravidade+eletricidade singularidade:gravidade+arcano buraco_negro:gravidade+sombra halo_gravitacional:gravidade+luz jugo:gravidade+vileza implosao:gravidade+morte ancora_vital:gravidade+vida peso_descomunal:gravidade+vigor ariete:gravidade+marcial dilatacao:gravidade+tempo onda_de_choque:gravidade+som meteoro:espaco+fogo cometa:espaco+agua asteroide:espaco+terra estratosfera:espaco+ar pulsar:espaco+eletricidade portal:espaco+arcano vazio:espaco+sombra constelacao:espaco+luz devorador:espaco+vileza nebulosa:espaco+morte semente_estelar:espaco+vida gigante_estelar:espaco+vigor lamina_sideral:espaco+marcial continuum:espaco+tempo silencio_cosmico:espaco+som dobra:espaco+gravidade fogo_fatuo:fada+fogo orvalho:fada+agua circulo_feerico:fada+terra brisa_cintilante:fada+ar glitter:fada+eletricidade feerie:fada+arcano sonho_sombrio:fada+sombra arco_iris:fada+luz encanto_traicoeiro:fada+vileza banshee:fada+morte coracao:fada+vida graca:fada+vigor lamina_purpurina:fada+marcial sono_encantado:fada+tempo cancao_feerica:fada+som leveza:fada+gravidade poeira_estelar:fada+espaco fornalha:industrial+fogo hidraulica:industrial+agua mineracao:industrial+terra pneumatica:industrial+ar usina:industrial+eletricidade artificio:industrial+arcano fuligem:industrial+sombra holofote:industrial+luz poluicao:industrial+vileza ferro_velho:industrial+morte biomecanica:industrial+vida exoesqueleto:industrial+vigor armaria:industrial+marcial relojoaria:industrial+tempo britadeira:industrial+som prensa:industrial+gravidade estacao_orbital:industrial+espaco brinquedo:industrial+fada queimada:planta+fogo mangue:planta+agua raiz_profunda:planta+terra polen:planta+ar fotossintese:planta+eletricidade druidismo:planta+arcano fungo:planta+sombra girassol:planta+luz espinheiro:planta+vileza murcha:planta+morte seiva:planta+vida carvalho:planta+vigor bambu:planta+marcial estacoes:planta+tempo farfalhar:planta+som trepadeira:planta+gravidade arvore_mundo:planta+espaco jardim_encantado:planta+fada estufa:planta+industrial";
+var CURATED_RAW = "pestilencia:planta+morte+vileza maldicao:fada+sombra+vileza cyber:industrial+eletricidade+arcano geiser:fogo+agua+terra vulcao:fogo+terra+ar deserto:fogo+terra+tempo relampago_seco:fogo+ar+eletricidade supernova:fogo+gravidade+espaco nevasca:agua+terra+ar permafrost:agua+terra+tempo monsoes:agua+ar+vida peste_negra:agua+vileza+morte coro_dos_afogados:agua+morte+som ossario_vivo:terra+morte+vida jardim_eterno:terra+vida+tempo aurora_boreal:ar+eletricidade+luz duelista_temporal:ar+marcial+tempo pulso_cosmico:eletricidade+som+espaco sabbat:arcano+sombra+vileza hipnose:arcano+sombra+som materia_escura:gravidade+sombra+arcano milagre:luz+vida+arcano memoria:tempo+arcano+luz coral_celeste:som+luz+arcano via_lactea:espaco+luz+arcano delirio:vileza+som+arcano cacador_de_almas:marcial+morte+sombra presagio:tempo+sombra+espaco horizonte_de_eventos:gravidade+espaco+sombra lamina_do_juizo:marcial+luz+morte bencao_marcial:luz+marcial+vigor arauto:marcial+som+luz farol:luz+espaco+som carniceiro:vileza+vigor+morte entropia_final:tempo+morte+gravidade gladiador:marcial+vigor+som punho_gravitico:marcial+gravidade+vigor avatar_elemental:fogo+agua+terra+ar titano_forjado:fogo+terra+vigor+marcial cataclismo:fogo+terra+gravidade+espaco sopro_do_dragao:fogo+ar+vigor+marcial ragnarok:fogo+morte+tempo+gravidade genesis:agua+terra+luz+vida tempestade_perfeita:agua+ar+eletricidade+som leviata:agua+sombra+morte+gravidade senhor_da_praga:agua+vileza+morte+vida sinfonia_do_caos:arcano+sombra+vileza+som vontade_absoluta:arcano+luz+vigor+som arquiteto_da_realidade:arcano+tempo+gravidade+espaco ceifador_estelar:sombra+morte+marcial+espaco renascimento:luz+morte+vida+tempo juizo_final:luz+morte+tempo+som cavaleiro_absoluto:luz+vigor+marcial+tempo clareira:planta+luz+vida alto_forno:industrial+fogo+terra bencao_feerica:fada+luz+vida floresta_ancestral:planta+terra+tempo+arcano colosso_blindado:industrial+eletricidade+vigor+marcial corte_feerica:fada+arcano+luz+som";
 var COMPOSITION = new Map(BASE_ELEMENTS.map((b) => [b, [b]]));
 for (const tok of PAIRS_RAW.split(" ")) {
   const [id, comp] = tok.split(":");
   const [a, b] = comp.split("+");
   COMPOSITION.set(id, a === b ? [a] : [a, b]);
+}
+for (const tok of CURATED_RAW.split(" ")) {
+  const [id, comp] = tok.split(":");
+  COMPOSITION.set(id, comp.split("+"));
 }
 var isKnownEssenceElement = /* @__PURE__ */ __name((id) => typeof id === "string" && COMPOSITION.has(id), "isKnownEssenceElement");
 var essenceBaseCount = /* @__PURE__ */ __name((id) => COMPOSITION.get(id)?.length ?? 0, "essenceBaseCount");
@@ -14514,6 +14910,30 @@ async function onRequestPost6({ request, env }) {
 }
 __name(onRequestPost6, "onRequestPost");
 
+// api/gm-carta-teste.js
+var headers = { "Cache-Control": "no-store", "X-Robots-Tag": "noindex" };
+async function onRequestPost7({ request, env }) {
+  const g = takeToken("gm-carta-teste", clientKey(request), { limit: 10, windowMs: 6e4 });
+  if (!g.ok) return tooManyRequests(g.retryAfter);
+  if (!(await verifiedAdmin(env, request)).admin) return Response.json({ error: "forbidden" }, { status: 403, headers });
+  const store = kv(env);
+  if (!store) return Response.json({ error: "Unavailable" }, { status: 503, headers });
+  const claims = await verifyIdToken(bearerToken(request), env.FIREBASE_PROJECT_ID);
+  if (!claims) return Response.json({ error: "forbidden" }, { status: 403, headers });
+  const id = await emailToSaveId(claims.email);
+  const now = Date.now();
+  const sent = await enqueueMail(env, store, id, {
+    mid: `gm-teste:${new Date(now).toISOString().slice(0, 10)}`,
+    titlePt: "Carta de teste",
+    titleEn: "Test letter",
+    bodyPt: "Carta de teste do Papus. Se voc\xEA leu isto, o correio funciona.",
+    bodyEn: "Test letter from Papus. If you can read this, the mail works.",
+    at: now
+  });
+  return Response.json({ ok: true, status: sent ? "sent" : "already" }, { headers });
+}
+__name(onRequestPost7, "onRequestPost");
+
 // api/_dayCounters.js
 var ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
 var DAY_MS2 = 864e5;
@@ -14605,8 +15025,8 @@ var prevMonthOf = /* @__PURE__ */ __name((nowMs) => {
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1)).toISOString().slice(0, 7);
 }, "prevMonthOf");
 var RIFT_MAX_LAYERS_PER_DAY = 60;
-var MILESTONE_FLOOR = 5;
-var riftStartLayer = /* @__PURE__ */ __name((record) => 1 + MILESTONE_FLOOR * Math.floor(Math.max(0, Math.min(DUNGEON_MAX_LAYER - 1, Math.floor(Number(record) || 0))) / MILESTONE_FLOOR), "riftStartLayer");
+var RETURN_EVERY = 2;
+var riftStartLayer = /* @__PURE__ */ __name((record) => 1 + RETURN_EVERY * Math.floor(Math.max(0, Math.min(DUNGEON_MAX_LAYER - 1, Math.floor(Number(record) || 0))) / RETURN_EVERY), "riftStartLayer");
 function layersDelta(antes, depois) {
   const a = sanitizeDungeonDaily(antes);
   const d = sanitizeDungeonDaily(depois);
@@ -14841,13 +15261,13 @@ async function readMyPrize(env, saveId, now = /* @__PURE__ */ new Date()) {
 __name(readMyPrize, "readMyPrize");
 
 // api/gm-rift-payout.js
-var headers = { "Cache-Control": "no-store", "X-Robots-Tag": "noindex" };
-var forbidden = /* @__PURE__ */ __name(() => Response.json({ error: "forbidden" }, { status: 403, headers }), "forbidden");
+var headers2 = { "Cache-Control": "no-store", "X-Robots-Tag": "noindex" };
+var forbidden = /* @__PURE__ */ __name(() => Response.json({ error: "forbidden" }, { status: 403, headers: headers2 }), "forbidden");
 async function gate(request, env) {
   const g = takeToken("gm-rift-payout", clientKey(request), { limit: 30, windowMs: 6e4 });
   if (!g.ok) return tooManyRequests(g.retryAfter);
   if (!(await verifiedAdmin(env, request)).admin) return forbidden();
-  if (!kv(env)) return Response.json({ error: "Unavailable" }, { status: 503, headers });
+  if (!kv(env)) return Response.json({ error: "Unavailable" }, { status: 503, headers: headers2 });
   return null;
 }
 __name(gate, "gate");
@@ -14856,7 +15276,7 @@ async function onRequestGet5({ request, env }) {
   if (bloqueio) return bloqueio;
   const items = await listRiftPrizes(env);
   console.log(JSON.stringify({ event: "gm_rift_payout_list", n: items.length }));
-  return Response.json({ items }, { headers });
+  return Response.json({ items }, { headers: headers2 });
 }
 __name(onRequestGet5, "onRequestGet");
 async function onRequestPostBruto4({ request, env }) {
@@ -14866,32 +15286,32 @@ async function onRequestPostBruto4({ request, env }) {
   try {
     body = await request.json();
   } catch {
-    return Response.json({ error: "invalid json" }, { status: 400, headers });
+    return Response.json({ error: "invalid json" }, { status: 400, headers: headers2 });
   }
   const { month: month2, saveId, action } = body ?? {};
-  if (action !== "approve" && action !== "reject") return Response.json({ error: "invalid action" }, { status: 400, headers });
+  if (action !== "approve" && action !== "reject") return Response.json({ error: "invalid action" }, { status: 400, headers: headers2 });
   const r = action === "approve" ? await approveRiftPrize(env, month2, saveId) : await rejectRiftPrize(env, month2, saveId);
   console.log(JSON.stringify({ event: "gm_rift_payout", action, status: r.status, saveIdPrefix: String(saveId).slice(0, 8) }));
-  if (r.status === "invalid") return Response.json({ error: "invalid" }, { status: 400, headers });
-  if (r.status === "not-found") return Response.json({ error: "not-found" }, { status: 404, headers });
-  return Response.json({ ok: true, ...r }, { headers });
+  if (r.status === "invalid") return Response.json({ error: "invalid" }, { status: 400, headers: headers2 });
+  if (r.status === "not-found") return Response.json({ error: "not-found" }, { status: 404, headers: headers2 });
+  return Response.json({ ok: true, ...r }, { headers: headers2 });
 }
 __name(onRequestPostBruto4, "onRequestPostBruto");
-var onRequestPost7 = comEntitlementLegivel(onRequestPostBruto4, { "Cache-Control": "no-store" });
+var onRequestPost8 = comEntitlementLegivel(onRequestPostBruto4, { "Cache-Control": "no-store" });
 
 // api/gm-soulmons.js
 var PAGE = 24;
 var CURSOR_OK = /^[A-Za-z0-9_=-]{1,2048}$/;
 var KEY = /^sprite:img:([^:]+):(.+)$/;
-var headers2 = { "Cache-Control": "no-store", "X-Robots-Tag": "noindex" };
-var forbidden2 = /* @__PURE__ */ __name(() => Response.json({ error: "forbidden" }, { status: 403, headers: headers2 }), "forbidden");
+var headers3 = { "Cache-Control": "no-store", "X-Robots-Tag": "noindex" };
+var forbidden2 = /* @__PURE__ */ __name(() => Response.json({ error: "forbidden" }, { status: 403, headers: headers3 }), "forbidden");
 async function onRequestGet6({ request, env }) {
   const gate2 = takeToken("gm-soulmons", clientKey(request), { limit: 30, windowMs: 6e4 });
   if (!gate2.ok) return tooManyRequests(gate2.retryAfter);
   if (!(await verifiedAdmin(env, request)).admin) return forbidden2();
-  if (!kv(env)) return Response.json({ error: "Unavailable" }, { status: 503, headers: headers2 });
+  if (!kv(env)) return Response.json({ error: "Unavailable" }, { status: 503, headers: headers3 });
   const cursor = new URL(request.url).searchParams.get("cursor");
-  if (cursor && !CURSOR_OK.test(cursor)) return Response.json({ error: "invalid-cursor" }, { status: 400, headers: headers2 });
+  if (cursor && !CURSOR_OK.test(cursor)) return Response.json({ error: "invalid-cursor" }, { status: 400, headers: headers3 });
   const store = kvOrThrow(env);
   const page = await store.list({ prefix: "sprite:img:", limit: PAGE, ...cursor ? { cursor } : {} });
   const nomes = /* @__PURE__ */ new Map();
@@ -14927,7 +15347,7 @@ async function onRequestGet6({ request, env }) {
     });
   }
   console.log(JSON.stringify({ event: "gm_soulmons_list", n: items.length }));
-  return Response.json({ items, cursor: page.list_complete ? null : page.cursor }, { headers: headers2 });
+  return Response.json({ items, cursor: page.list_complete ? null : page.cursor }, { headers: headers3 });
 }
 __name(onRequestGet6, "onRequestGet");
 
@@ -15125,7 +15545,7 @@ async function reconcileToken(env, purchaseToken, kind) {
   return { status: 200, outcome: read2.entitled ? "active" : "closed" };
 }
 __name(reconcileToken, "reconcileToken");
-async function onRequestPost8({ request, env }) {
+async function onRequestPost9({ request, env }) {
   if (!pubsubAuthConfigured(env) || !env.ANDROID_PACKAGE_NAME) return json8({ error: "rtdn-not-configured" }, 503);
   if (!await verifyPubsubPush(request, env)) return json8({ error: "Unauthorized" }, 401);
   if (!kv(env)) return json8({ error: "Storage not bound" }, 500);
@@ -15177,7 +15597,7 @@ async function onRequestPost8({ request, env }) {
   }
   return json8({ ok: true, outcome: result.outcome });
 }
-__name(onRequestPost8, "onRequestPost");
+__name(onRequestPost9, "onRequestPost");
 
 // api/_widgetFrames.js
 function onlyCatalogFrames(raw) {
@@ -15226,7 +15646,7 @@ var MATERIAL_IDS = [
 var BUILDING_RE = /^(jogos|exploracao|forja|arena|laboratorio|hall)\.[a-z]{1,24}$/;
 var MAX_LIST = 20;
 var has4 = /* @__PURE__ */ __name((o, k) => Object.prototype.hasOwnProperty.call(o, k), "has");
-function ids(v) {
+function ids2(v) {
   const out = [];
   if (Array.isArray(v)) {
     for (const raw of v) {
@@ -15237,7 +15657,7 @@ function ids(v) {
   }
   return out;
 }
-__name(ids, "ids");
+__name(ids2, "ids");
 function sanitizeBuildingQuests(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
   const r = (
@@ -15254,8 +15674,8 @@ function sanitizeBuildingQuests(raw) {
     const v = has4(m, id) ? m[id] : void 0;
     if (typeof v === "number" && Number.isFinite(v) && v > 0) materials[id] = Math.min(MATERIAL_CAP, Math.floor(v));
   }
-  const visited = ids(r.visited);
-  const claimed = ids(r.claimed);
+  const visited = ids2(r.visited);
+  const claimed = ids2(r.claimed);
   for (const c of claimed) if (!visited.includes(c)) visited.push(c);
   return { day: r.day, visited, claimed, materials };
 }
@@ -15513,6 +15933,44 @@ __name(sanitizeConquistasPagas, "sanitizeConquistasPagas");
 
 // api/_mercMission.js
 var MERC_ORDENS = ["filtrador", "tecelao", "rompente"];
+var MERC_TAREFA_ORDEM = Object.freeze({
+  "r-foco": "rompente",
+  "r-adiado": "rompente",
+  "r-novo": "rompente",
+  "r-volta": "rompente",
+  "r-meta": "rompente",
+  "r-serie": "rompente",
+  "r-tres": "rompente",
+  "r-paginas": "rompente",
+  "r-mensagem-pesada": "rompente",
+  "r-fora": "rompente",
+  "r-sem-tela": "rompente",
+  "r-plano": "rompente",
+  "t-gaveta": "tecelao",
+  "t-pausa": "tecelao",
+  "t-planta": "tecelao",
+  "t-musica": "tecelao",
+  "t-refeicao": "tecelao",
+  "t-rabisco": "tecelao",
+  "t-janela": "tecelao",
+  "t-mesa": "tecelao",
+  "t-linhas": "tecelao",
+  "t-caixa": "tecelao",
+  "t-foto": "tecelao",
+  "t-bebida": "tecelao",
+  "f-mensagem": "filtrador",
+  "f-elogio": "filtrador",
+  "f-favor": "filtrador",
+  "f-ligacao": "filtrador",
+  "f-obrigado": "filtrador",
+  "f-escuta": "filtrador",
+  "f-agrado": "filtrador",
+  "f-doar": "filtrador",
+  "f-convite": "filtrador",
+  "f-cumprimento": "filtrador",
+  "f-bilhete": "filtrador",
+  "f-indicacao": "filtrador"
+});
 function sanitizeMercMission(raw) {
   if (!raw || typeof raw !== "object") return void 0;
   const r = (
@@ -15522,7 +15980,10 @@ function sanitizeMercMission(raw) {
   if (typeof r.day !== "string" || r.day.length === 0 || r.day.length > 40) return void 0;
   if (typeof r.ordem !== "string" || !MERC_ORDENS.includes(r.ordem)) return void 0;
   if (typeof r.activityId !== "string" || r.activityId.length === 0 || r.activityId.length > 64) return void 0;
-  return { day: r.day, ordem: r.ordem, activityId: r.activityId, done: r.done === true };
+  const done = r.done === true;
+  if (!done && !Object.prototype.hasOwnProperty.call(MERC_TAREFA_ORDEM, r.activityId)) return void 0;
+  if (!done && MERC_TAREFA_ORDEM[r.activityId] !== r.ordem) return void 0;
+  return { day: r.day, ordem: r.ordem, activityId: r.activityId, done };
 }
 __name(sanitizeMercMission, "sanitizeMercMission");
 
@@ -15606,7 +16067,7 @@ __name(enforceImmutableElementoJornada, "enforceImmutableElementoJornada");
 
 // api/_essences.js
 var ESSENCE_MAX_PER_ELEMENT2 = 1e6;
-var ESSENCE_MAX_KEYS = 211;
+var ESSENCE_MAX_KEYS = 271;
 function sanitizeEssences(raw) {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) return void 0;
   const out = {};
@@ -15871,6 +16332,12 @@ async function onRequestBruto2({ request, env }) {
     const state = { ...incoming };
     for (const field of SERVER_OWNED_FIELDS) delete state[field];
     if ("caderno" in state) state.caderno = clampCaderno(state.caderno);
+    if ("journeyCredited" in state) {
+      const j = state.journeyCredited;
+      const ok3 = j && typeof j === "object" && typeof j.day === "string" && /^\d{4}-\d{2}-\d{2}$/.test(j.day) && Array.isArray(j.ids);
+      if (ok3) state.journeyCredited = { day: j.day, ids: [...new Set(j.ids.filter((x2) => typeof x2 === "string" && x2.length > 0 && x2.length <= 60))].slice(-80) };
+      else delete state.journeyCredited;
+    }
     if ("mailClaimed" in state) {
       const q = Array.isArray(state.mailClaimed) ? state.mailClaimed.filter((x2) => typeof x2 === "string" && x2.length > 0 && x2.length <= 80).slice(-100) : [];
       if (q.length) state.mailClaimed = q;
@@ -15972,6 +16439,28 @@ async function onRequestBruto2({ request, env }) {
         }
       }
       state.widgetFramesOwned = enforceWidgetFramesOwned(state, gravado);
+    }
+    if (typeof state.dungeonKeyDay === "string") {
+      let gravado;
+      if (typeof prev?.value === "string" && prev.value.includes('"dungeonKeyDay"')) {
+        try {
+          gravado = JSON.parse(prev.value).dungeonKeyDay;
+        } catch {
+          gravado = void 0;
+        }
+      }
+      if (state.dungeonKeyDay !== gravado) {
+        let razao = null;
+        try {
+          razao = JSON.parse(await kvOrThrow(env).get(`fjd:${saveId}:${state.dungeonKeyDay}`) || "null");
+        } catch {
+          razao = null;
+        }
+        if (!(Number(razao?.done) >= 1)) {
+          if (typeof gravado === "string") state.dungeonKeyDay = gravado;
+          else delete state.dungeonKeyDay;
+        }
+      }
     }
     if ("fichaJornada" in state) {
       let guardado;
@@ -16136,7 +16625,7 @@ async function onRequestPostBruto5({ request, env }) {
   return json9({ ok: true, formId, antes, depois: forms[formId] });
 }
 __name(onRequestPostBruto5, "onRequestPostBruto");
-var onRequestPost9 = comEntitlementLegivel(onRequestPostBruto5, { "Cache-Control": "no-store" });
+var onRequestPost10 = comEntitlementLegivel(onRequestPostBruto5, { "Cache-Control": "no-store" });
 
 // api/sprite-image.js
 var IMMUTABLE = "public, max-age=31536000, immutable";
@@ -16225,7 +16714,7 @@ async function onRequestOptions13() {
   return new Response(null, { status: 204, headers: CORS13 });
 }
 __name(onRequestOptions13, "onRequestOptions");
-async function onRequestPost10({ request, env }) {
+async function onRequestPost11({ request, env }) {
   const limited = costGate2(request);
   if (limited) return limited;
   let body;
@@ -16316,7 +16805,7 @@ async function onRequestPost10({ request, env }) {
     headers: { "Content-Type": "application/json", ...CORS13 }
   });
 }
-__name(onRequestPost10, "onRequestPost");
+__name(onRequestPost11, "onRequestPost");
 async function onRequestDelete2({ request, env }) {
   const limited = costGate2(request);
   if (limited) return limited;
@@ -16380,7 +16869,7 @@ async function onRequestOptions14() {
   return new Response(null, { headers: CORS14 });
 }
 __name(onRequestOptions14, "onRequestOptions");
-async function onRequestPost11({ request, env }) {
+async function onRequestPost12({ request, env }) {
   try {
     const body = await request.json().catch(() => null) ?? {};
     const goalMin = minimizeForAi(String(body.goalText || "").slice(0, 2e3).trim(), 300);
@@ -16453,7 +16942,7 @@ Reply with ONLY a raw JSON array (no markdown fences, no prose, no explanation).
     return Response.json({ error: "Internal error" }, { status: 500, headers: CORS14 });
   }
 }
-__name(onRequestPost11, "onRequestPost");
+__name(onRequestPost12, "onRequestPost");
 
 // api/top-ai.js
 var BUCKETS = ["chat", "sprite", "transcribe", "suggest"];
@@ -16509,7 +16998,7 @@ async function onRequestOptions15() {
   return new Response(null, { headers: CORS15 });
 }
 __name(onRequestOptions15, "onRequestOptions");
-async function onRequestPost12({ request, env }) {
+async function onRequestPost13({ request, env }) {
   const gate2 = takeToken("transcribe", clientKey(request), LIMITE);
   if (!gate2.ok) {
     console.warn("[transcribe] rate limited", { retryAfter: gate2.retryAfter });
@@ -16588,7 +17077,7 @@ async function onRequestPost12({ request, env }) {
   }
   return json11({ text: String(dados?.text ?? "").slice(0, 2e3) });
 }
-__name(onRequestPost12, "onRequestPost");
+__name(onRequestPost13, "onRequestPost");
 
 // api/velado-teste.js
 async function onRequestGet9({ request, env }) {
@@ -16626,8 +17115,32 @@ function gmHeaders(nonce) {
 }
 __name(gmHeaders, "gmHeaders");
 
-// gm/rift.js
+// gm/carta.js
 async function onRequestGet10({ env }) {
+  const nonce = gmNonce();
+  const cfg = { apiKey: env?.FIREBASE_API_KEY || "", authDomain: env?.FIREBASE_AUTH_DOMAIN || "", projectId: env?.FIREBASE_PROJECT_ID || "" };
+  const cfgJson = JSON.stringify(cfg).replace(/</g, "\\u003c");
+  const html = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>GM \xB7 Carta de teste</title>
+<style>body{font:14px system-ui;margin:16px;background:#14121c;color:#eee}button{padding:12px 16px;min-height:44px}p{margin:12px 0}</style></head><body>
+<h1>Carta de teste do Papus</h1><p>Vai s\xF3 para a sua conta, sem pr\xEAmio, no m\xE1ximo uma por dia.</p><div id="s">Carregando\u2026</div>
+${firebaseScripts(nonce)}
+<script nonce="${nonce}">
+const $=id=>document.getElementById(id);
+function botao(t,f){$('s').innerHTML='';const b=document.createElement('button');b.textContent=t;b.onclick=f;$('s').appendChild(b);}
+async function enviar(user){$('s').textContent='Enviando\u2026';const t=await user.getIdToken();const r=await fetch('/api/gm-carta-teste',{method:'POST',headers:{Authorization:'Bearer '+t}});
+if(r.status===403){$('s').textContent='Acesso negado.';return;}if(!r.ok){$('s').textContent='Erro '+r.status;return;}
+const j=await r.json();$('s').textContent=j.status==='sent'?'Carta enviada. Feche e abra o app.':'A carta de hoje j\xE1 foi enviada. Feche e abra o app.';}
+const cfg=${cfgJson};
+if(!cfg.apiKey){$('s').textContent='Firebase n\xE3o configurado.';}else{
+firebase.initializeApp(cfg);firebase.auth().onAuthStateChanged(u=>{if(u){botao('Enviar carta para mim',()=>enviar(u));}else{botao('Entrar com Google',()=>firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider()));}});}
+<\/script></body></html>`;
+  return new Response(html, { headers: gmHeaders(nonce) });
+}
+__name(onRequestGet10, "onRequestGet");
+
+// gm/rift.js
+async function onRequestGet11({ env }) {
   const nonce = gmNonce();
   const cfg = { apiKey: env?.FIREBASE_API_KEY || "", authDomain: env?.FIREBASE_AUTH_DOMAIN || "", projectId: env?.FIREBASE_PROJECT_ID || "" };
   const cfgJson = JSON.stringify(cfg).replace(/</g, "\\u003c");
@@ -16655,10 +17168,10 @@ firebase.initializeApp(cfg);firebase.auth().onAuthStateChanged(u=>{if(u){load(u)
 <\/script></body></html>`;
   return new Response(html, { headers: gmHeaders(nonce) });
 }
-__name(onRequestGet10, "onRequestGet");
+__name(onRequestGet11, "onRequestGet");
 
 // gm/soulmons.js
-async function onRequestGet11({ env }) {
+async function onRequestGet12({ env }) {
   const nonce = gmNonce();
   const cfg = { apiKey: env?.FIREBASE_API_KEY || "", authDomain: env?.FIREBASE_AUTH_DOMAIN || "", projectId: env?.FIREBASE_PROJECT_ID || "" };
   const cfgJson = JSON.stringify(cfg).replace(/</g, "\\u003c");
@@ -16681,7 +17194,7 @@ firebase.initializeApp(cfg);firebase.auth().onAuthStateChanged(u=>{if(u){load(u)
 <\/script></body></html>`;
   return new Response(html, { headers: gmHeaders(nonce) });
 }
-__name(onRequestGet11, "onRequestGet");
+__name(onRequestGet12, "onRequestGet");
 
 // .well-known/assetlinks.json.js
 var DEFAULT_PACKAGE = "com.soulmon";
@@ -16898,7 +17411,256 @@ async function onRequest9(ctx, fetchImpl = fetch) {
 }
 __name(onRequest9, "onRequest");
 
-// ../.wrangler/tmp/pages-VqIYye/functionsRoutes-0.8365904322983615.mjs
+// api/_focusJourney.js
+var JOURNEY_KEYS = ["bancada", "relampago", "quadrantes", "brejo", "elo", "pena"];
+var JOURNEY_MODES = { p25: { focusMin: 25, chests: 6 }, p50: { focusMin: 50, chests: 10 } };
+var SPECIAL_CHANCE = 0.4;
+var JOURNEY_ITEMS_DAILY_CAP = 16;
+var JOURNEY_ESSENCES_DAILY_CAP = 8;
+var JOURNEY_COMPLETIONS_REWARDED = 4;
+var JOURNEY_MAX_PAUSES = 3;
+var JOURNEY_MAX_PAUSED_MS = 30 * 6e4;
+var ENV_ELEMENT = { forest: "planta", shore: "agua", cavern: "terra", garden: "fada", workshop: "industrial", observatory: "espaco" };
+var ENV_MATERIALS = {
+  forest: ["moss", "laurel", "down", "fang"],
+  shore: ["pebble", "prism", "essence", "keepsake"],
+  cavern: ["ore", "spark", "cipher", "crest"],
+  garden: ["moss", "essence", "page", "prism"],
+  workshop: ["gear", "ink", "spark", "ribbon"],
+  observatory: ["cipher", "down", "page", "laurel"]
+};
+var JOURNEY_FOODS = ["\u{1F969}", "\u{1F957}", "\u{1F34E}", "\u2615", "\u{1F9C3}", "\u{1F35A}", "\u{1F355}", "\u{1F36D}"];
+function mulberry(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = a + 1831565813 >>> 0;
+    let t = a;
+    t = Math.imul(t ^ t >>> 15, t | 1);
+    t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+__name(mulberry, "mulberry");
+function journeyChests(seed, mode) {
+  const n = JOURNEY_MODES[mode].chests;
+  const rng = mulberry(seed ^ 20973);
+  const out = [];
+  for (let k = 0; k < n; k++) {
+    const jitter = (rng() - 0.5) * (0.5 / n);
+    const special = rng() < SPECIAL_CHANCE;
+    const type = special ? JOURNEY_KEYS[Math.min(JOURNEY_KEYS.length - 1, Math.floor(rng() * JOURNEY_KEYS.length))] : "common";
+    out.push({ k, at: Math.round(((k + 0.5) / n + jitter) * 1e6) / 1e6, type });
+  }
+  return out;
+}
+__name(journeyChests, "journeyChests");
+function focusElapsed(c, now) {
+  const parado = Math.min(JOURNEY_MAX_PAUSED_MS, c.pausedMs + (c.pausedAt !== null ? Math.max(0, now - c.pausedAt) : 0));
+  return Math.max(0, now - c.startAt - parado);
+}
+__name(focusElapsed, "focusElapsed");
+function journeyProgress(c, now) {
+  return Math.min(1, focusElapsed(c, now) / (JOURNEY_MODES[c.mode].focusMin * 6e4));
+}
+__name(journeyProgress, "journeyProgress");
+function chestLoot(seed, chest, keys, env) {
+  const rng = mulberry((seed ^ Math.imul(chest.k + 1, 2654435761)) >>> 0);
+  const mats = ENV_MATERIALS[env];
+  const pick = /* @__PURE__ */ __name((a) => a[Math.min(a.length - 1, Math.floor(rng() * a.length))], "pick");
+  const mat = /* @__PURE__ */ __name(() => ({ kind: "material", id: pick(mats), qty: 1 }), "mat");
+  const food = /* @__PURE__ */ __name(() => ({ kind: "food", id: pick(JOURNEY_FOODS), qty: 1 }), "food");
+  const ess = /* @__PURE__ */ __name((qty) => ({ kind: "essence", id: ENV_ELEMENT[env], qty }), "ess");
+  const common = /* @__PURE__ */ __name(() => [Math.floor(rng() * 5) < 4 ? mat() : food()], "common");
+  if (chest.type === "common" || !keys.includes(chest.type)) return common();
+  switch (chest.type) {
+    case "bancada":
+      return [food(), food()];
+    case "relampago":
+      return [mat(), mat()];
+    case "quadrantes": {
+      const a = mat();
+      let b = mat();
+      for (let i2 = 0; i2 < 4 && b.id === a.id; i2++) b = mat();
+      return [a, b];
+    }
+    case "brejo":
+      return [ess(2)];
+    case "elo":
+      return [mat(), food()];
+    case "pena":
+      return [ess(1), mat()];
+    default:
+      return common();
+  }
+}
+__name(chestLoot, "chestLoot");
+function completionLoot(seed, nth, env) {
+  if (nth === 1) return chestLoot(seed, { k: 999, at: 1, type: "common" }, [], env);
+  if (nth <= JOURNEY_COMPLETIONS_REWARDED) {
+    const rng = mulberry((seed ^ 12648430) >>> 0);
+    return [{ kind: "essence", id: ENV_ELEMENT[env], qty: 1 }, { kind: "food", id: JOURNEY_FOODS[Math.min(JOURNEY_FOODS.length - 1, Math.floor(rng() * JOURNEY_FOODS.length))], qty: 1 }];
+  }
+  return [];
+}
+__name(completionLoot, "completionLoot");
+var emptyLedger = /* @__PURE__ */ __name((day2) => ({ day: day2, items: 0, ess: 0, done: 0, claims: [] }), "emptyLedger");
+function capLoot(ledger, claimId, items) {
+  if (ledger.claims.includes(claimId)) return { granted: [], ledger };
+  let it = ledger.items;
+  let ess = ledger.ess;
+  const granted = [];
+  for (const x2 of items) {
+    if (x2.kind === "essence") {
+      const q = Math.min(x2.qty, JOURNEY_ESSENCES_DAILY_CAP - ess);
+      if (q > 0) {
+        granted.push({ ...x2, qty: q });
+        ess += q;
+      }
+    } else {
+      const q = Math.min(x2.qty, JOURNEY_ITEMS_DAILY_CAP - it);
+      if (q > 0) {
+        granted.push({ ...x2, qty: q });
+        it += q;
+      }
+    }
+  }
+  return { granted, ledger: { ...ledger, items: it, ess, claims: [...ledger.claims, claimId].slice(-80) } };
+}
+__name(capLoot, "capLoot");
+
+// api/focus-journey.js
+var headers4 = { "Cache-Control": "no-store" };
+var json13 = /* @__PURE__ */ __name((body, status = 200) => Response.json(body, { status, headers: headers4 }), "json");
+var ENVS = ["forest", "shore", "cavern", "garden", "workshop", "observatory"];
+var DAY2 = /^\d{4}-\d{2}-\d{2}$/;
+var TTL4 = 86400 * 3;
+async function lerJson3(store, key) {
+  try {
+    return JSON.parse(await store.get(key) || "null");
+  } catch {
+    return null;
+  }
+}
+__name(lerJson3, "lerJson");
+async function lerRazao(store, id, day2) {
+  const r = await lerJson3(store, `fjd:${id}:${day2}`);
+  const base = emptyLedger(day2);
+  if (!r || typeof r !== "object") return { ...base, grants: {} };
+  return {
+    day: day2,
+    items: Number(r.items) || 0,
+    ess: Number(r.ess) || 0,
+    done: Number(r.done) || 0,
+    claims: Array.isArray(r.claims) ? r.claims.filter((x2) => typeof x2 === "string") : [],
+    grants: r.grants && typeof r.grants === "object" ? r.grants : {}
+  };
+}
+__name(lerRazao, "lerRazao");
+var gravar4 = /* @__PURE__ */ __name((store, key, v) => store.put(key, JSON.stringify(v), { expirationTtl: TTL4 }), "gravar");
+function diaValido2(day2, now) {
+  if (typeof day2 !== "string" || !DAY2.test(day2)) return false;
+  return Math.abs(Date.parse(`${day2}T12:00:00Z`) - now) <= 36 * 36e5;
+}
+__name(diaValido2, "diaValido");
+function pagar(fj, razao, now, concluir) {
+  const p = journeyProgress(fj, now);
+  let dungeonKeyDay;
+  for (const ch of journeyChests(fj.seed, fj.mode)) {
+    if (ch.at > p) continue;
+    const id = `${fj.sid}:${ch.k}`;
+    const r = capLoot(razao, id, chestLoot(fj.seed, ch, fj.keys, fj.env));
+    if (r.ledger !== razao) {
+      Object.assign(razao, r.ledger);
+      razao.grants[id] = r.granted;
+    }
+  }
+  const doneId = `${fj.sid}:done`;
+  if (concluir && p >= 1 && !razao.claims.includes(doneId)) {
+    const nth = razao.done + 1;
+    const r = capLoot(razao, doneId, completionLoot(fj.seed, nth, fj.env));
+    Object.assign(razao, r.ledger, { done: nth });
+    razao.grants[doneId] = r.granted;
+    if (nth === 1) dungeonKeyDay = fj.day;
+  }
+  return { progress: p, dungeonKeyDay };
+}
+__name(pagar, "pagar");
+var publico = /* @__PURE__ */ __name((razao) => ({ ledger: { day: razao.day, items: razao.items, ess: razao.ess, done: razao.done }, grants: razao.grants }), "publico");
+async function onRequest10({ request, env }) {
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id") || "";
+  if (!VALID_ID.test(id)) return json13({ error: "invalid id" }, 400);
+  const g = takeToken("focus-journey", clientKey(request), { limit: 60, windowMs: 6e4 });
+  if (!g.ok) return tooManyRequests(g.retryAfter);
+  const auth = await authorizeSaveAccess(request, env, id);
+  if (!auth.ok) return json13({ error: auth.reason || "forbidden" }, auth.status || 403);
+  const store = kv(env);
+  if (!store) return json13({ error: "Unavailable" }, 503);
+  const now = Date.now();
+  const fj = await lerJson3(store, `fj:${id}`);
+  if (request.method === "GET") {
+    const day2 = url.searchParams.get("day");
+    const razao = await lerRazao(store, id, diaValido2(day2, now) ? day2 : fj?.day ?? new Date(now).toISOString().slice(0, 10));
+    return json13({ active: fj, ...publico(razao), now });
+  }
+  if (request.method !== "POST") return json13({ error: "method" }, 405);
+  let body = null;
+  try {
+    body = await request.json();
+  } catch {
+    return json13({ error: "invalid json" }, 400);
+  }
+  const action = body?.action;
+  if (action === "start") {
+    if (fj) return json13({ error: "active", active: fj, now }, 409);
+    const { mode, env: cena, keys, day: day2 } = body;
+    if (!(mode in JOURNEY_MODES) || !ENVS.includes(cena) || !diaValido2(day2, now)) return json13({ error: "invalid" }, 400);
+    const chaves = Array.isArray(keys) ? [...new Set(keys.filter((k) => JOURNEY_KEYS.includes(k)))] : [];
+    const rec = {
+      sid: crypto.randomUUID().slice(0, 18),
+      seed: crypto.getRandomValues(new Uint32Array(1))[0],
+      mode,
+      env: cena,
+      keys: chaves,
+      day: day2,
+      startAt: now,
+      pausedMs: 0,
+      pausedAt: null,
+      pauses: 0
+    };
+    await gravar4(store, `fj:${id}`, rec);
+    return json13({ active: rec, now });
+  }
+  if (!fj) return json13({ error: "no-active" }, 404);
+  if (action === "pause") {
+    if (fj.pausedAt === null && fj.pauses < JOURNEY_MAX_PAUSES && journeyProgress(fj, now) < 1) {
+      fj.pausedAt = now;
+      fj.pauses += 1;
+      await gravar4(store, `fj:${id}`, fj);
+    }
+    return json13({ active: fj, now });
+  }
+  if (action === "resume") {
+    if (fj.pausedAt !== null) {
+      fj.pausedMs += Math.max(0, now - fj.pausedAt);
+      fj.pausedAt = null;
+      await gravar4(store, `fj:${id}`, fj);
+    }
+    return json13({ active: fj, now });
+  }
+  if (action === "claim" || action === "end") {
+    const razao = await lerRazao(store, id, fj.day);
+    const { progress, dungeonKeyDay } = pagar(fj, razao, now, action === "claim");
+    await gravar4(store, `fjd:${id}:${fj.day}`, razao);
+    const terminou = action === "end" || progress >= 1 && razao.claims.includes(`${fj.sid}:done`);
+    if (terminou) await store.delete(`fj:${id}`);
+    return json13({ active: terminou ? null : fj, ...publico(razao), ...dungeonKeyDay ? { dungeonKeyDay } : {}, now });
+  }
+  return json13({ error: "unknown action" }, 400);
+}
+__name(onRequest10, "onRequest");
+
+// ../.wrangler/tmp/pages-FK2M7Q/functionsRoutes-0.08455562096382829.mjs
 var routes = [
   {
     routePath: "/api/account",
@@ -17027,6 +17789,13 @@ var routes = [
     modules: [onRequestPost3]
   },
   {
+    routePath: "/api/gm-carta-teste",
+    mountPath: "/api",
+    method: "POST",
+    middlewares: [],
+    modules: [onRequestPost7]
+  },
+  {
     routePath: "/api/gm-rift-payout",
     mountPath: "/api",
     method: "GET",
@@ -17038,7 +17807,7 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost7]
+    modules: [onRequestPost8]
   },
   {
     routePath: "/api/gm-soulmons",
@@ -17080,7 +17849,7 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost8]
+    modules: [onRequestPost9]
   },
   {
     routePath: "/api/save",
@@ -17094,7 +17863,7 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost9]
+    modules: [onRequestPost10]
   },
   {
     routePath: "/api/sprite-image",
@@ -17122,7 +17891,7 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost10]
+    modules: [onRequestPost11]
   },
   {
     routePath: "/api/suggest-tasks",
@@ -17136,7 +17905,7 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost11]
+    modules: [onRequestPost12]
   },
   {
     routePath: "/api/top-ai",
@@ -17157,7 +17926,7 @@ var routes = [
     mountPath: "/api",
     method: "POST",
     middlewares: [],
-    modules: [onRequestPost12]
+    modules: [onRequestPost13]
   },
   {
     routePath: "/api/velado-teste",
@@ -17167,18 +17936,25 @@ var routes = [
     modules: [onRequestGet9]
   },
   {
-    routePath: "/gm/rift",
+    routePath: "/gm/carta",
     mountPath: "/gm",
     method: "GET",
     middlewares: [],
     modules: [onRequestGet10]
   },
   {
-    routePath: "/gm/soulmons",
+    routePath: "/gm/rift",
     mountPath: "/gm",
     method: "GET",
     middlewares: [],
     modules: [onRequestGet11]
+  },
+  {
+    routePath: "/gm/soulmons",
+    mountPath: "/gm",
+    method: "GET",
+    middlewares: [],
+    modules: [onRequestGet12]
   },
   {
     routePath: "/.well-known/assetlinks.json",
@@ -17214,6 +17990,13 @@ var routes = [
     method: "",
     middlewares: [],
     modules: [onRequest9]
+  },
+  {
+    routePath: "/api/focus-journey",
+    mountPath: "/api",
+    method: "",
+    middlewares: [],
+    modules: [onRequest10]
   },
   {
     routePath: "/api/guild",

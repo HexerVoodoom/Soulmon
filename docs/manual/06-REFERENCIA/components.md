@@ -1811,6 +1811,11 @@ O Soulsmith (07/10/2026, lazy): 9 peças em cards (Lv N → Lv N+1 / Max, bônus
 **Régua:** `src/components/ForgeCard.render.test.tsx`.
 
 
+### `src/components/SoulsmithSheet.tsx`
+Entrada do Soulsmith (08–09/11/2026, pedido do dono): a folha do lote `ferreiro` abre primeiro com a Vitra falando no balão (`AreaSheet` + `NpcSpeech`, fala de `areaNpcVoice` › `forja:ferreiro`), um texto curto sobre o que se faz ali e o botão primário "Go to the Soul Forge"/"Ir para a Forja de Alma", que monta a `ForgeCard` (lazy). O botão chama `onGo`, que liga `forgeEntered` no `AreaView` e abre o mapa em tela cheia (`ForgeCard view="map"`); fechar zera.
+**Régua:** `src/components/SoulsmithSheet.render.test.tsx`, `src/components/nav/areaLotsNovos.test.ts`.
+
+
 ### `src/components/MaterialIcon.tsx`
 Ícone de MATERIAL de aprimoramento (REGISTRO §88, D1): a arte pixel `assets/soulmon/materiais/mat-<id>.png`, carregada SOB DEMANDA (fora do chunk de entrada); sem arte (ou enquanto carrega) cai no emoji de `MaterialDef.icon`. Usado no Soulsmith (`ForgeCard`) e na aba Materiais da Mochila (`home/Mochila.tsx`). Exporta também `materialArtIds()` (para teste).
 **Régua:** `src/components/ForgeCard.render.test.tsx`, `src/components/home/Mochila.render.test.tsx`.

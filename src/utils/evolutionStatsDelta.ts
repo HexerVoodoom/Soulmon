@@ -12,7 +12,7 @@
  * Mega→Ultra, e o piso do REGISTRO §229 (`evoStatFloor`, `utils/soulXP.ts › nextStatFloor`) acabou com isso.
  */
 import { soulCombatant, soulLevel, type SoulXPState } from './soulXP';
-import { hpPoints } from './combate/fight';
+import { hpPoints, statExibido } from './combate/fight';
 
 export type EvoStatId = 'hp' | 'atk' | 'def' | 'spd';
 
@@ -35,7 +35,7 @@ export interface EvoStatsDelta {
 
 function statsOf(state: SoulXPState): Record<EvoStatId, number> {
   const c = soulCombatant(state);
-  return { hp: hpPoints(c.hp), atk: Math.round(c.atk), def: Math.round(c.def), spd: Math.round(c.spd) };
+  return { hp: hpPoints(c.hp), atk: statExibido(c.atk), def: statExibido(c.def), spd: statExibido(c.spd) };
 }
 
 export function evolutionStatsDelta(before: SoulXPState, after: SoulXPState): EvoStatsDelta {
