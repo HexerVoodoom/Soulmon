@@ -12,6 +12,8 @@ afterEach(() => cleanup());
 async function abrir(language: 'pt-BR' | 'en-US' = 'pt-BR') {
   const r = render(<HomeFeedbackButton language={language} />);
   fireEvent.click(r.container.querySelector('[data-home-feedback]') as HTMLElement);
+  // o modal é `lazy` (fora do chunk de entrada): espera o chunk montar
+  await waitFor(() => expect(document.querySelector('[data-feedback-text]')).not.toBeNull());
   return r;
 }
 const q = (s: string) => document.querySelector(s) as HTMLElement;
