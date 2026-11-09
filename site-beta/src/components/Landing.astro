@@ -45,6 +45,8 @@ const HABITA = universoDados.habitantes as Record<string, string>;
 const NPCS = ['hall', 'jogos', 'oraculo', 'laboratorio-biblioteca-glifa', 'exploracao', 'cuidados', 'loja-itens', 'loja-decoracao', 'loja-background', 'onboarding', 'ranking-arauto', 'n-cozinheiro', 'n-broto', 'n-corvo', 'laboratorio-pet', 'n-musa'];
 const ELS = Object.keys(u.els);
 // Vinheta de cada lugar: recorte AMPLIADO num ponto diferente dos fundos de seção (x, y em % do mapa).
+// Cards com o prédio do jogo no lugar do recorte do mapa (dono, 09/11): Forja = Forja de Alma (Hexsmith), Mercado = tenda da Feira.
+const PREDIO: Record<string, string> = { forja: '/site/card-forja.webp', hall: '/site/card-mercado.webp' };
 const FOCO: Record<string, [number, number]> = { exploracao: [70, 34], jogos: [40, 62], arena: [72, 48], hall: [28, 20], guilda: [28, 30], laboratorio: [70, 50], forja: [50, 50] };
 // Capas dos jogos: arte ilustrada 4:3 (public/jogos, src/tools/preparar-capas-jogos.mjs). Título e selo são HTML, nunca na arte.
 const capaJogo = (id: string, w: 400 | 800 = 400) => b(`/jogos/capa-${id}-${w}`);
@@ -178,9 +180,8 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
           </div>
           </div>
           <div class="ciclo-fim" data-fim hidden>
-            <p>{c.fim}</p>
-            <a class="botao primario" href="#inscrever" data-cta>{t.cta}</a>
             <button type="button" class="link" data-recomecar>{c.recomecar}</button>
+            <a class="botao primario" href="#inscrever" data-cta>{t.cta}</a>
           </div>
           <img class="chama" data-chama src={b('/provisorio/chama.svg')} width="24" height="32" alt="" aria-hidden="true" loading="lazy" />
           <p class="sr" aria-live="polite" data-anuncio></p>
@@ -298,7 +299,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
             {u.areas.map(([id, nome]) => (
               <li class="area" style={`--fx:${FOCO[id][0] / 100};--fy:${FOCO[id][1] / 100}`}>
                 <button type="button" class="area-bt" data-lugar={id} aria-haspopup="dialog">
-                {id !== 'arena' && <span class="area-arte"><picture><source type="image/avif" srcset={b(`/mapa/${id}-820.avif`)} /><img loading="lazy" decoding="async" src={b(`/mapa/${id}-820.webp`)} width="820" height="1823" alt="" /></picture></span>}
+                {PREDIO[id] ? <span class="area-arte predio"><img loading="lazy" decoding="async" src={b(PREDIO[id])} alt="" /></span> : <span class="area-arte"><picture><source type="image/avif" srcset={b(`/mapa/${id}-820.avif`)} /><img loading="lazy" decoding="async" src={b(`/mapa/${id}-820.webp`)} width="820" height="1823" alt="" /></picture></span>}
                 <span class="area-tx"><strong>{nome}</strong><span>{u.lugares[id]}</span></span>
                 </button>
               </li>
@@ -414,21 +415,6 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
     </section>
 
    <!-- 9 · Perguntas -->
-    <section class="calmo faq" id="perguntas" aria-labelledby="faq-h">
-      <div class="cen-fundo" aria-hidden="true" style={cen('cen-ilhas')}></div>
-      <h2 id="faq-h">{t.faq.h2}</h2>
-      <div class="faq-lista">
-        {t.faq.itens.map(([q, a]) => (
-          <details>
-            <summary><img class="faq-seta" src={b(assets.seta.src)} width="48" height="31" alt="" loading="lazy" />{q}</summary>
-            <p>{a}</p>
-          </details>
-        ))}
-      </div>
-      <p class="faq-priv"><a href={t.priv}>{t.faq.privLink}</a></p>
-    </section>
-
-    <!-- 10 · Entre no beta: a Guilda inteira, praça do cristal -->
     <section class="cena inscrever" id="inscrever" aria-labelledby="inscrever-h">
       <Mapa id="guilda" desk="guilda-fecho-d" aD={841 / 640} fy={0.5} dfy={0.5}>
         {/* 2x nos dois (pixel da criatura perto do pixel do mapa). Pés medidos com grade sobre a cena renderizada. */}
@@ -460,6 +446,22 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
         </div>
       </div>
     </section>
+
+    <section class="calmo faq" id="perguntas" aria-labelledby="faq-h">
+      <div class="cen-fundo" aria-hidden="true" style={cen('cen-ilhas')}></div>
+      <h2 id="faq-h">{t.faq.h2}</h2>
+      <div class="faq-lista">
+        {t.faq.itens.map(([q, a]) => (
+          <details>
+            <summary><img class="faq-seta" src={b(assets.seta.src)} width="48" height="31" alt="" loading="lazy" />{q}</summary>
+            <p>{a}</p>
+          </details>
+        ))}
+      </div>
+      <p class="faq-priv"><a href={t.priv}>{t.faq.privLink}</a></p>
+    </section>
+
+    <!-- 10 · Entre no beta: a Guilda inteira, praça do cristal -->
   </main>
 
   <dialog class="popup" data-popup aria-labelledby="popup-h" aria-describedby="popup-p">

@@ -1123,3 +1123,13 @@ main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recurs
 @keyframes ovo-chacoalha { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-7deg); } 40% { transform: rotate(6deg); } 60% { transform: rotate(-4deg); } 80% { transform: rotate(3deg); } }
 @keyframes ovo-brilha { 0% { opacity: 0; transform: scale(.6); } 35% { opacity: 1; } 100% { opacity: 0; transform: scale(1.2); } }
 @media (prefers-reduced-motion: reduce) { .ovo.toca img { animation: none; } }
+
+/* 09/11: rótulo de forma e fim da demo com fundo esfumado (borda suave, igual ao véu do título) */
+.forma-titulo, .lista-bloco .demo-linha { background: none !important; position: relative; isolation: isolate; }
+.forma-titulo::before, .lista-bloco .demo-linha::before { content: ''; position: absolute; z-index: -1; inset: -14px -28px; pointer-events: none; background: var(--sb-veu-texto);
+  -webkit-mask-image: radial-gradient(closest-side, #000 55%, transparent); mask-image: radial-gradient(closest-side, #000 55%, transparent); }
+.ciclo-fim { background: none; position: relative; isolation: isolate; }
+.ciclo-fim::before { content: ''; position: absolute; z-index: -1; inset: -24px -40px; pointer-events: none; background: var(--sb-veu-texto);
+  -webkit-mask-image: radial-gradient(closest-side, #000 60%, transparent); mask-image: radial-gradient(closest-side, #000 60%, transparent); }
+.area-arte.predio { display: grid; place-items: center; background: radial-gradient(circle at 50% 60%, #0e4a4c, #031a1d 70%); }
+.area-arte.predio img { position: static; width: auto; height: 92%; max-width: 92%; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 6px 8px rgba(0,0,0,.5)); }
