@@ -31,6 +31,7 @@ import { FOOD_BY_CATEGORY } from '../constants/labels';
 import { premiumKey } from './premiumFood';
 import { potionKey } from './elementPotion';
 import { REDUCE_CHIP_SUFFIX } from './shop';
+import { potionArt } from './potionArt';
 import { elementIcon } from './elementIconArt';
 import { ALL_ELEMENT_IDS } from './elementDex';
 
@@ -71,8 +72,8 @@ for (const f of Object.values(FOOD_BY_CATEGORY)) {
   if (ITEM_ART[f.emoji]) ITEM_ART[premiumKey(f.emoji)] = ITEM_ART[f.emoji];
 }
 
-// Poção de Elemento (30/10/2026): a arte é o ÍCONE DO PRÓPRIO ELEMENTO (sem arte nova).
+// Poção de Elemento (30/10/2026): arte própria por elemento base (`potionArt`); sem ela, o ícone do elemento.
 for (const id of ALL_ELEMENT_IDS) {
-  const icon = elementIcon(id);
+  const icon = potionArt(id) ?? elementIcon(id);
   if (icon) ITEM_ART[potionKey(id)] = icon;
 }
