@@ -37,9 +37,9 @@ const pt = {
     tarefas: ['Lavar a louça', 'Responder e-mail', 'Ler dez páginas', 'Regar as plantas'],
     formas: ['rookie', 'champion', 'ultimate', 'mega', 'ultra'], // so nomes de arquivo; nunca exibir
     forma: 'Forma', de: 'de',
-    alt: 'Soulmon da linha fogo,',
+    alt: 'Soulmon,',
     fim: 'As cinco formas de uma mesma linha.',
-    recomecar: 'Recomeçar', pular: 'Pular demonstração', listaRotulo: 'Os cinco estágios de um Soulmon da linha fogo',
+    recomecar: 'Recomeçar', pular: 'Pular demonstração', listaRotulo: 'Os cinco estágios de um Soulmon',
   },
   soul: {
     h2: 'Seu Soulmon é só seu',
@@ -49,7 +49,7 @@ const pt = {
     caminhos: ['Poder', 'Harmonia', 'Benevolência'],
     arvoreRotulo: 'Árvore de evolução com os três caminhos',
     oculta: 'Forma ainda não revelada', descobrir: 'A descobrir',
-    linhas: ['Planta', 'Fada', 'Fogo'], linhaRotulo: 'Linha de evolução', linhaAnt: 'Linha anterior', linhaProx: 'Próxima linha', sortear: 'Aleatório', sorteioRotulo: 'Conheça algum Soulmon', sombra: 'Conheça algum Soulmon', elemento: 'Elemento', altSorteio: 'Soulmon sorteado, elemento',
+    linhas: ['Planta', 'Fada', 'Fogo'], linhaNoturno: 'Noturno', linhaRotulo: 'Linha de evolução', linhaAnt: 'Linha anterior', linhaProx: 'Próxima linha', sortear: 'Aleatório', sorteioRotulo: 'Conheça algum Soulmon', sombra: 'Conheça algum Soulmon', elemento: 'Elemento', altSorteio: 'Soulmon sorteado, elemento',
   },
   colete: { h2: 'Colete todas as formas', frase: 'Cada forma tem uma versão para cada elemento. Colete todas.', rot: 'Linha fogo, caminho Poder', falta: 'Forma a descobrir', variantes: [['agua', 'Água'], ['industrial', 'Industrial'], ['chama_azul', 'Chama azul'], ['brinquedo', 'Brinquedo de corda'], ['raiz_profunda', 'Raiz profunda']] as [string, string][] },
   universo: {
@@ -158,9 +158,9 @@ const en: typeof pt = {
     tarefas: ['Wash the dishes', 'Answer that email', 'Read ten pages', 'Water the plants'],
     formas: ['rookie', 'champion', 'ultimate', 'mega', 'ultra'],
     forma: 'Form', de: 'of',
-    alt: 'Fire line Soulmon,',
+    alt: 'Soulmon,',
     fim: 'Five forms of one line.',
-    recomecar: 'Start over', pular: 'Skip demo', listaRotulo: 'The five stages of a fire line Soulmon',
+    recomecar: 'Start over', pular: 'Skip demo', listaRotulo: 'The five stages of a Soulmon',
   },
   soul: {
     h2: 'Your Soulmon is yours alone',
@@ -170,7 +170,7 @@ const en: typeof pt = {
     caminhos: ['Power', 'Harmony', 'Benevolence'],
     arvoreRotulo: 'Evolution tree with all three paths',
     oculta: 'Form not revealed yet', descobrir: 'To discover',
-    linhas: ['Plant', 'Fairy', 'Fire'], linhaRotulo: 'Evolution line', linhaAnt: 'Previous line', linhaProx: 'Next line', sortear: 'Random', sorteioRotulo: 'Meet a Soulmon', sombra: 'Meet a Soulmon', elemento: 'Element', altSorteio: 'Drawn Soulmon, element',
+    linhas: ['Plant', 'Fairy', 'Fire'], linhaNoturno: 'Noturno', linhaRotulo: 'Evolution line', linhaAnt: 'Previous line', linhaProx: 'Next line', sortear: 'Random', sorteioRotulo: 'Meet a Soulmon', sombra: 'Meet a Soulmon', elemento: 'Element', altSorteio: 'Drawn Soulmon, element',
   },
   colete: { h2: 'Collect every form', frase: 'Every form has a version for each element. Collect them all.', rot: 'Fire line, Power path', falta: 'Form to discover', variantes: [['agua', 'Water'], ['industrial', 'Industrial'], ['chama_azul', 'Blue flame'], ['brinquedo', 'Wind-up toy'], ['raiz_profunda', 'Deep root']] },
   universo: {

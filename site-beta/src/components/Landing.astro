@@ -4,6 +4,7 @@
 // 5 o universo (Hall) · 6 o que você faz (Arena) · 7 trailer (slot, só com midia.trailer.ativo) · 8 como entrar (painel calmo)
 // 9 perguntas · 10 entre no beta (Guilda inteira). Ritmo: cena cheia x painel calmo, sem superfície clara.
 import Base from '../layouts/Base.astro';
+import { existsSync } from 'node:fs';
 import { b } from '../lib/base';
 import Mapa from './Mapa.astro';
 import Cria from './Cria.astro';
@@ -51,7 +52,14 @@ const JOGOS_POR_LUGAR: Record<string, string[]> = { jogos: ['ppt', 'combina', 'b
 const Formas = c.formas;
 // Árvore inteira (dono, 09/11): os 3 caminhos de cada linha. O caminho principal usa o sprite da linha; os outros vêm de E:\Soulmon-assets\...\ramos (public/sprites/ramos).
 const CAMINHOS = ['poder', 'harmonia', 'benevolencia'];
-const PRINCIPAL: Record<string, string> = { fogo: 'poder', fada: 'benevolencia', planta: 'harmonia' };
+const PRINCIPAL: Record<string, string> = { fogo: 'poder', fada: 'benevolencia', planta: 'harmonia', noturno: 'poder' };
+// Linha "Noturno" (corvinho roxo do dono, 09/11): entra sozinha quando os 5 sprites existirem em public/sprites/
+// (noturno-<forma>.webp e noturno-<forma>-128.webp; formas = c.formas). Caminhos paralelos opcionais em public/sprites/ramos/noturno-<caminho>-<forma>-128.webp;
+// sem eles, os outros caminhos aparecem em sombra. Com a linha pronta, ela vira a criatura da demo do scroll (no lugar do fogo).
+const temSprite = (rel: string) => existsSync(`public${rel}`);
+const NOTURNO = c.formas.every((fm) => temSprite(`/sprites/noturno-${fm}.webp`) && temSprite(`/sprites/noturno-${fm}-128.webp`));
+const LINHA_DEMO = NOTURNO ? 'noturno' : 'fogo';
+const LINHAS = [['planta', s.linhas[0]], ['fada', s.linhas[1]], ['fogo', s.linhas[2]], ...(NOTURNO ? [['noturno', s.linhaNoturno]] : [])] as [string, string][];
 // Sorteio: todo o elenco elegível de soulmon/novos (src/tools/elenco.mjs). Compacto: [id, elemento, forma].
 // Linha Som fora do sorteio (dono, 09/11: era o "sapinho").
 const POOL = JSON.stringify(elenco.elegiveis.filter((x) => !x.el.split(',').includes('som')).map((x) => [x.id, x.el, x.forma]));
@@ -105,7 +113,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
 
   <main id="conteudo" tabindex="-1">
     <!-- 2 · O jogo na sua mão: aparelho com o loop real ao lado da demo (Laboratório, scroll no desktop) -->
-    <section class="cena ciclo" id="ciclo" aria-labelledby="ciclo-h">
+    <section class="cena ciclo" id="ciclo" aria-labelledby="ciclo-h" data-linha-demo={LINHA_DEMO}>
       <div class="ciclo-palco" data-palco>
         <Mapa id="laboratorio" desk="laboratorio-d" aD={841 / 600} fy={0.4} dfy={0.5} />
         <div class="ciclo-texto veu">
@@ -113,7 +121,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         </div>
         {loop && <Aparelho loop={loop} classe="ciclo-aparelho" alt={j.videoAlt} tocar={j.tocar} erro={j.erro} abrir={j.abrir} auto limpo />}
         <ol class="estagios" data-estatico aria-label={c.listaRotulo}>
-          {Formas.map((fm, i) => <li><img class="sprite" src={vazio} data-tarde-src={b(`/sprites/fogo-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.nomes[i]}`} /><noscript><img class="sprite" src={b(`/sprites/fogo-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.nomes[i]}`} /></noscript><span>{c.nomes[i]}</span></li>)}
+          {Formas.map((fm, i) => <li><img class="sprite" src={vazio} data-tarde-src={b(`/sprites/${LINHA_DEMO}-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.nomes[i]}`} /><noscript><img class="sprite" src={b(`/sprites/${LINHA_DEMO}-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.nomes[i]}`} /></noscript><span>{c.nomes[i]}</span></li>)}
         </ol>
         <div class="demo-cena" data-cena hidden>
           <div class="cena-central">
@@ -121,7 +129,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
             <p class="forma-titulo" aria-hidden="true"><span class="ico-forma" data-ico-forma data-forma="rookie"></span><span data-placa>{c.nomes[0]}</span></p>
             <div class="disco-caixa">
               <img class="disco" data-tarde-src={assets.disco.src ? b(assets.disco.src) : undefined} src={vazio} width="240" height="109" alt="" />
-              <img class="sprite" data-criatura data-tarde-src={b('/sprites/fogo-rookie.webp')} src={vazio} width="256" height="256" alt={`${c.alt} ${c.nomes[0]}`} />
+              <img class="sprite" data-criatura data-tarde-src={b(`/sprites/${LINHA_DEMO}-rookie.webp`)} src={vazio} width="256" height="256" alt={`${c.alt} ${c.nomes[0]}`} />
               <span class="clarao" data-clarao></span>
               <div class="cristal" aria-hidden="true">
                 <img data-c="apagado" src={vazio} data-tarde-src={b(assets.cristalApagado.src)} width="48" height="96" alt="" />
@@ -180,8 +188,8 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           <h3>{s.arvoreH}</h3>
           <div class="arvore-palco">
           <button type="button" class="seta-linha esq" data-linha-ant aria-label={s.linhaAnt} hidden><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M15.5 3 6.5 12l9 9 2.1-2.1L10.7 12l6.9-6.9Z"/></svg></button>
-          {['planta', 'fada', 'fogo'].map((lin, li) => (
-          <ol class="arvore" data-linha={lin} aria-label={`${s.arvoreRotulo}: ${s.linhas[li]}`}>
+          {LINHAS.map(([lin, nomeLin]) => (
+          <ol class="arvore" data-linha={lin} aria-label={`${s.arvoreRotulo}: ${nomeLin}`}>
               <li class="arvore-linha arvore-caminhos" aria-hidden="true"><span class="arvore-rot">&nbsp;</span><span class="arvore-nos">{s.caminhos.map((cm) => <span class="caminho">{cm}</span>)}</span></li>
               {Formas.map((fm, i) => {
                 const tres = i > 0 && i < 4;
@@ -193,9 +201,11 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
                       <span class="arvore-nos">
                         {tres
                           ? CAMINHOS.map((cm, ci) => (
-                              <span class="no revelado"><img class="sprite" loading="lazy" src={b(cm === PRINCIPAL[lin] ? `/sprites/${lin}-${fm}-128.webp` : `/sprites/ramos/${lin}-${cm}-${fm}-128.webp`)} width="128" height="128" alt={`${s.linhas[li]}, ${s.caminhos[ci]}, ${c.nomes[i]}`} /></span>
+                              cm === PRINCIPAL[lin] || temSprite(`/sprites/ramos/${lin}-${cm}-${fm}-128.webp`)
+                                ? <span class="no revelado"><img class="sprite" loading="lazy" src={b(cm === PRINCIPAL[lin] ? `/sprites/${lin}-${fm}-128.webp` : `/sprites/ramos/${lin}-${cm}-${fm}-128.webp`)} width="128" height="128" alt={`${nomeLin}, ${s.caminhos[ci]}, ${c.nomes[i]}`} /></span>
+                                : <span class="no oculto" role="img" aria-label={s.descobrir}><span class="sombra-q" aria-hidden="true"><span>?</span></span></span>
                             ))
-                          : <span class="no revelado"><img class="sprite" loading="lazy" src={b(`/sprites/${lin}-${fm}-128.webp`)} width="128" height="128" alt={`${s.linhas[li]}, ${c.nomes[i]}`} /></span>}
+                          : <span class="no revelado"><img class="sprite" loading="lazy" src={b(`/sprites/${lin}-${fm}-128.webp`)} width="128" height="128" alt={`${nomeLin}, ${c.nomes[i]}`} /></span>}
                       </span>
                     </li>
                   </>

@@ -4,6 +4,7 @@ type Strs = { forma: string; de: string; alt: string; formas: string[]; nomes: s
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 export async function iniciar(S: Strs, fraco: boolean) {
+  const LIN = document.querySelector<HTMLElement>('#ciclo')?.dataset.linhaDemo || 'fogo';
   const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector<T>(s)!;
   const secao = $('#ciclo'); const palco = $('[data-palco]');
   const criatura = $<HTMLImageElement>('[data-criatura]'); const placa = $('[data-placa]');
@@ -11,7 +12,7 @@ export async function iniciar(S: Strs, fraco: boolean) {
   const fim = $('[data-fim]'); const blocoTarefas = $('[data-tarefas]');
   const cristal = $('.cristal'); const botoes = [...document.querySelectorAll<HTMLButtonElement>('[data-tarefa]')];
 
-  S.formas.forEach((f) => { new Image().src = `${BASE}/sprites/fogo-${f}.webp`; });
+  S.formas.forEach((f) => { new Image().src = `${BASE}/sprites/${LIN}-${f}.webp`; });
 
   let gsap: typeof import('gsap').gsap | null = null;
   let ST: typeof import('gsap/ScrollTrigger').ScrollTrigger | null = null;
@@ -29,7 +30,7 @@ export async function iniciar(S: Strs, fraco: boolean) {
   };
   const aplicarForma = () => {
     const f = S.formas[estagio];
-    criatura.src = `${BASE}/sprites/fogo-${f}.webp`;
+    criatura.src = `${BASE}/sprites/${LIN}-${f}.webp`;
     const rotulo = S.nomes[estagio]; // nome da forma na tela (pedido do dono, 09/11)
     document.querySelector<HTMLElement>('[data-ico-forma]')?.setAttribute('data-forma', f);
     criatura.alt = `${S.alt} ${rotulo}`;
