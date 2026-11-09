@@ -5,8 +5,8 @@
  * O jogador troca duas peças vizinhas, LIVREMENTE (beta-2, backlog 9.2: a exigência de "a troca tem que pontuar" saiu — toda troca entre vizinhas
  * vale e gasta 1 movimento, pontue ou não; é o que garante o fim da partida). Se formar linha de 3+, as linhas somem,
  * as peças de cima caem, o topo é preenchido e, se isso formar linhas novas, a CASCATA continua sozinha (cada passo da cascata vale
- * mais). Uma linha de 4+ deixa para trás uma peça ESPECIAL (listrada): quando ela entra numa combinação, limpa a linha (ou a coluna)
- * inteira — e pode acionar outra listrada, em cadeia. Sem movimentos possíveis, o tabuleiro se embaralha sozinho (sem custo).
+ * mais). Uma linha de 4 deixa uma ESPECIAL de 1 seta, 5+ ou uma cruz (3+3) deixam uma de 2 setas: quando ela entra numa combinação, limpa a linha, a coluna
+ * ou as duas — e pode acionar outra listrada, em cadeia. Sem movimentos possíveis, o tabuleiro se embaralha sozinho (sem custo).
  *
  * Tudo aqui é determinístico: o sorteio vem de `rng` por PARÂMETRO (`mulberry32(seed)` — nunca `Math.random`; um teste de grep
  * trava), então a mesma semente e a mesma sequência de trocas dão o mesmo tabuleiro, passo a passo.
@@ -30,8 +30,15 @@ export const M3_TILE_NAMES: ReadonlyArray<{ pt: string; en: string }> = [
   { pt: 'Vida', en: 'Life' }, { pt: 'Ar', en: 'Air' }, { pt: 'Luz', en: 'Light' },
 ];
 
-/** Peça especial: limpa a linha (`row`) ou a coluna (`col`) em que está quando entra numa combinação. */
-export type Special = 'row' | 'col';
+/**
+ * Peça especial (setinha no tile): limpa a linha (`row`), a coluna (`col`) ou as DUAS (`both`) em que está quando entra numa combinação.
+ * Nasce assim (pedido do dono, 09/11/2026): 4 em linha = 1 seta na direção formada; 5+ em linha = `both`; 3 horizontais + 3 verticais do
+ * mesmo elemento (cruz/L/T) = `both`, na casa em comum.
+ */
+export type Special = 'row' | 'col' | 'both';
+/** Ela limpa a linha? E a coluna? (a seta horizontal e/ou a vertical) */
+export const specialClearsRow = (sp: Special | undefined): boolean => sp === 'row' || sp === 'both';
+export const specialClearsCol = (sp: Special | undefined): boolean => sp === 'col' || sp === 'both';
 /**
  * `wild` = Quartzo da alma (regra do BOSS 7): combina com QUALQUER elemento e, ao sumir, explode a área 3×3 em volta.
  * `stone` = peça petrificada (regra do BOSS 10): não entra em linha nem troca; só quebra quando uma linha some ao lado dela.
@@ -41,7 +48,7 @@ export interface Tile { k: number; sp?: Special; wild?: boolean; stone?: boolean
 
 /** Regras de tabuleiro do BOSS (`utils/match3Boss.ts`). Todas opcionais; ausentes = o jogo de sempre. */
 export interface BoardRules {
-  /** 4 · Cruz: uma casa que é 3+ na horizontal E 3+ na vertical cria a peça especial (e, com ela, a vez extra). */
+  /** 4 · Cruz: (desde 09/11/2026 vale em TODA partida, não só no BOSS — a flag ficou só por compatibilidade e não muda mais nada). */
   cross?: boolean;
   /** 6 · Especiais vizinhos: duas especiais encostadas explodem juntas (linha + coluna + 3×3 de cada), sem precisar trocá-las. */
   neighborSpecials?: boolean;
@@ -226,20 +233,22 @@ export function resolveBoard(start: Board, rng: Rng, anchors: readonly Pos[] = [
     const bigKeys = new Set(vizinhas.map(key));
     for (const p of comboNow) clearSet.set(key(p), p);
     const created: Array<{ pos: Pos; tile: Tile }> = [];
+    // cruz/L/T: a casa comum a uma linha 3+ horizontal e uma 3+ vertical do MESMO elemento vira especial de 2 setas (linha + coluna)
+    const emCruz = new Set<Run>();
+    for (const h of runs) if (h.dir === 'h') for (const v of runs) if (v.dir === 'v' && v.k === h.k) {
+      const x = h.cells.find(p => v.cells.some(q => q.r === p.r && q.c === p.c));
+      if (!x) continue;
+      emCruz.add(h); emCruz.add(v);
+      if (!created.some(y => key(y.pos) === key(x))) created.push({ pos: { r: x.r, c: x.c }, tile: { k: h.k, sp: 'both' } });
+    }
     for (const run of runs) {
       for (const p of run.cells) clearSet.set(key(p), p);
-      if (run.cells.length >= 4) {
+      // 4 em linha = 1 seta na direção formada; 5+ = 2 setas (a linha que já virou cruz não gera outra)
+      if (run.cells.length >= 4 && !emCruz.has(run)) {
         const ancora = chain === 1 ? run.cells.find(p => anchors.some(a => a.r === p.r && a.c === p.c)) : undefined;
         const pos = ancora ?? run.cells[Math.floor((run.cells.length - 1) / 2)];
-        if (!created.some(x => key(x.pos) === key(pos))) created.push({ pos, tile: { k: run.k, sp: run.dir === 'h' ? 'row' : 'col' } });
-      }
-    }
-    // regra 4 (Cruz): a casa comum a uma linha 3+ horizontal e uma 3+ vertical vale como 4 — nasce a especial ali
-    if (rules.cross) {
-      for (const h of runs) if (h.dir === 'h') for (const v of runs) if (v.dir === 'v') {
-        const x = h.cells.find(p => v.cells.some(q => q.r === p.r && q.c === p.c));
-        if (!x || h.cells.length >= 4 || v.cells.length >= 4) continue;
-        if (!created.some(y => key(y.pos) === key(x))) created.push({ pos: x, tile: { k: h.k, sp: 'row' } });
+        const sp: Special = run.cells.length >= 5 ? 'both' : run.dir === 'h' ? 'row' : 'col';
+        if (!created.some(x => key(x.pos) === key(pos))) created.push({ pos, tile: { k: run.k, sp } });
       }
     }
     // regra 10: a pedra encostada (ortogonal) numa peça de LINHA quebra junto
@@ -259,7 +268,7 @@ export function resolveBoard(start: Board, rng: Rng, anchors: readonly Pos[] = [
       triggered.push(p);
       const linha = Array.from({ length: M3_COLS }, (_, c) => ({ r: p.r, c }));
       const coluna = Array.from({ length: M3_ROWS }, (_, r) => ({ r, c: p.c }));
-      const alvo: Pos[] = comboKeys.has(key(p)) ? [...linha, ...coluna, ...(bigKeys.has(key(p)) ? area3(p) : [])] : t.sp === 'row' ? linha : coluna;
+      const alvo: Pos[] = comboKeys.has(key(p)) ? [...linha, ...coluna, ...(bigKeys.has(key(p)) ? area3(p) : [])] : [...(specialClearsRow(t.sp) ? linha : []), ...(specialClearsCol(t.sp) ? coluna : [])];
       for (const q of alvo) {
         if (!w[q.r][q.c] || w[q.r][q.c]!.stone || clearSet.has(key(q))) continue;
         clearSet.set(key(q), q);
