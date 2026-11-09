@@ -16,7 +16,7 @@
 import { NOVOS_DATA, novoHasForm, novoFormName, type NovoAttack } from './novosSoulmonData';
 import { COMBINADOS_LOTE3_DATA } from './elementosLote3.data';
 import { COMBINADOS_LOTE4_DATA } from './elementosLote4.data';
-import { COMBINADOS_DATA, INIMIGOS_API_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
+import { COMBINADOS_DATA, INIMIGOS_API_DATA, PARALELOS_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
 import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 
@@ -36,7 +36,7 @@ export interface RosterEntry {
   key: string;
   id: string;
   stage: EnemyStage;
-  kind: 'base' | 'combinado' | 'api' | 'mascote' | 'ramo';
+  kind: 'base' | 'combinado' | 'api' | 'mascote' | 'ramo' | 'paralelo';
   /** Elemento do SPRITE e dos golpes dele (`spriteElement.ts`): nos combinados, o id FUNDIDO (= slug da arte, ex.: fogo+agua → `vapor`); nos base, o próprio. */
   element: string;
   /** Nos combinados, os dois COMPONENTES (a tabela de vantagem é só das 17 bases); nos base, só o próprio. */
@@ -44,7 +44,7 @@ export interface RosterEntry {
   name: string;
   basico: NovoAttack;
   especial: NovoAttack;
-  /** Nos combinados: o `NNN-slug` do arquivo de arte; nos `api`: `<id>-<estágio>`; nos `ramo`: `<elemento>/<ramo>-<estágio>`. */
+  /** Nos combinados: o `NNN-slug` do arquivo de arte; nos `api`: `<id>-<estágio>`; nos `ramo`: `<elemento>/<ramo>-<estágio>`; nos `paralelo`: `<id>-<estágio>`. */
   artFile?: string;
   /** Nos `api`: o nº do sprite no banco Higgsfield (rastreio). */
   bancoN?: number;
@@ -178,8 +178,27 @@ export function ramoFromRoll(u: number, n: number): { hit: boolean; pick: number
   return { hit: n > 0 && frac(u * 4096) < RAMO_CHANCE, pick: n > 0 ? Math.min(n - 1, Math.floor(frac(u * 16777216) * n)) : 0 };
 }
 
-/** Tudo que existe (base + combinados + o corvo, que só sai pelo `withRaven` + os ramos). */
-export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos()];
+/**
+ * AS FORMAS PARALELAS (dono, 09/11/2026): Champion e Ultimate alternativos (derivados do lagarto-dragão de fogo) em 5 elementos. Só saem
+ * quando o ELEMENTO é pedido (`pickEnemy({element})`, Arena de run do elemento): ficam fora do sorteio comum, que não muda. Entram no FIM
+ * do roster (o `#N` das células do Bestiário que já existiam não muda). Os golpes são os da criatura base do elemento dos golpes.
+ */
+function buildParalelos(): RosterEntry[] {
+  const out: RosterEntry[] = [];
+  for (const [id, el, comps, golpesDe, champion, ultimate] of PARALELOS_DATA) {
+    const base = BASE_BY_ELEMENT[golpesDe];
+    for (const [stage, name] of [['champion', champion], ['ultimate', ultimate]] as const) {
+      out.push({
+        key: chaveBestiario(id, stage), id, stage, kind: 'paralelo', element: el, elements: [...comps],
+        name, basico: base.basico, especial: base.especial, artFile: `${id}-${stage}`,
+      });
+    }
+  }
+  return out;
+}
+
+/** Tudo que existe (base + combinados + o corvo, que só sai pelo `withRaven` + os ramos + as formas paralelas). */
+export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos(), ...buildParalelos()];
 export const ENEMY_ROSTER_KEYS: ReadonlySet<string> = new Set(ENEMY_ROSTER.map(e => e.key));
 const BY_KEY: ReadonlyMap<string, RosterEntry> = new Map(ENEMY_ROSTER.map(e => [e.key, e]));
 export const rosterEntryOfKey = (key: string | undefined | null): RosterEntry | undefined => (key ? BY_KEY.get(key) : undefined);
@@ -249,7 +268,7 @@ function pickEnemyComum(
     stage = open[Math.floor(rng() * open.length)];
   }
   const comRamos = Number.isFinite(level) && !opts.semRamos;
-  const have = ENEMY_ROSTER.filter(e => e.stage === stage && e.kind !== 'mascote' && (comRamos || e.kind !== 'ramo'));
+  const have = ENEMY_ROSTER.filter(e => e.stage === stage && e.kind !== 'mascote' && e.kind !== 'paralelo' && (comRamos || e.kind !== 'ramo'));
   const fresh = opts.used ? have.filter(e => !opts.used!.has(e.id)) : have;
   const pool = fresh.length > 0 ? fresh : have;
   const ramos = pool.filter(e => e.kind === 'ramo');

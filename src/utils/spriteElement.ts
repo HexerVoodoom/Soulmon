@@ -19,7 +19,7 @@
 import { NOVOS_DATA } from './novosSoulmonData';
 import { COMBINADOS_LOTE3_DATA } from './elementosLote3.data';
 import { COMBINADOS_LOTE4_DATA } from './elementosLote4.data';
-import { COMBINADOS_DATA, INIMIGOS_API_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
+import { COMBINADOS_DATA, INIMIGOS_API_DATA, PARALELOS_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
 import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 import { STARTER_ELEMENT } from './starterElements';
@@ -81,6 +81,7 @@ function build(): Record<string, string> {
   for (const [num, slug] of COMBINADOS_LOTE4_DATA) t[`cmb:${num}`] = slug; // lote 4 (05/11/2026)
   for (const [id, , , el] of INIMIGOS_API_DATA) t[`api:${id}`] = el;
   for (const [, el, ramo] of RAMOS_INIMIGOS_DATA) t[`ramo:${el}/${ramo}`] = el; // §220: o ramo tem o elemento da criatura
+  for (const [id, el] of PARALELOS_DATA) t[`par:${id}`] = el; // 09/11/2026: a forma paralela tem o elemento do sprite (id fundido nos combinados)
   for (const [id, el] of Object.entries(STARTER_ELEMENT)) t[`starter:${id}`] = el;
   for (const [id, el] of Object.entries(LINE_ELEMENT)) t[`line:${id}`] = el;
   for (const [id, el] of Object.entries(BOSS_ELEMENT)) t[`boss:${id}`] = el;
@@ -103,7 +104,7 @@ export function lineElementOf(line: string | null | undefined): string | undefin
 }
 
 /** Elemento de uma entrada do roster (`RosterEntry`): base = o próprio; combinado = o id FUNDIDO (não o 1º componente); api = o escolhido. */
-export function rosterEntryElement(e: { kind: 'base' | 'combinado' | 'api' | 'mascote' | 'ramo'; id: string; element: string; artFile?: string }): string {
+export function rosterEntryElement(e: { kind: 'base' | 'combinado' | 'api' | 'mascote' | 'ramo' | 'paralelo'; id: string; element: string; artFile?: string }): string {
   if (e.kind === 'combinado' && e.artFile) return SPRITE_ELEMENT[`cmb:${e.artFile.split('-')[0]}`] ?? e.element;
   return e.element;
 }

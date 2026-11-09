@@ -57,3 +57,10 @@ const RAMOS_FILES = import.meta.glob('../assets/soulmon/novos-arquivo/ramos/*/*.
 export const RAMOS_ART: Readonly<Record<string, string>> = Object.fromEntries(
   Object.entries(RAMOS_FILES).map(([path, url]) => [path.slice(path.indexOf('/ramos/') + 7).replace(/\.png$/, ''), url]),
 );
+
+const PARALELOS_FILES = import.meta.glob('../assets/soulmon/novos-arquivo/paralelos/*.png', { eager: true, import: 'default' }) as Record<string, string>;
+
+/** ARTE das 10 formas paralelas (09/11/2026). Chave = `<id>-<estágio>` (`RosterEntry.artFile`). */
+export const PARALELOS_ART: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(PARALELOS_FILES).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1).replace(/.png$/, ''), url]),
+);

@@ -74,7 +74,7 @@ Os prompts de `E:/Soulmon-assets/out/rodada3/poderosos/prompts.json` descrevem a
 | 006 | combinados/006-fogo_negro.png | fogo_negro | fogo+sombra |
 | 007 | combinados/007-chama_solar.png | chama_solar | fogo+luz |
 | 008 | combinados/008-fogo_infernal.png | fogo_infernal | fogo+vileza |
-| 009 | combinados/009-chama_azul.png | chama_azul | fogo+morte |
+| 009 | combinados/009-chama_azul.png | chama_azul | fogo+morte (arte do Champion azul, quebra-galho, §258) |
 | 010 | combinados/010-fenix.png | fenix | fogo+vida |
 | 011 | combinados/011-fervor.png | fervor | fogo+vigor |
 | 012 | combinados/012-pantano.png | pantano | agua+terra |
