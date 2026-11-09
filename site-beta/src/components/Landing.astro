@@ -57,8 +57,10 @@ const PRINCIPAL: Record<string, string> = { fogo: 'poder', fada: 'benevolencia',
 // (noturno-<forma>.webp e noturno-<forma>-128.webp; formas = c.formas). Caminhos paralelos opcionais em public/sprites/ramos/noturno-<caminho>-<forma>-128.webp;
 // sem eles, os outros caminhos aparecem em sombra. Com a linha pronta, ela vira a criatura da demo do scroll (no lugar do fogo).
 const temSprite = (rel: string) => existsSync(`public${rel}`);
-const NOTURNO = c.formas.every((fm) => temSprite(`/sprites/noturno-${fm}.webp`) && temSprite(`/sprites/noturno-${fm}-128.webp`));
-const LINHA_DEMO = NOTURNO ? 'noturno' : 'fogo';
+const temForma = (lin: string, fm: string) => temSprite(`/sprites/${lin}-${fm}.webp`) && temSprite(`/sprites/${lin}-${fm}-128.webp`);
+// Árvore: entra com Champion..Ultra (o Rookie, se faltar, fica em sombra). Demo: só com as 5 formas.
+const NOTURNO = c.formas.slice(1).every((fm) => temForma('noturno', fm));
+const LINHA_DEMO = c.formas.every((fm) => temForma('noturno', fm)) ? 'noturno' : 'fogo';
 const LINHAS = [['planta', s.linhas[0]], ['fada', s.linhas[1]], ['fogo', s.linhas[2]], ...(NOTURNO ? [['noturno', s.linhaNoturno]] : [])] as [string, string][];
 // Sorteio: todo o elenco elegível de soulmon/novos (src/tools/elenco.mjs). Compacto: [id, elemento, forma].
 // Linha Som fora do sorteio (dono, 09/11: era o "sapinho").
@@ -205,7 +207,9 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
                                 ? <span class="no revelado"><img class="sprite" loading="lazy" src={b(cm === PRINCIPAL[lin] ? `/sprites/${lin}-${fm}-128.webp` : `/sprites/ramos/${lin}-${cm}-${fm}-128.webp`)} width="128" height="128" alt={`${nomeLin}, ${s.caminhos[ci]}, ${c.nomes[i]}`} /></span>
                                 : <span class="no oculto" role="img" aria-label={s.descobrir}><span class="sombra-q" aria-hidden="true"><span>?</span></span></span>
                             ))
-                          : <span class="no revelado"><img class="sprite" loading="lazy" src={b(`/sprites/${lin}-${fm}-128.webp`)} width="128" height="128" alt={`${nomeLin}, ${c.nomes[i]}`} /></span>}
+                          : temSprite(`/sprites/${lin}-${fm}-128.webp`)
+                            ? <span class="no revelado"><img class="sprite" loading="lazy" src={b(`/sprites/${lin}-${fm}-128.webp`)} width="128" height="128" alt={`${nomeLin}, ${c.nomes[i]}`} /></span>
+                            : <span class="no oculto" role="img" aria-label={s.descobrir}><span class="sombra-q" aria-hidden="true"><span>?</span></span></span>}
                       </span>
                     </li>
                   </>
