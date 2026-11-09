@@ -1,3 +1,4 @@
+import { aoDescerDeForma, type FormaState } from './formaSnapshot';
 import type { PardonReason } from './pardonReason';
 import { FORM_REQUIREMENTS, MANUAL_EVOLUTION, MAX_HP_BY_FORM, getStageLevel, canSelectWeekdays, clampBranch, canReachUltra } from '../types/progression';
 import type { EvolutionStage } from '../types/progression';
@@ -1284,7 +1285,7 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
     : (dailyDone > 0 && rawHeartsLost === 0 && !dayWasPerfect) ? 'partialGoal'
     : (weeklyReliefApplied && heartsLost > 0) ? 'mondayRelief'
     : 'none';
-  return {
+  return aoDescerDeForma(prev as unknown as FormaState, {
     ...comVinculo,
     activities: resetActivities,
     // P2 — a folga vive no save (um contador por JOGADOR, não por aparelho).
@@ -1410,5 +1411,5 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
       /** Quantas folgas ainda restam nesta semana, depois desta virada. */
       restDaysLeft,
     },
-  };
+  });
 }

@@ -1,3 +1,4 @@
+import { aoDescerDeForma, capturarForma, trocarFormaCompleta } from './utils/formaSnapshot';
 import { useState, useEffect, useCallback, useMemo, useRef, useId, useSyncExternalStore, lazy, Suspense, Fragment } from 'react';
 import type { ReactNode } from 'react';
 import { Icon } from './components/ui/Icon';
@@ -1392,7 +1393,9 @@ export default function App() {
   const handleEquipFormaAlt = useCallback((formId: string, elemento: string) => {
     setGameState(prev => {
       const formaAltEquipada = equiparFormaAlt(prev.formasAlt, prev.formaAltEquipada, formId, elemento);
-      return formaAltEquipada === prev.formaAltEquipada ? prev : { ...prev, formaAltEquipada };
+      if (formaAltEquipada === prev.formaAltEquipada) return prev;
+      // 09/11/2026 (dono): equipar a forma do estágio ATUAL equipa tudo dela — elemento, ataque e especial (`utils/formaSnapshot.ts`).
+      return formId === prev.evolutionStage ? trocarFormaCompleta(prev, s => ({ ...s, formaAltEquipada })) : { ...prev, formaAltEquipada };
     });
   }, [setGameState]);
   const handleTuneVisor = useCallback((formId: string) => spriteGen.tune(formId), [spriteGen]);
@@ -4007,7 +4010,8 @@ export default function App() {
       // queda e acende a da volta. A regra é de `dailyReset.ts` (dona), não
       // daqui: `App.tsx` só delega. Cosmética, opt-in, e nunca marca de queda.
       // Poção de Elemento: o elemento pendente vira o do Soulmon e o campo é limpo (`utils/elementPotion.ts`).
-      const base = applyPotionOnEvolve(applyRedemption(prev, newEvolutionStage !== prev.evolutionStage));
+      // 09/11/2026: a forma que fica para trás é fotografada antes (`utils/formaSnapshot.ts`), para a queda poder voltar a ela.
+      const base = applyPotionOnEvolve(applyRedemption(capturarForma(prev), newEvolutionStage !== prev.evolutionStage));
       const evolved = {
         ...base,
         evolutionCrystal: undefined,
@@ -4045,7 +4049,7 @@ export default function App() {
       // Antes → depois dos atributos de combate, da mesma derivação da luta (`utils/evolutionStatsDelta.ts`). Escrita idempotente.
       pendingEvoStatsRef.current = { delta: evolutionStatsDelta(prev, evolved), stage: newEvolutionStage };
       // FORMAS ALTERNATIVAS (05/11/2026): voltar a este estágio com outro elemento desbloqueia (e equipa) uma forma nova dele.
-      return { ...evolved, ...registrarFormaAoEvoluir(prev.formasAlt, prev.formaAltEquipada, newEvolutionStage, elementoDaForma(evolved.elementoJornada, newEvolutionStage), libraryOf(prev)) };
+      return { ...evolved, ...registrarFormaAoEvoluir(prev.formasAlt, prev.formaAltEquipada, newEvolutionStage, evolved.potionElement ?? elementoDaForma(evolved.elementoJornada, newEvolutionStage), libraryOf(prev)) };
     });
     playEvolve();
     setEvolutionFlash(true);
@@ -6737,7 +6741,7 @@ export default function App() {
       const newPerfectDays = degeneratedPerfectDays(prev.perfectDays, newStageLevel);
       const newEvolutionPoints = degeneratedEvolutionPoints(prev.evolutionPoints ?? 0, newStageLevel);
 
-      return {
+      const desceu = {
         ...prev,
         evolutionStage: targetStage,
         healthPoints: newHP,
@@ -6750,6 +6754,8 @@ export default function App() {
         chipsStage: undefined, // D-97: a contagem de chips é por estágio
         chipsReduceStage: undefined, // idem, chips de redução (limite próprio)
       };
+      // 09/11/2026 (dono): quem cai volta ao elemento (e às skills) da forma em que cai (`utils/formaSnapshot.ts`).
+      return aoDescerDeForma(prev, desceu);
     });
     playDegenerate();
     setMessageTrigger(prev => prev + 1);
@@ -6758,7 +6764,7 @@ export default function App() {
   // Troca lateral (mesmo nível, outra forma já desbloqueada): grátis, só troca a
   // forma. Sem som nem mensagem de queda; a regra é de `utils/trocaLateral.ts`.
   const handleSwitchForm = useCallback((targetStage: string) => {
-    setGameState(prev => applyLateralSwitch(prev, targetStage));
+    setGameState(prev => trocarFormaCompleta(prev, s => applyLateralSwitch(s, targetStage)));
   }, []);
 
   const handleEvolveToUnlocked = useCallback((targetStage: string) => {

@@ -37,4 +37,15 @@ describe('botões por forma', () => {
     fireEvent.pointerDown(document.body);
     expect(screen.queryByText('Degenerar')).toBeNull();
   });
+
+  it('09/11/2026 (dono): dá para degenerar até o rookie', () => {
+    const chamado: string[] = [];
+    renderWithCss(<EvolutionPath {...props} onDegenerate={(id) => chamado.push(id)} />);
+    const no = screen.getByTestId('sm-no-rookie').querySelector('button[data-soul-node]') as HTMLElement;
+    fireEvent.click(no);
+    fireEvent.click(screen.getByText('Degenerar'));
+    fireEvent.click(screen.getAllByRole('button').find(b => /confirmar/i.test(b.textContent ?? ''))!);
+    fireEvent.click(screen.getAllByRole('button').find(b => /confirmar|degenerar/i.test(b.textContent ?? '') && b.textContent !== 'Degenerar')!);
+    expect(chamado).toEqual(['rookie']);
+  });
 });
