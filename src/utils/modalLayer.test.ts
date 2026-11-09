@@ -42,7 +42,7 @@ describe('contrato de CSS e camadas', () => {
     expect(bloco).toMatch(/pointer-events:\s*none/);
     expect(bloco).toContain(':not([aria-modal="true"] .sm2-area-back)');
   });
-  it('nenhum overlay fixed de tela cheia com zIndex numérico fica abaixo do voltar (45)', () => {
+  it('nenhum diálogo de tela cheia com zIndex numérico fica abaixo do voltar (45)', () => {
     const ruins: string[] = [];
     const varre = (dir: string) => {
       for (const n of readdirSync(dir)) {
@@ -50,7 +50,7 @@ describe('contrato de CSS e camadas', () => {
         if (statSync(p).isDirectory()) { varre(p); continue; }
         if (!/\.tsx$/.test(n) || /\.test\./.test(n)) continue;
         for (const [i, l] of readFileSync(p, 'utf8').split('\n').entries()) {
-          if (/position: 'fixed', inset: 0/.test(l) || (/role="dialog"/.test(l) && /inset: 0/.test(l))) {
+          if (/(role="dialog"|aria-modal)/.test(l) && /inset: 0/.test(l) && /position: '(fixed|absolute)'/.test(l)) {
             const m = l.match(/zIndex: (\d+)/);
             if (m && Number(m[1]) <= 45) ruins.push(`${p}:${i + 1} zIndex ${m[1]}`);
           }

@@ -9240,4 +9240,3 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   opacity: .18;
   pointer-events: none;
 }
-@media (prefers-reduced-motion: reduce) { .sm2-area-back { transition: none; } }

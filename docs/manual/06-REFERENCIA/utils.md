@@ -4436,3 +4436,7 @@ O quadro da Oficina: critério de cada chave (`keyEarned`), chaves da sessão no
 ### `src/utils/funTickets.ts` (09/11/2026 — REGISTRO §270)
 
 Tickets dos minijogos do Salão (substituem a sessão de `funSession.ts`). Funções PURAS: `buyFunTickets` (1 energia → lote de 3; só com ≤2 vivos; teto 5), `startFunRound` (gasta 1 ticket do lote que vence antes), `funTicketStatus`, `ticketCount`, `nextExpiryMs`, `sanitizeFunTickets`. Validade 24 h por lote. Espelho no servidor: `functions/api/_funTickets.js` (paridade em `funTickets.parity.test.js`). Chamado por `App.tsx` e `AreaView.tsx`.
+
+### `src/utils/modalLayer.ts` (09/11/2026)
+
+Modal sempre acima do voltar da página. `syncModalFlag` liga/desliga `body[data-modal-open]` conforme exista `aria-modal`/`role=dialog` visível no DOM; `watchModalLayer` (montado no `App`) observa o DOM com um `MutationObserver` e chama o sync por frame. O CSS (`index.css`) esmaece e desativa os `.sm2-area-back` da PÁGINA enquanto o flag existe; o voltar dentro do próprio modal fica de fora. `Z_ABOVE_BACK` (60) é o piso de z-index dos overlays (o voltar é 45). Régua: `modalLayer.test.ts`.
