@@ -34,7 +34,7 @@ import { getSpriteForStage } from '../../utils/sprites';
 import { cloudHexForge } from '../../utils/cloudSave';
 import { readLocal } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
-import { HEX_ART, HEX_MAP_ART, resolveHexSlotArt } from '../../assets/soulmon/hex';
+import { HEX_ART, HEX_MAP_ART, resolveHexChipArt, resolveHexSlotArt } from '../../assets/soulmon/hex';
 import { HexSlotGlyph } from './HexSlotGlyph';
 
 export interface HexsmithSheetProps {
@@ -177,7 +177,11 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
  * cheia; vazia, a mesma arte apagada (`data-empty`). Sem arte na pasta → glifo SVG (fallback).
  */
 function SlotFace({ slot, value, size }: { slot: HexSlot; value?: string; size: number }) {
-  if (value && HEX_ELEMENT_SLOTS.includes(slot)) return <ElementIcon id={value} size={size} />;
+  if (value && HEX_ELEMENT_SLOTS.includes(slot)) {
+    const chip = resolveHexChipArt(value);
+    if (chip) return <img src={chip} alt="" aria-hidden="true" width={size} height={size} draggable={false} data-hex-chip={value} />;
+    return <ElementIcon id={value} size={size} />;
+  }
   const art = resolveHexSlotArt(slot);
   if (art) return <img src={art} alt="" aria-hidden="true" width={size} height={size} className="sm2-hex-art" data-empty={!value} />;
   return <HexSlotGlyph slot={slot} size={size} color={value ? 'var(--sm2-primary-ink)' : 'var(--sm2-muted)'} filled={!!value} />;
