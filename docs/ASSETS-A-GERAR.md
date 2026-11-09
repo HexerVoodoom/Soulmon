@@ -943,7 +943,7 @@ Hoje o selo usa marcador provisório (forma + texto, loop emprestado de `fx-dot-
 
 ## 23. Pratos do Restaurante — 12 desenhos (pedido do dono, 06/11/2026)
 
-**Status: INSTALADO em 09/11/2026 (§264), 128², alfa real.**
+**Status: INSTALADO em 09/11/2026 (§265), 128², alfa real.**
 
 Hoje os 12 pratos (`DISHES` em `src/utils/restaurant.ts`) aparecem como **emoji** (`Dish.icon`). A tela (`RestauranteSheet`) já lê `src/utils/dishArt.ts`, que descobre sozinho os PNG em `src/assets/soulmon/pratos/prato-<dishId>.png`: o arquivo caiu na pasta com o nome certo, assume sem editar código; sem arquivo, segue o emoji. Cardápio e regra: `docs/RESTAURANTE.md`.
 
@@ -996,20 +996,20 @@ Total pedido agora: 6 ícones + 6 folhas de FX. Fora deste pedido: 6 sprites roo
 
 ## 25. Cenas do Passeio — 8 panoramas horizontais (pedido do dono, 05/11/2026)
 
-**Status: INSTALADO em 09/11/2026 (§264), 8 WebP 1774×887.**
+**Status: INSTALADO em 09/11/2026 (§265), 8 WebP 1774×887.**
 
 **Contexto:** quando o jogador fez um Passeio, o resumo do dia abre uma CENA EM TELA CHEIA (`components/StrollScene.tsx`): o Soulmon dele no cenário da região visitada, um cartãozinho no topo com o que foi, "Espera… tem alguma coisa ali." → a câmera DESLIZA para o lado e mostra o Soulmon descoberto (um que ele nunca viu; entra no Drive) → OK → volta. Para deslizar, o cenário é um **PANORAMA horizontal**: o Soulmon do jogador na ESQUERDA, o descoberto na DIREITA, os dois pisando na mesma linha de chão. **Código pronto** (`utils/strollScene.ts`, `utils/strollDiscovery.ts`); **sem arte** — hoje a cena usa o postal da região espelhado lado a lado (piso, nunca quebra). Quando o arquivo cai com o nome-alvo, ele assume sozinho (glob).
 
 | Arquivo-alvo (`src/assets/soulmon/passeio-cenas/`) | Região | Postal de reserva hoje | Estado |
 |---|---|---|---|
-| `cena-campina.webp` | Campina (casa) | `bg-campina` | instalada (§264) |
-| `cena-floresta.webp` | Floresta | `bg-forest` | instalada (§264) |
-| `cena-oceano.webp` | Oceano | `bg-ocean` | instalada (§264) |
-| `cena-deserto.webp` | Deserto | `bg-desert` | instalada (§264) |
-| `cena-picos.webp` | Picos | `bg-cloudsea` | instalada (§264) |
-| `cena-pantano.webp` | Pântano | `bg-swamp` | instalada (§264) |
-| `cena-cavernas.webp` | Cavernas | `bg-cavernas` | instalada (§264) |
-| `cena-gelo.webp` | Gelo | `bg-snow` | instalada (§264) |
+| `cena-campina.webp` | Campina (casa) | `bg-campina` | instalada (§265) |
+| `cena-floresta.webp` | Floresta | `bg-forest` | instalada (§265) |
+| `cena-oceano.webp` | Oceano | `bg-ocean` | instalada (§265) |
+| `cena-deserto.webp` | Deserto | `bg-desert` | instalada (§265) |
+| `cena-picos.webp` | Picos | `bg-cloudsea` | instalada (§265) |
+| `cena-pantano.webp` | Pântano | `bg-swamp` | instalada (§265) |
+| `cena-cavernas.webp` | Cavernas | `bg-cavernas` | instalada (§265) |
+| `cena-gelo.webp` | Gelo | `bg-snow` | instalada (§265) |
 
 - **Formato:** HORIZONTAL, proporção **2:1** (largura ÷ altura = `SCENE_RATIO` em `utils/strollScene.ts`). Gerar a **1792×896** (ou o maior 2:1 que a ferramenta der); instalar em **WebP**, ≤ 400 KB cada (o orçamento de bytes olha o `dist/`). Pode ser `.png` (o glob aceita os dois); sem alfa (é fundo cheio).
 - **Composição (o que a cena precisa, em % do panorama):** **linha de chão em 80% da altura** (`SCENE_GROUND_Y`) — os pés dos dois Soulmons caem ali; **espaço livre e plano** ao redor de **x = 25%** (jogador) e **x = 75%** (descoberto), ~30% de largura cada, sem rocha/árvore/objeto grande na frente deles; o **meio (45–55%)** é só passagem (pode ter o detalhe mais marcante da região). Céu/topo mais calmo: o cartãozinho de texto cobre os ~35% de cima à esquerda/direita na tela cheia. Sem texto, sem moldura, sem personagem.
@@ -1087,3 +1087,7 @@ A masmorra agora é temática: cada elemento ocupa 2 camadas (base → 2 → 3 �
 
 **Feito:** 10 sprites 256² (5 elementos × Champion/Ultimate, derivados do lagarto-dragão de fogo) em `src/assets/soulmon/novos-arquivo/paralelos/`: `agua` (Aquarisk/Marevorn), `industrial` (Rivetisk/Ferrovorn), `chama_azul` (Cyanolisk/Azurvorn), `brinquedo` (Clockolisk/Springvorn), `raiz_profunda` (Rootolisk/Rhizovorn). Matrizes de ~905–970 px ficam em `E:/Soulmon-assets/site-formas/`.
 **Falta (opcional):** Mega dessas linhas; um Rookie próprio de `chama_azul`, `brinquedo` e `raiz_profunda` não é necessário (`brinquedo`/`raiz_profunda` já têm rookie combinado próprio; `chama_azul` está no §29).
+
+## Instalado em 09/11/2026 (REGISTRO §264)
+- Efeitos de combate por elemento (§228/§236): os 29 `st-*` e os 5 `fx-*-loop-sheet` da tabela acima estão instalados (a coluna "Situação" dessas linhas vale como **feito**). `st-seta-sobe/desce` e `stat-*` ficam na pasta sem ponto de chamada (camada CSS).
+- Curados novos: `el-<id>` e FX de ataque de clareira, alto_forno, bencao_feerica, floresta_ancestral, colosso_blindado, corte_feerica (novos) e pestilencia, maldicao, cyber (trocados) instalados.
