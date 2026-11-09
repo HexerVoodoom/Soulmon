@@ -36,7 +36,7 @@ export interface RosterEntry {
   key: string;
   id: string;
   stage: EnemyStage;
-  kind: 'base' | 'combinado' | 'api' | 'mascote' | 'ramo' | 'paralelo';
+  kind: 'base' | 'combinado' | 'api' | 'mascote' | 'ramo' | 'paralelo' | 'forma';
   /** Elemento do SPRITE e dos golpes dele (`spriteElement.ts`): nos combinados, o id FUNDIDO (= slug da arte, ex.: fogo+agua → `vapor`); nos base, o próprio. */
   element: string;
   /** Nos combinados, os dois COMPONENTES (a tabela de vantagem é só das 17 bases); nos base, só o próprio. */
@@ -44,7 +44,7 @@ export interface RosterEntry {
   name: string;
   basico: NovoAttack;
   especial: NovoAttack;
-  /** Nos combinados: o `NNN-slug` do arquivo de arte; nos `api`: `<id>-<estágio>`; nos `ramo`: `<elemento>/<ramo>-<estágio>`; nos `paralelo`: `<id>-<estágio>`. */
+  /** Nos combinados: o `NNN-slug` do arquivo de arte; nos `api`: `<id>-<estágio>`; nos `ramo`: `<elemento>/<ramo>-<estágio>`; nos `paralelo`: `<id>-<estágio>`; nos `forma`: `NNN-slug-<estágio>`. */
   artFile?: string;
   /** Nos `api`: o nº do sprite no banco Higgsfield (rastreio). */
   bancoN?: number;
@@ -197,8 +197,34 @@ function buildParalelos(): RosterEntry[] {
   return out;
 }
 
-/** Tudo que existe (base + combinados + o corvo, que só sai pelo `withRaven` + os ramos + as formas paralelas). */
-export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos(), ...buildParalelos()];
+/**
+ * AS FORMAS DOS COMBINADOS 212-261 (dono, 09/11/2026: "usar as formas Champion/Ultimate/Mega já instaladas"): os 50 elementos curados
+ * (lotes 1-3) tinham só o rookie; os 150 PNG de `novos-arquivo/combinados-formas/` agora são a forma champion/ultimate/mega DO MESMO elemento.
+ * Só saem quando o ELEMENTO é pedido (`pickEnemy({element})`, Fenda): ficam FORA do sorteio comum de estágio, como as paralelas. Mesmas
+ * regras de abertura de estágio (champion no Lv 7, ultimate no 14, mega no 22). Golpes e componentes iguais aos do rookie. Entram no FIM
+ * do roster (o `#N` do Bestiário não muda).
+ */
+export const SUFIXO_FORMA: Readonly<Record<'champion' | 'ultimate' | 'mega', string>> = { champion: 'aris', ultimate: 'axion', mega: 'alune' };
+/** Nome proposto da forma: o do rookie sem a vogal final + sufixo do estágio (Geyzor → Geyzoraris). O dono pode vetar. */
+export const nomeDaForma = (rookie: string, stage: 'champion' | 'ultimate' | 'mega'): string => rookie.replace(/[aeiouy]+$/i, '') + SUFIXO_FORMA[stage];
+
+function buildFormasCombinados(): RosterEntry[] {
+  const out: RosterEntry[] = [];
+  for (const [num, slug, name, e1, e2] of [...COMBINADOS_LOTE1_DATA, ...COMBINADOS_LOTE2_DATA, ...COMBINADOS_LOTE3_DATA]) {
+    const base = BASE_BY_ELEMENT[e1];
+    const id = `cmb${num}`;
+    for (const stage of ['champion', 'ultimate', 'mega'] as const) {
+      out.push({
+        key: chaveBestiario(id, stage), id, stage, kind: 'forma', element: slug, elements: [e1, e2],
+        name: nomeDaForma(name, stage), basico: base.basico, especial: base.especial, artFile: `${num}-${slug}-${stage}`,
+      });
+    }
+  }
+  return out;
+}
+
+/** Tudo que existe (base + combinados + o corvo, que só sai pelo `withRaven` + os ramos + as formas paralelas + as formas dos combinados 212-261). */
+export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados()];
 export const ENEMY_ROSTER_KEYS: ReadonlySet<string> = new Set(ENEMY_ROSTER.map(e => e.key));
 const BY_KEY: ReadonlyMap<string, RosterEntry> = new Map(ENEMY_ROSTER.map(e => [e.key, e]));
 export const rosterEntryOfKey = (key: string | undefined | null): RosterEntry | undefined => (key ? BY_KEY.get(key) : undefined);
@@ -268,7 +294,7 @@ function pickEnemyComum(
     stage = open[Math.floor(rng() * open.length)];
   }
   const comRamos = Number.isFinite(level) && !opts.semRamos;
-  const have = ENEMY_ROSTER.filter(e => e.stage === stage && e.kind !== 'mascote' && e.kind !== 'paralelo' && (comRamos || e.kind !== 'ramo'));
+  const have = ENEMY_ROSTER.filter(e => e.stage === stage && e.kind !== 'mascote' && e.kind !== 'paralelo' && e.kind !== 'forma' && (comRamos || e.kind !== 'ramo'));
   const fresh = opts.used ? have.filter(e => !opts.used!.has(e.id)) : have;
   const pool = fresh.length > 0 ? fresh : have;
   const ramos = pool.filter(e => e.kind === 'ramo');

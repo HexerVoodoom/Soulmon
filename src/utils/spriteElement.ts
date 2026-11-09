@@ -104,7 +104,7 @@ export function lineElementOf(line: string | null | undefined): string | undefin
 }
 
 /** Elemento de uma entrada do roster (`RosterEntry`): base = o próprio; combinado = o id FUNDIDO (não o 1º componente); api = o escolhido. */
-export function rosterEntryElement(e: { kind: 'base' | 'combinado' | 'api' | 'mascote' | 'ramo' | 'paralelo'; id: string; element: string; artFile?: string }): string {
+export function rosterEntryElement(e: { kind: 'base' | 'combinado' | 'api' | 'mascote' | 'ramo' | 'paralelo' | 'forma'; id: string; element: string; artFile?: string }): string {
   if (e.kind === 'combinado' && e.artFile) return SPRITE_ELEMENT[`cmb:${e.artFile.split('-')[0]}`] ?? e.element;
   return e.element;
 }

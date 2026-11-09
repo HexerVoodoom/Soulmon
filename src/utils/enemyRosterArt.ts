@@ -60,6 +60,13 @@ export const RAMOS_ART: Readonly<Record<string, string>> = Object.fromEntries(
 
 const PARALELOS_FILES = import.meta.glob('../assets/soulmon/novos-arquivo/paralelos/*.png', { eager: true, import: 'default' }) as Record<string, string>;
 
+const FORMAS_FILES = import.meta.glob('../assets/soulmon/novos-arquivo/combinados-formas/*.png', { eager: true, import: 'default' }) as Record<string, string>;
+
+/** ARTE das 150 formas champion/ultimate/mega dos combinados 212-261 (09/11/2026). Chave = `NNN-slug-<estágio>` (`RosterEntry.artFile`). */
+export const FORMAS_ART: Readonly<Record<string, string>> = Object.fromEntries(
+  Object.entries(FORMAS_FILES).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1).replace(/\.png$/, ''), url]),
+);
+
 /** ARTE das 10 formas paralelas (09/11/2026). Chave = `<id>-<estágio>` (`RosterEntry.artFile`). */
 export const PARALELOS_ART: Readonly<Record<string, string>> = Object.fromEntries(
   Object.entries(PARALELOS_FILES).map(([path, url]) => [path.slice(path.lastIndexOf('/') + 1).replace(/.png$/, ''), url]),

@@ -37,7 +37,7 @@ export function arenaCardSeeds(draw: () => number, n = 3): number[] {
   return out;
 }
 
-export const STRAY_ROSTER: readonly RosterEntry[] = ENEMY_ROSTER.filter(e => isStrayFoe(e.stage) && e.kind !== 'combinado' && e.kind !== 'ramo' && e.kind !== 'paralelo');
+export const STRAY_ROSTER: readonly RosterEntry[] = ENEMY_ROSTER.filter(e => isStrayFoe(e.stage) && e.kind !== 'combinado' && e.kind !== 'ramo' && e.kind !== 'paralelo' && e.kind !== 'forma');
 /** §221 (dono, 04/11/2026): os ramos evoluídos ULTIMATE/MEGA também podem ser o Desgarrado do Torneio (forma alta; champion fica de fora). */
 export const STRAY_RAMOS: readonly RosterEntry[] = ENEMY_ROSTER.filter(e => isStrayFoe(e.stage) && e.kind === 'ramo');
 

@@ -159,7 +159,7 @@ describe('arquivo de ramos e combinados (fora do bundle salvo pelo enemyRosterAr
       e.isDirectory() ? (e.name === 'assets' ? [] : walk(join(d, e.name))) : /\.(ts|tsx)$/.test(e.name) ? [join(d, e.name)] : []);
     for (const f of walk(join(process.cwd(), 'src'))) {
       if (f.endsWith('novosSoulmon.test.ts')) continue;
-      if (/enemyRoster(Art|Data)?\.ts$/.test(f)) continue; // M10: `enemyRosterArt.ts` é o ÚNICO consumidor (glob dos combinados e, §220, dos 120 ramos; `combinados-formas/` segue sem consumidor); os outros só citam o caminho em comentário
+      if (/enemyRoster(Art|Data)?\.ts$/.test(f)) continue; // M10: `enemyRosterArt.ts` é o ÚNICO consumidor (glob dos combinados e, §220, dos 120 ramos; `combinados-formas/` é lido por `FORMAS_ART`, 09/11/2026); os outros só citam o caminho em comentário
       expect(readFileSync(f, 'utf8'), f).not.toContain('novos-arquivo');
     }
   });

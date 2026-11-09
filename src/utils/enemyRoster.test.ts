@@ -8,7 +8,7 @@ import { NOVOS_DATA, FORMAS_ALTAS } from './novosSoulmonData';
 import { RAMOS_INIMIGOS_DATA } from './enemyRosterData';
 import { newBossCombat } from './match3Boss';
 import { SPRITE_ELEMENT, rosterEntryElement } from './spriteElement';
-import { COMBINADOS_ART, INIMIGOS_API_ART, PARALELOS_ART, RAMOS_ART } from './enemyRosterArt';
+import { COMBINADOS_ART, INIMIGOS_API_ART, FORMAS_ART, PARALELOS_ART, RAMOS_ART } from './enemyRosterArt';
 import { INIMIGOS_API_DATA } from './enemyRosterData';
 import { rosterSpriteOf } from './novosSoulmon';
 import { buildDungeonWave } from './dungeon';
@@ -24,8 +24,8 @@ import { isStrayFoe } from './wildFoeLabel';
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
 
 describe('roster de inimigos (M10): cobertura', () => {
-  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) + 10 formas paralelas (09/11) = 483 entradas, chaves únicas', () => {
-    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120 + 10);
+  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) + 10 formas paralelas + 150 formas dos combinados 212-261 (09/11) = 633 entradas, chaves únicas', () => {
+    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120 + 10 + 150);
     expect(ENEMY_ROSTER_KEYS.size).toBe(ENEMY_ROSTER.length);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'combinado').every(e => e.stage === 'rookie' && e.elements.length === 2)).toBe(true);
   });
@@ -280,7 +280,7 @@ describe('formas paralelas de champion/ultimate (09/11/2026)', () => {
   const ELS = ['agua', 'industrial', 'chama_azul', 'brinquedo', 'raiz_profunda'];
   it('10 entradas (5 elementos × champion/ultimate), no fim do roster, com arte, elemento certo e nome único sem -mon', () => {
     expect(par).toHaveLength(10);
-    expect(ENEMY_ROSTER.slice(-10)).toEqual(par);
+    expect(ENEMY_ROSTER.slice(-160, -150)).toEqual(par);
     expect(new Set(par.map(e => e.element))).toEqual(new Set(ELS));
     for (const e of par) {
       expect(['champion', 'ultimate']).toContain(e.stage);
@@ -339,5 +339,42 @@ describe('formas paralelas de champion/ultimate (09/11/2026)', () => {
       contagens.add(a.n);
     }
     expect(contagens.size).toBeLessThanOrEqual(3);
+  });
+});
+
+describe('formas champion/ultimate/mega dos combinados 212-261 (09/11/2026)', () => {
+  const formas = ENEMY_ROSTER.filter(e => e.kind === 'forma');
+  it('150 entradas (50 elementos × 3), no fim do roster, com arte própria, nome único e elemento do rookie', () => {
+    expect(formas).toHaveLength(150);
+    expect(ENEMY_ROSTER.slice(-150)).toEqual(formas);
+    expect(new Set(formas.map(e => e.element)).size).toBe(50);
+    expect(new Set(formas.map(e => e.name)).size).toBe(150);
+    expect(new Set(formas.map(e => rosterSpriteOf(e))).size).toBe(150);
+    const nomes = ENEMY_ROSTER.map(e => e.name);
+    for (const e of formas) {
+      expect(rosterSpriteOf(e), e.key).toBe(FORMAS_ART[e.artFile!]);
+      expect(nomes.filter(n => n === e.name), e.name).toHaveLength(1);
+      const rookie = ENEMY_ROSTER.find(r => r.kind === 'combinado' && r.id === e.id)!;
+      expect(e.element).toBe(rookie.element);
+      expect(e.elements).toEqual(rookie.elements);
+      expect(e.basico).toEqual(rookie.basico);
+    }
+  });
+  it('fora do sorteio comum e do Desgarrado: nunca saem sem o elemento pedido', () => {
+    for (let seed = 1; seed <= 2000; seed++) for (const st of ['champion', 'ultimate', 'mega'] as const) {
+      expect(pickEnemy(40, mulberry32(seed), { stage: st }).kind).not.toBe('forma');
+    }
+    for (let d = 1; d <= 300; d++) expect(strayForTournament('conta', `2026-11-${d}`).kind).not.toBe('forma');
+  });
+  it('com o elemento pedido: champion no Lv 7, ultimate no 14, mega no 22; antes disso, rookie; nunca outro elemento', () => {
+    for (const el of new Set(formas.map(e => e.element))) {
+      const quando: Array<[number, 'rookie' | 'champion' | 'ultimate' | 'mega']> = [[3, 'rookie'], [7, 'champion'], [14, 'ultimate'], [22, 'mega']];
+      for (const [lv, st] of quando) {
+        const e = pickEnemy(lv, mulberry32(5), { element: el, stage: 'mega' });
+        expect(e.element, el).toBe(el);
+        expect(e.stage, `${el} Lv${lv}`).toBe(st);
+        expect(e.kind).toBe(st === 'rookie' ? 'combinado' : 'forma');
+      }
+    }
   });
 });

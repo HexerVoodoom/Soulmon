@@ -79,3 +79,26 @@ describe('Chama Azul nunca mais mostra o urso marrom (09/11/2026)', () => {
     expect(new Set(hashes).size).toBe(10);
   });
 });
+
+describe('Fenda: as formas dos combinados 212-261 (09/11/2026)', () => {
+  const els = [...new Set(ENEMY_ROSTER.filter(e => e.kind === 'forma').map(e => e.element))];
+  it('50 elementos; a camada de cada um, com Lv alto, mostra rookie, champion, ultimate e mega só dele, com arte', () => {
+    expect(els).toHaveLength(50);
+    for (const el of els) {
+      const layer = ELEMENTOS_DA_MASMORRA.indexOf(el) * 2 + 1;
+      const w = dungeonWaveOf(7, layer, 40, 'mega');
+      const estagios = new Set<string>();
+      for (const f of w) {
+        expect(f.element, `${el} camada ${layer}`).toBe(el);
+        expect(f.sprite).toBeTruthy();
+        estagios.add(f.stage.split('-').pop()!);
+      }
+      expect([...estagios].sort(), el).toEqual(['champion', 'mega', 'rookie', 'ultimate']);
+    }
+  });
+  it('as 150 formas têm PNG distinto do rookie e entre si', () => {
+    const hashes = new Set<string>();
+    for (const e of ENEMY_ROSTER.filter(x => x.kind === 'forma')) hashes.add(sha(path.join(ART, 'combinados-formas', e.artFile + '.png')));
+    expect(hashes.size).toBe(150);
+  });
+});
