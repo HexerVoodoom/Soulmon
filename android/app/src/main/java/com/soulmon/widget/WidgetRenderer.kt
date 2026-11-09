@@ -138,6 +138,8 @@ object WidgetRenderer {
 
     private fun spriteBitmap(context: Context, spriteId: Int, sizeDp: Int, maxPx: Int = Int.MAX_VALUE): Bitmap? {
         val px = (sizeDp * context.resources.displayMetrics.density).toInt().coerceIn(1, maxPx)
+        // O sprite PRÓPRIO do jogador (gerado/equipado) vence o inicial de reserva.
+        WidgetOwnSprite.load(context, px)?.let { return it }
         return try {
             val opts = BitmapFactory.Options().apply { inScaled = false }
             val raw = BitmapFactory.decodeResource(context.resources, spriteId, opts) ?: return null
@@ -375,7 +377,12 @@ object WidgetRenderer {
      * Widget "Soulmon" (transparent): no background at all, the creature straight on the wallpaper.
      * Text is white with a tight black shadow; only the speech line sits in a low-opacity rounded box.
      */
-    fun renderClear(context: Context, mgr: AppWidgetManager, appWidgetId: Int) {
+    fun renderClear(
+        context: Context,
+        mgr: AppWidgetManager,
+        appWidgetId: Int,
+        options: Bundle = mgr.getAppWidgetOptions(appWidgetId),
+    ) {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val spriteId = resolveSprite(
             context,
@@ -383,23 +390,52 @@ object WidgetRenderer {
             prefs.getString("egg_type", "") ?: "",
             prefs.getString("branch_type", "data") ?: "data",
         )
-        val views = RemoteViews(context.packageName, R.layout.widget_soulmon_clear)
         val sprite = spriteBitmap(context, spriteId, 96, 256)
-        if (sprite != null) {
-            views.setImageViewBitmap(R.id.widget_sprite, sprite)
-            views.setImageViewBitmap(R.id.widget_sprite_2, sprite)
-        } else {
-            views.setImageViewResource(R.id.widget_sprite, spriteId)
-            views.setImageViewResource(R.id.widget_sprite_2, spriteId)
-        }
         val petName = prefs.getString("pet_name", "Soulmon") ?: "Soulmon"
         val counter = taskCounter(prefs.getInt("completed_tasks", 0), prefs.getInt("total_tasks", 0))
-        views.setTextViewText(
-            R.id.widget_pet_name,
-            if (counter != null) context.getString(R.string.widget_name_count, petName, counter) else petName,
-        )
-        views.setTextViewText(R.id.widget_message, adaptiveLine(context))
-        attachClick(context, views)
+        val line = adaptiveLine(context)
+
+        fun build(compact: Boolean): RemoteViews {
+            val views = RemoteViews(
+                context.packageName,
+                if (compact) R.layout.widget_soulmon_clear_compact else R.layout.widget_soulmon_clear,
+            )
+            if (sprite != null) {
+                views.setImageViewBitmap(R.id.widget_sprite, sprite)
+                views.setImageViewBitmap(R.id.widget_sprite_2, sprite)
+            } else {
+                views.setImageViewResource(R.id.widget_sprite, spriteId)
+                views.setImageViewResource(R.id.widget_sprite_2, spriteId)
+            }
+            if (compact) {
+                // 1x1: só a criatura. O nome vai como descrição para o leitor de tela.
+                views.setContentDescription(R.id.widget_root, petName)
+            } else {
+                views.setTextViewText(
+                    R.id.widget_pet_name,
+                    if (counter != null) context.getString(R.string.widget_name_count, petName, counter) else petName,
+                )
+                views.setTextViewText(R.id.widget_message, line)
+            }
+            attachClick(context, views)
+            return views
+        }
+
+        val views = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            RemoteViews(
+                mapOf(
+                    SizeF(40f, 40f) to build(true),
+                    SizeF(WidgetAdaptive.COMPACT_MIN_WIDTH_DP.toFloat(), WidgetAdaptive.COMPACT_MIN_HEIGHT_DP.toFloat()) to build(false),
+                ),
+            )
+        } else {
+            build(
+                WidgetAdaptive.isCompact(
+                    options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH),
+                    options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT),
+                ),
+            )
+        }
         mgr.updateAppWidget(appWidgetId, views)
     }
 
@@ -466,7 +502,7 @@ object WidgetRenderer {
         val side = minOf(sp.w, sp.h)
         val sx = sp.l + (sp.w - side) / 2
         val sy = sp.b - side
-        BitmapFactory.decodeResource(context.resources, spriteId, raw)?.let {
+        (WidgetOwnSprite.load(context, 256) ?: BitmapFactory.decodeResource(context.resources, spriteId, raw))?.let {
             c.drawBitmap(it, null, Rect(sx, sy, sx + side, sy + side), crisp)
             it.recycle()
         }

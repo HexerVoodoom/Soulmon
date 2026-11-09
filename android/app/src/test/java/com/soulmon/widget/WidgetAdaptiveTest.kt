@@ -40,6 +40,27 @@ class WidgetAdaptiveTest {
         assertEquals(Message.SUPPORT, msg(task = "   ", completed = 1, total = 3))
     }
 
+    @Test fun clearWidgetIsCompactBelowThreshold() {
+        assertEquals(true, WidgetAdaptive.isCompact(40, 40))
+        assertEquals(true, WidgetAdaptive.isCompact(110, 110))
+        assertEquals(true, WidgetAdaptive.isCompact(180, 60))
+        assertEquals(false, WidgetAdaptive.isCompact(180, 90))
+        assertEquals(false, WidgetAdaptive.isCompact(140, 70))
+        assertEquals(false, WidgetAdaptive.isCompact(0, 0))
+    }
+
+    @Test fun ownSpritePolicyIsAllowlistOnly() {
+        val p = WidgetOwnSprite.Policy
+        assertEquals(true, p.isAllowed("https://images.higgs.ai/x.png"))
+        assertEquals(true, p.isAllowed("data:image/png;base64,AAAA"))
+        assertEquals(false, p.isAllowed("http://images.higgs.ai/x.png"))
+        assertEquals(false, p.isAllowed("https://evil.example/x.png"))
+        assertEquals(false, p.isAllowed("https://images.higgs.ai@evil.example/x.png"))
+        assertEquals(false, p.isAllowed("https://x.images.higgs.ai/x.png"))
+        assertEquals(false, p.isAllowed("file:///etc/passwd"))
+        assertEquals(false, p.isAllowed(""))
+    }
+
     @Test fun shapeFollowsSize() {
         assertEquals(Shape.SQUARE, WidgetAdaptive.chooseShape(40, 40))
         assertEquals(Shape.SQUARE, WidgetAdaptive.chooseShape(130, 130))

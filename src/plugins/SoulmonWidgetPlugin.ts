@@ -2,6 +2,7 @@ import { registerPlugin } from '@capacitor/core';
 import { soulmonDisplayName } from '../utils/petName';
 import { spriteLineOf, CORVO_LINE, type CorvoCarrier } from '../utils/corvoPet';
 import { resolveArtLineId, isStarterId, type StarterId } from '../utils/sprites';
+import { isSafeSpriteUrl } from '../utils/spriteLibrary';
 import { groveStageAt, type GroveLocal } from '../utils/groveLocal';
 import { GROVE_STAGES, type GroveStageId } from '../utils/guildRules';
 import { activitiesForWeekDay, habitWeightOf } from '../utils/dailyReset';
@@ -37,6 +38,17 @@ export function widgetPetLine(state: CorvoCarrier): '' | typeof CORVO_LINE | Sta
   const line = resolveArtLineId(spriteLineOf(state));
   if (line === CORVO_LINE) return CORVO_LINE;
   return isStarterId(line) ? line : '';
+}
+
+/**
+ * O sprite PRÓPRIO que o widget copia (a criatura que o jogador vê na Home), ou `''`.
+ * Só `https:` / `data:image` (asset empacotado do Vite — caminho de raiz — não é "próprio": o widget já
+ * tem os iniciais e o corvo). Corvo (arte fixa) também vai vazio. O Kotlin refaz a allowlist de host.
+ * Antes disto o widget mostrava o inicial por hash ("Crato") a quem tinha criatura gerada.
+ */
+export function widgetOwnSpriteUrl(url: string | undefined | null, isCorvoPet: boolean): string {
+  if (isCorvoPet || typeof url !== 'string') return '';
+  return isSafeSpriteUrl(url) ? url.trim() : '';
 }
 
 /**
@@ -137,6 +149,8 @@ export interface DigiWidgetData {
   needsIntervention?: boolean;
   /** `'corvo'`, id de inicial ou `''` (vazio = o plugin remove `pet_line`). Ver `widgetPetLine`. */
   petLine?: '' | typeof CORVO_LINE | StarterId;
+  /** Sprite PRÓPRIO do jogador (https ou data:image) ou `''` (vazio = o widget volta ao inicial). Ver `widgetOwnSpriteUrl`. */
+  petSpriteUrl?: string;
   /** Id do estágio do Bosque ou `''` (vazio = o plugin remove `grove_stage`). Ver `widgetGroveStage`. */
   groveStage?: '' | GroveStageId;
   /* REGISTRO §221, widget redimensionável. Opcionais: APK velho ignora; ausente = o plugin remove. */

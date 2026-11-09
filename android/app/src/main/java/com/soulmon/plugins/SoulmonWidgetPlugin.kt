@@ -1,6 +1,7 @@
 package com.soulmon.plugins
 
 import android.content.Context
+import com.soulmon.widget.WidgetOwnSprite
 import com.soulmon.widget.WidgetRenderer
 import com.soulmon.widget.WidgetVpet
 import com.getcapacitor.Plugin
@@ -115,6 +116,10 @@ class SoulmonWidgetPlugin : Plugin() {
         if (WidgetVpet.frameDrawableName(vpetFrame) != null) editor.putString("vpet_frame", vpetFrame) else editor.remove("vpet_frame")
 
         editor.apply()
+
+        // O sprite PRÓPRIO (gerado/equipado): baixa/guarda em segundo plano; vazio apaga e volta ao inicial.
+        // A allowlist de host/esquema vive em WidgetOwnSprite.Policy.
+        WidgetOwnSprite.sync(ctx, call.getString("petSpriteUrl"))
 
         // Push update to all active widget instances (all 3 variants)
         WidgetRenderer.updateAll(ctx)
