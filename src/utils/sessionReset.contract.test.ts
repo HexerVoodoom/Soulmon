@@ -29,7 +29,7 @@ const ESPERADO = [
 ].sort();
 
 /** Telemetria que é da CONTA (derivada de tier/atividade) e por isso sai. */
-const TELEMETRIA_DA_CONTA = ['soulmon-telemetry-tier', 'soulmon-telemetry-week'];
+const TELEMETRIA_DA_CONTA = ['soulmon-telemetry-tier', 'soulmon-telemetry-week', 'soulmon-telemetry-usage'];
 
 describe('allowlist do que sobrevive ao logout', () => {
   it('é exatamente a lista aprovada', () => {
