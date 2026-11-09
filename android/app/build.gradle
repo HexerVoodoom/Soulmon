@@ -103,6 +103,7 @@ dependencies {
     // relatório 05-plataforma-r1, mas as notes já listam 8.2.0/8.2.1/8.3.0).
     // Conferir no Maven antes do AAB. Guard textual: src/plugins/billingPbl8.contract.test.ts
     implementation "com.android.billingclient:billing-ktx:8.3.0"
+    implementation "com.google.android.play:review:2.0.2"
     implementation project(':capacitor-android')
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"

@@ -15,6 +15,8 @@
 import { readLocal, writeLocal } from './safeStorage';
 
 export const STORAGE_KEYS = {
+  /** Pedido de avaliação na Play (aparelho): `{accepted?:true,lastAskedAt?:ms}`. Ver `utils/playReview.ts`. */
+  PLAY_REVIEW: 'soulmon-play-review',
   GAME_STATE: 'soulmon_state_v1',
   /** WP0.10 — dia do último dia ruim, para fechar `after_bad_day` NO APARELHO.
    *  Esta chave nunca é enviada: o que sai é uma FAIXA de distância, e é por
