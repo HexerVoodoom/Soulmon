@@ -75,7 +75,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
                 if (!confirm) { setConfirm(true); return; }
                 if (sel) { onCraft(sel); setConfirm(false); setDone(sel); setPicked(null); }
               }}>
-              <UiIcon name="science" size={22} tone="inherit" />
+              <UiIcon name="auto_awesome" size={22} tone="inherit" />
               <span>{label}</span>
               {sel && <Icon id={sel} size={24} />}
             </button>
