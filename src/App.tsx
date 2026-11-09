@@ -676,8 +676,9 @@ const XpGainDisplay = lazy(() => import('./components/XpGainDisplay').then(m => 
 const HelpModal = lazy(() => import('./components/HelpModal').then(m => ({ default: m.HelpModal })));
 const ElementPotionSheet = lazy(() => import('./components/ElementPotionSheet').then(m => ({ default: m.ElementPotionSheet })));
 import { applyPotionOnEvolve, craftPotion, canAffordPotion, isPotionUnlocked, essenceThresholdCrossings, readVescaOffered, writeVescaOffered, POTION_COSTS } from './utils/elementPotion';
-import { VescaPotionOffer } from './components/VescaPotionOffer';
-import { EssencesSection } from './components/EssencesSection';
+// Oferta da Vesca: só monta com 100 essências; a copy dos prédios (→ areaNpcVoice → guildCopy) fica fora da entrada.
+const VescaPotionOffer = lazy(() => import('./components/VescaPotionOffer').then(m => ({ default: m.VescaPotionOffer })));
+const EssencesSection = lazy(() => import('./components/EssencesSection').then(m => ({ default: m.EssencesSection })));
 const DreamDex = lazy(() => import('./components/DreamDex').then(m => ({ default: m.DreamDex })));
 const AdventureDiary = lazy(() => import('./components/AdventureDiary').then(m => ({ default: m.AdventureDiary })));
 
@@ -7844,7 +7845,7 @@ export default function App() {
           {/* ESSÊNCIAS dos elementos (28/10/2026, REGISTRO §183): logo abaixo dos Sonhos; só as com quantidade > 0; só coleta. */}
           {labTab === 'pet' && Object.keys(gameState.essences ?? {}).length > 0 && (
             <div style={{ marginTop: 16 }}>
-              <EssencesSection essences={gameState.essences} language={language} />
+              <Suspense fallback={null}><EssencesSection essences={gameState.essences} language={language} /></Suspense>
             </div>
           )}
 
@@ -9390,9 +9391,13 @@ export default function App() {
       )}
 
       {/* Vesca: oferta da poção ao juntar 100 essências de um elemento base (08/11/2026). */}
-      <VescaPotionOffer language={language} elementId={vescaQueue[0] ?? null} key={vescaQueue[0] ?? 'none'}
+      {vescaQueue[0] && (
+        <Suspense fallback={null}>
+          <VescaPotionOffer language={language} elementId={vescaQueue[0]} key={vescaQueue[0]}
             onMake={(id) => { if (canAffordPotion(gameState.essences, id, gameState.foodInventory)) setGameState(prev => craftPotion(prev, id)); }}
             onDismiss={() => setVescaQueue(q => q.slice(1))} />
+        </Suspense>
+      )}
       {/* P4 — a tela de antes/depois. Nunca monta sozinha: só por gesto no
           convite acima, e aplicar exige confirmação dentro dela. */}
       {balanceOpen && (

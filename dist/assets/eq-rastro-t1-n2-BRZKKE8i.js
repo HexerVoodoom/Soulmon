@@ -1,1 +1,1 @@
-const s="/assets/eq-rastro-t1-n2-CsQgXQOh.png";export{s as default};
+const s="/assets/eq-rastro-t1-n2-CsQgXQOh.webp";export{s as default};

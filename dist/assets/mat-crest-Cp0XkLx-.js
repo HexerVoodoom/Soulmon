@@ -1,1 +1,1 @@
-const t="/assets/mat-crest-DbnKFVkT.png";export{t as default};
+const t="/assets/mat-crest-DbnKFVkT.webp";export{t as default};

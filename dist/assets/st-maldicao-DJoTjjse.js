@@ -1,1 +1,1 @@
-const a="/assets/st-maldicao-o33n5mWW.png";export{a as default};
+const a="/assets/st-maldicao-o33n5mWW.webp";export{a as default};

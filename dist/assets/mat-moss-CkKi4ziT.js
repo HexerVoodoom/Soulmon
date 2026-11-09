@@ -1,1 +1,1 @@
-const s="/assets/mat-moss-BPb4Gjbb.png";export{s as default};
+const s="/assets/mat-moss-BPb4Gjbb.webp";export{s as default};

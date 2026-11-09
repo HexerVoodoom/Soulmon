@@ -1,1 +1,1 @@
-const a="/assets/fx-maldicao-loop-sheet-UZXwaNgX.png";export{a as default};
+const a="/assets/fx-maldicao-loop-sheet-UZXwaNgX.webp";export{a as default};

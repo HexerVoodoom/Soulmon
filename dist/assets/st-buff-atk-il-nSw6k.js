@@ -1,1 +1,1 @@
-const t="/assets/st-buff-atk-GnAylpRF.png";export{t as default};
+const t="/assets/st-buff-atk-GnAylpRF.webp";export{t as default};

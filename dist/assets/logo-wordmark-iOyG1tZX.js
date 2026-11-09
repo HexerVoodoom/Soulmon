@@ -1,1 +1,1 @@
-const o="/assets/logo-wordmark-C2PWLpMV.png";export{o as l};
+const o="/assets/logo-wordmark-C2PWLpMV.webp";export{o as l};

@@ -1,1 +1,1 @@
-const a="/assets/gate-arena-CJJsz8ta.png";export{a as default};
+const a="/assets/gate-arena-CJJsz8ta.webp";export{a as default};
