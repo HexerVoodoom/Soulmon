@@ -38,7 +38,7 @@ Não achei outro caso por regra mecânica; o julgamento é visual e só 009 é f
 
 ## 5. O que falta gerar (só com decisão do dono)
 
-1. Embaha / Chama Azul com **cor azul** (REGISTRO §254, fila `ASSETS-A-GERAR` §29). Nenhum outro Blue Flame existe: o único é o 009.
+1. Embaha / Chama Azul com **cor azul** (REGISTRO §255, fila `ASSETS-A-GERAR` §29). Nenhum outro Blue Flame existe: o único é o 009.
 2. 6 rookies do lote 4 (acima).
 3. Se o dono quer mais de 1 exclusivo por combinado: só rookie existe hoje; 50 combinados já têm champion/ultimate/mega prontos e instalados, falta **ligar** ao roster (decisão de escopo, não arte).
 4. Se o dono quer Ultra de inimigo selvagem: o roster não sorteia ultra por desenho; mudar isso é decisão de regra (afeta balanceamento), a arte dos 20 Ultra já está instalada.

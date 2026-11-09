@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * BIBLIOTECA EM 4 ABAS (27/10/2026, D-01/D-02/D-05/D-06): Encontrados (a lista de sempre), Selvagem, Desgarrado e Elemento.
+ * BIBLIOTECA EM 4 ABAS (27/10/2026, D-01/D-02/D-05/D-06): Encontrados (a lista de sempre), Selvagens (Selvagem + Desgarrado numa lista só, §254) e Elemento.
  * O dex de elementos começa trancado: "?" sem nome e sem ícone — nem no aria.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -44,20 +44,24 @@ describe('LibraryPage — abas do Hall', () => {
     expect(screen.getByRole('tab', { name: 'Wild' }).getAttribute('aria-selected')).toBe('true');
   });
 
-  it('Selvagem × Desgarrado dividem o roster pela regra de estágio, com contagem e silhueta', () => {
-    const vistoSelvagem = ENEMY_ROSTER.find(e => !isStrayFoe(e.stage))!;
-    render({ bestiary: [vistoSelvagem.key] });
+  it('Selvagens: UMA lista só, rookie → champion → ultimate → mega, com subtítulo por estágio, contagem e silhueta', () => {
+    const visto = ENEMY_ROSTER.find(e => !isStrayFoe(e.stage))!;
+    render({ bestiary: [visto.key] });
     fireEvent.click(screen.getByRole('tab', { name: 'Wild' }));
-    const totalSelvagem = ENEMY_ROSTER.filter(e => !isStrayFoe(e.stage)).length;
-    const totalDesgarrado = ENEMY_ROSTER.filter(e => isStrayFoe(e.stage)).length;
-    // Selvagem e Desgarrado moram na MESMA aba (28/10/2026): duas seções, cada uma com a sua contagem.
-    expect(document.querySelector('[data-bestiary="wild"] [data-bestiary-count]')!.textContent).toBe(`1 / ${totalSelvagem}`);
-    expect(document.querySelectorAll('[data-bestiary="wild"] [data-bestiary-cell]').length).toBe(totalSelvagem);
-    expect(document.querySelector(`[data-bestiary-cell="${vistoSelvagem.key}"]`)!.getAttribute('data-seen')).toBe('1');
+    expect(document.querySelectorAll('[data-bestiary]').length).toBe(1);
+    expect(document.querySelector('[data-bestiary="stray"]')).toBeNull();
+    expect(document.querySelector('[data-bestiary-count]')!.textContent).toBe(`1 / ${ENEMY_ROSTER.length}`);
+    const cells = [...document.querySelectorAll('[data-bestiary-cell]')].map(c => c.getAttribute('data-bestiary-cell')!);
+    expect(cells.length).toBe(ENEMY_ROSTER.length);
+    const ordem = ['rookie', 'champion', 'ultimate', 'mega'];
+    const idx = cells.map(k => ordem.indexOf(ENEMY_ROSTER.find(e => e.key === k)!.stage));
+    expect(idx).toEqual([...idx].sort((x, y) => x - y));
+    // ultimate e mega agora estão na mesma lista, sob o próprio subtítulo
+    expect([...document.querySelectorAll('[data-bestiary-stage]')].map(g => g.getAttribute('data-bestiary-stage'))).toEqual(ordem);
+    expect(document.querySelectorAll('[data-bestiary-stage="mega"] [data-bestiary-cell]').length).toBe(ENEMY_ROSTER.filter(e => e.stage === 'mega').length);
+    expect(document.querySelector(`[data-bestiary-cell="${visto.key}"]`)!.getAttribute('data-seen')).toBe('1');
     expect(document.body.textContent).toContain('???');
-    expect(document.querySelector('[data-bestiary="stray"] [data-bestiary-count]')!.textContent).toBe(`0 / ${totalDesgarrado}`);
-    expect(document.querySelector(`[data-bestiary="stray"] [data-bestiary-cell="${vistoSelvagem.key}"]`)).toBeNull();
-    expect(document.body.textContent).not.toMatch(/%|faltam|left to find/i);
+    expect(document.body.textContent).not.toMatch(/Desgarrado|Stray|%|faltam|left to find/i);
   });
 
   it('Elemento: tudo trancado ("?" sem nome, ícone nem id no DOM) e destranca por defeatedElements', () => {
