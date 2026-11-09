@@ -1081,3 +1081,23 @@ main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recurs
 }
 @keyframes foco-sobe { from { opacity: 0; transform: translateY(48px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .ciclo.foco .demo-cena { animation: none; } }
+
+/* 09/11: versão B — sorteio do Rookie e companheiro fixo que evolui com o scroll */
+.meu-soulmon { text-align: center; display: grid; justify-items: center; gap: 12px; padding: 48px 16px; }
+.meu-palco { position: relative; width: 192px; height: 192px; }
+.meu-palco .sprite { width: 192px; height: 192px; image-rendering: pixelated; }
+.meu-sombra { filter: brightness(0) opacity(.55); }
+.meu-info { min-height: 48px; }
+.companheiro { position: fixed; right: 12px; bottom: calc(96px + env(safe-area-inset-bottom)); z-index: calc(var(--sb-z-cta) + 1); width: 96px; height: 96px; cursor: pointer; filter: drop-shadow(0 4px 0 rgba(0,0,0,.45)); animation: comp-flutua 2.4s steps(6) infinite; }
+.companheiro[hidden] { display: none; }
+.companheiro .sprite { width: 96px; height: 96px; image-rendering: pixelated; position: relative; z-index: 1; }
+@media (min-width: 1024px) { .companheiro { width: 128px; height: 128px; right: 24px; } .companheiro .sprite { width: 128px; height: 128px; } }
+.comp-clarao { position: absolute; inset: -20%; border-radius: 50%; background: radial-gradient(circle, rgba(95,243,224,.95), rgba(41,201,184,.4) 45%, transparent 70%); opacity: 0; z-index: 2; pointer-events: none; }
+.companheiro.evoluindo .comp-clarao { animation: comp-clarao 1.4s ease-out; }
+.companheiro.evoluindo .sprite { animation: comp-treme .35s steps(2) 2; }
+.comp-chama { position: absolute; bottom: 10%; width: 18px; height: 24px; z-index: 3; image-rendering: pixelated; pointer-events: none; opacity: 0; animation: comp-chama 1.1s steps(8) both; }
+@keyframes comp-chama { 0% { opacity: 0; transform: translateY(0) scale(.6); } 20% { opacity: 1; } 100% { opacity: 0; transform: translateY(-90px) scale(1.2); } }
+@keyframes comp-clarao { 0%, 30% { opacity: 0; } 50% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes comp-treme { 50% { transform: translateX(3px); } }
+@keyframes comp-flutua { 50% { transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) { .companheiro { animation: none; } }

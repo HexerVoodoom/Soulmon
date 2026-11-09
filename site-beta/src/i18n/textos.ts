@@ -7,6 +7,7 @@ export type Lang = 'pt' | 'en';
 
 const pt = {
   html: 'pt-BR', idioma: 'pt-BR', home: `${B}/`, priv: `${B}/privacidade/`, outraHome: `${B}/en/`, outraPriv: `${B}/en/privacy/`, outraNome: 'English', outraCod: 'en',
+  vb: { h2: 'Sorteie seu Soulmon', tx: 'Ele vai com você pelo site e evolui enquanto você rola.', sortear: 'Sortear', outro: 'Sortear outro', evoluiu: 'evoluiu para' },
   titulo: 'Soulmon: criaturas que evoluem com suas tarefas', desc: 'Jogo de criaturas para Android. Conclua tarefas do seu dia e veja seu Soulmon ganhar novas formas. Entre no beta.',
   pular: 'Pular para o conteúdo', logoAlt: 'Soulmon', logoTopo: 'Soulmon, voltar ao topo',
   h1: 'Agora você tem mais motivação para evoluir na vida real.', cta: 'Entrar no beta', ctaEspera: 'Entrar na fila',
@@ -128,6 +129,7 @@ const pt = {
 
 const en: typeof pt = {
   html: 'en', idioma: 'en', home: `${B}/en/`, priv: `${B}/en/privacy/`, outraHome: `${B}/`, outraPriv: `${B}/privacidade/`, outraNome: 'Português', outraCod: 'pt-BR',
+  vb: { h2: 'Draw your Soulmon', tx: 'It comes along as you scroll and evolves on the way.', sortear: 'Draw', outro: 'Draw another', evoluiu: 'evolved into' },
   titulo: 'Soulmon: creatures that evolve with your tasks', desc: 'A creature game for Android. Finish tasks from your day and watch your Soulmon take on new forms. Join the beta.',
   pular: 'Skip to content', logoAlt: 'Soulmon', logoTopo: 'Soulmon, back to top',
   h1: 'Now you have more motivation to grow in real life.', cta: 'Join the beta', ctaEspera: 'Join the line',

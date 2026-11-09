@@ -320,6 +320,53 @@ function sorteio() {
   });
 }
 
+// ---------- Versão B: sorteio do Rookie e companheiro que evolui rolando (dono, 09/11) ----------
+function companheiro() {
+  const raiz = $('[data-comp]'); const comp = $('[data-companheiro]'); if (!raiz || !comp) return;
+  const linhas = JSON.parse(raiz.dataset.linhas!) as string[]; const formas = JSON.parse(raiz.dataset.formas!) as string[];
+  const nomes = JSON.parse(raiz.dataset.nomes!) as string[]; const els = JSON.parse(raiz.dataset.els!) as Record<string, string>;
+  const base = raiz.dataset.base!; const img = $<HTMLImageElement>('[data-meu-img]', raiz)!; const sombra = $('[data-meu-sombra]', raiz)!;
+  const info = $('[data-meu-info]', raiz)!; const bt = $<HTMLButtonElement>('[data-meu-sortear]', raiz)!; const cimg = $<HTMLImageElement>('[data-comp-img]', comp)!;
+  let lin = ''; let ant = -1; let estagio = 0; let alvo = 0; let correndo = false;
+  const src = (l: string, k: number) => `${base}${l}-${formas[k]}.webp`;
+  const rotulo = () => `${raiz.dataset.alt} ${els[lin] ?? lin}, ${nomes[estagio]}`;
+  // Quatro pontos de evolução espalhados pelas seções depois do sorteio.
+  const secoes = $$('main section').filter((x) => x !== raiz && (raiz.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING));
+  const marcos = [1, 2, 3, 4].map((k) => secoes[Math.min(secoes.length - 1, Math.round((k * (secoes.length - 1)) / 4))]).filter(Boolean);
+  const avaliar = () => {
+    if (!lin) return;
+    const meio = innerHeight * 0.6; let n = 0;
+    marcos.forEach((m, k) => { if (m.getBoundingClientRect().top < meio) n = k + 1; });
+    alvo = Math.max(alvo, Math.min(n, formas.length - 1)); proxima();
+  };
+  const proxima = () => {
+    if (correndo || estagio >= alvo) return;
+    correndo = true; estagio += 1;
+    const trocar = () => { cimg.src = src(lin, estagio); cimg.alt = rotulo(); };
+    if (reduzido) { trocar(); correndo = false; proxima(); return; }
+    comp.classList.remove('evoluindo'); void comp.offsetWidth; comp.classList.add('evoluindo');
+    const chamas: HTMLElement[] = [];
+    for (let k = 0; k < 7; k++) {
+      const ch = document.createElement('img'); ch.src = raiz.dataset.chama!; ch.className = 'comp-chama'; ch.alt = '';
+      ch.style.left = `${8 + k * 13}%`; ch.style.animationDelay = `${(k % 3) * 0.12 + (k > 3 ? 0.2 : 0)}s`; comp.append(ch); chamas.push(ch);
+    }
+    setTimeout(trocar, 700);
+    setTimeout(() => { chamas.forEach((ch) => ch.parentNode?.removeChild(ch)); comp.classList.remove('evoluindo'); correndo = false; proxima(); }, 1600);
+  };
+  bt.addEventListener('click', () => {
+    let i = Math.floor(Math.random() * linhas.length); if (i === ant && linhas.length > 1) i = (i + 1) % linhas.length; ant = i;
+    lin = linhas[i]; estagio = 0; alvo = 0;
+    formas.forEach((_, k) => { new Image().src = src(lin, k); });
+    img.src = src(lin, 0); img.alt = rotulo(); img.hidden = false; sombra.hidden = true;
+    info.replaceChildren(); const ic = document.createElement('img'); ic.src = `${raiz.dataset.elBase}${lin}.webp`; ic.width = ic.height = 48; ic.alt = els[lin] ?? lin; ic.title = ic.alt; ic.className = 'ico-el'; ic.onerror = () => { ic.hidden = true; }; info.append(ic);
+    if (!reduzido) { img.classList.remove('surge'); void img.offsetWidth; img.classList.add('surge'); }
+    cimg.src = src(lin, 0); cimg.alt = rotulo(); comp.hidden = false;
+    if (raiz.dataset.outro) bt.textContent = raiz.dataset.outro;
+    avaliar();
+  });
+  addEventListener('scroll', () => requestAnimationFrame(avaliar), { passive: true });
+  comp.addEventListener('click', () => raiz.scrollIntoView({ behavior: reduzido ? 'auto' : 'smooth', block: 'center' }));
+}
 // ---------- Árvore: seletor de linha (Planta, Fada, Fogo). Sem JS, as três aparecem empilhadas ----------
 function linhasArvore() {
   const arvores = $$('ol.arvore[data-linha]'); const ant = $<HTMLButtonElement>('[data-linha-ant]'); const prox = $<HTMLButtonElement>('[data-linha-prox]');
@@ -489,7 +536,7 @@ function ancoras() {
 
 // Só com JS: sem ele, o form faria GET com o e-mail na URL.
 if (form) form.hidden = false;
-ancoras(); partilha(); topoECta(); vagas(); formulario(); turnstile(); abas(); sorteio(); colete(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
+ancoras(); partilha(); topoECta(); vagas(); formulario(); turnstile(); abas(); sorteio(); companheiro(); colete(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
 // ajustarSprites lê o layout da página inteira: só depois do load, nunca na janela do primeiro quadro.
 depoisDoLoad(() => {
   document.documentElement.classList.add('tarde');
