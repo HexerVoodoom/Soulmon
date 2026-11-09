@@ -290,4 +290,23 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
     fireEvent.click(fechar);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+  it('filtro por elemento: 3 dropdowns só com item de elemento; E entre as bases; limpar volta tudo', async () => {
+    const { potionKey } = await import('../../utils/elementPotion');
+    const vapor = potionKey('vapor'); // fogo + água
+    const fogo = potionKey('fogo');
+    montar({ foodInventory: { '🍎': 1, [vapor]: 1, [fogo]: 1 } });
+    fireEvent.click(screen.getByRole('tab', { name: /Especiais/i }));
+    const slots = document.querySelectorAll('[data-mochila-filtro-elemento] [data-slot]');
+    expect(slots.length).toBe(3);
+    const itens = () => [...document.querySelectorAll('[data-item]')].map(e => e.getAttribute('data-item'));
+    expect(itens()).toEqual(expect.arrayContaining([vapor, fogo]));
+    const escolher = (i: number, base: string) => {
+      fireEvent.click(document.querySelectorAll('[data-mochila-filtro-elemento] [data-slot]')[i]);
+      fireEvent.click(document.querySelector(`[data-base="${base}"]`)!);
+    };
+    escolher(0, 'fogo');
+    expect(itens()).toEqual(expect.arrayContaining([vapor, fogo]));
+    escolher(1, 'agua');
+    expect(itens()).toEqual([vapor]); // E: só quem tem fogo E água
+  });
 });
