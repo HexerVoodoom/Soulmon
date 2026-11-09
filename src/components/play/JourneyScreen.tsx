@@ -114,7 +114,7 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
       </p>}
 
       <section data-journey-modal style={{ position: 'absolute', top: 'calc(10px + env(safe-area-inset-top, 0px))', left: '50%', transform: 'translateX(-50%)', width: 'min(236px, calc(100% - 24px))', zIndex: 2, background: 'color-mix(in srgb, var(--sm2-surface) 80%, transparent)', color: 'var(--sm2-ink)', borderRadius: 14, padding: '8px 12px 10px', boxShadow: '0 6px 18px rgba(0,0,0,.35)', display: 'grid', justifyItems: 'center', gap: 6 }}>
-        <span data-journey-clock role="timer" aria-label={isPt ? (p >= 1 ? 'Chegou' : paused ? 'Tempo restante, em pausa' : 'Tempo restante') : (p >= 1 ? 'Arrived' : paused ? 'Time left, paused' : 'Time left')} className="sm2-num" style={{ fontFamily: 'var(--sm2-font-display)', fontWeight: 700, fontSize: 44, lineHeight: 1.1, opacity: paused ? 0.7 : 1 }}>{formatClock(left)}</span>
+        <span data-journey-clock role="timer" aria-label={isPt ? (p >= 1 ? 'Chegou' : paused ? 'Tempo restante, em pausa' : 'Tempo restante') : (p >= 1 ? 'Arrived' : paused ? 'Time left, paused' : 'Time left')} className="sm2-num" style={{ fontFamily: 'var(--sm2-font-display)', fontWeight: 700, fontSize: 'calc(var(--sm2-text-2xl) * 1.6)', lineHeight: 1.1, opacity: paused ? 0.7 : 1 }}>{formatClock(left)}</span>
         {active.keys.length > 0 && <span data-journey-keys aria-label={isPt ? 'Chaves desta jornada' : 'Keys for this journey'} style={{ display: 'flex', gap: 6 }}>
           {active.keys.map(k => <KeyGlyph key={k} k={k} size={20} />)}
         </span>}
