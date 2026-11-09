@@ -3,6 +3,7 @@ import { sanitizeMailClaimed } from '../utils/mensageiro';
 import { sanitizeFunSession } from '../utils/funSession';
 import { normalizeGuildMission } from '../utils/guildMission';
 import { sanitizeCrystal } from '../utils/evolutionCrystal';
+import { sanitizeFormaSnapshots } from '../utils/formaSnapshot';
 import { sanitizeFormasAlt, sanitizeFormaAltEquipada, spriteVisorOf } from '../utils/formasAlternativas';
 import { sanitizeRogueRun, type RogueRun } from '../utils/rogueDungeonSave';
 import { sanitizeDungeonReturnSummary, type DungeonReturnSummary } from '../utils/dungeonReturnSummary';
@@ -380,6 +381,8 @@ export interface GameState {
   formasAlt?: import('../utils/formasAlternativas').FormasAlt;
   /** Qual forma alternativa está equipada em cada forma (ausente = a original). Cosmético. */
   formaAltEquipada?: import('../utils/formasAlternativas').FormaAltEquipada;
+  /** O QUE CADA FORMA CARREGA (09/11/2026, `utils/formaSnapshot.ts`): poção, elemento do nível e skills de cada forma já vivida. */
+  formaSnapshots?: import('../utils/formaSnapshot').FormaSnapshots;
   /** WP1.3 — os três gestos do primeiro dia (`utils/firstDay.ts`). Some
    *  sozinho na virada; nunca vira lista de pendências. */
   firstDay?: import('../utils/firstDay').FirstDayProgress | null;
@@ -1601,6 +1604,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         evolutionCrystal: sanitizeCrystal(loadedState.evolutionCrystal),
         formasAlt: sanitizeFormasAlt(loadedState.formasAlt),
         formaAltEquipada: sanitizeFormaAltEquipada(loadedState.formaAltEquipada),
+        formaSnapshots: sanitizeFormaSnapshots(loadedState.formaSnapshots),
         incubation: (() => {
           const v = loadedState.incubation as { v?: unknown; since?: unknown } | undefined;
           if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined;
