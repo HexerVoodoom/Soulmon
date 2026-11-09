@@ -45,3 +45,10 @@ export declare function histogramaActiveDays(
 ): Record<string, number>;
 export declare function renderTudo(totais: Record<string, number> | null | undefined): string[];
 export declare function renderRelatorio(payload: MetricsPayload, opts?: { full?: boolean }): string[];
+
+export declare function medianaDeFaixa(totais: Record<string, number>, prefixo: string): string | null;
+export declare function renderTempoPorTipo(totais: Record<string, number>, tipo: 'screen' | 'feature' | 'minigame', titulo: string): string[];
+export declare function renderMinigames(totais: Record<string, number>): string[];
+export declare function renderTarefas(totais: Record<string, number>): string[];
+export declare function renderSessoes(totais: Record<string, number>): string[];
+export declare function renderUsoDoApp(totais: Record<string, number>): string[];
