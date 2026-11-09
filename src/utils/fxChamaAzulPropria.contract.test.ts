@@ -1,4 +1,4 @@
-// §262: o FX da chama_azul (fogo+morte) já foi o da `fada` repintado (com corações). Nenhuma peça dela pode voltar a ser a da fada.
+// §263: o FX da chama_azul (fogo+morte) já foi o da `fada` repintado (com corações). Nenhuma peça dela pode voltar a ser a da fada.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
