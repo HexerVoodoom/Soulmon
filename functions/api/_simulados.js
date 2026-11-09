@@ -279,7 +279,8 @@ export async function upsertSimulado(env, p, day, now = new Date()) {
   const spriteRaw = await store.get(spriteKeyOf(p.id)).catch(() => null);
   const spriteUrl = spriteUrlOrNull(spriteRaw);
   const e = estadoDoDia(p, day);
-  const sig = `${e.level}|${e.bond}|${spriteUrl ?? ''}|${p.petName}`;
+  // element/artLine entram na assinatura: revisar o elemento no dado (09/11/2026, docs/reviews/2026-11-09-simulados-elemento.md) reescreve save+perfil no próximo tique, sem migração em lote e sem mexer em id/apelido/pontos.
+  const sig = `${e.level}|${e.bond}|${spriteUrl ?? ''}|${p.element}|${p.artLine}|${p.petName}`;
   const criadoEm = dayStart(SIM_EPOCH) - p.daysPlaying * DAY_MS;
   // `createdAt` do simulado segue o dado (`daysPlaying`): perfil gravado com conta mais velha que o dado diz é corrigido uma vez.
   const idadeCoerente = prev?.simulated !== true || prev.createdAt === criadoEm;
