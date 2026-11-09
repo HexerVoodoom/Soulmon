@@ -383,6 +383,7 @@ function companheiro() {
 function linhasArvore() {
   const arvores = $$('ol.arvore[data-linha]'); const ant = $<HTMLButtonElement>('[data-linha-ant]'); const prox = $<HTMLButtonElement>('[data-linha-prox]');
   if (!arvores.length || !ant || !prox) return;
+  if (document.querySelector('[data-trilho]')) return; // trilho com scroll-snap: scripts/ramos.ts
   ant.hidden = prox.hidden = false;
   let n = 0;
   const ver = (k: number) => { n = (k + arvores.length) % arvores.length; arvores.forEach((x, i) => { x.hidden = i !== n; }); if (iniciado) requestAnimationFrame(ajustarSprites); };
@@ -462,6 +463,7 @@ function trailer() {
   const v = $<HTMLVideoElement>('[data-trailer]'); const capa = $<HTMLButtonElement>('[data-trailer-capa]'); if (!v || !capa) return;
   capa.hidden = false;
   capa.addEventListener('click', () => {
+    if (!v.getAttribute('src')) v.src = (v.dataset.v && innerWidth < 768 ? v.dataset.v : v.dataset.h) ?? '';
     v.hidden = false; capa.hidden = true; capa.closest('.trailer-moldura')?.classList.add('tocando');
     for (const o of loops) o.pause();
     v.play().catch(() => {}); v.focus();

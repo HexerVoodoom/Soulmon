@@ -1140,3 +1140,24 @@ main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recurs
 .cartao .tela .combate-video { object-fit: cover; object-position: 50% 50%; }
 .colete-item img { background: radial-gradient(ellipse 58% 52% at 50% 50%, rgba(95,243,224,.38), rgba(20,112,108,.35) 50%, transparent 74%), radial-gradient(ellipse 40% 9% at 50% 92%, rgba(0,0,0,.6), transparent 70%) !important; }
 .colete-item:not(.falta) { background: radial-gradient(ellipse 60% 46% at 50% 40%, rgba(95,243,224,.55), rgba(20,112,108,.45) 50%, rgba(8,40,42,.2) 80%), var(--sb-sup) !important; }
+/* 09/11: gameplay PvP/PvE bem maior e mais alto (celular ~72svh, desktop largo) */
+.cartao.cartao-combate { flex: 0 0 min(86vw, 380px); }
+.cartao.cartao-combate .aparelho.mini { width: min(80vw, 340px, calc(72svh * .46)); }
+@media (min-width: 1024px) {
+  .cartoes:has(.cartao-combate) { grid-template-columns: 1.6fr 1fr 1fr 1fr; align-items: end; }
+  .cartao.cartao-combate .aparelho.mini { width: min(320px, calc(70vh * .46)); }
+}
+/* 09/11: trailer com a capa do mapa principal e play no centro; box na proporção do vídeo */
+.trailer-moldura, .trailer-moldura.tocando { aspect-ratio: 16 / 9; }
+.trailer-moldura .trailer-play { top: 50%; left: 50%; right: auto; bottom: auto; margin: -40px 0 0 -40px; width: 80px; height: 80px; background: rgba(1,12,14,.6); box-shadow: 0 0 0 3px var(--sb-pri), 0 0 24px rgba(95,243,224,.5); }
+@media (min-width: 768px) { .trailer-moldura .trailer-play { right: auto; bottom: auto; margin: -48px 0 0 -48px; width: 96px; height: 96px; } }
+@media (max-width: 767px) { .trailer-moldura.tem-v, .trailer-moldura.tem-v.tocando { aspect-ratio: 9 / 16; max-height: 82svh; margin-inline: auto; } }
+.trailer-moldura video { object-fit: contain; }
+.trailer-capa .capa-texto { display: none; }
+/* 09/11: criaturas do fim da página na frente do véu, nítidas */
+.cena-fundo.so-crias { z-index: 3; }
+.inscrever { isolation: isolate; }
+.inscrever .inscrever-caixa { position: relative; z-index: 2; }
+.inscrever .so-crias .cria img { filter: none; opacity: 1; }
+/* 09/11: bandeira do idioma com metade do tamanho */
+.idioma .bandeira { width: 17px; height: 12px; }

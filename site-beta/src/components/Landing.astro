@@ -4,6 +4,7 @@
 // 5 o universo (Hall) · 6 o que você faz (Arena) · 7 trailer (slot, só com midia.trailer.ativo) · 8 como entrar (painel calmo)
 // 9 perguntas · 10 entre no beta (Guilda inteira). Ritmo: cena cheia x painel calmo, sem superfície clara.
 import Base from '../layouts/Base.astro';
+import '../styles/ramos.css';
 import { existsSync } from 'node:fs';
 import { b } from '../lib/base';
 import Mapa from './Mapa.astro';
@@ -52,7 +53,8 @@ const FOCO: Record<string, [number, number]> = { exploracao: [70, 34], jogos: [4
 const capaJogo = (id: string, w: 400 | 800 = 400) => b(`/jogos/capa-${id}-${w}`);
 const capaSet = (id: string, ext: string) => `${capaJogo(id, 400)}.${ext} 400w, ${capaJogo(id, 800)}.${ext} 800w`;
 const MOSAICO = ['combina', 'arena', 'mente', 'ppt'];
-const JOGOS_POR_LUGAR: Record<string, string[]> = { jogos: ['ppt', 'combina', 'barrage', 'mente', 'corrida'], arena: ['arena'], exploracao: ['rift', 'calabouco'] };
+// Só o modal de Jogos mostra os cardzinhos (dono, 09/11); Arena, Exploração e os outros lugares ficam sem.
+const JOGOS_POR_LUGAR: Record<string, string[]> = { jogos: ['ppt', 'combina', 'barrage', 'mente', 'corrida'] };
 const Formas = c.formas;
 // Árvore inteira (dono, 09/11): os 3 caminhos de cada linha. O caminho principal usa o sprite da linha; os outros vêm de E:\Soulmon-assets\...\ramos (public/sprites/ramos).
 const CAMINHOS = ['poder', 'harmonia', 'benevolencia'];
@@ -75,6 +77,8 @@ const falas = JSON.stringify(Object.fromEntries(Object.entries(lugarDados).map((
 const printSrc = (id: string, ext: string) => [240, 480, 720].map((w) => `${b(`/print/${id}-${lang}-${w}.${ext}`)} ${w}w`).join(', ');
 const cen = (n: string) => `--cen-m:image-set(url(${b(`/dono/${n}-800.avif`)}) type("image/avif"), url(${b(`/dono/${n}-800.webp`)}) type("image/webp"));--cen-d:image-set(url(${b(`/dono/${n}-1400.avif`)}) type("image/avif"), url(${b(`/dono/${n}-1400.webp`)}) type("image/webp"))`;
 const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==';
+// Trailer vertical (celular) entra sozinho quando public/video/trailer-<lang>-v.mp4 existir.
+const TRAILER_V = temSprite(`/video/trailer-${lang}-v.mp4`);
 // Idioma por bandeira (dono, 09/11): a bandeira é a do OUTRO idioma.
 const BANDEIRA_PT = '<svg class="bandeira" viewBox="0 0 28 20" width="34" height="24" aria-hidden="true"><rect width="28" height="20" rx="3" fill="#009c3b"/><path d="M14 2.5 25.5 10 14 17.5 2.5 10Z" fill="#ffdf00"/><circle cx="14" cy="10" r="4.6" fill="#002776"/><path d="M9.6 9.1c3-.9 6.2-.5 8.8 1.2" stroke="#fff" stroke-width=".9" fill="none"/></svg>';
 const BANDEIRA_EN = '<svg class="bandeira" viewBox="0 0 60 40" width="34" height="24" aria-hidden="true"><clipPath id="bq"><rect width="60" height="40" rx="6"/></clipPath><g clip-path="url(#bq)"><rect width="60" height="40" fill="#012169"/><path d="M0 0 60 40M60 0 0 40" stroke="#fff" stroke-width="8"/><path d="M0 0 60 40M60 0 0 40" stroke="#c8102e" stroke-width="3"/><path d="M30 0v40M0 20h60" stroke="#fff" stroke-width="12"/><path d="M30 0v40M0 20h60" stroke="#c8102e" stroke-width="7"/></g></svg>';
@@ -211,7 +215,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
           <button type="button" class="botao primario sorteio-bt" data-sortear hidden>{s.sortear}</button>
         </div>
         )}
-        <div class="arvore-bloco veu">
+        <div class="arvore-bloco veu" data-trilho>
           <h3>{s.arvoreH}</h3>
           <div class="arvore-palco">
           <button type="button" class="seta-linha esq" data-linha-ant aria-label={s.linhaAnt} hidden><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M15.5 3 6.5 12l9 9 2.1-2.1L10.7 12l6.9-6.9Z"/></svg></button>
@@ -229,11 +233,11 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
                         {tres
                           ? CAMINHOS.map((cm, ci) => (
                               cm === PRINCIPAL[lin] || temSprite(`/sprites/ramos/${lin}-${cm}-${fm}-128.webp`)
-                                ? <span class="no revelado"><img class="sprite" loading="lazy" src={b(cm === PRINCIPAL[lin] ? `/sprites/${lin}-${fm}-128.webp` : `/sprites/ramos/${lin}-${cm}-${fm}-128.webp`)} width="128" height="128" alt={`${nomeLin}, ${s.caminhos[ci]}, ${c.nomes[i]}`} /></span>
+                                ? <button type="button" class="no revelado" data-ramo data-ramo-nome={`${nomeLin} · ${s.caminhos[ci]}`} data-ramo-i={i} data-ramo-el={lin} aria-haspopup="dialog"><img class="sprite" loading="lazy" src={b(cm === PRINCIPAL[lin] ? `/sprites/${lin}-${fm}-128c.webp` : `/sprites/ramos/${lin}-${cm}-${fm}-128c.webp`)} width="128" height="128" alt={`${nomeLin}, ${s.caminhos[ci]}, ${c.nomes[i]}`} /></button>
                                 : <span class="no oculto" role="img" aria-label={s.descobrir}><span class="sombra-q" aria-hidden="true"><span>?</span></span></span>
                             ))
                           : temSprite(`/sprites/${lin}-${fm}-128.webp`)
-                            ? <span class="no revelado"><img class="sprite" loading="lazy" src={b(`/sprites/${lin}-${fm}-128.webp`)} width="128" height="128" alt={`${nomeLin}, ${c.nomes[i]}`} /></span>
+                            ? <button type="button" class="no revelado" data-ramo data-ramo-nome={nomeLin} data-ramo-i={i} data-ramo-el={lin} aria-haspopup="dialog"><img class="sprite" loading="lazy" src={b(`/sprites/${lin}-${fm}-128c.webp`)} width="128" height="128" alt={`${nomeLin}, ${c.nomes[i]}`} /></button>
                             : <span class="no oculto" role="img" aria-label={s.descobrir}><span class="sombra-q" aria-hidden="true"><span>?</span></span></span>}
                       </span>
                     </li>
@@ -341,7 +345,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
         </div>
         <ul class="cartoes" tabindex="0" aria-label={r.h2}>
           {r.cartoes.filter(([id]) => prints.some((p) => p.id === id)).map(([id, h, p, alt]) => (
-            <li class="cartao">
+            <li class:list={['cartao', { 'cartao-combate': id === 'combate' }]}>
               {id === 'jogos' ? (
                 <figure class="mosaico-jogos" role="img" aria-label={alt}>
                   <p class="rotulo rot-arte">{t.rotulos.arte}</p>
@@ -377,25 +381,20 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
           <p class="frase">{t.video.legenda}</p>
         </div>
         <figure class="trailer-fig">
-         <div class="trailer-moldura">
+         <div class:list={['trailer-moldura', { 'tem-v': TRAILER_V }]}>
             {/* Sem autoplay e com som: a capa é um botão; o vídeo (com controles) só aparece depois do play. */}
             <button type="button" class="trailer-capa" data-trailer-capa hidden>
+              {/* Capa = mapa principal do jogo (dono, 09/11). Paisagem no desktop, retrato no celular quando houver vídeo vertical. */}
               <picture>
-                <source media="(min-width: 768px)" type="image/avif" srcset={`${b(capa.desktop)}-640.avif 640w, ${b(capa.desktop)}-821.avif 821w`} sizes="(min-width: 1024px) 960px, 100vw" />
-                <source media="(min-width: 768px)" type="image/webp" srcset={`${b(capa.desktop)}-640.webp 640w, ${b(capa.desktop)}-821.webp 821w`} sizes="(min-width: 1024px) 960px, 100vw" />
-                <source type="image/avif" srcset={`${b(capa.celular)}-480.avif 480w, ${b(capa.celular)}-720.avif 720w`} sizes="100vw" />
-                <img src={`${b(capa.celular)}-480.webp`} srcset={`${b(capa.celular)}-480.webp 480w, ${b(capa.celular)}-720.webp 720w`} sizes="100vw" width="720" height="900" alt="" loading="lazy" decoding="async" />
+                <source media={TRAILER_V ? '(min-width: 768px)' : 'all'} srcset={`${b('/video/trailer-mapa-d-640.webp')} 640w, ${b('/video/trailer-mapa-d-1280.webp')} 1280w`} sizes="(min-width: 1024px) 960px, 100vw" />
+                <img src={b('/video/trailer-mapa-m-480.webp')} srcset={`${b('/video/trailer-mapa-m-480.webp')} 480w, ${b('/video/trailer-mapa-m-720.webp')} 720w`} sizes="100vw" width="720" height="1280" alt="" loading="lazy" decoding="async" />
               </picture>
-              <span class="capa-texto">
-               <span class="capa-p">{t.video.capaP}</span>
-              </span>
               <span class="sr">{j.tocar}: {t.video.alt}</span>
               <span class="trailer-play" aria-hidden="true"><svg viewBox="0 0 16 16" width="40" height="40"><path fill="currentColor" d="M5 2v12l9-6z"/></svg></span>
             </button>
-            <video data-trailer hidden controls playsinline preload="none" width={trailer.largura} height={trailer.altura} aria-label={t.video.alt}>
-              <source src={trailer.src} type="video/mp4" />
-            </video>
-            <noscript><video controls playsinline preload="none" poster={`${b(capa.desktop)}-821.webp`} width={trailer.largura} height={trailer.altura} aria-label={t.video.alt}><source src={trailer.src} type="video/mp4" /></video></noscript>
+            {/* Um vídeo só, escolhido pela largura no toque: nada é baixado antes do play. */}
+            <video data-trailer data-h={b(`/video/trailer-${lang}-h.mp4`)} data-v={TRAILER_V ? b(`/video/trailer-${lang}-v.mp4`) : undefined} hidden controls playsinline preload="none" aria-label={t.video.alt}></video>
+            <noscript><video controls playsinline preload="none" poster={b('/video/trailer-mapa-d-1280.webp')} width="1280" height="720" aria-label={t.video.alt}><source src={b(`/video/trailer-${lang}-h.mp4`)} type="video/mp4" /></video></noscript>
           </div>
         </figure>
       </section>
@@ -416,9 +415,10 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
 
    <!-- 9 · Perguntas -->
     <section class="cena inscrever" id="inscrever" aria-labelledby="inscrever-h">
-      <Mapa id="guilda" desk="guilda-fecho-d" aD={841 / 640} fy={0.5} dfy={0.5}>
-        {/* 2x nos dois (pixel da criatura perto do pixel do mapa). Pés medidos com grade sobre a cena renderizada. */}
-        <Cria s="planta-ultra" t={128} td={128} x={50} y={89} dx={24} dy={47} />
+      <Mapa id="guilda" desk="guilda-fecho-d" aD={841 / 640} fy={0.5} dfy={0.5} />
+      {/* Criaturas numa camada própria, NA FRENTE do véu escuro do texto (dono, 09/11); a planta desceu para sair de cima do formulário. */}
+      <Mapa id="guilda" desk="guilda-fecho-d" aD={841 / 640} fy={0.5} dfy={0.5} soCrias>
+        <Cria s="planta-ultra" t={88} td={128} x={86} y={99} dx={24} dy={47} />
         <Cria s="agua-rookie" t={128} td={128} x={84} y={23} dx={73} dy={72} flip fase={500} />
         <Cria s="vigor-rookie" t={128} td={128} x={16} y={23} dx={79} dy={56} flipD fase={900} />
       </Mapa>
@@ -488,5 +488,15 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
   <button type="button" class="link pular-demo" data-pular-demo hidden>{c.pular}</button>
   {VB && <button type="button" class="companheiro" data-companheiro hidden aria-label={t.vb.tocar}><span class="comp-fala" data-comp-fala hidden aria-live="polite"></span><img class="sprite" data-comp-img width="128" height="128" alt="" /><span class="comp-clarao" aria-hidden="true"></span></button>}
   <div class="fixo" data-fixo><a class="botao primario fixo-cta" href="#inscrever" aria-label={`${t.cta} · ${t.hero.loja}`}><Fragment set:html={PLAY} /><span data-cta>{t.cta}</span></a></div>
+  <dialog class="ramo-modal" data-ramo-modal aria-label={s.ramoModal} data-estagio={s.estagio} data-els={JSON.stringify(u.els)} data-base={b('/el/')} data-nomes={JSON.stringify(c.nomes)}>
+    <button type="button" class="ramo-x" data-ramo-fechar aria-label={s.ramoFechar}><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M5.7 4.3 12 10.6l6.3-6.3 1.4 1.4-6.3 6.3 6.3 6.3-1.4 1.4-6.3-6.3-6.3 6.3-1.4-1.4 6.3-6.3-6.3-6.3Z"/></svg></button>
+    <div class="ramo-cont">
+      <img class="ramo-img" data-ramo-img width="128" height="128" alt="" />
+      <p class="ramo-nome" data-ramo-nome></p>
+      <p class="ramo-est" data-ramo-est></p>
+      <p class="ramo-el" data-ramo-elw><img data-ramo-elimg width="32" height="32" alt="" /><span data-ramo-elnome></span></p>
+    </div>
+  </dialog>
   <script src="../scripts/app.ts"></script>
+  <script src="../scripts/ramos.ts"></script>
 </Base>

@@ -1,0 +1,42 @@
+/* Árvore "O que você faz influencia": setas sem caixa, trilho com scroll-snap, sprites que enchem o nó, modal flutuante. */
+
+/* Sem JS as árvores empilham (antes ficavam sobrepostas na mesma célula do grid) */
+.arvore-palco > ol.arvore { grid-row: auto; }
+
+/* Setas: só o desenho, sem borda, fundo nem caixa */
+.arvore-palco .seta-linha { width: 48px; height: 72px; border: 0; border-radius: 0; background: none; box-shadow: none; padding: 0; animation: seta-pulso 1.6s ease-in-out infinite; }
+.arvore-palco .seta-linha svg { width: 40px; height: 40px; filter: drop-shadow(0 0 6px rgba(46, 230, 200, .6)); }
+.arvore-palco .seta-linha:hover { filter: brightness(1.3); }
+.arvore-palco .seta-linha:focus-visible { outline: 2px solid var(--sb-pri); outline-offset: 2px; border-radius: 8px; }
+@keyframes seta-pulso { 0%, 100% { opacity: .65; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .arvore-palco .seta-linha { animation: none; box-shadow: none; opacity: 1; } }
+@media (max-width: 767px) { .arvore-palco .seta-linha { width: 32px; height: 56px; } .arvore-palco .seta-linha svg { width: 32px; height: 32px; } }
+
+/* Trilho horizontal: uma linha por "página" */
+.arvore-trilho { grid-column: 2; grid-row: 1; display: flex; min-width: 0; width: 100%; overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: none; cursor: grab; -webkit-overflow-scrolling: touch; }
+.arvore-trilho::-webkit-scrollbar { display: none; }
+.arvore-trilho.arrastando { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+.arvore-trilho > ol.arvore { grid-column: auto; grid-row: auto; flex: 0 0 100%; width: 100%; max-width: none; min-width: 0; justify-content: center; scroll-snap-align: center; scroll-snap-stop: always; translate: none; }
+.arvore-trilho > ol.arvore[hidden] { display: grid; }
+@media (max-width: 1023px) { .arvore-trilho > ol.arvore { grid-template-columns: minmax(0, 240px); translate: -4px 0; } }
+.arvore-trilho img { -webkit-user-drag: none; user-select: none; }
+
+/* Sprites: enchem o quadrado do nó inteiro, sem rodapé vazio */
+.no.revelado { padding: 0; font: inherit; color: inherit; cursor: pointer; appearance: none; }
+.no.revelado:focus-visible { outline: 2px solid var(--sb-pri); outline-offset: 2px; }
+.no.revelado img { display: block; width: 100%; height: 100%; margin: 0 !important; object-fit: contain; image-rendering: pixelated; }
+
+/* Modal: tudo flutua sobre overlay escuro com blur, sem painel */
+.ramo-modal { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; border: 0; background: rgba(2, 8, 10, .78); color: var(--sb-tx, #fff); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); overflow: hidden; }
+.ramo-modal:not([open]) { display: none; }
+.ramo-modal::backdrop { background: transparent; }
+.ramo-x { position: absolute; top: max(16px, env(safe-area-inset-top)); left: max(16px, env(safe-area-inset-left)); z-index: 1; width: 48px; height: 48px; display: grid; place-items: center; padding: 0; border: 0; background: none; color: var(--sb-tx, #fff); cursor: pointer; }
+.ramo-x:hover { color: var(--sb-pri); }
+.ramo-x:focus-visible { outline: 2px solid var(--sb-pri); outline-offset: 2px; border-radius: 8px; }
+.ramo-cont { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 72px 16px 24px; text-align: center; pointer-events: none; }
+.ramo-img { width: min(70vw, 52vh, 340px); height: min(70vw, 52vh, 340px); object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 8px 24px rgba(0, 0, 0, .55)); }
+.ramo-nome { margin: 0; font: var(--sb-peso-titulo) var(--sb-t-h3, 1.5rem)/1.2 var(--sb-fonte-titulo); }
+.ramo-est { margin: 0; font: var(--sb-peso-forte) var(--sb-t-corpo, 1rem)/1.2 var(--sb-fonte-texto); color: var(--sb-ouro); }
+.ramo-el { margin: 0; display: inline-flex; align-items: center; gap: 8px; font: var(--sb-peso-forte) var(--sb-t-corpo, 1rem)/1 var(--sb-fonte-texto); }
+.ramo-el img { width: 32px; height: 32px; image-rendering: pixelated; }
+.ramo-el[hidden], .ramo-el img[hidden] { display: none; }
