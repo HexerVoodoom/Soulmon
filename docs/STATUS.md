@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 09/11/2026 — Sincronização do manual (`5229b1be..62f204e1b`, 271 commits, + arte instalada até `f80a470d6`; #674 simulados-elemento entra só como dado, sem reescrita no manual)
+>
+> - Feito: 02 (§68 novo), 03 (delta 09/11), 04, 05, 07, 08, 06-REFERENCIA (utils, components, api-workers, hooks, plugins, desktop), 09, 10, 11 e MAPA; `doc-verificador` carimbou todos, com escopo (só o que o diff tocou; ~45 módulos de mudança interna em utils não foram reconferidos). Corrigiu: `DailyMissionEvent`→`DailyEvent`, cut projétil 0,05→1,00, "2 chefs por dia" (é 1 chef/dia), `CACHE_VERSION` v248→v260, Forja com 5 prédios, RANKED_GAMES completo.
+> - ⚠️ Divergência para o dono/código: REGISTRO §253 diz só banner sem reaceite, mas o código (`versionCovers` + `ConsentGate`) bloqueia quem aceitou versão anterior a `PRIVACY_VERSION` 2026-11-09. Manual segue o código. Manual diz "Health Connect" mas o manifesto ainda não declara `READ_STEPS`.
+> - ⚠️ "Higgsfield vetado" é decisão do dono de 09/11 só no briefing; `docs/ASSETS-A-GERAR.md` ainda diz "ChatGPT primeiro, Higgsfield reserva". `PLAY-DATA-SAFETY.md` diz 90 dias de feedback; código/política dizem 30. `run_worker_first` ligado (`a4f90382b`) e revertido (`9454d68a8`): não habilitar; `/gm/*` não abre no navegador (SPA fallback).
+> - Dívida: lacuna 21/10–01/11 no 09/10 (849 commits sem entrada própria); numeração do REGISTRO tem colisões (§220–§222, §242/243, §255).
+
 > ## 05/11/2026 — Cena do Passeio em tela cheia + descoberta garantida (pedido do dono)
 >
 > - **Feito (código):** com Passeio no dia anterior (`strollSummary`, agora com `regionId`), o passo "Da aventura de ontem" do resumo vira `StrollScene` (tela cheia): cenário da região, cartãozinho de texto no topo, "Espera… tem alguma coisa ali." → o cenário desliza → **descoberta de 1 Soulmon que o jogador nunca viu** (`utils/strollDiscovery.ts`, determinística por dia, aleatória, garantida enquanto restar algum; Corvinho com a mesma chance rara de sempre, 1/1000, e vem se for o último) → OK grava a chave em `bestiary` (aba Selvagem/Desgarrado do Drive, com o aviso NEW de sempre) → desliza de volta → "Começar o dia". Sem som novo (R-NOVA). Sem campo novo no save (usa `bestiary`).
