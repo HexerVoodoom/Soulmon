@@ -94,6 +94,10 @@ import { SoulmonWidget, widgetOwnSpriteUrl, widgetPetName, widgetPetLine, widget
 import { unlockedAchievements, achievementPointsTotal, settleAchievements, ACHIEVEMENT_POINTS, ACHIEVEMENT_LABELS } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
+import { markAccepted, markAsked, parsePlayReview, shouldAskReview, REVIEW_MIN_VISIBLE_MS } from './utils/playReview';
+import { stageLevelIndex as playReviewLevelIndex } from './utils/evolutionForecast';
+import { SoulmonReview } from './plugins/SoulmonReviewPlugin';
+import { PlayReviewModal } from './components/PlayReviewModal';
 import { buildEvoRecap, parseEvoRecapSnapshot, serializeEvoRecapSnapshot, type EvoRecap } from './utils/evoRecap';
 import { parseRitualOpen, serializeRitualOpen } from './utils/atividadesLista';
 import { isDemoMode, demoRefusalText, isDemoBlockedView, setDemoNetworkOff } from './utils/demoMode';
@@ -2694,6 +2698,39 @@ export default function App() {
     pendingEvoStatsRef.current = null;
     setEvoStatsShown(p);
   }, [gameState.evolutionStage]);
+
+  // Pedido de avaliação na Play: a CADA evolução de estágio (para cima), depois da cerimônia e do modal de atributos; nunca
+  // depois de aceitar (decisão do dono, 09/11/2026). Fica pendente numa ref até a tela ficar livre.
+  const [playReviewOpen, setPlayReviewOpen] = useState(false);
+  const playReviewPendingRef = useRef(false);
+  const playReviewPrevStageRef = useRef(gameState.evolutionStage);
+  useEffect(() => {
+    const prev = playReviewPrevStageRef.current;
+    playReviewPrevStageRef.current = gameState.evolutionStage;
+    if (prev === gameState.evolutionStage || demo || !hasCompletedOnboarding) return;
+    if (shouldAskReview(parsePlayReview(readLocal(STORAGE_KEYS.PLAY_REVIEW)), playReviewLevelIndex(prev), playReviewLevelIndex(gameState.evolutionStage))) {
+      playReviewPendingRef.current = true;
+    }
+  }, [gameState.evolutionStage, demo, hasCompletedOnboarding]);
+  useEffect(() => {
+    if (playReviewPendingRef.current && evolutionCeremony === null && evoStatsShown === null && presentation.current === 'welcome') {
+      playReviewPendingRef.current = false;
+      setPlayReviewOpen(true);
+    }
+  });
+  const playReviewLater = () => {
+    setPlayReviewOpen(false);
+    writeLocal(STORAGE_KEYS.PLAY_REVIEW, JSON.stringify(markAsked(parsePlayReview(readLocal(STORAGE_KEYS.PLAY_REVIEW)), Date.now())), { silent: true });
+  };
+  const playReviewAccept = () => {
+    setPlayReviewOpen(false);
+    writeLocal(STORAGE_KEYS.PLAY_REVIEW, JSON.stringify(markAccepted(parsePlayReview(readLocal(STORAGE_KEYS.PLAY_REVIEW)), Date.now())), { silent: true });
+    // O fluxo do Google tem cota e não diz se abriu: se voltou rápido demais, abre a ficha da Play.
+    const t0 = Date.now();
+    SoulmonReview.requestReview()
+      .then(() => { if (Date.now() - t0 < REVIEW_MIN_VISIBLE_MS) return SoulmonReview.openStore(); })
+      .catch(() => SoulmonReview.openStore().catch(() => {}));
+  };
 
   // Sync game state to Android home screen widget
   const widgetSpriteUrl = widgetOwnSpriteUrl(minhaCriaturaUrl, petIsCorvo);
@@ -9736,6 +9773,8 @@ export default function App() {
           />
         </Suspense>
       )}
+
+      {playReviewOpen && <PlayReviewModal language={language} onAccept={playReviewAccept} onLater={playReviewLater} />}
 
       {/* Notification Manager */}
       <NotificationManager
