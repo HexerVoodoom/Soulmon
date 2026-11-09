@@ -761,6 +761,7 @@ export function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryCons
     return {
       title: 'Estatísticas de uso',
       sent: [
+      'Quanto tempo você passa em cada tela, recurso e jogo, só como uma faixa do dia inteiro (por exemplo "de 1 a 2 minutos"), como os jogos terminam e quanto do esforço do dia você concluiu — nunca os segundos exatos, nunca o que são as suas tarefas.',
         'Contadores de momentos do app: primeira abertura, qual passo do onboarding você alcançou e por qual caminho (grátis ou completo), se escolheu um personagem pronto, sua primeira conclusão, se você abriu a tela de compra (e por qual convite), e se comprou.',
         'Se você está no modo grátis ou no completo — só isso, sem nada da sua conta.',
         'Quando você cria uma atividade: se foi tarefa ou hábito e por qual tela — nunca o que ela é.',
@@ -778,13 +779,14 @@ export function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryCons
         'Seu e-mail, seu nome ou o nome do seu Soulmon.',
         'Sua localização, seus contatos ou qualquer identificador de aparelho.',
       ],
-      toggleLabel: 'Enviar estatísticas de uso',
+      toggleLabel: 'Compartilhar uso',
       footnote: 'Fica tudo em servidor nosso (Cloudflare) como um total por dia, somado a todo mundo — não existe uma linha do tempo sua. Nenhuma empresa de análise recebe nada. Se você desligar, o envio para de verdade e a fila que estiver aqui é apagada.',
     };
   }
   return {
     title: 'Usage stats',
     sent: [
+      'How long you spend on each screen, feature and game, only as a band for the whole day (for example "1 to 2 minutes"), plus how games end and how much of the effort planned for the day you completed — never exact seconds, never what your tasks are.',
       'Counters for app moments: first launch, which onboarding step you reached and which path you took (free or full), whether you picked a ready-made character, your first completion, whether you opened the purchase screen (and which invite brought you there), and whether you purchased.',
       'Whether you are on the free or the full mode — that alone, nothing else from your account.',
       'When you create an activity: whether it was a task or a habit, and from which screen — never what it is.',
@@ -802,7 +804,7 @@ export function telemetryConsentCopy(language: 'pt-BR' | 'en-US'): TelemetryCons
       'Your email, your name, or your Soulmon\'s name.',
       'Your location, your contacts, or any device identifier.',
     ],
-    toggleLabel: 'Send usage stats',
+    toggleLabel: 'Share usage',
     footnote: 'It lives on our own server (Cloudflare) as a daily total summed across everyone — there is no timeline of you. No analytics company receives anything. If you turn this off, sending really stops and whatever is queued here is deleted.',
   };
 }

@@ -134,7 +134,7 @@ describe('Configurações → Seus dados: o interruptor de estatísticas existe 
   it('em inglês, o rótulo é o do módulo (nenhuma segunda cópia da copy)', () => {
     renderSettings('en-US');
     expect(toggleOf('en-US')).toBeTruthy();
-    expect(telemetryConsentCopy('en-US').toggleLabel).toBe('Send usage stats');
+    expect(telemetryConsentCopy('en-US').toggleLabel).toBe('Share usage');
   });
 });
 
