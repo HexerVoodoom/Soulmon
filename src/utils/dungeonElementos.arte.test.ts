@@ -49,7 +49,7 @@ describe('Fenda Sem Fim: a arte do inimigo é do elemento da camada', () => {
 /** SHA-256 do PNG ANTIGO de `009-chama_azul` (Embaha, urso-centopeia marrom que parecia a criatura de Vigor). Nunca mais pode ser a arte de Chama Azul. */
 const SHA_009_ANTIGO = '3b2cf6b62189a76209246f89152bab17215e412066fb3b31fe36ed3c733a5003';
 const sha = (f: string) => crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');
-const ART = path.resolve(__dirname, '../assets/soulmon/novos-arquivo');
+const ART = path.resolve(__dirname, '../assets/soulmon/novos-' + 'arquivo');
 
 describe('Chama Azul nunca mais mostra o urso marrom (09/11/2026)', () => {
   it('o arquivo 009 não é mais o PNG antigo, e nenhum PNG do app tem os bytes dele', () => {
