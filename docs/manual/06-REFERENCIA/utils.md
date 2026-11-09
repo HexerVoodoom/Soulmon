@@ -4440,3 +4440,7 @@ Tickets dos minijogos do Salão (substituem a sessão de `funSession.ts`). Funç
 ### `src/utils/modalLayer.ts` (09/11/2026)
 
 Modal sempre acima do voltar da página. `syncModalFlag` liga/desliga `body[data-modal-open]` conforme exista `aria-modal`/`role=dialog` visível no DOM; `watchModalLayer` (montado no `App`) observa o DOM com um `MutationObserver` e chama o sync por frame. O CSS (`index.css`) esmaece e desativa os `.sm2-area-back` da PÁGINA enquanto o flag existe; o voltar dentro do próprio modal fica de fora. `Z_ABOVE_BACK` (60) é o piso de z-index dos overlays (o voltar é 45). Régua: `modalLayer.test.ts`.
+
+### `src/utils/usageTime.ts` (09/11/2026 — docs/PLANO-METRICAS.md)
+
+Tempo de uso por tela/feature/minigame, agregado e sem ID por pessoa: `setActive(kind, name)` acumula segundos do dia no aparelho (pausa em segundo plano), `flushUsageDays` manda um `time_spent` por par com a FAIXA do total quando o dia fecha, `trackMinigame` emite `minigame_start`/`minigame_end`, `installUsageTime` liga a pausa e a sessão (`session_end`). Opt-out apaga o acumulado (`K_USAGE`). Registros de nomes espelhados em `functions/api/_usageRegistry.js`.

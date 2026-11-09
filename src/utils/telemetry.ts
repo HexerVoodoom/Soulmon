@@ -158,7 +158,17 @@ export type TelemetryEvent =
    *  1 = almoço, 2 = jantar; `kind` = micro-ação que fechou (0 comida, 1 banho,
    *  2 carinho, 3 "oi"/tarefa). Responde UMA pergunta — o convite é atendido? —
    *  e nunca vira régua de cobrança: não há meta por janela. */
-  | 'meal_ritual';
+  | 'meal_ritual'
+  // ---- Tempo de uso (09/11/2026, docs/PLANO-METRICAS.md) — faixas e indices de registro, nunca segundos nem nomes ----
+  /** Total do DIA gasto numa tela/feature/minigame, em FAIXA (`utils/usageTime.ts`). Um por (kind,item) por dia. */
+  | 'time_spent'
+  | 'minigame_start'
+  | 'minigame_end'
+  | 'task_done'
+  | 'task_skipped'
+  /** Fechamento do dia: peso planejado e peso feito (mesma unidade do `day_active`). */
+  | 'day_close'
+  | 'session_end';
 
 /**
  * Allowlist de props por evento. `null` = evento sem prop nenhuma.
@@ -247,6 +257,13 @@ export const EVENT_SCHEMA: Record<TelemetryEvent, Record<string, { min: number; 
   guild_stage: { level: { min: 1, max: 5 } },
   /* Ritmo das refeições — ESPELHO de `functions/api/metrics.js`. */
   meal_ritual: { meal: { min: 0, max: 2 }, kind: { min: 0, max: 3 } },
+  time_spent: { kind: { min: 0, max: 2 }, item: { min: 0, max: 63 }, band: { min: 0, max: 11 } },
+  minigame_start: { item: { min: 0, max: 15 } },
+  minigame_end: { item: { min: 0, max: 15 }, outcome: { min: 0, max: 2 }, band: { min: 0, max: 11 } },
+  task_done: { kind: { min: 0, max: 1 } },
+  task_skipped: { kind: { min: 0, max: 1 } },
+  day_close: { planned: { min: 0, max: 50 }, done: { min: 0, max: 50 } },
+  session_end: { band: { min: 0, max: 11 }, build: { min: 0, max: 9999 } },
 };
 
 export const TELEMETRY_EVENTS = Object.keys(EVENT_SCHEMA) as TelemetryEvent[];
@@ -444,6 +461,12 @@ export function onboardingStepCode(step: number): number | null {
 
 /** Props aceitas. Note que NÃO existe campo de texto livre — de propósito. */
 export interface TelemetryProps {
+  /** Tempo de uso (docs/PLANO-METRICAS.md): `item` = índice no registro, `band` = faixa do total, `outcome` 0 vitória/1 derrota/2 saiu, `planned`/`done` = peso do dia, `build` = versão. */
+  item?: number;
+  band?: number;
+  planned?: number;
+  done?: number;
+  build?: number;
   /** `onboarding_step`: índice da tela alcançada (já como código, ver
    *  `onboardingStepCode`). */
   step?: number;
@@ -564,6 +587,8 @@ const K_SEEN = 'soulmon-telemetry-seen';
 const K_TIER = 'soulmon-telemetry-tier';
 /** Contagem da semana EM CURSO (ver `trackDayClosed`). Nunca sai daqui. */
 const K_WEEK = 'soulmon-telemetry-week';
+/** O acumulado de tempo de uso do aparelho (`utils/usageTime.ts`): apagado no opt-out, como a fila. */
+export const K_USAGE = 'soulmon-telemetry-usage';
 /** som-01 — o ÚLTIMO dia em que a trilha foi iniciada por gesto. Um dia, nunca
  *  uma série e nunca uma hora; **nunca é enviado** (mesmo desenho de
  *  `K_INSTALL_DAY`). Existe só para que o fechamento do dia — que acontece na
@@ -810,6 +835,7 @@ export function setTelemetryEnabled(on: boolean): void {
       // "desliguei e ele continuou contando meus dias" é uma frase que o opt-out
       // não pode deixar verdadeira.
       removeLocal(K_WEEK, { silent: true });
+      removeLocal(K_USAGE, { silent: true });
     }
   } catch {
     /* princípio 5 */
@@ -1432,6 +1458,7 @@ export function resetTelemetryForTest(): void {
   removeLocal(K_ENABLED, { silent: true });
   removeLocal(K_TIER, { silent: true });
   removeLocal(K_WEEK, { silent: true });
+  removeLocal(K_USAGE, { silent: true });
   if (flushTimer !== null) {
     try { clearTimeout(flushTimer); } catch { /* idem */ }
     flushTimer = null;

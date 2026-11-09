@@ -789,3 +789,7 @@ Rota da jornada do foco: começar, pausar, retomar, receber e encerrar, com o re
 ### `functions/api/_funTickets.js` (09/11/2026 — REGISTRO §270)
 
 `enforceFunTickets(incoming, stored, nowMs)` e `sanitizeFunTickets`, ligados no POST de `save.js`: gasto só desce, lote novo só com posse viva ≤2 e um por gravação, `at` dentro de ±1 dia do servidor, posse ≤5, lote com 24 h sai. Paridade com `src/utils/funTickets.ts` em `funTickets.parity.test.js`.
+
+### `functions/api/_usageRegistry.js` (09/11/2026 — docs/PLANO-METRICAS.md)
+
+Registros de nomes (telas, features, minigames) e faixas de tempo usados por `applyAggregate` em `metrics.js` para os eventos `time_spent`, `minigame_*`, `task_*`, `day_close` e `session_end`. Espelho de `src/utils/usageTime.ts` (paridade em `usageTime.test.ts`); só se acrescenta no fim.
