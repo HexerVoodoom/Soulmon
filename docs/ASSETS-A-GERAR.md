@@ -1081,7 +1081,7 @@ A masmorra agora é temática: cada elemento ocupa 2 camadas (base → 2 → 3 �
 ## 29. Embaha (Chama Azul): rookie de verdade ainda pendente (bug do dono, 09/11/2026, REGISTRO §255 e §258)
 
 **Feito (09/11/2026, §258):** o PNG marrom de `combinados/009-chama_azul.png` foi SUBSTITUÍDO pela forma Champion azul de `paralelos/parchamaazul-champion.png` (256², alfa real). Chama Azul nunca mais mostra o urso de Vigor; o teste `dungeonElementos.arte.test.ts` guarda o hash do PNG antigo.
-**Feito (09/11/2026, REGISTRO §268):** rookie de verdade instalado em `009-chama_azul.png` e os 6 rookies do lote 4 (`262` a `267`) instalados; dívida do `dungeonElementos.arte.test.ts` zerada.
+**Feito (09/11/2026, REGISTRO §269):** rookie de verdade instalado em `009-chama_azul.png` e os 6 rookies do lote 4 (`262` a `267`) instalados; dívida do `dungeonElementos.arte.test.ts` zerada.
 ~~**Falta:** um **rookie** de verdade para a Embaha (fogo+morte), mesma identidade Soulmon e chama azul (turquesa escuro/azulada), tamanho de rookie (menor e mais simples que o Champion), 256×256, alfa real (`gpt_image_2 --background transparent`), destino `src/assets/soulmon/novos-arquivo/combinados/009-chama_azul.png` (hoje esse slot usa a arte do Champion como quebra-galho: no rookie ela aparece "grande demais" para o estágio). Mesma dívida, sem urgência: 6 elementos do lote 4 sem PNG próprio (`clareira`, `floresta_ancestral`, `alto_forno`, `colosso_blindado`, `bencao_feerica`, `corte_feerica`) mostram o rookie do base (lista em `dungeonElementos.arte.test.ts`).~~
 
 ## 30. Formas paralelas de Champion/Ultimate (09/11/2026, §258)

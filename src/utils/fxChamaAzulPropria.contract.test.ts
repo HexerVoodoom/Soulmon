@@ -10,7 +10,7 @@ const ESTADOS = ['orb', 'slash', 'impact', 'cast', 'aura', 'defended', 'aura-96'
 const PROPRIOS = ['chama_azul', 'pira_eterna', 'chama_solar', 'fornalha_estelar', 'obsidiana'];
 const CASOS = PROPRIOS.flatMap((id) => ESTADOS.map((e) => [id, e] as const));
 
-describe('fx de chama_azul, pira_eterna, chama_solar, fornalha_estelar e obsidiana é própria (§263 e REGISTRO deste PR)', () => {
+describe('fx de chama_azul, pira_eterna, chama_solar, fornalha_estelar e obsidiana é própria (§263 e REGISTRO §269)', () => {
   it.each(CASOS)('fx-%s-%s não é a da fada (bytes nem pixels)', async (id, e) => {
     const a = join(DIR, `fx-${id}-${e}.png`);
     const f = join(DIR, `fx-fada-${e}.png`);
