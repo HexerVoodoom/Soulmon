@@ -9118,6 +9118,8 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
   & strong { color: var(--sm2-primary-ink); }
 }
 .sm2-hex-panel { display: grid; gap: var(--sm2-space-4); min-width: 0; grid-template-columns: minmax(0, 1fr); }
+/* 09/11 (dono): linha do que a Porta faz, sob o título — branco, bold, menor, mesma fonte. */
+.sm2-hex-desc { margin: calc(-1 * var(--sm2-space-2)) 0 0; color: #fff; font-weight: 700; font-size: 0.8125rem; line-height: 1.35; }
 .sm2-hex-group { display: grid; gap: var(--sm2-space-2); }
 .sm2-hex-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sm2-space-1); }
 .sm2-hex-balance {

@@ -234,6 +234,8 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
         </div>
       ) : undefined}>
       <div data-hex-panel={slot} className="sm2-hex-panel">
+        {/* 09/11/2026 (dono): embaixo do título, o que a Porta FAZ — mesma fonte, branco, bold, menor. */}
+        <p data-hex-desc={slot} className="sm2-hex-desc">{tx(HEX_SLOT_COPY[slot].desc, isPt)}</p>
         {aviso && <p role="status" data-hex-aviso style={sm2Text}>{aviso}</p>}
 
         <section aria-label={tx(HEX_UI.owned, isPt)} className="sm2-hex-group">
