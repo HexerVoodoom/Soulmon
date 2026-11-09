@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { ElementIcon as Icon, elName } from './ElementBaseSlots';
+import { potionArt } from '../utils/potionArt';
 import { POTION_COSTS } from '../utils/elementPotion';
 import { areaNpcVoice } from '../utils/areaNpcVoice';
 import type { Language } from '../utils/i18n';
@@ -37,7 +38,7 @@ export function VescaPotionOffer({ language, elementId, onMake, onDismiss }: Ves
         </div>
       )}>
       <div data-vesca-offer style={{ display: 'grid', gap: 10, justifyItems: 'center', textAlign: 'center' }}>
-        <Icon id={elementId} size={32} />
+        {potionArt(elementId) ? <img src={potionArt(elementId)} alt="" aria-hidden="true" width={64} height={64} draggable={false} data-vesca-potion-art /> : <Icon id={elementId} size={32} />}
         {made
           ? <p role="status" style={sm2Text}>{isPt ? `Poção de ${el} pronta! Está na pasta de itens.` : `${el} potion ready! It is in your item folder.`}</p>
           : <>

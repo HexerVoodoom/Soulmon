@@ -4452,3 +4452,7 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Decisão:** os 12 `prato-<dishId>.png` (128², alfa real) entram em `src/assets/soulmon/pratos/` e os 8 panoramas `cena-<regiao>.webp` (1774×887, 87–259 KB, abaixo do teto de 400 KB) em `src/assets/soulmon/passeio-cenas/`; os globs de `dishArt.ts` e `strollScene.ts` assumem sozinhos, sem mudar código. A Jornada do foco (§27) já tinha baú/chave Brejo e Quadrantes com alfa real desde o PR #646; os PNG crus de `E:/Soulmon-assets/focus-jornada` ficam como matriz.
 **Alternativa que perdeu:** reinstalar por cima as peças da Jornada já no ar (arriscaria trocar arte aprovada por matriz bruta). **Falsifica:** prato ilegível a 52 px ou cena com Soulmon cobrindo o cristal central.
+
+## §266 — Arte das poções de elemento e dos chips de essência da Hexsmith (09/11/2026)
+**Decisão:** os 20 elementos base ganham `items/pocao-<id>.png` e `hex/chip-<id>.png` (128², alfa real, pintado, reduzidos de 256² com BOX). A poção (`utils/potionArt.ts`) alimenta `ITEM_ART['potion:<id>']` (Mochila/Cambista), a oferta da Vesca e a confirmação do Laboratório; o chip (`resolveHexChipArt`) é o rosto da Porta de elemento na Hexsmith. Elemento sem arte própria (compostos) cai no ícone do elemento, como antes.
+**Alternativa que perdeu:** manter o ícone do elemento como cara da poção (não distingue poção de elemento no inventário). **Falsifica:** o dono achar a poção/chip pouco legível em 24–40 px ou preferir o ícone cru.

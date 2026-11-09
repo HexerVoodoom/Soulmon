@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { potionArt } from '../utils/potionArt';
 import { essenceName } from '../utils/essences';
 import { ElementBaseSlots, ElementIcon as Icon, elName, emptySlots } from './ElementBaseSlots';
 import { isPotionUnlocked, affordablePotionElements, canAffordPotion, potionCost, potionIngredients, potionKey } from '../utils/elementPotion';
@@ -114,7 +115,7 @@ export function ElementPotionSheet({ open, language, essences, inventory, pendin
 
         {confirm && sel && (
           <div data-potion-cost>
-            <p style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 8 }}><Icon id={sel} size={32} /><strong>{elName(sel, isPt)}</strong></p>
+            <p style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 8 }}>{potionArt(sel) ? <img src={potionArt(sel)} alt="" aria-hidden="true" width={40} height={40} draggable={false} data-potion-art={sel} /> : <Icon id={sel} size={32} />}<strong>{elName(sel, isPt)}</strong></p>
             <p style={sm2Hint}>{t.confirmQ}</p>
             <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, display: 'grid', gap: 6 }}>
               {costRows.map(c => (
