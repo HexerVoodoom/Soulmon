@@ -1,7 +1,7 @@
 import { efeitoElementoPve } from '../utils/combate/elementEffects';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHexOverrides } from '../hooks/useHexOverrides';
-import { lotIconName } from '../utils/lotIcons';
+import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { hexFamily, hexIdentity } from '../utils/hexsmith';
 import type { CSSProperties, ReactNode } from 'react';
 import { useBackLayer } from '../utils/backStack';
@@ -910,7 +910,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
                Copy §4 (L5, §7): perda só sobre o que foi apostado de propósito (a descida). Sem "descansar" (§5.12:
                vocabulário da criatura que acaba) — o verbo é RECUPERAR. Tela padrão: `ResultScreen` (Proposta D). */
             <ResultScreen
-              playAgainIcon={lotIconName('exploracao', 'dungeon')} dailyEvent="masmorra"
+              playAgainIcon={lotIconName('exploracao', 'dungeon')} playAgainArt={lotIconArt('exploracao', 'dungeon')} dailyEvent="masmorra"
               language={language}
               outcome={resumo.recordTo > resumo.recordFrom ? 'record' : endReason === 'hp' ? 'tired' : 'calm'}
               gameName={isPt ? 'Fenda Sem Fim' : 'Endless Rift'}

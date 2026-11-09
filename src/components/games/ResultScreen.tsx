@@ -126,6 +126,8 @@ export interface ResultScreenProps {
   onPlayAgain?: () => void;
   /** Ícone do botão de revanche: o do PRÉDIO onde mora a atividade (`utils/lotIcons.ts`). Ausente = `replay`. */
   playAgainIcon?: string;
+  /** Arte (PNG) do prédio no botão, no lugar do glifo: a mesma da pílula do mapa (`lotIconArt`). */
+  playAgainArt?: string;
   /** Sem `onHome` não há botão de sair (o Torneio tem uma ação só: "Continuar"). */
   homeLabel?: string;
   onHome?: () => void;
@@ -507,7 +509,9 @@ export function ResultScreen(p: ResultScreenProps) {
       <div data-result-dock style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '8px 16px calc(env(safe-area-inset-bottom, 0px) + 12px)', borderTop: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-bg)' }}>
         {p.onPlayAgain && (
           <button type="button" data-result-again {...p.againAttrs} onClick={p.onPlayAgain} style={{ ...sm2Button('primary'), width: '100%', padding: '0 8px', gap: 8 }}>
-            <Icon name={p.playAgainIcon ?? 'replay'} size={24} tone="inherit" />
+            {p.playAgainArt
+              ? <img src={p.playAgainArt} alt="" aria-hidden="true" width={28} height={28} style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} />
+              : <Icon name={p.playAgainIcon ?? 'replay'} size={24} tone="inherit" />}
             {p.playAgainLabel ?? (isPt ? 'Jogar de novo' : 'Play again')}
           </button>
         )}

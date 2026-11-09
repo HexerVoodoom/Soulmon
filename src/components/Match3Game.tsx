@@ -1,7 +1,7 @@
 import { RankingPanel } from './RankingPanel';
 import { ResultScreen } from './games/ResultScreen';
 import { essenceLedgerRows } from '../utils/resultEssences';
-import { lotIconName } from '../utils/lotIcons';
+import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { getOpponents } from '../utils/community';
 import { opponentSprite } from '../utils/opponentArt';
 import { npcFoe, pickPvpOpponent, pvpElementsForSeed, tileElementName, type PvpFoe } from '../utils/match3Pvp';
@@ -976,7 +976,7 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
 
       {over ? (
         <ResultScreen
-          playAgainIcon={lotIconName('jogos', 'salao')} dailyEvent="match3"
+          playAgainIcon={lotIconName('jogos', 'salao')} playAgainArt={lotIconArt('jogos', 'salao')} dailyEvent="match3"
           language={language}
           outcome={newBest && !pvp && !boss ? 'record' : win ? 'win' : 'tired'}
           gameName={isPt ? 'Combina 3' : 'Match 3'}

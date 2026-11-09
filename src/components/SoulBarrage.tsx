@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { RankingPanel } from './RankingPanel';
-import { lotIconName } from '../utils/lotIcons';
+import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { getSpriteForStage } from '../utils/sprites';
 import { lineIconForStage } from '../utils/lineIcons';
 import { STORAGE_KEYS } from '../utils/storageKeys';
@@ -410,7 +410,7 @@ export function SoulBarrage({ evolutionStage, demoCharacterId, petElement, playe
       </>)}
       {phase === 'over' && (
         <ResultScreen
-          playAgainIcon={lotIconName('jogos', 'salao')} dailyEvent="barrage"
+          playAgainIcon={lotIconName('jogos', 'salao')} playAgainArt={lotIconArt('jogos', 'salao')} dailyEvent="barrage"
           language={language}
           outcome={prevBest > 0 && finalScore > prevBest ? 'record' : 'calm'}
           bannerKind={prevBest > 0 && finalScore > prevBest ? undefined : 'complete'}
