@@ -28,6 +28,7 @@ import { ATTR_EFFECT, forgeRefusalText } from '../utils/forgeCopy';
 import { stockOf } from '../utils/buildingQuests';
 import { MATERIALS } from '../utils/buildingQuestsCopy';
 import { MaterialIcon } from './MaterialIcon';
+import { BackCircleButton } from './ui/BackCircleButton';
 import { VitraMap, type VitraChakra } from './forge/VitraMap';
 import { Icon } from './ui/Icon';
 import { forgeReadySlots } from '../utils/lotIndicators';
@@ -429,7 +430,7 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
       <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card data-forge-view="map">
         <VitraMap chakras={chakras} label={isPt ? 'Equipamentos do Soulsmith' : 'Soulsmith equipment'} onBackdrop={() => setPop(null)}>
           <div className="sm2-vit-bar" data-vitra-bar>
-            {onBack && <button type="button" className="sm2-vit-back" data-vitra-back onClick={onBack}>{isPt ? 'Voltar' : 'Back'}</button>}
+            {onBack && <BackCircleButton onClick={onBack} language={isPt ? 'pt-BR' : 'en-US'} overScene data-vitra-back />}
             <p id="sm2-equip-title" className="sm2-stats-lab sm2-vit-title">Soulsmith</p>
           </div>
           {(celebra || aviso) && (

@@ -58,7 +58,11 @@ describe('Soulsmith em mapa', () => {
     const onBack = vi.fn();
     localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify({ activities: [], tasks: [], soulmonMeta: { baseName: 'Fagulha' } }));
     render(<GameStateProvider><ForgeCard language="pt-BR" view="map" onBack={onBack} /></GameStateProvider>);
-    click(document.querySelector('[data-vitra-back]')!);
+    const back = document.querySelector('[data-vitra-back]')!;
+    expect(back.hasAttribute('data-back-circle')).toBe(true);
+    expect(back.textContent).toBe('');
+    expect(back.getAttribute('aria-label')).toBe('Voltar');
+    click(back);
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
