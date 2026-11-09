@@ -3,6 +3,8 @@
  * O servidor guarda a jornada; aqui se escolhe ritmo, cenário e chaves, se começa e se volta à jornada em andamento.
  */
 import { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useBackLayer } from '../../utils/backStack';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { Icon } from '../ui/Icon';
 import { sheetCard, sheetCardTitle } from '../nav/sheetKit';
@@ -55,6 +57,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
   const [lastItems, setLastItems] = useState<JourneyItem[] | null>(null);
   const [doneNote, setDoneNote] = useState<string | null>(null);
   const [listOpen, setListOpen] = useState(false);
+  const [envOpen, setEnvOpen] = useState(false);
 
   const absorb = useCallback((r: JourneyResponse, prevGrants?: Set<string>) => {
     setDelta(r.now - Date.now());
@@ -139,11 +142,11 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
           <div role="radiogroup" aria-label={isPt ? 'Ritmo' : 'Rhythm'} style={{ display: 'flex', gap: 8 }}>
             {(['p25', 'p50'] as JourneyMode[]).map(m => <button key={m} type="button" role="radio" aria-checked={prefs.mode === m} data-focus-mode={m} onClick={() => setPref({ mode: m })} style={{ ...sm2Button(prefs.mode === m ? 'primary' : 'outline'), flex: 1, minHeight: 44 }}>{m === 'p25' ? '25 / 5' : '50 / 10'}</button>)}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button type="button" data-focus-env-open aria-haspopup="dialog" aria-label={`${isPt ? 'Cenário da jornada' : 'Journey scene'}: ${isPt ? env.pt : env.en}`} onClick={() => setEnvOpen(true)} style={{ ...sm2Button('outline'), minHeight: 48, justifyContent: 'flex-start', gap: 8 }}>
             <Icon name={env.icon} size={20} tone="primary" />
-            <span data-focus-env={env.id} style={{ ...sm2Text, flex: 1 }}>{isPt ? env.pt : env.en}</span>
-            <button type="button" data-focus-env-next aria-label={isPt ? 'Outro cenário' : 'Another scene'} onClick={() => setPref({ env: FOCUS_ENVIRONMENTS[(envIdx + 1) % FOCUS_ENVIRONMENTS.length].id })} style={{ ...sm2Button('quiet'), minWidth: 44, minHeight: 44 }}><Icon name="chevron_right" size={24} tone="inherit" /></button>
-          </div>
+            <span data-focus-env={env.id} style={{ ...sm2Text, flex: 1, textAlign: 'left' }}>{isPt ? env.pt : env.en}</span>
+            <Icon name="chevron_right" size={24} tone="inherit" />
+          </button>
           {keys.length > 0 && <div aria-label={isPt ? 'Chaves desta sessão' : 'Keys for this session'} style={{ display: 'flex', gap: 6 }}>
             {keys.map(k => <KeyGlyph key={k} k={k} size={24} />)}
           </div>}
@@ -157,7 +160,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
         {JOURNEY_KEYS.map(k => {
           const got = keys.includes(k);
           return <button key={k} type="button" data-focus-card={k} data-has-key={got} onClick={() => setOpenCard(k)} style={{ ...sheetCard, minHeight: 88, alignItems: 'flex-start', justifyContent: 'space-between', gap: 6, cursor: 'pointer', textAlign: 'left', border: got ? `2px solid ${KEY_COLOR[k]}` : undefined }}>
-            <KeyGlyph k={k} size={24} muted={!got} />
+            <KeyGlyph k={k} size={24} muted={!got} label={isPt ? `${CARD[k].keyPt} — bloqueada` : `${CARD[k].keyEn} — locked`} />
             <span style={{ ...sm2Text, fontWeight: 600 }}>{isPt ? CARD[k].pt : CARD[k].en}</span>
             <span style={{ ...sm2Hint, margin: 0 }}>{got ? (isPt ? 'Refazer' : 'Redo') : (isPt ? 'Fazer' : 'Do it')}</span>
           </button>;
@@ -175,8 +178,33 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
         })}
       </section>}
 
+      {envOpen && <EnvModal isPt={isPt} current={prefs.env} onPick={id => { setPref({ env: id }); setEnvOpen(false); }} onClose={() => setEnvOpen(false)} />}
+
       {showJourney && active && <JourneyScreen language={language} active={active} delta={delta} petSprite={petSprite} lastItems={lastItems}
         onPause={() => act('pause')} onResume={() => act('resume')} onClaim={() => act('claim')} onEnd={() => act('end')} onClose={() => setShowJourney(false)} />}
     </div>
+  );
+}
+
+/** Modal do cenário da jornada: lista os cenários; escolher fecha e grava. Todos estão liberados hoje; se algum vier a travar, entra em `locked`. */
+function EnvModal({ isPt, current, onPick, onClose, locked = [] }: { isPt: boolean; current: FocusEnvironmentId; onPick: (id: FocusEnvironmentId) => void; onClose: () => void; locked?: readonly FocusEnvironmentId[] }) {
+  useBackLayer(true, onClose);
+  return createPortal(
+    <div data-focus-env-backdrop onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 60, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <div role="dialog" aria-modal="true" aria-label={isPt ? 'Escolher o cenário' : 'Choose the scene'} data-focus-env-modal onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 480, background: 'var(--sm2-surface)', color: 'var(--sm2-ink)', borderRadius: '14px 14px 0 0', padding: 16, paddingBottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', display: 'grid', gap: 8 }}>
+        <h3 style={{ ...sheetCardTitle, margin: 0 }}>{isPt ? 'Para onde o Soulmon vai?' : 'Where will Soulmon go?'}</h3>
+        <div role="radiogroup" aria-label={isPt ? 'Cenários' : 'Scenes'} style={{ display: 'grid', gap: 6 }}>
+          {FOCUS_ENVIRONMENTS.map(e => {
+            const isLocked = locked.includes(e.id);
+            return <button key={e.id} type="button" role="radio" aria-checked={current === e.id} disabled={isLocked} data-focus-env-option={e.id} onClick={() => onPick(e.id)} style={{ ...sm2Button(current === e.id ? 'primary' : 'outline', isLocked), minHeight: 48, justifyContent: 'flex-start', gap: 8 }}>
+              <Icon name={e.icon} size={20} tone="inherit" /><span style={{ flex: 1, textAlign: 'left' }}>{isPt ? e.pt : e.en}</span>
+              {current === e.id && <Icon name="check" size={20} tone="inherit" />}
+            </button>;
+          })}
+        </div>
+        <button type="button" data-focus-env-close onClick={onClose} style={{ ...sm2Button('quiet'), minHeight: 44 }}>{isPt ? 'Fechar' : 'Close'}</button>
+      </div>
+    </div>,
+    document.body,
   );
 }

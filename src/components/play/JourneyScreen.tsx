@@ -141,10 +141,12 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
   );
 }
 
-/** Chave com arte quando existe; senão o ícone na cor do token. */
-export function KeyGlyph({ k, size, muted }: { k: JourneyKeyId; size: 20 | 24; muted?: boolean }) {
+export const KEY_MUTED_OPACITY = 0.4;
+
+/** Chave com arte quando existe; senão o ícone na cor do token. `muted` = ainda não conquistada: a mesma chave, esmaecida (no lugar do cadeado). */
+export function KeyGlyph({ k, size, muted, label }: { k: JourneyKeyId; size: 20 | 24; muted?: boolean; label?: string }) {
   const src = KEY_ART[k];
-  if (src && !muted) return <img src={src} alt="" width={size} height={size} style={{ display: 'block' }} />;
+  if (src) return <img src={src} alt={muted ? (label ?? '') : ''} data-key-glyph={k} data-key-muted={muted ? 'true' : undefined} width={size} height={size} style={{ display: 'block', imageRendering: 'pixelated', opacity: muted ? KEY_MUTED_OPACITY : 1 }} />;
   const color = { color: muted ? 'var(--sm2-muted)' : KEY_COLOR[k] };
   return size === 20 ? <Icon name="lock_open" size={20} tone="inherit" style={color} /> : <Icon name="lock_open" size={24} tone="inherit" style={color} />;
 }
