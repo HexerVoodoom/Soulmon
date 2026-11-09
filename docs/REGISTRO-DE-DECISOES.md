@@ -4352,6 +4352,16 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Emenda (08/11/2026, dono, em modal):** veterano que já tem 100+ essências recebe a oferta da Vesca **uma vez por elemento** ao abrir o app (memória em `localStorage` `soulmon:vescaOffered`); cruzar 100 de novo sempre oferece. **Curados (59 elementos de 3–4 bases) funcionam como os pares** (dono: "iguais aos equivalentes"): têm essência (drop junto com a do par quando o sprite é curado, `essenceDropsOfFoe`), poção (50 essências + 1 poção de cada base distinta) e venda no Cambista (3 Créditos, teto por 3+ bases; espelho em `_essenceShop.js`). Catálogo novo `ESSENCE_ELEMENT_IDS` (269 = 210 + 59, sem `neutro`); `ALL_ELEMENT_IDS` segue 210 (Forja Hex, arte de item). `ESSENCE_MAX_KEYS` 211→271 nos dois lados.
 
+## §257 — Cada forma carrega o seu elemento e as suas skills (09/11/2026, pedido do dono)
+
+**Pedido.** "Quando o user evoluir usando poção elemental e degenerar ele deve voltar ao elemento da forma degenerada. Além disso, ao usar a função de equipar outra forma de um mesmo estágio de evolução, deve-se equipar tudo - elementos, tipo de ataque, tipo de especial."
+
+**O que se fez.** Novo campo opcional `formaSnapshots` (`utils/formaSnapshot.ts`, dono único): por forma (id do estágio, mais `@<elemento>` quando há forma alternativa equipada), a foto do que a define em combate — poção (`potionElement`), registro do elemento do nível (`elementoJornada.estagios[nível]`) e o par de skills do nível (`soulmonSkills[nível]`: ataque básico e especial). A foto é tirada ao SAIR da forma (evoluir, degenerar, trocar) e aplicada ao ENTRAR nela. Queda manual (`handleDegenerate`) e por HP (`computeDailyReset`) passam por `aoDescerDeForma`: fotografa a forma que cai, apaga o registro de elemento dos níveis acima do destino e aplica a foto do destino; sem foto, a poção é limpa. Troca lateral (`handleSwitchForm`) e equipar forma alternativa do estágio atual (`handleEquipFormaAlt`) passam por `trocarFormaCompleta`. A forma alternativa nova agora é registrada com o elemento da poção, quando houver.
+
+**Alternativa que perdeu.** Gravar a foto só ao evoluir: perderia o que muda dentro da forma (skills computadas depois). O estado vivo é a verdade da forma atual, então a foto sai dele na saída.
+
+**Limites / o que falsifica.** Forma sem foto (save anterior a 09/11/2026 ou nunca vivida desde então) não tem o que restaurar: na troca nada além do estágio/desenho muda; na queda só a poção é limpa. Apagar o registro dos níveis acima faz a próxima subida sortear o elemento do nível de novo (como na primeira vez) — se o dono quiser o elemento antigo de volta ao reevoluir, é reverter esse trecho. O servidor lê `potionElement`/`elementoJornada` do save sincronizado; nenhum espelho mudou.
+
 ## §251 — Ponto de retorno do Rift de 2 em 2 camadas (09/11/2026, decisão do dono; emenda a §31)
 
 **Decisão (modal do dono):** a nova descida recomeça no último múltiplo de **2** camadas já limpo (antes: de 5 em 5), então começa **no máximo 1 camada abaixo do recorde**. Código: `DUNGEON_RETURN_EVERY = 2` em `src/utils/dungeonIdle.ts` (`startLayerFor`), espelhado no servidor em `functions/api/_dayCounters.js` (`RETURN_EVERY`, `riftStartLayer`, base anti-trapaça do mês — tem que bater com o cliente).

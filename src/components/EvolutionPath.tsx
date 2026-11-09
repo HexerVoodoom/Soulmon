@@ -731,9 +731,9 @@ export function EvolutionPath({
     const hidden = !isReached && !isRevealed;
     // A stage the pet already passed through, on the branch it's CURRENTLY
     // on — offer to degenerate back to it.
-    // Qualquer forma JÁ liberada de nível ABAIXO, de qualquer galho (rookie segue
-    // como antes: fora). O botão vive no card da forma, na aba do galho dela.
-    const isPreviousStage = isReached && !isCurrent && evolution.stage !== 'rookie' && Boolean(evolution.branch)
+    // Qualquer forma JÁ liberada de nível ABAIXO, de qualquer galho. O botão vive no
+    // card da forma, na aba do galho dela. 09/11/2026 (dono): o rookie (tronco, sem galho) também.
+    const isPreviousStage = isReached && !isCurrent && (evolution.stage === 'rookie' || Boolean(evolution.branch))
       && stageLevelIndex(stageId) < stageLevelIndex(currentStageId);
     // Mesmo nível, outra forma JÁ desbloqueada (qualquer galho): troca grátis.
     const isLateralSwitch = canSwitchLaterally({ currentStageId, targetStageId: stageId, unlockedEvolutions });
