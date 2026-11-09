@@ -621,12 +621,8 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
               <div style={{ margin: '0 0 12px' }} data-base-filter>
                 <ElementBaseSlots slots={wildBases} isPt={isPt} onChange={(i, v) => setWildBases(s => s.map((x, j) => (j === i ? v : x)))} />
               </div>
-              {/* 28/10/2026 (dono): Selvagem e Desgarrado moram na MESMA aba, em duas seções. */}
-              <h3 className="sm2-lib-s" style={{ margin: '0 0 6px', fontWeight: 600 }}>{isPt ? 'Selvagem' : 'Wild'}</h3>
-              <BestiaryCollection seen={bestiary} mode="wild" language={language} isNew={novos.bestiary} bases={wildBases} />
-              <h3 className="sm2-lib-s" style={{ margin: '16px 0 6px', fontWeight: 600 }}>{isPt ? 'Desgarrado' : 'Stray'}</h3>
-              {/* 01/11/2026 (dono): desgarrado de jogador (§213) junto, sem distinção. */}
-              <BestiaryCollection seen={bestiary} mode="stray" language={language} isNew={novos.bestiary} players={strayPlayersSeen} playersNew={novos.strays} bases={wildBases} />
+              {/* 09/11/2026 (dono, §254): UMA lista só, rookie → mega, com subtítulo por estágio; desgarrado de jogador (§213) junto, no fim. */}
+              <BestiaryCollection seen={bestiary} language={language} isNew={novos.bestiary} players={strayPlayersSeen} playersNew={novos.strays} bases={wildBases} />
             </>
           )}
           {libTab === 'element' && <ElementDex defeated={defeatedElements} language={language} isNew={novos.elements} />}
