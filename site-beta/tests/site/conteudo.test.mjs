@@ -179,7 +179,7 @@ describe('capas dos jogos (arte 4:3, 08/11)', () => {
   it('Calabouço sem sprite; selo Em construção é HTML; sem selo Gameplay real; capas são arte', () => {
     expect(jogos.elenco.calabouco).toEqual([]);
     expect(TEXTOS.pt.universo.emObras).toBe('Em construção'); expect(TEXTOS.en.universo.emObras).toBe('Under construction');
-    expect(landing).toContain("id === 'calabouco' && <span class=\"selo-obras\"");
+    expect(landing).not.toContain('selo-obras'); // 09/11: dono — a Masmorra está pronta
     expect(jogos.gameplay).toBe(false);
     const bloco = landing.slice(landing.indexOf('<ul class="grade jogos"'), landing.indexOf('</ul>', landing.indexOf('<ul class="grade jogos"')));
     expect(bloco).not.toContain('gameplay');

@@ -39,7 +39,7 @@ const pt = {
     forma: 'Forma', de: 'de',
     alt: 'Soulmon da linha fogo,',
     fim: 'As cinco formas de uma mesma linha.',
-    recomecar: 'Recomeçar', listaRotulo: 'Os cinco estágios de um Soulmon da linha fogo',
+    recomecar: 'Recomeçar', pular: 'Pular demonstração', listaRotulo: 'Os cinco estágios de um Soulmon da linha fogo',
   },
   soul: {
     h2: 'Seu Soulmon é só seu',
@@ -51,9 +51,9 @@ const pt = {
     oculta: 'Forma ainda não revelada', descobrir: 'A descobrir',
     linhas: ['Planta', 'Fada', 'Fogo'], linhaRotulo: 'Linha de evolução', linhaAnt: 'Linha anterior', linhaProx: 'Próxima linha', sortear: 'Aleatório', sorteioRotulo: 'Conheça algum Soulmon', sombra: 'Conheça algum Soulmon', elemento: 'Elemento', altSorteio: 'Soulmon sorteado, elemento',
   },
-  colete: { h2: 'Colete todas as formas', frase: 'Evoluiu no caminho do Poder? Use uma poção elemental e o mesmo Soulmon ganha outra forma: de água, de raiz, de chama azul… Cada forma tem a sua versão por elemento. Colete todas as formas do seu Soulmon.', rot: 'Linha fogo, caminho Poder', falta: 'Forma a descobrir', variantes: [['agua', 'Água'], ['industrial', 'Industrial'], ['chama_azul', 'Chama azul'], ['brinquedo', 'Brinquedo de corda'], ['raiz_profunda', 'Raiz profunda']] as [string, string][] },
+  colete: { h2: 'Colete todas as formas', frase: 'Cada forma tem uma versão para cada elemento. Colete todas.', rot: 'Linha fogo, caminho Poder', falta: 'Forma a descobrir', variantes: [['agua', 'Água'], ['industrial', 'Industrial'], ['chama_azul', 'Chama azul'], ['brinquedo', 'Brinquedo de corda'], ['raiz_profunda', 'Raiz profunda']] as [string, string][] },
   universo: {
-    h2: 'O universo', frase: 'Lugares, habitantes, jogos e elementos.',
+    h2: 'O universo', frase: 'Toque num lugar para conhecer quem mora lá e o que tem para fazer.',
     abasRotulo: 'Explorar o universo',
     abas: ['Lugares', 'Habitantes', 'Jogos', 'Elementos'],
     areas: [['exploracao', 'Exploração'], ['jogos', 'Jogos'], ['arena', 'Arena'], ['hall', 'Hall'], ['guilda', 'Guilda'], ['laboratorio', 'Laboratório'], ['forja', 'Forja']],
@@ -62,7 +62,7 @@ const pt = {
     emObras: 'Em construção', jogosArte: 'Capas ilustradas dos jogos',
     els: { agua: 'Água', ar: 'Ar', arcano: 'Arcano', eletricidade: 'Eletricidade', espaco: 'Espaço', fada: 'Fada', fogo: 'Fogo', gravidade: 'Gravidade', industrial: 'Industrial', luz: 'Luz', marcial: 'Marcial', morte: 'Morte', planta: 'Planta', som: 'Som', sombra: 'Sombra', tempo: 'Tempo', terra: 'Terra', vida: 'Vida', vigor: 'Vigor', vileza: 'Vileza' } as Record<string, string>,
     ocultoRotulo: 'Elemento ainda não revelado', combinacoes: '+190 combinações', combinacoesTx: 'Os 20 elementos se combinam em pares.',
-    lugares: { exploracao: 'Passeio e Endless Rift.', jogos: 'Minijogos e Mind Workshop.', arena: 'Torneio e duelos.', hall: 'Feira, amigos e Grove.', guilda: 'Casa e Missão do clã.', laboratorio: 'Evolução e perfil do Soulmon.', forja: 'Ferramentas para as tarefas difíceis.' } as Record<string, string>,
+    lugares: { exploracao: 'Passeio, Endless Rift e Masmorra.', jogos: 'Minijogos e Ateliê da Mente.', arena: 'Torneio e duelos.', hall: 'Feira, amigos e Grove.', guilda: 'Casa e Missão do clã.', laboratorio: 'Evolução e perfil do Soulmon.', forja: 'Ferramentas para as tarefas difíceis.' } as Record<string, string>,
     jogosH: 'Minijogos', anterior: 'Anterior', proximo: 'Próximo', fechar: 'Fechar', falaDe: 'Fala de', morador: 'Habitante',
   },
   recursos: {
@@ -160,7 +160,7 @@ const en: typeof pt = {
     forma: 'Form', de: 'of',
     alt: 'Fire line Soulmon,',
     fim: 'Five forms of one line.',
-    recomecar: 'Start over', listaRotulo: 'The five stages of a fire line Soulmon',
+    recomecar: 'Start over', pular: 'Skip demo', listaRotulo: 'The five stages of a fire line Soulmon',
   },
   soul: {
     h2: 'Your Soulmon is yours alone',
@@ -172,9 +172,9 @@ const en: typeof pt = {
     oculta: 'Form not revealed yet', descobrir: 'To discover',
     linhas: ['Plant', 'Fairy', 'Fire'], linhaRotulo: 'Evolution line', linhaAnt: 'Previous line', linhaProx: 'Next line', sortear: 'Random', sorteioRotulo: 'Meet a Soulmon', sombra: 'Meet a Soulmon', elemento: 'Element', altSorteio: 'Drawn Soulmon, element',
   },
-  colete: { h2: 'Collect every form', frase: 'Evolved on the Power path? Use an elemental potion and the same Soulmon takes another form: water, root, blue flame… Every form has its own version for each element. Collect every form of your Soulmon.', rot: 'Fire line, Power path', falta: 'Form to discover', variantes: [['agua', 'Water'], ['industrial', 'Industrial'], ['chama_azul', 'Blue flame'], ['brinquedo', 'Wind-up toy'], ['raiz_profunda', 'Deep root']] },
+  colete: { h2: 'Collect every form', frase: 'Every form has a version for each element. Collect them all.', rot: 'Fire line, Power path', falta: 'Form to discover', variantes: [['agua', 'Water'], ['industrial', 'Industrial'], ['chama_azul', 'Blue flame'], ['brinquedo', 'Wind-up toy'], ['raiz_profunda', 'Deep root']] },
   universo: {
-    h2: 'The world', frase: 'Places, people, games and elements.',
+    h2: 'The world', frase: 'Tap a place to meet who lives there and see what you can do.',
     abasRotulo: 'Explore the world',
     abas: ['Places', 'Inhabitants', 'Games', 'Elements'],
     areas: [['exploracao', 'Exploration'], ['jogos', 'Games'], ['arena', 'Arena'], ['hall', 'Hall'], ['guilda', 'Guild'], ['laboratorio', 'Laboratory'], ['forja', 'Forge']],
@@ -183,7 +183,7 @@ const en: typeof pt = {
     emObras: 'Under construction', jogosArte: 'Illustrated game covers',
     els: { agua: 'Water', ar: 'Air', arcano: 'Arcane', eletricidade: 'Electricity', espaco: 'Space', fada: 'Fairy', fogo: 'Fire', gravidade: 'Gravity', industrial: 'Industrial', luz: 'Light', marcial: 'Martial', morte: 'Death', planta: 'Plant', som: 'Sound', sombra: 'Shadow', tempo: 'Time', terra: 'Earth', vida: 'Life', vigor: 'Vigor', vileza: 'Vileness' },
     ocultoRotulo: 'Element not revealed yet', combinacoes: '+190 combinations', combinacoesTx: 'The 20 elements combine in pairs.',
-    lugares: { exploracao: 'Strolls and the Endless Rift.', jogos: 'Minigames and Mind Workshop.', arena: 'Tournament and duels.', hall: 'The Fair, friends and the Grove.', guilda: "Your clan's House and Mission.", laboratorio: "Evolution and your Soulmon's profile.", forja: 'Tools for the hardest tasks.' },
+    lugares: { exploracao: 'Strolls, the Endless Rift and the Dungeon.', jogos: 'Minigames and Mind Workshop.', arena: 'Tournament and duels.', hall: 'The Fair, friends and the Grove.', guilda: "Your clan's House and Mission.", laboratorio: "Evolution and your Soulmon's profile.", forja: 'Tools for the hardest tasks.' },
     jogosH: 'Minigames', anterior: 'Previous', proximo: 'Next', fechar: 'Close', falaDe: 'Says', morador: 'Inhabitant',
   },
   recursos: {

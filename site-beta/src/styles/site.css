@@ -928,3 +928,46 @@ html:not(.ciclo-js) .estagios img[data-tarde-src] { display: none; }
 @media (min-width: 1024px) { .colete-niveis { grid-template-columns: 1fr 1fr; } .colete-roda { width: min(100%, 520px); } }
 .colete-nivel .colete-roda { margin: 12% 0 6%; }
 .colete-nivel .colete-roda { width: min(78%, 480px); } .colete-nivel .colete-roda .colete-item:not(.base) { width: 24%; left: 38%; top: 38%; translate: calc(cos(var(--i) * 72deg - 90deg) * 150%) calc(sin(var(--i) * 72deg - 90deg) * 150%); }
+
+/* ===== Rodada 2 do dono (09/11) ===== */
+/* Demo: sem palco preso de 340svh; a trava de rolagem (ciclo.ts) segura a página até o Ultra */
+.ciclo-js .ciclo { height: auto !important; }
+.ciclo-js .ciclo-palco { position: relative !important; height: auto !important; }
+.pular-demo { position: fixed; z-index: 40; left: 50%; bottom: 16px; translate: -50% 0; padding: 10px 18px; min-height: 44px; background: rgba(4, 20, 20, .88); border: 1px solid var(--sb-anel); border-radius: 999px; color: var(--sb-tx); font-size: .875rem; }
+.pular-demo[hidden] { display: none; }
+/* Ícone da Play dentro do botão principal */
+.hero-cta { display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
+.hero-cta .loja-ico { width: 22px; height: 24px; flex: none; }
+/* Modal do lugar com minijogos */
+.npc-modal.com-jogos { width: min(calc(100vw - 24px), 760px); max-height: 90vh; overflow: auto; background: #0b1f22; border-image: none; border: 2px solid var(--sb-anel); border-radius: 14px; padding: 24px 20px 16px; }
+.npc-modal.com-jogos::backdrop { background: rgba(3, 10, 10, .85); }
+.lugar-jogos { list-style: none; margin: 4px 0 0; padding: 0; width: 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.lugar-jogos[hidden] { display: none; }
+.lugar-jogos .capa-jogo { display: grid; gap: 6px; text-align: center; }
+.lugar-jogos .capa-arte { border-radius: 10px; border: 1px solid var(--sb-anel); }
+.lugar-jogos .capa-nome { font-weight: var(--sb-peso-forte); font-size: .9375rem; }
+
+/* Colete rodada 2: caminhos lado a lado, mesmo peso */
+.colete-niveis { grid-template-columns: 1fr !important; gap: var(--sb-e-6); }
+.colete-caminhos { display: grid; grid-template-columns: 1fr; gap: var(--sb-e-3); width: 100%; max-width: 1180px; }
+.colete-caminho { display: grid; gap: 10px; align-content: start; }
+.colete-caminho h4 { margin: 0; font-size: 1rem; letter-spacing: .06em; text-transform: uppercase; color: var(--sb-tx-2); }
+.colete-caminho .colete-grade { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; width: 100%; gap: 8px; }
+.colete-caminho .colete-item { padding: 8px 6px; border-radius: 10px; box-shadow: none; border-color: var(--sb-anel); animation: none; }
+.colete-caminho .colete-item img { max-width: 112px; }
+.colete-caminho .colete-item span { font-size: .8125rem; line-height: 1.2; }
+@media (min-width: 1024px) { .colete-caminhos { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--sb-e-4); } }
+.lugar-jogos .capa-jogo { border: 0; padding: 0; background: none; }
+
+/* Colete: um caminho por linha, 6 cartas iguais */
+.colete-caminhos { grid-template-columns: 1fr !important; gap: var(--sb-e-3) !important; max-width: 1040px; }
+.colete-caminho { grid-template-columns: 1fr; }
+.colete-caminho .colete-grade { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+@media (min-width: 768px) {
+  .colete-caminho { grid-template-columns: 140px minmax(0, 1fr); align-items: center; gap: var(--sb-e-3); }
+  .colete-caminho h4 { text-align: left; }
+  .colete-caminho .colete-grade { grid-template-columns: repeat(6, minmax(0, 1fr)) !important; }
+}
+@media (max-width: 1023px) { .soul-grade { grid-template-columns: minmax(0, 1fr); } .soul-grade > * { min-width: 0; } } .numero { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 10px; }
+.npc-modal .lugar-jogos { width: 100% !important; max-width: none !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } @media (min-width: 768px) { .npc-modal .lugar-jogos { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important; } }
+.npc-modal .lugar-jogos > li { width: 100% !important; max-width: none !important; min-width: 0; }

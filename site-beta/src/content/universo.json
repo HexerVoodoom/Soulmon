@@ -29,7 +29,7 @@
       }
     },
     "hall": {
-      "npc": "/npc/hall.webp",
+      "npc": "/npc/lugar-hall.webp",
       "pt": "Este é o Hall, nosso ponto de encontro. Tem a Feira, o Salão do Clã com seus amigos e o Grove. Venha trocar presentes e ver quem anda por aqui.",
       "en": "This is the Hall, our meeting point. There's the Fair, the Clan Hall with your friends, and the Grove. Come swap gifts and see who's around.",
       "habita": {
@@ -38,7 +38,7 @@
       }
     },
     "guilda": {
-      "npc": "/npc/hall-guilda.webp",
+      "npc": "/npc/lugar-guilda.webp",
       "pt": "Na Guilda, o clã tem uma casa e uma Missão em comum. Entre com amigos, cumpram juntos, e o esforço de cada um soma para todos. Sempre cabe mais um.",
       "en": "In the Guild, your clan has a house and a shared Mission. Join with friends, work on it together, and everyone's effort adds up for all. There's always room for one more.",
       "habita": {
@@ -47,7 +47,7 @@
       }
     },
     "laboratorio": {
-      "npc": "/npc/laboratorio-pet.webp",
+      "npc": "/npc/lugar-laboratorio.webp",
       "pt": "No Laboratório, acompanho a evolução do seu Soulmon. Aqui ficam o Vínculo, o perfil dele e o Centro de Evolução. É onde você vê quanto ele mudou e decide quando evoluir.",
       "en": "In the Laboratory, I follow your Soulmon's evolution. The Bond, its profile and the Evolution Center live here. It's where you see how much it has changed and decide when to evolve.",
       "habita": {
@@ -56,7 +56,7 @@
       }
     },
     "forja": {
-      "npc": "/npc/forja.webp",
+      "npc": "/npc/lugar-forja.webp",
       "pt": "Na Forja ficam ferramentas que ajudam a cumprir as tarefas mais difíceis. Pegue o que precisar e siga no seu ritmo.",
       "en": "In the Forge you'll find tools that help you get the hardest tasks done. Take what you need and go at your own pace.",
       "habita": {

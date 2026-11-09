@@ -93,20 +93,49 @@ export async function iniciar(S: Strs, fraco: boolean) {
   });
   setCristal('apagado');
 
-  if (!gsap || !ST) { secao.classList.add('sem-pin'); return; }
+  secao.classList.add('sem-pin');
+  travarRolagem();
 
-  // Rolar também avança, para quem não toca. Cabe só com tela alta o bastante (ver CSS).
-  // Pedido do dono (09/11): rolar sem tocar também marca e evolui, com ou sem o palco preso.
-  const preso = getComputedStyle(palco).position === 'sticky';
-  {
-    ST.create({
-      trigger: preso ? secao : blocoTarefas, start: preso ? 'top top' : 'top 85%', end: preso ? 'bottom bottom' : 'bottom 15%',
-      onUpdate: (self) => {
-        const alvo = Math.min(4, Math.floor(self.progress * 5.2));
-        for (let i = 0; i < botoes.length && estagio + fila.length < alvo; i++) {
-          if (botoes[i].getAttribute('aria-checked') !== 'true' && !fila.includes(i)) marcar(i);
-        }
-      },
-    });
+  // Trava da rolagem (dono, 09/11): ao chegar na demo, rolar para baixo NÃO move a página;
+  // cada gesto marca uma tarefa e evolui o Soulmon. Só no Ultra a página volta a rolar.
+  // Para cima sempre rola; "Pular" solta na hora; nunca com movimento reduzido (este módulo nem carrega).
+  function travarRolagem() {
+    // Cabe na tela (desktop): enquadra a seção inteira, com título e celular; senão (celular), a demo.
+    const cena = document.querySelector<HTMLElement>('[data-cena]')!;
+    let ancora = cena;
+    const escolher = () => { ancora = palco.offsetHeight <= innerHeight + 4 ? palco : cena; };
+    escolher(); addEventListener('resize', escolher);
+    const pular = document.querySelector<HTMLButtonElement>('[data-pular-demo]');
+    let solto = false; let ultimo = 0; let toqueY = 0;
+    const topoH = () => (ancora === palco ? 0 : (document.querySelector<HTMLElement>('[data-topo]')?.offsetHeight ?? 0) + 8);
+    const alvoY = () => Math.round(scrollY + ancora.getBoundingClientRect().top - topoH());
+    const naZona = () => { const r = ancora.getBoundingClientRect(); return r.top <= topoH() + 2 && r.bottom > innerHeight * 0.3; };
+    const soltar = () => { solto = true; secao.classList.remove('travada'); if (pular) pular.hidden = true; };
+    const avancar = () => {
+      const agora = Date.now(); if (agora - ultimo < 420) return; ultimo = agora;
+      const i = botoes.findIndex((b, k) => b.getAttribute('aria-checked') !== 'true' && !fila.includes(k));
+      if (i >= 0) marcar(i);
+    };
+    const prender = (ev: Event, desce: boolean) => {
+      if (solto || !desce) return;
+      if (!naZona()) return;
+      ev.preventDefault();
+      if (Math.abs(scrollY - alvoY()) > 2) scrollTo({ top: alvoY(), behavior: 'instant' as ScrollBehavior });
+      secao.classList.add('travada'); if (pular) pular.hidden = false;
+      avancar();
+    };
+    addEventListener('wheel', (e) => prender(e, e.deltaY > 0), { passive: false });
+    addEventListener('touchstart', (e) => { toqueY = e.touches[0].clientY; }, { passive: true });
+    addEventListener('touchmove', (e) => { const y = e.touches[0].clientY; const desce = toqueY - y > 4; if (desce) prender(e, true); }, { passive: false });
+    addEventListener('keydown', (e) => { if (['ArrowDown', 'PageDown', ' ', 'End'].includes(e.key) && !(e.target as Element).closest('input, textarea, button, a')) prender(e, true); });
+    // Rolagem rápida (barra, arrastar) que passa da demo: volta para ela uma vez.
+    addEventListener('scroll', () => {
+      if (solto) return;
+      const r = ancora.getBoundingClientRect();
+      if (r.top < topoH() - 4 && r.bottom > 0) { scrollTo({ top: alvoY(), behavior: 'instant' as ScrollBehavior }); secao.classList.add('travada'); if (pular) pular.hidden = false; }
+    }, { passive: true });
+    pular?.addEventListener('click', soltar);
+    const obs = new MutationObserver(() => { if (placa.textContent === S.nomes[S.nomes.length - 1]) soltar(); });
+    obs.observe(document.querySelector('[data-placa]')!, { childList: true, characterData: true, subtree: true });
   }
 }

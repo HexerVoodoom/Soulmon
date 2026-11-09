@@ -322,25 +322,18 @@ function modalNpc() {
     const lugar = (bt.querySelector('strong')?.textContent ?? bt.getAttribute('aria-label')?.split(': ').pop() ?? '').trim();
     h.textContent = habita ? `${d.dataset.morador} · ${lugar}` : lugar;
     p.textContent = habita ? f.habita : f.fala;
+    let comJogos = false;
+    d.querySelectorAll<HTMLElement>('[data-jogos-de]').forEach((ul) => { const v = !habita && ul.dataset.jogosDe === bt.dataset.lugar; ul.hidden = !v; comJogos ||= v; });
+    d.classList.toggle('com-jogos', comJogos);
     d.showModal();
     $<HTMLButtonElement>('[data-npc-fechar]', d)!.focus();
   };
   document.addEventListener('click', (e) => {
     const bt = (e.target as Element).closest<HTMLElement>('.area-bt, .npc-bt'); if (!bt) return;
-    const jm = $<HTMLDialogElement>('[data-jogos-modal]');
-    if (bt.dataset.lugar === 'jogos' && jm && !bt.classList.contains('npc-bt')) {
-      origem = bt; jm.showModal(); $<HTMLButtonElement>('[data-jogos-fechar]', jm)!.focus();
-      jm.addEventListener('close', () => { origem?.focus(); origem = null; }, { once: true });
-      return;
-    }
     abrir(bt, bt.classList.contains('npc-bt'));
   });
   $('[data-npc-fechar]', d)!.addEventListener('click', () => d.close());
-  const jm = $<HTMLDialogElement>('[data-jogos-modal]');
-  if (jm) {
-    $('[data-jogos-fechar]', jm)!.addEventListener('click', () => jm.close());
-    jm.addEventListener('click', (e) => { if (e.target === jm) jm.close(); });
-  }
+
   d.addEventListener('click', (e) => { if (e.target === d) { const r = d.getBoundingClientRect(); const ev = e as MouseEvent; if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) d.close(); } });
   d.addEventListener('keydown', (e) => { if ((e as KeyboardEvent).key === 'Tab') { e.preventDefault(); $<HTMLButtonElement>('[data-npc-fechar]', d)!.focus(); } }); // um só controle: o foco não sai
   d.addEventListener('close', () => { origem?.focus(); origem = null; });
