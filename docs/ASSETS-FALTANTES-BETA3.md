@@ -1,6 +1,6 @@
 # Assets faltantes da 1.3.0-beta3 — documento único para o dono
 
-> **REGRA MÁXIMA (04/11/2026):** todo prompt deste arquivo tem de carregar a identidade do `docs/REGRA-IDENTIDADE-SOULMON.md` (turquesa escuro, cristal com chama, cobre, circuito, folhinhas). "Arcane nature" sozinho não basta; onde aparecer, leia como a frase de identidade abaixo.
+> **REGRA DE IDENTIDADE (revista em 09/11/2026):** o bloco de identidade (`docs/REGRA-IDENTIDADE-SOULMON.md`) só entra em prompts de UI, prédio/NPC/mapa/hub e site; cenário de combate e item/poção/chip levam no máximo um acento discreto; criatura, FX e ícone de elemento NÃO levam o bloco e o prompt traz a linha "no copper pipes, no circuit lines, no leaves, no turquoise crystals unless the element itself calls for it". Onde um prompt abaixo trouxer o bloco completo, aplique só se a categoria do asset for "usar".
 
 Escrito em 26/10/2026 pela squad de arte. Junta `PROMPTS-BETA3.md` (P1/P2, 25/10) com a Rodada 4 (N1..N10, 26/10) do `BACKLOG-BETA3.md`. Nada foi gerado nem instalado. Caminhos de arquivo citados foram conferidos no disco em 26/10/2026.
 

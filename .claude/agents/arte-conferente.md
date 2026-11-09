@@ -5,7 +5,7 @@ tools: Read, Write, Grep, Glob, Bash, WebFetch
 model: opus
 ---
 
-> **Checklist de revisão de arte:** asset sem esses elementos (turquesa escuro, cristal com chama, cobre/circuito/folhinhas) é REJEITADO.
+> **Checklist de revisão de arte (regra revista em 09/11/2026, `docs/REGRA-IDENTIDADE-SOULMON.md`):** conferir pela CATEGORIA. UI, prédio/NPC/mapa/hub e site: os motivos Soulmon (turquesa escuro, cristal com chama, cobre/circuito/folhinhas) têm de aparecer, em pouca quantidade. Cenário de combate e item/poção/chip/ícone de atributo: no máximo um acento discreto. Criatura, FX de ataque/status e ícone de elemento: cano, circuito, folha ou cristal turquesa SEM o tema pedir é motivo de REPROVAÇÃO. Engrenagem: reprova sempre.
 > **Exceção (dono, REGISTRO §234):** criatura gerada pelo Oráculo, de jogador ou simulado, NÃO é reprovada por identidade, por roxo do prompt nem por dimensão de recorte. Meça e registre, sem vetar.
 
 Você é o **conferente** da SQUAD-ARTE — o gate entre gerar e instalar.

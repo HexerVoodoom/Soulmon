@@ -1,6 +1,6 @@
 # Prompts para colar no app ChatGPT — assets que ainda faltam (28/10/2026)
 
-> **REGRA MÁXIMA (04/11/2026):** todo prompt deste arquivo tem de carregar a identidade do `docs/REGRA-IDENTIDADE-SOULMON.md` (turquesa escuro, cristal com chama, cobre, circuito, folhinhas). "Arcane nature" sozinho não basta; onde aparecer, leia como a frase de identidade abaixo.
+> **REGRA DE IDENTIDADE (revista em 09/11/2026):** o bloco de identidade (`docs/REGRA-IDENTIDADE-SOULMON.md`) só entra em prompts de UI, prédio/NPC/mapa/hub e site; cenário de combate e item/poção/chip levam no máximo um acento discreto; criatura, FX e ícone de elemento NÃO levam o bloco e o prompt traz a linha "no copper pipes, no circuit lines, no leaves, no turquoise crystals unless the element itself calls for it". Onde um prompt abaixo trouxer o bloco completo, aplique só se a categoria do asset for "usar".
 
 > **Etiqueta: fila de geração (nada gerado, nada instalado).** Base: `ASSETS-A-GERAR.md` (§16 level up, §20 selo, pendência da sereia, §16 Caderno), `ASSETS-FALTANTES-BETA3.md`, `NPCS-NOVOS.md`, `PEDIDOS-DO-DONO-2026-10-28.md` (B5, F2) e as regras de arte do dono (padrão 23/09, vibe arcano+natureza, molde de NPC, transparência real, ChatGPT preferido ao Gemini, proporção no fim do prompt).
 > **Estado:** a geração do selo está **PAUSADA até o dono liberar o PC** (ele avisa). Este arquivo existe para a retomada ser só colar.

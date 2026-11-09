@@ -1,6 +1,6 @@
 # Prompts da 1.3.0-beta3 (Higgsfield) — arte dos itens novos do dono
 
-> **REGRA MÁXIMA (04/11/2026):** todo prompt deste arquivo tem de carregar a identidade do `docs/REGRA-IDENTIDADE-SOULMON.md` (turquesa escuro, cristal com chama, cobre, circuito, folhinhas). "Arcane nature" sozinho não basta; onde aparecer, leia como a frase de identidade abaixo.
+> **REGRA DE IDENTIDADE (revista em 09/11/2026):** o bloco de identidade (`docs/REGRA-IDENTIDADE-SOULMON.md`) só entra em prompts de UI, prédio/NPC/mapa/hub e site; cenário de combate e item/poção/chip levam no máximo um acento discreto; criatura, FX e ícone de elemento NÃO levam o bloco e o prompt traz a linha "no copper pipes, no circuit lines, no leaves, no turquoise crystals unless the element itself calls for it". Onde um prompt abaixo trouxer o bloco completo, aplique só se a categoria do asset for "usar".
 
 Escrito em 25/10/2026 pela squad de arte. Base: padrão aprovado de 23/09 (`PROMPTS-HIGGSFIELD-2026-09-23.md`), molde de NPC de 30/09 e a regra de transparência real. Contexto dos itens: `BACKLOG-BETA3.md` (rodadas 1 e 2) + pedido novo do dono (Soul Barrage, Dungeon/Endless Rift, Prepare to Focus, Zip/Patches, área digital, ranking).
 
