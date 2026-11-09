@@ -14,7 +14,7 @@ import { PARALELOS_DATA } from './enemyRosterData';
  * Para TODO elemento que pode aparecer na Fenda: o inimigo sorteado é DAQUELE elemento, tem arte, e a arte não é o quebra-galho de
  * `enemyRosterArt.ts` (rookie da criatura base do 1º componente) — exceto os que estão na dívida de arte declarada abaixo.
  */
-const SEM_ARTE_PROPRIA = ['alto_forno', 'bencao_feerica', 'clareira', 'colosso_blindado', 'corte_feerica', 'floresta_ancestral'];
+const SEM_ARTE_PROPRIA: string[] = []; // 09/11/2026: os 6 do lote 4 ganharam rookie próprio (262-267)
 
 const baseRookie = (el: string) => rosterSpriteOf(ENEMY_ROSTER.find(e => e.kind === 'base' && e.element === el && e.stage === 'rookie')!);
 
@@ -100,5 +100,11 @@ describe('Fenda: as formas dos combinados 212-261 (09/11/2026)', () => {
     const hashes = new Set<string>();
     for (const e of ENEMY_ROSTER.filter(x => x.kind === 'forma')) hashes.add(sha(path.join(ART, 'combinados-formas', e.artFile + '.png')));
     expect(hashes.size).toBe(150);
+  });
+});
+
+describe('rookie de Chama Azul é o de verdade, não o champion (09/11/2026)', () => {
+  it('009-chama_azul não tem os bytes do champion paralelo', () => {
+    expect(sha(path.join(ART, 'combinados/009-chama_azul.png'))).not.toBe(sha(path.join(ART, 'paralelos/parchamaazul-champion.png')));
   });
 });

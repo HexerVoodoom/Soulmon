@@ -7,9 +7,12 @@ import { describe, expect, it } from 'vitest';
 const DIR = join(__dirname, '../assets/soulmon/fx-ataque');
 const ESTADOS = ['orb', 'slash', 'impact', 'cast', 'aura', 'defended', 'aura-96'];
 
-describe('fx da chama_azul é própria', () => {
-  it.each(ESTADOS)('fx-chama_azul-%s não é a da fada (bytes nem pixels)', async (e) => {
-    const a = join(DIR, `fx-chama_azul-${e}.png`);
+const PROPRIOS = ['chama_azul', 'pira_eterna', 'chama_solar', 'fornalha_estelar', 'obsidiana'];
+const CASOS = PROPRIOS.flatMap((id) => ESTADOS.map((e) => [id, e] as const));
+
+describe('fx de chama_azul, pira_eterna, chama_solar, fornalha_estelar e obsidiana é própria (§263 e REGISTRO deste PR)', () => {
+  it.each(CASOS)('fx-%s-%s não é a da fada (bytes nem pixels)', async (id, e) => {
+    const a = join(DIR, `fx-${id}-${e}.png`);
     const f = join(DIR, `fx-fada-${e}.png`);
     expect(readFileSync(a).equals(readFileSync(f))).toBe(false);
     const A = await sharp(a).ensureAlpha().raw().toBuffer({ resolveWithObject: true });

@@ -132,10 +132,10 @@ describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => 
 
 describe('arquivo de ramos e combinados (fora do bundle salvo pelo enemyRosterArt)', () => {
   const ARQ = join(process.cwd(), 'src/assets/soulmon/novos-arquivo');
-  it('manifest bate com os PNGs (120 ramos + 261 combinados), 256² RGBA, sem órfão', () => {
+  it('manifest bate com os PNGs (120 ramos + 267 combinados), 256² RGBA, sem órfão', () => {
     const m = JSON.parse(readFileSync(join(ARQ, 'manifest.json'), 'utf8'));
     expect(m.branches).toHaveLength(120);
-    expect(m.combined).toHaveLength(261);
+    expect(m.combined).toHaveLength(267);
     const listados = new Set<string>([...m.branches, ...m.combined].map((x: { file: string }) => x.file));
     const reais = [...readdirSync(join(ARQ, 'combinados')).map(f => `combinados/${f}`),
       ...readdirSync(join(ARQ, 'ramos')).flatMap(d => readdirSync(join(ARQ, 'ramos', d)).map(f => `ramos/${d}/${f}`))];
