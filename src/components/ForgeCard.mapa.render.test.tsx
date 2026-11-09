@@ -82,6 +82,7 @@ describe('Soulsmith em mapa', () => {
     const opcoes = [...pop.querySelectorAll('[data-forge-option]')];
     expect(opcoes.map(o => o.getAttribute('data-forge-attr'))).toEqual(['atk', 'def']);
     expect(pop.textContent).toMatch(/Minério 3\/2/);
+    expect(pop.querySelector('[data-forge-pop-bonus]')!.textContent).toMatch(/Esta peça dá agora: .*\+/);
     click(opcoes[1]);
     click(pop.querySelector('[data-forge-upgrade-btn]')!);
     expect(document.querySelector('[data-forge-pop]')).toBeNull();
@@ -105,6 +106,7 @@ describe('Soulsmith em mapa', () => {
     click(chakra('rastro'));
     expect(document.querySelector('[data-forge-pop]')!.textContent).toMatch(/Ainda não forjado/);
     expect(document.querySelectorAll('[data-forge-option]')).toHaveLength(0);
+    expect(document.querySelector('[data-forge-pop-bonus]')).toBeNull();
     click(chakra('rastro'));
     expect(document.querySelector('[data-forge-pop]')).toBeNull();
     click(chakra('rastro'));
@@ -117,6 +119,7 @@ describe('Soulsmith em mapa', () => {
     click(chakra('nucleo'));
     const pop = document.querySelector('[data-forge-pop]')!;
     expect(pop.textContent).toMatch(/Lv 1/);
+    expect(pop.textContent).toMatch(/This piece gives now: /);
     expect(pop.textContent).toMatch(/More damage/);
     expect(pop.textContent).toMatch(/Upgrade/);
     expect(pop.textContent).not.toMatch(/Nível|Aprimorar/);
