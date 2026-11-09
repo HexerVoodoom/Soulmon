@@ -283,3 +283,18 @@ export const RAMOS_INIMIGOS_DATA: ReadonlyArray<readonly [string, string, string
   ['brotto', 'planta', 'benevolencia', 'Brottellis', 'Brottelyra', 'Brottethiel'],
   ['brotto', 'planta', 'poder', 'Brottarok', 'Brottaxion', 'Brottokhan'],
 ];
+
+/**
+ * FORMAS PARALELAS (09/11/2026, dono): a versão alternativa do Champion e do Ultimate da linha de fogo (lagarto-dragão de crânio e
+ * capa) em 5 elementos. `[id, elemento do sprite (id fundido nos combinados), componentes, elemento DOS GOLPES, champion, ultimate]`.
+ * Só entram no sorteio quando o elemento é pedido (masmorra temática, Arena de run do elemento): ficam FORA do sorteio comum de estágio,
+ * que não muda. Os dois de elemento base (`agua`, `industrial`) são irmãos dos ramos; os 3 combinados dão a Chama Azul, o Brinquedo e a
+ * Raiz Profunda um Champion e um Ultimate (antes só tinham rookie). Nomes propostos: o dono pode vetar.
+ */
+export const PARALELOS_DATA: ReadonlyArray<readonly [string, string, readonly string[], string, string, string]> = [
+  ['paragua', 'agua', ['agua'], 'agua', 'Aquarisk', 'Marevorn'],
+  ['parindustrial', 'industrial', ['industrial'], 'industrial', 'Rivetisk', 'Ferrovorn'],
+  ['parchamaazul', 'chama_azul', ['fogo', 'morte'], 'fogo', 'Cyanolisk', 'Azurvorn'],
+  ['parbrinquedo', 'brinquedo', ['industrial', 'fada'], 'industrial', 'Clockolisk', 'Springvorn'],
+  ['parraizprofunda', 'raiz_profunda', ['planta', 'terra'], 'planta', 'Rootolisk', 'Rhizovorn'],
+];
