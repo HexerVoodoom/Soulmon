@@ -3,27 +3,19 @@ import type { Language } from '../../utils/i18n';
 import { FUN_TICKET_BATCH, FUN_TICKET_COST, FUN_TICKET_MAX, formatHms, type FunTicketStatus } from '../../utils/funTickets';
 import { EnergyCost } from '../ui/EnergyCost';
 import { sm2Button, sm2Hint } from '../form/FormKit';
+import ticketImg from '../../assets/soulmon/hud/ticket-minigame.png';
 
 /**
  * 🎫 Tickets dos minijogos (09/11/2026; regra: `utils/funTickets.ts`).
- *
- * ⚠️ ARTE PROVISÓRIA: `TICKET_IMG` é `null` até a arte do ChatGPT chegar (fila: `docs/ASSETS-A-GERAR.md` §31). Enquanto for `null`, o
- * ticket é um SVG simples de bilhete de parque (placeholder, `data-ticket-placeholder`); quando a arte existir, basta apontar a constante.
+ * Arte final: ticket amarelo com controle de videogame (ChatGPT, UI, aprovado pelo dono em 09/11/2026), 512×308, alfa real.
  */
-export const TICKET_IMG: string | null = null;
+const TICKET_IMG = ticketImg;
+const TICKET_RATIO = 308 / 512;
 
-/** Um bilhete: arte final se houver, senão o placeholder em SVG (corpo, picote e um pequeno cristal). */
+/** Um bilhete (a arte final). Pintado, não pixel-art: renderização suave. */
 export function TicketArt({ width = 64, style }: { width?: number; style?: CSSProperties }) {
-  const h = Math.round(width * 0.62);
-  if (TICKET_IMG) return <img src={TICKET_IMG} alt="" aria-hidden="true" width={width} height={h} style={{ width, height: h, imageRendering: 'pixelated', ...style }} />;
-  return (
-    <svg data-ticket-placeholder aria-hidden="true" viewBox="0 0 100 62" width={width} height={h} style={{ display: 'block', ...style }}>
-      <path d="M6 4h88a4 4 0 0 1 4 4v12a8 8 0 0 0 0 22v12a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V42a8 8 0 0 0 0-22V8a4 4 0 0 1 4-4z" fill="#14585c" stroke="#c98a4b" strokeWidth="3" strokeLinejoin="round" />
-      <line x1="70" y1="9" x2="70" y2="53" stroke="#c98a4b" strokeWidth="2" strokeDasharray="4 3" />
-      <path d="M36 16l10 15-10 15-10-15z" fill="#7ff0e4" stroke="#0b3c3f" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M36 24c4 3 4 9 0 12-4-3-4-9 0-12z" fill="#ffd27a" />
-    </svg>
-  );
+  const h = Math.round(width * TICKET_RATIO);
+  return <img src={TICKET_IMG} alt="" aria-hidden="true" data-ticket-art width={width} height={h} draggable={false} style={{ width, height: h, display: 'block', ...style }} />;
 }
 
 /** O ticketzinho com "x1" que mora no botão de jogar / jogar de novo: a quantidade que a partida gasta. */
@@ -49,7 +41,7 @@ export function TicketFan({ count, language, width = 84 }: { count: number; lang
     <div
       data-ticket-fan={n} role="img"
       aria-label={isPt ? `${n} ${n === 1 ? 'ticket' : 'tickets'}` : `${n} ${n === 1 ? 'ticket' : 'tickets'}`}
-      style={{ position: 'relative', height: Math.round(width * 0.62) + 28, width: width + 4 * 22, maxWidth: '100%', margin: '0 auto', opacity: n ? 1 : 0.35 }}
+      style={{ position: 'relative', height: Math.round(width * TICKET_RATIO) + 28, width: width + 4 * 22, maxWidth: '100%', margin: '0 auto', opacity: n ? 1 : 0.35 }}
     >
       {Array.from({ length: n }, (_, i) => {
         const mid = (n - 1) / 2;

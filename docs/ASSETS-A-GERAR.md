@@ -1096,15 +1096,9 @@ A masmorra agora é temática: cada elemento ocupa 2 camadas (base → 2 → 3 �
 ## Poções e chips de essência por elemento base (09/11/2026) — ✅ instalado
 Pintados (padrão 23/09), alfa real, 256² em `E:/Soulmon-assets/pocoes-chips/{pocoes,chips}/`; instalados em 128². `items/pocao-<id>.png` (20) → Mochila/Cambista (`itemArt.ts`), oferta da Vesca, Laboratório; `hex/chip-<id>.png` (20) → Portas de elemento da Hexsmith. Sobra: poções/chips dos elementos compostos (seguem com o ícone do elemento).
 
-## 31. Ticket dos minijogos do Salão (pedido do dono, 09/11/2026, REGISTRO §270)
+## 31. Ticket dos minijogos do Salão (pedido do dono, 09/11/2026, REGISTRO §270) — ✅ feito
 
-**Situação: falta.** A mecânica já está no app com **placeholder em SVG** (`TICKET_IMG = null` em `src/components/play/TicketFan.tsx`, marcado `data-ticket-placeholder`). Quando a arte existir, instalar o PNG em `src/assets/soulmon/hud/ticket-minigame.png` e apontar `TICKET_IMG` para ele (o resto da UI já usa o componente).
-- **Onde aparece:** leque grande ao lado do NPC do Salão (até 5 tickets), ticketzinho com "x1" nos botões de jogar / jogar de novo (~28 px — tem que ler pequeno).
-- **Por quê não foi gerado:** a geração é no ChatGPT (GUI; veto do dono ao Higgsfield, 09/11/2026) e o PC estava em uso pelo dono; busca por arte parecida (`ticket`/`ingresso`/`bilhete`) em `src/assets` e `public` não achou nada reaproveitável. Antes de gerar: revisão da squad-design (regra `asset-novo-chama-squad-design`).
-- **Spec:** 1 imagem 512×320 (proporção 1,6:1), **alfa real** (`gpt_image_2`/ChatGPT com fundo transparente, nunca chroma), pintado no padrão de 23/09, **sem engrenagem**. UI: no máximo UM motivo discreto Soulmon (um cristal turquesa com chama dentro, ou um fio de cobre no picote).
-- **Prompt:** `A single amusement-park admission ticket, a worn paper-and-card stub seen straight-on, slightly rounded corners with a semicircular notch on each short side, a dashed perforation line one third from the right edge, dark turquoise ticket body with a warm copper border, one small glowing soul crystal with a flame inside as the only emblem, soft painted game-icon style with a clear dark outline, readable at 28 px, transparent background, no text, no gears, no extra objects.`
-- **Tags para o registro (`E:\Soulmon-assets\_bancoegistro.jsonl` + `<imagem>.meta.json`):** `tipo:ui`, `origem:chatgpt`, `uso:pendente`, `tema:ticket minigame`, `peca:ticket`.
-
+**Instalado em 09/11/2026:** ticket amarelo com controle de videogame (ChatGPT, UI, **aprovado pelo dono em 09/11/2026**; o primeiro, turquesa com cristal, foi trocado a pedido: amarelo, sem pedra, emblema de minigames). Original 1586×992 RGBA em `E:/Soulmon-assets/gerar-chatgpt/ui-2026-11-09/ticket-amarelo-controle.png` (+ `.meta.json` com prompt e tags); no jogo `src/assets/soulmon/hud/ticket-minigame.png` (512×308, alfa real, legível a 28 px). Usado por `components/play/TicketFan.tsx` (leque, botão "x1", compra). O SVG provisório saiu.
 
 ## 32. Molduras do widget V-Pet por elemento (20 casos, pedido do dono, 09/11/2026)
 

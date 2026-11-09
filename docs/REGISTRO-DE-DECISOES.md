@@ -4475,7 +4475,7 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Validade (modal ao dono, 09/11/2026):** **por lote** — os 3 tickets de uma compra vencem juntos; ao comprar com 1–2 ainda em posse, **cada lote mantém o próprio relógio** (não renova os antigos); gasta-se primeiro o lote que vence antes; a tela mostra a contagem regressiva desse lote.
 
-**UI:** na folha do Salão e na pergunta do NPC os tickets em posse aparecem GRANDES, abertos em leque (um por ticket); o botão de jogar e o "Jogar de novo" mostram um ticketzinho com "x1". **Arte provisória** (SVG, `TICKET_IMG = null` em `components/play/TicketFan.tsx`) até a arte do ChatGPT entrar (`docs/ASSETS-A-GERAR.md` §31).
+**UI:** na folha do Salão e na pergunta do NPC os tickets em posse aparecem GRANDES, abertos em leque (um por ticket); o botão de jogar e o "Jogar de novo" mostram um ticketzinho com "x1". **Arte:** ticket amarelo com controle de videogame (ChatGPT, UI), **aprovado pelo dono em 09/11/2026** e instalado em `src/assets/soulmon/hud/ticket-minigame.png` (`docs/ASSETS-A-GERAR.md` §31); o SVG provisório saiu.
 
 **Onde mora:** regra pura `src/utils/funTickets.ts` (`buyFunTickets`, `startFunRound`, `funTicketStatus`); save `funTickets { batches: [{ at, left }] }` (leitura tolerante, ausente = nenhum); servidor `functions/api/_funTickets.js` ligado em `save.js` com paridade em `funTickets.parity.test.js`. O campo `funSession` fica no save só como leitura legada (ninguém mais o escreve; `funSession.ts` guarda `isFunGame`/`sanitizeFunSession`).
 
