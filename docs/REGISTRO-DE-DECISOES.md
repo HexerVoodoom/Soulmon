@@ -4482,3 +4482,9 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Anti-trapaça (limite honesto, como `_dayCounters.js`):** o servidor lembra, não valida a energia (o save é do cliente): gasto só desce (`left = min`), lote novo só entra com posse viva gravada ≤ 2 e no máximo um por gravação, `at` dentro de ±1 dia do relógio do servidor, posse viva ≤ 5, lote com 24 h do relógio do servidor sai. Apagar o save local ou editar o JSON não devolve nem cria ticket além do que a regra de compra permitiria; a energia paga na compra segue só no cliente.
 
 **Rollback:** reverter o PR volta à sessão; o `funTickets` gravado vira campo desconhecido (ignorado) e `funSession` ausente = nenhuma sessão — nada corrompe. Tickets em posse na hora do rollback se perdem (custo: 1 energia por lote).
+
+## §271 — Vileza/Poder: Ultimate, Mega (3 caudas) e Ultra regeradas por API (09/11/2026)
+
+**Decisão:** as três formas altas da Vileza/Poder (`novos/vileza-{ultimate,mega,ultra}.png`) são substituídas pelas versões aprovadas pelo dono (Ultimate `poder/ultimate.novo`, Mega `poder/mega.novo2` com 3 caudas de escorpião, Ultra `ultra.novo2`), todas geradas pela **API Higgsfield — regra: sprite só via API** (nada de ChatGPT para sprite). O Champion lobisomem não mudou. Pipeline: remoção de franja/pixels magenta e de ilhas <24 px, recorte da bounding box, redução proporcional para 256² (mesmo tamanho dos sprites atuais da linha), alfa binário. Fontes e metas (prompt/tags) em `E:\Soulmon-assets\vileza-v2\`; inventário: os três arquivos acima constam como "API Higgsfield" em `docs/INVENTARIO-ASSETS.md`.
+
+**Alternativa que perdeu:** manter as formas v2 sem a cauda tripla. **Falsifica:** o dono ver a Mega sem as 3 caudas ou franja magenta no Ultra em combate.

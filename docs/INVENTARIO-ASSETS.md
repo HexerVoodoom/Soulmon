@@ -430,3 +430,5 @@ Fonte: `E:\Soulmon-assets\beta3-geradas\chatgpt\` (ChatGPT, alfa real; reduzidos
 - `npcs/npc-forja-caderno.png` e `npc-forja-refugio.png` (512², alfa binário) ← `E:/Soulmon-assets/gerados-2026-10-29/NPC-fantasma-maquinista.png` e `NPC-refugio-macaco.png` (1254² RGBA; recorte pelo alfa ≥128, encaixe em 500 px, centrado) (29/10); `LOT_NPC_ART['forja:caderno']` = Trilho e `['forja:refugio']` = Yuzu (§181). `npc-akasha-exploracao-caderno.png` e `npc-oceano-jogos-refugio.png` ficaram sem uso.
 
 > **05/11/2026:** `levelup/bond-up-<en|pt>-<entrada|laco|fixo>.webp` (342×256; 15 quadros de entrada, laço de 8, fixo) substituem `levelup-banner.png` e `levelup-banner-pt.png`. Fonte: folhas do dono em `E:/Soulmon-assets/bond-up/dono/`, recorte por projeção e registro pelo trilho da placa (`recorte.py`).
+
+> **Atualização 09/11/2026 (Vileza/Poder):** `soulmon/novos/vileza-{ultimate,mega,ultra}.png` (256², alfa real binário) substituídos por versões geradas via **API Higgsfield (regra: sprite só via API)**; Mega com 3 caudas de escorpião; fontes em `E:\Soulmon-assets\vileza-v2\`. `vileza-champion` e `vileza-rookie` inalterados. Ver `REGISTRO-DE-DECISOES.md` §271.
