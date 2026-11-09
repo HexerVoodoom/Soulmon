@@ -1528,7 +1528,7 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Avisos do arquivo:** tudo por `style` inline (footgun 1); o vidro reusa `.sm2-viewport-screen`/`.sm2-viewport-glass` do `index.css` — nenhum CSS novo; o × vive em `position:absolute` e a ORDEM no DOM (`closeLast`) é o que decide a ordem de foco.
 
 ### `src/components/ui/EstagioIcone.tsx`
-**Dono de:** o ícone de ESTÁGIO (rookie, champion, ultimate, mega, ultra) antes do nome — placa de HP/especial do `BattleStage` e nós do Centro de Evolução (09/11/2026, REGISTRO §256). Bebê/ovo e id desconhecido não renderizam nada.
+**Dono de:** o ícone de ESTÁGIO (rookie, champion, ultimate, mega, ultra) antes do nome — placa de HP/especial do `BattleStage` e nós do Centro de Evolução (09/11/2026, REGISTRO §257). Bebê/ovo e id desconhecido não renderizam nada.
 **Props principais:** `forma` (id da forma ou nível), `size?`, `label?`, `style?`.
 **Exports:** `EstagioIcone`.
 **Chamado por:** `src/components/games/BattleStage.tsx`, `src/components/EvolutionPath.tsx`.

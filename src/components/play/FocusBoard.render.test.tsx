@@ -17,6 +17,8 @@ beforeEach(() => {
     const now = Date.now();
     if (body?.action === 'start') {
       server.active = { sid: 's1', seed: 7, mode: body.mode, env: body.env, keys: body.keys, day: body.day, startAt: now, pausedMs: 0, pausedAt: null, pauses: 0 };
+    } else if (body?.action === 'pause' && server.active) {
+      server.active = { ...(server.active as object), pausedAt: now, pauses: 1 };
     } else if (body?.action === 'end') {
       server.grants = { 's1:0': [{ kind: 'material', id: 'moss', qty: 1 }] };
       server.active = null;
@@ -64,6 +66,29 @@ describe('quadro da Oficina (§247)', () => {
     await waitFor(() => expect(q(container, '[data-focus-done]')).not.toBeNull());
     expect(onGrants).toHaveBeenCalledWith(DIA, { 's1:0': [{ kind: 'material', id: 'moss', qty: 1 }] }, undefined);
     expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.FOCO_JOURNEY_KEYS)!)).toEqual([]);
+  });
+  it('a jornada: só o relógio (sem "Foco"), chaves, três botões redondos em linha, pausa vira play e sem trilha', async () => {
+    localStorage.setItem(STORAGE_KEYS.FOCO_JOURNEY_KEYS, JSON.stringify(['pena']));
+    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} onGrants={() => {}} />);
+    await waitFor(() => expect((q(container, '[data-focus-start]') as HTMLButtonElement).disabled).toBe(false));
+    await act(async () => { fireEvent.click(q(container, '[data-focus-start]')!); });
+    await waitFor(() => expect(document.querySelector('[data-journey]')).not.toBeNull());
+    const card = document.querySelector('[data-journey-modal]') as HTMLElement;
+    expect(card.style.top).not.toBe('');
+    expect(card.style.bottom).toBe('');
+    expect(card.style.background).toContain('80%');
+    expect(document.querySelector('[data-journey-clock]')!.textContent).toMatch(/^\d{1,2}:\d{2}$/);
+    expect(card.textContent).not.toMatch(/Foco|Focus/);
+    expect(card.querySelector('[data-journey-keys] [data-key-glyph="pena"]')).not.toBeNull();
+    const order = Array.from(card.querySelectorAll('[data-journey-actions] button')).map(b => b.getAttribute('aria-label'));
+    expect(order).toEqual(['Sair para a Oficina (a jornada continua)', 'Pausar', 'Encerrar']);
+    expect(document.querySelector('[data-journey-scene] path[stroke="#5c8f84"][stroke-width="2.6"]')).toBeNull();
+    expect(document.querySelectorAll('[data-journey-scene] path[stroke-width="4.2"]').length).toBe(0);
+    await act(async () => { fireEvent.click(document.querySelector('[data-journey-pause]')!); });
+    await waitFor(() => expect(document.querySelector('[data-journey-resume]')).not.toBeNull());
+    expect(document.querySelector('[data-journey-pause]')).toBeNull();
+    fireEvent.click(document.querySelector('[data-journey-close]')!);
+    expect(document.querySelector('[data-journey]')).toBeNull();
   });
   it('sem conexão, começar fica desativado com o motivo', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline'); }));
