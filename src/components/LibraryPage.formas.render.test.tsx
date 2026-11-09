@@ -63,6 +63,6 @@ describe('Biblioteca — formas ja vistas', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
     fireEvent.click(await screen.findByRole('button', { name: 'Brasinha' }));
     expect(await screen.findByText('Current form')).toBeTruthy();
-    expect(screen.getByText('Mega · Power')).toBeTruthy();
+    expect(screen.getByText('Apotheosis · Power')).toBeTruthy();
   });
 });
