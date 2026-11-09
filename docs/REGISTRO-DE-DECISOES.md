@@ -4352,7 +4352,7 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Emenda (08/11/2026, dono, em modal):** veterano que já tem 100+ essências recebe a oferta da Vesca **uma vez por elemento** ao abrir o app (memória em `localStorage` `soulmon:vescaOffered`); cruzar 100 de novo sempre oferece. **Curados (59 elementos de 3–4 bases) funcionam como os pares** (dono: "iguais aos equivalentes"): têm essência (drop junto com a do par quando o sprite é curado, `essenceDropsOfFoe`), poção (50 essências + 1 poção de cada base distinta) e venda no Cambista (3 Créditos, teto por 3+ bases; espelho em `_essenceShop.js`). Catálogo novo `ESSENCE_ELEMENT_IDS` (269 = 210 + 59, sem `neutro`); `ALL_ELEMENT_IDS` segue 210 (Forja Hex, arte de item). `ESSENCE_MAX_KEYS` 211→271 nos dois lados.
 
-## §254 — Cada forma carrega o seu elemento e as suas skills (09/11/2026, pedido do dono)
+## §256 — Cada forma carrega o seu elemento e as suas skills (09/11/2026, pedido do dono)
 
 **Pedido.** "Quando o user evoluir usando poção elemental e degenerar ele deve voltar ao elemento da forma degenerada. Além disso, ao usar a função de equipar outra forma de um mesmo estágio de evolução, deve-se equipar tudo - elementos, tipo de ataque, tipo de especial."
 
