@@ -1,1 +1,1 @@
-const s="/assets/mission-xp-reward-DraDdqRH.webp";export{s as default};
+const s="/assets/mission-xp-reward-DraDdqRH.png";export{s as default};

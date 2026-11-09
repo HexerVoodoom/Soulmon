@@ -1,1 +1,1 @@
-const a="/assets/mat-spark-JLmWrT2g.webp";export{a as default};
+const a="/assets/mat-spark-JLmWrT2g.png";export{a as default};

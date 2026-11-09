@@ -1,1 +1,1 @@
-const t="/assets/mat-cipher-BlFSJcw9.webp";export{t as default};
+const t="/assets/mat-cipher-BlFSJcw9.png";export{t as default};

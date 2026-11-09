@@ -1,1 +1,1 @@
-const a="/assets/lanterna-2-GmPe6chq.webp";export{a as l};
+const a="/assets/lanterna-2-GmPe6chq.png";export{a as l};

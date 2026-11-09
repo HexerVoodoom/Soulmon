@@ -1,1 +1,1 @@
-const t="/assets/mat-ink-CXTcAWyB.webp";export{t as default};
+const t="/assets/mat-ink-CXTcAWyB.png";export{t as default};

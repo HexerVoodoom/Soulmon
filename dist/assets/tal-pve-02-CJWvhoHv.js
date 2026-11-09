@@ -1,1 +1,1 @@
-const e="/assets/tal-pve-02-_eekvyxA.webp";export{e as default};
+const e="/assets/tal-pve-02-_eekvyxA.png";export{e as default};

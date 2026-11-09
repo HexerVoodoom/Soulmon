@@ -1230,7 +1230,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/formasAlternativas.test.ts`.
 
 ### `src/utils/formaSnapshot.ts`
-**Dono de:** a FOTO POR FORMA (09/11/2026, dono, REGISTRO §252) — pura. Ao sair de uma forma guarda poção, elemento do nível e skills do nível (`formaSnapshots`); ao entrar aplica a foto. Queda (manual ou por HP) volta ao elemento da forma em que cai; troca lateral e forma alternativa equipam elemento, ataque básico e especial. Forma sem foto (save antigo) só limpa a poção na queda.
+**Dono de:** a FOTO POR FORMA (09/11/2026, dono, REGISTRO §254) — pura. Ao sair de uma forma guarda poção, elemento do nível e skills do nível (`formaSnapshots`); ao entrar aplica a foto. Queda (manual ou por HP) volta ao elemento da forma em que cai; troca lateral e forma alternativa equipam elemento, ataque básico e especial. Forma sem foto (save antigo) só limpa a poção na queda.
 **Exports:** `FormaSnapshot` · `FormaSnapshots` · `FormaState` · `chaveDaForma` · `capturarForma` · `trocarFormaCompleta` · `aoDescerDeForma` · `sanitizeFormaSnapshots`.
 **Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`, `src/utils/dailyReset.ts`.
 **Régua:** `src/utils/formaSnapshot.test.ts`.

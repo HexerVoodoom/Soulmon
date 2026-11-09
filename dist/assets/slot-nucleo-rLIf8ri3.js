@@ -1,1 +1,1 @@
-const s="/assets/slot-nucleo-DCQlM-N1.webp";export{s as default};
+const s="/assets/slot-nucleo-DCQlM-N1.png";export{s as default};

@@ -1,1 +1,1 @@
-const a="/assets/soul-cap-mark-Duc7tiOH.webp";export{a as default};
+const a="/assets/soul-cap-mark-Duc7tiOH.png";export{a as default};

@@ -1,1 +1,1 @@
-const t="/assets/talent-path-pvp-paILuo6s.webp";export{t as default};
+const t="/assets/talent-path-pvp-paILuo6s.png";export{t as default};

@@ -1,1 +1,1 @@
-const s="/assets/mat-ribbon-DR9sjhzC.webp";export{s as default};
+const s="/assets/mat-ribbon-DR9sjhzC.png";export{s as default};

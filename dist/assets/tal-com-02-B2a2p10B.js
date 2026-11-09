@@ -1,1 +1,1 @@
-const t="/assets/tal-com-02-9k4cnf_3.webp";export{t as default};
+const t="/assets/tal-com-02-9k4cnf_3.png";export{t as default};

@@ -1,1 +1,1 @@
-const a="/assets/mat-page-B-UAkKBG.webp";export{a as default};
+const a="/assets/mat-page-B-UAkKBG.png";export{a as default};
