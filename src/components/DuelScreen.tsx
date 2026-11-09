@@ -45,7 +45,7 @@ import {
 } from '../utils/combatFx';
 import { meleeImpactOf, chaveDaIdentidade } from '../utils/combate/golpeImpacto';
 import { avancar as avancarPortao, bloqueiaAplicar, bloqueiaComecar, fechar as fecharPortao, serializarEspeciais, type ConfigDoPortao, type Portao } from '../utils/specialGate';
-import { hpPoints, PVP_HP_SCALE, type FightEvent } from '../utils/combate/fight';
+import { hpExibidoPvp, type FightEvent } from '../utils/combate/fight';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
 import { DUEL_CHEER_BUCKETS, simulatePvp, type DuelResult, type DuelSide } from '../utils/combate/duel';
 
@@ -107,7 +107,8 @@ const emSerie = (r: DuelResult): DuelResult => {
   return { ...r, events: v.events, fx: v.fx };
 };
 
-const maxHpOf = (s: DuelSide) => hpPoints(s.combatant.hp * PVP_HP_SCALE);
+/** O HP base (o da Arena), não o inflado do PvP: ver `hpExibidoPvp`. O dano mostrado é fração × este máximo. */
+const maxHpOf = (s: DuelSide) => hpExibidoPvp(s.combatant.hp);
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
 export function DuelScreen({

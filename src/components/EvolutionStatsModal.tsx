@@ -1,5 +1,8 @@
 import { ModalSheet, sm2Button, sm2Text } from './form/FormKit';
-import { Icon } from './ui/Icon';
+import iconHp from '../assets/soulmon/icones-ui/hp.png';
+import iconAtk from '../assets/soulmon/icones-ui/stat-ataque.png';
+import iconDef from '../assets/soulmon/icones-ui/stat-defesa.png';
+import iconSpd from '../assets/soulmon/icones-ui/stat-velocidade.png';
 import { formatDelta, type EvoStatId, type EvoStatsDelta } from '../utils/evolutionStatsDelta';
 import { soulLevelLabel } from '../utils/soulXP';
 import type { Language } from '../utils/i18n';
@@ -10,11 +13,11 @@ import type { Language } from '../utils/i18n';
  * `evoStats`, depois da cerimônia. Sem animação própria: o fade do `ModalSheet` já respeita `prefers-reduced-motion`.
  * Delta 0 aparece como "+0" em peso 400. Não existe "−N": evoluir nunca reduz um atributo (REGISTRO §229).
  */
-const STATS: Record<EvoStatId, { icon: string; pt: string; en: string }> = {
-  hp: { icon: 'favorite', pt: 'Vida', en: 'HP' },
-  atk: { icon: 'swords', pt: 'Ataque', en: 'Attack' },
-  def: { icon: 'military_tech', pt: 'Defesa', en: 'Defense' },
-  spd: { icon: 'bolt', pt: 'Velocidade', en: 'Speed' },
+const STATS: Record<EvoStatId, { art: string; pt: string; en: string }> = {
+  hp: { art: iconHp, pt: 'Vida', en: 'HP' },
+  atk: { art: iconAtk, pt: 'Ataque', en: 'Attack' },
+  def: { art: iconDef, pt: 'Defesa', en: 'Defense' },
+  spd: { art: iconSpd, pt: 'Velocidade', en: 'Speed' },
 };
 
 export function EvolutionStatsModal({ delta, stageName, language, onClose }: { delta: EvoStatsDelta; stageName: string; language: Language; onClose: () => void }) {
@@ -46,7 +49,7 @@ export function EvolutionStatsModal({ delta, stageName, language, onClose }: { d
                 data-evo-delta={r.delta}
                 style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 32 }}
               >
-                <Icon name={s.icon} size={20} fill={subiu ? 1 : 0} tone={subiu ? 'primary' : 'muted'} />
+                <img src={s.art} alt="" aria-hidden="true" draggable={false} width={20} height={20} data-evo-stat-icon={r.id} style={{ width: 20, height: 20, objectFit: 'contain', imageRendering: 'pixelated', opacity: subiu ? 1 : 0.6 }} />
                 <span style={{ ...sm2Text, flex: 1, margin: 0 }}>{label}</span>
                 <span className="sm2-num" style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>
                   <span style={{ color: 'var(--sm2-muted)', fontWeight: 400 }}>{r.before}</span>

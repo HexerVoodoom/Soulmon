@@ -5,7 +5,9 @@
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application"
+    "not_found_handling": "single-page-application",
+    // 09/11/2026: sem isto, o navegador (Sec-Fetch-Mode: navigate) recebia o index.html do SPA em /gm/rift e /gm/soulmons — o Worker nunca era chamado.
+    "run_worker_first": ["/gm/*"]
   },
   "kv_namespaces": [
     // 07/09/2026 — `SOULMON_SAVES` passou a apontar para um namespace PRÓPRIO
