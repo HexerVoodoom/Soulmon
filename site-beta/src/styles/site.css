@@ -1059,3 +1059,9 @@ main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recurs
 .hero:has(.hero-arte) .hero-fundo .hero-arte { top: 17svh !important; }
 .hero:has(.hero-arte) .hero-fundo .hero-arte img { -webkit-mask-image: linear-gradient(transparent, #000 12%) !important; mask-image: linear-gradient(transparent, #000 12%) !important; }
 @media (min-width: 1024px) { .hero:has(.hero-arte) .hero-fundo .hero-arte { top: 0 !important; } .hero:has(.hero-arte) .hero-fundo .hero-arte img { -webkit-mask-image: none !important; mask-image: none !important; } }
+@media (max-width: 1023px) {
+  .hero:has(.hero-arte) .hero-fundo .hero-arte { top: 17svh !important; bottom: 0 !important; height: auto !important; }
+  .hero:has(.hero-arte) .hero-fundo .hero-arte img { object-position: 50% 100% !important; }
+}
+@media (max-width: 1023px) { .hero:has(.hero-arte)::before { background: linear-gradient(180deg, rgba(1,12,14,.95) 0, rgba(1,12,14,.85) 42%, rgba(1,12,14,.4) 56%, rgba(1,12,14,0) 66%) !important; } }
+@media (max-width: 1023px) { .hero:has(.hero-arte) .hero-fundo::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(1,12,14,.95) 0, rgba(1,12,14,.82) 44%, rgba(1,12,14,.35) 57%, rgba(1,12,14,0) 66%); } }
