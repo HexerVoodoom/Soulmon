@@ -1091,3 +1091,6 @@ A masmorra agora é temática: cada elemento ocupa 2 camadas (base → 2 → 3 �
 ## Instalado em 09/11/2026 (REGISTRO §264)
 - Efeitos de combate por elemento (§228/§236): os 29 `st-*` e os 5 `fx-*-loop-sheet` da tabela acima estão instalados (a coluna "Situação" dessas linhas vale como **feito**). `st-seta-sobe/desce` e `stat-*` ficam na pasta sem ponto de chamada (camada CSS).
 - Curados novos: `el-<id>` e FX de ataque de clareira, alto_forno, bencao_feerica, floresta_ancestral, colosso_blindado, corte_feerica (novos) e pestilencia, maldicao, cyber (trocados) instalados.
+
+## Poções e chips de essência por elemento base (09/11/2026) — ✅ instalado
+Pintados (padrão 23/09), alfa real, 256² em `E:/Soulmon-assets/pocoes-chips/{pocoes,chips}/`; instalados em 128². `items/pocao-<id>.png` (20) → Mochila/Cambista (`itemArt.ts`), oferta da Vesca, Laboratório; `hex/chip-<id>.png` (20) → Portas de elemento da Hexsmith. Sobra: poções/chips dos elementos compostos (seguem com o ícone do elemento).
