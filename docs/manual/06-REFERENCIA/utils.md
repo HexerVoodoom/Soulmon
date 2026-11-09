@@ -4432,3 +4432,7 @@ Regra pura da jornada do foco: baús pela seed, relógio sem pausas, loot por ch
 **Sincronização 09/11/2026:** cliente de `/api/focus-journey` (§247; o servidor é o relógio e o caixa). Tipos `ActiveJourney` (`sid`, `seed`, `mode`, `env`, `keys`, `day`, `startAt`, `pausedMs`, `pausedAt`, `pauses`) e `JourneyResponse` (`active`, `ledger`, `grants`, `dungeonKeyDay`, `now`, `error`); `journeyState(saveId, day)`, `journeyStart(saveId, { mode, env, keys, day })`, `journeyAction(saveId, 'pause' | 'resume' | 'claim' | 'end')`. Chamado por `components/play/FocusBoard.tsx` e `components/play/JourneyScreen.tsx`.
 
 O quadro da Oficina: critério de cada chave (`keyEarned`), chaves da sessão no aparelho e o crédito idempotente dos recibos da jornada no save (`applyJourneyGrants`, campo `journeyCredited`); e o cliente de `/api/focus-journey`. Decisão: REGISTRO §247. **Régua:** `focusBoard.test.ts`.
+
+### `src/utils/funTickets.ts` (09/11/2026 — REGISTRO §270)
+
+Tickets dos minijogos do Salão (substituem a sessão de `funSession.ts`). Funções PURAS: `buyFunTickets` (1 energia → lote de 3; só com ≤2 vivos; teto 5), `startFunRound` (gasta 1 ticket do lote que vence antes), `funTicketStatus`, `ticketCount`, `nextExpiryMs`, `sanitizeFunTickets`. Validade 24 h por lote. Espelho no servidor: `functions/api/_funTickets.js` (paridade em `funTickets.parity.test.js`). Chamado por `App.tsx` e `AreaView.tsx`.

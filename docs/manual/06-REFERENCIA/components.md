@@ -2177,3 +2177,7 @@ Portão do Calabouço sem a chave do dia: Bastion (NPC 412) no modal padrão `Np
 ### `src/components/play/FocusBoard.tsx` · `src/components/play/JourneyScreen.tsx` · `src/components/play/journeyArt.ts`
 
 A Oficina do Foco desde §247: card Sessão + 6 cards de chave (as técnicas de `OficinaPlano.tsx` em modo `only`), e a jornada em tela cheia (arte pintada de `journeyArt.ts` em `src/assets/focus-jornada/`, com fallback SVG/ícone quando falta um asset; modal pequeno do relógio, pausas e encerrar). Posição = tempo do servidor. **Régua:** `FocusBoard.render.test.tsx`, `playArea.render.test.tsx`.
+
+### `src/components/play/TicketFan.tsx` (09/11/2026 — REGISTRO §270)
+
+`TicketFan` (os tickets em leque), `TicketPanel` (leque + contagem + validade + comprar), `TicketCost` (ticketzinho "x1" dos botões), `TicketArt` (arte; SVG provisório enquanto `TICKET_IMG` é `null`) e `FunTicketCostContext` (o `ResultScreen` mostra o x1 no "Jogar de novo"). **Chamado por:** `PlaySheets.tsx`, `MinigameModeGate.tsx`, `AreaView.tsx`, `games/ResultScreen.tsx`.

@@ -35,6 +35,7 @@ import { sanitizeDayPlan } from './_dayPlan.js';
 import { sanitizeNightmares } from './_nightmares.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
 import { enforceImmutableElementoJornada } from './_elementoJornada.js';
+import { enforceFunTickets } from './_funTickets.js';
 import { enforceDungeonDaily, enforceCheckIns, enforceArenaReroll, enforceArenaLadder, enforceEssenceAway, bumpRiftLayers } from './_dayCounters.js';
 import { enforceEssences, enforceEssenceSpent } from './_essences.js';
 import { sanitizeRegenUsed } from './_spriteRegen.js';
@@ -543,6 +544,16 @@ async function onRequestBruto({ request, env }) {
         if (esp && Object.keys(esp).length) state.essenceSpent = esp; else delete state.essenceSpent;
         const ea = enforceEssenceAway(state.essenceAway, gravado.essenceAway);
         if (ea) state.essenceAway = ea; else delete state.essenceAway;
+      }
+    }
+    // Tickets dos minijogos (09/11/2026, `_funTickets.js`): gasto so desce, lote novo so com posse viva <= 2, teto 5, validade 24 h.
+    {
+      const temGravado = typeof prev?.value === 'string' && prev.value.includes('"funTickets"');
+      if (temGravado || 'funTickets' in state) {
+        let gravado = {};
+        if (temGravado) { try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; } }
+        const ft = enforceFunTickets(state.funTickets, gravado.funTickets);
+        if (ft) state.funTickets = ft; else delete state.funTickets;
       }
     }
     // JSON aninhado fundo cabe no teto de bytes mas estoura a pilha em `JSON.stringify` (RangeError → exceção solta/500): recusa 400.

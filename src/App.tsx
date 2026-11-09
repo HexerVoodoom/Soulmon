@@ -858,7 +858,7 @@ const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ d
 // A barra de captura NÃO é lazy: ela fica na primeira tela e o ganho dela é
 // justamente não ter espera nenhuma entre lembrar e anotar.
 import type { QuickAddResult } from './utils/quickAdd';
-import { funSessionStatus, funRoundRefusal, startFunRound } from './utils/funSession';
+import { funTicketStatus, buyFunTickets, ticketBuyRefusal, startFunRound } from './utils/funTickets';
 import type { CreateAction } from './utils/chatActions';
 const EvoBanner = lazy(() => import('./components/EvoBanner'));
 const fetchEvoFeed = () => import('./utils/community').then(m => m.getEvoFeed());
@@ -8357,11 +8357,18 @@ export default function App() {
                   onBestiarySeen: handleBestiarySeen,
                   onRefugioComplete: () => setGameState(prev => grantRefugioEnergy(prev, Date.now())),
                   funSession: {
-                    status: (now) => funSessionStatus(gameState, now),
-                    /* Espelha a recusa sobre o estado da tela e reconfere dentro do updater (porta única `startFunRound`). */
+                    status: (now) => funTicketStatus(gameState, now),
+                    /* Comprar o lote (1 energia → 3 tickets): espelha a recusa sobre o estado da tela e reconfere dentro do updater. */
+                    onBuy: () => {
+                      const now = Date.now();
+                      if (ticketBuyRefusal(gameState, now)) return false;
+                      setGameState(prev => buyFunTickets(prev, now));
+                      return true;
+                    },
+                    /* Começa UMA rodada: gasta 1 ticket (porta única `startFunRound`, reconfere sobre o `prev`). */
                     onStartRound: () => {
                       const now = Date.now();
-                      if (funRoundRefusal(gameState, now)) return false;
+                      if (funTicketStatus(gameState, now).count < 1) return false;
                       setGameState(prev => startFunRound(prev, now));
                       return true;
                     },

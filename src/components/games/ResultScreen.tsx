@@ -31,6 +31,7 @@ import type { Language } from '../../utils/i18n';
 import type { DailyEvent } from '../../utils/dailyMissions';
 import { essenceIconSrc, essenceName } from '../../utils/resultEssences';
 import { useResultExtras } from './ResultExtrasContext';
+import { TicketCost, useFunTicketCost } from '../play/TicketFan';
 
 /** Desfecho visual: `record` = pico, `win` = alegria, `calm` = fim neutro, `tired` = sem vitória (acolhedor, nunca luto). */
 export type ResultOutcome = 'win' | 'record' | 'calm' | 'tired';
@@ -241,6 +242,7 @@ const MOOD_CLASS: Record<string, string> = { happy: 'sm-result-visor--happy', ca
 export function ResultScreen(p: ResultScreenProps) {
   const isPt = p.language === 'pt-BR';
   const record = p.outcome === 'record';
+  const ticketCost = useFunTicketCost(); // jogos do Salão: o "jogar de novo" gasta 1 ticket (09/11/2026)
   const mode = p.mode ?? 'page';
   const { step, skip, animated } = useResultReveal({ record, quick: !!p.quick, instant: !!p.instant });
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -509,6 +511,7 @@ export function ResultScreen(p: ResultScreenProps) {
           <button type="button" data-result-again {...p.againAttrs} onClick={p.onPlayAgain} style={{ ...sm2Button('primary'), width: '100%', padding: '0 8px', gap: 8 }}>
             <Icon name={p.playAgainIcon ?? 'replay'} size={24} tone="inherit" />
             {p.playAgainLabel ?? (isPt ? 'Jogar de novo' : 'Play again')}
+            {ticketCost && <TicketCost />}
           </button>
         )}
         {p.onHome && (

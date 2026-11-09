@@ -1,6 +1,7 @@
 import { sanitizeJourneyCredited } from '../utils/focusBoard';
 import { sanitizeMailClaimed } from '../utils/mensageiro';
 import { sanitizeFunSession } from '../utils/funSession';
+import { sanitizeFunTickets, type FunTickets } from '../utils/funTickets';
 import { normalizeGuildMission } from '../utils/guildMission';
 import { sanitizeCrystal } from '../utils/evolutionCrystal';
 import { sanitizeFormaSnapshots } from '../utils/formaSnapshot';
@@ -539,6 +540,8 @@ export interface GameState {
   dungeonDaily?: { day: string; layers: number };
   /** 🎟️ Sessão dos minijogos de diversão (04/11/2026, `utils/funSession.ts`): 1 energia = 3 rodadas em 30 min. Ausente = nenhuma sessão. */
   funSession?: { startedAt: number; rounds: number };
+  /** 🎫 Tickets dos minijogos do Salão (09/11/2026, `utils/funTickets.ts`): 1 energia = 3 tickets, teto 5, 24 h por lote. Ausente = nenhum ticket. Substitui a `funSession`. */
+  funTickets?: FunTickets;
   /** ☀️🌤️🌙 Check-ins do dia já resgatados (beta-2 4.1, `utils/checkIns.ts`): UMA recompensa por janela por dia do jogador; sem histórico. */
   checkIns?: { day: string; claimed: Array<'morning' | 'afternoon' | 'night'> };
   /** 🎲 Rerolls dos 3 cards da Arena livre feitos no dia do jogador (28/10/2026, `utils/arenaSorteio.ts`): 3 grátis, depois Bits. O contador (dia ISO + n) também é a semente dos cards, então reabrir mostra os mesmos. Servidor: monotônico no dia (`_dayCounters.js`). */
@@ -1460,6 +1463,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         hungerPenalty: sanitizeHungerPenalty(loadedState.hungerPenalty),
         dungeonDaily: sanitizeDungeonDaily(loadedState.dungeonDaily),
         funSession: sanitizeFunSession(loadedState.funSession),
+        funTickets: sanitizeFunTickets(loadedState.funTickets),
         checkIns: sanitizeCheckIns(loadedState.checkIns),
         arenaReroll: sanitizeArenaReroll(loadedState.arenaReroll),
         arenaRuns: sanitizeArenaReroll(loadedState.arenaRuns),

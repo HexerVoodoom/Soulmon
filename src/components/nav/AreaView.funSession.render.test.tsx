@@ -11,7 +11,7 @@ import { useState, type ComponentProps } from 'react';
 import { fireEvent, act, screen, cleanup } from '@testing-library/react';
 import { renderWithCss } from '../../test/renderEnv';
 import { AreaView } from './AreaView';
-import { funRoundRefusal, funSessionStatus, startFunRound, type FunSessionState } from '../../utils/funSession';
+import { funTicketStatus, startFunRound, buyFunTickets, ticketBuyRefusal, type FunTicketState } from '../../utils/funTickets';
 
 vi.mock('../SoulBarrage', () => ({
   SoulBarrage: ({ onReplayRound }: { onReplayRound?: () => boolean }) => (
@@ -27,9 +27,9 @@ vi.mock('../play/MinigameModeGate', () => ({
   ),
 }));
 
-let estado: FunSessionState;
-function Harness({ energy }: { energy: number }) {
-  const [s, setS] = useState<FunSessionState>({ energyPoints: energy, energyClock: { at: Date.now(), carry: 0 } });
+let estado: FunTicketState;
+function Harness({ energy, tickets = 0 }: { energy: number; tickets?: number }) {
+  const [s, setS] = useState<FunTicketState>({ energyPoints: energy, energyClock: { at: Date.now(), carry: 0 }, ...(tickets ? { funTickets: { batches: [{ at: Date.now() - 1000, left: tickets }] } } : {}) });
   estado = s;
   const props = {
     area: 'jogos', language: 'pt-BR', initialSheet: 'salao',
@@ -39,10 +39,16 @@ function Harness({ energy }: { energy: number }) {
     tournament: {}, evolutionStage: 'rookie', onEarnPoints: () => {},
     play: {
       funSession: {
-        status: (now: number) => funSessionStatus(s, now),
+        status: (now: number) => funTicketStatus(s, now),
+        onBuy: () => {
+          const now = Date.now();
+          if (ticketBuyRefusal(s, now)) return false;
+          setS(prev => buyFunTickets(prev, now));
+          return true;
+        },
         onStartRound: () => {
           const now = Date.now();
-          if (funRoundRefusal(s, now)) return false;
+          if (funTicketStatus(s, now).count < 1) return false;
           setS(prev => startFunRound(prev, now));
           return true;
         },
@@ -61,51 +67,46 @@ const abrirBarrage = async () => { await toque('[data-barrage-open]'); await toq
 
 afterEach(cleanup);
 
-describe('sessão de diversão: fluxo real no AreaView', () => {
-  it('voltar da pergunta do NPC não gasta', async () => {
+describe('tickets dos minijogos: fluxo real no AreaView', () => {
+  it('sem ticket, tocar em Jogar dá retorno visível e não abre nada', async () => {
     renderWithCss(<Harness energy={2} />);
+    await achar('[data-barrage-open]');
+    expect(q('[data-fun-tickets-nudged]')).toBeNull();
+    await toque('[data-barrage-open]');
+    expect(q('[data-fun-tickets-nudged]')).not.toBeNull();
+    expect(q('[data-gate-pick]')).toBeNull();
+    expect(estado.energyPoints).toBe(2);
+  }, 60000);
+
+  it('comprar cobra 1 energia e dá 3 tickets; comprar de novo com 3 é bloqueado', async () => {
+    renderWithCss(<Harness energy={2} />);
+    await toque('[data-fun-tickets-buy]');
+    expect(estado.energyPoints).toBe(1);
+    expect(funTicketStatus(estado, Date.now()).count).toBe(3);
+    await vi.waitFor(() => { if (!(q('[data-fun-tickets-buy]') as HTMLButtonElement).disabled) throw new Error('ainda habilitado'); });
+    await toque('[data-fun-tickets-buy]');
+    expect(estado.energyPoints).toBe(1);
+  }, 60000);
+
+  it('voltar da pergunta do NPC não gasta ticket', async () => {
+    renderWithCss(<Harness energy={2} tickets={3} />);
     await toque('[data-barrage-open]');
     await toque('[data-gate-back]');
-    expect(estado.energyPoints).toBe(2);
-    expect(estado.funSession).toBeUndefined();
+    expect(funTicketStatus(estado, Date.now()).count).toBe(3);
   }, 60000);
 
-  it('cobra ao abrir; o replay conta rodada e, gasta a sessão, cobra mais 1 energia', async () => {
-    renderWithCss(<Harness energy={2} />);
+  it('abrir gasta 1 ticket (3 → 2) e cada "jogar de novo" gasta mais 1 até acabar; sem ticket fecha com aviso', async () => {
+    renderWithCss(<Harness energy={2} tickets={3} />);
     await abrirBarrage();
-    expect(estado).toMatchObject({ energyPoints: 1, funSession: { rounds: 1 } });
+    expect(funTicketStatus(estado, Date.now()).count).toBe(2);
     await toque('[data-replay]');
+    expect(funTicketStatus(estado, Date.now()).count).toBe(1);
     await toque('[data-replay]');
-    expect(estado).toMatchObject({ energyPoints: 1, funSession: { rounds: 3 } });
-    await toque('[data-replay]');
-    expect(estado).toMatchObject({ energyPoints: 0, funSession: { rounds: 1 } });
-    expect(q('[data-stub-game]')).not.toBeNull();
-  }, 60000);
-
-  it('replay sem energia fecha o jogo e volta ao Salão com o aviso em destaque', async () => {
-    renderWithCss(<Harness energy={1} />);
-    await abrirBarrage();
-    await toque('[data-replay]');
-    await toque('[data-replay]');
+    expect(funTicketStatus(estado, Date.now()).count).toBe(0);
+    expect(estado.energyPoints).toBe(2); // jogar nunca gasta energia
     await toque('[data-replay]');
     expect(q('[data-stub-game]')).toBeNull();
-    const aviso = await achar('[data-fun-session="blocked"]');
-    expect(aviso.getAttribute('role')).toBe('alert');
-    expect(aviso.textContent).toContain('Sem energia');
-    expect(estado.energyPoints).toBe(0);
-  }, 60000);
-
-  it('tocar em Jogar bloqueado dá retorno visível e não abre nada', async () => {
-    renderWithCss(<Harness energy={0} />);
-    await achar('[data-barrage-open]');
-    expect(q('[data-fun-nudged]')).toBeNull();
-    const subir = vi.fn();
-    Element.prototype.scrollTo = subir as never;
-    await toque('[data-barrage-open]');
-    expect(q('[data-fun-nudged]')).not.toBeNull();
-    // Com a lista rolada o aviso estaria fora da tela: o toque sobe a lista até ele.
-    expect(subir).toHaveBeenCalledWith({ top: 0, behavior: 'smooth' });
-    expect(q('[data-gate-pick]')).toBeNull();
+    expect(q('[data-fun-tickets]')).not.toBeNull();
   }, 60000);
 
   it('os 4 jogos reais passam o "jogar de novo" pelo onReplayRound', () => {
