@@ -7,7 +7,7 @@ export type Lang = 'pt' | 'en';
 
 const pt = {
   html: 'pt-BR', idioma: 'pt-BR', home: `${B}/`, priv: `${B}/privacidade/`, outraHome: `${B}/en/`, outraPriv: `${B}/en/privacy/`, outraNome: 'English', outraCod: 'en',
-  vb: { h2: 'Sorteie seu Soulmon', tx: 'Ele vai com você pelo site e evolui enquanto você rola.', sortear: 'Sortear', outro: 'Sortear outro', evoluiu: 'evoluiu para' },
+  vb: { h2: 'Sorteie seu Soulmon', tx: 'Ele vai com você pelo site e evolui enquanto você rola.', sortear: 'Sortear', outro: 'Sortear outro', evoluiu: 'evoluiu para', tocar: 'Falar com seu Soulmon', falas: ['Oi! Bora cumprir uma tarefinha hoje?', 'Cada coisa que você faz me deixa mais forte.', 'Senti uma faísca... acho que vou evoluir!', 'Beber água conta, viu?', 'Devagar também chega. Eu espero você.', 'Já viu os lugares do universo? Tem tanta coisa lá!', 'Se você descansar, eu descanso junto.', 'Sabia que eu tenho uma forma para cada elemento?', 'Me leva pro beta? Prometo não dar trabalho.', 'Gostei de você. Vamos crescer juntos!'] },
   titulo: 'Soulmon: criaturas que evoluem com suas tarefas', desc: 'Jogo de criaturas para Android. Conclua tarefas do seu dia e veja seu Soulmon ganhar novas formas. Entre no beta.',
   pular: 'Pular para o conteúdo', logoAlt: 'Soulmon', logoTopo: 'Soulmon, voltar ao topo',
   h1: 'Agora você tem mais motivação para evoluir na vida real.', cta: 'Entrar no beta', ctaEspera: 'Entrar na fila',
@@ -85,7 +85,7 @@ const pt = {
     aviso: 'A 1ª leva tem 50 vagas, por ordem de inscrição; depois, lista de espera.',
   },
   form: {
-    h2: 'Seu Soulmon está esperando.',
+    h2: 'Seu Soulmon está esperando.', ovo: 'Cristal com seu Soulmon dentro',
     email: 'E-mail', exemplo: 'voce@gmail.com', dica: 'E-mail da conta Google usada na Play Store.',
     enviar: 'Entrar no beta', enviarEspera: 'Entrar na fila', enviando: 'Enviando…',
     legalA: 'Ao entrar, você aceita a', legalLink: 'política de privacidade', legalB: 'e declara ter 18 anos ou mais.',
@@ -129,7 +129,7 @@ const pt = {
 
 const en: typeof pt = {
   html: 'en', idioma: 'en', home: `${B}/en/`, priv: `${B}/en/privacy/`, outraHome: `${B}/`, outraPriv: `${B}/privacidade/`, outraNome: 'Português', outraCod: 'pt-BR',
-  vb: { h2: 'Draw your Soulmon', tx: 'It comes along as you scroll and evolves on the way.', sortear: 'Draw', outro: 'Draw another', evoluiu: 'evolved into' },
+  vb: { h2: 'Draw your Soulmon', tx: 'It comes along as you scroll and evolves on the way.', sortear: 'Draw', outro: 'Draw another', evoluiu: 'evolved into', tocar: 'Talk to your Soulmon', falas: ['Hi! Up for one small task today?', 'Every little thing you do makes me stronger.', 'I feel a spark... I think I am about to evolve!', 'Drinking water counts, you know.', 'Slow still gets there. I will wait for you.', 'Seen the places in this world yet? So much to do!', 'If you rest, I rest with you.', 'Did you know I have a form for every element?', 'Take me to the beta? I promise to behave.', 'I like you. Let us grow together!'] },
   titulo: 'Soulmon: creatures that evolve with your tasks', desc: 'A creature game for Android. Finish tasks from your day and watch your Soulmon take on new forms. Join the beta.',
   pular: 'Skip to content', logoAlt: 'Soulmon', logoTopo: 'Soulmon, back to top',
   h1: 'Now you have more motivation to grow in real life.', cta: 'Join the beta', ctaEspera: 'Join the line',
@@ -207,7 +207,7 @@ const en: typeof pt = {
     aviso: 'The first wave has 50 spots in sign-up order; after that, a waitlist.',
   },
   form: {
-    h2: 'Your Soulmon is waiting.',
+    h2: 'Your Soulmon is waiting.', ovo: 'Crystal with your Soulmon inside',
     email: 'Email', exemplo: 'you@gmail.com', dica: 'Google Account email used for the Play Store.',
     enviar: 'Join the beta', enviarEspera: 'Join the line', enviando: 'Sending…',
     legalA: 'By joining, you accept the', legalLink: 'privacy policy', legalB: 'and declare you are 18 or older.',

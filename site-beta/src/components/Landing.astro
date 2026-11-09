@@ -123,7 +123,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
 
   <main id="conteudo" tabindex="-1">
     {VB && (
-    <section class="calmo meu-soulmon" id="meu-soulmon" aria-labelledby="meu-h" data-comp data-base={b('/sprites/')} data-el-base={b('/el/')} data-chama={b('/provisorio/chama.svg')} data-linhas={JSON.stringify(LINHAS_B.filter((l) => c.formas.every((fm) => temSprite(`/sprites/${l}-${fm}.webp`))))} data-els={JSON.stringify(u.els)} data-nomes={JSON.stringify(c.nomes)} data-formas={JSON.stringify(c.formas)} data-alt={c.alt} data-outro={t.vb.outro}>
+    <section class="calmo meu-soulmon" id="meu-soulmon" aria-labelledby="meu-h" data-comp data-base={b('/sprites/')} data-el-base={b('/el/')} data-chama={b('/provisorio/chama.svg')} data-linhas={JSON.stringify(LINHAS_B.filter((l) => c.formas.every((fm) => temSprite(`/sprites/${l}-${fm}.webp`))))} data-els={JSON.stringify(u.els)} data-nomes={JSON.stringify(c.nomes)} data-formas={JSON.stringify(c.formas)} data-alt={c.alt} data-outro={t.vb.outro} data-falas={JSON.stringify(t.vb.falas)}>
       <h2 id="meu-h">{t.vb.h2}</h2>
       <p class="meu-tx">{t.vb.tx}</p>
       <div class="meu-palco">
@@ -437,6 +437,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
         <Cria s="vigor-rookie" t={128} td={128} x={16} y={23} dx={79} dy={56} flipD fase={900} />
       </Mapa>
       <div class="inscrever-caixa veu">
+        <button type="button" class="ovo" data-ovo aria-label={f.ovo}><img src={b('/site/ovo-cristal.webp')} width="160" height="160" alt="" loading="lazy" /><span class="ovo-brilho" aria-hidden="true"></span></button>
         <h2 id="inscrever-h">{f.h2}</h2>
         <p class="vagas" data-vagas hidden>{f.esperaPre}</p>
         <noscript><p class="ns">{f.noscript} <a href={`mailto:${CONTATO}`}>{CONTATO}</a></p></noscript>
@@ -483,7 +484,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
   </footer>
 
   <button type="button" class="link pular-demo" data-pular-demo hidden>{c.pular}</button>
-  {VB && <div class="companheiro" data-companheiro hidden aria-live="polite"><img class="sprite" data-comp-img width="128" height="128" alt="" /><span class="comp-clarao" aria-hidden="true"></span></div>}
+  {VB && <button type="button" class="companheiro" data-companheiro hidden aria-label={t.vb.tocar}><span class="comp-fala" data-comp-fala hidden aria-live="polite"></span><img class="sprite" data-comp-img width="128" height="128" alt="" /><span class="comp-clarao" aria-hidden="true"></span></button>}
   <div class="fixo" data-fixo><a class="botao primario fixo-cta" href="#inscrever" aria-label={`${t.cta} · ${t.hero.loja}`}><Fragment set:html={PLAY} /><span data-cta>{t.cta}</span></a></div>
   <script src="../scripts/app.ts"></script>
 </Base>

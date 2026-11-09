@@ -1,5 +1,5 @@
-﻿/* Site do beta, v3. Valores: tokens.css (--sb-*) e DESIGN-SYSTEM.md. PeÃ§as de marca vÃªm do manifesto
-   (assets.json) como --a-*, --f-*, --b-* (Base.astro): trocar a peÃ§a nÃ£o muda layout. */
+/* Site do beta, v3. Valores: tokens.css (--sb-*) e DESIGN-SYSTEM.md. Peças de marca vêm do manifesto
+   (assets.json) como --a-*, --f-*, --b-* (Base.astro): trocar a peça não muda layout. */
 @font-face { font-family: Cinzel; src: url(/fonts/cinzel-latin.woff2) format('woff2'); font-weight: 400 900; font-display: swap; unicode-range: U+0000-00FF, U+2000-206F; }
 @font-face { font-family: Cinzel; src: url(/fonts/cinzel-latin-ext.woff2) format('woff2'); font-weight: 400 900; font-display: swap; unicode-range: U+0100-02AF; }
 @font-face { font-family: Rubik; src: url(/fonts/rubik-latin.woff2) format('woff2'); font-weight: 300 900; font-display: swap; unicode-range: U+0000-00FF, U+2000-206F; }
@@ -38,7 +38,7 @@ main:focus { outline: none; }
 .sprite { image-rendering: pixelated; }
 .frase { font-size: var(--sb-t-lead); color: var(--sb-tx); max-width: var(--sb-medida-frase); margin-top: var(--sb-e-3); text-wrap: pretty; }
 
-/* ---------- BotÃ£o 9-slice: moldura em asset, texto limpo. Estados em CSS sobre o mesmo arquivo ---------- */
+/* ---------- Botão 9-slice: moldura em asset, texto limpo. Estados em CSS sobre o mesmo arquivo ---------- */
 .botao, .botao:visited {
   position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 8px;
   font: var(--sb-peso-forte) var(--sb-t-botao)/1 var(--sb-fonte-texto); color: var(--sb-tx); text-decoration: none; text-align: center; white-space: nowrap; cursor: pointer;
@@ -66,24 +66,24 @@ main:focus { outline: none; }
 @keyframes acende { 0%, 33% { opacity: 1; } 34%, 100% { opacity: .3; } }
 .link { background: none; border: 0; padding: 12px 8px; min-height: 44px; font: inherit; color: var(--sb-pri); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
-/* Molduras 9-slice das peÃ§as do manifesto */
+/* Molduras 9-slice das peças do manifesto */
 .popup { border: var(--b-popup, 2px) solid var(--sb-anel); border-image-source: var(--a-popup, none); border-image-slice: var(--f-popup, 100%); }
 .painel, .ficha { border: var(--b-painel, 2px) solid var(--sb-anel); border-image-slice: var(--f-painel, 100%); image-rendering: pixelated; }
 .aba { border: var(--b-aba, 2px) solid var(--sb-anel); border-image-slice: var(--f-aba, 100%); }
 .celula, .no { border: var(--b-celula, 2px) solid var(--sb-anel); border-image-slice: var(--f-celula, 100%); background: var(--sb-sup); }
-/* As molduras de baixo da dobra sÃ³ pedem o arquivo depois do load (fora da janela do LCP); sem JS, sempre. */
+/* As molduras de baixo da dobra só pedem o arquivo depois do load (fora da janela do LCP); sem JS, sempre. */
 .tarde :is(.painel, .ficha, .moldura) { border-image-source: var(--a-painel, none); }
 .tarde .aba { border-image-source: var(--a-aba, none); }
 .tarde :is(.celula, .no) { border-image-source: var(--a-celula, none); }
 @media (scripting: none) { :is(.painel, .ficha, .moldura) { border-image-source: var(--a-painel, none); } .aba { border-image-source: var(--a-aba, none); } :is(.celula, .no) { border-image-source: var(--a-celula, none); } }
 
-/* ---------- RÃ³tulos de mÃ­dia: texto, nunca Ã­cone em caixa ---------- */
+/* ---------- Rótulos de mídia: texto, nunca ícone em caixa ---------- */
 .rotulo { display: inline-block; justify-self: start; font: var(--sb-peso-forte) var(--sb-t-rotulo)/1.2 var(--sb-fonte-texto); text-transform: uppercase; letter-spacing: var(--sb-ls-rotulo); padding: 4px 8px; border: 1px solid currentColor; background: var(--sb-rot-fundo); }
 .rot-gameplay { color: var(--sb-rot-gameplay); }
 .rot-demo { color: var(--sb-rot-demo); }
 .rot-cine { color: var(--sb-rot-cine); }
 
-/* ---------- VÃ©u: sÃ³ atrÃ¡s do texto, chegando a 0 fora do bloco ---------- */
+/* ---------- Véu: só atrás do texto, chegando a 0 fora do bloco ---------- */
 .veu, .veu-h { position: relative; isolation: isolate; }
 .veu::before, .veu-h::before { content: ''; position: absolute; z-index: -1; inset: -40px -64px; pointer-events: none; background: var(--sb-veu-texto);
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 64px, #000 calc(100% - 64px), transparent), linear-gradient(transparent, #000 40px, #000 calc(100% - 40px), transparent); -webkit-mask-composite: source-in;
@@ -110,7 +110,7 @@ main:focus { outline: none; }
 .barra-capa.baixo { transform: scaleY(-1); }
 .barra-trilho { position: relative; flex: 1; }
 .barra-trilho > i { position: absolute; inset: 0; transform: scaleY(0); transform-origin: top; }
-/* NÃ³: a capa da barra na escala da barra, atÃ© existir o asset cristal-no (manifesto: barraNo). */
+/* Nó: a capa da barra na escala da barra, até existir o asset cristal-no (manifesto: barraNo). */
 .barra-no { position: absolute; left: 0; top: calc(var(--n) * 25%); width: var(--barra-l); height: var(--barra-l); margin-top: calc(var(--barra-l) / -2); background: center / 100% 100% no-repeat; image-rendering: pixelated; filter: brightness(.6); }
 .barra-no.aceso { filter: var(--sb-brilho-cristal); }
 .tarde .barra-capa { background-image: var(--a-barraCapa); }
@@ -121,7 +121,7 @@ main:focus { outline: none; }
   img[data-tarde-src] { display: none; }
 }
 
-/* ---------- Cena cheia: o mapa cobre a seÃ§Ã£o; criaturas pisam em % do mapa ---------- */
+/* ---------- Cena cheia: o mapa cobre a seção; criaturas pisam em % do mapa ---------- */
 .cena { position: relative; isolation: isolate; overflow: clip; background: var(--sb-fundo); }
 .cena-fundo { position: absolute; inset: 0; z-index: var(--sb-z-cena); overflow: hidden; container-type: size; pointer-events: none;
   -webkit-mask-image: linear-gradient(transparent, #000 64px, #000 calc(100% - 64px), transparent); mask-image: linear-gradient(transparent, #000 64px, #000 calc(100% - 64px), transparent); }
@@ -153,7 +153,7 @@ main:focus { outline: none; }
 @keyframes flutua { 0%, 49.9% { translate: 0 0; } 50%, 100% { translate: 0 calc(-1 * var(--sb-passo-flutua)); } }
 @media (prefers-reduced-motion: reduce) { .cria img { animation: none; } }
 
-/* ---------- 1 Â· Hero ---------- */
+/* ---------- 1 · Hero ---------- */
 .hero { min-height: 100svh; display: flex; flex-direction: column; }
 .hero .cena-fundo { -webkit-mask-image: linear-gradient(#000 calc(100% - 64px), transparent); mask-image: linear-gradient(#000 calc(100% - 64px), transparent); }
 .hero-corpo { flex: 1; display: flex; flex-direction: column; justify-content: space-between; gap: var(--sb-e-5); padding: 8px var(--sb-margem-dir) var(--sb-e-4) var(--sb-margem-esq); }
@@ -200,7 +200,7 @@ main:focus { outline: none; }
 @media (min-width: 1024px) { .aparelho { width: 320px; } }
 .aparelho.mini { width: 200px; }
 
-/* ---------- 2 Â· O jogo na sua mÃ£o: aparelho real + demo (LaboratÃ³rio) ---------- */
+/* ---------- 2 · O jogo na sua mão: aparelho real + demo (Laboratório) ---------- */
 .ciclo-palco { position: relative; isolation: isolate; min-height: 100svh; display: grid; align-content: center; justify-items: center; gap: var(--sb-e-5); padding: calc(var(--topo-h) + 16px) var(--pad-d) var(--sb-e-6) var(--pad-e); overflow: clip; }
 .ciclo-texto { text-align: center; display: grid; justify-items: center; max-width: 60rem; }
 .ciclo-aparelho { justify-self: center; }
@@ -209,7 +209,7 @@ main:focus { outline: none; }
 .estagios { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: center; }
 .estagios li { display: grid; justify-items: center; gap: 4px; color: var(--sb-ouro); font-weight: 500; background: var(--sb-veu-texto); padding: 4px 8px; }
 .ciclo-js .estagios { display: none; }
-/* Pin (rolar avanÃ§a a demo) sÃ³ no desktop alto o bastante para aparelho + demo; no celular a demo Ã© por toque. */
+/* Pin (rolar avança a demo) só no desktop alto o bastante para aparelho + demo; no celular a demo é por toque. */
 @media (min-width: 1024px) and (min-height: 820px) {
   .ciclo-js .ciclo { height: 340svh; }
   .ciclo-js .ciclo-palco { position: sticky; top: 0; height: 100svh; }
@@ -228,7 +228,7 @@ main:focus { outline: none; }
 .cristal img.on { opacity: 1; }
 .cristal img[data-c='aceso'].on { filter: var(--sb-brilho-cristal); }
 .chama { position: absolute; left: 0; top: 0; opacity: 0; z-index: 5; pointer-events: none; will-change: transform; image-rendering: pixelated; }
-/* Lista: rÃ©plica da Home (HOJE Â· MISSÃƒO, HÃBITOS, caixinha de cobre 24 em alvo 44) */
+/* Lista: réplica da Home (HOJE · MISSÃO, HÁBITOS, caixinha de cobre 24 em alvo 44) */
 .lista-jogo { width: 320px; padding: var(--sb-e-3) 0 var(--sb-e-1); margin-top: 40px; }
 .lista-cab, .lista-sub { padding: 0 28px; font: var(--sb-peso-forte) var(--sb-t-rotulo)/1.2 var(--sb-fonte-texto); text-transform: uppercase; letter-spacing: var(--sb-ls-rotulo); }
 .rot-hoje, .lista-sub { color: var(--sb-tx-2); }
@@ -268,7 +268,7 @@ main:focus { outline: none; }
   .ciclo-fim { grid-column: 1 / -1; }
 }
 
-/* ---------- 4 Â· Seu Soulmon (Jogos) ---------- */
+/* ---------- 4 · Seu Soulmon (Jogos) ---------- */
 .soul { padding: calc(var(--sb-secao-y) + 24px) var(--pad-d) var(--sb-secao-y) var(--pad-e); }
 .soul-grade { display: grid; gap: var(--sb-e-7); }
 .soul-texto { justify-self: start; max-width: 36rem; }
@@ -303,7 +303,7 @@ main:focus { outline: none; }
   .arvore-bloco { grid-column: 1 / -1; }
 }
 
-/* ---------- 5 Â· O universo (Hall: vÃ©u 0,82 atrÃ¡s de todo texto) ---------- */
+/* ---------- 5 · O universo (Hall: véu 0,82 atrás de todo texto) ---------- */
 .universo { padding: var(--sb-secao-y) var(--pad-d) var(--sb-secao-y) var(--pad-e); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sb-e-6); }
 .universo-cab { justify-self: start; }
 .abas { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--sb-e-2); }
@@ -325,7 +325,7 @@ main:focus { outline: none; }
 .els > li.combos { width: 60%; }
 .area { display: grid; align-content: start; background: var(--sb-fundo); }
 .area-arte { position: relative; display: block; overflow: hidden; aspect-ratio: 4 / 3; }
-/* imagem a 2x da largura do cartÃ£o, com o ponto (--fx, --fy) do mapa no centro: um recorte que nÃ£o repete os fundos de seÃ§Ã£o */
+/* imagem a 2x da largura do cartão, com o ponto (--fx, --fy) do mapa no centro: um recorte que não repete os fundos de seção */
 .area-arte img { position: absolute; width: 200%; max-width: none; height: auto; left: calc(50% - var(--fx) * 200%); top: calc(50% - var(--fy) * 592.8%); }
 .area-tx { display: grid; gap: 2px; padding: var(--sb-e-3) var(--sb-e-3) var(--sb-e-4); }
 .area-tx strong { font: 700 1.125rem/1.2 var(--sb-fonte-titulo); }
@@ -350,7 +350,7 @@ main:focus { outline: none; }
   .painel { padding: var(--sb-e-4); }
 }
 
-/* ---------- 6 Â· O que vocÃª faz (Arena) ---------- */
+/* ---------- 6 · O que você faz (Arena) ---------- */
 .recursos { padding: var(--sb-secao-y) var(--pad-d) var(--sb-secao-y) var(--pad-e); display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sb-e-6); }
 .recursos-cab { justify-self: start; }
 .cartoes { display: flex; gap: var(--sb-e-4); overflow-x: auto; scroll-snap-type: x mandatory; margin-right: calc(-1 * var(--sb-margem-dir)); padding: 4px var(--sb-margem-dir) 12px 0; }
@@ -364,7 +364,7 @@ main:focus { outline: none; }
   .aparelho.mini { width: 220px; }
 }
 
-/* ---------- 7 Â· Trailer (16:9) ---------- */
+/* ---------- 7 · Trailer (16:9) ---------- */
 .trailer { display: grid; gap: var(--sb-e-6); justify-items: center; text-align: center; }
 .trailer-texto { display: grid; justify-items: center; }
 .trailer-texto .frase { margin-inline: auto; color: var(--sb-tx-2); }
@@ -374,7 +374,7 @@ main:focus { outline: none; }
 .trailer-moldura video { display: block; width: 100%; height: 100%; object-fit: cover; }
 @media (scripting: none) { [data-trailer], [data-trailer-capa] { display: none !important; } }
 
-/* ---------- 8 Â· Faixa da Guilda + Como entrar (superfÃ­cie clara) ---------- */
+/* ---------- 8 · Faixa da Guilda + Como entrar (superfície clara) ---------- */
 .entrar { padding: var(--sb-secao-y) var(--pad-d) var(--sb-secao-y) var(--pad-e); }
 .passos { margin-top: var(--sb-e-6); display: grid; gap: var(--sb-e-4); }
 .passos li { display: grid; grid-template-columns: 96px 1fr; column-gap: var(--sb-e-4); align-items: center; padding: var(--sb-e-2); }
@@ -393,7 +393,7 @@ main:focus { outline: none; }
   .medalha, .medalha img { width: 192px; height: 192px; }
 }
 
-/* ---------- 9 Â· Perguntas ---------- */
+/* ---------- 9 · Perguntas ---------- */
 .faq h2 { margin-bottom: var(--sb-e-5); }
 .faq-lista { max-width: var(--sb-medida-texto); }
 @media (min-width: 1024px) { .faq-lista { max-width: none; display: grid; grid-template-columns: 1fr 1fr; column-gap: var(--sb-e-8); align-items: start; } }
@@ -406,7 +406,7 @@ main:focus { outline: none; }
 .faq details p { padding: 0 0 16px 36px; color: var(--sb-tx-2); overflow-wrap: anywhere; }
 .faq-priv { margin-top: var(--sb-e-5); }
 
-/* ---------- 10 Â· Entre no beta (ExploraÃ§Ã£o, fecha o ciclo) ---------- */
+/* ---------- 10 · Entre no beta (Exploração, fecha o ciclo) ---------- */
 .inscrever { min-height: 100svh; display: grid; place-items: center; padding: calc(var(--sb-secao-y) + 24px) var(--pad-d) var(--sb-secao-y) var(--pad-e); }
 .inscrever-caixa { width: min(100%, 520px); display: grid; justify-items: center; gap: var(--sb-e-4); text-align: center; padding: var(--sb-e-2) 0; }
 .inscrever h2 { max-width: 16ch; }
@@ -434,13 +434,13 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .popup { width: min(calc(100vw - 32px), 440px); padding: 40px 24px 16px; background: var(--sb-sup); color: var(--sb-tx); text-align: center; overflow: visible; box-shadow: var(--sb-sombra-2); }
 .popup[open] { display: grid; justify-items: center; gap: var(--sb-e-3); animation: abre var(--sb-dur-entrada) var(--sb-ease); }
 .popup::backdrop { background: var(--sb-veu-dialogo); }
-.popup[data-popup]::backdrop { background: #030a0a; } /* espera: o resto da pÃ¡gina some por inteiro, sem link solto atrÃ¡s */
+.popup[data-popup]::backdrop { background: #030a0a; } /* espera: o resto da página some por inteiro, sem link solto atrás */
 .popup-cristal { position: absolute; left: calc(50% - 24px); top: -72px; width: 48px; height: 96px; image-rendering: pixelated; filter: var(--sb-brilho-cristal); }
 .popup h2 { font-size: 1.5rem; color: var(--sb-pri); }
 .popup .botao { margin-top: var(--sb-e-2); min-width: 240px; }
 @keyframes abre { from { opacity: 0; scale: .96; } }
 
-/* ---------- RodapÃ© ---------- */
+/* ---------- Rodapé ---------- */
 .rodape { background: var(--sb-fundo); padding: 32px var(--pad-d) 112px var(--pad-e); display: grid; justify-items: center; gap: 8px; text-align: center; font-size: .9375rem; color: var(--sb-tx-2); border-top: 1px solid var(--sb-linha); }
 .rodape-logo { width: 64px; height: auto; }
 .rodape ul { display: flex; flex-wrap: wrap; gap: 0 20px; justify-content: center; }
@@ -467,20 +467,20 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .nada section p { margin-top: 12px; }
 .nada .botao { margin-top: 4px; height: 80px; min-width: 240px; border-width: 28px 32px; }
 
-/* Abaixo da dobra: antes do load, content-visibility tira a caixa do subtree; as imagens sÃ³ pedem quando a seÃ§Ã£o se aproxima. */
-/* SÃ³ com JS (sem JS nÃ£o hÃ¡ "tarde" e a pÃ¡gina inteira tem de pintar, inclusive em captura de pÃ¡gina cheia). */
+/* Abaixo da dobra: antes do load, content-visibility tira a caixa do subtree; as imagens só pedem quando a seção se aproxima. */
+/* Só com JS (sem JS não há "tarde" e a página inteira tem de pintar, inclusive em captura de página cheia). */
 @media (scripting: enabled) {
-  /* auto: hidden derrubava o CLS (1,0) na revelaÃ§Ã£o. As imagens perto do hero esperam o load por data-tarde-src. */
+  /* auto: hidden derrubava o CLS (1,0) na revelação. As imagens perto do hero esperam o load por data-tarde-src. */
   html:not(.tarde) :is(.jogo, .ciclo, .soul, .universo, .recursos, .trailer, .entrar, .faq) { content-visibility: auto; contain-intrinsic-size: auto 900px; }
 }
 @media (scripting: none) { [data-video] { display: none; } }
 
-/* ======================= v3.2 (segunda crÃ­tica, 06/11) ======================= */
-/* 3 Â· ritmo: cenas do meio com a arte escurecida; hero e fecho na saturaÃ§Ã£o cheia */
+/* ======================= v3.2 (segunda crítica, 06/11) ======================= */
+/* 3 · ritmo: cenas do meio com a arte escurecida; hero e fecho na saturação cheia */
 .cena:not(.hero):not(.inscrever) .cena-mapa img { filter: brightness(.6); }
 .ciclo .cena-mapa img, .soul .cena-mapa img { filter: brightness(.5); }
 
-/* 4 Â· ciclo: placa colada ao disco (abaixo do cristal), rÃ³tulo DEMONSTRAÃ‡ÃƒO sobre a lista */
+/* 4 · ciclo: placa colada ao disco (abaixo do cristal), rótulo DEMONSTRAÇÃO sobre a lista */
 .cena-central { display: flex; flex-direction: column; align-items: center; gap: 0; }
 .cena-central .forma-titulo { order: 2; margin-top: 48px; }
 .disco-caixa { margin-top: 112px; }
@@ -497,7 +497,7 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
   .disco-caixa { margin-top: 96px; }
   .cena-central .forma-titulo { margin-top: 32px; }
   .ciclo-aparelho { width: 320px; }
-  /* aparelho na coluna da esquerda, de cima a baixo; tÃ­tulo e demo na direita */
+  /* aparelho na coluna da esquerda, de cima a baixo; título e demo na direita */
   .ciclo-palco { grid-template-columns: 320px minmax(0, 1fr); grid-template-areas: 'aparelho texto' 'aparelho demo'; column-gap: var(--sb-e-7); align-items: center; align-content: center; }
   .ciclo-texto { align-self: end; }
   .demo-cena { grid-template-columns: 240px 360px; column-gap: var(--sb-e-6); justify-content: center; }
@@ -523,13 +523,13 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
   .soul { padding-bottom: var(--sb-secao-y); scroll-padding-bottom: 0; }
 }
 
-/* 6 Â· abas no celular: grupo colado ao painel, com fundo de superfÃ­cie (sem vÃ£o mostrando o mapa) */
+/* 6 · abas no celular: grupo colado ao painel, com fundo de superfície (sem vão mostrando o mapa) */
 @media (max-width: 767px) {
   .abas { gap: 0; background: var(--sb-sup); }
   .abas:not([hidden]) + .painel, .abas:not([hidden]) ~ .painel { margin-top: 0; }
 }
 
-/* 7 Â· fichas: setas + contador dentro da base da ficha, num bloco sÃ³; desabilitada com placa opaca */
+/* 7 · fichas: setas + contador dentro da base da ficha, num bloco só; desabilitada com placa opaca */
 .fichas { position: relative; }
 .ficha { padding-bottom: 88px; }
 .fichas-ctl { position: absolute; left: 28px; right: 28px; bottom: 24px; padding: 0; }
@@ -538,13 +538,13 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .seta-bt[aria-disabled='true'] img { opacity: .25; }
 .fichas { scroll-margin-bottom: 140px; }
 
-/* 8 Â· cartÃµes: tÃ­tulo com altura de 2 linhas para alinhar as legendas */
+/* 8 · cartões: título com altura de 2 linhas para alinhar as legendas */
 .cartao h3 { min-height: 2.4em; display: grid; align-items: center; }
 
-/* 9 Â· formulÃ¡rio do fecho: tudo na mesma coluna, Ã  esquerda */
+/* 9 · formulário do fecho: tudo na mesma coluna, à esquerda */
 .legal-linha { text-align: left; justify-self: stretch; }
 
-/* 2 Â· Como entrar -> Perguntas sem vÃ£o; passos centralizados a partir de 1024 */
+/* 2 · Como entrar -> Perguntas sem vão; passos centralizados a partir de 1024 */
 .entrar { padding-bottom: var(--sb-e-6); }
 .faq { padding-top: calc(var(--topo-h) + var(--sb-e-4)); }
 .divisor { display: grid; place-items: center; background: var(--sb-fundo-2); padding: var(--sb-e-2) 0; }
@@ -557,27 +557,27 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
   .aviso-vaga { max-width: 1000px; margin-inline: auto; text-align: center; border-left: 0; }
 }
 
-/* ---- arte-chave do hero (ilustraÃ§Ã£o): cobre a cena, ilha preservada ---- */
+/* ---- arte-chave do hero (ilustração): cobre a cena, ilha preservada ---- */
 .hero-fundo { -webkit-mask-image: none; mask-image: none; }
 .hero-arte, .hero-arte img { display: block; width: 100%; height: 100%; }
 .hero-arte img { object-fit: cover; object-position: 50% 100%; }
 @media (min-width: 1024px) { .hero-arte img { object-position: 100% 50%; } }
-/* celular: vÃ©u cheio (0,72) atrÃ¡s do texto; a ilha sobe por trÃ¡s do H1 */
+/* celular: véu cheio (0,72) atrás do texto; a ilha sobe por trás do H1 */
 .hero:has(.hero-arte) .veu-h::before { opacity: 1; }
 @media (min-width: 1024px) {
   .hero:has(.hero-arte)::before { background: linear-gradient(90deg, rgba(7,20,19,.55) 0, rgba(7,20,19,.3) 34%, rgba(7,20,19,0) 46%); }
 }
-/* nÃºmero grande com prefixo por extenso ("mais de 200") */
+/* número grande com prefixo por extenso ("mais de 200") */
 .num-pre { font: var(--sb-peso-titulo) var(--sb-t-h3)/1 var(--sb-fonte-titulo); color: var(--sb-ouro); }
-/* trailer: capa prÃ³pria + play grande no estilo do site */
+/* trailer: capa própria + play grande no estilo do site */
 .trailer-capa { position: absolute; inset: 0; padding: 0; border: 0; background: #000; cursor: pointer; display: block; }
 .trailer-capa picture, .trailer-capa img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .trailer-play { position: absolute; left: 50%; top: 50%; width: 96px; height: 96px; margin: -48px 0 0 -48px; display: grid; place-items: center; border-radius: 50%; color: var(--sb-pri);
   background: var(--sb-rot-fundo); box-shadow: 0 0 0 3px var(--sb-anel), 0 0 0 5px var(--sb-anel-fundo), var(--sb-sombra-2); transition: filter var(--sb-dur-toque) var(--sb-ease); }
 .trailer-capa:hover .trailer-play { filter: brightness(1.2); }
 .trailer-capa:focus-visible { outline-offset: -6px; }
-/* desktop: a arte ocupa ~80% da largura ancorada Ã  direita e embaixo; o cÃ©u dela (#01151F) continua no fundo,
-   entÃ£o o terÃ§o esquerdo fica calmo e o texto nÃ£o cai sobre a ilha (em 16:10 e em 16:9). */
+/* desktop: a arte ocupa ~80% da largura ancorada à direita e embaixo; o céu dela (#01151F) continua no fundo,
+   então o terço esquerdo fica calmo e o texto não cai sobre a ilha (em 16:10 e em 16:9). */
 @media (min-width: 1024px) {
   .hero:has(.hero-arte) { background: #01151f; }
   .hero-fundo .hero-arte { position: absolute; right: 0; bottom: 0; width: max(80vw, calc(100% - 640px)); height: auto; aspect-ratio: 1672 / 941; }
@@ -616,7 +616,7 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
   .fichas-ctl { top: 24px; bottom: auto; }
 }
 
-/* ---------- v4: sorteio, mosaico, linhas da Ã¡rvore, modal do NPC, passos em cartÃ£o ---------- */
+/* ---------- v4: sorteio, mosaico, linhas da árvore, modal do NPC, passos em cartão ---------- */
 .soul-mosaico { position: absolute; inset: 0; z-index: var(--sb-z-cena); pointer-events: none; background: var(--sb-fundo) 0 0 / 1344px 576px repeat; image-rendering: pixelated; }
 .soul-mosaico::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7, 20, 19, .7), rgba(7, 20, 19, .5) 40%, rgba(7, 20, 19, .75)); }
 .soul-grade { position: relative; z-index: 1; }
@@ -645,14 +645,14 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .passo-card { position: absolute; inset: 0; width: 100%; height: 100%; }
 @media (min-width: 1024px) { .passos li.passo { max-width: 340px; } }
 
-/* ---------- v4.2: peÃ§as do dono (assets.json) ---------- */
-/* BotÃ£o: 4 estados do cipÃ³. IlustraÃ§Ã£o, nÃ£o grade de pixel: sem pixelated. */
+/* ---------- v4.2: peças do dono (assets.json) ---------- */
+/* Botão: 4 estados do cipó. Ilustração, não grade de pixel: sem pixelated. */
 .botao { image-rendering: auto; }
 .botao:hover { filter: none; border-image-source: var(--a-botaoHover, var(--a-botao, none)); }
 .botao:active { filter: none; border-image-source: var(--a-botaoPress, var(--a-botao, none)); }
 .botao[aria-disabled='true'], .botao:disabled { border-image-source: var(--a-botaoOff, var(--a-botao, none)); cursor: not-allowed; }
 .botao.contorno:hover { filter: brightness(1.1); }
-/* PainÃ©is, molduras e abas */
+/* Painéis, molduras e abas */
 .painel, .ficha, .moldura { image-rendering: auto; }
 .aba { filter: none; border-width: var(--b-aba, 14px 18px); }
 .tarde .aba[aria-selected='true'] { border-image-source: var(--a-abaSel, var(--a-aba, none)); box-shadow: none; background: transparent; }
@@ -664,7 +664,7 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .popup[open] { gap: var(--sb-e-2); }
 .popup h2 { margin-top: 4px; }
 .npc-modal { width: min(calc(100vw - 24px), 480px); }
-/* Moldura da ficha (sorteio): cantos da folha Ãgua Profile, sem a lontra */
+/* Moldura da ficha (sorteio): cantos da folha Água Profile, sem a lontra */
 .ficha-moldura { border: 36px solid transparent; border-image: var(--a-ficha, none) 100 / 36px / 0 stretch; background: var(--sb-sup); background-clip: padding-box; box-shadow: none; padding: var(--sb-e-3); }
 /* Barra lateral: trilho 3-slice vertical, polegares */
 .tarde .barra-trilho { background: none; border: solid transparent; border-width: 6px 0; border-image: var(--a-barraCorpo) 30 0 30 0 fill / 6px 0 / 0 stretch; }
@@ -672,7 +672,7 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .barra-capa { image-rendering: auto; }
 .barra-no { height: calc(var(--barra-l) * 2); margin-top: calc(var(--barra-l) * -1); image-rendering: auto; }
 .tarde .barra-no.aceso { background-image: var(--a-barraNoAceso); filter: none; }
-/* CenÃ¡rios de seÃ§Ã£o */
+/* Cenários de seção */
 .calmo.entrar, .calmo.faq { position: relative; isolation: isolate; overflow: clip; }
 .cen-fundo { position: absolute; inset: -80px 0; z-index: -1; pointer-events: none; background: center / cover no-repeat; }
 .cen-fundo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(7, 20, 19, .9), rgba(7, 20, 19, .84) 50%, rgba(7, 20, 19, .92)); }
@@ -685,26 +685,26 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 
 @media (max-width: 420px) { .linhas { grid-template-columns: 44px 1fr 44px; } .seta-linha { width: 44px; } .seta-linha img { width: 40px; height: 27px; } }
 
-/* peÃ§as pesadas sÃ³ depois do load (fora da janela do LCP) */
+/* peças pesadas só depois do load (fora da janela do LCP) */
 .tarde .soul-mosaico { background-image: var(--mosaico); }
 .ficha-moldura { border-image: none; border-color: var(--sb-anel); border-width: 2px; }
 .tarde .ficha-moldura { border-width: 36px; border-color: transparent; border-image: var(--a-ficha, none) 100 / 36px / 0 stretch; }
 
-/* ---------- v4.3: crÃ­tica forte ---------- */
+/* ---------- v4.3: crítica forte ---------- */
 .topo.rolada { background: rgba(7, 20, 19, .97); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
-/* foco do botÃ£o de cipÃ³: anel que segue a forma (drop-shadow), nunca retÃ¢ngulo */
+/* foco do botão de cipó: anel que segue a forma (drop-shadow), nunca retângulo */
 .botao:focus-visible { outline: none; border-image-source: var(--a-botaoHover, var(--a-botao, none)); filter: drop-shadow(0 0 2px #5ff3e0) drop-shadow(0 0 5px #5ff3e0); }
 .botao.contorno:focus-visible { filter: drop-shadow(0 0 2px #5ff3e0) drop-shadow(0 0 5px #5ff3e0); }
 /* CTA fixo do celular: 56-64 px */
 .fixo { padding: 4px var(--sb-margem-dir) calc(4px + env(safe-area-inset-bottom)) var(--sb-margem-esq); }
 .fixo .botao.primario { height: 56px; min-width: 0; border-width: 19px 23px; }
-/* mosaico: vÃ©u forte atrÃ¡s do texto */
+/* mosaico: véu forte atrás do texto */
 .soul-mosaico::after { background: linear-gradient(180deg, rgba(7, 20, 19, .88), rgba(7, 20, 19, .84) 45%, rgba(7, 20, 19, .92)); }
-/* O que vocÃª faz: um selo, sem moldura dupla, tÃ­tulos na dobra */
+/* O que você faz: um selo, sem moldura dupla, títulos na dobra */
 .recursos-cab .rotulo { display: inline-block; margin-bottom: var(--sb-e-2); }
 .cartao { padding: 0; }
 @media (min-width: 1024px) { .cartao .aparelho.mini { width: 168px; margin-inline: auto; } .recursos { padding-top: calc(var(--sb-secao-y) - 24px); } }
-/* Universo: o 1Âº cartÃ£o ocupa mais de uma coluna; no celular, grade de 2 colunas sem corte */
+/* Universo: o 1º cartão ocupa mais de uma coluna; no celular, grade de 2 colunas sem corte */
 .areas { display: grid; grid-template-columns: 1fr 1fr; overflow: visible; scroll-snap-type: none; }
 .areas > li { width: auto; }
 .areas > li:first-child { grid-column: 1 / -1; }
@@ -713,17 +713,17 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .areas .area-tx span { font-size: var(--sb-t-legal); }
 @media (min-width: 768px) { .areas { grid-template-columns: repeat(3, 1fr); } }
 @media (min-width: 1024px) { .areas { grid-template-columns: repeat(4, 1fr); } .areas > li:first-child { grid-column: span 2; } }
-/* Ãrvore: sem rÃ³tulos "Forma N" visÃ­veis; nÃ³s menores no celular */
-/* Como entrar: passo 1 Ã© Ã¢ncora; subtexto entre as barras do cartÃ£o; cabeÃ§alho Ã  esquerda */
+/* Árvore: sem rótulos "Forma N" visíveis; nós menores no celular */
+/* Como entrar: passo 1 é âncora; subtexto entre as barras do cartão; cabeçalho à esquerda */
 .passo-link { display: block; position: absolute; inset: 0; color: inherit; text-decoration: none; }
 .passo-link:focus-visible { outline: none; filter: drop-shadow(0 0 2px #5ff3e0) drop-shadow(0 0 5px #5ff3e0); }
 .entrar-cab { max-width: none !important; margin-inline: 0 !important; justify-content: flex-start !important; text-align: left; }
 
-/* ---------- Ãrvore (Ãºnica fonte): celular em linhas 1-3-3-3-1, desktop em colunas ---------- */
+/* ---------- Árvore (única fonte): celular em linhas 1-3-3-3-1, desktop em colunas ---------- */
 .arvore { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; width: 240px; max-width: 100%; margin-inline: auto; gap: 0; --no: 72px; }
 .arvore[hidden], .linhas[hidden] { display: none; }
 .arvore-linha { position: relative; display: grid; justify-items: center; width: 100%; }
-.arvore-rot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }  /* "Forma N" sÃ³ para leitor de tela */
+.arvore-rot { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }  /* "Forma N" só para leitor de tela */
 .arvore-nos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; justify-items: center; }
 .arvore-linha:not(.tres) .arvore-nos { grid-template-columns: minmax(0, 1fr); }
 .arvore-caminhos .arvore-nos { font: var(--sb-peso-forte) .6875rem/1.2 var(--sb-fonte-texto); color: var(--sb-tx-2); text-align: center; }
@@ -757,14 +757,14 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 }
 
 /* ---------- v4.4 ---------- */
-/* Como entrar: nome dentro da pÃ­lula (0,651 a 0,728 do cartÃ£o) e legenda entre as duas barras (0,80 a 0,851), medidos no arquivo */
+/* Como entrar: nome dentro da pílula (0,651 a 0,728 do cartão) e legenda entre as duas barras (0,80 a 0,851), medidos no arquivo */
 /* Aba ativa do Universo: mais clara e com texto pleno; as demais recuadas (contraste entre estados >= 3:1) */
 .aba { filter: brightness(.7); }
 .aba[aria-selected='true'] { filter: brightness(1.35) saturate(1.15); color: #fff; box-shadow: none; }
 .aba:hover:not([aria-selected='true']) { filter: brightness(.95); }
-/* Fecho: mapa mais escuro para o formulÃ¡rio ser o foco */
+/* Fecho: mapa mais escuro para o formulário ser o foco */
 .inscrever .cena-mapa img { filter: brightness(.45); }
-/* Faz a tarefa: aparelho cabe inteiro acima da dobra no desktop; a demo Ã© outra coisa e diz isso */
+/* Faz a tarefa: aparelho cabe inteiro acima da dobra no desktop; a demo é outra coisa e diz isso */
 @media (min-width: 1024px) {
   .ciclo-aparelho { width: min(320px, calc((100svh - 230px) / 2.25)); }
   .ciclo-palco { grid-template-columns: min(320px, calc((100svh - 230px) / 2.25)) minmax(0, 1fr); }
@@ -775,27 +775,27 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 @media (min-width: 1024px) { .arvore-linha.arvore-caminhos .arvore-nos { grid-template-columns: none; } }
 
 /* ---------- v4.5 ---------- */
-/* Texto dos passos: uma regra por breakpoint (medidas tiradas do PNG do cartÃ£o) */
+/* Texto dos passos: uma regra por breakpoint (medidas tiradas do PNG do cartão) */
 .passos .passo-tx { position: absolute; inset: 0; display: block; text-align: center; }
 .passos .passo-tx strong { position: absolute; left: 12%; right: 12%; top: 65.5%; height: 7%; display: flex; align-items: center; justify-content: center; font-size: 12px; line-height: 1; }
 .passos .passo-tx > span:not(.sr) { position: absolute; left: 12%; right: 12%; top: 80.6%; height: 4.4%; display: grid; align-items: center; padding: 0; font-size: 12px; line-height: 1; color: var(--sb-tx); }
 @media (min-width: 1024px) { .passos .passo-tx strong { font-size: 1rem; } .passos .passo-tx > span:not(.sr) { font-size: .8125rem; } }
 /* Placeholder: token de texto de apoio (9,2:1 sobre o fundo; >= 4,5:1 sobre o campo) */
 .campo input::placeholder { color: var(--sb-tx-2); opacity: 1; }
-/* Perguntas: 4 + 3 em colunas e degradÃª de saÃ­da para o fecho */
+/* Perguntas: 4 + 3 em colunas e degradê de saída para o fecho */
 @media (min-width: 1024px) { .faq-lista { grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, auto); grid-auto-flow: column; } }
 .faq { padding-bottom: calc(var(--sb-secao-y) + 48px); -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 72px), transparent); mask-image: linear-gradient(180deg, #000 calc(100% - 72px), transparent); }
-/* CartÃµes do Universo: mesma proporÃ§Ã£o de arte e mesma altura de legenda */
+/* Cartões do Universo: mesma proporção de arte e mesma altura de legenda */
 .area-arte, .areas > li:first-child .area-arte { aspect-ratio: 4 / 3; }
 @media (min-width: 1024px) { .areas > li:first-child .area-arte { aspect-ratio: 8 / 3; } }
 .area-arte img { object-fit: cover; }
 .area-tx { min-height: 4.6em; align-content: start; }
-/* Faz a tarefa: escrim atrÃ¡s do tÃ­tulo e da frase, sÃ³ no desktop */
+/* Faz a tarefa: escrim atrás do título e da frase, só no desktop */
 @media (min-width: 1024px) { .ciclo-texto::before { background: radial-gradient(ellipse at center, rgba(7, 20, 19, .88) 0, rgba(7, 20, 19, .8) 55%, rgba(7, 20, 19, 0) 100%) !important; inset: -48px -120px !important; } }
-/* Fecho: mapa bem escuro, ilha ainda reconhecÃ­vel */
+/* Fecho: mapa bem escuro, ilha ainda reconhecível */
 .inscrever .cena-mapa img { filter: brightness(.35); }
 
-/* ---- v5: loop real no hero (aparelho com selo "Gameplay real"); arte em saturaÃ§Ã£o cheia Ã  esquerda do aparelho ---- */
+/* ---- v5: loop real no hero (aparelho com selo "Gameplay real"); arte em saturação cheia à esquerda do aparelho ---- */
 .hero-aparelho { z-index: 1; justify-self: center; }
 .hero-aparelho .rotulo { margin-left: 12px; }
 .aparelho .casca { position: relative; }
@@ -803,11 +803,11 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 @media (min-width: 1024px) {
   .hero { --ap-w: min(280px, calc((100svh - 160px) / 2.25)); --ap-r: max(40px, calc(var(--pad-d) - 78px)); }
   .hero-aparelho { position: absolute; top: 50%; translate: 0 -46%; width: var(--ap-w); right: var(--ap-r); }
-  /* a arte termina junto ao aparelho: as 6 criaturas ficam entre o texto (~500px) e o aparelho, nenhuma atrÃ¡s dele */
+  /* a arte termina junto ao aparelho: as 6 criaturas ficam entre o texto (~500px) e o aparelho, nenhuma atrás dele */
   .hero:has(.hero-arte) .hero-fundo .hero-arte { right: calc(var(--ap-w) + var(--ap-r) - 40px); width: min(56vw, 1000px, calc((100vw - var(--ap-r) - var(--ap-w) + 40px - var(--pad-e) - 500px) / .67)); }
   .hero-fundo .hero-arte img { -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 90%, transparent), linear-gradient(transparent, #000 10%); mask-image: linear-gradient(90deg, transparent, #000 22%, #000 90%, transparent), linear-gradient(transparent, #000 10%); }
   .hero:has(.hero-arte)::before { background: linear-gradient(90deg, rgba(7,20,19,.84) 0, rgba(7,20,19,.7) 22%, rgba(7,20,19,0) 36%); }
-  .hero:has(.hero-arte) h1 { font-size: clamp(2rem, 1.2rem + 2.6vw, 3.5rem); } /* 56px a 1440: "CREATURES THAT" nÃ£o encosta na arte */
+  .hero:has(.hero-arte) h1 { font-size: clamp(2rem, 1.2rem + 2.6vw, 3.5rem); } /* 56px a 1440: "CREATURES THAT" não encosta na arte */
   .hero:has(.hero-arte) .hero-logo { width: 260px; }
 }
 @media (max-width: 1023px) {
@@ -820,7 +820,7 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 @media (max-width: 1023px) { .hero:has(.hero-arte) .vagas-linha { background: rgba(7,20,19,.62); padding: 2px 8px; margin-left: -8px; border-radius: 6px; } }
 @media (max-width: 1023px) and (max-height: 700px) { .hero-aparelho { width: clamp(84px, calc((100svh - var(--hT) - var(--hG) - 90px) / 2.16), 200px); } }
 @media (max-width: 1023px) and (max-height: 619px) { .hero-aparelho { display: none; } }
-/* capa do trailer: mapa da main sem texto; texto real com escrim sÃ³ atrÃ¡s dele */
+/* capa do trailer: mapa da main sem texto; texto real com escrim só atrás dele */
 .capa-texto { position: absolute; left: var(--sb-e-5); top: 50%; translate: 0 -50%; width: fit-content; max-width: 52%; display: grid; gap: var(--sb-e-2); padding: var(--sb-e-4) var(--sb-e-6) var(--sb-e-4) var(--sb-e-4); text-align: left; pointer-events: none; border-radius: var(--sb-raio-md);
   background: linear-gradient(90deg, rgba(7,20,19,.78) 0, rgba(7,20,19,.74) 80%, rgba(7,20,19,0) 100%); }
 .capa-h { font: var(--sb-peso-titulo) var(--sb-t-h3)/1.14 var(--sb-fonte-titulo); color: var(--sb-tx); text-wrap: balance; }
@@ -833,7 +833,7 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .trailer-moldura .trailer-play svg { width: 32px; height: 32px; }
 @media (min-width: 768px) { .trailer-moldura { aspect-ratio: 16 / 9; } .trailer-moldura .trailer-play { width: 96px; height: 96px; right: 40px; bottom: 40px; } .trailer-moldura .trailer-play svg { width: 40px; height: 40px; } .capa-h { font-size: var(--sb-t-h2); } .capa-texto { left: var(--sb-e-6); padding: var(--sb-e-5) var(--sb-e-7) var(--sb-e-5) var(--sb-e-5); } }
 
-/* ---- capas dos jogos (arte 4:3, ilustraÃ§Ã£o: sem pixelated) ---- */
+/* ---- capas dos jogos (arte 4:3, ilustração: sem pixelated) ---- */
 .capa-jogo { gap: 6px; padding: 6px 6px 8px; align-content: start; }
 .capa-arte { position: relative; display: block; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; }
 .capa-arte img { width: 100%; height: 100%; display: block; object-fit: cover; }
@@ -848,7 +848,7 @@ form { display: grid; gap: var(--sb-e-4); width: 100%; }
 .mosaico-grade { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; width: 100%; }
 .mosaico-grade img { width: 100%; height: auto; display: block; }
 .rot-arte { color: var(--sb-rot-demo, var(--sb-tx-2)); }
-/* celular: sem vÃ£o entre o painel do Universo e "O que vocÃª faz" */
+/* celular: sem vão entre o painel do Universo e "O que você faz" */
 @media (max-width: 767px) { .universo { padding-bottom: var(--sb-e-4); } .recursos { padding-top: var(--sb-e-5); } }
 /* sem JS, o marcador vazio some: o <noscript> traz a imagem real */
 html:not(.ciclo-js) .estagios img[data-tarde-src] { display: none; }
@@ -856,10 +856,10 @@ html:not(.ciclo-js) .estagios img[data-tarde-src] { display: none; }
 /* ===== Pedido do dono 09/11 ===== */
 .loja { justify-content: center; }
 .loja-ico { width: 28px; height: 30px; }
-/* Ãcone de forma: PROVISÃ“RIO (caixa tracejada) atÃ© o dono mandar os Ã­cones Rookie/Champion/Ultimate/Mega/Ultra */
+/* Ícone de forma: PROVISÓRIO (caixa tracejada) até o dono mandar os ícones Rookie/Champion/Ultimate/Mega/Ultra */
 .ico-forma { display: inline-block; width: 24px; height: 24px; flex: none; border: 2px dashed var(--sb-anel); border-radius: 4px; vertical-align: middle; }
 .forma-titulo { display: inline-flex; align-items: center; gap: 8px; }
-/* MÃ£ozinha (luva branca) apontando para a primeira caixinha; some no primeiro check */
+/* Mãozinha (luva branca) apontando para a primeira caixinha; some no primeiro check */
 .lista-jogo { position: relative; }
 .maozinha { position: absolute; z-index: 2; left: -58px; top: 30px; pointer-events: none; filter: drop-shadow(0 2px 0 rgba(0,0,0,.5)); animation: mao-toca 1.1s steps(4) infinite; transition: opacity .3s; }
 .maozinha.some { opacity: 0; animation: none; }
@@ -870,7 +870,7 @@ html:not(.ciclo-js) .estagios img[data-tarde-src] { display: none; }
 .sorteio-info { display: grid; justify-items: center; gap: 6px; max-width: none; }
 .sort-linha { display: inline-flex; align-items: center; gap: 8px; font-size: 1.25rem; }
 .ico-el { width: 32px; height: 32px; image-rendering: pixelated; }
-/* Ãrvore: setas grandes com glow pulsando nas laterais */
+/* Árvore: setas grandes com glow pulsando nas laterais */
 .arvore-palco { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: var(--sb-e-3); width: 100%; }
 .arvore-palco > ol.arvore { grid-column: 2; grid-row: 1; }
 .seta-linha { grid-row: 1; width: 64px; height: 96px; display: grid; place-items: center; border: 2px solid var(--sb-pri); border-radius: 12px; background: var(--sb-sup); color: var(--sb-pri); cursor: pointer; animation: seta-glow 1.6s ease-in-out infinite; }
@@ -904,7 +904,7 @@ html:not(.ciclo-js) .estagios img[data-tarde-src] { display: none; }
 @media (min-width: 1024px) { .cria.flip-d img { scale: -1 1; } } /* celular: a da esquerda olha para o centro (dono, 09/11) */
 @media (max-width: 1023px) { .maozinha { left: -14px; top: 40px; } .maozinha svg { width: 44px; height: 30px; } }
 
-/* Ãcones de forma do dono (09/11) */
+/* Ícones de forma do dono (09/11) */
 .ico-forma { border: 0; border-radius: 0; background: center / contain no-repeat; image-rendering: pixelated; width: 28px; height: 28px; }
 .ico-forma[data-forma='rookie'] { background-image: url('/beta/forma/rookie.webp'); }
 .ico-forma[data-forma='champion'] { background-image: url('/beta/forma/champion.webp'); }
@@ -921,7 +921,7 @@ html:not(.ciclo-js) .estagios img[data-tarde-src] { display: none; }
 @media (prefers-reduced-motion: no-preference) { .colete-roda .colete-item:not(.base) { animation: colete-brilho 3s ease-in-out infinite; animation-delay: calc(var(--i) * .6s); } }
 @keyframes colete-brilho { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 16px rgba(46, 230, 200, .45); } }
 
-/* Colete: dois nÃ­veis lado a lado no desktop */
+/* Colete: dois níveis lado a lado no desktop */
 .colete-niveis { display: grid; gap: var(--sb-e-5); width: 100%; justify-items: center; }
 .colete-nivel { display: grid; justify-items: center; gap: var(--sb-e-2); width: 100%; }
 .colete-rot { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 1.375rem; color: var(--sb-ouro); }
@@ -930,12 +930,12 @@ html:not(.ciclo-js) .estagios img[data-tarde-src] { display: none; }
 .colete-nivel .colete-roda { width: min(78%, 480px); } .colete-nivel .colete-roda .colete-item:not(.base) { width: 24%; left: 38%; top: 38%; translate: calc(cos(var(--i) * 72deg - 90deg) * 150%) calc(sin(var(--i) * 72deg - 90deg) * 150%); }
 
 /* ===== Rodada 2 do dono (09/11) ===== */
-/* Demo: sem palco preso de 340svh; a trava de rolagem (ciclo.ts) segura a pÃ¡gina atÃ© o Ultra */
+/* Demo: sem palco preso de 340svh; a trava de rolagem (ciclo.ts) segura a página até o Ultra */
 .ciclo-js .ciclo { height: auto !important; }
 .ciclo-js .ciclo-palco { position: relative !important; height: auto !important; }
 .pular-demo { position: fixed; z-index: 40; left: 50%; bottom: 16px; translate: -50% 0; padding: 10px 18px; min-height: 44px; background: rgba(4, 20, 20, .88); border: 1px solid var(--sb-anel); border-radius: 999px; color: var(--sb-tx); font-size: .875rem; }
 .pular-demo[hidden] { display: none; }
-/* Ãcone da Play dentro do botÃ£o principal */
+/* Ícone da Play dentro do botão principal */
 .hero-cta { display: inline-flex; align-items: center; justify-content: center; gap: 10px; }
 .hero-cta .loja-ico { width: 22px; height: 24px; flex: none; }
 /* Modal do lugar com minijogos */
@@ -975,7 +975,7 @@ html:not(.ciclo-js) .estagios img[data-tarde-src] { display: none; }
 /* ==== rodada 3 do dono (09/11) ==== */
 /* idioma por bandeira */
 .idioma .bandeira { display: block; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.6); }
-/* hero: cenÃ¡rio em tela cheia, sem fade nem mÃ¡scara nas bordas */
+/* hero: cenário em tela cheia, sem fade nem máscara nas bordas */
 .hero:has(.hero-arte) .hero-fundo { position: absolute; inset: 0; --ah: auto; }
 .hero:has(.hero-arte) .hero-fundo .hero-arte { position: absolute; inset: 0; width: 100% !important; height: 100% !important; translate: none !important; top: 0 !important; left: 0 !important; right: 0 !important; aspect-ratio: auto !important; }
 .hero:has(.hero-arte) .hero-fundo .hero-arte img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; -webkit-mask-image: none !important; mask-image: none !important; }
@@ -989,23 +989,23 @@ html:not(.ciclo-js) .estagios img[data-tarde-src] { display: none; }
 .hero-logo, .hero:has(.hero-arte) .hero-logo { width: 180px !important; margin: 0 auto !important; }
 @media (min-width: 1024px) { .hero-logo, .hero:has(.hero-arte) .hero-logo { width: 340px !important; } .hero:has(.hero-arte) .hero-texto { max-width: 820px !important; } }
 .vagas-linha { justify-content: center; text-shadow: 0 1px 6px #000; }
-/* CTA Ãºnico fixo, grande */
+/* CTA único fixo, grande */
 .fixo { display: flex !important; justify-content: center; background: linear-gradient(transparent, rgba(1,12,14,.85) 45%); border-top: 0; padding: 16px 16px calc(12px + env(safe-area-inset-bottom)); pointer-events: none; }
 .fixo[hidden] { display: none !important; }
 .fixo .fixo-cta { pointer-events: auto; width: min(100%, 480px); height: 80px; border-width: 28px 32px; gap: 12px; font-size: 1.25rem; }
 @media (max-width: 1023px) { .fixo .fixo-cta { height: 68px; border-width: 24px 28px; } }
 body { padding-bottom: 104px; }
-/* centralizar todos os tÃ­tulos e textos de seÃ§Ã£o */
+/* centralizar todos os títulos e textos de seção */
 main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recursos-cab, .entrar-cab, .faq h2, .colete-cab, .trailer-texto { text-align: center; margin-inline: auto; }
 .soul-texto, .universo-cab, .recursos-cab { display: grid; justify-items: center; }
 .soul-texto .numero { justify-content: center; text-align: center; }
 /* Seu Soulmon: fundo garantido */
 .soul { background: #06181a; }
-/* sorteio: sÃ³ Ã­cones */
+/* sorteio: só ícones */
 .sort-icones { display: inline-flex; gap: 12px; align-items: center; justify-content: center; }
 .sort-icones .ico-el { width: 48px; height: 48px; image-rendering: pixelated; }
 .sort-icones .ico-forma { width: 44px; height: 44px; }
-/* Ã¡rvore: rÃ³tulo dos caminhos entre Rookie e Champion */
+/* árvore: rótulo dos caminhos entre Rookie e Champion */
 .arvore-caminhos .caminho { color: var(--sb-ouro); }
 /* Colete compacto: 3 por vez + slide, cabe numa dobra */
 .colete { gap: var(--sb-e-3); padding-block: var(--sb-e-5); }
@@ -1046,7 +1046,7 @@ main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recurs
 .area-bt:not(:has(.area-arte)) { display: grid; place-content: center; height: 100%; text-align: center; }
 .area-bt:not(:has(.area-arte)) .area-tx { position: static; background: none; }
 .combate-video { display: block; width: 100%; height: 100%; object-fit: cover; }
-/* combate.mp4 (Instagram 9:16) traz moldura e legenda prÃ³prias: zoom no celular de dentro */
+/* combate.mp4 (Instagram 9:16) traz moldura e legenda próprias: zoom no celular de dentro */
 .tela:has(.combate-video) { overflow: hidden; }
 .combate-video { transform: scale(1.04); } /* recortado no ffmpeg (src/tools: ver commit); 4% esconde a borda da moldura original */
 /* hero (dono, 09/11): arte um pouco mais baixa, texto no topo com escurecimento para leitura */
@@ -1101,3 +1101,25 @@ main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recurs
 @keyframes comp-treme { 50% { transform: translateX(3px); } }
 @keyframes comp-flutua { 50% { transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .companheiro { animation: none; } }
+
+
+/* 09/11: companheiro olha para o centro, sombra de contraste e balão de fala */
+.companheiro { border: 0; padding: 0; background: none; font: inherit; color: inherit; }
+.companheiro::before { content: ''; position: absolute; inset: -14%; border-radius: 50%; background: radial-gradient(circle, rgba(1,12,14,.85) 0, rgba(1,12,14,.6) 45%, transparent 70%); z-index: 0; pointer-events: none; }
+.companheiro.espelha .sprite { transform: scaleX(-1); }
+.companheiro.espelha.evoluindo .sprite { animation: comp-treme-e .35s steps(2) 2; }
+@keyframes comp-treme-e { 0%, 100% { transform: scaleX(-1); } 50% { transform: scaleX(-1) translateX(3px); } }
+.comp-fala { position: absolute; right: 8px; bottom: calc(100% + 6px); width: max-content; max-width: min(240px, 70vw); padding: 10px 12px; background: #fff; color: #011c1f; border: 3px solid #011c1f; border-radius: 4px; font-size: .95rem; line-height: 1.3; text-align: left; z-index: 4; box-shadow: 0 3px 0 rgba(0,0,0,.4); }
+.comp-fala::after { content: ''; position: absolute; right: 36px; top: 100%; border: 8px solid transparent; border-top-color: #011c1f; }
+.comp-fala[hidden] { display: none; }
+
+/* 09/11: cristal-ovo acima do "Seu Soulmon está esperando" */
+.ovo { position: relative; display: block; margin: 0 auto 8px; padding: 0; border: 0; background: none; cursor: pointer; width: 120px; filter: drop-shadow(0 0 14px rgba(95,243,224,.35)); }
+.ovo img { display: block; width: 120px; height: auto; image-rendering: pixelated; }
+@media (min-width: 1024px) { .ovo, .ovo img { width: 150px; } }
+.ovo-brilho { position: absolute; inset: -10%; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.95), rgba(95,243,224,.55) 35%, transparent 65%); opacity: 0; pointer-events: none; }
+.ovo.toca img { animation: ovo-chacoalha .5s steps(6); transform-origin: 50% 90%; }
+.ovo.toca .ovo-brilho { animation: ovo-brilha .7s ease-out; }
+@keyframes ovo-chacoalha { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-7deg); } 40% { transform: rotate(6deg); } 60% { transform: rotate(-4deg); } 80% { transform: rotate(3deg); } }
+@keyframes ovo-brilha { 0% { opacity: 0; transform: scale(.6); } 35% { opacity: 1; } 100% { opacity: 0; transform: scale(1.2); } }
+@media (prefers-reduced-motion: reduce) { .ovo.toca img { animation: none; } }

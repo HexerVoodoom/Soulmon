@@ -320,6 +320,13 @@ function sorteio() {
   });
 }
 
+// Sprites olhando para a DIREITA (1 = espelhar: o companheiro fica no canto direito e olha para o centro). Medido a olho, 09/11.
+const OLHA_DIR: Record<string, number[]> = { arcano: [0,0,1,0,0], espaco: [1,1,1,1,0], fada: [0,1,1,1,0], fogo: [1,1,1,1,1], morte: [1,0,0,0,1], noturno: [0,0,0,0,0], planta: [1,1,0,0,0], sombra: [1,1,1,1,1], vigor: [1,1,1,1,0], vileza: [1,1,1,1,0] };
+// Cristal-ovo do "Seu Soulmon está esperando" (dono, 09/11): toque = chacoalhada + brilho.
+function ovo() {
+  const o = $('[data-ovo]'); if (!o) return;
+  o.addEventListener('click', () => { o.classList.remove('toca'); void o.offsetWidth; o.classList.add('toca'); });
+}
 // ---------- Versão B: sorteio do Rookie e companheiro que evolui rolando (dono, 09/11) ----------
 function companheiro() {
   const raiz = $('[data-comp]'); const comp = $('[data-companheiro]'); if (!raiz || !comp) return;
@@ -329,6 +336,9 @@ function companheiro() {
   const info = $('[data-meu-info]', raiz)!; const bt = $<HTMLButtonElement>('[data-meu-sortear]', raiz)!; const cimg = $<HTMLImageElement>('[data-comp-img]', comp)!;
   let lin = ''; let ant = -1; let estagio = 0; let alvo = 0; let correndo = false;
   const src = (l: string, k: number) => `${base}${l}-${formas[k]}.webp`;
+  const virar = () => { comp.classList.toggle('espelha', (OLHA_DIR[lin] ?? [])[estagio] === 1); };
+  const falas = JSON.parse(raiz.dataset.falas ?? '[]') as string[]; const balao = $('[data-comp-fala]', comp)!; let ultFala = -1; let tFala = 0;
+  const falar = () => { let i = Math.floor(Math.random() * falas.length); if (i === ultFala) i = (i + 1) % falas.length; ultFala = i; balao.textContent = falas[i]; balao.hidden = false; clearTimeout(tFala); tFala = window.setTimeout(() => { balao.hidden = true; }, 3200); };
   const rotulo = () => `${raiz.dataset.alt} ${els[lin] ?? lin}, ${nomes[estagio]}`;
   // Quatro pontos de evolução espalhados pelas seções depois do sorteio.
   const secoes = $$('main section').filter((x) => x !== raiz && (raiz.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING));
@@ -342,7 +352,7 @@ function companheiro() {
   const proxima = () => {
     if (correndo || estagio >= alvo) return;
     correndo = true; estagio += 1;
-    const trocar = () => { cimg.src = src(lin, estagio); cimg.alt = rotulo(); };
+    const trocar = () => { cimg.src = src(lin, estagio); cimg.alt = rotulo(); virar(); };
     if (reduzido) { trocar(); correndo = false; proxima(); return; }
     comp.classList.remove('evoluindo'); void comp.offsetWidth; comp.classList.add('evoluindo');
     const chamas: HTMLElement[] = [];
@@ -360,12 +370,12 @@ function companheiro() {
     img.src = src(lin, 0); img.alt = rotulo(); img.hidden = false; sombra.hidden = true;
     info.replaceChildren(); const ic = document.createElement('img'); ic.src = `${raiz.dataset.elBase}${lin}.webp`; ic.width = ic.height = 48; ic.alt = els[lin] ?? lin; ic.title = ic.alt; ic.className = 'ico-el'; ic.onerror = () => { ic.hidden = true; }; info.append(ic);
     if (!reduzido) { img.classList.remove('surge'); void img.offsetWidth; img.classList.add('surge'); }
-    cimg.src = src(lin, 0); cimg.alt = rotulo(); comp.hidden = false;
+    cimg.src = src(lin, 0); cimg.alt = rotulo(); comp.hidden = false; virar();
     if (raiz.dataset.outro) bt.textContent = raiz.dataset.outro;
     avaliar();
   });
   addEventListener('scroll', () => requestAnimationFrame(avaliar), { passive: true });
-  comp.addEventListener('click', () => raiz.scrollIntoView({ behavior: reduzido ? 'auto' : 'smooth', block: 'center' }));
+  comp.addEventListener('click', falar);
 }
 // ---------- Árvore: seletor de linha (Planta, Fada, Fogo). Sem JS, as três aparecem empilhadas ----------
 function linhasArvore() {
@@ -536,7 +546,7 @@ function ancoras() {
 
 // Só com JS: sem ele, o form faria GET com o e-mail na URL.
 if (form) form.hidden = false;
-ancoras(); partilha(); topoECta(); vagas(); formulario(); turnstile(); abas(); sorteio(); companheiro(); colete(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
+ancoras(); partilha(); topoECta(); vagas(); formulario(); turnstile(); abas(); ovo(); sorteio(); companheiro(); colete(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
 // ajustarSprites lê o layout da página inteira: só depois do load, nunca na janela do primeiro quadro.
 depoisDoLoad(() => {
   document.documentElement.classList.add('tarde');
