@@ -153,7 +153,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
         isPt={isPt}
         scene={bg}
         me={{
-          key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, meHp) * hpMax), maxHp: hpMax,
+          key: 'me', sprite: petSprite, scale: petScale, stageIcon: evolutionStage, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, meHp) * hpMax), maxHp: hpMax,
           element: petEl, energy: (pronto ? battle.petEnergy : 0) / ENERGY_TRIGGER, status: pronto ? battle.status.me : undefined,
         }}
         foes={[{

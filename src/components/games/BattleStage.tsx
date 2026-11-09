@@ -26,6 +26,7 @@
  * especial são disparados AQUI (`playAttack`/`playSpecial`); a torcida e o resto seguem mudos (R-NOVA).
  */
 import { elementIcon } from '../../utils/elementIconArt';
+import { EstagioIcone } from '../ui/EstagioIcone';
 import { tileElementName } from '../../utils/match3Pvp';
 import { BackCircleButton } from '../ui/BackCircleButton';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
@@ -65,6 +66,8 @@ export interface StageFighter {
   /** Estágio do INIMIGO (rookie/champion-…): sem `scale`, o palco aplica a regra de render do rookie a 50% (REGISTRO §181). Ausente = 100%. */
   stage?: string;
   name: string;
+  /** Id da forma (ex. `mega-power`) só para o ÍCONE de estágio antes do nome (09/11/2026); bebê/ausente = sem ícone. Cai em `stage` (inimigo). */
+  stageIcon?: string;
   hp: number;
   maxHp: number;
   /** Id de elemento (qualquer um; sem arte cai no neutro). */
@@ -307,8 +310,9 @@ function FighterBars({ fighter, spot, tone, numeric, barsH, fieldW, isPt }: {
       }}
     >
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 6 }}>
-        <span style={{ fontSize: 12, lineHeight: 1.2, color: 'var(--sm2-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>
-          {fighter.name}
+        <span style={{ fontSize: 12, lineHeight: 1.2, color: 'var(--sm2-ink)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <EstagioIcone forma={fighter.stageIcon ?? fighter.stage} size={16} />
+          <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{fighter.name}</span>
         </span>
         {numeric && (
           <span className="sm2-num" style={{ fontSize: 12, lineHeight: 1.2, color: 'var(--sm2-ink)', flex: 'none' }}>

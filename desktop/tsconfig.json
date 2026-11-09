@@ -14,7 +14,9 @@
     // `checkJs` fica FALSE: queremos o import resolvido, não o endpoint tipado.
     "allowJs": true,
     "checkJs": false,
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    // Tipos de src/utils/soulProfile/ficha (via dailyReset → formaSnapshot) citam `class-system` (só tipo).
+    "paths": { "class-system": ["../vendor/class-system/index.d.ts"] }
   },
   "include": ["renderer/src/**/*.ts"]
 }

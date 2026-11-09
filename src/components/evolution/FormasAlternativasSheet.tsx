@@ -26,15 +26,18 @@ interface Props {
   itens: FormaAltItem[];
   formasAlt: FormasAlt | undefined;
   equipada: string | undefined;
+  /** Toque no botão de uma opção: equipar (modo `equipar`) ou degenerar para ela (modo `degenerar`). */
   onEquip: (elemento: string) => void;
+  /** `equipar` (padrão): lista para equipar. `degenerar` (09/11/2026): "Degenerar para…", opções já liberadas daquela forma. `ver`: só leitura (forma mais evoluída que a atual). */
+  modo?: 'equipar' | 'degenerar' | 'ver';
   onClose: () => void;
 }
 
-export function FormasAlternativasSheet({ isPt, formId, nomeDaForma, itens, formasAlt, equipada, onEquip, onClose }: Props) {
+export function FormasAlternativasSheet({ isPt, formId, nomeDaForma, itens, formasAlt, equipada, onEquip, modo = 'equipar', onClose }: Props) {
   const ocultas = ocultasDaForma(formasAlt, formId, new Set([...ALL_ELEMENT_IDS, ...CURATED_ELEMENT_IDS]).size);
   const equipadaEf = equipada ?? itens[0]?.elemento;
   const nomeEl = (el: string) => (el === ALT_ORIGINAL || el === '__atual' ? (isPt ? 'Original' : 'Original') : (isPt ? elementoNomeDe(el).pt : elementoNomeDe(el).en));
-  const titulo = isPt ? 'Formas alternativas' : 'Alternate forms';
+  const titulo = modo === 'degenerar' ? (isPt ? 'Degenerar para…' : 'Degenerate to…') : (isPt ? 'Formas alternativas' : 'Alternate forms');
   return (
     <RitualDialog label={titulo} onClose={onClose} zIndex={130} maxWidth={360} closeLabel={isPt ? 'Fechar' : 'Close'} closeOnBackdrop>
       <div data-testid="sm-formas-alt" style={{ display: 'flex', flexDirection: 'column', gap: 12, maxHeight: '70vh', overflowY: 'auto' }}>
@@ -42,7 +45,7 @@ export function FormasAlternativasSheet({ isPt, formId, nomeDaForma, itens, form
           <p style={{ ...sm2Text, fontWeight: 600, margin: 0 }}>{titulo}</p>
           <p style={{ ...sm2Hint, margin: 0 }}>{nomeDaForma}</p>
         </div>
-        {itens.length <= 1 && (
+        {modo === 'equipar' && itens.length <= 1 && (
           <p style={{ ...sm2Hint, margin: 0 }} data-testid="sm-formas-alt-dica">
             {isPt
               ? 'Se você degenerar e evoluir usando uma poção elemental, você desbloqueará uma nova forma deste nível.'
@@ -50,7 +53,7 @@ export function FormasAlternativasSheet({ isPt, formId, nomeDaForma, itens, form
           </p>
         )}
         {itens.map((it, i) => {
-          const eq = it.elemento === equipadaEf || (!equipadaEf && i === 0);
+          const eq = modo === 'equipar' && (it.elemento === equipadaEf || (!equipadaEf && i === 0));
           return (
             <div key={it.elemento} style={{ display: 'flex', gap: 12, alignItems: 'center' }} data-testid={`sm-forma-alt-${it.elemento}`}>
               <SoulNode visual={eq ? 'current' : 'reached'} sprite={it.sprite} label={`${nomeDaForma} — ${nomeEl(it.elemento)}`} title={nomeEl(it.elemento)} />
@@ -58,9 +61,11 @@ export function FormasAlternativasSheet({ isPt, formId, nomeDaForma, itens, form
                 <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{nomeEl(it.elemento)}</p>
                 {!it.sprite && <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'sendo desenhada…' : 'being drawn…'}</p>}
               </div>
-              {eq
+              {modo === 'ver' ? null : eq
                 ? <span style={{ ...sm2Hint, color: 'var(--sm2-primary-ink)', fontWeight: 600 }}>{isPt ? 'EQUIPADA' : 'EQUIPPED'}</span>
-                : <button type="button" onClick={() => onEquip(it.elemento)} style={sm2Button('outline', false, 'sm')}>{isPt ? 'Equipar' : 'Equip'}</button>}
+                : modo === 'degenerar'
+                  ? <button type="button" onClick={() => onEquip(it.elemento)} style={sm2Button('outline', false, 'sm')}>{isPt ? 'Degenerar' : 'Degenerate'}</button>
+                  : <button type="button" onClick={() => onEquip(it.elemento)} style={sm2Button('outline', false, 'sm')}>{isPt ? 'Equipar' : 'Equip'}</button>}
             </div>
           );
         })}

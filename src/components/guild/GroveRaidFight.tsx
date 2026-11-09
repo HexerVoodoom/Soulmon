@@ -111,7 +111,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
         isPt={isPt}
         scene={GROVE_RAID_SCENE}
         me={{
-          key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, pronto ? battle.hp : 1) * hpMax), maxHp: hpMax,
+          key: 'me', sprite: petSprite, scale: petScale, stageIcon: evolutionStage, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, pronto ? battle.hp : 1) * hpMax), maxHp: hpMax,
           element: fxElementId(ident.basico.elemento), energy: (pronto ? battle.petEnergy : 0) / ENERGY_TRIGGER, status: pronto ? battle.status.me : undefined,
         }}
         foes={lineup.map((e, i) => {

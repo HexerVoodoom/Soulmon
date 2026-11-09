@@ -1,0 +1,124 @@
+/**
+ * O QUE CADA FORMA CARREGA (pedido do dono, 09/11/2026) — dono único.
+ *
+ * "Quando o user evoluir usando poção elemental e degenerar ele deve voltar ao elemento da forma degenerada. Além disso, ao usar
+ * a função de equipar outra forma de um mesmo estágio de evolução, deve-se equipar tudo - elementos, tipo de ataque, tipo de especial."
+ *
+ * Cada forma (o id do estágio, mais `@<elemento>` quando há forma alternativa equipada — `formasAlternativas.ts`) guarda uma FOTO do
+ * que a define em combate: o elemento da poção (`potionElement`, ou nenhum), o registro do elemento do nível (`elementoJornada`) e o
+ * par de skills do nível (`soulmonSkills[nível]`: ataque básico/forma de golpe e especial). A foto é tirada ao SAIR da forma (evoluir,
+ * degenerar, trocar de forma) — o estado vivo é sempre a verdade da forma atual — e aplicada ao ENTRAR nela de novo.
+ *
+ * Limite honesto: forma sem foto (save de antes de 09/11/2026, ou forma nunca vivida) não tem o que restaurar. Na queda, a poção é
+ * limpa (o elemento volta ao do registro do nível); na troca, nada além do que já mudava é aplicado. Funções PURAS; `App.tsx` e
+ * `dailyReset.ts` só delegam.
+ */
+import { getStageLevel } from '../types/progression';
+import type { ElementoDoEstagio, ElementoJornada } from './elementoJornada';
+import type { StageSkills } from './soulProfile/ficha/skills';
+import type { FichaStage } from './soulProfile/ficha/types';
+import { fichaStageOf } from './soulProfile/ficha/stageSkillsFor';
+
+export interface FormaSnapshot {
+  /** O elemento da poção da forma; ausente = a forma não tinha poção. */
+  pocao?: string;
+  /** O registro do elemento do nível nesta forma. */
+  elemento?: ElementoDoEstagio;
+  /** Ataque básico (escola/forma de golpe) e especial da forma. */
+  skills?: StageSkills;
+}
+export type FormaSnapshots = Record<string, FormaSnapshot>;
+
+export interface FormaState {
+  evolutionStage: string;
+  potionElement?: string;
+  elementoJornada?: ElementoJornada;
+  soulmonSkills?: Partial<Record<FichaStage, StageSkills>>;
+  formaAltEquipada?: Record<string, string>;
+  formaSnapshots?: FormaSnapshots;
+}
+
+const ORDEM = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'];
+const nivelIdx = (stage: string): number => ORDEM.indexOf(getStageLevel(stage));
+
+/** A chave de uma forma: o id do estágio, mais o elemento da alternativa equipada. */
+export const chaveDaForma = (formId: string, equip?: Record<string, string>): string =>
+  equip?.[formId] ? `${formId}@${equip[formId]}` : formId;
+
+/** Fotografa a forma ATUAL (o estado vivo é a verdade dela). */
+export function capturarForma<T extends FormaState>(s: T): T {
+  const nivel = fichaStageOf(s.evolutionStage);
+  const foto: FormaSnapshot = {};
+  if (s.potionElement) foto.pocao = s.potionElement;
+  const el = s.elementoJornada?.estagios?.[nivel];
+  if (el) foto.elemento = el;
+  const sk = s.soulmonSkills?.[nivel];
+  if (sk) foto.skills = sk;
+  return { ...s, formaSnapshots: { ...(s.formaSnapshots ?? {}), [chaveDaForma(s.evolutionStage, s.formaAltEquipada)]: foto } };
+}
+
+/** Aplica a foto da forma ATUAL (já com `evolutionStage`/`formaAltEquipada` do destino). Sem foto = `undefined`. */
+function aplicarFotoAtual<T extends FormaState>(s: T): T | undefined {
+  const foto = s.formaSnapshots?.[chaveDaForma(s.evolutionStage, s.formaAltEquipada)];
+  if (!foto) return undefined;
+  const nivel = fichaStageOf(s.evolutionStage);
+  let out: T = { ...s, potionElement: foto.pocao };
+  if (foto.elemento && s.elementoJornada) {
+    out = { ...out, elementoJornada: { ...s.elementoJornada, estagios: { ...s.elementoJornada.estagios, [nivel]: foto.elemento } } };
+  }
+  if (foto.skills && s.soulmonSkills) {
+    out = { ...out, soulmonSkills: { ...s.soulmonSkills, [nivel]: foto.skills } };
+  }
+  return out;
+}
+
+/**
+ * TROCA de forma no MESMO nível (troca lateral de galho ou forma alternativa equipada): fotografa a de saída, troca, e aplica
+ * tudo da de entrada. `trocar` faz a troca em si (a regra de quem pode trocar continua no dono dela); se ela não trocou nada, o
+ * MESMO objeto volta.
+ */
+export function trocarFormaCompleta<T extends FormaState>(prev: T, trocar: (s: T) => T): T {
+  const trocado = trocar(prev);
+  if (trocado === prev) return prev;
+  const antes = chaveDaForma(prev.evolutionStage, prev.formaAltEquipada);
+  if (chaveDaForma(trocado.evolutionStage, trocado.formaAltEquipada) === antes) return trocado;
+  const comFoto = { ...trocado, formaSnapshots: capturarForma(prev).formaSnapshots };
+  return aplicarFotoAtual(comFoto) ?? comFoto;
+}
+
+/**
+ * QUEDA (manual ou por HP): `next` é o estado já com o estágio de destino. Fotografa a forma que cai (de `prev`), apaga o registro de
+ * elemento dos níveis ACIMA do destino (a próxima subida registra o elemento de novo, como na primeira vez) e aplica a foto do destino;
+ * sem foto, a poção é limpa e o elemento volta ao do registro do nível. Não caiu de nível = o MESMO `next`.
+ */
+export function aoDescerDeForma<T extends FormaState>(prev: FormaState, next: T): T {
+  const alvo = nivelIdx(next.evolutionStage);
+  if (alvo >= nivelIdx(prev.evolutionStage)) return next;
+  let out: T = { ...next, formaSnapshots: capturarForma(prev).formaSnapshots };
+  const j = next.elementoJornada;
+  if (j?.estagios) {
+    const estagios: ElementoJornada['estagios'] = {};
+    for (const [st, e] of Object.entries(j.estagios) as [FichaStage, ElementoDoEstagio][]) {
+      if (ORDEM.indexOf(st) <= alvo) estagios[st] = e;
+    }
+    out = { ...out, elementoJornada: { ...j, estagios } };
+  }
+  return aplicarFotoAtual(out) ?? { ...out, potionElement: undefined };
+}
+
+/** Leitura tolerante do save. */
+export function sanitizeFormaSnapshots(raw: unknown): FormaSnapshots | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const out: FormaSnapshots = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>).slice(0, 200)) {
+    if (!/^[a-z-]{2,40}(@[a-z_]{2,24})?$/.test(k) || !v || typeof v !== 'object' || Array.isArray(v)) continue;
+    const r = v as Record<string, unknown>;
+    const f: FormaSnapshot = {};
+    if (typeof r.pocao === 'string' && /^[a-z_]{2,24}$/.test(r.pocao)) f.pocao = r.pocao;
+    const e = r.elemento as Record<string, unknown> | undefined;
+    if (e && typeof e === 'object' && typeof e.id === 'string' && typeof e.base === 'string') f.elemento = { id: e.id, base: e.base };
+    if (r.skills && typeof r.skills === 'object' && !Array.isArray(r.skills)) f.skills = r.skills as StageSkills;
+    out[k] = f;
+  }
+  return Object.keys(out).length ? out : undefined;
+}

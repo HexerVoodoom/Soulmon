@@ -408,7 +408,7 @@ export function ArenaGame({
           foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
           isPt={isPt}
           me={{
-            key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, hpFrac) * hpMax), maxHp: hpMax,
+            key: 'me', sprite: petSprite, scale: petScale, stageIcon: evolutionStage, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, hpFrac) * hpMax), maxHp: hpMax,
             // o que se VÊ = a identidade (par incluso), SEMPRE — com ou sem ficha (o fallback é o elemento do oráculo, `petElement`). Antes, sem ficha
             // no estágio, caía em `atributos.principal` (o `vigor` padrão: o "marronzinho"). A vantagem segue em `elements` (base).
             element: fxElementId(ident.basico.elemento),

@@ -795,7 +795,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
           isPt={isPt}
           scene={scene.bg}
           me={{
-            key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
+            key: 'me', sprite: petSprite, scale: petScale, stageIcon: evolutionStage, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
             element: petEl, energy: (pronto ? battle.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
             status: pronto ? battle.status.me : undefined,
             cheerPending: pronto ? (battle.meter / CHEER_TAPS_FULL) * (CHEER.energyPerDischarge / ENERGY_TRIGGER) : 0,
