@@ -9235,3 +9235,12 @@ button.sm2-hex-row {
   display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sm2-space-1);
   font-size: var(--sm2-text-xs, 12px); color: var(--sm2-muted);
 }
+
+/* ── MODAL ACIMA DO VOLTAR (09/11/2026) ─────────────────────────────────
+   Com modal aberto (`body[data-modal-open]`, ligado por `utils/modalLayer.ts`) o voltar da PÁGINA esmaece e não recebe
+   toque; o voltar que mora DENTRO do modal/folha (aria-modal) segue normal. */
+.sm2-area-back { transition: opacity .15s ease; }
+body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not([role="dialog"] .sm2-area-back) {
+  opacity: .18;
+  pointer-events: none;
+}
