@@ -333,10 +333,12 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
               ) : (
               <figure class="aparelho mini">
                 <div class="casca"><div class="tela">
-                  <picture>
+                  {id === 'combate' ? (
+                    <video class="combate-video" src={b(`/video/combate-${lang}.mp4`)} poster={b(`/print/combate-${lang}-480.webp`)} muted loop playsinline autoplay preload="none" width="1080" height="1920" aria-label={alt}></video>
+                  ) : <picture>
                     {id === 'rift' ? <source type="image/avif" srcset={b('/mapa/exploracao-820.avif')} /> : <source type="image/avif" srcset={printSrc(id, 'avif')} sizes="(min-width: 1024px) 220px, 200px" />}
                     <img src={id === 'rift' ? b('/mapa/exploracao-820.webp') : b(`/print/${id}-${lang}-480.webp`)} srcset={id === 'rift' ? undefined : printSrc(id, 'webp')} sizes="(min-width: 1024px) 220px, 200px" width="1170" height="2532" alt={alt} loading="lazy" decoding="async" />
-                  </picture>
+                  </picture>}
                 </div></div>
               </figure>
               )}
