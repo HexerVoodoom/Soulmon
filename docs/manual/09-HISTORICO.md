@@ -1,6 +1,6 @@
 # Histórico — como chegamos aqui
 
-> **Dono:** doc-historiador · **Data:** 30/09/2026 (sincronização do delta `ae366480..5edfcfba`: §1.5 ganha o item de 30/09 — inglês como língua principal, três prédios em Jogos, duelo fantasma, hub de benchmarking e o Actions parado; título da §1.5 passa a 10–30/09); anterior: 27/09/2026 (sincronização do delta `78ef5367..c510c7e4`, correções pós-F3 da minimal-ui: §1.5 ganha a linha das duas correções pós-F3 de 24/09 (`7b4819e6`, `c510c7e4`); anterior: 24/09/2026 (delta `c7bca6d0..78ef5367`: §1.5 ganha dois itens — a incubação WP4.29 de 22/09 e as fatias F1–F6 da minimal-ui de 23–24/09; anterior: 22/09/2026, 3ª sincronização do dia, delta `cd66940f..cf6315e1`: §1.5 ganha **#102–#107** — merge da QA Rodada 2, o livrinho ilustrado + PDF + gerador, o one shot de prólogo e a execução das 32 respostas do dono; anterior no mesmo dia: SHA de `a6c1cd8a`/#100–#101 e a linha da QA Rodada 2; anterior: 21/09/2026, QA Rodada 1; 09/09/2026)) · **Estado:** verificado em 30/09/2026 por doc-verificador (delta `ae366480..5edfcfba` — os 10 SHAs do item novo da §1.5 conferidos por `git log -1` (data 30/09/2026 e assunto batem), a causa do Actions contra HANDOFF-LOCAL-SEM-ACTIONS §1, os rótulos de [10 §5, §6, §10 e §13] contra os `##` do doc 10; corrigidos o título da §1.5 (10–24/09 → 10–30/09) e a lista de temas citados); anterior: verificado em 27/09/2026 por doc-verificador (delta `78ef5367..c510c7e4` — os dois hashes, as mensagens e os arquivos conferidos com `git show --stat`); anterior: verificado em 24/09/2026 por doc-verificador (delta `c7bca6d0..78ef5367` — os 18 SHAs dos dois itens novos da §1.5 conferidos por `git log -1`, `git log --merges c7bca6d0..78ef5367` → vazio, `git log --oneline 78ef5367 | wc -l` → **1.117**; título da §1.5 passa a 10–24/09, âncora sem link em `docs/`; anterior: 22/09/2026, §1.5 conferido contra `gh pr list --state merged --json number,title,mergedAt` e `git log --oneline` → **1.080** commits; anterior: 10/09/2026, doc inteiro)
+> **Dono:** doc-historiador · **Data:** 09/11/2026 (sincronização do delta `5229b1be..62f204e1b`, 271 commits de 02 a 09/11/2026: nova §1.7 e nota de contagem na §1; **lacuna declarada** — a sincronização de 02/11 não tocou este doc, então 21/10–01/11 segue sem entrada própria); anterior: 30/09/2026 (sincronização do delta `ae366480..5edfcfba`: §1.5 ganha o item de 30/09 — inglês como língua principal, três prédios em Jogos, duelo fantasma, hub de benchmarking e o Actions parado; título da §1.5 passa a 10–30/09); anterior: 27/09/2026 (sincronização do delta `78ef5367..c510c7e4`, correções pós-F3 da minimal-ui: §1.5 ganha a linha das duas correções pós-F3 de 24/09 (`7b4819e6`, `c510c7e4`); anterior: 24/09/2026 (delta `c7bca6d0..78ef5367`: §1.5 ganha dois itens — a incubação WP4.29 de 22/09 e as fatias F1–F6 da minimal-ui de 23–24/09; anterior: 22/09/2026, 3ª sincronização do dia, delta `cd66940f..cf6315e1`: §1.5 ganha **#102–#107** — merge da QA Rodada 2, o livrinho ilustrado + PDF + gerador, o one shot de prólogo e a execução das 32 respostas do dono; anterior no mesmo dia: SHA de `a6c1cd8a`/#100–#101 e a linha da QA Rodada 2; anterior: 21/09/2026, QA Rodada 1; 09/09/2026)) · **Estado:** verificado em 09/11/2026 por doc-verificador (delta `5229b1be..62f204e1b`, escopo: só o que mudou em 09/11/2026 — os nota de contagem da §1 e a §1.7; todos os SHAs citados conferidos por `git cat-file -t` e por assunto/data em `git log -1`, os `§N` do REGISTRO contra os títulos `##`, e as contagens por comando: `git log --oneline 5229b1be..HEAD | wc -l` → 271, `--merges` → 37, por dia 14/22/67/64/4/21/79, por mês `2026-10` 1786 · `2026-11` 355, `rev-list --count 5229b1be` → 3281, total → 3552; símbolos por `grep` em `src`/`functions`/`public`; corrigido o que consta no texto da §1.7); restante verificado em 30/09/2026 por doc-verificador (delta `ae366480..5edfcfba` — os 10 SHAs do item novo da §1.5 conferidos por `git log -1` (data 30/09/2026 e assunto batem), a causa do Actions contra HANDOFF-LOCAL-SEM-ACTIONS §1, os rótulos de [10 §5, §6, §10 e §13] contra os `##` do doc 10; corrigidos o título da §1.5 (10–24/09 → 10–30/09) e a lista de temas citados); anterior: verificado em 27/09/2026 por doc-verificador (delta `78ef5367..c510c7e4` — os dois hashes, as mensagens e os arquivos conferidos com `git show --stat`); anterior: verificado em 24/09/2026 por doc-verificador (delta `c7bca6d0..78ef5367` — os 18 SHAs dos dois itens novos da §1.5 conferidos por `git log -1`, `git log --merges c7bca6d0..78ef5367` → vazio, `git log --oneline 78ef5367 | wc -l` → **1.117**; título da §1.5 passa a 10–24/09, âncora sem link em `docs/`; anterior: 22/09/2026, §1.5 conferido contra `gh pr list --state merged --json number,title,mergedAt` e `git log --oneline` → **1.080** commits; anterior: 10/09/2026, doc inteiro)
 > **Verificação:** os comandos `git log` colados ao lado de cada afirmação nesta página — rode-os de novo para reconferir
 > **Não cobre:** o CONTEÚDO de cada decisão (isso é `10-DISCUSSOES-E-DECISOES.md`); o changelog linha a linha (`../CHANGELOG.md`, que não se reescreve); regras de jogo em vigor hoje (`02-REGRAS-DE-NEGOCIO.md`)
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
@@ -46,6 +46,11 @@ ficou quase parado de fevereiro a abril/2026 (18 commits em 4 meses), um hiato
 total em maio, uma retomada em junho que já é outro produto por dentro, e dois
 meses (agosto e setembro) que concentram **540 dos 827 commits** — 65% do
 histórico inteiro em 5 semanas.
+
+Atualização de 09/11/2026 (a tabela acima é a de 09/09 e não foi remedida linha a linha): o mesmo
+comando, rodado em 09/11/2026 no HEAD `62f204e1b`, dá `2026-08` 358 · `2026-09` 767 · `2026-10` 1786 ·
+`2026-11` 355 (até 09/11); `git rev-list --count 5229b1be` → **3281** (02/11) e `git log --oneline | wc -l`
+→ **3552** (09/11). Outubro sozinho tem mais commits que agosto e setembro juntos.
 
 ### 1.1 Era DigiApp (25/12/2025 – 01/04/2026, retomada em 08/03–01/04)
 
@@ -266,6 +271,73 @@ detalhe de cada PR está na mensagem do próprio merge; este bloco é o índice.
   A partir daqui há usuários reais: save, chave e contrato passam a exigir compatibilidade
   ([`CLAUDE.md` › Compatibilidade](../../CLAUDE.md); decisão em `REGISTRO-DE-DECISOES.md` §148;
   régua `src/contexts/saveCompat.contract.test.ts`). Discussão: [10](10-DISCUSSOES-E-DECISOES.md).
+
+### 1.7 02–09/11/2026 — formas, jornada do Foco, Fenda e a árvore de evolução
+
+Sincronização do delta `5229b1be..62f204e1b`: `git log --oneline 5229b1be..HEAD | wc -l` → **271**
+commits em 7 dias com commit (`git log --date=short --format=%ad 5229b1be..HEAD | sort | uniq -c`:
+02/11 14 · 03/11 22 · 04/11 67 · 05/11 64 · 06/11 4 · 08/11 21 · 09/11 79), dos quais 37 merges
+(`git log --merges --oneline 5229b1be..HEAD | wc -l`). Agrupado por tema, sem listar os commits;
+cada tema aponta a decisão em `REGISTRO-DE-DECISOES.md` (a numeração `§N` tem colisões, ver o
+fim da seção) e a discussão em [10](10-DISCUSSOES-E-DECISOES.md).
+
+- **Evolução, formas e exibição** (05–09/11): troca lateral de forma grátis (§225) e piso "evoluir
+  nunca reduz" (§229) em 05/11; elemento combinado por estágio (§232); em 09/11, `formaSnapshot` —
+  cada forma carrega seu elemento e skills (§257, `9c433dee`), atributos x10 na tela
+  (`560d96b2`, `statExibido`), HP base da Arena no Duelo (§252, `2ddd1ff6`, `hpExibidoPvp`),
+  "Degenerar" até o rookie (`fb4f344b`), ícones de ataque/defesa/velocidade (`ef96e3f3`) e a **árvore
+  de três caminhos** com ícone de estágio (§259, `21116569`, `ESTAGIO_ICONE_SET`) no lugar das abas
+  de galho. A aba Selvagens junta rookie ao mega numa lista só (§254, `0231803a`).
+- **Foco/Oficina e a jornada** (05–09/11): sessão sem lista conclui (§238) e dá a chave do
+  Calabouço (§239, `77112497`); em 08/11 a **jornada** substitui a descida da masmorra no foco
+  (§247, fases 1–5: `489f2014`, `d181f195`, `cadab3d1`, `61ef7d34`, arte pintada `9c923aad` e
+  `9914bb49`); em 09/11 card de tempo no topo, só relógio (§256, `4657fa17`) e chave esmaecida no
+  lugar do cadeado, com modal do cenário (§255 do Foco, `0743d18b`).
+- **Fenda (Rift) e masmorra** (08–09/11): masmorra com andares por elemento e poções deixadas com o
+  Soulmon (§249, `d7dfa91d`); ponto de retorno de 2 em 2 camadas (§251, `92e4ecc7`,
+  `DUNGEON_RETURN_EVERY`); arte de "Chama Azul" corrigida e guarda de arte por elemento (§255 da
+  Fenda, `0867fdb9`); 10 **criaturas paralelas** como inimigos (§258, `331bc120`); cenário que gira
+  entre as camadas dos compostos (§260, `206f3cab`); formas dos combinados 212–261 como inimigos
+  (§261, `46a1242a`). Glitchtama passa a 1% por marco, no máximo 1 por semana (§226).
+- **Combate e poção** (03–08/11): alvo por toque, especial rápido, corte × concussão e corte à
+  distância que cresce (§227; `4bf4a6f1`, `dafadfe5`, `8c2c6743`); efeito real nos 11 elementos sem
+  efeito (§236); cura do especial calibrada (`59a7f162`); poção de elemento mais barata e oferta da
+  Vesca (§250, `35314730`; `912f6348`: curados com essência, drop e Cambista).
+- **Social, cartas e Home** (04–09/11): amigos por convite, presente e treino (§243, `458aeb86`,
+  `9634070c`); Mensageiro/Papus com cartas e a caixa na Home (§241, §246, §248; `c720b27b`,
+  `565efbff`); ícone de carta só com carta e "!/?" das missões sobem sem carta (`fd7eef5d`,
+  `486df94f`); Guilda dos Mercenários só com tarefa de um dia (§245, `13a9ff77`); NPC 412, Bastion, no
+  portão do Calabouço (§243 de 06/11, `e65a9297`).
+- **Minijogos, Refúgio e Feira** (02–05/11): o Refúgio devolve metade da energia (§217, `05763b41`),
+  minijogos do Salão custam energia, chips redutores no lugar do Chip Triplo (§219), desafio do dia
+  da Feira (§193 de 04/11, `6d1a7b2d`), Restaurante do Mercado abre (`10b4bebf`), Chuva de Almas em
+  tela cheia e chefes no splash.
+- **Arte e identidade** (02–09/11): rodada 5 de arte, coliseus por faixa, banners
+  victory/defeat, intro em painéis animados, cena do ovo-cristal e cerimônia de evolução em 6 tempos
+  (`release: v249` a `v253`); regra máxima de identidade (`c2764605`); criatura do Oráculo fora da
+  régua (§234); Thassia com arte nova (`a1aa18d1`). Higgsfield segue vetado para gerar; a fila está em
+  `docs/ASSETS-A-GERAR.md` (gerar no ChatGPT).
+- **Simulados** (05/11): 170 perfis, evolução por faixa, novos em Rookie, teto Champion, formas sob
+  demanda (§233, §235; `8246d370`, `ef5ed637`).
+- **Privacidade, widget e feedback** (04–09/11): feedback direto ao revisor com retenção de 30
+  dias (`ac4f1136`, `c652b823`); widget único e moldura V-Pet por elemento (`a1f2f421`, `f13c521b`);
+  política de passos pelo Health Connect publicada antes do recurso e `PRIVACY_VERSION` sobe para
+  `2026-11-09` (§253, `0e6b7e72`; só banner informativo, sem reaceite obrigatório).
+- **Build, cache e entrada** (03–09/11): `CACHE_VERSION` v248 → v260 (`public/sw.js`; v249–v253 pelos `release:` do período); em 05/11 os assets com hash
+  ganham o cache `soulmon-assets-v1`, que o bump não apaga (`aafcc2e7`); `index.js` volta ao orçamento
+  (`422f4e52`); guildCopy e o modal de feedback saem do chunk de entrada (`4662a086`); Soulsmith vira
+  mapa de chakras (`ba61a08f`) e a Vitra fala primeiro (`119b5a6f`).
+- **Release e GM**: AAB beta4 (`3321a17e`, versionCode 24), beta5 (`e940c5d2`, 25) e **beta6**
+  (`a4336d56`, 26, `1.3.0-beta6`, 08/11). Em 09/11 `a4f90382` tentou `run_worker_first` para as
+  páginas `/gm/*` e `9454d68a` o **desfez no mesmo dia** (derrubou `/api/*` em produção: o GET
+  devolvia o `index.html` do SPA) — ⚰️ `run_worker_first` não deve ser habilitado; as páginas `/gm/*`
+  não abrem no navegador por causa do SPA fallback.
+
+⚠️ Numeração do registro: no delta, `REGISTRO-DE-DECISOES.md` repete `§220`, `§221` e `§222` (04/11: decoração, ramos e escada da Arena × ramos arquivados, widget e nome do especial), `§242` e `§243` (Passeio e
+Amigos × as respostas do dono) e `§255` (Fenda × Oficina do Foco), e `§257` aparece antes de `§251`;
+a referência segura é título + data. Contagem: `grep -n '^## §2[0-9][0-9]' docs/REGISTRO-DE-DECISOES.md`.
+Lacuna: 21/10–01/11 (849 commits entre `126a7d514` e `5229b1be`) não teve sincronização deste doc na
+rodada de 02/11; o que dessa janela aparece aqui só entrou por decisão registrada no delta.
 
 ---
 
