@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
-  timeBand, timeItemIndex, setActive, flushUsageDays, clearUsageTime, trackMinigame, resetUsageTimeForTest,
+  timeBand, timeItemIndex, setActive, flushUsageDays, clearUsageTime, trackMinigame, noteMinigameOutcome, resetUsageTimeForTest,
   TIME_SCREENS, TIME_FEATURES, TIME_MINIGAMES, TIME_BAND_EDGES, TIME_BAND_MID,
 } from './usageTime';
 import { pendingTelemetry, resetTelemetryForTest, setTelemetryEnabled, EVENT_SCHEMA } from './telemetry';
@@ -91,6 +91,23 @@ describe('minigame', () => {
     expect(ev[ev.length - 1]).toEqual({ e: 'minigame_end', p: { item: 3, outcome: 0, band: 5 } });
     expect(ev.filter(e => e.e === 'minigame_end').length).toBe(1);
     expect(trackMinigame('nope')).toBeTypeOf('function');
+  });
+});
+
+describe('resultado da partida', () => {
+  it('a tela de resultado informa o desfecho e o end() o usa; sem informe vira "saiu"', () => {
+    const end = trackMinigame('dino');
+    noteMinigameOutcome(1);
+    end();
+    const fim = pendingTelemetry().filter(e => e.e === 'minigame_end');
+    expect(fim[0].p).toMatchObject({ item: 1, outcome: 1 });
+    const end2 = trackMinigame('dino');
+    end2();
+    expect(pendingTelemetry().filter(e => e.e === 'minigame_end')[1].p).toMatchObject({ outcome: 2 });
+    noteMinigameOutcome(0); // sem partida em andamento: ignorado
+    const end3 = trackMinigame('dino');
+    end3();
+    expect(pendingTelemetry().filter(e => e.e === 'minigame_end')[2].p).toMatchObject({ outcome: 2 });
   });
 });
 
