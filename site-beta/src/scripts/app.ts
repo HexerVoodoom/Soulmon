@@ -66,24 +66,33 @@ function quandoVisivel(el: Element | null, fn: () => void, margem = '0px') {
 
 // ---------- Barra superior, CTA compacto e CTA fixo ----------
 function topoECta() {
-  const topo = $('[data-topo]'); const hero = $('.hero'); const heroCta = $('[data-hero-cta]');
-  const compacto = $('[data-topo-cta]'); const fixo = $('[data-fixo]'); const alvo = $('#inscricao') ?? $('#inscrever'); // o formulário em si, não a seção
-  if (!topo || !hero || !heroCta || !alvo) return;
-  let heroFora = false; let ctaFora = false; let formVisto = false; let teclado = false; let popup = false; let naDemo = false;
+  // CTA único (dono, 09/11): "Entrar no beta" grande e fixo o tempo todo; some só sobre o formulário, com teclado, popup ou durante a demo.
+  const topo = $('[data-topo]'); const hero = $('.hero'); const fixo = $('[data-fixo]'); const alvo = $('#inscricao') ?? $('#inscrever');
+  if (!topo || !hero || !alvo) return;
+  let heroFora = false; let formVisto = false; let teclado = false; let popup = false; let naDemo = false;
   const aplicar = () => {
     topo.classList.toggle('rolada', heroFora);
-    if (compacto) compacto.hidden = !ctaFora || formVisto;
-    if (fixo) fixo.hidden = !ctaFora || formVisto || teclado || popup || naDemo;
+    if (fixo) fixo.hidden = formVisto || teclado || popup || naDemo;
   };
   new IntersectionObserver(([x]) => { heroFora = x.intersectionRatio < 0.2; aplicar(); }, { threshold: [0, 0.2, 1] }).observe(hero);
-  new IntersectionObserver(([x]) => { ctaFora = !x.isIntersecting; aplicar(); }).observe(heroCta);
   new IntersectionObserver(([x]) => { formVisto = x.isIntersecting; aplicar(); }, { rootMargin: '0px 0px -10% 0px' }).observe(alvo);
-  // A lista da demo fica no meio da tela durante o pin: o CTA fixo não pode cobrir as caixinhas.
   if (document.documentElement.classList.contains('ciclo-js')) new IntersectionObserver(([x]) => { naDemo = x.isIntersecting; aplicar(); }, { rootMargin: '-45% 0px -45% 0px' }).observe($('#ciclo')!);
   const vv = window.visualViewport;
   if (vv) { const alto = innerHeight; vv.addEventListener('resize', () => { teclado = vv.height < alto * 0.75; aplicar(); }); }
   const d = $<HTMLDialogElement>('[data-popup]');
   if (d) new MutationObserver(() => { popup = d.open; aplicar(); }).observe(d, { attributes: true, attributeFilter: ['open'] });
+}
+// ---------- Colete: abas Champion/Ultimate (celular) e slide de 3 em 3 ----------
+function colete() {
+  const abas = $$<HTMLButtonElement>('[data-colete-aba]');
+  abas.forEach((bt) => bt.addEventListener('click', () => {
+    abas.forEach((x) => x.setAttribute('aria-selected', String(x === bt)));
+    $$('[data-colete-nivel]').forEach((n) => { n.dataset.ativo = n.dataset.coleteNivel === bt.dataset.coleteAba ? '1' : '0'; });
+  }));
+  $$<HTMLButtonElement>('[data-colete-seta]').forEach((bt) => bt.addEventListener('click', () => {
+    const tr = bt.parentElement!.querySelector<HTMLElement>('[data-colete-trilho]')!;
+    tr.scrollBy({ left: Number(bt.dataset.coleteSeta) * tr.clientWidth, behavior: reduzido ? 'auto' : 'smooth' });
+  }));
 }
 
 // ---------- Estado da rodada (LEVA_ESTADO): sem contador, só troca o texto ----------
@@ -287,10 +296,15 @@ function sorteio() {
       img.alt = `${raiz.dataset.alt} ${nome}${nomeForma ? `, ${nomeForma}` : ''}`;
       img.hidden = false; sombra.hidden = true;
       info.replaceChildren();
-      const l1 = document.createElement('span'); l1.className = 'sort-linha';
-      for (const e of el.split(',')) { const ic = document.createElement('img'); ic.src = `${raiz.dataset.elBase}${e}.webp`; ic.width = ic.height = 32; ic.alt = ''; ic.className = 'ico-el'; l1.append(ic); }
-      l1.append(nome); info.append(l1);
-      if (nomeForma) { const l2 = document.createElement('span'); l2.className = 'sort-linha'; const ic = document.createElement('span'); ic.className = 'ico-forma'; ic.dataset.forma = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'][forma - 1]; l2.append(ic, nomeForma); info.append(l2); }
+      // Só ícones (dono, 09/11): par com elemento fundido mostra o ícone da fusão; senão, o ícone de cada elemento. O nome fica no alt.
+      const fus = JSON.parse(raiz.dataset.fusoes ?? '{}') as Record<string, [string, string, string]>;
+      const lista = el.split(','); const f = lista.length === 2 ? fus[[...lista].sort().join(',')] : undefined;
+      const l1 = document.createElement('span'); l1.className = 'sort-icones';
+      const icone = (src: string, alt: string) => { const ic = document.createElement('img'); ic.src = src; ic.width = ic.height = 48; ic.alt = alt; ic.title = alt; ic.className = 'ico-el'; l1.append(ic); };
+      if (f) icone(`${raiz.dataset.elBase}fusao/${f[0]}.webp`, f[raiz.dataset.lang === 'en' ? 2 : 1]);
+      else for (const e of lista) icone(`${raiz.dataset.elBase}${e}.webp`, els[e] ?? e);
+      if (nomeForma) { const ic = document.createElement('span'); ic.className = 'ico-forma'; ic.dataset.forma = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'][forma - 1]; ic.title = nomeForma; ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', nomeForma); l1.append(ic); }
+      info.append(l1);
       raiz.scrollIntoView({ block: 'nearest', behavior: reduzido ? 'auto' : 'smooth' });
       if (!reduzido) { img.classList.remove('surge'); void img.offsetWidth; img.classList.add('surge'); }
     };
@@ -468,7 +482,7 @@ function ancoras() {
 
 // Só com JS: sem ele, o form faria GET com o e-mail na URL.
 if (form) form.hidden = false;
-ancoras(); partilha(); topoECta(); vagas(); formulario(); turnstile(); abas(); sorteio(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
+ancoras(); partilha(); topoECta(); vagas(); formulario(); turnstile(); abas(); sorteio(); colete(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
 // ajustarSprites lê o layout da página inteira: só depois do load, nunca na janela do primeiro quadro.
 depoisDoLoad(() => {
   document.documentElement.classList.add('tarde');

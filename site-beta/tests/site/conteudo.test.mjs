@@ -68,7 +68,8 @@ describe('copy do site', () => {
   });
   it('títulos de seção com até 6 palavras e 34 caracteres (DESIGN-SYSTEM §3.3)', () => {
     for (const l of [TEXTOS.pt, TEXTOS.en]) {
-      for (const h of [l.jogo.h2, l.ciclo.h2, l.soul.h2, l.universo.h2, l.recursos.h2, l.video.h2, l.entrar.h2, l.faq.h2, l.form.h2]) {
+      // ciclo.h2 fora: texto ditado pelo dono (09/11), mais longo que 6 palavras.
+      for (const h of [l.jogo.h2, l.soul.h2, l.universo.h2, l.recursos.h2, l.video.h2, l.entrar.h2, l.faq.h2, l.form.h2]) {
         expect(h.split(' ').length, h).toBeLessThanOrEqual(6);
         expect(h.length, h).toBeLessThanOrEqual(34);
       }

@@ -971,3 +971,77 @@ html:not(.ciclo-js) .estagios img[data-tarde-src] { display: none; }
 @media (max-width: 1023px) { .soul-grade { grid-template-columns: minmax(0, 1fr); } .soul-grade > * { min-width: 0; } } .numero { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 10px; }
 .npc-modal .lugar-jogos { width: 100% !important; max-width: none !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; } @media (min-width: 768px) { .npc-modal .lugar-jogos { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)) !important; } }
 .npc-modal .lugar-jogos > li { width: 100% !important; max-width: none !important; min-width: 0; }
+
+/* ==== rodada 3 do dono (09/11) ==== */
+/* idioma por bandeira */
+.idioma .bandeira { display: block; border-radius: 4px; box-shadow: 0 1px 4px rgba(0,0,0,.6); }
+/* hero: cenário em tela cheia, sem fade nem máscara nas bordas */
+.hero:has(.hero-arte) .hero-fundo { position: absolute; inset: 0; --ah: auto; }
+.hero:has(.hero-arte) .hero-fundo .hero-arte { position: absolute; inset: 0; width: 100% !important; height: 100% !important; translate: none !important; top: 0 !important; left: 0 !important; right: 0 !important; aspect-ratio: auto !important; }
+.hero:has(.hero-arte) .hero-fundo .hero-arte img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; -webkit-mask-image: none !important; mask-image: none !important; }
+@media (min-width: 1024px) { .hero:has(.hero-arte) .hero-fundo .hero-arte img { object-position: 70% 50%; } }
+.hero.cena .cena-fundo, .hero .hero-fundo { -webkit-mask-image: none !important; mask-image: none !important; }
+.hero:has(.hero-arte)::before { background: radial-gradient(ellipse at 50% 28%, rgba(1,12,14,.55), rgba(1,12,14,0) 60%) !important; }
+.hero-corpo { justify-content: flex-start !important; align-items: center; padding-top: calc(var(--topo-h) + 24px) !important; }
+.hero-texto { align-self: center !important; text-align: center; display: grid; justify-items: center; }
+.hero .hero-texto.veu-h::before { display: none !important; }
+.hero h1 { margin-inline: auto; text-shadow: 0 2px 12px rgba(0,0,0,.85), 0 1px 0 #000; }
+.hero-logo, .hero:has(.hero-arte) .hero-logo { width: 180px !important; margin: 0 auto !important; }
+@media (min-width: 1024px) { .hero-logo, .hero:has(.hero-arte) .hero-logo { width: 340px !important; } .hero:has(.hero-arte) .hero-texto { max-width: 820px !important; } }
+.vagas-linha { justify-content: center; text-shadow: 0 1px 6px #000; }
+/* CTA único fixo, grande */
+.fixo { display: flex !important; justify-content: center; background: linear-gradient(transparent, rgba(1,12,14,.85) 45%); border-top: 0; padding: 16px 16px calc(12px + env(safe-area-inset-bottom)); pointer-events: none; }
+.fixo[hidden] { display: none !important; }
+.fixo .fixo-cta { pointer-events: auto; width: min(100%, 480px); height: 80px; border-width: 28px 32px; gap: 12px; font-size: 1.25rem; }
+@media (max-width: 1023px) { .fixo .fixo-cta { height: 68px; border-width: 24px 28px; } }
+body { padding-bottom: 104px; }
+/* centralizar todos os títulos e textos de seção */
+main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recursos-cab, .entrar-cab, .faq h2, .colete-cab, .trailer-texto { text-align: center; margin-inline: auto; }
+.soul-texto, .universo-cab, .recursos-cab { display: grid; justify-items: center; }
+.soul-texto .numero { justify-content: center; text-align: center; }
+/* Seu Soulmon: fundo garantido */
+.soul { background: #06181a; }
+/* sorteio: só ícones */
+.sort-icones { display: inline-flex; gap: 12px; align-items: center; justify-content: center; }
+.sort-icones .ico-el { width: 48px; height: 48px; image-rendering: pixelated; }
+.sort-icones .ico-forma { width: 44px; height: 44px; }
+/* árvore: rótulo dos caminhos entre Rookie e Champion */
+.arvore-caminhos .caminho { color: var(--sb-ouro); }
+/* Colete compacto: 3 por vez + slide, cabe numa dobra */
+.colete { gap: var(--sb-e-3); padding-block: var(--sb-e-5); }
+.colete-abas { display: flex; gap: 8px; justify-content: center; }
+.colete-aba { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: 999px; border: 2px solid var(--sb-anel); background: var(--sb-sup); color: var(--sb-tx); font-weight: var(--sb-peso-forte); cursor: pointer; }
+.colete-aba[aria-selected="true"] { border-color: var(--sb-pri); color: var(--sb-ouro); }
+.colete-niveis { display: grid !important; grid-template-columns: 1fr !important; gap: var(--sb-e-4) !important; width: min(100%, 1180px); }
+.colete-nivel { display: grid; gap: 8px; }
+.colete-nivel[data-ativo="0"] { display: none; }
+.colete-nivel .colete-rot { display: none; font-size: 1.125rem; }
+.colete-caminho { display: grid; grid-template-columns: 32px minmax(0, 1fr) 32px; grid-template-rows: auto auto; align-items: center; gap: 2px 4px; width: 100%; }
+.colete-caminho h4 { grid-column: 1 / -1; margin: 0; font-size: .9375rem; color: var(--sb-tx-2); }
+.colete-trilho { list-style: none; margin: 0; padding: 2px; display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 16px) / 3); gap: 8px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.colete-trilho::-webkit-scrollbar { display: none; }
+.colete-trilho .colete-item { scroll-snap-align: start; padding: 6px; gap: 2px; position: relative; font-size: .75rem; border-radius: 10px; }
+.colete-trilho .colete-item img { width: 100%; max-width: 88px; }
+.colete-trilho .colete-item.falta b { position: absolute; inset: 6px 6px 22px; display: grid; place-items: center; font-size: 1.75rem; color: var(--sb-tx); text-shadow: 0 0 8px #000; }
+.colete-seta { width: 32px; height: 44px; border: 0; background: none; color: var(--sb-tx); font-size: 2rem; line-height: 1; cursor: pointer; }
+@media (min-width: 1024px) {
+  .colete-abas { display: none; }
+  .colete-niveis { grid-template-columns: 1fr 1fr !important; }
+  .colete-nivel[data-ativo="0"] { display: grid; }
+  .colete-nivel .colete-rot { display: inline-flex; justify-self: center; }
+  .colete-trilho .colete-item img { max-width: 96px; }
+}
+/* Mundo: Arena sem imagem */
+.area-bt:not(:has(.area-arte)) { min-height: 100%; justify-content: center; }
+@media (min-width: 1024px) {
+  .hero-corpo { align-items: flex-start; justify-content: center !important; padding-left: max(32px, 4vw) !important; }
+  .hero:has(.hero-arte) .hero-texto { width: min(38vw, 560px); max-width: none !important; }
+  .hero-logo, .hero:has(.hero-arte) .hero-logo { width: min(320px, 24vw) !important; }
+  .hero:has(.hero-arte) .hero-fundo .hero-arte img { object-position: 100% 50%; }
+  .hero:has(.hero-arte)::before { background: linear-gradient(90deg, rgba(1,12,14,.55), rgba(1,12,14,0) 42%) !important; }
+}
+@media (min-width: 1024px) { .hero-texto { align-self: flex-start !important; } .hero:has(.hero-arte) h1 { font-size: clamp(2rem, 1.2rem + 2.2vw, 3.25rem); max-width: none; } }
+/* "Seu Soulmon" parecia sem fundo (dono, 09/11): o mosaico de elementos aparece mais */
+.soul-mosaico::after { background: linear-gradient(180deg, rgba(7, 20, 19, .66), rgba(7, 20, 19, .5) 45%, rgba(7, 20, 19, .72)) !important; }
+.area-bt:not(:has(.area-arte)) { display: grid; place-content: center; height: 100%; text-align: center; }
+.area-bt:not(:has(.area-arte)) .area-tx { position: static; background: none; }

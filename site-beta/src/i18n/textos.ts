@@ -9,7 +9,7 @@ const pt = {
   html: 'pt-BR', idioma: 'pt-BR', home: `${B}/`, priv: `${B}/privacidade/`, outraHome: `${B}/en/`, outraPriv: `${B}/en/privacy/`, outraNome: 'English', outraCod: 'en',
   titulo: 'Soulmon: criaturas que evoluem com suas tarefas', desc: 'Jogo de criaturas para Android. Conclua tarefas do seu dia e veja seu Soulmon ganhar novas formas. Entre no beta.',
   pular: 'Pular para o conteúdo', logoAlt: 'Soulmon', logoTopo: 'Soulmon, voltar ao topo',
-  h1: 'Criaturas que evoluem com suas tarefas.', cta: 'Entrar no beta', ctaEspera: 'Entrar na fila',
+  h1: 'Agora você tem mais motivação para evoluir na vida real.', cta: 'Entrar no beta', ctaEspera: 'Entrar na fila',
   hero: {
     vagasNum: '50', vagasTx: 'vagas no beta para Android.',
     vagasEspera: 'Vagas desta rodada preenchidas. Entre na fila.',
@@ -29,7 +29,7 @@ const pt = {
     ] as [string, string][],
   },
   ciclo: {
-    h2: 'Faz a tarefa, seu Soulmon evolui.',
+    h2: 'Cumpra com seus deveres e seu Soulmon evolui.',
     frase: 'A tela de verdade, e uma demonstração para você tocar.',
     demo: 'Toque para marcar', nomes: ['Rookie', 'Champion', 'Ultimate', 'Mega', 'Ultra'],
     hoje: 'Hoje', missao: 'Missão', habitos: 'Hábitos',
@@ -51,12 +51,12 @@ const pt = {
     oculta: 'Forma ainda não revelada', descobrir: 'A descobrir',
     linhas: ['Planta', 'Fada', 'Fogo'], linhaNoturno: 'Noturno', linhaRotulo: 'Linha de evolução', linhaAnt: 'Linha anterior', linhaProx: 'Próxima linha', sortear: 'Aleatório', sorteioRotulo: 'Conheça algum Soulmon', sombra: 'Conheça algum Soulmon', elemento: 'Elemento', altSorteio: 'Soulmon sorteado, elemento',
   },
-  colete: { h2: 'Colete todas as formas', frase: 'Cada forma tem uma versão para cada elemento. Colete todas.', rot: 'Linha fogo, caminho Poder', falta: 'Forma a descobrir', variantes: [['agua', 'Água'], ['industrial', 'Industrial'], ['chama_azul', 'Chama azul'], ['brinquedo', 'Brinquedo de corda'], ['raiz_profunda', 'Raiz profunda']] as [string, string][] },
+  colete: { h2: 'Colete todas as formas', frase: 'Cada forma tem uma versão para cada elemento. Colete todas.', rot: 'Linha fogo, caminho Poder', falta: 'Forma a descobrir', variantes: [['agua', 'Água'], ['industrial', 'Industrial'], ['chama_azul', 'Chama azul'], ['brinquedo', 'Brinquedo de corda'], ['raiz_profunda', 'Raiz profunda']] as [string, string][], nomes: { agua: 'Água', industrial: 'Industrial', chama_azul: 'Chama azul', brinquedo: 'Brinquedo de corda', raiz_profunda: 'Raiz profunda' } as Record<string, string> },
   universo: {
     h2: 'O universo', frase: 'Toque num lugar para conhecer quem mora lá e o que tem para fazer.',
     abasRotulo: 'Explorar o universo',
     abas: ['Lugares', 'Habitantes', 'Jogos', 'Elementos'],
-    areas: [['exploracao', 'Exploração'], ['jogos', 'Jogos'], ['arena', 'Arena'], ['hall', 'Hall'], ['guilda', 'Guilda'], ['laboratorio', 'Laboratório'], ['forja', 'Forja']],
+    areas: [['exploracao', 'Exploração'], ['jogos', 'Jogos'], ['arena', 'Arena'], ['hall', 'Mercado'], ['guilda', 'Guilda'], ['laboratorio', 'Laboratório'], ['forja', 'Forja']],
     habitanteAlt: 'Habitante do Soulmon',
     jogos: [['ppt', 'Pedra-Papel-Tesoura'], ['combina', 'Combina 3'], ['mente', 'Ateliê da Mente'], ['barrage', 'Chuva de Almas'], ['corrida', 'Corrida'], ['arena', 'Arena'], ['rift', 'Endless Rift'], ['calabouco', 'Calabouço']],
     emObras: 'Em construção', jogosArte: 'Capas ilustradas dos jogos',
@@ -69,7 +69,7 @@ const pt = {
     h2: 'Gameplay', frase: 'Cuide, explore e jogue, um pouco por dia.',
     cartoes: [
       ['combate', 'PvP e PvE', 'Duelos no Torneio e na Arena.', 'Combate na Arena do Soulmon: seu Soulmon contra um adversário, com as barras de vida.'],
-      ['rift', 'Endless Rift', 'Uma descida sem teto de camadas.', 'Endless Rift no Soulmon: camada 1, luta contra um Soulmon selvagem.'],
+      ['rift', 'Endless Rift', 'Uma descida sem teto de camadas.', 'Mapa da Exploração do Soulmon, onde fica o Endless Rift.'],
       ['hall', 'Compartilhe seu progresso e ajude amigos', 'Cresça junto com seus amigos.', 'Mapa do Hall no Soulmon, com Feira, Grove e Salão do Clã.'],
     ] as [string, string, string, string][],
   },
@@ -130,7 +130,7 @@ const en: typeof pt = {
   html: 'en', idioma: 'en', home: `${B}/en/`, priv: `${B}/en/privacy/`, outraHome: `${B}/`, outraPriv: `${B}/privacidade/`, outraNome: 'Português', outraCod: 'pt-BR',
   titulo: 'Soulmon: creatures that evolve with your tasks', desc: 'A creature game for Android. Finish tasks from your day and watch your Soulmon take on new forms. Join the beta.',
   pular: 'Skip to content', logoAlt: 'Soulmon', logoTopo: 'Soulmon, back to top',
-  h1: 'Creatures that evolve with your tasks.', cta: 'Join the beta', ctaEspera: 'Join the line',
+  h1: 'Now you have more motivation to grow in real life.', cta: 'Join the beta', ctaEspera: 'Join the line',
   hero: {
     vagasNum: '50', vagasTx: 'spots in the Android beta.',
     vagasEspera: 'This round is full. Join the line.',
@@ -150,7 +150,7 @@ const en: typeof pt = {
     ],
   },
   ciclo: {
-    h2: 'Do the task, your Soulmon evolves.',
+    h2: 'Do your duties and your Soulmon evolves.',
     frase: 'The real screen, and a demo you can tap.',
     demo: 'Tap to check', nomes: ['Rookie', 'Champion', 'Ultimate', 'Mega', 'Ultra'],
     hoje: 'Today', missao: 'Mission', habitos: 'Habits',
@@ -172,12 +172,12 @@ const en: typeof pt = {
     oculta: 'Form not revealed yet', descobrir: 'To discover',
     linhas: ['Plant', 'Fairy', 'Fire'], linhaNoturno: 'Noturno', linhaRotulo: 'Evolution line', linhaAnt: 'Previous line', linhaProx: 'Next line', sortear: 'Random', sorteioRotulo: 'Meet a Soulmon', sombra: 'Meet a Soulmon', elemento: 'Element', altSorteio: 'Drawn Soulmon, element',
   },
-  colete: { h2: 'Collect every form', frase: 'Every form has a version for each element. Collect them all.', rot: 'Fire line, Power path', falta: 'Form to discover', variantes: [['agua', 'Water'], ['industrial', 'Industrial'], ['chama_azul', 'Blue flame'], ['brinquedo', 'Wind-up toy'], ['raiz_profunda', 'Deep root']] },
+  colete: { h2: 'Collect every form', frase: 'Every form has a version for each element. Collect them all.', rot: 'Fire line, Power path', falta: 'Form to discover', variantes: [['agua', 'Water'], ['industrial', 'Industrial'], ['chama_azul', 'Blue flame'], ['brinquedo', 'Wind-up toy'], ['raiz_profunda', 'Deep root']], nomes: { agua: 'Water', industrial: 'Industrial', chama_azul: 'Blue flame', brinquedo: 'Wind-up toy', raiz_profunda: 'Deep root' } },
   universo: {
     h2: 'The world', frase: 'Tap a place to meet who lives there and see what you can do.',
     abasRotulo: 'Explore the world',
     abas: ['Places', 'Inhabitants', 'Games', 'Elements'],
-    areas: [['exploracao', 'Exploration'], ['jogos', 'Games'], ['arena', 'Arena'], ['hall', 'Hall'], ['guilda', 'Guild'], ['laboratorio', 'Laboratory'], ['forja', 'Forge']],
+    areas: [['exploracao', 'Exploration'], ['jogos', 'Games'], ['arena', 'Arena'], ['hall', 'Market'], ['guilda', 'Guild'], ['laboratorio', 'Laboratory'], ['forja', 'Forge']],
     habitanteAlt: 'Soulmon inhabitant',
     jogos: [['ppt', 'Rock-Paper-Scissors'], ['combina', 'Match 3'], ['mente', 'Mind Workshop'], ['barrage', 'Soul Barrage'], ['corrida', 'Runner'], ['arena', 'Arena'], ['rift', 'Endless Rift'], ['calabouco', 'Dungeon']],
     emObras: 'Under construction', jogosArte: 'Illustrated game covers',
@@ -190,7 +190,7 @@ const en: typeof pt = {
     h2: 'Gameplay', frase: 'Care, explore and play, a little each day.',
     cartoes: [
       ['combate', 'PvP and PvE', 'Duels in the Tournament and the Arena.', 'Soulmon Arena combat: your Soulmon against an opponent, with health bars.'],
-      ['rift', 'Endless Rift', 'A descent with no floor limit.', 'Soulmon Endless Rift: layer 1, a fight against a wild Soulmon.'],
+      ['rift', 'Endless Rift', 'A descent with no floor limit.', 'Soulmon Exploration map, home of the Endless Rift.'],
       ['hall', 'Share your progress and help your friends', 'Grow together with your friends.', 'Soulmon Hall map, with the Fair, the Grove and the Clan Hall.'],
     ],
   },
