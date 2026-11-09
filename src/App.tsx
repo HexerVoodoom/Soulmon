@@ -1612,6 +1612,7 @@ export default function App() {
 
   // A caixa de cartas do Papus (§246): a lista e o resgate moram no servidor (`useMailbox`). O modal da fila (§241) virou só o AVISO de carta nova, uma vez por carta.
   const mailbox = useMailbox({ saveId, demo: isDemoMode(gameState), getState: () => gameStateRef.current, setState: setGameState });
+  const mostraCarta = !isDemoMode(gameState) && mailbox.mail.length > 0;
   const [mailOpen, setMailOpen] = useState(false);
   const [mailAnnounced, setMailAnnounced] = useState<string[]>(() => parseAnnounced(readLocal(STORAGE_KEYS.MAIL_ANNOUNCED)));
   const mailToAnnounce = useMemo(() => toAnnounce(mailbox.mail, mailAnnounced), [mailbox.mail, mailAnnounced]);
@@ -9273,7 +9274,7 @@ export default function App() {
         />
       )}
       {/* O ícone só aparece com carta na caixa (dono, 09/11/2026); caixa vazia some. */}
-      {currentView === 'home' && !demo && mailbox.mail.length > 0 && (
+      {currentView === 'home' && mostraCarta && (
         <MailLink
           unread={mailbox.unread}
           label={language === 'pt-BR' ? 'Caixa de cartas' : 'Mailbox'}
@@ -9283,7 +9284,7 @@ export default function App() {
       )}
       {currentView === 'home' && (
         <MissionsLink
-          row={2}
+          row={mostraCarta ? 2 : 1} /* sem carta, o !/? sobe para o lugar do envelope (dono, 09/11/2026) */
           mark={marcasDeMissao.corner}
           tone="gold"
           markLabel={questMarkLabel(marcasDeMissao.corner, language === 'pt-BR')}
