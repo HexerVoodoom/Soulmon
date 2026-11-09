@@ -146,10 +146,10 @@ const prevMonthOf = (nowMs) => { const d = new Date(nowMs); return new Date(Date
 
 /** Camadas COMEÇADAS por dia (do servidor) que o lastro aceita: energia é o limite real (1/camada, estágio máx. ~12/dia) — folga larga, mas finita. */
 export const RIFT_MAX_LAYERS_PER_DAY = 60;
-/** Espelho de `DUNGEON_MILESTONE_FLOOR` (`src/utils/dungeonIdle.ts`). */
-const MILESTONE_FLOOR = 5;
+/** Espelho de `DUNGEON_RETURN_EVERY` (`src/utils/dungeonIdle.ts`): ponto de retorno de 2 em 2 (REGISTRO §31, emenda 09/11/2026). */
+const RETURN_EVERY = 2;
 /** Onde a descida começa para um recorde (espelho de `startLayerFor`, sem o teto do Lv: ver cabeçalho). */
-export const riftStartLayer = (record) => 1 + MILESTONE_FLOOR * Math.floor(Math.max(0, Math.min(DUNGEON_MAX_LAYER - 1, Math.floor(Number(record) || 0))) / MILESTONE_FLOOR);
+export const riftStartLayer = (record) => 1 + RETURN_EVERY * Math.floor(Math.max(0, Math.min(DUNGEON_MAX_LAYER - 1, Math.floor(Number(record) || 0))) / RETURN_EVERY);
 
 /** Quantas camadas novas a gravacao trouxe: mesmo dia = diferenca; dia novo = o contador inteiro. Nunca negativo. */
 export function layersDelta(antes, depois) {
