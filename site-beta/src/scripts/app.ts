@@ -307,7 +307,7 @@ function sorteio() {
       const fus = JSON.parse(raiz.dataset.fusoes ?? '{}') as Record<string, [string, string, string]>;
       const lista = el.split(','); const f = lista.length === 2 ? fus[[...lista].sort().join(',')] : undefined;
       const l1 = document.createElement('span'); l1.className = 'sort-icones';
-      const icone = (src: string, alt: string) => { const ic = document.createElement('img'); ic.src = src; ic.width = ic.height = 48; ic.alt = alt; ic.title = alt; ic.className = 'ico-el'; l1.append(ic); };
+      const icone = (src: string, alt: string) => { const ic = document.createElement('img'); ic.src = src; ic.width = ic.height = 48; ic.alt = alt; ic.title = alt; ic.className = 'ico-el'; ic.onerror = () => { ic.hidden = true; }; l1.append(ic); };
       if (f) icone(`${raiz.dataset.elBase}fusao/${f[0]}.webp`, f[raiz.dataset.lang === 'en' ? 2 : 1]);
       else for (const e of lista) icone(`${raiz.dataset.elBase}${e}.webp`, els[e] ?? e);
       if (nomeForma) { const ic = document.createElement('span'); ic.className = 'ico-forma'; ic.dataset.forma = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'][forma - 1]; ic.title = nomeForma; ic.setAttribute('role', 'img'); ic.setAttribute('aria-label', nomeForma); l1.append(ic); }
@@ -321,7 +321,7 @@ function sorteio() {
 }
 
 // Sprites olhando para a DIREITA (1 = espelhar: o companheiro fica no canto direito e olha para o centro). Medido a olho, 09/11.
-const OLHA_DIR: Record<string, number[]> = { arcano: [0,0,1,0,0], espaco: [1,1,1,1,0], fada: [0,1,1,1,0], fogo: [1,1,1,1,1], morte: [1,0,0,0,1], noturno: [0,0,0,0,0], planta: [1,1,0,0,0], sombra: [1,1,1,1,1], vigor: [1,1,1,1,0], vileza: [1,1,1,1,0] };
+const OLHA_DIR: Record<string, number[]> = { arcano: [0,0,1,1,0], espaco: [1,1,1,1,0], fada: [0,1,1,1,1], fogo: [1,1,1,1,1], morte: [1,1,0,0,1], noturno: [0,1,1,1,1], planta: [1,1,0,1,1], sombra: [1,1,1,1,1], vigor: [1,1,1,1,0], vileza: [1,1,1,1,0] };
 // Cristal-ovo do "Seu Soulmon está esperando" (dono, 09/11): toque = chacoalhada + brilho.
 function ovo() {
   const o = $('[data-ovo]'); if (!o) return;
@@ -342,16 +342,18 @@ function companheiro() {
   const rotulo = () => `${raiz.dataset.alt} ${els[lin] ?? lin}, ${nomes[estagio]}`;
   // Quatro pontos de evolução espalhados pelas seções depois do sorteio.
   const secoes = $$('main section').filter((x) => x !== raiz && (raiz.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING));
-  const marcos = [1, 2, 3, 4].map((k) => secoes[Math.min(secoes.length - 1, Math.round((k * (secoes.length - 1)) / 4))]).filter(Boolean);
+  const marcos = secoes.slice(0, formas.length - 1); // um estágio por seção; seções além disso não evoluem
+  let falouAuto = false;
   const avaliar = () => {
     if (!lin) return;
     const meio = innerHeight * 0.6; let n = 0;
     marcos.forEach((m, k) => { if (m.getBoundingClientRect().top < meio) n = k + 1; });
-    alvo = Math.max(alvo, Math.min(n, formas.length - 1)); proxima();
+    if (n >= 1 && !falouAuto) { falouAuto = true; falar(); }
+    alvo = Math.min(n, formas.length - 1); proxima();
   };
   const proxima = () => {
-    if (correndo || estagio >= alvo) return;
-    correndo = true; estagio += 1;
+    if (correndo || estagio === alvo) return;
+    correndo = true; estagio += alvo > estagio ? 1 : -1;
     const trocar = () => { cimg.src = src(lin, estagio); cimg.alt = rotulo(); virar(); };
     if (reduzido) { trocar(); correndo = false; proxima(); return; }
     comp.classList.remove('evoluindo'); void comp.offsetWidth; comp.classList.add('evoluindo');

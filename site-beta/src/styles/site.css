@@ -1133,3 +1133,10 @@ main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recurs
   -webkit-mask-image: radial-gradient(closest-side, #000 60%, transparent); mask-image: radial-gradient(closest-side, #000 60%, transparent); }
 .area-arte.predio { display: grid; place-items: center; background: radial-gradient(circle at 50% 60%, #0e4a4c, #031a1d 70%); }
 .area-arte.predio img { position: static; width: auto; height: 92%; max-width: 92%; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 6px 8px rgba(0,0,0,.5)); }
+
+/* 09/11: fundo atrás de cada forma do Colete e do Soulmon sorteado (brilho turquesa + chão), no padrão do site */
+.colete-carta img, .colete-trilho li img, .sorteio-palco, .meu-palco { background: radial-gradient(ellipse 60% 55% at 50% 52%, rgba(95,243,224,.22), rgba(14,74,76,.35) 55%, transparent 75%), radial-gradient(ellipse 42% 9% at 50% 90%, rgba(1,12,14,.75), transparent 70%); }
+.sorteio-palco, .meu-palco { border-radius: 8px; }
+.cartao .tela .combate-video { object-fit: cover; object-position: 50% 50%; }
+.colete-item img { background: radial-gradient(ellipse 58% 52% at 50% 50%, rgba(95,243,224,.38), rgba(20,112,108,.35) 50%, transparent 74%), radial-gradient(ellipse 40% 9% at 50% 92%, rgba(0,0,0,.6), transparent 70%) !important; }
+.colete-item:not(.falta) { background: radial-gradient(ellipse 60% 46% at 50% 40%, rgba(95,243,224,.55), rgba(20,112,108,.45) 50%, rgba(8,40,42,.2) 80%), var(--sb-sup) !important; }
