@@ -50,6 +50,7 @@ const GAME_STATE = 'soulmon_state_v1';
  */
 const NOVAS_DESDE_20_10_2026: readonly string[] = [
   'soulmon-mail-announced',
+  'soulmon-play-review',
   'soulmon-foco-plan-draft',
   'soulmon-foco-journey-keys',
   'soulmon-foco-journey-prefs',
