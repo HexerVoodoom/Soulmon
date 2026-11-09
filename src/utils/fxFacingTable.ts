@@ -55,7 +55,7 @@ export const FX_FACING_TABLE: Readonly<Record<string, string>> = {
   'cavaleiro_absoluto': 'RLS',
   ceifa: 'RLL',
   'ceifador_estelar': 'RLL',
-  'chama_azul': 'RLL',
+  'chama_azul': 'RLS',
   'chama_demoniaca': 'RRS',
   'chama_solar': 'RLS',
   ciclo: 'RLS',
