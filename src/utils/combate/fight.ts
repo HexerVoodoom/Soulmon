@@ -62,6 +62,14 @@ export function hpExibidoPvp(combatantHp: number): number {
   return hpPoints(combatantHp);
 }
 
+/** Fator SÓ VISUAL de ataque/defesa/velocidade (decisão do dono, 09/11/2026, §251). HP não multiplica. */
+export const STAT_DISPLAY_SCALE = 10;
+
+/** Ataque, defesa ou velocidade como a tela mostra: valor de combate × `STAT_DISPLAY_SCALE`, arredondado. Mecânica intocada. */
+export function statExibido(v: number): number {
+  return Math.round(v * STAT_DISPLAY_SCALE);
+}
+
 /** Points removed by a hit worth `frac` of a `pts`-point bar: at least 1 when it does any damage, 0 when it does none. */
 export function damagePoints(frac: number, pts: number): number {
   return frac > 1e-9 ? Math.max(1, Math.round(frac * pts)) : 0;

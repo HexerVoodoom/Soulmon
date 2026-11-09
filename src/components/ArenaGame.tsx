@@ -91,7 +91,7 @@ import {
 } from '../utils/arena';
 import { mulberry32 } from '../utils/combate/rng';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
-import { hpPoints } from '../utils/combate/fight';
+import { hpPoints, statExibido } from '../utils/combate/fight';
 import type { GroupResult } from '../utils/combate/group';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
@@ -519,7 +519,7 @@ export function ArenaGame({
           {/* A ficha em `.chip.tag` (D-J11): HP/Power/Essence, valor em `ink`. */}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
             <StatTag label={isPt ? 'Vida' : 'HP'} value={hpMax} />
-            <StatTag label={isPt ? 'Poder' : 'Power'} value={jogador.combatant.atk} />
+            <StatTag label={isPt ? 'Poder' : 'Power'} value={statExibido(jogador.combatant.atk)} />
             <StatTag label={isPt ? 'Essência' : 'Essence'} value={isPt ? elementoNomeDe(ident.basico.elemento).pt : elementoNomeDe(ident.basico.elemento).en} />
           </div>
 

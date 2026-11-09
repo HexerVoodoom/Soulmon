@@ -12,3 +12,11 @@ describe('hpExibidoPvp (§252: o duelo mostra o HP base da Arena)', () => {
     expect(PVP_HP_SCALE).toBe(1.7);
   });
 });
+
+import { statExibido } from './fight';
+describe('statExibido (§251: ataque/defesa/velocidade ×10 só na tela)', () => {
+  it('multiplica por 10 e arredonda', () => {
+    expect(statExibido(4.26)).toBe(43);
+    expect(statExibido(0)).toBe(0);
+  });
+});
