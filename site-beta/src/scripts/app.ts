@@ -339,7 +339,7 @@ function companheiro() {
   const virar = () => { comp.classList.toggle('espelha', (OLHA_DIR[lin] ?? [])[estagio] === 1); };
   const falas = JSON.parse(raiz.dataset.falas ?? '[]') as string[]; const balao = $('[data-comp-fala]', comp)!; let ultFala = -1; let tFala = 0;
   const falar = () => { let i = Math.floor(Math.random() * falas.length); if (i === ultFala) i = (i + 1) % falas.length; ultFala = i; balao.textContent = falas[i]; balao.hidden = false; clearTimeout(tFala); tFala = window.setTimeout(() => { balao.hidden = true; }, 3200); };
-  const rotulo = () => `${raiz.dataset.alt} ${els[lin] ?? lin}, ${nomes[estagio]}`;
+  const rotulo = () => `${raiz.dataset.alt} ${els[lin === 'noturno' ? 'sombra' : lin] ?? lin}, ${nomes[estagio]}`;
   // Quatro pontos de evolução espalhados pelas seções depois do sorteio.
   const secoes = $$('main section').filter((x) => x !== raiz && (raiz.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING));
   const marcos = secoes.slice(0, formas.length - 1); // um estágio por seção; seções além disso não evoluem
@@ -370,7 +370,7 @@ function companheiro() {
     lin = linhas[i]; estagio = 0; alvo = 0;
     formas.forEach((_, k) => { new Image().src = src(lin, k); });
     img.src = src(lin, 0); img.alt = rotulo(); img.hidden = false; sombra.hidden = true;
-    info.replaceChildren(); const ic = document.createElement('img'); ic.src = `${raiz.dataset.elBase}${lin}.webp`; ic.width = ic.height = 48; ic.alt = els[lin] ?? lin; ic.title = ic.alt; ic.className = 'ico-el'; ic.onerror = () => { ic.hidden = true; }; info.append(ic);
+    info.replaceChildren(); const elx = lin === 'noturno' ? 'sombra' : lin; const ic = document.createElement('img'); ic.src = `${raiz.dataset.elBase}${elx}.webp`; ic.width = ic.height = 48; ic.alt = els[elx] ?? elx; ic.title = ic.alt; ic.className = 'ico-el'; ic.onerror = () => { ic.hidden = true; }; info.append(ic);
     if (!reduzido) { img.classList.remove('surge'); void img.offsetWidth; img.classList.add('surge'); }
     cimg.src = src(lin, 0); cimg.alt = rotulo(); comp.hidden = false; virar();
     if (raiz.dataset.outro) bt.textContent = raiz.dataset.outro;

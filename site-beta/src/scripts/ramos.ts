@@ -45,7 +45,7 @@ function modal() {
   elimg.addEventListener('load', () => { elimg.hidden = false; });
   document.addEventListener('click', (e) => {
     const bt = (e.target as Element).closest<HTMLElement>('[data-ramo]'); if (!bt) return;
-    const i = Number(bt.dataset.ramoI); const el = bt.dataset.ramoEl || '';
+    const i = Number(bt.dataset.ramoI); const el0 = bt.dataset.ramoEl || ''; const el = el0 === 'noturno' ? 'sombra' : el0; // Noturno usa o elemento Sombra (dono, 09/11)
     origem = bt;
     const si = bt.querySelector('img');
     img.src = si?.currentSrc || si?.src || ''; img.alt = bt.dataset.ramoNome || '';
