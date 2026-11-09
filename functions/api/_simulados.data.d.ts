@@ -8,3 +8,4 @@ export declare const SIMULADOS: ReadonlyArray<Simulado>;
 export declare const ART_LINE_BY_ELEMENT: Readonly<Record<string, string>>;
 export declare const SIM_EPOCH: string;
 export declare const SIM_ANCORA_DIA: string;
+export declare const SIM_ELEMENTO_REVISADO: Readonly<Record<string, { de: string; para: string }>>;
