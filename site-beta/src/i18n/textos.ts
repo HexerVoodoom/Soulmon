@@ -13,7 +13,7 @@ const pt = {
   hero: {
     vagasNum: '50', vagasTx: 'vagas no beta para Android.',
     vagasEspera: 'Vagas desta rodada preenchidas. Entre na fila.',
-    ver: 'Ver o jogo', loja: 'Android, pela Google Play.',
+    loja: 'Disponível no Google Play'
   },
   n404: { h1: 'Página não encontrada', p: 'Esse endereço não existe, ou mudou de lugar.', volta: 'Voltar ao início' },
   rotulos: { arte: 'Arte', gameplay: 'Gameplay real', demo: 'Demonstração', cine: 'Cinemática', trailer: 'Trailer' },
@@ -31,26 +31,27 @@ const pt = {
   ciclo: {
     h2: 'Faz a tarefa, seu Soulmon evolui.',
     frase: 'A tela de verdade, e uma demonstração para você tocar.',
-    demo: 'Toque para marcar',
+    demo: 'Toque para marcar', nomes: ['Rookie', 'Champion', 'Ultimate', 'Mega', 'Ultra'],
     hoje: 'Hoje', missao: 'Missão', habitos: 'Hábitos',
     tarefasRotulo: 'Tarefas de exemplo',
     tarefas: ['Lavar a louça', 'Responder e-mail', 'Ler dez páginas', 'Regar as plantas'],
     formas: ['rookie', 'champion', 'ultimate', 'mega', 'ultra'], // so nomes de arquivo; nunca exibir
     forma: 'Forma', de: 'de',
-    alt: 'Soulmon da linha planta,',
+    alt: 'Soulmon da linha fogo,',
     fim: 'As cinco formas de uma mesma linha.',
-    recomecar: 'Recomeçar', listaRotulo: 'Os cinco estágios de um Soulmon da linha planta',
+    recomecar: 'Recomeçar', listaRotulo: 'Os cinco estágios de um Soulmon da linha fogo',
   },
   soul: {
     h2: 'Seu Soulmon é só seu',
     frase: 'Nasce de um teste de personalidade; o elemento muda o corpo e o combate.',
-    num: '20', numTx: 'elementos', num2Pre: 'mais de', num2: '200', num2Tx: 'combinações',
-    arvoreH: 'Cinco formas, três caminhos',
+    num: '20', numTx: 'elementos base', num2Pre: 'mais de', num2: '200', num2Tx: 'combinações',
+    arvoreH: 'O que você faz influencia no resultado',
     caminhos: ['Poder', 'Harmonia', 'Benevolência'],
     arvoreRotulo: 'Árvore de evolução: um caminho revelado, os outros em sombra',
     oculta: 'Forma ainda não revelada', descobrir: 'A descobrir',
-    linhas: ['Planta', 'Fada', 'Fogo'], linhaRotulo: 'Linha de evolução', linhaAnt: 'Linha anterior', linhaProx: 'Próxima linha', sortear: 'Sortear', sorteioRotulo: 'Sorteio de Soulmon', sombra: 'Quem será?', elemento: 'Elemento', altSorteio: 'Soulmon sorteado, elemento',
+    linhas: ['Planta', 'Fada', 'Fogo'], linhaRotulo: 'Linha de evolução', linhaAnt: 'Linha anterior', linhaProx: 'Próxima linha', sortear: 'Aleatório', sorteioRotulo: 'Conheça algum Soulmon', sombra: 'Conheça algum Soulmon', elemento: 'Elemento', altSorteio: 'Soulmon sorteado, elemento',
   },
+  colete: { h2: 'Colete todas as formas', frase: 'A mesma linha, o mesmo caminho, outro elemento: com poções elementais, seu Soulmon ganha uma forma nova para cada um. Colecione todas.', rot: 'Linha fogo, caminho Poder', falta: 'Forma a descobrir' },
   universo: {
     h2: 'O universo', frase: 'Lugares, habitantes, jogos e elementos.',
     abasRotulo: 'Explorar o universo',
@@ -62,18 +63,17 @@ const pt = {
     els: { agua: 'Água', ar: 'Ar', arcano: 'Arcano', eletricidade: 'Eletricidade', espaco: 'Espaço', fada: 'Fada', fogo: 'Fogo', gravidade: 'Gravidade', industrial: 'Industrial', luz: 'Luz', marcial: 'Marcial', morte: 'Morte', planta: 'Planta', som: 'Som', sombra: 'Sombra', tempo: 'Tempo', terra: 'Terra', vida: 'Vida', vigor: 'Vigor', vileza: 'Vileza' } as Record<string, string>,
     ocultoRotulo: 'Elemento ainda não revelado', combinacoes: '+190 combinações', combinacoesTx: 'Os 20 elementos se combinam em pares.',
     lugares: { exploracao: 'Passeio e Endless Rift.', jogos: 'Minijogos e Mind Workshop.', arena: 'Torneio e duelos.', hall: 'Feira, amigos e Grove.', guilda: 'Casa e Missão do clã.', laboratorio: 'Evolução e perfil do Soulmon.', forja: 'Ferramentas para as tarefas difíceis.' } as Record<string, string>,
-    anterior: 'Anterior', proximo: 'Próximo', fechar: 'Fechar', falaDe: 'Fala de', morador: 'Habitante',
+    jogosH: 'Minijogos', anterior: 'Anterior', proximo: 'Próximo', fechar: 'Fechar', falaDe: 'Fala de', morador: 'Habitante',
   },
   recursos: {
-    h2: 'O que você faz', frase: 'Cuide, explore e jogue, um pouco por dia.',
+    h2: 'Gameplay', frase: 'Cuide, explore e jogue, um pouco por dia.',
     cartoes: [
-      ['combate', 'PvP e PvE', 'Duelos no Torneio e descidas no Endless Rift.', 'Combate na Arena do Soulmon: seu Soulmon contra um adversário, com as barras de vida.'],
+      ['combate', 'PvP e PvE', 'Duelos no Torneio e na Arena.', 'Combate na Arena do Soulmon: seu Soulmon contra um adversário, com as barras de vida.'],
       ['rift', 'Endless Rift', 'Uma descida sem teto de camadas.', 'Endless Rift no Soulmon: camada 1, luta contra um Soulmon selvagem.'],
-      ['hall', 'Amigos e guilda', 'Presentes, Feira e Salão do Clã.', 'Mapa do Hall no Soulmon, com Feira, Grove e Salão do Clã.'],
-      ['jogos', 'Jogos rápidos', 'Minijogos que rendem Bits.', 'Mapa dos Jogos no Soulmon, com Salão de Jogos e Ateliê da Mente.'],
+      ['hall', 'Compartilhe seu progresso e ajude amigos', 'Cresça junto com seus amigos.', 'Mapa do Hall no Soulmon, com Feira, Grove e Salão do Clã.'],
     ] as [string, string, string, string][],
   },
-  video: { capaH: 'Um mundo de distritos para explorar', capaP: 'Cada lugar tem seu guardião', h2: 'Um minuto de Soulmon', legenda: 'Telas do app e a música do jogo. Com som.', alt: 'Trailer do Soulmon, 59 segundos, com música e sem narração.' },
+  video: { capaH: 'Um mundo de distritos para explorar', capaP: 'Cada lugar tem seu guardião', h2: 'Trailer', legenda: 'Telas do app e a música do jogo. Com som.', alt: 'Trailer do Soulmon, 59 segundos, com música e sem narração.' },
   entrar: {
     h2: 'Como entrar', frase: 'Três passos, sem pressa.',
     passos: [
@@ -111,7 +111,7 @@ const pt = {
     },
   },
   faq: {
-    h2: 'Perguntas',
+    h2: 'FAQ',
     itens: [
       ['Quanto custa?', 'Entrar no beta não custa nada. O jogo tem loja, e compras dentro do beta são de teste.'],
       ['Funciona no iPhone?', 'Não. O beta é só para Android.'],
@@ -134,7 +134,7 @@ const en: typeof pt = {
   hero: {
     vagasNum: '50', vagasTx: 'spots in the Android beta.',
     vagasEspera: 'This round is full. Join the line.',
-    ver: 'See the game', loja: 'Android, via Google Play.',
+    loja: 'Get it on Google Play'
   },
   n404: { h1: 'Page not found', p: 'That address does not exist, or it moved.', volta: 'Back to home' },
   rotulos: { arte: 'Art', gameplay: 'Real gameplay', demo: 'Demo', cine: 'Cinematic', trailer: 'Trailer' },
@@ -152,26 +152,27 @@ const en: typeof pt = {
   ciclo: {
     h2: 'Do the task, your Soulmon evolves.',
     frase: 'The real screen, and a demo you can tap.',
-    demo: 'Tap to check',
+    demo: 'Tap to check', nomes: ['Rookie', 'Champion', 'Ultimate', 'Mega', 'Ultra'],
     hoje: 'Today', missao: 'Mission', habitos: 'Habits',
     tarefasRotulo: 'Sample tasks',
     tarefas: ['Wash the dishes', 'Answer that email', 'Read ten pages', 'Water the plants'],
     formas: ['rookie', 'champion', 'ultimate', 'mega', 'ultra'],
     forma: 'Form', de: 'of',
-    alt: 'Plant line Soulmon,',
+    alt: 'Fire line Soulmon,',
     fim: 'Five forms of one line.',
-    recomecar: 'Start over', listaRotulo: 'The five stages of a plant line Soulmon',
+    recomecar: 'Start over', listaRotulo: 'The five stages of a fire line Soulmon',
   },
   soul: {
     h2: 'Your Soulmon is yours alone',
     frase: 'Born from a personality test; its element shapes its body and its fights.',
-    num: '20', numTx: 'elements', num2Pre: 'more than', num2: '200', num2Tx: 'combinations',
-    arvoreH: 'Five forms, three paths',
+    num: '20', numTx: 'base elements', num2Pre: 'more than', num2: '200', num2Tx: 'combinations',
+    arvoreH: 'What you do shapes the result',
     caminhos: ['Power', 'Harmony', 'Benevolence'],
     arvoreRotulo: 'Evolution tree: one path revealed, the others in shadow',
     oculta: 'Form not revealed yet', descobrir: 'To discover',
-    linhas: ['Plant', 'Fairy', 'Fire'], linhaRotulo: 'Evolution line', linhaAnt: 'Previous line', linhaProx: 'Next line', sortear: 'Draw', sorteioRotulo: 'Soulmon draw', sombra: 'Who will it be?', elemento: 'Element', altSorteio: 'Drawn Soulmon, element',
+    linhas: ['Plant', 'Fairy', 'Fire'], linhaRotulo: 'Evolution line', linhaAnt: 'Previous line', linhaProx: 'Next line', sortear: 'Random', sorteioRotulo: 'Meet a Soulmon', sombra: 'Meet a Soulmon', elemento: 'Element', altSorteio: 'Drawn Soulmon, element',
   },
+  colete: { h2: 'Collect every form', frase: 'Same line, same path, a different element: with elemental potions your Soulmon takes a new form for each one. Collect them all.', rot: 'Fire line, Power path', falta: 'Form to discover' },
   universo: {
     h2: 'The world', frase: 'Places, people, games and elements.',
     abasRotulo: 'Explore the world',
@@ -183,18 +184,17 @@ const en: typeof pt = {
     els: { agua: 'Water', ar: 'Air', arcano: 'Arcane', eletricidade: 'Electricity', espaco: 'Space', fada: 'Fairy', fogo: 'Fire', gravidade: 'Gravity', industrial: 'Industrial', luz: 'Light', marcial: 'Martial', morte: 'Death', planta: 'Plant', som: 'Sound', sombra: 'Shadow', tempo: 'Time', terra: 'Earth', vida: 'Life', vigor: 'Vigor', vileza: 'Vileness' },
     ocultoRotulo: 'Element not revealed yet', combinacoes: '+190 combinations', combinacoesTx: 'The 20 elements combine in pairs.',
     lugares: { exploracao: 'Strolls and the Endless Rift.', jogos: 'Minigames and Mind Workshop.', arena: 'Tournament and duels.', hall: 'The Fair, friends and the Grove.', guilda: "Your clan's House and Mission.", laboratorio: "Evolution and your Soulmon's profile.", forja: 'Tools for the hardest tasks.' },
-    anterior: 'Previous', proximo: 'Next', fechar: 'Close', falaDe: 'Says', morador: 'Inhabitant',
+    jogosH: 'Minigames', anterior: 'Previous', proximo: 'Next', fechar: 'Close', falaDe: 'Says', morador: 'Inhabitant',
   },
   recursos: {
-    h2: 'What you do', frase: 'Care, explore and play, a little each day.',
+    h2: 'Gameplay', frase: 'Care, explore and play, a little each day.',
     cartoes: [
-      ['combate', 'PvP and PvE', 'Duels in the Tournament and Endless Rift descents.', 'Soulmon Arena combat: your Soulmon against an opponent, with health bars.'],
+      ['combate', 'PvP and PvE', 'Duels in the Tournament and the Arena.', 'Soulmon Arena combat: your Soulmon against an opponent, with health bars.'],
       ['rift', 'Endless Rift', 'A descent with no floor limit.', 'Soulmon Endless Rift: layer 1, a fight against a wild Soulmon.'],
-      ['hall', 'Friends and guild', 'Gifts, the Fair and the Clan Hall.', 'Soulmon Hall map, with the Fair, the Grove and the Clan Hall.'],
-      ['jogos', 'Quick games', 'Minigames that earn Bits.', 'Soulmon Games map, with the Game Hall and the Mind Workshop.'],
+      ['hall', 'Share your progress and help your friends', 'Grow together with your friends.', 'Soulmon Hall map, with the Fair, the Grove and the Clan Hall.'],
     ],
   },
-  video: { capaH: 'A world of districts to explore', capaP: 'Every place has its guardian', h2: 'One minute of Soulmon', legenda: "App screens and the game's music. Sound on.", alt: 'Soulmon trailer, 59 seconds, with music and no narration.' },
+  video: { capaH: 'A world of districts to explore', capaP: 'Every place has its guardian', h2: 'Trailer', legenda: "App screens and the game's music. Sound on.", alt: 'Soulmon trailer, 59 seconds, with music and no narration.' },
   entrar: {
     h2: 'How to join', frase: 'Three steps, no rush.',
     passos: [
@@ -232,7 +232,7 @@ const en: typeof pt = {
     },
   },
   faq: {
-    h2: 'Questions',
+    h2: 'FAQ',
     itens: [
       ['What does it cost?', 'Joining the beta costs nothing. The game has a shop, and purchases during the beta are test purchases.'],
       ['Does it work on iPhone?', 'No. The beta is Android only.'],

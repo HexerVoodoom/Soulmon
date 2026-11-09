@@ -42,8 +42,8 @@ describe('copy do site', () => {
     // trailer de 06/11 vetado (rótulos internos e "ciência do comportamento"): slot desligado e fora de public/
     for (const l of ['pt', 'en']) { expect(midia.trailer[l].gameplay).toBe(false); expect(existsSync(`public${midia.trailer[l].src}`)).toBe(!!midia.trailer[l].ativo); }
   });
-  it('nada de rótulo interno de estágio na copy pública', () => {
-    expect(JSON.stringify({ ...TEXTOS.pt, ciclo: { ...TEXTOS.pt.ciclo, formas: [] } }) + JSON.stringify({ ...TEXTOS.en, ciclo: { ...TEXTOS.en.ciclo, formas: [] } })).not.toMatch(/rookie|champion|ultimate|mega|ultra/i);
+  it('nomes das formas só onde o dono pediu (09/11): ciclo.nomes', () => {
+    expect(JSON.stringify({ ...TEXTOS.pt, ciclo: { ...TEXTOS.pt.ciclo, formas: [], nomes: [] } }) + JSON.stringify({ ...TEXTOS.en, ciclo: { ...TEXTOS.en.ciclo, formas: [], nomes: [] } })).not.toMatch(/rookie|champion|ultimate|mega|ultra/i);
   });
   it('landing não usa arte vetada', () => {
     for (const t of ['starters/', 'mapas-recriados', 'bg-mapa', 'mapa/mercado', 'mapa-mundi', 'type="checkbox"']) expect(landing).not.toContain(t);
@@ -136,7 +136,8 @@ describe('v5: hero com loop real, gravidade-champion e capa do trailer sem texto
   });
   it('o loop real (gameplay:true) está no hero e é o único tocando por vez', () => {
     for (const l of ['pt', 'en']) { const v = midia.videos[l][0]; expect(v.gameplay).toBe(true); expect(existsSync(`public${v.posterP}`)).toBe(true); }
-    expect(landing).toMatch(/classe="hero-aparelho"[^>]*rotulo=\{t\.rotulos\.gameplay\}/);
+    expect(landing).not.toContain('hero-aparelho'); // 09/11: o dono tirou o celular do hero; o loop fica só em "Faz a tarefa", sem rótulo nem botão
+    expect(landing).toMatch(/classe="ciclo-aparelho"[^>]*auto limpo/);
     expect(app).toMatch(/for \(const o of loops\) if \(o !== v && !o\.paused\) o\.pause\(\)/);
   });
   it('mp4 não baixa antes do load/visível; autoplay só com muted, sem reduced-motion/save-data e em 4g', () => {
@@ -152,7 +153,7 @@ describe('v5: hero com loop real, gravidade-champion e capa do trailer sem texto
     }
     expect(TEXTOS.pt.video.capaH).toBe('Um mundo de distritos para explorar');
     expect(TEXTOS.pt.video.capaP).toBe('Cada lugar tem seu guardião');
-    expect(landing).toContain('{t.video.capaH}');
+    expect(landing).not.toContain('{t.video.capaH}'); // 09/11: dono tirou o título da capa
     expect(css).toMatch(/\.capa-texto[^}]*linear-gradient/);
   });
   it('v5b: capa é mapa da main (diferente do hero); arte do hero sem filtro; botão fora da tela; limiar de altura 619px', () => {

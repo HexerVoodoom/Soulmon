@@ -33,7 +33,7 @@ const hset = (base: string, ws: number[], ext: string) => ws.map((w) => `${b(bas
 const sitekey = import.meta.env.PUBLIC_TURNSTILE_SITEKEY ?? '';
 const strings = {
   share: f.shareTxt, copiado: f.copiado, falhaCopia: f.falhaCopia, erros: f.erros, enviando: f.enviando,
-  forma: c.forma, de: c.de, alt: c.alt, formas: c.formas, contato: CONTATO, okH: f.okH, ok: f.ok, esperaH: f.esperaH, espera: f.espera, feito: f.feito,
+  forma: c.forma, de: c.de, alt: c.alt, formas: c.formas, nomes: c.nomes, contato: CONTATO, okH: f.okH, ok: f.ok, esperaH: f.esperaH, espera: f.espera, feito: f.feito,
   cta: t.cta, ctaEspera: t.ctaEspera, vagasEspera: t.hero.vagasEspera, enviarEspera: f.enviarEspera, pausar: j.pausar, tocar: j.tocar,
 };
 const logo = b(assets.logo.src);
@@ -65,14 +65,6 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
     <a class="botao compacto topo-cta" href="#inscrever" data-cta data-topo-cta hidden>{t.cta}</a>
   </header>
 
-  <div class="barra" aria-hidden="true" data-barra hidden>
-    <span class="barra-capa"></span>
-    <span class="barra-trilho"><i data-barra-cheio></i>
-      {[0, 1, 2, 3, 4].map((n) => <b class="barra-no" style={`--n:${n}`} data-no></b>)}
-    </span>
-    <span class="barra-capa baixo"></span>
-  </div>
-
   <!-- 1 · Hero: Exploração em tela cheia, elenco pisando no mapa -->
   <section class="cena hero" id="topo" aria-labelledby="hero-h">
     {heroArte.desktop && heroArte.celular ? (
@@ -99,12 +91,10 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         <h1 id="hero-h">{t.h1}</h1>
         <p class="vagas-linha" data-vagas-linha><span class="num-g">{t.hero.vagasNum}</span> <span>{t.hero.vagasTx}</span></p>
       </div>
-      {loop && <Aparelho loop={loop} classe="hero-aparelho" rotulo={t.rotulos.gameplay} alt={j.videoAlt} tocar={j.tocar} erro={j.erro} abrir={j.abrir} auto lcp />}
       <div class="hero-acao veu-h">
         <a class="botao primario hero-cta" href="#inscrever" data-cta data-hero-cta>{t.cta}</a>
-        <a class="botao contorno hero-ver" href="#ciclo">{t.hero.ver}</a>
-        <a class="hero-ver-link" href="#ciclo">{t.hero.ver}</a>
-        <p class="loja"><svg class="loja-ico" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M4 8h16l-1.2 12H5.2L4 8Z"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M9 10V6a3 3 0 0 1 6 0v4"/></svg>{t.hero.loja}</p>
+        {/* Ícone da Play (PROVISÓRIO até o selo oficial "Disponível no Google Play"): triângulo nas 4 cores, sem texto. */}
+        <p class="loja" role="img" aria-label={t.hero.loja}><svg class="loja-ico" viewBox="0 0 24 26" width="28" height="30" aria-hidden="true"><path fill="#00d7fe" d="M1.2.6 13.4 12.9 1.2 25.2C.8 25 .5 24.5.5 23.9V2C.5 1.4.8.9 1.2.6Z"/><path fill="#00f076" d="M17.6 8.7 13.4 12.9 1.2.6c.4-.3 1-.3 1.6 0Z"/><path fill="#ff3a44" d="M17.6 17.1 2.8 25.3c-.6.3-1.2.3-1.6-.1l12.2-12.3Z"/><path fill="#ffd400" d="m17.6 8.7 4.6 2.6c1.3.7 1.3 2.2 0 2.9l-4.6 2.9-4.2-4.2Z"/></svg></p>
       </div>
     </div>
   </section>
@@ -116,18 +106,18 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         <Mapa id="laboratorio" desk="laboratorio-d" aD={841 / 600} fy={0.4} dfy={0.5} />
         <div class="ciclo-texto veu">
           <h2 id="ciclo-h">{c.h2}</h2>
-          <p class="frase">{c.frase}</p>
         </div>
-        {loop && <Aparelho loop={loop} classe="ciclo-aparelho" rotulo={t.rotulos.gameplay} alt={j.videoAlt} tocar={j.tocar} erro={j.erro} abrir={j.abrir} auto={false} />}
+        {loop && <Aparelho loop={loop} classe="ciclo-aparelho" alt={j.videoAlt} tocar={j.tocar} erro={j.erro} abrir={j.abrir} auto limpo />}
         <ol class="estagios" data-estatico aria-label={c.listaRotulo}>
-          {Formas.map((fm, i) => <li><img class="sprite" src={vazio} data-tarde-src={b(`/sprites/planta-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.forma} ${i + 1} ${c.de} 5`} /><noscript><img class="sprite" src={b(`/sprites/planta-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.forma} ${i + 1} ${c.de} 5`} /></noscript><span>{c.forma} {i + 1} {c.de} 5</span></li>)}
+          {Formas.map((fm, i) => <li><img class="sprite" src={vazio} data-tarde-src={b(`/sprites/fogo-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.nomes[i]}`} /><noscript><img class="sprite" src={b(`/sprites/fogo-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.nomes[i]}`} /></noscript><span>{c.nomes[i]}</span></li>)}
         </ol>
         <div class="demo-cena" data-cena hidden>
           <div class="cena-central">
-            <p class="forma-titulo" data-placa aria-hidden="true">{c.forma} 1 {c.de} 5</p>
+            {/* Nome da forma; o ícone de cada forma vem do dono (PROVISÓRIO: [data-ico-forma] fica vazio até o anexo). */}
+            <p class="forma-titulo" aria-hidden="true"><span class="ico-forma" data-ico-forma></span><span data-placa>{c.nomes[0]}</span></p>
             <div class="disco-caixa">
               <img class="disco" data-tarde-src={assets.disco.src ? b(assets.disco.src) : undefined} src={vazio} width="240" height="109" alt="" />
-              <img class="sprite" data-criatura data-tarde-src={b('/sprites/planta-rookie.webp')} src={vazio} width="256" height="256" alt={`${c.alt} ${c.forma} 1 ${c.de} 5`} />
+              <img class="sprite" data-criatura data-tarde-src={b('/sprites/fogo-rookie.webp')} src={vazio} width="256" height="256" alt={`${c.alt} ${c.nomes[0]}`} />
               <span class="clarao" data-clarao></span>
               <div class="cristal" aria-hidden="true">
                 <img data-c="apagado" src={vazio} data-tarde-src={b(assets.cristalApagado.src)} width="48" height="96" alt="" />
@@ -137,8 +127,8 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
             </div>
           </div>
           <div class="lista-bloco" data-tarefas>
-          <p class="demo-linha"><span class="rotulo rot-demo">{t.rotulos.demo}</span> <span>{c.demo}</span></p>
           <div class="lista-jogo moldura">
+            <span class="maozinha" data-mao aria-hidden="true"><svg viewBox="-1 0 22 15" width="66" height="45" shape-rendering="crispEdges"><g fill="#101418"><rect x='8' y='2' width='11' height='5'/><rect x='2' y='3' width='10' height='11'/><rect x='9' y='5' width='5' height='4'/><rect x='9' y='7' width='5' height='4'/><rect x='9' y='9' width='4' height='4'/><rect x='4' y='1' width='6' height='4'/><rect x='-1' y='2' width='5' height='12'/></g><g fill="#fff"><rect x='9' y='3' width='9' height='3'/><rect x='3' y='4' width='8' height='9'/><rect x='10' y='6' width='3' height='2'/><rect x='10' y='8' width='3' height='2'/><rect x='10' y='10' width='2' height='2'/><rect x='5' y='2' width='4' height='2'/><rect x='0' y='3' width='3' height='10'/></g><g fill="#b8c4cc"><rect x='10' y='8' width='3' height='0.6'/><rect x='10' y='10' width='3' height='0.6'/><rect x='2' y='3' width='1' height='10'/><rect x='4' y='12' width='6' height='1'/></g></svg></span>
             <p class="lista-cab"><span class="rot-hoje">{c.hoje}</span> <span class="rot-missao"><span data-missao aria-live="polite">0/{c.tarefas.length}</span></span></p>
             <ul aria-label={c.tarefasRotulo}>
               {c.tarefas.map((tx, i) => (
@@ -173,19 +163,19 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           <p class="numero"><span class="num-g">{s.num}</span> <span class="num-tx">{s.numTx}</span></p>
           <p class="numero"><span class="num-pre">{s.num2Pre}</span> <span class="num-g">{s.num2}</span> <span class="num-tx">{s.num2Tx}</span></p>
         </div>
-        <div class="sorteio ficha-moldura" role="group" aria-label={s.sorteioRotulo} data-sorteio data-pool={POOL} data-base={b('/sprites/')} data-els={JSON.stringify(u.els)} data-forma={c.forma} data-de={c.de} data-alt={s.altSorteio} data-elemento={s.elemento}>
+        <div class="sorteio ficha-moldura" role="group" aria-label={s.sorteioRotulo} data-sorteio data-pool={POOL} data-base={b('/sprites/')} data-els={JSON.stringify(u.els)} data-forma={c.forma} data-de={c.de} data-alt={s.altSorteio} data-elemento={s.elemento} data-nomes={JSON.stringify(c.nomes)} data-el-base={b('/el/')}>
           <div class="sorteio-palco">
-            <div class="sorteio-sombra" data-sort-sombra aria-hidden="true"><span>?</span></div>
+            <img class="sorteio-sombra sprite" data-sort-sombra aria-hidden="true" src={b('/sprites/agua-ultimate.webp')} width="256" height="256" alt="" loading="lazy" />
             <img class="sprite" data-sort-img hidden width="256" height="256" alt="" decoding="async" />
           </div>
+          {/* Duas linhas: elemento (ícone do elemento) e forma (ícone da forma: PROVISÓRIO até o anexo do dono). */}
           <p class="sorteio-info" data-sort-info aria-live="polite">{s.sombra}</p>
           <button type="button" class="botao primario sorteio-bt" data-sortear hidden>{s.sortear}</button>
         </div>
         <div class="arvore-bloco veu">
           <h3>{s.arvoreH}</h3>
-          <div class="linhas" data-linhas data-rotulo={s.linhaRotulo} hidden>
-            <div class="linhas-chips">{s.linhas.map((n, i) => <button type="button" class="chip-linha" data-linha-bt={i} aria-pressed={i === 0 ? 'true' : 'false'}>{n}</button>)}</div>
-          </div>
+          <div class="arvore-palco">
+          <button type="button" class="seta-linha esq" data-linha-ant aria-label={s.linhaAnt} hidden><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M15.5 3 6.5 12l9 9 2.1-2.1L10.7 12l6.9-6.9Z"/></svg></button>
           {['planta', 'fada', 'fogo'].map((lin, li) => (
           <ol class="arvore" data-linha={lin} aria-label={`${s.arvoreRotulo}: ${s.linhas[li]}`}>
               <li class="arvore-linha arvore-caminhos" aria-hidden="true"><span class="arvore-rot">&nbsp;</span><span class="arvore-nos">{s.caminhos.map((cm) => <span class="caminho">{cm}</span>)}</span></li>
@@ -195,10 +185,10 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
                   <>
                     {i > 0 && <li class="arvore-lig" aria-hidden="true"><Fragment set:html={i === 1 ? '<svg class="lv" viewBox="0 0 300 40" preserveAspectRatio="none"><path class="lg g" d="M150 0C150 22 50 18 50 40"/><path class="lg c" d="M150 0V40"/><path class="lg y" d="M150 0C150 22 250 18 250 40"/></svg><svg class="lh" viewBox="0 0 40 300" preserveAspectRatio="none"><path class="lg g" d="M0 150C22 150 18 46 40 46"/><path class="lg c" d="M0 150H40"/><path class="lg y" d="M0 150C22 150 18 254 40 254"/></svg>' : i === 4 ? '<svg class="lv" viewBox="0 0 300 40" preserveAspectRatio="none"><path class="lg g" d="M50 0C50 22 150 18 150 40"/><path class="lg c" d="M150 0V40"/><path class="lg y" d="M250 0C250 22 150 18 150 40"/></svg><svg class="lh" viewBox="0 0 40 300" preserveAspectRatio="none"><path class="lg g" d="M0 46C22 46 18 150 40 150"/><path class="lg c" d="M0 150H40"/><path class="lg y" d="M0 254C22 254 18 150 40 150"/></svg>' : '<svg class="lv" viewBox="0 0 300 40" preserveAspectRatio="none"><path class="lg g" d="M50 0V40"/><path class="lg c" d="M150 0V40"/><path class="lg y" d="M250 0V40"/></svg><svg class="lh" viewBox="0 0 40 300" preserveAspectRatio="none"><path class="lg g" d="M0 46H40"/><path class="lg c" d="M0 150H40"/><path class="lg y" d="M0 254H40"/></svg>'} /></li>}
                     <li class:list={['arvore-linha', { tres }]}>
-                      <span class="arvore-rot">{c.forma} {i + 1}</span>
+                      <span class="arvore-rot">{c.nomes[i]}</span>
                       <span class="arvore-nos">
                         {tres && <span class="no oculto" role="img" aria-label={s.descobrir}><span class="sombra-q" aria-hidden="true"><span>?</span></span></span>}
-                        <span class="no revelado"><img class="sprite" loading="lazy" src={b(`/sprites/${lin}-${fm}-128.webp`)} width="128" height="128" alt={`${s.linhas[li]}, ${c.forma} ${i + 1} ${c.de} 5`} /></span>
+                        <span class="no revelado"><img class="sprite" loading="lazy" src={b(`/sprites/${lin}-${fm}-128.webp`)} width="128" height="128" alt={`${s.linhas[li]}, ${c.nomes[i]}`} /></span>
                         {tres && <span class="no oculto" role="img" aria-label={s.descobrir}><span class="sombra-q" aria-hidden="true"><span>?</span></span></span>}
                       </span>
                     </li>
@@ -207,11 +197,28 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
               })}
             </ol>
           ))}
+          <button type="button" class="seta-linha dir" data-linha-prox aria-label={s.linhaProx} hidden><svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M8.5 3 6.4 5.1l6.9 6.9-6.9 6.9L8.5 21l9-9Z"/></svg></button>
+          </div>
           <p class="sr">{s.caminhos.join(', ')}</p>
         </div>
       </div>
     </section>
 
+    <!-- 4b · Colete todas as formas (pedido do dono, 09/11). PROVISÓRIO: as variantes elementais do fogo (caminho Poder) vêm da operacional;
+         cada slot [data-variante] troca a sombra pelo sprite quando o arquivo existir em public/sprites/colete/. -->
+    <section class="calmo colete" id="colete" aria-labelledby="colete-h">
+      <div class="colete-cab">
+        <h2 id="colete-h">{t.colete.h2}</h2>
+        <p class="frase">{t.colete.frase}</p>
+      </div>
+      <p class="colete-rot">{t.colete.rot}</p>
+      <ul class="colete-grade">
+        <li class="colete-item base"><img class="sprite" src={b('/sprites/fogo-ultimate.webp')} width="256" height="256" alt={`${t.colete.rot}: ${u.els.fogo}`} loading="lazy" /><span>{u.els.fogo}</span></li>
+        {['agua', 'industrial', 'fogo-azul', 'corda', 'raiz'].map((v) => (
+          <li class="colete-item falta" data-variante={v}><img class="sprite" src={b('/sprites/fogo-ultimate.webp')} width="256" height="256" alt={t.colete.falta} loading="lazy" /><span>?</span></li>
+        ))}
+      </ul>
+    </section>
     <!-- 5 · O universo: Hall, abas pedidas pelo dono -->
     <section class="cena universo" id="universo" aria-labelledby="universo-h">
       <Mapa id="hall" desk="hall-d" aD={821 / 600} fy={0.55} dfy={0.5} />
@@ -220,9 +227,6 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         <p class="frase">{u.frase}</p>
       </div>
       <div class="universo-corpo">
-        <div class="abas" data-abas data-rotulo={u.abasRotulo} hidden>
-          {u.abas.map((a, i) => <button type="button" class="aba" id={`aba-${i}`} data-aba={i}>{a}</button>)}
-        </div>
         <div class="painel" id="painel-0" data-painel>
           <h3 class="painel-h">{u.abas[0]}</h3>
           <ul class="grade areas">
@@ -238,16 +242,18 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
             ))}
           </ul>
         </div>
-        <div class="painel" id="painel-1" data-painel>
-          <h3 class="painel-h">{u.abas[1]}</h3>
-          <ul class="grade npcs">
-            {NPCS.map((n) => <li class="celula">{HABITA[n]
-              ? <button type="button" class="npc-bt" data-lugar={HABITA[n]} data-npc={b(`/npc/${n}.webp`)} data-habita aria-haspopup="dialog" aria-label={`${u.habitanteAlt}: ${u.areas.find(([id]) => id === HABITA[n])?.[1]}`}><img loading="lazy" src={b(`/npc/${n}.webp`)} width="256" height="256" alt="" /></button>
-              : <img loading="lazy" src={b(`/npc/${n}.webp`)} width="256" height="256" alt={u.habitanteAlt} />}</li>)}
-          </ul>
-        </div>
-        <div class="painel" id="painel-2" data-painel>
-          <h3 class="painel-h">{u.abas[2]}</h3>
+      </div>
+    </section>
+
+    <dialog class="popup npc-modal" role="dialog" data-npc-modal aria-labelledby="npc-h" aria-describedby="npc-p" data-falas={falas} data-morador={u.morador}>
+      <img class="npc-modal-img" data-npc-img src={vazio} width="256" height="256" alt="" />
+      <h2 id="npc-h" data-npc-h></h2>
+      <p id="npc-p" class="npc-fala" data-npc-p></p>
+      <button type="button" class="botao primario" data-npc-fechar>{u.fechar}</button>
+    </dialog>
+    <!-- Jogos: o lugar "Jogos" abre este modal com as capas dos minijogos (pedido do dono, 09/11) -->
+    <dialog class="popup jogos-modal" data-jogos-modal aria-labelledby="jogos-h">
+      <h2 id="jogos-h">{u.jogosH}</h2>
           <ul class="grade jogos" tabindex="0" aria-label={u.jogosArte}>
             {u.jogos.map(([id, nome]) => (
               <li class="celula capa-jogo" aria-labelledby={`cj-${id}${id === 'calabouco' ? ` cj-${id}-s` : ''}`}>
@@ -259,22 +265,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
               </li>
             ))}
           </ul>
-        </div>
-        <div class="painel" id="painel-3" data-painel>
-          <h3 class="painel-h">{u.abas[3]}</h3>
-          <ul class="grade els">
-            {ELS.map((id) => <li class="celula"><img class="sprite" loading="lazy" src={b(`/el/${id}.webp`)} width="96" height="96" alt="" /><span>{u.els[id]}</span></li>)}
-            <li class="celula combos"><strong class="num-g">{u.combinacoes.split(' ')[0]}</strong><span>{u.combinacoes.split(' ').slice(1).join(' ')}</span><span class="combos-tx">{u.combinacoesTx}</span></li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <dialog class="popup npc-modal" role="dialog" data-npc-modal aria-labelledby="npc-h" aria-describedby="npc-p" data-falas={falas} data-morador={u.morador}>
-      <img class="npc-modal-img" data-npc-img src={vazio} width="256" height="256" alt="" />
-      <h2 id="npc-h" data-npc-h></h2>
-      <p id="npc-p" class="npc-fala" data-npc-p></p>
-      <button type="button" class="botao primario" data-npc-fechar>{u.fechar}</button>
+      <button type="button" class="botao primario" data-jogos-fechar>{u.fechar}</button>
     </dialog>
 
     <!-- 6 · O que você faz: Arena, 3 telas reais -->
@@ -322,8 +313,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
           <p class="frase">{t.video.legenda}</p>
         </div>
         <figure class="trailer-fig">
-          <figcaption class="rotulo rot-cine">{t.rotulos.trailer}</figcaption>
-          <div class="trailer-moldura">
+         <div class="trailer-moldura">
             {/* Sem autoplay e com som: a capa é um botão; o vídeo (com controles) só aparece depois do play. */}
             <button type="button" class="trailer-capa" data-trailer-capa hidden>
               <picture>
@@ -333,8 +323,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
                 <img src={`${b(capa.celular)}-480.webp`} srcset={`${b(capa.celular)}-480.webp 480w, ${b(capa.celular)}-720.webp 720w`} sizes="100vw" width="720" height="900" alt="" loading="lazy" decoding="async" />
               </picture>
               <span class="capa-texto">
-                <span class="capa-h">{t.video.capaH}</span>
-                <span class="capa-p">{t.video.capaP}</span>
+               <span class="capa-p">{t.video.capaP}</span>
               </span>
               <span class="sr">{j.tocar}: {t.video.alt}</span>
               <span class="trailer-play" aria-hidden="true"><svg viewBox="0 0 16 16" width="40" height="40"><path fill="currentColor" d="M5 2v12l9-6z"/></svg></span>
@@ -361,9 +350,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
       <ul class="ilhas" aria-hidden="true">{['arena-bosque', 'arena-salao', 'arena-lab'].map((n) => <li><picture><source type="image/avif" srcset={b(`/dono/${n}.avif`)} /><img src={b(`/dono/${n}.webp`)} width="360" height="237" alt="" loading="lazy" decoding="async" /></picture></li>)}</ul>
     </section>
 
-    <div class="divisor" role="presentation"><picture><source media="(min-width: 768px)" srcset={b('/site/divisor.webp')} /><img src={b('/site/divisor-336.webp')} width="336" height="72" alt="" loading="lazy" /></picture></div>
-
-    <!-- 9 · Perguntas -->
+   <!-- 9 · Perguntas -->
     <section class="calmo faq" id="perguntas" aria-labelledby="faq-h">
       <div class="cen-fundo" aria-hidden="true" style={cen('cen-ilhas')}></div>
       <h2 id="faq-h">{t.faq.h2}</h2>
@@ -384,7 +371,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         {/* 2x nos dois (pixel da criatura perto do pixel do mapa). Pés medidos com grade sobre a cena renderizada. */}
         <Cria s="planta-ultra" t={128} td={128} x={50} y={89} dx={24} dy={47} />
         <Cria s="agua-rookie" t={128} td={128} x={84} y={23} dx={73} dy={72} flip fase={500} />
-        <Cria s="vigor-rookie" t={128} td={128} x={16} y={23} dx={79} dy={56} flip fase={900} />
+        <Cria s="vigor-rookie" t={128} td={128} x={16} y={23} dx={79} dy={56} flipD fase={900} />
       </Mapa>
       <div class="inscrever-caixa veu">
         <h2 id="inscrever-h">{f.h2}</h2>

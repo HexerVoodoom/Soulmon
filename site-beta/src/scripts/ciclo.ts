@@ -1,6 +1,6 @@
 // Cena participativa do ciclo: tarefa -> chama -> cristal -> nova forma.
 // Sem GSAP (aparelho fraco ou falha de rede) a cena continua funcionando, só sem a corrida.
-type Strs = { forma: string; de: string; alt: string; formas: string[] };
+type Strs = { forma: string; de: string; alt: string; formas: string[]; nomes: string[] };
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, '');
 
 export async function iniciar(S: Strs, fraco: boolean) {
@@ -11,7 +11,7 @@ export async function iniciar(S: Strs, fraco: boolean) {
   const fim = $('[data-fim]'); const blocoTarefas = $('[data-tarefas]');
   const cristal = $('.cristal'); const botoes = [...document.querySelectorAll<HTMLButtonElement>('[data-tarefa]')];
 
-  S.formas.forEach((f) => { new Image().src = `${BASE}/sprites/planta-${f}.webp`; });
+  S.formas.forEach((f) => { new Image().src = `${BASE}/sprites/fogo-${f}.webp`; });
 
   let gsap: typeof import('gsap').gsap | null = null;
   let ST: typeof import('gsap/ScrollTrigger').ScrollTrigger | null = null;
@@ -29,8 +29,9 @@ export async function iniciar(S: Strs, fraco: boolean) {
   };
   const aplicarForma = () => {
     const f = S.formas[estagio];
-    criatura.src = `${BASE}/sprites/planta-${f}.webp`;
-    const rotulo = `${S.forma} ${estagio + 1} ${S.de} 5`; // nomes internos das formas nunca saem na tela nem em aria
+    criatura.src = `${BASE}/sprites/fogo-${f}.webp`;
+    const rotulo = S.nomes[estagio]; // nome da forma na tela (pedido do dono, 09/11)
+    document.querySelector<HTMLElement>('[data-ico-forma]')?.setAttribute('data-forma', f);
     criatura.alt = `${S.alt} ${rotulo}`;
     placa.textContent = rotulo;
     anuncio.textContent = `${rotulo}.`;
@@ -76,7 +77,9 @@ export async function iniciar(S: Strs, fraco: boolean) {
       .to(clarao, { opacity: 0, duration: 0.32, ease: 'none' }, '<');
   }
 
+  const mao = document.querySelector<HTMLElement>('[data-mao]');
   function marcar(i: number) {
+    mao?.classList.add('some');
     if (botoes[i].getAttribute('aria-checked') === 'true' || fila.includes(i)) return;
     // toque rápido nunca é ignorado: marca na hora (feedback) e entra na fila da animação, que acelera
     if (correndo) { marcado(botoes[i], true); fila.push(i); gsap?.globalTimeline.getChildren(false, false, true).forEach((t) => t.timeScale(2.5)); } else correr(i);
@@ -86,16 +89,18 @@ export async function iniciar(S: Strs, fraco: boolean) {
   document.querySelector('[data-recomecar]')!.addEventListener('click', () => {
     estagio = 0; aplicarForma(); anuncio.textContent = '';
     botoes.forEach((b) => { marcado(b, false); b.removeAttribute('aria-disabled'); });
-    fim.hidden = true; blocoTarefas.hidden = false; setCristal('apagado'); botoes[0].focus();
+    mao?.classList.remove('some'); fim.hidden = true; blocoTarefas.hidden = false; setCristal('apagado'); botoes[0].focus();
   });
   setCristal('apagado');
 
   if (!gsap || !ST) { secao.classList.add('sem-pin'); return; }
 
   // Rolar também avança, para quem não toca. Cabe só com tela alta o bastante (ver CSS).
-  if (getComputedStyle(palco).position === 'sticky') {
+  // Pedido do dono (09/11): rolar sem tocar também marca e evolui, com ou sem o palco preso.
+  const preso = getComputedStyle(palco).position === 'sticky';
+  {
     ST.create({
-      trigger: secao, start: 'top top', end: 'bottom bottom',
+      trigger: preso ? secao : blocoTarefas, start: preso ? 'top top' : 'top 85%', end: preso ? 'bottom bottom' : 'bottom 15%',
       onUpdate: (self) => {
         const alvo = Math.min(4, Math.floor(self.progress * 5.2));
         for (let i = 0; i < botoes.length && estagio + fila.length < alvo; i++) {

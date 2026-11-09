@@ -64,24 +64,6 @@ function quandoVisivel(el: Element | null, fn: () => void, margem = '0px') {
   io.observe(el);
 }
 
-// ---------- Barra lateral: progresso da página, só transform. Nós acendem quando a seção cruza o meio ----------
-function barra() {
-  const cheio = $('[data-barra-cheio]'); const nos = $$('[data-no]');
-  if (!cheio) return;
-  const chaves = ['#topo', '#ciclo', '#seu-soulmon', '#entrar', '#inscrever'].map((s) => $(s));
-  let pedido = 0;
-  const aplicar = () => {
-    pedido = 0;
-    const total = document.documentElement.scrollHeight - innerHeight;
-    const p = total > 0 ? Math.min(1, scrollY / total) : 0;
-    cheio.style.transform = `scaleY(${p})`;
-    nos.forEach((n, i) => { const el = chaves[i]; n.classList.toggle('aceso', !!el && el.getBoundingClientRect().top < innerHeight / 2); });
-  };
-  addEventListener('scroll', () => { if (!pedido) pedido = requestAnimationFrame(aplicar); }, { passive: true });
-  addEventListener('resize', aplicar);
-  depoisDoLoad(aplicar);
-}
-
 // ---------- Barra superior, CTA compacto e CTA fixo ----------
 function topoECta() {
   const topo = $('[data-topo]'); const hero = $('.hero'); const heroCta = $('[data-hero-cta]');
@@ -298,12 +280,19 @@ function sorteio() {
     const i = proximoSorteio(pool.length, ant); ant = i;
     const [id, el, forma] = pool[i];
     const nome = el.split(',').map((e) => els[e] ?? e).join(' + ');
-    const texto = `${raiz.dataset.elemento}: ${nome}.${forma ? ` ${raiz.dataset.forma} ${forma} ${raiz.dataset.de} 5.` : ''}`;
+    // Duas linhas (pedido do dono, 09/11): elemento com o ícone dele; forma com o ícone dela (PROVISÓRIO: .ico-forma vazio até o anexo).
+    const nomesF = JSON.parse(raiz.dataset.nomes!) as string[];
+    const nomeForma = forma ? nomesF[forma - 1] ?? '' : '';
     const pronto = () => {
-      img.alt = `${raiz.dataset.alt} ${nome}${forma ? `, ${raiz.dataset.forma} ${forma} ${raiz.dataset.de} 5` : ''}`;
-      img.hidden = false; sombra.hidden = true; info.textContent = texto;
-      raiz.scrollIntoView({ block: 'nearest', behavior: reduzido ? 'auto' : 'smooth' }); // scroll-margin-bottom do CSS deixa a folga da barra fixa
-      if (!reduzido) { img.classList.remove('surge'); void img.offsetWidth; img.classList.add('surge'); } // só opacidade/escala, nunca giro
+      img.alt = `${raiz.dataset.alt} ${nome}${nomeForma ? `, ${nomeForma}` : ''}`;
+      img.hidden = false; sombra.hidden = true;
+      info.replaceChildren();
+      const l1 = document.createElement('span'); l1.className = 'sort-linha';
+      for (const e of el.split(',')) { const ic = document.createElement('img'); ic.src = `${raiz.dataset.elBase}${e}.webp`; ic.width = ic.height = 32; ic.alt = ''; ic.className = 'ico-el'; l1.append(ic); }
+      l1.append(nome); info.append(l1);
+      if (nomeForma) { const l2 = document.createElement('span'); l2.className = 'sort-linha'; const ic = document.createElement('span'); ic.className = 'ico-forma'; ic.dataset.forma = String(forma); l2.append(ic, nomeForma); info.append(l2); }
+      raiz.scrollIntoView({ block: 'nearest', behavior: reduzido ? 'auto' : 'smooth' });
+      if (!reduzido) { img.classList.remove('surge'); void img.offsetWidth; img.classList.add('surge'); }
     };
     const novo = new Image(); novo.onload = () => { img.src = novo.src; pronto(); }; novo.onerror = pronto;
     novo.src = `${raiz.dataset.base}${id}.webp`;
@@ -312,14 +301,14 @@ function sorteio() {
 
 // ---------- Árvore: seletor de linha (Planta, Fada, Fogo). Sem JS, as três aparecem empilhadas ----------
 function linhasArvore() {
-  const caixa = $('[data-linhas]'); if (!caixa) return;
-  const bts = $$<HTMLButtonElement>('[data-linha-bt]', caixa); const arvores = $$('ol.arvore[data-linha]');
-  caixa.hidden = false; caixa.setAttribute('role', 'group'); caixa.setAttribute('aria-label', caixa.dataset.rotulo!);
-  const ver = (n: number) => { bts.forEach((x, i) => x.setAttribute('aria-pressed', String(i === n))); arvores.forEach((x, i) => { x.hidden = i !== n; }); };
-  bts.forEach((x, i) => x.addEventListener('click', () => ver(i)));
+  const arvores = $$('ol.arvore[data-linha]'); const ant = $<HTMLButtonElement>('[data-linha-ant]'); const prox = $<HTMLButtonElement>('[data-linha-prox]');
+  if (!arvores.length || !ant || !prox) return;
+  ant.hidden = prox.hidden = false;
+  let n = 0;
+  const ver = (k: number) => { n = (k + arvores.length) % arvores.length; arvores.forEach((x, i) => { x.hidden = i !== n; }); if (iniciado) requestAnimationFrame(ajustarSprites); };
+  ant.addEventListener('click', () => ver(n - 1)); prox.addEventListener('click', () => ver(n + 1));
   ver(0);
 }
-
 // ---------- Modal do NPC (Universo e Habitantes): <dialog> nativo prende o foco e fecha com Esc; o foco volta ao botão que abriu ----------
 function modalNpc() {
   const d = $<HTMLDialogElement>('[data-npc-modal]'); if (!d) return;
@@ -338,9 +327,20 @@ function modalNpc() {
   };
   document.addEventListener('click', (e) => {
     const bt = (e.target as Element).closest<HTMLElement>('.area-bt, .npc-bt'); if (!bt) return;
+    const jm = $<HTMLDialogElement>('[data-jogos-modal]');
+    if (bt.dataset.lugar === 'jogos' && jm && !bt.classList.contains('npc-bt')) {
+      origem = bt; jm.showModal(); $<HTMLButtonElement>('[data-jogos-fechar]', jm)!.focus();
+      jm.addEventListener('close', () => { origem?.focus(); origem = null; }, { once: true });
+      return;
+    }
     abrir(bt, bt.classList.contains('npc-bt'));
   });
   $('[data-npc-fechar]', d)!.addEventListener('click', () => d.close());
+  const jm = $<HTMLDialogElement>('[data-jogos-modal]');
+  if (jm) {
+    $('[data-jogos-fechar]', jm)!.addEventListener('click', () => jm.close());
+    jm.addEventListener('click', (e) => { if (e.target === jm) jm.close(); });
+  }
   d.addEventListener('click', (e) => { if (e.target === d) { const r = d.getBoundingClientRect(); const ev = e as MouseEvent; if (ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) d.close(); } });
   d.addEventListener('keydown', (e) => { if ((e as KeyboardEvent).key === 'Tab') { e.preventDefault(); $<HTMLButtonElement>('[data-npc-fechar]', d)!.focus(); } }); // um só controle: o foco não sai
   d.addEventListener('close', () => { origem?.focus(); origem = null; });
@@ -353,14 +353,17 @@ const rapida = !nav.connection?.effectiveType || nav.connection.effectiveType ==
 const loops: HTMLVideoElement[] = [];
 function loopReal() {
   for (const fig of $$('[data-loop]')) {
-    const v = $<HTMLVideoElement>('[data-video]', fig)!; const bt = $<HTMLButtonElement>('[data-play]', fig)!;
-    const icoPlay = $('[data-ico-play]', bt)!; const icoPausa = $('[data-ico-pausa]', bt)!; const erro = $('[data-video-erro]', fig)!;
+    const v = $<HTMLVideoElement>('[data-video]', fig)!; const erro = $('[data-video-erro]', fig)!;
+    // Aparelho "limpo" (pedido do dono, 09/11): sem botão; toca sozinho e um toque na tela pausa/retoma.
+    const bt = $<HTMLButtonElement>('[data-play]', fig) ?? Object.assign(fig, {}) as unknown as HTMLButtonElement;
+    const icoPlay = $('[data-ico-play]', bt); const icoPausa = $('[data-ico-pausa]', bt);
     loops.push(v);
-    bt.hidden = false;
+    if (bt !== (fig as unknown)) bt.hidden = false;
     const auto = fig.dataset.auto === '1' && !reduzido && !poupar && rapida;
     let querTocar = auto; let visivel = false; let liberado = false;
     const estado = () => {
       const tocando = !v.paused;
+      if (!icoPlay || !icoPausa) return;
       bt.setAttribute('aria-label', tocando ? S.pausar : S.tocar);
       icoPlay.toggleAttribute('hidden', tocando); icoPausa.toggleAttribute('hidden', !tocando);
     };
@@ -472,8 +475,7 @@ function ancoras() {
 
 // Só com JS: sem ele, o form faria GET com o e-mail na URL.
 if (form) form.hidden = false;
-$('[data-barra]')?.removeAttribute('hidden');
-ancoras(); partilha(); barra(); topoECta(); vagas(); formulario(); turnstile(); abas(); sorteio(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
+ancoras(); partilha(); topoECta(); vagas(); formulario(); turnstile(); abas(); sorteio(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
 // ajustarSprites lê o layout da página inteira: só depois do load, nunca na janela do primeiro quadro.
 depoisDoLoad(() => {
   document.documentElement.classList.add('tarde');
