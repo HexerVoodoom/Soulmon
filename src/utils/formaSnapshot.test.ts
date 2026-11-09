@@ -10,7 +10,7 @@ const sk = (nome: string) => ({ basico: { nome }, especial: { nome: `${nome}-esp
 const jornada = (estagios: Record<string, { id: string; base: string }>) => ({ v: 1 as const, u: 0.5, estagios });
 
 /** Champion de fogo (sem poção) que evolui para ultimate COM poção de água. */
-function evoluidoComPocao() {
+function evoluidoComPocao(): any {
   const champion = {
     evolutionStage: 'champion-power',
     elementoJornada: jornada({ rookie: { id: 'fogo', base: 'fogo' }, champion: { id: 'fogo', base: 'fogo' } }),
@@ -99,7 +99,7 @@ describe('equipar outra forma do mesmo estágio equipa tudo', () => {
   });
 
   it('forma alternativa equipada aplica o que ela carrega', () => {
-    const s0 = { ...base, formasAlt: { 'champion-power': ['agua', 'fogo'] }, formaAltEquipada: { 'champion-power': 'agua' },
+    const s0: any = { ...base, formasAlt: { 'champion-power': ['agua', 'fogo'] }, formaAltEquipada: { 'champion-power': 'agua' },
       formaSnapshots: { [chaveDaForma('champion-power', { 'champion-power': 'fogo' })]: { pocao: 'fogo', skills: sk('chama') } } };
     const t = trocarFormaCompleta(s0, s => ({ ...s, formaAltEquipada: equiparFormaAlt(s.formasAlt, s.formaAltEquipada, 'champion-power', 'fogo') }));
     expect(petElementOf(t)).toBe('fogo');
