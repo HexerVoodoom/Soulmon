@@ -16,7 +16,6 @@
     "checkJs": false,
     "types": ["vite/client"],
     // Tipos de src/utils/soulProfile/ficha (via dailyReset → formaSnapshot) citam `class-system` (só tipo).
-    "baseUrl": ".",
     "paths": { "class-system": ["../vendor/class-system/index.d.ts"] }
   },
   "include": ["renderer/src/**/*.ts"]
