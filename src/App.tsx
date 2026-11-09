@@ -859,6 +859,7 @@ const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ d
 // A barra de captura NÃO é lazy: ela fica na primeira tela e o ganho dela é
 // justamente não ter espera nenhuma entre lembrar e anotar.
 import type { QuickAddResult } from './utils/quickAdd';
+import { installUsageTime } from './utils/usageTime';
 import { funTicketStatus, buyFunTickets, ticketBuyRefusal, startFunRound } from './utils/funTickets';
 import type { CreateAction } from './utils/chatActions';
 const EvoBanner = lazy(() => import('./components/EvoBanner'));
@@ -2033,7 +2034,8 @@ export default function App() {
        ledger local, nada de id); o que sai é um inteiro de marco. */
     trackRetentionOnOpen();
     const stop = installTelemetryAutoFlush();
-    return stop;
+    const stopUsage = installUsageTime(); // tempo de uso por tela/feature/jogo (docs/PLANO-METRICAS.md)
+    return () => { stop(); stopUsage(); };
   }, []);
 
   /** `first_task_done`: a primeira conclusão REAL. Um ponto só, ancorado no
