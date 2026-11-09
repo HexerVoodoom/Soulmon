@@ -68,7 +68,7 @@ import { buildRunScenes, DUNGEON_SCENES, type DungeonScene } from '../utils/dung
 import { elementoDaCamada } from '../utils/dungeonElementos';
 import { DungeonPotionsModal } from './DungeonPotionsModal';
 import { deixarPocoes, devolverPocoes, pocoesDoJogador, potionsTotal, recolherPocoes, type PotionStock } from '../utils/dungeonPotions';
-import { combatSceneBg } from '../utils/combatArt';
+import { combatSceneBgDaCamada } from '../utils/combatArt';
 import { jeitoDaProfissao, fraseDaProfissao, jeitoParaPve } from '../utils/profissaoMasmorra';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
@@ -303,7 +303,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   const ladderLen = LADDER_TIERS.length;
   // 08/11/2026: o cenário da camada é o do ELEMENTO dela (2 camadas por elemento, `dungeonElementos.ts`); o sorteio antigo fica só de reserva.
   const sceneReserva = runScenes[(floor - 1) % Math.max(1, runScenes.length)] ?? DUNGEON_SCENES[0];
-  const scene = { ...sceneReserva, bg: combatSceneBg(elementoDaCamada(floor)) ?? sceneReserva.bg };
+  const scene = { ...sceneReserva, bg: combatSceneBgDaCamada(elementoDaCamada(floor), floor) ?? sceneReserva.bg };
   // A identidade de combate (dono único): o mesmo golpe básico/especial da Arena, do Torneio e do PvP.
   const petEl = fxElementId(ident.basico.elemento);
   const enemyEl = fxElementId(dungeonEnemyElement(enemy));
