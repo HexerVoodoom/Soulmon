@@ -11,6 +11,7 @@
  * em `LIBRARY_SEEN` e não tem histórico ganha 1 forma (a atual) na próxima vez que a Biblioteca carrega o perfil dele.
  */
 import { readJson, writeJson } from './safeStorage';
+import { STAGE_NAMES } from './oracle/base';
 import { STORAGE_KEYS } from './storageKeys';
 import { isSafeSpriteSrc } from './spriteLibrary';
 
@@ -90,15 +91,16 @@ export function recordForms(id: string | null | undefined, incoming: readonly un
   return next;
 }
 
-const STAGE_PT: Record<string, string> = { rookie: 'Iniciante', champion: 'Campeão', ultimate: 'Supremo', mega: 'Mega', ultra: 'Ultra' };
-const STAGE_EN: Record<string, string> = { rookie: 'Rookie', champion: 'Champion', ultimate: 'Ultimate', mega: 'Mega', ultra: 'Ultra' };
+// Nomes de estágio = os do JOGO (`STAGE_NAMES`: Desperto/Ascendente/Transcendente/Apoteose/Zênite); Rookie/Champion/Ultimate/Mega/Ultra são só a fala interna do dono.
+const STAGE_KEY: Record<string, keyof typeof STAGE_NAMES> = { rookie: 'rookie', champion: 'champion', ultimate: 'perfeito', mega: 'mega', ultra: 'ultra' };
 const PATH_PT: Record<string, string> = { power: 'Poder', harmony: 'Harmonia', benevolence: 'Benevolência' };
 const PATH_EN: Record<string, string> = { power: 'Power', harmony: 'Harmony', benevolence: 'Benevolence' };
 
 /** Nome do estágio de uma forma (PT/EN), com o caminho quando há ('Champion · Power'). Id desconhecido volta como veio. */
 export function formStageLabel(stage: string, isPt: boolean): string {
   const [base, path] = stage.split('-');
-  const nome = (isPt ? STAGE_PT : STAGE_EN)[base] ?? stage;
+  const chave = STAGE_KEY[base];
+  const nome = chave ? STAGE_NAMES[chave][isPt ? 'pt' : 'en'] : stage;
   const caminho = path ? (isPt ? PATH_PT : PATH_EN)[path] : undefined;
   return caminho ? `${nome} · ${caminho}` : nome;
 }

@@ -5,6 +5,7 @@ import { dexElementName } from './ElementDex';
 import { ENEMY_ROSTER, ENEMY_ROSTER_KEYS, ENEMY_STAGES } from '../utils/enemyRoster';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
+import { STAGE_NAMES } from '../utils/oracle/base';
 import { NewBadge } from './LibraryNewBadge';
 import type { StrayPlayerSeen } from '../utils/strayPlayers';
 import { elementMatchesBases, selectedBases } from '../utils/elementPotion';
@@ -16,7 +17,8 @@ import { elementMatchesBases, selectedBases } from '../utils/elementPotion';
  * só não divide mais a lista. O número é de COLEÇÃO ("N de M"), nunca percentual nem "faltam N". Chaves
  * antigas fora do roster (baby-i, linhas aposentadas) não contam.
  */
-const STAGE_LABEL: Record<string, string> = { rookie: 'Rookie', champion: 'Champion', ultimate: 'Ultimate', mega: 'Mega' };
+// Nome do estágio = o do jogo (STAGE_NAMES), nunca Rookie/Champion/Ultimate/Mega (decisão do dono, 09/11/2026).
+const STAGE_LABEL_KEY: Record<string, keyof typeof STAGE_NAMES> = { rookie: 'rookie', champion: 'champion', ultimate: 'perfeito', mega: 'mega', ultra: 'ultra' };
 
 export function BestiaryCollection({ seen, language = 'en-US', isNew, players, playersNew, bases }: { seen: readonly string[] | undefined; language?: string; isNew?: ReadonlySet<string>; players?: readonly StrayPlayerSeen[]; playersNew?: ReadonlySet<string>; bases?: readonly (string | null)[] }) {
   const isPt = language === 'pt-BR';
@@ -46,7 +48,7 @@ export function BestiaryCollection({ seen, language = 'en-US', isNew, players, p
       )}
       {stageGroups.map(({ stage, cells, last }) => (
         <div key={stage} data-bestiary-stage={stage}>
-          <h3 className="sm2-lib-s" style={{ margin: '12px 0 6px', fontWeight: 600 }}>{STAGE_LABEL[stage]}</h3>
+          <h3 className="sm2-lib-s" style={{ margin: '12px 0 6px', fontWeight: 600 }}>{STAGE_LABEL_KEY[stage] ? STAGE_NAMES[STAGE_LABEL_KEY[stage]][isPt ? 'pt' : 'en'] : stage}</h3>
       <ul style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))', gap: 8, listStyle: 'none', padding: 0, margin: 0 }}>
         {cells.map(({ e, i }) => {
           const vista = seenSet.has(e.key);
