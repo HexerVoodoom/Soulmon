@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type CSSProperties } fr
 import type { Language } from '../../utils/i18n';
 import { FUN_TICKET_BATCH, FUN_TICKET_COST, FUN_TICKET_MAX, formatHms, type FunTicketStatus } from '../../utils/funTickets';
 import { EnergyCost } from '../ui/EnergyCost';
-import { sm2Button } from '../form/FormKit';
+import { sm2Button, sm2Hint } from '../form/FormKit';
 
 /**
  * 🎫 Tickets dos minijogos (09/11/2026; regra: `utils/funTickets.ts`).
@@ -97,7 +97,7 @@ export function TicketPanel({ language, status, onBuy, nudge = 0 }: { language: 
           <EnergyCost amount={FUN_TICKET_COST} />
         </button>
       )}
-      <p data-fun-tickets-hint style={{ margin: 0, fontSize: 13, opacity: 0.8, textAlign: 'center' }}>{hint}</p>
+      <p data-fun-tickets-hint style={{ ...sm2Hint, margin: 0, opacity: 0.8, textAlign: 'center' }}>{hint}</p>
     </section>
   );
 }
