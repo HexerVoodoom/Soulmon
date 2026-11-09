@@ -6,7 +6,7 @@
 import { getStageLevel } from '../../../types/progression';
 
 export type EstagioIconeSet = 'creme' | 'branco';
-export const ESTAGIO_ICONE_SET: EstagioIconeSet = 'creme';
+export const ESTAGIO_ICONE_SET: EstagioIconeSet = 'branco';
 
 const arquivos = import.meta.glob('./estagio-*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 const url = (nome: string): string | undefined => arquivos[`./${nome}.png`];
