@@ -4438,3 +4438,7 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 ## §262 — Linha Vileza regenerada: escorpião vira lobo (09/11/2026, aprovado pelo dono)
 **Decisão:** a linha do elemento Vileza foi refeita (Ultimate/Mega/Ultra tinham perdido a referência de cor). Rookie compartilhado e Ultra únicos; três ramos (Poder, Harmonia, Benevolência) com Champion/Ultimate/Mega. O Champion de Poder é o lobo do site, inalterado. Instalado em 256² sobre `novos/vileza-*.png` (Poder = linha principal) e `novos-arquivo/ramos/vileza/{harmonia,benevolencia}-*.png`; mesmos nomes, sem consumidor novo. Fonte: `E:\Soulmon-assets\vileza-v2\`.
 **Alternativa que perdeu:** manter o escorpião e só recolorir. **Falsifica:** o dono achar o lobo fora da identidade Vileza ou ainda ver ramos sem a cor de referência.
+
+## §263 — Ícones de estágio do set branco redesenhados pela especificação do dono (09/11/2026, pedido do dono)
+**Decisão:** o set `branco` de `src/assets/soulmon/icones-ui/estagio-branco-*.png` foi refeito por geração procedural, 96², alfa real, seguindo a especificação do dono: rookie = triângulo; champion = losango; ultimate = losango arredondado com recorte em cruz; mega = estrela fina de 8 raios; ultra = coroa de 5 pontas. Nomes e caminhos iguais; o set `creme` e a constante `ESTAGIO_ICONE_SET` não mudam.
+**Alternativa que perdeu:** manter o set branco anterior e só ajustar cor. **Falsifica:** o dono achar algum formato fora da especificação ou ver o set branco confundido com o creme no `BattleStage`.
