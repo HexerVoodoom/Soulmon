@@ -1065,3 +1065,6 @@ main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recurs
 }
 @media (max-width: 1023px) { .hero:has(.hero-arte)::before { background: linear-gradient(180deg, rgba(1,12,14,.95) 0, rgba(1,12,14,.85) 42%, rgba(1,12,14,.4) 56%, rgba(1,12,14,0) 66%) !important; } }
 @media (max-width: 1023px) { .hero:has(.hero-arte) .hero-fundo::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(1,12,14,.95) 0, rgba(1,12,14,.82) 44%, rgba(1,12,14,.35) 57%, rgba(1,12,14,0) 66%); } }
+
+/* 09/11: aviso 18+ logo abaixo do botao de enviar, discreto e centralizado */
+.inscrever form .legal-linha { text-align: center; justify-self: center; margin-top: -.25rem; max-width: 34ch; }

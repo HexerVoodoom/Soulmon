@@ -88,7 +88,14 @@ function colete() {
   abas.forEach((bt) => bt.addEventListener('click', () => {
     abas.forEach((x) => x.setAttribute('aria-selected', String(x === bt)));
     $$('[data-colete-nivel]').forEach((n) => { n.dataset.ativo = n.dataset.coleteNivel === bt.dataset.coleteAba ? '1' : '0'; });
+    $$('[data-colete-trilho]').forEach((tr) => tr.dispatchEvent(new Event('scroll')));
   }));
+  // Setas só aparecem quando há algo escondido daquele lado (dono, 09/11).
+  $$<HTMLElement>('[data-colete-trilho]').forEach((tr) => {
+    const [ant, prox] = [tr.previousElementSibling, tr.nextElementSibling] as HTMLElement[];
+    const ver = () => { ant.style.visibility = tr.scrollLeft > 4 ? '' : 'hidden'; prox.style.visibility = tr.scrollLeft + tr.clientWidth < tr.scrollWidth - 4 ? '' : 'hidden'; };
+    tr.addEventListener('scroll', ver, { passive: true }); addEventListener('resize', ver); ver();
+  });
   $$<HTMLButtonElement>('[data-colete-seta]').forEach((bt) => bt.addEventListener('click', () => {
     const tr = bt.parentElement!.querySelector<HTMLElement>('[data-colete-trilho]')!;
     tr.scrollBy({ left: Number(bt.dataset.coleteSeta) * tr.clientWidth, behavior: reduzido ? 'auto' : 'smooth' });
