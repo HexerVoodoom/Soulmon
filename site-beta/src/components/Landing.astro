@@ -211,14 +211,20 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         <h2 id="colete-h">{t.colete.h2}</h2>
         <p class="frase">{t.colete.frase}</p>
       </div>
-      <p class="colete-rot">{t.colete.rot}</p>
-      {/* Fogo do site no centro; as 5 variantes elementais (mesma linha, caminho Poder) em volta. Arte: E:\Soulmon-assets\site-formas (09/11). */}
-      <ul class="colete-roda">
-        <li class="colete-item base"><img class="sprite" src={b('/sprites/fogo-ultimate.webp')} width="256" height="256" alt={`${t.colete.rot}: ${u.els.fogo}`} loading="lazy" /><span>{u.els.fogo}</span></li>
-        {t.colete.variantes.map(([id, nome], i) => (
-          <li class="colete-item" style={`--i:${i}`}><picture><source type="image/avif" srcset={b(`/sprites/colete/${id}.avif`)} /><img class="sprite" src={b(`/sprites/colete/${id}.webp`)} width="256" height="256" alt={`${t.colete.rot}: ${nome}`} loading="lazy" /></picture><span>{nome}</span></li>
-        ))}
-      </ul>
+      {/* Duas rodas (09/11): Champion e Ultimate de fogo no centro, cada um com as 5 formas paralelas por elemento. Arte: E:\Soulmon-assets\site-formas\{champion,ultimate}. */}
+      <div class="colete-niveis">
+      {(['champion', 'ultimate'] as const).map((nv, k) => (
+        <div class="colete-nivel">
+          <h3 class="colete-rot"><span class="ico-forma" data-forma={nv}></span>{c.nomes[k + 1]}</h3>
+          <ul class="colete-roda">
+            <li class="colete-item base"><img class="sprite" src={b(`/sprites/fogo-${nv}.webp`)} width="256" height="256" alt={`${t.colete.rot}, ${c.nomes[k + 1]}: ${u.els.fogo}`} loading="lazy" /><span>{u.els.fogo}</span></li>
+            {t.colete.variantes.map(([id, nome], i) => (
+              <li class="colete-item" style={`--i:${i}`}><picture><source type="image/avif" srcset={b(`/sprites/colete/${nv}/${id}.avif`)} /><img class="sprite" src={b(`/sprites/colete/${nv}/${id}.webp`)} width="256" height="256" alt={`${t.colete.rot}, ${c.nomes[k + 1]}: ${nome}`} loading="lazy" /></picture><span>{nome}</span></li>
+            ))}
+          </ul>
+        </div>
+      ))}
+      </div>
     </section>
     <!-- 5 · O universo: Hall, abas pedidas pelo dono -->
     <section class="cena universo" id="universo" aria-labelledby="universo-h">

@@ -920,3 +920,11 @@ html:not(.ciclo-js) .estagios img[data-tarde-src] { display: none; }
 .colete-roda .colete-item span { font-size: .875rem; }
 @media (prefers-reduced-motion: no-preference) { .colete-roda .colete-item:not(.base) { animation: colete-brilho 3s ease-in-out infinite; animation-delay: calc(var(--i) * .6s); } }
 @keyframes colete-brilho { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 16px rgba(46, 230, 200, .45); } }
+
+/* Colete: dois níveis lado a lado no desktop */
+.colete-niveis { display: grid; gap: var(--sb-e-5); width: 100%; justify-items: center; }
+.colete-nivel { display: grid; justify-items: center; gap: var(--sb-e-2); width: 100%; }
+.colete-rot { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 1.375rem; color: var(--sb-ouro); }
+@media (min-width: 1024px) { .colete-niveis { grid-template-columns: 1fr 1fr; } .colete-roda { width: min(100%, 520px); } }
+.colete-nivel .colete-roda { margin: 12% 0 6%; }
+.colete-nivel .colete-roda { width: min(78%, 480px); } .colete-nivel .colete-roda .colete-item:not(.base) { width: 24%; left: 38%; top: 38%; translate: calc(cos(var(--i) * 72deg - 90deg) * 150%) calc(sin(var(--i) * 72deg - 90deg) * 150%); }
