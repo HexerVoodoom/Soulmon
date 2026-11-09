@@ -52,7 +52,8 @@ const Formas = c.formas;
 const CAMINHOS = ['poder', 'harmonia', 'benevolencia'];
 const PRINCIPAL: Record<string, string> = { fogo: 'poder', fada: 'benevolencia', planta: 'harmonia' };
 // Sorteio: todo o elenco elegível de soulmon/novos (src/tools/elenco.mjs). Compacto: [id, elemento, forma].
-const POOL = JSON.stringify(elenco.elegiveis.map((x) => [x.id, x.el, x.forma]));
+// Linha Som fora do sorteio (dono, 09/11: era o "sapinho").
+const POOL = JSON.stringify(elenco.elegiveis.filter((x) => !x.el.split(',').includes('som')).map((x) => [x.id, x.el, x.forma]));
 const lugarDados = universoDados.lugares as Record<string, { npc: string; pt: string; en: string; habita: { pt: string; en: string } }>;
 const falas = JSON.stringify(Object.fromEntries(Object.entries(lugarDados).map(([k, v]) => [k, { fala: v[lang], habita: v.habita[lang], npc: b(v.npc) }])));
 const printSrc = (id: string, ext: string) => [240, 480, 720].map((w) => `${b(`/print/${id}-${lang}-${w}.${ext}`)} ${w}w`).join(', ');
