@@ -1049,3 +1049,13 @@ main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recurs
 /* combate.mp4 (Instagram 9:16) traz moldura e legenda próprias: zoom no celular de dentro */
 .tela:has(.combate-video) { overflow: hidden; }
 .combate-video { transform: scale(1.04); } /* recortado no ffmpeg (src/tools: ver commit); 4% esconde a borda da moldura original */
+/* hero (dono, 09/11): arte um pouco mais baixa, texto no topo com escurecimento para leitura */
+.hero:has(.hero-arte) .hero-fundo .hero-arte { top: 14svh !important; }
+.hero:has(.hero-arte)::before { z-index: 0; background: linear-gradient(180deg, rgba(1,12,14,.92) 0, rgba(1,12,14,.7) 30%, rgba(1,12,14,.25) 55%, rgba(1,12,14,0) 70%) !important; }
+@media (min-width: 1024px) {
+  .hero:has(.hero-arte) .hero-fundo .hero-arte { top: 10svh !important; }
+  .hero:has(.hero-arte)::before { background: linear-gradient(90deg, rgba(1,12,14,.85) 0, rgba(1,12,14,.6) 30%, rgba(1,12,14,0) 50%), linear-gradient(180deg, rgba(1,12,14,.6), rgba(1,12,14,0) 40%) !important; }
+}
+.hero:has(.hero-arte) .hero-fundo .hero-arte { top: 17svh !important; }
+.hero:has(.hero-arte) .hero-fundo .hero-arte img { -webkit-mask-image: linear-gradient(transparent, #000 12%) !important; mask-image: linear-gradient(transparent, #000 12%) !important; }
+@media (min-width: 1024px) { .hero:has(.hero-arte) .hero-fundo .hero-arte { top: 0 !important; } .hero:has(.hero-arte) .hero-fundo .hero-arte img { -webkit-mask-image: none !important; mask-image: none !important; } }
