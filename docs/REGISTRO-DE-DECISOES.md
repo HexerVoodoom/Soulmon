@@ -4357,3 +4357,11 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Decisão (modal do dono):** a nova descida recomeça no último múltiplo de **2** camadas já limpo (antes: de 5 em 5), então começa **no máximo 1 camada abaixo do recorde**. Código: `DUNGEON_RETURN_EVERY = 2` em `src/utils/dungeonIdle.ts` (`startLayerFor`), espelhado no servidor em `functions/api/_dayCounters.js` (`RETURN_EVERY`, `riftStartLayer`, base anti-trapaça do mês — tem que bater com o cliente).
 **Prêmios desacoplados:** o marco de prêmio (`DUNGEON_MILESTONE_FLOOR = 5`, `isMilestoneLayer`: Glitchtama 1%/semana, bônus de marco) **continua de 5 em 5**. O dono aceitou prêmios mais frequentes, mas separar as duas constantes foi trivial e mantém a economia igual; só o ponto de partida mudou.
 **Alternativa que perdeu:** trocar `DUNGEON_MILESTONE_FLOOR` para 2 (prêmio de marco 2,5× mais frequente). **Falsifica:** se o jogador ainda sente que "perde progresso" ao recomeçar, o problema não é o passo do retorno.
+
+## §252 — Duelo mostra o HP base da Arena (09/11/2026, decisão do dono)
+
+**Decisão.** No PvP/Duelo a tela mostra o **HP base** (o mesmo número da Arena), não o HP inflado por `PVP_HP_SCALE = 1.7`. **Só apresentação:** motor, servidor (`_combate.js`, `_duel.js`, `_feira.js`) e balanço intocados; a luta dura o mesmo.
+
+**Onde.** Helper único `hpExibidoPvp` em `src/utils/combate/fight.ts`; `DuelScreen` usa-o como máximo da barra. HP atual e números de dano já saem de fração × máximo, então encolhem na mesma proporção; a barra (fração) não muda. Cobre ranqueada, torneio e treino com amigo (todos passam pelo `DuelScreen`).
+
+**Alternativa que perdeu.** Manter o número inflado (coerente com a duração da luta, mas o mesmo Soulmon "tinha" vidas diferentes na Arena e no Duelo). Falsifica a aposta: jogadores estranhando que golpes no Duelo tirem menos que na Arena sem a barra andar mais devagar.
