@@ -56,7 +56,7 @@ export async function iniciar(S: Strs, fraco: boolean) {
     estagio += 1;
     if (!gsap) { setCristal('aceso'); concluir(); return; }
     correndo = true;
-    const base = palco.getBoundingClientRect();
+    const base = ((chama.offsetParent as HTMLElement | null) ?? palco).getBoundingClientRect();
     const caixa = b.querySelector('.caixa')!.getBoundingClientRect();
     const cr = cristal.getBoundingClientRect();
     const px = (v: number) => Math.round(v / 4) * 4;
@@ -95,7 +95,31 @@ export async function iniciar(S: Strs, fraco: boolean) {
   setCristal('apagado');
 
   secao.classList.add('sem-pin');
-  travarRolagem();
+  if (matchMedia('(max-width: 1023px)').matches) modoFoco(); else travarRolagem();
+
+  // Celular (dono, 09/11): ao chegar na demo a tela escurece e a cena sobe sozinha na frente:
+  // só a lista e o Soulmon na plataforma de evolução do jogo, mão grande apontando.
+  // Tocar marca e evolui; tentar rolar fecha na hora e a página segue, sem trava.
+  function modoFoco() {
+    const cena = document.querySelector<HTMLElement>('[data-cena]')!;
+    const disco = cena.querySelector<HTMLImageElement>('.disco');
+    if (disco) { const ped = BASE + '/el/pedestal.webp'; disco.dataset.tardeSrc = ped; disco.src = ped; disco.width = 384; disco.height = 146; }
+    let aberto = false; let fechado = false; let y0 = 0;
+    const fechar = () => {
+      if (!aberto) return; aberto = false; fechado = true;
+      secao.classList.remove('foco'); palco.style.minHeight = '';
+    };
+    const abrir = () => {
+      if (aberto || fechado) return; aberto = true;
+      palco.style.minHeight = palco.offsetHeight + 'px';
+      secao.classList.add('foco');
+    };
+    new IntersectionObserver(([x]) => { if (x.isIntersecting) abrir(); }, { threshold: 0.35 }).observe(cena);
+    addEventListener('touchstart', (e) => { y0 = e.touches[0].clientY; }, { passive: true });
+    addEventListener('touchmove', (e) => { if (aberto && Math.abs(e.touches[0].clientY - y0) > 14) fechar(); }, { passive: true });
+    addEventListener('wheel', () => { if (aberto) fechar(); }, { passive: true });
+    fim.querySelector('[data-cta]')?.addEventListener('click', fechar);
+  }
 
   // Trava da rolagem (dono, 09/11): ao chegar na demo, rolar para baixo NÃO move a página;
   // cada gesto marca uma tarefa e evolui o Soulmon. Só no Ultra a página volta a rolar.
