@@ -4410,7 +4410,7 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Premissa:** "as chaves que o jogador já tem" = as chaves levadas para esta jornada. Com o limite de pausas esgotado, o botão de pausa fica desativado (com a dica de texto) em vez de sumir, para a linha manter três botões.
 **Alternativa que perdeu:** manter os botões com texto em duas colunas (card maior). **Falsifica:** se o card a 80% ficar ilegível sobre cenários claros, subir a opacidade ou escurecer o fundo do card.
 
-## §257 — Fenda: cenário gira entre as camadas dos compostos (09/11/2026, bug do dono)
+## §258 — Fenda: cenário gira entre as camadas dos compostos (09/11/2026, bug do dono)
 
 **Relato:** "eu já desci umas 3 camadas, pelo menos, aqui no Rift, e continuo enfrentando os mesmos inimigos. Mesmo elemento, mesmo cenário."
 **Regra pretendida (§249, mantida):** o elemento muda a cada 2 camadas; a camada só tem criaturas dele (guarda de §255, `dungeonElementos.arte.test.ts`); o cenário é o do elemento. **Sinalizado:** o relato não diz "variar a cada camada"; não mudei a cadência do elemento (2 camadas).
