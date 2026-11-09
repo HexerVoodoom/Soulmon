@@ -75,7 +75,7 @@ describe('10.1 — ícones de categoria no Santuário', () => {
   });
 });
 
-describe('10.3 — Centro de Evolução: abas compactas', () => {
+describe('10.3 — Centro de Evolução: os três caminhos lado a lado (09/11/2026, substitui as abas compactas)', () => {
   const stage = (over: Partial<CreatureStage>): CreatureStage => ({
     stage: 'rookie', stageName: { pt: 'Rookie', en: 'Rookie' }, name: 'Fagul',
     description: { pt: 'x', en: 'x' }, imagePrompt: 'p', imagePromptFallback: 'pf', ...over,
@@ -84,52 +84,20 @@ describe('10.3 — Centro de Evolução: abas compactas', () => {
     currentStageId: 'rookie', currentBranch: 'harmony' as const,
     powerPoints: 4, harmonyPoints: 12, benevolencePoints: 7,
     evolutionPoints: 5, todayGauge: 0, gaugeGoal: 30,
-    stages: [stage({})], unlockedEvolutions: ['rookie'],
+    stages: [stage({}), ...(['poder', 'harmonia', 'benevolencia'] as const).map(b => stage({ stage: 'champion', branch: b, name: `C-${b}`, stageName: { pt: 'Champion', en: 'Champion' } }))],
+    unlockedEvolutions: ['rookie'],
   };
-  it('PT: tablist com as três abas, nome inteiro e número; a ativa é a do caminho atual; sem pílula (radio)', () => {
+  it('PT: Poder / Harmonia / Benevolência inteiros, com número, sem abas nem radio', () => {
     renderWithCss(<EvolutionPath {...base} language="pt-BR" />);
-    const tablist = screen.getByRole('tablist', { name: 'Linha de evolução' });
-    expect(tablist.className).toContain('sm2-kit-tabs-compact');
-    const tabs = screen.getAllByRole('tab');
-    expect(tabs.map(t => t.querySelector('[data-tab-label]')!.textContent)).toEqual(['Poder', 'Harmonia', 'Benevolência']);
-    expect(tabs.map(t => t.querySelector('[data-tab-meta]')!.textContent)).toEqual(['4', '12', '7']);
-    expect(tabs.map(t => t.getAttribute('aria-selected'))).toEqual(['false', 'true', 'false']);
+    expect(screen.queryAllByRole('tab')).toHaveLength(0);
     expect(screen.queryAllByRole('radio')).toHaveLength(0);
-    // nada de truncar: sem reticências nem overflow escondido no rótulo
-    for (const t of tabs) expect((t.querySelector('[data-tab-label]') as HTMLElement).style.textOverflow).toBe('');
+    const rot = (a: string) => screen.getByTestId(`sm-caminho-rotulo-${a}`).textContent;
+    expect([rot('power'), rot('harmony'), rot('benevolence')]).toEqual(['Poder4', 'Harmonia12', 'Benevolência7']);
   });
   it('EN: Power / Harmony / Benevolence inteiros', () => {
     renderWithCss(<EvolutionPath {...base} language="en-US" />);
-    expect(screen.getAllByRole('tab').map(t => t.querySelector('[data-tab-label]')!.textContent)).toEqual(['Power', 'Harmony', 'Benevolence']);
-  });
-  it('toque troca de aba', () => {
-    renderWithCss(<EvolutionPath {...base} language="pt-BR" />);
-    fireEvent.click(screen.getByRole('tab', { name: /Benevolência/ }));
-    expect(screen.getByRole('tab', { name: /Benevolência/ }).getAttribute('aria-selected')).toBe('true');
-    expect(screen.getByRole('tab', { name: /Harmonia/ }).getAttribute('aria-selected')).toBe('false');
-  });
-  it('deslize para a esquerda avança, para a direita volta; gesto curto ou vertical não troca; nas pontas não passa', () => {
-    const { container } = renderWithCss(<EvolutionPath {...base} language="pt-BR" />);
-    const area = container.querySelector('[data-branch-swipe]') as HTMLElement;
-    const sel = () => screen.getAllByRole('tab').findIndex(t => t.getAttribute('aria-selected') === 'true');
-    const deslizar = (dx: number, dy = 0) => {
-      fireEvent.pointerDown(area, { clientX: 200, clientY: 300 });
-      fireEvent.pointerUp(area, { clientX: 200 + dx, clientY: 300 + dy });
-    };
-    expect(sel()).toBe(1);
-    deslizar(-80);            // esquerda → próxima
-    expect(sel()).toBe(2);
-    deslizar(-80);            // já é a última
-    expect(sel()).toBe(2);
-    deslizar(30);             // curto demais
-    expect(sel()).toBe(2);
-    deslizar(80, 90);         // mais vertical que horizontal
-    expect(sel()).toBe(2);
-    deslizar(80);             // direita → anterior
-    expect(sel()).toBe(1);
-    deslizar(80);
-    deslizar(80);             // já é a primeira
-    expect(sel()).toBe(0);
+    const rot = (a: string) => screen.getByTestId(`sm-caminho-rotulo-${a}`).textContent;
+    expect([rot('power'), rot('harmony'), rot('benevolence')]).toEqual(['Power4', 'Harmony12', 'Benevolence7']);
   });
 });
 

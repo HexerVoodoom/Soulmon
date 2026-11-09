@@ -836,10 +836,10 @@ export function EvolutionPath({
             onClick={hidden && isAdmin ? () => setConfirmReveal(evolution) : abrir}
           />
           {hidden && (
-            <span aria-hidden="true" data-testid={`sm-no-${stageId}-interrogacao`} style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', ...sm2Text, fontWeight: 700, fontSize: 28, color: 'var(--sm2-ink)', textShadow: '0 0 6px var(--sm2-surface-2)' }}>?</span>
+            <span aria-hidden="true" data-testid={`sm-no-${stageId}-interrogacao`} style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', ...sm2Text, fontWeight: 700, fontSize: 'var(--sm2-text-2xl)', color: 'var(--sm2-ink)', textShadow: '0 0 6px var(--sm2-surface-2)' }}>?</span>
           )}
         </div>
-        <p style={{ ...sm2Text, fontWeight: 500, margin: 0, fontSize: 13, color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-muted)', overflowWrap: 'anywhere' }}>
+        <p style={{ ...sm2Text, fontWeight: 500, margin: 0, fontSize: 'var(--sm2-text-sm)', color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-muted)', overflowWrap: 'anywhere' }}>
           {hidden ? '???' : evolution.name}
         </p>
         <p style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
@@ -1420,7 +1420,7 @@ export function EvolutionPath({
                       <p
                         style={{
                           ...sm2Text, margin: '0 0 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, textAlign: 'center',
-                          fontWeight: lider === attr ? 700 : 600, color: ATTR_INK[attr], fontSize: 12, lineHeight: 1.2,
+                          fontWeight: lider === attr ? 700 : 600, color: ATTR_INK[attr], fontSize: 'var(--sm2-text-xs)', lineHeight: 1.2,
                         }}
                         data-testid={`sm-caminho-rotulo-${attr}`}
                       >
