@@ -113,8 +113,8 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
         </ol>
         <div class="demo-cena" data-cena hidden>
           <div class="cena-central">
-            {/* Nome da forma; o ícone de cada forma vem do dono (PROVISÓRIO: [data-ico-forma] fica vazio até o anexo). */}
-            <p class="forma-titulo" aria-hidden="true"><span class="ico-forma" data-ico-forma></span><span data-placa>{c.nomes[0]}</span></p>
+            {/* Nome da forma; ícone da forma em public/forma/ (enviado pelo dono, 09/11). */}
+            <p class="forma-titulo" aria-hidden="true"><span class="ico-forma" data-ico-forma data-forma="rookie"></span><span data-placa>{c.nomes[0]}</span></p>
             <div class="disco-caixa">
               <img class="disco" data-tarde-src={assets.disco.src ? b(assets.disco.src) : undefined} src={vazio} width="240" height="109" alt="" />
               <img class="sprite" data-criatura data-tarde-src={b('/sprites/fogo-rookie.webp')} src={vazio} width="256" height="256" alt={`${c.alt} ${c.nomes[0]}`} />

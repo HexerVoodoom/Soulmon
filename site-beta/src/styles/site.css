@@ -903,3 +903,11 @@ html:not(.ciclo-js) .estagios img[data-tarde-src] { display: none; }
 .entrar-cab .frase { font-size: 1.25rem; }
 @media (min-width: 1024px) { .cria.flip-d img { scale: -1 1; } } /* celular: a da esquerda olha para o centro (dono, 09/11) */
 @media (max-width: 1023px) { .maozinha { left: -14px; top: 40px; } .maozinha svg { width: 44px; height: 30px; } }
+
+/* Ícones de forma do dono (09/11) */
+.ico-forma { border: 0; border-radius: 0; background: center / contain no-repeat; image-rendering: pixelated; width: 28px; height: 28px; }
+.ico-forma[data-forma='rookie'] { background-image: url('/beta/forma/rookie.webp'); }
+.ico-forma[data-forma='champion'] { background-image: url('/beta/forma/champion.webp'); }
+.ico-forma[data-forma='ultimate'] { background-image: url('/beta/forma/ultimate.webp'); }
+.ico-forma[data-forma='mega'] { background-image: url('/beta/forma/mega.webp'); }
+.ico-forma[data-forma='ultra'] { background-image: url('/beta/forma/ultra.webp'); }

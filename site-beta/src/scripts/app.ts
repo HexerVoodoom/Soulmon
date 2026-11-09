@@ -290,7 +290,7 @@ function sorteio() {
       const l1 = document.createElement('span'); l1.className = 'sort-linha';
       for (const e of el.split(',')) { const ic = document.createElement('img'); ic.src = `${raiz.dataset.elBase}${e}.webp`; ic.width = ic.height = 32; ic.alt = ''; ic.className = 'ico-el'; l1.append(ic); }
       l1.append(nome); info.append(l1);
-      if (nomeForma) { const l2 = document.createElement('span'); l2.className = 'sort-linha'; const ic = document.createElement('span'); ic.className = 'ico-forma'; ic.dataset.forma = String(forma); l2.append(ic, nomeForma); info.append(l2); }
+      if (nomeForma) { const l2 = document.createElement('span'); l2.className = 'sort-linha'; const ic = document.createElement('span'); ic.className = 'ico-forma'; ic.dataset.forma = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'][forma - 1]; l2.append(ic, nomeForma); info.append(l2); }
       raiz.scrollIntoView({ block: 'nearest', behavior: reduzido ? 'auto' : 'smooth' });
       if (!reduzido) { img.classList.remove('surge'); void img.offsetWidth; img.classList.add('surge'); }
     };
