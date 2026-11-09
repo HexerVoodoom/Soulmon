@@ -81,3 +81,30 @@ describe('aviso do baú', () => {
     expect(itemLabel({ kind: 'essence', id: 'planta', qty: 2 }, true)).not.toContain('planta ×');
   });
 });
+
+describe('chaves esmaecidas e modal do cenário', () => {
+  it('chave não conquistada aparece como a própria chave com opacidade baixa, pixelada, com rótulo "bloqueada" (sem cadeado)', () => {
+    localStorage.setItem(STORAGE_KEYS.FOCO_JOURNEY_KEYS, JSON.stringify(['pena']));
+    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} onGrants={() => {}} />);
+    const mudo = q(container, '[data-focus-card="elo"] img[data-key-glyph="elo"]') as HTMLImageElement;
+    expect(mudo.getAttribute('data-key-muted')).toBe('true');
+    expect(Number(mudo.style.opacity)).toBeGreaterThanOrEqual(0.35);
+    expect(Number(mudo.style.opacity)).toBeLessThanOrEqual(0.45);
+    expect(mudo.style.imageRendering).toBe('pixelated');
+    expect(mudo.alt).toContain('bloqueada');
+    const cheio = q(container, '[data-focus-card="pena"] img[data-key-glyph="pena"]') as HTMLImageElement;
+    expect(cheio.style.opacity).toBe('1');
+  });
+  it('tocar no cenário abre o modal com as opções; escolher fecha e atualiza', () => {
+    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} onGrants={() => {}} />);
+    expect(q(container, '[data-focus-env]')!.getAttribute('data-focus-env')).toBe('forest');
+    expect(document.querySelector('[data-focus-env-modal]')).toBeNull();
+    fireEvent.click(q(container, '[data-focus-env-open]')!);
+    expect(document.querySelectorAll('[data-focus-env-option]').length).toBe(6);
+    expect(document.querySelector('[data-focus-env-option="forest"]')!.getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(document.querySelector('[data-focus-env-option="cavern"]')!);
+    expect(document.querySelector('[data-focus-env-modal]')).toBeNull();
+    expect(q(container, '[data-focus-env]')!.getAttribute('data-focus-env')).toBe('cavern');
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.FOCO_JOURNEY_PREFS)!).env).toBe('cavern');
+  });
+});
