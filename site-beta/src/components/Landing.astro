@@ -48,6 +48,9 @@ const capaJogo = (id: string, w: 400 | 800 = 400) => b(`/jogos/capa-${id}-${w}`)
 const capaSet = (id: string, ext: string) => `${capaJogo(id, 400)}.${ext} 400w, ${capaJogo(id, 800)}.${ext} 800w`;
 const MOSAICO = ['combina', 'arena', 'mente', 'ppt'];
 const Formas = c.formas;
+// Árvore inteira (dono, 09/11): os 3 caminhos de cada linha. O caminho principal usa o sprite da linha; os outros vêm de E:\Soulmon-assets\...\ramos (public/sprites/ramos).
+const CAMINHOS = ['poder', 'harmonia', 'benevolencia'];
+const PRINCIPAL: Record<string, string> = { fogo: 'poder', fada: 'benevolencia', planta: 'harmonia' };
 // Sorteio: todo o elenco elegível de soulmon/novos (src/tools/elenco.mjs). Compacto: [id, elemento, forma].
 const POOL = JSON.stringify(elenco.elegiveis.map((x) => [x.id, x.el, x.forma]));
 const lugarDados = universoDados.lugares as Record<string, { npc: string; pt: string; en: string; habita: { pt: string; en: string } }>;
@@ -187,9 +190,11 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
                     <li class:list={['arvore-linha', { tres }]}>
                       <span class="arvore-rot">{c.nomes[i]}</span>
                       <span class="arvore-nos">
-                        {tres && <span class="no oculto" role="img" aria-label={s.descobrir}><span class="sombra-q" aria-hidden="true"><span>?</span></span></span>}
-                        <span class="no revelado"><img class="sprite" loading="lazy" src={b(`/sprites/${lin}-${fm}-128.webp`)} width="128" height="128" alt={`${s.linhas[li]}, ${c.nomes[i]}`} /></span>
-                        {tres && <span class="no oculto" role="img" aria-label={s.descobrir}><span class="sombra-q" aria-hidden="true"><span>?</span></span></span>}
+                        {tres
+                          ? CAMINHOS.map((cm, ci) => (
+                              <span class="no revelado"><img class="sprite" loading="lazy" src={b(cm === PRINCIPAL[lin] ? `/sprites/${lin}-${fm}-128.webp` : `/sprites/ramos/${lin}-${cm}-${fm}-128.webp`)} width="128" height="128" alt={`${s.linhas[li]}, ${s.caminhos[ci]}, ${c.nomes[i]}`} /></span>
+                            ))
+                          : <span class="no revelado"><img class="sprite" loading="lazy" src={b(`/sprites/${lin}-${fm}-128.webp`)} width="128" height="128" alt={`${s.linhas[li]}, ${c.nomes[i]}`} /></span>}
                       </span>
                     </li>
                   </>
