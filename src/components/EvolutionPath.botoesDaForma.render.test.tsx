@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/** "Trocar forma" e "Degenerar" só aparecem ao tocar a forma; tocar fora ou outra forma troca. */
+/** Tocar uma forma liberada de nível abaixo abre o modal "Degenerar para…" (09/11/2026); a degeneração segue com dupla confirmação. */
 import { describe, it, expect } from 'vitest';
 import { screen, fireEvent } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
@@ -27,15 +27,12 @@ const props = {
 };
 
 describe('botões por forma', () => {
-  it('Degenerar só aparece ao tocar a forma anterior; tocar fora some', () => {
+  it('tocar a forma de nível abaixo abre o modal "Degenerar para…"; nada de botão solto na árvore', () => {
     renderWithCss(<EvolutionPath {...props} />);
-    expect(screen.queryByText('Degenerar')).toBeNull();
-    const no = screen.getByTestId('sm-no-champion-harmony').querySelector('button[data-soul-node]') as HTMLElement;
-    fireEvent.click(no);
-    expect(screen.getByText('Degenerar')).toBeTruthy();
-    expect(no.getAttribute('aria-pressed')).toBe('true');
-    fireEvent.pointerDown(document.body);
-    expect(screen.queryByText('Degenerar')).toBeNull();
+    expect(screen.queryByText('Degenerar para…')).toBeNull();
+    fireEvent.click(screen.getByTestId('sm-no-champion-harmony').querySelector('button[data-soul-node]') as HTMLElement);
+    expect(screen.getByText('Degenerar para…')).toBeTruthy();
+    expect(screen.getByTestId('sm-formas-alt')).toBeTruthy();
   });
 
   it('09/11/2026 (dono): dá para degenerar até o rookie', () => {
@@ -43,7 +40,7 @@ describe('botões por forma', () => {
     renderWithCss(<EvolutionPath {...props} onDegenerate={(id) => chamado.push(id)} />);
     const no = screen.getByTestId('sm-no-rookie').querySelector('button[data-soul-node]') as HTMLElement;
     fireEvent.click(no);
-    fireEvent.click(screen.getByText('Degenerar'));
+    fireEvent.click(screen.getByRole('button', { name: 'Degenerar' }));
     fireEvent.click(screen.getAllByRole('button').find(b => /confirmar/i.test(b.textContent ?? ''))!);
     fireEvent.click(screen.getAllByRole('button').find(b => /confirmar|degenerar/i.test(b.textContent ?? '') && b.textContent !== 'Degenerar')!);
     expect(chamado).toEqual(['rookie']);
