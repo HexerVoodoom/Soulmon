@@ -9,7 +9,7 @@
  */
 import type { HexSlot } from '../../../utils/hexsmith';
 
-const ARTE = import.meta.glob('./{slot-*,forjar,mapa-portas}.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const ARTE = import.meta.glob('./{slot-*,chip-*,forjar,mapa-portas}.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 const art = (nome: string): string | undefined => ARTE[`./${nome}.png`];
 
@@ -32,3 +32,6 @@ export const resolveHexSlotArt = (slot: HexSlot): string | undefined => HEX_ART.
 
 /** A placa do mapa (`mapa-portas.png`), ou `undefined`. */
 export const HEX_MAP_ART: string | undefined = art('mapa-portas');
+
+/** Chip de essência da Hexsmith por elemento BASE (`chip-<id>.png`, 128², alfa real), ou `undefined` (= ícone do elemento). */
+export const resolveHexChipArt = (elementId: string): string | undefined => art(`chip-${elementId}`);

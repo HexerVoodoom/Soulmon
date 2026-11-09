@@ -1,5 +1,5 @@
 // Arte pixel dos PRATOS do Restaurante (06/11/2026). Fronteira de troca no molde de `itemArt.ts`/`decorArt.ts`:
-// a tela importa daqui e não conhece PNG nenhum. Arquivos: assets/soulmon/pratos/prato-<dishId>.png (96², alfa real),
+// a tela importa daqui e não conhece PNG nenhum. Arquivos: assets/soulmon/pratos/prato-<dishId>.png (128², alfa real),
 // descobertos por glob EAGER: prato sem PNG ainda cai no emoji de `Dish.icon` (que continua a identidade em push/log/fallback).
 // Fila de geração (12 pratos, prompts prontos): docs/ASSETS-A-GERAR.md › "Pratos do Restaurante".
 const FILES = import.meta.glob('../assets/soulmon/pratos/prato-*.png', { eager: true, import: 'default' }) as Record<string, string>;

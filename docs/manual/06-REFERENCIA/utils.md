@@ -1585,6 +1585,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Avisos do arquivo:**
 - ⚠️ A CHAVE É O EMOJI, deliberado: `foodInventory` indexa por emoji (save antigo, widget Android e desktop leem assim) — trocar a chave quebraria save.
 
+### `src/utils/potionArt.ts`
+**Dono de:** URL da arte da poção de elemento (`items/pocao-<id>.png`, 20 bases), 09/11/2026.
+**Exports:** `potionArt(elementId)` — URL ou `undefined` (quem chama cai no ícone do elemento).
+**Chamado por:** `src/utils/itemArt.ts`, `src/components/VescaPotionOffer.tsx`, `src/components/ElementPotionSheet.tsx`.
+**Régua:** `src/utils/potionArt.test.ts`.
+
 ### `src/utils/librarySeen.ts`
 **Dono de:** a lista local de ids de jogadores já vistos na Biblioteca (`STORAGE_KEYS.LIBRARY_SEEN`), 28/10/2026. A Biblioteca (ao abrir a ficha) e o Torneio (ao enfrentar) marcam pelo MESMO caminho; o simulado é tratado como jogador real (o cliente nunca recebe a flag `simulated`).
 **Exports:** `readSeenIds`, `addSeenId` (pura, idempotente), `markSeenId` (grava; tolera lixo e storage indisponível).
