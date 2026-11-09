@@ -9266,7 +9266,8 @@ export default function App() {
           onClick={() => goTo('map')}
         />
       )}
-      {currentView === 'home' && !demo && (
+      {/* O ícone só aparece com carta na caixa (dono, 09/11/2026); caixa vazia some. */}
+      {currentView === 'home' && !demo && mailbox.mail.length > 0 && (
         <MailLink
           unread={mailbox.unread}
           label={language === 'pt-BR' ? 'Caixa de cartas' : 'Mailbox'}
