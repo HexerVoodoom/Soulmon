@@ -32,7 +32,7 @@ const pt = {
   ciclo: {
     h2: 'Cumpra com seus deveres e seu Soulmon evolui.',
     frase: 'A tela de verdade, e uma demonstração para você tocar.',
-    demo: 'Toque para marcar', nomes: ['Rookie', 'Champion', 'Ultimate', 'Mega', 'Ultra'],
+    demo: 'Toque para marcar', nomes: ['Desperto', 'Ascendente', 'Transcendente', 'Apoteose', 'Zênite'],
     hoje: 'Hoje', missao: 'Missão', habitos: 'Hábitos',
     tarefasRotulo: 'Tarefas de exemplo',
     tarefas: ['Lavar a louça', 'Responder e-mail', 'Ler dez páginas', 'Regar as plantas'],
@@ -154,7 +154,7 @@ const en: typeof pt = {
   ciclo: {
     h2: 'Do your duties and your Soulmon evolves.',
     frase: 'The real screen, and a demo you can tap.',
-    demo: 'Tap to check', nomes: ['Rookie', 'Champion', 'Ultimate', 'Mega', 'Ultra'],
+    demo: 'Tap to check', nomes: ['Awakened', 'Ascendant', 'Transcendent', 'Apotheosis', 'Zenith'],
     hoje: 'Today', missao: 'Mission', habitos: 'Habits',
     tarefasRotulo: 'Sample tasks',
     tarefas: ['Wash the dishes', 'Answer that email', 'Read ten pages', 'Water the plants'],
