@@ -62,7 +62,7 @@ export function hpExibidoPvp(combatantHp: number): number {
   return hpPoints(combatantHp);
 }
 
-/** Fator SÓ VISUAL de ataque/defesa/velocidade (decisão do dono, 09/11/2026, §251). HP não multiplica. */
+/** Fator SÓ VISUAL de ataque/defesa/velocidade (decisão do dono, 09/11/2026, §252). HP não multiplica. */
 export const STAT_DISPLAY_SCALE = 10;
 
 /** Ataque, defesa ou velocidade como a tela mostra: valor de combate × `STAT_DISPLAY_SCALE`, arredondado. Mecânica intocada. */
