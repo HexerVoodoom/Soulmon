@@ -92,6 +92,23 @@ describe('Soulsmith em mapa', () => {
     expect(document.querySelector('[data-forge-seal]')).not.toBeNull();
   });
 
+  it('tocar num ingrediente abre onde conseguir (missão do prédio + expedições), PT e EN; tocar de novo fecha', () => {
+    abrir(nivel1({ buildingQuests: bq({ ore: 1 }) }));
+    click(chakra('nucleo'));
+    const custo = document.querySelector('[data-forge-cost="ore"]')!;
+    click(custo);
+    const onde = document.querySelector('[data-forge-where="ore"]')!;
+    expect(custo.getAttribute('aria-expanded')).toBe('true');
+    expect(onde.textContent).toMatch(/Minério · A missão de .+ rende um por dia\. Também aparece nas expedições de foco: Caverna\./);
+    click(custo);
+    expect(document.querySelector('[data-forge-where]')).toBeNull();
+    cleanup();
+    abrir(nivel1({ buildingQuests: bq({ ore: 1 }) }), 'en-US');
+    click(chakra('nucleo'));
+    click(document.querySelector('[data-forge-cost="ore"]')!);
+    expect(document.querySelector('[data-forge-where="ore"]')!.textContent).toMatch(/Ore · The .+ mission pays one a day\. It also turns up on focus expeditions: Cavern\./);
+  });
+
   it('sem material o botão fica desabilitado e nada é gasto', () => {
     abrir(nivel1({ buildingQuests: bq({}) }));
     click(chakra('nucleo'));
