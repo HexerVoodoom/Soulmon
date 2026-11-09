@@ -365,6 +365,11 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
     return (
       <div role="dialog" aria-label={nome} className="sm2-vit-card" data-forge-pop={piece.id}>
         <p className="sm2-vit-card-title"><b>{nome}</b><span className="sm2-num">{possui ? (isPt ? `Nv ${level}` : `Lv ${level}`) : (isPt ? 'Ainda não forjado' : 'Not forged yet')}</span></p>
+        {possui && (
+          <p className="sm2-stats-s sm2-num" style={{ margin: 0 }} data-forge-pop-bonus>
+            {isPt ? 'Esta peça dá agora: ' : 'This piece gives now: '}<b style={{ fontWeight: 600 }}>{bonusTexto(pieceBonus(piece.id, level, pieceChoices(piece.id, level, gameState.forge)), attrName, isPt)}</b>
+          </p>
+        )}
         {max && <p className="sm2-stats-s" data-forge-max>{isPt ? 'No nível máximo.' : 'At the top level.'}</p>}
         {possui && !max && (
           <>
