@@ -62,7 +62,7 @@ const pt = {
     emObras: 'Em construção', jogosArte: 'Capas ilustradas dos jogos',
     els: { agua: 'Água', ar: 'Ar', arcano: 'Arcano', eletricidade: 'Eletricidade', espaco: 'Espaço', fada: 'Fada', fogo: 'Fogo', gravidade: 'Gravidade', industrial: 'Industrial', luz: 'Luz', marcial: 'Marcial', morte: 'Morte', planta: 'Planta', som: 'Som', sombra: 'Sombra', tempo: 'Tempo', terra: 'Terra', vida: 'Vida', vigor: 'Vigor', vileza: 'Vileza' } as Record<string, string>,
     ocultoRotulo: 'Elemento ainda não revelado', combinacoes: '+190 combinações', combinacoesTx: 'Os 20 elementos se combinam em pares.',
-    lugares: { exploracao: 'Passeio, Endless Rift e Masmorra.', jogos: 'Minijogos e Ateliê da Mente.', arena: 'Torneio e duelos.', hall: 'Feira, amigos e Grove.', guilda: 'Casa e Missão do clã.', laboratorio: 'Evolução e perfil do Soulmon.', forja: 'Ferramentas para as tarefas difíceis.' } as Record<string, string>,
+    lugares: { exploracao: 'Passeio, Endless Rift e Masmorra.', jogos: 'Minijogos e Ateliê da Mente.', arena: 'Torneio e duelos.', hall: 'Feira, amigos e Jardim.', guilda: 'Casa e Missão do clã.', laboratorio: 'Evolução e perfil do Soulmon.', forja: 'Ferramentas para as tarefas difíceis.' } as Record<string, string>,
     jogosH: 'Minijogos', anterior: 'Anterior', proximo: 'Próximo', fechar: 'Fechar', falaDe: 'Fala de', morador: 'Habitante',
   },
   recursos: {
@@ -70,7 +70,7 @@ const pt = {
     cartoes: [
       ['combate', 'PvP e PvE', 'Duelos no Torneio e na Arena.', 'Combate na Arena do Soulmon: seu Soulmon contra um adversário, com as barras de vida.'],
       ['rift', 'Endless Rift', 'Uma descida sem teto de camadas.', 'Mapa da Exploração do Soulmon, onde fica o Endless Rift.'],
-      ['hall', 'Compartilhe seu progresso e ajude amigos', 'Cresça junto com seus amigos.', 'Mapa do Hall no Soulmon, com Feira, Grove e Salão do Clã.'],
+      ['hall', 'Compartilhe seu progresso e ajude amigos', 'Cresça junto com seus amigos.', 'Mapa do Hall no Soulmon, com Feira, Jardim e Salão do Clã.'],
     ] as [string, string, string, string][],
   },
   video: { capaH: 'Um mundo de distritos para explorar', capaP: 'Cada lugar tem seu guardião', h2: 'Trailer', legenda: 'Telas do app e a música do jogo. Com som.', alt: 'Trailer do Soulmon, 59 segundos, com música e sem narração.' },
