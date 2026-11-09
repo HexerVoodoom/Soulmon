@@ -89,7 +89,7 @@ import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { gaugeFull, gaugeContribution, gaugeGoalFor } from './utils/evolutionGauge';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
-import { SoulmonWidget, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt } from './plugins/SoulmonWidgetPlugin';
+import { SoulmonWidget, widgetOwnSpriteUrl, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt } from './plugins/SoulmonWidgetPlugin';
 import { unlockedAchievements, achievementPointsTotal, settleAchievements, ACHIEVEMENT_POINTS, ACHIEVEMENT_LABELS } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
@@ -2692,6 +2692,7 @@ export default function App() {
   }, [gameState.evolutionStage]);
 
   // Sync game state to Android home screen widget
+  const widgetSpriteUrl = widgetOwnSpriteUrl(minhaCriaturaUrl, petIsCorvo);
   useEffect(() => {
     SoulmonWidget.updateWidgetData({
       /* ⚠️ Este campo se chamava `digimonName`, e o comentário aqui dizia que
@@ -2742,6 +2743,8 @@ export default function App() {
       // do estágio do Bosque que ESTE aparelho viu (`groveLocal`, fora do save).
       // Vazio = o plugin remove a chave. Sem timer: roda quando `grove` muda.
       petLine: widgetPetLine(gameState),
+      // O sprite que a Home mostra (gerado/equipado), para o widget não cair no inicial por hash.
+      petSpriteUrl: widgetSpriteUrl,
       groveStage: widgetGroveStage(grove),
       // Widget redimensionável (REGISTRO §221): a fome vai como INSTANTE para o refresh de hora em hora acertar com o app fechado.
       ...(() => {
@@ -2758,7 +2761,8 @@ export default function App() {
       gameState.poopEventsShown, gameState.poopEventsCompleted, dailyDone, dailyTotal,
       gameState.habitRhythms, gameState.totalXP, gameState.soulmonMeta, grove,
       gameState.hunger, gameState.tasks, gameState.activities, gameState.dayPlan,
-      gameState.widgetFrame, gameState.widgetFramesOwned, paidWidgetFrames]);
+      gameState.widgetFrame, gameState.widgetFramesOwned, paidWidgetFrames,
+      gameState.demoCharacterId, widgetSpriteUrl]);
 
   // Moldura do widget V-Pet LIBERADA NA EVOLUÇÃO (dono, 04/11/2026): quando o Soulmon já evoluiu e o elemento base dele ainda não
   // tem moldura na posse, ela entra. Idempotente (`grantFrameOnEvolution` devolve a mesma referência sem novidade); cobre também quem

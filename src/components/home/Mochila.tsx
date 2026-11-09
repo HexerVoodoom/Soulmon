@@ -263,10 +263,16 @@ export function Mochila({
         aria-label={isPt ? 'Arquivos' : 'Files'}
       >
         <div className="sm3-mochila-alca" aria-hidden="true" />
-        {/* I3: o fechar é a seta do app (`BackArrow` com `close`), no canto superior
-            ESQUERDO, ACIMA do título — o mesmo lugar do voltar. */}
-        <BackArrow onClick={onClose} language={isPt ? 'pt-BR' : 'en-US'} style={{ margin: '-6px 0 0 -10px' }} />
-        <div className="sm3-mochila-head">
+        {/* Fechar (X, alvo 44) + título + "i" na MESMA linha (pedido do dono, 09/11/2026: ganhar
+            altura). O fechar segue no canto ESQUERDO, o lugar do voltar (I3). */}
+        <div className="sm3-mochila-head" style={{ alignItems: 'center' }}>
+          <BackArrow
+            icon="close"
+            onClick={onClose}
+            label={isPt ? 'Fechar' : 'Close'}
+            language={isPt ? 'pt-BR' : 'en-US'}
+            style={{ margin: '0 0 0 -10px', flexShrink: 0 }}
+          />
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2 className="sm3-mochila-titulo">{isPt ? 'Arquivos' : 'Files'}</h2>
           </div>

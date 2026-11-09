@@ -32,6 +32,19 @@ object WidgetAdaptive {
     }
 
     /**
+     * Widget "Soulmon" (clear): below this size only the creature fits (1x1 cell and up to ~2x1),
+     * so the compact layout (sprite only, no text) is used. `0x0` = launcher reported nothing =
+     * default placement (3x2) = full layout. Sizes in dp, portrait reading: minWidth x maxHeight.
+     */
+    fun isCompact(widthDp: Int, heightDp: Int): Boolean {
+        if (widthDp <= 0 && heightDp <= 0) return false
+        return widthDp < COMPACT_MIN_WIDTH_DP || heightDp < COMPACT_MIN_HEIGHT_DP
+    }
+
+    const val COMPACT_MIN_WIDTH_DP = 140
+    const val COMPACT_MIN_HEIGHT_DP = 70
+
+    /**
      * The owner's priority: care (hunger, then residue), then a missing task, then a kind
      * word. Task data is only trusted inside the day it was written for (`dayEndsAt`):
      * after midnight with the app closed the list is yesterday's, so neither a task nor a
