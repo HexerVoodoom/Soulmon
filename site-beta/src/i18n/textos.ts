@@ -51,7 +51,7 @@ const pt = {
     oculta: 'Forma ainda não revelada', descobrir: 'A descobrir',
     linhas: ['Planta', 'Fada', 'Fogo'], linhaRotulo: 'Linha de evolução', linhaAnt: 'Linha anterior', linhaProx: 'Próxima linha', sortear: 'Aleatório', sorteioRotulo: 'Conheça algum Soulmon', sombra: 'Conheça algum Soulmon', elemento: 'Elemento', altSorteio: 'Soulmon sorteado, elemento',
   },
-  colete: { h2: 'Colete todas as formas', frase: 'A mesma linha, o mesmo caminho, outro elemento: com poções elementais, seu Soulmon ganha uma forma nova para cada um. Colecione todas.', rot: 'Linha fogo, caminho Poder', falta: 'Forma a descobrir' },
+  colete: { h2: 'Colete todas as formas', frase: 'Evoluiu no caminho do Poder? Use uma poção elemental e o mesmo Soulmon ganha outra forma: de água, de raiz, de chama azul… Colete todas as formas do seu Soulmon.', rot: 'Linha fogo, caminho Poder', falta: 'Forma a descobrir', variantes: [['agua', 'Água'], ['industrial', 'Industrial'], ['chama_azul', 'Chama azul'], ['brinquedo', 'Brinquedo de corda'], ['raiz_profunda', 'Raiz profunda']] as [string, string][] },
   universo: {
     h2: 'O universo', frase: 'Lugares, habitantes, jogos e elementos.',
     abasRotulo: 'Explorar o universo',
@@ -172,7 +172,7 @@ const en: typeof pt = {
     oculta: 'Form not revealed yet', descobrir: 'To discover',
     linhas: ['Plant', 'Fairy', 'Fire'], linhaRotulo: 'Evolution line', linhaAnt: 'Previous line', linhaProx: 'Next line', sortear: 'Random', sorteioRotulo: 'Meet a Soulmon', sombra: 'Meet a Soulmon', elemento: 'Element', altSorteio: 'Drawn Soulmon, element',
   },
-  colete: { h2: 'Collect every form', frase: 'Same line, same path, a different element: with elemental potions your Soulmon takes a new form for each one. Collect them all.', rot: 'Fire line, Power path', falta: 'Form to discover' },
+  colete: { h2: 'Collect every form', frase: 'Evolved on the Power path? Use an elemental potion and the same Soulmon takes another form: water, root, blue flame… Collect every form of your Soulmon.', rot: 'Fire line, Power path', falta: 'Form to discover', variantes: [['agua', 'Water'], ['industrial', 'Industrial'], ['chama_azul', 'Blue flame'], ['brinquedo', 'Wind-up toy'], ['raiz_profunda', 'Deep root']] },
   universo: {
     h2: 'The world', frase: 'Places, people, games and elements.',
     abasRotulo: 'Explore the world',

@@ -911,3 +911,12 @@ html:not(.ciclo-js) .estagios img[data-tarde-src] { display: none; }
 .ico-forma[data-forma='ultimate'] { background-image: url('/beta/forma/ultimate.webp'); }
 .ico-forma[data-forma='mega'] { background-image: url('/beta/forma/mega.webp'); }
 .ico-forma[data-forma='ultra'] { background-image: url('/beta/forma/ultra.webp'); }
+
+/* Colete: roda com o fogo no centro (09/11) */
+.colete-roda { list-style: none; margin: 0; padding: 0; position: relative; width: min(100%, 640px); aspect-ratio: 1; }
+.colete-roda .colete-item { position: absolute; width: 26%; left: 37%; top: 37%; padding: 8px; translate: calc(cos(var(--i) * 72deg - 90deg) * 135%) calc(sin(var(--i) * 72deg - 90deg) * 135%); }
+.colete-roda .colete-item.base { width: 34%; left: 33%; top: 33%; translate: none; }
+.colete-roda .colete-item img { max-width: 100%; }
+.colete-roda .colete-item span { font-size: .875rem; }
+@media (prefers-reduced-motion: no-preference) { .colete-roda .colete-item:not(.base) { animation: colete-brilho 3s ease-in-out infinite; animation-delay: calc(var(--i) * .6s); } }
+@keyframes colete-brilho { 0%, 100% { box-shadow: none; } 50% { box-shadow: 0 0 16px rgba(46, 230, 200, .45); } }

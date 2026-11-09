@@ -204,18 +204,19 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
       </div>
     </section>
 
-    <!-- 4b · Colete todas as formas (pedido do dono, 09/11). PROVISÓRIO: as variantes elementais do fogo (caminho Poder) vêm da operacional;
-         cada slot [data-variante] troca a sombra pelo sprite quando o arquivo existir em public/sprites/colete/. -->
+    <!-- 4b · Colete todas as formas (pedido do dono, 09/11). variantes elementais do fogo (caminho Poder) em public/sprites/colete/;
+         -->
     <section class="calmo colete" id="colete" aria-labelledby="colete-h">
       <div class="colete-cab">
         <h2 id="colete-h">{t.colete.h2}</h2>
         <p class="frase">{t.colete.frase}</p>
       </div>
       <p class="colete-rot">{t.colete.rot}</p>
-      <ul class="colete-grade">
+      {/* Fogo do site no centro; as 5 variantes elementais (mesma linha, caminho Poder) em volta. Arte: E:\Soulmon-assets\site-formas (09/11). */}
+      <ul class="colete-roda">
         <li class="colete-item base"><img class="sprite" src={b('/sprites/fogo-ultimate.webp')} width="256" height="256" alt={`${t.colete.rot}: ${u.els.fogo}`} loading="lazy" /><span>{u.els.fogo}</span></li>
-        {['agua', 'industrial', 'fogo-azul', 'corda', 'raiz'].map((v) => (
-          <li class="colete-item falta" data-variante={v}><img class="sprite" src={b('/sprites/fogo-ultimate.webp')} width="256" height="256" alt={t.colete.falta} loading="lazy" /><span>?</span></li>
+        {t.colete.variantes.map(([id, nome], i) => (
+          <li class="colete-item" style={`--i:${i}`}><picture><source type="image/avif" srcset={b(`/sprites/colete/${id}.avif`)} /><img class="sprite" src={b(`/sprites/colete/${id}.webp`)} width="256" height="256" alt={`${t.colete.rot}: ${nome}`} loading="lazy" /></picture><span>{nome}</span></li>
         ))}
       </ul>
     </section>
