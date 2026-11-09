@@ -987,7 +987,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
         {drops.length > 0 && <DropNotice group={drops[0]} isPt={isPt} speed={speed} onClose={closeDrop} />}
         {/* 💗 A queda: antes da derrota, "Usar Coraçãozinho". Esquerda = recusar (derrota normal), direita = confirmar (volta com 50% do HP). */}
         {reviveOffer && (
-          <div role="dialog" aria-modal="true" data-revive-offer style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.6)', padding: 16 }}>
+          <div role="dialog" aria-modal="true" data-revive-offer style={{ position: 'absolute', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.6)', padding: 16 }}>
             <div style={{ background: 'var(--sm2-surface, #14221f)', color: 'var(--sm2-ink, #fff)', borderRadius: 12, padding: 16, maxWidth: 320, width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <p style={{ margin: 0, fontWeight: 700 }}>{isPt ? 'Seu Soulmon caiu' : 'Your Soulmon went down'}</p>
               <p style={{ margin: 0 }}>

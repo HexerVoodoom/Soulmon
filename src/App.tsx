@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useMemo, useRef, useId, useSyncExtern
 import type { ReactNode } from 'react';
 import { Icon } from './components/ui/Icon';
 import { lazyOverlay } from './utils/lazyOverlay';
+import { watchModalLayer } from './utils/modalLayer';
 import { ScreenSkeleton } from './components/ui/ScreenSkeleton';
 import { OfflineSeal } from './components/ui/OfflineSeal';
 import { toast } from 'sonner';
@@ -902,6 +903,7 @@ function paneFor(view: ViewType, labTab: LabTab): Pane {
 }
 
 export default function App() {
+  useEffect(() => watchModalLayer(), []); // modal sempre acima do voltar da página (ver utils/modalLayer.ts)
   const { gameState, setGameState } = useGameState();
   const [showIntro, setShowIntro] = useState(true);
   const [currentView, setCurrentView] = useState<ViewType>('home');
