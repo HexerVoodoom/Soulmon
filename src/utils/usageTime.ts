@@ -159,20 +159,31 @@ export function clearUsageTime(): void {
   try { removeLocal(K_USAGE, { silent: true }); } catch { /* idem */ }
 }
 
+/* Resultado que a tela de resultado informou para a partida em andamento (0 vitória · 1 derrota); sem informe = "saiu" (2). */
+let pendingOutcome: 0 | 1 | undefined;
+let runningMinigames = 0;
+/** A tela de resultado chama isto ao aparecer. Sem partida rastreada em andamento, não faz nada. */
+export function noteMinigameOutcome(outcome: 0 | 1): void {
+  if (runningMinigames > 0) pendingOutcome = outcome;
+}
+
 /** Minigame: `begin` conta a partida e devolve `end(outcome)` (0 vitória · 1 derrota · 2 saiu). Idempotente: o 2º `end` não faz nada. */
 export function trackMinigame(name: string): (outcome?: 0 | 1 | 2) => void {
   const item = TIME_MINIGAMES.indexOf(name as typeof TIME_MINIGAMES[number]);
   if (item < 0) return () => {};
-  let started = nowMs();
-  let spent = 0;
+  const started = nowMs();
   let done = false;
+  runningMinigames++;
+  pendingOutcome = undefined;
   track('minigame_start', { item });
-  return (outcome = 2) => {
+  return (outcome) => {
     if (done) return;
     done = true;
+    runningMinigames = Math.max(0, runningMinigames - 1);
+    const final = outcome ?? pendingOutcome ?? 2;
+    pendingOutcome = undefined;
     try {
-      spent += hidden ? 0 : nowMs() - started;
-      track('minigame_end', { item, outcome, band: timeBand(spent / 1000) });
+      track('minigame_end', { item, outcome: final, band: timeBand((nowMs() - started) / 1000) });
     } catch { /* princípio 5 */ }
   };
 }
@@ -202,4 +213,6 @@ export function resetUsageTimeForTest(): void {
   sessionMs = 0;
   sessionSince = -1;
   hiddenAt = 0;
+  pendingOutcome = undefined;
+  runningMinigames = 0;
 }

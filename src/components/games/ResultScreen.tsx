@@ -32,6 +32,7 @@ import type { DailyEvent } from '../../utils/dailyMissions';
 import { essenceIconSrc, essenceName } from '../../utils/resultEssences';
 import { useResultExtras } from './ResultExtrasContext';
 import { TicketCost, useFunTicketCost } from '../play/TicketFan';
+import { noteMinigameOutcome } from '../../utils/usageTime';
 
 /** Desfecho visual: `record` = pico, `win` = alegria, `calm` = fim neutro, `tired` = sem vitória (acolhedor, nunca luto). */
 export type ResultOutcome = 'win' | 'record' | 'calm' | 'tired';
@@ -244,6 +245,7 @@ const MOOD_CLASS: Record<string, string> = { happy: 'sm-result-visor--happy', ca
 export function ResultScreen(p: ResultScreenProps) {
   const isPt = p.language === 'pt-BR';
   const record = p.outcome === 'record';
+  useEffect(() => { noteMinigameOutcome(p.outcome === 'tired' ? 1 : 0); }, [p.outcome]); // métricas: como a partida terminou
   const ticketCost = useFunTicketCost(); // jogos do Salão: o "jogar de novo" gasta 1 ticket (09/11/2026)
   const mode = p.mode ?? 'page';
   const { step, skip, animated } = useResultReveal({ record, quick: !!p.quick, instant: !!p.instant });

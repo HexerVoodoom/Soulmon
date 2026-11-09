@@ -863,7 +863,7 @@ const CreateModal = lazy(() => import('./components/CreateModal').then(m => ({ d
 // A barra de captura NÃO é lazy: ela fica na primeira tela e o ganho dela é
 // justamente não ter espera nenhuma entre lembrar e anotar.
 import type { QuickAddResult } from './utils/quickAdd';
-import { installUsageTime } from './utils/usageTime';
+import { installUsageTime, setActive as setUsageActive } from './utils/usageTime';
 import { funTicketStatus, buyFunTickets, ticketBuyRefusal, startFunRound } from './utils/funTickets';
 import type { CreateAction } from './utils/chatActions';
 const EvoBanner = lazy(() => import('./components/EvoBanner'));
@@ -2042,6 +2042,9 @@ export default function App() {
     return () => { stop(); stopUsage(); };
   }, []);
 
+  /* Métricas de tempo por tela (docs/PLANO-METRICAS.md): `currentView` já tem o nome do registro ('home', 'map', 'area:x', 'page:x'). */
+  useEffect(() => { setUsageActive('screen', currentView); return () => setUsageActive('screen', null); }, [currentView]);
+
   /** `first_task_done`: a primeira conclusão REAL. Um ponto só, ancorado no
    *  popup que já é disparado pelos três handlers de conclusão — repetir a
    *  condição nos três seria regra copiada (footgun 9). */
@@ -2085,6 +2088,11 @@ export default function App() {
     if (!Number.isFinite(effort)) return;
     const closed = new Date(report.date);
     if (Number.isNaN(closed.getTime())) return;
+    // % de tarefas concluídas: peso planejado (a meta do dia) e peso feito, em inteiros 0..50 (docs/PLANO-METRICAS.md).
+    track('day_close', {
+      planned: Math.max(0, Math.min(50, Math.round(Number.isFinite(required) ? required : 0))),
+      done: Math.max(0, Math.min(50, Math.round(effort))),
+    }, telemetryDayKey(closed));
     trackDayClosed({
       day: telemetryDayKey(closed),
       effort,
@@ -3131,6 +3139,7 @@ export default function App() {
     const activity = gameState.activities.find(a => a.id === activityId);
     // Completed activities cannot be unchecked — only daily reset restores them
     if (activity?.completedToday && activity?.lastCompletedDate === today) return;
+    if (activity) track('task_done', { kind: 1 }); // métricas: só o fato, nunca o nome
 
     setGameState(prevRaw => {
       // Virada pendente (até 30 s depois da meia-noite): fecha ontem ANTES de escrever hoje (QA L02-02).
@@ -3432,6 +3441,7 @@ export default function App() {
 
     if (!task.completed) {
       playTaskComplete();
+      track('task_done', { kind: 0 }); // métricas: só o fato, nunca o nome
 
       /**
        * BÔNUS DE ALÍVIO — concluir uma tarefa ASSOMBRADA (vencida ou parada há
@@ -3749,6 +3759,7 @@ export default function App() {
    *  existe na página de Atividades com `handleRestoreTask` do outro lado. */
   const handleDropTask = useCallback((taskId: string) => {
     const now = new Date();
+    track('task_skipped', { kind: 0 });
     setGameState(prev => ({
       ...prev,
       tasks: prev.tasks.map(t => (t.id === taskId ? drop(t, now) : t)),
@@ -6160,6 +6171,7 @@ export default function App() {
 
   const handleTriageResolve = useCallback((taskId: string, action: TriageAction) => {
     const now = new Date();
+    if (action !== 'today') track('task_skipped', { kind: 0 });
     const weekAhead = new Date(now.getTime());
     weekAhead.setDate(weekAhead.getDate() + 7);
     setGameState(prev => {

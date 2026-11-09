@@ -44,6 +44,7 @@ import { ScreenSkeleton } from '../ui/ScreenSkeleton';
 import { isFunGame } from '../../utils/funSession';
 import type { FunTicketStatus } from '../../utils/funTickets';
 import { FunTicketCostContext } from '../play/TicketFan';
+import { setActive, trackMinigame } from '../../utils/usageTime';
 import type { PasseioAchado } from '../play/PasseioSheet';
 import {
   usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame, loadZipGame, loadSeloGame,
@@ -402,7 +403,11 @@ export function AreaView(props: AreaViewProps) {
   /** O Soulsmith: a entrada com a Vitra vem antes do mapa em tela cheia (09/11/2026). */
   const [forgeEntered, setForgeEntered] = useState(false);
   const refuseFun = () => { setGame(null); setModeChosen(null); setFunRefused(true); setSheet('salao'); };
-  const replayRound = () => { if (!funApi || funApi.onStartRound()) return true; refuseFun(); return false; };
+  const replayRound = () => {
+    if (funApi && !funApi.onStartRound()) { refuseFun(); return false; }
+    if (game) { endRoundRef.current?.(); endRoundRef.current = trackMinigame(game); } // nova rodada = nova partida nas métricas
+    return true;
+  };
   const funRunning = !!game && isFunGame(game) && (!MINIGAME_GATE[game] || modeChosen?.game === game);
   const funKey = funRunning ? `${game}:${modeChosen?.level ?? 0}:${modeChosen ? 'm' : 'n'}` : null;
   useEffect(() => {
@@ -411,6 +416,16 @@ export function AreaView(props: AreaViewProps) {
     funChargedRef.current = funKey;
     if (!funApi.onStartRound()) refuseFun();
   }, [funKey, funApi]);
+  /* Métricas de tempo (docs/PLANO-METRICAS.md): o prédio aberto (feature) e o jogo em andamento (minigame). Só agregado; o nome vem do registro. */
+  useEffect(() => { setActive('feature', sheet ? `${area}.${sheet}` : null); return () => setActive('feature', null); }, [area, sheet]);
+  const endRoundRef = useRef<((o?: 0 | 1 | 2) => void) | null>(null);
+  const gameRunning = !!game && (!MINIGAME_GATE[game] || modeChosen?.game === game);
+  useEffect(() => {
+    if (!gameRunning || !game) return;
+    endRoundRef.current = trackMinigame(game);
+    setActive('minigame', game);
+    return () => { endRoundRef.current?.(); endRoundRef.current = null; setActive('minigame', null); };
+  }, [gameRunning, game]);
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
