@@ -4,7 +4,7 @@
  */
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { sm2Hint, sm2Text } from '../form/FormKit';
 import { Icon } from '../ui/Icon';
 import type { Language } from '../../utils/i18n';
 import {
@@ -26,6 +26,8 @@ const ENV_TONE: Record<string, [string, string]> = {
   garden: ['#10302c', '#1d5246'], workshop: ['#0e2626', '#2a3b33'], observatory: ['#081c22', '#0f3640'],
 };
 const VIEW_BLOCKS = 1.2;
+const ROUND: CSSProperties = { width: 48, height: 48, borderRadius: '50%', border: '2px solid var(--sm2-ink)', background: 'transparent', color: 'var(--sm2-ink)', display: 'grid', placeItems: 'center', padding: 0, cursor: 'pointer' };
+const SVG = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
 const H = 200; // altura do bloco em unidades do SVG (arte 1:2)
 
 export function itemLabel(it: JourneyItem, isPt: boolean): string {
@@ -42,7 +44,6 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
   const isPt = language === 'pt-BR';
   const [now, setNow] = useState(() => Date.now() + delta);
   const [confirmEnd, setConfirmEnd] = useState(false);
-  const [mini, setMini] = useState(false);
   useBackLayer(true, onClose);
   useEffect(() => {
     const tick = () => setNow(Date.now() + delta);
@@ -68,7 +69,6 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
   const tone = ENV_TONE[active.env] ?? ENV_TONE.forest;
   const Y = (y: number) => (blocks - y) * H;
   const art = JOURNEY_ART[active.env];
-  const path = spine.map((pt, i) => `${i ? 'L' : 'M'}${(pt.x * 100).toFixed(2)},${Y(pt.y).toFixed(2)}`).join(' ');
   const paused = active.pausedAt !== null;
 
   const box: CSSProperties = { position: 'fixed', inset: 0, zIndex: 210, background: tone[0], overflow: 'hidden' };
@@ -85,8 +85,6 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
           {[0.12, 0.88].map(x => <polygon key={x} points={`${x * 100},${Y(b + 0.5) - 6} ${x * 100 + 3},${Y(b + 0.5)} ${x * 100},${Y(b + 0.5) + 6} ${x * 100 - 3},${Y(b + 0.5)}`} fill="#4fe3d6" opacity={0.55} />)}
         </g>)}
         <image data-journey-arrival href={ARRIVAL_ART} x={20} y={Y(blocks)} width={60} height={60} opacity={p >= 1 ? 1 : 0.85} />
-        <path d={path} fill="none" stroke="#0a1d1d" strokeWidth={4.2} strokeLinejoin="round" strokeLinecap="round" />
-        <path d={path} fill="none" stroke="#5c8f84" strokeWidth={2.6} strokeLinejoin="round" strokeLinecap="round" />
         {chests.map(c => {
           const at = trailAt(spine, c.at);
           const side = at.x > 0.5 ? -1 : 1;
@@ -107,34 +105,40 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
           </g>;
         })}
         {petSprite
-          ? <image data-journey-pet href={petSprite} x={pet.x * 100 - 6} y={Y(pet.y) - 12} width={12} height={12} style={{ imageRendering: 'pixelated' }} />
-          : <circle data-journey-pet cx={pet.x * 100} cy={Y(pet.y) - 4} r={3} fill="#e9f5f2" />}
+          ? <image data-journey-pet href={petSprite} x={pet.x * 100 - 8.5} y={Y(pet.y) - 17} width={17} height={17} style={{ imageRendering: 'pixelated' }} />
+          : <circle data-journey-pet cx={pet.x * 100} cy={Y(pet.y) - 5} r={4} fill="#e9f5f2" />}
       </svg>
 
-      {lastItems && lastItems.length > 0 && <p role="status" data-journey-toast style={{ ...sm2Text, position: 'absolute', left: 16, right: 16, bottom: mini ? 72 : 132, margin: 0, padding: '8px 12px', borderRadius: 10, background: 'rgba(4,16,18,.85)', color: '#e9f5f2', textAlign: 'center', zIndex: 1 }}>
+      {lastItems && lastItems.length > 0 && <p role="status" data-journey-toast style={{ ...sm2Text, position: 'absolute', left: 16, right: 16, bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', margin: 0, padding: '8px 12px', borderRadius: 10, background: 'rgba(4,16,18,.85)', color: '#e9f5f2', textAlign: 'center', zIndex: 1 }}>
         {(isPt ? 'Baú aberto: ' : 'Chest opened: ') + lastItems.map(i => itemLabel(i, isPt)).join(' · ')}
       </p>}
 
-      <section data-journey-modal style={{ position: 'absolute', left: 12, right: 12, bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))', zIndex: 2, background: 'var(--sm2-surface)', color: 'var(--sm2-ink)', borderRadius: 14, padding: mini ? '6px 12px' : 12, boxShadow: '0 6px 18px rgba(0,0,0,.4)', display: 'grid', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <button type="button" data-journey-clock onClick={() => setMini(m => !m)} aria-expanded={!mini} aria-label={isPt ? 'Recolher ou abrir o relógio' : 'Collapse or expand the timer'} style={{ background: 'none', border: 0, color: 'inherit', padding: 0, minHeight: 44, display: 'flex', alignItems: 'baseline', gap: 8, cursor: 'pointer' }}>
-            <span className="sm2-num" style={{ fontFamily: 'var(--sm2-font-display)', fontWeight: 700, fontSize: 'var(--sm2-text-2xl)' }}>{formatClock(left)}</span>
-            <span style={{ ...sm2Hint, margin: 0 }}>{p >= 1 ? (isPt ? 'Chegou' : 'Arrived') : paused ? (isPt ? 'Pausa' : 'Paused') : (isPt ? 'Foco' : 'Focus')}</span>
+      <section data-journey-modal style={{ position: 'absolute', top: 'calc(10px + env(safe-area-inset-top, 0px))', left: '50%', transform: 'translateX(-50%)', width: 'min(236px, calc(100% - 24px))', zIndex: 2, background: 'color-mix(in srgb, var(--sm2-surface) 80%, transparent)', color: 'var(--sm2-ink)', borderRadius: 14, padding: '8px 12px 10px', boxShadow: '0 6px 18px rgba(0,0,0,.35)', display: 'grid', justifyItems: 'center', gap: 6 }}>
+        <span data-journey-clock role="timer" aria-label={isPt ? (p >= 1 ? 'Chegou' : paused ? 'Tempo restante, em pausa' : 'Tempo restante') : (p >= 1 ? 'Arrived' : paused ? 'Time left, paused' : 'Time left')} className="sm2-num" style={{ fontFamily: 'var(--sm2-font-display)', fontWeight: 700, fontSize: 44, lineHeight: 1.1, opacity: paused ? 0.7 : 1 }}>{formatClock(left)}</span>
+        {active.keys.length > 0 && <span data-journey-keys aria-label={isPt ? 'Chaves desta jornada' : 'Keys for this journey'} style={{ display: 'flex', gap: 6 }}>
+          {active.keys.map(k => <KeyGlyph key={k} k={k} size={20} />)}
+        </span>}
+        <div data-journey-actions style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'center' }}>
+          <button type="button" data-journey-close onClick={onClose} aria-label={isPt ? 'Sair para a Oficina (a jornada continua)' : 'Leave to the Workshop (the journey goes on)'} style={ROUND}>
+            <svg {...SVG}><path d="M10 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20H10" /><path d="M9.5 12H20" /><path d="m16.5 8.5 3.5 3.5-3.5 3.5" /></svg>
           </button>
-          {!mini && <span aria-label={isPt ? 'Chaves desta jornada' : 'Keys for this journey'} style={{ display: 'flex', gap: 4, marginLeft: 'auto' }}>
-            {active.keys.map(k => <KeyGlyph key={k} k={k} size={24} />)}
-          </span>}
+          {p < 1 && (paused
+            ? <button type="button" data-journey-resume onClick={onResume} aria-label={isPt ? 'Continuar' : 'Resume'} style={ROUND}>
+              <svg {...SVG}><circle cx="12" cy="12" r="9" /><path d="M10 8.6v6.8l5.6-3.4z" fill="currentColor" /></svg>
+            </button>
+            : <button type="button" data-journey-pause onClick={onPause} disabled={active.pauses >= JOURNEY_MAX_PAUSES} aria-label={isPt ? 'Pausar' : 'Pause'} style={{ ...ROUND, opacity: active.pauses >= JOURNEY_MAX_PAUSES ? 0.4 : 1 }}>
+              <svg {...SVG}><circle cx="12" cy="12" r="9" /><path d="M10 9v6M14 9v6" /></svg>
+            </button>)}
+          {p < 1 && (!confirmEnd
+            ? <button type="button" data-journey-end onClick={() => setConfirmEnd(true)} aria-label={isPt ? 'Encerrar' : 'End'} style={ROUND}>
+              <svg {...SVG}><circle cx="12" cy="12" r="9" /><rect x="9" y="9" width="6" height="6" rx="0.8" fill="currentColor" /></svg>
+            </button>
+            : <button type="button" data-journey-end-confirm onClick={onEnd} aria-label={isPt ? 'Encerrar e voltar' : 'End and go back'} style={{ ...ROUND, background: 'var(--sm2-ink)', color: 'var(--sm2-surface)' }}>
+              <svg {...SVG}><circle cx="12" cy="12" r="9" /><rect x="9" y="9" width="6" height="6" rx="0.8" fill="currentColor" /></svg>
+            </button>)}
         </div>
-        {!mini && p < 1 && <div style={{ display: 'flex', gap: 8 }}>
-          {paused
-            ? <button type="button" data-journey-resume onClick={onResume} style={{ ...sm2Button('primary'), flex: 1 }}>{isPt ? 'Continuar' : 'Resume'}</button>
-            : active.pauses < JOURNEY_MAX_PAUSES && <button type="button" data-journey-pause onClick={onPause} style={{ ...sm2Button('outline'), flex: 1 }}>{isPt ? 'Pausar' : 'Pause'}</button>}
-          {!confirmEnd
-            ? <button type="button" data-journey-end onClick={() => setConfirmEnd(true)} style={{ ...sm2Button('quiet'), flex: 1 }}>{isPt ? 'Encerrar' : 'End'}</button>
-            : <button type="button" data-journey-end-confirm onClick={onEnd} style={{ ...sm2Button('outline'), flex: 1 }}>{isPt ? 'Encerrar e voltar' : 'End and go back'}</button>}
-        </div>}
-        {!mini && p < 1 && !paused && active.pauses >= JOURNEY_MAX_PAUSES && <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Daqui até o fim, o Soulmon segue direto.' : 'From here to the end, your Soulmon keeps going.'}</p>}
-        {!mini && <button type="button" data-journey-close onClick={onClose} style={{ ...sm2Button('quiet'), minHeight: 44 }}>{isPt ? 'Voltar à Oficina (a jornada continua)' : 'Back to the Workshop (the journey goes on)'}</button>}
+        {confirmEnd && p < 1 && <p role="status" style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{isPt ? 'Toque de novo para encerrar e voltar' : 'Tap again to end and go back'}</p>}
+        {p < 1 && !paused && active.pauses >= JOURNEY_MAX_PAUSES && <p style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>{isPt ? 'Daqui até o fim, o Soulmon segue direto.' : 'From here to the end, your Soulmon keeps going.'}</p>}
       </section>
     </div>,
     document.body,
