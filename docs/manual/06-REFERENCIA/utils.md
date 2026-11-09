@@ -1576,6 +1576,13 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/components/home/FeedBubble.tsx`
 **Régua:** `src/components/home/FeedBubble.render.test.tsx` (com `eatStages` simulado).
 
+### `src/utils/potionArt.ts`
+**Dono de:** URL da arte da poção de Elemento (09/11/2026): `assets/soulmon/items/pocao-<id>.png` (128², alfa real) para os 20 elementos BASE.
+**Exports:**
+- `potionArt(elementId)` — URL ou `undefined` (composto sem poção própria: quem chama cai no ícone do elemento).
+**Chamado por:** `src/components/ElementPotionSheet.tsx`, `src/components/VescaPotionOffer.tsx` (arte instalada em #671).
+**Régua:** `src/utils/potionArt.test.ts`.
+
 ### `src/utils/itemArt.ts`
 **Dono de:** URL da arte de um item da pastinha, indexada pelo EMOJI (a chave real do inventário).
 **Exports:**
