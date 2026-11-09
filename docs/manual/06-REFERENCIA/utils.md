@@ -1229,6 +1229,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`, `src/hooks/useSpriteGeneration.ts`, `src/components/EvolutionPath.tsx`, `src/components/evolution/FormasAlternativasSheet.tsx`.
 **Régua:** `src/utils/formasAlternativas.test.ts`.
 
+### `src/utils/formaSnapshot.ts`
+**Dono de:** a FOTO POR FORMA (09/11/2026, dono, REGISTRO §251) — pura. Ao sair de uma forma guarda poção, elemento do nível e skills do nível (`formaSnapshots`); ao entrar aplica a foto. Queda (manual ou por HP) volta ao elemento da forma em que cai; troca lateral e forma alternativa equipam elemento, ataque básico e especial. Forma sem foto (save antigo) só limpa a poção na queda.
+**Exports:** `FormaSnapshot` · `FormaSnapshots` · `FormaState` · `chaveDaForma` · `capturarForma` · `trocarFormaCompleta` · `aoDescerDeForma` · `sanitizeFormaSnapshots`.
+**Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`, `src/utils/dailyReset.ts`.
+**Régua:** `src/utils/formaSnapshot.test.ts`.
+
 ### `src/utils/strollDiscovery.ts`
 **Dono de:** a DESCOBERTA do Passeio (05/11/2026, dono) — pura. Todo dia com Passeio o Soulmon topa com UM Soulmon do `ENEMY_ROSTER` que o jogador ainda não viu (`bestiary`); aleatório e determinístico por (`dayKey`, Drive atual), garantido enquanto restar algum. O Corvinho segue `RAVEN_SPAWN_CHANCE` (1/1000) e só vem fora disso se for o último que falta. Não grava nada: quem chama grava a chave em `bestiary` no OK.
 **Exports:** `strollDiscoveryOf`.
