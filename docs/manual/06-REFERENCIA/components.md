@@ -2181,3 +2181,7 @@ A Oficina do Foco desde §247: card Sessão + 6 cards de chave (as técnicas de 
 ### `src/components/play/TicketFan.tsx` (09/11/2026 — REGISTRO §270)
 
 `TicketFan` (os tickets em leque), `TicketPanel` (leque + contagem + validade + comprar), `TicketCost` (ticketzinho "x1" dos botões), `TicketArt` (arte; SVG provisório enquanto `TICKET_IMG` é `null`) e `FunTicketCostContext` (o `ResultScreen` mostra o x1 no "Jogar de novo"). **Chamado por:** `PlaySheets.tsx`, `MinigameModeGate.tsx`, `AreaView.tsx`, `games/ResultScreen.tsx`.
+
+### `src/components/PlayReviewModal.tsx`
+
+Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
