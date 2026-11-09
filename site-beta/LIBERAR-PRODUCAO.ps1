@@ -82,7 +82,7 @@ Passo 5 'Build com a site key real'
 $env:PUBLIC_TURNSTILE_SITEKEY = $sitekey
 & npm run build; if ($LASTEXITCODE -ne 0) { throw 'O build falhou.' }
 Remove-Item Env:PUBLIC_TURNSTILE_SITEKEY
-if (-not (Select-String -Path 'dist\index.html' -SimpleMatch $sitekey -Quiet)) { throw 'A site key nao entrou no build.' }
+if (-not (Select-String -Path 'dist\beta\index.html' -SimpleMatch $sitekey -Quiet)) { throw 'A site key nao entrou no build.' }
 Write-Host '  Build ok.' -ForegroundColor Green
 
 Passo 6 'Publicar em PRODUCAO'
