@@ -14,8 +14,8 @@ export async function notificar(env, dia, total, fetchFn = fetch) {
       body: JSON.stringify({
         from: 'Soulmon beta <onboarding@resend.dev>',
         to: [env.NOTIFICAR_PARA],
-        subject: 'Nova inscricao no beta',
-        text: 'Nova inscricao registrada. Total na lista: ' + total + '. Rode npm run exportar para ver.',
+        subject: 'Nova inscrição no beta do Soulmon (total: ' + total + ')',
+        text: 'Alguém entrou na lista do beta agora. Total de inscritos: ' + total + '. Para baixar a lista, dê dois cliques em BAIXAR-INSCRITOS.bat na pasta do site-beta.',
       }),
     });
     if (!resp.ok) console.log(JSON.stringify({ evento: 'notificacao_falhou', status: resp.status }));
