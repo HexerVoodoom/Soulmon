@@ -983,12 +983,12 @@ Código pronto (nº 262-267, `elementosLote4.data.ts`), **sem arte**. Ícone e F
 
 | Id | Elemento | Soulmon | Ícone (96x96, 1:1) | FX (folha 3x2 → 7 peças) | Sprite rookie `novos-arquivo/combinados/` | Cenário `combate/elemento/<id>.png` | Formas `combinados-formas/` |
 |---|---|---|---|---|---|---|---|
-| `clareira` | Clareira Sagrada (planta, luz, vida) | Glaedryn | falta | falta | `262-clareira.png` falta | falta | falta (champion, ultimate, mega) |
-| `alto_forno` | Alto-Forno (industrial, fogo, terra) | Furnarok | falta | falta | `263-alto_forno.png` falta | falta | falta |
-| `bencao_feerica` | Bênção Feérica (fada, luz, vida) | Blessylle | falta | falta | `264-bencao_feerica.png` falta | falta | falta |
-| `floresta_ancestral` | Floresta Ancestral (planta, terra, tempo, arcano) | Eldrowan | falta | falta | `265-floresta_ancestral.png` falta | falta | falta |
-| `colosso_blindado` | Colosso Blindado (industrial, eletricidade, vigor, marcial) | Colossarm | falta | falta | `266-colosso_blindado.png` falta | falta | falta |
-| `corte_feerica` | Corte Feérica (fada, arcano, luz, som) | Faecourt | falta | falta | `267-corte_feerica.png` falta | falta | falta |
+| `clareira` | Clareira Sagrada (planta, luz, vida) | Glaedryn | falta | falta | `262-clareira.png` feito | falta | falta (champion, ultimate, mega) |
+| `alto_forno` | Alto-Forno (industrial, fogo, terra) | Furnarok | falta | falta | `263-alto_forno.png` feito | falta | falta |
+| `bencao_feerica` | Bênção Feérica (fada, luz, vida) | Blessylle | falta | falta | `264-bencao_feerica.png` feito | falta | falta |
+| `floresta_ancestral` | Floresta Ancestral (planta, terra, tempo, arcano) | Eldrowan | falta | falta | `265-floresta_ancestral.png` feito | falta | falta |
+| `colosso_blindado` | Colosso Blindado (industrial, eletricidade, vigor, marcial) | Colossarm | falta | falta | `266-colosso_blindado.png` feito | falta | falta |
+| `corte_feerica` | Corte Feérica (fada, arcano, luz, som) | Faecourt | falta | falta | `267-corte_feerica.png` feito | falta | falta |
 
 Total pedido agora: 6 ícones + 6 folhas de FX. Fora deste pedido: 6 sprites rookie, 6 cenários e 18 formas dos novos, e formas e cenário dos 3 promovidos (Pestilência, Maldição, Cyber).
 
@@ -1081,7 +1081,8 @@ A masmorra agora é temática: cada elemento ocupa 2 camadas (base → 2 → 3 �
 ## 29. Embaha (Chama Azul): rookie de verdade ainda pendente (bug do dono, 09/11/2026, REGISTRO §255 e §258)
 
 **Feito (09/11/2026, §258):** o PNG marrom de `combinados/009-chama_azul.png` foi SUBSTITUÍDO pela forma Champion azul de `paralelos/parchamaazul-champion.png` (256², alfa real). Chama Azul nunca mais mostra o urso de Vigor; o teste `dungeonElementos.arte.test.ts` guarda o hash do PNG antigo.
-**Falta:** um **rookie** de verdade para a Embaha (fogo+morte), mesma identidade Soulmon e chama azul (turquesa escuro/azulada), tamanho de rookie (menor e mais simples que o Champion), 256×256, alfa real (`gpt_image_2 --background transparent`), destino `src/assets/soulmon/novos-arquivo/combinados/009-chama_azul.png` (hoje esse slot usa a arte do Champion como quebra-galho: no rookie ela aparece "grande demais" para o estágio). Mesma dívida, sem urgência: 6 elementos do lote 4 sem PNG próprio (`clareira`, `floresta_ancestral`, `alto_forno`, `colosso_blindado`, `bencao_feerica`, `corte_feerica`) mostram o rookie do base (lista em `dungeonElementos.arte.test.ts`).
+**Feito (09/11/2026, REGISTRO §269):** rookie de verdade instalado em `009-chama_azul.png` e os 6 rookies do lote 4 (`262` a `267`) instalados; dívida do `dungeonElementos.arte.test.ts` zerada.
+~~**Falta:** um **rookie** de verdade para a Embaha (fogo+morte), mesma identidade Soulmon e chama azul (turquesa escuro/azulada), tamanho de rookie (menor e mais simples que o Champion), 256×256, alfa real (`gpt_image_2 --background transparent`), destino `src/assets/soulmon/novos-arquivo/combinados/009-chama_azul.png` (hoje esse slot usa a arte do Champion como quebra-galho: no rookie ela aparece "grande demais" para o estágio). Mesma dívida, sem urgência: 6 elementos do lote 4 sem PNG próprio (`clareira`, `floresta_ancestral`, `alto_forno`, `colosso_blindado`, `bencao_feerica`, `corte_feerica`) mostram o rookie do base (lista em `dungeonElementos.arte.test.ts`).~~
 
 ## 30. Formas paralelas de Champion/Ultimate (09/11/2026, §258)
 

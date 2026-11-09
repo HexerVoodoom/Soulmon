@@ -192,7 +192,7 @@ export const ELEMENT_VISUAL: Readonly<Record<string, readonly [number, number, n
   mutacao: [38.2, -2.0, 7.9, 0.322],
   nascente: [54.1, -27.9, 13.3, 0.418],
   nebulosa: [27.8, 19.5, -38.1, 0.478],
-  neutro: [69.8, -0.4, 3.1, 0.563],
+  neutro: [54.3, 4.0, -1.7, 0.326],
   nevasca: [66.0, -1.9, -16.7, 0.66],
   nucleo: [47.9, 30.6, 35.8, 0.492],
   nulo: [44.9, 4.3, -9.6, 0.364],
