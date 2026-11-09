@@ -12,8 +12,9 @@ describe('projectileScale', () => {
     expect(projectileScaleRange('cut', 'toFoe')).toEqual({ from: CUT_START, to: 1 });
     expect(projectileScale('cut', 'toFoe', 0.5)).toBeCloseTo((CUT_START + 1) / 2);
   });
-  it('corte: inverso simétrico ao comum', () => {
-    expect(projectileScaleRange('cut', 'toMe')).toEqual(projectileScaleRange('orb', 'toMe'));
+  it('corte: vindo do inimigo também nasce ~0 e cresce até 100%', () => {
+    expect(CUT_START).toBeLessThanOrEqual(0.05);
+    expect(projectileScaleRange('cut', 'toMe')).toEqual({ from: CUT_START, to: 1 });
   });
   it('limita o progresso e ignora NaN', () => {
     expect(projectileScale('cut', 'toFoe', -3)).toBe(CUT_START);
