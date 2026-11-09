@@ -8,6 +8,7 @@
 import { RitualDialog } from '../ritual/RitualKit';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { SoulNode } from './SoulNode';
+import { ElementIcon } from '../ElementBaseSlots';
 import { ALT_ORIGINAL, ocultasDaForma, type FormasAlt } from '../../utils/formasAlternativas';
 import { ALL_ELEMENT_IDS } from '../../utils/elementDex';
 import { CURATED_ELEMENT_IDS } from '../../utils/elementosCurados';
@@ -58,7 +59,14 @@ export function FormasAlternativasSheet({ isPt, formId, nomeDaForma, itens, form
             <div key={it.elemento} style={{ display: 'flex', gap: 12, alignItems: 'center' }} data-testid={`sm-forma-alt-${it.elemento}`}>
               <SoulNode visual={eq ? 'current' : 'reached'} sprite={it.sprite} label={`${nomeDaForma} — ${nomeEl(it.elemento)}`} title={nomeEl(it.elemento)} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{nomeEl(it.elemento)}</p>
+                {/* Nome da variante em NEGRITO (forma + elemento; a original leva só o nome da forma) e, embaixo, ícone + elemento. */}
+                <p style={{ ...sm2Text, fontWeight: 700, margin: 0, overflowWrap: 'anywhere' }} data-testid="sm-forma-alt-nome">
+                  {it.elemento === ALT_ORIGINAL || it.elemento === '__atual' ? nomeDaForma : `${nomeDaForma} ${nomeEl(it.elemento)}`}
+                </p>
+                <p style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', gap: 4 }} data-testid="sm-forma-alt-elemento">
+                  {it.elemento !== ALT_ORIGINAL && it.elemento !== '__atual' && <ElementIcon id={it.elemento} size={16} />}
+                  <span>{nomeEl(it.elemento)}</span>
+                </p>
                 {!it.sprite && <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'sendo desenhada…' : 'being drawn…'}</p>}
               </div>
               {modo === 'ver' ? null : eq
