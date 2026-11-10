@@ -353,6 +353,8 @@ export function SettingsPage({
     if (!ok) restoreTimer.current = setTimeout(() => setRestoreStatus('idle'), 3000);
   };
 
+  const petImg = profile ? getSpriteForStage(profile.petStage) : '';
+
   return (
     <>
       <InstallPrompt language={language} />
@@ -360,18 +362,19 @@ export function SettingsPage({
       {/* ── PERFIL — foto e moldura (a foto do canto da Home). ───────────── */}
       {profile && (
         <GroupCard title={isPt ? 'Perfil' : 'Profile'}>
+          {/* Soulmon PRÓPRIO (nunca oponente): piso por estágio, como no ProfileEditor. */}
           <div data-profile-cards style={{ display: 'flex', gap: 8, alignItems: 'stretch', width: '100%' }}>
             {([
               { key: 'profile', attr: { 'data-edit-profile': true }, label: isPt ? 'Perfil' : 'Profile', on: () => setProfileOpen(true),
                 img: <UserAvatar avatarId={profile.avatarId} frameId={profile.equippedFrame} seed={profile.saveId} size={56} /> },
               ...(profile.editHome ? [{ key: 'home', attr: { 'data-edit-home-open': true }, label: 'Home', on: () => setEditHomeOpen(true),
-                img: <img src={getSpriteForStage(profile.petStage)} alt="" width={56} height={56} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /> }] : []),
+                img: <img src={petImg} alt="" width={56} height={56} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /> }] : []),
               ...(profile.widgetFrames ? [{ key: 'widget', attr: { 'data-widget-frames-open': true }, label: 'Widget', on: () => setWidgetFramesOpen(true),
                 img: (() => {
                   const url = profile.widgetFrames!.selected ? widgetFramePreview(profile.widgetFrames!.selected) : undefined;
                   return url
                     ? <img src={url} alt="" width={84} height={56} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
-                    : <img src={getSpriteForStage(profile.petStage)} alt="" width={56} height={56} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />;
+                    : <img src={petImg} alt="" width={56} height={56} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />;
                 })() }] : []),
             ]).map(c => (
               <button key={c.key} type="button" {...c.attr} onClick={c.on}
