@@ -4442,6 +4442,10 @@ Regra pura da jornada do foco: baús pela seed, relógio sem pausas, loot por ch
 
 O quadro da Oficina: critério de cada chave (`keyEarned`), chaves da sessão no aparelho e o crédito idempotente dos recibos da jornada no save (`applyJourneyGrants`, campo `journeyCredited`); e o cliente de `/api/focus-journey`. Decisão: REGISTRO §247. **Régua:** `focusBoard.test.ts`.
 
+### `src/utils/treinoTickets.ts` (10/11/2026 — REGISTRO §280)
+
+Tickets do Treino (aba Sparring do Torneio): 20 partidas COM Honra grátis por dia do jogador (`TREINO_TICKET_MATCHES`) e ticket extra de 30 Bits ganhos (`TREINO_EXTRA_TICKET_BITS`) = +20 sem Honra, máx. 3/dia (`TREINO_EXTRA_TICKETS_MAX`). O contador mora no servidor; aqui ficam as constantes espelhadas, `sanitizeTreinoTickets`, `treinoBuyRefusal` (`max-extras`/`no-bits`) e `chargeTreinoTicket` (cobra só Bits ganhos, reconfere sobre o `prev`). Chamado por `App.tsx` e `TournamentPage`. Régua: `treinoTickets.test.ts` e `community.treino.tickets.test.js`.
+
 ### `src/utils/funTickets.ts` (09/11/2026 — REGISTRO §270)
 
 Tickets dos minijogos do Salão (substituem a sessão de `funSession.ts`). Funções PURAS: `buyFunTickets` (1 energia → lote de 3; só com ≤2 vivos; teto 5), `startFunRound` (gasta 1 ticket do lote que vence antes), `funTicketStatus`, `ticketCount`, `nextExpiryMs`, `sanitizeFunTickets`. Validade 24 h por lote. Espelho no servidor: `functions/api/_funTickets.js` (paridade em `funTickets.parity.test.js`). Chamado por `App.tsx` e `AreaView.tsx`.
@@ -4477,3 +4481,7 @@ Redutores puros do modal de formas, usados pelo `App` e pelo teste de tela: `equ
 ### `src/utils/elementoDescritores.data.ts` (10/11/2026)
 
 Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglês), derivada dos prompts-fonte dos assets: os 20 elementos base de `docs/ASSETS-A-GERAR.md` (motivo da moldura + paleta) e combinados do `registro.jsonl` (FX por elemento). Elemento sem prompt-fonte não está na tabela (o prompt leva só o nome). Lida por `pistasVisuaisDoElemento` (`elementoCombinado.ts`); o verde é permitido e o fundo chroma troca para magenta (`escolherChroma`). Régua: `elementoDescritores.test.ts`.
+
+### `src/utils/feiraLoja.ts`
+**Dono de:** o lado CLIENTE da Feira de verdade: tipos, `sanitizeFeiraLoja`, `feiraLojaAbre`, `feiraLojaShownKey`, compra local ao preço da oferta (`applyFeiraLojaBuy`) e entrega da Hexsmith (`applyServerFeiraHex`).
+**Chamado por:** `utils/community.ts`, `App.tsx`, `components/guild/FeiraLojaSheet.tsx`.

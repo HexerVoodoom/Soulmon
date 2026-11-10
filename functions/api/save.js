@@ -22,6 +22,8 @@ import { sanitizeTalentPicks } from './_talents.js';
 import { sanitizeEquipment, sanitizeBitsOrigin } from './_equipment.js';
 import { sanitizeForge } from './_forge.js';
 import { enforceStoredHexOwned, forgeOnServer } from './_hexsmith.js';
+import { feiraLigada } from './_feira.js';
+import { feiraHexOnServer, validarCompraFeiraLoja, marcarCompraFeiraLoja, diaDoJogadorValido } from './_feiraLoja.js';
 import { sanitizeBuildingQuests } from './_buildingQuests.js';
 import { sanitizeDailyMissions, sanitizeFeats, sanitizeFirstTimes, sanitizeMissionsClaimed } from './_dailyMissions.js';
 import { sanitizeFocusLoot } from './_focusLoot.js';
@@ -331,6 +333,39 @@ async function onRequestBruto({ request, env }) {
     const f = firstSeenMeta(prev.metadata).f ?? Date.now();
     await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS, metadata: { t: Date.now(), f, r: cur + 1, h } });
     return Response.json({ ok: true, already: false, revision: cur + 1, ...campos(r.state) }, { headers: CORS });
+  }
+
+  // ITEM DA HEXSMITH NA FEIRA DE VERDADE (10/11/2026, `_feiraLoja.js`): `POST ?id=&action=hexFair { itemId, dayKey, baseRevision? }`.
+  // A posse de HEX é do servidor (§216), então a compra do item com desconto também é: confere que o item está na OFERTA de hoje (sorteada
+  // e gravada pelo servidor), que não foi comprado, e debita SÓ o preço da oferta em Bits ganhos (sem ingredientes). Mesma escrita da forja.
+  if (request.method === 'POST' && url.searchParams.get('action') === 'hexFair') {
+    const acctGate = takeToken('save-write', saveId, SAVE_WRITE_RATE_ACCOUNT);
+    if (!acctGate.ok) return tooManyRequests(acctGate.retryAfter, CORS);
+    if (!feiraLigada(env)) return Response.json({ error: 'not available' }, { status: 404, headers: CORS });
+    if (!diaDoJogadorValido(body?.dayKey)) return Response.json({ error: 'invalid' }, { status: 400, headers: CORS });
+    const v = await validarCompraFeiraLoja(env, saveId, body.dayKey, typeof body?.itemId === 'string' ? body.itemId : '');
+    if (!v.ok) return Response.json({ error: v.reason }, { status: v.reason === 'no-offer' ? 404 : 409, headers: CORS });
+    if (v.item.type !== 'hex') return Response.json({ error: 'not hex' }, { status: 409, headers: CORS });
+    const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    if (typeof prev?.value !== 'string') return Response.json({ error: 'no-save' }, { status: 404, headers: CORS });
+    const cur = revisionOf(prev.metadata);
+    const base = body?.baseRevision;
+    if (Number.isInteger(base) && base >= 0 && base !== cur) {
+      return Response.json({ error: 'conflict', revision: cur }, { status: 409, headers: CORS });
+    }
+    let stored;
+    try { stored = JSON.parse(prev.value); } catch { stored = null; }
+    if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return Response.json({ error: 'no-save' }, { status: 404, headers: CORS });
+    const r = feiraHexOnServer(stored, v.item.id, v.item.price);
+    if (!r.ok) return Response.json({ error: r.reason }, { status: r.reason === 'invalid' ? 400 : 402, headers: CORS });
+    const campos = (st) => ({ hexsmith: st.hexsmith, gamePoints: st.gamePoints, bitsOrigin: st.bitsOrigin });
+    if (r.already) return Response.json({ ok: true, already: true, revision: cur, ...campos(stored) }, { headers: CORS });
+    const serialized = JSON.stringify(r.state);
+    const h = await sha256Hex(serialized);
+    const f = firstSeenMeta(prev.metadata).f ?? Date.now();
+    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS, metadata: { t: Date.now(), f, r: cur + 1, h } });
+    await marcarCompraFeiraLoja(env, saveId, body.dayKey, v.item.id);
+    return Response.json({ ok: true, already: false, price: v.item.price, revision: cur + 1, ...campos(r.state) }, { headers: CORS });
   }
 
   if (request.method === 'POST') {

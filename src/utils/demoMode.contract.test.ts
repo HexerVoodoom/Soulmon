@@ -155,6 +155,7 @@ describe('2. ponto novo sem o predicado reprova', () => {
       'components/guild/ClaProcurar.tsx': 'procurar clã e pedidos de entrada (§203), montados só dentro do GuildSheet (`hall.guilda`, bloqueado na demo)',
       'components/guild/FeiraEventoSheet.tsx': 'sala da Feira (mistério/chefe): só abre pelo prédio `hall.feira`, bloqueado na demo',
       'components/guild/FeiraTrailPlay.tsx': 'trilha da Feira, montada dentro do FeiraEventoSheet (bloqueado na demo)',
+      'components/guild/FeiraLojaSheet.tsx': 'a feira de verdade nasce da volta da Missão da guilda (`guildRaidHit`, sem guilda/demo nunca há oferta); só monta com `feiraLoja` do servidor',
       'utils/claApi.ts': 'cliente dos prédios do clã (Praça/Plantio/Mistério) sobre o `guildCall`; só chega pelo GuildSheet, e o Mistério por tarefa só dispara com memória de clã no aparelho (a demo não tem)',
       'components/perfil/ProfileEditor.tsx': 'só abre em Configurações > Perfil; o perfil público só sobe com PvP ligado (nunca na demo)',
       'utils/giftsCredited.ts': 'confirma presentes (giftsAck) só depois de um save confirmado na nuvem — na demo não há POST de save, então nunca dispara',

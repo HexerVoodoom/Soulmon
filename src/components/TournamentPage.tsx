@@ -87,9 +87,10 @@ import { useGameStateOptional } from '../contexts/GameStateContext';
 import { stageSkillsFor } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { FX_FALLBACK_ELEMENT, opponentElementFor } from '../utils/combatFx';
 import { DESAFIANTE_ELEMENT } from '../utils/spriteElement';
-import { getOpponents, playMatchComRetry, playMatch, isFalhaDeRede, startDuel, getRank, getSeasonHistory, getSparOpponents, startSpar, playSpar, playSparComRetry, type SparResult, type Opponent, type MatchResult, type RankRow, type SeasonHistory } from '../utils/community';
+import { getOpponents, playMatchComRetry, playMatch, isFalhaDeRede, startDuel, getRank, getSeasonHistory, getSparOpponents, startSpar, buySparTicket, playSpar, playSparComRetry, type SparResult, type Opponent, type MatchResult, type RankRow, type SeasonHistory } from '../utils/community';
 import { buildSeasonHistoryView, placeLabel, prevSeasonKey, seasonMonthLabel } from '../utils/seasonHistoryView';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, SPAR_HONOR_MAX, SPAR_HONOR_DAILY_CAP, emblemStyle } from '../utils/currencies';
+import { sanitizeTreinoTickets, TREINO_TICKET_MATCHES, TREINO_EXTRA_TICKET_BITS, TREINO_EXTRA_TICKETS_MAX, type TreinoTickets } from '../utils/treinoTickets';
 import { RewardPreview } from './ui/RewardPreview';
 import { TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
 import { seasonDaysLabel } from '../utils/tournamentSeason';
@@ -130,6 +131,9 @@ interface TournamentPageProps {
   /** B3: saldo de Bits e compra de moldura de loja. */
   bits?: number;
   onBuyFrame?: (id: string) => void;
+  /** Treino: Bits GANHOS (saldo menos Bit de Crédito; `earnedBits`) e a cobrança do ticket extra, chamada só DEPOIS de o servidor confirmar a compra. `false` = nada cobrado. */
+  earnedBits?: number;
+  onChargeTreinoTicket?: () => boolean;
   language: string;
   /** Emblemas atuais (moeda do torneio) — só para exibir. */
   emblems: number;
@@ -251,7 +255,7 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
   );
 }
 
-export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, onElementsDefeated, onEnemySeen, headSlot, onCoverChange }: TournamentPageProps) {
+export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, earnedBits: earnedBitsProp = 0, onChargeTreinoTicket, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, onElementsDefeated, onEnemySeen, headSlot, onCoverChange }: TournamentPageProps) {
   // Música (19/10/2026): o Torneio toca o "Stone Hall Combat" (se o interruptor "Música" está ligado). Antes de qualquer return (hooks).
   useEffect(() => entrarNaSuperficie('torneio'), []);
   const isPt = language === 'pt-BR';
@@ -290,6 +294,9 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   const [sparResult, setSparResult] = useState<SparResult | null>(null);
   const [sparError, setSparError] = useState<string | null>(null);
   const [sparRetry, setSparRetry] = useState<{ opp: Opponent; taps: number[]; seed: number } | null>(null);
+  /* Tickets do dia (servidor): 20 partidas com Honra grátis + extras de 30 Bits sem Honra. `undefined` = servidor antigo (sem contador). */
+  const [tickets, setTickets] = useState<TreinoTickets | undefined>(undefined);
+  const [buyingTicket, setBuyingTicket] = useState(false);
   /* WP4.13 (achado E5) — a FAIXA lê o contador LIFETIME, não os pontos da
      season. Os pontos da season descem por três caminhos (derrota própria,
      ser sorteado como oponente e perder — sem jogar — e a virada de mês), e a
@@ -521,7 +528,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     if (!pvpAberto) return;
     setSparFailed(false);
     getSparOpponents(saveId)
-      .then(r => setSparOpps(r.opponents ?? []))
+      .then(r => { setSparOpps(r.opponents ?? []); const t = sanitizeTreinoTickets(r.tickets); if (t) setTickets(t); })
       .catch(() => { setSparOpps([]); setSparFailed(true); });
   };
   useEffect(() => { if (tab === 'sparring') loadSpar(); }, [tab, pvpAberto, saveId]);
@@ -530,6 +537,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     setSparFighting(opp.id);
     setSparError(null);
     try {
+      if (tickets && tickets.left <= 0) { setSparError(isPt ? 'As partidas de hoje acabaram. Amanhã tem um ticket novo.' : "Today's matches are used up. A new ticket comes tomorrow."); return; }
       const r = await startSpar(saveId, opp.id);
       setSparDuel({ opp, seed: r.seed, me: r.me, oppSide: r.opp });
     } catch (err) {
@@ -538,6 +546,22 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         : (isPt ? 'O treino não aconteceu. Tente de novo.' : "The sparring match didn't happen. Try again."));
     } finally {
       setSparFighting(null);
+    }
+  };
+  /** Compra o ticket EXTRA: o servidor conta (e limita 3/dia) e SÓ ENTÃO os Bits ganhos são cobrados; falha em qualquer ponto não cobra nada. */
+  const buyTreinoTicket = async () => {
+    if (buyingTicket || !onChargeTreinoTicket) return;
+    setBuyingTicket(true);
+    setSparError(null);
+    try {
+      const r = await buySparTicket(saveId);
+      const tk = sanitizeTreinoTickets(r.tickets);
+      if (tk) setTickets(tk);
+      if (!onChargeTreinoTicket()) setSparError(isPt ? 'Bits ganhos insuficientes para o ticket.' : 'Not enough earned Bits for the ticket.');
+    } catch {
+      setSparError(isPt ? 'Não deu para comprar o ticket agora. Nada foi cobrado.' : "Couldn't buy the ticket right now. Nothing was charged.");
+    } finally {
+      setBuyingTicket(false);
     }
   };
   const leaveSpar = (opp: Opponent) => { void resolveSpar(opp, [], true); };
@@ -552,6 +576,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       // A Honra é a do SERVIDOR (1–2 por vitória, teto de 20 por dia): o app só soma o que veio, e não soma o reenvio.
       const honor = Number.isFinite(r.honor) ? Math.max(0, Math.min(SPAR_HONOR_MAX, Math.floor(r.honor))) : 0;
       if (honor > 0 && !r.replayed) onEarnEmblems(honor);
+      const tk = sanitizeTreinoTickets(r.tickets);
+      if (tk) setTickets(tk);
       if (!forfeit) setSparResult(r);
     } catch (err) {
       setSparResult(null);
@@ -645,8 +671,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         </span>
         <InfoTipSection title={isPt ? 'Treino' : 'Sparring'}>
           {isPt
-            ? `A aba Treino é amistosa: você enfrenta jogadores de Vínculo parecido, sem mexer na posição nem gastar partida. Vencer rende de 1 a ${SPAR_HONOR_MAX} de Honra, até ${SPAR_HONOR_DAILY_CAP} por dia. Dá para sortear outros oponentes quantas vezes quiser.`
-            : `The Sparring tab is friendly: you face players of a similar Bond, without touching your rank or using a match. A win earns 1 to ${SPAR_HONOR_MAX} Honor, up to ${SPAR_HONOR_DAILY_CAP} a day. You can draw new opponents as often as you like.`}
+            ? `A aba Treino é amistosa: você enfrenta jogadores de Vínculo parecido, sem mexer na posição nem gastar partida. Todo dia você ganha 1 ticket grátis: ${TREINO_TICKET_MATCHES} partidas com Honra (vencer rende de 1 a ${SPAR_HONOR_MAX}, até ${SPAR_HONOR_DAILY_CAP} de Honra por dia). Para jogar mais, o ticket extra custa ${TREINO_EXTRA_TICKET_BITS} Bits ganhos e dá +${TREINO_TICKET_MATCHES} partidas sem Honra (até ${TREINO_EXTRA_TICKETS_MAX} por dia). Dá para sortear outros oponentes quantas vezes quiser.`
+            : `The Sparring tab is friendly: you face players of a similar Bond, without touching your rank or using a match. Every day you get 1 free ticket: ${TREINO_TICKET_MATCHES} matches with Honor (a win earns 1 to ${SPAR_HONOR_MAX}, up to ${SPAR_HONOR_DAILY_CAP} Honor a day). To play more, an extra ticket costs ${TREINO_EXTRA_TICKET_BITS} earned Bits and gives +${TREINO_TICKET_MATCHES} matches without Honor (up to ${TREINO_EXTRA_TICKETS_MAX} a day). You can draw new opponents as often as you like.`}
         </InfoTipSection>
         <InfoTipSection title={isPt ? 'Missões' : 'Missions'}>
           {isPt
@@ -1022,9 +1048,46 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         <div data-torneio-treino style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <p style={{ ...sm2Hint, margin: 0 }}>
             {isPt
-              ? `Treino amistoso contra outros jogadores: não muda a sua posição. Vencer rende de 1 a ${SPAR_HONOR_MAX} de Honra, até ${SPAR_HONOR_DAILY_CAP} por dia.`
-              : `Friendly practice against other players: it never changes your rank. A win earns 1 to ${SPAR_HONOR_MAX} Honor, up to ${SPAR_HONOR_DAILY_CAP} a day.`}
+              ? `Treino amistoso contra outros jogadores: não muda a sua posição. Vencer rende de 1 a ${SPAR_HONOR_MAX} de Honra (até ${SPAR_HONOR_DAILY_CAP} por dia), nas partidas com Honra do ticket do dia.`
+              : `Friendly practice against other players: it never changes your rank. A win earns 1 to ${SPAR_HONOR_MAX} Honor (up to ${SPAR_HONOR_DAILY_CAP} a day) in the matches with Honor from today's ticket.`}
           </p>
+          {tickets && (
+            <div data-treino-tickets style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <p data-treino-contador className="sm2-num" style={{ ...sm2Text, margin: 0, fontWeight: 500 }}>
+                {isPt ? 'Partidas com Honra hoje' : 'Matches with Honor today'}: {Math.min(TREINO_TICKET_MATCHES, tickets.played)}/{TREINO_TICKET_MATCHES}
+              </p>
+              {tickets.honorLeft === 0 && tickets.left > 0 && (
+                <p data-treino-extras style={{ ...sm2Hint, margin: 0 }}>
+                  {isPt ? `Ticket extra em uso: ${tickets.left} ${tickets.left === 1 ? 'partida restante' : 'partidas restantes'}, sem Honra.` : `Extra ticket in use: ${tickets.left} ${tickets.left === 1 ? 'match' : 'matches'} left, no Honor.`}
+                </p>
+              )}
+              {tickets.left === 0 && (
+                <div data-treino-oferta style={{ ...cardStyle, display: 'flex', flexDirection: 'column', gap: 8, padding: 12 }}>
+                  <p style={{ ...sm2Text, margin: 0 }}>
+                    {tickets.canBuy
+                      ? (isPt ? 'As partidas de hoje acabaram. Se quiser jogar mais, dá para pegar um ticket extra.' : "Today's matches are done. If you want to play more, you can get an extra ticket.")
+                      : (isPt ? 'Você usou todos os tickets de hoje. Amanhã tem um novo, grátis.' : "You used all of today's tickets. A new free one comes tomorrow.")}
+                  </p>
+                  {tickets.canBuy && (
+                    <>
+                      <button
+                        type="button"
+                        data-treino-comprar
+                        disabled={buyingTicket || !onChargeTreinoTicket || earnedBitsProp < TREINO_EXTRA_TICKET_BITS}
+                        onClick={() => { void buyTreinoTicket(); }}
+                        style={{ ...sm2Button('outline', buyingTicket || earnedBitsProp < TREINO_EXTRA_TICKET_BITS), width: '100%' }}
+                      >
+                        {isPt ? `+${TREINO_TICKET_MATCHES} partidas, sem Honra — ${TREINO_EXTRA_TICKET_BITS} Bits` : `+${TREINO_TICKET_MATCHES} matches, no Honor — ${TREINO_EXTRA_TICKET_BITS} Bits`}
+                      </button>
+                      {earnedBitsProp < TREINO_EXTRA_TICKET_BITS && (
+                        <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Só Bits ganhos jogando pagam o ticket.' : 'Only Bits earned by playing pay for the ticket.'}</p>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           {sparError && (
             <p role="alert" style={{ ...sm2Text, margin: 0, paddingLeft: 12, borderLeft: '3px solid var(--sm2-gold-ink)' }}>{sparError}</p>
           )}
@@ -1056,7 +1119,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           )}
           {sparOpps?.map(o => {
             const busy = sparFighting === o.id;
-            const locked = sparFighting !== null;
+            const locked = sparFighting !== null || (tickets !== undefined && tickets.left <= 0);
             return (
               <div key={o.id} data-treino-oponente style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', minHeight: 56 }}>
                 <MiniGlass size={64}>

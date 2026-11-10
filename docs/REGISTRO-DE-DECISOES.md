@@ -4536,6 +4536,9 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Alternativa que perdeu:** manter a arte anterior à regra (caveira/engrenagem fora do tema do elemento). **Falsifica:** o dono reprovar a leitura dos novos em combate real.
 
+## §277 — Feira de verdade: a volta da Missão pode encontrar uma feira (10/11/2026)
+**Decidido:** chance rara (`FEIRA_LOJA_PCT` = 8% das voltas, só com a Feira ligada) de um vendedor com 4 a 6 itens do Mercado ou da Hexsmith, 10% a 50% de desconto, só Bits, sem ingredientes, 1 por item, oferta do dia gravada pelo servidor. Aditiva: não consome o Chefe/Desafio. **Alternativa que perdeu:** sorteio no cliente (reroll) e faixa 62/30/8 exata (mexeria em `TRAIL_PCT`). **Falsifica:** feira em >15% das voltas, ou preço final <1 Bit. Detalhes e catálogo de vendedores: `PLANO-FEIRA-CHEFE.md` §12.
+
 ## §277 — Dormir dá +50% na regeneração de energia (10/11/2026, decisão do dono)
 
 **Decisão.** Com o Soulmon DORMINDO a velocidade de regeneração da energia é MULTIPLICADA por `SLEEP_ENERGY_REGEN_BONUS` = 1,5 (fator da fome × 1,5, prato do Restaurante incluso): bem alimentado 150%, mediano 75%, faminto continua 0% (a regra da fome não muda). Ponto único: `utils/hunger.ts` (`regenPoints(..., sleeping)`, `msUntilPoints`, `energyStatus.sleeping`, `setSleeping`). O estado de sono é gravado em `energyClock.sleep` (campo opcional dentro do relógio existente; leitura tolerante em `sanitizeEnergyClock`; ausente = acordado) quando o `isSleeping` real troca (`App.tsx`), e cada trecho é contado com o estado que valia nele, por timestamp (troca no meio da unidade não gera erro). **Limitação, sem inventar:** com o app fechado não há histórico do sono; o intervalo fechado conta com o estado registrado por último. O "dormindo para acordar" do dia (`dayWake`) é só apresentação e não conta. Timer, Guia, Ajuda e dica de energia refletem o fator pelas constantes. Servidor não espelha a regeneração (nada a paridar).
@@ -4549,6 +4552,14 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Alternativa que perdeu:** nível = o nível-alvo (o 1º upgrade já custaria 25 e a base 20 nunca apareceria); também perdeu custo plano em Bits (não cresce com o poder da peça) e aceitar Bits de câmbio de Crédito (daria vantagem paga).
 
 **Falsifica:** o dono achar o Soulsmith caro demais para quem joga só o necessário (baixar `UPGRADE_BITS_FACTOR`) ou o teto diário de Bits dos minijogos (`MINIGAME_BITS_PER_DAY`) travar a escada (revisar `BALANCO-SOULSMITH.md`).
+
+## §280 — Tickets do Treino: 20 partidas com Honra por dia, ticket extra de 30 Bits sem Honra (10/11/2026, decisão do dono em modal)
+
+**Decisão.** A aba Treino (§279) passa a ter TICKETS por DIA DO JOGADOR: todo dia vem **1 ticket grátis = 20 partidas COM Honra** (`TREINO_TICKET_MATCHES`; a Honra segue 1–2 por vitória e o teto de 20 Honra/dia de `SPAR_HONOR_DAILY_CAP` continua valendo). Passou das 20, só jogando com **ticket extra: `TREINO_EXTRA_TICKET_BITS` = 30 Bits (só Bits GANHOS, regra de `bitsOrigin`; nunca Créditos) = +20 partidas SEM Honra**, no máximo **`TREINO_EXTRA_TICKETS_MAX` = 3 por dia** (escolha nossa, para não virar farm). O contador mora no SERVIDOR (`sparTicket:<id>:<dia>` = `{played, extra}`; `functions/api/_treino.js`), a ação `sparBuyTicket` conta e limita, e o app só cobra os 30 Bits (`chargeTreinoTicket`) DEPOIS do ok. Partida liquidada gasta 1 (desistir não gasta); `sparStart` recusa com 409 sem partida restante. Treino nunca pontua ranking. Sem campo novo no save. UI: "Partidas com Honra hoje x/20" e oferta suave do extra ao esgotar.
+
+**Alternativa que perdeu:** (a) tickets na ARENA livre (o pedido original falava em "Arena" e "teto de 20 partidas", que na verdade não existem lá: a Arena é ilimitada e não paga Honra; o limite de 5/dia com Honra é do Torneio ranqueado); (b) manter o teto de partidas só pela Honra (sem ticket); (c) contar o ticket no save do cliente (furável por localStorage; o Treino rende Honra, então o contador fica no servidor).
+
+**Falsifica:** o dono ver o Treino virando a fonte dominante de Honra (baixar `TREINO_TICKET_MATCHES`) ou ninguém comprar o extra (preço alto/baixo demais, ajustar `TREINO_EXTRA_TICKET_BITS`); sinal de farm via extras (baixar `TREINO_EXTRA_TICKETS_MAX`).
 
 ## §279 — Torneio ganha a aba Treino (Sparring), sem ranking e com pouca Honra (10/11/2026, decisão do dono em modal)
 

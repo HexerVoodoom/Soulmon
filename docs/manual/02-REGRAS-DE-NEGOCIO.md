@@ -430,7 +430,7 @@ decidida pela FOME (`src/utils/hunger.ts`): bem alimentado (fome ≥ 60) 100%,
 mediano (≥ 20) 50%, faminto 0% (interrompida). A fome cai de 100 a 0 em 14 h e só
 sobe comendo; fome nunca tira coração, Bits nem bloqueia outra coisa. O progresso
 até a próxima unidade fica no save (`energyClock`): fechar o app não reinicia o
-timer. **Dormindo: ×1,5 (REGISTRO §277).** Com o Soulmon dormindo (o `isSleeping` real: gesto
+timer. **Dormindo: ×1,5 (REGISTRO §279).** Com o Soulmon dormindo (o `isSleeping` real: gesto
 manual ou sono automático) a velocidade efetiva é MULTIPLICADA por `SLEEP_ENERGY_REGEN_BONUS`
 (1,5): bem alimentado 150%, mediano 75%, faminto continua 0%. O estado de sono vive em
 `energyClock.sleep` e é gravado por `setSleeping` na troca; o trecho anterior é contado com
@@ -4941,7 +4941,7 @@ faixas, na season nem no `lifetimePoints`, não gasta a cota de partidas do dia 
 
 ```
 GET  sparOpponents ?id=  → 5 oponentes (functions/api/_treino.js › pickSparOpponents); cada GET sorteia de novo (REFRESH ILIMITADO, sem custo nem teto)
-POST sparStart {id, opponentId}   → semente do SERVIDOR + ficha dos dois lados do SAVE, congeladas em spar:<id> (KV, 1 h); NÃO gasta partida
+POST sparStart {id, opponentId, zone?, off?} → semente do SERVIDOR + ficha dos dois lados do SAVE, congeladas em spar:<id> (KV, 1 h); recusa 409 sem ticket
 POST sparMatch {id, opponentId, taps?, forfeit?, seed?, zone?, off?} → simulateDuel no servidor; vitória rende Honra; reenvio idempotente (sparDone:<id>)
 ```
 
@@ -4953,6 +4953,11 @@ POST sparMatch {id, opponentId, taps?, forfeit?, seed?, zone?, off?} → simulat
   (contador `sparHonor:<id>:<dia>` no KV, dia por `playerDayOf` com a zona/offset que o app manda; leitura tolerante; nunca por tick). Derrota, empate
   e desistência rendem 0. Sem vantagem paga. A Honra é a moeda de sempre (`emblems` no save, a das lojinhas do Mercado, aba Honra): o servidor devolve
   `honor` (e `honorCapped` quando o teto do dia já foi) e o app soma pelo MESMO caminho das outras fontes (`onEarnEmblems`), uma vez (o reenvio não soma).
+- **🎫 Tickets (REGISTRO §280):** todo DIA DO JOGADOR dá **1 ticket grátis = `TREINO_TICKET_MATCHES` (20) partidas COM Honra**; depois delas, o **ticket extra** custa
+  `TREINO_EXTRA_TICKET_BITS` (**30 Bits GANHOS**, `earnedBits`, nunca Créditos) e vale **+20 partidas SEM Honra**, até `TREINO_EXTRA_TICKETS_MAX` (**3/dia**). Contador no
+  KV (`sparTicket:<id>:<dia>`, leitura tolerante, `sparTicketStatus`); `POST sparBuyTicket {id, zone?, off?}` conta/limita e o app cobra depois do ok (`chargeTreinoTicket`,
+  `src/utils/treinoTickets.ts`); `sparStart` recusa 409 `no tickets`; `sparMatch` gasta 1 (desistir não gasta) e só paga Honra se ainda cabia nas 20; `sparOpponents`
+  devolve `tickets`. UI: "Partidas com Honra hoje x/20", extras em uso, oferta suave ao esgotar. Trava: `community.treino.tickets.test.js`, `treinoTickets.test.ts`.
 - **Contrato aditivo:** ações novas; cliente antigo ignora a aba; servidor antigo responde erro e a aba mostra "não deu para carregar" sem afetar a ranqueada.
   Nenhum campo novo de save. Telas: `TournamentPage` (abas `Segment`), textos PT/EN, `InfoTip`, GuideModal e HelpModal.
 - **Travas:** `functions/api/community.treino.test.js` (faixa, 5 candidatos, refresh ilimitado, não toca rank/perfil, teto de 20, derrota sem Honra,
@@ -6384,3 +6389,5 @@ E-mail verificado presente em `BETA_EMAILS` é tratado como conta paga: o servid
 ## Elemento combinado por estágio (§232)
 
 Sorte fixa por Soulmon decide quantos componentes o elemento tem em cada estágio (Rookie 95/5/0/0, Champion 35/60/5/0, Ultimate 15/30/50/5, Mega 10/20/40/30, Ultra 5/10/25/60). Contém sempre a base nº 1; 3 e 4 componentes só nos 50 curados (planta, industrial e fada ficam no par). Vale a partir da próxima evolução; degenerar volta ao elemento do nível. A vantagem usa a base nº 1. Dono: `src/utils/elementoCombinado.ts`. Decisão: REGISTRO §232.
+
+**🎪 Feira de verdade (10/11/2026, REGISTRO §279).** Rara (`FEIRA_LOJA_PCT` = 8% das voltas): vendedor com 4 a 6 itens do Mercado/Hexsmith, 10% a 50% de desconto, só Bits, sem ingredientes, 1 por item; servidor decide e grava a oferta do dia. Ver `PLANO-FEIRA-CHEFE.md` §12.

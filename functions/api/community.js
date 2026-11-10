@@ -21,7 +21,8 @@
 //   POST match     {id, opponentId, taps?, forfeit?} → resolve a partida no servidor (taps = toques por BALDE de 3 s)
 //                                          (forfeit = desistir do duelo aberto = derrota)
 //   GET  sparOpponents ?id=             → TREINO (aba Sparring): 5 oponentes por faixa de Vínculo, sem ranking; cada GET sorteia de novo
-//   POST sparStart {id, opponentId}     → abre o treino (semente no servidor, ficha congelada; NÃO gasta partida)
+//   POST sparStart {id, opponentId, zone?, off?} → abre o treino (semente no servidor, ficha congelada); recusa 409 sem ticket
+//   POST sparBuyTicket {id, zone?, off?} → ticket EXTRA (+20 partidas sem Honra, 3/dia; o app cobra 30 Bits ganhos)
 //   POST sparMatch {id, opponentId, taps?, forfeit?, seed?, zone?, off?} → resolve; não ranqueia; vitória rende 1–2 de Honra (teto 20/dia do jogador)
 //   GET  rank      ?season=             → top 50 da season (+ `myPlace`, a posição REAL, só com `&id=` autorizado)
 //   GET  seasonResult ?season=          → top 3 (para troféus)
@@ -73,7 +74,7 @@ import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_hon
 import { sanitizarNomeDeGuilda } from './_coop.js';
 import { nomeEspecialValido, ESPECIAL_NOME_COOLDOWN_MS } from './_especialNomeRegra.js';
 import { pickRankedOpponents } from './_rankedPick.js';
-import { pickSparOpponents, grantSparHonor, sparPendingKey, sparDoneKey, SPAR_PICKS, SPAR_SCAN_MAX, SPAR_PENDING_TTL_S } from './_treino.js';
+import { pickSparOpponents, grantSparHonor, readSparTicket, buySparTicket, spendSparMatch, sparTicketStatus, sparPendingKey, sparDoneKey, SPAR_PICKS, SPAR_SCAN_MAX, SPAR_PENDING_TTL_S } from './_treino.js';
 import { loadDuelSide as loadDuelSideShared, loadDuelSideWithSprite } from './_duelLoad.js';
 import { avatarIdOrNull } from './_avatares.js';
 import { artLineOrNull, spriteUrlOrNull } from './_artLine.js';
@@ -393,7 +394,7 @@ export async function onRequest(context) {
 // `_coop.js` e a resposta em `guild.js` › `vistaDaGuilda` (continua havendo UMA
 // só montagem). Aqui só se roteia, com o teto LEVE desta rota já cobrado.
 
-const SIM_ACTIONS = new Set(['players', 'player', 'opponents', 'rank', 'seasonResult', 'duelStart', 'match', 'sparOpponents', 'sparStart', 'sparMatch']);
+const SIM_ACTIONS = new Set(['players', 'player', 'opponents', 'rank', 'seasonResult', 'duelStart', 'match', 'sparOpponents', 'sparStart', 'sparMatch', 'sparBuyTicket']);
 async function handleCommunity(context) {
   const { request, env } = context;
   if (!kv(env)) return json({ error: 'Storage not bound' }, 500);
@@ -1191,7 +1192,8 @@ async function handleCommunity(context) {
       opponents.push({ ...pub, artLine: pub.artLine ?? artLine, ...(effectiveSprite ? { spriteUrl: effectiveSprite } : {}), duel: { level: side.combatant.level } });
     }
     const meSide = await loadDuelSide(id);
-    return json({ opponents, me: { duel: meSide ? { level: meSide.combatant.level } : null } });
+    const tickets = sparTicketStatus(await readSparTicket(env, id, diaDe(tzDe(url.searchParams.get('zone'), url.searchParams.get('off')))));
+    return json({ opponents, tickets, me: { duel: meSide ? { level: meSide.combatant.level } : null } });
   }
 
   /* Abre o treino: a ficha dos DOIS lados sai do SAVE e é CONGELADA aqui, e a SEMENTE nasce aqui (nunca vai na lista) — o mesmo
@@ -1204,11 +1206,24 @@ async function handleCommunity(context) {
     if (aberto && aberto.opp === opponentId && Date.now() - (aberto.at || 0) <= DUEL_PENDING_MS) {
       return json({ seed: aberto.seed, me: aberto.sides.me, opp: aberto.sides.opp });
     }
+    // Ticket do dia (20 grátis com Honra + extras sem Honra): sem partida restante, não abre.
+    const tk = sparTicketStatus(await readSparTicket(env, id, diaDe(tzDe(body.zone, body.off))));
+    if (tk.left <= 0) return json({ error: 'no tickets', tickets: tk }, 409);
     const sides = await loadDuelSides(id, oppSave);
     if (sides.res) return sides.res;
     const seed = crypto.getRandomValues(new Uint32Array(1))[0];
     await kvOrThrow(env).put(sparPendingKey(id), JSON.stringify({ opp: opponentId, oppSave, seed, at: Date.now(), sides: { me: sides.me, opp: sides.opp } }), { expirationTtl: SPAR_PENDING_TTL_S });
     return json({ seed, me: sides.me, opp: sides.opp });
+  });
+
+  /* Compra de ticket EXTRA (+20 partidas sem Honra). A cobrança em Bits (ganhos) é do app, só depois do ok; o servidor conta e limita (3/dia). */
+  if (action === 'sparBuyTicket' && method === 'POST') return withDuelLock(`spar:${id}`, async () => {
+    if (!VALID_ID.test(id || '')) return json({ error: 'invalid id' }, 400);
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    const r = await buySparTicket(env, id, diaDe(tzDe(body.zone, body.off)));
+    if (!r.ok) return json({ error: 'extra limit', tickets: r.status }, 409);
+    return json({ tickets: r.status });
   });
 
   if (action === 'sparMatch' && method === 'POST') return withDuelLock(`spar:${id}`, async () => {
@@ -1237,14 +1252,15 @@ async function handleCommunity(context) {
     const duel = simulateDuel({ me: aberto.sides.me, opp: aberto.sides.opp, seed: aberto.seed, taps: body.taps ?? body.cheers });
     const outcome = duel.winner === 'me' ? 'win' : duel.winner === 'opp' ? 'loss' : 'draw';
     let honra = { honor: 0, capped: false };
-    if (outcome === 'win') {
-      const tz = tzDe(body.zone, body.off);
-      honra = await grantSparHonor(env, id, diaDe(tz), () => { const b = new Uint32Array(1); crypto.getRandomValues(b); return b[0] / 4294967296; });
+    const diaTk = diaDe(tzDe(body.zone, body.off));
+    const gasto = await spendSparMatch(env, id, diaTk); // a partida liquidada gasta 1 do ticket; passou das 20 do grátis = sem Honra
+    if (outcome === 'win' && gasto.withHonor) {
+      honra = await grantSparHonor(env, id, diaTk, () => { const b = new Uint32Array(1); crypto.getRandomValues(b); return b[0] / 4294967296; });
     }
     const resposta = {
       won: outcome === 'win', draw: outcome === 'draw', outcome,
       myScore: Math.round(100 * duel.hpMe), oppScore: Math.round(100 * duel.hpOpp),
-      honor: honra.honor, ...(honra.capped ? { honorCapped: true } : {}),
+      honor: honra.honor, ...(honra.capped ? { honorCapped: true } : {}), ...(gasto.withHonor ? {} : { noHonorTicket: true }), tickets: gasto.status,
       opponent,
     };
     await kvOrThrow(env).put(sparDoneKey(id), JSON.stringify({ opp: opponentId, seed: aberto.seed, res: resposta }), { expirationTtl: SPAR_PENDING_TTL_S });

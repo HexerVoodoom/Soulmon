@@ -111,3 +111,5 @@ avançam, Esc e o voltar do Android pulam. O `BuildingIntro` o usa; o tutorial d
 ## 7. Nota: missão especial diária
 
 O cartão "Especial do dia" (`SpecialMissionCard`) é inline na folha Missões, aba Diárias. Não é modal e não é item da fila. Sem "!", sem som, sem resgate (REGISTRO §106).
+
+> **Feira de verdade (10/11/2026):** usa a MESMA vaga `feiraEvento` (2c): quando a volta traz `feiraLoja`, ela é o que abre (`FeiraLojaSheet`), no lugar do mistério; "visto" ao MOSTRAR em `FEIRA_EVENTO_VISTO` (`loja:<dia>`). Nunca os dois juntos.

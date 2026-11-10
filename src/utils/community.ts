@@ -10,6 +10,7 @@ import {
   sanitizeFeiraEvento, sanitizeFeiraResumo, sanitizeFeiraAttack, sanitizeFeiraClaim, sanitizeFeiraTrail, sanitizeFeiraTrailDone,
   type FeiraEvento, type FeiraResumo, type FeiraAttack, type FeiraClaim, type FeiraTrail, type FeiraTrailDone, type FeiraSolution,
 } from './feira';
+import { sanitizeFeiraLoja, type FeiraLoja } from './feiraLoja';
 export type { FeiraEvento, FeiraResumo, FeiraAttack, FeiraClaim, FeiraTrail, FeiraTrailDone, FeiraSolution };
 import {
   GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES, GUILD_GESTURES, TIDE_SIZES, RAID_PHENOMENA, CASA_STAGES,
@@ -243,9 +244,12 @@ const diaDoJogador = (): { zone?: string; off: number } => {
   return { ...(zone ? { zone } : {}), off: -new Date().getTimezoneOffset() * 60_000 };
 };
 export const getSparOpponents = (id: string) =>
-  call<{ opponents: Opponent[]; me?: { duel: { level: number } | null } }>('sparOpponents', { params: { id } });
+  call<{ opponents: Opponent[]; tickets?: unknown; me?: { duel: { level: number } | null } }>('sparOpponents', { params: (() => { const d = diaDoJogador(); return { id, ...(d.zone ? { zone: d.zone } : {}), off: String(d.off) }; })() });
 export const startSpar = (id: string, opponentId: string) =>
-  call<{ seed: number; me: DuelSide; opp: DuelSide }>('sparStart', { method: 'POST', body: { id, opponentId } });
+  call<{ seed: number; me: DuelSide; opp: DuelSide }>('sparStart', { method: 'POST', body: { id, opponentId, ...diaDoJogador() } });
+/** Ticket EXTRA do Treino (+20 partidas sem Honra). O servidor conta e limita (3/dia); quem chama cobra os Bits ganhos só se vier `ok`. */
+export const buySparTicket = (id: string) =>
+  call<{ tickets: unknown }>('sparBuyTicket', { method: 'POST', body: { id, ...diaDoJogador() } });
 export interface SparResult {
   won: boolean; draw?: boolean; outcome?: 'win' | 'loss' | 'draw';
   myScore: number; oppScore: number;
@@ -254,6 +258,10 @@ export interface SparResult {
   /** O teto do dia foi atingido: a vitória não rendeu (tudo de bom segue, só a Honra de hoje acabou). */
   honorCapped?: boolean;
   forfeit?: boolean;
+  /** A partida passou das 20 do ticket grátis: jogou, mas sem Honra (ticket extra). */
+  noHonorTicket?: boolean;
+  /** Estado dos tickets do dia depois desta partida (`sanitizeTreinoTickets`). */
+  tickets?: unknown;
   opponent: MatchResult['opponent'];
   duel?: { events: FightEvent[]; me: DuelSide; opp: DuelSide };
   replayed?: boolean;
@@ -848,8 +856,8 @@ export const hitGuildRaid = (id: string, tz?: PlayerDayAnchor) =>
  * exatamente como antes.
  */
 export const hitGuildRaidEvento = (id: string, tz?: PlayerDayAnchor) =>
-  guildCall<{ landed?: boolean; guild: unknown; evento?: unknown }>('guildRaidHit', { method: 'POST', body: { id, dayKey: dia(tz) } })
-    .then(r => ({ guild: viewOf(r), evento: sanitizeFeiraEvento(r.evento) }));
+  guildCall<{ landed?: boolean; guild: unknown; evento?: unknown; feiraLoja?: unknown }>('guildRaidHit', { method: 'POST', body: { id, dayKey: dia(tz) } })
+    .then(r => ({ guild: viewOf(r), evento: sanitizeFeiraEvento(r.evento), feiraLoja: sanitizeFeiraLoja(r.feiraLoja) }));
 
 // ── A FEIRA: O CHEFE E O DESAFIO (client; servidor em `functions/api/_feira.js`) ─────────────────────────────────────
 // Desligada no servidor = 404 `not available` em toda rota: aqui isso é "a Feira não existe" (`null`), nunca um erro.
@@ -1034,3 +1042,16 @@ export const claimGuildReward = (id: string, week: string, tz?: PlayerDayAnchor)
     if (!c) throw new GuildError('server', 200);
     return c;
   });
+
+// ── A FEIRA DE VERDADE (rara; servidor em `functions/api/_feiraLoja.js`) ───────────────────────────────────────────
+/** A loja de hoje (reabrir a folha). `null` = sem feira, Feira desligada ou servidor antigo. */
+export const getGuildFeiraLoja = (id: string, tz?: PlayerDayAnchor): Promise<FeiraLoja | null> =>
+  guildCall<{ loja?: unknown }>('guildFeiraLoja', { params: { id, dayKey: dia(tz) } })
+    .then(r => sanitizeFeiraLoja(r.loja))
+    .catch(e => { if (feiraAusente(e)) return null; throw e; });
+
+/** Compra de um item do Mercado: o SERVIDOR confere a oferta, o limite de 1 e devolve o PREÇO; o cliente debita esse preço. */
+export const buyGuildFeiraLoja = (id: string, itemId: string, tz?: PlayerDayAnchor): Promise<{ price: number } | null> =>
+  guildCall<{ ok?: boolean; price?: unknown }>('guildFeiraLojaBuy', { method: 'POST', body: { id, dayKey: dia(tz), itemId } })
+    .then(r => (r.ok === true && typeof r.price === 'number' && Number.isFinite(r.price) && r.price >= 1 ? { price: Math.floor(r.price) } : null))
+    .catch(e => { if (feiraAusente(e)) return null; throw e; });
