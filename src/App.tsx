@@ -109,7 +109,7 @@ import { buildDemoPatch, leaveDemo, keepDemoVitalsFull, localizeDemoActivities }
 import { newUuid } from './utils/uuid';
 import type { StarterId } from './utils/sprites';
 import { petElementOf, petBaseOf } from './utils/starterElements';
-import { pocoesDoEstado, registrarElementoDoEstagio, stagesComElemento } from './utils/elementoCombinado';
+import { elementoParaGerar, formasDasPocoes, pocoesDoEstado, registrarElementoDoEstagio, stagesComElemento } from './utils/elementoCombinado';
 import { identityKey } from './utils/soulProfile/identity';
 import {
   readFlag, readFlagOr, readFlagState, readJson, readLocal, readNumber, removeLocal, writeFlag, writeJson, writeLocal,
@@ -1313,7 +1313,7 @@ export default function App() {
   );
   /** §232: as formas por desenhar pedem o elemento combinado do estágio. */
   const pocoesDoSprite = useMemo(() => pocoesDoEstado(gameState), [gameState.potionElement, gameState.evolutionPotion, gameState.evolutionStage, gameState.evolutionCrystal]); // eslint-disable-line react-hooks/exhaustive-deps
-  const stagesDoSprite = useMemo(() => stagesComElemento(gameState.soulmonStages, gameState.elementoJornada, pocoesDoSprite, gameState.soulmonMeta?.dominantElement), [gameState.soulmonStages, gameState.elementoJornada, pocoesDoSprite, gameState.soulmonMeta?.dominantElement]);
+  const stagesDoSprite = useMemo(() => stagesComElemento(gameState.soulmonStages, gameState.elementoJornada, pocoesDoSprite, gameState.soulmonMeta?.dominantElement, formasDasPocoes(gameState)), [gameState.soulmonStages, gameState.elementoJornada, pocoesDoSprite, gameState.soulmonMeta?.dominantElement, gameState.evolutionStage, gameState.potionElement, gameState.evolutionPotion, gameState.evolutionCrystal]); // eslint-disable-line react-hooks/exhaustive-deps
   const spriteGenOn = (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0;
   const spriteGen = useSpriteGeneration({
     trigger: {
@@ -7195,7 +7195,8 @@ export default function App() {
         }
       }
       // "Gerar personagem" usa o MESMO construtor de prompt da evolução: o elemento efetivo (poção/forma trocada/registro do estágio) entra nas palavras-chave.
-      stagesParaGerar = stagesComElemento(stagesParaGerar, gameState.elementoJornada, pocoesDoSprite, gameState.soulmonMeta?.dominantElement);
+      const elGer = elementoParaGerar(novoResultado?.dominantElement, gameState.elementoJornada, gameState.soulmonMeta?.dominantElement);
+      stagesParaGerar = stagesComElemento(stagesParaGerar, elGer.jornada, pocoesDoSprite, elGer.base, formasDasPocoes(gameState));
       // A sprite nasce na chave da forma EQUIPADA (`estágio` = original, `estágio@elemento` = forma alternativa): nunca por cima de outra.
       if (!spriteGen.force(chaveAtual, stagesParaGerar)) {
         toast.error(language === 'pt-BR' ? 'Já há uma geração em andamento. Aguarde um pouco.' : 'A generation is already running. Please wait a bit.');

@@ -3,7 +3,7 @@
  * Duas contas: base sombra (a do dono, poção que virou Sabá) e base terra com poção de ar.
  */
 import { describe, it, expect } from 'vitest';
-import { trocarFormaEstado, type EstadoDeForma } from './formaEquip';
+import { equiparFormaAltEstado, trocarFormaEstado, type EstadoDeForma } from './formaEquip';
 import { sanitizeFormaSnapshots } from './formaSnapshot';
 import { petElementOf } from './starterElements';
 
@@ -31,9 +31,10 @@ describe('original = base do PRÓPRIO Soulmon; poção = elemento da poção', (
       const original = trocarFormaEstado(s, 'ultimate-power', 'original');
       expect(original.formaAltEquipada?.['ultimate-power']).toBe('original');
       expect(petElementOf(original as never)).toBe(base);
-      const dePocao = trocarFormaEstado(original, 'ultimate-power', pocao);
+      const dePocao = equiparFormaAltEstado(original, 'ultimate-power', pocao); // mesma forma (já é a atual): equipar, não trocar de galho
       expect(petElementOf(trocarFormaEstado(s, 'ultimate-power', pocao) as never)).toBe(elDaPocao);
-      expect(dePocao).toBeTruthy();
+      expect(petElementOf(dePocao as never)).toBe(elDaPocao);
+      expect(dePocao.formaAltEquipada?.['ultimate-power']).toBe(pocao);
       expect(petElementOf(trocarFormaEstado(original, 'ultimate-harmony', 'fada') as never)).toBe('fada');
     });
   }
