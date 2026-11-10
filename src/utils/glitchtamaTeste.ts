@@ -13,7 +13,7 @@ import { playerDayKey, type PlayerDayAnchor } from './playerDay';
 import { spendBitsPaidFirst, type BitsOriginState } from './bitsOrigin';
 import { GLITCHTAMA_EMOJI } from './shop';
 
-export const GLITCHTAMA_TESTE_ON = true;
+export const GLITCHTAMA_TESTE_ON = false;
 export const GLITCHTAMA_TESTE_USO_POR_DIA = 999;
 export const GLITCHTAMA_TESTE_PRECO_BITS = 1;
 export const GLITCHTAMA_TESTE_COMPRAS_POR_DIA = 3;
