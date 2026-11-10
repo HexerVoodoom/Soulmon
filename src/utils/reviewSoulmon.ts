@@ -23,6 +23,9 @@ export type ReviewStatus =
   | 'pendente' | 'pendente-sem-chave' | 'avaliando' | 'aguardando-regeneracao' | 'regenerando'
   | 'consertado' | 'sem-problema' | 'precisa-manual' | 'falhou' | 'limite-diario' | 'aguardando-equipe';
 
+/** Motivo que o jogador escolhe ao pedir revisao (campo ADITIVO no POST: servidor antigo ignora, cliente antigo nao manda). */
+export type ReviewMotivo = 'estilo' | 'recorte';
+
 export interface ReviewReport {
   id: string; formId: string; status: ReviewStatus; createdAt: number; updatedAt?: number;
   afterUrl: string | null; applied: boolean; cooldownUntil?: number;
@@ -73,8 +76,9 @@ async function call(body: Record<string, unknown>, fetchImpl: Fetch): Promise<{ 
   }
 }
 
-export function submitReview(snap: ReviewSnapshot, fetchImpl: Fetch = fetch) {
+export function submitReview(snap: ReviewSnapshot, fetchImpl: Fetch = fetch, motivo?: ReviewMotivo) {
   return call({
+    ...(motivo ? { motivo } : {}),
     formId: snap.formId, spriteUrl: snap.spriteUrl,
     ...(snap.soulmonId ? { soulmonId: snap.soulmonId } : {}),
     ...(snap.stage ? { stage: snap.stage } : {}),

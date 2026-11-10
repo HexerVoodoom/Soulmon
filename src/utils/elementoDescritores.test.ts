@@ -52,14 +52,19 @@ describe('elemento efetivo em TODO prompt', () => {
 });
 
 describe('fundo chroma coerente com as cores do elemento', () => {
-  it('elemento com verde (planta, vileza) → fundo MAGENTA #FF00FF e a cláusula "no magenta"', () => {
+  it('elemento com verde (planta, vileza) → fundo NUNCA verde: o de maior distância real de matiz (magenta ou azul), com a cláusula da própria chave', () => {
+    // Regra de 10/11/2026: sem penalidade de posição, vence a chave de maior distância real; planta (verde + amarelo) fica a 120 do azul e 115 do magenta => azul.
+    const clausula = { magenta: 'contains no magenta, no hot pink and no magenta fringe', blue: 'contains no blue and no blue fringe' } as const;
+    const hex = { magenta: '#FF00FF', blue: '#0000FF' } as const;
     for (const id of ['planta', 'vileza']) {
       const p = gen(id, 'sombra').imagePrompt;
-      expect(p, id).toContain('#FF00FF chroma-magenta');
-      expect(p, id).toContain('contains no magenta, no hot pink and no magenta fringe');
+      const k = chromaDoPrompt(p) as 'magenta' | 'blue';
+      expect(['magenta', 'blue'], id).toContain(k);
+      expect(p, id).toContain(hex[k]);
+      expect(p, id).toContain(clausula[k]);
       expect(p, id).not.toContain('#00FF00');
-      expect(chromaDoPrompt(p)).toBe('magenta');
     }
+    expect(chromaDoPrompt(gen('planta', 'sombra').imagePrompt)).toBe('blue');
   });
   it('elemento sem verde mantém o fundo VERDE #00FF00', () => {
     for (const id of ['marcial', 'morte', 'sombra', 'fogo']) {
@@ -93,7 +98,7 @@ describe('fundo chroma coerente com as cores do elemento', () => {
   });
   it('portal e glitter (magenta, sem verde nas pistas) ficam no verde; elementos normais não mudam', () => {
     for (const id of ['portal', 'glitter']) expect(chromaDoPrompt(gen(id, 'sombra').imagePrompt), id).toBe('green');
-    expect(chromaDoPrompt(gen('planta', 'sombra').imagePrompt)).toBe('magenta');
+    expect(chromaDoPrompt(gen('planta', 'sombra').imagePrompt)).toBe('blue'); // (era magenta pela penalidade de posicao, removida em 10/11/2026)
     expect(chromaDoPrompt(gen('fogo', 'sombra').imagePrompt)).toBe('green');
   });
   it('aplicarChroma troca entre as 3 chaves e volta ao original', () => {

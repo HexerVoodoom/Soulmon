@@ -16,10 +16,14 @@ function img(bg, fg) {
 const opacos = png => { const o = decodePng(png); let n = 0; for (let i = 3; i < o.data.length; i += 4) if (o.data[i]) n++; return n; };
 
 describe('recorte pela cor de fundo que o prompt do elemento escolheu', () => {
-  it('elemento COM verde (planta): o prompt pede magenta e a criatura verde sobre magenta sobrevive', () => {
+  it('elemento COM verde (planta): o prompt nao pede verde e a criatura verde sobre magenta sobrevive', () => {
     const p = promptDe('planta');
-    expect(chromaKeyOfPrompt(p)).toBe('magenta');
-    expect(opacos(chromaKeyPng(img([255, 0, 255], [40, 200, 60]), chromaKeyOfPrompt(p)))).toBeGreaterThan(24 * 24 * 0.9);
+    // Regra de 10/11/2026 (distancia REAL de matiz, sem penalidade de posicao): com verde na paleta o fundo NUNCA e verde; entre magenta e azul
+    // vence o de maior distancia (aqui o violeta do corpo fica a 25 do magenta e a 35 do azul => azul). O que importa: a criatura verde sobrevive.
+    const key = chromaKeyOfPrompt(p);
+    expect(key).not.toBe('green');
+    const bg = { magenta: [255, 0, 255], blue: [0, 0, 255] }[key];
+    expect(opacos(chromaKeyPng(img(bg, [40, 200, 60]), key))).toBeGreaterThan(24 * 24 * 0.9);
   });
   it('elemento sem verde (marcial): o prompt fica no verde e a criatura rosa-choque sobre verde sobrevive', () => {
     const p = promptDe('marcial');

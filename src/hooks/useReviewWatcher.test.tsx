@@ -180,8 +180,25 @@ describe('ReviewSoulmonRow', () => {
     const b = screen.getByRole('button') as HTMLButtonElement;
     expect(b.disabled).toBe(false);
     expect(b.textContent).toContain('Pedir revisão do meu Soulmon');
-    b.click();
+    act(() => { b.click(); });
+    // o toque abre a escolha do MOTIVO (um de dois); so a escolha envia o pedido
+    expect(onRequest).not.toHaveBeenCalled();
+    act(() => { (document.querySelector('[data-review-motivo="recorte"]') as HTMLButtonElement).click(); });
     expect(onRequest).toHaveBeenCalledTimes(1);
+    expect(onRequest).toHaveBeenCalledWith('recorte');
+  });
+  it('os dois motivos PT/EN e o envio de cada um', () => {
+    const onRequest = vi.fn();
+    const { rerender } = render(<ReviewSoulmonRow language="pt-BR" review={{ ...base, onRequest }} />);
+    act(() => { (screen.getByRole('button') as HTMLButtonElement).click(); });
+    expect(document.querySelector('[data-review-motivo="estilo"]')?.textContent).toBe('Estilo inconsistente');
+    expect(document.querySelector('[data-review-motivo="recorte"]')?.textContent).toBe('Recorte com falhas');
+    act(() => { (document.querySelector('[data-review-motivo="estilo"]') as HTMLButtonElement).click(); });
+    expect(onRequest).toHaveBeenLastCalledWith('estilo');
+    rerender(<ReviewSoulmonRow language="en-US" review={{ ...base, onRequest }} />);
+    act(() => { (screen.getAllByRole('button')[0] as HTMLButtonElement).click(); });
+    expect(document.querySelector('[data-review-motivo="estilo"]')?.textContent).toBe('Inconsistent style');
+    expect(document.querySelector('[data-review-motivo="recorte"]')?.textContent).toBe('Cutout has flaws');
   });
   it('mensagens de conclusao PT/EN', () => {
     expect(reviewResultMessage('pt-BR', [{ status: 'consertado' }])).toBe('Revisão concluída — seu Soulmon foi atualizado.');

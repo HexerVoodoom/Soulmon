@@ -67,3 +67,15 @@ describe('Pedir revisao do meu Soulmon (cliente)', () => {
     expect(r).toEqual({ reports: null, finished: [] });
   });
 });
+
+describe('motivo no pedido (aditivo)', () => {
+  it('submitReview manda `motivo` so quando informado (cliente antigo nao manda)', async () => {
+    const corpos: Record<string, unknown>[] = [];
+    const f = vi.fn(async (_u: string, init?: RequestInit) => { corpos.push(JSON.parse(init?.body as string)); return Response.json({ ok: true }); });
+    const snap = { formId: 'rookie', spriteUrl: '/api/sprite-image?k=' + 'a'.repeat(32) };
+    await submitReview(snap, f as unknown as typeof fetch);
+    await submitReview(snap, f as unknown as typeof fetch, 'recorte');
+    expect('motivo' in corpos[0]).toBe(false);
+    expect(corpos[1].motivo).toBe('recorte');
+  });
+});
