@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach } from 'vitest';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 import { SalaoSheet } from './PlaySheets';
+import { TicketFan, TicketCost } from './TicketFan';
 import type { FunTicketStatus } from '../../utils/funTickets';
 
 const st = (o: Partial<FunTicketStatus>): (() => FunTicketStatus) => () => ({ count: 0, msLeft: 0, canBuy: true, canPlay: false, ...o });
@@ -15,16 +16,20 @@ describe('Salão: o painel de tickets', () => {
     const c = painel(st({}));
     expect(c.querySelector('[data-fun-tickets-hint]')?.textContent).toBe('1 energia = 3 tickets (valem 24 h)');
     expect((c.querySelector('[data-fun-tickets-buy]') as HTMLButtonElement).disabled).toBe(false);
-    expect(c.querySelector('[data-ticket-fan="0"]')).toBeTruthy();
+    expect(c.querySelector('[data-ticket-fan]')).toBeNull(); // o leque mora FORA do modal (sem faixa reservada)
     cleanup();
     expect(painel(st({}), 'en-US').querySelector('[data-fun-tickets-hint]')?.textContent).toBe('1 energy = 3 tickets (good for 24 h)');
   });
-  it('com tickets: um bilhete no leque por ticket, contagem e validade do lote que vence primeiro', () => {
+  it('com tickets: contagem e validade do lote que vence primeiro (o leque fica fora do modal)', () => {
     const c = painel(st({ count: 3, canPlay: true, canBuy: false, buyRefusal: 'has-tickets', msLeft: 3_725_000 }));
-    expect(c.querySelectorAll('[data-ticket-in-fan]').length).toBe(3);
+    expect(c.querySelector('[data-ticket-fan]')).toBeNull();
     expect(c.querySelector('[data-fun-tickets-count]')?.textContent).toContain('3/5');
     expect(c.querySelector('[data-fun-tickets-expiry]')?.textContent).toBe('vence em 01:02:05');
-    expect((c.querySelector('[data-fun-tickets-buy]') as HTMLButtonElement).disabled).toBe(true);
+    const buy = c.querySelector('[data-fun-tickets-buy]') as HTMLButtonElement;
+    expect(buy.getAttribute('aria-disabled')).toBe('true');
+    // aviso padrao (09/11/2026): o comprar bloqueado e tocavel e diz por que
+    fireEvent.click(buy);
+    expect(document.querySelector('[data-blocked-action="limite"]')).not.toBeNull();
   });
   it('sem energia aponta para outras atividades, em PT e EN', () => {
     expect(painel(st({ canBuy: false, buyRefusal: 'no-energy' })).textContent).toContain('Ateliê da Mente');
@@ -36,5 +41,29 @@ describe('Salão: o painel de tickets', () => {
     for (const k of ['data-dino-start', 'data-ppt-start', 'data-match3-start', 'data-barrage-open']) {
       expect(c.querySelector(`[${k}] [data-ticket-cost="1"]`)?.textContent, k).toContain('x1');
     }
+  });
+});
+
+describe('leque de tickets (fora do modal, na zona do NPC)', () => {
+  it('sem ticket não desenha nada (nenhum vão reservado)', () => {
+    const { container } = render(<TicketFan count={0} language="pt-BR" />);
+    expect(container.firstChild).toBeNull();
+  });
+  it('um bilhete por ticket, quase em pé (-90° ± leque) e com tamanho em dvh', () => {
+    for (const n of [1, 3, 5]) {
+      cleanup();
+      const { container } = render(<TicketFan count={n} language="en-US" />);
+      const fan = container.querySelector('[data-ticket-fan]') as HTMLElement;
+      expect(fan.getAttribute('aria-label')).toBe(`${n} ${n === 1 ? 'ticket' : 'tickets'}`);
+      const itens = container.querySelectorAll<HTMLElement>('[data-ticket-in-fan]');
+      expect(itens.length).toBe(n);
+      expect(itens[0].style.width).toMatch(/dvh$/);
+      expect(itens[0].style.transformOrigin).toBe('0% 50%');
+    }
+  });
+  it('o ticketzinho do botão fica inclinado a -45° e mostra a quantidade', () => {
+    const { container } = render(<TicketCost amount={1} />);
+    expect((container.querySelector('[data-ticket-cost-icon]') as HTMLElement).style.transform).toBe('rotate(-45deg)');
+    expect(container.querySelector('[data-ticket-cost]')?.textContent).toContain('x1');
   });
 });

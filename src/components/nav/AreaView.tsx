@@ -43,7 +43,7 @@ export type FocusRewardResult = { accepted: boolean; items: FocusLootItem[]; cha
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
 import { isFunGame } from '../../utils/funSession';
 import type { FunTicketStatus } from '../../utils/funTickets';
-import { FunTicketCostContext } from '../play/TicketFan';
+import { FunTicketCostContext, TicketFan } from '../play/TicketFan';
 import { setActive, trackMinigame } from '../../utils/usageTime';
 import type { PasseioAchado } from '../play/PasseioSheet';
 import {
@@ -634,7 +634,7 @@ export function AreaView(props: AreaViewProps) {
     const mindTut = (id: MindGameId) => (mt ? { seen: mt.seen[id] === true, onShown: () => mt.onShown(id) } : undefined);
     return (
       <AreaScene areaId={area} language={language} background={area === 'forja' ? FORJA_BG : PLAY_AREA_BG[area]} lots={lots} notice={lockNote}>
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate && !forgeFull} onClose={close}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate && !forgeFull} onClose={close} npcOverlay={open?.id === 'salao' && play.funSession ? <TicketFan count={play.funSession.status(Date.now()).count} language={language} /> : undefined}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'passeio' && (
               <PasseioSheet
