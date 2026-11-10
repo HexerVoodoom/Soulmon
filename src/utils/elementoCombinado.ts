@@ -19,11 +19,38 @@ import type { ElementoJornada } from './elementoJornada';
 import { essenceComposition } from './elementDex';
 import { DESCRITORES_ELEMENTO } from './elementoDescritores.data';
 
-/** As pistas visuais do elemento (forma + paleta), derivadas dos prompts dos assets dele. `undefined` = sem prompt-fonte (só o nome). */
+/**
+ * Palavra-chave visual de cada elemento BASE (substring do descritor da própria base em `elementoDescritores.data.ts`; sem duas iguais).
+ * Todo componente de um combinado precisa dela nas pistas do prompt (dono, 10/11/2026: cada elemento, inclusive de 3 e 4 componentes).
+ */
+export const PALAVRA_CHAVE_BASE: Readonly<Record<string, string>> = {
+  fogo: 'flames', agua: 'water', terra: 'clay', ar: 'wind', eletricidade: 'arcs', arcano: 'glyphs', sombra: 'smoke', luz: 'rays',
+  vileza: 'thorns', morte: 'branches', vida: 'budding', vigor: 'amber beads', marcial: 'blades', tempo: 'sand', som: 'sound',
+  gravidade: 'tiny stones', espaco: 'stars', fada: 'wings', industrial: 'plates', planta: 'vines',
+};
+
+/** Teto (caracteres) das pistas de forma + paleta de um elemento no prompt de sprite. */
+export const TETO_PISTAS = 260;
+
+/** Forma curta de cada base, usada só para completar o componente que o descritor gerado não citou (contém a palavra-chave). */
+const PISTA_CURTA_BASE: Readonly<Record<string, string>> = {
+  fogo: 'licking flames', agua: 'flowing water', terra: 'rough clay and stone', ar: 'swirling wind', eletricidade: 'yellow arcs',
+  arcano: 'violet glyphs', sombra: 'black smoke', luz: 'golden rays', vileza: 'barbed thorns', morte: 'bleached branches',
+  vida: 'budding leaves', vigor: 'amber beads', marcial: 'crossed blades', tempo: 'drifting sand', som: 'sound waves',
+  gravidade: 'orbiting tiny stones', espaco: 'stars', fada: 'tiny wings', industrial: 'aged plates', planta: 'broad vines',
+};
+
+/** As pistas visuais do elemento (forma + paleta), derivadas dos prompts dos assets dele; combinados completam UMA pista por componente. `undefined` = sem prompt-fonte (só o nome). */
 export function pistasVisuaisDoElemento(id: string): string | undefined {
   const d = DESCRITORES_ELEMENTO[id];
   if (!d || (!d.forma && !d.paleta)) return undefined;
-  return `${[d.forma, d.paleta ? `${d.paleta} palette` : ''].filter(Boolean).join(', ')}`;
+  let forma = d.forma ?? '';
+  const faltam = (essenceComposition(id) ?? []).filter(c => PALAVRA_CHAVE_BASE[c] && !`${forma} ${d.paleta ?? ''}`.toLowerCase().includes(PALAVRA_CHAVE_BASE[c]));
+  if (faltam.length) {
+    const extra = faltam.map(c => PISTA_CURTA_BASE[c]).join(', ');
+    forma = forma ? (/ with hints of /.test(forma) ? `${forma}, ${extra}` : `${forma}, with hints of ${extra}`) : extra;
+  }
+  return `${[forma, d.paleta ? `${d.paleta} palette` : ''].filter(Boolean).join(', ')}`;
 }
 
 /** % de 1, 2, 3 e 4 componentes. Tabela aprovada pelo dono. */
