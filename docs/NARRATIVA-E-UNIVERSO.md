@@ -867,6 +867,8 @@ renascimento como recomeço do zero, castigo, purificação ou apagamento.
 
 ## 12. Vocabulário canônico
 
+> **Renome (10/11/2026, dono):** a área antes chamada "Hall" é **Cidadela / Citadel** na UI. O id interno segue `hall` (save/cache). "Clan Hall / Salão do Clã" e "Game Hall / Salão de Jogos" são outros lugares e não mudaram. Ver `REGISTRO-DE-DECISOES.md` §278.
+
 | PT | EN | Uso | Proibido em vez dele / por quê |
 |---|---|---|---|
 | **a Malha** ⚠️ | the Mesh | o lugar | "mundo digital" ⚠️ (fronteira de IP forte), "ciberespaço", "a rede", "o outro mundo", "portal" ⚠️ |
