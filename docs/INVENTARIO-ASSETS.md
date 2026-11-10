@@ -440,3 +440,7 @@ Fonte: `E:\Soulmon-assets\beta3-geradas\chatgpt\` (ChatGPT, alfa real; reduzidos
 ## Selvagens da API — cadeias Krowlix e Mantralun (09/11/2026)
 
 6 PNG 256² (alfa real) em `src/assets/soulmon/inimigos-api/`: `krowlix-{rookie,champion,ultimate}.png`, `mantralun-{rookie,champion,ultimate}.png`. Origem: Higgsfield API pelo processo real do Oráculo (`E:\Soulmon-assets\playstore\duo\`, com `-1024.png` e `.meta.json`). Roster: `INIMIGOS_DUO_DATA` (REGISTRO §274).
+
+## Selvagens do elenco do Oráculo — Mareoror e Salsolura (10/11/2026)
+
+22 PNG 256² (alfa binário, 40 cores, caixa visível normalizada a 240 px) em `src/assets/soulmon/inimigos-api/`: `<espécie>-rookie`, `<espécie>-{poder,harmonia,benevolencia}-{champion,ultimate,mega}`, `<espécie>-ultra` (ultra só instalada, fora do roster). Origem: sprites da demo do Oráculo (`E:\Soulmon-assets\demo-oraculo\{a,b}\`, formas de poção excluídas). O rookie de Mareoror (A) é visivelmente mais pixelado que o de Salsolura (B): candidato a regerar. Roster: `ELENCO_ORACULO_DATA` (REGISTRO §275).
