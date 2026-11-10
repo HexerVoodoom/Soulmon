@@ -95,6 +95,7 @@ import { SoulmonWidget, widgetOwnSpriteUrl, widgetPetName, widgetPetLine, widget
 import { unlockedAchievements, achievementPointsTotal, settleAchievements, ACHIEVEMENT_POINTS, ACHIEVEMENT_LABELS } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
+import { buyGlitchtama, glitchtamaBuyRefusal, glitchtamaBuysLeft, type GlitchtamaBuyRefusal } from './utils/glitchtamaTeste';
 import { markAccepted, markAsked, parsePlayReview, shouldAskReview, REVIEW_MIN_VISIBLE_MS } from './utils/playReview';
 import { stageLevelIndex as playReviewLevelIndex } from './utils/evolutionForecast';
 import { SoulmonReview } from './plugins/SoulmonReviewPlugin';
@@ -967,6 +968,16 @@ export default function App() {
   }, []);
   /* Cerimônia BB→rookie: o rookie grátis (`/api/free-rookie`) carrega sem travar a UI; falha = sprite inicial pronto. */
   const [freeRookie, setFreeRookie] = useState<'idle' | 'loading' | 'done'>('idle');
+  // ⚠️ TESTE (`utils/glitchtamaTeste.ts`): o Desfeito vende o 🌀. A recusa é decidida sobre o estado ATUAL (para a UI) e reconferida
+  // dentro do updater (dois toques no mesmo lote não passam do teto nem compram sem saldo).
+  const glitchBuyStateRef = useRef(gameState);
+  glitchBuyStateRef.current = gameState;
+  const comprarGlitchtama = useCallback((): GlitchtamaBuyRefusal | undefined => {
+    const refused = glitchtamaBuyRefusal(glitchBuyStateRef.current as never, new Date());
+    if (refused) return refused;
+    setGameState(prev => buyGlitchtama(prev as never, new Date()).state as never);
+    return undefined;
+  }, [setGameState]);
   const escolherMercenario = useCallback((o: MercOrdem) => { void import('./utils/mercMission').then(m => setGameState(prev => m.escolherMerc(prev, o, playerDayKey(new Date(), prev.playerDayTz)).state)); }, []);
   /* Proposta pendente fora da regra "tarefa de um dia" (save antigo): descartada e sorteada de novo ao abrir a Guilda. */
   useEffect(() => {
@@ -9177,7 +9188,12 @@ export default function App() {
                 dayKey={playerDayKey(new Date(), gameState.playerDayTz)}
                 hoje={gameState.mercMission && gameState.mercMission.day === playerDayKey(new Date(), gameState.playerDayTz) ? gameState.mercMission : null}
                 bb={gameState.evolutionStage === 'bb'}
-                onAccept={escolherMercenario} onConfirm={confirmarMercenario} />
+                onAccept={escolherMercenario} onConfirm={confirmarMercenario}
+                glitchtama={{
+                  left: glitchtamaBuysLeft(gameState, new Date()),
+                  bits: gameState.gamePoints ?? 0,
+                  onBuy: comprarGlitchtama,
+                }} />
             </Suspense>
           )}
           {reverHistoria && <Suspense fallback={null}><SequenciaRevisao language={language} onDone={() => setReverHistoria(false)} ligacoes={{

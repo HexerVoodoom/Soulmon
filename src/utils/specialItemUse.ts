@@ -2,6 +2,7 @@ import { CHIP_BOOST, HEART_HEAL, SPARK_HOME_ENERGY, SPECIAL_ITEMS, type Attr } f
 import { potionElementOfKey } from './elementPotion';
 import { resetAlignmentPoints } from './betaResetGrant';
 import { fillGaugePoints } from './evolutionGauge';
+import { GLITCHTAMA_TESTE_ON, GLITCHTAMA_TESTE_USO_POR_DIA } from './glitchtamaTeste';
 import { playerDayKey, playerDayIso, type PlayerDayAnchor } from './playerDay';
 import { HUNGER_PER_PREMIUM, HUNGER_PREMIUM_REFUSE_AT, eat, hungerAt, maxEnergyOf, setEnergy, settleEnergy, type EnergyClock, type HungerRecord } from './hunger';
 import {
@@ -112,7 +113,8 @@ export function reduceChipsUsedThisStage(state: { evolutionStage?: string; chips
  * Um por dia significa que o Glitchtama, no melhor caso, DOBRA o ritmo de quem
  * já faz o dia perfeito — é generoso, e é finito.
  */
-export const GLITCHTAMA_PER_DAY = 1;
+/** 1 por dia do jogador. ⚠️ Com a flag de TESTE ligada (`utils/glitchtamaTeste.ts`) sobe para 999 — exceção temporária do dono (10/11/2026). */
+export const GLITCHTAMA_PER_DAY = GLITCHTAMA_TESTE_ON ? GLITCHTAMA_TESTE_USO_POR_DIA : 1;
 
 /**
  * O registro do teto, no SAVE (`glitchtamaUse`), nunca no localStorage.

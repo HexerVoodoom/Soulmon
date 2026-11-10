@@ -10,7 +10,7 @@ import {
 } from './evolutionGauge';
 import { FORM_REQUIREMENTS, ULTRA_PATIENCE_POINTS, ULTRA_PATIENCE_DAYS, getMaxEnergyForStage } from '../types/progression';
 import { computeDailyReset, degeneratedEvolutionPoints } from './dailyReset';
-import { applySpecialItem } from './specialItemUse';
+import { applySpecialItem, GLITCHTAMA_PER_DAY } from './specialItemUse';
 
 const TRES_MEGAS = ['mega-power', 'mega-harmony', 'mega-benevolence'];
 
@@ -108,7 +108,9 @@ describe('o item da masmorra (+ um dia de teto, ainda 1 por dia)', () => {
     expect(r1.refused).toBeUndefined();
     expect(r1.state.evolutionPoints).toBe(meta);
     expect(r1.state.perfectDays).toBe(1); // continua dando o dia perfeito
-    const r2 = applySpecialItem(r1.state as any, '🌀', now);
+    // o teto segue `GLITCHTAMA_PER_DAY` (1, ou 999 com a flag de teste): o estado já no teto recusa
+    const noTeto = { ...r1.state, glitchtamaUse: { ...r1.state.glitchtamaUse!, used: GLITCHTAMA_PER_DAY } };
+    const r2 = applySpecialItem(noTeto as any, '🌀', now);
     expect(r2.refused).toBe('daily-cap');
     expect(r2.state.evolutionPoints).toBe(meta);
   });

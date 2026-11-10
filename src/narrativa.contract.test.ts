@@ -185,6 +185,9 @@ const EXCECOES: Record<string, { arquivos: string[]; proposta: string }> = {
   'Glitchtama': {
     proposta: 'P5 — rótulo do item. ACEITO PELO DONO em 21/09/2026',
     arquivos: [
+      // 10/11/2026, pedido do dono: o Desfeito vende o item (EXCEÇÃO DE TESTE, flag em glitchtamaTeste.ts) — o botão leva o nome do item.
+      'src/components/nav/GuildaMapPage.tsx',
+      'src/utils/glitchtamaTeste.ts',
       'src/App.tsx',
       'src/components/nav/AreaView.tsx',
       'src/components/play/PlaySheets.tsx',
