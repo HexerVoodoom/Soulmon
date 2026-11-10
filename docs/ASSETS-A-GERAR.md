@@ -1,7 +1,7 @@
 ﻿# Assets a gerar — lista completa, por família, com uso, formato e prompt
 
 > **REGRA DE IDENTIDADE (dono, revista em 09/11/2026):** os motivos Soulmon (turquesa ESCURO, cristais da alma com chama, canos de cobre, circuitos, folhinhas, tudo por cabo; nunca engrenagem) valem SÓ para UI (molduras, botões, HUD, painéis), prédios/NPCs/mapas/hub e site/marketing; em cenário de combate, só como acento sutil (1–2 cristais discretos); em itens, poções, chips e ícones de atributo, no máximo UM motivo discreto. NUNCA em criaturas/sprites, FX de ataque e status e ícones de elemento, nem em asset cujo tema não comporte — ali o elemento e a espécie mandam e o prompt traz "no copper pipes, no circuit lines, no leaves, no turquoise crystals unless the element itself calls for it". Texto canônico: `docs/REGRA-IDENTIDADE-SOULMON.md`.
-> **Checklist de revisão de arte:** asset sem esses elementos (turquesa escuro, cristal com chama, cobre/circuito/folhinhas) é REJEITADO.
+> **Checklist de revisão de arte:** conferir pela CATEGORIA do asset, conforme `docs/REGRA-IDENTIDADE-SOULMON.md` (versão de 09/11/2026). Criatura/sprite, FX e ícone de elemento NÃO são reprovados por faltar turquesa, cristal, cobre ou circuito: ali o elemento e a espécie mandam.
 
 > **Data:** 15/09/2026 · **Base:** `INVENTARIO-ASSETS.md` (o que existe, medido) + as decisões do
 > dono D1–D9 (15/09). Este documento é a **fila de trabalho**: cada linha "falta" tem uso,
@@ -43,8 +43,9 @@ Retro pixel art background, 16-bit era, WIDE HORIZONTAL BANNER composition, abou
 ```
 
 **[SPRITE]** — peça recortada (ícone, emblema, FX, placeholder), gerada em FOLHA sobre branco
+> Paleta teal/cobre abaixo só para peça de UI e emblema da marca (`docs/REGRA-IDENTIDADE-SOULMON.md`). Criatura, FX de ataque/status, ícone de elemento e placeholder de criatura usam a cor do ELEMENTO/espécie e levam "no copper pipes, no circuit lines, no leaves, no turquoise crystals unless the element itself calls for it". Item/poção/chip: no máximo UM motivo discreto.
 ```
-Pixel-art game sprite in the "SOUL MON" style: 16-bit dark fantasy tech-dungeon. Palette: deep teal #0E2E2E / #123232, neon cyan #6EFFFB, copper-bronze #C98B4B with darker #8A5A2B shading, electric blue #3E9EFF, near-black outline #061414. Chunky readable pixels, HARD aliased edges, 1px dark outline around every shape. STRICT: NO blur, NO soft glow, NO drop shadow, NO gradients, NO translucent aura, NO semi-transparent pixels. PURE SOLID WHITE BACKGROUND (#FFFFFF), nothing else behind the sprites. Each item is a CUT-OUT object floating alone on the white — no sky, no ground, no square tile, no frame. No watermark, no text, no letters, no numbers. Lay the items out in a neat grid with generous empty white gaps between them so they can be cut apart.
+Pixel-art game sprite in the "SOUL MON" style: 16-bit dark fantasy tech-dungeon. Palette (UI/brand pieces only; for creatures, FX and element icons use the ELEMENT colors instead and add: no copper pipes, no circuit lines, no leaves, no turquoise crystals unless the element itself calls for it): deep teal #0E2E2E / #123232, neon cyan #6EFFFB, copper-bronze #C98B4B with darker #8A5A2B shading, electric blue #3E9EFF, near-black outline #061414. Chunky readable pixels, HARD aliased edges, 1px dark outline around every shape. STRICT: NO blur, NO soft glow, NO drop shadow, NO gradients, NO translucent aura, NO semi-transparent pixels. PURE SOLID WHITE BACKGROUND (#FFFFFF), nothing else behind the sprites. Each item is a CUT-OUT object floating alone on the white — no sky, no ground, no square tile, no frame. No watermark, no text, no letters, no numbers. Lay the items out in a neat grid with generous empty white gaps between them so they can be cut apart.
 ```
 Recorte depois com `scripts-arte/_fatiar.mjs` (projeção de pixels; aborta se a contagem não bater).
 Para peça única que precise de alfa limpo, trocar o fundo por **verde chapado `#00FF00`** e
