@@ -1562,6 +1562,12 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Props principais:** `onClick`, `label?` (padrão Voltar/Back por `language`), `language?`, `overScene?` (tinta clara sobre cena escura), `icon?` (`arrow_back` | `map`), `style?`, `data-*`.
 **Exports:** `BACK_CIRCLE` · `BackCircleButton`.
 
+### `src/components/ui/BlockedActionModal.tsx`
+**Dono de:** o modalzinho PADRÃO de ação bloqueada (dono, 09/11/2026): diz POR QUE a ação não pode, PT/EN. `ModalSheet` centralizado em portal (foco, Esc, véu, camada acima do voltar); fecha com OK, com o fechar do canto ou tocando fora. O lugar em "pode ser obtido em <lugar>" é tocável e leva até lá (`requestGoToBuilding`).
+**Props principais:** `reason` (`BlockedReason | null`), `onClose`, `language`, `onGo?`.
+**Exports:** `BlockedActionModal` · `useBlockedAction(language, onGo?)` → `[modal, explain]`.
+**Régua:** `ui/BlockedActionModal.render.test.tsx`.
+
 ### `src/components/ui/BitsAmount.tsx`
 **Dono de:** o ÚNICO componente que mostra um valor de Bits (D-62, 19/10/2026, REGISTRO §105): ícone de Bits (`BitsIcon`, 16 px por padrão) + número em `bitsStyle`; a palavra "Bits" só para leitor de tela (`sm2-sr-only`). **Régua:** `ui/BitsAmount.render.test.tsx` (Bits sempre pelo componente; as três moedas nunca com a mesma tinta).
 

@@ -3976,6 +3976,11 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 **Exports:** `EQUIP_CATALOG`, `EQUIP_BY_ID`, `EQUIP_SLOTS`, `SLOT_ATTR`, `TIER_PCT`, `TIER_BITS`, `TIER_FRAGMENTS`, `FRAGMENTS_MAX`, `EMPTY_EQUIPMENT`, `sanitizeEquipment`, `equipAttrBonus`, `equipScalar`, `dungeonAttrBonus`, `backpackCapacity`, `backpackUsed`, `backpackHasRoom`, `missionBitsGain`, `equipPriceDiscount`, `fragmentGain`, `discounted`, `equipPrice`, `equipBuyRefusal`, `applyEquipBuy`, `applyEquip`, `applyUnequip`, `addFragments`, `spendBits`.
 **Régua:** `src/utils/equipment.test.ts`, `functions/api/equipment.parity.test.js`.
 
+### `src/utils/blockedAction.ts`
+**Dono de:** o TEXTO do aviso de ação bloqueada (09/11/2026): `explainBlocked(motivo, isPt)` é pura e devolve título, linhas (o que falta, com quantidade) e as fontes tocáveis. Tipos: `energia`, `recursos`, `missao`, `ticket`, `nivel`, `espera`, `limite`, `demo`, `outro`. A navegação vai por evento (`GO_TO_BUILDING_EVENT`, ouvido pelo `App` › `handleMaterialGoTo`).
+**Exports:** `BlockedKind`, `BlockedMissing`, `BlockedSource`, `BlockedReason`, `BlockedExplanation`, `explainBlocked`, `GO_TO_BUILDING_EVENT`, `requestGoToBuilding`.
+**Régua:** `src/components/ui/BlockedActionModal.render.test.tsx`.
+
 ### `src/utils/bitsOrigin.ts`
 **Dono de:** a PROCEDÊNCIA dos Bits (PR8): quanto do saldo veio do câmbio Crédito→Bits (`paidLeft`) e o câmbio do dia. Equipamento só enxerga o Bit GANHO (`earnedBits`); o gasto que não é equipamento gasta o Bit pago primeiro; o câmbio do dia cabe em 25% do ganho grátis do dia (piso de referência de 100). Regra de cliente: o servidor só sanea a forma (`_equipment.js › sanitizeBitsOrigin`).
 **Exports:** `CREDIT_BITS_CAP_RATIO`, `CREDIT_CAP_REFERENCE_FREE`, `BitsOrigin`, `normalizeOrigin`, `sanitizeBitsOrigin`, `earnedBits`, `noteFreeBits`, `creditExchangeRoom`, `applyCreditExchange`, `spendBitsPaidFirst`.

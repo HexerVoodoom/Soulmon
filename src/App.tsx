@@ -58,6 +58,7 @@ import {
 import { registerAndroidBack } from './utils/androidBack';
 import { closeTopBackLayer } from './utils/backStack';
 import { OPEN_FRAME_SHOP_EVENT } from './utils/frameShopNav';
+import { GO_TO_BUILDING_EVENT } from './utils/blockedAction';
 import { CompanionHUD } from './components/CompanionHUD';
 import { HomeHud } from './components/pixel/HomeHud';
 import { DailyRituals } from './components/DailyRituals';
@@ -4588,6 +4589,13 @@ export default function App() {
     setPendingSheet({ area: dest.area, lot: dest.lot, section: dest.section });
     goTo(areaView(dest.area));
   }, [goTo]);
+
+  /* Aviso padrao de acao bloqueada (09/11/2026): o lugar tocavel do "pode ser obtido em" pede a navegacao por evento. */
+  useEffect(() => {
+    const ir = (e: Event) => { const b = (e as CustomEvent<BuildingId>).detail; if (b) handleMaterialGoTo(b); };
+    window.addEventListener(GO_TO_BUILDING_EVENT, ir);
+    return () => window.removeEventListener(GO_TO_BUILDING_EVENT, ir);
+  }, [handleMaterialGoTo]);
 
   /* D-16 (19/10/2026): a moldura de loja trancada no Editar perfil leva ao Mercado > Frames (lojinha de Background, aba Frames).
      O Perfil só pede (evento de `utils/frameShopNav`); a navegação é do App. */
