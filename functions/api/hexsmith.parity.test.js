@@ -17,7 +17,7 @@ describe('hexsmith: servidor = app', () => {
   });
   it('custos: HEX_COSTS e hexCost iguais (o servidor cobra o que o app cobra, §216)', () => {
     expect(srv.HEX_COSTS).toEqual(app.HEX_COSTS);
-    for (const id of ['garra:agua', 'amuleto:fogo', 'couraca:terra', 'coroa:heal', 'luvas:melee', 'luvas:ranged', 'x:y']) expect(srv.hexCost(id)).toEqual(app.hexCost(id));
+    for (const id of ['garra:agua', 'amuleto:fogo', 'couraca:terra', 'coroa:heal', 'luvas:melee-slash', 'luvas:magic', 'x:y']) expect(srv.hexCost(id)).toEqual(app.hexCost(id));
   });
   it('forja do servidor = forgeHexItem do app (debito, Bit de Credito, recusa, ja possuido)', () => {
     const estados = [
@@ -26,7 +26,7 @@ describe('hexsmith: servidor = app', () => {
       { gamePoints: 100, foodInventory: { 'potion:agua': 9 }, equipment: { owned: [], equipped: {}, fragments: 0 } },
     ];
     for (const st of estados) {
-      for (const id of ['garra:agua', 'coroa:heal', 'coroa:dot', 'luvas:melee']) {
+      for (const id of ['garra:agua', 'coroa:heal', 'coroa:dot', 'luvas:melee-slash']) {
         const a = app.forgeHexItem(st, id);
         const r = srv.forgeOnServer(st, id);
         if (a === st) expect(r.ok === false || r.already).toBe(true);
@@ -45,12 +45,27 @@ describe('hexsmith: servidor = app', () => {
   it('sanitize e overrides iguais em saves hostis', () => {
     const casos = [
       undefined, null, 3, 'x', { owned: 'x' },
-      { owned: ['garra:agua', 'garra:agua', 'coroa:heal', 'lixo'], equipped: { garra: 'garra:agua', coroa: 'garra:agua', luvas: 'luvas:melee' } },
-      { owned: ['amuleto:fogo', 'couraca:terra', 'luvas:ranged', 'coroa:dot'], equipped: { amuleto: 'amuleto:fogo', couraca: 'couraca:terra', luvas: 'luvas:ranged', coroa: 'coroa:dot' } },
+      { owned: ['garra:agua', 'garra:agua', 'coroa:heal', 'lixo'], equipped: { garra: 'garra:agua', coroa: 'garra:agua', luvas: 'luvas:melee-slash' } },
+      { owned: ['amuleto:fogo', 'couraca:terra', 'luvas:magic', 'coroa:dot'], equipped: { amuleto: 'amuleto:fogo', couraca: 'couraca:terra', luvas: 'luvas:magic', coroa: 'coroa:dot' } },
     ];
     for (const c of casos) {
       expect(srv.sanitizeHexsmith(c)).toEqual(app.sanitizeHexsmith(c));
       expect(srv.hexOverrides(c)).toEqual(app.hexOverrides(c));
     }
+  });
+  it('luvas: 4 ataques e migracao identicos (legado ranged/melee)', () => {
+    for (const id of ['luvas:ranged', 'luvas:melee', 'luvas:magic', 'luvas:ranged-slash', 'luvas:melee-slash', 'luvas:melee-smash']) {
+      expect(srv.migrateHexId(id)).toEqual(app.migrateHexId(id));
+      expect(srv.parseHexItem(id)).toEqual(app.parseHexItem(id));
+      expect(srv.hexCost(id)).toEqual(app.hexCost(id));
+    }
+    const legado = { owned: ['luvas:ranged', 'luvas:melee', 'luvas:magic'], equipped: { luvas: 'luvas:ranged' } };
+    expect(srv.sanitizeHexsmith(legado)).toEqual(app.sanitizeHexsmith(legado));
+    expect(srv.sanitizeHexsmith(legado)).toEqual({ owned: ['luvas:magic', 'luvas:melee-slash'], equipped: { luvas: 'luvas:magic' } });
+    expect(srv.hexOverrides(legado)).toEqual(app.hexOverrides(legado));
+    const st = { gamePoints: 5000, foodInventory: {}, equipment: { owned: [], equipped: {}, fragments: 20 } };
+    const r = srv.forgeOnServer(st, 'luvas:melee');
+    expect(r.ok && r.state.hexsmith.owned).toEqual(['luvas:melee-slash']);
+    expect(r.state).toEqual(app.forgeHexItem(st, 'luvas:melee'));
   });
 });

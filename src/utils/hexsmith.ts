@@ -33,8 +33,29 @@ export type HexSlot = 'coroa' | 'amuleto' | 'garra' | 'couraca' | 'luvas';
 export const HEX_SLOTS: readonly HexSlot[] = ['coroa', 'amuleto', 'garra', 'couraca', 'luvas'];
 /** Os slots cujo valor é um elemento do dex. */
 export const HEX_ELEMENT_SLOTS: readonly HexSlot[] = ['amuleto', 'garra', 'couraca'];
-export type HexStrike = 'ranged' | 'melee';
-export const HEX_STRIKES: readonly HexStrike[] = ['ranged', 'melee'];
+/**
+ * Os 4 ataques das Luvas (dono, 10/11/2026) = {alcance} × {efeito}: `magic` (distância + splash), `ranged-slash` (distância + corte),
+ * `melee-slash` (corpo a corpo + corte), `melee-smash` (corpo a corpo + splash/impacto). SÓ VISUAL (forma + acabamento do básico).
+ */
+export type HexStrike = 'magic' | 'ranged-slash' | 'melee-slash' | 'melee-smash';
+export const HEX_STRIKES: readonly HexStrike[] = ['magic', 'ranged-slash', 'melee-slash', 'melee-smash'];
+/** Valores ANTIGOS do slot (só 2 alcances) → o equivalente de hoje. Idempotente. `ranged` era projétil com splash = Magic; `melee` = só o corte. */
+const LEGACY_STRIKE: Readonly<Record<string, HexStrike>> = { ranged: 'magic', melee: 'melee-slash' };
+/** Migra um id de item antigo (`luvas:ranged`, `luvas:melee`) para o novo; qualquer outro id volta igual. */
+export function migrateHexId(id: unknown): unknown {
+  if (typeof id !== 'string' || !id.startsWith('luvas:')) return id;
+  const to = LEGACY_STRIKE[id.slice(6)];
+  return to ? `luvas:${to}` : id;
+}
+/** A forma e o acabamento que um ataque das Luvas dá ao básico (`impacto`: o mesmo eixo de `combate/golpeImpacto.ts`). */
+export function strikeParts(s: HexStrike): { forma: 'melee' | 'ranged'; impacto: 'corte' | 'concussao' } {
+  switch (s) {
+    case 'magic': return { forma: 'ranged', impacto: 'concussao' };
+    case 'ranged-slash': return { forma: 'ranged', impacto: 'corte' };
+    case 'melee-slash': return { forma: 'melee', impacto: 'corte' };
+    default: return { forma: 'melee', impacto: 'concussao' };
+  }
+}
 
 /** Custos padrão (ajustáveis). `potions` = poções do PRÓPRIO elemento do item. */
 export const HEX_COSTS = {
@@ -48,7 +69,8 @@ export interface HexCost { readonly potions: number; readonly potionElement?: st
 /** Id do item: `slot:valor` (`garra:fogo`, `coroa:heal`, `luvas:ranged`). */
 export const hexItemId = (slot: HexSlot, value: string): string => `${slot}:${value}`;
 
-export function parseHexItem(id: unknown): { slot: HexSlot; value: string } | undefined {
+export function parseHexItem(idRaw: unknown): { slot: HexSlot; value: string } | undefined {
+  const id = migrateHexId(idRaw);
   if (typeof id !== 'string') return undefined;
   const i = id.indexOf(':');
   if (i < 1) return undefined;
@@ -68,8 +90,8 @@ export function hexValuesOf(slot: HexSlot): readonly string[] {
   return slot === 'coroa' ? SPECIAL_FAMILIES : HEX_STRIKES;
 }
 
-export function hexCost(id: string): HexCost | undefined {
-  const it = parseHexItem(id);
+export function hexCost(idRaw: string): HexCost | undefined {
+  const it = parseHexItem(idRaw);
   if (!it) return undefined;
   if (HEX_ELEMENT_SLOTS.includes(it.slot)) return { ...HEX_COSTS.element, potionElement: it.value };
   return { ...(it.slot === 'coroa' ? HEX_COSTS.coroa : HEX_COSTS.luvas) };
@@ -89,15 +111,16 @@ export function sanitizeHexsmith(raw: unknown): HexsmithState {
   const r = raw as Record<string, unknown>;
   const owned: string[] = [];
   if (Array.isArray(r.owned)) {
-    for (const id of r.owned) {
+    for (const raw of r.owned) {
       if (owned.length >= HEX_MAX_OWNED) break;
+      const id = migrateHexId(raw);
       if (isHexItem(id) && !owned.includes(id)) owned.push(id);
     }
   }
   const equipped: Partial<Record<HexSlot, string>> = {};
   const eq = r.equipped && typeof r.equipped === 'object' ? (r.equipped as Record<string, unknown>) : {};
   for (const slot of HEX_SLOTS) {
-    const id = eq[slot];
+    const id = migrateHexId(eq[slot]);
     if (typeof id === 'string' && owned.includes(id) && parseHexItem(id)!.slot === slot) equipped[slot] = id;
   }
   return { owned, equipped };
@@ -114,7 +137,8 @@ export interface HexForgeState {
 export type HexRefusal = 'invalid' | 'owned' | 'potions' | 'bits' | 'fragments';
 
 /** Por que não dá para forjar agora (ou `undefined` = dá). A ordem é a da tela: o que falta primeiro. */
-export function hexForgeRefusal(state: HexForgeState, id: string): HexRefusal | undefined {
+export function hexForgeRefusal(state: HexForgeState, idRaw: string): HexRefusal | undefined {
+  const id = migrateHexId(idRaw) as string;
   const cost = hexCost(id);
   if (!cost) return 'invalid';
   if (sanitizeHexsmith(state.hexsmith).owned.includes(id)) return 'owned';
@@ -125,7 +149,8 @@ export function hexForgeRefusal(state: HexForgeState, id: string): HexRefusal | 
 }
 
 /** Forja o item: paga tudo de uma vez e o item entra na posse (e vai direto para o slot se o slot estava vazio). Recusa = o MESMO objeto. */
-export function forgeHexItem<T extends HexForgeState>(prev: T, id: string): T {
+export function forgeHexItem<T extends HexForgeState>(prev: T, idRaw: string): T {
+  const id = migrateHexId(idRaw) as string;
   if (hexForgeRefusal(prev, id)) return prev;
   const cost = hexCost(id)!;
   const hx = sanitizeHexsmith(prev.hexsmith);
@@ -147,7 +172,8 @@ export function forgeHexItem<T extends HexForgeState>(prev: T, id: string): T {
  * Aplica no estado LOCAL a forja que o SERVIDOR já confirmou (REGISTRO §216, `cloudHexForge`): `paid` = o servidor debitou, então
  * o cliente debita o mesmo custo (sem recusar: a verdade é a do servidor; nada fica negativo); `paid: false` = já era seu, só a posse.
  */
-export function applyServerHexForge<T extends HexForgeState>(prev: T, id: string, paid: boolean): T {
+export function applyServerHexForge<T extends HexForgeState>(prev: T, idRaw: string, paid: boolean): T {
+  const id = migrateHexId(idRaw) as string;
   const cost = hexCost(id);
   if (!cost) return prev;
   const hx = sanitizeHexsmith(prev.hexsmith);
@@ -172,7 +198,8 @@ export function applyServerHexForge<T extends HexForgeState>(prev: T, id: string
 }
 
 /** Equipa um item possuído no slot dele (troca o que estava). Não possuído = o MESMO objeto. Nada se perde: o anterior fica na posse. */
-export function equipHexItem<T extends { hexsmith?: HexsmithState }>(prev: T, id: string): T {
+export function equipHexItem<T extends { hexsmith?: HexsmithState }>(prev: T, idRaw: string): T {
+  const id = migrateHexId(idRaw) as string;
   const hx = sanitizeHexsmith(prev.hexsmith);
   if (!hx.owned.includes(id)) return prev;
   const slot = parseHexItem(id)!.slot;
@@ -233,8 +260,9 @@ export function hexArenaElements<T extends { basica: string; especial: string; a
 /** A identidade VISUAL do lutador: elemento exibido dos golpes, família do especial e a forma do básico (Luvas, só visual). */
 export function hexIdentity(id: FighterIdentity, hx: HexOverrides): FighterIdentity {
   if (!hx.basicElement && !hx.specialElement && !hx.specialFamily && !hx.strike) return id;
+  const st = hx.strike ? strikeParts(hx.strike) : undefined;
   return {
-    basico: { ...id.basico, elemento: hx.basicElement ?? id.basico.elemento, forma: hx.strike ?? id.basico.forma },
+    basico: { ...id.basico, elemento: hx.basicElement ?? id.basico.elemento, forma: st?.forma ?? id.basico.forma, ...(st ? { impacto: st.impacto } : {}) },
     especial: { ...id.especial, elemento: hx.specialElement ?? id.especial.elemento, familia: hx.specialFamily ?? id.especial.familia },
   };
 }

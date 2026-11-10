@@ -14,7 +14,7 @@ export const HEX_SLOT_COPY: Readonly<Record<HexSlot, { name: Par; port: Par; eff
   amuleto: { name: p('Amulet', 'Amuleto'), port: p('Amulet Port', 'Porta do Amuleto'), effect: p('Special element', 'Elemento do especial'), line: p('Special element', 'Elemento do especial'), desc: p('Swap this chip, swap the special’s element', 'Troca esse chip, troca o elemento do especial') },
   garra: { name: p('Claw', 'Garra'), port: p('Claw Port', 'Porta da Garra'), effect: p('Basic attack element', 'Elemento do ataque básico'), line: p('Basic', 'Básico'), desc: p('Swap this chip, swap the basic attack’s element', 'Troca esse chip, troca o elemento do ataque básico') },
   couraca: { name: p('Cuirass', 'Couraça'), port: p('Cuirass Port', 'Porta da Couraça'), effect: p('Element when defending (only the damage it takes)', 'Elemento na defesa (só o dano que recebe)'), line: p('Defense', 'Defesa'), desc: p('Changes your element only for damage you take', 'Troca seu elemento só para o dano que você recebe') },
-  luvas: { name: p('Gloves', 'Luvas'), port: p('Gloves Port', 'Porta das Luvas'), effect: p('Basic attack reach (looks only)', 'Alcance do ataque básico (só visual)'), line: p('Reach', 'Alcance'), desc: p('Changes how the basic attack looks, not its power', 'Muda o visual do ataque básico, não a força') },
+  luvas: { name: p('Gloves', 'Luvas'), port: p('Gloves Port', 'Porta das Luvas'), effect: p('Basic attack type (looks only)', 'Tipo do ataque básico (só visual)'), line: p('Attack', 'Ataque'), desc: p('Changes how the basic attack looks, not its power', 'Muda o visual do ataque básico, não a força') },
 };
 
 /** O nome do item: um HEX (dono, 01/11/2026). "HEX de Água" / "Water HEX". */
@@ -31,8 +31,18 @@ export const HEX_FAMILY_COPY: Readonly<Record<SpecialFamily, Par>> = {
 };
 
 export const HEX_STRIKE_COPY: Readonly<Record<HexStrike, Par>> = {
-  ranged: p('Ranged', 'Distância'),
-  melee: p('Close range', 'Corpo a corpo'),
+  magic: p('Magic', 'Magia'),
+  'ranged-slash': p('Ranged Slash', 'Corte à distância'),
+  'melee-slash': p('Melee Slash', 'Corte corpo a corpo'),
+  'melee-smash': p('Melee Smash', 'Esmagamento'),
+};
+
+/** Legenda curta (texto, sem ícone dentro de box) do que o ataque das Luvas desenha: alcance + acabamento. */
+export const HEX_STRIKE_LEGEND: Readonly<Record<HexStrike, Par>> = {
+  magic: p('From afar, bursts on impact', 'De longe, explode no impacto'),
+  'ranged-slash': p('From afar, a cutting arc', 'De longe, um arco cortante'),
+  'melee-slash': p('Up close, a blade cut', 'De perto, um corte de lâmina'),
+  'melee-smash': p('Up close, a crushing blow', 'De perto, um golpe de impacto'),
 };
 
 /** O motivo que desabilita "Forjar", em linguagem de convite (o que ainda falta e onde se consegue). */

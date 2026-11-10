@@ -25,6 +25,8 @@ export interface FighterStrike {
   elemento: string;
   escola: EscolaSkillId | null;
   forma: StrikeForm;
+  /** Só com Luvas da Hexsmith (acabamento visual do básico: corte ou splash); ausente = o sorteio estável por elemento. */
+  impacto?: 'corte' | 'concussao';
 }
 export interface FighterIdentity {
   basico: FighterStrike;

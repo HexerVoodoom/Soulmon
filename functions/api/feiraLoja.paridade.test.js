@@ -31,7 +31,7 @@ describe('o catálogo da feira de verdade espelha `src/utils/shop.ts`', () => {
     }
   });
   it('o preço-base da Hexsmith (só a parte em Bits) é o do cliente', () => {
-    for (const id of ['coroa:heal', 'luvas:ranged', 'amuleto:fervor', 'garra:fervor', 'couraca:fervor']) {
+    for (const id of ['coroa:heal', 'luvas:magic', 'amuleto:fervor', 'garra:fervor', 'couraca:fervor']) {
       expect(hexCost(id).bits, id).toBe(hexCostSrc(id).bits);
     }
     expect([HEX_COSTS.coroa.bits, HEX_COSTS.luvas.bits, HEX_COSTS.element.bits].sort()).toEqual([1500, 2000, 500].sort());
