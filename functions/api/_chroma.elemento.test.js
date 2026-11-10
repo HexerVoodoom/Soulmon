@@ -32,4 +32,22 @@ describe('recorte pela cor de fundo que o prompt do elemento escolheu', () => {
     expect(opacos(mag)).toBe(opacos(ver));
     expect(opacos(ver)).toBeLessThan(64 * 64 * 0.5);
   });
+  it('elemento com verde+magenta (tormento): o prompt pede AZUL e a criatura verde+magenta sobre azul sobrevive', () => {
+    const p = promptDe('tormento');
+    expect(chromaKeyOfPrompt(p)).toBe('blue');
+    const W = 64, H = 64, d = new Uint8Array(W * H * 4);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const dentro = x >= 20 && x < 44 && y >= 20 && y < 44;
+      const cor = !dentro ? [0, 0, 255] : x < 32 ? [40, 200, 60] : [255, 40, 200];
+      d.set([...cor, 255], (y * W + x) * 4);
+    }
+    const out = chromaKeyPng(encodePng(W, H, d), chromaKeyOfPrompt(p));
+    expect(opacos(out)).toBeGreaterThan(24 * 24 * 0.9);
+    expect(opacos(out)).toBeLessThan(64 * 64 * 0.5);
+    const o = decodePng(out);
+    for (let i = 0; i < o.data.length; i += 4) if (o.data[i + 3]) expect(o.data[i + 2] <= Math.max(o.data[i], o.data[i + 1]) + 60).toBe(true);
+  });
+  it('sem fundo azul numa imagem de fundo verde: BadChroma (sem fundo azul)', () => {
+    expect(() => chromaKeyPng(img([0, 255, 0], [200, 60, 60]), 'blue')).toThrow(/sem fundo azul/);
+  });
 });

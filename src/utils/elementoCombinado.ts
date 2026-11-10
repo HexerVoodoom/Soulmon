@@ -88,32 +88,50 @@ const MAGENTA = /(?<!dark |deep |dim )magenta|hot[- ]pink|fuchsia|neon pink/i;
 /** O pedido de fundo chroma do prompt (a "cláusula do fundo"), que não conta como cor da criatura. */
 const CLAUSULA_FUNDO = /on a solid flat pure #[0-9A-Fa-f]{6} chroma-\w+ background \([^)]*\), the creature itself contains no [^:]*? fringe/;
 
+export type ChromaKey = 'green' | 'magenta' | 'blue';
+
+// Azul forte = o que o recorte azul (b > 150 e b - max(r,g) > 60) comeria. Ciano, marinho, "dark blue", céu e azul-aço NÃO contam.
+const AZUL_FORTE = /(?<!dark |deep |navy |pale |sky |light |steel |baby |powder |clear |cosmic )(?:bright|vivid|electric|royal|cobalt|saturated|pure|neon) blue|cobalt|sapphire|ultramarine/i;
+
+/** Cláusula do fundo (hex, nome e "a criatura não tem a cor") de cada chave. */
+const CLAUSULAS: Record<ChromaKey, { hex: string; nome: string; sem: string }> = {
+  green: { hex: '#00FF00', nome: 'chroma-green', sem: 'contains no green and no green fringe' },
+  magenta: { hex: '#FF00FF', nome: 'chroma-magenta', sem: 'contains no magenta, no hot pink and no magenta fringe' },
+  blue: { hex: '#0000FF', nome: 'chroma-blue', sem: 'contains no blue and no blue fringe' },
+};
+
 /** Cor do chroma que o prompt pede hoje. */
-export const chromaDoPrompt = (prompt: string): 'green' | 'magenta' => (/#FF00FF/i.test(prompt) ? 'magenta' : 'green');
+export const chromaDoPrompt = (prompt: string): ChromaKey => (/#0000FF/i.test(prompt) ? 'blue' : /#FF00FF/i.test(prompt) ? 'magenta' : 'green');
 
 /**
  * Qual fundo chroma o prompt deve pedir (dono, 10/11/2026): VERDE #00FF00 por padrão; MAGENTA #FF00FF quando a criatura/elemento usa
- * verde (o recorte verde comeria o verde dela); e VERDE de novo quando só há magenta/rosa-choque. Verde e magenta juntos: o fundo é a chave da cor
- * que NÃO domina (a primeira citada é a dominante).
- * O recorte (`functions/api/_chroma.js › chromaKeyOfPrompt`) lê essa cor DO PRÓPRIO PROMPT, então as duas cores funcionam sem outro ajuste.
+ * verde (o recorte verde comeria o verde dela); e VERDE de novo quando só há magenta/rosa-choque. Verde E magenta juntos: AZUL #0000FF
+ * (3ª chave) — nenhuma das duas outras recortaria limpo. Se a paleta também tem azul forte, não há cor segura: cai na regra antiga
+ * (a cor que NÃO domina; a primeira citada é a dominante) e `semChromaSeguro` marca o caso para o dono.
+ * O recorte (`functions/api/_chroma.js › chromaKeyOfPrompt`) lê essa cor DO PRÓPRIO PROMPT.
  */
-export function escolherChroma(prompt: string): 'green' | 'magenta' {
+export function escolherChroma(prompt: string): ChromaKey {
   const corpo = prompt.replace(CLAUSULA_FUNDO, '');
   const g = corpo.search(VERDE);
   const m = corpo.search(MAGENTA);
   if (g >= 0 && m < 0) return 'magenta';
   if (m >= 0 && g < 0) return 'green';
-  // Os dois: a cor que aparece PRIMEIRO é a dominante (nas pistas a 1ª cor domina); o fundo é a OUTRA chave.
-  if (g >= 0 && m >= 0) return g < m ? 'magenta' : 'green';
+  if (g >= 0 && m >= 0) return AZUL_FORTE.test(corpo) ? (g < m ? 'magenta' : 'green') : 'blue';
   return chromaDoPrompt(prompt);
 }
 
-/** Troca o pedido de fundo do prompt para a cor dada (a mesma troca de texto do `withChroma` do Oráculo, nos dois sentidos). */
-export function aplicarChroma(prompt: string, key: 'green' | 'magenta'): string {
-  if (chromaDoPrompt(prompt) === key) return prompt;
-  return key === 'magenta'
-    ? prompt.replace('#00FF00 chroma-green', '#FF00FF chroma-magenta').replace('contains no green and no green fringe', 'contains no magenta, no hot pink and no magenta fringe')
-    : prompt.replace('#FF00FF chroma-magenta', '#00FF00 chroma-green').replace('contains no magenta, no hot pink and no magenta fringe', 'contains no green and no green fringe');
+/** true = verde, magenta e azul forte juntos na paleta: nenhuma das 3 chaves é segura (listar para o dono). */
+export function semChromaSeguro(prompt: string): boolean {
+  const corpo = prompt.replace(CLAUSULA_FUNDO, '');
+  return corpo.search(VERDE) >= 0 && corpo.search(MAGENTA) >= 0 && AZUL_FORTE.test(corpo);
+}
+
+/** Troca o pedido de fundo do prompt para a cor dada (a mesma troca de texto do `withChroma` do Oráculo, em qualquer sentido). */
+export function aplicarChroma(prompt: string, key: ChromaKey): string {
+  const atual = chromaDoPrompt(prompt);
+  if (atual === key) return prompt;
+  const de = CLAUSULAS[atual], para = CLAUSULAS[key];
+  return prompt.replace(`${de.hex} ${de.nome}`, `${para.hex} ${para.nome}`).replace(de.sem, para.sem);
 }
 
 /**

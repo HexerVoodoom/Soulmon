@@ -4,7 +4,7 @@
  * há magenta). Só gerações futuras usam isto — nada de sprite/save existente muda.
  */
 import { describe, it, expect } from 'vitest';
-import { stagesComElemento, pistasVisuaisDoElemento, escolherChroma, aplicarChroma, chromaDoPrompt } from './elementoCombinado';
+import { stagesComElemento, pistasVisuaisDoElemento, escolherChroma, aplicarChroma, chromaDoPrompt, semChromaSeguro } from './elementoCombinado';
 import { DESCRITORES_ELEMENTO } from './elementoDescritores.data';
 import { ESSENCE_ELEMENT_IDS, BASE_ELEMENT_IDS } from './elementDex';
 
@@ -67,9 +67,37 @@ describe('fundo chroma coerente com as cores do elemento', () => {
       expect(p, id).not.toContain('#FF00FF');
     }
   });
-  it('verde e magenta juntos: o fundo é a chave da cor que NÃO domina (a 1ª citada domina)', () => {
-    expect(escolherChroma(`${RAW} Visual cues of this element: hot-pink glitter, green leaves palette.`)).toBe('green');
-    expect(escolherChroma(`${RAW} Visual cues of this element: green leaves, hot-pink glitter palette.`)).toBe('magenta');
+  it('verde e magenta juntos: o fundo é AZUL #0000FF (3ª chave), sem azul forte na paleta', () => {
+    expect(escolherChroma(`${RAW} Visual cues of this element: hot-pink glitter, green leaves palette.`)).toBe('blue');
+    expect(escolherChroma(`${RAW} Visual cues of this element: green leaves, hot-pink glitter, cyan and navy palette.`)).toBe('blue');
+  });
+  it('verde, magenta E azul forte: sem cor segura -> regra antiga (a que não domina) e semChromaSeguro marca', () => {
+    const t = `${RAW} Visual cues of this element: green leaves, hot-pink glitter, royal blue palette.`;
+    expect(semChromaSeguro(t)).toBe(true);
+    expect(escolherChroma(t)).toBe('magenta');
+  });
+  it('elementos com verde E magenta nas pistas (tormento, praga, devorador, cyber, bencao_feerica): fundo azul, sem "blue" forte nas pistas', () => {
+    for (const id of ['tormento', 'praga', 'devorador', 'cyber', 'bencao_feerica']) {
+      const p = gen(id, 'sombra').imagePrompt;
+      expect(p, id).toContain('#0000FF chroma-blue');
+      expect(p, id).toContain('contains no blue and no blue fringe');
+      expect(p, id).not.toMatch(/#00FF00|#FF00FF/);
+      expect(chromaDoPrompt(p), id).toBe('blue');
+      expect(semChromaSeguro(p), id).toBe(false);
+      expect(pistasVisuaisDoElemento(id) ?? '', id).not.toMatch(/(?:bright|vivid|electric|royal|cobalt|neon) blue|sapphire|ultramarine/i);
+    }
+  });
+  it('portal e glitter (magenta, sem verde nas pistas) ficam no verde; elementos normais não mudam', () => {
+    for (const id of ['portal', 'glitter']) expect(chromaDoPrompt(gen(id, 'sombra').imagePrompt), id).toBe('green');
+    expect(chromaDoPrompt(gen('planta', 'sombra').imagePrompt)).toBe('magenta');
+    expect(chromaDoPrompt(gen('fogo', 'sombra').imagePrompt)).toBe('green');
+  });
+  it('aplicarChroma troca entre as 3 chaves e volta ao original', () => {
+    for (const k of ['green', 'magenta', 'blue'] as const) {
+      const x = aplicarChroma(RAW, k);
+      expect(chromaDoPrompt(x)).toBe(k);
+      expect(aplicarChroma(x, 'green')).toBe(RAW);
+    }
   });
   it('só magenta/rosa-choque (sem verde em lugar nenhum) → volta ao fundo VERDE', () => {
     const mag = aplicarChroma(RAW, 'magenta');
@@ -81,7 +109,7 @@ describe('fundo chroma coerente com as cores do elemento', () => {
     expect(aplicarChroma(aplicarChroma(RAW, 'magenta'), 'green')).toBe(RAW);
     expect(aplicarChroma(RAW, 'green')).toBe(RAW);
   });
-  it('em todo o catálogo, o fundo pedido combina com as cores: verde nas pistas ⇒ magenta; sem verde ⇒ verde', () => {
+  it('em todo o catálogo, o fundo pedido combina com as cores: verde nas pistas ⇒ magenta; verde+magenta ⇒ azul; sem verde ⇒ verde', () => {
     const VERDE = /green|lime|mint|emerald|jade|olive|fern|moss|sage|clover|forest|verde/i;
     for (const id of ESSENCE_ELEMENT_IDS) {
       const p = gen(id, 'sombra');
@@ -90,10 +118,13 @@ describe('fundo chroma coerente com as cores do elemento', () => {
         const key = chromaDoPrompt(txt);
         const MAG = /(?<!dark |deep |dim )magenta|hot[- ]pink|fuchsia|neon pink/i;
         const g = cues.search(VERDE); const m = cues.search(MAG);
-        const esperado = g >= 0 && m < 0 ? 'magenta' : m >= 0 && g < 0 ? 'green' : g >= 0 && m >= 0 ? (g < m ? 'magenta' : 'green') : 'green';
+        const esperado = g >= 0 && m < 0 ? 'magenta' : m >= 0 && g < 0 ? 'green' : g >= 0 && m >= 0 ? (semChromaSeguro(txt) ? (g < m ? 'magenta' : 'green') : 'blue') : 'green';
         expect(key, id).toBe(esperado);
       }
     }
+  });
+  it('nenhum elemento do catálogo cai em "sem chroma seguro" (verde+magenta+azul forte)', () => {
+    expect(ESSENCE_ELEMENT_IDS.filter(id => semChromaSeguro(gen(id, 'sombra').imagePrompt))).toEqual([]);
   });
   it('a troca de texto é a MESMA do Oráculo (motor.ts › withChroma)', () => {
     const doMotor = FUNDO_VERDE.replace('#00FF00 chroma-green', '#FF00FF chroma-magenta').replace('contains no green and no green fringe', 'contains no magenta, no hot pink and no magenta fringe');
