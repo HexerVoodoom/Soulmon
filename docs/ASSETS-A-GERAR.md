@@ -590,7 +590,7 @@ O class-system passou de 17 para **20 bases** (Class-System `56546d9`, branch
 `feat/elementos-fada-industrial-planta`): +54 pares e 3 triplas curadas novas
 (**Pestilência** = planta+morte+vileza · **Maldição** = fada+sombra+vileza ·
 
-> **Atualização 10/11/2026 (regra de identidade v2):** FX de ataque (6 estados + aura-96) de `maldicao`, `fada`, `industrial` e `planta` e o ícone `el-maldicao` foram **refeitos e instalados** (arte em `E:Soulmon-assetsidentidade-refazer`). `el-industrial` segue pendente (refazendo).
+> **Atualização 10/11/2026 (regra de identidade v2):** FX de ataque (6 estados + aura-96) de `maldicao`, `fada`, `industrial` e `planta` e o ícone `el-maldicao` foram **refeitos e instalados** (arte em `E:Soulmon-assetsidentidade-refazer`). `el-industrial` também refeito e instalado (10/11/2026, fundo removido pelo editor do ChatGPT; alfa real verificado).
 **Cyber** = industrial+eletricidade+arcano). Nada abaixo foi gerado: **fila para quando
 houver créditos Higgsfield**. Regras de prompt: `PROMPTS-BETA3.md` §1 (receita de 23/09,
 transparência real, nada de steampunk — Industrial é *fábrica arcana*: pedra, cobre e
