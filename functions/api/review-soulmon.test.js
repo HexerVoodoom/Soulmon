@@ -384,3 +384,80 @@ describe('compositeOnGray', () => {
     expect([data[0], data[1], data[2], data[3]]).toEqual([128, 128, 128, 255]);
   });
 });
+
+describe('re-recorte do raw guardado (sem provedor, sem cota de regeneracao)', () => {
+  const PROMPT_AZUL = PROMPT_SABA.replace('#FF00FF chroma-magenta', '#0000FF chroma-blue').replace('contains no magenta, no hot pink and no magenta fringe', 'contains no blue and no blue fringe');
+  const rawMagenta = () => { const d = new Uint8Array(64 * 64 * 4); for (let i = 0; i < 64 * 64; i++) { d[i * 4] = 255; d[i * 4 + 2] = 255; d[i * 4 + 3] = 255; } for (let y = 12; y < 52; y++) for (let x = 12; x < 52; x++) d.set([40, 160, 60, 255], (y * 64 + x) * 4); return encodePng(64, 64, d); };
+  const rawAzul = () => {
+    const w = 64, d = new Uint8Array(w * w * 4);
+    for (let i = 0; i < w * w; i++) { d[i * 4 + 2] = 255; d[i * 4 + 3] = 255; } // fundo azul puro
+    for (let y = 12; y < 52; y++) for (let x = 12; x < 52; x++) { const p = (y * w + x) * 4; d[p] = 120; d[p + 1] = 40; d[p + 2] = 160; }
+    return encodePng(w, w, d);
+  };
+  const seed = raw => ({
+    [`sprite:img:${SAVE}:${FORM}`]: JSON.stringify({ image: URL_ANTES, provider: 'higgsfield', at: 1, prompt: PROMPT_AZUL }),
+    ...(raw ? { [`sprite:raw:${SAVE}:${FORM}`]: ab(raw) } : {}),
+  });
+  const limite = env => { const dia = new Date().toISOString().slice(0, 10); env.SOULMON_SAVES.store.set(`review-cap:regen-acct:${SAVE}:${dia}`, String(REVIEW_LIMITS.regenPerAccountPerDay)); return dia; };
+  const avaliado = async env => {
+    const { report } = await createReport(env, sanitizeReportBody(corpo()));
+    await evaluateReport(env, report.id, { fetch: claudeFetch({ problema: 'recorte', detalhe: 'buracos', acao: 'regenerar', fundoResidual: 'none' }) });
+    return report;
+  };
+
+  it('recorte + raw: re-chaveia o raw, conserta (detail recut) e NAO toca a cota nem o provedor, mesmo com o limite diario estourado', async () => {
+    const env = mkEnv({ ANTHROPIC_API_KEY: 'k' }, seed(rawAzul()));
+    const dia = limite(env);
+    const report = await avaliado(env);
+    const generate = vi.fn();
+    const r = await regenerateReport(env, report.id, { generate, origin: 'https://x.test' });
+    expect(generate).not.toHaveBeenCalled();
+    expect(r).toMatchObject({ status: STATUS.CONSERTADO, method: 'recorte', detail: 'recut', recutFrom: 'raw', saveSync: 'patched' });
+    expect(env.SOULMON_SAVES.store.get(`review-cap:regen-acct:${SAVE}:${dia}`)).toBe(String(REVIEW_LIMITS.regenPerAccountPerDay));
+    expect(env.SOULMON_SAVES.store.has(`review-cap:regen:global:${dia}`)).toBe(false);
+    const reg = JSON.parse(env.SOULMON_SAVES.store.get(`sprite:img:${SAVE}:${FORM}`));
+    expect(reg.image).toBe(r.afterUrl);
+    expect(reg.prev).toBe(URL_ANTES);
+  });
+
+  it('report limite-diario pendente: o polling (advanceReport) reabre e passa pelo re-recorte antes do limite', async () => {
+    const env = mkEnv({ ANTHROPIC_API_KEY: 'k' }, seed(rawAzul()));
+    limite(env);
+    const report = await avaliado(env);
+    const lim = await readReport(env, report.id); lim.status = STATUS.LIMITE; lim.detail = 'regen-limit';
+    env.SOULMON_SAVES.store.set(`review:${report.id}`, JSON.stringify(lim));
+    const generate = vi.fn();
+    const r = await advanceReport(env, report.id, { generate, origin: 'https://x.test' });
+    expect(r).toMatchObject({ status: STATUS.CONSERTADO, detail: 'recut' });
+    expect(generate).not.toHaveBeenCalled();
+  });
+
+  it('sem raw: cai na regeneracao e o limite diario continua barrando', async () => {
+    const env = mkEnv({ ANTHROPIC_API_KEY: 'k' }, seed(null));
+    limite(env);
+    const report = await avaliado(env);
+    const generate = vi.fn();
+    const r = await regenerateReport(env, report.id, { generate });
+    expect(r).toMatchObject({ status: STATUS.LIMITE, detail: 'regen-limit', recutError: 'sem-raw' });
+    expect(generate).not.toHaveBeenCalled();
+  });
+
+  it('raw que o recorte nao consegue chavear (fundo nao e o da chave): nao aplica, cai na regeneracao (limite barra)', async () => {
+    const env = mkEnv({ ANTHROPIC_API_KEY: 'k' }, seed(rawMagenta()));
+    limite(env);
+    const report = await avaliado(env);
+    const r = await regenerateReport(env, report.id, { generate: vi.fn() });
+    expect(r.status).toBe(STATUS.LIMITE);
+    expect(r.recutError).toMatch(/sem fundo/);
+    expect(JSON.parse(env.SOULMON_SAVES.store.get(`sprite:img:${SAVE}:${FORM}`)).image).toBe(URL_ANTES);
+  });
+
+  it('problema de ESTILO nunca usa o re-recorte (so regeneracao)', async () => {
+    const env = mkEnv({ ANTHROPIC_API_KEY: 'k' }, seed(rawAzul()));
+    limite(env);
+    const { report } = await createReport(env, sanitizeReportBody(corpo()));
+    await evaluateReport(env, report.id, { fetch: claudeFetch({ problema: 'estilo', detalhe: 'x', acao: 'regenerar', fundoResidual: 'none' }) });
+    const r = await regenerateReport(env, report.id, { generate: vi.fn() });
+    expect(r.status).toBe(STATUS.LIMITE);
+  });
+});

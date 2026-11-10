@@ -22,7 +22,7 @@
 
 import { kvOrThrow } from './_kv.js';
 import { decodePng, encodePng } from './_png.js';
-import { chromaKeyPng, chromaKeyOfPrompt, BadChromaError, medirBuracosInternos } from './_chroma.js';
+import { chromaKeyPng, chromaKeyPngChecked, chromaKeyOfPrompt, BadChromaError, medirBuracosInternos, HOLE_REJECT_FRACTION } from './_chroma.js';
 import { escolherChaveDeMatiz } from './_chromaHue.js';
 export { notificarEquipe } from './_reviewTeam.js';
 import { generateWithProviders, republicar, RAW_PREFIX, RAW_TTL_SECONDS } from './generate-sprite.js';
@@ -465,6 +465,11 @@ async function lerFonteBruta(env, saveId, formId) {
   } catch { return null; }
 }
 
+/** O veredito (ou a medicao) aponta recorte, nao estilo. */
+function problemaDeRecorte(report) {
+  return report.verdict?.problema === 'recorte' || report.method === 'medicao' || report.buracos?.holeFraction > HOLE_REJECT_FRACTION;
+}
+
 const origemFalsa = origin => ({ url: `${origin}/api/sprite-image` });
 
 /** Grava a imagem nova no registro do sprite (o MESMO `sprite:img:` que o app lê) mantendo o anterior em `prev`. */
@@ -582,6 +587,28 @@ export async function regenerateReport(env, reportId, deps = {}) {
     report.status = STATUS.MANUAL; report.detail = 'no-stored-prompt';
     await saveReport(env, report, now);
     return report;
+  }
+  // RE-RECORTE ANTES DA COTA: problema de recorte + raw pre-recorte guardado => re-chaveia o raw com o recorte de HOJE, sem provedor e sem
+  // gastar a cota de regeneracao. So cai para a regeneracao se o resultado ainda reprovar na medicao (ou nao houver raw / o recorte falhar).
+  if (!retomada && problemaDeRecorte(report)) {
+    try {
+      const raw = await lerFonteBruta(env, report.saveId, report.formId);
+      if (raw) {
+        const key = chromaKeyOfPrompt(basePrompt);
+        const { png } = chromaKeyPngChecked(raw, key);
+        const medida = medirBuracosInternos(png);
+        if (!medida.reprovado) {
+          const url = await republish(env, origemFalsa(origin), `data:image/png;base64,${b64(png)}`);
+          if (!url) throw new Error('republish-failed');
+          await trocarSprite(env, report, registro, url, 'review-recut', { regenBy: 'review-recut' });
+          report.afterUrl = url; report.method = 'recorte'; report.status = STATUS.CONSERTADO; report.detail = 'recut'; report.recutFrom = 'raw';
+          report.buracosDepois = { holeFraction: Number(medida.holeFraction.toFixed(4)), components: medida.components };
+          await saveReport(env, report, now);
+          return report;
+        }
+        report.recutError = `recut-ainda-reprova (${(medida.holeFraction * 100).toFixed(1)}%)`;
+      } else report.recutError = 'sem-raw';
+    } catch (err) { report.recutError = String(err?.message ?? err).slice(0, 120); }
   }
   if (!retomada && (!(await takeDaily(env, 'regen-acct', report.saveId, REVIEW_LIMITS.regenPerAccountPerDay, now))
     || !(await takeDaily(env, 'regen', 'global', REVIEW_LIMITS.regenPerDay, now)))) {
