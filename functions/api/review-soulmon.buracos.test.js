@@ -9,7 +9,7 @@ import {
 } from './_spriteReview.js';
 import { decodePng } from './_png.js';
 
-const FIXTURE = new Uint8Array(fs.readFileSync(new URL('./fixtures/sabbat-buracos-160.png', import.meta.url)));
+const FIXTURE = new Uint8Array(fs.readFileSync(new URL('../../src/test/fixtures/sabbat-buracos-160.png', import.meta.url)));
 const SAVE = 'abcdefgh12345678abcdefgh';
 const FORM = 'ultimate-power@sabbat';
 const TOK = 'a'.repeat(32);
