@@ -12,7 +12,7 @@
  * O jogador EQUIPA qualquer forma já desbloqueada daquele nível (`formaAltEquipada[formId] = elemento`; ausente = a original).
  * Cosmético: não muda atributo, galho nem regra — só qual desenho representa a forma. Funções PURAS; o `App.tsx` só delega.
  */
-import type { SpriteLibrary } from './spriteLibrary';
+import { displaySprite, type SpriteLibrary } from './spriteLibrary';
 import { getStageLevel } from '../types/progression';
 import type { ElementoJornada } from './elementoJornada';
 
@@ -145,4 +145,26 @@ export function spriteVisorOf(lib: SpriteLibrary, formas: FormasAlt | undefined,
 export function ocultasDaForma(formas: FormasAlt | undefined, formId: string, total: number): number {
   const tem = formas?.[formId]?.length ?? 1;
   return Math.max(0, Math.min(ALT_OCULTAS, total - Math.max(1, tem)));
+}
+
+/**
+ * O mapa forma → url que o App entrega a `setOwnSprites` (a arte que o app MOSTRA de cada forma), a partir do acervo já visto pelo visor.
+ * - forma com arte própria: ela (mesmo com `reverted` e sem `previousSprites` — não há traço antigo para voltar, então vale a própria arte;
+ *   antes a forma "revertida" ficava sem arte e o app mostrava a de OUTRA variante: bug do dono, original = Sabá, 10/11/2026);
+ * - forma SEM arte própria, mas com alternativa (`forma@elemento`): usa a alternativa (nunca cai na Rookie).
+ */
+export function mapaDeSpritesProprios(visor: SpriteLibrary): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const formId of Object.keys(visor.sprites)) {
+    if (formId.includes('@')) continue; // forma alternativa: entra pela chave da forma quando equipada
+    const url = displaySprite(visor, formId)?.url ?? visor.sprites[formId]?.url;
+    if (url) map[formId.toLowerCase()] = url;
+  }
+  for (const formId of Object.keys(visor.sprites)) {
+    if (!formId.includes('@')) continue;
+    const base = formId.split('@')[0].toLowerCase();
+    const url = visor.sprites[formId]?.url;
+    if (url && !map[base] && !visor.sprites[base]) map[base] = url;
+  }
+  return map;
 }
