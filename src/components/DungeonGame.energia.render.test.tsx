@@ -58,7 +58,13 @@ describe('Masmorra — energia por camada', () => {
 
   it('sem energia: o botão não acende e a frase é convite, nunca cobrança (PT)', () => {
     montar({ energyPoints: 0 }, 'pt-BR');
-    expect((screen.getByRole('button', { name: 'Descer' }) as HTMLButtonElement).disabled).toBe(true);
+    const descer = screen.getByRole('button', { name: 'Descer' });
+    expect(descer.getAttribute('aria-disabled')).toBe('true');
+    // aviso padrao (09/11/2026): tocar no Descer bloqueado abre o modal com custo e quanto falta
+    fireEvent.click(descer);
+    expect(document.querySelector('[data-blocked-action="energia"]')).not.toBeNull();
+    expect(document.body.textContent).toMatch(/Você não tem energia suficiente/);
+    expect(document.querySelector('[data-battle-stage]')).toBeNull();
     const aviso = document.querySelector('[data-dungeon-no-energy]')!.textContent!;
     expect(aviso).toMatch(/conclua algo do seu dia/i);
     expect(aviso).not.toMatch(/precisa|deve|falhou|culpa/i);
