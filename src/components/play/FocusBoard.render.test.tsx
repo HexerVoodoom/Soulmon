@@ -79,7 +79,12 @@ describe('quadro da Oficina (§247)', () => {
     expect(card.style.background).toContain('80%');
     expect(document.querySelector('[data-journey-clock]')!.textContent).toMatch(/^\d{1,2}:\d{2}$/);
     expect(card.textContent).not.toMatch(/Foco|Focus/);
-    expect(card.querySelector('[data-journey-keys] [data-key-glyph="pena"]')).not.toBeNull();
+    // as chaves saíram do card para o canto inferior direito (pedido do dono, 10/11/2026)
+    const keys = document.querySelector('[data-journey-keys]') as HTMLElement;
+    expect(card.contains(keys)).toBe(false);
+    expect(keys.querySelector('[data-key-glyph="pena"]')).not.toBeNull();
+    expect(keys.style.right).not.toBe('');
+    expect(keys.style.bottom).not.toBe('');
     const order = Array.from(card.querySelectorAll('[data-journey-actions] button')).map(b => b.getAttribute('aria-label'));
     expect(order).toEqual(['Sair para a Oficina (a jornada continua)', 'Pausar', 'Encerrar']);
     expect(document.querySelector('[data-journey-scene] path[stroke="#5c8f84"][stroke-width="2.6"]')).toBeNull();

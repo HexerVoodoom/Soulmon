@@ -109,7 +109,7 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
           : <circle data-journey-pet cx={pet.x * 100} cy={Y(pet.y) - 6} r={5.5} fill="#e9f5f2" />}
       </svg>
 
-      {lastItems && lastItems.length > 0 && <p role="status" data-journey-toast style={{ ...sm2Text, position: 'absolute', left: 16, right: 16, bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', margin: 0, padding: '8px 12px', borderRadius: 10, background: 'rgba(4,16,18,.85)', color: '#e9f5f2', textAlign: 'center', zIndex: 1 }}>
+      {lastItems && lastItems.length > 0 && <p role="status" data-journey-toast style={{ ...sm2Text, position: 'absolute', left: 16, right: 16, bottom: active.keys.length > 0 ? 'calc(56px + env(safe-area-inset-bottom, 0px))' : 'calc(16px + env(safe-area-inset-bottom, 0px))', margin: 0, padding: '8px 12px', borderRadius: 10, background: 'rgba(4,16,18,.85)', color: '#e9f5f2', textAlign: 'center', zIndex: 1 }}>
         {(isPt ? 'Baú aberto: ' : 'Chest opened: ') + lastItems.map(i => itemLabel(i, isPt)).join(' · ')}
       </p>}
 
