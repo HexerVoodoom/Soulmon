@@ -109,7 +109,7 @@ import { buildDemoPatch, leaveDemo, keepDemoVitalsFull, localizeDemoActivities }
 import { newUuid } from './utils/uuid';
 import type { StarterId } from './utils/sprites';
 import { petElementOf, petBaseOf } from './utils/starterElements';
-import { registrarElementoDoEstagio, stagesComElemento } from './utils/elementoCombinado';
+import { pocoesDoEstado, registrarElementoDoEstagio, stagesComElemento } from './utils/elementoCombinado';
 import { identityKey } from './utils/soulProfile/identity';
 import {
   readFlag, readFlagOr, readFlagState, readJson, readLocal, readNumber, removeLocal, writeFlag, writeJson, writeLocal,
@@ -1312,13 +1312,7 @@ export default function App() {
     [setGameState],
   );
   /** §232: as formas por desenhar pedem o elemento combinado do estágio. */
-  const pocoesDoSprite = useMemo(() => {
-    const out: Partial<Record<FichaStage, string>> = {};
-    if (gameState.potionElement) out[fichaStageOf(gameState.evolutionStage)] = gameState.potionElement;
-    const alvo = activeCrystal(gameState);
-    if (alvo && gameState.evolutionPotion) out[fichaStageOf(alvo.to)] = gameState.evolutionPotion;
-    return Object.keys(out).length ? out : undefined;
-  }, [gameState.potionElement, gameState.evolutionPotion, gameState.evolutionStage, gameState.evolutionCrystal]);
+  const pocoesDoSprite = useMemo(() => pocoesDoEstado(gameState), [gameState.potionElement, gameState.evolutionPotion, gameState.evolutionStage, gameState.evolutionCrystal]); // eslint-disable-line react-hooks/exhaustive-deps
   const stagesDoSprite = useMemo(() => stagesComElemento(gameState.soulmonStages, gameState.elementoJornada, pocoesDoSprite), [gameState.soulmonStages, gameState.elementoJornada, pocoesDoSprite]);
   const spriteGenOn = (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0;
   const spriteGen = useSpriteGeneration({
@@ -1450,7 +1444,7 @@ export default function App() {
     library: spriteAcervo,
     updateLibrary: updateSpriteLibrary,
     stages: stagesDoSprite,
-    formId: gameState.evolutionStage,
+    formId: chaveAtual, // a chave da forma equipada: regenerar a alternativa não sobrescreve a original
     accountTier: gameState.accountTier,
     credits: gameState.credits ?? 0,
     onCredits: credits => setGameState(prev => ({ ...prev, credits })),
@@ -7200,7 +7194,8 @@ export default function App() {
       }
       // "Gerar personagem" usa o MESMO construtor de prompt da evolução: o elemento efetivo (poção/forma trocada/registro do estágio) entra nas palavras-chave.
       stagesParaGerar = stagesComElemento(stagesParaGerar, gameState.elementoJornada, pocoesDoSprite);
-      if (!spriteGen.force(gameState.evolutionStage, stagesParaGerar)) {
+      // A sprite nasce na chave da forma EQUIPADA (`estágio` = original, `estágio@elemento` = forma alternativa): nunca por cima de outra.
+      if (!spriteGen.force(chaveAtual, stagesParaGerar)) {
         toast.error(language === 'pt-BR' ? 'Já há uma geração em andamento. Aguarde um pouco.' : 'A generation is already running. Please wait a bit.');
         return;
       }
