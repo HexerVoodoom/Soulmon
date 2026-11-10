@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
-  FEIRA_LOJA_PCT, FEIRA_LOJA_VENDEDORES, FEIRA_LOJA_CATALOGO, DESCONTO_MIN, DESCONTO_MAX, ITENS_MIN, ITENS_MAX,
+  FEIRA_LOJA_PCT, FEIRA_LOJA_VENDEDORES, FEIRA_LOJA_CATALOGO, FEIRA_LOJA_HONRA, PRECO_MATERIAL, PRECO_POCAO, HONRA_EM_BITS, FEIRA_LOJA_PRATOS, DESCONTO_MIN, DESCONTO_MAX, ITENS_MIN, ITENS_MAX,
   haFeiraDeVerdade, sortearFeiraLoja, precoComDesconto, abrirFeiraLoja, feiraLojaDoDia, validarCompraFeiraLoja,
   marcarCompraFeiraLoja, feiraHexOnServer, possuidosDoSave, diaDoJogadorValido, feiraLojaKey,
 } from './_feiraLoja.js';
@@ -53,6 +53,7 @@ describe('a feira de verdade: o sorteio', () => {
     expect(FEIRA_LOJA_VENDEDORES.filter(v => v.ativo).reduce((n, v) => n + v.peso, 0)).toBe(100);
     expect(FEIRA_LOJA_VENDEDORES.filter(v => !v.ativo).every(v => v.peso === 0)).toBe(true);
     expect(FEIRA_LOJA_VENDEDORES).toHaveLength(9);
+    expect(FEIRA_LOJA_VENDEDORES.filter(v => !v.ativo).map(v => v.id)).toEqual(['sacerdotisa']);
     const hx = FEIRA_LOJA_VENDEDORES.find(v => v.id === 'hexsmith');
     expect(hx.peso).toBeLessThan(Math.min(...FEIRA_LOJA_VENDEDORES.filter(v => v.ativo && !v.hex).map(v => v.peso)));
     for (const v of FEIRA_LOJA_VENDEDORES) expect(['vesca', 'tessaria', 'alquimista', 'gladiadora']).not.toContain(v.id);
@@ -96,7 +97,7 @@ describe('a feira de verdade: a oferta', () => {
     const comHex = ofertas.filter(o => o.items.some(i => i.type === 'hex'));
     expect(comHex.length).toBeGreaterThan(0);
     expect(comHex.length / ofertas.length).toBeLessThan(0.25);
-    expect(ofertas.every(o => ['mercado', 'colheita', 'aranha', 'hexsmith'].includes(o.vendor))).toBe(true);
+    expect(ofertas.every(o => o.vendor !== 'sacerdotisa')).toBe(true);
     for (const o of comHex) {
       expect(o.vendor).toBe('hexsmith');
       for (const i of o.items.filter(x => x.type === 'hex')) {
@@ -108,7 +109,7 @@ describe('a feira de verdade: a oferta', () => {
     for (const o of ofertas.filter(x => x.vendor !== 'hexsmith')) expect(o.items.some(i => i.type === 'hex')).toBe(false);
   });
   it('só Bits e só itens destrancados do catálogo da loja: nada de Créditos, Emblemas ou item de missão', () => {
-    const ids = new Set(FEIRA_LOJA_CATALOGO.map(([id]) => id));
+    const ids = new Set([...FEIRA_LOJA_CATALOGO.map(([id]) => id), ...FEIRA_LOJA_HONRA.map(([id]) => id)]);
     for (const o of ofertas) for (const i of o.items.filter(x => x.type === 'shop')) {
       expect(ids.has(i.id)).toBe(true);
       expect(['chip', 'furniture', 'bg']).toContain(i.kind);
@@ -191,6 +192,40 @@ describe('a feira de verdade: gravação, limite de 1/item, expiração', () => 
     expect(diaDoJogadorValido('2026-11-11', agora)).toBe(true);
     expect(diaDoJogadorValido('2026-11-08', agora)).toBe(false);
     expect(diaDoJogadorValido('x', agora)).toBe(false);
+  });
+});
+
+describe('as prateleiras novas: materiais, pratos, poções e Honra em Bits', () => {
+  const porVendedor = {};
+  for (let c = 0; c < 2000; c++) for (const dia of diasDe(30)) {
+    const o = sortearFeiraLoja(`conta-${c}`, dia);
+    if (o) (porVendedor[o.vendor] ??= []).push(o);
+  }
+  it('todos os vendedores ativos aparecem e cada um vende SÓ o seu tipo', () => {
+    for (const v of FEIRA_LOJA_VENDEDORES.filter(x => x.ativo)) expect(porVendedor[v.id]?.length, v.id).toBeGreaterThan(0);
+    expect(porVendedor.sacerdotisa).toBeUndefined();
+    const tipo = { morcego: 'material', salamandra: 'dish', vitra: 'potion' };
+    for (const [v, t] of Object.entries(tipo)) for (const o of porVendedor[v]) for (const i of o.items) { expect(i.type).toBe(t); expect(i.id.startsWith(`${t}:`)).toBe(true); }
+  });
+  it('preço-base por categoria: material 15, poção 60, prato = Bits do Restaurante, Honra x10; sempre com desconto de 10 a 50%', () => {
+    for (const o of porVendedor.morcego) for (const i of o.items) expect(i.was).toBe(PRECO_MATERIAL);
+    for (const o of porVendedor.vitra) for (const i of o.items) expect(i.was).toBe(PRECO_POCAO);
+    const pratos = Object.fromEntries(FEIRA_LOJA_PRATOS.map(([id, b]) => [`dish:${id}`, b]));
+    for (const o of porVendedor.salamandra) for (const i of o.items) expect(i.was).toBe(pratos[i.id]);
+    const honra = Object.fromEntries(FEIRA_LOJA_HONRA.map(([id, , h]) => [id, h * HONRA_EM_BITS]));
+    expect(HONRA_EM_BITS).toBe(10);
+    for (const o of porVendedor.serpente) for (const i of o.items) { expect(i.type).toBe('shop'); expect(i.was).toBe(honra[i.id]); }
+    for (const o of Object.values(porVendedor).flat()) for (const i of o.items) { expect(i.pct).toBeGreaterThanOrEqual(10); expect(i.pct).toBeLessThanOrEqual(50); expect(i.price).toBeGreaterThanOrEqual(1); }
+  });
+  it('consumível (material, poção, prato) pode repetir; equipamento de Honra já possuído não entra', () => {
+    const o = porVendedor.serpente[0];
+    const donos = new Set(o.items.map(i => i.id));
+    const dia = o.day;
+    const conta = [...Array(2000).keys()].map(c => `conta-${c}`).find(c => sortearFeiraLoja(c, dia)?.vendor === 'serpente' && sortearFeiraLoja(c, dia).items.length > 0);
+    const base = sortearFeiraLoja(conta, dia);
+    const sem = sortearFeiraLoja(conta, dia, new Set(base.items.map(i => i.id)));
+    expect(sem === null || sem.items.every(i => !base.items.some(b => b.id === i.id))).toBe(true);
+    expect(donos.size).toBeGreaterThan(0);
   });
 });
 

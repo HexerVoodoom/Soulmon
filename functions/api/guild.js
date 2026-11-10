@@ -756,7 +756,7 @@ export async function handleGuild({ request, env }) {
     if (action === 'guildFeiraLojaBuy') {
       const r = await validarCompraFeiraLoja(env, id, hoje, typeof body.itemId === 'string' ? body.itemId : '');
       if (!r.ok) return erro(r.reason === 'no-offer' ? 'no offer' : r.reason === 'no-item' ? 'no item' : r.reason, r.reason === 'no-offer' ? 404 : 409);
-      if (r.item.type !== 'shop') return erro('hex item', 409);
+      if (r.item.type === 'hex') return erro('hex item', 409);
       await marcarCompraFeiraLoja(env, id, hoje, r.item.id);
       return json({ ok: true, price: r.item.price, item: { id: r.item.id, kind: r.item.kind } });
     }

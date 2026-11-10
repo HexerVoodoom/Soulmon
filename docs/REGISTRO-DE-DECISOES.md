@@ -4558,3 +4558,5 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 - **Fora de escopo de propósito:** ids e chaves internas (`hall`, `hall:feira`, lote `hall`, `HALL_BG`, nomes de arquivo de asset, chaves de save/storage, rotas) e os sentidos que não são a área: **Clan Hall / Salão do Clã** (o prédio administrativo do clã), **Game Hall / Salão de Jogos**, "Golden Hall", "Ruined Hall" e as trilhas "Stone Hall ...". Trocar id quebraria save e cache.
 - **Alternativa que perdeu:** manter "Hall" (colide com Clan Hall/Game Hall) e "Skyhall".
 - **O que falsificaria:** o jogador confundir a Cidadela com o Salão do Clã dentro dela, ou o rótulo "Cidadela" estourar o teto do rótulo do Mapa em 360 px (a régua `navRotulo.contract.test.ts` mede).
+
+**Adendo ao §279 (10/11/2026, dono):** a feira ganhou os vendedores de materiais (15 Bits), pratos prontos (Bits do Restaurante), poções de elemento (60 Bits, Vitra) e equipamentos de Honra em Bits (1 Honra = 10 Bits, pergunta ao dono); a saída especial (passeio melhor) fica com peso 0 por exigir refatoração. Detalhe em `PLANO-FEIRA-CHEFE.md` §12.

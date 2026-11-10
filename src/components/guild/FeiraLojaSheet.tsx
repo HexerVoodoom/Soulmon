@@ -15,8 +15,15 @@ import npcMercado from '../../assets/avatares/ativo-mercado.webp';
 import npcAranha from '../../assets/avatares/extra-aranha-fiandeira-b.webp';
 import npcColheita from '../../assets/soulmon/npcs/npc-n-colheita.png';
 import npcHexsmith from '../../assets/soulmon/npcs/npc-forja-hexsmith.png';
+import npcMorcego from '../../assets/avatares/cavernas-morcego-sabio-eco.webp';
+import npcSalamandra from '../../assets/avatares/fogo-salamandra-cozinheira.webp';
+import npcVitra from '../../assets/dominios/industrial/npcs/npc-industrial-espirito-forno-vidraceiro.png';
+import npcSerpente from '../../assets/soulmon/npcs/npc-n-serpentePlumadaForma.png';
+import { MATERIALS } from '../../utils/buildingQuestsCopy';
+import { dishById } from '../../utils/restaurant';
+import { POTION_SPECIAL_ITEMS, potionKey } from '../../utils/elementPotion';
 import { feiraText, type FeiraKey } from '../../utils/feiraCopy';
-import { FEIRA_LOJA_VENDOR_NAMES, shopItemOnOffer, type FeiraLoja, type FeiraLojaItem } from '../../utils/feiraLoja';
+import { FEIRA_LOJA_VENDOR_NAMES, feiraLojaRef, shopItemOnOffer, type FeiraLoja, type FeiraLojaItem } from '../../utils/feiraLoja';
 import { buyGuildFeiraLoja, dia, GuildError } from '../../utils/community';
 import { cloudHexFair, type HexFairOutcome } from '../../utils/cloudSave';
 import { HEX_SLOT_COPY, tx } from '../../utils/hexsmithCopy';
@@ -30,7 +37,7 @@ export interface FeiraLojaApi {
   hexFair: (id: string, state: unknown, itemId: string, dayKey: string) => Promise<HexFairOutcome>;
 }
 
-const VENDOR_ART = { mercado: npcMercado, colheita: npcColheita, aranha: npcAranha, hexsmith: npcHexsmith } as const;
+const VENDOR_ART = { mercado: npcMercado, colheita: npcColheita, aranha: npcAranha, hexsmith: npcHexsmith, morcego: npcMorcego, salamandra: npcSalamandra, vitra: npcVitra, serpente: npcSerpente } as const;
 
 const DEFAULT_API: FeiraLojaApi = { buy: buyGuildFeiraLoja, hexFair: cloudHexFair };
 
@@ -69,6 +76,8 @@ export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, own
   const shopItems = shopOffers.flatMap(o => { const it = shopItemOnOffer(o); return it ? [it] : []; });
   const discounts = Object.fromEntries(shopOffers.map(o => [o.id, { was: o.was, pct: o.pct }]));
   const hexOffers = loja.items.filter(i => i.type === 'hex');
+  /** Materiais, poções e pratos prontos: linhas próprias (não são `ShopItem`). */
+  const otherOffers = loja.items.filter(i => i.type === 'material' || i.type === 'potion' || i.type === 'dish');
   const allYours = loja.items.every(i => i.bought);
 
   const errorKey = (e: unknown): FeiraKey => {
@@ -114,8 +123,25 @@ export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, own
   };
 
   const hexLabel = (o: FeiraLojaItem): string => {
+    if (o.type === 'material') { const m = MATERIALS.find(x => x.id === feiraLojaRef(o.id)); return m ? `${m.icon} ${isPt ? m.namePt : m.nameEn}` : o.id; }
+    if (o.type === 'dish') { const d = dishById(feiraLojaRef(o.id)); return d ? `${d.icon} ${isPt ? d.namePt : d.nameEn}` : o.id; }
+    if (o.type === 'potion') { const it = POTION_SPECIAL_ITEMS[potionKey(feiraLojaRef(o.id))]; return it ? (isPt ? it.namePt : it.nameEn) : o.id; }
     const p = parseHexItem(o.id);
     return p ? `${tx(HEX_SLOT_COPY[p.slot].name, isPt)} · ${hexValueName(p.slot, p.value, isPt)}` : o.id;
+  };
+
+  /** Material, poção ou prato: o servidor confere (oferta de hoje, 1 por item) e devolve o preço; só então o cliente debita. */
+  const buyOther = async (offer: FeiraLojaItem) => {
+    setConfirmHex(null);
+    try {
+      const r = await api.buy(saveId, offer.id, tz);
+      if (!r) { say(offer.id, false, t('loja.gone')); return; }
+      if (!onBuyShop({ ...offer, price: r.price })) { say(offer.id, false, t('loja.noFunds')); return; }
+      markBought(offer.id);
+      say(offer.id, true, t('loja.ok', { name: hexLabel(offer) }));
+    } catch (e) {
+      say(offer.id, false, t(errorKey(e)));
+    }
   };
 
   const footer = <button type="button" onClick={onClose} style={{ ...sm2Button('outline'), width: '100%' }} data-feira-loja-fechar>{isPt ? 'Fechar' : 'Close'}</button>;
@@ -153,6 +179,24 @@ export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, own
           />
         )}
 
+        {otherOffers.length > 0 && (
+          <section data-feira-loja-outros style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {otherOffers.map(o => (
+              <div key={o.id} data-feira-loja-item={o.id} style={{ display: 'flex', alignItems: 'center', gap: 10, minHeight: 56, padding: '8px 12px', border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-lg)', backgroundColor: 'var(--sm2-surface)' }}>
+                <span style={{ ...sm2Text, flex: 1, minWidth: 0, fontWeight: 500 }}>{hexLabel(o)}</span>
+                <span style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
+                  <span style={sm2Hint}>{t('loja.off', { pct: o.pct })}</span>
+                  <Bits value={o.price} dim={points < o.price} />
+                  <s className="sm2-num" style={sm2Hint}>{o.was}</s>
+                </span>
+                {o.bought
+                  ? <span style={{ ...sm2Hint, flex: 'none' }}>{t('loja.bought')}</span>
+                  : <button type="button" onClick={() => (points < o.price ? say(o.id, false, t('loja.noFunds')) : setConfirmHex(o))} style={{ ...sm2Button('primary'), flex: 'none' }} data-feira-loja-buy={o.id}>{t('loja.buy')}</button>}
+              </div>
+            ))}
+          </section>
+        )}
+
         {hexOffers.length > 0 && (
           <section data-feira-loja-hex aria-label={t('loja.hex')} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <h3 className="sm2-title" style={{ margin: 0, fontSize: 'var(--sm2-text-md)' }}>{t('loja.hex')}</h3>
@@ -183,7 +227,7 @@ export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, own
         cost={confirmHex?.price ?? 0}
         currency="bits"
         onCancel={() => setConfirmHex(null)}
-        onConfirm={() => { if (confirmHex) void buyHex(confirmHex); }}
+        onConfirm={() => { if (confirmHex) void (confirmHex.type === 'hex' ? buyHex(confirmHex) : buyOther(confirmHex)); }}
       />
     </ModalSheet>
   );
