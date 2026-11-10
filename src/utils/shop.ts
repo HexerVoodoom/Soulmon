@@ -112,14 +112,14 @@ export interface SpecialItem {
 }
 
 // 🌀 Glitchtama — rare drop at dungeon milestones (1% per 5 layers, max 1/week; `glitchtamaDrop.ts`). Using it grants
-// one perfect day (an evolution point), no questions asked.
+// one perfect day AND fills the current stage's evolution bar (09/11/2026), no questions asked.
 export const GLITCHTAMA_EMOJI = '🌀';
 
 export const SPECIAL_ITEMS: Record<string, SpecialItem> = {
   [GLITCHTAMA_EMOJI]: {
     emoji: GLITCHTAMA_EMOJI, kind: 'glitchtama',
     namePt: 'Glitchtama', nameEn: 'Glitchtama',
-    descPt: 'Usar soma um dia de passos ao caminho da evolução', descEn: 'Use to add one day of steps to the evolution path',
+    descPt: 'Usar enche a barra de evolução do estágio e deixa seu Soulmon pronto para evoluir (1 por dia)', descEn: 'Use to fill the stage evolution bar and get your Soulmon ready to evolve (1 per day)',
   },
   [CHIP_EMOJI.power]: {
     emoji: CHIP_EMOJI.power, kind: 'chip', attr: 'power',

@@ -516,7 +516,7 @@ separação das duas metas).
   para `completedTasks`). Contar só `prev.tasks` fazia quem fez TUDO cair em
   `totalTasks === 0` e a virada NEGAR o dia completo — com a barra da tela em
   100%.
-- Item **🌀 Glitchtama** dá +1 `perfectDays` ao ser usado, **no máximo 1 por dia
+- Item **🌀 Glitchtama** dá +1 `perfectDays` e enche a barra de evolução do estágio ao ser usado, **no máximo 1 por dia
   do jogador** (`GLITCHTAMA_PER_DAY`) — ver [§48](#itens-especiais). ⚰️ Desde
   22/09/2026 ele **não** soma em `totalPerfectDays`, só em `missionPerfectDays`
   ([§57-A](#conquistas), decisão **#41/#60**).
@@ -4297,7 +4297,7 @@ cura, Glitchtama dá um dia completo — e nenhum conta no teto de comida.
 
 | Emoji | `kind` | Efeito ao USAR |
 |---|---|---|
-| 🌀 `GLITCHTAMA_EMOJI` | `glitchtama` | `perfectDays +1` **e** `missionPerfectDays +1`. ⚰️ Até 22/09/2026 o segundo era `totalPerfectDays` — o 🌀 saiu das conquistas por decisão do dono **#41/#60** ([§57-A](#conquistas)) |
+| 🌀 `GLITCHTAMA_EMOJI` | `glitchtama` | `perfectDays +1`, `missionPerfectDays +1` **e ENCHE a barra de evolução do estágio atual** (`fillGaugePoints`: sobe `evolutionPoints` até a meta do estágio, nunca acima, nunca reduz; sem barra no BB/ultra; não evolui sozinho — decisão do dono, 09/11/2026; antes era 1 dia de teto). Continua 1 por dia. ⚰️ Até 22/09/2026 o segundo era `totalPerfectDays` — o 🌀 saiu das conquistas por decisão do dono **#41/#60** ([§57-A](#conquistas)) |
 | 💗 `HEART_ITEM_EMOJI` | `heart` | `+HEART_HEAL` de coração, clampado em `maxHealthPoints` |
 | 👊 / 🎶 / 🤲 `CHIP_EMOJI` | `chip` | `+CHIP_BOOST` no atributo, `+CHIP_BOOST × 10` de `totalXP`, e o mesmo no `attributesSinceLastEvolution` |
 

@@ -1,7 +1,7 @@
 import { CHIP_BOOST, HEART_HEAL, SPARK_HOME_ENERGY, SPECIAL_ITEMS, type Attr } from './shop';
 import { potionElementOfKey } from './elementPotion';
 import { resetAlignmentPoints } from './betaResetGrant';
-import { dayItemGaugeGain } from './evolutionGauge';
+import { fillGaugePoints } from './evolutionGauge';
 import { playerDayKey, playerDayIso, type PlayerDayAnchor } from './playerDay';
 import { HUNGER_PER_PREMIUM, HUNGER_PREMIUM_REFUSE_AT, eat, hungerAt, maxEnergyOf, setEnergy, settleEnergy, type EnergyClock, type HungerRecord } from './hunger';
 import {
@@ -133,7 +133,7 @@ export interface SpecialItemState {
   maxHealthPoints: number;
   foodInventory: Record<string, number>;
   perfectDays: number;
-  /** 🧬 Gauge de evolução (`utils/evolutionGauge.ts`) — o 🌀 soma um dia de teto. */
+  /** 🧬 Gauge de evolução (`utils/evolutionGauge.ts`) — o 🌀 enche até a meta do estágio. */
   evolutionPoints?: number;
   totalPerfectDays?: number;
   /** Dias completos vitalícios PARA AS MISSÕES — real + 🌀 (decisão #41/#60). */
@@ -147,6 +147,8 @@ export interface SpecialItemState {
   /** Comida premium: fome/relógio da energia (`utils/hunger.ts`) + registro de tetos. A comida NÃO dá energia direto (REGISTRO §40). */
   energyPoints?: number;
   evolutionStage?: string;
+  /** Evoluções destravadas: o mega só mira o Ultra com a coleção (`gaugeGoalFor`). */
+  unlockedEvolutions?: readonly string[];
   hunger?: HungerRecord;
   energyClock?: EnergyClock;
   premiumFood?: PremiumRecord;
@@ -276,10 +278,9 @@ export function applySpecialItem<T extends SpecialItemState>(
         ...prev,
         foodInventory,
         perfectDays: prev.perfectDays + 1,
-        // 🧬 11/10/2026: o 🌀 empurra o GAUGE de evolução em um dia de teto do
-        // estágio (`dayItemGaugeGain`) — o mesmo que um dia de meta
-        // cumprida rende, e continua 1 por dia do jogador (teto acima).
-        evolutionPoints: (prev.evolutionPoints ?? 0) + dayItemGaugeGain(prev.evolutionStage ?? 'rookie'),
+        // 🧬 09/11/2026 (dono): o 🌀 ENCHE a barra de evolução do estágio inteira (`fillGaugePoints`; antes era 1 dia de teto).
+        // Continua 1 por dia do jogador (teto acima). Não evolui sozinho: deixa o Soulmon pronto.
+        evolutionPoints: fillGaugePoints(prev.evolutionPoints, prev.evolutionStage ?? 'rookie', prev.unlockedEvolutions),
         // #41/#60: o vitalício REAL não é tocado — só o da missão.
         missionPerfectDays: (prev.missionPerfectDays ?? prev.totalPerfectDays ?? 0) + 1,
         glitchtamaUse: {

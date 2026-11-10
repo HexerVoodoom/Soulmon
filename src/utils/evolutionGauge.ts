@@ -101,6 +101,17 @@ export function dayItemGaugeGain(stage: string): number {
   return dailyGaugeCap(stage);
 }
 
+/**
+ * 🌀 (09/11/2026, dono): ENCHE a barra do estágio atual até a meta, de uma vez. Nunca passa da meta nem reduz o que já
+ * há (`max`); estágio sem barra (BB, ultra) fica como está. Não evolui: só deixa pronto — o gesto de evoluir segue o fluxo normal.
+ */
+export function fillGaugePoints(points: number | undefined, stage: string, unlockedEvolutions?: readonly string[]): number {
+  const atual = Math.floor(safe(points));
+  if (isBBStage(stage)) return atual;
+  const goal = gaugeGoalFor(stage, unlockedEvolutions);
+  return goal > 0 ? Math.max(atual, goal) : atual;
+}
+
 export interface GaugeView {
   /** Pontos já creditados. */
   points: number;
