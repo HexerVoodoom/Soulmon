@@ -91,6 +91,7 @@ import { CATEGORY_ATTRIBUTES, type ActivityCategory, XP_THRESHOLDS } from './typ
 import { type CareEvent } from './components/CareSystem';
 import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForStage } from './types/progression';
 import { gaugeFull, gaugeContribution, gaugeGoalFor } from './utils/evolutionGauge';
+import { glitchtamaDiasRestantes, glitchtamaExpiraEm, glitchtamaBuffAtivo } from './utils/glitchtamaBuff';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
 import { SoulmonWidget, widgetOwnSpriteUrl, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt } from './plugins/SoulmonWidgetPlugin';
 import { unlockedAchievements, achievementPointsTotal, settleAchievements, ACHIEVEMENT_POINTS, ACHIEVEMENT_LABELS } from './utils/achievements';
@@ -4188,14 +4189,13 @@ export default function App() {
           : "⭐ One premium food a day. It'll wait for you tomorrow.");
         return;
       }
-      if (refused === 'daily-cap') {
-        // O item VOLTA para a pastinha e vale amanhã — por isso a mensagem diz
-        // o que fazer, e não o que foi negado. Nada de toast de erro: o teto do
-        // Glitchtama existe para devolver o atalho ao calendário, não para
-        // repreender quem farmou a masmorra.
+      if (refused === 'weekly-cap') {
+        // O item VOLTA para a pastinha e vale quando a semana passar — a mensagem diz quando, não repreende.
+        // 🌀 Design de 10/11/2026: 1 uso por semana (buff de +10% por 7 dias; `utils/glitchtamaBuff.ts`).
+        const dias = glitchtamaDiasRestantes(gameState.glitchtamaUsadoEm, agora.getTime());
         toast(language === 'pt-BR'
-          ? '🌀 Um Glitchtama por dia. Ele te espera amanhã.'
-          : "🌀 One Glitchtama a day. It'll wait for you tomorrow.");
+          ? `🌀 Um Glitchtama por semana: o buff de +10% ainda está ativo (${dias} ${dias === 1 ? 'dia' : 'dias'}). Ele te espera.`
+          : `🌀 One Glitchtama a week: the +10% buff is still active (${dias} ${dias === 1 ? 'day' : 'days'} left). It'll wait for you.`);
         return;
       }
       if (refused === 'stage-cap' && special.kind === 'chip' && special.reduce) {
@@ -4259,7 +4259,7 @@ export default function App() {
           : `This Soulmon can get ${CHIPS_PER_STAGE} chips this stage · ${n} of ${CHIPS_PER_STAGE}`);
       }
       if (special.kind === 'glitchtama') {
-        toast(language === 'pt-BR' ? '🌀 Glitchtama! +1 dia completo' : '🌀 Glitchtama! +1 complete day');
+        toast(language === 'pt-BR' ? '🌀 Glitchtama! +10% de progressão de evolução por 7 dias' : '🌀 Glitchtama! +10% evolution progress for 7 days');
       }
       if (special.kind === 'spark') {
         toast(language === 'pt-BR' ? `✨ Faísca de Alma! +${SPARK_HOME_ENERGY} de energia` : `✨ Soul Spark! +${SPARK_HOME_ENERGY} energy`);
@@ -7719,6 +7719,7 @@ export default function App() {
               todayGauge={gaugeContribution(dailyDone, gameState.evolutionStage)}
               incubating={incubandoAgora}
               gaugeGoal={gaugeGoalFor(gameState.evolutionStage, gameState.unlockedEvolutions)}
+              glitchtamaBuffAte={glitchtamaBuffAtivo(gameState.glitchtamaUsadoEm, Date.now()) ? glitchtamaExpiraEm(gameState.glitchtamaUsadoEm) : undefined}
               onDegenerate={handleDegenerate}
               onSwitchForm={handleSwitchForm}
               stages={gameState.soulmonStages ?? []}

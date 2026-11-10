@@ -516,10 +516,8 @@ separação das duas metas).
   para `completedTasks`). Contar só `prev.tasks` fazia quem fez TUDO cair em
   `totalTasks === 0` e a virada NEGAR o dia completo — com a barra da tela em
   100%.
-- Item **🌀 Glitchtama** dá +1 `perfectDays` e enche a barra de evolução do estágio ao ser usado, **no máximo 1 por dia
-  do jogador** (`GLITCHTAMA_PER_DAY`) — ver [§48](#itens-especiais). ⚰️ Desde
-  22/09/2026 ele **não** soma em `totalPerfectDays`, só em `missionPerfectDays`
-  ([§57-A](#conquistas), decisão **#41/#60**).
+- Item **🌀 Glitchtama** (design de 10/11/2026, REGISTRO §276) **não** dá dia perfeito nem enche a barra: usado **1× por semana**, liga um
+  buff de **+10% nos pontos de progressão** por 7 dias (`glitchtamaUsadoEm`) — ver [§48](#itens-especiais).
 - A **folga da semana não vira dia completo**: não ganha, não perde.
 - ⚰️ **A virada julgava só ONTEM** (`yesterdayString = now − 1`) até 22/09/2026.
   Quem fazia tudo na segunda e só reabria na quarta nunca recebia o dia completo
@@ -4297,16 +4295,15 @@ cura, Glitchtama dá um dia completo — e nenhum conta no teto de comida.
 
 | Emoji | `kind` | Efeito ao USAR |
 |---|---|---|
-| 🌀 `GLITCHTAMA_EMOJI` | `glitchtama` | `perfectDays +1`, `missionPerfectDays +1` **e ENCHE a barra de evolução do estágio atual** (`fillGaugePoints`: sobe `evolutionPoints` até a meta do estágio, nunca acima, nunca reduz; sem barra no BB/ultra; não evolui sozinho — decisão do dono, 09/11/2026; antes era 1 dia de teto). Continua 1 por dia. ⚰️ Até 22/09/2026 o segundo era `totalPerfectDays` — o 🌀 saiu das conquistas por decisão do dono **#41/#60** ([§57-A](#conquistas)) |
+| 🌀 `GLITCHTAMA_EMOJI` | `glitchtama` | Grava `glitchtamaUsadoEm` e liga o **buff de +10% na progressão de evolução por 7 dias** (`utils/glitchtamaBuff.ts`; o `+10%` é creditado na virada por `dailyReset`, sobre o ganho do dia, com a fração em `glitchtamaCarry`). **1 uso por semana**. ⚰️ Até 10/11/2026 dava `perfectDays +1`, `missionPerfectDays +1` e enchia a barra (`fillGaugePoints`) — revogado (REGISTRO §276) |
 | 💗 `HEART_ITEM_EMOJI` | `heart` | `+HEART_HEAL` de coração, clampado em `maxHealthPoints` |
 | 👊 / 🎶 / 🤲 `CHIP_EMOJI` | `chip` | `+CHIP_BOOST` no atributo, `+CHIP_BOOST × 10` de `totalXP`, e o mesmo no `attributesSinceLastEvolution` |
 
 `CHIP_BOOST` = 3 e `HEART_HEAL` = 1 (`src/utils/shop.ts`, junto do catálogo) ·
-`GLITCHTAMA_PER_DAY` = 1 (`src/utils/specialItemUse.ts`, junto do teto que ela
-guarda).
+`GLITCHTAMA_JANELA_MS` = 7 dias (`src/utils/glitchtamaBuff.ts`, buff e cooldown).
 
 **Dono único do USO: `src/utils/specialItemUse.ts`** (`specialRefusal`,
-`applySpecialItem`, `glitchtamaUsedToday`). **Não é o `careUpdaters.ts`**, de
+`applySpecialItem`). **Não é o `careUpdaters.ts`**, de
 propósito: aquele arquivo existe para guardar o TETO de cuidado (janela de
 comida por hora, carinho por dia), e item especial não tem teto de cuidado
 nenhum — pôr os dois no mesmo lugar reabriria a pergunta "isso conta no teto?"
@@ -4317,8 +4314,8 @@ aquilo é CATÁLOGO (o que existe, quanto custa); aqui é o que ACONTECE.
 decremento:
 
 - `'no-stock'` — não há o item na pastinha.
-- `'daily-cap'` — só o Glitchtama, e só a partir do segundo do dia. O item volta
-  para a pastinha intacto e vale amanhã.
+- `'weekly-cap'` — só o Glitchtama, enquanto o buff de 7 dias está ativo. O item volta
+  para a pastinha intacto e vale quando a semana passar.
 - `'already-full'` — só o coraçãozinho, e só com a vida cheia. Gastar um item
   para curar zero é queimá-lo. A recusa tem VOZ desde `a2ded861` (21/09/2026):
   `src/App.tsx` chama `falar('steady')` (`kind` `steady` de `PET_VOICE_LINES`,
@@ -4327,15 +4324,14 @@ decremento:
   distintos e a frase do item ("guarda", que diz que ele volta para a pastinha)
   não serve ao carinho. Nunca "você desperdiçou".
 
-**O teto do Glitchtama é a espinha da progressão, não economia.** A conta que o
+**O cooldown semanal do Glitchtama é a espinha da progressão, não economia (histórico: era 1 por dia até 10/11/2026).** A conta que o
 justifica: rookie→mega custa 14 dias perfeitos e o Ultra custa mais
 `ULTRA_PATIENCE_DAYS` (45) = **59**; a masmorra não tem limite diário nem gate de
 entrada e (até 05/11/2026) concluir os 5 andares sempre dropava um Glitchtama — então 59 runs
 seguidas compravam a escada inteira, e elas cabem num fim de semana. Um por dia
 converte o atalho de volta em dias de calendário, que é o recurso que a
-justificativa do Ultra protege. O registro é `glitchtamaUse {day, used}` **no
-save**, e o `day` é o **dia do jogador** (`playerDayKey` + `playerDayTz`, ver
-[§5](#dia-do-jogador)) — nunca o do aparelho.
+justificativa do Ultra protege. O registro é `glitchtamaUsadoEm` (ms epoch) **no
+save**, espelhado monotônico no servidor (`functions/api/_glitchtama.js`) — nunca o relógio do aparelho sozinho.
 
 **Dono.** `src/utils/specialItemUse.ts`. O `src/App.tsx` (`handleFeed`, ramo
 `SPECIAL_ITEMS`) fica só com os efeitos: o som por tipo de item, a animação de
@@ -6162,7 +6158,7 @@ Desde 15/10/2026 (REGISTRO §75) cada inicial usa **um elemento base** (`STARTER
 Tudo abaixo é o que o código de `f3acead1` faz. Cada item aponta o dono; a
 decisão em aberto vai para [`PERGUNTAS-DO-DONO.md`](../PERGUNTAS-DO-DONO.md).
 
-**🧬 Gauge de evolução (substitui o dia completo como critério).** Dono único: `utils/evolutionGauge.ts`. `evolutionPoints` (no save) enche com o **peso de esforço** concluído, nunca contagem de itens. Três travas: teto diário = `FORM_REQUIREMENTS[estágio].required` (`dailyGaugeCap`); nunca decresce por dia ruim (só zera ao evoluir e cai a um piso na degeneração, `degeneratedEvolutionPoints` em `dailyReset.ts`); creditado **só na virada** (`computeDailyReset`), sobre o mesmo `dailyDone` que julga o coração. Metas por estágio em `FORM_REQUIREMENTS`: rookie 30 · champion 45 · ultimate 60 · mega 60 (sem a coleção das três megas vale `ULTRA_PATIENCE_POINTS`) · ultra 0 (`gaugeGoalFor`). Save antigo migra por `migrateEvolutionPoints` (`perfectDays` na mesma fração da barra, arredondando para cima) e a hidratação é idempotente (`hydrateEvolutionPoints`). A Glitchtama (1 por dia) rende um dia de teto (`dayItemGaugeGain`). O **dia completo** continua existindo como **selo cosmético** (`perfectDays` segue acumulando, mas não é mais o critério). O cadeado (§17) segue travando a cerimônia; o gesto de evoluir só acende com o gauge cheio (`gaugeFull`).
+**🧬 Gauge de evolução (substitui o dia completo como critério).** Dono único: `utils/evolutionGauge.ts`. `evolutionPoints` (no save) enche com o **peso de esforço** concluído, nunca contagem de itens. Três travas: teto diário = `FORM_REQUIREMENTS[estágio].required` (`dailyGaugeCap`); nunca decresce por dia ruim (só zera ao evoluir e cai a um piso na degeneração, `degeneratedEvolutionPoints` em `dailyReset.ts`); creditado **só na virada** (`computeDailyReset`), sobre o mesmo `dailyDone` que julga o coração. Metas por estágio em `FORM_REQUIREMENTS`: rookie 30 · champion 45 · ultimate 60 · mega 60 (sem a coleção das três megas vale `ULTRA_PATIENCE_POINTS`) · ultra 0 (`gaugeGoalFor`). Save antigo migra por `migrateEvolutionPoints` (`perfectDays` na mesma fração da barra, arredondando para cima) e a hidratação é idempotente (`hydrateEvolutionPoints`). A Glitchtama (1 por semana) liga um buff de +10% sobre o ganho de cada virada por 7 dias (`aplicarBuffGlitchtama`, `utils/glitchtamaBuff.ts`). O **dia completo** continua existindo como **selo cosmético** (`perfectDays` segue acumulando, mas não é mais o critério). O cadeado (§17) segue travando a cerimônia; o gesto de evoluir só acende com o gauge cheio (`gaugeFull`).
 
 **💠 Fragmento de Alma (20/10/2026, REGISTRO §153).** É o NOME visível do `evolutionPoints`: 1 ponto do gauge = 1 Fragmento de Alma, mesmo campo e mesmo significado no save (sem migração). Continua por **esforço** (tarefa 1–3, hábito `HABIT_WEIGHT`), com teto diário = meta do estágio e crédito na virada; é CONSUMIDO ao evoluir (a cerimônia diz o custo uma vez). Vocabulário e frases: `utils/soulFragment.ts`; glifo: `components/ui/SoulFragmentIcon.tsx`. Nenhuma regra de jogo mudou.
 

@@ -36,6 +36,7 @@ import { sanitizeNightmares } from './_nightmares.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
 import { enforceImmutableElementoJornada } from './_elementoJornada.js';
 import { enforceFunTickets } from './_funTickets.js';
+import { enforceGlitchtamaUsadoEm } from './_glitchtama.js';
 import { enforceDungeonDaily, enforceCheckIns, enforceArenaReroll, enforceArenaLadder, enforceEssenceAway, bumpRiftLayers } from './_dayCounters.js';
 import { enforceEssences, enforceEssenceSpent } from './_essences.js';
 import { sanitizeRegenUsed } from './_spriteRegen.js';
@@ -554,6 +555,17 @@ async function onRequestBruto({ request, env }) {
         if (temGravado) { try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; } }
         const ft = enforceFunTickets(state.funTickets, gravado.funTickets);
         if (ft) state.funTickets = ft; else delete state.funTickets;
+      }
+    }
+    // Cooldown/buff do 🌀 Glitchtama (10/11/2026, `_glitchtama.js`): o instante do último uso só anda para a frente — apagar o save local ou
+    // voltar o relógio não devolve o uso semanal. Só parseia o gravado quando ele tem o campo.
+    {
+      const temGravado = typeof prev?.value === 'string' && prev.value.includes('"glitchtamaUsadoEm"');
+      if (temGravado || 'glitchtamaUsadoEm' in state) {
+        let gravado = {};
+        if (temGravado) { try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; } }
+        const gu = enforceGlitchtamaUsadoEm(state.glitchtamaUsadoEm, gravado.glitchtamaUsadoEm);
+        if (gu !== undefined) state.glitchtamaUsadoEm = gu; else delete state.glitchtamaUsadoEm;
       }
     }
     // JSON aninhado fundo cabe no teto de bytes mas estoura a pilha em `JSON.stringify` (RangeError → exceção solta/500): recusa 400.

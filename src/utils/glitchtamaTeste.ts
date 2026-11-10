@@ -2,8 +2,7 @@
  * ⚠️ EXCEÇÃO DE TESTE, TEMPORÁRIA (pedido do dono, 10/11/2026) — uma flag só, fácil de reverter.
  *
  * Com `GLITCHTAMA_TESTE_ON = true`:
- *  1. o limite diário de USO do 🌀 sobe de 1 para `GLITCHTAMA_TESTE_USO_POR_DIA` (ver `GLITCHTAMA_PER_DAY` em `specialItemUse.ts`);
- *  2. o Desfeito (Guilda) VENDE o 🌀 por `GLITCHTAMA_TESTE_PRECO_BITS` Bit, no máximo `GLITCHTAMA_TESTE_COMPRAS_POR_DIA` por dia do jogador.
+ *  1. o Desfeito (Guilda) VENDE o 🌀 por `GLITCHTAMA_TESTE_PRECO_BITS` Bit, no máximo `GLITCHTAMA_TESTE_COMPRAS_POR_DIA` por dia do jogador.
  *
  * O princípio "Glitchtama nunca é vendido" (01-VISAO §2, 02 §48) fica SUSPENSO enquanto a flag estiver ligada. Para voltar ao
  * normal: `GLITCHTAMA_TESTE_ON = false` (nada mais; os testes seguem a flag). A compra é registrada no SAVE (`glitchtamaBuy`),
@@ -14,7 +13,6 @@ import { spendBitsPaidFirst, type BitsOriginState } from './bitsOrigin';
 import { GLITCHTAMA_EMOJI } from './shop';
 
 export const GLITCHTAMA_TESTE_ON = false;
-export const GLITCHTAMA_TESTE_USO_POR_DIA = 999;
 export const GLITCHTAMA_TESTE_PRECO_BITS = 1;
 export const GLITCHTAMA_TESTE_COMPRAS_POR_DIA = 3;
 

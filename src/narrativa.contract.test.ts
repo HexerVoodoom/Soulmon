@@ -202,6 +202,10 @@ const EXCECOES: Record<string, { arquivos: string[]; proposta: string }> = {
       'src/utils/itemArt.ts',
       'src/utils/shop.ts',
       'src/utils/specialItemUse.ts',
+      // 10/11/2026, decisão do dono (REGISTRO §276): o item vira buff semanal de +10% — dono único da regra, o crédito na virada e a linha de UI do buff.
+      'src/utils/glitchtamaBuff.ts',
+      'src/utils/dailyReset.ts',
+      'src/components/EvolutionPath.tsx',
     ],
   },
   'contraparte digital da alma': {

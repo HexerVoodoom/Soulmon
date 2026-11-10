@@ -918,9 +918,9 @@ if (refused === 'daily-cap') {
 if (refused === 'already-full') { falar('steady'); return; }
 ```
 
-- **`'daily-cap'`** (🌀 Glitchtama além de `GLITCHTAMA_PER_DAY`): **toast**, e a
+- **`'weekly-cap'`** (🌀 Glitchtama com o buff de 7 dias ainda ativo): **toast** com os dias restantes, e a
   pastinha continua aberta com o item **ainda na grade** — a recusa acontece
-  antes do decremento, então ele volta e vale amanhã. A frase diz o que fazer,
+  antes do decremento, então ele volta e vale depois da semana. A frase diz o que fazer,
   não o que foi negado.
 - **`'already-full'`** (💗 Coraçãozinho com `healthPoints >= maxHealthPoints`):
   **fala do pet**, kind `steady` de `petVoice.ts` ("Tô firme. Guarda essa.") via
