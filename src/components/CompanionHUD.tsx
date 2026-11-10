@@ -290,6 +290,8 @@ interface CompanionHUDProps {
   foodInventory?: Record<string, number>;
   /** Materiais de aprimoramento, só leitura na Mochila. */
   materials?: Partial<Record<string, number>>;
+  /** Fragmento do Soulsmith, Fragmento de Boss e Essências (aba Materiais da Mochila, 10/11/2026). */
+  materialExtras?: { fragments?: number; bossShards?: number; essences?: Record<string, number> };
   /** O "Ir lá" do material na Mochila (o App navega). */
   onGoToBuilding?: (building: import('../utils/gates').BuildingId) => void;
   /** DEMO LOCAL: repassado à Mochila para o "Ir lá" respeitar os prédios bloqueados. */
@@ -380,6 +382,7 @@ export const CompanionHUD = memo(function CompanionHUD({
   language,
   foodInventory = {},
   materials,
+  materialExtras,
   onGoToBuilding,
   demoMode,
   onFeed,
@@ -2144,6 +2147,7 @@ export const CompanionHUD = memo(function CompanionHUD({
             onClose={() => { setMochilaOpen(false); setPetIsTarget(false); }}
             foodInventory={foodInventory}
             materials={materials}
+            extras={materialExtras}
             onGoToBuilding={onGoToBuilding}
             demo={demoMode}
             language={language}

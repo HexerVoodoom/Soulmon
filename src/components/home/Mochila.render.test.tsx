@@ -205,7 +205,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
 
   it('lista TODOS os 16 materiais do catálogo, mesmo com ×0, com ícone, nome e quantidade', async () => {
     const { sec } = await abrirMateriais();
-    expect(sec.querySelectorAll('[data-material]')).toHaveLength(16);
+    expect(sec.querySelectorAll('[data-material]:not([data-material-extra])')).toHaveLength(16); // + os 3 recursos extras (Fragmento do Soulsmith, de Boss, Essências)
     // ícone: o PNG de `MaterialIcon` (carregado sob demanda) ou, enquanto não chega, o emoji do material
     const icone = within(sec).getByLabelText('Spark × 3').querySelector('.sm3-material-icone')!;
     expect(icone.querySelector('img') !== null || (icone.textContent ?? '').includes('✨')).toBe(true);
@@ -217,7 +217,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
     montar({ language: 'en-US', foodInventory: { '🍎': 1 }, materials: {} });
     fireEvent.click(screen.getByRole('tab', { name: 'Materials' }));
     const sec = await secMateriais();
-    expect(sec.querySelectorAll('[data-material]')).toHaveLength(16);
+    expect(sec.querySelectorAll('[data-material]:not([data-material-extra])')).toHaveLength(16); // + os 3 recursos extras (Fragmento do Soulsmith, de Boss, Essências)
     expect(within(sec).getByLabelText('Spark × 0')).toBeTruthy();
     // os materiais NÃO moram mais na aba Especiais (C1): lá o vazio dos especiais aparece sem a seção
     fireEvent.click(screen.getByRole('tab', { name: 'Specials' }));
@@ -237,7 +237,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
     fireEvent.click(btn);
     expect(btn.getAttribute('aria-expanded')).toBe('true');
     const pop = document.querySelector('[data-material-pop="moss"]')!;
-    expect(pop.textContent).toMatch(/Find more at/);
+    expect(pop.textContent).toMatch(/How to get it: The daily mission at/);
     expect(pop.textContent).not.toMatch(/corra|hurry|only|acaba/i);
     fireEvent.click(btn);
     expect(document.querySelector('[data-material-pop]')).toBeNull();
@@ -266,7 +266,7 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
     fireEvent.click(screen.getByRole('tab', { name: 'Materiais' }));
     fireEvent.click(await screen.findByLabelText('Faísca × 0'));
     expect(document.querySelector('[data-material-go]')!.textContent).toBe('Ir lá');
-    expect(document.querySelector('[data-material-where]')!.textContent).toMatch(/Você encontra mais em/);
+    expect(document.querySelector('[data-material-where]')!.textContent).toMatch(/Como conseguir: Missão diária de/);
   });
 
   it('demo: prédio social bloqueado não recebe o "Go there" e diz que não está disponível; os liberados seguem', async () => {
@@ -290,4 +290,40 @@ describe('Mochila - materiais (ingrediente-recurso: aparece SEMPRE, com ×0; toq
     fireEvent.click(fechar);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+});
+
+describe('Mochila — materiais: para que serve e onde usar (10/11/2026)', () => {
+  const abrir = async (over: Partial<Parameters<typeof Mochila>[0]> = {}) => {
+    const lang = over.language ?? 'pt-BR';
+    montar({ language: lang, materials: { gear: 2 }, ...over });
+    fireEvent.click(screen.getByRole('tab', { name: lang === 'pt-BR' ? 'Materiais' : 'Materials' }));
+    await secMateriais();
+  };
+  it('um material com uso mostra o Soulsmith (principal e apoio) e o Restaurante, derivados do código', async () => {
+    await abrir();
+    fireEvent.click(document.querySelector('[data-material-btn="gear"]')!);
+    const usos = [...document.querySelectorAll('[data-material-use]')].map(e => e.textContent).join(' | ');
+    expect(usos).toMatch(/Para que serve: Soulsmith: material principal para aprimorar Rastro polido/);
+    expect(usos).toMatch(/material de apoio \(a partir do nível 3\) para aprimorar Núcleo de cobre e Rastro ornado/);
+  }, 60000);
+  it('material sem uso hoje diz isso (Cifra), em PT', async () => {
+    await abrir();
+    fireEvent.click(document.querySelector('[data-material-btn="cipher"]')!);
+    expect(document.querySelector('[data-material-no-use]')!.textContent).toBe('Ainda não tem uso: por enquanto só coleciona.');
+  }, 60000);
+  it('material sem uso hoje diz isso (Cipher), em EN', async () => {
+    await abrir({ language: 'en-US' });
+    fireEvent.click(document.querySelector('[data-material-btn="cipher"]')!);
+    expect(document.querySelector('[data-material-no-use]')!.textContent).toBe('No use yet: for now it is just collected.');
+  }, 60000);
+  it('os recursos extras aparecem com a quantidade: Fragmento do Soulsmith, Fragmento de Boss e Essências (soma)', async () => {
+    await abrir({ extras: { fragments: 7, bossShards: 2, essences: { fogo: 5, agua: 3 } } });
+    const q = (id: string) => document.querySelector(`[data-material="${id}"] small`)!.textContent;
+    expect(q('soulsmith-fragment')).toBe('×7');
+    expect(q('boss-shard')).toBe('×2');
+    expect(q('essences')).toBe('×8');
+    fireEvent.click(document.querySelector('[data-material-btn="boss-shard"]')!);
+    expect(document.querySelector('[data-material-where]')!.textContent).toMatch(/Boss do Elemental Fusion/);
+    expect(document.querySelector('[data-material-no-use]')).not.toBeNull();
+  }, 60000);
 });
