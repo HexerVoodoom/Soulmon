@@ -47,7 +47,7 @@ const NPCS = ['hall', 'jogos', 'oraculo', 'laboratorio-biblioteca-glifa', 'explo
 const ELS = Object.keys(u.els);
 // Vinheta de cada lugar: recorte AMPLIADO num ponto diferente dos fundos de seção (x, y em % do mapa).
 // Cards com o prédio do jogo no lugar do recorte do mapa (dono, 09/11): Forja = Forja de Alma (Hexsmith), Mercado = tenda da Feira.
-const PREDIO: Record<string, string> = { forja: '/site/card-forja.webp', hall: '/site/card-mercado.webp' };
+const PREDIO: Record<string, string> = { forja: '/site/card-forja-mapa.webp', hall: '/site/card-mercado-mapa.webp' };
 const FOCO: Record<string, [number, number]> = { exploracao: [70, 34], jogos: [40, 62], arena: [72, 48], hall: [28, 20], guilda: [28, 30], laboratorio: [70, 50], forja: [50, 50] };
 // Capas dos jogos: arte ilustrada 4:3 (public/jogos, src/tools/preparar-capas-jogos.mjs). Título e selo são HTML, nunca na arte.
 const capaJogo = (id: string, w: 400 | 800 = 400) => b(`/jogos/capa-${id}-${w}`);
@@ -62,6 +62,8 @@ const PRINCIPAL: Record<string, string> = { fogo: 'poder', fada: 'benevolencia',
 // Linha "Noturno" (corvinho roxo do dono, 09/11): entra sozinha quando os 5 sprites existirem em public/sprites/
 // (noturno-<forma>.webp e noturno-<forma>-128.webp; formas = c.formas). Caminhos paralelos opcionais em public/sprites/ramos/noturno-<caminho>-<forma>-128.webp;
 // sem eles, os outros caminhos aparecem em sombra. Com a linha pronta, ela vira a criatura da demo do scroll (no lugar do fogo).
+// Ordem invertida pelo dono (10/11) na linha Fada: Benevolência Champion<->Mega, Harmonia Ultimate<->Mega.
+const TROCA: Record<string, string> = { 'fada-benevolencia-champion': 'mega', 'fada-benevolencia-mega': 'champion', 'fada-harmonia-ultimate': 'mega', 'fada-harmonia-mega': 'ultimate' };
 const temSprite = (rel: string) => existsSync(`public${rel}`);
 const temForma = (lin: string, fm: string) => temSprite(`/sprites/${lin}-${fm}.webp`) && temSprite(`/sprites/${lin}-${fm}-128.webp`);
 // Árvore: entra com Champion..Ultra (o Rookie, se faltar, fica em sombra). Demo: só com as 5 formas.
@@ -131,7 +133,6 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
     {VB && (
     <section class="calmo meu-soulmon" id="meu-soulmon" aria-labelledby="meu-h" data-comp data-base={b('/sprites/')} data-el-base={b('/el/')} data-chama={b('/provisorio/chama.svg')} data-linhas={JSON.stringify(LINHAS_B.filter((l) => c.formas.every((fm) => temSprite(`/sprites/${l}-${fm}.webp`))))} data-els={JSON.stringify(u.els)} data-nomes={JSON.stringify(c.nomes)} data-formas={JSON.stringify(c.formas)} data-alt={c.alt} data-outro={t.vb.outro} data-falas={JSON.stringify(t.vb.falas)}>
       <h2 id="meu-h">{t.vb.h2}</h2>
-      <p class="meu-tx">{t.vb.tx}</p>
       <div class="meu-palco">
         <img class="sprite meu-sombra" data-meu-sombra src={b('/sprites/fogo-rookie.webp')} width="192" height="192" alt="" aria-hidden="true" loading="lazy" />
         <img class="sprite" data-meu-img hidden width="192" height="192" alt="" />
@@ -235,7 +236,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
                         {tres
                           ? CAMINHOS.map((cm, ci) => (
                               cm === PRINCIPAL[lin] || temSprite(`/sprites/ramos/${lin}-${cm}-${fm}-128.webp`)
-                                ? <button type="button" class="no revelado" data-ramo data-ramo-nome={`${nomeLin} · ${s.caminhos[ci]}`} data-ramo-i={i} data-ramo-el={lin} aria-haspopup="dialog"><img class="sprite" loading="lazy" src={b(cm === PRINCIPAL[lin] ? `/sprites/${lin}-${fm}-128c.webp` : `/sprites/ramos/${lin}-${cm}-${fm}-128c.webp`)} width="128" height="128" alt={`${nomeLin}, ${s.caminhos[ci]}, ${c.nomes[i]}`} /></button>
+                                ? <button type="button" class="no revelado" data-ramo data-ramo-nome={`${nomeLin} · ${s.caminhos[ci]}`} data-ramo-i={i} data-ramo-el={lin} aria-haspopup="dialog"><img class="sprite" loading="lazy" src={b(cm === PRINCIPAL[lin] ? `/sprites/${lin}-${TROCA[`${lin}-${cm}-${fm}`] ?? fm}-128c.webp` : `/sprites/ramos/${lin}-${cm}-${TROCA[`${lin}-${cm}-${fm}`] ?? fm}-128c.webp`)} width="128" height="128" alt={`${nomeLin}, ${s.caminhos[ci]}, ${c.nomes[i]}`} /></button>
                                 : <span class="no oculto" role="img" aria-label={s.descobrir}><span class="sombra-q" aria-hidden="true"><span>?</span></span></span>
                             ))
                           : temSprite(`/sprites/${lin}-${fm}-128.webp`)

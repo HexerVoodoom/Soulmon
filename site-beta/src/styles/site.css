@@ -1170,3 +1170,5 @@ main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recurs
 /* em foco (celular) a barra do topo sai: o Fechar fica livre para o toque */
 body:has(.ciclo.foco) .topo { visibility: hidden; }
 @media (min-width: 1024px) { .ciclo .demo-cena { position: static; } .ciclo-palco { position: relative; } .ciclo .demo-fechar { top: calc(var(--topo-h, 64px) + 16px); right: 24px; } }
+/* 10/11: Market e Forja usam recorte do mapa (como os outros lugares) */
+.area-arte.predio img { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: cover; image-rendering: auto; filter: none; }
