@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useBlockedAction } from '../ui/BlockedActionModal';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ARENA_ROUNDS, ARENA_ROUND_COMP, elementLabel, loadBestiaryPool } from '../../utils/arena';
 import { arenaCardElements, arenaCards, arenaFoesOfSeed, arenaRunIsStray, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
@@ -59,6 +60,7 @@ export interface ArenaRerollProps {
 }
 
 function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: (seed: number) => void; arena: ArenaRerollProps }) {
+  const [blockedModal, explain] = useBlockedAction(isPt ? 'pt-BR' : 'en-US');
   const done = arenaRerollsToday(arena.reroll, arena.dayIso);
   // 3 desafios do DIA, determinísticos (mesmos ao reabrir), elementos distintos, no máximo 1 Desgarrado.
   const runsDone = arenaRerollsToday(arena.runs, arena.dayIso);
@@ -112,7 +114,8 @@ function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: 
         );
       })}
       <button
-        type="button" data-arena-reroll disabled={!canReroll} onClick={() => { if (canReroll) arena.onReroll(); }}
+        type="button" data-arena-reroll aria-disabled={!canReroll ? true : undefined}
+        onClick={() => { if (canReroll) arena.onReroll(); else explain({ kind: 'recursos', faltam: [{ namePt: 'Bits', nameEn: 'Bits', have: arena.bits, need: cost }] }); }}
         aria-label={free > 0 ? (isPt ? `Sortear outros três adversários, ${free} grátis` : `Draw three other opponents, ${free} free`) : (isPt ? `Sortear outros três adversários por ${cost} Bits` : `Draw three other opponents for ${cost} Bits`)}
         style={{ ...sm2Button('outline'), width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: canReroll ? 1 : 0.55 }}
       >
@@ -123,6 +126,7 @@ function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: 
             : (isPt ? `Sortear de novo · ${cost} Bits` : `Draw again · ${cost} Bits`)}
         </span>
       </button>
+      {blockedModal}
       {!canReroll && (
         <p data-arena-reroll-faltam style={{ ...sm2Hint, margin: 0 }}>
           {isPt ? `Faltam ${cost - arena.bits} Bits para sortear de novo hoje.` : `${cost - arena.bits} more Bits needed to draw again today.`}
