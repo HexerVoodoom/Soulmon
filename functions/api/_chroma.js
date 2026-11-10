@@ -23,15 +23,18 @@ export class BadChromaError extends Error {
   }
 }
 
-/** Cor do chroma pedida no prompt: magenta quando a criatura tem verde (o verde dela
+/** Cor do chroma pedida no prompt: azul #0000FF quando a paleta tem verde E magenta (nenhuma das duas recortaria limpo); magenta quando a criatura tem verde (o verde dela
  *  seria comido pelo recorte); verde #00FF00 no resto. O prompt é a fonte única. */
 export function chromaKeyOfPrompt(prompt) {
-  return /#FF00FF/i.test(String(prompt ?? '')) ? 'magenta' : 'green';
+  const t = String(prompt ?? '');
+  if (/#0000FF/i.test(t)) return 'blue';
+  return /#FF00FF/i.test(t) ? 'magenta' : 'green';
 }
 
-/** Chroma-key sobre RGBA (muta e devolve as métricas). `key`: 'green' | 'magenta'. */
+/** Chroma-key sobre RGBA (muta e devolve as métricas). `key`: 'green' | 'magenta' | 'blue'. */
 export function keyRgba(width, height, rgba, key = 'green') {
   const magenta = key === 'magenta';
+  const blue = key === 'blue';
   const n = width * height;
   const alpha = new Uint8Array(n);
   const isBg = new Uint8Array(n);
@@ -39,15 +42,15 @@ export function keyRgba(width, height, rgba, key = 'green') {
   for (let i = 0; i < n; i++) {
     const p = i * 4;
     const r = rgba[p], g = rgba[p + 1], b = rgba[p + 2];
-    // verde: canal-chave g contra max(r,b); magenta: canal-chave min(r,b) contra g.
-    const v = magenta ? (r < b ? r : b) : g;
-    const other = magenta ? g : (r > b ? r : b);
+    // verde: canal-chave g contra max(r,b); magenta: canal-chave min(r,b) contra g; azul: b contra max(r,g).
+    const v = magenta ? (r < b ? r : b) : blue ? b : g;
+    const other = magenta ? g : blue ? (r > g ? r : g) : (r > b ? r : b);
     const d = v - other;
     const bg = v > BG_G_MIN && d > BG_D_MIN;
     const al = bg ? 0 : d > EDGE_D_MIN ? 255 * (1 - (d - EDGE_D_MIN) / EDGE_SPAN) : 255;
     if (bg) { isBg[i] = 1; bgCount++; }
     // despill: nunca sobra o canal-chave acima do resto
-    if (d > 0) { if (magenta) { rgba[p] = r - d; rgba[p + 2] = b - d; } else rgba[p + 1] = other; }
+    if (d > 0) { if (magenta) { rgba[p] = r - d; rgba[p + 2] = b - d; } else if (blue) rgba[p + 2] = other; else rgba[p + 1] = other; }
     alpha[i] = al > 128 ? 255 : 0;
   }
   const stack = new Int32Array(n);
@@ -102,7 +105,7 @@ export function keyRgba(width, height, rgba, key = 'green') {
 export function chromaKeyPng(pngBytes, key = 'green') {
   const { width, height, data } = decodePng(pngBytes);
   const m = keyRgba(width, height, data, key);
-  if (m.bgFraction < MIN_BG_FRACTION) throw new BadChromaError(`sem fundo ${key === 'magenta' ? 'magenta' : 'verde'} (${(m.bgFraction * 100).toFixed(1)}% removido)`);
+  if (m.bgFraction < MIN_BG_FRACTION) throw new BadChromaError(`sem fundo ${key === 'magenta' ? 'magenta' : key === 'blue' ? 'azul' : 'verde'} (${(m.bgFraction * 100).toFixed(1)}% removido)`);
   if (m.holeFraction > MAX_HOLE_FRACTION) throw new BadChromaError(`verde demais na criatura (${(m.holeFraction * 100).toFixed(1)}%)`);
   let x0 = width, y0 = height, x1 = -1, y1 = -1;
   for (let y = 0; y < height; y++) {

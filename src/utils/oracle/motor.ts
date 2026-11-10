@@ -933,11 +933,15 @@ export const ELEMENT_SECONDARY_HUE: Record<ElementId, string> = {
   sombra: 'deep violet', luz: 'pearl-white', planta: 'leaf-green', industrial: 'steel-gray',
 };
 
+const MAGENTA_WORDS = /(?<!dark |deep |dim )magenta|hot[- ]pink|fuchsia|neon pink/i;
 const GREEN_WORDS = /green|fern|moss|sage|lime|leaf|emerald|jade|olive|clover|forest|mint|sprout/i;
 
 /** Cor do chroma: magenta quando a criatura tem verde (o recorte verde a comeria). */
-export function chromaFor(colorDesc: string, accent: string, elements: ElementId[]): 'green' | 'magenta' {
-  return elements.includes('planta') || GREEN_WORDS.test(`${colorDesc} ${accent}`) ? 'magenta' : 'green';
+export function chromaFor(colorDesc: string, accent: string, elements: ElementId[]): 'green' | 'magenta' | 'blue' {
+  const verde = elements.includes('planta') || GREEN_WORDS.test(`${colorDesc} ${accent}`);
+  // Verde E magenta juntos: nem o fundo verde nem o magenta recortam limpo -> azul #0000FF.
+  if (verde && MAGENTA_WORDS.test(`${colorDesc} ${accent}`)) return 'blue';
+  return verde ? 'magenta' : 'green';
 }
 
 // ---------------------------------------------------------------------------
@@ -1523,14 +1527,19 @@ export type SpritePromptArgs = {
   design?: string;
   /** 2 itens de `TYPE_LOOK` do alinhamento, já unidos ("a, b"). */
   looks?: string;
-  /** Cor do fundo chroma (padrão verde). 'magenta' quando a criatura tem verde. */
-  chroma?: 'green' | 'magenta';
+  /** Cor do fundo chroma (padrão verde). 'magenta' quando a criatura tem verde; 'blue' quando tem verde e magenta. */
+  chroma?: 'green' | 'magenta' | 'blue';
   /** true = cita GENRE_REFERENCES (1ª tentativa); false = prompt limpo (2ª). */
   withReferences: boolean;
 };
 
 /** Troca o pedido de fundo verde pelo magenta (criatura com verde). */
-function withChroma(text: string, chroma?: 'green' | 'magenta'): string {
+function withChroma(text: string, chroma?: 'green' | 'magenta' | 'blue'): string {
+  if (chroma === 'blue') {
+    return text
+      .replace('#00FF00 chroma-green', '#0000FF chroma-blue')
+      .replace('contains no green and no green fringe', 'contains no blue and no blue fringe');
+  }
   if (chroma !== 'magenta') return text;
   return text
     .replace('#00FF00 chroma-green', '#FF00FF chroma-magenta')

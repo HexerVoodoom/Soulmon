@@ -142,7 +142,7 @@ export async function passoFormas(env, { now = new Date(), origin = '' } = {}) {
         if (data?.status === 'completed') {
           const img = data.images?.[0]?.url;
           if (typeof img !== 'string' || !img.startsWith('https://')) throw new Error('sem imagem');
-          await instalar(env, store, p, forma, img, { chroma: f.chroma === 'magenta' ? 'magenta' : 'green', sha: f.sha });
+          await instalar(env, store, p, forma, img, { chroma: f.chroma === 'magenta' || f.chroma === 'blue' ? f.chroma : 'green', sha: f.sha });
           await store.delete(name);
         } else if (data?.status === 'failed' || data?.status === 'canceled' || data?.status === 'nsfw' || now.getTime() - Number(f.em) > ENVIO_VENCE_MS) {
           throw new Error(`provedor ${data?.status ?? 'vencido'}`);

@@ -100,6 +100,7 @@ describe('paleta do prompt de sprite — sem monocromático amarelo', () => {
   it('fundo: magenta quando a criatura tem verde, verde no resto, e o prompt traz a cor certa', () => {
     expect(chromaFor('cool blue and teal', 'red', ['agua'])).toBe('green');
     expect(chromaFor('leafy green and lime', 'red', ['planta'])).toBe('magenta');
+    expect(chromaFor('leafy green and hot pink', 'red', ['planta'])).toBe('blue'); // verde + magenta: nenhuma das duas recorta limpo
     expect(chromaFor('earthy brown and ochre', 'cyan', ['terra', 'planta'])).toBe('magenta');
     for (const p of perfis) for (const f of p.formas) {
       const verde = p.dom === 'planta' || p.sec === 'planta' || /green|fern|moss|sage|lime|leaf|emerald|jade|olive|clover|forest|mint|sprout/i.test(`${f.cor} ${f.acento}`);
