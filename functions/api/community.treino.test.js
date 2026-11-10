@@ -222,12 +222,12 @@ describe('treino: luta, não ranqueia, Honra', () => {
     expect(b.kv.store.get(sparHonorKey(ME, dia))).toBe('20');
   });
 
-  it('o teto soma ao longo das lutas do dia e nunca passa de 20 (30 vitórias)', async () => {
+  it('o teto soma ao longo das lutas do dia e nunca passa de 20 (20 vitórias = o ticket grátis do dia)', async () => {
     const { env, ids, kv } = mkEnv({ bonds: [10], meOver: FORTE, oppSave: [OPP_FRACO] });
     let total = 0;
-    for (let i = 0; i < 30; i++) total += (await lutar(env, ids)).json.honor;
+    for (let i = 0; i < 20; i++) total += (await lutar(env, ids)).json.honor; // o ticket grátis do dia são 20 partidas
     expect(total).toBeLessThanOrEqual(SPAR_HONOR_DAILY_CAP);
-    expect(total).toBeGreaterThanOrEqual(SPAR_HONOR_DAILY_CAP); // 30 vitórias de 1–2 enchem o teto
+    expect(total).toBeGreaterThanOrEqual(SPAR_HONOR_DAILY_CAP); // 20 vitórias de 1–2 enchem o teto (mínimo 20 × 1)
     const dia = new Date().toISOString().slice(0, 10);
     expect(Number(kv.store.get(sparHonorKey(ME, dia)))).toBe(SPAR_HONOR_DAILY_CAP);
   });

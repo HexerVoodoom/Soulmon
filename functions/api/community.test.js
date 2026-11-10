@@ -75,6 +75,7 @@ const ACOES_COM_ATOR = [
   { action: 'duelStart', method: 'POST', body: { id: VITIMA, opponentId: ATOR } },
   { action: 'sparStart', method: 'POST', body: { id: VITIMA, opponentId: ATOR } },
   { action: 'sparMatch', method: 'POST', body: { id: VITIMA, opponentId: ATOR } },
+  { action: 'sparBuyTicket', method: 'POST', body: { id: VITIMA } },
   { action: 'sparOpponents', method: 'GET', params: { id: VITIMA } },
   { action: 'friends', method: 'POST', body: { id: VITIMA, friendId: ATOR } },
   { action: 'gift', method: 'POST', body: { id: VITIMA, friendId: ATOR } },

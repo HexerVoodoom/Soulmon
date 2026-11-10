@@ -512,8 +512,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              'O Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar; sortear três novos custa Bits depois de 3 grátis por dia. A aba Treino do Torneio é amistosa: não muda a sua posição e rende de 1 a 2 de Honra por vitória, até 20 por dia; sortear outros oponentes lá é de graça e sem limite.',
-              'The Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight; drawing three new ones costs Bits after 3 free a day. The Tournament\'s Sparring tab is friendly: it never changes your rank and a win earns 1 to 2 Honor, up to 20 a day; drawing new opponents there is free and unlimited.',
+              'O Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar; sortear três novos custa Bits depois de 3 grátis por dia. A aba Treino do Torneio é amistosa: não muda a sua posição. Todo dia você ganha 1 ticket grátis com 20 partidas com Honra (de 1 a 2 por vitória, até 20 de Honra por dia); para jogar mais, o ticket extra custa 30 Bits ganhos e dá +20 partidas sem Honra (até 3 por dia). Sortear outros oponentes lá é de graça e sem limite.',
+              'The Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight; drawing three new ones costs Bits after 3 free a day. The Tournament\'s Sparring tab is friendly: it never changes your rank. Every day you get 1 free ticket with 20 matches with Honor (1 to 2 per win, up to 20 Honor a day); to play more, an extra ticket costs 30 earned Bits and gives +20 matches without Honor (up to 3 a day). Drawing new opponents there is free and unlimited.',
             )}
           </p>
           <p style={para}>
