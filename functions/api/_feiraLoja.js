@@ -116,7 +116,7 @@ export const FEIRA_LOJA_VENDEDORES = Object.freeze([
   { id: 'salamandra', file: 'src/assets/avatares/fogo-salamandra-cozinheira.webp', tipo: 'comidas', peso: 12, ativo: true, hex: false, pool: i => i.tipo === 'dish' },
   { id: 'vitra', file: 'src/assets/dominios/industrial/npcs/npc-industrial-espirito-forno-vidraceiro.png', tipo: 'pocoes', peso: 12, ativo: true, hex: false, pool: i => i.tipo === 'potion' },
   { id: 'serpente', file: 'src/assets/soulmon/npcs/npc-n-serpentePlumadaForma.png', tipo: 'honra', peso: 8, ativo: true, hex: false, pool: i => i.origem === 'honra' },
-  // Fica FORA (peso 0): a saida especial (passeio com recompensa melhor) pede um sistema novo de oferta sobre o sistema de viagens (nao ha multiplicador de recompensa).
+  // Fica FORA (peso 0): a saida especial (saida com recompensa melhor) pede um sistema novo de oferta sobre o sistema de viagens (nao ha multiplicador de recompensa).
   { id: 'sacerdotisa', file: 'src/assets/soulmon/npcs/npc-f-sacerdotisa.png', tipo: 'saida-especial', peso: 0, ativo: false, hex: false, pool: () => false },
 ]);
 
