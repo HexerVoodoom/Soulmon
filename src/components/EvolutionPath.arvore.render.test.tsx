@@ -69,14 +69,14 @@ describe('árvore do Centro de Evolução', () => {
     expect(screen.getByText('Formas alternativas')).toBeTruthy();
     expect(screen.queryByText('Degenerar para…')).toBeNull();
   });
-  it('troca de galho no mesmo nível: escolher a opção pede a confirmação da troca e depois equipa', () => {
+  it('troca de galho no mesmo nível: o botão diz Trocar forma e a troca leva o elemento escolhido junto', () => {
     const chamadas: string[] = [];
     renderWithCss(<EvolutionPath {...props} currentStageId="champion-harmony" formasAlt={{ 'champion-power': ['fogo', 'agua'] }}
-      onSwitchForm={(id) => chamadas.push(`troca:${id}`)} onEquipFormaAlt={(id, el) => chamadas.push(`eq:${id}:${el}`)} />);
+      onSwitchForm={(id, el) => chamadas.push(`troca:${id}:${el}`)} onEquipFormaAlt={(id, el) => chamadas.push(`eq:${id}:${el}`)} />);
     fireEvent.click(botao('champion-power'));
-    fireEvent.click(within(screen.getByTestId('sm-forma-alt-agua')).getByRole('button', { name: 'Equipar' }));
+    fireEvent.click(within(screen.getByTestId('sm-forma-alt-agua')).getByRole('button', { name: 'Trocar forma' }));
     fireEvent.click(screen.getByRole('button', { name: 'Trocar' }));
-    expect(chamadas).toEqual(['troca:champion-power', 'eq:champion-power:agua']);
+    expect(chamadas).toEqual(['troca:champion-power:agua']);
   });
   it('forma liberada de nível ACIMA do atual: só leitura, sem degenerar nem botões', () => {
     renderWithCss(<EvolutionPath {...props} currentStageId="champion-harmony" />);

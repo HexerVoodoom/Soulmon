@@ -14,7 +14,7 @@
  * `dailyReset.ts` só delegam.
  */
 import { getStageLevel } from '../types/progression';
-import type { ElementoDoEstagio, ElementoJornada } from './elementoJornada';
+import { elementoDoEstagioAtual, type ElementoDoEstagio, type ElementoJornada } from './elementoJornada';
 import type { StageSkills } from './soulProfile/ficha/skills';
 import type { FichaStage } from './soulProfile/ficha/types';
 import { fichaStageOf } from './soulProfile/ficha/stageSkillsFor';
@@ -57,6 +57,18 @@ export function capturarForma<T extends FormaState>(s: T): T {
   return { ...s, formaSnapshots: { ...(s.formaSnapshots ?? {}), [chaveDaForma(s.evolutionStage, s.formaAltEquipada)]: foto } };
 }
 
+/**
+ * Forma SEM foto (nunca fotografada) mas com elemento equipado (`formaAltEquipada`, ex.: a forma Poder/Sabá): o Soulmon passa a ter o
+ * elemento DELA — como poção (`potionElement`), nunca no registro do estágio (imutável) e portanto NÃO permanente: a próxima evolução
+ * volta ao elemento de base, a menos que o jogador dê outra poção. Elemento igual ao do registro = sem poção.
+ */
+function elementoDaFormaSemFoto<T extends FormaState>(s: T): T | undefined {
+  const el = s.formaAltEquipada?.[s.evolutionStage];
+  if (!el || el === 'original' || !/^[a-z_]{2,24}$/.test(el)) return undefined;
+  const registrado = elementoDoEstagioAtual(s.elementoJornada, s.evolutionStage)?.id;
+  return { ...s, potionElement: el === registrado ? undefined : el };
+}
+
 /** Aplica a foto da forma ATUAL (já com `evolutionStage`/`formaAltEquipada` do destino). Sem foto = `undefined`. */
 function aplicarFotoAtual<T extends FormaState>(s: T): T | undefined {
   const foto = s.formaSnapshots?.[chaveDaForma(s.evolutionStage, s.formaAltEquipada)];
@@ -83,7 +95,7 @@ export function trocarFormaCompleta<T extends FormaState>(prev: T, trocar: (s: T
   const antes = chaveDaForma(prev.evolutionStage, prev.formaAltEquipada);
   if (chaveDaForma(trocado.evolutionStage, trocado.formaAltEquipada) === antes) return trocado;
   const comFoto = { ...trocado, formaSnapshots: capturarForma(prev).formaSnapshots };
-  return aplicarFotoAtual(comFoto) ?? comFoto;
+  return aplicarFotoAtual(comFoto) ?? elementoDaFormaSemFoto(comFoto) ?? comFoto;
 }
 
 /**

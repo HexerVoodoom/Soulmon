@@ -16,6 +16,7 @@ import { ELEMENTOS_CURADOS, CURATED_ELEMENT_NAMES } from './elementosCurados';
 import { elementoNomeDe } from './soulProfile/ficha/elementoNome';
 import type { FichaStage } from './soulProfile/ficha/types';
 import type { ElementoJornada } from './elementoJornada';
+import { essenceComposition } from './elementDex';
 
 /** % de 1, 2, 3 e 4 componentes. Tabela aprovada pelo dono. */
 export const CHANCES_POR_ESTAGIO: Readonly<Record<FichaStage, readonly [number, number, number, number]>> = {
@@ -75,10 +76,21 @@ export function registrarElementoDoEstagio(
 /** O prompt das formas ainda por desenhar recebe o elemento combinado. Forma sem registro ou de elemento único: o prompt de sempre. */
 export function stagesComElemento<T extends { stage: string; imagePrompt: string; imagePromptFallback: string }>(
   stages: T[] | undefined, jornada: ElementoJornada | undefined,
+  /** Poção de elemento por estágio (dono, 10/11/2026): vale a que vai nascer (`evolutionPotion`, no cristal) e a da forma atual (`potionElement`). Vence o registro do estágio, como em `petElementOf`. */
+  pocoes?: Partial<Record<FichaStage, string>>,
 ): T[] | undefined {
-  if (!stages || !jornada) return stages;
+  if (!stages || (!jornada && !pocoes)) return stages;
   return stages.map(st => {
-    const reg = jornada.estagios[st.stage as FichaStage];
+    const pocao = pocoes?.[st.stage as FichaStage];
+    if (pocao) {
+      const nome = CURATED_ELEMENT_NAMES[pocao]?.en ?? elementoNomeDe(pocao).en;
+      const base = essenceComposition(pocao)?.[0] ?? pocao;
+      const frase = base === pocao
+        ? ` Elemental theme of this form: ${nome}.`
+        : ` Elemental theme of this form: ${nome}, with ${base} as its main element.`;
+      return { ...st, imagePrompt: st.imagePrompt + frase, imagePromptFallback: st.imagePromptFallback + frase };
+    }
+    const reg = jornada?.estagios[st.stage as FichaStage];
     if (!reg || reg.id === reg.base) return st;
     const nome = CURATED_ELEMENT_NAMES[reg.id]?.en ?? elementoNomeDe(reg.id).en;
     const frase = ` Elemental theme of this form: ${nome}, with ${reg.base} as its main element.`;
