@@ -4542,10 +4542,16 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Alternativa que perdeu:** sem bônus de sono. **Falsifica:** o dono ver a energia encher "rápido demais" de manhã (reduzir o fator na constante) ou jogadores dormirem o pet o dia todo só pelo bônus. **Rollback:** reverter o PR; `energyClock.sleep` ignorado por versões antigas.
 
-## §278 — Torneio ganha a aba Treino (Sparring), sem ranking e com pouca Honra (10/11/2026, decisão do dono em modal)
+## §279 — Torneio ganha a aba Treino (Sparring), sem ranking e com pouca Honra (10/11/2026, decisão do dono em modal)
 
 **Decisão.** O Torneio passa a ter DUAS abas: **Ranqueada** (como era) e **Treino** (EN *Sparring*): luta PvP contra outros jogadores que NÃO ranqueia (placar, rank, faixa, season e `lifetimePoints` intocados; sem cota de partidas; derrota sem castigo) e rende **1 a 2 de Honra por vitória, teto de 20 por dia do jogador**, contado e decidido no servidor. Oponentes: 5 sorteados num pool grande por faixa de **Vínculo** (±3, ampliando se houver menos de 5), nunca por ranking; **refresh ilimitado** (o servidor sorteia a cada pedido). Implementação: `functions/api/_treino.js` + ações `sparOpponents/sparStart/sparMatch` em `community.js`; UI em `TournamentPage`. Manual 02 §53 › "O Treino".
 
 **Alternativa que perdeu:** reaproveitar a ranqueada com um parâmetro de modo (`match` com `practice:true`): arriscava o treino mexer no `rank:*`/`lifetimePoints` por um `if` esquecido e misturava a cota de partidas; ações próprias e KV próprio (`spar:`, `sparHonor:`) isolam o treino por construção (há teste de que nenhuma chave `rank:*` nasce). Também perdeu: oponentes por ranking no Treino (leitura de comparação, e o dono quis pool amplo) e refresh pago ou limitado (o Treino é descompressão, sem custo).
 
 **Falsifica:** a Honra do Treino virar o jeito dominante de farmar Honra (20/dia somando ao teto de ranqueada fazer o dono achar muito/pouco — ajustar `SPAR_HONOR_DAILY_CAP`); o pool por Vínculo devolver poucos humanos (o dono ver sempre os mesmos simulados — ajustar `SPAR_BOND_RANGE`/`SPAR_SCAN_MAX`).
+
+## §278 — A área "Hall" passa a se chamar Citadel / Cidadela (10/11/2026, dono)
+- **Decisão do dono:** o prédio/distrito "Hall" passa a se chamar **Citadel** (EN) / **Cidadela** (PT). Vale só para o texto que o jogador lê: o rótulo da área no Mapa, na barra e nos avisos (`areaLabel` em `navigation.ts`) e o nome em inglês do avatar do anfitrião (`hall`, "Citadel greeter").
+- **Fora de escopo de propósito:** ids e chaves internas (`hall`, `hall:feira`, lote `hall`, `HALL_BG`, nomes de arquivo de asset, chaves de save/storage, rotas) e os sentidos que não são a área: **Clan Hall / Salão do Clã** (o prédio administrativo do clã), **Game Hall / Salão de Jogos**, "Golden Hall", "Ruined Hall" e as trilhas "Stone Hall ...". Trocar id quebraria save e cache.
+- **Alternativa que perdeu:** manter "Hall" (colide com Clan Hall/Game Hall) e "Skyhall".
+- **O que falsificaria:** o jogador confundir a Cidadela com o Salão do Clã dentro dela, ou o rótulo "Cidadela" estourar o teto do rótulo do Mapa em 360 px (a régua `navRotulo.contract.test.ts` mede).
