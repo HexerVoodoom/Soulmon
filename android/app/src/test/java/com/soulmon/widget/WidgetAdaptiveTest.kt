@@ -58,6 +58,10 @@ class WidgetAdaptiveTest {
         assertEquals(false, p.isAllowed("https://images.higgs.ai@evil.example/x.png"))
         assertEquals(false, p.isAllowed("https://x.images.higgs.ai/x.png"))
         assertEquals(false, p.isAllowed("file:///etc/passwd"))
+        val k = "a".repeat(32)
+        assertEquals(true, p.isAllowed("https://soulmon.mateus-sprnd.workers.dev/api/sprite-image?k=$k"))
+        assertEquals(false, p.isAllowed("https://soulmon.mateus-sprnd.workers.dev/api/other?k=$k"))
+        assertEquals(false, p.isAllowed("https://soulmon.mateus-sprnd.workers.dev/api/sprite-image?k=curto"))
         assertEquals(false, p.isAllowed(""))
     }
 

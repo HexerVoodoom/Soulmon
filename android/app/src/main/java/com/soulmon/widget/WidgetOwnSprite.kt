@@ -26,6 +26,10 @@ object WidgetOwnSprite {
     object Policy {
         /** Espelho de `HOSTS_DE_SPRITE` (src/utils/spriteLibrary.ts): igualdade EXATA, nunca sufixo. */
         val HOSTS = setOf("d8j0ntlcm91z4.cloudfront.net", "images.higgs.ai", "platform.higgsfield.ai")
+
+        /** O Worker do app: SO o caminho `/api/sprite-image?k=<32hex>` (o sprite gerado do jogador). */
+        const val APP_HOST = "soulmon.mateus-sprnd.workers.dev"
+        private val APP_SPRITE_QUERY = Regex("^k=[0-9a-fA-F]{32}$")
         private val DATA_PREFIX = Regex("^data:image/(png|jpe?g|webp|gif);base64,", RegexOption.IGNORE_CASE)
 
         fun isData(url: String) = DATA_PREFIX.containsMatchIn(url)
@@ -34,7 +38,10 @@ object WidgetOwnSprite {
             if (!url.startsWith("https://", ignoreCase = true)) return false
             return try {
                 val u = URL(url)
-                u.userInfo == null && u.host.lowercase() in HOSTS
+                u.userInfo == null && (
+                    u.host.lowercase() in HOSTS ||
+                        (u.host.lowercase() == APP_HOST && u.path == "/api/sprite-image" && u.query != null && APP_SPRITE_QUERY.matches(u.query))
+                    )
             } catch (e: Exception) {
                 false
             }
@@ -84,6 +91,10 @@ object WidgetOwnSprite {
         val prefs = app.getSharedPreferences(WidgetRenderer.PREFS_NAME, Context.MODE_PRIVATE)
         val key = Policy.keyOf(url)
         if (prefs.getString(KEY_PREF, null) == key && file(app).exists()) return
+        // Sprite novo (evoluiu/degenerou/trocou de forma): o antigo NAO pode ficar no lugar enquanto baixa, nem se a rede falhar.
+        file(app).delete()
+        prefs.edit().remove(KEY_PREF).apply()
+        android.util.Log.d("SoulmonWidget", "own sprite: baixando novo ($key)")
         Thread {
             try {
                 val bytes = if (Policy.isData(url)) {
@@ -99,9 +110,10 @@ object WidgetOwnSprite {
                 tmp.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
                 tmp.renameTo(file(app))
                 prefs.edit().putString(KEY_PREF, key).apply()
+                android.util.Log.d("SoulmonWidget", "own sprite: ok ${bmp.width}x${bmp.height}")
                 WidgetRenderer.updateAll(app)
             } catch (e: Exception) {
-                // sem rede / arquivo ruim: o widget segue com o que tinha
+                android.util.Log.w("SoulmonWidget", "own sprite: falhou (${e.javaClass.simpleName}); widget usa o inicial até a próxima sync")
             } catch (e: OutOfMemoryError) {
             }
         }.start()
