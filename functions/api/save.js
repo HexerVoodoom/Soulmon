@@ -35,6 +35,7 @@ import { sanitizeDayPlan } from './_dayPlan.js';
 import { sanitizeNightmares } from './_nightmares.js';
 import { sanitizeFichaJornada, enforceImmutableFicha } from './_fichaJornada.js';
 import { enforceImmutableElementoJornada } from './_elementoJornada.js';
+import { enforceFunTickets } from './_funTickets.js';
 import { enforceDungeonDaily, enforceCheckIns, enforceArenaReroll, enforceArenaLadder, enforceEssenceAway, bumpRiftLayers } from './_dayCounters.js';
 import { enforceEssences, enforceEssenceSpent } from './_essences.js';
 import { sanitizeRegenUsed } from './_spriteRegen.js';
@@ -348,6 +349,13 @@ async function onRequestBruto({ request, env }) {
     // formato do cliente (`utils/cadernoSave.ts`: 120 x 2000 caracteres) e descarta o resto — nunca o
     // lê, interpreta ou envia a IA/métricas. 120 x 2000 (menos de ~1 MB em UTF-8) cabe nos 5 MB.
     if ('caderno' in state) state.caderno = clampCaderno(state.caderno);
+    // Recibos da jornada do foco já creditados (§247): só a forma. Quem paga é `/api/focus-journey` (razão `fjd:`).
+    if ('journeyCredited' in state) {
+      const j = state.journeyCredited;
+      const ok = j && typeof j === 'object' && typeof j.day === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(j.day) && Array.isArray(j.ids);
+      if (ok) state.journeyCredited = { day: j.day, ids: [...new Set(j.ids.filter(x => typeof x === 'string' && x.length > 0 && x.length <= 60))].slice(-80) };
+      else delete state.journeyCredited;
+    }
     // Cartas do Mensageiro já creditadas (§241): só a forma e o teto.
     if ('mailClaimed' in state) {
       const q = Array.isArray(state.mailClaimed) ? state.mailClaimed.filter(x => typeof x === 'string' && x.length > 0 && x.length <= 80).slice(-100) : [];
@@ -454,6 +462,21 @@ async function onRequestBruto({ request, env }) {
       }
       state.widgetFramesOwned = enforceWidgetFramesOwned(state, gravado);
     }
+    // Chave do Calabouço (§247): dia NOVO só entra se a jornada do foco daquele dia foi concluída no razão do servidor (`fjd:`);
+    // o que já estava gravado fica. Fecha a brecha do §239 (a chave nascia só no aparelho).
+    if (typeof state.dungeonKeyDay === 'string') {
+      let gravado;
+      if (typeof prev?.value === 'string' && prev.value.includes('"dungeonKeyDay"')) {
+        try { gravado = JSON.parse(prev.value).dungeonKeyDay; } catch { gravado = undefined; }
+      }
+      if (state.dungeonKeyDay !== gravado) {
+        let razao = null;
+        try { razao = JSON.parse((await kvOrThrow(env).get(`fjd:${saveId}:${state.dungeonKeyDay}`)) || 'null'); } catch { razao = null; }
+        if (!(Number(razao?.done) >= 1)) {
+          if (typeof gravado === 'string') state.dungeonKeyDay = gravado; else delete state.dungeonKeyDay;
+        }
+      }
+    }
     // Ficha da jornada (Combate v3 / PR15c): a FORMA e saneada (estagio valido, galhos finitos e com teto, `at` plausivel,
     // `familia` na lista fechada, `plano` recalculado dos galhos) e um estagio JA gravado no servidor nao e sobrescrito.
     // So parseia o gravado quando o campo existe nele (save de 5 MB nao e relido a toa). NUNCA recusa o save: o que nao
@@ -521,6 +544,16 @@ async function onRequestBruto({ request, env }) {
         if (esp && Object.keys(esp).length) state.essenceSpent = esp; else delete state.essenceSpent;
         const ea = enforceEssenceAway(state.essenceAway, gravado.essenceAway);
         if (ea) state.essenceAway = ea; else delete state.essenceAway;
+      }
+    }
+    // Tickets dos minijogos (09/11/2026, `_funTickets.js`): gasto so desce, lote novo so com posse viva <= 2, teto 5, validade 24 h.
+    {
+      const temGravado = typeof prev?.value === 'string' && prev.value.includes('"funTickets"');
+      if (temGravado || 'funTickets' in state) {
+        let gravado = {};
+        if (temGravado) { try { gravado = JSON.parse(prev.value) ?? {}; } catch { gravado = {}; } }
+        const ft = enforceFunTickets(state.funTickets, gravado.funTickets);
+        if (ft) state.funTickets = ft; else delete state.funTickets;
       }
     }
     // JSON aninhado fundo cabe no teto de bytes mas estoura a pilha em `JSON.stringify` (RangeError → exceção solta/500): recusa 400.

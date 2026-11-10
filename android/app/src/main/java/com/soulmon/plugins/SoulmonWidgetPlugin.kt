@@ -1,6 +1,7 @@
 package com.soulmon.plugins
 
 import android.content.Context
+import com.soulmon.widget.WidgetOwnSprite
 import com.soulmon.widget.WidgetRenderer
 import com.soulmon.widget.WidgetVpet
 import com.getcapacitor.Plugin
@@ -115,6 +116,14 @@ class SoulmonWidgetPlugin : Plugin() {
         if (WidgetVpet.frameDrawableName(vpetFrame) != null) editor.putString("vpet_frame", vpetFrame) else editor.remove("vpet_frame")
 
         editor.apply()
+
+        // O sprite PRÓPRIO (gerado/equipado): baixa/guarda em segundo plano; vazio apaga e volta ao inicial.
+        // A allowlist de host/esquema vive em WidgetOwnSprite.Policy.
+        WidgetOwnSprite.sync(ctx, call.getString("petSpriteUrl"))
+        // Fome com o app fechado: agenda um redesenho para o instante `hungry_at` (e garante o periodico de 15 min).
+        com.soulmon.widget.WidgetRefreshWorker.scheduleHunger(ctx, if (hungryAt >= 0L) hungryAt else null)
+        com.soulmon.widget.WidgetRefreshWorker.schedule(ctx)
+        android.util.Log.d("SoulmonWidget", "updateWidgetData stage=${call.getString("currentStage")} sprite=${!call.getString("petSpriteUrl").isNullOrBlank()} hungryAt=$hungryAt poop=${call.data.optBoolean("hasPoop", false)}")
 
         // Push update to all active widget instances (all 3 variants)
         WidgetRenderer.updateAll(ctx)

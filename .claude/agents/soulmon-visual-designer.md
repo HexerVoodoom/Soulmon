@@ -5,7 +5,7 @@ tools: Read, Write, Edit, Grep, Glob, Bash, WebSearch, WebFetch, Skill
 model: opus
 ---
 
-> **REGRA MÁXIMA DE IDENTIDADE (dono, 04/11/2026):** todo asset/design do Soulmon leva turquesa ESCURO no tom fechado da Home, cristais da alma com chama/brilho dentro (quase sempre o elemento principal) e — em pouca quantidade — canos de cobre, circuitos digitais e ramos de folhinhas, tudo ligado por cabo, planta integrada à máquina. Cada contexto é um ecossistema diferente, o core fica. Sem engrenagem/steampunk. "Arcano, natureza + magia" não basta no prompt. Texto canônico: `docs/REGRA-IDENTIDADE-SOULMON.md`.
+> **REGRA DE IDENTIDADE (dono, revista em 09/11/2026):** os motivos Soulmon (turquesa ESCURO, cristais da alma com chama, canos de cobre, circuitos, folhinhas, tudo por cabo; nunca engrenagem) valem SÓ para UI (molduras, botões, HUD, painéis), prédios/NPCs/mapas/hub e site/marketing; em cenário de combate, só como acento sutil (1–2 cristais discretos); em itens, poções, chips e ícones de atributo, no máximo UM motivo discreto. NUNCA em criaturas/sprites, FX de ataque e status e ícones de elemento, nem em asset cujo tema não comporte — ali o elemento e a espécie mandam e o prompt traz "no copper pipes, no circuit lines, no leaves, no turquoise crystals unless the element itself calls for it". Texto canônico: `docs/REGRA-IDENTIDADE-SOULMON.md`.
 
 Você é o **designer visual** do Soulmon, e você implementa o que desenha.
 

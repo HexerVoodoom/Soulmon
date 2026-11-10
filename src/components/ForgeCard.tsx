@@ -28,6 +28,9 @@ import { ATTR_EFFECT, forgeRefusalText } from '../utils/forgeCopy';
 import { stockOf } from '../utils/buildingQuests';
 import { MATERIALS } from '../utils/buildingQuestsCopy';
 import { MaterialIcon } from './MaterialIcon';
+import { BackCircleButton } from './ui/BackCircleButton';
+import { nameOf } from './nav/BuildingQuestList';
+import { FOCUS_ENVIRONMENTS } from '../utils/focusExpedition';
 import { VitraMap, type VitraChakra } from './forge/VitraMap';
 import { Icon } from './ui/Icon';
 import { forgeReadySlots } from '../utils/lotIndicators';
@@ -86,6 +89,9 @@ function ForgeDialogShell({ mode, onClose, children }: { mode: string; onClose: 
 export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list', onBack }: { language?: string; view?: 'list' | 'map'; onBack?: () => void }) {
   const ctx = useGameStateOptional();
   const [pop, setPop] = useState<string | null>(null);
+  /** O material cujo "onde conseguir" está aberto no balão (toque no custo). */
+  const [onde, setOnde] = useState<string | null>(null);
+  useEffect(() => { setOnde(null); }, [pop]);
   const [popChoice, setPopChoice] = useState<ForgeChoice>('a');
   const [aviso, setAviso] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
@@ -364,6 +370,11 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
     return (
       <div role="dialog" aria-label={nome} className="sm2-vit-card" data-forge-pop={piece.id}>
         <p className="sm2-vit-card-title"><b>{nome}</b><span className="sm2-num">{possui ? (isPt ? `Nv ${level}` : `Lv ${level}`) : (isPt ? 'Ainda não forjado' : 'Not forged yet')}</span></p>
+        {possui && (
+          <p className="sm2-stats-s sm2-num" style={{ margin: 0 }} data-forge-pop-bonus>
+            {isPt ? 'Esta peça dá agora: ' : 'This piece gives now: '}<b style={{ fontWeight: 600 }}>{bonusTexto(pieceBonus(piece.id, level, pieceChoices(piece.id, level, gameState.forge)), attrName, isPt)}</b>
+          </p>
+        )}
         {max && <p className="sm2-stats-s" data-forge-max>{isPt ? 'No nível máximo.' : 'At the top level.'}</p>}
         {possui && !max && (
           <>
@@ -381,9 +392,26 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
             </div>
             <span className="sm2-stats-s sm2-vit-costs">
               {custoTexto(piece, to).map(({ m, n, have }) => (
-                <span key={m.id} data-forge-cost={m.id} data-enough={have >= n || undefined}><MaterialIcon id={m.id} emoji={m.icon} />{isPt ? m.namePt : m.nameEn} {have}/{n}</span>
+                <button key={m.id} type="button" className="sm2-vit-cost" data-forge-cost={m.id} data-enough={have >= n || undefined}
+                  aria-expanded={onde === m.id} aria-label={isPt ? `${m.namePt} ${have}/${n}: onde conseguir` : `${m.nameEn} ${have}/${n}: where to get it`}
+                  onClick={() => setOnde(onde === m.id ? null : m.id)}>
+                  <MaterialIcon id={m.id} emoji={m.icon} />{isPt ? m.namePt : m.nameEn} {have}/{n}
+                </button>
               ))}
             </span>
+            {onde && (() => {
+              const m = MATERIALS.find(x => x.id === onde);
+              if (!m) return null;
+              const lugar = nameOf(m.building, isPt ? 'pt-BR' : 'en-US');
+              const amb = FOCUS_ENVIRONMENTS.filter(e => (e.materials as readonly string[]).includes(m.id)).map(e => (isPt ? e.pt : e.en)).join(', ');
+              return (
+                <p role="note" className="sm2-stats-s sm2-vit-where" data-forge-where={m.id} style={{ margin: 0 }}>
+                  <b>{isPt ? m.namePt : m.nameEn}</b>{' · '}
+                  {isPt ? `A missão de ${lugar} rende um por dia.` : `The ${lugar} mission pays one a day.`}
+                  {amb && (isPt ? ` Também aparece nas expedições de foco: ${amb}.` : ` It also turns up on focus expeditions: ${amb}.`)}
+                </p>
+              );
+            })()}
             {recusa && recusa !== 'no-materials' && <span className="sm2-stats-s" data-forge-why>{forgeRefusalText(recusa, isPt, level)}</span>}
             <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-forge-upgrade-btn={piece.id} disabled={!!recusa}
               onClick={() => runUpgrade(piece.id, popChoice)}
@@ -429,7 +457,7 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
       <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card data-forge-view="map">
         <VitraMap chakras={chakras} label={isPt ? 'Equipamentos do Soulsmith' : 'Soulsmith equipment'} onBackdrop={() => setPop(null)}>
           <div className="sm2-vit-bar" data-vitra-bar>
-            {onBack && <button type="button" className="sm2-vit-back" data-vitra-back onClick={onBack}>{isPt ? 'Voltar' : 'Back'}</button>}
+            {onBack && <BackCircleButton onClick={onBack} language={isPt ? 'pt-BR' : 'en-US'} overScene data-vitra-back />}
             <p id="sm2-equip-title" className="sm2-stats-lab sm2-vit-title">Soulsmith</p>
           </div>
           {(celebra || aviso) && (

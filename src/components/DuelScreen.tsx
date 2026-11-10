@@ -45,7 +45,7 @@ import {
 } from '../utils/combatFx';
 import { meleeImpactOf, chaveDaIdentidade } from '../utils/combate/golpeImpacto';
 import { avancar as avancarPortao, bloqueiaAplicar, bloqueiaComecar, fechar as fecharPortao, serializarEspeciais, type ConfigDoPortao, type Portao } from '../utils/specialGate';
-import { hpPoints, PVP_HP_SCALE, type FightEvent } from '../utils/combate/fight';
+import { hpExibidoPvp, type FightEvent } from '../utils/combate/fight';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
 import { DUEL_CHEER_BUCKETS, simulatePvp, type DuelResult, type DuelSide } from '../utils/combate/duel';
 
@@ -107,7 +107,8 @@ const emSerie = (r: DuelResult): DuelResult => {
   return { ...r, events: v.events, fx: v.fx };
 };
 
-const maxHpOf = (s: DuelSide) => hpPoints(s.combatant.hp * PVP_HP_SCALE);
+/** O HP base (o da Arena), não o inflado do PvP: ver `hpExibidoPvp`. O dano mostrado é fração × este máximo. */
+const maxHpOf = (s: DuelSide) => hpExibidoPvp(s.combatant.hp);
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 
 export function DuelScreen({
@@ -325,7 +326,7 @@ export function DuelScreen({
         specialLabel={par?.especial ? specialLabel(isPt, par.especial) : (me.fx?.lex ? foeSpecialLabel(isPt, meEl, 'me', me.fx.familia, me.fx.lex) : specialLabel(isPt))}
         foeSpecialLabel={(f) => oppEspecialNome?.trim() || foeSpecialLabel(isPt, f.element, f.name, opp.fx?.familia, opp.fx?.lex)}
         isPt={isPt}
-        me={{ key: 'me', sprite: petSprite, scale: petScale, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER, status: status.me, cheerPending: (barra / CHEER.tapsFull) * (CHEER.pvpEnergyPerDischarge / ENERGY_TRIGGER) }}
+        me={{ key: 'me', sprite: petSprite, scale: petScale, stageIcon: petStage, name: petName || (isPt ? 'Você' : 'You'), hp: Math.round(hpFrac.me * maxMe), maxHp: maxMe, element: meEl, down: fimDaLuta && hpFrac.me <= 0, energy: energia.me / ENERGY_TRIGGER, status: status.me, cheerPending: (barra / CHEER.tapsFull) * (CHEER.pvpEnergyPerDischarge / ENERGY_TRIGGER) }}
         foes={[{ key: 'opp', sprite: oppSprite, stage: oppStage, name: oppName, hp: Math.round(hpFrac.opp * maxOpp), maxHp: maxOpp, element: oppEl, down: fimDaLuta && hpFrac.opp <= 0, energy: energia.opp / ENERGY_TRIGGER, status: status.opp }]}
         action={acao}
         hit={golpes}

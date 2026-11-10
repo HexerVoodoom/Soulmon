@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-/** Formas alternativas (05/11/2026): cartão com setinha; anterior → Degenerar + Formas alternativas; atual → direto na lista. */
+/** Formas alternativas (05/11/2026), modal do nó (09/11/2026): anterior → "Degenerar para…"; atual/mesmo nível → lista para equipar. */
 import { describe, it, expect } from 'vitest';
-import { screen, fireEvent } from '@testing-library/react';
+import { screen, fireEvent, within } from '@testing-library/react';
 import { renderWithCss } from '../test/renderEnv';
 import { EvolutionPath } from './EvolutionPath';
 import type { CreatureStage } from '../utils/oracle';
@@ -27,21 +27,30 @@ const props = {
 };
 
 describe('formas alternativas no Centro de Evolução', () => {
-  it('a forma atual abre direto a lista, com a dica e 3 ocultas', () => {
+  it('a forma atual abre a lista para equipar, com a dica e 3 ocultas', () => {
     renderWithCss(<EvolutionPath {...props} />);
-    expect(screen.getByTestId('sm-no-rookie').getAttribute('role')).toBeNull();
-    fireEvent.click(screen.getByTestId('sm-no-ultimate-harmony'));
+    fireEvent.click(screen.getByTestId('sm-no-ultimate-harmony').querySelector('button[data-soul-node]') as HTMLElement);
     expect(screen.getByTestId('sm-formas-alt')).toBeTruthy();
     expect(screen.getByTestId('sm-formas-alt-dica')).toBeTruthy();
     expect(screen.getAllByTestId('sm-forma-alt-oculta')).toHaveLength(3);
   });
-  it('a forma anterior oferece Degenerar e Formas alternativas', () => {
+  it('a forma anterior abre "Degenerar para…" com as opções já liberadas, sem dica', () => {
     renderWithCss(<EvolutionPath {...props} formasAlt={{ 'champion-harmony': ['fogo', 'agua'] }} />);
-    fireEvent.click(screen.getByTestId('sm-no-champion-harmony'));
-    expect(screen.getByText('Degenerar')).toBeTruthy();
-    fireEvent.click(screen.getByText('Formas alternativas'));
+    fireEvent.click(screen.getByTestId('sm-no-champion-harmony').querySelector('button[data-soul-node]') as HTMLElement);
+    expect(screen.getByText('Degenerar para…')).toBeTruthy();
     expect(screen.queryByTestId('sm-formas-alt-dica')).toBeNull();
     expect(screen.getByTestId('sm-forma-alt-agua')).toBeTruthy();
     expect(screen.getAllByTestId('sm-forma-alt-oculta')).toHaveLength(3);
+  });
+  it('degenerar para uma opção de elemento: confirma duas vezes, degenera e equipa o elemento escolhido', () => {
+    const chamadas: string[] = [];
+    renderWithCss(<EvolutionPath {...props} formasAlt={{ 'champion-harmony': ['fogo', 'agua'] }}
+      onDegenerate={(id) => chamadas.push(`deg:${id}`)} onEquipFormaAlt={(id, el) => chamadas.push(`eq:${id}:${el}`)} />);
+    fireEvent.click(screen.getByTestId('sm-no-champion-harmony').querySelector('button[data-soul-node]') as HTMLElement);
+    fireEvent.click(within(screen.getByTestId('sm-forma-alt-agua')).getByRole('button', { name: 'Degenerar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    expect(chamadas).toEqual([]);
+    fireEvent.click(screen.getByRole('button', { name: 'Sim, degenerar' }));
+    expect(chamadas).toEqual(['deg:champion-harmony', 'eq:champion-harmony:agua']);
   });
 });

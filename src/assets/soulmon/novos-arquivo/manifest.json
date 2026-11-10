@@ -4783,6 +4783,81 @@
    ],
    "name": "Absolknight",
    "lote": 3
+  },
+  {
+   "n": 262,
+   "file": "combinados/262-clareira.png",
+   "combination": "Clareira",
+   "components": [
+    "planta",
+    "luz",
+    "vida"
+   ],
+   "name": "Glaedryn",
+   "lote": 4
+  },
+  {
+   "n": 263,
+   "file": "combinados/263-alto_forno.png",
+   "combination": "Alto-Forno",
+   "components": [
+    "industrial",
+    "fogo",
+    "terra"
+   ],
+   "name": "Furnarok",
+   "lote": 4
+  },
+  {
+   "n": 264,
+   "file": "combinados/264-bencao_feerica.png",
+   "combination": "Bênção Feérica",
+   "components": [
+    "fada",
+    "luz",
+    "vida"
+   ],
+   "name": "Blessylle",
+   "lote": 4
+  },
+  {
+   "n": 265,
+   "file": "combinados/265-floresta_ancestral.png",
+   "combination": "Floresta Ancestral",
+   "components": [
+    "planta",
+    "terra",
+    "tempo",
+    "arcano"
+   ],
+   "name": "Eldrowan",
+   "lote": 4
+  },
+  {
+   "n": 266,
+   "file": "combinados/266-colosso_blindado.png",
+   "combination": "Colosso Blindado",
+   "components": [
+    "industrial",
+    "eletricidade",
+    "vigor",
+    "marcial"
+   ],
+   "name": "Colossarm",
+   "lote": 4
+  },
+  {
+   "n": 267,
+   "file": "combinados/267-corte_feerica.png",
+   "combination": "Corte Feérica",
+   "components": [
+    "fada",
+    "arcano",
+    "luz",
+    "som"
+   ],
+   "name": "Faecourt",
+   "lote": 4
   }
  ]
 }

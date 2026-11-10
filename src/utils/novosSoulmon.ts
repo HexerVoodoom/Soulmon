@@ -12,7 +12,7 @@ import {
   type NovoData, type NovoStage, type NovoHighStage, type NovoAnyStage, type NovoAttack, type NovoLine,
 } from './novosSoulmonData';
 import { pickEnemy, type EnemyStage, type RosterEntry } from './enemyRoster';
-import { COMBINADOS_ART, INIMIGOS_API_ART, RAMOS_ART } from './enemyRosterArt';
+import { COMBINADOS_ART, INIMIGOS_API_ART, FORMAS_ART, PARALELOS_ART, RAMOS_ART } from './enemyRosterArt';
 export type { NovoData, NovoStage, NovoHighStage, NovoAnyStage, NovoAttack, NovoLine };
 export { FORMAS_ALTAS, novoDataOfStage, novoHasForm };
 import embritRookie from '../assets/soulmon/novos/fogo-rookie.png';
@@ -185,6 +185,8 @@ export const novoSoulmonOfStage = (stage: string | undefined | null): NovoSoulmo
 export function rosterSpriteOf(e: RosterEntry): string | undefined {
   if (e.kind === 'mascote') return CORVO_NEUTRO_ART;
   if (e.kind === 'ramo') return RAMOS_ART[e.artFile ?? ''];
+  if (e.kind === 'paralelo') return PARALELOS_ART[e.artFile ?? ''];
+  if (e.kind === 'forma') return FORMAS_ART[e.artFile ?? ''];
   return e.kind === 'base' ? BY_ID[e.id]?.sprite(e.stage) : e.kind === 'api' ? INIMIGOS_API_ART[e.artFile ?? ''] : COMBINADOS_ART[e.artFile ?? ''];
 }
 
@@ -217,9 +219,11 @@ export function getDungeonEncounter(
   legacy: (tier: string, excludeLine: string | undefined, rng: () => number) => { sprite: string; name: string; line: string },
   /** Level do jogador: o teto de estágio de ARTE do inimigo (`enemyRoster.ts`). Sem ele, tudo liberado (comportamento antigo). */
   level: number = Number.POSITIVE_INFINITY,
+  /** Masmorra temática: só criaturas deste elemento (`dungeonElementos.ts`). */
+  element?: string,
 ): DungeonEncounter {
   const pref = novoPreferenceOfTier(tier)[0] as EnemyStage;
-  const e = pickEnemy(level, rng, { stage: pref, used });
+  const e = pickEnemy(level, rng, { stage: pref, used, ...(element ? { element } : {}) });
   const n = e.kind === 'base' ? BY_ID[e.id] : undefined;
   const sprite = n ? n.sprite(e.stage) : rosterSpriteOf(e);
   if (!sprite) return legacy(tier, undefined, rng);

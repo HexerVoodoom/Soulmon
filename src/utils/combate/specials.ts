@@ -90,7 +90,7 @@ export type PveEngine = 'arena' | 'dungeon';
  */
 export const PVE_FAMILY_POWER: Readonly<Record<PveEngine, Readonly<Record<SpecialFamily, number>>>> = {
   arena: { direct: 1, dot: 0.95, heal: 1.25, shield: 1.2, atkBuff: 1.35, defDebuff: 1.55, spdBuff: 1.25 },
-  dungeon: { direct: 1, dot: 1.1, heal: 0.8, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5 },
+  dungeon: { direct: 1, dot: 1.1, heal: 0.88, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5 },
 };
 
 /**

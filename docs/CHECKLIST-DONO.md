@@ -138,7 +138,7 @@ Sem linha de código, só registro:
 | BP-19 | Steps viram Fragmentos | ✅ feito | — | `utils/soulFragment.ts`, §153 | migração do save |
 | BP-20 | Rookie pequeno | ✅ feito | — | `utils/spriteScale.ts` `ROOKIE_RENDER_RATIO`, `petScaleStyle` em várias telas, §181 | visual |
 | BP-21 | Essências: drop e Arquivo | ✅ feito | — | `utils/essences.ts`, `_essences.js`, `_feira.js` `essenceDoChefe`, §183 | em jogo |
-| BP-22 | Essências "sem uso por enquanto" | ⚰️ órfão | — | Superado por `utils/elementPotion.ts` (poção, 300 da essência; `essenceSpent`) e compra por Créditos em `entitlements.js` (`essencePackPrice`). Backlog desatualizado | se o dono quer preço e uso assim |
+| BP-22 | Essências "sem uso por enquanto" | ⚰️ órfão | — | Superado por `utils/elementPotion.ts` (poção, 100 da essência; `essenceSpent`) e compra por Créditos em `entitlements.js` (`essencePackPrice`). Backlog desatualizado | se o dono quer preço e uso assim |
 
 ## 4. Pedidos de 27–29/10
 

@@ -29,6 +29,11 @@ export const DUNGEON_FIGHTS_PER_FLOOR = 6;
 /** O MARCO: limpar este andar (uma vez por descida) rende o item raro (o 🌀) e sobe a base semanal. Era o fim da run (`MAX_FLOORS` = 5). */
 export const DUNGEON_MILESTONE_FLOOR = 5;
 
+/** O PONTO DE RETORNO: a descida recomeça logo depois do último múltiplo deste já limpo (`startLayerFor`). Era 5 (o marco);
+ *  o dono passou para 2 em 09/11/2026 (REGISTRO §31, emenda), então a nova descida começa no máximo 1 camada abaixo do
+ *  recorde. Desacoplado do marco de prêmio (`DUNGEON_MILESTONE_FLOOR`/`isMilestoneLayer`), que segue em 5: economia igual. */
+export const DUNGEON_RETURN_EVERY = 2;
+
 /** Horas para o HP ir de ZERO a CHEIO, parado ou com o app fechado. O dono ajusta este número. */
 export const DUNGEON_HP_REGEN_FULL_HOURS = 4;
 
@@ -106,8 +111,8 @@ export function formatarEspera(ms: number, pt: boolean): string {
 //     dificuldade sobe como sempre subiu, e a parede medida (andar efetivo ~5–6) cai `comfortLayers(L)` camadas
 //     mais fundo. Quem fez tarefas e hábitos com constância tem Lv mais alto (dias completos + estágio), e por
 //     isso desce mais. O TETO declarado é `dungeonLayerCap` (zona + margem, e o portão do Vínculo de `gates.ts`).
-//  3. O RECORDE (`dungeonDepthRecord` no save) é o ponto de retorno: cada descida começa no último marco de
-//     `DUNGEON_MILESTONE_FLOOR` camadas já limpo (`startLayerFor`). Bater um marco de profundidade pela 1ª vez
+//  3. O RECORDE (`dungeonDepthRecord` no save) é o ponto de retorno: cada descida começa no último múltiplo de
+//     `DUNGEON_RETURN_EVERY` (2) camadas já limpo (`startLayerFor`). Bater um marco de profundidade pela 1ª vez
 //     (`DUNGEON_DEPTH_MARKS`) rende fragmentos do Soulsmith — material, nunca Bits e nunca equipamento sorteado.
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -155,10 +160,10 @@ export function sanitizeDepthRecord(raw: unknown): number {
   return Math.min(DUNGEON_MAX_LAYER, Math.max(0, int(raw, 0)));
 }
 
-/** Onde a descida começa: logo depois do último marco (múltiplo de `DUNGEON_MILESTONE_FLOOR`) já limpo, sem passar do teto. */
+/** Onde a descida começa: logo depois do último múltiplo de `DUNGEON_RETURN_EVERY` já limpo, sem passar do teto. */
 export function startLayerFor(record: number, cap: number): number {
   const lim = Math.min(sanitizeDepthRecord(record), Math.max(1, int(cap, 1)) - 1);
-  return 1 + DUNGEON_MILESTONE_FLOOR * Math.floor(Math.max(0, lim) / DUNGEON_MILESTONE_FLOOR);
+  return 1 + DUNGEON_RETURN_EVERY * Math.floor(Math.max(0, lim) / DUNGEON_RETURN_EVERY);
 }
 
 /** A camada `layer` é um marco da descida (o item 🌀 1× por descida, no primeiro)? */

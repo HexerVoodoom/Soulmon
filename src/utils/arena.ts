@@ -243,18 +243,22 @@ export interface ArenaEnemy {
   artFile?: string;
   /** §221 (04/11/2026): o inimigo é um RAMO evoluído (`kind: 'ramo'`); = a chave do bestiário/roster (`<criatura><ramo>-<estágio>`). Só arte/nome; a força segue sendo do slot. */
   ramoKey?: string;
+  /** 09/11/2026: o inimigo é uma FORMA PARALELA (`kind: 'paralelo'`, champion/ultimate de run de elemento); = a chave do roster. Só arte/nome/elementos; a força segue sendo do slot. */
+  paraleloKey?: string;
 }
 
 /** Os rookies de elemento combinado (o pool "combinado" da Arena; só existem na forma rookie). */
 const COMBO_ROOKIES = ENEMY_ROSTER.filter(e => e.kind === 'combinado' && e.stage === 'rookie');
+/** 09/11/2026: chance de um inimigo Champion/Ultimate de run de elemento ser a FORMA PARALELA desse elemento (quando existe). */
+export const ARENA_PARALELO_CHANCE = 1 / 6;
 /** §199 (emenda do dono, 30/10/2026): chance de UM inimigo de uma run de elemento base ser um FUNDIDO que contém esse elemento. */
 export const ARENA_FUSED_FOE_CHANCE = 0.5; // 30/10 (2ª emenda do dono): "variados do elemento escolhido, não só o base" — era 0.12
 /** Os fundidos (rookie combinado) cuja composição inclui o elemento base `el`. */
 export const arenaFusedOf = (el: string) => COMBO_ROOKIES.filter(e => e.elements.includes(el));
 
 /** A chave do BESTIÁRIO (`<id>-<estágio>`) de um inimigo da Arena, ou `undefined` (forma fora do roster, ex.: ultra). 31/10/2026: a Arena não registrava. */
-export function arenaFoeKey(e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form'> & { ramoKey?: string }): string | undefined {
-  const k = e.ramoKey ? e.ramoKey : e.artFile ? `cmb${e.artFile.split('-')[0]}-rookie` : e.creature && e.form ? `${e.creature}-${e.form}` : undefined;
+export function arenaFoeKey(e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form'> & { ramoKey?: string; paraleloKey?: string }): string | undefined {
+  const k = e.ramoKey ? e.ramoKey : e.paraleloKey ? e.paraleloKey : e.artFile ? `cmb${e.artFile.split('-')[0]}-rookie` : e.creature && e.form ? `${e.creature}-${e.form}` : undefined;
   return k && ENEMY_ROSTER_KEYS.has(k) ? k : undefined;
 }
 
@@ -377,6 +381,20 @@ export function buildArenaRound(
         return {
           namePt: r.name, nameEn: r.name, elements: [r.element], points: shape.points + Math.max(0, difficulty - 1),
           cls, tier: stage, dropTier: shape.tier, form: ramoStage, ramoKey: r.key, ...(strayHere ? { stray: true as const } : {}),
+        };
+      }
+    }
+    // 09/11/2026 (dono): FORMA PARALELA (Champion/Ultimate alternativos, `PARALELOS_DATA`) em run de elemento: só quando o elemento da run está nos
+    // componentes dela (agua → Aquarisk/Marevorn; fogo ou morte → Cyanolisk/Azurvorn…), na forma da escada, 1 em `ARENA_PARALELO_CHANCE`.
+    // Zero `rng` a mais (bits do MESMO `u0`, janela diferente da do ramo) e fora do Desgarrado: card = luta e o resto do sorteio não muda.
+    if (runElement && !stray && u0 !== undefined && (stage === 'champion' || stage === 'ultimate')) {
+      const paralelos = ENEMY_ROSTER.filter(e => e.kind === 'paralelo' && e.stage === stage && e.elements.includes(runElement) && !used.has(e.id));
+      if (paralelos.length > 0 && (u0 * 65536) % 1 < ARENA_PARALELO_CHANCE) {
+        const p = paralelos[ramoFromRoll(u0, paralelos.length).pick];
+        used.add(p.id);
+        return {
+          namePt: p.name, nameEn: p.name, elements: [...p.elements], element: p.element, points: shape.points + Math.max(0, difficulty - 1),
+          cls, tier: stage, dropTier: shape.tier, form: stage, paraleloKey: p.key,
         };
       }
     }

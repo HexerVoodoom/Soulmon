@@ -137,7 +137,7 @@ De [`REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §3. **Não afrouxar.
 | # | Princípio | Onde mora no código |
 |---|---|---|
 | 1 | **Dinheiro compra conveniência, cosmético e identidade — nunca o comportamento nem o perdão dele** | `src/utils/currencies.ts` (`CREDIT_TO_BITS` só numa direção); teste `currencies.test.ts` |
-| 2 | **Nada de conteúdo aleatório vendido.** Drops se ganham jogando; a loja vende item determinado | Glitchtama nunca entra em `SHOP_ITEMS`; `rollDungeonHeartDrop` tem teto diário |
+| 2 | **Nada de conteúdo aleatório vendido.** Drops se ganham jogando; a loja vende item determinado | Glitchtama nunca entra em `SHOP_ITEMS` (⚠️ **EXCEÇÃO DE TESTE temporária, 10/11/2026 — hoje DESLIGADA (`GLITCHTAMA_TESTE_ON = false`), princípio valendo**: com `GLITCHTAMA_TESTE_ON` o Desfeito da Guilda o vende por 1 Bit, até 3 por dia — `utils/glitchtamaTeste.ts`; desligar a flag restaura o princípio); `rollDungeonHeartDrop` tem teto diário |
 | 3 | **Modernizar o atrito, nunca a dificuldade** | é o critério que separou `HEART_GOAL_RATIO` (perdão no coração) de afrouxar o dia completo — `src/utils/dailyReset.ts` |
 | 4 | **O jogo continua íntegro com o backend morto** | a regra do `?? padrão` no load (`src/contexts/GameStateContext.tsx`); nenhuma progressão exige rede |
 | 5 | **Regras explicadas, resultados surpreendentes** | a árvore de 11 formas é visível; os thresholds não. É a condição para o Oráculo não virar gacha caro |
@@ -403,7 +403,7 @@ Dono: `src/utils/currencies.ts`. Detalhe de regra em
   `bg`), e as recompensas do Vínculo são 100% cosméticas por regra escrita em
   `src/utils/bond.ts` (`BondRewardKind` não tem um kind de moeda, HP, energia
   nem `perfectDay`).
-- **Conteúdo aleatório** (princípio 2): o Glitchtama nunca é vendido.
+- **Conteúdo aleatório** (princípio 2): o Glitchtama nunca é vendido (⚠️ exceção de teste temporária: `GLITCHTAMA_TESTE_ON`, §48 da regra 02).
 
 Um comprovante de compra vale para **uma conta só** (`claimOrder`,
 `functions/api/_entitlements.js`); há teste. Ver

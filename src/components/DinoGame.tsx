@@ -1,6 +1,6 @@
 import { RankingPanel } from './RankingPanel';
 import type { GameChallenge } from '../utils/gameChallenge';
-import { lotIconName } from '../utils/lotIcons';
+import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getSpriteForStage, artFacesLeft } from '../utils/sprites';
 
@@ -698,7 +698,7 @@ export function DinoGame({ evolutionStage, demoCharacterId, language, onEarnPoin
       )}
       {phase === 'over' && (
         <ResultScreen
-          playAgainIcon={lotIconName('jogos', 'salao')} dailyEvent="dino"
+          playAgainIcon={lotIconName('jogos', 'salao')} playAgainArt={lotIconArt('jogos', 'salao')} dailyEvent="dino"
           language={language}
           outcome={prevBest > 0 && finalScore > prevBest ? 'record' : 'calm'}
           gameName={isPt ? 'Corrida com obstáculos' : 'Obstacle Run'}

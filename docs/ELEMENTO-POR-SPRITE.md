@@ -16,7 +16,7 @@ Decisão do dono (30/10/2026): **um sprite tem UM elemento e ele vale em todo lu
 - `GameStateContext.tsx`: o perfil público publica `petElementOf(gameState)` (antes só o dominante cru: iniciais e corvo ficavam sem elemento).
 - `match3Combat.ts`/`match3Pvp.ts`/`Match3Game.tsx`: inimigo do Elemental Fusion tem o elemento do sprite (roster, linha própria, oponente PvP).
 - `soulBarrage.ts`: filtro espaço por `elements[0]` (mesmo conjunto de antes).
-- Simulados (170 desde 05/11/2026; nos 120 novos o `element` é gravado antes de gerar a arte): `element` = elemento do prompt (33/50 mudaram), `artLine` só quando existe linha/inicial do MESMO elemento (senão vazio); save do simulado ganha `soulmonMeta.dominantElement`.
+- Simulados (170 desde 05/11/2026; nos 120 novos o `element` é gravado antes de gerar a arte): `element` = o que a ARTE mostra (revisado em 09/11/2026: 55 dos 170 trocados em relação ao elemento do prompt, que nunca nomeia o elemento; lista em `SIM_ELEMENTO_REVISADO` e `docs/reviews/2026-11-09-simulados-elemento.md`; antes, 30/10, era o elemento do prompt, 33/50 mudaram), `artLine` só quando existe linha/inicial do MESMO elemento (senão vazio); save do simulado ganha `soulmonMeta.dominantElement`.
 
 ## Tabelas
 ### Corvo neutro (1): `mascote:corvo` = `neutro` — a ÚNICA criatura neutra (31/10/2026, REGISTRO §211; `RAVEN_ENTRY`, sai só pelo `withRaven`, 1/1000).
@@ -74,7 +74,7 @@ Os prompts de `E:/Soulmon-assets/out/rodada3/poderosos/prompts.json` descrevem a
 | 006 | combinados/006-fogo_negro.png | fogo_negro | fogo+sombra |
 | 007 | combinados/007-chama_solar.png | chama_solar | fogo+luz |
 | 008 | combinados/008-fogo_infernal.png | fogo_infernal | fogo+vileza |
-| 009 | combinados/009-chama_azul.png | chama_azul | fogo+morte |
+| 009 | combinados/009-chama_azul.png | chama_azul | fogo+morte (arte do Champion azul, quebra-galho, §258) |
 | 010 | combinados/010-fenix.png | fenix | fogo+vida |
 | 011 | combinados/011-fervor.png | fervor | fogo+vigor |
 | 012 | combinados/012-pantano.png | pantano | agua+terra |

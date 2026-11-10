@@ -5,7 +5,9 @@ import { useBackLayer } from '../../utils/backStack';
 import type { MercMissionState, MercOrdem } from '../../utils/mercMissionSave';
 import { MercGuildSheet } from '../MercGuildSheet';
 import { LockNotice } from '../ui/LockBadge';
-import { ModalSheet, sm2Text } from '../form/FormKit';
+import { ModalSheet, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { useBlockedAction } from '../ui/BlockedActionModal';
+import { GLITCHTAMA_TESTE_ON, GLITCHTAMA_TESTE_PRECO_BITS, GLITCHTAMA_TESTE_COMPRAS_POR_DIA, type GlitchtamaBuyRefusal } from '../../utils/glitchtamaTeste';
 import { arteOnboarding } from '../onboarding/sequencia/assets';
 import { Icon } from '../ui/Icon';
 import bgGuilda from '../../assets/soulmon/mapa/bg-guilda.png';
@@ -28,7 +30,7 @@ const SO_NPC = {
 } as const;
 
 /** A GUILDA DOS MERCENÁRIOS: mapa de um nível só, sem área interna; cada prédio abre direto o NPC. Fica por cima do Mapa até o jogador voltar. */
-export function GuildaMapPage({ language, onClose, hoje, dayKey, bb = false, onAccept, onConfirm }: {
+export function GuildaMapPage({ language, onClose, hoje, dayKey, bb = false, onAccept, onConfirm, glitchtama }: {
   language: Language;
   onClose: () => void;
   /** A missão de hoje (dia do jogador), ou `null`. */
@@ -37,8 +39,12 @@ export function GuildaMapPage({ language, onClose, hoje, dayKey, bb = false, onA
   bb?: boolean;
   onAccept: (ordem: MercOrdem) => void;
   onConfirm: () => void;
+  /** ⚠️ TESTE (`utils/glitchtamaTeste.ts`): o Desfeito vende o 🌀. `left` = compras que ainda cabem hoje; `bits` = saldo; `onBuy` devolve a recusa (ou nada). */
+  glitchtama?: { left: number; bits: number; onBuy: () => GlitchtamaBuyRefusal | undefined };
 }) {
   const isPt = language === 'pt-BR';
+  const [blocked, explain] = useBlockedAction(language);
+  const [comprou, setComprou] = useState(false);
   const [npc, setNpc] = useState<keyof typeof SO_NPC | null>(null);
   const [lider, setLider] = useState<MercOrdem | null>(null);
   const [aviso, setAviso] = useState(false);
@@ -102,12 +108,45 @@ export function GuildaMapPage({ language, onClose, hoje, dayKey, bb = false, onA
           onConfirm={onConfirm}
         />
       )}
+      {blocked}
       {aviso && <LockNotice text={isPt ? 'Só dá para pegar uma missão por dia, de um dos três.' : 'You can take only one mission a day, from one of the three.'} />}
       {npc && aberto && (
         <ModalSheet open onClose={() => setNpc(null)} language={language} maxWidth={440} title={isPt ? aberto.pt : aberto.en}>
           <div data-guilda-npc={npc} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
             <img src={arteOnboarding(aberto.retrato)} alt="" aria-hidden="true" style={{ width: 160, height: 160, objectFit: 'contain' }} />
             <p style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{isPt ? aberto.falaPt : aberto.falaEn}</p>
+            {npc === 'desfeitos' && GLITCHTAMA_TESTE_ON && glitchtama && (
+              <>
+                <p style={{ ...sm2Text, margin: 0, textAlign: 'center' }} data-glitchtama-fala>
+                  {isPt ? 'Mas eu tenho algo que a torre deixou cair. Um Glitchtama, por um Bit.' : 'But I have something the tower dropped. A Glitchtama, for one Bit.'}
+                </p>
+                <button
+                  type="button"
+                  data-glitchtama-comprar
+                  onClick={() => {
+                    const r = glitchtama.onBuy();
+                    if (!r) { setComprou(true); return; }
+                    setComprou(false);
+                    if (r === 'bits') {
+                      explain({ kind: 'recursos', faltam: [{ namePt: 'Bits', nameEn: 'Bits', have: glitchtama.bits, need: GLITCHTAMA_TESTE_PRECO_BITS }] });
+                    } else {
+                      explain({
+                        kind: 'limite',
+                        textoPt: `O Desfeito só vende ${GLITCHTAMA_TESTE_COMPRAS_POR_DIA} Glitchtama por dia. Volte amanhã.`,
+                        textoEn: `The Undone sells only ${GLITCHTAMA_TESTE_COMPRAS_POR_DIA} Glitchtama a day. Come back tomorrow.`,
+                      });
+                    }
+                  }}
+                  style={{ ...sm2Button('primary', false), width: 'auto', minWidth: 220 }}
+                >
+                  {isPt ? `Comprar Glitchtama · ${GLITCHTAMA_TESTE_PRECO_BITS} Bit` : `Buy Glitchtama · ${GLITCHTAMA_TESTE_PRECO_BITS} Bit`}
+                </button>
+                <p style={{ ...sm2Hint, margin: 0 }} data-glitchtama-restam>
+                  {isPt ? `restam ${glitchtama.left} hoje` : `${glitchtama.left} left today`}
+                  {comprou ? (isPt ? ' · na mochila (Especiais)' : ' · in your bag (Specials)') : ''}
+                </p>
+              </>
+            )}
           </div>
         </ModalSheet>
       )}

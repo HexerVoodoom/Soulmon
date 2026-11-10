@@ -1,7 +1,7 @@
 import { RankingPanel } from './RankingPanel';
 import { ResultScreen } from './games/ResultScreen';
 import { essenceLedgerRows } from '../utils/resultEssences';
-import { lotIconName } from '../utils/lotIcons';
+import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { getOpponents } from '../utils/community';
 import { opponentSprite } from '../utils/opponentArt';
 import { npcFoe, pickPvpOpponent, pvpElementsForSeed, tileElementName, type PvpFoe } from '../utils/match3Pvp';
@@ -39,7 +39,7 @@ import { fxMirror } from '../utils/fxFacing';
 import { OWN_LINE_SPRITES, getSpriteForStage } from '../utils/sprites';
 import { rosterEntryOfKey } from '../utils/enemyRoster';
 import { dexIdsOfFoe } from '../utils/elementDex';
-import { essenceDropOfFoe, type EssenceDrop } from '../utils/essences';
+import { essenceDropsOfFoe, type EssenceDrop } from '../utils/essences';
 import { ElementAdvantageBadge } from './games/ElementAdvantageBadge';
 import { rosterSpriteOf } from '../utils/novosSoulmon';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
@@ -283,7 +283,7 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
     if (combatRef.current.outcome === 'win' && elementsDefeatedRef.current) {
       const ids = combatRef.current.enemies.flatMap(e => dexIdsOfFoe(rosterEntryOfKey(e.roster)));
       if (ids.length > 0) {
-        const drops = combatRef.current.enemies.map(e => { const r = rosterEntryOfKey(e.roster); return r ? essenceDropOfFoe(r.elements, r.stage) : undefined; }).filter((d): d is EssenceDrop => !!d);
+        const drops = combatRef.current.enemies.flatMap(e => { const r = rosterEntryOfKey(e.roster); return essenceDropsOfFoe(r, r?.stage); });
         elementsDefeatedRef.current(ids, drops);
         setEssenciasRodada(drops);
       }
@@ -685,7 +685,7 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
   const cellLabel = (t: Tile, r: number, c: number) => {
     const nome = { pt: tileElementName(elements[t.k], true), en: tileElementName(elements[t.k], false) };
     const extra = t.stone ? (isPt ? ', petrificada' : ', petrified') : t.wild ? (isPt ? ', quartzo coringa' : ', wildcard quartz') : '';
-    const esp = extra + (t.sp === 'row' ? (isPt ? ', limpa a linha' : ', clears the row') : t.sp === 'col' ? (isPt ? ', limpa a coluna' : ', clears the column') : '');
+    const esp = extra + (t.sp === 'both' ? (isPt ? ', limpa a linha e a coluna' : ', clears the row and the column') : t.sp === 'row' ? (isPt ? ', limpa a linha' : ', clears the row') : t.sp === 'col' ? (isPt ? ', limpa a coluna' : ', clears the column') : '');
     return isPt ? `${nome.pt}${esp}, linha ${r + 1}, coluna ${c + 1}` : `${nome.en}${esp}, row ${r + 1}, column ${c + 1}`;
   };
 
@@ -976,7 +976,7 @@ function Match3Round({ pvp: pvpProp, onReplayRound, language, evolutionStage, de
 
       {over ? (
         <ResultScreen
-          playAgainIcon={lotIconName('jogos', 'salao')} dailyEvent="match3"
+          playAgainIcon={lotIconName('jogos', 'salao')} playAgainArt={lotIconArt('jogos', 'salao')} dailyEvent="match3"
           language={language}
           outcome={newBest && !pvp && !boss ? 'record' : win ? 'win' : 'tired'}
           gameName={isPt ? 'Combina 3' : 'Match 3'}
@@ -1246,7 +1246,9 @@ const TileButton = forwardRef<HTMLButtonElement, TileButtonProps>(function TileB
       {tile.sp && (
         // a especial: setas na direção que limpa (a forma, não só a cor, diz o que ela faz)
         <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="55%" height="55%" style={{ position: 'absolute', pointerEvents: 'none', color: 'var(--sm2-gold-ink)', opacity: 0.95 }}>
-          {tile.sp === 'row'
+          {tile.sp === 'both'
+            ? <path d="M12 1 L16 6 H13.5 V10.5 H18 V8 L23 12 L18 16 V13.5 H13.5 V18 H16 L12 23 L8 18 H10.5 V13.5 H6 V16 L1 12 L6 8 V10.5 H10.5 V6 H8 Z" fill="currentColor" stroke="var(--sm2-surface)" strokeWidth="1" />
+            : tile.sp === 'row'
             ? <path d="M2 12 L8 7 V10 H16 V7 L22 12 L16 17 V14 H8 V17 Z" fill="currentColor" stroke="var(--sm2-surface)" strokeWidth="1" />
             : <path d="M12 2 L17 8 H14 V16 H17 L12 22 L7 16 H10 V8 H7 Z" fill="currentColor" stroke="var(--sm2-surface)" strokeWidth="1" />}
         </svg>

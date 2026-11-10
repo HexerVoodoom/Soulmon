@@ -9,12 +9,12 @@ type Par = { en: string; pt: string };
 const p = (en: string, pt: string): Par => ({ en, pt });
 export const tx = (par: Par, isPt: boolean) => (isPt ? par.pt : par.en);
 
-export const HEX_SLOT_COPY: Readonly<Record<HexSlot, { name: Par; port: Par; effect: Par; line: Par }>> = {
-  coroa: { name: p('Crown', 'Coroa'), port: p('Crown Port', 'Porta da Coroa'), effect: p('Special family', 'Família do especial'), line: p('Special', 'Especial') },
-  amuleto: { name: p('Amulet', 'Amuleto'), port: p('Amulet Port', 'Porta do Amuleto'), effect: p('Special element', 'Elemento do especial'), line: p('Special element', 'Elemento do especial') },
-  garra: { name: p('Claw', 'Garra'), port: p('Claw Port', 'Porta da Garra'), effect: p('Basic attack element', 'Elemento do ataque básico'), line: p('Basic', 'Básico') },
-  couraca: { name: p('Cuirass', 'Couraça'), port: p('Cuirass Port', 'Porta da Couraça'), effect: p('Element when defending (only the damage it takes)', 'Elemento na defesa (só o dano que recebe)'), line: p('Defense', 'Defesa') },
-  luvas: { name: p('Gloves', 'Luvas'), port: p('Gloves Port', 'Porta das Luvas'), effect: p('Basic attack reach (looks only)', 'Alcance do ataque básico (só visual)'), line: p('Reach', 'Alcance') },
+export const HEX_SLOT_COPY: Readonly<Record<HexSlot, { name: Par; port: Par; effect: Par; line: Par; desc: Par }>> = {
+  coroa: { name: p('Crown', 'Coroa'), port: p('Crown Port', 'Porta da Coroa'), effect: p('Special family', 'Família do especial'), line: p('Special', 'Especial'), desc: p('Changes the type of special', 'Troca o tipo de especial') },
+  amuleto: { name: p('Amulet', 'Amuleto'), port: p('Amulet Port', 'Porta do Amuleto'), effect: p('Special element', 'Elemento do especial'), line: p('Special element', 'Elemento do especial'), desc: p('Swap this chip, swap the special’s element', 'Troca esse chip, troca o elemento do especial') },
+  garra: { name: p('Claw', 'Garra'), port: p('Claw Port', 'Porta da Garra'), effect: p('Basic attack element', 'Elemento do ataque básico'), line: p('Basic', 'Básico'), desc: p('Swap this chip, swap the basic attack’s element', 'Troca esse chip, troca o elemento do ataque básico') },
+  couraca: { name: p('Cuirass', 'Couraça'), port: p('Cuirass Port', 'Porta da Couraça'), effect: p('Element when defending (only the damage it takes)', 'Elemento na defesa (só o dano que recebe)'), line: p('Defense', 'Defesa'), desc: p('Changes your element only for damage you take', 'Troca seu elemento só para o dano que você recebe') },
+  luvas: { name: p('Gloves', 'Luvas'), port: p('Gloves Port', 'Porta das Luvas'), effect: p('Basic attack reach (looks only)', 'Alcance do ataque básico (só visual)'), line: p('Reach', 'Alcance'), desc: p('Changes how the basic attack looks, not its power', 'Muda o visual do ataque básico, não a força') },
 };
 
 /** O nome do item: um HEX (dono, 01/11/2026). "HEX de Água" / "Water HEX". */

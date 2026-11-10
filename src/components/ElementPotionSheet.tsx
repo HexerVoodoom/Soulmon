@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from './form/FormKit';
+import { potionArt } from '../utils/potionArt';
 import { essenceName } from '../utils/essences';
 import { ElementBaseSlots, ElementIcon as Icon, elName, emptySlots } from './ElementBaseSlots';
-import { isPotionUnlocked, affordablePotionElements, canAffordPotion, potionCost } from '../utils/elementPotion';
+import { isPotionUnlocked, affordablePotionElements, canAffordPotion, potionCost, potionIngredients, potionKey } from '../utils/elementPotion';
 import type { Language } from '../utils/i18n';
 import { Icon as UiIcon } from './ui/Icon';
 
@@ -15,6 +16,8 @@ export interface ElementPotionSheetProps {
   open: boolean;
   language: Language;
   essences: Record<string, number> | undefined;
+  /** Inventário (`foodInventory`): o composto consome 1 poção de cada base. */
+  inventory?: Record<string, number>;
   /** Elemento da poção pendente no Soulmon (se houver), só para informar. */
   pending?: string;
   onBack: () => void;
@@ -23,14 +26,14 @@ export interface ElementPotionSheetProps {
   unlocked?: readonly string[];
 }
 
-export function ElementPotionSheet({ open, language, essences, pending, onBack, onCraft, unlocked }: ElementPotionSheetProps) {
+export function ElementPotionSheet({ open, language, essences, inventory, pending, onBack, onCraft, unlocked }: ElementPotionSheetProps) {
   const isPt = language === 'pt-BR';
   const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
   const [picked, setPicked] = useState<string | null>(null);
   const [confirm, setConfirm] = useState(false);
   const [done, setDone] = useState<string | null>(null);
 
-  const options = useMemo(() => affordablePotionElements(essences, slots), [essences, slots]);
+  const options = useMemo(() => affordablePotionElements(essences, slots, inventory), [essences, slots, inventory]);
   const isOpen = (id: string) => isPotionUnlocked(id, unlocked);
   const sel = picked && options.includes(picked) && isOpen(picked) ? picked : null;
   const setSlot = (i: number, id: string | null) => {
@@ -40,11 +43,12 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
   const back = () => { if (confirm) setConfirm(false); else onBack(); };
 
   const costRows = sel ? potionCost(sel) : [];
+  const potionRows = sel ? potionIngredients(sel) : [];
   const t = {
     title: isPt ? 'Criar poção de elemento' : 'Create element potion',
     back: isPt ? 'Voltar' : 'Back',
     hint: isPt ? 'Escolha até 3 elementos base. Aparecem só os elementos que contêm todos eles e que você consegue pagar.' : 'Pick up to 3 base elements. Only elements that contain all of them, and that you can afford, are listed.',
-    none: isPt ? 'Nenhum — você não tem essências suficientes para produzir um elemento deste.' : "None — you don't have enough essences to make an element like this.",
+    none: isPt ? 'Nenhum — faltam essências (base: 100 da própria; composto: 50 dele) ou a poção de cada elemento base dele.' : "None — you need essences (base: 100 of its own; compound: 50 of it) or one potion of each of its base elements.",
     generate: isPt ? 'Gerar' : 'Generate',
     confirmQ: isPt ? 'Gastar estas essências?' : 'Spend these essences?',
     confirmBtn: isPt ? 'Confirmar' : 'Confirm',
@@ -60,7 +64,7 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
     <ModalSheet open={open} title={t.title} onClose={onBack} onBack={back} language={language}
       // 30/10/2026 (dono): botão centralizado no fim do modal, com largura própria e ícone (frasco + o elemento escolhido).
       footer={(() => {
-        const disabled = confirm ? (!sel || !canAffordPotion(essences, sel)) : !sel;
+        const disabled = confirm ? (!sel || !canAffordPotion(essences, sel, inventory)) : !sel;
         const label = confirm ? t.confirmBtn : t.generate;
         return (
           <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -71,7 +75,7 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
                 if (!confirm) { setConfirm(true); return; }
                 if (sel) { onCraft(sel); setConfirm(false); setDone(sel); setPicked(null); }
               }}>
-              <UiIcon name="science" size={22} tone="inherit" />
+              <UiIcon name="auto_awesome" size={22} tone="inherit" />
               <span>{label}</span>
               {sel && <Icon id={sel} size={24} />}
             </button>
@@ -111,7 +115,7 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
 
         {confirm && sel && (
           <div data-potion-cost>
-            <p style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 8 }}><Icon id={sel} size={32} /><strong>{elName(sel, isPt)}</strong></p>
+            <p style={{ ...sm2Text, display: 'flex', alignItems: 'center', gap: 8 }}>{potionArt(sel) ? <img src={potionArt(sel)} alt="" aria-hidden="true" width={40} height={40} draggable={false} data-potion-art={sel} /> : <Icon id={sel} size={32} />}<strong>{elName(sel, isPt)}</strong></p>
             <p style={sm2Hint}>{t.confirmQ}</p>
             <ul style={{ listStyle: 'none', margin: '8px 0 0', padding: 0, display: 'grid', gap: 6 }}>
               {costRows.map(c => (
@@ -121,6 +125,16 @@ export function ElementPotionSheet({ open, language, essences, pending, onBack, 
                 </li>
               ))}
             </ul>
+            {potionRows.length > 0 && (
+              <ul style={{ listStyle: 'none', margin: '6px 0 0', padding: 0, display: 'grid', gap: 6 }}>
+                {potionRows.map(c => (
+                  <li key={c.id} data-cost-potion={c.id} style={{ display: 'flex', alignItems: 'center', gap: 10, ...sm2Text }}>
+                    <Icon id={c.id} size={24} /><span style={{ flex: 1 }}>{isPt ? 'Poção de ' : ''}{elName(c.id, isPt)}{isPt ? '' : ' potion'}</span>
+                    <span className="sm2-num">{c.qty} / {inventory?.[potionKey(c.id)] ?? 0}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
             <button type="button" onClick={back} style={{ ...sm2Button('quiet'), marginTop: 12 }}>{t.back}</button>
           </div>
         )}

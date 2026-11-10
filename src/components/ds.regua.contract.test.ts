@@ -86,7 +86,6 @@ const EXCECOES: Readonly<Record<string, Partial<Record<Regra, number>>>> = {
   'onboarding/sequencia/SequenciaPlayer.tsx': { fontSize: 3 },
   'perfil/ProfileAvatarButton.tsx': { fontSize: 1 },
   'perfil/SoulmonPerfil.tsx': { fontSize: 1 },
-  'play/OficinaSheet.tsx': { fontSize: 1 },
   'play/StrollFind.tsx': { fontSize: 1 },
   'ritual/RitualKit.tsx': { rolagem: 1 },
   'ui/InfoTip.tsx': { fontSize: 1, rolagem: 1 },

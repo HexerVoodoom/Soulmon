@@ -65,7 +65,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
   const ident = useMemo(() => hexIdentity(fighterIdentity(par, petElement), hx), [par, petElement, hx]);
   const family = hexFamily(dungeonFamily(par?.especial), hx);
   const enemy = useMemo(() => {
-    const wave = dungeonWaveOf(setup.seed, setup.ref.floor, combatant.level, evolutionStage);
+    const wave = dungeonWaveOf(setup.seed, setup.ref.floor, combatant.level, evolutionStage, false);
     return wave[Math.min(wave.length - 1, setup.ref.slot)];
   }, [setup, combatant.level, evolutionStage]);
   const seenKey = enemy?.stage;
@@ -153,7 +153,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
         isPt={isPt}
         scene={bg}
         me={{
-          key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, meHp) * hpMax), maxHp: hpMax,
+          key: 'me', sprite: petSprite, scale: petScale, stageIcon: evolutionStage, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, meHp) * hpMax), maxHp: hpMax,
           element: petEl, energy: (pronto ? battle.petEnergy : 0) / ENERGY_TRIGGER, status: pronto ? battle.status.me : undefined,
         }}
         foes={[{
@@ -183,7 +183,7 @@ export function RogueFight({ language, run, step, combatant, skills, petElement,
         onPauseChange={setPaused}
       >
         {oferta && (
-          <div role="dialog" aria-modal="true" data-revive-offer style={{ position: 'absolute', inset: 0, zIndex: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.6)', padding: 16 }}>
+          <div role="dialog" aria-modal="true" data-revive-offer style={{ position: 'absolute', inset: 0, zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,.6)', padding: 16 }}>
             <div style={{ background: 'var(--sm2-surface, #14221f)', color: 'var(--sm2-ink, #fff)', borderRadius: 12, padding: 16, maxWidth: 320, width: '100%', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <p style={{ margin: 0, fontWeight: 700 }}>{isPt ? 'Seu Soulmon caiu' : 'Your Soulmon went down'}</p>
               <p style={{ margin: 0 }}>{isPt ? 'Usar um Coraçãozinho para ele voltar com metade da vida e seguir a luta?' : 'Use a Little heart to bring him back with half his HP and keep fighting?'}</p>

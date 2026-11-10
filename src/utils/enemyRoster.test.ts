@@ -8,8 +8,8 @@ import { NOVOS_DATA, FORMAS_ALTAS } from './novosSoulmonData';
 import { RAMOS_INIMIGOS_DATA } from './enemyRosterData';
 import { newBossCombat } from './match3Boss';
 import { SPRITE_ELEMENT, rosterEntryElement } from './spriteElement';
-import { COMBINADOS_ART, INIMIGOS_API_ART, RAMOS_ART } from './enemyRosterArt';
-import { INIMIGOS_API_DATA } from './enemyRosterData';
+import { COMBINADOS_ART, INIMIGOS_API_ART, FORMAS_ART, PARALELOS_ART, RAMOS_ART } from './enemyRosterArt';
+import { INIMIGOS_API_DATA, INIMIGOS_DUO_DATA } from './enemyRosterData';
 import { rosterSpriteOf } from './novosSoulmon';
 import { buildDungeonWave } from './dungeon';
 import { newCombat } from './match3Combat';
@@ -24,8 +24,8 @@ import { isStrayFoe } from './wildFoeLabel';
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
 
 describe('roster de inimigos (M10): cobertura', () => {
-  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) = 473 entradas, chaves únicas', () => {
-    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120);
+  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) + 10 formas paralelas + 150 formas dos combinados 212-261 (09/11) + 6 das cadeias da API (§274) = 639 entradas, chaves únicas', () => {
+    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120 + 10 + 150 + 6);
     expect(ENEMY_ROSTER_KEYS.size).toBe(ENEMY_ROSTER.length);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'combinado').every(e => e.stage === 'rookie' && e.elements.length === 2)).toBe(true);
   });
@@ -45,9 +45,9 @@ describe('roster de inimigos (M10): cobertura', () => {
     }
   });
   it('5 inimigos da API (à parte; R10/R14/R12/R19/R42): arte 256² alfa binário, elemento existente, sem nome de franquia, nada de sufixo -mon', () => {
-    const api = ENEMY_ROSTER.filter(e => e.kind === 'api');
+    const api = ENEMY_ROSTER.filter(e => e.kind === 'api' && e.bancoN !== undefined);
     expect(api).toHaveLength(5);
-    expect(Object.keys(INIMIGOS_API_ART).sort()).toEqual(INIMIGOS_API_DATA.map(([id, st]) => `${id}-${st}`).sort());
+    expect(Object.keys(INIMIGOS_API_ART).sort()).toEqual([...INIMIGOS_API_DATA.map(([id, st]) => `${id}-${st}`), ...INIMIGOS_DUO_DATA.flatMap(([id]) => ['rookie', 'champion', 'ultimate'].map(st => `${id}-${st}`))].sort());
     const els = new Set(NOVOS_DATA.map(n => n.element));
     for (const e of api) {
       expect(els.has(e.element), e.key).toBe(true);
@@ -273,4 +273,125 @@ describe('ramos na Arena e no Desgarrado do Torneio (§221)', () => {
   it('sem exclusão por identificador: os 3 Soulmon de teste de 04/11 não têm id no código, só ficam de fora por não terem sido baixados', () => {
     expect(new Set(ENEMY_ROSTER.filter(e => e.kind === 'ramo').map(e => e.artFile))).toEqual(new Set(Object.keys(RAMOS_ART)));
   });
+});
+
+describe('formas paralelas de champion/ultimate (09/11/2026)', () => {
+  const par = ENEMY_ROSTER.filter(e => e.kind === 'paralelo');
+  const ELS = ['agua', 'industrial', 'chama_azul', 'brinquedo', 'raiz_profunda'];
+  it('10 entradas (5 elementos × champion/ultimate), no fim do roster, com arte, elemento certo e nome único sem -mon', () => {
+    expect(par).toHaveLength(10);
+    expect(ENEMY_ROSTER.slice(-166, -156)).toEqual(par);
+    expect(new Set(par.map(e => e.element))).toEqual(new Set(ELS));
+    for (const e of par) {
+      expect(['champion', 'ultimate']).toContain(e.stage);
+      expect(rosterSpriteOf(e), e.key).toBe(PARALELOS_ART[e.artFile!]);
+      expect(SPRITE_ELEMENT[`par:${e.id}`], e.key).toBe(e.element);
+      expect(rosterEntryElement(e)).toBe(e.element);
+      expect(e.name).not.toMatch(/mon$/i);
+    }
+    const nomes = ENEMY_ROSTER.map(e => e.name);
+    expect(new Set(par.map(e => e.name)).size).toBe(10);
+    for (const e of par) expect(nomes.filter(n => n === e.name), e.name).toHaveLength(1);
+  });
+  it('fora do sorteio comum: sem elemento pedido, nunca saem (por muitas sementes e níveis)', () => {
+    for (let seed = 1; seed <= 3000; seed++) for (const st of ['champion', 'ultimate'] as const) {
+      expect(pickEnemy(30, mulberry32(seed), { stage: st }).kind).not.toBe('paralelo');
+      expect(pickEnemy(30, mulberry32(seed), { stage: st, semRamos: true }).kind).not.toBe('paralelo');
+    }
+  });
+  it('masmorra temática: pedindo o elemento no champion/ultimate, sai a forma paralela dele (ou os irmãos do mesmo elemento); nunca de outro', () => {
+    for (const el of ELS) for (const st of ['champion', 'ultimate'] as const) {
+      const vistos = new Set<string>();
+      for (let seed = 1; seed <= 300; seed++) { const e = pickEnemy(30, mulberry32(seed), { stage: st, element: el }); expect(e.element).toBe(el); vistos.add(e.kind); }
+      expect(vistos.has('paralelo'), `${el} ${st}`).toBe(true);
+    }
+    // abaixo do level do champion/ultimate o teto de arte vale: nunca paralelo
+    for (let seed = 1; seed <= 200; seed++) expect(pickEnemy(3, mulberry32(seed), { stage: 'ultimate', element: 'chama_azul' }).stage).toBe('rookie');
+  });
+  it('Arena de run do elemento: aparecem só no champion/ultimate da escada, só se o elemento da run é componente, com chave válida e arte', () => {
+    const achou = new Map<string, number>();
+    for (let seed = 1; seed <= 3000; seed++) for (let r = 1; r <= 5; r++) for (const el of ARENA_BASE_ELEMENTS) {
+      const ladder = [0, 8, 14, 32][seed % 4];
+      for (const e of buildArenaRound(r, 1, mulberry32(seed * 11 + r), undefined, false, false, el, ladder)) {
+        if (!e.paraleloKey) continue;
+        const entry = rosterEntryOfKey(e.paraleloKey)!;
+        expect(entry.kind).toBe('paralelo');
+        expect(entry.stage).toBe(arenaLadderStage(ladder, r));
+        expect(entry.elements).toContain(el);
+        expect(e.element).toBe(entry.element);
+        expect(arenaFoeKey(e)).toBe(e.paraleloKey);
+        expect(rosterSpriteOf(entry)).toBeTruthy();
+        achou.set(entry.element, (achou.get(entry.element) ?? 0) + 1);
+      }
+    }
+    expect([...achou.keys()].sort()).toEqual([...ELS].sort());
+  });
+  it('Arena Desgarrada e Desgarrado do Torneio não recebem forma paralela', () => {
+    for (let seed = 1; seed <= 1500; seed++) for (let r = 1; r <= 5; r++) for (const e of buildArenaRound(r, 1, mulberry32(seed * 13 + r), undefined, true, false, ARENA_BASE_ELEMENTS[seed % ARENA_BASE_ELEMENTS.length], 32)) expect(e.paraleloKey).toBeUndefined();
+    for (let d = 1; d <= 400; d++) expect(strayForTournament('conta', `2026-11-${d}`).kind).not.toBe('paralelo');
+  });
+  it('determinismo: mesma semente = mesma rodada; a contagem de sorteios é a de antes (nenhum rng a mais)', () => {
+    const contagens = new Set<number>();
+    for (const el of ['agua', 'fogo', 'planta']) for (let seed = 1; seed <= 300; seed++) {
+      const roda = () => { let n = 0; const g = mulberry32(seed); const out = buildArenaRound(3, 1, () => { n++; return g(); }, undefined, false, false, el, 14); return { out, n }; };
+      const a = roda(), b = roda();
+      expect(b).toEqual(a);
+      contagens.add(a.n);
+    }
+    expect(contagens.size).toBeLessThanOrEqual(3);
+  });
+});
+
+describe('formas champion/ultimate/mega dos combinados 212-261 (09/11/2026)', () => {
+  const formas = ENEMY_ROSTER.filter(e => e.kind === 'forma');
+  it('150 entradas (50 elementos × 3), no fim do roster, com arte própria, nome único e elemento do rookie', () => {
+    expect(formas).toHaveLength(150);
+    expect(ENEMY_ROSTER.slice(-156, -6)).toEqual(formas);
+    expect(new Set(formas.map(e => e.element)).size).toBe(50);
+    expect(new Set(formas.map(e => e.name)).size).toBe(150);
+    expect(new Set(formas.map(e => rosterSpriteOf(e))).size).toBe(150);
+    const nomes = ENEMY_ROSTER.map(e => e.name);
+    for (const e of formas) {
+      expect(rosterSpriteOf(e), e.key).toBe(FORMAS_ART[e.artFile!]);
+      expect(nomes.filter(n => n === e.name), e.name).toHaveLength(1);
+      const rookie = ENEMY_ROSTER.find(r => r.kind === 'combinado' && r.id === e.id)!;
+      expect(e.element).toBe(rookie.element);
+      expect(e.elements).toEqual(rookie.elements);
+      expect(e.basico).toEqual(rookie.basico);
+    }
+  });
+  it('fora do sorteio comum e do Desgarrado: nunca saem sem o elemento pedido', () => {
+    for (let seed = 1; seed <= 2000; seed++) for (const st of ['champion', 'ultimate', 'mega'] as const) {
+      expect(pickEnemy(40, mulberry32(seed), { stage: st }).kind).not.toBe('forma');
+    }
+    for (let d = 1; d <= 300; d++) expect(strayForTournament('conta', `2026-11-${d}`).kind).not.toBe('forma');
+  });
+  it('com o elemento pedido: champion no Lv 7, ultimate no 14, mega no 22; antes disso, rookie; nunca outro elemento', () => {
+    for (const el of new Set(formas.map(e => e.element))) {
+      const quando: Array<[number, 'rookie' | 'champion' | 'ultimate' | 'mega']> = [[3, 'rookie'], [7, 'champion'], [14, 'ultimate'], [22, 'mega']];
+      for (const [lv, st] of quando) {
+        const e = pickEnemy(lv, mulberry32(5), { element: el, stage: 'mega' });
+        expect(e.element, el).toBe(el);
+        expect(e.stage, `${el} Lv${lv}`).toBe(st);
+        expect(e.kind).toBe(st === 'rookie' ? 'combinado' : 'forma');
+      }
+    }
+  });
+
+describe('cadeias da API como selvagens (§274, 09/11/2026)', () => {
+  it('Krowlix (praga) e Mantralun (arco_iris): rookie/champion/ultimate no fim do roster, sorteáveis, com arte 256²', () => {
+    const duo = ENEMY_ROSTER.slice(-6);
+    expect(duo.map(e => e.key)).toEqual(['krowlix-rookie', 'krowlix-champion', 'krowlix-ultimate', 'mantralun-rookie', 'mantralun-champion', 'mantralun-ultimate']);
+    for (const e of duo) {
+      expect(e.kind).toBe('api');
+      expect(rosterSpriteOf(e), e.key).toBeTruthy();
+      const b = readFileSync(join(process.cwd(), 'src/assets/soulmon/inimigos-api', `${e.artFile}.png`));
+      expect(b.readUInt32BE(16), e.key).toBe(256);
+      expect(b.readUInt32BE(20), e.key).toBe(256);
+    }
+    expect(duo.slice(0, 3).every(e => e.element === 'praga' && e.elements.join('+') === 'vileza+morte')).toBe(true);
+    expect(duo.slice(3).every(e => e.element === 'arco_iris' && e.elements.join('+') === 'fada+luz')).toBe(true);
+  });
+});
+
 });

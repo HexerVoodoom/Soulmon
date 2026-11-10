@@ -15,6 +15,8 @@
 import { readLocal, writeLocal } from './safeStorage';
 
 export const STORAGE_KEYS = {
+  /** Pedido de avaliação na Play (aparelho): `{accepted?:true,lastAskedAt?:ms}`. Ver `utils/playReview.ts`. */
+  PLAY_REVIEW: 'soulmon-play-review',
   GAME_STATE: 'soulmon_state_v1',
   /** WP0.10 — dia do último dia ruim, para fechar `after_bad_day` NO APARELHO.
    *  Esta chave nunca é enviada: o que sai é uma FAIXA de distância, e é por
@@ -217,6 +219,8 @@ export const STORAGE_KEYS = {
    *  respostas 200 são possíveis, e é esta lista que impede o segundo crédito de Emblemas.
    *  Só recibos (nada de nome, guilda ou quantia). Dono: `utils/guildClaimLocal.ts`. */
   GUILD_CLAIMED: 'soulmon-guild-claimed',
+  /** Caixa de cartas (§246): os `mid` das cartas novas que o Papus JÁ anunciou neste aparelho (CSV, até 50). Só o aviso da fila; o resto mora no servidor. */
+  MAIL_ANNOUNCED: 'soulmon-mail-announced',
   /** Feira do Chefe: o último evento da volta que a fila JÁ mostrou (`<k>:<kind>:<dia>`), gravado ao MOSTRAR. */
   FEIRA_EVENTO_VISTO: 'soulmon-feira-evento-visto',
   /** Feira (04/11/2026): o desafio que a volta da Missão trouxe HOJE (`{ day, k, done }`). Só do aparelho, nunca no
@@ -234,6 +238,10 @@ export const STORAGE_KEYS = {
   FOCO_WORKSHOP_PLAN: 'soulmon-foco-workshop-plan',
   /** Rascunho do planejamento da sessão: sobrevive a fechar a folha e a recarregar. */
   FOCO_PLAN_DRAFT: 'soulmon-foco-plan-draft',
+  /** Chaves da sessão em preparo no quadro da Oficina (§247). */
+  FOCO_JOURNEY_KEYS: 'soulmon-foco-journey-keys',
+  /** Ritmo e cenário escolhidos por último no quadro da Oficina (§247). */
+  FOCO_JOURNEY_PREFS: 'soulmon-foco-journey-prefs',
   /** Preferência da OFICINA DO FOCO: vibração curta ao fim. LIGADA por padrão (decisão do dono,
    *  04/10/2026): só `'false'` desliga. Interruptor em Configurações › Seus dados. */
   FOCO_VIBRATE: 'soulmon-foco-vibrate',

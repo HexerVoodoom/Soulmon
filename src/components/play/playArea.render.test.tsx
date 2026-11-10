@@ -116,7 +116,7 @@ const ESPERA_LAZY_MS = 30_000;
 // Os doubles de `vi.mock` acima já valem; depois disso o `lazy()` do AreaView
 // resolve do cache de módulos e o `waitFor` só espera o React, não o disco.
 await Promise.all([
-  import('./PlaySheets'), import('../DungeonGame'), import('./OficinaSheet'),
+  import('./PlaySheets'), import('../DungeonGame'),
   import('./CadernoSheet'), import('./PasseioSheet'),
 ]);
 vi.setConfig({ testTimeout: 60_000 });
@@ -159,15 +159,12 @@ describe('Exploração — Zeph e a Masmorra', () => {
     expect(container.querySelector('[data-area-sheet-npc-line]')!.textContent).toContain('Zeph');
   });
 
-  it('Oficina do Foco: sem a chave abre a etapa 1 (Prepare to Focus); com a chave, a etapa 2 (N8)', async () => {
-    const sem = renderWithCss(<PlayAreaView {...props({ area: 'forja', focusKeyActive: false } as Partial<PlayProps>)} />);
-    fireEvent.click(sem.container.querySelector('[data-area-lot="oficina"]')!);
-    await achar(sem.container, '[data-oficina-etapa="1"] [data-preparar-foco]');
-    sem.unmount();
-    const com = renderWithCss(<PlayAreaView {...props({ area: 'forja', focusKeyActive: true } as Partial<PlayProps>)} />);
-    fireEvent.click(com.container.querySelector('[data-area-lot="oficina"]')!);
-    await achar(com.container, '[data-oficina]');
-    expect(com.container.querySelector('[data-oficina-etapa="1"]')).toBeNull();
+  it('Oficina do Foco (§247): abre o quadro de cards, com ou sem a chave antiga', async () => {
+    const r = renderWithCss(<PlayAreaView {...props({ area: 'forja', focusKeyActive: false } as Partial<PlayProps>)} />);
+    fireEvent.click(r.container.querySelector('[data-area-lot="oficina"]')!);
+    await achar(r.container, '[data-focus-board] [data-focus-session]');
+    expect(r.container.querySelectorAll('[data-focus-card]')).toHaveLength(6);
+    expect(r.container.querySelector('[data-oficina-etapa="1"]')).toBeNull();
   });
 
   it('Masmorra: folha mostra dificuldade e placar lidos das chaves do jogo, e diz que perder não custa coração', async () => {

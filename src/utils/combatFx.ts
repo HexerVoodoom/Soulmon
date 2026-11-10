@@ -293,18 +293,13 @@ export interface StatusFxDef {
 
 const L = (en: string, pt: string): Bilingual => ({ en, pt });
 
-/** Glifos citados que ainda não têm arte (fila em docs/ASSETS-A-GERAR.md): o selo mostra forma + texto. */
-export const GLIFOS_PENDENTES: readonly string[] = [
-  'st-queimadura', 'st-veneno', 'st-silencio', 'st-lentidao',
-  // §236: selo próprio dos 11 elementos; até a arte chegar, forma + texto
-  'st-peso', 'st-retardo', 'st-ferrugem', 'st-distorcao', 'st-ofuscado', 'st-curto-circuito', 'st-atordoado', 'st-selado',
-  'st-seiva', 'st-po-de-fada', 'st-folego', 'st-escudo-peso', 'st-blindagem', 'st-furia', 'st-postura', 'st-aceleracao', 'st-carga',
-];
+/** Glifos citados que ainda não têm arte (fila em docs/ASSETS-A-GERAR.md): o selo mostra forma + texto. Vazio desde 09/11/2026 (REGISTRO §228/§236 instalados). */
+export const GLIFOS_PENDENTES: readonly string[] = [];
 
 export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
   buff: {
     // `fisico`/`magico`: mesma mecânica de `atk`; glifo próprio pendente (docs/ASSETS-A-GERAR.md), usa o de ataque até lá.
-    glyph: { _: 'st-buff-atk', atk: 'st-buff-atk', spd: 'st-buff-spd', furia: 'st-furia', postura: 'st-postura', aceleracao: 'st-aceleracao', carga: 'st-carga' },
+    glyph: { _: 'st-buff-atk', atk: 'st-buff-atk', fisico: 'st-atk-fisico', magico: 'st-atk-magico', spd: 'st-buff-spd', furia: 'st-furia', postura: 'st-postura', aceleracao: 'st-aceleracao', carga: 'st-carga' },
     loop: 'fx-buff-loop-sheet', still: null, mark: '▲',
     label: { _: L('Boost', 'Reforço'), atk: L('Attack up', 'Ataque em alta'), spd: L('Speed up', 'Velocidade em alta'), fisico: L('Physical attack up', 'Ataque físico em alta'), magico: L('Magic attack up', 'Ataque mágico em alta'), furia: L('Fury', 'Fúria'), postura: L('Stance', 'Postura'), aceleracao: L('Acceleration', 'Aceleração'), carga: L('Charge', 'Carga') },
     short: { _: L('UP', 'UP'), atk: L('ATK', 'ATQ'), spd: L('SPD', 'VEL'), fisico: L('PHYS', 'FÍS.'), magico: L('MAG', 'MÁG.'), furia: L('FURY', 'FÚRIA'), postura: L('STNC', 'POST.'), aceleracao: L('ACCEL', 'ACEL.'), carga: L('CHRG', 'CARGA') },
@@ -327,27 +322,27 @@ export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
     label: { _: L('Damage over time', 'Dano contínuo') },
     short: { _: L('DoT', 'DoT') },
   },
-  // Marcadores PROVISÓRIOS: o glifo `st-*` ainda não existe, então o selo cai na forma + texto; o loop empresta o do DoT.
+  // Glifo e loop próprios instalados em 09/11/2026 (REGISTRO §228); a forma + texto (`mark`) segue como fallback.
   queimadura: {
     glyph: { _: 'st-queimadura' },
-    loop: 'fx-dot-loop-sheet', still: null, mark: '♨',
+    loop: 'fx-queimadura-loop-sheet', still: null, mark: '♨',
     label: { _: L('Burn', 'Queimadura') },
     short: { _: L('BURN', 'QUEIM.') },
   },
   veneno: {
     glyph: { _: 'st-veneno' },
-    loop: 'fx-dot-loop-sheet', still: null, mark: '☣',
+    loop: 'fx-veneno-loop-sheet', still: null, mark: '☣',
     label: { _: L('Poison', 'Veneno') },
     short: { _: L('PSN', 'VEN.') },
   },
   silencio: {
     glyph: { _: 'st-silencio', ofuscado: 'st-ofuscado', curtoCircuito: 'st-curto-circuito', atordoado: 'st-atordoado', selado: 'st-selado' },
-    loop: null, still: null, mark: '∅',
+    loop: 'fx-silencio-loop-sheet', still: null, mark: '∅',
     label: { _: L('Silenced', 'Silêncio'), ofuscado: L('Dazzled', 'Ofuscado'), curtoCircuito: L('Short circuit', 'Curto-circuito'), atordoado: L('Stunned', 'Atordoado'), selado: L('Sealed', 'Selado') },
     short: { _: L('MUTE', 'MUDO'), ofuscado: L('DAZE', 'OFUSC.'), curtoCircuito: L('SHORT', 'CURTO'), atordoado: L('STUN', 'ATORD.'), selado: L('SEAL', 'SELO') },
   },
   lento: {
-    glyph: { _: 'st-lentidao', peso: 'st-peso', retardo: 'st-retardo', ferrugem: 'st-ferrugem', distorcao: 'st-distorcao' },
+    glyph: { _: 'st-velocidade', peso: 'st-peso', retardo: 'st-retardo', ferrugem: 'st-ferrugem', distorcao: 'st-distorcao' },
     loop: 'fx-debuff-loop-sheet', still: null, mark: '▽',
     label: { _: L('Speed down', 'Velocidade em baixa'), peso: L('Weighed down', 'Peso'), retardo: L('Time lag', 'Retardo'), ferrugem: L('Rust', 'Ferrugem'), distorcao: L('Warped', 'Distorção') },
     short: { _: L('SLOW', 'LENTO'), peso: L('HEAVY', 'PESO'), retardo: L('LAG', 'RETARD.'), ferrugem: L('RUST', 'FERR.'), distorcao: L('WARP', 'DIST.') },
@@ -360,12 +355,12 @@ export const STATUS_FX: Readonly<Record<StatusFxKind, StatusFxDef>> = {
   },
   hot: {
     glyph: { _: 'st-hot', seiva: 'st-seiva', poDeFada: 'st-po-de-fada', folego: 'st-folego' },
-    loop: null, still: 'fx-heal', mark: '+↑',
+    loop: 'fx-regen-loop-sheet', still: 'fx-heal', mark: '+↑',
     label: { _: L('Healing over time', 'Cura contínua'), seiva: L('Sap', 'Seiva'), poDeFada: L('Fairy dust', 'Pó de fada'), folego: L('Second wind', 'Fôlego') },
     short: { _: L('HoT', 'HoT'), seiva: L('SAP', 'SEIVA'), poDeFada: L('DUST', 'PÓ'), folego: L('WIND', 'FÔL.') },
   },
   escudo: {
-    glyph: { _: 'st-escudo', escudoPeso: 'st-escudo-peso', blindagem: 'st-blindagem' },
+    glyph: { _: 'st-escudo', terra: 'st-def-terra', agua: 'st-def-agua', escudoPeso: 'st-escudo-peso', blindagem: 'st-blindagem' },
     loop: null, still: 'fx-shield', mark: '▣',
     label: { _: L('Shield', 'Escudo'), terra: L('Earth defense up', 'Defesa de terra em alta'), agua: L('Water defense up', 'Defesa de água em alta'), escudoPeso: L('Heavy shield', 'Escudo de peso'), blindagem: L('Plating', 'Blindagem') },
     short: { _: L('SHLD', 'ESCU'), terra: L('DEF', 'DEF'), agua: L('DEF', 'DEF'), escudoPeso: L('HEAVY', 'PESO'), blindagem: L('PLATE', 'BLIND.') },

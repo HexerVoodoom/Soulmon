@@ -1,7 +1,11 @@
+import { sanitizeGlitchtamaBuy } from '../utils/glitchtamaTeste';
+import { sanitizeJourneyCredited } from '../utils/focusBoard';
 import { sanitizeMailClaimed } from '../utils/mensageiro';
 import { sanitizeFunSession } from '../utils/funSession';
+import { sanitizeFunTickets, type FunTickets } from '../utils/funTickets';
 import { normalizeGuildMission } from '../utils/guildMission';
 import { sanitizeCrystal } from '../utils/evolutionCrystal';
+import { sanitizeFormaSnapshots } from '../utils/formaSnapshot';
 import { sanitizeFormasAlt, sanitizeFormaAltEquipada, spriteVisorOf } from '../utils/formasAlternativas';
 import { sanitizeRogueRun, type RogueRun } from '../utils/rogueDungeonSave';
 import { sanitizeDungeonReturnSummary, type DungeonReturnSummary } from '../utils/dungeonReturnSummary';
@@ -19,6 +23,7 @@ import { createContext, useContext, useState, useEffect, useMemo, useRef, type R
 import { type ActivityCategory } from '../types/attributes';
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS, BB_MAX_HP } from '../types/progression';
 import { isBBStage, sanitizeStageId } from '../utils/bbStage';
+import { devolverPocoes, sanitizeDungeonPotions } from '../utils/dungeonPotions';
 import { sanitizeDungeonAway, sanitizeDungeonDaily, type DungeonAway } from '../utils/dungeonIdle';
 import { sanitizeHunger, sanitizeEnergyClock } from '../utils/hunger';
 import { sanitizeHungerPenalty } from '../utils/hungerPenalty';
@@ -118,7 +123,7 @@ import { sanitizeLibraryAck, type LibraryAck } from '../utils/libraryNew';
 import { sanitizeStrayPlayersSeen, type StrayPlayerSeen } from '../utils/strayPlayers';
 import { sanitizeRestaurant, type RestaurantState } from '../utils/restaurantState';
 import { sanitizeEssences, sanitizeEssenceSpent, sanitizeEssenceAway, type EssenceAway } from '../utils/essences';
-import { sanitizeElementId } from '../utils/elementPotion';
+import { sanitizeElementId, curarPocaoOrfa } from '../utils/elementPotion';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
 import type { Answers } from '../utils/soulProfile/personality/types';
 
@@ -378,6 +383,8 @@ export interface GameState {
   formasAlt?: import('../utils/formasAlternativas').FormasAlt;
   /** Qual forma alternativa está equipada em cada forma (ausente = a original). Cosmético. */
   formaAltEquipada?: import('../utils/formasAlternativas').FormaAltEquipada;
+  /** O QUE CADA FORMA CARREGA (09/11/2026, `utils/formaSnapshot.ts`): poção, elemento do nível e skills de cada forma já vivida. */
+  formaSnapshots?: import('../utils/formaSnapshot').FormaSnapshots;
   /** WP1.3 — os três gestos do primeiro dia (`utils/firstDay.ts`). Some
    *  sozinho na virada; nunca vira lista de pendências. */
   firstDay?: import('../utils/firstDay').FirstDayProgress | null;
@@ -487,6 +494,8 @@ export interface GameState {
   /** Quantos 🌀 Glitchtama foram usados no DIA DO JOGADOR — o teto que impede
    *  a masmorra de comprar a escada de evolução (`utils/specialItemUse.ts`). */
   glitchtamaUse?: { day: string; used: number };
+  /** ⚠️ TESTE (`utils/glitchtamaTeste.ts`): compras do 🌀 no Desfeito hoje — dia do jogador, no save. */
+  glitchtamaBuy?: { day: string; used: number };
   /** O drop RARO do 🌀 na masmorra: semana (segunda) do último drop e quantos caíram (teto 1/semana — `utils/glitchtamaDrop.ts`). */
   glitchtamaDrop?: { week: string; dropped: number };
   /** Tetos da comida premium (drop por dia/semana, uso por dia) — `utils/premiumFood.ts`. */
@@ -518,6 +527,9 @@ export interface GameState {
    *  especial, semente, instantâneo do jogador). Presente = o Soulmon está NA MASMORRA (ocupado; a Home mostra a plaquinha) e o avanço
    *  fora do app é calculado por `utils/dungeonAway.ts` › `applyDungeonAway` ao voltar. Ausente = em casa. Tipo e higienização: `utils/dungeonIdle.ts`. */
   dungeonAway?: DungeonAway;
+  /** 🧪 As poções de cura que o jogador DEIXOU com o Soulmon na masmorra (08/11/2026): o Soulmon usa uma sozinho a cada queda da descida
+   *  fora do app; o que sobra volta ao inventário quando a descida acaba. Dono: `utils/dungeonPotions.ts`. Ausente = nada deixado. */
+  dungeonPotions?: Record<string, number>;
   /** 🍽️ A FOME (beta-2 3.5, REGISTRO §40): nível 0..100 + o instante da medida. NUNCA se lê direto — `hungerAt`/`energyStatus` (`utils/hunger.ts`)
    *  somam a queda por timestamp. Comer SOBE a fome (não a energia). Ausente = cheia (sem dívida retroativa). Fome não tira coração nem Bits. */
   hunger?: { v: number; at: number };
@@ -531,6 +543,8 @@ export interface GameState {
   dungeonDaily?: { day: string; layers: number };
   /** 🎟️ Sessão dos minijogos de diversão (04/11/2026, `utils/funSession.ts`): 1 energia = 3 rodadas em 30 min. Ausente = nenhuma sessão. */
   funSession?: { startedAt: number; rounds: number };
+  /** 🎫 Tickets dos minijogos do Salão (09/11/2026, `utils/funTickets.ts`): 1 energia = 3 tickets, teto 5, 24 h por lote. Ausente = nenhum ticket. Substitui a `funSession`. */
+  funTickets?: FunTickets;
   /** ☀️🌤️🌙 Check-ins do dia já resgatados (beta-2 4.1, `utils/checkIns.ts`): UMA recompensa por janela por dia do jogador; sem histórico. */
   checkIns?: { day: string; claimed: Array<'morning' | 'afternoon' | 'night'> };
   /** 🎲 Rerolls dos 3 cards da Arena livre feitos no dia do jogador (28/10/2026, `utils/arenaSorteio.ts`): 3 grátis, depois Bits. O contador (dia ISO + n) também é a semente dos cards, então reabrir mostra os mesmos. Servidor: monotônico no dia (`_dayCounters.js`). */
@@ -626,6 +640,8 @@ export interface GameState {
   mailClaimed?: string[];
   /** Dia do jogador em que concluiu uma sessão da Oficina: abre o Calabouço naquele dia (§239). */
   dungeonKeyDay?: string;
+  /** Recibos da jornada do foco já creditados no dia (§247). */
+  journeyCredited?: { day: string; ids: string[] };
   /** 02/11/2026: dia do jogador (AAAA-MM-DD) em que o Refúgio já devolveu a energia do dia (`utils/refugio/energia.ts`; 1×/dia). */
   refugioEnergyDay?: string;
   /** beta3 M7: incursão do Calabouço roguelike do dia (`utils/rogueDungeon.ts`) (outro dia = incursão nova na leitura, via `runForDay`). */
@@ -1332,7 +1348,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         essences: sanitizeEssences(loadedState.essences), // essências: ausente/lixo = objeto vazio
         essenceSpent: sanitizeEssenceSpent(loadedState.essenceSpent), // gasto acumulado: ausente/lixo = objeto vazio
         evolutionPotion: sanitizeElementId(loadedState.evolutionPotion), // poção pendente: id fora do catálogo = nenhuma
-        potionElement: sanitizeElementId(loadedState.potionElement),
+        potionElement: curarPocaoOrfa(sanitizeElementId(loadedState.potionElement), typeof loadedState.evolutionStage === 'string' ? loadedState.evolutionStage : undefined, sanitizeFormaAltEquipada(loadedState.formaAltEquipada)),
         essenceAway: sanitizeEssenceAway(loadedState.essenceAway),
         offerShownWeek: typeof loadedState.offerShownWeek === 'string' ? loadedState.offerShownWeek : undefined,
         offerDismissed: loadedState.offerDismissed === true,
@@ -1396,6 +1412,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           const g = obj<unknown>(loadedState.glitchtamaUse);
           return typeof g.day === 'string' ? { day: g.day, used: num(g.used, 0) } : undefined;
         })(),
+        glitchtamaBuy: sanitizeGlitchtamaBuy(loadedState.glitchtamaBuy),
         // Teto semanal do drop do Glitchtama. Save antigo entra `undefined` = nenhum drop na semana (nunca fica travado).
         glitchtamaDrop: sanitizeGlitchtamaDrop(loadedState.glitchtamaDrop),
         // D-97: chips por estágio. Ausente/lixo → `undefined` (0 usados): o save antigo
@@ -1442,6 +1459,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // A descida que continua sozinha: registro inteiro ou nada (campo ruim → `undefined`, o Soulmon volta para casa). Mesma regra de
         // `sanitizeDungeonAway` (`utils/dungeonIdle.ts`).
         dungeonAway: sanitizeDungeonAway(loadedState.dungeonAway),
+        dungeonPotions: sanitizeDungeonPotions(loadedState.dungeonPotions),
         // Fome, relógio da energia, camadas do dia e check-ins (beta-2): registro bom ou nada (lixo → ausente = cheia / relógio novo /
         // nenhuma camada / nenhuma janela). Mesmas regras de `utils/hunger.ts`, `dungeonIdle.ts` e `checkIns.ts`.
         hunger: sanitizeHunger(loadedState.hunger),
@@ -1449,6 +1467,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         hungerPenalty: sanitizeHungerPenalty(loadedState.hungerPenalty),
         dungeonDaily: sanitizeDungeonDaily(loadedState.dungeonDaily),
         funSession: sanitizeFunSession(loadedState.funSession),
+        funTickets: sanitizeFunTickets(loadedState.funTickets),
         checkIns: sanitizeCheckIns(loadedState.checkIns),
         arenaReroll: sanitizeArenaReroll(loadedState.arenaReroll),
         arenaRuns: sanitizeArenaReroll(loadedState.arenaRuns),
@@ -1541,6 +1560,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         focusKeyDay: sanitizeFocusKeyDay(loadedState.focusKeyDay),
         mailClaimed: sanitizeMailClaimed(loadedState.mailClaimed),
         dungeonKeyDay: sanitizeFocusKeyDay(loadedState.dungeonKeyDay),
+        journeyCredited: sanitizeJourneyCredited(loadedState.journeyCredited),
         refugioEnergyDay: sanitizeRefugioEnergyDay(loadedState.refugioEnergyDay),
         rogueDungeon: sanitizeRogueRun(loadedState.rogueDungeon),
         dungeonReturnPending: sanitizeDungeonReturnSummary(loadedState.dungeonReturnPending),
@@ -1592,6 +1612,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         evolutionCrystal: sanitizeCrystal(loadedState.evolutionCrystal),
         formasAlt: sanitizeFormasAlt(loadedState.formasAlt),
         formaAltEquipada: sanitizeFormaAltEquipada(loadedState.formaAltEquipada),
+        formaSnapshots: sanitizeFormaSnapshots(loadedState.formaSnapshots),
         incubation: (() => {
           const v = loadedState.incubation as { v?: unknown; since?: unknown } | undefined;
           if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined;
@@ -2075,6 +2096,13 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
   reconciliarRef.current = reconciliarComNuvem;
 
   // D3 — pedido vindo do 409. Indeterminado/ilegível: tenta de novo com recuo (máx 4), POST suspenso.
+  // 🧪 Invariante das poções deixadas na masmorra (08/11/2026): estoque SEM descida viva volta para o inventário (save antigo, descida
+  // apagada por qualquer caminho, outro aparelho). Idempotente: sem estoque ou com descida viva o updater devolve o MESMO estado.
+  const pocoesSemDescida = !!gameState.dungeonPotions && !gameState.dungeonAway;
+  useEffect(() => {
+    if (pocoesSemDescida) setGameState(prev => devolverPocoes(prev));
+  }, [pocoesSemDescida]);
+
   useEffect(() => {
     if (pedidoReconciliar === 0) return;
     let cancelado = false;

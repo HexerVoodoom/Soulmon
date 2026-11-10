@@ -52,7 +52,7 @@ describe('the declared table', () => {
     expect(DUNGEON_SLOTS.map((s) => !!s.special)).toEqual([false, false, false, false, false, true]);
     expect(DUNGEON_SLOTS).toHaveLength(LADDER_TIERS.length);
     expect({ ...DUNGEON_FLOOR_GROWTH }).toEqual(DECLARED.growth);
-    expect(PVE_FAMILY_POWER.dungeon).toEqual({ direct: 1, dot: 1.1, heal: 0.8, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5 });
+    expect(PVE_FAMILY_POWER.dungeon).toEqual({ direct: 1, dot: 1.1, heal: 0.88, shield: 1, atkBuff: 1.3, defDebuff: 1.3, spdBuff: 1.5 });
   });
   it('dungeonFoe(L, slot, floor) = the balanced mirror of L with hp × slot.hp × (1 + g·(f−1)) and bonus slot.power × (1 + p·(f−1)) − 1', () => {
     for (const L of RULER_LEVELS) {

@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent } from 'react';
-import { lotIconName } from '../../utils/lotIcons';
+import { lotIconArt, lotIconName } from '../../utils/lotIcons';
 import { MindTutorialScreen, MindTutorialLink, useMindTutorial } from './MindTutorial';
 import type { EarningGameProps } from './types';
 import { sm2Button, sm2Hint } from '../form/FormKit';
@@ -296,7 +296,7 @@ export function PatchesGame({ language, evolutionStage, demoCharacterId, onEarnP
 
       {solved && !challenge && (
         <ResultScreen
-          playAgainIcon={lotIconName('jogos', 'mente')} dailyEvent="patches"
+          playAgainIcon={lotIconName('jogos', 'mente')} playAgainArt={lotIconArt('jogos', 'mente')} dailyEvent="patches"
           language={language}
           outcome="win"
           gameName={title}

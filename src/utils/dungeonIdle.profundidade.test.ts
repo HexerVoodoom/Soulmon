@@ -71,12 +71,15 @@ describe('zona de conforto, andar efetivo e teto', () => {
 describe('ponto de retorno, marcos e recorde', () => {
   it('começa logo depois do último marco limpo, nunca acima do teto', () => {
     expect(startLayerFor(0, 100)).toBe(1);
-    expect(startLayerFor(4, 100)).toBe(1);
-    expect(startLayerFor(5, 100)).toBe(6);
-    expect(startLayerFor(37, 100)).toBe(36);
-    expect(startLayerFor(37, 10)).toBe(6); // teto 10: começa no 6, ainda dá para tentar o 10
-    expect(startLayerFor(999, 999)).toBe(996);
-    expect(startLayerFor(50, 3)).toBe(1);
+    expect(startLayerFor(1, 100)).toBe(1);
+    expect(startLayerFor(2, 100)).toBe(3);
+    expect(startLayerFor(4, 100)).toBe(5);
+    expect(startLayerFor(5, 100)).toBe(5); // no máximo 1 camada abaixo do recorde (§31, emenda 09/11)
+    expect(startLayerFor(37, 100)).toBe(37);
+    expect(startLayerFor(38, 100)).toBe(39);
+    expect(startLayerFor(37, 10)).toBe(9); // teto 10: começa no 9, ainda dá para tentar o 10
+    expect(startLayerFor(999, 999)).toBe(999);
+    expect(startLayerFor(50, 3)).toBe(3);
   });
   it('marco = múltiplo de 5', () => {
     expect([4, 5, 6, 10, 0].map(isMilestoneLayer)).toEqual([false, true, false, true, false]);

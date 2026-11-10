@@ -37,9 +37,14 @@ import type { CadernoEntry } from '../../utils/cadernoSave';
 import type { ArenaReroll } from '../../utils/arenaSorteio';
 import type { QuestMark } from '../../utils/questMarks';
 import type { FocusLootRequest } from '../../utils/focusExpedition';
-import type { FocusRewardResult } from '../play/OficinaSheet';
+import type { JourneyGrants } from '../../utils/focusJourney';
+import type { FocusLootItem } from '../../utils/focusExpedition';
+export type FocusRewardResult = { accepted: boolean; items: FocusLootItem[]; chancePercent: number };
 import { ScreenSkeleton } from '../ui/ScreenSkeleton';
-import { isFunGame, type FunSessionStatus } from '../../utils/funSession';
+import { isFunGame } from '../../utils/funSession';
+import type { FunTicketStatus } from '../../utils/funTickets';
+import { FunTicketCostContext, TicketFan } from '../play/TicketFan';
+import { setActive, trackMinigame } from '../../utils/usageTime';
 import type { PasseioAchado } from '../play/PasseioSheet';
 import {
   usePlayPrefetch, loadPlaySheets, loadDungeonGame, loadDinoGame, loadRPSGame, loadMatch3Game, loadEcoGame, loadBolhasGame, loadZipGame, loadSeloGame,
@@ -68,6 +73,8 @@ const CambistaSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({
 const ConquistasSheet = lazy(() => import('../mercado/MercadoSheets').then(m => ({ default: m.ConquistasSheet })));
 // ⚒️ O Soulsmith (07/10/2026): abre a tela de equipamento do Combate v3 (PR8b), que saiu das Estatísticas. Lazy — a arte dos itens é sob demanda.
 const ForgeCard = lazy(() => import('../ForgeCard'));
+// 09/11/2026: a entrada do Soulsmith (Vitra fala + botão para a Forja de Alma), antes do mapa em tela cheia.
+const SoulsmithSheet = lazy(() => import('../SoulsmithSheet'));
 const HexsmithSheet = lazy(() => import('../hex/HexsmithSheet'));
 const TournamentPage = lazy(() => import('../TournamentPage').then(m => ({ default: m.TournamentPage })));
 const GuildSheet = lazy(() => import('../guild/GuildSheet').then(m => ({ default: m.GuildSheet })));
@@ -82,8 +89,7 @@ const MenteSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.MenteShee
 const RefugioSheet = lazy(() => loadPlaySheets().then(m => ({ default: m.RefugioSheet })));
 // 🧭 O Passeio (30/09/2026): a folha carrega o catálogo das regiões — por isso lazy.
 const RogueKeyGate = lazy(() => import('../play/RogueKeyGate').then(m => ({ default: m.RogueKeyGate })));
-const PrepararFocoSheet = lazy(() => import('../play/PrepararFocoSheet').then(m => ({ default: m.PrepararFocoSheet })));
-const OficinaSheet = lazy(() => import('../play/OficinaSheet').then(m => ({ default: m.OficinaSheet })));
+const FocusBoard = lazy(() => import('../play/FocusBoard').then(m => ({ default: m.FocusBoard })));
 const PasseioSheet = lazy(() => import('../play/PasseioSheet').then(m => ({ default: m.PasseioSheet })));
 const CadernoSheet = lazy(() => import('../play/CadernoSheet').then(m => ({ default: m.CadernoSheet })));
 const Match3Game = lazy(() => loadMatch3Game().then(m => ({ default: m.Match3Game })));
@@ -124,7 +130,7 @@ export interface PlayHandlers {
   onDinoScore: (score: number) => void;
   /** 🎟️ Sessão dos minijogos de diversão (04/11/2026, `utils/funSession.ts`): o estado AGORA e a porta que começa uma rodada
    *  (cobra 1 energia ao abrir sessão; `false` = sem energia). Ausente (testes antigos) = jogos do Salão sem custo. */
-  funSession?: { status: (nowMs: number) => FunSessionStatus; onStartRound: () => boolean };
+  funSession?: { status: (nowMs: number) => FunTicketStatus; onBuy?: () => boolean; onStartRound: () => boolean };
   onSpendBits?: (pts: number) => boolean;
   /** Arena livre (28/10/2026): contador de rerolls do save, dia do jogador e o pedido de reroll (o App desconta Bits e grava). */
   arena?: { dayIso: string; reroll?: ArenaReroll; onReroll: () => boolean; runs?: ArenaReroll; ladder?: number; onRunEnd?: (outcome: 'win' | 'loss' | 'draw') => void };
@@ -142,6 +148,8 @@ export interface PlayHandlers {
   /** §239: a chave do Calabouço: concluir uma sessão da Oficina abre a dungeon naquele dia. Ausente = sem trava (testes antigos). */
   dungeonKeyActive?: boolean;
   onFocusSessionComplete?: () => void;
+  /** §247: recibos pagos pela jornada do foco (o crédito no save é idempotente). */
+  onJourneyGrants?: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => void;
   /** beta3 F1: o timer de foco começou — a masmorra desce em background. */
   onFocusStart?: (focusEndsAt?: number) => 'started' | 'busy' | 'no-hp' | 'no-energy';
   /** O timer de foco foi pausado / continuou (novo fim) / cancelado: a descida do foco acompanha. */
@@ -392,8 +400,14 @@ export function AreaView(props: AreaViewProps) {
   const funChargedRef = useRef<string | null>(null);
   /* Sem energia: fecha o jogo e devolve à folha do Salão, com o aviso em destaque. */
   const [funRefused, setFunRefused] = useState(false);
+  /** O Soulsmith: a entrada com a Vitra vem antes do mapa em tela cheia (09/11/2026). */
+  const [forgeEntered, setForgeEntered] = useState(false);
   const refuseFun = () => { setGame(null); setModeChosen(null); setFunRefused(true); setSheet('salao'); };
-  const replayRound = () => { if (!funApi || funApi.onStartRound()) return true; refuseFun(); return false; };
+  const replayRound = () => {
+    if (funApi && !funApi.onStartRound()) { refuseFun(); return false; }
+    if (game) { endRoundRef.current?.(); endRoundRef.current = trackMinigame(game); } // nova rodada = nova partida nas métricas
+    return true;
+  };
   const funRunning = !!game && isFunGame(game) && (!MINIGAME_GATE[game] || modeChosen?.game === game);
   const funKey = funRunning ? `${game}:${modeChosen?.level ?? 0}:${modeChosen ? 'm' : 'n'}` : null;
   useEffect(() => {
@@ -402,6 +416,16 @@ export function AreaView(props: AreaViewProps) {
     funChargedRef.current = funKey;
     if (!funApi.onStartRound()) refuseFun();
   }, [funKey, funApi]);
+  /* Métricas de tempo (docs/PLANO-METRICAS.md): o prédio aberto (feature) e o jogo em andamento (minigame). Só agregado; o nome vem do registro. */
+  useEffect(() => { setActive('feature', sheet ? `${area}.${sheet}` : null); return () => setActive('feature', null); }, [area, sheet]);
+  const endRoundRef = useRef<((o?: 0 | 1 | 2) => void) | null>(null);
+  const gameRunning = !!game && (!MINIGAME_GATE[game] || modeChosen?.game === game);
+  useEffect(() => {
+    if (!gameRunning || !game) return;
+    endRoundRef.current = trackMinigame(game);
+    setActive('minigame', game);
+    return () => { endRoundRef.current?.(); endRoundRef.current = null; setActive('minigame', null); };
+  }, [gameRunning, game]);
   const { onInitialGameConsumed } = props;
   useEffect(() => { if (props.initialGame) onInitialGameConsumed?.(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const { onInitialSheetConsumed } = props;
@@ -420,7 +444,7 @@ export function AreaView(props: AreaViewProps) {
   /* D-16: capturado na montagem (o `App` limpa o pedido logo depois e a folha do Mercado é `lazy` — ela monta DEPOIS disso).
      Vale só para a primeira abertura: fechar a folha apaga. */
   const [stallKind, setStallKind] = useState(props.initialStallKind);
-  const close = () => { setSheet(null); setStallKind(undefined); };
+  const close = () => { setSheet(null); setStallKind(undefined); setForgeEntered(false); };
   // R1: qualquer camada de tela cheia (folha, jogo, duelo) avisa o `App`, que
   // esconde o topo sobre a cena — ele não pode competir com o ✕/voltar da camada.
   const layerOpen = sheet !== null || duelOpen || game !== null;
@@ -599,7 +623,7 @@ export function AreaView(props: AreaViewProps) {
     const rogueFull = area === 'exploracao' && open?.id === 'dungeon' && !!play.rogue && play.dungeonKeyActive !== false;
     const rogueGate = area === 'exploracao' && open?.id === 'dungeon' && !!play.rogue && play.dungeonKeyActive === false;
     /** O mapa do Soulsmith (ferreiro) também abre em TELA CHEIA, de borda a borda (05/11/2026, pedido do dono); o Voltar fecha de volta à área. */
-    const forgeFull = area === 'forja' && open?.id === 'ferreiro';
+    const forgeFull = area === 'forja' && open?.id === 'ferreiro' && forgeEntered;
     const base = {
       evolutionStage: props.evolutionStage,
       demoCharacterId: props.demoCharacterId,
@@ -610,7 +634,7 @@ export function AreaView(props: AreaViewProps) {
     const mindTut = (id: MindGameId) => (mt ? { seen: mt.seen[id] === true, onShown: () => mt.onShown(id) } : undefined);
     return (
       <AreaScene areaId={area} language={language} background={area === 'forja' ? FORJA_BG : PLAY_AREA_BG[area]} lots={lots} notice={lockNote}>
-        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate && !forgeFull} onClose={close}>
+        <AreaSheet areaId={area} lotId={open?.id} language={language} title={open?.label ?? ''} closeLabel={closeLabel} open={!!open && !rogueFull && !rogueGate && !forgeFull} onClose={close} npcOverlay={open?.id === 'salao' && play.funSession ? <TicketFan count={play.funSession.status(Date.now()).count} language={language} /> : undefined}>
           <Suspense fallback={<SheetLoading language={language} />}>
             {open?.id === 'passeio' && (
               <PasseioSheet
@@ -623,13 +647,15 @@ export function AreaView(props: AreaViewProps) {
               />
             )}
             {/* beta3 N8 (26/10/2026): a Oficina abre primeiro a etapa 1 (Prepare to Focus); concluída, libera a etapa 2 (workshop/timer). */}
-            {open?.id === 'oficina' && play.focusKeyActive === false && <div data-oficina-etapa="1"><PrepararFocoSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} keyActive={false} onPrepared={play.onFocusPrepared} /></div>}
-            {open?.id === 'oficina' && play.focusKeyActive !== false && <OficinaSheet language={language} todayKey={play.todayKey} tasks={play.focusTasks ?? []} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onFocusReward={play.onFocusReward} onPlanReward={play.onPlanReward} onSessionComplete={play.onFocusSessionComplete} onFocusCycle={() => props.onDailyEvent?.('foco')} onFocusStart={play.onFocusStart} onFocusPause={play.onFocusPause} onFocusResume={play.onFocusResume} onFocusCancel={play.onFocusCancel} />}
+            {/* §247: a Oficina é o quadro de cards + a jornada (substitui o Preparar → chave → timer). */}
+            {open?.id === 'oficina' && <FocusBoard language={language} todayKey={play.todayKey ?? playerDayIso(new Date(), undefined)} saveId={props.guild.saveId} tasks={play.focusTasks ?? []} petSprite={props.guild.mySprite ?? undefined} onCompleteTask={play.onCompleteFocusTask ?? (() => {})} onGrants={play.onJourneyGrants ?? (() => {})} onFocusCycle={() => props.onDailyEvent?.('foco')} />}
             {open?.id === 'caderno' && <CadernoSheet language={language} todayKey={play.todayKey} entries={props.caderno?.entries ?? []} onChange={props.caderno?.onChange ?? (() => {})} />}
             {open?.id === 'fenda' && <MasmorraSheet language={language} bitsToday={play.minigameBitsToday} onStart={() => start('masmorra')} />}
+            {/* 09/11/2026 (dono): a Vitra fala primeiro e o botão "Ir para a Forja de Alma" abre o mapa em tela cheia. */}
+            {open?.id === 'ferreiro' && !forgeFull && <SoulsmithSheet language={language} onGo={() => setForgeEntered(true)} />}
             {/* 🔣 A Hexsmith (01/11/2026): o mapa de slots que reescreve o código hex (`components/hex/HexsmithSheet.tsx`, lê/grava o save pelo contexto). */}
             {open?.id === 'hexsmith' && <HexsmithSheet language={language} sprite={props.guild.mySprite} demoCharacterId={props.demoCharacterId} evolutionStage={props.evolutionStage} skills={props.skills} petElement={props.petElement} />}
-            {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={startSalao} funStatus={play.funSession?.status} refused={funRefused} />}
+            {open?.id === 'salao' && <SalaoSheet language={language} bitsToday={play.minigameBitsToday} onStart={startSalao} funStatus={play.funSession?.status} onBuyTickets={play.funSession?.onBuy ? () => { play.funSession!.onBuy!(); } : undefined} refused={funRefused} />}
             {open?.id === 'mente' && <MenteSheet language={language} bitsToday={play.minigameBitsToday} onStart={start} />}
             {open?.id === 'refugio' && <RefugioSheet language={language} onStart={start} />}
             {open?.id === 'dungeon' && !play.rogue && <RogueDungeonPlaceholder language={language} />}
@@ -652,6 +678,7 @@ export function AreaView(props: AreaViewProps) {
               gameName={MINIGAME_GATE[game]!.name[language === 'pt-BR' ? 'pt' : 'en']}
               rankings={MINIGAME_GATE[game]!.rankings}
               saveId={props.guild.saveId}
+              tickets={isFunGame(game) ? funApi?.status(Date.now()).count : undefined}
               withDifficulty={!!MINIGAME_GATE[game]!.difficulty}
               pveVsPvp={!!MINIGAME_GATE[game]!.pveVsPvp}
               onPick={level => setModeChosen({ game, level })}
@@ -660,6 +687,7 @@ export function AreaView(props: AreaViewProps) {
           </div>
         )}
         {game && (!MINIGAME_GATE[game] || modeChosen?.game === game) && (
+          <FunTicketCostContext.Provider value={!!funApi && isFunGame(game)}>
           <div style={{ position: 'absolute', inset: 0, zIndex: 6000 }}>
           <Suspense fallback={<ScreenSkeleton language={language} variant="overlay" label={language === 'pt-BR' ? 'Abrindo' : 'Opening'} />}>
             {game === 'masmorra' && renderMasmorra()}
@@ -719,6 +747,7 @@ export function AreaView(props: AreaViewProps) {
             {game === 'chama' && <ChamaGame {...base} onEarnPoints={props.onEarnPoints} onComplete={play.onRefugioComplete} />}
           </Suspense>
           </div>
+          </FunTicketCostContext.Provider>
         )}
       </AreaScene>
     );

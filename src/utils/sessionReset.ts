@@ -88,7 +88,7 @@ export const PREFIXO_DO_APP = /^(soulmon|digiapp)[-_]/;
 export function chavesDaConta(): string[] {
   const vivas = new Set<string>(listLocalKeys().filter(k => PREFIXO_DO_APP.test(k)));
   for (const k of Object.values(STORAGE_KEYS)) vivas.add(k);
-  for (const k of ['soulmon-telemetry-tier', 'soulmon-telemetry-week', 'soulmon-chat-feedback-day']) vivas.add(k);
+  for (const k of ['soulmon-telemetry-tier', 'soulmon-telemetry-week', 'soulmon-telemetry-usage', 'soulmon-chat-feedback-day']) vivas.add(k);
   return [...vivas].filter(k => !SOBREVIVEM_AO_LOGOUT.includes(k));
 }
 

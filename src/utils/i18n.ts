@@ -583,10 +583,10 @@ export const translations: Record<Language, Translations> = {
     stages: {
       baby: 'Baby',
       inTraining: 'In-Training',
-      rookie: 'Rookie',
-      champion: 'Champion',
-      ultimate: 'Ultimate',
-      mega: 'Mega',
+      rookie: 'Awakened',
+      champion: 'Ascendant',
+      ultimate: 'Transcendent',
+      mega: 'Apotheosis',
     },
 
     nav: {
@@ -871,10 +871,10 @@ export const translations: Record<Language, Translations> = {
     stages: {
       baby: 'Bebê',
       inTraining: 'Em Treinamento',
-      rookie: 'Iniciante',
-      champion: 'Campeão',
-      ultimate: 'Supremo',
-      mega: 'Mega',
+      rookie: 'Desperto',
+      champion: 'Ascendente',
+      ultimate: 'Transcendente',
+      mega: 'Apoteose',
     },
 
     nav: {

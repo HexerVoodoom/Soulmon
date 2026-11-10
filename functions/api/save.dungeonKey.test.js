@@ -19,11 +19,22 @@ const post = (e, dungeonKeyDay) => save({
   env: e,
 });
 
-describe('save.js: chave do Calabouço (§239)', () => {
-  it('guarda um dia válido e descarta lixo', async () => {
-    const ok = env();
-    await post(ok, '2026-11-05');
-    expect(JSON.parse(ok.store.get(ID)).dungeonKeyDay).toBe('2026-11-05');
+describe('save.js: chave do Calabouço (§239, provada pelo razão no §247)', () => {
+  it('dia novo só entra com a jornada concluída no razão do servidor', async () => {
+    const sem = env();
+    await post(sem, '2026-11-05');
+    expect(JSON.parse(sem.store.get(ID)).dungeonKeyDay).toBeUndefined();
+    const com = env();
+    com.store.set(`fjd:${ID}:2026-11-05`, JSON.stringify({ done: 1 }));
+    await post(com, '2026-11-05');
+    expect(JSON.parse(com.store.get(ID)).dungeonKeyDay).toBe('2026-11-05');
+  });
+  it('a chave já gravada fica; forjar outro dia não troca; lixo sai', async () => {
+    const e = env();
+    e.store.set(`fjd:${ID}:2026-11-05`, JSON.stringify({ done: 1 }));
+    await post(e, '2026-11-05');
+    await post(e, '2026-11-06');
+    expect(JSON.parse(e.store.get(ID)).dungeonKeyDay).toBe('2026-11-05');
     const bad = env();
     await post(bad, { sempre: true });
     expect(JSON.parse(bad.store.get(ID)).dungeonKeyDay).toBeUndefined();

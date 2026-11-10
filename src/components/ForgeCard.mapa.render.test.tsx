@@ -58,7 +58,11 @@ describe('Soulsmith em mapa', () => {
     const onBack = vi.fn();
     localStorage.setItem(STORAGE_KEYS.GAME_STATE, JSON.stringify({ activities: [], tasks: [], soulmonMeta: { baseName: 'Fagulha' } }));
     render(<GameStateProvider><ForgeCard language="pt-BR" view="map" onBack={onBack} /></GameStateProvider>);
-    click(document.querySelector('[data-vitra-back]')!);
+    const back = document.querySelector('[data-vitra-back]')!;
+    expect(back.hasAttribute('data-back-circle')).toBe(true);
+    expect(back.textContent).toBe('');
+    expect(back.getAttribute('aria-label')).toBe('Voltar');
+    click(back);
     expect(onBack).toHaveBeenCalledTimes(1);
   });
 
@@ -78,6 +82,7 @@ describe('Soulsmith em mapa', () => {
     const opcoes = [...pop.querySelectorAll('[data-forge-option]')];
     expect(opcoes.map(o => o.getAttribute('data-forge-attr'))).toEqual(['atk', 'def']);
     expect(pop.textContent).toMatch(/Minério 3\/2/);
+    expect(pop.querySelector('[data-forge-pop-bonus]')!.textContent).toMatch(/Esta peça dá agora: .*\+/);
     click(opcoes[1]);
     click(pop.querySelector('[data-forge-upgrade-btn]')!);
     expect(document.querySelector('[data-forge-pop]')).toBeNull();
@@ -85,6 +90,23 @@ describe('Soulsmith em mapa', () => {
     expect(estado().forge.picks['eq-nucleo-t1']).toEqual(['b']);
     expect(estado().mats.ore).toBe(1);
     expect(document.querySelector('[data-forge-seal]')).not.toBeNull();
+  });
+
+  it('tocar num ingrediente abre onde conseguir (missão do prédio + expedições), PT e EN; tocar de novo fecha', () => {
+    abrir(nivel1({ buildingQuests: bq({ ore: 1 }) }));
+    click(chakra('nucleo'));
+    const custo = document.querySelector('[data-forge-cost="ore"]')!;
+    click(custo);
+    const onde = document.querySelector('[data-forge-where="ore"]')!;
+    expect(custo.getAttribute('aria-expanded')).toBe('true');
+    expect(onde.textContent).toMatch(/Minério · A missão de .+ rende um por dia\. Também aparece nas expedições de foco: Caverna\./);
+    click(custo);
+    expect(document.querySelector('[data-forge-where]')).toBeNull();
+    cleanup();
+    abrir(nivel1({ buildingQuests: bq({ ore: 1 }) }), 'en-US');
+    click(chakra('nucleo'));
+    click(document.querySelector('[data-forge-cost="ore"]')!);
+    expect(document.querySelector('[data-forge-where="ore"]')!.textContent).toMatch(/Ore · The .+ mission pays one a day\. It also turns up on focus expeditions: Cavern\./);
   });
 
   it('sem material o botão fica desabilitado e nada é gasto', () => {
@@ -101,6 +123,7 @@ describe('Soulsmith em mapa', () => {
     click(chakra('rastro'));
     expect(document.querySelector('[data-forge-pop]')!.textContent).toMatch(/Ainda não forjado/);
     expect(document.querySelectorAll('[data-forge-option]')).toHaveLength(0);
+    expect(document.querySelector('[data-forge-pop-bonus]')).toBeNull();
     click(chakra('rastro'));
     expect(document.querySelector('[data-forge-pop]')).toBeNull();
     click(chakra('rastro'));
@@ -113,6 +136,7 @@ describe('Soulsmith em mapa', () => {
     click(chakra('nucleo'));
     const pop = document.querySelector('[data-forge-pop]')!;
     expect(pop.textContent).toMatch(/Lv 1/);
+    expect(pop.textContent).toMatch(/This piece gives now: /);
     expect(pop.textContent).toMatch(/More damage/);
     expect(pop.textContent).toMatch(/Upgrade/);
     expect(pop.textContent).not.toMatch(/Nível|Aprimorar/);

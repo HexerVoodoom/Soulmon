@@ -227,6 +227,8 @@ const PARES: Par[] = [
   ['gold-fill sobre bg (UI)', '--sm2-gold-fill', '--sm2-bg', AA_UI],
   ['gold-fill sobre surface (UI)', '--sm2-gold-fill', '--sm2-surface', AA_UI],
   ['danger-fill sobre surface (UI)', '--sm2-danger-fill', '--sm2-surface', AA_UI],
+  // Chaves da jornada (§247): ícone e borda, 3:1 nas três superfícies.
+  ...(['bancada','relampago','quadrantes','brejo','elo','pena'] as const).flatMap(k => (['bg','surface','surface-2'] as const).map(f => [`chave ${k} sobre ${f} (UI)`, `--sm2-key-${k}`, `--sm2-${f}`, AA_UI] as Par)),
 ];
 
 for (const [nomeTema, tokens] of [

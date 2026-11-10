@@ -22,6 +22,7 @@ export async function onRequestPost({ request, env }) {
   const now = Date.now();
   const sent = await enqueueMail(env, store, id, {
     mid: `gm-teste:${new Date(now).toISOString().slice(0, 10)}`,
+    titlePt: 'Carta de teste', titleEn: 'Test letter',
     bodyPt: 'Carta de teste do Papus. Se você leu isto, o correio funciona.',
     bodyEn: 'Test letter from Papus. If you can read this, the mail works.',
     at: now,

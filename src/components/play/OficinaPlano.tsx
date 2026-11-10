@@ -75,14 +75,17 @@ const loadDraft = (): { draft: SessionDraft; step: StepId } | null => {
   return { draft: toDraft(s), step: (STEP_ORDER as readonly unknown[]).includes(raw?.step) ? raw?.step as StepId : 'preparar' };
 };
 
-export function OficinaPlano({ language, tasks, initial, keepDraft = false, onSave, onCancel }: {
+export function OficinaPlano({ language, tasks, initial, keepDraft = false, onSave, onCancel, only }: {
   language: Language; tasks: PlanTask[]; initial: SessionDraft; keepDraft?: boolean;
   onSave: (draft: SessionDraft) => void; onCancel: () => void;
+  /** §247: abre UMA técnica (o card de chave). `onKey` devolve se a chave saiu; sem ela, a folha diz o que falta. */
+  only?: { step: StepId; onKey: (draft: SessionDraft, info: { noTasks: boolean; dumpDone: boolean }) => boolean };
 }) {
   const isPt = language === 'pt-BR';
   const [restored] = useState(() => (keepDraft ? loadDraft() : null));
   const [draft, setDraft] = useState<SessionDraft>(restored?.draft ?? initial);
-  const [step, setStep] = useState<StepId>(restored?.step ?? 'preparar');
+  const [step, setStep] = useState<StepId>(only?.step ?? restored?.step ?? 'preparar');
+  const [keyMissing, setKeyMissing] = useState(false);
   const [dumpEnd, setDumpEnd] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [missing, setMissing] = useState<'name' | 'environment' | null>(null);
@@ -131,7 +134,7 @@ export function OficinaPlano({ language, tasks, initial, keepDraft = false, onSa
 
   return (
     <section ref={rootRef} data-oficina-plano style={{ ...sheetCard, alignItems: 'stretch', gap: 12 }}>
-      <header style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      {!only && <><header style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <p style={{ ...sectionHead, flex: 1 }}>{isPt ? 'Planejar sessão' : 'Plan session'}</p>
         <button type="button" data-oficina-cancel-session onClick={() => { clearDraft(); onCancel(); }} style={softLink}>{isPt ? 'Cancelar' : 'Cancel'}</button>
       </header>
@@ -143,7 +146,7 @@ export function OficinaPlano({ language, tasks, initial, keepDraft = false, onSa
           <span className="sm-oficina-bar" style={{ display: 'block', width: `${(stepNumber(step) / STEP_ORDER.length) * 100}%`, height: '100%', background: 'var(--sm2-primary)' }} />
         </div>
         <span style={{ ...sm2Hint, margin: 0, whiteSpace: 'nowrap' }}>{isPt ? `Etapa ${stepNumber(step)} de ${STEP_ORDER.length}` : `Step ${stepNumber(step)} of ${STEP_ORDER.length}`}</span>
-      </div>
+      </div></>}
 
       <div data-oficina-step={step} style={{ display: 'grid', gap: 10 }}>
         <header style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -224,14 +227,19 @@ export function OficinaPlano({ language, tasks, initial, keepDraft = false, onSa
       {missing && <p role="alert" data-oficina-save-missing style={{ ...sm2Text, margin: 0, color: 'var(--sm2-gold-ink, var(--sm2-ink))' }}>{missing === 'name'
         ? (isPt ? 'Dê um nome à sessão, no topo. Depois toque em Salvar sessão de novo.' : 'Just add a session name at the top, then tap Save session again.')
         : (isPt ? 'Escolha aqui para onde o Soulmon vai e toque em Salvar sessão.' : 'Choose where Soulmon goes right here, then tap Save session.')}</p>}
-      <footer style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+      {only && keyMissing && <p role="alert" data-oficina-key-missing style={{ ...sm2Text, margin: 0 }}>{isPt ? 'Faça a técnica acima e toque de novo.' : 'Do the technique above, then tap again.'}</p>}
+      {only ? <footer style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <button type="button" data-oficina-cancel-key onClick={onCancel} style={softLink}>{isPt ? 'Cancelar' : 'Cancel'}</button>
+        {pool.length === 0 && ['dois-minutos', 'eisenhower', 'sapo'].includes(step) && <button type="button" data-oficina-no-tasks onClick={() => setKeyMissing(!only.onKey(draft, { noTasks: true, dumpDone }))} style={softLink}>{isPt ? 'Não tenho tarefas agora' : 'No tasks right now'}</button>}
+        <button type="button" data-oficina-take-key onClick={() => setKeyMissing(!only.onKey(draft, { noTasks: false, dumpDone }))} style={{ ...sm2Button('primary'), marginLeft: 'auto' }}>{isPt ? 'Pegar a chave' : 'Take the key'}</button>
+      </footer> : <footer style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         {step !== 'preparar' && <button type="button" data-oficina-back onClick={() => setStep(prevStep(step))} style={softLink}>{isPt ? 'Voltar' : 'Back'}</button>}
         {step !== 'revisar' && <>
           <button type="button" data-oficina-skip onClick={() => setStep(nextStep(step))} style={softLink}>{isPt ? 'Pular' : 'Skip'}</button>
           <button type="button" data-oficina-next onClick={() => setStep(nextStep(step))} style={{ ...sm2Button('primary'), marginLeft: 'auto' }}>{isPt ? 'Próxima etapa' : 'Next step'}</button>
         </>}
         {step === 'revisar' && <button type="button" data-oficina-save-session onClick={trySave} style={{ ...sm2Button('primary'), marginLeft: 'auto' }}>{isPt ? 'Salvar sessão' : 'Save session'}</button>}
-      </footer>
+      </footer>}
     </section>
   );
 }

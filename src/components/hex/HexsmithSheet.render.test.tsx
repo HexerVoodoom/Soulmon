@@ -178,4 +178,14 @@ describe('HexsmithSheet', () => {
     abrir({}, 'en');
     expect(q('[data-hex-slot="coroa"]').getAttribute('aria-label')).toMatch(/^Crown Port: Empty/);
   });
+
+  it('cada Porta abre com a linha do que ela faz, embaixo do título (PT e EN)', () => {
+    for (const lang of ['pt-BR', 'en']) for (const s of HEX_SLOTS) {
+      abrir({}, lang);
+      click(q(`[data-hex-slot="${s}"]`));
+      const d = document.querySelector(`[data-hex-desc="${s}"]`)?.textContent ?? '';
+      expect(d.length, `${lang}/${s}`).toBeGreaterThan(5);
+      cleanup();
+    }
+  });
 });

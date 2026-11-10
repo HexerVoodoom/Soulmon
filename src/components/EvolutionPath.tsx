@@ -33,14 +33,14 @@ import { EvolveButton } from './pixel/EvolveButton';
 import { useState, useMemo, useEffect, useRef, type CSSProperties } from 'react';
 import { SoulNode, type SoulNodeVisual } from './evolution/SoulNode';
 import { FormasAlternativasSheet } from './evolution/FormasAlternativasSheet';
-import { altSpriteKey, formaTemAlternativas, type FormaAltEquipada, type FormasAlt } from '../utils/formasAlternativas';
+import { altSpriteKey, type FormaAltEquipada, type FormasAlt } from '../utils/formasAlternativas';
 import { getSpriteForStage, isStarterId, type StarterId } from '../utils/sprites';
 import { useAdmin } from '../utils/adminFlag';
 import { canManualRetry, cardState, displaySprite, emptySpriteLibrary, type SpriteCardState, type SpriteLibrary } from '../utils/spriteLibrary';
 import { spriteFailText, spriteText } from '../utils/spriteCopy';
 import { pointsToEvolve } from '../utils/spriteTrigger';
 import { creatureFormId, type CreatureStage, type LText } from '../utils/oracle';
-import { AVAILABLE_BRANCHES, clampBranch, canReachUltra, ULTRA_PATIENCE_POINTS } from '../types/progression';
+import { AVAILABLE_BRANCHES, canReachUltra, ULTRA_PATIENCE_POINTS } from '../types/progression';
 import { canSwitchLaterally } from '../utils/trocaLateral';
 import { forecastNodeId, stageLevelIndex } from '../utils/evolutionForecast';
 import { dailyGaugeCap } from '../utils/evolutionGauge';
@@ -48,7 +48,7 @@ import { fragmentBarLabel, fragmentTodayHint, fragmentHowText, fragmentsGathered
 import { SoulFragmentIcon } from './ui/SoulFragmentIcon';
 import { ALIGN_TO_ATTR, ATTR_LABEL, ATTR_COLOR, ATTR_INK, ULTRA_COLOR } from '../types/attributes';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
-import { PixelTabs } from './pixel/PixelKit';
+import { EstagioIcone } from './ui/EstagioIcone';
 /* A varredura de 400 ms mudou de casa: o dono dela é o dono do visor
    (`ui/Viewport.tsx`), porque a spec pede a MESMA sintonia em dois call-sites
    — esta página e o visor da Home (`CompanionHUD`). Hook duplicado com um
@@ -101,7 +101,7 @@ interface EvolutionPathProps {
   gaugeGoal: number;
   onDegenerate?: (targetStageId: string) => void;
   /** Troca lateral (mesmo nível, outra forma já desbloqueada): grátis, sem queda. */
-  onSwitchForm?: (targetStageId: string) => void;
+  onSwitchForm?: (targetStageId: string, elemento?: string) => void;
   /** As 11 formas ÚNICAS do jogador (utils/oracle.ts). */
   stages: CreatureStage[];
   /** Linha de sprite genérica (fallback visual — ver utils/sprites.ts). */
@@ -195,6 +195,19 @@ const sectionLabel: CSSProperties = {
   textTransform: 'uppercase',
 };
 
+/** Conectores da árvore (09/11/2026): as três cores dos caminhos saindo do rookie (`split`) e voltando ao ultra (`join`) — o mesmo desenho do site do beta. */
+function TreeLinks({ mode }: { mode: 'split' | 'join' }) {
+  const xs = [50, 150, 250];
+  const d = (x: number) => (mode === 'split' ? `M150 0C150 22 ${x} 18 ${x} 28` : `M${x} 0C${x} 22 150 18 150 28`);
+  return (
+    <svg viewBox="0 0 300 28" preserveAspectRatio="none" aria-hidden="true" data-testid={`sm-arvore-ligacao-${mode}`} style={{ display: 'block', width: '100%', height: 28, overflow: 'visible' }}>
+      {ATTR_ORDER.map((a, i) => (
+        <path key={a} d={d(xs[i])} fill="none" stroke={ATTR_COLOR[a]} strokeWidth={4} strokeLinecap="round" vectorEffect="non-scaling-stroke" opacity={0.9} />
+      ))}
+    </svg>
+  );
+}
+
 export function EvolutionPath({
   currentStageId,
   currentBranch,
@@ -242,29 +255,14 @@ export function EvolutionPath({
     && [powerPoints, harmonyPoints, benevolencePoints].filter(v => v === topAttr).length > 1;
   const L = (t: LText) => (isPt ? t.pt : t.en);
   const unlockedSet = useMemo(() => new Set(unlockedEvolutions), [unlockedEvolutions]);
-  const [selectedBranch, setSelectedBranch] = useState<Attr>(clampBranch(currentBranch));
-  /** 10.3: o gesto de deslizar para trocar de aba do galho (origem do toque). */
-  const swipeRef = useRef<{ x: number; y: number } | null>(null);
-  const [confirmDegenerate, setConfirmDegenerate] = useState<{ id: string; name: string; isSecondConfirm: boolean; lateral?: boolean } | null>(null);
+  const [confirmDegenerate, setConfirmDegenerate] = useState<{ id: string; name: string; isSecondConfirm: boolean; lateral?: boolean; elemento?: string } | null>(null);
   // Locked evolutions are hidden behind a "?" (spoiler guard). The user can
   // reveal one (shown darkened) after confirming; this local set resets when
   // they leave the screen (the component unmounts on navigation).
   const [revealed, setRevealed] = useState<Set<string>>(new Set());
   const [confirmReveal, setConfirmReveal] = useState<CreatureStage | null>(null);
-  // A forma tocada: só ela mostra "Trocar forma" / "Degenerar". Tocar fora (ou trocar de galho) limpa.
-  const [formaSel, setFormaSel] = useState<string | null>(null);
-  useEffect(() => {
-    if (!formaSel) return undefined;
-    const fora = (ev: Event) => {
-      const alvo = ev.target as Element | null;
-      if (!alvo?.closest?.('[data-testid^="sm-no-"]')) setFormaSel(null);
-    };
-    document.addEventListener('pointerdown', fora);
-    return () => document.removeEventListener('pointerdown', fora);
-  }, [formaSel]);
-  useEffect(() => { setFormaSel(null); }, [selectedBranch]);
-  /** A forma cuja lista de formas alternativas está aberta. */
-  const [altAberta, setAltAberta] = useState<CreatureStage | null>(null);
+  /** O modal da forma tocada (09/11/2026): `degenerar` (forma de nível abaixo), `equipar` (mesmo nível) ou `ver` (nível acima, só leitura). */
+  const [opcoes, setOpcoes] = useState<{ evolution: CreatureStage; modo: 'degenerar' | 'equipar' | 'ver' } | null>(null);
 
   const handleRevealConfirm = () => {
     if (confirmReveal) setRevealed(prev => new Set(prev).add(creatureFormId(confirmReveal)));
@@ -285,7 +283,8 @@ export function EvolutionPath({
      não se decide critério nenhum. */
   const podeChegarAoUltra = canReachUltra({ unlockedEvolutions, evolutionPoints });
 
-  const branchPath = getBranchPath(selectedBranch);
+  const caminhos = ATTR_ORDER.map(a => ({ attr: a, path: getBranchPath(a) }));
+  const arvoreVazia = caminhos.every(c => c.path.length === 0);
 
   const formaAtual = stages.find(s => creatureFormId(s) === currentStageId);
 
@@ -442,24 +441,29 @@ export function EvolutionPath({
    * quem chama; aqui só se acha o primeiro nó ainda não alcançado do galho
    * previsto — e só quando o galho exibido É o previsto.
    */
-  const forecastStageId = forecastBranch && selectedBranch === forecastBranch
-    ? forecastNodeId(currentStageId, branchPath.map(s => creatureFormId(s)))
+  const forecastStageId = forecastBranch
+    ? forecastNodeId(currentStageId, getBranchPath(forecastBranch).map(s => creatureFormId(s)))
     : null;
 
-  const handleDegenerateClick = (evolution: CreatureStage) => {
-    setConfirmDegenerate({ id: creatureFormId(evolution), name: evolution.name, isSecondConfirm: false });
+  const handleDegenerateClick = (evolution: CreatureStage, elemento?: string) => {
+    setConfirmDegenerate({ id: creatureFormId(evolution), name: evolution.name, isSecondConfirm: false, elemento });
   };
 
-  const handleSwitchClick = (evolution: CreatureStage) => {
-    setConfirmDegenerate({ id: creatureFormId(evolution), name: evolution.name, isSecondConfirm: false, lateral: true });
+  const handleSwitchClick = (evolution: CreatureStage, elemento?: string) => {
+    setConfirmDegenerate({ id: creatureFormId(evolution), name: evolution.name, isSecondConfirm: false, lateral: true, elemento });
   };
+
+  /* O elemento escolhido no modal vale DEPOIS da troca: a forma de destino já é a atual, e equipar a forma atual aplica elemento,
+     ataque e especial (#651, `trocarFormaCompleta`). Os dois `setState` do App enfileiram em ordem. */
+  const equiparDepois = (id: string, elemento?: string) => { if (elemento && elemento !== '__atual') onEquipFormaAlt?.(id, elemento); };
 
   const handleDegenerateConfirm = () => {
     if (confirmDegenerate?.lateral) {
-      onSwitchForm?.(confirmDegenerate.id);
+      onSwitchForm?.(confirmDegenerate.id, confirmDegenerate.elemento);
       setConfirmDegenerate(null);
     } else if (confirmDegenerate?.isSecondConfirm) {
       onDegenerate?.(confirmDegenerate.id);
+      equiparDepois(confirmDegenerate.id, confirmDegenerate.elemento);
       setConfirmDegenerate(null);
     } else {
       setConfirmDegenerate({ ...confirmDegenerate!, isSecondConfirm: true });
@@ -713,7 +717,7 @@ export function EvolutionPath({
    * alvos para a mesma regra já bastam; um terceiro no card seria ruído de
    * foco. O nó OCULTO continua botão ("Reveal (spoiler)").
    */
-  const renderEvolutionCard = (evolution: CreatureStage, isLast: boolean) => {
+  const renderEvolutionCard = (evolution: CreatureStage) => {
     const stageId = creatureFormId(evolution);
     const isCurrent = stageId === currentStageId;
     const isUltra = evolution.stage === 'ultra';
@@ -731,9 +735,9 @@ export function EvolutionPath({
     const hidden = !isReached && !isRevealed;
     // A stage the pet already passed through, on the branch it's CURRENTLY
     // on — offer to degenerate back to it.
-    // Qualquer forma JÁ liberada de nível ABAIXO, de qualquer galho (rookie segue
-    // como antes: fora). O botão vive no card da forma, na aba do galho dela.
-    const isPreviousStage = isReached && !isCurrent && evolution.stage !== 'rookie' && Boolean(evolution.branch)
+    // Qualquer forma JÁ liberada de nível ABAIXO, de qualquer galho. O botão vive no
+    // card da forma, na aba do galho dela. 09/11/2026 (dono): o rookie (tronco, sem galho) também.
+    const isPreviousStage = isReached && !isCurrent && (evolution.stage === 'rookie' || Boolean(evolution.branch))
       && stageLevelIndex(stageId) < stageLevelIndex(currentStageId);
     // Mesmo nível, outra forma JÁ desbloqueada (qualquer galho): troca grátis.
     const isLateralSwitch = canSwitchLaterally({ currentStageId, targetStageId: stageId, unlockedEvolutions });
@@ -745,13 +749,14 @@ export function EvolutionPath({
       : isForecast ? 'forecast'
       : 'locked';
     const estado = estadoDoNo(stageId, isCurrent, isForecast);
-    // FORMAS ALTERNATIVAS (05/11/2026): toda forma alcançada, menos o rookie, ganha a setinha → e o cartão vira toque.
-    // Na forma atual (ou numa sem outra ação) o toque abre direto as formas alternativas; na anterior/lateral, as opções.
-    const temSetinha = !hidden && isReached && formaTemAlternativas(stageId) && Boolean(onEquipFormaAlt);
-    const temOpcoes = isLateralSwitch || isPreviousStage;
-    const tocarCartao = temSetinha
-      ? () => (temOpcoes ? setFormaSel((cur) => (cur === stageId ? null : stageId)) : setAltAberta(evolution))
-      : undefined;
+    /* 09/11/2026 (dono): tocar numa forma LIBERADA abre o modal. Nível abaixo do atual: "Degenerar para…"; mesmo nível: lista para
+       equipar; nível acima (liberada, mas ainda não alcançada nesta vida): só ver. Forma trancada ("?") não abre nada. */
+    const modoDoToque: 'degenerar' | 'equipar' | 'ver' | null = hidden || !isReached ? null
+      : isPreviousStage ? 'degenerar'
+      : (isCurrent || isLateralSwitch) ? 'equipar'
+      : stageLevelIndex(stageId) > stageLevelIndex(currentStageId) ? 'ver'
+      : null;
+    const abrir = modoDoToque ? () => setOpcoes({ evolution, modo: modoDoToque }) : undefined;
 
     // Situação em PALAVRAS: a cor e a posição do nó não podem ser o único
     // portador da informação (WCAG 1.4.1).
@@ -764,7 +769,7 @@ export function EvolutionPath({
     // V2: o rótulo diz o que o TOQUE faz — e só quando há toque.
     const nodeLabel = hidden && isAdmin
       ? `${nome} — ${situacao}. ${isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)'}`
-      : `${nome} — ${situacao}`;
+      : `${nome} — ${situacao}${abrir ? `. ${modoDoToque === 'degenerar' ? (isPt ? 'Degenerar para…' : 'Degenerate to…') : isPt ? 'Ver opções da forma' : 'See form options'}` : ''}`;
 
     /* A arte dentro do vidro do nó (256² a 64):
        · oculto: só a SILHUETA, e só de uma arte que É a forma que vem — o
@@ -812,118 +817,63 @@ export function EvolutionPath({
     );
 
     return (
-      <article
+      <div
         key={stageId}
-        style={{
-          ...card, padding: 12, display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: isLast ? 0 : 8,
-          // Rodada 7 (I3): sem moldura/barra colorida — a COR do ramo mora no
-          // círculo em volta da arte (`ringColor` do `SoulNode`).
-        }}
+        style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, minWidth: 0, textAlign: 'center' }}
         data-testid={`sm-no-${stageId}`}
-        {...(tocarCartao ? {
-          role: 'button', tabIndex: 0, 'aria-label': `${nodeLabel}. ${isPt ? 'Ver opções da forma' : 'See form options'}`,
-          'aria-expanded': temOpcoes ? formaSel === stageId : undefined,
-          onClick: tocarCartao,
-          onKeyDown: (e: React.KeyboardEvent) => { if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); tocarCartao(); } },
-        } : null)}
+        data-estagio={evolution.stage}
       >
-        <SoulNode
-          visual={visual}
-          sprite={arteDoNo}
-          silhouette={hidden && Boolean(arteVerdadeira)}
-          busy={estado === 'GERANDO'}
-          ringColor={isUltra ? ULTRA_COLOR : ramoAttr ? ATTR_COLOR[ramoAttr] : undefined}
-          label={nodeLabel}
-          title={hidden && isAdmin ? (isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)') : nome}
-          onClick={hidden && isAdmin
-            ? () => setConfirmReveal(evolution)
-            : (isLateralSwitch || isPreviousStage) && !tocarCartao
-              ? () => setFormaSel((cur) => (cur === stageId ? null : stageId))
-              : undefined}
-          pressed={!hidden && !tocarCartao && (isLateralSwitch || isPreviousStage) ? formaSel === stageId : undefined}
-        />
-
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <p style={{ ...sm2Text, fontWeight: 500, margin: 0, color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-muted)' }}>
-            {hidden ? '???' : evolution.name}
-          </p>
-          {!hidden && (
-            <p style={{ ...sm2Hint, display: 'flex', alignItems: 'center', gap: 4 }}>
-              {ramoAttr && <AttrGlyph attr={ramoAttr} />}
-              <span style={ramoAttr ? { color: ATTR_INK[ramoAttr] } : undefined}>{L(evolution.stageName)}</span>
-            </p>
-          )}
-          <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-            {isCurrent && tag(isPt ? 'ATUAL' : 'CURRENT', 'current')}
-            {isForecast && tag(isPt ? 'PREVISTA' : 'FORECAST')}
-            {/* X3: o cadeado do jogador é "ON HOLD", nunca "LOCKED" — a
-                coleção trancada é outra coisa (BLOQUEADA). */}
-            {isCurrent && evolutionLocked && tag(isPt ? 'SEGURADA' : 'ON HOLD')}
-            {isUltraMode && tag(isPt ? 'ZÊNITE' : 'ZENITH', 'gold')}
-            {!isReached && tag(isPt ? 'BLOQUEADA' : 'LOCKED')}
-          </div>
-          {/* A espiada NÃO persiste (só a sessão), e o card diz isso. */}
-          {isRevealed && !isReached && (
-            <p style={sm2Hint}>{isPt ? 'revelada só nesta sessão' : 'revealed this session only'}</p>
-          )}
-          {/* O estado da ARTE desta forma (§2.2). */}
-          {linhaDeEstado(stageId, estado, hidden)}
-
-          {/* WP4.2 — os DOIS caminhos, ditos no lugar onde a pergunta nasce.
-
-              Sem esta linha, quem olha o Ultra trancado conclui a mesma coisa
-              que antes: "preciso das três megas", ou seja, "preciso descer".
-              A ordem é deliberada — a PERMANÊNCIA vem primeiro, porque é o
-              caminho que não pede nenhum ato de descuido. */}
-          {isUltraMode && (
-            <InfoTip language={language} label={isPt ? 'Como chegar à forma Ultra' : 'How to reach the Ultra form'} align="left" style={{ minHeight: 24, justifyContent: 'flex-start' }}>
-              {isPt
-                ? `Dois caminhos chegam aqui: ${ULTRA_PATIENCE_POINTS} passos como mega, ou conhecer os três galhos. Nenhum é melhor — e nenhum pede que você desça.`
-                : `Two paths reach this form: ${ULTRA_PATIENCE_POINTS} steps as a mega, or knowing all three branches. Neither is better, and neither asks you to go back down.`}
-            </InfoTip>
-          )}
-
-          {isLateralSwitch && formaSel === stageId && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); handleSwitchClick(evolution); }}
-              style={{ ...sm2Button('outline', false, 'sm'), alignSelf: 'flex-start', marginTop: 4 }}
-            >
-              {isPt ? 'Trocar forma' : 'Switch form'}
-            </button>
-          )}
-          {isPreviousStage && formaSel === stageId && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); handleDegenerateClick(evolution); }}
-              style={{ ...sm2Button('outline', false, 'sm'), alignSelf: 'flex-start', marginTop: 4 }}
-            >
-              {isPt ? 'Degenerar' : 'Degenerate'}
-            </button>
-          )}
-          {temSetinha && temOpcoes && formaSel === stageId && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setFormaSel(null); setAltAberta(evolution); }}
-              style={{ ...sm2Button('outline', false, 'sm'), alignSelf: 'flex-start', marginTop: 4 }}
-            >
-              {isPt ? 'Formas alternativas' : 'Alternate forms'}
-            </button>
+        <div style={{ position: 'relative' }}>
+          <SoulNode
+            visual={visual}
+            sprite={arteDoNo}
+            silhouette={hidden && Boolean(arteVerdadeira)}
+            busy={estado === 'GERANDO'}
+            ringColor={isUltra ? ULTRA_COLOR : ramoAttr ? ATTR_COLOR[ramoAttr] : undefined}
+            label={nodeLabel}
+            title={hidden && isAdmin ? (isPt ? 'Revelar (spoiler)' : 'Reveal (spoiler)') : nome}
+            onClick={hidden && isAdmin ? () => setConfirmReveal(evolution) : abrir}
+          />
+          {hidden && (
+            <span aria-hidden="true" data-testid={`sm-no-${stageId}-interrogacao`} style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', pointerEvents: 'none', ...sm2Text, fontWeight: 700, fontSize: 'var(--sm2-text-2xl)', color: 'var(--sm2-ink)', textShadow: '0 0 6px var(--sm2-surface-2)' }}>?</span>
           )}
         </div>
-        {temSetinha && (
-          <span aria-hidden="true" style={{ alignSelf: 'center', display: 'inline-flex' }}>
-            <Icon name="chevron_right" size={24} tone="muted" />
-          </span>
+        <p style={{ ...sm2Text, fontWeight: 500, margin: 0, fontSize: 'var(--sm2-text-sm)', color: isReached ? 'var(--sm2-ink)' : 'var(--sm2-muted)', overflowWrap: 'anywhere' }}>
+          {hidden ? '???' : evolution.name}
+        </p>
+        <p style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+          <EstagioIcone forma={stageId} size={16} />
+          {!hidden && <span style={ramoAttr ? { color: ATTR_INK[ramoAttr] } : undefined}>{L(evolution.stageName)}</span>}
+        </p>
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'center' }}>
+          {isCurrent && tag(isPt ? 'ATUAL' : 'CURRENT', 'current')}
+          {isForecast && tag(isPt ? 'PREVISTA' : 'FORECAST')}
+          {/* X3: o cadeado do jogador é "ON HOLD", nunca "LOCKED" — a coleção trancada é outra coisa (BLOQUEADA). */}
+          {isCurrent && evolutionLocked && tag(isPt ? 'SEGURADA' : 'ON HOLD')}
+          {isUltraMode && tag(isPt ? 'ZÊNITE' : 'ZENITH', 'gold')}
+          {!isReached && tag(isPt ? 'BLOQUEADA' : 'LOCKED')}
+        </div>
+        {/* A espiada NÃO persiste (só a sessão), e o card diz isso. */}
+        {isRevealed && !isReached && (
+          <p style={sm2Hint}>{isPt ? 'revelada só nesta sessão' : 'revealed this session only'}</p>
         )}
-      </article>
+        {/* O estado da ARTE desta forma (§2.2). */}
+        {linhaDeEstado(stageId, estado, hidden)}
+        {isUltraMode && (
+          <InfoTip language={language} label={isPt ? 'Como chegar à forma Ultra' : 'How to reach the Ultra form'} align="left" style={{ minHeight: 24, justifyContent: 'flex-start' }}>
+            {isPt
+              ? `Dois caminhos chegam aqui: ${ULTRA_PATIENCE_POINTS} passos como mega, ou conhecer os três galhos. Nenhum é melhor — e nenhum pede que você desça.`
+              : `Two paths reach this form: ${ULTRA_PATIENCE_POINTS} steps as a mega, or knowing all three branches. Neither is better, and neither asks you to go back down.`}
+          </InfoTip>
+        )}
+      </div>
     );
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 24 }}>
-      {altAberta && onEquipFormaAlt && (() => {
-        const fid = creatureFormId(altAberta);
+      {opcoes && (() => {
+        const fid = creatureFormId(opcoes.evolution);
         const real = spriteLibraryReal ?? acervo;
         const lista = formasAlt?.[fid]?.length ? formasAlt[fid] : ['__atual'];
         const itens = lista.map(el => ({
@@ -932,16 +882,25 @@ export function EvolutionPath({
             ? (displaySprite(real, fid)?.url ?? getSpriteForStage(fid, fid === currentStageId ? demoCharacterId : undefined))
             : (real.sprites[altSpriteKey(fid, el, formasAlt)]?.url),
         }));
+        const noAtual = fid === currentStageId;
         return (
           <FormasAlternativasSheet
             isPt={isPt}
             formId={fid}
-            nomeDaForma={altAberta.name}
+            nomeDaForma={opcoes.evolution.name}
             itens={itens}
             formasAlt={formasAlt}
+            modo={opcoes.modo}
             equipada={formasAlt?.[fid]?.length ? formaAltEquipada?.[fid] : '__atual'}
-            onEquip={(el) => { if (el !== '__atual') onEquipFormaAlt(fid, el); }}
-            onClose={() => setAltAberta(null)}
+            ehAtual={noAtual}
+            onEquip={(el) => {
+              const evo = opcoes.evolution;
+              setOpcoes(null);
+              if (opcoes.modo === 'degenerar') handleDegenerateClick(evo, el);
+              else if (noAtual) { if (el !== '__atual') onEquipFormaAlt?.(fid, el); }
+              else handleSwitchClick(evo, el);
+            }}
+            onClose={() => setOpcoes(null)}
           />
         );
       })()}
@@ -1429,44 +1388,7 @@ export function EvolutionPath({
           </p>
         )}
 
-        {/* Seletor de galho — só os branches disponíveis (transição de arte).
-            BETA-2 (10.3, 13/10/2026): as três PÍLULAS viraram ABAS COMPACTAS (`PixelTabs variant="compact"`): sublinhado fino na
-            ativa, separadores discretos, o nome inteiro (Poder/Harmonia/Benevolência nunca é cortado) e o número do caminho. Toque OU
-            deslize para o lado na área da árvore troca de aba. I11 (02/10): a cor e o glifo do caminho continuam na aba — o RÓTULO
-            é o portador da informação (WCAG 1.4.1); cor/glifo são identidade. I5: o caminho que lidera brilha no glifo. */}
-        <div
-          data-branch-swipe
-          style={{ touchAction: 'pan-y' }}
-          onPointerDown={e => { swipeRef.current = { x: e.clientX, y: e.clientY }; }}
-          onPointerUp={e => {
-            const o = swipeRef.current; swipeRef.current = null;
-            if (!o) return;
-            const dx = e.clientX - o.x; const dy = e.clientY - o.y;
-            if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-            const list = AVAILABLE_BRANCHES as readonly Attr[];
-            const next = list[list.indexOf(selectedBranch as Attr) + (dx < 0 ? 1 : -1)];
-            if (next) setSelectedBranch(next);
-          }}
-          onPointerCancel={() => { swipeRef.current = null; }}
-        >
-        {!naoEvolui && <div style={{ marginBottom: 12 }}>
-          <PixelTabs
-            variant="compact"
-            ariaLabel={isPt ? 'Linha de evolução' : 'Evolution branch'}
-            value={selectedBranch as Attr}
-            onChange={k => setSelectedBranch(k)}
-            items={(AVAILABLE_BRANCHES as readonly Attr[]).map(b => ({
-              key: b,
-              label: L(ATTR_LABEL[b]),
-              glyph: <AttrGlyph attr={b} />,
-              meta: pontosDe(b),
-              color: ATTR_INK[b],
-              emphasis: lider === b,
-            }))}
-          />
-        </div>}
-
-        {!naoEvolui && branchPath.length === 0 && !ultra ? (
+        {!naoEvolui && arvoreVazia && !ultra ? (
           // Sem a árvore do oráculo (save antigo ou incompleto) não há o que
           // desenhar. Antes ficava só um vazio enorme abaixo dos botões, e a
           // tela parecia quebrada.
@@ -1485,17 +1407,42 @@ export function EvolutionPath({
             </p>
           </div>
         ) : (
-          (() => {
-            // Uma coluna de cards: tronco (rookie) → galho escolhido → ultra.
-            const ordem = (naoEvolui ? [rookie] : [rookie, ...branchPath, ultra]).filter((s): s is CreatureStage => Boolean(s));
-            return (
-              <div style={{ display: 'flex', flexDirection: 'column' }} aria-label={isPt ? 'Árvore de evolução' : 'Evolution tree'}>
-                {ordem.map((evolution, i) => renderEvolutionCard(evolution, i === ordem.length - 1))}
-              </div>
-            );
-          })()
+          /* A ÁRVORE (09/11/2026, dono): referência do site do beta. Rookie no topo; abaixo, os TRÊS caminhos lado a lado (Poder, Harmonia,
+             Benevolência), cada um com o rótulo (ícone + nome) no INÍCIO dele e uma corrente vertical de nós; os três convergem no Ultra. */
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch' }} role="group" aria-label={isPt ? 'Árvore de evolução' : 'Evolution tree'} data-testid="sm-arvore">
+            {rookie && <div style={{ display: 'flex', justifyContent: 'center' }}>{renderEvolutionCard(rookie)}</div>}
+            {!naoEvolui && !arvoreVazia && (
+              <>
+                <TreeLinks mode="split" />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', alignItems: 'start' }} data-testid="sm-caminhos">
+                  {caminhos.map(({ attr, path }) => (
+                    <div key={attr} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 0 }} data-testid={`sm-caminho-${attr}`} role="group" aria-label={L(ATTR_LABEL[attr])}>
+                      <p
+                        style={{
+                          ...sm2Text, margin: '0 0 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, textAlign: 'center',
+                          fontWeight: lider === attr ? 700 : 600, color: ATTR_INK[attr], fontSize: 'var(--sm2-text-xs)', lineHeight: 1.2,
+                        }}
+                        data-testid={`sm-caminho-rotulo-${attr}`}
+                      >
+                        <AttrGlyph attr={attr} />
+                        <span>{L(ATTR_LABEL[attr])}</span>
+                        <span className="sm2-num" style={{ ...sm2Hint, margin: 0 }}>{pontosDe(attr)}</span>
+                      </p>
+                      {path.map((evo, i) => (
+                        <div key={creatureFormId(evo)} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                          {i > 0 && <span aria-hidden="true" style={{ width: 4, height: 16, borderRadius: 2, backgroundColor: ATTR_COLOR[attr], opacity: 0.85, boxShadow: `0 0 4px ${ATTR_COLOR[attr]}` }} />}
+                          {renderEvolutionCard(evo)}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
+                </div>
+                <TreeLinks mode="join" />
+              </>
+            )}
+            {!naoEvolui && ultra && <div style={{ display: 'flex', justifyContent: 'center' }}>{renderEvolutionCard(ultra)}</div>}
+          </div>
         )}
-        </div>
       </section>
     </div>
   );

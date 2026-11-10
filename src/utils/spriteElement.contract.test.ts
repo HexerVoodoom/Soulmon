@@ -30,11 +30,11 @@ describe('todo arquivo de criatura tem elemento', () => {
     for (const el of els) expect(SPRITE_ELEMENT['novo:' + el], el).toBe(el);
     expect(new Set(NOVOS_DATA.map(n => n.element))).toEqual(els);
   });
-  it('combinados/: elemento = id fundido do manifest, 261 de 261', () => {
+  it('combinados/: elemento = id fundido do manifest, 267 de 267', () => {
     const man = JSON.parse(fs.readFileSync(path.join(ART, 'novos-' + 'arquivo/manifest.json'), 'utf8')).combined as { n: number; file: string; combination: string; components: string[] }[];
     const files = ls('novos-' + 'arquivo/combinados');
-    expect(files.length).toBe(261);
-    expect(man.length).toBe(261);
+    expect(files.length).toBe(267);
+    expect(man.length).toBe(267);
     for (const m of man) {
       const num = String(m.n).padStart(3, '0');
       expect(files, num).toContain(m.file.replace('combinados/', ''));
@@ -77,14 +77,17 @@ describe('sem hash/sorteio de elemento para arte conhecida', () => {
   });
 });
 
-describe('simulados: elemento = o do prompt (embutido)', () => {
+describe('simulados: elemento = o que a arte mostra (revisão 09/11/2026) ou o do prompt (embutido)', () => {
   it('170 de 170, e o fallback de arte tem o MESMO elemento', async () => {
     // @ts-ignore JS do servidor
-    const { SIMULADOS, ART_LINE_BY_ELEMENT } = await import('../../functions/api/_simulados.data.js');
+    const { SIMULADOS, ART_LINE_BY_ELEMENT, SIM_ELEMENTO_REVISADO } = await import('../../functions/api/_simulados.data.js');
     expect(SIMULADOS.length).toBe(170);
     for (const s of SIMULADOS) {
       expect(ORACLE_IDS).toContain(PROMPT_ELEMENT[s.id]);
-      expect(s.element, s.id).toBe(PROMPT_ELEMENT[s.id]);
+      // 09/11/2026: o elemento segue o que a ARTE mostra (SIM_ELEMENTO_REVISADO); fora da revisão vale o do prompt.
+      const rev = SIM_ELEMENTO_REVISADO[s.id];
+      if (rev) expect(rev.de, s.id).toBe(PROMPT_ELEMENT[s.id]);
+      expect(s.element, s.id).toBe(rev ? rev.para : PROMPT_ELEMENT[s.id]);
       if (s.artLine) expect(STARTER_ELEMENT[s.artLine as keyof typeof STARTER_ELEMENT] ?? LINE_ELEMENT[s.artLine], s.id).toBe(s.element);
       expect(s.artLine, s.id).toBe(ART_LINE_BY_ELEMENT[s.element] ?? '');
     }

@@ -20,8 +20,8 @@ describe('Biblioteca: os 59 elementos curados (205–207 promovidos, 212–267) 
     for (const id of CURATED_ELEMENT_IDS) expect(LIBRARY_ELEMENT_IDS).toContain(id);
     expect(ELEMENT_DEX_MAX).toBe(LIBRARY_ELEMENT_IDS.length);
   });
-  it('todo curado e o neutro têm ícone e nome (os 6 do lote 4 usam o ícone do 1º componente até a arte: `docs/ASSETS-A-GERAR.md`)', () => {
-    for (const id of COMBINADOS_LOTE4_DATA.map(r => r[1])) expect(elementIcon(id), id).toBe(elementIcon(curatedComponents(id)![0]));
+  it('todo curado e o neutro têm ícone e nome (os 6 do lote 4 ganharam ícone próprio em 09/11/2026, §264)', () => {
+    for (const id of COMBINADOS_LOTE4_DATA.map(r => r[1])) expect(elementIcon(id), id).not.toBe(elementIcon(curatedComponents(id)![0]));
     for (const id of CURATED_ELEMENT_IDS) {
       expect(elementIcon(id), id).toBeTruthy();
       expect(curatedElementName(id, true).length).toBeGreaterThan(1);

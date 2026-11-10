@@ -355,7 +355,7 @@ export function NightmareBattle({
           isPt={isPt}
           scene={sceneBg}
           me={{
-            key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Seu Soulmon' : 'Your Soulmon', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
+            key: 'me', sprite: petSprite, scale: petScale, stageIcon: petStage, name: isPt ? 'Seu Soulmon' : 'Your Soulmon', hp: Math.round(Math.max(0, meHpFrac) * hpMax), maxHp: hpMax,
             element: petEl, energy: (pronto ? battle.petEnergy : energyCarryRef.current) / ENERGY_TRIGGER,
             status: pronto ? battle.status.me : undefined,
             // o trecho da barra de especial que a torcida em andamento já encheu (só UI; o núcleo soma na descarga)

@@ -13,7 +13,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildSoulProfile, generateOracleComplete } from '../src/utils/soulProfile';
 import { ORACLE_QUESTIONS, creatureFormId, type ElementId, type AlignmentId, type OracleInput } from '../src/utils/oracle';
-import { SIMULADOS } from '../functions/api/_simulados.data.js';
+import { SIMULADOS, SIM_ELEMENTO_REVISADO } from '../functions/api/_simulados.data.js';
 import { formasDaLinha, SAIDA_PADRAO } from './simulados-sprites-fila.mjs';
 
 type Perfil = { id: string; petName: string; element: string; line: string };
@@ -51,7 +51,8 @@ export function entradaDoSimulado(p: Perfil): OracleInput {
 /** Os prompts das 5 formas da linha do simulado. Falta de forma é erro: nunca gera com prompt inventado. */
 export async function promptsDoSimulado(p: Perfil): Promise<Record<string, PromptsDaForma>> {
   const { result } = await generateOracleComplete(entradaDoSimulado(p), Number(p.id.slice(4)), {
-    dominantElement: p.element as ElementId, dominantAlignment: p.line as AlignmentId,
+    // O elemento do PROMPT (o da paleta com que a arte nasceu; só os 8 do Oráculo), não o revisado pela arte (SIM_ELEMENTO_REVISADO, 09/11/2026): formas novas seguem a paleta do rookie já gerado.
+    dominantElement: (SIM_ELEMENTO_REVISADO[p.id]?.de ?? p.element) as ElementId, dominantAlignment: p.line as AlignmentId,
   });
   const out: Record<string, PromptsDaForma> = {};
   for (const forma of formasDaLinha(p.line)) {

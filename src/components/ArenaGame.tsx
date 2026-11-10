@@ -31,7 +31,7 @@
  */
 import { efeitoElementoPve } from '../utils/combate/elementEffects';
 import { useHexOverrides } from '../hooks/useHexOverrides';
-import { lotIconName } from '../utils/lotIcons';
+import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { hexArenaElements, hexFamily, hexIdentity } from '../utils/hexsmith';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TorcidaLayer } from './games/TorcidaKit';
@@ -41,7 +41,7 @@ import { useGroupBattle, type GroupRound, type GroupScene } from './games/useGro
 import { dexIdsOfFoe } from '../utils/elementDex';
 import { useStrayPlayerEncounters } from '../utils/strayPlayerEncounter';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
-import { essenceDropOfFoe, type EssenceDrop } from '../utils/essences';
+import { essenceDropsOfFoe, type EssenceDrop } from '../utils/essences';
 import { isStraySeed } from '../utils/strayFoes';
 import { RING_TAG, DODGE_TAG, PERSONAL_TAG, ELEMENT_ADVANTAGE_TAG } from './games/pveTags';
 import { CHEER_TAPS_FULL } from '../utils/energia';
@@ -91,7 +91,7 @@ import {
 } from '../utils/arena';
 import { mulberry32 } from '../utils/combate/rng';
 import { CHEER, ENERGY_TRIGGER } from '../utils/combate/specials';
-import { hpPoints } from '../utils/combate/fight';
+import { hpPoints, statExibido } from '../utils/combate/fight';
 import type { GroupResult } from '../utils/combate/group';
 import { useGameStateOptional } from '../contexts/GameStateContext';
 import { soulCombatant, type SoulXPState } from '../utils/soulXP';
@@ -250,7 +250,7 @@ export function ArenaGame({
     rodadaRef.current = n;
     setInimigos(novos);
     for (const e of novos) { const k = arenaFoeKey(e); if (k) enemySeenRef.current?.(k); }
-    setSprites(novos.map(e => (arenaFoeKey(e) === RAVEN_ENTRY.key ? rosterSpriteOf(RAVEN_ENTRY) : undefined) ?? (e.ramoKey ? rosterSpriteOf(rosterEntryOfKey(e.ramoKey)!) : undefined) ?? (e.artFile ? COMBINADOS_ART[e.artFile] : undefined) ?? novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
+    setSprites(novos.map(e => (arenaFoeKey(e) === RAVEN_ENTRY.key ? rosterSpriteOf(RAVEN_ENTRY) : undefined) ?? (e.ramoKey || e.paraleloKey ? rosterSpriteOf(rosterEntryOfKey((e.ramoKey || e.paraleloKey)!)!) : undefined) ?? (e.artFile ? COMBINADOS_ART[e.artFile] : undefined) ?? novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
     setFightKey(k => k + 1);
     setFase('luta');
   }, []);
@@ -331,7 +331,7 @@ export function ArenaGame({
       playVictory();
       const ids = inimigosRef.current.flatMap(e => dexIdsOfFoe(e));
       if (ids.length > 0) {
-        const drops = inimigosRef.current.map(e => essenceDropOfFoe(e.elements, e.dropTier)).filter((d): d is EssenceDrop => !!d);
+        const drops = inimigosRef.current.flatMap(e => essenceDropsOfFoe(e, e.dropTier));
         elementsDefeatedRef.current?.(ids, drops);
         if (elementsDefeatedRef.current && drops.length > 0) setEssenciasRun(prev => [...prev, ...drops]);
       }
@@ -408,7 +408,7 @@ export function ArenaGame({
           foeSpecialLabel={(f) => foeSpecialLabel(isPt, f.element, f.name)}
           isPt={isPt}
           me={{
-            key: 'me', sprite: petSprite, scale: petScale, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, hpFrac) * hpMax), maxHp: hpMax,
+            key: 'me', sprite: petSprite, scale: petScale, stageIcon: evolutionStage, name: isPt ? 'Você' : 'You', hp: Math.round(Math.max(0, hpFrac) * hpMax), maxHp: hpMax,
             // o que se VÊ = a identidade (par incluso), SEMPRE — com ou sem ficha (o fallback é o elemento do oráculo, `petElement`). Antes, sem ficha
             // no estágio, caía em `atributos.principal` (o `vigor` padrão: o "marronzinho"). A vantagem segue em `elements` (base).
             element: fxElementId(ident.basico.elemento),
@@ -519,7 +519,7 @@ export function ArenaGame({
           {/* A ficha em `.chip.tag` (D-J11): HP/Power/Essence, valor em `ink`. */}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
             <StatTag label={isPt ? 'Vida' : 'HP'} value={hpMax} />
-            <StatTag label={isPt ? 'Poder' : 'Power'} value={jogador.combatant.atk} />
+            <StatTag label={isPt ? 'Poder' : 'Power'} value={statExibido(jogador.combatant.atk)} />
             <StatTag label={isPt ? 'Essência' : 'Essence'} value={isPt ? elementoNomeDe(ident.basico.elemento).pt : elementoNomeDe(ident.basico.elemento).en} />
           </div>
 
@@ -574,7 +574,7 @@ export function ArenaGame({
       {/* Fim da run: tela padrão (Proposta D). A "rodada limpa" acima é intermediária (a run segue) e fica COMPACTA, inline: não é resultado. */}
       {(fase === 'venceu' || fase === 'perdeu' || fase === 'empatou') && (
         <ResultScreen
-          playAgainIcon={lotIconName('arena', 'duelo')} dailyEvent="arena"
+          playAgainIcon={lotIconName('arena', 'duelo')} playAgainArt={lotIconArt('arena', 'duelo')} dailyEvent="arena"
           language={language}
           outcome={fase === 'venceu' ? 'win' : fase === 'empatou' ? 'calm' : 'tired'}
           gameName="Arena"

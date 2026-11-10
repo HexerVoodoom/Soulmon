@@ -16,7 +16,7 @@
 import { NOVOS_DATA, novoHasForm, novoFormName, type NovoAttack } from './novosSoulmonData';
 import { COMBINADOS_LOTE3_DATA } from './elementosLote3.data';
 import { COMBINADOS_LOTE4_DATA } from './elementosLote4.data';
-import { COMBINADOS_DATA, INIMIGOS_API_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
+import { COMBINADOS_DATA, INIMIGOS_API_DATA, INIMIGOS_DUO_DATA, PARALELOS_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
 import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 
@@ -36,7 +36,7 @@ export interface RosterEntry {
   key: string;
   id: string;
   stage: EnemyStage;
-  kind: 'base' | 'combinado' | 'api' | 'mascote' | 'ramo';
+  kind: 'base' | 'combinado' | 'api' | 'mascote' | 'ramo' | 'paralelo' | 'forma';
   /** Elemento do SPRITE e dos golpes dele (`spriteElement.ts`): nos combinados, o id FUNDIDO (= slug da arte, ex.: fogo+agua → `vapor`); nos base, o próprio. */
   element: string;
   /** Nos combinados, os dois COMPONENTES (a tabela de vantagem é só das 17 bases); nos base, só o próprio. */
@@ -44,7 +44,7 @@ export interface RosterEntry {
   name: string;
   basico: NovoAttack;
   especial: NovoAttack;
-  /** Nos combinados: o `NNN-slug` do arquivo de arte; nos `api`: `<id>-<estágio>`; nos `ramo`: `<elemento>/<ramo>-<estágio>`. */
+  /** Nos combinados: o `NNN-slug` do arquivo de arte; nos `api`: `<id>-<estágio>`; nos `ramo`: `<elemento>/<ramo>-<estágio>`; nos `paralelo`: `<id>-<estágio>`; nos `forma`: `NNN-slug-<estágio>`. */
   artFile?: string;
   /** Nos `api`: o nº do sprite no banco Higgsfield (rastreio). */
   bancoN?: number;
@@ -178,8 +178,68 @@ export function ramoFromRoll(u: number, n: number): { hit: boolean; pick: number
   return { hit: n > 0 && frac(u * 4096) < RAMO_CHANCE, pick: n > 0 ? Math.min(n - 1, Math.floor(frac(u * 16777216) * n)) : 0 };
 }
 
-/** Tudo que existe (base + combinados + o corvo, que só sai pelo `withRaven` + os ramos). */
-export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos()];
+/**
+ * AS FORMAS PARALELAS (dono, 09/11/2026): Champion e Ultimate alternativos (derivados do lagarto-dragão de fogo) em 5 elementos. Só saem
+ * quando o ELEMENTO é pedido (`pickEnemy({element})`, Arena de run do elemento): ficam fora do sorteio comum, que não muda. Entram no FIM
+ * do roster (o `#N` das células do Bestiário que já existiam não muda). Os golpes são os da criatura base do elemento dos golpes.
+ */
+function buildParalelos(): RosterEntry[] {
+  const out: RosterEntry[] = [];
+  for (const [id, el, comps, golpesDe, champion, ultimate] of PARALELOS_DATA) {
+    const base = BASE_BY_ELEMENT[golpesDe];
+    for (const [stage, name] of [['champion', champion], ['ultimate', ultimate]] as const) {
+      out.push({
+        key: chaveBestiario(id, stage), id, stage, kind: 'paralelo', element: el, elements: [...comps],
+        name, basico: base.basico, especial: base.especial, artFile: `${id}-${stage}`,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * AS FORMAS DOS COMBINADOS 212-261 (dono, 09/11/2026: "usar as formas Champion/Ultimate/Mega já instaladas"): os 50 elementos curados
+ * (lotes 1-3) tinham só o rookie; os 150 PNG de `novos-arquivo/combinados-formas/` agora são a forma champion/ultimate/mega DO MESMO elemento.
+ * Só saem quando o ELEMENTO é pedido (`pickEnemy({element})`, Fenda): ficam FORA do sorteio comum de estágio, como as paralelas. Mesmas
+ * regras de abertura de estágio (champion no Lv 7, ultimate no 14, mega no 22). Golpes e componentes iguais aos do rookie. Entram no FIM
+ * do roster (o `#N` do Bestiário não muda).
+ */
+export const SUFIXO_FORMA: Readonly<Record<'champion' | 'ultimate' | 'mega', string>> = { champion: 'aris', ultimate: 'axion', mega: 'alune' };
+/** Nome proposto da forma: o do rookie sem a vogal final + sufixo do estágio (Geyzor → Geyzoraris). O dono pode vetar. */
+export const nomeDaForma = (rookie: string, stage: 'champion' | 'ultimate' | 'mega'): string => rookie.replace(/[aeiouy]+$/i, '') + SUFIXO_FORMA[stage];
+
+function buildFormasCombinados(): RosterEntry[] {
+  const out: RosterEntry[] = [];
+  for (const [num, slug, name, e1, e2] of [...COMBINADOS_LOTE1_DATA, ...COMBINADOS_LOTE2_DATA, ...COMBINADOS_LOTE3_DATA]) {
+    const base = BASE_BY_ELEMENT[e1];
+    const id = `cmb${num}`;
+    for (const stage of ['champion', 'ultimate', 'mega'] as const) {
+      out.push({
+        key: chaveBestiario(id, stage), id, stage, kind: 'forma', element: slug, elements: [e1, e2],
+        name: nomeDaForma(name, stage), basico: base.basico, especial: base.especial, artFile: `${num}-${slug}-${stage}`,
+      });
+    }
+  }
+  return out;
+}
+
+/** As 2 cadeias da API (09/11/2026): kind `api`, entram no sorteio comum e no do elemento; no FIM do roster (o `#N` não muda). */
+function buildDuo(): RosterEntry[] {
+  const out: RosterEntry[] = [];
+  for (const [id, el, comps, golpesDe, rookie, champion, ultimate] of INIMIGOS_DUO_DATA) {
+    const base = BASE_BY_ELEMENT[golpesDe];
+    for (const [stage, name] of [['rookie', rookie], ['champion', champion], ['ultimate', ultimate]] as const) {
+      out.push({
+        key: chaveBestiario(id, stage), id, stage, kind: 'api', element: el, elements: [...comps],
+        name, basico: base.basico, especial: base.especial, artFile: `${id}-${stage}`,
+      });
+    }
+  }
+  return out;
+}
+
+/** Tudo que existe (base + combinados + o corvo, que só sai pelo `withRaven` + os ramos + as formas paralelas + as formas dos combinados 212-261). */
+export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados(), ...buildDuo()];
 export const ENEMY_ROSTER_KEYS: ReadonlySet<string> = new Set(ENEMY_ROSTER.map(e => e.key));
 const BY_KEY: ReadonlyMap<string, RosterEntry> = new Map(ENEMY_ROSTER.map(e => [e.key, e]));
 export const rosterEntryOfKey = (key: string | undefined | null): RosterEntry | undefined => (key ? BY_KEY.get(key) : undefined);
@@ -205,9 +265,37 @@ export function capEnemyStage(requested: EnemyStage, level: number): EnemyStage 
  * desconhecido (infinito) também não sorteia ramo. Determinístico dado `rng`; continua 1 só chamada de `rng` para escolher a entrada.
  */
 export function pickEnemy(
-  level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string>; semRamos?: boolean } = {},
+  level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string>; semRamos?: boolean; element?: string } = {},
 ): RosterEntry {
+  // Masmorra temática (08/11/2026): com `element`, só criaturas DAQUELE elemento — o corvo (neutro) não entra, é um elemento de fora.
+  if (opts.element) {
+    const r = pickEnemyDoElemento(level, rng, { ...opts, element: opts.element });
+    if (r) return r;
+  }
   return withRaven(rng, r => pickEnemyComum(level, r, opts), () => RAVEN_ENTRY);
+}
+
+/**
+ * O sorteio restrito a UM elemento (o id da criatura: o base, ou o fundido). O estágio pedido vale se o elemento tem criatura nele;
+ * senão desce para o estágio mais baixo que tenha (os fundidos só têm `rookie`). Elemento sem criatura no roster → `undefined`
+ * (quem chama cai no sorteio comum: nunca trava a escada). Uma só chamada de `rng`, como o sorteio comum.
+ */
+function pickEnemyDoElemento(
+  level: number, rng: () => number, opts: { stage?: EnemyStage; used?: ReadonlySet<string>; semRamos?: boolean; element: string },
+): RosterEntry | undefined {
+  const pedido = capEnemyStage(opts.stage ?? maxEnemyStageForLevel(level), level);
+  const comRamos = Number.isFinite(level) && !opts.semRamos;
+  const doElemento = ENEMY_ROSTER.filter(e => e.element === opts.element && e.kind !== 'mascote' && (comRamos || e.kind !== 'ramo'));
+  if (doElemento.length === 0) return undefined;
+  let have: RosterEntry[] = [];
+  for (let i = ENEMY_STAGES.indexOf(pedido); i >= 0 && have.length === 0; i--) have = doElemento.filter(e => e.stage === ENEMY_STAGES[i]);
+  if (have.length === 0) {
+    const menor = ENEMY_STAGES.find(st => doElemento.some(e => e.stage === st));
+    have = doElemento.filter(e => e.stage === menor);
+  }
+  const fresh = opts.used ? have.filter(e => !opts.used!.has(e.id)) : have;
+  const pool = fresh.length > 0 ? fresh : have;
+  return pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))];
 }
 
 function pickEnemyComum(
@@ -221,7 +309,7 @@ function pickEnemyComum(
     stage = open[Math.floor(rng() * open.length)];
   }
   const comRamos = Number.isFinite(level) && !opts.semRamos;
-  const have = ENEMY_ROSTER.filter(e => e.stage === stage && e.kind !== 'mascote' && (comRamos || e.kind !== 'ramo'));
+  const have = ENEMY_ROSTER.filter(e => e.stage === stage && e.kind !== 'mascote' && e.kind !== 'paralelo' && e.kind !== 'forma' && (comRamos || e.kind !== 'ramo'));
   const fresh = opts.used ? have.filter(e => !opts.used!.has(e.id)) : have;
   const pool = fresh.length > 0 ? fresh : have;
   const ramos = pool.filter(e => e.kind === 'ramo');

@@ -5098,6 +5098,13 @@ select:focus-visible {
   --sm2-bg: #F1F7F5;
   --sm2-surface: #FFFFFF;
   --sm2-surface-2: #E9F2EF;
+  /* Chaves da jornada do foco (§247): ícone/borda, ≥3:1 sobre bg, surface e surface-2. */
+  --sm2-key-bancada: #9A6B12;
+  --sm2-key-relampago: #0E7C8A;
+  --sm2-key-quadrantes: #5B6B76;
+  --sm2-key-brejo: #4E7330;
+  --sm2-key-elo: #A3532A;
+  --sm2-key-pena: #7A5BA8;
   --sm2-line: #DCE9E6;
   /* tinta */
   --sm2-ink: #0E2422;
@@ -5159,6 +5166,13 @@ select:focus-visible {
   --sm2-bg: #08191A;
   --sm2-surface: #0F2A29;
   --sm2-surface-2: #163735;
+  /* Chaves da jornada do foco (§247): ícone/borda, ≥3:1 sobre bg, surface e surface-2. */
+  --sm2-key-bancada: #D9A441;
+  --sm2-key-relampago: #4FD1E0;
+  --sm2-key-quadrantes: #B8C4CC;
+  --sm2-key-brejo: #8DB866;
+  --sm2-key-elo: #D98A5E;
+  --sm2-key-pena: #C9B6E8;
   --sm2-line: #1E3F3C;
   --sm2-ink: #E9F5F2;
   --sm2-muted: #9DBCB4;
@@ -5853,7 +5867,9 @@ select:focus-visible {
   &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; }
 }
 .sm2-vit-costs { display: flex; flex-wrap: wrap; gap: var(--sm2-space-2); }
-.sm2-vit-costs > span { display: inline-flex; align-items: center; gap: 3px; }
+.sm2-vit-costs > span, .sm2-vit-cost { display: inline-flex; align-items: center; gap: 3px; }
+.sm2-vit-where { color: var(--sm2-ink-2, inherit); }
+.sm2-vit-cost { min-height: 32px; padding: 0 var(--sm2-space-2); border: 1px dashed var(--sm2-line); border-radius: 16px; background: transparent; color: inherit; font: inherit; cursor: pointer; &[aria-expanded="true"] { border-style: solid; border-color: var(--sm2-primary-ink); } &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; } }
 /* Faixa de evolucoes (04/11/2026): a frase cruza a tira uma vez e a fila passa para a proxima. Movimento reduzido: o componente troca por texto parado. */
 .sm2-evo-run { display: inline-block; padding-left: 100%; animation: sm2-evo-run 14s linear 1 forwards; }
 @keyframes sm2-evo-run { from { transform: translateX(0); } to { transform: translateX(-100%); } }
@@ -8720,6 +8736,14 @@ button.sm3-stat:focus-visible { outline: 3px solid var(--sm2-primary-fill); outl
   100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(1.45); }
 }
 .sm-bs-fly.sm-bs-big { animation-name: sm-bs-fly-big; }
+/* Perspectiva (câmera baixa): --s0/--s1 vêm de `utils/combate/projetilEscala.ts` (orb 1→1,1 indo ao inimigo, 1,1→1 vindo; corte à distância nasce pequeno e cresce). */
+@keyframes sm-bs-fly-persp {
+  0% { opacity: 0; transform: translate(0, 0) scale(var(--s0, 1)); }
+  12% { opacity: 1; transform: translate(calc(var(--dx) * .08), calc(var(--dy) * .08)) scale(calc(var(--s0, 1) + (var(--s1, 1) - var(--s0, 1)) * .12)); }
+  96% { opacity: 1; transform: translate(var(--dx), var(--dy)) scale(var(--s1, 1)); }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) scale(var(--s1, 1)); }
+}
+.sm-bs-fly.sm-bs-persp { animation-name: sm-bs-fly-persp; }
 @keyframes sm-bs-pop-big {
   0% { opacity: 0; transform: scale(.4); }
   22% { opacity: 1; transform: scale(1.22); }
@@ -9094,6 +9118,8 @@ body:has([data-area-sheet-backdrop], [aria-modal="true"]) .sm-demo-seal { opacit
   & strong { color: var(--sm2-primary-ink); }
 }
 .sm2-hex-panel { display: grid; gap: var(--sm2-space-4); min-width: 0; grid-template-columns: minmax(0, 1fr); }
+/* 09/11 (dono): linha do que a Porta faz, sob o título — branco, bold, menor, mesma fonte. */
+.sm2-hex-desc { margin: calc(-1 * var(--sm2-space-2)) 0 0; color: #fff; font-weight: 700; font-size: 0.8125rem; line-height: 1.35; }
 .sm2-hex-group { display: grid; gap: var(--sm2-space-2); }
 .sm2-hex-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sm2-space-1); }
 .sm2-hex-balance {
@@ -9209,3 +9235,15 @@ button.sm2-hex-row {
   display: flex; flex-wrap: wrap; justify-content: center; gap: var(--sm2-space-1);
   font-size: var(--sm2-text-xs, 12px); color: var(--sm2-muted);
 }
+
+/* ── MODAL ACIMA DO VOLTAR (09/11/2026) ─────────────────────────────────
+   Com modal aberto (`body[data-modal-open]`, ligado por `utils/modalLayer.ts`) o voltar da PÁGINA esmaece e não recebe
+   toque; o voltar que mora DENTRO do modal/folha (aria-modal) segue normal. */
+.sm2-area-back { transition: opacity .15s ease; }
+body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not([role="dialog"] .sm2-area-back) {
+  opacity: .18;
+  pointer-events: none;
+}
+
+/* BlockedActionModal (09/11/2026): o nome do lugar tocavel em "pode ser obtido em <lugar>". */
+.sm2-blocked-link { display: inline; padding: 0; min-height: 0; border: 0; background: none; color: var(--sm2-primary-ink); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; } }

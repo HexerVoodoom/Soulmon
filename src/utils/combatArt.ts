@@ -79,6 +79,22 @@ export function combatSceneBg(id: string | null | undefined): string | undefined
   return id === 'planta' || id === 'industrial' ? combatDomainSceneBg(id, 0) : undefined;
 }
 
+/**
+ * O cenário de uma CAMADA da masmorra: o próprio do elemento; sem arte própria, o do elemento BASE que o compõe, girando pela camada
+ * (antes era sempre o 1º componente: até 20 elementos seguidos, 40 camadas, no mesmo cenário). Camada ímpar = 1º componente, par = 2º…
+ */
+export function combatSceneBgDaCamada(id: string | null | undefined, layer: number): string | undefined {
+  const proprio = sceneBgDoElemento(id, ELEMENTO_BG, ELEMENTO_BG_MEAN);
+  if (proprio) return proprio;
+  const comps = id ? (DERIVED_ELEMENT_PAIRS.find(d => d.id === id)?.componentes ?? curatedComponents(id)) : undefined;
+  if (comps && comps.length > 1) {
+    const l = Number.isFinite(layer) ? Math.max(1, Math.floor(layer)) : 1;
+    const base = comps[(l - 1) % comps.length];
+    if (BG[base]) return `url(${BG[base]}) center/cover ${BG_MEAN[base] ?? ''}`.trim();
+  }
+  return combatSceneBg(id);
+}
+
 // ── Cenários por DOMÍNIO (Arena por tema, 27/10/2026) ──────────────────────
 // `combate/dominio/<dominio>-<1..3>.png`: o `masmorra-1..3` de cada um dos 17 domínios (`assets/dominios/`), reduzido para 360×640 e
 // paleta de 64 cores (≈ 70 KB cada, como os `bg-*` base). Quem escolhe o domínio é `utils/arenaTema.ts`.

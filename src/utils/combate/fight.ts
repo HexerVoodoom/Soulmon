@@ -53,6 +53,23 @@ export function hpPoints(hp: number): number {
   return Math.max(1, Math.round(hp * HP_POINTS_PER_HP));
 }
 
+/**
+ * HP EXIBIDO no PvP/Duelo (decisão do dono, 09/11/2026, §252): a tela mostra o HP BASE, o mesmo número da Arena,
+ * e não o inflado por `PVP_HP_SCALE`. Só apresentação: o motor segue lutando com `hp × PVP_HP_SCALE` (a luta dura o
+ * mesmo); a barra é fração, então a proporção não muda, e dano/HP atual derivam da fração × este máximo.
+ */
+export function hpExibidoPvp(combatantHp: number): number {
+  return hpPoints(combatantHp);
+}
+
+/** Fator SÓ VISUAL de ataque/defesa/velocidade (decisão do dono, 09/11/2026, §252). HP não multiplica. */
+export const STAT_DISPLAY_SCALE = 10;
+
+/** Ataque, defesa ou velocidade como a tela mostra: valor de combate × `STAT_DISPLAY_SCALE`, arredondado. Mecânica intocada. */
+export function statExibido(v: number): number {
+  return Math.round(v * STAT_DISPLAY_SCALE);
+}
+
 /** Points removed by a hit worth `frac` of a `pts`-point bar: at least 1 when it does any damage, 0 when it does none. */
 export function damagePoints(frac: number, pts: number): number {
   return frac > 1e-9 ? Math.max(1, Math.round(frac * pts)) : 0;
