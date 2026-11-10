@@ -153,6 +153,7 @@ import { ROGUE_PER_FLOOR, type RogueRun } from './utils/rogueDungeonSave';
 import { applyPoopDrain, cleanPoop, pendingPoopEvent, POOP_DRAIN_PERIOD_MS, remainingDrainToday } from './utils/poopDrain';
 import { isMuted, setMuted, playTaskComplete, playFeed, playEvolve, playDegenerate, playSleep } from './utils/sounds';
 import { pausarTrilha, retomarTrilha } from './utils/trilha';
+import { entrarNaSuperficie } from './utils/musica';
 import { showNotification } from './utils/notifications';
 import {
   decidePermissionAction, platformForPermission, readPlatformPermission,
@@ -4451,36 +4452,16 @@ export default function App() {
     // abaixo, que cobre o gesto manual E o sono automático com um caminho só.
   }, [isSleeping, falar, markDayAwake]);
 
-  /* E0 (S13, peça extraída; `SOM.md` §2.1): dormindo, a trilha para — e
-     "dormindo" inclui o sono AUTOMÁTICO e o app aberto com o pet já dormindo.
-     Até 22/09/2026 a pausa vivia dentro de `handleSleep`, então só o gesto
-     manual parava a trilha: o `useEffect` da janela de sono automático
-     (`AUTO_SLEEP_*`) trocava `isSleeping` sem tocar nela, e o primeiro gesto
-     sonoro de uma sessão aberta depois das 23h religava a trilha com o pet
-     dormindo (achado S-1 da QA rodada 2). Efeito sobre o ESTADO, não sobre o
-     gesto: quem quer que mude `isSleeping`, a trilha obedece. */
+  /* MÚSICA × SONO (pedido do dono, 10/11/2026 — emenda do E0/S13): ACORDADO, a música toca normal; DORMINDO, toca a música calma do
+     Refúgio (a faixa de meditação) em vez de calar. Antes (E0) o sono e a janela de descanso (23h–7h, a padrão vale para TODOS) pausavam o
+     tema: quem acordava o Soulmon de madrugada ficava sem música até as 7h, e acordar não bastava. Agora não há pausa por sono nem por
+     relógio: dormir é uma SUPERFÍCIE (`musica.ts` › `dormir`) — o tema cede à faixa calma e, ao acordar, o tema volta (crossfade) —,
+     e a janela de descanso só decide o sono automático, nunca o som. O mudo global continua calando tudo (`pausarTrilha('mudo')`).
+     Efeito sobre o ESTADO: quem quer que mude `isSleeping` (gesto, sono automático, app aberto com o pet dormindo), a música obedece. */
   useEffect(() => {
-    if (isSleeping) pausarTrilha('sono'); else retomarTrilha('sono');
+    if (!isSleeping) return undefined;
+    return entrarNaSuperficie('dormir');
   }, [isSleeping]);
-
-  /* E0, a outra metade: a janela de descanso (`rest.window`, `restWindow.ts`)
-     também cala a trilha, pelo relógio — sem a tolerância de 45 min do
-     `isWithinWindow`, que existe para premiar DEITAR cedo, não para calar som
-     antes da hora. Checado a cada 60 s, como o sono automático. */
-  const restWindowStart = gameState.rest?.window?.start;
-  const restWindowEnd = gameState.rest?.window?.end;
-  useEffect(() => {
-    const janela = restWindowStart && restWindowEnd
-      ? { start: restWindowStart, end: restWindowEnd }
-      : createRestState().window;
-    const check = () => {
-      if (isWithinWindow(janela, new Date(), 0)) pausarTrilha('descanso');
-      else retomarTrilha('descanso');
-    };
-    check();
-    const id = setInterval(check, 60000);
-    return () => clearInterval(id);
-  }, [restWindowStart, restWindowEnd]);
 
   /* Copy §1.6: a borra apareceu — ela constata e aponta (L3, §5.6). Só na
      CHEGADA do evento; o dreno cobrando sustentação segue mudo de propósito
