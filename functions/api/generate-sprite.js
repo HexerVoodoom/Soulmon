@@ -57,7 +57,7 @@
 // para os dois provedores igualmente.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { chromaKeyPng, chromaKeyOfPrompt, BadChromaError } from './_chroma.js';
+import { chromaKeyPng, chromaKeyPngChecked, chromaKeyOfPrompt, BadChromaError } from './_chroma.js';
 import { guardAiRequest, VALID_FORM_ID } from './_aiGuard.js';
 import { legacyFormIdOf } from './_branchLegacy.js';
 import { requirePaidTier, comEntitlementLegivel } from './_entitlements.js';
@@ -292,13 +292,15 @@ function bytesToDataUrl(bytes, mime) {
 }
 
 /** Baixa a imagem do provedor e devolve o PNG com fundo removido (data URL). */
+/** @param {string} url @param {'green'|'magenta'|'blue'} [key] */
 async function baixarEChavear(url, key = 'green') {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`higgsfield: download ${res.status}`);
   const buf = new Uint8Array(await res.arrayBuffer());
   if (buf.length > MAX_IMAGE_BYTES) throw new Error('higgsfield: imagem grande demais');
   try {
-    return { image: bytesToDataUrl(chromaKeyPng(buf, key), 'image/png'), raw: buf };
+    const { png, quality } = chromaKeyPngChecked(buf, key);
+    return { image: bytesToDataUrl(png, 'image/png'), raw: buf, quality };
   } catch (err) {
     if (err instanceof BadChromaError) {
       console.error('generate-sprite:', err.message);
@@ -457,6 +459,7 @@ async function generateGemini(env, prompt) {
 }
 
 /** Chroma-key "se der" para Soul/Gemini: qualquer falha devolve a imagem original. */
+/** @param {string} image @param {'green'|'magenta'|'blue'} [key] */
 async function chaveioOpcional(image, key = 'green') {
   try {
     if (image.startsWith('data:image/png;base64,')) {
@@ -485,7 +488,7 @@ export async function generateWithProviders(env, prompt, referenceImageUrls) {
       // Soul (e Gemini abaixo) também recebem o prompt de fundo verde: tira o fundo se der,
       // senão entrega como veio (nunca derruba uma geração já paga).
       const image = hf.keyed ? hf.image : await chaveioOpcional(hf.image, chromaKeyOfPrompt(prompt));
-      return { image, provider: 'higgsfield', hfError: null, ...(hf.raw ? { raw: hf.raw } : {}) };
+      return { image, provider: 'higgsfield', hfError: null, ...(hf.raw ? { raw: hf.raw } : {}), ...(hf.quality ? { quality: hf.quality } : {}) };
     } catch (err) {
       hfError = err.message;
       hfRefusal = isRefusal(err);
@@ -810,7 +813,7 @@ async function onRequestPostBruto({ request, env }) {
         try {
           await kvOrThrow(env).put(
             cacheKey(id, formId),
-            JSON.stringify({ image, provider: out.provider, at: Date.now(), ...guardarPromptParaRevisao(out, prompt, promptFallback, referenceImageUrls), ...(GRAVAR_EMAIL_DO_SPRITE && typeof auth.email === 'string' && auth.email ? { email: auth.email } : {}) }),
+            JSON.stringify({ image, provider: out.provider, at: Date.now(), ...(out.quality?.flag ? { recorteSuspeito: true, recorteQuality: out.quality } : {}), ...guardarPromptParaRevisao(out, prompt, promptFallback, referenceImageUrls), ...(GRAVAR_EMAIL_DO_SPRITE && typeof auth.email === 'string' && auth.email ? { email: auth.email } : {}) }),
           );
         } catch (err) {
           // Cache que não gravou custa uma regeração futura, não a resposta de

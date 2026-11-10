@@ -4,6 +4,7 @@
  * há magenta). Só gerações futuras usam isto — nada de sprite/save existente muda.
  */
 import { describe, it, expect } from 'vitest';
+import { escolherChaveDeMatiz, hueDist, KEY_HUE } from '../../functions/api/_chromaHue.js';
 import { stagesComElemento, pistasVisuaisDoElemento, escolherChroma, aplicarChroma, chromaDoPrompt, semChromaSeguro } from './elementoCombinado';
 import { DESCRITORES_ELEMENTO } from './elementoDescritores.data';
 import { ESSENCE_ELEMENT_IDS, BASE_ELEMENT_IDS } from './elementDex';
@@ -40,7 +41,7 @@ describe('elemento efetivo em TODO prompt', () => {
     expect(s).toContain('Elemental theme of this form: Sabbath, with arcano as its main element.');
     expect(s).toContain('ring of candles around rune, with hints of orbiting violet glyphs, curling black smoke, barbed thorns');
     expect(s).toContain('royal violet, ink black, sickly green accents');
-    expect(chromaDoPrompt(s)).toBe('magenta'); // a paleta do Sabá tem verde: fundo magenta
+    expect(chromaDoPrompt(s)).not.toBe('magenta'); // violeta fica entre azul e magenta: fundo magenta/azul comeria o corpo (#749)
   });
   it('elemento simples (base): só o próprio, sem traço de componentes', () => {
     for (const b of BASE_ELEMENT_IDS) expect(`${DESCRITORES_ELEMENTO[b].forma} ${DESCRITORES_ELEMENTO[b].paleta}`, b).not.toMatch(/hints of|accents/);
@@ -74,17 +75,20 @@ describe('fundo chroma coerente com as cores do elemento', () => {
   it('verde, magenta E azul forte: sem cor segura -> regra antiga (a que não domina) e semChromaSeguro marca', () => {
     const t = `${RAW} Visual cues of this element: green leaves, hot-pink glitter, royal blue palette.`;
     expect(semChromaSeguro(t)).toBe(true);
-    expect(escolherChroma(t)).toBe('magenta');
+    expect(escolherChroma(t)).toBe('blue'); // por matiz: a 3ª cor citada (azul) é a menos dominante e a sacrificada
   });
-  it('elementos com verde E magenta nas pistas (tormento, praga, devorador, cyber, bencao_feerica): fundo azul, sem "blue" forte nas pistas', () => {
+  it('elementos com verde E magenta nas pistas: o fundo é o de maior distância de matiz (nunca a cor dominante da criatura)', () => {
     for (const id of ['tormento', 'praga', 'devorador', 'cyber', 'bencao_feerica']) {
       const p = gen(id, 'sombra').imagePrompt;
-      expect(p, id).toContain('#0000FF chroma-blue');
-      expect(p, id).toContain('contains no blue and no blue fringe');
-      expect(p, id).not.toMatch(/#00FF00|#FF00FF/);
-      expect(chromaDoPrompt(p), id).toBe('blue');
-      expect(semChromaSeguro(p), id).toBe(false);
-      expect(pistasVisuaisDoElemento(id) ?? '', id).not.toMatch(/(?:bright|vivid|electric|royal|cobalt|neon) blue|sapphire|ultramarine/i);
+      const corpo = p.replace(/on a solid flat pure #[0-9A-Fa-f]{6} chroma-\w+ background \([^)]*\), the creature itself contains no [^:]*? fringe/, '');
+      const r = escolherChaveDeMatiz(corpo);
+      expect(chromaDoPrompt(p), id).toBe(r.key);
+      expect(r.cores[0] && Math.min(...[r.cores[0]].map(c => hueDist(c.hue, KEY_HUE[r.key]))) >= 30, id).toBe(true); // a cor dominante nunca fica a <30 graus da chave
+    }
+  });
+  it('criatura ROXA (entre azul e magenta) pede fundo VERDE, não magenta nem azul', () => {
+    for (const t of ['purple dragon with violet wings', 'dragão roxo com asas violeta', 'lilac fox, amethyst eyes']) {
+      expect(escolherChroma(`${RAW} ${t}`), t).toBe('green');
     }
   });
   it('portal e glitter (magenta, sem verde nas pistas) ficam no verde; elementos normais não mudam', () => {
@@ -109,22 +113,19 @@ describe('fundo chroma coerente com as cores do elemento', () => {
     expect(aplicarChroma(aplicarChroma(RAW, 'magenta'), 'green')).toBe(RAW);
     expect(aplicarChroma(RAW, 'green')).toBe(RAW);
   });
-  it('em todo o catálogo, o fundo pedido combina com as cores: verde nas pistas ⇒ magenta; verde+magenta ⇒ azul; sem verde ⇒ verde', () => {
-    const VERDE = /green|lime|mint|emerald|jade|olive|fern|moss|sage|clover|forest|verde/i;
+  it('em todo o catálogo, o fundo pedido é o de maior pontuação de matiz, e a cor dominante nunca colide', () => {
     for (const id of ESSENCE_ELEMENT_IDS) {
       const p = gen(id, 'sombra');
       for (const txt of [p.imagePrompt, p.imagePromptFallback]) {
-        const cues = txt.split('Visual cues of this element:')[1] ?? '';
-        const key = chromaDoPrompt(txt);
-        const MAG = /(?<!dark |deep |dim )magenta|hot[- ]pink|fuchsia|neon pink/i;
-        const g = cues.search(VERDE); const m = cues.search(MAG);
-        const esperado = g >= 0 && m < 0 ? 'magenta' : m >= 0 && g < 0 ? 'green' : g >= 0 && m >= 0 ? (semChromaSeguro(txt) ? (g < m ? 'magenta' : 'green') : 'blue') : 'green';
-        expect(key, id).toBe(esperado);
+        const corpo = txt.replace(/on a solid flat pure #[0-9A-Fa-f]{6} chroma-\w+ background \([^)]*\), the creature itself contains no [^:]*? fringe/, '');
+        const r = escolherChaveDeMatiz(corpo);
+        expect(chromaDoPrompt(txt), id).toBe(r.key);
+        if (r.cores[0]) expect(hueDist(r.cores[0].hue, KEY_HUE[r.key]), id).toBeGreaterThanOrEqual(Math.min(30, r.ranking[0].score));
       }
     }
   });
-  it('nenhum elemento do catálogo cai em "sem chroma seguro" (verde+magenta+azul forte)', () => {
-    expect(ESSENCE_ELEMENT_IDS.filter(id => semChromaSeguro(gen(id, 'sombra').imagePrompt))).toEqual([]);
+  it('catálogo com o círculo cheio (sem chave segura) é um conjunto pequeno e conhecido: listar para o dono', () => {
+    expect(ESSENCE_ELEMENT_IDS.filter(id => semChromaSeguro(gen(id, 'sombra').imagePrompt))).toEqual(['requiem']);
   });
   it('a troca de texto é a MESMA do Oráculo (motor.ts › withChroma)', () => {
     const doMotor = FUNDO_VERDE.replace('#00FF00 chroma-green', '#FF00FF chroma-magenta').replace('contains no green and no green fringe', 'contains no magenta, no hot pink and no magenta fringe');

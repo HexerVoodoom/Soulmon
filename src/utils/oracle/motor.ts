@@ -8,6 +8,7 @@
  * de código do chunk de entrada (`oracleBundleSplit.contract.test.ts` cobra).
  * Testes e scripts que precisam do corpo síncrono importam daqui.
  */
+import { escolherChaveDeMatiz } from '../../../functions/api/_chromaHue.js';
 import { SPRITE_FACING_PROMPT } from '../spritePose';
 import { isOnboardingVelado } from '../bbStage';
 import { FAMILY_KIN, CHAMPION_MORPHS_EXTRA, PERFECT_MORPHS_EXTRA, MEGA_MORPHS_EXTRA, ELEMENT_MOTIFS, THEME_MOTIFS, type EvoShape, type KinGroup } from './formas';
@@ -933,15 +934,13 @@ export const ELEMENT_SECONDARY_HUE: Record<ElementId, string> = {
   sombra: 'deep violet', luz: 'pearl-white', planta: 'leaf-green', industrial: 'steel-gray',
 };
 
-const MAGENTA_WORDS = /(?<!dark |deep |dim )magenta|hot[- ]pink|fuchsia|neon pink/i;
-const GREEN_WORDS = /green|fern|moss|sage|lime|leaf|emerald|jade|olive|clover|forest|mint|sprout/i;
-
-/** Cor do chroma: magenta quando a criatura tem verde (o recorte verde a comeria). */
+/**
+ * Cor do chroma por DISTÂNCIA DE MATIZ (`functions/api/_chromaHue.js`): a chave (verde/magenta/azul) mais longe, no círculo cromático,
+ * das cores da criatura. Planta conta como verde; sombra como violeta escuro (ignorado: escuro demais para o recorte comer).
+ */
 export function chromaFor(colorDesc: string, accent: string, elements: ElementId[]): 'green' | 'magenta' | 'blue' {
-  const verde = elements.includes('planta') || GREEN_WORDS.test(`${colorDesc} ${accent}`);
-  // Verde E magenta juntos: nem o fundo verde nem o magenta recortam limpo -> azul #0000FF.
-  if (verde && MAGENTA_WORDS.test(`${colorDesc} ${accent}`)) return 'blue';
-  return verde ? 'magenta' : 'green';
+  const texto = `${colorDesc} ${accent}${elements.includes('planta') ? ' green' : ''}`;
+  return escolherChaveDeMatiz(texto).key;
 }
 
 // ---------------------------------------------------------------------------
