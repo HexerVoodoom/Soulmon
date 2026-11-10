@@ -8,6 +8,7 @@ import { Language, useTranslation, getLanguageName } from '../utils/i18n';
 import { readFlag, readFlagOr, readLocal, writeFlag, writeLocal } from '../utils/safeStorage';
 import { isVibrateOn, setVibrateOn } from '../utils/focoTimer';
 import { AccountSection } from './AccountSection';
+import { ReviewSoulmonRow, type ReviewRowState } from './ReviewSoulmonRow';
 import { SubscriptionSection } from './SubscriptionSection';
 import { AccountDataSection } from './AccountDataSection';
 import { InstallPrompt } from './InstallPrompt';
@@ -68,6 +69,8 @@ interface SettingsPageProps {
   onReplayWelcomeTour?: () => void;
   /** Glossário (HelpModal). */
   onOpenGlossary: () => void;
+  /** "Pedir revisão do meu Soulmon" (Ajuda): estado e toque do pedido da forma equipada. Sem ele a linha não existe. */
+  review?: ReviewRowState;
   /** Cartões de estudo do jogador (Revisão da Malha): ler/editar fora do Ateliê (decisão do dono 25/10). */
   onOpenStudyCards?: () => void;
   notificationsEnabled: boolean;
@@ -269,6 +272,7 @@ export function SettingsPage({
   onOpenGuide,
   onReplayWelcomeTour,
   onOpenGlossary,
+  review,
   onOpenStudyCards,
   notificationsEnabled,
   onToggleNotifications,
@@ -697,6 +701,7 @@ export function SettingsPage({
             (design-critic B3, 21/09/2026; `FeedbackLink.tsx`). */}
         <FeedbackRow language={language} saveId={saveId} />
         <BugReportRow language={language} view="settings" />
+        <ReviewSoulmonRow language={language} review={review} />
         <p className="sm2-num" style={{ ...sm2Hint, minHeight: 24, display: 'flex', alignItems: 'center' }}>Soulmon {APP_VERSION}</p>
       </Group>
 

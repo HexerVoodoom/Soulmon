@@ -69,12 +69,15 @@ import { GamePopups } from './components/GamePopups';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
 import { emptyIncubation, incubationFor, incubationReady } from './utils/spriteTrigger';
 import { activeCrystal, crystalPhase, startCrystal, type CrystalPhase } from './utils/evolutionCrystal';
-import { altSpriteKey, chaveDaFormaEquipada, elementoDaForma, equiparFormaAlt, mapaDeSpritesProprios, registrarFormaAoEvoluir, spriteVisorOf } from './utils/formasAlternativas';
+import { altSpriteKey, baseFormOfKey, chaveDaFormaEquipada, elementoDaForma, equiparFormaAlt, mapaDeSpritesProprios, registrarFormaAoEvoluir, spriteVisorOf } from './utils/formasAlternativas';
 import { equiparFormaAltEstado, trocarFormaEstado } from './utils/formaEquip';
 import { spriteText } from './utils/spriteCopy';
 import { UNLOCK_NEEDED_EVENT } from './utils/unlockEvent';
 import { MAX_GENERATE_CHARACTER_USES, generateCharacterUsesLeft, spendGenerateCharacterUse } from './utils/generateCharacterUses';
 import { useRegenAparencia } from './hooks/useRegenAparencia';
+import { useReviewWatcher } from './hooks/useReviewWatcher';
+import { isReviewableSpriteUrl, type ReviewReport, type ReviewSnapshot } from './utils/reviewSoulmon';
+import { ReviewResultModal, reviewResultMessage, type ReviewRowState } from './components/ReviewSoulmonRow';
 import { emptySpriteLibrary, revertVisor, displaySprite, isNewbornLibrary, isAccountCapped, isFormCapped, markTuneSeen, recordSprite, canManualRetry, type SpriteLibrary } from './utils/spriteLibrary';
 import { PLACEHOLDER_ART } from './utils/placeholderArt';
 import { getSpriteForStage, isStarterId, migrateEggType, setOwnSprites, STARTER_IDS } from './utils/sprites';
@@ -1456,6 +1459,39 @@ export default function App() {
     generatingOther: spriteGen.generating.length > 0,
   });
 
+
+  /* "Pedir revisão do meu Soulmon" (Ajuda): a forma EQUIPADA, o sprite dela no acervo e o prompt que o app montaria (reserva do servidor para
+     sprites antigos). O estado do pedido mora no servidor (por forma) e o hook só o acompanha: 2 min nos 10 primeiros, depois 10 min até 24 h. */
+  const reviewSnapshot = useMemo<ReviewSnapshot | undefined>(() => {
+    const url = spriteAcervo.sprites[chaveAtual]?.url;
+    if (!url) return undefined;
+    const stage = (stagesDoSprite ?? []).find(s => creatureFormId(s) === baseFormOfKey(chaveAtual));
+    return {
+      formId: chaveAtual,
+      spriteUrl: url,
+      soulmonId: gameState.soulmonMeta?.seed != null ? String(gameState.soulmonMeta.seed) : null,
+      stage: gameState.evolutionStage,
+      element: elementoDaForma(gameState.elementoJornada, gameState.evolutionStage) ?? gameState.soulmonMeta?.dominantElement ?? null,
+      prompt: stage?.imagePrompt ?? null,
+    };
+  }, [spriteAcervo, chaveAtual, stagesDoSprite, gameState.soulmonMeta, gameState.evolutionStage, gameState.elementoJornada]);
+  const [reviewDone, setReviewDone] = useState<ReviewReport[] | null>(null);
+  const reviewWatcher = useReviewWatcher({
+    snapshot: reviewSnapshot,
+    // O servidor já trocou a URL no save; aqui o app passa a mostrar a imagem nova NESTA forma (e só nela), sem reinstalar.
+    onApplyFix: useCallback((formId: string, newUrl: string) => updateSpriteLibrary(prev => {
+      const cur = prev.sprites[formId];
+      return cur && cur.url !== newUrl ? { ...prev, sprites: { ...prev.sprites, [formId]: { ...cur, url: newUrl, at: Date.now() } } } : prev;
+    }), [updateSpriteLibrary]),
+    onFinished: setReviewDone,
+  });
+  const reviewRow = useMemo<ReviewRowState>(() => ({
+    active: reviewWatcher.active,
+    sending: reviewWatcher.sending,
+    error: reviewWatcher.error,
+    reviewable: isReviewableSpriteUrl(reviewSnapshot?.spriteUrl),
+    onRequest: () => { void reviewWatcher.request(); },
+  }), [reviewWatcher.active, reviewWatcher.sending, reviewWatcher.error, reviewWatcher.request, reviewSnapshot?.spriteUrl]);
 
   // ── Os rituais do motor de tarefas (utils/rituals.ts) ─────────────────────
   // Check-in matinal: no MÁXIMO 1× por dia (`lastCheckInDate` no save) e
@@ -8087,6 +8123,7 @@ export default function App() {
         )}
 
         {/* Help Modal */}
+        <ReviewResultModal language={language} message={reviewDone ? reviewResultMessage(language, reviewDone) : null} onClose={() => setReviewDone(null)} />
         {showHelpModal && (
           <Suspense fallback={null}>
             <HelpModal
@@ -9252,6 +9289,7 @@ export default function App() {
               onOpenGuide={() => setGuideModalOpen(true)}
               onReplayWelcomeTour={handleReplayWelcomeTour}
               onOpenGlossary={() => setShowHelpModal(true)}
+              review={reviewSnapshot ? reviewRow : undefined}
               onOpenStudyCards={() => setStudyCardsOpen(true)}
               notificationsEnabled={notificationsEnabled}
               onToggleNotifications={handleToggleNotifications}
