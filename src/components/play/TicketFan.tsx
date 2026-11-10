@@ -7,7 +7,7 @@ import ticketImg from '../../assets/soulmon/hud/ticket-minigame.png';
 
 /**
  * 🎫 Tickets dos minijogos (09/11/2026; regra: `utils/funTickets.ts`).
- * Arte final: ticket amarelo com controle de videogame (ChatGPT, UI, aprovado pelo dono em 09/11/2026), 512×308, alfa real.
+ * Arte: `hud/ticket-minigame.png` (ChatGPT, UI, aprovado provisório pelo dono em 09/11/2026), 512×308, alfa.
  */
 const TICKET_IMG = ticketImg;
 const TICKET_RATIO = 308 / 512;
@@ -18,11 +18,14 @@ export function TicketArt({ width = 64, style }: { width?: number; style?: CSSPr
   return <img src={TICKET_IMG} alt="" aria-hidden="true" data-ticket-art width={width} height={h} draggable={false} style={{ width, height: h, display: 'block', ...style }} />;
 }
 
-/** O ticketzinho com "x1" que mora no botão de jogar / jogar de novo: a quantidade que a partida gasta. */
-export function TicketCost({ amount = 1, size = 28 }: { amount?: number; size?: number }) {
+/** O ticketzinho com "x1" que mora no botão de jogar / jogar de novo: a quantidade que a partida gasta. O ícone fica INCLINADO a -45° (pedido do dono, 09/11/2026). */
+export function TicketCost({ amount = 1, size = 30 }: { amount?: number; size?: number }) {
+  const box = Math.round(size * 1.25); // a caixa do ícone girado a 45° ocupa mais que a imagem: sem isso o canto vaza
   return (
-    <span aria-hidden="true" data-ticket-cost={amount} className="sm2-num" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginInlineStart: 8, fontWeight: 600 }}>
-      <TicketArt width={size} />
+    <span aria-hidden="true" data-ticket-cost={amount} className="sm2-num" style={{ display: 'inline-flex', alignItems: 'center', gap: 2, marginInlineStart: 6, fontWeight: 700 }}>
+      <span data-ticket-cost-icon style={{ display: 'inline-flex', width: box, height: box, alignItems: 'center', justifyContent: 'center', transform: 'rotate(-45deg)', flex: 'none' }}>
+        <TicketArt width={size} />
+      </span>
       x{amount}
     </span>
   );
@@ -32,24 +35,51 @@ export function TicketCost({ amount = 1, size = 28 }: { amount?: number; size?: 
 export const FunTicketCostContext = createContext(false);
 export const useFunTicketCost = (): boolean => useContext(FunTicketCostContext);
 
-/** Os tickets em posse, GRANDES e abertos em leque (um por ticket). */
-export function TicketFan({ count, language, width = 84 }: { count: number; language: Language; width?: number }) {
+/**
+ * Os tickets em posse, FORA do modal, por cima da cena, na frente do NPC (pedido do dono, 09/11/2026): um leque quase em PÉ, aberto a
+ * partir de um ponto (a mão do NPC), um bilhete por ticket. Vai como filho da zona do NPC (`AreaSheet` › `npcOverlay`), entre o NPC e o
+ * balão de fala: a caixa tem largura ZERO e fica no fim do NPC, então o leque cobre o braço e não o corpo nem a fala.
+ * Tamanhos em `dvh` (a zona do NPC é 1/3 da altura da tela): o leque acompanha a tela, 360×640 ou 412×915. Sem ticket não desenha nada
+ * (nenhum vão reservado); ao comprar, os bilhetes abrem com uma animação curta.
+ */
+export const TICKET_FAN_LONG_DVH = 11; // lado maior do bilhete (a zona do NPC tem ~33 dvh)
+export const TICKET_FAN_PIVOT_DVH = 7; // altura da mão, medida do pé da zona
+export const TICKET_FAN_STEP_DEG = 10;
+
+export function TicketFan({ count, language }: { count: number; language: Language }) {
   const n = Math.max(0, Math.min(FUN_TICKET_MAX, Math.floor(count)));
   const isPt = language === 'pt-BR';
-  const spread = 14; // graus entre bilhetes
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (n < 1) { setOpen(false); return; }
+    const id = requestAnimationFrame(() => setOpen(true));
+    return () => cancelAnimationFrame(id);
+  }, [n > 0]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (n < 1) return null;
+  const long = TICKET_FAN_LONG_DVH;
+  const short = long * TICKET_RATIO;
+  const mid = (n - 1) / 2;
   return (
     <div
       data-ticket-fan={n} role="img"
       aria-label={isPt ? `${n} ${n === 1 ? 'ticket' : 'tickets'}` : `${n} ${n === 1 ? 'ticket' : 'tickets'}`}
-      style={{ position: 'relative', height: Math.round(width * TICKET_RATIO) + 28, width: width + 4 * 22, maxWidth: '100%', margin: '0 auto', opacity: n ? 1 : 0.35 }}
+      style={{ position: 'relative', flex: 'none', width: 0, height: 0, alignSelf: 'flex-end', zIndex: 0, pointerEvents: 'none' }}
     >
       {Array.from({ length: n }, (_, i) => {
-        const mid = (n - 1) / 2;
-        const rot = (i - mid) * spread;
-        const left = `calc(50% - ${width / 2}px + ${(i - mid) * 22}px)`;
+        const spread = (i - mid) * TICKET_FAN_STEP_DEG;
+        const angle = open ? -90 + spread : -90;
         return (
-          <span key={i} data-ticket-in-fan style={{ position: 'absolute', left, bottom: 4, transform: `rotate(${rot}deg)`, transformOrigin: '50% 140%', filter: 'drop-shadow(0 2px 2px rgba(0,0,0,.45))' }}>
-            <TicketArt width={width} />
+          <span
+            key={i} data-ticket-in-fan
+            style={{
+              position: 'absolute', left: `-${long * 0.3}dvh`, top: `-${TICKET_FAN_PIVOT_DVH + short / 2}dvh`,
+              width: `${long}dvh`, height: `${short}dvh`, transformOrigin: '0% 50%',
+              transform: `rotate(${angle}deg) scale(${open ? 1 : 0.6})`, opacity: open ? 1 : 0,
+              transition: `transform 280ms cubic-bezier(.2,.9,.3,1.2) ${i * 30}ms, opacity 200ms ease-out ${i * 30}ms`,
+              filter: 'drop-shadow(0 2px 3px rgba(0,0,0,.55))',
+            }}
+          >
+            <img src={TICKET_IMG} alt="" aria-hidden="true" data-ticket-art draggable={false} style={{ width: '100%', height: '100%', display: 'block' }} />
           </span>
         );
       })}
@@ -58,7 +88,7 @@ export function TicketFan({ count, language, width = 84 }: { count: number; lang
 }
 
 /**
- * O painel do Salão: o leque, a contagem, a contagem regressiva do lote que vence primeiro e o botão de comprar
+ * O painel do Salão (DENTRO do modal; o leque mora fora, na cena): a contagem, a contagem regressiva do lote que vence primeiro e o botão de comprar
  * (1 energia → 3 tickets). `nudge` > 0 = o jogador tentou jogar sem ticket: o aviso ganha destaque.
  */
 export function TicketPanel({ language, status, onBuy, nudge = 0 }: { language: Language; status: (nowMs: number) => FunTicketStatus; onBuy?: () => void; nudge?: number }) {
@@ -73,7 +103,6 @@ export function TicketPanel({ language, status, onBuy, nudge = 0 }: { language: 
       : (isPt ? 'Sem energia para comprar tickets agora. A energia volta com o tempo; que tal uma tarefa, o Ateliê da Mente ou o Refúgio?' : 'No energy to buy tickets right now. Energy comes back over time; how about a task, the Mind Atelier or the Refuge?');
   return (
     <section data-fun-tickets={st.count} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
-      <TicketFan count={st.count} language={language} />
       <p className="sm2-num" data-fun-tickets-count style={{ margin: 0, fontWeight: 600 }}>
         {isPt ? `Tickets: ${st.count}/${FUN_TICKET_MAX}` : `Tickets: ${st.count}/${FUN_TICKET_MAX}`}
         {st.count > 0 && <span data-fun-tickets-expiry style={{ fontWeight: 400, marginInlineStart: 8 }}>{isPt ? `vence em ${formatHms(st.msLeft)}` : `expires in ${formatHms(st.msLeft)}`}</span>}

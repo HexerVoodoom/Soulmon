@@ -50,9 +50,9 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
       areaId="jogos" lotId="salao" language={language} title={gameName}
       closeLabel={isPt ? 'Voltar' : 'Back'} open onClose={onBack}
       npcArt={lotNpcArt('jogos', 'salao')} npcVoice={{ name: voice.name, line }}
+      npcOverlay={tickets !== undefined ? <TicketFan count={tickets} language={language} /> : undefined}
     >
       <div data-minigame-gate style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {tickets !== undefined && <TicketFan count={tickets} language={language} />}
         <button type="button" data-gate-ranking-open onClick={() => setRankOpen(true)} style={{ ...sm2Button('outline', false), minHeight: 44 }}>
           {isPt ? 'Ver ranking' : 'See ranking'}
         </button>
