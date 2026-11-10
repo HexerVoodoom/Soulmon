@@ -38,6 +38,8 @@ export const chaveDaForma = (id, forma) => `sim:sprite:${id}:${forma}`;
 export const chaveDoPrompt = (id, forma) => `sim:prompt:${id}:${forma}`;
 export const chaveDaFila = (id, forma) => `sim:form:${id}:${forma}`;
 const FORMA_RE = /^(?:rookie|ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))$/;
+/** Maior forma cuja arte o motor GERA. Acima dela o simulado reaproveita o sprite que já tem (dono, 10/11/2026: sem arte nova para o balanço de oponentes; pendência no REGISTRO §280). */
+export const FORMA_GERADA_MAX = 'champion';
 const posicao = (forma) => ORDEM.indexOf(String(forma).split('-')[0]);
 
 /** O prompt gravado da forma, ou `null` se faltar ou estiver ilegível. */
@@ -58,7 +60,7 @@ async function sha256Hex(texto) {
 /** Um jogador viu o simulado nesta forma: entra na fila se a arte ainda não existe. No-op desligado. Nunca lança. */
 export async function enfileirarForma(env, id, forma, now = new Date()) {
   try {
-    if (!formasLigadas(env) || !kv(env) || !POR_ID.has(id) || ACIMA_DO_TETO.has(id) || !FORMA_RE.test(forma)) return false;
+    if (!formasLigadas(env) || !kv(env) || !POR_ID.has(id) || ACIMA_DO_TETO.has(id) || !FORMA_RE.test(forma) || posicao(forma) > posicao(FORMA_GERADA_MAX)) return false;
     const store = kvOrThrow(env);
     if (await store.get(chaveDaForma(id, forma))) return false;
     if (await store.get(chaveDaFila(id, forma))) return false;

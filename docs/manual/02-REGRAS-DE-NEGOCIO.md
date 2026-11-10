@@ -4933,6 +4933,10 @@ quem chama é um cron e cron repete.
 A Honra do jogador vem do CLIENTE (`onEarnEmblems` com `EMBLEMS_PER_WIN` /
 `EMBLEMS_PER_LOSS`), não do servidor — ver [§46](#moedas).
 
+### Estágio e ataques dos oponentes (10/11/2026, REGISTRO §280)
+
+O oponente sorteado do **Treino** e da **Ranqueada** tem estágio próximo e variado ao do jogador: peso por delta de estágio em `ESTAGIO_PESOS` (`functions/api/_oponenteEstagio.js`: −1 25%, igual 40%, +1 25%, +2 7%, −2 3%). Os simulados não têm mais teto Champion (`SIM_FORMA_MAX = 'ultra'`; sprite reaproveitado, sem arte nova de forma alta). Nas listas do Torneio o estágio é um **ícone** (`EstagioMarca`, `aria-label` com o nome do jogo). O mix de ataques dos inimigos ({à distância, corpo a corpo} × {corte, splash}) é ~25% cada (`foeStrikeForm`, `FORMA_MELEE_PCT`), só visual.
+
 ### O Treino (Sparring, a 2ª aba do Torneio — 10/11/2026)
 
 O Torneio tem **duas abas** (só aparecem com o Vínculo mínimo): **Ranqueada** (tudo o que está acima, intocado) e **Treino**

@@ -71,6 +71,7 @@ import { essenceIconSrc, essenceName } from '../utils/resultEssences';
 import { wildFoeLabel } from '../utils/wildFoeLabel';
 import { TOURNAMENT_NPCS, npcSide, tournamentNpcSprite, type TournamentNpc } from '../utils/tournamentNpcs';
 import { getSpriteForStage } from '../utils/sprites';
+import { EstagioMarca } from './ui/EstagioMarca';
 import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
 import { lineIconForStage } from '../utils/lineIcons';
@@ -999,7 +1000,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                     {o.name}
                   </p>
                   <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {o.petName || o.stage} · {getStageLevel(o.stage)}
+                    <EstagioMarca forma={o.stage} isPt={isPt} />{o.petName} · {getStageLevel(o.stage)}
                   </p>
                 </div>
                 <RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} size={14} items={[
@@ -1128,7 +1129,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ ...sm2Text, margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.name}</p>
                   <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {o.petName || o.stage} · {getStageLevel(o.stage)}
+                    <EstagioMarca forma={o.stage} isPt={isPt} />{o.petName} · {getStageLevel(o.stage)}
                   </p>
                 </div>
                 <RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} size={14} items={[{ kind: 'honor', max: SPAR_HONOR_MAX }]} />

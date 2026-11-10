@@ -87,8 +87,9 @@ describe('sorteio por faixa de Vínculo (puro)', () => {
   });
   it('rng diferente muda a ordem (o refresh sorteia de novo)', () => {
     const pool = mk([8, 9, 10, 11, 12, 13, 9, 10, 11, 12]);
-    const a = pickSparOpponents(pool, 10, () => 0.01).map(p => p.i).join();
-    const b = pickSparOpponents(pool, 10, () => 0.99).map(p => p.i).join();
+    const seq = (seed) => { let x = seed; return () => (x = (x * 16807) % 2147483647) / 2147483647; };
+    const a = pickSparOpponents(pool, 10, seq(1)).map(p => p.i).join();
+    const b = pickSparOpponents(pool, 10, seq(99)).map(p => p.i).join();
     expect(a).not.toBe(b);
   });
   it('Honra por vitória é 1 ou 2', () => {

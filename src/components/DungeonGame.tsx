@@ -56,7 +56,7 @@ import { CHEER_TAPS_FULL } from '../utils/energia';
 import type { GroupResult } from '../utils/combate/group';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { fighterIdentity } from '../utils/fighterIdentity';
-import { fxElementId, dungeonEnemyElement, dungeonFoeSpecialLabel, prefersReducedMotion, elementStrikeForm, specialLabel } from '../utils/combatFx';
+import { fxElementId, dungeonEnemyElement, dungeonFoeSpecialLabel, prefersReducedMotion, elementStrikeForm, foeStrikeForm, specialLabel } from '../utils/combatFx';
 import { meleeImpactOf, chaveDaIdentidade } from '../utils/combate/golpeImpacto';
 import { TorcidaLayer } from './games/TorcidaKit';
 import { useBattleSpeed, BattleSpeedButton } from './games/BattleSpeed';
@@ -585,7 +585,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       playerKind: sp => (sp ? ident.especial.forma : ident.basico.forma),
       playerImpact: sp => meleeImpactOf({ element: sp ? ident.especial.elemento : ident.basico.elemento, key: chaveDaIdentidade(ident) }),
       foeImpact: () => meleeImpactOf({ element: foeEl, key: e?.name ?? foeEl, name: e?.name }),
-      foeKind: (_f, sp) => elementStrikeForm(foeEl, sp ? 'especial' : 'basica'),
+      foeKind: (_f, sp) => foeStrikeForm(foeEl, sp ? 'especial' : 'basica'),
       labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
       playerSpecialEscola: ident.especial.escola,

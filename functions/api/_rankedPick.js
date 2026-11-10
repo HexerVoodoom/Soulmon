@@ -11,6 +11,8 @@
 // comparação tóxica que o `TournamentPage` proíbe.
 // ---------------------------------------------------------------------------
 
+import { ordenarPorEstagio } from './_oponenteEstagio.js';
+
 /** Quantos candidatos mais próximos entram no sorteio (3 devolvidos entre eles). */
 export const RANKED_WINDOW = 4;
 export const RANKED_PICKS = 3;
@@ -21,7 +23,7 @@ export const RANKED_PICKS = 3;
  * cada luta); `lifetime` só desempata. `me` aceita número (legado: compara `lifetime`) ou `{ score, lifetime }`.
  * Pura: o `rng` vem de fora (`() => [0,1)`).
  */
-export function pickRankedOpponents(pool, me, rng, n = RANKED_PICKS, window = RANKED_WINDOW) {
+export function pickRankedOpponents(pool, me, rng, n = RANKED_PICKS, window = RANKED_WINDOW, myStage = null) {
   const fin = v => (Number.isFinite(v) ? v : 0);
   const legado = typeof me !== 'object' || me === null;
   const alvo = legado ? fin(me) : fin(me.score);
@@ -34,9 +36,5 @@ export function pickRankedOpponents(pool, me, rng, n = RANKED_PICKS, window = RA
   }));
   tagged.sort((a, b) => a.d - b.d || a.d2 - b.d2 || a.tie - b.tie);
   const near = tagged.slice(0, Math.max(n, window)).map(t => t.item);
-  for (let i = near.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [near[i], near[j]] = [near[j], near[i]];
-  }
-  return near.slice(0, n);
+  return ordenarPorEstagio(near, myStage, rng, c => c.stage).slice(0, n);
 }

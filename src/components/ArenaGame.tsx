@@ -47,7 +47,7 @@ import { RING_TAG, DODGE_TAG, PERSONAL_TAG, ELEMENT_ADVANTAGE_TAG } from './game
 import { CHEER_TAPS_FULL } from '../utils/energia';
 import { BattleStage, BATTLE_LAYER_STYLE } from './games/BattleStage';
 import { entrarNaSuperficie } from '../utils/musica';
-import { fxElementId, prefersReducedMotion, elementStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
+import { fxElementId, prefersReducedMotion, elementStrikeForm, foeStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
 import { meleeImpactOf, chaveDaIdentidade } from '../utils/combate/golpeImpacto';
 import { fighterIdentity } from '../utils/fighterIdentity';
 import { elementoNomeDe } from '../utils/soulProfile/ficha/elementoNome';
@@ -305,7 +305,7 @@ export function ArenaGame({
       playerKind: (sp: boolean) => (sp ? ident.especial.forma : ident.basico.forma),
       playerImpact: sp => meleeImpactOf({ element: sp ? ident.especial.elemento : ident.basico.elemento, key: chaveDaIdentidade(ident) }),
       foeImpact: (foe: number, sp: boolean) => { const e = inimigosRef.current[foe]; return meleeImpactOf({ element: e?.element ?? e?.elements[0], key: e?.nameEn ?? String(foe), name: e ? `${e.namePt} ${e.nameEn}` : null }); },
-      foeKind: (foe: number, sp: boolean) => elementStrikeForm(inimigosRef.current[foe]?.element ?? inimigosRef.current[foe]?.elements[0], sp ? 'especial' : 'basica'),
+      foeKind: (foe: number, sp: boolean) => foeStrikeForm(inimigosRef.current[foe]?.element ?? inimigosRef.current[foe]?.elements[0], sp ? 'especial' : 'basica'),
       labels: { blocked: isPt ? 'Defendeu!' : 'Blocked!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
       playerSpecialEscola: ident.especial.escola,
