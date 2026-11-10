@@ -9,7 +9,7 @@ import { RAMOS_INIMIGOS_DATA } from './enemyRosterData';
 import { newBossCombat } from './match3Boss';
 import { SPRITE_ELEMENT, rosterEntryElement } from './spriteElement';
 import { COMBINADOS_ART, INIMIGOS_API_ART, FORMAS_ART, PARALELOS_ART, RAMOS_ART } from './enemyRosterArt';
-import { INIMIGOS_API_DATA } from './enemyRosterData';
+import { INIMIGOS_API_DATA, INIMIGOS_DUO_DATA } from './enemyRosterData';
 import { rosterSpriteOf } from './novosSoulmon';
 import { buildDungeonWave } from './dungeon';
 import { newCombat } from './match3Combat';
@@ -24,8 +24,8 @@ import { isStrayFoe } from './wildFoeLabel';
 const ORDEM: EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
 
 describe('roster de inimigos (M10): cobertura', () => {
-  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) + 10 formas paralelas + 150 formas dos combinados 212-261 (09/11) = 633 entradas, chaves únicas', () => {
-    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120 + 10 + 150);
+  it('20 base × 4 estágios + 211 combinados rookie + 17+17+16+6 (lotes 1-4) + 5 da API (à parte) + o corvo neutro (31/10) + 120 de ramos (§220) + 10 formas paralelas + 150 formas dos combinados 212-261 (09/11) + 6 das cadeias da API (§274) = 639 entradas, chaves únicas', () => {
+    expect(ENEMY_ROSTER).toHaveLength(20 * 4 + 211 + 17 + 17 + 16 + 6 + 5 + 1 + 120 + 10 + 150 + 6);
     expect(ENEMY_ROSTER_KEYS.size).toBe(ENEMY_ROSTER.length);
     expect(ENEMY_ROSTER.filter(e => e.kind === 'combinado').every(e => e.stage === 'rookie' && e.elements.length === 2)).toBe(true);
   });
@@ -45,9 +45,9 @@ describe('roster de inimigos (M10): cobertura', () => {
     }
   });
   it('5 inimigos da API (à parte; R10/R14/R12/R19/R42): arte 256² alfa binário, elemento existente, sem nome de franquia, nada de sufixo -mon', () => {
-    const api = ENEMY_ROSTER.filter(e => e.kind === 'api');
+    const api = ENEMY_ROSTER.filter(e => e.kind === 'api' && e.bancoN !== undefined);
     expect(api).toHaveLength(5);
-    expect(Object.keys(INIMIGOS_API_ART).sort()).toEqual(INIMIGOS_API_DATA.map(([id, st]) => `${id}-${st}`).sort());
+    expect(Object.keys(INIMIGOS_API_ART).sort()).toEqual([...INIMIGOS_API_DATA.map(([id, st]) => `${id}-${st}`), ...INIMIGOS_DUO_DATA.flatMap(([id]) => ['rookie', 'champion', 'ultimate'].map(st => `${id}-${st}`))].sort());
     const els = new Set(NOVOS_DATA.map(n => n.element));
     for (const e of api) {
       expect(els.has(e.element), e.key).toBe(true);
@@ -280,7 +280,7 @@ describe('formas paralelas de champion/ultimate (09/11/2026)', () => {
   const ELS = ['agua', 'industrial', 'chama_azul', 'brinquedo', 'raiz_profunda'];
   it('10 entradas (5 elementos × champion/ultimate), no fim do roster, com arte, elemento certo e nome único sem -mon', () => {
     expect(par).toHaveLength(10);
-    expect(ENEMY_ROSTER.slice(-160, -150)).toEqual(par);
+    expect(ENEMY_ROSTER.slice(-166, -156)).toEqual(par);
     expect(new Set(par.map(e => e.element))).toEqual(new Set(ELS));
     for (const e of par) {
       expect(['champion', 'ultimate']).toContain(e.stage);
@@ -346,7 +346,7 @@ describe('formas champion/ultimate/mega dos combinados 212-261 (09/11/2026)', ()
   const formas = ENEMY_ROSTER.filter(e => e.kind === 'forma');
   it('150 entradas (50 elementos × 3), no fim do roster, com arte própria, nome único e elemento do rookie', () => {
     expect(formas).toHaveLength(150);
-    expect(ENEMY_ROSTER.slice(-150)).toEqual(formas);
+    expect(ENEMY_ROSTER.slice(-156, -6)).toEqual(formas);
     expect(new Set(formas.map(e => e.element)).size).toBe(50);
     expect(new Set(formas.map(e => e.name)).size).toBe(150);
     expect(new Set(formas.map(e => rosterSpriteOf(e))).size).toBe(150);
@@ -377,4 +377,21 @@ describe('formas champion/ultimate/mega dos combinados 212-261 (09/11/2026)', ()
       }
     }
   });
+
+describe('cadeias da API como selvagens (§274, 09/11/2026)', () => {
+  it('Krowlix (praga) e Mantralun (arco_iris): rookie/champion/ultimate no fim do roster, sorteáveis, com arte 256²', () => {
+    const duo = ENEMY_ROSTER.slice(-6);
+    expect(duo.map(e => e.key)).toEqual(['krowlix-rookie', 'krowlix-champion', 'krowlix-ultimate', 'mantralun-rookie', 'mantralun-champion', 'mantralun-ultimate']);
+    for (const e of duo) {
+      expect(e.kind).toBe('api');
+      expect(rosterSpriteOf(e), e.key).toBeTruthy();
+      const b = readFileSync(join(process.cwd(), 'src/assets/soulmon/inimigos-api', `${e.artFile}.png`));
+      expect(b.readUInt32BE(16), e.key).toBe(256);
+      expect(b.readUInt32BE(20), e.key).toBe(256);
+    }
+    expect(duo.slice(0, 3).every(e => e.element === 'praga' && e.elements.join('+') === 'vileza+morte')).toBe(true);
+    expect(duo.slice(3).every(e => e.element === 'arco_iris' && e.elements.join('+') === 'fada+luz')).toBe(true);
+  });
+});
+
 });

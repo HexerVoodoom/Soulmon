@@ -16,7 +16,7 @@
 import { NOVOS_DATA, novoHasForm, novoFormName, type NovoAttack } from './novosSoulmonData';
 import { COMBINADOS_LOTE3_DATA } from './elementosLote3.data';
 import { COMBINADOS_LOTE4_DATA } from './elementosLote4.data';
-import { COMBINADOS_DATA, INIMIGOS_API_DATA, PARALELOS_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
+import { COMBINADOS_DATA, INIMIGOS_API_DATA, INIMIGOS_DUO_DATA, PARALELOS_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
 import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 
@@ -223,8 +223,23 @@ function buildFormasCombinados(): RosterEntry[] {
   return out;
 }
 
+/** As 2 cadeias da API (09/11/2026): kind `api`, entram no sorteio comum e no do elemento; no FIM do roster (o `#N` não muda). */
+function buildDuo(): RosterEntry[] {
+  const out: RosterEntry[] = [];
+  for (const [id, el, comps, golpesDe, rookie, champion, ultimate] of INIMIGOS_DUO_DATA) {
+    const base = BASE_BY_ELEMENT[golpesDe];
+    for (const [stage, name] of [['rookie', rookie], ['champion', champion], ['ultimate', ultimate]] as const) {
+      out.push({
+        key: chaveBestiario(id, stage), id, stage, kind: 'api', element: el, elements: [...comps],
+        name, basico: base.basico, especial: base.especial, artFile: `${id}-${stage}`,
+      });
+    }
+  }
+  return out;
+}
+
 /** Tudo que existe (base + combinados + o corvo, que só sai pelo `withRaven` + os ramos + as formas paralelas + as formas dos combinados 212-261). */
-export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados()];
+export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados(), ...buildDuo()];
 export const ENEMY_ROSTER_KEYS: ReadonlySet<string> = new Set(ENEMY_ROSTER.map(e => e.key));
 const BY_KEY: ReadonlyMap<string, RosterEntry> = new Map(ENEMY_ROSTER.map(e => [e.key, e]));
 export const rosterEntryOfKey = (key: string | undefined | null): RosterEntry | undefined => (key ? BY_KEY.get(key) : undefined);
