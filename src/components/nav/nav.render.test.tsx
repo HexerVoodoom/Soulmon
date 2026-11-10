@@ -51,8 +51,8 @@ describe('MapPage', () => {
     const pt = nomes('pt-BR');
     expect(en.h1).toBe('Map');
     expect(pt.h1).toBe('Mapa');
-    expect(en.out).toEqual(['Market', 'Games', 'Arena', 'Exploration', 'The Forge', 'Laboratory', 'Hall']);
-    expect(pt.out).toEqual(['Mercado', 'Jogos', 'Arena', 'Exploração', 'A Forja', 'Laboratório', 'Hall']);
+    expect(en.out).toEqual(['Market', 'Games', 'Arena', 'Exploration', 'The Forge', 'Laboratory', 'Citadel']);
+    expect(pt.out).toEqual(['Mercado', 'Jogos', 'Arena', 'Exploração', 'A Forja', 'Laboratório', 'Cidadela']);
     // rótulo visível == nome acessível (aria-label do botão)
     expect(en.ariaOut).toEqual(en.out);
     expect(pt.ariaOut).toEqual(pt.out);

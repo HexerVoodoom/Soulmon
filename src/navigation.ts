@@ -99,7 +99,7 @@ export function areaLabel(id: AreaId, isPt: boolean): string {
     case 'exploracao': return isPt ? 'Exploração' : 'Exploration';
     case 'forja': return isPt ? 'A Forja' : 'The Forge';
     case 'laboratorio': return isPt ? 'Laboratório' : 'Laboratory';
-    case 'hall': return 'Hall';
+    case 'hall': return isPt ? 'Cidadela' : 'Citadel';
   }
 }
 

@@ -34,7 +34,7 @@ import { lotCoins, lotMissionMarks } from './utils/lotMarks';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
-import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, hungryFrom, starvingSince, maxEnergyOf, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
+import { setEnergy, setSleeping, tickEnergy, tickTime, settleEnergy, hungerAt, hungryFrom, starvingSince, maxEnergyOf, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
@@ -1251,6 +1251,13 @@ export default function App() {
     window.addEventListener('focus', acertar);
     return () => { clearInterval(id); document.removeEventListener('visibilitychange', aoVoltar); window.removeEventListener('focus', acertar); };
   }, [setGameState]);
+
+  /* 💤 BÔNUS DE SONO DA ENERGIA (REGISTRO §177): a troca do estado de sono REAL (`isSleeping`: gesto, sono automático ou app aberto com o
+     pet dormindo) é registrada no relógio da energia (`setSleeping`), que acerta o trecho anterior com o estado antigo. Roda DEPOIS do
+     tick acima (mesma montagem): o intervalo com o app fechado conta com o sono que ficou registrado. Idempotente. */
+  useEffect(() => {
+    setGameState(prev => (isDemoMode(prev) ? prev : setSleeping(prev, Date.now(), isSleeping)));
+  }, [isSleeping, setGameState]);
 
   /* Telemetria do ritmo: dispara quando uma janela PASSA a constar como
      atendida NESTA sessão (comparando com o render anterior) — fora do updater

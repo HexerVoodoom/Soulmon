@@ -15,7 +15,7 @@ import {
 import { GOOD_CONSTANCY_RATIO } from '../utils/habitRhythm';
 import { GATES } from '../utils/gates';
 import { DUNGEON_ENERGY_PER_LAYER } from '../utils/dungeonIdle';
-import { ENERGY_REGEN_MINUTES } from '../utils/hunger';
+import { ENERGY_REGEN_MINUTES, SLEEP_ENERGY_REGEN_BONUS } from '../utils/hunger';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
 import { FORGE_MAX_LEVEL } from '../utils/forge';
@@ -73,8 +73,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '⚡', en: 'Energy', pt: 'Energia',
-    descEn: `The side bar: rises with time (1 every ${ENERGY_REGEN_MINUTES} min; slower hungry, stopped starving), resets daily. Dungeon fuel: ${DUNGEON_ENERGY_PER_LAYER} per layer.`,
-    descPt: `A barra lateral: sobe com o tempo (1 a cada ${ENERGY_REGEN_MINUTES} min; mais devagar com fome, parada se faminto), zera todo dia. Masmorra: ${DUNGEON_ENERGY_PER_LAYER} por camada.`,
+    descEn: `The side bar: rises with time (1 every ${ENERGY_REGEN_MINUTES} min; slower hungry, stopped starving; ×${SLEEP_ENERGY_REGEN_BONUS} faster while asleep), resets daily. Dungeon fuel: ${DUNGEON_ENERGY_PER_LAYER} per layer.`,
+    descPt: `A barra lateral: sobe com o tempo (1 a cada ${ENERGY_REGEN_MINUTES} min; mais devagar com fome, parada se faminto; ×${SLEEP_ENERGY_REGEN_BONUS} mais rápido dormindo), zera todo dia. Masmorra: ${DUNGEON_ENERGY_PER_LAYER} por camada.`,
   },
   {
     // Combate v3: Vínculo N (você) e Lv N (o Soulmon). Números das CONSTANTES; sem prazo, sem cobrança.
@@ -228,8 +228,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '💠', en: 'Bits vs. 🎖️ Honor vs. 💎 Credits', pt: 'Bits vs. 🎖️ Honra vs. 💎 Créditos',
-    descEn: 'Bits come from minigames and buy the shop. Honor comes from the Tournament and buys cosmetics only. Credits are bought with real money.',
-    descPt: 'Bits vêm dos minijogos e compram a loja. Honra vem do Torneio e compra só cosméticos. Créditos são comprados com dinheiro real.',
+    descEn: 'Bits come from minigames and buy the shop. Honor comes from the Tournament (ranked and sparring) and buys cosmetics only. Credits are bought with real money.',
+    descPt: 'Bits vêm dos minijogos e compram a loja. Honra vem do Torneio (ranqueada e treino) e compra só cosméticos. Créditos são comprados com dinheiro real.',
   },
   {
     // DEMO LOCAL (`utils/demoMode.ts`): o nível vem da CONSTANTE.
