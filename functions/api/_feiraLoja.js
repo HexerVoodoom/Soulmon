@@ -102,9 +102,9 @@ export const FEIRA_LOJA_CATALOGO = Object.freeze([
 
 /**
  * O CATALOGO DE VENDEDORES (dono, 10/11/2026) — constante unica: id, arquivo da arte (so reuso, nada novo), tipo, peso, ativo.
- * Nenhum e a Vesca nem a Tessaria. `peso` soma 100 entre os ATIVOS (a Hexsmith e o passeio sao os mais raros). Os vendedores com
+ * Nenhum e a Vesca nem a Tessaria. `peso` soma 100 entre os ATIVOS (a Hexsmith e a saida especial sao os mais raros). Os vendedores com
  * `ativo: false` (peso 0) ja tem NPC e lugar no catalogo mas ainda NAO vendem: faltam catalogos de Bits (materiais, comidas sem
- * ingrediente, pocoes de elemento com desconto, itens de Honra em Bits) ou refatoracao (o passeio); ver docs/PLANO-FEIRA-CHEFE.md.
+ * ingrediente, pocoes de elemento com desconto, itens de Honra em Bits) ou refatoracao (a saida especial da sacerdotisa); ver docs/PLANO-FEIRA-CHEFE.md.
  * `pool` escolhe de onde saem os itens do Mercado; `hex` = a prateleira e da Hexsmith (so Bits, sem ingredientes).
  */
 export const FEIRA_LOJA_VENDEDORES = Object.freeze([
@@ -116,7 +116,7 @@ export const FEIRA_LOJA_VENDEDORES = Object.freeze([
   { id: 'salamandra', file: 'src/assets/avatares/fogo-salamandra-cozinheira.webp', tipo: 'comidas', peso: 0, ativo: false, hex: false, pool: () => false },
   { id: 'vitra', file: 'src/assets/soulmon/npcs/npc-mercado-ferreiro.png', tipo: 'pocoes', peso: 0, ativo: false, hex: false, pool: () => false },
   { id: 'serpente', file: 'src/assets/soulmon/npcs/npc-n-serpentePlumadaForma.png', tipo: 'honra', peso: 0, ativo: false, hex: false, pool: () => false },
-  { id: 'sacerdotisa', file: 'src/assets/soulmon/npcs/npc-f-sacerdotisa.png', tipo: 'passeio', peso: 0, ativo: false, hex: false, pool: () => false },
+  { id: 'sacerdotisa', file: 'src/assets/soulmon/npcs/npc-f-sacerdotisa.png', tipo: 'saida-especial', peso: 0, ativo: false, hex: false, pool: () => false },
 ]);
 
 const CATALOGO = FEIRA_LOJA_CATALOGO.map(([id, tipo, preco, fits]) => ({ id, tipo, preco, fits }));

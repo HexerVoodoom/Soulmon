@@ -824,3 +824,8 @@ Rota da jornada do foco: começar, pausar, retomar, receber e encerrar, com o re
 ### `functions/api/_usageRegistry.js` (09/11/2026 — docs/PLANO-METRICAS.md)
 
 Registros de nomes (telas, features, minigames) e faixas de tempo usados por `applyAggregate` em `metrics.js` para os eventos `time_spent`, `minigame_*`, `task_*`, `day_close` e `session_end`. Espelho de `src/utils/usageTime.ts` (paridade em `usageTime.test.ts`); só se acrescenta no fim.
+
+### `functions/api/_feiraLoja.js`
+**Dono de:** a FEIRA DE VERDADE (`PLANO-FEIRA-CHEFE.md` §12, REGISTRO §279): oferta rara na volta da Missão, sorteada e GRAVADA pelo servidor por (conta, dia); vendedores em `FEIRA_LOJA_VENDEDORES`.
+**Exports:** `FEIRA_LOJA_PCT` (8), `FEIRA_LOJA_CATALOGO`, `FEIRA_LOJA_VENDEDORES`, `haFeiraDeVerdade`, `sortearFeiraLoja`, `abrirFeiraLoja`, `feiraLojaDoDia`, `validarCompraFeiraLoja`, `marcarCompraFeiraLoja`, `feiraHexOnServer`, `diaDoJogadorValido`, `precoComDesconto`, `descontoDoItem`, `possuidosDoSave`.
+**Chamado por:** `guild.js` (`guildFeiraLoja*`, `guildRaidHit.feiraLoja`), `save.js` (`action=hexFair`).

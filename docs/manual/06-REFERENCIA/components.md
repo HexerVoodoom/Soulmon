@@ -2191,3 +2191,7 @@ A Oficina do Foco desde §247: card Sessão + 6 cards de chave (as técnicas de 
 ### `src/components/PlayReviewModal.tsx`
 
 Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
+
+### `src/components/guild/FeiraLojaSheet.tsx`
+**Dono de:** a folha da Feira de verdade (vendedor + `ShopShelf` com desconto + Hexsmith sem ingrediente), montada pela fila na vaga `feiraEvento`.
+**Props principais:** `{ language, saveId, loja, points, ownership, getState, onBuyShop, onHexBought, onClose }`.

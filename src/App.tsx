@@ -10105,7 +10105,7 @@ export default function App() {
             points={gameState.gamePoints ?? 0}
             ownership={{
               ownedBackgrounds: gameState.ownedBackgrounds ?? [],
-              equippedBackground: visibleBackground(gameState.equippedBackground),
+              equippedBackground: null,
               ownedFurniture: gameState.ownedFurniture ?? [],
               equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
               missionProgress,
