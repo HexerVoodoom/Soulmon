@@ -34,11 +34,16 @@ describe('elemento efetivo em TODO prompt', () => {
     expect(d).toContain('Elemental theme of this form: Death.');
     expect(d).toContain('bleached branches and pale moths');
   });
-  it('combinado com prompt-fonte próprio usa o esquema DELE; sem prompt-fonte (Sabá) só o nome e o elemento principal', () => {
+  it('combinado: esquema do PRÓPRIO elemento (kit) + um traço dos componentes (70/30); Sabá = arcano+sombra+vileza', () => {
     expect(gen('armaria', 'sombra').imagePrompt).toContain('forged blades and anvil sparks');
     const s = gen('sabbat', 'sombra').imagePrompt;
-    expect(s).toBe(`${RAW} Elemental theme of this form: Sabbath, with arcano as its main element.`);
-    expect(pistasVisuaisDoElemento('sabbat')).toBeUndefined();
+    expect(s).toContain('Elemental theme of this form: Sabbath, with arcano as its main element.');
+    expect(s).toContain('ring of candles around rune, with hints of orbiting violet glyphs, curling black smoke, barbed thorns');
+    expect(s).toContain('royal violet, ink black, sickly green accents');
+    expect(chromaDoPrompt(s)).toBe('magenta'); // a paleta do Sabá tem verde: fundo magenta
+  });
+  it('elemento simples (base): só o próprio, sem traço de componentes', () => {
+    for (const b of BASE_ELEMENT_IDS) expect(`${DESCRITORES_ELEMENTO[b].forma} ${DESCRITORES_ELEMENTO[b].paleta}`, b).not.toMatch(/hints of|accents/);
   });
   it('a forma original (elemento = base) leva as pistas do base, também em forma de poção do mesmo elemento', () => {
     expect(gen('sombra', 'sombra').imagePrompt).toContain('Visual cues of this element: curling black smoke');
@@ -100,6 +105,9 @@ describe('tabela de descritores', () => {
   it('todos os 20 elementos base têm prompt-fonte e só existem ids do catálogo', () => {
     for (const b of BASE_ELEMENT_IDS) expect(DESCRITORES_ELEMENTO[b]?.forma || DESCRITORES_ELEMENTO[b]?.paleta, b).toBeTruthy();
     for (const id of Object.keys(DESCRITORES_ELEMENTO)) expect(ESSENCE_ELEMENT_IDS, id).toContain(id);
+  });
+  it('TODO elemento do catálogo tem descritor (sem exceções: cada um tem kit próprio de ícone + FX)', () => {
+    for (const id of ESSENCE_ELEMENT_IDS) expect(pistasVisuaisDoElemento(id), id).toBeTruthy();
   });
   it('sem identidade Soulmon (cristal da alma) nos descritores; engrenagem só onde o elemento pede (tempo/relojoaria)', () => {
     for (const [id, d] of Object.entries(DESCRITORES_ELEMENTO)) expect(`${d.forma ?? ''} ${d.paleta ?? ''}`, id).not.toMatch(/soul-?crystal|steampunk/i);
