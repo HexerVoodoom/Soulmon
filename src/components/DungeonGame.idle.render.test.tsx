@@ -100,11 +100,13 @@ describe('Masmorra idle — HP persistente e recuperação', () => {
     vi.useFakeTimers();
     montar({ save: { dungeonHp: { frac: 0, at: Date.now() } } });
     const go = screen.getByRole('button', { name: 'Go down' }) as HTMLButtonElement;
-    expect(go.disabled).toBe(true);
+    expect(go.getAttribute('aria-disabled')).toBe('true');
     const nota = document.querySelector('[data-dungeon-recovering]')!;
     expect(nota.textContent).toMatch(/Recovering… ready to go down again in 1h 00m/);
     fireEvent.click(go);
     expect(document.querySelector('[data-battle-stage]')).toBeNull(); // nada começou
+    expect(document.querySelector('[data-blocked-action="espera"]')).not.toBeNull();
+    expect(document.body.textContent).toMatch(/Come back in 60 min/);
     expect(document.body.textContent).not.toMatch(/heart|Bits.*(lost|cost)/i);
   });
 

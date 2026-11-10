@@ -1,4 +1,5 @@
 import { efeitoElementoPve } from '../utils/combate/elementEffects';
+import { useBlockedAction } from './ui/BlockedActionModal';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useHexOverrides } from '../hooks/useHexOverrides';
 import { lotIconArt, lotIconName } from '../utils/lotIcons';
@@ -199,6 +200,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
   // Música (11/10/2026): na masmorra toca o "Stone Hall Combat" (se o interruptor "Música" está ligado; 19/10/2026). Abrir o jogo é o gesto do jogador.
 
   const isPt = language === 'pt-BR';
+  const [blockedModal, explain] = useBlockedAction(language);
   const lang = isPt ? 'pt' : 'en';
   const jeito = jeitoDaProfissao(profissao);
   const pve = jeitoParaPve(jeito);
@@ -1088,7 +1090,15 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
             { kind: 'item', item: 'heart' },
           ]} />
         )}
-        <button type="button" onClick={startRun} disabled={espera > 0 || !temEnergia} style={{ ...sm2Button('primary', espera > 0 || !temEnergia), width: '100%', maxWidth: 320 }}>
+        {blockedModal}
+        <button type="button" data-dungeon-descer aria-disabled={espera > 0 || !temEnergia ? true : undefined}
+          onClick={() => {
+            /* Aviso padrao (09/11/2026): o Descer bloqueado continua tocavel e diz POR QUE. */
+            if (espera > 0) { explain({ kind: 'espera', n: Math.ceil(espera / 60000), textoPt: 'Seu Soulmon está se recuperando da última descida.', textoEn: 'Your Soulmon is recovering from the last descent.' }); return; }
+            if (!temEnergia) { explain({ kind: 'energia', faltam: [{ namePt: 'Energia', nameEn: 'Energy', have: Math.floor(energia), need: DUNGEON_ENERGY_PER_LAYER }], textoPt: 'A energia volta com o tempo, mais depressa com ele bem alimentado.', textoEn: 'Energy returns with time, faster when well fed.' }); return; }
+            startRun();
+          }}
+          style={{ ...sm2Button('primary', espera > 0 || !temEnergia), width: '100%', maxWidth: 320 }}>
           {/* Copy §4: fenda se DESCE; não se "entra" nem se "inicia run". */}
           {isPt ? 'Descer' : 'Go down'}
           <EnergyCost amount={DUNGEON_ENERGY_PER_LAYER} />
