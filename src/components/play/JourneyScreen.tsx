@@ -26,7 +26,7 @@ const ENV_TONE: Record<string, [string, string]> = {
   garden: ['#10302c', '#1d5246'], workshop: ['#0e2626', '#2a3b33'], observatory: ['#081c22', '#0f3640'],
 };
 const VIEW_BLOCKS = 1.2;
-const ROUND: CSSProperties = { width: 48, height: 48, borderRadius: '50%', border: '2px solid var(--sm2-ink)', background: 'transparent', color: 'var(--sm2-ink)', display: 'grid', placeItems: 'center', padding: 0, cursor: 'pointer' };
+const ROUND: CSSProperties = { width: 48, height: 48, borderRadius: '50%', border: 'none', background: 'transparent', color: 'var(--sm2-ink)', display: 'grid', placeItems: 'center', padding: 0, cursor: 'pointer' };
 const SVG = { width: 26, height: 26, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', 'aria-hidden': true } as const;
 const H = 200; // altura do bloco em unidades do SVG (arte 1:2)
 
@@ -113,12 +113,12 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, o
         {(isPt ? 'Baú aberto: ' : 'Chest opened: ') + lastItems.map(i => itemLabel(i, isPt)).join(' · ')}
       </p>}
 
-      <section data-journey-modal style={{ position: 'absolute', top: 'calc(10px + env(safe-area-inset-top, 0px))', left: '50%', transform: 'translateX(-50%)', width: 'min(236px, calc(100% - 24px))', zIndex: 2, background: 'color-mix(in srgb, var(--sm2-surface) 80%, transparent)', color: 'var(--sm2-ink)', borderRadius: 14, padding: '8px 12px 10px', boxShadow: '0 6px 18px rgba(0,0,0,.35)', display: 'grid', justifyItems: 'center', gap: 6 }}>
+      {active.keys.length > 0 && <span data-journey-keys aria-label={isPt ? 'Chaves desta jornada' : 'Keys for this journey'} style={{ position: 'absolute', zIndex: 2, right: 16, bottom: 'calc(16px + env(safe-area-inset-bottom, 0px))', display: 'flex', gap: 6 }}>
+        {active.keys.map(k => <KeyGlyph key={k} k={k} size={20} />)}
+      </span>}
+      <section data-journey-modal style={{ position: 'absolute', top: 'calc(10px + env(safe-area-inset-top, 0px))', left: '50%', transform: 'translateX(-50%)', width: 'min(320px, calc(100% - 24px))', zIndex: 2, background: 'color-mix(in srgb, var(--sm2-surface) 80%, transparent)', color: 'var(--sm2-ink)', borderRadius: 14, padding: '8px 12px 10px', boxShadow: '0 6px 18px rgba(0,0,0,.35)', display: 'grid', justifyItems: 'center', gap: 6 }}>
         <span data-journey-clock role="timer" aria-label={isPt ? (p >= 1 ? 'Chegou' : paused ? 'Tempo restante, em pausa' : 'Tempo restante') : (p >= 1 ? 'Arrived' : paused ? 'Time left, paused' : 'Time left')} className="sm2-num" style={{ fontFamily: 'var(--sm2-font-display)', fontWeight: 700, fontSize: 'calc(var(--sm2-text-2xl) * 1.6)', lineHeight: 1.1, opacity: paused ? 0.7 : 1 }}>{formatClock(left)}</span>
-        {active.keys.length > 0 && <span data-journey-keys aria-label={isPt ? 'Chaves desta jornada' : 'Keys for this journey'} style={{ display: 'flex', gap: 6 }}>
-          {active.keys.map(k => <KeyGlyph key={k} k={k} size={20} />)}
-        </span>}
-        <div data-journey-actions style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'center' }}>
+        <div data-journey-actions style={{ display: 'flex', gap: 36, alignItems: 'center', justifyContent: 'center' }}>
           <button type="button" data-journey-close onClick={onClose} aria-label={isPt ? 'Sair para a Oficina (a jornada continua)' : 'Leave to the Workshop (the journey goes on)'} style={ROUND}>
             <svg {...SVG}><path d="M10 4H6.5A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20H10" /><path d="M9.5 12H20" /><path d="m16.5 8.5 3.5 3.5-3.5 3.5" /></svg>
           </button>
