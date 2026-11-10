@@ -81,7 +81,9 @@ export function stagesComElemento<T extends { stage: string; imagePrompt: string
 ): T[] | undefined {
   if (!stages || (!jornada && !pocoes)) return stages;
   return stages.map(st => {
-    const pocao = pocoes?.[st.stage as FichaStage];
+    // As etapas do Oráculo chamam o Ultimate de `perfeito` (ver `creatureFormId`); a poção é indexada pelo nível da ficha (`ultimate`).
+    // Só a poção usa esse mapa: o caminho do registro (`jornada`) segue exatamente como era, para nenhuma conta sem poção mudar.
+    const pocao = pocoes?.[(st.stage === 'perfeito' ? 'ultimate' : st.stage) as FichaStage];
     if (pocao) {
       const nome = CURATED_ELEMENT_NAMES[pocao]?.en ?? elementoNomeDe(pocao).en;
       const base = essenceComposition(pocao)?.[0] ?? pocao;
@@ -96,4 +98,19 @@ export function stagesComElemento<T extends { stage: string; imagePrompt: string
     const frase = ` Elemental theme of this form: ${nome}, with ${reg.base} as its main element.`;
     return { ...st, imagePrompt: st.imagePrompt + frase, imagePromptFallback: st.imagePromptFallback + frase };
   });
+}
+
+/**
+ * As poções que entram no PROMPT por estágio (dono, 10/11/2026): a ativa vale para a forma atual (`potionElement`) e a pendente
+ * (`evolutionPotion`, no cristal) para o estágio-destino. Sem nenhuma, `undefined` — o prompt fica como antes do #722.
+ */
+export function pocoesDoEstado(s: {
+  evolutionStage: string; potionElement?: string; evolutionPotion?: string; evolutionCrystal?: { from: string; to: string };
+}): Partial<Record<FichaStage, string>> | undefined {
+  const nivel = (id: string): FichaStage => (['champion', 'ultimate', 'mega'].includes(id.split('-')[0]) ? id.split('-')[0] : id === 'ultra' ? 'ultra' : 'rookie') as FichaStage;
+  const out: Partial<Record<FichaStage, string>> = {};
+  if (s.potionElement) out[nivel(s.evolutionStage)] = s.potionElement;
+  const c = s.evolutionCrystal;
+  if (c && c.from === s.evolutionStage && s.evolutionPotion) out[nivel(c.to)] = s.evolutionPotion;
+  return Object.keys(out).length ? out : undefined;
 }

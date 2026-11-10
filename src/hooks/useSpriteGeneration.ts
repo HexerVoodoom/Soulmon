@@ -256,7 +256,7 @@ export function useSpriteGeneration(args: UseSpriteGenerationArgs): SpriteGenera
     if (running.current) return false;
     const a = argsRef.current;
     const fonte = stagesOverride ?? a.stages ?? [];
-    if (!fonte.some(st => creatureFormId(st) === formId)) return false;
+    if (!fonte.some(st => creatureFormId(st) === baseFormOfKey(formId))) return false;
     updateLibrary(prev => {
       const failures = { ...prev.failures };
       delete failures[formId];
