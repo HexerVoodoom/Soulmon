@@ -75,6 +75,10 @@ describe('widget Android: sprite PRÓPRIO do jogador (09/11/2026, fim do "Crato"
     expect(widgetOwnSpriteUrl('data:image/png;base64,AAAA', false)).toBe('data:image/png;base64,AAAA');
     expect(widgetOwnSpriteUrl('https://images.higgs.ai/x.png', true)).toBe('');
     expect(widgetOwnSpriteUrl('/assets/crato-abc.png', false)).toBe('');
+    // o sprite GERADO do jogador é caminho de raiz do nosso Worker: vira URL absoluta (era descartado: o widget nunca o recebia)
+    const k = 'a'.repeat(32);
+    expect(widgetOwnSpriteUrl(`/api/sprite-image?k=${k}`, false)).toBe(`https://soulmon.mateus-sprnd.workers.dev/api/sprite-image?k=${k}`);
+    expect(widgetOwnSpriteUrl('/api/sprite-image?k=curto', false)).toBe('');
     expect(widgetOwnSpriteUrl('javascript:alert(1)', false)).toBe('');
     expect(widgetOwnSpriteUrl(undefined, false)).toBe('');
   });

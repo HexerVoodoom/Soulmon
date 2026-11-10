@@ -48,8 +48,16 @@ export function widgetPetLine(state: CorvoCarrier): '' | typeof CORVO_LINE | Sta
  */
 export function widgetOwnSpriteUrl(url: string | undefined | null, isCorvoPet: boolean): string {
   if (isCorvoPet || typeof url !== 'string') return '';
-  return isSafeSpriteUrl(url) ? url.trim() : '';
+  const limpa = url.trim();
+  // O sprite GERADO do jogador mora no nosso Worker: `/api/sprite-image?k=<32hex>` (caminho de raiz). Era o caso comum e o
+  // filtro só aceitava https, então o widget NUNCA recebia a criatura gerada (bug de 09/11/2026). Vira URL absoluta do app.
+  const proprio = /^(?:https?:\/\/[^/]+)?(\/api\/sprite-image\?k=[0-9a-f]{32})$/i.exec(limpa);
+  if (proprio) return WIDGET_APP_ORIGIN + proprio[1];
+  return isSafeSpriteUrl(limpa) ? limpa : '';
 }
+
+/** Origem do app (a mesma de `capacitor.config` › `server.url`); o Kotlin só baixa dela o caminho `/api/sprite-image`. */
+export const WIDGET_APP_ORIGIN = 'https://soulmon.mateus-sprnd.workers.dev';
 
 /**
  * `grove_stage` do widget: o id do ÚLTIMO estágio do Bosque que este aparelho
