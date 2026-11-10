@@ -4498,3 +4498,9 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Decisão:** o dono escolheu em 09/11/2026: `262-clareira` e `264-bencao_feerica` = arte da API Higgsfield (v5a; a bênção teve a franja verde de chroma removida por despill, sem alterar o desenho); `263-alto_forno` = **EXCEÇÃO aprovada pelo dono** (arte pintada do ChatGPT, escolhida por ele; recorte com alfa real por rembg `isnet-general-use`, sem a fumaça, 256² RGBA LANCZOS). A regra "sprite só via API" (§271) segue valendo para todo o resto. Fontes e meta em `E:/Soulmon-assets/sprites-api-rookies-2026-11-09/`.
 
 **Alternativa que perdeu:** manter os v3/v4 da API também para o alto forno. **Falsifica:** o dono ver franja/halo em algum dos três em combate, ou a exceção virar precedente para outros sprites.
+
+## §274 — Duas cadeias da API viram selvagens da Arena: Krowlix e Mantralun (09/11/2026)
+
+**Decisão (pedido do dono).** As duas cadeias geradas pelo processo real do Oráculo (Higgsfield API, lote `playstore/duo`, 09/11) entram como Soulmons selvagens: **Krowlix → RageKrowlix → ChaosKrowlix** (elemento `praga` = vileza+morte, golpes de sombra) e **Mantralun → AegisMantralun → LumenMantralun** (`arco_iris` = fada+luz, golpes de luz). Dados em `INIMIGOS_DUO_DATA` (`enemyRosterData.ts`), kind `api`, no FIM do roster (o `#N` do Bestiário não muda); sorteio comum por estágio e sorteio do elemento. Arte 256² alfa real em `assets/soulmon/inimigos-api/<id>-<estágio>.png`; metadados de origem em `E:\Soulmon-assets\playstore\duo\*.meta.json`.
+
+**Regra mantida.** Sprite de Soulmon só via API (nada de geração por chat). **Alternativa que perdeu:** usar sombra/luz puros como elemento — perderia o par derivado que o próprio Oráculo atribuiu.

@@ -236,6 +236,17 @@ export const INIMIGOS_API_DATA: ReadonlyArray<readonly [string, 'rookie' | 'cham
 ];
 
 /**
+ * AS DUAS CADEIAS DA API (dono, 09/11/2026): selvagens com rookie/champion/ultimate, gerados pelo processo REAL do Oráculo
+ * (Higgsfield API, `E:\Soulmon-assets\playstore\duo\*.meta.json`; sprite de Soulmon só via API). Elemento = o PAR derivado do
+ * catálogo; golpes = os da criatura base do tema do Oráculo. Arte em `assets/soulmon/inimigos-api/<id>-<estágio>.png` (256², alfa real).
+ * [id, elemento (par), componentes, golpes de, nome rookie, nome champion, nome ultimate].
+ */
+export const INIMIGOS_DUO_DATA: ReadonlyArray<readonly [string, string, readonly [string, string], string, string, string, string]> = [
+  ['krowlix', 'praga', ['vileza', 'morte'], 'sombra', 'Krowlix', 'RageKrowlix', 'ChaosKrowlix'],
+  ['mantralun', 'arco_iris', ['fada', 'luz'], 'luz', 'Mantralun', 'AegisMantralun', 'LumenMantralun'],
+];
+
+/**
  * OS 40 RAMOS EVOLUÍDOS COMO INIMIGOS (dono, 04/11/2026, REGISTRO §220): os 2 ramos de alinhamento que cada uma das 20 criaturas não usa,
  * cada um em champion/ultimate/mega (120 sprites, `assets/soulmon/novos-arquivo/ramos/<elemento>/<ramo>-<estágio>.png`). Elemento e golpes =
  * os da criatura. Nomes GERADOS (raiz da criatura + sufixo fixo por ramo e estágio; PT = EN como `FORMAS_ALTAS`): o dono renomeia aqui, sem

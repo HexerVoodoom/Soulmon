@@ -436,3 +436,7 @@ Fonte: `E:\Soulmon-assets\beta3-geradas\chatgpt\` (ChatGPT, alfa real; reduzidos
 > **09/11/2026 (Ticket dos minijogos, REGISTRO §270):** `soulmon/hud/ticket-minigame.png` (512×308, alfa real) — ticket turquesa com cogumelo (inspirado no prédio dos minijogos), **ChatGPT, UI, aprovado provisório pelo dono em 09/11/2026** (trocou o amarelo com controle; o bruto veio sem alfa; alfa por recorte de borda feito na origem). Original 1586×992 e prompt/tags em `E:/Soulmon-assets/gerar-chatgpt/ui-2026-11-09/ticket-inspirado-predio-cogumelo.{png,meta.json}`. Usado em `components/play/TicketFan.tsx`.
 
 > **Atualização 09/11/2026 (rookies escolhidos):** `novos-arquivo/combinados/262-clareira.png` e `264-bencao_feerica.png` = API Higgsfield (v5a; bênção sem franja verde); `263-alto_forno.png` = EXCEÇÃO aprovada pelo dono (pintura do ChatGPT, recorte rembg, sem fumaça). Ver `REGISTRO-DE-DECISOES.md` §273.
+
+## Selvagens da API — cadeias Krowlix e Mantralun (09/11/2026)
+
+6 PNG 256² (alfa real) em `src/assets/soulmon/inimigos-api/`: `krowlix-{rookie,champion,ultimate}.png`, `mantralun-{rookie,champion,ultimate}.png`. Origem: Higgsfield API pelo processo real do Oráculo (`E:\Soulmon-assets\playstore\duo\`, com `-1024.png` e `.meta.json`). Roster: `INIMIGOS_DUO_DATA` (REGISTRO §274).
