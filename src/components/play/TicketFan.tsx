@@ -110,6 +110,7 @@ export function TicketPanel({ language, status, onBuy, nudge = 0 }: { language: 
       : (isPt ? 'Sem energia para comprar tickets agora. A energia volta com o tempo; que tal uma tarefa, o Ateliê da Mente ou o Refúgio?' : 'No energy to buy tickets right now. Energy comes back over time; how about a task, the Mind Atelier or the Refuge?');
   return (
     <section data-fun-tickets={st.count} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+      {blockedModal}
       <p className="sm2-num" data-fun-tickets-count style={{ margin: 0, fontWeight: 600 }}>
         {isPt ? `Tickets: ${st.count}/${FUN_TICKET_MAX}` : `Tickets: ${st.count}/${FUN_TICKET_MAX}`}
         {st.count > 0 && <span data-fun-tickets-expiry style={{ fontWeight: 400, marginInlineStart: 8 }}>{isPt ? `vence em ${formatHms(st.msLeft)}` : `expires in ${formatHms(st.msLeft)}`}</span>}
