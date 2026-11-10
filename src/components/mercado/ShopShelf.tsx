@@ -1,4 +1,5 @@
 import { missionsInQueueOrder } from '../../utils/missionOrder';
+import { useBlockedAction } from '../ui/BlockedActionModal';
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { bitsStyle, emblemStyle, BITS_EXCHANGE, CREDIT_COLOR, CREDIT_TO_BITS, EMBLEMS_PER_LOSS, EMBLEMS_PER_WIN, MINIGAME_BITS_PER_DAY, type CurrencyId } from '../../utils/currencies';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
@@ -641,6 +642,7 @@ export function CreditExchange({ language, credits, onExchangeCredits, say }: {
   say: (id: string, ok: boolean, msg: ReactNode) => void;
 }) {
   const isPt = language === 'pt-BR';
+  const [blockedModal, explain] = useBlockedAction(isPt ? 'pt-BR' : 'en-US');
   const [exchanging, setExchanging] = useState<number | null>(null);
   // PR8 (§2.26): o câmbio do dia cabe em 25% do ganho GRÁTIS do dia. A conta é do save (`bitsOrigin`); sem Provider (demo, testes) não há teto.
   const ctx = useGameStateOptional();
@@ -658,6 +660,7 @@ export function CreditExchange({ language, credits, onExchangeCredits, say }: {
   };
   return (
     <div data-credit-exchange style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingTop: 4 }}>
+      {blockedModal}
       <p style={{ ...sm2Text, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
         <Icon name="diamond" size={ICON_INLINE} fill={1} tone="inherit" style={{ color: CREDIT_COLOR, flexShrink: 0 }} />
         <span>
@@ -673,10 +676,15 @@ export function CreditExchange({ language, credits, onExchangeCredits, say }: {
           <button
             key={pack.credits}
             type="button"
-            disabled={!can}
+            disabled={exchanging !== null}
+            aria-disabled={!can ? true : undefined}
             aria-busy={busy || undefined}
             aria-label={isPt ? `Trocar ${pack.credits} ${pack.credits === 1 ? 'Crédito' : 'Créditos'} por ${pack.bits} Bits` : `Swap ${pack.credits} ${pack.credits === 1 ? 'Credit' : 'Credits'} for ${pack.bits} Bits`}
-            onClick={() => setPending(pack)}
+            onClick={() => {
+              if (can) { setPending(pack); return; }
+              if (!fits) explain({ kind: 'limite', textoPt: 'Seus Bits já estão perto do teto; gaste um pouco antes de trocar.', textoEn: 'Your Bits are near the cap; spend some before swapping.' });
+              else explain({ kind: 'recursos', faltam: [{ namePt: 'Créditos', nameEn: 'Credits', have: credits, need: pack.credits }] });
+            }}
             style={{ ...sm2Button('outline', !can), width: '100%', gap: 8 }}
           >
             {busy && <Icon name="sync" size={ICON_INLINE} tone="muted" />}

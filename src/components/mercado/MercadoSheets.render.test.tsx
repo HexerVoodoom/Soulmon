@@ -195,7 +195,12 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
     expect(container.querySelector('[style*="--sm2-credit-ink"]')).not.toBeNull();
     const swap = screen.getByRole('button', { name: 'Swap 1 Credit for 10 Bits' });
     expect(swap.hasAttribute('disabled')).toBe(false);
-    expect(screen.getByRole('button', { name: 'Swap 4 Credits for 40 Bits' }).hasAttribute('disabled')).toBe(true);
+    const caro = screen.getByRole('button', { name: 'Swap 4 Credits for 40 Bits' });
+    expect(caro.getAttribute('aria-disabled')).toBe('true');
+    // aviso padrao (09/11/2026): tocar diz quantos Creditos faltam
+    fireEvent.click(caro);
+    expect(document.querySelector('[data-blocked-action="recursos"]')!.textContent).toMatch(/Credits: have/);
+    fireEvent.click(document.querySelector('[data-blocked-ok]')!);
     expect(container.querySelector('[data-shop-item]')).toBeNull();
   });
 
@@ -223,7 +228,10 @@ describe('Cambista (30/10/2026): abas Bits, Essências e Outros', () => {
     expect(row(trancado).textContent).toMatch(/\?\?\?/);
     expect((row(fogo).querySelector('[data-essence-buy="5"]') as HTMLButtonElement).disabled).toBe(false);
     expect((row(par).querySelector('[data-essence-buy="1"]') as HTMLButtonElement).disabled).toBe(false);
-    expect((row(par).querySelector('[data-essence-buy="5"]') as HTMLButtonElement).disabled).toBe(true);
+    const semSaldo = row(par).querySelector('[data-essence-buy="5"]') as HTMLButtonElement;
+    expect(semSaldo.getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(semSaldo);
+    expect(document.querySelector('[data-blocked-action]')).not.toBeNull();
   });
 
   it('Essências: Comprar abre a confirmação (Cancelar à esquerda não cobra; Confirmar chama o servidor)', async () => {
