@@ -4529,3 +4529,9 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Decisão (dono).** As duas espécies da demo do Oráculo (A = Mareoror, B = Salsolura; fogo+água, elemento fundido `vapor`) entram como selvagens com a linha inteira: rookie + 3 ramos (poder/harmonia/benevolência) × champion/ultimate(perfeito)/mega + ultra. Dados em `ELENCO_ORACULO_DATA` (`enemyRosterData.ts`), kind `api`, 10 entradas por espécie no FIM do roster (o `#N` do Bestiário não muda); entram no sorteio comum por estágio (masmorra, Arena, Fenda via `pickEnemy`) e no do elemento `vapor`, com os mesmos pesos e aberturas por level das demais criaturas (sem peso próprio). Ids: `<espécie>` (rookie) e `<espécie><ramo>`. Golpes = os da criatura `fogo`. A forma ultra tem arte instalada, mas fica fora do roster (ultra é só do chefe da Arena). Formas de poção ficaram de fora.
 
 **Alternativa que perdeu:** kind `ramo` (RAMO_CHANCE de 1/3 e filtro por elemento base): o ramo é amarrado a uma das 20 bases, e estas espécies têm elemento fundido próprio. **Falsifica:** o dono achar que elas aparecem demais/de menos (ajustar peso) ou querer o ultra como chefe.
+
+## §276 — FX e ícones refeitos pela regra de identidade v2 instalados (10/11/2026)
+
+**Decisão (dono).** Instalar, no mesmo nome/formato/tamanho: FX de ataque (cast, aura, aura-96, slash, impact, defended, orb) de `maldicao`, `fada`, `industrial` e `planta`; `el-maldicao` (96²); `st-maldicao` (64²); `fx-maldicao-loop-1..6` + sheet (384×256). Fora: `el-industrial` (em refação). Assets são importados com hash do Vite, sem bump de `CACHE_VERSION`. `fxFacingTable.ts` regerada.
+
+**Alternativa que perdeu:** manter a arte anterior à regra (caveira/engrenagem fora do tema do elemento). **Falsifica:** o dono reprovar a leitura dos novos em combate real.
