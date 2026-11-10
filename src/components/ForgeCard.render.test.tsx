@@ -158,7 +158,7 @@ describe('ForgeCard', () => {
 
   it('falta material: o botão fica desabilitado, os custos 0/N dizem o que falta e NÃO há texto "materiais faltando" (C4)', () => {
     abrir(nivel1({ buildingQuests: bq({}) }));
-    expect(q('[data-forge-upgrade-btn="eq-nucleo-t1"]').disabled).toBe(true);
+    expect(q('[data-forge-upgrade-btn="eq-nucleo-t1"]').getAttribute('aria-disabled')).toBe('true');
     expect(peca('eq-nucleo-t1').querySelector('[data-forge-why]')).toBeNull();
     expect(peca('eq-nucleo-t1').querySelector('[data-forge-cost]')).toBeTruthy();
     expect(peca('eq-nucleo-t1').textContent).not.toMatch(/faltam materiais|materials are still missing/i);
@@ -166,7 +166,7 @@ describe('ForgeCard', () => {
 
   it('falta Vínculo: o motivo diz de qual Vínculo abre o nível', () => {
     abrir(nivel1({ totalXP: 0, buildingQuests: bq({ ore: 9 }) }));
-    expect(q('[data-forge-upgrade-btn="eq-nucleo-t1"]').disabled).toBe(true);
+    expect(q('[data-forge-upgrade-btn="eq-nucleo-t1"]').getAttribute('aria-disabled')).toBe('true');
     expect(peca('eq-nucleo-t1').querySelector('[data-forge-why]')!.textContent).toMatch(/Vínculo 2/);
   });
 

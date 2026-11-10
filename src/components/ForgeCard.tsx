@@ -29,6 +29,8 @@ import { stockOf } from '../utils/buildingQuests';
 import { MATERIALS } from '../utils/buildingQuestsCopy';
 import { MaterialIcon } from './MaterialIcon';
 import { BackCircleButton } from './ui/BackCircleButton';
+import { useBlockedAction } from './ui/BlockedActionModal';
+import type { BlockedReason } from '../utils/blockedAction';
 import { nameOf } from './nav/BuildingQuestList';
 import { FOCUS_ENVIRONMENTS } from '../utils/focusExpedition';
 import { VitraMap, type VitraChakra } from './forge/VitraMap';
@@ -165,6 +167,17 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
     });
   };
 
+  const [blockedModal, explain] = useBlockedAction(isPt ? 'pt-BR' : 'en-US');
+  /** Aviso padrao (09/11/2026): o Aprimorar bloqueado continua tocavel e diz POR QUE; sem material, diz onde conseguir. */
+  const bloqueio = (piece: ForgePiece, to: number, level: number, recusa: NonNullable<ReturnType<typeof upgradeRefusal>>): BlockedReason => {
+    if (recusa !== 'no-materials') return { kind: 'outro', textoPt: forgeRefusalText(recusa, true, level), textoEn: forgeRefusalText(recusa, false, level) };
+    const falta = custoTexto(piece, to).filter(c => c.have < c.n);
+    return {
+      kind: 'recursos',
+      faltam: falta.map(c => ({ namePt: c.m.namePt, nameEn: c.m.nameEn, have: c.have, need: c.n })),
+      fonte: falta.map(c => ({ rota: c.m.building, lugarPt: nameOf(c.m.building, 'pt-BR'), lugarEn: nameOf(c.m.building, 'en-US'), itemPt: falta.length > 1 ? c.m.namePt : undefined, itemEn: falta.length > 1 ? c.m.nameEn : undefined })),
+    };
+  };
   const custoTexto = (piece: ForgePiece, to: number) => upgradeCost(piece, to).map((c) => ({ m: matOf(c.material), n: c.n, have: stockOf(gameState.buildingQuests, c.material) }));
 
   const linha = (piece: ForgePiece) => {
@@ -208,8 +221,8 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
           {/* C4: o Upgrade à direita, na linha do nome; os materiais ficam logo abaixo dele. */}
           {possui && !max && (
             <div data-forge-upgrade={piece.id} style={{ display: 'grid', gap: 4, justifyItems: 'end', flexShrink: 0 }}>
-              <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" disabled={!!recusa} data-forge-upgrade-btn={piece.id}
-                onClick={() => abrir({ mode: 'upgrade', id: piece.id })}
+              <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" aria-disabled={recusa ? true : undefined} data-forge-upgrade-btn={piece.id}
+                onClick={() => (recusa ? explain(bloqueio(piece, to, level, recusa)) : abrir({ mode: 'upgrade', id: piece.id }))}
                 aria-label={isPt ? `Upgrade de ${nome} para o nível ${to}` : `Upgrade ${nome} to level ${to}`}>
                 {isPt ? 'Aprimorar' : 'Upgrade'}
               </button>
@@ -413,8 +426,8 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
               );
             })()}
             {recusa && recusa !== 'no-materials' && <span className="sm2-stats-s" data-forge-why>{forgeRefusalText(recusa, isPt, level)}</span>}
-            <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-forge-upgrade-btn={piece.id} disabled={!!recusa}
-              onClick={() => runUpgrade(piece.id, popChoice)}
+            <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-forge-upgrade-btn={piece.id} aria-disabled={recusa ? true : undefined}
+              onClick={() => (recusa ? explain(bloqueio(piece, to, level, recusa)) : runUpgrade(piece.id, popChoice))}
               aria-label={isPt ? `Aprimorar ${nome} para o nível ${to}` : `Upgrade ${nome} to level ${to}`}>
               {isPt ? 'Aprimorar' : 'Upgrade'}
             </button>
@@ -455,6 +468,7 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
     });
     return (
       <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card data-forge-view="map">
+        {blockedModal}
         <VitraMap chakras={chakras} label={isPt ? 'Equipamentos do Soulsmith' : 'Soulsmith equipment'} onBackdrop={() => setPop(null)}>
           <div className="sm2-vit-bar" data-vitra-bar>
             {onBack && <BackCircleButton onClick={onBack} language={isPt ? 'pt-BR' : 'en-US'} overScene data-vitra-back />}
@@ -478,6 +492,7 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
 
   return (
     <section aria-labelledby="sm2-equip-title" data-equipment-card data-forge-card>
+      {blockedModal}
       <p id="sm2-equip-title" className="sm2-stats-lab" style={{ margin: '0 0 8px' }}>Soulsmith</p>
       <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 10 }}>
         {EQUIP_SLOTS.map((slot) => {
