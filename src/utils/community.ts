@@ -233,6 +233,45 @@ export async function playMatchComRetry(
   }
 }
 
+// ── TREINO ("Sparring"), a 2a aba do Torneio (10/11/2026) ─────────────────────────────────────────────────────────
+// Luta contra outros jogadores que NÃO ranqueia; vitória rende 1–2 de Honra (o servidor decide e limita a 20/dia). O servidor sorteia
+// 5 por faixa de Vínculo e a lista muda a CADA pedido (refresh ilimitado). Contrato aditivo: servidor antigo responde erro e a aba some.
+/** Âncora do dia do jogador (o teto de Honra segue o dia DELE, não o UTC). */
+const diaDoJogador = (): { zone?: string; off: number } => {
+  let zone: string | undefined;
+  try { zone = Intl.DateTimeFormat().resolvedOptions().timeZone || undefined; } catch { zone = undefined; }
+  return { ...(zone ? { zone } : {}), off: -new Date().getTimezoneOffset() * 60_000 };
+};
+export const getSparOpponents = (id: string) =>
+  call<{ opponents: Opponent[]; me?: { duel: { level: number } | null } }>('sparOpponents', { params: { id } });
+export const startSpar = (id: string, opponentId: string) =>
+  call<{ seed: number; me: DuelSide; opp: DuelSide }>('sparStart', { method: 'POST', body: { id, opponentId } });
+export interface SparResult {
+  won: boolean; draw?: boolean; outcome?: 'win' | 'loss' | 'draw';
+  myScore: number; oppScore: number;
+  /** Honra desta partida (0, 1 ou 2): decidida e limitada no servidor. Só o app a soma ao save. */
+  honor: number;
+  /** O teto do dia foi atingido: a vitória não rendeu (tudo de bom segue, só a Honra de hoje acabou). */
+  honorCapped?: boolean;
+  forfeit?: boolean;
+  opponent: MatchResult['opponent'];
+  duel?: { events: FightEvent[]; me: DuelSide; opp: DuelSide };
+  replayed?: boolean;
+}
+export const playSpar = (id: string, opponentId: string, taps: number[] = [], forfeit = false, seed?: number) =>
+  call<SparResult>('sparMatch', { method: 'POST', body: { id, opponentId, taps, ...(forfeit ? { forfeit: true } : {}), ...(typeof seed === 'number' ? { seed } : {}), ...diaDoJogador() } });
+export async function playSparComRetry(id: string, opponentId: string, taps: number[], seed: number, delays: number[] = MATCH_RETRY_DELAYS_MS): Promise<SparResult> {
+  for (let i = 0; ; i++) {
+    try {
+      return await playSpar(id, opponentId, taps, false, seed);
+    } catch (err) {
+      if (!isFalhaDeRede(err) || i >= delays.length) throw err;
+      await new Promise(r => setTimeout(r, delays[i]));
+    }
+  }
+}
+
+
 export interface RankRow {
   id: string; name: string; petName: string; stage: string;
   avatarId?: string | null; frameId?: string | null; artLine?: string | null; spriteUrl?: string | null;

@@ -228,8 +228,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '💠', en: 'Bits vs. 🎖️ Honor vs. 💎 Credits', pt: 'Bits vs. 🎖️ Honra vs. 💎 Créditos',
-    descEn: 'Bits come from minigames and buy the shop. Honor comes from the Tournament and buys cosmetics only. Credits are bought with real money.',
-    descPt: 'Bits vêm dos minijogos e compram a loja. Honra vem do Torneio e compra só cosméticos. Créditos são comprados com dinheiro real.',
+    descEn: 'Bits come from minigames and buy the shop. Honor comes from the Tournament (ranked and sparring) and buys cosmetics only. Credits are bought with real money.',
+    descPt: 'Bits vêm dos minijogos e compram a loja. Honra vem do Torneio (ranqueada e treino) e compra só cosméticos. Créditos são comprados com dinheiro real.',
   },
   {
     // DEMO LOCAL (`utils/demoMode.ts`): o nível vem da CONSTANTE.
