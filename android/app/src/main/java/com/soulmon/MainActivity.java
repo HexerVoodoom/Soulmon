@@ -13,6 +13,7 @@ import com.soulmon.plugins.SoulmonWidgetPlugin;
 import com.soulmon.plugins.SoulmonAlarmPlugin;
 import com.soulmon.plugins.BillingPlugin;
 import com.soulmon.plugins.SoulmonReviewPlugin;
+import com.soulmon.plugins.SoulmonStepsPlugin;
 
 public class MainActivity extends BridgeActivity {
     @Override
@@ -21,6 +22,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(SoulmonAlarmPlugin.class);
         registerPlugin(BillingPlugin.class);
         registerPlugin(SoulmonReviewPlugin.class);
+        registerPlugin(SoulmonStepsPlugin.class);
         super.onCreate(savedInstanceState);
         createPushNotificationChannel();
         enterImmersiveMode();

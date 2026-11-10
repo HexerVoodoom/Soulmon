@@ -325,6 +325,7 @@ import { type TriageAction } from './components/TriagePile';
 import { dreamTwin, grantDreamTwin } from './utils/dreamDecorTwin';
 import { sanitizeSoulTestAnswers } from './utils/soulTestAnswers';
 import { shouldShowRestSetup } from './utils/restSetup';
+import { shouldShowStepsInvite } from './utils/stepsInvite';
 import { chatSettingsFor, personalityProfileFromSave } from './utils/personality';
 import {
   needsCheckIn, checkInPlan, completeCheckIn,
@@ -860,6 +861,8 @@ const MorningCheckIn = lazy(() => import('./components/MorningCheckIn').then(m =
 const TriagePile = lazy(() => import('./components/TriagePile').then(m => ({ default: m.TriagePile })));
 const MorningDream = lazy(() => import('./components/MorningDream').then(m => ({ default: m.MorningDream })));
 const RestSetupModal = lazy(() => import('./components/RestSetupModal').then(m => ({ default: m.RestSetupModal })));
+// O convite curto da contagem de passos (REGISTRO §277): intersticial `stepsInvite`, só no app Android com contador.
+const StepsInviteModal = lazy(() => import('./components/StepsInviteModal').then(m => ({ default: m.StepsInviteModal })));
 const DayGoalsModal = lazy(() => import('./components/DayGoalsModal').then(m => ({ default: m.DayGoalsModal })));
 const CatalogOnboardingFlow = lazy(() => import('./components/catalog/CatalogOnboardingFlow').then(m => ({ default: m.CatalogOnboardingFlow })));
 const CatalogBrowserModal = lazy(() => import('./components/catalog/CatalogBrowserModal').then(m => ({ default: m.CatalogBrowserModal })));
@@ -2580,6 +2583,8 @@ export default function App() {
       nightmare: nightmareOpen,
       catalogLevelInvite: Boolean(catalogLevelInviteCandidate),
       restSetup: needsRestSetup,
+      // O convite curto dos passos (§277): só com contador no aparelho, depois do onboarding, e só quem ainda não respondeu.
+      stepsInvite: shouldShowStepsInvite({ available: stepsAvailable, consent: gameState.stepsConsent, onboarded: hasCompletedOnboarding }),
     }),
     // ao MOSTRAR: grava o "visto" (a fila chama uma vez por entrada na tela)
     onShow: id => {
@@ -2651,6 +2656,7 @@ export default function App() {
         case 'dream': setMorningDream(null); break;
         case 'nightmare': closeNightmare(); break;
         case 'catalogLevelInvite': declineCatalogLevelInvite(); break;
+        case 'stepsInvite': break; // as duas saídas são os botões: voltar do Android não decide por ninguém
         case 'restSetup': break; // obrigatório: voltar do Android não pula; só "Confirmar" fecha (o erro de render cai no `fail`)
         default: break; // catalogOnboarding: sem "pular" por decisão do dono (C11); o erro de render cai no `fail`
       }
@@ -6620,6 +6626,12 @@ export default function App() {
     setGameState(prev => ({ ...prev, stepsConsent: 'declined' }));
   }, [setGameState]);
 
+  /** O convite curto (§277): grava a meta escolhida e SÓ DEPOIS pede a permissão (consentimento antes do diálogo do sistema). */
+  const handleStepsInviteAccept = useCallback((goal: number) => {
+    setGameState(prev => ({ ...prev, stepGoal: sanitizeStepGoal(goal) }));
+    void handleStepsRequestPermission();
+  }, [setGameState, handleStepsRequestPermission]);
+
   /** MISSÃO ESPECIAL DO DIA (REGISTRO §106): UM ponto de fiação. O gauge é creditado sozinho na virada (dailyReset). */
   const specialHasSteps = stepsAvailable === true && gameState.stepsConsent === 'granted' && stepsPermission === true;
   useEffect(() => {
@@ -10090,6 +10102,18 @@ export default function App() {
           window={(gameState.rest ?? createRestState()).window}
           onConfirm={handleConfirmRestWindow}
         />
+        </PresentationSlot>
+      )}
+
+      {/* O CONVITE CURTO DOS PASSOS (§277): sim/não + meta. Aceitar grava a meta e SÓ ENTÃO abre o diálogo do sistema. */}
+      {interstitial === 'stepsInvite' && (
+        <PresentationSlot id="stepsInvite" onFail={() => presentation.fail('stepsInvite')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <StepsInviteModal
+            language={language}
+            initialGoal={sanitizeStepGoal(gameState.stepGoal)}
+            onAccept={handleStepsInviteAccept}
+            onDecline={handleStepsDecline}
+          />
         </PresentationSlot>
       )}
 

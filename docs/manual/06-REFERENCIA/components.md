@@ -1768,6 +1768,12 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 **Régua:** `src/components/GmPanel.render.test.tsx`.
 
 
+### `src/components/StepsInviteModal.tsx`
+**Dono de:** o convite curto da contagem de passos (REGISTRO §277), intersticial `stepsInvite` da fila central: pergunta sim/não do MESMO peso, meta escolhível, sem X.
+**Exports:** `StepsInviteModal`, `StepsInviteModalProps`.
+**Chamado por:** `src/App.tsx`
+**Régua:** `src/components/StepsInviteModal.render.test.tsx`.
+
 ### `src/components/RestSetupModal.tsx`
 **Dono de:** o convite do sono (G8, 01/10/2026): explica e configura Janela de Descanso + sono automático, intersticial `restSetup` (antes de `welcome`).
 **Exports:** `RestSetupModal`, `RestSetupModalProps`.

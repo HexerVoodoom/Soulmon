@@ -33,6 +33,27 @@
 
         </activity>
 
+        <!-- Health Connect (REGISTRO §277): a tela de "por que pedimos" que o Health Connect exige para mostrar o diálogo de permissão
+             (Android 13 e antes) e o alias da visualização de uso (Android 14+). Só abre a política de privacidade. -->
+        <activity
+            android:name=".plugins.HealthRationaleActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+        </activity>
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
+            android:targetActivity=".plugins.HealthRationaleActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -172,6 +193,11 @@
 
     </application>
 
+    <!-- Android 13 e antes: o Health Connect é um app à parte; sem isto o aparelho esconde que ele existe. -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+    </queries>
+
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
@@ -185,6 +211,11 @@
          dados de saúde ou política dedicada. Opcional: o app roda inteiro sem
          ela (ver src/utils/steps.ts). -->
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/>
+    <!-- Passos pelo Health Connect (REGISTRO §277, SoulmonStepsPlugin.kt): SÓ LEITURA de passos. Nenhuma outra permissão de saúde, nenhuma
+         de escrita, nenhuma de segundo plano (READ_HEALTH_DATA_IN_BACKGROUND) e nenhuma de histórico. Ao contrário do contador do
+         aparelho acima, esta EXIGE a declaração de permissões de saúde no Play Console (formulário próprio) e a política de
+         privacidade (§2/§6) dizendo isso. Opcional: o app roda inteiro sem ela. -->
+    <uses-permission android:name="android.permission.health.READ_STEPS"/>
     <!-- Microfone, para o recado FALADO ao bichinho (ChatBox → /api/transcribe).
          Runtime, e OPCIONAL do mesmo jeito que o contador de passos: negar não
          impede nada além de gravar — o campo de texto continua inteiro.
