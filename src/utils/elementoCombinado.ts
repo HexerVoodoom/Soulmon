@@ -10,7 +10,7 @@
  * Base nº 1 sem curado possível (hoje nenhuma das 17) ainda cairia no par: nunca se inventa elemento.
  * A camada é só de LEITURA: não muda ficha, pontos nem cascata. Puro e sem relógio.
  */
-import { hashString, mulberry32 } from './oracle/base';
+import { creatureFormId, hashString, mulberry32 } from './oracle/base';
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { ELEMENTOS_CURADOS, CURATED_ELEMENT_NAMES } from './elementosCurados';
 import { elementoNomeDe } from './soulProfile/ficha/elementoNome';
@@ -121,18 +121,21 @@ export function aplicarChroma(prompt: string, key: 'green' | 'magenta'): string 
  * base do Soulmon. Entram o tema (poção ou combinado natural), as pistas visuais DO elemento (derivadas dos prompts dos assets) e o fundo
  * chroma coerente com as cores. A paleta por dominante/linha do prompt cru continua sendo a base. Só gerações FUTURAS usam isto.
  */
-export function stagesComElemento<T extends { stage: string; imagePrompt: string; imagePromptFallback: string }>(
+export function stagesComElemento<T extends { stage: string; branch?: string; imagePrompt: string; imagePromptFallback: string }>(
   stages: T[] | undefined, jornada: ElementoJornada | undefined,
   /** Poção por estágio: a ativa vale para a forma atual e a pendente (cristal) para o estágio-destino; vence o registro (como em `petElementOf`). */
   pocoes?: Partial<Record<FichaStage, string>>,
   /** O elemento BASE do Soulmon (Oráculo): vale quando não há poção nem registro do estágio. */
   baseDoSoulmon?: string,
+  /** A forma (id de forma) dona de cada poção: a poção NÃO vale para uma forma-irmã do mesmo nível. Ausente = vale para o nível todo (legado). */
+  formaDaPocao?: Partial<Record<FichaStage, string>>,
 ): T[] | undefined {
   if (!stages || (!jornada && !pocoes && !baseDoSoulmon)) return stages;
   return stages.map(st => {
     // As etapas do Oráculo chamam o Ultimate de `perfeito` (ver `creatureFormId`); a ficha usa `ultimate`.
     const nivel = (st.stage === 'perfeito' ? 'ultimate' : st.stage) as FichaStage;
-    const pocao = pocoes?.[nivel];
+    const dona = formaDaPocao?.[nivel];
+    const pocao = dona && creatureFormId(st as never) !== dona ? undefined : pocoes?.[nivel];
     const reg = jornada?.estagios[nivel];
     const efetivo = pocao ?? reg?.id ?? baseDoSoulmon;
     if (!efetivo) return st;
@@ -167,5 +170,27 @@ export function pocoesDoEstado(s: {
   if (s.potionElement) out[nivel(s.evolutionStage)] = s.potionElement;
   const c = s.evolutionCrystal;
   if (c && c.from === s.evolutionStage && s.evolutionPotion) out[nivel(c.to)] = s.evolutionPotion;
+  return Object.keys(out).length ? out : undefined;
+}
+
+/**
+ * "Gerar personagem" com leitura NOVA do Oráculo: o elemento base do prompt é o do resultado recém-lido, e o registro por estágio
+ * (`elementoJornada`) é o da criatura ANTIGA, então não vale para a nova. Sem leitura nova, nada muda (QA 10/11/2026).
+ */
+export function elementoParaGerar(
+  novoDominante: string | undefined, jornada: ElementoJornada | undefined, baseAtual: string | undefined,
+): { jornada: ElementoJornada | undefined; base: string | undefined } {
+  return novoDominante ? { jornada: undefined, base: novoDominante } : { jornada, base: baseAtual };
+}
+
+/** De qual FORMA é cada poção de `pocoesDoEstado`: a ativa é da forma atual; a pendente, da forma-destino do cristal (`crystal.to`). */
+export function formasDasPocoes(s: {
+  evolutionStage: string; potionElement?: string; evolutionPotion?: string; evolutionCrystal?: { from: string; to: string };
+}): Partial<Record<FichaStage, string>> | undefined {
+  const nivel = (id: string): FichaStage => (['champion', 'ultimate', 'mega'].includes(id.split('-')[0]) ? id.split('-')[0] : id === 'ultra' ? 'ultra' : 'rookie') as FichaStage;
+  const out: Partial<Record<FichaStage, string>> = {};
+  if (s.potionElement) out[nivel(s.evolutionStage)] = s.evolutionStage;
+  const c = s.evolutionCrystal;
+  if (c && c.from === s.evolutionStage && s.evolutionPotion) out[nivel(c.to)] = c.to;
   return Object.keys(out).length ? out : undefined;
 }
