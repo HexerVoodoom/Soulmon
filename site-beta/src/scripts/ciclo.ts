@@ -95,6 +95,11 @@ export async function iniciar(S: Strs, fraco: boolean) {
   setCristal('apagado');
 
   secao.classList.add('sem-pin');
+  // Fechar (topo) e Continuar (fim): saem da demo e seguem para a próxima seção (dono, 09/11).
+  let sairModo = () => {};
+  const sair = () => { sairModo(); const prox = secao.nextElementSibling as HTMLElement | null; (prox ?? secao).scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  document.querySelector('[data-demo-fechar]')?.addEventListener('click', sair);
+  document.querySelector('[data-continuar]')?.addEventListener('click', sair);
   if (matchMedia('(max-width: 1023px)').matches) modoFoco(); else travarRolagem();
 
   // Celular (dono, 09/11): ao chegar na demo a tela escurece e a cena sobe sozinha na frente:
@@ -119,6 +124,7 @@ export async function iniciar(S: Strs, fraco: boolean) {
     addEventListener('touchmove', (e) => { if (aberto && Math.abs(e.touches[0].clientY - y0) > 14) fechar(); }, { passive: true });
     addEventListener('wheel', () => { if (aberto) fechar(); }, { passive: true });
     fim.querySelector('[data-cta]')?.addEventListener('click', fechar);
+    sairModo = fechar;
   }
 
   // Trava da rolagem (dono, 09/11): ao chegar na demo, rolar para baixo NÃO move a página;
@@ -136,6 +142,7 @@ export async function iniciar(S: Strs, fraco: boolean) {
     const alvoY = () => Math.round(scrollY + ancora.getBoundingClientRect().top - topoH());
     const naZona = () => { const r = ancora.getBoundingClientRect(); return r.top <= topoH() + 2 && r.bottom > innerHeight * 0.3; };
     const soltar = () => { solto = true; secao.classList.remove('travada'); if (pular) pular.hidden = true; };
+    sairModo = soltar;
     const avancar = () => {
       const agora = Date.now(); if (agora - ultimo < 420) return; ultimo = agora;
       const i = botoes.findIndex((b, k) => b.getAttribute('aria-checked') !== 'true' && !fila.includes(k));

@@ -40,7 +40,7 @@ const pt = {
     forma: 'Forma', de: 'de',
     alt: 'Soulmon,',
     fim: 'As cinco formas de uma mesma linha.',
-    recomecar: 'Recomeçar', pular: 'Pular demonstração', listaRotulo: 'Os cinco estágios de um Soulmon',
+    recomecar: 'Recomeçar', fechar: 'Fechar', continuar: 'Continuar', pular: 'Pular demonstração', listaRotulo: 'Os cinco estágios de um Soulmon',
   },
   soul: {
     h2: 'Seu Soulmon é só seu',
@@ -163,7 +163,7 @@ const en: typeof pt = {
     forma: 'Form', de: 'of',
     alt: 'Soulmon,',
     fim: 'Five forms of one line.',
-    recomecar: 'Start over', pular: 'Skip demo', listaRotulo: 'The five stages of a Soulmon',
+    recomecar: 'Start over', fechar: 'Close', continuar: 'Continue', pular: 'Skip demo', listaRotulo: 'The five stages of a Soulmon',
   },
   soul: {
     h2: 'Your Soulmon is yours alone',

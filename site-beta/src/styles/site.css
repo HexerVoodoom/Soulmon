@@ -1141,11 +1141,11 @@ main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recurs
 .colete-item img { background: radial-gradient(ellipse 58% 52% at 50% 50%, rgba(95,243,224,.38), rgba(20,112,108,.35) 50%, transparent 74%), radial-gradient(ellipse 40% 9% at 50% 92%, rgba(0,0,0,.6), transparent 70%) !important; }
 .colete-item:not(.falta) { background: radial-gradient(ellipse 60% 46% at 50% 40%, rgba(95,243,224,.55), rgba(20,112,108,.45) 50%, rgba(8,40,42,.2) 80%), var(--sb-sup) !important; }
 /* 09/11: gameplay PvP/PvE bem maior e mais alto (celular ~72svh, desktop largo) */
-.cartao.cartao-combate { flex: 0 0 min(86vw, 380px); }
-.cartao.cartao-combate .aparelho.mini { width: min(80vw, 340px, calc(72svh * .46)); }
+.cartao.cartao-grande { flex: 0 0 min(86vw, 380px); }
+.cartao.cartao-grande .aparelho.mini { width: min(80vw, 340px, calc(72svh * .46)); }
 @media (min-width: 1024px) {
-  .cartoes:has(.cartao-combate) { grid-template-columns: 1.6fr 1fr 1fr 1fr; align-items: end; }
-  .cartao.cartao-combate .aparelho.mini { width: min(320px, calc(70vh * .46)); }
+  .cartoes:has(.cartao-grande) { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); align-items: end; }
+  .cartao.cartao-grande .aparelho.mini { width: min(100%, 320px, calc(70vh * .46)); }
 }
 /* 09/11: trailer com a capa do mapa principal e play no centro; box na proporção do vídeo */
 .trailer-moldura, .trailer-moldura.tocando { aspect-ratio: 16 / 9; }
@@ -1161,3 +1161,12 @@ main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recurs
 .inscrever .so-crias .cria img { filter: none; opacity: 1; }
 /* 09/11: bandeira do idioma com metade do tamanho */
 .idioma .bandeira { width: 17px; height: 12px; }
+
+/* 09/11: Fechar grande no topo da demo e Continuar no fim */
+.demo-fechar { position: absolute; top: 8px; right: 8px; z-index: 5; display: inline-flex; align-items: center; gap: 8px; min-height: 56px; padding: 0 20px; font: var(--sb-peso-forte) 1.125rem/1 var(--sb-fonte-texto); color: var(--sb-pri); background: rgba(1,12,14,.85); border: 2px solid var(--sb-pri); border-radius: 8px; cursor: pointer; }
+.demo-cena { position: relative; }
+.ciclo.foco .demo-fechar { position: fixed; top: calc(12px + env(safe-area-inset-top)); left: 16px; right: 16px; justify-content: center; }
+.ciclo-fim .botao:not(.primario) { min-width: 12rem; }
+/* em foco (celular) a barra do topo sai: o Fechar fica livre para o toque */
+body:has(.ciclo.foco) .topo { visibility: hidden; }
+@media (min-width: 1024px) { .ciclo .demo-cena { position: static; } .ciclo-palco { position: relative; } .ciclo .demo-fechar { top: calc(var(--topo-h, 64px) + 16px); right: 24px; } }

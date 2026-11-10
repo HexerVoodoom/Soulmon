@@ -89,7 +89,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
   ultimate: { poder: [['/sprites/colete/ultimate/chama_azul.webp', t.colete.nomes.chama_azul], ['/sprites/colete/ultimate/brinquedo.webp', t.colete.nomes.brinquedo], ['/sprites/colete/ultimate/raiz_profunda.webp', t.colete.nomes.raiz_profunda]] },
 };
 ---
-<Base lang={lang} alternativa={VB ? t.outraHome + 'b/' : t.outraHome} aqui={VB ? t.home + 'b/' : t.home} preload>
+<Base lang={lang} alternativa={VB ? t.outraHome + 'b/' : t.outraHome} aqui={VB ? t.home + 'b/' : t.home} canonico={t.home} versaoB={VB ? undefined : t.home + 'b/'} preload>
   <a class="pular" href="#conteudo">{t.pular}</a>
 
   <header class="topo" data-topo>
@@ -153,6 +153,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
           {Formas.map((fm, i) => <li><img class="sprite" src={vazio} data-tarde-src={b(`/sprites/${LINHA_DEMO}-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.nomes[i]}`} /><noscript><img class="sprite" src={b(`/sprites/${LINHA_DEMO}-${fm}-128.webp`)} width="128" height="128" alt={`${c.alt} ${c.nomes[i]}`} /></noscript><span>{c.nomes[i]}</span></li>)}
         </ol>
         <div class="demo-cena" data-cena hidden>
+          <button type="button" class="demo-fechar" data-demo-fechar><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M6.4 4 4 6.4 9.6 12 4 17.6 6.4 20l5.6-5.6 5.6 5.6 2.4-2.4-5.6-5.6L20 6.4 17.6 4 12 9.6Z"/></svg>{c.fechar}</button>
           <div class="cena-central">
             {/* Nome da forma; ícone da forma em public/forma/ (enviado pelo dono, 09/11). */}
             <p class="forma-titulo" aria-hidden="true"><span class="ico-forma" data-ico-forma data-forma="rookie"></span><span data-placa>{c.nomes[0]}</span></p>
@@ -186,6 +187,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
           <div class="ciclo-fim" data-fim hidden>
             <button type="button" class="link" data-recomecar>{c.recomecar}</button>
             <a class="botao primario" href="#inscrever" data-cta>{t.cta}</a>
+            <button type="button" class="botao" data-continuar>{c.continuar}</button>
           </div>
           <img class="chama" data-chama src={b('/provisorio/chama.svg')} width="24" height="32" alt="" aria-hidden="true" loading="lazy" />
           <p class="sr" aria-live="polite" data-anuncio></p>
@@ -345,7 +347,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
         </div>
         <ul class="cartoes" tabindex="0" aria-label={r.h2}>
           {r.cartoes.filter(([id]) => prints.some((p) => p.id === id)).map(([id, h, p, alt]) => (
-            <li class:list={['cartao', { 'cartao-combate': id === 'combate' }]}>
+            <li class:list={['cartao', { 'cartao-combate': id === 'combate', 'cartao-grande': id !== 'jogos' }]}>
               {id === 'jogos' ? (
                 <figure class="mosaico-jogos" role="img" aria-label={alt}>
                   <p class="rotulo rot-arte">{t.rotulos.arte}</p>
