@@ -45,11 +45,162 @@ function nearKeyHue(r, g, b, keyHue) {
   return (d > 180 ? 360 - d : d) <= 30;
 }
 
+// ---------------------------------------------------------------- chave AZUL: flood-fill a partir da borda (M5)
+// Por que: o criterio por canal (b > 150 e b - max(r,g) > 60) pega tambem violeta/azul-royal do sprite (ex.: (110,90,230), runas do
+// Saba) e o despill (b = max(r,g)) agia na imagem toda. Aqui o fundo e o que e ALCANCAVEL da borda por pixels perto do azul amostrado
+// nos cantos; o despill so age num anel de poucos px ao redor do fundo removido. Verde e magenta NAO usam este caminho.
+const FLOOD_TOL2 = 110 * 110;
+const PURE_TOL2 = 60 * 60;
+const HALO_TOL2 = 170 * 170;
+const DESPILL_RING = 3;
+/** Buraco enclausurado so conta como fundo se tiver pelo menos isto (px, a 1024x1024; escala com a area). */
+const ENCLOSED_MIN_AT_1K = 800;
+
+/** Cor do fundo amostrada nos 4 cantos (mediana por canal de blocos 8x8) ou null se nao for azul de chave. */
+function amostrarFundoAzul(width, height, rgba) {
+  const bs = Math.max(1, Math.min(8, width >> 1, height >> 1));
+  const rs = [], gs = [], bl = [];
+  for (const [cx, cy] of [[0, 0], [width - bs, 0], [0, height - bs], [width - bs, height - bs]]) {
+    for (let y = cy; y < cy + bs; y++) for (let x = cx; x < cx + bs; x++) {
+      const p = (y * width + x) * 4;
+      rs.push(rgba[p]); gs.push(rgba[p + 1]); bl.push(rgba[p + 2]);
+    }
+  }
+  const med = a => { a.sort((x, y) => x - y); return a[a.length >> 1]; };
+  const r = med(rs), g = med(gs), b = med(bl);
+  return b > BG_G_MIN && b - Math.max(r, g) > BG_D_MIN ? [r, g, b] : null;
+}
+
+/** Flood-fill 4-conexo: marca em `out` os pixels de `cand` ligados as sementes. */
+function inundar(width, height, cand, seeds) {
+  const n = width * height;
+  const out = new Uint8Array(n);
+  const st = new Int32Array(n);
+  let tp = 0;
+  const push = i => { if (cand[i] && !out[i]) { out[i] = 1; st[tp++] = i; } };
+  for (const i of seeds) push(i);
+  while (tp) {
+    const i = st[--tp];
+    const x = i % width;
+    if (x > 0) push(i - 1);
+    if (x < width - 1) push(i + 1);
+    if (i >= width) push(i - width);
+    if (i < n - width) push(i + width);
+  }
+  return out;
+}
+
+function dilatar(width, height, src) {
+  const n = width * height;
+  const o = new Uint8Array(src);
+  for (let i = 0; i < n; i++) {
+    if (!src[i]) continue;
+    const x = i % width;
+    if (x > 0) o[i - 1] = 1;
+    if (x < width - 1) o[i + 1] = 1;
+    if (i >= width) o[i - width] = 1;
+    if (i < n - width) o[i + width] = 1;
+  }
+  return o;
+}
+
+/** Recorte da chave azul por flood-fill. Devolve as mesmas metricas de `keyRgba`, ou null quando os cantos nao sao azul de chave
+ *  (o chamador cai no recorte por canal, que sabe dizer "sem fundo azul"). */
+function keyRgbaBlueFlood(width, height, rgba) {
+  const bg0 = amostrarFundoAzul(width, height, rgba);
+  if (!bg0) return null;
+  const n = width * height;
+  const dist2 = new Int32Array(n);
+  const cand = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    const p = i * 4;
+    const dr = rgba[p] - bg0[0], dg = rgba[p + 1] - bg0[1], db = rgba[p + 2] - bg0[2];
+    const d2 = dr * dr + dg * dg + db * db;
+    dist2[i] = d2;
+    cand[i] = d2 <= FLOOD_TOL2 ? 1 : 0;
+  }
+  const seeds = [];
+  for (let x = 0; x < width; x++) { seeds.push(x, (height - 1) * width + x); }
+  for (let y = 0; y < height; y++) { seeds.push(y * width, y * width + width - 1); }
+  const bg = inundar(width, height, cand, seeds);
+  // buracos enclausurados grandes (ex.: vao entre bracos): componentes de cand nao alcancados com >= ENCLOSED_MIN px
+  const minEnc = Math.max(16, Math.round(ENCLOSED_MIN_AT_1K * n / (1024 * 1024)));
+  const resto = new Uint8Array(n);
+  for (let i = 0; i < n; i++) resto[i] = cand[i] && !bg[i] ? 1 : 0;
+  const lab = new Uint8Array(n);
+  const st = new Int32Array(n);
+  let enclosedBg = 0;
+  for (let s = 0; s < n; s++) {
+    if (!resto[s] || lab[s]) continue;
+    let tp = 0, size = 0;
+    st[tp++] = s; lab[s] = 1;
+    const mem = [];
+    while (tp) {
+      const i = st[--tp]; size++; mem.push(i);
+      const x = i % width;
+      if (x > 0 && resto[i - 1] && !lab[i - 1]) { lab[i - 1] = 1; st[tp++] = i - 1; }
+      if (x < width - 1 && resto[i + 1] && !lab[i + 1]) { lab[i + 1] = 1; st[tp++] = i + 1; }
+      if (i >= width && resto[i - width] && !lab[i - width]) { lab[i - width] = 1; st[tp++] = i - width; }
+      if (i < n - width && resto[i + width] && !lab[i + width]) { lab[i + width] = 1; st[tp++] = i + width; }
+    }
+    if (size >= minEnc) { for (const i of mem) bg[i] = 1; enclosedBg += size; }
+  }
+  // azul quase puro mesmo isolado (resto do fundo entre pelos/dedos)
+  for (let i = 0; i < n; i++) if (dist2[i] <= PURE_TOL2) bg[i] = 1;
+  // halo de 1 px
+  const d1 = dilatar(width, height, bg);
+  for (let i = 0; i < n; i++) if (!bg[i] && d1[i] && dist2[i] <= HALO_TOL2) bg[i] = 1;
+  // despill so num anel ao redor do fundo removido
+  let ring = bg;
+  for (let k = 0; k < DESPILL_RING; k++) ring = dilatar(width, height, ring);
+  for (let i = 0; i < n; i++) {
+    if (bg[i] || !ring[i]) continue;
+    const p = i * 4;
+    const m = rgba[p] > rgba[p + 1] ? rgba[p] : rgba[p + 1];
+    if (rgba[p + 2] > m) rgba[p + 2] = m;
+  }
+  const alpha = new Uint8Array(n);
+  for (let i = 0; i < n; i++) alpha[i] = bg[i] ? 0 : 255;
+  // ilhas pequenas somem (igual ao caminho por canal)
+  const seen = new Uint8Array(n);
+  for (let s = 0; s < n; s++) {
+    if (!alpha[s] || seen[s]) continue;
+    let tp = 0, size = 0;
+    st[tp++] = s; seen[s] = 1;
+    const mem = [];
+    while (tp) {
+      const i = st[--tp]; size++;
+      if (size <= MIN_ISLAND) mem.push(i);
+      const x = i % width;
+      if (x > 0 && alpha[i - 1] && !seen[i - 1]) { seen[i - 1] = 1; st[tp++] = i - 1; }
+      if (x < width - 1 && alpha[i + 1] && !seen[i + 1]) { seen[i + 1] = 1; st[tp++] = i + 1; }
+      if (i >= width && alpha[i - width] && !seen[i - width]) { seen[i - width] = 1; st[tp++] = i - width; }
+      if (i < n - width && alpha[i + width] && !seen[i + width]) { seen[i + width] = 1; st[tp++] = i + width; }
+    }
+    if (size < MIN_ISLAND) for (const i of mem) alpha[i] = 0;
+  }
+  let bgCount = 0, opaque = 0, nearOpaque = 0;
+  for (let i = 0; i < n; i++) {
+    const p = i * 4;
+    if (bg[i]) bgCount++;
+    if (alpha[i]) { opaque++; if (nearKeyHue(rgba[p], rgba[p + 1], rgba[p + 2], 240)) nearOpaque++; }
+    rgba[p + 3] = alpha[i];
+  }
+  return {
+    bgFraction: bgCount / n, opaque, holeFraction: enclosedBg + opaque ? enclosedBg / (enclosedBg + opaque) : 0,
+    nearFraction: opaque ? nearOpaque / opaque : 0,
+  };
+}
+
 /** Chroma-key sobre RGBA (muta e devolve as métricas). `key`: 'green' | 'magenta' | 'blue'.
  *  `opts.connectedOnly`: so e fundo o que toca a borda (pixel da cor da chave DENTRO da criatura fica opaco e sem despill). */
 export function keyRgba(width, height, rgba, key = 'green', opts = {}) {
   const magenta = key === 'magenta';
   const blue = key === 'blue';
+  if (blue) {
+    const m = keyRgbaBlueFlood(width, height, rgba);
+    if (m) return m;
+  }
   const n = width * height;
   const alpha = new Uint8Array(n);
   const isBg = new Uint8Array(n);
@@ -250,86 +401,63 @@ export function chromaKeyPngChecked(pngBytes, key = 'green') {
 
 // ---------------------------------------------------------------- medicao DETERMINISTICA de buracos internos (sprite ja recortado)
 
-/** Raio (px, em sprite de 1k; escala com o lado) do fecho morfologico que cobre o "capuz" entre pedacos opacos. */
-const CLOSE_RADIUS_FRAC = 0.012;
 /** Alfa abaixo disto = transparente. */
 const HOLE_ALPHA = 128;
-/** Buraco interno acima desta fracao da silhueta (opaco + buraco) reprova o sprite (calibrado no caso real do Saba, ver teste). */
-export const HOLE_REJECT_FRACTION = 0.02;
-/** Pedaco de buraco menor que isto (fracao da silhueta) e ruido de borda e nao conta. */
-const HOLE_MIN_COMPONENT = 0.0004;
-
-function box1d(src, w, h, r, horizontal, op) {
-  // op 'max' (dilata) | 'min' (erode); fora da imagem = 0 para max e 1 para min (o canvas ja vem com margem).
-  const out = new Uint8Array(src.length);
-  const len = horizontal ? w : h, lines = horizontal ? h : w;
-  for (let l = 0; l < lines; l++) {
-    for (let i = 0; i < len; i++) {
-      let v = op === 'max' ? 0 : 1;
-      for (let k = -r; k <= r; k++) {
-        const j = i + k;
-        const s = j < 0 || j >= len ? (op === 'max' ? 0 : 1) : src[horizontal ? l * w + j : j * w + l];
-        if (op === 'max' ? s : !s) { v = op === 'max' ? 1 : 0; break; }
-      }
-      out[horizontal ? l * w + i : i * w + l] = v;
-    }
-  }
-  return out;
-}
+/** POEIRA de furos reprova: fracao da silhueta ocupada por furos PEQUENOS enclausurados acima disto => recorte quebrado.
+ *  Calibrado em medidas reais do sprite do Saba (fixture + miniaturas 160/256/985, ver review-soulmon.buracos.test.js):
+ *  recorte quebrado (runas comidas) 2,35-3,34%; recorte correto e arejado 0,63-0,84% (de 8-13 furos, contra 63-109 do quebrado). */
+export const HOLE_REJECT_FRACTION = 0.015;
+/** Furo enclausurado MAIOR que isto (fracao da silhueta) e vao legitimo (entre bracos, asas, cauda) e NAO conta: sprite arejado correto
+ *  tem ate ~17% de vaos assim e NAO deve ser mandado regenerar (regenerar custa). So a poeira de furos pequenos denuncia corpo comido. */
+const HOLE_BIG_COMPONENT = 0.002;
+/** Furo menor que isto (fracao da silhueta, minimo 2 px) e ruido de borda e nao conta. */
+const HOLE_MIN_COMPONENT = 0.00002;
 
 /**
- * Mede buracos INTERNOS de um sprite RGBA ja recortado: transparencia (alfa < 128) dentro da silhueta. Dois sinais, somados:
- * (a) fecho morfologico (dilata r, erode r) da mascara opaca: o que o fecho preenche e transparente = buraco/entalhe interno;
- * (b) flood-fill do exterior a partir das bordas: transparente que ele NAO alcanca = buraco totalmente cercado.
- * Determinístico, so CPU. `holeFraction` = buracos / (opacos + buracos); `components` = pedacos conexos relevantes.
+ * Mede a POEIRA de furos internos de um sprite RGBA ja recortado: transparencia (alfa < 128) totalmente cercada pela silhueta
+ * (flood-fill do exterior a partir das bordas nao a alcanca), contando so os pedacos PEQUENOS (<= 0,2% da silhueta cada).
+ * Vao grande (ligado ao exterior ou enclausurado e grande) nao conta: e arejado legitimo, nao recorte quebrado.
+ * Deterministico, so CPU. `holeFraction` = area dos furos pequenos / (opacos + essa area); `components` = quantos furos pequenos.
  * @param {Uint8Array} pngBytes
  * @returns {{ opaque: number, holes: number, holeFraction: number, components: number, reprovado: boolean }}
  */
 export function medirBuracosInternos(pngBytes) {
   const { width, height, data } = decodePng(pngBytes);
-  const r = Math.max(2, Math.round(Math.max(width, height) * CLOSE_RADIUS_FRAC));
-  const pad = r + 2;
-  const W = width + 2 * pad, H = height + 2 * pad;
-  const mask = new Uint8Array(W * H);
+  const n = width * height;
+  const opaqueMask = new Uint8Array(n);
   let opaque = 0;
-  for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
-    if (data[(y * width + x) * 4 + 3] >= HOLE_ALPHA) { mask[(y + pad) * W + x + pad] = 1; opaque++; }
-  }
+  for (let i = 0; i < n; i++) if (data[i * 4 + 3] >= HOLE_ALPHA) { opaqueMask[i] = 1; opaque++; }
   if (!opaque) return { opaque: 0, holes: 0, holeFraction: 0, components: 0, reprovado: false };
-  const dil = box1d(box1d(mask, W, H, r, true, 'max'), W, H, r, false, 'max');
-  const closed = box1d(box1d(dil, W, H, r, true, 'min'), W, H, r, false, 'min');
-  // (b) exterior: transparente ligado a borda do canvas com margem
-  const reach = new Uint8Array(W * H);
-  const stack = new Int32Array(W * H);
+  // exterior: transparente ligado a borda da imagem
+  const reach = new Uint8Array(n);
+  const stack = new Int32Array(n);
   let top = 0;
-  const seed = i => { if (!mask[i] && !reach[i]) { reach[i] = 1; stack[top++] = i; } };
-  seed(0);
+  const seed = i => { if (!opaqueMask[i] && !reach[i]) { reach[i] = 1; stack[top++] = i; } };
+  for (let x = 0; x < width; x++) { seed(x); seed((height - 1) * width + x); }
+  for (let y = 0; y < height; y++) { seed(y * width); seed(y * width + width - 1); }
   while (top) {
-    const i = stack[--top]; const x = i % W;
+    const i = stack[--top]; const x = i % width;
     if (x > 0) seed(i - 1);
-    if (x < W - 1) seed(i + 1);
-    if (i >= W) seed(i - W);
-    if (i < W * H - W) seed(i + W);
+    if (x < width - 1) seed(i + 1);
+    if (i >= width) seed(i - width);
+    if (i < n - width) seed(i + width);
   }
-  const hole = new Uint8Array(W * H);
-  let holes = 0;
-  for (let i = 0; i < W * H; i++) if (!mask[i] && (closed[i] || !reach[i])) { hole[i] = 1; holes++; }
-  // componentes (4-conexos) acima do piso de ruido
-  const seen = new Uint8Array(W * H);
-  const minPix = Math.max(4, Math.floor((opaque + holes) * HOLE_MIN_COMPONENT));
+  const minPix = Math.max(2, Math.floor(opaque * HOLE_MIN_COMPONENT));
+  const maxPix = Math.floor(opaque * HOLE_BIG_COMPONENT);
+  const seen = new Uint8Array(n);
   let components = 0, kept = 0;
-  for (let s = 0; s < W * H; s++) {
-    if (!hole[s] || seen[s]) continue;
+  for (let s = 0; s < n; s++) {
+    if (opaqueMask[s] || reach[s] || seen[s]) continue;
     let size = 0; top = 0; stack[top++] = s; seen[s] = 1;
     while (top) {
-      const i = stack[--top]; size++; const x = i % W;
-      const push = j => { if (hole[j] && !seen[j]) { seen[j] = 1; stack[top++] = j; } };
+      const i = stack[--top]; size++; const x = i % width;
+      const push = j => { if (!opaqueMask[j] && !reach[j] && !seen[j]) { seen[j] = 1; stack[top++] = j; } };
       if (x > 0) push(i - 1);
-      if (x < W - 1) push(i + 1);
-      if (i >= W) push(i - W);
-      if (i < W * H - W) push(i + W);
+      if (x < width - 1) push(i + 1);
+      if (i >= width) push(i - width);
+      if (i < n - width) push(i + width);
     }
-    if (size >= minPix) { components++; kept += size; }
+    if (size >= minPix && size <= maxPix) { components++; kept += size; }
   }
   const holeFraction = kept / (opaque + kept);
   return { opaque, holes: kept, holeFraction, components, reprovado: holeFraction > HOLE_REJECT_FRACTION };

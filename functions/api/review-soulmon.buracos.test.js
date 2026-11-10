@@ -32,25 +32,38 @@ const solido = () => { // criatura sem buracos: quadrado opaco
 const corpo = { id: SAVE, formId: FORM, spriteUrl: `https://x.test/api/sprite-image?k=${TOK}`, soulmonId: 's1', stage: 'ultimate', element: 'sabbat', note: '' };
 const env = (png) => ({ SOULMON_SAVES: kvFake({ [`sprite:blob:${TOK}`]: ab(png) }), ANTHROPIC_API_KEY: 'k' });
 
-describe('medicao deterministica de buracos internos', () => {
-  it('o caso real do Saba passa MUITO do limiar; sprite sem buracos fica em zero', () => {
+const CORRETO = new Uint8Array(fs.readFileSync(new URL('../../src/test/fixtures/sabbat-recorte-correto-160.png', import.meta.url)));
+const quadrado = (w, lado) => { const d = new Uint8Array(w * w * 4); const o = (w - lado) >> 1; for (let y = o; y < o + lado; y++) for (let x = o; x < o + lado; x++) d.set([100, 100, 100, 255], (y * w + x) * 4); return d; };
+
+describe('medicao deterministica de buracos internos (poeira de furos pequenos)', () => {
+  it('o caso real do Saba (runas comidas) reprova; sprite sem buracos fica em zero', () => {
     const real = medirBuracosInternos(FIXTURE);
     expect(real.reprovado).toBe(true);
-    expect(real.holeFraction).toBeGreaterThan(HOLE_REJECT_FRACTION * 3);
-    expect(real.components).toBeGreaterThan(5);
+    expect(real.holeFraction).toBeGreaterThan(HOLE_REJECT_FRACTION);
+    expect(real.components).toBeGreaterThan(20);
     const limpo = medirBuracosInternos(solido());
     expect(limpo.holeFraction).toBe(0);
     expect(limpo.reprovado).toBe(false);
   });
-  it('furo cercado (flood-fill) e entalhe estreito (fecho morfologico) contam; vao grande ligado ao exterior nao', () => {
-    const w = 160, d = new Uint8Array(w * w * 4);
-    for (let y = 20; y < 140; y++) for (let x = 20; x < 140; x++) d.set([100, 100, 100, 255], (y * w + x) * 4);
-    for (let y = 60; y < 90; y++) for (let x = 60; x < 90; x++) d[(y * w + x) * 4 + 3] = 0; // furo 30x30 cercado
-    expect(medirBuracosInternos(encodePng(w, w, d)).reprovado).toBe(true);
-    const e = new Uint8Array(w * w * 4);
-    for (let y = 20; y < 140; y++) for (let x = 20; x < 140; x++) e.set([100, 100, 100, 255], (y * w + x) * 4);
-    for (let y = 20; y < 100; y++) for (let x = 70; x < 90; x++) e[(y * w + x) * 4 + 3] = 0; // baia larga aberta (perna/vao)
-    expect(medirBuracosInternos(encodePng(w, w, e)).reprovado).toBe(false);
+  it('o MESMO sprite recortado certo (arejado, com vaos enclausurados grandes) NAO reprova: nao forca regenerar', () => {
+    const ok = medirBuracosInternos(CORRETO);
+    expect(ok.reprovado).toBe(false);
+    expect(ok.holeFraction).toBeLessThan(HOLE_REJECT_FRACTION / 1.5);
+    expect(ok.components).toBeLessThan(15);
+  });
+  it('poeira de furos pequenos cercados reprova; um vao grande cercado (ou aberto ao exterior) nao', () => {
+    const w = 160;
+    const poeira = quadrado(w, 120);
+    for (let gy = 0; gy < 6; gy++) for (let gx = 0; gx < 6; gx++) for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) poeira[((30 + gy * 18 + y) * w + 30 + gx * 18 + x) * 4 + 3] = 0; // 36 furos de 3x3 (2,25% da silhueta, cada um < 0,2%)
+    const rp = medirBuracosInternos(encodePng(w, w, poeira));
+    expect(rp.reprovado).toBe(true);
+    expect(rp.components).toBe(36);
+    const furoGrande = quadrado(w, 120);
+    for (let y = 60; y < 90; y++) for (let x = 60; x < 90; x++) furoGrande[(y * w + x) * 4 + 3] = 0; // furo 30x30 cercado = vao legitimo
+    expect(medirBuracosInternos(encodePng(w, w, furoGrande)).reprovado).toBe(false);
+    const baia = quadrado(w, 120);
+    for (let y = 20; y < 100; y++) for (let x = 70; x < 90; x++) baia[(y * w + x) * 4 + 3] = 0; // baia aberta
+    expect(medirBuracosInternos(encodePng(w, w, baia)).reprovado).toBe(false);
   });
 });
 
