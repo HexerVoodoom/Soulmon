@@ -51,6 +51,7 @@
  * 16 (Silkscreen só dentro do vidro); o resultado num `RitualDialog` com o
  * visor 288×112 da arena e as duas criaturas a 64 na vitória.
  */
+import { useBlockedAction } from './ui/BlockedActionModal';
 import { useHexOverrides } from '../hooks/useHexOverrides';
 import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { hexFamily } from '../utils/hexsmith';
@@ -254,6 +255,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   // Música (19/10/2026): o Torneio toca o "Stone Hall Combat" (se o interruptor "Música" está ligado). Antes de qualquer return (hooks).
   useEffect(() => entrarNaSuperficie('torneio'), []);
   const isPt = language === 'pt-BR';
+  const [blockedModal, explain] = useBlockedAction(isPt ? 'pt-BR' : 'en-US');
   const lang: Language = isPt ? 'pt-BR' : 'en-US';
   const [opponents, setOpponents] = useState<Opponent[] | null>(null);
   /** `null` = o servidor não disse quantas sobraram (offline ou resposta velha). */
@@ -819,6 +821,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             </div>
           )}
 
+          {blockedModal}
           {opponents?.map(o => {
             const busy = fighting === o.id;
             // Um duelo sendo aberto trava TODOS os "Desafiar": outro duelStart em voo fecharia este como derrota.
@@ -851,8 +854,10 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                     "Fight" e acerta. */}
                 <button
                   type="button"
-                  disabled={blocked || busy || lockedByOther}
-                  onClick={() => fight(o)}
+                  disabled={busy || lockedByOther}
+                  aria-disabled={blocked ? true : undefined}
+                  data-tournament-fight={o.id}
+                  onClick={() => (blocked ? explain({ kind: 'limite', textoPt: 'As partidas do Torneio voltam amanhã.', textoEn: 'Tournament matches come back tomorrow.' }) : fight(o))}
                   aria-label={blocked
                     ? (isPt ? 'Desafiar — sem partidas restantes hoje' : 'Fight — no matches left today')
                     : (isPt ? `Desafiar ${o.name}` : `Fight — challenge ${o.name}`)}
