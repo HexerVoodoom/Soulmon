@@ -1405,6 +1405,14 @@ export default function App() {
       const url = displaySprite(spriteVisor, formId)?.url;
       if (url) map[formId.toLowerCase()] = url;
     }
+    // 10/11/2026: forma sem arte na chave própria mas COM arte alternativa (`forma@elemento`) usa a alternativa — senão `getSpriteForStage`
+    // caía na 1ª arte do acervo (a Rookie) ao equipar a forma original do nível.
+    for (const formId of Object.keys(spriteVisor.sprites)) {
+      if (!formId.includes('@')) continue;
+      const base = formId.split('@')[0].toLowerCase();
+      const url = spriteVisor.sprites[formId]?.url;
+      if (url && !map[base]) map[base] = url;
+    }
     setOwnSprites(map, petChocando || petOraculo ? PLACEHOLDER_ART.forming : undefined);
   }, [spriteVisor, petChocando, petOraculo]);
   /**
