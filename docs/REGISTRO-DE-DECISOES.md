@@ -4523,3 +4523,15 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 ## §276 — Glitchtama vira buff semanal de +10% (10/11/2026, decisão do dono)
 **Decisão.** O 🌀 não enche mais a barra de evolução nem dá dia perfeito. Pode ser usado **1× por semana** (7 dias corridos, `glitchtamaUsadoEm` no save, espelho monotônico no servidor `_glitchtama.js`) e concede um **buff de +10% nos pontos de progressão** que entram durante 7 dias. O +10% incide sobre o ganho de cada virada (tarefas + missão especial; único ponto de entrada, `dailyReset`), nunca sobre o já acumulado; a fração acumula em `glitchtamaCarry`. Dentro da janela o uso é recusado e o item volta à pastinha; relógio que volta não libera. O Desfeito pode continuar vendendo (a flag `GLITCHTAMA_TESTE_ON` segue `false`). Fecha o caso apontado pelo QA (mega sem coleção cheio de uma vez).
 **Alternativa que perdeu:** manter "enche a barra, 1 por dia" (atalho de calendário na escada de 59 dias). **Falsifica:** o buff não ser perceptível (ganho de 4–6/dia rende ~0,5/dia) e o dono querer um bônus maior ou fixo por dia.
+
+## §275 — Elenco do Oráculo: Mareoror e Salsolura viram selvagens com linha completa (10/11/2026)
+
+**Decisão (dono).** As duas espécies da demo do Oráculo (A = Mareoror, B = Salsolura; fogo+água, elemento fundido `vapor`) entram como selvagens com a linha inteira: rookie + 3 ramos (poder/harmonia/benevolência) × champion/ultimate(perfeito)/mega + ultra. Dados em `ELENCO_ORACULO_DATA` (`enemyRosterData.ts`), kind `api`, 10 entradas por espécie no FIM do roster (o `#N` do Bestiário não muda); entram no sorteio comum por estágio (masmorra, Arena, Fenda via `pickEnemy`) e no do elemento `vapor`, com os mesmos pesos e aberturas por level das demais criaturas (sem peso próprio). Ids: `<espécie>` (rookie) e `<espécie><ramo>`. Golpes = os da criatura `fogo`. A forma ultra tem arte instalada, mas fica fora do roster (ultra é só do chefe da Arena). Formas de poção ficaram de fora.
+
+**Alternativa que perdeu:** kind `ramo` (RAMO_CHANCE de 1/3 e filtro por elemento base): o ramo é amarrado a uma das 20 bases, e estas espécies têm elemento fundido próprio. **Falsifica:** o dono achar que elas aparecem demais/de menos (ajustar peso) ou querer o ultra como chefe.
+
+## §276 — FX e ícones refeitos pela regra de identidade v2 instalados (10/11/2026)
+
+**Decisão (dono).** Instalar, no mesmo nome/formato/tamanho: FX de ataque (cast, aura, aura-96, slash, impact, defended, orb) de `maldicao`, `fada`, `industrial` e `planta`; `el-maldicao` (96²); `st-maldicao` (64²); `fx-maldicao-loop-1..6` + sheet (384×256). Fora: `el-industrial` (em refação). Assets são importados com hash do Vite, sem bump de `CACHE_VERSION`. `fxFacingTable.ts` regerada.
+
+**Alternativa que perdeu:** manter a arte anterior à regra (caveira/engrenagem fora do tema do elemento). **Falsifica:** o dono reprovar a leitura dos novos em combate real.

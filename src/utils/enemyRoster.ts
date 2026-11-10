@@ -16,7 +16,7 @@
 import { NOVOS_DATA, novoHasForm, novoFormName, type NovoAttack } from './novosSoulmonData';
 import { COMBINADOS_LOTE3_DATA } from './elementosLote3.data';
 import { COMBINADOS_LOTE4_DATA } from './elementosLote4.data';
-import { COMBINADOS_DATA, INIMIGOS_API_DATA, INIMIGOS_DUO_DATA, PARALELOS_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
+import { COMBINADOS_DATA, INIMIGOS_API_DATA, ELENCO_ORACULO_DATA, INIMIGOS_DUO_DATA, PARALELOS_DATA, RAMOS_INIMIGOS_DATA } from './enemyRosterData';
 import { COMBINADOS_LOTE1_DATA } from './elementosLote1.data';
 import { COMBINADOS_LOTE2_DATA } from './elementosLote2.data';
 
@@ -238,8 +238,25 @@ function buildDuo(): RosterEntry[] {
   return out;
 }
 
+/** O ELENCO DO ORÁCULO (10/11/2026): Mareoror e Salsolura, linha completa (rookie + 3 ramos × champion/ultimate/mega), kind `api`, no sorteio comum e no do elemento `vapor`; no FIM do roster. */
+function buildElencoOraculo(): RosterEntry[] {
+  const out: RosterEntry[] = [];
+  for (const [id, el, comps, golpesDe, rookie, ramos] of ELENCO_ORACULO_DATA) {
+    const base = BASE_BY_ELEMENT[golpesDe];
+    out.push({ key: chaveBestiario(id, 'rookie'), id, stage: 'rookie', kind: 'api', element: el, elements: [...comps], name: rookie, basico: base.basico, especial: base.especial, artFile: `${id}-rookie` });
+    for (const [ramo, nomes] of Object.entries(ramos)) {
+      const rid = `${id}${ramo}`;
+      (['champion', 'ultimate', 'mega'] as const).forEach((stage, i) => out.push({
+        key: chaveBestiario(rid, stage), id: rid, stage, kind: 'api', element: el, elements: [...comps], name: nomes[i],
+        basico: base.basico, especial: base.especial, artFile: `${id}-${ramo}-${stage}`,
+      }));
+    }
+  }
+  return out;
+}
+
 /** Tudo que existe (base + combinados + o corvo, que só sai pelo `withRaven` + os ramos + as formas paralelas + as formas dos combinados 212-261). */
-export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados(), ...buildDuo()];
+export const ENEMY_ROSTER: readonly RosterEntry[] = [...build(), RAVEN_ENTRY, ...buildRamos(), ...buildParalelos(), ...buildFormasCombinados(), ...buildDuo(), ...buildElencoOraculo()];
 export const ENEMY_ROSTER_KEYS: ReadonlySet<string> = new Set(ENEMY_ROSTER.map(e => e.key));
 const BY_KEY: ReadonlyMap<string, RosterEntry> = new Map(ENEMY_ROSTER.map(e => [e.key, e]));
 export const rosterEntryOfKey = (key: string | undefined | null): RosterEntry | undefined => (key ? BY_KEY.get(key) : undefined);

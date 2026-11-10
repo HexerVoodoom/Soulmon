@@ -589,6 +589,8 @@ Higgsfield CLI `gpt_image_2_5` flare, `--background transparent`, `@char_sprite-
 O class-system passou de 17 para **20 bases** (Class-System `56546d9`, branch
 `feat/elementos-fada-industrial-planta`): +54 pares e 3 triplas curadas novas
 (**Pestilência** = planta+morte+vileza · **Maldição** = fada+sombra+vileza ·
+
+> **Atualização 10/11/2026 (regra de identidade v2):** FX de ataque (6 estados + aura-96) de `maldicao`, `fada`, `industrial` e `planta` e o ícone `el-maldicao` foram **refeitos e instalados** (arte em `E:Soulmon-assetsidentidade-refazer`). `el-industrial` segue pendente (refazendo).
 **Cyber** = industrial+eletricidade+arcano). Nada abaixo foi gerado: **fila para quando
 houver créditos Higgsfield**. Regras de prompt: `PROMPTS-BETA3.md` §1 (receita de 23/09,
 transparência real, nada de steampunk — Industrial é *fábrica arcana*: pedra, cobre e
@@ -608,7 +610,7 @@ Vibe de cada base (para o bloco COLORS do prompt):
 | EL5 | Inimigos das triplas Pestilência, Maldição, Cyber | 3 | 1:1 transparente → `combinados/193-pestilencia.png`, `194-maldicao.png`, `195-cyber.png` | os pares-filhos (espinheiro/murcha · pesadelo_doce/encanto_traicoeiro · usina/artificio) |
 | EL6 | Sigilos das 3 bases no simulador do Class-System | 3 | gerado por `npm run sigilos` (procedural) — só conferir; sem crédito | — |
 | EL7 | Pixel-art dos 57 derivados novos no simulador | 57 | folha de ícones 32px → `Class-System/assets/icones-elementos/` + `npm run icones` | folha atual do simulador |
-| EL8 | FX de ataque por elemento (4 famílias) para fada/industrial/planta | 3×4 | mesmo formato das famílias de FX por elemento (`PROMPTS-BETA3.md` §2) | FX de `luz`, `terra`, `vida` |
+| EL8 | FX de ataque por elemento (4 famílias) para fada/industrial/planta | 3×4 | mesmo formato das famílias de FX por elemento (`PROMPTS-BETA3.md` §2) | FX de `luz`, `terra`, `vida` | **refeito pela regra v2 e instalado (10/11/2026)** |
 | EL9 | Pet-box/cenário temático (opcional) | 3 | 1200×648 opaco, bloco **[PET-BOX]** §1 | pet-box atuais |
 
 **Prédios e NPCs:** esta mudança não cria nenhum. Regra do dono (25/10/2026): todo Soulmon,
@@ -926,7 +928,7 @@ Hoje o selo usa marcador provisório (forma + texto, loop emprestado de `fx-dot-
 |---|---|---|---|
 | `st-queimadura.png` | chama no medalhão de cristal | DoT de fogo | falta (provisório: `♨`) |
 | `st-veneno.png` | gota tóxica | DoT de vileza | falta (provisório: `☣`) |
-| `st-maldicao.png` | caveira sombria, refazer no molde | maldição | existe, anterior à regra de identidade |
+| `st-maldicao.png` | caveira sombria, refazer no molde | maldição | refeito pela regra v2 (10/11/2026), instalado |
 | `st-velocidade.png` | botinha com asa | `spdBuff` de ar e lentidão | falta |
 | `st-silencio.png` | nota musical riscada | silêncio | falta |
 | `st-def-terra.png`, `st-def-agua.png` | escudo de pedra, escudo de água | defesa | falta (provisório: `st-escudo`) |
@@ -934,7 +936,7 @@ Hoje o selo usa marcador provisório (forma + texto, loop emprestado de `fx-dot-
 | `st-seta-sobe.png`, `st-seta-desce.png` | setas, camada animada em CSS | buff e debuff | falta |
 | `fx-queimadura-loop-sheet.png` | chama que sobe e queima, toca a cada golpe de quem queima | queimadura | falta |
 | `fx-veneno-loop-sheet.png` | gotas pingando | veneno | falta |
-| `fx-maldicao-loop-sheet.png` | caveira e névoa, refazer | maldição | existe, anterior à regra |
+| `fx-maldicao-loop-sheet.png` | caveira e névoa, refazer | maldição | refeito pela regra v2 (10/11/2026), instalado (loop-1..6 + sheet) |
 | `fx-silencio-loop-sheet.png` | anéis de som se desfazendo | silêncio | falta |
 | `fx-regen-loop-sheet.png` | folhas e faíscas subindo | cura contínua | falta |
 | `st-peso`, `st-retardo`, `st-ferrugem`, `st-distorcao` (.png) | glifos de lentidão de Gravidade, Tempo, Industrial, Espaço | §236 | falta (provisório: `▽` + texto) |

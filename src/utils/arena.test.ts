@@ -172,3 +172,20 @@ describe('arenaElementsFor — o oráculo sem ficha entra na vantagem pela base 
     expect(els).toEqual({ basica: 'fogo', especial: 'agua', attrs });
   });
 });
+
+describe('especial par/derivado nunca vira neutro (dono, 10/11/2026)', () => {
+  const attrs = { principal: 'vigor', secundario: 'vigor' };
+  const ident = fighterIdentity(null, petElementOf({ soulmonMeta: { dominantElement: 'planta' } }));
+  it('ficha com especial derivado (sem petElement) vira a base dominante', () => {
+    expect(arenaElementsFor({ basica: 'fogo', especial: 'vapor' }, ident, attrs).especial).toBe('fogo');
+  });
+  it('elementAdvantage resolve o derivado para a base: gelo (agua) = agua', () => {
+    expect(elementAdvantage('fogo', ['planta'])).toBe(1);
+    expect(elementAdvantage('vapor', ['planta'])).toBe(1); // vapor -> fogo
+    expect(elementAdvantage('planta', ['vapor'])).toBe(-1);
+  });
+  it('neutro de verdade segue neutro', () => {
+    expect(elementAdvantage('neutro', ['fogo'])).toBe(0);
+    expect(elementAdvantage('fogo', ['neutro'])).toBe(0);
+  });
+});

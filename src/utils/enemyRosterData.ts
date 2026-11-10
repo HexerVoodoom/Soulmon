@@ -247,6 +247,26 @@ export const INIMIGOS_DUO_DATA: ReadonlyArray<readonly [string, string, readonly
 ];
 
 /**
+ * AS 2 ESPÉCIES DO ELENCO DO ORÁCULO (dono, 10/11/2026): Mareoror e Salsolura (fogo+água, elemento fundido `vapor`), cada uma com a LINHA
+ * COMPLETA — rookie + 3 ramos (poder/harmonia/benevolência) × champion/ultimate/mega + ultra. Arte em `assets/soulmon/inimigos-api/`
+ * (`<espécie>-rookie`, `<espécie>-<ramo>-<estágio>`, `<espécie>-ultra`; 256², alfa binário). Ultra NÃO entra no roster (só o chefe da Arena usa ultra);
+ * a arte fica instalada. Golpes = os da criatura base `fogo`. Ids do roster: `<espécie>` (rookie) e `<espécie><ramo>` (champion/ultimate/mega).
+ * [id, elemento (fundido), componentes, golpes de, nome rookie, {ramo: [champion, ultimate, mega]}, nome ultra].
+ */
+export const ELENCO_ORACULO_DATA: ReadonlyArray<readonly [string, string, readonly [string, string], string, string, Readonly<Record<'poder' | 'harmonia' | 'benevolencia', readonly [string, string, string]>>, string]> = [
+  ['mareoror', 'vapor', ['fogo', 'agua'], 'fogo', 'Mareoror', {
+    poder: ['FangMareoror', 'ChaosMareoror', 'OmegaMareoror'],
+    harmonia: ['SageMareoror', 'AstraMareoror', 'ZenithMareoror'],
+    benevolencia: ['SolMareoror', 'ArchMareoror', 'SeraphMareoror'],
+  }, 'TriuneMareoror'],
+  ['salsolura', 'vapor', ['fogo', 'agua'], 'fogo', 'Salsolura', {
+    poder: ['FangSalsolura', 'ChaosSalsolura', 'AbyssSalsolura'],
+    harmonia: ['SageSalsolura', 'AstraSalsolura', 'CosmoSalsolura'],
+    benevolencia: ['AegisSalsolura', 'ArchSalsolura', 'SeraphSalsolura'],
+  }, 'TriuneSalsolura'],
+];
+
+/**
  * OS 40 RAMOS EVOLUÍDOS COMO INIMIGOS (dono, 04/11/2026, REGISTRO §220): os 2 ramos de alinhamento que cada uma das 20 criaturas não usa,
  * cada um em champion/ultimate/mega (120 sprites, `assets/soulmon/novos-arquivo/ramos/<elemento>/<ramo>-<estágio>.png`). Elemento e golpes =
  * os da criatura. Nomes GERADOS (raiz da criatura + sufixo fixo por ramo e estágio; PT = EN como `FORMAS_ALTAS`): o dono renomeia aqui, sem
