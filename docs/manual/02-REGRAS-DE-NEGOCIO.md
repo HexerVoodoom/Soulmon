@@ -4261,7 +4261,7 @@ se vende) e §5.6.
 - **Item equipado incompatível com o cenário não é desenhado**, mas a loja
   explica o `fits` em vez de sumir em silêncio.
 
-**O que NÃO faz.** Não vende **Glitchtama** (há teste; ⚠️ **EXCEÇÃO DE TESTE temporária, 10/11/2026**: com `GLITCHTAMA_TESTE_ON` (`utils/glitchtamaTeste.ts`) o NPC Desfeito da Guilda vende 1 por 1 Bit, até 3 compras por dia do jogador (`glitchtamaBuy` no SAVE) e o uso diário sobe de 1 para 999; desligar a flag restaura tudo; a única fonte é a
+**O que NÃO faz.** Não vende **Glitchtama** (há teste; ⚠️ **EXCEÇÃO DE TESTE temporária, 10/11/2026 — hoje DESLIGADA (`GLITCHTAMA_TESTE_ON = false`: 1 uso por dia e o Desfeito não vende)**: com `GLITCHTAMA_TESTE_ON` (`utils/glitchtamaTeste.ts`) o NPC Desfeito da Guilda vende 1 por 1 Bit, até 3 compras por dia do jogador (`glitchtamaBuy` no SAVE) e o uso diário sobe de 1 para 999; desligar a flag restaura tudo; a única fonte é a
 masmorra). Não vende o **coraçãozinho** — ⚠️ **divergência**, ver
 [§59](#divergencias). Não aplica o chip na hora da compra. Não cobra em duas
 moedas. Não tem cinco abas — ⚠️ **divergência**, ver [§59](#divergencias). Não
