@@ -118,7 +118,9 @@ export function desligarMusica(): void {
  */
 export function entrarNaSuperficie(s: Superficie): () => void {
   pilha.push(s);
-  if (s !== 'casa') consentirNestaSessao();
+  /* 'dormir' NÃO é gesto: o sono automático (23h–7h) e o app aberto com o pet já dormindo entram aqui sem toque nenhum, e consentir
+     ali ligaria a música sem gesto (D11, "sem autoplay no carregamento"). O gesto de dormir à mão passa por `playSleep` → `aoGestoSonoro`. */
+  if (s !== 'casa' && s !== 'dormir') consentirNestaSessao();
   reavaliarMusica();
   let saiu = false;
   return () => {
