@@ -22,7 +22,7 @@ function Espiao() {
 const estado = () => JSON.parse(screen.getByTestId('estado').textContent!);
 const bq = (materials: Record<string, number>) => ({ day: 'Mon Oct 05 2026', visited: [], claimed: [], materials });
 const nivel1 = (extra: Record<string, unknown> = {}) => ({
-  totalXP: xpForLevel(6), equipment: { owned: ['eq-nucleo-t1'], equipped: { nucleo: 'eq-nucleo-t1' }, fragments: 0 },
+  gamePoints: 100000, totalXP: xpForLevel(6), equipment: { owned: ['eq-nucleo-t1'], equipped: { nucleo: 'eq-nucleo-t1' }, fragments: 0 },
   forge: { v: 2, levels: { 'eq-nucleo-t1': 1 }, picks: {} }, ...extra,
 });
 function abrir(save: Record<string, unknown>, language = 'pt-BR') {

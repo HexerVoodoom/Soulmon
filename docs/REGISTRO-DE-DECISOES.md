@@ -4545,6 +4545,14 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Alternativa que perdeu:** sem bônus de sono. **Falsifica:** o dono ver a energia encher "rápido demais" de manhã (reduzir o fator na constante) ou jogadores dormirem o pet o dia todo só pelo bônus. **Rollback:** reverter o PR; `energyClock.sleep` ignorado por versões antigas.
 
+## §281 — Aprimorar peça no Soulsmith custa também Bits, em curva crescente (10/11/2026, decisão do dono em modal)
+
+**Decisão.** Subir uma peça do Soulsmith (nível 1→15) passa a custar Bits GANHOS além dos materiais: `upgradeBitsCost(nível) = round(UPGRADE_BITS_BASE (20) × UPGRADE_BITS_FACTOR (1,25)^(nível − 1))` (`src/utils/forge.ts`, o módulo único), com **nível = o nível ATUAL da peça**: 1→2 custa 20, 5→6 custa 49, 10→11 custa 149, 14→15 custa 364; a peça inteira (1→15) soma 1.738 Bits. O ponto único é `upgradeRefusal`/`applyUpgrade` (`forgeActions.ts`): falta de Bits = recusa suave (`no-funds`; `not-earned` se o saldo vem de Crédito), vem ANTES de qualquer débito, então nada é consumido; só Bits ganhos pagam (`earnedBits`, regra de `bitsOrigin`, igual ao equipamento e ao refazer); sem desconto de Comércio (a fórmula é a do dono). O botão mostra o preço. O servidor não muda (só espelha tabelas de bônus; o gasto de Bits é do cliente).
+
+**Alternativa que perdeu:** nível = o nível-alvo (o 1º upgrade já custaria 25 e a base 20 nunca apareceria); também perdeu custo plano em Bits (não cresce com o poder da peça) e aceitar Bits de câmbio de Crédito (daria vantagem paga).
+
+**Falsifica:** o dono achar o Soulsmith caro demais para quem joga só o necessário (baixar `UPGRADE_BITS_FACTOR`) ou o teto diário de Bits dos minijogos (`MINIGAME_BITS_PER_DAY`) travar a escada (revisar `BALANCO-SOULSMITH.md`).
+
 ## §280 — Tickets do Treino: 20 partidas com Honra por dia, ticket extra de 30 Bits sem Honra (10/11/2026, decisão do dono em modal)
 
 **Decisão.** A aba Treino (§279) passa a ter TICKETS por DIA DO JOGADOR: todo dia vem **1 ticket grátis = 20 partidas COM Honra** (`TREINO_TICKET_MATCHES`; a Honra segue 1–2 por vitória e o teto de 20 Honra/dia de `SPAR_HONOR_DAILY_CAP` continua valendo). Passou das 20, só jogando com **ticket extra: `TREINO_EXTRA_TICKET_BITS` = 30 Bits (só Bits GANHOS, regra de `bitsOrigin`; nunca Créditos) = +20 partidas SEM Honra**, no máximo **`TREINO_EXTRA_TICKETS_MAX` = 3 por dia** (escolha nossa, para não virar farm). O contador mora no SERVIDOR (`sparTicket:<id>:<dia>` = `{played, extra}`; `functions/api/_treino.js`), a ação `sparBuyTicket` conta e limita, e o app só cobra os 30 Bits (`chargeTreinoTicket`) DEPOIS do ok. Partida liquidada gasta 1 (desistir não gasta); `sparStart` recusa com 409 sem partida restante. Treino nunca pontua ranking. Sem campo novo no save. UI: "Partidas com Honra hoje x/20" e oferta suave do extra ao esgotar.
