@@ -6,11 +6,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   dailyGaugeCap, gaugeGoalFor, gaugeContribution, creditGauge, gaugeFull,
-  migrateEvolutionPoints, hydrateEvolutionPoints, dayItemGaugeGain, fillGaugePoints, gaugeView, gaugePointsLeft,
+  migrateEvolutionPoints, hydrateEvolutionPoints, gaugeView, gaugePointsLeft,
 } from './evolutionGauge';
 import { FORM_REQUIREMENTS, ULTRA_PATIENCE_POINTS, ULTRA_PATIENCE_DAYS, getMaxEnergyForStage } from '../types/progression';
 import { computeDailyReset, degeneratedEvolutionPoints } from './dailyReset';
-import { applySpecialItem, GLITCHTAMA_PER_DAY } from './specialItemUse';
+import { applySpecialItem } from './specialItemUse';
 
 const TRES_MEGAS = ['mega-power', 'mega-harmony', 'mega-benevolence'];
 
@@ -96,32 +96,17 @@ describe('migração de save (perfectDays → gauge)', () => {
   });
 });
 
-describe('o item da masmorra (+ um dia de teto, ainda 1 por dia)', () => {
-  const base = () => ({
-    healthPoints: 3, maxHealthPoints: 3, foodInventory: { '🌀': 2 }, perfectDays: 0, evolutionPoints: 5,
-    powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, totalXP: 0, evolutionStage: 'rookie',
-  });
-  it('enche a barra do estágio (fillGaugePoints) e a 2ª no mesmo dia é recusada', () => {
+describe('o item da masmorra (🌀): não mexe mais na barra', () => {
+  it('usar o 🌀 NÃO enche a barra nem dá dia perfeito: só liga o buff (utils/glitchtamaBuff.ts)', () => {
     const now = new Date('2026-10-11T12:00:00Z');
-    const meta = gaugeGoalFor('rookie');
-    const r1 = applySpecialItem(base() as any, '🌀', now);
+    const prev = { healthPoints: 3, maxHealthPoints: 3, foodInventory: { '🌀': 2 }, perfectDays: 0, evolutionPoints: 5,
+      powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, totalXP: 0, evolutionStage: 'rookie' };
+    const r1 = applySpecialItem(prev as any, '🌀', now);
     expect(r1.refused).toBeUndefined();
-    expect(r1.state.evolutionPoints).toBe(meta);
-    expect(r1.state.perfectDays).toBe(1); // continua dando o dia perfeito
-    // o teto segue `GLITCHTAMA_PER_DAY` (1, ou 999 com a flag de teste): o estado já no teto recusa
-    const noTeto = { ...r1.state, glitchtamaUse: { ...r1.state.glitchtamaUse!, used: GLITCHTAMA_PER_DAY } };
-    const r2 = applySpecialItem(noTeto as any, '🌀', now);
-    expect(r2.refused).toBe('daily-cap');
-    expect(r2.state.evolutionPoints).toBe(meta);
-  });
-
-  it('fillGaugePoints: nunca passa da meta, nunca reduz, e estágio sem barra fica como está', () => {
-    const meta = gaugeGoalFor('rookie');
-    expect(fillGaugePoints(0, 'rookie')).toBe(meta);
-    expect(fillGaugePoints(meta + 3, 'rookie')).toBe(meta + 3); // já acima (banco do mega→ultra): não reduz
-    expect(fillGaugePoints(undefined, 'rookie')).toBe(meta);
-    expect(fillGaugePoints(7, 'ultra')).toBe(7); // topo: sem barra
-    expect(gaugeFull(fillGaugePoints(0, 'champion-power', ['champion-power']), 'champion-power', ['champion-power'])).toBe(true);
+    expect(r1.state.evolutionPoints).toBe(5);
+    expect(r1.state.perfectDays).toBe(0);
+    expect(r1.state.glitchtamaUsadoEm).toBe(now.getTime());
+    expect(applySpecialItem(r1.state as any, '🌀', now).refused).toBe('weekly-cap');
   });
 });
 
@@ -146,6 +131,46 @@ describe('a virada credita o gauge', () => {
   it('dia sem nada não tira nada', () => {
     const r: any = computeDailyReset(st(0, 4) as any, { now: NOW });
     expect(r.evolutionPoints).toBe(7);
+  });
+
+  describe('🌀 buff do Glitchtama (+10% nos ganhos, 7 dias)', () => {
+    const DIA = 86_400_000;
+    const comBuff = (usadoEm: number, over: Record<string, unknown> = {}) => st(4, 4, { glitchtamaUsadoEm: usadoEm, ...over });
+    it('ativo: o ganho rende +10% (fração acumula no carry, sem arredondar para zero)', () => {
+      let s: any = comBuff(NOW.getTime() - DIA);
+      const total = [];
+      // 10 dias seguidos de ganho 4 (teto rookie): 40 pontos base -> +4 de bônus no total (0.4/dia acumulando)
+      for (let i = 0; i < 10; i++) {
+        const antes = s.evolutionPoints;
+        s = computeDailyReset({ ...s, lastResetDate: new Date(2026, 9, 12).toDateString(), tasks: st(4, 4).tasks } as any, { now: NOW });
+        total.push(s.evolutionPoints - antes);
+        s = { ...s, evolutionPoints: s.evolutionPoints, evolutionStage: 'rookie', glitchtamaUsadoEm: NOW.getTime() - DIA };
+      }
+      expect(total.reduce((a, b) => a + b, 0)).toBe(44);
+      expect(s.glitchtamaCarry).toBeLessThan(1);
+    });
+    it('relatório e pontos concordam (gaugeGain inclui o bônus)', () => {
+      const r: any = computeDailyReset(comBuff(NOW.getTime() - DIA, { glitchtamaCarry: 0.8 }) as any, { now: NOW });
+      expect(r.lastDayReport.gaugeGain).toBe(5); // 4 + floor(0.4 + 0.8)
+      expect(r.evolutionPoints).toBe(7 + 5);
+      expect(r.glitchtamaCarry).toBeCloseTo(0.2, 5);
+    });
+    it('sem buff, expirado (>= 7 dias) ou nunca usado: ganho puro, carry intocado', () => {
+      for (const over of [{}, { glitchtamaUsadoEm: NOW.getTime() - 7 * DIA }, { glitchtamaUsadoEm: NOW.getTime() - 30 * DIA }]) {
+        const r: any = computeDailyReset(st(4, 4, over) as any, { now: NOW });
+        expect(r.evolutionPoints).toBe(11);
+        expect(r.lastDayReport.gaugeGain).toBe(4);
+        expect(r.glitchtamaCarry ?? 0).toBe(0);
+      }
+    });
+    it('não mexe no que já estava acumulado: só o ganho do dia', () => {
+      const r: any = computeDailyReset(comBuff(NOW.getTime() - DIA, { evolutionPoints: 20, glitchtamaCarry: 0.9 }) as any, { now: NOW });
+      expect(r.evolutionPoints).toBe(20 + 5);
+    });
+    it('dia sem ganho não rende bônus', () => {
+      const r: any = computeDailyReset(st(0, 4, { glitchtamaUsadoEm: NOW.getTime() - DIA }) as any, { now: NOW });
+      expect(r.evolutionPoints).toBe(7);
+    });
   });
 });
 

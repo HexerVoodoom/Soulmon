@@ -1,9 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { reduceChipsUsedThisStage, REDUCE_CHIPS_PER_STAGE } from './specialItemUse';
 import { REDUCE_CHIP_EMOJI, REDUCE_CHIP_BOOST, isReduceChipKey } from './shop';
-import { GLITCHTAMA_TESTE_ON } from './glitchtamaTeste';
-import { applySpecialItem, specialRefusal, glitchtamaUsedToday, GLITCHTAMA_PER_DAY, CHIPS_PER_STAGE, chipsUsedThisStage, sanitizeChipsStage, type SpecialItemState } from './specialItemUse';
-import { playerDayKey } from './playerDay';
+import { applySpecialItem, specialRefusal, CHIPS_PER_STAGE, chipsUsedThisStage, sanitizeChipsStage, type SpecialItemState } from './specialItemUse';
+import { GLITCHTAMA_JANELA_MS } from './glitchtamaBuff';
 import { SHOP_ITEMS, BIG_CHIP_BOOST, BIG_CHIP_EMOJI, PRISM_CHIP_EMOJI, PRISM_CHIP_BOOST, CHIP_BOOST, HEART_HEAL, CHIP_EMOJI, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, TRIPLE_CHIP_EMOJI, TRIPLE_CHIP_BOOST, SPECIAL_ITEMS } from './shop';
 
 // Os três itens especiais tinham a regra dentro de updater inline no
@@ -33,19 +32,16 @@ function estado(over: Partial<SpecialItemState> = {}): SpecialItemState {
 const AGORA = new Date('2026-09-07T12:00:00Z');
 
 describe('glitchtama', () => {
-  /* ⚰️ 22/09/2026 — decisão do dono #41/#60: o 🌀 deixou de somar em
-     `totalPerfectDays` (o vitalício que `achievements.ts` lê) e passou a somar
-     em `missionPerfectDays` (o da missão `mission-perfect-30`, que a decisão
-     manda continuar contando o item). Este teste afirmava `totalPerfectDays`
-     8 — e era justamente esse número que deixava o perfil G abrir
-     `dias-completos-30` com ZERO dias completos (QA rodada 2, §2.6). */
-  it('vale exatamente 1 dia perfeito, soma no vitalicio da MISSAO e gasta 1 do inventario', () => {
-    const prev = estado({ foodInventory: { [GLITCHTAMA_EMOJI]: 2 }, perfectDays: 3, totalPerfectDays: 7, missionPerfectDays: 7 });
+  /* 10/11/2026 — novo design: o 🌀 NÃO dá mais dia perfeito nem enche a barra. Só liga o buff (+10% por 7 dias, 1 uso por semana). */
+  it('só liga o buff: grava o instante, gasta 1 do inventário e NÃO toca em dias perfeitos nem na barra', () => {
+    const prev = estado({ foodInventory: { [GLITCHTAMA_EMOJI]: 2 }, perfectDays: 3, totalPerfectDays: 7, missionPerfectDays: 7, evolutionPoints: 12 });
     const { state, refused } = applySpecialItem(prev, GLITCHTAMA_EMOJI, AGORA);
     expect(refused).toBeUndefined();
-    expect(state.perfectDays).toBe(4);
-    expect(state.totalPerfectDays).toBe(7);      // #41/#60: intacto
-    expect(state.missionPerfectDays).toBe(8);
+    expect(state.glitchtamaUsadoEm).toBe(AGORA.getTime());
+    expect(state.perfectDays).toBe(3);
+    expect(state.totalPerfectDays).toBe(7);
+    expect(state.missionPerfectDays).toBe(7);
+    expect(state.evolutionPoints).toBe(12);
     expect(state.foodInventory[GLITCHTAMA_EMOJI]).toBe(1);
   });
 
@@ -62,16 +58,13 @@ describe('glitchtama', () => {
     expect(state.attributesSinceLastEvolution).toEqual({ power: 0, harmony: 0, benevolence: 0 });
   });
 
-  it('vitalicio ausente no save antigo comeca do zero, nao vira NaN', () => {
-    const prev = estado({ foodInventory: { [GLITCHTAMA_EMOJI]: 1 } });
-    delete (prev as Partial<SpecialItemState>).totalPerfectDays;
-    delete (prev as Partial<SpecialItemState>).missionPerfectDays;
-    const { state } = applySpecialItem(prev, GLITCHTAMA_EMOJI, AGORA);
-    expect(state.missionPerfectDays).toBe(1);
-    expect(state.totalPerfectDays).toBeUndefined();   // #41/#60: não é tocado
+  it('save antigo sem o campo: pode usar (ninguém fica trancado por dado que não existe)', () => {
+    const antigo = estado({ foodInventory: { [GLITCHTAMA_EMOJI]: 1 } });
+    expect(antigo.glitchtamaUsadoEm).toBeUndefined();
+    expect(applySpecialItem(antigo, GLITCHTAMA_EMOJI, AGORA).refused).toBeUndefined();
   });
 
-  it('sem estoque nao concede dia perfeito nenhum', () => {
+  it('sem estoque nao concede buff nenhum', () => {
     const prev = estado({ foodInventory: {}, perfectDays: 3 });
     const { state, refused } = applySpecialItem(prev, GLITCHTAMA_EMOJI, AGORA);
     expect(refused).toBe('no-stock');
@@ -223,60 +216,43 @@ describe('specialRefusal', () => {
 // compravam a escada inteira num fim de semana, contra a justificativa escrita
 // em `progression.ts` de que o recurso do Ultra "não cresce indefinidamente".
 // ---------------------------------------------------------------------------
-describe('teto diário do glitchtama', () => {
+describe('cooldown semanal do glitchtama', () => {
   const comDois = () => estado({ foodInventory: { [GLITCHTAMA_EMOJI]: 2 }, playerDayTz: { offsetMs: -3 * 60 * 60 * 1000 } });
+  const usado = (aQuantoTempo: number) => ({ ...comDois(), glitchtamaUsadoEm: AGORA.getTime() - aQuantoTempo });
 
-  it('o primeiro do dia dá o ponto e grava o uso', () => {
-    const { state, refused } = applySpecialItem(comDois(), GLITCHTAMA_EMOJI, AGORA);
-    expect(refused).toBeUndefined();
-    expect(state.perfectDays).toBe(1);
-    expect(state.glitchtamaUse?.used).toBe(1);
+  it('depois de usar, o segundo é recusado (weekly-cap) e NÃO consome o item', () => {
+    const a = applySpecialItem(comDois(), GLITCHTAMA_EMOJI, AGORA);
+    expect(a.refused).toBeUndefined();
+    const prev = a.state;
+    const b = applySpecialItem(prev, GLITCHTAMA_EMOJI, new Date(AGORA.getTime() + 6 * 86_400_000));
+    expect(b.refused).toBe('weekly-cap');
+    expect(b.state).toBe(prev);
+    expect(b.state.foodInventory[GLITCHTAMA_EMOJI]).toBe(1);
   });
 
-  // Estes testes seguem `GLITCHTAMA_PER_DAY` (1 normal; 999 com a flag de TESTE de `glitchtamaTeste.ts`): o estado já nasce no teto.
-  const noTeto = (usado = GLITCHTAMA_PER_DAY) => ({ ...comDois(), glitchtamaUse: { day: playerDayKey(AGORA, { offsetMs: -3 * 60 * 60 * 1000 }), used: usado } });
-
-  it('batido o teto do dia, o próximo é recusado — e não consome o item', () => {
-    const prev = noTeto();
-    const segundo = applySpecialItem(prev, GLITCHTAMA_EMOJI, AGORA);
-    expect(segundo.refused).toBe('daily-cap');
-    // A recusa é ANTES do decremento: o item volta para a pastinha e vale amanhã. Recusar depois de consumir seria o X-6 ao contrário.
-    expect(segundo.state.foodInventory[GLITCHTAMA_EMOJI]).toBe(2);
-    expect(segundo.state).toBe(prev);
+  it('exatamente 7 dias depois libera de novo (e grava o instante novo)', () => {
+    const r = applySpecialItem(usado(GLITCHTAMA_JANELA_MS), GLITCHTAMA_EMOJI, AGORA);
+    expect(r.refused).toBeUndefined();
+    expect(r.state.glitchtamaUsadoEm).toBe(AGORA.getTime());
+    expect(applySpecialItem(usado(GLITCHTAMA_JANELA_MS - 1), GLITCHTAMA_EMOJI, AGORA).refused).toBe('weekly-cap');
   });
 
-  it('a flag de teste define o teto: 1 por dia desligada, 999 ligada', () => {
-    expect(GLITCHTAMA_PER_DAY).toBe(GLITCHTAMA_TESTE_ON ? 999 : 1);
-    const segundo = applySpecialItem(applySpecialItem(comDois(), GLITCHTAMA_EMOJI, AGORA).state, GLITCHTAMA_EMOJI, AGORA);
-    expect(segundo.refused).toBe(GLITCHTAMA_TESTE_ON ? undefined : 'daily-cap');
+  it('relógio que VOLTA não reabre o uso (now < usadoEm continua dentro do cooldown)', () => {
+    expect(applySpecialItem(usado(-3 * 86_400_000), GLITCHTAMA_EMOJI, AGORA).refused).toBe('weekly-cap');
   });
 
-  it('a virada do DIA DO JOGADOR devolve o direito', () => {
-    const amanha = new Date(AGORA.getTime() + 24 * 60 * 60 * 1000);
-    const segundo = applySpecialItem(noTeto(), GLITCHTAMA_EMOJI, amanha);
-    expect(segundo.refused).toBeUndefined();
-    expect(segundo.state.perfectDays).toBe(1);
-    expect(segundo.state.glitchtamaUse?.used).toBe(1);
-  });
-
-  it('dois toques no MESMO lote do React: o último que cabe passa e o seguinte já enxerga o teto (X-6)', () => {
-    const a = applySpecialItem(noTeto(GLITCHTAMA_PER_DAY - 1), GLITCHTAMA_EMOJI, AGORA);
+  it('dois toques no MESMO lote do React: o segundo já enxerga o buff (X-6)', () => {
+    const a = applySpecialItem(comDois(), GLITCHTAMA_EMOJI, AGORA);
     const b = applySpecialItem(a.state, GLITCHTAMA_EMOJI, AGORA);
     expect(a.refused).toBeUndefined();
-    expect(b.refused).toBe('daily-cap');
+    expect(b.refused).toBe('weekly-cap');
   });
 
-  it('save antigo sem o campo ganha o dia de hoje inteiro, nunca dívida', () => {
-    const antigo = estado({ foodInventory: { [GLITCHTAMA_EMOJI]: 1 } });
-    expect(glitchtamaUsedToday(antigo, AGORA)).toBe(0);
-    expect(applySpecialItem(antigo, GLITCHTAMA_EMOJI, AGORA).refused).toBeUndefined();
-  });
-
-  it('o teto vale SÓ para o glitchtama — coraçãozinho e chip seguem livres', () => {
+  it('o cooldown vale SÓ para o glitchtama — coraçãozinho e chip seguem livres', () => {
     const st = estado({
       foodInventory: { [HEART_ITEM_EMOJI]: 2, [CHIP_EMOJI.power]: 2 },
       healthPoints: 1,
-      glitchtamaUse: { day: playerDayKey(AGORA, undefined), used: GLITCHTAMA_PER_DAY },
+      glitchtamaUsadoEm: AGORA.getTime(),
     });
     expect(applySpecialItem(st, HEART_ITEM_EMOJI, AGORA).refused).toBeUndefined();
     expect(applySpecialItem(st, CHIP_EMOJI.power, AGORA).refused).toBeUndefined();

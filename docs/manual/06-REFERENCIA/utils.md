@@ -1247,7 +1247,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 
 ### `src/utils/evolutionGauge.ts`
 **Dono de:** o GAUGE DE EVOLUÇÃO (decisão do dono, 11/10/2026) — o critério de evolução que substituiu `perfectDays`. Peso de esforço (hábito = 1, tarefa = effort 1–3), creditado na virada (`computeDailyReset`) com teto diário = `FORM_REQUIREMENTS[estágio].required`, nunca decresce por dia ruim, zera ao evoluir. Meta por estágio = `FORM_REQUIREMENTS[…].gauge` (30/45/60/60; no mega sem as três megas, `ULTRA_PATIENCE_POINTS` = 270). Migração de save: `perfectDays` → mesma fração da barra (arredonda para cima). A queda usa `degeneratedEvolutionPoints` (em `dailyReset.ts`).
-**Exports:** `dailyGaugeCap`, `gaugeGoalFor`, `gaugeContribution`, `creditGauge`, `gaugeFull`, `gaugePointsLeft`, `migrateEvolutionPoints`, `hydrateEvolutionPoints`, `dayItemGaugeGain`, `gaugeView`, `GaugeView`.
+**Exports:** `dailyGaugeCap`, `gaugeGoalFor`, `gaugeContribution`, `creditGauge`, `gaugeFull`, `gaugePointsLeft`, `migrateEvolutionPoints`, `hydrateEvolutionPoints`, `gaugeView`, `GaugeView`.
 **Chamado por:** `src/App.tsx`, `src/utils/dailyReset.ts`, `src/utils/spriteTrigger.ts`, `src/utils/specialItemUse.ts`, `src/utils/gmTools.ts`, `src/contexts/GameStateContext.tsx`, `src/components/EvolutionPath.tsx`, `src/components/EvolutionGaugeMini.tsx`.
 **Régua:** `src/utils/evolutionGauge.test.ts` (regra, migração, simulação leve/médio/intenso).
 
@@ -4460,7 +4460,11 @@ Pedido de avaliacao na Play a cada evolucao (09/11/2026): `parsePlayReview`, `sh
 
 ### `src/utils/glitchtamaTeste.ts`
 
-EXCECAO DE TESTE temporaria (10/11/2026): flag `GLITCHTAMA_TESTE_ON`; uso diario do item sobe para 999 e o Desfeito vende 1 por 1 Bit (3 compras/dia, `glitchtamaBuy` no save). Funcoes: `buyGlitchtama`, `glitchtamaBuyRefusal`, `glitchtamaBuysLeft`, `sanitizeGlitchtamaBuy`.
+EXCECAO DE TESTE temporaria (10/11/2026): flag `GLITCHTAMA_TESTE_ON`; o Desfeito vende 1 por 1 Bit (3 compras/dia, `glitchtamaBuy` no save). Funcoes: `buyGlitchtama`, `glitchtamaBuyRefusal`, `glitchtamaBuysLeft`, `sanitizeGlitchtamaBuy`.
+
+### `src/utils/glitchtamaBuff.ts` (10/11/2026 — REGISTRO §276)
+
+Buff semanal do 🌀 Glitchtama, funções PURAS: janela de 7 dias a partir de `glitchtamaUsadoEm` (`glitchtamaBuffAtivo`, `glitchtamaExpiraEm`, `glitchtamaDiasRestantes`; relógio que volta continua dentro da janela), saneamento do save (`sanitizeGlitchtamaUsadoEm`, `sanitizeGlitchtamaCarry`) e `aplicarBuffGlitchtama` (+10% sobre o ganho, fração no carry). Usado por `specialItemUse.ts` (recusa `weekly-cap`), `dailyReset.ts` (único ponto onde o +10% entra), `GameStateContext.tsx` (hidratação) e `App.tsx`/`EvolutionPath.tsx` (UI). Espelho no servidor: `functions/api/_glitchtama.js`.
 
 ### `src/utils/materialGuide.ts` (10/11/2026 — REGISTRO §272)
 

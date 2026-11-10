@@ -1,4 +1,5 @@
 import { sanitizeGlitchtamaBuy } from '../utils/glitchtamaTeste';
+import { sanitizeGlitchtamaUsadoEm, sanitizeGlitchtamaCarry } from '../utils/glitchtamaBuff';
 import { sanitizeJourneyCredited } from '../utils/focusBoard';
 import { sanitizeMailClaimed } from '../utils/mensageiro';
 import { sanitizeFunSession } from '../utils/funSession';
@@ -491,9 +492,10 @@ export interface GameState {
   /** Quanto o dreno de cocô já cobrou no dia civil — é o que faz o teto ser
    *  DIÁRIO (regra em `utils/poopDrain.ts`). */
   poopDrainCharge?: { day: string; hearts: number };
-  /** Quantos 🌀 Glitchtama foram usados no DIA DO JOGADOR — o teto que impede
-   *  a masmorra de comprar a escada de evolução (`utils/specialItemUse.ts`). */
-  glitchtamaUse?: { day: string; used: number };
+  /** 🌀 Instante (ms) do último uso do Glitchtama: buff de +10% na progressão e cooldown de 7 dias (`utils/glitchtamaBuff.ts`). Espelhado no servidor. */
+  glitchtamaUsadoEm?: number;
+  /** Fração (0..1) do +10% do buff ainda não creditada em ponto inteiro (`utils/glitchtamaBuff.ts`). */
+  glitchtamaCarry?: number;
   /** ⚠️ TESTE (`utils/glitchtamaTeste.ts`): compras do 🌀 no Desfeito hoje — dia do jogador, no save. */
   glitchtamaBuy?: { day: string; used: number };
   /** O drop RARO do 🌀 na masmorra: semana (segunda) do último drop e quantos caíram (teto 1/semana — `utils/glitchtamaDrop.ts`). */
@@ -1405,13 +1407,10 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           const c = obj<unknown>(loadedState.poopDrainCharge);
           return typeof c.day === 'string' ? { day: c.day, hearts: num(c.hearts, 0) } : undefined;
         })(),
-        // Teto diário do Glitchtama. Save antigo não tem o campo e entra como
-        // `undefined`, que `glitchtamaUsedToday` lê como zero — quem já jogava
-        // ganha o dia de hoje inteiro, nunca uma dívida retroativa.
-        glitchtamaUse: (() => {
-          const g = obj<unknown>(loadedState.glitchtamaUse);
-          return typeof g.day === 'string' ? { day: g.day, used: num(g.used, 0) } : undefined;
-        })(),
+        // Buff/cooldown semanal do Glitchtama. Save antigo não tem o campo (`undefined` = nunca usou, ninguém fica travado);
+        // timestamp absurdamente no futuro é saneado para "agora" (`sanitizeGlitchtamaUsadoEm`).
+        glitchtamaUsadoEm: sanitizeGlitchtamaUsadoEm(loadedState.glitchtamaUsadoEm),
+        glitchtamaCarry: sanitizeGlitchtamaCarry(loadedState.glitchtamaCarry),
         glitchtamaBuy: sanitizeGlitchtamaBuy(loadedState.glitchtamaBuy),
         // Teto semanal do drop do Glitchtama. Save antigo entra `undefined` = nenhum drop na semana (nunca fica travado).
         glitchtamaDrop: sanitizeGlitchtamaDrop(loadedState.glitchtamaDrop),

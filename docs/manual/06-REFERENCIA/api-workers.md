@@ -794,6 +794,10 @@ Rota da jornada do foco: começar, pausar, retomar, receber e encerrar, com o re
 - **`public/sw.js`.** `CACHE_VERSION` andou (número não repetido aqui). Novo cache SEM versão no nome, `soulmon-assets-v1` (`ASSET_CACHE`, teto `ASSET_CACHE_MAX` = 6000 entradas, as mais antigas saem no `activate`): os arquivos de `/assets/` têm hash de conteúdo no nome (imutáveis) e passam a morar nele, então o bump de `CACHE_VERSION` não os apaga mais; `migrarParaAcervo` os move dos caches `soulmon-static-*` antes da limpeza e `podarAcervo` aplica o teto. Trocar o NOME do cache é o único jeito de esvaziá-lo. Régua: `src/deploy/swCache.contract.test.ts`.
 - **`wrangler.jsonc`.** Binding `ratelimits`: `FEEDBACK_RL` (`namespace_id` 1001, 5 por 60 s) usado por `feedback.js`; `vars.SIMULADOS_FORMAS_ON`.
 
+### `functions/api/_glitchtama.js` (10/11/2026 — REGISTRO §276)
+
+`enforceGlitchtamaUsadoEm(incoming, stored, nowMs)` e `sanitizeGlitchtamaUsadoEm`, ligados no POST de `save.js`: o instante do último uso do 🌀 é monotônico (voltar o timestamp ou apagar o save local não reabre o uso semanal) e mais de 1 dia à frente do servidor é recusado. Janela de 7 dias travada contra `src/utils/glitchtamaBuff.ts` em `glitchtama.parity.test.js`.
+
 ### `functions/api/_funTickets.js` (09/11/2026 — REGISTRO §270)
 
 `enforceFunTickets(incoming, stored, nowMs)` e `sanitizeFunTickets`, ligados no POST de `save.js`: gasto só desce, lote novo só com posse viva ≤2 e um por gravação, `at` dentro de ±1 dia do servidor, posse ≤5, lote com 24 h sai. Paridade com `src/utils/funTickets.ts` em `funTickets.parity.test.js`.

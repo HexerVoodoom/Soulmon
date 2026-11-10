@@ -99,6 +99,8 @@ interface EvolutionPathProps {
   incubating?: boolean;
   /** Pontos para encher o gauge do estágio (`gaugeGoalFor`). 0 no topo. */
   gaugeGoal: number;
+  /** 🌀 Buff do Glitchtama ativo: instante (ms) em que expira; ausente = sem buff (`utils/glitchtamaBuff.ts`). */
+  glitchtamaBuffAte?: number;
   onDegenerate?: (targetStageId: string) => void;
   /** Troca lateral (mesmo nível, outra forma já desbloqueada): grátis, sem queda. */
   onSwitchForm?: (targetStageId: string, elemento?: string) => void;
@@ -218,6 +220,7 @@ export function EvolutionPath({
   todayGauge = 0,
   incubating = false,
   gaugeGoal,
+  glitchtamaBuffAte,
   onDegenerate,
   onSwitchForm,
   stages,
@@ -1152,6 +1155,14 @@ export function EvolutionPath({
             </p>
           )}
           <p style={{ ...sm2Text, margin: 0, textAlign: 'center' }}>{fraseProgresso}</p>
+          {/* 🌀 Buff do Glitchtama (10/11/2026): ativo = +10% nos pontos que entram; mostra até quando e que o próximo uso só depois. */}
+          {glitchtamaBuffAte !== undefined && (
+            <p data-glitchtama-buff style={{ ...sm2Hint, margin: 0, textAlign: 'center' }}>
+              {isPt
+                ? `🌀 Glitchtama ativo: +10% de progressão até ${new Date(glitchtamaBuffAte).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}. Novo uso depois disso.`
+                : `🌀 Glitchtama active: +10% progress until ${new Date(glitchtamaBuffAte).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' })}. Next use after that.`}
+            </p>
+          )}
           {/* 💎 31/10/2026 (dono): barra a 100% → o botão Evoluir aparece aqui também (o mesmo gesto do visor e da Home). */}
           {evoluiNoToque && (
             <EvolveButton

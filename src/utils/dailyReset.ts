@@ -30,6 +30,7 @@ import { hiddenForDayKey, type DayPlan } from './dayPlan';
 import type { PlayerDayAnchor } from './playerDay';
 import { noteFreeBits } from './bitsOrigin';
 import { creditGauge, gaugeContribution, gaugeFull } from './evolutionGauge';
+import { aplicarBuffGlitchtama, glitchtamaBuffAtivo } from './glitchtamaBuff';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
 import { parseDayKeyLocal } from './dayKeyParse';
 import { specialMissionGaugeBonus, markSpecialMissionCredited } from './specialMissions';
@@ -982,7 +983,15 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
   // não reduz o peso das tarefas reais). Fora do selo de dia completo, do
   // coração e de dailyGoalFor — por isso NÃO entra em `dailyDone`.
   const specialBonus = specialMissionGaugeBonus(prev.specialMission, [yesterdayString, playerDayKey(diaJulgado, prev.playerDayTz)]);
-  const gaugeGain = gaugeContribution(dailyDone, prev.evolutionStage) + specialBonus;
+  const gaugeGainBase = gaugeContribution(dailyDone, prev.evolutionStage) + specialBonus;
+  /* 🌀 Buff do Glitchtama (10/11/2026): +10% sobre o GANHO deste crédito (tarefas + missão especial), só com o buff ativo na virada.
+     É o ÚNICO ponto onde pontos de progressão entram (`creditGauge` abaixo); o que já estava acumulado não muda. A fração vai no carry. */
+  const buffGlitch = aplicarBuffGlitchtama(
+    gaugeGainBase,
+    (prev as any).glitchtamaCarry ?? 0,
+    glitchtamaBuffAtivo((prev as any).glitchtamaUsadoEm, now.getTime()),
+  );
+  const gaugeGain = buffGlitch.ganho;
   // PR12b (`tal-com-06`): os Bits do dia completo com o Comércio. Picks inválidos para o Vínculo valem zero.
   const dayBits = missionBitsGain(BITS_PER_COMPLETE_DAY, sanitizeTalentPicks(prev.talentPicks, bondLevelFor(prev.totalXP ?? 0)));
 
@@ -1011,7 +1020,7 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
 
   let newHP = prev.healthPoints;
   let newPerfectDays = prev.perfectDays;
-  let newEvolutionPoints = creditGauge(prev.evolutionPoints ?? 0, dailyDone, prev.evolutionStage) + specialBonus;
+  let newEvolutionPoints = creditGauge(prev.evolutionPoints ?? 0, dailyDone, prev.evolutionStage) + specialBonus + (gaugeGain - gaugeGainBase);
   let newEvolutionStage = prev.evolutionStage;
   const finalUnlockedEvolutions = [...prev.unlockedEvolutions];
   let wasDegeneratedByHP = false;
@@ -1296,6 +1305,7 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
     maxHealthPoints: newMaxHP,
     perfectDays: newPerfectDays,
     evolutionPoints: newEvolutionPoints,
+    ...((prev as any).glitchtamaCarry !== undefined || buffGlitch.carry > 0 ? { glitchtamaCarry: buffGlitch.carry } : {}),
     ...(specialBonus > 0 && prev.specialMission ? { specialMission: markSpecialMissionCredited(prev.specialMission, [yesterdayString, playerDayKey(diaJulgado, prev.playerDayTz)]) } : {}),
     lastResetDate: now.toDateString(),
     evolutionStage: newEvolutionStage,

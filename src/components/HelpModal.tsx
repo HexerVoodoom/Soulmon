@@ -157,8 +157,8 @@ const TERMS: Term[] = [
   },
   {
     icon: '🌀', en: 'Glitchtama', pt: 'Glitchtama',
-    descEn: 'Very rare item: each milestone (every 5 layers) of an Endless Rift descent has a 1% chance to drop one, at most once a week. Using it adds one day of steps to the evolution path — one a day.',
-    descPt: 'Item muito raro: cada marco (a cada 5 camadas) de uma descida da Fenda tem 1% de chance de soltar um, no máximo uma vez por semana. Usar soma um dia de passos ao caminho da evolução — um por dia.',
+    descEn: 'Very rare item: each milestone (every 5 layers) of an Endless Rift descent has a 1% chance to drop one, at most once a week. Using it gives +10% evolution progress for 7 days — once a week.',
+    descPt: 'Item muito raro: cada marco (a cada 5 camadas) de uma descida da Fenda tem 1% de chance de soltar um, no máximo uma vez por semana. Usar dá +10% de progressão de evolução por 7 dias — uma vez por semana.',
   },
   {
     // 🧭 Passeio e Travessias (30/09/2026). Sem número, sem prazo, sem prêmio.
