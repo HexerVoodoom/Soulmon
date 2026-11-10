@@ -199,7 +199,7 @@ export function stepsConsentCopy(language: Language): StepsConsentCopy {
   return {
     title: 'Want to use step counting?',
     what: "Turning it on unlocks a bonus mission. Soulmon reads just the day's step total, from Health Connect (or your phone's step counter), even while the app is closed.",
-    why: 'Steps never score on their own and do not count toward a perfect day. If you skip it, you lose nothing.',
+    why: 'Steps never score on their own and do not count toward a complete day. If you skip it, you lose nothing.',
     privacy: 'We keep only the daily total, in your save. No timestamps, no routes, no location, and none of it is sold.',
     accept: 'Count them',
     decline: 'Not now',

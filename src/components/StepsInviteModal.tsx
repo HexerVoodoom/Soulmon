@@ -11,7 +11,7 @@
 import { useState } from 'react';
 import type { Language } from '../utils/i18n';
 import { DEFAULT_STEP_GOAL, STEP_GOAL_OPTIONS, stepsConsentCopy } from '../utils/steps';
-import { sm2Button, sm2Hint } from './form/FormKit';
+import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { RitualDialog, ritualTitle } from './ritual/RitualKit';
 import { InfoTip } from './ui/InfoTip';
 
@@ -43,7 +43,7 @@ export function StepsInviteModal({ language, initialGoal = DEFAULT_STEP_GOAL, on
         </InfoTip>
       </div>
 
-      <p data-steps-invite-what="" style={{ margin: 0, fontSize: 14 }}>{copy.what}</p>
+      <p data-steps-invite-what="" style={{ ...sm2Text, margin: 0 }}>{copy.what}</p>
 
       <div data-step-goal-choice="" role="group" aria-label={isPt ? 'Meta diária de passos' : 'Daily step goal'} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         <span style={sm2Hint}>{isPt ? 'Meta diária de passos' : 'Daily step goal'}</span>
