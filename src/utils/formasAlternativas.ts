@@ -66,6 +66,20 @@ export function altSpriteKey(
   return `${formId}@${elemento}`;
 }
 
+/**
+ * O elemento a equipar ao ENTRAR numa forma (troca lateral): o pedido (ou o já equipado) se a arte dele existe no acervo; senão o
+ * primeiro da lista COM arte — trocar de forma nunca pede imagem nova (10/11/2026). Sem nenhum com arte, devolve o pedido/equipado.
+ */
+export function elementoEquipavelComArte(
+  formId: string, formas: FormasAlt | undefined, equip: FormaAltEquipada | undefined, lib: SpriteLibrary | undefined, pedido?: string,
+): string | undefined {
+  const preferido = pedido ?? equip?.[formId];
+  const lista = formas?.[formId] ?? [];
+  const temArte = (el: string) => !!lib?.sprites[altSpriteKey(formId, el, formas, lib)];
+  if (preferido && temArte(preferido)) return preferido;
+  return lista.find(temArte) ?? preferido;
+}
+
 /** A forma de uma chave de acervo (`mega-power@fire` → `mega-power`). */
 export const baseFormOfKey = (key: string): string => key.split('@')[0];
 

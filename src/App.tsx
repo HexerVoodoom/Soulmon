@@ -69,7 +69,7 @@ import { GamePopups } from './components/GamePopups';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
 import { emptyIncubation, incubationFor, incubationReady } from './utils/spriteTrigger';
 import { activeCrystal, crystalPhase, startCrystal, type CrystalPhase } from './utils/evolutionCrystal';
-import { altSpriteKey, elementoDaForma, equiparFormaAlt, registrarFormaAoEvoluir, spriteVisorOf } from './utils/formasAlternativas';
+import { altSpriteKey, elementoDaForma, elementoEquipavelComArte, equiparFormaAlt, registrarFormaAoEvoluir, spriteVisorOf } from './utils/formasAlternativas';
 import { spriteText } from './utils/spriteCopy';
 import { UNLOCK_NEEDED_EVENT } from './utils/unlockEvent';
 import { MAX_GENERATE_CHARACTER_USES, generateCharacterUsesLeft, spendGenerateCharacterUse } from './utils/generateCharacterUses';
@@ -118,6 +118,7 @@ import { hashString, creatureFormId, ELEMENT_INFO } from './utils/oracle/base';
 import type { OracleInput, OracleResult, ElementId } from './utils/oracle';
 import type { Manifestacao } from './utils/soulProfile/ficha/manifestacaoSave';
 import { skillsTemFamilia, fichaStageOf } from './utils/soulProfile/ficha/stageSkillsFor';
+import type { FichaStage } from './utils/soulProfile/ficha/types';
 import { comNomeDoEspecial } from './utils/soulProfile/ficha/especialNome';
 import { registrarEstagio, completarEstagios, ESTAGIOS_COM_JANELA } from './utils/fichaJornada';
 import { applyDecorEquip, type SlotId } from './utils/petStage';
@@ -1301,14 +1302,22 @@ export default function App() {
   const chaveAtual = altSpriteKey(gameState.evolutionStage, gameState.formaAltEquipada?.[gameState.evolutionStage], gameState.formasAlt);
   /** A chave da forma-destino do cristal: com outro elemento num estágio já visitado, é a forma alternativa (arte NOVA). */
   const cristalAlvo = activeCrystal(gameState);
-  const cristalKey = cristalAlvo ? altSpriteKey(cristalAlvo.to, elementoDaForma(gameState.elementoJornada, cristalAlvo.to), gameState.formasAlt, spriteAcervo) : null;
+  // 10/11/2026: a poção pendente (`evolutionPotion`) é o elemento da forma que vai nascer — a MESMA chave que `registrarFormaAoEvoluir` grava ao evoluir (senão a arte nasce numa chave e, ao evoluir, o app pede outra: 2ª imagem).
+  const cristalKey = cristalAlvo ? altSpriteKey(cristalAlvo.to, gameState.evolutionPotion || elementoDaForma(gameState.elementoJornada, cristalAlvo.to), gameState.formasAlt, spriteAcervo) : null;
   const updateSpriteLibrary = useCallback(
     (fn: (prev: SpriteLibrary) => SpriteLibrary) =>
       setGameState(prev => ({ ...prev, spriteLibrary: fn(prev.spriteLibrary ?? emptySpriteLibrary()) })),
     [setGameState],
   );
   /** §232: as formas por desenhar pedem o elemento combinado do estágio. */
-  const stagesDoSprite = useMemo(() => stagesComElemento(gameState.soulmonStages, gameState.elementoJornada), [gameState.soulmonStages, gameState.elementoJornada]);
+  const pocoesDoSprite = useMemo(() => {
+    const out: Partial<Record<FichaStage, string>> = {};
+    if (gameState.potionElement) out[fichaStageOf(gameState.evolutionStage)] = gameState.potionElement;
+    const alvo = activeCrystal(gameState);
+    if (alvo && gameState.evolutionPotion) out[fichaStageOf(alvo.to)] = gameState.evolutionPotion;
+    return Object.keys(out).length ? out : undefined;
+  }, [gameState.potionElement, gameState.evolutionPotion, gameState.evolutionStage, gameState.evolutionCrystal]);
+  const stagesDoSprite = useMemo(() => stagesComElemento(gameState.soulmonStages, gameState.elementoJornada, pocoesDoSprite), [gameState.soulmonStages, gameState.elementoJornada, pocoesDoSprite]);
   const spriteGenOn = (!gameState.demoCharacterId || gameState.accountTier === 'paid') && !petIsCorvo && (gameState.soulmonStages?.length ?? 0) > 0;
   const spriteGen = useSpriteGeneration({
     trigger: {
@@ -6839,8 +6848,17 @@ export default function App() {
 
   // Troca lateral (mesmo nível, outra forma já desbloqueada): grátis, só troca a
   // forma. Sem som nem mensagem de queda; a regra é de `utils/trocaLateral.ts`.
-  const handleSwitchForm = useCallback((targetStage: string) => {
-    setGameState(prev => trocarFormaCompleta(prev, s => applyLateralSwitch(s, targetStage)));
+  /* Troca lateral + elemento equipado da forma de destino, UMA transição só (10/11/2026): o elemento/ataque/especial vêm da forma
+     (`trocarFormaCompleta`) e a chave de arte equipada é sempre uma que JÁ tem imagem — trocar de forma nunca pede imagem nova. */
+  const handleSwitchForm = useCallback((targetStage: string, elemento?: string) => {
+    setGameState(prev => trocarFormaCompleta(prev, s => {
+      const sw = applyLateralSwitch(s, targetStage);
+      if (sw === s) return s;
+      const pedido = elemento && elemento !== '__atual' ? elemento : undefined;
+      const el = elementoEquipavelComArte(targetStage, sw.formasAlt, sw.formaAltEquipada, libraryOf(sw), pedido);
+      const eq = el ? equiparFormaAlt(sw.formasAlt, sw.formaAltEquipada, targetStage, el) : sw.formaAltEquipada;
+      return eq === sw.formaAltEquipada ? sw : { ...sw, formaAltEquipada: eq };
+    }));
   }, []);
 
   const handleEvolveToUnlocked = useCallback((targetStage: string) => {
