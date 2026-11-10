@@ -249,6 +249,19 @@ export const getRank = (season?: string, id?: string) =>
 export const getSeasonResult = (season: string) =>
   call<{ season: string; top3: RankRow[] }>('seasonResult', { params: { season } });
 
+/** Uma temporada ENCERRADA em que o jogador jogou: colocação final e pontos (servidor: `_seasonHist.js`). */
+export interface SeasonHistoryEntry { season: string; place: number; points: number }
+/** Histórico do PRÓPRIO jogador (só o dono lê). `last` = a temporada do mês anterior (`null` = não jogou ou o dado já venceu no KV); `best` = a melhor colocação. GM/admin: tudo vazio. */
+export interface SeasonHistory {
+  seasons: SeasonHistoryEntry[];
+  best: { season: string; place: number } | null;
+  last: SeasonHistoryEntry | null;
+  lastSeason: string;
+  /** GM/admin: fora de todo ranking do Torneio — a tela não mostra histórico (nem troféu antigo). */
+  excluded?: boolean;
+}
+export const getSeasonHistory = (id: string) => call<SeasonHistory>('seasonHistory', { params: { id } });
+
 /** §242: ENVIA um convite (a pessoa aceita). `status`: `pending` (aguardando) ou `friends` (convite cruzado, já são amigos). */
 export const addFriend = (id: string, friendId: string) =>
   call<{ ok: true; status?: 'pending' | 'friends'; friends: string[] }>('friends', { method: 'POST', body: { id, friendId } });

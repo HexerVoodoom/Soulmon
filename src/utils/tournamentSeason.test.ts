@@ -7,13 +7,16 @@ import {
 const at = (day: number, hour = 12) => new Date(2026, 7, day, hour, 0, 0);
 
 describe('seasonDaysLabel', () => {
-  it('conta até o fim do mês em UTC, por extenso, com singular', () => {
+  it('conta até o fim do mês em UTC, em algarismo, com singular', () => {
     expect(seasonDaysLeft(new Date(Date.UTC(2026, 10, 24, 12)))).toBe(7);
-    expect(seasonDaysLabel(new Date(Date.UTC(2026, 10, 24, 12)), 'en-US')).toBe('Seven Days Remaining');
-    expect(seasonDaysLabel(new Date(Date.UTC(2026, 10, 30, 12)), 'en-US')).toBe('One Day Remaining');
-    expect(seasonDaysLabel(new Date(Date.UTC(2026, 10, 24, 12)), 'pt-BR')).toBe('Sete dias restantes');
-    expect(seasonDaysLabel(new Date(Date.UTC(2026, 10, 30, 12)), 'pt-BR')).toBe('Um dia restante');
+    expect(seasonDaysLabel(new Date(Date.UTC(2026, 10, 24, 12)), 'en-US')).toBe('7 Days Remaining');
+    expect(seasonDaysLabel(new Date(Date.UTC(2026, 10, 30, 12)), 'en-US')).toBe('1 Day Remaining');
+    expect(seasonDaysLabel(new Date(Date.UTC(2026, 10, 24, 12)), 'pt-BR')).toBe('7 dias restantes');
+    expect(seasonDaysLabel(new Date(Date.UTC(2026, 10, 30, 12)), 'pt-BR')).toBe('1 dia restante');
     expect(seasonDaysLeft(new Date(Date.UTC(2026, 11, 1, 0)))).toBe(31);
+    // Mês cheio: nunca por extenso.
+    expect(seasonDaysLabel(new Date(Date.UTC(2026, 9, 6, 12)), 'en-US')).toBe('26 Days Remaining');
+    expect(seasonDaysLabel(new Date(Date.UTC(2026, 9, 6, 12)), 'pt-BR')).toBe('26 dias restantes');
   });
 });
 

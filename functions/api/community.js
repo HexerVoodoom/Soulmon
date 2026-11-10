@@ -22,6 +22,8 @@
 //                                          (forfeit = desistir do duelo aberto = derrota)
 //   GET  rank      ?season=             → top 50 da season (+ `myPlace`, a posição REAL, só com `&id=` autorizado)
 //   GET  seasonResult ?season=          → top 3 (para troféus)
+//   GET  seasonHistory ?id=             → colocação do jogador em cada temporada encerrada (+ melhor e a última); só o dono
+//                                          (GM/admin fora de todo ranking do Torneio: `_rankAdmin.js`)
 //   POST closeSeason {season, adminKey} → fecha a season: dá troféu (top 3)
 //   GET  trophies  ?id=&claim=1         → troféus pendentes do jogador (e zera)
 //   POST friends   {id, friendId, remove?} → ENVIA convite (a pessoa aceita); remove desfaz nos dois lados. Até 20 amigos (§243)
@@ -42,6 +44,8 @@
 //   POST coopLeave   {id}              → sai, sem penalidade e sem confirmação
 
 import { lerIndice, indexarPontos, completarIndice, podarIndice, ordenar } from './_rankIndex.js';
+import { adminSaveIds } from './_rankAdmin.js';
+import { historicoDoJogador, registrarColocacao } from './_seasonHist.js';
 import { authorizeSaveAccess, authStatus } from './_auth.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { bondLevelOf } from './_bond.js';
@@ -234,7 +238,8 @@ async function getRank(env, season, id) {
 async function putRank(env, season, id, rec) {
   // `metadata.pts` deixa o preenchimento do índice (`_rankIndex.js`) ler os pontos pelo `list`, sem um `get` por linha.
   await kvOrThrow(env).put(`rank:${season}:${id}`, JSON.stringify(rec), { expirationTtl: 86400 * 120, metadata: { pts: Number(rec?.points) || 0 } });
-  await indexarPontos(env, season, id, rec?.points);
+  // GM/admin luta e tem a linha (cota diária), mas NUNCA entra na ordem da season (`_rankAdmin.js`).
+  if (!(await adminSaveIds(env)).has(id)) await indexarPontos(env, season, id, rec?.points);
 }
 /** Reroll dos 3 oponentes (27/10/2026): UM por intervalo entre combates. Chave própria (não toca o `rank:`: não cria linha
  *  no ranking nem corre contra o `putRank` de uma partida). Nasce no reroll, morre em `settleMatch`; TTL de 1 dia por segurança. */
@@ -902,7 +907,9 @@ async function handleCommunity(context) {
     const keys = await listPrefix(env, 'profile:', 300);
     const me = id;
     const pool = [];
+    const adminsOpp = await adminSaveIds(env);
     for (const k of keys) {
+      if (adminsOpp.has(k.slice('profile:'.length))) continue; // GM/admin não aparece como oponente de ranking
       const raw = await kvOrThrow(env).get(k);
       if (!raw) continue;
       const p = JSON.parse(raw);
@@ -976,7 +983,7 @@ async function handleCommunity(context) {
     const me = await getProfile(env, id);
     const opp = await getProfile(env, oppSave);
     if (!me?.pvpEnabled) return { res: json({ error: 'pvp disabled' }, 403) };
-    if (!opp?.pvpEnabled || isHidden(opp)) return { res: json({ error: 'opponent unavailable' }, 404) };
+    if (!opp?.pvpEnabled || isHidden(opp) || (await adminSaveIds(env)).has(oppSave)) return { res: json({ error: 'opponent unavailable' }, 404) };
     const myRank = await getRank(env, currentSeason(), id);
     if (myRank.day !== today()) { myRank.day = today(); myRank.matchesToday = 0; myRank.pairs = {}; }
     return { opponentId, oppSave, me, opp, myRank };
@@ -1138,10 +1145,12 @@ async function handleCommunity(context) {
     }
     const autenticado = action === 'rank' && !!meIdIdx;
     const indice = autenticado ? await completarIndice(env, season, RANK_INDEX_BUDGET) : await lerIndice(env, season);
-    const ordenados = indice.done ? ordenar(indice.p) : null;
+    // GM/admin fora de TODO ranking (entradas antigas no índice/lista saem aqui na leitura; nada é apagado).
+    const admins = await adminSaveIds(env);
+    const ordenados = indice.done ? ordenar(indice.p).filter(r => !admins.has(r.owner)) : null;
     const keys = ordenados
       ? ordenados.slice(0, RANK_SCAN_MAX).map(r => `rank:${season}:${r.owner}`)
-      : await listPrefix(env, `rank:${season}:`, 300);
+      : (await listPrefix(env, `rank:${season}:`, 300)).filter(k => !admins.has(k.slice(`rank:${season}:`.length)));
     const semLinha = [];
     const rows = [];
     // `me`: quem optou por sair da lista continua vendo o PRÓPRIO lugar — só
@@ -1192,7 +1201,9 @@ async function handleCommunity(context) {
     if (autenticado && semLinha.length) await podarIndice(env, season, semLinha); // conta apagada / linha vencida: sai da ordem
     if (action === 'seasonResult') return json({ season, top3: rows.slice(0, 3) });
     let myPlace = null;
-    if (ordenados && meId) {
+    if (meId && admins.has(meId)) {
+      myPlace = null; // GM/admin não ocupa posição
+    } else if (ordenados && meId) {
       const at = ordenados.findIndex(r => r.owner === meId);
       if (at >= 0) myPlace = at + 1;
       // Oculto e fora da faixa varrida: a linha `me` sai da leitura direta, como antes.
@@ -1209,6 +1220,13 @@ async function handleCommunity(context) {
       if (at >= 0) myPlace = at + 1;
     }
     return json({ season, rank: rows.slice(0, 50), ...(meRow ? { me: meRow } : {}), ...(myPlace ? { myPlace } : {}) });
+  }
+
+  // Histórico de temporadas do PRÓPRIO jogador (modal "Última temporada"). Só o dono lê; reconstrói do KV o que falta (`_seasonHist.js`).
+  if (action === 'seasonHistory' && method === 'GET') {
+    const denied = await denyUnlessOwner(id);
+    if (denied) return denied;
+    return json(await historicoDoJogador(env, id, currentSeason()));
   }
 
   // Fecha uma season: dá troféu (place 1/2/3) aos 3 primeiros do rank. Chamado
@@ -1229,16 +1247,17 @@ async function handleCommunity(context) {
     }
     // Índice ordenado (REGISTRO §23): o pódio sai da season INTEIRA, não das 300 primeiras chaves por saveId. Os
     // primeiros colocados são RECONFERIDOS na linha `rank:` (o índice é só candidato). Os primeiros colocados são RECONFERIDOS na linha `rank:` (o índice é só candidato).
+    const admins = await adminSaveIds(env); // GM/admin nunca leva troféu nem Honra de colocação
     const indice = await completarIndice(env, season, CLOSE_INDEX_BUDGET);
     // Índice ainda incompleto depois do lote: o cron chama UMA vez, então a season fecha mesmo assim, pelo caminho
     // antigo (300 chaves `rank:` em ordem de saveId), com log para o dono saber que o pódio saiu do limite herdado.
     let keys;
     if (indice.done) {
       // Simulado é pulado ANTES da releitura (nunca premia e não gasta subrequest); o teto conta só candidatos reais.
-      keys = ordenar(indice.p).filter(r => !isSimuladoId(r.owner)).slice(0, CLOSE_SCAN_MAX).map(r => `rank:${season}:${r.owner}`);
+      keys = ordenar(indice.p).filter(r => !isSimuladoId(r.owner) && !admins.has(r.owner)).slice(0, CLOSE_SCAN_MAX).map(r => `rank:${season}:${r.owner}`);
     } else {
       console.warn(JSON.stringify({ event: 'season.close.fallback', season, indexed: Object.keys(indice.p).length }));
-      keys = await listPrefix(env, `rank:${season}:`, 300);
+      keys = (await listPrefix(env, `rank:${season}:`, 300)).filter(k => !admins.has(k.slice(`rank:${season}:`.length)));
     }
     const rows = [];
     for (const k of keys) {
@@ -1266,6 +1285,7 @@ async function handleCommunity(context) {
       p.pendingTrophies = p.pendingTrophies || [];
       p.pendingTrophies.push({ season, place: i + 1 });
       await putProfile(env, top3[i].id, p);
+      await registrarColocacao(env, top3[i].id, season, i + 1, top3[i].points); // histórico do jogador (modal "Última temporada")
     }
     // TTL de 400 d (QA rodada 2, `04-dados-r2` #12): a marca só precisa
     // sobreviver ao retry do cron e a `rank:<season>:*` (120 d). Sem prazo era
