@@ -112,7 +112,8 @@ export function reduceChipsUsedThisStage(state: { evolutionStage?: string; chips
  * Um por dia significa que o Glitchtama, no melhor caso, DOBRA o ritmo de quem
  * já faz o dia perfeito — é generoso, e é finito.
  */
-export const GLITCHTAMA_PER_DAY = 1;
+// ⚠️ TESTE (dono, 10/11/2026): limite diário do Glitchtama levantado de 1 para 999 SÓ para testar. Reverter para 1 depois do teste.
+export const GLITCHTAMA_PER_DAY = 999;
 
 /**
  * O registro do teto, no SAVE (`glitchtamaUse`), nunca no localStorage.
