@@ -4461,3 +4461,7 @@ EXCECAO DE TESTE temporaria (10/11/2026): flag `GLITCHTAMA_TESTE_ON`; uso diario
 ### `src/utils/materialGuide.ts` (10/11/2026 — REGISTRO §272)
 
 O guia da aba Materiais da Mochila: para cada material de prédio, ONDE conseguir (missão diária do prédio + expedições do Foco) e PARA QUE SERVE (peças do Soulsmith como material principal/apoio, via `FORGE_PIECES`; pratos do Restaurante, via `DISHES`), tudo derivado do código. Também define os 3 recursos extras que não moram em `buildingQuests` — Fragmento do Soulsmith (`equipment.fragments`), Fragmento de Boss (`bossShards`) e Essências (`essences`) — com fonte e uso. `usoAinda` diz, sem inventar, quando um material não tem uso hoje. Só a Mochila (lazy) o importa.
+
+### `src/utils/formaEquip.ts` (10/11/2026)
+
+Redutores puros do modal de formas, usados pelo `App` e pelo teste de tela: `equiparFormaAltEstado` (equipar uma forma do estágio; a escolha explícita do jogador vale sempre) e `trocarFormaEstado` (troca lateral + elemento equipado da forma de destino numa transição só, via `trocarFormaCompleta`). Régua: `EvolutionPath.equiparForma.render.test.tsx`.
