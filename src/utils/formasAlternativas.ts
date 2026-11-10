@@ -80,6 +80,14 @@ export function elementoEquipavelComArte(
   return lista.find(temArte) ?? preferido;
 }
 
+/**
+ * A chave de acervo da forma como ela está EQUIPADA (`estágio` = a original/1ª da lista; `estágio@elemento` = forma de poção). Toda ação
+ * sobre a arte de uma forma (gerar de novo, tentar de novo, sintonizar, voltar ao traço antigo) usa ESTA chave, nunca só o id do estágio —
+ * senão mexe na arte da original quando a de poção está equipada (bug do dono, 10/11/2026).
+ */
+export const chaveDaFormaEquipada = (formId: string, formas: FormasAlt | undefined, equip: FormaAltEquipada | undefined): string =>
+  altSpriteKey(formId, equip?.[formId], formas);
+
 /** A forma de uma chave de acervo (`mega-power@fire` → `mega-power`). */
 export const baseFormOfKey = (key: string): string => key.split('@')[0];
 
