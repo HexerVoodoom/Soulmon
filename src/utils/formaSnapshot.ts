@@ -36,6 +36,7 @@ export interface FormaState {
   soulmonSkills?: Partial<Record<FichaStage, StageSkills>>;
   formaAltEquipada?: Record<string, string>;
   formaSnapshots?: FormaSnapshots;
+  soulmonMeta?: { dominantElement?: string } | null;
 }
 
 const ORDEM = ['rookie', 'champion', 'ultimate', 'mega', 'ultra'];
@@ -55,6 +56,16 @@ const pocaoDaChave = (chave: string, pocao: string | undefined): string | undefi
   return el && pocao !== el ? undefined : pocao;
 };
 
+/**
+ * A forma ORIGINAL (`forma@original`) é SEMPRE o elemento BASE do Soulmon (ex.: Sombra), sem poção e sem o elemento combinado do
+ * registro (dono, 10/11/2026). Quem tem a original equipada assume o base como elemento; o registro do estágio não é tocado.
+ */
+function forcarOriginal<T extends FormaState>(s: T): T {
+  if (s.formaAltEquipada?.[s.evolutionStage] !== 'original') return s;
+  const base = s.elementoJornada?.estagios?.[fichaStageOf(s.evolutionStage)]?.base ?? s.soulmonMeta?.dominantElement;
+  return base && s.potionElement !== base ? { ...s, potionElement: base } : s;
+}
+
 /** Fotografa a forma ATUAL (o estado vivo é a verdade dela). */
 export function capturarForma<T extends FormaState>(s: T): T {
   const nivel = fichaStageOf(s.evolutionStage);
@@ -63,7 +74,7 @@ export function capturarForma<T extends FormaState>(s: T): T {
   const pocao = pocaoDaChave(chave, s.potionElement);
   if (pocao) foto.pocao = pocao;
   const el = s.elementoJornada?.estagios?.[nivel];
-  if (el) foto.elemento = el;
+  if (el && !chave.endsWith('@original')) foto.elemento = el;
   const sk = s.soulmonSkills?.[nivel];
   if (sk) foto.skills = sk;
   return { ...s, formaSnapshots: { ...(s.formaSnapshots ?? {}), [chave]: foto } };
@@ -89,8 +100,9 @@ function aplicarFotoAtual<T extends FormaState>(s: T): T | undefined {
   const foto = s.formaSnapshots?.[chaveDaForma(s.evolutionStage, s.formaAltEquipada)];
   if (!foto) return undefined;
   const nivel = fichaStageOf(s.evolutionStage);
-  let out: T = { ...s, potionElement: foto.pocao };
-  if (foto.elemento && s.elementoJornada) {
+  const original = s.formaAltEquipada?.[s.evolutionStage] === 'original';
+  let out: T = { ...s, potionElement: original ? undefined : foto.pocao };
+  if (!original && foto.elemento && s.elementoJornada) {
     out = { ...out, elementoJornada: { ...s.elementoJornada, estagios: { ...s.elementoJornada.estagios, [nivel]: foto.elemento } } };
   }
   if (foto.skills && s.soulmonSkills) {
@@ -108,13 +120,13 @@ export function trocarFormaCompleta<T extends FormaState>(prev: T, trocar: (s: T
   const trocado = trocar(prev);
   if (trocado === prev) return prev;
   const antes = chaveDaForma(prev.evolutionStage, prev.formaAltEquipada);
-  if (chaveDaForma(trocado.evolutionStage, trocado.formaAltEquipada) === antes) return trocado;
+  if (chaveDaForma(trocado.evolutionStage, trocado.formaAltEquipada) === antes) return forcarOriginal(trocado);
   const comFoto = { ...trocado, formaSnapshots: capturarForma(prev).formaSnapshots };
-  return aplicarFotoAtual(comFoto) ?? elementoDaFormaSemFoto(comFoto) ?? comFoto;
+  return forcarOriginal(aplicarFotoAtual(comFoto) ?? elementoDaFormaSemFoto(comFoto) ?? comFoto);
 }
 
 /**
-QUEDA (manual ou por HP): `next` é o estado já com o estágio de destino. Fotografa a forma que cai (de `prev`), apaga o registro de
+ * QUEDA (manual ou por HP): `next` é o estado já com o estágio de destino. Fotografa a forma que cai (de `prev`), apaga o registro de
  * elemento dos níveis ACIMA do destino (a próxima subida registra o elemento de novo, como na primeira vez), aplica a foto do destino
  * e DESCARTA a poção (o elemento volta ao do registro do nível). Não caiu de nível = o MESMO `next`.
  */
@@ -146,6 +158,8 @@ export function sanitizeFormaSnapshots(raw: unknown): FormaSnapshots | undefined
     // Migração tolerante: saves já gravados com a poção de outra forma na foto (ver `pocaoDaChave`) são curados na leitura.
     if (typeof r.pocao === 'string' && /^[a-z_]{2,24}$/.test(r.pocao)) { const p = pocaoDaChave(k, r.pocao); if (p) f.pocao = p; }
     const e = r.elemento as Record<string, unknown> | undefined;
+    // `forma@original` é sempre o elemento base: foto de save antigo com elemento combinado/poção dessa forma é lixo (curada na leitura).
+    if (k.endsWith('@original')) { if (r.skills && typeof r.skills === 'object' && !Array.isArray(r.skills)) f.skills = r.skills as StageSkills; out[k] = f; continue; }
     if (e && typeof e === 'object' && typeof e.id === 'string' && typeof e.base === 'string') f.elemento = { id: e.id, base: e.base };
     if (r.skills && typeof r.skills === 'object' && !Array.isArray(r.skills)) f.skills = r.skills as StageSkills;
     out[k] = f;
