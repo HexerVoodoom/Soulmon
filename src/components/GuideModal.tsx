@@ -31,7 +31,7 @@ import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { CREDIT_BITS_CAP_RATIO } from '../utils/bitsOrigin';
 import { DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_HP_REGEN_FULL_HOURS, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_MILESTONE_FLOOR, DUNGEON_RETURN_EVERY, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER } from '../utils/dungeonIdle';
-import { ENERGY_REGEN_MINUTES, HUNGER_FULL_TO_EMPTY_HOURS } from '../utils/hunger';
+import { ENERGY_REGEN_MINUTES, HUNGER_FULL_TO_EMPTY_HOURS, SLEEP_ENERGY_REGEN_BONUS } from '../utils/hunger';
 import { DEFAULT_MEAL_TIMES, MEAL_WINDOW_MIN } from '../utils/mealRhythm';
 
 interface GuideModalProps {
@@ -221,8 +221,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Sobe com o tempo: 1 a cada ${ENERGY_REGEN_MINUTES} min com o Soulmon bem alimentado, metade da velocidade com um pouco de fome, parada se ele estiver faminto.`,
-              `It rises with time: 1 every ${ENERGY_REGEN_MINUTES} min when your Soulmon is well fed, half speed when a little hungry, stopped when starving.`,
+              `Sobe com o tempo: 1 a cada ${ENERGY_REGEN_MINUTES} min com o Soulmon bem alimentado, metade da velocidade com um pouco de fome, parada se ele estiver faminto. Dormindo, tudo isso ×${SLEEP_ENERGY_REGEN_BONUS} mais rápido (faminto continua parado).`,
+              `It rises with time: 1 every ${ENERGY_REGEN_MINUTES} min when your Soulmon is well fed, half speed when a little hungry, stopped when starving. While asleep, all of that runs ×${SLEEP_ENERGY_REGEN_BONUS} faster (starving stays stopped).`,
             )}
           </p>
           <p style={para}>
