@@ -1738,7 +1738,7 @@ const ALIGNMENT_DESIGNS: Record<AlignmentId, string[]> = {
     'POWER-attribute design language: apex-predator build, lean muscular stance ready to pounce, scratch-mark motifs, one deep crimson accent, wild untamed build',
     'POWER-attribute design language: gladiator bearing, broad armored frame, a chipped horn, burnt-orange war accent, veteran brawler build',
     'POWER-attribute design language: cunning trickster energy, sharp angular ears or fins, mismatched asymmetric details, one toxic-purple accent, streetwise rogue build',
-    'POWER-attribute design language: stormy berserker energy, bristling fur or plating standing on end, jagged lightning-shaped marks, one hot magenta accent, untamable build',
+    'POWER-attribute design language: stormy berserker energy, bristling fur or plating standing on end, jagged lightning-shaped marks, one electric-blue accent, untamable build',
     'POWER-attribute design language: silent hunter poise, low crouched stance, arrow-sharp silhouette edges, one dark scarlet accent, ruthless precision build',
   ],
   harmonia: [
