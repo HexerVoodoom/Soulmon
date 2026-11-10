@@ -36,6 +36,11 @@ import { readLocal } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { HEX_ART, HEX_MAP_ART, resolveHexChipArt, resolveHexSlotArt } from '../../assets/soulmon/hex';
 import { HexSlotGlyph } from './HexSlotGlyph';
+import { useBlockedAction } from '../ui/BlockedActionModal';
+import { nameOf } from '../nav/BuildingQuestList';
+import type { BlockedReason } from '../../utils/blockedAction';
+import { hexCost as hexCostOf } from '../../utils/hexsmith';
+import type { BuildingId } from '../../utils/gates';
 
 export interface HexsmithSheetProps {
   language?: string;
@@ -214,6 +219,19 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
       .sort((a, b) => Number(!!hexForgeRefusal(gs, a)) - Number(!!hexForgeRefusal(gs, b)));
   }, [slot, isEl, bases, gs, hx.owned]);
 
+  const [blockedModal, explain] = useBlockedAction(language as Language);
+  /** Aviso padrao (09/11/2026): o Forjar bloqueado continua tocavel; diz o que falta e onde conseguir. */
+  const bloqueio = (id: string, r: NonNullable<ReturnType<typeof hexForgeRefusal>>, el?: string): BlockedReason => {
+    const c = hexCostOf(id);
+    const fonte = (rota: BuildingId) => [{ rota, lugarPt: nameOf(rota, 'pt-BR'), lugarEn: nameOf(rota, 'en-US') }];
+    if (c && r === 'potions') {
+      const have = gs.foodInventory[potionKey(c.potionElement!)] ?? 0;
+      return { kind: 'recursos', faltam: [{ namePt: `Poção de ${el ?? 'elemento'}`, nameEn: `${el ?? 'Element'} potion`, have, need: c.potions }], fonte: fonte('laboratorio.evolucao') };
+    }
+    if (c && r === 'fragments') return { kind: 'recursos', faltam: [{ namePt: 'Fragmentos', nameEn: 'Fragments', have: gs.equipment?.fragments ?? 0, need: c.fragments }], fonte: fonte('exploracao.fenda') };
+    if (c && r === 'bits') return { kind: 'recursos', faltam: [{ namePt: 'Bits ganhos jogando', nameEn: 'Bits earned by playing', have: earnedBits(gs), need: c.bits }] };
+    return { kind: 'outro', textoPt: hexRefusalText(r, true, el), textoEn: hexRefusalText(r, false, el) };
+  };
   const sel = picked && catalog.includes(picked) ? picked : null;
   const selRefusal = sel ? hexForgeRefusal(gs, sel) : undefined;
   const selValue = sel ? parseHexItem(sel)!.value : '';
@@ -223,8 +241,9 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
     <ModalSheet open title={`${tx(HEX_SLOT_COPY[slot].port, isPt)} · ${tx(HEX_SLOT_COPY[slot].effect, isPt)}`} onClose={onClose} language={language as Language}
       footer={sel ? (
         <div data-hex-forge-footer className="sm2-hex-footer">
-          <button type="button" data-hex-forge={sel} disabled={!!selRefusal} aria-describedby={selRefusal ? refusalId : undefined}
-            onClick={() => { onForge(sel); setPicked(null); }}
+          {blockedModal}
+          <button type="button" data-hex-forge={sel} aria-disabled={selRefusal ? true : undefined} aria-describedby={selRefusal ? refusalId : undefined}
+            onClick={() => { if (selRefusal) { explain(bloqueio(sel, selRefusal, isEl ? selName : undefined)); return; } onForge(sel); setPicked(null); }}
             style={sm2Button('primary', !!selRefusal)}>
             {HEX_ART.forge && <img src={HEX_ART.forge} alt="" aria-hidden="true" width={ICON_ROW} height={ICON_ROW} className="sm2-hex-art" />}
             <span>{tx(HEX_UI.forge, isPt)}: {hexName(selName, isPt)}</span>

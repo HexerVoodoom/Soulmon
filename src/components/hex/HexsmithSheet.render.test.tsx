@@ -106,7 +106,13 @@ describe('HexsmithSheet', () => {
     abrir({ gamePoints: 5000, foodInventory: { [potionKey('agua')]: 1 } });
     click(q('[data-hex-slot="garra"]'));
     click(q('[data-hex-item="garra:agua"]'));
-    expect(q('[data-hex-forge="garra:agua"]').disabled).toBe(true);
+    expect(q('[data-hex-forge="garra:agua"]').getAttribute('aria-disabled')).toBe('true');
+    // aviso padrao (09/11/2026): tocar abre o modal com a falta e o lugar tocavel
+    click(q('[data-hex-forge="garra:agua"]'));
+    const aviso = document.querySelector('[data-blocked-action="recursos"]')!;
+    expect(aviso.textContent).toMatch(/Poção de Água: tem 1, precisa de 3 \(faltam 2\)/);
+    expect(aviso.querySelector('[data-blocked-go="laboratorio.evolucao"]')).not.toBeNull();
+    click(q('[data-blocked-ok]'));
     const r = document.querySelector('[data-hex-refusal]')!;
     expect(r.getAttribute('data-hex-refusal')).toBe('potions');
     expect(r.textContent).toBe(hexRefusalText('potions', true, 'Água'));
