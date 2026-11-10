@@ -4535,3 +4535,9 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Decisão (dono).** Instalar, no mesmo nome/formato/tamanho: FX de ataque (cast, aura, aura-96, slash, impact, defended, orb) de `maldicao`, `fada`, `industrial` e `planta`; `el-maldicao` (96²); `st-maldicao` (64²); `fx-maldicao-loop-1..6` + sheet (384×256). Fora: `el-industrial` (em refação). Assets são importados com hash do Vite, sem bump de `CACHE_VERSION`. `fxFacingTable.ts` regerada.
 
 **Alternativa que perdeu:** manter a arte anterior à regra (caveira/engrenagem fora do tema do elemento). **Falsifica:** o dono reprovar a leitura dos novos em combate real.
+
+## §277 — Widget V-Pet: Z de sono e fundo do cenário (10/11/2026)
+
+**Decisão (dono).** O V-Pet ganha um Z ao lado do bicho (apagado acordado, aceso dormindo) e o cenário equipado atrás dele. Z desenhado no bitmap por `petSleeping`; fundo por miniaturas WebP empacotadas (796 KB) escolhidas pelo id `vpetBg`, sem bitmap trafegando. Chaves novas, APK velho ignora. Detalhe: `docs/WIDGET-VPET-FUNDO-VIABILIDADE.md`.
+
+**Alternativa que perdeu:** bitmap do fundo enviado pelo app ou baixado do servidor (peso e rede para arte que já é fixa). **Falsifica:** o dono achar o véu escuro ruim ou o fundo poluir a leitura no aparelho; retorno = tirar a miniatura do APK (cai no LCD liso) sem mexer no bridge. Rollback do PR: reverter o commit.

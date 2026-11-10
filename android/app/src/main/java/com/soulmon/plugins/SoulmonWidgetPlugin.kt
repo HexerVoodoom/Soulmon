@@ -120,6 +120,11 @@ class SoulmonWidgetPlugin : Plugin() {
         val vpetFrame = call.getString("vpetFrame") ?: ""
         if (WidgetVpet.frameDrawableName(vpetFrame) != null) editor.putString("vpet_frame", vpetFrame) else editor.remove("vpet_frame")
 
+        // V-Pet: Z de sono (aceso = dormindo) e cenario equipado atras do pet. Chaves novas; ausente = acordado / sem fundo.
+        editor.putBoolean("pet_sleeping", call.data.optBoolean("petSleeping", false))
+        val vpetBg = call.getString("vpetBg") ?: ""
+        if (WidgetVpet.bgDrawableName(vpetBg) != null) editor.putString("vpet_bg", vpetBg) else editor.remove("vpet_bg")
+
         editor.apply()
 
         // O sprite PRÓPRIO (gerado/equipado): baixa/guarda em segundo plano; vazio apaga e volta ao inicial.

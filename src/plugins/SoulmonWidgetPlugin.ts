@@ -174,6 +174,10 @@ export interface DigiWidgetData {
   dayEndsAtMs?: number;
   /** Moldura do widget V-Pet: id de elemento base ou `''` (= casco padrão; o plugin remove a chave). Ver `utils/widgetFrames.ts`. */
   vpetFrame?: string;
+  /** Z de sono do V-Pet: `true` = dormindo (Z aceso), ausente/`false` = acordado (Z apagado). Chave nova; APK antigo ignora. Só estado, nunca contagem. */
+  petSleeping?: boolean;
+  /** Id do cenário equipado (`bg-...`) para o fundo do LCD do V-Pet, ou `''`. O Kotlin só usa se houver miniatura `vpet_bg_<id>` no APK. */
+  vpetBg?: string;
 }
 
 export interface SoulmonWidgetPlugin {

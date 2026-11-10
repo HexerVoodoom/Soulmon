@@ -2858,6 +2858,9 @@ export default function App() {
       dayEndsAtMs: widgetDayEndsAt(new Date()),
       // Moldura do widget V-Pet: o escolhido SE ainda é do jogador, senão '' (casco padrão). Arquivo ausente no APK = padrão também.
       vpetFrame: resolveWidgetFrame(gameState.widgetFrame, effectiveOwnedFrames(gameState.widgetFramesOwned, paidWidgetFrames)),
+      // Z de sono do V-Pet (aceso = dormindo, apagado = acordado) e o cenário equipado atrás do pet. Chaves NOVAS: APK antigo ignora.
+      petSleeping: isSleeping,
+      vpetBg: visibleBackground(gameState.equippedBackground) ?? '',
     }).catch(() => {});
   }, [gameState.evolutionStage, gameState.currentBranch, gameState.eggType,
       gameState.healthPoints, gameState.maxHealthPoints, gameState.energyPoints,
@@ -2865,7 +2868,7 @@ export default function App() {
       gameState.habitRhythms, gameState.totalXP, gameState.soulmonMeta, grove,
       gameState.hunger, gameState.tasks, gameState.activities, gameState.dayPlan,
       gameState.widgetFrame, gameState.widgetFramesOwned, paidWidgetFrames,
-      gameState.demoCharacterId, widgetSpriteUrl]);
+      gameState.demoCharacterId, widgetSpriteUrl, isSleeping, gameState.equippedBackground]);
 
   // Moldura do widget V-Pet LIBERADA NA EVOLUÇÃO (dono, 04/11/2026): quando o Soulmon já evoluiu e o elemento base dele ainda não
   // tem moldura na posse, ela entra. Idempotente (`grantFrameOnEvolution` devolve a mesma referência sem novidade); cobre também quem
