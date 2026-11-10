@@ -4492,3 +4492,9 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Decisão:** as três formas altas da Vileza/Poder (`novos/vileza-{ultimate,mega,ultra}.png`) são substituídas pelas versões aprovadas pelo dono (Ultimate `poder/ultimate.novo`, Mega `poder/mega.novo2` com 3 caudas de escorpião, Ultra `ultra.novo2`), todas geradas pela **API Higgsfield — regra: sprite só via API** (nada de ChatGPT para sprite). O Champion lobisomem não mudou. Pipeline: remoção de franja/pixels magenta e de ilhas <24 px, recorte da bounding box, redução proporcional para 256² (mesmo tamanho dos sprites atuais da linha), alfa binário. Fontes e metas (prompt/tags) em `E:\Soulmon-assets\vileza-v2\`; inventário: os três arquivos acima constam como "API Higgsfield" em `docs/INVENTARIO-ASSETS.md`.
 
 **Alternativa que perdeu:** manter as formas v2 sem a cauda tripla. **Falsifica:** o dono ver a Mega sem as 3 caudas ou franja magenta no Ultra em combate.
+
+## §273 — Rookies escolhidos pelo dono: clareira e bênção feérica (API), alto forno (exceção) (09/11/2026)
+
+**Decisão:** o dono escolheu em 09/11/2026: `262-clareira` e `264-bencao_feerica` = arte da API Higgsfield (v5a; a bênção teve a franja verde de chroma removida por despill, sem alterar o desenho); `263-alto_forno` = **EXCEÇÃO aprovada pelo dono** (arte pintada do ChatGPT, escolhida por ele; recorte com alfa real por rembg `isnet-general-use`, sem a fumaça, 256² RGBA LANCZOS). A regra "sprite só via API" (§271) segue valendo para todo o resto. Fontes e meta em `E:/Soulmon-assets/sprites-api-rookies-2026-11-09/`.
+
+**Alternativa que perdeu:** manter os v3/v4 da API também para o alto forno. **Falsifica:** o dono ver franja/halo em algum dos três em combate, ou a exceção virar precedente para outros sprites.
