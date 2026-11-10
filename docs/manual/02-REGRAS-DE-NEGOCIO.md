@@ -4933,7 +4933,7 @@ quem chama é um cron e cron repete.
 A Honra do jogador vem do CLIENTE (`onEarnEmblems` com `EMBLEMS_PER_WIN` /
 `EMBLEMS_PER_LOSS`), não do servidor — ver [§46](#moedas).
 
-### Estágio e ataques dos oponentes (10/11/2026, REGISTRO §280)
+### Estágio e ataques dos oponentes (10/11/2026, REGISTRO §282)
 
 O oponente sorteado do **Treino** e da **Ranqueada** tem estágio próximo e variado ao do jogador: peso por delta de estágio em `ESTAGIO_PESOS` (`functions/api/_oponenteEstagio.js`: −1 25%, igual 40%, +1 25%, +2 7%, −2 3%). Os simulados não têm mais teto Champion (`SIM_FORMA_MAX = 'ultra'`; sprite reaproveitado, sem arte nova de forma alta). Nas listas do Torneio o estágio é um **ícone** (`EstagioMarca`, `aria-label` com o nome do jogo). O mix de ataques dos inimigos ({à distância, corpo a corpo} × {corte, splash}) é ~25% cada (`foeStrikeForm`, `FORMA_MELEE_PCT`), só visual.
 
@@ -4957,7 +4957,7 @@ POST sparMatch {id, opponentId, taps?, forfeit?, seed?, zone?, off?} → simulat
   (contador `sparHonor:<id>:<dia>` no KV, dia por `playerDayOf` com a zona/offset que o app manda; leitura tolerante; nunca por tick). Derrota, empate
   e desistência rendem 0. Sem vantagem paga. A Honra é a moeda de sempre (`emblems` no save, a das lojinhas do Mercado, aba Honra): o servidor devolve
   `honor` (e `honorCapped` quando o teto do dia já foi) e o app soma pelo MESMO caminho das outras fontes (`onEarnEmblems`), uma vez (o reenvio não soma).
-- **🎫 Tickets (REGISTRO §280):** todo DIA DO JOGADOR dá **1 ticket grátis = `TREINO_TICKET_MATCHES` (20) partidas COM Honra**; depois delas, o **ticket extra** custa
+- **🎫 Tickets (REGISTRO §282):** todo DIA DO JOGADOR dá **1 ticket grátis = `TREINO_TICKET_MATCHES` (20) partidas COM Honra**; depois delas, o **ticket extra** custa
   `TREINO_EXTRA_TICKET_BITS` (**30 Bits GANHOS**, `earnedBits`, nunca Créditos) e vale **+20 partidas SEM Honra**, até `TREINO_EXTRA_TICKETS_MAX` (**3/dia**). Contador no
   KV (`sparTicket:<id>:<dia>`, leitura tolerante, `sparTicketStatus`); `POST sparBuyTicket {id, zone?, off?}` conta/limita e o app cobra depois do ok (`chargeTreinoTicket`,
   `src/utils/treinoTickets.ts`); `sparStart` recusa 409 `no tickets`; `sparMatch` gasta 1 (desistir não gasta) e só paga Honra se ainda cabia nas 20; `sparOpponents`

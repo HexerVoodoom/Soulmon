@@ -96,7 +96,7 @@ describe('o elemento visual do oponente e a ação de cada escola', () => {
     expect(elementStrikeForm('fogo', 'especial')).toBe('melee');
     expect(elementStrikeForm('planta', 'basica')).toBe('melee'); // tabela própria, sem alias
     expect(elementStrikeForm(undefined, 'especial')).toBe('ranged');
-    // fora da tabela: sorteio estável por (elemento, papel), REGISTRO §280
+    // fora da tabela: sorteio estável por (elemento, papel), REGISTRO §282
     expect(elementStrikeForm('elemento-que-nao-existe', 'especial')).toBe(elementStrikeForm('elemento-que-nao-existe', 'especial'));
   });
 

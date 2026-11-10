@@ -4,7 +4,7 @@ import { meleeImpactOf } from './golpeImpacto';
 import { NOVOS_DATA } from '../novosSoulmonData';
 import { ENEMY_ROSTER } from '../enemyRoster';
 
-/** Mix {ranged,melee} × {corte,splash} dos INIMIGOS (REGISTRO §280): antes 88% ranged no elenco; meta ~25% cada. */
+/** Mix {ranged,melee} × {corte,splash} dos INIMIGOS (REGISTRO §282): antes 88% ranged no elenco; meta ~25% cada. */
 type Row = { el: string; n1: string; n2: string };
 function mix(rows: Row[]) {
   const t: Record<string, number> = { 'ranged-corte': 0, 'ranged-splash': 0, 'melee-corte': 0, 'melee-splash': 0 };

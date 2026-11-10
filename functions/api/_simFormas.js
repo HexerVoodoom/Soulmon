@@ -38,7 +38,7 @@ export const chaveDaForma = (id, forma) => `sim:sprite:${id}:${forma}`;
 export const chaveDoPrompt = (id, forma) => `sim:prompt:${id}:${forma}`;
 export const chaveDaFila = (id, forma) => `sim:form:${id}:${forma}`;
 const FORMA_RE = /^(?:rookie|ultra|(?:champion|ultimate|mega)-(?:power|harmony|benevolence))$/;
-/** Maior forma cuja arte o motor GERA. Acima dela o simulado reaproveita o sprite que já tem (dono, 10/11/2026: sem arte nova para o balanço de oponentes; pendência no REGISTRO §280). */
+/** Maior forma cuja arte o motor GERA. Acima dela o simulado reaproveita o sprite que já tem (dono, 10/11/2026: sem arte nova para o balanço de oponentes; pendência no REGISTRO §282). */
 export const FORMA_GERADA_MAX = 'champion';
 const posicao = (forma) => ORDEM.indexOf(String(forma).split('-')[0]);
 

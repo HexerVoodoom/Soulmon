@@ -891,6 +891,9 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/combate/combate.test.ts` (gates 2, 3, 4, 7 e 8) e `combate.v11.test.ts` (regressão 300/300, fightSteps ≡ fight, golpe normalizado, sorte por estágio, ganchos).
 **HP INTEIRO (30/10/2026, REGISTRO §192, espelhado em `functions/api/_combate.js`):** o núcleo ainda raciocina em frações 0..1, mas todo lutador tem `hpPoints(hp)` pontos inteiros e TODA mudança de vida é arredondada a eles: `HP_POINTS_PER_HP` (30) · `hpPoints(hp)` (= max(1, round(hp·30)); o máximo que as telas mostram) · `damagePoints(frac, pts)` (golpe que causa dano tira no mínimo 1 ponto; 0 se não causa) · `startPoints(frac, pts)` (início em pontos inteiros, ≥ 1; acima de 1 é permitido — o chefe da Feira). `FightEvent` carrega os pontos que saíram da BARRA; cura e escudo também são pontos inteiros; 0 ponto = nocaute na hora.
 
+### `src/utils/combate/mixAtaques.test.ts`
+**Dono de:** a régua do mix {à distância, corpo a corpo} × {corte, splash} dos inimigos (REGISTRO §282): as 4 combinações entre 18% e 32% no elenco da Masmorra/Fenda e nas 17 criaturas da Arena (`foeStrikeForm`, `FORMA_MELEE_PCT` em `combatFx.ts`). Só teste.
+
 ### `src/utils/combate/golpeImpacto.ts`
 **Dono de:** CORTE × CONCUSSÃO do golpe corpo a corpo (dono, 05/11/2026), só visual. Função pura por lutador: palavra-chave do nome de inimigo do bestiário, senão sorteio estável (FNV-1a de `elemento|chave`) com o peso de corte por elemento; derivado herda a média dos componentes. Não toca dano, sementes nem RNG do combate. Regra e tabela: `docs/REGRA-CORTE-CONCUSSAO.md`; decisão: REGISTRO §227.
 **Exports:**

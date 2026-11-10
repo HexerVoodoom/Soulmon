@@ -131,7 +131,7 @@ describe('evolução por faixa fixa', () => {
   it.each([['A', 73, 74], ['B', 106, 107], ['C', 224, 225]])('faixa %s: Mega no dia %i, Ultra no dia %i', (f, antes, ultra) => {
     expect(progressoDoDia(novo(f), diaMais(antes)).stage).toBe('mega');
     expect(progressoDoDia(novo(f), diaMais(ultra)).stage).toBe('ultra');
-    expect(estadoDoDia(novo(f), diaMais(ultra))).toMatchObject({ stage: 'ultra' }); // sem teto (REGISTRO §280)
+    expect(estadoDoDia(novo(f), diaMais(ultra))).toMatchObject({ stage: 'ultra' }); // sem teto (REGISTRO §282)
   });
   it('faixas fixas: 50 / 50 / 70, pela skill', () => {
     const n = (f) => SIMULADOS.filter(p => p.faixa === f);
@@ -139,7 +139,7 @@ describe('evolução por faixa fixa', () => {
     expect(Math.min(...n('A').map(p => p.skill))).toBeGreaterThanOrEqual(Math.max(...n('B').map(p => p.skill)));
     expect(Math.min(...n('B').map(p => p.skill))).toBeGreaterThanOrEqual(Math.max(...n('C').map(p => p.skill)));
   });
-  it('os 120 novos partem de Rookie, sem pontos; sem teto, a curva leva até o fim (REGISTRO §280)', () => {
+  it('os 120 novos partem de Rookie, sem pontos; sem teto, a curva leva até o fim (REGISTRO §282)', () => {
     for (const p of SIMULADOS.slice(50)) expect(p.ancora).toEqual({ estagio: 'rookie', pontos: 0 });
     for (const p of SIMULADOS) {
       const final = estadoDoDia(p, diaMais(400)).stage;

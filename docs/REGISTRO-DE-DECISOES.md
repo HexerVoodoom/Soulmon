@@ -4561,7 +4561,7 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Falsifica:** o dono ver o Treino virando a fonte dominante de Honra (baixar `TREINO_TICKET_MATCHES`) ou ninguém comprar o extra (preço alto/baixo demais, ajustar `TREINO_EXTRA_TICKET_BITS`); sinal de farm via extras (baixar `TREINO_EXTRA_TICKETS_MAX`).
 
-## §280 — Oponentes com estágio variado, ícone de estágio e mix de ataques equilibrado (10/11/2026, pedido do dono por voz)
+## §282 — Oponentes com estágio variado, ícone de estágio e mix de ataques equilibrado (10/11/2026, pedido do dono por voz)
 
 **Pedido.** (1) Onde aparece o NOME do estágio do oponente, mostrar o ÍCONE (aria-label com o nome). (2) Dono é Ultimate (Transcendente) e só encontra Champions. (3) Só via ranged de corte; nunca ranged de splash; melee de splash raro.
 

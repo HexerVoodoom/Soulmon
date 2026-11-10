@@ -534,6 +534,12 @@ Cloudflare Workers (`workers/`), deploy **manual** (`cd workers && ../node_modul
 **Chamado por:** `guild.js` (`guildDonate`, `guildSlot`, vista), `_coop.js` (cartão e `coopLeave`).
 **Régua:** `functions/api/guild.casa.test.js`, `src/utils/guildRules.parity.test.ts`.
 
+### `functions/api/_oponenteEstagio.js`
+**Dono de:** a distribuição do estágio dos oponentes sorteados (10/11/2026, REGISTRO §282): `ESTAGIO_PESOS` (delta oponente−jogador: −2 3%, −1 25%, 0 40%, +1 25%, +2 7%; outro delta pesa `PESO_RESTO`) e o sorteio ponderado sem reposição usado por `pickSparOpponents` e `pickRankedOpponents`.
+**Exports:** `ESTAGIO_PESOS`, `PESO_RESTO`, `stageRankOf`, `pesoDoDelta`, `ordenarPorEstagio`.
+**Chamado por:** `_treino.js`, `_rankedPick.js`.
+**Régua:** `functions/api/_oponenteEstagio.test.js`.
+
 ### `functions/api/_rankedPick.js`
 **Dono de:** o SORTEIO RANQUEADO do Torneio (guilda-lancamento PR1, 11/10/2026): `opponents` devolve 3 oponentes aleatórios dentre os `RANKED_WINDOW` (6) mais próximos de `lifetimePoints` de quem pede — a mesma medida da faixa. O jogador não escolhe (isso é a Arena livre); o número nunca sai na resposta.
 **Exports:** `RANKED_WINDOW`, `RANKED_PICKS`, `pickRankedOpponents`.

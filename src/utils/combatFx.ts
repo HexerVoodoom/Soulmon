@@ -150,7 +150,7 @@ export const ELEMENT_STRIKE_FALLBACK: Record<SkillRole, StrikeForm> = { basica: 
 /**
  * Só para INIMIGO selvagem/de PvE (Arena, Masmorra, Fenda, Pesadelo, Raid): a tabela do elemento tinha ~65% à distância e 35% corpo a corpo,
  * então corpo a corpo era raro. Estas 6 básicas dos elementos base passam a corpo a corpo NO INIMIGO (3 de corte, 3 de splash pelo `PESO_CORTE`),
- * levando o mix {ranged,melee} × {corte,splash} a ~25% cada (REGISTRO §280; `mixAtaques.test.ts`). NÃO vale para o jogador, os 5 iniciais nem o PvP.
+ * levando o mix {ranged,melee} × {corte,splash} a ~25% cada (REGISTRO §282; `mixAtaques.test.ts`). NÃO vale para o jogador, os 5 iniciais nem o PvP.
  */
 export const FOE_MELEE_BASICA: ReadonlySet<string> = new Set(['agua', 'vida', 'som', 'ar', 'luz', 'tempo']);
 export function foeStrikeForm(element: string | undefined | null, role: SkillRole): StrikeForm {
@@ -164,7 +164,7 @@ export function elementStrikeForm(element: string | undefined | null, role: Skil
   const direto = id ? ELEMENT_STRIKE_FORM[id]?.[role] : undefined;
   if (direto) return direto;
   // Elemento FORA da tabela (os ~640 combinados/curados do bestiário): antes TODOS caíam em `ranged`, então corpo a corpo era raro (12% dos
-  // golpes do elenco). Agora é um sorteio ESTÁVEL por (elemento, papel), `FORMA_MELEE_PCT`% corpo a corpo (REGISTRO §280). Só para quem
+  // golpes do elenco). Agora é um sorteio ESTÁVEL por (elemento, papel), `FORMA_MELEE_PCT`% corpo a corpo (REGISTRO §282). Só para quem
   // NÃO tem ficha (a ficha do jogador usa a escola, e os 5 iniciais, a tabela). Sem elemento: o fallback antigo.
   if (!id) return ELEMENT_STRIKE_FALLBACK[role];
   return hashEstavel(`forma|${id}|${role}`) % 100 < FORMA_MELEE_PCT ? 'melee' : 'ranged';
