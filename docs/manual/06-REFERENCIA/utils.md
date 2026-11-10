@@ -1647,6 +1647,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Chamado por:** `src/App.tsx` e `src/utils/androidBack.ts` (`closeTopBackLayer`), `src/components/nav/AreaSheet.tsx` e `src/components/nav/AreaView.tsx` (`useBackLayer`).
 **Régua:** nenhuma direta (`ls src/utils/backStack*.test.ts` vazio) — indireta via `src/utils/androidBack.test.ts`.
 
+### `src/utils/modalDepth.ts`
+**Dono de:** o esmaecimento do VOLTAR quando há modal aberto por cima (10/11/2026). A profundidade é DERIVADA do DOM (`[aria-modal="true"]`) por um único `MutationObserver`, não por contador: modal que monta/desmonta sem cleanup não vaza. O voltar de baixo fica `disabled` + `data-modal-dimmed` (opacidade .35, sem toque); o voltar de dentro do próprio modal só esmaece se OUTRO modal abrir sobre ele.
+**Exports:** `modalsAbove(el?)`, `modalDepth()`, `useBackDimmed(ref)` — hook.
+**Chamado por:** `src/components/nav/AreaTopBar.tsx` e `src/components/ui/BackCircleButton.tsx`.
+**Régua:** `src/utils/modalDepth.render.test.tsx` (0/1/2 modais, reabilita, sem vazamento).
+
 ### `src/utils/playAreaLots.ts`
 
 > **#187 (28/10/2026):** `playAreaLots.ts` exporta `forjaLots` (Soulsmith, Oficina do Foco, Caderno, Refúgio) e `exploracaoLots` passa a ser Passeio + Fenda Sem Fim + Calabouço; `jogosLots` perde o Calabouço. `navigation.ts` ganha `BUILDING_HOME`/`buildingLot`; `gates.ts` › `MOVED_BUILDINGS` ganha os ids antigos; `areaSheetCopy.ts` ganha `sectionBuildingLabel`.
