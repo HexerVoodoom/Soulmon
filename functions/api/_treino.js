@@ -68,3 +68,61 @@ export async function grantSparHonor(env, id, day, rng) {
   if (honor > 0) await kvOrThrow(env).put(key, String(used + honor), { expirationTtl: 172800 });
   return { honor, capped: honor < roll };
 }
+
+// ---------------------------------------------------------------------------
+// TICKETS DO TREINO (dono, 10/11/2026). Todo DIA DO JOGADOR dá 1 ticket GRÁTIS = `TREINO_TICKET_MATCHES` (20) partidas COM Honra
+// (a Honra segue 1–2 por vitória, teto `SPAR_HONOR_DAILY_CAP`). Depois delas só se joga comprando ticket EXTRA: `TREINO_EXTRA_TICKET_BITS` (30)
+// Bits = +20 partidas SEM Honra, no máximo `TREINO_EXTRA_TICKETS_MAX` (3) por dia (evita farm). Só Bits, nunca Créditos: o app cobra
+// os Bits (ganhos) e o servidor só conta. O Treino nunca ranqueia. Registro `sparTicket:<id>:<dia>` = `{played, extra}`; leitura tolerante.
+// Espelho no app: `src/utils/treinoTickets.ts` (paridade em `treino.parity.test.js`).
+// ---------------------------------------------------------------------------
+export const TREINO_TICKET_MATCHES = 20;
+export const TREINO_EXTRA_TICKET_BITS = 30;
+export const TREINO_EXTRA_TICKETS_MAX = 3;
+export const sparTicketKey = (id, day) => `sparTicket:${id}:${day}`;
+
+/** Lixo vira zero; `extra` fica em 0..MAX; `played` em 0..capacidade máxima. */
+export function sanitizeSparTicket(raw) {
+  let o = raw;
+  if (typeof raw === 'string') { try { o = JSON.parse(raw); } catch { o = null; } }
+  const fin = v => { const n = Math.floor(Number(v)); return Number.isFinite(n) && n > 0 ? n : 0; };
+  const extra = Math.min(TREINO_EXTRA_TICKETS_MAX, fin(o && o.extra));
+  const played = Math.min(TREINO_TICKET_MATCHES * (1 + TREINO_EXTRA_TICKETS_MAX), fin(o && o.played));
+  return { played, extra };
+}
+
+/** O que a aba mostra: partidas com Honra que restam, partidas totais que restam e se ainda dá para comprar. */
+export function sparTicketStatus(t) {
+  const { played, extra } = sanitizeSparTicket(t);
+  const capacity = TREINO_TICKET_MATCHES * (1 + extra);
+  return {
+    played, extra, capacity,
+    honorLeft: Math.max(0, TREINO_TICKET_MATCHES - played),
+    left: Math.max(0, capacity - played),
+    canBuy: extra < TREINO_EXTRA_TICKETS_MAX,
+  };
+}
+
+export async function readSparTicket(env, id, day) {
+  const raw = await kvOrThrow(env).get(sparTicketKey(id, day)).catch(() => null);
+  return sanitizeSparTicket(raw);
+}
+const writeSparTicket = (env, id, day, t) => kvOrThrow(env).put(sparTicketKey(id, day), JSON.stringify(t), { expirationTtl: 172800 });
+
+/** Compra 1 ticket extra (a cobrança em Bits é do app). Recusa no teto: `{ ok:false }`. */
+export async function buySparTicket(env, id, day) {
+  const t = await readSparTicket(env, id, day);
+  if (t.extra >= TREINO_EXTRA_TICKETS_MAX) return { ok: false, status: sparTicketStatus(t) };
+  const next = { ...t, extra: t.extra + 1 };
+  await writeSparTicket(env, id, day, next);
+  return { ok: true, status: sparTicketStatus(next) };
+}
+
+/** Gasta 1 partida liquidada. `withHonor` = ainda cabia no ticket grátis (o servidor só paga Honra nesse caso). */
+export async function spendSparMatch(env, id, day) {
+  const t = await readSparTicket(env, id, day);
+  const withHonor = t.played < TREINO_TICKET_MATCHES;
+  const next = { ...t, played: t.played + 1 };
+  await writeSparTicket(env, id, day, next);
+  return { withHonor, status: sparTicketStatus(next) };
+}

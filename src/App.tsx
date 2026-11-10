@@ -225,7 +225,8 @@ import { ResultExtrasContext } from './components/games/ResultExtrasContext';
 import { buildResultExtras } from './utils/resultExtras';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsGranted, minigameBitsToday } from './utils/currencies';
 import { arenaRerollCost, arenaRerollsToday, applyArenaReroll, applyArenaRunEnd } from './utils/arenaSorteio';
-import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst } from './utils/bitsOrigin';
+import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst, earnedBits } from './utils/bitsOrigin';
+import { chargeTreinoTicket, TREINO_EXTRA_TICKET_BITS } from './utils/treinoTickets';
 import { applyGuildSlot } from './utils/guildHouse';
 import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMission';
 import { recordFeiraDesafio } from './utils/feiraDesafio';
@@ -8429,6 +8430,14 @@ export default function App() {
                   equippedFrame: gameState.equippedFrame ?? null,
                   ownedFrames: gameState.ownedFrames ?? [],
                   onEquipFrame: handleEquipFrame,
+                  /* Ticket extra do Treino: só Bits GANHOS (`earnedBits`); o servidor já confirmou a compra, aqui só se cobra, reconferido sobre o `prev`. */
+                  earnedBits: earnedBits(gameState),
+                  onChargeTreinoTicket: () => {
+                    if (demo) { refuseDemo(); return false; }
+                    if (earnedBits(gameState) < TREINO_EXTRA_TICKET_BITS) return false;
+                    setGameState(prev => chargeTreinoTicket(prev));
+                    return true;
+                  },
                   petElement: petElementOf(gameState),
                   language,
                   emblems: gameState.emblems ?? 0,

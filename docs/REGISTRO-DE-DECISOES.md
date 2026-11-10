@@ -4542,6 +4542,14 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Alternativa que perdeu:** sem bônus de sono. **Falsifica:** o dono ver a energia encher "rápido demais" de manhã (reduzir o fator na constante) ou jogadores dormirem o pet o dia todo só pelo bônus. **Rollback:** reverter o PR; `energyClock.sleep` ignorado por versões antigas.
 
+## §280 — Tickets do Treino: 20 partidas com Honra por dia, ticket extra de 30 Bits sem Honra (10/11/2026, decisão do dono em modal)
+
+**Decisão.** A aba Treino (§279) passa a ter TICKETS por DIA DO JOGADOR: todo dia vem **1 ticket grátis = 20 partidas COM Honra** (`TREINO_TICKET_MATCHES`; a Honra segue 1–2 por vitória e o teto de 20 Honra/dia de `SPAR_HONOR_DAILY_CAP` continua valendo). Passou das 20, só jogando com **ticket extra: `TREINO_EXTRA_TICKET_BITS` = 30 Bits (só Bits GANHOS, regra de `bitsOrigin`; nunca Créditos) = +20 partidas SEM Honra**, no máximo **`TREINO_EXTRA_TICKETS_MAX` = 3 por dia** (escolha nossa, para não virar farm). O contador mora no SERVIDOR (`sparTicket:<id>:<dia>` = `{played, extra}`; `functions/api/_treino.js`), a ação `sparBuyTicket` conta e limita, e o app só cobra os 30 Bits (`chargeTreinoTicket`) DEPOIS do ok. Partida liquidada gasta 1 (desistir não gasta); `sparStart` recusa com 409 sem partida restante. Treino nunca pontua ranking. Sem campo novo no save. UI: "Partidas com Honra hoje x/20" e oferta suave do extra ao esgotar.
+
+**Alternativa que perdeu:** (a) tickets na ARENA livre (o pedido original falava em "Arena" e "teto de 20 partidas", que na verdade não existem lá: a Arena é ilimitada e não paga Honra; o limite de 5/dia com Honra é do Torneio ranqueado); (b) manter o teto de partidas só pela Honra (sem ticket); (c) contar o ticket no save do cliente (furável por localStorage; o Treino rende Honra, então o contador fica no servidor).
+
+**Falsifica:** o dono ver o Treino virando a fonte dominante de Honra (baixar `TREINO_TICKET_MATCHES`) ou ninguém comprar o extra (preço alto/baixo demais, ajustar `TREINO_EXTRA_TICKET_BITS`); sinal de farm via extras (baixar `TREINO_EXTRA_TICKETS_MAX`).
+
 ## §279 — Torneio ganha a aba Treino (Sparring), sem ranking e com pouca Honra (10/11/2026, decisão do dono em modal)
 
 **Decisão.** O Torneio passa a ter DUAS abas: **Ranqueada** (como era) e **Treino** (EN *Sparring*): luta PvP contra outros jogadores que NÃO ranqueia (placar, rank, faixa, season e `lifetimePoints` intocados; sem cota de partidas; derrota sem castigo) e rende **1 a 2 de Honra por vitória, teto de 20 por dia do jogador**, contado e decidido no servidor. Oponentes: 5 sorteados num pool grande por faixa de **Vínculo** (±3, ampliando se houver menos de 5), nunca por ranking; **refresh ilimitado** (o servidor sorteia a cada pedido). Implementação: `functions/api/_treino.js` + ações `sparOpponents/sparStart/sparMatch` em `community.js`; UI em `TournamentPage`. Manual 02 §53 › "O Treino".

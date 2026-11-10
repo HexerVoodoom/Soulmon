@@ -243,9 +243,12 @@ const diaDoJogador = (): { zone?: string; off: number } => {
   return { ...(zone ? { zone } : {}), off: -new Date().getTimezoneOffset() * 60_000 };
 };
 export const getSparOpponents = (id: string) =>
-  call<{ opponents: Opponent[]; me?: { duel: { level: number } | null } }>('sparOpponents', { params: { id } });
+  call<{ opponents: Opponent[]; tickets?: unknown; me?: { duel: { level: number } | null } }>('sparOpponents', { params: (() => { const d = diaDoJogador(); return { id, ...(d.zone ? { zone: d.zone } : {}), off: String(d.off) }; })() });
 export const startSpar = (id: string, opponentId: string) =>
-  call<{ seed: number; me: DuelSide; opp: DuelSide }>('sparStart', { method: 'POST', body: { id, opponentId } });
+  call<{ seed: number; me: DuelSide; opp: DuelSide }>('sparStart', { method: 'POST', body: { id, opponentId, ...diaDoJogador() } });
+/** Ticket EXTRA do Treino (+20 partidas sem Honra). O servidor conta e limita (3/dia); quem chama cobra os Bits ganhos só se vier `ok`. */
+export const buySparTicket = (id: string) =>
+  call<{ tickets: unknown }>('sparBuyTicket', { method: 'POST', body: { id, ...diaDoJogador() } });
 export interface SparResult {
   won: boolean; draw?: boolean; outcome?: 'win' | 'loss' | 'draw';
   myScore: number; oppScore: number;
@@ -254,6 +257,10 @@ export interface SparResult {
   /** O teto do dia foi atingido: a vitória não rendeu (tudo de bom segue, só a Honra de hoje acabou). */
   honorCapped?: boolean;
   forfeit?: boolean;
+  /** A partida passou das 20 do ticket grátis: jogou, mas sem Honra (ticket extra). */
+  noHonorTicket?: boolean;
+  /** Estado dos tickets do dia depois desta partida (`sanitizeTreinoTickets`). */
+  tickets?: unknown;
   opponent: MatchResult['opponent'];
   duel?: { events: FightEvent[]; me: DuelSide; opp: DuelSide };
   replayed?: boolean;

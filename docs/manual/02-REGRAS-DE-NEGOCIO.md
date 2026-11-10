@@ -4941,7 +4941,7 @@ faixas, na season nem no `lifetimePoints`, não gasta a cota de partidas do dia 
 
 ```
 GET  sparOpponents ?id=  → 5 oponentes (functions/api/_treino.js › pickSparOpponents); cada GET sorteia de novo (REFRESH ILIMITADO, sem custo nem teto)
-POST sparStart {id, opponentId}   → semente do SERVIDOR + ficha dos dois lados do SAVE, congeladas em spar:<id> (KV, 1 h); NÃO gasta partida
+POST sparStart {id, opponentId, zone?, off?} → semente do SERVIDOR + ficha dos dois lados do SAVE, congeladas em spar:<id> (KV, 1 h); recusa 409 sem ticket
 POST sparMatch {id, opponentId, taps?, forfeit?, seed?, zone?, off?} → simulateDuel no servidor; vitória rende Honra; reenvio idempotente (sparDone:<id>)
 ```
 
@@ -4953,6 +4953,11 @@ POST sparMatch {id, opponentId, taps?, forfeit?, seed?, zone?, off?} → simulat
   (contador `sparHonor:<id>:<dia>` no KV, dia por `playerDayOf` com a zona/offset que o app manda; leitura tolerante; nunca por tick). Derrota, empate
   e desistência rendem 0. Sem vantagem paga. A Honra é a moeda de sempre (`emblems` no save, a das lojinhas do Mercado, aba Honra): o servidor devolve
   `honor` (e `honorCapped` quando o teto do dia já foi) e o app soma pelo MESMO caminho das outras fontes (`onEarnEmblems`), uma vez (o reenvio não soma).
+- **🎫 Tickets (REGISTRO §280):** todo DIA DO JOGADOR dá **1 ticket grátis = `TREINO_TICKET_MATCHES` (20) partidas COM Honra**; depois delas, o **ticket extra** custa
+  `TREINO_EXTRA_TICKET_BITS` (**30 Bits GANHOS**, `earnedBits`, nunca Créditos) e vale **+20 partidas SEM Honra**, até `TREINO_EXTRA_TICKETS_MAX` (**3/dia**). Contador no
+  KV (`sparTicket:<id>:<dia>`, leitura tolerante, `sparTicketStatus`); `POST sparBuyTicket {id, zone?, off?}` conta/limita e o app cobra depois do ok (`chargeTreinoTicket`,
+  `src/utils/treinoTickets.ts`); `sparStart` recusa 409 `no tickets`; `sparMatch` gasta 1 (desistir não gasta) e só paga Honra se ainda cabia nas 20; `sparOpponents`
+  devolve `tickets`. UI: "Partidas com Honra hoje x/20", extras em uso, oferta suave ao esgotar. Trava: `community.treino.tickets.test.js`, `treinoTickets.test.ts`.
 - **Contrato aditivo:** ações novas; cliente antigo ignora a aba; servidor antigo responde erro e a aba mostra "não deu para carregar" sem afetar a ranqueada.
   Nenhum campo novo de save. Telas: `TournamentPage` (abas `Segment`), textos PT/EN, `InfoTip`, GuideModal e HelpModal.
 - **Travas:** `functions/api/community.treino.test.js` (faixa, 5 candidatos, refresh ilimitado, não toca rank/perfil, teto de 20, derrota sem Honra,
