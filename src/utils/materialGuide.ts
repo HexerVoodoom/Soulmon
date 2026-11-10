@@ -8,7 +8,7 @@
  * lugar no inventário: Fragmento do Soulsmith (`equipment.fragments`), Fragmento de Boss (`bossShards`) e as Essências dos elementos
  * (`essences`). Material sem uso HOJE diz isso com franqueza (`usoAinda`), em vez de inventar um.
  */
-import { MATERIAL_BUILDING, type MaterialId } from './buildingQuests';
+import { LISTED_QUEST_BUILDINGS, MATERIAL_BUILDING, type MaterialId } from './buildingQuests';
 import { FORGE_PIECES, REDO_BITS, REDO_FRAGMENTS } from './forge';
 import { itemName } from './equipmentCopy';
 import { FOCUS_ENVIRONMENTS } from './focusExpedition';
@@ -79,9 +79,15 @@ export function usesOfMaterial(id: MaterialId, isPt: boolean): string[] {
 /** O guia de um material de prédio. `buildingName` é o nome do prédio dono (o mesmo que o Mapa mostra). */
 export function guideOfMaterial(id: MaterialId, isPt: boolean, buildingName: string): MaterialGuide {
   const exp = expeditionsOf(id).map(e => (isPt ? e.pt : e.en));
+  /* Prédio LISTADO (hoje o Caderno): a missão NÃO conclui ao entrar — pede a ação real (um registro) e o "Resgatar" na Home
+     (`applyBuildingEntry`). Os outros pagam na própria entrada. A frase tem que dizer o que de fato acontece. */
+  const listado = (LISTED_QUEST_BUILDINGS as readonly string[]).includes(MATERIAL_BUILDING[id]);
+  const como = listado
+    ? (isPt ? '1 por dia, ao fazer um registro e resgatar a missão' : '1 a day, by writing an entry and claiming the mission')
+    : (isPt ? '1 por dia, só por entrar no prédio' : '1 a day, just by stepping in');
   const sources = isPt
-    ? `Missão diária de ${buildingName} (1 por dia, só por entrar no prédio)${exp.length ? ` e expedições do Foco: ${lista(exp, true)}` : ''}.`
-    : `The daily mission at ${buildingName} (1 a day, just by stepping in)${exp.length ? ` and Focus expeditions: ${lista(exp, false)}` : ''}.`;
+    ? `Missão diária de ${buildingName} (${como})${exp.length ? ` e expedições do Foco: ${lista(exp, true)}` : ''}.`
+    : `The daily mission at ${buildingName} (${como})${exp.length ? ` and Focus expeditions: ${lista(exp, false)}` : ''}.`;
   return {
     sources,
     uses: usesOfMaterial(id, isPt),

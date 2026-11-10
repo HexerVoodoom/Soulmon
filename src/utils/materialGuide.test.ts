@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { MATERIAL_IDS, MATERIAL_BUILDING } from './buildingQuests';
+import { MATERIAL_IDS, MATERIAL_BUILDING, LISTED_QUEST_BUILDINGS } from './buildingQuests';
 import { MATERIALS } from './buildingQuestsCopy';
 import { FORGE_PIECES } from './forge';
 import { DISHES } from './restaurant';
@@ -32,6 +32,14 @@ describe('guia dos materiais: onde conseguir e para que serve (derivado do códi
     for (const id of MATERIAL_IDS) {
       expect(usesOfMaterial(id, true).some(u => u.startsWith('Restaurante')), id).toBe(usados.has(id));
     }
+  });
+  it('"só por entrar" só vale para prédio que paga na entrada: o Caderno (listado) pede registro + resgate', () => {
+    for (const id of MATERIAL_IDS) {
+      const listado = (LISTED_QUEST_BUILDINGS as readonly string[]).includes(MATERIAL_BUILDING[id]);
+      expect(guideOfMaterial(id, true, 'X').sources.includes('só por entrar'), id).toBe(!listado);
+      expect(guideOfMaterial(id, false, 'X').sources.includes('just by stepping in'), id).toBe(!listado);
+    }
+    expect(guideOfMaterial('ink', true, 'Caderno').sources).toMatch(/registro/);
   });
   it('as expedições do Foco entram na fonte', () => {
     for (const id of MATERIAL_IDS) {
