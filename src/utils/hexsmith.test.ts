@@ -18,7 +18,7 @@ describe('hexsmith — catálogo', () => {
     expect(HEX_SLOTS).toEqual(['coroa', 'amuleto', 'garra', 'couraca', 'luvas']);
     expect(parseHexItem('garra:agua')).toEqual({ slot: 'garra', value: 'agua' });
     expect(parseHexItem('coroa:heal')).toEqual({ slot: 'coroa', value: 'heal' });
-    expect(parseHexItem('luvas:ranged')).toEqual({ slot: 'luvas', value: 'ranged' });
+    expect(parseHexItem('luvas:magic')).toEqual({ slot: 'luvas', value: 'magic' });
     for (const bad of ['garra:nao_existe', 'coroa:agua', 'luvas:agua', 'chapeu:agua', ':agua', 'garra', 42, null]) {
       expect(parseHexItem(bad)).toBeUndefined();
     }
@@ -27,12 +27,12 @@ describe('hexsmith — catálogo', () => {
     expect(hexValuesOf('amuleto')).toBe(ALL_ELEMENT_IDS);
     expect(ALL_ELEMENT_IDS.length).toBe(210);
     expect(hexValuesOf('coroa').length).toBe(7);
-    expect(hexValuesOf('luvas')).toEqual(['ranged', 'melee']);
+    expect(hexValuesOf('luvas')).toEqual(['magic', 'ranged-slash', 'melee-slash', 'melee-smash']);
   });
   it('custos: elemento paga poções do próprio elemento; coroa e luvas pagam fragmentos + Bits', () => {
     expect(hexCost('couraca:agua')).toEqual({ ...HEX_COSTS.element, potionElement: 'agua' });
     expect(hexCost('coroa:dot')).toEqual(HEX_COSTS.coroa);
-    expect(hexCost('luvas:melee')).toEqual(HEX_COSTS.luvas);
+    expect(hexCost('luvas:melee-slash')).toEqual(HEX_COSTS.luvas);
     expect(hexCost('x')).toBeUndefined();
   });
 });
@@ -78,14 +78,14 @@ describe('hexsmith — equipar e ler', () => {
     expect(equipHexItem(s0, 'garra:terra')).toBe(s0);
   });
   it('sanitiza lixo: posse inválida sai, equipado sem posse ou no slot errado sai', () => {
-    expect(sanitizeHexsmith({ owned: ['garra:agua', 'garra:agua', 'lixo', 3], equipped: { garra: 'garra:agua', coroa: 'garra:agua', luvas: 'luvas:melee' } }))
+    expect(sanitizeHexsmith({ owned: ['garra:agua', 'garra:agua', 'lixo', 3], equipped: { garra: 'garra:agua', coroa: 'garra:agua', luvas: 'luvas:melee-slash' } }))
       .toEqual({ owned: ['garra:agua'], equipped: { garra: 'garra:agua' } });
     expect(sanitizeHexsmith(null)).toEqual({ owned: [], equipped: {} });
   });
   it('overrides: só o equipado reescreve', () => {
-    const hx = { owned: ['coroa:heal', 'amuleto:fogo', 'garra:agua', 'couraca:terra', 'luvas:ranged'],
-      equipped: { coroa: 'coroa:heal', amuleto: 'amuleto:fogo', garra: 'garra:agua', couraca: 'couraca:terra', luvas: 'luvas:ranged' } };
-    expect(hexOverrides(hx)).toEqual({ specialFamily: 'heal', specialElement: 'fogo', basicElement: 'agua', defenseElement: 'terra', strike: 'ranged' });
+    const hx = { owned: ['coroa:heal', 'amuleto:fogo', 'garra:agua', 'couraca:terra', 'luvas:magic'],
+      equipped: { coroa: 'coroa:heal', amuleto: 'amuleto:fogo', garra: 'garra:agua', couraca: 'couraca:terra', luvas: 'luvas:magic' } };
+    expect(hexOverrides(hx)).toEqual({ specialFamily: 'heal', specialElement: 'fogo', basicElement: 'agua', defenseElement: 'terra', strike: 'magic' });
     expect(hexOverrides(undefined)).toEqual({});
   });
 });

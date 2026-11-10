@@ -8,13 +8,22 @@ import { SPECIAL_FAMILIES } from './_combate.js';
 
 export const HEX_SLOTS = ['coroa', 'amuleto', 'garra', 'couraca', 'luvas'];
 export const HEX_ELEMENT_SLOTS = ['amuleto', 'garra', 'couraca'];
-export const HEX_STRIKES = ['ranged', 'melee'];
+export const HEX_STRIKES = ['magic', 'ranged-slash', 'melee-slash', 'melee-smash'];
+/** Espelho de `LEGACY_STRIKE`/`migrateHexId` (app): `luvas:ranged` -> `luvas:magic`, `luvas:melee` -> `luvas:melee-slash`. Idempotente. */
+const LEGACY_STRIKE = { ranged: 'magic', melee: 'melee-slash' };
+/** @param {unknown} id */
+export function migrateHexId(id) {
+  if (typeof id !== 'string' || !id.startsWith('luvas:')) return id;
+  const to = /** @type {Record<string, string>} */ (LEGACY_STRIKE)[id.slice(6)];
+  return to ? `luvas:${to}` : id;
+}
 export const HEX_MAX_OWNED = 3 * 210 + 7 + 2;
 
 const ELEMENT_IDS = new Set([...COUNTER_RING, ...Object.keys(BASE_DO_PAR)]);
 
-/** @param {unknown} id @returns {{ slot: string, value: string } | undefined} */
-export function parseHexItem(id) {
+/** @param {unknown} idRaw @returns {{ slot: string, value: string } | undefined} */
+export function parseHexItem(idRaw) {
+  const id = migrateHexId(idRaw);
   if (typeof id !== 'string') return undefined;
   const i = id.indexOf(':');
   if (i < 1) return undefined;
@@ -33,7 +42,8 @@ export function sanitizeHexsmith(raw) {
   /** @type {string[]} */
   const owned = [];
   if (Array.isArray(r.owned)) {
-    for (const id of r.owned) {
+    for (const raw of r.owned) {
+      const id = /** @type {string} */ (migrateHexId(raw));
       if (owned.length >= HEX_MAX_OWNED) break;
       if (parseHexItem(id) && !owned.includes(id)) owned.push(id);
     }
@@ -42,7 +52,7 @@ export function sanitizeHexsmith(raw) {
   const equipped = {};
   const eq = r.equipped && typeof r.equipped === 'object' ? /** @type {Record<string, unknown>} */ (r.equipped) : {};
   for (const slot of HEX_SLOTS) {
-    const id = eq[slot];
+    const id = /** @type {string} */ (migrateHexId(eq[slot]));
     if (typeof id === 'string' && owned.includes(id) && parseHexItem(id)?.slot === slot) equipped[slot] = id;
   }
   return { owned, equipped };
@@ -96,7 +106,7 @@ const num = (v) => (typeof v === 'number' && Number.isFinite(v) && v > 0 ? v : 0
 export function forgeOnServer(stored, itemId) {
   const c = typeof itemId === 'string' ? hexCost(itemId) : undefined;
   if (!c) return { ok: false, reason: 'invalid' };
-  const id = /** @type {string} */ (itemId);
+  const id = /** @type {string} */ (migrateHexId(itemId));
   const hx = sanitizeHexsmith(stored.hexsmith);
   if (hx.owned.includes(id)) return { ok: true, already: true, state: stored };
   if (hx.owned.length >= HEX_MAX_OWNED) return { ok: false, reason: 'invalid' };

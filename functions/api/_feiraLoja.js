@@ -21,7 +21,7 @@ import { kvOrThrow } from './_kv.js';
 import { feiraLigada, hash32 } from './_feira.js';
 import { COUNTER_RING } from './_elementoBase.js';
 import { SPECIAL_FAMILIES } from './_combate.js';
-import { hexCost, sanitizeHexsmith, HEX_MAX_OWNED, parseHexItem } from './_hexsmith.js';
+import { hexCost, sanitizeHexsmith, HEX_MAX_OWNED, HEX_STRIKES, parseHexItem } from './_hexsmith.js';
 
 /** Chance (em %) de uma volta da Missão encontrar a feira de verdade. Constante, sem custo extra para a pessoa. */
 export const FEIRA_LOJA_PCT = 8;
@@ -178,7 +178,7 @@ const ordenar = (lista, semente, rotulo) => [...lista].sort((a, b) => hash32(`${
 function candidatosHex() {
   const ids = [
     ...SPECIAL_FAMILIES.map(f => `coroa:${f}`),
-    'luvas:ranged', 'luvas:melee',
+    ...HEX_STRIKES.map(v => `luvas:${v}`),
     ...['amuleto', 'garra', 'couraca'].flatMap(s => COUNTER_RING.map(e => `${s}:${e}`)),
   ];
   return ids.filter(id => parseHexItem(id)).map(id => ({ id, tipo: 'hex', preco: hexCost(id)?.bits ?? 0 }));

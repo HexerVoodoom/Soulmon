@@ -29,7 +29,7 @@ import {
   sanitizeHexsmith, unequipHexSlot, type HexSlot, type HexStrike,
 } from '../../utils/hexsmith';
 import type { SpecialFamily } from '../../utils/combate/specials';
-import { HEX_FAMILY_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_UI, hexName, hexRefusalText, tx } from '../../utils/hexsmithCopy';
+import { HEX_FAMILY_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_STRIKE_LEGEND, HEX_UI, hexName, hexRefusalText, tx } from '../../utils/hexsmithCopy';
 import { getSpriteForStage } from '../../utils/sprites';
 import { cloudHexForge } from '../../utils/cloudSave';
 import { readLocal } from '../../utils/safeStorage';
@@ -73,6 +73,11 @@ export function hexValueName(slot: HexSlot, value: string, isPt: boolean): strin
   return tx(HEX_STRIKE_COPY[value as HexStrike], isPt);
 }
 
+/** Legenda curta do ataque das Luvas (só nas Luvas; os outros slots não têm). */
+function hexLegend(slot: HexSlot, value: string, isPt: boolean): string | null {
+  return slot === 'luvas' && HEX_STRIKE_LEGEND[value as HexStrike] ? tx(HEX_STRIKE_LEGEND[value as HexStrike], isPt) : null;
+}
+
 export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, evolutionStage, skills, petElement, demoCharacterId }: HexsmithSheetProps) {
   const ctx = useGameStateOptional();
   const isPt = language === 'pt-BR';
@@ -84,7 +89,7 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
   const over = useMemo(() => hexOverrides(hx), [hx]);
   const orig = useMemo(() => {
     const id = fighterIdentity(evolutionStage ? skills?.[fichaStageOf(evolutionStage)] : undefined, petElement);
-    return { coroa: id.especial.familia as string, amuleto: id.especial.elemento, garra: id.basico.elemento, couraca: petElement ?? id.basico.elemento, luvas: id.basico.forma as string };
+    return { coroa: id.especial.familia as string, amuleto: id.especial.elemento, garra: id.basico.elemento, couraca: petElement ?? id.basico.elemento, luvas: '' };
   }, [evolutionStage, skills, petElement]);
   const sprite = spriteProp ?? (evolutionStage ? getSpriteForStage(evolutionStage, demoCharacterId) : null);
   if (!ctx || !gs) return null;
@@ -95,7 +100,7 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
   };
   const origName = (slot: HexSlot) => {
     const v = orig[slot];
-    if (slot === 'luvas') return v === 'ranged' || v === 'melee' ? hexValueName(slot, v, isPt) : tx(HEX_UI.original, isPt);
+    if (slot === 'luvas') return tx(HEX_UI.original, isPt);
     if (slot === 'coroa') return HEX_FAMILY_COPY[v as SpecialFamily] ? hexValueName(slot, v, isPt) : tx(HEX_UI.original, isPt);
     return v ? elName(v, isPt) : tx(HEX_UI.original, isPt);
   };
@@ -251,7 +256,7 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
                       <>
                         <div className="sm2-hex-row" data-on="true" data-hex-is-equipped>
                           <SlotFace slot={slot} value={v} size={ICON_ROW} />
-                          <span className="sm2-hex-row-name">{hexValueName(slot, v, isPt)}</span>
+                          <span className="sm2-hex-row-name">{hexValueName(slot, v, isPt)}{hexLegend(slot, v, isPt) && <small data-hex-legend style={{ display: 'block', fontWeight: 400, opacity: 0.8 }}>{hexLegend(slot, v, isPt)}</small>}</span>
                           <span className="sm2-hex-row-tag"><Icon name="check" size={ICON_INLINE} fill={1} tone="inherit" />{tx(HEX_UI.equipped, isPt)}</span>
                         </div>
                         <div data-hex-clear><ActionRow label={tx(HEX_UI.clear, isPt)} onClick={onClear} language={language as Language} /></div>
@@ -259,7 +264,7 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
                     ) : (
                       <div className="sm2-hex-row">
                         <SlotFace slot={slot} value={v} size={ICON_ROW} />
-                        <span className="sm2-hex-row-name">{hexValueName(slot, v, isPt)}</span>
+                        <span className="sm2-hex-row-name">{hexValueName(slot, v, isPt)}{hexLegend(slot, v, isPt) && <small data-hex-legend style={{ display: 'block', fontWeight: 400, opacity: 0.8 }}>{hexLegend(slot, v, isPt)}</small>}</span>
                         <button type="button" data-hex-equip={id} onClick={() => onEquip(id)} style={sm2Button('outline', false, 'sm')}>{tx(HEX_UI.equip, isPt)}</button>
                       </div>
                     )}
@@ -296,7 +301,7 @@ function SlotPanel({ slot, isPt, language, gs, aviso, onClose, onForge, onEquip,
                     <button type="button" data-hex-item={id} data-hex-affordable={ok} aria-pressed={on} className="sm2-hex-row"
                       data-on={on} data-ok={ok} onClick={() => setPicked(on ? null : id)}>
                       {on ? <Icon name="check" size={ICON_ROW} fill={1} tone="inherit" /> : <SlotFace slot={slot} value={v} size={ICON_ROW} />}
-                      <span className="sm2-hex-row-name">{hexValueName(slot, v, isPt)}</span>
+                      <span className="sm2-hex-row-name">{hexValueName(slot, v, isPt)}{hexLegend(slot, v, isPt) && <small data-hex-legend style={{ display: 'block', fontWeight: 400, opacity: 0.8 }}>{hexLegend(slot, v, isPt)}</small>}</span>
                       <span className="sm2-hex-row-cost sm2-num">
                         {c.potions > 0 && <span>{pot}/{c.potions} {tx(HEX_UI.potions, isPt)}</span>}
                         {c.fragments > 0 && <span>{frags}/{c.fragments} {tx(HEX_UI.fragments, isPt)}</span>}

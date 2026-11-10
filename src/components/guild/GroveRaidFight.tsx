@@ -88,7 +88,7 @@ export function GroveRaidFight({ isPt, seed, combatant, skills, petElement, evol
     playerElement: sp => fxElementId(sp ? ident.especial.elemento : ident.basico.elemento),
     foeElement: f => foeEl[f] ?? foeEl[0],
     playerKind: sp => (sp ? ident.especial.forma : ident.basico.forma),
-    playerImpact: sp => meleeImpactOf({ element: sp ? ident.especial.elemento : ident.basico.elemento, key: chaveDaIdentidade(ident) }),
+    playerImpact: sp => (!sp && ident.basico.impacto) || meleeImpactOf({ element: sp ? ident.especial.elemento : ident.basico.elemento, key: chaveDaIdentidade(ident) }),
     foeImpact: f => meleeImpactOf({ element: foeEl[f] ?? foeEl[0], key: `${f}|${foeEl[f] ?? foeEl[0]}` }),
     foeKind: (f, sp) => elementStrikeForm(foeEl[f] ?? foeEl[0], sp ? 'especial' : 'basica'),
     labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },

@@ -125,8 +125,8 @@ describe('a feira de verdade: a oferta', () => {
     if (chips.length) expect(sortearFeiraLoja(conta, '2026-11-10', new Set(chips)).items.map(i => i.id)).toEqual(expect.arrayContaining(chips));
   });
   it('possuidosDoSave lê cenário, decoração e Hexsmith; save ilegível = nada', () => {
-    const s = possuidosDoSave({ ownedBackgrounds: ['bg-a'], ownedFurniture: ['furn-b'], hexsmith: { owned: ['luvas:ranged'], equipped: {} } });
-    expect(s.has('bg-a') && s.has('furn-b') && s.has('luvas:ranged')).toBe(true);
+    const s = possuidosDoSave({ ownedBackgrounds: ['bg-a'], ownedFurniture: ['furn-b'], hexsmith: { owned: ['luvas:magic'], equipped: {} } });
+    expect(s.has('bg-a') && s.has('furn-b') && s.has('luvas:magic')).toBe(true);
     expect(possuidosDoSave(null).size).toBe(0);
   });
 });
