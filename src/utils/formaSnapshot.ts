@@ -45,16 +45,28 @@ const nivelIdx = (stage: string): number => ORDEM.indexOf(getStageLevel(stage));
 export const chaveDaForma = (formId: string, equip?: Record<string, string>): string =>
   equip?.[formId] ? `${formId}@${equip[formId]}` : formId;
 
+/**
+ * A poção pertence à forma cujo ELEMENTO (a parte `@elemento` da chave) é ela. Foto de `forma@original` ou `forma@sabbat` com poção
+ * `fada` é a poção de OUTRA forma, gravada por cima (o app antigo fazia a forma sem foto herdar a poção e a fotografava ao sair —
+ * save real do dono, 10/11/2026). Chave sem `@` (forma sem alternativa equipada) não é julgada.
+ */
+const pocaoDaChave = (chave: string, pocao: string | undefined): string | undefined => {
+  const el = chave.includes('@') ? chave.split('@')[1] : undefined;
+  return el && pocao !== el ? undefined : pocao;
+};
+
 /** Fotografa a forma ATUAL (o estado vivo é a verdade dela). */
 export function capturarForma<T extends FormaState>(s: T): T {
   const nivel = fichaStageOf(s.evolutionStage);
   const foto: FormaSnapshot = {};
-  if (s.potionElement) foto.pocao = s.potionElement;
+  const chave = chaveDaForma(s.evolutionStage, s.formaAltEquipada);
+  const pocao = pocaoDaChave(chave, s.potionElement);
+  if (pocao) foto.pocao = pocao;
   const el = s.elementoJornada?.estagios?.[nivel];
   if (el) foto.elemento = el;
   const sk = s.soulmonSkills?.[nivel];
   if (sk) foto.skills = sk;
-  return { ...s, formaSnapshots: { ...(s.formaSnapshots ?? {}), [chaveDaForma(s.evolutionStage, s.formaAltEquipada)]: foto } };
+  return { ...s, formaSnapshots: { ...(s.formaSnapshots ?? {}), [chave]: foto } };
 }
 
 /**
@@ -129,7 +141,8 @@ export function sanitizeFormaSnapshots(raw: unknown): FormaSnapshots | undefined
     if (!/^[a-z-]{2,40}(@[a-z_]{2,24})?$/.test(k) || !v || typeof v !== 'object' || Array.isArray(v)) continue;
     const r = v as Record<string, unknown>;
     const f: FormaSnapshot = {};
-    if (typeof r.pocao === 'string' && /^[a-z_]{2,24}$/.test(r.pocao)) f.pocao = r.pocao;
+    // Migração tolerante: saves já gravados com a poção de outra forma na foto (ver `pocaoDaChave`) são curados na leitura.
+    if (typeof r.pocao === 'string' && /^[a-z_]{2,24}$/.test(r.pocao)) { const p = pocaoDaChave(k, r.pocao); if (p) f.pocao = p; }
     const e = r.elemento as Record<string, unknown> | undefined;
     if (e && typeof e === 'object' && typeof e.id === 'string' && typeof e.base === 'string') f.elemento = { id: e.id, base: e.base };
     if (r.skills && typeof r.skills === 'object' && !Array.isArray(r.skills)) f.skills = r.skills as StageSkills;
