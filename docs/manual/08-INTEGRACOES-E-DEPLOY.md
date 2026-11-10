@@ -91,7 +91,7 @@ São **27** rotas de `functions/api/` (`grep -lE "export (async function|const|f
 | `/api/velado-teste` (NOVA, 01/11/2026) | `GET` — `{ tester }` do PRÓPRIO ID token (`Cache-Control: private, no-store`); nunca devolve a lista | `velado-teste.js` |
 | `/api/top-ai` (NOVA) | `GET ?day=` (`X-Metrics-Key`) | `top-ai.js` |
 | `/api/transcribe` | `OPTIONS`, `POST` | `transcribe.js` |
-| `/gm/soulmons`, `/gm/rift`, `/gm/carta` (páginas) | `GET` (HTML sem dados; login Firebase no navegador). ⚠️ **Hoje NÃO abrem no navegador**: o `assets.not_found_handling = single-page-application` do `wrangler.jsonc` responde com o `index.html` antes da Function (ver §2.15) | `functions/gm/soulmons.js`, `functions/gm/rift.js`, `functions/gm/carta.js` |
+| `/gm/soulmons`, `/gm/rift`, `/gm/carta` (páginas) | `GET` (HTML sem dados; login Firebase no navegador). Desde 10/11/2026 são ARQUIVOS ESTÁTICOS `dist/gm/*.html` (gerados por `scripts/build-gm-pages.mjs` a partir das Functions), servidos antes do fallback SPA (§2.15) | `functions/gm/soulmons.js`, `functions/gm/rift.js`, `functions/gm/carta.js` |
 | `/.well-known/assetlinks.json` | `ANY` (lista vazia sem `ASSETLINKS_SHA256`; pacote padrão `com.soulmon`) | `functions/.well-known/assetlinks.json.js` |
 
 ### 1.1 Os módulos internos que quase toda rota atravessa
@@ -595,7 +595,7 @@ encontrava 404 com o token ainda válido e nada mais para apagar. A resposta tra
 
 ### 2.15 Rotas do GM e do beta (11/10 a 28/10/2026)
 
-> ⚠️ **`/gm/*` não abre no navegador hoje (09/11/2026).** Duas coisas, não confundir: (1) `functions/gm/*` **NÃO foi apagado** — o delta lista o glob como removido, mas `_gmPage.js`, `soulmons.js`, `rift.js` e `carta.js` (nova, §244) existem; (2) as três páginas HTML ficam inalcançáveis porque `assets.not_found_handling = "single-page-application"` faz o navegador receber o `index.html` do SPA antes da Pages Function. O conserto óbvio, `assets.run_worker_first` para `/gm/*` (`a4f90382b`), foi **revertido no mesmo dia** (`9454d68a8`) porque **derrubou `/api/*` em produção** (o `GET` devolvia o `index.html`). **Não habilitar `run_worker_first`** sem um desenho que preserve `/api/*`. As rotas de dados (`/api/gm-*`) continuam funcionando por chamada direta com o ID token do GM; a carta de teste (`POST /api/gm-carta-teste`) idem.
+> ✅ **`/gm/*` abre no navegador (10/11/2026).** Causa: `assets.not_found_handling = "single-page-application"` responde o `index.html` a toda NAVEGAÇÃO antes do Worker, então `functions/gm/*.js` só era alcançada por `curl`. O conserto óbvio, `assets.run_worker_first` (`a4f90382b`), foi revertido (`9454d68a8`) porque derrubou `/api/*`. **Solução adotada, sem tocar em `assets`:** `scripts/build-gm-pages.mjs` (passo do `npm run build`) executa o `onRequestGet` de cada página (`soulmons`, `rift`, `carta`, `reviews`) e grava `dist/gm/<nome>.html` — arquivo existente é servido ANTES do fallback SPA. Sem nonce por requisição, os `<script>` inline são liberados por HASH sha256 na CSP, escrita por página no bloco `# >>> gm-pages` do `dist/_headers` (`!` destaca os cabeçalhos globais). `dist/` é commitado: rodar `node scripts/build-gm-pages.mjs` depois de mudar `functions/gm/*` (o teste `src/deploy/gmPaginasEstaticas.contract.test.ts` falha se estiver defasado e se `run_worker_first` reaparecer). **Não habilitar `run_worker_first`.** As rotas de dados (`/api/gm-*`) seguem pelo Worker com o ID token do GM.
 
 As rotas de ADMIN (`GET /api/crash`, `top-ai`, `sprite-admin`, `gm-*`) respondem **404 sem a variável** (`METRICS_ADMIN_KEY`) ou **403 `forbidden` idêntico** a quem não é GM — nenhuma confirma que existe.
 
@@ -645,7 +645,7 @@ nome e o ícone do Soulmon.
 - `wrangler.jsonc` declara: `main` = `./dist/_worker.js/index.js`, `assets` =
   `./dist` com `not_found_handling: "single-page-application"`, os três KV
   (`SOULMON_SAVES`, `DIGIAPP_SAVES`, `PUSH_SUBSCRIPTIONS`), o D1 (`DB` →
-  `soulmon-billing`) e `vars` (`FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `SIMULADOS_ON`, `SIMULADOS_FORMAS_ON` — §0), e, desde 05/11/2026, `ratelimits` (`FEEDBACK_RL`). ⚠️ **`assets.run_worker_first` NÃO está habilitado e não deve ser**: foi ligado e desligado em 09/11/2026 porque quebrava `/api/*` (§2.15). ⚠️ **Desde 20/10/2026 há saves reais** (teste fechado na Play, `126a7d5148`): trocar o `id` do binding `SOULMON_SAVES` ou apagar o `DIGIAPP_SAVES` exige backup e conferência antes (comentário do próprio `wrangler.jsonc`; `scripts/backup-saves.mjs`) — a "separação sem migrar" de 07/09/2026 não se repete.
+  `soulmon-billing`) e `vars` (`FIREBASE_PROJECT_ID`, `FIREBASE_API_KEY`, `FIREBASE_AUTH_DOMAIN`, `SIMULADOS_ON`, `SIMULADOS_FORMAS_ON` — §0), e, desde 05/11/2026, `ratelimits` (`FEEDBACK_RL`). ⚠️ **`assets.run_worker_first` NÃO está habilitado e não deve ser** (as páginas `/gm/*` são estáticas, §2.15): foi ligado e desligado em 09/11/2026 porque quebrava `/api/*` (§2.15). ⚠️ **Desde 20/10/2026 há saves reais** (teste fechado na Play, `126a7d5148`): trocar o `id` do binding `SOULMON_SAVES` ou apagar o `DIGIAPP_SAVES` exige backup e conferência antes (comentário do próprio `wrangler.jsonc`; `scripts/backup-saves.mjs`) — a "separação sem migrar" de 07/09/2026 não se repete.
 - **Fluxo**: desenvolva na branch de trabalho → commit → push → merge **ff-only**
   em `main` → push da `main` → volte para a branch.
 
