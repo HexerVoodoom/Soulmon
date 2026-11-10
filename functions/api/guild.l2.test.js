@@ -239,7 +239,7 @@ describe('B5 — gesto numa roda de 2 não diz o tipo', () => {
  */
 export const ORCAMENTO = {
   // +1 leitura (11/10, casa da guilda): o cartão do membro resume também `coopCasa:<gid>:<save>`.
-  // +1 leitura (R5/A, 26/10, Loja do clã): a vista lê `coopLoja:<gid>` (uma por vista, não por membro).
+  // +1 leitura (R5/A, 26/10, Loja do clã): a vista lê `coopBuffs:<gid>` (uma por vista, não por membro; 10/11/2026: os Buffs do clã trocaram a Loja).
   // +1 escrita (30/10, §203): a entrada do clã no diretório `coopDir:<dirId>` nasce junto.
   criar: { get: 17, put: 6 },
   // +1 leitura (30/10, §203): entrar apaga o pedido pendente de quem entra (`coopReq:<save>`).

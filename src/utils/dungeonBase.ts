@@ -29,6 +29,7 @@ import { REFERENCE_BUILDS, combatantAt } from './combate/level';
 import { specialOf } from './combate/specials';
 import type { NovoAttack } from './novosSoulmon';
 import { STORAGE_KEYS } from './storageKeys';
+import { BUFF_DROP_MULT, clanBuffActive } from './guildBuffs';
 import { readJson, readNumber, writeJson, writeLocal } from './safeStorage';
 
 export interface DungeonEnemy {
@@ -165,6 +166,11 @@ export function recordDungeonScore(score: number): number {
 }
 
 // ── Heart drops ──────────────────────────────────────────────────────────────
+/** A chance por inimigo (base + passiva), ×1,10 com o buff "Achados" do clã ativo (10/11/2026). O ÚNICO cálculo da chance (jogo ao vivo e descida sozinha). */
+export function heartDropChance(bonusChance: number, nowMs: number): number {
+  return (HEART_DROP_CHANCE + bonusChance) * (clanBuffActive('drop', nowMs) ? BUFF_DROP_MULT : 1);
+}
+
 /** Roll for a heart drop (capped per day). Returns true when one dropped. */
 export function rollDungeonHeartDrop(bonusChance = 0): boolean {
   const today = new Date().toDateString();
@@ -173,7 +179,8 @@ export function rollDungeonHeartDrop(bonusChance = 0): boolean {
     STORAGE_KEYS.DUNGEON_HEART_DROPS, null);
   if (saved?.date === today) rec = { date: today, count: Number(saved.count) || 0 };
   if (rec.count >= HEART_DROP_DAILY_CAP) return false;
-  if (Math.random() > HEART_DROP_CHANCE + bonusChance) return false;
+  // 🫂 Buff do clã "Achados" (10/11/2026): ×1,10 na chance (o teto diário acima continua valendo). Único ponto de drop da masmorra.
+  if (Math.random() > heartDropChance(bonusChance, Date.now())) return false;
   // Teto diário de cura: se não persistir, o jogador ganha itens acima do teto.
   // É regra de economia — a falha AVISA.
   writeJson(STORAGE_KEYS.DUNGEON_HEART_DROPS, { date: today, count: rec.count + 1 });

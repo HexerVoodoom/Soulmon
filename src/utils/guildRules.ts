@@ -67,7 +67,8 @@ export type RaidPhenomenon = (typeof RAID_PHENOMENA)[number];
 export const CASA_STAGES = ['fagulha', 'haste', 'latao', 'flores', 'cristais', 'aurora'] as const;
 export type CasaStageId = (typeof CASA_STAGES)[number];
 export const CASA_BITS_POR_PONTO = 10;
-export const CASA_BITS_POR_DIA = 200;
-export const CASA_BITS_MIN = 10;
-/** Doações oferecidas (Bits, múltiplos de `CASA_BITS_POR_PONTO`). */
+/** UMA doação por dia do jogador: o teto do dia é a maior doação (10/11/2026; antes 200 em várias). */
+export const CASA_BITS_POR_DIA = 100;
+export const CASA_BITS_MIN = 50;
+/** As ÚNICAS doações aceitas (Bits; uma por dia do jogador). */
 export const CASA_DOACOES = [50, 100] as const;

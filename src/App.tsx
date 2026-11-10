@@ -226,7 +226,7 @@ import { ResultExtrasContext } from './components/games/ResultExtrasContext';
 import { buildResultExtras } from './utils/resultExtras';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsGranted, minigameBitsToday } from './utils/currencies';
 import { arenaRerollCost, arenaRerollsToday, applyArenaReroll, applyArenaRunEnd } from './utils/arenaSorteio';
-import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst, earnedBits } from './utils/bitsOrigin';
+import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst, spendEarnedBits, earnedBits } from './utils/bitsOrigin';
 import { chargeTreinoTicket, TREINO_EXTRA_TICKET_BITS } from './utils/treinoTickets';
 import { applyGuildSlot } from './utils/guildHouse';
 import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMission';
@@ -5113,12 +5113,9 @@ export default function App() {
     setGameState(prev => grantGuildScenes(prev, ids));
   }, [setGameState]);
 
-  /** CASA DA GUILDA: desconta SÓ o que o servidor aceitou (nunca o pedido) — Bit pago primeiro, como todo gasto fora do equipamento. */
+  /** CASA DA GUILDA: desconta SÓ o que o servidor aceitou (nunca o pedido), e só de Bits GANHOS (nunca Crédito; 10/11/2026). */
   const handleGuildSpend = useCallback((bits: number) => {
-    setGameState(prev => {
-      const n = Math.min(Math.max(0, Math.floor(bits)), prev.gamePoints ?? 0);
-      return n > 0 ? spendBitsPaidFirst({ ...prev, gamePoints: (prev.gamePoints ?? 0) - n }, n) : prev;
-    });
+    setGameState(prev => spendEarnedBits(prev, bits));
   }, [setGameState]);
 
   /** CASA DA GUILDA: o save segue o slot que o servidor diz (`applyGuildSlot`, idempotente). */
@@ -8633,7 +8630,7 @@ export default function App() {
                 onLabTab={setLabTab}
                 labContent={labContent}
                 hallContent={hallContent}
-                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, pendentesDoDia, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend }, feira: { me: feiraMe, onCredit: handleFeiraCredit }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
+                guild={{ saveId, metaDoDiaCumprida: fioMetaCumprida, fioGoal, pendentesDoDia, mySprite: minhaCriaturaUrl, playerDayTz: gameState.playerDayTz, onClaimed: handleGuildClaimed, onScenes: handleGuildScenes, accountTier: gameState.accountTier, onUnlock: () => setUnlockReason('shop'), onLogin: () => goTo('page:settings'), casa: { bits: gameState.gamePoints ?? 0, earned: earnedBits(gameState), ownedFurniture: gameState.ownedFurniture ?? [], equippedDecor: gameState.equippedDecor ?? {}, donatedItem: gameState.guildDonatedItem ?? null, onSpend: handleGuildSpend, onSlot: handleGuildSlot }, missao: { state: guildMission, onSend: handleGuildMissionSend }, feira: { me: feiraMe, onCredit: handleFeiraCredit }, cla: { onReward: handleClaReward, arvores: gameState.bosqueArvores ?? EMPTY_ARVORES, onPlantio: handleBosquePlantio } }}
               />
               </ResultExtrasContext.Provider>
             </Suspense>

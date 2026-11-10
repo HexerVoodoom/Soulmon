@@ -25,6 +25,8 @@ import { hexCost, sanitizeHexsmith, HEX_MAX_OWNED, parseHexItem } from './_hexsm
 
 /** Chance (em %) de uma volta da Missão encontrar a feira de verdade. Constante, sem custo extra para a pessoa. */
 export const FEIRA_LOJA_PCT = 8;
+/** Buff do clã "Feira" (`_buffsCla.js`): soma isto à chance (8% → 12%). */
+export const FEIRA_LOJA_PCT_BUFF = 4;
 export const DESCONTO_MIN = 10;
 export const DESCONTO_MAX = 50;
 export const ITENS_MIN = 4;
@@ -168,8 +170,8 @@ export const descontoDoItem = (semente, id) => DESCONTO_MIN + (hash32(`${semente
 export const precoComDesconto = (preco, pct) => Math.max(1, Math.round(preco * (100 - pct) / 100));
 
 /** A chance do dia, deterministica em (conta, dia). Reabrir o app nao re-sorteia. */
-export function haFeiraDeVerdade(save, hoje) {
-  return ISO_DIA.test(hoje) && hash32(`feiraLoja:${save}:${hoje}:roll`) % 100 < FEIRA_LOJA_PCT;
+export function haFeiraDeVerdade(save, hoje, bonusPct = 0) {
+  return ISO_DIA.test(hoje) && hash32(`feiraLoja:${save}:${hoje}:roll`) % 100 < FEIRA_LOJA_PCT + Math.max(0, bonusPct);
 }
 
 const ordenar = (lista, semente, rotulo) => [...lista].sort((a, b) => hash32(`${semente}:${rotulo}:${a.id}`) - hash32(`${semente}:${rotulo}:${b.id}`) || (a.id < b.id ? -1 : 1));
@@ -189,8 +191,8 @@ function candidatosHex() {
  * ja tem tambem nao, e a Hexsmith entra SEM ingrediente (preco = so os Bits do item, com o desconto).
  * @returns {null | { day: string, vendor: string, items: Array<{ id: string, type: string, kind: string, price: number, was: number, pct: number }> }}
  */
-export function sortearFeiraLoja(save, hoje, possuidos = new Set()) {
-  if (!haFeiraDeVerdade(save, hoje)) return null;
+export function sortearFeiraLoja(save, hoje, possuidos = new Set(), bonusPct = 0) {
+  if (!haFeiraDeVerdade(save, hoje, bonusPct)) return null;
   const semente = `${save}:${hoje}`;
   let r = hash32(`feiraLoja:${semente}:vendedor`) % 100;
   const vendedor = FEIRA_LOJA_VENDEDORES.find(v => v.ativo && (r -= v.peso) < 0) ?? FEIRA_LOJA_VENDEDORES[0];
@@ -221,11 +223,11 @@ function oferta(raw) {
 }
 
 /** Sorteia e GRAVA a oferta (idempotente: se ja existe, devolve a gravada). Chamado pela volta da Missao. */
-export async function abrirFeiraLoja(env, save, hoje) {
-  if (!feiraLigada(env) || !haFeiraDeVerdade(save, hoje)) return null;
+export async function abrirFeiraLoja(env, save, hoje, bonusPct = 0) {
+  if (!feiraLigada(env) || !haFeiraDeVerdade(save, hoje, bonusPct)) return null;
   const ja = oferta(await lerJson(env, feiraLojaKey(save, hoje)));
   if (ja) return ja;
-  const o = sortearFeiraLoja(save, hoje, possuidosDoSave(await lerSave(env, save)));
+  const o = sortearFeiraLoja(save, hoje, possuidosDoSave(await lerSave(env, save)), bonusPct);
   if (!o) return null;
   await kvOrThrow(env).put(feiraLojaKey(save, hoje), JSON.stringify(o), { expirationTtl: FEIRA_LOJA_TTL });
   return o;
