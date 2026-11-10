@@ -457,3 +457,25 @@ describe('chips de REDUÇÃO (04/11/2026)', () => {
     expect(reduceChipsUsedThisStage(estado({}))).toBe(0);
   });
 });
+
+describe('poção de elemento: só vale se há próxima evolução', () => {
+  const POCAO = 'potion:fogo';
+  it('no ápice (ultra, ou mega sem destino) recusa e NÃO consome o item', () => {
+    for (const evolutionStage of ['ultra', 'mega-power']) {
+      const prev = estado({ evolutionStage, foodInventory: { [POCAO]: 1 }, unlockedEvolutions: [], evolutionPoints: 0 });
+      expect(specialRefusal(prev, POCAO, AGORA)).toBe('no-next-evolution');
+      const r = applySpecialItem(prev, POCAO, AGORA);
+      expect(r.refused).toBe('no-next-evolution');
+      expect(r.state).toBe(prev);
+      expect(r.state.foodInventory[POCAO]).toBe(1);
+      expect(r.state.evolutionPotion).toBeUndefined();
+    }
+  });
+  it('estágio com próxima evolução segue funcionando (consome e grava a poção)', () => {
+    const prev = estado({ evolutionStage: 'champion-power', foodInventory: { [POCAO]: 1 } });
+    const r = applySpecialItem(prev, POCAO, AGORA);
+    expect(r.refused).toBeUndefined();
+    expect(r.state.evolutionPotion).toBe('fogo');
+    expect(r.state.foodInventory[POCAO]).toBeUndefined();
+  });
+});

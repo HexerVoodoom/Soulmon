@@ -24,7 +24,18 @@ describe('servidor: anti-trapaça dos tickets', () => {
   it('gasto só desce: voltar o contador no JSON não devolve ticket', () => {
     expect(srv.enforceFunTickets(b(NOW - H, 3), b(NOW - H, 1), NOW)).toEqual(b(NOW - H, 1));
   });
-  it('gasto legítimo passa e lote zerado some', () => {
+  it('lote ZERADO persiste (tombstone): stored left 1 + incoming left 0 => servidor devolve left 0, e omitir depois não ressuscita', () => {
+    const z = srv.enforceFunTickets(b(NOW - H, 0), b(NOW - H, 1), NOW);
+    expect(z).toEqual(b(NOW - H, 0));
+    expect(srv.enforceFunTickets(undefined, z, NOW)).toEqual(b(NOW - H, 0));
+    expect(srv.enforceFunTickets(b(NOW - H, 3), z, NOW)).toEqual(b(NOW - H, 0)); // gasto só desce
+    expect(srv.enforceFunTickets(b(NOW - 25 * H, 0), b(NOW - 25 * H, 0), NOW)).toBeUndefined(); // vence e some
+    // lote NOVO zerado não entra; e o tombstone não conta como posse viva
+    expect(srv.enforceFunTickets(b(NOW, 0), undefined, NOW)).toBeUndefined();
+    const compra = srv.enforceFunTickets({ batches: [{ at: NOW - H, left: 0 }, { at: NOW, left: 3 }] }, z, NOW);
+    expect(compra.batches.map((x) => x.left)).toEqual([0, 3]);
+  });
+  it('gasto legítimo passa', () => {
     expect(srv.enforceFunTickets(b(NOW - H, 1), b(NOW - H, 2), NOW)).toEqual(b(NOW - H, 1));
     expect(srv.enforceFunTickets(undefined, b(NOW - H, 2), NOW)).toEqual(b(NOW - H, 2)); // omitir não zera
   });

@@ -126,3 +126,28 @@ describe('save', () => {
       .toEqual({ 'champion-power@fogo': { pocao: 'fogo', elemento: { id: 'x', base: 'y' } } });
   });
 });
+
+describe('degenerar de uma forma de poção DESEQUIPA para a original', () => {
+  it('equipado vira "original" e o elemento é o base do Soulmon', () => {
+    const ult: any = {
+      ...evoluidoComPocao(),
+      soulmonMeta: { dominantElement: 'sombra' },
+      formasAlt: { 'champion-power': ['sabbat', 'agua'], 'ultimate-power': ['sabbat', 'agua'] },
+      formaAltEquipada: { 'champion-power': 'agua', 'ultimate-power': 'agua' },
+      potionElement: 'agua',
+    };
+    const caiu = aoDescerDeForma(ult, { ...ult, evolutionStage: 'champion-power' });
+    expect(caiu.formaAltEquipada?.['champion-power']).toBe('original');
+    expect(caiu.potionElement).toBe('sombra');
+    expect(petElementOf(caiu)).toBe('sombra');
+  });
+  it('queda de forma que NÃO era de poção não mexe no equipado', () => {
+    const ult: any = {
+      evolutionStage: 'ultimate-power', soulmonMeta: { dominantElement: 'sombra' },
+      elementoJornada: jornada({ rookie: { id: 'fogo', base: 'fogo' }, champion: { id: 'fogo', base: 'fogo' }, ultimate: { id: 'fogo', base: 'fogo' } }),
+      formaAltEquipada: { 'champion-power': 'fogo' },
+    };
+    const caiu = aoDescerDeForma(ult, { ...ult, evolutionStage: 'champion-power' });
+    expect(caiu.formaAltEquipada).toEqual({ 'champion-power': 'fogo' });
+  });
+});

@@ -1,5 +1,6 @@
 import { CHIP_BOOST, HEART_HEAL, SPARK_HOME_ENERGY, SPECIAL_ITEMS, type Attr } from './shop';
 import { potionElementOfKey } from './elementPotion';
+import { getNextEvolution } from './dailyReset';
 import { resetAlignmentPoints } from './betaResetGrant';
 import { fillGaugePoints } from './evolutionGauge';
 import { GLITCHTAMA_TESTE_ON, GLITCHTAMA_TESTE_USO_POR_DIA } from './glitchtamaTeste';
@@ -46,7 +47,7 @@ import {
  * roda 2× no StrictMode.
  */
 
-export type SpecialRefusal = 'no-stock' | 'already-full' | 'daily-cap' | 'stage-cap' | 'nothing-to-reduce';
+export type SpecialRefusal = 'no-stock' | 'already-full' | 'daily-cap' | 'stage-cap' | 'nothing-to-reduce' | 'no-next-evolution';
 
 /**
  * D-97 (19/10/2026): no máximo 3 chips por ESTÁGIO de evolução, TODOS os tipos
@@ -207,6 +208,12 @@ export function specialRefusal(state: SpecialItemState, emoji: string, now: Date
     // Tipo já em 0: não há o que tirar — recusa e o chip volta intacto (não se queima à toa).
     if (special.attr && pointsOf(state, special.attr) <= 0) return 'nothing-to-reduce';
   } else if (special.kind === 'chip' && chipsUsedThisStage(state) >= CHIPS_PER_STAGE) return 'stage-cap';
+  // Poção de Elemento só vale para a PRÓXIMA evolução: no ápice (sem destino) ela seria consumida à toa — recusa e o item volta intacto.
+  // O galho não muda se existe destino, então 'harmony' serve de neutro; a regra mora em `getNextEvolution`/`canReachUltra`.
+  if (special.kind === 'potion') {
+    const stage = state.evolutionStage ?? 'rookie';
+    if (getNextEvolution(stage, 'harmony', [...(state.unlockedEvolutions ?? [])], state.evolutionPoints ?? 0) === stage) return 'no-next-evolution';
+  }
   // Só o coraçãozinho recusa por estado: ele é a única cura comprável, e gastar
   // um com a vida cheia queimaria o item por nada.
   if (special.kind === 'heart' && state.healthPoints >= state.maxHealthPoints) return 'already-full';

@@ -64,6 +64,14 @@ describe('tickets dos minijogos', () => {
     expect(funTicketStatus(s, NOW).canPlay).toBe(false);
   });
 
+  it('o último ticket deixa o lote ZERADO (tombstone left:0) no save, sem contar nem aparecer como validade', () => {
+    let s = buyFunTickets(base(), NOW);
+    for (let i = 0; i < 3; i++) s = startFunRound(s, NOW);
+    expect(s.funTickets!.batches).toEqual([{ at: NOW, left: 0 }]);
+    expect(ticketCount(s, NOW)).toBe(0);
+    expect(funTicketStatus(s, NOW).msLeft).toBe(0);
+  });
+
   it('gastar ticket não gasta energia', () => {
     const s = buyFunTickets(base(), NOW);
     expect(Number(startFunRound(s, NOW).energyPoints)).toBe(Number(s.energyPoints));
@@ -72,6 +80,6 @@ describe('tickets dos minijogos', () => {
   it('sanitizador: lixo vira undefined/limpo, left é limitado a 3, lote vazio sai', () => {
     for (const x of [null, 3, 'x', [], {}, { batches: 'a' }]) expect(sanitizeFunTickets(x)).toBeUndefined();
     expect(sanitizeFunTickets({ batches: [{ at: 5, left: 99 }, { at: 'x', left: 1 }, { at: 3, left: 0 }, null, { at: 1, left: 2.9 }] }))
-      .toEqual({ batches: [{ at: 1, left: 2 }, { at: 5, left: 3 }] });
+      .toEqual({ batches: [{ at: 1, left: 2 }, { at: 3, left: 0 }, { at: 5, left: 3 }] });
   });
 });

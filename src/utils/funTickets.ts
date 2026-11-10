@@ -25,7 +25,7 @@ export interface TicketBatch { at: number; left: number }
 export interface FunTickets { batches: TicketBatch[] }
 export interface FunTicketState extends HungerState { funTickets?: FunTickets }
 
-/** Lixo → `undefined`. Lote com `left` fora de 1..BATCH é descartado; ordena do mais antigo ao mais novo. */
+/** Lixo → `undefined`. Lote com `left` fora de 0..BATCH é descartado; `left: 0` é o TOMBSTONE do lote gasto (persiste na nuvem até vencer); ordena do mais antigo ao mais novo. */
 export function sanitizeFunTickets(raw: unknown): FunTickets | undefined {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
   const b = (raw as { batches?: unknown }).batches;
@@ -37,7 +37,7 @@ export function sanitizeFunTickets(raw: unknown): FunTickets | undefined {
     if (typeof at !== 'number' || !Number.isFinite(at) || at < 0) continue;
     if (typeof left !== 'number' || !Number.isFinite(left)) continue;
     const l = Math.min(FUN_TICKET_BATCH, Math.floor(left));
-    if (l < 1) continue;
+    if (l < 0) continue;
     out.push({ at: Math.floor(at), left: l });
   }
   out.sort((x, y) => x.at - y.at);
@@ -57,7 +57,7 @@ export function ticketCount(state: { funTickets?: unknown }, nowMs: number): num
 
 /** ms até o lote que vence primeiro (0 sem ticket). */
 export function nextExpiryMs(state: { funTickets?: unknown }, nowMs: number): number {
-  const l = liveBatches(state, nowMs);
+  const l = liveBatches(state, nowMs).filter(x => x.left > 0);
   return l.length ? Math.max(0, l[0].at + FUN_TICKET_TTL_MS - nowMs) : 0;
 }
 
@@ -97,9 +97,10 @@ export function buyFunTickets<T extends FunTicketState>(prev: T, nowMs: number):
 /** Começa UMA rodada: gasta 1 ticket do lote que vence primeiro. Sem ticket = mesma referência. */
 export function startFunRound<T extends FunTicketState>(prev: T, nowMs: number): T {
   const vivos = liveBatches(prev, nowMs);
-  if (!vivos.length) return prev;
-  const [primeiro, ...resto] = vivos;
-  const batches = primeiro.left > 1 ? [{ at: primeiro.at, left: primeiro.left - 1 }, ...resto] : resto;
+  const i = vivos.findIndex(x => x.left > 0);
+  if (i < 0) return prev;
+  // Lote zerado fica com `left: 0` (tombstone): a nuvem só aceita o gasto do último ticket se o zero for gravado.
+  const batches = vivos.map((x, j) => (j === i ? { at: x.at, left: x.left - 1 } : x));
   return { ...prev, funTickets: { batches } };
 }
 

@@ -4215,6 +4215,12 @@ export default function App() {
           : `This Soulmon already got ${CHIPS_PER_STAGE} chips this stage. The chip will wait for the next one.`);
         return;
       }
+      if (refused === 'no-next-evolution') {
+        toast(language === 'pt-BR'
+          ? '🧪 Este Soulmon já está no estágio máximo: a poção não teria o que mudar. Ela te espera.'
+          : '🧪 This Soulmon is at its max stage: the potion would have nothing to change. It will wait.');
+        return;
+      }
       if (refused === 'already-full' && special.kind === 'spark') {
         toast(language === 'pt-BR' ? '✨ A energia já está cheia. A Faísca te espera.' : '✨ Energy is already full. The Spark will wait.');
         return;
