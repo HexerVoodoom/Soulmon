@@ -121,7 +121,7 @@ export function spendBitsPaidFirst<T extends BitsOriginState>(prev: T, amount: n
 }
 
 /**
- * 🫂 Doação ao CLÃ (10/11/2026): só Bits GANHOS. Debita `amount` de `gamePoints` SE `earnedBits` cobre (senão devolve `prev`: nada
+ * Doação ao CLÃ (10/11/2026): só Bits GANHOS. Debita `amount` de `gamePoints` SE `earnedBits` cobre (senão devolve `prev`: nada
  * muda), e nunca toca `paidLeft` (o Bit de Crédito fica na carteira). O servidor já decidiu o `accepted`; isto só aplica.
  */
 export function spendEarnedBits<T extends BitsOriginState>(prev: T, amount: number): T {

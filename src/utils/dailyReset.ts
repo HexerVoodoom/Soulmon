@@ -991,7 +991,7 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
     (prev as any).glitchtamaCarry ?? 0,
     glitchtamaBuffAtivo((prev as any).glitchtamaUsadoEm, now.getTime()),
   );
-  /* 🫂 Buff do clã (10/11/2026): +5% sobre o crédito de TAREFAS do dia, nunca acima do teto diário do estágio (`aplicarBuffClaGauge`). */
+  /* Buff do clã (10/11/2026): +5% sobre o crédito de TAREFAS do dia, nunca acima do teto diário do estágio (`aplicarBuffClaGauge`). */
   const clanContrib = gaugeContribution(dailyDone, prev.evolutionStage);
   const clanExtra = aplicarBuffClaGauge(clanContrib, prev.evolutionStage, now.getTime()) - clanContrib;
   const gaugeGain = buffGlitch.ganho + clanExtra;

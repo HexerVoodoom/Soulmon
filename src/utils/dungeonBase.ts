@@ -179,7 +179,7 @@ export function rollDungeonHeartDrop(bonusChance = 0): boolean {
     STORAGE_KEYS.DUNGEON_HEART_DROPS, null);
   if (saved?.date === today) rec = { date: today, count: Number(saved.count) || 0 };
   if (rec.count >= HEART_DROP_DAILY_CAP) return false;
-  // 🫂 Buff do clã "Achados" (10/11/2026): ×1,10 na chance (o teto diário acima continua valendo). Único ponto de drop da masmorra.
+  // Buff do clã "Achados" (10/11/2026): ×1,10 na chance (o teto diário acima continua valendo). Único ponto de drop da masmorra.
   if (Math.random() > heartDropChance(bonusChance, Date.now())) return false;
   // Teto diário de cura: se não persistir, o jogador ganha itens acima do teto.
   // É regra de economia — a falha AVISA.

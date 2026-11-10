@@ -195,7 +195,7 @@ function crossing(rec: HungerRecord | undefined, level: number): number {
  * saem do REGISTRO; o resultado é aditivo em intervalos adjacentes (fatiar não muda a soma).
  */
 /**
- * 🫂 Buff do CLÃ "Descanso rápido" (10/11/2026): +`BUFF_ENERGIA_PCT`% na velocidade, só dentro da janela do buff, MULTIPLICANDO tudo
+ * Buff do CLÃ "Descanso rápido" (10/11/2026): +`BUFF_ENERGIA_PCT`% na velocidade, só dentro da janela do buff, MULTIPLICANDO tudo
  * (fome × prato × sono: 1,5 × 1,1 = 1,65 dormindo). `undefined` = sem buff. Quem chama passa o resultado para `regenPoints`/`msUntilPoints`.
  */
 export function clanRegenBoost(): RegenBoost | undefined {

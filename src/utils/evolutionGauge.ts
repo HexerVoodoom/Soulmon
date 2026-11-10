@@ -57,7 +57,7 @@ export function gaugeContribution(doneWeight: number, stage: string): number {
 }
 
 /**
- * 🫂 Buff do CLÃ (10/11/2026, `utils/guildBuffs.ts`): +5% no ganho do dia com o buff ativo em `nowMs`, ARREDONDADO e NUNCA acima do
+ * Buff do CLÃ (10/11/2026, `utils/guildBuffs.ts`): +5% no ganho do dia com o buff ativo em `nowMs`, ARREDONDADO e NUNCA acima do
  * teto diário do estágio (o teto É a meta: o buff acelera os dias de esforço parcial, não fura a trava anti-farm). Sem buff,
  * devolve o próprio ganho. O ÚNICO ponto onde o buff do clã toca o gauge.
  */
