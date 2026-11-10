@@ -40,9 +40,11 @@ beforeEach(() => { requestSprite.mockReset(); requestSprite.mockResolvedValue({ 
 
 describe('Gerar Soulmon: prompt final e chave da sprite', () => {
   for (const base of ['sombra', 'terra', 'fogo']) {
-    it(`base ${base}, original sem poção: prompt idêntico ao de antes (sem tema extra) e grava em 'ultimate-power'`, async () => {
+    it(`base ${base}, original sem poção: prompt natural = cru + pistas do ELEMENTO BASE (sem tema) e grava em 'ultimate-power'`, async () => {
       const r = await gerar({ evolutionStage: 'ultimate-power', formasAlt: { 'ultimate-power': ['original', 'ar'] }, formaAltEquipada: { 'ultimate-power': 'original' } }, base);
-      expect(r.prompt).toBe(RAW);
+      expect(r.prompt.startsWith(RAW)).toBe(true);
+      expect(r.prompt).toContain('Visual cues of this element:');
+      expect(r.prompt).not.toContain('Elemental theme');
       expect(r.chave).toBe('ultimate-power');
       expect(r.opts.formId).toBe('ultimate-power');
       expect(r.lib.sprites['ultimate-power'].url).toBe('https://img.test/nova1.png');

@@ -109,7 +109,7 @@ describe('propriedades do elemento (todas as bases × poções × linhas × nív
 
 describe('prompt do Higgsfield e chave da sprite', () => {
   const st = (stage: string) => ({ stage, imagePrompt: `p ${stage}`, imagePromptFallback: `f ${stage}` });
-  it('com poção, o prompt do estágio leva o NOME do elemento efetivo; sem poção e elemento = base, o prompt não muda', () => {
+  it('com poção, o prompt do estágio leva o NOME do elemento efetivo; sem poção e elemento = base, o prompt leva as pistas do base (todo prompt tem elemento)', () => {
     for (const pocao of ESSENCE_ELEMENT_IDS) {
       const out = stagesComElemento([st('ultimate')], undefined, { ultimate: pocao })![0];
       expect(out.imagePrompt, pocao).toContain(elementoNomeDe(pocao).en.length ? 'Elemental theme of this form:' : '');
@@ -118,7 +118,10 @@ describe('prompt do Higgsfield e chave da sprite', () => {
     }
     for (const base of BASE_ELEMENT_IDS) {
       const lista = [st('ultimate')];
-      expect(stagesComElemento(lista, { v: 1, u: 0.5, estagios: { ultimate: { id: base, base } } })).toEqual(lista);
+      const out = stagesComElemento(lista, { v: 1, u: 0.5, estagios: { ultimate: { id: base, base } } })![0];
+      expect(out.imagePrompt.startsWith('p ultimate'), base).toBe(true);
+      expect(out.imagePrompt, base).toContain('Visual cues of this element:');
+      expect(out.imagePrompt, base).not.toContain('Elemental theme');
     }
   });
   it('a chave da sprite de uma forma de poção nunca é a da original nem se repete', () => {

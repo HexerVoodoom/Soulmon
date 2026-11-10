@@ -19,7 +19,7 @@ describe('1) a poção entra no prompt da criatura', () => {
     const out = stagesComElemento([st('champion'), st('ultimate')], jornada({ champion: { id: 'sombra', base: 'sombra' } }), { ultimate: 'fada' })!;
     expect(out[1].imagePrompt).toContain('Elemental theme of this form:');
     expect(out[1].imagePromptFallback).toContain('Elemental theme of this form:');
-    expect(out[0].imagePrompt).toBe('prompt champion');
+    expect(out[0].imagePrompt.startsWith('prompt champion')).toBe(true); // o champion leva as pistas do elemento do estágio, não a poção
   });
   it('a poção vence o registro do estágio (como em petElementOf)', () => {
     const j = jornada({ ultimate: { id: 'sombra', base: 'sombra' } });
