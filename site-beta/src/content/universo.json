@@ -30,11 +30,11 @@
     },
     "hall": {
       "npc": "/npc/lugar-hall.webp",
-      "pt": "Este é o Hall, nosso ponto de encontro. Tem a Feira, o Salão do Clã com seus amigos e o Grove. Venha trocar presentes e ver quem anda por aqui.",
-      "en": "This is the Hall, our meeting point. There's the Fair, the Clan Hall with your friends, and the Grove. Come swap gifts and see who's around.",
+      "pt": "Esta é a Cidadela, nosso ponto de encontro. Tem a Feira, o Salão do Clã com seus amigos e o Grove. Venha trocar presentes e ver quem anda por aqui.",
+      "en": "This is the Citadel, our meeting point. There's the Fair, the Clan Hall with your friends, and the Grove. Come swap gifts and see who's around.",
       "habita": {
-        "pt": "Eu moro no Hall. A Feira e o Grove ficam bem aqui.",
-        "en": "I live in the Hall. The Fair and the Grove are right here."
+        "pt": "Eu moro na Cidadela. A Feira e o Grove ficam bem aqui.",
+        "en": "I live in the Citadel. The Fair and the Grove are right here."
       }
     },
     "guilda": {

@@ -72,7 +72,7 @@ const pt = {
     cartoes: [
       ['combate', 'PvP e PvE', 'Duelos no Torneio e na Arena.', 'Combate na Arena do Soulmon: seu Soulmon contra um adversário, com as barras de vida.'],
       ['rift', 'Endless Rift', 'Uma descida sem teto de camadas.', 'Mapa da Exploração do Soulmon, onde fica o Endless Rift.'],
-      ['hall', 'Compartilhe seu progresso e ajude amigos', 'Cresça junto com seus amigos.', 'Mapa do Hall no Soulmon, com Feira, Jardim e Salão do Clã.'],
+      ['hall', 'Compartilhe seu progresso e ajude amigos', 'Cresça junto com seus amigos.', 'Mapa da Cidadela no Soulmon, com Feira, Jardim e Salão do Clã.'],
     ] as [string, string, string, string][],
   },
   video: { capaH: 'Um mundo de distritos para explorar', capaP: 'Cada lugar tem seu guardião', h2: 'Trailer', legenda: 'Telas do app e a música do jogo. Com som.', alt: 'Trailer do Soulmon, 59 segundos, com música e sem narração.' },
@@ -195,7 +195,7 @@ const en: typeof pt = {
     cartoes: [
       ['combate', 'PvP and PvE', 'Duels in the Tournament and the Arena.', 'Soulmon Arena combat: your Soulmon against an opponent, with health bars.'],
       ['rift', 'Endless Rift', 'A descent with no floor limit.', 'Soulmon Exploration map, home of the Endless Rift.'],
-      ['hall', 'Share your progress and help your friends', 'Grow together with your friends.', 'Soulmon Hall map, with the Fair, the Grove and the Clan Hall.'],
+      ['hall', 'Share your progress and help your friends', 'Grow together with your friends.', 'Soulmon Citadel map, with the Fair, the Grove and the Clan Hall.'],
     ],
   },
   video: { capaH: 'A world of districts to explore', capaP: 'Every place has its guardian', h2: 'Trailer', legenda: "App screens and the game's music. Sound on.", alt: 'Soulmon trailer, 59 seconds, with music and no narration.' },
