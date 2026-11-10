@@ -169,7 +169,7 @@ async function guardarBlob(env, request, bytes, contentType) {
  * lançar cairia no `catch` que chama `release`, devolvendo uma cota que o
  * provedor já cobrou de verdade.
  */
-async function republicar(env, request, image) {
+export async function republicar(env, request, image) {
   const dataMatch = /^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i.exec(image);
   if (dataMatch) {
     const [, contentType, b64] = dataMatch;
@@ -298,7 +298,7 @@ async function baixarEChavear(url, key = 'green') {
   const buf = new Uint8Array(await res.arrayBuffer());
   if (buf.length > MAX_IMAGE_BYTES) throw new Error('higgsfield: imagem grande demais');
   try {
-    return bytesToDataUrl(chromaKeyPng(buf, key), 'image/png');
+    return { image: bytesToDataUrl(chromaKeyPng(buf, key), 'image/png'), raw: buf };
   } catch (err) {
     if (err instanceof BadChromaError) {
       console.error('generate-sprite:', err.message);
@@ -358,7 +358,8 @@ async function generateHiggsfield(env, prompt, referenceImageUrls) {
   const model = spriteModel(env);
   if (model !== 'soul' && hfCredentials(env)) {
     try {
-      return { image: await generateHf(env, model, prompt, referenceImageUrls), keyed: true };
+      const g = await generateHf(env, model, prompt, referenceImageUrls);
+      return { image: g.image, raw: g.raw, keyed: true };
     } catch (err) {
       // Recusa de conteúdo sobe (troca o prompt); `bad-chroma` e outras falhas caem no
       // Soul se o par antigo existir (sem inventar regeração).
@@ -474,7 +475,7 @@ async function chaveioOpcional(image, key = 'green') {
 /** Roda os provedores na ordem (Higgsfield → Gemini) para UM texto de prompt.
  *  Devolve `{ image, provider, hfError }` ou lança — o erro carrega `refusal`
  *  quando o motivo foi política de conteúdo, que é o que decide a 2ª tentativa. */
-async function generateWithProviders(env, prompt, referenceImageUrls) {
+export async function generateWithProviders(env, prompt, referenceImageUrls) {
   let hfError = null;
   let hfRefusal = false;
 
@@ -484,7 +485,7 @@ async function generateWithProviders(env, prompt, referenceImageUrls) {
       // Soul (e Gemini abaixo) também recebem o prompt de fundo verde: tira o fundo se der,
       // senão entrega como veio (nunca derruba uma geração já paga).
       const image = hf.keyed ? hf.image : await chaveioOpcional(hf.image, chromaKeyOfPrompt(prompt));
-      return { image, provider: 'higgsfield', hfError: null };
+      return { image, provider: 'higgsfield', hfError: null, ...(hf.raw ? { raw: hf.raw } : {}) };
     } catch (err) {
       hfError = err.message;
       hfRefusal = isRefusal(err);
@@ -554,6 +555,29 @@ export function referenciasSeguras(request, referenceImageUrls) {
  *  · `debited`   → ainda em andamento (202); se passou de `REGEN_STALE_MS` sem terminar, o Worker caiu: devolve o débito;
  *  · `refunded`  → 409 (o cliente usa um `opId` novo para tentar de novo).
  */
+/** Imagem CRUA do provedor (antes do chroma-key), por forma, com validade: é o que deixa o "Revisar meu Soulmon" re-recortar sem pagar
+ *  outra geração (`_spriteReview.js`). Melhor esforço: falhar aqui nunca derruba a resposta. A `out.raw` NÃO vai ao cliente (o `...out` da
+ *  resposta é montado sem ela: ver `responder`). Chave por conta+forma (a nova geração da mesma forma sobrescreve; outra forma não é tocada). */
+export const RAW_PREFIX = 'sprite:raw:';
+export const RAW_TTL_SECONDS = 30 * 24 * 60 * 60;
+async function guardarFonteBruta(env, saveId, formId, raw) {
+  if (!(raw instanceof Uint8Array) || raw.length === 0 || raw.length > MAX_BLOB_BYTES) return;
+  try {
+    await kvOrThrow(env).put(`${RAW_PREFIX}${saveId}:${formId}`, raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength), { expirationTtl: RAW_TTL_SECONDS });
+  } catch (err) {
+    console.error('generate-sprite: falha ao guardar a fonte bruta', err?.message);
+  }
+}
+
+/** Prompt e referências do desenho, guardados no registro para o "Revisar meu Soulmon" poder regerar pelo mesmo caminho
+ *  (`_spriteReview.js`). Aditivo: registro antigo sem eles segue válido (a revisão cai em "precisa-manual"). Só o prompt que de fato gerou. */
+function guardarPromptParaRevisao(out, prompt, promptFallback, referenceImageUrls) {
+  const usado = out?.usedFallbackPrompt && typeof promptFallback === 'string' ? promptFallback : prompt;
+  if (typeof usado !== 'string' || !usado) return {};
+  const refs = out?.usedFallbackPrompt ? [] : (Array.isArray(referenceImageUrls) ? referenceImageUrls.slice(0, MAX_REFERENCE_URLS) : []);
+  return { prompt: usado, ...(refs.length ? { refs } : {}) };
+}
+
 async function respostaDeRegenRepetida(env, id, formId, opId, op) {
   if (op.s === 'done') {
     let guardada = null;
@@ -768,7 +792,8 @@ async function onRequestPostBruto({ request, env }) {
      * tentativa e a refeitura pelo `promptFallback`) — dois blocos aqui seriam
      * a mesma regra em duas cópias, e uma delas esqueceria de cachear.
      */
-    const responder = async out => {
+    const responder = async outCru => {
+      const { raw: fonteBruta, ...out } = outCru; // a fonte crua nunca vai ao cliente
       let image = out.image;
       if (typeof image === 'string') {
         const republicada = await republicar(env, request, image);
@@ -781,10 +806,11 @@ async function onRequestPostBruto({ request, env }) {
         image = republicada;
       }
       if (typeof formId === 'string' && formId.length > 0) {
+        await guardarFonteBruta(env, id, formId, fonteBruta);
         try {
           await kvOrThrow(env).put(
             cacheKey(id, formId),
-            JSON.stringify({ image, provider: out.provider, at: Date.now(), ...(GRAVAR_EMAIL_DO_SPRITE && typeof auth.email === 'string' && auth.email ? { email: auth.email } : {}) }),
+            JSON.stringify({ image, provider: out.provider, at: Date.now(), ...guardarPromptParaRevisao(out, prompt, promptFallback, referenceImageUrls), ...(GRAVAR_EMAIL_DO_SPRITE && typeof auth.email === 'string' && auth.email ? { email: auth.email } : {}) }),
           );
         } catch (err) {
           // Cache que não gravou custa uma regeração futura, não a resposta de

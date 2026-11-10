@@ -679,11 +679,13 @@ export function SwitchRow({
 /** Linha que LEVA a algum lugar (outro painel, o guia, a política): 44 com
  *  `chevron_right` 24 `muted` pelado. Com `href` é um link na mesma linha. */
 export function ActionRow({
-  label, hint, onClick, href, language,
+  label, hint, onClick, href, language, disabled,
 }: {
   label: string;
   hint?: string;
   onClick?: () => void;
+  /** Inativa (sem toque, `aria-disabled`, esmaecida): so para linhas de acao (nao `href`). */
+  disabled?: boolean;
   href?: string;
   /** Idioma do sufixo acessível "(abre em nova aba)" de `href` externo
    *  (A5, QA rodada 2 — a mesma regra do `TermsUpdateBanner`). Sem ele,
@@ -716,7 +718,18 @@ export function ActionRow({
     if (href.startsWith('mailto:')) return <a href={href} className="sm2-conta-arow">{inner}</a>;
     return <a href={href} target="_blank" rel="noopener noreferrer" className="sm2-conta-arow">{inner}</a>;
   }
-  return <button type="button" onClick={onClick} className="sm2-conta-arow">{inner}</button>;
+  return (
+    <button
+      type="button"
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      aria-disabled={disabled || undefined}
+      className="sm2-conta-arow"
+      style={disabled ? { opacity: 0.6, cursor: 'default' } : undefined}
+    >
+      {inner}
+    </button>
+  );
 }
 
 /**
