@@ -65,7 +65,7 @@ import { usePetScale } from '../hooks/usePetScale';
 import { petScaleStyle } from '../utils/spriteScale';
 import { novoSoulmonById, rosterSpriteOf } from '../utils/novosSoulmon';
 import { RAVEN_ENTRY, rosterEntryOfKey } from '../utils/enemyRoster';
-import { COMBINADOS_ART } from '../utils/enemyRosterArt';
+import { COMBINADOS_ART, INIMIGOS_API_ART } from '../utils/enemyRosterArt';
 import {
   ARENA_ROUNDS,
   DEFAULT_ARENA_ATTRIBUTES,
@@ -250,7 +250,7 @@ export function ArenaGame({
     rodadaRef.current = n;
     setInimigos(novos);
     for (const e of novos) { const k = arenaFoeKey(e); if (k) enemySeenRef.current?.(k); }
-    setSprites(novos.map(e => (arenaFoeKey(e) === RAVEN_ENTRY.key ? rosterSpriteOf(RAVEN_ENTRY) : undefined) ?? (e.ramoKey || e.paraleloKey ? rosterSpriteOf(rosterEntryOfKey((e.ramoKey || e.paraleloKey)!)!) : undefined) ?? (e.artFile ? COMBINADOS_ART[e.artFile] : undefined) ?? novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
+    setSprites(novos.map(e => (arenaFoeKey(e) === RAVEN_ENTRY.key ? rosterSpriteOf(RAVEN_ENTRY) : undefined) ?? (e.ramoKey || e.paraleloKey ? rosterSpriteOf(rosterEntryOfKey((e.ramoKey || e.paraleloKey)!)!) : undefined) ?? (e.chefeUltra ? INIMIGOS_API_ART[`${e.chefeUltra}-ultra`] : undefined) ?? (e.artFile ? COMBINADOS_ART[e.artFile] : undefined) ?? novoSoulmonById(e.creature)?.sprite(e.form ?? 'champion') ?? getDungeonEnemySprite(e.tier).sprite));
     setFightKey(k => k + 1);
     setFase('luta');
   }, []);
@@ -278,7 +278,7 @@ export function ArenaGame({
     const els = inimigosRef.current.map(e => e.elements);
     return {
       player: { ...arenaPlayerSide(p), startShield: r === 0 ? riftRef.current.startShield : 0 }, // só na 1ª rodada
-      foes: arenaFoeSides(p, r, els, runLadderRef.current),
+      foes: arenaFoeSides(p, r, els, runLadderRef.current, inimigosRef.current.some(e => e.chefeUltra)),
       seed: arenaRoundSeed(seed, r),
       startHp: hpCarryRef.current,
       startEnergy: energyCarryRef.current,
@@ -295,7 +295,7 @@ export function ArenaGame({
 
   const cena = useCallback((): GroupScene => {
     const p = jogadorRef.current;
-    const foes = arenaFoeSides(p, rodadaRef.current - 1, inimigosRef.current.map(e => e.elements), runLadderRef.current);
+    const foes = arenaFoeSides(p, rodadaRef.current - 1, inimigosRef.current.map(e => e.elements), runLadderRef.current, inimigosRef.current.some(e => e.chefeUltra));
     return {
       playerMaxHp: hpPoints(arenaPlayerSide(p).combatant.hp),
       foeMaxHp: foes.map(f => hpPoints(f.combatant.hp)),
@@ -387,7 +387,7 @@ export function ArenaGame({
   const entreRodadas = fase === 'rodada-limpa' && rodada < ARENA_ROUNDS;
   if (fase === 'luta' || entreRodadas) {
     const pronto = batalha.stateKey === fightKey;
-    const foesLado = arenaFoeSides(jogador, rodada - 1, inimigos.map(e => e.elements), runLadderRef.current);
+    const foesLado = arenaFoeSides(jogador, rodada - 1, inimigos.map(e => e.elements), runLadderRef.current, inimigos.some(e => e.chefeUltra));
     const hpFrac = pronto ? batalha.hp : hpCarryRef.current;
     const foesHp = (i: number) => (pronto ? (batalha.foesHp[i] ?? 1) : 1);
     const alvoIdx = pronto ? batalha.target : Math.max(0, inimigos.findIndex((_, i) => foesHp(i) > 1e-9));

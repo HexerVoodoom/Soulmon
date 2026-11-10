@@ -5,7 +5,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   ARENA_LADDER_MAX, ARENA_ROUNDS, arenaFoe, arenaFoeSides, arenaLadderStage, arenaLadderStep, arenaLadderStrength, buildArenaRound,
-  nextArenaLadder, sanitizeArenaLadder, simulateArenaRunV3, type ArenaLadderStage, type ArenaSkill,
+  ARENA_CHEFE_ULTRA_MIN_LADDER, ARENA_CHEFE_ULTRA_MULT, arenaChefeUltraLiberado, nextArenaLadder, sanitizeArenaLadder, simulateArenaRunV3, type ArenaLadderStage, type ArenaSkill,
 } from './arena';
 import { applyArenaRunEnd, arenaFoesOfSeed, arenaRunIsStray } from './arenaSorteio';
 import { combatantAt, REFERENCE_BUILDS, REFERENCE_BUILD_NAMES, RULER_LEVELS } from './combate/level';
@@ -135,5 +135,42 @@ describe('calibração medida', () => {
   });
   it('subir a escada endurece a run média', () => {
     expect(taxa(32, 'media', NEUTRO, 'teto')).toBeLessThan(taxa(0, 'media', NEUTRO, 'teto') - 0.3);
+  });
+});
+
+describe('o chefe ULTRA (Mareoror/Salsolura, 10/11/2026)', () => {
+  const ult = (ladder: number, n = 400) => Array.from({ length: n }, (_, s) => buildArenaRound(5, 1, mulberry32(s * 7919 + 13), undefined, false, false, undefined, ladder)[0]);
+  it('abaixo do limiar NUNCA aparece (e o sorteio é o de sempre)', () => {
+    for (const l of [0, 5, 20, 31]) expect(ult(l).some(e => e.chefeUltra)).toBe(false);
+    expect(ARENA_CHEFE_ULTRA_MIN_LADDER).toBe(32);
+    expect(arenaChefeUltraLiberado(31)).toBe(false);
+    expect(arenaChefeUltraLiberado('x')).toBe(false);
+  });
+  it('a partir do limiar sorteia, com chance razoável (não 100%), as duas espécies, só na rodada-chefe', () => {
+    const foes = ult(32);
+    const n = foes.filter(e => e.chefeUltra).length;
+    expect(n).toBeGreaterThan(50); expect(n).toBeLessThan(180);
+    expect(new Set(foes.filter(e => e.chefeUltra).map(e => e.chefeUltra))).toEqual(new Set(['mareoror', 'salsolura']));
+    const u = foes.find(e => e.chefeUltra)!;
+    expect(u.cls).toBe('boss'); expect(u.element).toBe('vapor'); expect(u.elements).toEqual(['fogo', 'agua']); expect(u.namePt).toMatch(/^Triune/);
+    for (let r = 1; r <= 4; r++) for (let s = 0; s < 200; s++) expect(buildArenaRound(r, 1, mulberry32(s), undefined, false, false, undefined, 40).some(e => e.chefeUltra)).toBe(false);
+  });
+  it('determinístico (card = luta) e fora do Desgarrado/combinada', () => {
+    expect(ult(40, 50)).toEqual(ult(40, 50));
+    for (let s = 0; s < 200; s++) {
+      expect(buildArenaRound(5, 1, mulberry32(s), undefined, true, false, undefined, 40)[0].chefeUltra).toBeUndefined();
+      expect(buildArenaRound(5, 1, mulberry32(s), undefined, false, true, undefined, 40)[0].chefeUltra).toBeUndefined();
+    }
+  });
+  it('é MUITO mais forte que o chefe comum e que um adversário comum', () => {
+    for (const L of [10, 30, 60]) {
+      const comum = arenaFoe(L, 'boss', 4, 32), ultra = arenaFoe(L, 'boss', 4, 32, 0, true), medio = arenaFoe(L, 'medium', 4, 32);
+      expect(ultra.combatant.hp).toBeCloseTo(comum.combatant.hp * ARENA_CHEFE_ULTRA_MULT.hp, 6);
+      expect(ultra.combatant.bonus + 1).toBeCloseTo((comum.combatant.bonus + 1) * ARENA_CHEFE_ULTRA_MULT.power, 6);
+      expect(ultra.combatant.hp).toBeGreaterThan(medio.combatant.hp * 1.5);
+      expect(ultra.combatant.bonus).toBeGreaterThan(comum.combatant.bonus);
+      expect(ultra.special).not.toBeNull();
+    }
+    expect(arenaFoe(10, 'medium', 4, 32, 0, true)).toEqual(arenaFoe(10, 'medium', 4, 32)); // só a classe boss muda
   });
 });

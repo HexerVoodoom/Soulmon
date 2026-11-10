@@ -13,6 +13,7 @@
 // (`builder/balanco-motores.md` §6) — recalibrate with that script, never by hand.
 import { CLASS_ELEMENT_ORDER } from './soulProfile/types';
 import { novoFormName, pickNovo, type NovoAnyStage } from './novosSoulmonData';
+import { ELENCO_ORACULO_DATA } from './enemyRosterData';
 import { ENEMY_ROSTER, ENEMY_ROSTER_KEYS, RAVEN_ENTRY, ramoFromRoll, rosterEntryOfKey, withRaven } from './enemyRoster';
 import { BASE_ELEMENT_LABELS, DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { CUSTO_PONTO_PAR } from './soulProfile/ficha/cascata';
@@ -249,6 +250,8 @@ export interface ArenaEnemy {
   ramoKey?: string;
   /** 09/11/2026: o inimigo é uma FORMA PARALELA (`kind: 'paralelo'`, champion/ultimate de run de elemento); = a chave do roster. Só arte/nome/elementos; a força segue sendo do slot. */
   paraleloKey?: string;
+  /** 10/11/2026 (dono): o inimigo é o CHEFE ULTRA da Arena (Mareoror/Salsolura): = o id da espécie; a arte é `<id>-ultra` (`INIMIGOS_API_ART`). A força vem de `arenaFoe(..., ultraChefe)`. */
+  chefeUltra?: string;
 }
 
 /** Os rookies de elemento combinado (o pool "combinado" da Arena; só existem na forma rookie). */
@@ -267,6 +270,20 @@ export function arenaFoeKey(e: Pick<ArenaEnemy, 'artFile' | 'creature' | 'form'>
 }
 
 export const ARENA_ROUNDS = 5;
+
+// ── O chefe ULTRA (dono, 10/11/2026) ────────────────────────────────────────
+
+/** Só com a escada NO TOPO (32 vitórias = todas as 5 rodadas em Ultimate = `ARENA_LADDER_STRENGTH_CAP`, o mesmo ponto em que a força dos inimigos para de subir) o chefe da rodada 5 pode ser um Ultra. Antes disso, NUNCA. */
+export const ARENA_CHEFE_ULTRA_MIN_LADDER = 32;
+/** Chance de a rodada 5 de uma run (já liberada) ser o chefe Ultra: 1 em 4 ("muito raro e muito difícil"; a espécie sai 50/50). */
+export const ARENA_CHEFE_ULTRA_CHANCE = 0.25;
+/** "Muito difícil": multiplicadores SOBRE o chefe comum (hp × e dano ×). O chefe comum já tem o especial. */
+export const ARENA_CHEFE_ULTRA_MULT = { hp: 1.5, power: 1.25 } as const;
+/** As espécies que podem ser o chefe Ultra: as 2 do elenco do Oráculo (id, elementos, nome do Ultra). Ultra fica fora do roster comum. */
+export const ARENA_CHEFES_ULTRA: ReadonlyArray<{ id: string; element: string; elements: readonly string[]; name: string }> =
+  ELENCO_ORACULO_DATA.map(([id, element, elements, , , , ultra]) => ({ id, element, elements, name: ultra }));
+/** A escada libera o chefe Ultra? */
+export const arenaChefeUltraLiberado = (ladder: unknown): boolean => sanitizeArenaLadder(ladder) >= ARENA_CHEFE_ULTRA_MIN_LADDER;
 
 /** §222: a composição dá o FORMATO e o pagamento da rodada; a forma do bicho vem da escada (`arenaLadderStage`). Round composition: 1,3 = one medium · 2 = two weak · 4 = three weak · 5 = boss. THE declared composition (the ruler reads it). */
 export const ARENA_ROUND_COMP: readonly (readonly ArenaEnemyClass[])[] = [
@@ -352,6 +369,17 @@ export function buildArenaRound(
   })));
   function arenaFoeComum(cls: ArenaEnemyClass, rng: () => number): ArenaEnemy {
     const shape = CLASS_FLAVOR[cls];
+    // Chefe ULTRA: só a rodada-chefe e só com a escada no topo; abaixo disso NENHUM `rng` a mais (os sorteios de antes não mudam). Fora do Desgarrado/combinada.
+    if (cls === 'boss' && !stray && !combo && arenaChefeUltraLiberado(ladder)) {
+      const roll = rng();
+      if (roll < ARENA_CHEFE_ULTRA_CHANCE) {
+        const c = ARENA_CHEFES_ULTRA[Math.floor((roll / ARENA_CHEFE_ULTRA_CHANCE) * ARENA_CHEFES_ULTRA.length)];
+        return {
+          namePt: c.name, nameEn: c.name, elements: [...c.elements], element: c.element, points: shape.points + Math.max(0, difficulty - 1),
+          cls, tier: 'ultimate', dropTier: shape.tier, form: 'ultimate', chefeUltra: c.id,
+        };
+      }
+    }
     const fusedOk = runElement ? arenaFusedOf(runElement) : [];
     // O sorteio do fundido segue na mesma ordem; fundido só existe em rookie, então fora dele o resultado é ignorado.
     const fused = !!runElement && !stray && fusedOk.length > 0 && rng() < ARENA_FUSED_FOE_CHANCE && stage === 'rookie';
@@ -455,12 +483,13 @@ export const ARENA_STAGE_FLOOR: Record<ArenaLadderStage, number> = { rookie: 1, 
  * `{ ...combatantAt(L, balanced), hp: hp × cls.hp × (1 + 0.04·r), bonus: cls.power × (1 + 0.142·r) − 1 }`.
  * The boss casts a `direct` special aimed at ONE target.
  */
-export function arenaFoe(L: number, cls: ArenaEnemyClass, r: number, ladder = 0, playerBonus = 0): FightSide {
+export function arenaFoe(L: number, cls: ArenaEnemyClass, r: number, ladder = 0, playerBonus = 0, ultraChefe = false): FightSide {
   const s = ARENA_FOES[cls];
   const b = combatantAt(L, REFERENCE_BUILDS.balanced);
   const k = Math.max(arenaLadderStrength(ladder), ARENA_STAGE_FLOOR[arenaLadderStage(ladder, r + 1)]) * (1 + Math.max(0, playerBonus));
+  const u = ultraChefe && cls === 'boss' ? ARENA_CHEFE_ULTRA_MULT : { hp: 1, power: 1 };
   return {
-    combatant: { ...b, hp: b.hp * s.hp * (1 + ARENA_ROUND_GROWTH.hp * r) * k, bonus: s.power * (1 + ARENA_ROUND_GROWTH.power * r) * k - 1 },
+    combatant: { ...b, hp: b.hp * s.hp * (1 + ARENA_ROUND_GROWTH.hp * r) * k * u.hp, bonus: s.power * (1 + ARENA_ROUND_GROWTH.power * r) * k * u.power - 1 },
     special: 'special' in s || arenaLadderStage(ladder, r + 1) !== 'rookie' ? specialOf('direct') : null,
   };
 }
@@ -528,8 +557,8 @@ export function arenaPlayerHitScale(p: ArenaPlayerCfg): number {
  * foe's element shrinks or grows the FOE's HP; the foe's element against the player's attributes
  * shrinks or grows the foe's damage bonus.
  */
-export function arenaFoeSides(p: ArenaPlayerCfg, r: number, foeElements?: readonly (readonly string[])[], ladder = 0): FightSide[] {
-  return ARENA_ROUND_COMP[r].map((cls, i) => arenaFoeWithElement(arenaFoe(p.combatant.level, cls, r, ladder, p.combatant.bonus), p, foeElements?.[i]));
+export function arenaFoeSides(p: ArenaPlayerCfg, r: number, foeElements?: readonly (readonly string[])[], ladder = 0, ultraChefe = false): FightSide[] {
+  return ARENA_ROUND_COMP[r].map((cls, i) => arenaFoeWithElement(arenaFoe(p.combatant.level, cls, r, ladder, p.combatant.bonus, ultraChefe), p, foeElements?.[i]));
 }
 
 /** One foe with the element matchup applied (see `arenaFoeSides`); neutral when there is no element on either side. */
