@@ -69,7 +69,7 @@ import { GamePopups } from './components/GamePopups';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
 import { emptyIncubation, incubationFor, incubationReady } from './utils/spriteTrigger';
 import { activeCrystal, crystalPhase, startCrystal, type CrystalPhase } from './utils/evolutionCrystal';
-import { altSpriteKey, elementoDaForma, equiparFormaAlt, mapaDeSpritesProprios, registrarFormaAoEvoluir, spriteVisorOf } from './utils/formasAlternativas';
+import { altSpriteKey, chaveDaFormaEquipada, elementoDaForma, equiparFormaAlt, mapaDeSpritesProprios, registrarFormaAoEvoluir, spriteVisorOf } from './utils/formasAlternativas';
 import { equiparFormaAltEstado, trocarFormaEstado } from './utils/formaEquip';
 import { spriteText } from './utils/spriteCopy';
 import { UNLOCK_NEEDED_EVENT } from './utils/unlockEvent';
@@ -1301,7 +1301,7 @@ export default function App() {
   /** O acervo como o VISOR o vê: a forma alternativa equipada ocupa a chave da forma (`utils/formasAlternativas.ts`). Só exibição. */
   const spriteVisor = useMemo(() => spriteVisorOf(spriteAcervo, gameState.formasAlt, gameState.formaAltEquipada), [spriteAcervo, gameState.formasAlt, gameState.formaAltEquipada]);
   /** A chave de acervo da forma ATUAL (a alternativa equipada, se houver). */
-  const chaveAtual = altSpriteKey(gameState.evolutionStage, gameState.formaAltEquipada?.[gameState.evolutionStage], gameState.formasAlt);
+  const chaveAtual = chaveDaFormaEquipada(gameState.evolutionStage, gameState.formasAlt, gameState.formaAltEquipada);
   /** A chave da forma-destino do cristal: com outro elemento num estágio já visitado, é a forma alternativa (arte NOVA). */
   const cristalAlvo = activeCrystal(gameState);
   // 10/11/2026: a poção pendente (`evolutionPotion`) é o elemento da forma que vai nascer — a MESMA chave que `registrarFormaAoEvoluir` grava ao evoluir (senão a arte nasce numa chave e, ao evoluir, o app pede outra: 2ª imagem).
@@ -1412,14 +1412,16 @@ export default function App() {
   const handleEquipFormaAlt = useCallback((formId: string, elemento: string) => {
     setGameState(prev => equiparFormaAltEstado(prev, formId, elemento));
   }, [setGameState]);
-  const handleTuneVisor = useCallback((formId: string) => spriteGen.tune(formId), [spriteGen]);
+  // Toda ação sobre a arte de uma forma age na chave da forma EQUIPADA (`chaveDaFormaEquipada`), nunca no id do estágio.
+  const chaveDe = useCallback((formId: string) => chaveDaFormaEquipada(formId, gameState.formasAlt, gameState.formaAltEquipada), [gameState.formasAlt, gameState.formaAltEquipada]);
+  const handleTuneVisor = useCallback((formId: string) => spriteGen.tune(chaveDe(formId)), [spriteGen, chaveDe]);
   /* O botao "Tentar de novo" do card de falha de credencial. Nasceu INERTE no
      commit 60b0c89b: `onRetrySprite` e opcional, entao a prop faltando nao
      acusava nada nem no TypeScript nem na suite, e o botao simplesmente nao
      era desenhado. Quem manda continua sendo `canManualRetry` (teto manual de
      3 e cooldown de 60 s), dentro do hook — este handler nao decide nada e nao
      abre um segundo caminho de geracao. */
-  const handleRetrySprite = useCallback((formId: string) => spriteGen.retry(formId), [spriteGen]);
+  const handleRetrySprite = useCallback((formId: string) => spriteGen.retry(chaveDe(formId)), [spriteGen, chaveDe]);
   /* O anúncio é PONTUAL: some depois de anunciado, para a região viva não
      repetir a mesma frase na próxima mudança dela. 4s é o suficiente para um
      leitor de tela ler "Visor sintonizado" sem cortar. */
@@ -1432,12 +1434,12 @@ export default function App() {
 
   // X-3: a marca de "adotado sozinho" sai do save quando o jogador vê o card.
   const handleSeenTune = useCallback(
-    (formId: string) => updateSpriteLibrary(prev => markTuneSeen(prev, formId)),
-    [updateSpriteLibrary],
+    (formId: string) => updateSpriteLibrary(prev => markTuneSeen(prev, chaveDe(formId))),
+    [updateSpriteLibrary, chaveDe],
   );
   const handleRevertVisor = useCallback(
-    (formId: string) => updateSpriteLibrary(prev => revertVisor(prev, formId)),
-    [updateSpriteLibrary],
+    (formId: string) => updateSpriteLibrary(prev => revertVisor(prev, chaveDe(formId))),
+    [updateSpriteLibrary, chaveDe],
   );
   /* "Gerar de novo" a aparência (Laboratório › Perfil, rodada 5, REGISTRO §34b): sorteio pago em Créditos; quem cobra, devolve e limita é o servidor. */
   const regenAparencia = useRegenAparencia({
