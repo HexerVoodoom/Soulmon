@@ -115,12 +115,14 @@ describe('§232 o registro', () => {
     expect(elementoDoEstagioAtual(null, 'ultra')).toBeUndefined();
   });
 
-  it('o prompt só muda em forma combinada', () => {
+  it('o prompt de forma combinada leva o tema; o de elemento puro leva as pistas do elemento (10/11/2026: todo prompt tem elemento)', () => {
     const st = [{ stage: 'ultra', imagePrompt: 'a', imagePromptFallback: 'b' }, { stage: 'mega', imagePrompt: 'c', imagePromptFallback: 'd' }];
     const out = stagesComElemento(st, { v: 1, u: 0.9, estagios: { ultra: { id: 'geiser', base: 'fogo' }, mega: { id: 'fogo', base: 'fogo' } } })!;
     expect(out[0].imagePrompt).toContain('Geyser');
     expect(out[0].imagePromptFallback).toContain('Geyser');
-    expect(out[1]).toBe(st[1]);
+    expect(out[1].imagePrompt.startsWith('c')).toBe(true);
+    expect(out[1].imagePrompt).toContain('Visual cues of this element:');
+    expect(out[1].imagePrompt).not.toContain('Elemental theme');
   });
 });
 

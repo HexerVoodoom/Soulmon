@@ -430,3 +430,13 @@ Fonte: `E:\Soulmon-assets\beta3-geradas\chatgpt\` (ChatGPT, alfa real; reduzidos
 - `npcs/npc-forja-caderno.png` e `npc-forja-refugio.png` (512², alfa binário) ← `E:/Soulmon-assets/gerados-2026-10-29/NPC-fantasma-maquinista.png` e `NPC-refugio-macaco.png` (1254² RGBA; recorte pelo alfa ≥128, encaixe em 500 px, centrado) (29/10); `LOT_NPC_ART['forja:caderno']` = Trilho e `['forja:refugio']` = Yuzu (§181). `npc-akasha-exploracao-caderno.png` e `npc-oceano-jogos-refugio.png` ficaram sem uso.
 
 > **05/11/2026:** `levelup/bond-up-<en|pt>-<entrada|laco|fixo>.webp` (342×256; 15 quadros de entrada, laço de 8, fixo) substituem `levelup-banner.png` e `levelup-banner-pt.png`. Fonte: folhas do dono em `E:/Soulmon-assets/bond-up/dono/`, recorte por projeção e registro pelo trilho da placa (`recorte.py`).
+
+> **Atualização 09/11/2026 (Vileza/Poder):** `soulmon/novos/vileza-{ultimate,mega,ultra}.png` (256², alfa real binário) substituídos por versões geradas via **API Higgsfield (regra: sprite só via API)**; Mega com 3 caudas de escorpião; fontes em `E:\Soulmon-assets\vileza-v2\`. `vileza-champion` e `vileza-rookie` inalterados. Ver `REGISTRO-DE-DECISOES.md` §272.
+
+> **09/11/2026 (Ticket dos minijogos, REGISTRO §270):** `soulmon/hud/ticket-minigame.png` (512×308, alfa real) — ticket turquesa com cogumelo (inspirado no prédio dos minijogos), **ChatGPT, UI, aprovado provisório pelo dono em 09/11/2026** (trocou o amarelo com controle; o bruto veio sem alfa; alfa por recorte de borda feito na origem). Original 1586×992 e prompt/tags em `E:/Soulmon-assets/gerar-chatgpt/ui-2026-11-09/ticket-inspirado-predio-cogumelo.{png,meta.json}`. Usado em `components/play/TicketFan.tsx`.
+
+> **Atualização 09/11/2026 (rookies escolhidos):** `novos-arquivo/combinados/262-clareira.png` e `264-bencao_feerica.png` = API Higgsfield (v5a; bênção sem franja verde); `263-alto_forno.png` = EXCEÇÃO aprovada pelo dono (pintura do ChatGPT, recorte rembg, sem fumaça). Ver `REGISTRO-DE-DECISOES.md` §273.
+
+## Selvagens da API — cadeias Krowlix e Mantralun (09/11/2026)
+
+6 PNG 256² (alfa real) em `src/assets/soulmon/inimigos-api/`: `krowlix-{rookie,champion,ultimate}.png`, `mantralun-{rookie,champion,ultimate}.png`. Origem: Higgsfield API pelo processo real do Oráculo (`E:\Soulmon-assets\playstore\duo\`, com `-1024.png` e `.meta.json`). Roster: `INIMIGOS_DUO_DATA` (REGISTRO §274).

@@ -6,11 +6,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   dailyGaugeCap, gaugeGoalFor, gaugeContribution, creditGauge, gaugeFull,
-  migrateEvolutionPoints, hydrateEvolutionPoints, dayItemGaugeGain, gaugeView, gaugePointsLeft,
+  migrateEvolutionPoints, hydrateEvolutionPoints, dayItemGaugeGain, fillGaugePoints, gaugeView, gaugePointsLeft,
 } from './evolutionGauge';
 import { FORM_REQUIREMENTS, ULTRA_PATIENCE_POINTS, ULTRA_PATIENCE_DAYS, getMaxEnergyForStage } from '../types/progression';
 import { computeDailyReset, degeneratedEvolutionPoints } from './dailyReset';
-import { applySpecialItem } from './specialItemUse';
+import { applySpecialItem, GLITCHTAMA_PER_DAY } from './specialItemUse';
 
 const TRES_MEGAS = ['mega-power', 'mega-harmony', 'mega-benevolence'];
 
@@ -101,15 +101,27 @@ describe('o item da masmorra (+ um dia de teto, ainda 1 por dia)', () => {
     healthPoints: 3, maxHealthPoints: 3, foodInventory: { '🌀': 2 }, perfectDays: 0, evolutionPoints: 5,
     powerPoints: 0, harmonyPoints: 0, benevolencePoints: 0, totalXP: 0, evolutionStage: 'rookie',
   });
-  it('soma dailyGaugeCap e a 2ª no mesmo dia é recusada', () => {
+  it('enche a barra do estágio (fillGaugePoints) e a 2ª no mesmo dia é recusada', () => {
     const now = new Date('2026-10-11T12:00:00Z');
-    expect(dayItemGaugeGain('rookie')).toBe(4);
+    const meta = gaugeGoalFor('rookie');
     const r1 = applySpecialItem(base() as any, '🌀', now);
     expect(r1.refused).toBeUndefined();
-    expect(r1.state.evolutionPoints).toBe(9);
-    const r2 = applySpecialItem(r1.state as any, '🌀', now);
+    expect(r1.state.evolutionPoints).toBe(meta);
+    expect(r1.state.perfectDays).toBe(1); // continua dando o dia perfeito
+    // o teto segue `GLITCHTAMA_PER_DAY` (1, ou 999 com a flag de teste): o estado já no teto recusa
+    const noTeto = { ...r1.state, glitchtamaUse: { ...r1.state.glitchtamaUse!, used: GLITCHTAMA_PER_DAY } };
+    const r2 = applySpecialItem(noTeto as any, '🌀', now);
     expect(r2.refused).toBe('daily-cap');
-    expect(r2.state.evolutionPoints).toBe(9);
+    expect(r2.state.evolutionPoints).toBe(meta);
+  });
+
+  it('fillGaugePoints: nunca passa da meta, nunca reduz, e estágio sem barra fica como está', () => {
+    const meta = gaugeGoalFor('rookie');
+    expect(fillGaugePoints(0, 'rookie')).toBe(meta);
+    expect(fillGaugePoints(meta + 3, 'rookie')).toBe(meta + 3); // já acima (banco do mega→ultra): não reduz
+    expect(fillGaugePoints(undefined, 'rookie')).toBe(meta);
+    expect(fillGaugePoints(7, 'ultra')).toBe(7); // topo: sem barra
+    expect(gaugeFull(fillGaugePoints(0, 'champion-power', ['champion-power']), 'champion-power', ['champion-power'])).toBe(true);
   });
 });
 

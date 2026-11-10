@@ -31,6 +31,8 @@ import type { Language } from '../../utils/i18n';
 import type { DailyEvent } from '../../utils/dailyMissions';
 import { essenceIconSrc, essenceName } from '../../utils/resultEssences';
 import { useResultExtras } from './ResultExtrasContext';
+import { TicketCost, useFunTicketCost } from '../play/TicketFan';
+import { noteMinigameOutcome } from '../../utils/usageTime';
 
 /** Desfecho visual: `record` = pico, `win` = alegria, `calm` = fim neutro, `tired` = sem vitória (acolhedor, nunca luto). */
 export type ResultOutcome = 'win' | 'record' | 'calm' | 'tired';
@@ -126,6 +128,8 @@ export interface ResultScreenProps {
   onPlayAgain?: () => void;
   /** Ícone do botão de revanche: o do PRÉDIO onde mora a atividade (`utils/lotIcons.ts`). Ausente = `replay`. */
   playAgainIcon?: string;
+  /** Arte (PNG) do prédio no botão, no lugar do glifo: a mesma da pílula do mapa (`lotIconArt`). */
+  playAgainArt?: string;
   /** Sem `onHome` não há botão de sair (o Torneio tem uma ação só: "Continuar"). */
   homeLabel?: string;
   onHome?: () => void;
@@ -241,6 +245,8 @@ const MOOD_CLASS: Record<string, string> = { happy: 'sm-result-visor--happy', ca
 export function ResultScreen(p: ResultScreenProps) {
   const isPt = p.language === 'pt-BR';
   const record = p.outcome === 'record';
+  useEffect(() => { noteMinigameOutcome(p.outcome === 'tired' ? 1 : 0); }, [p.outcome]); // métricas: como a partida terminou
+  const ticketCost = useFunTicketCost(); // jogos do Salão: o "jogar de novo" gasta 1 ticket (09/11/2026)
   const mode = p.mode ?? 'page';
   const { step, skip, animated } = useResultReveal({ record, quick: !!p.quick, instant: !!p.instant });
   const titleRef = useRef<HTMLHeadingElement>(null);
@@ -507,8 +513,11 @@ export function ResultScreen(p: ResultScreenProps) {
       <div data-result-dock style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '8px 16px calc(env(safe-area-inset-bottom, 0px) + 12px)', borderTop: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-bg)' }}>
         {p.onPlayAgain && (
           <button type="button" data-result-again {...p.againAttrs} onClick={p.onPlayAgain} style={{ ...sm2Button('primary'), width: '100%', padding: '0 8px', gap: 8 }}>
-            <Icon name={p.playAgainIcon ?? 'replay'} size={24} tone="inherit" />
+            {p.playAgainArt
+              ? <img src={p.playAgainArt} alt="" aria-hidden="true" width={28} height={28} style={{ width: 28, height: 28, objectFit: 'contain', flexShrink: 0 }} />
+              : <Icon name={p.playAgainIcon ?? 'replay'} size={24} tone="inherit" />}
             {p.playAgainLabel ?? (isPt ? 'Jogar de novo' : 'Play again')}
+            {ticketCost && <TicketCost />}
           </button>
         )}
         {p.onHome && (

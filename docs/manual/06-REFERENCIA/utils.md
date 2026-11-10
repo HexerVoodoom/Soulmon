@@ -3976,6 +3976,11 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 **Exports:** `EQUIP_CATALOG`, `EQUIP_BY_ID`, `EQUIP_SLOTS`, `SLOT_ATTR`, `TIER_PCT`, `TIER_BITS`, `TIER_FRAGMENTS`, `FRAGMENTS_MAX`, `EMPTY_EQUIPMENT`, `sanitizeEquipment`, `equipAttrBonus`, `equipScalar`, `dungeonAttrBonus`, `backpackCapacity`, `backpackUsed`, `backpackHasRoom`, `missionBitsGain`, `equipPriceDiscount`, `fragmentGain`, `discounted`, `equipPrice`, `equipBuyRefusal`, `applyEquipBuy`, `applyEquip`, `applyUnequip`, `addFragments`, `spendBits`.
 **Régua:** `src/utils/equipment.test.ts`, `functions/api/equipment.parity.test.js`.
 
+### `src/utils/blockedAction.ts`
+**Dono de:** o TEXTO do aviso de ação bloqueada (09/11/2026): `explainBlocked(motivo, isPt)` é pura e devolve título, linhas (o que falta, com quantidade) e as fontes tocáveis. Tipos: `energia`, `recursos`, `missao`, `ticket`, `nivel`, `espera`, `limite`, `demo`, `outro`. A navegação vai por evento (`GO_TO_BUILDING_EVENT`, ouvido pelo `App` › `handleMaterialGoTo`).
+**Exports:** `BlockedKind`, `BlockedMissing`, `BlockedSource`, `BlockedReason`, `BlockedExplanation`, `explainBlocked`, `GO_TO_BUILDING_EVENT`, `requestGoToBuilding`.
+**Régua:** `src/components/ui/BlockedActionModal.render.test.tsx`.
+
 ### `src/utils/bitsOrigin.ts`
 **Dono de:** a PROCEDÊNCIA dos Bits (PR8): quanto do saldo veio do câmbio Crédito→Bits (`paidLeft`) e o câmbio do dia. Equipamento só enxerga o Bit GANHO (`earnedBits`); o gasto que não é equipamento gasta o Bit pago primeiro; o câmbio do dia cabe em 25% do ganho grátis do dia (piso de referência de 100). Regra de cliente: o servidor só sanea a forma (`_equipment.js › sanitizeBitsOrigin`).
 **Exports:** `CREDIT_BITS_CAP_RATIO`, `CREDIT_CAP_REFERENCE_FREE`, `BitsOrigin`, `normalizeOrigin`, `sanitizeBitsOrigin`, `earnedBits`, `noteFreeBits`, `creditExchangeRoom`, `applyCreditExchange`, `spendBitsPaidFirst`.
@@ -4432,3 +4437,35 @@ Regra pura da jornada do foco: baús pela seed, relógio sem pausas, loot por ch
 **Sincronização 09/11/2026:** cliente de `/api/focus-journey` (§247; o servidor é o relógio e o caixa). Tipos `ActiveJourney` (`sid`, `seed`, `mode`, `env`, `keys`, `day`, `startAt`, `pausedMs`, `pausedAt`, `pauses`) e `JourneyResponse` (`active`, `ledger`, `grants`, `dungeonKeyDay`, `now`, `error`); `journeyState(saveId, day)`, `journeyStart(saveId, { mode, env, keys, day })`, `journeyAction(saveId, 'pause' | 'resume' | 'claim' | 'end')`. Chamado por `components/play/FocusBoard.tsx` e `components/play/JourneyScreen.tsx`.
 
 O quadro da Oficina: critério de cada chave (`keyEarned`), chaves da sessão no aparelho e o crédito idempotente dos recibos da jornada no save (`applyJourneyGrants`, campo `journeyCredited`); e o cliente de `/api/focus-journey`. Decisão: REGISTRO §247. **Régua:** `focusBoard.test.ts`.
+
+### `src/utils/funTickets.ts` (09/11/2026 — REGISTRO §270)
+
+Tickets dos minijogos do Salão (substituem a sessão de `funSession.ts`). Funções PURAS: `buyFunTickets` (1 energia → lote de 3; só com ≤2 vivos; teto 5), `startFunRound` (gasta 1 ticket do lote que vence antes), `funTicketStatus`, `ticketCount`, `nextExpiryMs`, `sanitizeFunTickets`. Validade 24 h por lote. Espelho no servidor: `functions/api/_funTickets.js` (paridade em `funTickets.parity.test.js`). Chamado por `App.tsx` e `AreaView.tsx`.
+
+### `src/utils/modalLayer.ts` (09/11/2026)
+
+Modal sempre acima do voltar da página. `syncModalFlag` liga/desliga `body[data-modal-open]` conforme exista `aria-modal`/`role=dialog` visível no DOM; `watchModalLayer` (montado no `App`) observa o DOM com um `MutationObserver` e chama o sync por frame. O CSS (`index.css`) esmaece e desativa os `.sm2-area-back` da PÁGINA enquanto o flag existe; o voltar dentro do próprio modal fica de fora. `Z_ABOVE_BACK` (60) é o piso de z-index dos overlays (o voltar é 45). Régua: `modalLayer.test.ts`.
+
+### `src/utils/usageTime.ts` (09/11/2026 — docs/PLANO-METRICAS.md)
+
+Tempo de uso por tela/feature/minigame, agregado e sem ID por pessoa: `setActive(kind, name)` acumula segundos do dia no aparelho (pausa em segundo plano), `flushUsageDays` manda um `time_spent` por par com a FAIXA do total quando o dia fecha, `trackMinigame` emite `minigame_start`/`minigame_end`, `installUsageTime` liga a pausa e a sessão (`session_end`). Opt-out apaga o acumulado (`K_USAGE`). Registros de nomes espelhados em `functions/api/_usageRegistry.js`.
+
+### `src/utils/playReview.ts`
+
+Pedido de avaliacao na Play a cada evolucao (09/11/2026): `parsePlayReview`, `shouldAskReview` (so evolucao para cima, nunca depois de aceitar), `markAsked`, `markAccepted`, `storeUrl`. Estado em `STORAGE_KEYS.PLAY_REVIEW`.
+
+### `src/utils/glitchtamaTeste.ts`
+
+EXCECAO DE TESTE temporaria (10/11/2026): flag `GLITCHTAMA_TESTE_ON`; uso diario do item sobe para 999 e o Desfeito vende 1 por 1 Bit (3 compras/dia, `glitchtamaBuy` no save). Funcoes: `buyGlitchtama`, `glitchtamaBuyRefusal`, `glitchtamaBuysLeft`, `sanitizeGlitchtamaBuy`.
+
+### `src/utils/materialGuide.ts` (10/11/2026 — REGISTRO §272)
+
+O guia da aba Materiais da Mochila: para cada material de prédio, ONDE conseguir (missão diária do prédio + expedições do Foco) e PARA QUE SERVE (peças do Soulsmith como material principal/apoio, via `FORGE_PIECES`; pratos do Restaurante, via `DISHES`), tudo derivado do código. Também define os 3 recursos extras que não moram em `buildingQuests` — Fragmento do Soulsmith (`equipment.fragments`), Fragmento de Boss (`bossShards`) e Essências (`essences`) — com fonte e uso. `usoAinda` diz, sem inventar, quando um material não tem uso hoje. Só a Mochila (lazy) o importa.
+
+### `src/utils/formaEquip.ts` (10/11/2026)
+
+Redutores puros do modal de formas, usados pelo `App` e pelo teste de tela: `equiparFormaAltEstado` (equipar uma forma do estágio; a escolha explícita do jogador vale sempre) e `trocarFormaEstado` (troca lateral + elemento equipado da forma de destino numa transição só, via `trocarFormaCompleta`). Régua: `EvolutionPath.equiparForma.render.test.tsx`.
+
+### `src/utils/elementoDescritores.data.ts` (10/11/2026)
+
+Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglês), derivada dos prompts-fonte dos assets: os 20 elementos base de `docs/ASSETS-A-GERAR.md` (motivo da moldura + paleta) e combinados do `registro.jsonl` (FX por elemento). Elemento sem prompt-fonte não está na tabela (o prompt leva só o nome). Lida por `pistasVisuaisDoElemento` (`elementoCombinado.ts`); o verde é permitido e o fundo chroma troca para magenta (`escolherChroma`). Régua: `elementoDescritores.test.ts`.

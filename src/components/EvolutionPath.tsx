@@ -101,7 +101,7 @@ interface EvolutionPathProps {
   gaugeGoal: number;
   onDegenerate?: (targetStageId: string) => void;
   /** Troca lateral (mesmo nível, outra forma já desbloqueada): grátis, sem queda. */
-  onSwitchForm?: (targetStageId: string) => void;
+  onSwitchForm?: (targetStageId: string, elemento?: string) => void;
   /** As 11 formas ÚNICAS do jogador (utils/oracle.ts). */
   stages: CreatureStage[];
   /** Linha de sprite genérica (fallback visual — ver utils/sprites.ts). */
@@ -459,8 +459,7 @@ export function EvolutionPath({
 
   const handleDegenerateConfirm = () => {
     if (confirmDegenerate?.lateral) {
-      onSwitchForm?.(confirmDegenerate.id);
-      equiparDepois(confirmDegenerate.id, confirmDegenerate.elemento);
+      onSwitchForm?.(confirmDegenerate.id, confirmDegenerate.elemento);
       setConfirmDegenerate(null);
     } else if (confirmDegenerate?.isSecondConfirm) {
       onDegenerate?.(confirmDegenerate.id);
@@ -893,6 +892,7 @@ export function EvolutionPath({
             formasAlt={formasAlt}
             modo={opcoes.modo}
             equipada={formasAlt?.[fid]?.length ? formaAltEquipada?.[fid] : '__atual'}
+            ehAtual={noAtual}
             onEquip={(el) => {
               const evo = opcoes.evolution;
               setOpcoes(null);

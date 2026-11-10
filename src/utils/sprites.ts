@@ -331,6 +331,10 @@ export function getSpriteForStage(stage: string, demoCharacterIdRaw?: string, si
     return line[level] ?? line.rookie;
   }
   // O Soulmon PRÓPRIO (criatura do Oráculo) já adotado no acervo; enquanto ele ainda não nasceu, o cristal (`setOwnSprites`).
-  return ownSprites[key] ?? Object.values(ownSprites)[0] ?? ownFallback ?? STARTER_SPRITES[fallbackStarterFor(key)];
+  // 10/11/2026: forma sem arte própria usa antes a arte de OUTRA forma do MESMO nível (linha irmã) e só depois a 1ª do acervo
+  // (que é a Rookie): equipar/trocar nunca devolve a Rookie num Ultimate que tem arte.
+  const lvl = getStageLevel(key);
+  const mesmoNivel = Object.entries(ownSprites).find(([k]) => getStageLevel(k) === lvl && k !== 'rookie')?.[1];
+  return ownSprites[key] ?? (lvl !== 'rookie' ? mesmoNivel : undefined) ?? Object.values(ownSprites)[0] ?? ownFallback ?? STARTER_SPRITES[fallbackStarterFor(key)];
 }
 

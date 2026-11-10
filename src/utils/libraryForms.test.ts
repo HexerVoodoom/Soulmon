@@ -52,8 +52,8 @@ describe('libraryForms', () => {
   });
 
   it('rotulos PT/EN', () => {
-    expect(formStageLabel('champion-power', false)).toBe('Champion · Power');
-    expect(formStageLabel('mega-harmony', true)).toBe('Mega · Harmonia');
-    expect(formStageLabel('rookie', true)).toBe('Iniciante');
+    expect(formStageLabel('champion-power', false)).toBe('Ascendant · Power');
+    expect(formStageLabel('mega-harmony', true)).toBe('Apoteose · Harmonia');
+    expect(formStageLabel('rookie', true)).toBe('Desperto');
   });
 });

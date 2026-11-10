@@ -43,7 +43,7 @@ describe('Biblioteca — formas ja vistas', () => {
     expect(itens.map(i => i.getAttribute('data-pet-form'))).toEqual(['rookie', 'champion-power', 'mega-power', 'ultra']);
     expect(itens.filter(i => i.getAttribute('data-current') === '1').map(i => i.getAttribute('data-pet-form'))).toEqual(['mega-power']);
     expect(screen.getByText('Forma atual')).toBeTruthy();
-    expect(screen.getByText('Campeão · Poder')).toBeTruthy();
+    expect(screen.getByText('Ascendente · Poder')).toBeTruthy();
     const srcs = Array.from(document.querySelectorAll('[data-pet-form] > img')).map(i => i.getAttribute('src') ?? '');
     expect(srcs.some(s => s.includes('atacante'))).toBe(false);
   });
@@ -63,6 +63,6 @@ describe('Biblioteca — formas ja vistas', () => {
     await act(async () => { await vi.advanceTimersByTimeAsync(400); });
     fireEvent.click(await screen.findByRole('button', { name: 'Brasinha' }));
     expect(await screen.findByText('Current form')).toBeTruthy();
-    expect(screen.getByText('Mega · Power')).toBeTruthy();
+    expect(screen.getByText('Apotheosis · Power')).toBeTruthy();
   });
 });

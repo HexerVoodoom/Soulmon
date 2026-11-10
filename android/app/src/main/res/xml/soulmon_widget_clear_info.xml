@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Redimensionável de 1x1 (só a criatura) até maior (criatura + frase + nome). O layout
+     compacto entra abaixo de WidgetAdaptive.COMPACT_MIN_* (renderClear). -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="180dp"
     android:minHeight="90dp"
-    android:minResizeWidth="140dp"
-    android:minResizeHeight="70dp"
+    android:minResizeWidth="40dp"
+    android:minResizeHeight="40dp"
     android:targetCellWidth="3"
     android:targetCellHeight="2"
     android:updatePeriodMillis="0"

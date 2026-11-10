@@ -168,6 +168,16 @@ export function applyPotionOnEvolve<T extends { evolutionPotion?: string; potion
   return { ...prev, evolutionPotion: undefined, potionElement: id };
 }
 
+/**
+ * Migração tolerante (10/11/2026): `potionElement` persistido que NÃO é da forma atual é lixo de versão antiga (a poção sobrevivia a
+ * queda e a troca de forma). Ela só é legítima se o elemento equipado da forma atual é ela; sem equipado (save muito antigo) é mantida.
+ */
+export function curarPocaoOrfa(potion: string | undefined, evolutionStage: string | undefined, equip: Record<string, string> | undefined): string | undefined {
+  if (!potion) return undefined;
+  const equipado = evolutionStage ? equip?.[evolutionStage] : undefined;
+  return equipado && equipado !== potion ? undefined : potion;
+}
+
 /** Entradas de `SPECIAL_ITEMS`, uma por elemento do catálogo. */
 export const POTION_SPECIAL_ITEMS: Record<string, SpecialItem> = Object.fromEntries(
   ESSENCE_ELEMENT_IDS.map(id => {

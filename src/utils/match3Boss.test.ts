@@ -101,7 +101,7 @@ describe('BOSS: regras de tabuleiro', () => {
   it('4 · cruz: 3 na horizontal e 3 na vertical cria a especial (e a vez extra)', () => {
     const b = base();
     for (const [r, c] of [[2, 1], [2, 2], [2, 3], [1, 2], [3, 2]]) b[r][c] = { k: 5 };
-    expect(resolveBoard(b, mulberry32(1)).steps[0].created).toHaveLength(0);
+    expect(resolveBoard(b, mulberry32(1)).steps[0].created).toHaveLength(1); // desde 09/11/2026 a cruz vale em toda partida
     const st = resolveBoard(b, mulberry32(1), [], [], bossBoardRules(['cross'])).steps[0];
     expect(st.created).toHaveLength(1);
     expect(st.created[0].pos).toEqual({ r: 2, c: 2 });

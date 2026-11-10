@@ -12,7 +12,7 @@
  * O jogador EQUIPA qualquer forma já desbloqueada daquele nível (`formaAltEquipada[formId] = elemento`; ausente = a original).
  * Cosmético: não muda atributo, galho nem regra — só qual desenho representa a forma. Funções PURAS; o `App.tsx` só delega.
  */
-import type { SpriteLibrary } from './spriteLibrary';
+import { displaySprite, type SpriteLibrary } from './spriteLibrary';
 import { getStageLevel } from '../types/progression';
 import type { ElementoJornada } from './elementoJornada';
 
@@ -66,6 +66,28 @@ export function altSpriteKey(
   return `${formId}@${elemento}`;
 }
 
+/**
+ * O elemento a equipar ao ENTRAR numa forma (troca lateral): o pedido (ou o já equipado) se a arte dele existe no acervo; senão o
+ * primeiro da lista COM arte — trocar de forma nunca pede imagem nova (10/11/2026). Sem nenhum com arte, devolve o pedido/equipado.
+ */
+export function elementoEquipavelComArte(
+  formId: string, formas: FormasAlt | undefined, equip: FormaAltEquipada | undefined, lib: SpriteLibrary | undefined, pedido?: string,
+): string | undefined {
+  const preferido = pedido ?? equip?.[formId];
+  const lista = formas?.[formId] ?? [];
+  const temArte = (el: string) => !!lib?.sprites[altSpriteKey(formId, el, formas, lib)];
+  if (preferido && temArte(preferido)) return preferido;
+  return lista.find(temArte) ?? preferido;
+}
+
+/**
+ * A chave de acervo da forma como ela está EQUIPADA (`estágio` = a original/1ª da lista; `estágio@elemento` = forma de poção). Toda ação
+ * sobre a arte de uma forma (gerar de novo, tentar de novo, sintonizar, voltar ao traço antigo) usa ESTA chave, nunca só o id do estágio —
+ * senão mexe na arte da original quando a de poção está equipada (bug do dono, 10/11/2026).
+ */
+export const chaveDaFormaEquipada = (formId: string, formas: FormasAlt | undefined, equip: FormaAltEquipada | undefined): string =>
+  altSpriteKey(formId, equip?.[formId], formas);
+
 /** A forma de uma chave de acervo (`mega-power@fire` → `mega-power`). */
 export const baseFormOfKey = (key: string): string => key.split('@')[0];
 
@@ -104,7 +126,17 @@ export function spriteVisorOf(lib: SpriteLibrary, formas: FormasAlt | undefined,
   let sprites: SpriteLibrary['sprites'] | null = null;
   for (const [formId, el] of Object.entries(equip)) {
     const key = altSpriteKey(formId, el, formas);
-    if (key === formId) continue;
+    // 1ª da lista = a chave da própria forma. Se a arte dela mora numa chave `forma@elemento` (gerada antes da lista existir), a
+    // forma não pode ficar SEM arte — o app cairia na 1ª do acervo, a Rookie (bug do dono, 10/11/2026): usa a 1ª alternativa que existe.
+    if (key === formId) {
+      if (lib.sprites[formId]) continue;
+      const prefixo = `${formId}@`;
+      const outra = Object.keys(lib.sprites).find(k => k.startsWith(prefixo));
+      if (!outra) continue;
+      sprites = sprites ?? { ...lib.sprites };
+      sprites[formId] = { ...lib.sprites[outra], formId };
+      continue;
+    }
     const alt = lib.sprites[key];
     if (!alt) continue;
     sprites = sprites ?? { ...lib.sprites };
@@ -121,4 +153,26 @@ export function spriteVisorOf(lib: SpriteLibrary, formas: FormasAlt | undefined,
 export function ocultasDaForma(formas: FormasAlt | undefined, formId: string, total: number): number {
   const tem = formas?.[formId]?.length ?? 1;
   return Math.max(0, Math.min(ALT_OCULTAS, total - Math.max(1, tem)));
+}
+
+/**
+ * O mapa forma → url que o App entrega a `setOwnSprites` (a arte que o app MOSTRA de cada forma), a partir do acervo já visto pelo visor.
+ * - forma com arte própria: ela (mesmo com `reverted` e sem `previousSprites` — não há traço antigo para voltar, então vale a própria arte;
+ *   antes a forma "revertida" ficava sem arte e o app mostrava a de OUTRA variante: bug do dono, original = Sabá, 10/11/2026);
+ * - forma SEM arte própria, mas com alternativa (`forma@elemento`): usa a alternativa (nunca cai na Rookie).
+ */
+export function mapaDeSpritesProprios(visor: SpriteLibrary): Record<string, string> {
+  const map: Record<string, string> = {};
+  for (const formId of Object.keys(visor.sprites)) {
+    if (formId.includes('@')) continue; // forma alternativa: entra pela chave da forma quando equipada
+    const url = displaySprite(visor, formId)?.url ?? visor.sprites[formId]?.url;
+    if (url) map[formId.toLowerCase()] = url;
+  }
+  for (const formId of Object.keys(visor.sprites)) {
+    if (!formId.includes('@')) continue;
+    const base = formId.split('@')[0].toLowerCase();
+    const url = visor.sprites[formId]?.url;
+    if (url && !map[base] && !visor.sprites[base]) map[base] = url;
+  }
+  return map;
 }

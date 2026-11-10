@@ -1,6 +1,6 @@
 import { RankingPanel } from '../RankingPanel';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { lotIconName } from '../../utils/lotIcons';
+import { lotIconArt, lotIconName } from '../../utils/lotIcons';
 import type { CSSProperties } from 'react';
 import { MindTutorialScreen, MindTutorialLink, useMindTutorial } from './MindTutorial';
 import type { EarningGameProps } from './types';
@@ -282,7 +282,7 @@ export function EcoGame({ language, evolutionStage, demoCharacterId, onEarnPoint
 
       {phase === 'done' && (
         <ResultScreen
-          playAgainIcon={lotIconName('jogos', 'mente')} dailyEvent="eco"
+          playAgainIcon={lotIconName('jogos', 'mente')} playAgainArt={lotIconArt('jogos', 'mente')} dailyEvent="eco"
           language={language}
           outcome="win"
           gameName={title}

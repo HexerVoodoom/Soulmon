@@ -516,7 +516,7 @@ separação das duas metas).
   para `completedTasks`). Contar só `prev.tasks` fazia quem fez TUDO cair em
   `totalTasks === 0` e a virada NEGAR o dia completo — com a barra da tela em
   100%.
-- Item **🌀 Glitchtama** dá +1 `perfectDays` ao ser usado, **no máximo 1 por dia
+- Item **🌀 Glitchtama** dá +1 `perfectDays` e enche a barra de evolução do estágio ao ser usado, **no máximo 1 por dia
   do jogador** (`GLITCHTAMA_PER_DAY`) — ver [§48](#itens-especiais). ⚰️ Desde
   22/09/2026 ele **não** soma em `totalPerfectDays`, só em `missionPerfectDays`
   ([§57-A](#conquistas), decisão **#41/#60**).
@@ -4261,7 +4261,7 @@ se vende) e §5.6.
 - **Item equipado incompatível com o cenário não é desenhado**, mas a loja
   explica o `fits` em vez de sumir em silêncio.
 
-**O que NÃO faz.** Não vende **Glitchtama** (há teste; a única fonte é a
+**O que NÃO faz.** Não vende **Glitchtama** (há teste; ⚠️ **EXCEÇÃO DE TESTE temporária, 10/11/2026 — hoje DESLIGADA (`GLITCHTAMA_TESTE_ON = false`: 1 uso por dia e o Desfeito não vende)**: com `GLITCHTAMA_TESTE_ON` (`utils/glitchtamaTeste.ts`) o NPC Desfeito da Guilda vende 1 por 1 Bit, até 3 compras por dia do jogador (`glitchtamaBuy` no SAVE) e o uso diário sobe de 1 para 999; desligar a flag restaura tudo; a única fonte é a
 masmorra). Não vende o **coraçãozinho** — ⚠️ **divergência**, ver
 [§59](#divergencias). Não aplica o chip na hora da compra. Não cobra em duas
 moedas. Não tem cinco abas — ⚠️ **divergência**, ver [§59](#divergencias). Não
@@ -4297,7 +4297,7 @@ cura, Glitchtama dá um dia completo — e nenhum conta no teto de comida.
 
 | Emoji | `kind` | Efeito ao USAR |
 |---|---|---|
-| 🌀 `GLITCHTAMA_EMOJI` | `glitchtama` | `perfectDays +1` **e** `missionPerfectDays +1`. ⚰️ Até 22/09/2026 o segundo era `totalPerfectDays` — o 🌀 saiu das conquistas por decisão do dono **#41/#60** ([§57-A](#conquistas)) |
+| 🌀 `GLITCHTAMA_EMOJI` | `glitchtama` | `perfectDays +1`, `missionPerfectDays +1` **e ENCHE a barra de evolução do estágio atual** (`fillGaugePoints`: sobe `evolutionPoints` até a meta do estágio, nunca acima, nunca reduz; sem barra no BB/ultra; não evolui sozinho — decisão do dono, 09/11/2026; antes era 1 dia de teto). Continua 1 por dia. ⚰️ Até 22/09/2026 o segundo era `totalPerfectDays` — o 🌀 saiu das conquistas por decisão do dono **#41/#60** ([§57-A](#conquistas)) |
 | 💗 `HEART_ITEM_EMOJI` | `heart` | `+HEART_HEAL` de coração, clampado em `maxHealthPoints` |
 | 👊 / 🎶 / 🤲 `CHIP_EMOJI` | `chip` | `+CHIP_BOOST` no atributo, `+CHIP_BOOST × 10` de `totalXP`, e o mesmo no `attributesSinceLastEvolution` |
 

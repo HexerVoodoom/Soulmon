@@ -8,6 +8,7 @@ import { difficultyLabel } from '../../utils/minigameDifficulty';
 import type { Language } from '../../utils/i18n';
 import quadroRanking from '../../assets/soulmon/icones-ui/quadro-ranking.png';
 import type { RankedGame } from '../../utils/rankings';
+import { TicketFan } from './TicketFan';
 
 /**
  * A pergunta do Pipo antes de cada minijogo (pedido do dono, 30/10/2026): o NPC do Salão
@@ -18,7 +19,9 @@ import type { RankedGame } from '../../utils/rankings';
  */
 export type GateRanking = { game: RankedGame; label?: string };
 
-export function MinigameModeGate({ language, gameName, rankings, saveId, withDifficulty, pveVsPvp = false, onPick, onBack }: {
+export function MinigameModeGate({ language, gameName, rankings, saveId, withDifficulty, pveVsPvp = false, tickets, onPick, onBack }: {
+  /** Tickets em posse: aparecem em leque ao lado do NPC (09/11/2026). Ausente = sem leque. */
+  tickets?: number;
   language: Language;
   gameName: string;
   rankings: GateRanking[];
@@ -47,6 +50,7 @@ export function MinigameModeGate({ language, gameName, rankings, saveId, withDif
       areaId="jogos" lotId="salao" language={language} title={gameName}
       closeLabel={isPt ? 'Voltar' : 'Back'} open onClose={onBack}
       npcArt={lotNpcArt('jogos', 'salao')} npcVoice={{ name: voice.name, line }}
+      npcOverlay={tickets !== undefined ? <TicketFan count={tickets} language={language} /> : undefined}
     >
       <div data-minigame-gate style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <button type="button" data-gate-ranking-open onClick={() => setRankOpen(true)} style={{ ...sm2Button('outline', false), minHeight: 44 }}>

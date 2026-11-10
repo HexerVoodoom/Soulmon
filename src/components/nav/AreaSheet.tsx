@@ -25,7 +25,7 @@ import { CORNER_RING_TOP, CORNER_RING_SIDE } from './cornerAnchor';
  * vem de quem chama (F5: Mercado e Arena em `App.tsx`); o molde só garante
  * abrir/fechar, o NPC certo, a fala e a proporção.
  */
-export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcVoice, headSlotRef, closeInSheet = false, hideClose = false, npcFrame, footer, children }: {
+export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, onClose, npcArt, npcVoice, headSlotRef, closeInSheet = false, hideClose = false, npcFrame, footer, npcOverlay, children }: {
   /** Ausente só quando `npcArt` + `npcVoice` vêm de fora (NPC de FUNÇÃO, ex.: Ambra nas Missões). */
   areaId?: AreaId;
   /** Id do lote aberto (ex.: `'itens'`, `'torneio'`) — resolve o NPC certo
@@ -56,6 +56,8 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
   npcFrame?: NpcFrame;
   /** Rodapé FIXO da folha (ex.: as ações em lote da caixa de cartas): fica colado embaixo, fora do trecho rolável, com a safe-area. */
   footer?: ReactNode;
+  /** Peça por cima da cena, na ZONA DO NPC, entre o NPC e o balão (ex.: o leque de tickets do Salão). Largura zero: o filho se posiciona sozinho. */
+  npcOverlay?: ReactNode;
   children?: ReactNode;
 }) {
   // O voltar do sistema (botão do Android/navegador) fecha a folha antes de mudar de tela.
@@ -148,6 +150,7 @@ export function AreaSheet({ areaId, lotId, language, title, closeLabel, open, on
               filter: 'drop-shadow(0 6px 8px rgba(0,0,0,.6))',
             }}
           />
+          {npcOverlay}
           {/* Balão de fala — a fala surge letra a letra (I1, `NpcSpeech`); a altura final
               já fica reservada, então o balão não cresce enquanto ela é dita. */}
           <NpcSpeech name={npc.name} line={npc.line} speakerKey={npcVoice ? `fn:${npcVoice.name}` : lotId ? `${areaId}:${lotId}` : undefined} />

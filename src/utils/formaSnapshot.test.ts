@@ -38,10 +38,11 @@ describe('queda volta ao elemento da forma em que cai', () => {
     expect(caiu.formaSnapshots?.['ultimate-power']?.pocao).toBe('agua');
   });
 
-  it('a forma em que cai tinha poção: ela volta', () => {
+  it('a forma em que cai tinha poção: ela NÃO volta (degenerar descarta a poção; volta à base)', () => {
     const ult = { ...evoluidoComPocao(), formaSnapshots: { 'champion-power': { pocao: 'terra' } } };
     const caiu = aoDescerDeForma(ult, { ...ult, evolutionStage: 'champion-power' });
-    expect(petElementOf(caiu)).toBe('terra');
+    expect(caiu.potionElement).toBeUndefined();
+    expect(petElementOf(caiu)).toBe('fogo');
   });
 
   it('sem queda de nível = o mesmo objeto', () => {
@@ -106,10 +107,11 @@ describe('equipar outra forma do mesmo estágio equipa tudo', () => {
     expect(t.soulmonSkills.champion.basico.nome).toBe('chama');
   });
 
-  it('destino sem foto: só a troca de sempre', () => {
+  it('destino sem foto: troca de sempre, mas a poção da forma de saída NÃO o acompanha (fica fotografada na saída)', () => {
     const t = trocarFormaCompleta({ ...base, formaSnapshots: undefined }, s => applyLateralSwitch(s, 'champion-harmony'));
     expect(t.evolutionStage).toBe('champion-harmony');
-    expect(t.potionElement).toBe('agua');
+    expect(t.potionElement).toBeUndefined();
+    expect(Object.values(t.formaSnapshots ?? {}).some((f: any) => f.pocao === 'agua')).toBe(true);
   });
 
   it('troca recusada = o mesmo objeto', () => {

@@ -1,5 +1,5 @@
 import { useRef, useState, type CSSProperties } from 'react';
-import { lotIconName } from '../../utils/lotIcons';
+import { lotIconArt, lotIconName } from '../../utils/lotIcons';
 import { MindTutorialScreen, MindTutorialLink, useMindTutorial } from './MindTutorial';
 import type { EarningGameProps } from './types';
 import { sm2Button } from '../form/FormKit';
@@ -192,7 +192,7 @@ export function SeloGame({ language, evolutionStage, demoCharacterId, onEarnPoin
             {earned > 0 ? <>{isPt ? 'Rodada fechada.' : 'Round complete.'} <BitsAmount value={earned} sign="+" /></> : (isPt ? 'Rodada fechada. Bora mais uma?' : 'Round complete. Another go?')}
           </p>
           <ResultScreen
-            playAgainIcon={lotIconName('jogos', 'mente')} dailyEvent="selo"
+            playAgainIcon={lotIconName('jogos', 'mente')} playAgainArt={lotIconArt('jogos', 'mente')} dailyEvent="selo"
             language={language}
             outcome="win"
             gameName={title}

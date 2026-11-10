@@ -8,6 +8,7 @@
 import { RitualDialog } from '../ritual/RitualKit';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { SoulNode } from './SoulNode';
+import { ElementIcon } from '../ElementBaseSlots';
 import { ALT_ORIGINAL, ocultasDaForma, type FormasAlt } from '../../utils/formasAlternativas';
 import { ALL_ELEMENT_IDS } from '../../utils/elementDex';
 import { CURATED_ELEMENT_IDS } from '../../utils/elementosCurados';
@@ -30,10 +31,12 @@ interface Props {
   onEquip: (elemento: string) => void;
   /** `equipar` (padrão): lista para equipar. `degenerar` (09/11/2026): "Degenerar para…", opções já liberadas daquela forma. `ver`: só leitura (forma mais evoluída que a atual). */
   modo?: 'equipar' | 'degenerar' | 'ver';
+  /** A forma do modal é a ATUAL? Não sendo (outra linha, mesmo nível), o botão diz "Trocar forma" e nenhuma é marcada EQUIPADA. */
+  ehAtual?: boolean;
   onClose: () => void;
 }
 
-export function FormasAlternativasSheet({ isPt, formId, nomeDaForma, itens, formasAlt, equipada, onEquip, modo = 'equipar', onClose }: Props) {
+export function FormasAlternativasSheet({ isPt, formId, nomeDaForma, itens, formasAlt, equipada, onEquip, modo = 'equipar', ehAtual = true, onClose }: Props) {
   const ocultas = ocultasDaForma(formasAlt, formId, new Set([...ALL_ELEMENT_IDS, ...CURATED_ELEMENT_IDS]).size);
   const equipadaEf = equipada ?? itens[0]?.elemento;
   const nomeEl = (el: string) => (el === ALT_ORIGINAL || el === '__atual' ? (isPt ? 'Original' : 'Original') : (isPt ? elementoNomeDe(el).pt : elementoNomeDe(el).en));
@@ -53,19 +56,26 @@ export function FormasAlternativasSheet({ isPt, formId, nomeDaForma, itens, form
           </p>
         )}
         {itens.map((it, i) => {
-          const eq = modo === 'equipar' && (it.elemento === equipadaEf || (!equipadaEf && i === 0));
+          const eq = modo === 'equipar' && ehAtual && (it.elemento === equipadaEf || (!equipadaEf && i === 0));
           return (
             <div key={it.elemento} style={{ display: 'flex', gap: 12, alignItems: 'center' }} data-testid={`sm-forma-alt-${it.elemento}`}>
               <SoulNode visual={eq ? 'current' : 'reached'} sprite={it.sprite} label={`${nomeDaForma} — ${nomeEl(it.elemento)}`} title={nomeEl(it.elemento)} />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ ...sm2Text, fontWeight: 500, margin: 0 }}>{nomeEl(it.elemento)}</p>
+                {/* Nome da variante em NEGRITO (forma + elemento; a original leva só o nome da forma) e, embaixo, ícone + elemento. */}
+                <p style={{ ...sm2Text, fontWeight: 700, margin: 0, overflowWrap: 'anywhere' }} data-testid="sm-forma-alt-nome">
+                  {it.elemento === ALT_ORIGINAL || it.elemento === '__atual' ? nomeDaForma : `${nomeDaForma} ${nomeEl(it.elemento)}`}
+                </p>
+                <p style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', gap: 4 }} data-testid="sm-forma-alt-elemento">
+                  {it.elemento !== ALT_ORIGINAL && it.elemento !== '__atual' && <ElementIcon id={it.elemento} size={16} />}
+                  <span>{nomeEl(it.elemento)}</span>
+                </p>
                 {!it.sprite && <p style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'sendo desenhada…' : 'being drawn…'}</p>}
               </div>
               {modo === 'ver' ? null : eq
                 ? <span style={{ ...sm2Hint, color: 'var(--sm2-primary-ink)', fontWeight: 600 }}>{isPt ? 'EQUIPADA' : 'EQUIPPED'}</span>
                 : modo === 'degenerar'
                   ? <button type="button" onClick={() => onEquip(it.elemento)} style={sm2Button('outline', false, 'sm')}>{isPt ? 'Degenerar' : 'Degenerate'}</button>
-                  : <button type="button" onClick={() => onEquip(it.elemento)} style={sm2Button('outline', false, 'sm')}>{isPt ? 'Equipar' : 'Equip'}</button>}
+                  : <button type="button" onClick={() => onEquip(it.elemento)} style={sm2Button('outline', false, 'sm')}>{ehAtual ? (isPt ? 'Equipar' : 'Equip') : (isPt ? 'Trocar forma' : 'Switch form')}</button>}
             </div>
           );
         })}

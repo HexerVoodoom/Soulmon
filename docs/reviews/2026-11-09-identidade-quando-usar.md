@@ -1,6 +1,6 @@
 # Auditoria 09/11/2026 — assets frente à regra "quando usar a identidade"
 
-> Regra: `docs/REGRA-IDENTIDADE-SOULMON.md` (REGISTRO §270). Auditoria só de leitura, sem regenerar nada.
+> Regra: `docs/REGRA-IDENTIDADE-SOULMON.md` (REGISTRO §275). Auditoria só de leitura, sem regenerar nada.
 > Método: folhas de contato (miniaturas lado a lado) dos assets do dia, julgadas pela categoria. Julgamento visual: confirmar peça a peça antes de refazer.
 > Referência do aceitável (ressalva do dono): chips atuais e `icones-ui/stat-*`.
 

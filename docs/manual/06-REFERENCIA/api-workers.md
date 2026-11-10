@@ -785,3 +785,11 @@ Rota da jornada do foco: começar, pausar, retomar, receber e encerrar, com o re
 - **`generate-sprite.js`.** `HF_API` e `HF_ROUTES` (`alpha` → `/marketing-studio/image`, `flare` → `/marketing-studio/image/flare`) passaram a `export` (testes). ⚠️ A arte de DESIGN nova (cenários, NPCs, molduras, decorações) deixou de ser gerada no Higgsfield por decisão do dono (09/11/2026): o caminho é o app ChatGPT desktop (`docs/ASSETS-A-GERAR.md` diz «pedir pelo ChatGPT desktop»; o veto ao Higgsfield não está escrito nesse arquivo, só no briefing da rodada). Isso é a produção de assets; a rota do sprite do jogador continua como descrita, atrás de `SPRITE_DISABLED`.
 - **`public/sw.js`.** `CACHE_VERSION` andou (número não repetido aqui). Novo cache SEM versão no nome, `soulmon-assets-v1` (`ASSET_CACHE`, teto `ASSET_CACHE_MAX` = 6000 entradas, as mais antigas saem no `activate`): os arquivos de `/assets/` têm hash de conteúdo no nome (imutáveis) e passam a morar nele, então o bump de `CACHE_VERSION` não os apaga mais; `migrarParaAcervo` os move dos caches `soulmon-static-*` antes da limpeza e `podarAcervo` aplica o teto. Trocar o NOME do cache é o único jeito de esvaziá-lo. Régua: `src/deploy/swCache.contract.test.ts`.
 - **`wrangler.jsonc`.** Binding `ratelimits`: `FEEDBACK_RL` (`namespace_id` 1001, 5 por 60 s) usado por `feedback.js`; `vars.SIMULADOS_FORMAS_ON`.
+
+### `functions/api/_funTickets.js` (09/11/2026 — REGISTRO §270)
+
+`enforceFunTickets(incoming, stored, nowMs)` e `sanitizeFunTickets`, ligados no POST de `save.js`: gasto só desce, lote novo só com posse viva ≤2 e um por gravação, `at` dentro de ±1 dia do servidor, posse ≤5, lote com 24 h sai. Paridade com `src/utils/funTickets.ts` em `funTickets.parity.test.js`.
+
+### `functions/api/_usageRegistry.js` (09/11/2026 — docs/PLANO-METRICAS.md)
+
+Registros de nomes (telas, features, minigames) e faixas de tempo usados por `applyAggregate` em `metrics.js` para os eventos `time_spent`, `minigame_*`, `task_*`, `day_close` e `session_end`. Espelho de `src/utils/usageTime.ts` (paridade em `usageTime.test.ts`); só se acrescenta no fim.

@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { ENERGY_ICON } from '../../utils/rewardIcons';
 import { EnergyCost } from '../ui/EnergyCost';
-import { FUN_SESSION_COST, FUN_SESSION_ROUNDS, FUN_SESSION_MS, formatMmSs, type FunSessionStatus } from '../../utils/funSession';
+import type { FunTicketStatus } from '../../utils/funTickets';
+import { TicketCost, TicketPanel } from './TicketFan';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ModalInfo, InfoTipSection } from '../ui/InfoTip';
 import { clearBonus } from '../DungeonGame';
@@ -183,7 +184,7 @@ export function MasmorraSheet({ language, onStart, bitsToday }: { language: Lang
 const DINO_POINTS_PER_BIT = 100;
 import { BARRAGE_POINTS_PER_BIT } from '../../utils/soulBarrage';
 
-export function DinoSheet({ language, onStart, energyCost }: { language: Language; onStart: () => void; /** Abrir gasta energia (sessão de diversão sem rodadas sobrando): o botão mostra o ícone. */ energyCost?: boolean }) {
+export function DinoSheet({ language, onStart, energyCost }: { language: Language; onStart: () => void; /** Abrir gasta 1 ticket (09/11/2026): o botão mostra o ticketzinho com "x1". */ energyCost?: boolean }) {
   const isPt = language === 'pt-BR';
   const [best] = useState(() => readNumber(STORAGE_KEYS.DINO_BEST, 0));
   return (
@@ -203,14 +204,14 @@ export function DinoSheet({ language, onStart, energyCost }: { language: Languag
           lia como descrição do jogo, não como a ação de abri-lo. */}
       <button type="button" data-dino-start onClick={onStart} style={cta}>
         {isPt ? 'Jogar' : 'Play'}
-        {energyCost && <EnergyCost amount={FUN_SESSION_COST} />}
+        {energyCost && <TicketCost />}
       </button>
     </div>
   );
 }
 
 // ── Elemental Fusion ───────────────────────────────────────────────────────────────
-export function Match3Sheet({ language, onStart, energyCost }: { language: Language; onStart: () => void; /** Abrir gasta energia (sessão de diversão sem rodadas sobrando): o botão mostra o ícone. */ energyCost?: boolean }) {
+export function Match3Sheet({ language, onStart, energyCost }: { language: Language; onStart: () => void; /** Abrir gasta 1 ticket (09/11/2026): o botão mostra o ticketzinho com "x1". */ energyCost?: boolean }) {
   const isPt = language === 'pt-BR';
   const [best] = useState(() => readNumber(STORAGE_KEYS.MATCH3_BEST, 0));
   return (
@@ -221,14 +222,14 @@ export function Match3Sheet({ language, onStart, energyCost }: { language: Langu
       </div>
       <button type="button" data-match3-start onClick={onStart} style={cta}>
         {isPt ? 'Jogar' : 'Play'}
-        {energyCost && <EnergyCost amount={FUN_SESSION_COST} />}
+        {energyCost && <TicketCost />}
       </button>
     </div>
   );
 }
 
 // ── Pedra, papel e tesoura ──────────────────────────────────────────────────
-export function PptSheet({ language, onStart, energyCost }: { language: Language; onStart: () => void; /** Abrir gasta energia (sessão de diversão sem rodadas sobrando): o botão mostra o ícone. */ energyCost?: boolean }) {
+export function PptSheet({ language, onStart, energyCost }: { language: Language; onStart: () => void; /** Abrir gasta 1 ticket (09/11/2026): o botão mostra o ticketzinho com "x1". */ energyCost?: boolean }) {
   const isPt = language === 'pt-BR';
   return (
     <div data-ppt style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -238,7 +239,7 @@ export function PptSheet({ language, onStart, energyCost }: { language: Language
       </div>
       <button type="button" data-ppt-start onClick={onStart} style={cta}>
         {isPt ? 'Jogar' : 'Play'}
-        {energyCost && <EnergyCost amount={FUN_SESSION_COST} />}
+        {energyCost && <TicketCost />}
       </button>
     </div>
   );
@@ -259,60 +260,16 @@ export type MenteGame = 'eco' | 'zip' | 'selo';
 export type RefugioGame = 'respiracao' | 'bolhas-calmas' | 'chama';
 
 /** Salão de Jogos — jogos livres, em LISTA de cards (o dono pediu a lista de volta em 04/11/2026; as cartas ilustradas ficaram só no Refúgio). */
-/** 🎟️ A linha da sessão de diversão (04/11/2026, `utils/funSession.ts`): o custo, ou as rodadas e o relógio da sessão aberta,
- *  ou — sem energia — um convite calmo para as outras atividades. Atualiza a cada segundo. */
-export function FunSessionLine({ language, status, nudge = 0 }: { language: Language; status: (nowMs: number) => FunSessionStatus; nudge?: number }) {
-  const isPt = language === 'pt-BR';
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
-  /* O aviso mora no topo da lista: com a lista rolada, o toque na 2ª fileira não mostraria resposta nenhuma. Sobe só a lista (`scrollIntoView` moveria a folha inteira). */
-  const aviso = useRef<HTMLParagraphElement>(null);
-  useEffect(() => {
-    if (nudge <= 0) return;
-    let el = aviso.current?.parentElement ?? null;
-    while (el && getComputedStyle(el).overflowY !== 'auto') el = el.parentElement;
-    el?.scrollTo?.({ top: 0, behavior: 'smooth' });
-  }, [nudge]);
-  const st = status(now);
-  const mins = Math.round(FUN_SESSION_MS / 60000);
-  if (st.active) {
-    return (
-      <p data-fun-session="active" style={{ ...sm2Text, margin: 0 }}>
-        {isPt
-          ? `Rodadas restantes: ${st.roundsLeft} · expira em ${formatMmSs(st.msLeft)}`
-          : `Rounds left: ${st.roundsLeft} · expires in ${formatMmSs(st.msLeft)}`}
-      </p>
-    );
-  }
-  if (!st.canPlay) {
-    return (
-      <p key={nudge} ref={aviso} data-fun-session="blocked" data-fun-nudged={nudge > 0 || undefined} role={nudge > 0 ? 'alert' : 'status'} style={nudge > 0 ? { ...sm2Text, margin: 0, padding: 8, borderRadius: 8, outline: '2px solid currentColor' } : { ...sm2Hint, margin: 0 }}>
-        {isPt
-          ? 'Sem energia para jogar agora. Que tal uma tarefa, o Ateliê da Mente ou o Refúgio? A energia volta com o tempo.'
-          : 'No energy to play right now. How about a task, the Mind Atelier or the Refuge? Energy comes back over time.'}
-      </p>
-    );
-  }
-  return (
-    <p data-fun-session="cost" style={{ ...sm2Hint, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-      <img src={ENERGY_ICON} alt="" aria-hidden="true" width={16} height={16} style={{ width: 16, height: 16, imageRendering: 'pixelated' }} />
-      {isPt
-        ? `${FUN_SESSION_COST} energia = ${FUN_SESSION_ROUNDS} rodadas (${mins} min)`
-        : `${FUN_SESSION_COST} energy = ${FUN_SESSION_ROUNDS} rounds (${mins} min)`}
-    </p>
-  );
-}
-
-export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, refused }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number; funStatus?: (nowMs: number) => FunSessionStatus; refused?: boolean }) {
+export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, onBuyTickets, refused }: { language: Language; onStart: (g: SalaoGame) => void; bitsToday?: number; funStatus?: (nowMs: number) => FunTicketStatus; /** Compra o lote de tickets (1 energia → 3). */ onBuyTickets?: () => void; refused?: boolean }) {
   /* Tocar em Jogar sem energia: o toque responde (o aviso ganha destaque e é anunciado), em vez de não fazer nada. */
   const [nudge, setNudge] = useState(refused ? 1 : 0);
   const onStart = (g: SalaoGame) => { if (funStatus && !funStatus(Date.now()).canPlay) { setNudge(n => n + 1); return; } abrir(g); };
   const isPt = language === 'pt-BR';
-  /* Abrir uma partida gasta energia SÓ quando não há sessão ativa (as rodadas da sessão já foram pagas): sem `funStatus` (testes antigos) = sem custo. */
-  const paga = !!funStatus && funStatus(Date.now()).costsEnergy;
+  /* Cada partida gasta 1 ticket (09/11/2026): sem `funStatus` (testes antigos) = sem custo. */
+  const paga = !!funStatus;
   return (
     <div data-salao style={{ display: 'flex', flexDirection: 'column', gap: 'var(--sm2-space-4, 16px)' }}>
-      {funStatus && <FunSessionLine language={language} status={funStatus} nudge={nudge} />}
+      {funStatus && <TicketPanel language={language} status={funStatus} onBuy={onBuyTickets} nudge={nudge} />}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
         <BitsHoje language={language} earned={bitsToday} />
         <ModalInfo language={language} label={isPt ? 'Como funciona o Salão' : 'How the Hall works'} align="right">
@@ -368,7 +325,7 @@ export function SalaoSheet({ language, onStart: abrir, bitsToday, funStatus, ref
           <div data-barrage style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <button type="button" data-barrage-open onClick={() => onStart('barrage')} style={cta}>
               {isPt ? 'Jogar' : 'Play'}
-              {paga && <EnergyCost amount={FUN_SESSION_COST} />}
+              {paga && <TicketCost />}
             </button>
           </div>
         </li>

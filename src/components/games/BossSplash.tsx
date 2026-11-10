@@ -40,7 +40,7 @@ export function BossSplash({ monster, art, portrait, kicker, title, intro, cards
       aria-modal="true"
       aria-labelledby="boss-splash-title"
       onClick={onDone}
-      style={{ position: 'fixed', inset: 0, zIndex: 40, display: 'flex', flexDirection: 'column', cursor: 'pointer', overflow: 'hidden',
+      style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', flexDirection: 'column', cursor: 'pointer', overflow: 'hidden',
         background: 'radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--sm2-surface) 85%, var(--sm2-danger-ink)) 0%, var(--sm2-bg) 70%)' }}
     >
       {usePortrait ? (
