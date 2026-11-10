@@ -56,4 +56,36 @@ class WidgetVpetTest {
         assertEquals(7, WidgetVpet.pickCasing(0, 7))
         assertEquals(9, WidgetVpet.pickCasing(9, 7))
     }
+
+    @Test fun foodTierFollowsTheTwoInstants() {
+        // Meat whole -> half -> bone only, by the instants the app stores.
+        assertEquals(WidgetVpet.FoodTier.FED, WidgetVpet.foodTier(100, null, null))
+        assertEquals(WidgetVpet.FoodTier.FED, WidgetVpet.foodTier(100, 200, 300))
+        assertEquals(WidgetVpet.FoodTier.FAIR, WidgetVpet.foodTier(200, 200, 300))
+        assertEquals(WidgetVpet.FoodTier.FAIR, WidgetVpet.foodTier(299, 200, 300))
+        assertEquals(WidgetVpet.FoodTier.STARVING, WidgetVpet.foodTier(300, 200, 300))
+        // Already below both when the app wrote them (past instants).
+        assertEquals(WidgetVpet.FoodTier.STARVING, WidgetVpet.foodTier(1_000, 10, 20))
+        // Old app (no starving instant): never worse than FAIR.
+        assertEquals(WidgetVpet.FoodTier.FAIR, WidgetVpet.foodTier(1_000, 10, null))
+    }
+
+    @Test fun energyBoltIsDarkHalfOrFull() {
+        assertEquals(WidgetVpet.EnergyLevel.EMPTY, WidgetVpet.energyLevel(0, 12))
+        assertEquals(WidgetVpet.EnergyLevel.EMPTY, WidgetVpet.energyLevel(-1, 12))
+        assertEquals(WidgetVpet.EnergyLevel.HALF, WidgetVpet.energyLevel(1, 12))
+        assertEquals(WidgetVpet.EnergyLevel.HALF, WidgetVpet.energyLevel(6, 12))
+        assertEquals(WidgetVpet.EnergyLevel.HALF, WidgetVpet.energyLevel(8, 12))
+        assertEquals(WidgetVpet.EnergyLevel.FULL, WidgetVpet.energyLevel(9, 12))
+        assertEquals(WidgetVpet.EnergyLevel.FULL, WidgetVpet.energyLevel(12, 12))
+        assertEquals(WidgetVpet.EnergyLevel.FULL, WidgetVpet.energyLevel(15, 12))
+        // Unknown cap (old app): any energy is full, none is dark.
+        assertEquals(WidgetVpet.EnergyLevel.FULL, WidgetVpet.energyLevel(3, 0))
+        assertEquals(WidgetVpet.EnergyLevel.EMPTY, WidgetVpet.energyLevel(0, 0))
+    }
+
+    @Test fun threeIconsFitInTheIconRow() {
+        val step = WidgetVpet.ICON + WidgetVpet.ICON_GAP
+        assertTrue(WidgetVpet.iconRow.l + 2 * step + WidgetVpet.ICON <= WidgetVpet.iconRow.r)
+    }
 }

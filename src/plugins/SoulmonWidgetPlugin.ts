@@ -164,6 +164,10 @@ export interface DigiWidgetData {
   /* REGISTRO §221, widget redimensionável. Opcionais: APK velho ignora; ausente = o plugin remove. */
   /** Instante (ms) em que a fome passa a contar. Ausente = sem registro de fome. Ver `hungryFrom`. */
   hungryAtMs?: number;
+  /** Instante (ms) em que a fome cai abaixo de "mediano" (osso). Ausente = sem registro. Ver `starvingSince`. V-Pet: comida em 3 estados. */
+  starvingAtMs?: number;
+  /** Teto de energia do estagio (`maxEnergyOf`), para o raio do V-Pet (escuro/metade/cheio). */
+  maxEnergyPoints?: number;
   /** O que falta hoje, ou vazio. Ver `widgetNextTask`. */
   nextTaskName?: string;
   /** Até quando `nextTaskName` e o placar do dia valem. Ver `widgetDayEndsAt`. */

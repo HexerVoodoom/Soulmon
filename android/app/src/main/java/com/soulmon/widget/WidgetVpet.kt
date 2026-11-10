@@ -57,4 +57,28 @@ object WidgetVpet {
 
     /** Hunger shown full-colour only when the pet is hungry (same rule as the hungry line). */
     fun isHungry(now: Long, hungryAt: Long?): Boolean = hungryAt != null && now >= hungryAt
+
+    /** The three food states of the game (`utils/hunger.ts` > `HungerTier`): whole meat, half meat, bone only. */
+    enum class FoodTier { FED, FAIR, STARVING }
+
+    /**
+     * Food tier now, from the two INSTANTS the app stores (hunger falls by timestamp, so a refresh with the app closed still
+     * gets it right): `hungryAt` = below "well fed" (HUNGER_FED_MIN), `starvingAt` = below "fair" (HUNGER_FAIR_MIN). Absent = not there.
+     */
+    fun foodTier(now: Long, hungryAt: Long?, starvingAt: Long?): FoodTier = when {
+        starvingAt != null && now >= starvingAt -> FoodTier.STARVING
+        hungryAt != null && now >= hungryAt -> FoodTier.FAIR
+        else -> FoodTier.FED
+    }
+
+    /** Energy bolt: dark = none, half-filled = some, full = (nearly) full. */
+    enum class EnergyLevel { EMPTY, HALF, FULL }
+
+    /** `points` of `max` (`getMaxEnergyForStage`). Unknown/zero max: any energy reads as full, none as empty. */
+    fun energyLevel(points: Int, max: Int): EnergyLevel = when {
+        points <= 0 -> EnergyLevel.EMPTY
+        max <= 0 -> EnergyLevel.FULL
+        points * 4 >= max * 3 -> EnergyLevel.FULL
+        else -> EnergyLevel.HALF
+    }
 }
