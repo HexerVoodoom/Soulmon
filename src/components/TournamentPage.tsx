@@ -55,7 +55,7 @@ import { useHexOverrides } from '../hooks/useHexOverrides';
 import { lotIconArt, lotIconName } from '../utils/lotIcons';
 import { hexFamily } from '../utils/hexsmith';
 import type { FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
-import { markSeenId } from '../utils/librarySeen';
+import { markSeenId, addSeenToState } from '../utils/librarySeen';
 import { useEffect, useMemo, useState } from 'react';
 import { entrarNaSuperficie } from '../utils/musica';
 import { createPortal } from 'react-dom';
@@ -437,7 +437,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
      sozinhos e o dono torce. Sair antes do fim é DERROTA (`leaveDuel`).
      Sem a ficha (servidor antigo), a partida segue direto como antes. */
   const fight = async (opp: Opponent) => {
-    markSeenId(opp.id); // enfrentou = viu o Soulmon (mesma lista da Biblioteca; simulado entra igual a jogador real)
+    if (ctx) ctx.setGameState(prev => addSeenToState(prev, opp.id)); else markSeenId(opp.id); // enfrentou = viu o Soulmon (mesma lista da Biblioteca; simulado entra igual a jogador real)
     if (!(opp.duel && myDuel)) { void resolveMatch(opp, []); return; }
     setFighting(opp.id);
     setFightError(null);

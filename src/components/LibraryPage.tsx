@@ -31,7 +31,7 @@ import { PlayerDetailModal } from './PlayerDetailModal';
 import { RitualDialog } from './ritual/RitualKit';
 import { elementIcon } from '../utils/elementIconArt';
 import { dexElementName } from './ElementDex';
-import { readAllForms, recordForms, sanitizeForm, formStageLabel, isCurrentForm, type SeenForm } from '../utils/libraryForms';
+import { sanitizeForm, formStageLabel, isCurrentForm, type SeenForm } from '../utils/libraryForms';
 import { CoopPanel } from './CoopPanel';
 import { BestiaryCollection } from './BestiaryCollection';
 import { NewBadge } from './LibraryNewBadge';
@@ -46,9 +46,7 @@ import { MiniGlass } from './ui/MiniGlass';
 import { Field, sm2Button } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 import type { PlayerDayAnchor } from '../utils/playerDay';
-import { readSeenIds, addSeenId } from '../utils/librarySeen';
-import { writeJson } from '../utils/safeStorage';
-import { STORAGE_KEYS } from '../utils/storageKeys';
+import { useLibraryMemory } from '../hooks/useLibraryMemory';
 
 const FriendTraining = lazy(() => import('./FriendTraining').then(m => ({ default: m.FriendTraining })));
 
@@ -210,18 +208,9 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
   const [sugestoes, setSugestoes] = useState<string[]>([]);
   /** Pet aberto no painel simples da Biblioteca do Hall. */
   const [selectedPet, setSelectedPet] = useState<LibraryEntry | null>(null);
-  const [seen, setSeen] = useState<string[]>(readSeenIds);
-  /** Formas já vistas de cada Soulmon (aparelho) — junta o que a Biblioteca vê agora com o que o servidor conta dos AMIGOS. */
-  const [formsMap, setFormsMap] = useState<Record<string, SeenForm[]>>(readAllForms);
+  /** Memória da Biblioteca (10/11/2026): vistos e formas vivem no save (fonte única, vai à nuvem); sem provider cai na chave local. */
+  const { seen, formsMap, markSeen, record: recordForms } = useLibraryMemory();
   const formaAtualDe = (p: LibraryEntry) => ({ stage: p.stage, spriteUrl: isSafeSpriteSrc(p.spriteUrl) ? p.spriteUrl : null, element: p.element ?? null, date: Date.now() });
-  const markSeen = (id: string) => {
-    setSeen(prev => {
-      if (prev.includes(id)) return prev;
-      const next = [...addSeenId(prev, id)];
-      writeJson(STORAGE_KEYS.LIBRARY_SEEN, next);
-      return next;
-    });
-  };
 
   useEffect(() => {
     let vivo = true;
@@ -295,14 +284,13 @@ export function LibraryPage({ saveId, friends, canGiftToday = false, onFriendsCh
     const todos = [...((players ?? []) as LibraryEntry[]), ...(friendPlayers ?? [])].filter(p => !p.isNpc && !p.unresolved && (seen.includes(p.id) || friends.includes(p.id)));
     if (todos.length === 0) return;
     for (const p of todos) recordForms(p.id, [formaAtualDe(p)]);
-    setFormsMap(readAllForms());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [players, friendPlayers, vistosKey, friendsKey]);
   useEffect(() => {
     let vivo = true;
     friendsKey.split(',').filter(Boolean).forEach(pid => {
       getFriendForms(saveId, pid)
-        .then(r => { if (vivo && Array.isArray(r.forms)) { recordForms(pid, r.forms); setFormsMap(readAllForms()); } })
+        .then(r => { if (vivo && Array.isArray(r.forms)) recordForms(pid, r.forms); })
         .catch(() => { /* sem rede / 403: fica o que já foi visto */ });
     });
     return () => { vivo = false; };
