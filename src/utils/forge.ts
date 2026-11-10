@@ -73,6 +73,19 @@ const OLD_LEVEL_SPAN: readonly number[] = [3, 2, 3, 3, 4];
 
 /** Refazer a escolha de UM nível: Bits GANHOS (com o desconto do Comércio) ou fragmentos. Material não volta. */
 export const REDO_BITS = 150;
+
+/**
+ * 💠 BITS DO APRIMORAMENTO (dono, 10/11/2026): subir uma peça do Soulsmith custa também Bits, além dos materiais, e o preço CRESCE a cada nível:
+ * `upgradeBitsCost(nível) = round(UPGRADE_BITS_BASE × UPGRADE_BITS_FACTOR^(nível − 1))`, em que **nível = o nível ATUAL da peça** (o que ela tem antes de subir):
+ * 1→2 custa 20, 5→6 custa 49, 10→11 custa 149, 14→15 custa 364. Só Bits GANHOS (`earnedBits`, regra de `bitsOrigin`, igual ao equipamento e ao refazer),
+ * nunca Créditos; sem desconto de Comércio (a fórmula é a do dono). O custo mora SÓ aqui: `forgeActions.ts`, a tela e o manual leem desta função.
+ */
+export const UPGRADE_BITS_BASE = 20;
+export const UPGRADE_BITS_FACTOR = 1.25;
+export function upgradeBitsCost(level: number): number {
+  const n = Math.max(1, Math.min(FORGE_MAX_LEVEL - 1, Math.floor(Number.isFinite(level) ? level : 1)));
+  return Math.round(UPGRADE_BITS_BASE * Math.pow(UPGRADE_BITS_FACTOR, n - 1));
+}
 export const REDO_FRAGMENTS = 3;
 
 export interface ForgePiece {

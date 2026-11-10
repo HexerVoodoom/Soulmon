@@ -4542,6 +4542,14 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Alternativa que perdeu:** sem bônus de sono. **Falsifica:** o dono ver a energia encher "rápido demais" de manhã (reduzir o fator na constante) ou jogadores dormirem o pet o dia todo só pelo bônus. **Rollback:** reverter o PR; `energyClock.sleep` ignorado por versões antigas.
 
+## §281 — Aprimorar peça no Soulsmith custa também Bits, em curva crescente (10/11/2026, decisão do dono em modal)
+
+**Decisão.** Subir uma peça do Soulsmith (nível 1→15) passa a custar Bits GANHOS além dos materiais: `upgradeBitsCost(nível) = round(UPGRADE_BITS_BASE (20) × UPGRADE_BITS_FACTOR (1,25)^(nível − 1))` (`src/utils/forge.ts`, o módulo único), com **nível = o nível ATUAL da peça**: 1→2 custa 20, 5→6 custa 49, 10→11 custa 149, 14→15 custa 364; a peça inteira (1→15) soma 1.738 Bits. O ponto único é `upgradeRefusal`/`applyUpgrade` (`forgeActions.ts`): falta de Bits = recusa suave (`no-funds`; `not-earned` se o saldo vem de Crédito), vem ANTES de qualquer débito, então nada é consumido; só Bits ganhos pagam (`earnedBits`, regra de `bitsOrigin`, igual ao equipamento e ao refazer); sem desconto de Comércio (a fórmula é a do dono). O botão mostra o preço. O servidor não muda (só espelha tabelas de bônus; o gasto de Bits é do cliente).
+
+**Alternativa que perdeu:** nível = o nível-alvo (o 1º upgrade já custaria 25 e a base 20 nunca apareceria); também perdeu custo plano em Bits (não cresce com o poder da peça) e aceitar Bits de câmbio de Crédito (daria vantagem paga).
+
+**Falsifica:** o dono achar o Soulsmith caro demais para quem joga só o necessário (baixar `UPGRADE_BITS_FACTOR`) ou o teto diário de Bits dos minijogos (`MINIGAME_BITS_PER_DAY`) travar a escada (revisar `BALANCO-SOULSMITH.md`).
+
 ## §279 — Torneio ganha a aba Treino (Sparring), sem ranking e com pouca Honra (10/11/2026, decisão do dono em modal)
 
 **Decisão.** O Torneio passa a ter DUAS abas: **Ranqueada** (como era) e **Treino** (EN *Sparring*): luta PvP contra outros jogadores que NÃO ranqueia (placar, rank, faixa, season e `lifetimePoints` intocados; sem cota de partidas; derrota sem castigo) e rende **1 a 2 de Honra por vitória, teto de 20 por dia do jogador**, contado e decidido no servidor. Oponentes: 5 sorteados num pool grande por faixa de **Vínculo** (±3, ampliando se houver menos de 5), nunca por ranking; **refresh ilimitado** (o servidor sorteia a cada pedido). Implementação: `functions/api/_treino.js` + ações `sparOpponents/sparStart/sparMatch` em `community.js`; UI em `TournamentPage`. Manual 02 §53 › "O Treino".

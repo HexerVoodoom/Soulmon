@@ -23,6 +23,7 @@ import { ATTR_COPY, itemName } from '../utils/equipmentCopy';
 import {
   ALT_ATTR, FORGE_MAX_LEVEL, FORGE_PIECES, LEVEL_PCT, PRIMARY_ATTR, REDO_FRAGMENTS, pieceBonus, pieceChoices, type ForgeChoice, type ForgePiece,
 } from '../utils/forge';
+import { upgradeBitsCost } from '../utils/forge';
 import { applyRedo, applyUpgrade, levelNow, redoBitsPrice, redoRefusal, upgradeCost, upgradeRefusal, type ForgeGameState } from '../utils/forgeActions';
 import { ATTR_EFFECT, forgeRefusalText } from '../utils/forgeCopy';
 import { stockOf } from '../utils/buildingQuests';
@@ -210,8 +211,8 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
             <div data-forge-upgrade={piece.id} style={{ display: 'grid', gap: 4, justifyItems: 'end', flexShrink: 0 }}>
               <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" disabled={!!recusa} data-forge-upgrade-btn={piece.id}
                 onClick={() => abrir({ mode: 'upgrade', id: piece.id })}
-                aria-label={isPt ? `Upgrade de ${nome} para o nível ${to}` : `Upgrade ${nome} to level ${to}`}>
-                {isPt ? 'Aprimorar' : 'Upgrade'}
+                aria-label={isPt ? `Upgrade de ${nome} para o nível ${to}, ${upgradeBitsCost(level)} Bits` : `Upgrade ${nome} to level ${to}, ${upgradeBitsCost(level)} Bits`}>
+                {isPt ? 'Aprimorar' : 'Upgrade'} · <BitsAmount value={upgradeBitsCost(level)} size={16} style={{ color: 'inherit' }} />
               </button>
               <span className="sm2-stats-s" style={{ display: 'grid', gap: 2, justifyItems: 'end' }}>
                 {custos.map(({ m, n, have }) => (
@@ -326,6 +327,7 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
             <>
               <span className="sm2-stats-s" style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 {custoTexto(piece, alvo).map(({ m, n, have }) => <span key={m.id}><MaterialIcon id={m.id} emoji={m.icon} /> {isPt ? m.namePt : m.nameEn} {have}/{n}</span>)}
+                <span data-forge-bits-cost>{isPt ? 'Bits ganhos' : 'Earned Bits'} {earnedBits(view)}/{upgradeBitsCost(alvo - 1)}</span>
               </span>
               {refUp && <span className="sm2-stats-s" data-forge-why>{forgeRefusalText(refUp, isPt, alvo - 1)}</span>}
             </>
@@ -340,7 +342,8 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', flexWrap: 'wrap' }}>
             <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-quiet" data-forge-cancel onClick={() => setDialog(null)}>{isPt ? 'Cancelar' : 'Cancel'}</button>
             {dialog.mode === 'upgrade' ? (
-              <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-forge-confirm disabled={!!refUp} onClick={() => confirmar()}>{isPt ? 'Confirmar' : 'Confirm'}</button>
+              <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-forge-confirm disabled={!!refUp} onClick={() => confirmar()}
+                aria-label={isPt ? `Confirmar · ${upgradeBitsCost(alvo - 1)} Bits` : `Confirm · ${upgradeBitsCost(alvo - 1)} Bits`}>{isPt ? 'Confirmar' : 'Confirm'} · <BitsAmount value={upgradeBitsCost(alvo - 1)} size={16} style={{ color: 'inherit' }} /></button>
             ) : (
               <>
                 <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-outline" data-forge-confirm-fragments disabled={!!refFrag} onClick={() => confirmar('fragments')}
@@ -415,8 +418,8 @@ export default function ForgeCard({ language = 'pt-BR', view: viewMode = 'list',
             {recusa && recusa !== 'no-materials' && <span className="sm2-stats-s" data-forge-why>{forgeRefusalText(recusa, isPt, level)}</span>}
             <button type="button" className="sm2-kit-btn sm2-kit-btn-sm sm2-kit-btn-primary" data-forge-upgrade-btn={piece.id} disabled={!!recusa}
               onClick={() => runUpgrade(piece.id, popChoice)}
-              aria-label={isPt ? `Aprimorar ${nome} para o nível ${to}` : `Upgrade ${nome} to level ${to}`}>
-              {isPt ? 'Aprimorar' : 'Upgrade'}
+              aria-label={isPt ? `Aprimorar ${nome} para o nível ${to}, ${upgradeBitsCost(level)} Bits` : `Upgrade ${nome} to level ${to}, ${upgradeBitsCost(level)} Bits`}>
+              {isPt ? 'Aprimorar' : 'Upgrade'} · <BitsAmount value={upgradeBitsCost(level)} size={16} style={{ color: 'inherit' }} />
             </button>
           </>
         )}

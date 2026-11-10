@@ -24,7 +24,7 @@ import { GOOD_CONSTANCY_RATIO } from '../utils/habitRhythm';
 import { DREAM_CATALOG, NIGHT_ENERGY_BONUS } from '../utils/restWindow';
 import { guildText } from '../utils/guildCopy';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
-import { FORGE_MAX_LEVEL, PIECE_MAX_PCT, REDO_BITS } from '../utils/forge';
+import { FORGE_MAX_LEVEL, PIECE_MAX_PCT, REDO_BITS, upgradeBitsCost } from '../utils/forge';
 import { HEX_COSTS } from '../utils/hexsmith';
 import { GATES } from '../utils/gates';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
@@ -554,8 +554,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `A cada nível você escolhe entre dois ganhos (refazer custa ${REDO_BITS} Bits ganhos jogando). Uma peça no máximo vale ${(PIECE_MAX_PCT * 100).toFixed(1).replace('.', ',')}%.`,
-              `At each level you choose between two gains (redoing a choice costs ${REDO_BITS} Bits earned by playing). One piece at the top is worth ${(PIECE_MAX_PCT * 100).toFixed(1)}%.`,
+              `Cada aprimoramento custa materiais e Bits ganhos jogando (de ${upgradeBitsCost(1)} no começo, crescendo a cada nível). A cada nível você escolhe entre dois ganhos (refazer custa ${REDO_BITS} Bits ganhos jogando). Uma peça no máximo vale ${(PIECE_MAX_PCT * 100).toFixed(1).replace('.', ',')}%.`,
+              `Each upgrade costs materials and Bits earned by playing (from ${upgradeBitsCost(1)} at the start, growing each level). At each level you choose between two gains (redoing a choice costs ${REDO_BITS} Bits earned by playing). One piece at the top is worth ${(PIECE_MAX_PCT * 100).toFixed(1)}%.`,
             )}
           </p>
           <p style={para}>
