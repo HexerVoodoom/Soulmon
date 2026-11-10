@@ -21,7 +21,8 @@ import { APP_VERSION, FeedbackRow, BugReportRow } from './FeedbackLink';
 import { ProfileEditor } from './perfil/ProfileEditor';
 import { EditHomeScreen, type EditHomeProps } from './perfil/EditHomeScreen';
 import { WidgetFramePicker } from './WidgetFramePicker';
-import type { WidgetFramePickerData } from '../utils/widgetFrames';
+import { getSpriteForStage } from '../utils/sprites';
+import { widgetFramePreview, type WidgetFramePickerData } from '../utils/widgetFrames';
 import { UserAvatar } from './ui/UserAvatar';
 import { BondXpBar } from './perfil/BondXpBar';
 import { GmPanel, type GmActions } from './GmPanel';
@@ -107,6 +108,8 @@ interface SettingsPageProps {
     petStage: string; totalXP?: number; onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
     userName?: string; onChangeName?: (name: string) => void;
     petName?: string; onChangePetName?: (name: string) => void;
+    /** Nome do especial (Editar perfil). */
+    especial?: { nome: string; nomeAt?: number; onSave: (nome: string) => void };
     /** Editar Home: sem isto a linha nao existe. */
     editHome?: Pick<EditHomeProps, 'ownedFurniture' | 'equippedDecor' | 'equippedBackground' | 'ownedBackgrounds' | 'onSave' | 'onOpenShop'>;
     /** Moldura do widget V-Pet (`utils/widgetFrames.ts`): sem isto a linha não existe. */
@@ -350,6 +353,8 @@ export function SettingsPage({
     if (!ok) restoreTimer.current = setTimeout(() => setRestoreStatus('idle'), 3000);
   };
 
+  const petImg = profile ? getSpriteForStage(profile.petStage) : '';
+
   return (
     <>
       <InstallPrompt language={language} />
@@ -357,40 +362,29 @@ export function SettingsPage({
       {/* ── PERFIL — foto e moldura (a foto do canto da Home). ───────────── */}
       {profile && (
         <GroupCard title={isPt ? 'Perfil' : 'Profile'}>
-          <button
-            type="button"
-            data-edit-profile
-            onClick={() => setProfileOpen(true)}
-            style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 56, background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--sm2-ink)', textAlign: 'left' }}
-          >
-            <UserAvatar avatarId={profile.avatarId} frameId={profile.equippedFrame} seed={profile.saveId} size={32} />
-            <span style={{ ...sm2Text, flex: 1 }}>{isPt ? 'Editar perfil' : 'Edit profile'}</span>
-            <Icon name="chevron_right" size={24} tone="muted" />
-          </button>
-          {profile.editHome && (
-            <button
-              type="button"
-              data-edit-home-open
-              onClick={() => setEditHomeOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 56, background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--sm2-ink)', textAlign: 'left' }}
-            >
-              <span style={{ width: 32, display: 'flex', justifyContent: 'center' }}><Icon name="home" size={24} tone="muted" /></span>
-              <span style={{ ...sm2Text, flex: 1 }}>{isPt ? 'Editar Home' : 'Edit Home'}</span>
-              <Icon name="chevron_right" size={24} tone="muted" />
-            </button>
-          )}
-          {profile.widgetFrames && (
-            <button
-              type="button"
-              data-widget-frames-open
-              onClick={() => setWidgetFramesOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 56, background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--sm2-ink)', textAlign: 'left' }}
-            >
-              <span style={{ width: 32 }} />
-              <span style={{ ...sm2Text, flex: 1 }}>{isPt ? 'Moldura do widget' : 'Widget frame'}</span>
-              <Icon name="chevron_right" size={24} tone="muted" />
-            </button>
-          )}
+          {/* Soulmon PRÓPRIO (nunca oponente): piso por estágio, como no ProfileEditor. */}
+          <div data-profile-cards style={{ display: 'flex', gap: 8, alignItems: 'stretch', width: '100%' }}>
+            {([
+              { key: 'profile', attr: { 'data-edit-profile': true }, label: isPt ? 'Perfil' : 'Profile', on: () => setProfileOpen(true),
+                img: <UserAvatar avatarId={profile.avatarId} frameId={profile.equippedFrame} seed={profile.saveId} size={56} /> },
+              ...(profile.editHome ? [{ key: 'home', attr: { 'data-edit-home-open': true }, label: 'Home', on: () => setEditHomeOpen(true),
+                img: <img src={petImg} alt="" width={56} height={56} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} /> }] : []),
+              ...(profile.widgetFrames ? [{ key: 'widget', attr: { 'data-widget-frames-open': true }, label: 'Widget', on: () => setWidgetFramesOpen(true),
+                img: (() => {
+                  const url = profile.widgetFrames!.selected ? widgetFramePreview(profile.widgetFrames!.selected) : undefined;
+                  return url
+                    ? <img src={url} alt="" width={84} height={56} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />
+                    : <img src={petImg} alt="" width={56} height={56} style={{ objectFit: 'contain', imageRendering: 'pixelated' }} />;
+                })() }] : []),
+            ]).map(c => (
+              <button key={c.key} type="button" {...c.attr} onClick={c.on}
+                aria-label={isPt ? `Editar ${c.label}` : `Edit ${c.label}`}
+                style={{ flex: '1 1 0', minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, padding: '12px 4px', cursor: 'pointer', color: 'var(--sm2-ink)', background: 'var(--sm2-surface)', border: '1px solid var(--sm2-line)', borderRadius: 'var(--sm2-radius-lg)' }}>
+                <span style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{c.img}</span>
+                <span style={{ ...sm2Text, fontWeight: 600 }}>{c.label}</span>
+              </button>
+            ))}
+          </div>
           {profile.widgetFrames && (
             <ModalSheet open={widgetFramesOpen} title={isPt ? 'Moldura do widget' : 'Widget frame'} onClose={() => setWidgetFramesOpen(false)} language={language}>
               <WidgetFramePicker language={language} data={profile.widgetFrames} />
@@ -421,6 +415,9 @@ export function SettingsPage({
             onChangeName={profile.onChangeName}
             petName={profile.petName}
             onChangePetName={profile.onChangePetName}
+            especialNome={profile.especial?.nome}
+            especialNomeAt={profile.especial?.nomeAt}
+            onSaveEspecialNome={profile.especial?.onSave}
             onOpenFrameShop={requestOpenFrameShop}
           />
           <BondXpBar totalXP={profile.totalXP ?? 0} language={language} />

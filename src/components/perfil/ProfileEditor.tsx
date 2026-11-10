@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ModalSheet, Field, Segment, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
+import { EspecialNomeEditor } from './EspecialNomeEditor';
 import { FrameSelector } from '../ui/AvatarFrame';
 import { UserAvatar } from '../ui/UserAvatar';
 import { AvatarImg } from '../ui/AvatarImg';
@@ -32,7 +33,7 @@ function useFrameContext(saveId: string, owned: string[]): FrameContext {
 }
 
 /** EDITAR PERFIL: e-mail (em breve), moldura e foto. Só IDs de listas fechadas vão para o save. */
-export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, petStage, petElement, onChangeAvatar, onChangeFrame, userName = '', onChangeName, petName = '', onChangePetName, onOpenFrameShop }: {
+export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, petStage, petElement, onChangeAvatar, onChangeFrame, userName = '', onChangeName, petName = '', onChangePetName, onOpenFrameShop, especialNome, especialNomeAt, onSaveEspecialNome }: {
   open: boolean; onClose: () => void; language: Language; saveId: string; email?: string | null;
   avatarId: string | null; equippedFrame: string | null; ownedFrames: string[]; petStage: string; petElement?: string;
   onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
@@ -43,6 +44,8 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
   /** D-16: o Perfil NÃO compra moldura. A de loja que a pessoa não tem aparece trancada e o toque abre Mercado > Frames
    *  (por padrão, o pedido vai pelo evento de `utils/frameShopNav`, que o `App` atende). */
   onOpenFrameShop?: () => void;
+  /** Nome do especial do Soulmon (público para quem duela). Sem `onSaveEspecialNome` o campo não aparece. */
+  especialNome?: string; especialNomeAt?: number; onSaveEspecialNome?: (nome: string) => void;
 }) {
   const isPt = language === 'pt-BR';
   const ctx = useFrameContext(saveId, ownedFrames);
@@ -152,8 +155,11 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
             <p style={sm2Hint}>{isPt ? 'O nome exibido na tela principal e na comunidade.' : 'The name shown on the home screen and in the community.'}</p>
           </div>
         )}
-        <label style={sm2Text} htmlFor="sm-profile-email">{isPt ? 'E-mail' : 'Email'}</label>
-        <Field id="sm-profile-email" type="email" value={email ?? ''} disabled readOnly placeholder={isPt ? 'em breve' : 'coming soon'} />
+        {onSaveEspecialNome && (
+          <EspecialNomeEditor key={especialNome ?? ''} language={language} nome={especialNome ?? ''} nomeAt={especialNomeAt} onSave={onSaveEspecialNome} />
+        )}
+        <label style={{ ...sm2Text, display: 'block', marginTop: 12 }} htmlFor="sm-profile-email">{isPt ? 'E-mail' : 'Email'}</label>
+        <Field id="sm-profile-email" data-profile-email type="email" value={email ?? ''} disabled readOnly tabIndex={-1} aria-disabled="true" style={{ background: 'var(--sm2-surface-2)', color: 'var(--sm2-muted)', cursor: 'not-allowed' }} placeholder={isPt ? 'em breve' : 'coming soon'} />
         <p style={sm2Hint}>{isPt ? 'Trocar o e-mail: em breve.' : 'Changing your email: coming soon.'}</p>
 
         <h3 style={sec}>{isPt ? 'Moldura' : 'Frame'}</h3>

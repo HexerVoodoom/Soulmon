@@ -9307,6 +9307,7 @@ export default function App() {
                 onChangeName: handleChangeUserName,
                 petName: soulmonDisplayName(gameState.soulmonMeta),
                 onChangePetName: handleChangePetName,
+                especial: { nome: gameState.especialNome ?? '', nomeAt: gameState.especialNomeAt, onSave: nome => setGameState(prev => (prev.especialNome === nome ? prev : { ...prev, especialNome: nome })) },
                 editHome: {
                   ownedFurniture: gameState.ownedFurniture ?? [],
                   equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
