@@ -38,10 +38,11 @@ describe('queda volta ao elemento da forma em que cai', () => {
     expect(caiu.formaSnapshots?.['ultimate-power']?.pocao).toBe('agua');
   });
 
-  it('a forma em que cai tinha poção: ela volta', () => {
+  it('a forma em que cai tinha poção: ela NÃO volta (degenerar descarta a poção; volta à base)', () => {
     const ult = { ...evoluidoComPocao(), formaSnapshots: { 'champion-power': { pocao: 'terra' } } };
     const caiu = aoDescerDeForma(ult, { ...ult, evolutionStage: 'champion-power' });
-    expect(petElementOf(caiu)).toBe('terra');
+    expect(caiu.potionElement).toBeUndefined();
+    expect(petElementOf(caiu)).toBe('fogo');
   });
 
   it('sem queda de nível = o mesmo objeto', () => {

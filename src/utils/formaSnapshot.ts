@@ -114,9 +114,9 @@ export function trocarFormaCompleta<T extends FormaState>(prev: T, trocar: (s: T
 }
 
 /**
- * QUEDA (manual ou por HP): `next` é o estado já com o estágio de destino. Fotografa a forma que cai (de `prev`), apaga o registro de
- * elemento dos níveis ACIMA do destino (a próxima subida registra o elemento de novo, como na primeira vez) e aplica a foto do destino;
- * sem foto, a poção é limpa e o elemento volta ao do registro do nível. Não caiu de nível = o MESMO `next`.
+QUEDA (manual ou por HP): `next` é o estado já com o estágio de destino. Fotografa a forma que cai (de `prev`), apaga o registro de
+ * elemento dos níveis ACIMA do destino (a próxima subida registra o elemento de novo, como na primeira vez), aplica a foto do destino
+ * e DESCARTA a poção (o elemento volta ao do registro do nível). Não caiu de nível = o MESMO `next`.
  */
 export function aoDescerDeForma<T extends FormaState>(prev: FormaState, next: T): T {
   const alvo = nivelIdx(next.evolutionStage);
@@ -130,7 +130,9 @@ export function aoDescerDeForma<T extends FormaState>(prev: FormaState, next: T)
     }
     out = { ...out, elementoJornada: { ...j, estagios } };
   }
-  return aplicarFotoAtual(out) ?? { ...out, potionElement: undefined };
+  // REGRA DO DONO (10/11/2026): degenerar DESCARTA a poção — o Soulmon volta ao elemento do registro do nível (a base) e a poção só
+  // vale para a evolução em que foi usada. O resto da foto (elemento e skills do nível) segue sendo restaurado.
+  return { ...(aplicarFotoAtual(out) ?? out), potionElement: undefined };
 }
 
 /** Leitura tolerante do save. */

@@ -123,7 +123,7 @@ import { sanitizeLibraryAck, type LibraryAck } from '../utils/libraryNew';
 import { sanitizeStrayPlayersSeen, type StrayPlayerSeen } from '../utils/strayPlayers';
 import { sanitizeRestaurant, type RestaurantState } from '../utils/restaurantState';
 import { sanitizeEssences, sanitizeEssenceSpent, sanitizeEssenceAway, type EssenceAway } from '../utils/essences';
-import { sanitizeElementId } from '../utils/elementPotion';
+import { sanitizeElementId, curarPocaoOrfa } from '../utils/elementPotion';
 import { sanitizeSoulTestAnswers } from '../utils/soulTestAnswers';
 import type { Answers } from '../utils/soulProfile/personality/types';
 
@@ -1348,7 +1348,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         essences: sanitizeEssences(loadedState.essences), // essências: ausente/lixo = objeto vazio
         essenceSpent: sanitizeEssenceSpent(loadedState.essenceSpent), // gasto acumulado: ausente/lixo = objeto vazio
         evolutionPotion: sanitizeElementId(loadedState.evolutionPotion), // poção pendente: id fora do catálogo = nenhuma
-        potionElement: sanitizeElementId(loadedState.potionElement),
+        potionElement: curarPocaoOrfa(sanitizeElementId(loadedState.potionElement), typeof loadedState.evolutionStage === 'string' ? loadedState.evolutionStage : undefined, sanitizeFormaAltEquipada(loadedState.formaAltEquipada)),
         essenceAway: sanitizeEssenceAway(loadedState.essenceAway),
         offerShownWeek: typeof loadedState.offerShownWeek === 'string' ? loadedState.offerShownWeek : undefined,
         offerDismissed: loadedState.offerDismissed === true,
