@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, afterEach } from 'vitest';
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, fireEvent, render } from '@testing-library/react';
 import { SalaoSheet } from './PlaySheets';
 import { TicketFan, TicketCost } from './TicketFan';
 import type { FunTicketStatus } from '../../utils/funTickets';
@@ -25,7 +25,11 @@ describe('Salão: o painel de tickets', () => {
     expect(c.querySelector('[data-ticket-fan]')).toBeNull();
     expect(c.querySelector('[data-fun-tickets-count]')?.textContent).toContain('3/5');
     expect(c.querySelector('[data-fun-tickets-expiry]')?.textContent).toBe('vence em 01:02:05');
-    expect((c.querySelector('[data-fun-tickets-buy]') as HTMLButtonElement).disabled).toBe(true);
+    const buy = c.querySelector('[data-fun-tickets-buy]') as HTMLButtonElement;
+    expect(buy.getAttribute('aria-disabled')).toBe('true');
+    // aviso padrao (09/11/2026): o comprar bloqueado e tocavel e diz por que
+    fireEvent.click(buy);
+    expect(document.querySelector('[data-blocked-action="limite"]')).not.toBeNull();
   });
   it('sem energia aponta para outras atividades, em PT e EN', () => {
     expect(painel(st({ canBuy: false, buyRefusal: 'no-energy' })).textContent).toContain('Ateliê da Mente');

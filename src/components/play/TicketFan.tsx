@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type CSSProperties } from 'react';
+import { useBlockedAction } from '../ui/BlockedActionModal';
 import type { Language } from '../../utils/i18n';
 import { FUN_TICKET_BATCH, FUN_TICKET_COST, FUN_TICKET_MAX, formatHms, type FunTicketStatus } from '../../utils/funTickets';
 import { EnergyCost } from '../ui/EnergyCost';
@@ -96,6 +97,12 @@ export function TicketPanel({ language, status, onBuy, nudge = 0 }: { language: 
   const [, setTick] = useState(0);
   useEffect(() => { const id = setInterval(() => setTick(t => t + 1), 1000); return () => clearInterval(id); }, []);
   const st = status(Date.now()); // relógio lido a cada render: um lote recém-comprado nunca fica "no futuro"
+  const [blockedModal, explain] = useBlockedAction(language);
+  /* Aviso padrao (09/11/2026): tentou jogar sem ticket → o modal diz o que falta. */
+  useEffect(() => {
+    if (nudge > 0 && status(Date.now()).count === 0) explain({ kind: 'ticket', faltam: [{ namePt: 'Tickets', nameEn: 'Tickets', have: 0, need: 1 }], textoPt: `Compre um lote: ${FUN_TICKET_COST} energia = ${FUN_TICKET_BATCH} tickets.`, textoEn: `Buy a batch: ${FUN_TICKET_COST} energy = ${FUN_TICKET_BATCH} tickets.` });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nudge]);
   const hint = st.canBuy
     ? (isPt ? `${FUN_TICKET_COST} energia = ${FUN_TICKET_BATCH} tickets (valem 24 h)` : `${FUN_TICKET_COST} energy = ${FUN_TICKET_BATCH} tickets (good for 24 h)`)
     : st.buyRefusal === 'has-tickets'
@@ -113,7 +120,12 @@ export function TicketPanel({ language, status, onBuy, nudge = 0 }: { language: 
         </p>
       )}
       {onBuy && (
-        <button type="button" data-fun-tickets-buy disabled={!st.canBuy} aria-disabled={!st.canBuy} onClick={onBuy} style={{ ...sm2Button('primary', !st.canBuy), minHeight: 44 }}>
+        <button type="button" data-fun-tickets-buy aria-disabled={!st.canBuy}
+          onClick={() => {
+            if (st.canBuy) { onBuy(); return; }
+            if (st.buyRefusal === 'has-tickets') explain({ kind: 'limite', textoPt: 'Você ainda tem tickets de sobra: compre mais quando restarem 2 ou menos.', textoEn: 'You still have plenty of tickets: buy more when 2 or fewer are left.' });
+            else explain({ kind: 'energia', textoPt: `Um lote custa ${FUN_TICKET_COST} de energia. A energia volta com o tempo.`, textoEn: `A batch costs ${FUN_TICKET_COST} energy. Energy comes back over time.` });
+          }} style={{ ...sm2Button('primary', !st.canBuy), minHeight: 44 }}>
           {isPt ? `Comprar ${FUN_TICKET_BATCH} tickets` : `Buy ${FUN_TICKET_BATCH} tickets`}
           <EnergyCost amount={FUN_TICKET_COST} />
         </button>
