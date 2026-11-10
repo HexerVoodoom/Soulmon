@@ -94,8 +94,12 @@ export function countersElement(attacker: string, defender: string): boolean {
  * (advantage and disadvantage cancel out when the defender has mixed elements).
  */
 export function elementAdvantage(attackEl: string, defenderEls: readonly string[]): -1 | 0 | 1 {
-  const adv = defenderEls.some(d => countersElement(attackEl, d));
-  const dis = defenderEls.some(d => countersElement(d, attackEl));
+  // Nenhum elemento especial (par/derivado) cai em neutro por vir cru: tudo se resolve para a BASE dominante antes da tabela (idempotente nas
+  // bases; só 'neutro' de verdade segue neutro). Decisão do dono (10/11/2026).
+  const atk = baseDominanteDoElemento(attackEl);
+  const defs = defenderEls.map(d => baseDominanteDoElemento(d));
+  const adv = defs.some(d => countersElement(atk, d));
+  const dis = defs.some(d => countersElement(d, atk));
   if (adv && !dis) return 1;
   if (dis && !adv) return -1;
   return 0;
@@ -471,8 +475,8 @@ export function arenaElementsFor(
   attrs: { principal: string; secundario: string },
 ): ArenaElements {
   return {
-    basica: ficha.basica ?? baseDominanteDoElemento(ident.basico.elemento),
-    especial: ficha.especial ?? baseDominanteDoElemento(ident.especial.elemento),
+    basica: baseDominanteDoElemento(ficha.basica ?? ident.basico.elemento),
+    especial: baseDominanteDoElemento(ficha.especial ?? ident.especial.elemento),
     attrs,
   };
 }
