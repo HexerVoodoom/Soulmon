@@ -87,9 +87,9 @@ import { useGameStateOptional } from '../contexts/GameStateContext';
 import { stageSkillsFor } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { FX_FALLBACK_ELEMENT, opponentElementFor } from '../utils/combatFx';
 import { DESAFIANTE_ELEMENT } from '../utils/spriteElement';
-import { getOpponents, playMatchComRetry, playMatch, isFalhaDeRede, startDuel, getRank, getSeasonHistory, type Opponent, type MatchResult, type RankRow, type SeasonHistory } from '../utils/community';
+import { getOpponents, playMatchComRetry, playMatch, isFalhaDeRede, startDuel, getRank, getSeasonHistory, getSparOpponents, startSpar, playSpar, playSparComRetry, type SparResult, type Opponent, type MatchResult, type RankRow, type SeasonHistory } from '../utils/community';
 import { buildSeasonHistoryView, placeLabel, prevSeasonKey, seasonMonthLabel } from '../utils/seasonHistoryView';
-import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, emblemStyle } from '../utils/currencies';
+import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, SPAR_HONOR_MAX, SPAR_HONOR_DAILY_CAP, emblemStyle } from '../utils/currencies';
 import { RewardPreview } from './ui/RewardPreview';
 import { TIER_INSIGNIA_ART } from '../assets/soulmon/icones-ui';
 import { seasonDaysLabel } from '../utils/tournamentSeason';
@@ -103,7 +103,7 @@ import { RitualDialog } from './ritual/RitualKit';
 import { BackCircleButton } from './ui/BackCircleButton';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { GameVisor, VisorSprite, DIALOG_VISOR_W } from './games/GameKit';
-import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD, ModalSheet } from './form/FormKit';
+import { sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD, ModalSheet, Segment } from './form/FormKit';
 import { sm2Tag } from './TaskMeta';
 import { bondXP, bondLevelFor, meetsPvpBond, xpToPvpBond, xpForLevel, BOND_PVP_MIN_LEVEL } from '../utils/bond';
 import tournamentFinal from '../assets/soulmon/bg/tournament-final.png';
@@ -280,6 +280,16 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   const [fightError, setFightError] = useState<string | null>(null);
   /* QA-4: partida acabada cuja resposta não chegou (rede). Guardada para "tentar de novo"; o servidor segue com o duelo aberto. */
   const [matchRetry, setMatchRetry] = useState<{ opp: Opponent; taps: number[]; seed: number } | null>(null);
+  /* TREINO ("Sparring", 2a aba do Torneio): luta contra outros jogadores que NÃO ranqueia e rende 1–2 de Honra (teto no servidor).
+     Estado próprio e separado do ranqueado — nada daqui toca o placar, a cota de partidas nem o ranking. */
+  const [tab, setTab] = useState<'ranked' | 'sparring'>('ranked');
+  const [sparOpps, setSparOpps] = useState<Opponent[] | null>(null);
+  const [sparFailed, setSparFailed] = useState(false);
+  const [sparFighting, setSparFighting] = useState<string | null>(null);
+  const [sparDuel, setSparDuel] = useState<{ opp: Opponent; seed: number; me: DuelSide; oppSide: DuelSide } | null>(null);
+  const [sparResult, setSparResult] = useState<SparResult | null>(null);
+  const [sparError, setSparError] = useState<string | null>(null);
+  const [sparRetry, setSparRetry] = useState<{ opp: Opponent; taps: number[]; seed: number } | null>(null);
   /* WP4.13 (achado E5) — a FAIXA lê o contador LIFETIME, não os pontos da
      season. Os pontos da season descem por três caminhos (derrota própria,
      ser sorteado como oponente e perder — sem jogar — e a virada de mês), e a
@@ -371,7 +381,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
      REGISTRO: o único destrave não-cosmético e social), e a tela o EXPLICA em
      vez de parecer quebrada. A trava inforjável continua sendo a do servidor. */
   /* Duelo, faixas/ranking e moldura cobrem a folha com o voltar PADRÃO próprio: a folha esconde o dela (uma seta só). */
-  const coverOpen = duel !== null || tiersOpen || framesOpen;
+  const coverOpen = duel !== null || sparDuel !== null || tiersOpen || framesOpen;
   useEffect(() => {
     onCoverChange?.(coverOpen);
     return () => { if (coverOpen) onCoverChange?.(false); };
@@ -506,6 +516,55 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     }
   };
 
+  /* ── TREINO ── a lista nasce no SERVIDOR e muda a CADA pedido: o "Refresh" é ilimitado e sem custo (nada de cota, nada de Honra). */
+  const loadSpar = () => {
+    if (!pvpAberto) return;
+    setSparFailed(false);
+    getSparOpponents(saveId)
+      .then(r => setSparOpps(r.opponents ?? []))
+      .catch(() => { setSparOpps([]); setSparFailed(true); });
+  };
+  useEffect(() => { if (tab === 'sparring') loadSpar(); }, [tab, pvpAberto, saveId]);
+
+  const fightSpar = async (opp: Opponent) => {
+    setSparFighting(opp.id);
+    setSparError(null);
+    try {
+      const r = await startSpar(saveId, opp.id);
+      setSparDuel({ opp, seed: r.seed, me: r.me, oppSide: r.opp });
+    } catch (err) {
+      setSparError(err instanceof Error && err.message
+        ? err.message
+        : (isPt ? 'O treino não aconteceu. Tente de novo.' : "The sparring match didn't happen. Try again."));
+    } finally {
+      setSparFighting(null);
+    }
+  };
+  const leaveSpar = (opp: Opponent) => { void resolveSpar(opp, [], true); };
+  const resolveSpar = async (opp: Opponent, taps: number[], forfeit = false, seed?: number) => {
+    setSparFighting(opp.id);
+    setSparError(null);
+    setSparRetry(null);
+    try {
+      const r = typeof seed === 'number' && !forfeit
+        ? await playSparComRetry(saveId, opp.id, taps, seed)
+        : await playSpar(saveId, opp.id, taps, forfeit);
+      // A Honra é a do SERVIDOR (1–2 por vitória, teto de 20 por dia): o app só soma o que veio, e não soma o reenvio.
+      const honor = Number.isFinite(r.honor) ? Math.max(0, Math.min(SPAR_HONOR_MAX, Math.floor(r.honor))) : 0;
+      if (honor > 0 && !r.replayed) onEarnEmblems(honor);
+      if (!forfeit) setSparResult(r);
+    } catch (err) {
+      setSparResult(null);
+      if (typeof seed === 'number' && !forfeit && isFalhaDeRede(err)) setSparRetry({ opp, taps, seed });
+      setSparError(err instanceof Error && err.message
+        ? err.message
+        : (isPt ? 'O treino não aconteceu. Tente de novo.' : "The sparring match didn't happen. Try again."));
+    } finally {
+      setSparFighting(null);
+      setSparDuel(null);
+    }
+  };
+
   /** O indicador da faixa (canto do título): a insígnia atual; toque abre a folha.
    *  Se o ranking falhou, vira a nuvem cortada — tocar tenta de novo. */
   const tierIndicator = rank === null ? null : (
@@ -584,6 +643,11 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
               : 'The Soulmons fight on their own. Tap the screen (or the mascot) to cheer: the cheer bar fills and feeds your Soulmon energy, then it unleashes its special.'}
           </InfoTipSection>
         </span>
+        <InfoTipSection title={isPt ? 'Treino' : 'Sparring'}>
+          {isPt
+            ? `A aba Treino é amistosa: você enfrenta jogadores de Vínculo parecido, sem mexer na posição nem gastar partida. Vencer rende de 1 a ${SPAR_HONOR_MAX} de Honra, até ${SPAR_HONOR_DAILY_CAP} por dia. Dá para sortear outros oponentes quantas vezes quiser.`
+            : `The Sparring tab is friendly: you face players of a similar Bond, without touching your rank or using a match. A win earns 1 to ${SPAR_HONOR_MAX} Honor, up to ${SPAR_HONOR_DAILY_CAP} a day. You can draw new opponents as often as you like.`}
+        </InfoTipSection>
         <InfoTipSection title={isPt ? 'Missões' : 'Missions'}>
           {isPt
             ? 'Três missões por semana, pagas em Honra. Contam partidas e jogo, nunca quantidade de tarefas.'
@@ -655,6 +719,30 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         isPt={isPt}
         onDone={taps => { void resolveMatch(duel.opp, taps, false, duel.seed, duel.oppSide.fx?.elBasica ?? undefined); }}
         onClose={() => leaveDuel(duel.opp)}
+      />
+    );
+  }
+
+  if (sparDuel) {
+    return (
+      <DuelScreen
+        scene={coliseuSceneFor(standing?.tier.id).bg}
+        me={sparDuel.me}
+        opp={sparDuel.oppSide}
+        seed={sparDuel.seed}
+        petSprite={getSpriteForStage(petStage, petLine, 256)}
+        oppSprite={opponentSprite(sparDuel.opp, 256)}
+        oppStage={sparDuel.opp.stage}
+        petElement={petElement}
+        petStage={petStage}
+        skills={skills}
+        oppElement={sparDuel.oppSide.fx?.elBasica ?? opponentElementFor(sparDuel.opp)}
+        petName={isPt ? 'Você' : 'You'}
+        oppName={sparDuel.opp.petName || sparDuel.opp.name}
+        oppEspecialNome={sparDuel.opp.especialNome}
+        isPt={isPt}
+        onDone={taps => { void resolveSpar(sparDuel.opp, taps, false, sparDuel.seed); }}
+        onClose={() => leaveSpar(sparDuel.opp)}
       />
     );
   }
@@ -767,6 +855,13 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       {/* D-58 (19/10/2026): o botão "Train" saiu — o Torneio é só de lutas. O treino contra os desafiantes NPC (`startTraining(npc)`)
           continua na lista vazia de oponentes. */}
       {pvpAberto && (
+        <div role="radiogroup" data-torneio-abas aria-label={isPt ? 'Modo do Torneio' : 'Tournament mode'} style={{ display: 'flex', gap: 8 }}>
+          <Segment tonal selected={tab === 'ranked'} onSelect={() => setTab('ranked')} label={isPt ? 'Ranqueada' : 'Ranked'} />
+          <Segment tonal selected={tab === 'sparring'} onSelect={() => setTab('sparring')} label={isPt ? 'Treino' : 'Sparring'} />
+        </div>
+      )}
+
+      {pvpAberto && tab === 'ranked' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, margin: '-8px 0' }}>
             <p className="sm2-num" style={{ ...sm2Hint, flex: 1, minWidth: 0 }}>
@@ -916,6 +1011,88 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
             >
               <Icon name="sync" size={20} className={rerolling ? 'animate-spin' : undefined} />
               {isPt ? 'Sortear outros 3 oponentes' : 'Draw 3 new opponents'}
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* TREINO ("Sparring"): luta contra outros jogadores, parecida com a ranqueada, mas que NÃO ranqueia (sem pontos, sem faixa, sem
+          cota de partidas, sem Vínculo) e rende pouca Honra. O servidor sorteia 5 por faixa de Vínculo — nenhum número de ranking aparece. */}
+      {pvpAberto && tab === 'sparring' && (
+        <div data-torneio-treino style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <p style={{ ...sm2Hint, margin: 0 }}>
+            {isPt
+              ? `Treino amistoso contra outros jogadores: não muda a sua posição. Vencer rende de 1 a ${SPAR_HONOR_MAX} de Honra, até ${SPAR_HONOR_DAILY_CAP} por dia.`
+              : `Friendly practice against other players: it never changes your rank. A win earns 1 to ${SPAR_HONOR_MAX} Honor, up to ${SPAR_HONOR_DAILY_CAP} a day.`}
+          </p>
+          {sparError && (
+            <p role="alert" style={{ ...sm2Text, margin: 0, paddingLeft: 12, borderLeft: '3px solid var(--sm2-gold-ink)' }}>{sparError}</p>
+          )}
+          {sparRetry && (
+            <button type="button" onClick={() => { void resolveSpar(sparRetry.opp, sparRetry.taps, false, sparRetry.seed); }} style={{ ...sm2Button('outline'), width: '100%', maxWidth: 200 }}>
+              {isPt ? 'Tentar de novo' : 'Try again'}
+            </button>
+          )}
+          {sparOpps === null && (
+            <p role="status" style={{ ...sm2Hint, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '24px 0' }}>
+              <Icon name="sync" size={24} tone="primary" className="animate-spin" />
+              {isPt ? 'Procurando parceiros de treino…' : 'Looking for sparring partners…'}
+            </p>
+          )}
+          {sparFailed && (
+            <div role="status" style={{ ...cardStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8, padding: 12 }}>
+              <Icon name="cloud_off" size={24} tone="muted" />
+              <p style={{ ...sm2Text, margin: 0 }}>{isPt ? 'Não deu para carregar o treino.' : "Couldn't load sparring."}</p>
+              <p style={sm2Hint}>{isPt ? 'Pode ser a sua conexão.' : 'It may be your connection.'}</p>
+              <button type="button" onClick={() => { setSparOpps(null); loadSpar(); }} style={{ ...sm2Button('outline'), width: '100%', maxWidth: 200 }}>
+                {isPt ? 'Tentar de novo' : 'Try again'}
+              </button>
+            </div>
+          )}
+          {sparOpps?.length === 0 && !sparFailed && (
+            <p data-treino-vazio style={{ ...sm2Hint, textAlign: 'center', padding: '12px 0' }}>
+              {isPt ? 'Ninguém para treinar agora. Tente de novo daqui a pouco.' : 'No one to practise with right now. Try again in a little while.'}
+            </p>
+          )}
+          {sparOpps?.map(o => {
+            const busy = sparFighting === o.id;
+            const locked = sparFighting !== null;
+            return (
+              <div key={o.id} data-treino-oponente style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', minHeight: 56 }}>
+                <MiniGlass size={64}>
+                  <img src={opponentIcon(o, 64) ?? opponentSprite(o)} alt="" width={64} height={64} style={{ width: 64, height: 64, imageRendering: 'pixelated', display: 'block' }} />
+                </MiniGlass>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ ...sm2Text, margin: 0, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{o.name}</p>
+                  <p className="sm2-num" style={{ ...sm2Hint, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {o.petName || o.stage} · {getStageLevel(o.stage)}
+                  </p>
+                </div>
+                <RewardPreview mode="before" language={isPt ? 'pt-BR' : 'en-US'} size={14} items={[{ kind: 'honor', max: SPAR_HONOR_MAX }]} />
+                <button
+                  type="button"
+                  disabled={busy || locked}
+                  onClick={() => { void fightSpar(o); }}
+                  aria-label={isPt ? `Treinar com ${o.name}` : `Spar with ${o.name}`}
+                  style={{ ...sm2Button('primary', busy || locked, 'sm'), flexShrink: 0, minWidth: 88 }}
+                >
+                  {busy && <Icon name="sync" size={20} className="animate-spin" />}
+                  {isPt ? 'Treinar' : 'Spar'}
+                </button>
+              </div>
+            );
+          })}
+          {/* Refresh ILIMITADO neste modo: sem custo, sem teto — o servidor sorteia de novo a cada pedido. */}
+          {!sparFailed && sparOpps !== null && (
+            <button
+              type="button"
+              data-treino-refresh
+              disabled={sparFighting !== null}
+              onClick={() => { setSparOpps(null); loadSpar(); }}
+              style={{ ...sm2Button('outline', sparFighting !== null), width: '100%' }}
+            >
+              <Icon name="sync" size={20} />
+              {isPt ? 'Sortear outros 5 oponentes' : 'Draw 5 new opponents'}
             </button>
           )}
         </div>
@@ -1117,6 +1294,33 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           ) : null}
           <p style={sm2Hint}>{trainingEssence && trainingOutcome === 'win' ? (isPt ? 'Sem Bits e sem custo.' : 'No Bits, no cost.') : (isPt ? 'Sem prêmio e sem custo.' : 'No reward, no cost.')}</p>
           <button type="button" onClick={() => setTrainingOutcome(null)} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 260 }}>
+            {isPt ? 'Continuar' : 'Continue'}
+          </button>
+        </RitualDialog>
+      )}
+
+      {sparResult && (
+        <RitualDialog
+          label={isPt ? 'Treino' : 'Sparring'}
+          onClose={() => { setSparResult(null); loadSpar(); }}
+          zIndex={400}
+          maxWidth={320}
+          style={{ alignItems: 'center', textAlign: 'center', gap: 10 }}
+        >
+          <h2 data-treino-resultado style={{ margin: 0, fontFamily: 'var(--sm2-font-display)', fontWeight: 600, fontSize: 'var(--sm2-text-lg)', lineHeight: 'var(--sm2-leading-title)', color: 'var(--sm2-ink)' }}>
+            {sparResult.draw ? (isPt ? 'Treino empatado' : 'Sparring drawn') : sparResult.won ? (isPt ? 'Treino vencido' : 'Sparring won') : (isPt ? 'Treino encerrado' : 'Sparring over')}
+          </h2>
+          <p style={sm2Hint}>
+            {isPt ? `Contra ${sparResult.opponent.name} · ${sparResult.myScore} × ${sparResult.oppScore}` : `Against ${sparResult.opponent.name} · ${sparResult.myScore} × ${sparResult.oppScore}`}
+          </p>
+          {sparResult.honor > 0 ? (
+            <p data-treino-honra className="sm2-num" style={{ ...emblemNum, margin: 0 }}>{isPt ? `Honra +${sparResult.honor}` : `Honor +${sparResult.honor}`}</p>
+          ) : sparResult.won && sparResult.honorCapped ? (
+            <p data-treino-honra-teto style={sm2Hint}>{isPt ? 'A Honra do treino de hoje já está completa. Volte amanhã.' : "Today's sparring Honor is complete. Come back tomorrow."}</p>
+          ) : (
+            <p style={sm2Hint}>{isPt ? 'Sem pressa: nada se perde. Treine de novo quando quiser.' : 'No rush, nothing is lost. Spar again whenever you like.'}</p>
+          )}
+          <button type="button" onClick={() => { setSparResult(null); loadSpar(); }} style={{ ...sm2Button('primary'), width: '100%', maxWidth: 260 }}>
             {isPt ? 'Continuar' : 'Continue'}
           </button>
         </RitualDialog>

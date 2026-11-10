@@ -164,6 +164,14 @@ export const BITS_EXCHANGE = [
 export const EMBLEMS_PER_WIN = 3;
 export const EMBLEMS_PER_LOSS = 1;   // consolo: jogar sempre rende alguma coisa
 
+/**
+ * TREINO ("Sparring", a 2a aba do Torneio, 10/11/2026): a vitória rende POUCA Honra e o servidor decide o valor (1 a 2) e o teto do dia (20).
+ * Espelho de `functions/api/_treino.js` (`SPAR_HONOR_MAX`, `SPAR_HONOR_DAILY_CAP`) só para a PRÉVIA da tela; o que vale é o `honor` que a
+ * resposta do servidor traz. Travado por `functions/api/community.treino.test.js` (paridade).
+ */
+export const SPAR_HONOR_MAX = 2;
+export const SPAR_HONOR_DAILY_CAP = 20;
+
 // ──────────────────────────────────────────────── o teto de Bits do dia (#61/#63)
 
 /**
