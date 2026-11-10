@@ -6576,7 +6576,7 @@ body {
   /* Regra do foco (X11): anel 2px `primary-ink` SEMPRE com fresta ≥ 2px de
      fundo — offset 3 para o anel nunca encostar num fill da mesma cor. */
   &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 3px; }
-  &:disabled { cursor: not-allowed; }
+  &:disabled, &[aria-disabled="true"] { cursor: not-allowed; }
 }
 .sm2-kit-btn-sm { min-height: 44px; padding: 0 var(--sm2-space-4); font-size: var(--sm2-text-sm); }
 .sm2-kit-btn-md { min-height: 48px; padding: 0 20px; }
@@ -6586,7 +6586,7 @@ body {
   background-color: var(--sm2-primary-fill);
   color: var(--sm2-on-primary);
   &:active { background-color: var(--sm2-primary-deep); transform: translateY(1px); }
-  &:disabled { background-color: var(--sm2-surface-2); color: var(--sm2-muted); transform: none; }
+  &:disabled, &[aria-disabled="true"] { background-color: var(--sm2-surface-2); color: var(--sm2-muted); transform: none; }
 }
 /* Outline: a alternativa. Fronteira `muted` 1px (F2 — `line` dá 1,3:1). */
 .sm2-kit-btn-outline {
@@ -6594,7 +6594,7 @@ body {
   color: var(--sm2-ink);
   box-shadow: inset 0 0 0 1px var(--sm2-muted);
   &:active { background-color: var(--sm2-surface-2); }
-  &:disabled { background-color: var(--sm2-surface-2); color: var(--sm2-muted); box-shadow: inset 0 0 0 1px var(--sm2-line); }
+  &:disabled, &[aria-disabled="true"] { background-color: var(--sm2-surface-2); color: var(--sm2-muted); box-shadow: inset 0 0 0 1px var(--sm2-line); }
 }
 /* Ghost: ação leve em ciano, sem borda. */
 .sm2-kit-btn-ghost {

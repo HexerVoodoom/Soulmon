@@ -113,9 +113,17 @@ describe('Soulsmith em mapa', () => {
     abrir(nivel1({ buildingQuests: bq({}) }));
     click(chakra('nucleo'));
     const btn = document.querySelector<HTMLButtonElement>('[data-forge-upgrade-btn]')!;
-    expect(btn.disabled).toBe(true);
+    expect(btn.getAttribute('aria-disabled')).toBe('true');
     click(btn);
     expect(estado().forge.levels['eq-nucleo-t1']).toBe(1);
+    // aviso padrao: diz o que falta e onde conseguir (lugar tocavel)
+    const aviso = document.querySelector('[data-blocked-action="recursos"]')!;
+    expect(aviso).not.toBeNull();
+    expect(document.body.textContent).toMatch(/Você não tem Minério suficiente/);
+    expect(aviso.textContent).toMatch(/Minério: tem 0, precisa de 2 \(faltam 2\)/);
+    expect(aviso.querySelector('[data-blocked-go="exploracao.fenda"]')).not.toBeNull();
+    act(() => { fireEvent.click(document.querySelector('[data-blocked-ok]')!); });
+    expect(document.querySelector('[data-blocked-action]')).toBeNull();
   });
 
   it('peça ainda não forjada: balão informativo, sem opções; tocar de novo e Esc fecham', () => {
