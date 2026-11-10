@@ -77,3 +77,18 @@ describe('2) trocar para forma de outra linha leva o elemento dela', () => {
     expect(elementoEquipavelComArte('ultimate-power', formas, undefined, lib, 'sabbat')).toBe('sabbat');
   });
 });
+
+describe('equipar na forma ORIGINAL do mesmo nível não aponta para chave sem arte', () => {
+  it('equipar a original (sentinela) com arte só na chave da forma mantém essa arte', () => {
+    const formas: FormasAlt = { 'ultimate-power': ['original', 'fogo'] };
+    const lib: any = { sprites: { 'ultimate-power': { url: 'orig' } } };
+    expect(elementoEquipavelComArte('ultimate-power', formas, { 'ultimate-power': 'fogo' }, lib, 'original')).toBe('original');
+  });
+  it('variante pedida sem imagem cai na que tem (nunca a de outro nível)', () => {
+    const formas: FormasAlt = { 'ultimate-power': ['original', 'fogo'] };
+    const lib: any = { sprites: { 'ultimate-power': { url: 'orig' } } };
+    const el = elementoEquipavelComArte('ultimate-power', formas, undefined, lib, 'fogo');
+    expect(el).toBe('original');
+    expect(altSpriteKey('ultimate-power', el, formas, lib)).toBe('ultimate-power');
+  });
+});

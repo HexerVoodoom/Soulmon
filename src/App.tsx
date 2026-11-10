@@ -1420,7 +1420,10 @@ export default function App() {
   /** FORMAS ALTERNATIVAS (05/11/2026): equipar uma forma já desbloqueada (cosmético; a regra é de `utils/formasAlternativas.ts`). */
   const handleEquipFormaAlt = useCallback((formId: string, elemento: string) => {
     setGameState(prev => {
-      const formaAltEquipada = equiparFormaAlt(prev.formasAlt, prev.formaAltEquipada, formId, elemento);
+      // 10/11/2026: equipar nunca aponta para uma chave SEM arte (a original `__atual`/`original` e as variantes sem imagem caem na que tem),
+      // senão o visor mostrava outra imagem e o app pedia uma nova.
+      const el = elementoEquipavelComArte(formId, prev.formasAlt, prev.formaAltEquipada, libraryOf(prev), elemento) ?? elemento;
+      const formaAltEquipada = equiparFormaAlt(prev.formasAlt, prev.formaAltEquipada, formId, el);
       if (formaAltEquipada === prev.formaAltEquipada) return prev;
       // 09/11/2026 (dono): equipar a forma do estágio ATUAL equipa tudo dela — elemento, ataque e especial (`utils/formaSnapshot.ts`).
       return formId === prev.evolutionStage ? trocarFormaCompleta(prev, s => ({ ...s, formaAltEquipada })) : { ...prev, formaAltEquipada };
@@ -7231,6 +7234,8 @@ export default function App() {
           novoResultado = null;
         }
       }
+      // "Gerar personagem" usa o MESMO construtor de prompt da evolução: o elemento efetivo (poção/forma trocada/registro do estágio) entra nas palavras-chave.
+      stagesParaGerar = stagesComElemento(stagesParaGerar, gameState.elementoJornada, pocoesDoSprite);
       if (!spriteGen.force(gameState.evolutionStage, stagesParaGerar)) {
         toast.error(language === 'pt-BR' ? 'Já há uma geração em andamento. Aguarde um pouco.' : 'A generation is already running. Please wait a bit.');
         return;
