@@ -1041,7 +1041,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
           )}
           {sparFailed && (
             <div role="status" style={{ ...cardStyle, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 8, padding: 12 }}>
-              <Icon name="cloud_off" size={48} tone="muted" />
+              <Icon name="cloud_off" size={24} tone="muted" />
               <p style={{ ...sm2Text, margin: 0 }}>{isPt ? 'Não deu para carregar o treino.' : "Couldn't load sparring."}</p>
               <p style={sm2Hint}>{isPt ? 'Pode ser a sua conexão.' : 'It may be your connection.'}</p>
               <button type="button" onClick={() => { setSparOpps(null); loadSpar(); }} style={{ ...sm2Button('outline'), width: '100%', maxWidth: 200 }}>
