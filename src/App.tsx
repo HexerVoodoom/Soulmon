@@ -96,7 +96,7 @@ import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForSta
 import { gaugeFull, gaugeContribution, gaugeGoalFor } from './utils/evolutionGauge';
 import { glitchtamaDiasRestantes, glitchtamaExpiraEm, glitchtamaBuffAtivo } from './utils/glitchtamaBuff';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
-import { SoulmonWidget, widgetOwnSpriteUrl, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt } from './plugins/SoulmonWidgetPlugin';
+import { SoulmonWidget, widgetOwnSpriteUrl, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt, widgetBgId } from './plugins/SoulmonWidgetPlugin';
 import { unlockedAchievements, achievementPointsTotal, settleAchievements, ACHIEVEMENT_POINTS, ACHIEVEMENT_LABELS } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
@@ -2860,7 +2860,7 @@ export default function App() {
       vpetFrame: resolveWidgetFrame(gameState.widgetFrame, effectiveOwnedFrames(gameState.widgetFramesOwned, paidWidgetFrames)),
       // Z de sono do V-Pet (aceso = dormindo, apagado = acordado) e o cenário equipado atrás do pet. Chaves NOVAS: APK antigo ignora.
       petSleeping: isSleeping,
-      vpetBg: visibleBackground(gameState.equippedBackground) ?? '',
+      vpetBg: widgetBgId(gameState.equippedBackground),
     }).catch(() => {});
   }, [gameState.evolutionStage, gameState.currentBranch, gameState.eggType,
       gameState.healthPoints, gameState.maxHealthPoints, gameState.energyPoints,

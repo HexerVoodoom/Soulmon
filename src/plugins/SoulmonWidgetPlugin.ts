@@ -3,6 +3,7 @@ import { soulmonDisplayName } from '../utils/petName';
 import { spriteLineOf, CORVO_LINE, type CorvoCarrier } from '../utils/corvoPet';
 import { resolveArtLineId, isStarterId, type StarterId } from '../utils/sprites';
 import { isSafeSpriteUrl } from '../utils/spriteLibrary';
+import { visibleBackground } from '../utils/backgrounds';
 import { groveStageAt, type GroveLocal } from '../utils/groveLocal';
 import { GROVE_STAGES, type GroveStageId } from '../utils/guildRules';
 import { activitiesForWeekDay, habitWeightOf } from '../utils/dailyReset';
@@ -54,6 +55,11 @@ export function widgetOwnSpriteUrl(url: string | undefined | null, isCorvoPet: b
   const proprio = /^(?:https?:\/\/[^/]+)?(\/api\/sprite-image\?k=[0-9a-f]{32})$/i.exec(limpa);
   if (proprio) return WIDGET_APP_ORIGIN + proprio[1];
   return isSafeSpriteUrl(limpa) ? limpa : '';
+}
+
+/** `vpetBg` do widget: o cenário equipado que o app DESENHA (`visibleBackground`) ou `''`. */
+export function widgetBgId(equipped: string | null | undefined): string {
+  return visibleBackground(equipped) ?? '';
 }
 
 /** Origem do app (a mesma de `capacitor.config` › `server.url`); o Kotlin só baixa dela o caminho `/api/sprite-image`. */

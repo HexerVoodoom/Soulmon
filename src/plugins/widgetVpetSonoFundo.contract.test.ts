@@ -14,7 +14,8 @@ describe('widget V-Pet: Z de sono e fundo do jogador (chaves novas e aditivas)',
 
   it('o app manda o sono REAL e o cenario equipado; o bridge declara as duas chaves como opcionais', () => {
     expect(app).toContain('petSleeping: isSleeping');
-    expect(app).toContain("vpetBg: visibleBackground(gameState.equippedBackground) ?? ''");
+    expect(app).toContain('vpetBg: widgetBgId(gameState.equippedBackground)');
+    expect(bridge).toContain('visibleBackground(equipped)');
     expect(bridge).toContain('petSleeping?: boolean');
     expect(bridge).toContain('vpetBg?: string');
   });
