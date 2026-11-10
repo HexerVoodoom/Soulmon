@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { FEIRA_LOJA_CATALOGO, FEIRA_LOJA_VENDEDORES } from './_feiraLoja.js';
+import { FEIRA_LOJA_CATALOGO, FEIRA_LOJA_VENDEDORES, FEIRA_LOJA_MATERIAIS, FEIRA_LOJA_PRATOS, FEIRA_LOJA_HONRA } from './_feiraLoja.js';
+import { COUNTER_RING } from './_elementoBase.js';
+import { MATERIAL_IDS } from '../../src/utils/buildingQuests.ts';
+import { DISHES } from '../../src/utils/restaurant.ts';
+import { TOURNAMENT_ITEMS } from '../../src/utils/shop.ts';
+import { POTION_SPECIAL_ITEMS, potionKey } from '../../src/utils/elementPotion.ts';
 import { hexCost } from './_hexsmith.js';
 import { SHOP_ITEMS } from '../../src/utils/shop.ts';
 import { isNeverForSale } from '../../src/utils/mercadoCatalog.ts';
@@ -40,5 +45,19 @@ describe('o catálogo da feira de verdade espelha `src/utils/shop.ts`', () => {
       expect(existsSync(new URL(`../../${v.file}`, import.meta.url)), v.file).toBe(true);
       expect(['vesca', 'tessaria']).not.toContain(v.id);
     }
+  });
+});
+
+describe('as prateleiras novas espelham o cliente', () => {
+  it('materiais = MATERIAL_IDS', () => { expect([...FEIRA_LOJA_MATERIAIS]).toEqual([...MATERIAL_IDS]); });
+  it('pratos = DISHES (id, Bits, efeito de combate)', () => {
+    expect(FEIRA_LOJA_PRATOS.map(r => [...r])).toEqual(DISHES.map(d => [d.id, d.bits, ['atk', 'def', 'spd'].includes(d.effect.kind)]));
+  });
+  it('Honra = itens de TOURNAMENT_ITEMS pagos em Honra, sem trava nem elemento', () => {
+    const fonte = TOURNAMENT_ITEMS.filter(i => i.currency === 'emblems' && i.price > 0 && !i.unlock && !i.element && ['furniture', 'bg'].includes(i.kind)).map(i => [i.id, i.kind, i.price, i.fits ?? '']);
+    expect(FEIRA_LOJA_HONRA.map(r => [...r])).toEqual(fonte);
+  });
+  it('toda poção vendida existe no catálogo de uso do cliente', () => {
+    for (const e of COUNTER_RING) expect(POTION_SPECIAL_ITEMS[potionKey(e)], e).toBeTruthy();
   });
 });

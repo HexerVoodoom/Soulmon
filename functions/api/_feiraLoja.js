@@ -108,21 +108,51 @@ export const FEIRA_LOJA_CATALOGO = Object.freeze([
  * `pool` escolhe de onde saem os itens do Mercado; `hex` = a prateleira e da Hexsmith (so Bits, sem ingredientes).
  */
 export const FEIRA_LOJA_VENDEDORES = Object.freeze([
-  { id: 'mercado', file: 'src/assets/avatares/ativo-mercado.webp', tipo: 'itens', peso: 30, ativo: true, hex: false, pool: i => i.tipo === 'chip' },
-  { id: 'colheita', file: 'src/assets/soulmon/npcs/npc-n-colheita.png', tipo: 'backgrounds', peso: 28, ativo: true, hex: false, pool: i => i.tipo === 'bg' },
-  { id: 'aranha', file: 'src/assets/avatares/extra-aranha-fiandeira-b.webp', tipo: 'decoracao', peso: 30, ativo: true, hex: false, pool: i => i.tipo === 'furniture' },
-  { id: 'hexsmith', file: 'src/assets/soulmon/npcs/npc-forja-hexsmith.png', tipo: 'hexsmith', peso: 12, ativo: true, hex: true, pool: () => false },
-  { id: 'morcego', file: 'src/assets/avatares/cavernas-morcego-sabio-eco.webp', tipo: 'materiais', peso: 0, ativo: false, hex: false, pool: () => false },
-  { id: 'salamandra', file: 'src/assets/avatares/fogo-salamandra-cozinheira.webp', tipo: 'comidas', peso: 0, ativo: false, hex: false, pool: () => false },
-  { id: 'vitra', file: 'src/assets/soulmon/npcs/npc-mercado-ferreiro.png', tipo: 'pocoes', peso: 0, ativo: false, hex: false, pool: () => false },
-  { id: 'serpente', file: 'src/assets/soulmon/npcs/npc-n-serpentePlumadaForma.png', tipo: 'honra', peso: 0, ativo: false, hex: false, pool: () => false },
+  { id: 'mercado', file: 'src/assets/avatares/ativo-mercado.webp', tipo: 'itens', peso: 18, ativo: true, hex: false, pool: i => i.origem === 'mercado' && i.tipo === 'chip' },
+  { id: 'colheita', file: 'src/assets/soulmon/npcs/npc-n-colheita.png', tipo: 'backgrounds', peso: 16, ativo: true, hex: false, pool: i => i.origem === 'mercado' && i.tipo === 'bg' },
+  { id: 'aranha', file: 'src/assets/avatares/extra-aranha-fiandeira-b.webp', tipo: 'decoracao', peso: 16, ativo: true, hex: false, pool: i => i.origem === 'mercado' && i.tipo === 'furniture' },
+  { id: 'hexsmith', file: 'src/assets/soulmon/npcs/npc-forja-hexsmith.png', tipo: 'hexsmith', peso: 6, ativo: true, hex: true, pool: () => false },
+  { id: 'morcego', file: 'src/assets/avatares/cavernas-morcego-sabio-eco.webp', tipo: 'materiais', peso: 12, ativo: true, hex: false, pool: i => i.tipo === 'material' },
+  { id: 'salamandra', file: 'src/assets/avatares/fogo-salamandra-cozinheira.webp', tipo: 'comidas', peso: 12, ativo: true, hex: false, pool: i => i.tipo === 'dish' },
+  { id: 'vitra', file: 'src/assets/dominios/industrial/npcs/npc-industrial-espirito-forno-vidraceiro.png', tipo: 'pocoes', peso: 12, ativo: true, hex: false, pool: i => i.tipo === 'potion' },
+  { id: 'serpente', file: 'src/assets/soulmon/npcs/npc-n-serpentePlumadaForma.png', tipo: 'honra', peso: 8, ativo: true, hex: false, pool: i => i.origem === 'honra' },
+  // Fica FORA (peso 0): a saida especial (saida com recompensa melhor) pede um sistema novo de oferta sobre o sistema de viagens (nao ha multiplicador de recompensa).
   { id: 'sacerdotisa', file: 'src/assets/soulmon/npcs/npc-f-sacerdotisa.png', tipo: 'saida-especial', peso: 0, ativo: false, hex: false, pool: () => false },
 ]);
 
-const CATALOGO = FEIRA_LOJA_CATALOGO.map(([id, tipo, preco, fits]) => ({ id, tipo, preco, fits }));
+/** PRECOS POR CATEGORIA (decididos pelo dono, 10/11/2026; AJUSTAVEIS aqui). O desconto de 10% a 50% vale sobre eles. */
+export const PRECO_MATERIAL = 15;
+export const PRECO_POCAO = 60;
+/** 1 Honra = 10 Bits (equipamentos de Honra vendidos em Bits; PERGUNTA AO DONO em PLANO-FEIRA-CHEFE.md §12). */
+export const HONRA_EM_BITS = 10;
 
-/** Itens que so se tem UM (posse): cenario, decoracao e Hexsmith. Chip e consumivel. */
-const unico = tipo => tipo !== 'chip';
+/** Materiais do jogo (espelho de `MATERIAL_IDS`, `src/utils/buildingQuests.ts`). */
+export const FEIRA_LOJA_MATERIAIS = Object.freeze(['spark', 'moss', 'prism', 'pebble', 'ore', 'ink', 'gear', 'fang', 'laurel', 'ribbon', 'essence', 'down', 'cipher', 'page', 'keepsake', 'crest']);
+
+/** Pratos (espelho de `DISHES`, `src/utils/restaurant.ts`): [id, Bits do Restaurante, efeito de combate?]. Vendidos PRONTOS, sem ingrediente. */
+export const FEIRA_LOJA_PRATOS = Object.freeze([
+  ['salada-viva', 20, false], ['cha-de-orvalho', 15, false], ['tigela-do-bosque', 30, false], ['espetinho-de-vinha', 30, true],
+  ['sopa-de-raiz', 30, true], ['mordida-da-flor', 35, true], ['pao-de-faisca', 15, false], ['ensopado-do-caldeirao', 40, false],
+  ['torta-de-mel-lunar', 20, false], ['caldo-de-brasa', 30, true], ['pizza-de-ferro', 30, true], ['pudim-de-nevoa', 35, true],
+]);
+
+/** Equipamentos de HONRA (espelho dos itens de `TOURNAMENT_ITEMS` pagos em Honra): [id, tipo, preco em HONRA, ambiente]. */
+export const FEIRA_LOJA_HONRA = Object.freeze([
+  ['furn-crate', 'furniture', 8, 'any'], ['furn-shelf-simple', 'furniture', 12, 'any'], ['furniture-champion-banner', 'furniture', 15, 'any'],
+  ['furniture-medal-wall', 'furniture', 20, 'any'], ['furniture-trophy-shelf', 'furniture', 25, 'any'], ['bg-arena-champion', 'bg', 40, ''],
+  ['furniture-podium', 'furniture', 55, 'any'], ['bg-arena-spotlight', 'bg', 70, ''],
+]);
+
+const CATALOGO = [
+  ...FEIRA_LOJA_CATALOGO.map(([id, tipo, preco, fits]) => ({ id, tipo, preco, fits, origem: 'mercado' })),
+  ...FEIRA_LOJA_HONRA.map(([id, tipo, honra, fits]) => ({ id, tipo, preco: Number(honra) * HONRA_EM_BITS, fits, origem: 'honra' })),
+  ...FEIRA_LOJA_MATERIAIS.map(m => ({ id: `material:${m}`, tipo: 'material', preco: PRECO_MATERIAL, fits: '', origem: 'bits' })),
+  ...FEIRA_LOJA_PRATOS.map(([id, bits]) => ({ id: `dish:${id}`, tipo: 'dish', preco: bits, fits: '', origem: 'restaurante' })),
+  ...COUNTER_RING.map(e => ({ id: `potion:${e}`, tipo: 'potion', preco: PRECO_POCAO, fits: '', origem: 'bits' })),
+];
+
+/** Itens que so se tem UM (posse): cenario, decoracao e Hexsmith. Chip, material, prato e pocao sao consumiveis. */
+const unico = tipo => tipo === 'bg' || tipo === 'furniture' || tipo === 'hex';
 
 /** O que a pessoa ja tem, lido do save GRAVADO (ausente/ilegivel = nada). */
 export function possuidosDoSave(stored) {
@@ -172,7 +202,7 @@ export function sortearFeiraLoja(save, hoje, possuidos = new Set()) {
   if (escolhidos.length === 0) return null;
   const items = escolhidos.map(i => {
     const pct = descontoDoItem(semente, i.id);
-    return { id: i.id, type: i.tipo === 'hex' ? 'hex' : 'shop', kind: i.tipo, price: precoComDesconto(i.preco, pct), was: i.preco, pct };
+    return { id: i.id, type: i.tipo === 'hex' ? 'hex' : ['material', 'potion', 'dish'].includes(i.tipo) ? i.tipo : 'shop', kind: i.tipo, price: precoComDesconto(i.preco, pct), was: i.preco, pct };
   });
   return { day: hoje, vendor: vendedor.id, items };
 }

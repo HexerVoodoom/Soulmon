@@ -1114,4 +1114,4 @@ Pintados (padrão 23/09), alfa real, 256² em `E:/Soulmon-assets/pocoes-chips/{p
 - **Instalação:** copiar para `drawable-nodpi`, rodar a régua do widget (`widgetFrames.test.ts`), gerar APK novo e só então ativar os SKUs no Play Console. Tags no registro: `tipo:ui`, `origem:chatgpt`, `uso:widget-moldura`, `peca:moldura_vpet_<id>`.
 
 ## Feira de verdade (10/11/2026): vendedores
-Nenhuma arte nova: todos reusam NPCs existentes. Pendente de confirmar com o dono: arte da `vitra` (#381, poções elementais; hoje placeholder `npc-mercado-ferreiro.png`) e nomes finais dos 4 vendedores ativos (hoje nomes genéricos em `feiraLoja.ts`).
+Nenhuma arte nova: todos reusam NPCs existentes. A `vitra` (#381) é a Vitra, a Soulsmith (`npc-industrial-espirito-forno-vidraceiro.png`). Pendente: nomes finais dos vendedores (hoje genéricos em `feiraLoja.ts`, exceto a Vitra).
