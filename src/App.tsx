@@ -69,7 +69,8 @@ import { GamePopups } from './components/GamePopups';
 import { useSpriteGeneration, libraryOf } from './hooks/useSpriteGeneration';
 import { emptyIncubation, incubationFor, incubationReady } from './utils/spriteTrigger';
 import { activeCrystal, crystalPhase, startCrystal, type CrystalPhase } from './utils/evolutionCrystal';
-import { altSpriteKey, elementoDaForma, elementoEquipavelComArte, equiparFormaAlt, registrarFormaAoEvoluir, spriteVisorOf } from './utils/formasAlternativas';
+import { altSpriteKey, elementoDaForma, equiparFormaAlt, registrarFormaAoEvoluir, spriteVisorOf } from './utils/formasAlternativas';
+import { equiparFormaAltEstado, trocarFormaEstado } from './utils/formaEquip';
 import { spriteText } from './utils/spriteCopy';
 import { UNLOCK_NEEDED_EVENT } from './utils/unlockEvent';
 import { MAX_GENERATE_CHARACTER_USES, generateCharacterUsesLeft, spendGenerateCharacterUse } from './utils/generateCharacterUses';
@@ -1428,15 +1429,7 @@ export default function App() {
   }, [setGameState]);
   /** FORMAS ALTERNATIVAS (05/11/2026): equipar uma forma já desbloqueada (cosmético; a regra é de `utils/formasAlternativas.ts`). */
   const handleEquipFormaAlt = useCallback((formId: string, elemento: string) => {
-    setGameState(prev => {
-      // 10/11/2026: equipar nunca aponta para uma chave SEM arte (a original `__atual`/`original` e as variantes sem imagem caem na que tem),
-      // senão o visor mostrava outra imagem e o app pedia uma nova.
-      const el = elementoEquipavelComArte(formId, prev.formasAlt, prev.formaAltEquipada, libraryOf(prev), elemento) ?? elemento;
-      const formaAltEquipada = equiparFormaAlt(prev.formasAlt, prev.formaAltEquipada, formId, el);
-      if (formaAltEquipada === prev.formaAltEquipada) return prev;
-      // 09/11/2026 (dono): equipar a forma do estágio ATUAL equipa tudo dela — elemento, ataque e especial (`utils/formaSnapshot.ts`).
-      return formId === prev.evolutionStage ? trocarFormaCompleta(prev, s => ({ ...s, formaAltEquipada })) : { ...prev, formaAltEquipada };
-    });
+    setGameState(prev => equiparFormaAltEstado(prev, formId, elemento));
   }, [setGameState]);
   const handleTuneVisor = useCallback((formId: string) => spriteGen.tune(formId), [spriteGen]);
   /* O botao "Tentar de novo" do card de falha de credencial. Nasceu INERTE no
@@ -6845,14 +6838,7 @@ export default function App() {
   /* Troca lateral + elemento equipado da forma de destino, UMA transição só (10/11/2026): o elemento/ataque/especial vêm da forma
      (`trocarFormaCompleta`) e a chave de arte equipada é sempre uma que JÁ tem imagem — trocar de forma nunca pede imagem nova. */
   const handleSwitchForm = useCallback((targetStage: string, elemento?: string) => {
-    setGameState(prev => trocarFormaCompleta(prev, s => {
-      const sw = applyLateralSwitch(s, targetStage);
-      if (sw === s) return s;
-      const pedido = elemento && elemento !== '__atual' ? elemento : undefined;
-      const el = elementoEquipavelComArte(targetStage, sw.formasAlt, sw.formaAltEquipada, libraryOf(sw), pedido);
-      const eq = el ? equiparFormaAlt(sw.formasAlt, sw.formaAltEquipada, targetStage, el) : sw.formaAltEquipada;
-      return eq === sw.formaAltEquipada ? sw : { ...sw, formaAltEquipada: eq };
-    }));
+    setGameState(prev => trocarFormaEstado(prev, targetStage, elemento));
   }, []);
 
   const handleEvolveToUnlocked = useCallback((targetStage: string) => {
