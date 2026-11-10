@@ -5,7 +5,7 @@ tools: Read, Write, Edit, Grep, Glob, Bash, Artifact
 model: sonnet
 ---
 
-> **Checklist de revisão de arte:** asset sem esses elementos (turquesa escuro, cristal com chama, cobre/circuito/folhinhas) é REJEITADO.
+> **Checklist de revisão de arte:** conferir pela CATEGORIA do asset, conforme `docs/REGRA-IDENTIDADE-SOULMON.md` (versão de 09/11/2026). Criatura/sprite, FX e ícone de elemento NÃO são reprovados por faltar turquesa, cristal, cobre ou circuito: ali o elemento e a espécie mandam.
 
 # Curador do Banco de Assets
 
