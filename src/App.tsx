@@ -34,7 +34,7 @@ import { lotCoins, lotMissionMarks } from './utils/lotMarks';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
-import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, hungryFrom, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
+import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, hungryFrom, starvingSince, maxEnergyOf, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
@@ -2847,7 +2847,12 @@ export default function App() {
       // Widget redimensionável (REGISTRO §221): a fome vai como INSTANTE para o refresh de hora em hora acertar com o app fechado.
       ...(() => {
         const hungryAtMs = hungryFrom(gameState.hunger);
-        return hungryAtMs === null ? {} : { hungryAtMs };
+        const starvingAtMs = starvingSince(gameState.hunger);
+        return {
+          ...(hungryAtMs === null ? {} : { hungryAtMs }),
+          ...(starvingAtMs === null ? {} : { starvingAtMs }),
+          maxEnergyPoints: maxEnergyOf(gameState),
+        };
       })(),
       nextTaskName: widgetNextTask(gameState as never, new Date(), dailyDone, dailyTotal),
       dayEndsAtMs: widgetDayEndsAt(new Date()),

@@ -103,6 +103,11 @@ class SoulmonWidgetPlugin : Plugin() {
          */
         val hungryAt = call.data.optLong("hungryAtMs", -1L)
         if (hungryAt >= 0L) editor.putLong("hungry_at", hungryAt) else editor.remove("hungry_at")
+        // V-Pet icons (food in 3 states, energy bolt): the instant food falls below "fair" and the energy cap. Absent = removed.
+        val starvingAt = call.data.optLong("starvingAtMs", -1L)
+        if (starvingAt >= 0L) editor.putLong("starving_at", starvingAt) else editor.remove("starving_at")
+        val maxEnergy = call.data.optInt("maxEnergyPoints", -1)
+        if (maxEnergy >= 0) editor.putInt("max_energy_points", maxEnergy) else editor.remove("max_energy_points")
         val nextTask = call.getString("nextTaskName")?.trim().orEmpty()
         if (nextTask.isNotEmpty()) editor.putString("next_task", nextTask) else editor.remove("next_task")
         val dayEndsAt = call.data.optLong("dayEndsAtMs", -1L)
@@ -121,7 +126,8 @@ class SoulmonWidgetPlugin : Plugin() {
         // A allowlist de host/esquema vive em WidgetOwnSprite.Policy.
         WidgetOwnSprite.sync(ctx, call.getString("petSpriteUrl"))
         // Fome com o app fechado: agenda um redesenho para o instante `hungry_at` (e garante o periodico de 15 min).
-        com.soulmon.widget.WidgetRefreshWorker.scheduleHunger(ctx, if (hungryAt >= 0L) hungryAt else null)
+        val nowMs = System.currentTimeMillis()
+        com.soulmon.widget.WidgetRefreshWorker.scheduleHunger(ctx, listOf(hungryAt, starvingAt).filter { it > nowMs }.minOrNull())
         com.soulmon.widget.WidgetRefreshWorker.schedule(ctx)
         android.util.Log.d("SoulmonWidget", "updateWidgetData stage=${call.getString("currentStage")} sprite=${!call.getString("petSpriteUrl").isNullOrBlank()} hungryAt=$hungryAt poop=${call.data.optBoolean("hasPoop", false)}")
 

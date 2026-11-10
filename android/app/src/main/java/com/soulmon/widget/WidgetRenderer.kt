@@ -453,15 +453,20 @@ object WidgetRenderer {
             prefs.getString("egg_type", "") ?: "",
             prefs.getString("branch_type", "data") ?: "data",
         )
-        val hungry = WidgetVpet.isHungry(
+        val food = WidgetVpet.foodTier(
             System.currentTimeMillis(),
             if (prefs.contains("hungry_at")) prefs.getLong("hungry_at", 0L) else null,
+            if (prefs.contains("starving_at")) prefs.getLong("starving_at", 0L) else null,
+        )
+        val energy = WidgetVpet.energyLevel(
+            if (prefs.contains("energy_points")) prefs.getInt("energy_points", 0) else 0,
+            prefs.getInt("max_energy_points", 0),
         )
         val poop = prefs.getBoolean("has_poop", false)
         val casing = vpetCasingRes(context, prefs.getString("vpet_frame", ""))
         val views = RemoteViews(context.packageName, R.layout.widget_soulmon_vpet)
         val bmp = try {
-            drawVpet(context, spriteId, adaptiveLine(context), hungry, poop, casing)
+            drawVpet(context, spriteId, adaptiveLine(context), food, energy, poop, casing)
         } catch (e: OutOfMemoryError) {
             null
         }
@@ -478,7 +483,10 @@ object WidgetRenderer {
         return WidgetVpet.pickCasing(variant, R.drawable.vpet_moldura)
     }
 
-    private fun drawVpet(context: Context, spriteId: Int, line: String, hungry: Boolean, poop: Boolean, casing: Int): Bitmap {
+    private fun drawVpet(
+        context: Context, spriteId: Int, line: String,
+        food: WidgetVpet.FoodTier, energy: WidgetVpet.EnergyLevel, poop: Boolean, casing: Int,
+    ): Bitmap {
         val raw = BitmapFactory.Options().apply { inScaled = false }
         val out = Bitmap.createBitmap(WidgetVpet.W, WidgetVpet.H, Bitmap.Config.ARGB_8888)
         val c = Canvas(out)
@@ -537,21 +545,47 @@ object WidgetRenderer {
         lay.draw(c)
         c.restore()
 
-        // Status icons: low-opacity black silhouette by default, full colour when it applies.
+        // Status icons, as in the game: food (whole meat / half meat / bone only, always in colour), poop (dark silhouette
+        // when there is none) and the energy bolt (dark = none, half-filled = some, full = full).
         val row = WidgetVpet.iconRow
         val iy = row.t + (row.h - WidgetVpet.ICON) / 2
+        fun dim() = Paint(crisp).apply {
+            colorFilter = PorterDuffColorFilter(Color.BLACK, PorterDuff.Mode.SRC_IN)
+            alpha = 70
+        }
         fun icon(resId: Int, x: Int, active: Boolean) {
             val ic = BitmapFactory.decodeResource(context.resources, resId, raw) ?: return
-            val p = Paint(crisp)
-            if (!active) {
-                p.colorFilter = PorterDuffColorFilter(Color.BLACK, PorterDuff.Mode.SRC_IN)
-                p.alpha = 70
-            }
-            c.drawBitmap(ic, null, Rect(x, iy, x + WidgetVpet.ICON, iy + WidgetVpet.ICON), p)
+            c.drawBitmap(ic, null, Rect(x, iy, x + WidgetVpet.ICON, iy + WidgetVpet.ICON), if (active) crisp else dim())
             ic.recycle()
         }
-        icon(R.drawable.vpet_icon_fome, row.l, hungry)
-        icon(R.drawable.fx_poop, row.l + WidgetVpet.ICON + WidgetVpet.ICON_GAP, poop)
+        icon(
+            when (food) {
+                WidgetVpet.FoodTier.FED -> R.drawable.vpet_fome_cheio
+                WidgetVpet.FoodTier.FAIR -> R.drawable.vpet_fome_medio
+                WidgetVpet.FoodTier.STARVING -> R.drawable.vpet_fome_faminto
+            },
+            row.l, true,
+        )
+        val step = WidgetVpet.ICON + WidgetVpet.ICON_GAP
+        icon(R.drawable.fx_poop, row.l + step, poop)
+        // The bolt is taller than wide (89x128): fit the icon height, centre in the slot.
+        BitmapFactory.decodeResource(context.resources, R.drawable.vpet_icon_energia, raw)?.let { bolt ->
+            val w = (WidgetVpet.ICON * bolt.width / bolt.height.toFloat()).toInt().coerceAtLeast(1)
+            val bx = row.l + 2 * step + (WidgetVpet.ICON - w) / 2
+            val dst = Rect(bx, iy, bx + w, iy + WidgetVpet.ICON)
+            when (energy) {
+                WidgetVpet.EnergyLevel.FULL -> c.drawBitmap(bolt, null, dst, crisp)
+                WidgetVpet.EnergyLevel.EMPTY -> c.drawBitmap(bolt, null, dst, dim())
+                WidgetVpet.EnergyLevel.HALF -> {
+                    c.drawBitmap(bolt, null, dst, dim())
+                    c.save()
+                    c.clipRect(dst.left, dst.top + dst.height() / 2, dst.right, dst.bottom)
+                    c.drawBitmap(bolt, null, dst, crisp)
+                    c.restore()
+                }
+            }
+            bolt.recycle()
+        }
 
         // Casing on top.
         // A variant that fails to decode (corrupt/oversized art) falls back to the default casing instead of a bare LCD.
