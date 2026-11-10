@@ -151,7 +151,8 @@ export function aoDescerDeForma<T extends FormaState>(prev: FormaState, next: T)
   }
   // REGRA DO DONO (10/11/2026): degenerar DESCARTA a poção — o Soulmon volta ao elemento do registro do nível (a base) e a poção só
   // vale para a evolução em que foi usada. O resto da foto (elemento e skills do nível) segue sendo restaurado.
-  return { ...(aplicarFotoAtual(out) ?? out), potionElement: undefined };
+  // A forma ORIGINAL equipada no destino segue sendo o elemento BASE do Soulmon (como na troca de forma), nao o registro do nivel.
+  return forcarOriginal({ ...(aplicarFotoAtual(out) ?? out), potionElement: undefined });
 }
 
 /** Leitura tolerante do save. */
