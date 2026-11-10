@@ -4928,6 +4928,31 @@ quem chama é um cron e cron repete.
 A Honra do jogador vem do CLIENTE (`onEarnEmblems` com `EMBLEMS_PER_WIN` /
 `EMBLEMS_PER_LOSS`), não do servidor — ver [§46](#moedas).
 
+### O Treino (Sparring, a 2ª aba do Torneio — 10/11/2026)
+
+O Torneio tem **duas abas** (só aparecem com o Vínculo mínimo): **Ranqueada** (tudo o que está acima, intocado) e **Treino**
+(EN *Sparring*): luta PvP contra outros jogadores, parecida com a ranqueada, que **NÃO ranqueia** — não mexe no placar, no rank, nas
+faixas, na season nem no `lifetimePoints`, não gasta a cota de partidas do dia e perder não custa nada (sem coração, sem castigo, sem Vínculo).
+
+```
+GET  sparOpponents ?id=  → 5 oponentes (functions/api/_treino.js › pickSparOpponents); cada GET sorteia de novo (REFRESH ILIMITADO, sem custo nem teto)
+POST sparStart {id, opponentId}   → semente do SERVIDOR + ficha dos dois lados do SAVE, congeladas em spar:<id> (KV, 1 h); NÃO gasta partida
+POST sparMatch {id, opponentId, taps?, forfeit?, seed?, zone?, off?} → simulateDuel no servidor; vitória rende Honra; reenvio idempotente (sparDone:<id>)
+```
+
+- **Oponentes por faixa de Vínculo, não por ranking:** pool = perfis com PvP ligado e visíveis (os simulados `sim_*` entram como na ranqueada),
+  menos você, GM/admin e forma BB; faixa = `bondLevelFor` ±`SPAR_BOND_RANGE` (3, maior que a vizinhança da ranqueada), ampliada de
+  `SPAR_RANGE_STEP` (2) por lado enquanto houver menos de `SPAR_PICKS` (5); varredura de até `SPAR_SCAN_MAX` (120) perfis em ordem sorteada.
+  Nenhum número de ranking, ponto ou posição alheia sai na resposta (só o `level` com que cada um luta).
+- **Honra, pouca e do servidor:** `SPAR_HONOR_MIN`–`SPAR_HONOR_MAX` = **1 a 2 por vitória**, teto `SPAR_HONOR_DAILY_CAP` = **20 por DIA DO JOGADOR**
+  (contador `sparHonor:<id>:<dia>` no KV, dia por `playerDayOf` com a zona/offset que o app manda; leitura tolerante; nunca por tick). Derrota, empate
+  e desistência rendem 0. Sem vantagem paga. A Honra é a moeda de sempre (`emblems` no save, a das lojinhas do Mercado, aba Honra): o servidor devolve
+  `honor` (e `honorCapped` quando o teto do dia já foi) e o app soma pelo MESMO caminho das outras fontes (`onEarnEmblems`), uma vez (o reenvio não soma).
+- **Contrato aditivo:** ações novas; cliente antigo ignora a aba; servidor antigo responde erro e a aba mostra "não deu para carregar" sem afetar a ranqueada.
+  Nenhum campo novo de save. Telas: `TournamentPage` (abas `Segment`), textos PT/EN, `InfoTip`, GuideModal e HelpModal.
+- **Travas:** `functions/api/community.treino.test.js` (faixa, 5 candidatos, refresh ilimitado, não toca rank/perfil, teto de 20, derrota sem Honra,
+  idempotência, paridade das constantes com `currencies.ts`) e `TournamentPage.treino.render.test.tsx`.
+
 ### A Arena
 
 `src/utils/arena.ts` + `src/components/ArenaGame.tsx`. É uma **segunda** masmorra,

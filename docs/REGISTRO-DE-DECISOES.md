@@ -4535,3 +4535,11 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Decisão (dono).** Instalar, no mesmo nome/formato/tamanho: FX de ataque (cast, aura, aura-96, slash, impact, defended, orb) de `maldicao`, `fada`, `industrial` e `planta`; `el-maldicao` (96²); `st-maldicao` (64²); `fx-maldicao-loop-1..6` + sheet (384×256). Fora: `el-industrial` (em refação). Assets são importados com hash do Vite, sem bump de `CACHE_VERSION`. `fxFacingTable.ts` regerada.
 
 **Alternativa que perdeu:** manter a arte anterior à regra (caveira/engrenagem fora do tema do elemento). **Falsifica:** o dono reprovar a leitura dos novos em combate real.
+
+## §277 — Torneio ganha a aba Treino (Sparring), sem ranking e com pouca Honra (10/11/2026, decisão do dono em modal)
+
+**Decisão.** O Torneio passa a ter DUAS abas: **Ranqueada** (como era) e **Treino** (EN *Sparring*): luta PvP contra outros jogadores que NÃO ranqueia (placar, rank, faixa, season e `lifetimePoints` intocados; sem cota de partidas; derrota sem castigo) e rende **1 a 2 de Honra por vitória, teto de 20 por dia do jogador**, contado e decidido no servidor. Oponentes: 5 sorteados num pool grande por faixa de **Vínculo** (±3, ampliando se houver menos de 5), nunca por ranking; **refresh ilimitado** (o servidor sorteia a cada pedido). Implementação: `functions/api/_treino.js` + ações `sparOpponents/sparStart/sparMatch` em `community.js`; UI em `TournamentPage`. Manual 02 §53 › "O Treino".
+
+**Alternativa que perdeu:** reaproveitar a ranqueada com um parâmetro de modo (`match` com `practice:true`): arriscava o treino mexer no `rank:*`/`lifetimePoints` por um `if` esquecido e misturava a cota de partidas; ações próprias e KV próprio (`spar:`, `sparHonor:`) isolam o treino por construção (há teste de que nenhuma chave `rank:*` nasce). Também perdeu: oponentes por ranking no Treino (leitura de comparação, e o dono quis pool amplo) e refresh pago ou limitado (o Treino é descompressão, sem custo).
+
+**Falsifica:** a Honra do Treino virar o jeito dominante de farmar Honra (20/dia somando ao teto de ranqueada fazer o dono achar muito/pouco — ajustar `SPAR_HONOR_DAILY_CAP`); o pool por Vínculo devolver poucos humanos (o dono ver sempre os mesmos simulados — ajustar `SPAR_BOND_RANGE`/`SPAR_SCAN_MAX`).

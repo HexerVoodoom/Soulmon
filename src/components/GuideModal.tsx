@@ -512,8 +512,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              'O Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar; sortear três novos custa Bits depois de 3 grátis por dia.',
-              'The Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight; drawing three new ones costs Bits after 3 free a day.',
+              'O Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar; sortear três novos custa Bits depois de 3 grátis por dia. A aba Treino do Torneio é amistosa: não muda a sua posição e rende de 1 a 2 de Honra por vitória, até 20 por dia; sortear outros oponentes lá é de graça e sem limite.',
+              'The Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight; drawing three new ones costs Bits after 3 free a day. The Tournament\'s Sparring tab is friendly: it never changes your rank and a win earns 1 to 2 Honor, up to 20 a day; drawing new opponents there is free and unlimited.',
             )}
           </p>
           <p style={para}>

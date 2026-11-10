@@ -540,6 +540,12 @@ Cloudflare Workers (`workers/`), deploy **manual** (`cd workers && ../node_modul
 **Chamado por:** `community.js › opponents`.
 **Régua:** `functions/api/rankedPick.test.js`.
 
+### `functions/api/_treino.js`
+**Dono de:** o TREINO ("Sparring"), a 2ª aba do Torneio (10/11/2026): sorteio de 5 oponentes por faixa de VÍNCULO (nunca por ranking; `SPAR_BOND_RANGE` ±3, ampliando de `SPAR_RANGE_STEP` enquanto houver menos de `SPAR_PICKS`) e a Honra da vitória (1 a 2, teto `SPAR_HONOR_DAILY_CAP` = 20 por dia do JOGADOR, contador `sparHonor:<id>:<dia>` no KV). Não toca `rank:*`, placar, faixa nem `lifetimePoints`.
+**Exports:** `SPAR_PICKS`, `SPAR_BOND_RANGE`, `SPAR_RANGE_STEP`, `SPAR_SCAN_MAX`, `SPAR_HONOR_MIN`, `SPAR_HONOR_MAX`, `SPAR_HONOR_DAILY_CAP`, `SPAR_PENDING_TTL_S`, `pickSparOpponents`, `sparHonorRoll`, `grantSparHonor`, `sparHonorKey`, `sparPendingKey`, `sparDoneKey`.
+**Chamado por:** `community.js › sparOpponents / sparStart / sparMatch`.
+**Régua:** `functions/api/community.treino.test.js` (inclui a paridade das constantes com `src/utils/currencies.ts`).
+
 ### `functions/api/_gates.js`
 **Dono de:** o ESPELHO de `src/utils/gates.ts` (a tabela de portões do Vínculo); `community.js` e `_bond.js` leem daqui.
 **Exports:** `GATES`, `BUILDING_GATES`, `MOVED_BUILDINGS`, `currentBuildingId`, `MASMORRA_ALTO_A_PARTIR_DO_ANDAR`, `gateFor`.
