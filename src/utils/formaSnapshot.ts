@@ -62,7 +62,8 @@ const pocaoDaChave = (chave: string, pocao: string | undefined): string | undefi
  */
 function forcarOriginal<T extends FormaState>(s: T): T {
   if (s.formaAltEquipada?.[s.evolutionStage] !== 'original') return s;
-  const base = s.elementoJornada?.estagios?.[fichaStageOf(s.evolutionStage)]?.base ?? s.soulmonMeta?.dominantElement;
+  // O base é POR Soulmon (Oráculo): `soulmonMeta.dominantElement`; sem ele, o `base` gravado no registro do estágio. Nunca um valor fixo.
+  const base = s.soulmonMeta?.dominantElement ?? s.elementoJornada?.estagios?.[fichaStageOf(s.evolutionStage)]?.base;
   return base && s.potionElement !== base ? { ...s, potionElement: base } : s;
 }
 
