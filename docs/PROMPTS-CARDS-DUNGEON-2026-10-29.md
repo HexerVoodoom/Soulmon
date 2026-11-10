@@ -1,6 +1,6 @@
 # Prompts ChatGPT — cards de arte do Calabouço (29/10/2026)
 
-> **REGRA MÁXIMA (04/11/2026):** todo prompt deste arquivo tem de carregar a identidade do `docs/REGRA-IDENTIDADE-SOULMON.md` (turquesa escuro, cristal com chama, cobre, circuito, folhinhas). "Arcane nature" sozinho não basta; onde aparecer, leia como a frase de identidade abaixo.
+> **REGRA DE IDENTIDADE (revista em 09/11/2026):** o bloco de identidade (`docs/REGRA-IDENTIDADE-SOULMON.md`) só entra em prompts de UI, prédio/NPC/mapa/hub e site; cenário de combate e item/poção/chip levam no máximo um acento discreto; criatura, FX e ícone de elemento NÃO levam o bloco e o prompt traz a linha "no copper pipes, no circuit lines, no leaves, no turquoise crystals unless the element itself calls for it". Onde um prompt abaixo trouxer o bloco completo, aplique só se a categoria do asset for "usar".
 
 > **Etiqueta: fila de geração (nada gerado, nada instalado).** Regras gerais: `PROMPTS-CHATGPT-2026-10-28.md` §0 (canal ChatGPT desktop, uma conversa por peça, referência por clique-direito > Paste, proporção na ÚLTIMA frase, sem texto, sem pixelização, vibe arcano+natureza, sem engrenagem/vapor/couro, **sem magenta/roxo/rosa**, padrão 23/09). Fluxo pós-geração: `arte-conferente` > `arte-instalador`.
 
