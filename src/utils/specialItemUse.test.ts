@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { reduceChipsUsedThisStage, REDUCE_CHIPS_PER_STAGE } from './specialItemUse';
 import { REDUCE_CHIP_EMOJI, REDUCE_CHIP_BOOST, isReduceChipKey } from './shop';
+import { GLITCHTAMA_TESTE_ON } from './glitchtamaTeste';
 import { applySpecialItem, specialRefusal, glitchtamaUsedToday, GLITCHTAMA_PER_DAY, CHIPS_PER_STAGE, chipsUsedThisStage, sanitizeChipsStage, type SpecialItemState } from './specialItemUse';
 import { playerDayKey } from './playerDay';
 import { SHOP_ITEMS, BIG_CHIP_BOOST, BIG_CHIP_EMOJI, PRISM_CHIP_EMOJI, PRISM_CHIP_BOOST, CHIP_BOOST, HEART_HEAL, CHIP_EMOJI, HEART_ITEM_EMOJI, GLITCHTAMA_EMOJI, TRIPLE_CHIP_EMOJI, TRIPLE_CHIP_BOOST, SPECIAL_ITEMS } from './shop';
@@ -232,33 +233,37 @@ describe('teto diário do glitchtama', () => {
     expect(state.glitchtamaUse?.used).toBe(1);
   });
 
-  it('o SEGUNDO do mesmo dia é recusado — e não consome o item', () => {
-    const primeiro = applySpecialItem(comDois(), GLITCHTAMA_EMOJI, AGORA).state;
-    const segundo = applySpecialItem(primeiro, GLITCHTAMA_EMOJI, AGORA);
+  // Estes testes seguem `GLITCHTAMA_PER_DAY` (1 normal; 999 com a flag de TESTE de `glitchtamaTeste.ts`): o estado já nasce no teto.
+  const noTeto = (usado = GLITCHTAMA_PER_DAY) => ({ ...comDois(), glitchtamaUse: { day: playerDayKey(AGORA, { offsetMs: -3 * 60 * 60 * 1000 }), used: usado } });
+
+  it('batido o teto do dia, o próximo é recusado — e não consome o item', () => {
+    const prev = noTeto();
+    const segundo = applySpecialItem(prev, GLITCHTAMA_EMOJI, AGORA);
     expect(segundo.refused).toBe('daily-cap');
-    // A recusa é ANTES do decremento: o item volta para a pastinha e vale
-    // amanhã. Recusar depois de consumir seria o X-6 ao contrário.
-    expect(segundo.state.foodInventory[GLITCHTAMA_EMOJI]).toBe(1);
-    expect(segundo.state.perfectDays).toBe(1);
-    expect(segundo.state).toBe(primeiro);
+    // A recusa é ANTES do decremento: o item volta para a pastinha e vale amanhã. Recusar depois de consumir seria o X-6 ao contrário.
+    expect(segundo.state.foodInventory[GLITCHTAMA_EMOJI]).toBe(2);
+    expect(segundo.state).toBe(prev);
+  });
+
+  it('a flag de teste define o teto: 1 por dia desligada, 999 ligada', () => {
+    expect(GLITCHTAMA_PER_DAY).toBe(GLITCHTAMA_TESTE_ON ? 999 : 1);
+    const segundo = applySpecialItem(applySpecialItem(comDois(), GLITCHTAMA_EMOJI, AGORA).state, GLITCHTAMA_EMOJI, AGORA);
+    expect(segundo.refused).toBe(GLITCHTAMA_TESTE_ON ? undefined : 'daily-cap');
   });
 
   it('a virada do DIA DO JOGADOR devolve o direito', () => {
-    const primeiro = applySpecialItem(comDois(), GLITCHTAMA_EMOJI, AGORA).state;
     const amanha = new Date(AGORA.getTime() + 24 * 60 * 60 * 1000);
-    const segundo = applySpecialItem(primeiro, GLITCHTAMA_EMOJI, amanha);
+    const segundo = applySpecialItem(noTeto(), GLITCHTAMA_EMOJI, amanha);
     expect(segundo.refused).toBeUndefined();
-    expect(segundo.state.perfectDays).toBe(2);
+    expect(segundo.state.perfectDays).toBe(1);
     expect(segundo.state.glitchtamaUse?.used).toBe(1);
   });
 
-  it('dois toques no MESMO lote do React não passam os dois (X-6)', () => {
-    // O contador é escrito no mesmo retorno que dá o ponto, então a segunda
-    // passada sobre o `prev` da primeira já enxerga o teto batido.
-    const prev = comDois();
-    const a = applySpecialItem(prev, GLITCHTAMA_EMOJI, AGORA);
+  it('dois toques no MESMO lote do React: o último que cabe passa e o seguinte já enxerga o teto (X-6)', () => {
+    const a = applySpecialItem(noTeto(GLITCHTAMA_PER_DAY - 1), GLITCHTAMA_EMOJI, AGORA);
     const b = applySpecialItem(a.state, GLITCHTAMA_EMOJI, AGORA);
-    expect(a.state.perfectDays + (b.state.perfectDays - a.state.perfectDays)).toBe(1);
+    expect(a.refused).toBeUndefined();
+    expect(b.refused).toBe('daily-cap');
   });
 
   it('save antigo sem o campo ganha o dia de hoje inteiro, nunca dívida', () => {

@@ -1,3 +1,4 @@
+import { sanitizeGlitchtamaBuy } from '../utils/glitchtamaTeste';
 import { sanitizeJourneyCredited } from '../utils/focusBoard';
 import { sanitizeMailClaimed } from '../utils/mensageiro';
 import { sanitizeFunSession } from '../utils/funSession';
@@ -493,6 +494,8 @@ export interface GameState {
   /** Quantos 🌀 Glitchtama foram usados no DIA DO JOGADOR — o teto que impede
    *  a masmorra de comprar a escada de evolução (`utils/specialItemUse.ts`). */
   glitchtamaUse?: { day: string; used: number };
+  /** ⚠️ TESTE (`utils/glitchtamaTeste.ts`): compras do 🌀 no Desfeito hoje — dia do jogador, no save. */
+  glitchtamaBuy?: { day: string; used: number };
   /** O drop RARO do 🌀 na masmorra: semana (segunda) do último drop e quantos caíram (teto 1/semana — `utils/glitchtamaDrop.ts`). */
   glitchtamaDrop?: { week: string; dropped: number };
   /** Tetos da comida premium (drop por dia/semana, uso por dia) — `utils/premiumFood.ts`. */
@@ -1409,6 +1412,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
           const g = obj<unknown>(loadedState.glitchtamaUse);
           return typeof g.day === 'string' ? { day: g.day, used: num(g.used, 0) } : undefined;
         })(),
+        glitchtamaBuy: sanitizeGlitchtamaBuy(loadedState.glitchtamaBuy),
         // Teto semanal do drop do Glitchtama. Save antigo entra `undefined` = nenhum drop na semana (nunca fica travado).
         glitchtamaDrop: sanitizeGlitchtamaDrop(loadedState.glitchtamaDrop),
         // D-97: chips por estágio. Ausente/lixo → `undefined` (0 usados): o save antigo

@@ -4453,3 +4453,7 @@ Tempo de uso por tela/feature/minigame, agregado e sem ID por pessoa: `setActive
 ### `src/utils/playReview.ts`
 
 Pedido de avaliacao na Play a cada evolucao (09/11/2026): `parsePlayReview`, `shouldAskReview` (so evolucao para cima, nunca depois de aceitar), `markAsked`, `markAccepted`, `storeUrl`. Estado em `STORAGE_KEYS.PLAY_REVIEW`.
+
+### `src/utils/glitchtamaTeste.ts`
+
+EXCECAO DE TESTE temporaria (10/11/2026): flag `GLITCHTAMA_TESTE_ON`; uso diario do item sobe para 999 e o Desfeito vende 1 por 1 Bit (3 compras/dia, `glitchtamaBuy` no save). Funcoes: `buyGlitchtama`, `glitchtamaBuyRefusal`, `glitchtamaBuysLeft`, `sanitizeGlitchtamaBuy`.
