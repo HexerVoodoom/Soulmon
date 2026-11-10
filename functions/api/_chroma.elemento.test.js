@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { chromaKeyPng, chromaKeyOfPrompt } from './_chroma.js';
 import { decodePng, encodePng } from './_png.js';
-import { stagesComElemento } from '../../src/utils/elementoCombinado';
+import { stagesComElemento, aplicarChroma } from '../../src/utils/elementoCombinado';
 
 const FUNDO = 'Tamagotchi-style v-pet sprite, 16x16 pixel art, isolated subject, on a solid flat pure #00FF00 chroma-green background (uniform, no gradient, no shadow), the creature itself contains no green and no green fringe: macaw. Flat dark violet colors.';
 const promptDe = id => stagesComElemento([{ stage: 'perfeito', imagePrompt: FUNDO, imagePromptFallback: FUNDO }], undefined, { ultimate: id }, 'sombra')[0].imagePrompt;
@@ -32,8 +32,8 @@ describe('recorte pela cor de fundo que o prompt do elemento escolheu', () => {
     expect(opacos(mag)).toBe(opacos(ver));
     expect(opacos(ver)).toBeLessThan(64 * 64 * 0.5);
   });
-  it('elemento com verde+magenta (tormento): o prompt pede AZUL e a criatura verde+magenta sobre azul sobrevive', () => {
-    const p = promptDe('tormento');
+  it('criatura verde+magenta sobre fundo AZUL sobrevive (a chave azul não come verde nem magenta)', () => {
+    const p = aplicarChroma(promptDe('tormento'), 'blue');
     expect(chromaKeyOfPrompt(p)).toBe('blue');
     const W = 64, H = 64, d = new Uint8Array(W * H * 4);
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {

@@ -16,7 +16,7 @@ import { VALID_ID } from './_entitlements.js';
 import { clientKey, takeToken, tooManyRequests } from './_rateLimit.js';
 import { flagOn } from './_killSwitch.js';
 import {
-  sanitizeReportBody, createReport, evaluateReport, regenerateReport, advanceReport, ackReport, listByAccount, readReport, userView,
+  sanitizeReportBody, createReport, notificarEquipe, takeDaily, evaluateReport, regenerateReport, advanceReport, ackReport, listByAccount, readReport, userView,
   REPORT_ID_RE, STATUS,
 } from './_spriteReview.js';
 
@@ -85,7 +85,10 @@ export async function onRequestPost({ request, env, waitUntil }) {
   const created = await createReport(env, clean);
   if (!created.ok) return json({ error: created.error }, created.status);
   const reportId = created.report.id;
-  if (created.created) {
+  if (created.created && created.equipe) {
+    // 2o/3o pedido do dia depois de um `sem-problema`: sem IA, vai por e-mail para a equipe (e fica guardado na KV).
+    await bg(notificarEquipe(env, created.report, created.equipe, { origin, takeDaily }).then(() => undefined));
+  } else if (created.created) {
     // Avalia e, se o veredito for regenerar, ja tenta regenerar no mesmo segundo plano (o Workers pode cortar o waitUntil ~30 s depois da
     // resposta; o que ficar pela metade o app retoma na proxima checagem, via `continue`).
     await bg((async () => {

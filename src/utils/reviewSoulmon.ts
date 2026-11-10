@@ -21,7 +21,7 @@ export interface ReviewSnapshot {
 
 export type ReviewStatus =
   | 'pendente' | 'pendente-sem-chave' | 'avaliando' | 'aguardando-regeneracao' | 'regenerando'
-  | 'consertado' | 'sem-problema' | 'precisa-manual' | 'falhou' | 'limite-diario';
+  | 'consertado' | 'sem-problema' | 'precisa-manual' | 'falhou' | 'limite-diario' | 'aguardando-equipe';
 
 export interface ReviewReport {
   id: string; formId: string; status: ReviewStatus; createdAt: number; updatedAt?: number;
@@ -41,7 +41,7 @@ export function reviewPollDelay(ageMs: number): number | null {
   return ageMs < REVIEW_POLL.fastUntilMs ? REVIEW_POLL.fastMs : REVIEW_POLL.slowMs;
 }
 
-const ACTIVE: ReviewStatus[] = ['pendente', 'pendente-sem-chave', 'avaliando', 'aguardando-regeneracao', 'regenerando', 'limite-diario'];
+const ACTIVE: ReviewStatus[] = ['pendente', 'pendente-sem-chave', 'avaliando', 'aguardando-regeneracao', 'regenerando', 'limite-diario', 'aguardando-equipe'];
 /** Pedido ainda sem resposta (o botao fica inativo e o texto diz "em revisao"). */
 export function isActive(r: Pick<ReviewReport, 'status' | 'createdAt'> | null | undefined, now = Date.now()): boolean {
   return !!r && ACTIVE.includes(r.status) && now - r.createdAt < REVIEW_POLL.giveUpMs;

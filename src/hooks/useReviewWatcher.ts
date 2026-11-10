@@ -26,6 +26,8 @@ export interface ReviewWatcher {
   current: ReviewReport | null;
   /** Ativo = botao inativo + "Seu Soulmon esta em revisao". */
   active: boolean;
+  /** Ativo e entregue à equipe (e-mail), não à IA. */
+  team: boolean;
   sending: boolean;
   error: ReviewRequestError;
   request: () => Promise<void>;
@@ -105,5 +107,5 @@ export function useReviewWatcher({ snapshot, onApplyFix, onFinished, now = Date.
   }, [check, schedule]);
 
   const current = currentOf(reports);
-  return { current, active: sending || isActive(current, now()), sending, error, request };
+  return { current, active: sending || isActive(current, now()), team: current?.status === 'aguardando-equipe' && isActive(current, now()), sending, error, request };
 }

@@ -5,6 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { generateOracle } from '../test/oracleSync';
+import { coresDoTexto } from '../../functions/api/_chromaHue.js';
 import { stagesComElemento, chromaDoPrompt } from './elementoCombinado';
 
 const VERDE = /green|lime|mint|emerald|jade|olive|fern|moss|sage|clover|forest/i;
@@ -17,7 +18,8 @@ describe('fundo chroma x linguagem de design do alinhamento', () => {
       const r = generateOracle({ fullName: `P${s}`, birthDate: `19${70 + (s % 30)}-0${1 + (s % 9)}-${10 + (s % 18)}`, birthTime: `${10 + (s % 12)}:30`, birthPlace: 'Lisboa, Portugal' }, s * 104729);
       for (const st of stagesComElemento(r.creature.stages, undefined, undefined, 'planta') ?? []) {
         for (const p of [st.imagePrompt, st.imagePromptFallback]) {
-          if (chromaDoPrompt(p) === 'green' && VERDE.test(p.replace(CLAUSULA, ''))) ruins.push(`${s}/${st.stage}`);
+          const cores = coresDoTexto(p.replace(CLAUSULA, ''));
+          if (chromaDoPrompt(p) === 'green' && cores[0]?.hue === 120) ruins.push(`${s}/${st.stage}`);
         }
       }
     }

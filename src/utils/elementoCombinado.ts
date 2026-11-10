@@ -82,16 +82,13 @@ export function registrarElementoDoEstagio(
 }
 
 /** O prompt das formas ainda por desenhar recebe o elemento combinado. Forma sem registro ou de elemento único: o prompt de sempre. */
-const VERDE = /green|lime|mint|emerald|jade|olive|fern|moss|sage|clover|forest|verde/i;
-// Só o magenta que o recorte comeria (claro/saturado); "dark magenta" (min(r,b) < 150) não é chaveado.
-const MAGENTA = /(?<!dark |deep |dim )magenta|hot[- ]pink|fuchsia|neon pink/i;
 /** O pedido de fundo chroma do prompt (a "cláusula do fundo"), que não conta como cor da criatura. */
 const CLAUSULA_FUNDO = /on a solid flat pure #[0-9A-Fa-f]{6} chroma-\w+ background \([^)]*\), the creature itself contains no [^:]*? fringe/;
 
+import { escolherChaveDeMatiz, semChaveSegura } from '../../functions/api/_chromaHue.js';
+
 export type ChromaKey = 'green' | 'magenta' | 'blue';
 
-// Azul forte = o que o recorte azul (b > 150 e b - max(r,g) > 60) comeria. Ciano, marinho, "dark blue", céu e azul-aço NÃO contam.
-const AZUL_FORTE = /(?<!dark |deep |navy |pale |sky |light |steel |baby |powder |clear |cosmic )(?:bright|vivid|electric|royal|cobalt|saturated|pure|neon) blue|cobalt|sapphire|ultramarine/i;
 
 /** Cláusula do fundo (hex, nome e "a criatura não tem a cor") de cada chave. */
 const CLAUSULAS: Record<ChromaKey, { hex: string; nome: string; sem: string }> = {
@@ -112,18 +109,12 @@ export const chromaDoPrompt = (prompt: string): ChromaKey => (/#0000FF/i.test(pr
  */
 export function escolherChroma(prompt: string): ChromaKey {
   const corpo = prompt.replace(CLAUSULA_FUNDO, '');
-  const g = corpo.search(VERDE);
-  const m = corpo.search(MAGENTA);
-  if (g >= 0 && m < 0) return 'magenta';
-  if (m >= 0 && g < 0) return 'green';
-  if (g >= 0 && m >= 0) return AZUL_FORTE.test(corpo) ? (g < m ? 'magenta' : 'green') : 'blue';
-  return chromaDoPrompt(prompt);
+  return escolherChaveDeMatiz(corpo).key;
 }
 
-/** true = verde, magenta e azul forte juntos na paleta: nenhuma das 3 chaves é segura (listar para o dono). */
+/** true = o círculo cromático está cheio (nenhuma das 3 chaves fica a 30 graus ou mais das cores): listar para o dono. */
 export function semChromaSeguro(prompt: string): boolean {
-  const corpo = prompt.replace(CLAUSULA_FUNDO, '');
-  return corpo.search(VERDE) >= 0 && corpo.search(MAGENTA) >= 0 && AZUL_FORTE.test(corpo);
+  return semChaveSegura(prompt.replace(CLAUSULA_FUNDO, ''));
 }
 
 /** Troca o pedido de fundo do prompt para a cor dada (a mesma troca de texto do `withChroma` do Oráculo, em qualquer sentido). */
