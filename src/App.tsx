@@ -207,6 +207,7 @@ import {
 } from './utils/groveLocal';
 import { grantGuildTrophy } from './utils/guildClaimLocal';
 import { feiraEventoAbre, feiraShownKey, type FeiraEvento } from './utils/feira';
+import { feiraLojaAbre, feiraLojaShownKey, applyFeiraLojaBuy, applyServerFeiraHex, type FeiraLoja, type FeiraLojaItem } from './utils/feiraLoja';
 import type { FeiraCredit } from './utils/feiraCredit';
 import { guildCoreText, groveStageName, type GroveMarcoStage } from './utils/guildCopyCore';
 import { canRebirth, rebirthRefusal } from './utils/rebirthGate';
@@ -856,6 +857,7 @@ const ProtectProgressModal = lazy(() => import('./components/ProtectProgressModa
 const MilestoneCeremony = lazy(() => import('./components/MilestoneCeremony').then(m => ({ default: m.MilestoneCeremony })));
 const GroveMilestoneCeremony = lazy(() => import('./components/guild/GroveMilestoneCeremony').then(m => ({ default: m.GroveMilestoneCeremony })));
 const FeiraEventoSheet = lazy(() => import('./components/guild/FeiraEventoSheet').then(m => ({ default: m.FeiraEventoSheet })));
+const FeiraLojaSheet = lazy(() => import('./components/guild/FeiraLojaSheet').then(m => ({ default: m.FeiraLojaSheet })));
 const MorningCheckIn = lazy(() => import('./components/MorningCheckIn').then(m => ({ default: m.MorningCheckIn })));
 const TriagePile = lazy(() => import('./components/TriagePile').then(m => ({ default: m.TriagePile })));
 const MorningDream = lazy(() => import('./components/MorningDream').then(m => ({ default: m.MorningDream })));
@@ -924,6 +926,8 @@ export default function App() {
   // FEIRA DO CHEFE (docs/PLANO-FEIRA-CHEFE.md): o evento que a VOLTA da Missão encontrou. Em memória (a sala da Feira reabre a folha);
   // `null` com a Feira desligada/servidor antigo — e então nada disto acontece.
   const [feiraEvento, setFeiraEvento] = useState<FeiraEvento | null>(null);
+  /** A FEIRA DE VERDADE (rara; `utils/feiraLoja.ts`): usa a MESMA vaga da fila que o `feiraEvento` (um aviso de gesto, nunca os dois). */
+  const [feiraLoja, setFeiraLoja] = useState<FeiraLoja | null>(null);
 
   // O resumo da volta sozinha mora no SAVE (`dungeonReturnPending`): fechar o app antes de ver o aviso não o perde.
   const dungeonReturnSummary: DungeonReturnSummary | null = gameState.dungeonReturnPending ?? null;
@@ -2568,7 +2572,7 @@ export default function App() {
       welcomeTour: welcomeTourOpen,
       triage: Boolean(triageTasks),
       dungeonReturn: dungeonReturnSummary !== null,
-      feiraEvento: feiraEvento !== null,
+      feiraEvento: feiraEvento !== null || feiraLoja !== null,
       levelUp: levelUpOpen,
       dailyReport: showDailyReport && Boolean(gameState.lastDayReport),
       evoRecap: evoRecap !== null,
@@ -2595,6 +2599,9 @@ export default function App() {
         handleLevelUpDone(levelUpEvent.to);
         const abertos = buildingsUnlockedBetween(levelUpEvent.from, levelUpEvent.to);
         if (abertos.length > 0) setUnlockToastIds(abertos);
+      } else if (id === 'feiraEvento' && feiraLoja) {
+        // a feira de verdade: "visto" ao MOSTRAR (a oferta é do dia; a sala da Feira não a reabre, ela some quando o dia vira)
+        writeLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO, feiraLojaShownKey(feiraLoja), { silent: true });
       } else if (id === 'feiraEvento' && feiraEvento) {
         // "visto" ao MOSTRAR: o mesmo mistério no mesmo dia não reabre sozinho (a sala da Feira reabre à mão)
         writeLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO, feiraShownKey(feiraEvento, playerDayKey(new Date(), gameState.playerDayTz)), { silent: true });
@@ -2641,7 +2648,7 @@ export default function App() {
         case 'welcomeTour': handleWelcomeTourDone(); break;
         case 'triage': setTriageTasks(null); break;
         case 'dungeonReturn': setDungeonReturnSummary(null); break;
-        case 'feiraEvento': setFeiraEvento(null); break;
+        case 'feiraEvento': setFeiraEvento(null); setFeiraLoja(null); break;
         case 'levelUp': setLevelUpShown(null); break;
         case 'dailyReport': closeDailyReport(); break;
         case 'evoRecap': setEvoRecap(null); break;
@@ -5060,6 +5067,19 @@ export default function App() {
     // a compra em Emblemas decidia sobre um saldo velho.
   }, [gameState, missionProgress, refuseDemo]);
 
+  /** FEIRA DE VERDADE: o servidor já conferiu a oferta e o limite de 1; aqui só se debita o PREÇO DA OFERTA pelo caminho de sempre (`applyShopBuy`, Bit pago primeiro, recusa reconferida sobre o `prev`). */
+  const handleFeiraLojaBuy = useCallback((offer: FeiraLojaItem): boolean => {
+    if (isDemoMode(gameState)) { refuseDemo(); return false; }
+    if (applyFeiraLojaBuy(gameState, offer).refused) return false;
+    setGameState(prev => applyFeiraLojaBuy(prev, offer).state);
+    return true;
+  }, [gameState, refuseDemo, setGameState]);
+
+  /** FEIRA DE VERDADE (Hexsmith): o servidor cobrou o preço da oferta (sem ingredientes) e entregou o item; o save local o acompanha. */
+  const handleFeiraHexBought = useCallback((itemId: string, price: number, paid: boolean) => {
+    setGameState(prev => applyServerFeiraHex(prev, itemId, price, paid));
+  }, [setGameState]);
+
   /** Compra de MOLDURA com Bits, UM handler só (C3 Mercado + B3 Perfil/Torneio): mesma disciplina de `handleShopBuy`
    *  (recusa reconferida sobre o `prev`, em `utils/frameBuy.ts`). `equipar` (Perfil/Torneio, B3) já veste a moldura comprada;
    *  o Mercado só entrega a posse. Devolve se a compra passou. */
@@ -5163,7 +5183,9 @@ export default function App() {
         // O DESAFIO DO DIA: o inimigo que ele trouxe só vale HOJE (amanhã "escapou"). Descanso não é desafio.
         if (volta.evento && volta.evento.kind !== 'rest') recordFeiraDesafio(playerDayKey(new Date(), gameState.playerDayTz), volta.evento.k);
         // FEIRA DO CHEFE: o evento da volta entra na fila (um por vez). Ausente (Feira desligada / servidor antigo) = nada muda.
-        if (volta.evento && feiraEventoAbre(volta.evento) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraShownKey(volta.evento, playerDayKey(new Date(), gameState.playerDayTz))) setFeiraEvento(volta.evento);
+        // FEIRA DE VERDADE (rara, ~8% das voltas): quando existe, ELA é o que a volta mostra; o mistério segue na sala da Feira. Servidor/cliente antigo: sem `feiraLoja`, tudo como antes.
+        if (volta.feiraLoja && feiraLojaAbre(volta.feiraLoja) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraLojaShownKey(volta.feiraLoja)) setFeiraLoja(volta.feiraLoja);
+        else if (volta.evento && feiraEventoAbre(volta.evento) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraShownKey(volta.evento, playerDayKey(new Date(), gameState.playerDayTz))) setFeiraEvento(volta.evento);
         if (alive) encerrar();
       } catch (e) {
         const kind = (e as { kind?: string } | null)?.kind;
@@ -10068,6 +10090,32 @@ export default function App() {
             me={feiraMe}
             onClose={() => setFeiraEvento(null)}
             onCredit={handleFeiraCredit}
+          />
+        </PresentationSlot>
+      )}
+
+      {/* 🎪 FEIRA DE VERDADE (rara): a volta encontrou uma feira — vendedor próprio, itens do Mercado com desconto, só Bits. Mesma vaga da fila do `feiraEvento`. */}
+      {interstitial === 'feiraEvento' && feiraLoja && saveId && (
+        <PresentationSlot id="feiraEvento" onFail={() => presentation.fail('feiraEvento')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <FeiraLojaSheet
+            language={language}
+            saveId={saveId}
+            tz={gameState.playerDayTz}
+            loja={feiraLoja}
+            points={gameState.gamePoints ?? 0}
+            ownership={{
+              ownedBackgrounds: gameState.ownedBackgrounds ?? [],
+              equippedBackground: null,
+              ownedFurniture: gameState.ownedFurniture ?? [],
+              equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
+              missionProgress,
+              missionClaimed: gameState.missionsClaimed,
+              petElement: petElementOf(gameState),
+            }}
+            getState={() => gameStateRef.current}
+            onBuyShop={handleFeiraLojaBuy}
+            onHexBought={handleFeiraHexBought}
+            onClose={() => setFeiraLoja(null)}
           />
         </PresentationSlot>
       )}
