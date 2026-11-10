@@ -28,11 +28,11 @@ const salvoDoDono = (snaps: unknown): EstadoDeForma & { unlockedEvolutions: stri
 } as never);
 
 describe('save real: snapshots contaminados pela poção de outra forma', () => {
-  it('antes da migração (snapshots crus) trocar para a original do Poder mantinha Fada — o bug', () => {
+  it('mesmo com snapshots crus, a original do Poder é o elemento BASE (regra da original)', () => {
     const cru = salvoDoDono(snapshotsDoDono);
     const poder = trocarFormaEstado(cru, 'ultimate-power', 'original');
     expect(poder.formaAltEquipada?.['ultimate-power']).toBe('original');
-    expect(petElementOf(poder as never)).toBe('fada'); // contaminado
+    expect(petElementOf(poder as never)).toBe('sombra');
   });
   it('a migração (leitura tolerante) tira a poção que não é da forma', () => {
     const s = sanitizeFormaSnapshots(snapshotsDoDono)!;
@@ -40,14 +40,14 @@ describe('save real: snapshots contaminados pela poção de outra forma', () => 
     expect(s['ultimate-power@sabbat'].pocao).toBeUndefined();
     expect(s['ultimate-harmony@fada'].pocao).toBe('fada'); // a poção é da Harmonia: fica
     expect(s['champion-benevolence'].pocao).toBe('vileza'); // chave sem elemento: não mexe
-    expect(s['ultimate-power@original'].elemento).toEqual(SABBAT);
+    expect(s['ultimate-power@original'].elemento).toBeUndefined(); // original = base: sem elemento combinado
   });
-  it('com o save migrado: original e Sabá do Poder passam a Sabá, e Harmonia segue Fada', () => {
+  it('com o save migrado: a original do Poder é Sombra, a Sabá é Sabá, e Harmonia segue Fada', () => {
     const migrado = salvoDoDono(sanitizeFormaSnapshots(snapshotsDoDono));
     const original = trocarFormaEstado(migrado, 'ultimate-power', 'original');
     expect(original.evolutionStage).toBe('ultimate-power');
     expect(original.formaAltEquipada?.['ultimate-power']).toBe('original');
-    expect(petElementOf(original as never)).toBe('sabbat');
+    expect(petElementOf(original as never)).toBe('sombra');
     const sabba = trocarFormaEstado(migrado, 'ultimate-power', 'sabbat');
     expect(petElementOf(sabba as never)).toBe('sabbat');
     const volta = trocarFormaEstado(original, 'ultimate-harmony', 'fada');
