@@ -19,8 +19,6 @@
  * arrastar): o item selecionado — por toque OU por foco — mostra um botão
  * "Usar"/"Use" logo abaixo da grade, com o nome do item no rótulo.
  */
-import { ElementBaseSlots, emptySlots } from '../ElementBaseSlots';
-import { elementMatchesBases, potionElementOfKey, selectedBases } from '../../utils/elementPotion';
 import { useCallback, useEffect, useRef, useState, type RefObject, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Language } from '../../utils/i18n';
 import { SPECIAL_ITEMS } from '../../utils/shop';
@@ -116,8 +114,6 @@ export function Mochila({
   const isPt = language === 'pt-BR';
   const [aba, setAba] = useState<MochilaAbaVista>('comida');
   const [selecionado, setSelecionado] = useState<string | null>(null);
-  /** Filtro por elemento (09/11/2026): 3 dropdowns, E entre as bases escolhidas. Só aparece se há item com elemento (poção). */
-  const [filtroEl, setFiltroEl] = useState<(string | null)[]>(emptySlots);
   const [fantasma, setFantasma] = useState<{ emoji: string; x: number; y: number } | null>(null);
   const arrastoRef = useRef<Arrasto | null>(null);
   /** O `click` que o navegador dispara depois de um arrasto NÃO é um toque. */
@@ -176,10 +172,7 @@ export function Mochila({
   useEffect(() => { if (!open || aba !== 'materiais') setMatAberto(null); }, [open, aba]);
 
   const abas = mochilaTabs(foodInventory);
-  const temItemComElemento = Object.entries(foodInventory).some(([k, n]) => n > 0 && !!potionElementOfKey(k));
-  const filtroAtivo = selectedBases(filtroEl).length > 0;
-  const listaBruta = aba === 'materiais' ? [] : abas[aba];
-  const lista = filtroAtivo ? listaBruta.filter(([k]) => elementMatchesBases(potionElementOfKey(k), filtroEl)) : listaBruta;
+  const lista = aba === 'materiais' ? [] : abas[aba];
 
   // Fechou: nada fica selecionado nem arrastando.
   useEffect(() => {
@@ -310,12 +303,6 @@ export function Mochila({
           ))}
         </div>
 
-        {aba !== 'materiais' && temItemComElemento && (
-          <div data-mochila-filtro-elemento style={{ marginBottom: 10 }}>
-            <ElementBaseSlots slots={filtroEl} isPt={isPt} onChange={(i, id) => setFiltroEl(prev => prev.map((v, j) => (j === i ? id : v)))} />
-          </div>
-        )}
-
         <div
           role="tabpanel"
           id={`sm3-painel-${aba}`}
@@ -324,11 +311,9 @@ export function Mochila({
         >
           {lista.length === 0 && aba === 'comida' ? (
             <p className="sm3-mochila-vazia" data-mochila-vazia>
-              {filtroAtivo
-                ? (isPt ? 'Nenhum item com esses elementos.' : 'No items with these elements.')
-                : (isPt
-                  ? 'Nada por aqui. Complete tarefas pra ganhar comida.'
-                  : 'Nothing here yet. Complete tasks to earn food.')}
+              {isPt
+                ? 'Nada por aqui. Complete tarefas pra ganhar comida.'
+                : 'Nothing here yet. Complete tasks to earn food.'}
             </p>
           ) : (
             lista.length > 0 && <div className="sm3-mochila-grade">
