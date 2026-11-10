@@ -430,7 +430,12 @@ decidida pela FOME (`src/utils/hunger.ts`): bem alimentado (fome ≥ 60) 100%,
 mediano (≥ 20) 50%, faminto 0% (interrompida). A fome cai de 100 a 0 em 14 h e só
 sobe comendo; fome nunca tira coração, Bits nem bloqueia outra coisa. O progresso
 até a próxima unidade fica no save (`energyClock`): fechar o app não reinicia o
-timer. `getMaxEnergyForStage(stage) = FORM_REQUIREMENTS[nível].required ×
+timer. **Dormindo: ×1,5 (REGISTRO §277).** Com o Soulmon dormindo (o `isSleeping` real: gesto
+manual ou sono automático) a velocidade efetiva é MULTIPLICADA por `SLEEP_ENERGY_REGEN_BONUS`
+(1,5): bem alimentado 150%, mediano 75%, faminto continua 0%. O estado de sono vive em
+`energyClock.sleep` e é gravado por `setSleeping` na troca; o trecho anterior é contado com
+o estado antigo (por timestamp). Com o app fechado vale o sono registrado por último; o
+"dormindo para acordar" do dia (`dayWake`) é só apresentação e não conta. `getMaxEnergyForStage(stage) = FORM_REQUIREMENTS[nível].required ×
 ENERGY_HEADROOM` (`src/types/progression.ts`) — rookie 8, champion 10, ultimate
 10, mega 12, ultra 12. `computeDailyReset` zera a energia em toda virada (o
 relógio e a fome seguem). A energia serve para descer a Fenda (1 por camada, sem limite
