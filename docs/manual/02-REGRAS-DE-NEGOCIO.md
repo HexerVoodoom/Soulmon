@@ -430,7 +430,12 @@ decidida pela FOME (`src/utils/hunger.ts`): bem alimentado (fome ≥ 60) 100%,
 mediano (≥ 20) 50%, faminto 0% (interrompida). A fome cai de 100 a 0 em 14 h e só
 sobe comendo; fome nunca tira coração, Bits nem bloqueia outra coisa. O progresso
 até a próxima unidade fica no save (`energyClock`): fechar o app não reinicia o
-timer. `getMaxEnergyForStage(stage) = FORM_REQUIREMENTS[nível].required ×
+timer. **Dormindo: ×1,5 (REGISTRO §279).** Com o Soulmon dormindo (o `isSleeping` real: gesto
+manual ou sono automático) a velocidade efetiva é MULTIPLICADA por `SLEEP_ENERGY_REGEN_BONUS`
+(1,5): bem alimentado 150%, mediano 75%, faminto continua 0%. O estado de sono vive em
+`energyClock.sleep` e é gravado por `setSleeping` na troca; o trecho anterior é contado com
+o estado antigo (por timestamp). Com o app fechado vale o sono registrado por último; o
+"dormindo para acordar" do dia (`dayWake`) é só apresentação e não conta. `getMaxEnergyForStage(stage) = FORM_REQUIREMENTS[nível].required ×
 ENERGY_HEADROOM` (`src/types/progression.ts`) — rookie 8, champion 10, ultimate
 10, mega 12, ultra 12. `computeDailyReset` zera a energia em toda virada (o
 relógio e a fome seguem). A energia serve para descer a Fenda (1 por camada, sem limite
@@ -6355,4 +6360,4 @@ E-mail verificado presente em `BETA_EMAILS` é tratado como conta paga: o servid
 
 Sorte fixa por Soulmon decide quantos componentes o elemento tem em cada estágio (Rookie 95/5/0/0, Champion 35/60/5/0, Ultimate 15/30/50/5, Mega 10/20/40/30, Ultra 5/10/25/60). Contém sempre a base nº 1; 3 e 4 componentes só nos 50 curados (planta, industrial e fada ficam no par). Vale a partir da próxima evolução; degenerar volta ao elemento do nível. A vantagem usa a base nº 1. Dono: `src/utils/elementoCombinado.ts`. Decisão: REGISTRO §232.
 
-**🎪 Feira de verdade (10/11/2026, REGISTRO §277).** Rara (`FEIRA_LOJA_PCT` = 8% das voltas): vendedor com 4 a 6 itens do Mercado/Hexsmith, 10% a 50% de desconto, só Bits, sem ingredientes, 1 por item; servidor decide e grava a oferta do dia. Ver `PLANO-FEIRA-CHEFE.md` §12.
+**🎪 Feira de verdade (10/11/2026, REGISTRO §279).** Rara (`FEIRA_LOJA_PCT` = 8% das voltas): vendedor com 4 a 6 itens do Mercado/Hexsmith, 10% a 50% de desconto, só Bits, sem ingredientes, 1 por item; servidor decide e grava a oferta do dia. Ver `PLANO-FEIRA-CHEFE.md` §12.
