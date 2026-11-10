@@ -18,6 +18,7 @@ import { elementoDoEstagioAtual, type ElementoDoEstagio, type ElementoJornada } 
 import type { StageSkills } from './soulProfile/ficha/skills';
 import type { FichaStage } from './soulProfile/ficha/types';
 import { fichaStageOf } from './soulProfile/ficha/stageSkillsFor';
+import { ALT_ORIGINAL, formaTemAlternativas } from './formasAlternativas';
 
 export interface FormaSnapshot {
   /** O elemento da poção da forma; ausente = a forma não tinha poção. */
@@ -152,7 +153,23 @@ export function aoDescerDeForma<T extends FormaState>(prev: FormaState, next: T)
   // REGRA DO DONO (10/11/2026): degenerar DESCARTA a poção — o Soulmon volta ao elemento do registro do nível (a base) e a poção só
   // vale para a evolução em que foi usada. O resto da foto (elemento e skills do nível) segue sendo restaurado.
   // A forma ORIGINAL equipada no destino segue sendo o elemento BASE do Soulmon (como na troca de forma), nao o registro do nivel.
-  return forcarOriginal({ ...(aplicarFotoAtual(out) ?? out), potionElement: undefined });
+  // DECISÃO DO DONO (10/11/2026): degenerar de uma forma de POÇÃO desequipa-a — o destino volta à forma ORIGINAL do nível (elemento
+  // base do Soulmon, `soulmonMeta.dominantElement`), em vez de ficar com a arte de poção equipada e o elemento do nível (inconsistente).
+  if (saiuDeFormaDePocao(prev) && formaTemAlternativas(next.evolutionStage)) {
+    out = { ...out, formaAltEquipada: { ...(out.formaAltEquipada ?? {}), [out.evolutionStage]: ALT_ORIGINAL } };
+  }
+  const fim = forcarOriginal({ ...(aplicarFotoAtual(out) ?? out), potionElement: undefined });
+  // Base igual ao elemento já registrado do nível = nada a sobrepor (a poção continua descartada de fato).
+  return fim.potionElement && fim.potionElement === elementoDoEstagioAtual(fim.elementoJornada, fim.evolutionStage)?.id ? { ...fim, potionElement: undefined } : fim;
+}
+
+/** A forma de onde se cai era de poção? (poção viva, ou alternativa equipada que não é a original nem o elemento registrado do nível.) */
+function saiuDeFormaDePocao(prev: FormaState): boolean {
+  if (prev.potionElement) return true;
+  const eq = prev.formaAltEquipada?.[prev.evolutionStage];
+  if (!eq || eq === ALT_ORIGINAL) return false;
+  const registrado = prev.elementoJornada?.estagios?.[fichaStageOf(prev.evolutionStage)]?.id;
+  return eq !== registrado;
 }
 
 /** Leitura tolerante do save. */
