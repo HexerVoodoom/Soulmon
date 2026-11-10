@@ -19,6 +19,12 @@ import {
 } from '../../utils/restaurant';
 import { COMBAT_NOTE, effectText, refusalText } from '../../utils/restaurantCopy';
 import type { Language } from '../../utils/i18n';
+import { getFoodName } from '../ItemsWindow';
+import { nameOf } from '../nav/BuildingQuestList';
+import { useBlockedAction } from '../ui/BlockedActionModal';
+import type { BlockedMissing, BlockedReason, BlockedSource } from '../../utils/blockedAction';
+import { earnedBits } from '../../utils/bitsOrigin';
+import type { CookRefusal } from '../../utils/restaurant';
 
 /** Lado do ícone de ingrediente (px) e do desenho do prato. */
 const ING = 20;
@@ -29,6 +35,7 @@ export function RestauranteSheet({ language }: { language: Language }) {
   const ctx = useGameStateOptional();
   const { flash, say } = useShopFlash();
   const [pending, setPending] = useState<Dish | null>(null);
+  const [blockedModal, explain] = useBlockedAction(language);
   if (!ctx) return null;
   const { gameState, setGameState } = ctx;
   const now = Date.now();
@@ -46,6 +53,31 @@ export function RestauranteSheet({ language }: { language: Language }) {
     say(d.id, true, isPt ? `${d.namePt} servido! Fome cheia.` : `${d.nameEn} served! Fully fed.`);
   };
 
+  /** Aviso padrao (09/11/2026): o Cozinhar bloqueado diz o que falta (com quantidade) e, no material, onde conseguir. */
+  const bloqueio = (d: Dish, r: CookRefusal): BlockedReason => {
+    if (r === 'no-food' || r === 'no-extra' || r === 'no-bits' || r === 'not-earned') {
+      const faltam: BlockedMissing[] = [];
+      const fonte: BlockedSource[] = [];
+      for (const [emoji, n] of Object.entries(d.foods)) {
+        const own = gameState.foodInventory?.[emoji] ?? 0;
+        if (own < n) faltam.push({ namePt: getFoodName(emoji, 'pt-BR'), nameEn: getFoodName(emoji, 'en-US'), have: own, need: n });
+      }
+      const has = extraOwned(gameState, d.extra);
+      if (has < d.extra.qty) {
+        const m = d.extra.type === 'material' ? MATERIALS.find(x => x.id === d.extra.id) : undefined;
+        faltam.push({ namePt: m ? m.namePt : essenceName(d.extra.id, true), nameEn: m ? m.nameEn : essenceName(d.extra.id, false), have: has, need: d.extra.qty });
+        if (m) fonte.push({ rota: m.building, lugarPt: nameOf(m.building, 'pt-BR'), lugarEn: nameOf(m.building, 'en-US'), itemPt: m.namePt, itemEn: m.nameEn });
+      }
+      const bits = gameState.gamePoints ?? 0;
+      if (bits < d.bits) faltam.push({ namePt: 'Bits', nameEn: 'Bits', have: bits, need: d.bits });
+      else if (r === 'not-earned') faltam.push({ namePt: 'Bits ganhos jogando', nameEn: 'Bits earned by playing', have: earnedBits(gameState), need: d.bits });
+      const foods = Object.keys(d.foods).some(e => (gameState.foodInventory?.[e] ?? 0) < d.foods[e]);
+      return { kind: 'recursos', faltam, fonte, textoPt: foods ? 'As comidas vêm das atividades concluídas.' : undefined, textoEn: foods ? 'Foods come from finished activities.' : undefined };
+    }
+    if (r === 'daily-cap') return { kind: 'limite', textoPt: refusalText(r, true), textoEn: refusalText(r, false) };
+    return { kind: 'outro', textoPt: refusalText(r, true), textoEn: refusalText(r, false) };
+  };
+
   const extraName = (d: Dish) => d.extra.type === 'essence'
     ? essenceName(d.extra.id, isPt)
     : (() => { const m = MATERIALS.find(x => x.id === d.extra.id); return m ? (isPt ? m.namePt : m.nameEn) : d.extra.id; })();
@@ -57,6 +89,7 @@ export function RestauranteSheet({ language }: { language: Language }) {
 
   return (
     <div data-restaurante data-restaurante-weekday={weekday} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {blockedModal}
       <ShopStatus
         flash={flash}
         language={language}
@@ -107,10 +140,10 @@ export function RestauranteSheet({ language }: { language: Language }) {
               <button
                 type="button"
                 data-dish-cook={d.id}
-                disabled={!!refused}
+                aria-disabled={refused ? true : undefined}
                 title={refused ? refusalText(refused, isPt) : undefined}
                 aria-label={isPt ? `Cozinhar ${d.namePt} por ${d.bits} Bits` : `Cook ${d.nameEn} for ${d.bits} Bits`}
-                onClick={() => setPending(d)}
+                onClick={() => (refused ? explain(bloqueio(d, refused)) : setPending(d))}
                 style={{ ...sm2Button('outline', !!refused), flexShrink: 0, padding: '4px 8px', gap: 4 }}
               >
                 <span>{isPt ? 'Cozinhar' : 'Cook'}</span>
