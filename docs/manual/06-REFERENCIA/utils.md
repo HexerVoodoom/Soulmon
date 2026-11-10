@@ -4477,3 +4477,7 @@ Redutores puros do modal de formas, usados pelo `App` e pelo teste de tela: `equ
 ### `src/utils/elementoDescritores.data.ts` (10/11/2026)
 
 Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglês), derivada dos prompts-fonte dos assets: os 20 elementos base de `docs/ASSETS-A-GERAR.md` (motivo da moldura + paleta) e combinados do `registro.jsonl` (FX por elemento). Elemento sem prompt-fonte não está na tabela (o prompt leva só o nome). Lida por `pistasVisuaisDoElemento` (`elementoCombinado.ts`); o verde é permitido e o fundo chroma troca para magenta (`escolherChroma`). Régua: `elementoDescritores.test.ts`.
+
+### `src/utils/feiraLoja.ts`
+**Dono de:** o lado CLIENTE da Feira de verdade: tipos, `sanitizeFeiraLoja`, `feiraLojaAbre`, `feiraLojaShownKey`, compra local ao preço da oferta (`applyFeiraLojaBuy`) e entrega da Hexsmith (`applyServerFeiraHex`).
+**Chamado por:** `utils/community.ts`, `App.tsx`, `components/guild/FeiraLojaSheet.tsx`.

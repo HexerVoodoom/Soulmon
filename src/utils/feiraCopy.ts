@@ -81,6 +81,24 @@ const COPY = {
   'room.open': ['Open', 'Abrir'],
   'room.challenge': ['Take the challenge', 'Aceitar o desafio'],
   'room.boss.go': ['Face the boss', 'Enfrentar o chefe'],
+
+  // A FEIRA DE VERDADE (10/11/2026): rara, calma, sem urgência ("só hoje" é vetado); só Bits, sem ingredientes.
+  'loja.title': ['A fair on the way', 'Uma feira no caminho'],
+  'loja.line': ['Your Soulmon found a fair while it was out.', 'O seu Soulmon encontrou uma feira enquanto estava fora.'],
+  'loja.prices': ['Everything here is a bit cheaper. Bits only.', 'Tudo aqui está um pouco mais barato. Só Bits.'],
+  'loja.keep': ['The stalls pack up when the day ends.', 'As barracas se recolhem quando o dia termina.'],
+  'loja.hex': ['From the Hexsmith', 'Da Hexsmith'],
+  'loja.hexNote': ['No ingredients needed here, just Bits.', 'Sem ingredientes aqui, só Bits.'],
+  'loja.buy': ['Buy', 'Comprar'],
+  'loja.bought': ['Yours', 'Seu'],
+  'loja.off': ['{pct}% off', '{pct}% a menos'],
+  'loja.ok': ['{name} bought.', '{name} comprado.'],
+  'loja.noFunds': ['Not enough Bits for this one. Nothing was spent.', 'Bits insuficientes para este. Nada foi gasto.'],
+  'loja.offline': ['No connection right now. Nothing was spent, try again in a moment.', 'Sem conexão agora. Nada foi gasto, tente de novo daqui a pouco.'],
+  'loja.gone': ['The stalls have packed up. Nothing was spent.', 'As barracas já se recolheram. Nada foi gasto.'],
+  'loja.taken': ['That one is already yours. Nothing was spent.', 'Esse já é seu. Nada foi gasto.'],
+  'loja.error': ['Something got stuck. Nothing was spent, try again in a moment.', 'Algo travou. Nada foi gasto, tente de novo daqui a pouco.'],
+  'loja.allYours': ['Everything here is yours now. Thank you for walking the path.', 'Tudo daqui já é seu. Obrigado por andar pelo caminho.'],
 } as const;
 
 export type FeiraKey = keyof typeof COPY;

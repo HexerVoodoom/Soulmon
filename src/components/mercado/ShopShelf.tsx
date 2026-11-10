@@ -213,7 +213,7 @@ export interface ShopActions {
   /** Resgata (de graça) um item do trimestre da assinatura. Quem decide é o `App.tsx`. */
   onClaimSubscription?: (itemId: string) => boolean;
   /** A compra. Quem decide é o `handleShopBuy` do `App.tsx`; devolve false na recusa. */
-  onBuy: (itemId: string) => boolean;
+  onBuy: (itemId: string) => boolean | Promise<boolean>;
   /** C3: compra de moldura de avatar (aba Molduras da Panora). Ausente = a aba só mostra. */
   onBuyFrame?: (frameId: string) => boolean;
   onEquip: (id: string | null) => void;
@@ -227,7 +227,7 @@ export interface ShopActions {
  * recusa item de outra moeda (ele seria julgado contra o saldo errado).
  */
 export function ShopShelf({
-  language, items, currency, balance, ownership, actions, say, flash, emptyHint, hideDecorRule = false,
+  language, items, currency, balance, ownership, actions, say, flash, emptyHint, hideDecorRule = false, discounts,
 }: {
   language: Language;
   items: ShopItem[];
@@ -240,6 +240,8 @@ export function ShopShelf({
   emptyHint?: string;
   /** A lojinha de Decoração já desenha a regra no topo da folha. */
   hideDecorRule?: boolean;
+  /** A FEIRA DE VERDADE (10/11/2026): preço cheio e % de desconto por id; os `items` já trazem o preço FINAL. Sem isto, nada muda. */
+  discounts?: Record<string, { was: number; pct: number }>;
 }) {
   const isPt = language === 'pt-BR';
   const { ownedBackgrounds, equippedBackground, ownedFurniture, equippedDecor, missionProgress, missionClaimed } = ownership;
@@ -275,10 +277,12 @@ export function ShopShelf({
   const confirmBuy = (item: ShopItem) => {
     const name = isPt ? item.namePt : item.nameEn;
     setConfirming(null);
-    const ok = actions.onBuy(item.id);
-    say(item.id, ok, ok
+    const done = (ok: boolean) => say(item.id, ok, ok
       ? (isPt ? `${name} comprado.` : `${name} purchased.`)
       : (isPt ? `Saldo insuficiente para ${name}.` : `Not enough to buy ${name}.`));
+    // `onBuy` pode ser assíncrono (a feira de verdade confere a oferta no servidor antes de debitar); a loja de sempre segue síncrona.
+    const r = actions.onBuy(item.id);
+    if (typeof r === 'boolean') done(r); else void r.then(done, () => done(false));
   };
 
   /** Missão que destrava o item + progresso, na LINHA do item. */
@@ -405,6 +409,12 @@ export function ShopShelf({
         ) : isEmblem ? (
           <span className="sm2-num" style={{ ...emblemNum, display: 'inline-flex', alignItems: 'baseline', gap: 4, whiteSpace: 'nowrap', flex: 'none', color: affordable ? emblemNum.color : 'var(--sm2-muted)' }}>
             {item.price}<span style={unitStyle}>{isPt ? 'Honra' : 'Honor'}</span>
+          </span>
+        ) : discounts?.[item.id] ? (
+          <span data-shop-discount={discounts[item.id].pct} style={{ display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2, flex: 'none' }}>
+            <span style={{ ...shopTagStyle, color: 'var(--sm2-primary-ink)' }}>{isPt ? `${discounts[item.id].pct}% a menos` : `${discounts[item.id].pct}% off`}</span>
+            <Bits value={item.price} dim={!affordable} />
+            <s className="sm2-num" style={{ ...sm2Hint, textDecorationThickness: 1 }} aria-label={isPt ? `era ${discounts[item.id].was}` : `was ${discounts[item.id].was}`}>{discounts[item.id].was}</s>
           </span>
         ) : (
           <Bits value={item.price} dim={!affordable} />

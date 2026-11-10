@@ -505,7 +505,7 @@ export function AreaView(props: AreaViewProps) {
               <CambistaSheet language={language} credits={props.credits} onExchangeCredits={props.onExchangeCredits} accountTier={props.accountTier} onUnlock={props.onUnlock} unlockedElements={props.unlockedElements} essences={props.essences} onBuyEssence={props.onBuyEssence} />
             )}
             {open?.id === 'conquistas' && (
-              <ConquistasSheet language={language} missionProgress={ownership.missionProgress} claimed={ownership.missionClaimed} shop={{ ownedBackgrounds: ownership.ownedBackgrounds, balance: props.points, onBuy: actions.onBuy }} />
+              <ConquistasSheet language={language} missionProgress={ownership.missionProgress} claimed={ownership.missionClaimed} shop={{ ownedBackgrounds: ownership.ownedBackgrounds, balance: props.points, onBuy: id => actions.onBuy(id) === true }} />
             )}
           </Suspense>
         </AreaSheet>

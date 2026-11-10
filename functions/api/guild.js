@@ -47,6 +47,10 @@
 //   POST guildFeiraTrailStart {id, dayKey} → { trail:{k,game,seed,puzzle}, evento }   404 no guild · 409 no trail|already cleared
 //   POST guildFeiraTrailDone  {id, dayKey, path|rects|cells|sides|score} → { cleared:true, reward:{emblems,sap}, receipt, evento }
 //                                            400 wrong solution|too fast · 409 no trail|not started|already cleared · 429 daily limit
+//   GET  guildFeiraLoja      ?id=&dayKey=  → { loja }   `loja` = a FEIRA DE VERDADE de hoje ({day,vendor,items:[{id,type,kind,price,was,pct,bought}]}) ou null
+//   POST guildFeiraLojaBuy   {id, dayKey, itemId} → { ok:true, price, item }   só item de tipo `shop` (Mercado); o cliente debita `price`.
+//                                            404 no offer · 409 no item|bought|owned|hex item (a Hexsmith se compra por /api/save?action=hexFair)
+//   `guildRaidHit` ganha `feiraLoja?` (ADITIVO, rara: ~8% das voltas, só com a Feira ligada; ver `_feiraLoja.js`).
 //   `guildRaidHit` ganha `evento?` (ADITIVO: ausente com a Feira desligada, e um erro ao calculá-lo nunca derruba o golpe).
 //   POST guildLeave   {id}                 → { ok: true } (sempre; idempotente)
 //   POST guildRename  {id, name}           → { guild }   403 not host · 400 invalid name · 404 no guild
@@ -94,6 +98,7 @@ import {
   feiraLigada, lerEstadoFeira, eventoDaFeira, resumoDaFeira, simularAtaque, fichaDoAtacante, sementeDoServidor,
   gravarGolpe, marcarFeira, resgatarChefe, iniciarTrilha, entregarTrilha, FIGHT_SECONDS,
 } from './_feira.js';
+import { abrirFeiraLoja, feiraLojaDoDia, validarCompraFeiraLoja, marcarCompraFeiraLoja } from './_feiraLoja.js';
 import { lerFeiraHit } from './_coop.js';
 import {
   listarDiretorio, lerEntrada, idOpacoValido, lerPedido, lerPedidoNoCla, gravarPedido, apagarPedido, listarPedidos,
@@ -156,6 +161,8 @@ export const GUILD_ACTIONS = Object.freeze({
   guildFeiraClaim: 'POST',
   guildFeiraTrailStart: 'POST',
   guildFeiraTrailDone: 'POST',
+  guildFeiraLoja: 'GET',
+  guildFeiraLojaBuy: 'POST',
   guildLeave: 'POST',
   guildRename: 'POST',
   guildNewCode: 'POST',
@@ -744,6 +751,15 @@ export async function handleGuild({ request, env }) {
       if (r.reason === 'claimed') return erro('already claimed', 409, { receipt: r.claimed.receipt, claimed: r.claimed });
       return erro('nothing to claim', 404);
     }
+    // A FEIRA DE VERDADE (`_feiraLoja.js`): a oferta é da CONTA (não da guilda) e do dia; o servidor define itens e preços.
+    if (action === 'guildFeiraLoja') return json({ loja: await feiraLojaDoDia(env, id, hoje) });
+    if (action === 'guildFeiraLojaBuy') {
+      const r = await validarCompraFeiraLoja(env, id, hoje, typeof body.itemId === 'string' ? body.itemId : '');
+      if (!r.ok) return erro(r.reason === 'no-offer' ? 'no offer' : r.reason === 'no-item' ? 'no item' : r.reason, r.reason === 'no-offer' ? 404 : 409);
+      if (r.item.type !== 'shop') return erro('hex item', 409);
+      await marcarCompraFeiraLoja(env, id, hoje, r.item.id);
+      return json({ ok: true, price: r.item.price, item: { id: r.item.id, kind: r.item.kind } });
+    }
     if (!g) return erro('no {g}', 404);
     const cartoes = await lerCartoes(env, g);
     const estado = await lerEstadoFeira(env, g, hoje, { cartoes });
@@ -832,7 +848,12 @@ export async function handleGuild({ request, env }) {
     if (feiraLigada(env)) {
       try { evento = await eventoDaFeira(env, g, id, hoje, await lerEstadoFeira(env, g, hoje, { cartoes: cartoesDaRoda })); } catch (err) { console.warn('feira: evento indisponível', String(err)); evento = undefined; }
     }
-    return json({ landed: true, [chave]: await montar(g, id, hoje), ...(evento ? { evento } : {}) });
+    // A FEIRA DE VERDADE (rara, ~8% das voltas): campo ADITIVO, independente do Chefe/Desafio. Falha aqui nunca derruba o golpe.
+    let feiraLoja;
+    if (feiraLigada(env)) {
+      try { await abrirFeiraLoja(env, id, hoje); feiraLoja = (await feiraLojaDoDia(env, id, hoje)) ?? undefined; } catch (err) { console.warn('feira: loja indisponível', String(err)); feiraLoja = undefined; }
+    }
+    return json({ landed: true, [chave]: await montar(g, id, hoje), ...(evento ? { evento } : {}), ...(feiraLoja ? { feiraLoja } : {}) });
   }
 
   if (action === 'guildRewards' || action === 'guildClaim') {
