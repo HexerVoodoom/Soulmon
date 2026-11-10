@@ -9244,3 +9244,6 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
   opacity: .18;
   pointer-events: none;
 }
+
+/* BlockedActionModal (09/11/2026): o nome do lugar tocavel em "pode ser obtido em <lugar>". */
+.sm2-blocked-link { display: inline; padding: 0; min-height: 0; border: 0; background: none; color: var(--sm2-primary-ink); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; } }
