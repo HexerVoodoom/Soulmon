@@ -2134,6 +2134,8 @@ export default function App() {
    * linha é a mesma decisão dita no ponto de uso. Não é trava de segurança — é
    * desenho de produto, 100% cliente.
    */
+  /** Fragmento do Soulsmith, Fragmento de Boss e Essências para a aba Materiais da Mochila (memo: o `CompanionHUD` é `memo`). */
+  const materialExtras = useMemo(() => ({ fragments: gameState.equipment?.fragments, bossShards: gameState.bossShards, essences: gameState.essences }), [gameState.equipment?.fragments, gameState.bossShards, gameState.essences]);
   const tierForRules: AccountTier = gameState.accountTier === 'demo' ? 'demo' : 'paid';
   /**
    * O TETO EFETIVO de hábitos ativos — o número que a UI mostra e o portão usa.
@@ -8667,6 +8669,7 @@ export default function App() {
                 onCareEventComplete={handleCareEventComplete}
                 foodInventory={gameState.foodInventory}
                 materials={gameState.buildingQuests?.materials}
+                materialExtras={materialExtras}
                 onGoToBuilding={handleMaterialGoTo}
                 demoMode={demo}
                 onFeed={handleFeed}

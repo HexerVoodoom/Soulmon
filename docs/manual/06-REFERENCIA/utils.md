@@ -4457,3 +4457,7 @@ Pedido de avaliacao na Play a cada evolucao (09/11/2026): `parsePlayReview`, `sh
 ### `src/utils/glitchtamaTeste.ts`
 
 EXCECAO DE TESTE temporaria (10/11/2026): flag `GLITCHTAMA_TESTE_ON`; uso diario do item sobe para 999 e o Desfeito vende 1 por 1 Bit (3 compras/dia, `glitchtamaBuy` no save). Funcoes: `buyGlitchtama`, `glitchtamaBuyRefusal`, `glitchtamaBuysLeft`, `sanitizeGlitchtamaBuy`.
+
+### `src/utils/materialGuide.ts` (10/11/2026 — REGISTRO §272)
+
+O guia da aba Materiais da Mochila: para cada material de prédio, ONDE conseguir (missão diária do prédio + expedições do Foco) e PARA QUE SERVE (peças do Soulsmith como material principal/apoio, via `FORGE_PIECES`; pratos do Restaurante, via `DISHES`), tudo derivado do código. Também define os 3 recursos extras que não moram em `buildingQuests` — Fragmento do Soulsmith (`equipment.fragments`), Fragmento de Boss (`bossShards`) e Essências (`essences`) — com fonte e uso. `usoAinda` diz, sem inventar, quando um material não tem uso hoje. Só a Mochila (lazy) o importa.
