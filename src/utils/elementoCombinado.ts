@@ -17,6 +17,14 @@ import { elementoNomeDe } from './soulProfile/ficha/elementoNome';
 import type { FichaStage } from './soulProfile/ficha/types';
 import type { ElementoJornada } from './elementoJornada';
 import { essenceComposition } from './elementDex';
+import { DESCRITORES_ELEMENTO } from './elementoDescritores.data';
+
+/** As pistas visuais do elemento (forma + paleta), derivadas dos prompts dos assets dele. `undefined` = sem prompt-fonte (só o nome). */
+export function pistasVisuaisDoElemento(id: string): string | undefined {
+  const d = DESCRITORES_ELEMENTO[id];
+  if (!d || (!d.forma && !d.paleta)) return undefined;
+  return `${[d.forma, d.paleta ? `${d.paleta} palette` : ''].filter(Boolean).join(', ')}`;
+}
 
 /** % de 1, 2, 3 e 4 componentes. Tabela aprovada pelo dono. */
 export const CHANCES_POR_ESTAGIO: Readonly<Record<FichaStage, readonly [number, number, number, number]>> = {
@@ -78,6 +86,8 @@ export function stagesComElemento<T extends { stage: string; imagePrompt: string
   stages: T[] | undefined, jornada: ElementoJornada | undefined,
   /** Poção de elemento por estágio (dono, 10/11/2026): vale a que vai nascer (`evolutionPotion`, no cristal) e a da forma atual (`potionElement`). Vence o registro do estágio, como em `petElementOf`. */
   pocoes?: Partial<Record<FichaStage, string>>,
+  /** O elemento BASE do Soulmon: a forma cujo elemento é o base (a original) leva só o nome — as pistas visuais são das formas de poção. */
+  baseDoSoulmon?: string,
 ): T[] | undefined {
   if (!stages || (!jornada && !pocoes)) return stages;
   return stages.map(st => {
@@ -87,9 +97,11 @@ export function stagesComElemento<T extends { stage: string; imagePrompt: string
     if (pocao) {
       const nome = CURATED_ELEMENT_NAMES[pocao]?.en ?? elementoNomeDe(pocao).en;
       const base = essenceComposition(pocao)?.[0] ?? pocao;
-      const frase = base === pocao
+      const tema = base === pocao
         ? ` Elemental theme of this form: ${nome}.`
         : ` Elemental theme of this form: ${nome}, with ${base} as its main element.`;
+      const pistas = pocao !== baseDoSoulmon ? pistasVisuaisDoElemento(pocao) : undefined;
+      const frase = pistas ? `${tema} Visual cues of this element: ${pistas}.` : tema;
       return { ...st, imagePrompt: st.imagePrompt + frase, imagePromptFallback: st.imagePromptFallback + frase };
     }
     const reg = jornada?.estagios[st.stage as FichaStage];
