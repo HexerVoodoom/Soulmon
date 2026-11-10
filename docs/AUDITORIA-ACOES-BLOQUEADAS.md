@@ -17,6 +17,7 @@ Texto: `explainBlocked({ kind, faltam, fonte, n })` em `src/utils/blockedAction.
 | Laboratório › Hexsmith | Forjar HEX | poções (Centro de Evolução tocável), fragmentos (Fenda tocável), Bits ganhos | #713 |
 | Hall › Grove | Cuidar do Bosque | "Complete mais N tarefas" + pendentes (a fala da Lilia continua) | #714 |
 | Salão de jogos | Comprar tickets / Jogar sem ticket | energia (custo do lote); tickets de sobra; sem ticket | #715 |
+| Mercado › Cambista | Comprar essência / Trocar Créditos | Créditos (tem/precisa/faltam); teto por elemento; teto de Bits | #717 |
 
 ## Pendente (fatia 3) — candidatas, por prioridade
 
@@ -24,9 +25,7 @@ Prioridade A = bloqueio de jogo com dado para explicar e hoje mudo (`disabled` s
 
 | Pri | Arquivo | Ação | Bloqueio | Hoje | Dado disponível |
 |---|---|---|---|---|---|
-| A | `mercado/MercadoSheets.tsx` (~532) | Cambista: comprar essência | Créditos < preço; teto por elemento | disabled mudo | `credits`, `essencePackPrice`, `owned`, `ESSENCE_MAX_PER_ELEMENT` |
-| A | `mercado/ShopShelf.tsx` (~671) | Trocar Créditos por Bits | Créditos; espaço | disabled mudo | `credits`, `pack`, `room` |
-| A | `guild/GuildLoja.tsx` (~44) | Comprar decoração da guilda | saldo < preço | disabled mudo | `saldo`, `i.preco` |
+| ⚠ | `guild/GuildLoja.tsx` (~44) | Comprar decoração da guilda | saldo < preço | disabled mudo | `saldo`, `i.preco` — **conflito:** a Guilda tem a regra "sem cobrança" (`guildSemCobranca.contract.test.ts` veta "falta/missing"), e o aviso padrão lista "faltam N". Decisão do dono antes de aplicar em qualquer tela da Guilda (o Grove, #714, usa só "Complete mais N tarefas", que passa na regra). |
 | A | `ElementPotionSheet.tsx` (~67) | Fazer poção | essências/ingredientes | disabled/silêncio | `potionCost`, `potionIngredients`, `essences` |
 | A | `Match3Game.tsx` (~765) | Dica | sem dicas e sem Bits | disabled mudo | `hintsLeft`, `bits`, `M3_HINT_PRICE_BITS` |
 | A | `NewReadingModal.tsx` (~75) | Nova leitura | Créditos | disabled | `credits`, `REROLL_COST_CREDITS` |
