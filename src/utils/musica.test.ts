@@ -135,6 +135,14 @@ describe('S18 — masmorra (mapa), evolução e meditação têm faixa própria'
     sair();
     expect(M.chamadas).toEqual(['combate:false', 'faixa:null', ...SAI_DO_TEMA]);
   });
+  it('dormir NÃO consente a sessão (sono automático / app aberto dormindo não é gesto); superfície aberta por toque consente', () => {
+    const sair = entrarNaSuperficie('dormir');
+    expect(M.chamadas).not.toContain('consentir');
+    sair();
+    M.chamadas.length = 0;
+    entrarNaSuperficie('meditacao')();
+    expect(M.chamadas).toContain('consentir');
+  });
   it('o App não cala a música por sono nem por janela de descanso: dormir é superfície, só o mudo pausa (a fonte)', () => {
     const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
     expect(app).toContain("entrarNaSuperficie('dormir')");
