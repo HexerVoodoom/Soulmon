@@ -1,8 +1,7 @@
 /**
  * FORMAS JÁ VISTAS dos Soulmons de outros jogadores (31/10/2026, pedido do dono: "tocar nele e ver todas as formas que
  * eu já encontrei, e não só a atual"). Dono único do histórico local: `{ [idDoJogador]: SeenForm[] }`, no aparelho (como
- * `librarySeen.ts`: chave `STORAGE_KEYS.LIBRARY_FORMS`, não é progresso, não pontua, NÃO vai no save em nuvem — sem campo novo
- * em `GameState`, então nada para o `hydrateSave`/servidor sanitizar). Quem MORA no servidor é o histórico DO AMIGO
+ * `librarySeen.ts`: chave `STORAGE_KEYS.LIBRARY_FORMS`, não é progresso, não pontua, 10/11/2026: agora TAMBÉM vai no save em nuvem, `GameState.libraryForms`; a chave local segue lida e nunca apagada). Quem MORA no servidor é o histórico DO AMIGO
  * (`community.js?action=forms`, derivado de `spriteLibrary.sprites` do save dele); aqui se junta os dois sem duplicar.
  *
  * Regras: dedupe por (estágio + URL), no máximo MAX_FORMS_PER_PLAYER por criatura (as mais antigas por ordem de estágio/data
@@ -14,6 +13,7 @@ import { readJson, writeJson } from './safeStorage';
 import { STAGE_NAMES } from './oracle/base';
 import { STORAGE_KEYS } from './storageKeys';
 import { isSafeSpriteSrc } from './spriteLibrary';
+import { ID_JOGADOR } from './librarySeen';
 
 export interface SeenForm {
   /** Id da forma: 'rookie' | '{champion|ultimate|mega}-{power|harmony|benevolence}' | 'ultra'. */
@@ -77,6 +77,44 @@ export function readAllForms(): Record<string, SeenForm[]> {
     if (m.length) out[id] = m;
   }
   return out;
+}
+
+/** Teto de jogadores com formas no save. */
+export const MAX_PLAYERS_FORMS = 500;
+
+/** Mapa cru (save, nuvem, localStorage) -> `{ id: SeenForm[] }` seguro: ≤ 500 jogadores, ids seguros, ≤ 8 (`MAX_FORMS_PER_PLAYER`, logo ≤ 20) formas. */
+export function sanitizeFormsMap(raw: unknown): Record<string, SeenForm[]> {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return {};
+  const out: Record<string, SeenForm[]> = {};
+  let n = 0;
+  for (const [id, forms] of Object.entries(raw as Record<string, unknown>)) {
+    if (!ID_JOGADOR.test(id) || !Array.isArray(forms)) continue;
+    const m = mergeForms([], forms);
+    if (!m.length) continue;
+    out[id] = m;
+    if (++n >= MAX_PLAYERS_FORMS) break;
+  }
+  return out;
+}
+
+/** União de mapas (o 1º manda): por jogador, `mergeForms` (sem duplicar; fica a data mais antiga). Idempotente. */
+export function unionFormsMaps(...maps: unknown[]): Record<string, SeenForm[]> {
+  const acc: Record<string, SeenForm[]> = {};
+  for (const m of maps) {
+    for (const [id, forms] of Object.entries(sanitizeFormsMap(m))) acc[id] = mergeForms(acc[id] ?? [], forms);
+  }
+  return sanitizeFormsMap(acc);
+}
+
+/** Grava formas de `id` no estado do jogo. Nada mudou = o MESMO objeto (não dispara save em nuvem). */
+export function recordFormsInState<T extends { libraryForms?: Record<string, SeenForm[]> }>(prev: T, id: string | null | undefined, incoming: readonly unknown[]): T {
+  if (!id || typeof id !== 'string' || !ID_JOGADOR.test(id)) return prev;
+  const all = prev.libraryForms ?? {};
+  const before = all[id] ?? [];
+  const next = mergeForms(before, incoming);
+  if (JSON.stringify(next) === JSON.stringify(before)) return prev;
+  if (!(id in all) && Object.keys(all).length >= MAX_PLAYERS_FORMS) return prev;
+  return { ...prev, libraryForms: { ...all, [id]: next } };
 }
 
 export const readFormsOf = (id: string): SeenForm[] => readAllForms()[id] ?? [];

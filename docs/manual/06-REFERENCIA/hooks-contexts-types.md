@@ -7,7 +7,7 @@
 > **Precedência:** código > teste > `CLAUDE.md` > este documento. Onde discordarem, o código está certo e este doc tem defeito.
 
 ## Índice
-- [src/hooks](#src-hooks) — `useCareSystem.ts` · `useDailyReset.ts` · `useDeferredFlush.ts` · `useDialogA11y.ts` · `useGroveWatch.ts` · `useLongPress.ts` · `useMailbox.ts` · `useOrdemCongelada.ts` · `usePresentationQueue.ts` · `useItemForm.ts` · `useProgressTracking.ts` · `usePetScale.ts` · `useSpriteGeneration.ts`
+- [src/hooks](#src-hooks) — `useCareSystem.ts` · `useDailyReset.ts` · `useDeferredFlush.ts` · `useDialogA11y.ts` · `useGroveWatch.ts` · `useLibraryMemory.ts` · `useLongPress.ts` · `useMailbox.ts` · `useOrdemCongelada.ts` · `usePresentationQueue.ts` · `useItemForm.ts` · `useProgressTracking.ts` · `usePetScale.ts` · `useSpriteGeneration.ts`
 - [src/contexts](#src-contexts) — `GameStateContext.tsx` · `LanguageContext.tsx` · `ThemeContext.tsx`
 - [src/types](#src-types) — `attributes.ts` · `category-icons.ts` · `progression.ts` · `taskModel.ts`
 
@@ -17,6 +17,9 @@
 
 ### `src/hooks/useMailbox.ts`
 **Dono de:** o espelho local da caixa de cartas (`mail`, `unread`) e as ações `openLetter`, `claim`, `claimAll`, `remove`, `removeRead`; relê ao abrir, ao voltar à aba e a cada 5 min; credita no save só o que o servidor entregou. **Chamado por:** `src/App.tsx`. Decisão: REGISTRO §246.
+
+### `src/hooks/useLibraryMemory.ts`
+**Dono de:** a porta única da memória da Biblioteca (10/11/2026). `useLibraryMemory()` devolve `{ seen, formsMap, markSeen, record }`: com provider lê/escreve `GameState.librarySeen`/`libraryForms` (nuvem; updaters devolvem o mesmo objeto se nada muda), sem provider cai nas chaves locais.
 
 ### `src/hooks/useCareSystem.ts`
 **Dono de:** o agendamento do cocô — quando o primeiro e o segundo evento do dia aparecem na tela, nunca a regra de quanto custa não limpar (isso é `src/utils/poopDrain.ts`).

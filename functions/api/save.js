@@ -27,6 +27,7 @@ import { sanitizeDailyMissions, sanitizeFeats, sanitizeFirstTimes, sanitizeMissi
 import { sanitizeFocusLoot } from './_focusLoot.js';
 import { sanitizeDefeatedElements } from './_elementDex.js';
 import { sanitizeLibraryAck, sanitizeStrayPlayersSeen } from './_libraryAck.js';
+import { sanitizeLibrarySeen, sanitizeLibraryForms } from './_libraryMemory.js';
 import { touchLastLogin, recoverStrayFromSave } from './_strays.js';
 import { sanitizeConquistasPagas } from './_conquistas.js';
 import { sanitizeMercMission } from './_mercMission.js';
@@ -421,6 +422,15 @@ async function onRequestBruto({ request, env }) {
     if ('strayPlayersSeen' in state) {
       const q = sanitizeStrayPlayersSeen(state.strayPlayersSeen);
       if (q) state.strayPlayersSeen = q; else delete state.strayPlayersSeen;
+    }
+    // Memória da Biblioteca (10/11/2026): ids vistos (≤ 500) e formas vistas por jogador (≤ 500 × 8). Espelhos de `sanitizeSeenIds`/`sanitizeFormsMap` (cliente).
+    if ('librarySeen' in state) {
+      const q = sanitizeLibrarySeen(state.librarySeen);
+      if (q) state.librarySeen = q; else delete state.librarySeen;
+    }
+    if ('libraryForms' in state) {
+      const q = sanitizeLibraryForms(state.libraryForms);
+      if (q) state.libraryForms = q; else delete state.libraryForms;
     }
     // Conquistas pagas (30/10/2026): lista fechada de ids. Espelho de `sanitizeConquistasPagas` (cliente).
     if ('conquistasPagas' in state) {

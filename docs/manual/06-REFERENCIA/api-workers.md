@@ -736,6 +736,9 @@ Regra dos DESGARRADOS DE JOGADORES (01/11/2026, REGISTRO §213): desgarrado = So
 ### `functions/api/_libraryAck.js`
 Espelho de forma de dois campos do save da Biblioteca (01/11/2026): `libraryAck` (`{b,e,s}` inteiros 0..100000, contadores do aviso NEW, `src/utils/libraryNew.ts`) e `strayPlayersSeen` (desgarrados de jogadores vistos, `src/utils/strayPlayers.ts`; sid 24 hex, sem repetir, teto 200, sprite por `spriteUrlOrNull`). `save.js` aplica; nunca recusa o save. Régua: `strays.contract.test.js`.
 
+### `functions/api/_libraryMemory.js`
+Espelho de forma da memória da Biblioteca no save (10/11/2026): `sanitizeLibrarySeen` (ids vistos, ≤ 500) e `sanitizeLibraryForms` (formas por jogador, ≤ 500 × 8, sprite pela allowlist `spriteUrlOrNull`). Chamadas pelo `save.js`; paridade com `src/utils/librarySeen.ts`/`libraryForms.ts` travada em `libraryMemory.contract.test.js`.
+
 ### `functions/api/_hexsmith.js`
 **Dono de:** o espelho no servidor de `src/utils/hexsmith.ts`: `sanitizeHexsmith` (chamado pelo `save.js` no campo `hexsmith`) e `hexOverrides` (lido pelo `_duel.js`: família do especial, `elBasica`, `elEspecial` e `elDefesa` da couraça). Paridade: `hexsmith.parity.test.js` (inclui `HEX_COSTS`/`hexCost`). **Forja no servidor** (§216): `forgeOnServer` (ação `POST /api/save?id=&action=hexForge { itemId }`: lê o save gravado, confere poções/fragmentos/Bits ganhos com `HEX_COSTS`, debita e entrega numa escrita só; já possuído = `already`, sem cobrar) e `enforceStoredHexOwned` (no POST normal do save, `owned` = o gravado; o cliente só troca o `equipped`). Régua: `save.hexForge.test.js`.
 

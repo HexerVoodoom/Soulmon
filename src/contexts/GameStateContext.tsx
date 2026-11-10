@@ -122,6 +122,8 @@ import { migrateBestiary } from '../utils/bestiaryMigrate';
 import { sanitizeDefeatedElements } from '../utils/elementDex';
 import { sanitizeLibraryAck, type LibraryAck } from '../utils/libraryNew';
 import { sanitizeStrayPlayersSeen, type StrayPlayerSeen } from '../utils/strayPlayers';
+import { unionSeenIds } from '../utils/librarySeen';
+import { unionFormsMaps, type SeenForm } from '../utils/libraryForms';
 import { sanitizeRestaurant, type RestaurantState } from '../utils/restaurantState';
 import { sanitizeEssences, sanitizeEssenceSpent, sanitizeEssenceAway, type EssenceAway } from '../utils/essences';
 import { sanitizeElementId, curarPocaoOrfa } from '../utils/elementPotion';
@@ -350,6 +352,10 @@ export interface GameState {
   libraryAck?: LibraryAck;
   /** Desgarrados de JOGADORES vistos (01/11/2026, REGISTRO §213, `utils/strayPlayers.ts`): só cresce; aba Desgarrado da Biblioteca. */
   strayPlayersSeen?: StrayPlayerSeen[];
+  /** "Já vistos" da Biblioteca (10/11/2026, `utils/librarySeen.ts`): ids de jogadores/simulados vistos, ≤ 500. Migra da chave local `LIBRARY_SEEN` por união; vai na nuvem (aba Other players, filtro H17). */
+  librarySeen?: string[];
+  /** Formas já vistas de cada Soulmon de outro jogador (10/11/2026, `utils/libraryForms.ts`): `{ id: SeenForm[] }`, ≤ 500 jogadores × ≤ 8 formas. Migra da chave local `LIBRARY_FORMS` por união. */
+  libraryForms?: Record<string, SeenForm[]>;
   /** 💧 Essências dos elementos (28/10/2026, `utils/essences.ts`, REGISTRO §183): `{ elementId: quantidade }`, só cresce, só coleta (sem uso). Servidor: monotônico por elemento (`_essences.js`). */
   essences?: Record<string, number>;
   /** 💧 Acumulado GASTO por essência (30/10/2026, Poção de Elemento): só cresce; o servidor só deixa `essences` baixar pelo aumento dele. */
@@ -1245,6 +1251,17 @@ function hydrateSteps(v: unknown): StepsRecord | undefined {
 }
 
 /**
+ * Nuvem adotada (409/boot/visível/carga degradada) = a nuvem vence o save INTEIRO, mas a memória da Biblioteca só CRESCE: o que o
+ * aparelho já tinha (`atual`) entra por UNIÃO em cima do que a nuvem trouxe — nunca perde um id nem uma forma (dois aparelhos).
+ * Idempotente (união de união = a mesma) e sem efeito se `atual` não tem nada a somar.
+ */
+export function hidratarNuvem(nuvem: Partial<GameState>, atual?: GameState): GameState {
+  const h = hydrateSave(nuvem);
+  if (!atual) return h;
+  return { ...h, librarySeen: unionSeenIds(h.librarySeen, atual.librarySeen), libraryForms: unionFormsMaps(h.libraryForms, atual.libraryForms) };
+}
+
+/**
  * Migra/completa um save carregado. Isolada da leitura de propósito: o
  * inicializador precisa poder cair para o estado novo se QUALQUER coisa aqui
  * lançar, e para isso o corpo tem que ser uma expressão que ele possa embrulhar.
@@ -1347,6 +1364,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         defeatedElements: sanitizeDefeatedElements(loadedState.defeatedElements), // dex de elementos: ausente/lixo = lista vazia
         strayPlayersSeen: sanitizeStrayPlayersSeen(loadedState.strayPlayersSeen), // §213: ausente/lixo = lista vazia
         libraryAck: sanitizeLibraryAck(loadedState.libraryAck, { bestiary: migrateBestiary(strArr(loadedState.bestiary)), defeatedElements: sanitizeDefeatedElements(loadedState.defeatedElements), strayPlayersSeen: sanitizeStrayPlayersSeen(loadedState.strayPlayersSeen) }), // ausente = tamanhos atuais (sem NEW retroativo)
+        librarySeen: unionSeenIds(loadedState.librarySeen, readJson<unknown>(STORAGE_KEYS.LIBRARY_SEEN, [])), // save vence na ordem; a chave local (aparelho) entra por UNIÃO, idempotente, e não é apagada
+        libraryForms: unionFormsMaps(loadedState.libraryForms, readJson<unknown>(STORAGE_KEYS.LIBRARY_FORMS, {})), // idem: união por jogador, ≤ 500 × ≤ 8
         essences: sanitizeEssences(loadedState.essences), // essências: ausente/lixo = objeto vazio
         essenceSpent: sanitizeEssenceSpent(loadedState.essenceSpent), // gasto acumulado: ausente/lixo = objeto vazio
         evolutionPotion: sanitizeElementId(loadedState.evolutionPotion), // poção pendente: id fora do catálogo = nenhuma
@@ -2050,7 +2069,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       if (cancelado) return;
       parar = m.repetirComRecuo(() => m.lerParaSairDaCargaDegradada<GameState>({
         estadoAtual: () => estadoRef.current,
-        hidratar: nuvem => hydrateSave(nuvem as Partial<GameState>),
+        hidratar: nuvem => hidratarNuvem(nuvem as Partial<GameState>, estadoRef.current),
         aplicar: setGameState,
         liberar,
         cancelado: () => cancelado,
@@ -2083,7 +2102,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
       motivo,
       revisaoMinima: motivo === '409' ? revisaoDo409.current : undefined,
       estadoAtual: () => estadoRef.current,
-      hidratar: nuvem => hydrateSave(nuvem as Partial<GameState>),
+      hidratar: nuvem => hidratarNuvem(nuvem as Partial<GameState>, estadoRef.current),
       aplicar: setGameState,
       rajada: rajadaComecouEm,
       montado,
