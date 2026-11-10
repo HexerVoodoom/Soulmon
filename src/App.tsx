@@ -1487,11 +1487,12 @@ export default function App() {
   });
   const reviewRow = useMemo<ReviewRowState>(() => ({
     active: reviewWatcher.active,
+    team: reviewWatcher.team,
     sending: reviewWatcher.sending,
     error: reviewWatcher.error,
     reviewable: isReviewableSpriteUrl(reviewSnapshot?.spriteUrl),
     onRequest: () => { void reviewWatcher.request(); },
-  }), [reviewWatcher.active, reviewWatcher.sending, reviewWatcher.error, reviewWatcher.request, reviewSnapshot?.spriteUrl]);
+  }), [reviewWatcher.active, reviewWatcher.team, reviewWatcher.sending, reviewWatcher.error, reviewWatcher.request, reviewSnapshot?.spriteUrl]);
 
   // ── Os rituais do motor de tarefas (utils/rituals.ts) ─────────────────────
   // Check-in matinal: no MÁXIMO 1× por dia (`lastCheckInDate` no save) e

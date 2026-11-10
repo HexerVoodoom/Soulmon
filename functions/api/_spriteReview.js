@@ -24,6 +24,7 @@ import { kvOrThrow } from './_kv.js';
 import { decodePng, encodePng } from './_png.js';
 import { chromaKeyPng, chromaKeyOfPrompt, BadChromaError, medirBuracosInternos } from './_chroma.js';
 import { escolherChaveDeMatiz } from './_chromaHue.js';
+export { notificarEquipe } from './_reviewTeam.js';
 import { generateWithProviders, republicar, RAW_PREFIX, RAW_TTL_SECONDS } from './generate-sprite.js';
 import { VALID_FORM_ID } from './_aiGuard.js';
 
@@ -39,16 +40,16 @@ export const CLAUDE_TIMEOUT_MS = 30_000;
 
 /** Tetos. Contam por dia UTC; o balde de KV expira sozinho. */
 export const REVIEW_LIMITS = Object.freeze({
-  /** Pedidos de revisão por conta por dia (cada um custa uma chamada ao Claude). */
-  reportsPerAccountPerDay: 3,
+  /** Pedidos por FORMA por dia (dono, 10/11/2026): cada forma tem os seus 3. O 1o roda a IA; o 2o e o 3o, se a IA disse sem-problema, vao para a equipe. */
+  reportsPerFormPerDay: 3,
+  /** Teto anti-abuso por conta por dia (soma das formas). */
+  reportsPerAccountPerDay: 30,
   /** Regenerações automáticas por conta por dia (cada uma custa uma imagem do Higgsfield). */
   regenPerAccountPerDay: 1,
   /** Avaliações (Claude) no servidor todo por dia. */
   evalsPerDay: 150,
   /** Regenerações automáticas no servidor todo por dia. */
   regenPerDay: 25,
-  /** Um pedido por FORMA a cada 24 h (o cooldown conta do pedido anterior, qualquer que tenha sido o resultado). */
-  cooldownMs: 24 * 60 * 60_000,
 });
 /** Pedido ainda sem resposta depois disto vira `falhou` (e o botao do jogador volta). */
 export const GIVE_UP_MS = 24 * 60 * 60_000;
@@ -64,6 +65,7 @@ export const STATUS = Object.freeze({
   MANUAL: 'precisa-manual',
   FALHOU: 'falhou',
   LIMITE: 'limite-diario',
+  EQUIPE: 'aguardando-equipe',
 });
 /** Estados de onde o processamento pode partir (idempotência: o resto nunca é reprocessado sozinho). */
 const INICIAVEIS = new Set([STATUS.PENDENTE, STATUS.SEM_CHAVE, STATUS.LIMITE]);
@@ -86,7 +88,7 @@ const byKey = (saveId, id) => `${REVIEW_BY_PREFIX}${saveId}:${id}`;
 const openKey = (saveId, formId) => `review-open:${saveId}:${formId}`;
 const lastKey = (saveId, formId) => `review-last:${saveId}:${formId}`;
 /** Estados em que o jogador ainda espera (o botao fica inativo). */
-export const ATIVOS = new Set([STATUS.PENDENTE, STATUS.SEM_CHAVE, STATUS.AVALIANDO, STATUS.REGENERAR, STATUS.REGENERANDO, STATUS.LIMITE]);
+export const ATIVOS = new Set([STATUS.PENDENTE, STATUS.SEM_CHAVE, STATUS.AVALIANDO, STATUS.REGENERAR, STATUS.REGENERANDO, STATUS.LIMITE, STATUS.EQUIPE]);
 /** Estados finais (o app avisa o jogador uma vez e confirma com ack). */
 export const FINAIS = new Set([STATUS.CONSERTADO, STATUS.SEM_PROBLEMA, STATUS.FALHOU, STATUS.MANUAL]);
 const dayOf = (now = Date.now()) => new Date(now).toISOString().slice(0, 10);
@@ -357,24 +359,24 @@ export function userView(r) {
     id: r.id, formId: r.formId, status: r.status, createdAt: r.createdAt, updatedAt: r.updatedAt,
     afterUrl: r.status === STATUS.CONSERTADO ? r.afterUrl ?? null : null,
     applied: r.applied === true,
-    cooldownUntil: avaliadorDesatualizado(r) ? 0 : (r.createdAt ?? 0) + REVIEW_LIMITS.cooldownMs,
+    cooldownUntil: 0, // sem cooldown: o limite e 3 pedidos por forma por dia
   };
 }
 
-/** true = o ultimo pedido desta forma ficou `sem-problema`/`falhou` com um avaliador MAIS ANTIGO: o cooldown nao vale (pode retestar). */
-export function avaliadorDesatualizado(r) {
-  return !!r && (r.status === STATUS.SEM_PROBLEMA || r.status === STATUS.FALHOU) && (r.evalVersion ?? 1) < EVAL_VERSION;
-}
-async function avaliadorMudou(env, saveId, formId) {
-  try {
-    const ult = (await listByAccount(env, saveId, 20)).find(r => r.formId === formId);
-    return avaliadorDesatualizado(ult);
-  } catch { return false; }
+/** Dia UTC (AAAA-MM-DD) de um instante. */
+const diaUtc = t => new Date(t).toISOString().slice(0, 10);
+
+/**
+ * A escalada para pessoas vale quando o 1o pedido DO DIA desta forma foi `sem-problema` e veio do avaliador ATUAL (EVAL_VERSION): se foi de um
+ * avaliador antigo, a IA nova roda de novo (o dono precisa retestar logo). Consertado/problema achado/falhou: segue a regra normal (IA).
+ */
+export function deveEscalarParaEquipe(primeiro) {
+  return !!primeiro && primeiro.status === STATUS.SEM_PROBLEMA && (primeiro.evalVersion ?? 1) >= EVAL_VERSION;
 }
 
 /**
  * Cria o report (ou devolve o aberto da mesma forma: IDEMPOTENTE no gesto). Respeita o teto de pedidos por conta/dia.
- * @returns {Promise<{ ok: true, report: any, created: boolean } | { ok: false, status: number, error: string }>}
+ * @returns {Promise<{ ok: true, report: any, created: boolean, equipe?: any } | { ok: false, status: number, error: string }>}
  */
 export async function createReport(env, clean, now = Date.now()) {
   const store = kvOrThrow(env);
@@ -383,22 +385,31 @@ export async function createReport(env, clean, now = Date.now()) {
     const existing = await readReport(env, open);
     if (existing && ATIVOS.has(existing.status)) return { ok: true, report: existing, created: false };
   }
-  // Cooldown: 1 pedido por forma a cada 24 h.
-  const ultimo = Number(await store.get(lastKey(clean.saveId, clean.formId))) || 0;
-  if (ultimo && now - ultimo < REVIEW_LIMITS.cooldownMs && !(await avaliadorMudou(env, clean.saveId, clean.formId))) return { ok: false, status: 429, error: 'review-cooldown' };
+  // Ate 3 pedidos POR FORMA por dia (sem cooldown de 24 h) + teto anti-abuso por conta.
+  if (!(await takeDaily(env, 'report-form', `${clean.saveId}:${clean.formId}`, REVIEW_LIMITS.reportsPerFormPerDay, now))) {
+    return { ok: false, status: 429, error: 'review-form-limit' };
+  }
   if (!(await takeDaily(env, 'report', clean.saveId, REVIEW_LIMITS.reportsPerAccountPerDay, now))) {
     return { ok: false, status: 429, error: 'review-daily-limit' };
   }
+  // Escalada: 1o pedido do dia foi sem-problema => este (2o/3o) vai para a equipe, sem IA.
+  let primeiro = null;
+  try {
+    const hoje = (await listByAccount(env, clean.saveId, 50)).filter(r => r.formId === clean.formId && diaUtc(r.createdAt ?? 0) === diaUtc(now));
+    primeiro = hoje.sort((a, b) => a.createdAt - b.createdAt)[0] ?? null;
+  } catch { primeiro = null; }
+  const equipe = deveEscalarParaEquipe(primeiro);
   const id = crypto.randomUUID().replace(/-/g, '');
   const report = {
     id, saveId: clean.saveId, formId: clean.formId, soulmonId: clean.soulmonId, stage: clean.stage, element: clean.element,
-    note: clean.note, clientPrompt: clean.clientPrompt ?? null, beforeKey: clean.spriteKey, status: STATUS.PENDENTE, createdAt: now, updatedAt: now, applied: false, evalVersion: EVAL_VERSION,
+    note: clean.note, clientPrompt: clean.clientPrompt ?? null, beforeKey: clean.spriteKey, status: equipe ? STATUS.EQUIPE : STATUS.PENDENTE, createdAt: now, updatedAt: now, applied: false, evalVersion: EVAL_VERSION,
+    ...(equipe ? { method: 'equipe', primeiroId: primeiro.id } : {}),
   };
   await saveReport(env, report, now);
   await store.put(byKey(clean.saveId, id), id, { expirationTtl: REVIEW_TTL_SECONDS });
   await store.put(openKey(clean.saveId, clean.formId), id, { expirationTtl: REVIEW_TTL_SECONDS });
   await store.put(lastKey(clean.saveId, clean.formId), String(now), { expirationTtl: 24 * 60 * 60 });
-  return { ok: true, report, created: true };
+  return { ok: true, report, created: true, ...(equipe ? { equipe: primeiro } : {}) };
 }
 
 async function lerBlob(env, token) {

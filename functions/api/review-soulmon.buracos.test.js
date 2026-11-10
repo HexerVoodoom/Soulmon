@@ -84,30 +84,3 @@ describe('revisao: buracos forcam regenerar antes do Claude', () => {
     expect(buildClaudeRequest('x', { stage: 's' }).system).toContain('checkerboard');
   });
 });
-
-describe('cooldown e versao do avaliador', () => {
-  async function comUltimoPedido(status, evalVersion) {
-    const e = env(solido());
-    const t0 = 1_000_000;
-    const { report } = await createReport(e, sanitizeReportBody(corpo), t0);
-    const r = await readReport(e, report.id, t0);
-    r.status = status; if (evalVersion === undefined) delete r.evalVersion; else r.evalVersion = evalVersion;
-    await saveReport(e, r, t0);
-    // o pedido aberto sai do caminho (final)
-    return { e, r, t1: t0 + 3600_000 };
-  }
-  it('sem-problema de avaliador ANTIGO (sem evalVersion): o cooldown de 24h nao vale', async () => {
-    const { e, r, t1 } = await comUltimoPedido(STATUS.SEM_PROBLEMA, undefined);
-    expect(userView(r).cooldownUntil).toBe(0);
-    const novo = await createReport(e, sanitizeReportBody(corpo), t1);
-    expect(novo.ok).toBe(true);
-  });
-  it('falhou de avaliador antigo tambem libera; sem-problema da versao ATUAL continua em cooldown', async () => {
-    const a = await comUltimoPedido(STATUS.FALHOU, 1);
-    expect((await createReport(a.e, sanitizeReportBody(corpo), a.t1)).ok).toBe(true);
-    const b = await comUltimoPedido(STATUS.SEM_PROBLEMA, EVAL_VERSION);
-    const r = await createReport(b.e, sanitizeReportBody(corpo), b.t1);
-    expect(r.ok).toBe(false);
-    expect(r.error).toBe('review-cooldown');
-  });
-});

@@ -13,14 +13,15 @@ export function reviewCopy(language: Language) {
   const pt = language === 'pt-BR';
   return {
     label: pt ? 'Pedir revisão do meu Soulmon' : 'Request a review of my Soulmon',
-    hint: pt ? 'Acha que o desenho está com problema? Revisamos e consertamos sozinhos.' : 'Think the drawing has a problem? We review it and fix it automatically.',
+    hint: pt ? 'Se o desenho tiver um problema, nos avise. Vamos verificar para você.' : "If the drawing has a problem, let us know. We'll check it for you.",
     inReview: pt ? 'Seu Soulmon está em revisão' : 'Your Soulmon is under review',
+    sentToTeam: pt ? 'Enviamos para a nossa equipe olhar' : 'We sent it to our team to take a look',
     sending: pt ? 'Enviando…' : 'Sending…',
     noSprite: pt ? 'Seu Soulmon ainda não tem um desenho próprio para revisar.' : 'Your Soulmon has no drawing of its own to review yet.',
     error: (e: Exclude<ReviewRequestError, null>) => ({
       network: pt ? 'Sem conexão. Tente de novo.' : 'No connection. Try again.',
       cooldown: pt ? 'Você já pediu revisão deste Soulmon hoje. Tente amanhã.' : 'You already requested a review of this Soulmon today. Try again tomorrow.',
-      limit: pt ? 'Você já pediu revisões demais hoje. Tente amanhã.' : 'You already requested several reviews today. Try again tomorrow.',
+      limit: pt ? 'Você já fez 3 pedidos para este Soulmon hoje. Tente amanhã.' : 'You already made 3 requests for this Soulmon today. Try again tomorrow.',
       server: pt ? 'Não deu para enviar agora. Tente de novo.' : 'Could not send right now. Try again.',
       'no-sprite': pt ? 'Seu Soulmon ainda não tem um desenho próprio para revisar.' : 'Your Soulmon has no drawing of its own to review yet.',
     }[e]),
@@ -42,6 +43,8 @@ export function reviewResultMessage(language: Language, finished: Pick<ReviewRep
 
 export interface ReviewRowState {
   active: boolean;
+  /** O pedido ativo foi para a equipe (e-mail), não para a IA. */
+  team?: boolean;
   sending: boolean;
   error: ReviewRequestError;
   /** `false` = a forma equipada ainda não tem um desenho do nosso servidor para revisar. */
@@ -63,7 +66,7 @@ export function ReviewSoulmonRow({ language, review }: { language: Language; rev
       />
       {/* `role="status"`: o leitor de tela anuncia a mudança de estado. */}
       <p role="status" aria-live="polite" data-review-state={review.active ? 'active' : 'idle'} style={{ ...sm2Text, margin: '0 0 0 16px', minHeight: 0, fontSize: 'var(--sm2-text-sm)' }}>
-        {review.active && !review.sending ? t.inReview : erro}
+        {review.active && !review.sending ? (review.team ? t.sentToTeam : t.inReview) : erro}
       </p>
     </>
   );

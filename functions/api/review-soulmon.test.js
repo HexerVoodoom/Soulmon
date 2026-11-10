@@ -140,14 +140,20 @@ describe('POST /api/review-soulmon: grava na fila', () => {
     expect(b.created).toBe(false);
     expect(b.report.id).toBe(a.report.id);
   });
-  it('cooldown: depois de concluido, a MESMA forma so pede de novo em 24 h; outra forma pode', async () => {
+  it('sem cooldown de 24 h: ate 3 pedidos por FORMA por dia; o 4o e recusado; outra forma tem os seus 3', async () => {
     const env = mkEnv({ ANTHROPIC_API_KEY: 'k' });
     vi.stubGlobal('fetch', claudeFetch({ problema: 'nenhum', detalhe: '', acao: 'nada', fundoResidual: 'none' }));
-    const a = await (await post(env, corpo())).json();
-    expect(a.report.status).toBe(STATUS.SEM_PROBLEMA);
-    const b = await post(env, corpo());
-    expect(b.status).toBe(429);
-    expect((await b.json()).error).toBe('review-cooldown');
+    for (let i = 0; i < REVIEW_LIMITS.reportsPerFormPerDay; i++) {
+      const r = await post(env, corpo());
+      expect(r.status).toBe(200);
+      // encerra o pedido (a equipe/IA resolveu) para o proximo poder abrir
+      const rep = JSON.parse(env.SOULMON_SAVES.store.get('review:' + (await r.json()).report.id));
+      rep.status = i === 0 ? rep.status : STATUS.FALHOU;
+      env.SOULMON_SAVES.store.set('review:' + rep.id, JSON.stringify(rep));
+    }
+    const d = await post(env, corpo());
+    expect(d.status).toBe(429);
+    expect((await d.json()).error).toBe('review-form-limit');
     expect((await post(env, corpo({ formId: 'rookie' }))).status).toBe(200);
   });
   it('24 h sem resolver vira falhou (o botao volta) e o app pode pedir de novo', async () => {
@@ -174,16 +180,6 @@ describe('POST /api/review-soulmon: grava na fila', () => {
     expect((await post(env, { ...corpo(), spriteUrl: 'https://evil.test/x' })).status).toBe(400);
     expect((await post(env, { ...corpo(), id: 'x' })).status).toBe(400);
     expect((await post({ ...env, REVIEW_DISABLED: '1' }, corpo())).status).toBe(503);
-  });
-  it('respeita o teto de pedidos por conta por dia', async () => {
-    const env = mkEnv();
-    const formas = ['rookie', 'champion-power', 'champion-harmony', 'champion-benevolence'];
-    for (let i = 0; i < REVIEW_LIMITS.reportsPerAccountPerDay; i++) {
-      expect((await post(env, corpo({ formId: formas[i] }))).status).toBe(200);
-    }
-    const r = await post(env, corpo({ formId: formas[REVIEW_LIMITS.reportsPerAccountPerDay] }));
-    expect(r.status).toBe(429);
-    expect((await r.json()).error).toBe('review-daily-limit');
   });
   it('GET lista so os da conta, sem a nota', async () => {
     const env = mkEnv();
