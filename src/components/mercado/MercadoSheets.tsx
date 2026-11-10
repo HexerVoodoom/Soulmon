@@ -1,4 +1,5 @@
 import { elementShopVisible } from '../../utils/elementExclusive';
+import { useBlockedAction } from '../ui/BlockedActionModal';
 import { missionsInQueueOrder } from '../../utils/missionOrder';
 import { useState, type CSSProperties } from 'react';
 import { PixelTabs } from '../pixel/PixelKit';
@@ -450,6 +451,7 @@ export interface CambistaSheetProps {
 
 export function CambistaSheet({ language, credits, onExchangeCredits, accountTier, onUnlock, unlockedElements, essences, onBuyEssence }: CambistaSheetProps) {
   const isPt = language === 'pt-BR';
+  const [blockedModal, explain] = useBlockedAction(isPt ? 'pt-BR' : 'en-US');
   const [tab, setTab] = useState<CambistaTab>('bits');
   const [slots, setSlots] = useState<(string | null)[]>(emptySlots);
   const { flash, say } = useShopFlash();
@@ -515,6 +517,7 @@ export function CambistaSheet({ language, credits, onExchangeCredits, accountTie
             {isPt ? 'Filtre por até 3 elementos base: aparecem só as essências que contêm todos eles.' : 'Filter by up to 3 base elements: only essences that contain all of them are listed.'}
           </p>
           <ElementBaseSlots slots={slots} isPt={isPt} onChange={(i, id) => setSlots(v => v.map((x, j) => (j === i ? id : x)))} />
+          {blockedModal}
           <ul data-cambista-essence-list style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 2, maxHeight: 320, overflowY: 'auto' }}>
             {elementsMatchingBases(slots, ESSENCE_ELEMENT_IDS).map(id => {
               const known = isPotionUnlocked(id, unlockedElements);
@@ -535,9 +538,15 @@ export function CambistaSheet({ language, credits, onExchangeCredits, accountTie
                         key={qty}
                         type="button"
                         data-essence-buy={qty}
-                        disabled={!can}
+                        disabled={!!buyingEss}
+                        aria-disabled={!can ? true : undefined}
                         aria-label={isPt ? `Comprar ${qty} ${name} por ${price} ${price === 1 ? 'Crédito' : 'Créditos'}` : `Buy ${qty} ${name} for ${price} ${price === 1 ? 'Credit' : 'Credits'}`}
-                        onClick={() => setPendingEss({ id, qty, price })}
+                        onClick={() => {
+                          if (can) { setPendingEss({ id, qty, price }); return; }
+                          /* Aviso padrao (09/11/2026): diz por que nao da para comprar. */
+                          if (owned + qty > ESSENCE_MAX_PER_ELEMENT) explain({ kind: 'limite', textoPt: `Você pode guardar até ${ESSENCE_MAX_PER_ELEMENT} de cada essência (tem ${owned}).`, textoEn: `You can hold up to ${ESSENCE_MAX_PER_ELEMENT} of each essence (you have ${owned}).` });
+                          else explain({ kind: 'recursos', faltam: [{ namePt: 'Créditos', nameEn: 'Credits', have: credits, need: price }] });
+                        }}
                         style={{ ...sm2Button('outline', !can), flexShrink: 0, padding: '4px 8px', gap: 4 }}
                       >
                         <span>{qty === 1 ? (isPt ? 'Comprar' : 'Buy') : '×5'}</span>
