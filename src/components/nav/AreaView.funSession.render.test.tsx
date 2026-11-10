@@ -83,7 +83,7 @@ describe('tickets dos minijogos: fluxo real no AreaView', () => {
     await toque('[data-fun-tickets-buy]');
     expect(estado.energyPoints).toBe(1);
     expect(funTicketStatus(estado, Date.now()).count).toBe(3);
-    await vi.waitFor(() => { if (q('[data-fun-tickets-buy]').getAttribute('aria-disabled') !== 'true') throw new Error('ainda habilitado'); });
+    await vi.waitFor(() => { if (q('[data-fun-tickets-buy]')?.getAttribute('aria-disabled') !== 'true') throw new Error('ainda habilitado'); });
     await toque('[data-fun-tickets-buy]');
     expect(estado.energyPoints).toBe(1);
   }, 60000);
