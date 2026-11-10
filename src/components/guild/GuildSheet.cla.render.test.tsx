@@ -228,6 +228,9 @@ describe('Cuidar do Bosque: a meta do dia libera aguar/defender (Lilia explica)'
     fireEvent.click(container.querySelector('[data-plantio-cuidar]')!);
     await waitFor(() => expect(container.querySelector('[data-plantio-lilia]')).not.toBeNull());
     await waitFor(() => expect(container.querySelector('[data-plantio-lilia]')!.textContent).toMatch(/You still need to finish Read to tend the Grove/));
+    // aviso padrao (09/11/2026): o modal diz quantas tarefas faltam
+    await waitFor(() => expect(document.querySelector('[data-blocked-action="missao"]')).not.toBeNull());
+    expect(document.body.textContent).toMatch(/Complete 1 more task to do this/);
     expect(calls.some(c => c.action === 'claSortear')).toBe(false);
   });
   it('2 faltando: cita as duas tarefas (EN e PT)', async () => {

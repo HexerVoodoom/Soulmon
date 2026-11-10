@@ -12,6 +12,7 @@
  * nenhum número por pessoa existe na vista. A barra é o crescimento COLETIVO da planta, sem texto de razão.
  * Os botões mostram só o que a pessoa pode fazer agora: o que já foi feito hoje vira o fato, sem botão.
  */
+import { useBlockedAction } from '../ui/BlockedActionModal';
 import { lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useGameStateOptional } from '../../contexts/GameStateContext';
 import type { SoulXPState } from '../../utils/soulXP';
@@ -147,9 +148,16 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
 
   /** O servidor sorteia a acao (aguar ou defender); aguar acontece na hora, defender abre o combate. */
   const [lilia, setLilia] = useState(false);
+  const [blockedModal, explain] = useBlockedAction(language === 'pt-BR' ? 'pt-BR' : 'en-US');
   const gate = unico ? tendGate({ metaCumprida: unico.metaCumprida, goal: unico.goal, pendentes: unico.pendentes }) : null;
   const cuidar = async () => {
-    if (gate && !gate.liberado) { setLilia(true); return; }
+    if (gate && !gate.liberado) {
+      setLilia(true);
+      /* Aviso padrao (09/11/2026): 'Complete mais N tarefas para poder fazer isso', com as tarefas pendentes. */
+      const nomes = gate.nomes.slice(0, 5).join(', ');
+      explain({ kind: 'missao', n: gate.restam, textoPt: nomes ? `Pendentes: ${nomes}.` : undefined, textoEn: nomes ? `Still to do: ${nomes}.` : undefined });
+      return;
+    }
     let tarefa = view?.task ?? null;
     if (!tarefa) {
       const r = await agir(() => actPlantio('claSortear', saveId, tz));
@@ -228,6 +236,7 @@ export function SalaPlantio({ saveId, language, t, tz, reducedMotion, onReward, 
                     <Defesa t={t} isPt={language === 'pt-BR'} estado={estado} evolutionStage={gs?.evolutionStage} demoCharacterId={gs?.demoCharacterId} skills={gs?.soulmonSkills} petElement={gs ? petElementOf(gs) : undefined} mySprite={mySprite} niveis={niveis} ocupado={ocupado} onVenceu={() => { setDefendendo(false); void fazer('claProteger'); }} />
                   ) : (v.canDraw || v.task) && (
                     <>
+                    {blockedModal}
                     {gate && !gate.liberado && <p className="sm2-lib-s" style={{ margin: 0 }} data-plantio-tend-antes>{tendLinhaAntes(language, gate.restam)}</p>}
                     {lilia && gate && !gate.liberado && (
                       <div data-plantio-lilia style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
