@@ -1096,9 +1096,9 @@ A masmorra agora é temática: cada elemento ocupa 2 camadas (base → 2 → 3 �
 ## Poções e chips de essência por elemento base (09/11/2026) — ✅ instalado
 Pintados (padrão 23/09), alfa real, 256² em `E:/Soulmon-assets/pocoes-chips/{pocoes,chips}/`; instalados em 128². `items/pocao-<id>.png` (20) → Mochila/Cambista (`itemArt.ts`), oferta da Vesca, Laboratório; `hex/chip-<id>.png` (20) → Portas de elemento da Hexsmith. Sobra: poções/chips dos elementos compostos (seguem com o ícone do elemento).
 
-## 31. Ticket dos minijogos do Salão (pedido do dono, 09/11/2026, REGISTRO §270) — ✅ feito
+## 31. Ticket dos minijogos do Salão (pedido do dono, 09/11/2026, REGISTRO §270) — ✅ feito (arte PROVISÓRIA)
 
-**Instalado em 09/11/2026:** ticket amarelo com controle de videogame (ChatGPT, UI, **aprovado pelo dono em 09/11/2026**; o primeiro, turquesa com cristal, foi trocado a pedido: amarelo, sem pedra, emblema de minigames). Original 1586×992 RGBA em `E:/Soulmon-assets/gerar-chatgpt/ui-2026-11-09/ticket-amarelo-controle.png` (+ `.meta.json` com prompt e tags); no jogo `src/assets/soulmon/hud/ticket-minigame.png` (512×308, alfa real, legível a 28 px). Usado por `components/play/TicketFan.tsx` (leque, botão "x1", compra). O SVG provisório saiu.
+**Instalado em 09/11/2026:** ticket turquesa com cogumelo vermelho (inspirado no prédio dos minijogos; ChatGPT, UI, **aprovado provisório pelo dono em 09/11/2026**, troca o ticket amarelo com controle do #700, que fica arquivado). Original 1586×992 em `E:/Soulmon-assets/gerar-chatgpt/ui-2026-11-09/ticket-inspirado-predio-cogumelo.png` (+ `.meta.json`). O bruto veio RGB com fundo preto; a operacional corrigiu na origem (RGBA, alfa por preenchimento de borda; bruto em `...-bruto-preto.png`). No jogo `src/assets/soulmon/hud/ticket-minigame.png` (512×308, alfa, legível a 28 px). **Dívida:** o alfa é recorte, não geração transparente: regerar com fundo transparente de verdade (ChatGPT) quando a arte deixar de ser provisória. Usado por `components/play/TicketFan.tsx`.
 
 ## 32. Molduras do widget V-Pet por elemento (20 casos, pedido do dono, 09/11/2026)
 
