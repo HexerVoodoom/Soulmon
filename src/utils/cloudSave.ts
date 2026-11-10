@@ -327,6 +327,45 @@ export async function cloudHexForge(saveId: string, state: unknown, itemId: stri
   return minha;
 }
 
+/** Resultado da compra de um item da Hexsmith na FEIRA DE VERDADE (`_feiraLoja.js`). `price` = o que o servidor cobrou (o da oferta). */
+export type HexFairOutcome =
+  | { ok: true; already: boolean; price: number }
+  | { ok: false; kind: 'offline' | 'saldo' | 'conflict' | 'server' | 'gone' };
+
+/**
+ * ITEM DA HEXSMITH NA FEIRA DE VERDADE (10/11/2026): a posse de HEX é do servidor (§216), então o item com desconto também é pago e
+ * entregue por ele (`POST /api/save?action=hexFair`), contra a OFERTA que ele mesmo sorteou. Mesma fila e mesma disciplina de
+ * `cloudHexForge`: sobe o estado local, compra com a revisão resultante, sem rede = não compra (nada é debitado localmente).
+ */
+export async function cloudHexFair(saveId: string, state: unknown, itemId: string, dayKey: string): Promise<HexFairOutcome> {
+  if (ehDemo(state)) return { ok: false, kind: 'server' };
+  const anterior = filaDePosts.get(saveId) ?? Promise.resolve();
+  const minha = anterior.then(async (): Promise<HexFairOutcome> => {
+    const sync = await enviarSerializado(saveId, state);
+    if (!sync.ok) return { ok: false, kind: sync.kind === 'offline' ? 'offline' : sync.kind === 'conflict' ? 'conflict' : 'server' };
+    try {
+      const base = lerRevisao(saveId);
+      const res = await fetch(`/api/save?id=${saveId}&action=hexFair`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify(base === null ? { itemId, dayKey } : { itemId, dayKey, baseRevision: base }),
+      });
+      const data: unknown = await res.json().catch(() => null);
+      if (!res.ok) return { ok: false, kind: res.status === 402 ? 'saldo' : res.status === 404 ? 'gone' : res.status === 409 ? 'conflict' : 'server' };
+      const r = revisaoDoCorpo(data);
+      if (r !== undefined && r >= (lerRevisao(saveId) ?? 0)) gravarRevisao(saveId, r);
+      const d = data as { already?: unknown; price?: unknown } | null;
+      return { ok: true, already: !!d?.already, price: typeof d?.price === 'number' && Number.isFinite(d.price) ? Math.max(0, Math.floor(d.price)) : 0 };
+    } catch {
+      return { ok: false, kind: 'offline' };
+    }
+  });
+  const cauda = minha.then(() => undefined);
+  filaDePosts.set(saveId, cauda);
+  void cauda.then(() => { if (filaDePosts.get(saveId) === cauda) filaDePosts.delete(saveId); });
+  return minha;
+}
+
 // ---------------------------------------------------------------------------
 // R-2 — ORÇAMENTO DE RETRY POR `saveId`, COM TETO E JANELA.
 //

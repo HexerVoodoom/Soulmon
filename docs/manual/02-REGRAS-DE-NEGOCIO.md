@@ -6354,3 +6354,5 @@ E-mail verificado presente em `BETA_EMAILS` é tratado como conta paga: o servid
 ## Elemento combinado por estágio (§232)
 
 Sorte fixa por Soulmon decide quantos componentes o elemento tem em cada estágio (Rookie 95/5/0/0, Champion 35/60/5/0, Ultimate 15/30/50/5, Mega 10/20/40/30, Ultra 5/10/25/60). Contém sempre a base nº 1; 3 e 4 componentes só nos 50 curados (planta, industrial e fada ficam no par). Vale a partir da próxima evolução; degenerar volta ao elemento do nível. A vantagem usa a base nº 1. Dono: `src/utils/elementoCombinado.ts`. Decisão: REGISTRO §232.
+
+**🎪 Feira de verdade (10/11/2026, REGISTRO §277).** Rara (`FEIRA_LOJA_PCT` = 8% das voltas): vendedor com 4 a 6 itens do Mercado/Hexsmith, 10% a 50% de desconto, só Bits, sem ingredientes, 1 por item; servidor decide e grava a oferta do dia. Ver `PLANO-FEIRA-CHEFE.md` §12.
