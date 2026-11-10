@@ -118,7 +118,17 @@ export function spriteVisorOf(lib: SpriteLibrary, formas: FormasAlt | undefined,
   let sprites: SpriteLibrary['sprites'] | null = null;
   for (const [formId, el] of Object.entries(equip)) {
     const key = altSpriteKey(formId, el, formas);
-    if (key === formId) continue;
+    // 1ª da lista = a chave da própria forma. Se a arte dela mora numa chave `forma@elemento` (gerada antes da lista existir), a
+    // forma não pode ficar SEM arte — o app cairia na 1ª do acervo, a Rookie (bug do dono, 10/11/2026): usa a 1ª alternativa que existe.
+    if (key === formId) {
+      if (lib.sprites[formId]) continue;
+      const prefixo = `${formId}@`;
+      const outra = Object.keys(lib.sprites).find(k => k.startsWith(prefixo));
+      if (!outra) continue;
+      sprites = sprites ?? { ...lib.sprites };
+      sprites[formId] = { ...lib.sprites[outra], formId };
+      continue;
+    }
     const alt = lib.sprites[key];
     if (!alt) continue;
     sprites = sprites ?? { ...lib.sprites };

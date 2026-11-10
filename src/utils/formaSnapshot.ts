@@ -58,15 +58,18 @@ export function capturarForma<T extends FormaState>(s: T): T {
 }
 
 /**
- * Forma SEM foto (nunca fotografada) mas com elemento equipado (`formaAltEquipada`, ex.: a forma Poder/Sabá): o Soulmon passa a ter o
- * elemento DELA — como poção (`potionElement`), nunca no registro do estágio (imutável) e portanto NÃO permanente: a próxima evolução
- * volta ao elemento de base, a menos que o jogador dê outra poção. Elemento igual ao do registro = sem poção.
+ * Forma SEM foto (nunca fotografada): a poção da forma de saída NÃO a acompanha; vale o elemento equipado dela (`formaAltEquipada`,
+ * como poção) ou, sem ele, o registro do estágio. Nunca grava no registro (imutável): não é permanente, a próxima evolução volta ao base.
  */
 function elementoDaFormaSemFoto<T extends FormaState>(s: T): T | undefined {
+  // Forma que chega SEM foto não herda a poção da forma de onde saiu: aquela poção ficou fotografada na de saída (voltar a ela a
+  // restaura). Causa raiz do bug "troquei para a forma Sabá e o elemento continuou Fada" (10/11/2026): a poção da forma anterior
+  // seguia valendo sobre o registro do estágio da forma nova.
   const el = s.formaAltEquipada?.[s.evolutionStage];
-  if (!el || el === 'original' || !/^[a-z_]{2,24}$/.test(el)) return undefined;
+  const valido = !!el && el !== 'original' && /^[a-z_]{2,24}$/.test(el);
   const registrado = elementoDoEstagioAtual(s.elementoJornada, s.evolutionStage)?.id;
-  return { ...s, potionElement: el === registrado ? undefined : el };
+  const nova = valido && el !== registrado ? el : undefined;
+  return s.potionElement === nova ? undefined : { ...s, potionElement: nova };
 }
 
 /** Aplica a foto da forma ATUAL (já com `evolutionStage`/`formaAltEquipada` do destino). Sem foto = `undefined`. */
