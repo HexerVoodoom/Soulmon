@@ -461,3 +461,77 @@ describe('re-recorte do raw guardado (sem provedor, sem cota de regeneracao)', (
     expect(r.status).toBe(STATUS.LIMITE);
   });
 });
+
+describe('motivo escolhido pelo jogador (estilo | recorte) e regra da chave', () => {
+  const clausula = (hex, nome, sem) => `on a solid flat pure ${hex} ${nome} background (uniform, no gradient, no shadow), the creature itself contains ${sem}`;
+  const CORPO_SABA = 'Flat dark violet and ash-gray colors with red accents. Elemental theme: orange, charcoal and brown with royal violet, ink black, sickly green accents palette.';
+  const promptCom = (hex, nome, sem) => `Retro virtual-pet sprite, 16x16 pixel art, isolated subject, ${clausula(hex, nome, sem)}: a violet serpent. ${CORPO_SABA}`;
+  const P_VERDE = promptCom('#00FF00', 'chroma-green', 'no green and no green fringe');
+  const P_AZUL = promptCom('#0000FF', 'chroma-blue', 'no blue and no blue fringe');
+  const seedPrompt = prompt => ({ [`sprite:img:${SAVE}:${FORM}`]: JSON.stringify({ image: URL_ANTES, provider: 'higgsfield', at: 1, prompt }) });
+  const genOk = () => vi.fn(async () => ({ image: `data:image/png;base64,${btoa(String.fromCharCode(...pngCriatura()))}`, provider: 'higgsfield', raw: pngCriatura() }));
+
+  it('o campo `motivo` e aditivo: ausente = null; valido passa; invalido derruba o corpo', () => {
+    expect(sanitizeReportBody(corpo()).motivo).toBeNull();
+    expect(sanitizeReportBody(corpo({ motivo: 'recorte' })).motivo).toBe('recorte');
+    expect(sanitizeReportBody(corpo({ motivo: 'estilo' })).motivo).toBe('estilo');
+    expect(sanitizeReportBody(corpo({ motivo: 'outro' })).error).toBe('invalid-body');
+    expect(sanitizeReportBody(corpo({ motivo: 3 })).error).toBe('invalid-body');
+  });
+
+  it('motivo "recorte": sem IA (Claude nao e chamado) e vai direto para regeneracao', async () => {
+    const env = mkEnv({ ANTHROPIC_API_KEY: 'k' }, seedPrompt(P_VERDE));
+    const { report } = await createReport(env, sanitizeReportBody(corpo({ motivo: 'recorte' })));
+    const f = claudeFetch({ problema: 'nenhum', detalhe: '', acao: 'nada', fundoResidual: 'none' });
+    const av = await evaluateReport(env, report.id, { fetch: f });
+    expect(f).not.toHaveBeenCalled();
+    expect(av).toMatchObject({ status: STATUS.REGENERAR, motivo: 'recorte' });
+  });
+
+  it('motivo "recorte" sem raw: regenera com OUTRA chave (verde => a de maior distancia entre as restantes), uma vez, gastando a cota so agora', async () => {
+    const env = mkEnv({ ANTHROPIC_API_KEY: 'k' }, seedPrompt(P_VERDE));
+    const { report } = await createReport(env, sanitizeReportBody(corpo({ motivo: 'recorte' })));
+    await evaluateReport(env, report.id, {});
+    const generate = genOk();
+    const rg = await regenerateReport(env, report.id, { generate, origin: 'https://x.test' });
+    expect(generate).toHaveBeenCalledTimes(1);
+    expect(generate.mock.calls[0][1]).toContain('#0000FF chroma-blue'); // violeta 35 / laranja 150 => azul (maior distancia que o magenta, 25)
+    expect(generate.mock.calls[0][1]).not.toContain('#00FF00');
+    expect(rg).toMatchObject({ status: STATUS.CONSERTADO, method: 'regeneracao', chroma: 'blue' });
+  });
+
+  it('motivo "estilo": a IA avalia com a queixa e o prompt como DADO; "nada" => sem-problema (sem regenerar)', async () => {
+    const env = mkEnv({ ANTHROPIC_API_KEY: 'k' }, seedPrompt(P_VERDE));
+    const { report } = await createReport(env, sanitizeReportBody(corpo({ motivo: 'estilo' })));
+    const f = claudeFetch({ problema: 'nenhum', detalhe: 'confere com o pedido', acao: 'nada', fundoResidual: 'none' });
+    const av = await evaluateReport(env, report.id, { fetch: f });
+    const corpoReq = JSON.parse(f.mock.calls[0][1].body);
+    const texto = corpoReq.messages[0].content[1].text;
+    expect(texto).toContain('Player complaint: the style looks inconsistent.');
+    expect(texto).toContain('<intended_prompt>');
+    expect(texto).not.toContain('#00FF00'); // a clausula do fundo nao vai
+    expect(av.status).toBe(STATUS.SEM_PROBLEMA);
+  });
+
+  it('motivo "estilo" + IA acha problema: regenera com a MESMA chave da geracao original (verde)', async () => {
+    const env = mkEnv({ ANTHROPIC_API_KEY: 'k' }, seedPrompt(P_VERDE));
+    const { report } = await createReport(env, sanitizeReportBody(corpo({ motivo: 'estilo' })));
+    const av = await evaluateReport(env, report.id, { fetch: claudeFetch({ problema: 'estilo', detalhe: 'nao e pixel art', acao: 'regenerar', fundoResidual: 'none' }) });
+    expect(av.status).toBe(STATUS.REGENERAR);
+    const generate = genOk();
+    const rg = await regenerateReport(env, report.id, { generate, origin: 'https://x.test' });
+    expect(generate.mock.calls[0][1]).toContain('#00FF00 chroma-green');
+    expect(rg.chroma).toBe('green');
+  });
+
+  it('sem motivo (cliente antigo): comportamento anterior; chave antiga que colide (azul a 35 graus do violeta) e recalculada para VERDE', async () => {
+    const env = mkEnv({ ANTHROPIC_API_KEY: 'k' }, seedPrompt(P_AZUL));
+    const { report } = await createReport(env, sanitizeReportBody(corpo()));
+    expect(report.motivo).toBeUndefined();
+    await evaluateReport(env, report.id, { fetch: claudeFetch({ problema: 'recorte', detalhe: 'x', acao: 'regenerar', fundoResidual: 'none' }) });
+    const generate = genOk();
+    const rg = await regenerateReport(env, report.id, { generate, origin: 'https://x.test' });
+    expect(generate.mock.calls[0][1]).toContain('#00FF00 chroma-green');
+    expect(rg.chroma).toBe('green');
+  });
+});

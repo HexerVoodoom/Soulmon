@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { ActionRow, ModalSheet, sm2Button, sm2Text } from './form/FormKit';
 import type { Language } from '../utils/i18n';
-import type { ReviewReport } from '../utils/reviewSoulmon';
+import type { ReviewMotivo, ReviewReport } from '../utils/reviewSoulmon';
 import type { ReviewRequestError } from '../hooks/useReviewWatcher';
 
 /**
@@ -16,6 +17,10 @@ export function reviewCopy(language: Language) {
     hint: pt ? 'Se o desenho tiver um problema, nos avise. Vamos verificar para você.' : "If the drawing has a problem, let us know. We'll check it for you.",
     inReview: pt ? 'Seu Soulmon está em revisão' : 'Your Soulmon is under review',
     sentToTeam: pt ? 'Enviamos para a nossa equipe olhar' : 'We sent it to our team to take a look',
+    motivoTitle: pt ? 'O que há de errado com o desenho?' : 'What is wrong with the drawing?',
+    motivoEstilo: pt ? 'Estilo inconsistente' : 'Inconsistent style',
+    motivoRecorte: pt ? 'Recorte com falhas' : 'Cutout has flaws',
+    cancel: pt ? 'Cancelar' : 'Cancel',
     sending: pt ? 'Enviando…' : 'Sending…',
     noSprite: pt ? 'Seu Soulmon ainda não tem um desenho próprio para revisar.' : 'Your Soulmon has no drawing of its own to review yet.',
     error: (e: Exclude<ReviewRequestError, null>) => ({
@@ -49,10 +54,11 @@ export interface ReviewRowState {
   error: ReviewRequestError;
   /** `false` = a forma equipada ainda não tem um desenho do nosso servidor para revisar. */
   reviewable: boolean;
-  onRequest: () => void;
+  onRequest: (motivo?: ReviewMotivo) => void;
 }
 
 export function ReviewSoulmonRow({ language, review }: { language: Language; review?: ReviewRowState }) {
+  const [escolhendo, setEscolhendo] = useState(false);
   if (!review) return null;
   const t = reviewCopy(language);
   const erro = review.error ? t.error(review.error) : !review.reviewable ? t.noSprite : null;
@@ -61,13 +67,30 @@ export function ReviewSoulmonRow({ language, review }: { language: Language; rev
       <ActionRow
         label={t.label}
         hint={review.sending ? t.sending : t.hint}
-        onClick={review.onRequest}
+        onClick={() => setEscolhendo(true)}
         disabled={review.active || !review.reviewable}
       />
       {/* `role="status"`: o leitor de tela anuncia a mudança de estado. */}
       <p role="status" aria-live="polite" data-review-state={review.active ? 'active' : 'idle'} style={{ ...sm2Text, margin: '0 0 0 16px', minHeight: 0, fontSize: 'var(--sm2-text-sm)' }}>
         {review.active && !review.sending ? (review.team ? t.sentToTeam : t.inReview) : erro}
       </p>
+      <ModalSheet
+        open={escolhendo}
+        title={t.motivoTitle}
+        onClose={() => setEscolhendo(false)}
+        language={language}
+        sobreTelas
+        footer={<button type="button" onClick={() => setEscolhendo(false)} style={{ ...sm2Button('outline'), width: '100%' }}>{t.cancel}</button>}
+      >
+        <div style={{ display: 'grid', gap: 12 }}>
+          {(['estilo', 'recorte'] as const).map(m => (
+            <button key={m} type="button" data-review-motivo={m} style={{ ...sm2Button('primary'), width: '100%' }}
+              onClick={() => { setEscolhendo(false); review.onRequest(m); }}>
+              {m === 'estilo' ? t.motivoEstilo : t.motivoRecorte}
+            </button>
+          ))}
+        </div>
+      </ModalSheet>
     </>
   );
 }

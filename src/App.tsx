@@ -1491,7 +1491,7 @@ export default function App() {
     sending: reviewWatcher.sending,
     error: reviewWatcher.error,
     reviewable: isReviewableSpriteUrl(reviewSnapshot?.spriteUrl),
-    onRequest: () => { void reviewWatcher.request(); },
+    onRequest: motivo => { void reviewWatcher.request(motivo); },
   }), [reviewWatcher.active, reviewWatcher.team, reviewWatcher.sending, reviewWatcher.error, reviewWatcher.request, reviewSnapshot?.spriteUrl]);
 
   // ── Os rituais do motor de tarefas (utils/rituals.ts) ─────────────────────

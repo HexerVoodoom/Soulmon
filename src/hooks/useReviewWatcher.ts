@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   checkReviews, isActive, isReviewableSpriteUrl, reviewPollDelay, submitReview,
-  type ReviewReport, type ReviewSnapshot,
+  type ReviewMotivo, type ReviewReport, type ReviewSnapshot,
 } from '../utils/reviewSoulmon';
 
 /**
@@ -30,7 +30,7 @@ export interface ReviewWatcher {
   team: boolean;
   sending: boolean;
   error: ReviewRequestError;
-  request: () => Promise<void>;
+  request: (motivo?: ReviewMotivo) => Promise<void>;
 }
 
 export function useReviewWatcher({ snapshot, onApplyFix, onFinished, now = Date.now }: UseReviewWatcherArgs): ReviewWatcher {
@@ -89,13 +89,13 @@ export function useReviewWatcher({ snapshot, onApplyFix, onFinished, now = Date.
     };
   }, [check]);
 
-  const request = useCallback(async () => {
+  const request = useCallback(async (motivo?: ReviewMotivo) => {
     const snap = ref.current.snapshot;
     if (!snap || sending) return;
     if (!isReviewableSpriteUrl(snap.spriteUrl)) { setError('no-sprite'); return; }
     setSending(true);
     setError(null);
-    const r = await submitReview(snap);
+    const r = await submitReview(snap, fetch, motivo);
     setSending(false);
     if (r.ok && r.report) {
       setReports(prev => { const next = [r.report as ReviewReport, ...prev.filter(x => x.id !== r.report?.id)]; schedule(next); return next; });
