@@ -82,33 +82,76 @@ export function registrarElementoDoEstagio(
 }
 
 /** O prompt das formas ainda por desenhar recebe o elemento combinado. Forma sem registro ou de elemento único: o prompt de sempre. */
+const VERDE = /green|lime|mint|emerald|jade|olive|fern|moss|sage|clover|forest|verde/i;
+// Só o magenta que o recorte comeria (claro/saturado); "dark magenta" (min(r,b) < 150) não é chaveado.
+const MAGENTA = /(?<!dark |deep |dim )magenta|hot[- ]pink|fuchsia|neon pink/i;
+/** O pedido de fundo chroma do prompt (a "cláusula do fundo"), que não conta como cor da criatura. */
+const CLAUSULA_FUNDO = /on a solid flat pure #[0-9A-Fa-f]{6} chroma-\w+ background \([^)]*\), the creature itself contains no [^:]*? fringe/;
+
+/** Cor do chroma que o prompt pede hoje. */
+export const chromaDoPrompt = (prompt: string): 'green' | 'magenta' => (/#FF00FF/i.test(prompt) ? 'magenta' : 'green');
+
+/**
+ * Qual fundo chroma o prompt deve pedir (dono, 10/11/2026): VERDE #00FF00 por padrão; MAGENTA #FF00FF quando a criatura/elemento usa
+ * verde (o recorte verde comeria o verde dela); e VERDE de novo quando só há magenta/rosa-choque. Verde e magenta juntos: o fundo é a chave da cor
+ * que NÃO domina (a primeira citada é a dominante).
+ * O recorte (`functions/api/_chroma.js › chromaKeyOfPrompt`) lê essa cor DO PRÓPRIO PROMPT, então as duas cores funcionam sem outro ajuste.
+ */
+export function escolherChroma(prompt: string): 'green' | 'magenta' {
+  const corpo = prompt.replace(CLAUSULA_FUNDO, '');
+  const g = corpo.search(VERDE);
+  const m = corpo.search(MAGENTA);
+  if (g >= 0 && m < 0) return 'magenta';
+  if (m >= 0 && g < 0) return 'green';
+  // Os dois: a cor que aparece PRIMEIRO é a dominante (nas pistas a 1ª cor domina); o fundo é a OUTRA chave.
+  if (g >= 0 && m >= 0) return g < m ? 'magenta' : 'green';
+  return chromaDoPrompt(prompt);
+}
+
+/** Troca o pedido de fundo do prompt para a cor dada (a mesma troca de texto do `withChroma` do Oráculo, nos dois sentidos). */
+export function aplicarChroma(prompt: string, key: 'green' | 'magenta'): string {
+  if (chromaDoPrompt(prompt) === key) return prompt;
+  return key === 'magenta'
+    ? prompt.replace('#00FF00 chroma-green', '#FF00FF chroma-magenta').replace('contains no green and no green fringe', 'contains no magenta, no hot pink and no magenta fringe')
+    : prompt.replace('#FF00FF chroma-magenta', '#00FF00 chroma-green').replace('contains no magenta, no hot pink and no magenta fringe', 'contains no green and no green fringe');
+}
+
+/**
+ * O elemento EFETIVO influencia TODO prompt (forma e cores), não só o de poção (dono, 10/11/2026): poção da forma > registro do estágio >
+ * base do Soulmon. Entram o tema (poção ou combinado natural), as pistas visuais DO elemento (derivadas dos prompts dos assets) e o fundo
+ * chroma coerente com as cores. A paleta por dominante/linha do prompt cru continua sendo a base. Só gerações FUTURAS usam isto.
+ */
 export function stagesComElemento<T extends { stage: string; imagePrompt: string; imagePromptFallback: string }>(
   stages: T[] | undefined, jornada: ElementoJornada | undefined,
-  /** Poção de elemento por estágio (dono, 10/11/2026): vale a que vai nascer (`evolutionPotion`, no cristal) e a da forma atual (`potionElement`). Vence o registro do estágio, como em `petElementOf`. */
+  /** Poção por estágio: a ativa vale para a forma atual e a pendente (cristal) para o estágio-destino; vence o registro (como em `petElementOf`). */
   pocoes?: Partial<Record<FichaStage, string>>,
-  /** O elemento BASE do Soulmon: a forma cujo elemento é o base (a original) leva só o nome — as pistas visuais são das formas de poção. */
+  /** O elemento BASE do Soulmon (Oráculo): vale quando não há poção nem registro do estágio. */
   baseDoSoulmon?: string,
 ): T[] | undefined {
-  if (!stages || (!jornada && !pocoes)) return stages;
+  if (!stages || (!jornada && !pocoes && !baseDoSoulmon)) return stages;
   return stages.map(st => {
-    // As etapas do Oráculo chamam o Ultimate de `perfeito` (ver `creatureFormId`); a poção é indexada pelo nível da ficha (`ultimate`).
-    // Só a poção usa esse mapa: o caminho do registro (`jornada`) segue exatamente como era, para nenhuma conta sem poção mudar.
-    const pocao = pocoes?.[(st.stage === 'perfeito' ? 'ultimate' : st.stage) as FichaStage];
+    // As etapas do Oráculo chamam o Ultimate de `perfeito` (ver `creatureFormId`); a ficha usa `ultimate`.
+    const nivel = (st.stage === 'perfeito' ? 'ultimate' : st.stage) as FichaStage;
+    const pocao = pocoes?.[nivel];
+    const reg = jornada?.estagios[nivel];
+    const efetivo = pocao ?? reg?.id ?? baseDoSoulmon;
+    if (!efetivo) return st;
+    let tema = '';
     if (pocao) {
       const nome = CURATED_ELEMENT_NAMES[pocao]?.en ?? elementoNomeDe(pocao).en;
-      const base = essenceComposition(pocao)?.[0] ?? pocao;
-      const tema = base === pocao
-        ? ` Elemental theme of this form: ${nome}.`
-        : ` Elemental theme of this form: ${nome}, with ${base} as its main element.`;
-      const pistas = pocao !== baseDoSoulmon ? pistasVisuaisDoElemento(pocao) : undefined;
-      const frase = pistas ? `${tema} Visual cues of this element: ${pistas}.` : tema;
-      return { ...st, imagePrompt: st.imagePrompt + frase, imagePromptFallback: st.imagePromptFallback + frase };
+      const principal = essenceComposition(pocao)?.[0] ?? pocao;
+      tema = principal === pocao ? ` Elemental theme of this form: ${nome}.` : ` Elemental theme of this form: ${nome}, with ${principal} as its main element.`;
+    } else if (reg && reg.id !== reg.base) {
+      const nome = CURATED_ELEMENT_NAMES[reg.id]?.en ?? elementoNomeDe(reg.id).en;
+      tema = ` Elemental theme of this form: ${nome}, with ${reg.base} as its main element.`;
     }
-    const reg = jornada?.estagios[st.stage as FichaStage];
-    if (!reg || reg.id === reg.base) return st;
-    const nome = CURATED_ELEMENT_NAMES[reg.id]?.en ?? elementoNomeDe(reg.id).en;
-    const frase = ` Elemental theme of this form: ${nome}, with ${reg.base} as its main element.`;
-    return { ...st, imagePrompt: st.imagePrompt + frase, imagePromptFallback: st.imagePromptFallback + frase };
+    const pistas = pistasVisuaisDoElemento(efetivo);
+    const frasePistas = pistas ? ` Visual cues of this element: ${pistas}.` : '';
+    const extra = `${tema}${frasePistas}`;
+    if (!extra) return st;
+    // O fundo segue as CORES (prompt cru + pistas), não o nome do elemento ("Floresta" não é cor).
+    const comExtra = (prompt: string): string => aplicarChroma(prompt + extra, escolherChroma(prompt + frasePistas));
+    return { ...st, imagePrompt: comExtra(st.imagePrompt), imagePromptFallback: comExtra(st.imagePromptFallback) };
   });
 }
 
