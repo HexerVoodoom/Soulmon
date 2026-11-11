@@ -62,7 +62,7 @@ import {
   getProfile, putProfile, pidSoLeitura, nickKey, claimNick,
 } from './_profile.js';
 import { secretEquals } from './metrics.js';
-import { ackMail, claimMail, deleteMail, enqueueMail, markRead, readMail } from './_mensageiro.js';
+import { ackMail, claimMail, deleteMail, enqueueMail, markRead, readMail, removerConvitesDe } from './_mensageiro.js';
 import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado, petNameDoSimulado, formaVista } from './_simulados.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
 import {
@@ -1542,6 +1542,8 @@ async function handleCommunity(context) {
     if (remove) {
       // Remover um amigo que se escondeu continua possível; desfaz os dois lados e cancela convite pendente.
       await desfazerAmizade(env, id, friendSave);
+      // Convite cancelado: a carta dele some da caixa do outro lado (melhor esforço; o aceite tardio já responde 404).
+      await removerConvitesDe(kvOrThrow(env), friendSave, await ensurePid(env, me)).catch(() => {});
       const depois = await getProfile(env, id);
       return json({ ok: true, friends: await friendPids(depois?.friends || []) });
     }
@@ -1562,6 +1564,7 @@ async function handleCommunity(context) {
       await gravarConvites(env, id, { in: minha.in.filter(x => x.from !== friendSave), out: minha.out.filter(f => f !== friendSave) });
       const dele = await lerConvites(env, friendSave);
       await gravarConvites(env, friendSave, { in: dele.in.filter(x => x.from !== id), out: dele.out.filter(f => f !== id) });
+      await removerConvitesDe(kvOrThrow(env), id, friendId).catch(() => {});
       return json({ ok: true, status: 'friends', friends: await friendPids((await getProfile(env, id))?.friends || []) });
     }
     if (minha.out.includes(friendSave)) return json({ ok: true, status: 'pending', friends: await friendPids(me.friends) });
@@ -1569,8 +1572,23 @@ async function handleCommunity(context) {
     // Simulado nunca recebe convite: resposta igual à de um convite real, nada gravado.
     if (alvo.simulated === true) return json({ ok: true, status: 'pending', friends: await friendPids(me.friends) });
     const dele = await lerConvites(env, friendSave);
-    if (!dele.in.some(r => r.from === id) && dele.in.length < MAX_IN) dele.in.push({ from: id, at: Date.now() });
+    const novo = !dele.in.some(r => r.from === id) && dele.in.length < MAX_IN;
+    if (novo) dele.in.push({ from: id, at: Date.now() });
     await gravarConvites(env, friendSave, dele);
+    // O convite também chega por CARTA do Papus (§288). Quem se escondeu não aparece nos convites, então não manda carta. Melhor esforço: o convite já está gravado.
+    if (novo && !isHidden(me)) {
+      try {
+        const pid = await ensurePid(env, me);
+        const nome = me.name || '';
+        await enqueueMail(env, kvOrThrow(env), friendSave, {
+          mid: `invite:${pid}:${Date.now().toString(36)}`, kind: 'friend-invite', fromPid: pid,
+          titlePt: 'Convite de amizade', titleEn: 'Friend invite',
+          bodyPt: `${nome || 'Alguém'} convidou você para ser amigo. Aceitar?`,
+          bodyEn: `${nome || 'Someone'} invited you to be friends. Accept?`,
+          at: Date.now(),
+        });
+      } catch { /* a carta é cosmética: o convite segue na lista de Amigos */ }
+    }
     minha.out.push(friendSave);
     await gravarConvites(env, id, minha);
     return json({ ok: true, status: 'pending', friends: await friendPids(me.friends) });
@@ -1590,6 +1608,7 @@ async function handleCommunity(context) {
       await gravarConvites(env, id, { in: meus.in.filter(r => r.from !== quem), out: meus.out });
       const dele = await lerConvites(env, quem);
       await gravarConvites(env, quem, { in: dele.in, out: dele.out.filter(f => f !== id) });
+      await removerConvitesDe(kvOrThrow(env), id, friendId).catch(() => {});
     };
     if (decline === true) { await limpar(); return json({ ok: true, friends: await friendPids((await getProfile(env, id))?.friends || []) }); }
     const alvo = await getProfile(env, quem);
@@ -1694,12 +1713,27 @@ async function handleCommunity(context) {
       return await withDuelLock(`gcap:${friendSave}`, async () => {
         const credited = await reservarRecebimento(env, friendSave, GIFT_BITS);
         const quem = isHidden(me) ? '' : me.name;
+        // O presente chega por CARTA do Papus, com "Resgatar" (§288). Caixa sem espaço (30 cartas, todas com prêmio): cai na fila antiga `gifts:`,
+        // que o cliente ainda resgata, então nenhum presente se perde. Presentes já pendentes na fila antiga continuam sendo entregues por ela.
+        const gid = crypto.randomUUID();
+        let viaCarta = false;
         if (credited > 0) {
+          try {
+            viaCarta = await enqueueMail(env, kvOrThrow(env), friendSave, {
+              mid: `gift:${gid}`, kind: 'gift',
+              titlePt: 'Presente de amigo', titleEn: 'Gift from a friend',
+              bodyPt: `${quem || 'Um amigo'} mandou ${credited} Bits para você.`,
+              bodyEn: `${quem || 'A friend'} sent you ${credited} Bits.`,
+              bits: credited, at: Date.now(),
+            }, { recusarSeCheia: true });
+          } catch { viaCarta = false; }
+        }
+        if (credited > 0 && !viaCarta) {
           const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
           // Lista ilegível na KV não pode dar 500 DEPOIS do registro do dia gravado (o presente do dia sumia): recomeça vazia.
           let gifts = [];
           try { const lido = raw ? JSON.parse(raw) : []; gifts = Array.isArray(lido) ? lido : []; } catch { gifts = []; }
-          gifts.push({ from: quem, bits: credited, at: Date.now(), gid: crypto.randomUUID() });
+          gifts.push({ from: quem, bits: credited, at: Date.now(), gid });
           await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
         }
         // O histórico mostra o valor REAL (0 = o teto do dia já tinha sido atingido). Melhor esforço: o crédito já está na fila.

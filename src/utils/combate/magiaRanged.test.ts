@@ -50,6 +50,11 @@ describe('ranged = ~80% magia (splash) em inimigos, selvagens e simulados', () =
     }
     dentro(m / r);
   });
+  it('chefe de guilda: o especial (ranged) segue ~80% magia por elemento', () => {
+    const els = ['fogo','agua','terra','ar','eletricidade','arcano','sombra','luz','vileza','morte','vida','vigor','marcial','tempo','som','gravidade','espaco','fada','industrial','planta'];
+    const m = els.filter(e => meleeImpactOf({ element: e, key: `boss|${e}`, forma: 'ranged' }) === 'concussao').length / els.length;
+    dentro(m);
+  });
   it('jogador real (fx sem a flag): nada muda; corpo a corpo e o sorteio por elemento seguem iguais', () => {
     const id = fighterIdentityFromFx({ basica: 'longo_alcance', especial: 'longo_alcance', familia: 'direct', elBasica: 'fogo', elEspecial: 'fogo' }, 'fogo');
     expect(id.basico.impacto).toBeUndefined();

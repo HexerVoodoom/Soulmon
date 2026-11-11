@@ -127,7 +127,7 @@ export function BossFightScreen(p: BossFightScreenProps) {
     let last = performance.now();
     const fire = (e: FightEvent, k: StageActionKind) => {
       const mineSide = e.side === 0;
-      setAction({ id: ++seq.current, actor: mineSide ? 'me' : 'foe', foe: 0, kind: k, strike: k === 'special' ? 'ranged' : undefined, impacto: meleeImpactOf({ element: mineSide ? p.me.element : bossElement, key: mineSide ? `me|${p.me.element}` : `boss|${bossElement}` }), element: mineSide ? p.me.element : bossElement });
+      setAction({ id: ++seq.current, actor: mineSide ? 'me' : 'foe', foe: 0, kind: k, strike: k === 'special' ? 'ranged' : undefined, impacto: meleeImpactOf({ element: mineSide ? p.me.element : bossElement, key: mineSide ? `me|${p.me.element}` : `boss|${bossElement}`, ...(mineSide || k !== 'special' ? {} : { forma: 'ranged' as const }) }), element: mineSide ? p.me.element : bossElement });
     };
     const id = window.setInterval(() => {
       if (finished) return;
