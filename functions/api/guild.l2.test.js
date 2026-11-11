@@ -250,7 +250,8 @@ export const ORCAMENTO = {
   checkin: { get: 27, put: 2 },
   // +1 escrita (29/09, A-1): `coopPart:<save>:<week>`, o direito ao resgate
   // guardado com a PESSOA para sobreviver à saída.
-  golpe: { get: 41, put: 4 },
+  // +1 leitura e +1 escrita (11/11/2026): o encontro da volta (`encontro:<save>:<dia>`, `_encontro.js`).
+  golpe: { get: 42, put: 5 },
   gesto: { get: 26, put: 2 },
   vista12: { get: 18, put: 0 },
 };

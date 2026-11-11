@@ -4740,3 +4740,17 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 ## §293 — Auditoria da volta da Missão: nunca voltar sem dizer nada (11/11/2026, relato do dono)
 
 Relato: mandou o Soulmon investigar, ele voltou e só havia "Mandar investigar" de novo (sem chefe, desafio ou feira). Auditoria: a feira de verdade funciona (medido em 10.000 voltas: 8,05% sem buff, 12,0% com; `feiraLoja.taxa.test.js`). O que o jogador via vazio era a volta SEM evento: mistério em descanso (1 dia + 2 de intervalo entre mistérios), trilha já cumprida, chefe sem ataque hoje, ou o registro encerrado em silêncio por erro não-retentável (limite do dia em outro aparelho, roda mudada). Nesses casos a volta não mostrava nada e o botão da sala voltava. Sem bug de sorteio; havia dois defeitos de cliente: (1) o "desafio do dia" era gravado mesmo com evento sem ação (trilha cumprida), gerando um "escapou" falso no dia seguinte; agora só grava se `feiraEventoAbre`. (2) Volta sem loja/evento e o encerramento silencioso agora dão um aviso (toast) em vez de silêncio. Regra de jogo inalterada (8%, pesos, cooldowns).
+
+## §294 — Encontro garantido na volta da Missão: Mercador, Desafio, Chefe (11/11/2026, decisão do dono)
+
+Decisão: a volta da Missão traz SEMPRE um encontro (nunca vazia, nunca só «Mandar investigar»), sorteado por conta e dia: **Mercador** raro (~8%, 12% com o buff do clã; a antiga «feira de verdade», renomeada nos textos ao jogador, a Feira/Mercado fixo do mapa não muda), **Desafio** médio-baixo (~25%) que dá Bits AO TESOURO DO CLÃ, **Chefe** alto (o resto, ~67%). Descanso e trilha já cumprida deixam de ser resultado. Se o sorteado não abre cai para o próximo; o achado (Bits pessoais pequenos) é o último recurso. Substitui o «evento menor garantido» do pedido anterior.
+
+Implementação: `functions/api/_encontro.js` (sorteio, resolução, desafio com `k` sintético ≥ 500000, registro `encontro:<save>:<dia>`); `_casa.js › somarBitsDesafio` (10 Bits por dia por pessoa, idempotente, no tesouro via `bitsDaCasa` e preservado na saída em `recolherCasaDetalhe`); o Desafio reusa os jogos da Trilha (`iniciarTrilha`/`entregarTrilha`); a chance e a oferta do Mercador não mudaram.
+
+Economia: o teto é 10 Bits/dia/pessoa (10% da doação máxima de 100); um clã cheio rende no máximo +840/semana sobre os 8400 de doação, o preço do buff (7560) e a regra «um buff por semana» seguem. Média esperada: 2,5 Bits/dia/pessoa.
+
+Medido em 10.000 voltas (funções reais, `encontro.test.js`): chefe sempre aberto, mercador 8,05% / desafio 25,32% / chefe 66,63% / achado 0%. Com o chefe aberto só em metade dos dias (o chefe do clã nem sempre existe), o desafio absorve a sobra: 8,05 / 58,37 / 33,58 / 0%. Achado só ocorre se o Desafio também fechar.
+
+**Falsifica:** uma volta de Missão sem encontro, o Desafio dar Bits mais de 1× por dia por pessoa, ou o Mercador sair da taxa 8%/12% (`feiraLoja.taxa.test.js`, `encontro.test.js`).
+
+**Rollback:** reverter o PR (o campo novo `desafioBits` da casa e a chave `encontro:` são aditivos). **APK:** nada obrigatório.

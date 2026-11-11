@@ -7,7 +7,7 @@ import { authHeaders } from './auth';
 import { reagirContaExcluida } from './cloudSave';
 import { playerDayKey, type PlayerDayAnchor } from './playerDay';
 import {
-  sanitizeFeiraEvento, sanitizeFeiraResumo, sanitizeFeiraAttack, sanitizeFeiraClaim, sanitizeFeiraTrail, sanitizeFeiraTrailDone,
+  sanitizeAchado, sanitizeFeiraEvento, sanitizeFeiraResumo, sanitizeFeiraAttack, sanitizeFeiraClaim, sanitizeFeiraTrail, sanitizeFeiraTrailDone,
   type FeiraEvento, type FeiraResumo, type FeiraAttack, type FeiraClaim, type FeiraTrail, type FeiraTrailDone, type FeiraSolution,
 } from './feira';
 import { sanitizeFeiraLoja, type FeiraLoja } from './feiraLoja';
@@ -889,8 +889,8 @@ export const hitGuildRaid = (id: string, tz?: PlayerDayAnchor) =>
  * exatamente como antes.
  */
 export const hitGuildRaidEvento = (id: string, tz?: PlayerDayAnchor) =>
-  guildCall<{ landed?: boolean; guild: unknown; evento?: unknown; feiraLoja?: unknown }>('guildRaidHit', { method: 'POST', body: { id, dayKey: dia(tz) } })
-    .then(r => ({ guild: viewOf(r), evento: sanitizeFeiraEvento(r.evento), feiraLoja: sanitizeFeiraLoja(r.feiraLoja) }));
+  guildCall<{ landed?: boolean; guild: unknown; evento?: unknown; feiraLoja?: unknown; achado?: unknown }>('guildRaidHit', { method: 'POST', body: { id, dayKey: dia(tz) } })
+    .then(r => ({ guild: viewOf(r), evento: sanitizeFeiraEvento(r.evento), feiraLoja: sanitizeFeiraLoja(r.feiraLoja), achado: sanitizeAchado(r.achado) }));
 
 // ── A FEIRA: O CHEFE E O DESAFIO (client; servidor em `functions/api/_feira.js`) ─────────────────────────────────────
 // Desligada no servidor = 404 `not available` em toda rota: aqui isso é "a Feira não existe" (`null`), nunca um erro.
@@ -932,14 +932,14 @@ export const claimGuildFeira = (id: string, k?: number, tz?: PlayerDayAnchor): P
     });
 
 /** Começa o Desafio de hoje: o servidor gera a instância e o relógio do piso de tempo. */
-export const startGuildFeiraTrail = (id: string, tz?: PlayerDayAnchor): Promise<FeiraTrail | null> =>
-  guildCall<{ trail?: unknown }>('guildFeiraTrailStart', { method: 'POST', body: { id, dayKey: dia(tz) } })
+export const startGuildFeiraTrail = (id: string, tz?: PlayerDayAnchor, k?: number): Promise<FeiraTrail | null> =>
+  guildCall<{ trail?: unknown }>('guildFeiraTrailStart', { method: 'POST', body: { id, dayKey: dia(tz), ...(k !== undefined ? { k } : {}) } })
     .then(r => sanitizeFeiraTrail(r.trail))
     .catch(e => { if (feiraAusente(e)) return null; throw e; });
 
 /** Entrega a solução. 400 (errada / rápida demais), 409 (já cumprido / não começou), 429 (limite do dia): `GuildError`. */
-export const doneGuildFeiraTrail = (id: string, solution: FeiraSolution, tz?: PlayerDayAnchor): Promise<FeiraTrailDone | null> =>
-  guildCall<unknown>('guildFeiraTrailDone', { method: 'POST', body: { id, dayKey: dia(tz), ...solution } })
+export const doneGuildFeiraTrail = (id: string, solution: FeiraSolution, tz?: PlayerDayAnchor, k?: number): Promise<FeiraTrailDone | null> =>
+  guildCall<unknown>('guildFeiraTrailDone', { method: 'POST', body: { id, dayKey: dia(tz), ...solution, ...(k !== undefined ? { k } : {}) } })
     .then(r => sanitizeFeiraTrailDone(r))
     .catch(e => { if (feiraAusente(e)) return null; throw e; });
 

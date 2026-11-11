@@ -180,7 +180,7 @@ describe('wrappers de API', () => {
     expect((await startGuildFeiraTrail('save-12345'))!.game).toBe('zip');
     fetchMock.mockResolvedValue(resp(200, { cleared: true, reward: { emblems: 1, sap: 3 }, receipt: 'tr-1', evento: null }));
     const r = await doneGuildFeiraTrail('save-12345', { path: [0, 1] });
-    expect(r!.reward).toEqual({ emblems: 1, sap: 3 });
+    expect(r!.reward).toEqual({ emblems: 1, sap: 3, clanBits: 0 });
     expect(JSON.parse(fetchMock.mock.calls[1][1].body)).toEqual({ id: 'save-12345', dayKey: dia(), path: [0, 1] });
     fetchMock.mockResolvedValue(resp(400, { error: 'wrong solution' }));
     const e = await doneGuildFeiraTrail('save-12345', { path: [0] }).catch(x => x as GuildError);

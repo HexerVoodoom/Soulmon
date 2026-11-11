@@ -28,6 +28,8 @@ Termo padrão por conceito. Nomes próprios e de marca ficam como estão. Regras
 | Torneio | Torneio | |
 | Arena | Arena | |
 | Mercado | Feira | |
+| Encontro raro da volta da Missão (loja com desconto) | Mercador | "feira" (nesse contexto; "Feira" segue sendo o Mercado fixo do mapa) |
+| Desafio da volta (quebra-cabeça que dá Bits ao clã) | Desafio do Mercador | |
 | Guilda | Clã | |
 | Soulsmith, Hexsmith | manter | Nomes próprios |
 | Fragmentos | Fragmentos | Sempre plural, minúsculo no meio da frase |

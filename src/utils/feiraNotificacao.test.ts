@@ -17,9 +17,9 @@ const deps = (native: boolean, permitted = true) => {
 describe('feiraNotificacao — o aviso da volta da investigação', () => {
   const now = new Date(2026, 10, 4, 14, 0).getTime();
   const at = now + 30 * 60_000;
-  it('copy PT e EN chamam para derrotar o inimigo', () => {
-    expect(feiraVoltaCopy('pt-BR').body).toContain('Seu Soulmon voltou da investigação na feira. Derrote o inimigo');
-    expect(feiraVoltaCopy('en-US').body).toContain('Defeat the enemy');
+  it('copy PT e EN avisam da volta e chamam para ver o encontro', () => {
+    expect(feiraVoltaCopy('pt-BR').body).toContain('Seu Soulmon voltou da investigação. Veja quem ele encontrou');
+    expect(feiraVoltaCopy('en-US').body).toContain('See who it met');
   });
   it('APK: alarme local na hora da volta, com a tag própria', () => {
     const d = deps(true);

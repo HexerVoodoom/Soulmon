@@ -16,8 +16,8 @@ export const FEIRA_VOLTA_TAG = 'feira-missao-volta';
 
 export function feiraVoltaCopy(language: Language): { title: string; body: string } {
   return language === 'pt-BR'
-    ? { title: 'Seu Soulmon voltou da investigação na feira', body: 'Seu Soulmon voltou da investigação na feira. Derrote o inimigo hoje, antes que ele escape!' }
-    : { title: 'Your Soulmon is back from the fair', body: 'Your Soulmon is back from investigating the fair. Defeat the enemy today, before it escapes!' };
+    ? { title: 'Seu Soulmon voltou da investigação', body: 'Seu Soulmon voltou da investigação. Veja quem ele encontrou pelo caminho!' }
+    : { title: 'Your Soulmon is back from investigating', body: 'Your Soulmon is back from investigating. See who it met on the way!' };
 }
 
 /** `HH:mm` local de um instante (o formato do `SoulmonAlarm`). */
