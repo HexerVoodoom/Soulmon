@@ -34,7 +34,7 @@ import { lotCoins, lotMissionMarks } from './utils/lotMarks';
 import { buildingMarks, claimBuildingQuest, completeBuildingQuest } from './utils/buildingQuests';
 import { applyForgeGrant, applyBuildingEntry } from './utils/forgeActions';
 import { applyHungerPenalty } from './utils/hungerPenalty';
-import { setEnergy, tickEnergy, tickTime, settleEnergy, hungerAt, hungryFrom, starvingSince, maxEnergyOf, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
+import { setEnergy, setSleeping, tickEnergy, tickTime, settleEnergy, hungerAt, hungryFrom, starvingSince, maxEnergyOf, HUNGER_PREMIUM_REFUSE_AT, paidArrivalVitals } from './utils/hunger';
 import { availableCheckIn, checkInWindows, claimCheckIn, CHECKIN_REWARDS, CHECKINS_ENABLED, MORNING_COMMITMENT_ENABLED } from './utils/checkIns';
 import { useEnergyStatus } from './hooks/useEnergyStatus';
 import { useDungeonReturn } from './hooks/useDungeonReturn';
@@ -96,7 +96,7 @@ import { FORM_REQUIREMENTS, getStageLevel, canSelectWeekdays, getMaxEnergyForSta
 import { gaugeFull, gaugeContribution, gaugeGoalFor } from './utils/evolutionGauge';
 import { glitchtamaDiasRestantes, glitchtamaExpiraEm, glitchtamaBuffAtivo } from './utils/glitchtamaBuff';
 import { type Language, useTranslation, resolveLanguage } from './utils/i18n';
-import { SoulmonWidget, widgetOwnSpriteUrl, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt } from './plugins/SoulmonWidgetPlugin';
+import { SoulmonWidget, widgetOwnSpriteUrl, widgetPetName, widgetPetLine, widgetGroveStage, widgetNextTask, widgetDayEndsAt, widgetBgId } from './plugins/SoulmonWidgetPlugin';
 import { unlockedAchievements, achievementPointsTotal, settleAchievements, ACHIEVEMENT_POINTS, ACHIEVEMENT_LABELS } from './utils/achievements';
 import { useGameState, getMaxHPForStage, type GameState, type Activity, type Task, type Step } from './contexts/GameStateContext';
 import { STORAGE_KEYS } from './utils/storageKeys';
@@ -207,6 +207,7 @@ import {
 } from './utils/groveLocal';
 import { grantGuildTrophy } from './utils/guildClaimLocal';
 import { feiraEventoAbre, feiraShownKey, type FeiraEvento } from './utils/feira';
+import { feiraLojaAbre, feiraLojaShownKey, applyFeiraLojaBuy, applyServerFeiraHex, type FeiraLoja, type FeiraLojaItem } from './utils/feiraLoja';
 import type { FeiraCredit } from './utils/feiraCredit';
 import { guildCoreText, groveStageName, type GroveMarcoStage } from './utils/guildCopyCore';
 import { canRebirth, rebirthRefusal } from './utils/rebirthGate';
@@ -225,7 +226,8 @@ import { ResultExtrasContext } from './components/games/ResultExtrasContext';
 import { buildResultExtras } from './utils/resultExtras';
 import { BITS_EXCHANGE, creditMinigameBits, minigameBitsGranted, minigameBitsToday } from './utils/currencies';
 import { arenaRerollCost, arenaRerollsToday, applyArenaReroll, applyArenaRunEnd } from './utils/arenaSorteio';
-import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst } from './utils/bitsOrigin';
+import { noteFreeBits, creditExchangeRoom, applyCreditExchange, spendBitsPaidFirst, earnedBits } from './utils/bitsOrigin';
+import { chargeTreinoTicket, TREINO_EXTRA_TICKET_BITS } from './utils/treinoTickets';
 import { applyGuildSlot } from './utils/guildHouse';
 import { startGuildMission, isMissionAway, msUntilReturn } from './utils/guildMission';
 import { recordFeiraDesafio } from './utils/feiraDesafio';
@@ -857,11 +859,12 @@ const ProtectProgressModal = lazy(() => import('./components/ProtectProgressModa
 const MilestoneCeremony = lazy(() => import('./components/MilestoneCeremony').then(m => ({ default: m.MilestoneCeremony })));
 const GroveMilestoneCeremony = lazy(() => import('./components/guild/GroveMilestoneCeremony').then(m => ({ default: m.GroveMilestoneCeremony })));
 const FeiraEventoSheet = lazy(() => import('./components/guild/FeiraEventoSheet').then(m => ({ default: m.FeiraEventoSheet })));
+const FeiraLojaSheet = lazy(() => import('./components/guild/FeiraLojaSheet').then(m => ({ default: m.FeiraLojaSheet })));
 const MorningCheckIn = lazy(() => import('./components/MorningCheckIn').then(m => ({ default: m.MorningCheckIn })));
 const TriagePile = lazy(() => import('./components/TriagePile').then(m => ({ default: m.TriagePile })));
 const MorningDream = lazy(() => import('./components/MorningDream').then(m => ({ default: m.MorningDream })));
 const RestSetupModal = lazy(() => import('./components/RestSetupModal').then(m => ({ default: m.RestSetupModal })));
-// O convite curto da contagem de passos (REGISTRO §277): intersticial `stepsInvite`, só no app Android com contador.
+// O convite curto da contagem de passos (REGISTRO §283): intersticial `stepsInvite`, só no app Android com contador.
 const StepsInviteModal = lazy(() => import('./components/StepsInviteModal').then(m => ({ default: m.StepsInviteModal })));
 const DayGoalsModal = lazy(() => import('./components/DayGoalsModal').then(m => ({ default: m.DayGoalsModal })));
 const CatalogOnboardingFlow = lazy(() => import('./components/catalog/CatalogOnboardingFlow').then(m => ({ default: m.CatalogOnboardingFlow })));
@@ -927,6 +930,8 @@ export default function App() {
   // FEIRA DO CHEFE (docs/PLANO-FEIRA-CHEFE.md): o evento que a VOLTA da Missão encontrou. Em memória (a sala da Feira reabre a folha);
   // `null` com a Feira desligada/servidor antigo — e então nada disto acontece.
   const [feiraEvento, setFeiraEvento] = useState<FeiraEvento | null>(null);
+  /** A FEIRA DE VERDADE (rara; `utils/feiraLoja.ts`): usa a MESMA vaga da fila que o `feiraEvento` (um aviso de gesto, nunca os dois). */
+  const [feiraLoja, setFeiraLoja] = useState<FeiraLoja | null>(null);
 
   // O resumo da volta sozinha mora no SAVE (`dungeonReturnPending`): fechar o app antes de ver o aviso não o perde.
   const dungeonReturnSummary: DungeonReturnSummary | null = gameState.dungeonReturnPending ?? null;
@@ -1254,6 +1259,13 @@ export default function App() {
     window.addEventListener('focus', acertar);
     return () => { clearInterval(id); document.removeEventListener('visibilitychange', aoVoltar); window.removeEventListener('focus', acertar); };
   }, [setGameState]);
+
+  /* 💤 BÔNUS DE SONO DA ENERGIA (REGISTRO §177): a troca do estado de sono REAL (`isSleeping`: gesto, sono automático ou app aberto com o
+     pet dormindo) é registrada no relógio da energia (`setSleeping`), que acerta o trecho anterior com o estado antigo. Roda DEPOIS do
+     tick acima (mesma montagem): o intervalo com o app fechado conta com o sono que ficou registrado. Idempotente. */
+  useEffect(() => {
+    setGameState(prev => (isDemoMode(prev) ? prev : setSleeping(prev, Date.now(), isSleeping)));
+  }, [isSleeping, setGameState]);
 
   /* Telemetria do ritmo: dispara quando uma janela PASSA a constar como
      atendida NESTA sessão (comparando com o render anterior) — fora do updater
@@ -2564,7 +2576,7 @@ export default function App() {
       welcomeTour: welcomeTourOpen,
       triage: Boolean(triageTasks),
       dungeonReturn: dungeonReturnSummary !== null,
-      feiraEvento: feiraEvento !== null,
+      feiraEvento: feiraEvento !== null || feiraLoja !== null,
       levelUp: levelUpOpen,
       dailyReport: showDailyReport && Boolean(gameState.lastDayReport),
       evoRecap: evoRecap !== null,
@@ -2583,7 +2595,7 @@ export default function App() {
       nightmare: nightmareOpen,
       catalogLevelInvite: Boolean(catalogLevelInviteCandidate),
       restSetup: needsRestSetup,
-      // O convite curto dos passos (§277): só com contador no aparelho, depois do onboarding, e só quem ainda não respondeu.
+      // O convite curto dos passos (§283): só com contador no aparelho, depois do onboarding, e só quem ainda não respondeu.
       stepsInvite: shouldShowStepsInvite({ available: stepsAvailable, consent: gameState.stepsConsent, onboarded: hasCompletedOnboarding }),
     }),
     // ao MOSTRAR: grava o "visto" (a fila chama uma vez por entrada na tela)
@@ -2593,6 +2605,9 @@ export default function App() {
         handleLevelUpDone(levelUpEvent.to);
         const abertos = buildingsUnlockedBetween(levelUpEvent.from, levelUpEvent.to);
         if (abertos.length > 0) setUnlockToastIds(abertos);
+      } else if (id === 'feiraEvento' && feiraLoja) {
+        // a feira de verdade: "visto" ao MOSTRAR (a oferta é do dia; a sala da Feira não a reabre, ela some quando o dia vira)
+        writeLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO, feiraLojaShownKey(feiraLoja), { silent: true });
       } else if (id === 'feiraEvento' && feiraEvento) {
         // "visto" ao MOSTRAR: o mesmo mistério no mesmo dia não reabre sozinho (a sala da Feira reabre à mão)
         writeLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO, feiraShownKey(feiraEvento, playerDayKey(new Date(), gameState.playerDayTz)), { silent: true });
@@ -2639,7 +2654,7 @@ export default function App() {
         case 'welcomeTour': handleWelcomeTourDone(); break;
         case 'triage': setTriageTasks(null); break;
         case 'dungeonReturn': setDungeonReturnSummary(null); break;
-        case 'feiraEvento': setFeiraEvento(null); break;
+        case 'feiraEvento': setFeiraEvento(null); setFeiraLoja(null); break;
         case 'levelUp': setLevelUpShown(null); break;
         case 'dailyReport': closeDailyReport(); break;
         case 'evoRecap': setEvoRecap(null); break;
@@ -2864,6 +2879,9 @@ export default function App() {
       dayEndsAtMs: widgetDayEndsAt(new Date()),
       // Moldura do widget V-Pet: o escolhido SE ainda é do jogador, senão '' (casco padrão). Arquivo ausente no APK = padrão também.
       vpetFrame: resolveWidgetFrame(gameState.widgetFrame, effectiveOwnedFrames(gameState.widgetFramesOwned, paidWidgetFrames)),
+      // Z de sono do V-Pet (aceso = dormindo, apagado = acordado) e o cenário equipado atrás do pet. Chaves NOVAS: APK antigo ignora.
+      petSleeping: isSleeping,
+      vpetBg: widgetBgId(gameState.equippedBackground),
     }).catch(() => {});
   }, [gameState.evolutionStage, gameState.currentBranch, gameState.eggType,
       gameState.healthPoints, gameState.maxHealthPoints, gameState.energyPoints,
@@ -2871,7 +2889,7 @@ export default function App() {
       gameState.habitRhythms, gameState.totalXP, gameState.soulmonMeta, grove,
       gameState.hunger, gameState.tasks, gameState.activities, gameState.dayPlan,
       gameState.widgetFrame, gameState.widgetFramesOwned, paidWidgetFrames,
-      gameState.demoCharacterId, widgetSpriteUrl]);
+      gameState.demoCharacterId, widgetSpriteUrl, isSleeping, gameState.equippedBackground]);
 
   // Moldura do widget V-Pet LIBERADA NA EVOLUÇÃO (dono, 04/11/2026): quando o Soulmon já evoluiu e o elemento base dele ainda não
   // tem moldura na posse, ela entra. Idempotente (`grantFrameOnEvolution` devolve a mesma referência sem novidade); cobre também quem
@@ -5059,6 +5077,19 @@ export default function App() {
     // a compra em Emblemas decidia sobre um saldo velho.
   }, [gameState, missionProgress, refuseDemo]);
 
+  /** FEIRA DE VERDADE: o servidor já conferiu a oferta e o limite de 1; aqui só se debita o PREÇO DA OFERTA pelo caminho de sempre (`applyShopBuy`, Bit pago primeiro, recusa reconferida sobre o `prev`). */
+  const handleFeiraLojaBuy = useCallback((offer: FeiraLojaItem): boolean => {
+    if (isDemoMode(gameState)) { refuseDemo(); return false; }
+    if (applyFeiraLojaBuy(gameState, offer).refused) return false;
+    setGameState(prev => applyFeiraLojaBuy(prev, offer).state);
+    return true;
+  }, [gameState, refuseDemo, setGameState]);
+
+  /** FEIRA DE VERDADE (Hexsmith): o servidor cobrou o preço da oferta (sem ingredientes) e entregou o item; o save local o acompanha. */
+  const handleFeiraHexBought = useCallback((itemId: string, price: number, paid: boolean) => {
+    setGameState(prev => applyServerFeiraHex(prev, itemId, price, paid));
+  }, [setGameState]);
+
   /** Compra de MOLDURA com Bits, UM handler só (C3 Mercado + B3 Perfil/Torneio): mesma disciplina de `handleShopBuy`
    *  (recusa reconferida sobre o `prev`, em `utils/frameBuy.ts`). `equipar` (Perfil/Torneio, B3) já veste a moldura comprada;
    *  o Mercado só entrega a posse. Devolve se a compra passou. */
@@ -5162,7 +5193,9 @@ export default function App() {
         // O DESAFIO DO DIA: o inimigo que ele trouxe só vale HOJE (amanhã "escapou"). Descanso não é desafio.
         if (volta.evento && volta.evento.kind !== 'rest') recordFeiraDesafio(playerDayKey(new Date(), gameState.playerDayTz), volta.evento.k);
         // FEIRA DO CHEFE: o evento da volta entra na fila (um por vez). Ausente (Feira desligada / servidor antigo) = nada muda.
-        if (volta.evento && feiraEventoAbre(volta.evento) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraShownKey(volta.evento, playerDayKey(new Date(), gameState.playerDayTz))) setFeiraEvento(volta.evento);
+        // FEIRA DE VERDADE (rara, ~8% das voltas): quando existe, ELA é o que a volta mostra; o mistério segue na sala da Feira. Servidor/cliente antigo: sem `feiraLoja`, tudo como antes.
+        if (volta.feiraLoja && feiraLojaAbre(volta.feiraLoja) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraLojaShownKey(volta.feiraLoja)) setFeiraLoja(volta.feiraLoja);
+        else if (volta.evento && feiraEventoAbre(volta.evento) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraShownKey(volta.evento, playerDayKey(new Date(), gameState.playerDayTz))) setFeiraEvento(volta.evento);
         if (alive) encerrar();
       } catch (e) {
         const kind = (e as { kind?: string } | null)?.kind;
@@ -6626,7 +6659,7 @@ export default function App() {
     setGameState(prev => ({ ...prev, stepsConsent: 'declined' }));
   }, [setGameState]);
 
-  /** O convite curto (§277): grava a meta escolhida e SÓ DEPOIS pede a permissão (consentimento antes do diálogo do sistema). */
+  /** O convite curto (§283): grava a meta escolhida e SÓ DEPOIS pede a permissão (consentimento antes do diálogo do sistema). */
   const handleStepsInviteAccept = useCallback((goal: number) => {
     setGameState(prev => ({ ...prev, stepGoal: sanitizeStepGoal(goal) }));
     void handleStepsRequestPermission();
@@ -8434,6 +8467,14 @@ export default function App() {
                   equippedFrame: gameState.equippedFrame ?? null,
                   ownedFrames: gameState.ownedFrames ?? [],
                   onEquipFrame: handleEquipFrame,
+                  /* Ticket extra do Treino: só Bits GANHOS (`earnedBits`); o servidor já confirmou a compra, aqui só se cobra, reconferido sobre o `prev`. */
+                  earnedBits: earnedBits(gameState),
+                  onChargeTreinoTicket: () => {
+                    if (demo) { refuseDemo(); return false; }
+                    if (earnedBits(gameState) < TREINO_EXTRA_TICKET_BITS) return false;
+                    setGameState(prev => chargeTreinoTicket(prev));
+                    return true;
+                  },
                   petElement: petElementOf(gameState),
                   language,
                   emblems: gameState.emblems ?? 0,
@@ -9281,6 +9322,7 @@ export default function App() {
                 onChangeName: handleChangeUserName,
                 petName: soulmonDisplayName(gameState.soulmonMeta),
                 onChangePetName: handleChangePetName,
+                especial: { nome: gameState.especialNome ?? '', nomeAt: gameState.especialNomeAt, onSave: nome => setGameState(prev => (prev.especialNome === nome ? prev : { ...prev, especialNome: nome })) },
                 editHome: {
                   ownedFurniture: gameState.ownedFurniture ?? [],
                   equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
@@ -10077,6 +10119,32 @@ export default function App() {
         </PresentationSlot>
       )}
 
+      {/* 🎪 FEIRA DE VERDADE (rara): a volta encontrou uma feira — vendedor próprio, itens do Mercado com desconto, só Bits. Mesma vaga da fila do `feiraEvento`. */}
+      {interstitial === 'feiraEvento' && feiraLoja && saveId && (
+        <PresentationSlot id="feiraEvento" onFail={() => presentation.fail('feiraEvento')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
+          <FeiraLojaSheet
+            language={language}
+            saveId={saveId}
+            tz={gameState.playerDayTz}
+            loja={feiraLoja}
+            points={gameState.gamePoints ?? 0}
+            ownership={{
+              ownedBackgrounds: gameState.ownedBackgrounds ?? [],
+              equippedBackground: null,
+              ownedFurniture: gameState.ownedFurniture ?? [],
+              equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,
+              missionProgress,
+              missionClaimed: gameState.missionsClaimed,
+              petElement: petElementOf(gameState),
+            }}
+            getState={() => gameStateRef.current}
+            onBuyShop={handleFeiraLojaBuy}
+            onHexBought={handleFeiraHexBought}
+            onClose={() => setFeiraLoja(null)}
+          />
+        </PresentationSlot>
+      )}
+
       {/* ARRUMAR A PILHA — fila de cartas com quatro saídas grandes. Topo da
           fila de intersticiais: é a única aberta por toque do usuário. */}
       {interstitial === 'triage' && triageTasks && (
@@ -10105,7 +10173,7 @@ export default function App() {
         </PresentationSlot>
       )}
 
-      {/* O CONVITE CURTO DOS PASSOS (§277): sim/não + meta. Aceitar grava a meta e SÓ ENTÃO abre o diálogo do sistema. */}
+      {/* O CONVITE CURTO DOS PASSOS (§283): sim/não + meta. Aceitar grava a meta e SÓ ENTÃO abre o diálogo do sistema. */}
       {interstitial === 'stepsInvite' && (
         <PresentationSlot id="stepsInvite" onFail={() => presentation.fail('stepsInvite')} fallback={<ScreenSkeleton language={language} variant="overlay" />}>
           <StepsInviteModal

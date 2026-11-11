@@ -534,11 +534,23 @@ Cloudflare Workers (`workers/`), deploy **manual** (`cd workers && ../node_modul
 **Chamado por:** `guild.js` (`guildDonate`, `guildSlot`, vista), `_coop.js` (cartão e `coopLeave`).
 **Régua:** `functions/api/guild.casa.test.js`, `src/utils/guildRules.parity.test.ts`.
 
+### `functions/api/_oponenteEstagio.js`
+**Dono de:** a distribuição do estágio dos oponentes sorteados (10/11/2026, REGISTRO §282): `ESTAGIO_PESOS` (delta oponente−jogador: −2 3%, −1 25%, 0 40%, +1 25%, +2 7%; outro delta pesa `PESO_RESTO`) e o sorteio ponderado sem reposição usado por `pickSparOpponents` e `pickRankedOpponents`.
+**Exports:** `ESTAGIO_PESOS`, `PESO_RESTO`, `stageRankOf`, `pesoDoDelta`, `ordenarPorEstagio`.
+**Chamado por:** `_treino.js`, `_rankedPick.js`.
+**Régua:** `functions/api/_oponenteEstagio.test.js`.
+
 ### `functions/api/_rankedPick.js`
 **Dono de:** o SORTEIO RANQUEADO do Torneio (guilda-lancamento PR1, 11/10/2026): `opponents` devolve 3 oponentes aleatórios dentre os `RANKED_WINDOW` (6) mais próximos de `lifetimePoints` de quem pede — a mesma medida da faixa. O jogador não escolhe (isso é a Arena livre); o número nunca sai na resposta.
 **Exports:** `RANKED_WINDOW`, `RANKED_PICKS`, `pickRankedOpponents`.
 **Chamado por:** `community.js › opponents`.
 **Régua:** `functions/api/rankedPick.test.js`.
+
+### `functions/api/_treino.js`
+**Dono de:** o TREINO ("Sparring"), a 2ª aba do Torneio (10/11/2026): sorteio de 5 oponentes por faixa de VÍNCULO (nunca por ranking; `SPAR_BOND_RANGE` ±3, ampliando de `SPAR_RANGE_STEP` enquanto houver menos de `SPAR_PICKS`) e a Honra da vitória (1 a 2, teto `SPAR_HONOR_DAILY_CAP` = 20 por dia do JOGADOR, contador `sparHonor:<id>:<dia>` no KV). Não toca `rank:*`, placar, faixa nem `lifetimePoints`.
+**Exports:** `SPAR_PICKS`, `SPAR_BOND_RANGE`, `SPAR_RANGE_STEP`, `SPAR_SCAN_MAX`, `SPAR_HONOR_MIN`, `SPAR_HONOR_MAX`, `SPAR_HONOR_DAILY_CAP`, `SPAR_PENDING_TTL_S`, `pickSparOpponents`, `sparHonorRoll`, `grantSparHonor`, `sparHonorKey`, `sparPendingKey`, `sparDoneKey`; tickets (REGISTRO §280): `TREINO_TICKET_MATCHES` (20), `TREINO_EXTRA_TICKET_BITS` (30), `TREINO_EXTRA_TICKETS_MAX` (3), `sparTicketKey`, `sanitizeSparTicket`, `sparTicketStatus`, `readSparTicket`, `buySparTicket`, `spendSparMatch`.
+**Chamado por:** `community.js › sparOpponents / sparStart / sparMatch / sparBuyTicket`.
+**Régua:** `functions/api/community.treino.test.js` (inclui a paridade das constantes com `src/utils/currencies.ts`).
 
 ### `functions/api/_gates.js`
 **Dono de:** o ESPELHO de `src/utils/gates.ts` (a tabela de portões do Vínculo); `community.js` e `_bond.js` leem daqui.
@@ -824,3 +836,8 @@ Rota da jornada do foco: começar, pausar, retomar, receber e encerrar, com o re
 ### `functions/api/_usageRegistry.js` (09/11/2026 — docs/PLANO-METRICAS.md)
 
 Registros de nomes (telas, features, minigames) e faixas de tempo usados por `applyAggregate` em `metrics.js` para os eventos `time_spent`, `minigame_*`, `task_*`, `day_close` e `session_end`. Espelho de `src/utils/usageTime.ts` (paridade em `usageTime.test.ts`); só se acrescenta no fim.
+
+### `functions/api/_feiraLoja.js`
+**Dono de:** a FEIRA DE VERDADE (`PLANO-FEIRA-CHEFE.md` §12, REGISTRO §279): oferta rara na volta da Missão, sorteada e GRAVADA pelo servidor por (conta, dia); vendedores em `FEIRA_LOJA_VENDEDORES`.
+**Exports:** `FEIRA_LOJA_PCT` (8), `FEIRA_LOJA_CATALOGO`, `FEIRA_LOJA_VENDEDORES`, `haFeiraDeVerdade`, `sortearFeiraLoja`, `abrirFeiraLoja`, `feiraLojaDoDia`, `validarCompraFeiraLoja`, `marcarCompraFeiraLoja`, `feiraHexOnServer`, `diaDoJogadorValido`, `precoComDesconto`, `descontoDoItem`, `possuidosDoSave`.
+**Chamado por:** `guild.js` (`guildFeiraLoja*`, `guildRaidHit.feiraLoja`), `save.js` (`action=hexFair`).

@@ -4536,7 +4536,79 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Alternativa que perdeu:** manter a arte anterior à regra (caveira/engrenagem fora do tema do elemento). **Falsifica:** o dono reprovar a leitura dos novos em combate real.
 
-## §277 — Passos pelo Health Connect: convite curto depois do onboarding, contado com o app fechado (dono, 20/10/2026 por modal; execução 10/11/2026; AAB beta11, versionCode 31)
+
+## §280 — Widget V-Pet: Z de sono e fundo do cenário (10/11/2026)
+
+**Decisão (dono).** O V-Pet ganha um Z ao lado do bicho (apagado acordado, aceso dormindo) e o cenário equipado atrás dele. Z desenhado no bitmap por `petSleeping`; fundo por miniaturas WebP empacotadas (796 KB) escolhidas pelo id `vpetBg`, sem bitmap trafegando. Chaves novas, APK velho ignora. Detalhe: `docs/WIDGET-VPET-FUNDO-VIABILIDADE.md`.
+
+**Alternativa que perdeu:** bitmap do fundo enviado pelo app ou baixado do servidor (peso e rede para arte que já é fixa). **Falsifica:** o dono achar o véu escuro ruim ou o fundo poluir a leitura no aparelho; retorno = tirar a miniatura do APK (cai no LCD liso) sem mexer no bridge. Rollback do PR: reverter o commit.
+
+## §277 — Feira de verdade: a volta da Missão pode encontrar uma feira (10/11/2026)
+**Decidido:** chance rara (`FEIRA_LOJA_PCT` = 8% das voltas, só com a Feira ligada) de um vendedor com 4 a 6 itens do Mercado ou da Hexsmith, 10% a 50% de desconto, só Bits, sem ingredientes, 1 por item, oferta do dia gravada pelo servidor. Aditiva: não consome o Chefe/Desafio. **Alternativa que perdeu:** sorteio no cliente (reroll) e faixa 62/30/8 exata (mexeria em `TRAIL_PCT`). **Falsifica:** feira em >15% das voltas, ou preço final <1 Bit. Detalhes e catálogo de vendedores: `PLANO-FEIRA-CHEFE.md` §12.
+
+
+## §277 — Dormir dá +50% na regeneração de energia (10/11/2026, decisão do dono)
+
+**Decisão.** Com o Soulmon DORMINDO a velocidade de regeneração da energia é MULTIPLICADA por `SLEEP_ENERGY_REGEN_BONUS` = 1,5 (fator da fome × 1,5, prato do Restaurante incluso): bem alimentado 150%, mediano 75%, faminto continua 0% (a regra da fome não muda). Ponto único: `utils/hunger.ts` (`regenPoints(..., sleeping)`, `msUntilPoints`, `energyStatus.sleeping`, `setSleeping`). O estado de sono é gravado em `energyClock.sleep` (campo opcional dentro do relógio existente; leitura tolerante em `sanitizeEnergyClock`; ausente = acordado) quando o `isSleeping` real troca (`App.tsx`), e cada trecho é contado com o estado que valia nele, por timestamp (troca no meio da unidade não gera erro). **Limitação, sem inventar:** com o app fechado não há histórico do sono; o intervalo fechado conta com o estado registrado por último. O "dormindo para acordar" do dia (`dayWake`) é só apresentação e não conta. Timer, Guia, Ajuda e dica de energia refletem o fator pelas constantes. Servidor não espelha a regeneração (nada a paridar).
+
+**Alternativa que perdeu:** sem bônus de sono. **Falsifica:** o dono ver a energia encher "rápido demais" de manhã (reduzir o fator na constante) ou jogadores dormirem o pet o dia todo só pelo bônus. **Rollback:** reverter o PR; `energyClock.sleep` ignorado por versões antigas.
+
+## §282 — Luvas da Hexsmith: 4 ataques = alcance × efeito (10/11/2026, dono, ditado por voz)
+- **Decisão do dono:** as Luvas deixam de ter 2 tipos (`ranged`, `melee`) e passam a ter 4, cobrindo {distância, corpo a corpo} × {corte, splash}: **Magic / Magia** (distância + splash), **Ranged Slash / Corte à distância** (distância + corte), **Melee Slash / Corte corpo a corpo** (corpo a corpo + corte; o antigo "Close Range") e **Melee Smash / Esmagamento** (corpo a corpo + impacto/splash). PT: "Esmagamento" é o substantivo de golpe mais natural (a "Magia" é o nome que o dono deu ao à distância).
+- **Como funciona (nada de mecânica nova):** as Luvas continuam **só visuais** (regra do §216). O combate já tinha os dois eixos: forma (`StrikeForm`, `melee`/`ranged`) e acabamento (`impacto`, `corte`/`concussao`, `combate/golpeImpacto.ts`; no à distância, `cut` = corte, senão o orbe com splash). Antes as Luvas só fixavam a forma e o acabamento vinha do sorteio por elemento; agora o item fixa os dois no golpe BÁSICO (`strikeParts`, `hexIdentity` › `FighterStrike.impacto`, lido por `playerImpact` nas 5 telas de luta). Dano, energia, RNG e o teto de 5% (`COMBAT_BONUS_CAP`) intocados; custo igual ao das Luvas (5 fragmentos + 500 Bits ganhos).
+- **Migração (idempotente, leitura tolerante):** `luvas:ranged` → `luvas:magic` (o à distância antigo era projétil com splash); `luvas:melee` → `luvas:melee-slash` (o corpo a corpo antigo era "só o corte"). `migrateHexId` roda em `parseHexItem`/`sanitizeHexsmith`/forja/equipar, no app e no servidor (`_hexsmith.js`), duplicatas somem; contrato aditivo (o save antigo lê, o próximo save grava o id novo). A Feira passou a vender os 4 ids novos.
+- **Lacuna documentada:** o PvP publica só `fx` de elemento/escola/família; a forma/acabamento das Luvas do OPONENTE não é publicada (já era assim com `strike`), então o oponente é desenhado pelo sorteio normal. Publicar exigiria campo novo em `duelSide.fx` — fora do escopo mínimo.
+- **Alternativa que perdeu:** "Melee Crush" (Esmagamento no sentido de crush); perdeu para "Smash", que o dono já tinha dito e que contrasta com "Slash".
+- **Falsifica:** jogador esperar que Magic mude o dano/alcance real (a legenda diz "só visual"), ou querer que o oponente de PvP veja as Luvas (aí publicar o campo).
+
+## §281 — Aprimorar peça no Soulsmith custa também Bits, em curva crescente (10/11/2026, decisão do dono em modal)
+
+**Decisão.** Subir uma peça do Soulsmith (nível 1→15) passa a custar Bits GANHOS além dos materiais: `upgradeBitsCost(nível) = round(UPGRADE_BITS_BASE (20) × UPGRADE_BITS_FACTOR (1,25)^(nível − 1))` (`src/utils/forge.ts`, o módulo único), com **nível = o nível ATUAL da peça**: 1→2 custa 20, 5→6 custa 49, 10→11 custa 149, 14→15 custa 364; a peça inteira (1→15) soma 1.738 Bits. O ponto único é `upgradeRefusal`/`applyUpgrade` (`forgeActions.ts`): falta de Bits = recusa suave (`no-funds`; `not-earned` se o saldo vem de Crédito), vem ANTES de qualquer débito, então nada é consumido; só Bits ganhos pagam (`earnedBits`, regra de `bitsOrigin`, igual ao equipamento e ao refazer); sem desconto de Comércio (a fórmula é a do dono). O botão mostra o preço. O servidor não muda (só espelha tabelas de bônus; o gasto de Bits é do cliente).
+
+**Alternativa que perdeu:** nível = o nível-alvo (o 1º upgrade já custaria 25 e a base 20 nunca apareceria); também perdeu custo plano em Bits (não cresce com o poder da peça) e aceitar Bits de câmbio de Crédito (daria vantagem paga).
+
+**Falsifica:** o dono achar o Soulsmith caro demais para quem joga só o necessário (baixar `UPGRADE_BITS_FACTOR`) ou o teto diário de Bits dos minijogos (`MINIGAME_BITS_PER_DAY`) travar a escada (revisar `BALANCO-SOULSMITH.md`).
+
+## §280 — Tickets do Treino: 20 partidas com Honra por dia, ticket extra de 30 Bits sem Honra (10/11/2026, decisão do dono em modal)
+
+**Decisão.** A aba Treino (§279) passa a ter TICKETS por DIA DO JOGADOR: todo dia vem **1 ticket grátis = 20 partidas COM Honra** (`TREINO_TICKET_MATCHES`; a Honra segue 1–2 por vitória e o teto de 20 Honra/dia de `SPAR_HONOR_DAILY_CAP` continua valendo). Passou das 20, só jogando com **ticket extra: `TREINO_EXTRA_TICKET_BITS` = 30 Bits (só Bits GANHOS, regra de `bitsOrigin`; nunca Créditos) = +20 partidas SEM Honra**, no máximo **`TREINO_EXTRA_TICKETS_MAX` = 3 por dia** (escolha nossa, para não virar farm). O contador mora no SERVIDOR (`sparTicket:<id>:<dia>` = `{played, extra}`; `functions/api/_treino.js`), a ação `sparBuyTicket` conta e limita, e o app só cobra os 30 Bits (`chargeTreinoTicket`) DEPOIS do ok. Partida liquidada gasta 1 (desistir não gasta); `sparStart` recusa com 409 sem partida restante. Treino nunca pontua ranking. Sem campo novo no save. UI: "Partidas com Honra hoje x/20" e oferta suave do extra ao esgotar.
+
+**Alternativa que perdeu:** (a) tickets na ARENA livre (o pedido original falava em "Arena" e "teto de 20 partidas", que na verdade não existem lá: a Arena é ilimitada e não paga Honra; o limite de 5/dia com Honra é do Torneio ranqueado); (b) manter o teto de partidas só pela Honra (sem ticket); (c) contar o ticket no save do cliente (furável por localStorage; o Treino rende Honra, então o contador fica no servidor).
+
+**Falsifica:** o dono ver o Treino virando a fonte dominante de Honra (baixar `TREINO_TICKET_MATCHES`) ou ninguém comprar o extra (preço alto/baixo demais, ajustar `TREINO_EXTRA_TICKET_BITS`); sinal de farm via extras (baixar `TREINO_EXTRA_TICKETS_MAX`).
+
+## §282 — Oponentes com estágio variado, ícone de estágio e mix de ataques equilibrado (10/11/2026, pedido do dono por voz)
+
+**Pedido.** (1) Onde aparece o NOME do estágio do oponente, mostrar o ÍCONE (aria-label com o nome). (2) Dono é Ultimate (Transcendente) e só encontra Champions. (3) Só via ranged de corte; nunca ranged de splash; melee de splash raro.
+
+**Causas achadas.** (2) `SIM_FORMA_MAX = 'champion'` (§235) travava os simulados (142 Rookies + 18 Champions em 10/11); a seleção do Treino era só por Vínculo e a da ranqueada só por pontos, sem olhar estágio. (3) Os elementos FORA de `ELEMENT_STRIKE_FORM` (combinados/curados, ~640 do elenco) caíam todos em `ranged`: elenco da Masmorra/Fenda = 88% à distância; Arena (17 base) = 65% à distância.
+
+**Como fica.**
+- **Estágio:** `functions/api/_oponenteEstagio.js` é o dono ÚNICO da distribuição (`ESTAGIO_PESOS`: delta oponente−jogador −2 3%, −1 25%, 0 40%, +1 25%, +2 7%; outro delta só entra se faltar candidato). Sorteio ponderado sem reposição no Treino (`pickSparOpponents`) e na ranqueada (`pickRankedOpponents`, dentro da janela de pontos, que continua 4). O servidor decide; nenhum estágio/ranking novo sai na resposta. `SIM_FORMA_MAX` agora `'ultra'` (sem teto: a curva por faixa leva os simulados a Ultimate/Mega/Ultra; em 25/11 ~55 Ultimates). Rollback: voltar `'champion'`.
+- **Arte (PENDÊNCIA):** nenhuma arte gerada. O simulado reaproveita o sprite que já tem (`sim:sprite:<id>`) e `enfileirarForma` NÃO gera acima de `FORMA_GERADA_MAX = 'champion'`. Falta arte de Ultimate/Mega/Ultra por simulado.
+- **Ícone:** `EstagioMarca` (`src/components/ui`) no lugar do texto do estágio nas listas do Torneio (ranqueada e Treino); `role="img"` + `aria-label` + `title` com o nome do jogo (Desperto/Ascendente/Transcendente/Apoteose/Zênite). Na luta (`BattleStage`) o ícone já existia.
+- **Mix de ataques (só visual, só inimigo):** elemento fora da tabela passa a sortear `ranged`/`melee` estável por (elemento, papel), `FORMA_MELEE_PCT = 50`; `foeStrikeForm` põe 6 básicas de elementos base (água, vida, som, ar, luz, tempo) em corpo a corpo NO INIMIGO. Jogador, 5 iniciais e PvP (`fighterIdentity`) não mudam; dano, 5% de bônus e `_combate.js` intactos. Antes → depois (ranged-corte / ranged-splash / melee-corte / melee-splash): elenco 45,1/43,2/5,4/6,2 → 25,2/25,3/25,3/24,2; Arena (17 base) 35/30/15/20 → 28,8/21,3/21,3/28,8. Teste `src/utils/combate/mixAtaques.test.ts` (tolerância 18–32%).
+
+**Alternativa que perdeu:** mexer na tabela `ELEMENT_STRIKE_FORM` inteira (afetaria iniciais e PvP) e gerar arte nova para as formas altas.
+**Falsifica:** o dono ainda ver um quadrante raro (ajusta-se `FOE_MELEE_BASICA`/`FORMA_MELEE_PCT`) ou achar Mega demais para quem é Ultimate (ajusta-se `ESTAGIO_PESOS`).
+
+## §279 — Torneio ganha a aba Treino (Sparring), sem ranking e com pouca Honra (10/11/2026, decisão do dono em modal)
+
+**Decisão.** O Torneio passa a ter DUAS abas: **Ranqueada** (como era) e **Treino** (EN *Sparring*): luta PvP contra outros jogadores que NÃO ranqueia (placar, rank, faixa, season e `lifetimePoints` intocados; sem cota de partidas; derrota sem castigo) e rende **1 a 2 de Honra por vitória, teto de 20 por dia do jogador**, contado e decidido no servidor. Oponentes: 5 sorteados num pool grande por faixa de **Vínculo** (±3, ampliando se houver menos de 5), nunca por ranking; **refresh ilimitado** (o servidor sorteia a cada pedido). Implementação: `functions/api/_treino.js` + ações `sparOpponents/sparStart/sparMatch` em `community.js`; UI em `TournamentPage`. Manual 02 §53 › "O Treino".
+
+**Alternativa que perdeu:** reaproveitar a ranqueada com um parâmetro de modo (`match` com `practice:true`): arriscava o treino mexer no `rank:*`/`lifetimePoints` por um `if` esquecido e misturava a cota de partidas; ações próprias e KV próprio (`spar:`, `sparHonor:`) isolam o treino por construção (há teste de que nenhuma chave `rank:*` nasce). Também perdeu: oponentes por ranking no Treino (leitura de comparação, e o dono quis pool amplo) e refresh pago ou limitado (o Treino é descompressão, sem custo).
+
+**Falsifica:** a Honra do Treino virar o jeito dominante de farmar Honra (20/dia somando ao teto de ranqueada fazer o dono achar muito/pouco — ajustar `SPAR_HONOR_DAILY_CAP`); o pool por Vínculo devolver poucos humanos (o dono ver sempre os mesmos simulados — ajustar `SPAR_BOND_RANGE`/`SPAR_SCAN_MAX`).
+
+## §278 — A área "Hall" passa a se chamar Citadel / Cidadela (10/11/2026, dono)
+- **Decisão do dono:** o prédio/distrito "Hall" passa a se chamar **Citadel** (EN) / **Cidadela** (PT). Vale só para o texto que o jogador lê: o rótulo da área no Mapa, na barra e nos avisos (`areaLabel` em `navigation.ts`) e o nome em inglês do avatar do anfitrião (`hall`, "Citadel greeter").
+- **Fora de escopo de propósito:** ids e chaves internas (`hall`, `hall:feira`, lote `hall`, `HALL_BG`, nomes de arquivo de asset, chaves de save/storage, rotas) e os sentidos que não são a área: **Clan Hall / Salão do Clã** (o prédio administrativo do clã), **Game Hall / Salão de Jogos**, "Golden Hall", "Ruined Hall" e as trilhas "Stone Hall ...". Trocar id quebraria save e cache.
+- **Alternativa que perdeu:** manter "Hall" (colide com Clan Hall/Game Hall) e "Skyhall".
+- **O que falsificaria:** o jogador confundir a Cidadela com o Salão do Clã dentro dela, ou o rótulo "Cidadela" estourar o teto do rótulo do Mapa em 360 px (a régua `navRotulo.contract.test.ts` mede).
+
+**Adendo ao §279 (10/11/2026, dono):** a feira ganhou os vendedores de materiais (15 Bits), pratos prontos (Bits do Restaurante), poções de elemento (60 Bits, Vitra) e equipamentos de Honra em Bits (1 Honra = 10 Bits, pergunta ao dono); a saída especial (passeio melhor) fica com peso 0 por exigir refatoração. Detalhe em `PLANO-FEIRA-CHEFE.md` §12.
+
+## §283 — Passos pelo Health Connect: convite curto depois do onboarding, contado com o app fechado (dono, 20/10/2026 por modal; execução 10/11/2026; AAB beta11, versionCode 31)
 
 **Decisão (dono).** (1) QUANDO pedir: logo depois da apresentação do Soulmon, uma pergunta curta sim/não ("Quer usar a contagem de passos? Ao ligar, você ativa uma missão bônus"), com a meta escolhível; quem recusa nunca é cobrado e a recusa é definitiva (`stepsConsent: 'declined'`). (2) COMO contar com o app fechado: **Health Connect**. (3) RECOMPENSA: a do §106 (pesa 1 hábito diário, NÃO conta para dia completo, passos nunca pontuam sozinhos, meta TRAVADA no dia, só quem tem sensor e permite). O aviso do app e o diálogo do Health Connect são UM fluxo: o "sim" do convite abre o diálogo do sistema.
 **REVOGA, em parte, a linha vermelha "Nunca… Google Fit" do `CLAUDE.md`** (a intenção era não ler dado de saúde de fora): Health Connect é outra API do Android e passa a ser permitido, só com opt-in, só `READ_STEPS`, só o total do dia. Google Fit em si segue proibido. Emenda o cabeçalho de `src/utils/steps.ts` ("por que não Health Connect") e o §2.6 do `PLAY-DATA-SAFETY`.

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
- * Passos pelo Health Connect (REGISTRO §277): fonte preferida, com o contador do aparelho de reserva e feature detect para o APK antigo
+ * Passos pelo Health Connect (REGISTRO §283): fonte preferida, com o contador do aparelho de reserva e feature detect para o APK antigo
  * (sem o plugin nativo `SoulmonSteps`). O Capacitor e os dois plugins são simulados: o que se prova aqui é a ESCOLHA da fonte.
  */
 const { cap, hc, sensor } = vi.hoisted(() => ({

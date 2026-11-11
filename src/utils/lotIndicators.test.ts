@@ -3,7 +3,7 @@ import { forgeReadySlots, lotIndicators, talentPointsFree } from './lotIndicator
 import { xpForLevel } from './bond';
 
 const base = {
-  totalXP: xpForLevel(6),
+  gamePoints: 100000, totalXP: xpForLevel(6),
   equipment: { owned: ['eq-nucleo-t1'], equipped: { nucleo: 'eq-nucleo-t1' }, fragments: 0 },
   forge: { v: 2, levels: { 'eq-nucleo-t1': 1 }, picks: {} },
 };

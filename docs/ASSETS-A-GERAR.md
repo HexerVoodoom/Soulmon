@@ -1112,3 +1112,6 @@ Pintados (padrão 23/09), alfa real, 256² em `E:/Soulmon-assets/pocoes-chips/{p
 - **Ordem sugerida:** primeiro um piloto (fogo) para o dono aprovar a linguagem, depois os 19 em lote; os 8 elementos mais comuns primeiro (fogo, agua, terra, ar, vida, luz, sombra, eletricidade).
 - **Prompt-base:** `Recreate this exact pixel-art handheld virtual-pet casing at 576x384, keeping the screen opening (the empty rectangular LCD window) pixel-for-pixel identical, but restyle only the shell material, colour and border ornaments for the element <ELEMENTO>: <motivo do elemento>. Real transparent background, no text, no gears.`
 - **Instalação:** copiar para `drawable-nodpi`, rodar a régua do widget (`widgetFrames.test.ts`), gerar APK novo e só então ativar os SKUs no Play Console. Tags no registro: `tipo:ui`, `origem:chatgpt`, `uso:widget-moldura`, `peca:moldura_vpet_<id>`.
+
+## Feira de verdade (10/11/2026): vendedores
+Nenhuma arte nova: todos reusam NPCs existentes. A `vitra` (#381) é a Vitra, a Soulsmith (`npc-industrial-espirito-forno-vidraceiro.png`). Pendente: nomes finais dos vendedores (hoje genéricos em `feiraLoja.ts`, exceto a Vitra).

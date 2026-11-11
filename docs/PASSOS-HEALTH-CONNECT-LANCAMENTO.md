@@ -1,6 +1,6 @@
 # Passos pelo Health Connect: o que fazer para lançar
 
-> 10/11/2026. Decisão: `REGISTRO-DE-DECISOES.md` §277. PR `feat/passos-health-connect`, **não mergeado**. Este é o roteiro de quem sobe o AAB beta11 (versionCode 31, junto com as molduras do widget). Não rode `build-release.ps1` a partir daqui.
+> 10/11/2026. Decisão: `REGISTRO-DE-DECISOES.md` §283. PR `feat/passos-health-connect`, **não mergeado**. Este é o roteiro de quem sobe o AAB beta11 (versionCode 31, junto com as molduras do widget). Não rode `build-release.ps1` a partir daqui.
 
 ## 1. O que mudou no app
 

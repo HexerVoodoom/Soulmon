@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import { useBackLayer } from '../../utils/backStack';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { Icon } from '../ui/Icon';
+import { checkBoxStyle, CheckMark } from '../pixel/RitualPanel';
 import { sheetCard, sheetCardTitle } from '../nav/sheetKit';
 import type { Language } from '../../utils/i18n';
 import { FOCUS_ENVIRONMENTS, isFocusEnvironmentId, type FocusEnvironmentId } from '../../utils/focusExpedition';
@@ -173,7 +174,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
         {listOpen && plan.map(item => {
           const done = tasks.some(t => t.id === item.id && t.completed);
           return <button key={item.id} type="button" role="checkbox" aria-checked={done} disabled={done} data-focus-task={item.id} onClick={() => onCompleteTask(item.id)} style={{ ...sm2Button(done ? 'quiet' : 'outline'), justifyContent: 'flex-start', gap: 8, minHeight: 44, textAlign: 'left' }}>
-            <Icon name={done ? 'check_circle' : 'radio_button_unchecked'} size={20} tone="inherit" /><span style={{ overflowWrap: 'anywhere', textDecoration: done ? 'line-through' : 'none' }}>{item.name}</span>
+            <span aria-hidden="true" className={done ? 'sm2-check-halo' : undefined} style={checkBoxStyle({ checked: done })}>{done && <CheckMark />}</span><span style={{ overflowWrap: 'anywhere', textDecoration: done ? 'line-through' : 'none' }}>{item.name}</span>
           </button>;
         })}
       </section>}

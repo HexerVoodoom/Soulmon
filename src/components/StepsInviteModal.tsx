@@ -1,5 +1,5 @@
 /**
- * O CONVITE CURTO DOS PASSOS (REGISTRO §277; `utils/stepsInvite.ts`).
+ * O CONVITE CURTO DOS PASSOS (REGISTRO §283; `utils/stepsInvite.ts`).
  *
  * Intersticial da fila central (`stepsInvite`). Pergunta, em poucas linhas, se a pessoa quer a contagem de passos e deixa escolher a
  * meta; aceitar ativa a missão bônus. As MESMAS três regras do `StepsCard` valem aqui:

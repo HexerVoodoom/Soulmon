@@ -891,6 +891,9 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/combate/combate.test.ts` (gates 2, 3, 4, 7 e 8) e `combate.v11.test.ts` (regressão 300/300, fightSteps ≡ fight, golpe normalizado, sorte por estágio, ganchos).
 **HP INTEIRO (30/10/2026, REGISTRO §192, espelhado em `functions/api/_combate.js`):** o núcleo ainda raciocina em frações 0..1, mas todo lutador tem `hpPoints(hp)` pontos inteiros e TODA mudança de vida é arredondada a eles: `HP_POINTS_PER_HP` (30) · `hpPoints(hp)` (= max(1, round(hp·30)); o máximo que as telas mostram) · `damagePoints(frac, pts)` (golpe que causa dano tira no mínimo 1 ponto; 0 se não causa) · `startPoints(frac, pts)` (início em pontos inteiros, ≥ 1; acima de 1 é permitido — o chefe da Feira). `FightEvent` carrega os pontos que saíram da BARRA; cura e escudo também são pontos inteiros; 0 ponto = nocaute na hora.
 
+### `src/utils/combate/mixAtaques.test.ts`
+**Dono de:** a régua do mix {à distância, corpo a corpo} × {corte, splash} dos inimigos (REGISTRO §282): as 4 combinações entre 18% e 32% no elenco da Masmorra/Fenda e nas 17 criaturas da Arena (`foeStrikeForm`, `FORMA_MELEE_PCT` em `combatFx.ts`). Só teste.
+
 ### `src/utils/combate/golpeImpacto.ts`
 **Dono de:** CORTE × CONCUSSÃO do golpe corpo a corpo (dono, 05/11/2026), só visual. Função pura por lutador: palavra-chave do nome de inimigo do bestiário, senão sorteio estável (FNV-1a de `elemento|chave`) com o peso de corte por elemento; derivado herda a média dos componentes. Não toca dano, sementes nem RNG do combate. Regra e tabela: `docs/REGRA-CORTE-CONCUSSAO.md`; decisão: REGISTRO §227.
 **Exports:**
@@ -1646,6 +1649,12 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Exports:** `pushBackLayer(close)` — registra e devolve a função que tira da pilha; `closeTopBackLayer()` — fecha a do topo, `true` se havia uma; `hasBackLayer()`; `useBackLayer(active, close)` — hook: enquanto `active`, o voltar chama `close`.
 **Chamado por:** `src/App.tsx` e `src/utils/androidBack.ts` (`closeTopBackLayer`), `src/components/nav/AreaSheet.tsx` e `src/components/nav/AreaView.tsx` (`useBackLayer`).
 **Régua:** nenhuma direta (`ls src/utils/backStack*.test.ts` vazio) — indireta via `src/utils/androidBack.test.ts`.
+
+### `src/utils/modalDepth.ts`
+**Dono de:** o esmaecimento do VOLTAR quando há modal aberto por cima (10/11/2026). A profundidade é DERIVADA do DOM (`[aria-modal="true"]`) por um único `MutationObserver`, não por contador: modal que monta/desmonta sem cleanup não vaza. O voltar de baixo fica `disabled` + `data-modal-dimmed` (opacidade .35, sem toque); o voltar de dentro do próprio modal só esmaece se OUTRO modal abrir sobre ele.
+**Exports:** `modalsAbove(el?)`, `modalDepth()`, `useBackDimmed(ref)` — hook.
+**Chamado por:** `src/components/nav/AreaTopBar.tsx` e `src/components/ui/BackCircleButton.tsx`.
+**Régua:** `src/utils/modalDepth.render.test.tsx` (0/1/2 modais, reabilita, sem vazamento).
 
 ### `src/utils/playAreaLots.ts`
 
@@ -3908,7 +3917,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 **Regra de negócio:** escolha gravada manda; sem escolha, ligado só com permissão já concedida — nunca pede permissão na abertura.
 
 ### `src/utils/stepsInvite.ts`
-**Dono de:** QUANDO aparece o convite curto dos passos (REGISTRO §277): só com contador no aparelho, `stepsConsent` ausente e onboarding concluído.
+**Dono de:** QUANDO aparece o convite curto dos passos (REGISTRO §283): só com contador no aparelho, `stepsConsent` ausente e onboarding concluído.
 **Exports:** `shouldShowStepsInvite({ available, consent, onboarded })`.
 **Chamado por:** `src/App.tsx`
 **Régua:** `src/utils/stepsInvite.test.ts`.
@@ -4396,8 +4405,8 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 **Dono de:** o desgarrado de JOGADOR nos encontros (REGISTRO §213 emenda): chance determinística de 1/40 por chave de encontro (`strayPlayerForEncounter`), o pool da sessão (`loadStrayPool`), o hook `useStrayPlayerEncounters` (arte/rótulo por cima do inimigo) e o receptor do "visto" registrado pelo App. Nunca no Torneio. **Chamado por:** `DungeonGame.tsx`, `RogueFight.tsx`, `Match3Game.tsx`, `ArenaGame.tsx`, `App.tsx`. **Régua:** `strayPlayerEncounter.test.ts`.
 
 ### `src/utils/hexsmith.ts`
-**Dono de:** as regras da Hexsmith (Forja). Cinco slots (`HEX_SLOTS`: coroa = família do especial, amuleto = elemento do especial, garra = elemento do básico, couraça = elemento de defesa, luvas = alcance só visual); ids `slot:valor` (`parseHexItem`, `hexValuesOf`); custo `hexCost`/`HEX_COSTS` (poções do próprio elemento ou fragmentos + Bits GANHOS); `hexForgeRefusal`/`forgeHexItem`/`equipHexItem`/`unequipHexSlot` (posse só cresce, um por slot); `applyServerHexForge` (aplica no estado local a forja que o servidor confirmou, §216: a tela forja por `cloudSave.ts` › `cloudHexForge`, nunca localmente); `sanitizeHexsmith`; e a leitura para o combate: `hexOverrides`, `hexFamily`, `hexArenaElements` (base dominante), `hexIdentity` (visual). Espelho: `functions/api/_hexsmith.js` (`hexsmith.parity.test.js`).
-**Exports:** tipos `HexSlot` (`coroa`/`amuleto`/`garra`/`couraca`/`luvas`), `HexStrike` (`ranged`/`melee`), `HexCost`, `HexsmithState` (`owned`, `equipped`), `HexForgeState`, `HexRefusal` (`invalid`/`owned`/`potions`/`bits`/`fragments`), `HexOverrides` · constantes `HEX_SLOTS`, `HEX_ELEMENT_SLOTS` (amuleto, garra, couraça), `HEX_STRIKES`, `HEX_COSTS` (elemento: 3 poções + 1500 Bits; coroa: 2000 Bits + 20 fragmentos; luvas: 500 Bits + 5 fragmentos — números PADRÃO, o dono ajusta), `EMPTY_HEXSMITH`, `HEX_MAX_OWNED` (639) · `hexItemId`, `parseHexItem`, `isHexItem`, `hexValuesOf`, `hexCost`, `sanitizeHexsmith`, `hexForgeRefusal` (a ordem é a da tela: poções, fragmentos, Bits), `forgeHexItem` (recusa = o MESMO objeto), `applyServerHexForge(prev, id, paid)`, `equipHexItem`, `unequipHexSlot`, `hexOverrides`, `hexFamily`, `hexArenaElements`, `hexIdentity`. Estado persistido: `GameState.hexsmith = { owned, equipped }`. O Bit que veio de Crédito não paga (`bitsOrigin.ts › earnedBits`). Não dá % de atributo (teto de 5% de `combate/bonus.ts` intocado). Módulo puro.
+**Dono de:** as regras da Hexsmith (Forja). Cinco slots (`HEX_SLOTS`: coroa = família do especial, amuleto = elemento do especial, garra = elemento do básico, couraça = elemento de defesa, luvas = tipo do ataque básico, só visual); ids `slot:valor` (`parseHexItem`, `hexValuesOf`); custo `hexCost`/`HEX_COSTS` (poções do próprio elemento ou fragmentos + Bits GANHOS); `hexForgeRefusal`/`forgeHexItem`/`equipHexItem`/`unequipHexSlot` (posse só cresce, um por slot); `applyServerHexForge` (aplica no estado local a forja que o servidor confirmou, §216: a tela forja por `cloudSave.ts` › `cloudHexForge`, nunca localmente); `sanitizeHexsmith`; e a leitura para o combate: `hexOverrides`, `hexFamily`, `hexArenaElements` (base dominante), `hexIdentity` (visual). Espelho: `functions/api/_hexsmith.js` (`hexsmith.parity.test.js`).
+**Exports:** tipos `HexSlot` (`coroa`/`amuleto`/`garra`/`couraca`/`luvas`), `HexStrike` (`magic`/`ranged-slash`/`melee-slash`/`melee-smash`; legado `ranged`/`melee` migra por `migrateHexId`), `HexCost`, `HexsmithState` (`owned`, `equipped`), `HexForgeState`, `HexRefusal` (`invalid`/`owned`/`potions`/`bits`/`fragments`), `HexOverrides` · constantes `HEX_SLOTS`, `HEX_ELEMENT_SLOTS` (amuleto, garra, couraça), `HEX_STRIKES`, `HEX_COSTS` (elemento: 3 poções + 1500 Bits; coroa: 2000 Bits + 20 fragmentos; luvas: 500 Bits + 5 fragmentos — números PADRÃO, o dono ajusta), `EMPTY_HEXSMITH`, `HEX_MAX_OWNED` (639) · `hexItemId`, `parseHexItem`, `isHexItem`, `hexValuesOf`, `hexCost`, `migrateHexId`, `strikeParts`, `sanitizeHexsmith`, `hexForgeRefusal` (a ordem é a da tela: poções, fragmentos, Bits), `forgeHexItem` (recusa = o MESMO objeto), `applyServerHexForge(prev, id, paid)`, `equipHexItem`, `unequipHexSlot`, `hexOverrides`, `hexFamily`, `hexArenaElements`, `hexIdentity`. Estado persistido: `GameState.hexsmith = { owned, equipped }`. O Bit que veio de Crédito não paga (`bitsOrigin.ts › earnedBits`). Não dá % de atributo (teto de 5% de `combate/bonus.ts` intocado). Módulo puro.
 **Chamado por:** `src/contexts/GameStateContext.tsx`, `src/hooks/useHexOverrides.ts`, `src/components/hex/HexsmithSheet.tsx`, `src/components/hex/HexSlotGlyph.tsx`, `src/components/ArenaGame.tsx`, `src/components/DungeonGame.tsx`, `src/components/RogueFight.tsx`, `src/components/NightmareBattle.tsx`, `src/components/TournamentPage.tsx`, `src/components/guild/GroveRaidFight.tsx`, `src/components/GuideModal.tsx`, `src/utils/hexsmithCopy.ts`, `src/assets/soulmon/hex/index.ts`.
 **Régua:** `src/utils/hexsmith.test.ts`.
 
@@ -4448,6 +4457,10 @@ Regra pura da jornada do foco: baús pela seed, relógio sem pausas, loot por ch
 
 O quadro da Oficina: critério de cada chave (`keyEarned`), chaves da sessão no aparelho e o crédito idempotente dos recibos da jornada no save (`applyJourneyGrants`, campo `journeyCredited`); e o cliente de `/api/focus-journey`. Decisão: REGISTRO §247. **Régua:** `focusBoard.test.ts`.
 
+### `src/utils/treinoTickets.ts` (10/11/2026 — REGISTRO §280)
+
+Tickets do Treino (aba Sparring do Torneio): 20 partidas COM Honra grátis por dia do jogador (`TREINO_TICKET_MATCHES`) e ticket extra de 30 Bits ganhos (`TREINO_EXTRA_TICKET_BITS`) = +20 sem Honra, máx. 3/dia (`TREINO_EXTRA_TICKETS_MAX`). O contador mora no servidor; aqui ficam as constantes espelhadas, `sanitizeTreinoTickets`, `treinoBuyRefusal` (`max-extras`/`no-bits`) e `chargeTreinoTicket` (cobra só Bits ganhos, reconfere sobre o `prev`). Chamado por `App.tsx` e `TournamentPage`. Régua: `treinoTickets.test.ts` e `community.treino.tickets.test.js`.
+
 ### `src/utils/funTickets.ts` (09/11/2026 — REGISTRO §270)
 
 Tickets dos minijogos do Salão (substituem a sessão de `funSession.ts`). Funções PURAS: `buyFunTickets` (1 energia → lote de 3; só com ≤2 vivos; teto 5), `startFunRound` (gasta 1 ticket do lote que vence antes), `funTicketStatus`, `ticketCount`, `nextExpiryMs`, `sanitizeFunTickets`. Validade 24 h por lote. Espelho no servidor: `functions/api/_funTickets.js` (paridade em `funTickets.parity.test.js`). Chamado por `App.tsx` e `AreaView.tsx`.
@@ -4483,3 +4496,7 @@ Redutores puros do modal de formas, usados pelo `App` e pelo teste de tela: `equ
 ### `src/utils/elementoDescritores.data.ts` (10/11/2026)
 
 Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglês), derivada dos prompts-fonte dos assets: os 20 elementos base de `docs/ASSETS-A-GERAR.md` (motivo da moldura + paleta) e combinados do `registro.jsonl` (FX por elemento). Elemento sem prompt-fonte não está na tabela (o prompt leva só o nome). Lida por `pistasVisuaisDoElemento` (`elementoCombinado.ts`); o verde é permitido e o fundo chroma troca para magenta (`escolherChroma`). Régua: `elementoDescritores.test.ts`.
+
+### `src/utils/feiraLoja.ts`
+**Dono de:** o lado CLIENTE da Feira de verdade: tipos, `sanitizeFeiraLoja`, `feiraLojaAbre`, `feiraLojaShownKey`, compra local ao preço da oferta (`applyFeiraLojaBuy`) e entrega da Hexsmith (`applyServerFeiraHex`).
+**Chamado por:** `utils/community.ts`, `App.tsx`, `components/guild/FeiraLojaSheet.tsx`.

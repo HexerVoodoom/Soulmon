@@ -430,7 +430,12 @@ decidida pela FOME (`src/utils/hunger.ts`): bem alimentado (fome ≥ 60) 100%,
 mediano (≥ 20) 50%, faminto 0% (interrompida). A fome cai de 100 a 0 em 14 h e só
 sobe comendo; fome nunca tira coração, Bits nem bloqueia outra coisa. O progresso
 até a próxima unidade fica no save (`energyClock`): fechar o app não reinicia o
-timer. `getMaxEnergyForStage(stage) = FORM_REQUIREMENTS[nível].required ×
+timer. **Dormindo: ×1,5 (REGISTRO §279).** Com o Soulmon dormindo (o `isSleeping` real: gesto
+manual ou sono automático) a velocidade efetiva é MULTIPLICADA por `SLEEP_ENERGY_REGEN_BONUS`
+(1,5): bem alimentado 150%, mediano 75%, faminto continua 0%. O estado de sono vive em
+`energyClock.sleep` e é gravado por `setSleeping` na troca; o trecho anterior é contado com
+o estado antigo (por timestamp). Com o app fechado vale o sono registrado por último; o
+"dormindo para acordar" do dia (`dayWake`) é só apresentação e não conta. `getMaxEnergyForStage(stage) = FORM_REQUIREMENTS[nível].required ×
 ENERGY_HEADROOM` (`src/types/progression.ts`) — rookie 8, champion 10, ultimate
 10, mega 12, ultra 12. `computeDailyReset` zera a energia em toda virada (o
 relógio e a fome seguem). A energia serve para descer a Fenda (1 por camada, sem limite
@@ -3807,7 +3812,7 @@ módulo quando o Dex de Sonhos ganhou data.
 o app lê o total do dia para **confirmar** um hábito de saúde que a pessoa já
 marcou e mover a missão especial de passos — passo nunca pontua sozinho.
 
-**Fonte (REGISTRO §277, 10/11/2026).** Preferida: o **Health Connect** do Android
+**Fonte (REGISTRO §283, 10/11/2026).** Preferida: o **Health Connect** do Android
 (plugin nativo `SoulmonSteps`, só `READ_STEPS`, só o total de hoje; continua somando
 com o app FECHADO). Reserva: o contador do aparelho (`@capgo/capacitor-pedometer`,
 só com o app vivo) para aparelho sem Health Connect ou quem já tinha só o sensor.
@@ -3856,7 +3861,7 @@ leituras caóticas)" e o bloco "degradação graciosa na web").
 
 **Decisão.** [`docs/PLANO-TAREFAS.md`](../PLANO-TAREFAS.md) Parte 3b dizia "o sensor
 certo é o mais burro" (nem Health Connect, nem Google Fit). ⚰️ **A parte do Health Connect foi
-revogada pelo dono em 20/10/2026** (REGISTRO §277): Health Connect é a fonte preferida, só com
+revogada pelo dono em 20/10/2026** (REGISTRO §283): Health Connect é a fonte preferida, só com
 opt-in, só `READ_STEPS`. Google Fit segue proibido (cadastros novos fechados desde 05/2024, APIs até o fim de 2026).
 [`docs/REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §5.8 registra que
 `steps` e `moodLog` são declarados no Data Safety.
@@ -4939,6 +4944,40 @@ quem chama é um cron e cron repete.
 A Honra do jogador vem do CLIENTE (`onEarnEmblems` com `EMBLEMS_PER_WIN` /
 `EMBLEMS_PER_LOSS`), não do servidor — ver [§46](#moedas).
 
+### Estágio e ataques dos oponentes (10/11/2026, REGISTRO §282)
+
+O oponente sorteado do **Treino** e da **Ranqueada** tem estágio próximo e variado ao do jogador: peso por delta de estágio em `ESTAGIO_PESOS` (`functions/api/_oponenteEstagio.js`: −1 25%, igual 40%, +1 25%, +2 7%, −2 3%). Os simulados não têm mais teto Champion (`SIM_FORMA_MAX = 'ultra'`; sprite reaproveitado, sem arte nova de forma alta). Nas listas do Torneio o estágio é um **ícone** (`EstagioMarca`, `aria-label` com o nome do jogo). O mix de ataques dos inimigos ({à distância, corpo a corpo} × {corte, splash}) é ~25% cada (`foeStrikeForm`, `FORMA_MELEE_PCT`), só visual.
+
+### O Treino (Sparring, a 2ª aba do Torneio — 10/11/2026)
+
+O Torneio tem **duas abas** (só aparecem com o Vínculo mínimo): **Ranqueada** (tudo o que está acima, intocado) e **Treino**
+(EN *Sparring*): luta PvP contra outros jogadores, parecida com a ranqueada, que **NÃO ranqueia** — não mexe no placar, no rank, nas
+faixas, na season nem no `lifetimePoints`, não gasta a cota de partidas do dia e perder não custa nada (sem coração, sem castigo, sem Vínculo).
+
+```
+GET  sparOpponents ?id=  → 5 oponentes (functions/api/_treino.js › pickSparOpponents); cada GET sorteia de novo (REFRESH ILIMITADO, sem custo nem teto)
+POST sparStart {id, opponentId, zone?, off?} → semente do SERVIDOR + ficha dos dois lados do SAVE, congeladas em spar:<id> (KV, 1 h); recusa 409 sem ticket
+POST sparMatch {id, opponentId, taps?, forfeit?, seed?, zone?, off?} → simulateDuel no servidor; vitória rende Honra; reenvio idempotente (sparDone:<id>)
+```
+
+- **Oponentes por faixa de Vínculo, não por ranking:** pool = perfis com PvP ligado e visíveis (os simulados `sim_*` entram como na ranqueada),
+  menos você, GM/admin e forma BB; faixa = `bondLevelFor` ±`SPAR_BOND_RANGE` (3, maior que a vizinhança da ranqueada), ampliada de
+  `SPAR_RANGE_STEP` (2) por lado enquanto houver menos de `SPAR_PICKS` (5); varredura de até `SPAR_SCAN_MAX` (120) perfis em ordem sorteada.
+  Nenhum número de ranking, ponto ou posição alheia sai na resposta (só o `level` com que cada um luta).
+- **Honra, pouca e do servidor:** `SPAR_HONOR_MIN`–`SPAR_HONOR_MAX` = **1 a 2 por vitória**, teto `SPAR_HONOR_DAILY_CAP` = **20 por DIA DO JOGADOR**
+  (contador `sparHonor:<id>:<dia>` no KV, dia por `playerDayOf` com a zona/offset que o app manda; leitura tolerante; nunca por tick). Derrota, empate
+  e desistência rendem 0. Sem vantagem paga. A Honra é a moeda de sempre (`emblems` no save, a das lojinhas do Mercado, aba Honra): o servidor devolve
+  `honor` (e `honorCapped` quando o teto do dia já foi) e o app soma pelo MESMO caminho das outras fontes (`onEarnEmblems`), uma vez (o reenvio não soma).
+- **🎫 Tickets (REGISTRO §282):** todo DIA DO JOGADOR dá **1 ticket grátis = `TREINO_TICKET_MATCHES` (20) partidas COM Honra**; depois delas, o **ticket extra** custa
+  `TREINO_EXTRA_TICKET_BITS` (**30 Bits GANHOS**, `earnedBits`, nunca Créditos) e vale **+20 partidas SEM Honra**, até `TREINO_EXTRA_TICKETS_MAX` (**3/dia**). Contador no
+  KV (`sparTicket:<id>:<dia>`, leitura tolerante, `sparTicketStatus`); `POST sparBuyTicket {id, zone?, off?}` conta/limita e o app cobra depois do ok (`chargeTreinoTicket`,
+  `src/utils/treinoTickets.ts`); `sparStart` recusa 409 `no tickets`; `sparMatch` gasta 1 (desistir não gasta) e só paga Honra se ainda cabia nas 20; `sparOpponents`
+  devolve `tickets`. UI: "Partidas com Honra hoje x/20", extras em uso, oferta suave ao esgotar. Trava: `community.treino.tickets.test.js`, `treinoTickets.test.ts`.
+- **Contrato aditivo:** ações novas; cliente antigo ignora a aba; servidor antigo responde erro e a aba mostra "não deu para carregar" sem afetar a ranqueada.
+  Nenhum campo novo de save. Telas: `TournamentPage` (abas `Segment`), textos PT/EN, `InfoTip`, GuideModal e HelpModal.
+- **Travas:** `functions/api/community.treino.test.js` (faixa, 5 candidatos, refresh ilimitado, não toca rank/perfil, teto de 20, derrota sem Honra,
+  idempotência, paridade das constantes com `currencies.ts`) e `TournamentPage.treino.render.test.tsx`.
+
 ### A Arena
 
 `src/utils/arena.ts` + `src/components/ArenaGame.tsx`. É uma **segunda** masmorra,
@@ -5316,7 +5355,7 @@ vindo do servidor).
 
 **Régua** (medida em 06/10/2026 sobre a `main` com o #232; `npx vitest run src/utils/arena.v3.test.ts src/utils/dungeon.v3.test.ts`, N = 3200): Arena, duração mediana R1–R5 de 19,7 a 27,6 s; vitória por build 64,0–68,6% (spread 4,6pp); 14 células família × área 60,3–72,3% (12,1pp); habilidade `nenhuma` 48,4% × `boa` 72,0% (23,6pp); torcida sozinha no teto +24,8pp (`nenhuma`) e +17,9pp (`boa`). Masmorra: andares limpos 83,5–89,6% (6,1pp). Detalhe e alternativas descartadas: REGISTRO §24.6.
 
-- **Soulsmith: equipamento por missão e aprimoramento (07/10/2026, REGISTRO §26).** Dono `src/utils/forge.ts` (tabelas, bônus por nível) + `forgeActions.ts` (conceder, aprimorar, refazer; updaters puros e idempotentes); espelho `functions/api/_forge.js`. A peça de nível 1 vem do 1º resgate da missão do prédio de origem; níveis 2–15 (eram 2–5 até 11/10/2026, REGISTRO §26.1) custam materiais por prédio (98 + 56 por peça no total) e Vínculo 2…10; cada nível escolhe entre duas opções IGUAIS de 0,1 % (o atributo do slot ou o vizinho; a tela diz "Mais dano" OU "Mais defesa", sem A/B); refazer = 150 Bits ganhos (ou 3 fragmentos). Registro `forge` com `v: 2` (sem ele, o esquema de 5 níveis é convertido na leitura); `BALANCO-SOULSMITH.md` traz a simulação (todo dia ≈ 100 dias, passa do Ultra). Uma peça no máximo = no máximo 1,5%; o teto único de 5% é o de sempre. A compra por Bits saiu da tela. Peça comprada antes vale o nível equivalente. **Lore e regra (07/10/2026, dono): as peças são partes da alma, aprimoradas — não se desequipam.** Peça possuída está sempre equipada; `sanitizeEquipment` (cliente e `_equipment.js`) devolve ao slot o tier mais alto possuído quando o save antigo o tinha "tirado" (idempotente, nada se perde, teto de 5% intacto); `applyUnequip` não existe mais. **Uma peça por TIPO (07/10/2026, pedido do dono):** `sanitizeEquipment` (cliente e `_equipment.js`) mantém só o tier mais alto de cada slot (migração idempotente de saves com dois tiers); `applyForgeGrant` de um tier maior substitui a peça anterior e herda nível e escolhas (o aprimoramento nunca se perde; tier menor não entra); `applyEquip` saiu e a mochila de peças (`backpackUsed`) fica sempre em 0. **Regra do ingrediente-recurso (Mochila):** o material aparece SEMPRE na aba Especiais, com ×0, e o toque no ícone diz onde conseguir mais.
+- **Soulsmith: equipamento por missão e aprimoramento (07/10/2026, REGISTRO §26).** Dono `src/utils/forge.ts` (tabelas, bônus por nível) + `forgeActions.ts` (conceder, aprimorar, refazer; updaters puros e idempotentes); espelho `functions/api/_forge.js`. A peça de nível 1 vem do 1º resgate da missão do prédio de origem; níveis 2–15 (eram 2–5 até 11/10/2026, REGISTRO §26.1) custam materiais por prédio (98 + 56 por peça no total) e Vínculo 2…10; cada nível escolhe entre duas opções IGUAIS de 0,1 % (o atributo do slot ou o vizinho; a tela diz "Mais dano" OU "Mais defesa", sem A/B); **aprimorar também custa Bits GANHOS (REGISTRO §281): `upgradeBitsCost(nível atual) = round(20 × 1,25^(nível−1))`, de 20 (1→2) a 364 (14→15), recusa suave sem Bits, mostrado no botão;** refazer = 150 Bits ganhos (ou 3 fragmentos). Registro `forge` com `v: 2` (sem ele, o esquema de 5 níveis é convertido na leitura); `BALANCO-SOULSMITH.md` traz a simulação (todo dia ≈ 100 dias, passa do Ultra). Uma peça no máximo = no máximo 1,5%; o teto único de 5% é o de sempre. A compra por Bits saiu da tela. Peça comprada antes vale o nível equivalente. **Lore e regra (07/10/2026, dono): as peças são partes da alma, aprimoradas — não se desequipam.** Peça possuída está sempre equipada; `sanitizeEquipment` (cliente e `_equipment.js`) devolve ao slot o tier mais alto possuído quando o save antigo o tinha "tirado" (idempotente, nada se perde, teto de 5% intacto); `applyUnequip` não existe mais. **Uma peça por TIPO (07/10/2026, pedido do dono):** `sanitizeEquipment` (cliente e `_equipment.js`) mantém só o tier mais alto de cada slot (migração idempotente de saves com dois tiers); `applyForgeGrant` de um tier maior substitui a peça anterior e herda nível e escolhas (o aprimoramento nunca se perde; tier menor não entra); `applyEquip` saiu e a mochila de peças (`backpackUsed`) fica sempre em 0. **Regra do ingrediente-recurso (Mochila):** o material aparece SEMPRE na aba Especiais, com ×0, e o toque no ícone diz onde conseguir mais.
 
 **Efeito pelo elemento do especial (REGISTRO §228, §236).** A família decide a mecânica; o elemento do especial dá o efeito, e `direct` é só dano. Regra real só em PvE (`EFEITOS_PVE_LIGADOS`), PvP só visual; queimadura e veneno são só visuais. Dono: `src/utils/combate/elementEffects.ts`. Régua: `efeitosPve.medicao.test.ts` (±3pp por modo).
 
@@ -6303,7 +6342,7 @@ Tudo abaixo é o que o código de `5229b1be` faz. Decisões: `REGISTRO-DE-DECISO
 
 **🔊 Trilha +6 dB (§215).** `ALVO_TRILHA_LUFS_S` −22 → −16; `GANHO_MUSICA_DB` +6 → +12. Música de combate fica a −19 (offset −3 intacto).
 
-**🔨 Hexsmith (§216; área Forja).** Itens que reescrevem o código hex do Soulmon: custos em `HEX_COSTS` (HEX de elemento = 3 poções + 1500 Bits; coroa = 20 fragmentos + 2000 Bits; luvas = 5 fragmentos + 500 Bits). A forja é **ação do servidor**: `POST /api/save?action=hexForge { itemId, baseRevision? }` (`_hexsmith.js` › `forgeOnServer`) confere o saldo (Bits GANHOS, não de Crédito), debita e grava o HEX em `hexsmith.owned` numa escrita só; 402 sem saldo, 409 revisão velha, repetição = 200 `already:true`. O save do cliente **não cria nem tira** HEX (`enforceStoredHexOwned`). Sem rede = nada forjado. Limite residual: o do ADR-004 (KV sem CAS).
+**🔨 Hexsmith (§216; área Forja).** Itens que reescrevem o código hex do Soulmon: custos em `HEX_COSTS` (HEX de elemento = 3 poções + 1500 Bits; coroa = 20 fragmentos + 2000 Bits; luvas = 5 fragmentos + 500 Bits). A forja é **ação do servidor**: `POST /api/save?action=hexForge { itemId, baseRevision? }` (`_hexsmith.js` › `forgeOnServer`) confere o saldo (Bits GANHOS, não de Crédito), debita e grava o HEX em `hexsmith.owned` numa escrita só; 402 sem saldo, 409 revisão velha, repetição = 200 `already:true`. O save do cliente **não cria nem tira** HEX (`enforceStoredHexOwned`). Sem rede = nada forjado. Limite residual: o do ADR-004 (KV sem CAS). **Luvas (§282, 10/11/2026):** 4 ataques do básico = alcance × efeito — `magic` (distância + splash), `ranged-slash`, `melee-slash`, `melee-smash` (corpo a corpo + impacto); só visual (forma + acabamento, `strikeParts`), mesmo custo; os ids antigos `luvas:ranged`/`luvas:melee` migram para `magic`/`melee-slash` na leitura (`migrateHexId`, app e servidor).
 
 **🧑‍🎨 NPCs da Forja (§181).** `forja:caderno` = Trilho; `forja:refugio` = Yuzu (bustos novos; ⚰️ Opala/Marim).
 
@@ -6365,3 +6404,5 @@ E-mail verificado presente em `BETA_EMAILS` é tratado como conta paga: o servid
 ## Elemento combinado por estágio (§232)
 
 Sorte fixa por Soulmon decide quantos componentes o elemento tem em cada estágio (Rookie 95/5/0/0, Champion 35/60/5/0, Ultimate 15/30/50/5, Mega 10/20/40/30, Ultra 5/10/25/60). Contém sempre a base nº 1; 3 e 4 componentes só nos 50 curados (planta, industrial e fada ficam no par). Vale a partir da próxima evolução; degenerar volta ao elemento do nível. A vantagem usa a base nº 1. Dono: `src/utils/elementoCombinado.ts`. Decisão: REGISTRO §232.
+
+**🎪 Feira de verdade (10/11/2026, REGISTRO §279).** Rara (`FEIRA_LOJA_PCT` = 8% das voltas): vendedor com 4 a 6 itens do Mercado/Hexsmith, 10% a 50% de desconto, só Bits, sem ingredientes, 1 por item; servidor decide e grava a oferta do dia. Ver `PLANO-FEIRA-CHEFE.md` §12.

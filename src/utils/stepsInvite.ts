@@ -1,5 +1,5 @@
 /**
- * O CONVITE CURTO DA CONTAGEM DE PASSOS (REGISTRO §277, dono, 20/10/2026).
+ * O CONVITE CURTO DA CONTAGEM DE PASSOS (REGISTRO §283, dono, 20/10/2026).
  *
  * "Perguntar de cara se o usuário quer contar passos, sem textão: deixa só contar passos e ativar a missão." Quando: logo depois do
  * onboarding (a Home já está de pé e o convite é um intersticial da fila central, `stepsInvite`, classe CONVITE: só numa abertura sem

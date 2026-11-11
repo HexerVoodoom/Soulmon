@@ -26,7 +26,7 @@ import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS, BB_MAX_HP } from '../
 import { isBBStage, sanitizeStageId } from '../utils/bbStage';
 import { devolverPocoes, sanitizeDungeonPotions } from '../utils/dungeonPotions';
 import { sanitizeDungeonAway, sanitizeDungeonDaily, type DungeonAway } from '../utils/dungeonIdle';
-import { sanitizeHunger, sanitizeEnergyClock } from '../utils/hunger';
+import { sanitizeHunger, sanitizeEnergyClock, type EnergyClock } from '../utils/hunger';
 import { sanitizeHungerPenalty } from '../utils/hungerPenalty';
 import { sanitizeCheckIns } from '../utils/checkIns';
 import { sanitizeArenaReroll, type ArenaReroll } from '../utils/arenaSorteio';
@@ -543,7 +543,7 @@ export interface GameState {
   hunger?: { v: number; at: number };
   /** ⏱️ O relógio da regeneração da ENERGIA (`utils/hunger.ts`): até onde a regeneração foi contada e o progresso até a próxima unidade.
    *  Moram no save para fechar o app, navegar ou trocar de aparelho NÃO reiniciarem o timer. Ausente = nasce na próxima leitura. */
-  energyClock?: { at: number; carry: number };
+  energyClock?: EnergyClock;
   /** 🍽️ Penalidade de fome (REGISTRO §45, `utils/hungerPenalty.ts`): meio coração a cada 12 h CONTÍNUAS de faminto. `since` = a âncora da fome, `paid` = janelas já resolvidas (anti-dupla), `unreported` = o que o resumo do dia ainda vai contar. Ausente = nada cobrado. */
   hungerPenalty?: { since: number; paid: number; unreported: number };
   /** 🚧 Camadas da masmorra COMEÇADAS no dia do jogador (beta-2 6.1): o limite diário (REMOVIDO em beta3 F2; o contador segue) morava no

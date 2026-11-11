@@ -20,7 +20,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 /**
- * PASSOS PELO HEALTH CONNECT (REGISTRO §277) — o total de passos de HOJE, lido do Health Connect, que continua somando
+ * PASSOS PELO HEALTH CONNECT (REGISTRO §283) — o total de passos de HOJE, lido do Health Connect, que continua somando
  * com o app FECHADO (o relógio/o celular gravam lá; o Soulmon só pergunta ao abrir).
  *
  * UMA permissão só: `READ_STEPS`. Nada de escrita, nada de outro tipo de dado, nada de leitura em segundo plano, nada de histórico:

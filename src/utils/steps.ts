@@ -37,7 +37,7 @@
  *    série bruta, nunca horário de passo, nunca localização. Minimização de
  *    dados; e sem série não há como inferir rotina de ninguém.
  *
- * HEALTH CONNECT (REGISTRO §277, dono, 20/10/2026 — REVOGA "não Health Connect") E O GOOGLE FIT
+ * HEALTH CONNECT (REGISTRO §283, dono, 20/10/2026 — REVOGA "não Health Connect") E O GOOGLE FIT
  * ---------------------------------------------------------------------------------------------
  * - **Health Connect** é a fonte PREFERIDA no Android: o total do dia vem do próprio Health Connect, que continua somando com o app
  *   FECHADO (o contador do aparelho só conta com o app vivo). Uma permissão só, `READ_STEPS`, só leitura, só "passos de hoje"

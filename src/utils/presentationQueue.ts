@@ -56,7 +56,7 @@ export const PRESENTATION_IDLE = 'welcome' as const;
  *  9. `levelUp` (celebração), 10. `evolveTask` ("crie mais atividades" depois de evoluir), 11. `groveMilestone`;
  *  ── FORA do início de dia ──
  * 12. `catalogLevelInvite`, 13. `restSetup`, 13b. `stepsInvite` — convite e configuração: só numa abertura sem nada do início de dia
- *     (`stepsInvite` = o convite curto da contagem de passos, só no app Android com contador e SÓ depois do onboarding; REGISTRO §277);
+ *     (`stepsInvite` = o convite curto da contagem de passos, só no app Android com contador e SÓ depois do onboarding; REGISTRO §283);
  * 14. `unlockToast` — balãozinho NÃO bloqueante "<Prédio> desbloqueado no <local>" (nunca sticky: qualquer modal pronto o substitui);
  * 14b. `noticeToast` — balãozinho NÃO bloqueante de um aviso acionável (refeição, Refúgio, termos, triagem, recomeço), 1× por dia cada, o mais leve de todos;
  * 15. `welcome` — ocioso (o pedido de instalar/notificar decide sozinho se tem algo a dizer; não aparece no início de dia).

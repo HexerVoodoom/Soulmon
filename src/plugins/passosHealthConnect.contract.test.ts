@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 
 /**
- * RÉGUA DOS PASSOS PELO HEALTH CONNECT (REGISTRO §277). O que se protege aqui é a SUPERFÍCIE DE PERMISSÃO (o que vai para a ficha do
+ * RÉGUA DOS PASSOS PELO HEALTH CONNECT (REGISTRO §283). O que se protege aqui é a SUPERFÍCIE DE PERMISSÃO (o que vai para a ficha do
  * Play e para o formulário de saúde do Console) e o feature detect (o APK antigo não tem o plugin). Guard de fonte.
  */
 // sem comentários: o que vale é o que o manifesto DECLARA, não o que a prosa menciona

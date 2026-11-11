@@ -1,6 +1,6 @@
 # Status do Soulmon — registro vivo
 
-> ## 10/11/2026 — Passos pelo Health Connect (`feat/passos-health-connect`, REGISTRO §277) — PR aberto, NÃO mergeado
+> ## 10/11/2026 — Passos pelo Health Connect (`feat/passos-health-connect`, REGISTRO §283) — PR aberto, NÃO mergeado
 >
 > - **Feito:** plugin nativo `SoulmonSteps` (só `READ_STEPS`), convite curto `stepsInvite` depois do onboarding (fila central), Health Connect como fonte preferida com o contador do aparelho de reserva, feature detect para o APK antigo. Revoga em parte a linha vermelha do Google Fit no `CLAUDE.md`. `PRIVACY_VERSION` NÃO subiu (já era `2026-11-09`, §253).
 > - **NÃO mergear antes do AAB beta11:** o push na `main` publica o app web que o APK carrega; sem o plugin no APK o JS cai no contador do aparelho (seguro), mas o convite já apareceria para quem tem sensor.

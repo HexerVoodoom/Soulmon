@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * O convite curto dos passos (REGISTRO §277): sim/não com o MESMO peso, meta escolhível, sem X. A regra de QUANDO aparece é de
+ * O convite curto dos passos (REGISTRO §283): sim/não com o MESMO peso, meta escolhível, sem X. A regra de QUANDO aparece é de
  * `utils/stepsInvite.ts` (testada lá); aqui, a tela.
  */
 import { describe, it, expect, vi } from 'vitest';

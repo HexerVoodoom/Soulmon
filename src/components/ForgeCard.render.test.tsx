@@ -41,7 +41,7 @@ const q = (sel: string) => document.querySelector<HTMLButtonElement>(sel)!;
 const click = (el: Element) => act(() => { fireEvent.click(el); });
 const bq = (materials: Record<string, number>) => ({ day: 'Mon Oct 05 2026', visited: [], claimed: [], materials });
 const nivel1 = (extra: Record<string, unknown> = {}) => ({
-  totalXP: xpForLevel(6), equipment: { owned: ['eq-nucleo-t1'], equipped: { nucleo: 'eq-nucleo-t1' }, fragments: 0 },
+  gamePoints: 100000, totalXP: xpForLevel(6), equipment: { owned: ['eq-nucleo-t1'], equipped: { nucleo: 'eq-nucleo-t1' }, fragments: 0 },
   forge: { v: 2, levels: { 'eq-nucleo-t1': 1 }, picks: {} }, ...extra,
 });
 
@@ -109,7 +109,7 @@ describe('ForgeCard', () => {
     expect(document.querySelector('[data-equip-btn]')).toBeNull();
     const botoes = Array.from(peca('eq-nucleo-t1').querySelectorAll('button'));
     expect(botoes).toHaveLength(1);
-    expect(botoes[0].textContent).toBe('Upgrade');
+    expect(botoes[0].textContent).toMatch(/^Upgrade · 20/); // o preço em Bits aparece no botão (nível 1 = 20)
     expect(peca('eq-carapaca-t1').querySelector('button')).toBeNull();
     expect(peca('eq-carapaca-t1').textContent).not.toMatch(/Comes from/);
     expect(estado().eq.owned).toEqual(['eq-nucleo-t1']);

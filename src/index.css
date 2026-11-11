@@ -5755,6 +5755,8 @@ select:focus-visible {
    `:active` em movimento reduzido mora no bloco CANÔNICO, abaixo. */
 .sm2-corner-link { -webkit-tap-highlight-color: transparent; }
 .sm2-area-back { -webkit-tap-highlight-color: transparent; }
+/* Modal aberto por cima: o voltar de baixo esmaece e não responde (utils/modalDepth.ts). Sem animação, então vale em movimento reduzido. */
+.sm2-area-back[data-modal-dimmed] { opacity: .35; pointer-events: none; cursor: default; z-index: 1 !important; }
 .sm2-corner-link:focus-visible { outline: 3px solid var(--sm2-primary-ink); outline-offset: 2px; }
 .sm2-area-back:focus-visible { outline: 3px solid var(--sm2-primary-ink); outline-offset: 2px; }
 [data-map-area]:focus-visible { outline: 3px solid var(--sm2-primary-ink); outline-offset: 2px; }

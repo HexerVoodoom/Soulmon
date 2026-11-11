@@ -24,14 +24,14 @@ import { GOOD_CONSTANCY_RATIO } from '../utils/habitRhythm';
 import { DREAM_CATALOG, NIGHT_ENERGY_BONUS } from '../utils/restWindow';
 import { guildText } from '../utils/guildCopy';
 import { COMBAT_BONUS_CAP } from '../utils/combate/bonus';
-import { FORGE_MAX_LEVEL, PIECE_MAX_PCT, REDO_BITS } from '../utils/forge';
+import { FORGE_MAX_LEVEL, PIECE_MAX_PCT, REDO_BITS, upgradeBitsCost } from '../utils/forge';
 import { HEX_COSTS } from '../utils/hexsmith';
 import { GATES } from '../utils/gates';
 import { DEMO_BOND_LEVEL } from '../utils/demoMode';
 import { TALENT_POINTS_MAX } from '../utils/talents';
 import { CREDIT_BITS_CAP_RATIO } from '../utils/bitsOrigin';
 import { DUNGEON_FIGHTS_PER_FLOOR, DUNGEON_HP_REGEN_FULL_HOURS, DUNGEON_MIN_HP_TO_ENTER_PCT, DUNGEON_MILESTONE_FLOOR, DUNGEON_RETURN_EVERY, DUNGEON_ENERGY_PER_LAYER, DUNGEON_MAX_LAYER } from '../utils/dungeonIdle';
-import { ENERGY_REGEN_MINUTES, HUNGER_FULL_TO_EMPTY_HOURS } from '../utils/hunger';
+import { ENERGY_REGEN_MINUTES, HUNGER_FULL_TO_EMPTY_HOURS, SLEEP_ENERGY_REGEN_BONUS } from '../utils/hunger';
 import { DEFAULT_MEAL_TIMES, MEAL_WINDOW_MIN } from '../utils/mealRhythm';
 
 interface GuideModalProps {
@@ -221,8 +221,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `Sobe com o tempo: 1 a cada ${ENERGY_REGEN_MINUTES} min com o Soulmon bem alimentado, metade da velocidade com um pouco de fome, parada se ele estiver faminto.`,
-              `It rises with time: 1 every ${ENERGY_REGEN_MINUTES} min when your Soulmon is well fed, half speed when a little hungry, stopped when starving.`,
+              `Sobe com o tempo: 1 a cada ${ENERGY_REGEN_MINUTES} min com o Soulmon bem alimentado, metade da velocidade com um pouco de fome, parada se ele estiver faminto. Dormindo, tudo isso ×${SLEEP_ENERGY_REGEN_BONUS} mais rápido (faminto continua parado).`,
+              `It rises with time: 1 every ${ENERGY_REGEN_MINUTES} min when your Soulmon is well fed, half speed when a little hungry, stopped when starving. While asleep, all of that runs ×${SLEEP_ENERGY_REGEN_BONUS} faster (starving stays stopped).`,
             )}
           </p>
           <p style={para}>
@@ -512,8 +512,8 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              'O Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar; sortear três novos custa Bits depois de 3 grátis por dia.',
-              'The Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight; drawing three new ones costs Bits after 3 free a day.',
+              'O Torneio é RANQUEADO e o servidor sorteia seus oponentes. Na Arena livre VOCÊ escolhe contra quem lutar; sortear três novos custa Bits depois de 3 grátis por dia. A aba Treino do Torneio é amistosa: não muda a sua posição. Todo dia você ganha 1 ticket grátis com 20 partidas com Honra (de 1 a 2 por vitória, até 20 de Honra por dia); para jogar mais, o ticket extra custa 30 Bits ganhos e dá +20 partidas sem Honra (até 3 por dia). Sortear outros oponentes lá é de graça e sem limite.',
+              'The Tournament is RANKED and the server draws your opponents. In the Open Arena YOU choose who to fight; drawing three new ones costs Bits after 3 free a day. The Tournament\'s Sparring tab is friendly: it never changes your rank. Every day you get 1 free ticket with 20 matches with Honor (1 to 2 per win, up to 20 Honor a day); to play more, an extra ticket costs 30 earned Bits and gives +20 matches without Honor (up to 3 a day). Drawing new opponents there is free and unlimited.',
             )}
           </p>
           <p style={para}>
@@ -554,14 +554,14 @@ export function GuideModal({ isOpen, onClose, language = 'en-US' }: GuideModalPr
           </p>
           <p style={para}>
             {L(
-              `A cada nível você escolhe entre dois ganhos (refazer custa ${REDO_BITS} Bits ganhos jogando). Uma peça no máximo vale ${(PIECE_MAX_PCT * 100).toFixed(1).replace('.', ',')}%.`,
-              `At each level you choose between two gains (redoing a choice costs ${REDO_BITS} Bits earned by playing). One piece at the top is worth ${(PIECE_MAX_PCT * 100).toFixed(1)}%.`,
+              `Cada aprimoramento custa materiais e Bits ganhos jogando (de ${upgradeBitsCost(1)} no começo, crescendo a cada nível). A cada nível você escolhe entre dois ganhos (refazer custa ${REDO_BITS} Bits ganhos jogando). Uma peça no máximo vale ${(PIECE_MAX_PCT * 100).toFixed(1).replace('.', ',')}%.`,
+              `Each upgrade costs materials and Bits earned by playing (from ${upgradeBitsCost(1)} at the start, growing each level). At each level you choose between two gains (redoing a choice costs ${REDO_BITS} Bits earned by playing). One piece at the top is worth ${(PIECE_MAX_PCT * 100).toFixed(1)}%.`,
             )}
           </p>
           <p style={para}>
             {L(
-              `Na Forja, a Hexsmith reescreve o código hex do Soulmon em cinco Portas, cada uma com o seu HEX: Coroa (família do especial), Amuleto (elemento do especial), Garra (elemento do ataque básico), Couraça (elemento na defesa, só o dano recebido) e Luvas (alcance do básico, só visual). Os HEXes de elemento pedem ${HEX_COSTS.element.potions} poções do próprio elemento + ${HEX_COSTS.element.bits} Bits ganhos; a Coroa, ${HEX_COSTS.coroa.fragments} fragmentos + ${HEX_COSTS.coroa.bits} Bits ganhos; as Luvas, ${HEX_COSTS.luvas.fragments} fragmentos + ${HEX_COSTS.luvas.bits} Bits ganhos. Os HEXes ficam para sempre (não se vendem), um equipado por Porta, e trocar não perde o anterior.`,
-              `At the Forge, the Hexsmith rewrites your Soulmon's hex code in five Ports, each holding its HEX: Crown (special family), Amulet (special element), Claw (basic attack element), Cuirass (element when defending, only damage taken) and Gloves (basic attack reach, looks only). Element HEXes take ${HEX_COSTS.element.potions} potions of that element + ${HEX_COSTS.element.bits} earned Bits; the Crown, ${HEX_COSTS.coroa.fragments} fragments + ${HEX_COSTS.coroa.bits} earned Bits; the Gloves, ${HEX_COSTS.luvas.fragments} fragments + ${HEX_COSTS.luvas.bits} earned Bits. HEXes are kept forever (they can't be sold), one equipped per Port, and swapping never loses the previous one.`,
+              `Na Forja, a Hexsmith reescreve o código hex do Soulmon em cinco Portas, cada uma com o seu HEX: Coroa (família do especial), Amuleto (elemento do especial), Garra (elemento do ataque básico), Couraça (elemento na defesa, só o dano recebido) e Luvas (tipo do ataque básico: Magia, Corte à distância, Corte corpo a corpo ou Esmagamento; só visual). Os HEXes de elemento pedem ${HEX_COSTS.element.potions} poções do próprio elemento + ${HEX_COSTS.element.bits} Bits ganhos; a Coroa, ${HEX_COSTS.coroa.fragments} fragmentos + ${HEX_COSTS.coroa.bits} Bits ganhos; as Luvas, ${HEX_COSTS.luvas.fragments} fragmentos + ${HEX_COSTS.luvas.bits} Bits ganhos. Os HEXes ficam para sempre (não se vendem), um equipado por Porta, e trocar não perde o anterior.`,
+              `At the Forge, the Hexsmith rewrites your Soulmon's hex code in five Ports, each holding its HEX: Crown (special family), Amulet (special element), Claw (basic attack element), Cuirass (element when defending, only damage taken) and Gloves (basic attack type: Magic, Ranged Slash, Melee Slash or Melee Smash; looks only). Element HEXes take ${HEX_COSTS.element.potions} potions of that element + ${HEX_COSTS.element.bits} earned Bits; the Crown, ${HEX_COSTS.coroa.fragments} fragments + ${HEX_COSTS.coroa.bits} earned Bits; the Gloves, ${HEX_COSTS.luvas.fragments} fragments + ${HEX_COSTS.luvas.bits} earned Bits. HEXes are kept forever (they can't be sold), one equipped per Port, and swapping never loses the previous one.`,
             )}
           </p>
           <p style={para}>

@@ -17,7 +17,7 @@
 import { MAX_HEARTS_LOST_PER_DAY, WEEKLY_RELIEF_HEARTS } from '../../utils/dailyReset';
 import { RUB_HEAL_DAILY_CAP } from '../../utils/careRules';
 import { DUNGEON_ENERGY_PER_LAYER } from '../../utils/dungeonIdle';
-import { ENERGY_REGEN_MINUTES, HUNGER_FULL_TO_EMPTY_HOURS } from '../../utils/hunger';
+import { ENERGY_REGEN_MINUTES, HUNGER_FULL_TO_EMPTY_HOURS, SLEEP_ENERGY_REGEN_BONUS } from '../../utils/hunger';
 
 export type StatTipKind = 'hp' | 'energy' | 'hunger';
 
@@ -73,8 +73,8 @@ export function statTip(kind: StatTipKind, isPt: boolean): StatTip {
     upLabel,
     downLabel,
     up: isPt
-      ? `quanto mais bem alimentado, mais rápido enche (+1 a cada ${ENERGY_REGEN_MINUTES} min no melhor caso).`
-      : `the better fed, the faster it fills (+1 every ${ENERGY_REGEN_MINUTES} min at best).`,
+      ? `quanto mais bem alimentado, mais rápido enche (+1 a cada ${ENERGY_REGEN_MINUTES} min no melhor caso; dormindo, ×${SLEEP_ENERGY_REGEN_BONUS} mais rápido).`
+      : `the better fed, the faster it fills (+1 every ${ENERGY_REGEN_MINUTES} min at best; asleep, ×${SLEEP_ENERGY_REGEN_BONUS} faster).`,
     down: isPt
       ? `cada camada da Masmorra gasta ${DUNGEON_ENERGY_PER_LAYER}.`
       : `each Dungeon layer spends ${DUNGEON_ENERGY_PER_LAYER}.`,

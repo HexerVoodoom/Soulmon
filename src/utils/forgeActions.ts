@@ -12,7 +12,7 @@ import { earnedBits, type BitsOrigin } from './bitsOrigin';
 import { bondLevelFor } from './bond';
 import type { BuildingId } from './gates';
 import {
-  FORGE_MAX_LEVEL, FORGE_SCHEMA, LEVEL_MIN_BOND, PIECE_BY_BUILDING, PIECE_BY_ID, REDO_BITS, REDO_FRAGMENTS, UPGRADE_COST, pieceChoices, pieceLevel, sanitizeForge,
+  FORGE_MAX_LEVEL, FORGE_SCHEMA, LEVEL_MIN_BOND, PIECE_BY_BUILDING, PIECE_BY_ID, REDO_BITS, upgradeBitsCost, REDO_FRAGMENTS, UPGRADE_COST, pieceChoices, pieceLevel, sanitizeForge,
   type ForgeChoice, type ForgePiece, type ForgeState,
 } from './forge';
 
@@ -52,6 +52,11 @@ export function upgradeRefusal(state: ForgeGameState, id: string): ForgeRefusal 
   const vinculo = bondLevelFor(state.totalXP ?? 0);
   if (vinculo < LEVEL_MIN_BOND[to]) return 'bond';
   for (const c of upgradeCost(piece, to)) if (stockOf(state.buildingQuests, c.material) < c.n) return 'no-materials';
+  // 💠 Bits do aprimoramento (REGISTRO §281): sem saldo, ou com saldo vindo de Crédito, recusa SUAVE (nada é consumido, a recusa vem antes de qualquer débito).
+  const price = upgradeBitsCost(level);
+  const bal = Math.max(0, Math.floor(Number.isFinite(state.gamePoints) ? (state.gamePoints as number) : 0));
+  if (bal < price) return 'no-funds';
+  if (earnedBits(state) < price) return 'not-earned';
   return undefined;
 }
 
@@ -75,7 +80,7 @@ export function applyUpgrade<T extends ForgeGameState>(prev: T, id: string, choi
   const f = sanitizeForge(prev.forge);
   const picks = [...pieceChoices(id, level, prev.forge), choice];
   const forge: ForgeState = { v: FORGE_SCHEMA, levels: { ...f.levels, [id]: to }, picks: { ...f.picks, [id]: picks } };
-  return { ok: true, state: { ...prev, buildingQuests: { ...bq, materials }, forge } };
+  return { ok: true, state: { ...prev, gamePoints: (prev.gamePoints ?? 0) - upgradeBitsCost(level), buildingQuests: { ...bq, materials }, forge } };
 }
 
 /** O preço em Bits de refazer uma escolha, com o Comércio (`tal-com-01`). */

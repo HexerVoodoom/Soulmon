@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { shouldShowStepsInvite } from './stepsInvite';
 
-describe('shouldShowStepsInvite — o convite curto dos passos (REGISTRO §277)', () => {
+describe('shouldShowStepsInvite — o convite curto dos passos (REGISTRO §283)', () => {
   const ok = { available: true as boolean | null, consent: undefined as 'granted' | 'declined' | undefined, onboarded: true };
 
   it('aparece só com contador no aparelho, sem resposta anterior e depois do onboarding', () => {

@@ -180,3 +180,28 @@ export function applyCook<T extends CookState>(prev: T, dishId: string, now: num
   }
   return { state: { ...s, restaurant } };
 }
+
+/**
+ * A FEIRA DE VERDADE (10/11/2026): o prato PRONTO, sem ingrediente, ao preço da oferta (Bits do Restaurante com o desconto da feira).
+ * Mesmo efeito do prato cozinhado (`applyCook`: fome cheia + energia na hora ou buff), mas NÃO usa o chef do dia nem o teto de pratos
+ * por dia (não é o Restaurante) e não toca comidas, essências ou materiais. Efeito de combate só com Bit GANHO, como no Restaurante.
+ */
+export function applyFeiraDish<T extends CookState>(prev: T, dishId: string, price: number, now: number): { state: T; refused?: 'unknown' | 'no-bits' | 'not-earned' } {
+  const d = dishById(dishId);
+  if (!d || !Number.isInteger(price) || price < 1) return { state: prev, refused: 'unknown' };
+  if ((prev.gamePoints ?? 0) < price) return { state: prev, refused: 'no-bits' };
+  if (isCombatEffect(d.effect) && earnedBits(prev) < price) return { state: prev, refused: 'not-earned' };
+  const gamePoints = prev.gamePoints - price;
+  let s: T = isCombatEffect(d.effect)
+    ? { ...prev, gamePoints, ...(prev.bitsOrigin ? { bitsOrigin: { ...prev.bitsOrigin, paidLeft: Math.min(prev.bitsOrigin.paidLeft, gamePoints) } } : {}) }
+    : spendBitsPaidFirst({ ...prev, gamePoints }, price);
+  s = eat(s, now, HUNGER_MAX);
+  const restaurant: RestaurantState = { ...(s.restaurant ?? {}) };
+  if (d.effect.kind === 'energy') {
+    const value = d.effect.value;
+    s = setEnergy(s, now, cur => cur + value);
+  } else {
+    restaurant.buff = { dish: d.id, kind: d.effect.kind, value: d.effect.value, from: now, until: now + MEAL_BUFF_MS };
+  }
+  return { state: { ...s, restaurant } };
+}

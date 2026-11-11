@@ -147,4 +147,4 @@ O inventário (`node scripts/docs-inventario.mjs`, 09/09/2026) mostra **0 módul
 
 ### `src/plugins/SoulmonStepsPlugin.ts`
 
-`SoulmonSteps` (REGISTRO §277) — `status()`, `requestPermission()`, `readToday()` do Health Connect (só `READ_STEPS`, só o total de hoje); respostas `{ available, granted, steps? }` (`steps` ausente nunca é zero). Nativo: `SoulmonStepsPlugin.kt`. Feature detect em `utils/steps.ts` (`Capacitor.isPluginAvailable('SoulmonSteps')`): o APK antigo não tem o plugin. Régua: `src/plugins/passosHealthConnect.contract.test.ts`.
+`SoulmonSteps` (REGISTRO §283) — `status()`, `requestPermission()`, `readToday()` do Health Connect (só `READ_STEPS`, só o total de hoje); respostas `{ available, granted, steps? }` (`steps` ausente nunca é zero). Nativo: `SoulmonStepsPlugin.kt`. Feature detect em `utils/steps.ts` (`Capacitor.isPluginAvailable('SoulmonSteps')`): o APK antigo não tem o plugin. Régua: `src/plugins/passosHealthConnect.contract.test.ts`.

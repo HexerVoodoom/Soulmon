@@ -1541,6 +1541,13 @@ Era um `<img>` com fallback visual (SVG de erro em base64) remanescente do impor
 **Régua:** exercitado pelos testes de render dos chamadores (`MilestoneCeremony.render.test.tsx`, `MorningCheckIn.*.render.test.tsx`, `DailyReportModal.aventura.render.test.tsx`).
 **Avisos do arquivo:** tudo por `style` inline (footgun 1); o vidro reusa `.sm2-viewport-screen`/`.sm2-viewport-glass` do `index.css` — nenhum CSS novo; o × vive em `position:absolute` e a ORDEM no DOM (`closeLast`) é o que decide a ordem de foco.
 
+### `src/components/ui/EstagioMarca.tsx`
+**Dono de:** o estágio do OPONENTE como ÍCONE nas listas do Torneio (Ranqueada/Treino), no lugar do texto (10/11/2026, REGISTRO §282): `role="img"` com `aria-label` e `title` = nome do jogo (Desperto/Ascendente/Transcendente/Apoteose/Zênite). Bebê/desconhecido não renderiza.
+**Props principais:** `forma`, `isPt`, `size?`.
+**Exports:** `EstagioMarca`, `nomeDoEstagio`.
+**Chamado por:** `src/components/TournamentPage.tsx`.
+**Régua:** `src/components/ui/EstagioMarca.test.tsx`.
+
 ### `src/components/ui/EstagioIcone.tsx`
 **Dono de:** o ícone de ESTÁGIO (rookie, champion, ultimate, mega, ultra) antes do nome — placa de HP/especial do `BattleStage` e nós do Centro de Evolução (09/11/2026, REGISTRO §259). Bebê/ovo e id desconhecido não renderizam nada.
 **Props principais:** `forma` (id da forma ou nível), `size?`, `label?`, `style?`.
@@ -1769,7 +1776,7 @@ Cadeado dos prédios trancados por Vínculo (Tarefa A, 07/10/2026): `LockGlyph` 
 
 
 ### `src/components/StepsInviteModal.tsx`
-**Dono de:** o convite curto da contagem de passos (REGISTRO §277), intersticial `stepsInvite` da fila central: pergunta sim/não do MESMO peso, meta escolhível, sem X.
+**Dono de:** o convite curto da contagem de passos (REGISTRO §283), intersticial `stepsInvite` da fila central: pergunta sim/não do MESMO peso, meta escolhível, sem X.
 **Exports:** `StepsInviteModal`, `StepsInviteModalProps`.
 **Chamado por:** `src/App.tsx`
 **Régua:** `src/components/StepsInviteModal.render.test.tsx`.
@@ -2197,3 +2204,7 @@ A Oficina do Foco desde §247: card Sessão + 6 cards de chave (as técnicas de 
 ### `src/components/PlayReviewModal.tsx`
 
 Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
+
+### `src/components/guild/FeiraLojaSheet.tsx`
+**Dono de:** a folha da Feira de verdade (vendedor + `ShopShelf` com desconto + Hexsmith sem ingrediente), montada pela fila na vaga `feiraEvento`.
+**Props principais:** `{ language, saveId, loja, points, ownership, getState, onBuyShop, onHexBought, onClose }`.

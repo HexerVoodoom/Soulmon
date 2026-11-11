@@ -27,7 +27,7 @@ do arquivo indicado, lidas em 09/09/2026 no commit `4e77a08a`.
 | Push nativo | `@capacitor/push-notifications` | `^8.1.1` |
 | Ciclo de vida nativo (botão físico de VOLTAR) | `@capacitor/app` — entrou em `7b4819e6` (24/09/2026). Até então o plugin era procurado em tempo de execução em `window.Capacitor.Plugins.App` justamente porque o pacote **não** estava instalado; hoje o import é estático e fica atrás de `Capacitor.isNativePlatform()` (dono: `src/utils/androidBack.ts`). | `^8.1.1` |
 | Passos | `@capgo/capacitor-pedometer` (reserva) | `^8.0.38` |
-| Passos (Health Connect, REGISTRO §277) | plugin nativo próprio `SoulmonSteps` sobre `androidx.health.connect:connect-client` | `1.1.0` |
+| Passos (Health Connect, REGISTRO §283) | plugin nativo próprio `SoulmonSteps` sobre `androidx.health.connect:connect-client` | `1.1.0` |
 | Login | `firebase` | `^12.16.0` |
 | Efemérides do Oráculo | `astronomy-engine` | `^2.1.19` |
 | Compressão | `fflate` | `^0.8.3` (entrou depois de 11/10/2026 em `dependencies`; régua `depsVivas.contract.test.ts` exige um import vivo) |
