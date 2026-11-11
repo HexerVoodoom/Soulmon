@@ -40,10 +40,11 @@ describe('jornada do foco (§247)', () => {
       if (it.kind === 'material') expect(env.materials as readonly string[]).toContain(it.id);
     }
   });
-  it('conclusão: 1ª dá baú comum, 2ª a 4ª essência + comida, 5ª nada', () => {
+  it('conclusão: 1ª dá baú comum, 2ª a 4ª essência + comida, 5ª a 7ª um item simples, 8ª nada', () => {
     expect(completionLoot(1, 1, 'shore')).toHaveLength(1);
     expect(completionLoot(1, 3, 'shore').map(i => i.kind)).toEqual(['essence', 'food']);
-    expect(completionLoot(1, 5, 'shore')).toEqual([]);
+    expect(completionLoot(1, 5, 'shore')).toHaveLength(1);
+    expect(completionLoot(1, 8, 'shore')).toEqual([]);
   });
   it('tetos do dia cortam o excesso e o mesmo recibo não paga duas vezes', () => {
     let l = emptyLedger('2026-11-08');

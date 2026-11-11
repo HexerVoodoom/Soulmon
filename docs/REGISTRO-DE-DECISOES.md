@@ -4809,3 +4809,9 @@ Decisão: (1) A jornada de 25 min **coincide com o Soulmon atravessar uma porta*
 **Falsifica:** o descanso contar a partir de quando a tela abriu, o tempo parar com o app fechado, «Seguir» perder a tarefa/ritmo/cenário, «Concluir» deixar a sessão ou o descanso no storage, o alarme cair no dia seguinte por arredondar para baixo (`focusRest.test.ts`, `focusNotify.test.ts`, `FocusBoard.render.test.tsx`).
 
 **Rollback:** reverter o PR. **APK:** nada obrigatório (alarme inexato com o plugin existente; o exato e o push da web são o item I da beta12). **Arte:** 6 salas-oásis (slots; fundo em código até lá).
+
+## §302 — Foco: ciclos extras rendem um prêmio pequeno com teto (12/11/2026, decisão do dono)
+
+Decisão: depois dos 4 focos recompensados do dia (§247), os focos 5º, 6º e 7º dão UM item simples cada (baú comum, 4 em 5 de ser material do cenário; nunca Bits), idempotente pelo recibo `<sid>:done` e dentro dos tetos diários de itens do `focus-journey`; do 8º em diante, nada. A regra mora em `completionLoot` (`functions/api/_focusJourney.js`, autoridade, e `src/utils/focusJourney.ts`, espelho; `JOURNEY_EXTRA_COMPLETIONS = 3`) e o servidor já a aplica em `pagar`. A chave da masmorra continua só no 1º foco.
+
+**Falsifica:** o 8º foco pagar algo, o extra pagar Bits ou duplicar ao repetir o `claim` (`focusJourney.parity.test.ts`, `focus-journey.test.js`). **Rollback:** reverter o PR. **APK:** nada.
