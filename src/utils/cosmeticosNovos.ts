@@ -34,9 +34,9 @@ const temaDe = (id: string): Tema => TEMAS[id.split('-')[1]];
 const ELEMENTOS: Record<string, readonly [string, string, string]> = {
   fogo: ['Fogo', 'Fire', '🔥'], agua: ['Água', 'Water', '💧'], terra: ['Terra', 'Earth', '⛰️'], ar: ['Ar', 'Air', '💨'],
   eletricidade: ['Eletricidade', 'Electricity', '⚡'], arcano: ['Arcano', 'Arcane', '🔮'], sombra: ['Sombra', 'Shadow', '🌑'],
-  luz: ['Luz', 'Light', '☀️'], vileza: ['Vileza', 'Vileness', '☠️'], morte: ['Morte', 'Death', '🪦'], vida: ['Vida', 'Life', '🌱'],
+  luz: ['Luz', 'Light', '☀️'], vileza: ['Vileza', 'Vileness', '☠️'], morte: ['Morte', 'Death', '⚰️'], vida: ['Vida', 'Life', '🌱'],
   vigor: ['Vigor', 'Vigor', '💪'], marcial: ['Marcial', 'Martial', '🥋'], tempo: ['Tempo', 'Time', '⏳'], som: ['Som', 'Sound', '🔔'],
-  gravidade: ['Gravidade', 'Gravity', '🪐'], espaco: ['Espaço', 'Space', '🌌'], fada: ['Fada', 'Fairy', '🧚'],
+  gravidade: ['Gravidade', 'Gravity', '⚫'], espaco: ['Espaço', 'Space', '🌌'], fada: ['Fada', 'Fairy', '🧚'],
   industrial: ['Industrial', 'Industrial', '🏭'], planta: ['Planta', 'Plant', '🌿'],
 };
 

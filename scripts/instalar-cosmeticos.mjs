@@ -10,6 +10,7 @@
 //   cenário   → src/assets/backgrounds/<id>.webp  + backgrounds/thumbs/<id>.png (96×52)
 //   moldura   → src/assets/soulmon/molduras/<id>.png (192², alfa binário, miolo 64² vazio — contrato de teste)
 //   decoração → src/assets/decor/<id>.webp (caixa do slot × 3; tapete × 2, como as 33 peças anteriores)
+//   + android/app/src/main/res/drawable-nodpi/vpet_bg_<id>.webp (360×194, miniatura do widget V-Pet)
 // Também regrava src/utils/cosmeticosNovosCores.ts (baseColor de cada cenário).
 import { readdir, mkdir, writeFile, stat } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
@@ -38,6 +39,8 @@ for (const f of await pngs('cenarios', 'bg-')) {
   const out = join(A, 'backgrounds', `${id}.webp`);
   await sharp(src).removeAlpha().webp({ quality: 78, effort: 6 }).toFile(out);
   await sharp(src).removeAlpha().resize(96, 52, { fit: 'cover', kernel: 'lanczos3' }).png({ compressionLevel: 9 }).toFile(join(A, 'backgrounds/thumbs', `${id}.png`));
+  // miniatura do widget V-Pet (Android procura `vpet_bg_<id com _>.webp`; contrato em widgetVpetSonoFundo.contract.test.ts)
+  await sharp(src).removeAlpha().resize(360, 194, { fit: 'cover', kernel: 'lanczos3' }).webp({ quality: 80 }).toFile(join(RAIZ, 'android/app/src/main/res/drawable-nodpi', `vpet_bg_${id.replace(/-/g, '_')}.webp`));
   // baseColor = média dos 32 px de baixo (mesma convenção dos outros pintados)
   const { data, info } = await sharp(src).removeAlpha().extract({ left: 0, top: 648 - 32, width: 1200, height: 32 }).raw().toBuffer({ resolveWithObject: true });
   const s = [0, 0, 0]; const n = info.width * info.height;
