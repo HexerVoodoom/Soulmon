@@ -4736,3 +4736,7 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Falsifica:** a música-tema deixar de tocar depois do 1º toque na intro/Home (régua `tema.test.ts`), ou a tela "Tap to start" reaparecer (régua `IntroScreen.render.test.tsx`).
 
 **Rollback:** reverter o PR. **APK:** nada obrigatório; o web sai sem APK.
+
+## §293 — Auditoria da volta da Missão: nunca voltar sem dizer nada (11/11/2026, relato do dono)
+
+Relato: mandou o Soulmon investigar, ele voltou e só havia "Mandar investigar" de novo (sem chefe, desafio ou feira). Auditoria: a feira de verdade funciona (medido em 10.000 voltas: 8,05% sem buff, 12,0% com; `feiraLoja.taxa.test.js`). O que o jogador via vazio era a volta SEM evento: mistério em descanso (1 dia + 2 de intervalo entre mistérios), trilha já cumprida, chefe sem ataque hoje, ou o registro encerrado em silêncio por erro não-retentável (limite do dia em outro aparelho, roda mudada). Nesses casos a volta não mostrava nada e o botão da sala voltava. Sem bug de sorteio; havia dois defeitos de cliente: (1) o "desafio do dia" era gravado mesmo com evento sem ação (trilha cumprida), gerando um "escapou" falso no dia seguinte; agora só grava se `feiraEventoAbre`. (2) Volta sem loja/evento e o encerramento silencioso agora dão um aviso (toast) em vez de silêncio. Regra de jogo inalterada (8%, pesos, cooldowns).
