@@ -340,17 +340,39 @@ export async function upsertSimulado(env, p, day, now = new Date()) {
   return { wrote: true, name };
 }
 
-/** Placar do Torneio da season corrente: só quando ausente (duelos reais passam a mexer nele). */
-async function garantirRankDaSeason(env, p, now) {
+/** Pontos-base do simulado na season: pelo PODER (level), não pela habilidade escondida (dono, 11/11/2026: quem está no topo do
+ *  ranking tem que ser o mais forte — o rank ordenava por `skill`, e o level vem de outra curva, então o topo lutava como fraco).
+ *  Cada level vale 10 e o desempate (0–4) nunca cruza dois levels: a ordem do rank = a ordem de poder. */
+export function pontosBaseDaSeason(p, level, season) {
+  const rng = prngOf(`${p.id}|${season}|rank`);
+  return Math.round(level * 10 + rng() * 4);
+}
+/** A fórmula antiga (por `skill`), só para migrar linhas já gravadas sem perder o que as partidas reais somaram/tiraram. */
+const pontosBaseAntigos = (p, season) => Math.round(p.skill * 380 + prngOf(`${p.id}|${season}|rank`)() * 60);
+
+/** Placar do Torneio da season corrente. Linha ausente = nasce por poder. Linha sem `simV: 2` (gravada pela fórmula por skill) é
+ *  MIGRADA uma vez: troca a base antiga pela nova e mantém a diferença (`points − base antiga`) que os duelos reais deixaram. */
+async function garantirRankDaSeason(env, p, now, level) {
   const store = kvOrThrow(env);
   const season = new Date(now).toISOString().slice(0, 7);
   const key = `rank:${season}:${p.id}`;
-  if (await store.get(key)) return;
+  const nova = pontosBaseDaSeason(p, level, season);
+  const atual = await store.get(key);
+  if (atual) {
+    let rec = null;
+    try { rec = JSON.parse(atual); } catch { /* linha ilegível: deixa como está */ }
+    if (!rec || typeof rec !== 'object' || rec.simV === 2) return;
+    const points = Math.max(0, nova + (Number(rec.points) || 0) - pontosBaseAntigos(p, season));
+    await store.put(key, JSON.stringify({ ...rec, points, simV: 2 }), { expirationTtl: 86400 * 120, metadata: { pts: points } });
+    await indexarPontos(env, season, p.id, points);
+    return;
+  }
   const rng = prngOf(`${p.id}|${season}|rank`);
-  const points = Math.round(p.skill * 380 + rng() * 60);
+  rng(); // o 1º sorteio é o desempate dos pontos (mesma ordem de consumo de antes: jogos/vitórias seguem iguais)
+  const points = nova;
   const jogos = 3 + Math.floor(p.skill * 14 + rng() * 6);
   const wins = Math.round(jogos * (0.3 + p.skill * 0.5));
-  await store.put(key, JSON.stringify({ points, wins, losses: Math.max(0, jogos - wins), day: SIM_EPOCH, matchesToday: 0 }), { expirationTtl: 86400 * 120, metadata: { pts: points } });
+  await store.put(key, JSON.stringify({ points, wins, losses: Math.max(0, jogos - wins), day: SIM_EPOCH, matchesToday: 0, simV: 2 }), { expirationTtl: 86400 * 120, metadata: { pts: points } });
   await indexarPontos(env, season, p.id, points); // índice ordenado da season (REGISTRO §23)
 }
 
@@ -371,7 +393,7 @@ async function escreverScores(env, p, day, now) {
 
 async function processarSimulado(env, p, day, now) {
   await upsertSimulado(env, p, day, now);
-  await garantirRankDaSeason(env, p, now);
+  await garantirRankDaSeason(env, p, now, estadoDoDia(p, day).level);
   await escreverScores(env, p, day, now);
 }
 
