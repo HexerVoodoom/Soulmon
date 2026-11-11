@@ -146,22 +146,28 @@ export function usePaidWidgetFrames(): readonly string[] {
   return useSyncExternalStore(subscribe, getPaidWidgetFrames, getPaidWidgetFrames);
 }
 
-// ── Prévia no app (opcional): `src/assets/soulmon/widget-molduras/<elemento>.png|webp`; ausente = sem prévia ──────
+// ── Prévia no app: `src/assets/soulmon/widget-molduras/<elemento>.webp` (cópia dos drawables Android `moldura_vpet_*`) +
+// `padrao.webp` (casco padrão). Ausente = sem prévia. O caminho nunca teve arquivo no repo (bug: as prévias não apareciam). ──
+export const WIDGET_FRAME_DEFAULT_PREVIEW = 'padrao';
+/** Abertura LCD (fração do casco 576x384) por onde o Soulmon do jogador aparece na prévia. */
+export const WIDGET_FRAME_LCD = { left: 109 / 576, top: 71 / 384, width: 357 / 576, height: 191 / 384 } as const;
 const PREVIEW_FILES = import.meta.glob<string>('../assets/soulmon/widget-molduras/*.{png,webp}', { eager: true, import: 'default' });
 const PREVIEWS: Readonly<Record<string, string>> = Object.fromEntries(
   Object.entries(PREVIEW_FILES).flatMap(([path, url]) => {
     const m = /\/([a-z_]+)\.(?:png|webp)$/.exec(path);
-    return m && isWidgetFrameId(m[1]) ? [[m[1], url]] : [];
+    return m && (isWidgetFrameId(m[1]) || m[1] === WIDGET_FRAME_DEFAULT_PREVIEW) ? [[m[1], url]] : [];
   }),
 );
 
-export function widgetFramePreview(element: string): string | undefined {
-  return PREVIEWS[element];
+export function widgetFramePreview(element: string | null): string | undefined {
+  return PREVIEWS[element ?? WIDGET_FRAME_DEFAULT_PREVIEW];
 }
 
 /** O que o seletor (components/WidgetFramePicker.tsx) recebe do App: posse efetiva, escolha atual (ja reconferida) e as acoes. */
 export interface WidgetFramePickerData {
   owned: readonly string[];
+  /** Sprite do Soulmon do jogador, desenhado dentro do LCD da prévia (ausente = só o casco). */
+  petSrc?: string;
   /** Id do elemento da moldura em uso, ou '' = a padrao. */
   selected: string;
   /** null = a padrao. */

@@ -3,7 +3,7 @@ import { Icon } from './ui/Icon';
 import { sm2Button, sm2Hint, sm2Text } from './form/FormKit';
 import { getLocalizedPrice, isBillingAvailable, useStoreOpen, billingDisabledMessage } from '../utils/playBilling';
 import {
-  widgetFramePreview, widgetFrameProductId, widgetFrameRows, widgetFrameUnlockHint, type WidgetFramePickerData,
+  WIDGET_FRAME_LCD, widgetFramePreview, widgetFrameProductId, widgetFrameRows, widgetFrameUnlockHint, type WidgetFramePickerData,
 } from '../utils/widgetFrames';
 import type { Language } from '../utils/i18n';
 
@@ -52,10 +52,21 @@ export function WidgetFramePicker({ language, data }: { language: Language; data
 
   const rowBox = { display: 'flex', alignItems: 'center', gap: 10, minHeight: 64, padding: '8px 12px', boxSizing: 'border-box', borderRadius: 'var(--sm2-radius-lg)', border: '1px solid var(--sm2-line)', backgroundColor: 'var(--sm2-surface)' } as const;
   const preview = (id: string | null) => {
-    const url = id ? widgetFramePreview(id) : undefined;
+    const url = widgetFramePreview(id);
     return url
-      ? <img src={url} alt="" width={72} height={48} style={{ flex: 'none', objectFit: 'contain', imageRendering: 'pixelated' }} />
-      : <span aria-hidden="true" style={{ flex: 'none', width: 72, height: 48, boxSizing: 'border-box', borderRadius: 6, border: '1px dashed var(--sm2-line)' }} />;
+      ? (
+        <span data-widget-frame-preview={id ?? 'default'} style={{ position: 'relative', flex: 'none', width: 90, height: 60 }}>
+          {data.petSrc && (
+            <img src={data.petSrc} alt="" style={{
+              position: 'absolute', objectFit: 'contain', imageRendering: 'pixelated',
+              left: `${WIDGET_FRAME_LCD.left * 100}%`, top: `${WIDGET_FRAME_LCD.top * 100}%`,
+              width: `${WIDGET_FRAME_LCD.width * 100}%`, height: `${WIDGET_FRAME_LCD.height * 100}%`,
+            }} />
+          )}
+          <img src={url} alt="" width={90} height={60} style={{ position: 'absolute', inset: 0, objectFit: 'contain' }} />
+        </span>
+      )
+      : <span aria-hidden="true" style={{ flex: 'none', width: 90, height: 60, boxSizing: 'border-box', borderRadius: 6, border: '1px dashed var(--sm2-line)' }} />;
   };
   const inUse = (
     <span data-widget-frame-inuse style={{ ...sm2Hint, flex: 'none', display: 'inline-flex', alignItems: 'center', gap: 4 }}>

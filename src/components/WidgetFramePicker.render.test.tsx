@@ -87,3 +87,16 @@ describe('WidgetFramePicker', () => {
     expect(item('luz').querySelector('[data-widget-frame-buy]')).toBeNull();
   });
 });
+
+describe('WidgetFramePicker: prévias', () => {
+  it('cada opção (padrão + 20) mostra uma imagem de casco, com o Soulmon no LCD quando há sprite', () => {
+    abrir(data({ petSrc: 'pet.png' }));
+    const prevs = document.querySelectorAll('[data-widget-frame-preview]');
+    expect(prevs).toHaveLength(21);
+    prevs.forEach(p => {
+      const imgs = p.querySelectorAll('img');
+      expect(imgs).toHaveLength(2);
+      expect((imgs[1] as HTMLImageElement).getAttribute('src')).toBeTruthy();
+    });
+  });
+});
