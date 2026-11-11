@@ -1,6 +1,6 @@
 # Backlog da beta12 (versionCode 32)
 
-> **Dono:** soulmon-coordenador · **Data:** 11/11/2026 · **Pedido do dono:** 11/11/2026 · **Base:** `7895310` (main; `versionName` `1.3.0-beta11`, `versionCode` 31) · **Estado:** BACKLOG, nada implementado; o estado real é o código.
+> **Dono:** soulmon-coordenador · **Data:** 11/11/2026 · **Pedido do dono:** 11/11/2026 · **Base:** `7895310` (main; `versionName` `1.3.0-beta11`, `versionCode` 31) · **Atualizado:** 11/11/2026 (decisões 9 a 13 em §F) · **Estado:** BACKLOG, nada implementado; o estado real é o código.
 > **Execução:** DOMINGO 15/11/2026 às 03:00. A tarefa agendada `soulmon-traducao-pt-inline-lotes` roda no mesmo horário e FAZ PARTE da beta12 (é o item D). **Exige APK novo** (itens A e, se houver mudança nativa, os demais).
 > **Fonte única do conteúdo:** o pedido do dono (memória `soulmon-beta12-widgets`). Os critérios de aceite abaixo vêm do texto dele; nenhum requisito foi acrescentado. O que o texto não decide está em "Perguntas em aberto" (modal ao dono, `AskUserQuestion`).
 > **Precedência:** código > teste > `CLAUDE.md` > este backlog.
@@ -44,27 +44,29 @@ Plano de A1 já escrito: [design/PLANO-WIDGET-MOLDURAS-REMOTAS.md](design/PLANO-
 
 ### A2. Widget V-Pet redimensionável na vertical
 
-- **Objetivo:** o V-Pet poder ser esticado na vertical: 1 célula de largura, 2 ou mais de altura; o texto fica ABAIXO do Soulmon.
+- **Objetivo:** o widget SEM moldura (o que já existe; decisão 9) poder ser esticado na vertical: 1 célula de largura, 2 ou mais de altura; o texto fica ABAIXO do Soulmon. O widget COM moldura, agora chamado Cage, NÃO ganha formato vertical.
 - **Critérios de aceite:**
-  1. O widget aceita 1 célula de largura e 2+ de altura (hoje `minResizeWidth` 180dp e alvo 4x3 impedem).
+  1. O widget sem moldura aceita 1 célula de largura e 2+ de altura (hoje o seu `minWidth` 180dp e o alvo 3x2 impedem; o Cage tem alvo 4x3 e `minResizeWidth` 180dp).
   2. Nesse formato o texto da fala aparece abaixo do Soulmon (hoje fica à direita).
   3. O formato horizontal atual continua igual.
-- **Dependências:** `soulmon_widget_vpet_info.xml`, `WidgetVpet.kt` (layout em caixas), `drawVpet`, `widget_soulmon_vpet.xml`; a moldura (A1) tem proporção 576x384 com LCD fixo (x 108..467, y 71..263), logo um formato vertical precisa de arte/recorte novo ou de moldura reduzida.
-- **Riscos:** o casco 576x384 é horizontal; esticar na vertical pode distorcer ou deixar o sprite minúsculo; interação com A3 (sprite grande); o launcher do aparelho decide as células reais, só se prova em aparelho.
+- **Dependências:** `soulmon_widget_clear_info.xml` (provider `SoulmonWidgetClearProvider`, rótulo "Soulmon"; confirmar no código ao executar), o layout e o renderer desse widget; `WidgetVpet.kt` (layout em caixas) só se o formato vertical reutilizar a geometria do V-Pet. Não há moldura vertical nova: o formato vertical é do widget sem moldura (decisão 9).
+- **Riscos:** o layout do widget sem moldura precisa caber em 1 de largura sem distorcer nem deixar o sprite minúsculo; interação com A3 (sprite grande); o launcher do aparelho decide as células reais, só se prova em aparelho.
 - **APK × web:** APK (XML, layout, Kotlin).
-- **Perguntas em aberto:** a moldura no formato vertical é a mesma com mais fundo ou arte nova? Há teto de altura?
+- **Decidido (§F, 9):** não há moldura vertical nova; o formato vertical é do widget sem moldura.
+- **Perguntas em aberto:** teto de altura (não está na lista de §F).
 
 ### A3. Terceiro widget (total de 3 opções) com o Soulmon GRANDE
 
-- **Objetivo:** terceira opção, igual à primeira, mas com o Soulmon grande (2x2 ou 3x3 conforme o tamanho colocado); o sprite se ajusta ao tamanho do widget.
+- **Objetivo:** terceira opção, o **Companheiro** (en: "Companion"; §F, 7), igual ao Cage, mas com o Soulmon grande (2x2 ou 3x3 conforme o tamanho colocado); o sprite se ajusta ao tamanho do widget.
 - **Critérios de aceite:**
-  1. O seletor do Android passa a mostrar 3 opções (a confirmar o que o dono conta como "as 3", ver pergunta).
-  2. O novo widget tem o mesmo conteúdo do primeiro (fala, ícones, moldura, cenário).
+  1. O seletor do Android passa a mostrar 3 opções: **Cage** (V-Pet com moldura), **sem moldura** (redimensionável também na vertical, ver A2) e **Companheiro** (Soulmon grande) (§F, 9).
+  2. O Companheiro tem o mesmo conteúdo do Cage (fala, ícones, moldura, cenário).
   3. Colocado em 2x2 ou 3x3, o sprite ocupa o espaço e se ajusta ao tamanho.
 - **Dependências:** provider + `info.xml` + layout + manifest novos; reuso de `renderVpet` com outra geometria (`WidgetVpet.kt`); `updateData` já alimenta os providers pelo mesmo prefs.
-- **Riscos:** hoje há 8 providers registrados e os antigos NÃO podem sair (tirar um receiver apaga o widget já colocado); contar "3 opções" depende de qual é a "primeira"; sprite grande exige a arte nativa do estágio (`WidgetOwnSprite`, `STARTER_SPRITES`).
+- **Riscos:** hoje há 8 providers registrados e os antigos NÃO podem sair (tirar um receiver apaga o widget já colocado); sprite grande exige a arte nativa do estágio (`WidgetOwnSprite`, `STARTER_SPRITES`).
 - **APK × web:** APK.
-- **Perguntas em aberto:** as 3 opções são V-Pet atual, V-Pet vertical (A2) e V-Pet grande, ou o vertical é só o redimensionamento do primeiro? Entre 2x2 e 3x3 o layout muda sozinho?
+- **Decidido (§F, 9):** as 3 opções são Cage, sem moldura e Companheiro; o vertical é o redimensionamento do widget sem moldura, não uma opção separada.
+- **Perguntas em aberto:** entre 2x2 e 3x3 o layout muda sozinho? (não está na lista de §F)
 
 ## B. Personalidade do Soulmon e dos NPCs
 
@@ -183,14 +185,10 @@ Decididas pelo dono; **prevalecem sobre qualquer "Perguntas em aberto" dos itens
 6. **Escopo das falas (B2/B3):** na beta12, priorizar o Soulmon (falas padrão e API) e os NPCs principais; o resto em lotes depois.
 7. **Nome do 3º widget (A3):** "Companheiro" (en: "Companion").
 8. **Execução:** só no DOMINGO 15/11/2026 às 03:00; nenhuma implementação antes (o dono escolheu "Só domingo").
+9. **Widget vertical (A2) e opções (A3):** o redimensionamento vertical vale para o widget SEM moldura (o outro widget que já existe). O widget COM moldura passa a se chamar **Cage** (en: "Cage"); portanto NÃO se gera moldura vertical nova. As 3 opções de widget: **Cage** (V-Pet com moldura), o **sem moldura** (redimensionável também na vertical, 1 de largura x 2+ de altura, texto abaixo do Soulmon) e **Companheiro** (Soulmon grande).
+10. **Derivação por forças/dificuldades (B1):** a derivação do G7 (01/10) CONVIVE com o Big Five: o teste decide o caráter, forças/dificuldades decidem o veto.
+11. **Chat (C1):** ~20 mensagens visíveis na tela (da sessão); o servidor recebe 3 turnos, como hoje.
+12. **Veto em SIMILAR (B2):** em personalidade SIMILAR o veto de vulnerabilidade prevalece.
+13. **Falas do B e lotes de PT (D):** as falas reescritas no item B ficam FORA dos lotes de revisão de português (D).
 
-Ainda em aberto (modal ao dono antes ou durante a execução; recomendada primeiro):
-
-| # | Item | Pergunta | Recomendada |
-|---|---|---|---|
-| 1 | A3 | O vertical (A2) é só o redimensionamento do V-Pet ou uma opção separada do seletor? | redimensionamento do V-Pet; as 3 opções são V-Pet, outro existente e Companheiro (confirmar) |
-| 2 | A2 | Moldura vertical: a mesma estendida ou arte nova? | arte nova, pelo ChatGPT |
-| 3 | B2 | Em SIMILAR o veto de vulnerabilidade prevalece? | sim |
-| 4 | B1 | A derivação por forças/dificuldades (G7, 01/10) convive ou é substituída? | convive: o teste decide o caráter, forças/dificuldades decidem o veto |
-| 5 | C1 | Quantas mensagens ficam na tela; o histórico enviado à IA sobe de 3? | últimas ~20 na tela, 3 turnos para a IA como hoje |
-| 6 | D | As falas reescritas no B ficam fora dos lotes de PT? | sim |
+Ainda em aberto: **nenhuma pergunta de modal pendente**. As seis perguntas da tabela anterior (widget vertical e opções, moldura vertical, veto em SIMILAR, derivação G7, chat e falas fora dos lotes de PT) foram respondidas nas decisões 9 a 13 e nos itens 1 a 8 acima. Restam só as perguntas de detalhe marcadas nos itens A2 (teto de altura) e A3 (layout 2x2/3x3), que não estão na lista de §F.
