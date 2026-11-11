@@ -102,7 +102,10 @@ export function casaStageFor(total) {
 export async function doarBits(env, gid, save, day, bits) {
   if (!CASA_DOACOES.includes(bits)) return { accepted: 0, capped: false, invalid: true };
   const c = await lerCasa(env, gid, save);
-  if (c.day === day && c.bitsToday > 0) return { accepted: 0, capped: true };
+  // O registro guarda só o ÚLTIMO dia doado e o `dayKey` vem do cliente (janela ±1 dia UTC): sem exigir dia ESTRITAMENTE mais
+  // novo, alternar 10/11 ↔ 11/11 doava sem fim (tesouro e seiva ilimitados = Buffs do clã de graça). Dia igual ou anterior ao
+  // último doado = já doou (texto ISO AAAA-MM-DD compara na ordem cronológica). Segurança, rodada 1 (11/11/2026).
+  if (c.day && c.bitsToday > 0 && day <= c.day) return { accepted: 0, capped: true };
   c.day = day;
   c.bitsToday = bits;
   c.pts.doacao += bits / CASA_BITS_POR_PONTO;
