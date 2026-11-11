@@ -13,8 +13,9 @@ Escopo: PRs #757, #759, #761, #762, #764, #765, #766, #767, #769-#782. Base lida
 
 | # | Achado | Onde | PR |
 |---|---|---|---|
-| C1 | Build Android quebrado na main: `androidx.health.connect:connect-client:1.1.0` exige AGP 8.9.1 (o repo usa 8.2.1); `checkDebugAarMetadata` falha. Sem APK/AAB, o beta11 não sai. | `android/app/build.gradle:108` | `fix/android-health-connect-agp` |
-| A1 | Teste frágil: o caso "duelo que ficou aberto" recua `pending.at` em 5 min + 1 s; nos primeiros ~5 min do dia UTC esse instante cai no dia anterior e `refundOpenDuel` (corretamente) não devolve a partida. O código está certo; o teste dependia do relógio. | `functions/api/community.duel.qa458.test.js` | `qa/rodada-1` (este) |
+| C1 | Build Android quebrado na main: `androidx.health.connect:connect-client:1.1.0` exige AGP 8.9.1 (o repo usa 8.2.1); `checkDebugAarMetadata` falha. Sem APK/AAB, o beta11 não sai. | `android/app/build.gradle:108` | #790 |
+| A1 | Teste frágil: o caso "duelo que ficou aberto" recua `pending.at` em 5 min + 1 s; nos primeiros ~5 min do dia UTC esse instante cai no dia anterior e `refundOpenDuel` (corretamente) não devolve a partida. O código está certo; o teste dependia do relógio. | `functions/api/community.duel.qa458.test.js` | #789 (este) |
+| A2 | Custo: `sparOpponents` (Treino) varre até 120 perfis + Vínculo (~240 leituras de KV) por GET e estava no teto LEVE (120/min/IP): ~29 mil leituras/min por IP. | `functions/api/community.js:130` | #791 |
 
 ## Médios (lista, sem PR)
 
@@ -35,7 +36,8 @@ Escopo: PRs #757, #759, #761, #762, #764, #765, #766, #767, #769-#782. Base lida
 5. Buff do clã fica no `localStorage` (`soulmon-clan-buffs`) até vencer; sair do clã por outro aparelho não limpa neste.
 6. Testes que calculam `new Date().toISOString().slice(0,10)` antes das chamadas (`community.treino.test.js`, `community.treino.tickets.test.js`, `feiraLoja.test.js`, `review-soulmon.test.js`) ainda podem falhar se o dia UTC virar no meio do teste (janela de milissegundos).
 7. `modalDepth`: qualquer `aria-modal="true"` montado e invisível deixaria o Voltar esmaecido para sempre. Hoje os 36 usos são condicionais (lido no código, não testado em tela).
-8. Textos ainda dizem "Hall" em alguns lugares depois do #767 (só o rótulo da área foi trocado); ids e chaves não mudaram (correto).
+8. Cliente antigo (beta10, sem a UI de tickets) que passa das 20 partidas do Treino recebe 409 e mostra o texto cru do servidor (`no tickets`).
+9. Textos ainda dizem "Hall" em alguns lugares depois do #767 (só o rótulo da área foi trocado); ids e chaves não mudaram (correto).
 
 ## Não verificado
 
