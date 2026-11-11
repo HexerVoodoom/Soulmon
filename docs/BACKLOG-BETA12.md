@@ -171,15 +171,26 @@ Plano de A1 já escrito: [design/PLANO-WIDGET-MOLDURAS-REMOTAS.md](design/PLANO-
 3. APK único no fim (`versionCode` 32), depois do merge de A.
 4. Antes de começar: modal ao dono com as perguntas abaixo (decisões de design, não de código).
 
-## F. Perguntas em aberto consolidadas (para modal, recomendada primeiro)
+## F. Decisões do dono (11/11/2026) e o que segue em aberto
+
+Decididas pelo dono; **prevalecem sobre qualquer "Perguntas em aberto" dos itens acima** (essas ficam como histórico do raciocínio):
+
+1. **Modelo base da personalidade (B1):** Big Five (5 dimensões); o complemento é calculado por dimensão.
+2. **Tom das falas (B2):** depende da personalidade de cada Soulmon/NPC; não há tom padrão único; reduzir o "no seu tempo, tudo bem" em geral.
+3. **Chat (C):** limite de 20 mensagens por dia no plano grátis; ao passar do limite o Soulmon responde com fala padrão; o histórico vale só na sessão (não persiste).
+4. **Jogador sem teste de personalidade (B1/B2):** Soulmon neutro até o teste; depois, complementar (ou similar, se a opção estiver ligada em Configurações).
+5. **NPCs (B3):** elemento, estágio, classe e personalidade são definidos pelo papel e design de cada um e APLICADOS sem pedir aprovação; a tabela resultante entra no relatório para o dono ajustar depois.
+6. **Escopo das falas (B2/B3):** na beta12, priorizar o Soulmon (falas padrão e API) e os NPCs principais; o resto em lotes depois.
+7. **Nome do 3º widget (A3):** "Companheiro" (en: "Companion").
+8. **Execução:** só no DOMINGO 15/11/2026 às 03:00; nenhuma implementação antes (o dono escolheu "Só domingo").
+
+Ainda em aberto (modal ao dono antes ou durante a execução; recomendada primeiro):
 
 | # | Item | Pergunta | Recomendada |
 |---|---|---|---|
-| 1 | A3 | Quais são "as 3 opções" e qual é "o primeiro"? | V-Pet atual, V-Pet vertical (A2) e V-Pet grande |
+| 1 | A3 | O vertical (A2) é só o redimensionamento do V-Pet ou uma opção separada do seletor? | redimensionamento do V-Pet; as 3 opções são V-Pet, outro existente e Companheiro (confirmar) |
 | 2 | A2 | Moldura vertical: a mesma estendida ou arte nova? | arte nova, pelo ChatGPT |
-| 3 | B1 | "Tipo" do teste: Jung, perfil Big Five ou arquétipos novos? | arquétipos derivados do Big Five |
+| 3 | B2 | Em SIMILAR o veto de vulnerabilidade prevalece? | sim |
 | 4 | B1 | A derivação por forças/dificuldades (G7, 01/10) convive ou é substituída? | convive: o teste decide o caráter, forças/dificuldades decidem o veto |
-| 5 | B2 | Em SIMILAR o veto de vulnerabilidade prevalece? | sim |
-| 6 | B3 | Lista fechada dos NPCs que entram na criação de personagem | todos os que têm fala, mais os novos |
-| 7 | C1 | Quantas mensagens ficam; o histórico enviado à IA sobe? | últimas ~20 na tela, 3 turnos para a IA como hoje |
-| 8 | D | As falas reescritas no B ficam fora dos lotes de PT? | sim |
+| 5 | C1 | Quantas mensagens ficam na tela; o histórico enviado à IA sobe de 3? | últimas ~20 na tela, 3 turnos para a IA como hoje |
+| 6 | D | As falas reescritas no B ficam fora dos lotes de PT? | sim |
