@@ -668,8 +668,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                     : 'Your nickname and your Soulmon show up on a public list of Tournament players.')}
                 {' '}
                 {isPt
-                  ? 'Há um limite de partidas por dia; perder também rende Honra. Vencer alguém bem abaixo de você, ou o mesmo oponente de novo, rende cada vez menos. ' + 'Sem oponentes, três NPCs treinam com você, sem gastar partida.'
-                  : 'There is a daily match limit; losing earns Honor too. Beating someone far below you, or the same opponent again, earns less each time. ' + 'With no opponents, three NPCs train with you, no match used.'}
+                  ? 'Há um limite de partidas por dia; perder também rende Honra. Vencer quem está acima de você no ranking rende mais pontos; vencer quem está bem abaixo, ou o mesmo oponente de novo, rende menos. ' + 'Sem oponentes, três NPCs treinam com você, sem gastar partida.'
+                  : 'There is a daily match limit; losing earns Honor too. Beating someone ranked above you earns more points; beating someone far below you, or the same opponent again, earns less. ' + 'With no opponents, three NPCs train with you, no match used.'}
               </span>
             )}
         </InfoTipSection>

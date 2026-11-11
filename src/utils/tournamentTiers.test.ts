@@ -114,7 +114,8 @@ describe('pontos da faixa na tela', () => {
   });
   it('explica o motivo de rendimento reduzido ou zero', () => {
     expect(motivoSemPontosTexto(null, 20, true)).toBeNull();
-    expect(motivoSemPontosTexto('level', 0, true)).toMatch(/muito abaixo/);
+    expect(motivoSemPontosTexto('rank-down', 3, true)).toMatch(/bem abaixo/);
+    expect(motivoSemPontosTexto('rank-up', 35, false)).toMatch(/Earned more/);
     expect(motivoSemPontosTexto('repeat', 0, false)).toMatch(/already beat/);
     expect(motivoSemPontosTexto('repeat', 10, true)).toMatch(/Rendeu menos/);
   });

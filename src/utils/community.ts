@@ -197,12 +197,12 @@ export interface MatchResult {
   duel?: { events: FightEvent[]; me: DuelSide; opp: DuelSide };
   /** Saiu do duelo antes do fim: o servidor fechou como derrota, sem luta. */
   forfeit?: boolean;
-  /** PR13: quanto a vitória rendeu em pontos (0 em derrota/empate). O servidor reduz o ganho contra oponente bem abaixo do seu level e contra o mesmo oponente repetido no dia. */
+  /** PR13: quanto a vitória rendeu em pontos (0 em derrota/empate). Por RANK (pontos da temporada): mais contra quem está acima (até ~2x), menos contra quem está bem abaixo (piso 3), e menos contra o mesmo oponente repetido no dia. */
   gain?: number;
   /** PR13: fator (0..1) que o app aplica à Honra de VITÓRIA (1 = inteira). Derrota e empate: 1 e nada muda. Ausente (servidor antigo) = 1. */
   honorFactor?: number;
-  /** Por que a vitória rendeu menos pontos de faixa: oponente bem abaixo do seu level (`level`), mesmo oponente de novo no dia (`repeat`) ou `null` (inteira). Só leitura. */
-  gainReason?: 'level' | 'repeat' | null;
+  /** Por que a vitória rendeu mais/menos pontos de faixa: oponente acima no ranking (`rank-up`), bem abaixo (`rank-down`), mesmo oponente de novo no dia (`repeat`) ou `null` (normal). Só leitura. */
+  gainReason?: 'rank-up' | 'rank-down' | 'repeat' | null;
   /** Pontos da FAIXA (contador que só soma) depois desta partida. Ausente em servidor antigo. */
   lifetime?: number;
 }

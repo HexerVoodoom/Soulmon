@@ -139,14 +139,11 @@ export function faixaPontosTexto(standing: TierStanding, lifetime: number, isPt:
     : `${nome}: ${p}/${standing.next.min} · ${standing.pointsToNext} to go`;
 }
 
-/** Motivo curto para uma vitória que rendeu 0 ponto de faixa (ou menos que o cheio). `null` = nada a explicar. */
-export function motivoSemPontosTexto(reason: 'level' | 'repeat' | null | undefined, gain: number, isPt: boolean): string | null {
-  if (reason !== 'level' && reason !== 'repeat') return null;
-  if (reason === 'level') {
-    return gain > 0
-      ? (isPt ? 'Rendeu menos: o oponente estava abaixo do seu nível.' : 'Worth less: the opponent was below your level.')
-      : (isPt ? 'Sem pontos de faixa: o oponente estava muito abaixo do seu nível.' : 'No tier points: the opponent was far below your level.');
-  }
+/** Motivo curto para uma vitória que rendeu mais ou menos pontos de faixa que o normal. `null` = nada a explicar. */
+export function motivoSemPontosTexto(reason: 'rank-up' | 'rank-down' | 'repeat' | null | undefined, gain: number, isPt: boolean): string | null {
+  if (reason === 'rank-up') return isPt ? 'Rendeu mais: oponente acima de você no rank.' : 'Earned more: opponent ranked above you.';
+  if (reason === 'rank-down') return isPt ? 'Rendeu menos: oponente bem abaixo de você no rank.' : 'Earned less: opponent ranked well below you.';
+  if (reason !== 'repeat') return null;
   return gain > 0
     ? (isPt ? 'Rendeu menos: você já venceu esse oponente hoje.' : 'Worth less: you already beat this opponent today.')
     : (isPt ? 'Sem pontos de faixa: você já venceu esse oponente hoje.' : 'No tier points: you already beat this opponent today.');
