@@ -44,7 +44,10 @@ export function fatorPorRepeticao(vitoriasAntes) {
  */
 export function ganhoDePontos(base, levelVencedor, levelPerdedor, vitoriasAntes) {
   const factor = fatorPorLevel(Number(levelVencedor), Number(levelPerdedor)) * fatorPorRepeticao(vitoriasAntes);
-  return { gain: Math.round(base * factor), factor };
+  // Piso por nivel: o corte de nivel sozinho nunca leva a 0; o teto do piso e o que a repeticao ja deixaria (rep 0 => 0).
+  const porRep = Math.round(base * fatorPorRepeticao(vitoriasAntes));
+  const gain = Math.max(Math.round(base * factor), Math.min(PONTOS_PISO_VITORIA, porRep));
+  return { gain, factor };
 }
 
 /** O maximo de pontos que UM par (mesmos dois levels, sem queda por level) rende por dia de vitorias: a soma da lista. */

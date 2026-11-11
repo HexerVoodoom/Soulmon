@@ -86,7 +86,8 @@ describe('ALTO-2: as regras puras (nomeadas) do rendimento', () => {
   it('ganhoDePontos junta os dois fatores e arredonda', () => {
     expect(ganhoDePontos(HONRA_PONTOS_VITORIA, 5, 5, 0)).toEqual({ gain: 20, factor: 1 });
     expect(ganhoDePontos(HONRA_PONTOS_VITORIA, 5, 5, 1).gain).toBe(10);
-    expect(ganhoDePontos(HONRA_PONTOS_VITORIA, 40, 1, 0).gain).toBe(0);
+    expect(ganhoDePontos(HONRA_PONTOS_VITORIA, 40, 1, 0).gain).toBe(PONTOS_PISO_VITORIA); // piso, não 0
+    expect(ganhoDePontos(HONRA_PONTOS_VITORIA, 40, 1, 3).gain).toBe(0); // repetição ainda zera
     expect(ganhoDePontos(HONRA_PONTOS_DEFESA, 5, 5, 0).gain).toBe(10);
   });
 });
@@ -111,7 +112,7 @@ describe('ALTO-2: fazenda com conta própria', () => {
     const r = [];
     for (let i = 0; i < 4; i++) r.push((await jogar(env, A, PIDB, 'me')).json);
     expect(r[0].gain).toBe(20);
-    expect(r[0].gainReason).toBeUndefined();
+    expect(r[0].gainReason).toBeNull();
     expect(r.map(x => x.gain)).toEqual(r.map(x => x.gain).slice().sort((a, b) => b - a)); // nunca sobe
     expect(r[1].gain).toBeLessThanOrEqual(10);
     expect(r[1].gainReason).toBe('repeat');
@@ -134,6 +135,7 @@ describe('ALTO-2: fazenda com conta própria', () => {
     const r = await jogar(env, A, PIDB, 'me');
     expect(r.json.outcome).toBe('win');
     expect(r.json.gain).toBe(20);
+    expect(r.json.gainReason).toBeNull();
     expect(r.json.honorFactor).toBe(0);
     expect(rankDe(env, A).points).toBe(20);
     expect(rankDe(env, B).losses).toBe(1);
@@ -207,5 +209,34 @@ describe('pontos por RANK (11/11/2026): oponente acima rende mais, abaixo rende 
     expect(r.json.gain).toBeGreaterThan(20);
     expect(r.json.gain).toBeLessThanOrEqual(40);
     expect(r.json.gainReason).toBe('rank-up');
+  });
+});
+
+/* Por que a faixa "não anda" (investigação 11/11/2026): lifetime só soma em VITÓRIA e o ganho cai a 0 com oponente 9+ níveis
+   abaixo ou a partir da 4ª vitória no mesmo oponente no dia. Estes testes só documentam a regra vigente; não a mudam. */
+describe('velocidade da faixa (honra por level)', () => {
+  it('oponente 9+ níveis abaixo nunca soma; o par repetido soma 20+10+5 e para', () => {
+    expect(ganhoDePontos(HONRA_PONTOS_VITORIA, 15, 6, 0).gain).toBe(3);
+    const dia = [0, 1, 2, 3, 4].map(n => ganhoDePontos(HONRA_PONTOS_VITORIA, 5, 5, n).gain);
+    expect(dia).toEqual([20, 10, 5, 0, 0]);
+  });
+
+  it('simulação: partidas até cruzar a faixa (5 partidas/dia, 20 por vitória cheia)', () => {
+    const partidasAte = (alvo, lvMe, lvOpp, oponentesDistintos) => {
+      let pts = 0, n = 0;
+      for (let dia = 0; dia < 400 && pts < alvo; dia++) {
+        const vistas = {};
+        for (let j = 0; j < 5 && pts < alvo; j++) {
+          const o = j % oponentesDistintos; const w = vistas[o] ?? 0;
+          pts += ganhoDePontos(HONRA_PONTOS_VITORIA, lvMe, lvOpp, w).gain; vistas[o] = w + 1; n++;
+        }
+      }
+      return pts >= alvo ? n : Infinity;
+    };
+    expect(partidasAte(100, 5, 5, 5)).toBe(5);           // 5 oponentes de nível igual: Bronze em 1 dia
+    expect(partidasAte(1000, 10, 10, 5)).toBe(50);       // 1000 pts a 20/vitória = 50 vitórias = 10 dias
+    expect(partidasAte(100, 10, 10, 1)).toBe(12);        // sempre o mesmo oponente: 35/dia, 3 dias
+    expect(partidasAte(100, 20, 10, 5)).toBe(34);        // oponentes 10 níveis abaixo: piso 3 (5/dia de 3,3,3,... com 5 distintos) = 34 vitórias
+    expect(partidasAte(1000, 20, 10, 5)).toBe(334);      // 1000 pts só contra quem está muito abaixo: 334 vitórias (~67 dias, bem mais lento que 50)
   });
 });

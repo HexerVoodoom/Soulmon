@@ -46,3 +46,17 @@ describe('pickRankedOpponents — pontos da SEASON (o rank que muda a cada luta)
     expect([...baixo].some(id => alto.has(id))).toBe(false);
   });
 });
+
+describe('Torneio ranqueado: vizinhos de rank com variedade', () => {
+  it('sorteia só entre os vizinhos mais próximos em pontos da temporada e varia entre pedidos', () => {
+    const pool = Array.from({ length: 40 }, (_, i) => ({ id: 'o' + i, score: i * 10, lifetime: 0 }));
+    const vistos = new Map();
+    for (let k = 0; k < 300; k++) {
+      for (const o of pickRankedOpponents(pool, { score: 200, lifetime: 0 }, Math.random)) {
+        expect(Math.abs(o.score - 200)).toBeLessThanOrEqual(RANKED_WINDOW * 10);
+        vistos.set(o.id, (vistos.get(o.id) ?? 0) + 1);
+      }
+    }
+    expect(vistos.size).toBeGreaterThanOrEqual(RANKED_WINDOW); // não é sempre o mesmo trio
+  });
+});

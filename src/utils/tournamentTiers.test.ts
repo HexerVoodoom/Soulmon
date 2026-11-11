@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TOURNAMENT_TIERS, TOURNAMENT_SEATS, TOURNAMENT_LADDER, SEAT_MIN_LIFETIME, getTierStanding, resolveSeasonPlace } from './tournamentTiers';
+import { TOURNAMENT_TIERS, TOURNAMENT_SEATS, TOURNAMENT_LADDER, SEAT_MIN_LIFETIME, getTierStanding, resolveSeasonPlace, faixaPontosTexto, motivoSemPontosTexto } from './tournamentTiers';
 
 describe('faixas do torneio', () => {
   it('A1/R8: a escada clássica, nesta ordem, nos dois idiomas (Mestre e Grão-Mestre são LUGARES)', () => {
@@ -99,5 +99,24 @@ describe('faixas do torneio', () => {
       expect(resolveSeasonPlace('7', -1)).toBeNull();
       expect(resolveSeasonPlace(undefined, -1)).toBeNull();
     });
+  });
+});
+
+describe('pontos da faixa na tela', () => {
+  it('mostra quanto falta para a próxima faixa, em pt e en', () => {
+    const st = getTierStanding(900);
+    expect(faixaPontosTexto(st, 900, true)).toBe('Ouro: 900/1100 · faltam 200');
+    expect(faixaPontosTexto(st, 900, false)).toBe('Gold: 900/1100 · 200 to go');
+    expect(faixaPontosTexto(getTierStanding(0), 0, true)).toBe('Madeira: 0/100 · faltam 100');
+  });
+  it('na última faixa só mostra os pontos', () => {
+    expect(faixaPontosTexto(getTierStanding(1600), 1600, true)).toBe('Diamante: 1600 pontos da faixa');
+  });
+  it('explica o motivo de rendimento reduzido ou zero', () => {
+    expect(motivoSemPontosTexto(null, 20, true)).toBeNull();
+    expect(motivoSemPontosTexto('rank-down', 3, true)).toMatch(/bem abaixo/);
+    expect(motivoSemPontosTexto('rank-up', 35, false)).toMatch(/Earned more/);
+    expect(motivoSemPontosTexto('repeat', 0, false)).toMatch(/already beat/);
+    expect(motivoSemPontosTexto('repeat', 10, true)).toMatch(/Rendeu menos/);
   });
 });

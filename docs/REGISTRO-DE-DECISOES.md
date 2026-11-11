@@ -4691,7 +4691,14 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Rollback:** reverter o PR (presente volta à fila `gifts:`; convite segue só na lista de Amigos; cartas já entregues expiram em 3 dias).
 
-## §289 — Pontos do Torneio ranqueado por RANK, não por level (11/11/2026, pedido do dono)
+## §289 — Torneio: pontos da FAIXA separados dos da temporada, e o motivo de uma vitória sem pontos (11/11/2026, pedido do dono)
+
+**Decisão.** O dono não conseguia subir de faixa. A regra NÃO mudou (20/10/5/0 por repetição do mesmo oponente no dia, corte a 9 níveis abaixo, Bronze 100 · Prata 300 · Ouro 700 · Platina 1100 · Diamante 1500, `lifetimePoints` só soma em vitória). Mudou só a leitura: a tela do Torneio mostra "Pontos da faixa · Madeira: X/100 · faltam N", separado dos "pontos da temporada" (o número da lista do ranking e do resultado da partida), e o `match` devolve `gainReason` (`level` | `repeat` | `null`) e `lifetime` para o resultado dizer por que uma vitória rendeu 0.
+**Causa.** A faixa e o ranking mostravam dois contadores com o mesmo rótulo "pts"; só um deles sobe a faixa, e uma vitória contra oponente muito abaixo (ou o mesmo oponente de novo) não soma nada sem explicar o porquê. Simulação (testes em `community.farm.test.js`): 100 pts = 5 partidas contra 5 oponentes de nível igual; 12 partidas (3 dias) se o sorteio repete sempre o mesmo oponente (teto 35/dia); nunca contra oponentes 10+ níveis abaixo.
+**Atualização (dono, mesmo dia).** Piso: vitória contra oponente abaixo do nível rende no mínimo 3 pontos (`HONRA_PISO_POR_LEVEL`), a repetição no dia segue zerando; 100 pontos só contra quem está muito abaixo = 34 partidas, 1000 = 334 (contra 5 e 50 com oponentes de nível igual). O sorteio do Torneio ranqueado já é por vizinhança de pontos da temporada (`_rankedPick.js`, janela 4, estágio só pondera dentro dela); ganhou teste de variedade.
+**O que falsifica.** Se mesmo com o motivo visível jogadores seguirem travados, a regra (corte de nível, cota de 5 partidas/dia) é que precisa de decisão do dono.
+
+## §291 — Pontos do Torneio ranqueado por RANK, não por level (11/11/2026, pedido do dono)
 
 **Decisão.** O ganho de pontos de season/faixa numa vitória ranqueada depende da posição do oponente em relação à do jogador, medida em pontos da season: `mult = 1 + tanh(dif/200)` com `dif` = pontos do oponente − os seus (teto 2×, piso `PONTOS_PISO_VITORIA` = 3). Acima rende até ~40 (base 20), bem abaixo rende 3. A repetição do mesmo oponente no dia segue 20/10/5/0. O corte por LEVEL (`fatorPorLevel`) sai dos pontos e fica só na Honra (`honorFactor`); Treino e Honra não mudam. Os pontos dos dois lados são congelados em `duelStart` (`pending.pts`). Anti-abuso de conta nova de level 1: ela fica no fundo do ranking, então quem a farma sobe e o ganho cai ao piso (~300 pontos de vantagem); a repetição diária limita o começo da temporada.
 
@@ -4700,3 +4707,5 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Falsifica:** conta em massa de level 1 rendendo mais que o teto da repetição por par/dia, ou ganho de oponente acima menor que o de oponente abaixo (régua `functions/api/community.farm.test.js`).
 
 **Rollback:** reverter o PR (volta ao `ganhoDePontos` por level).
+
+**Nota:** substitui o corte por level e o piso por level do §289: o `gainReason` passa a ser `rank-up` | `rank-down` | `repeat`.

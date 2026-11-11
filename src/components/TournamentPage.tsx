@@ -60,7 +60,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { entrarNaSuperficie } from '../utils/musica';
 import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
-import { TOURNAMENT_LADDER, getTierStanding, resolveSeasonPlace } from '../utils/tournamentTiers';
+import { TOURNAMENT_LADDER, getTierStanding, resolveSeasonPlace, faixaPontosTexto, motivoSemPontosTexto } from '../utils/tournamentTiers';
 import { availableFrames, frameOrBasic, resolveEquippedFrame, type FrameContext } from '../utils/frames';
 import { type RosterEntry } from '../utils/enemyRoster';
 import { strayForTournament } from '../utils/strayFoes';
@@ -811,6 +811,13 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         </span>
       </div>
 
+      {/* Pontos da FAIXA (só somam; sobem a faixa) separados dos pontos da TEMPORADA (ranking do mês): a faixa só avança em vitória. */}
+      {standing && (
+        <p data-torneio-faixa-pontos className="sm2-num" style={{ ...sm2Hint, margin: 0 }}>
+          {isPt ? 'Pontos da faixa' : 'Tier points'} · {faixaPontosTexto(standing, myLifetime, isPt)}
+        </p>
+      )}
+
       <p data-torneio-temporada style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Temporada' : 'Season'}: {seasonDaysLabel(new Date(), isPt ? 'pt-BR' : 'en-US')}</p>
 
       {/* "Última temporada" (06/11/2026, dono): a pílula diz só a colocação do jogador no mês anterior ("—" se não jogou);
@@ -1253,8 +1260,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                 <p className="sm2-num" style={{ ...sm2Hint, flex: 1, minWidth: 0, margin: 0 }}>
                   {standing.next
                     ? (isPt
-                        ? `${standing.pointsToNext} pts até ${standing.next.namePt}`
-                        : `${standing.pointsToNext} pts to ${standing.next.nameEn}`)
+                        ? `${faixaPontosTexto(standing, myLifetime, true)} (pontos da faixa; só vitórias somam)`
+                        : `${faixaPontosTexto(standing, myLifetime, false)} (tier points; only wins add)`)
                     : standing.seat
                       ? (isPt ? `Lugar da season: #${standing.place}` : `Season seat: #${standing.place}`)
                       : (isPt ? 'Top 100 da season = Mestre · top 20 = Grão-Mestre' : 'Season top 100 = Master · top 20 = Grandmaster')}
@@ -1273,7 +1280,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
 
           {rank && rank.length > 0 && (
             <p style={{ ...sm2Hint, marginTop: 4, fontWeight: 500, letterSpacing: '.06em', textTransform: 'uppercase' }}>
-              {isPt ? 'Ranking da season' : 'Season ranking'}
+              {isPt ? 'Ranking da season · pontos da temporada' : 'Season ranking · season points'}
             </p>
           )}
           {rank && rank.length === 0 && !rankFailed && (
@@ -1425,20 +1432,13 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
  * "Emblems +N" com o número em serifa dourada 20; "Continue" primário nos
  * dois — a saída não muda de cor com o resultado (D-J8).
  */
-/** O motivo do ganho de pontos de faixa da vitória (pt/en); `undefined` = ganho normal, sem texto. */
-export function gainReasonText(reason: MatchResult['gainReason'], isPt: boolean): string {
-  if (reason === 'rank-up') return isPt ? 'Rendeu mais: oponente acima de você no ranking' : 'Earned more: opponent ranked above you';
-  if (reason === 'rank-down') return isPt ? 'Rendeu menos: oponente bem abaixo de você no ranking' : 'Earned less: opponent ranked well below you';
-  if (reason === 'repeat') return isPt ? 'Rendeu menos: mesmo oponente de novo hoje' : 'Earned less: same opponent again today';
-  return '';
-}
 function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: MatchResult; isPt: boolean; petStage: string; petLine?: string; onClose: () => void }) {
   const draw = result.draw === true;
   const petSpriteSrc = getSpriteForStage(petStage, petLine, 256);
   const petScale = usePetScale(petStage, petSpriteSrc);
+  /* Vitória que rendeu 0 (ou menos que o cheio) de ponto de faixa: diz o porquê (só leitura; a regra é do servidor). */
+  const motivo = result.won && !draw ? motivoSemPontosTexto(result.gainReason, result.gain ?? 0, isPt) : null;
   const title = draw ? (isPt ? 'Empate' : 'Draw') : result.won ? (isPt ? 'Vitória' : 'Victory') : (isPt ? 'Derrota' : 'Defeat');
-  // Por que a vitória rendeu mais ou menos pontos (decisão do servidor, `gainReason`).
-  const gainWhy = !draw && result.won ? gainReasonText(result.gainReason, isPt) : '';
   return (
     <ResultScreen
       playAgainIcon={lotIconName('arena', 'torneio')} playAgainArt={lotIconArt('arena', 'torneio')} dailyEvent="torneio"
@@ -1450,10 +1450,13 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
       title={title}
       line={draw
         ? (isPt ? 'Os dois caíram juntos. A partida conta, sem pontos para ninguém.' : 'You both went down together. The match counts, with no points for anyone.')
-        : (isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`) + (gainWhy ? ` · ${gainWhy}` : '')}
+        : `${isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`}${motivo ? ` · ${motivo}` : ''}`}
       lineAttrs={draw ? { 'data-empate': true } : undefined}
       hero={draw ? undefined : { label: isPt ? 'Placar da partida' : 'Match score', value: `${result.myScore} × ${result.oppScore}` }}
-      strip={draw ? undefined : [{ key: 'pts', label: isPt ? 'Poder da partida' : 'Match power', value: `${result.points} pts` }]}
+      strip={draw ? undefined : [
+        { key: 'pts', label: isPt ? 'Pontos da temporada' : 'Season points', value: `${result.points} pts` },
+        ...(typeof result.gain === 'number' && result.won ? [{ key: 'tier', label: isPt ? 'Pontos da faixa' : 'Tier points', value: `+${result.gain}` }] : []),
+      ]}
       ledger={draw ? [] : [
         { key: 'honor', kind: 'honor', value: result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS },
         { key: 'xp', kind: 'xp', value: bondXP({ kind: 'tournamentMatch', won: result.won }) },

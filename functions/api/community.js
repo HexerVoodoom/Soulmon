@@ -1158,9 +1158,10 @@ async function handleCommunity(context) {
       points: myRank.points,
       // PR13: o que a vitoria rendeu de fato e o fator (0..1) que o app aplica a Honra; derrota/empate = 0 e 1.
       gain: settled.gain,
+      // Só leitura para a tela: por que a vitória rendeu mais/menos ('rank-up' | 'rank-down' | 'repeat' | null) e os pontos da FAIXA (`lifetimePoints`, só soma).
+      gainReason: outcome === 'win' ? (settled.reason ?? null) : null,
+      lifetime: me.lifetimePoints || 0,
       honorFactor: outcome === 'win' ? settled.factor : 1,
-      // Por que o ganho saiu maior/menor: 'rank-up' | 'rank-down' | 'repeat' (ausente = ganho normal).
-      ...(outcome === 'win' && settled.reason ? { gainReason: settled.reason } : {}),
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
       opponent,
       duel: { events: duel.events, me: sides.me, opp: sides.opp },
