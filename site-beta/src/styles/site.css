@@ -1151,7 +1151,7 @@ main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recurs
 .trailer-moldura, .trailer-moldura.tocando { aspect-ratio: 16 / 9; }
 .trailer-moldura .trailer-play { top: 50%; left: 50%; right: auto; bottom: auto; margin: -40px 0 0 -40px; width: 80px; height: 80px; background: rgba(1,12,14,.6); box-shadow: 0 0 0 3px var(--sb-pri), 0 0 24px rgba(95,243,224,.5); }
 @media (min-width: 768px) { .trailer-moldura .trailer-play { right: auto; bottom: auto; margin: -48px 0 0 -48px; width: 96px; height: 96px; } }
-@media (max-width: 767px) { .trailer-moldura.tem-v, .trailer-moldura.tem-v.tocando { aspect-ratio: 9 / 16; max-height: 82svh; margin-inline: auto; } }
+@media (max-width: 767px) { .trailer-moldura.tem-v, .trailer-moldura.tem-v.tocando { aspect-ratio: 9 / 16; width: min(100%, calc(82svh * 9 / 16)); max-height: 82svh; margin-inline: auto; } }
 .trailer-moldura video { object-fit: contain; }
 .trailer-capa .capa-texto { display: none; }
 /* 09/11: criaturas do fim da página na frente do véu, nítidas */
