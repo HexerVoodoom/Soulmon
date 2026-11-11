@@ -3803,7 +3803,7 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 ### `src/utils/weeklyMissions.ts`
 **Dono de:** As 3 missões SEMANAIS sorteadas deterministicamente, pagas em Emblemas.
 **Exports:**
-- `WeeklyMissionId` (type) — `| 'rest-nights' | 'checkins' | 'haunted-done' | 'dungeon-runs' | 'rub-days' | 'shower' | 'play-days' | 'mood-checkins' | 'dream-new' | 'evolve-view' | 'tournament-match' | 'friend-visit'`
+- `WeeklyMissionId` (type) — `| 'rest-nights' | 'checkins' | 'haunted-done' | 'dungeon-runs' | 'rub-days' | 'shower' | 'play-days' | 'mood-checkins' | 'dream-new' | 'evolve-view' | 'tournament-match' | 'gift-sent'` (era `friend-visit`; `migrateWeeklyLegacy(p)` migra o save, §296)
 - `WeeklyMission` (interface) — campos: `id`, `target`, `emblems`, `descPt`, `descEn`.
 - `WEEKLY_MISSION_COUNT` — `3`
 - `function weeklyMissionsFor(weekKey: string): WeeklyMission[]` — As três missões da semana. DETERMINÍSTICO por semana: a mesma `weekKey` devolve sempre as mesmas três, em qualquer aparelho.

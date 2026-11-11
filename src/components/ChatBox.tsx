@@ -42,6 +42,10 @@ interface ChatBoxProps {
   /** Resumo agregado do comportamento recente. Lido SÓ quando a pessoa pergunta
    *  como está indo (ou no feedback proativo opt-in) — nunca a cada mensagem. */
   getBehavior?: () => BehaviorSummary | Promise<BehaviorSummary>;
+  /** A pessoa MANDOU uma mensagem ao Soulmon (qualquer uma; sem olhar o conteúdo). Não dispara na resposta local da ponte nem sem rede. */
+  onUserMessage?: () => void;
+  /** Pedido de foco no campo (missão "Conte como você está se sentindo"): `Date.now()` do toque; só vale por 4 s (remontar a Home não refoca). */
+  focusRequest?: number;
 }
 
 /** Chave do dia do último feedback proativo. Só local; nada vai ao servidor. */
@@ -61,6 +65,8 @@ export function ChatBox({
   onChatCreate,
   getBehavior,
   chatContext,
+  onUserMessage,
+  focusRequest,
   language = 'en-US',
 }: ChatBoxProps) {
   const [inputValue, setInputValue] = useState('');
@@ -131,6 +137,19 @@ export function ChatBox({
   
   // Anti-autofill trick
   const [isInputReadOnly, setIsInputReadOnly] = useState(true);
+  const campoRef = useRef<HTMLInputElement | null>(null);
+  useEffect(() => {
+    if (!focusRequest || Date.now() - focusRequest > 4000) return;
+    setIsInputReadOnly(false);
+    // A folha de Missões ainda está fechando: o foco espera ela soltar o foco dela.
+    const t = setTimeout(() => {
+      const el = campoRef.current;
+      if (!el) return;
+      try { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch { /* sem scroll suave: o foco basta */ }
+      el.focus({ preventScroll: true });
+    }, 150);
+    return () => clearTimeout(t);
+  }, [focusRequest]);
   /* minimal-ui F2 — o TERMINAL: o `_` pisca colado no `>` e SOME quando a
      pessoa começa a escrever (foco ou texto no campo), como no mock aprovado. */
   const [focado, setFocado] = useState(false);
@@ -358,6 +377,7 @@ export function ChatBox({
 
       lembrar('user', userMessage);
       lembrar('assistant', response);
+      onUserMessage?.();
       onSendMessage(response);
     } catch (error) {
       if (error instanceof SemRede) {
@@ -367,6 +387,7 @@ export function ChatBox({
         return;
       }
       if (import.meta.env.DEV) console.error('Error sending message:', error);
+      onUserMessage?.();
       onSendMessage(language === 'pt-BR' ? 'Ops... deu algo errado aqui!' : 'Oops... something went wrong!');
     } finally {
       setIsLoading(false);
@@ -596,6 +617,7 @@ export function ChatBox({
           <span className="sm3-term-cur" aria-hidden="true" data-terminal-cursor>_</span>
         )}
         <input
+          ref={campoRef}
           type="text"
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}

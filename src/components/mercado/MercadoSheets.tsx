@@ -279,7 +279,7 @@ export function ConquistasSheet({ language, missionProgress, claimed, onClaim, n
         {list.map(m => {
           const done = isMissionComplete(m.id, missionProgress);
           const resgatada = done && (!m.bgReward || claimed === undefined || claimed.includes(m.id));
-          const go = resolveGo(nav, achievementTarget(m.category), language);
+          const go = resolveGo(nav, achievementTarget(m.category, m.id), language);
           const cur = Math.min(missionProgress[m.id] ?? 0, m.target);
           const reward = SHOP_ITEMS.find(i => i.id === m.bgReward);
           const rewardName = reward ? (isPt ? reward.namePt : reward.nameEn) : null;

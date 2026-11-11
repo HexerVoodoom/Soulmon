@@ -286,6 +286,10 @@ interface CompanionHUDProps {
   onChatCreate?: (action: import('../utils/chatActions').CreateAction) => 'ok' | 'cap' | Promise<'ok' | 'cap'>;
   /** Resumo agregado do comportamento recente (só é lido quando a pessoa pergunta). */
   getBehavior?: () => import('../utils/chatBehavior').BehaviorSummary | Promise<import('../utils/chatBehavior').BehaviorSummary>;
+  /** Uma mensagem foi enviada ao Soulmon no chat (qualquer uma): conta para a missão do dia "Conte como você está se sentindo". */
+  onChatSent?: () => void;
+  /** `Date.now()` do toque numa missão que leva à conversa: o campo do chat ganha foco. */
+  chatFocusRequest?: number;
   language: Language;
   foodInventory?: Record<string, number>;
   /** Materiais de aprimoramento, só leitura na Mochila. */
@@ -379,6 +383,8 @@ export const CompanionHUD = memo(function CompanionHUD({
   aiSettings,
   onChatCreate,
   getBehavior,
+  onChatSent,
+  chatFocusRequest,
   language,
   foodInventory = {},
   materials,
@@ -1277,6 +1283,8 @@ export const CompanionHUD = memo(function CompanionHUD({
         aiSettings={aiSettings}
         onChatCreate={onChatCreate}
         getBehavior={getBehavior}
+        onUserMessage={onChatSent}
+        focusRequest={chatFocusRequest}
         chatContext={chatContext}
         language={language}
       />

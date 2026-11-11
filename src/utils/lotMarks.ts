@@ -22,7 +22,7 @@ export const DAILY_EVENT_BUILDING: Readonly<Record<DailyEvent, BuildingId | null
   masmorra: 'exploracao.fenda', calabouco: 'exploracao.dungeon',
   foco: 'forja.oficina',
   arena: 'arena.duelo', torneio: 'arena.torneio',
-  mercado: 'mercado.itens', amigo: 'laboratorio.amigos',
+  mercado: 'mercado.itens', amigo: 'laboratorio.amigos', presente: 'laboratorio.amigos',
   banho: null, carinho: null, comida: null, humor: null, sono: null,
 };
 
