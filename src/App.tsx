@@ -5289,8 +5289,8 @@ export default function App() {
 
   const widgetFramePicker = useMemo<WidgetFramePickerData>(() => {
     const owned = effectiveOwnedFrames(gameState.widgetFramesOwned, paidWidgetFrames);
-    return { owned, selected: resolveWidgetFrame(gameState.widgetFrame, owned), onSelect: handleSelectWidgetFrame, onBuy: handleBuyWidgetFrame };
-  }, [gameState.widgetFramesOwned, gameState.widgetFrame, paidWidgetFrames, handleSelectWidgetFrame, handleBuyWidgetFrame]);
+    return { owned, selected: resolveWidgetFrame(gameState.widgetFrame, owned), onSelect: handleSelectWidgetFrame, onBuy: handleBuyWidgetFrame, petSrc: minhaCriaturaUrl };
+  }, [minhaCriaturaUrl, gameState.widgetFramesOwned, gameState.widgetFrame, paidWidgetFrames, handleSelectWidgetFrame, handleBuyWidgetFrame]);
 
   const handleWatchAd = useCallback(async (): Promise<boolean> => {
     if (isDemoMode(gameState)) { refuseDemo(); return false; }

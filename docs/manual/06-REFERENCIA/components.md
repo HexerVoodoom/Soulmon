@@ -577,6 +577,13 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Chamado por:** `src/components/SettingsPage.tsx`.
 **Régua:** `src/components/perfil/perfilNivel.render.test.tsx`.
 
+### `src/components/perfil/PerfilCardTile.tsx`
+**Dono de:** o card do menu da Home em Configurações › Perfil (Perfil / Home / Widget): a mesma peça para os três, palco com o visual do item e o nome embaixo, no estilo turquesa escuro com fio de cobre. Slot de arte opcional em `src/assets/soulmon/perfil-cards/card-<chave>.{webp,png}` (vira o fundo do palco; ausente = visual de hoje).
+**Props principais:** `cardKey`, `attr`, `label`, `ariaLabel`, `onClick`, `children`.
+**Exports:** `PerfilCardTile(props)`, `perfilCardArt(key)`.
+**Chamado por:** `src/components/SettingsPage.tsx`.
+**Régua:** `src/components/perfil/perfilCards.render.test.tsx`.
+
 ### `src/components/perfil/ProfileEditor.tsx`
 **Dono de:** a folha "Editar perfil" (Configurações › Perfil): e-mail desativado ("em breve"), moldura (`FrameSelector` — sem opção "sem moldura": o frame básico preto, grátis e padrão, vem primeiro; contexto de rank vivo via `getRank(undefined, saveId)`) e foto em grade com busca e filtro por domínio (miniaturas lazy, 64 px, cabe em 375 px). Só IDs de lista fechada saem daqui.
 **Exports:** `ProfileEditor(props)`.

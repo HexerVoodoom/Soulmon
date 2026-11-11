@@ -1115,3 +1115,10 @@ Pintados (padrão 23/09), alfa real, 256² em `E:/Soulmon-assets/pocoes-chips/{p
 
 ## Feira de verdade (10/11/2026): vendedores
 Nenhuma arte nova: todos reusam NPCs existentes. A `vitra` (#381) é a Vitra, a Soulsmith (`npc-industrial-espirito-forno-vidraceiro.png`). Pendente: nomes finais dos vendedores (hoje genéricos em `feiraLoja.ts`, exceto a Vitra).
+
+## 33. Cards do menu da Home: Home e Widget (pedido do dono, 11/11/2026) — falta arte (0 de 2)
+
+O código já tem o SLOT (`components/perfil/PerfilCardTile.tsx`): basta soltar o arquivo em `src/assets/soulmon/perfil-cards/` (`card-home.webp|png`, `card-widget.webp|png`); sem ele o card mostra o visual atual (sprite / prévia da moldura). Uso: fundo do palco do card, que fica ~100x76 px na tela, atrás do sprite ou da moldura do widget. UI: identidade Soulmon liberada (turquesa escuro, cristal com chama, cobre); sem engrenagem. Alfa real, nunca chroma, nunca Higgsfield (ChatGPT). Tags: `tipo:ui`, `origem:chatgpt`, `uso:card-perfil`.
+
+- **card-home** — 400x304 (proporção 100:76), fundo opaco. Prompt: `Painted 16-bit style card background, wide landscape 100:76. The cosy interior of a small turquoise-teal room seen straight on: a soft glowing dark-teal crystal with a small flame on a shelf, a copper pipe along the wall, a few small leaves and a cable running to a window, warm lamp light in the centre-bottom. Calm, uncluttered, mostly dark teal values with one warm glow. The centre must stay empty so a creature sprite can stand on it. No characters, no creatures, no text, no gears, no border.`
+- **card-widget** — 400x304 (proporção 100:76), fundo opaco. Prompt: `Painted 16-bit style card background, wide landscape 100:76. A dark teal tech-workshop bench top-down-ish: soft turquoise crystal glow, aged copper traces and thin circuit lines like cables running to the edges, tiny leaves, a faint rectangular glow in the middle as if a small handheld screen were resting there. Calm, uncluttered, dark teal and copper. The centre must stay quiet so a handheld frame image can sit on it. No characters, no creatures, no text, no gears, no border.`
