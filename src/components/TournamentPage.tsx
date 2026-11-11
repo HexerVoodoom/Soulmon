@@ -88,7 +88,7 @@ import { useGameStateOptional } from '../contexts/GameStateContext';
 import { stageSkillsFor } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { FX_FALLBACK_ELEMENT, opponentElementFor } from '../utils/combatFx';
 import { DESAFIANTE_ELEMENT } from '../utils/spriteElement';
-import { getOpponents, playMatchComRetry, playMatch, isFalhaDeRede, startDuel, getRank, getSeasonHistory, getSparOpponents, startSpar, buySparTicket, playSpar, playSparComRetry, type SparResult, type Opponent, type MatchResult, type RankRow, type SeasonHistory } from '../utils/community';
+import { getOpponents, playMatchComRetry, playMatch, isFalhaDeRede, startDuel, getRank, getSeasonHistory, getSparOpponents, startSpar, buySparTicket, confirmSparTicketComRetry, playSpar, playSparComRetry, type SparResult, type Opponent, type MatchResult, type RankRow, type SeasonHistory } from '../utils/community';
 import { buildSeasonHistoryView, placeLabel, prevSeasonKey, seasonMonthLabel } from '../utils/seasonHistoryView';
 import { EMBLEMS_PER_WIN, EMBLEMS_PER_LOSS, SPAR_HONOR_MAX, SPAR_HONOR_DAILY_CAP, emblemStyle } from '../utils/currencies';
 import { sanitizeTreinoTickets, TREINO_TICKET_MATCHES, TREINO_EXTRA_TICKET_BITS, TREINO_EXTRA_TICKETS_MAX, type TreinoTickets } from '../utils/treinoTickets';
@@ -562,10 +562,11 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
       await buySparTicket(saveId, playerDayTz, 'reserve');
       if (!onChargeTreinoTicket()) { setSparError(isPt ? 'Bits ganhos insuficientes para o ticket.' : 'Not enough earned Bits for the ticket.'); return; }
       try {
-        const r = await buySparTicket(saveId, playerDayTz, 'confirm');
+        const r = await confirmSparTicketComRetry(saveId, playerDayTz);
         const tk = sanitizeTreinoTickets(r.tickets);
         if (tk) setTickets(tk);
       } catch {
+        loadSpar(); // a confirmação pode ter chegado e só a resposta se perdeu: relê o contador do servidor
         setSparError(isPt ? 'Cobrado, mas o ticket não confirmou. Toque em atualizar a lista.' : "Charged, but the ticket didn't confirm. Refresh the list.");
       }
     } catch {

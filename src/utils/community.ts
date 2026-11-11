@@ -260,6 +260,21 @@ export const startSpar = (id: string, opponentId: string, tz?: SparTz) =>
 /** Ticket EXTRA do Treino (+20 partidas sem Honra). O servidor conta e limita (3/dia); quem chama cobra os Bits ganhos só se vier `ok`. */
 export const buySparTicket = (id: string, tz?: SparTz, phase?: 'reserve' | 'confirm') =>
   call<{ tickets: unknown; reserved?: boolean }>('sparBuyTicket', { method: 'POST', body: { id, ...(phase ? { phase } : {}), ...diaDoJogador(tz) } });
+/**
+ * A CONFIRMAÇÃO do ticket extra roda DEPOIS de o app já ter cobrado os 30 Bits: uma queda de rede ali perdia o ticket pago
+ * (QA rodada 2, R2-C1). A reserva vale 2 min no servidor, então repetir com recuo SÓ para falha de rede é seguro: a confirmação
+ * concede uma vez e apaga a reserva (a repetição depois de um sucesso cujo retorno se perdeu volta 409 `no reserve`, nunca concede 2x).
+ */
+export async function confirmSparTicketComRetry(id: string, tz?: SparTz, delays: number[] = MATCH_RETRY_DELAYS_MS): Promise<{ tickets: unknown; reserved?: boolean }> {
+  for (let i = 0; ; i++) {
+    try {
+      return await buySparTicket(id, tz, 'confirm');
+    } catch (err) {
+      if (!isFalhaDeRede(err) || i >= delays.length) throw err;
+      await new Promise(r => setTimeout(r, delays[i]));
+    }
+  }
+}
 export interface SparResult {
   won: boolean; draw?: boolean; outcome?: 'win' | 'loss' | 'draw';
   myScore: number; oppScore: number;
