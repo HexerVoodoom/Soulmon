@@ -105,7 +105,8 @@ dependencies {
     implementation "com.android.billingclient:billing-ktx:8.3.0"
     implementation "com.google.android.play:review:2.0.2"
     // Passos pelo Health Connect (REGISTRO §283; plugins/SoulmonStepsPlugin.kt). SÓ leitura de `READ_STEPS`.
-    implementation "androidx.health.connect:connect-client:1.1.0"
+    // 1.1.0 exige AGP 8.9.1+ (checkReleaseAarMetadata); o projeto esta no AGP 8.2.1. alpha07 e a ultima compativel e tem a API de Steps usada aqui.
+    implementation "androidx.health.connect:connect-client:1.1.0-alpha07"
     implementation project(':capacitor-android')
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
