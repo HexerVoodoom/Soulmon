@@ -119,7 +119,8 @@ describe('carta global de anúncio', () => {
   const kv0 = () => { const store = new Map(); return { store, get: async k => store.get(k) ?? null, put: async (k, v) => { store.set(k, v); }, delete: async k => { store.delete(k); }, list: async () => ({ keys: [], list_complete: true }) }; };
   const g = CARTAS_GLOBAIS.find(x => x.id === 'widget-area-de-trabalho-2026-11');
   const quando = g.desde + 3600_000;
-  const globais = l => l.filter(m => m.kind === 'global');
+  const todasGlobais = l => l.filter(m => m.kind === 'global');
+  const globais = l => todasGlobais(l).filter(m => m.mid === 'global:widget-area-de-trabalho-2026-11');
 
   it('a carta do widget está ativa na janela, sem prêmio, com o mini-tutorial e texto pt/en', () => {
     const [c] = cartasGlobaisAtivas(quando);
@@ -137,7 +138,7 @@ describe('carta global de anúncio', () => {
     expect(h.carta.bodyPt).toMatch(/lápis[\s\S]*chama/);
     expect(cartasGlobaisAtivas(quando).map(c => c.mid)).toContain('global:hexsmith-nomes-2026-11');
     const kv = kv0(); const env = { DIGIAPP_SAVES: kv };
-    expect(globais(await readMail(env, kv, B, quando)).map(m => m.npc).sort()).toEqual(['hexsmith', 'mensageiro']);
+    expect(todasGlobais(await readMail(env, kv, B, quando)).map(m => m.npc).sort()).toEqual(['hexsmith', 'mensageiro']);
   });
 
   it('aparece UMA vez por conta: apagada não volta; sem prêmio e sem dado pessoal; cada conta recebe a sua', async () => {
