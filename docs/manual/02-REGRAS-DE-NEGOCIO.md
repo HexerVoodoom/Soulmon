@@ -4484,7 +4484,7 @@ fácil.
 O pool inteiro, com alvo e pagamento em Honra: `rest-nights` 3/3 ·
 `checkins` 4/3 · `haunted-done` 1/4 · `dungeon-runs` 2/3 · `rub-days` 4/2 ·
 `shower` 3/2 · `play-days` 3/2 · `mood-checkins` 3/2 · `dream-new` 1/4 ·
-`evolve-view` 1/2 · `tournament-match` 2/3 · `journal-days` 3/3 · `focus-days` 3/3 (11/11/2026, §297: SEMPRE na lista da semana, além das 3 sorteadas; contam ao salvar entrada nova do journal / concluir sessão do Focus Workshop, no máx. 1 por dia — `WeeklyMissionProgress.last`; `d-foco` diária aposentada e o Caderno saiu de `LISTED_QUEST_BUILDINGS`) · `gift-sent` 1/2 (11/11/2026, §296: era `friend-visit`, «Visite a criatura de alguém»; virou «Envie um presente a alguém», mesmo alvo/pagamento/posição; `migrateWeeklyLegacy` leva o progresso e o resgate do save antigo).
+`evolve-view` 1/2 · `tournament-match` 2/3 · `journal-days` 3/3 · `focus-days` 3/3 (11/11/2026, §297: SEMPRE na lista da semana, além das 3 sorteadas; contam ao salvar entrada nova do journal / concluir sessão do Focus Workshop, no máx. 1 por dia — `WeeklyMissionProgress.last`; `d-foco` diária aposentada) · `gift-sent` 1/2 (11/11/2026, §296: era `friend-visit`, «Visite a criatura de alguém»; virou «Envie um presente a alguém», mesmo alvo/pagamento/posição; `migrateWeeklyLegacy` leva o progresso e o resgate do save antigo).
 
 **⚠️ Nenhuma missão premia CONTAGEM DE TAREFAS**, e essa é a proibição mais fácil
 de furar sem perceber — "faça 10 tarefas" é a missão mais óbvia do mundo e é

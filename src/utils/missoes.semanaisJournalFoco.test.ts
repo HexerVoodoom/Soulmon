@@ -4,7 +4,6 @@ import { weeklyMissionsFor, weeklyMissionPool, bumpWeeklyDay, claimWeekly, isWee
 import { countWeeklyMission } from './dungeonRewards';
 import { weeklyTarget } from './missionTargets';
 import { dailyMissionPool } from './dailyMissions';
-import { LISTED_QUEST_BUILDINGS } from './buildingQuests';
 import { buildingLot } from '../navigation';
 
 const app = readFileSync('src/App.tsx', 'utf8');
@@ -54,6 +53,5 @@ describe('journal e Focus Workshop são semanais 3x, nunca diárias', () => {
     expect(app).toContain("countWeeklyMission(prev, 'journal-days'");
     expect(app).toContain("countWeeklyMission(prev, 'focus-days'");
     expect(dailyMissionPool().some(m => m.id === 'd-foco')).toBe(false);
-    expect(LISTED_QUEST_BUILDINGS).toEqual([]);
   });
 });

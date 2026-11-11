@@ -4777,7 +4777,7 @@ Limite honesto: a contagem diária segue escrita pelo cliente (economia local-fi
 
 ## §297 — Journal e Focus Workshop viram missões SEMANAIS 3× (11/11/2026, decisão do dono)
 
-Decisão: «Fazer o journal» e «Focus Workshop» não são tarefas diárias. `d-foco` (diária) foi aposentada e o Caderno saiu de `LISTED_QUEST_BUILDINGS` (nenhuma missão de prédio listada no menu; o material continua no modelo). Entram na semanal `journal-days` («Faça o journal em 3 dias») e `focus-days` («Complete a Focus Workshop em 3 dias»), alvo 3 e 3 Emblemas (o padrão das semanais de alvo 3), SEMPRE na lista (`WEEKLY_FIXED`; as 3 sorteadas vêm do resto do pool, então a lista tem 5). Contam uma vez por dia do jogador (`bumpWeeklyDay`, `last` no progresso) ao salvar uma entrada NOVA do journal e ao concluir (resgatar) uma jornada do Focus Workshop; tocar leva ao Caderno / à Oficina.
+Decisão: «Fazer o journal» e «Focus Workshop» não são tarefas diárias. `d-foco` (diária) foi aposentada (a missão de prédio do Caderno, "Faça um registro no journaling", segue listada no menu: ponto em aberto com o dono). Entram na semanal `journal-days` («Faça o journal em 3 dias») e `focus-days` («Complete a Focus Workshop em 3 dias»), alvo 3 e 3 Emblemas (o padrão das semanais de alvo 3), SEMPRE na lista (`WEEKLY_FIXED`; as 3 sorteadas vêm do resto do pool, então a lista tem 5). Contam uma vez por dia do jogador (`bumpWeeklyDay`, `last` no progresso) ao salvar uma entrada NOVA do journal e ao concluir (resgatar) uma jornada do Focus Workshop; tocar leva ao Caderno / à Oficina.
 
 Limite honesto: as semanais não têm espelho nem validação no servidor (o progresso é do save, local-first, como as demais); não foi criada validação nova.
 
