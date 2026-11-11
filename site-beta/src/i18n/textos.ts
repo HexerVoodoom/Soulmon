@@ -64,7 +64,7 @@ const pt = {
     emObras: 'Em construção', jogosArte: 'Capas ilustradas dos jogos',
     els: { agua: 'Água', ar: 'Ar', arcano: 'Arcano', eletricidade: 'Eletricidade', espaco: 'Espaço', fada: 'Fada', fogo: 'Fogo', gravidade: 'Gravidade', industrial: 'Industrial', luz: 'Luz', marcial: 'Marcial', morte: 'Morte', planta: 'Planta', som: 'Som', sombra: 'Sombra', tempo: 'Tempo', terra: 'Terra', vida: 'Vida', vigor: 'Vigor', vileza: 'Vileza' } as Record<string, string>,
     ocultoRotulo: 'Elemento ainda não revelado', combinacoes: '+190 combinações', combinacoesTx: 'Os 20 elementos se combinam em pares.',
-    lugares: { exploracao: 'Passeio, Endless Rift e Masmorra.', jogos: 'Minijogos e Ateliê da Mente.', arena: 'Torneio e duelos.', hall: 'Feira, amigos e Jardim.', guilda: 'Casa e Missão do clã.', laboratorio: 'Evolução e perfil do Soulmon.', forja: 'Ferramentas para as tarefas difíceis.' } as Record<string, string>,
+    lugares: { exploracao: 'Passeio, Endless Rift e Masmorra.', jogos: 'Minijogos e Ateliê da Mente.', arena: 'Torneio e duelos.', hall: 'Bits por itens, chips e materiais.', guilda: 'Casa e Missão do clã.', laboratorio: 'Evolução e perfil do Soulmon.', forja: 'Ferramentas para as tarefas difíceis.' } as Record<string, string>,
     jogosH: 'Minijogos', anterior: 'Anterior', proximo: 'Próximo', fechar: 'Fechar', falaDe: 'Fala de', morador: 'Habitante',
   },
   recursos: {
@@ -187,7 +187,7 @@ const en: typeof pt = {
     emObras: 'Under construction', jogosArte: 'Illustrated game covers',
     els: { agua: 'Water', ar: 'Air', arcano: 'Arcane', eletricidade: 'Electricity', espaco: 'Space', fada: 'Fairy', fogo: 'Fire', gravidade: 'Gravity', industrial: 'Industrial', luz: 'Light', marcial: 'Martial', morte: 'Death', planta: 'Plant', som: 'Sound', sombra: 'Shadow', tempo: 'Time', terra: 'Earth', vida: 'Life', vigor: 'Vigor', vileza: 'Vileness' },
     ocultoRotulo: 'Element not revealed yet', combinacoes: '+190 combinations', combinacoesTx: 'The 20 elements combine in pairs.',
-    lugares: { exploracao: 'Strolls, the Endless Rift and the Dungeon.', jogos: 'Minigames and Mind Workshop.', arena: 'Tournament and duels.', hall: 'The Fair, friends and the Grove.', guilda: "Your clan's House and Mission.", laboratorio: "Evolution and your Soulmon's profile.", forja: 'Tools for the hardest tasks.' },
+    lugares: { exploracao: 'Strolls, the Endless Rift and the Dungeon.', jogos: 'Minigames and Mind Workshop.', arena: 'Tournament and duels.', hall: 'Bits for items, chips and materials.', guilda: "Your clan's House and Mission.", laboratorio: "Evolution and your Soulmon's profile.", forja: 'Tools for the hardest tasks.' },
     jogosH: 'Minigames', anterior: 'Previous', proximo: 'Next', fechar: 'Close', falaDe: 'Says', morador: 'Inhabitant',
   },
   recursos: {

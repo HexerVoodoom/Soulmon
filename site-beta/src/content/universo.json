@@ -30,11 +30,11 @@
     },
     "hall": {
       "npc": "/npc/lugar-hall.webp",
-      "pt": "Esta é a Cidadela, nosso ponto de encontro. Tem a Feira, o Salão do Clã com seus amigos e o Grove. Venha trocar presentes e ver quem anda por aqui.",
-      "en": "This is the Citadel, our meeting point. There's the Fair, the Clan Hall with your friends, and the Grove. Come swap gifts and see who's around.",
+      "pt": "Bem-vindo ao Mercado. Aqui você troca Bits por itens, chips e materiais com os vendedores. De vez em quando chega a Feira, com 8 vendedores e descontos de 10 a 50%, só com Bits.",
+      "en": "Welcome to the Market. Here you trade Bits for items, chips and materials with the vendors. Every now and then the Fair arrives, with 8 vendors and 10 to 50% off, Bits only.",
       "habita": {
-        "pt": "Eu moro na Cidadela. A Feira e o Grove ficam bem aqui.",
-        "en": "I live in the Citadel. The Fair and the Grove are right here."
+        "pt": "Eu cuido das bancas do Mercado. Fique de olho na Feira.",
+        "en": "I look after the Market stalls. Keep an eye out for the Fair."
       }
     },
     "guilda": {
