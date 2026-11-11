@@ -9,6 +9,7 @@
 // ---------------------------------------------------------------------------
 import { kvOrThrow } from './_kv.js';
 import { BOND_MAX_LEVEL } from './_bond.js';
+import { ordenarPorEstagio } from './_oponenteEstagio.js';
 
 /** Quantos oponentes a aba mostra. */
 export const SPAR_PICKS = 5;
@@ -30,7 +31,7 @@ export const SPAR_PENDING_TTL_S = 3600;
  * a faixa até haver ao menos `n` (ou até o pool todo). Quem chama fatia os `n` primeiros (e pode pular quem não luta).
  * Pura: o `rng` vem de fora (`() => [0,1)`).
  */
-export function pickSparOpponents(pool, myBond, rng, n = SPAR_PICKS, range = SPAR_BOND_RANGE) {
+export function pickSparOpponents(pool, myBond, rng, n = SPAR_PICKS, range = SPAR_BOND_RANGE, myStage = null) {
   const fin = v => (Number.isFinite(v) ? v : 1);
   const mine = fin(myBond);
   let r = Math.max(0, range);
@@ -39,12 +40,8 @@ export function pickSparOpponents(pool, myBond, rng, n = SPAR_PICKS, range = SPA
     r += SPAR_RANGE_STEP;
     cand = pool.filter(p => Math.abs(fin(p.bond) - mine) <= r);
   }
-  const out = cand.slice();
-  for (let i = out.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    [out[i], out[j]] = [out[j], out[i]];
-  }
-  return out;
+  // Embaralha com preferência por estágio próximo/variado ao do jogador (`ESTAGIO_PESOS`); sem `myStage`, uniforme.
+  return ordenarPorEstagio(cand, myStage, rng, c => c.stage);
 }
 
 /** Honra desta vitória: 1 ou 2, a 50%. */

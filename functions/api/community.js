@@ -936,12 +936,13 @@ async function handleCommunity(context) {
     const meProfileRaw = me ? await kvOrThrow(env).get(`profile:${me}`) : null;
     const myLifetime = meProfileRaw ? (JSON.parse(meProfileRaw).lifetimePoints ?? 0) : 0;
     const comPontos = await Promise.all(pool.map(async e => ({
-      ...e, score: await pontosDaSeason(e.saveId), lifetime: e.profile.lifetimePoints ?? 0,
+      ...e, score: await pontosDaSeason(e.saveId), lifetime: e.profile.lifetimePoints ?? 0, stage: e.profile.stage,
     })));
     const sorted = pickRankedOpponents(
       comPontos,
       { score: myPoints, lifetime: myLifetime },
       () => { const b = new Uint32Array(1); crypto.getRandomValues(b); return b[0] / 4294967296; },
+      undefined, undefined, meProfileRaw ? (JSON.parse(meProfileRaw).stage ?? null) : null,
     );
     pool.length = 0; pool.push(...sorted);
     const matchesLeft = myRank
@@ -1178,9 +1179,9 @@ async function handleCommunity(context) {
       let p;
       try { p = JSON.parse(raw); } catch { continue; }
       if (!p?.pvpEnabled || isHidden(p) || p.id === id) continue;
-      pool.push({ profile: p, saveId, bond: await bondLevelOf(env, saveId) });
+      pool.push({ profile: p, saveId, bond: await bondLevelOf(env, saveId), stage: p.stage });
     }
-    const ordered = pickSparOpponents(pool, myBond, rng, SPAR_PICKS);
+    const ordered = pickSparOpponents(pool, myBond, rng, SPAR_PICKS, undefined, meProfile.stage ?? null);
     const opponents = [];
     for (const { profile, saveId } of ordered) {
       if (opponents.length >= SPAR_PICKS) break;

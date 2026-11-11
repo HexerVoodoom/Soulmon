@@ -28,6 +28,7 @@ import { baseElementLabel } from './soulProfile/essenceLabels';
 import { AREA_FAMILIES, SPECIAL_BUDGET_HITS, type SpecialFamily } from './combate/specials';
 import type { FighterFx } from './combate/fight';
 import { curatedComponents } from './elementosCurados';
+import { hashEstavel } from './combate/golpeImpacto';
 import { efeitoVisivel, type EfeitoElemento } from './combate/elementEffects';
 
 export type StageActionKind = 'melee' | 'ranged' | 'special';
@@ -142,12 +143,31 @@ export const ELEMENT_STRIKE_FORM: Record<string, Record<SkillRole, StrikeForm>> 
   veneno: { basica: 'melee', especial: 'ranged' },
   [FX_FALLBACK_ELEMENT]: { basica: 'melee', especial: 'ranged' },
 };
+/** % de golpes corpo a corpo entre os elementos fora da tabela (mix {ranged,melee} × {corte,splash}: meta ~25% cada; ver `mixAtaques.test.ts`). */
+export const FORMA_MELEE_PCT = 50;
 export const ELEMENT_STRIKE_FALLBACK: Record<SkillRole, StrikeForm> = { basica: 'ranged', especial: 'ranged' };
+
+/**
+ * Só para INIMIGO selvagem/de PvE (Arena, Masmorra, Fenda, Pesadelo, Raid): a tabela do elemento tinha ~65% à distância e 35% corpo a corpo,
+ * então corpo a corpo era raro. Estas 6 básicas dos elementos base passam a corpo a corpo NO INIMIGO (3 de corte, 3 de splash pelo `PESO_CORTE`),
+ * levando o mix {ranged,melee} × {corte,splash} a ~25% cada (REGISTRO §282; `mixAtaques.test.ts`). NÃO vale para o jogador, os 5 iniciais nem o PvP.
+ */
+export const FOE_MELEE_BASICA: ReadonlySet<string> = new Set(['agua', 'vida', 'som', 'ar', 'luz', 'tempo']);
+export function foeStrikeForm(element: string | undefined | null, role: SkillRole): StrikeForm {
+  if (role === 'basica' && element && FOE_MELEE_BASICA.has(element)) return 'melee';
+  return elementStrikeForm(element, role);
+}
 
 /** Elemento (inimigo, fantasma, pet sem ficha) → forma do golpe da skill básica/especial dele. */
 export function elementStrikeForm(element: string | undefined | null, role: SkillRole): StrikeForm {
   const id = element ?? undefined;
-  return (id ? ELEMENT_STRIKE_FORM[id] : undefined)?.[role] ?? ELEMENT_STRIKE_FALLBACK[role];
+  const direto = id ? ELEMENT_STRIKE_FORM[id]?.[role] : undefined;
+  if (direto) return direto;
+  // Elemento FORA da tabela (os ~640 combinados/curados do bestiário): antes TODOS caíam em `ranged`, então corpo a corpo era raro (12% dos
+  // golpes do elenco). Agora é um sorteio ESTÁVEL por (elemento, papel), `FORMA_MELEE_PCT`% corpo a corpo (REGISTRO §282). Só para quem
+  // NÃO tem ficha (a ficha do jogador usa a escola, e os 5 iniciais, a tabela). Sem elemento: o fallback antigo.
+  if (!id) return ELEMENT_STRIKE_FALLBACK[role];
+  return hashEstavel(`forma|${id}|${role}`) % 100 < FORMA_MELEE_PCT ? 'melee' : 'ranged';
 }
 
 /** Skill do jogador (a da ficha) → forma do golpe. Sem escola (ficha ausente), cai no elemento; sem nada, à distância. */

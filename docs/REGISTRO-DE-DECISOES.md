@@ -4569,6 +4569,21 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Falsifica:** o dono ver o Treino virando a fonte dominante de Honra (baixar `TREINO_TICKET_MATCHES`) ou ninguém comprar o extra (preço alto/baixo demais, ajustar `TREINO_EXTRA_TICKET_BITS`); sinal de farm via extras (baixar `TREINO_EXTRA_TICKETS_MAX`).
 
+## §282 — Oponentes com estágio variado, ícone de estágio e mix de ataques equilibrado (10/11/2026, pedido do dono por voz)
+
+**Pedido.** (1) Onde aparece o NOME do estágio do oponente, mostrar o ÍCONE (aria-label com o nome). (2) Dono é Ultimate (Transcendente) e só encontra Champions. (3) Só via ranged de corte; nunca ranged de splash; melee de splash raro.
+
+**Causas achadas.** (2) `SIM_FORMA_MAX = 'champion'` (§235) travava os simulados (142 Rookies + 18 Champions em 10/11); a seleção do Treino era só por Vínculo e a da ranqueada só por pontos, sem olhar estágio. (3) Os elementos FORA de `ELEMENT_STRIKE_FORM` (combinados/curados, ~640 do elenco) caíam todos em `ranged`: elenco da Masmorra/Fenda = 88% à distância; Arena (17 base) = 65% à distância.
+
+**Como fica.**
+- **Estágio:** `functions/api/_oponenteEstagio.js` é o dono ÚNICO da distribuição (`ESTAGIO_PESOS`: delta oponente−jogador −2 3%, −1 25%, 0 40%, +1 25%, +2 7%; outro delta só entra se faltar candidato). Sorteio ponderado sem reposição no Treino (`pickSparOpponents`) e na ranqueada (`pickRankedOpponents`, dentro da janela de pontos, que continua 4). O servidor decide; nenhum estágio/ranking novo sai na resposta. `SIM_FORMA_MAX` agora `'ultra'` (sem teto: a curva por faixa leva os simulados a Ultimate/Mega/Ultra; em 25/11 ~55 Ultimates). Rollback: voltar `'champion'`.
+- **Arte (PENDÊNCIA):** nenhuma arte gerada. O simulado reaproveita o sprite que já tem (`sim:sprite:<id>`) e `enfileirarForma` NÃO gera acima de `FORMA_GERADA_MAX = 'champion'`. Falta arte de Ultimate/Mega/Ultra por simulado.
+- **Ícone:** `EstagioMarca` (`src/components/ui`) no lugar do texto do estágio nas listas do Torneio (ranqueada e Treino); `role="img"` + `aria-label` + `title` com o nome do jogo (Desperto/Ascendente/Transcendente/Apoteose/Zênite). Na luta (`BattleStage`) o ícone já existia.
+- **Mix de ataques (só visual, só inimigo):** elemento fora da tabela passa a sortear `ranged`/`melee` estável por (elemento, papel), `FORMA_MELEE_PCT = 50`; `foeStrikeForm` põe 6 básicas de elementos base (água, vida, som, ar, luz, tempo) em corpo a corpo NO INIMIGO. Jogador, 5 iniciais e PvP (`fighterIdentity`) não mudam; dano, 5% de bônus e `_combate.js` intactos. Antes → depois (ranged-corte / ranged-splash / melee-corte / melee-splash): elenco 45,1/43,2/5,4/6,2 → 25,2/25,3/25,3/24,2; Arena (17 base) 35/30/15/20 → 28,8/21,3/21,3/28,8. Teste `src/utils/combate/mixAtaques.test.ts` (tolerância 18–32%).
+
+**Alternativa que perdeu:** mexer na tabela `ELEMENT_STRIKE_FORM` inteira (afetaria iniciais e PvP) e gerar arte nova para as formas altas.
+**Falsifica:** o dono ainda ver um quadrante raro (ajusta-se `FOE_MELEE_BASICA`/`FORMA_MELEE_PCT`) ou achar Mega demais para quem é Ultimate (ajusta-se `ESTAGIO_PESOS`).
+
 ## §279 — Torneio ganha a aba Treino (Sparring), sem ranking e com pouca Honra (10/11/2026, decisão do dono em modal)
 
 **Decisão.** O Torneio passa a ter DUAS abas: **Ranqueada** (como era) e **Treino** (EN *Sparring*): luta PvP contra outros jogadores que NÃO ranqueia (placar, rank, faixa, season e `lifetimePoints` intocados; sem cota de partidas; derrota sem castigo) e rende **1 a 2 de Honra por vitória, teto de 20 por dia do jogador**, contado e decidido no servidor. Oponentes: 5 sorteados num pool grande por faixa de **Vínculo** (±3, ampliando se houver menos de 5), nunca por ranking; **refresh ilimitado** (o servidor sorteia a cada pedido). Implementação: `functions/api/_treino.js` + ações `sparOpponents/sparStart/sparMatch` em `community.js`; UI em `TournamentPage`. Manual 02 §53 › "O Treino".

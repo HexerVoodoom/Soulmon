@@ -148,8 +148,8 @@ export function progressoDoDia(p, day) {
   return { level: Math.min(MAX_LEVEL, STAGE_FIRST_LEVEL.ultra + Math.floor(pontos + dias * taxa)), stage: 'ultra' };
 }
 
-/** Teto de SUBIDA dos simulados, até nova decisão do dono: ninguém sobe acima de Champion, e quem já está acima fica onde está, sem cair (REGISTRO §235). A curva segue por baixo em `progressoDoDia`. */
-export const SIM_FORMA_MAX = 'champion';
+/** Teto de SUBIDA dos simulados. 'ultra' = sem teto: seguem a curva por faixa (REGISTRO §282, revoga o teto Champion do §235, a pedido do dono: oponentes com estágio variado). O sprite é reaproveitado (`sim:sprite:<id>`); a geração de forma nova só roda com `SIMULADOS_FORMAS_ON`. Rollback: voltar a 'champion'. */
+export const SIM_FORMA_MAX = 'ultra';
 
 /** Level, estágio e Vínculo do simulado no dia. */
 export function estadoDoDia(p, day) {

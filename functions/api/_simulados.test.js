@@ -131,7 +131,7 @@ describe('evolução por faixa fixa', () => {
   it.each([['A', 73, 74], ['B', 106, 107], ['C', 224, 225]])('faixa %s: Mega no dia %i, Ultra no dia %i', (f, antes, ultra) => {
     expect(progressoDoDia(novo(f), diaMais(antes)).stage).toBe('mega');
     expect(progressoDoDia(novo(f), diaMais(ultra)).stage).toBe('ultra');
-    expect(estadoDoDia(novo(f), diaMais(ultra))).toMatchObject({ stage: 'champion', level: 13 });
+    expect(estadoDoDia(novo(f), diaMais(ultra))).toMatchObject({ stage: 'ultra' }); // sem teto (REGISTRO §282)
   });
   it('faixas fixas: 50 / 50 / 70, pela skill', () => {
     const n = (f) => SIMULADOS.filter(p => p.faixa === f);
@@ -139,18 +139,17 @@ describe('evolução por faixa fixa', () => {
     expect(Math.min(...n('A').map(p => p.skill))).toBeGreaterThanOrEqual(Math.max(...n('B').map(p => p.skill)));
     expect(Math.min(...n('B').map(p => p.skill))).toBeGreaterThanOrEqual(Math.max(...n('C').map(p => p.skill)));
   });
-  it('os 120 novos partem de Rookie, sem pontos; ninguém passa de Champion', () => {
+  it('os 120 novos partem de Rookie, sem pontos; sem teto, a curva leva até o fim (REGISTRO §282)', () => {
     for (const p of SIMULADOS.slice(50)) expect(p.ancora).toEqual({ estagio: 'rookie', pontos: 0 });
     for (const p of SIMULADOS) {
       const final = estadoDoDia(p, diaMais(400)).stage;
-      if (['ultimate', 'mega'].includes(p.ancora.estagio)) expect(final).toBe(p.ancora.estagio);
-      else expect(['rookie', 'champion']).toContain(final);
+      expect(final).toBe(progressoDoDia(p, diaMais(400)).stage);
     }
   });
-  it('antigo acima do teto não cai nem sobe', () => {
+  it('antigo acima de Champion não cai e agora segue a curva (sem teto)', () => {
     const mega = SIMULADOS.find((s) => s.id === 'sim_0006');
     expect(estadoDoDia(mega, '2026-11-05').stage).toBe('mega');
-    expect(estadoDoDia(mega, diaMais(400))).toMatchObject({ stage: 'mega', level: 30 });
+    expect(['mega', 'ultra']).toContain(estadoDoDia(mega, diaMais(400)).stage);
   });
   it('todo level cabe no teto do duelo por dia de conta', () => {
     for (const p of SIMULADOS) expect(estadoDoDia(p, '2026-11-05').level, p.id).toBeLessThanOrEqual(1 + p.daysPlaying);
