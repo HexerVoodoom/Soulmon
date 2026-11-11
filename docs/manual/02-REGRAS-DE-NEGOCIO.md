@@ -4982,9 +4982,14 @@ POST sparMatch {id, opponentId, taps?, forfeit?, seed?, zone?, off?} → simulat
   `honor` (e `honorCapped` quando o teto do dia já foi) e o app soma pelo MESMO caminho das outras fontes (`onEarnEmblems`), uma vez (o reenvio não soma).
 - **🎫 Tickets (REGISTRO §282):** todo DIA DO JOGADOR dá **1 ticket grátis = `TREINO_TICKET_MATCHES` (20) partidas COM Honra**; depois delas, o **ticket extra** custa
   `TREINO_EXTRA_TICKET_BITS` (**30 Bits GANHOS**, `earnedBits`, nunca Créditos) e vale **+20 partidas SEM Honra**, até `TREINO_EXTRA_TICKETS_MAX` (**3/dia**). Contador no
-  KV (`sparTicket:<id>:<dia>`, leitura tolerante, `sparTicketStatus`); `POST sparBuyTicket {id, zone?, off?}` conta/limita e o app cobra depois do ok (`chargeTreinoTicket`,
-  `src/utils/treinoTickets.ts`); `sparStart` recusa 409 `no tickets`; `sparMatch` gasta 1 (desistir não gasta) e só paga Honra se ainda cabia nas 20; `sparOpponents`
+  KV (`sparTicket:<id>:<dia>`, leitura tolerante, `sparTicketStatus`); `POST sparBuyTicket {id, phase?, zone?, off?}` em DUAS FASES (#792): `phase:'reserve'` só confere
+  o teto e abre `sparReserve:<id>:<dia>` (2 min), o app cobra (`chargeTreinoTicket`, `src/utils/treinoTickets.ts`) e `phase:'confirm'` concede uma vez (sem reserva = 409
+  `no reserve`; a confirmação repete só em falha de rede, `confirmSparTicketComRetry`); sem `phase` = contrato antigo (concede direto). `sparStart` recusa 409 `no tickets`
+  e **gasta 1 partida ao abrir** (desistir não devolve; o dia e o direito à Honra ficam no duelo aberto); `sparMatch` só paga Honra se ainda cabia nas 20; `sparOpponents`
   devolve `tickets`. UI: "Partidas com Honra hoje x/20", extras em uso, oferta suave ao esgotar. Trava: `community.treino.tickets.test.js`, `treinoTickets.test.ts`.
+- **Dia fixo da conta (#792, QA rodada 2):** o app manda a âncora do jogo (`gameState.playerDayTz`) e o servidor PRENDE o fuso em `sparTz:<id>`
+  (`fixarTzTreino`): o primeiro valor fica e só troca depois de `SPAR_TZ_LOCK_MS` (24 h); pedido sem fuso prende o UTC; a âncora é regravada a cada
+  30 dias (`SPAR_TZ_REFRESH_MS`) para não vencer (`SPAR_TZ_TTL_S`, 60 dias). Trava: `community.treino.qa2.test.js`.
 - **Contrato aditivo:** ações novas; cliente antigo ignora a aba; servidor antigo responde erro e a aba mostra "não deu para carregar" sem afetar a ranqueada.
   Nenhum campo novo de save. Telas: `TournamentPage` (abas `Segment`), textos PT/EN, `InfoTip`, GuideModal e HelpModal.
 - **Travas:** `functions/api/community.treino.test.js` (faixa, 5 candidatos, refresh ilimitado, não toca rank/perfil, teto de 20, derrota sem Honra,

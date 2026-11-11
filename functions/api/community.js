@@ -1237,7 +1237,7 @@ async function handleCommunity(context) {
   if (action === 'sparMatch' && method === 'POST') return withDuelLock(`spar:${id}`, async () => {
     const ctx = await sparContext();
     if (ctx.res) {
-      if (ctx.res.status === 404) await kvOrThrow(env).delete(sparPendingKey(id)).catch(() => {}); // oponente sumiu: cancela, sem custo
+      if (ctx.res.status === 404) await kvOrThrow(env).delete(sparPendingKey(id)).catch(() => {}); // oponente sumiu: cancela. A partida já foi gasta no `sparStart` (#792) e NÃO volta: devolver aqui reabriria a desistência grátis (basta a 2ª conta do próprio jogador desligar o PvP)
       return ctx.res;
     }
     const { opponentId, opp } = ctx;

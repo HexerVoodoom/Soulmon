@@ -1,0 +1,33 @@
+# QA rodada 2 (11/11/2026) - saida real dos testes, worktree E:/wt-qa2, base origin/main 3bc2a928f
+
+## 1. Reproducao ANTES da correcao (community.treino.qa2.test.js contra o _treino.js do #792)
+     × R2-T1: 20 partidas SEM fuso e depois off +14 h NÃO abrem um segundo dia (o pedido sem fuso prende o UTC) 76ms
+     × R2-T2: âncora com mais de 30 dias e o MESMO fuso é regravada (o prazo de 60 dias recomeça) 24ms
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  functions/api/community.treino.qa2.test.js > QA rodada 2: âncora do fuso do Treino > R2-T1: 20 partidas SEM fuso e depois off +14 h NÃO abrem um segundo dia (o pedido sem fuso prende o UTC)
+AssertionError: expected 200 to be 409 // Object.is equality
+ FAIL  functions/api/community.treino.qa2.test.js > QA rodada 2: âncora do fuso do Treino > R2-T2: âncora com mais de 30 dias e o MESMO fuso é regravada (o prazo de 60 dias recomeça)
+AssertionError: expected 1791720000000 to be 1794398400000 // Object.is equality
+ Test Files  1 failed (1)
+      Tests  2 failed | 2 passed (4)
+
+## 2. Suite inteira DEPOIS da correcao (npx vitest run), resumo
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  src/utils/match3Combat.test.ts > D-07: placar, fim e recompensa derivam do combate > balanço: quem joga a melhor troca termina mais rápido que o típico
+Error: Test timed out in 15000ms.
+ Test Files  1 failed | 1313 passed | 1 skipped (1315)
+      Tests  1 failed | 15663 passed | 1 expected fail | 12 skipped | 4 todo (15681)
+
+## 3. O unico vermelho da suite, isolado (match3Combat, fora do escopo, timeout de 15 s sob carga paralela)
+ Test Files  1 passed (1)
+      Tests  34 passed (34)
+   Duration  17.26s (transform 378ms, setup 49ms, import 430ms, tests 16.57s, environment 0ms)
+
+## 4. Arquivos tocados + escopo, depois da correcao
+ Test Files  17 passed (17)
+      Tests  148 passed (148)
+
+## 5. tsc
+tsc app: limpo
+tsc servidor: limpo
+tsc desktop: limpo

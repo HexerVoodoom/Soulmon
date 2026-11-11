@@ -159,11 +159,14 @@ describe('GET sparOpponents', () => {
     expect(vistos.size).toBeGreaterThan(SPAR_PICKS);
   });
 
-  it('não grava nada (nem rank, nem contador): só lê', async () => {
+  it('não grava nada (nem rank, nem contador): só lê (a única chave nova é a âncora do fuso, `sparTz:`, gravada uma vez)', async () => {
     const { env, kv } = mkEnv({ bonds: [10, 10, 10, 10, 10] });
     const antes = [...kv.store.keys()].sort().join();
     await lista(env);
-    expect([...kv.store.keys()].sort().join()).toBe(antes);
+    expect([...kv.store.keys()].filter(k => !k.startsWith('sparTz:')).sort().join()).toBe(antes);
+    const ancora = kv.store.get(`sparTz:${ME}`);
+    await lista(env);
+    expect(kv.store.get(`sparTz:${ME}`)).toBe(ancora); // 2ª leitura não regrava
   });
 });
 

@@ -139,18 +139,27 @@ export async function buySparTicket(env, id, day, phase) {
  * `SPAR_TZ_LOCK_MS` (viagem real), então os contadores de Honra e tickets seguem UM dia por conta.
  */
 export const SPAR_TZ_LOCK_MS = 24 * 3600 * 1000;
+/** Validade da âncora no KV e a idade a partir da qual ela é regravada (mesmo valor) para não vencer em conta ativa. */
+export const SPAR_TZ_TTL_S = 60 * 86400;
+export const SPAR_TZ_REFRESH_MS = 30 * 86400 * 1000;
 export const sparTzKey = id => `sparTz:${id}`;
 export async function fixarTzTreino(env, id, tz) {
   const kv = kvOrThrow(env);
-  const novo = tz && (tz.zone || tz.offsetMs !== undefined) ? tz : null;
+  // Pedido SEM fuso prende o UTC (QA rodada 2, R2-T1): antes devolvia `{}` sem gravar, e o 1º fuso explícito que chegasse depois
+  // virava a âncora, abrindo um 2º "dia" (+20 partidas com Honra) no mesmo instante. O app sempre manda `off`; só cliente editado não manda.
+  const novo = tz && (tz.zone || tz.offsetMs !== undefined) ? tz : { offsetMs: 0 };
   let atual = null;
   try { const raw = await kv.get(sparTzKey(id)); atual = raw ? JSON.parse(raw) : null; } catch { atual = null; }
   const valido = atual && typeof atual === 'object' && (atual.zone || Number.isFinite(atual.offsetMs));
-  const grava = async v => { await kv.put(sparTzKey(id), JSON.stringify({ ...v, at: Date.now() }), { expirationTtl: 60 * 86400 }).catch(() => {}); return v; };
-  if (!valido) return novo ? grava(novo) : {};
+  const grava = async v => { await kv.put(sparTzKey(id), JSON.stringify({ ...v, at: Date.now() }), { expirationTtl: SPAR_TZ_TTL_S }).catch(() => {}); return v; };
+  if (!valido) return grava(novo);
   const ancora = { ...(atual.zone ? { zone: atual.zone } : {}), ...(Number.isFinite(atual.offsetMs) ? { offsetMs: atual.offsetMs } : {}) };
-  const igual = novo && novo.zone === ancora.zone && novo.offsetMs === ancora.offsetMs;
-  if (novo && !igual && Date.now() - (Number(atual.at) || 0) >= SPAR_TZ_LOCK_MS) return grava(novo);
+  const igual = novo.zone === ancora.zone && novo.offsetMs === ancora.offsetMs;
+  const idade = Date.now() - (Number(atual.at) || 0);
+  if (!igual && idade >= SPAR_TZ_LOCK_MS) return grava(novo);
+  // R2-T2: o TTL só contava da gravação, então a âncora vencia no dia 60 mesmo em conta ativa e o truque do R2-T1 voltava.
+  // Regrava o MESMO valor a cada 30 dias (no máximo 1 escrita por mês por conta).
+  if (idade >= SPAR_TZ_REFRESH_MS) return grava(ancora);
   return ancora;
 }
 
