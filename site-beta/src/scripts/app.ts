@@ -325,7 +325,12 @@ const OLHA_DIR: Record<string, number[]> = { arcano: [0,0,1,1,0], espaco: [1,1,1
 // Cristal-ovo do "Seu Soulmon está esperando" (dono, 09/11): toque = chacoalhada + brilho.
 function ovo() {
   const o = $('[data-ovo]'); if (!o) return;
-  o.addEventListener('click', () => { o.classList.remove('toca'); void o.offsetWidth; o.classList.add('toca'); });
+  const tocar = (c: string) => { o.classList.remove('toca', 'toca2'); void o.offsetWidth; o.classList.add(c); };
+  o.addEventListener('click', () => tocar('toca'));
+  // Celular (dono, 11/11): ao passar pelo cristal no scroll, duas mexidinhas sozinho.
+  if ('IntersectionObserver' in window && matchMedia('(max-width: 1023px)').matches) {
+    new IntersectionObserver((es) => { for (const e of es) if (e.isIntersecting) tocar('toca2'); }, { threshold: 0.6 }).observe(o);
+  }
 }
 // ---------- Versão B: sorteio do Rookie e companheiro que evolui rolando (dono, 09/11) ----------
 function companheiro() {

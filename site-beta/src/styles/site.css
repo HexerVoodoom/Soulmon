@@ -1120,9 +1120,10 @@ main h2, main h3, main .frase, .ciclo-texto, .soul-texto, .universo-cab, .recurs
 .ovo-brilho { position: absolute; inset: -10%; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.95), rgba(95,243,224,.55) 35%, transparent 65%); opacity: 0; pointer-events: none; }
 .ovo.toca img { animation: ovo-chacoalha .5s steps(6); transform-origin: 50% 90%; }
 .ovo.toca .ovo-brilho { animation: ovo-brilha .7s ease-out; }
+.ovo.toca2 img { animation: ovo-chacoalha .5s steps(6) 2; transform-origin: 50% 90%; }
 @keyframes ovo-chacoalha { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-7deg); } 40% { transform: rotate(6deg); } 60% { transform: rotate(-4deg); } 80% { transform: rotate(3deg); } }
 @keyframes ovo-brilha { 0% { opacity: 0; transform: scale(.6); } 35% { opacity: 1; } 100% { opacity: 0; transform: scale(1.2); } }
-@media (prefers-reduced-motion: reduce) { .ovo.toca img { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .ovo.toca img, .ovo.toca2 img { animation: none; } }
 
 /* 09/11: rótulo de forma e fim da demo com fundo esfumado (borda suave, igual ao véu do título) */
 .forma-titulo, .lista-bloco .demo-linha { background: none !important; position: relative; isolation: isolate; }
