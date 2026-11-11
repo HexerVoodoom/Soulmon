@@ -452,6 +452,7 @@ async function handleCommunity(context) {
     // Um combate terminou (vitória, derrota, empate ou desistência): o reroll dos oponentes volta.
     await kvOrThrow(env).delete(rerollKey(id)).catch(() => {});
     // Resultado sem ganho: o que o cliente usa para NAO pagar Honra de vitoria (`honorFactor`).
+    /** @type {{ gain: number, factor: number, reason: 'repeat' | 'rank-up' | 'rank-down' | null }} */
     const nada = { gain: 0, factor: 1, reason: null };
     // EMPATE (combate v3, §2.4/§2.19): resultado válido, a partida conta como jogada (a cota já foi gasta) e
     // NENHUM lado ganha ou perde pontos, vitória, derrota nem Honra.
