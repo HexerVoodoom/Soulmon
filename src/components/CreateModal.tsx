@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ACTIVITY_CATEGORIES } from '../types/categories';
 import { Icon } from './ui/Icon';
 import { PowerIcon, HarmonyIcon, BenevolenceIcon } from './AlignmentIcons';
 import { InfoTip } from './ui/InfoTip';
@@ -278,9 +279,7 @@ export function HabitAnchorFields({ sched, language }: { sched: HabitScheduleSta
   );
 }
 
-const CATEGORIES: ActivityCategory[] = [
-  'Health', 'Creativity', 'Discipline', 'Study', 'Work', 'Social', 'Wellness', 'Fitness',
-];
+const CATEGORIES: ActivityCategory[] = ACTIVITY_CATEGORIES as ActivityCategory[];
 
 /** Chips de categoria com o ícone VETOR de 20 (D-A7: `CATEGORY_ICON_NAME`,
  *  todos no subset — o PNG `icon-cat-*` fora do visor saiu). */

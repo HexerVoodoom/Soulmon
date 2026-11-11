@@ -20,34 +20,10 @@
 import type { Effort, Schedule } from './taskModel';
 import type { ActivityCategory } from './attributes';
 
-/** As nove áreas da vida que o onboarding oferece para melhorar. */
-export type LifeArea =
-  | 'sono'
-  | 'corpo'
-  | 'mente'
-  | 'foco'
-  | 'aprendizado'
-  | 'relacoes'
-  | 'casa'
-  | 'financas'
-  | 'proposito';
-
-export const LIFE_AREAS: LifeArea[] = [
-  'sono', 'corpo', 'mente', 'foco', 'aprendizado', 'relacoes', 'casa', 'financas', 'proposito',
-];
-
-/** Nome bilíngue de cada área, para os seletores do onboarding e do catálogo. */
-export const LIFE_AREA_LABEL: Record<LifeArea, { pt: string; en: string }> = {
-  sono: { pt: 'Sono', en: 'Sleep' },
-  corpo: { pt: 'Corpo', en: 'Body' },
-  mente: { pt: 'Mente', en: 'Mind' },
-  foco: { pt: 'Foco', en: 'Focus' },
-  aprendizado: { pt: 'Aprendizado', en: 'Learning' },
-  relacoes: { pt: 'Relações', en: 'Relationships' },
-  casa: { pt: 'Casa', en: 'Home' },
-  financas: { pt: 'Finanças', en: 'Finances' },
-  proposito: { pt: 'Propósito', en: 'Purpose' },
-};
+/** As áreas = as categorias (fonte única em `./categories`; Criatividade é a 10ª). */
+import { LIFE_AREAS, LIFE_AREA_LABEL, type LifeArea } from './categories';
+export { LIFE_AREAS, LIFE_AREA_LABEL };
+export type { LifeArea };
 
 /** Dificuldades que o onboarding oferece para escolha múltipla (até 3). */
 export type StruggleId =

@@ -1,5 +1,20 @@
 ﻿# Assets a gerar — lista completa, por família, com uso, formato e prompt
 
+## PRIORIDADE ALTA — ícones das categorias unificadas (pedido do dono, 11/11/2026, item F)
+
+As categorias de tarefa e de hábito agora são UMA lista de 10 (`src/types/categories.ts`). Só 7 delas herdam arte antiga (os `icon-cat-*.png` das 8 categorias de antes, desenhados para os significados de antes); **sono, casa e propósito não têm arte** e **criatividade** (que tem a arte herdada) entra aqui por pedido do dono, para ganhar a versão nova. A arte entra por **slots com troca automática**: basta cair `icon-cat-<id>.png` em `src/assets/soulmon/icons/categories/` (resolvido por `import.meta.glob` em `index.ts`; sem arquivo, vale a arte herdada e, sem ela, o glifo Material de `CATEGORY_ICON_NAME`). Nenhum código a mexer. Tamanho: **128×128**, RGBA, alfa real, igual aos ícones existentes. Gerar no ChatGPT (cota volta às 18:13): `gpt_image_2 --background transparent`, nunca chroma. Anexar como referência de estilo um dos `icon-cat-*.png` atuais. Categoria UI/ícone: identidade Soulmon só como UM motivo discreto (um cristal turquesa pequeno OU um fio de cobre), nunca entupir, sem engrenagem.
+
+| id | arquivo (slot) | uso | prompt (EN) |
+|---|---|---|---|
+| `cat-sono` | `src/assets/soulmon/icons/categories/icon-cat-sono.png` | chip de categoria (Sono), Santuário do Vínculo, listas de atividades | `A single game-UI category icon in the same style, line weight and palette as the existing category icons: a crescent moon with two small stars, soft dark-teal and cream colors, one tiny turquoise crystal as the only accent, pixel-crisp clean edges, transparent background, centered, no text, no gear, square 1:1, 128x128` |
+| `cat-casa` | `.../icon-cat-casa.png` | idem (Casa) | `A single game-UI category icon in the same style, line weight and palette as the existing category icons: a small cozy house with a round door and a chimney, warm cream walls and a muted teal roof, one thin copper pipe along the chimney as the only accent, pixel-crisp clean edges, transparent background, centered, no text, no gear, square 1:1, 128x128` |
+| `cat-proposito` | `.../icon-cat-proposito.png` | idem (Propósito) | `A single game-UI category icon in the same style, line weight and palette as the existing category icons: a compass rose with a bright guiding star on the north point, cream and dark-teal tones, one tiny turquoise crystal at the center as the only accent, pixel-crisp clean edges, transparent background, centered, no text, no gear, square 1:1, 128x128` |
+| `cat-criatividade` | `.../icon-cat-criatividade.png` | idem (Criatividade) — substitui a arte herdada | `A single game-UI category icon in the same style, line weight and palette as the existing category icons: a paint palette with a small lightbulb-shaped spark rising from it, warm cream palette with a few muted color dabs, one small turquoise crystal as the only accent, pixel-crisp clean edges, transparent background, centered, no text, no gear, square 1:1, 128x128` |
+
+Opcional (sem urgência): refazer `corpo`, `mente`, `foco`, `aprendizado`, `relacoes` e `financas`, que hoje usam a arte de Fitness, Wellness, Discipline, Study, Social e Work. Mesmo formato e mesmo slot (`icon-cat-<id>.png`).
+
+---
+
 ## PRIORIDADE MÁXIMA — botões de renomear da Hexsmith (pedido do dono, 11/11/2026)
 
 Hoje a tela usa hexágonos GENERATIVOS em código (`src/components/hex/HexRenameButton.tsx`). A arte final entra por **slots com troca automática**: basta cair `btn-lapis.(webp|png)` e `btn-chama.(webp|png)` em `src/assets/soulmon/hexsmith/` (resolvido por `import.meta.glob` em `index.ts`; sem arquivo, vale o hexágono generativo). Gerar no ChatGPT (cota volta às 18h) e instalar por PR. Categoria UI: pode levar a identidade Soulmon; sem engrenagem.

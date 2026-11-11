@@ -4,15 +4,8 @@ export interface AttributePoints {
   benevolence: number;
 }
 
-export type ActivityCategory = 
-  | 'Health' 
-  | 'Creativity' 
-  | 'Discipline' 
-  | 'Study' 
-  | 'Work' 
-  | 'Social' 
-  | 'Wellness' 
-  | 'Fitness';
+import type { ActivityCategory } from './categories';
+export type { ActivityCategory } from './categories';
 
 /** Alinhamento do oráculo → galho de evolução. Era um mapa LOCAL do
  *  `EvolutionPath`; virou compartilhado quando o `EvoTrail` da Home passou a
@@ -25,15 +18,25 @@ export const ALIGN_TO_ATTR: Record<'poder' | 'harmonia' | 'benevolencia', 'power
   benevolencia: 'benevolence',
 };
 
+/**
+ * Pontos por atividade concluída em cada categoria (Poder/Harmonia/Benevolência).
+ * REGRA (11/11/2026, dono): toda categoria soma 4 (a soma que já era a mais comum) e o
+ * conjunto é equilibrado entre os três tipos (Poder 14 · Harmonia 13 · Benevolência 13 —
+ * com 10 categorias × 4 = 40 a igualdade exata é impossível; Poder, o menor de antes,
+ * leva a sobra). Nenhuma categoria favorece Poder; 3 delas dão +3 de Poder.
+ * Travado por `types/categories.contract.test.ts`.
+ */
 export const CATEGORY_ATTRIBUTES: Record<ActivityCategory, AttributePoints> = {
-  Health: { power: 1, harmony: 1, benevolence: 2 },
-  Creativity: { power: 3, harmony: 1, benevolence: 0 },
-  Discipline: { power: 0, harmony: 1, benevolence: 3 },
-  Study: { power: 0, harmony: 3, benevolence: 1 },
-  Work: { power: 1, harmony: 2, benevolence: 1 },
-  Social: { power: 1, harmony: 1, benevolence: 2 },
-  Wellness: { power: 1, harmony: 2, benevolence: 1 },
-  Fitness: { power: 2, harmony: 1, benevolence: 1 },
+  sono:         { power: 0, harmony: 3, benevolence: 1 },
+  corpo:        { power: 3, harmony: 1, benevolence: 0 },
+  mente:        { power: 1, harmony: 3, benevolence: 0 },
+  foco:         { power: 3, harmony: 0, benevolence: 1 },
+  aprendizado:  { power: 1, harmony: 3, benevolence: 0 },
+  relacoes:     { power: 0, harmony: 1, benevolence: 3 },
+  casa:         { power: 1, harmony: 0, benevolence: 3 },
+  financas:     { power: 2, harmony: 1, benevolence: 1 },
+  proposito:    { power: 0, harmony: 1, benevolence: 3 },
+  criatividade: { power: 3, harmony: 0, benevolence: 1 },
 };
 
 export const XP_THRESHOLDS = {

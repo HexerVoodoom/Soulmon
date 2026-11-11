@@ -22,6 +22,10 @@ import { sanitizeGlitchtamaDrop } from '../utils/glitchtamaDrop';
 import { sanitizeStatFloor } from '../utils/combate/level';
 import { createContext, useContext, useState, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { type ActivityCategory } from '../types/attributes';
+import { normalizeCategory } from '../types/categories';
+
+/** Categoria de um save: id antigo (`Health`…) vira o equivalente de hoje; o desconhecido passa intacto (a UI já tolera). */
+const migrateCategory = (raw: unknown): ActivityCategory => (normalizeCategory(raw) ?? raw) as ActivityCategory;
 import { MAX_HP_BY_FORM, getStageLevel, FORM_REQUIREMENTS, BB_MAX_HP } from '../types/progression';
 import { isBBStage, sanitizeStageId } from '../utils/bbStage';
 import { devolverPocoes, sanitizeDungeonPotions } from '../utils/dungeonPotions';
@@ -1060,7 +1064,7 @@ function hydrateActivity(v: unknown): Activity | null {
     ...(raw as object),
     id,
     name: str(raw.name) ?? '',
-    category: raw.category as ActivityCategory,
+    category: migrateCategory(raw.category),
     emoji: str(raw.emoji) ?? '⭐',
     steps: arr<unknown>(raw.steps).map(hydrateStep),
     // A ponte com o widget Android e o desktop lê `weekDays` direto.
@@ -1079,7 +1083,7 @@ function hydrateTask(v: unknown): Task | null {
     ...(raw as object),
     id,
     name: str(raw.name) ?? '',
-    category: raw.category as ActivityCategory,
+    category: migrateCategory(raw.category),
     emoji: str(raw.emoji) ?? '⭐',
     completed: raw.completed === true,
     ...(raw.steps !== undefined ? { steps: arr<unknown>(raw.steps).map(hydrateStep) } : {}),
@@ -1103,6 +1107,7 @@ function hydrateCompletedTask(v: unknown): unknown {
   const raw = v as Record<string, unknown>;
   return {
     ...raw,
+    ...(raw.category !== undefined ? { category: migrateCategory(raw.category) } : {}),
     ...(str(raw.emoji) === undefined ? { emoji: '⭐' } : {}),
     ...(str(raw.name) === undefined ? { name: '' } : {}),
   };
@@ -1324,6 +1329,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
               const e = s as Record<string, unknown>;
               return [id, {
                 ...e,
+                ...(e.category !== undefined ? { category: migrateCategory(e.category) } : {}),
                 name: str(e.name) ?? id,
                 emoji: str(e.emoji) ?? '⭐',
                 completionCount: Math.max(0, num(e.completionCount, 0)),
