@@ -2192,6 +2192,10 @@ O AVISO do Papus (NPC 440) no modal padrão `NpcSequence`, item `messenger` da f
 
 A caixa de cartas do Papus, folha aberta pelo ícone da Home: accordion de uma carta aberta por vez, "Resgatar" (só com item), "Deletar" (confirmação se houver item não resgatado), rodapé "Excluir todas lidas" e "Resgatar tudo" (pop-up com a lista e o total). Recebe a lista e as ações de `hooks/useMailbox.ts`. Decisão: REGISTRO §246.
 
+### `src/components/CartaTutorialWidget.tsx`
+
+A imagem da carta global do widget (§287): o casco do widget com cenário no LCD, sem Soulmon (`src/assets/soulmon/cartas/tutorial-2-widget.(webp|png)`, por glob em `index.ts`); sem o arquivo não mostra nada. `MailboxSheet` também mostra a imagem do NPC remetente (96px, campo `npc`: `mensageiro` ou `hexsmith`) nas cartas globais e Aceitar/Recusar nas cartas `friend-invite` (`onAnswerInvite` de `useMailbox`). **Régua:** `MailboxSheet.cartas.render.test.tsx`.
+
 ### `src/components/nav/MailLink.tsx`
 
 O ícone de carta da Home, linha 1 da pilha do canto direito (entre o Mapa e as Missões), com a bolinha vermelha de carta nova. Arte por glob em `assets/soulmon/icones-ui/carta.ts`; sem arquivo cai no glifo `chat_bubble`. Decisão: REGISTRO §246.

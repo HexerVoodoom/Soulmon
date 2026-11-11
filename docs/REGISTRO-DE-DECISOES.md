@@ -4673,3 +4673,13 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Falsifica:** em produção, a fração de oponentes dentro de ±10%/±2 níveis ficar abaixo de ~65% com o pool cheio, ou jogador reclamar de só enfrentar iguais.
 
 **Rollback:** reverter o PR (volta a faixa de Vínculo + `ESTAGIO_PESOS`).
+
+## §287 — Cartas do Papus: presente, convite de amizade e anúncio global (11/11/2026, pedido do dono)
+
+**Decisão.** A caixa de cartas (§241/§246) vira o canal de 3 coisas novas, sem infra nova (mesma fila `mail:<saveId>`, mesmo TTL de 3 dias sem prêmio, mesma idempotência de `claimMail`): (1) **presente de amigo** chega como carta `kind: 'gift'` com "Resgatar" (20 Bits, o teto diário de recebimento e o 1×/dia/amigo seguem no servidor); se a caixa estiver no teto de 30 só com prêmios pendentes, cai na fila antiga `gifts:`, que o cliente ainda resgata (o presente pendente de quem já tinha na fila antiga também; nada se perde, não há migração destrutiva); (2) **convite de amizade** chega como carta `kind: 'friend-invite'` com Aceitar e Recusar, usando o mesmo `friendAccept` da lista de Amigos (a carta some quando o convite é aceito, recusado ou cancelado; quem se escondeu da lista pública convida sem carta; `fromPid` é o id público, nunca o saveId); (3) **anúncio global**: conteúdo versionado no código (`functions/api/_cartasGlobais.js`, id + janela `desde`/`ate`), entregue na leitura da caixa como `global:<id>`, uma vez por conta (apagada ou expirada vira `done` e não volta), sem prêmio, sem dado pessoal e sem push. A primeira carta global é a do nome do especial e do widget, (duas): a do widget (NPC Papus + imagem do casco com cenário no LCD, sem Soulmon, `src/assets/soulmon/cartas/tutorial-2-widget.webp`, ativa) e a da Hexsmith (nomes do Soulmon e do especial por 200 Bits; pronta com `ativa: false`, só liga depois do PR da Hexsmith). Carta de NPC mostra a imagem dele (`npc`); remetente jogador não.
+
+**Alternativa que perdeu:** manter o presente creditado direto na fila `gifts:` (o jogador não via de quem veio nem escolhia o momento) e criar tabela própria de anúncios no KV (conteúdo em código é revisado em PR e não precisa de admin).
+
+**Falsifica:** presente creditado duas vezes (régua `functions/api/cartas.test.js`), carta global reaparecendo depois de apagada/expirada, ou o convite sumir da lista de Amigos por causa da carta.
+
+**Rollback:** reverter o PR (presente volta à fila `gifts:`; convite segue só na lista de Amigos; cartas já entregues expiram em 3 dias).

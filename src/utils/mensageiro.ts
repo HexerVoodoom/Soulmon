@@ -10,7 +10,16 @@ export interface MailItem {
   read?: boolean;
   /** Instante em que o servidor entregou o prêmio (0/ausente = ainda pendente). */
   claimedAt?: number;
+  /** Carta especial (§287): presente de amigo, convite de amizade (Aceitar/Recusar) ou anúncio global (pode levar o mini-tutorial). Ausente = carta comum. */
+  kind?: MailKind;
+  /** Só no convite: o pid público de quem convidou (nunca o saveId). */
+  fromPid?: string;
+  /** Só na carta global: qual mini-tutorial ilustra o corpo. */
+  tutorial?: 'widget';
+  /** NPC remetente: a caixa mostra a imagem dele na carta. Ausente = remetente jogador (sem imagem). */
+  npc?: 'mensageiro' | 'hexsmith';
 }
+export type MailKind = 'gift' | 'friend-invite' | 'global';
 /** O que o servidor entregou num resgate: só o prêmio e o título. */
 export interface MailGrant { mid: string; titlePt?: string; titleEn?: string; bits: number; emblems: number }
 export interface MailState { gamePoints?: number; emblems?: number; mailClaimed?: string[] }
@@ -37,6 +46,8 @@ export function applyMail<T extends MailState>(prev: T, mail: MailItem): T {
 
 /** Tem item a resgatar. */
 export const hasPendingReward = (m: MailItem): boolean => (m.bits > 0 || m.emblems > 0) && !m.claimedAt;
+/** Convite de amizade com o que o servidor precisa para responder. */
+export const isFriendInvite = (m: MailItem): m is MailItem & { fromPid: string } => m.kind === 'friend-invite' && typeof m.fromPid === 'string' && m.fromPid.length > 0;
 /** Carta nova = ainda não aberta nem resgatada. */
 export const isUnread = (m: MailItem): boolean => m.read !== true && !m.claimedAt;
 /** A bolinha vermelha do ícone da Home. */

@@ -3,9 +3,11 @@ import { toast } from 'sonner';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text, SM2_SHADOW_CARD } from './form/FormKit';
 import { Icon } from './ui/Icon';
 import { AreaSheet } from './nav/AreaSheet';
+import { CartaTutorialWidget } from './CartaTutorialWidget';
 import { NPC_MENSAGEIRO_ART } from '../assets/soulmon/npcs';
+import npcHexsmith from '../assets/soulmon/npcs/npc-forja-hexsmith.png';
 import {
-  hasPendingReward, isUnread, mailBody, mailTitle, rewardText, sumGrants,
+  hasPendingReward, isFriendInvite, isUnread, mailBody, mailTitle, rewardText, sumGrants,
   type MailGrant, type MailItem,
 } from '../utils/mensageiro';
 import type { Language } from '../utils/i18n';
@@ -19,7 +21,9 @@ import type { Language } from '../utils/i18n';
  *  · sem deslocar layout: o rodapé está sempre montado (desativado quando não há o que fazer), o ponto de "nova" ocupa sempre o mesmo espaço
  *    e a linha do título tem altura mínima fixa. Só a carta aberta cresce, para baixo.
  */
-export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onClaim, onClaimAll, onDelete, onDeleteRead }: {
+const CARTA_NPC_ART = { mensageiro: NPC_MENSAGEIRO_ART, hexsmith: npcHexsmith } as const;
+
+export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onClaim, onClaimAll, onDelete, onDeleteRead, onAnswerInvite }: {
   open: boolean;
   language: Language;
   mail: readonly MailItem[];
@@ -29,6 +33,8 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
   onClaimAll: () => Promise<MailGrant[]>;
   onDelete: (mid: string, force: boolean) => Promise<'removed' | 'blocked'>;
   onDeleteRead: () => Promise<number>;
+  /** Convite de amizade por carta (§287). */
+  onAnswerInvite?: (m: MailItem, decline: boolean) => Promise<'accepted' | 'declined' | 'gone'>;
 }) {
   const isPt = language === 'pt-BR';
   const [aberta, setAberta] = useState<string | null>(null);
@@ -53,6 +59,13 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
     toast(g.length
       ? (isPt ? `Resgatado: ${rewardText(sumGrants(g), true)}.` : `Claimed: ${rewardText(sumGrants(g), false)}.`)
       : (isPt ? 'Essa carta já foi resgatada.' : 'This letter was already claimed.'));
+  });
+  const responder = (m: MailItem, decline: boolean) => rodar(async () => {
+    const r = await onAnswerInvite!(m, decline);
+    if (aberta === m.mid) setAberta(null);
+    toast(r === 'accepted' ? (isPt ? 'Agora vocês são amigos.' : 'You are now friends.')
+      : r === 'declined' ? (isPt ? 'Convite recusado.' : 'Invite declined.')
+      : (isPt ? 'Esse convite não existe mais.' : 'That invite is gone.'));
   });
   const deletar = (m: MailItem) => rodar(async () => {
     if (hasPendingReward(m)) { setConfirmar(m); return; }
@@ -136,10 +149,23 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
                 {aberto && (
                   <div id={`mail-${m.mid}`} role="region" aria-label={mailTitle(m, isPt)} style={{ padding: '0 14px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <p style={{ ...sm2Text, margin: 0 }}>{mailBody(m, isPt)}</p>
+                    {m.npc && CARTA_NPC_ART[m.npc] && (
+                      <img data-mail-npc={m.npc} src={CARTA_NPC_ART[m.npc]} alt="" aria-hidden="true" width={96} height={96} draggable={false}
+                        style={{ width: 96, height: 96, objectFit: 'contain', imageRendering: 'pixelated', alignSelf: 'center' }} />
+                    )}
+                    {m.kind === 'global' && m.tutorial === 'widget' && <CartaTutorialWidget isPt={isPt} />}
                     {premio && (
                       <p data-mail-reward style={{ ...sm2Hint, margin: 0 }}>
                         {m.claimedAt ? (isPt ? 'Resgatado: ' : 'Claimed: ') : (isPt ? 'Na bolsa: ' : 'In the bag: ')}{premio}
                       </p>
+                    )}
+                    {isFriendInvite(m) && onAnswerInvite && (
+                      <div data-mail-invite style={{ display: 'flex', gap: 8 }}>
+                        <button type="button" data-mail-invite-accept disabled={ocupado} onClick={() => void responder(m, false)}
+                          style={{ ...sm2Button('primary', ocupado, 'sm'), flex: 1 }}>{isPt ? 'Aceitar' : 'Accept'}</button>
+                        <button type="button" data-mail-invite-decline disabled={ocupado} onClick={() => void responder(m, true)}
+                          style={{ ...sm2Button('outline', ocupado, 'sm'), flex: 1 }}>{isPt ? 'Recusar' : 'Decline'}</button>
+                      </div>
                     )}
                     <div style={{ display: 'flex', gap: 8 }}>
                       {item && (

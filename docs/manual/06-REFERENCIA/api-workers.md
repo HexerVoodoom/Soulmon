@@ -795,7 +795,7 @@ Espelho de `src/utils/elementoJornada.ts` (§232): forma do registro no save e i
 
 ### `functions/api/_mensageiro.js`
 
-Fila `mail:<saveId>`, carta e prêmio da temporada na 1ª leitura do mês; simulado nunca recebe. Caixa de cartas: leitura com varredura de expiração (3 dias, menos carta com item pendente), `markRead`, `claimMail` (resgate uma vez só, prêmio do registro do servidor), `deleteMail` (item pendente só com `force`). Ações `mail`, `mailRead`, `mailClaim`, `mailDelete`, `mailAck` (app antigo), `mailSend` em `community.js`. Decisão: REGISTRO §241 e §246. **Régua:** `functions/api/mensageiro.test.js`.
+Fila `mail:<saveId>`, carta e prêmio da temporada na 1ª leitura do mês; simulado nunca recebe. Caixa de cartas: leitura com varredura de expiração (3 dias, menos carta com item pendente), `markRead`, `claimMail` (resgate uma vez só, prêmio do registro do servidor), `deleteMail` (item pendente só com `force`). Ações `mail`, `mailRead`, `mailClaim`, `mailDelete`, `mailAck` (app antigo), `mailSend` em `community.js`. Decisão: REGISTRO §241 e §246. **Régua:** `functions/api/mensageiro.test.js`. Cartas especiais (§287): `kind` `gift` (presente), `friend-invite` (`fromPid`; `removerConvitesDe` ao responder/cancelar) e `global` (`tutorial`); `enqueueMail(..., { recusarSeCheia })`; `readMail` injeta as cartas de `functions/api/_cartasGlobais.js` uma vez por conta (`cartasGlobaisAtivas`). **Régua:** `functions/api/cartas.test.js`.
 
 ### `functions/api/_amigos.js`
 
