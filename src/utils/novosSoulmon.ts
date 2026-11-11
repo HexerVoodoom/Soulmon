@@ -221,8 +221,12 @@ export function getDungeonEncounter(
   level: number = Number.POSITIVE_INFINITY,
   /** Masmorra temática: só criaturas deste elemento (`dungeonElementos.ts`). */
   element?: string,
+  /** Coerência estágio × HP: forma MÍNIMA (só sobe a da escada, nunca desce). Ausente = a do slot. */
+  minStage?: EnemyStage,
 ): DungeonEncounter {
-  const pref = novoPreferenceOfTier(tier)[0] as EnemyStage;
+  const slotStage = novoPreferenceOfTier(tier)[0] as EnemyStage;
+  const ordem: readonly EnemyStage[] = ['rookie', 'champion', 'ultimate', 'mega'];
+  const pref = minStage && ordem.indexOf(minStage) > ordem.indexOf(slotStage) ? minStage : slotStage;
   const e = pickEnemy(level, rng, { stage: pref, used, ...(element ? { element } : {}) });
   const n = e.kind === 'base' ? BY_ID[e.id] : undefined;
   const sprite = n ? n.sprite(e.stage) : rosterSpriteOf(e);

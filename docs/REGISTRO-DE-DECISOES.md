@@ -4653,3 +4653,13 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Falsifica:** a barra de HP do inimigo de forma baixa ainda passar de ~1.330 (Champion) ou o jogador reclamar que o Ultimate aparece cedo demais na escada.
 
 **Rollback:** reverter o PR (a âncora dos simulados volta ao dado antigo).
+
+## §285 — Masmorra: a forma do inimigo acompanha o HP (11/11/2026, pedido do dono)
+
+**Decisão.** A regra de coerência estágio × HP do §284 (`estagioPorHp.ts`) passa a valer também na Masmorra, mesmo quebrando o contrato antigo "escada rookie→mega por slot" (4 testes, atualizados). Em `buildDungeonWave` a forma do slot sobe até a faixa do HP real do inimigo (`dungeonFoe`): nível 30, slot 0, ~3.800 pts deixa de ser Rookie. Só sobe, nunca desce; o roster NÃO tem arte de Ultra, então o **teto é Mega** (HP de faixa Ultra ≥ 5.138 pts, andares altos de level ≥ ~30, mostra Mega). O teto de arte por level (`ENEMY_STAGE_UNLOCK_LEVEL`) não segura a forma coerente com o HP. Efeito prático: o HP quase não varia entre os 6 slots (±3%), então a onda inteira vira uma forma só — Rookie até level ~6, Champion ~7–13, Ultimate ~14–21, Mega daí em diante (andar 1; andares mais fundos sobem antes). HP, poder e Bits não mudam. Exceção: o corvo (portão 1/1000, só tem arte Rookie) continua como é, igual à Arena.
+
+**Alternativa que perdeu:** manter a escada por slot e rebaixar o HP dos slots baixos (quebraria o balanço medido da Masmorra, §2.18 do plano de combate v3).
+
+**Falsifica:** ver Rookie/Champion com HP acima da faixa da forma (varredura `dungeon.estagioPorHp.test.ts`), ou a onda toda Mega parecer sem progressão visual para o jogador.
+
+**Rollback:** reverter o PR (a escada por slot volta).

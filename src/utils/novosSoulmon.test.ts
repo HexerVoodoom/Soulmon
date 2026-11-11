@@ -8,6 +8,7 @@ import { buildDungeonWave, LADDER_TIERS } from './dungeon';
 import { DUNGEON_LINE_NAMES, DUNGEON_LINE_SPRITES } from './sprites';
 import { VISUAL_ELEMENTS, fxElementId, elementStrikeForm, dungeonEnemyElement, dungeonFoeSpecialLabel } from './combatFx';
 import { mulberry32 } from './combate/rng';
+import { maxFoeStage, stageForFoeHp } from './estagioPorHp';
 
 const DIR = join(process.cwd(), 'src/assets/soulmon/novos');
 
@@ -74,7 +75,9 @@ describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => 
     for (let seed = 1; seed <= 20; seed++) {
       // M10: a forma de ARTE do slot é limitada pelo level (`enemyRoster.ts`); level 30 libera a escada inteira.
       const wave = buildDungeonWave(1 + seed % 4, 'mega', mulberry32(seed), 30);
-      const forma = ['rookie', 'rookie', 'rookie', 'champion', 'ultimate', 'mega'] as const;
+      // Coerência estágio × HP (11/11/2026): a forma do slot sobe até a faixa do HP real do inimigo (teto Mega: não há arte de Ultra).
+      const slotForma = ['rookie', 'rookie', 'rookie', 'champion', 'ultimate', 'mega'] as const;
+      const forma = wave.map((e, i) => { const m = maxFoeStage(slotForma[i], stageForFoeHp(e.foe.combatant.hp)); return (m === 'ultra' ? 'mega' : m) as 'rookie' | 'champion' | 'ultimate' | 'mega'; });
       wave.forEach((e, i) => {
         const n = novoSoulmonOfStage(e.stage);
         if (!n) { expect(e.stage, e.stage).toMatch(/^(cmb\d{3}-rookie|[a-z]+-(rookie|champion|ultimate|mega))$/); return; } // rookie de elemento combinado (M10)
