@@ -14,8 +14,8 @@ export const CARTAS_GLOBAIS = [
     carta: {
       titlePt: 'Novidade: widget na área de trabalho',
       titleEn: 'New: desktop widget',
-      bodyPt: 'Desde a última atualização você pode colocar o widget do Soulmon na área de trabalho.',
-      bodyEn: 'Since the latest update you can put the Soulmon widget on your desktop.',
+      bodyPt: 'O que é o widget? É o seu Soulmon na área de trabalho do celular. Agora você pode colocar o Soulmon na tela inicial. Escolha a moldura (o frame) que você mais gosta; veja um exemplo na imagem. Toque na sua foto de avatar e configure o seu widget por lá.',
+      bodyEn: 'What is the widget? It is your Soulmon on your phone’s home screen. Now you can put your Soulmon right there. Pick the frame you like most; see an example in the image. Tap your avatar photo and set up your widget from there.',
       npc: 'mensageiro',
       tutorial: 'widget',
     },

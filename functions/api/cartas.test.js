@@ -125,7 +125,7 @@ describe('carta global de anúncio', () => {
   it('a carta do widget está ativa na janela, sem prêmio, com o mini-tutorial e texto pt/en', () => {
     const [c] = cartasGlobaisAtivas(quando);
     expect(c).toMatchObject({ mid: 'global:widget-area-de-trabalho-2026-11', kind: 'global', tutorial: 'widget', npc: 'mensageiro' });
-    expect(c.bodyPt).toContain('widget');
+    expect(c.bodyPt).toContain('O que é o widget?');
     expect(c.bodyEn).toBeTruthy();
     expect(cartasGlobaisAtivas(g.desde - 1)).toEqual([]);
     expect(cartasGlobaisAtivas(g.ate)).toEqual([]);
