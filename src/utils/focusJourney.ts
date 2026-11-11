@@ -68,6 +68,11 @@ export function focusElapsed(c: JourneyClock, now: number): number {
   const parado = Math.min(JOURNEY_MAX_PAUSED_MS, c.pausedMs + (c.pausedAt !== null ? Math.max(0, now - c.pausedAt) : 0));
   return Math.max(0, now - c.startAt - parado);
 }
+/** Instante (relógio do servidor) em que o foco acaba, ou `null` em pausa (o fim anda enquanto pausado). Dono do aviso "hora do descanso". */
+export function focusEndAt(c: JourneyClock): number | null {
+  if (c.pausedAt !== null) return null;
+  return c.startAt + JOURNEY_MODES[c.mode].focusMin * 60_000 + Math.min(JOURNEY_MAX_PAUSED_MS, c.pausedMs);
+}
 /** Progresso 0..1 do foco. */
 export function journeyProgress(c: JourneyClock, now: number): number {
   return Math.min(1, focusElapsed(c, now) / (JOURNEY_MODES[c.mode].focusMin * 60_000));

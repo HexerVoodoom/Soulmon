@@ -315,3 +315,12 @@ Execução: beta12, **domingo 15/11/2026 às 03:00** (nenhuma implementação an
 - Grove atacado e jogador sem condição: tom da fala não pode culpar nem pressionar (item B2); sem dark pattern.
 - Fila de balões virar spam: limite de um visível e uma vez por dia por tipo.
 - Sinal "Grove sob ataque" ainda não existir como estado explícito: pode exigir trabalho de servidor (`functions/api`), o que muda o canal (APK x web, seção 0).
+
+## I. Avisos do Pomodoro com o app fechado (pedido do dono, 12/11/2026)
+
+A jornada do Foco avisa «hora do descanso» (fim dos 25 min) e «o descanso acabou» (fim dos 5 min) sem plugin novo (REGISTRO §301, `src/utils/focusNotify.ts`): no APK reaproveita o alarme nativo que já existe (`SoulmonAlarm.scheduleAlarm`, "HH:mm", disparo único, INEXATO: pode atrasar alguns minutos; é refeito após o boot). O que depende de APK ou de servidor:
+
+- **Alarme exato com data completa** (hoje o plugin só entende "HH:mm" do próximo disparo e é inexato por não declarar `SCHEDULE_EXACT_ALARM`): um método novo no `SoulmonAlarmPlugin` (timestamp em ms, `setAlarmClock` ou `setExactAndAllowWhileIdle`) pediria APK; só vale se o atraso do inexato incomodar nos testes.
+- **Web/PWA com o app FECHADO**: sem push do servidor para o foco não há como avisar (o timer da web só vive com a aba em segundo plano). Exigiria um `focus-end` no worker de push (`functions/api`), com o horário de fim vindo do servidor da jornada, que já o conhece.
+- **Alarme esquecido depois do reboot**: o `BootReceiver` reagenda o que está em `SoulmonAlarms`; o app cancela o alarme ao seguir ou concluir, mas um alarme que disparou fica guardado até o próximo `cancelFocusAlarm`. Conferir em aparelho real se reaparece um aviso velho após reiniciar.
+- Permissão de notificação: o app só usa a que o jogador já deu (não pede sozinho nesta tela).

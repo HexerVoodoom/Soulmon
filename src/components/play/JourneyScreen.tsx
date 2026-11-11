@@ -128,6 +128,11 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, c
           {[0.12, 0.88].map(x => <polygon key={x} points={`${x * 100},${Y(b + 0.5) - 6} ${x * 100 + 3},${Y(b + 0.5)} ${x * 100},${Y(b + 0.5) + 6} ${x * 100 - 3},${Y(b + 0.5)}`} fill="#4fe3d6" opacity={0.55} />)}
         </g>)}
         <rect data-journey-top x={0} y={-JOURNEY_TOP_PAD} width={100} height={JOURNEY_TOP_PAD + 1} fill={tone[0]} />
+        <g data-journey-door data-open={p >= 1} transform={`translate(${spine[spine.length - 1].x * 100},${Y(blocks)})`}>
+          <path d="M-11 0 V-22 A11 11 0 0 1 11 -22 V0 Z" fill="#06181a" stroke="#b8733a" strokeWidth={1.6} />
+          <path d="M-7 0 V-21 A7 7 0 0 1 7 -21 V0 Z" fill={p >= 1 ? '#bff5ee' : '#0f3f44'} opacity={p >= 1 ? 0.95 : 0.9} />
+          <circle cx={4} cy={-9} r={0.9} fill="#b8733a" />
+        </g>
         <image data-journey-arrival href={ARRIVAL_ART} x={20} y={Y(blocks)} width={60} height={60} opacity={p >= 1 ? 1 : 0.85} />
         {chests.map(c => {
           const at = trailAt(spine, c.at);
@@ -149,7 +154,7 @@ export function JourneyScreen({ language, active, delta, petSprite, lastItems, c
           </g>;
         })}
         {petSprite
-          ? <image data-journey-pet href={petSprite} x={Math.min(89, Math.max(11, pet.x * 100)) - 11} y={Y(pet.y) - 22} width={22} height={22} style={{ imageRendering: 'pixelated' }} />
+          ? <image data-journey-pet href={petSprite} x={Math.min(89, Math.max(11, pet.x * 100)) - 11} y={Y(pet.y) - 22} width={22} height={22} opacity={p >= 1 ? 0 : 1} style={{ imageRendering: 'pixelated', transition: 'opacity 600ms ease-in' }} />
           : <circle data-journey-pet cx={pet.x * 100} cy={Y(pet.y) - 6} r={5.5} fill="#e9f5f2" />}
       </svg>
 
