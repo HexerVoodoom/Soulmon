@@ -185,13 +185,17 @@
 
 ## Módulos internos
 
-### `functions/api/app-config.js` (+ `_appVersion.js`)
+### `functions/api/app-config.js`
 **Rota:** `/api/app-config` · **Metodos:** `OPTIONS`, `GET`.
 **Dono de:** versao minima e recomendada do app nativo (`{minVersionCode, recommendedVersionCode}`, versionCode da Play), lida pelo modal de atualizacao (`AppUpdateGate`). Padrao min=0 (ninguem forcado) e recomendada=31.
 **Auth:** nenhuma — publica, `Cache-Control: public, max-age=300`.
 **Grava/le:** nada — so `env.APP_MIN_VERSION_CODE` / `env.APP_RECOMMENDED_VERSION_CODE` (var do Worker vence a constante de `_appVersion.js`; invalida = padrao). Mudar = var no painel ou deploy, sem APK.
 **Erros:** nenhum caminho de erro (sempre 200).
 **Regua:** `functions/api/app-config.test.js`.
+
+### `functions/api/_appVersion.js`
+
+Helper de `/api/app-config` (11/11/2026): `appVersionConfig(env)` devolve `{minVersionCode, recommendedVersionCode}`; constantes `DEFAULT_MIN_VERSION_CODE=0` e `DEFAULT_RECOMMENDED_VERSION_CODE=31`, sobrescritas pelas vars `APP_MIN_VERSION_CODE`/`APP_RECOMMENDED_VERSION_CODE` quando inteiras >= 0.
 
 ### `functions/api/_admin.js`
 **Dono de:** o **papel de admin/GM do dono** (29/09/2026). Admin = ID token Firebase verificado por `verifyIdToken` (reusado de `_auth.js`, nunca copiado) cujo e-mail está em `ADMIN_EMAILS` e, quando a rota passa `saveId`, é o dono daquele save. Fail-closed sem `ADMIN_EMAILS` e sem `FIREBASE_PROJECT_ID`. Efeitos derivados na LEITURA, nunca gravados em `ent:`. Contrato: [`../../reviews/admin-corvo/impl-notas-backend.md`](../../reviews/admin-corvo/impl-notas-backend.md).
