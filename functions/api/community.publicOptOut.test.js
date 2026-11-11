@@ -189,11 +189,11 @@ describe('opt-out da lista pública — o servidor respeita a flag por conta', (
   it('presente de quem saiu não leva o apelido', async () => {
     const env = mundo({ publicHidden: true, friends: [CAROL] });
     expect((await post(env, 'gift', BRUNO, { friendId: PID_C })).status).toBe(200);
-    expect(env.DIGIAPP_SAVES.store.get(`gifts:${CAROL}`)).not.toContain(SEGREDO);
+    expect(env.DIGIAPP_SAVES.store.get(`mail:${CAROL}`)).not.toContain(SEGREDO);
     // e quem aparece continua mandando o apelido normalmente
     const env2 = mundo({ friends: [CAROL] });
     await post(env2, 'gift', BRUNO, { friendId: PID_C });
-    expect(env2.DIGIAPP_SAVES.store.get(`gifts:${CAROL}`)).toContain(SEGREDO);
+    expect(env2.DIGIAPP_SAVES.store.get(`mail:${CAROL}`)).toContain(SEGREDO);
   });
 
   describe('cache de borda de 60 s', () => {

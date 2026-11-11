@@ -290,7 +290,7 @@ Helper de `/api/app-config` (11/11/2026): `appVersionConfig(env)` devolve `{minV
 **Dono de:** a arte das formas evoluídas dos simulados, sob demanda, em passos, atrás de `SIMULADOS_FORMAS_ON` (desligada) e `SPRITE_DISABLED`, com tetos próprios (REGISTRO §233, §234). O prompt vem pronto do Oráculo em `sim:prompt:<id>:<forma>`, semeado por `scripts/simulados-prompts.ts`; sem ele, nada é gerado. **Exports:** `FORMAS_DIA_MAX`, `FORMAS_MES_MAX`, `FORMA_TENTATIVAS_MAX`, `formasLigadas`, `chaveDaForma`, `chaveDoPrompt`, `chaveDaFila`, `enfileirarForma`, `passoFormas`. **Chamado por:** `_simulados.js`. **Régua:** `_simFormas.test.js`.
 
 ### `functions/api/_foeFamilies.js`
-**Dono de:** a FAMÍLIA do especial dos simulados `sim_*` no duelo 1v1 (REGISTRO §288): espelho de `src/utils/combate/foeFamilies.ts` (mesmo sorteio FNV-1a; HoT vira `shield` porque o 1v1 não tem HoT). **Exports:** `FOE_MIX`, `foeHash`, `foeKindOf`, `foeFamilyOf`. **Chamado por:** `_simulados.js` (`saveDoSimulado`). **Régua:** `src/utils/combate/foeFamilies.test.ts` (paridade).
+**Dono de:** a FAMÍLIA do especial dos simulados `sim_*` no duelo 1v1 (REGISTRO §290): espelho de `src/utils/combate/foeFamilies.ts` (mesmo sorteio FNV-1a; HoT vira `shield` porque o 1v1 não tem HoT). **Exports:** `FOE_MIX`, `foeHash`, `foeKindOf`, `foeFamilyOf`. **Chamado por:** `_simulados.js` (`saveDoSimulado`). **Régua:** `src/utils/combate/foeFamilies.test.ts` (paridade).
 
 ### `functions/api/_simulados.data.js`
 **Dono de:** os 170 perfis simulados (dados versionados, sem lógica): `id` estável `sim_NNNN` (vira chave de save/perfil/ranking; nunca mude), apelido único, nome do Soulmon, linha, ritmo. **Exports:** `SIM_EPOCH`, `SIMULADOS`. **Chamado por:** `_simulados.js`.
@@ -520,8 +520,8 @@ Cloudflare Workers (`workers/`), deploy **manual** (`cd workers && ../node_modul
 
 ### `functions/api/_honra.js`
 **Dono de:** o RENDIMENTO DECRESCENTE dos pontos do Torneio (PR13, decisão do dono 06/10/2026): o ganho de uma vitória cai com a diferença de level (oponente muito abaixo rende ~0) e com a N-ésima vitória do dia sobre o MESMO oponente. Nunca mexe no que se perde. Os levels vêm da ficha congelada em `duelStart`.
-**Exports:** `HONRA_PONTOS_VITORIA`, `HONRA_PONTOS_DEFESA`, `HONRA_LEVEL_CARENCIA`, `HONRA_LEVEL_QUEDA`, `HONRA_FATOR_POR_REPETICAO`, `fatorPorLevel`, `fatorPorRepeticao`, `ganhoDePontos`, `HONRA_TETO_DIA_POR_PAR`.
-**Chamado por:** `community.js › settleMatch` (devolve `gain`/`honorFactor` no `match`).
+**Exports:** `HONRA_PONTOS_VITORIA`, `HONRA_PONTOS_DEFESA`, `HONRA_LEVEL_CARENCIA`, `HONRA_LEVEL_QUEDA`, `HONRA_FATOR_POR_REPETICAO`, `fatorPorLevel`, `fatorPorRepeticao`, `HONRA_PISO_POR_LEVEL`, `ganhoDePontos`, `motivoDoCorte` (só leitura: `level` | `repeat` | `null`), `HONRA_TETO_DIA_POR_PAR`.
+**Chamado por:** `community.js › settleMatch` (devolve `gain`/`honorFactor`/`gainReason`/`lifetime` no `match`).
 **Régua:** `functions/api/community.farm.test.js`.
 
 ### `functions/api/_guerra.js`
@@ -798,7 +798,7 @@ Espelho de `src/utils/elementoJornada.ts` (§232): forma do registro no save e i
 
 ### `functions/api/_mensageiro.js`
 
-Fila `mail:<saveId>`, carta e prêmio da temporada na 1ª leitura do mês; simulado nunca recebe. Caixa de cartas: leitura com varredura de expiração (3 dias, menos carta com item pendente), `markRead`, `claimMail` (resgate uma vez só, prêmio do registro do servidor), `deleteMail` (item pendente só com `force`). Ações `mail`, `mailRead`, `mailClaim`, `mailDelete`, `mailAck` (app antigo), `mailSend` em `community.js`. Decisão: REGISTRO §241 e §246. **Régua:** `functions/api/mensageiro.test.js`.
+Fila `mail:<saveId>`, carta e prêmio da temporada na 1ª leitura do mês; simulado nunca recebe. Caixa de cartas: leitura com varredura de expiração (3 dias, menos carta com item pendente), `markRead`, `claimMail` (resgate uma vez só, prêmio do registro do servidor), `deleteMail` (item pendente só com `force`). Ações `mail`, `mailRead`, `mailClaim`, `mailDelete`, `mailAck` (app antigo), `mailSend` em `community.js`. Decisão: REGISTRO §241 e §246. **Régua:** `functions/api/mensageiro.test.js`. Cartas especiais (§288): `kind` `gift` (presente), `friend-invite` (`fromPid`; `removerConvitesDe` ao responder/cancelar) e `global` (`tutorial`); `enqueueMail(..., { recusarSeCheia })`; `readMail` injeta as cartas de `functions/api/_cartasGlobais.js` uma vez por conta (`cartasGlobaisAtivas`). **Régua:** `functions/api/cartas.test.js`.
 
 ### `functions/api/_amigos.js`
 

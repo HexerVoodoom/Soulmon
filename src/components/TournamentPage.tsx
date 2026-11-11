@@ -60,7 +60,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { entrarNaSuperficie } from '../utils/musica';
 import { createPortal } from 'react-dom';
 import type { Language } from '../utils/i18n';
-import { TOURNAMENT_LADDER, getTierStanding, resolveSeasonPlace } from '../utils/tournamentTiers';
+import { TOURNAMENT_LADDER, getTierStanding, resolveSeasonPlace, faixaPontosTexto, motivoSemPontosTexto } from '../utils/tournamentTiers';
 import { availableFrames, frameOrBasic, resolveEquippedFrame, type FrameContext } from '../utils/frames';
 import { type RosterEntry } from '../utils/enemyRoster';
 import { strayForTournament } from '../utils/strayFoes';
@@ -811,6 +811,13 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         </span>
       </div>
 
+      {/* Pontos da FAIXA (só somam; sobem a faixa) separados dos pontos da TEMPORADA (ranking do mês): a faixa só avança em vitória. */}
+      {standing && (
+        <p data-torneio-faixa-pontos className="sm2-num" style={{ ...sm2Hint, margin: 0 }}>
+          {isPt ? 'Pontos da faixa' : 'Tier points'} · {faixaPontosTexto(standing, myLifetime, isPt)}
+        </p>
+      )}
+
       <p data-torneio-temporada style={{ ...sm2Hint, margin: 0 }}>{isPt ? 'Temporada' : 'Season'}: {seasonDaysLabel(new Date(), isPt ? 'pt-BR' : 'en-US')}</p>
 
       {/* "Última temporada" (06/11/2026, dono): a pílula diz só a colocação do jogador no mês anterior ("—" se não jogou);
@@ -821,13 +828,17 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         onClick={() => setHistOpen(true)}
         aria-haspopup="dialog"
         aria-label={isPt
-          ? `Última temporada: ${histView.lastPlace !== null ? `${histView.lastPlace}º lugar` : 'sem colocação'}. Abrir o histórico`
-          : `Last season: ${histView.lastPlace !== null ? `place ${histView.lastPlace}` : 'no placement'}. Open the history`}
+          ? `Última temporada: ${histView.lastPlace !== null ? `${histView.lastPlace}º lugar` : 'sem colocação'}. Nesta temporada: ${myPlace !== null ? `${myPlace}º lugar` : 'sem colocação'}. Abrir o histórico`
+          : `Last season: ${histView.lastPlace !== null ? `place ${histView.lastPlace}` : 'no placement'}. This season: ${myPlace !== null ? `place ${myPlace}` : 'no placement'}. Open the history`}
         style={{ ...sm2Tag, alignSelf: 'flex-start', minHeight: 44, padding: '0 12px', border: 0, cursor: 'pointer', color: 'var(--sm2-ink)' }}
       >
         <Icon name="emoji_events" size={20} tone={histView.lastPlace !== null && histView.lastPlace <= 3 ? 'gold' : 'muted'} fill={histView.lastPlace !== null && histView.lastPlace <= 3 ? 1 : 0} />
         <span>{isPt ? 'Última temporada' : 'Last season'}</span>
         <span className="sm2-num" style={{ fontWeight: 600 }}>{histView.lastPlace !== null ? placeLabel(histView.lastPlace, lang) : '—'}</span>
+        {/* 11/11/2026 (dono): na mesma linha, a posição nesta temporada (a do servidor; sem ela, a da lista pública). */}
+        <span aria-hidden="true" style={{ opacity: 0.5 }}>·</span>
+        <span data-torneio-posicao-atual>{isPt ? 'Agora' : 'Now'}</span>
+        <span className="sm2-num" style={{ fontWeight: 600 }}>{myPlace !== null ? placeLabel(myPlace, lang) : '—'}</span>
         <Icon name="chevron_right" size={20} tone="muted" />
       </button>
 
@@ -1249,8 +1260,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                 <p className="sm2-num" style={{ ...sm2Hint, flex: 1, minWidth: 0, margin: 0 }}>
                   {standing.next
                     ? (isPt
-                        ? `${standing.pointsToNext} pts até ${standing.next.namePt}`
-                        : `${standing.pointsToNext} pts to ${standing.next.nameEn}`)
+                        ? `${faixaPontosTexto(standing, myLifetime, true)} (pontos da faixa; só vitórias somam)`
+                        : `${faixaPontosTexto(standing, myLifetime, false)} (tier points; only wins add)`)
                     : standing.seat
                       ? (isPt ? `Lugar da season: #${standing.place}` : `Season seat: #${standing.place}`)
                       : (isPt ? 'Top 100 da season = Mestre · top 20 = Grão-Mestre' : 'Season top 100 = Master · top 20 = Grandmaster')}
@@ -1269,7 +1280,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
 
           {rank && rank.length > 0 && (
             <p style={{ ...sm2Hint, marginTop: 4, fontWeight: 500, letterSpacing: '.06em', textTransform: 'uppercase' }}>
-              {isPt ? 'Ranking da season' : 'Season ranking'}
+              {isPt ? 'Ranking da season · pontos da temporada' : 'Season ranking · season points'}
             </p>
           )}
           {rank && rank.length === 0 && !rankFailed && (
@@ -1425,6 +1436,8 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
   const draw = result.draw === true;
   const petSpriteSrc = getSpriteForStage(petStage, petLine, 256);
   const petScale = usePetScale(petStage, petSpriteSrc);
+  /* Vitória que rendeu 0 (ou menos que o cheio) de ponto de faixa: diz o porquê (só leitura; a regra é do servidor). */
+  const motivo = result.won && !draw ? motivoSemPontosTexto(result.gainReason, result.gain ?? 0, isPt) : null;
   const title = draw ? (isPt ? 'Empate' : 'Draw') : result.won ? (isPt ? 'Vitória' : 'Victory') : (isPt ? 'Derrota' : 'Defeat');
   return (
     <ResultScreen
@@ -1437,10 +1450,13 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
       title={title}
       line={draw
         ? (isPt ? 'Os dois caíram juntos. A partida conta, sem pontos para ninguém.' : 'You both went down together. The match counts, with no points for anyone.')
-        : (isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`)}
+        : `${isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`}${motivo ? ` · ${motivo}` : ''}`}
       lineAttrs={draw ? { 'data-empate': true } : undefined}
       hero={draw ? undefined : { label: isPt ? 'Placar da partida' : 'Match score', value: `${result.myScore} × ${result.oppScore}` }}
-      strip={draw ? undefined : [{ key: 'pts', label: isPt ? 'Poder da partida' : 'Match power', value: `${result.points} pts` }]}
+      strip={draw ? undefined : [
+        { key: 'pts', label: isPt ? 'Pontos da temporada' : 'Season points', value: `${result.points} pts` },
+        ...(typeof result.gain === 'number' && result.won ? [{ key: 'tier', label: isPt ? 'Pontos da faixa' : 'Tier points', value: `+${result.gain}` }] : []),
+      ]}
       ledger={draw ? [] : [
         { key: 'honor', kind: 'honor', value: result.won ? EMBLEMS_PER_WIN : EMBLEMS_PER_LOSS },
         { key: 'xp', kind: 'xp', value: bondXP({ kind: 'tournamentMatch', won: result.won }) },

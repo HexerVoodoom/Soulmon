@@ -11,6 +11,7 @@ import { isSimuladoId } from './_simulados.js';
 import { adminSaveIds } from './_rankAdmin.js';
 import { lerIndice, ordenar } from './_rankIndex.js';
 import { getProfile } from './_profile.js';
+import { cartasGlobaisAtivas } from './_cartasGlobais.js';
 
 const QUEUE_MAX = 30;
 export const MAIL_TTL_MS = 3 * 86400_000;
@@ -36,8 +37,18 @@ export function sanitizeMail(m) {
     at: inteiro(m.at, Number.MAX_SAFE_INTEGER),
     read: m.read === true || inteiro(m.claimedAt, Number.MAX_SAFE_INTEGER) > 0,
     claimedAt: inteiro(m.claimedAt, Number.MAX_SAFE_INTEGER),
+    // Cartas especiais (§288): o tipo decide os botões e o corpo na caixa. Só valores conhecidos; o resto é carta comum.
+    ...(KINDS.has(m.kind) ? { kind: m.kind } : {}),
+    ...(m.kind === 'friend-invite' && PID_RE.test(m.fromPid || '') ? { fromPid: m.fromPid } : {}),
+    ...(m.kind === 'global' && TUTORIAIS.has(m.tutorial) ? { tutorial: m.tutorial } : {}),
+    // NPC remetente (imagem grande na carta). Só o servidor define; jogador remetente = sem NPC.
+    ...(m.kind === 'global' && NPCS.has(m.npc) ? { npc: m.npc } : {}),
   };
 }
+const KINDS = new Set(['gift', 'friend-invite', 'global']);
+const TUTORIAIS = new Set(['widget']);
+const NPCS = new Set(['mensageiro', 'hexsmith']);
+const PID_RE = /^[a-zA-Z0-9_-]{8,64}$/;
 
 /** Carta antiga (sem título): a primeira frase, cortada. */
 const tituloDe = (corpo) => { const f = corpo.split(/(?<=[.!?])\s/)[0] || corpo; return f.length > 60 ? `${f.slice(0, 57)}...` : f; };
@@ -69,8 +80,9 @@ async function ler(kv, id) {
 }
 const gravar = (kv, id, rec) => kv.put(`mail:${id}`, JSON.stringify(rec), { expirationTtl: TTL_S });
 
-/** Enfileira uma carta. Mesmo `mid` (na fila ou já confirmado) e simulado são no-op. */
-export async function enqueueMail(env, kv, id, raw) {
+/** Enfileira uma carta. Mesmo `mid` (na fila ou já confirmado) e simulado são no-op.
+ *  `recusarSeCheia`: não entra se a fila já está no teto só com prêmio pendente (o corte apagaria um prêmio; quem chama usa o caminho antigo). */
+export async function enqueueMail(env, kv, id, raw, { recusarSeCheia = false } = {}) {
   const msg = sanitizeMail(raw);
   if (!msg || isSimuladoId(id)) return false;
   msg.read = false; msg.claimedAt = 0;
@@ -79,6 +91,7 @@ export async function enqueueMail(env, kv, id, raw) {
   if (p?.simulated === true) return false;
   const rec = await ler(kv, id);
   if (rec.done.includes(msg.mid) || rec.q.some(m => m.mid === msg.mid)) return false;
+  if (recusarSeCheia && rec.q.length >= QUEUE_MAX && rec.q.every(pendingReward)) return false;
   rec.q = cortar([...rec.q, msg]);
   await gravar(kv, id, rec);
   return true;
@@ -142,6 +155,17 @@ export async function readMail(env, kv, id, now = Date.now()) {
       }
     }
   }
+  // Cartas globais vigentes: entram UMA vez por conta (apagada/expirada vira `done` e não renasce).
+  if (!isSimuladoId(id)) {
+    for (const g of cartasGlobaisAtivas(now)) {
+      if (rec.done.includes(g.mid) || rec.q.some(m => m.mid === g.mid)) continue;
+      const msg = sanitizeMail({ ...g, at: now });
+      if (!msg) continue;
+      msg.read = false; msg.claimedAt = 0;
+      rec.q = cortar([...rec.q, msg]);
+      sujo = true;
+    }
+  }
   if (sujo) await gravar(kv, id, rec);
   return rec.q;
 }
@@ -193,6 +217,17 @@ export async function deleteMail(kv, id, mids, force = false) {
     await gravar(kv, id, rec);
   }
   return { removed: removidas.length, blocked };
+}
+
+/** Retira as cartas de convite de `fromPid` (o convite foi aceito, recusado ou cancelado). Idempotente. */
+export async function removerConvitesDe(kv, id, fromPid) {
+  const rec = await ler(kv, id);
+  const fora = rec.q.filter(m => m.kind === 'friend-invite' && m.fromPid === fromPid).map(m => m.mid);
+  if (!fora.length) return 0;
+  rec.q = rec.q.filter(m => !fora.includes(m.mid));
+  rec.done = [...rec.done, ...fora].slice(-DONE_MAX);
+  await gravar(kv, id, rec);
+  return fora.length;
 }
 
 /** Confirma as cartas já creditadas. Idempotente: `mid` desconhecido não faz nada. */

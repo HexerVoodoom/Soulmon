@@ -62,7 +62,7 @@ import {
   getProfile, putProfile, pidSoLeitura, nickKey, claimNick,
 } from './_profile.js';
 import { secretEquals } from './metrics.js';
-import { ackMail, claimMail, deleteMail, enqueueMail, markRead, readMail } from './_mensageiro.js';
+import { ackMail, claimMail, deleteMail, enqueueMail, markRead, readMail, removerConvitesDe } from './_mensageiro.js';
 import { agendarSimuladosDia, stripSimulated, isSimuladoId, spriteVivoDoSimulado, petNameDoSimulado, formaVista } from './_simulados.js';
 import { COOP_ALIASES, handleGuild } from './guild.js';
 import {
@@ -70,7 +70,7 @@ import {
   presentesDeHoje, marcarPresenteDeHoje, lerNotas, anotarPresente, marcarNotasVistas, tzDe, diaDe, lembrarTz, reservarRecebimento, GIFT_DAILY_CAP,
 } from './_amigos.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
-import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_honra.js';
+import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos, motivoDoCorte } from './_honra.js';
 import { sanitizarNomeDeGuilda } from './_coop.js';
 import { nomeEspecialValido, ESPECIAL_NOME_COOLDOWN_MS } from './_especialNomeRegra.js';
 import { pickRankedOpponents } from './_rankedPick.js';
@@ -462,7 +462,7 @@ async function handleCommunity(context) {
     const pairs = myRank.pairs && typeof myRank.pairs === 'object' ? myRank.pairs : (myRank.pairs = {});
     const par = oppSave ? (pairs[oppSave] && typeof pairs[oppSave] === 'object' ? pairs[oppSave] : (pairs[oppSave] = { w: 0, l: 0 })) : { w: 0, l: 0 };
     let mine = nada;
-    if (won) { mine = ganhoDePontos(HONRA_PONTOS_VITORIA, lvMe, lvOpp, par.w); par.w += 1; }
+    if (won) { mine = { ...ganhoDePontos(HONRA_PONTOS_VITORIA, lvMe, lvOpp, par.w), reason: motivoDoCorte(lvMe, lvOpp, par.w) }; par.w += 1; }
     // Quem defende e vence (o desafiante perdeu) tambem rende menos contra o mesmo desafiante no dia / muito abaixo.
     let theirs = nada;
     if (!won && oppSave && opp) { theirs = ganhoDePontos(HONRA_PONTOS_DEFESA, lvOpp, lvMe, par.l); par.l += 1; }
@@ -1141,6 +1141,9 @@ async function handleCommunity(context) {
       points: myRank.points,
       // PR13: o que a vitoria rendeu de fato e o fator (0..1) que o app aplica a Honra; derrota/empate = 0 e 1.
       gain: settled.gain,
+      // Só leitura para a tela: por que a vitória rendeu menos ('level' | 'repeat' | null) e os pontos da FAIXA (`lifetimePoints`, só soma).
+      gainReason: outcome === 'win' ? (settled.reason ?? null) : null,
+      lifetime: me.lifetimePoints || 0,
       honorFactor: outcome === 'win' ? settled.factor : 1,
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
       opponent,
@@ -1542,6 +1545,8 @@ async function handleCommunity(context) {
     if (remove) {
       // Remover um amigo que se escondeu continua possível; desfaz os dois lados e cancela convite pendente.
       await desfazerAmizade(env, id, friendSave);
+      // Convite cancelado: a carta dele some da caixa do outro lado (melhor esforço; o aceite tardio já responde 404).
+      await removerConvitesDe(kvOrThrow(env), friendSave, await ensurePid(env, me)).catch(() => {});
       const depois = await getProfile(env, id);
       return json({ ok: true, friends: await friendPids(depois?.friends || []) });
     }
@@ -1562,6 +1567,7 @@ async function handleCommunity(context) {
       await gravarConvites(env, id, { in: minha.in.filter(x => x.from !== friendSave), out: minha.out.filter(f => f !== friendSave) });
       const dele = await lerConvites(env, friendSave);
       await gravarConvites(env, friendSave, { in: dele.in.filter(x => x.from !== id), out: dele.out.filter(f => f !== id) });
+      await removerConvitesDe(kvOrThrow(env), id, friendId).catch(() => {});
       return json({ ok: true, status: 'friends', friends: await friendPids((await getProfile(env, id))?.friends || []) });
     }
     if (minha.out.includes(friendSave)) return json({ ok: true, status: 'pending', friends: await friendPids(me.friends) });
@@ -1569,8 +1575,23 @@ async function handleCommunity(context) {
     // Simulado nunca recebe convite: resposta igual à de um convite real, nada gravado.
     if (alvo.simulated === true) return json({ ok: true, status: 'pending', friends: await friendPids(me.friends) });
     const dele = await lerConvites(env, friendSave);
-    if (!dele.in.some(r => r.from === id) && dele.in.length < MAX_IN) dele.in.push({ from: id, at: Date.now() });
+    const novo = !dele.in.some(r => r.from === id) && dele.in.length < MAX_IN;
+    if (novo) dele.in.push({ from: id, at: Date.now() });
     await gravarConvites(env, friendSave, dele);
+    // O convite também chega por CARTA do Papus (§288). Quem se escondeu não aparece nos convites, então não manda carta. Melhor esforço: o convite já está gravado.
+    if (novo && !isHidden(me)) {
+      try {
+        const pid = await ensurePid(env, me);
+        const nome = me.name || '';
+        await enqueueMail(env, kvOrThrow(env), friendSave, {
+          mid: `invite:${pid}:${Date.now().toString(36)}`, kind: 'friend-invite', fromPid: pid,
+          titlePt: 'Convite de amizade', titleEn: 'Friend invite',
+          bodyPt: `${nome || 'Alguém'} convidou você para ser amigo. Aceitar?`,
+          bodyEn: `${nome || 'Someone'} invited you to be friends. Accept?`,
+          at: Date.now(),
+        });
+      } catch { /* a carta é cosmética: o convite segue na lista de Amigos */ }
+    }
     minha.out.push(friendSave);
     await gravarConvites(env, id, minha);
     return json({ ok: true, status: 'pending', friends: await friendPids(me.friends) });
@@ -1590,6 +1611,7 @@ async function handleCommunity(context) {
       await gravarConvites(env, id, { in: meus.in.filter(r => r.from !== quem), out: meus.out });
       const dele = await lerConvites(env, quem);
       await gravarConvites(env, quem, { in: dele.in, out: dele.out.filter(f => f !== id) });
+      await removerConvitesDe(kvOrThrow(env), id, friendId).catch(() => {});
     };
     if (decline === true) { await limpar(); return json({ ok: true, friends: await friendPids((await getProfile(env, id))?.friends || []) }); }
     const alvo = await getProfile(env, quem);
@@ -1694,12 +1716,27 @@ async function handleCommunity(context) {
       return await withDuelLock(`gcap:${friendSave}`, async () => {
         const credited = await reservarRecebimento(env, friendSave, GIFT_BITS);
         const quem = isHidden(me) ? '' : me.name;
+        // O presente chega por CARTA do Papus, com "Resgatar" (§288). Caixa sem espaço (30 cartas, todas com prêmio): cai na fila antiga `gifts:`,
+        // que o cliente ainda resgata, então nenhum presente se perde. Presentes já pendentes na fila antiga continuam sendo entregues por ela.
+        const gid = crypto.randomUUID();
+        let viaCarta = false;
         if (credited > 0) {
+          try {
+            viaCarta = await enqueueMail(env, kvOrThrow(env), friendSave, {
+              mid: `gift:${gid}`, kind: 'gift',
+              titlePt: 'Presente de amigo', titleEn: 'Gift from a friend',
+              bodyPt: `${quem || 'Um amigo'} mandou ${credited} Bits para você.`,
+              bodyEn: `${quem || 'A friend'} sent you ${credited} Bits.`,
+              bits: credited, at: Date.now(),
+            }, { recusarSeCheia: true });
+          } catch { viaCarta = false; }
+        }
+        if (credited > 0 && !viaCarta) {
           const raw = await kvOrThrow(env).get(`gifts:${friendSave}`);
           // Lista ilegível na KV não pode dar 500 DEPOIS do registro do dia gravado (o presente do dia sumia): recomeça vazia.
           let gifts = [];
           try { const lido = raw ? JSON.parse(raw) : []; gifts = Array.isArray(lido) ? lido : []; } catch { gifts = []; }
-          gifts.push({ from: quem, bits: credited, at: Date.now(), gid: crypto.randomUUID() });
+          gifts.push({ from: quem, bits: credited, at: Date.now(), gid });
           await kvOrThrow(env).put(`gifts:${friendSave}`, JSON.stringify(gifts.slice(-50)), { expirationTtl: 86400 * 60 });
         }
         // O histórico mostra o valor REAL (0 = o teto do dia já tinha sido atingido). Melhor esforço: o crédito já está na fila.

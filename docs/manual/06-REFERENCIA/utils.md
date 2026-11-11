@@ -970,7 +970,7 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `src/utils/combate/elementEffects.test.ts`.
 
 ### `src/utils/combate/foeFamilies.ts`
-**Dono de:** o ESPECIAL DOS INIMIGOS (REGISTRO §288): sorteio determinístico por chave (FNV-1a) do tipo de especial de selvagens da Arena e do Endless Rift/Masmorra e dos simulados. Champion em diante: 50% dano direto e ~10% de cada outro (buff, DoT, cura, HoT, debuff); Rookie: 75% direto e ~5% de cada. O especial que o JOGADOR escolhe não passa aqui; o Pesadelo fica fora. HoT = `shield` + `effect: 'hot'` (só núcleo de grupo; no 1v1 vira `shield`). DoT e HoT dos inimigos levam `OVER_TIME_BONUS` (1,15). **Exports:** `FoeKind`, `FOE_MIX`, `foeHash`, `foeKindOf`, `foeSpecialOf`, `foeFamilyOf`. **Chamado por:** `arena.ts` (`arenaFoe`/`arenaFoeSides` com `mix`), `dungeon.ts` (`buildDungeonWave`). **Espelho:** `functions/api/_foeFamilies.js`. **Régua:** `src/utils/combate/foeFamilies.test.ts`.
+**Dono de:** o ESPECIAL DOS INIMIGOS (REGISTRO §290): sorteio determinístico por chave (FNV-1a) do tipo de especial de selvagens da Arena e do Endless Rift/Masmorra e dos simulados. Champion em diante: 50% dano direto e ~10% de cada outro (buff, DoT, cura, HoT, debuff); Rookie: 75% direto e ~5% de cada. O especial que o JOGADOR escolhe não passa aqui; o Pesadelo fica fora. HoT = `shield` + `effect: 'hot'` (só núcleo de grupo; no 1v1 vira `shield`). DoT e HoT dos inimigos levam `OVER_TIME_BONUS` (1,15). **Exports:** `FoeKind`, `FOE_MIX`, `foeHash`, `foeKindOf`, `foeSpecialOf`, `foeFamilyOf`. **Chamado por:** `arena.ts` (`arenaFoe`/`arenaFoeSides` com `mix`), `dungeon.ts` (`buildDungeonWave`). **Espelho:** `functions/api/_foeFamilies.js`. **Régua:** `src/utils/combate/foeFamilies.test.ts`.
 
 ### `src/utils/combate/specials.ts`
 **Dono de:** As 7 famílias de especial do combate v3 (orçamento E = 3 golpes, potência `p` calibrada no spike) e a energia (60 por fração causada, 60 por fração recebida, +2/s, dispara a 100).
@@ -3693,6 +3693,8 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 - `TierStanding` (interface) — campos: `tier`, `next`, `pointsToNext`, `progress`, `seat`, `place` (o "#N" do ícone; só com `seat`).
 - `function getTierStanding(points: number, place?: number | null): TierStanding` — Faixa a partir dos pontos lifetime e, opcionalmente, da posição na season. Nunca lança.
 - `function resolveSeasonPlace(serverPlace: unknown, rankIndex: number): number | null` — a posição do servidor (`myPlace` de `action=rank&id=`) ou, em servidor antigo, o índice na lista pública (top 50) + 1.
+- `function faixaPontosTexto(standing: TierStanding, lifetime: number, isPt: boolean): string` — "Bronze: 80/300 · faltam 220" (pontos da FAIXA, não da temporada); na última faixa só os pontos.
+- `function motivoSemPontosTexto(reason: 'level' | 'repeat' | null | undefined, gain: number, isPt: boolean): string | null` — motivo curto de uma vitória que rendeu 0 (ou menos que o cheio): oponente abaixo do nível / mesmo oponente hoje.
 **Chamado por:** `src/components/TournamentPage.tsx`
 **Régua:** `tournamentTiers.test.ts`
 **Regra de negócio:** As faixas de pontos nunca rebaixam o jogador ao acumular pontos; Mestre/Grão-Mestre são lugares da season. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).

@@ -102,7 +102,8 @@ describe('GM/admin fora do ranking do Torneio', () => {
     // o índice da temporada passada já tem o admin no topo (entrada antiga)
     env.DIGIAPP_SAVES.store.set(`rankIndex:${prev}`, JSON.stringify({ v: 1, p: { [admin]: 999, [P('a')]: 300, [P('b')]: 200 }, done: true, cursor: null }));
     const kv = env.DIGIAPP_SAVES;
-    expect(await readMail(env, kv, admin)).toEqual([]);
+    // a carta GLOBAL de anúncio chega a todos; o que o admin não recebe é a carta de Honra da temporada
+    expect((await readMail(env, kv, admin)).filter(m => m.kind !== 'global')).toEqual([]);
     const q = await readMail(env, kv, ids.a);
     expect(q[0].bodyPt).toContain('1º lugar');
   });

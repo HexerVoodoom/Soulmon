@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { SIMULADOS } from './_simulados.data.js';
 import {
   CHUNK, OPS_BUDGET, custoEstimado, petNameDoSimulado, agendarSimuladosDia, ensureSimuladosDia, estadoDoDia, saveDoSimulado, scoresDoDia, stripSimulated, lockKeyDia, isSimuladoId, inicioDoDia, eleitosDoJogo, PLACAR_SIMS_MAX, GAUGE_SIM, FAIXA_P,
-  progressoDoDia,
+  progressoDoDia, pontosBaseDaSeason,
 } from './_simulados.js';
 import { entradasDoSimulado, emLotes, novos, rookiesDoManifesto, ESCRITAS_POR_SIMULADO } from '../../scripts/simulados-sprites-publicar.mjs';
 import { submitScore, readBoard, payablePlacements, RANKED_GAMES, isoWeekKey } from './_rankings.js';
@@ -523,5 +523,17 @@ describe('fila de sprites (script manual)', () => {
     expect(() => planejar(['sim_0001'], '2026-11-05', {})).toThrow(/sem prompt/);
     const prompts = { sim_0001: Object.fromEntries(formasDaLinha('poder').map((f) => [f, { prompt: `P ${f}`, fallback: 'F' }])) };
     expect(planejar(['sim_0001'], '2026-11-05', prompts)[0].prompt).toBe('P rookie');
+  });
+});
+
+describe('placar da season: a ordem do rank é a ordem de PODER (dono, 11/11/2026)', () => {
+  it('mais level = mais pontos-base, para todos os simulados (sem inversão)', () => {
+    const rows = SIMULADOS.map(p => { const e = estadoDoDia(p, '2026-11-11'); return { level: e.level, pts: pontosBaseDaSeason(p, e.level, '2026-11') }; });
+    rows.sort((a, b) => b.pts - a.pts);
+    for (let i = 1; i < rows.length; i++) expect(rows[i].level).toBeLessThanOrEqual(rows[i - 1].level);
+  });
+  it('é determinístico por simulado e season', () => {
+    const p = SIMULADOS[0];
+    expect(pontosBaseDaSeason(p, 12, '2026-11')).toBe(pontosBaseDaSeason(p, 12, '2026-11'));
   });
 });
