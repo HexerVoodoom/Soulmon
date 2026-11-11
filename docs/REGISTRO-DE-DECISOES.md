@@ -4621,3 +4621,11 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Falsifica:** clãs cheios não conseguirem comprar nem um buff por semana (baixar `BUFF_PRECO_FRACAO`) ou comprarem dois (a conta de 8400 está errada, p.ex. se subir o teto de membros); o +5% do gauge ser invisível (subir para ceil); ninguém usar os Buffs.
 
 **Rollback:** reverter o PR (a Loja volta; `coopBuffs:<gid>` fica órfão e expira, `coopLoja:<gid>` nunca foi apagado); ou esconder `<GuildBuffs>`. A regra de 1 doação/dia reverte junto.
+
+## §283 — Hexsmith pede bem mais fragmentos: elemento 12 · Coroa 70 · Luvas 18 (10/11/2026, pedido do dono, ditado por voz)
+
+**Decisão.** O dono tem fragmentos do Soulsmith de sobra, então forjar HEX estava barato demais. `HEX_COSTS` (`src/utils/hexsmith.ts`, espelho em `functions/api/_hexsmith.js`, `hexsmith.parity.test.js`) passa de **elemento 0 · Coroa 20 · Luvas 5** para **elemento 12 · Coroa 70 · Luvas 18** fragmentos (Coroa 3,5×, Luvas 3,6×; os HEX de elemento, amuleto/garra/couraça, que não pediam nenhum, passam a pedir 12 — é aí que está o volume: 3 slots × 210 elementos). Poções e Bits não mudam; o upgrade em Bits do §281 segue cobrança adicional. Peças já forjadas ficam como estão (posse só cresce), nenhum campo novo no save; a Feira da Hexsmith vende SEM ingrediente e não muda. Fontes: marcos de profundidade 5/10/25/50/100/250/500/999 = 5+10+15+20+30+40+50+100 = 270 UMA vez na vida; Fenda faixa 1 = 20 por mês; run completa = 5 (+até 25% do Comércio). A Coroa (70) cabe em ~2 marcos até o 25 (30) + ~8 runs; os 7 efeitos da Coroa custam 490 e as 4 Luvas 72, bem acima dos 270 de marco: quem quiser tudo precisa farmar runs.
+
+**Alternativa que perdeu:** só multiplicar Coroa e Luvas (elemento ficaria em 0 fragmentos, e é ele que tem 630 itens possíveis, então o sumidouro real não nascia); também perdeu 4× puro em tudo (Coroa 80, tira alcance de quem acumulou pouco até o marco 25).
+
+**Falsifica:** a mediana de fragmentos acumulados continuar sobrando (reaumentar, começando pelo elemento) ou jogadores que só chegaram ao marco 25 não conseguirem forjar nem uma Coroa em um mês (baixar para ~50).

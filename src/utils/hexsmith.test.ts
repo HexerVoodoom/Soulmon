@@ -9,7 +9,7 @@ import { ALL_ELEMENT_IDS } from './elementDex';
 const rico = (over: Partial<HexForgeState> = {}): HexForgeState => ({
   foodInventory: { [potionKey('agua')]: 5 },
   gamePoints: 10_000,
-  equipment: { owned: [], equipped: {}, fragments: 50 },
+  equipment: { owned: [], equipped: {}, fragments: 200 },
   ...over,
 });
 
@@ -87,5 +87,23 @@ describe('hexsmith — equipar e ler', () => {
       equipped: { coroa: 'coroa:heal', amuleto: 'amuleto:fogo', garra: 'garra:agua', couraca: 'couraca:terra', luvas: 'luvas:magic' } };
     expect(hexOverrides(hx)).toEqual({ specialFamily: 'heal', specialElement: 'fogo', basicElement: 'agua', defenseElement: 'terra', strike: 'magic' });
     expect(hexOverrides(undefined)).toEqual({});
+  });
+});
+
+describe('custo em fragmentos (10/11/2026: sumidouro de novo)', () => {
+  it('tabela vigente: elemento 12 · coroa 70 · luvas 18, todos pedem fragmentos', () => {
+    expect(HEX_COSTS.element.fragments).toBe(12);
+    expect(HEX_COSTS.coroa.fragments).toBe(70);
+    expect(HEX_COSTS.luvas.fragments).toBe(18);
+    expect(hexCost('garra:agua')!.fragments).toBe(12);
+    expect(hexCost('coroa:heal')!.fragments).toBe(70);
+    expect(hexCost('luvas:magic')!.fragments).toBe(18);
+  });
+  it('recusa sem fragmentos suficientes (um a menos) e não consome nada', () => {
+    for (const id of ['garra:agua', 'coroa:heal', 'luvas:magic']) {
+      const c = hexCost(id)!;
+      const st = rico({ equipment: { owned: [], equipped: {}, fragments: c.fragments - 1 }, foodInventory: { [potionKey('agua')]: 9 } });
+      expect(hexForgeRefusal(st, id)).toBe('fragments');
+    }
   });
 });

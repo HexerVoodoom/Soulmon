@@ -50,7 +50,7 @@ export function hexRefusalText(r: HexRefusal, isPt: boolean, el?: string): strin
   switch (r) {
     case 'owned': return isPt ? 'Já está na sua coleção.' : 'Already in your collection.';
     case 'potions': return isPt ? `Pede 3 poções de ${el ?? 'elemento'} — o Centro de Evolução, no Laboratório, as fabrica.` : `Takes 3 ${el ?? 'element'} potions — the Evolution Center in the Lab makes them.`;
-    case 'fragments': return isPt ? 'Pede mais fragmentos — a Masmorra os deixa a cada profundidade nova.' : 'Takes more fragments — the Dungeon leaves them at each new depth.';
+    case 'fragments': return isPt ? 'Pede mais fragmentos — a Masmorra os deixa a cada profundidade nova.' : 'Takes more fragments — the Dungeon leaves them at each new depth and run.';
     case 'bits': return isPt ? 'Pede mais Bits ganhos jogando (Bits de Crédito não entram aqui).' : 'Takes more Bits earned by playing (Credit Bits do not count here).';
     default: return isPt ? 'Este HEX não existe.' : 'This HEX does not exist.';
   }

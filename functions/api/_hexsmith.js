@@ -79,9 +79,9 @@ export function hexOverrides(raw) {
  * elemento do item (chave `potion:<elemento>` em `foodInventory`); `fragments` = `equipment.fragments`; `bits` = `gamePoints`.
  */
 export const HEX_COSTS = {
-  element: { potions: 3, bits: 1500, fragments: 0 },
-  coroa: { potions: 0, bits: 2000, fragments: 20 },
-  luvas: { potions: 0, bits: 500, fragments: 5 },
+  element: { potions: 3, bits: 1500, fragments: 12 },
+  coroa: { potions: 0, bits: 2000, fragments: 70 },
+  luvas: { potions: 0, bits: 500, fragments: 18 },
 };
 
 /** @param {string} id @returns {{ potions: number, potionElement?: string, bits: number, fragments: number } | undefined} */
