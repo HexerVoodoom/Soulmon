@@ -4727,6 +4727,16 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Nota:** substitui o corte por level e o piso por level do §289: o `gainReason` passa a ser `rank-up` | `rank-down` | `repeat`.
 
-## §292 — Auditoria da volta da Missão: nunca voltar sem dizer nada (11/11/2026, relato do dono)
+## §292 — Abertura direto na intro: sai a tela "Tap to start" (11/11/2026, pedido do dono)
+
+**Decisão.** A tela de abertura (pôster + "Tap to start"/"Toque para começar") foi removida. Ela existia só para dar um gesto ao áudio: o navegador/WebView só libera a música-tema depois de um toque (S17, D11). Agora o app vai direto à intro com a animação de carregar, e o áudio é desbloqueado pelo ouvinte passivo único que já existe (`armarTemaNoPrimeiroGesto`, `main.tsx`): o 1º toque/tecla em qualquer lugar (intro, login, Home) liga o tema; o toque que pula a intro também chama `iniciarTemaNoGesto`. Nenhum autoplay cego (D11 mantida), mudo/preferência/aba escondida seguem valendo. A intro e o gate do boot não mudaram (o loading continua esperando como antes); onboarding/login intactos.
+
+**Alternativa que perdeu:** manter o "tap to start" e só iniciar o loading em paralelo (ainda exigiria um toque inútil); e ligar o áudio sem gesto via `mediaPlaybackRequiresUserGesture=false` no WebView (depende de APK e fura a D11).
+
+**Falsifica:** a música-tema deixar de tocar depois do 1º toque na intro/Home (régua `tema.test.ts`), ou a tela "Tap to start" reaparecer (régua `IntroScreen.render.test.tsx`).
+
+**Rollback:** reverter o PR. **APK:** nada obrigatório; o web sai sem APK.
+
+## §293 — Auditoria da volta da Missão: nunca voltar sem dizer nada (11/11/2026, relato do dono)
 
 Relato: mandou o Soulmon investigar, ele voltou e só havia "Mandar investigar" de novo (sem chefe, desafio ou feira). Auditoria: a feira de verdade funciona (medido em 10.000 voltas: 8,05% sem buff, 12,0% com; `feiraLoja.taxa.test.js`). O que o jogador via vazio era a volta SEM evento: mistério em descanso (1 dia + 2 de intervalo entre mistérios), trilha já cumprida, chefe sem ataque hoje, ou o registro encerrado em silêncio por erro não-retentável (limite do dia em outro aparelho, roda mudada). Nesses casos a volta não mostrava nada e o botão da sala voltava. Sem bug de sorteio; havia dois defeitos de cliente: (1) o "desafio do dia" era gravado mesmo com evento sem ação (trilha cumprida), gerando um "escapou" falso no dia seguinte; agora só grava se `feiraEventoAbre`. (2) Volta sem loja/evento e o encerramento silencioso agora dão um aviso (toast) em vez de silêncio. Regra de jogo inalterada (8%, pesos, cooldowns).
