@@ -4784,3 +4784,12 @@ Limite honesto: as semanais não têm espelho nem validação no servidor (o pro
 **Falsifica:** uma semana sem as duas na lista, dois toques no mesmo dia contarem 2, ou o journal voltar a aparecer como tarefa diária (`missoes.semanaisJournalFoco.test.ts`).
 
 **Rollback:** reverter o PR (o campo `last` é aditivo). **APK:** nada obrigatório.
+## §298 — Foco: lista de tarefas na jornada e tela sempre acordada (11/11/2026, pedido do dono)
+
+Decisão: (1) a jornada do Foco (`JourneyScreen`) ganhou, na metade de baixo e acima do aviso «Baú aberto», a lista de TAREFAS do dia (`FocusTaskDock`): mesma largura e mesmo vidro do card do relógio, ~1/4 da tela com rolagem interna, alça (arrastar para cima ou botão com a setinha) para crescer até perto do relógio (12 px de folga) e minimizar para voltar; Voltar fecha o modo grande antes de sair. As linhas são as da Home (`RitualRow` + `StepRow`, mesmo checkbox): tarefa com subtópicos mostra-os e o pai só reflete; marcar chama os MESMOS handlers do App (`handleToggleTask`/`handleToggleActivityCompletion` via `onCompleteFocusTask`; subtópico via `handleToggleTaskStep`, novo `onToggleFocusStep`), então XP, Bits e regras são os da Home e nada foi duplicado. (2) Tela acordada: `useKeepAwake` (`utils/keepAwake.ts`) pede `navigator.wakeLock.request('screen')` enquanto o timer roda (não pausado, não chegou), reaquisita no `visibilitychange`, solta ao pausar, chegar ou sair e engole rejeição; se o app tiver o plugin nativo `KeepAwake` do Capacitor registrado, usa-o; sem nenhum dos dois, a jornada avisa «mantenha a tela ligada».
+
+Limite honesto: o WebView do Capacitor Android (Chromium) expõe a Wake Lock API em https, mas isso NÃO foi medido em aparelho real; o lock também é solto pelo sistema com economia de bateria. O caminho robusto é o plugin nativo, que exige APK: `docs/BACKLOG-BETA12.md` item H (nada de dependência nativa nova aqui).
+
+**Falsifica:** lista fora da jornada, marcar na sessão não dar o mesmo pagamento da Home, o lock não ser pedido ao iniciar ou ficar preso depois de pausar/sair (`FocusTaskDock.render.test.tsx`).
+
+**Rollback:** reverter o PR. **APK:** nada obrigatório (o plugin nativo é o item H da beta12).

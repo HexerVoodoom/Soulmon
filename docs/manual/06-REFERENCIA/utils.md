@@ -3190,6 +3190,10 @@ dominância populacional — por isso ±15%. Régua nova:
 **Chamado por:** `src/App.tsx`, `src/components/CompanionHUD.tsx`, `src/components/DinoGame.tsx`, `src/components/DungeonGame.tsx`, `src/components/EvolutionPath.tsx`, `src/components/NightmareBattle.tsx`, `src/components/RPSGame.tsx`, `src/utils/trilha.ts` (`isMuted`)
 **Régua:** `sounds.contract.test.ts`, `sounds.visorTune.test.ts`
 
+### `src/utils/keepAwake.ts`
+
+Tela acordada na jornada do Foco (REGISTRO §298). `useKeepAwake(active): boolean` pede `navigator.wakeLock.request('screen')` (ou o plugin Capacitor `KeepAwake`, se registrado), reaquisita no `visibilitychange`, solta ao desativar/desmontar e engole rejeição; devolve se há suporte. `keepAwakeSupported()`. Consumidor: `components/play/JourneyScreen.tsx`. **Régua:** `FocusTaskDock.render.test.tsx`.
+
 ### `src/utils/focoTimer.ts`
 **Dono de:** o timer da Oficina do Foco e o registro dos "foquei" (04/10/2026). O tempo é um timestamp (`endAt`): `startPhase`, `pause`, `resume`, `remainingMs`, `settle`, `formatClock`; modos `FOCO_MODES` (25/5, 50/10), pausa longa a cada 4 focos no 25/5 (`isLongBreak`); `normalizeTimer`/`normalizeSessions` higienizam o storage; `recordSession` soma por dia (guarda `KEEP_DAYS`); `armEndNotice`/`fireEndNotice` avisam ao fim (notificação local só com permissão JÁ concedida, nunca a pede, + vibração curta).
 **Chaves:** `STORAGE_KEYS.FOCO_TIMER`, `FOCO_SESSIONS`, `FOCO_VIBRATE` — só do aparelho, fora do save. `isVibrateOn`/`setVibrateOn`: a vibração ao fim é LIGADA por padrão (interruptor em Configurações).

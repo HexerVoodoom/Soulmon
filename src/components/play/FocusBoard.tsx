@@ -21,7 +21,7 @@ import { formatClock } from '../../utils/focoTimer';
 import { OficinaPlano } from './OficinaPlano';
 import { JourneyScreen, KEY_COLOR, KeyGlyph } from './JourneyScreen';
 
-type BoardTask = { id: string; name: string; completed: boolean; kind?: 'habit' };
+type BoardTask = { id: string; name: string; completed: boolean; kind?: 'habit'; steps?: Array<{ id: string; label: string; completed: boolean }> };
 const CARD: Record<JourneyKeyId, { pt: string; en: string; keyPt: string; keyEn: string }> = {
   bancada: { pt: 'Preparar o espaço', en: 'Prepare your space', keyPt: 'Chave de Bancada', keyEn: 'Bench Key' },
   relampago: { pt: 'Dois minutos', en: 'Two minutes', keyPt: 'Chave Relâmpago', keyEn: 'Lightning Key' },
@@ -38,9 +38,11 @@ const loadPrefs = (): { mode: JourneyMode; env: FocusEnvironmentId } => {
   return { mode: r?.mode === 'p50' ? 'p50' : 'p25', env: isFocusEnvironmentId(r?.env) ? r!.env as FocusEnvironmentId : 'forest' };
 };
 
-export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, onCompleteTask = () => {}, onGrants, onFocusCycle }: {
+export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, onCompleteTask = () => {}, onToggleStep = () => {}, onGrants, onFocusCycle }: {
   language: Language; todayKey: string; saveId?: string; tasks?: BoardTask[]; petSprite?: string;
   onCompleteTask?: (id: string) => void;
+  /** Subtópico de tarefa marcado na lista da sessão: o mesmo handler da Home (`handleToggleTaskStep`). */
+  onToggleStep?: (taskId: string, stepId: string) => void;
   onGrants: (day: string, grants: JourneyGrants, dungeonKeyDay?: string) => void;
   /** Um foco terminou de verdade: a missão do dia conta o evento (REGISTRO §52). */
   onFocusCycle?: () => void;
@@ -181,7 +183,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
 
       {envOpen && <EnvModal isPt={isPt} current={prefs.env} onPick={id => { setPref({ env: id }); setEnvOpen(false); }} onClose={() => setEnvOpen(false)} />}
 
-      {showJourney && active && <JourneyScreen language={language} active={active} delta={delta} petSprite={petSprite} lastItems={lastItems}
+      {showJourney && active && <JourneyScreen language={language} active={active} delta={delta} petSprite={petSprite} lastItems={lastItems} tasks={tasks} onToggleTask={onCompleteTask} onToggleStep={onToggleStep}
         onPause={() => act('pause')} onResume={() => act('resume')} onClaim={() => act('claim')} onEnd={() => act('end')} onClose={() => setShowJourney(false)} />}
     </div>
   );
