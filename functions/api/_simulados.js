@@ -163,6 +163,15 @@ export function estadoDoDia(p, day) {
   return { level, stage, bond, evolutionStage };
 }
 
+/**
+ * A ESCOLA do golpe do simulado (só a FORMA visual: corpo a corpo x à distância). Antes ele não tinha escola e o cliente caía na tabela do
+ * elemento (~85% à distância). Agora é um sorteio fixo por id: metade corpo a corpo (`combate_fisico`), metade à distância; com o acabamento
+ * corte/splash do elemento no cliente, as 4 combinações ficam perto de 25% cada. SÓ visual: a família do especial segue `direct`.
+ */
+export function escolaDoSimulado(id) {
+  return ['combate_fisico', 'combate_fisico', 'combate_fisico', 'longo_alcance', 'conjuracao', 'benca'][hash32(`forma|${id}`) % 6];
+}
+
 /** O save mínimo que o duelo e o Vínculo derivam (`_soulXP.js`: level = f(evolutionStage, perfectDays)). */
 export function saveDoSimulado(p, day) {
   const e = estadoDoDia(p, day);
@@ -179,7 +188,11 @@ export function saveDoSimulado(p, day) {
     // REGISTRO 182: o golpe BÁSICO do duelo usa o elemento do simulado (`elementoDoBasico` lê `elementoDominante.id` da ficha do estágio). Só isso: sem escola/especial, a luta não muda.
     // O ELEMENTO DO SPRITE (= o do prompt com que a arte foi gerada): `petElementDeSave` lê daqui; vale para o básico E o especial.
     soulmonMeta: { dominantElement: p.element },
-    soulmonSkills: { [fichaStageOf(e.evolutionStage)]: { elementoDominante: { id: p.element } } },
+    soulmonSkills: { [fichaStageOf(e.evolutionStage)]: {
+      elementoDominante: { id: p.element },
+      basica: { escolaId: escolaDoSimulado(p.id), elementoId: p.element },
+      especial: { escolaId: escolaDoSimulado(p.id), elementoId: p.element, familia: 'direct' },
+    } },
   };
 }
 

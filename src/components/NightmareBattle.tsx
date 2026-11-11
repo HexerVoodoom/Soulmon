@@ -68,7 +68,7 @@ import { soulCombatant, type SoulXPState } from '../utils/soulXP';
 import { useTalentBonus, useRiftTalents } from '../contexts/useTalentBonus';
 import { stageSkillsFor, type FichaSkills } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { fighterIdentity } from '../utils/fighterIdentity';
-import { fxElementId, prefersReducedMotion, elementStrikeForm, foeStrikeForm, specialLabel, foeSpecialLabel } from '../utils/combatFx';
+import { fxElementId, prefersReducedMotion, elementStrikeForm, pesadeloGolpe, specialLabel, foeSpecialLabel } from '../utils/combatFx';
 import { meleeImpactOf, chaveDaIdentidade } from '../utils/combate/golpeImpacto';
 import { playDefeat, playVictory } from '../utils/sounds';
 import {
@@ -261,8 +261,8 @@ export function NightmareBattle({
       foeElement: () => foeEl,
       playerKind: sp => (sp ? ident.especial.forma : ident.basico.forma),
       playerImpact: sp => (!sp && ident.basico.impacto) || meleeImpactOf({ element: sp ? ident.especial.elemento : ident.basico.elemento, key: chaveDaIdentidade(ident) }),
-      foeImpact: () => meleeImpactOf({ element: foeEl, key: foeEl }),
-      foeKind: (_f, sp) => foeStrikeForm(foeEl, sp ? 'especial' : 'basica'),
+      foeImpact: () => pesadeloGolpe(idxRef.current).impacto,
+      foeKind: () => pesadeloGolpe(idxRef.current).forma,
       labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
       playerSpecialEscola: ident.especial.escola,
