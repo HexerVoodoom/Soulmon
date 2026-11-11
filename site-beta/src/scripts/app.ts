@@ -342,8 +342,10 @@ function companheiro() {
   let lin = ''; let ant = -1; let estagio = 0; let alvo = 0; let correndo = false;
   const src = (l: string, k: number) => `${base}${l}-${formas[k]}.webp`;
   const virar = () => { comp.classList.toggle('espelha', (OLHA_DIR[lin] ?? [])[estagio] === 1); };
-  const falas = JSON.parse(raiz.dataset.falas ?? '[]') as string[]; const balao = $('[data-comp-fala]', comp)!; let ultFala = -1; let tFala = 0;
-  const falar = () => { let i = Math.floor(Math.random() * falas.length); if (i === ultFala) i = (i + 1) % falas.length; ultFala = i; balao.textContent = falas[i]; balao.hidden = false; clearTimeout(tFala); tFala = window.setTimeout(() => { balao.hidden = true; }, 3200); };
+  const falas = JSON.parse(raiz.dataset.falas ?? '[]') as string[]; const balao = $('[data-comp-fala]', comp)!; const balaoTx = $('[data-comp-tx]', comp)!; const balaoX = $('[data-comp-x]', comp)!; let ultFala = -1; let tFala = 0;
+  const fechaBalao = (e: Event) => { e.stopPropagation(); e.preventDefault(); clearTimeout(tFala); balao.hidden = true; };
+  balaoX.addEventListener('click', fechaBalao); balaoX.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') fechaBalao(e); });
+  const falar = () => { let i = Math.floor(Math.random() * falas.length); if (i === ultFala) i = (i + 1) % falas.length; ultFala = i; balaoTx.textContent = falas[i]; balao.hidden = false; clearTimeout(tFala); tFala = window.setTimeout(() => { balao.hidden = true; }, 3200); };
   const rotulo = () => `${raiz.dataset.alt} ${els[lin === 'noturno' ? 'sombra' : lin] ?? lin}, ${nomes[estagio]}`;
   // Quatro pontos de evolução espalhados pelas seções depois do sorteio.
   const secoes = $$('main section').filter((x) => x !== raiz && (raiz.compareDocumentPosition(x) & Node.DOCUMENT_POSITION_FOLLOWING));
