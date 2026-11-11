@@ -29,6 +29,14 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); });
 
 const q = (c: HTMLElement, s: string) => c.querySelector(s) as HTMLElement | null;
+const TASKS = [{ id: 't1', name: 'Escrever o relatório', completed: false }, { id: 't2', name: 'Pagar a conta', completed: false }];
+/** Começar abre o modal de escolha da tarefa (§300): escolhe a primeira e confirma. */
+const startWithTask = async (c: HTMLElement) => {
+  await waitFor(() => expect((q(c, '[data-focus-start]') as HTMLButtonElement).disabled).toBe(false));
+  await act(async () => { fireEvent.click(q(c, '[data-focus-start]')!); });
+  fireEvent.click(document.querySelector('[data-focus-pick="t1"]')!);
+  await act(async () => { fireEvent.click(document.querySelector('[data-focus-pick-go]')!); });
+};
 
 describe('quadro da Oficina (§247)', () => {
   it('card de chave: sem fazer a técnica não dá chave; feita, a chave aparece no card', async () => {
@@ -52,9 +60,8 @@ describe('quadro da Oficina (§247)', () => {
   it('começar abre a jornada; ao reabrir com jornada ativa, o card vira "Voltar à jornada"; encerrar credita e limpa as chaves', async () => {
     localStorage.setItem(STORAGE_KEYS.FOCO_JOURNEY_KEYS, JSON.stringify(['pena']));
     const onGrants = vi.fn();
-    const first = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} onGrants={onGrants} />);
-    await waitFor(() => expect((q(first.container, '[data-focus-start]') as HTMLButtonElement).disabled).toBe(false));
-    await act(async () => { fireEvent.click(q(first.container, '[data-focus-start]')!); });
+    const first = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} tasks={TASKS} onGrants={onGrants} />);
+    await startWithTask(first.container);
     await waitFor(() => expect(document.querySelector('[data-journey]')).not.toBeNull());
     expect((server.active as { keys: string[] }).keys).toEqual(['pena']);
     first.unmount();
@@ -69,9 +76,8 @@ describe('quadro da Oficina (§247)', () => {
   });
   it('a jornada: só o relógio (sem "Foco"), chaves, três botões redondos em linha, pausa vira play e sem trilha', async () => {
     localStorage.setItem(STORAGE_KEYS.FOCO_JOURNEY_KEYS, JSON.stringify(['pena']));
-    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} onGrants={() => {}} />);
-    await waitFor(() => expect((q(container, '[data-focus-start]') as HTMLButtonElement).disabled).toBe(false));
-    await act(async () => { fireEvent.click(q(container, '[data-focus-start]')!); });
+    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} tasks={TASKS} onGrants={() => {}} />);
+    await startWithTask(container);
     await waitFor(() => expect(document.querySelector('[data-journey]')).not.toBeNull());
     const card = document.querySelector('[data-journey-modal]') as HTMLElement;
     expect(card.style.top).not.toBe('');
@@ -100,6 +106,74 @@ describe('quadro da Oficina (§247)', () => {
     const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} onGrants={() => {}} />);
     await waitFor(() => expect(q(container, '[data-focus-offline]')).not.toBeNull());
     expect((q(container, '[data-focus-start]') as HTMLButtonElement).disabled).toBe(true);
+  });
+});
+
+describe('escolher a tarefa e o baú da sessão (§300)', () => {
+  it('começar SEMPRE abre o modal de escolha; sem tarefa escolhida não há como começar', async () => {
+    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} tasks={TASKS} onGrants={() => {}} />);
+    await waitFor(() => expect((q(container, '[data-focus-start]') as HTMLButtonElement).disabled).toBe(false));
+    await act(async () => { fireEvent.click(q(container, '[data-focus-start]')!); });
+    expect(document.querySelector('[data-focus-picker]')).not.toBeNull();
+    expect((document.querySelector('[data-focus-pick-go]') as HTMLButtonElement).disabled).toBe(true);
+    expect(server.active).toBeNull();
+    fireEvent.click(document.querySelector('[data-focus-pick="t2"]')!);
+    expect((document.querySelector('[data-focus-pick-go]') as HTMLButtonElement).disabled).toBe(false);
+    await act(async () => { fireEvent.click(document.querySelector('[data-focus-pick-go]')!); });
+    await waitFor(() => expect(document.querySelector('[data-journey]')).not.toBeNull());
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEYS.FOCO_SESSION)!).taskId).toBe('t2');
+    // a escolhida aparece primeiro no dock, com a etiqueta
+    expect(document.querySelector('[data-focus-dock-chosen]')).not.toBeNull();
+    expect(document.querySelector('[data-focus-dock] li')!.textContent).toContain('Em foco');
+  });
+  it('sem tarefas abertas, o modal oferece criar uma na hora', async () => {
+    const onCreateTask = vi.fn(() => true);
+    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} tasks={[]} onCreateTask={onCreateTask} onGrants={() => {}} />);
+    await waitFor(() => expect((q(container, '[data-focus-start]') as HTMLButtonElement).disabled).toBe(false));
+    await act(async () => { fireEvent.click(q(container, '[data-focus-start]')!); });
+    expect(document.querySelector('[data-focus-picker-empty]')).not.toBeNull();
+    fireEvent.change(document.querySelector('[data-focus-pick-new] input')!, { target: { value: 'Estudar inglês' } });
+    fireEvent.click(document.querySelector('[data-focus-pick-add]')!);
+    expect(onCreateTask).toHaveBeenCalledWith('Estudar inglês');
+  });
+  it('fechar o modal (Voltar) não começa a jornada', async () => {
+    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} tasks={TASKS} onGrants={() => {}} />);
+    await waitFor(() => expect((q(container, '[data-focus-start]') as HTMLButtonElement).disabled).toBe(false));
+    await act(async () => { fireEvent.click(q(container, '[data-focus-start]')!); });
+    fireEvent.keyDown(document, { key: 'Escape' });
+    await waitFor(() => expect(document.querySelector('[data-focus-picker]')).toBeNull());
+    expect(server.active).toBeNull();
+  });
+  it('o baú do canto esquerdo abre o tooltip com os itens coletados e fecha ao tocar fora', async () => {
+    localStorage.setItem(STORAGE_KEYS.FOCO_SESSION, JSON.stringify({ taskId: 't1', taskName: 'Escrever', collected: [{ kind: 'material', id: 'moss', qty: 2 }, { kind: 'food', id: '🍎', qty: 1 }], cycles: 0 }));
+    server.active = { sid: 's1', seed: 7, mode: 'p25', env: 'forest', keys: [], day: DIA, startAt: Date.now(), pausedMs: 0, pausedAt: null, pauses: 0 };
+    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} tasks={TASKS} onGrants={() => {}} />);
+    await waitFor(() => expect(q(container, '[data-focus-return]')).not.toBeNull());
+    fireEvent.click(q(container, '[data-focus-return]')!);
+    const bag = document.querySelector('[data-journey-bag]') as HTMLElement;
+    const keys = document.querySelector('[data-journey-bag-box]') as HTMLElement;
+    expect(keys.style.left).toBe('16px');
+    expect(document.querySelector('[data-journey-bag-count]')!.textContent).toBe('3');
+    expect(document.querySelector('[data-journey-bag-tip]')).toBeNull();
+    fireEvent.click(bag);
+    const tip = document.querySelector('[data-journey-bag-tip]')!;
+    expect(tip.textContent).toContain('Musgo');
+    expect(tip.textContent).toContain('×2');
+    expect(tip.querySelector('[data-journey-bag-item="moss"] [data-item-icon="glyph"]')).not.toBeNull();
+    fireEvent.pointerDown(document.body);
+    expect(document.querySelector('[data-journey-bag-tip]')).toBeNull();
+    // não há mais a soma "Baú aberto" embaixo
+    expect(document.querySelector('[data-journey-toast]')).toBeNull();
+  });
+  it('item novo vira voo do baú do mapa ao baú do canto; sem Web Animations (ou movimento reduzido) o contador só atualiza', async () => {
+    server.active = { sid: 's1', seed: 7, mode: 'p25', env: 'forest', keys: [], day: DIA, startAt: Date.now() - 20 * 60_000, pausedMs: 0, pausedAt: null, pauses: 0 };
+    server.grants = { 's1:0': [{ kind: 'material', id: 'moss', qty: 1 }] };
+    const { container } = render(<FocusBoard language="pt-BR" todayKey={DIA} saveId={ID} tasks={TASKS} onGrants={() => {}} />);
+    await waitFor(() => expect(q(container, '[data-focus-return]')).not.toBeNull());
+    localStorage.setItem(STORAGE_KEYS.FOCO_SESSION, JSON.stringify({ taskId: 't1', taskName: 'Escrever', collected: [], cycles: 0 }));
+    fireEvent.click(q(container, '[data-focus-return]')!);
+    await waitFor(() => expect(document.querySelector('[data-journey]')).not.toBeNull());
+    expect(document.querySelector('[data-journey-flying]')).toBeNull(); // jsdom: chega na hora
   });
 });
 

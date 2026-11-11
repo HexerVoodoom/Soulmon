@@ -4547,3 +4547,7 @@ Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglê
 ### `src/utils/hexsmithRename.ts` (11/11/2026, §287)
 
 **Dono de:** a parte pura de RENOMEAR na Hexsmith. **Exports:** `HEX_RENAME_COST` (200 Bits ganhos), `HEX_RENAME_MAX` (20), `hexRenameClean`, `hexRenameRefusal` (`empty`/`invalid`/`same`/`bits`), `applyServerHexRename` (aplica o que o servidor confirmou; nunca saldo negativo). **Chamado por:** `components/hex/HexsmithSheet.tsx`, `HexRenameModal.tsx`. **Server:** `cloudHexRename` em `cloudSave.ts` → `POST /api/save?action=hexRename`.
+
+### `src/utils/focusJourneyCamera.ts` · `src/utils/focusSession.ts` · `src/utils/materialIcons.ts` · `src/utils/journeyItemInfo.ts` (12/11/2026 — REGISTRO §300)
+
+`journeyCamera({ petY, blocks, screenW, screenH, clockBottom, margin?, lookahead? })` devolve o `vbTop` do SVG da jornada: segue o bicho e garante o topo do sprite abaixo do card do relógio (`petTopPx` mede; `JOURNEY_TOP_PAD` é o teto extra). `focusSession.ts`: `FocusSessionState { taskId, taskName, collected, cycles }`, `loadFocusSession`/`saveFocusSession` (`soulmon-foco-session`, aparelho). `materialIconSrc(id)` resolve os slots `src/assets/soulmon/icons/materiais/<id>.(webp|png)`; `journeyItemInfo`, `mergeItems`, `totalQty` descrevem e somam itens. **Régua:** `focusJourneyCamera.test.ts`, `journeyItemInfo.test.ts`.

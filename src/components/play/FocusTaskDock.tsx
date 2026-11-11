@@ -5,7 +5,7 @@
  * As linhas são as da Home (`RitualRow` + `StepRow`): marcar tarefa/subtópico chama os MESMOS handlers do App
  * (`onToggleTask` → handleToggleTask/handleToggleActivityCompletion; `onToggleStep` → handleToggleTaskStep), sem lógica nova.
  */
-import { useRef, useState, type CSSProperties } from 'react';
+import { Fragment, useRef, useState, type CSSProperties } from 'react';
 import { RitualRow } from '../pixel/RitualPanel';
 import { StepRow } from '../StepRow';
 import { Icon } from '../ui/Icon';
@@ -24,8 +24,10 @@ const GAP_TOP = 12;
 const DRAG_PX = 36;
 const reduced = (): boolean => { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch { return false; } };
 
-export function FocusTaskDock({ language, tasks, onToggleTask, onToggleStep, top, bottom }: {
+export function FocusTaskDock({ language, tasks, focusId, onToggleTask, onToggleStep, top, bottom }: {
   language: Language; tasks: readonly DockTask[];
+  /** A tarefa escolhida ao começar a sessão (§300): sobe para o topo da lista e leva a etiqueta "Em foco". */
+  focusId?: string | null;
   onToggleTask: (id: string) => void; onToggleStep: (taskId: string, stepId: string) => void;
   /** Px do topo da tela até a base do card do relógio. */
   top: number;
@@ -39,7 +41,9 @@ export function FocusTaskDock({ language, tasks, onToggleTask, onToggleStep, top
   const suppress = useRef(false);
   useBackLayer(expanded, () => setExpanded(false));
 
-  const ordered = [...tasks.filter(t => !t.completed), ...tasks.filter(t => t.completed)];
+  const chosen = focusId ? tasks.find(t => t.id === focusId) : undefined;
+  const rest = chosen ? tasks.filter(t => t.id !== chosen.id) : tasks;
+  const ordered = [...(chosen ? [chosen] : []), ...rest.filter(t => !t.completed), ...rest.filter(t => t.completed)];
   const label = expanded ? (isPt ? 'Minimizar a lista de tarefas' : 'Minimize the task list') : (isPt ? 'Aumentar a lista de tarefas' : 'Enlarge the task list');
   const height = expanded ? `calc(100dvh - ${top + GAP_TOP}px - ${bottom})` : '25dvh';
 
@@ -72,13 +76,13 @@ export function FocusTaskDock({ language, tasks, onToggleTask, onToggleStep, top
               const comFilhos = etapas.length > 0 && t.kind !== 'habit';
               const aberta = !!open[t.id] && !t.completed;
               const isHabit = t.kind === 'habit';
-              return <RitualRow key={t.id} kind={isHabit ? 'habit' : 'task'} name={t.name} value={t.completed ? (etapas.length || 1) : feitas} max={Math.max(1, etapas.length || 1)}
+              return <Fragment key={t.id}>{t.id === focusId && <li data-focus-dock-chosen style={{ ...sm2Hint, listStyle: 'none', margin: '4px 0 0 6px' }}>{isPt ? 'Em foco' : 'In focus'}</li>}<RitualRow kind={isHabit ? 'habit' : 'task'} name={t.name} value={t.completed ? (etapas.length || 1) : feitas} max={Math.max(1, etapas.length || 1)}
                 done={t.completed} onToggle={() => { if (!t.completed) onToggleTask(t.id); }} language={language}
                 expandable={comFilhos} expanded={aberta} onExpand={() => setOpen(o => ({ ...o, [t.id]: !aberta }))}
                 toggleLabelPt={comFilhos ? `${t.completed ? 'Tarefa concluída' : 'Conclua as etapas'}: ${t.name}` : `${t.completed ? (isHabit ? 'Hábito concluído' : 'Tarefa concluída') : (isHabit ? 'Marcar hábito como feito' : 'Marcar tarefa como concluída')}: ${t.name}`}
                 toggleLabelEn={comFilhos ? `${t.completed ? 'Task completed' : 'Complete the steps'}: ${t.name}` : `${t.completed ? (isHabit ? 'Habit done' : 'Task completed') : (isHabit ? 'Mark habit as done' : 'Mark task as completed')}: ${t.name}`}>
                 {etapas.map(s => <StepRow key={s.id} id={s.id} label={s.label} completed={s.completed} onToggle={sid => onToggleStep(t.id, sid)} language={language} />)}
-              </RitualRow>;
+              </RitualRow></Fragment>;
             })}
           </ul>}
       </div>
