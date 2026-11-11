@@ -8,7 +8,7 @@ import { areaLockedAt, buildingLockLine } from '../../utils/gates';
 
 import bgMapa from '../../assets/soulmon/mapa/bg-mapa.png';
 import { CHIP_MOEDA_ART, CHIP_MOEDA_SLICE } from '../../assets/soulmon/icones-ui';
-import { MAPA_MUNDO_PINTADO, MAPA_PALCO_STYLE } from '../../utils/areaLotGeometry';
+import { MAPA_MUNDO_PINTADO, MAPA_PALCO_STYLE, MAPA_AJUSTE_ESCALA } from '../../utils/areaLotGeometry';
 
 /** A pílula de moeda: moldura `chip-moeda` em 9-slice. A arte tem 256×92 e é
  *  desenhada a 1/3 (tampas de 16px, bordas de 6px) — a altura final fica
@@ -83,18 +83,6 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
         {isPt ? 'Mapa' : 'Map'}
       </h1>
 
-      {/* Fundo 9:16, cobrindo — object-fit: cover centrado. */}
-      <img
-        src={bgMapa}
-        alt=""
-        aria-hidden="true"
-        style={{
-          position: 'absolute', inset: 0,
-          width: '100%', height: '100%',
-          objectFit: 'cover', objectPosition: 'center',
-        }}
-      />
-
       {/* Vinheta leve no canto superior esquerdo — onde mora o link da Home (B2). */}
       <div
         aria-hidden="true"
@@ -143,7 +131,15 @@ export function MapPage({ language, onOpenArea, onSecretoGuilda, bits, emblems, 
 
       {/* Os distritos vêm pintados no fundo (05/11/2026): cada botão é só o alvo de toque e o rótulo, no palco da imagem. */}
       <div style={{ position: 'absolute', inset: 0, containerType: 'size', pointerEvents: 'none' }}>
-        <div style={MAPA_PALCO_STYLE}>
+        {/* O fundo mora DENTRO do palco: imagem e alvos crescem juntos, ancorados na borda direita (simetria lateral, ver MAPA_AJUSTE_ESCALA). */}
+        <div style={{ ...MAPA_PALCO_STYLE, transform: `translate(-50%, -50%) scale(${MAPA_AJUSTE_ESCALA})`, transformOrigin: '100% 50%' }}>
+          <img
+            src={bgMapa}
+            alt=""
+            aria-hidden="true"
+            data-map-bg
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'fill' }}
+          />
           {/* Secreto de propósito (dono, 05/11/2026): sem botão, rótulo, cursor ou resposta visual. */}
           <div
             data-map-cristal

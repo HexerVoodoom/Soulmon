@@ -87,7 +87,7 @@ describe('MapPage', () => {
 
   it('fundo isométrico real (imagem de cena, não placeholder de ícone)', () => {
     const { container } = renderWithCss(<MapPage language="en-US" onOpenArea={() => {}} {...mapProps} />);
-    const bg = container.querySelector('[data-map-page] > img')!;
+    const bg = container.querySelector('[data-map-page] [data-map-bg]')!;
     expect(bg.getAttribute('aria-hidden')).toBe('true');
     // os distritos vêm pintados no fundo: cada um é só alvo de toque + rótulo, sem sprite por cima
     expect(container.querySelectorAll('[data-map-area]').length).toBe(7);

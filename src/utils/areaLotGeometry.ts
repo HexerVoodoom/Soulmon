@@ -193,6 +193,23 @@ export const MAPA_PALCO_STYLE = {
   pointerEvents: 'none',
 } as const;
 
+/**
+ * Ajuste de simetria lateral do mapa-mundo (11/11/2026). A arte `bg-mapa.png` (821 px) tem os prédios de cima desbalanceados:
+ * o Mercado começa a 26 px da borda esquerda (3,2%) e o cogumelo dos Jogos passa da borda direita (0 px). Em vez de refazer a
+ * arte, o palco inteiro (imagem + alvos de toque) cresce `MAPA_AJUSTE_ESCALA` ancorado na borda DIREITA: a folga esquerda cai a
+ * ~2 px e a direita fica em 0, a mesma distância da margem nos dois lados (±1%).
+ */
+export const MAPA_ARTE_LARGURA = 821;
+export const MAPA_FOLGA_ESQ_PX = 26;
+export const MAPA_FOLGA_DIR_PX = 0;
+export const MAPA_AJUSTE_ESCALA = 1.03;
+/** Folgas (fração da largura da tela) depois do ajuste; negativa = sangra para fora da tela. */
+export function mapaFolgasAjustadas(): { esq: number; dir: number } {
+  const W = MAPA_ARTE_LARGURA;
+  const s = MAPA_AJUSTE_ESCALA;
+  return { esq: (W - (W - MAPA_FOLGA_ESQ_PX) * s) / W, dir: MAPA_FOLGA_DIR_PX / W };
+}
+
 /** Lado de uma marca sobre o prédio ("!", "?" ou a moeda de recurso), em px. */
 export const LOT_MARK_SIZE = 32;
 /** Folga entre a base das marcas e o TOPO desenhado do prédio, e entre duas marcas lado a lado, em px. */
