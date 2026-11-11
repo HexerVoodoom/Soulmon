@@ -53,7 +53,16 @@ describe('combatArt — cenário próprio do elemento fundido (fixture, sem inst
   it('sem arquivo (ou sem id) devolve undefined, e combatSceneBg segue no cenário do elemento base', () => {
     expect(sceneBgDoElemento('gelo', urls, {})).toBeUndefined();
     expect(sceneBgDoElemento(null, urls, {})).toBeUndefined();
-    // `heresia` (luz + vileza) ainda não tem cenário próprio instalado: cai no do elemento base (luz).
-    expect(combatSceneBg('heresia')).toMatch(/bg-luz\.png/);
+    // `heresia` ganhou cenário próprio em 11/11/2026 (webp); `gelo` aqui é só a fixture.
+  });
+});
+
+describe('combatArt — 151 compostos de 11/11/2026 (webp)', () => {
+  it('um composto com cenário próprio usa o webp; heresia (sem arquivo antigo) agora tem o seu', () => {
+    expect(combatSceneBg('aco')).toMatch(/aco\.webp/);
+    expect(combatSceneBg('heresia')).toMatch(/heresia\.webp/);
+  });
+  it('sem arquivo próprio cai no cenário do elemento base', () => {
+    expect(combatSceneBg('cyber')).toMatch(/bg-/);
   });
 });

@@ -247,7 +247,7 @@ describe('BattleStage — o que a cena desenha', () => {
     const { unmount } = render(<BattleStage {...baseProps} scene="url(x.png) center/cover" sceneElement="heresia" />);
     const camada = document.querySelector('[data-stage-scene]') as HTMLElement;
     expect(camada).not.toBeNull();
-    expect(camada.style.background).toMatch(/bg-luz\.png/);
+    expect(camada.style.background).toMatch(/heresia\.webp/);
     expect(camada.style.imageRendering).not.toBe('pixelated');
     expect(document.querySelectorAll('[data-stage-platform]').length).toBeGreaterThan(0);
     unmount();
