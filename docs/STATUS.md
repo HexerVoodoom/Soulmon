@@ -1,5 +1,12 @@
 # Status do Soulmon — registro vivo
 
+> ## 10/11/2026 — Passos pelo Health Connect (`feat/passos-health-connect`, REGISTRO §283) — PR aberto, NÃO mergeado
+>
+> - **Feito:** plugin nativo `SoulmonSteps` (só `READ_STEPS`), convite curto `stepsInvite` depois do onboarding (fila central), Health Connect como fonte preferida com o contador do aparelho de reserva, feature detect para o APK antigo. Revoga em parte a linha vermelha do Google Fit no `CLAUDE.md`. `PRIVACY_VERSION` NÃO subiu (já era `2026-11-09`, §253).
+> - **NÃO mergear antes do AAB beta11:** o push na `main` publica o app web que o APK carrega; sem o plugin no APK o JS cai no contador do aparelho (seguro), mas o convite já apareceria para quem tem sensor.
+> - **Depende do dono (Play Console):** declaração de permissões do Health Connect (`READ_STEPS`) e atualização da declaração de Apps de saúde e do Data Safety; roteiro em `docs/PASSOS-HEALTH-CONNECT-LANCAMENTO.md`. `versionCode`/`versionName` NÃO foram tocados (vão junto com as molduras do widget).
+> - **Não compilado nem testado em aparelho:** o Kotlin novo só é provado pelo `android-build.yml` e por um teste em aparelho com Health Connect.
+
 > ## 09/11/2026 — Sincronização do manual (`5229b1be..62f204e1b`, 271 commits, + arte instalada até `f80a470d6`; #674 simulados-elemento entra só como dado, sem reescrita no manual)
 >
 > - Feito: 02 (§68 novo), 03 (delta 09/11), 04, 05, 07, 08, 06-REFERENCIA (utils, components, api-workers, hooks, plugins, desktop), 09, 10, 11 e MAPA; `doc-verificador` carimbou todos, com escopo (só o que o diff tocou; ~45 módulos de mudança interna em utils não foram reconferidos). Corrigiu: `DailyMissionEvent`→`DailyEvent`, cut projétil 0,05→1,00, "2 chefs por dia" (é 1 chef/dia), `CACHE_VERSION` v248→v260, Forja com 5 prédios, RANKED_GAMES completo.

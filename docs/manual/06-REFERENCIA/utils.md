@@ -3916,6 +3916,12 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 **Régua:** `src/utils/notificationDefault.test.ts`.
 **Regra de negócio:** escolha gravada manda; sem escolha, ligado só com permissão já concedida — nunca pede permissão na abertura.
 
+### `src/utils/stepsInvite.ts`
+**Dono de:** QUANDO aparece o convite curto dos passos (REGISTRO §283): só com contador no aparelho, `stepsConsent` ausente e onboarding concluído.
+**Exports:** `shouldShowStepsInvite({ available, consent, onboarded })`.
+**Chamado por:** `src/App.tsx`
+**Régua:** `src/utils/stepsInvite.test.ts`.
+
 ### `src/utils/restSetup.ts`
 **Dono de:** quando aparece o convite do sono (G8): primeira abertura a partir do 2º dia de uso, uma vez só.
 **Exports:** `shouldShowRestSetup({ shown, bornAt, todayKey })`, `isMorning(now)`, `REST_SETUP_DAY`, `REST_SETUP_MORNING_END_HOUR`.

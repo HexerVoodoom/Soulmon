@@ -26,7 +26,8 @@ do arquivo indicado, lidas em 09/09/2026 no commit `4e77a08a`.
 | Casca nativa | `@capacitor/core` · `@capacitor/android` (`dependencies`; `^8.4.3` desde 11/10/2026, por GHSA-rvm3-566m-v7fv — só vale com APK novo) · `@capacitor/cli` (**`devDependencies` desde `592e2c14`** — é o binário `cap` do CI, e puxava `tar` vulnerável para o `npm audit --omit=dev`, hoje 0; `android-build.yml` o instala por `npm install -g`; régua `SO_DEV` em `depsVivas.contract.test.ts`. Pendência da R1 que "em correção" não tinha aterrissado) | `^8.4.0` |
 | Push nativo | `@capacitor/push-notifications` | `^8.1.1` |
 | Ciclo de vida nativo (botão físico de VOLTAR) | `@capacitor/app` — entrou em `7b4819e6` (24/09/2026). Até então o plugin era procurado em tempo de execução em `window.Capacitor.Plugins.App` justamente porque o pacote **não** estava instalado; hoje o import é estático e fica atrás de `Capacitor.isNativePlatform()` (dono: `src/utils/androidBack.ts`). | `^8.1.1` |
-| Passos | `@capgo/capacitor-pedometer` | `^8.0.38` |
+| Passos | `@capgo/capacitor-pedometer` (reserva) | `^8.0.38` |
+| Passos (Health Connect, REGISTRO §283) | plugin nativo próprio `SoulmonSteps` sobre `androidx.health.connect:connect-client` | `1.1.0` |
 | Login | `firebase` | `^12.16.0` |
 | Efemérides do Oráculo | `astronomy-engine` | `^2.1.19` |
 | Compressão | `fflate` | `^0.8.3` (entrou depois de 11/10/2026 em `dependencies`; régua `depsVivas.contract.test.ts` exige um import vivo) |

@@ -55,7 +55,8 @@ export const PRESENTATION_IDLE = 'welcome' as const;
  *  ── DEPOIS, se sobrar vaga no teto de 3 (senão, próxima abertura) ──
  *  9. `levelUp` (celebração), 10. `evolveTask` ("crie mais atividades" depois de evoluir), 11. `groveMilestone`;
  *  ── FORA do início de dia ──
- * 12. `catalogLevelInvite`, 13. `restSetup` — convite e configuração: só numa abertura sem nada do início de dia;
+ * 12. `catalogLevelInvite`, 13. `restSetup`, 13b. `stepsInvite` — convite e configuração: só numa abertura sem nada do início de dia
+ *     (`stepsInvite` = o convite curto da contagem de passos, só no app Android com contador e SÓ depois do onboarding; REGISTRO §283);
  * 14. `unlockToast` — balãozinho NÃO bloqueante "<Prédio> desbloqueado no <local>" (nunca sticky: qualquer modal pronto o substitui);
  * 14b. `noticeToast` — balãozinho NÃO bloqueante de um aviso acionável (refeição, Refúgio, termos, triagem, recomeço), 1× por dia cada, o mais leve de todos;
  * 15. `welcome` — ocioso (o pedido de instalar/notificar decide sozinho se tem algo a dizer; não aparece no início de dia).
@@ -81,6 +82,7 @@ export const PRESENTATION_ORDER = [
   'messenger',
   'catalogLevelInvite',
   'restSetup',
+  'stepsInvite',
   'unlockToast',
   'noticeToast',
   PRESENTATION_IDLE,
@@ -106,7 +108,7 @@ export const DAY_START_IDS: readonly PresentationId[] = ['nightmare', 'dream', '
 export const CELEBRATION_IDS: readonly PresentationId[] = ['levelUp', 'evolveTask', 'groveMilestone', 'messenger'];
 
 /** Convites e configuração: SAEM do início de dia (próxima abertura ou ação). */
-export const INVITE_IDS: readonly PresentationId[] = ['catalogLevelInvite', 'restSetup'];
+export const INVITE_IDS: readonly PresentationId[] = ['catalogLevelInvite', 'restSetup', 'stepsInvite'];
 
 /** Quem o Soulmon dormindo (`holdDayStart`) segura: início de dia, celebrações e convites. O que nasce de GESTO (triagem, intro de prédio, mapa) e o onboarding não. */
 const HELD_WHILE_ASLEEP: ReadonlySet<PresentationId> = new Set<PresentationId>([...DAY_START_IDS, ...CELEBRATION_IDS, ...INVITE_IDS]);

@@ -3808,9 +3808,19 @@ módulo quando o Dex de Sonhos ganhou data.
 <a id="passos"></a>
 ## 44. 👣 Passos
 
-**Em uma frase.** Num aparelho com pedômetro, e só com consentimento explícito,
+**Em uma frase.** Num aparelho com Health Connect ou pedômetro, e só com consentimento explícito,
 o app lê o total do dia para **confirmar** um hábito de saúde que a pessoa já
-marcou — passo nunca pontua sozinho.
+marcou e mover a missão especial de passos — passo nunca pontua sozinho.
+
+**Fonte (REGISTRO §283, 10/11/2026).** Preferida: o **Health Connect** do Android
+(plugin nativo `SoulmonSteps`, só `READ_STEPS`, só o total de hoje; continua somando
+com o app FECHADO). Reserva: o contador do aparelho (`@capgo/capacitor-pedometer`,
+só com o app vivo) para aparelho sem Health Connect ou quem já tinha só o sensor.
+`applyHealthTotal(rec, total, dayKey)` (pura): sem registro/outro dia → `{ date, baseline: 0, today: total }`;
+mesmo dia → `today = max(today, total)`. Feature detect: o APK antigo não tem o plugin
+(`Capacitor.isPluginAvailable('SoulmonSteps')`) e cai no sensor. O convite curto
+(`stepsInvite`, `StepsInviteModal`, fila central, depois do onboarding) pergunta uma vez,
+com a meta; o cartão de Configurações segue para quem ainda não respondeu.
 
 **A regra.**
 
@@ -3849,10 +3859,10 @@ import DINÂMICO (`isStepsAvailable`, `hasStepsPermission`,
 que já tinha sido andado", "dentro do mesmo dia o total só cresce (fuzz de
 leituras caóticas)" e o bloco "degradação graciosa na web").
 
-**Decisão.** [`docs/PLANO-TAREFAS.md`](../PLANO-TAREFAS.md) Parte 3b — "o sensor
-certo é o mais burro": nem Health Connect (exige conta de organização
-verificada, declaração de dados de saúde e política dedicada), nem Google Fit
-(cadastros novos fechados desde 05/2024, APIs até o fim de 2026).
+**Decisão.** [`docs/PLANO-TAREFAS.md`](../PLANO-TAREFAS.md) Parte 3b dizia "o sensor
+certo é o mais burro" (nem Health Connect, nem Google Fit). ⚰️ **A parte do Health Connect foi
+revogada pelo dono em 20/10/2026** (REGISTRO §283): Health Connect é a fonte preferida, só com
+opt-in, só `READ_STEPS`. Google Fit segue proibido (cadastros novos fechados desde 05/2024, APIs até o fim de 2026).
 [`docs/REGISTRO-DE-DECISOES.md`](../REGISTRO-DE-DECISOES.md) §5.8 registra que
 `steps` e `moodLog` são declarados no Data Safety.
 
@@ -3872,8 +3882,9 @@ verificada, declaração de dados de saúde e política dedicada), nem Google Fi
   o do jogador ([§5](#dia-do-jogador)). É a única leitura diária do save fora das
   sete famílias ancoradas — cabe aqui porque o número não pontua e subcontar não
   tira nada de ninguém.
-- **Passos dados com o app morto** (sem reboot) ficam de fora: a sessão do plugin
-  começa do zero. Limitação declarada do desenho leve.
+- **Passos dados com o app morto**: com Health Connect entram no total (ele conta sozinho e o app lê ao abrir, a cada 5 min em primeiro plano); só no sensor de reserva (sem Health Connect) ficam de fora, porque a sessão do plugin começa do zero.
+- **Sem leitura em segundo plano**: não há serviço nem `READ_HEALTH_DATA_IN_BACKGROUND`; a missão só "fecha" quando o app lê.
+- **`'declined'` do convite é o mesmo `stepsConsent`** do cartão de Configurações: quem recusa num não vê o outro.
 
 **O que NÃO faz.** Não vira HP, energia, `perfectDays` nem peso de esforço.
 Não existe missão semanal de passos (o pool de [§50](#missoes-semanais) tem 12
@@ -3881,7 +3892,7 @@ ids e nenhum é de passo). Não guarda série, horário nem localização. Não 
 "faltam X passos" e o medidor não tem estado de falha. Sem sensor, não mostra
 erro nem medidor vazio: quem joga na PWA não fica atrás de nada.
 
-**Onde a UI mostra.** `src/components/StepsCard.tsx`, **só em Configurações**,
+**Onde a UI mostra.** O convite curto `src/components/StepsInviteModal.tsx` (uma vez, depois do onboarding) e `src/components/StepsCard.tsx`, em Configurações,
 logo abaixo da Janela de Descanso — é preferência de privacidade, não conteúdo
 de jogo. Some por completo quando `isStepsAvailable()` responde `false` (o caso
 da PWA) ou quando `stepsConsent === 'declined'`. Aceitar e recusar são botões do
