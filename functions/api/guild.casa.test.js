@@ -50,6 +50,18 @@ describe('a casa da guilda', () => {
     expect((await doar('2026-11-10')).status).toBe(429);
     expect((await doar('2026-11-11')).status).toBe(200);
   });
+  it('alternar o dayKey (±1 dia) NÃO reabre a doação: dia igual ou anterior ao último doado = 429 (segurança, rodada 1)', async () => {
+    const { e } = await setup();
+    const hoje = new Date().toISOString().slice(0, 10);
+    const ontem = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+    const amanha = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    const doar = (dayKey) => call(e, 'guildDonate', { body: { id: A, bits: 100, dayKey } });
+    expect((await doar(hoje)).status).toBe(200);
+    expect((await doar(ontem)).status).toBe(429);
+    expect((await doar(hoje)).status).toBe(429);
+    expect((await doar(amanha)).status).toBe(200);
+    for (const d of [ontem, hoje, amanha]) expect((await doar(d)).status).toBe(429);
+  });
   it('sem guilda, 404', async () => {
     const e = { DIGIAPP_SAVES: fakeKV({ [`profile:${A}`]: perfil(A, 'Ana') }) };
     expect((await call(e, 'guildDonate', { body: { id: A, bits: 50 } })).status).toBe(404);

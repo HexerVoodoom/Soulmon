@@ -330,7 +330,7 @@ export async function vistaDaGuilda(env, g, euSave, hoje = new Date().toISOStrin
       buffs: { ...buffs, euPosso: anfitriaoDe(g) === euSave },
       mine: (() => {
         const c = eu >= 0 && cart[eu]?.casa ? normalizarCasa(cart[eu].casa) : null;
-        return { slot: c?.slot ?? null, capReached: !!c && c.day === hoje && c.bitsToday >= CASA_MIN_DOACAO };
+        return { slot: c?.slot ?? null, capReached: !!c && !!c.day && c.day >= hoje && c.bitsToday >= CASA_MIN_DOACAO };
       })(),
     },
     raid: {
