@@ -29,6 +29,7 @@ export function renameOnServer(stored, kind, nomeRaw, now = Date.now()) {
   const gp = num(stored.gamePoints);
   const paidLeft = num(stored.bitsOrigin?.paidLeft);
   if (Math.max(0, gp - Math.min(gp, paidLeft)) < HEX_RENAME_COST) return { ok: false, reason: 'bits' };
+  /** @type {Record<string, any>} */
   const next = { ...stored, gamePoints: gp - HEX_RENAME_COST };
   if (stored.bitsOrigin && typeof stored.bitsOrigin === 'object') {
     const left = Math.min(Math.max(0, paidLeft - HEX_RENAME_COST), next.gamePoints);
