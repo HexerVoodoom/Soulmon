@@ -17,7 +17,7 @@ export function ItemIcon({ item, isPt, size }: { item: JourneyItem; isPt: boolea
   const info = journeyItemInfo(item, isPt);
   return info.src
     ? <img src={info.src} alt="" data-item-icon="img" width={size} height={size} style={{ display: 'block', objectFit: 'contain' }} />
-    : <span aria-hidden="true" data-item-icon="glyph" style={{ fontSize: Math.round(size * 0.8), lineHeight: 1, width: size, height: size, display: 'grid', placeItems: 'center' }}>{info.glyph}</span>;
+    : <span aria-hidden="true" data-item-icon="glyph" style={{ fontSize: `${Math.round(size * 0.8)}px`, lineHeight: 1, width: size, height: size, display: 'grid', placeItems: 'center' }}>{info.glyph}</span>;
 }
 
 export const FocusBag = forwardRef<HTMLButtonElement, { language: Language; items: readonly JourneyItem[]; /** Quantidade ainda em voo (não entrou no contador). */ pending?: number }>(
@@ -53,8 +53,8 @@ export const FocusBag = forwardRef<HTMLButtonElement, { language: Language; item
         </div>}
         <button ref={ref} type="button" data-journey-bag aria-expanded={open} aria-haspopup="dialog" aria-label={label} onClick={() => setOpen(v => !v)}
           style={{ position: 'relative', width: BAG_SIZE, height: BAG_SIZE, padding: 0, border: 'none', borderRadius: 12, background: 'rgba(4,16,18,.6)', display: 'grid', placeItems: 'center', cursor: 'pointer' }}>
-          {CHEST_ART.common ? <img src={CHEST_ART.common} alt="" width={34} height={34} style={{ display: 'block', imageRendering: 'pixelated' }} /> : <span aria-hidden="true" style={{ fontSize: 26 }}>🧰</span>}
-          <span data-journey-bag-count className="sm2-num" aria-hidden="true" style={{ position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, padding: '0 4px', borderRadius: 9, background: 'var(--sm2-ink)', color: 'var(--sm2-surface)', fontSize: 11, fontWeight: 700, display: 'grid', placeItems: 'center' }}>{count}</span>
+          {CHEST_ART.common ? <img src={CHEST_ART.common} alt="" width={34} height={34} style={{ display: 'block', imageRendering: 'pixelated' }} /> : <span aria-hidden="true" style={{ fontSize: 'var(--sm2-text-2xl)' }}>🧰</span>}
+          <span data-journey-bag-count className="sm2-num" aria-hidden="true" style={{ position: 'absolute', top: -4, right: -4, minWidth: 18, height: 18, padding: '0 4px', borderRadius: 9, background: 'var(--sm2-ink)', color: 'var(--sm2-surface)', fontSize: 'var(--sm2-text-xs)', fontWeight: 700, display: 'grid', placeItems: 'center' }}>{count}</span>
         </button>
       </span>
     );
