@@ -533,7 +533,13 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
     setQuickText('');
   };
 
+  // Tela 'Novo hábito': tudo visível (sem 'Mais opções'), categoria aberta, um só campo de nome.
+  const habitMode = kind === 'habit';
+  const formOpen = habitMode || showForm;
+
   const txt = {
+    exampleLabel: isPt ? 'Exemplo' : 'Example',
+    habitExample: isPt ? 'Caminhar 20 minutos' : 'Walk 20 minutes',
     name: isPt ? 'Nome' : 'Name',
     namePlaceholder: isPt ? 'Ex: Meditar 10 minutos' : 'Ex: Meditate 10 minutes',
     quickHelp: isPt
@@ -614,14 +620,14 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
           onChange={(e) => setQuickText(e.target.value)}
           onBlur={applyQuickAdd}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); applyQuickAdd(); } }}
-          placeholder={quickAddHint(isPt ? 'pt-BR' : 'en')}
+          placeholder={habitMode ? `${txt.exampleLabel}: ${txt.habitExample}` : quickAddHint(isPt ? 'pt-BR' : 'en')}
         />
         <HintTip language={language} label={isPt ? 'Sobre a captura rápida' : 'About quick add'}>{txt.quickHelp}</HintTip>
       </div>
 
       {/* O que foi entendido. Só aparece com o formulário fechado — com ele
           aberto, os próprios campos preenchidos já são a conferência. */}
-      {!showForm && name.trim() && (
+      {(habitMode || !showForm) && name.trim() && (
         <div>
           <p className="sm2-title" style={{ margin: 0, fontSize: 'var(--sm2-text-md)', fontWeight: 500 }}>{name}</p>
           {quickTokens.length > 0 && (
@@ -637,6 +643,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
 
       {/* 2. O FORMULÁRIO INTEIRO, atrás de uma divulgação só. */}
       <div>
+        {!habitMode && (
         <button
           type="button"
           onClick={() => setShowForm(v => !v)}
@@ -646,9 +653,11 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
           <Icon name={showForm ? 'expand_less' : 'expand_more'} size={20} />
           {showForm ? txt.lessOptions : txt.moreOptions}
         </button>
+        )}
 
-        {showForm && (
+        {formOpen && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 18, marginTop: 14 }}>
+            {!habitMode && (
             <div>
               <label style={sm2Label} htmlFor="sm-create-name">{txt.name}</label>
               <Field id="sm-create-name" type="text" value={name} onChange={(e) => setName(e.target.value)}
@@ -657,6 +666,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
                   segue sendo dele (autonomia da SDT). */}
               {minHint && <p style={sm2Hint}>{minHint}</p>}
             </div>
+            )}
 
             <CategoryChips category={category} setCategory={setCategory} isPt={isPt} />
 
@@ -664,7 +674,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
               <label style={sm2Label}>{txt.kindLabel}</label>
               <div role="radiogroup" aria-label={txt.kindLabel} style={{ display: 'flex', gap: 8 }}>
                 <Segment selected={kind === 'habit'} onSelect={() => { setKind('habit'); setTaskOnDays(false); }} label={txt.habit} />
-                <Segment selected={kind === 'task'} onSelect={() => setKind('task')} label={txt.task} />
+                <Segment selected={kind === 'task'} onSelect={() => { setKind('task'); setShowForm(true); }} label={txt.task} />
               </div>
               <HintTip language={language} label={isPt ? 'Hábito ou tarefa?' : 'Habit or task?'}>{txt.kindHint}</HintTip>
             </div>
@@ -727,7 +737,7 @@ export function CreateModal({ isOpen, initialKind = 'habit', onClose, onSaveTask
 
             <div>
               <label style={sm2Label} htmlFor="sm-create-alarm">
-                {isSingleExecution ? txt.alarm : isPt ? 'Horário (opcional)' : 'Time (optional)'}
+                {isSingleExecution ? txt.alarm : habitMode ? txt.frequency : isPt ? 'Horário (opcional)' : 'Time (optional)'}
               </label>
               {isSingleExecution && hasDeadline && (
                 <div role="radiogroup" aria-label={txt.alarm} style={{ display: 'flex', gap: 8, marginBottom: 8 }}>

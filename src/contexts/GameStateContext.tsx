@@ -119,6 +119,7 @@ import { spriteLineOf, isCorvo } from '../utils/corvoPet';
 import { newUuid } from '../utils/uuid';
 import { sanitizeAvatarId } from '../utils/avatar';
 import { migrateBestiary } from '../utils/bestiaryMigrate';
+import { migrateCatalogHabitDaily } from '../utils/catalogHabitMigrate';
 import { sanitizeDefeatedElements } from '../utils/elementDex';
 import { sanitizeLibraryAck, type LibraryAck } from '../utils/libraryNew';
 import { sanitizeStrayPlayersSeen, type StrayPlayerSeen } from '../utils/strayPlayers';
@@ -1303,7 +1304,8 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         // Não basta ser array: cada ITEM é percorrido sem checagem (a virada faz
         // `activity.steps.length`). Item irrecuperável é DESCARTADO.
         activities: arr<unknown>(loadedState.activities)
-          .map(hydrateActivity).filter((a): a is Activity => a !== null),
+          .map(hydrateActivity).filter((a): a is Activity => a !== null)
+          .map(migrateCatalogHabitDaily),
         tasks: arr<unknown>(loadedState.tasks)
           .map(hydrateTask).filter((t): t is Task => t !== null),
         completedTasks: arr<unknown>(loadedState.completedTasks)
