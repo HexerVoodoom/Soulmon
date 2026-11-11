@@ -304,7 +304,7 @@ export function ArenaGame({
       // A FORMA do golpe vem da skill da FICHA (escola; sem ficha, do elemento) — nunca de índice ou sorteio.
       playerKind: (sp: boolean) => (sp ? ident.especial.forma : ident.basico.forma),
       playerImpact: sp => (!sp && ident.basico.impacto) || meleeImpactOf({ element: sp ? ident.especial.elemento : ident.basico.elemento, key: chaveDaIdentidade(ident) }),
-      foeImpact: (foe: number, sp: boolean) => { const e = inimigosRef.current[foe]; return meleeImpactOf({ element: e?.element ?? e?.elements[0], key: e?.nameEn ?? String(foe), name: e ? `${e.namePt} ${e.nameEn}` : null }); },
+      foeImpact: (foe: number, sp: boolean) => { const e = inimigosRef.current[foe]; const el = e?.element ?? e?.elements[0]; return meleeImpactOf({ element: el, key: e?.nameEn ?? String(foe), name: e ? `${e.namePt} ${e.nameEn}` : null, forma: foeStrikeForm(el, sp ? 'especial' : 'basica') }); },
       foeKind: (foe: number, sp: boolean) => foeStrikeForm(inimigosRef.current[foe]?.element ?? inimigosRef.current[foe]?.elements[0], sp ? 'especial' : 'basica'),
       labels: { blocked: isPt ? 'Defendeu!' : 'Blocked!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],
