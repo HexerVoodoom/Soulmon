@@ -4238,7 +4238,7 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 ### `src/utils/estagioPorHp.ts`
 **Dono de:** a coerência estágio × HP do inimigo (11/11/2026, REGISTRO §284): a forma exibida de um inimigo sorteado nunca fica abaixo da faixa do HP que ele tem. Pisos em pontos de HP exibidos, tirados do `autoHp` por estágio (ponto médio entre o último level de um estágio e o primeiro do seguinte): champion ≈ 622, ultimate ≈ 1.327, mega ≈ 2.666, ultra ≈ 5.138.
 **Exports:** `FoeStage`, `FOE_STAGES`, `FOE_STAGE_HP_FLOORS`, `stageForFoeHp(coreHp)`, `maxFoeStage(a, b)`.
-**Chamado por:** `arena.ts` (`arenaStageForHp`, usado em `buildArenaRound` quando recebe o level do jogador; a Arena só tem arte até Ultimate). A Masmorra ainda não usa (escada por slot é contrato). **Régua:** `estagioPorHp.test.ts`.
+**Chamado por:** `arena.ts` (`arenaStageForHp`, usado em `buildArenaRound` quando recebe o level do jogador; a Arena só tem arte até Ultimate). `dungeon.ts` (`buildDungeonWave`: a forma do slot sobe até a do HP, teto Mega por falta de arte de Ultra; REGISTRO §285). **Régua:** `estagioPorHp.test.ts`, `dungeon.estagioPorHp.test.ts`.
 
 ### `src/utils/enemyRoster.ts`
 **Dono de:** "quem pode aparecer como inimigo, em que estágio e a partir de que level" (M10): 17 criaturas base × rookie/champion/ultimate/mega + 138 rookies de elemento combinado. Dados puros, sem asset. O level do jogador só decide até que estágio de ARTE o slot mostra; a força continua do slot da escada.

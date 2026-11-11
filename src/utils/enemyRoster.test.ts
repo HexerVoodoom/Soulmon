@@ -97,12 +97,15 @@ describe('roster de inimigos (M10): progressão', () => {
     const used = new Set(ENEMY_ROSTER.filter(e => e.stage === 'rookie').slice(1).map(e => e.id));
     expect(pickEnemy(1, () => 0.5, { used }).id).toBe(ENEMY_ROSTER.filter(e => e.stage === 'rookie')[0].id);
   });
-  it('masmorra: level 1 → onda toda rookie; level 22+ → a escada sobe até mega', () => {
+  it('masmorra: a forma acompanha o HP (11/11/2026) — level 1 → onda toda rookie; 7 → champion; 14 → ultimate; 22+ → mega (teto: não há arte de Ultra)', () => {
+    const formas = (lv: number) => buildDungeonWave(1, 'mega', mulberry32(3), lv).map(e => e.stage.split('-').pop());
     for (let seed = 1; seed <= 30; seed++) {
       expect(buildDungeonWave(1, 'rookie', mulberry32(seed), 1).every(e => e.stage.endsWith('-rookie'))).toBe(true);
-      const alta = buildDungeonWave(1, 'mega', mulberry32(seed), 25).map(e => e.stage.split('-').pop());
-      expect(alta).toEqual(['rookie', 'rookie', 'rookie', 'champion', 'ultimate', 'mega']);
+      expect(buildDungeonWave(1, 'mega', mulberry32(seed), 25).map(e => e.stage.split('-').pop())).toEqual(Array(6).fill('mega'));
     }
+    expect(formas(7)).toEqual(Array(6).fill('champion'));
+    expect(formas(14)).toEqual(Array(6).fill('ultimate'));
+    expect(formas(30)).toEqual(Array(6).fill('mega'));
   });
   it('masmorra: toda `stage` da onda é chave válida do roster (entra no bestiário)', () => {
     for (let seed = 1; seed <= 50; seed++) for (const e of buildDungeonWave(2, 'mega', mulberry32(seed), 30)) expect(ENEMY_ROSTER_KEYS.has(e.stage), e.stage).toBe(true);
