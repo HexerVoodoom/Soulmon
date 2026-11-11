@@ -957,7 +957,7 @@ Uma entrada por módulo não-teste de `src/components` (91 módulos, `find src/c
 **Dono de:** a splash screen do cold start — toca o vídeo de marca e cai no gate de onboarding/app principal.
 **Props principais:** `{ onFinish: () => void }` (tipo inline, sem interface nomeada).
 **Exports:** `IntroScreen(props)`.
-**Estado/efeitos relevantes:** tela de abertura (07/10/2026, S17: `TelaDeAbertura`, pôster + "Tap to start", toque → `iniciarTemaNoGesto()` + vídeo; pulada por `precisaDeAbertura()`); `useState` (`leaving`, `videoFailed`); `useRef` (`doneTimerRef`, `leaveTimerRef`); `useEffect` agenda `scheduleFinish(1500)` como fallback, substituído pela duração real do vídeo quando conhecida; toque/clique pula direto com o mesmo fade de 400ms.
+**Estado/efeitos relevantes:** sem tela de abertura desde 11/11/2026 (§292: `TelaDeAbertura`/`precisaDeAbertura` removidas; a intro abre direto e o tema liga no 1º gesto, pelo ouvinte de `main.tsx`; o toque de pular chama `iniciarTemaNoGesto()`); `useState` (`leaving`, `videoFailed`); `useRef` (`doneTimerRef`, `leaveTimerRef`); `useEffect` agenda `scheduleFinish(1500)` como fallback, substituído pela duração real do vídeo quando conhecida; toque/clique pula direto com o mesmo fade de 400ms.
 **Chamado por:** `src/App.tsx` (`grep -rl "from '.*/IntroScreen'" src`, 09/09/2026).
 **Régua:** `src/components/IntroScreen.render.test.tsx`.
 **Avisos do arquivo:** puramente cosmético, self-dismiss via `onFinish`; cai para o wordmark raven/gradiente se o vídeo falhar (WebView antiga sem suporte ao formato).

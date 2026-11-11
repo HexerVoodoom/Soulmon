@@ -5,8 +5,7 @@ import introPoster from '../assets/brand/intro-poster.webp';
 import { resolveLanguage } from '../utils/i18n';
 import { readLocal } from '../utils/safeStorage';
 import { STORAGE_KEYS } from '../utils/storageKeys';
-import { iniciarTemaNoGesto, temaIniciado, temaPreferido } from '../utils/tema';
-import { isMuted } from '../utils/sounds';
+import { iniciarTemaNoGesto } from '../utils/tema';
 import { IntroWelcomePill } from './ui/IntroWelcomePill';
 
 /**
@@ -24,51 +23,15 @@ import { IntroWelcomePill } from './ui/IntroWelcomePill';
  * Os literais `#0b0d16` e o gradiente Tailwind saíram: tudo é token.
  */
 /**
- * TELA DE ABERTURA (07/10/2026, decisão do dono, S17: o tema toca DURANTE a intro).
- * O navegador/WebView só libera áudio depois de um gesto, e a intro é muda e curta
- * demais para esperar um: antes dela vem UM quadro da marca (o próprio pôster do
- * vídeo, sem salto de imagem) com "Tap to start". O toque inicia o tema (gesto real)
- * e a intro. Pulada quando não há o que liberar: o jogador já interagiu (ativação
- * do navegador — cobre também o autoplay com som liberado), o tema está desligado
- * ou o app está mudo. Sem cobrança, sem play cinza nativo, sem som antes do toque.
+ * SEM TELA DE "TAP TO START" (11/11/2026, pedido do dono, REGISTRO §292): ela existia só
+ * para dar um gesto ao áudio (o WebView/navegador só libera a música-tema depois de um
+ * toque, S17). Agora a intro (vídeo + "Carregando dados...") abre DIRETO e o áudio é
+ * desbloqueado pelo ouvinte passivo único de `armarTemaNoPrimeiroGesto` (main.tsx):
+ * o primeiro toque/tecla em QUALQUER lugar (intro, login, Home) liga o tema. O toque que
+ * pula a intro também chama `iniciarTemaNoGesto` (idempotente) por garantia.
  */
-function precisaDeAbertura(): boolean {
-  try {
-    if (typeof navigator !== 'undefined' && (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation?.hasBeenActive) return false;
-    return temaPreferido() && !isMuted() && !temaIniciado();
-  } catch {
-    return false;
-  }
-}
-
 export function IntroScreen({ onFinish }: { onFinish: () => void }) {
-  const [iniciada, setIniciada] = useState(() => !precisaDeAbertura());
-  if (!iniciada) return <TelaDeAbertura onStart={() => { iniciarTemaNoGesto(); setIniciada(true); }} />;
   return <IntroVideo onFinish={onFinish} />;
-}
-
-function TelaDeAbertura({ onStart }: { onStart: () => void }) {
-  const isPt = resolveLanguage(readLocal(STORAGE_KEYS.LANGUAGE)) === 'pt-BR';
-  const label = isPt ? 'Toque para começar' : 'Tap to start';
-  return (
-    <div
-      role="button"
-      tabIndex={0}
-      aria-label={label}
-      onClick={onStart}
-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onStart(); } }}
-      className="sm2-visor sm2-splash"
-      data-testid="intro-open"
-      style={{ zIndex: 500 }}
-    >
-      <img src={introPoster} alt="Soulmon" className="sm2-splash-video" draggable={false} />
-      <IntroWelcomePill />
-      <span className="sm2-viewport-glass" aria-hidden="true" />
-      <span className="sm2-splash-tap" aria-hidden="true">
-        <span className="sm2-splash-pix" style={{ color: 'var(--sm2-primary-ink)', textShadow: '0 1px 3px var(--sm2-viewport-bg), 0 0 8px var(--sm2-viewport-bg)' }}>{label}</span>
-      </span>
-    </div>
-  );
 }
 
 function IntroVideo({ onFinish }: { onFinish: () => void }) {
@@ -92,6 +55,7 @@ function IntroVideo({ onFinish }: { onFinish: () => void }) {
   // Toque/tecla em qualquer lugar: pula direto pro app, com o mesmo fade de
   // saída (400ms) que o fim natural do vídeo já usa.
   const skip = () => {
+    iniciarTemaNoGesto();
     // Autoplay recusado: o primeiro toque é o gesto que o libera — toca o vídeo em vez de pular.
     const v = videoRef.current;
     if (blocked && v) {

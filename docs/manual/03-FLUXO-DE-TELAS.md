@@ -305,7 +305,7 @@ cima de um app já carregado. Corrigido em 27/08/2026 (comentário em `main.tsx`
 
 ### 2.2 `IntroScreen` — o vídeo de marca
 
-- **Chega por**: `showIntro` nasce `true` (`useState(true)`). **Tela de abertura (07/10/2026, S17):** antes do vídeo, o `IntroScreen` mostra o pôster da marca + "Tap to start"/"Toque para começar" (`role=button`, toque/Enter/Espaço); o toque inicia a música-tema por gesto real e monta o vídeo. Pulada se o jogador já interagiu (`userActivation.hasBeenActive`), o tema está desligado ou o app mudo.
+- **Chega por**: `showIntro` nasce `true` (`useState(true)`). **Sem tela "Tap to start" (11/11/2026, REGISTRO §292):** a intro abre direto no vídeo + "Carregando dados..."; a música-tema liga no 1º toque/tecla em qualquer lugar (ouvinte passivo de `main.tsx`; o toque de pular também chama `iniciarTemaNoGesto`). Antes (07/10, S17) havia uma tela de abertura só para dar esse gesto.
 - **Sai para**: `onFinish` → `setShowIntro(false)`.
 - **Aparece quando**:
 

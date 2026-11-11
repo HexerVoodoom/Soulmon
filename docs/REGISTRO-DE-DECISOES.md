@@ -4726,3 +4726,13 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Rollback:** reverter o PR (volta ao `ganhoDePontos` por level).
 
 **Nota:** substitui o corte por level e o piso por level do §289: o `gainReason` passa a ser `rank-up` | `rank-down` | `repeat`.
+
+## §292 — Abertura direto na intro: sai a tela "Tap to start" (11/11/2026, pedido do dono)
+
+**Decisão.** A tela de abertura (pôster + "Tap to start"/"Toque para começar") foi removida. Ela existia só para dar um gesto ao áudio: o navegador/WebView só libera a música-tema depois de um toque (S17, D11). Agora o app vai direto à intro com a animação de carregar, e o áudio é desbloqueado pelo ouvinte passivo único que já existe (`armarTemaNoPrimeiroGesto`, `main.tsx`): o 1º toque/tecla em qualquer lugar (intro, login, Home) liga o tema; o toque que pula a intro também chama `iniciarTemaNoGesto`. Nenhum autoplay cego (D11 mantida), mudo/preferência/aba escondida seguem valendo. A intro e o gate do boot não mudaram (o loading continua esperando como antes); onboarding/login intactos.
+
+**Alternativa que perdeu:** manter o "tap to start" e só iniciar o loading em paralelo (ainda exigiria um toque inútil); e ligar o áudio sem gesto via `mediaPlaybackRequiresUserGesture=false` no WebView (depende de APK e fura a D11).
+
+**Falsifica:** a música-tema deixar de tocar depois do 1º toque na intro/Home (régua `tema.test.ts`), ou a tela "Tap to start" reaparecer (régua `IntroScreen.render.test.tsx`).
+
+**Rollback:** reverter o PR. **APK:** nada obrigatório; o web sai sem APK.
