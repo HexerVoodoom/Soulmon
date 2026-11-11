@@ -185,6 +185,14 @@
 
 ## Módulos internos
 
+### `functions/api/app-config.js` (+ `_appVersion.js`)
+**Rota:** `/api/app-config` · **Metodos:** `OPTIONS`, `GET`.
+**Dono de:** versao minima e recomendada do app nativo (`{minVersionCode, recommendedVersionCode}`, versionCode da Play), lida pelo modal de atualizacao (`AppUpdateGate`). Padrao min=0 (ninguem forcado) e recomendada=31.
+**Auth:** nenhuma — publica, `Cache-Control: public, max-age=300`.
+**Grava/le:** nada — so `env.APP_MIN_VERSION_CODE` / `env.APP_RECOMMENDED_VERSION_CODE` (var do Worker vence a constante de `_appVersion.js`; invalida = padrao). Mudar = var no painel ou deploy, sem APK.
+**Erros:** nenhum caminho de erro (sempre 200).
+**Regua:** `functions/api/app-config.test.js`.
+
 ### `functions/api/_admin.js`
 **Dono de:** o **papel de admin/GM do dono** (29/09/2026). Admin = ID token Firebase verificado por `verifyIdToken` (reusado de `_auth.js`, nunca copiado) cujo e-mail está em `ADMIN_EMAILS` e, quando a rota passa `saveId`, é o dono daquele save. Fail-closed sem `ADMIN_EMAILS` e sem `FIREBASE_PROJECT_ID`. Efeitos derivados na LEITURA, nunca gravados em `ent:`. Contrato: [`../../reviews/admin-corvo/impl-notas-backend.md`](../../reviews/admin-corvo/impl-notas-backend.md).
 **Exports:** `ADMIN_AI_CAP_MULTIPLIER` (3; ⚰️ era 10 na 1ª versão de 29/09/2026 — a correção M-1 baixou para 3) · `ADMIN_SPRITE_MONTHLY_CAP` (40 — sub-teto mensal próprio do admin para sprite, contador KV `ai:sprite:@admin:<mês UTC>`, sem PII; pior caso ~40 x R$ 0,101 = ~R$ 4/mês; estouro = 503 `ai-monthly-budget-reached`) · `ADMIN_CREDITS_DISPLAY` (exibição, não saldo) · `parseAdminEmails(raw)` · `isAdminEmail(env, email)` · `verifiedAdmin(env, request, saveId?)` → `{ admin }` (desde o delta `ae366480..5edfcfba`: lê `ADMIN_EMAILS` vazia como `noList` mas só DEPOIS de `verifyIdToken`; sem token verificado devolve `{ admin:false }` em silêncio — é o tráfego comum; com token verificado e negação chama `logAdminDenied` com `'no-allowlist'` / `'not-listed'` / `'saveid-mismatch'`) · `adminPublicView(view)` · `logAdminSession(route)` (log `admin_session` sem PII) · **`logAdminDenied(reason)`** (novo: log `admin_denied` `{ event, reason }` — motivo curto, nunca e-mail nem saveId; existe para o dono ver no log do Cloudflare que falta `ADMIN_EMAILS`).

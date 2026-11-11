@@ -105,6 +105,7 @@ import { markAccepted, markAsked, parsePlayReview, shouldAskReview, REVIEW_MIN_V
 import { stageLevelIndex as playReviewLevelIndex } from './utils/evolutionForecast';
 import { SoulmonReview } from './plugins/SoulmonReviewPlugin';
 import { PlayReviewModal } from './components/PlayReviewModal';
+import { AppUpdateGate } from './components/AppUpdateGate';
 import { buildEvoRecap, parseEvoRecapSnapshot, serializeEvoRecapSnapshot, type EvoRecap } from './utils/evoRecap';
 import { parseRitualOpen, serializeRitualOpen } from './utils/atividadesLista';
 import { isDemoMode, demoRefusalText, isDemoBlockedView, setDemoNetworkOff } from './utils/demoMode';
@@ -9898,6 +9899,8 @@ export default function App() {
           />
         </Suspense>
       )}
+
+      <AppUpdateGate language={language} />
 
       {playReviewOpen && <PlayReviewModal language={language} onAccept={playReviewAccept} onLater={playReviewLater} />}
 
