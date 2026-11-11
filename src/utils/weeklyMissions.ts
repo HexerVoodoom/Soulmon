@@ -23,7 +23,8 @@ import { hashString, mulberry32 } from './oracle/base';
 export type WeeklyMissionId =
   | 'rest-nights' | 'checkins' | 'haunted-done' | 'dungeon-runs'
   | 'rub-days' | 'shower' | 'play-days' | 'mood-checkins'
-  | 'dream-new' | 'evolve-view' | 'tournament-match' | 'gift-sent';
+  | 'dream-new' | 'evolve-view' | 'tournament-match' | 'gift-sent'
+  | 'journal-days' | 'focus-days';
 
 export interface WeeklyMission {
   id: WeeklyMissionId;
@@ -51,8 +52,18 @@ const POOL: readonly WeeklyMission[] = [
   { id: 'evolve-view', target: 1, emblems: 2, descPt: 'Visite a árvore de evolução', descEn: 'Visit the evolution tree' },
   { id: 'tournament-match', target: 2, emblems: 3, descPt: 'Dispute 2 partidas do Torneio', descEn: 'Play 2 Tournament matches' },
   // 11/11/2026: "Visite a criatura de alguém" (id antigo `friend-visit`) virou ENVIAR UM PRESENTE; mesmo alvo e Emblemas, mesma posição (mesmo sorteio).
+  { id: 'journal-days', target: 3, emblems: 3, descPt: 'Faça o journal em 3 dias', descEn: 'Write in your journal on 3 days' },
+  { id: 'focus-days', target: 3, emblems: 3, descPt: 'Complete a Focus Workshop em 3 dias', descEn: 'Complete the Focus Workshop on 3 days' },
   { id: 'gift-sent', target: 1, emblems: 2, descPt: 'Envie um presente a alguém', descEn: 'Send someone a gift' },
 ];
+
+/**
+ * SEMPRE na lista da semana (dono, 11/11/2026): "fazer o journal" e "completar o Focus Workshop" NÃO são diárias; são 3× por semana, no máximo 1 por dia.
+ * As outras `WEEKLY_MISSION_COUNT` vêm do sorteio da semana, sem estas duas.
+ */
+export const WEEKLY_FIXED: readonly WeeklyMissionId[] = ['journal-days', 'focus-days'];
+/** Missões que contam no máximo 1× por dia do jogador. */
+export const WEEKLY_ONCE_PER_DAY: readonly WeeklyMissionId[] = ['journal-days', 'focus-days'];
 
 export const WEEKLY_MISSION_COUNT = 3;
 
@@ -67,8 +78,8 @@ export const WEEKLY_MISSION_COUNT = 3;
  */
 export function weeklyMissionsFor(weekKey: string): WeeklyMission[] {
   const rng = mulberry32(hashString(`weekly-missions:${weekKey}`));
-  const restantes = [...POOL];
-  const escolhidas: WeeklyMission[] = [];
+  const restantes = POOL.filter(m => !WEEKLY_FIXED.includes(m.id));
+  const escolhidas: WeeklyMission[] = WEEKLY_FIXED.map(id => POOL.find(m => m.id === id)!);
   for (let i = 0; i < WEEKLY_MISSION_COUNT && restantes.length; i += 1) {
     const idx = Math.floor(rng() * restantes.length);
     escolhidas.push(restantes.splice(idx, 1)[0]);
@@ -88,6 +99,8 @@ export interface WeeklyMissionProgress {
   counts: Partial<Record<WeeklyMissionId, number>>;
   /** Missões já pagas nesta semana — pagar duas vezes é bug de economia. */
   claimed: WeeklyMissionId[];
+  /** Último dia do jogador em que cada missão "1 por dia" contou (só `WEEKLY_ONCE_PER_DAY`). */
+  last?: Partial<Record<WeeklyMissionId, string>>;
 }
 
 export function emptyWeeklyProgress(week: string): WeeklyMissionProgress {
@@ -98,6 +111,13 @@ export function emptyWeeklyProgress(week: string): WeeklyMissionProgress {
 export function forWeek(p: WeeklyMissionProgress | undefined, week: string): WeeklyMissionProgress {
   if (p && p.week === week) return p;
   return emptyWeeklyProgress(week);
+}
+
+/** Soma 1 numa missão "1 por dia" SÓ se ela ainda não contou em `dia`; senão devolve o MESMO `p`. */
+export function bumpWeeklyDay(p: WeeklyMissionProgress, id: WeeklyMissionId, dia: string): WeeklyMissionProgress {
+  if (p.last?.[id] === dia) return p;
+  const b = bumpWeekly(p, id);
+  return { ...b, last: { ...(p.last ?? {}), [id]: dia } };
 }
 
 /** Soma 1 numa missão. PURA e sem teto — quem lê compara com o `target`. */

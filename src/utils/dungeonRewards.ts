@@ -7,7 +7,7 @@ import { playerDayKey } from './playerDay';
 import { addFragments, fragmentGain, FRAGMENTS_PER_RUN } from './equipment';
 import { sanitizeTalentPicks } from './talents';
 import { isoWeekKey } from './offerMoment';
-import { bumpWeekly, forWeek, type WeeklyMissionId } from './weeklyMissions';
+import { bumpWeekly, bumpWeeklyDay, forWeek, WEEKLY_ONCE_PER_DAY, type WeeklyMissionId } from './weeklyMissions';
 import { rosterEntryOfKey } from './enemyRoster';
 import { applyElementsDefeated, dexIdsOfFoe } from './elementDex';
 import { applyEssences, applyEssencesAway, essenceDropsOfFoe } from './essences';
@@ -16,7 +16,10 @@ import { applyEssences, applyEssencesAway, essenceDropsOfFoe } from './essences'
 export function countWeeklyMission<T extends Pick<GameState, 'weeklyMissions' | 'playerDayTz'>>(prev: T, id: WeeklyMissionId, now: Date): T {
   const semana = isoWeekKey(playerDayKey(now, prev.playerDayTz));
   if (!semana) return prev;
-  return { ...prev, weeklyMissions: bumpWeekly(forWeek(prev.weeklyMissions, semana), id) };
+  const dia = playerDayKey(now, prev.playerDayTz);
+  const cur = forWeek(prev.weeklyMissions, semana);
+  const prox = WEEKLY_ONCE_PER_DAY.includes(id) ? bumpWeeklyDay(cur, id, dia) : bumpWeekly(cur, id);
+  return prox === cur && prev.weeklyMissions === cur ? prev : { ...prev, weeklyMissions: prox };
 }
 
 /** Um inimigo vencido: abate, bestiário e elemento do dex (a mesma conta de `handleDungeonEnemyDefeated`). */

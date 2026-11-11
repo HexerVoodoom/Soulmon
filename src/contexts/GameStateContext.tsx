@@ -1544,6 +1544,7 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
             week: w.week,
             counts: obj<number>(w.counts) as WeeklyMissionProgress['counts'],
             claimed: Array.isArray(w.claimed) ? (w.claimed.filter(x => typeof x === 'string') as WeeklyMissionProgress['claimed']) : [],
+            ...(w.last && typeof w.last === 'object' && !Array.isArray(w.last) ? { last: Object.fromEntries(Object.entries(w.last as Record<string, unknown>).filter(([, v]) => typeof v === 'string' && v.length <= 40)) as WeeklyMissionProgress['last'] } : {}),
           });
         })(),
         buildingQuests: sanitizeBuildingQuests(loadedState.buildingQuests),

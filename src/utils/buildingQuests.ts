@@ -70,7 +70,8 @@ export const MATERIAL_IDS = Object.keys(MATERIAL_BUILDING) as MaterialId[];
 export const QUEST_BUILDINGS: readonly BuildingId[] = (Object.keys(BUILDING_GATES) as BuildingId[]).filter(id => !id.startsWith('mercado.') && id !== 'forja.ferreiro' && id !== 'forja.hexsmith' && id !== 'laboratorio.perfil' && id !== 'arena.guerra' && id !== 'hall.grove' && id !== 'exploracao.dungeon');
 
 /** Os prédios cuja missão o menu da Home lista (e que acendem a marca do canto). O resto só conta a visita. */
-export const LISTED_QUEST_BUILDINGS: readonly BuildingId[] = ['forja.caderno'];
+// 11/11/2026 (dono): o journal deixou de ser tarefa diária (virou semanal 3×, `weeklyMissions`); nenhuma missão de prédio é listada no menu.
+export const LISTED_QUEST_BUILDINGS: readonly BuildingId[] = [];
 
 const BY_BUILDING = new Map(MATERIAL_IDS.map(id => [MATERIAL_BUILDING[id], id] as const));
 

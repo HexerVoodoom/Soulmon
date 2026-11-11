@@ -37,7 +37,7 @@ describe('as missões semanais estão plugadas', () => {
     // missão nova que alguém acrescenta ao pool sem ligar em lugar nenhum.
     const semGatilho = weeklyMissionPool()
       .map(m => m.id)
-      .filter(id => !app.includes(`contarMissao('${id}')`));
+      .filter(id => !app.includes(`contarMissao('${id}')`) && !app.includes(`countWeeklyMission(prev, '${id}'`));
     expect(semGatilho).toEqual([]);
   });
 
