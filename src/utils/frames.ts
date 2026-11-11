@@ -23,6 +23,8 @@
 // glifos de interface, que ficam pelados). Ela envolve a criatura, não um ícone.
 // ---------------------------------------------------------------------------
 
+import { COSMETICOS_NOVOS } from './cosmeticosNovos';
+
 export type FrameOrigin = 'basic' | 'rank' | 'shop' | 'achievement' | 'event';
 
 export interface FrameLook {
@@ -77,6 +79,11 @@ export const FRAMES: readonly AvatarFrame[] = [
   // ── evento ──
   { id: 'evento-lua-colheita', namePt: 'Lua da colheita', nameEn: 'Harvest moon', origin: 'event', howPt: 'Dada no evento sazonal de outono.', howEn: 'Given during the autumn seasonal event.', look: { ring: '#D9A05B', accent: '#FFE9C2', line: 'dotted', width: 3 } },
   { id: 'evento-primeira-season', namePt: 'Primeira season', nameEn: 'First season', origin: 'event', howPt: 'Dada a quem jogou a primeira season do Torneio.', howEn: 'Given to anyone who played the first Tournament season.', look: { ring: '#A98B6A', accent: '#F3E6D2', line: 'double', width: 2 } },
+  // ── loja (Bits): temas e elementos (04/11/2026). Só as com arte instalada; catálogo em `utils/cosmeticosNovos.ts`. Anel CSS de fallback = cor do tema. ──
+  ...COSMETICOS_NOVOS.filter(c => c.kind === 'frame').map((c): AvatarFrame => ({
+    id: c.id, namePt: c.namePt, nameEn: c.nameEn, origin: 'shop', price: c.price, ...(c.element ? { element: c.element } : {}),
+    look: { ring: '#8A8F98', line: 'solid', width: 3 },
+  })),
 ];
 
 const BASIC_FRAME = FRAMES[0];

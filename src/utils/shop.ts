@@ -5,6 +5,7 @@ import { GUILD_COPY_CORE } from './guildCopyCore';
 import { PREMIUM_SPECIAL_ITEMS } from './premiumFood';
 import { POTION_SPECIAL_ITEMS } from './elementPotion';
 import { RESET_POINTS_EMOJI } from './betaResetGrant';
+import { COSMETICOS_NOVOS } from './cosmeticosNovos';
 
 export type ShopItemKind = 'chip' | 'heart' | 'bg' | 'furniture' | 'emblem';
 
@@ -549,6 +550,12 @@ export const SHOP_ITEMS: ShopItem[] = [
     descPt: 'Pódio dourado sob céu de fim de tarde', descEn: 'Golden podium under an evening sky', price: 1500,
     unlock: { kind: 'mission', missionId: 'mission-rank-gold' } },
 
+  // COSMÉTICOS NOVOS (temas e elementos, 04/11/2026) — só as peças com arte instalada; catálogo em `utils/cosmeticosNovos.ts`.
+  ...COSMETICOS_NOVOS.filter(c => c.kind !== 'frame').map((c): ShopItem => ({
+    id: c.id, kind: c.kind === 'bg' ? 'bg' : 'furniture', icon: c.icon, namePt: c.namePt, nameEn: c.nameEn,
+    descPt: c.descPt, descEn: c.descEn, price: c.price,
+    ...(c.slot ? { slot: c.slot, fits: c.fits } : {}), ...(c.element ? { element: c.element } : {}),
+  })),
 ];
 
 /**
