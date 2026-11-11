@@ -668,8 +668,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
                     : 'Your nickname and your Soulmon show up on a public list of Tournament players.')}
                 {' '}
                 {isPt
-                  ? 'Há um limite de partidas por dia; perder também rende Honra. Vencer alguém bem abaixo de você, ou o mesmo oponente de novo, rende cada vez menos. ' + 'Sem oponentes, três NPCs treinam com você, sem gastar partida.'
-                  : 'There is a daily match limit; losing earns Honor too. Beating someone far below you, or the same opponent again, earns less each time. ' + 'With no opponents, three NPCs train with you, no match used.'}
+                  ? 'Há um limite de partidas por dia; perder também rende Honra. Vencer quem está acima de você no ranking rende mais pontos; vencer quem está bem abaixo, ou o mesmo oponente de novo, rende menos. ' + 'Sem oponentes, três NPCs treinam com você, sem gastar partida.'
+                  : 'There is a daily match limit; losing earns Honor too. Beating someone ranked above you earns more points; beating someone far below you, or the same opponent again, earns less. ' + 'With no opponents, three NPCs train with you, no match used.'}
               </span>
             )}
         </InfoTipSection>
@@ -1425,11 +1425,20 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
  * "Emblems +N" com o número em serifa dourada 20; "Continue" primário nos
  * dois — a saída não muda de cor com o resultado (D-J8).
  */
+/** O motivo do ganho de pontos de faixa da vitória (pt/en); `undefined` = ganho normal, sem texto. */
+export function gainReasonText(reason: MatchResult['gainReason'], isPt: boolean): string {
+  if (reason === 'rank-up') return isPt ? 'Rendeu mais: oponente acima de você no ranking' : 'Earned more: opponent ranked above you';
+  if (reason === 'rank-down') return isPt ? 'Rendeu menos: oponente bem abaixo de você no ranking' : 'Earned less: opponent ranked well below you';
+  if (reason === 'repeat') return isPt ? 'Rendeu menos: mesmo oponente de novo hoje' : 'Earned less: same opponent again today';
+  return '';
+}
 function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: MatchResult; isPt: boolean; petStage: string; petLine?: string; onClose: () => void }) {
   const draw = result.draw === true;
   const petSpriteSrc = getSpriteForStage(petStage, petLine, 256);
   const petScale = usePetScale(petStage, petSpriteSrc);
   const title = draw ? (isPt ? 'Empate' : 'Draw') : result.won ? (isPt ? 'Vitória' : 'Victory') : (isPt ? 'Derrota' : 'Defeat');
+  // Por que a vitória rendeu mais ou menos pontos (decisão do servidor, `gainReason`).
+  const gainWhy = !draw && result.won ? gainReasonText(result.gainReason, isPt) : '';
   return (
     <ResultScreen
       playAgainIcon={lotIconName('arena', 'torneio')} playAgainArt={lotIconArt('arena', 'torneio')} dailyEvent="torneio"
@@ -1441,7 +1450,7 @@ function ResultDialog({ result, isPt, petStage, petLine, onClose }: { result: Ma
       title={title}
       line={draw
         ? (isPt ? 'Os dois caíram juntos. A partida conta, sem pontos para ninguém.' : 'You both went down together. The match counts, with no points for anyone.')
-        : (isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`)}
+        : (isPt ? `Contra ${result.opponent.name}` : `Against ${result.opponent.name}`) + (gainWhy ? ` · ${gainWhy}` : '')}
       lineAttrs={draw ? { 'data-empate': true } : undefined}
       hero={draw ? undefined : { label: isPt ? 'Placar da partida' : 'Match score', value: `${result.myScore} × ${result.oppScore}` }}
       strip={draw ? undefined : [{ key: 'pts', label: isPt ? 'Poder da partida' : 'Match power', value: `${result.points} pts` }]}

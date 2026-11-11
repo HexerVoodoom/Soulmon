@@ -516,9 +516,9 @@ Cloudflare Workers (`workers/`), deploy **manual** (`cd workers && ../node_modul
 **Régua:** `functions/api/equipment.parity.test.js`.
 
 ### `functions/api/_honra.js`
-**Dono de:** o RENDIMENTO DECRESCENTE dos pontos do Torneio (PR13, decisão do dono 06/10/2026): o ganho de uma vitória cai com a diferença de level (oponente muito abaixo rende ~0) e com a N-ésima vitória do dia sobre o MESMO oponente. Nunca mexe no que se perde. Os levels vêm da ficha congelada em `duelStart`.
-**Exports:** `HONRA_PONTOS_VITORIA`, `HONRA_PONTOS_DEFESA`, `HONRA_LEVEL_CARENCIA`, `HONRA_LEVEL_QUEDA`, `HONRA_FATOR_POR_REPETICAO`, `fatorPorLevel`, `fatorPorRepeticao`, `ganhoDePontos`, `HONRA_TETO_DIA_POR_PAR`.
-**Chamado por:** `community.js › settleMatch` (devolve `gain`/`honorFactor` no `match`).
+**Dono de:** os pontos do Torneio por RANK (decisão do dono 11/11/2026): o ganho de uma vitória sobe contra oponente acima (até ~2×) e desce contra bem abaixo (piso 3), por diferença de pontos da season (`ganhoPorRank`), e cai com a N-ésima vitória do dia sobre o MESMO oponente. O corte por level (PR13, `ganhoDePontos`/`fatorPorLevel`) ficou só para a Honra (`honorFactor`). Nunca mexe no que se perde. Os pontos vêm congelados em `duelStart` (`pending.pts`).
+**Exports:** `HONRA_PONTOS_VITORIA`, `HONRA_PONTOS_DEFESA`, `HONRA_LEVEL_CARENCIA`, `HONRA_LEVEL_QUEDA`, `HONRA_FATOR_POR_REPETICAO`, `fatorPorLevel`, `fatorPorRepeticao`, `ganhoDePontos`, `HONRA_TETO_DIA_POR_PAR`, `PONTOS_PISO_VITORIA`, `PONTOS_RANK_ESCALA`, `PONTOS_RANK_MULT_MAX`, `multPorRank`, `ganhoPorRank`.
+**Chamado por:** `community.js › settleMatch` (devolve `gain`/`honorFactor`/`gainReason` no `match`).
 **Régua:** `functions/api/community.farm.test.js`.
 
 ### `functions/api/_guerra.js`
