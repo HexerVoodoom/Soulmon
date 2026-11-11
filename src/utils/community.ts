@@ -11,6 +11,7 @@ import {
   type FeiraEvento, type FeiraResumo, type FeiraAttack, type FeiraClaim, type FeiraTrail, type FeiraTrailDone, type FeiraSolution,
 } from './feira';
 import { sanitizeFeiraLoja, type FeiraLoja } from './feiraLoja';
+import { BUFF_PRECO, rememberClanBuffs, sanitizeBuffsAtivos, type BuffsAtivos } from './guildBuffs';
 export type { FeiraEvento, FeiraResumo, FeiraAttack, FeiraClaim, FeiraTrail, FeiraTrailDone, FeiraSolution };
 import {
   GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES, GUILD_GESTURES, TIDE_SIZES, RAID_PHENOMENA, CASA_STAGES,
@@ -492,7 +493,8 @@ export interface GuildCasa {
   bitsTotal: number | null;
   slots: Array<{ memberId: string; item: string; euMesmo: boolean }>;
   /** A Loja do clã (R5/A): itens JÁ do clã (ids do catálogo) e o saldo de Bits do clã. Campo aditivo: ausente = vazio. */
-  loja: { itens: string[]; saldo: number | null };
+  /** BUFFS DO CLÃ (10/11/2026; substituem a Loja): tesouro, preço e os buffs ativos do clã inteiro. `euPosso` = quem pergunta é o anfitrião. */
+  buffs: { saldo: number | null; preco: number; ativos: BuffsAtivos; euPosso: boolean };
   mine: {
     /** O item que EU pus na casa, ou `null`. */
     slot: string | null;
@@ -519,10 +521,10 @@ function sanitizeCasa(raw: unknown): GuildCasa | null {
     perto: x.perto === true && idx < CASA_STAGES.length - 1,
     bitsTotal: typeof x.bitsTotal === 'number' && Number.isFinite(x.bitsTotal) && x.bitsTotal >= 0 ? Math.floor(x.bitsTotal) : null,
     slots,
-    loja: (() => {
-      const l = (x.loja && typeof x.loja === 'object' ? x.loja : {}) as Record<string, unknown>;
-      const itens = [...new Set((Array.isArray(l.itens) ? l.itens : []).filter((v): v is string => typeof v === 'string' && /^loja-[a-z0-9-]{2,40}$/.test(v)))].slice(0, 20);
-      return { itens, saldo: typeof l.saldo === 'number' && Number.isFinite(l.saldo) && l.saldo >= 0 ? Math.floor(l.saldo) : null };
+    buffs: (() => {
+      const l = (x.buffs && typeof x.buffs === 'object' ? x.buffs : {}) as Record<string, unknown>;
+      const n = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? Math.floor(v) : null);
+      return { saldo: n(l.saldo), preco: n(l.preco) ?? BUFF_PRECO, ativos: sanitizeBuffsAtivos(l.ativos), euPosso: l.euPosso === true };
     })(),
     mine: { slot: itemOk(mine.slot) ? mine.slot : null, capReached: mine.capReached === true },
   };
@@ -594,6 +596,9 @@ const str = (v: unknown, max = 200): string => (typeof v === 'string' ? v.slice(
 export function sanitizeGuildView(raw: unknown): GuildView | null {
   if (!raw || typeof raw !== 'object') return null;
   const r = raw as Record<string, unknown>;
+  const casa = sanitizeCasa(r.casa);
+  // Os buffs do clã valem fora da folha da Guilda (efeito local): guarda os da vista mais recente (cada um vence sozinho).
+  if (casa) rememberClanBuffs(casa.buffs.ativos);
   const list = Array.isArray(r.members) ? r.members : [];
   const declared = typeof r.size === 'number' && Number.isFinite(r.size) ? Math.floor(r.size) : 0;
   const size = Math.max(list.length, declared);
@@ -651,7 +656,7 @@ export function sanitizeGuildView(raw: unknown): GuildView | null {
     gestureReceived: r.gestureReceived === true,
     raid: sanitizeRaid(r.raid),
     ...(feiraResumo ? { feira: feiraResumo } : {}),
-    casa: sanitizeCasa(r.casa),
+    casa,
   };
 }
 
@@ -918,12 +923,14 @@ export const donateToGuild = (id: string, bits: number, tz?: PlayerDayAnchor) =>
   guildCall<{ accepted?: number; guild: unknown }>('guildDonate', { method: 'POST', body: { id, dayKey: dia(tz), bits } })
     .then(r => ({ accepted: typeof r.accepted === 'number' && r.accepted > 0 ? Math.floor(r.accepted) : 0, guild: viewOf(r) }));
 
+// LÁPIDE (10/11/2026): `buyGuildShopItem` (a Loja do clã) saiu; os Buffs do clã a substituem (`buyGuildBuff`).
+
 /**
- * Compra na LOJA do clã. Manda SÓ `itemId` + `opId` (nunca preço): o servidor decide preço e saldo, e repetir o
- * MESMO `opId` (reenvio após queda de rede) não cobra de novo. 409 = saldo curto / já é do clã (o chamador relê).
+ * Compra um BUFF do clã com o tesouro (só o anfitrião). Manda SÓ `buffId` + `opId` (nunca preço); repetir o MESMO `opId` não cobra de
+ * novo. 409 = saldo curto (o chamador relê); 403 = não é o anfitrião.
  */
-export const buyGuildShopItem = (id: string, itemId: string, opId: string, tz?: PlayerDayAnchor) =>
-  guildCall<{ repeated?: boolean; guild: unknown }>('guildShopBuy', { method: 'POST', body: { id, dayKey: dia(tz), itemId, opId } }).then(viewOf);
+export const buyGuildBuff = (id: string, buffId: string, opId: string, tz?: PlayerDayAnchor) =>
+  guildCall<{ repeated?: boolean; guild: unknown }>('guildBuffBuy', { method: 'POST', body: { id, dayKey: dia(tz), buffId, opId } }).then(viewOf);
 
 /** Põe (ou tira, com `null`) o item do SEU slot na casa. Um item por pessoa. */
 export const setGuildSlot = (id: string, item: string | null, tz?: PlayerDayAnchor) =>

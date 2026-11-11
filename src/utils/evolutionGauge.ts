@@ -21,6 +21,7 @@
  *
  * Funções PURAS: sem React, sem localStorage.
  */
+import { BUFF_GAUGE_MULT, clanBuffActive } from './guildBuffs';
 import { isBBStage, bbEvolveReady } from './bbStage';
 import {
   FORM_REQUIREMENTS,
@@ -53,6 +54,17 @@ export function gaugeGoalFor(stage: string, unlockedEvolutions?: readonly string
 /** Quanto o peso feito num dia rende ao gauge: 0..teto diário. */
 export function gaugeContribution(doneWeight: number, stage: string): number {
   return Math.min(dailyGaugeCap(stage), Math.floor(safe(doneWeight)));
+}
+
+/**
+ * Buff do CLÃ (10/11/2026, `utils/guildBuffs.ts`): +5% no ganho do dia com o buff ativo em `nowMs`, ARREDONDADO e NUNCA acima do
+ * teto diário do estágio (o teto É a meta: o buff acelera os dias de esforço parcial, não fura a trava anti-farm). Sem buff,
+ * devolve o próprio ganho. O ÚNICO ponto onde o buff do clã toca o gauge.
+ */
+export function aplicarBuffClaGauge(contribution: number, stage: string, nowMs: number): number {
+  const c = Math.floor(safe(contribution));
+  if (c <= 0 || !clanBuffActive('gauge', nowMs)) return c;
+  return Math.min(dailyGaugeCap(stage), Math.max(c, Math.round(c * BUFF_GAUGE_MULT)));
 }
 
 /** Credita um dia. Nunca devolve menos do que recebeu. */

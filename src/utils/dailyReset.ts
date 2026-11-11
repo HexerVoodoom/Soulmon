@@ -29,7 +29,7 @@ import { playerDayKey } from './playerDay';
 import { hiddenForDayKey, type DayPlan } from './dayPlan';
 import type { PlayerDayAnchor } from './playerDay';
 import { noteFreeBits } from './bitsOrigin';
-import { creditGauge, gaugeContribution, gaugeFull } from './evolutionGauge';
+import { creditGauge, gaugeContribution, gaugeFull, aplicarBuffClaGauge } from './evolutionGauge';
 import { aplicarBuffGlitchtama, glitchtamaBuffAtivo } from './glitchtamaBuff';
 import { CATALOG_OPT_IN_ONLY_IDS } from '../data/catalogoCarga';
 import { parseDayKeyLocal } from './dayKeyParse';
@@ -991,7 +991,10 @@ function computeDailyResetCore<T extends Record<string, any>>(prev: T, opts: Dai
     (prev as any).glitchtamaCarry ?? 0,
     glitchtamaBuffAtivo((prev as any).glitchtamaUsadoEm, now.getTime()),
   );
-  const gaugeGain = buffGlitch.ganho;
+  /* Buff do clã (10/11/2026): +5% sobre o crédito de TAREFAS do dia, nunca acima do teto diário do estágio (`aplicarBuffClaGauge`). */
+  const clanContrib = gaugeContribution(dailyDone, prev.evolutionStage);
+  const clanExtra = aplicarBuffClaGauge(clanContrib, prev.evolutionStage, now.getTime()) - clanContrib;
+  const gaugeGain = buffGlitch.ganho + clanExtra;
   // PR12b (`tal-com-06`): os Bits do dia completo com o Comércio. Picks inválidos para o Vínculo valem zero.
   const dayBits = missionBitsGain(BITS_PER_COMPLETE_DAY, sanitizeTalentPicks(prev.talentPicks, bondLevelFor(prev.totalXP ?? 0)));
 

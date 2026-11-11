@@ -31,7 +31,8 @@ import {
 import { elementoDaCamada } from './dungeonElementos';
 import { devolverPocoes, gastarUmaDoEstoque, type PotionStock } from './dungeonPotions';
 import { reviveStart, reviveSeed } from './dungeonRevive';
-import { buildDungeonWave, clearBonus, dungeonHeartsLeftToday, noteDungeonHeartDrops, HEART_DROP_CHANCE, type DungeonEnemy } from './dungeon';
+import { buildDungeonWave, clearBonus, dungeonHeartsLeftToday, noteDungeonHeartDrops, type DungeonEnemy } from './dungeon';
+import { heartDropChance } from './dungeonBase';
 import { autoDodgeGrade, autoRingGrade, dungeonFight, dungeonFightSeed, type DungeonPlayerCfg } from './dungeonFight';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
 import { mulberry32 } from './combate/rng';
@@ -257,7 +258,7 @@ export function applyDungeonAway<T extends GameState>(prev: T, nowMs: number, op
     s = applyEnemyDefeated(s, enemy.stage, { dayKey });
     credit(enemy.points);
     report.enemies += 1;
-    if (heartsLeft > 0 && mulberry32((away.seed * 31 + layer * 7 + slot * 3 + 1) | 0)() <= HEART_DROP_CHANCE + heartBonus) {
+    if (heartsLeft > 0 && mulberry32((away.seed * 31 + layer * 7 + slot * 3 + 1) | 0)() <= heartDropChance(heartBonus, t)) {
       heartsLeft -= 1;
       report.hearts += 1;
       s = { ...s, foodInventory: { ...s.foodInventory, [HEART_ITEM_EMOJI]: (s.foodInventory[HEART_ITEM_EMOJI] ?? 0) + 1 } };

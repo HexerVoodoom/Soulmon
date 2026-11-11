@@ -22,10 +22,15 @@ import { kvOrThrow } from './_kv.js';
 export const CASA_TTL = 86400 * 120;
 /** 1 ponto de seiva a cada 10 Bits doados. */
 export const CASA_BITS_POR_PONTO = 10;
-/** Teto de Bits doados por pessoa por DIA DO JOGADOR (anti-esvaziar-a-carteira e anti-abuso). */
-export const CASA_BITS_POR_DIA = 200;
+/**
+ * DOAÇÃO DE BITS AO CLÃ (pedido do dono, 10/11/2026): UMA doação por pessoa por DIA DO JOGADOR, de um valor FECHADO
+ * (`CASA_DOACOES`: 50 ou 100, nenhum outro). Antes eram várias doações até o teto de 200/dia.
+ */
+export const CASA_DOACOES = Object.freeze([50, 100]);
+/** Teto de Bits doados por pessoa por DIA DO JOGADOR = a maior doação (só cabe UMA). */
+export const CASA_BITS_POR_DIA = 100;
 /** Menor doação aceita (múltiplo de `CASA_BITS_POR_PONTO`). */
-export const CASA_BITS_MIN = 10;
+export const CASA_BITS_MIN = 50;
 /**
  * Seiva de UMA missão: cresce com o LEVEL do Soulmon (`stagePower` 1..5) e com o tamanho da roda ativa
  * (pedido do dono: "mais membros e mais level = mais pontos"). 4 → 17; sempre inteiro, ≥ 1.
@@ -89,24 +94,20 @@ export function casaStageFor(total) {
 
 /**
  * Doação de Bits. O CLIENTE só desconta o que o servidor aceitar (`accepted`).
- * Aceita no máximo o que falta do teto do dia; o resto sobra na carteira.
+ * UMA vez por dia do jogador, e só 50 ou 100 (`CASA_DOACOES`). A doação enche o TESOURO do clã (`bitsDaCasa`, de onde saem os
+ * Buffs) E rende seiva como sempre (10 Bits = 1 ponto): uma doação, duas leituras do MESMO registro (`pts.doacao`), sem
+ * segunda contabilidade. A seiva NÃO diminui quando o clã gasta o tesouro (a árvore só cresce).
  * @returns {Promise<{ accepted: number, capped: boolean, invalid?: boolean }>}
  */
 export async function doarBits(env, gid, save, day, bits) {
-  const pedido = int0(bits);
-  // Múltiplos de 10 (nenhum Bit "perdido" no arredondamento do ponto).
-  const quer = pedido - (pedido % CASA_BITS_POR_PONTO);
-  if (quer < CASA_BITS_MIN) return { accepted: 0, capped: false, invalid: true };
+  if (!CASA_DOACOES.includes(bits)) return { accepted: 0, capped: false, invalid: true };
   const c = await lerCasa(env, gid, save);
-  const hoje = c.day === day ? c.bitsToday : 0;
-  const resta = Math.max(0, CASA_BITS_POR_DIA - hoje);
-  const aceito = Math.min(quer, resta - (resta % CASA_BITS_POR_PONTO));
-  if (aceito < CASA_BITS_MIN) return { accepted: 0, capped: true };
+  if (c.day === day && c.bitsToday > 0) return { accepted: 0, capped: true };
   c.day = day;
-  c.bitsToday = hoje + aceito;
-  c.pts.doacao += aceito / CASA_BITS_POR_PONTO;
+  c.bitsToday = bits;
+  c.pts.doacao += bits / CASA_BITS_POR_PONTO;
   await gravarCasa(env, gid, save, c);
-  return { accepted: aceito, capped: aceito < quer };
+  return { accepted: bits, capped: false };
 }
 
 /** Seiva de outra fonte (missão, guerra). `pts` é clampado; devolve o que entrou. */
