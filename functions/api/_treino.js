@@ -8,7 +8,9 @@
 // Este módulo é puro/KV-only: a rota (`community.js`) só o chama.
 // ---------------------------------------------------------------------------
 import { kvOrThrow } from './_kv.js';
-import { BOND_MAX_LEVEL } from './_bond.js';
+import { BOND_MAX_LEVEL, bondLevelFor } from './_bond.js';
+import { soulLevel } from './_soulXP.js';
+import { maxLevelFor } from './_duel.js';
 import { ordenarPorEstagio } from './_oponenteEstagio.js';
 
 /** Quantos oponentes a aba mostra. */
@@ -27,21 +29,56 @@ export const SPAR_HONOR_DAILY_CAP = 20;
 export const SPAR_PENDING_TTL_S = 3600;
 
 /**
- * `pool`: `[{ bond: number, ...resto }]`. Devolve os candidatos EMBARALHADOS dentro da faixa de `myBond`, ampliando
- * a faixa até haver ao menos `n` (ou até o pool todo). Quem chama fatia os `n` primeiros (e pode pular quem não luta).
- * Pura: o `rng` vem de fora (`() => [0,1)`).
+ * Vínculo e NÍVEL DE LUTA de um save, numa só leitura do KV (o nível = o da ficha de duelo: `soulLevel` limitado pelo teto S1 `maxLevelFor`).
+ * Save ausente/ilegível = `{ bond: 0, level: null }` (sem nível: cai na faixa de Vínculo).
  */
-export function pickSparOpponents(pool, myBond, rng, n = SPAR_PICKS, range = SPAR_BOND_RANGE, myStage = null) {
+export async function bondELevelOf(env, saveId) {
+  try {
+    const { value, metadata } = await kvOrThrow(env).getWithMetadata(saveId);
+    if (!value || typeof value !== 'string') return { bond: 0, level: null };
+    const state = JSON.parse(value);
+    if (!state || typeof state !== 'object') return { bond: 0, level: null };
+    const level = Math.min(soulLevel(state), Math.max(1, Math.floor(maxLevelFor(metadata?.f, Date.now()))));
+    return { bond: bondLevelFor(state.totalXP), level: Number.isFinite(level) ? level : null };
+  } catch {
+    return { bond: 0, level: null };
+  }
+}
+
+/** Fatia da lista dos que lutam perto do NÍVEL do jogador (dono, 11/11/2026: "inimigos MAJORITARIAMENTE de nível similar"). Os demais (mais fortes/fracos) dão a variedade. */
+export const SPAR_NEAR_SHARE = 0.75;
+/** "Nível similar": dentro de ±10% do nível do jogador, no mínimo ±2 níveis (nos níveis baixos 10% seria menos que 1 nível). */
+export const sparLevelWindow = (myLevel) => Math.max(2, Math.ceil(myLevel * 0.1));
+
+/**
+ * `pool`: `[{ bond: number, level?: number, ...resto }]`. Devolve os candidatos EMBARALHADOS. Com `myLevel` (e `level` nos itens) a lista é uma
+ * MISTURA: com chance `SPAR_NEAR_SHARE` a próxima vaga vai para alguém de nível similar (`sparLevelWindow`, qualquer Vínculo), senão para
+ * alguém da faixa de Vínculo (±`range`, ampliada até haver ao menos `n`) que NÃO é similar — a variedade. Dentro de cada grupo vale a
+ * preferência de estágio (`ESTAGIO_PESOS`, que acompanha o poder). Sem `myLevel` (ou sem `level`) = o comportamento antigo (só Vínculo).
+ * Quem chama fatia os `n` primeiros (e pode pular quem não luta). Pura: o `rng` vem de fora (`() => [0,1)`).
+ */
+export function pickSparOpponents(pool, myBond, rng, n = SPAR_PICKS, range = SPAR_BOND_RANGE, myStage = null, myLevel = null) {
   const fin = v => (Number.isFinite(v) ? v : 1);
   const mine = fin(myBond);
+  const byLevel = Number.isFinite(myLevel);
+  const isNear = p => byLevel && Number.isFinite(p.level) && Math.abs(p.level - myLevel) <= sparLevelWindow(myLevel);
+  const inBand = r => pool.filter(p => Math.abs(fin(p.bond) - mine) <= r);
+  const total = c => c.length + pool.filter(p => isNear(p) && !c.includes(p)).length;
   let r = Math.max(0, range);
-  let cand = pool.filter(p => Math.abs(fin(p.bond) - mine) <= r);
-  while (cand.length < n && cand.length < pool.length && r < BOND_MAX_LEVEL) {
+  let cand = inBand(r);
+  while (total(cand) < n && cand.length < pool.length && r < BOND_MAX_LEVEL) {
     r += SPAR_RANGE_STEP;
-    cand = pool.filter(p => Math.abs(fin(p.bond) - mine) <= r);
+    cand = inBand(r);
   }
-  // Embaralha com preferência por estágio próximo/variado ao do jogador (`ESTAGIO_PESOS`); sem `myStage`, uniforme.
-  return ordenarPorEstagio(cand, myStage, rng, c => c.stage);
+  if (!byLevel) return ordenarPorEstagio(cand, myStage, rng, c => c.stage);
+  const near = ordenarPorEstagio(pool.filter(isNear), myStage, rng, c => c.stage);
+  const far = ordenarPorEstagio(cand.filter(p => !isNear(p)), myStage, rng, c => c.stage);
+  const out = [];
+  let i = 0, j = 0;
+  while (i < near.length || j < far.length) {
+    if (i < near.length && (j >= far.length || rng() < SPAR_NEAR_SHARE)) out.push(near[i++]); else out.push(far[j++]);
+  }
+  return out;
 }
 
 /** Honra desta vitória: 1 ou 2, a 50%. */

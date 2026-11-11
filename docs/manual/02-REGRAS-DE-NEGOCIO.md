@@ -4967,7 +4967,7 @@ O Torneio tem **duas abas** (só aparecem com o Vínculo mínimo): **Ranqueada**
 faixas, na season nem no `lifetimePoints`, não gasta a cota de partidas do dia e perder não custa nada (sem coração, sem castigo, sem Vínculo).
 
 ```
-GET  sparOpponents ?id=  → 5 oponentes (functions/api/_treino.js › pickSparOpponents); cada GET sorteia de novo (REFRESH ILIMITADO, sem custo nem teto)
+GET  sparOpponents ?id=  → 5 oponentes, ~75% de NÍVEL similar (±10%, mín. ±2; REGISTRO §286) e o resto da faixa de Vínculo (functions/api/_treino.js › pickSparOpponents); cada GET sorteia de novo (REFRESH ILIMITADO, sem custo nem teto)
 POST sparStart {id, opponentId, zone?, off?} → semente do SERVIDOR + ficha dos dois lados do SAVE, congeladas em spar:<id> (KV, 1 h); recusa 409 sem ticket
 POST sparMatch {id, opponentId, taps?, forfeit?, seed?, zone?, off?} → simulateDuel no servidor; vitória rende Honra; reenvio idempotente (sparDone:<id>)
 ```

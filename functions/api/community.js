@@ -74,7 +74,7 @@ import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_hon
 import { sanitizarNomeDeGuilda } from './_coop.js';
 import { nomeEspecialValido, ESPECIAL_NOME_COOLDOWN_MS } from './_especialNomeRegra.js';
 import { pickRankedOpponents } from './_rankedPick.js';
-import { fixarTzTreino, pickSparOpponents, grantSparHonor, readSparTicket, buySparTicket, spendSparMatch, sparTicketStatus, sparPendingKey, sparDoneKey, SPAR_PICKS, SPAR_SCAN_MAX, SPAR_PENDING_TTL_S } from './_treino.js';
+import { fixarTzTreino, pickSparOpponents, bondELevelOf, grantSparHonor, readSparTicket, buySparTicket, spendSparMatch, sparTicketStatus, sparPendingKey, sparDoneKey, SPAR_PICKS, SPAR_SCAN_MAX, SPAR_PENDING_TTL_S } from './_treino.js';
 import { loadDuelSide as loadDuelSideShared, loadDuelSideWithSprite } from './_duelLoad.js';
 import { avatarIdOrNull } from './_avatares.js';
 import { artLineOrNull, spriteUrlOrNull } from './_artLine.js';
@@ -1166,7 +1166,7 @@ async function handleCommunity(context) {
     const rng = () => { const b = new Uint32Array(1); crypto.getRandomValues(b); return b[0] / 4294967296; };
     const meProfile = await getProfile(env, id);
     if (!meProfile?.pvpEnabled) return json({ error: 'pvp disabled' }, 403);
-    const myBond = await bondLevelOf(env, id);
+    const { bond: myBond, level: myLevel } = await bondELevelOf(env, id);
     const admins = await adminSaveIds(env);
     // Varre os perfis em ORDEM SORTEADA (a cada pedido: é o "Refresh" sem fim) até `SPAR_SCAN_MAX` elegíveis.
     const keys = await listPrefix(env, 'profile:', 300);
@@ -1181,9 +1181,10 @@ async function handleCommunity(context) {
       let p;
       try { p = JSON.parse(raw); } catch { continue; }
       if (!p?.pvpEnabled || isHidden(p) || p.id === id) continue;
-      pool.push({ profile: p, saveId, bond: await bondLevelOf(env, saveId), stage: p.stage });
+      const bl = await bondELevelOf(env, saveId);
+      pool.push({ profile: p, saveId, bond: bl.bond, level: bl.level, stage: p.stage });
     }
-    const ordered = pickSparOpponents(pool, myBond, rng, SPAR_PICKS, undefined, meProfile.stage ?? null);
+    const ordered = pickSparOpponents(pool, myBond, rng, SPAR_PICKS, undefined, meProfile.stage ?? null, myLevel);
     const opponents = [];
     for (const { profile, saveId } of ordered) {
       if (opponents.length >= SPAR_PICKS) break;

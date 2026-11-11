@@ -120,7 +120,9 @@ describe('GET sparOpponents', () => {
   });
 
   it('respeita a faixa de Vínculo: quem está longe fica de fora quando a faixa tem 5 ou mais', async () => {
-    const { env, ids } = mkEnv({ meBond: 10, bonds: [9, 10, 11, 12, 8, 9, 40, 41, 1] });
+    // Quem está longe de Vínculo E de nível fica de fora (quem é de nível similar entra mesmo com Vínculo distante: Sparring por nível, 11/11/2026).
+    const longe6 = { evolutionStage: 'ultra-power', perfectDays: 999 };
+    const { env, ids } = mkEnv({ meBond: 10, bonds: [9, 10, 11, 12, 8, 9, 40, 41, 1], oppSave: { 6: longe6, 7: longe6, 8: longe6 } });
     for (let i = 0; i < 15; i++) {
       const r = await lista(env);
       const longe = new Set(ids.filter(x => Math.abs(x.bond - 10) > 3).map(x => x.pid));
