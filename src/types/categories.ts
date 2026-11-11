@@ -65,5 +65,5 @@ export function normalizeCategory(raw: unknown): ActivityCategory | undefined {
   if (typeof raw !== 'string' || !raw) return undefined;
   if ((LIFE_AREAS as string[]).includes(raw)) return raw as ActivityCategory;
   const cap = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
-  return LEGACY_CATEGORY_MAP[cap];
+  return Object.prototype.hasOwnProperty.call(LEGACY_CATEGORY_MAP, cap) ? LEGACY_CATEGORY_MAP[cap] : undefined;
 }

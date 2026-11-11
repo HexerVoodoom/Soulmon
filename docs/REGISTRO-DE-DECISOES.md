@@ -4764,3 +4764,15 @@ Migração: `migrateCatalogHabitDaily` no load converte para todo dia a atividad
 **Falsifica:** item do catálogo na linha de Tarefas, ou o botão Mais opções na tela Novo hábito (`CreateModal.habito.render.test.tsx`).
 
 **Rollback:** reverter o PR. **APK:** nada obrigatório.
+
+## §296 — Categorias: uma lista só (hábito = tarefa), P/H/B equilibrado e Criatividade (11/11/2026, pedido do dono)
+
+**Decisão.** Tarefas e hábitos usam as MESMAS 10 categorias (`src/types/categories.ts`): Sono, Corpo, Mente, Foco, Aprendizado, Relações, Casa, Finanças, Propósito, Criatividade. O id gravado no save é o da área. Antes: 8 categorias em inglês (chips/save) e 9 áreas (catálogo/onboarding).
+
+**Balanceamento (decisão do dono: 3 pontos por categoria, 10/10/10).** Auditoria: as 8 antigas somavam 4 cada, mas Poder 9 / Harmonia 12 / Benevolência 11. Agora toda categoria soma 3 e o total é Poder 10 / Harmonia 10 / Benevolência 10 (igualdade exata). Tabela final (P/H/B): sono 0/2/1, corpo 2/1/0, mente 0/2/1, foco 2/0/1, aprendizado 1/2/0, relações 0/1/2, casa 0/1/2, finanças 1/1/1, propósito 2/0/1, criatividade 2/0/1. Corpo, foco, criatividade e propósito pendem a Poder; sono, mente e aprendizado a Harmonia; relações e casa a Benevolência. **Alternativa que perdeu:** soma 4 com P14/H13/B13 (igualdade impossível). **Custo:** cada atividade rende 25% menos pontos de atributo que antes (4 para 3); a progressão por atributo fica mais lenta na mesma proporção, conferir no beta.
+
+**Migração.** `normalizeCategory` no load (atividade, tarefa, histórico, stats): Health e Fitness -> corpo, Wellness -> mente, Discipline e Work -> foco, Study -> aprendizado, Social -> relações, Creativity -> criatividade. Id desconhecido passa intacto. Servidor de IA aceita os dois vocabulários e devolve o novo.
+
+**Falsifica:** `categories.contract.test.ts` (soma igual, equilíbrio, mesma lista em hábito/tarefa/chat/servidor, migração).
+
+**Rollback:** reverter o PR. **APK:** nada obrigatório.

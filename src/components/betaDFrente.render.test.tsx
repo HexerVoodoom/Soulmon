@@ -41,16 +41,16 @@ describe('9.1 — Salão de Jogos', () => {
 describe('10.1 — ícones de categoria no Santuário', () => {
   it('as 8 categorias têm arte (qualquer caixa) e a categoria inválida não quebra', () => {
     expect(Object.keys(CATEGORY_ICON_ART).sort()).toEqual(Object.keys(CATEGORY_ICONS).sort());
-    expect(categoryIconArt('study')).toBe(CATEGORY_ICON_ART.Study);
-    expect(categoryIconArt('STUDY')).toBe(CATEGORY_ICON_ART.Study);
+    expect(categoryIconArt('study')).toBe(CATEGORY_ICON_ART.aprendizado);
+    expect(categoryIconArt('STUDY')).toBe(CATEGORY_ICON_ART.aprendizado);
     expect(categoryIconArt('nada')).toBeUndefined();
     expect(categoryIconArt(undefined)).toBeUndefined();
   });
   it('as listas "O que você mais repete" e "Últimas conclusões" desenham a imagem da categoria, não o emoji', () => {
     const { container } = renderWithCss(
       <StatsPage
-        completedTasks={[{ id: 't1', name: 'Alongar', category: 'Health', emoji: '🧘', completedAt: new Date().toISOString() }]}
-        activityStats={{ a1: { name: 'Alongar', emoji: '🧘', category: 'Health', completionCount: 3 } }}
+        completedTasks={[{ id: 't1', name: 'Alongar', category: 'corpo', emoji: '🧘', completedAt: new Date().toISOString() }]}
+        activityStats={{ a1: { name: 'Alongar', emoji: '🧘', category: 'corpo', completionCount: 3 } }}
         language="pt-BR"
         totalXP={50}
       />,

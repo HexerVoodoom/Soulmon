@@ -11,7 +11,7 @@ import { ACTIVITY_CATALOG } from '../data/activityCatalog';
 import { CHAT_CATEGORIES } from '../utils/chatActions';
 import { CATEGORIES as SERVER_CATEGORIES, LEGACY_CATEGORY_MAP as SERVER_LEGACY } from '../../functions/api/_categories.js';
 
-const SOMA_COMUM = 4;
+const SOMA_COMUM = 3;
 const cats = [...ACTIVITY_CATEGORIES];
 const soma = (c: (typeof cats)[number]) => {
   const a = CATEGORY_ATTRIBUTES[c];
@@ -19,28 +19,23 @@ const soma = (c: (typeof cats)[number]) => {
 };
 
 describe('D — balanceamento de atributos por categoria', () => {
-  it('toda categoria soma o mesmo total (4, a soma que já era a mais comum)', () => {
+  it('toda categoria soma 3', () => {
     for (const c of cats) expect(soma(c), c).toBe(SOMA_COMUM);
   });
 
-  it('o conjunto é equilibrado: Poder, Harmonia e Benevolência diferem em no máximo 1 ponto', () => {
+  it('o conjunto é exatamente equilibrado: Poder = Harmonia = Benevolência = 10', () => {
     const tot = { power: 0, harmony: 0, benevolence: 0 };
     for (const c of cats) {
       tot.power += CATEGORY_ATTRIBUTES[c].power;
       tot.harmony += CATEGORY_ATTRIBUTES[c].harmony;
       tot.benevolence += CATEGORY_ATTRIBUTES[c].benevolence;
     }
-    const v = Object.values(tot);
-    expect(v.reduce((a, b) => a + b, 0)).toBe(SOMA_COMUM * cats.length);
-    expect(Math.max(...v) - Math.min(...v)).toBeLessThanOrEqual(1); // 40 pontos não dividem por 3: 14/13/13
-    expect(tot.power).toBeGreaterThanOrEqual(tot.harmony); // a sobra vai para Poder, o menor de antes
+    expect(tot).toEqual({ power: 10, harmony: 10, benevolence: 10 });
   });
 
-  it('nenhuma categoria favorece só Poder, mas existem categorias com 3 de Poder (como com 3 de Harmonia/Benevolência)', () => {
-    for (const k of ['power', 'harmony', 'benevolence'] as const) {
-      expect(cats.filter(c => CATEGORY_ATTRIBUTES[c][k] === 3).length, k).toBeGreaterThanOrEqual(2);
-    }
-    for (const c of cats) expect(CATEGORY_ATTRIBUTES[c].power, c).toBeLessThanOrEqual(3);
+  it('caráter: corpo, foco e criatividade pendem a Poder; nenhuma categoria passa de 2 num tipo', () => {
+    for (const c of ['corpo', 'foco', 'criatividade'] as const) expect(CATEGORY_ATTRIBUTES[c].power, c).toBe(2);
+    for (const c of cats) for (const k of ['power', 'harmony', 'benevolence'] as const) expect(CATEGORY_ATTRIBUTES[c][k], c).toBeLessThanOrEqual(2);
   });
 });
 

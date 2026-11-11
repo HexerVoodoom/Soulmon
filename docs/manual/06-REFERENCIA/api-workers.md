@@ -614,6 +614,10 @@ Cloudflare Workers (`workers/`), deploy **manual** (`cd workers && ../node_modul
 **Erros:** `400` corpo inválido/tipo/mensagem · `429` · `503` sem KV/desligado · `404`/`401` na leitura · `405`.
 **Cliente:** `src/utils/feedbackClient.ts`. **Privacidade:** `public/privacidade.html` §6e, `docs/PLAY-DATA-SAFETY.md`.
 
+### `functions/api/_categories.js`
+
+Espelho servidor de `src/types/categories.ts`: `CATEGORIES`, `LEGACY_CATEGORY_MAP`, `normalizeCategory` (aceita id antigo ou novo, devolve o novo). Usado por `chat.js`, `suggest-tasks.js` e `_chatActions.js`.
+
 ### Chat agente (11/10/2026) — `functions/api/_chatActions.js`, `_chatKnowledge.js`, `_chatKnowledge.data.js`, `_llm.js`
 
 **`functions/api/_chatActions.js`** — definição das ferramentas (`TOOLS`) e o schema fechado das ações (`validateToolCall`, `sanitizeToolCalls`, `MAX_ACTIONS`). O modelo só propõe; nada grava.
