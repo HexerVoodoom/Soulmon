@@ -4948,6 +4948,18 @@ A Honra do jogador vem do CLIENTE (`onEarnEmblems` com `EMBLEMS_PER_WIN` /
 
 O oponente sorteado do **Treino** e da **Ranqueada** tem estágio próximo e variado ao do jogador: peso por delta de estágio em `ESTAGIO_PESOS` (`functions/api/_oponenteEstagio.js`: −1 25%, igual 40%, +1 25%, +2 7%, −2 3%). Os simulados não têm mais teto Champion (`SIM_FORMA_MAX = 'ultra'`; sprite reaproveitado, sem arte nova de forma alta). Nas listas do Torneio o estágio é um **ícone** (`EstagioMarca`, `aria-label` com o nome do jogo). O mix de ataques dos inimigos ({à distância, corpo a corpo} × {corte, splash}) é ~25% cada (`foeStrikeForm`, `FORMA_MELEE_PCT`), só visual.
 
+**Mix de ataques por superfície, medido (10/11/2026, pelas funções reais; `mixAtaques.superficies.test.ts`).** Tabela [à distância corte / à distância splash / corpo a corpo corte / corpo a corpo splash]:
+
+| Superfície | Antes | Depois |
+|---|---|---|
+| Masmorra, Fenda, Raid, Arena (inimigos) | 25/25/25/24 (#778) | igual |
+| Pesadelo (1 elemento só) | 100/0/0/0 | 25/25/25/25 (`pesadeloGolpe`, por onda) |
+| Simulados (170; Treino, Ranqueada, Duelo) | 56/12/25/7 | 24/26/22/29 (`escolaDoSimulado`, por id, no `fx` do servidor) |
+| Jogador/oponente real com ficha (escola) | 37/33/17/13 | igual: a forma vem da escola da skill (identidade do jogador) |
+
+Causa de "muito ranged de corte": os simulados não tinham escola e caíam na tabela do elemento do jogador (~85% à distância) com o peso de corte por elemento (>50%); o Pesadelo tinha um único golpe fixo (à distância + corte). Os jogadores reais seguem a escola (só `combate_fisico` e a básica da `maldicao` vão de perto), então ~70% à distância por desenho, mas com corte × splash ~50/50. Rollback: reverter o PR (a escola do simulado é derivada a cada leitura, sem dado gravado).
+
+
 ### O Treino (Sparring, a 2ª aba do Torneio — 10/11/2026)
 
 O Torneio tem **duas abas** (só aparecem com o Vínculo mínimo): **Ranqueada** (tudo o que está acima, intocado) e **Treino**

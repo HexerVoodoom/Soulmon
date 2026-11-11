@@ -158,6 +158,15 @@ export function foeStrikeForm(element: string | undefined | null, role: SkillRol
   return elementStrikeForm(element, role);
 }
 
+/**
+ * Pesadelo: um elemento só (`pesadelo`), então a tabela dava SEMPRE o mesmo golpe (ranged + corte). Agora cada inimigo da onda sorteia, estável
+ * por (onda, índice), uma das 4 combinações {ranged, melee} × {corte, concussão}: ~25% cada. Só visual.
+ */
+export function pesadeloGolpe(onda: number): { forma: StrikeForm; impacto: 'corte' | 'concussao' } {
+  const h = hashEstavel(`pesadelo|${onda}`) % 4;
+  return { forma: h & 1 ? 'melee' : 'ranged', impacto: h & 2 ? 'concussao' : 'corte' };
+}
+
 /** Elemento (inimigo, fantasma, pet sem ficha) → forma do golpe da skill básica/especial dele. */
 export function elementStrikeForm(element: string | undefined | null, role: SkillRole): StrikeForm {
   const id = element ?? undefined;
