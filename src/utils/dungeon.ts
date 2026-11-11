@@ -1,6 +1,7 @@
 // Masmorra — a ONDA (`buildDungeonWave`) mora aqui porque sorteia a criatura no roster de combinados (`novosSoulmon` →
 // `enemyRoster*`, ~40 KB com arte). O resto das regras está em `dungeonBase.ts` (leve; entra no chunk de entrada).
 // Quem só precisa de `dungeonFoe`/`getDungeonBest`/… importa de `dungeonBase` e NÃO puxa o roster.
+import { foeSpecialOf } from './combate/foeFamilies';
 import { getDungeonEnemySprite } from './sprites';
 import { lineElementOf } from './spriteElement';
 import { getDungeonEncounter } from './novosSoulmon';
@@ -34,6 +35,8 @@ export function buildDungeonWave(
     const hpStage = stageForFoeHp(foe.combatant.hp);
     const minStage: EnemyStage = FOE_STAGES.indexOf(hpStage) >= FOE_STAGES.indexOf('mega') ? 'mega' : (hpStage as EnemyStage);
     const picked = getDungeonEncounter(tier, used, rng, getDungeonEnemySprite, Math.max(playerLevel, ENEMY_STAGE_UNLOCK_LEVEL[minStage]), element, minStage); // o HP manda: o teto de ARTE por level não segura a forma coerente com ele
+    // Especiais variados (dono, 11/11/2026): o tipo do especial do inimigo (Rift/Masmorra) vem do sorteio fixo por (andar, posição, criatura). O Pesadelo substitui o foe depois.
+    const foeFinal = foe.special ? { ...foe, special: foeSpecialOf(minStage, `rift|${floor}|${slot}|${picked.name}`) } : foe;
     return {
       name: picked.name,
       stage: 'key' in picked && picked.key ? picked.key : enemyKey(tier, picked.line),
@@ -41,7 +44,7 @@ export function buildDungeonWave(
       points: Math.max(1, Math.round(TIER_POINTS[tier] * ptsMult * DUNGEON_BITS_FACTOR)),
       slot,
       floor,
-      foe,
+      foe: foeFinal,
       ...('element' in picked && picked.element ? { element: picked.element, basico: picked.basico, especial: picked.especial } : (lineElementOf(picked.line) ? { element: lineElementOf(picked.line) } : {})),
     };
   });

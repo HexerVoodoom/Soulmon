@@ -40,6 +40,7 @@
 //   • scores de `_rankings.js` (`submitScore`), semanais e mensais por jogo.
 // ---------------------------------------------------------------------------
 
+import { foeFamilyOf } from './_foeFamilies.js';
 import { indexarPontos } from './_rankIndex.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { flagOn } from './_killSwitch.js';
@@ -166,7 +167,7 @@ export function estadoDoDia(p, day) {
 /**
  * A ESCOLA do golpe do simulado (só a FORMA visual: corpo a corpo x à distância). Antes ele não tinha escola e o cliente caía na tabela do
  * elemento (~85% à distância). Agora é um sorteio fixo por id: metade corpo a corpo (`combate_fisico`), metade à distância; com o acabamento
- * corte/splash do elemento no cliente, as 4 combinações ficam perto de 25% cada. SÓ visual: a família do especial segue `direct`.
+ * corte/splash do elemento no cliente, as 4 combinações ficam perto de 25% cada. SÓ visual (a família do especial vem de `foeFamilyOf`).
  */
 export function escolaDoSimulado(id) {
   return ['combate_fisico', 'combate_fisico', 'combate_fisico', 'longo_alcance', 'conjuracao', 'benca'][hash32(`forma|${id}`) % 6];
@@ -191,7 +192,7 @@ export function saveDoSimulado(p, day) {
     soulmonSkills: { [fichaStageOf(e.evolutionStage)]: {
       elementoDominante: { id: p.element },
       basica: { escolaId: escolaDoSimulado(p.id), elementoId: p.element },
-      especial: { escolaId: escolaDoSimulado(p.id), elementoId: p.element, familia: 'direct' },
+      especial: { escolaId: escolaDoSimulado(p.id), elementoId: p.element, familia: foeFamilyOf(e.stage, `sim|${p.id}|${e.stage}`) },
     } },
   };
 }

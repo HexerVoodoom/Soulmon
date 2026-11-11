@@ -4680,3 +4680,13 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Removido.** O editor do Perfil (Editar perfil: campo "Nome do Soulmon" e `EspecialNomeEditor`) virou só leitura com a dica "Troque na Hexsmith". A espera semanal do nome do especial (`ESPECIAL_NOME_COOLDOWN_MS`) caiu para 0: o limite agora é o preço.
 **Arte.** Hexágonos generativos em código; slots `btn-lapis`/`btn-chama` em `src/assets/soulmon/hexsmith/` para a arte final (pedido em `docs/ASSETS-A-GERAR.md`, prioridade máxima).
 **O que falsifica.** Se jogadores trocarem nome em massa só para ofender, o filtro de palavrões é a régua única (ampliar lá); se o preço virar barreira, mudar a constante.
+
+## §288 — Especiais variados nos inimigos (11/11/2026, pedido do dono)
+
+**Decisão.** Os inimigos selvagens (Arena, Endless Rift/Masmorra) e os simulados `sim_*` só soltavam especial de DANO DIRETO. Agora o tipo é sorteado por chave fixa (`foeFamilies.ts`, FNV-1a; sem `Math.random`): Champion em diante 50% dano direto e ~10% cada de buff (`atkBuff`/`spdBuff`), DoT, cura, HoT (`shield` + `effect: 'hot'`) e debuff (`defDebuff`); Rookie 75% direto e ~5% cada. O motor já suportava tudo (`group.ts`/`fight.ts`); nada de efeito novo. Pesadelo fora; o especial escolhido pelo jogador não muda; magnitude e ficha 37/33/17/13 intactas.
+**Regra de equilíbrio do dono.** Cura instantânea = mesma magnitude do dano direto (razão 1); HoT = DoT (razão 1); DoT e HoT ~15% acima do imediato (`OVER_TIME_BONUS` 1,15, razão 1,1–1,2). Aplicado SÓ ao especial dos inimigos no núcleo de grupo (`power` do DoT e `hotScale` do HoT). Buff e debuff mantêm os valores.
+**Simulados (duelo 1v1 no servidor).** Família vinda de `_foeFamilies.js` (espelho; paridade testada). No 1v1 não existe HoT: a fatia do HoT vira `shield`; e `SPECIAL_POWER.dot` segue 1 (mexer no núcleo quebra os gates de calibração do jogador e a paridade cliente×servidor). Pendência: bônus de 15% do DoT dos simulados e HoT real no 1v1.
+**Medição (Arena, nível 30, 150 corridas, `media`):** vitória do mix vs. todo-direto +0 a +10pp (mix é ligeiramente mais fácil: buff/cura/HoT matam menos que dano direto), duração +2% a +8%; ninguém fica invencível. Gate em `foeFamilies.test.ts` (±12pp, ±12%).
+**Alternativa que perdeu:** subir `SPECIAL_POWER.dot`/`hotScale` globais (quebrava 5 gates: regressão 300 lutas, AC5 Masmorra, largada, cheer, HoT ±3pp).
+**Falsifica:** a taxa de vitória da Arena/Rift subir mais de ~12pp no ao vivo, ou jogador reclamar de inimigo que não morre (cura/HoT).
+**Rollback:** reverter o PR (volta `direct` em tudo).

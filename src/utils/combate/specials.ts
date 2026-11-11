@@ -7,6 +7,12 @@
  * the paired ruler (see `ruler.ts`). Buffs are allowed −15% at rookie (§2.5).
  */
 
+/**
+ * Bônus dos efeitos que demoram (DoT e HoT) NOS INIMIGOS, dono 11/11/2026: total ~15% acima do equivalente imediato (dano direto / cura).
+ * Só o especial dos inimigos usa (`foeFamilies.ts`): mexer em `SPECIAL_POWER`/`EFFECT_TUNE` quebraria os gates de calibração do jogador.
+ */
+export const OVER_TIME_BONUS = 1.15;
+
 /** Budget of every special, in hits. */
 export const SPECIAL_BUDGET_HITS = 3;
 

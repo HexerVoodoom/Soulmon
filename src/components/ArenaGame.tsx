@@ -278,7 +278,7 @@ export function ArenaGame({
     const els = inimigosRef.current.map(e => e.elements);
     return {
       player: { ...arenaPlayerSide(p), startShield: r === 0 ? riftRef.current.startShield : 0 }, // só na 1ª rodada
-      foes: arenaFoeSides(p, r, els, runLadderRef.current, inimigosRef.current.some(e => e.chefeUltra)),
+      foes: arenaFoeSides(p, r, els, runLadderRef.current, inimigosRef.current.some(e => e.chefeUltra), runSeedRef.current),
       seed: arenaRoundSeed(seed, r),
       startHp: hpCarryRef.current,
       startEnergy: energyCarryRef.current,
@@ -295,7 +295,7 @@ export function ArenaGame({
 
   const cena = useCallback((): GroupScene => {
     const p = jogadorRef.current;
-    const foes = arenaFoeSides(p, rodadaRef.current - 1, inimigosRef.current.map(e => e.elements), runLadderRef.current, inimigosRef.current.some(e => e.chefeUltra));
+    const foes = arenaFoeSides(p, rodadaRef.current - 1, inimigosRef.current.map(e => e.elements), runLadderRef.current, inimigosRef.current.some(e => e.chefeUltra), runSeedRef.current);
     return {
       playerMaxHp: hpPoints(arenaPlayerSide(p).combatant.hp),
       foeMaxHp: foes.map(f => hpPoints(f.combatant.hp)),
@@ -387,7 +387,7 @@ export function ArenaGame({
   const entreRodadas = fase === 'rodada-limpa' && rodada < ARENA_ROUNDS;
   if (fase === 'luta' || entreRodadas) {
     const pronto = batalha.stateKey === fightKey;
-    const foesLado = arenaFoeSides(jogador, rodada - 1, inimigos.map(e => e.elements), runLadderRef.current, inimigos.some(e => e.chefeUltra));
+    const foesLado = arenaFoeSides(jogador, rodada - 1, inimigos.map(e => e.elements), runLadderRef.current, inimigos.some(e => e.chefeUltra), runSeedRef.current);
     const hpFrac = pronto ? batalha.hp : hpCarryRef.current;
     const foesHp = (i: number) => (pronto ? (batalha.foesHp[i] ?? 1) : 1);
     const alvoIdx = pronto ? batalha.target : Math.max(0, inimigos.findIndex((_, i) => foesHp(i) > 1e-9));
