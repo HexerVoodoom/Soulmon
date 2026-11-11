@@ -283,3 +283,13 @@ describe('treino: luta, não ranqueia, Honra', () => {
     expect([...kv.store.keys()].some(k => k.startsWith('rank:') && k.includes(ME) && JSON.parse(kv.store.get(k)).points > 0)).toBe(false);
   });
 });
+
+describe('custo: sparOpponents é varredura (teto pesado)', () => {
+  it('o 21º sparOpponents do mesmo IP no minuto leva 429 (cada um varre até 120 perfis)', async () => {
+    const { env } = mkEnv({ bonds: [10, 10, 10] });
+    const headers = { 'CF-Connecting-IP': '203.0.113.91' };
+    let ultimo;
+    for (let i = 0; i < 21; i++) ultimo = await onRequest({ request: new Request(`https://x.dev/api/community?action=sparOpponents&id=${ME}`, { headers }), env });
+    expect(ultimo.status).toBe(429);
+  });
+});
