@@ -241,10 +241,7 @@ Detalhe completo, com saídas coladas e proveniência de cada número:
 - **Gesto:** `armarTemaNoPrimeiroGesto()` (no `main.tsx`) só instala ouvintes (`pointerup`/`touchend`/`keydown`/`click`).
   Se o motor recusar o `play()`, rearma e o próximo gesto tenta — **nunca** autoplay cego. A intro é `muted` (guard em
   `IntroScreen.render.test.tsx`), então não há briga de áudio com o vídeo.
-- **Na intro (07/10/2026, decisão do dono):** o tema toca DURANTE a intro. Antes do vídeo, o `IntroScreen` mostra a tela de
-  abertura (pôster da marca + "Tap to start"/"Toque para começar"); o toque chama `iniciarTemaNoGesto()` no handler (D11 no
-  chamador, guard em `tema.test.ts`) e monta o vídeo `muted`. A tela é pulada se o jogador já interagiu
-  (`navigator.userActivation.hasBeenActive`), se o tema está desligado ou se o app está mudo. Sem ducking novo.
+- **Na intro (07/10/2026, decisão do dono; emendado em 11/11/2026, REGISTRO §292):** o tema toca DURANTE a intro, mas SEM tela dedicada: a tela "Tap to start" saiu e a intro (vídeo `muted` + "Carregando dados...") abre direto. O áudio é desbloqueado pelo ouvinte passivo único de `armarTemaNoPrimeiroGesto` (`main.tsx`): o 1º toque/tecla em QUALQUER lugar liga o tema; o toque que pula a intro também chama `iniciarTemaNoGesto()` no handler (D11 no chamador, guard em `tema.test.ts`). Sem ducking novo.
 - **Pausas:** `pausarTrilha`/`retomarTrilha` repassam os motivos (`sono`/`descanso`/`mudo`) ao tema; `document.hidden` pausa o
   elemento. O mudo global (`isMuted`) impede o início.
 - **Loudness:** o arquivo foi mestrado no ALVO DA TRILHA de `loudness.ts` (LUFS-S mediano medido com o filtro `ebur128` do
