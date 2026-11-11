@@ -4643,3 +4643,13 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Alternativa que perdeu:** só multiplicar Coroa e Luvas (elemento ficaria em 0 fragmentos, e é ele que tem 630 itens possíveis, então o sumidouro real não nascia); também perdeu 4× puro em tudo (Coroa 80, tira alcance de quem acumulou pouco até o marco 25).
 
 **Falsifica:** a mediana de fragmentos acumulados continuar sobrando (reaumentar, começando pelo elemento) ou jogadores que só chegaram ao marco 25 não conseguirem forjar nem uma Coroa em um mês (baixar para ~50).
+
+## §284 — Forma do inimigo acompanha o HP; mais Ultimate nos simulados (11/11/2026, pedido do dono)
+
+**Decisão.** Na 5ª luta da Arena o inimigo tinha ~2.500 de HP e aparecia Champion: o HP vem do level do JOGADOR (`arenaFoe`/`dungeonFoe`) e a forma vinha da escada/tier, sem se olharem. Regra única (`src/utils/estagioPorHp.ts`; aplicada na Arena, pendente na Masmorra, cuja escada rookie→mega por slot é contrato testado e fica para decisão do dono): a forma exibida nunca fica abaixo da faixa do HP real do inimigo. Faixas tiradas do `autoHp` por estágio (rookie 330–480, champion 765–1035, ultimate 1620–2093, mega 3240–4050 pts): pisos 622 / 1.327 / 2.666 / 5.138 (ponto médio entre estágios). Só SOBE a forma; Arena tem arte até Ultimate (teto). `buildArenaRound(..., playerLevel)`; sem o level nada muda. Pesadelo fora (regra própria depois). Simulados `sim_*`: 49 âncoras Rookie viraram Champion/Ultimate (Ultimate+ 4% → 24% em 11/11), com `daysPlaying` acima do mínimo que o gauge exige (revisa §235/§282, que fixavam os 120 novos em Rookie; a fila de sprites passa a incluir âncora Ultimate); o poder deles segue a curva da faixa (A é o teto de um jogador real). Ficha 37/33/17/13 e mix de ataques intactos.
+
+**Alternativa que perdeu:** rebaixar o HP do inimigo para casar com a forma (quebraria o balanceamento medido da Arena).
+
+**Falsifica:** a barra de HP do inimigo de forma baixa ainda passar de ~1.330 (Champion) ou o jogador reclamar que o Ultimate aparece cedo demais na escada.
+
+**Rollback:** reverter o PR (a âncora dos simulados volta ao dado antigo).

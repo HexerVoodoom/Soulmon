@@ -4220,6 +4220,11 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Exports:** `RIFT_GAME_ID = 'endless-rift'`, `RiftTier`/`RIFT_TIERS`, `RIFT_RANKING_FROM = 250`, `RiftMonth`/`RiftMonthState`, `riftMonthKey(nowMs)`, `sanitizeRiftMonth(raw)` (leitura tolerante).
 **Régua:** o prêmio em Créditos do top 3 é pago só pelo servidor (`functions/api/_riftPayout.js`).
 
+### `src/utils/estagioPorHp.ts`
+**Dono de:** a coerência estágio × HP do inimigo (11/11/2026, REGISTRO §284): a forma exibida de um inimigo sorteado nunca fica abaixo da faixa do HP que ele tem. Pisos em pontos de HP exibidos, tirados do `autoHp` por estágio (ponto médio entre o último level de um estágio e o primeiro do seguinte): champion ≈ 622, ultimate ≈ 1.327, mega ≈ 2.666, ultra ≈ 5.138.
+**Exports:** `FoeStage`, `FOE_STAGES`, `FOE_STAGE_HP_FLOORS`, `stageForFoeHp(coreHp)`, `maxFoeStage(a, b)`.
+**Chamado por:** `arena.ts` (`arenaStageForHp`, usado em `buildArenaRound` quando recebe o level do jogador; a Arena só tem arte até Ultimate). A Masmorra ainda não usa (escada por slot é contrato). **Régua:** `estagioPorHp.test.ts`.
+
 ### `src/utils/enemyRoster.ts`
 **Dono de:** "quem pode aparecer como inimigo, em que estágio e a partir de que level" (M10): 17 criaturas base × rookie/champion/ultimate/mega + 138 rookies de elemento combinado. Dados puros, sem asset. O level do jogador só decide até que estágio de ARTE o slot mostra; a força continua do slot da escada.
 **Sincronização 09/11/2026:** o roster ganhou os kinds `paralelo` (as 10 formas paralelas, 09/11/2026) e `forma` (as 150 formas champion/ultimate/mega dos combinados 212-261); ambos só saem quando o ELEMENTO é pedido (masmorra temática, Arena, Fenda) e ficam fora do sorteio geral. `SUFIXO_FORMA` (`aris`/`axion`/`alune`) e `nomeDaForma(rookie, stage)` (nome proposto: rookie sem a vogal final + sufixo; o dono pode vetar). `ramoFromRoll(u, n)` decide o ramo com os bits BAIXOS do mesmo número `u` que escolheu a criatura (Arena e Desgarrado, §221): a contagem de chamadas de `rng` não muda e card = luta segue valendo; `RAMO_CHANCE` = 1/3.

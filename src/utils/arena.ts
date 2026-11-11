@@ -24,6 +24,7 @@ import type { StageSkills } from './soulProfile/ficha/skills';
 import type { Combatant } from './combate/curve';
 import { elementHits } from './combate/curve';
 import type { FightSide } from './combate/fight';
+import { maxFoeStage, stageForFoeHp } from './estagioPorHp';
 import { comEfeitoDoElemento } from './combate/elementEffects';
 import { cheerEvents, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf, type SpecialFamily } from './combate/specials';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
@@ -304,6 +305,9 @@ export const ARENA_LADDER_FIRST_STEP = 5;
 /** Vitórias entre um degrau e o próximo depois disso. */
 export const ARENA_LADDER_WINS_PER_STEP = 3;
 /** 5 rodadas de Champion + 5 de Ultimate. */
+/** Coerência estágio × HP (`estagioPorHp.ts`, regra única): a forma do inimigo sobe até a faixa do HP dele. A Arena só tem arte até Ultimate: o teto é Ultimate. */
+export const arenaStageForHp = (coreHp: number): ArenaLadderStage => { const f = stageForFoeHp(coreHp); return f === 'rookie' || f === 'champion' ? f : 'ultimate'; };
+export const maxLadderStage = (a: ArenaLadderStage, b: ArenaLadderStage): ArenaLadderStage => maxFoeStage(a, b);
 export const ARENA_LADDER_TOP_STEP = 2 * ARENA_ROUNDS;
 
 /** Valor bom ou 0 (espelho em `functions/api/_dayCounters.js`). */
@@ -357,18 +361,23 @@ export function buildArenaRound(
   runElement?: string,
   /** §222: o valor da escada do jogador, congelado no começo da run (card = luta). Ausente = 0, só Rookies. */
   ladder = 0,
+  /** Level do jogador (coerência estágio × HP): com ele, a forma de cada inimigo nunca fica abaixo da faixa do HP que ele terá (`arenaStageForHp`). Ausente = só a escada. */
+  playerLevel?: number,
 ): ArenaEnemy[] {
   const comp = ARENA_ROUND_COMP[Math.min(Math.max(roundIdx, 1), ARENA_ROUNDS) - 1];
   const used = new Set<string>(); // sem criatura repetida dentro da rodada
-  const stage = arenaLadderStage(ladder, roundIdx);
-  const strayHere = stray && stage === 'ultimate'; // §222: Desgarrado só onde a escada já chegou em Ultimate; antes disso a rodada é a comum
+  const ladderStage = arenaLadderStage(ladder, roundIdx);
+  /** Forma do inimigo de classe `cls`: a da escada, subida até a faixa do HP real dele (nunca desce). */
+  const stageOf = (cls: ArenaEnemyClass): ArenaLadderStage => (playerLevel === undefined ? ladderStage : maxLadderStage(ladderStage, arenaStageForHp(arenaFoe(playerLevel, cls, roundIdx - 1, ladder).combatant.hp)));
   // 31/10/2026 (dono): cada inimigo passa pelo portão central do corvo (`withRaven`): 1/1000, sem sorteio a mais (card = luta).
-  return comp.map(cls => withRaven<ArenaEnemy>(rng, rr => arenaFoeComum(cls, rr), () => ({
+  return comp.map(cls => withRaven<ArenaEnemy>(rng, rr => arenaFoeComum(cls, rr), () => { const stage = stageOf(cls); return ({
     namePt: RAVEN_ENTRY.name, nameEn: RAVEN_ENTRY.name, elements: ['neutro'], element: 'neutro',
     points: CLASS_FLAVOR[cls].points + Math.max(0, difficulty - 1), cls, tier: stage, dropTier: CLASS_FLAVOR[cls].tier, creature: RAVEN_ENTRY.id, form: 'rookie' as const,
-  })));
+  }); }));
   function arenaFoeComum(cls: ArenaEnemyClass, rng: () => number): ArenaEnemy {
     const shape = CLASS_FLAVOR[cls];
+    const stage = stageOf(cls);
+    const strayHere = stray && stage === 'ultimate'; // §222: Desgarrado só onde a escada já chegou em Ultimate; antes disso a rodada é a comum
     // Chefe ULTRA: só a rodada-chefe e só com a escada no topo; abaixo disso NENHUM `rng` a mais (os sorteios de antes não mudam). Fora do Desgarrado/combinada.
     if (cls === 'boss' && !stray && !combo && arenaChefeUltraLiberado(ladder)) {
       const roll = rng();
