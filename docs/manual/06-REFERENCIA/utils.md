@@ -4478,6 +4478,10 @@ Modal sempre acima do voltar da página. `syncModalFlag` liga/desliga `body[data
 
 Tempo de uso por tela/feature/minigame, agregado e sem ID por pessoa: `setActive(kind, name)` acumula segundos do dia no aparelho (pausa em segundo plano), `flushUsageDays` manda um `time_spent` por par com a FAIXA do total quando o dia fecha, `trackMinigame` emite `minigame_start`/`minigame_end`, `installUsageTime` liga a pausa e a sessão (`session_end`). Opt-out apaga o acumulado (`K_USAGE`). Registros de nomes espelhados em `functions/api/_usageRegistry.js`.
 
+### `src/utils/appUpdate.ts`
+
+Decisao pura do modal de atualizacao (11/11/2026): `decideUpdate(installed, cfg)` -> `'block'` (< minVersionCode) | `'suggest'` (< recommendedVersionCode) | `'none'`; `parseAppConfig`, `parseInstalledBuild`. Dado ausente/invalido = `'none'` (fail-open). Regua: `appUpdate.test.ts`.
+
 ### `src/utils/playReview.ts`
 
 Pedido de avaliacao na Play a cada evolucao (09/11/2026): `parsePlayReview`, `shouldAskReview` (so evolucao para cima, nunca depois de aceitar), `markAsked`, `markAccepted`, `storeUrl`. Estado em `STORAGE_KEYS.PLAY_REVIEW`.
