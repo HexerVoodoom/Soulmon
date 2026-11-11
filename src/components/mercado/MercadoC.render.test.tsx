@@ -145,7 +145,7 @@ describe('C3 - Panora: Molduras / Backgrounds separados, Bits / Honra dentro', (
     fireEvent.click(screen.getByRole('tab', { name: 'Frames' }));
     expect(document.querySelector('[data-shop-shelf]')).toBeNull();
     const shelf = document.querySelector('[data-frame-shelf]') as HTMLElement;
-    expect(shelf.querySelectorAll('[data-frame-item]').length).toBe(FRAMES.filter(f => f.origin === 'shop').length);
+    expect(shelf.querySelectorAll('[data-frame-item]').length).toBe(FRAMES.filter(f => f.origin === 'shop' && !f.element).length); // sem elemento no save: exclusivos de elemento ficam fora da vitrine
     expect(within(shelf).getByRole('button', { name: new RegExp(`for ${shopFrame.price} Bits`) })).toBeTruthy();
   });
 

@@ -30,7 +30,7 @@ describe('molduras — catálogo', () => {
   });
 
   it('é COSMÉTICA: nenhum campo da moldura carrega efeito de jogo', () => {
-    const permitidos = new Set(['id', 'namePt', 'nameEn', 'origin', 'tierId', 'price', 'howPt', 'howEn', 'look']);
+    const permitidos = new Set(['id', 'namePt', 'nameEn', 'origin', 'tierId', 'price', 'howPt', 'howEn', 'look', 'element']); // `element` só filtra a VITRINE (exclusivo de elemento, utils/elementExclusive.ts), nunca dá efeito
     for (const f of FRAMES) for (const k of Object.keys(f)) expect(permitidos.has(k), `${f.id}.${k}`).toBe(true);
   });
 });

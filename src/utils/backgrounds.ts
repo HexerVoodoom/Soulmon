@@ -10,6 +10,7 @@
 // diz quais espaços aquele cenário oferece (nem todo cenário tem parede).
 import { type SlotId, type StageSetting } from './petStage';
 import { BG_ART_ALIASES } from './artAliases';
+import { COSMETICOS_NOVOS, ARTE_BG_NOVOS } from './cosmeticosNovos';
 import bgMatrixImg from '../assets/backgrounds/bg-matrix.png';
 import bgOceanImg from '../assets/backgrounds/bg-ocean.png';
 import bgGameboyImg from '../assets/backgrounds/bg-gameboy.png';
@@ -461,6 +462,15 @@ export const PET_BACKGROUNDS: Record<string, PetBackground> = {
     setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
   },
 };
+
+// Cenários novos de tema/elemento (04/11/2026): pintura 1200×648 WebP, chão em 74% (o prompt pede a linha em 74%). Catálogo: `utils/cosmeticosNovos.ts`.
+for (const c of COSMETICOS_NOVOS) {
+  if (c.kind !== 'bg') continue;
+  PET_BACKGROUNDS[c.id] = {
+    namePt: c.namePt, nameEn: c.nameEn, css: `url(${ARTE_BG_NOVOS[c.id]})`, baseColor: c.baseColor,
+    setting: 'outdoor', slots: FULL_SLOTS, horizonY: 74,
+  };
+}
 
 // Cenários novos que usam a pintura de outro por ora (`artAliases.ts`): outro id, outro nome, mesma arte.
 for (const [id, a] of Object.entries(BG_ART_ALIASES)) {

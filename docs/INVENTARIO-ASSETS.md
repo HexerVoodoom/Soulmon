@@ -446,3 +446,7 @@ Fonte: `E:\Soulmon-assets\beta3-geradas\chatgpt\` (ChatGPT, alfa real; reduzidos
 ## Selvagens do elenco do Oráculo — Mareoror e Salsolura (10/11/2026)
 
 22 PNG 256² (alfa binário, 40 cores, caixa visível normalizada a 240 px) em `src/assets/soulmon/inimigos-api/`: `<espécie>-rookie`, `<espécie>-{poder,harmonia,benevolencia}-{champion,ultimate,mega}`, `<espécie>-ultra` (ultra só instalada, fora do roster). Origem: sprites da demo do Oráculo (`E:\Soulmon-assets\demo-oraculo\{a,b}\`, formas de poção excluídas). O rookie de Mareoror (A) é visivelmente mais pixelado que o de Salsolura (B): candidato a regerar. Roster: `ELENCO_ORACULO_DATA` (REGISTRO §275).
+
+## Cosméticos de tema e de elemento (11/11/2026)
+
+Instalados a partir de `E:/Soulmon-assets/cosmeticos/` por `scripts/instalar-cosmeticos.mjs` (idempotente; fonte = arquivo canônico da pasta): **32 cenários** (`src/assets/backgrounds/<id>.webp` 1200×648 + miniatura `thumbs/<id>.png` 96×52), **32 molduras** (`src/assets/soulmon/molduras/<id>.png`, 192², alfa binário, miolo 64² vazio) e **24 decorações** (`src/assets/decor/<id>.webp`, caixa do slot × 3; tapete × 2). Peso somado ≈ 4,5 MB (WebP/PNG pequeno, medido pelo próprio script). Catálogo e nomes: `src/utils/cosmeticosNovos.ts`. Faltam 20 decorações (Ruínas × 4 e `furn-el-*` × 16) — ver `ASSETS-A-GERAR.md`. O registro do banco (`_banco/registro.jsonl`) segue `uso: pendente-instalar` nessas 88 linhas: o arquivo tem linhas corrompidas e reescrever não é seguro; a verdade de instalação é esta seção.
