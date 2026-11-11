@@ -17,6 +17,7 @@ import HexsmithSheet from './HexsmithSheet';
 const forjaServidor = vi.fn(async (): Promise<{ ok: true; already: boolean } | { ok: false; kind: string }> => ({ ok: true, already: false }));
 vi.mock('../../utils/cloudSave', () => ({
   cloudHexForge: () => forjaServidor(),
+  cloudHexRename: async () => ({ ok: false, kind: 'offline' }),
   cloudSave: () => Promise.resolve({ ok: true }),
   cloudSaveComRetry: () => Promise.resolve({ ok: true }),
   emailToSaveId: async () => 'x',

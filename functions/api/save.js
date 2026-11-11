@@ -22,6 +22,7 @@ import { sanitizeTalentPicks } from './_talents.js';
 import { sanitizeEquipment, sanitizeBitsOrigin } from './_equipment.js';
 import { sanitizeForge } from './_forge.js';
 import { enforceStoredHexOwned, forgeOnServer } from './_hexsmith.js';
+import { renameOnServer } from './_hexRename.js';
 import { feiraLigada } from './_feira.js';
 import { feiraHexOnServer, validarCompraFeiraLoja, marcarCompraFeiraLoja, diaDoJogadorValido } from './_feiraLoja.js';
 import { sanitizeBuildingQuests } from './_buildingQuests.js';
@@ -327,6 +328,32 @@ async function onRequestBruto({ request, env }) {
     const r = forgeOnServer(stored, body?.itemId);
     if (!r.ok) return Response.json({ error: r.reason }, { status: r.reason === 'invalid' ? 400 : 402, headers: CORS });
     const campos = (st) => ({ hexsmith: st.hexsmith, gamePoints: st.gamePoints, foodInventory: st.foodInventory, equipment: st.equipment, bitsOrigin: st.bitsOrigin });
+    if (r.already) return Response.json({ ok: true, already: true, revision: cur, ...campos(stored) }, { headers: CORS });
+    const serialized = JSON.stringify(r.state);
+    const h = await sha256Hex(serialized);
+    const f = firstSeenMeta(prev.metadata).f ?? Date.now();
+    await kvOrThrow(env).put(saveId, serialized, { expirationTtl: SAVE_TTL_SECONDS, metadata: { t: Date.now(), f, r: cur + 1, h } });
+    return Response.json({ ok: true, already: false, revision: cur + 1, ...campos(r.state) }, { headers: CORS });
+  }
+
+  // RENOMEAR NA HEXSMITH (11/11/2026, `_hexRename.js`): `POST ?id=&action=hexRename { kind: 'pet'|'especial', nome, baseRevision? }`.
+  // Valida o nome (mesma régua do apelido), debita HEX_RENAME_COST Bits GANHOS e grava o nome na MESMA escrita (revisão +1). Mesmo nome = 200 `already`.
+  if (request.method === 'POST' && url.searchParams.get('action') === 'hexRename') {
+    const acctGate = takeToken('save-write', saveId, SAVE_WRITE_RATE_ACCOUNT);
+    if (!acctGate.ok) return tooManyRequests(acctGate.retryAfter, CORS);
+    const prev = await kvOrThrow(env).getWithMetadata(saveId);
+    if (typeof prev?.value !== 'string') return Response.json({ error: 'no-save' }, { status: 404, headers: CORS });
+    const cur = revisionOf(prev.metadata);
+    const base = body?.baseRevision;
+    if (Number.isInteger(base) && base >= 0 && base !== cur) {
+      return Response.json({ error: 'conflict', revision: cur }, { status: 409, headers: CORS });
+    }
+    let stored;
+    try { stored = JSON.parse(prev.value); } catch { stored = null; }
+    if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return Response.json({ error: 'no-save' }, { status: 404, headers: CORS });
+    const r = renameOnServer(stored, body?.kind, body?.nome);
+    if (!r.ok) return Response.json({ error: r.reason }, { status: r.reason === 'bits' ? 402 : 400, headers: CORS });
+    const campos = (st) => ({ gamePoints: st.gamePoints, bitsOrigin: st.bitsOrigin, soulmonMeta: st.soulmonMeta, especialNome: st.especialNome, especialNomeAt: st.especialNomeAt });
     if (r.already) return Response.json({ ok: true, already: true, revision: cur, ...campos(stored) }, { headers: CORS });
     const serialized = JSON.stringify(r.state);
     const h = await sha256Hex(serialized);

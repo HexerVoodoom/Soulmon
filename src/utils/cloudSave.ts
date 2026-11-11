@@ -836,3 +836,43 @@ export async function reconcileSaveId(
   await cloudSaveComRetry(derivado, estadoLocal);
   return { estado: 'migrado', saveId: derivado, anterior };
 }
+
+/** Resultado de renomear na Hexsmith. `nome` = o que o servidor gravou (já normalizado). */
+export type HexRenameOutcome =
+  | { ok: true; already: boolean; nome: string }
+  | { ok: false; kind: 'offline' | 'saldo' | 'conflict' | 'rejected' | 'server' };
+
+/**
+ * RENOMEAR NA HEXSMITH (11/11/2026): o servidor valida o nome, debita `HEX_RENAME_COST` Bits ganhos e grava o nome numa escrita
+ * (`POST /api/save?action=hexRename`). Mesma fila e disciplina de `cloudHexForge`: sobe o estado, age com a revisão resultante,
+ * sem rede = não troca (nada é debitado localmente).
+ */
+export async function cloudHexRename(saveId: string, state: unknown, kind: 'pet' | 'especial', nome: string): Promise<HexRenameOutcome> {
+  if (ehDemo(state)) return { ok: false, kind: 'server' };
+  const anterior = filaDePosts.get(saveId) ?? Promise.resolve();
+  const minha = anterior.then(async (): Promise<HexRenameOutcome> => {
+    const sync = await enviarSerializado(saveId, state);
+    if (!sync.ok) return { ok: false, kind: sync.kind === 'offline' ? 'offline' : sync.kind === 'conflict' ? 'conflict' : 'server' };
+    try {
+      const base = lerRevisao(saveId);
+      const res = await fetch(`/api/save?id=${saveId}&action=hexRename`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(await authHeaders()) },
+        body: JSON.stringify(base === null ? { kind, nome } : { kind, nome, baseRevision: base }),
+      });
+      const data: unknown = await res.json().catch(() => null);
+      if (!res.ok) return { ok: false, kind: res.status === 402 ? 'saldo' : res.status === 409 ? 'conflict' : res.status === 400 ? 'rejected' : 'server' };
+      const r = revisaoDoCorpo(data);
+      if (r !== undefined && r >= (lerRevisao(saveId) ?? 0)) gravarRevisao(saveId, r);
+      const d = data as { already?: unknown; soulmonMeta?: { petName?: unknown }; especialNome?: unknown } | null;
+      const gravado = kind === 'pet' ? d?.soulmonMeta?.petName : d?.especialNome;
+      return { ok: true, already: !!d?.already, nome: typeof gravado === 'string' ? gravado : nome };
+    } catch {
+      return { ok: false, kind: 'offline' };
+    }
+  });
+  const cauda = minha.then(() => undefined);
+  filaDePosts.set(saveId, cauda);
+  void cauda.then(() => { if (filaDePosts.get(saveId) === cauda) filaDePosts.delete(saveId); });
+  return minha;
+}

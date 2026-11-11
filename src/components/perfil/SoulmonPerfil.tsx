@@ -10,7 +10,7 @@ import {
   buildPerfil, PERFIL_ATRIBUTO, PERFIL_EFEITO, PERFIL_FORMA, PERFIL_IMPACTO, type MainAttr, type PerfilInput,
 } from '../../utils/soulmonPerfil';
 import type { Language } from '../../utils/i18n';
-import { EspecialNomeEditor } from './EspecialNomeEditor';
+import { EspecialNomeLeitura } from './EspecialNomeLeitura';
 // Arte que já está no repo (beta-2, 11: "ícones próprios, sem arte nova"): escudo, engrenagem, livro, chama, poção, estrela, aperto de mãos (atributo e ataque ganharam arte própria, P2).
 import iconGear from '../../assets/soulmon/icons/icon-gear.png';
 import iconSpellbook from '../../assets/soulmon/icons/icon-spellbook.png';
@@ -47,10 +47,10 @@ function Row({ id, icon, label, hint, children }: { id: string; icon: ReactNode;
   );
 }
 
-export function SoulmonPerfil({ language, input, especialNome, especialNomeAt, onSaveEspecialNome }: {
+export function SoulmonPerfil({ language, input, especialNome }: {
   language: Language; input: PerfilInput;
   /** O nome escolhido (`''` = padrão), quando foi aceito e o gravador; sem o gravador a carta não oferece a troca. */
-  especialNome?: string; especialNomeAt?: number; onSaveEspecialNome?: (nome: string) => void;
+  especialNome?: string;
 }) {
   const isPt = language === 'pt-BR';
   const L = (x: { pt: string; en: string }) => (isPt ? x.pt : x.en);
@@ -90,9 +90,7 @@ export function SoulmonPerfil({ language, input, especialNome, especialNomeAt, o
               <span style={{ color: 'var(--sm2-muted)' }}> · {L(elementoNomeDe(p.especial.elementoId))} · {L(PERFIL_EFEITO[p.especial.familia])}</span>
             </Row>
           )}
-          {p.especial && onSaveEspecialNome && (
-            <EspecialNomeEditor key={especialNome ?? ''} language={language} nome={especialNome ?? ''} nomeAt={especialNomeAt} onSave={onSaveEspecialNome} />
-          )}
+          {p.especial && <EspecialNomeLeitura language={language} nome={especialNome ?? ''} />}
         </li>
       </ul>
     </div>

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ModalSheet, Field, Segment, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
-import { EspecialNomeEditor } from './EspecialNomeEditor';
+import { EspecialNomeLeitura } from './EspecialNomeLeitura';
 import { FrameSelector } from '../ui/AvatarFrame';
 import { UserAvatar } from '../ui/UserAvatar';
 import { AvatarImg } from '../ui/AvatarImg';
@@ -33,19 +33,19 @@ function useFrameContext(saveId: string, owned: string[]): FrameContext {
 }
 
 /** EDITAR PERFIL: e-mail (em breve), moldura e foto. Só IDs de listas fechadas vão para o save. */
-export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, petStage, petElement, onChangeAvatar, onChangeFrame, userName = '', onChangeName, petName = '', onChangePetName, onOpenFrameShop, especialNome, especialNomeAt, onSaveEspecialNome }: {
+export function ProfileEditor({ open, onClose, language, saveId, email, avatarId, equippedFrame, ownedFrames, petStage, petElement, onChangeAvatar, onChangeFrame, userName = '', onChangeName, petName = '', onOpenFrameShop, especialNome }: {
   open: boolean; onClose: () => void; language: Language; saveId: string; email?: string | null;
   avatarId: string | null; equippedFrame: string | null; ownedFrames: string[]; petStage: string; petElement?: string;
   onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
   /** Nome público do jogador (B8). Sem `onChangeName` o campo não aparece. */
   userName?: string; onChangeName?: (name: string) => void;
-  /** Nome do Soulmon (`soulmonMeta.petName`). Sem `onChangePetName` o campo não aparece. */
-  petName?: string; onChangePetName?: (name: string) => void;
+  /** Nome do Soulmon (`soulmonMeta.petName`): só leitura aqui, a troca é na Hexsmith. */
+  petName?: string;
   /** D-16: o Perfil NÃO compra moldura. A de loja que a pessoa não tem aparece trancada e o toque abre Mercado > Frames
    *  (por padrão, o pedido vai pelo evento de `utils/frameShopNav`, que o `App` atende). */
   onOpenFrameShop?: () => void;
-  /** Nome do especial do Soulmon (público para quem duela). Sem `onSaveEspecialNome` o campo não aparece. */
-  especialNome?: string; especialNomeAt?: number; onSaveEspecialNome?: (nome: string) => void;
+  /** Nome do especial do Soulmon (público para quem duela): só leitura aqui, a troca é na Hexsmith. */
+  especialNome?: string;
 }) {
   const isPt = language === 'pt-BR';
   const ctx = useFrameContext(saveId, ownedFrames);
@@ -85,12 +85,6 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
     setNameSaved(true);
   };
 
-  const [petNameDraft, setPetNameDraft] = useState(petName);
-  const [petNameSaved, setPetNameSaved] = useState(false);
-  useEffect(() => { setPetNameDraft(petName); setPetNameSaved(false); }, [petName, open]);
-  const petNameTrim = petNameDraft.trim();
-  const petNameOk = petNameTrim.length >= 1;
-  const petNameCanSave = petNameOk && petNameTrim !== petName;
 
   const [group, setGroup] = useState('all');
   const shown = useMemo(() => {
@@ -130,34 +124,14 @@ export function ProfileEditor({ open, onClose, language, saveId, email, avatarId
             <p style={sm2Hint}>{isPt ? 'É o nome que outros jogadores veem. Mínimo de 2 letras.' : 'The name other players see. At least 2 letters.'}</p>
           </>
         )}
-        {onChangePetName && (
-          <div style={{ marginTop: 12 }}>
-            <label style={sm2Text} htmlFor="sm-profile-pet-name">{isPt ? 'Nome do Soulmon' : 'Soulmon name'}</label>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 4 }}>
-              <Field id="sm-profile-pet-name" type="text" value={petNameDraft} maxLength={24}
-                style={{ flex: 1 }}
-                onChange={e => { setPetNameDraft(e.target.value); setPetNameSaved(false); }}
-                onBlur={() => { if (petNameOk && petNameTrim !== petName) { onChangePetName(petNameTrim); setPetNameSaved(true); } }} />
-              <button
-                type="button"
-                data-save-pet-name
-                disabled={!petNameCanSave}
-                style={sm2Button('primary', !petNameCanSave, 'sm')}
-                onClick={() => {
-                  if (!petNameCanSave) return;
-                  onChangePetName(petNameTrim);
-                  setPetNameSaved(true);
-                }}
-              >
-                {petNameSaved && !petNameCanSave ? (isPt ? 'Salvo' : 'Saved') : (isPt ? 'Salvar' : 'Save')}
-              </button>
-            </div>
-            <p style={sm2Hint}>{isPt ? 'O nome exibido na tela principal e na comunidade.' : 'The name shown on the home screen and in the community.'}</p>
+        {petName && (
+          <div data-profile-pet-name style={{ marginTop: 12 }}>
+            <span style={sm2Text}>{isPt ? 'Nome do Soulmon' : 'Soulmon name'}</span>
+            <p style={{ ...sm2Text, margin: '4px 0 0', fontWeight: 600 }} data-profile-pet-name-valor>{petName}</p>
+            <p style={sm2Hint}>{isPt ? 'Troque na Hexsmith.' : 'Change it at the Hexsmith.'}</p>
           </div>
         )}
-        {onSaveEspecialNome && (
-          <EspecialNomeEditor key={especialNome ?? ''} language={language} nome={especialNome ?? ''} nomeAt={especialNomeAt} onSave={onSaveEspecialNome} />
-        )}
+        {especialNome !== undefined && <EspecialNomeLeitura language={language} nome={especialNome} />}
         <label style={{ ...sm2Text, display: 'block', marginTop: 12 }} htmlFor="sm-profile-email">{isPt ? 'E-mail' : 'Email'}</label>
         <Field id="sm-profile-email" data-profile-email type="email" value={email ?? ''} disabled readOnly tabIndex={-1} aria-disabled="true" style={{ background: 'var(--sm2-surface-2)', color: 'var(--sm2-muted)', cursor: 'not-allowed' }} placeholder={isPt ? 'em breve' : 'coming soon'} />
         <p style={sm2Hint}>{isPt ? 'Trocar o e-mail: em breve.' : 'Changing your email: coming soon.'}</p>

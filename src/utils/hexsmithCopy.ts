@@ -83,3 +83,37 @@ export const HEX_UI = {
   close: p('Back to the Ports', 'Voltar às Portas'),
   noMatch: p('No unlocked element has all these bases yet. Elements unlock in the Drive.', 'Nenhum elemento desbloqueado tem todas essas bases ainda. Os elementos se desbloqueiam no Drive.'),
 };
+
+/** Renomear na Hexsmith (11/11/2026): lápis = nome do Soulmon, chama = nome do especial. O preço vem de `HEX_RENAME_COST`. */
+export const HEX_RENAME_COPY = {
+  pet: {
+    btn: p('Rename your Soulmon', 'Trocar o nome do Soulmon'),
+    title: p('Rename your Soulmon', 'Trocar o nome do Soulmon'),
+    hint: p('The name shown on the Home screen and in the community.', 'O nome mostrado na tela principal e na comunidade.'),
+  },
+  especial: {
+    btn: p('Rename your special', 'Trocar o nome do especial'),
+    title: p('Rename your special', 'Trocar o nome do especial'),
+    hint: p('Anyone who duels you sees this name.', 'Quem duelar contra você vê este nome.'),
+  },
+  label: p('New name', 'Novo nome'),
+  rules: p('Up to 20 characters: letters, numbers and spaces, no bad words.', 'Até 20 caracteres: letras, números e espaço, sem palavrões.'),
+  cost: p('Cost', 'Custo'),
+  confirm: p('Change name', 'Trocar nome'),
+  confirmAsk: p('Spend {n} earned Bits to change the name?', 'Gastar {n} Bits ganhos para trocar o nome?'),
+  yes: p('Yes, spend', 'Sim, gastar'),
+  no: p('Back', 'Voltar'),
+  working: p('Changing…', 'Trocando…'),
+  done: p('Name changed.', 'Nome trocado.'),
+  offline: p('No connection. The server charges and saves the name; nothing was charged. Try again when you are online.', 'Sem conexão. O servidor cobra e grava o nome; nada foi cobrado. Tente de novo quando estiver online.'),
+  failed: p('The server did not answer. Nothing was charged; try again.', 'O servidor não respondeu. Nada foi cobrado; tente de novo.'),
+  noFunds: p('The server did not find enough earned Bits. Nothing was charged.', 'O servidor não encontrou Bits ganhos suficientes. Nada foi cobrado.'),
+  rejected: p('That name was not accepted. Try another.', 'Esse nome não foi aceito. Tente outro.'),
+  refusal: {
+    empty: p('Type a name.', 'Digite um nome.'),
+    invalid: p('Use only letters, numbers and spaces, no bad words.', 'Use só letras, números e espaço, sem palavrões.'),
+    same: p('That is already the current name.', 'Esse já é o nome atual.'),
+    bits: p('Takes more Bits earned by playing (Credit Bits do not count here).', 'Pede mais Bits ganhos jogando (Bits de Crédito não entram aqui).'),
+  },
+  readonlyHint: p('Change it at the Hexsmith.', 'Troque na Hexsmith.'),
+} as const;

@@ -4529,3 +4529,7 @@ Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglê
 ### `src/utils/feiraLoja.ts`
 **Dono de:** o lado CLIENTE da Feira de verdade: tipos, `sanitizeFeiraLoja`, `feiraLojaAbre`, `feiraLojaShownKey`, compra local ao preço da oferta (`applyFeiraLojaBuy`) e entrega da Hexsmith (`applyServerFeiraHex`).
 **Chamado por:** `utils/community.ts`, `App.tsx`, `components/guild/FeiraLojaSheet.tsx`.
+
+### `src/utils/hexsmithRename.ts` (11/11/2026, §287)
+
+**Dono de:** a parte pura de RENOMEAR na Hexsmith. **Exports:** `HEX_RENAME_COST` (200 Bits ganhos), `HEX_RENAME_MAX` (20), `hexRenameClean`, `hexRenameRefusal` (`empty`/`invalid`/`same`/`bits`), `applyServerHexRename` (aplica o que o servidor confirmou; nunca saldo negativo). **Chamado por:** `components/hex/HexsmithSheet.tsx`, `HexRenameModal.tsx`. **Server:** `cloudHexRename` em `cloudSave.ts` → `POST /api/save?action=hexRename`.
