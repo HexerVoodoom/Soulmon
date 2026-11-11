@@ -4536,8 +4536,16 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 
 **Alternativa que perdeu:** manter a arte anterior à regra (caveira/engrenagem fora do tema do elemento). **Falsifica:** o dono reprovar a leitura dos novos em combate real.
 
+
+## §280 — Widget V-Pet: Z de sono e fundo do cenário (10/11/2026)
+
+**Decisão (dono).** O V-Pet ganha um Z ao lado do bicho (apagado acordado, aceso dormindo) e o cenário equipado atrás dele. Z desenhado no bitmap por `petSleeping`; fundo por miniaturas WebP empacotadas (796 KB) escolhidas pelo id `vpetBg`, sem bitmap trafegando. Chaves novas, APK velho ignora. Detalhe: `docs/WIDGET-VPET-FUNDO-VIABILIDADE.md`.
+
+**Alternativa que perdeu:** bitmap do fundo enviado pelo app ou baixado do servidor (peso e rede para arte que já é fixa). **Falsifica:** o dono achar o véu escuro ruim ou o fundo poluir a leitura no aparelho; retorno = tirar a miniatura do APK (cai no LCD liso) sem mexer no bridge. Rollback do PR: reverter o commit.
+
 ## §277 — Feira de verdade: a volta da Missão pode encontrar uma feira (10/11/2026)
 **Decidido:** chance rara (`FEIRA_LOJA_PCT` = 8% das voltas, só com a Feira ligada) de um vendedor com 4 a 6 itens do Mercado ou da Hexsmith, 10% a 50% de desconto, só Bits, sem ingredientes, 1 por item, oferta do dia gravada pelo servidor. Aditiva: não consome o Chefe/Desafio. **Alternativa que perdeu:** sorteio no cliente (reroll) e faixa 62/30/8 exata (mexeria em `TRAIL_PCT`). **Falsifica:** feira em >15% das voltas, ou preço final <1 Bit. Detalhes e catálogo de vendedores: `PLANO-FEIRA-CHEFE.md` §12.
+
 
 ## §277 — Dormir dá +50% na regeneração de energia (10/11/2026, decisão do dono)
 

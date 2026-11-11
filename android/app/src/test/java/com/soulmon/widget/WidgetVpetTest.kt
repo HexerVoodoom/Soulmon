@@ -88,4 +88,16 @@ class WidgetVpetTest {
         val step = WidgetVpet.ICON + WidgetVpet.ICON_GAP
         assertTrue(WidgetVpet.iconRow.l + 2 * step + WidgetVpet.ICON <= WidgetVpet.iconRow.r)
     }
+
+    @Test fun backgroundDrawableNameIsAllowlisted() {
+        assertEquals("vpet_bg_bg_room", WidgetVpet.bgDrawableName("bg-room"))
+        assertEquals(null, WidgetVpet.bgDrawableName(""))
+        assertEquals(null, WidgetVpet.bgDrawableName("../x"))
+        assertEquals(null, WidgetVpet.bgDrawableName("room"))
+    }
+
+    @Test fun sleepZStaysInsideTheSpriteColumn() {
+        assertTrue(WidgetVpet.sleepZ.l >= WidgetVpet.sprite.l && WidgetVpet.sleepZ.r <= WidgetVpet.sprite.r)
+        assertTrue(WidgetVpet.sleepZ.b <= WidgetVpet.sprite.b)
+    }
 }

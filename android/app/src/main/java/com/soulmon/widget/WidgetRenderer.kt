@@ -464,9 +464,12 @@ object WidgetRenderer {
         )
         val poop = prefs.getBoolean("has_poop", false)
         val casing = vpetCasingRes(context, prefs.getString("vpet_frame", ""))
+        val sleeping = prefs.getBoolean("pet_sleeping", false)
+        val bgName = WidgetVpet.bgDrawableName(prefs.getString("vpet_bg", ""))
+        val bgRes = if (bgName != null) context.resources.getIdentifier(bgName, "drawable", context.packageName) else 0
         val views = RemoteViews(context.packageName, R.layout.widget_soulmon_vpet)
         val bmp = try {
-            drawVpet(context, spriteId, adaptiveLine(context), food, energy, poop, casing)
+            drawVpet(context, spriteId, adaptiveLine(context), food, energy, poop, casing, sleeping, bgRes)
         } catch (e: OutOfMemoryError) {
             null
         }
@@ -486,6 +489,7 @@ object WidgetRenderer {
     private fun drawVpet(
         context: Context, spriteId: Int, line: String,
         food: WidgetVpet.FoodTier, energy: WidgetVpet.EnergyLevel, poop: Boolean, casing: Int,
+        sleeping: Boolean, bgRes: Int,
     ): Bitmap {
         val raw = BitmapFactory.Options().apply { inScaled = false }
         val out = Bitmap.createBitmap(WidgetVpet.W, WidgetVpet.H, Bitmap.Config.ARGB_8888)
@@ -498,6 +502,17 @@ object WidgetRenderer {
             (WidgetVpet.SCREEN_L - 4).toFloat(), (WidgetVpet.SCREEN_T - 4).toFloat(),
             (WidgetVpet.SCREEN_R + 4).toFloat(), (WidgetVpet.SCREEN_B + 4).toFloat(), lcd,
         )
+        // Equipped scene behind the creature (thumbnail in the APK; absent = plain LCD), dimmed so text and icons stay legible.
+        if (bgRes != 0) {
+            BitmapFactory.decodeResource(context.resources, bgRes, raw)?.let { bg ->
+                c.drawBitmap(bg, null, Rect(WidgetVpet.SCREEN_L, WidgetVpet.SCREEN_T, WidgetVpet.SCREEN_R, WidgetVpet.SCREEN_B), Paint(Paint.FILTER_BITMAP_FLAG))
+                bg.recycle()
+                c.drawRect(
+                    WidgetVpet.SCREEN_L.toFloat(), WidgetVpet.SCREEN_T.toFloat(), WidgetVpet.SCREEN_R.toFloat(), WidgetVpet.SCREEN_B.toFloat(),
+                    Paint().apply { color = Color.argb(120, 7, 20, 19) },
+                )
+            }
+        }
         val scan = Paint().apply { color = Color.argb(46, 0, 0, 0) }
         var y = WidgetVpet.SCREEN_T
         while (y < WidgetVpet.SCREEN_B) {
@@ -514,6 +529,17 @@ object WidgetRenderer {
             c.drawBitmap(it, null, Rect(sx, sy, sx + side, sy + side), crisp)
             it.recycle()
         }
+
+        // Sleep Z next to the creature: dark/dim when awake, lit (warm glow) while asleep. Drawn text, no asset needed.
+        val zb = WidgetVpet.sleepZ
+        val zp = TextPaint(Paint.ANTI_ALIAS_FLAG).apply {
+            textSize = zb.h.toFloat()
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            textAlign = Paint.Align.CENTER
+            if (sleeping) { color = Color.parseColor("#FFE680"); setShadowLayer(8f, 0f, 0f, Color.parseColor("#FFB300")) }
+            else { color = Color.BLACK; alpha = 70 }
+        }
+        c.drawText("Z", (zb.l + zb.w / 2).toFloat(), (zb.b - 4).toFloat(), zp)
 
         // Speech text, white, shrunk until it fits the box; ellipsized as the last resort.
         val tb = WidgetVpet.text

@@ -52,6 +52,15 @@ object WidgetVpet {
     fun frameDrawableName(id: String?): String? =
         if (id != null && id in FRAME_ELEMENTS) "moldura_vpet_$id" else null
 
+    private val BG_ID = Regex("^bg-[a-z0-9-]{1,48}$")
+
+    /** Drawable name of the equipped scene's thumbnail (`vpet_bg_<id with _>`), or null = no background (bad/empty id). */
+    fun bgDrawableName(id: String?): String? =
+        if (id != null && BG_ID.matches(id)) "vpet_bg_" + id.replace('-', '_') else null
+
+    /** Sleep Z box: top-right corner of the sprite column, free space above the creature (never over the speech text). */
+    val sleepZ = Box(sprite.r - 30, sprite.t, sprite.r, sprite.t + 34)
+
     /** The resource id to draw: the variant when it exists in the APK (`variantRes` != 0), else the default. */
     fun pickCasing(variantRes: Int, defaultRes: Int): Int = if (variantRes != 0) variantRes else defaultRes
 
