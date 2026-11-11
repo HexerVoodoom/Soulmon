@@ -5189,17 +5189,23 @@ export default function App() {
         const volta = await hitGuildRaidEvento(saveId, gameState.playerDayTz);
         cancelFeiraVolta();
         // O DESAFIO DO DIA: o inimigo que ele trouxe só vale HOJE (amanhã "escapou"). Descanso não é desafio.
-        if (volta.evento && volta.evento.kind !== 'rest') recordFeiraDesafio(playerDayKey(new Date(), gameState.playerDayTz), volta.evento.k);
+        if (volta.evento && feiraEventoAbre(volta.evento)) recordFeiraDesafio(playerDayKey(new Date(), gameState.playerDayTz), volta.evento.k);
         // FEIRA DO CHEFE: o evento da volta entra na fila (um por vez). Ausente (Feira desligada / servidor antigo) = nada muda.
         // FEIRA DE VERDADE (rara, ~8% das voltas): quando existe, ELA é o que a volta mostra; o mistério segue na sala da Feira. Servidor/cliente antigo: sem `feiraLoja`, tudo como antes.
         if (volta.feiraLoja && feiraLojaAbre(volta.feiraLoja) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraLojaShownKey(volta.feiraLoja)) setFeiraLoja(volta.feiraLoja);
         else if (volta.evento && feiraEventoAbre(volta.evento) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraShownKey(volta.evento, playerDayKey(new Date(), gameState.playerDayTz))) setFeiraEvento(volta.evento);
+        // NUNCA VOLTA SEM DIZER NADA (Feira, 11/11/2026): sem loja, chefe nem desafio (descanso entre mistérios, trilha já cumprida), a volta ainda aparece.
+        else toast(language === 'pt-BR' ? 'Seu Soulmon voltou da investigação. Nada novo hoje; amanhã a roda tem mais.' : 'Your Soulmon is back from investigating. Nothing new today; the circle has more tomorrow.');
         if (alive) encerrar();
       } catch (e) {
         const kind = (e as { kind?: string } | null)?.kind;
         if (!alive) return;
         if (kind === 'unavailable' || kind === 'server' || kind === 'rateLimit') timer = setTimeout(() => { busy = false; void tentar(); }, 60_000);
-        else encerrar();
+        else {
+          // Encerrou sem registrar (limite do dia em outro aparelho, roda desfeita...): avisa em vez de só devolver o botão "Mandar investigar".
+          toast(language === 'pt-BR' ? 'Seu Soulmon voltou. Hoje a roda já tinha recebido a volta (ou mudou); veja a sala da Feira.' : 'Your Soulmon is back. The circle had already received today’s return (or changed); check the Fair room.');
+          encerrar();
+        }
       } finally { busy = false; }
     };
     timer = setTimeout(() => void tentar(), msUntilReturn(guildMission, Date.now()));
