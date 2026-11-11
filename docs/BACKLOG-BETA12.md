@@ -266,3 +266,44 @@ Decididas pelo dono; **prevalecem sobre qualquer "Perguntas em aberto" dos itens
 13. **Falas do B e lotes de PT (D):** as falas reescritas no item B ficam FORA dos lotes de revisão de português (D).
 
 Ainda em aberto: **nenhuma pergunta de modal pendente**. As seis perguntas da tabela anterior (widget vertical e opções, moldura vertical, veto em SIMILAR, derivação G7, chat e falas fora dos lotes de PT) foram respondidas nas decisões 9 a 13 e nos itens 1 a 8 acima. Restam só as perguntas de detalhe marcadas nos itens A2 (teto de altura) e A3 (layout 2x2/3x3), que não estão na lista de §F.
+
+## G. Balões dourados do Soulmon (pedido do dono, 11/11/2026; item "F" do pedido, renumerado G porque a seção F já é "Decisões do dono")
+
+Execução: beta12, **domingo 15/11/2026 às 03:00** (nenhuma implementação antes). Falas **PERSISTENTES** do Soulmon, em balão diferente (**borda dourada**), que **levam o jogador ao lugar**. Três casos:
+
+1. **Volta da missão / do Mercador (antes "feira"):** quando o Soulmon volta e encontrou algo, o balão fica na Home até ser tocado; tocar leva ao encontro (`encontro`/`guildRaidHit`) ou ao Mercador.
+2. **Plaquinha do Rift:** a plaquinha de que ele está no Rift ganha o balão dourado; tocar oferece a opção de ir ao Rift (aviso "Ele está na masmorra", com "Retirar da masmorra" e o novo "Ir ao Rift").
+3. **Grove sob ataque:** o Soulmon avisa que o Grove está sendo ATACADO; o balão leva até lá **mesmo que o jogador ainda não tenha condição de defender** (não fez as tarefas): o balão só encaminha, nunca bloqueia nem cobra.
+
+**Regra comum:** depois de tocar e ser direcionado, o balão fecha e **NÃO aparece mais naquele dia** (por conta).
+
+### Critérios de aceite (testáveis)
+
+- G1. Com a missão/Mercador concluídos e achado pendente, a Home mostra o balão dourado sem timeout de auto-esconder (diferente do `speak` de ~poucos segundos); ele sobrevive a trocar de aba e voltar.
+- G2. Tocar o balão do caso 1 navega ao encontro/Mercador correto (um teste por destino) e marca o balão como dispensado no dia.
+- G3. Com o Soulmon no Rift, o balão aparece junto da plaquinha; tocar abre a escolha com "Ir ao Rift"; ao escolher, navega e dispensa.
+- G4. Com o Grove atacado, o balão aparece mesmo com tarefas do dia pendentes; tocar abre o Grove (modo ataque) sem exigir pré-requisito; sem ataque, não aparece.
+- G5. Depois de tocado, o balão não reaparece no mesmo dia local (reabrir o app, recarregar, trocar de aba) e reaparece no dia seguinte se a condição ainda valer.
+- G6. Vários balões ao mesmo tempo: fila por prioridade (Grove sob ataque > Rift > achado); só um visível; o dispensado libera o próximo.
+- G7. Borda dourada distinguível do balão comum em claro e escuro, contraste AA do texto; alvo de toque >= 44 px; leitor de tela anuncia como botão com o destino ("Abrir o Grove").
+- G8. Suíte verde e régua de PT (`pt-lint`) nas falas novas; falas respeitam o tom da personalidade do Soulmon (item B).
+
+### Onde toca no código
+
+- Falas e balão da Home: `src/components/CompanionHUD.tsx` (`bubbleText`, `speak`, `bubbleTimeoutRef`; o balão atual some por timeout, o dourado precisa de estado próprio persistente e `pointer-events: auto` sem comer o clique dos botões de cuidado, ver o comentário sobre zIndex 45).
+- Plaquinha do Rift / masmorra: `CompanionHUD.tsx` (`naMasmorra`, prop da plaquinha e do toque que abre o aviso), `src/components/DungeonBusyModal.tsx`, `src/App.tsx` (~linhas 3997-4011) e `src/contexts/GameStateContext.tsx` (estado "na masmorra").
+- Retorno da missão e acerto do Grove: `src/App.tsx` e `src/utils/community.ts` (`guildRaidHit`), telas `src/components/guild/` (`BossFightScreen`, `BossCheerPrelude`); o estado "Grove sob ataque" precisa de um sinal único (hoje deve ser derivado do chefe/raid da guilda: confirmar na implementação).
+- Mercador (antes "feira"): `src/components/guild/` (contrato `guildFeiraFiacao`) e a rota do Mercador.
+
+### Persistência diária por conta
+
+- Chave `balaoDourado:<tipo>:<AAAA-MM-DD>` no save da conta (não só localStorage), para não reaparecer em outro aparelho; "dia" = dia local do jogador, o mesmo corte usado pelas tarefas diárias.
+- Gravar ao TOCAR e ser direcionado (não ao exibir); sincronizar pelo caminho normal do save em nuvem; dados novos entram nos testes de serialização (`cloudSave.serializacao`).
+
+### Riscos
+
+- Balão persistente cobre o corpo do pet ou os botões de cuidado (regressão que o §60 já corrigiu): testar render nos temas e tamanhos de tela.
+- Dois relógios de "dia" (UTC no servidor x local no cliente) reabrindo o balão perto da meia-noite.
+- Grove atacado e jogador sem condição: tom da fala não pode culpar nem pressionar (item B2); sem dark pattern.
+- Fila de balões virar spam: limite de um visível e uma vez por dia por tipo.
+- Sinal "Grove sob ataque" ainda não existir como estado explícito: pode exigir trabalho de servidor (`functions/api`), o que muda o canal (APK x web, seção 0).

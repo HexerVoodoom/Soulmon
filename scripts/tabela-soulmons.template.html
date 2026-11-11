@@ -1,9 +1,5 @@
-<!doctype html>
-<html lang="pt-BR">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tabela de Soulmons</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <style>
 :root {
   --bg: #eef3f2; --surface: #ffffff; --surface2: #e2ecea; --ink: #0f2e2d; --muted: #4d6967; --line: #c3d4d1;
@@ -20,13 +16,14 @@
   --teal: #2fb3ad; --teal-ink: #062022; --copper: #e0955d; --edit-bg: #3a2616; --edit-line: #e0955d; --focus: #e0955d;
 }
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
+body { margin: 0; }
 body { background: var(--bg); color: var(--ink); font: 15px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow-x: hidden; }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
-.app { padding: 0 16px; max-width: 1500px; margin: 0 auto; }
-header.topo { padding: 16px 0 8px; position: sticky; top: 0; background: var(--bg); z-index: 5; }
+.app { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); max-width: 1500px; margin: 0 auto; }
+header.topo { padding: 16px 0 8px; position: sticky; top: env(safe-area-inset-top, 0px); background: var(--bg); z-index: 5; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
 h1 { margin: 0 0 8px; font-size: 20px; color: var(--teal); }
 h1 small { color: var(--muted); font-weight: 400; font-size: 13px; margin-left: 6px; }
 .barra { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
@@ -51,6 +48,11 @@ tr.editado td { background: var(--edit-bg); }
 tr.editado td:first-child { box-shadow: inset 4px 0 0 var(--edit-line); }
 td .sub { color: var(--muted); font-size: 12px; }
 .tag { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--surface2); font-size: 12px; margin: 1px 2px 1px 0; }
+.spr { display: block; width: auto; height: 56px; max-width: 100%; image-rendering: pixelated; object-fit: contain; }
+.spr-nada { display: flex; align-items: center; justify-content: center; width: 56px; height: 56px; max-width: 100%; background: #8a9795; color: #fff; font-weight: 700; border-radius: 6px; }
+.col-spr { width: 76px; }
+.cartao .topo-c { display: flex; gap: 10px; align-items: center; }
+.cartao .topo-c .txt { flex: 1; min-width: 0; }
 .col-nome { width: 20%; } .col-pers { width: 11%; } .col-elem { width: 11%; } .col-est { width: 9%; } .col-atk { width: 13%; } .col-esp { width: 13%; } .col-ctx { width: 13%; } .col-id { width: 10%; }
 
 .cartoes { display: none; }
@@ -93,9 +95,15 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
   .busca { flex-basis: 100%; min-height: 48px; font-size: 16px; }
   .opcao { min-height: 44px; }
 }
+
+.painel-csv { position: fixed; inset: 0; z-index: 30; background: var(--bg); display: flex; flex-direction: column; gap: 8px; padding-top: max(16px, env(safe-area-inset-top, 0px)); padding-bottom: max(16px, env(safe-area-inset-bottom, 0px)); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.painel-csv[hidden] { display: none; }
+.painel-csv h2 { margin: 0; font-size: 18px; color: var(--teal); }
+.painel-csv p { margin: 0; color: var(--muted); font-size: 13px; }
+.painel-csv textarea { flex: 1; min-height: 0; width: 100%; font: 12px/1.35 ui-monospace, Menlo, Consolas, monospace; background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: 10px; padding: 10px; resize: none; }
+.painel-csv .acoes { display: flex; gap: 8px; flex-wrap: wrap; }
+.painel-csv .msg { min-height: 18px; color: var(--copper); font-size: 13px; }
 </style>
-</head>
-<body>
 <div class="app">
   <header class="topo">
     <h1>Tabela de Soulmons <small id="gerado"></small></h1>
@@ -115,7 +123,7 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
   <div class="tabela-wrap" id="tabelaWrap">
     <table>
       <thead><tr>
-        <th class="col-nome">Nome</th><th class="col-pers">Personalidade</th><th class="col-elem">Elemento base</th><th class="col-est">Estágio</th>
+        <th class="col-spr">Sprite</th><th class="col-nome">Nome</th><th class="col-pers">Personalidade</th><th class="col-elem">Elemento base</th><th class="col-est">Estágio</th>
         <th class="col-atk">Tipo de ataque</th><th class="col-esp">Ataque especial</th><th class="col-ctx">Contexto</th><th class="col-id">Id</th>
       </tr></thead>
       <tbody id="corpo"></tbody>
@@ -140,6 +148,13 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
 </aside>
 
 <script id="dados" type="application/json">__DADOS__</script>
+<section id="painelCsv" class="painel-csv" hidden aria-label="Exportar CSV">
+  <h2 id="csvTitulo">CSV</h2>
+  <p>Este visualizador não baixa arquivos. Toque em Copiar e cole o CSV na conversa.</p>
+  <textarea id="csvTexto" readonly spellcheck="false"></textarea>
+  <div id="csvMsg" class="msg" role="status"></div>
+  <div class="acoes"><button id="csvCopiar" class="btn primario" type="button">Copiar</button><button id="csvFechar" class="btn" type="button">Fechar</button></div>
+</section>
 <script>
 (function () {
   'use strict';
@@ -198,6 +213,8 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (ch) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]; }); }
   function tags(campo, v) { return (Array.isArray(v) ? v : [v]).map(function (x) { return '<span class="tag">' + esc(rot(campo, x)) + '</span>'; }).join(''); }
 
+  var SPR = DADOS.sprites || [];
+  function spr(l) { return l.sp >= 0 && SPR[l.sp] ? '<img class="spr" loading="lazy" alt="" src="' + SPR[l.sp] + '">' : '<div class="spr-nada" title="sem sprite">?</div>'; }
   var visiveis = [];
   function render() {
     visiveis = BASE.filter(passa);
@@ -205,8 +222,9 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
     visiveis.forEach(function (l, i) {
       var nova = l.linha !== ant; ant = l.linha;
       var ed = editado(l);
+      var sp = spr(l);
       h += '<tr data-i="' + i + '" class="' + (ed ? 'editado ' : '') + (nova ? 'novo-grupo' : '') + '">' +
-        '<td><b>' + esc(valor(l, 'nome')) + '</b><div class="sub">' + esc(valor(l, 'linha')) + '</div></td>' +
+        '<td>' + sp + '</td><td><b>' + esc(valor(l, 'nome')) + '</b><div class="sub">' + esc(valor(l, 'linha')) + '</div></td>' +
         '<td>' + tags('personalidade', valor(l, 'personalidade')) + '</td>' +
         '<td>' + esc(valor(l, 'elemento_base')) + (l.elementos && l.elementos.length > 1 ? '<div class="sub">' + esc(l.elementos.join(' + ')) + '</div>' : '') + '</td>' +
         '<td>' + esc(rot('estagio', valor(l, 'estagio'))) + '</td>' +
@@ -215,8 +233,8 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
         '<td>' + tags('contexto', valor(l, 'contexto')) + '</td>' +
         '<td class="sub">' + esc(l.id) + '</td></tr>';
       c += '<div class="cartao ' + (ed ? 'editado ' : '') + (nova ? 'novo-grupo' : '') + '" data-i="' + i + '">' +
-        '<h3>' + esc(valor(l, 'nome')) + '<span>' + esc(rot('estagio', valor(l, 'estagio'))) + '</span></h3>' +
-        '<div class="linha-id">' + esc(valor(l, 'linha')) + ' · ' + esc(l.id) + '</div>' +
+        '<div class="topo-c">' + sp + '<div class="txt"><h3>' + esc(valor(l, 'nome')) + '<span>' + esc(rot('estagio', valor(l, 'estagio'))) + '</span></h3>' +
+        '<div class="linha-id">' + esc(valor(l, 'linha')) + ' · ' + esc(l.id) + '</div></div></div>' +
         '<div class="grade">' +
         '<div><b>Personalidade</b>' + esc(rot('personalidade', valor(l, 'personalidade'))) + '</div>' +
         '<div><b>Elemento</b>' + esc(valor(l, 'elemento_base')) + '</div>' +
@@ -228,7 +246,7 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
     document.getElementById('cartoes').innerHTML = c;
     document.getElementById('vazio').hidden = visiveis.length > 0;
     var nEd = BASE.filter(editado).length;
-    document.getElementById('resumo').textContent = visiveis.length + ' de ' + BASE.length + ' Soulmons · ' + nEd + ' editado' + (nEd === 1 ? '' : 's');
+    document.getElementById('resumo').textContent = visiveis.length + ' de ' + BASE.length + ' Soulmons · ' + (DADOS.sem_sprite || 0) + ' sem sprite · ' + nEd + ' editado' + (nEd === 1 ? '' : 's');
     var n = nFiltrosAtivos(), b = document.getElementById('nFiltros'); b.hidden = n === 0; b.textContent = n;
     var chips = '';
     COL_FILTRO.forEach(function (col) { Object.keys(filtros[col[0]]).forEach(function (v) { chips += '<button class="chip" type="button" data-c="' + col[0] + '" data-v="' + esc(v) + '">' + esc(rot(col[0], v)) + ' ✕</button>'; }); });
@@ -343,21 +361,30 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
     if (!atual) return; delete edicoes[atual.id]; gravar(); fechar(); render();
   });
 
-  var COLS_CSV = ['id', 'nome', 'linha', 'estagio', 'personalidade', 'elemento_base', 'ataque_tipo', 'especial_tipo', 'contexto', 'editado', 'fonte'];
+  var COLS_CSV = ['id', 'nome', 'sprite', 'linha', 'estagio', 'personalidade', 'elemento_base', 'ataque_tipo', 'especial_tipo', 'contexto', 'editado', 'fonte'];
   function cel(v) { var s = Array.isArray(v) ? v.join(';') : String(v == null ? '' : v); return /[",\r\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
   function exportar(soEditados) {
     var rows = BASE.filter(function (l) { return !soEditados || editado(l); });
-    if (!rows.length) { alert('Nenhuma linha editada ainda.'); return; }
+    if (!rows.length) { mostrarCsv('Nenhuma linha editada ainda. Edite uma linha e volte aqui.', 'Só editados'); return; }
     var linhas = [COLS_CSV.join(',')];
     rows.forEach(function (l) {
-      linhas.push(COLS_CSV.map(function (c) { return cel(c === 'editado' ? (editado(l) ? 'sim' : 'nao') : (c === 'id' || c === 'fonte') ? l[c] : valor(l, c)); }).join(','));
+      linhas.push(COLS_CSV.map(function (c) { return cel(c === 'editado' ? (editado(l) ? 'sim' : 'nao') : (c === 'id' || c === 'fonte' || c === 'sprite') ? l[c] : valor(l, c)); }).join(','));
     });
-    var blob = new Blob(['﻿' + linhas.join('\r\n') + '\r\n'], { type: 'text/csv;charset=utf-8' });
-    var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
-    a.download = soEditados ? 'soulmons-editados.csv' : 'soulmons.csv';
-    document.body.appendChild(a); a.click();
-    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    mostrarCsv(linhas.join('\n'), soEditados ? 'CSV só editados (' + rows.length + ' linhas)' : 'CSV completo (' + rows.length + ' linhas)');
   }
+  function mostrarCsv(texto, titulo) {
+    document.getElementById('csvTitulo').textContent = titulo;
+    var ta = document.getElementById('csvTexto'); ta.value = texto;
+    document.getElementById('csvMsg').textContent = '';
+    document.getElementById('painelCsv').hidden = false;
+    ta.scrollTop = 0;
+  }
+  document.getElementById('csvFechar').addEventListener('click', function () { document.getElementById('painelCsv').hidden = true; });
+  document.getElementById('csvCopiar').addEventListener('click', function () {
+    var ta = document.getElementById('csvTexto'), msg = document.getElementById('csvMsg');
+    function sel() { ta.focus(); ta.select(); msg.textContent = 'Selecionado: use Copiar do sistema.'; }
+    try { navigator.clipboard.writeText(ta.value).then(function () { msg.textContent = 'Copiado.'; }, sel); } catch (e) { sel(); }
+  });
   document.getElementById('btnCsv').addEventListener('click', function () { exportar(false); });
   document.getElementById('btnCsvEd').addEventListener('click', function () { exportar(true); });
 
@@ -365,5 +392,4 @@ legend { padding: 0 6px; color: var(--teal); font-weight: 600; font-size: 14px; 
   render();
 })();
 </script>
-</body>
-</html>
+
