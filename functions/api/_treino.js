@@ -57,11 +57,13 @@ export const sparLevelWindow = (myLevel) => Math.max(2, Math.ceil(myLevel * 0.1)
  * preferência de estágio (`ESTAGIO_PESOS`, que acompanha o poder). Sem `myLevel` (ou sem `level`) = o comportamento antigo (só Vínculo).
  * Quem chama fatia os `n` primeiros (e pode pular quem não luta). Pura: o `rng` vem de fora (`() => [0,1)`).
  */
+/** @param {any[]} pool @param {number} myBond @param {() => number} rng @param {number} [n] @param {number} [range] @param {string | null} [myStage] @param {number | null} [myLevel] */
 export function pickSparOpponents(pool, myBond, rng, n = SPAR_PICKS, range = SPAR_BOND_RANGE, myStage = null, myLevel = null) {
   const fin = v => (Number.isFinite(v) ? v : 1);
   const mine = fin(myBond);
-  const byLevel = Number.isFinite(myLevel);
-  const isNear = p => byLevel && Number.isFinite(p.level) && Math.abs(p.level - myLevel) <= sparLevelWindow(myLevel);
+  const lvl = typeof myLevel === 'number' && Number.isFinite(myLevel) ? myLevel : null;
+  const byLevel = lvl !== null;
+  const isNear = p => lvl !== null && Number.isFinite(p.level) && Math.abs(p.level - lvl) <= sparLevelWindow(lvl);
   const inBand = r => pool.filter(p => Math.abs(fin(p.bond) - mine) <= r);
   const total = c => c.length + pool.filter(p => isNear(p) && !c.includes(p)).length;
   let r = Math.max(0, range);
