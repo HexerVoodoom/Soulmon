@@ -821,13 +821,17 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         onClick={() => setHistOpen(true)}
         aria-haspopup="dialog"
         aria-label={isPt
-          ? `Última temporada: ${histView.lastPlace !== null ? `${histView.lastPlace}º lugar` : 'sem colocação'}. Abrir o histórico`
-          : `Last season: ${histView.lastPlace !== null ? `place ${histView.lastPlace}` : 'no placement'}. Open the history`}
+          ? `Última temporada: ${histView.lastPlace !== null ? `${histView.lastPlace}º lugar` : 'sem colocação'}. Nesta temporada: ${myPlace !== null ? `${myPlace}º lugar` : 'sem colocação'}. Abrir o histórico`
+          : `Last season: ${histView.lastPlace !== null ? `place ${histView.lastPlace}` : 'no placement'}. This season: ${myPlace !== null ? `place ${myPlace}` : 'no placement'}. Open the history`}
         style={{ ...sm2Tag, alignSelf: 'flex-start', minHeight: 44, padding: '0 12px', border: 0, cursor: 'pointer', color: 'var(--sm2-ink)' }}
       >
         <Icon name="emoji_events" size={20} tone={histView.lastPlace !== null && histView.lastPlace <= 3 ? 'gold' : 'muted'} fill={histView.lastPlace !== null && histView.lastPlace <= 3 ? 1 : 0} />
         <span>{isPt ? 'Última temporada' : 'Last season'}</span>
         <span className="sm2-num" style={{ fontWeight: 600 }}>{histView.lastPlace !== null ? placeLabel(histView.lastPlace, lang) : '—'}</span>
+        {/* 11/11/2026 (dono): na mesma linha, a posição nesta temporada (a do servidor; sem ela, a da lista pública). */}
+        <span aria-hidden="true" style={{ opacity: 0.5 }}>·</span>
+        <span data-torneio-posicao-atual>{isPt ? 'Agora' : 'Now'}</span>
+        <span className="sm2-num" style={{ fontWeight: 600 }}>{myPlace !== null ? placeLabel(myPlace, lang) : '—'}</span>
         <Icon name="chevron_right" size={20} tone="muted" />
       </button>
 
