@@ -139,8 +139,11 @@ describe('evolução por faixa fixa', () => {
     expect(Math.min(...n('A').map(p => p.skill))).toBeGreaterThanOrEqual(Math.max(...n('B').map(p => p.skill)));
     expect(Math.min(...n('B').map(p => p.skill))).toBeGreaterThanOrEqual(Math.max(...n('C').map(p => p.skill)));
   });
-  it('os 120 novos partem de Rookie, sem pontos; sem teto, a curva leva até o fim (REGISTRO §282)', () => {
-    for (const p of SIMULADOS.slice(50)) expect(p.ancora).toEqual({ estagio: 'rookie', pontos: 0 });
+  it('os 120 novos partem de Rookie, sem pontos (REGISTRO §282), EXCETO os promovidos a Champion/Ultimate em 11/11/2026 (REGISTRO §284); sem teto, a curva leva até o fim', () => {
+    for (const p of SIMULADOS.slice(50)) {
+      if (p.ancora.estagio === 'rookie') expect(p.ancora.pontos).toBe(0);
+      else expect(['champion', 'ultimate']).toContain(p.ancora.estagio);
+    }
     for (const p of SIMULADOS) {
       const final = estadoDoDia(p, diaMais(400)).stage;
       expect(final).toBe(progressoDoDia(p, diaMais(400)).stage);
@@ -155,7 +158,7 @@ describe('evolução por faixa fixa', () => {
     for (const p of SIMULADOS) expect(estadoDoDia(p, '2026-11-05').level, p.id).toBeLessThanOrEqual(1 + p.daysPlaying);
   });
   it('Rookies novos: poucos dias de conta, coerentes com o level 1 da âncora', () => {
-    for (const p of SIMULADOS.filter((x) => x.id >= 'sim_0051')) {
+    for (const p of SIMULADOS.filter((x) => x.id >= 'sim_0051' && x.ancora.estagio === 'rookie')) {
       expect(estadoDoDia(p, '2026-11-05').level, p.id).toBe(1);
       expect(p.daysPlaying, p.id).toBeLessThanOrEqual(5);
     }
@@ -507,7 +510,7 @@ describe('publicação dos rookies (script manual)', () => {
 describe('fila de sprites (script manual)', () => {
   it('não gera por padrão; o plano é a cadeia do rookie à forma atual', () => {
     expect(parseArgs(['--only', 'sim_0001,sim_0002'])).toMatchObject({ only: ['sim_0001', 'sim_0002'], lote: null, instalar: null });
-    expect(new Set(planejar().map((i) => i.id)).size).toBe(160); // os 10 acima do teto ficam de fora
+    expect(new Set(planejar().map((i) => i.id)).size).toBe(167); // só os 3 acima de Ultimate (mega) ficam de fora; os Ultimate (inclusive os promovidos em 11/11, REGISTRO §284) entram
     expect(cadeiaAte('poder', 'ultimate-power')).toEqual(['rookie', 'champion-power', 'ultimate-power']);
     expect(cadeiaAte('harmonia', 'rookie')).toEqual(['rookie']);
     expect(formasDaLinha('benevolencia')[4]).toBe('ultra');

@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { ARENA_ROUNDS, ARENA_ROUND_COMP, elementLabel, loadBestiaryPool } from '../../utils/arena';
+import { useGameStateOptional } from '../../contexts/GameStateContext';
+import { soulLevel } from '../../utils/soulXP';
 import { arenaCardElements, arenaCards, arenaFoesOfSeed, arenaRunIsStray, arenaRerollCost, arenaRerollsFreeLeft, arenaRerollsToday, type ArenaReroll } from '../../utils/arenaSorteio';
 import { elementIcon } from '../../utils/elementIconArt';
 import { Icon } from '../ui/Icon';
@@ -60,6 +62,8 @@ export interface ArenaRerollProps {
 
 function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: (seed: number) => void; arena: ArenaRerollProps }) {
   const done = arenaRerollsToday(arena.reroll, arena.dayIso);
+  const gs = useGameStateOptional()?.gameState; // o level do jogador: a forma do inimigo acompanha o HP que ele terá (`arenaStageForHp`)
+  const playerLevel = gs ? soulLevel({ evolutionStage: gs.evolutionStage, perfectDays: gs.perfectDays, powerPoints: gs.powerPoints, harmonyPoints: gs.harmonyPoints, benevolencePoints: gs.benevolencePoints, degeneratedByHP: gs.degeneratedByHP, evoStatFloor: gs.evoStatFloor }) : undefined;
   // 3 desafios do DIA, determinísticos (mesmos ao reabrir), elementos distintos, no máximo 1 Desgarrado.
   const runsDone = arenaRerollsToday(arena.runs, arena.dayIso);
   const seeds = useMemo(() => arenaCards(arena.dayIso, arena.accountKey, done, 3, runsDone), [arena.dayIso, arena.accountKey, done, runsDone]);
@@ -83,7 +87,7 @@ function EscolhaDeAdversarios({ isPt, onPick, arena }: { isPt: boolean; onPick: 
       </p>
       {seeds.map((seed, i) => {
         const bossIdx = ARENA_ROUND_COMP[ARENA_ROUNDS - 1].indexOf('boss');
-        const boss = arenaFoesOfSeed(seed, ARENA_ROUNDS, arena.ladder)[Math.max(0, bossIdx)];
+        const boss = arenaFoesOfSeed(seed, ARENA_ROUNDS, arena.ladder, playerLevel)[Math.max(0, bossIdx)];
         const els = arenaCardElements(seed); // §199: o elemento da RUN (o de todo inimigo, fundido nas combinadas)
         const on = chosen === i;
         return (

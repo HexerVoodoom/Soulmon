@@ -245,7 +245,7 @@ export function ArenaGame({
 
   const montarRodada = useCallback((n: number, poolAtual: BestiaryCreature[]) => {
     // O sabor da rodada vem da semente da run (determinístico: a mesma run, os mesmos bichos).
-    const novos = arenaFoesOfSeed(runSeedRef.current, n, runLadderRef.current); // a MESMA função do card da DueloSheet
+    const novos = arenaFoesOfSeed(runSeedRef.current, n, runLadderRef.current, jogadorRef.current.combatant.level); // a MESMA função do card da DueloSheet
     inimigosRef.current = novos;
     rodadaRef.current = n;
     setInimigos(novos);
