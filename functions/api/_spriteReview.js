@@ -51,6 +51,8 @@ export const REVIEW_LIMITS = Object.freeze({
   /** Regenerações automáticas no servidor todo por dia. */
   regenPerDay: 25,
 });
+/** Quantas vezes UM report pode retomar uma regeneracao cortada no meio sem cobrar os tetos (segurança, rodada 1). */
+export const REGEN_RETOMADAS_MAX = 2;
 /** Pedido ainda sem resposta depois disto vira `falhou` (e o botao do jogador volta). */
 export const GIVE_UP_MS = 24 * 60 * 60_000;
 
@@ -617,6 +619,24 @@ export async function regenerateReport(env, reportId, deps = {}) {
   const republish = deps.republish ?? republicar;
 
   const registro = await lerRegistro(env, report.saveId, report.formId);
+  // SEGURANCA (rodada 1, 11/11/2026): so se regenera forma que ESTA conta de fato gerou pelo pipeline (existe `sprite:img:<save>:<forma>`).
+  // Sem isto, qualquer `formId` valido + `prompt` do corpo (ate 12000 caracteres) + motivo "recorte" virava uma geracao paga com prompt
+  // livre, sem o portao de plano/cota do generate-sprite. Sem registro = pessoa da equipe olha (`precisa-manual`).
+  if (!registro || typeof registro !== 'object' || typeof registro.image !== 'string' || !registro.image) {
+    report.status = STATUS.MANUAL; report.detail = 'no-registro';
+    await saveReport(env, report, now);
+    return report;
+  }
+  // A retomada (Worker caiu no meio) nao cobra os tetos; sem limite, cortar a conexao de proposito e chamar `continue` a cada 10 min
+  // gerava imagens pagas sem fim no mesmo report. Teto de retomadas por report; passou = `falhou` (o botao do jogador volta amanha).
+  if (retomada) {
+    if ((Number(report.retomadas) || 0) >= REGEN_RETOMADAS_MAX) {
+      report.status = STATUS.FALHOU; report.detail = 'regen-retomadas';
+      await saveReport(env, report, now);
+      return report;
+    }
+    report.retomadas = (Number(report.retomadas) || 0) + 1;
+  }
   const basePrompt = typeof registro?.prompt === 'string' && registro.prompt ? registro.prompt : (typeof report.clientPrompt === 'string' ? report.clientPrompt : '');
   if (!basePrompt) {
     report.status = STATUS.MANUAL; report.detail = 'no-stored-prompt';

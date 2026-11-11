@@ -6,6 +6,7 @@ import { encodePng, decodePng } from './_png.js';
 import {
   parseVerdict, sanitizeReportBody, tokenOfSpriteUrl, evaluateReport, regenerateReport, createReport, escolherChroma, aplicarChroma,
   patchSaveSprite, advanceReport, ackReport, buildClaudeRequest, callClaude, REVIEW_LIMITS, STATUS, CLAUDE_MODEL, readReport, listByAccount, compositeOnGray,
+  REGEN_RETOMADAS_MAX,
 } from './_spriteReview.js';
 import { onRequestPost, onRequestGet } from './review-soulmon.js';
 import { onRequestGet as gmGet } from './gm-reviews.js';
@@ -375,6 +376,29 @@ describe('advanceReport (o app anda o pedido parado)', () => {
     const r = await advanceReport(env, report.id, { generate: gen, origin: 'https://x.test' });
     expect(r.status).toBe(STATUS.CONSERTADO);
     expect(gen).toHaveBeenCalledTimes(1);
+  });
+  it('seguranca: retomadas gratis tem teto por report (cortar a conexao de proposito nao gera sem fim)', async () => {
+    const env = mkEnv({ ANTHROPIC_API_KEY: 'k' });
+    const { report } = await createReport(env, sanitizeReportBody(corpo({ prompt: PROMPT_SABA })));
+    await evaluateReport(env, report.id, { fetch: claudeFetch({ problema: 'estilo', detalhe: 'x', acao: 'regenerar', fundoResidual: 'none' }) });
+    const r1 = JSON.parse(env.SOULMON_SAVES.store.get('review:' + report.id));
+    r1.status = STATUS.REGENERANDO; r1.startedAt = Date.now() - 20 * 60_000; r1.retomadas = REGEN_RETOMADAS_MAX;
+    env.SOULMON_SAVES.store.set('review:' + report.id, JSON.stringify(r1));
+    const gen = vi.fn(async () => ({ image: `data:image/png;base64,${btoa(String.fromCharCode(...pngCriatura()))}`, provider: 'higgsfield' }));
+    const r = await advanceReport(env, report.id, { generate: gen, origin: 'https://x.test' });
+    expect(r.status).toBe(STATUS.FALHOU);
+    expect(r.detail).toBe('regen-retomadas');
+    expect(gen).not.toHaveBeenCalled();
+  });
+  it('seguranca: forma sem registro do pipeline (formId inventado + prompt livre) nao regenera: precisa-manual', async () => {
+    const env = mkEnv({ ANTHROPIC_API_KEY: 'k' });
+    const { report } = await createReport(env, sanitizeReportBody(corpo({ formId: 'mega-harmony@sabbat', prompt: 'qualquer coisa paga', motivo: 'recorte' })));
+    await evaluateReport(env, report.id, {});
+    const gen = vi.fn(async () => ({ image: `data:image/png;base64,${btoa(String.fromCharCode(...pngCriatura()))}`, provider: 'higgsfield' }));
+    const r = await regenerateReport(env, report.id, { generate: gen, origin: 'https://x.test' });
+    expect(r.status).toBe(STATUS.MANUAL);
+    expect(r.detail).toBe('no-registro');
+    expect(gen).not.toHaveBeenCalled();
   });
 });
 
