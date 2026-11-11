@@ -64,7 +64,7 @@ const PORTS: Readonly<Record<HexSlot, { x: number; y: number }>> = {
 };
 const CORE = { x: 49.8, y: 53.5 };
 /** Os 2 botões de RENOMEAR: na linha da Coroa, à direita dela (entre a Coroa e a Garra). */
-const RENAME_PORTS: Readonly<Record<HexRenameKind, { x: number; y: number }>> = { pet: { x: 71.5, y: 16.5 }, especial: { x: 87, y: 16.5 } };
+const RENAME_PORTS: Readonly<Record<HexRenameKind, { x: number; y: number }>> = { pet: { x: 73.5, y: 16.5 }, especial: { x: 91, y: 16.5 } };
 
 /** Degraus de `tokens.md` §6.1: `nav` 32 no mapa (o encaixe é um destino), `action` 24 nas linhas e no botão, `inline` 20 no saldo. */
 const ICON_MAP = 32;
