@@ -1,4 +1,5 @@
 import type { CatalogItem } from '../types/activityCatalog';
+import { DAILY_SCHEDULE } from './catalogHabitMigrate';
 
 /** Id novo de atividade criada a partir do catálogo. */
 function genId(): string {
@@ -29,7 +30,8 @@ export function activitiesFromCatalogChoice(
     weekDays: [0, 1, 2, 3, 4, 5, 6],
     catalogId: item.id,
     level: 1,
-    schedule: item.levels[0].defaultSchedule,
+    // Hábito = TODO DIA: a agenda 3x/semana do nível 1 mandava o item para a linha de tarefas.
+    schedule: DAILY_SCHEDULE,
   }));
 }
 

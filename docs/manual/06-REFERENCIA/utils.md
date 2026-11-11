@@ -2046,10 +2046,14 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Régua:** `rebirth.test.ts`, `entradaEnxuta.contract.test.ts`
 **Regra de negócio:** o resto do Renascimento (`applyRebirth`, opções) carrega por `import()` ao renascer. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
 
+### `src/utils/catalogHabitMigrate.ts`
+**Dono de:** a migração do load (`hydrateSave`) que converte hábito do catálogo na agenda padrão de algum nível (3x/semana, dias úteis…) para todo dia (`migrateCatalogHabitDaily`, idempotente; não toca agenda editada nem atividade sem `catalogId`) e de `DAILY_SCHEDULE`.
+**Régua:** `CreateModal.habito.render.test.tsx`
+
 ### `src/utils/catalogChoice.ts`
 **Dono de:** a construção das `Activity` a partir dos itens do catálogo escolhidos.
 **Exports:**
-- `activitiesFromCatalogChoice(items, isPt, nowIso?)` — id novo, nível 1, agenda padrão do nível 1, `catalogLevelSetAt` desde a criação. Antes morava em `CatalogOnboardingFlow.tsx` (reexportada de lá).
+- `activitiesFromCatalogChoice(items, isPt, nowIso?)` — id novo, nível 1, agenda TODO DIA (§295; antes a do nível 1, que mandava o item para as Tarefas), `catalogLevelSetAt` desde a criação. Antes morava em `CatalogOnboardingFlow.tsx` (reexportada de lá).
 **Chamado por:** `src/App.tsx`, `src/components/catalog/CatalogOnboardingFlow.tsx`.
 **Régua:** `CatalogOnboardingFlow.render.test.tsx`
 **Regra de negócio:** o `App.tsx` o usa sem carregar o fluxo (que é `React.lazy`). [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).

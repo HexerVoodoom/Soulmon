@@ -1051,6 +1051,8 @@ quem aplica é `handleTriageResolve` no `App.tsx`, delegando a `toOpen`,
 `postpone`, `toSomeday` e `drop`. A fila é **congelada** ao abrir (`setTriageTasks(triageQueue(…))`),
 para o contador não mentir enquanto encolhe.
 
+**Novo hábito (§295, 11/11/2026)**: com `kind === 'habit'` o `CreateModal` mostra tudo de uma vez — sem o botão "Mais opções"/"Menos opções", categoria aberta, rótulo **Quando/When** no horário, placeholder da captura rápida **Exemplo: Caminhar 20 minutos / Example: Walk 20 minutes** e UM só campo de nome (o de cima; o `sm-create-name` não é montado). A tela "Nova tarefa" segue com o recolher. Hábito do catálogo entra com agenda **todo dia** (antes herdava 3x/semana do nível 1 e caía na linha de Tarefas). Régua: `CreateModal.habito.render.test.tsx`.
+
 **Marcar feito abre 5 s de "Desfazer"** (desde 22/09/2026, decisão do dono
 **#57**): os handlers de conclusão do `App.tsx` chamam `ofereceDesfazer`
 — o da atividade inteira, o da ÚLTIMA etapa (que fecha um hábito com etapas) e,

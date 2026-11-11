@@ -4754,3 +4754,13 @@ Medido em 10.000 voltas (funções reais, `encontro.test.js`): chefe sempre aber
 **Falsifica:** uma volta de Missão sem encontro, o Desafio dar Bits mais de 1× por dia por pessoa, ou o Mercador sair da taxa 8%/12% (`feiraLoja.taxa.test.js`, `encontro.test.js`).
 
 **Rollback:** reverter o PR (o campo novo `desafioBits` da casa e a chave `encontro:` são aditivos). **APK:** nada obrigatório.
+
+## §295 — Hábito do catálogo é hábito (todo dia) e a tela Novo hábito sem recolher (11/11/2026, decisão do dono)
+
+Decisão: um hábito acontece TODO DIA. Causa do bug: `activitiesFromCatalogChoice` gravava a agenda do nível 1 do item (3x/semana, dias úteis); `activityBucket` chama de "scheduled" tudo que não é todo dia e a Home põe isso na linha de Tarefas. Agora o catálogo grava agenda todo dia (os níveis seguem mudando só a meta). A tela Novo hábito (`CreateModal` com `kind='habit'`) mostra tudo: sem Mais opções, categoria aberta, Quando/When no horário, Exemplo/Example no lugar do placeholder de tarefa e um só campo de nome. Nova tarefa não mudou.
+
+Migração: `migrateCatalogHabitDaily` no load converte para todo dia a atividade com `catalogId` cuja agenda é exatamente a padrão de algum nível do item (id, histórico, stats, Bits e nível intactos). Agenda editada pela pessoa e atividade sem `catalogId` não são tocadas (não dá para provar a intenção).
+
+**Falsifica:** item do catálogo na linha de Tarefas, ou o botão Mais opções na tela Novo hábito (`CreateModal.habito.render.test.tsx`).
+
+**Rollback:** reverter o PR. **APK:** nada obrigatório.
