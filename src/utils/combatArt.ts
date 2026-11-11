@@ -19,7 +19,11 @@
 import { DERIVED_ELEMENT_PAIRS } from './soulProfile/derivedElements';
 import { curatedComponents } from './elementosCurados';
 import { ELEMENT_VISUAL } from './elementVisual.data';
-import { ELEMENTO_BG_MEAN } from './combatArtElementoMedias.data';
+import { ELEMENTO_BG_MEAN as ELEMENTO_BG_MEAN_V1 } from './combatArtElementoMedias.data';
+import { ELEMENTO_BG_MEAN_V2 } from './combatArtElementoMedias2.data';
+
+/** Cor média dos cenários próprios dos fundidos: os 93 antigos (png, 360×640) + os 151 compostos de 11/11/2026 (webp, 450×800). */
+const ELEMENTO_BG_MEAN: Record<string, string> = { ...ELEMENTO_BG_MEAN_V1, ...ELEMENTO_BG_MEAN_V2 };
 
 const bgs = import.meta.glob('../assets/soulmon/combate/bg-*.png', { eager: true, import: 'default' }) as Record<string, string>;
 const escudos = import.meta.glob('../assets/soulmon/combate/escudo-*.png', { eager: true, import: 'default' }) as Record<string, string>;
@@ -36,10 +40,10 @@ const BG = porId(bgs, 'bg');
 
 // Cenário PRÓPRIO de cada elemento fundido: `combate/elemento/<id>.png` (360×640, instalado por `tools/instalar-cenarios-elemento.py`).
 // Vem ANTES do cenário do elemento base; sem arquivo, cai no base (comportamento anterior).
-const elementoBgs = import.meta.glob('../assets/soulmon/combate/elemento/*.png', { eager: true, import: 'default' }) as Record<string, string>;
+const elementoBgs = import.meta.glob('../assets/soulmon/combate/elemento/*.{png,webp}', { eager: true, import: 'default' }) as Record<string, string>;
 const ELEMENTO_BG: Record<string, string> = {};
 for (const [p, url] of Object.entries(elementoBgs)) {
-  const m = /\/([a-z_]+)\.png$/.exec(p);
+  const m = /\/([a-z_]+)\.(?:png|webp)$/.exec(p);
   if (m) ELEMENTO_BG[m[1]] = url;
 }
 
