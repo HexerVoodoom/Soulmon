@@ -18,6 +18,8 @@ export function weeklyTarget(id: WeeklyMissionId): GoTarget {
     case 'evolve-view': return 'laboratorio.evolucao';
     case 'tournament-match': return 'arena.torneio';
     case 'gift-sent': return 'laboratorio.amigos';
+    case 'journal-days': return 'forja.caderno';
+    case 'focus-days': return 'forja.oficina';
     case 'rest-nights': case 'checkins': case 'haunted-done': case 'rub-days': case 'shower': case 'play-days': case 'mood-checkins':
       return 'home';
     case 'dream-new': return 'home';

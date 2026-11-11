@@ -118,7 +118,7 @@ describe('semanal: friend-visit virou gift-sent com o progresso preservado', () 
     expect(claimWeekly(so, m).emblems).toBe(2);
     const limpo: WeeklyMissionProgress = { week: 'w', counts: { shower: 1 }, claimed: [] };
     expect(migrateWeeklyLegacy(limpo)).toBe(limpo);
-    expect(weeklyMissionsFor('2026-W46').length).toBe(3);
+    expect(weeklyMissionsFor('2026-W46').length).toBe(5);
   });
 });
 

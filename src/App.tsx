@@ -246,7 +246,7 @@ import { useLibraryNewNotice } from './components/LibraryNewBadge';
 import { applyEssences, type EssenceDrop } from './utils/essences';
 import { NIGHTMARE_ELEMENT } from './utils/nightmareElement';
 import { aplicarDropDoMarco } from './utils/glitchtamaDrop';
-import { applyBestiarySeen, applyEnemyDefeated, applyFloorCleared, applyMilestoneItem } from './utils/dungeonRewards';
+import { applyBestiarySeen, applyEnemyDefeated, applyFloorCleared, applyMilestoneItem, countWeeklyMission } from './utils/dungeonRewards';
 import type { BosqueArvores } from './utils/bosqueArvores';
 import type { OcupadoAcao } from './components/DungeonBusyModal';
 import type { DungeonReturnSummary } from './utils/dungeonReturnSummary';
@@ -4598,6 +4598,8 @@ export default function App() {
   const contarDiaria = useCallback((evento: DailyEvent) => {
     setGameState(prev => {
       const firstTimes = markFirstForEvent(prev.firstTimes, evento);
+      /* Sessão do Focus Workshop concluída = a semanal "3 dias" (no máx. 1 por dia). */
+      if (evento === 'foco') prev = countWeeklyMission(prev, 'focus-days', new Date());
       return { ...prev, dailyMissions: bumpDaily(prev.dailyMissions, playerDayKey(new Date(), prev.playerDayTz), evento), ...(firstTimes === prev.firstTimes ? {} : { firstTimes }) };
     });
   }, []);
@@ -6082,6 +6084,7 @@ export default function App() {
       // O EVENTO REAL da missão do journaling (07/10/2026): um registro NOVO guardado. Mesmo updater, PURO sobre `prev`;
       // idempotente por dia do jogador (`completeBuildingQuest` só age em `available`).
       const novo = c1.some(e => !c0.some(o => o.id === e.id));
+      if (novo) prev = countWeeklyMission(prev, 'journal-days', new Date()); // semanal "journal em 3 dias" (no máx. 1 por dia)
       const bq = novo
         ? completeBuildingQuest(prev.buildingQuests, playerDayKey(new Date(), prev.playerDayTz), 'forja.caderno', bondLevelFor(prev.totalXP ?? 0))
         : prev.buildingQuests;
