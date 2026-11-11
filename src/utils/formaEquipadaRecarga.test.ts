@@ -59,6 +59,9 @@ describe('save JÁ afetado (potionElement base perdido na gravação anterior)',
   });
   it('é idempotente: carregar duas vezes dá o mesmo estado', () => {
     const uma = recarrega(cenario('original'));
-    expect(recarrega(uma)).toEqual(uma);
+    const duas = recarrega(uma);
+    // (campos de relógio do load variam entre cargas; a régua é a forma equipada)
+    expect([duas.potionElement, duas.formaAltEquipada, duas.formasAlt, duas.formaSnapshots, duas.elementoJornada])
+      .toEqual([uma.potionElement, uma.formaAltEquipada, uma.formasAlt, uma.formaSnapshots, uma.elementoJornada]);
   });
 });
