@@ -4765,7 +4765,27 @@ Migração: `migrateCatalogHabitDaily` no load converte para todo dia a atividad
 
 **Rollback:** reverter o PR. **APK:** nada obrigatório.
 
-## §296 — Categorias: uma lista só (hábito = tarefa), P/H/B equilibrado e Criatividade (11/11/2026, pedido do dono)
+## §296 — Missões: «Conte como você está se sentindo» leva ao chat; «Visitar a criatura» vira «Enviar um presente» (11/11/2026, pedido do dono)
+
+Decisão: (1) a diária `d-humor` («Conte como você está se sentindo hoje») não fazia nada ao tocar porque o alvo era a Home, onde o jogador já estava (a folha fechava e nada mais). Agora o alvo é `'chat'` (`missionTargets.ts`): fecha a folha, vai à Home e dá foco ao campo de conversa com o Soulmon (`chatFocusRequest` → `ChatBox.focusRequest`, vale 4 s). QUALQUER mensagem enviada conta (`onUserMessage` → `contarDiaria('humor')`, idempotente pelo alvo 1/dia); a resposta local da ponte (`chatSafetyDecision`) e o envio sem rede não contam. (2) Ninguém sabia cumprir «Visite a criatura de alguém»: a semanal `friend-visit` virou `gift-sent` («Envie um presente a alguém», 1/2 Emblemas) e a diária `d-amigo` virou `d-presente` («Envie um presente a um amigo», 1 material `keepsake`), ambas no mesmo lugar do catálogo (mesmo sorteio), levando à tela dos amigos (`laboratorio.amigos`); contam em `onGiftSent`, que a LibraryPage só chama depois do `ok` do servidor (`action=gift`: dono, amizade e 1/dia por amigo conferidos lá). Migração: `migrateWeeklyLegacy` no load; `d-amigo`/`amigo` ficam no catálogo aposentados e no espelho `_dailyMissions.js`. Varredura: conquistas ganharam alvo por id (Ateliê, Oficina, Guilda, Home); sem ação ficam só `mission-rank-gold` e `mission-regen-1`.
+
+Limite honesto: a contagem diária segue escrita pelo cliente (economia local-first); o envio é validado pelo servidor, o contador não. O presente exige a meta do dia cumprida (§190), então a missão pode ficar «aberta» até lá.
+
+**Falsifica:** tocar em «Conte como você está se sentindo» sem cair no campo de chat, uma mensagem enviada que não conta, ou o presente contar sem o `ok` do servidor (`missoes.chatPresente.test.ts`, `ChatBox.missaoDoDia.render.test.tsx`).
+
+**Rollback:** reverter o PR (o save antigo continua válido: ids antigos aceitos). **APK:** nada obrigatório.
+
+## §297 — Journal e Focus Workshop viram missões SEMANAIS 3× (11/11/2026, decisão do dono)
+
+Decisão: «Fazer o journal» e «Focus Workshop» não são tarefas diárias. `d-foco` (diária) foi aposentada (a missão de prédio do Caderno, "Faça um registro no journaling", segue listada no menu: ponto em aberto com o dono). Entram na semanal `journal-days` («Faça o journal em 3 dias») e `focus-days` («Complete a Focus Workshop em 3 dias»), alvo 3 e 3 Emblemas (o padrão das semanais de alvo 3), SEMPRE na lista (`WEEKLY_FIXED`; as 3 sorteadas vêm do resto do pool, então a lista tem 5). Contam uma vez por dia do jogador (`bumpWeeklyDay`, `last` no progresso) ao salvar uma entrada NOVA do journal e ao concluir (resgatar) uma jornada do Focus Workshop; tocar leva ao Caderno / à Oficina.
+
+Limite honesto: as semanais não têm espelho nem validação no servidor (o progresso é do save, local-first, como as demais); não foi criada validação nova.
+
+**Falsifica:** uma semana sem as duas na lista, dois toques no mesmo dia contarem 2, ou o journal voltar a aparecer como tarefa diária (`missoes.semanaisJournalFoco.test.ts`).
+
+**Rollback:** reverter o PR (o campo `last` é aditivo). **APK:** nada obrigatório.
+
+## §298 — Categorias: uma lista só (hábito = tarefa), P/H/B equilibrado e Criatividade (11/11/2026, pedido do dono)
 
 **Decisão.** Tarefas e hábitos usam as MESMAS 10 categorias (`src/types/categories.ts`): Sono, Corpo, Mente, Foco, Aprendizado, Relações, Casa, Finanças, Propósito, Criatividade. O id gravado no save é o da área. Antes: 8 categorias em inglês (chips/save) e 9 áreas (catálogo/onboarding).
 

@@ -95,7 +95,7 @@ import { sanitizeRefugeInvite, type RefugeInviteState } from '../utils/refugio/c
 import { sanitizeMealRhythm, sanitizeMealRitual, type MealRhythmSettings, type MealRitualRecord } from '../utils/mealRhythm';
 import { normalizeCrossings } from '../utils/travessiasSave';
 import type { CrossingsState } from '../types/travessias';
-import type { WeeklyMissionProgress } from '../utils/weeklyMissions';
+import { migrateWeeklyLegacy, type WeeklyMissionProgress } from '../utils/weeklyMissions';
 import { sanitizeBuildingQuests, type BuildingQuestState } from '../utils/buildingQuests';
 import { sanitizeMissionsClaimed } from '../utils/missions';
 import { sanitizeFeats, type Feats } from '../utils/feats';
@@ -1546,11 +1546,12 @@ function hydrateSave(rawState: Partial<GameState>): GameState {
         weeklyMissions: (() => {
           const w = obj<unknown>(loadedState.weeklyMissions);
           if (typeof w.week !== 'string') return undefined;
-          return {
+          return migrateWeeklyLegacy({
             week: w.week,
             counts: obj<number>(w.counts) as WeeklyMissionProgress['counts'],
             claimed: Array.isArray(w.claimed) ? (w.claimed.filter(x => typeof x === 'string') as WeeklyMissionProgress['claimed']) : [],
-          };
+            ...(w.last && typeof w.last === 'object' && !Array.isArray(w.last) ? { last: Object.fromEntries(Object.entries(w.last as Record<string, unknown>).filter(([, v]) => typeof v === 'string' && v.length <= 40)) as WeeklyMissionProgress['last'] } : {}),
+          });
         })(),
         buildingQuests: sanitizeBuildingQuests(loadedState.buildingQuests),
         dailyMissions: sanitizeDailyMissions(loadedState.dailyMissions),

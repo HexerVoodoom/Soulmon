@@ -1867,7 +1867,7 @@ linha "Biblioteca" do menu sanduíche da `BottomNav` (⚰️ o menu sanduíche i
 folha ou voltar ao Mapa.
 
 - **O que se vê/faz**: uma ação dominante por linha — tocar no jogador abre o
-  `PlayerDetailModal` (e chama `onVisitPlayer` → `contarMissao('friend-visit')`).
+  `PlayerDetailModal` (visitar já não conta missão; o presente enviado chama `onGiftSent` → `contarMissao('gift-sent')`, §296).
   Presentear e adicionar/remover amigo são botões com rótulo e 44px. NPCs de
   `utils/libraryNpcs.ts` aparecem misturados aos jogadores reais, marcados por
   `isNpc`.

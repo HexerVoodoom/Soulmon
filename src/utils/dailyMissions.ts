@@ -31,7 +31,7 @@ import type { QuestMark } from './questMarks';
 export type DailyEvent =
   | 'dino' | 'ppt' | 'match3' | 'foco' | 'masmorra' | 'banho' | 'carinho'
   | 'comida' | 'humor' | 'sono' | 'arena' | 'torneio' | 'mercado' | 'amigo'
-  | 'barrage' | 'eco' | 'zip' | 'patches' | 'calabouco' | 'selo';
+  | 'barrage' | 'eco' | 'zip' | 'patches' | 'calabouco' | 'selo' | 'presente';
 
 export interface DailyMission {
   /** Estável (o save e os testes o citam). */
@@ -57,15 +57,18 @@ const POOL: readonly DailyMission[] = [
   { id: 'd-dino', event: 'dino', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Dê uma corrida na Corrida com obstáculos', descEn: 'Take a run in the obstacle course' },
   { id: 'd-ppt', event: 'ppt', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Jogue uma partida de Pedra, papel e tesoura', descEn: 'Play a match of Rock, paper, scissors' },
   { id: 'd-match3', event: 'match3', target: 1, building: 'jogos.salao', material: 'spark', descPt: 'Jogue uma rodada de Elemental Fusion', descEn: 'Play a round of Elemental Fusion' },
-  { id: 'd-foco', event: 'foco', target: 1, building: 'forja.oficina', material: 'gear', descPt: 'Faça um ciclo de foco (Pomodoro) na Oficina', descEn: 'Do one focus cycle (Pomodoro) in the Workshop' },
+  { id: 'd-foco', event: 'foco', target: 1, building: 'forja.oficina', material: 'gear', descPt: 'Faça um ciclo de foco (Pomodoro) na Oficina', descEn: 'Do one focus cycle (Pomodoro) in the Workshop', retired: true },
   { id: 'd-masmorra', event: 'masmorra', target: 1, building: 'exploracao.fenda', material: 'ore', descPt: 'Limpe uma camada da Fenda', descEn: 'Clear an Endless Rift layer' },
   { id: 'd-banho', event: 'banho', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Dê um banho no seu Soulmon', descEn: 'Give your Soulmon a bath' },
   { id: 'd-carinho', event: 'carinho', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Faça carinho no seu Soulmon', descEn: 'Pet your Soulmon' },
   { id: 'd-comida', event: 'comida', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Dê uma comidinha ao seu Soulmon', descEn: 'Give your Soulmon a snack' },
   { id: 'd-humor', event: 'humor', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Conte como você está se sentindo hoje', descEn: 'Tell how you are feeling today' },
+  // ^ 11/11/2026: ao tocar, leva à CONVERSA com o Soulmon (`dailyTarget` → 'chat'); QUALQUER mensagem enviada a ele conta (`contarDiaria('humor')`).
   { id: 'd-sono', event: 'sono', target: 1, building: 'forja.refugio', material: 'moss', descPt: 'Deixe o seu Soulmon descansar', descEn: 'Let your Soulmon get some rest' },
   { id: 'd-mercado', event: 'mercado', target: 1, building: 'mercado.itens', material: 'ribbon', descPt: 'Dê uma passadinha no Mercado', descEn: 'Stop by the Market' },
-  { id: 'd-amigo', event: 'amigo', target: 1, building: 'laboratorio.amigos', material: 'keepsake', descPt: 'Visite a criatura de um amigo', descEn: 'Visit a friend’s creature' },
+  // 11/11/2026: "Visite a criatura de um amigo" ninguém sabia cumprir; vira ENVIAR UM PRESENTE (mesma tela dos amigos, mesmo prédio, mesmo material,
+  // alvo 1). Mesma posição no catálogo = mesmo sorteio do dia. O id/evento antigo (`d-amigo`/`amigo`) fica aposentado no fim, só para o save.
+  { id: 'd-presente', event: 'presente', target: 1, building: 'laboratorio.amigos', material: 'keepsake', descPt: 'Envie um presente a um amigo', descEn: 'Send a friend a gift' },
   { id: 'd-arena', event: 'arena', target: 1, building: 'arena.duelo', material: 'fang', descPt: 'Faça um Duelo na Arena', descEn: 'Have a Duel in the Arena' },
   { id: 'd-torneio', event: 'torneio', target: 1, building: 'arena.torneio', material: 'laurel', descPt: 'Dispute uma partida do Torneio', descEn: 'Play a Tournament match' },
   // Rodada 6 (L4): Chuva de Almas no rodízio do Salão; Eco/Trilha/Colcha no rodízio do Ateliê; Calabouço sempre. O Calabouço não tem material
@@ -77,6 +80,7 @@ const POOL: readonly DailyMission[] = [
   { id: 'd-calabouco', event: 'calabouco', target: 1, building: 'exploracao.dungeon', material: 'ore', descPt: 'Conclua um andar do Calabouço', descEn: 'Finish a Dungeon floor' },
   // 04/11/2026: o Selo Faltante substitui a Colcha no rodízio do Ateliê (a Colcha fica aposentada acima).
   { id: 'd-selo', event: 'selo', target: 1, building: 'jogos.mente', material: 'prism', descPt: 'Complete uma rodada do Selo Faltante', descEn: 'Finish a round of Missing Seal' },
+  { id: 'd-amigo', event: 'amigo', target: 1, building: 'laboratorio.amigos', material: 'keepsake', descPt: 'Visite a criatura de um amigo', descEn: 'Visit a friend’s creature', retired: true },
 ];
 
 /** Rodízios (rodada 6): UMA do Salão e UMA do Ateliê por dia, em ordem fixa; o Calabouço entra todo dia. */

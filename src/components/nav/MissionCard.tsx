@@ -19,7 +19,7 @@ export interface MissionNav {
 /** O que o cartão faz com o alvo: `onGo` quando pode navegar, `lockNote` quando o prédio ainda está fechado. */
 export function resolveGo(nav: MissionNav | undefined, target: GoTarget | undefined, language: Language): { onGo?: () => void; lockNote?: string } {
   if (!nav || !target) return {};
-  if (target === 'home') return { onGo: () => nav.onGo('home') };
+  if (target === 'home' || target === 'chat') return { onGo: () => nav.onGo(target) };
   const gate = buildingGateFor(target, nav.bondLevel);
   if (!gate.open) return { lockNote: buildingLockLine(gate.minBond, language) };
   return { onGo: () => nav.onGo(target) };
