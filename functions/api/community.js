@@ -127,7 +127,9 @@ async function withDuelLock(key, fn) {
 // Duas classes, porque o custo delas é diferente em uma ordem de grandeza:
 // `players`/`opponents`/`rank` varrem até 300 chaves do KV por chamada; as
 // demais leem uma ou duas. Ver `_rateLimit.js` para o que este teto NÃO é.
-const HEAVY_ACTIONS = new Set(['players', 'opponents', 'rank', 'seasonResult', 'names', 'strays', 'evoFeed']); // evoFeed: até 20 perfis por leitura
+// sparOpponents (Treino, 10/11/2026): lista até 300 chaves e lê até 120 perfis + 120 SAVES inteiros (Vínculo) por chamada, sem cache
+// de borda (cada GET sorteia de novo). No teto leve (120/min/IP) eram ~30 mil leituras de KV por minuto por IP. Segurança, rodada 1.
+const HEAVY_ACTIONS = new Set(['players', 'opponents', 'rank', 'seasonResult', 'names', 'strays', 'evoFeed', 'sparOpponents']); // evoFeed: até 20 perfis por leitura
 const HEAVY_LIMIT = { limit: 20, windowMs: 60_000 };   // 20 varreduras/min/IP
 const LIGHT_LIMIT = { limit: 120, windowMs: 60_000 };  // 2/s/IP no resto
 
