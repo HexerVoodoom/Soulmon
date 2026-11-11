@@ -65,7 +65,7 @@ const usouPocao = (s: FormaState): boolean =>
  * A forma ORIGINAL (`forma@original`) é SEMPRE o elemento BASE do Soulmon (ex.: Sombra), sem poção e sem o elemento combinado do
  * registro (dono, 10/11/2026). Quem tem a original equipada assume o base como elemento; o registro do estágio não é tocado.
  */
-function forcarOriginal<T extends FormaState>(s: T): T {
+export function forcarOriginal<T extends FormaState>(s: T): T {
   if (s.formaAltEquipada?.[s.evolutionStage] !== 'original') return s;
   // Só atua em quem JÁ usou poção (assinatura do problema). Conta sem poção nenhuma: no-op — nada muda para as outras contas.
   if (!usouPocao(s)) return s;

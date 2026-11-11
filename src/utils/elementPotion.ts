@@ -175,7 +175,8 @@ export function applyPotionOnEvolve<T extends { evolutionPotion?: string; potion
 export function curarPocaoOrfa(potion: string | undefined, evolutionStage: string | undefined, equip: Record<string, string> | undefined): string | undefined {
   if (!potion) return undefined;
   const equipado = evolutionStage ? equip?.[evolutionStage] : undefined;
-  return equipado && equipado !== potion ? undefined : potion;
+  // `original` equipada: a poção viva é o elemento BASE posto por `forcarOriginal` (`formaSnapshot.ts`) — legítima, não órfã.
+  return equipado && equipado !== 'original' && equipado !== potion ? undefined : potion;
 }
 
 /** Entradas de `SPECIAL_ITEMS`, uma por elemento do catálogo. */
