@@ -4663,3 +4663,13 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Falsifica:** ver Rookie/Champion com HP acima da faixa da forma (varredura `dungeon.estagioPorHp.test.ts`), ou a onda toda Mega parecer sem progressão visual para o jogador.
 
 **Rollback:** reverter o PR (a escada por slot volta).
+
+## §286 — Sparring: oponentes majoritariamente de nível similar (11/11/2026, pedido do dono)
+
+**Decisão.** No Treino (Sparring) os oponentes sorteados são MAJORITARIAMENTE de nível parecido com o do jogador. `pickSparOpponents` (`functions/api/_treino.js`) recebe o nível de luta do jogador (`bondELevelOf`: `soulLevel` limitado pelo teto S1, lido do save junto com o Vínculo) e mistura a lista: a cada vaga, 75% (`SPAR_NEAR_SHARE`) vão para alguém de nível similar (±10%, no mínimo ±2 níveis: `sparLevelWindow`; qualquer Vínculo) e 25% para a faixa de Vínculo de antes (±3, ampliada), fora dessa janela: é a variedade (mais forte e mais fraco). Dentro de cada grupo vale o sorteio por estágio (`ESTAGIO_PESOS`), que já acompanha o poder. Preservados: teto pesado do `sparOpponents` (`SPAR_SCAN_MAX`), ficha de ataques dos reais e o mix de ataques. Pesadelo fora. Medição (pool sintético de 120, 5 oponentes, 3.000 sorteios por nível): ±10%/±2 níveis ia de 36% a 88% conforme o nível (nível 15: 40%; nível 40: 36%) e passa a ~75% em qualquer nível com gente de sobra (nível 40 com pool ralo: ~58%, limitado pela oferta).
+
+**Alternativa que perdeu:** estreitar só a faixa de Vínculo (Vínculo mede tempo de jogo, não poder: não casa com o nível de luta) ou filtrar 100% por nível (lista sem variedade e vazia com pool ralo).
+
+**Falsifica:** em produção, a fração de oponentes dentro de ±10%/±2 níveis ficar abaixo de ~65% com o pool cheio, ou jogador reclamar de só enfrentar iguais.
+
+**Rollback:** reverter o PR (volta a faixa de Vínculo + `ESTAGIO_PESOS`).
