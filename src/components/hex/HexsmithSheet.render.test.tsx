@@ -75,7 +75,7 @@ describe('HexsmithSheet', () => {
 
   it('forjar com saldo (servidor confirma) debita poções e Bits e equipa no slot vazio; o código hex mostra o reescrito', async () => {
     localStorage.setItem(STORAGE_KEYS.SAVE_ID, 'a'.repeat(32));
-    abrir({ gamePoints: 2000, foodInventory: { [potionKey('agua')]: 3 } });
+    abrir({ gamePoints: 2000, foodInventory: { [potionKey('agua')]: 3 }, equipment: { owned: [], equipped: {}, fragments: HEX_COSTS.element.fragments } });
     click(q('[data-hex-slot="garra"]'));
     click(q('[data-hex-item="garra:agua"]'));
     await forjar('garra:agua');
@@ -92,7 +92,7 @@ describe('HexsmithSheet', () => {
   it('sem rede: erro claro e NADA forja localmente (§216)', async () => {
     localStorage.setItem(STORAGE_KEYS.SAVE_ID, 'a'.repeat(32));
     forjaServidor.mockImplementation(async () => ({ ok: false, kind: 'offline' }));
-    abrir({ gamePoints: 2000, foodInventory: { [potionKey('agua')]: 3 } });
+    abrir({ gamePoints: 2000, foodInventory: { [potionKey('agua')]: 3 }, equipment: { owned: [], equipped: {}, fragments: HEX_COSTS.element.fragments } });
     click(q('[data-hex-slot="garra"]'));
     click(q('[data-hex-item="garra:agua"]'));
     await forjar('garra:agua');
@@ -135,7 +135,7 @@ describe('HexsmithSheet', () => {
   });
 
   it('catálogo de elemento: 210 itens, quem pode pagar vem primeiro, filtro por bases e uma rolagem só', () => {
-    abrir({ gamePoints: 2000, foodInventory: { [potionKey('luz')]: 3 } });
+    abrir({ gamePoints: 2000, foodInventory: { [potionKey('luz')]: 3 }, equipment: { owned: [], equipped: {}, fragments: HEX_COSTS.element.fragments } });
     click(q('[data-hex-slot="amuleto"]'));
     const items = document.querySelectorAll('[data-hex-item]');
     expect(items).toHaveLength(210);

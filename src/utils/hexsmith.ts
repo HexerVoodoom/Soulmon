@@ -59,10 +59,15 @@ export function strikeParts(s: HexStrike): { forma: 'melee' | 'ranged'; impacto:
 
 /** Custos padrão (ajustáveis). `potions` = poções do PRÓPRIO elemento do item. */
 export const HEX_COSTS = {
-  element: { potions: 3, bits: 1500, fragments: 0 },
-  coroa: { potions: 0, bits: 2000, fragments: 20 },
-  luvas: { potions: 0, bits: 500, fragments: 5 },
+  element: { potions: 3, bits: 1500, fragments: 12 },
+  coroa: { potions: 0, bits: 2000, fragments: 70 },
+  luvas: { potions: 0, bits: 500, fragments: 18 },
 } as const;
+/**
+ * 10/11/2026 (pedido do dono, REGISTRO §283): fragmentos viraram sumidouro de novo. ANTES element 0 · coroa 20 · luvas 5 → DEPOIS 12 · 70 · 18.
+ * Peças já forjadas NÃO mudam (posse só cresce); só o custo de forjar daqui para a frente. O upgrade em Bits (PR #772) é cobrança à parte.
+ * Espelho no servidor: `functions/api/_hexsmith.js` › `HEX_COSTS` (`hexsmith.parity.test.js`).
+ */
 
 export interface HexCost { readonly potions: number; readonly potionElement?: string; readonly bits: number; readonly fragments: number }
 

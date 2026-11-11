@@ -27,7 +27,7 @@ const req = (e, qs, body) => save({
 const post = (e, state) => req(e, '', { state });
 const forge = async (e, itemId, extra = {}) => { const r = await req(e, '&action=hexForge', { itemId, ...extra }); return { status: r.status, body: await r.json() }; };
 const gravado = (e) => JSON.parse(e.store.get(ID));
-const base = { gamePoints: 10_000, foodInventory: { 'potion:agua': 5 }, equipment: { owned: [], equipped: {}, fragments: 30 }, hexsmith: { owned: [], equipped: {} } };
+const base = { gamePoints: 10_000, foodInventory: { 'potion:agua': 5 }, equipment: { owned: [], equipped: {}, fragments: 100 }, hexsmith: { owned: [], equipped: {} } };
 const E = HEX_COSTS.element;
 const C = HEX_COSTS.coroa;
 
@@ -43,7 +43,7 @@ describe('hexForge — a forja do servidor', () => {
     const s = gravado(e);
     expect(s.gamePoints).toBe(10_000 - E.bits - C.bits);
     expect(s.foodInventory['potion:agua']).toBe(5 - E.potions);
-    expect(s.equipment.fragments).toBe(30 - C.fragments);
+    expect(s.equipment.fragments).toBe(100 - E.fragments - C.fragments);
     expect(s.hexsmith).toEqual({ owned: ['garra:agua', 'coroa:heal'], equipped: { garra: 'garra:agua', coroa: 'coroa:heal' } });
   });
 
