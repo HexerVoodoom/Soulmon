@@ -52,11 +52,11 @@ const ESCUDO = porId(escudos, 'escudo');
 
 /** Cor média medida de cada cenário: pinta o fundo enquanto a imagem carrega (mesma regra de `dungeonScenes.ts`). */
 const BG_MEAN: Record<string, string> = {
-  agua: '#184f53', ar: '#33686a', arcano: '#18474d', eletricidade: '#195154', espaco: '#174352',
-  fogo: '#274644', gravidade: '#17434b', luz: '#716c48', marcial: '#245859', morte: '#275455',
-  vida: '#1c504c', som: '#1e5c5f', sombra: '#12303b', tempo: '#1c5656', terra: '#39443c',
-  vigor: '#274a48', vileza: '#204c42', neutro: '#285558',
-  fada: '#16312f', industrial: '#0c3532', planta: '#0e3830', // 30/10/2026: cenários base próprios
+  agua: '#0b6874', ar: '#5da0cc', arcano: '#3b2a61', eletricidade: '#484e43', espaco: '#2c3466',
+  fogo: '#6a2b20', gravidade: '#3b2a69', luz: '#a78c69', marcial: '#362f3b', morte: '#5c8984',
+  vida: '#5b855c', som: '#205761', sombra: '#1a3240', tempo: '#836147', terra: '#7f4430',
+  vigor: '#761f1b', vileza: '#343728', neutro: '#285558',
+  fada: '#79738f', industrial: '#40362e', planta: '#2f6735', // 10/11/2026: 20 cenários base novos (masmorra-cenarios-v2); `neutro` segue o antigo
 };
 
 const DERIVED_TO_BASE: Record<string, string> = Object.fromEntries(DERIVED_ELEMENT_PAIRS.map(d => [d.id, d.componentes[0]]));
