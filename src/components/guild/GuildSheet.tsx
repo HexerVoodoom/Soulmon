@@ -39,7 +39,7 @@
 import { lazy, Suspense, useCallback, useEffect, useId, useRef, useState } from 'react';
 import {
   getGuild, createGuild, joinGuild, guildGesture, leaveGuild, renameGuild, newGuildCode,
-  hitGuildRaid, getGuildFeira, getGuildRewards, claimGuildReward, donateToGuild, setGuildSlot, buyGuildShopItem, getGuildWar, seekGuildWar,
+  hitGuildRaid, getGuildFeira, getGuildRewards, claimGuildReward, donateToGuild, setGuildSlot, buyGuildBuff, getGuildWar, seekGuildWar,
   type GuildWar,
   GuildError, type GuildErrorKind, type GuildView, type FeiraEvento, type GuildGoal, type GuildRaid, type GuildRewards, type GuildClaim,
 } from '../../utils/community';
@@ -52,7 +52,10 @@ import {
   GUILD_NAME_MAX, GUILD_CODE_LENGTH, GUILD_PRESENCE_NOMINAL_MAX, GROVE_STAGES,
   RAID_EMBLEMS, RAID_EMBLEMS_FLOOR, CASA_DOACOES, CASA_BITS_MIN, CASA_STAGES, normalizeGuildCode, type GuildGesture, type CasaStageId,
 } from '../../utils/guildRules';
-import { GuildLoja } from './GuildLoja';
+// LÁPIDE (10/11/2026): `GuildLoja` (a Loja do clã, cosméticos da Casa) saiu; entram os Buffs do clã.
+import { GuildBuffs } from './GuildBuffs';
+import { BitsAmount } from '../ui/BitsAmount';
+import { clearClanBuffs, type BuffId } from '../../utils/guildBuffs';
 import { ProcurarCla, PedidosDeEntrada, AceitarPedidos } from './ClaProcurar';
 import { donatableItems } from '../../utils/guildHouse';
 import { isMissionAway, msUntilReturn, type GuildMissionState } from '../../utils/guildMission';
@@ -126,6 +129,8 @@ interface GuildSheetProps {
    */
   casa?: {
     bits: number;
+    /** Bits GANHOS (saldo − o que veio de Crédito): só estes podem ser doados. */
+    earned?: number;
     ownedFurniture: string[];
     equippedDecor: Record<string, string | undefined>;
     donatedItem: string | null;
@@ -184,7 +189,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
 
   const rootRef = useRef<HTMLDivElement>(null);
   const vivo = useRef(false);
-  const lojaOps = useRef(new Map<string, string>()); // itemId → opId da compra em andamento (idempotência no reenvio)
+  const lojaOps = useRef(new Map<string, string>()); // buffId → opId da compra em andamento (idempotência no reenvio)
   const busy = useRef(false);            // trava SÍNCRONA: `disabled` só vale depois do re-render
   const seq = useRef(0);                 // resposta velha nunca sobrescreve a nova
   const tz = useRef(playerDayTz);
@@ -268,6 +273,7 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
   useEffect(() => {
     if (load.status !== 'ready') return;
     casaRef.current?.onSlot(load.guild ? (load.guild.casa?.mine.slot ?? null) : null);
+    if (!load.guild) clearClanBuffs(); // sem clã, nenhum Buff do clã vale
   }, [load]);
 
   // O RESGATE: pergunta ao abrir (Salão e Feira) e de novo quando o estado da Feira muda (a rodada
@@ -801,25 +807,26 @@ export function GuildSheet({ saveId, language, metaDoDiaCumprida, fioGoal, pende
                 return v;
               }, { anunciar: item ? 'guild.casa.slot.ok' : 'guild.casa.slot.volta' })}
             />
-            <GuildLoja
+            <GuildBuffs
               casa={g.casa}
               language={language}
               ocupado={ocupado}
-              onComprar={(itemId) => void agir(async () => {
+              now={Date.now()}
+              onComprar={(buffId: BuffId) => void agir(async () => {
                 // O `opId` vale por tentativa: se a rede cair e a pessoa tocar de novo, vai o MESMO (o servidor não cobra duas vezes).
-                const opId = lojaOps.current.get(itemId) ?? `op-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`}`;
-                lojaOps.current.set(itemId, opId);
+                const opId = lojaOps.current.get(buffId) ?? `op-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`}`;
+                lojaOps.current.set(buffId, opId);
                 try {
-                  const v = await buyGuildShopItem(saveId, itemId, opId, tz.current);
-                  lojaOps.current.delete(itemId);
+                  const v = await buyGuildBuff(saveId, buffId, opId, tz.current);
+                  lojaOps.current.delete(buffId);
                   emitFeat('clanShopBuys');
                   return v;
                 } catch (e) {
-                  // 409 (saldo mudou / já é do clã): não é frase de tela; relê e o estado verdadeiro aparece.
-                  if (e instanceof GuildError && e.status === 409) { lojaOps.current.delete(itemId); return await getGuild(saveId, tz.current); }
+                  // 409 (saldo mudou) / 403 (não é o anfitrião): não é frase de tela; relê e o estado verdadeiro aparece.
+                  if (e instanceof GuildError && (e.status === 409 || e.status === 403)) { lojaOps.current.delete(buffId); return await getGuild(saveId, tz.current); }
                   throw e;
                 }
-              })}
+              }, { anunciar: 'guild.buffs.ok' })}
             />
         </div>
         )}
@@ -1040,7 +1047,7 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
   const [lista, setLista] = useState(false);
   const proximo = c.perto && c.nivelIndex < CASA_STAGES.length - 1 ? casaStageName(t, CASA_STAGES[c.nivelIndex + 1]) : null;
   const nome = (id: string) => { const it = ALL_SHOP_ITEMS.find(x => x.id === id); return it ? (isPt ? it.namePt : it.nameEn) : id; };
-  const bits = casa?.bits ?? 0;
+  const bits = casa?.earned ?? casa?.bits ?? 0; // só Bits GANHOS doam (nunca os que vieram de Crédito)
   const livres = casa ? donatableItems({ ownedFurniture: casa.ownedFurniture, equippedDecor: casa.equippedDecor as never }) : [];
   const meu = c.mine.slot;
   return (
@@ -1054,7 +1061,7 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
 
       {/* W14b: "Bring Bits" é a seção de Bits do clã: o TOTAL (um número do clã, nunca por pessoa) e, com carteira, o gesto de trazer. */}
       <p className="sm2-stats-t" style={{ margin: 0 }} data-casa-bits-titulo>{t('guild.casa.doar.titulo')}</p>
-      {c.bitsTotal !== null && <p className="sm2-lib-s" style={{ margin: 0 }} data-casa-bits-total>{t('guild.casa.bits.total', { n: c.bitsTotal })}</p>}
+      {c.bitsTotal !== null && <p className="sm2-lib-s" style={{ margin: 0, display: 'flex', gap: 6, alignItems: 'center' }} data-casa-bits-total>{t('guild.casa.bits.total')} <BitsAmount value={c.bitsTotal} size={16} /></p>}
       {casa && (
         <>
           {c.mine.capReached ? (
@@ -1073,8 +1080,8 @@ function SalaCasa({ guild, t, language, ocupado, casa, onDoar, onSlot }: {
                   onClick={() => onDoar(d)}
                   className="sm2-kit-btn sm2-kit-btn-md sm2-kit-btn-outline sm2-guild-btn"
                 >
-                  <Icon name="diamond" size={20} />
-                  {t('guild.casa.doar.botao', { bits: d })}
+                  {t('guild.casa.doar.botao')}
+                  <BitsAmount value={d} size={18} />
                 </button>
               ))}
             </div>

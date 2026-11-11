@@ -119,3 +119,13 @@ export function spendBitsPaidFirst<T extends BitsOriginState>(prev: T, amount: n
   const paidLeft = Math.min(Math.max(0, left - n), fin(prev.gamePoints));
   return paidLeft === left ? prev : { ...prev, bitsOrigin: { ...prev.bitsOrigin, paidLeft } };
 }
+
+/**
+ * Doação ao CLÃ (10/11/2026): só Bits GANHOS. Debita `amount` de `gamePoints` SE `earnedBits` cobre (senão devolve `prev`: nada
+ * muda), e nunca toca `paidLeft` (o Bit de Crédito fica na carteira). O servidor já decidiu o `accepted`; isto só aplica.
+ */
+export function spendEarnedBits<T extends BitsOriginState>(prev: T, amount: number): T {
+  const n = Math.floor(fin(amount));
+  if (n <= 0 || earnedBits(prev) < n) return prev;
+  return { ...prev, gamePoints: fin(prev.gamePoints) - n };
+}

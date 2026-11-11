@@ -253,6 +253,7 @@ function guildTerms(): Term[] {
     par('🌳', 'guild.help.fio.termo', 'guild.help.fio.def'),
     par('🌳', 'guild.help.feira.termo', 'guild.help.feira.def', { cheio: RAID_EMBLEMS, piso: RAID_EMBLEMS_FLOOR }),
     par('🌳', 'guild.help.casa.termo', 'guild.help.casa.def'),
+    par('🌳', 'guild.help.buffs.termo', 'guild.help.buffs.def'),
     par('🌳', 'guild.help.missao.termo', 'guild.help.missao.def'),
     par('🌳', 'guild.help.guerra.termo', 'guild.help.guerra.def'),
     par('🌳', 'guild.help.mare.termo', 'guild.help.mare.def', { semanas: GUILD_TIDE_WEEKS }),

@@ -86,7 +86,7 @@ describe('as portas dos prédios (D-107)', { timeout: 20000 }, () => {
     await waitFor(() => expect(document.querySelector('[data-cla-info]')).toBeTruthy(), { timeout: 8000 });
     expect(document.querySelector('.sm2-coop-code .sm2-lib-s')!.textContent).toBe('Código do clã');
     expect(document.querySelector('[data-casa-bits-titulo]')!.textContent).toBe('Trazer Bits');
-    expect(document.querySelector('[data-casa-bits-total]')!.textContent).toBe('Bits do clã: 1230');
+    expect(document.querySelector('[data-casa-bits-total]')!.textContent).toBe('Bits do clã 1230 Bits');
     expect(document.body.textContent).not.toMatch(/Código da roda|Circle code/);
     expect(document.querySelector('[data-predio="plantio"]')).toBeNull();
     expect(document.querySelector('[data-predio="misterio"]')).toBeNull();

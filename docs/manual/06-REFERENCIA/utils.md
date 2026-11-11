@@ -4308,7 +4308,12 @@ O CORPO da reconciliação, fora do chunk de entrada (orçamento de bytes): `rec
 **Sincronização 09/11/2026:** `ROGUE_FOE_RAMP` (`{ stepsPerFloor: 3,1, flat: 0 }`): escala do inimigo nas lutas SEGUIDAS do Calabouço (dono 28/10/2026) — +1 "andar de golpes" a cada `stepsPerFloor` passos da incursão; medida por `winrateModos.sim.test.ts`. `over` virou ⚰️ (§239: combate perdido não encerra mais o dia; só lê save antigo) e `RogueRun` ganhou `hp`/`hpAt` (vida da incursão: `hpOf`, recuperação em `rogueDungeon.ts` › `rogueHpNow`). Constantes: `ROGUE_FLOORS` (3), `ROGUE_PER_FLOOR` (8), `ROGUE_MAX_STEPS` (24), `ROGUE_COMBAT_EVERY` (3), `ROGUE_FLOOR_BONUS` (3), `ROGUE_MAX_SCORE` (33, espelho de `functions/api/_rankings.js`); `POWER_STEP` 0,06, `VIGOR_STEP` 0,1, `HEAL_SHIELD` 0,15. `elementoIds.ts`: `IDS_DOS_CURADOS` (os 59 curados de `ELEMENTOS_CURADOS`: 50 dos lotes 1–3, 6 do lote 4 e 3 promovidos; elementos de 3 e 4 componentes, REGISTRO §232), `IDS_DOS_PARES` e `elementoConhecidoLeve(id)` (o id está na lista fechada: bases + pares + curados), travados por `elementoIds.test.ts`.
 **Chamado por:** `src/App.tsx`, `src/contexts/GameStateContext.tsx`, `src/utils/rogueDungeon.ts`, `src/utils/dungeonFight.ts`, `src/utils/nightmares.ts`.
 
-## Rodada 5 da beta3 (26/10/2026) — Loja do Clã e "Gerar de novo"
+## Buffs do clã (10/11/2026) — substituem a Loja do Clã (REGISTRO §281)
+
+- `src/utils/guildBuffs.ts` — espelho do catálogo/preço/duração dos Buffs, estado lembrado (`rememberClanBuffs`, `clanBuffActive`, `CLAN_BUFFS`), copy EN+PT. Paridade com `functions/api/_buffsCla.js` em `guildBuffs.test.ts`.
+- `src/components/guild/GuildBuffs.tsx` — o painel (substitui `GuildLoja`). Efeitos: `evolutionGauge.aplicarBuffClaGauge`, `dungeonBase.heartDropChance`, `hunger.clanRegenBoost`/`regenPoints`; `bitsOrigin.spendEarnedBits` (doação só com Bits ganhos).
+
+## Rodada 5 da beta3 (26/10/2026) — Loja do Clã (ABOLIDA em 10/11/2026) e "Gerar de novo"
 
 - `src/utils/guildLoja.ts` — espelho do catálogo da Loja do Clã (ids/preços em paridade com `functions/api/_lojaCla.js`), arte de `DECOR_ART`, copy EN+PT. REGISTRO §175.
 - `src/components/guild/GuildLoja.tsx` — vitrine da Loja dentro do Salão (`GuildSheet`); compra por `buyGuildShopItem` com `opId` por item, nunca manda preço.

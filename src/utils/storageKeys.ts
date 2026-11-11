@@ -81,6 +81,8 @@ export const STORAGE_KEYS = {
   DUNGEON_BEST: 'soulmon-dungeon-best',
   DUNGEON_REACHED: 'soulmon-dungeon-reached',
   DUNGEON_HEART_DROPS: 'soulmon-dungeon-heart-drops',
+  /** Últimos buffs do clã vistos (`utils/guildBuffs.ts`): só para o efeito local valer fora da folha da Guilda. Vence sozinho (`ate`). */
+  CLAN_BUFFS: 'soulmon-clan-buffs',
   /** Velocidade da cena de combate da masmorra (1/2/3), preferência do aparelho (REGISTRO §36). */
   DUNGEON_SPEED: 'soulmon-dungeon-speed',
   /** Beta-2 (2.2): o que a pessoa abriu/recolheu na lista do dia (JSON `Record<string, boolean>`, chave `id|d`/`id|p`). Preferência de tela do aparelho — não é progresso e não vai para a nuvem. */

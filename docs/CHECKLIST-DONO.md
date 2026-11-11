@@ -117,7 +117,7 @@ Sem linha de código, só registro:
 
 | # | Item | Estado | Responsável | Evidência | Não verificado |
 |---|---|---|---|---|---|
-| BP-01 | Loja do clã | ✅ feito | — | `functions/api/_lojaCla.js` `comprarNaLoja`; `components/guild/GuildLoja.tsx`; REGISTRO §175 | tela no app; preços provisórios, ver P5-1 |
+| BP-01 | Loja do clã (substituída pelos Buffs do clã em 10/11/2026, REGISTRO §281) | ✅ feito | — | `functions/api/_lojaCla.js` `comprarNaLoja`; `components/guild/GuildLoja.tsx`; REGISTRO §175 | tela no app; preços provisórios, ver P5-1 |
 | BP-02 | Match 3: 17 Novos como inimigos, afinidade, níveis, reset mensal, rank | 🟡 parcial | A atribuir | Feito: inimigos do roster (`Match3Game.tsx` `rosterOf`, `newCombat`), vantagem (`match3Combat.ts` `elementAdvantage`), ranking (`RankingPanel game="match3"`). Não achado: níveis com dificuldade e reset mensal; sorteio "6 dos 17" por fase (PvE usa `M3_TILE_ELEMENTS` fixo) | ranking é por pontos; reset mensal não confirmado por grep |
 | BP-03 | Cena própria da Casa da Guilda | ⬜ aberto | Arte | `components/guild/GroveCena.tsx` ainda usa `PANORAMA_SRC`; nenhum asset de casa da guilda em `src/assets` | parado por decisão de 20/10 |
 | BP-04 | Busto próprio do Grove | ❓ decisão | Dono | `npcs/index.ts` `hall:grove` = `npc-n-musa.png` (Lilia, D-50, escolha do dono); `areaNpcVoice.ts` | dono ainda quer busto próprio? comentário em `npcs/index.ts` ainda diz "Ramo" |
