@@ -9463,6 +9463,7 @@ export default function App() {
           onClaimAll={mailbox.claimAll}
           onDelete={mailbox.remove}
           onDeleteRead={mailbox.removeRead}
+          onAnswerInvite={mailbox.answerInvite}
         />
       )}
       {currentView === 'home' && (

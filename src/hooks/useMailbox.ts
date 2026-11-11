@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import {
-  applyGrants, deletableRead, hasNewMail, markClaimed, sortMail, unclaimedInSave,
+  applyGrants, deletableRead, hasNewMail, isFriendInvite, markClaimed, sortMail, unclaimedInSave,
   type MailGrant, type MailItem, type MailState,
 } from '../utils/mensageiro';
 
@@ -10,7 +10,7 @@ const api = () => import('../utils/community');
  * A CAIXA DE CARTAS (§246). A lista e as decisões moram no servidor (`functions/api/_mensageiro.js`); aqui só o espelho local, o crédito no save
  * (idempotente por `mailClaimed`) e a releitura (ao abrir, ao voltar à aba e a cada 5 min). Nada é creditado sem o servidor ter entregue o prêmio.
  */
-export function useMailbox<S extends MailState>({ saveId, demo, getState, setState }: {
+export function useMailbox<S extends MailState & { friends?: string[] }>({ saveId, demo, getState, setState }: {
   saveId: string;
   demo: boolean;
   /** Lido só quando uma ação roda (nunca no render), então pode apontar para um ref declarado mais abaixo. */
@@ -81,6 +81,27 @@ export function useMailbox<S extends MailState>({ saveId, demo, getState, setSta
     return r.blocked.length > 0 ? 'blocked' : 'removed';
   }, [saveId, mail, credit]);
 
+  /**
+   * Convite de amizade por carta (§288): Aceitar ou Recusar pelo MESMO fluxo da lista de Amigos (`friendAccept`). O servidor apaga a carta ao responder.
+   * `gone` = o convite não existe mais (quem convidou cancelou): a carta sai da caixa. Lança sem rede (a carta fica).
+   */
+  const answerInvite = useCallback(async (m: MailItem, decline: boolean): Promise<'accepted' | 'declined' | 'gone'> => {
+    if (!isFriendInvite(m)) return 'gone';
+    try {
+      const r = await (await api()).answerFriendInvite(saveId, m.fromPid, decline);
+      if (!decline) setState(prev => ({ ...prev, friends: r.friends }));
+      setMail(l => l.filter(x => x.mid !== m.mid));
+      return decline ? 'declined' : 'accepted';
+    } catch (e) {
+      if (e instanceof Error && (e.message === 'no invite' || e.message === 'invite expired')) {
+        setMail(l => l.filter(x => x.mid !== m.mid));
+        void api().then(a => a.deleteMail(saveId, [m.mid], true)).catch(() => {});
+        return 'gone';
+      }
+      throw e;
+    }
+  }, [saveId, setState]);
+
   /** "Excluir todas lidas": só as lidas SEM item pendente. */
   const removeRead = useCallback(async (): Promise<number> => {
     const r = await (await api()).deleteMail(saveId, 'read');
@@ -95,6 +116,6 @@ export function useMailbox<S extends MailState>({ saveId, demo, getState, setSta
     canClaimAll: mail.some(m => (m.bits > 0 || m.emblems > 0) && !m.claimedAt),
     /** Há algo que "Excluir todas lidas" apagaria. */
     canDeleteRead: deletableRead(mail).length > 0,
-    refresh, openLetter, claim, claimAll, remove, removeRead,
+    refresh, openLetter, claim, claimAll, remove, removeRead, answerInvite,
   };
 }

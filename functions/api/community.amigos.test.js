@@ -175,14 +175,16 @@ describe('migração das amizades antigas', () => {
 
 describe('presente: 20 Bits, 1×/dia/amigo, no servidor', () => {
   const amigos = () => mundo({ [`profile:${A}`]: perfil(A, PA, { friends: [B] }), [`profile:${B}`]: perfil(B, PB, { friends: [A] }), [`gmir:${A}`]: '1' });
-  const fila = (env, id) => JSON.parse(env.DIGIAPP_SAVES.store.get(`gifts:${id}`) || '[]');
+  // O presente chega por CARTA do Papus (§286): `mail:<id>.q`, `kind: 'gift'`.
+  const fila = (env, id) => (JSON.parse(env.DIGIAPP_SAVES.store.get(`mail:${id}`) || '{}').q || []).filter(m => m.kind === 'gift');
 
   it('só amigo recebe; o segundo no mesmo dia é 429 e não cria Bits; regravar o perfil não zera o limite', async () => {
     const env = amigos();
     expect((await post(env, 'gift', { id: A, friendId: PC })).status).toBe(403);
     expect((await post(env, 'gift', { id: A, friendId: PB })).status).toBe(200);
     expect(fila(env, B)).toHaveLength(1);
-    expect(fila(env, B)[0]).toMatchObject({ bits: 20, from: 'Nomea' });
+    expect(fila(env, B)[0]).toMatchObject({ bits: 20, kind: 'gift', claimedAt: 0 });
+    expect(fila(env, B)[0].bodyPt).toContain('Nomea');
     // o perfil de A é regravado (profile action) — o registro do dia não mora lá
     await post(env, 'profile', { id: A, name: 'Nomea', stage: 'rookie' });
     const de = await post(env, 'gift', { id: A, friendId: PB });
@@ -237,7 +239,8 @@ describe('presente: teto de recebimento (100 Bits/dia) e dia do jogador', () => 
     env.DIGIAPP_SAVES.store.set(`profile:${C}`, perfil(C, PC, { friends: [B] }));
     return { env, remetentes: [{ id: A, pid: PA }, { id: C, pid: PC }, ...cs] };
   };
-  const fila = (env, id) => JSON.parse(env.DIGIAPP_SAVES.store.get(`gifts:${id}`) || '[]');
+  // O presente chega por CARTA do Papus (§286): `mail:<id>.q`, `kind: 'gift'`.
+  const fila = (env, id) => (JSON.parse(env.DIGIAPP_SAVES.store.get(`mail:${id}`) || '{}').q || []).filter(m => m.kind === 'gift');
 
   it('o excedente além de 100 não credita; a resposta e o histórico dizem o valor real', async () => {
     const { env, remetentes } = rec();
