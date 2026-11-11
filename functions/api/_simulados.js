@@ -40,6 +40,7 @@
 //   • scores de `_rankings.js` (`submitScore`), semanais e mensais por jogo.
 // ---------------------------------------------------------------------------
 
+import { foeFamilyOf } from './_foeFamilies.js';
 import { indexarPontos } from './_rankIndex.js';
 import { kv, kvOrThrow } from './_kv.js';
 import { flagOn } from './_killSwitch.js';
@@ -166,10 +167,17 @@ export function estadoDoDia(p, day) {
 /**
  * A ESCOLA do golpe do simulado (só a FORMA visual: corpo a corpo x à distância). Antes ele não tinha escola e o cliente caía na tabela do
  * elemento (~85% à distância). Agora é um sorteio fixo por id: metade corpo a corpo (`combate_fisico`), metade à distância; com o acabamento
- * corte/splash do elemento no cliente, as 4 combinações ficam perto de 25% cada. SÓ visual: a família do especial segue `direct`.
+ * corte/splash do elemento no cliente, as 4 combinações ficam perto de 25% cada. SÓ visual (a família do especial vem de `foeFamilyOf`).
  */
 export function escolaDoSimulado(id) {
   return ['combate_fisico', 'combate_fisico', 'combate_fisico', 'longo_alcance', 'conjuracao', 'benca'][hash32(`forma|${id}`) % 6];
+}
+
+/** % dos simulados cujo golpe à distância é MAGIA (ranged + splash); o resto é Ranged Slash (corte). Dono, 11/11/2026. Só visual. Espelho: `RANGED_MAGIA_PCT` (`golpeImpacto.ts`). */
+export const SIM_MAGIA_PCT = 80;
+/** Este simulado conjura Magic (true) ou dispara Ranged Slash (false) quando o golpe dele é à distância. Sorteio fixo por id. */
+export function simulaMagia(id) {
+  return hash32(`magia|${id}`) % 100 < SIM_MAGIA_PCT;
 }
 
 /** O save mínimo que o duelo e o Vínculo derivam (`_soulXP.js`: level = f(evolutionStage, perfectDays)). */
@@ -187,11 +195,12 @@ export function saveDoSimulado(p, day) {
     demoCharacterId: artLineOrNull(p.artLine) ?? undefined,
     // REGISTRO 182: o golpe BÁSICO do duelo usa o elemento do simulado (`elementoDoBasico` lê `elementoDominante.id` da ficha do estágio). Só isso: sem escola/especial, a luta não muda.
     // O ELEMENTO DO SPRITE (= o do prompt com que a arte foi gerada): `petElementDeSave` lê daqui; vale para o básico E o especial.
+    simMagia: simulaMagia(p.id),
     soulmonMeta: { dominantElement: p.element },
     soulmonSkills: { [fichaStageOf(e.evolutionStage)]: {
       elementoDominante: { id: p.element },
       basica: { escolaId: escolaDoSimulado(p.id), elementoId: p.element },
-      especial: { escolaId: escolaDoSimulado(p.id), elementoId: p.element, familia: 'direct' },
+      especial: { escolaId: escolaDoSimulado(p.id), elementoId: p.element, familia: foeFamilyOf(e.stage, `sim|${p.id}|${e.stage}`) },
     } },
   };
 }

@@ -907,9 +907,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Dono de:** a régua do mix {à distância, corpo a corpo} × {corte, splash} dos inimigos (REGISTRO §282): as 4 combinações entre 18% e 32% no elenco da Masmorra/Fenda e nas 17 criaturas da Arena (`foeStrikeForm`, `FORMA_MELEE_PCT` em `combatFx.ts`). Só teste.
 
 ### `src/utils/combate/golpeImpacto.ts`
-**Dono de:** CORTE × CONCUSSÃO do golpe corpo a corpo (dono, 05/11/2026), só visual. Função pura por lutador: palavra-chave do nome de inimigo do bestiário, senão sorteio estável (FNV-1a de `elemento|chave`) com o peso de corte por elemento; derivado herda a média dos componentes. Não toca dano, sementes nem RNG do combate. Regra e tabela: `docs/REGRA-CORTE-CONCUSSAO.md`; decisão: REGISTRO §227.
+**Dono de:** CORTE × CONCUSSÃO do golpe corpo a corpo (dono, 05/11/2026), só visual. Função pura por lutador: palavra-chave do nome de inimigo do bestiário, senão sorteio estável (FNV-1a de `elemento|chave`) com o peso de corte por elemento; derivado herda a média dos componentes. Não toca dano, sementes nem RNG do combate. **Ranged de inimigo/selvagem/simulado (REGISTRO §289):** com `forma: 'ranged'` em `EntradaImpacto`, `magiaOuCorte` sorteia 80% Magic (splash) e 20% Ranged Slash (`RANGED_MAGIA_PCT`); sem `forma` (jogador, Pesadelo) nada muda. Regra e tabela: `docs/REGRA-CORTE-CONCUSSAO.md`; decisão: REGISTRO §227.
 **Exports:**
 - `ImpactoMelee` — `'corte' | 'concussao'`.
+- `RANGED_MAGIA_PCT` (80), `magiaOuCorte(element, key)` — dos golpes à distância de inimigo/selvagem/simulado, % que é Magic (splash); só visual (REGISTRO §289).
 - `PESO_CORTE`, `PESO_CORTE_NEUTRO`, `pesoCorte(element)` — % de corte por elemento base (Ar 75, Terra 25); derivado = média; desconhecido = 50.
 - `PALAVRAS_CONCUSSAO`, `PALAVRAS_CORTE`, `impactoPorNome(name)` — palavra inteira, sem acento; as duas famílias ou nenhuma = `null`.
 - `hashEstavel(s)`, `meleeImpactOf({ element, key, name? })` — a decisão; `chaveDaIdentidade(identidade)` — a chave do PvP (ids fechados).
@@ -969,11 +970,14 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 - `efeitoDoEspecial(family, elemento)`, `efeitoVisivel(family, elemento, mecanicaLigada?)`, `EFEITOS_COM_MECANICA` (const), tipo `EfeitoElemento`.
 **Régua:** `src/utils/combate/elementEffects.test.ts`.
 
+### `src/utils/combate/foeFamilies.ts`
+**Dono de:** o ESPECIAL DOS INIMIGOS (REGISTRO §290): sorteio determinístico por chave (FNV-1a) do tipo de especial de selvagens da Arena e do Endless Rift/Masmorra e dos simulados. Champion em diante: 50% dano direto e ~10% de cada outro (buff, DoT, cura, HoT, debuff); Rookie: 75% direto e ~5% de cada. O especial que o JOGADOR escolhe não passa aqui; o Pesadelo fica fora. HoT = `shield` + `effect: 'hot'` (só núcleo de grupo; no 1v1 vira `shield`). DoT e HoT dos inimigos levam `OVER_TIME_BONUS` (1,15). **Exports:** `FoeKind`, `FOE_MIX`, `foeHash`, `foeKindOf`, `foeSpecialOf`, `foeFamilyOf`. **Chamado por:** `arena.ts` (`arenaFoe`/`arenaFoeSides` com `mix`), `dungeon.ts` (`buildDungeonWave`). **Espelho:** `functions/api/_foeFamilies.js`. **Régua:** `src/utils/combate/foeFamilies.test.ts`.
+
 ### `src/utils/combate/specials.ts`
 **Dono de:** As 7 famílias de especial do combate v3 (orçamento E = 3 golpes, potência `p` calibrada no spike) e a energia (60 por fração causada, 60 por fração recebida, +2/s, dispara a 100).
 **Sincronização 09/11/2026:** `SpecialEffect` (`'hot' | 'slow' | 'silence'`) e os botões `EFFECT_TUNE` (`silenceHits` 2, `silenceKeep` 1, `slowScale` 0,3, `slowKeep` 0,58, `hotScale` 1,05) / `EffectTune` / `EFFECT_TUNE_PESADELO` (Pesadelo com balanço próprio: `slowScale` 0,15, `slowKeep` 0,4) — as mecânicas novas do núcleo de GRUPO (só PvE; `fight.ts` ignora; REGISTRO §228). Só o gate `efeitosPve.medicao.test.ts` autoriza mudar os valores.
 **Exports:**
-- `SPECIAL_BUDGET_HITS` (const) — `3`. `SPECIAL_FAMILIES`, `REFERENCE_FAMILY`, `BUFF_FAMILIES`, `SPECIAL_POWER`, `ENERGY`, `ENERGY_TRIGGER` (const).
+- `SPECIAL_BUDGET_HITS` (const) — `3`. `OVER_TIME_BONUS` (const) — `1.15`, usado só pelos inimigos (`foeFamilies.ts`). `SPECIAL_FAMILIES`, `REFERENCE_FAMILY`, `BUFF_FAMILIES`, `SPECIAL_POWER`, `ENERGY`, `ENERGY_TRIGGER` (const).
 - `SpecialFamily` (type), `Special`, `EnergyRates` (interface).
 - `specialOf(family)`.
 - PR3a: `AREA_FAMILIES` (`direct`, `dot`, `defDebuff`: as que miram o inimigo), `AREA_EFFICIENCY` (1: o núcleo NÃO usa a eficiência 0,9 do class-system), `PVE_FAMILY_POWER` (`arena`/`dungeon`), `CHEER`, `cheerEvents(taps, side)`, `RING_MULT_V3`, `DODGE_REDUCE_V3` (tabelas de habilidade do motor v3; o `energia.ts` ao vivo mantém as antigas até o PR3b).

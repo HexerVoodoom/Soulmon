@@ -5336,7 +5336,7 @@ vindo do servidor).
 
 ---
 
-**Corte × concussão (05/11/2026, REGISTRO §227).** O golpe corpo a corpo acaba em corte ou em concussão (splash de impacto, sem projétil): só visual, decidido por função pura por lutador (palavra-chave do nome de inimigo, senão sorteio estável com peso por elemento; Ar 75/25, Terra 25/75). Não altera dano, sementes nem RNG. Tabela e garantias: [REGRA-CORTE-CONCUSSAO.md](../REGRA-CORTE-CONCUSSAO.md).
+**Corte × concussão (05/11/2026, REGISTRO §227).** O golpe corpo a corpo acaba em corte ou em concussão (splash de impacto, sem projétil): só visual, decidido por função pura por lutador (palavra-chave do nome de inimigo, senão sorteio estável com peso por elemento; Ar 75/25, Terra 25/75). Não altera dano, sementes nem RNG. Tabela e garantias: [REGRA-CORTE-CONCUSSAO.md](../REGRA-CORTE-CONCUSSAO.md). **Ranged = ~80% Magia (11/11/2026, §289):** nos golpes À DISTÂNCIA de inimigos, selvagens e simulados, 80% são Magic (splash) e 20% corte à distância (`RANGED_MAGIA_PCT`); Pesadelo, a ficha dos jogadores reais e as Luvas ficam fora; só visual.
 
 <a id="combate-v3"></a>
 ## 55-B. ⚔️ Combate v3: level, talentos, equipamento e o teto de 5%

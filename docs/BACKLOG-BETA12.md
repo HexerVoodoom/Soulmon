@@ -173,6 +173,80 @@ Plano de A1 já escrito: [design/PLANO-WIDGET-MOLDURAS-REMOTAS.md](design/PLANO-
 3. APK único no fim (`versionCode` 32), depois do merge de A.
 4. Antes de começar: modal ao dono com as perguntas abaixo (decisões de design, não de código).
 
+## E2. Artefato Tabela de Soulmons e NPCs (fora do jogo)
+
+> **Pedido do dono:** 11/11/2026. **Execução:** DOMINGO 15/11/2026 (precisa de tokens a partir de domingo). **NÃO entra no jogo:** nenhum arquivo de `src/`, `functions/` ou `android/` muda por causa deste item; não exige APK nem deploy do Worker. É um artefato de uso do dono (claude.ai Artifact, HTML, privado por padrão, sem link público) e o CSV exportado é usado pela sessão operacional para atualizar os dados da beta12 (espécies, estágios, NPCs e personalidades do item B).
+> **Nota de rótulo:** a letra `E` já era da seção "Ordem sugerida"; este item ficou `E2` para não renomear nada existente.
+
+### E2.1 Objetivo
+
+Uma tabela única com todos os sprites do Soulmon em ordem de evolução (por linha e ramo) e todos os NPCs, com os dados que o jogo usa hoje, editável pelo dono e exportável em CSV para reimportação sem ambiguidade.
+
+### E2.2 Conteúdo e colunas
+
+- **Soulmon:** uma linha por sprite. Ordem de evolução: `rookie` → `champion` (power, harmony, benevolence) → `ultimate` (×3) → `mega` (×3) → `ultra`. Uma linha ramificada completa tem 11 sprites (1 + 3 + 3 + 3 + 1), a mesma escada de `CORVO_FORM_IDS`. Linhas sem ramo (um sprite por estágio) entram com `ramo` vazio.
+- **NPCs:** uma linha por NPC de cada registro listado em E2.3 (sem repetir o mesmo NPC em dois registros; a chave canônica é a do registro de arte).
+- **Colunas visíveis:** `nome` (PT, com EN no detalhe), `tipo` (harmonia, benevolência ou poder; é o ramo do jogo), `elemento base`, `estágio` (nome do nível do jogo), `tipo de ataque` (escola do básico), `tipo de ataque especial` (escola + família do efeito).
+- **NPC sem ataque no código:** a célula fica vazia e `origem_ataque` = `sem_ataque`. Nada é inventado.
+
+### E2.3 Fonte dos dados (levantado em `c3af0eb`, origin/main de 11/11; reconferir na execução)
+
+- **Linhas e ramos do Soulmon:** `src/utils/corvoPet.ts` (`CORVO_FORM_IDS`, 11 formas; `CORVO_SPRITES` e `CORVO_SPRITES_256`); nomes e descrições em `src/utils/corvoAdocao.ts` (`NOMES`, `CORVO_STAGES`); starters e linhas de arte em `src/utils/sprites.ts` (`STARTER_IDS` e `STARTER_NAMES`, 5 iniciais com um sprite cada; `OWN_LINE_SPRITES`, 4 linhas × 4 estágios; `DUNGEON_LINE_SPRITES` e `DUNGEON_LINE_NAMES`). Arte em `src/assets/soulmon/lines/` e `src/assets/soulmon/corvo/`.
+- **Linhas aposentadas:** `RETIRED_LINE_IDS` em `src/utils/sprites.ts` (orrin, serah, nautilu, ignar, lumel). Ficam FORA da tabela; o id continua válido em save antigo.
+- **Estágios:** `FORM_REQUIREMENTS` em `src/types/progression.ts` (rookie, champion, ultimate, mega, ultra). ⚠️ O oráculo chama o nível ultimate de `perfeito` (`StageId` em `src/utils/oracle.ts`); a tradução para o id do jogo é `creatureFormId` em `src/utils/oracle/base.ts`. A tabela e o CSV usam sempre o id do jogo.
+- **Ramo (tipo):** `BranchType` em `src/types/attributes.ts` (power, harmony, benevolence), com rótulos `ATTR_LABEL` (Poder, Harmonia, Benevolência). No oráculo o mesmo eixo é `AlignmentId` (poder, harmonia, benevolencia).
+- **Elemento base:** `SPRITE_ELEMENT`, `LINE_ELEMENT`, `BOSS_ELEMENT` e `DESAFIANTE_ELEMENT` em `src/utils/spriteElement.ts` (dono único; regra do dono de 30/10: um sprite = um elemento). Vocabulário: `ElementId` em `src/utils/oracle.ts` (agua, fogo, terra, ar, sombra, luz, planta, industrial) e os combinados (id fundido, ex.: `vapor`).
+- **Tipo de ataque e de especial:** NÃO há tabela estática por espécie. Os valores saem da ficha: `buildStageSkills` e `buildAllStageSkills` em `src/utils/soulProfile/ficha/skills.ts` (`StageSkill.escolaId`, `familia`); forma do golpe em `src/utils/soulProfile/ficha/strikeForm.ts`. Escolas: `ESCOLAS_SKILL` em `src/utils/soulProfile/ficha/types.ts` (combate_fisico, longo_alcance, conjuracao, benca, maldicao). Famílias do especial: `SPECIAL_FAMILIES` em `src/utils/combate/specials.ts` (direct, dot, heal, shield, atkBuff, defDebuff, spdBuff). Padrão de escola→família: `ESCOLA_FAMILY_PADRAO` em `src/utils/arena.ts`.
+- **NPCs (registros de arte):** `src/assets/soulmon/npcs/index.ts` (`AREA_NPC_ART`, `STALL_NPC_ART`, `LOT_NPC_ART`, `FUNCTION_NPC_ART`, `EXTRA_NPC_ART`, `NOVO_NPC_ART`).
+- **NPCs (falas e nomes):** `src/utils/areaNpcVoice.ts` (`LOT_NPC_VOICE`, `EXTRA_NPC_VOICE`, `NOVO_NPC_VOICE`); chefes e guardiões em `src/data/bossRoster.ts` (`BOSS_ROSTER`, com `BossElement`); torneio em `src/utils/tournamentNpcs.ts` (`TOURNAMENT_NPCS`). Registro humano: `docs/NPCS-NOVOS.md` e `docs/ELEMENTO-POR-SPRITE.md`.
+- **Fora da tabela:** `LIBRARY_NPCS` (`src/utils/libraryNpcs.ts`) reaproveita sprites de linha do jogador como pets de teste, não é NPC; e `src/utils/soulProfile/bestiary/pool.json` (7.386 criaturas do bestiário do oráculo, só texto e atributos) só entra se o dono pedir.
+
+### E2.4 Formato do CSV (chaves estáveis, para reimportar sem ambiguidade)
+
+- Codificação UTF-8 sem BOM, separador vírgula, aspas no padrão RFC 4180, fim de linha LF, cabeçalho na linha 1 com EXATAMENTE estas colunas, nesta ordem:
+  `id,tipo_entidade,linha_id,estagio,ramo,nome_pt,nome_en,elemento,ataque_basico,ataque_especial_escola,ataque_especial_familia,origem_ataque,fonte_codigo`
+- **`id` (chave de importação):** `soulmon.<linha_id>.<forma_id>` para Soulmon, com `forma_id` no padrão de `creatureFormId` (`rookie`, `champion-power`, …, `ultra`); `npc.<registro>.<chave>` para NPC, com a chave do registro de arte (ex.: `npc.novo.alquimistaLimo`). O nome nunca é chave.
+- **Valores fechados:** `tipo_entidade` ∈ {`soulmon`, `npc`}; `estagio` ∈ {`rookie`, `champion`, `ultimate`, `mega`, `ultra`} (vazio em NPC sem estágio); `ramo` ∈ {`power`, `harmony`, `benevolence`, vazio}; `elemento` ∈ `ElementId` ou combinado; `ataque_basico` e `ataque_especial_escola` ∈ `ESCOLAS_SKILL`; `ataque_especial_familia` ∈ `SPECIAL_FAMILIES`; `origem_ataque` ∈ {`ficha`, `padrao`, `sem_ataque`}.
+- `origem_ataque` = `padrao` quando o valor veio de `ESCOLA_FAMILY_PADRAO` e não da ficha; `fonte_codigo` = caminho do arquivo e nome do registro de onde a linha saiu.
+- **Importação (feita pela sessão operacional, não pelo artefato):** é atualização, não substituição. `id` desconhecido = erro com a linha; `id` ausente no CSV não é apagado; célula vazia em campo obrigatório = erro; `nome_pt`, `estagio` e `elemento` são obrigatórios para `soulmon`.
+- Nome do arquivo exportado: `soulmon-npcs-beta12-v1.csv`. A versão do formato sobe (`v2`) se uma coluna mudar.
+
+### E2.5 Interface (artefato)
+
+- **Filtro:** ícone de três linhas abre filtro por coluna com várias opções marcadas. Dentro de uma coluna vale OU (união); entre colunas vale E (interseção). Colunas filtráveis: `tipo_entidade`, `linha_id`, `estagio`, `ramo`, `elemento`, `ataque_basico`, `ataque_especial_escola`, `ataque_especial_familia`, `origem_ataque`.
+- **Edição:** clicar numa linha abre o painel de edição com TODOS os campos preenchidos com o valor da linha. Campos de lista fechada são seleção; `id`, `tipo_entidade` e `fonte_codigo` são somente leitura.
+- **Exportar CSV:** exporta as linhas visíveis com o filtro aplicado (sem filtro = todas), no formato de E2.4.
+- Gerado a partir de um JSON produzido por um script novo na execução (não existe hoje). O script roda pelo vitest ou `tsx`, porque a ficha é TypeScript.
+
+### E2.6 Critérios de aceite (testáveis)
+
+1. **Total:** o número de linhas do artefato = o número de linhas do JSON gerado pelo script, e o script registra a contagem por `tipo_entidade` no relatório da execução.
+2. **Escada completa:** para `corvo`, a sequência de `estagio` + `ramo` é `rookie`, `champion`×3, `ultimate`×3, `mega`×3, `ultra` (11 linhas), sem id repetido.
+3. **Sem vazio obrigatório:** nenhuma linha de Soulmon sem `nome_pt`, `estagio` ou `elemento`.
+4. **Elemento válido:** todo `elemento` é um `ElementId` ou combinado existente no código (teste que lê o vocabulário e falha em valor fora dele).
+5. **Filtro:** `ramo=power` + `estagio=mega` mostra só as linhas que têm os dois; duas opções na mesma coluna mostram a união; limpar tudo volta ao total do item 1.
+6. **Edição completa:** o painel de edição abre com os campos da linha; comparação campo a campo com a tabela dá zero diferença.
+7. **Round trip:** exportar sem edição gera um CSV idêntico, byte a byte, a um segundo export; o cabeçalho é idêntico ao de E2.4.
+8. **Diff de edição:** editar um campo de uma linha e exportar muda só essa linha e só essas colunas.
+9. **Importação:** `id` desconhecido é recusado com o número da linha; `id` ausente no CSV é mantido no jogo (não apagado).
+10. **Sem dado inventado:** toda linha tem `fonte_codigo` preenchido; NPC sem ataque sai com `origem_ataque` = `sem_ataque` e campos de ataque vazios.
+11. **Fora do jogo:** `git diff --name-only` do PR de execução não toca `src/` nem `functions/` nem `android/`, salvo o script novo e seus testes; o artefato não é publicado com link público.
+12. **Régua:** `vitest src/docsManual*.test.ts` verde.
+
+### E2.7 Riscos e pontos a confirmar na execução
+
+- **Linhas sem ramo:** `kaelen`, `thalindra`, `igni` e `astrase` têm um sprite por estágio em `OWN_LINE_SPRITES`, e algumas artes só trazem sufixo de ramo no nome (ex.: `kaelen-champion-power.png`). Confirmar quais ramos existem de fato.
+- **Linhas de masmorra:** em `DUNGEON_LINE_SPRITES` os quatro estágios de cada linha apontam para o MESMO sprite de chefe. A tabela mostra a arte de linha (`OWN_LINE_SPRITES`) ou a do chefe?
+- **Ultra:** só o corvo tem `ultra` em arte de linha? Confirmar.
+- **Starters:** cada um tem um sprite só (`STARTER_SPRITES`), sem estágios. Entram como estágio único?
+- **Ataque sem ficha determinística:** a ficha depende do save do jogador. Para a tabela, o valor vem do gerador com entrada fixa ou do `ESCOLA_FAMILY_PADRAO` (`origem_ataque` = `padrao`)?
+- **Efeito nos NPCs:** o mesmo NPC aparece em mais de um registro (ex.: área e torneio); a regra de chave canônica (E2.2) decide qual linha vale.
+- **Voz:** as falas do item B não entram nesta tabela; o CSV só carrega os dados de identidade (nome, elemento, ramo, estágio, ataque).
+
+### E2.8 Perguntas em aberto (modal ao dono, domingo, antes da execução)
+
+Nenhuma pergunta foi feita no momento da escrita; as de E2.7 vão em modal no domingo, com a opção recomendada primeiro.
+
 ## F. Decisões do dono (11/11/2026) e o que segue em aberto
 
 Decididas pelo dono; **prevalecem sobre qualquer "Perguntas em aberto" dos itens acima** (essas ficam como histórico do raciocínio):
