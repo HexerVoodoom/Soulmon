@@ -822,6 +822,17 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
 
       {/* "Última temporada" (06/11/2026, dono): a pílula diz só a colocação do jogador no mês anterior ("—" se não jogou);
           tocar abre o modal com TODAS as temporadas e a melhor colocação. Troféu em ouro quando foi pódio. */}
+      {/* 11/11/2026 (dono): pílulas SEPARADAS lado a lado: à esquerda a colocação nesta temporada (a do servidor; sem ela,
+          a da lista pública), à direita a da última temporada. Quebra linha em telas estreitas, sem cortar texto. */}
+      <div data-torneio-pilulas style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'stretch' }}>
+      <div
+        data-torneio-posicao-atual
+        style={{ ...sm2Tag, minHeight: 44, padding: '0 12px', flexWrap: 'wrap', justifyContent: 'center', color: 'var(--sm2-ink)' }}
+      >
+        <Icon name="emoji_events" size={20} tone="muted" />
+        <span>{isPt ? 'Temporada atual' : 'Current season'}</span>
+        <span className="sm2-num" style={{ fontWeight: 600 }}>{myPlace !== null ? placeLabel(myPlace, lang) : '—'}</span>
+      </div>
       <button
         type="button"
         data-torneio-ultima-temporada
@@ -830,17 +841,14 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
         aria-label={isPt
           ? `Última temporada: ${histView.lastPlace !== null ? `${histView.lastPlace}º lugar` : 'sem colocação'}. Nesta temporada: ${myPlace !== null ? `${myPlace}º lugar` : 'sem colocação'}. Abrir o histórico`
           : `Last season: ${histView.lastPlace !== null ? `place ${histView.lastPlace}` : 'no placement'}. This season: ${myPlace !== null ? `place ${myPlace}` : 'no placement'}. Open the history`}
-        style={{ ...sm2Tag, alignSelf: 'flex-start', minHeight: 44, padding: '0 12px', border: 0, cursor: 'pointer', color: 'var(--sm2-ink)' }}
+        style={{ ...sm2Tag, marginLeft: 'auto', minHeight: 44, padding: '0 12px', flexWrap: 'wrap', justifyContent: 'center', border: 0, cursor: 'pointer', color: 'var(--sm2-ink)' }}
       >
         <Icon name="emoji_events" size={20} tone={histView.lastPlace !== null && histView.lastPlace <= 3 ? 'gold' : 'muted'} fill={histView.lastPlace !== null && histView.lastPlace <= 3 ? 1 : 0} />
         <span>{isPt ? 'Última temporada' : 'Last season'}</span>
         <span className="sm2-num" style={{ fontWeight: 600 }}>{histView.lastPlace !== null ? placeLabel(histView.lastPlace, lang) : '—'}</span>
-        {/* 11/11/2026 (dono): na mesma linha, a posição nesta temporada (a do servidor; sem ela, a da lista pública). */}
-        <span aria-hidden="true" style={{ opacity: 0.5 }}>·</span>
-        <span data-torneio-posicao-atual>{isPt ? 'Agora' : 'Now'}</span>
-        <span className="sm2-num" style={{ fontWeight: 600 }}>{myPlace !== null ? placeLabel(myPlace, lang) : '—'}</span>
         <Icon name="chevron_right" size={20} tone="muted" />
       </button>
+      </div>
 
       <ModalSheet open={histOpen} title={isPt ? 'Temporadas' : 'Seasons'} onClose={() => setHistOpen(false)} language={lang}>
         <div data-torneio-historico style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
