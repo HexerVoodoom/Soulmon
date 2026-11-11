@@ -517,7 +517,7 @@ Cloudflare Workers (`workers/`), deploy **manual** (`cd workers && ../node_modul
 
 ### `functions/api/_honra.js`
 **Dono de:** o RENDIMENTO DECRESCENTE dos pontos do Torneio (PR13, decisão do dono 06/10/2026): o ganho de uma vitória cai com a diferença de level (oponente muito abaixo rende ~0) e com a N-ésima vitória do dia sobre o MESMO oponente. Nunca mexe no que se perde. Os levels vêm da ficha congelada em `duelStart`.
-**Exports:** `HONRA_PONTOS_VITORIA`, `HONRA_PONTOS_DEFESA`, `HONRA_LEVEL_CARENCIA`, `HONRA_LEVEL_QUEDA`, `HONRA_FATOR_POR_REPETICAO`, `fatorPorLevel`, `fatorPorRepeticao`, `ganhoDePontos`, `motivoDoCorte` (só leitura: `level` | `repeat` | `null`), `HONRA_TETO_DIA_POR_PAR`.
+**Exports:** `HONRA_PONTOS_VITORIA`, `HONRA_PONTOS_DEFESA`, `HONRA_LEVEL_CARENCIA`, `HONRA_LEVEL_QUEDA`, `HONRA_FATOR_POR_REPETICAO`, `fatorPorLevel`, `fatorPorRepeticao`, `HONRA_PISO_POR_LEVEL`, `ganhoDePontos`, `motivoDoCorte` (só leitura: `level` | `repeat` | `null`), `HONRA_TETO_DIA_POR_PAR`.
 **Chamado por:** `community.js › settleMatch` (devolve `gain`/`honorFactor`/`gainReason`/`lifetime` no `match`).
 **Régua:** `functions/api/community.farm.test.js`.
 

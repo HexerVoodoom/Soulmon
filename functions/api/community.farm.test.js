@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { onRequest } from './community.js';
 import { simulateDuel, DUEL_DAY_MS } from './_duel.js';
 import {
-  HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, HONRA_FATOR_POR_REPETICAO, ganhoDePontos, fatorPorLevel, fatorPorRepeticao, motivoDoCorte,
+  HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, HONRA_FATOR_POR_REPETICAO, ganhoDePontos, fatorPorLevel, fatorPorRepeticao, motivoDoCorte, HONRA_PISO_POR_LEVEL,
   HONRA_LEVEL_CARENCIA, HONRA_LEVEL_QUEDA,
 } from './_honra.js';
 
@@ -86,7 +86,8 @@ describe('ALTO-2: as regras puras (nomeadas) do rendimento', () => {
   it('ganhoDePontos junta os dois fatores e arredonda', () => {
     expect(ganhoDePontos(HONRA_PONTOS_VITORIA, 5, 5, 0)).toEqual({ gain: 20, factor: 1 });
     expect(ganhoDePontos(HONRA_PONTOS_VITORIA, 5, 5, 1).gain).toBe(10);
-    expect(ganhoDePontos(HONRA_PONTOS_VITORIA, 40, 1, 0).gain).toBe(0);
+    expect(ganhoDePontos(HONRA_PONTOS_VITORIA, 40, 1, 0).gain).toBe(HONRA_PISO_POR_LEVEL); // piso, não 0
+    expect(ganhoDePontos(HONRA_PONTOS_VITORIA, 40, 1, 3).gain).toBe(0); // repetição ainda zera
     expect(ganhoDePontos(HONRA_PONTOS_DEFESA, 5, 5, 0).gain).toBe(10);
   });
 });
@@ -122,21 +123,22 @@ describe('ALTO-2: fazenda com conta própria', () => {
     expect(r.json.gain).toBe(20);
   });
 
-  it('level: A (mega) vence B (level 1) e leva 0 ponto; B não perde mais que o de sempre (-4)', async () => {
+  it('level: A (mega) vence B (level 1) e leva o PISO de pontos (não 0); B não perde mais que o de sempre (-4)', async () => {
     const env = mkEnv({ a: { evolutionStage: 'mega-power', perfectDays: 9 }, b: { perfectDays: 0 }, fa: 400, fb: 0 });
     const r = await jogar(env, A, PIDB, 'me');
     expect(r.json.outcome).toBe('win');
-    expect(r.json.gain).toBe(0);
-    expect(r.json.honorFactor).toBe(0);
-    expect(rankDe(env, A).points).toBe(0);
-    expect(perfilDe(env, A).lifetimePoints ?? 0).toBe(0);
+    expect(r.json.gain).toBe(HONRA_PISO_POR_LEVEL);
+    expect(r.json.honorFactor).toBe(0); // a Honra segue cortada; só os pontos têm piso
+    expect(r.json.gainReason).toBe('level');
+    expect(rankDe(env, A).points).toBe(HONRA_PISO_POR_LEVEL);
+    expect(perfilDe(env, A).lifetimePoints ?? 0).toBe(HONRA_PISO_POR_LEVEL);
     expect(rankDe(env, B).losses).toBe(1);
   });
 
   it('o desafiante que PERDE de propósito para a conta B também não farma: a defesa repetida rende menos', async () => {
     const env = mkEnv();
     for (let i = 0; i < 5; i++) await jogar(env, A, PIDB, 'opp'); // A perde de propósito 5x
-    expect(rankDe(env, B).points).toBe(Math.round(HONRA_PONTOS_DEFESA * 1) + 5 + 3 + 0 + 0); // 10 + 5 + 3 (2,5 arredondado) + 0 + 0
+    expect(rankDe(env, B).points).toBe(Math.round(HONRA_PONTOS_DEFESA * 1) + 5 + 3 + 0 + 0); // 10 + 5 + 3 (2,5 arredondado) + 0 + 0 (piso só vale com repetição > 0)
     expect(rankDe(env, B).points).toBeLessThan(50);
   });
 
@@ -161,7 +163,7 @@ describe('motivoDoCorte e a velocidade da faixa', () => {
   });
 
   it('oponente 9+ níveis abaixo nunca soma; o par repetido soma 20+10+5 e para', () => {
-    expect(ganhoDePontos(HONRA_PONTOS_VITORIA, 15, 6, 0).gain).toBe(0);
+    expect(ganhoDePontos(HONRA_PONTOS_VITORIA, 15, 6, 0).gain).toBe(3);
     const dia = [0, 1, 2, 3, 4].map(n => ganhoDePontos(HONRA_PONTOS_VITORIA, 5, 5, n).gain);
     expect(dia).toEqual([20, 10, 5, 0, 0]);
   });
@@ -169,7 +171,7 @@ describe('motivoDoCorte e a velocidade da faixa', () => {
   it('simulação: partidas até cruzar a faixa (5 partidas/dia, 20 por vitória cheia)', () => {
     const partidasAte = (alvo, lvMe, lvOpp, oponentesDistintos) => {
       let pts = 0, n = 0;
-      for (let dia = 0; dia < 60 && pts < alvo; dia++) {
+      for (let dia = 0; dia < 400 && pts < alvo; dia++) {
         const vistas = {};
         for (let j = 0; j < 5 && pts < alvo; j++) {
           const o = j % oponentesDistintos; const w = vistas[o] ?? 0;
@@ -181,6 +183,7 @@ describe('motivoDoCorte e a velocidade da faixa', () => {
     expect(partidasAte(100, 5, 5, 5)).toBe(5);           // 5 oponentes de nível igual: Bronze em 1 dia
     expect(partidasAte(1000, 10, 10, 5)).toBe(50);       // 1000 pts a 20/vitória = 50 vitórias = 10 dias
     expect(partidasAte(100, 10, 10, 1)).toBe(12);        // sempre o mesmo oponente: 35/dia, 3 dias
-    expect(partidasAte(100, 20, 10, 5)).toBe(Infinity);  // oponentes 10 níveis abaixo: nunca
+    expect(partidasAte(100, 20, 10, 5)).toBe(34);        // oponentes 10 níveis abaixo: piso 3 (5/dia de 3,3,3,... com 5 distintos) = 34 vitórias
+    expect(partidasAte(1000, 20, 10, 5)).toBe(334);      // 1000 pts só contra quem está muito abaixo: 334 vitórias (~67 dias, bem mais lento que 50)
   });
 });

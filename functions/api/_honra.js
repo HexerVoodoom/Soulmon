@@ -23,6 +23,9 @@ export const HONRA_LEVEL_QUEDA = 6;
 /** Fator da N-esima vitoria do dia sobre o MESMO oponente (0-based); alem do fim da lista vale o ultimo (zero). */
 export const HONRA_FATOR_POR_REPETICAO = [1, 0.5, 0.25, 0];
 
+/** Piso de pontos de uma vitoria contra oponente ABAIXO do nivel (decisao do dono, 11/11/2026): nunca 0 so por nivel (entre 2 e 5). A repeticao no dia continua zerando. */
+export const HONRA_PISO_POR_LEVEL = 3;
+
 /** Fator [0,1] pela diferenca de level (vencedor - perdedor). Level ausente/invalido = 1 (ficha antiga, sem punir). */
 export function fatorPorLevel(levelVencedor, levelPerdedor) {
   if (!Number.isFinite(levelVencedor) || !Number.isFinite(levelPerdedor)) return 1;
@@ -44,7 +47,10 @@ export function fatorPorRepeticao(vitoriasAntes) {
  */
 export function ganhoDePontos(base, levelVencedor, levelPerdedor, vitoriasAntes) {
   const factor = fatorPorLevel(Number(levelVencedor), Number(levelPerdedor)) * fatorPorRepeticao(vitoriasAntes);
-  return { gain: Math.round(base * factor), factor };
+  // Piso por nivel: o corte de nivel sozinho nunca leva a 0; o teto do piso e o que a repeticao ja deixaria (rep 0 => 0).
+  const porRep = Math.round(base * fatorPorRepeticao(vitoriasAntes));
+  const gain = Math.max(Math.round(base * factor), Math.min(HONRA_PISO_POR_LEVEL, porRep));
+  return { gain, factor };
 }
 
 /** O maximo de pontos que UM par (mesmos dois levels, sem queda por level) rende por dia de vitorias: a soma da lista. */
