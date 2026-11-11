@@ -4764,3 +4764,13 @@ Migração: `migrateCatalogHabitDaily` no load converte para todo dia a atividad
 **Falsifica:** item do catálogo na linha de Tarefas, ou o botão Mais opções na tela Novo hábito (`CreateModal.habito.render.test.tsx`).
 
 **Rollback:** reverter o PR. **APK:** nada obrigatório.
+
+## §296 — Missões: «Conte como você está se sentindo» leva ao chat; «Visitar a criatura» vira «Enviar um presente» (11/11/2026, pedido do dono)
+
+Decisão: (1) a diária `d-humor` («Conte como você está se sentindo hoje») não fazia nada ao tocar porque o alvo era a Home, onde o jogador já estava (a folha fechava e nada mais). Agora o alvo é `'chat'` (`missionTargets.ts`): fecha a folha, vai à Home e dá foco ao campo de conversa com o Soulmon (`chatFocusRequest` → `ChatBox.focusRequest`, vale 4 s). QUALQUER mensagem enviada conta (`onUserMessage` → `contarDiaria('humor')`, idempotente pelo alvo 1/dia); a resposta local da ponte (`chatSafetyDecision`) e o envio sem rede não contam. (2) Ninguém sabia cumprir «Visite a criatura de alguém»: a semanal `friend-visit` virou `gift-sent` («Envie um presente a alguém», 1/2 Emblemas) e a diária `d-amigo` virou `d-presente` («Envie um presente a um amigo», 1 material `keepsake`), ambas no mesmo lugar do catálogo (mesmo sorteio), levando à tela dos amigos (`laboratorio.amigos`); contam em `onGiftSent`, que a LibraryPage só chama depois do `ok` do servidor (`action=gift`: dono, amizade e 1/dia por amigo conferidos lá). Migração: `migrateWeeklyLegacy` no load; `d-amigo`/`amigo` ficam no catálogo aposentados e no espelho `_dailyMissions.js`. Varredura: conquistas ganharam alvo por id (Ateliê, Oficina, Guilda, Home); sem ação ficam só `mission-rank-gold` e `mission-regen-1`.
+
+Limite honesto: a contagem diária segue escrita pelo cliente (economia local-first); o envio é validado pelo servidor, o contador não. O presente exige a meta do dia cumprida (§190), então a missão pode ficar «aberta» até lá.
+
+**Falsifica:** tocar em «Conte como você está se sentindo» sem cair no campo de chat, uma mensagem enviada que não conta, ou o presente contar sem o `ok` do servidor (`missoes.chatPresente.test.ts`, `ChatBox.missaoDoDia.render.test.tsx`).
+
+**Rollback:** reverter o PR (o save antigo continua válido: ids antigos aceitos). **APK:** nada obrigatório.

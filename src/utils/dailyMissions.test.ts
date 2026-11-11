@@ -52,7 +52,7 @@ describe('rotação determinística', () => {
       }
       // a Masmorra abre no Vínculo 1 desde a #328 (REGISTRO §51): sai da lista de bloqueadas, o portão é lido da tabela.
       const b1 = dailyMissionsFor(day, 1).map(m => m.event);
-      for (const e of ['arena', 'torneio', 'foco', 'amigo'] as const) expect(b1).not.toContain(e);
+      for (const e of ['arena', 'torneio', 'foco', 'presente'] as const) expect(b1).not.toContain(e);
     }
   });
   it('as missões dos recursos novos aparecem quando o Vínculo os abre', () => {

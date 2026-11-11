@@ -23,7 +23,7 @@ import { hashString, mulberry32 } from './oracle/base';
 export type WeeklyMissionId =
   | 'rest-nights' | 'checkins' | 'haunted-done' | 'dungeon-runs'
   | 'rub-days' | 'shower' | 'play-days' | 'mood-checkins'
-  | 'dream-new' | 'evolve-view' | 'tournament-match' | 'friend-visit';
+  | 'dream-new' | 'evolve-view' | 'tournament-match' | 'gift-sent';
 
 export interface WeeklyMission {
   id: WeeklyMissionId;
@@ -50,7 +50,8 @@ const POOL: readonly WeeklyMission[] = [
   { id: 'dream-new', target: 1, emblems: 4, descPt: 'Colecione um sonho novo', descEn: 'Collect a new dream' },
   { id: 'evolve-view', target: 1, emblems: 2, descPt: 'Visite a árvore de evolução', descEn: 'Visit the evolution tree' },
   { id: 'tournament-match', target: 2, emblems: 3, descPt: 'Dispute 2 partidas do Torneio', descEn: 'Play 2 Tournament matches' },
-  { id: 'friend-visit', target: 1, emblems: 2, descPt: 'Visite a criatura de alguém', descEn: 'Visit someone else’s creature' },
+  // 11/11/2026: "Visite a criatura de alguém" (id antigo `friend-visit`) virou ENVIAR UM PRESENTE; mesmo alvo e Emblemas, mesma posição (mesmo sorteio).
+  { id: 'gift-sent', target: 1, emblems: 2, descPt: 'Envie um presente a alguém', descEn: 'Send someone a gift' },
 ];
 
 export const WEEKLY_MISSION_COUNT = 3;
@@ -121,4 +122,19 @@ export function claimWeekly(
 ): { progress: WeeklyMissionProgress; emblems: number } {
   if (!isWeeklyDone(p, m) || p.claimed.includes(m.id)) return { progress: p, emblems: 0 };
   return { progress: { ...p, claimed: [...p.claimed, m.id] }, emblems: m.emblems };
+}
+
+/**
+ * Migração do save (11/11/2026): `friend-visit` virou `gift-sent`. O progresso e o resgate da semana corrente atravessam a troca
+ * (quem já tinha cumprido/resgatado a antiga não perde nem recebe de novo); sem a chave antiga devolve o MESMO objeto.
+ */
+export function migrateWeeklyLegacy(p: WeeklyMissionProgress): WeeklyMissionProgress {
+  const counts = p.counts as Record<string, number>;
+  const claimed = p.claimed as string[];
+  if (!('friend-visit' in counts) && !claimed.includes('friend-visit')) return p;
+  const { 'friend-visit': antigo, ...resto } = counts;
+  const novos: Record<string, number> = { ...resto };
+  if (typeof antigo === 'number' && antigo > (novos['gift-sent'] ?? 0)) novos['gift-sent'] = antigo;
+  const pagos = [...new Set(claimed.map(x => (x === 'friend-visit' ? 'gift-sent' : x)))] as WeeklyMissionProgress['claimed'];
+  return { ...p, counts: novos as WeeklyMissionProgress['counts'], claimed: pagos };
 }

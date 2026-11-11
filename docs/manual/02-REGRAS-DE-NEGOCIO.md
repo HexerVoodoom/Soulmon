@@ -4484,7 +4484,7 @@ fácil.
 O pool inteiro, com alvo e pagamento em Honra: `rest-nights` 3/3 ·
 `checkins` 4/3 · `haunted-done` 1/4 · `dungeon-runs` 2/3 · `rub-days` 4/2 ·
 `shower` 3/2 · `play-days` 3/2 · `mood-checkins` 3/2 · `dream-new` 1/4 ·
-`evolve-view` 1/2 · `tournament-match` 2/3 · `friend-visit` 1/2.
+`evolve-view` 1/2 · `tournament-match` 2/3 · `gift-sent` 1/2 (11/11/2026, §296: era `friend-visit`, «Visite a criatura de alguém»; virou «Envie um presente a alguém», mesmo alvo/pagamento/posição; `migrateWeeklyLegacy` leva o progresso e o resgate do save antigo).
 
 **⚠️ Nenhuma missão premia CONTAGEM DE TAREFAS**, e essa é a proibição mais fácil
 de furar sem perceber — "faça 10 tarefas" é a missão mais óbvia do mundo e é
@@ -6325,7 +6325,7 @@ Tudo abaixo é o que o código de `5229b1be` faz. Decisões: `REGISTRO-DE-DECISO
 
 **💗 Coraçãozinho e Faísca de Alma (§191 do dia 30).** Além de curar fora da luta, o Coraçãozinho ganha um 2º uso: na queda (HP 0) na Masmorra/Fenda e no Calabouço, antes do resultado, oferece "Usar Coraçãozinho" — gasta 1 e volta com **50% do HP máx** (`utils/dungeonRevive.ts`, continuação determinística com semente derivada). A **Faísca de Alma** restaura a **energia da Home** (`SPARK_HOME_ENERGY` = 5, nos Arquivos/Mochila), **não** o especial da luta. Arte própria pendente.
 
-**🫶 Missão diária e presente (§190 do dia 30).** ⚰️ `d-brincar` saiu do catálogo (`dailyMissions.ts`, espelho `_dailyMissions.js`); fica `d-carinho`, que agora conta mesmo com vida cheia (o gesto chama `onPet` a cada ~2 s). Presente a amigo exige a **meta do dia cumprida** (`fioMetaCumprida`), não mais energia cheia — só cliente; o servidor segue limitando 1×/dia por amigo.
+**🫶 Missão diária e presente (§190 do dia 30).** ⚰️ `d-brincar` saiu do catálogo (`dailyMissions.ts`, espelho `_dailyMissions.js`); fica `d-carinho`, que agora conta mesmo com vida cheia (o gesto chama `onPet` a cada ~2 s). **11/11/2026 (§296):** a diária `d-amigo` («Visite a criatura de um amigo») virou `d-presente` («Envie um presente a um amigo», evento `presente`, contado só quando o servidor confirma o envio); `d-amigo`/`amigo` ficam aposentados no catálogo só para o save. `d-humor` («Conte como você está se sentindo hoje») leva ao campo de conversa com o Soulmon na Home (`GoTarget 'chat'`) e QUALQUER mensagem enviada a ele conta (`ChatBox.onUserMessage` → `contarDiaria('humor')`; a resposta local da ponte e o envio sem rede não contam). Presente a amigo exige a **meta do dia cumprida** (`fioMetaCumprida`), não mais energia cheia — só cliente; o servidor segue limitando 1×/dia por amigo.
 
 **🎮 Pipo pergunta o modo (§191 do dia 30).** Antes de cada minijogo o NPC dos Jogos pergunta "Comum ou Avançado?" (`MinigameModeGate`, rótulos de `utils/minigameDifficulty.ts`); ids e valores salvos (nível 1/2) **não** mudaram. Com dificuldade: Corrida com obstáculos e Pedra·Papel·Tesoura; os demais têm um único "Jogar". Fora: Fenda/Masmorra e Refúgio.
 

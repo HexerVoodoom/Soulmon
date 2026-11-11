@@ -4608,7 +4608,7 @@ export default function App() {
   })), [setGameState]);
   const contarMissao = useCallback((id: WeeklyMissionId) => {
     const doDia: Partial<Record<WeeklyMissionId, DailyEvent>> = {
-      shower: 'banho', 'mood-checkins': 'humor', 'rub-days': 'carinho', 'friend-visit': 'amigo', 'tournament-match': 'torneio',
+      shower: 'banho', 'mood-checkins': 'humor', 'rub-days': 'carinho', 'gift-sent': 'presente', 'tournament-match': 'torneio',
     };
     setGameState(prev => {
       const dia = playerDayKey(new Date(), prev.playerDayTz);
@@ -4673,6 +4673,7 @@ export default function App() {
 
   /* "Faça um passeio" no menu de Missões leva ao PRÉDIO do Passeio (pedido do dono, 11/10/2026):
      fecha o menu e abre a área com a folha do lote aberta, como o "Ir lá" da Mochila. */
+  const [chatFocusAt, setChatFocusAt] = useState(0);
   const irAoPasseio = useCallback(() => {
     setMissionsOpen(null);
     setPendingSheet({ area: 'exploracao', lot: 'passeio' });
@@ -4691,7 +4692,9 @@ export default function App() {
 
   /* TODA missão com lugar LEVA até ele (dono, 14/10/2026, REGISTRO §62): fecha a folha e abre o prédio no Mapa (ou volta à Home,
      onde se cuida do bicho). Prédio fechado nem chega aqui: o cartão mostra o requisito em vez do Ir. */
-  const irAoDestinoDaMissao = useCallback((alvo: BuildingId | 'home') => {
+  const irAoDestinoDaMissao = useCallback((alvo: BuildingId | 'home' | 'chat') => {
+    /* "Conte como você está se sentindo hoje" (11/11/2026): leva à Home e põe o foco no CAMPO DE CONVERSA com o Soulmon. */
+    if (alvo === 'chat') { setMissionsOpen(null); if (currentViewRef.current !== 'home') goTo('home'); setChatFocusAt(Date.now()); return; }
     if (alvo === 'home') { setMissionsOpen(null); if (currentViewRef.current !== 'home') goTo('home'); return; }
     irAoPredioDaMissao(alvo);
   }, [goTo, irAoPredioDaMissao]);
@@ -8042,8 +8045,8 @@ export default function App() {
                 friends={gameState.friends ?? []}
                 canGiftToday={fioMetaCumprida}
                 onFriendsChange={(friends) => setGameState(prev => ({ ...prev, friends }))}
-                onGiftSent={() => {}}
-                onVisitPlayer={() => contarMissao('friend-visit')}
+                /* Presente ENVIADO (o servidor respondeu ok em `/api/community?action=gift`): conta a missão do dia e a da semana. */
+                onGiftSent={() => contarMissao('gift-sent')}
                 metaDoDiaCumprida={dailyTotal > 0 && dailyDone >= dailyTotal}
                 playerDayTz={gameState.playerDayTz}
                 mySprite={minhaCriaturaUrl}
@@ -8688,6 +8691,8 @@ export default function App() {
 
               {/* Pet — acima, sem estar contido em uma caixa */}
               <CompanionHUD
+                onChatSent={() => contarDiaria('humor')}
+                chatFocusRequest={chatFocusAt}
                 companionMood={getCompanionMood()}
                 energyLevel={progress}
                 message={getCompanionMessage()}
