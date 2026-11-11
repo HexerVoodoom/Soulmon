@@ -132,6 +132,8 @@ export function applyFeiraLojaBuy<T extends ShopBuyState & Partial<CookState>>(p
   if (!(MATERIAL_IDS as readonly string[]).includes(ref)) return { state: prev, refused: 'not-for-sale' };
   const bq = prev.buildingQuests ?? { day: '', visited: [], claimed: [], materials: {} };
   const had = bq.materials[ref as MaterialId] ?? 0;
+  // No teto não cobra nem entrega: recusa ANTES de debitar (QA 2026-11-11, médio 2).
+  if (had >= MATERIAL_CAP) return { state: prev, refused: 'cap' };
   return { state: { ...paid, buildingQuests: { ...bq, materials: { ...bq.materials, [ref]: Math.min(MATERIAL_CAP, had + 1) } } } };
 }
 

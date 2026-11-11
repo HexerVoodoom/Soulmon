@@ -135,6 +135,8 @@ interface TournamentPageProps {
   /** Treino: Bits GANHOS (saldo menos Bit de Crédito; `earnedBits`) e a cobrança do ticket extra, chamada só DEPOIS de o servidor confirmar a compra. `false` = nada cobrado. */
   earnedBits?: number;
   onChargeTreinoTicket?: () => boolean;
+  /** Âncora do dia do jogador (`gameState.playerDayTz`): o Treino usa o MESMO dia dos demais tetos. */
+  playerDayTz?: { zone?: string; offsetMs?: number };
   language: string;
   /** Emblemas atuais (moeda do torneio) — só para exibir. */
   emblems: number;
@@ -256,7 +258,7 @@ function TierMark({ id, size, state, place }: { id: string; size: 24 | 32 | 48; 
   );
 }
 
-export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, earnedBits: earnedBitsProp = 0, onChargeTreinoTicket, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, onElementsDefeated, onEnemySeen, headSlot, onCoverChange }: TournamentPageProps) {
+export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLine, petElement, skills, trophies, equippedFrame = null, ownedFrames = [], onEquipFrame, bits = 0, onBuyFrame, earnedBits: earnedBitsProp = 0, onChargeTreinoTicket, playerDayTz, language, emblems, onEarnEmblems, totalXP, onMatchPlayed, onElementsDefeated, onEnemySeen, headSlot, onCoverChange }: TournamentPageProps) {
   // Música (19/10/2026): o Torneio toca o "Stone Hall Combat" (se o interruptor "Música" está ligado). Antes de qualquer return (hooks).
   useEffect(() => entrarNaSuperficie('torneio'), []);
   const isPt = language === 'pt-BR';
@@ -528,7 +530,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
   const loadSpar = () => {
     if (!pvpAberto) return;
     setSparFailed(false);
-    getSparOpponents(saveId)
+    getSparOpponents(saveId, playerDayTz)
       .then(r => { setSparOpps(r.opponents ?? []); const t = sanitizeTreinoTickets(r.tickets); if (t) setTickets(t); })
       .catch(() => { setSparOpps([]); setSparFailed(true); });
   };
@@ -539,7 +541,7 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     setSparError(null);
     try {
       if (tickets && tickets.left <= 0) { setSparError(isPt ? 'As partidas de hoje acabaram. Amanhã tem um ticket novo.' : "Today's matches are used up. A new ticket comes tomorrow."); return; }
-      const r = await startSpar(saveId, opp.id);
+      const r = await startSpar(saveId, opp.id, playerDayTz);
       setSparDuel({ opp, seed: r.seed, me: r.me, oppSide: r.opp });
     } catch (err) {
       setSparError(err instanceof Error && err.message
@@ -555,10 +557,17 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     setBuyingTicket(true);
     setSparError(null);
     try {
-      const r = await buySparTicket(saveId);
-      const tk = sanitizeTreinoTickets(r.tickets);
-      if (tk) setTickets(tk);
-      if (!onChargeTreinoTicket()) setSparError(isPt ? 'Bits ganhos insuficientes para o ticket.' : 'Not enough earned Bits for the ticket.');
+      // Duas fases: o servidor RESERVA (sem conceder), o app debita e só então CONFIRMA; recusa local = nada concedido, nada cobrado.
+      if (earnedBitsProp < TREINO_EXTRA_TICKET_BITS) { setSparError(isPt ? 'Bits ganhos insuficientes para o ticket.' : 'Not enough earned Bits for the ticket.'); return; }
+      await buySparTicket(saveId, playerDayTz, 'reserve');
+      if (!onChargeTreinoTicket()) { setSparError(isPt ? 'Bits ganhos insuficientes para o ticket.' : 'Not enough earned Bits for the ticket.'); return; }
+      try {
+        const r = await buySparTicket(saveId, playerDayTz, 'confirm');
+        const tk = sanitizeTreinoTickets(r.tickets);
+        if (tk) setTickets(tk);
+      } catch {
+        setSparError(isPt ? 'Cobrado, mas o ticket não confirmou. Toque em atualizar a lista.' : "Charged, but the ticket didn't confirm. Refresh the list.");
+      }
     } catch {
       setSparError(isPt ? 'Não deu para comprar o ticket agora. Nada foi cobrado.' : "Couldn't buy the ticket right now. Nothing was charged.");
     } finally {
@@ -572,8 +581,8 @@ export function TournamentPage({ ocultoDaLista = false, saveId, petStage, petLin
     setSparRetry(null);
     try {
       const r = typeof seed === 'number' && !forfeit
-        ? await playSparComRetry(saveId, opp.id, taps, seed)
-        : await playSpar(saveId, opp.id, taps, forfeit);
+        ? await playSparComRetry(saveId, opp.id, taps, seed, undefined, playerDayTz)
+        : await playSpar(saveId, opp.id, taps, forfeit, undefined, playerDayTz);
       // A Honra é a do SERVIDOR (1–2 por vitória, teto de 20 por dia): o app só soma o que veio, e não soma o reenvio.
       const honor = Number.isFinite(r.honor) ? Math.max(0, Math.min(SPAR_HONOR_MAX, Math.floor(r.honor))) : 0;
       if (honor > 0 && !r.replayed) onEarnEmblems(honor);

@@ -8,7 +8,7 @@
  * o cliente debita pelo caminho de sempre (`onBuyShop` → `applyShopBuy`). Item da Hexsmith: a posse é do servidor, ele cobra e
  * entrega (`cloudHexFair`). Tom calmo, sem urgência. Mudo (nenhum som novo).
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ModalSheet, sm2Button, sm2Hint, sm2Text } from '../form/FormKit';
 import { Bits, CurrencyBalance, PurchaseConfirmSheet, PurchaseQuestion, ShopShelf, ShopStatus, useShopFlash, type ShopOwnership } from '../mercado/ShopShelf';
 import npcMercado from '../../assets/avatares/ativo-mercado.webp';
@@ -23,7 +23,7 @@ import { MATERIALS } from '../../utils/buildingQuestsCopy';
 import { dishById } from '../../utils/restaurant';
 import { POTION_SPECIAL_ITEMS, potionKey } from '../../utils/elementPotion';
 import { feiraText, type FeiraKey } from '../../utils/feiraCopy';
-import { FEIRA_LOJA_VENDOR_NAMES, feiraLojaRef, shopItemOnOffer, type FeiraLoja, type FeiraLojaItem } from '../../utils/feiraLoja';
+import { FEIRA_LOJA_VENDOR_NAMES, applyFeiraLojaBuy, feiraLojaRef, shopItemOnOffer, type FeiraLoja, type FeiraLojaItem } from '../../utils/feiraLoja';
 import { buyGuildFeiraLoja, dia, GuildError } from '../../utils/community';
 import { cloudHexFair, type HexFairOutcome } from '../../utils/cloudSave';
 import { HEX_SLOT_COPY, tx } from '../../utils/hexsmithCopy';
@@ -67,6 +67,16 @@ export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, own
   const { flash, say } = useShopFlash();
   const [confirmHex, setConfirmHex] = useState<FeiraLojaItem | null>(null);
   const [busyHex, setBusyHex] = useState(false);
+  /** Trava de clique duplo da compra em Bits (Mercado/material/poção/prato): a 2ª chamada voltaria 409 logo depois do sucesso. */
+  const busyBuy = useRef(false);
+  /**
+   * Confere ANTES de tocar no servidor se o app aceitaria a compra (saldo ganho, teto de material, posse). O servidor marca o item
+   * como comprado na hora; recusar DEPOIS apagava a oferta sem cobrar/entregar (QA 2026-11-11, médio 1). Só passa quem o app aceita.
+   */
+  const appRecusa = (offer: FeiraLojaItem, price: number): FeiraKey | null => {
+    const r = applyFeiraLojaBuy(getState() as Parameters<typeof applyFeiraLojaBuy>[0], { ...offer, price });
+    return r.refused ? (r.refused === 'cap' ? 'loja.cap' : 'loja.noFunds') : null;
+  };
 
   const vn = FEIRA_LOJA_VENDOR_NAMES[loja.vendor];
   const voice = { name: isPt ? vn.pt : vn.en, line: isPt ? vn.linePt : vn.lineEn };
@@ -93,7 +103,11 @@ export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, own
   const buyShop = async (itemId: string): Promise<boolean> => {
     const offer = loja.items.find(i => i.id === itemId && i.type === 'shop' && !i.bought);
     if (!offer) return false;
+    if (busyBuy.current) return false;
     if (points < offer.price) { say(itemId, false, t('loja.noFunds')); return false; }
+    const antes = appRecusa(offer, offer.price);
+    if (antes) { say(itemId, false, t(antes)); return false; }
+    busyBuy.current = true;
     try {
       const r = await api.buy(saveId, itemId, tz);
       if (!r) { say(itemId, false, t('loja.gone')); return false; }
@@ -103,6 +117,8 @@ export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, own
     } catch (e) {
       say(itemId, false, t(errorKey(e)));
       return false;
+    } finally {
+      busyBuy.current = false;
     }
   };
 
@@ -133,6 +149,10 @@ export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, own
   /** Material, poção ou prato: o servidor confere (oferta de hoje, 1 por item) e devolve o preço; só então o cliente debita. */
   const buyOther = async (offer: FeiraLojaItem) => {
     setConfirmHex(null);
+    if (busyBuy.current) return;
+    const antes = appRecusa(offer, offer.price);
+    if (antes) { say(offer.id, false, t(antes)); return; }
+    busyBuy.current = true;
     try {
       const r = await api.buy(saveId, offer.id, tz);
       if (!r) { say(offer.id, false, t('loja.gone')); return; }
@@ -141,6 +161,8 @@ export function FeiraLojaSheet({ language, saveId, tz, loja: lojaIn, points, own
       say(offer.id, true, t('loja.ok', { name: hexLabel(offer) }));
     } catch (e) {
       say(offer.id, false, t(errorKey(e)));
+    } finally {
+      busyBuy.current = false;
     }
   };
 

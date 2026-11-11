@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { MATERIAL_CAP } from './buildingQuests';
 import { applyFeiraLojaBuy, sanitizeFeiraLoja, shopItemOnOffer, type FeiraLojaItem } from './feiraLoja';
 
 const base = { gamePoints: 500, foodInventory: {} as Record<string, number> };
@@ -10,6 +11,18 @@ describe('a feira de verdade no cliente: prateleiras novas', () => {
     expect(r.refused).toBeUndefined();
     expect(r.state.gamePoints).toBe(491);
     expect((r.state as any).buildingQuests.materials.ore).toBe(1);
+  });
+  it('material no teto: recusa com cap ANTES de debitar (nada cobrado, nada entregue)', () => {
+    const cheio = { ...base, buildingQuests: { day: '', visited: [], claimed: [], materials: { ore: MATERIAL_CAP } } };
+    const r = applyFeiraLojaBuy(cheio as any, offer({ id: 'material:ore', type: 'material', kind: 'material', price: 9 }));
+    expect(r.refused).toBe('cap');
+    expect(r.state).toBe(cheio);
+  });
+  it('prato de combate pago só com Bit de Crédito: recusa e devolve o MESMO estado (a folha não chama o servidor)', () => {
+    const credito = { ...base, gamePoints: 500, bitsOrigin: { paidLeft: 500 } };
+    const r = applyFeiraLojaBuy(credito as any, offer({ id: 'dish:espetinho-de-vinha', type: 'dish', kind: 'dish', price: 8 }), 1_000_000);
+    expect(r.refused).toBe('not-earned');
+    expect(r.state).toBe(credito);
   });
   it('poção de elemento: +1 na pastinha (potion:<elemento>)', () => {
     const r = applyFeiraLojaBuy(base as any, offer({ id: 'potion:fogo', type: 'potion', kind: 'potion', price: 40 }));

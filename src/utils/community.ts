@@ -239,18 +239,27 @@ export async function playMatchComRetry(
 // Luta contra outros jogadores que NÃO ranqueia; vitória rende 1–2 de Honra (o servidor decide e limita a 20/dia). O servidor sorteia
 // 5 por faixa de Vínculo e a lista muda a CADA pedido (refresh ilimitado). Contrato aditivo: servidor antigo responde erro e a aba some.
 /** Âncora do dia do jogador (o teto de Honra segue o dia DELE, não o UTC). */
-const diaDoJogador = (): { zone?: string; off: number } => {
+type SparTz = { zone?: string; offsetMs?: number };
+/**
+ * Com a âncora do jogo (`gameState.playerDayTz`, a MESMA dos demais tetos) o Treino manda ela; sem âncora (save que ainda não migrou)
+ * cai no aparelho como antes. O servidor ainda prende o fuso da conta (`fixarTzTreino`), então isto é só o primeiro valor.
+ */
+const diaDoJogador = (tz?: SparTz): { zone?: string; off: number } => {
+  if (tz && (tz.zone || Number.isFinite(tz.offsetMs))) {
+    const off = Number.isFinite(tz.offsetMs) ? (tz.offsetMs as number) : -new Date().getTimezoneOffset() * 60_000;
+    return { ...(tz.zone ? { zone: tz.zone } : {}), off };
+  }
   let zone: string | undefined;
   try { zone = Intl.DateTimeFormat().resolvedOptions().timeZone || undefined; } catch { zone = undefined; }
   return { ...(zone ? { zone } : {}), off: -new Date().getTimezoneOffset() * 60_000 };
 };
-export const getSparOpponents = (id: string) =>
-  call<{ opponents: Opponent[]; tickets?: unknown; me?: { duel: { level: number } | null } }>('sparOpponents', { params: (() => { const d = diaDoJogador(); return { id, ...(d.zone ? { zone: d.zone } : {}), off: String(d.off) }; })() });
-export const startSpar = (id: string, opponentId: string) =>
-  call<{ seed: number; me: DuelSide; opp: DuelSide }>('sparStart', { method: 'POST', body: { id, opponentId, ...diaDoJogador() } });
+export const getSparOpponents = (id: string, tz?: SparTz) =>
+  call<{ opponents: Opponent[]; tickets?: unknown; me?: { duel: { level: number } | null } }>('sparOpponents', { params: (() => { const d = diaDoJogador(tz); return { id, ...(d.zone ? { zone: d.zone } : {}), off: String(d.off) }; })() });
+export const startSpar = (id: string, opponentId: string, tz?: SparTz) =>
+  call<{ seed: number; me: DuelSide; opp: DuelSide; tickets?: unknown }>('sparStart', { method: 'POST', body: { id, opponentId, ...diaDoJogador(tz) } });
 /** Ticket EXTRA do Treino (+20 partidas sem Honra). O servidor conta e limita (3/dia); quem chama cobra os Bits ganhos só se vier `ok`. */
-export const buySparTicket = (id: string) =>
-  call<{ tickets: unknown }>('sparBuyTicket', { method: 'POST', body: { id, ...diaDoJogador() } });
+export const buySparTicket = (id: string, tz?: SparTz, phase?: 'reserve' | 'confirm') =>
+  call<{ tickets: unknown; reserved?: boolean }>('sparBuyTicket', { method: 'POST', body: { id, ...(phase ? { phase } : {}), ...diaDoJogador(tz) } });
 export interface SparResult {
   won: boolean; draw?: boolean; outcome?: 'win' | 'loss' | 'draw';
   myScore: number; oppScore: number;
@@ -267,12 +276,12 @@ export interface SparResult {
   duel?: { events: FightEvent[]; me: DuelSide; opp: DuelSide };
   replayed?: boolean;
 }
-export const playSpar = (id: string, opponentId: string, taps: number[] = [], forfeit = false, seed?: number) =>
-  call<SparResult>('sparMatch', { method: 'POST', body: { id, opponentId, taps, ...(forfeit ? { forfeit: true } : {}), ...(typeof seed === 'number' ? { seed } : {}), ...diaDoJogador() } });
-export async function playSparComRetry(id: string, opponentId: string, taps: number[], seed: number, delays: number[] = MATCH_RETRY_DELAYS_MS): Promise<SparResult> {
+export const playSpar = (id: string, opponentId: string, taps: number[] = [], forfeit = false, seed?: number, tz?: SparTz) =>
+  call<SparResult>('sparMatch', { method: 'POST', body: { id, opponentId, taps, ...(forfeit ? { forfeit: true } : {}), ...(typeof seed === 'number' ? { seed } : {}), ...diaDoJogador(tz) } });
+export async function playSparComRetry(id: string, opponentId: string, taps: number[], seed: number, delays: number[] = MATCH_RETRY_DELAYS_MS, tz?: SparTz): Promise<SparResult> {
   for (let i = 0; ; i++) {
     try {
-      return await playSpar(id, opponentId, taps, false, seed);
+      return await playSpar(id, opponentId, taps, false, seed, tz);
     } catch (err) {
       if (!isFalhaDeRede(err) || i >= delays.length) throw err;
       await new Promise(r => setTimeout(r, delays[i]));
