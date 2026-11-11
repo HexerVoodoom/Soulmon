@@ -201,6 +201,10 @@ export interface MatchResult {
   gain?: number;
   /** PR13: fator (0..1) que o app aplica à Honra de VITÓRIA (1 = inteira). Derrota e empate: 1 e nada muda. Ausente (servidor antigo) = 1. */
   honorFactor?: number;
+  /** Por que a vitória rendeu menos pontos de faixa: oponente bem abaixo do seu level (`level`), mesmo oponente de novo no dia (`repeat`) ou `null` (inteira). Só leitura. */
+  gainReason?: 'level' | 'repeat' | null;
+  /** Pontos da FAIXA (contador que só soma) depois desta partida. Ausente em servidor antigo. */
+  lifetime?: number;
 }
 /** Abre o duelo: gasta a partida do dia e devolve a SEMENTE, sorteada no
  *  servidor só depois disso (o cliente nunca a vê antes de se comprometer), e a FICHA dos dois lados, derivada

@@ -70,7 +70,7 @@ import {
   presentesDeHoje, marcarPresenteDeHoje, lerNotas, anotarPresente, marcarNotasVistas, tzDe, diaDe, lembrarTz, reservarRecebimento, GIFT_DAILY_CAP,
 } from './_amigos.js';
 import { duelSide, maxLevelFor, simulateDuel, DUEL_PENDING_MS, DUEL_SAVE_MAX_CHARS } from './_duel.js';
-import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_honra.js';
+import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos, motivoDoCorte } from './_honra.js';
 import { sanitizarNomeDeGuilda } from './_coop.js';
 import { nomeEspecialValido, ESPECIAL_NOME_COOLDOWN_MS } from './_especialNomeRegra.js';
 import { pickRankedOpponents } from './_rankedPick.js';
@@ -462,7 +462,7 @@ async function handleCommunity(context) {
     const pairs = myRank.pairs && typeof myRank.pairs === 'object' ? myRank.pairs : (myRank.pairs = {});
     const par = oppSave ? (pairs[oppSave] && typeof pairs[oppSave] === 'object' ? pairs[oppSave] : (pairs[oppSave] = { w: 0, l: 0 })) : { w: 0, l: 0 };
     let mine = nada;
-    if (won) { mine = ganhoDePontos(HONRA_PONTOS_VITORIA, lvMe, lvOpp, par.w); par.w += 1; }
+    if (won) { mine = { ...ganhoDePontos(HONRA_PONTOS_VITORIA, lvMe, lvOpp, par.w), reason: motivoDoCorte(lvMe, lvOpp, par.w) }; par.w += 1; }
     // Quem defende e vence (o desafiante perdeu) tambem rende menos contra o mesmo desafiante no dia / muito abaixo.
     let theirs = nada;
     if (!won && oppSave && opp) { theirs = ganhoDePontos(HONRA_PONTOS_DEFESA, lvOpp, lvMe, par.l); par.l += 1; }
@@ -1141,6 +1141,9 @@ async function handleCommunity(context) {
       points: myRank.points,
       // PR13: o que a vitoria rendeu de fato e o fator (0..1) que o app aplica a Honra; derrota/empate = 0 e 1.
       gain: settled.gain,
+      // Só leitura para a tela: por que a vitória rendeu menos ('level' | 'repeat' | null) e os pontos da FAIXA (`lifetimePoints`, só soma).
+      gainReason: outcome === 'win' ? (settled.reason ?? null) : null,
+      lifetime: me.lifetimePoints || 0,
       honorFactor: outcome === 'win' ? settled.factor : 1,
       matchesLeft: MATCHES_PER_DAY - myRank.matchesToday,
       opponent,

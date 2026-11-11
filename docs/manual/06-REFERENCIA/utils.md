@@ -3690,6 +3690,8 @@ Dono do REGISTRO §209 (31/10/2026): `resetAlignmentPoints` (zera `powerPoints`/
 - `TierStanding` (interface) — campos: `tier`, `next`, `pointsToNext`, `progress`, `seat`, `place` (o "#N" do ícone; só com `seat`).
 - `function getTierStanding(points: number, place?: number | null): TierStanding` — Faixa a partir dos pontos lifetime e, opcionalmente, da posição na season. Nunca lança.
 - `function resolveSeasonPlace(serverPlace: unknown, rankIndex: number): number | null` — a posição do servidor (`myPlace` de `action=rank&id=`) ou, em servidor antigo, o índice na lista pública (top 50) + 1.
+- `function faixaPontosTexto(standing: TierStanding, lifetime: number, isPt: boolean): string` — "Bronze: 80/300 · faltam 220" (pontos da FAIXA, não da temporada); na última faixa só os pontos.
+- `function motivoSemPontosTexto(reason: 'level' | 'repeat' | null | undefined, gain: number, isPt: boolean): string | null` — motivo curto de uma vitória que rendeu 0 (ou menos que o cheio): oponente abaixo do nível / mesmo oponente hoje.
 **Chamado por:** `src/components/TournamentPage.tsx`
 **Régua:** `tournamentTiers.test.ts`
 **Regra de negócio:** As faixas de pontos nunca rebaixam o jogador ao acumular pontos; Mestre/Grão-Mestre são lugares da season. [02-REGRAS-DE-NEGOCIO.md](../02-REGRAS-DE-NEGOCIO.md).
