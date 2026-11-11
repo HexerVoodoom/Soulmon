@@ -4784,3 +4784,16 @@ Limite honesto: as semanais não têm espelho nem validação no servidor (o pro
 **Falsifica:** uma semana sem as duas na lista, dois toques no mesmo dia contarem 2, ou o journal voltar a aparecer como tarefa diária (`missoes.semanaisJournalFoco.test.ts`).
 
 **Rollback:** reverter o PR (o campo `last` é aditivo). **APK:** nada obrigatório.
+
+## §299 — Chave do Calabouço vale 48 h, 1 uso por dia (11/11/2026, pedido do dono)
+
+Decisão: a chave (§239) deixa de valer só o dia em que foi ganha. Agora vale o dia do jogador da conquista + o seguinte (48 h, `DUNGEON_KEY_VALID_HOURS`), com 1 uso por dia (a incursão é uma por dia do jogador, `runForDay`; virada do dia = incursão nova com a mesma chave ainda válida). Continua uma só (não acumula; a nova renova). Passou das 48 h: o portão do Bastion diz que expirou e manda concluir outra sessão. Textos: «Válida por 48 h · 1 uso por dia».
+
+Migração: nenhuma no save. `dungeonKeyDay` é o mesmo campo e a janela é calculada na leitura (`hasDungeonKey`), então a chave de ontem ainda vale hoje e a de anteontem não; dia futuro (relógio que volta) e data lixo não valem. O servidor (`save.js`, `fjd:`) segue validando só a CONQUISTA da chave (jornada concluída no razão); a expiração é por dia do jogador (âncora), sem relógio cru.
+
+Limite honesto: o 1 uso por dia é o da incursão diária já existente, não um contador novo; a leitura da validade é do cliente (a economia da masmorra é local-first).
+
+**Falsifica:** chave de ontem não abrir hoje, chave de 2 dias atrás abrir, ou duas incursões no mesmo dia (`focusKey.dungeon.test.ts`).
+
+**Rollback:** reverter o PR (o campo não mudou). **APK:** nada obrigatório.
+

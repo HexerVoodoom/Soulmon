@@ -95,7 +95,7 @@ export function FocusBoard({ language, todayKey, saveId, tasks = [], petSprite, 
         if (action === 'claim') onFocusCycle?.();
         setDoneNote(action === 'end'
           ? (isPt ? 'Jornada encerrada. O que o Soulmon achou pelo caminho já é seu.' : 'Journey ended. What your Soulmon found on the way is yours.')
-          : r.dungeonKeyDay ? (isPt ? 'Jornada concluída. A chave do Calabouço é sua hoje.' : 'Journey complete. The Dungeon key is yours today.')
+          : r.dungeonKeyDay ? (isPt ? 'Jornada concluída. A chave do Calabouço é sua. Válida por 48 h · 1 uso por dia.' : 'Journey complete. The Dungeon key is yours. Valid for 48 h · 1 use per day.')
             : (isPt ? 'Jornada concluída.' : 'Journey complete.'));
       }
     }).catch(() => setOnline(false));
