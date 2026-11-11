@@ -6,7 +6,7 @@ import { sanitizeFunSession } from '../utils/funSession';
 import { sanitizeFunTickets, type FunTickets } from '../utils/funTickets';
 import { normalizeGuildMission } from '../utils/guildMission';
 import { sanitizeCrystal } from '../utils/evolutionCrystal';
-import { sanitizeFormaSnapshots } from '../utils/formaSnapshot';
+import { sanitizeFormaSnapshots, forcarOriginal } from '../utils/formaSnapshot';
 import { sanitizeFormasAlt, sanitizeFormaAltEquipada, spriteVisorOf } from '../utils/formasAlternativas';
 import { sanitizeRogueRun, type RogueRun } from '../utils/rogueDungeonSave';
 import { sanitizeDungeonReturnSummary, type DungeonReturnSummary } from '../utils/dungeonReturnSummary';
@@ -1255,8 +1255,17 @@ function hydrateSteps(v: unknown): StepsRecord | undefined {
  * aparelho já tinha (`atual`) entra por UNIÃO em cima do que a nuvem trouxe — nunca perde um id nem uma forma (dois aparelhos).
  * Idempotente (união de união = a mesma) e sem efeito se `atual` não tem nada a somar.
  */
+/**
+ * Porta única do load (envolve `hydrateSave`). Depois de higienizar tudo, reaplica o INVARIANTE da forma equipada: a forma ORIGINAL é sempre o elemento base
+ * (e, por ele, o tipo de ataque). Antes o `potionElement` base posto ao equipar era descartado como "órfão" ao reabrir e o app caía
+ * no registro do nível — o elemento da última evolução paralela (bug do dono, 11/11/2026). Saves já afetados se curam aqui, sem apagar dado.
+ */
+function carregarSave(rawState: Partial<GameState>): GameState {
+  return forcarOriginal(hydrateSave(rawState));
+}
+
 export function hidratarNuvem(nuvem: Partial<GameState>, atual?: GameState): GameState {
-  const h = hydrateSave(nuvem);
+  const h = carregarSave(nuvem);
   if (!atual) return h;
   return { ...h, librarySeen: unionSeenIds(h.librarySeen, atual.librarySeen), libraryForms: unionFormsMaps(h.libraryForms, atual.libraryForms) };
 }
@@ -2010,7 +2019,7 @@ export function GameStateProvider({ children }: { children: ReactNode }) {
     let resultado: GameState | null = null;
     if (loadedState) {
       try {
-        resultado = hydrateSave(loadedState);
+        resultado = carregarSave(loadedState);
       } catch (err) {
         motivoQuarentena = 'hydrate-lancou';
         console.error('[GameState] falha ao migrar o save; caindo para estado novo', {
