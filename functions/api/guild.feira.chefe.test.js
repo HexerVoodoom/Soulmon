@@ -372,7 +372,7 @@ describe('F-05 `guildRaidHit.evento` (aditivo)', () => {
     expect((await chamar(e, 'guildRaidHit', { id: M[0] })).status).toBe(200);
     expect((await chamar(e, 'guildRaidHit', { id: M[0] })).status).toBe(429);
   });
-  it('erro ao calcular o evento NUNCA derruba o golpe (try/catch): o golpe é registrado e `evento` é omitido', async () => {
+  it('erro ao calcular o evento NUNCA derruba o golpe (try/catch): o golpe é registrado e a volta cai no Desafio (encontro garantido, nunca vazia)', async () => {
     const { e, kv } = await roda(4);
     const get = kv.get;
     // quebra só a leitura do estado da Feira
@@ -383,7 +383,7 @@ describe('F-05 `guildRaidHit.evento` (aditivo)', () => {
     expect(resp.status).toBe(200);
     const j = await J(resp);
     expect(j.landed).toBe(true);
-    expect('evento' in j).toBe(false);
+    expect(j.evento).toMatchObject({ kind: 'trail', trail: { pending: true } });
     expect(j.guild.raid.mine).toEqual({ hitToday: true });
   });
   it('clientes antigos: o golpe sem `dayKey` e sem nenhum campo novo continua valendo', async () => {

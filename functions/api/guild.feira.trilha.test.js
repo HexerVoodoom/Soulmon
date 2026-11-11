@@ -183,7 +183,8 @@ describe('a porta (gate) é individual', () => {
     expect(r.status).toBe(200);
     const j = await J(r);
     expect(j.landed).toBe(true);
-    expect(j.evento).toMatchObject({ kind: 'trail', gate: 'locked' });
+    // 11/11/2026: a volta sempre traz um encontro; com a Trilha do clã em curso o encontro é o Desafio do Mercador (k sintético), e a Missão segue livre.
+    expect(j.evento).toMatchObject({ kind: 'trail' });
   });
 });
 

@@ -273,18 +273,27 @@ export type FeiraSolution =
 /** Tempo mínimo (ms) entre `start` e `done` por jogo — espelha `TRAIL_MIN_MS` do servidor. O cliente ESPERA este piso antes de enviar. */
 export const FEIRA_TRAIL_MIN_MS: Readonly<Record<FeiraTrailGame, number>> = Object.freeze({ picross: 8000, zip: 4000, patches: 4000, selo: 6000, troca: 10000, eco: 6000 });
 
-export interface FeiraTrailDone { reward: { emblems: number; sap: number }; receipt: string; evento: FeiraEvento | null }
+export interface FeiraTrailDone { reward: { emblems: number; sap: number; clanBits?: number }; receipt: string; evento: FeiraEvento | null }
 
 export function sanitizeFeiraTrailDone(raw: unknown): FeiraTrailDone | null {
   const r = obj(raw);
   if (!r || r.cleared !== true) return null;
   const w = obj(r.reward) ?? {};
   return {
-    reward: { emblems: int(w.emblems, 0, 20), sap: int(w.sap, 0, 100) },
+    reward: { emblems: int(w.emblems, 0, 20), sap: int(w.sap, 0, 100), clanBits: int(w.clanBits, 0, 100) },
     receipt: typeof r.receipt === 'string' ? r.receipt.slice(0, 80) : '',
     evento: sanitizeFeiraEvento(r.evento),
   };
 }
+
+/** O achado de último recurso da volta (Bits pessoais pequenos; o recibo é o do dia, creditado UMA vez). */
+export interface Achado { bits: number }
+export function sanitizeAchado(raw: unknown): Achado | null {
+  const r = obj(raw);
+  return r ? { bits: int(r.bits, 1, 50) } : null;
+}
+/** Quanto o desafio sintético da volta começa (o servidor usa `k` ≥ isto para o Desafio do Mercador). */
+export const DESAFIO_K0 = 500000;
 
 /** Chave do "já mostrei": o mesmo mistério no mesmo dia não reabre sozinho (marcada ao MOSTRAR). */
 export const feiraShownKey = (e: FeiraEvento, dayKey: string): string => `${e.k}:${e.kind}:${dayKey}`;

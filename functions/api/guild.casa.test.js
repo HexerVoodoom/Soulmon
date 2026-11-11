@@ -115,7 +115,7 @@ describe('a casa da guilda', () => {
     for (let t = 0; t < 1200; t += 7) { const s = casaStageFor(t).stageIndex; expect(s).toBeGreaterThanOrEqual(ant); ant = s; }
     expect(casaStageFor(CASA_THRESHOLDS[5]).stageIndex).toBe(5);
     expect(casaStageFor(0).stageIndex).toBe(0);
-    expect(normalizarCasa({ pts: { doacao: -3, missao: 'x' }, slot: '!!' })).toEqual({ v: 1, day: null, bitsToday: 0, pts: { doacao: 0, missao: 0, guerra: 0 }, slot: null });
+    expect(normalizarCasa({ pts: { doacao: -3, missao: 'x' }, slot: '!!' })).toEqual({ v: 1, day: null, bitsToday: 0, pts: { doacao: 0, missao: 0, guerra: 0 }, desafioBits: 0, desafioDay: null, slot: null });
   });
 });
 

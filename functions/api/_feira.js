@@ -27,7 +27,7 @@ import {
   feiraEvtKey, feiraDoneKey, feiraDeadKey, feiraHitKey, feiraTrailKey, feiraClaimKey, feiraPartKey, feiraGateKey, feiraRightKey, feiraTrofeusKey,
   lerFeiraHit, lerConjunto, unirConjunto,
 } from './_coop.js';
-import { somarPontos, CASA_PTS_FONTE_DIA_MAX } from './_casa.js';
+import { somarPontos, somarBitsDesafio, CASA_PTS_FONTE_DIA_MAX } from './_casa.js';
 import { scoreIsPlausible } from './_rankings.js';
 import { loadDuelSide } from './_duelLoad.js';
 import { duelSide, duelCheerEvents } from './_duel.js';
@@ -821,6 +821,8 @@ export async function entregarTrilha(env, g, save, hoje, estado, corpo) {
   await kvs.put(feiraTrailKey(g.id, estado.k, save), JSON.stringify({ ...reg, attempts: tentativas, clearedDay: hoje }), { expirationTtl: FEIRA_TRILHA_TTL });
   await kvs.put(feiraGateKey(save), JSON.stringify({ k: estado.k, day: hoje, open: true }), { expirationTtl: FEIRA_TRILHA_TTL });
   await somarPontos(env, g.id, save, 'missao', TRILHA_SEIVA);
-  return { ok: true, receipt, reward: { emblems: TRILHA_EMBLEMAS, sap: TRILHA_SEIVA } };
+  // O DESAFIO DO MERCADOR (estado sintético da volta, `_encontro.js`) também enche o tesouro do clã; a Trilha do mistério não muda.
+  const clanBits = estado.desafio === true ? await somarBitsDesafio(env, g.id, save, hoje) : 0;
+  return { ok: true, receipt, reward: { emblems: TRILHA_EMBLEMAS, sap: TRILHA_SEIVA, ...(estado.desafio === true ? { clanBits } : {}) } };
 }
 

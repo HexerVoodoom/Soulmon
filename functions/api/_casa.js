@@ -66,6 +66,9 @@ export function normalizarCasa(r) {
     day: typeof r?.day === 'string' ? r.day : null,
     bitsToday: int0(r?.bitsToday),
     pts: { doacao: int0(p.doacao), missao: int0(p.missao), guerra: int0(p.guerra) },
+    // Bits que o DESAFIO DO MERCADOR deu ao tesouro do clã (11/11/2026): `DESAFIO_BITS_CLA` por dia no máximo, 1× por dia (`desafioDay`).
+    desafioBits: int0(r?.desafioBits),
+    desafioDay: typeof r?.desafioDay === 'string' ? r.desafioDay : null,
     slot: typeof r?.slot === 'string' && CASA_ITEM_RE.test(r.slot) ? r.slot : null,
   };
 }
@@ -113,6 +116,22 @@ export async function doarBits(env, gid, save, day, bits) {
   return { accepted: bits, capped: false };
 }
 
+/** Bits do clã por Desafio cumprido (pequeno; o teto de economia é 1× por dia por pessoa). */
+export const DESAFIO_BITS_CLA = 10;
+
+/**
+ * O Desafio do Mercador enche o TESOURO do clã (não a seiva, não o bolso de ninguém). Idempotente por dia do jogador.
+ * @returns {Promise<number>} os Bits que entraram agora (0 = já entraram hoje).
+ */
+export async function somarBitsDesafio(env, gid, save, hoje) {
+  const c = await lerCasa(env, gid, save);
+  if (c.desafioDay && c.desafioDay >= hoje) return 0;
+  c.desafioDay = hoje;
+  c.desafioBits += DESAFIO_BITS_CLA;
+  await gravarCasa(env, gid, save, c);
+  return DESAFIO_BITS_CLA;
+}
+
 /** Seiva de outra fonte (missão, guerra). `pts` é clampado; devolve o que entrou. */
 export async function somarPontos(env, gid, save, fonte, pts) {
   if (!CASA_FONTES.includes(fonte) || fonte === 'doacao') return 0;
@@ -145,7 +164,7 @@ export async function recolherCasaDeQuemSai(env, gid, save) {
 export async function recolherCasaDetalhe(env, gid, save) {
   const c = await lerCasa(env, gid, save);
   await kvOrThrow(env).delete(coopCasaKey(gid, save));
-  return { pts: pontosDaCasa(c), bits: c.pts.doacao * CASA_BITS_POR_PONTO };
+  return { pts: pontosDaCasa(c), bits: c.pts.doacao * CASA_BITS_POR_PONTO + c.desafioBits };
 }
 
 /**
@@ -166,6 +185,9 @@ export function totalDaCasa(g, cartoes) {
  */
 export function bitsDaCasa(g, cartoes) {
   let t = int0(g.bitsLegado);
-  for (const m of g.members) t += (cartoes[m]?.casa ? normalizarCasa(cartoes[m].casa) : normalizarCasa(null)).pts.doacao * CASA_BITS_POR_PONTO;
+  for (const m of g.members) {
+    const x = cartoes[m]?.casa ? normalizarCasa(cartoes[m].casa) : normalizarCasa(null);
+    t += x.pts.doacao * CASA_BITS_POR_PONTO + x.desafioBits;
+  }
   return t;
 }

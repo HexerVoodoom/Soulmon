@@ -5194,7 +5194,14 @@ export default function App() {
         // FEIRA DE VERDADE (rara, ~8% das voltas): quando existe, ELA é o que a volta mostra; o mistério segue na sala da Feira. Servidor/cliente antigo: sem `feiraLoja`, tudo como antes.
         if (volta.feiraLoja && feiraLojaAbre(volta.feiraLoja) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraLojaShownKey(volta.feiraLoja)) setFeiraLoja(volta.feiraLoja);
         else if (volta.evento && feiraEventoAbre(volta.evento) && readLocal(STORAGE_KEYS.FEIRA_EVENTO_VISTO) !== feiraShownKey(volta.evento, playerDayKey(new Date(), gameState.playerDayTz))) setFeiraEvento(volta.evento);
-        // NUNCA VOLTA SEM DIZER NADA (Feira, 11/11/2026): sem loja, chefe nem desafio (descanso entre mistérios, trilha já cumprida), a volta ainda aparece.
+        // ACHADO (último recurso do encontro da volta, `_encontro.js`): Bits pessoais pequenos, creditados UMA vez por recibo do dia.
+        else if (volta.achado) {
+          const rec = `achado:${saveId}:${playerDayKey(new Date(), gameState.playerDayTz)}`;
+          const [{ creditFeiraOnce }, { feiraText }] = await Promise.all([import('./utils/feiraCredit'), import('./utils/feiraCopy')]);
+          creditFeiraOnce({ receipt: rec, emblems: 0, bits: volta.achado.bits, trophyId: null }, handleFeiraCredit);
+          toast(feiraText(language, 'achado.toast', { n: volta.achado.bits }));
+        }
+        // Servidor antigo (sem encontro): nunca volta sem dizer nada.
         else toast(language === 'pt-BR' ? 'Seu Soulmon voltou da investigação. Nada novo hoje; amanhã a roda tem mais.' : 'Your Soulmon is back from investigating. Nothing new today; the circle has more tomorrow.');
         if (alive) encerrar();
       } catch (e) {
@@ -5203,7 +5210,7 @@ export default function App() {
         if (kind === 'unavailable' || kind === 'server' || kind === 'rateLimit') timer = setTimeout(() => { busy = false; void tentar(); }, 60_000);
         else {
           // Encerrou sem registrar (limite do dia em outro aparelho, roda desfeita...): avisa em vez de só devolver o botão "Mandar investigar".
-          toast(language === 'pt-BR' ? 'Seu Soulmon voltou. Hoje a roda já tinha recebido a volta (ou mudou); veja a sala da Feira.' : 'Your Soulmon is back. The circle had already received today’s return (or changed); check the Fair room.');
+          toast(language === 'pt-BR' ? 'Seu Soulmon voltou. Hoje a roda já tinha recebido a volta (ou mudou); veja a sala do Mercador.' : 'Your Soulmon is back. The circle had already received today’s return (or changed); check the Merchant room.');
           encerrar();
         }
       } finally { busy = false; }
@@ -5212,7 +5219,7 @@ export default function App() {
     const aoVoltar = () => { if (!document.hidden) void tentar(); };
     document.addEventListener('visibilitychange', aoVoltar);
     return () => { alive = false; if (timer) clearTimeout(timer); document.removeEventListener('visibilitychange', aoVoltar); };
-  }, [guildMission, saveId, gameState.playerDayTz, setGameState, language, notificationsEnabled]);
+  }, [guildMission, saveId, gameState.playerDayTz, setGameState, language, notificationsEnabled, handleFeiraCredit]);
 
   const handleEquipBackground = useCallback((id: string | null) => {
     setGameState(prev => ({ ...prev, equippedBackground: id }));

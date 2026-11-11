@@ -94,6 +94,7 @@ import { buscarGuerra, estadoDaGuerra } from './_guerra.js';
 import { vistaDaPraca, definirSlotPraca, enviarPresente, resgatarPresente } from './_claPraca.js';
 import { vistaDoPlantio, plantar, regar, proteger, colher, sortear } from './_claPlantio.js';
 import { vistaDoMisterio, enviarMisterio, somarTarefa, resgatarMisterio, converterMisterio } from './_claMisterio.js';
+import { lerEncontro, gravarEncontro, sortearEncontro, resolverEncontro, achadoDoDia, eventoDoDesafio, estadoDoDesafio, ehDesafioK, desafioK } from './_encontro.js';
 import { comprarBuff, vistaDosBuffs, clanTemBuff } from './_buffsCla.js';
 import {
   feiraLigada, lerEstadoFeira, eventoDaFeira, resumoDaFeira, simularAtaque, fichaDoAtacante, sementeDoServidor,
@@ -769,7 +770,13 @@ export async function handleGuild({ request, env }) {
     }
     if (!g) return erro('no {g}', 404);
     const cartoes = await lerCartoes(env, g);
-    const estado = await lerEstadoFeira(env, g, hoje, { cartoes });
+    /** @type {any} */
+    let estado = await lerEstadoFeira(env, g, hoje, { cartoes });
+    // O DESAFIO DO MERCADOR da volta (`k` sintético): só vale se a volta de HOJE sorteou desafio e ele ainda não foi cumprido.
+    if ((action === 'guildFeiraTrailStart' || action === 'guildFeiraTrailDone') && ehDesafioK(body?.k)) {
+      if (body.k !== desafioK(hoje) || (await lerEncontro(env, id, hoje))?.tipo !== 'desafio') return erro('no trail', 409);
+      estado = estadoDoDesafio(hoje, estado.level);
+    }
     if (action === 'guildFeira') return json({ evento: await eventoDaFeira(env, g, id, hoje, estado) });
     if (action === 'guildFeiraAttack') {
       if (estado.phase !== 'boss') return erro(estado.phase === 'rest' && estado.done.lastKind === 'boss' ? 'boss dead' : 'no boss', 409);
@@ -792,7 +799,7 @@ export async function handleGuild({ request, env }) {
     if (action === 'guildFeiraTrailStart') {
       const r = await iniciarTrilha(env, g, id, hoje, estado);
       if (!r.ok) return erro(r.reason === 'already-cleared' ? 'already cleared' : 'no trail', 409);
-      return json({ trail: r.trail, evento: await eventoDaFeira(env, g, id, hoje, estado) });
+      return json({ trail: r.trail, evento: estado.desafio ? eventoDoDesafio(hoje, estado.level) : await eventoDaFeira(env, g, id, hoje, estado) });
     }
     if (action === 'guildFeiraTrailDone') {
       const r = await entregarTrilha(env, g, id, hoje, estado, body);
@@ -804,7 +811,7 @@ export async function handleGuild({ request, env }) {
         return erro(r.reason === 'no-start' ? 'not started' : 'no trail', 409);
       }
       await cartao(g);
-      return json({ cleared: true, reward: r.reward, receipt: r.receipt, evento: await eventoDaFeira(env, g, id, hoje, await lerEstadoFeira(env, g, hoje, { cartoes })) });
+      return json({ cleared: true, reward: r.reward, receipt: r.receipt, evento: estado.desafio ? eventoDoDesafio(hoje, estado.level, true) : await eventoDaFeira(env, g, id, hoje, await lerEstadoFeira(env, g, hoje, { cartoes })) });
     }
   }
 
@@ -851,16 +858,35 @@ export async function handleGuild({ request, env }) {
     await cartao(g);
     // O EVENTO DA VOLTA (Feira: Chefe ou Desafio): calculado DEPOIS de tudo acima, para que a Missão, o fenômeno e a seiva
     // fiquem idênticos; campo ADITIVO (cliente antigo ignora), ausente com a Feira desligada, e falha aqui nunca derruba o golpe.
+    /** @type {any} */
     let evento;
     if (feiraLigada(env)) {
       try { evento = await eventoDaFeira(env, g, id, hoje, await lerEstadoFeira(env, g, hoje, { cartoes: cartoesDaRoda })); } catch (err) { console.warn('feira: evento indisponível', String(err)); evento = undefined; }
     }
-    // A FEIRA DE VERDADE (rara, ~8% das voltas): campo ADITIVO, independente do Chefe/Desafio. Falha aqui nunca derruba o golpe.
+    // A FEIRA DE VERDADE vira o MERCADOR (rara, ~8% das voltas; 12% com o buff): campo ADITIVO. Falha aqui nunca derruba o golpe.
+    const bonusLoja = (await clanTemBuff(env, g.id, 'feira').catch(() => false)) ? FEIRA_LOJA_PCT_BUFF : 0;
     let feiraLoja;
     if (feiraLigada(env)) {
-      try { await abrirFeiraLoja(env, id, hoje, (await clanTemBuff(env, g.id, 'feira')) ? FEIRA_LOJA_PCT_BUFF : 0); feiraLoja = (await feiraLojaDoDia(env, id, hoje)) ?? undefined; } catch (err) { console.warn('feira: loja indisponível', String(err)); feiraLoja = undefined; }
+      try { await abrirFeiraLoja(env, id, hoje, bonusLoja); feiraLoja = (await feiraLojaDoDia(env, id, hoje)) ?? undefined; } catch (err) { console.warn('feira: loja indisponível', String(err)); feiraLoja = undefined; }
     }
-    return json({ landed: true, [chave]: await montar(g, id, hoje), ...(evento ? { evento } : {}), ...(feiraLoja ? { feiraLoja } : {}) });
+    // O ENCONTRO DA VOLTA (`_encontro.js`): SEMPRE um. Sorteio por (conta, dia); o que não abre cai para o próximo; o achado só se nada mais abrir.
+    let achado;
+    if (feiraLigada(env)) {
+      try {
+        const sorteado = sortearEncontro(id, hoje, bonusLoja);
+        const ja = await lerEncontro(env, id, hoje);
+        const evChefe = evento && ((evento.kind === 'boss' && evento.canAttack) || (evento.kind === 'rest' && evento.claimable)) ? evento : null;
+        const desafioFeito = ja?.tipo === 'desafio' && ja.cumprido === true;
+        const tipo = ja ? ja.tipo : resolverEncontro(sorteado, { mercador: !!feiraLoja, desafio: true, chefe: !!evChefe });
+        if (!ja) await gravarEncontro(env, id, hoje, { tipo });
+        if (tipo === 'desafio' && !desafioFeito) evento = eventoDoDesafio(hoje, evento?.level ?? 1);
+        else if (tipo === 'chefe') evento = evChefe ?? evento;
+        else if (tipo === 'mercador') evento = undefined;
+        else if (tipo === 'achado') { evento = undefined; achado = achadoDoDia(id, hoje); }
+        if (tipo !== 'mercador') feiraLoja = undefined;
+      } catch (err) { console.warn('feira: encontro indisponível', String(err)); }
+    }
+    return json({ landed: true, [chave]: await montar(g, id, hoje), ...(evento ? { evento } : {}), ...(feiraLoja ? { feiraLoja } : {}), ...(achado ? { achado } : {}) });
   }
 
   if (action === 'guildRewards' || action === 'guildClaim') {

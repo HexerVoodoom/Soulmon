@@ -11,7 +11,7 @@ const COPY = {
   'sheet.close': ['Close', 'Fechar'],
   'sheet.later': ['Later', 'Depois'],
   'sheet.retry': ['Try again', 'Tentar de novo'],
-  'sheet.room': ['Fair path', 'Caminho da Feira'],
+  'sheet.room': ['Merchant path', 'Caminho do Mercador'],
 
   'boss.title': ['A mystery on the path', 'Um mistério no caminho'],
   'boss.line': ['{name} showed up while your Soulmon was out.', '{name} apareceu enquanto o seu Soulmon estava fora.'],
@@ -50,7 +50,9 @@ const COPY = {
   'trail.already': ['Already done today. Nice work.', 'Já feito hoje. Bom trabalho.'],
   'trail.done': ['Challenge done', 'Desafio cumprido'],
   'trail.doneLine': ['The House garden thanks you.', 'O jardim da Casa agradece.'],
-  'trail.gameName': ['Fair challenge', 'Desafio da Feira'],
+  'trail.gameName': ['Merchant challenge', 'Desafio do Mercador'],
+  'trail.clanBits': ['Bits for the clan treasury', 'Bits para o tesouro do clã'],
+  'achado.toast': ['Your Soulmon found {n} Bits on the way back.', 'Seu Soulmon achou {n} Bits no caminho de volta.'],
   'trail.keepGoing': ['Continue', 'Continuar'],
 
   'game.zip': ['Join the numbers in order, filling every square.', 'Ligue os números em ordem, preenchendo todas as casas.'],
@@ -83,8 +85,8 @@ const COPY = {
   'room.boss.go': ['Face the boss', 'Enfrentar o chefe'],
 
   // A FEIRA DE VERDADE (10/11/2026): rara, calma, sem urgência ("só hoje" é vetado); só Bits, sem ingredientes.
-  'loja.title': ['A fair on the way', 'Uma feira no caminho'],
-  'loja.line': ['Your Soulmon found a fair while it was out.', 'O seu Soulmon encontrou uma feira enquanto estava fora.'],
+  'loja.title': ['A merchant on the way', 'Um mercador no caminho'],
+  'loja.line': ['Your Soulmon met a merchant while it was out.', 'O seu Soulmon encontrou um mercador enquanto estava fora.'],
   'loja.prices': ['Everything here is a bit cheaper. Bits only.', 'Tudo aqui está um pouco mais barato. Só Bits.'],
   'loja.keep': ['The stalls pack up when the day ends.', 'As barracas se recolhem quando o dia termina.'],
   'loja.hex': ['From the Hexsmith', 'Da Hexsmith'],
