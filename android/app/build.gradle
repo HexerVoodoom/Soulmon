@@ -105,7 +105,10 @@ dependencies {
     implementation "com.android.billingclient:billing-ktx:8.3.0"
     implementation "com.google.android.play:review:2.0.2"
     // Passos pelo Health Connect (REGISTRO §283; plugins/SoulmonStepsPlugin.kt). SÓ leitura de `READ_STEPS`.
-    implementation "androidx.health.connect:connect-client:1.1.0"
+    // 1.1.0-alpha12 e NAO 1.1.0: a 1.1.0 (e a rc01) exige AGP 8.9.1 no aar-metadata e o repo usa AGP 8.2.1 (CI quebrou em 0827056a7).
+    // A 1.1.0-alpha12 pede só compileSdk 35 (temos 36) e AGP minimo 1.0.0; a API usada (getSdkStatus, aggregate,
+    // createRequestPermissionResultContract, getGrantedPermissions: Set<String>) e a mesma. Subir para a estavel junto com o AGP.
+    implementation "androidx.health.connect:connect-client:1.1.0-alpha12"
     implementation project(':capacitor-android')
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
