@@ -108,9 +108,9 @@ interface SettingsPageProps {
     saveId: string; email?: string | null; avatarId: string | null; equippedFrame: string | null; ownedFrames: string[];
     petStage: string; totalXP?: number; onChangeAvatar: (id: string) => void; onChangeFrame: (id: string | null) => void;
     userName?: string; onChangeName?: (name: string) => void;
-    petName?: string; onChangePetName?: (name: string) => void;
-    /** Nome do especial (Editar perfil). */
-    especial?: { nome: string; nomeAt?: number; onSave: (nome: string) => void };
+    petName?: string;
+    /** Nome do especial (Editar perfil, só leitura: a troca é na Hexsmith). */
+    especial?: { nome: string };
     /** Editar Home: sem isto a linha nao existe. */
     editHome?: Pick<EditHomeProps, 'ownedFurniture' | 'equippedDecor' | 'equippedBackground' | 'ownedBackgrounds' | 'onSave' | 'onOpenShop'>;
     /** Moldura do widget V-Pet (`utils/widgetFrames.ts`): sem isto a linha não existe. */
@@ -416,10 +416,7 @@ export function SettingsPage({
             userName={profile.userName}
             onChangeName={profile.onChangeName}
             petName={profile.petName}
-            onChangePetName={profile.onChangePetName}
             especialNome={profile.especial?.nome}
-            especialNomeAt={profile.especial?.nomeAt}
-            onSaveEspecialNome={profile.especial?.onSave}
             onOpenFrameShop={requestOpenFrameShop}
           />
           <BondXpBar totalXP={profile.totalXP ?? 0} language={language} />

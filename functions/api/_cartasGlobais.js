@@ -1,10 +1,10 @@
-// CARTAS GLOBAIS (§287): anúncio do app entregue pela caixa do Papus a TODA conta, sem push e sem dado pessoal.
+// CARTAS GLOBAIS (§288): anúncio do app entregue pela caixa do Papus a TODA conta, sem push e sem dado pessoal.
 // O conteúdo é versionado AQUI (código, revisado em PR). Cada carta tem `id` estável e janela `desde`/`ate`.
 // A entrega acontece na leitura da caixa (`readMail`): vira uma carta comum `global:<id>` na fila da conta, UMA vez
 // (o `mid` entra em `done` quando a carta é apagada ou expira), então "ver uma vez e marcar como lida" é o próprio fluxo da caixa.
 // Publicar nova = acrescentar um item; retirar = deixar `ate` no passado (quem já recebeu continua com a carta até expirar).
 
-// `ativa: false` = pronta, mas NÃO publicada. A carta da Hexsmith só liga DEPOIS que o PR dos botões de lápis e chama estiver na main (o dono ativa trocando para `true`).
+// `ativa: false` = pronta, mas NÃO publicada. A carta da Hexsmith foi ligada depois que o PR dos botões de lápis e chama (#808) entrou na main.
 export const CARTAS_GLOBAIS = [
   {
     id: 'widget-area-de-trabalho-2026-11',
@@ -22,7 +22,7 @@ export const CARTAS_GLOBAIS = [
   },
   {
     id: 'hexsmith-nomes-2026-11',
-    ativa: false,
+    ativa: true,
     desde: Date.UTC(2026, 10, 11),
     ate: Date.UTC(2027, 0, 11),
     carta: {

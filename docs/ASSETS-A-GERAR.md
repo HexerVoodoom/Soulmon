@@ -1,5 +1,18 @@
 ﻿# Assets a gerar — lista completa, por família, com uso, formato e prompt
 
+## PRIORIDADE MÁXIMA — botões de renomear da Hexsmith (pedido do dono, 11/11/2026)
+
+Hoje a tela usa hexágonos GENERATIVOS em código (`src/components/hex/HexRenameButton.tsx`). A arte final entra por **slots com troca automática**: basta cair `btn-lapis.(webp|png)` e `btn-chama.(webp|png)` em `src/assets/soulmon/hexsmith/` (resolvido por `import.meta.glob` em `index.ts`; sem arquivo, vale o hexágono generativo). Gerar no ChatGPT (cota volta às 18h) e instalar por PR. Categoria UI: pode levar a identidade Soulmon; sem engrenagem.
+
+| id | arquivo | uso | formato | prompt (EN) |
+|---|---|---|---|---|
+| `hexsmith-btn-lapis` | `src/assets/soulmon/hexsmith/btn-lapis.webp` | botão da Hexsmith: trocar o NOME do Soulmon (à direita da Coroa) | 256×256, alfa real, fundo transparente, mesmo tamanho dos 5 hexágonos | `A single hexagonal game-UI button, same style, colors, frame thickness and glow as the five port hexagons of the Hexsmith screen (dark teal inner hex, thick colored metallic rim in magenta-pink, small cyan diamond studs at the top and bottom vertices), a clean pencil icon inside (diagonal pencil with eraser, slightly worn silver and cream), pixel-crisp, transparent background, centered, no text, no gear, square 1:1` |
+| `hexsmith-btn-chama` | `src/assets/soulmon/hexsmith/btn-chama.webp` | botão da Hexsmith: trocar o NOME do ESPECIAL | 256×256, alfa real, fundo transparente, mesmo tamanho dos 5 hexágonos | `A single hexagonal game-UI button, same style, colors, frame thickness and glow as the five port hexagons of the Hexsmith screen (dark teal inner hex, thick colored metallic rim in warm orange, small cyan diamond studs at the top and bottom vertices), a small flame icon inside (orange-yellow fire with a bright core), pixel-crisp, transparent background, centered, no text, no gear, square 1:1` |
+
+Anexar como referência de estilo o print da tela da Hexsmith (os 5 hexágonos). Transparência real: `gpt_image_2 --background transparent`, nunca chroma.
+
+---
+
 > **REGRA DE IDENTIDADE (dono, revista em 09/11/2026):** os motivos Soulmon (turquesa ESCURO, cristais da alma com chama, canos de cobre, circuitos, folhinhas, tudo por cabo; nunca engrenagem) valem SÓ para UI (molduras, botões, HUD, painéis), prédios/NPCs/mapas/hub e site/marketing; em cenário de combate, só como acento sutil (1–2 cristais discretos); em itens, poções, chips e ícones de atributo, no máximo UM motivo discreto. NUNCA em criaturas/sprites, FX de ataque e status e ícones de elemento, nem em asset cujo tema não comporte — ali o elemento e a espécie mandam e o prompt traz "no copper pipes, no circuit lines, no leaves, no turquoise crystals unless the element itself calls for it". Texto canônico: `docs/REGRA-IDENTIDADE-SOULMON.md`.
 > **Checklist de revisão de arte:** conferir pela CATEGORIA do asset, conforme `docs/REGRA-IDENTIDADE-SOULMON.md` (versão de 09/11/2026). Criatura/sprite, FX e ícone de elemento NÃO são reprovados por faltar turquesa, cristal, cobre ou circuito: ali o elemento e a espécie mandam.
 

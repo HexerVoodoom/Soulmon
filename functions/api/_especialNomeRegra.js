@@ -10,8 +10,8 @@
  */
 
 export const ESPECIAL_NOME_MAX = 20;
-/** Trocar o nome: uma vez por semana (decidido NO SERVIDOR; a tela só explica). */
-export const ESPECIAL_NOME_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1000;
+/** Sem espera entre trocas (11/11/2026): o limite agora é o PREÇO da troca na Hexsmith (`_hexRename.js`, Bits ganhos). 0 = sem cooldown. */
+export const ESPECIAL_NOME_COOLDOWN_MS = 0;
 
 /** "Leet" e símbolos que fingem letra. Só entram na dobra de palavrão: o telefone conta os dígitos no texto original. */
 const LEET = { 0: 'o', 1: 'i', 3: 'e', 4: 'a', 5: 's', 7: 't', 8: 'b', '@': 'a', $: 's', '!': 'i', '|': 'i', '€': 'e', '£': 'l' };

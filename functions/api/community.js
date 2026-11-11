@@ -1575,7 +1575,7 @@ async function handleCommunity(context) {
     const novo = !dele.in.some(r => r.from === id) && dele.in.length < MAX_IN;
     if (novo) dele.in.push({ from: id, at: Date.now() });
     await gravarConvites(env, friendSave, dele);
-    // O convite também chega por CARTA do Papus (§287). Quem se escondeu não aparece nos convites, então não manda carta. Melhor esforço: o convite já está gravado.
+    // O convite também chega por CARTA do Papus (§288). Quem se escondeu não aparece nos convites, então não manda carta. Melhor esforço: o convite já está gravado.
     if (novo && !isHidden(me)) {
       try {
         const pid = await ensurePid(env, me);
@@ -1713,7 +1713,7 @@ async function handleCommunity(context) {
       return await withDuelLock(`gcap:${friendSave}`, async () => {
         const credited = await reservarRecebimento(env, friendSave, GIFT_BITS);
         const quem = isHidden(me) ? '' : me.name;
-        // O presente chega por CARTA do Papus, com "Resgatar" (§287). Caixa sem espaço (30 cartas, todas com prêmio): cai na fila antiga `gifts:`,
+        // O presente chega por CARTA do Papus, com "Resgatar" (§288). Caixa sem espaço (30 cartas, todas com prêmio): cai na fila antiga `gifts:`,
         // que o cliente ainda resgata, então nenhum presente se perde. Presentes já pendentes na fila antiga continuam sendo entregues por ela.
         const gid = crypto.randomUUID();
         let viaCarta = false;

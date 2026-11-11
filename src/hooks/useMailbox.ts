@@ -82,7 +82,7 @@ export function useMailbox<S extends MailState & { friends?: string[] }>({ saveI
   }, [saveId, mail, credit]);
 
   /**
-   * Convite de amizade por carta (§287): Aceitar ou Recusar pelo MESMO fluxo da lista de Amigos (`friendAccept`). O servidor apaga a carta ao responder.
+   * Convite de amizade por carta (§288): Aceitar ou Recusar pelo MESMO fluxo da lista de Amigos (`friendAccept`). O servidor apaga a carta ao responder.
    * `gone` = o convite não existe mais (quem convidou cancelou): a carta sai da caixa. Lança sem rede (a carta fica).
    */
   const answerInvite = useCallback(async (m: MailItem, decline: boolean): Promise<'accepted' | 'declined' | 'gone'> => {

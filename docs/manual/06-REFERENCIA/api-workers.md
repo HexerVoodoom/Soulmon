@@ -785,9 +785,9 @@ Espelho de forma da memória da Biblioteca no save (10/11/2026): `sanitizeLibrar
 - **Workers.** `workers/fcm.js`: a troca OAuth em voo é dividida (uma promessa compartilhada — antes até 100 trocas por lote na passada `lazyFcm`) e o corpo da resposta é liberado; `workers/webpush.js`: corpo nunca lido é descartado (evita "stalled response" nos lotes de 100 envios); `workers/push-scheduler.js`: idade da criatura em dias (`bornAt`, `null` = copy de sempre) e `drainPrefix` documentado.
 
 ### `functions/api/_especialNomeRegra.js`
-**Dono de:** a regra do nome PÚBLICO do especial (REGISTRO §222), pura e sem KV, usada pelo servidor (`community.js`, perfil) e pela tela (`components/perfil/EspecialNomeEditor.tsx`): até 20 caracteres, letras/números/espaço, filtro de palavrão PT+EN (palavra inteira; raízes longas também no texto colado; normaliza acento, leet e repetição).
+**Dono de:** a regra do nome PÚBLICO do especial (REGISTRO §222), pura e sem KV, usada pelo servidor (`community.js`, perfil) e pela Hexsmith (`utils/hexsmithRename.ts`): até 20 caracteres, letras/números/espaço, filtro de palavrão PT+EN (palavra inteira; raízes longas também no texto colado; normaliza acento, leet e repetição).
 **Exports:** `ESPECIAL_NOME_MAX` · `ESPECIAL_NOME_COOLDOWN_MS` (7 dias) · `temPalavrao(texto)` · `nomeEspecialValido(raw)` (nome limpo ou `null`). O `community.js` ainda passa o nome pela régua de contato do apelido (`sanitizarNomeDeGuilda`) e decide a troca semanal.
-**Chamado por:** `functions/api/community.js` (`profile` POST e `publicProfile`), `src/components/perfil/EspecialNomeEditor.tsx`.
+**Chamado por:** `functions/api/community.js` (`profile` POST e `publicProfile`), `src/components/perfil/EspecialNomeLeitura.tsx` (só leitura).
 
 ### `functions/api/_elementoJornada.js`
 
@@ -795,7 +795,7 @@ Espelho de `src/utils/elementoJornada.ts` (§232): forma do registro no save e i
 
 ### `functions/api/_mensageiro.js`
 
-Fila `mail:<saveId>`, carta e prêmio da temporada na 1ª leitura do mês; simulado nunca recebe. Caixa de cartas: leitura com varredura de expiração (3 dias, menos carta com item pendente), `markRead`, `claimMail` (resgate uma vez só, prêmio do registro do servidor), `deleteMail` (item pendente só com `force`). Ações `mail`, `mailRead`, `mailClaim`, `mailDelete`, `mailAck` (app antigo), `mailSend` em `community.js`. Decisão: REGISTRO §241 e §246. **Régua:** `functions/api/mensageiro.test.js`. Cartas especiais (§287): `kind` `gift` (presente), `friend-invite` (`fromPid`; `removerConvitesDe` ao responder/cancelar) e `global` (`tutorial`); `enqueueMail(..., { recusarSeCheia })`; `readMail` injeta as cartas de `functions/api/_cartasGlobais.js` uma vez por conta (`cartasGlobaisAtivas`). **Régua:** `functions/api/cartas.test.js`.
+Fila `mail:<saveId>`, carta e prêmio da temporada na 1ª leitura do mês; simulado nunca recebe. Caixa de cartas: leitura com varredura de expiração (3 dias, menos carta com item pendente), `markRead`, `claimMail` (resgate uma vez só, prêmio do registro do servidor), `deleteMail` (item pendente só com `force`). Ações `mail`, `mailRead`, `mailClaim`, `mailDelete`, `mailAck` (app antigo), `mailSend` em `community.js`. Decisão: REGISTRO §241 e §246. **Régua:** `functions/api/mensageiro.test.js`. Cartas especiais (§288): `kind` `gift` (presente), `friend-invite` (`fromPid`; `removerConvitesDe` ao responder/cancelar) e `global` (`tutorial`); `enqueueMail(..., { recusarSeCheia })`; `readMail` injeta as cartas de `functions/api/_cartasGlobais.js` uma vez por conta (`cartasGlobaisAtivas`). **Régua:** `functions/api/cartas.test.js`.
 
 ### `functions/api/_amigos.js`
 
@@ -856,3 +856,7 @@ Registros de nomes (telas, features, minigames) e faixas de tempo usados por `ap
 **Dono de:** a FEIRA DE VERDADE (`PLANO-FEIRA-CHEFE.md` §12, REGISTRO §279): oferta rara na volta da Missão, sorteada e GRAVADA pelo servidor por (conta, dia); vendedores em `FEIRA_LOJA_VENDEDORES`.
 **Exports:** `FEIRA_LOJA_PCT` (8), `FEIRA_LOJA_CATALOGO`, `FEIRA_LOJA_VENDEDORES`, `haFeiraDeVerdade`, `sortearFeiraLoja`, `abrirFeiraLoja`, `feiraLojaDoDia`, `validarCompraFeiraLoja`, `marcarCompraFeiraLoja`, `feiraHexOnServer`, `diaDoJogadorValido`, `precoComDesconto`, `descontoDoItem`, `possuidosDoSave`.
 **Chamado por:** `guild.js` (`guildFeiraLoja*`, `guildRaidHit.feiraLoja`), `save.js` (`action=hexFair`).
+
+### `functions/api/_hexRename.js` (11/11/2026, §287)
+
+**Dono de:** `renameOnServer` e `HEX_RENAME_COST` (200). Ação `POST /api/save?id=&action=hexRename { kind: 'pet'|'especial', nome, baseRevision? }` (`save.js`): valida o nome (`nomeEspecialValido` + `sanitizarNomeDeGuilda`), debita Bits ganhos e grava `soulmonMeta.petName` ou `especialNome`/`especialNomeAt` numa escrita (revisão +1); 400 nome recusado, 402 saldo, 409 revisão. Régua: `save.hexRename.test.js`, `hexsmithRename.parity.test.js`. `ESPECIAL_NOME_COOLDOWN_MS` = 0 (o limite é o preço).

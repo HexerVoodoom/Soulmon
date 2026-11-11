@@ -72,12 +72,15 @@ describe('Editar perfil', () => {
     fireEvent.click(document.querySelector('[data-save-user-name]')!);
     await waitFor(() => expect(onChangeName).toHaveBeenCalledWith('Ana Maria'));
   });
-  it('nome do especial aparece e salva', () => {
-    const onSave = vi.fn();
-    renderWithCss(<ProfileEditor open onClose={() => {}} language="pt-BR" {...base} especialNome="" onSaveEspecialNome={onSave} />);
+  it('nome do especial e do Soulmon: só leitura, sem campo; a troca é na Hexsmith', () => {
+    renderWithCss(<ProfileEditor open onClose={() => {}} language="pt-BR" {...base} petName="Brasa" especialNome="Raio Solar" />);
     expect(screen.getByText('Nome do seu especial')).toBeTruthy();
-    fireEvent.change(document.getElementById('especial-nome')!, { target: { value: 'Raio Solar' } });
-    fireEvent.click(document.querySelector('[data-especial-nome-salvar]')!);
-    expect(onSave).toHaveBeenCalledWith('Raio Solar');
+    expect(screen.getByText('Raio Solar')).toBeTruthy();
+    expect(document.querySelector('[data-profile-pet-name-valor]')!.textContent).toBe('Brasa');
+    expect(document.getElementById('especial-nome')).toBeNull();
+    expect(document.getElementById('sm-profile-pet-name')).toBeNull();
+    expect(document.querySelector('[data-save-pet-name]')).toBeNull();
+    expect(document.querySelector('[data-especial-nome-salvar]')).toBeNull();
+    expect(screen.getAllByText(/Troque na Hexsmith/i).length).toBeGreaterThanOrEqual(2);
   });
 });

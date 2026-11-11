@@ -5229,23 +5229,7 @@ export default function App() {
     toast.success(language === 'pt-BR' ? 'Apelido salvo!' : 'Nickname saved!');
   }, [setGameState, language]);
 
-  /** Nome do Soulmon (`soulmonMeta.petName`): atualiza no save e preserva `baseName` intacto. */
-  const handleChangePetName = useCallback((nome: string) => {
-    const limpo = nome.trim().slice(0, 24);
-    if (!limpo) return;
-    setGameState(prev => {
-      const baseName = prev.soulmonMeta?.baseName || '';
-      return {
-        ...prev,
-        soulmonMeta: {
-          ...prev.soulmonMeta,
-          baseName,
-          petName: limpo,
-        },
-      };
-    });
-    toast.success(language === 'pt-BR' ? 'Nome do Soulmon salvo!' : 'Soulmon name saved!');
-  }, [setGameState, language]);
+  // 11/11/2026: o nome do Soulmon e o do especial só se trocam na Hexsmith (`HexRenameModal`, servidor debita Bits).
 
   /**
    * Equipa/desequipa decoração. `id` null limpa o espaço; caso contrário o item
@@ -8033,8 +8017,6 @@ export default function App() {
                   forge: gameState.forge,
                 }}
                 especialNome={gameState.especialNome ?? ''}
-                especialNomeAt={gameState.especialNomeAt}
-                onSaveEspecialNome={nome => setGameState(prev => (prev.especialNome === nome ? prev : { ...prev, especialNome: nome }))}
               />
             </Suspense>
           )}
@@ -9320,8 +9302,7 @@ export default function App() {
                 userName,
                 onChangeName: handleChangeUserName,
                 petName: soulmonDisplayName(gameState.soulmonMeta),
-                onChangePetName: handleChangePetName,
-                especial: { nome: gameState.especialNome ?? '', nomeAt: gameState.especialNomeAt, onSave: nome => setGameState(prev => (prev.especialNome === nome ? prev : { ...prev, especialNome: nome })) },
+                especial: { nome: gameState.especialNome ?? '' },
                 editHome: {
                   ownedFurniture: gameState.ownedFurniture ?? [],
                   equippedDecor: gameState.equippedDecor ?? EMPTY_DECOR,

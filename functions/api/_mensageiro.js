@@ -37,7 +37,7 @@ export function sanitizeMail(m) {
     at: inteiro(m.at, Number.MAX_SAFE_INTEGER),
     read: m.read === true || inteiro(m.claimedAt, Number.MAX_SAFE_INTEGER) > 0,
     claimedAt: inteiro(m.claimedAt, Number.MAX_SAFE_INTEGER),
-    // Cartas especiais (§287): o tipo decide os botões e o corpo na caixa. Só valores conhecidos; o resto é carta comum.
+    // Cartas especiais (§288): o tipo decide os botões e o corpo na caixa. Só valores conhecidos; o resto é carta comum.
     ...(KINDS.has(m.kind) ? { kind: m.kind } : {}),
     ...(m.kind === 'friend-invite' && PID_RE.test(m.fromPid || '') ? { fromPid: m.fromPid } : {}),
     ...(m.kind === 'global' && TUTORIAIS.has(m.tutorial) ? { tutorial: m.tutorial } : {}),

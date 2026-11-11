@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { TUTORIAL_WIDGET_ART } from '../assets/soulmon/cartas';
 
-/** A imagem da carta global do widget (§287): o casco do widget com cenário no LCD, sem Soulmon. Sem o arquivo (ou se falhar) não mostra nada: o texto da carta basta. */
+/** A imagem da carta global do widget (§288): o casco do widget com cenário no LCD, sem Soulmon. Sem o arquivo (ou se falhar) não mostra nada: o texto da carta basta. */
 export function CartaTutorialWidget({ isPt }: { isPt: boolean }) {
   const [falhou, setFalhou] = useState(false);
   if (!TUTORIAL_WIDGET_ART || falhou) return null;

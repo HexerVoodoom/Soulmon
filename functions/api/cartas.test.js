@@ -3,7 +3,7 @@ import { onRequest } from './community.js';
 import { claimMail, readMail } from './_mensageiro.js';
 import { CARTAS_GLOBAIS, cartasGlobaisAtivas } from './_cartasGlobais.js';
 
-// §287 — cartas do Papus: presente com "Resgatar", convite de amizade (Aceitar/Recusar) e carta GLOBAL de anúncio (uma vez por conta).
+// §288 — cartas do Papus: presente com "Resgatar", convite de amizade (Aceitar/Recusar) e carta GLOBAL de anúncio (uma vez por conta).
 
 const A = 'a'.repeat(32);
 const B = 'b'.repeat(32);
@@ -130,13 +130,14 @@ describe('carta global de anúncio', () => {
     expect(cartasGlobaisAtivas(g.ate)).toEqual([]);
   });
 
-  it('a carta da Hexsmith está pronta mas NÃO publicada (flag ativa:false) e ninguém a recebe', async () => {
+  it('a carta da Hexsmith está ativa (o PR dos botões já entrou), com NPC, 200 Bits, lápis e chama', async () => {
     const h = CARTAS_GLOBAIS.find(x => x.id === 'hexsmith-nomes-2026-11');
-    expect(h).toMatchObject({ ativa: false, carta: { npc: 'hexsmith' } });
-    expect(h.carta.bodyPt).toContain('200 Bits');
-    expect(cartasGlobaisAtivas(quando).map(c => c.mid)).not.toContain('global:hexsmith-nomes-2026-11');
+    expect(h).toMatchObject({ ativa: true, carta: { npc: 'hexsmith' } });
+    for (const t of [h.carta.bodyPt, h.carta.bodyEn]) { expect(t).toContain('200 Bits'); }
+    expect(h.carta.bodyPt).toMatch(/lápis[\s\S]*chama/);
+    expect(cartasGlobaisAtivas(quando).map(c => c.mid)).toContain('global:hexsmith-nomes-2026-11');
     const kv = kv0(); const env = { DIGIAPP_SAVES: kv };
-    expect((await readMail(env, kv, B, quando)).map(m => m.mid)).not.toContain('global:hexsmith-nomes-2026-11');
+    expect(globais(await readMail(env, kv, B, quando)).map(m => m.npc).sort()).toEqual(['hexsmith', 'mensageiro']);
   });
 
   it('aparece UMA vez por conta: apagada não volta; sem prêmio e sem dado pessoal; cada conta recebe a sua', async () => {

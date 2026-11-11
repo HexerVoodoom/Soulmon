@@ -2170,9 +2170,6 @@ Aviso curto na Home (REGISTRO §213 emenda 2): o Soulmon do jogador está desgar
 
 ⚰️ **Apagado em `63719e356` (31/10/2026, REGISTRO §208).** Era a luz procedural da cerimônia de evolução; a transformação refeita (`EvolutionCeremony`: `treme`/`racha`/`estilhaca`/`revela`) não a usa mais, e o `LevelUpOverlay` tem luz própria.
 
-### `src/components/perfil/EspecialNomeEditor.tsx`
-**Dono de:** o campo "Nome do seu especial" na carta do Perfil do Soulmon (Laboratório): valida na tela com a mesma regra do servidor, avisa em âmbar e mostra quantos dias faltam para a próxima troca (a troca semanal é decidida no servidor). Vazio volta ao nome padrão.
-**Chamado por:** `src/components/perfil/SoulmonPerfil.tsx`.
 
 ### `src/components/WidgetFramePicker.tsx`
 
@@ -2194,7 +2191,7 @@ A caixa de cartas do Papus, folha aberta pelo ícone da Home: accordion de uma c
 
 ### `src/components/CartaTutorialWidget.tsx`
 
-A imagem da carta global do widget (§287): o casco do widget com cenário no LCD, sem Soulmon (`src/assets/soulmon/cartas/tutorial-2-widget.(webp|png)`, por glob em `index.ts`); sem o arquivo não mostra nada. `MailboxSheet` também mostra a imagem do NPC remetente (96px, campo `npc`: `mensageiro` ou `hexsmith`) nas cartas globais e Aceitar/Recusar nas cartas `friend-invite` (`onAnswerInvite` de `useMailbox`). **Régua:** `MailboxSheet.cartas.render.test.tsx`.
+A imagem da carta global do widget (§288): o casco do widget com cenário no LCD, sem Soulmon (`src/assets/soulmon/cartas/tutorial-2-widget.(webp|png)`, por glob em `index.ts`); sem o arquivo não mostra nada. `MailboxSheet` também mostra a imagem do NPC remetente (96px, campo `npc`: `mensageiro` ou `hexsmith`) nas cartas globais e Aceitar/Recusar nas cartas `friend-invite` (`onAnswerInvite` de `useMailbox`). **Régua:** `MailboxSheet.cartas.render.test.tsx`.
 
 ### `src/components/nav/MailLink.tsx`
 
@@ -2223,3 +2220,15 @@ Modal "Avaliar / Agora nao" mostrado depois da evolucao (App.tsx).
 ### `src/components/guild/FeiraLojaSheet.tsx`
 **Dono de:** a folha da Feira de verdade (vendedor + `ShopShelf` com desconto + Hexsmith sem ingrediente), montada pela fila na vaga `feiraEvento`.
 **Props principais:** `{ language, saveId, loja, points, ownership, getState, onBuyShop, onHexBought, onClose }`.
+
+### `src/components/hex/HexRenameButton.tsx`
+
+**Dono de:** os 2 botões hexagonais de renomear da Hexsmith (11/11/2026, §287): lápis = nome do Soulmon, chama = nome do especial. Arte final por `assets/soulmon/hexsmith/btn-lapis|btn-chama`; sem arquivo, hexágono generativo SVG. Montados em `HexsmithSheet.tsx` na linha da Coroa.
+
+### `src/components/hex/HexRenameModal.tsx`
+
+**Dono de:** o modal de renomear (§287): caixa de texto, custo `HEX_RENAME_COST`, confirmação antes de gastar; a troca é do servidor (`cloudHexRename`). Usa `ModalSheet` (modalDepth/Voltar).
+
+### `src/components/perfil/EspecialNomeLeitura.tsx`
+
+**Dono de:** a leitura do nome do especial no Perfil (§287). Substituiu `EspecialNomeEditor`: o Perfil só mostra os nomes e aponta para a Hexsmith. Usado por `ProfileEditor` e `SoulmonPerfil`.

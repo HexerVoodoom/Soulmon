@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/** §287: convite de amizade com Aceitar/Recusar, e carta global com o mini-tutorial do widget (2 quadros, com fallback em código). */
+/** §288: convite de amizade com Aceitar/Recusar, e carta global com o mini-tutorial do widget (2 quadros, com fallback em código). */
 import { describe, it, expect, afterEach, beforeEach, vi } from 'vitest';
 import { render, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import { MailboxSheet } from './MailboxSheet';

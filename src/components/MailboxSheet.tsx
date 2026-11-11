@@ -33,7 +33,7 @@ export function MailboxSheet({ open, language, mail, onClose, onOpenLetter, onCl
   onClaimAll: () => Promise<MailGrant[]>;
   onDelete: (mid: string, force: boolean) => Promise<'removed' | 'blocked'>;
   onDeleteRead: () => Promise<number>;
-  /** Convite de amizade por carta (§287). */
+  /** Convite de amizade por carta (§288). */
   onAnswerInvite?: (m: MailItem, decline: boolean) => Promise<'accepted' | 'declined' | 'gone'>;
 }) {
   const isPt = language === 'pt-BR';

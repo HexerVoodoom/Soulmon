@@ -10,7 +10,7 @@ export interface MailItem {
   read?: boolean;
   /** Instante em que o servidor entregou o prêmio (0/ausente = ainda pendente). */
   claimedAt?: number;
-  /** Carta especial (§287): presente de amigo, convite de amizade (Aceitar/Recusar) ou anúncio global (pode levar o mini-tutorial). Ausente = carta comum. */
+  /** Carta especial (§288): presente de amigo, convite de amizade (Aceitar/Recusar) ou anúncio global (pode levar o mini-tutorial). Ausente = carta comum. */
   kind?: MailKind;
   /** Só no convite: o pid público de quem convidou (nunca o saveId). */
   fromPid?: string;
