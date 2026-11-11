@@ -1,3 +1,3 @@
-export const CATEGORIES: string[];
-export const LEGACY_CATEGORY_MAP: Record<string, string>;
-export function normalizeCategory(v: unknown): string | undefined;
+export declare const CATEGORIES: string[];
+export declare const LEGACY_CATEGORY_MAP: Record<string, string>;
+export declare function normalizeCategory(v: unknown): string | undefined;
