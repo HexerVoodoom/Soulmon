@@ -8472,6 +8472,7 @@ export default function App() {
                     setGameState(prev => chargeTreinoTicket(prev));
                     return true;
                   },
+                  playerDayTz: gameState.playerDayTz,
                   petElement: petElementOf(gameState),
                   language,
                   emblems: gameState.emblems ?? 0,

@@ -96,6 +96,7 @@ const COPY = {
   'loja.noFunds': ['Not enough Bits for this one. Nothing was spent.', 'Bits insuficientes para este. Nada foi gasto.'],
   'loja.offline': ['No connection right now. Nothing was spent, try again in a moment.', 'Sem conexão agora. Nada foi gasto, tente de novo daqui a pouco.'],
   'loja.gone': ['The stalls have packed up. Nothing was spent.', 'As barracas já se recolheram. Nada foi gasto.'],
+  'loja.cap': ['Your stock of this one is full. Nothing was spent.', 'Seu estoque deste já está cheio. Nada foi gasto.'],
   'loja.taken': ['That one is already yours. Nothing was spent.', 'Esse já é seu. Nada foi gasto.'],
   'loja.error': ['Something got stuck. Nothing was spent, try again in a moment.', 'Algo travou. Nada foi gasto, tente de novo daqui a pouco.'],
   'loja.allYours': ['Everything here is yours now. Thank you for walking the path.', 'Tudo daqui já é seu. Obrigado por andar pelo caminho.'],

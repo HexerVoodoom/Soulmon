@@ -74,7 +74,7 @@ import { HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, ganhoDePontos } from './_hon
 import { sanitizarNomeDeGuilda } from './_coop.js';
 import { nomeEspecialValido, ESPECIAL_NOME_COOLDOWN_MS } from './_especialNomeRegra.js';
 import { pickRankedOpponents } from './_rankedPick.js';
-import { pickSparOpponents, grantSparHonor, readSparTicket, buySparTicket, spendSparMatch, sparTicketStatus, sparPendingKey, sparDoneKey, SPAR_PICKS, SPAR_SCAN_MAX, SPAR_PENDING_TTL_S } from './_treino.js';
+import { fixarTzTreino, pickSparOpponents, grantSparHonor, readSparTicket, buySparTicket, spendSparMatch, sparTicketStatus, sparPendingKey, sparDoneKey, SPAR_PICKS, SPAR_SCAN_MAX, SPAR_PENDING_TTL_S } from './_treino.js';
 import { loadDuelSide as loadDuelSideShared, loadDuelSideWithSprite } from './_duelLoad.js';
 import { avatarIdOrNull } from './_avatares.js';
 import { artLineOrNull, spriteUrlOrNull } from './_artLine.js';
@@ -1195,7 +1195,7 @@ async function handleCommunity(context) {
       opponents.push({ ...pub, artLine: pub.artLine ?? artLine, ...(effectiveSprite ? { spriteUrl: effectiveSprite } : {}), duel: { level: side.combatant.level } });
     }
     const meSide = await loadDuelSide(id);
-    const tickets = sparTicketStatus(await readSparTicket(env, id, diaDe(tzDe(url.searchParams.get('zone'), url.searchParams.get('off')))));
+    const tickets = sparTicketStatus(await readSparTicket(env, id, diaDe(await fixarTzTreino(env, id, tzDe(url.searchParams.get('zone'), url.searchParams.get('off'))))));
     return json({ opponents, tickets, me: { duel: meSide ? { level: meSide.combatant.level } : null } });
   }
 
@@ -1210,13 +1210,17 @@ async function handleCommunity(context) {
       return json({ seed: aberto.seed, me: aberto.sides.me, opp: aberto.sides.opp });
     }
     // Ticket do dia (20 grátis com Honra + extras sem Honra): sem partida restante, não abre.
-    const tk = sparTicketStatus(await readSparTicket(env, id, diaDe(tzDe(body.zone, body.off))));
+    const diaTk = diaDe(await fixarTzTreino(env, id, tzDe(body.zone, body.off)));
+    const tk = sparTicketStatus(await readSparTicket(env, id, diaTk));
     if (tk.left <= 0) return json({ error: 'no tickets', tickets: tk }, 409);
     const sides = await loadDuelSides(id, oppSave);
     if (sides.res) return sides.res;
     const seed = crypto.getRandomValues(new Uint32Array(1))[0];
-    await kvOrThrow(env).put(sparPendingKey(id), JSON.stringify({ opp: opponentId, oppSave, seed, at: Date.now(), sides: { me: sides.me, opp: sides.opp } }), { expirationTtl: SPAR_PENDING_TTL_S });
-    return json({ seed, me: sides.me, opp: sides.opp });
+    // ABRIR A LUTA GASTA 1 PARTIDA do ticket (com ou sem resultado): desistir não é de graça (QA 2026-11-11, médio 5).
+    // O dia e o direito à Honra ficam gravados no duelo aberto; o `sparMatch` não gasta de novo.
+    const gasto = await spendSparMatch(env, id, diaTk);
+    await kvOrThrow(env).put(sparPendingKey(id), JSON.stringify({ opp: opponentId, oppSave, seed, at: Date.now(), spent: true, day: diaTk, withHonor: gasto.withHonor, sides: { me: sides.me, opp: sides.opp } }), { expirationTtl: SPAR_PENDING_TTL_S });
+    return json({ seed, me: sides.me, opp: sides.opp, tickets: gasto.status });
   });
 
   /* Compra de ticket EXTRA (+20 partidas sem Honra). A cobrança em Bits (ganhos) é do app, só depois do ok; o servidor conta e limita (3/dia). */
@@ -1224,9 +1228,10 @@ async function handleCommunity(context) {
     if (!VALID_ID.test(id || '')) return json({ error: 'invalid id' }, 400);
     const denied = await denyUnlessOwner(id);
     if (denied) return denied;
-    const r = await buySparTicket(env, id, diaDe(tzDe(body.zone, body.off)));
-    if (!r.ok) return json({ error: 'extra limit', tickets: r.status }, 409);
-    return json({ tickets: r.status });
+    const phase = body.phase === 'reserve' || body.phase === 'confirm' ? body.phase : undefined;
+    const r = await buySparTicket(env, id, diaDe(await fixarTzTreino(env, id, tzDe(body.zone, body.off))), phase);
+    if (!r.ok) return json({ error: r.reason === 'no-reserve' ? 'no reserve' : 'extra limit', tickets: r.status }, 409);
+    return json({ tickets: r.status, ...(r.reserved ? { reserved: true } : {}) });
   });
 
   if (action === 'sparMatch' && method === 'POST') return withDuelLock(`spar:${id}`, async () => {
@@ -1255,8 +1260,9 @@ async function handleCommunity(context) {
     const duel = simulateDuel({ me: aberto.sides.me, opp: aberto.sides.opp, seed: aberto.seed, taps: body.taps ?? body.cheers });
     const outcome = duel.winner === 'me' ? 'win' : duel.winner === 'opp' ? 'loss' : 'draw';
     let honra = { honor: 0, capped: false };
-    const diaTk = diaDe(tzDe(body.zone, body.off));
-    const gasto = await spendSparMatch(env, id, diaTk); // a partida liquidada gasta 1 do ticket; passou das 20 do grátis = sem Honra
+    // Duelo aberto por esta versão já gastou a partida no `sparStart` (`spent`) e gravou dia/Honra; registro antigo gasta aqui.
+    const diaTk = aberto.spent && aberto.day ? aberto.day : diaDe(await fixarTzTreino(env, id, tzDe(body.zone, body.off)));
+    const gasto = aberto.spent ? { withHonor: aberto.withHonor === true, status: sparTicketStatus(await readSparTicket(env, id, diaTk)) } : await spendSparMatch(env, id, diaTk);
     if (outcome === 'win' && gasto.withHonor) {
       honra = await grantSparHonor(env, id, diaTk, () => { const b = new Uint32Array(1); crypto.getRandomValues(b); return b[0] / 4294967296; });
     }

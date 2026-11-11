@@ -105,11 +105,33 @@ describe('ticket grátis do dia: 20 partidas com Honra', () => {
     expect([...kv.store.keys()].some(k => k.startsWith('rank:'))).toBe(false);
   });
 
-  it('desistir NÃO gasta partida', async () => {
+  it('abrir a luta GASTA 1 partida do ticket; desistir não devolve (sem farm de leitura) e a Honra segue sem pagar', async () => {
     const { env, ids, kv } = mkEnv({ bonds: [10], meOver: FORTE, oppSave: [OPP_FRACO] });
-    const r = await lutar(env, ids, { forfeit: true });
+    const o = ids[0];
+    const s = await call(env, 'sparStart', { opponentId: o.pid, zone: 'UTC' });
+    expect(s.json.tickets.played).toBe(1);
+    expect(JSON.parse(kv.store.get(sparTicketKey(ME, hoje())))).toEqual({ played: 1, extra: 0 });
+    const r = await call(env, 'sparMatch', { opponentId: o.pid, seed: s.json.seed, zone: 'UTC', forfeit: true });
     expect(r.json.forfeit).toBe(true);
-    expect(kv.store.has(sparTicketKey(ME, hoje()))).toBe(false);
+    expect(r.json.honor).toBe(0);
+    expect(JSON.parse(kv.store.get(sparTicketKey(ME, hoje())))).toEqual({ played: 1, extra: 0 }); // não gasta 2x
+  });
+
+  it('desistir 20 vezes fecha o ticket grátis: a 21ª abertura é recusada', async () => {
+    const { env, ids } = mkEnv({ bonds: [10], meOver: FORTE, oppSave: [OPP_FRACO] });
+    for (let i = 0; i < 20; i++) { const r = await lutar(env, ids, { forfeit: true }); expect(r.status).toBe(200); }
+    const r21 = await call(env, 'sparStart', { opponentId: ids[0].pid, zone: 'UTC' });
+    expect(r21.status).toBe(409);
+  });
+
+  it('reabrir o MESMO oponente já aberto não gasta outra partida', async () => {
+    const { env, ids } = mkEnv({ bonds: [10], meOver: FORTE, oppSave: [OPP_FRACO] });
+    const o = ids[0];
+    await call(env, 'sparStart', { opponentId: o.pid, zone: 'UTC' });
+    const s2 = await call(env, 'sparStart', { opponentId: o.pid, zone: 'UTC' });
+    const l = await call(env, 'sparOpponents', {}, 'GET');
+    expect(l.json.tickets.played).toBe(1);
+    expect(s2.status).toBe(200);
   });
 
   it('virada do dia do jogador: dia seguinte tem ticket novo (outro registro)', async () => {
@@ -120,12 +142,10 @@ describe('ticket grátis do dia: 20 partidas com Honra', () => {
     const amanha = await lutar(env, ids, {}); // mesmo UTC: ainda cheio
     expect(amanha.status).toBe(409);
     const o = ids[0];
-    const s = await call(env, 'sparStart', { opponentId: o.pid, off: 26 * 3600e3 }); // fuso fora de ±14h cai no UTC; usa ±14h
+    // O fuso da conta é preso: trocar de ±14 h NÃO abre outro dia. Só uma âncora presa há >24 h aceita a troca.
     const s2 = await call(env, 'sparStart', { opponentId: o.pid, off: 14 * 3600e3 });
     const s3 = await call(env, 'sparStart', { opponentId: o.pid, off: -14 * 3600e3 });
-    // um dos fusos extremos cai em OUTRO dia do jogador: ali o ticket é novo
-    expect([s2.status, s3.status]).toContain(200);
-    expect(s.status === 409 || s.status === 200).toBe(true);
+    expect([s2.status, s3.status]).toEqual(s2.status === 200 ? [200, 200] : [409, 409]);
   });
 });
 
@@ -163,12 +183,44 @@ describe('ticket extra: 30 Bits (app), +20 partidas SEM Honra, máx. 3/dia', () 
     const antes = [...kv.store.keys()].sort().join();
     await call(env, 'sparBuyTicket', { zone: 'UTC' });
     const depois = [...kv.store.keys()].sort();
-    expect(depois.filter(k => !antes.split(',').includes(k))).toEqual([sparTicketKey(ME, hoje())]);
+    expect(depois.filter(k => !antes.split(',').includes(k) && !k.startsWith('sparTz:'))).toEqual([sparTicketKey(ME, hoje())]);
   });
 
   it('só o dono compra (sem login de outro id = recusa)', async () => {
     const { env } = mkEnv({ bonds: [10] });
     const res = await onRequest({ request: new Request('https://x.dev/api/community?action=sparBuyTicket', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: 'zz' }) }), env });
     expect(res.status).toBe(400);
+  });
+});
+
+describe('ticket extra em DUAS FASES (reserva + confirmação)', () => {
+  it('reservar NÃO concede; confirmar concede UMA vez; confirmar de novo sem reserva é recusado', async () => {
+    const { env, kv } = mkEnv({ bonds: [10] });
+    const r = await call(env, 'sparBuyTicket', { zone: 'UTC', phase: 'reserve' });
+    expect(r.status).toBe(200);
+    expect(r.json.tickets.extra).toBe(0);
+    expect(kv.store.has(sparTicketKey(ME, hoje()))).toBe(false);
+    const c = await call(env, 'sparBuyTicket', { zone: 'UTC', phase: 'confirm' });
+    expect(c.json.tickets.extra).toBe(1);
+    const c2 = await call(env, 'sparBuyTicket', { zone: 'UTC', phase: 'confirm' });
+    expect(c2.status).toBe(409);
+    expect(c2.json.error).toBe('no reserve');
+    expect(JSON.parse(kv.store.get(sparTicketKey(ME, hoje()))).extra).toBe(1);
+  });
+
+  it('recusa no app = só reservou: o ticket nunca sai de graça e a reserva vence', async () => {
+    const { env, kv } = mkEnv({ bonds: [10] });
+    await call(env, 'sparBuyTicket', { zone: 'UTC', phase: 'reserve' });
+    kv.store.set(`sparReserve:${ME}:${hoje()}`, String(Date.now() - 10 * 60e3)); // venceu
+    const c = await call(env, 'sparBuyTicket', { zone: 'UTC', phase: 'confirm' });
+    expect(c.status).toBe(409);
+    expect(kv.store.has(sparTicketKey(ME, hoje()))).toBe(false);
+  });
+
+  it('no teto de 3 a reserva é recusada', async () => {
+    const { env, kv } = mkEnv({ bonds: [10] });
+    kv.store.set(sparTicketKey(ME, hoje()), JSON.stringify({ played: 0, extra: 3 }));
+    const r = await call(env, 'sparBuyTicket', { zone: 'UTC', phase: 'reserve' });
+    expect(r.status).toBe(409);
   });
 });

@@ -233,17 +233,41 @@ describe('treino: luta, não ranqueia, Honra', () => {
     expect(Number(kv.store.get(sparHonorKey(ME, dia)))).toBe(SPAR_HONOR_DAILY_CAP);
   });
 
-  it('o dia é o do JOGADOR: o contador do dia seguinte começa de novo', async () => {
-    const { env, ids, kv } = mkEnv({ bonds: [10], meOver: FORTE, oppSave: [OPP_FRACO] });
+  it('o dia é o do JOGADOR: o contador do dia seguinte começa de novo (contas com fusos extremos; o dia vem do start)', async () => {
     const dia = new Date().toISOString().slice(0, 10);
-    kv.store.set(sparHonorKey(ME, dia), '20');
+    let honra = 0;
+    for (const off of [14 * 3600e3, -14 * 3600e3]) {
+      const { env, ids, kv } = mkEnv({ bonds: [10], meOver: FORTE, oppSave: [OPP_FRACO] });
+      kv.store.set(sparHonorKey(ME, dia), '20');
+      const o = ids[0];
+      const s = await call(env, 'sparStart', { opponentId: o.pid, off });
+      const r = await call(env, 'sparMatch', { opponentId: o.pid, seed: s.json.seed, off });
+      honra += r.json.honor;
+    }
+    // +14 h pode já ser o dia seguinte; -14 h pode ser o anterior (contador intocado). Um dos dois NÃO é o dia cheio.
+    expect(honra).toBeGreaterThan(0);
+  });
+
+  it('fuso ±14 h NÃO vira dois dias: a âncora da conta é presa e a 2ª luta usa o MESMO dia/contador', async () => {
+    const { env, ids, kv } = mkEnv({ bonds: [10], meOver: FORTE, oppSave: [OPP_FRACO] });
     const o = ids[0];
-    const s = await call(env, 'sparStart', { opponentId: o.pid });
-    // fuso +14 h: pode já ser o dia seguinte; fuso -14 h: o dia anterior (contador intocado). Um dos dois NÃO é o dia cheio.
-    const r1 = await call(env, 'sparMatch', { opponentId: o.pid, seed: s.json.seed, off: 14 * 3600e3 });
-    const s2 = await call(env, 'sparStart', { opponentId: o.pid });
-    const r2 = await call(env, 'sparMatch', { opponentId: o.pid, seed: s2.json.seed, off: -14 * 3600e3 });
-    expect(r1.json.honor + r2.json.honor).toBeGreaterThan(0);
+    for (const off of [14 * 3600e3, -14 * 3600e3, 14 * 3600e3, -14 * 3600e3]) {
+      const s = await call(env, 'sparStart', { opponentId: o.pid, off });
+      expect(s.status).toBe(200);
+      await call(env, 'sparMatch', { opponentId: o.pid, seed: s.json.seed, off });
+    }
+    const dias = [...kv.store.keys()].filter(k => k.startsWith('sparTicket:'));
+    expect(dias).toHaveLength(1); // um único "dia" de ticket, não 2-3
+    expect(JSON.parse(kv.store.get(dias[0])).played).toBe(4);
+    expect(JSON.parse(kv.store.get(`sparTz:${ME}`)).offsetMs).toBe(14 * 3600e3); // o primeiro valor ficou
+  });
+
+  it('a âncora presa só troca depois de 24 h (viagem real)', async () => {
+    const { env, ids, kv } = mkEnv({ bonds: [10], meOver: FORTE, oppSave: [OPP_FRACO] });
+    kv.store.set(`sparTz:${ME}`, JSON.stringify({ offsetMs: 14 * 3600e3, at: Date.now() - 25 * 3600e3 }));
+    const s = await call(env, 'sparStart', { opponentId: ids[0].pid, off: -14 * 3600e3 });
+    expect(s.status).toBe(200);
+    expect(JSON.parse(kv.store.get(`sparTz:${ME}`)).offsetMs).toBe(-14 * 3600e3);
   });
 
   it('reenvio do mesmo resultado devolve o mesmo e NÃO paga Honra em dobro', async () => {

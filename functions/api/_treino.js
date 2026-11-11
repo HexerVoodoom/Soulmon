@@ -106,13 +106,52 @@ export async function readSparTicket(env, id, day) {
 }
 const writeSparTicket = (env, id, day, t) => kvOrThrow(env).put(sparTicketKey(id, day), JSON.stringify(t), { expirationTtl: 172800 });
 
-/** Compra 1 ticket extra (a cobrança em Bits é do app). Recusa no teto: `{ ok:false }`. */
-export async function buySparTicket(env, id, day) {
+/**
+ * Compra 1 ticket extra (a cobrança em Bits é do app). Recusa no teto: `{ ok:false }`.
+ * DUAS FASES (QA 2026-11-11, médio 4): `phase:'reserve'` só confere o teto e abre uma reserva curta (`sparReserve:<id>:<dia>`, TTL
+ * `SPAR_RESERVE_TTL_S`), SEM conceder; o app debita e só então chama `phase:'confirm'`, que concede UMA vez (idempotente: sem reserva
+ * = `{ ok:false, reason:'no-reserve' }`). Sem `phase` = contrato antigo (concede direto), para cliente que ainda não conhece as fases.
+ */
+export const SPAR_RESERVE_TTL_S = 120;
+export const sparReserveKey = (id, day) => `sparReserve:${id}:${day}`;
+export async function buySparTicket(env, id, day, phase) {
   const t = await readSparTicket(env, id, day);
+  if (phase === 'reserve') {
+    if (t.extra >= TREINO_EXTRA_TICKETS_MAX) return { ok: false, status: sparTicketStatus(t) };
+    await kvOrThrow(env).put(sparReserveKey(id, day), String(Date.now()), { expirationTtl: SPAR_RESERVE_TTL_S + 60 });
+    return { ok: true, reserved: true, status: sparTicketStatus(t) };
+  }
+  if (phase === 'confirm') {
+    const raw = await kvOrThrow(env).get(sparReserveKey(id, day)).catch(() => null);
+    const at = Number(raw);
+    if (!Number.isFinite(at) || at <= 0 || Date.now() - at > SPAR_RESERVE_TTL_S * 1000) return { ok: false, reason: 'no-reserve', status: sparTicketStatus(t) };
+    await kvOrThrow(env).delete(sparReserveKey(id, day)).catch(() => {});
+  }
   if (t.extra >= TREINO_EXTRA_TICKETS_MAX) return { ok: false, status: sparTicketStatus(t) };
   const next = { ...t, extra: t.extra + 1 };
   await writeSparTicket(env, id, day, next);
   return { ok: true, status: sparTicketStatus(next) };
+}
+
+/**
+ * DIA FIXO DA CONTA no Treino (QA 2026-11-11, médio 3). `zone`/`off` vêm do cliente a cada pedido; alternar entre +14 h e -14 h
+ * dava 2-3 "dias" no mesmo instante. A âncora é PRENDIDA no servidor (`sparTz:<id>`) e só aceita trocar depois de
+ * `SPAR_TZ_LOCK_MS` (viagem real), então os contadores de Honra e tickets seguem UM dia por conta.
+ */
+export const SPAR_TZ_LOCK_MS = 24 * 3600 * 1000;
+export const sparTzKey = id => `sparTz:${id}`;
+export async function fixarTzTreino(env, id, tz) {
+  const kv = kvOrThrow(env);
+  const novo = tz && (tz.zone || tz.offsetMs !== undefined) ? tz : null;
+  let atual = null;
+  try { const raw = await kv.get(sparTzKey(id)); atual = raw ? JSON.parse(raw) : null; } catch { atual = null; }
+  const valido = atual && typeof atual === 'object' && (atual.zone || Number.isFinite(atual.offsetMs));
+  const grava = async v => { await kv.put(sparTzKey(id), JSON.stringify({ ...v, at: Date.now() }), { expirationTtl: 60 * 86400 }).catch(() => {}); return v; };
+  if (!valido) return novo ? grava(novo) : {};
+  const ancora = { ...(atual.zone ? { zone: atual.zone } : {}), ...(Number.isFinite(atual.offsetMs) ? { offsetMs: atual.offsetMs } : {}) };
+  const igual = novo && novo.zone === ancora.zone && novo.offsetMs === ancora.offsetMs;
+  if (novo && !igual && Date.now() - (Number(atual.at) || 0) >= SPAR_TZ_LOCK_MS) return grava(novo);
+  return ancora;
 }
 
 /** Gasta 1 partida liquidada. `withHonor` = ainda cabia no ticket grátis (o servidor só paga Honra nesse caso). */
