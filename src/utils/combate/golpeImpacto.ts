@@ -68,10 +68,22 @@ export interface EntradaImpacto {
   key: string;
   /** Nome de um INIMIGO do bestiário (dado confiável). Nunca o nome que o jogador digitou. */
   name?: string | null;
+  /** Forma do golpe. Só passa `'ranged'` quem é INIMIGO/selvagem/simulado: aí vale `RANGED_MAGIA_PCT` (magia = à distância + splash). Ausente = comportamento antigo (jogador). */
+  forma?: 'melee' | 'ranged';
+}
+
+/**
+ * MAGIA (dono, 11/11/2026): dos golpes À DISTÂNCIA de inimigos, selvagens e simulados, ~80% são Magic (ranged + splash/`concussao`) e ~20% Ranged Slash
+ * (corte). Antes o splash seguia o peso do elemento (~50/50). Sorteio ESTÁVEL por (elemento, chave); só visual. NÃO vale para o jogador (ficha 37/33/17/13 e Luvas).
+ */
+export const RANGED_MAGIA_PCT = 80;
+export function magiaOuCorte(element: string | null | undefined, key: string): ImpactoMelee {
+  return hashEstavel(`magia|${element ?? ''}|${key}`) % 100 < RANGED_MAGIA_PCT ? 'concussao' : 'corte';
 }
 
 /** O acabamento do golpe corpo a corpo deste lutador: palavra-chave do nome, senão sorteio estável com o peso do elemento. */
 export function meleeImpactOf(e: EntradaImpacto): ImpactoMelee {
+  if (e.forma === 'ranged') return magiaOuCorte(e.element, e.key);
   const porNome = impactoPorNome(e.name);
   if (porNome) return porNome;
   return hashEstavel(`${e.element ?? ''}|${e.key}`) % 100 < pesoCorte(e.element) ? 'corte' : 'concussao';

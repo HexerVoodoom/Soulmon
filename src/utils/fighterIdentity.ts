@@ -41,6 +41,8 @@ export interface FighterFx {
   /** Elemento do golpe básico e do especial (ids no formato fechado de elemento). */
   elBasica?: string | null;
   elEspecial?: string | null;
+  /** Só dos simulados (`sim_NNNN`): o golpe À DISTÂNCIA dele é Magic (`true`, splash) ou Ranged Slash (`false`, corte). Ausente = jogador real: sem mudança. */
+  magia?: boolean;
 }
 
 const ELEMENTO_ID = /^[a-z][a-z_]{0,23}$/;
@@ -94,10 +96,14 @@ export function fighterIdentityFromFx(fx: Partial<FighterFx> | null | undefined,
   const elBasico = elementoConhecido(fx?.elBasica) ? fx.elBasica : sem;
   const elEspecial = elementoConhecido(fx?.elEspecial) ? fx.elEspecial : elBasico;
   const fam = famValida(fx?.familia);
+  const basico = golpe(fx?.basica, elBasico, 'basica');
+  const esp = golpe(fx?.especial, elEspecial, 'especial');
+  // Simulado: no golpe à distância o acabamento vem da flag do servidor (80% Magic). Corpo a corpo e jogador real ficam como estão.
+  const mag = typeof fx?.magia === 'boolean' ? (f: FighterStrike): FighterStrike => (f.forma === 'ranged' ? { ...f, impacto: fx!.magia ? 'concussao' : 'corte' } : f) : (f: FighterStrike) => f;
   return {
-    basico: golpe(fx?.basica, elBasico, 'basica'),
+    basico: mag(basico),
     // sem escola do especial (save sem ficha) a família é a padrão de `familyOfSkill`; com ela, a publicada se for válida
-    especial: { ...golpe(fx?.especial, elEspecial, 'especial'), familia: fam ?? familyOfSkill({ escolaId: fx?.especial ?? undefined }) },
+    especial: { ...mag(esp), familia: fam ?? familyOfSkill({ escolaId: fx?.especial ?? undefined }) },
   };
 }
 

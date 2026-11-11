@@ -584,7 +584,7 @@ export function DungeonGame({ evolutionStage, demoCharacterId, petElement, skill
       foeElement: () => foeEl,
       playerKind: sp => (sp ? ident.especial.forma : ident.basico.forma),
       playerImpact: sp => (!sp && ident.basico.impacto) || meleeImpactOf({ element: sp ? ident.especial.elemento : ident.basico.elemento, key: chaveDaIdentidade(ident) }),
-      foeImpact: () => meleeImpactOf({ element: foeEl, key: e?.name ?? foeEl, name: e?.name }),
+      foeImpact: (_f, sp) => meleeImpactOf({ element: foeEl, key: e?.name ?? foeEl, name: e?.name, forma: foeStrikeForm(foeEl, sp ? 'especial' : 'basica') }),
       foeKind: (_f, sp) => foeStrikeForm(foeEl, sp ? 'especial' : 'basica'),
       labels: { blocked: isPt ? 'Defendeu!' : 'Defended!', ring: RING_TAG[lang], dodge: DODGE_TAG[lang] },
       personalTag: PERSONAL_TAG[lang][p.family],

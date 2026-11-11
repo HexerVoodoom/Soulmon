@@ -907,9 +907,10 @@ Cobertura: +7 em 05/10/2026 (`combate/*`: `bonus`, `curve`, `fight`, `level`, `r
 **Dono de:** a régua do mix {à distância, corpo a corpo} × {corte, splash} dos inimigos (REGISTRO §282): as 4 combinações entre 18% e 32% no elenco da Masmorra/Fenda e nas 17 criaturas da Arena (`foeStrikeForm`, `FORMA_MELEE_PCT` em `combatFx.ts`). Só teste.
 
 ### `src/utils/combate/golpeImpacto.ts`
-**Dono de:** CORTE × CONCUSSÃO do golpe corpo a corpo (dono, 05/11/2026), só visual. Função pura por lutador: palavra-chave do nome de inimigo do bestiário, senão sorteio estável (FNV-1a de `elemento|chave`) com o peso de corte por elemento; derivado herda a média dos componentes. Não toca dano, sementes nem RNG do combate. Regra e tabela: `docs/REGRA-CORTE-CONCUSSAO.md`; decisão: REGISTRO §227.
+**Dono de:** CORTE × CONCUSSÃO do golpe corpo a corpo (dono, 05/11/2026), só visual. Função pura por lutador: palavra-chave do nome de inimigo do bestiário, senão sorteio estável (FNV-1a de `elemento|chave`) com o peso de corte por elemento; derivado herda a média dos componentes. Não toca dano, sementes nem RNG do combate. **Ranged de inimigo/selvagem/simulado (REGISTRO §288):** com `forma: 'ranged'` em `EntradaImpacto`, `magiaOuCorte` sorteia 80% Magic (splash) e 20% Ranged Slash (`RANGED_MAGIA_PCT`); sem `forma` (jogador, Pesadelo) nada muda. Regra e tabela: `docs/REGRA-CORTE-CONCUSSAO.md`; decisão: REGISTRO §227.
 **Exports:**
 - `ImpactoMelee` — `'corte' | 'concussao'`.
+- `RANGED_MAGIA_PCT` (80), `magiaOuCorte(element, key)` — dos golpes à distância de inimigo/selvagem/simulado, % que é Magic (splash); só visual (REGISTRO §288).
 - `PESO_CORTE`, `PESO_CORTE_NEUTRO`, `pesoCorte(element)` — % de corte por elemento base (Ar 75, Terra 25); derivado = média; desconhecido = 50.
 - `PALAVRAS_CONCUSSAO`, `PALAVRAS_CORTE`, `impactoPorNome(name)` — palavra inteira, sem acento; as duas famílias ou nenhuma = `null`.
 - `hashEstavel(s)`, `meleeImpactOf({ element, key, name? })` — a decisão; `chaveDaIdentidade(identidade)` — a chave do PvP (ids fechados).
