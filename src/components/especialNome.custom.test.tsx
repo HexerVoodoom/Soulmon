@@ -12,7 +12,7 @@ import type { DuelSide } from '../utils/combate/duel';
 import { comNomeDoEspecial } from '../utils/soulProfile/ficha/especialNome';
 import { stageSkillsFor } from '../utils/soulProfile/ficha/stageSkillsFor';
 import { specialLabel } from '../utils/combatFx';
-import { EspecialNomeEditor } from './perfil/EspecialNomeEditor';
+import { EspecialNomeLeitura } from './perfil/EspecialNomeLeitura';
 
 type Cena = { specialLabel?: string; foe?: string };
 const cenas: Cena[] = [];
@@ -62,24 +62,11 @@ describe('nome do especial escolhido', () => {
     expect(duelo('   ').foe).toBe(padrao);
   });
 
-  it('Editor: palavrão e símbolo travam o botão e avisam; nome bom salva aparado; troca recente mostra os dias e trava', () => {
-    const salvar = vi.fn();
-    const { rerender } = render(<EspecialNomeEditor language="pt-BR" nome="" onSave={salvar} />);
-    const campo = screen.getByLabelText(/Nome do seu especial/i) as HTMLInputElement;
-    const botao = screen.getByRole('button', { name: /Salvar nome/i }) as HTMLButtonElement;
-    fireEvent.change(campo, { target: { value: 'Caralho' } });
-    expect(botao.disabled).toBe(true);
-    expect(screen.getByText(/sem palavrões/i)).toBeTruthy();
-    fireEvent.change(campo, { target: { value: 'Raio!' } });
-    expect(botao.disabled).toBe(true);
-    fireEvent.change(campo, { target: { value: ' Raio Solar ' } });
-    expect(botao.disabled).toBe(false);
-    fireEvent.click(botao);
-    expect(salvar).toHaveBeenCalledWith('Raio Solar');
-    const agora = Date.now();
-    rerender(<EspecialNomeEditor language="en-US" nome="Raio Solar" nomeAt={agora - 2 * 86_400_000} now={agora} onSave={salvar} />);
-    fireEvent.change(screen.getByLabelText(/special’s name/i), { target: { value: 'Outro' } });
-    expect((screen.getByRole('button', { name: /Save name/i }) as HTMLButtonElement).disabled).toBe(true);
-    expect(screen.getByText(/again in 5 days/i)).toBeTruthy();
+  it('Perfil: o nome do especial é SÓ LEITURA (sem campo nem botão) e aponta para a Hexsmith', () => {
+    const { container } = render(<EspecialNomeLeitura language="pt-BR" nome="Raio Solar" />);
+    expect(container.querySelector('input')).toBeNull();
+    expect(container.querySelector('button')).toBeNull();
+    expect(screen.getByText('Raio Solar')).toBeTruthy();
+    expect(screen.getByText(/Troque na Hexsmith/i)).toBeTruthy();
   });
 });

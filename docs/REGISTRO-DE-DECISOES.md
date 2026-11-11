@@ -4673,3 +4673,10 @@ A Oficina de antes pagava no máximo 8 itens por dia: a renda de material dobra 
 **Falsifica:** em produção, a fração de oponentes dentro de ±10%/±2 níveis ficar abaixo de ~65% com o pool cheio, ou jogador reclamar de só enfrentar iguais.
 
 **Rollback:** reverter o PR (volta a faixa de Vínculo + `ESTAGIO_PESOS`).
+
+## §287 — Hexsmith: trocar o nome do Soulmon e do especial, por 200 Bits (11/11/2026, pedido do dono)
+
+**Decisão.** Dois botões hexagonais na linha da Coroa (lápis = nome do Soulmon, chama = nome do especial) abrem um modal com caixa de texto, custo e confirmação. O preço é `HEX_RENAME_COST` = 200 Bits GANHOS (Bits de Crédito não pagam), constante nomeada em `src/utils/hexsmithRename.ts` e em `functions/api/_hexRename.js` (paridade travada por teste). A troca é do SERVIDOR (`POST /api/save?action=hexRename`): valida o nome (mesma régua do especial: até 20, letras/números/espaço, sem palavrão nem contato), debita e grava numa escrita; sem rede, não troca e nada é cobrado. O campo lido por duelo/exibição não mudou (`soulmonMeta.petName`, `especialNome`).
+**Removido.** O editor do Perfil (Editar perfil: campo "Nome do Soulmon" e `EspecialNomeEditor`) virou só leitura com a dica "Troque na Hexsmith". A espera semanal do nome do especial (`ESPECIAL_NOME_COOLDOWN_MS`) caiu para 0: o limite agora é o preço.
+**Arte.** Hexágonos generativos em código; slots `btn-lapis`/`btn-chama` em `src/assets/soulmon/hexsmith/` para a arte final (pedido em `docs/ASSETS-A-GERAR.md`, prioridade máxima).
+**O que falsifica.** Se jogadores trocarem nome em massa só para ofender, o filtro de palavrões é a régua única (ampliar lá); se o preço virar barreira, mudar a constante.

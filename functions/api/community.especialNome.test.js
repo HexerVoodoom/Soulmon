@@ -104,33 +104,25 @@ describe('nome do especial (perfil publico)', () => {
     }
   });
 
-  it('troca limitada a uma por semana, medida no servidor; repetir o mesmo nome nao gasta', async () => {
+  it('sem espera entre trocas (o limite e o preco na Hexsmith); repetir o mesmo nome nao muda nada', async () => {
     const env = mundo();
     await salvar(env, { especialNome: 'Primeiro' });
     const igual = await (await salvar(env, { especialNome: 'Primeiro' })).json();
     expect(igual.especialNomeLimit).toBeUndefined();
     const j = await (await salvar(env, { especialNome: 'Segundo' })).json();
-    expect(j.especialNomeLimit).toBe(true);
-    expect(j.especialNome).toBe('Primeiro');
-    expect(perfilDe(env).especialNome).toBe('Primeiro');
-    // 6 dias: ainda travado; 8 dias: liberado. O relogio do cliente nao entra.
-    const p = perfilDe(env);
-    env.DIGIAPP_SAVES.store.set(`profile:${BRUNO}`, JSON.stringify({ ...p, especialNomeAt: Date.now() - 6 * DIA }));
-    expect((await (await salvar(env, { especialNome: 'Segundo' })).json()).especialNomeLimit).toBe(true);
-    env.DIGIAPP_SAVES.store.set(`profile:${BRUNO}`, JSON.stringify({ ...p, especialNomeAt: Date.now() - 8 * DIA }));
-    const livre = await (await salvar(env, { especialNome: 'Segundo' })).json();
-    expect(livre.especialNomeLimit).toBeUndefined();
-    expect(livre.especialNome).toBe('Segundo');
+    expect(j.especialNomeLimit).toBeUndefined();
+    expect(j.especialNome).toBe('Segundo');
+    expect(perfilDe(env).especialNome).toBe('Segundo');
   });
 
-  it('limpar e vazio/null volta ao padrao sem gastar a troca; limpar e regravar dentro da semana continua travado', async () => {
+  it('limpar e vazio/null volta ao padrao', async () => {
     const env = mundo();
     await salvar(env, { especialNome: 'Primeiro' });
     const limpo = await (await salvar(env, { especialNome: '' })).json();
     expect(limpo.especialNome).toBe('');
     expect(limpo.especialNomeLimit).toBeUndefined();
     expect(perfilDe(env).especialNome).toBeUndefined();
-    expect((await (await salvar(env, { especialNome: 'Outro' })).json()).especialNomeLimit).toBe(true);
+    expect((await (await salvar(env, { especialNome: 'Outro' })).json()).especialNome).toBe('Outro');
     expect((await (await salvar(env, { especialNome: null })).json()).especialNome).toBe('');
   });
 

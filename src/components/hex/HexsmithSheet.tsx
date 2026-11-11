@@ -29,9 +29,12 @@ import {
   sanitizeHexsmith, unequipHexSlot, type HexSlot, type HexStrike,
 } from '../../utils/hexsmith';
 import type { SpecialFamily } from '../../utils/combate/specials';
-import { HEX_FAMILY_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_STRIKE_LEGEND, HEX_UI, hexName, hexRefusalText, tx } from '../../utils/hexsmithCopy';
+import { HEX_FAMILY_COPY, HEX_RENAME_COPY, HEX_SLOT_COPY, HEX_STRIKE_COPY, HEX_STRIKE_LEGEND, HEX_UI, hexName, hexRefusalText, tx } from '../../utils/hexsmithCopy';
 import { getSpriteForStage } from '../../utils/sprites';
-import { cloudHexForge } from '../../utils/cloudSave';
+import { cloudHexForge, cloudHexRename } from '../../utils/cloudSave';
+import { HexRenameButton } from './HexRenameButton';
+import { HexRenameModal } from './HexRenameModal';
+import { applyServerHexRename, type HexRenameKind } from '../../utils/hexsmithRename';
 import { readLocal } from '../../utils/safeStorage';
 import { STORAGE_KEYS } from '../../utils/storageKeys';
 import { HEX_ART, HEX_MAP_ART, resolveHexChipArt, resolveHexSlotArt } from '../../assets/soulmon/hex';
@@ -60,6 +63,8 @@ const PORTS: Readonly<Record<HexSlot, { x: number; y: number }>> = {
   luvas: { x: 78.6, y: 82.3 },
 };
 const CORE = { x: 49.8, y: 53.5 };
+/** Os 2 botões de RENOMEAR: na linha da Coroa, à direita dela (entre a Coroa e a Garra). */
+const RENAME_PORTS: Readonly<Record<HexRenameKind, { x: number; y: number }>> = { pet: { x: 71.5, y: 16.5 }, especial: { x: 87, y: 16.5 } };
 
 /** Degraus de `tokens.md` §6.1: `nav` 32 no mapa (o encaixe é um destino), `action` 24 nas linhas e no botão, `inline` 20 no saldo. */
 const ICON_MAP = 32;
@@ -84,6 +89,7 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
   const [open, setOpen] = useState<HexSlot | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [forjando, setForjando] = useState(false);
+  const [renomear, setRenomear] = useState<HexRenameKind | null>(null);
   const gs = ctx?.gameState;
   const hx = useMemo(() => sanitizeHexsmith(gs?.hexsmith), [gs?.hexsmith]);
   const over = useMemo(() => hexOverrides(hx), [hx]);
@@ -103,6 +109,25 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
     if (slot === 'luvas') return tx(HEX_UI.original, isPt);
     if (slot === 'coroa') return HEX_FAMILY_COPY[v as SpecialFamily] ? hexValueName(slot, v, isPt) : tx(HEX_UI.original, isPt);
     return v ? elName(v, isPt) : tx(HEX_UI.original, isPt);
+  };
+
+  // 11/11/2026: renomear é do SERVIDOR (valida, debita HEX_RENAME_COST e grava o nome numa escrita); sem rede, não troca.
+  const rename = async (kind: HexRenameKind, nome: string) => {
+    if (isDemoMode(gs)) { setAviso(demoRefusalText(isPt)); return; }
+    if (forjando) return;
+    const saveId = readLocal(STORAGE_KEYS.SAVE_ID);
+    if (!saveId) { setAviso(tx(HEX_RENAME_COPY.offline, isPt)); return; }
+    setForjando(true);
+    setAviso(tx(HEX_RENAME_COPY.working, isPt));
+    const r = await cloudHexRename(saveId, gs, kind, nome);
+    setForjando(false);
+    if (!r.ok) {
+      setAviso(tx(r.kind === 'offline' ? HEX_RENAME_COPY.offline : r.kind === 'saldo' ? HEX_RENAME_COPY.noFunds : r.kind === 'rejected' ? HEX_RENAME_COPY.rejected : HEX_RENAME_COPY.failed, isPt));
+      return;
+    }
+    setGameState((prev) => applyServerHexRename(prev, kind, r.nome, !r.already));
+    setAviso(null);
+    setRenomear(null);
   };
 
   // §216: a forja é do SERVIDOR (debita e entrega numa escrita). O cliente só aplica o que ele confirmou; sem rede, não forja.
@@ -148,6 +173,9 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
             </button>
           );
         })}
+        {(['pet', 'especial'] as const).map((k) => (
+          <HexRenameButton key={k} kind={k} x={RENAME_PORTS[k].x} y={RENAME_PORTS[k].y} label={tx(HEX_RENAME_COPY[k].btn, isPt)} onClick={() => { setAviso(null); setRenomear(k); }} />
+        ))}
       </div>
 
       {/* O CÓDIGO HEX legível — avançado, fica fechado */}
@@ -165,6 +193,12 @@ export default function HexsmithSheet({ language = 'pt-BR', sprite: spriteProp, 
           })}
         </ul>
       </Disclosure>
+
+      {renomear && (
+        <HexRenameModal key={renomear} kind={renomear} language={language as Language} gs={gs} aviso={aviso} ocupado={forjando}
+          atual={renomear === 'pet' ? gs.soulmonMeta?.petName ?? '' : gs.especialNome ?? ''}
+          onClose={() => { setRenomear(null); setAviso(null); }} onConfirm={(nome) => void rename(renomear, nome)} />
+      )}
 
       {open && (
         <SlotPanel slot={open} isPt={isPt} language={language} gs={gs} aviso={aviso}
