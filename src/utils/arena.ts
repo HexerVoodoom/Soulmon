@@ -26,6 +26,7 @@ import { elementHits } from './combate/curve';
 import type { FightSide } from './combate/fight';
 import { maxFoeStage, stageForFoeHp } from './estagioPorHp';
 import { comEfeitoDoElemento } from './combate/elementEffects';
+import { foeSpecialOf } from './combate/foeFamilies';
 import { cheerEvents, PVE_FAMILY_POWER, SPECIAL_FAMILIES, specialOf, type SpecialFamily } from './combate/specials';
 import { groupFightSteps, type GroupEvent, type GroupResult } from './combate/group';
 import { REFERENCE_BUILDS, combatantAt, type StatWeights } from './combate/level';
@@ -492,14 +493,17 @@ export const ARENA_STAGE_FLOOR: Record<ArenaLadderStage, number> = { rookie: 1, 
  * `{ ...combatantAt(L, balanced), hp: hp × cls.hp × (1 + 0.04·r), bonus: cls.power × (1 + 0.142·r) − 1 }`.
  * The boss casts a `direct` special aimed at ONE target.
  */
-export function arenaFoe(L: number, cls: ArenaEnemyClass, r: number, ladder = 0, playerBonus = 0, ultraChefe = false): FightSide {
+export function arenaFoe(L: number, cls: ArenaEnemyClass, r: number, ladder = 0, playerBonus = 0, ultraChefe = false, mix?: { seed: number; i: number }): FightSide {
   const s = ARENA_FOES[cls];
   const b = combatantAt(L, REFERENCE_BUILDS.balanced);
   const k = Math.max(arenaLadderStrength(ladder), ARENA_STAGE_FLOOR[arenaLadderStage(ladder, r + 1)]) * (1 + Math.max(0, playerBonus));
   const u = ultraChefe && cls === 'boss' ? ARENA_CHEFE_ULTRA_MULT : { hp: 1, power: 1 };
+  const stage = arenaLadderStage(ladder, r + 1);
+  const temEspecial = 'special' in s || stage !== 'rookie';
   return {
     combatant: { ...b, hp: b.hp * s.hp * (1 + ARENA_ROUND_GROWTH.hp * r) * k * u.hp, bonus: s.power * (1 + ARENA_ROUND_GROWTH.power * r) * k * u.power - 1 },
-    special: 'special' in s || arenaLadderStage(ladder, r + 1) !== 'rookie' ? specialOf('direct') : null,
+    // Especiais variados (dono, 11/11/2026): com `mix` o tipo é sorteado por (semente da run, rodada, posição); sem `mix` segue `direct` (régua antiga).
+    special: !temEspecial ? null : mix ? foeSpecialOf(stage, `arena|${mix.seed}|${r}|${mix.i}`) : specialOf('direct'),
   };
 }
 
@@ -566,8 +570,8 @@ export function arenaPlayerHitScale(p: ArenaPlayerCfg): number {
  * foe's element shrinks or grows the FOE's HP; the foe's element against the player's attributes
  * shrinks or grows the foe's damage bonus.
  */
-export function arenaFoeSides(p: ArenaPlayerCfg, r: number, foeElements?: readonly (readonly string[])[], ladder = 0, ultraChefe = false): FightSide[] {
-  return ARENA_ROUND_COMP[r].map((cls, i) => arenaFoeWithElement(arenaFoe(p.combatant.level, cls, r, ladder, p.combatant.bonus, ultraChefe), p, foeElements?.[i]));
+export function arenaFoeSides(p: ArenaPlayerCfg, r: number, foeElements?: readonly (readonly string[])[], ladder = 0, ultraChefe = false, mixSeed?: number): FightSide[] {
+  return ARENA_ROUND_COMP[r].map((cls, i) => arenaFoeWithElement(arenaFoe(p.combatant.level, cls, r, ladder, p.combatant.bonus, ultraChefe, mixSeed === undefined ? undefined : { seed: mixSeed, i }), p, foeElements?.[i]));
 }
 
 /** One foe with the element matchup applied (see `arenaFoeSides`); neutral when there is no element on either side. */
@@ -671,6 +675,8 @@ export interface ArenaRunConfig {
   foeElement?: string;
   /** §228: ver `ArenaPlayerCfg.efeitoElemento`. */
   efeitoElemento?: string;
+  /** Especiais variados dos inimigos (11/11/2026). Ausente/false = tudo `direct` (régua antiga). */
+  foeMix?: boolean;
 }
 
 export interface ArenaRunResult {
@@ -708,7 +714,7 @@ export function simulateArenaRunV3(cfg: ArenaRunConfig, seed: number, skill: Are
     const rng = mulberry32((seed * 7919 + r) | 0);
     const foeEls = cfg.foeElement ? ARENA_ROUND_COMP[r].map(() => [cfg.foeElement!]) : cfg.pool && cfg.elements ? buildArenaRound(r + 1, 1, mulberry32((seed * 31 + r) | 0), cfg.pool).map(e => e.elements) : undefined;
     const foeHp = cfg.knobs?.foeHp ?? 1;
-    const foes = arenaFoeSides(p, r, foeEls, cfg.ladder).map(f => (foeHp === 1 ? f : { ...f, combatant: { ...f.combatant, hp: f.combatant.hp * foeHp } }));
+    const foes = arenaFoeSides(p, r, foeEls, cfg.ladder, false, cfg.foeMix ? seed : undefined).map(f => (foeHp === 1 ? f : { ...f, combatant: { ...f.combatant, hp: f.combatant.hp * foeHp } }));
     const g = groupFightSteps(player, foes, {
       seed: arenaRoundSeed(seed, r), startHp: hp, startEnergy: en, areaEfficiency, cheer, fairStart: cfg.fairStart ?? true,
       hitScale: (who) => {

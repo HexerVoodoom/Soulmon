@@ -289,6 +289,9 @@ Helper de `/api/app-config` (11/11/2026): `appVersionConfig(env)` devolve `{minV
 ### `functions/api/_simFormas.js`
 **Dono de:** a arte das formas evoluídas dos simulados, sob demanda, em passos, atrás de `SIMULADOS_FORMAS_ON` (desligada) e `SPRITE_DISABLED`, com tetos próprios (REGISTRO §233, §234). O prompt vem pronto do Oráculo em `sim:prompt:<id>:<forma>`, semeado por `scripts/simulados-prompts.ts`; sem ele, nada é gerado. **Exports:** `FORMAS_DIA_MAX`, `FORMAS_MES_MAX`, `FORMA_TENTATIVAS_MAX`, `formasLigadas`, `chaveDaForma`, `chaveDoPrompt`, `chaveDaFila`, `enfileirarForma`, `passoFormas`. **Chamado por:** `_simulados.js`. **Régua:** `_simFormas.test.js`.
 
+### `functions/api/_foeFamilies.js`
+**Dono de:** a FAMÍLIA do especial dos simulados `sim_*` no duelo 1v1 (REGISTRO §290): espelho de `src/utils/combate/foeFamilies.ts` (mesmo sorteio FNV-1a; HoT vira `shield` porque o 1v1 não tem HoT). **Exports:** `FOE_MIX`, `foeHash`, `foeKindOf`, `foeFamilyOf`. **Chamado por:** `_simulados.js` (`saveDoSimulado`). **Régua:** `src/utils/combate/foeFamilies.test.ts` (paridade).
+
 ### `functions/api/_simulados.data.js`
 **Dono de:** os 170 perfis simulados (dados versionados, sem lógica): `id` estável `sim_NNNN` (vira chave de save/perfil/ranking; nunca mude), apelido único, nome do Soulmon, linha, ritmo. **Exports:** `SIM_EPOCH`, `SIMULADOS`. **Chamado por:** `_simulados.js`.
 

@@ -95,7 +95,8 @@ describe('os 20 novos Soulmon da masmorra (17 + fada/industrial/planta)', () => 
   it('o valor (HP/poder) do encontro não mudou: só o sabor', () => {
     const a = buildDungeonWave(3, 'rookie', mulberry32(7));
     const b = buildDungeonWave(3, 'rookie', mulberry32(99));
-    expect(a.map(e => e.foe)).toEqual(b.map(e => e.foe));
+    // o TIPO do especial varia com a criatura (REGISTRO §290); o valor (HP/poder) e a existência do especial não
+    expect(a.map(e => ({ ...e.foe, special: !!e.foe.special }))).toEqual(b.map(e => ({ ...e.foe, special: !!e.foe.special })));
   });
 
   it('sem repetição: as criaturas novas da onda (6 slots) são todas diferentes', () => {
