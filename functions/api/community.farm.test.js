@@ -8,7 +8,7 @@ import { describe, it, expect } from 'vitest';
 import { onRequest } from './community.js';
 import { simulateDuel, DUEL_DAY_MS } from './_duel.js';
 import {
-  HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, HONRA_FATOR_POR_REPETICAO, ganhoDePontos, fatorPorLevel, fatorPorRepeticao,
+  HONRA_PONTOS_VITORIA, HONRA_PONTOS_DEFESA, HONRA_FATOR_POR_REPETICAO, ganhoDePontos, fatorPorLevel, fatorPorRepeticao, motivoDoCorte,
   HONRA_LEVEL_CARENCIA, HONRA_LEVEL_QUEDA,
 } from './_honra.js';
 
@@ -146,5 +146,41 @@ describe('ALTO-2: fazenda com conta própria', () => {
     const r = await jogar(env, A, PIDB, 'opp');
     expect(r.json.outcome).toBe('loss');
     expect(rankDe(env, A).points).toBe(SOMA_DIA - 8);
+  });
+});
+
+/* Por que a faixa "não anda" (investigação 11/11/2026): lifetime só soma em VITÓRIA e o ganho cai a 0 com oponente 9+ níveis
+   abaixo ou a partir da 4ª vitória no mesmo oponente no dia. Estes testes só documentam a regra vigente; não a mudam. */
+describe('motivoDoCorte e a velocidade da faixa', () => {
+  it('diz por que cortou, sem mudar o ganho', () => {
+    expect(motivoDoCorte(5, 5, 0)).toBeNull();
+    expect(motivoDoCorte(20, 5, 0)).toBe('level');
+    expect(motivoDoCorte(5, 5, 1)).toBe('repeat');
+    expect(motivoDoCorte(20, 5, 3)).toBe('level');
+    expect(motivoDoCorte(undefined, 5, 0)).toBeNull();
+  });
+
+  it('oponente 9+ níveis abaixo nunca soma; o par repetido soma 20+10+5 e para', () => {
+    expect(ganhoDePontos(HONRA_PONTOS_VITORIA, 15, 6, 0).gain).toBe(0);
+    const dia = [0, 1, 2, 3, 4].map(n => ganhoDePontos(HONRA_PONTOS_VITORIA, 5, 5, n).gain);
+    expect(dia).toEqual([20, 10, 5, 0, 0]);
+  });
+
+  it('simulação: partidas até cruzar a faixa (5 partidas/dia, 20 por vitória cheia)', () => {
+    const partidasAte = (alvo, lvMe, lvOpp, oponentesDistintos) => {
+      let pts = 0, n = 0;
+      for (let dia = 0; dia < 60 && pts < alvo; dia++) {
+        const vistas = {};
+        for (let j = 0; j < 5 && pts < alvo; j++) {
+          const o = j % oponentesDistintos; const w = vistas[o] ?? 0;
+          pts += ganhoDePontos(HONRA_PONTOS_VITORIA, lvMe, lvOpp, w).gain; vistas[o] = w + 1; n++;
+        }
+      }
+      return pts >= alvo ? n : Infinity;
+    };
+    expect(partidasAte(100, 5, 5, 5)).toBe(5);           // 5 oponentes de nível igual: Bronze em 1 dia
+    expect(partidasAte(1000, 10, 10, 5)).toBe(50);       // 1000 pts a 20/vitória = 50 vitórias = 10 dias
+    expect(partidasAte(100, 10, 10, 1)).toBe(12);        // sempre o mesmo oponente: 35/dia, 3 dias
+    expect(partidasAte(100, 20, 10, 5)).toBe(Infinity);  // oponentes 10 níveis abaixo: nunca
   });
 });

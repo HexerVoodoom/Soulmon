@@ -49,3 +49,16 @@ export function ganhoDePontos(base, levelVencedor, levelPerdedor, vitoriasAntes)
 
 /** O maximo de pontos que UM par (mesmos dois levels, sem queda por level) rende por dia de vitorias: a soma da lista. */
 export const HONRA_TETO_DIA_POR_PAR = (base) => Math.round(HONRA_FATOR_POR_REPETICAO.reduce((s, f) => s + base * f, 0));
+
+/**
+ * POR QUE uma vitoria rendeu menos (ou nada): so leitura para a tela, NAO muda nenhuma regra de pontos.
+ * `'level'` = oponente bem abaixo do seu level; `'repeat'` = mesmo oponente de novo no dia; `null` = rendeu inteira.
+ * Quando os dois pesam, vale o fator MENOR (o que mais cortou); empate fica com `'level'`.
+ * @returns {'level' | 'repeat' | null}
+ */
+export function motivoDoCorte(levelVencedor, levelPerdedor, vitoriasAntes) {
+  const porLevel = fatorPorLevel(Number(levelVencedor), Number(levelPerdedor));
+  const porRep = fatorPorRepeticao(vitoriasAntes);
+  if (porLevel >= 1 && porRep >= 1) return null;
+  return porLevel <= porRep ? 'level' : 'repeat';
+}

@@ -125,3 +125,29 @@ export function getTierStanding(points: number, place?: number | null): TierStan
     place: null,
   };
 }
+
+/**
+ * Texto dos PONTOS DA FAIXA (o contador que só soma; NÃO é o placar da temporada). Ex.: "Bronze: 80/300 · faltam 220".
+ * Na última faixa de pontos (ou num lugar de topo) não há próxima: devolve só os pontos acumulados.
+ */
+export function faixaPontosTexto(standing: TierStanding, lifetime: number, isPt: boolean): string {
+  const p = Number.isFinite(lifetime) ? Math.max(0, Math.floor(lifetime)) : 0;
+  const nome = isPt ? standing.tier.namePt : standing.tier.nameEn;
+  if (!standing.next) return isPt ? `${nome}: ${p} pontos da faixa` : `${nome}: ${p} tier points`;
+  return isPt
+    ? `${nome}: ${p}/${standing.next.min} · faltam ${standing.pointsToNext}`
+    : `${nome}: ${p}/${standing.next.min} · ${standing.pointsToNext} to go`;
+}
+
+/** Motivo curto para uma vitória que rendeu 0 ponto de faixa (ou menos que o cheio). `null` = nada a explicar. */
+export function motivoSemPontosTexto(reason: 'level' | 'repeat' | null | undefined, gain: number, isPt: boolean): string | null {
+  if (reason !== 'level' && reason !== 'repeat') return null;
+  if (reason === 'level') {
+    return gain > 0
+      ? (isPt ? 'Rendeu menos: o oponente estava abaixo do seu nível.' : 'Worth less: the opponent was below your level.')
+      : (isPt ? 'Sem pontos de faixa: o oponente estava muito abaixo do seu nível.' : 'No tier points: the opponent was far below your level.');
+  }
+  return gain > 0
+    ? (isPt ? 'Rendeu menos: você já venceu esse oponente hoje.' : 'Worth less: you already beat this opponent today.')
+    : (isPt ? 'Sem pontos de faixa: você já venceu esse oponente hoje.' : 'No tier points: you already beat this opponent today.');
+}
