@@ -36,8 +36,8 @@ async function esgotar(env) {
 
 // Valores refeitos em 11/10/2026: custo ZERO no plano gratuito (REGISTRO §32).
 describe('cota de chat por tier (provisório #55 → free tier §32)', () => {
-  it('a tabela declara demo 20 / paid 20 (beta12: 20 por dia no grátis), e `perAccount` continua sendo o teto de quem não tem tier', () => {
-    expect(AI_LIMITS.chat.perAccountByTier).toEqual({ demo: 20, paid: 20 });
+  it('a tabela declara demo 20 / paid 100 (beta12: 20 por dia no grátis, 100 no pago — dono 12/11), e `perAccount` continua sendo o teto de quem não tem tier', () => {
+    expect(AI_LIMITS.chat.perAccountByTier).toEqual({ demo: 20, paid: 100 });
     expect(AI_LIMITS.chat.perAccount).toBe(15);
   });
 
@@ -48,10 +48,10 @@ describe('cota de chat por tier (provisório #55 → free tier §32)', () => {
     expect(ultimo).toMatchObject({ ok: false, status: 429, reason: 'ai-daily-limit' });
   });
 
-  it('paid: 20 chamadas passam, a 21ª é 429', async () => {
+  it('paid: 100 chamadas passam, a 101ª é 429', async () => {
     const env = fakeEnv({ tier: 'paid', credits: 0, orderDetails: [{ orderId: 'o', grantTier: 'paid' }] });
     const { ok, ultimo } = await esgotar(env);
-    expect(ok).toBe(20);
+    expect(ok).toBe(100);
     expect(ultimo).toMatchObject({ ok: false, status: 429 });
   });
 
