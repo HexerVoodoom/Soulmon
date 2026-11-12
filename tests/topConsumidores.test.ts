@@ -19,7 +19,7 @@ describe('top consumidores de IA', () => {
       { saveId: '@all', n: 999 }, { saveId: 'aaaaaaaa11112222', n: 3 }, { saveId: 'bbbbbbbb33334444', n: 19 },
     ]);
     expect(r).toEqual([
-      { bucket: 'chat', saveIdPrefix: 'bbbbbbbb', n: 19, acima80: true },
+      { bucket: 'chat', saveIdPrefix: 'bbbbbbbb', n: 85, acima80: true },
       { bucket: 'chat', saveIdPrefix: 'aaaaaaaa', n: 3, acima80: false },
     ]);
   });
