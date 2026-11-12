@@ -134,3 +134,18 @@ describe('painel do chat (C1/C2)', () => {
     expect(within(painel).getByLabelText('Gravar mensagem')).toBeTruthy();
   });
 });
+
+describe('BUG-05: botão voltar do Android no painel do chat', () => {
+  it('voltar fecha tela cheia → meia tela → fechado', async () => {
+    const { closeTopBackLayer, hasBackLayer } = await import('../utils/backStack');
+    render(<ChatBox {...base} />);
+    fireEvent.focus(screen.getByLabelText(CAMPO));
+    fireEvent.click(document.querySelector('[data-chat-maximizar]') as HTMLElement);
+    expect(document.querySelector('[data-chat-modo="cheia"]')).toBeTruthy();
+    act(() => { closeTopBackLayer(); });
+    expect(document.querySelector('[data-chat-modo="meia"]')).toBeTruthy();
+    act(() => { closeTopBackLayer(); });
+    expect(document.querySelector('[data-chat-modo]')).toBeNull();
+    expect(hasBackLayer()).toBe(false);
+  });
+});

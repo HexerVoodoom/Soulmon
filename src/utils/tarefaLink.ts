@@ -19,8 +19,8 @@ import type { Language } from './i18n';
 import { resourceOfCatalogId } from '../data/catalogResources';
 import type { CatalogResource } from '../types/activityCatalog';
 import { habitCountsOn, type HabitRhythm } from './habitRhythm';
+import { playerDayIso, playerDayKey, type PlayerDayAnchor } from './playerDay';
 import { DEFAULT_STEP_GOAL, sanitizeStepGoal, stepsDayKey, type StepsRecord } from './steps';
-import { playerDayIso, type PlayerDayAnchor } from './playerDay';
 
 /** O mínimo de uma atividade que este módulo lê (o `Activity` do save serve). */
 export interface LinkableActivity {
@@ -99,7 +99,8 @@ export const autoTagAria = (name: string, language: Language): string =>
   language === 'pt-BR' ? `Tarefa concluída automaticamente: ${name}` : `Task completed automatically: ${name}`;
 
 /** A atividade já está concluída HOJE (mesma leitura de `handleToggleActivityCompletion`). */
-const feitaHoje = (a: LinkableActivity, now: Date): boolean => a.completedToday === true && a.lastCompletedDate === now.toDateString();
+/** BUG-04 (QA beta12): no dia do JOGADOR (`playerDayKey`), o mesmo da chave de idempotência (`playerDayIso`) — não o do aparelho. */
+const feitaHoje = (a: LinkableActivity, now: Date, tz?: PlayerDayAnchor): boolean => a.completedToday === true && a.lastCompletedDate === playerDayKey(now, tz);
 
 export interface AutoCheckArgs {
   activities: readonly LinkableActivity[];
@@ -125,7 +126,7 @@ export function atividadesParaAutoCheck(gatilho: AutoRecurso, a: AutoCheckArgs &
   return a.activities.filter(act =>
     gatilhoDoRecurso(recursoDaAtividade(act)) === gatilho
     && (!a.somenteIds || a.somenteIds.includes(act.id))
-    && !feitaHoje(act, a.now)
+    && !feitaHoje(act, a.now, a.tz)
     && !jaFezAuto(a.tarefaAuto, dia, act.id)
     && habitCountsOn(act as Parameters<typeof habitCountsOn>[0], a.habitRhythms?.[act.id], a.now),
   ).map(act => act.id);

@@ -6054,6 +6054,14 @@ var AI_LIMITS = {
   sprite: { perAccount: 60, perAccountLifetime: 500, perFormLifetime: 20, globalMonth: 800, globalDay: 40 }
 };
 var day = /* @__PURE__ */ __name((now = /* @__PURE__ */ new Date()) => now.toISOString().slice(0, 10), "day");
+function playerDayHint(request, now = /* @__PURE__ */ new Date()) {
+  const raw = request?.headers?.get?.("x-player-day");
+  if (typeof raw !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(raw)) return null;
+  const min = new Date(now.getTime() - 12 * 36e5).toISOString().slice(0, 10);
+  const max2 = new Date(now.getTime() + 14 * 36e5).toISOString().slice(0, 10);
+  return raw >= min && raw <= max2 && !Number.isNaN(Date.parse(`${raw}T00:00:00Z`)) ? raw : null;
+}
+__name(playerDayHint, "playerDayHint");
 var month = /* @__PURE__ */ __name((now = /* @__PURE__ */ new Date()) => now.toISOString().slice(0, 7), "month");
 var TTL_SECONDS = 60 * 60 * 30;
 var MONTH_TTL_SECONDS = 60 * 60 * 24 * 40;
@@ -6165,7 +6173,8 @@ async function guardAiRequest(request, env, bucket, saveId, units = 1, formId = 
   const globalKey = usesMonth ? `ai:${bucket}:@all:${thisMonth}` : `ai:${bucket}:@all:${today3}`;
   const globalLimit = usesMonth ? limits.globalMonth : limits.global;
   const globalTtl = usesMonth ? MONTH_TTL_SECONDS : TTL_SECONDS;
-  const accountKey = `ai:${bucket}:${saveId}:${today3}`;
+  const accountDay = bucket === "chat" ? playerDayHint(request, now) ?? today3 : today3;
+  const accountKey = `ai:${bucket}:${saveId}:${accountDay}`;
   const dayKey = usesMonth && typeof limits.globalDay === "number" ? `ai:${bucket}:@all:${today3}` : null;
   const regenPaga = opts?.regenPaid === true && bucket === "sprite";
   const hasLifetime = !regenPaga && typeof limits.perAccountLifetime === "number";
@@ -20924,7 +20933,7 @@ async function onRequest10({ request, env }) {
 }
 __name(onRequest10, "onRequest");
 
-// ../.wrangler/tmp/pages-NroQfS/functionsRoutes-0.4551705136595944.mjs
+// ../.wrangler/tmp/pages-ekJomW/functionsRoutes-0.867197567476573.mjs
 var routes = [
   {
     routePath: "/api/account",

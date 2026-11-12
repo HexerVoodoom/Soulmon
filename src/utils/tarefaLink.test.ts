@@ -4,6 +4,7 @@ import {
   recursoDaAtividade, gatilhoDoRecurso, autoTagText, autoTagAria, chaveAuto,
 } from './tarefaLink';
 import { stepsDayKey } from './steps';
+import { playerDayKey } from './playerDay';
 
 const NOW = new Date(2026, 10, 15, 10, 0, 0); // domingo 15/11/2026 10h
 const DIA = '2026-11-15';
@@ -110,5 +111,24 @@ describe('recurso e textos (A2, A12)', () => {
     expect(autoTagText('en-US')).toBe('Task');
     expect(autoTagAria('Caminhar', 'pt-BR')).toBe('Tarefa concluída automaticamente: Caminhar');
     expect(autoTagAria('Walk', 'en-US')).toBe('Task completed automatically: Walk');
+  });
+});
+
+describe('BUG-04: "feita hoje" e a chave de idempotência usam o MESMO dia (o do jogador)', () => {
+  const HORA = 3_600_000;
+  it('concluída no dia do JOGADOR (âncora ≠ fuso do aparelho) não é marcada de novo', () => {
+    for (const offsetMs of [14 * HORA, -12 * HORA]) {
+      const tz = { offsetMs };
+      const feita = hab({ completedToday: true, lastCompletedDate: playerDayKey(NOW, tz) });
+      expect(atividadesParaAutoCheck('steps', { activities: [feita], now: NOW, tz, passos: passos(9000) }), 'offset ' + offsetMs).toEqual([]);
+    }
+  });
+  it('conclusão do dia do APARELHO que já é "ontem" para o jogador volta a valer hoje', () => {
+    for (const offsetMs of [14 * HORA, -12 * HORA]) {
+      const tz = { offsetMs };
+      if (playerDayKey(NOW, tz) === NOW.toDateString()) continue;
+      const velha = hab({ completedToday: true, lastCompletedDate: NOW.toDateString() });
+      expect(atividadesParaAutoCheck('steps', { activities: [velha], now: NOW, tz, passos: passos(9000) }), 'offset ' + offsetMs).toEqual(['h1']);
+    }
   });
 });

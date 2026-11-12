@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { Icon } from './ui/Icon';
+import { useBackLayer } from '../utils/backStack';
 import './ChatPanel.css';
 
 /**
@@ -78,6 +79,8 @@ export function ChatPanel({ modo, msgs, petName, spriteSrc, isPt, carregando, on
   const area = useAreaVisivel();
   const listaRef = useRef<HTMLUListElement | null>(null);
   const cheia = modo === 'cheia';
+  // BUG-05: botão voltar do Android — tela cheia → meia tela → fechado (mesma pilha das folhas/minijogos).
+  useBackLayer(true, cheia ? onRestaurar : onFechar);
 
   // A última fala sempre à vista (também quando o teclado sobe e a área encolhe).
   useLayoutEffect(() => {
