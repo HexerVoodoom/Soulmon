@@ -764,11 +764,17 @@ Espelho de `sanitizeDefeatedElements` (`src/utils/elementDex.ts`) para o campo `
 ### `functions/api/_mercMission.js`
 **Dono de:** o espelho server-side de `sanitizeMercMission` (`src/utils/mercMission.ts`; Guilda dos Mercenários, plano do Velado §11) para o campo `mercMission` do save. **Exports:** `MERC_ORDENS` (`filtrador`, `tecelao`, `rompente`), `sanitizeMercMission(raw)` → `{ day, ordem, activityId, done }` ou `undefined` (`day` ≤ 40 chars, `activityId` ≤ 64, `ordem` da lista fechada, só `done === true` conta). Só a FORMA: o servidor não tem o catálogo e não concede nada (os pontos de tipo vivem no save do cliente). `save.js` aplica; nunca recusa o save. **Régua:** `mercMission.parity.test.js`. Desde o §245 exporta também `MERC_TAREFA_ORDEM` (id → Ordem das tarefas da Guilda) e descarta a proposta PENDENTE de id desconhecido ou de outra Ordem; a cumprida fica.
 
+### `functions/api/_intro.js`
+**Dono de:** o interruptor POR PESSOA da intro narrativa (`INTRO_NARRATIVA_TESTERS`, hashes sha256 de `intro-tester:<e-mail>`), separado do `ONBOARDING_VELADO_TESTERS`. **Exports:** `introTesterHash(email)`, `isIntroTester(env, email)`. **Chamado por:** `intro-teste.js`. **Régua:** `intro.test.js`.
+
 ### `functions/api/_velado.js`
 **Dono de:** o espelho MÍNIMO da forma BB no servidor (Onboarding Velado D3/D5; plano §4/§7; paridade com `src/utils/bbStage.ts` em `velado.parity.test.js`). **Interruptor `ONBOARDING_VELADO`** (var/secret lido por `flagOn` de `_killSwitch.js`): DESLIGADO por padrão — desligado, nada do que existia muda. **Exports:** `BB_STAGE` (`'bb'`), `isOnboardingVelado(env)`, `bbRefusal(env, evolutionStage)` → `'bb-locked'` só com o interruptor ligado E estágio BB, senão `null`; `BB_LOCKED_MESSAGE` (`pt`/`en`, voz sem culpa); `veladoTesterHash(email)` e `isVeladoTester(env, email)` (interruptor POR PESSOA: lista de testers por hash de e-mail). **Chamado por:** `community.js` (Duelo PvP, `bbLocked`), `guild.js` (`guildCreate`/`guildJoin` recusam BB com o motivo; o estágio vem do SAVE do servidor), `config.js` (`onboardingVelado`) e `velado-teste.js`. `_aiGuard.js` › `VALID_FORM_ID` passou a aceitar `bb` (D31: BB exclusivo do pagante que já entra pagando).
 
 ### `functions/api/free-rookie.js`
 **Dono de:** `POST /api/free-rookie { id, formId, prompt, promptFallback? }` — rookie grátis por e-mail (D6/D20). **Auth:** `authorizeSaveAccess` (400 `bad-request` sem `id`/`formId`/`prompt` string). Reusa o `onRequestPost` de `generate-sprite.js` com um env montado AQUI (`__freeGen: true`, que o corpo do cliente não alcança e que só libera o portão de tier); `referenceImageUrls` e `regenerate` do cliente são DESCARTADOS. Resposta = `freeRookie` de `_freeGen.js` (`{ image, cached }` ou `{ image: null, fallback: true }`). **Régua:** `freeGen.test.js`.
+
+### `functions/api/intro-teste.js`
+**Dono de:** `GET /api/intro-teste` → `{ tester: boolean }`, "o usuário logado está no teste da intro narrativa?". Só responde sobre o PRÓPRIO ID token; nunca devolve a lista.
 
 ### `functions/api/velado-teste.js`
 **Dono de:** `GET /api/velado-teste` → `{ tester: boolean }`, "o usuário logado está no teste do Velado?" (plano §7). Só responde sobre o PRÓPRIO ID token (`verifyIdToken` + `isVeladoTester` de `_velado.js`); nunca devolve a lista; `Cache-Control: private, no-store`.

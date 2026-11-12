@@ -4450,6 +4450,9 @@ Rótulos dos 20 elementos base (`BASE_ELEMENT_LABELS_EN`, `elementLabel(id, isPt
 ### `src/utils/elementosLote4.data.ts`
 **Dono de:** o lote 4 dos elementos curados (nº 262-267: Clareira Sagrada, Alto-Forno, Bênção Feérica, Floresta Ancestral, Colosso Blindado, Corte Feérica) e `CURADOS_PROMOVIDOS_DATA` (Pestilência, Maldição, Cyber, nº 205-207). **Chamado por:** `elementosCurados.ts`, `enemyRoster.ts`, `enemyRosterArt.ts`, `spriteElement.ts`.
 
+### `src/utils/introTester.ts`
+**Dono de:** `refreshIntroTester`: pergunta ao servidor (`/api/intro-teste`) se o usuário logado está no teste da intro narrativa e aplica o resultado; nunca lança, falha = desligado.
+
 ### `src/utils/veladoTester.ts`
 **Dono de:** `refreshVeladoTester`: pergunta ao servidor se o usuário logado está no teste do Velado e aplica o resultado; nunca lança, falha = desligado.
 
