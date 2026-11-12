@@ -110,12 +110,21 @@ export interface Purpose {
   grants: string[];
   /** dayKey da última fala de lembrete do porquê (máx. 1 por semana). */
   lastVoiceAt?: string;
+  /** Convites de revisão dispensados (`mês:2026-10`, `semester:C1`): o card some e só volta no próximo ciclo. */
+  dismissed: string[];
+}
+
+/** A semanal é anotação leve: guarda só as últimas 12 para não empurrar as revisões grandes para fora do teto. */
+export function trimReviews(list: PurposeReview[]): PurposeReview[] {
+  const weeks = list.filter(r => r.kind === 'week').slice(-12);
+  const rest = list.filter(r => r.kind !== 'week').slice(-MAX_REVIEWS);
+  return [...rest, ...weeks].sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
 }
 
 export function emptyPurpose(): Purpose {
   return {
     history: [], motiveHistory: [], priorities: [], milestones: [], reviews: [],
-    monthlyAgg: {}, prefs: { voiceReminder: true }, grants: [],
+    monthlyAgg: {}, prefs: { voiceReminder: true }, grants: [], dismissed: [],
   };
 }
 
@@ -239,12 +248,13 @@ export function sanitizePurpose(raw: unknown): Purpose | undefined {
     ...(plan ? { plan } : {}),
     priorities,
     milestones: milestones.slice(-MAX_MILESTONES),
-    reviews: reviews.slice(-MAX_REVIEWS),
+    reviews: trimReviews(reviews),
     monthlyAgg: cleanMonthlyAgg(raw.monthlyAgg),
     prefs,
     ...(raw.promptedExisting === true ? { promptedExisting: true } : {}),
     grants: Array.isArray(raw.grants) ? [...new Set(raw.grants.map(safeId).filter(Boolean))].slice(-20) : [],
     ...(lastVoiceAt ? { lastVoiceAt } : {}),
+    dismissed: Array.isArray(raw.dismissed) ? [...new Set(raw.dismissed.map(safeId).filter(Boolean))].slice(-20) : [],
   };
 }
 

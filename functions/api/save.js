@@ -87,6 +87,33 @@ function clampCaderno(raw) {
 }
 
 /**
+ * Objetivo anual (12/11/2026, docs/PLANO-OBJETIVO-ANUAL.md): texto pessoal do titular. O servidor só garante a
+ * FORMA e os MESMOS tetos de `src/utils/purpose.ts` (objetivo 200, frase 120, plano 120, motivo livre 80) e limita
+ * listas; nunca interpreta o conteúdo. Quem lê para a IA é o `/api/chat`, que redige e detecta sofrimento.
+ */
+const PURPOSE_CAPS = { goal: 200, custom: 80, phrase: 120, plan: 120, note: 300 };
+const cut = (v, n) => (typeof v === 'string' ? v.slice(0, n) : v);
+function clampPurpose(raw) {
+  if (!isPlainObj(raw)) return undefined;
+  const p = { ...raw };
+  const g = (x) => (isPlainObj(x) ? { ...x, text: cut(x.text, PURPOSE_CAPS.goal) } : x);
+  if (isPlainObj(p.goal)) p.goal = g(p.goal);
+  if (Array.isArray(p.history)) p.history = p.history.slice(-20).map(g);
+  const m = (x) => (isPlainObj(x) ? { ...x, customText: cut(x.customText, PURPOSE_CAPS.custom), phrase: cut(x.phrase, PURPOSE_CAPS.phrase) } : x);
+  if (isPlainObj(p.motive)) p.motive = m(p.motive);
+  if (Array.isArray(p.motiveHistory)) p.motiveHistory = p.motiveHistory.slice(-20).map(m);
+  if (isPlainObj(p.plan)) p.plan = { ...p.plan, obstacleText: cut(p.plan.obstacleText, PURPOSE_CAPS.plan), response: cut(p.plan.response, PURPOSE_CAPS.plan) };
+  if (Array.isArray(p.priorities)) p.priorities = p.priorities.slice(0, 3);
+  if (Array.isArray(p.milestones)) p.milestones = p.milestones.slice(-40).map((x) => (isPlainObj(x) ? { ...x, label: cut(x.label, PURPOSE_CAPS.plan) } : x));
+  if (Array.isArray(p.reviews)) p.reviews = p.reviews.slice(-60).map((x) => (isPlainObj(x) ? { ...x, note: cut(x.note, PURPOSE_CAPS.note) } : x));
+  if (Array.isArray(p.grants)) p.grants = p.grants.slice(-20);
+  if (isPlainObj(p.monthlyAgg)) p.monthlyAgg = Object.fromEntries(Object.entries(p.monthlyAgg).sort(([a], [b]) => (a < b ? -1 : 1)).slice(-120));
+  // Rede de segurança de tamanho: um objeto que ainda assim passa de ~256 KB não é um objetivo, é lixo.
+  try { if (JSON.stringify(p).length > 256 * 1024) return undefined; } catch { return undefined; }
+  return p;
+}
+
+/**
  * Molduras de avatar (R8, 04/10/2026) — COSMÉTICA. O servidor só garante a FORMA: `equippedFrame` é um id
  * do catálogo fechado (`_frames.js`) ou `null`; `ownedFrames` é uma lista de ids no formato, sem repetição, com teto. Nunca valida
  * se o jogador "merece" a moldura (rank/loja/conquista são do cliente e não dão poder algum) e nada daqui
@@ -415,6 +442,11 @@ async function onRequestBruto({ request, env }) {
     // formato do cliente (`utils/cadernoSave.ts`: 120 x 2000 caracteres) e descarta o resto — nunca o
     // lê, interpreta ou envia a IA/métricas. 120 x 2000 (menos de ~1 MB em UTF-8) cabe nos 5 MB.
     if ('caderno' in state) state.caderno = clampCaderno(state.caderno);
+    // Objetivo anual: só a forma e os tetos (ver `clampPurpose`). Não-objeto ou gigante: o campo some.
+    if ('purpose' in state) {
+      const limpo = clampPurpose(state.purpose);
+      if (limpo === undefined) delete state.purpose; else state.purpose = limpo;
+    }
     // Recibos da jornada do foco já creditados (§247): só a forma. Quem paga é `/api/focus-journey` (razão `fjd:`).
     if ('journeyCredited' in state) {
       const j = state.journeyCredited;
