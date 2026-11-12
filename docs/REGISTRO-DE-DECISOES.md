@@ -4784,3 +4784,11 @@ Limite honesto: as semanais não têm espelho nem validação no servidor (o pro
 **Falsifica:** uma semana sem as duas na lista, dois toques no mesmo dia contarem 2, ou o journal voltar a aparecer como tarefa diária (`missoes.semanaisJournalFoco.test.ts`).
 
 **Rollback:** reverter o PR (o campo `last` é aditivo). **APK:** nada obrigatório.
+
+## §303 — Arte final dos botões de renomear da Hexsmith (lápis e chama) instalada (11/11/2026, pedido do dono)
+
+Os slots `src/assets/soulmon/hexsmith/btn-lapis.webp` e `btn-chama.webp` (256×256, alfa real, hexágono de aro rosa-magenta com lápis e aro laranja com chama, no estilo dos 5 hexágonos da tela) agora existem; `HexRenameButton` passa a usá-los no lugar do hexágono generativo, sem mudança de código. Gerados no ChatGPT com um hexágono do `mapa-portas.png` como referência de estilo; fundo removido pelo «Remover fundo» do ChatGPT (sem chroma), alfa conferido. Prompt e tags em `E:/Soulmon-assets/_banco/registro.jsonl`.
+
+**Falsifica:** o botão voltar ao SVG generativo com a arte presente (`HexsmithRename.arte.test.tsx`).
+
+**Rollback:** reverter o PR (volta ao generativo). **APK:** nada obrigatório.
