@@ -16,7 +16,7 @@ const get = (key: string | null, qs = '') => new Request(`https://s/api/top-ai${
 describe('top consumidores de IA', () => {
   it('ranking: tira @all/@admin, trunca o saveId em 8, ordena e marca ≥ 80% da cota', () => {
     const r = ranking('chat', [
-      { saveId: '@all', n: 999 }, { saveId: 'aaaaaaaa11112222', n: 3 }, { saveId: 'bbbbbbbb33334444', n: 19 },
+      { saveId: '@all', n: 999 }, { saveId: 'aaaaaaaa11112222', n: 3 }, { saveId: 'bbbbbbbb33334444', n: 85 },
     ]);
     expect(r).toEqual([
       { bucket: 'chat', saveIdPrefix: 'bbbbbbbb', n: 85, acima80: true },
