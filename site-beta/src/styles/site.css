@@ -1208,3 +1208,12 @@ body:has(.ciclo.foco) .topo { visibility: hidden; }
   .topo .ig-topo { display: none; }
   .fixo .ig-fixo { display: inline-grid; position: absolute; right: 24px; bottom: 22px; pointer-events: auto; }
 }
+
+/* 12/11 (dono): convite direto pelo Google Group — 3 passos + botão (antes: formulário de e-mail). */
+.grupo-passos { list-style: none; margin: 8px auto 20px; padding: 0; display: grid; gap: 10px; max-width: 34rem; counter-reset: gp; text-align: left; }
+.grupo-passos li { counter-increment: gp; display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; font-size: 1.125rem; line-height: 1.4; }
+.grupo-passos li::before { content: counter(gp); display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; border: 2px solid var(--sb-ouro, #c27a3e); color: var(--sb-ouro, #c27a3e); font-weight: 700; background: rgba(1,12,14,.6); }
+.grupo-passos a { color: var(--sb-pri); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.grupo-cta { display: inline-flex; margin: 0 auto; }
+.grupo-nota { margin: 12px 0 0; font-size: .95rem; opacity: .85; text-align: center; }
+.inscrever-caixa { text-align: center; }

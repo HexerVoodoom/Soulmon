@@ -431,25 +431,11 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
       <div class="inscrever-caixa veu">
         <button type="button" class="ovo" data-ovo aria-label={f.ovo}><img src={b('/site/ovo-cristal.webp')} width="160" height="160" alt="" loading="lazy" /><span class="ovo-brilho" aria-hidden="true"></span></button>
         <h2 id="inscrever-h">{f.h2}</h2>
-        <p class="vagas" data-vagas hidden>{f.esperaPre}</p>
-        <noscript><p class="ns">{f.noscript} <a href={`mailto:${CONTATO}`}>{CONTATO}</a></p></noscript>
-        <form id="inscricao" hidden novalidate data-form data-sitekey={sitekey} data-idioma={t.idioma} data-strings={JSON.stringify(strings)}>
-          <div class="campo">
-            <label for="email">{f.email}</label>
-            <p class="dica" id="email-dica">{f.dica}</p>
-            <input id="email" name="email" type="email" required autocomplete="email" inputmode="email" placeholder={f.exemplo} autocapitalize="off" spellcheck="false" maxlength="254" aria-describedby="email-dica" />
-            <p class="erro" id="email-erro" data-erro hidden></p>
-          </div>
-          <div class="hp" aria-hidden="true"><label>Site<input type="text" name="site" tabindex="-1" autocomplete="off" /></label></div>
-          <div id="turnstile" class="turnstile"></div>
-          <button class="botao primario grande" type="submit" data-enviar><span data-enviar-tx>{f.enviar}</span><span class="cristais" aria-hidden="true"><i></i><i></i><i></i></span></button>
-          <p class="legal-linha">{f.legalA} <a href={t.priv}>{f.legalLink}</a> {f.legalB}</p>
-        </form>
-        <p class="feito" tabindex="-1" data-feito hidden>{f.feito}</p>
-        <div class="partilha">
-          <button type="button" class="link" data-share hidden>{f.share}</button>
-          <p class="partilha-msg" aria-live="polite" data-partilha-msg></p>
-        </div>
+        <ol class="grupo-passos" aria-label={f.grupo.rotulo}>
+          {f.grupo.passos.map((p) => <li><span><Fragment set:html={p} /></span></li>)}
+        </ol>
+        <a class="botao primario grande grupo-cta" href="https://groups.google.com/g/soulmon-testers" target="_blank" rel="noopener noreferrer" data-clique data-grupo-cta>{f.grupo.botao}</a>
+        <p class="grupo-nota">{f.grupo.nota}</p>
       </div>
     </section>
 

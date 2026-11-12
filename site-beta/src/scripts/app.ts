@@ -170,6 +170,15 @@ function mostrarErro(msg: string, comContato = false, info = false) {
   if (email && !info) email.setAttribute('aria-describedby', 'email-dica email-erro');
 }
 
+// Clique no Google Group (dono, 12/11): conta por dia + UTM (allowlist), sem dado pessoal. Não atrasa nem bloqueia a navegação.
+function cliqueGrupo() {
+  const links = $$('[data-clique]'); if (!links.length) return;
+  const lang = document.documentElement.lang.startsWith('pt') ? 'pt-BR' : 'en';
+  for (const a of links) a.addEventListener('click', () => {
+    try { void fetch('/api/clique', { method: 'POST', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ idioma: lang, utm: utm() }) }).catch(() => {}); } catch { /* medição é opcional */ }
+  });
+}
+
 function utm() {
   const q = new URLSearchParams(location.search);
   const limpo = limparUtm({ source: q.get('utm_source'), medium: q.get('utm_medium'), campaign: q.get('utm_campaign') });
@@ -554,7 +563,7 @@ function ancoras() {
 
 // Só com JS: sem ele, o form faria GET com o e-mail na URL.
 if (form) form.hidden = false;
-ancoras(); partilha(); topoECta(); vagas(); formulario(); turnstile(); abas(); ovo(); sorteio(); companheiro(); colete(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
+ancoras(); cliqueGrupo(); partilha(); topoECta(); vagas(); formulario(); turnstile(); abas(); ovo(); sorteio(); companheiro(); colete(); linhasArvore(); modalNpc(); loopReal(); trailer(); ciclo(); profundidade();
 // ajustarSprites lê o layout da página inteira: só depois do load, nunca na janela do primeiro quadro.
 depoisDoLoad(() => {
   document.documentElement.classList.add('tarde');

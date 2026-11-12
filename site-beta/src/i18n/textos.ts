@@ -79,14 +79,15 @@ const pt = {
   entrar: {
     h2: 'Como entrar', frase: 'Três passos, sem pressa.',
     passos: [
-      ['Deixe seu e-mail', 'Use o e-mail da sua conta Google.'],
-      ['Receba o convite', 'Você tem 7 dias para aceitar.'],
-      ['Instale e jogue', 'Fique no teste por 14 dias.'],
+      ['Entre no Google Group', 'Com o mesmo Gmail que você usa na Play.'],
+      ['Vire testador', 'Abra o link de teste e toque em Tornar-se testador.'],
+      ['Instale e jogue', 'Pela Play Store.'],
     ],
-    aviso: 'A 1ª leva tem 50 vagas, por ordem de inscrição; depois, lista de espera.',
+    aviso: 'Beta fechado, vagas limitadas. Para maiores de 18 anos.',
   },
   form: {
     h2: 'Seu Soulmon está esperando.', ovo: 'Cristal com seu Soulmon dentro',
+    grupo: { passos: ['Entre no <a href="https://groups.google.com/g/soulmon-testers" target="_blank" rel="noopener noreferrer" data-clique>Google Group</a>, com o mesmo Gmail que você usa na Play.', 'Abra o <a href="https://play.google.com/apps/testing/com.soulmon" target="_blank" rel="noopener noreferrer">link de teste</a> e toque em <b>Tornar-se testador</b>.', 'Instale o Soulmon pela <a href="https://play.google.com/store/apps/details?id=com.soulmon" target="_blank" rel="noopener noreferrer">Play Store</a>.'], botao: 'Entrar no beta fechado', nota: 'Beta fechado, vagas limitadas. Para maiores de 18 anos.', rotulo: 'Como entrar no beta fechado' },
     email: 'E-mail', exemplo: 'voce@gmail.com', dica: 'E-mail da conta Google usada na Play Store.',
     enviar: 'Entrar no beta', enviarEspera: 'Entrar na fila', enviando: 'Enviando…',
     legalA: 'Ao entrar, você aceita a', legalLink: 'política de privacidade', legalB: 'e declara ter 18 anos ou mais.',
@@ -202,14 +203,15 @@ const en: typeof pt = {
   entrar: {
     h2: 'How to join', frase: 'Three steps, no rush.',
     passos: [
-      ['Leave your email', 'Use your Google Account email.'],
-      ['Get your invite', 'You have 7 days to accept.'],
-      ['Install and play', 'Stay in the test for 14 days.'],
+      ['Join the Google Group', 'With the same Gmail you use on Google Play.'],
+      ['Become a tester', 'Open the test link and tap Become a tester.'],
+      ['Install and play', 'From the Play Store.'],
     ],
-    aviso: 'The first wave has 50 spots in sign-up order; after that, a waitlist.',
+    aviso: 'Closed beta, limited spots. 18 and older.',
   },
   form: {
     h2: 'Your Soulmon is waiting.', ovo: 'Crystal with your Soulmon inside',
+    grupo: { passos: ['Join our <a href="https://groups.google.com/g/soulmon-testers" target="_blank" rel="noopener noreferrer" data-clique>Google Group</a> with the same Gmail you use on Google Play.', 'Open the <a href="https://play.google.com/apps/testing/com.soulmon" target="_blank" rel="noopener noreferrer">test link</a> and tap <b>Become a tester</b>.', 'Install Soulmon from the <a href="https://play.google.com/store/apps/details?id=com.soulmon" target="_blank" rel="noopener noreferrer">Play Store</a>.'], botao: 'Join the closed beta', nota: 'Closed beta, limited spots. 18 and older.', rotulo: 'How to join the closed beta' },
     email: 'Email', exemplo: 'you@gmail.com', dica: 'Google Account email used for the Play Store.',
     enviar: 'Join the beta', enviarEspera: 'Join the line', enviando: 'Sending…',
     legalA: 'By joining, you accept the', legalLink: 'privacy policy', legalB: 'and declare you are 18 or older.',
