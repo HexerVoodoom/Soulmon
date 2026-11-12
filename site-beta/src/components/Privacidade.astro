@@ -40,7 +40,7 @@ const blocos: [string, string[]][] = pt ? [
       <p class="versao">{pt ? 'Versão 1, novembro de 2026.' : 'Version 1, November 2026.'}</p>
       {blocos.map(([h, ps]) => <section><h2>{h}</h2>{ps.map((p) => <p>{p}</p>)}</section>)}
       <p><a href={TERMOS} rel="noopener">{t.rodape.termos}</a></p>
-      <p><a class="botao" href={`${t.home}#inscrever`}>{t.cta}</a></p>
+      <p><a class="botao" href={`${t.home}#entrar`}>{t.cta}</a></p>
     </main>
   </div>
 </Base>

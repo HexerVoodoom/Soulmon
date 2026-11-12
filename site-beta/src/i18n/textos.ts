@@ -79,7 +79,7 @@ const pt = {
   entrar: {
     h2: 'Como entrar', frase: 'Três passos, sem pressa.',
     passos: [
-      ['Entre no Google Group', 'Com o mesmo Gmail que você usa na Play.'],
+      ['Entre no grupo', 'Google Group, com o mesmo Gmail da Play.'],
       ['Vire testador', 'Abra o link de teste e toque em Tornar-se testador.'],
       ['Instale e jogue', 'Pela Play Store.'],
     ],
@@ -203,7 +203,7 @@ const en: typeof pt = {
   entrar: {
     h2: 'How to join', frase: 'Three steps, no rush.',
     passos: [
-      ['Join the Google Group', 'With the same Gmail you use on Google Play.'],
+      ['Join the group', 'Google Group, with the same Gmail as Play.'],
       ['Become a tester', 'Open the test link and tap Become a tester.'],
       ['Install and play', 'From the Play Store.'],
     ],

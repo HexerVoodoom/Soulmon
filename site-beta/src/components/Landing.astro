@@ -82,6 +82,7 @@ const vazio = 'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAI
 // Trailer vertical (celular) entra sozinho quando public/video/trailer-<lang>-v.mp4 existir.
 const TRAILER_V = temSprite(`/video/trailer-${lang}-v.mp4`);
 // Idioma por bandeira (dono, 09/11): a bandeira é a do OUTRO idioma.
+const PASSO_HREF = ['https://groups.google.com/g/soulmon-testers', 'https://play.google.com/apps/testing/com.soulmon', 'https://play.google.com/store/apps/details?id=com.soulmon'];
 const IG = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="3" width="18" height="18" rx="5.2"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none"/></svg>';
 const BANDEIRA_PT = '<svg class="bandeira" viewBox="0 0 28 20" width="34" height="24" aria-hidden="true"><rect width="28" height="20" rx="3" fill="#009c3b"/><path d="M14 2.5 25.5 10 14 17.5 2.5 10Z" fill="#ffdf00"/><circle cx="14" cy="10" r="4.6" fill="#002776"/><path d="M9.6 9.1c3-.9 6.2-.5 8.8 1.2" stroke="#fff" stroke-width=".9" fill="none"/></svg>';
 const BANDEIRA_EN = '<svg class="bandeira" viewBox="0 0 60 40" width="34" height="24" aria-hidden="true"><clipPath id="bq"><rect width="60" height="40" rx="6"/></clipPath><g clip-path="url(#bq)"><rect width="60" height="40" fill="#012169"/><path d="M0 0 60 40M60 0 0 40" stroke="#fff" stroke-width="8"/><path d="M0 0 60 40M60 0 0 40" stroke="#c8102e" stroke-width="3"/><path d="M30 0v40M0 20h60" stroke="#fff" stroke-width="12"/><path d="M30 0v40M0 20h60" stroke="#c8102e" stroke-width="7"/></g></svg>';
@@ -189,7 +190,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
           </div>
           <div class="ciclo-fim" data-fim hidden>
             <button type="button" class="link" data-recomecar>{c.recomecar}</button>
-            <a class="botao primario" href="#inscrever" data-cta>{t.cta}</a>
+            <a class="botao primario" href="#entrar" data-cta>{t.cta}</a>
           </div>
           <img class="chama" data-chama src={b('/provisorio/chama.svg')} width="24" height="32" alt="" aria-hidden="true" loading="lazy" />
           <p class="sr" aria-live="polite" data-anuncio></p>
@@ -414,7 +415,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
         <p class="frase">{e.aviso}</p>
       </div>
       <ol class="passos">
-        {e.passos.map(([a, b], i) => <li class="passo">{i === 0 ? <a class="passo-link" href="#inscrever"><img class="passo-card" src={passos[i]} width="420" height="525" alt="" loading="lazy" /><span class="passo-tx"><strong><span class="sr">{i + 1}. </span>{a}</strong><span>{b}</span></span></a> : <><img class="passo-card" src={passos[i]} width="420" height="525" alt="" loading="lazy" /><span class="passo-tx"><strong><span class="sr">{i + 1}. </span>{a}</strong><span>{b}</span></span></>}</li>)}
+        {e.passos.map(([a, b], i) => <li class="passo"><a class="passo-link" href={PASSO_HREF[i]} target="_blank" rel="noopener noreferrer" data-clique={i === 0 ? '' : undefined}><img class="passo-card" src={passos[i]} width="420" height="525" alt="" loading="lazy" /><span class="passo-tx"><strong><span class="sr">{i + 1}. </span>{a}</strong><span>{b}</span></span></a></li>)}
       </ol>
       <ul class="ilhas" aria-hidden="true">{['arena-bosque', 'arena-salao', 'arena-lab'].map((n) => <li><picture><source type="image/avif" srcset={b(`/dono/${n}.avif`)} /><img src={b(`/dono/${n}.webp`)} width="360" height="237" alt="" loading="lazy" decoding="async" /></picture></li>)}</ul>
     </section>
@@ -431,10 +432,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
       <div class="inscrever-caixa veu">
         <button type="button" class="ovo" data-ovo aria-label={f.ovo}><img src={b('/site/ovo-cristal.webp')} width="160" height="160" alt="" loading="lazy" /><span class="ovo-brilho" aria-hidden="true"></span></button>
         <h2 id="inscrever-h">{f.h2}</h2>
-        <ol class="grupo-passos" aria-label={f.grupo.rotulo}>
-          {f.grupo.passos.map((p) => <li><span><Fragment set:html={p} /></span></li>)}
-        </ol>
-        <a class="botao primario grande grupo-cta" href="https://groups.google.com/g/soulmon-testers" target="_blank" rel="noopener noreferrer" data-clique data-grupo-cta>{f.grupo.botao}</a>
+        <a class="botao primario grande grupo-cta" href="#entrar" data-cta>{t.cta}</a>
         <p class="grupo-nota">{f.grupo.nota}</p>
       </div>
     </section>
@@ -479,7 +477,7 @@ const COLETE: Record<string, Record<string, [string, string][]>> = {
 
   <button type="button" class="link pular-demo" data-pular-demo hidden>{c.pular}</button>
   {VB && <button type="button" class="companheiro" data-companheiro hidden aria-label={t.vb.tocar}><span class="comp-fala" data-comp-fala hidden><span class="comp-tx" data-comp-tx aria-live="polite"></span><span class="comp-x" role="button" tabindex="0" data-comp-x aria-label={c.fechar}>×</span></span><img class="sprite" data-comp-img width="128" height="128" alt="" /><span class="comp-clarao" aria-hidden="true"></span></button>}
-  <div class="fixo" data-fixo><a class="ig ig-fixo" href="https://www.instagram.com/soulmon.app/" target="_blank" rel="noopener noreferrer" aria-label={lang === 'pt' ? 'Instagram do Soulmon' : 'Soulmon on Instagram'} title="Instagram"><Fragment set:html={IG} /></a><a class="botao primario fixo-cta" href="#inscrever" aria-label={`${t.cta} · ${t.hero.loja}`}><Fragment set:html={PLAY} /><span data-cta>{t.cta}</span></a></div>
+  <div class="fixo" data-fixo><a class="ig ig-fixo" href="https://www.instagram.com/soulmon.app/" target="_blank" rel="noopener noreferrer" aria-label={lang === 'pt' ? 'Instagram do Soulmon' : 'Soulmon on Instagram'} title="Instagram"><Fragment set:html={IG} /></a><a class="botao primario fixo-cta" href="#entrar" aria-label={`${t.cta} · ${t.hero.loja}`}><Fragment set:html={PLAY} /><span data-cta>{t.cta}</span></a></div>
   <dialog class="ramo-modal" data-ramo-modal aria-label={s.ramoModal} data-estagio={s.estagio} data-els={JSON.stringify(u.els)} data-base={b('/el/')} data-nomes={JSON.stringify(c.nomes)}>
     <button type="button" class="ramo-x" data-ramo-fechar aria-label={s.ramoFechar}><svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"><path fill="currentColor" d="M5.7 4.3 12 10.6l6.3-6.3 1.4 1.4-6.3 6.3 6.3 6.3-1.4 1.4-6.3-6.3-6.3 6.3-1.4-1.4 6.3-6.3-6.3-6.3Z"/></svg></button>
     <div class="ramo-cont">

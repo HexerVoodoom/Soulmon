@@ -67,7 +67,7 @@ function quandoVisivel(el: Element | null, fn: () => void, margem = '0px') {
 // ---------- Barra superior, CTA compacto e CTA fixo ----------
 function topoECta() {
   // CTA único (dono, 09/11): "Entrar no beta" grande e fixo o tempo todo; some só sobre o formulário, com teclado, popup ou durante a demo.
-  const topo = $('[data-topo]'); const hero = $('.hero'); const fixo = $('[data-fixo]'); const alvo = $('#inscricao') ?? $('#inscrever');
+  const topo = $('[data-topo]'); const hero = $('.hero'); const fixo = $('[data-fixo]'); const alvo = $('#entrar');
   if (!topo || !hero || !alvo) return;
   let heroFora = false; let formVisto = false; let teclado = false; let popup = false; let naDemo = false;
   const aplicar = () => {
