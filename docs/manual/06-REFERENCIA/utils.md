@@ -4555,3 +4555,7 @@ Tabela GERADA de descritores visuais por elemento (`forma` + `paleta`, em inglê
 ### `src/utils/focusRest.ts` · `src/utils/focusNotify.ts` (12/11/2026 — REGISTRO §301)
 
 `focusRest.ts`: `REST_MIN` (`p25: 5`, `p50: 10`), `RestState { startedAt, mode, env, items, key }`, `restEndsAt/restLeftMs/restOver`, `restFromFocusEnd(focusEnd, delta, now, rest)` (o descanso nasce no FIM do foco, corrigido pelo relógio do servidor, nunca no futuro), `normalizeRest/loadRest/saveRest` (`soulmon-foco-rest`, aparelho, descarta > 12 h) e `alarmClock(at)` ("HH:mm" arredondado PARA CIMA). `focusJourney.ts` ganhou `focusEndAt(clock)` (nulo em pausa). `focusNotify.ts`: `scheduleFocusAlarm(kind, at, language)` / `cancelFocusAlarm(kind)` para `'focus-end'` («Hora do descanso») e `'rest-end'` («O descanso acabou»): alarme nativo `SoulmonAlarm` no APK, timer + `showNotification` na web (só em segundo plano e com permissão). **Régua:** `focusRest.test.ts`, `focusNotify.test.ts`.
+
+### `src/utils/atividadeEmCurso.ts`
+
+**`atividadeEmCurso` (12/11/2026, §306):** `atividadeEmCurso(sinais) → 'area' | 'masmorra' | 'foco' | 'modal' | null`, `estaOcioso`, `focoEmAndamento`, `ATIVIDADE_AREAS` (`arena`, `jogos`, `exploracao`). Puro; dono único do que conta como "atividade em curso".

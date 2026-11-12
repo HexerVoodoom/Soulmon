@@ -54,3 +54,14 @@ export function useBackDimmed(ref: RefObject<Element | null>): boolean {
   }, [ref]);
   return dimmed;
 }
+
+/** Quantos modais há abertos agora, reativo (re-renderiza quando abre/fecha um). Base do gate ocioso (`hooks/useOcioso`). */
+export function useModalDepth(): number {
+  const [n, setN] = useState(() => modalDepth());
+  useEffect(() => {
+    const read = () => setN(modalDepth());
+    read();
+    return subscribe(read);
+  }, []);
+  return n;
+}

@@ -4979,6 +4979,24 @@ select:focus-visible {
   transform-origin: 50% 100%;
 }
 
+/* ── "Poção criada" (12/11/2026): véu escuro + luz girando + ícone grande + texto + OK. Sem caixa nem painel. ── */
+.sm2-potion-made {
+  position: fixed; inset: 0; z-index: 120; box-sizing: border-box;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--sm2-space-4);
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  background: rgba(4, 18, 20, .82);
+}
+.sm2-potion-stage { position: relative; width: 240px; height: 240px; display: grid; place-items: center; }
+.sm2-potion-rays {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 236, 170, .5) 0deg 9deg, rgba(255, 236, 170, 0) 9deg 22deg);
+  -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 70%); mask-image: radial-gradient(circle, #000 18%, transparent 70%);
+  animation: sm2-potion-spin 14s linear infinite;
+}
+.sm2-potion-icon { position: relative; width: 160px; height: 160px; object-fit: contain; image-rendering: pixelated; filter: drop-shadow(0 0 18px rgba(255, 236, 170, .55)); display: grid; place-items: center; }
+.sm2-potion-text { margin: 0; text-align: center; font-family: var(--sm2-font-display, var(--sm2-font-text)); font-size: var(--sm2-text-lg, 20px); font-weight: 600; color: #fff; }
+@keyframes sm2-potion-spin { to { transform: rotate(360deg); } }
+
 /* ═══════════════════════════════════════════════════════════════════════════
    MOVIMENTO REDUZIDO — cobertura do arquivo inteiro
    ═══════════════════════════════════════════════════════════════════════════
@@ -9262,3 +9280,4 @@ body[data-modal-open] .sm2-area-back:not([aria-modal="true"] .sm2-area-back):not
 
 /* BlockedActionModal (09/11/2026): o nome do lugar tocavel em "pode ser obtido em <lugar>". */
 .sm2-blocked-link { display: inline; padding: 0; min-height: 0; border: 0; background: none; color: var(--sm2-primary-ink); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; &:focus-visible { outline: 2px solid var(--sm2-primary-ink); outline-offset: 2px; } }
+
