@@ -4647,6 +4647,12 @@ export default function App() {
   /* O "Ir lá" do material na Mochila. A missão que está no menu da Home (`LISTED_QUEST_BUILDINGS`, o Caderno) abre o menu de
      Missões — ela mora SÓ lá; qualquer outro prédio leva à área dele com a folha do lote aberta (a visita conta como sempre, e o
      Vínculo/demo são decididos pelo próprio `AreaView`). One-shot: `pendingSheet` é limpo no consumo. */
+  /** Plaquinha da Home → "Ir à Fenda": fecha o aviso e abre a tela da descida (Exploração > Fenda, com o Soulmon lá). */
+  const irAFenda = useCallback(() => {
+    setOcupadoAviso(null);
+    setPendingSheet({ area: 'exploracao', lot: 'fenda' });
+    goTo(areaView('exploracao'));
+  }, [goTo]);
   const handleMaterialGoTo = useCallback((building: BuildingId) => {
     const dest = buildingDestination(building);
     if (!dest) return;
@@ -9807,6 +9813,7 @@ export default function App() {
         acao={ocupadoAviso?.acao ?? null}
         language={language}
         onRetire={() => void retirarDaMasmorra()}
+        onGo={irAFenda}
         onClose={() => setOcupadoAviso(null)}
         busy={retirando}
       /></Suspense>}

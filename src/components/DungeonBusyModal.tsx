@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { ModalSheet, sm2Button, sm2Text } from './form/FormKit';
 import type { Language } from '../utils/i18n';
 
@@ -34,8 +35,8 @@ export function ocupadoMensagem(acao: OcupadoAcao | null, isPt: boolean): string
   }
   if (!acao) {
     return isPt
-      ? 'Ele está na Fenda, descendo sozinho. O que ele render fica esperando você. Quer trazê-lo de volta?'
-      : 'He is in the Rift, going down on his own. Whatever he earns waits for you. Want to bring him back?';
+      ? 'Ele está na Fenda, descendo sozinho. O que ele render fica esperando você.'
+      : 'He is in the Rift, going down on his own. Whatever he earns waits for you.';
   }
   const verbo = ocupadoVerbo(acao, isPt);
   return isPt
@@ -43,27 +44,43 @@ export function ocupadoMensagem(acao: OcupadoAcao | null, isPt: boolean): string
     : `He is in the Rift, going down on his own. To ${verbo}, take him out first — what he already earned is yours.`;
 }
 
-export function DungeonBusyModal({ open, acao, language, onRetire, onClose, busy = false }: {
+export function DungeonBusyModal({ open, acao, language, onRetire, onGo, onClose, busy = false }: {
   open: boolean;
   acao: OcupadoAcao | null;
   language: Language;
   /** Acerta a descida e traz o Soulmon para casa. */
   onRetire: () => void;
+  /** Plaquinha da Home: leva até a tela da Fenda, onde ele está descendo. Sem isso, o aviso mantém o formato antigo (Deixar lá / Retirar). */
+  onGo?: () => void;
   onClose: () => void;
   /** O acerto está em andamento (o botão espera). */
   busy?: boolean;
 }) {
   const isPt = language === 'pt-BR';
   const emMissao = acao === 'masmorra-em-missao';
+  // Plaquinha (acao null) com destino: a ação principal é IR até a Fenda; trazê-lo de volta vira ação secundária pequena, com confirmação.
+  const irLa = !acao && !!onGo;
+  const [confirmando, setConfirmando] = useState(false);
+  useEffect(() => { if (!open) setConfirmando(false); }, [open]);
   return (
     <ModalSheet
       open={open}
-      onClose={onClose}
+      onClose={confirmando ? () => setConfirmando(false) : onClose}
       language={language}
       title={emMissao ? (isPt ? 'Ele está em missão' : 'He is on a mission') : (isPt ? 'Ele está na Fenda' : 'He is in the Rift')}
       maxWidth={420}
       footer={
-        emMissao ? (
+        irLa && !confirmando ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+            <button type="button" onClick={onGo} style={{ ...sm2Button('primary'), width: '100%' }} data-dungeon-busy-go>{isPt ? 'Ir à Fenda' : 'Go to the Rift'}</button>
+            <button type="button" onClick={() => setConfirmando(true)} style={{ ...sm2Button('outline'), width: '100%', minHeight: 44, fontSize: 'var(--sm2-text-xs, 12px)' }} data-dungeon-busy-bring>{isPt ? 'Trazer de volta' : 'Bring him back'}</button>
+          </div>
+        ) : irLa ? (
+          <div className="sm2-conta-two">
+            <button type="button" onClick={() => setConfirmando(false)} style={sm2Button('outline')} data-dungeon-busy-keep>{isPt ? 'Deixar lá' : 'Leave him there'}</button>
+            <button type="button" onClick={onRetire} disabled={busy} style={sm2Button('primary', busy)} data-dungeon-busy-retire>{isPt ? 'Trazer de volta' : 'Bring him back'}</button>
+          </div>
+        ) : emMissao ? (
           <button type="button" onClick={onClose} style={{ ...sm2Button('primary'), width: '100%' }} data-dungeon-busy-ok>{isPt ? 'Entendi' : 'Got it'}</button>
         ) : (
           <div className="sm2-conta-two">
@@ -77,7 +94,9 @@ export function DungeonBusyModal({ open, acao, language, onRetire, onClose, busy
         )
       }
     >
-      <p style={{ ...sm2Text, margin: 0 }} data-dungeon-busy-msg>{ocupadoMensagem(acao, isPt)}</p>
+      <p style={{ ...sm2Text, margin: 0 }} data-dungeon-busy-msg>{irLa && confirmando
+        ? (isPt ? 'Trazê-lo de volta encerra a descida agora. O que ele já rendeu fica com você.' : 'Bringing him back ends the descent now. What he already earned is yours.')
+        : ocupadoMensagem(acao, isPt)}</p>
     </ModalSheet>
   );
 }

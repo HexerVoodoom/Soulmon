@@ -1957,7 +1957,7 @@ A TELA do beta fechado, separada do portão para sair do chunk de entrada (`lazy
 
 ### `src/components/DungeonBusyModal.tsx`
 
-**Dono de:** o aviso "Ele está na masmorra" (REGISTRO §36) sobre o `ModalSheet` base. **Exports:** `DungeonBusyModal`, `OcupadoAcao`, `ocupadoVerbo`, `ocupadoMensagem`. **Chamado por:** `App.tsx` (`bloqueiaOcupado`, a plaquinha) e `nav/AreaView.tsx` (via `onBusy`).
+**Dono de:** o aviso "Ele está na masmorra" (REGISTRO §36) sobre o `ModalSheet` base. Com `onGo` (plaquinha) a ação principal é **Ir à Fenda** (`data-dungeon-busy-go`) e **Trazer de volta** (`data-dungeon-busy-bring`) é secundária, com confirmação. **Régua:** `DungeonBusyModal.render.test.tsx`. **Exports:** `DungeonBusyModal`, `OcupadoAcao`, `ocupadoVerbo`, `ocupadoMensagem`. **Chamado por:** `App.tsx` (`bloqueiaOcupado`, a plaquinha) e `nav/AreaView.tsx` (via `onBusy`).
 
 ### `src/components/games/DropNotice.tsx`
 
